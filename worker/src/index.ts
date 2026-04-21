@@ -276,9 +276,21 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   const okCount = settled.filter((s) => s.result.ok).length;
   console.log(`[worker] collect ok=${okCount}/${sources.length} entries=${all.length} deduped=${deduped.length}`);
 
-  // 2) Sort newest-first and cap at INDEX_LIMIT (500) so we only
-  //    consider entries that would actually end up in the index.
-  const sorted = [...deduped]
+  // 2) Cap per source (prevents arxiv's 400+ daily drop from drowning out
+  //    all other sources), then sort newest-first, then cap to INDEX_LIMIT.
+  const PER_SOURCE_CAP = 15;
+  const bySource = new Map<string, NormalizedEntry[]>();
+  for (const e of deduped) {
+    const arr = bySource.get(e.source) ?? [];
+    arr.push(e);
+    bySource.set(e.source, arr);
+  }
+  const capped: NormalizedEntry[] = [];
+  for (const [, arr] of bySource) {
+    arr.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    capped.push(...arr.slice(0, PER_SOURCE_CAP));
+  }
+  const sorted = capped
     .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
     .slice(0, INDEX_LIMIT);
 
@@ -366,11 +378,11 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   }
 
   // 5) Build payload (cap 500, newest first)
-  const capped = afterCache.slice(0, INDEX_LIMIT);
+  const finalEntries = afterCache.slice(0, INDEX_LIMIT);
   const payload = {
     generatedAt: new Date().toISOString(),
-    count: capped.length,
-    entries: capped,
+    count: finalEntries.length,
+    entries: finalEntries,
   };
   const json = JSON.stringify(payload, null, 2) + "\n";
 

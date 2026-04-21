@@ -1,0 +1,43 @@
+#:schema https://cloudflare.com/workers/wrangler-schema.json
+# Cloudflare Worker: daily harness (replaces GitHub Actions harness-daily.yml).
+# Runs 4 x per day on cron, re-publishes data/index.json back to GitHub,
+# which triggers a Cloudflare Pages deploy via the Git integration.
+
+name = "tech-dashboard-harness"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Cron: every 6 hours, aligned to JST business-friendly times.
+#   15:00 UTC = 00:00 JST
+#   21:00 UTC = 06:00 JST
+#   03:00 UTC = 12:00 JST
+#   09:00 UTC = 18:00 JST
+[triggers]
+crons = ["0 15,21,3,9 * * *"]
+
+# Summary cache (replaces data/_summary-cache.json).
+# Create with: wrangler kv namespace create SUMMARY_CACHE
+[[kv_namespaces]]
+binding = "SUMMARY_CACHE"
+id = "REPLACE_WITH_KV_ID"
+
+[vars]
+GITHUB_OWNER = "himiyosh"
+GITHUB_REPO = "tech-dashboard"
+GITHUB_BRANCH = "main"
+SUMMARIZE_MODEL = "claude-opus-4.7"
+SUMMARIZE_MAX_NEW = "25"
+
+# Secrets (set via `wrangler secret put`):
+#   - COPILOT_PAT    Classic PAT with Copilot Enterprise access
+#   - GH_TOKEN       Fine-grained PAT with "Contents: Write" on this repo
+
+[observability]
+enabled = true
+
+# Cron runs are billed against the Workers Paid plan limits.
+# Expected monthly usage: 4 runs/day * 30 days = ~120 runs/month.
+# CPU budget per run: ~5-30s (mostly fetch waits, not CPU).
+[placement]
+mode = "smart"

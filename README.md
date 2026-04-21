@@ -41,12 +41,6 @@ npx tsx .claude/skills/quality-audit/run.ts
 
 要約は **GitHub Copilot Enterprise** の Chat Completions API 経由で Claude Opus 4.7 を呼び出します (GitHub Models とは別体系)。
 
-#### GitHub Actions での設定
-
-1. Copilot Enterprise 権限のあるアカウントで **Classic PAT** を発行 (scope: `read:user` で十分)
-2. リポジトリの **Settings → Secrets → Actions** で `COPILOT_PAT` として登録
-3. (任意) **Variables** で `SUMMARIZE_MODEL` を設定 (既定 `claude-opus-4.7`、他に `claude-opus-4.6` / `claude-sonnet-4.5` / `gpt-4o` 等)
-
 ```bash
 # ローカル実行用 (いずれか片方)
 COPILOT_PAT=ghp_...               # PAT → 一時トークン交換を自動で行う
@@ -58,6 +52,62 @@ SUMMARIZE_MAX_NEW=15               # 1 ラン当たりの新規要約上限
 ```
 
 > どのトークンも無ければ要約フェーズは自動でスキップされます (ローカル dev を妨げない設計)。
+
+## デプロイ & 自動更新 (Cloudflare ネイティブ構成)
+
+GitHub Actions は使用せず、Cloudflare 上で完結する構成:
+
+```
+[Cloudflare Worker Cron] ──6h ごと──→ [GitHub Contents API]
+       ↓ (RSS 収集 + Copilot 要約)              ↓ push
+       ↓                              [Cloudflare Pages Git 統合]
+       └── Summary Cache (KV)                    ↓ auto build & deploy
+                                          [本番サイト配信]
+```
+
+### 1. Cloudflare Pages (サイトビルド + デプロイ)
+
+1. Cloudflare ダッシュボード → **Workers & Pages → Create → Pages → Connect to Git**
+2. `himiyosh/tech-dashboard` を選択
+3. ビルド設定:
+   - **Framework preset**: Astro
+   - **Root directory**: `web`
+   - **Build command**: `npm run build`
+   - **Build output directory**: `dist`
+   - **Node version** (環境変数): `NODE_VERSION=22`
+
+以降、`main` ブランチへの push が自動的にビルド & デプロイされます。
+
+### 2. Cloudflare Worker (定期ハーネス実行)
+
+`worker/` に実装済み。ローカルから以下で一度だけセットアップ:
+
+```bash
+cd worker
+npm install
+npx wrangler login                              # 初回認証
+
+# KV ネームスペース作成 (Summary Cache 用)
+npx wrangler kv namespace create SUMMARY_CACHE
+# → 出力された id を worker/wrangler.toml の REPLACE_WITH_KV_ID に反映
+
+# シークレット登録 (インタラクティブ入力)
+npx wrangler secret put COPILOT_PAT             # Copilot Enterprise 権限付き Classic PAT
+npx wrangler secret put GH_TOKEN                # Contents:Write 権限の Fine-grained PAT
+
+# デプロイ (Cron トリガを含む)
+npx wrangler deploy
+```
+
+Cron は `0 15,21,3,9 * * *` (6 時間ごと、JST の 00/06/12/18 時) で起動し、
+変更があれば `data/index.json` を GitHub に commit → Pages が自動的に再デプロイします。
+
+**手動トリガ** (緊急で回したい時):
+
+```bash
+curl -X POST "https://tech-dashboard-harness.<your-subdomain>.workers.dev/run" \
+  -H "x-trigger-token: <GH_TOKEN と同じ値>"
+```
 
 ## プロジェクト構造
 
@@ -97,14 +147,15 @@ tech-dashboard/
 │  └─ astro.config.mjs
 ├─ .claude/skills/
 │  └─ quality-audit/         # 品質監査スキル (SKILL.md + run.ts)
-├─ .github/workflows/
-│  ├─ harness-daily.yml      # 6h おき収集 + auto commit
-│  └─ build-web.yml          # Astro ビルド
+├─ worker/                   # Cloudflare Worker (定期ハーネス実行)
+│  ├─ src/index.ts           # Cron 起動 → 収集 → Copilot 要約 → GitHub Contents API に commit
+│  ├─ wrangler.toml          # Workers 設定 (Cron / KV / Vars)
+│  └─ package.json
 └─ data/                     # 成果物 (git-as-DB)
    ├─ index.json             # サイト配信用 (最新 500 件)
    ├─ raw/                   # 生データ (.gitignore, 監査用ローカル保持)
    ├─ _runs/                 # 実行レポート + 監査レポート (.gitignore)
-   ├─ _summary-cache.json    # Claude 要約キャッシュ (.gitignore)
+   ├─ _summary-cache.json    # Claude 要約キャッシュ (.gitignore、Worker では KV を使用)
    └─ user-opml.xml          # ユーザ個別 OPML (.gitignore)
 ```
 

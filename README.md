@@ -109,6 +109,22 @@ curl -X POST "https://tech-dashboard-harness.<your-subdomain>.workers.dev/run" \
   -H "x-trigger-token: <GH_TOKEN と同じ値>"
 ```
 
+レスポンスは `202 Accepted` が即座に返り、実処理は `ctx.waitUntil` でバックグラウンド実行。進行状況は GitHub のコミット履歴 (`tech-dashboard-worker` 作成者) または Cloudflare ダッシュボードの Worker Logs で確認できます。
+
+### 3. Cloudflare MCP サーバー (任意)
+
+VS Code / Copilot Chat から Cloudflare を直接操作できる公式 MCP 群を `.vscode/mcp.json` に登録済み。認証は Cloudflare アカウントで OAuth。
+
+| MCP サーバー | 用途 |
+|---|---|
+| `cloudflare-docs` | Cloudflare ドキュメント検索 |
+| `cloudflare-bindings` | Workers / Pages の bindings 管理 |
+| `cloudflare-observability` | Worker ログ / メトリクス照会 |
+| `cloudflare-radar` | Cloudflare Radar (ネット動向) |
+| `cloudflare-browser-rendering` | Browser Rendering API |
+
+VS Code で MCP 拡張 or Copilot Chat を開き、初回は OAuth 認可画面が出ます。参考: https://blog.cloudflare.com/ja-jp/thirteen-new-mcp-servers-from-cloudflare/
+
 ## プロジェクト構造
 
 ```

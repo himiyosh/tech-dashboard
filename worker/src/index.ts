@@ -415,21 +415,19 @@ export default {
     );
   },
 
-  // Manual trigger: `curl https://<worker>.workers.dev/run -H "x-trigger-token: ..."`
-  // Useful for testing before the next cron tick.
-  async fetch(req: Request, env: Env): Promise<Response> {
+  // Manual trigger: `curl -X POST https://<worker>.workers.dev/run -H "x-trigger-token: ..."`
+  // Returns 202 immediately; the harness runs in background via ctx.waitUntil.
+  async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
     if (url.pathname === "/run" && req.method === "POST") {
       const authHeader = req.headers.get("x-trigger-token");
       if (!authHeader || authHeader !== env.GH_TOKEN) {
         return new Response("unauthorized", { status: 401 });
       }
-      try {
-        const { changed, stats } = await runHarness(env);
-        return Response.json({ ok: true, changed, stats });
-      } catch (err) {
-        return Response.json({ ok: false, error: String(err) }, { status: 500 });
-      }
+      ctx.waitUntil(
+        runHarness(env).catch((err) => console.error("[worker] manual run fatal:", err)),
+      );
+      return Response.json({ ok: true, status: "accepted", note: "running in background; check git log" }, { status: 202 });
     }
     return new Response(
       "tech-dashboard harness worker. POST /run (auth: x-trigger-token) to trigger.",

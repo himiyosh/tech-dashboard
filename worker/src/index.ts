@@ -276,10 +276,11 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   const okCount = settled.filter((s) => s.result.ok).length;
   console.log(`[worker] collect ok=${okCount}/${sources.length} entries=${all.length} deduped=${deduped.length}`);
 
-  // 2) Sort newest-first and cap candidates for summarization budget
-  const sorted = [...deduped].sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-  );
+  // 2) Sort newest-first and cap at INDEX_LIMIT (500) so we only
+  //    consider entries that would actually end up in the index.
+  const sorted = [...deduped]
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+    .slice(0, INDEX_LIMIT);
 
   // 3) Resolve Copilot token (skip if PAT absent)
   let token: string | null = null;
@@ -291,14 +292,20 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
     }
   }
 
-  // 4) Summarize — apply KV cache, budget new calls
+  // 4) Summarize — apply KV cache, budget new calls.
+  //    Cache stored as a single JSON blob keyed by URL to avoid
+  //    hundreds of sequential KV gets (each ~30ms, which exhausts the
+  //    Worker wall-time budget of ~30s).
   const model = env.SUMMARIZE_MODEL || "claude-opus-4.7";
   const maxNew = Number(env.SUMMARIZE_MAX_NEW || "25");
+  const CACHE_KEY = "cache.v1";
+  const cacheBlob =
+    (await env.SUMMARY_CACHE.get<Record<string, CacheEntry>>(CACHE_KEY, "json")) ?? {};
+
   const needsSummary: NormalizedEntry[] = [];
   const afterCache: NormalizedEntry[] = [];
-
   for (const e of sorted) {
-    const hit = await env.SUMMARY_CACHE.get<CacheEntry>(e.url, "json");
+    const hit = cacheBlob[e.url];
     if (hit && hit.summaryJa && hit.summaryEn) {
       afterCache.push({
         ...e,
@@ -323,7 +330,7 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
       async (e) => {
         try {
           const r = await callCopilot(token!, model, e);
-          await env.SUMMARY_CACHE.put(e.url, JSON.stringify(r));
+          cacheBlob[e.url] = r;
           return { url: e.url, entry: r, ok: true as const };
         } catch (err) {
           errors++;
@@ -349,6 +356,10 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
           tags: dedupeTags([...e.tags, ...r.extraTags]),
         };
       }
+    }
+    // Persist the updated blob (single KV put).
+    if (summarized > 0) {
+      await env.SUMMARY_CACHE.put(CACHE_KEY, JSON.stringify(cacheBlob));
     }
   } else if (!token) {
     console.warn("[worker] no Copilot token — skipping summarization");

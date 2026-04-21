@@ -67,8 +67,16 @@ GitHub Actions は使用せず、Cloudflare 上で完結する構成:
 
 ### 1. Cloudflare Pages (サイトビルド + デプロイ)
 
-1. Cloudflare ダッシュボード → **Workers & Pages → Create → Pages → Connect to Git**
-2. `himiyosh/tech-dashboard` を選択
+**本番 URL**: https://tech-dashboard-6a7.pages.dev/
+
+セットアップ方法は以下 2 択:
+
+#### A. Git 連携 (推奨 — 完全自動)
+
+Worker が data を push → Pages が自動ビルド & デプロイ、となる理想形。初回のみダッシュボード操作が必要です。
+
+1. Cloudflare ダッシュボード → **Workers & Pages → tech-dashboard → Settings → Builds & deployments**
+2. **Connect to Git** → `himiyosh/tech-dashboard` を接続
 3. ビルド設定:
    - **Framework preset**: Astro
    - **Root directory**: `web`
@@ -77,6 +85,17 @@ GitHub Actions は使用せず、Cloudflare 上で完結する構成:
    - **Node version** (環境変数): `NODE_VERSION=22`
 
 以降、`main` ブランチへの push が自動的にビルド & デプロイされます。
+
+#### B. CLI 直接アップロード (Git 連携なし)
+
+プロジェクト作成 + 初回デプロイは CLI で完了済み。再デプロイは以下 1 コマンド:
+
+```bash
+cd web && npm run deploy
+# → ビルド + wrangler pages deploy
+```
+
+この場合、Worker のデータ更新を本番に反映するには手動で `npm run deploy` を叩く必要があります。
 
 ### 2. Cloudflare Worker (定期ハーネス実行)
 

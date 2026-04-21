@@ -1,0 +1,127 @@
+---
+import Portal from "../../layouts/Portal.astro";
+import Sidebar from "../../components/Sidebar.astro";
+import EntryCard from "../../components/EntryCard.astro";
+import CategoryHero from "../../components/CategoryHero.astro";
+import TrendChart from "../../components/TrendChart.astro";
+import Pager from "../../components/Pager.astro";
+import {
+  CATEGORY_META,
+  PAGE_SIZE,
+  entriesFor,
+  groupByDay,
+  jstDayLabel,
+  type Category,
+} from "../../lib/data.ts";
+
+export function getStaticPaths() {
+  return CATEGORY_META.map((c) => ({
+    params: { slug: c.slug },
+    props: { category: c },
+  }));
+}
+
+interface Props {
+  category: (typeof CATEGORY_META)[number];
+}
+
+const { category } = Astro.props as Props;
+const slug = category.slug as Category;
+const all = entriesFor(slug);
+const currentPage = 1;
+const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+const entries = all.slice(0, PAGE_SIZE);
+const dayGroups = groupByDay(entries);
+const now = new Date();
+
+const breadcrumb = [
+  { label: "Home", href: "/" },
+  { label: "Categories", href: "/categories" },
+  { label: category.name },
+];
+---
+
+<Portal
+  pageKey="categories"
+  title={`${category.name} — TECH Dashboard`}
+  breadcrumb={breadcrumb}
+>
+  <div class="layout">
+    <Sidebar active={slug} />
+
+    <main>
+      <CategoryHero
+        slug={slug}
+        name={category.name}
+        color={category.color}
+        initial={category.initial}
+        totalCount={all.length}
+      />
+
+      <TrendChart category={slug} color={category.color} days={30} />
+
+      <div
+        class="section-header"
+        style={`border-bottom:2px solid ${category.color}`}
+      >
+        <h2>
+          All articles
+          <span
+            class="count"
+            style={`background:${category.color}22;color:${category.color}`}
+          >
+            {all.length} total
+          </span>
+        </h2>
+        <div class="sort">
+          <span class="active">新着順</span>
+        </div>
+      </div>
+
+      {entries.length === 0 ? (
+        <p style="color:var(--muted);padding:24px 0">
+          まだエントリがありません。
+        </p>
+      ) : (
+        dayGroups.map(({ key, items }) => (
+          <>
+            <div class="day-header">
+              <span>{jstDayLabel(key, now)}</span>
+              <span class="day-count">{items.length} entries</span>
+            </div>
+            {items.map((entry) => <EntryCard entry={entry} />)}
+          </>
+        ))
+      )}
+
+      <Pager
+        currentPage={currentPage}
+        totalPages={totalPages}
+        baseHref={`/c/${slug}`}
+      />
+    </main>
+
+    <aside class="right"></aside>
+  </div>
+</Portal>
+
+<style>
+  .section-header .sort {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11px;
+  }
+  .section-header .sort span {
+    padding: 3px 10px;
+    border-radius: 4px;
+    color: var(--muted);
+  }
+  .section-header .sort span.active {
+    background: var(--surface-2, var(--surface));
+    color: var(--text);
+  }
+</style>

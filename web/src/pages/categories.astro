@@ -1,0 +1,120 @@
+---
+import Portal from "../layouts/Portal.astro";
+import Sidebar from "../components/Sidebar.astro";
+import {
+  CATEGORY_META,
+  countByCategory,
+  entriesFor,
+  relativeTime,
+} from "../lib/data.ts";
+
+const counts = countByCategory();
+
+const GROUP_LABEL: Record<string, string> = {
+  coding: "Coding Agents",
+  platform: "Platform / Runtime",
+  ecosystem: "Ecosystem",
+  research: "Research",
+};
+
+// Group categories by display group while preserving order.
+const grouped = new Map<string, typeof CATEGORY_META>();
+for (const cat of CATEGORY_META) {
+  const arr = grouped.get(cat.group) ?? [];
+  arr.push(cat);
+  grouped.set(cat.group, arr);
+}
+
+function latestOf(slug: string): string | null {
+  const list = entriesFor(slug as never);
+  if (list.length === 0) return null;
+  return list[0]!.publishedAt;
+}
+---
+
+<Portal pageKey="categories" title="Categories — TECH Dashboard">
+  <div class="layout">
+    <Sidebar />
+
+    <main>
+      <div class="section-header primary">
+        <h2>
+          Categories
+          <span class="count">{CATEGORY_META.length} categories</span>
+        </h2>
+      </div>
+
+      {[...grouped.entries()].map(([group, cats]) => (
+        <section style="margin-bottom:32px">
+          <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-subtle);margin:0 0 12px 4px">
+            {GROUP_LABEL[group] ?? group}
+          </h3>
+          <div class="category-grid">
+            {cats.map((cat) => {
+              const latest = latestOf(cat.slug);
+              return (
+                <a href={`/c/${cat.slug}`} class="category-card">
+                  <div class="cat-head">
+                    <span class="cat-dot" style={`background:${cat.color}`}></span>
+                    <span class="cat-name">{cat.name}</span>
+                    <span class="cat-count">{counts[cat.slug] ?? 0}</span>
+                  </div>
+                  <div class="cat-meta">
+                    {latest ? `最終更新 ${relativeTime(latest)}` : "エントリなし"}
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+    </main>
+  </div>
+</Portal>
+
+<style>
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .category-card {
+    display: block;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .category-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .cat-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .cat-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+  }
+  .cat-name {
+    font-weight: 600;
+    flex: 1;
+  }
+  .cat-count {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-subtle);
+    font-size: 13px;
+  }
+  .cat-meta {
+    font-size: 12px;
+    color: var(--text-subtle);
+  }
+</style>

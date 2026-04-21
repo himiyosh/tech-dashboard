@@ -1,0 +1,63 @@
+---
+import Portal from "../../layouts/Portal.astro";
+import Sidebar from "../../components/Sidebar.astro";
+import EntryCard from "../../components/EntryCard.astro";
+import Pager from "../../components/Pager.astro";
+import {
+  ALL_ENTRIES,
+  PAGE_SIZE,
+  groupByDay,
+  jstDayLabel,
+} from "../../lib/data.ts";
+
+export function getStaticPaths() {
+  const total = Math.max(1, Math.ceil(ALL_ENTRIES.length / PAGE_SIZE));
+  const paths: Array<{ params: { page: string }; props: { page: number; total: number } }> = [];
+  for (let p = 2; p <= total; p++) {
+    paths.push({ params: { page: String(p) }, props: { page: p, total } });
+  }
+  return paths;
+}
+
+interface Props {
+  page: number;
+  total: number;
+}
+
+const { page, total } = Astro.props as Props;
+const start = (page - 1) * PAGE_SIZE;
+const pageEntries = ALL_ENTRIES.slice(start, start + PAGE_SIZE);
+const dayGroups = groupByDay(pageEntries);
+const now = new Date();
+
+const breadcrumb = [
+  { label: "Home", href: "/" },
+  { label: `Page ${page}` },
+];
+---
+
+<Portal pageKey="timeline" title={`Timeline · p.${page} — TECH Dashboard`} breadcrumb={breadcrumb}>
+  <div class="layout">
+    <Sidebar active="all" />
+
+    <main>
+      <div class="section-header primary">
+        <h2>Timeline <span class="count">page {page}/{total} · {ALL_ENTRIES.length} total</span></h2>
+      </div>
+
+      {dayGroups.map(({ key, items }) => (
+        <>
+          <div class="day-header">
+            <span>{jstDayLabel(key, now)}</span>
+            <span class="day-count">{items.length} entries</span>
+          </div>
+          {items.map((entry) => <EntryCard entry={entry} />)}
+        </>
+      ))}
+
+      <Pager currentPage={page} totalPages={total} baseHref="" />
+    </main>
+
+    <aside class="right"></aside>
+  </div>
+</Portal>

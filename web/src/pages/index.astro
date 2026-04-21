@@ -1,0 +1,170 @@
+---
+import Portal from "../layouts/Portal.astro";
+import Sidebar from "../components/Sidebar.astro";
+import EntryCard from "../components/EntryCard.astro";
+import DailySummary from "../components/DailySummary.astro";
+import TickerBar from "../components/TickerBar.astro";
+import Pager from "../components/Pager.astro";
+import {
+  ALL_ENTRIES,
+  GENERATED_AT,
+  PAGE_SIZE,
+  featured,
+  trendingTags,
+  relativeTime,
+  groupByDay,
+  jstDateKey,
+  jstDayLabel,
+  summaryForLang,
+  summaryForLangWithFallback,
+  titleForLang,
+} from "../lib/data.ts";
+
+const currentPage = 1;
+const totalPages = Math.max(1, Math.ceil(ALL_ENTRIES.length / PAGE_SIZE));
+const pageEntries = ALL_ENTRIES.slice(0, PAGE_SIZE);
+const dayGroups = groupByDay(pageEntries);
+
+const feat = featured();
+const tags = trendingTags(12);
+
+const now = new Date();
+const ago = relativeTime(GENERATED_AT, now);
+
+const todayKey = jstDateKey(now.toISOString());
+const todayCount = ALL_ENTRIES.filter((e) => jstDateKey(e.publishedAt) === todayKey).length;
+const majorCount = ALL_ENTRIES.filter((e) => e.importance === 3).length;
+const sourceCount = new Set(ALL_ENTRIES.map((e) => e.source)).size;
+---
+
+<Portal pageKey="timeline">
+  <section class="banner">
+    <div class="banner-bg-grid"></div>
+    <div class="banner-inner">
+      <h1 class="i18n-ja">
+        AI エコシステムの<br />
+        <span class="brand-accent">日々のアップデート</span>を、1 画面で。
+      </h1>
+      <h1 class="i18n-en" lang="en">
+        The AI ecosystem's<br />
+        <span class="brand-accent">daily updates</span>, on one screen.
+      </h1>
+      <p class="tagline i18n-ja">
+        <strong>Copilot / Claude / Codex / Gemini / Local LLM / Research</strong>
+        の公式情報・論文・リリースを 6 時間おきに自動収集。日本語で要約し、重要度でソートして届けます。
+      </p>
+      <p class="tagline i18n-en" lang="en">
+        Official news, papers, and releases from
+        <strong>Copilot / Claude / Codex / Gemini / Local LLM / Research</strong>
+        collected every 6 hours, summarized, and ranked by importance.
+      </p>
+    </div>
+  </section>
+
+  <TickerBar entries={ALL_ENTRIES} now={now} />
+
+  <section class="stats">
+    <div class="stat">
+      <span>Today</span>
+      <span class="value">{todayCount}</span>
+    </div>
+    <div class="stat">
+      <span>Total</span>
+      <span class="value">{ALL_ENTRIES.length}</span>
+    </div>
+    <div class="stat">
+      <span>Major</span>
+      <span class="value">{majorCount}</span>
+    </div>
+    <div class="stat">
+      <span>Sources</span>
+      <span class="value">{sourceCount}</span>
+    </div>
+    <div class="stat">
+      <span>Updated</span>
+      <span class="value" style="font-size:13px">{ago}</span>
+    </div>
+  </section>
+
+  <div class="layout">
+    <Sidebar active="all" />
+
+    <main>
+      {feat && (() => {
+        const featSumJa = summaryForLangWithFallback(feat, "ja");
+        const featSumEn = summaryForLangWithFallback(feat, "en");
+        return (
+        <article class="featured" data-pagefind-body>
+          <div class="featured-label">
+            <span class="i18n-ja">Featured · 注目</span>
+            <span class="i18n-en" lang="en">Featured</span>
+          </div>
+          <h2 class="featured-title">
+            <a href={feat.url} target="_blank" rel="noopener">
+              <span class="i18n-ja">{titleForLang(feat, "ja")}</span>
+              <span class="i18n-en" lang="en">{titleForLang(feat, "en") || "(no English title)"}</span>
+            </a>
+          </h2>
+          {featSumJa.text && (
+            <p class="featured-sum i18n-ja">
+              {featSumJa.isFallback && <span class="lang-badge">[en]</span>}
+              {featSumJa.text}
+            </p>
+          )}
+          {featSumEn.text && (
+            <p class="featured-sum i18n-en" lang={featSumEn.isFallback ? "ja" : "en"}>
+              {featSumEn.isFallback && <span class="lang-badge">[ja]</span>}
+              {featSumEn.text}
+            </p>
+          )}
+          <div class="featured-meta">
+            <span class="badge release">{feat.sourceType}</span>
+            <span>{feat.source}</span>
+            <span>·</span>
+            <span>{relativeTime(feat.publishedAt, now)}</span>
+          </div>
+        </article>
+        );
+      })()}
+
+      <DailySummary entries={ALL_ENTRIES} now={now} />
+
+      <div class="section-header primary">
+        <h2>Timeline <span class="count">{ALL_ENTRIES.length} total · page {currentPage}/{totalPages}</span></h2>
+      </div>
+
+      {dayGroups.map(({ key, items }) => (
+        <>
+          <div class="day-header">
+            <span>{jstDayLabel(key, now)}</span>
+            <span class="day-count">{items.length} entries</span>
+          </div>
+          {items.map((entry) => <EntryCard entry={entry} />)}
+        </>
+      ))}
+
+      <Pager currentPage={currentPage} totalPages={totalPages} baseHref="" />
+    </main>
+
+    <aside class="right">
+      <div class="side-card">
+        <div class="right-title">Trending Tags</div>
+        <div class="tag-cloud">
+          {tags.map((t) => (
+            <a class="tag" href={`/t/${encodeURIComponent(t.tag)}`}>
+              #{t.tag} <span class="c">{t.count}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="right-title">About</div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.55">
+          24h おきに公式ソースを自動収集し、日本語で要約。
+          <a href="/about" style="color:var(--accent)">詳しく</a>
+        </p>
+      </div>
+    </aside>
+  </div>
+</Portal>

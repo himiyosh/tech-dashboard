@@ -1,0 +1,121 @@
+---
+import Portal from "../../../../layouts/Portal.astro";
+import Sidebar from "../../../../components/Sidebar.astro";
+import EntryCard from "../../../../components/EntryCard.astro";
+import CategoryHero from "../../../../components/CategoryHero.astro";
+import TrendChart from "../../../../components/TrendChart.astro";
+import Pager from "../../../../components/Pager.astro";
+import {
+  CATEGORY_META,
+  PAGE_SIZE,
+  entriesFor,
+  groupByDay,
+  jstDayLabel,
+  type Category,
+} from "../../../../lib/data.ts";
+
+export function getStaticPaths() {
+  const out: Array<{
+    params: { slug: string; page: string };
+    props: {
+      category: (typeof CATEGORY_META)[number];
+      page: number;
+      total: number;
+    };
+  }> = [];
+  for (const c of CATEGORY_META) {
+    const all = entriesFor(c.slug);
+    const total = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+    for (let p = 2; p <= total; p++) {
+      out.push({
+        params: { slug: c.slug, page: String(p) },
+        props: { category: c, page: p, total },
+      });
+    }
+  }
+  return out;
+}
+
+interface Props {
+  category: (typeof CATEGORY_META)[number];
+  page: number;
+  total: number;
+}
+
+const { category, page, total } = Astro.props as Props;
+const slug = category.slug as Category;
+const all = entriesFor(slug);
+const start = (page - 1) * PAGE_SIZE;
+const entries = all.slice(start, start + PAGE_SIZE);
+const dayGroups = groupByDay(entries);
+const now = new Date();
+
+const breadcrumb = [
+  { label: "Home", href: "/" },
+  { label: "Categories", href: "/categories" },
+  { label: category.name, href: `/c/${slug}` },
+  { label: `Page ${page}` },
+];
+---
+
+<Portal
+  pageKey="categories"
+  title={`${category.name} · p.${page} — TECH Dashboard`}
+  breadcrumb={breadcrumb}
+>
+  <div class="layout">
+    <Sidebar active={slug} />
+
+    <main>
+      <CategoryHero
+        slug={slug}
+        name={category.name}
+        color={category.color}
+        initial={category.initial}
+        totalCount={all.length}
+      />
+
+      <div
+        class="section-header"
+        style={`border-bottom:2px solid ${category.color}`}
+      >
+        <h2>
+          All articles
+          <span
+            class="count"
+            style={`background:${category.color}22;color:${category.color}`}
+          >
+            page {page}/{total} · {all.length} total
+          </span>
+        </h2>
+        <div class="sort">
+          <span class="active">新着順</span>
+        </div>
+      </div>
+
+      {dayGroups.map(({ key, items }) => (
+        <>
+          <div class="day-header">
+            <span>{jstDayLabel(key, now)}</span>
+            <span class="day-count">{items.length} entries</span>
+          </div>
+          {items.map((entry) => <EntryCard entry={entry} />)}
+        </>
+      ))}
+
+      <Pager currentPage={page} totalPages={total} baseHref={`/c/${slug}`} />
+    </main>
+
+    <aside class="right"></aside>
+  </div>
+</Portal>
+
+<style>
+  .section-header .sort {
+    display: flex; gap: 2px; padding: 2px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 11px;
+  }
+  .section-header .sort span { padding: 3px 10px; border-radius: 4px; color: var(--muted); }
+  .section-header .sort span.active { background: var(--surface-2, var(--surface)); color: var(--text); }
+</style>

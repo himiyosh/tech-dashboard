@@ -1,0 +1,76 @@
+---
+import Portal from "../../layouts/Portal.astro";
+import Sidebar from "../../components/Sidebar.astro";
+import EntryCard from "../../components/EntryCard.astro";
+import Pager from "../../components/Pager.astro";
+import {
+  ALL_ENTRIES,
+  PAGE_SIZE,
+  groupByDay,
+  jstDayLabel,
+} from "../../lib/data.ts";
+
+export function getStaticPaths() {
+  const tags = new Set<string>();
+  for (const e of ALL_ENTRIES) for (const t of e.tags) tags.add(t);
+  return [...tags].map((tag) => ({
+    params: { tag },
+    props: { tag },
+  }));
+}
+
+interface Props {
+  tag: string;
+}
+
+const { tag } = Astro.props as Props;
+const all = ALL_ENTRIES.filter((e) => e.tags.includes(tag));
+const currentPage = 1;
+const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+const entries = all.slice(0, PAGE_SIZE);
+const dayGroups = groupByDay(entries);
+const now = new Date();
+
+const breadcrumb = [
+  { label: "Home", href: "/" },
+  { label: "Tags" },
+  { label: `#${tag}` },
+];
+---
+
+<Portal title={`#${tag} — TECH Dashboard`} breadcrumb={breadcrumb}>
+  <div class="layout">
+    <Sidebar />
+
+    <main>
+      <div class="section-header primary">
+        <h2>
+          #{tag}
+          <span class="count">page {currentPage}/{totalPages} · {all.length} total</span>
+        </h2>
+      </div>
+
+      {entries.length === 0 ? (
+        <p style="color:var(--muted);padding:24px 0">該当するエントリがありません。</p>
+      ) : (
+        dayGroups.map(({ key, items }) => (
+          <>
+            <div class="day-header">
+              <span>{jstDayLabel(key, now)}</span>
+              <span class="day-count">{items.length} entries</span>
+            </div>
+            {items.map((entry) => <EntryCard entry={entry} />)}
+          </>
+        ))
+      )}
+
+      <Pager
+        currentPage={currentPage}
+        totalPages={totalPages}
+        baseHref={`/t/${tag}`}
+      />
+    </main>
+
+    <aside class="right"></aside>
+  </div>
+</Portal>

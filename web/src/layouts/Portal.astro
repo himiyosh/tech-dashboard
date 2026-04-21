@@ -1,0 +1,159 @@
+---
+import "../styles/portal.css";
+
+export interface Props {
+  title?: string;
+  description?: string;
+  pageKey?: "timeline" | "categories" | "sources" | "status" | "about";
+  breadcrumb?: Array<{ label: string; href?: string }>;
+}
+
+const {
+  title = "TECH Dashboard — AI エコシステム Daily",
+  description = "Copilot / Claude / Codex / Local LLM / Research の公式情報を毎日自動収集・要約。",
+  pageKey = "timeline",
+  breadcrumb,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="alternate" type="application/rss+xml" title="TECH Dashboard RSS" href="/rss.xml" />
+    <link rel="alternate" type="application/json" title="TECH Dashboard JSON Feed" href="/feed.json" />
+    <script is:inline>
+      // Pre-paint: apply saved language to avoid flash.
+      (function () {
+        try {
+          var l = localStorage.getItem("td:lang");
+          if (l !== "ja" && l !== "en") l = "ja";
+          document.documentElement.setAttribute("data-lang", l);
+          document.documentElement.setAttribute("lang", l);
+        } catch (_) {
+          document.documentElement.setAttribute("data-lang", "ja");
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <header>
+      <div class="header-inner">
+        <a class="logo" href="/">
+          <span class="logo-mark"></span>
+          <span class="logo-text">TECH <span class="logo-accent">Dashboard</span></span>
+        </a>
+        <nav class="nav">
+          <a href="/" class={pageKey === "timeline" ? "active" : ""}>Timeline</a>
+          <a href="/categories" class={pageKey === "categories" ? "active" : ""}>Categories</a>
+          <a href="/sources" class={pageKey === "sources" ? "active" : ""}>Sources</a>
+          <a href="/status" class={pageKey === "status" ? "active" : ""}>Status</a>
+          <a href="/about" class={pageKey === "about" ? "active" : ""}>About</a>
+        </nav>
+        <div class="search">
+          <span aria-hidden="true">🔍</span>
+          <input
+            type="search"
+            id="pagefind-search-input"
+            placeholder="search updates..."
+            autocomplete="off"
+          />
+          <kbd>/</kbd>
+        </div>
+        <div class="lang-toggle" role="group" aria-label="Language">
+          <button type="button" class="lang-btn" data-lang="ja" aria-pressed="true">JA</button>
+          <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+        </div>
+      </div>
+      {breadcrumb && breadcrumb.length > 0 && (
+        <div class="crumb-bar">
+          <div class="crumb-inner">
+            {breadcrumb.map((b, i) => (
+              <>
+                {b.href ? <a href={b.href}>{b.label}</a> : <span class="current">{b.label}</span>}
+                {i < breadcrumb.length - 1 && <span class="sep">›</span>}
+              </>
+            ))}
+          </div>
+        </div>
+      )}
+    </header>
+
+    <slot />
+
+    <div class="footer-bar">
+      <div class="footer-inner">
+        <span class="item"><span class="dot"></span> <strong>healthy</strong></span>
+        <span class="item">harness <strong>v0.1</strong></span>
+        <span class="item">powered by <strong>Astro</strong> + <strong>Claude Opus</strong></span>
+        <span class="spacer"></span>
+        <span class="item">Cloudflare Pages</span>
+      </div>
+    </div>
+
+    <script>
+      // Language toggle (Ja / En) — sync with <html data-lang="...">.
+      (() => {
+        const apply = (l: "ja" | "en") => {
+          document.documentElement.setAttribute("data-lang", l);
+          document.documentElement.setAttribute("lang", l);
+          try { localStorage.setItem("td:lang", l); } catch {}
+          document.querySelectorAll<HTMLButtonElement>(".lang-btn").forEach((b) => {
+            const on = b.dataset.lang === l;
+            b.setAttribute("aria-pressed", on ? "true" : "false");
+            b.classList.toggle("is-active", on);
+          });
+        };
+        const current =
+          (document.documentElement.getAttribute("data-lang") as "ja" | "en") || "ja";
+        apply(current);
+        document.querySelectorAll<HTMLButtonElement>(".lang-btn").forEach((b) => {
+          b.addEventListener("click", () => {
+            const l = (b.dataset.lang as "ja" | "en") || "ja";
+            apply(l);
+          });
+        });
+      })();
+
+      // Focus search on "/"
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "/" && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
+          e.preventDefault();
+          document.getElementById("pagefind-search-input")?.focus();
+        }
+      });
+
+      // Lazy-load Pagefind and wire to the existing input.
+      (async () => {
+        const input = document.getElementById("pagefind-search-input") as HTMLInputElement | null;
+        if (!input) return;
+        // Pagefind UI-less: navigate to /?q= on submit for simplicity,
+        // heavier integration can swap to in-place results later.
+        input.form?.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const q = input.value.trim();
+          if (q) window.location.href = `/?q=${encodeURIComponent(q)}`;
+        });
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const q = input.value.trim();
+            if (q) window.location.href = `/?q=${encodeURIComponent(q)}`;
+          }
+        });
+
+        // Try to load Pagefind (only available after `astro build && pagefind`)
+        try {
+          const pf = await import(/* @vite-ignore */ "/pagefind/pagefind.js");
+          await pf.init();
+          (window as any).__pagefind = pf;
+        } catch {
+          // Dev/preview — Pagefind index not built yet; search still redirects.
+        }
+      })();
+    </script>
+  </body>
+</html>

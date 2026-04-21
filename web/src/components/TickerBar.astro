@@ -1,0 +1,338 @@
+---
+import { CATEGORY_META, jstDateKey, titleForLang, type NormalizedEntry } from "../lib/data.ts";
+
+export interface Props {
+  entries: readonly NormalizedEntry[];
+  now?: Date;
+  limit?: number;
+  intervalMs?: number;
+}
+
+const { entries, now = new Date(), limit = 24, intervalMs = 7000 } = Astro.props;
+
+const todayKey = jstDateKey(now.toISOString());
+const yKey = jstDateKey(new Date(now.getTime() - 86_400_000).toISOString());
+const today = entries.filter((e) => jstDateKey(e.publishedAt) === todayKey);
+const baseDayKey = today.length > 0 ? todayKey : yKey;
+const baseEntries = entries.filter((e) => jstDateKey(e.publishedAt) === baseDayKey);
+
+const typeWeight = (t: string): number =>
+  t === "release" || t === "changelog" ? 2 : t === "paper" ? 1 : 0;
+
+const items = [...baseEntries]
+  .sort((a, b) => {
+    const imp = (b.importance ?? 1) - (a.importance ?? 1);
+    if (imp !== 0) return imp;
+    const tw = typeWeight(b.sourceType) - typeWeight(a.sourceType);
+    if (tw !== 0) return tw;
+    return (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
+  })
+  .slice(0, limit);
+
+const catColorOf = (slug: string): string =>
+  CATEGORY_META.find((c) => c.slug === slug)?.color ?? "#7cff9a";
+---
+
+{items.length > 0 && (
+  <div class="ticker-bar" data-interval={intervalMs}>
+    <div class="tb-inner">
+      <span class="tb-label">
+        <span class="tb-live-dot" aria-hidden="true"></span>
+        LIVE · {baseDayKey.slice(5).replace("-", "/")}
+      </span>
+      <div class="tb-stage" aria-live="polite">
+        {items.map((e, i) => {
+          const isRel = e.sourceType === "release" || e.sourceType === "changelog";
+          const isImp = e.importance === 3;
+          const ja = titleForLang(e, "ja");
+          const en = titleForLang(e, "en");
+          return (
+            <a
+              href={e.url}
+              target="_blank"
+              rel="noopener"
+              class={`tb-slide${i === 0 ? " is-active" : ""}`}
+              style={`--cat-color:${catColorOf(e.category)}`}
+              data-index={i}
+            >
+              <span class="tb-cat">{e.category}</span>
+              {isImp && <span class="tb-tag imp">★</span>}
+              {isRel && <span class="tb-tag rel">REL</span>}
+              {ja && <span class="tb-title i18n-ja">{ja}</span>}
+              {en ? (
+                <span class="tb-title i18n-en" lang="en">{en}</span>
+              ) : (
+                <span class="tb-title i18n-en tb-muted" lang="en">(no English title)</span>
+              )}
+              <span class="tb-src">[{e.source}]</span>
+            </a>
+          );
+        })}
+      </div>
+      <div class="tb-controls" role="group" aria-label="ticker controls">
+        <button type="button" class="tb-ctrl tb-prev" aria-label="Previous headline">‹</button>
+        <button type="button" class="tb-ctrl tb-pause" aria-label="Pause" data-state="play">
+          <span class="tb-pause-ic">❚❚</span>
+          <span class="tb-play-ic">▶</span>
+        </button>
+        <button type="button" class="tb-ctrl tb-next" aria-label="Next headline">›</button>
+      </div>
+      <div class="tb-counter" aria-hidden="true">
+        <span class="tb-cur">1</span>/<span class="tb-tot">{items.length}</span>
+      </div>
+    </div>
+  </div>
+)}
+
+<style>
+  .ticker-bar {
+    background: #0a0d0a;
+    border-top: 1px solid #1a2a1a;
+    border-bottom: 1px solid #1a2a1a;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    position: relative;
+    overflow: hidden;
+  }
+  .ticker-bar::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 3px 3px;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+  .tb-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+  }
+  .tb-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.14em;
+    color: #ff3b30;
+    text-shadow: 0 0 4px rgba(255, 59, 48, 0.5);
+    flex-shrink: 0;
+    padding-right: 12px;
+    border-right: 1px solid rgba(124,255,154,0.15);
+  }
+  .tb-live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ff3b30;
+    box-shadow: 0 0 6px #ff3b30;
+    animation: tb-blink 1.2s steps(2, end) infinite;
+  }
+  @keyframes tb-blink { 50% { opacity: 0.25; } }
+
+  .tb-stage {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    height: 22px;
+  }
+  .tb-slide {
+    position: absolute; inset: 0;
+    display: inline-flex; align-items: center; gap: 8px;
+    white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(2px);
+    transition: opacity 1.1s cubic-bezier(.2,.7,.2,1), transform 1.1s cubic-bezier(.2,.7,.2,1), filter 1.1s ease;
+    color: #7cff9a;
+    text-decoration: none;
+    text-shadow: 0 0 2px rgba(124,255,154,0.5), 0 0 6px rgba(124,255,154,0.2);
+    font-size: 13.5px;
+    line-height: 1.4;
+    pointer-events: none;
+  }
+  .tb-slide.is-active {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+    pointer-events: auto;
+  }
+  .tb-slide.is-leaving {
+    opacity: 0;
+    transform: translateY(-14px);
+    filter: blur(2px);
+  }
+  .tb-slide:hover { color: #ffffff; }
+
+  .tb-cat {
+    font-size: 9.5px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--cat-color, #7cff9a);
+    text-shadow: 0 0 4px color-mix(in srgb, var(--cat-color, #7cff9a) 60%, transparent);
+    padding: 1px 5px;
+    border: 1px solid color-mix(in srgb, var(--cat-color, #7cff9a) 50%, transparent);
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--cat-color, #7cff9a) 8%, transparent);
+    flex-shrink: 0;
+  }
+  .tb-tag {
+    font-size: 9.5px; font-weight: 700;
+    padding: 1px 4px; border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .tb-tag.rel { color: #000; background: #ffcc00; text-shadow: none; }
+  .tb-tag.imp { color: #000; background: #ff8a2a; text-shadow: none; }
+  .tb-title {
+    font-weight: 700;
+    color: #e8ffe9;
+    text-shadow: 0 0 2px rgba(232,255,233,0.6), 0 0 8px rgba(124,255,154,0.25);
+    overflow: hidden; text-overflow: ellipsis;
+    min-width: 0; flex: 1;
+  }
+  .tb-title.tb-muted {
+    color: #5ab075;
+    opacity: 0.6;
+    font-weight: 400;
+    font-style: italic;
+    text-shadow: none;
+  }
+  .tb-src {
+    font-size: 10.5px;
+    color: #5ab075;
+    opacity: 0.85;
+    flex-shrink: 0;
+  }
+  .tb-counter {
+    font-size: 10.5px;
+    color: #5ab075;
+    opacity: 0.8;
+    flex-shrink: 0;
+    padding-left: 10px;
+    border-left: 1px solid rgba(124,255,154,0.15);
+    min-width: 48px;
+    text-align: right;
+  }
+  .tb-counter .tb-cur { color: #e8ffe9; font-weight: 700; }
+
+  /* Manual controls */
+  .tb-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    padding: 0 4px;
+    border-left: 1px solid rgba(124,255,154,0.15);
+    border-right: 1px solid rgba(124,255,154,0.15);
+    margin: 0 4px;
+  }
+  .tb-ctrl {
+    appearance: none;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #7cff9a;
+    font: 700 13px/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    width: 24px; height: 22px;
+    border-radius: 3px;
+    cursor: pointer;
+    text-shadow: 0 0 4px rgba(124,255,154,0.5);
+    transition: background 0.12s, color 0.12s;
+    padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .tb-ctrl:hover {
+    background: rgba(124,255,154,0.12);
+    color: #e8ffe9;
+  }
+  .tb-pause .tb-pause-ic,
+  .tb-pause .tb-play-ic { display: none; font-size: 10px; }
+  .tb-pause[data-state="play"] .tb-pause-ic { display: inline; }
+  .tb-pause[data-state="pause"] .tb-play-ic { display: inline; }
+
+  /* i18n visibility — local fallback (in case scoping interferes) */
+  :global(html[data-lang="en"]) .tb-title.i18n-ja { display: none !important; }
+  :global(html:not([data-lang="en"])) .tb-title.i18n-en { display: none !important; }
+
+  @media (max-width: 720px) {
+    .tb-src { display: none; }
+    .tb-counter { display: none; }
+  }
+</style>
+
+<script>
+  (() => {
+    const bar = document.querySelector<HTMLElement>(".ticker-bar");
+    if (!bar) return;
+    const slides = Array.from(bar.querySelectorAll<HTMLElement>(".tb-slide"));
+    if (slides.length === 0) return;
+    const counterEl = bar.querySelector<HTMLElement>(".tb-cur");
+    const prevBtn = bar.querySelector<HTMLButtonElement>(".tb-prev");
+    const nextBtn = bar.querySelector<HTMLButtonElement>(".tb-next");
+    const pauseBtn = bar.querySelector<HTMLButtonElement>(".tb-pause");
+    const interval = Number(bar.dataset.interval || 7000);
+    let idx = 0;
+    let timer: number | undefined;
+    let userPaused = false;
+    let hovering = false;
+
+    const show = (next: number) => {
+      const total = slides.length;
+      const target = ((next % total) + total) % total;
+      if (target === idx) return;
+      const prev = idx;
+      slides[prev].classList.remove("is-active");
+      slides[prev].classList.add("is-leaving");
+      window.setTimeout(() => slides[prev].classList.remove("is-leaving"), 1200);
+      slides[target].classList.add("is-active");
+      idx = target;
+      if (counterEl) counterEl.textContent = String(target + 1);
+    };
+
+    const tick = () => {
+      if (userPaused || hovering) return;
+      show(idx + 1);
+    };
+
+    const start = () => {
+      window.clearInterval(timer);
+      timer = window.setInterval(tick, interval);
+    };
+    const stop = () => {
+      window.clearInterval(timer);
+      timer = undefined;
+    };
+
+    bar.addEventListener("mouseenter", () => { hovering = true; });
+    bar.addEventListener("mouseleave", () => { hovering = false; });
+
+    prevBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      show(idx - 1);
+      // Reset cycle so user has full interval to read.
+      if (!userPaused) start();
+    });
+    nextBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      show(idx + 1);
+      if (!userPaused) start();
+    });
+    pauseBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      userPaused = !userPaused;
+      pauseBtn.dataset.state = userPaused ? "pause" : "play";
+      pauseBtn.setAttribute("aria-label", userPaused ? "Play" : "Pause");
+      if (userPaused) stop(); else start();
+    });
+
+    // Keyboard: ←/→ when ticker focused.
+    bar.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") { e.preventDefault(); prevBtn?.click(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); nextBtn?.click(); }
+    });
+
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mql.matches) {
+      // Don't auto-advance; manual nav still works.
+      return;
+    }
+    start();
+  })();
+</script>

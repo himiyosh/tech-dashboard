@@ -1,0 +1,97 @@
+---
+import Portal from "../layouts/Portal.astro";
+import Sidebar from "../components/Sidebar.astro";
+import { ALL_ENTRIES, GENERATED_AT, relativeTime } from "../lib/data.ts";
+import { REGISTRY } from "../../../harness/registry.ts";
+
+const now = new Date();
+const SIX_H = 6 * 3600_000;
+const WARN_H = 42 * 3600_000;
+
+const sources = Object.values(REGISTRY).map((def) => {
+  const fromSource = ALL_ENTRIES.filter((e) => e.source === def.id);
+  const latest = fromSource.reduce(
+    (acc, e) => (e.publishedAt > acc ? e.publishedAt : acc),
+    "1970-01-01T00:00:00Z",
+  );
+  const ageMs = now.getTime() - new Date(latest).getTime();
+  const status =
+    fromSource.length === 0 ? "error" : ageMs > WARN_H ? "stale" : "ok";
+  return {
+    id: def.id,
+    displayName: def.displayName,
+    category: def.category,
+    tier: def.tier,
+    count: fromSource.length,
+    latest,
+    status,
+  };
+});
+
+const ok = sources.filter((s) => s.status === "ok").length;
+const stale = sources.filter((s) => s.status === "stale").length;
+const error = sources.filter((s) => s.status === "error").length;
+---
+
+<Portal pageKey="status" title="Status — TECH Dashboard">
+  <div class="layout">
+    <Sidebar />
+
+    <main>
+      <div class="section-header primary">
+        <h2>
+          Source Health
+          <span class="count">{sources.length} sources</span>
+        </h2>
+      </div>
+
+      <div class="stats" style="padding:0 0 16px">
+        <div class="stat">
+          <span>Healthy</span>
+          <span class="value" style="color:var(--success)">{ok}</span>
+        </div>
+        <div class="stat">
+          <span>Stale</span>
+          <span class="value" style="color:var(--important)">{stale}</span>
+        </div>
+        <div class="stat">
+          <span>Error</span>
+          <span class="value" style="color:var(--danger)">{error}</span>
+        </div>
+        <div class="stat">
+          <span>Index</span>
+          <span class="value" style="font-size:13px">{relativeTime(GENERATED_AT, now)}</span>
+        </div>
+      </div>
+
+      <div class="side-card">
+        {sources.map((s) => {
+          const dotColor = s.status === "ok" ? "var(--success)" : s.status === "stale" ? "var(--important)" : "var(--danger)";
+          return (
+            <div class="source-item">
+              <span class="status" style={`background:${dotColor}`}></span>
+              <span class="name">
+                {s.displayName}
+                <span style="color:var(--muted-2);margin-left:8px;font-size:11px">
+                  tier {s.tier} · {s.category}
+                </span>
+              </span>
+              <span class="time">
+                {s.count} · {s.status === "error" ? "no data" : relativeTime(s.latest, now)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      <p style="color:var(--muted);font-size:12px;margin-top:12px;line-height:1.6">
+        <strong style="color:var(--text-2)">status</strong>:
+        <span style="color:var(--success)">ok</span> = 最新が 42h 以内に収集 ·
+        <span style="color:var(--important)">stale</span> = 42h 以上経過 ·
+        <span style="color:var(--danger)">error</span> = 直近 run でデータなし
+      </p>
+    </main>
+
+    <aside class="right"></aside>
+  </div>
+</Portal>

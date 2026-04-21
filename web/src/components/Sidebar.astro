@@ -1,0 +1,94 @@
+---
+import { CATEGORY_META, countByCategory, sparklineHeights, ALL_ENTRIES, type Category } from "../lib/data.ts";
+
+export interface Props {
+  active?: Category | "all";
+}
+
+const { active = "all" } = Astro.props;
+const counts = countByCategory();
+const total = ALL_ENTRIES.length;
+
+const groupLabels: Record<"coding" | "platform" | "ecosystem" | "research", string> = {
+  coding: "Coding Agents",
+  platform: "Platforms & Runtime",
+  ecosystem: "Ecosystem",
+  research: "Research",
+};
+
+const groupOrder: Array<keyof typeof groupLabels> = ["coding", "platform", "ecosystem", "research"];
+
+function tileClass(slug: Category): string {
+  const map: Record<Category, string> = {
+    copilot: "bt-copilot",
+    claude: "bt-claude",
+    codex: "bt-codex",
+    gemini: "bt-gemini",
+    cursor: "bt-cursor",
+    cline: "bt-cline",
+    aider: "bt-aider",
+    opencode: "bt-opencode",
+    vscode: "bt-vscode",
+    "local-llm": "bt-local",
+    "agent-fw": "bt-agentfw",
+    mcp: "bt-mcp",
+    "tech-news": "bt-technews",
+    research: "bt-research",
+  };
+  return map[slug];
+}
+
+function initial(slug: Category): string {
+  const map: Record<Category, string> = {
+    copilot: "Co",
+    claude: "Cl",
+    codex: "Cx",
+    gemini: "Gm",
+    cursor: "Cu",
+    cline: "Cn",
+    aider: "Ai",
+    opencode: "Oc",
+    vscode: "Vs",
+    "local-llm": "Ll",
+    "agent-fw": "Af",
+    mcp: "Mc",
+    "tech-news": "Tn",
+    research: "Rs",
+  };
+  return map[slug];
+}
+---
+
+<aside class="left">
+  <div class="side-card">
+    <div class="side-title">Categories <span class="sub">{total}</span></div>
+    <a class={`side-item ${active === "all" ? "active" : ""}`} href="/">
+      <span class="brand-tile bt-all">•</span>
+      <span class="name">All</span>
+      <span class="count">{total}</span>
+    </a>
+
+    {groupOrder.map((g) => (
+      <>
+        <div class="side-group-label">{groupLabels[g]}</div>
+        {CATEGORY_META.filter((c) => c.group === g).map((c) => {
+          const heights = sparklineHeights(c.slug);
+          const href = `/c/${c.slug}`;
+          const isActive = active === c.slug;
+          return (
+            <a class={`side-item ${isActive ? "active" : ""}`} href={href}>
+              <span class={`brand-tile ${tileClass(c.slug)}`}>{initial(c.slug)}</span>
+              <span class="name">{c.name}</span>
+              <span class="spark" title="Past 7 days">
+                {heights.map((h) => (
+                  <i style={`height:${Math.max(h, 6)}%`}></i>
+                ))}
+              </span>
+              <span class="count">{counts[c.slug]}</span>
+            </a>
+          );
+        })}
+      </>
+    ))}
+  </div>
+</aside>

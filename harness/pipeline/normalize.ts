@@ -1,0 +1,108 @@
+/**
+ * normalize.ts — deterministic raw→NormalizedEntry conversion (NO LLM).
+ * Pure functions. See docs/04-site-spec.md §1.1 for category rules.
+ */
+import { createHash } from "node:crypto";
+import type {
+  Importance,
+  Lang,
+  NormalizedEntry,
+  RawEntry,
+  SourceDefinition,
+} from "../types.ts";
+
+function sha256Short(input: string): string {
+  return createHash("sha256").update(input).digest("hex").slice(0, 16);
+}
+
+/** Crude but effective: treat entries as Japanese if >10% of chars are CJK. */
+export function detectLang(text: string, defaultLang: Lang): Lang {
+  if (!text) return defaultLang;
+  let cjk = 0;
+  for (const ch of text) {
+    const code = ch.codePointAt(0) ?? 0;
+    if (
+      (code >= 0x3040 && code <= 0x30ff) || // Hiragana+Katakana
+      (code >= 0x4e00 && code <= 0x9fff) || // CJK Unified
+      (code >= 0xff66 && code <= 0xff9f) // Halfwidth Katakana
+    ) {
+      cjk++;
+    }
+  }
+  return cjk / Math.max(text.length, 1) > 0.1 ? "ja" : "en";
+}
+
+/**
+ * Heuristic importance: 3 = major release/changelog, 2 = blog with release keywords, 1 = default.
+ * Real scoring (engagement, cross-source mentions) comes in Phase 2.
+ */
+export function scoreImportance(raw: RawEntry, source: SourceDefinition): Importance {
+  const hay = `${raw.title} ${raw.contentSnippet ?? ""}`.toLowerCase();
+  const majorKeywords = [
+    "announcing",
+    "released",
+    "general availability",
+    " ga ",
+    "v1.",
+    "v2.",
+    "v3.",
+    "major update",
+  ];
+  if (source.sourceType === "release" || source.sourceType === "changelog") {
+    return majorKeywords.some((k) => hay.includes(k)) ? 3 : 2;
+  }
+  if (majorKeywords.some((k) => hay.includes(k))) return 2;
+  return 1;
+}
+
+/**
+ * Phase 1 placeholder summary: strip HTML and truncate contentSnippet.
+ * Phase 2 will replace this with an LLM call (Claude Opus 4.7 per docs/01 §2.3).
+ */
+function placeholderSummary(raw: RawEntry, lang: Lang): { ja: string; en: string } {
+  const base = (raw.contentSnippet ?? raw.title).replace(/\s+/g, " ").trim();
+  const short = base.slice(0, lang === "ja" ? 120 : 200);
+  if (lang === "ja") {
+    return { ja: short, en: raw.title };
+  }
+  return { ja: "", en: short };
+}
+
+export function normalize(
+  raw: RawEntry,
+  source: SourceDefinition,
+  collectedAt: string,
+): NormalizedEntry {
+  const id = sha256Short(`${source.id}::${raw.url}`);
+  const lang = detectLang(`${raw.title} ${raw.contentSnippet ?? ""}`, source.defaultLang);
+  const summary = placeholderSummary(raw, lang);
+  const image = raw.mediaThumbnail
+    ? {
+      src: raw.mediaThumbnail,
+      origSrc: raw.mediaThumbnail,
+      alt: raw.title,
+      width: 0,
+      height: 0,
+      source: "media" as const,
+    }
+    : undefined;
+
+  return {
+    id,
+    source: source.id,
+    sourceType: source.sourceType,
+    url: raw.url,
+    title: raw.title,
+    titleJa: lang === "ja" ? raw.title : "",
+    titleEn: lang === "en" ? raw.title : "",
+    summaryJa: summary.ja,
+    summaryEn: summary.en,
+    lang,
+    publishedAt: raw.publishedAt,
+    collectedAt,
+    tags: [...source.autoTags],
+    category: source.category,
+    importance: scoreImportance(raw, source),
+    ...(image ? { image } : {}),
+  };
+}

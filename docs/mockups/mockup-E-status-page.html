@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>tech-dashboard - /_status</title>
+<style>
+  :root {
+    --bg: #0a0908;
+    --bg-2: #141210;
+    --surface: #1c1917;
+    --surface-2: #252220;
+    --border: #2c2825;
+    --border-strong: #3a3633;
+    --text: #f5f5f4;
+    --text-2: #d6d3d1;
+    --muted: #a8a29e;
+    --muted-2: #78716c;
+    --accent: #5eead4;
+    --accent-2: #2dd4bf;
+    --accent-bg: #134e4a;
+    --accent-bg-2: #0a2e2c;
+    --important: #fbbf24;
+    --danger: #f87171;
+    --success: #4ade80;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background:
+      radial-gradient(ellipse 800px 400px at 20% -10%, rgba(94,234,212,0.06), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font: 14.5px/1.55 ui-sans-serif, system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .mono { font-family: ui-monospace, "SF Mono", "JetBrains Mono", monospace; }
+  a { color: inherit; text-decoration: none; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,9,8,0.85);
+    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .header-inner {
+    max-width: 1280px; margin: 0 auto;
+    padding: 14px 28px;
+    display: flex; align-items: center; gap: 28px;
+  }
+  .logo {
+    font-weight: 700; font-size: 17px; letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .logo-mark {
+    width: 22px; height: 22px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    border-radius: 6px;
+    position: relative;
+  }
+  .logo-mark::after {
+    content: ""; position: absolute; inset: 4px;
+    background: var(--bg); border-radius: 3px;
+  }
+  .logo-mark::before {
+    content: ""; position: absolute; left: 8px; right: 8px; top: 8px; bottom: 8px;
+    background: var(--accent);
+    border-radius: 2px;
+    z-index: 1;
+  }
+  .logo .dot { color: var(--accent); }
+  .nav { display: flex; gap: 4px; font-size: 13px; }
+  .nav a { padding: 6px 12px; border-radius: 6px; color: var(--muted); }
+  .nav a.active { background: var(--surface); color: var(--text); }
+  .nav a:hover { background: var(--surface); color: var(--text); }
+
+  .container {
+    max-width: 1280px; margin: 0 auto;
+    padding: 28px 28px 48px;
+  }
+
+  .page-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .page-head h1 {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.015em;
+  }
+  .page-head .crumb {
+    font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted);
+  }
+  .page-sub {
+    font-size: 13px; color: var(--muted);
+    margin-bottom: 24px;
+  }
+  .page-sub .live {
+    display: inline-flex; align-items: center; gap: 5px; color: var(--success);
+  }
+  .page-sub .live::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 50% { opacity: 0.4; } }
+
+  /* GLOBAL HEALTH BANNER */
+  .health-banner {
+    background:
+      linear-gradient(180deg, rgba(74,222,128,0.08) 0%, transparent 80%),
+      var(--surface);
+    border: 1px solid rgba(74,222,128,0.3);
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .health-banner .bb {
+    width: 48px; height: 48px; border-radius: 10px;
+    background: rgba(74,222,128,0.12);
+    color: var(--success);
+    display: grid; place-items: center;
+    font-size: 24px;
+  }
+  .health-banner .bt { flex: 1; }
+  .health-banner .bt h3 { font-size: 15px; font-weight: 600; }
+  .health-banner .bt p { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .health-banner .bx { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted-2); text-align: right; }
+  .health-banner .bx strong { color: var(--text); }
+
+  /* KPI ROW */
+  .kpis {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    margin-bottom: 24px;
+  }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; position: relative; overflow: hidden;
+    display: grid; grid-template-columns: 1fr auto; column-gap: 12px;
+  }
+  .kpi::after { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); }
+  .kpi.warn::after { background: var(--important); }
+  .kpi .l { font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); font-weight:600; grid-column:1; }
+  .kpi .v { font-size: 22px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; grid-column:1; }
+  .kpi .d { font-size: 11px; color: var(--muted-2); margin-top: 2px; font-family: ui-monospace, monospace; grid-column:1; }
+  .kpi .d.ok { color: var(--success); }
+  .kpi .icon {
+    grid-column: 2; grid-row: 1 / span 3; align-self: center;
+    width: 38px; height: 38px; border-radius: 9px;
+    display: grid; place-items: center;
+    color: var(--accent); background: rgba(94,234,212,0.12);
+  }
+  .kpi.warn .icon { color: var(--important); background: rgba(251,191,36,0.14); }
+  .kpi .icon svg { width: 19px; height: 19px; stroke-width: 2; }
+  .tip {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: var(--border); color: var(--muted-2);
+    font-size: 9px; font-weight: 700; margin-left: 4px; letter-spacing: 0;
+    cursor: help;
+  }
+
+  /* SECTION */
+  section { margin-bottom: 32px; }
+  .section-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header h2 {
+    font-size: 14px; font-weight: 700; letter-spacing: -0.005em;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-header h2 .count {
+    font-size: 11px; color: var(--muted); font-weight: 500; font-family: ui-monospace, monospace;
+  }
+  .section-header .hint { font-size: 11px; color: var(--muted-2); }
+
+  /* SOURCES TABLE */
+  .table {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden;
+  }
+  .row {
+    display: grid; grid-template-columns: 20px 1fr 80px 140px 90px 80px 60px;
+    gap: 14px;
+    padding: 10px 16px;
+    align-items: center;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+  .row:last-child { border-bottom: none; }
+  .row.head {
+    background: var(--bg-2);
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); font-weight: 600;
+  }
+  .row .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 6px rgba(74,222,128,0.5);
+  }
+  .row .status-dot.stale { background: var(--important); box-shadow: 0 0 6px rgba(251,191,36,0.5); }
+  .row .status-dot.error { background: var(--danger); box-shadow: 0 0 6px rgba(248,113,113,0.5); }
+  .row .name { font-weight: 500; }
+  .row .url { font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted-2); display: block; margin-top: 2px; }
+  .row .method { font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted); }
+  .row .time { font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--text-2); }
+  .row .time.warn { color: var(--important); }
+  .row .count-col { font-family: ui-monospace, monospace; font-weight: 600; text-align: right; color: var(--accent); }
+  .row .spark { display: flex; align-items: end; gap: 2px; height: 16px; }
+  .row .spark span { width: 3px; background: var(--accent); opacity: 0.5; border-radius: 1px; }
+
+  /* TWO-COL */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+  /* CHART */
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px;
+  }
+  .chart-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .chart-card .sub { font-size: 11px; color: var(--muted-2); margin-bottom: 14px; font-family: ui-monospace, monospace; }
+  .bars { display: flex; align-items: end; gap: 4px; height: 140px; padding-top: 8px; border-bottom: 1px solid var(--border); }
+  .bar {
+    flex: 1; background: var(--accent); opacity: 0.8; border-radius: 2px 2px 0 0;
+    position: relative;
+  }
+  .bar.fail { background: var(--danger); }
+  .bar-labels { display: flex; justify-content: space-between; font-family: ui-monospace, monospace; font-size: 10px; color: var(--muted-2); margin-top: 6px; }
+
+  .cost-chart { display: flex; align-items: end; gap: 3px; height: 140px; padding-top: 8px; border-bottom: 1px solid var(--border); }
+  .cost-chart .c { flex: 1; background: var(--important); opacity: 0.7; border-radius: 2px 2px 0 0; }
+
+  /* RUN LOG */
+  .runs {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden;
+    font-family: ui-monospace, monospace; font-size: 12px;
+  }
+  .run {
+    display: grid; grid-template-columns: 16px 160px 70px 90px 1fr 60px;
+    gap: 14px;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .run:last-child { border-bottom: none; }
+  .run .s { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+  .run .s.fail { background: var(--danger); }
+  .run .ts { color: var(--text-2); }
+  .run .id { color: var(--muted-2); }
+  .run .dur { color: var(--muted); }
+  .run .msg { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .run .cost { color: var(--important); text-align: right; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-mark"></div>
+      tech<span class="dot">·</span>dashboard
+    </div>
+    <nav class="nav">
+      <a href="#">Timeline</a>
+      <a href="#">Categories</a>
+      <a href="#">Sources</a>
+      <a href="#" class="active">Status</a>
+      <a href="#">About</a>
+    </nav>
+    <div style="margin-left:auto; font-size:12px; color:var(--muted); font-family:ui-monospace,monospace;">
+      build 3a1f · v0.4.2
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="page-head">
+    <h1>Harness Status</h1>
+    <div class="crumb">/_status</div>
+  </div>
+  <div class="page-sub">
+    <span class="live">Healthy</span> ・ 最終ハーネス実行 2 分前 ・ 次回実行まで 3h 58m ・ 過去 30 日成功率 99.2%
+  </div>
+
+  <!-- GLOBAL HEALTH -->
+  <div class="health-banner">
+    <div class="bb">✓</div>
+    <div class="bt">
+      <h3>All systems operational</h3>
+      <p>10 / 10 ソースが正常に稼働中。過去 24h で 14 件の新規エントリを収集、LLM 呼出 87 回、エラー 0 件。</p>
+    </div>
+    <div class="bx">
+      Run #<strong>1,847</strong><br>
+      <span style="font-size:10.5px;">2026-04-19 14:03 UTC</span>
+    </div>
+  </div>
+
+  <!-- KPI ROW -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="l">Success rate (30d)</div>
+      <div class="v">99.2%</div>
+      <div class="d ok">118 / 119 runs</div>
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="l">Avg duration</div>
+      <div class="v">47s</div>
+      <div class="d">p95: 82s</div>
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="l">LLM calls (MTD) <span class="tip" title="MTD = Month-To-Date (月初から現在まで)。記事要約・タグ付けに使った LLM API 呼出回数の累計。">i</span></div>
+      <div class="v">2,431</div>
+      <div class="d">Claude Opus 4.7 · 1M</div>
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><rect x="9" y="9" width="6" height="6" fill="currentColor" stroke="none"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="15" x2="23" y2="15"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="15" x2="4" y2="15"/></svg>
+      </div>
+    </div>
+    <div class="kpi warn">
+      <div class="l">月間コスト (MTD) <span class="tip" title="Month-To-Date:月初から現在までの LLM API 累計課金。毎月 1 日に 0 にリセット。Budget を超えそうならアラート。">i</span></div>
+      <div class="v">$12.34</div>
+      <div class="d">Budget $20 · 62%</div>
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOURCES TABLE -->
+  <section>
+    <div class="section-header">
+      <h2>Sources <span class="count">10 sources · last 7d</span></h2>
+      <div class="hint">click a row to view entries from that source</div>
+    </div>
+    <div class="table">
+      <div class="row head">
+        <div></div>
+        <div>Source</div>
+        <div>Method</div>
+        <div>Last check</div>
+        <div>7d entries</div>
+        <div>Activity</div>
+        <div></div>
+      </div>
+      <div class="row">
+        <div class="status-dot"></div>
+        <div><div class="name">Anthropic News</div><div class="url">anthropic.com/news</div></div>
+        <div class="method">RSS</div>
+        <div class="time">2h ago</div>
+        <div class="count-col">12</div>
+        <div class="spark">
+          <span style="height:40%"></span><span style="height:60%"></span><span style="height:30%"></span>
+          <span style="height:80%"></span><span style="height:95%"></span><span style="height:70%"></span><span style="height:100%"></span>
+        </div>
+        <div style="color:var(--muted); font-size:11px;">→</div>
+      </div>
+      <div class="row">
+        <div class="status-dot"></div>
+        <div><div class="name">Anthropic Engineering</div><div class="url">anthropic.com/engineering</div></div>
+        <div class="method">RSS</div>
+        <div class="time">6h ago</div>
+        <div class="count-col">4</div>
+        <div class="spark">
+          <span style="height:20%"></span><span style="height:30%"></span><span style="height:25%"></span>
+          <span style="height:50%"></span><span style="height:40%"></span><span style="height:65%"></span><span style="height:55%"></span>
+        </div>
+        <div style="color:var(--muted); font-size:11px;">→</div>
+      </div>
+      <div class="row">
+        <div class="status-dot"></div>
+        <div><div class="name">GitHub Changelog (Copilot)</div><div class="url">github.blog/changelog</div></div>
+        <div class="method">RSS</div>
+        <div class="time">9h ago</div>
+        <div class="count-col">18</div>
+        <div class="spark">
+          <span style="height:50%"></span><span style="height:70%"></span><span style="height:55%"></span>
+          <span style="height:85%"></span><span style="height:90%"></span><span style="height:75%"></span><span style="height:95%"></span>
+        </div>
+        <div style="color:var(--muted); font-size:11px;">→</div>
+      </div>
+      <div class="row">
+        <div class="status-dot"></div>
+        <div><div class="name">OpenAI Blog</div><div class="url">openai.com/blog</div></div>
+        <div class="method">RSS</div>
+        <div class="time">1d ago</div>
+        <div class="count-col">9</div>
+        <div class="spark">
+          <span style="height:30%"></span><span style="height:45%"></span><span style="height:60%"></span>
+          <span style="height:40%"></span><span style="height:70%"></span><span style="height:85%"></span><span style="height:65%"></span>
+        </div>
+        <div style="color:var(--muted); font-size:11px;">→</div>
+      </div>
+      <div class="row">
+        <div class="status-dot"></div>
+        <div><div class="name">Ollama Releases</div><div class="url">github.com/ollama/ollama/releases</div></div>
+        <div class="method">GH API</div>
+        <div class="time">7h ago</div>
+        <div class="count-col">6</div>
+        <div class="spark">
+          <span style="height:25%"></span><span style="height:40%"></span><span style="height:30%"></span>
+          <span style="height:60%"></span><span style="height:80%"></span><span style="height:55%"></span><span style="height:75%"></span>
+        </div>
+        <div style="color:var(--muted); font-size:11px;">→</div>
+      </div>
+      <div class="row">
+        <div class="status-dot"></div>
+        <div><div class="name">LM Studio Blog</div><div class="url">lmstudio.ai/blog</div></div>
+        <div class="method">RSS</div>
+        <div class="time">2d ago</div>
+        <div class="count-col">3</div>
+        <div class="spark">
+          <span style="height:15%"></span><span style="height:25%"></span><span style="height:30%"></span>
+          <span style="height:20%"></span><span style="height:35%"></span><span style="height:40%"></span><span style="height:30%"></span>
+        </div>
+        <div style="color:var(--muted); font-size:11px;">→</div>
+      </div>
+      <div class="row">
+        <div class="status-dot"></div>
+        <div><div class="name">Hugging Face Blog</div><div class="url">huggingface.co/blog</div></div>
+        <div class="method">RSS</div>
+        <div class="time">4h ago</div>
+        <div class="count-col">14</div>
+        <div class="spark">
+          <span style="height:40%"></span><span style="height:55%"></span><span style="height:70%"></span>
+          <span style="height:60%"></span><span style="height:85%"></span><span style="height:95%"></span><span style="height:80%"></span>
+        </div>
+        <div style="color:var(--muted); font-size:11px;">→</div>
+      </div>
+      <div class="row">
+        <div class="status-dot"></div>
+        <div><div class="name">OpenCode Releases</div><div class="url">github.com/opencode/opencode/releases</div></div>
+        <div class="method">GH API</div>
+        <div class="time">1d ago</div>
+        <div class="count-col">3</div>
+        <div class="spark">
+          <span style="height:15%"></span><span style="height:20%"></span><span style="height:30%"></span>
+          <span style="height:25%"></span><span style="height:35%"></span><span style="height:45%"></span><span style="height:40%"></span>
+        </div>
+        <div style="color:var(--muted); font-size:11px;">→</div>
+      </div>
+      <div class="row">
+        <div class="status-dot"></div>
+        <div><div class="name">arXiv cs.CL (LLM)</div><div class="url">arxiv.org/list/cs.CL</div></div>
+        <div class="method">arXiv API</div>
+        <div class="time">22h ago</div>
+        <div class="count-col">25</div>
+        <div class="spark">
+          <span style="height:50%"></span><span style="height:60%"></span><span style="height:70%"></span>
+          <span style="height:65%"></span><span style="height:85%"></span><span style="height:75%"></span><span style="height:90%"></span>
+        </div>
+        <div style="color:var(--muted); font-size:11px;">→</div>
+      </div>
+      <div class="row">
+        <div class="status-dot stale"></div>
+        <div><div class="name">VS Code Release Notes</div><div class="url">code.visualstudio.com/updates</div></div>
+        <div class="method">RSS</div>
+        <div class="time warn">3d ago</div>
+        <div class="count-col">0</div>
+        <div class="spark">
+          <span style="height:10%; opacity:0.3"></span><span style="height:10%; opacity:0.3"></span><span style="height:10%; opacity:0.3"></span>
+          <span style="height:10%; opacity:0.3"></span><span style="height:10%; opacity:0.3"></span><span style="height:10%; opacity:0.3"></span><span style="height:10%; opacity:0.3"></span>
+        </div>
+        <div style="color:var(--muted); font-size:11px;">→</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHARTS -->
+  <section>
+    <div class="two-col">
+      <div class="chart-card">
+        <h3>Entries collected per day (30d)</h3>
+        <div class="sub">avg 14.2 / day · peak 31 on 2026-04-12</div>
+        <div class="bars">
+          <div class="bar" style="height:40%"></div><div class="bar" style="height:55%"></div>
+          <div class="bar" style="height:30%"></div><div class="bar" style="height:70%"></div>
+          <div class="bar" style="height:50%"></div><div class="bar" style="height:60%"></div>
+          <div class="bar" style="height:45%"></div><div class="bar" style="height:65%"></div>
+          <div class="bar" style="height:85%"></div><div class="bar" style="height:75%"></div>
+          <div class="bar" style="height:40%"></div><div class="bar" style="height:55%"></div>
+          <div class="bar" style="height:100%"></div><div class="bar" style="height:68%"></div>
+          <div class="bar" style="height:45%"></div><div class="bar" style="height:60%"></div>
+          <div class="bar" style="height:72%"></div><div class="bar fail" style="height:15%"></div>
+          <div class="bar" style="height:55%"></div><div class="bar" style="height:80%"></div>
+          <div class="bar" style="height:62%"></div><div class="bar" style="height:48%"></div>
+          <div class="bar" style="height:70%"></div><div class="bar" style="height:55%"></div>
+          <div class="bar" style="height:85%"></div><div class="bar" style="height:90%"></div>
+          <div class="bar" style="height:58%"></div><div class="bar" style="height:72%"></div>
+          <div class="bar" style="height:65%"></div><div class="bar" style="height:55%"></div>
+        </div>
+        <div class="bar-labels">
+          <span>30d ago</span>
+          <span>15d</span>
+          <span>today</span>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>LLM cost per day (30d)</h3>
+        <div class="sub">total $12.34 · avg $0.41 / day · mostly Claude Opus 4.7</div>
+        <div class="cost-chart">
+          <div class="c" style="height:35%"></div><div class="c" style="height:50%"></div>
+          <div class="c" style="height:25%"></div><div class="c" style="height:60%"></div>
+          <div class="c" style="height:45%"></div><div class="c" style="height:55%"></div>
+          <div class="c" style="height:40%"></div><div class="c" style="height:58%"></div>
+          <div class="c" style="height:75%"></div><div class="c" style="height:68%"></div>
+          <div class="c" style="height:38%"></div><div class="c" style="height:50%"></div>
+          <div class="c" style="height:90%"></div><div class="c" style="height:60%"></div>
+          <div class="c" style="height:42%"></div><div class="c" style="height:55%"></div>
+          <div class="c" style="height:65%"></div><div class="c" style="height:15%"></div>
+          <div class="c" style="height:50%"></div><div class="c" style="height:72%"></div>
+          <div class="c" style="height:55%"></div><div class="c" style="height:45%"></div>
+          <div class="c" style="height:62%"></div><div class="c" style="height:50%"></div>
+          <div class="c" style="height:78%"></div><div class="c" style="height:82%"></div>
+          <div class="c" style="height:52%"></div><div class="c" style="height:65%"></div>
+          <div class="c" style="height:60%"></div><div class="c" style="height:50%"></div>
+        </div>
+        <div class="bar-labels">
+          <span>30d ago</span>
+          <span>15d</span>
+          <span>today</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RUN LOG -->
+  <section>
+    <div class="section-header">
+      <h2>Recent runs <span class="count">last 10</span></h2>
+      <div class="hint">all timestamps in UTC</div>
+    </div>
+    <div class="runs">
+      <div class="run"><div class="s"></div><div class="ts">2026-04-19 14:03</div><div class="id">#1847</div><div class="dur">46s</div><div class="msg">OK · 14 new · 87 LLM calls</div><div class="cost">$0.42</div></div>
+      <div class="run"><div class="s"></div><div class="ts">2026-04-19 08:02</div><div class="id">#1846</div><div class="dur">51s</div><div class="msg">OK · 8 new · 52 LLM calls</div><div class="cost">$0.28</div></div>
+      <div class="run"><div class="s"></div><div class="ts">2026-04-19 02:00</div><div class="id">#1845</div><div class="dur">39s</div><div class="msg">OK · 3 new · 21 LLM calls</div><div class="cost">$0.11</div></div>
+      <div class="run"><div class="s"></div><div class="ts">2026-04-18 20:01</div><div class="id">#1844</div><div class="dur">44s</div><div class="msg">OK · 11 new · 68 LLM calls</div><div class="cost">$0.35</div></div>
+      <div class="run"><div class="s"></div><div class="ts">2026-04-18 14:02</div><div class="id">#1843</div><div class="dur">48s</div><div class="msg">OK · 16 new · 92 LLM calls</div><div class="cost">$0.48</div></div>
+      <div class="run"><div class="s"></div><div class="ts">2026-04-18 08:00</div><div class="id">#1842</div><div class="dur">42s</div><div class="msg">OK · 5 new · 34 LLM calls</div><div class="cost">$0.17</div></div>
+      <div class="run"><div class="s fail"></div><div class="ts">2026-04-18 02:00</div><div class="id">#1841</div><div class="dur">12s</div><div class="msg" style="color:var(--danger);">FAIL · vscode-release timeout (retry succeeded in #1841b)</div><div class="cost">$0.00</div></div>
+      <div class="run"><div class="s"></div><div class="ts">2026-04-17 20:00</div><div class="id">#1840</div><div class="dur">50s</div><div class="msg">OK · 9 new · 54 LLM calls</div><div class="cost">$0.29</div></div>
+      <div class="run"><div class="s"></div><div class="ts">2026-04-17 14:01</div><div class="id">#1839</div><div class="dur">47s</div><div class="msg">OK · 12 new · 74 LLM calls</div><div class="cost">$0.38</div></div>
+      <div class="run"><div class="s"></div><div class="ts">2026-04-17 08:02</div><div class="id">#1838</div><div class="dur">45s</div><div class="msg">OK · 7 new · 42 LLM calls</div><div class="cost">$0.22</div></div>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

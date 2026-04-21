@@ -1,0 +1,26 @@
+{
+  "name": "tech-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Daily AI tech dashboard — 13 categories × 30 sources, self-updating",
+  "type": "module",
+  "scripts": {
+    "collect": "tsx --env-file-if-exists=.env.local harness/orchestrator.ts",
+    "collect:dry": "tsx --env-file-if-exists=.env.local harness/orchestrator.ts --dry-run",
+    "auth:setup": "bash scripts/setup-copilot-auth.sh",
+    "auth:rotate": "bash scripts/setup-copilot-auth.sh --rotate",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

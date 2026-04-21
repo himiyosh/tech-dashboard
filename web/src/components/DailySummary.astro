@@ -1,0 +1,544 @@
+---
+import {
+  CATEGORY_META,
+  jstDateKey,
+  summaryForLang,
+  titleForLang,
+  type NormalizedEntry,
+} from "../lib/data.ts";
+
+export interface Props {
+  entries: readonly NormalizedEntry[];
+  now?: Date;
+}
+
+const { entries, now = new Date() } = Astro.props;
+
+// Last 7 days window (JST).
+const days: string[] = [];
+for (let i = 6; i >= 0; i--) {
+  const d = new Date(now.getTime() - i * 86_400_000);
+  days.push(jstDateKey(d.toISOString()));
+}
+const todayKey = days[days.length - 1];
+const yKey = days[days.length - 2];
+
+// Per-day totals for sparkline.
+const perDay = days.map((k) => ({
+  key: k,
+  count: entries.filter((e) => jstDateKey(e.publishedAt) === k).length,
+}));
+const maxDay = Math.max(1, ...perDay.map((d) => d.count));
+
+// Today's / yesterday's entries.
+const today = entries.filter((e) => jstDateKey(e.publishedAt) === todayKey);
+const yesterday = entries.filter((e) => jstDateKey(e.publishedAt) === yKey);
+
+// Per-category totals across the 7 days.
+const weekKeys = new Set(days);
+const weekEntries = entries.filter((e) =>
+  weekKeys.has(jstDateKey(e.publishedAt)),
+);
+const catCounts = new Map<string, number>();
+for (const e of weekEntries) {
+  catCounts.set(e.category, (catCounts.get(e.category) ?? 0) + 1);
+}
+const catRows = CATEGORY_META
+  .filter((c) => catCounts.has(c.slug))
+  .map((c) => ({ ...c, n: catCounts.get(c.slug) ?? 0 }))
+  .sort((a, b) => b.n - a.n)
+  .slice(0, 8);
+
+// "Today" base = latest day that actually has entries (falls back 1 day if today is empty).
+const baseDayKey =
+  today.length > 0 ? todayKey : yesterday.length > 0 ? yKey : todayKey;
+const baseDayEntries = entries.filter((e) => jstDateKey(e.publishedAt) === baseDayKey);
+
+// 主要な更新内容: importance desc → release/changelog 優先 → publishedAt desc で上位 12 件
+const typeWeight = (t: string): number =>
+  t === "release" || t === "changelog" ? 2 : t === "paper" ? 1 : 0;
+const topUpdates = [...baseDayEntries]
+  .sort((a, b) => {
+    const imp = (b.importance ?? 1) - (a.importance ?? 1);
+    if (imp !== 0) return imp;
+    const tw = typeWeight(b.sourceType) - typeWeight(a.sourceType);
+    if (tw !== 0) return tw;
+    return (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
+  })
+  .slice(0, 10);
+
+const boardItems = topUpdates;
+
+const catColorOf = (slug: string): string =>
+  CATEGORY_META.find((c) => c.slug === slug)?.color ?? "#8a847e";
+
+const todayDelta =
+  yesterday.length === 0 ? 0 : Math.round(((today.length - yesterday.length) / yesterday.length) * 100);
+---
+
+<section class="digest">
+  <div class="digest-head">
+    <div class="title">
+      <span class="eyebrow">Daily Summary</span>
+      <h2 class="i18n-ja">今日の更新</h2>
+      <h2 class="i18n-en" lang="en">Today's Updates</h2>
+    </div>
+    <div class="kpis">
+      <div class="kpi">
+        <span class="k">Today</span>
+        <span class="v">{today.length}</span>
+        {yesterday.length > 0 && (
+          <span class="d" data-trend={todayDelta > 0 ? "up" : todayDelta < 0 ? "down" : "flat"}>
+            {todayDelta > 0 ? "▲" : todayDelta < 0 ? "▼" : "—"} {Math.abs(todayDelta)}%
+          </span>
+        )}
+      </div>
+      <div class="kpi">
+        <span class="k">Yesterday</span>
+        <span class="v">{yesterday.length}</span>
+      </div>
+      <div class="kpi">
+        <span class="k">7-day</span>
+        <span class="v">{weekEntries.length}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="digest-body">
+    <div class="panel spark">
+      <div class="panel-title">Last 7 days</div>
+      <div class="bars">
+        {perDay.map((d) => (
+          <div class="bar" title={`${d.key}: ${d.count}`}>
+            <div class="fill" style={`height:${Math.round((d.count / maxDay) * 100)}%`}></div>
+            <span class="n">{d.count}</span>
+          </div>
+        ))}
+      </div>
+      <div class="axis">
+        {perDay.map((d, i) => (
+          <span class:list={[{ today: i === perDay.length - 1 }]}>
+            {d.key.slice(5).replace("-", "/")}
+          </span>
+        ))}
+      </div>
+    </div>
+
+    <div class="panel cats">
+      <div class="panel-title">Top categories · 7d</div>
+      <ul class="cat-list">
+        {catRows.map((c) => (
+          <li>
+            <a class="cat-link" href={`/c/${c.slug}`} style={`--cat-color:${c.color}`}>
+              <span class="dot"></span>
+              <span class="name">{c.name}</span>
+              <span class="bar-wrap">
+                <span
+                  class="bar-fill"
+                  style={`width:${Math.round((c.n / (catRows[0]?.n ?? 1)) * 100)}%`}
+                ></span>
+              </span>
+              <span class="n">{c.n}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <div class="panel updates ticker-panel">
+      <div class="panel-title">
+        <span class="i18n-ja">主要な更新</span>
+        <span class="i18n-en" lang="en">Top stories</span>
+        <span class="panel-sub">{baseDayKey.slice(5).replace("-", "/")} · {boardItems.length} 件</span>
+      </div>
+      {boardItems.length === 0 ? (
+        <p class="empty"><span class="i18n-ja">まだ更新がありません。</span><span class="i18n-en" lang="en">No updates yet.</span></p>
+      ) : (
+        <ol class="board">
+          {boardItems.map((e, i) => {
+            const isRel = e.sourceType === "release" || e.sourceType === "changelog";
+            const isImp = e.importance === 3;
+            const ja = titleForLang(e, "ja");
+            const en = titleForLang(e, "en");
+            const summaryJa = summaryForLang(e, "ja");
+            const summaryEn = summaryForLang(e, "en");
+            const num = String(i + 1).padStart(2, "0");
+            return (
+              <li style={`--cat-color:${catColorOf(e.category)}`}>
+                <a href={e.url} target="_blank" rel="noopener" class="b-row">
+                  <span class="b-num">{num}</span>
+                  <span class="b-cat">{e.category}</span>
+                  <span class="b-tags">
+                    {isImp && <span class="t-tag imp">★</span>}
+                    {isRel && <span class="t-tag rel">REL</span>}
+                  </span>
+                  {ja && <span class="b-title i18n-ja">{ja}</span>}
+                  {en && <span class="b-title i18n-en" lang="en">{en}</span>}
+                  {!en && <span class="b-title i18n-en b-muted" lang="en">(no English title)</span>}
+                  {summaryJa && <span class="b-summary i18n-ja">{summaryJa}</span>}
+                  {summaryEn && <span class="b-summary i18n-en" lang="en">{summaryEn}</span>}
+                  <span class="b-src">[{e.source}]</span>
+                </a>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </div>
+  </div>
+</section>
+
+<style>
+  .digest {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(94,234,212,0.04), transparent 40%), var(--surface);
+    padding: 18px 22px 20px;
+    margin-bottom: 22px;
+    overflow: hidden;
+    min-width: 0;
+  }
+  .digest-head {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 16px;
+  }
+  .title .eyebrow {
+    font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700; display: block; margin-bottom: 4px;
+  }
+  .title h2 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+  .kpis { display: flex; gap: 22px; }
+  .kpi { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+  .kpi .k { font-size: 10.5px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .kpi .v { font-size: 22px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; line-height: 1; }
+  .kpi .d { font-size: 11px; font-family: ui-monospace, monospace; }
+  .kpi .d[data-trend="up"] { color: var(--success); }
+  .kpi .d[data-trend="down"] { color: var(--danger); }
+  .kpi .d[data-trend="flat"] { color: var(--muted); }
+
+  .digest-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    min-width: 0;
+  }
+  .digest-body .updates {
+    grid-column: 1 / -1;
+  }
+  @media (max-width: 720px) {
+    .digest-body { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    min-width: 0;
+  }
+  .panel-title {
+    font-size: 10.5px; color: var(--muted); letter-spacing: 0.08em;
+    text-transform: uppercase; font-weight: 600; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  }
+  .panel-title .panel-sub {
+    font-size: 10px; color: var(--muted-2);
+    font-family: ui-monospace, monospace;
+    text-transform: none; letter-spacing: 0;
+  }
+
+  .spark .bars {
+    display: flex; align-items: flex-end; gap: 4px; height: 72px;
+    margin-top: 12px;
+  }
+  .spark .bar {
+    flex: 1; height: 100%; position: relative;
+    display: flex; flex-direction: column-reverse;
+    align-items: center;
+  }
+  .spark .fill {
+    width: 100%;
+    background: linear-gradient(180deg, var(--accent), var(--accent-2));
+    border-radius: 3px 3px 0 0;
+    min-height: 2px;
+    transition: height 0.2s;
+  }
+  .spark .bar:last-child .fill {
+    background: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-bg);
+  }
+  .spark .n {
+    position: absolute; top: -14px;
+    font-size: 9.5px; color: var(--muted-2);
+    font-family: ui-monospace, monospace;
+  }
+  .spark .axis {
+    display: flex; justify-content: space-between;
+    margin-top: 6px; font-size: 9.5px; color: var(--muted-2);
+    font-family: ui-monospace, monospace;
+  }
+  .spark .axis .today { color: var(--accent); font-weight: 700; }
+
+  .cat-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .cat-link {
+    display: grid;
+    grid-template-columns: 8px minmax(0, 1fr) minmax(32px, 56px) 28px;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+    border-radius: 5px;
+    color: var(--text-2);
+    text-decoration: none;
+    font-size: 12px;
+    transition: background 0.12s;
+    min-width: 0;
+  }
+  .cat-link:hover { background: var(--surface); }
+  .cat-link .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cat-color, var(--muted)); }
+  .cat-link .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cat-link .bar-wrap {
+    height: 4px; border-radius: 2px; background: var(--bg);
+    overflow: hidden; width: 100%;
+  }
+  .cat-link .bar-fill {
+    display: block; height: 100%;
+    background: var(--cat-color, var(--accent));
+    opacity: 0.75;
+    min-width: 2px;
+  }
+  .cat-link .n {
+    text-align: right; font-variant-numeric: tabular-nums;
+    color: var(--cat-color, var(--text));
+    font-family: ui-monospace, monospace; font-size: 11px; font-weight: 700;
+  }
+
+  .updates .empty { color: var(--muted); font-size: 12px; }
+
+  .board-wrap {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+
+  /* Static LED board (top 10) */
+  .board {
+    list-style: none;
+    margin: 0; padding: 8px 0;
+    background: #0a0d0a;
+    border: 1px solid #1a2a1a;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    counter-reset: board;
+  }
+  .board::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 3px 3px;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+  .board > li {
+    border-bottom: 1px dashed rgba(124, 255, 154, 0.08);
+  }
+  .board > li:last-child { border-bottom: none; }
+  .board .b-row {
+    display: grid;
+    grid-template-columns: auto auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "num cat tags title src"
+      "num cat tags summary summary";
+    column-gap: 10px;
+    row-gap: 2px;
+    align-items: center;
+    padding: 8px 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13.5px;
+    line-height: 1.35;
+    color: #7cff9a;
+    text-decoration: none;
+    text-shadow: 0 0 2px rgba(124,255,154,0.5), 0 0 6px rgba(124,255,154,0.2);
+    transition: background 0.12s;
+  }
+  .board .b-row:hover {
+    background: rgba(124, 255, 154, 0.06);
+    color: #ffffff;
+  }
+  .board .b-num {
+    grid-area: num;
+    font-size: 11px; font-weight: 700;
+    color: #ff8a2a;
+    text-shadow: 0 0 4px rgba(255,138,42,0.6);
+    letter-spacing: 0.08em;
+    min-width: 20px;
+  }
+  .board .b-cat {
+    grid-area: cat;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--cat-color, #7cff9a);
+    text-shadow: 0 0 4px color-mix(in srgb, var(--cat-color, #7cff9a) 60%, transparent);
+    padding: 2px 6px;
+    border: 1px solid color-mix(in srgb, var(--cat-color, #7cff9a) 50%, transparent);
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--cat-color, #7cff9a) 8%, transparent);
+    min-width: 78px; text-align: center;
+  }
+  .board .b-tags {
+    grid-area: tags;
+    display: inline-flex; gap: 4px;
+    min-width: 28px;
+  }
+  .board .b-title {
+    grid-area: title;
+    font-weight: 700;
+    color: #e8ffe9;
+    text-shadow: 0 0 2px rgba(232,255,233,0.6), 0 0 8px rgba(124,255,154,0.25);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    min-width: 0;
+  }
+  .board .b-title.b-muted {
+    color: #5ab075;
+    opacity: 0.55;
+    font-weight: 400;
+    font-style: italic;
+    text-shadow: none;
+  }
+  .board .b-src {
+    grid-area: src;
+    font-size: 10.5px;
+    color: #5ab075;
+    opacity: 0.85;
+    white-space: nowrap;
+  }
+  .board .b-summary {
+    grid-area: summary;
+    font-size: 12px;
+    color: #7cff9a;
+    opacity: 0.78;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    min-width: 0;
+  }
+  @media (max-width: 720px) {
+    .board .b-row {
+      grid-template-columns: auto auto minmax(0, 1fr);
+      grid-template-areas:
+        "num cat title"
+        "num cat summary"
+        "num tags src";
+    }
+  }
+
+  /* Electronic-signboard (LED ticker) */
+  .ticker-panel .panel-title .panel-sub::before {
+    content: "● ";
+    color: #ff3b30;
+    animation: blink 1.2s steps(2, end) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0.25; } }
+
+  .ticker {
+    position: relative;
+    overflow: hidden;
+    background: #0a0d0a;
+    border: 1px solid #1a2a1a;
+    border-radius: 6px;
+    padding: 10px 0;
+    /* soft fade on edges */
+    mask-image: linear-gradient(90deg, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%);
+  }
+  .ticker::before {
+    /* scanline / dot-matrix overlay */
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 3px 3px;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+  .ticker-track {
+    display: inline-flex;
+    align-items: center;
+    gap: 48px;
+    white-space: nowrap;
+    animation: ticker-scroll 300s linear infinite;
+    will-change: transform;
+  }
+  .ticker:hover .ticker-track { animation-play-state: paused; }
+  @keyframes ticker-scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track { animation-duration: 1200s; }
+  }
+
+  .t-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 15px;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    color: #7cff9a;
+    text-decoration: none;
+    text-shadow:
+      0 0 2px rgba(124, 255, 154, 0.6),
+      0 0 8px rgba(124, 255, 154, 0.25);
+    padding: 0 4px;
+    transition: color 0.15s;
+  }
+  .t-item:hover { color: #ffffff; text-shadow: 0 0 4px #7cff9a, 0 0 12px rgba(124,255,154,0.6); }
+  .t-cat {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--cat-color, #7cff9a);
+    text-shadow: 0 0 6px color-mix(in srgb, var(--cat-color, #7cff9a) 60%, transparent);
+    padding: 2px 6px;
+    border: 1px solid color-mix(in srgb, var(--cat-color, #7cff9a) 60%, transparent);
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--cat-color, #7cff9a) 10%, transparent);
+  }
+  .t-tag {
+    font-size: 10px; font-weight: 700;
+    padding: 1px 5px; border-radius: 3px;
+  }
+  .t-tag.rel {
+    color: #000; background: #ffcc00;
+    text-shadow: none;
+    box-shadow: 0 0 6px rgba(255, 204, 0, 0.5);
+  }
+  .t-tag.imp {
+    color: #000; background: #ff8a2a;
+    text-shadow: none;
+    box-shadow: 0 0 6px rgba(255, 138, 42, 0.5);
+  }
+  .t-title {
+    font-weight: 700;
+    color: #e8ffe9;
+    text-shadow: 0 0 2px rgba(232,255,233,0.7), 0 0 8px rgba(124,255,154,0.3);
+  }
+  .t-sep { opacity: 0.5; }
+  .t-summary { color: #7cff9a; opacity: 0.92; }
+  .t-src {
+    font-size: 11px;
+    color: #5ab075;
+    opacity: 0.8;
+  }
+  .hi-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+  .hi-list a {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    padding: 5px 6px;
+    border-radius: 5px;
+    color: var(--text-2);
+    text-decoration: none;
+    font-size: 12.5px;
+    transition: background 0.12s, color 0.12s;
+    min-width: 0;
+  }
+  .hi-list a:hover { background: var(--surface); color: var(--text); }
+</style>

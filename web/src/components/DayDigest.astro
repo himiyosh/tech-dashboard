@@ -1,0 +1,168 @@
+---
+import CompactRow from "./CompactRow.astro";
+import EntryCard from "./EntryCard.astro";
+import {
+  jstDayLabel,
+  CATEGORY_META,
+  type NormalizedEntry,
+} from "../lib/data.ts";
+
+export interface Props {
+  dayKey: string;
+  items: NormalizedEntry[];
+  now?: Date;
+  /** If true, show important entries as full cards; others as compact rows. Default: true */
+  highlightImportant?: boolean;
+}
+
+const { dayKey, items, now = new Date(), highlightImportant = true } =
+  Astro.props;
+
+// Break down by category for the day summary bar.
+const byCat = new Map<string, number>();
+for (const e of items) {
+  byCat.set(e.category, (byCat.get(e.category) ?? 0) + 1);
+}
+const catSummary = CATEGORY_META
+  .filter((c) => byCat.has(c.slug))
+  .map((c) => ({ slug: c.slug, name: c.name, color: c.color, n: byCat.get(c.slug) ?? 0 }))
+  .sort((a, b) => b.n - a.n);
+
+const important = highlightImportant
+  ? items.filter((e) => e.importance === 3)
+  : [];
+const rest = highlightImportant
+  ? items.filter((e) => e.importance !== 3)
+  : items;
+
+const label = jstDayLabel(dayKey, now);
+---
+
+<section class="day" id={`day-${dayKey}`}>
+  <div class="day-hd">
+    <div class="day-title">
+      <span class="day-label">{label}</span>
+      <span class="day-key">{dayKey}</span>
+      <span class="day-count">{items.length} entries</span>
+    </div>
+    <div class="day-cats">
+      {catSummary.slice(0, 8).map((c) => (
+        <a class="dcat" href={`/c/${c.slug}`} style={`--cat-color:${c.color}`}>
+          <span class="dcat-dot"></span>
+          <span class="dcat-name">{c.name}</span>
+          <span class="dcat-n">{c.n}</span>
+        </a>
+      ))}
+      {catSummary.length > 8 && (
+        <span class="dcat more">+{catSummary.length - 8}</span>
+      )}
+    </div>
+  </div>
+
+  {important.length > 0 && (
+    <div class="day-important">
+      {important.map((entry) => <EntryCard entry={entry} />)}
+    </div>
+  )}
+
+  {rest.length > 0 && (
+    <div class="day-rows">
+      {rest.map((entry) => <CompactRow entry={entry} />)}
+    </div>
+  )}
+</section>
+
+<style>
+  .day {
+    margin-bottom: 22px;
+  }
+  .day-hd {
+    position: sticky;
+    top: 54px;
+    z-index: 10;
+    background: rgba(28,26,23,0.92);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px;
+    margin: 0 -14px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .day-title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 12px;
+  }
+  .day-label {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .day-key {
+    color: var(--muted-2);
+  }
+  .day-count {
+    color: var(--muted);
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10.5px;
+  }
+  .day-cats {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .dcat {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px 2px 6px;
+    font-size: 10.5px;
+    font-family: ui-monospace, monospace;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.12s, border-color 0.12s;
+  }
+  .dcat:hover {
+    color: var(--text);
+    border-color: var(--cat-color, var(--border-strong));
+  }
+  .dcat-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--cat-color, var(--muted));
+  }
+  .dcat-name { color: var(--text-2); }
+  .dcat-n {
+    color: var(--cat-color, var(--text));
+    font-weight: 700;
+  }
+  .dcat.more {
+    background: transparent; border: none;
+    color: var(--muted-2);
+  }
+  .day-important {
+    margin-bottom: 6px;
+  }
+  .day-rows {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .day-rows :global(.row:last-child) {
+    border-bottom: none;
+  }
+</style>

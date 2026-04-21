@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>tech-dashboard - Portal mockup</title>
+<style>
+  :root {
+    /* Milder warm dark palette (lifted from near-black to soft warm gray) */
+    --bg: #1c1a17;
+    --bg-2: #252220;
+    --surface: #2d2a26;
+    --surface-2: #36322e;
+    --border: #403b36;
+    --border-strong: #524c46;
+    --text: #f5f5f4;
+    --text-2: #e7e5e4;
+    --muted: #b8b2ac;
+    --muted-2: #8a847e;
+    --accent: #5eead4;
+    --accent-2: #2dd4bf;
+    --accent-bg: #1a5f5a;
+    --accent-bg-2: #0f3f3c;
+    --important: #fbbf24;
+    --danger: #f87171;
+    --success: #4ade80;
+    --paper: #93c5fd;
+    --paper-bg: #253449;
+    --tutorial: #fbbf24;
+    --tutorial-bg: #4d2d0a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background:
+      radial-gradient(ellipse 800px 400px at 20% -10%, rgba(94,234,212,0.10), transparent 60%),
+      radial-gradient(ellipse 600px 400px at 90% 10%, rgba(94,234,212,0.05), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font: 14.5px/1.55 ui-sans-serif, system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .mono { font-family: ui-monospace, "SF Mono", "JetBrains Mono", monospace; }
+  a { color: inherit; text-decoration: none; }
+
+  /* ============ SITE BANNER ============ */
+  .banner {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(ellipse 900px 280px at 15% 120%, rgba(94,234,212,0.18), transparent 70%),
+      radial-gradient(ellipse 700px 260px at 85% -20%, rgba(251,191,36,0.09), transparent 70%),
+      linear-gradient(180deg, #0e1513 0%, #0a0f0e 100%);
+  }
+  .banner-bg-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(94,234,212,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(94,234,212,0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+    pointer-events: none;
+  }
+  .banner-inner {
+    max-width: 1440px; margin: 0 auto;
+    padding: 36px 28px 30px;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 32px;
+    align-items: center;
+  }
+  .banner-left h1 {
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 10px;
+    background: linear-gradient(180deg, #ffffff 0%, #a8a29e 120%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .banner-left h1 .brand-accent {
+    background: linear-gradient(90deg, var(--accent) 0%, #fbbf24 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .banner-left .tagline {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.55;
+    max-width: 620px;
+    margin-bottom: 16px;
+  }
+  .banner-left .tagline strong { color: var(--text-2); font-weight: 600; }
+  .banner-cta {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .banner-cta .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 12.5px; font-weight: 600;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text-2);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .banner-cta .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .banner-cta .btn.primary {
+    background: var(--accent);
+    color: #0a0908;
+    border-color: var(--accent);
+  }
+  .banner-cta .btn.primary:hover { background: var(--accent-2); border-color: var(--accent-2); color: #0a0908; }
+  .banner-cta .meta-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--muted); margin-left: 4px;
+  }
+  .banner-cta .meta-pill .d {
+    width: 5px; height: 5px; border-radius: 50%; background: var(--success);
+    box-shadow: 0 0 6px var(--success);
+  }
+
+  .banner-visual {
+    position: relative;
+    height: 180px;
+    display: grid; place-items: center;
+  }
+  .banner-visual svg { width: 100%; height: 100%; max-width: 360px; }
+
+  @media (max-width: 900px) {
+    .banner-inner { grid-template-columns: 1fr; padding: 24px 20px; }
+    .banner-visual { display: none; }
+    .banner-left h1 { font-size: 24px; }
+  }
+
+  /* ============ FAVICONS ============ */
+  .favicon {
+    display: inline-grid; place-items: center;
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    font-family: ui-sans-serif, system-ui;
+    font-size: 9px; font-weight: 700;
+    color: #0a0908;
+    flex-shrink: 0;
+    letter-spacing: -0.02em;
+  }
+  .fv-anthropic { background: #d97706; color: #fef3c7; }
+  .fv-github    { background: #e5e7eb; color: #111; }
+  .fv-openai    { background: #10a37f; color: #fff; }
+  .fv-ollama    { background: #f87171; color: #fff; }
+  .fv-arxiv     { background: #b91c1c; color: #fff; }
+  .fv-opencode  { background: #a5b4fc; color: #1e1b4b; }
+  .fv-hf        { background: #fbbf24; color: #422006; }
+  .fv-lmstudio  { background: #93c5fd; color: #0c4a6e; }
+  .fv-vscode    { background: #0369a1; color: #e0f2fe; }
+
+  /* ============ NEW BADGE ============ */
+  .new-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 1px 6px;
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em;
+    background: var(--accent);
+    color: #0a0908;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+  .new-badge::before {
+    content: ""; width: 4px; height: 4px; border-radius: 50%;
+    background: #0a0908;
+    animation: pulse 1.8s infinite;
+  }
+
+  /* ============ HEADER ============ */
+  header {
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,9,8,0.85);
+    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .header-inner {
+    max-width: 1440px; margin: 0 auto;
+    padding: 14px 28px;
+    display: flex; align-items: center; gap: 28px;
+  }
+  .logo {
+    font-weight: 700; font-size: 17px; letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .logo-mark {
+    width: 22px; height: 22px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    border-radius: 6px;
+    position: relative;
+  }
+  .logo-mark::after {
+    content: ""; position: absolute; inset: 4px;
+    background: var(--bg); border-radius: 3px;
+  }
+  .logo-mark::before {
+    content: ""; position: absolute; left: 8px; right: 8px; top: 8px; bottom: 8px;
+    background: var(--accent);
+    border-radius: 2px;
+    z-index: 1;
+  }
+  .logo .dot { color: var(--accent); }
+
+  .nav {
+    display: flex; gap: 4px;
+    font-size: 13px;
+  }
+  .nav a {
+    padding: 6px 12px; border-radius: 6px;
+    color: var(--muted);
+  }
+  .nav a:hover { background: var(--surface); color: var(--text); }
+  .nav a.active { background: var(--surface); color: var(--text); }
+
+  .search {
+    margin-left: auto;
+    width: 320px;
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg-2);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 7px 12px;
+    color: var(--muted); font-size: 13px;
+  }
+  .search kbd {
+    margin-left: auto;
+    padding: 1px 6px; border: 1px solid var(--border); border-radius: 4px;
+    background: var(--surface); font-size: 11px;
+    font-family: inherit;
+  }
+  .header-right { display: flex; gap: 12px; align-items: center; }
+  .icon-btn {
+    width: 32px; height: 32px;
+    display: grid; place-items: center;
+    border-radius: 6px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .icon-btn:hover { background: var(--surface); color: var(--text); }
+  .lang-toggle {
+    display: flex; gap: 2px; padding: 2px;
+    background: var(--bg-2); border: 1px solid var(--border); border-radius: 6px;
+    font-size: 11px; font-weight: 500;
+  }
+  .lang-toggle span { padding: 3px 7px; border-radius: 4px; cursor: pointer; color: var(--muted); }
+  .lang-toggle span.active { background: var(--surface-2); color: var(--text); }
+
+  /* ============ HERO / STATS ============ */
+  .hero {
+    max-width: 1440px; margin: 0 auto;
+    padding: 28px 28px 8px;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .hero-left { flex: 1; min-width: 0; }
+  .hero-illustration {
+    flex: 0 0 220px;
+    height: 110px;
+    position: relative;
+    display: grid; place-items: center;
+  }
+  .hero-illustration svg { width: 220px; height: 110px; }
+  .hero-illustration .n-glow { filter: blur(6px); }
+  @keyframes floatNode {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  .hero-illustration .n-anim { animation: floatNode 3s ease-in-out infinite; transform-origin: center; }
+  .hero-illustration .n-anim2 { animation: floatNode 3.4s ease-in-out infinite; animation-delay: 0.5s; }
+  .hero-illustration .n-anim3 { animation: floatNode 2.8s ease-in-out infinite; animation-delay: 1s; }
+  .hero-title {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.015em;
+    margin-bottom: 4px;
+  }
+  .hero-title .accent-underline {
+    background: linear-gradient(180deg, transparent 70%, var(--accent-bg) 70%);
+    padding: 0 4px;
+  }
+  .hero-sub {
+    font-size: 13px; color: var(--muted);
+  }
+  .hero-sub .live {
+    display: inline-flex; align-items: center; gap: 5px;
+    color: var(--success);
+  }
+  .hero-sub .live::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Stats: compact flat strip (low visual weight, high scannability) */
+  .stats {
+    max-width: 1440px; margin: 0 auto;
+    padding: 10px 28px 14px;
+    display: flex; align-items: center; flex-wrap: wrap;
+    gap: 0;
+  }
+  .stat {
+    display: flex; align-items: baseline; gap: 8px;
+    padding: 4px 18px;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat:first-child { padding-left: 0; }
+  .stat .label {
+    font-size: 11px; color: var(--muted); font-weight: 500;
+    text-transform: none; letter-spacing: 0;
+  }
+  .stat .value {
+    font-size: 15px; font-weight: 700;
+    font-variant-numeric: tabular-nums; color: var(--text);
+  }
+  .stat .delta {
+    font-size: 11px; color: var(--muted);
+    font-family: ui-monospace, monospace;
+  }
+  .stat .delta.down { color: var(--muted); }
+  .stat.cost .value { color: var(--important); }
+  .stat .icon { display: none; }
+
+  /* help tip (info icon next to label) */
+  .tip {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: var(--border); color: var(--muted-2);
+    font-size: 9px; font-weight: 700; margin-left: 4px;
+    cursor: help; letter-spacing: 0;
+  }
+
+  /* ============ BRAND ICON TILES ============ */
+  .brand-tile {
+    display: grid; place-items: center;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+  .brand-tile svg { stroke-width: 2; }
+  /* side nav 22x22 */
+  .side-item .brand-tile { width: 22px; height: 22px; }
+  .side-item .brand-tile svg { width: 13px; height: 13px; }
+  /* category card 32x32 */
+  .cat-card .brand-tile { width: 32px; height: 32px; border-radius: 8px; }
+  .cat-card .brand-tile svg { width: 17px; height: 17px; }
+
+  /* brand color themes */
+  .bt-copilot { background: rgba(94,234,212,0.14); color: #5eead4; }
+  .bt-claude  { background: rgba(251,191,36,0.14); color: #fbbf24; }
+  .bt-codex   { background: rgba(147,197,253,0.16); color: #93c5fd; }
+  .bt-gemini  { background: rgba(96,165,250,0.16); color: #60a5fa; }
+  .bt-local   { background: rgba(248,113,113,0.14); color: #f87171; }
+  .bt-opencode{ background: rgba(165,180,252,0.16); color: #a5b4fc; }
+  .bt-research{ background: rgba(253,164,175,0.14); color: #fda4af; }
+  .bt-vscode  { background: rgba(99,162,255,0.16); color: #63a2ff; }
+  .bt-cursor  { background: rgba(148,163,184,0.18); color: #cbd5e1; }
+  .bt-cline   { background: rgba(196,181,253,0.16); color: #c4b5fd; }
+  .bt-aider   { background: rgba(163,161,106,0.18); color: #d6d3a1; }
+  .bt-agentfw { background: rgba(52,211,153,0.14); color: #34d399; }
+  .bt-mcp     { background: rgba(244,114,182,0.14); color: #f472b6; }
+  .bt-all     { background: var(--accent-bg-2); color: var(--accent); }
+
+  /* featured hero art */
+  .featured-art {
+    position: absolute; top: 18px; right: 22px;
+    width: 120px; height: 120px;
+    opacity: 0.9;
+    pointer-events: none;
+  }
+
+  /* ============ MAIN LAYOUT ============ */
+  .layout {
+    max-width: 1440px; margin: 0 auto;
+    display: grid; grid-template-columns: 232px 1fr 280px;
+    gap: 24px;
+    padding: 16px 28px 48px;
+  }
+  aside.left, aside.right {
+    font-size: 13px;
+  }
+  aside.left { position: sticky; top: 80px; align-self: start; }
+  aside.right { position: sticky; top: 80px; align-self: start; }
+
+  .side-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .side-title {
+    text-transform: uppercase; letter-spacing: 0.08em; font-size: 10.5px;
+    color: var(--muted); font-weight: 600;
+    margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .side-title .sub { text-transform: none; letter-spacing: 0; color: var(--muted-2); font-weight: 400; }
+  .side-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 8px; border-radius: 6px;
+    cursor: pointer;
+    font-size: 12.5px;
+  }
+  .side-item:hover { background: var(--surface-2); }
+  .side-item.active { background: var(--accent-bg-2); color: var(--accent); font-weight: 500; }
+  .side-group-label {
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted-2); font-weight: 600;
+    padding: 8px 8px 3px;
+    margin-top: 2px;
+  }
+  .side-group-label:first-of-type { margin-top: 0; }
+  .side-item .ic {
+    width: 16px; height: 16px; border-radius: 4px;
+    display: grid; place-items: center;
+    background: var(--surface-2);
+    font-size: 10px;
+  }
+  .side-item.active .ic { background: var(--accent-bg); color: var(--accent); }
+  .side-item .name { flex: 1; }
+  .side-item .spark {
+    width: 26px; height: 9px;
+    display: flex; align-items: flex-end; gap: 1px;
+    flex-shrink: 0;
+    opacity: 0.45;
+  }
+  .side-item:hover .spark { opacity: 0.75; }
+  .side-item.active .spark { opacity: 0.9; }
+  .side-item .spark i {
+    flex: 1;
+    background: var(--muted-2);
+    border-radius: 0.5px;
+    min-height: 1px;
+  }
+  .side-item.active .spark i { background: var(--accent); }
+  .side-item .count { color: var(--muted-2); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .side-item.active .count { color: var(--accent); }
+
+  .range-group { display: flex; gap: 4px; padding: 2px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 6px; }
+  .range-btn {
+    flex: 1; text-align: center; padding: 4px 6px; border-radius: 4px;
+    font-size: 11px; cursor: pointer; color: var(--muted);
+  }
+  .range-btn.active { background: var(--surface-2); color: var(--text); }
+
+  /* ============ MAIN CONTENT ============ */
+  main { min-width: 0; }
+
+  /* HERO FEATURE */
+  .featured {
+    background:
+      linear-gradient(180deg, rgba(94,234,212,0.08) 0%, transparent 80%),
+      var(--surface);
+    border: 1px solid var(--accent-bg);
+    border-radius: 14px;
+    padding: 0;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 0;
+  }
+  .featured-text {
+    padding: 20px 22px;
+    position: relative;
+    min-width: 0;
+  }
+  .featured-hero-img {
+    position: relative;
+    overflow: hidden;
+    border-left: 1px solid var(--accent-bg);
+    min-height: 180px;
+  }
+  .featured-hero-img::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(270deg, transparent 60%, var(--surface) 100%);
+    z-index: 2; pointer-events: none;
+  }
+  .featured-hero-img img {
+    width: 100%; height: 100%; object-fit: cover;
+    display: block;
+  }
+  .featured-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .featured-label::before {
+    content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .featured-title {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.01em;
+    line-height: 1.3; margin-bottom: 10px;
+    position: relative;
+  }
+  .featured-sum {
+    font-size: 14px; color: var(--text-2); line-height: 1.6;
+    margin-bottom: 14px; max-width: 720px;
+    position: relative;
+  }
+  .featured-meta {
+    display: flex; gap: 12px; align-items: center; font-size: 12px;
+    position: relative;
+  }
+  .featured-meta .badge { }
+  .featured-meta .ex {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--accent);
+    font-weight: 500;
+    padding: 6px 12px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+  }
+
+  /* SECTION HEADERS */
+  .section-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin: 24px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header h2 {
+    font-size: 14px; font-weight: 700; letter-spacing: -0.005em;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-header h2 .count {
+    font-size: 11px; color: var(--muted); font-weight: 500;
+    font-family: ui-monospace, monospace;
+  }
+  .section-header .actions { display: flex; gap: 8px; font-size: 12px; color: var(--muted); }
+  .section-header .actions a:hover { color: var(--text); }
+  /* subtle: utility-style, muted header (for secondary sections) */
+  .section-header.subtle {
+    margin: 20px 0 10px;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  .section-header.subtle h2 {
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .section-header.subtle h2 .count { font-size: 10.5px; }
+  /* primary: emphasize the main focal section (Timeline / new articles) */
+  .section-header.primary {
+    margin: 28px 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--accent);
+  }
+  .section-header.primary h2 {
+    font-size: 16px; font-weight: 700;
+  }
+  .section-header.primary h2 .count {
+    background: var(--accent-bg); color: var(--accent);
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 10.5px; font-weight: 600;
+  }
+  .section-header .sort {
+    display: flex; gap: 2px; padding: 2px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 6px; font-size: 11px;
+  }
+  .section-header .sort span { padding: 3px 8px; border-radius: 4px; cursor: pointer; color: var(--muted); }
+  .section-header .sort span.active { background: var(--surface-2); color: var(--text); }
+
+  /* CATEGORY PANELS (compact panel grid — simple but structured) */
+  .cat-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .cat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  }
+  .cat-card:hover {
+    border-color: var(--accent);
+    background: var(--surface-2);
+    transform: translateY(-1px);
+  }
+  .cat-card .cat-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+  }
+  .cat-card .cat-name {
+    font-weight: 600; font-size: 13px;
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--text);
+    min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .cat-card .brand-tile { width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0; }
+  .cat-card .brand-tile svg { width: 14px; height: 14px; }
+  .cat-card .cat-count {
+    font-family: ui-monospace, monospace; font-size: 12px; font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .cat-card .cat-latest,
+  .cat-card .spark { display: none; }
+  @media (max-width: 1200px) {
+    .cat-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 700px) {
+    .cat-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* TIMELINE */
+  .day-header {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--muted); font-weight: 600;
+    margin: 18px 0 10px;
+    padding-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .day-header::after {
+    content: ""; flex: 1; height: 1px; background: var(--border);
+  }
+  .day-header .day-count {
+    font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted-2); letter-spacing: 0;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 18px 14px 20px;
+    margin-bottom: 8px;
+    position: relative;
+    transition: border-color 0.12s, transform 0.12s;
+    cursor: pointer;
+  }
+  .card:hover { border-color: var(--border-strong); }
+  .card.important::before {
+    content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px;
+    background: var(--important); border-radius: 3px;
+  }
+
+  /* card with thumbnail */
+  .card.has-thumb {
+    display: grid;
+    grid-template-columns: 1fr 144px;
+    gap: 16px;
+    padding: 12px 16px 12px 20px;
+  }
+  .card-body { min-width: 0; }
+  .card-thumb {
+    width: 144px; height: 96px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card-thumb.fallback {
+    display: grid; place-items: center;
+  }
+  .card-thumb.fallback svg { width: 42%; height: 42%; }
+  .card-thumb .src-mark {
+    position: absolute; bottom: 4px; left: 4px;
+    background: rgba(10,9,8,0.75);
+    color: var(--muted);
+    font-family: ui-monospace, monospace;
+    font-size: 9px;
+    padding: 1px 5px; border-radius: 3px;
+    letter-spacing: 0.02em;
+  }
+  .card .meta {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .badge {
+    padding: 1px 7px; border-radius: 4px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    font-size: 10.5px; color: var(--text-2);
+    font-weight: 500;
+  }
+  .badge.release { background: var(--accent-bg-2); border-color: var(--accent-bg); color: var(--accent); }
+  .badge.paper { background: var(--paper-bg); border-color: var(--paper-bg); color: var(--paper); }
+  .badge.tutorial { background: var(--tutorial-bg); border-color: var(--tutorial-bg); color: var(--tutorial); }
+  .card .meta .spacer { flex: 1; }
+  .card .title {
+    font-size: 15px; font-weight: 600; line-height: 1.45;
+    margin-bottom: 4px;
+  }
+  .card .summary {
+    font-size: 13px; color: var(--text-2); line-height: 1.55;
+    margin-bottom: 8px;
+  }
+  .card .url {
+    font-family: ui-monospace, monospace;
+    font-size: 11px; color: var(--muted-2);
+  }
+  .card .url .arrow { margin-left: 6px; color: var(--muted); }
+
+  /* ============ RIGHT SIDEBAR ============ */
+  .right-title {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .trend-item {
+    display: flex; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .trend-item:last-child { border-bottom: none; }
+  .trend-rank {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--muted-2);
+    width: 16px;
+    font-weight: 600;
+  }
+  .trend-rank.top { color: var(--accent); }
+  .trend-body { flex: 1; min-width: 0; }
+  .trend-body .t {
+    font-size: 12.5px; font-weight: 500; line-height: 1.35;
+    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    margin-bottom: 2px;
+  }
+  .trend-body .m {
+    font-size: 10.5px; color: var(--muted-2);
+    font-family: ui-monospace, monospace;
+  }
+  .trend-body .m .score { color: var(--accent); font-weight: 600; }
+
+  .tag-cloud {
+    display: flex; flex-wrap: wrap; gap: 4px;
+  }
+  .tag {
+    padding: 3px 8px; border-radius: 999px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    font-size: 11px;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .tag:hover { border-color: var(--accent); color: var(--accent); }
+  .tag .c { color: var(--muted-2); margin-left: 4px; }
+
+  .source-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 0;
+    font-size: 12px;
+  }
+  .source-item .status {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--success);
+  }
+  .source-item .status.stale { background: var(--muted-2); }
+  .source-item .name { flex: 1; color: var(--text-2); }
+  .source-item .time { color: var(--muted-2); font-family: ui-monospace, monospace; font-size: 10.5px; }
+
+  /* ============ FOOTER STATUS BAR ============ */
+  .footer-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(10,9,8,0.9);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    font-size: 11px; font-family: ui-monospace, monospace;
+    color: var(--muted);
+    z-index: 40;
+  }
+  .footer-inner {
+    max-width: 1440px; margin: 0 auto;
+    padding: 7px 28px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .footer-inner .item { display: flex; align-items: center; gap: 6px; }
+  .footer-inner .item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+  .footer-inner .item.warn .dot { background: var(--important); }
+  .footer-inner .spacer { flex: 1; }
+  .footer-inner .item strong { color: var(--text-2); font-weight: 600; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-mark"></div>
+      tech<span class="dot">·</span>dashboard
+    </div>
+    <nav class="nav">
+      <a href="#" class="active">Timeline</a>
+      <a href="#">Categories</a>
+      <a href="#">Sources</a>
+      <a href="#">Status</a>
+      <a href="#">About</a>
+    </nav>
+    <div class="search">
+      <span>🔍</span>
+      <span>search 231 updates...</span>
+      <kbd>/</kbd>
+    </div>
+    <div class="header-right">
+      <div class="lang-toggle">
+        <span class="active">JA</span>
+        <span>EN</span>
+      </div>
+      <div class="icon-btn" title="Dark / Light">◐</div>
+      <div class="icon-btn" title="RSS">📡</div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ SITE BANNER ============ -->
+<section class="banner" aria-label="Site banner">
+  <div class="banner-bg-grid"></div>
+  <div class="banner-inner">
+    <div class="banner-left">
+      <h1>
+        AI エコシステムの<br>
+        <span class="brand-accent">日々のアップデート</span>を、1 画面で。
+      </h1>
+      <div class="tagline">
+        <strong>Copilot / Claude / Codex / Local LLM / OpenCode / Research</strong> の公式情報・論文・リリースを
+        6 時間おきに自動収集。Claude Opus 4.7 が日本語で要約し、重要度でソートして届けます。
+      </div>
+      <div class="banner-cta">
+        <button class="btn primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Subscribe
+        </button>
+        <button class="btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1" fill="currentColor"/></svg>
+          RSS
+        </button>
+        <button class="btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          About
+        </button>
+        <span class="meta-pill">
+          <span class="d"></span>
+          10 sources · 231 entries · updated 2m ago
+        </span>
+      </div>
+    </div>
+    <div class="banner-visual" aria-hidden="true">
+      <svg viewBox="0 0 360 180" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="bv-glow" cx="50%" cy="50%">
+            <stop offset="0" stop-color="#5eead4" stop-opacity="0.55"/>
+            <stop offset="1" stop-color="#5eead4" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="bv-ring" x1="0" x2="1">
+            <stop offset="0" stop-color="#5eead4"/>
+            <stop offset="1" stop-color="#fbbf24"/>
+          </linearGradient>
+        </defs>
+        <!-- outer orbit -->
+        <ellipse cx="180" cy="90" rx="150" ry="54" fill="none" stroke="url(#bv-ring)" stroke-opacity="0.5" stroke-dasharray="2 6"/>
+        <ellipse cx="180" cy="90" rx="110" ry="38" fill="none" stroke="#5eead4" stroke-opacity="0.35"/>
+        <!-- glow behind core -->
+        <circle cx="180" cy="90" r="60" fill="url(#bv-glow)"/>
+        <!-- core node -->
+        <circle cx="180" cy="90" r="22" fill="#0a1f1c" stroke="#5eead4" stroke-width="1.5"/>
+        <path d="M180 75 l4.5 11 11 4.5 -11 4.5 -4.5 11 -4.5 -11 -11 -4.5 11 -4.5z" fill="#5eead4"/>
+        <!-- satellite nodes -->
+        <g>
+          <circle cx="30" cy="90" r="14" fill="#2d2a26" stroke="#5eead4" stroke-width="1"/>
+          <text x="30" y="94" text-anchor="middle" font-family="ui-sans-serif" font-size="9" font-weight="700" fill="#5eead4">Co</text>
+        </g>
+        <g>
+          <circle cx="330" cy="90" r="14" fill="#2d2a26" stroke="#fbbf24" stroke-width="1"/>
+          <text x="330" y="94" text-anchor="middle" font-family="ui-sans-serif" font-size="9" font-weight="700" fill="#fbbf24">Cl</text>
+        </g>
+        <g>
+          <circle cx="80" cy="30" r="12" fill="#2d2a26" stroke="#93c5fd" stroke-width="1"/>
+          <text x="80" y="34" text-anchor="middle" font-family="ui-sans-serif" font-size="8" font-weight="700" fill="#93c5fd">Cx</text>
+        </g>
+        <g>
+          <circle cx="280" cy="30" r="12" fill="#2d2a26" stroke="#f87171" stroke-width="1"/>
+          <text x="280" y="34" text-anchor="middle" font-family="ui-sans-serif" font-size="8" font-weight="700" fill="#f87171">Lo</text>
+        </g>
+        <g>
+          <circle cx="80" cy="150" r="12" fill="#2d2a26" stroke="#a5b4fc" stroke-width="1"/>
+          <text x="80" y="154" text-anchor="middle" font-family="ui-sans-serif" font-size="8" font-weight="700" fill="#a5b4fc">Oc</text>
+        </g>
+        <g>
+          <circle cx="280" cy="150" r="12" fill="#2d2a26" stroke="#fda4af" stroke-width="1"/>
+          <text x="280" y="154" text-anchor="middle" font-family="ui-sans-serif" font-size="8" font-weight="700" fill="#fda4af">Rs</text>
+        </g>
+        <!-- subtle links -->
+        <g stroke-opacity="0.25" stroke-width="1" fill="none">
+          <line x1="44" y1="90" x2="158" y2="90" stroke="#5eead4"/>
+          <line x1="316" y1="90" x2="202" y2="90" stroke="#fbbf24"/>
+          <line x1="88" y1="38" x2="168" y2="78" stroke="#93c5fd"/>
+          <line x1="272" y1="38" x2="192" y2="78" stroke="#f87171"/>
+          <line x1="88" y1="142" x2="168" y2="102" stroke="#a5b4fc"/>
+          <line x1="272" y1="142" x2="192" y2="102" stroke="#fda4af"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-sub" style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+      <span class="live">Live</span>
+      <span style="color: var(--muted-2);">·</span>
+      <span>最終更新 <strong style="color:var(--text-2); font-weight:600;">2 分前</strong></span>
+      <span style="color: var(--muted-2);">·</span>
+      <span>10 ソースから <strong style="color:var(--text-2); font-weight:600;">231 件</strong> 収集中</span>
+      <span style="color: var(--muted-2);">·</span>
+      <span>重要度 3 が本日 <strong style="color:var(--important); font-weight:600;">2 件</strong></span>
+    </div>
+  </div>
+  <div class="hero-illustration" aria-hidden="true" style="display:none;"></div>
+</section>
+
+<section class="stats">
+  <div class="stat">
+    <div class="label">Today</div>
+    <div class="value">14</div>
+    <div class="delta">+22% vs avg</div>
+    <div class="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+        <path d="M9 16l2 2 4-4"/>
+      </svg>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="label">This week</div>
+    <div class="value">87</div>
+    <div class="delta">+8%</div>
+    <div class="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+        <polyline points="16 7 22 7 22 13"/>
+      </svg>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="label">Major releases</div>
+    <div class="value">2</div>
+    <div class="delta">Claude 4.7, Codex 2.0</div>
+    <div class="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="label">Active sources</div>
+    <div class="value">10 / 10</div>
+    <div class="delta">All healthy</div>
+    <div class="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="2"/>
+        <path d="M16.24 7.76a6 6 0 0 1 0 8.49"/>
+        <path d="M7.76 16.24a6 6 0 0 1 0-8.49"/>
+        <path d="M20.07 4.93a10 10 0 0 1 0 14.14"/>
+        <path d="M3.93 19.07a10 10 0 0 1 0-14.14"/>
+      </svg>
+    </div>
+  </div>
+  <div class="stat cost">
+    <div class="label">月間コスト (MTD) <span class="tip" title="Month-To-Date：月初から現在までの LLM (Claude Opus 4.7) API 累計課金。記事要約・タグ付け・重要度判定に使用。">i</span></div>
+    <div class="value">$12.34</div>
+    <div class="delta down">Budget $20 ・ 62%</div>
+    <div class="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="1" x2="12" y2="23"/>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="left">
+    <div class="side-card">
+      <div class="side-title">Categories <span class="sub">234</span></div>
+      <div class="side-item active">
+        <span class="brand-tile bt-all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg></span>
+        <span class="name">All</span>
+        <span class="spark" title="Past 7 days"><i style="height:40%"></i><i style="height:55%"></i><i style="height:35%"></i><i style="height:70%"></i><i style="height:60%"></i><i style="height:85%"></i><i style="height:100%"></i></span>
+        <span class="count">234</span>
+      </div>
+
+      <div class="side-group-label">Coding Agents</div>
+      <div class="side-item c-copilot">
+        <span class="brand-tile bt-copilot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c5 0 9 4 9 9 0 3-2 5-4 5H7c-2 0-4-2-4-5 0-5 4-9 9-9z"/><circle cx="9" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="12" r="1.2" fill="currentColor"/></svg></span>
+        <span class="name">Copilot</span>
+        <span class="spark" title="Past 7 days"><i style="height:30%"></i><i style="height:50%"></i><i style="height:25%"></i><i style="height:60%"></i><i style="height:45%"></i><i style="height:75%"></i><i style="height:90%"></i></span>
+        <span class="count">28</span>
+      </div>
+      <div class="side-item c-claude">
+        <span class="brand-tile bt-claude"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l2.2 5.8L20 10l-5.8 2.2L12 18l-2.2-5.8L4 10l5.8-2.2z"/></svg></span>
+        <span class="name">Claude</span>
+        <span class="spark" title="Past 7 days"><i style="height:25%"></i><i style="height:40%"></i><i style="height:80%"></i><i style="height:30%"></i><i style="height:65%"></i><i style="height:70%"></i><i style="height:85%"></i></span>
+        <span class="count">24</span>
+      </div>
+      <div class="side-item c-codex">
+        <span class="brand-tile bt-codex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 3 12 8 7"/><polyline points="16 7 21 12 16 17"/></svg></span>
+        <span class="name">Codex</span>
+        <span class="spark" title="Past 7 days"><i style="height:15%"></i><i style="height:25%"></i><i style="height:20%"></i><i style="height:40%"></i><i style="height:15%"></i><i style="height:30%"></i><i style="height:50%"></i></span>
+        <span class="count">15</span>
+      </div>
+      <div class="side-item c-gemini">
+        <span class="brand-tile bt-gemini"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z"/></svg></span>
+        <span class="name">Gemini</span>
+        <span class="spark" title="Past 7 days"><i style="height:20%"></i><i style="height:35%"></i><i style="height:55%"></i><i style="height:30%"></i><i style="height:50%"></i><i style="height:60%"></i><i style="height:70%"></i></span>
+        <span class="count">18</span>
+      </div>
+      <div class="side-item c-cursor">
+        <span class="brand-tile bt-cursor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4 L20 12 L12 14 L10 22 Z"/></svg></span>
+        <span class="name">Cursor</span>
+        <span class="spark" title="Past 7 days"><i style="height:30%"></i><i style="height:40%"></i><i style="height:25%"></i><i style="height:55%"></i><i style="height:45%"></i><i style="height:60%"></i><i style="height:80%"></i></span>
+        <span class="count">14</span>
+      </div>
+      <div class="side-item c-cline">
+        <span class="brand-tile bt-cline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></span>
+        <span class="name">Cline / Roo</span>
+        <span class="spark" title="Past 7 days"><i style="height:20%"></i><i style="height:30%"></i><i style="height:15%"></i><i style="height:40%"></i><i style="height:25%"></i><i style="height:45%"></i><i style="height:55%"></i></span>
+        <span class="count">9</span>
+      </div>
+      <div class="side-item c-aider">
+        <span class="brand-tile bt-aider"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4-8 4-8-4 8-4z"/><path d="M4 11l8 4 8-4"/><path d="M4 15l8 4 8-4"/></svg></span>
+        <span class="name">Aider</span>
+        <span class="spark" title="Past 7 days"><i style="height:15%"></i><i style="height:20%"></i><i style="height:10%"></i><i style="height:30%"></i><i style="height:25%"></i><i style="height:35%"></i><i style="height:40%"></i></span>
+        <span class="count">6</span>
+      </div>
+      <div class="side-item c-opencode">
+        <span class="brand-tile bt-opencode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>
+        <span class="name">OpenCode</span>
+        <span class="spark" title="Past 7 days"><i style="height:15%"></i><i style="height:20%"></i><i style="height:10%"></i><i style="height:25%"></i><i style="height:15%"></i><i style="height:20%"></i><i style="height:30%"></i></span>
+        <span class="count">8</span>
+      </div>
+
+      <div class="side-group-label">Platforms & Runtime</div>
+      <div class="side-item c-vscode">
+        <span class="brand-tile bt-vscode"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M17.5 2.5 7.2 12l-3.4-2.6L2 10.8l3 2.4-3 2.4 1.8 1.4 3.4-2.6L17.5 21.5l4.5-2.2V4.7l-4.5-2.2zm0 4.2v10.6L10.3 12l7.2-5.3z"/></svg></span>
+        <span class="name">VSCode</span>
+        <span class="spark" title="Past 7 days"><i style="height:20%"></i><i style="height:35%"></i><i style="height:30%"></i><i style="height:55%"></i><i style="height:40%"></i><i style="height:65%"></i><i style="height:75%"></i></span>
+        <span class="count">16</span>
+      </div>
+      <div class="side-item c-local">
+        <span class="brand-tile bt-local"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="2" x2="9" y2="5"/><line x1="15" y1="2" x2="15" y2="5"/><line x1="9" y1="19" x2="9" y2="22"/><line x1="15" y1="19" x2="15" y2="22"/><line x1="19" y1="9" x2="22" y2="9"/><line x1="19" y1="15" x2="22" y2="15"/><line x1="2" y1="9" x2="5" y2="9"/><line x1="2" y1="15" x2="5" y2="15"/></svg></span>
+        <span class="name">Local LLM</span>
+        <span class="spark" title="Past 7 days"><i style="height:60%"></i><i style="height:80%"></i><i style="height:55%"></i><i style="height:90%"></i><i style="height:75%"></i><i style="height:100%"></i><i style="height:95%"></i></span>
+        <span class="count">32</span>
+      </div>
+
+      <div class="side-group-label">Ecosystem</div>
+      <div class="side-item c-agentfw">
+        <span class="brand-tile bt-agentfw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="6" r="2"/><circle cx="4" cy="18" r="2"/><circle cx="20" cy="18" r="2"/><line x1="6" y1="6" x2="10" y2="10"/><line x1="18" y1="6" x2="14" y2="10"/><line x1="6" y1="18" x2="10" y2="14"/><line x1="18" y1="18" x2="14" y2="14"/></svg></span>
+        <span class="name">Agent FW</span>
+        <span class="spark" title="Past 7 days"><i style="height:25%"></i><i style="height:35%"></i><i style="height:20%"></i><i style="height:50%"></i><i style="height:40%"></i><i style="height:55%"></i><i style="height:65%"></i></span>
+        <span class="count">12</span>
+      </div>
+      <div class="side-item c-mcp">
+        <span class="brand-tile bt-mcp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l3-8 4 16 3-8h2"/></svg></span>
+        <span class="name">MCP</span>
+        <span class="spark" title="Past 7 days"><i style="height:40%"></i><i style="height:55%"></i><i style="height:35%"></i><i style="height:70%"></i><i style="height:50%"></i><i style="height:75%"></i><i style="height:85%"></i></span>
+        <span class="count">10</span>
+      </div>
+
+      <div class="side-group-label">Research</div>
+      <div class="side-item c-research">
+        <span class="brand-tile bt-research"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6l-5 9a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9V3"/><line x1="8" y1="3" x2="16" y2="3"/><line x1="7" y1="14" x2="17" y2="14"/></svg></span>
+        <span class="name">Research</span>
+        <span class="spark" title="Past 7 days"><i style="height:70%"></i><i style="height:85%"></i><i style="height:65%"></i><i style="height:95%"></i><i style="height:80%"></i><i style="height:90%"></i><i style="height:100%"></i></span>
+        <span class="count">42</span>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <div class="side-title">Range</div>
+      <div class="range-group">
+        <div class="range-btn">24h</div>
+        <div class="range-btn active">7d</div>
+        <div class="range-btn">30d</div>
+        <div class="range-btn">All</div>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <div class="side-title">Importance</div>
+      <div class="side-item"><span class="ic" style="color:#fbbf24;">▌</span><span class="name">Major only</span><span class="count">12</span></div>
+      <div class="side-item active"><span class="ic">◎</span><span class="name">All levels</span><span class="count">231</span></div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main>
+
+    <!-- FEATURED CARD -->
+    <div class="featured">
+      <div class="featured-text">
+        <div class="featured-label">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;"><path d="M12 2l2.2 5.8L20 10l-5.8 2.2L12 18l-2.2-5.8L4 10l5.8-2.2z"/></svg>
+          Featured · Major Release
+        </div>
+        <div class="featured-title">Claude Opus 4.7 リリース - 長期推論タスクで大幅改善、harness design が標準搭載に</div>
+        <div class="featured-sum">
+          長期推論ベンチで 15% 改善。ツール呼出の安定性が向上し、Anthropic が 2026 年 3 月に発表した harness design のベストプラクティスが SDK レベルで組込済みに。既存ユーザーは設定変更なしで恩恵を受ける。
+        </div>
+        <div class="featured-meta">
+          <span class="new-badge">NEW</span>
+          <span class="badge release">release</span>
+          <span class="badge">claude</span>
+          <span class="badge">opus</span>
+          <span style="color: var(--muted); display:inline-flex; align-items:center; gap:6px;" class="mono">
+            <span class="favicon fv-anthropic">A</span>
+            2h · Anthropic News
+          </span>
+          <span style="flex:1;"></span>
+          <span class="ex">anthropic.com/news/claude-opus-4-7 →</span>
+        </div>
+      </div>
+      <div class="featured-hero-img">
+        <!-- mock OGP image: Anthropic-like gradient with sparkle -->
+        <svg viewBox="0 0 260 220" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="og1" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#d97706"/>
+              <stop offset="0.5" stop-color="#b45309"/>
+              <stop offset="1" stop-color="#7c2d12"/>
+            </linearGradient>
+            <radialGradient id="og1r" cx="70%" cy="30%">
+              <stop offset="0" stop-color="#fbbf24" stop-opacity="0.8"/>
+              <stop offset="1" stop-color="#fbbf24" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <rect width="260" height="220" fill="url(#og1)"/>
+          <circle cx="180" cy="70" r="100" fill="url(#og1r)"/>
+          <g fill="#fef3c7" opacity="0.95">
+            <path d="M180 50 l8 22 22 8 -22 8 -8 22 -8 -22 -22 -8 22 -8z"/>
+          </g>
+          <g fill="#fef3c7" opacity="0.6">
+            <path d="M50 140 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4z"/>
+            <path d="M220 170 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/>
+          </g>
+          <text x="20" y="195" font-family="ui-sans-serif, system-ui" font-size="11" fill="#fef3c7" opacity="0.8" font-weight="700">ANTHROPIC</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- TIMELINE -->
+    <div class="section-header primary">
+      <h2>Timeline <span class="count">14 today</span></h2>
+      <div class="sort">
+        <span class="active">Newest</span>
+        <span>Importance</span>
+        <span>Category</span>
+      </div>
+    </div>
+
+    <div class="day-header">
+      Today <span class="day-count">2026-04-19 · 14 entries</span>
+    </div>
+
+    <div class="card has-thumb">
+      <div class="card-body">
+        <div class="meta">
+          <span class="new-badge">NEW</span>
+          <span class="badge tutorial">tutorial</span>
+          <span class="badge">copilot</span>
+          <span class="spacer"></span>
+          <span class="mono">5h</span>
+          <span>·</span>
+          <span class="favicon fv-github">Gh</span>
+          <span>GitHub Blog</span>
+        </div>
+        <div class="title">Agent mode のベストプラクティス 5 選</div>
+        <div class="summary">プランニング層の導入で精度向上、Hook 機能を使った破壊的操作の抑止、サブエージェントの使い分けを紹介。</div>
+        <div class="url">github.blog/2026/agent-mode-best-practices<span class="arrow">→</span></div>
+      </div>
+      <div class="card-thumb">
+        <svg viewBox="0 0 144 96" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="og2" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#1e293b"/>
+              <stop offset="1" stop-color="#0f172a"/>
+            </linearGradient>
+          </defs>
+          <rect width="144" height="96" fill="url(#og2)"/>
+          <g stroke="#5eead4" stroke-opacity="0.5" fill="none">
+            <circle cx="72" cy="48" r="22"/>
+            <circle cx="72" cy="48" r="32" stroke-dasharray="2 4" stroke-opacity="0.3"/>
+          </g>
+          <g fill="#5eead4"><circle cx="72" cy="48" r="5"/></g>
+          <g fill="#5eead4" opacity="0.8">
+            <circle cx="50" cy="48" r="3"/><circle cx="94" cy="48" r="3"/>
+            <circle cx="72" cy="26" r="3"/><circle cx="72" cy="70" r="3"/>
+          </g>
+          <g stroke="#5eead4" stroke-opacity="0.3">
+            <line x1="50" y1="48" x2="72" y2="48"/><line x1="72" y1="48" x2="94" y2="48"/>
+            <line x1="72" y1="26" x2="72" y2="70"/>
+          </g>
+          <text x="8" y="88" font-family="ui-sans-serif" font-size="8" fill="#64748b" font-weight="600">GITHUB BLOG</text>
+        </svg>
+        <span class="src-mark">og</span>
+      </div>
+    </div>
+
+    <div class="card has-thumb">
+      <div class="card-body">
+        <div class="meta">
+          <span class="new-badge">NEW</span>
+          <span class="badge release">release</span>
+          <span class="badge">local-llm</span>
+          <span class="spacer"></span>
+          <span class="mono">7h</span>
+          <span>·</span>
+          <span class="favicon fv-ollama">Ol</span>
+          <span>Ollama Releases</span>
+        </div>
+        <div class="title">Ollama 0.9.0 - マルチモーダル対応と MCP クライアント統合</div>
+        <div class="summary">ローカルで画像入力が可能に。MCP サーバへの接続サポートにより、ローカル LLM から外部ツール呼出が簡潔に。</div>
+        <div class="url">github.com/ollama/ollama/releases/tag/v0.9.0<span class="arrow">→</span></div>
+      </div>
+      <!-- fallback: Ollama Release は画像なし → ブランドアイコン -->
+      <div class="card-thumb fallback" style="background: linear-gradient(135deg, #2d2a26, #36322e);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="5" y="5" width="14" height="14" rx="2"/>
+          <rect x="9" y="9" width="6" height="6"/>
+          <line x1="9" y1="2" x2="9" y2="5"/><line x1="15" y1="2" x2="15" y2="5"/>
+          <line x1="9" y1="19" x2="9" y2="22"/><line x1="15" y1="19" x2="15" y2="22"/>
+          <line x1="19" y1="9" x2="22" y2="9"/><line x1="19" y1="15" x2="22" y2="15"/>
+          <line x1="2" y1="9" x2="5" y2="9"/><line x1="2" y1="15" x2="5" y2="15"/>
+        </svg>
+        <span class="src-mark">fallback</span>
+      </div>
+    </div>
+
+    <div class="card has-thumb">
+      <div class="card-body">
+        <div class="meta">
+          <span class="badge">changelog</span>
+          <span class="badge">copilot</span>
+          <span class="spacer"></span>
+          <span class="mono">9h</span>
+          <span>·</span>
+          <span class="favicon fv-github">Gh</span>
+          <span>GitHub Changelog</span>
+        </div>
+        <div class="title">VS Code 1.100 で MCP サポートが GA 昇格、Copilot Chat 統合が標準に</div>
+        <div class="summary">preview フラグが不要に。設定 UI も刷新され、MCP サーバの有効化 / 無効化がコマンドパレットから可能。</div>
+        <div class="url">github.blog/changelog/vscode-1-100-mcp-ga<span class="arrow">→</span></div>
+      </div>
+      <div class="card-thumb">
+        <svg viewBox="0 0 144 96" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="og3" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#0369a1"/>
+              <stop offset="1" stop-color="#164e63"/>
+            </linearGradient>
+          </defs>
+          <rect width="144" height="96" fill="url(#og3)"/>
+          <g transform="translate(36,18)">
+            <rect x="0" y="0" width="72" height="54" rx="3" fill="#0c4a6e" stroke="#38bdf8" stroke-width="1"/>
+            <rect x="0" y="0" width="72" height="8" fill="#082f49"/>
+            <circle cx="5" cy="4" r="1.3" fill="#f87171"/>
+            <circle cx="10" cy="4" r="1.3" fill="#fbbf24"/>
+            <circle cx="15" cy="4" r="1.3" fill="#4ade80"/>
+            <rect x="6" y="16" width="28" height="2" fill="#38bdf8" opacity="0.6"/>
+            <rect x="6" y="22" width="20" height="2" fill="#38bdf8" opacity="0.4"/>
+            <rect x="6" y="28" width="32" height="2" fill="#38bdf8" opacity="0.5"/>
+            <rect x="6" y="34" width="16" height="2" fill="#38bdf8" opacity="0.3"/>
+            <rect x="6" y="40" width="24" height="2" fill="#38bdf8" opacity="0.5"/>
+          </g>
+          <text x="8" y="88" font-family="ui-sans-serif" font-size="8" fill="#38bdf8" font-weight="600">VS CODE 1.100</text>
+        </svg>
+        <span class="src-mark">og</span>
+      </div>
+    </div>
+
+    <div class="day-header">
+      Yesterday <span class="day-count">2026-04-18 · 16 entries</span>
+    </div>
+
+    <div class="card has-thumb">
+      <div class="card-body">
+        <div class="meta">
+          <span class="badge paper">paper</span>
+          <span class="badge">research</span>
+          <span class="spacer"></span>
+          <span class="mono">22h</span>
+          <span>·</span>
+          <span class="favicon fv-arxiv">aX</span>
+          <span>arXiv cs.CL</span>
+        </div>
+        <div class="title">Context Rot in Million-Token LLMs: An Empirical Study</div>
+        <div class="summary">1M トークン対応モデルでも有効コンテキストは 200-300K で飽和することを示す実証研究。圧縮戦略の定量比較を含む。</div>
+        <div class="url">arxiv.org/abs/2604.xxxxx<span class="arrow">→</span></div>
+      </div>
+      <!-- fallback: arXiv は画像なし → 研究アイコン -->
+      <div class="card-thumb fallback" style="background: linear-gradient(135deg, #2d2a26, #36322e);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fda4af" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 3v6l-5 9a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9V3"/>
+          <line x1="8" y1="3" x2="16" y2="3"/>
+          <line x1="7" y1="14" x2="17" y2="14"/>
+        </svg>
+        <span class="src-mark">fallback</span>
+      </div>
+    </div>
+
+    <div class="card has-thumb important">
+      <div class="card-body">
+        <div class="meta">
+          <span class="badge release">release</span>
+          <span class="badge">codex</span>
+          <span class="spacer"></span>
+          <span class="mono">1d</span>
+          <span>·</span>
+          <span class="favicon fv-openai">Oa</span>
+          <span>OpenAI Blog</span>
+        </div>
+        <div class="title">Codex CLI 2.0 - Harness Engineering 原則を標準装備</div>
+        <div class="summary">Context engineering の Reduce / Offload / Isolate をデフォルト戦略として実装。長時間セッションで再現性が向上。</div>
+        <div class="url">openai.com/index/codex-cli-2-0<span class="arrow">→</span></div>
+      </div>
+      <div class="card-thumb">
+        <svg viewBox="0 0 144 96" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="og4" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#064e3b"/>
+              <stop offset="1" stop-color="#022c22"/>
+            </linearGradient>
+          </defs>
+          <rect width="144" height="96" fill="url(#og4)"/>
+          <g font-family="ui-monospace, monospace" fill="#6ee7b7" font-size="9" opacity="0.9">
+            <text x="10" y="22">$ codex --plan</text>
+            <text x="10" y="36" opacity="0.7">&gt; reduce</text>
+            <text x="10" y="48" opacity="0.7">&gt; offload</text>
+            <text x="10" y="60" opacity="0.7">&gt; isolate</text>
+            <text x="10" y="76" fill="#a7f3d0">OK v2.0</text>
+          </g>
+          <rect x="82" y="72" width="6" height="2" fill="#6ee7b7" opacity="0.9"/>
+        </svg>
+        <span class="src-mark">og</span>
+      </div>
+    </div>
+
+    <div class="card has-thumb">
+      <div class="card-body">
+        <div class="meta">
+          <span class="badge tutorial">tutorial</span>
+          <span class="badge">opencode</span>
+          <span class="spacer"></span>
+          <span class="mono">1d</span>
+          <span>·</span>
+          <span class="favicon fv-opencode">Oc</span>
+          <span>OpenCode Blog</span>
+        </div>
+        <div class="title">OpenCode を自社リポジトリに導入するまで</div>
+        <div class="summary">セキュリティポリシー、Hook による破壊操作ガード、レビューワークフローへの組込みまでの実運用ノウハウ。</div>
+        <div class="url">opencode.dev/blog/enterprise-rollout<span class="arrow">→</span></div>
+      </div>
+      <div class="card-thumb">
+        <svg viewBox="0 0 144 96" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="og5" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#312e81"/>
+              <stop offset="1" stop-color="#1e1b4b"/>
+            </linearGradient>
+          </defs>
+          <rect width="144" height="96" fill="url(#og5)"/>
+          <g transform="translate(72,48)" fill="none" stroke="#a5b4fc" stroke-width="1.2">
+            <path d="M-22 -14 L0 -24 L22 -14 L22 14 L0 24 L-22 14 Z"/>
+            <path d="M-22 -14 L0 -4 L22 -14" stroke-opacity="0.5"/>
+            <line x1="0" y1="-4" x2="0" y2="24" stroke-opacity="0.5"/>
+          </g>
+          <circle cx="72" cy="44" r="2" fill="#a5b4fc"/>
+          <text x="8" y="88" font-family="ui-sans-serif" font-size="8" fill="#a5b4fc" font-weight="600">OPENCODE</text>
+        </svg>
+        <span class="src-mark">og</span>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- RIGHT SIDEBAR -->
+  <aside class="right">
+    <div class="side-card">
+      <div class="right-title">🔥 Trending this week</div>
+      <div class="trend-item">
+        <div class="trend-rank top">01</div>
+        <div class="trend-body">
+          <div class="t">Claude Opus 4.7 リリース - 長期推論で大幅改善</div>
+          <div class="m"><span class="score">score 98</span> · claude · 2h ago</div>
+        </div>
+      </div>
+      <div class="trend-item">
+        <div class="trend-rank top">02</div>
+        <div class="trend-body">
+          <div class="t">Codex CLI 2.0 - Harness Engineering 原則を標準装備</div>
+          <div class="m"><span class="score">score 87</span> · codex · 1d ago</div>
+        </div>
+      </div>
+      <div class="trend-item">
+        <div class="trend-rank top">03</div>
+        <div class="trend-body">
+          <div class="t">Ollama 0.9.0 マルチモーダル + MCP 統合</div>
+          <div class="m"><span class="score">score 76</span> · local-llm · 7h ago</div>
+        </div>
+      </div>
+      <div class="trend-item">
+        <div class="trend-rank">04</div>
+        <div class="trend-body">
+          <div class="t">Context Rot 実証研究: 1M モデルの限界</div>
+          <div class="m"><span class="score">score 71</span> · research · 22h ago</div>
+        </div>
+      </div>
+      <div class="trend-item">
+        <div class="trend-rank">05</div>
+        <div class="trend-body">
+          <div class="t">Agent mode のベストプラクティス 5 選</div>
+          <div class="m"><span class="score">score 65</span> · copilot · 5h ago</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <div class="right-title">Hot tags</div>
+      <div class="tag-cloud">
+        <div class="tag">#release <span class="c">89</span></div>
+        <div class="tag">#agent <span class="c">54</span></div>
+        <div class="tag">#mcp <span class="c">42</span></div>
+        <div class="tag">#harness <span class="c">38</span></div>
+        <div class="tag">#local <span class="c">35</span></div>
+        <div class="tag">#paper <span class="c">41</span></div>
+        <div class="tag">#tutorial <span class="c">34</span></div>
+        <div class="tag">#security <span class="c">12</span></div>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <div class="right-title" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>Sources</span>
+        <a href="#" style="text-transform:none; letter-spacing:0; color:var(--accent); font-size:11px; font-weight:500;">Status →</a>
+      </div>
+      <div style="font-size:12px; color:var(--text-2); line-height:1.5;">
+        10 ソース稼働中・全て <span style="color:var(--success); font-weight:600;">healthy</span>
+      </div>
+      <div style="font-size:11px; color:var(--muted-2); margin-top:6px; font-family:ui-monospace,monospace;">
+        詳細は <a href="#" style="color:var(--accent);">/_status</a> ページ
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- FOOTER STATUS BAR -->
+<div class="footer-bar">
+  <div class="footer-inner">
+    <div class="item"><span class="dot"></span>Harness <strong>healthy</strong></div>
+    <div class="item">Last run <strong>2 min ago</strong></div>
+    <div class="item">Next run <strong>in 3h 58m</strong></div>
+    <div class="item">Run #<strong>1,847</strong></div>
+    <div class="spacer"></div>
+    <div class="item">Claude Opus <strong>4.7 · 1M</strong></div>
+    <div class="item">v0.4.2 <strong>build 3a1f</strong></div>
+  </div>
+</div>
+
+</body>
+</html>

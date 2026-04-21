@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Category: Claude — AI Dashboard</title>
+<style>
+  :root {
+    --bg: #1c1a17;
+    --bg-2: #252220;
+    --surface: #2d2a26;
+    --surface-2: #36322e;
+    --border: #403b36;
+    --border-strong: #524c46;
+    --text: #f5f5f4;
+    --text-2: #e7e5e4;
+    --muted: #b8b2ac;
+    --muted-2: #8a847e;
+    --accent: #5eead4;
+    --accent-2: #2dd4bf;
+    --accent-bg: #1a5f5a;
+    --accent-bg-2: #0f3f3c;
+    --important: #fbbf24;
+    --claude: #fbbf24;
+    --claude-bg: rgba(251,191,36,0.14);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background:
+      radial-gradient(ellipse 800px 400px at 20% -10%, rgba(251,191,36,0.06), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font: 14.5px/1.55 ui-sans-serif, system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    max-width: 1440px; margin: 0 auto;
+    padding: 14px 28px;
+    display: flex; align-items: center; gap: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { font-weight: 700; font-size: 15px; color: var(--text); }
+  .crumb { color: var(--muted); font-size: 12px; }
+  .crumb a { color: var(--muted); text-decoration: none; }
+  .crumb a:hover { color: var(--text); }
+  .crumb .sep { margin: 0 8px; color: var(--muted-2); }
+
+  /* Layout */
+  .layout {
+    max-width: 1440px; margin: 0 auto;
+    padding: 24px 28px 60px;
+    display: grid; grid-template-columns: 240px 1fr;
+    gap: 28px;
+  }
+
+  /* Left sidebar (simplified) */
+  .side { position: sticky; top: 20px; align-self: start; }
+  .side-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .side-title { font-size: 11px; color: var(--muted); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+  .side-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 5px 8px; border-radius: 7px;
+    cursor: pointer; color: var(--text-2); font-size: 12.5px;
+    margin-bottom: 1px;
+  }
+  .side-item:hover { background: var(--surface-2); }
+  .side-item.active { background: var(--accent-bg-2); color: var(--accent); font-weight: 500; }
+  .side-group-label {
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted-2); font-weight: 600;
+    padding: 8px 8px 3px;
+    margin-top: 2px;
+  }
+  .side-group-label:first-of-type { margin-top: 0; }
+  .side-item .tile {
+    width: 20px; height: 20px; border-radius: 5px;
+    display: grid; place-items: center; flex-shrink: 0;
+    font-size: 9px; font-weight: 700;
+  }
+  .side-item .name { flex: 1; }
+  .side-item .spark {
+    width: 26px; height: 9px;
+    display: flex; align-items: flex-end; gap: 1px;
+    flex-shrink: 0;
+    opacity: 0.45;
+  }
+  .side-item:hover .spark { opacity: 0.75; }
+  .side-item.active .spark { opacity: 0.9; }
+  .side-item .spark i {
+    flex: 1;
+    border-radius: 0.5px;
+    min-height: 1px;
+    background: var(--muted-2);
+  }
+  .side-item.active .spark i { background: var(--claude); }
+  .side-item .count { color: var(--muted-2); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .t-copilot { background: rgba(94,234,212,0.14); color: #5eead4; }
+  .t-claude  { background: rgba(251,191,36,0.14); color: #fbbf24; }
+  .t-codex   { background: rgba(147,197,253,0.16); color: #93c5fd; }
+  .t-gemini  { background: rgba(96,165,250,0.16); color: #60a5fa; }
+  .t-vscode  { background: rgba(99,162,255,0.16); color: #63a2ff; }
+  .t-cursor  { background: rgba(148,163,184,0.18); color: #cbd5e1; }
+  .t-cline   { background: rgba(196,181,253,0.16); color: #c4b5fd; }
+  .t-aider   { background: rgba(163,161,106,0.18); color: #d6d3a1; }
+  .t-opencode{ background: rgba(165,180,252,0.16); color: #a5b4fc; }
+  .t-local   { background: rgba(248,113,113,0.14); color: #f87171; }
+  .t-agentfw { background: rgba(52,211,153,0.14); color: #34d399; }
+  .t-mcp     { background: rgba(244,114,182,0.14); color: #f472b6; }
+  .t-research{ background: rgba(253,164,175,0.14); color: #fda4af; }
+
+  /* Main */
+  .main { min-width: 0; }
+
+  /* Category Header */
+  .cat-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 26px;
+    margin-bottom: 22px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px; align-items: center;
+  }
+  .cat-hero .big-tile {
+    width: 56px; height: 56px; border-radius: 14px;
+    display: grid; place-items: center;
+    background: var(--claude-bg); color: var(--claude);
+  }
+  .cat-hero .big-tile svg { width: 30px; height: 30px; }
+  .cat-hero h1 {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .cat-hero .meta {
+    font-size: 12px; color: var(--muted);
+    display: flex; gap: 14px; flex-wrap: wrap;
+  }
+  .cat-hero .meta strong { color: var(--text-2); font-weight: 600; }
+  .cat-hero .rss {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border: 1px solid var(--border-strong);
+    border-radius: 8px; color: var(--text-2);
+    font-size: 12px; text-decoration: none;
+    background: var(--bg-2);
+  }
+  .cat-hero .rss:hover { border-color: var(--claude); color: var(--claude); }
+
+  /* Trend panel */
+  .trend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 26px 18px;
+    margin-bottom: 22px;
+  }
+  .trend-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 14px;
+    flex-wrap: wrap; gap: 10px;
+  }
+  .trend-title {
+    font-size: 13px; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .trend-title .range-pill {
+    font-size: 11px; font-weight: 500; color: var(--muted);
+    padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px;
+  }
+  .trend-kpis {
+    display: flex; gap: 22px; font-size: 11px; color: var(--muted);
+  }
+  .trend-kpis .v { color: var(--text); font-weight: 700;
+    font-size: 13px; font-variant-numeric: tabular-nums; }
+  .trend-kpis .up { color: #4ade80; margin-left: 4px; font-size: 11px; }
+  .trend-kpis .down { color: #f87171; margin-left: 4px; font-size: 11px; }
+  .trend-range {
+    display: inline-flex; background: var(--bg-2);
+    border: 1px solid var(--border); border-radius: 7px;
+    padding: 2px; font-size: 11px;
+  }
+  .trend-range span {
+    padding: 3px 10px; cursor: pointer; border-radius: 5px;
+    color: var(--muted);
+  }
+  .trend-range span.active { background: var(--surface-2); color: var(--text); }
+
+  /* Stacked bar chart */
+  .chart-wrap { position: relative; }
+  .chart {
+    display: flex; align-items: flex-end; gap: 3px;
+    height: 120px;
+    padding-top: 18px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .chart .bar {
+    flex: 1; display: flex; flex-direction: column-reverse;
+    min-width: 0; cursor: pointer;
+    border-radius: 3px 3px 0 0;
+    overflow: hidden;
+    background: transparent;
+    transition: opacity 0.15s;
+  }
+  .chart .bar:hover { opacity: 0.75; }
+  .chart .bar .seg {
+    width: 100%;
+    transition: height 0.2s;
+  }
+  /* Sub-category colors for Claude (examples: news, engineering, releases) */
+  .chart .bar .seg.s-news        { background: #fbbf24; }
+  .chart .bar .seg.s-engineering { background: #d97706; }
+  .chart .bar .seg.s-releases    { background: #f59e0b; opacity: 0.8; }
+  .chart .bar .seg.s-papers      { background: rgba(251,191,36,0.5); }
+  /* muted (past days, >7d ago): desaturate */
+  .chart .bar.past .seg          { opacity: 0.35; filter: saturate(0.5); }
+
+  /* X-axis labels */
+  .x-axis {
+    display: flex; justify-content: space-between;
+    margin-top: 6px;
+    font-size: 9.5px; color: var(--muted-2);
+    font-family: ui-monospace, monospace;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex; gap: 16px; margin-top: 14px;
+    font-size: 11px; color: var(--muted);
+    flex-wrap: wrap;
+  }
+  .legend .sw {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 2px; margin-right: 6px; vertical-align: middle;
+  }
+  .legend .sw.s-news        { background: #fbbf24; }
+  .legend .sw.s-engineering { background: #d97706; }
+  .legend .sw.s-releases    { background: #f59e0b; opacity: 0.8; }
+  .legend .sw.s-papers      { background: rgba(251,191,36,0.5); }
+  .legend .dim {
+    border-left: 1px solid var(--border); padding-left: 16px;
+    color: var(--muted-2);
+  }
+
+  /* hover tooltip */
+  .bar .tip {
+    position: absolute;
+    background: var(--surface-2); border: 1px solid var(--border-strong);
+    color: var(--text); font-size: 11px;
+    padding: 6px 8px; border-radius: 6px;
+    white-space: nowrap; pointer-events: none;
+    transform: translate(-50%, -100%);
+    opacity: 0; transition: opacity 0.1s;
+  }
+
+  /* Section header (for timeline) */
+  .section-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin: 24px 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--claude);
+  }
+  .section-header h2 {
+    font-size: 15px; font-weight: 700;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-header h2 .count {
+    background: var(--claude-bg); color: var(--claude);
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 10.5px; font-weight: 600;
+  }
+  .section-header .sort {
+    display: flex; gap: 2px; padding: 2px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 11px;
+  }
+  .section-header .sort span {
+    padding: 3px 10px; border-radius: 4px; cursor: pointer; color: var(--muted);
+  }
+  .section-header .sort span.active { background: var(--surface-2); color: var(--text); }
+
+  /* Favicons */
+  .favicon {
+    display: inline-grid; place-items: center;
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    font-family: ui-sans-serif, system-ui;
+    font-size: 9px; font-weight: 700;
+    color: #0a0908;
+    flex-shrink: 0;
+    letter-spacing: -0.02em;
+  }
+  .fv-anthropic { background: #d97706; color: #fef3c7; }
+  .fv-github    { background: #e5e7eb; color: #111; }
+  .fv-openai    { background: #10a37f; color: #fff; }
+  .fv-arxiv     { background: #b91c1c; color: #fff; }
+
+  /* NEW badge */
+  .new-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 1px 6px;
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em;
+    background: var(--accent);
+    color: #0a0908;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+  .new-badge::before {
+    content: ""; width: 4px; height: 4px; border-radius: 50%;
+    background: #0a0908;
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 18px 14px 20px;
+    margin-bottom: 8px;
+    position: relative;
+    transition: border-color 0.12s;
+    cursor: pointer;
+  }
+  .card:hover { border-color: var(--border-strong); }
+  .card.important::before {
+    content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px;
+    background: var(--important); border-radius: 3px;
+  }
+  .card.has-thumb {
+    display: grid;
+    grid-template-columns: 1fr 144px;
+    gap: 16px;
+    padding: 12px 16px 12px 20px;
+  }
+  .card-body { min-width: 0; }
+  .card-thumb {
+    width: 144px; height: 96px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card-thumb.fallback { display: grid; place-items: center; }
+  .card-thumb.fallback svg { width: 42%; height: 42%; }
+  .card-thumb .src-mark {
+    position: absolute; bottom: 4px; left: 4px;
+    background: rgba(10,9,8,0.75);
+    color: var(--muted);
+    font-family: ui-monospace, monospace;
+    font-size: 9px;
+    padding: 1px 5px; border-radius: 3px;
+  }
+  .card .meta {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--muted);
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .card .meta .mono { font-family: ui-monospace, monospace; }
+  .card .meta .spacer { flex: 1; }
+  .badge {
+    padding: 1px 7px; border-radius: 4px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    font-size: 10.5px; color: var(--text-2);
+    font-weight: 500;
+  }
+  .badge.release { background: var(--accent-bg-2); border-color: var(--accent-bg); color: var(--accent); }
+  .badge.paper { background: rgba(253,164,175,0.1); border-color: rgba(253,164,175,0.2); color: #fda4af; }
+  .badge.tutorial { background: rgba(147,197,253,0.1); border-color: rgba(147,197,253,0.2); color: #93c5fd; }
+  .card .title {
+    font-size: 15px; font-weight: 600; line-height: 1.45;
+    margin-bottom: 4px;
+  }
+  .card .summary {
+    font-size: 13px; color: var(--text-2); line-height: 1.55;
+    margin-bottom: 8px;
+  }
+  .card .url {
+    font-family: ui-monospace, monospace;
+    font-size: 11px; color: var(--muted-2);
+  }
+  .card .url .arrow { margin-left: 6px; color: var(--muted); }
+
+  /* Day separator inside timeline */
+  .day-header {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--muted); font-weight: 600;
+    margin: 18px 0 10px;
+    padding-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .day-header::after {
+    content: ""; flex: 1; height: 1px; background: var(--border);
+  }
+  .day-header .day-count {
+    font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted-2); letter-spacing: 0;
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">AI Dashboard</div>
+  <nav class="crumb">
+    <a href="#">Home</a>
+    <span class="sep">›</span>
+    <a href="#">Categories</a>
+    <span class="sep">›</span>
+    <span style="color: var(--text-2);">Claude</span>
+  </nav>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR (abbreviated) -->
+  <aside class="side">
+    <div class="side-card">
+      <div class="side-title">Categories</div>
+      <div class="side-group-label">Coding Agents</div>
+      <div class="side-item c-copilot"><span class="tile t-copilot">Co</span><span class="name">Copilot</span><span class="spark"><i style="height:30%"></i><i style="height:50%"></i><i style="height:25%"></i><i style="height:60%"></i><i style="height:45%"></i><i style="height:75%"></i><i style="height:90%"></i></span><span class="count">28</span></div>
+      <div class="side-item active c-claude"><span class="tile t-claude">Cl</span><span class="name">Claude</span><span class="spark"><i style="height:25%"></i><i style="height:40%"></i><i style="height:80%"></i><i style="height:30%"></i><i style="height:65%"></i><i style="height:70%"></i><i style="height:85%"></i></span><span class="count">24</span></div>
+      <div class="side-item c-codex"><span class="tile t-codex">Cx</span><span class="name">Codex</span><span class="spark"><i style="height:15%"></i><i style="height:25%"></i><i style="height:20%"></i><i style="height:40%"></i><i style="height:15%"></i><i style="height:30%"></i><i style="height:50%"></i></span><span class="count">15</span></div>
+      <div class="side-item c-gemini"><span class="tile t-gemini">Gm</span><span class="name">Gemini</span><span class="spark"><i style="height:20%"></i><i style="height:35%"></i><i style="height:55%"></i><i style="height:30%"></i><i style="height:50%"></i><i style="height:60%"></i><i style="height:70%"></i></span><span class="count">18</span></div>
+      <div class="side-item c-cursor"><span class="tile t-cursor">Cu</span><span class="name">Cursor</span><span class="spark"><i style="height:30%"></i><i style="height:40%"></i><i style="height:25%"></i><i style="height:55%"></i><i style="height:45%"></i><i style="height:60%"></i><i style="height:80%"></i></span><span class="count">14</span></div>
+      <div class="side-item c-cline"><span class="tile t-cline">Cn</span><span class="name">Cline / Roo</span><span class="spark"><i style="height:20%"></i><i style="height:30%"></i><i style="height:15%"></i><i style="height:40%"></i><i style="height:25%"></i><i style="height:45%"></i><i style="height:55%"></i></span><span class="count">9</span></div>
+      <div class="side-item c-aider"><span class="tile t-aider">Ai</span><span class="name">Aider</span><span class="spark"><i style="height:15%"></i><i style="height:20%"></i><i style="height:10%"></i><i style="height:30%"></i><i style="height:25%"></i><i style="height:35%"></i><i style="height:40%"></i></span><span class="count">6</span></div>
+      <div class="side-item c-opencode"><span class="tile t-opencode">Oc</span><span class="name">OpenCode</span><span class="spark"><i style="height:15%"></i><i style="height:20%"></i><i style="height:10%"></i><i style="height:25%"></i><i style="height:15%"></i><i style="height:20%"></i><i style="height:30%"></i></span><span class="count">8</span></div>
+
+      <div class="side-group-label">Platforms & Runtime</div>
+      <div class="side-item c-vscode"><span class="tile t-vscode">Vs</span><span class="name">VSCode</span><span class="spark"><i style="height:20%"></i><i style="height:35%"></i><i style="height:30%"></i><i style="height:55%"></i><i style="height:40%"></i><i style="height:65%"></i><i style="height:75%"></i></span><span class="count">16</span></div>
+      <div class="side-item c-local"><span class="tile t-local">Lo</span><span class="name">Local LLM</span><span class="spark"><i style="height:60%"></i><i style="height:80%"></i><i style="height:55%"></i><i style="height:90%"></i><i style="height:75%"></i><i style="height:100%"></i><i style="height:95%"></i></span><span class="count">32</span></div>
+
+      <div class="side-group-label">Ecosystem</div>
+      <div class="side-item c-agentfw"><span class="tile t-agentfw">Af</span><span class="name">Agent FW</span><span class="spark"><i style="height:25%"></i><i style="height:35%"></i><i style="height:20%"></i><i style="height:50%"></i><i style="height:40%"></i><i style="height:55%"></i><i style="height:65%"></i></span><span class="count">12</span></div>
+      <div class="side-item c-mcp"><span class="tile t-mcp">Mc</span><span class="name">MCP</span><span class="spark"><i style="height:40%"></i><i style="height:55%"></i><i style="height:35%"></i><i style="height:70%"></i><i style="height:50%"></i><i style="height:75%"></i><i style="height:85%"></i></span><span class="count">10</span></div>
+
+      <div class="side-group-label">Research</div>
+      <div class="side-item c-research"><span class="tile t-research">Rs</span><span class="name">Research</span><span class="spark"><i style="height:70%"></i><i style="height:85%"></i><i style="height:65%"></i><i style="height:95%"></i><i style="height:80%"></i><i style="height:90%"></i><i style="height:100%"></i></span><span class="count">42</span></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- CATEGORY HERO -->
+    <section class="cat-hero">
+      <div class="big-tile">
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <path d="M12 2l2.2 5.8L20 10l-5.8 2.2L12 18l-2.2-5.8L4 10l5.8-2.2z"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Claude</h1>
+        <div class="meta">
+          <span><strong>38</strong> articles total</span>
+          <span><strong>9</strong> in last 7 days</span>
+          <span style="color: #4ade80;">▲ 12% vs prev 7d</span>
+        </div>
+      </div>
+      <a href="#" class="rss">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/>
+        </svg>
+        このカテゴリを RSS 購読
+      </a>
+    </section>
+
+    <!-- TREND PANEL -->
+    <section class="trend">
+      <div class="trend-head">
+        <div class="trend-title">
+          Trend
+          <span class="range-pill">Last 30 days</span>
+        </div>
+        <div class="trend-kpis">
+          <span>This week <span class="v">9</span><span class="up">+12%</span></span>
+          <span>Last week <span class="v">8</span></span>
+          <span>Daily avg <span class="v">1.3</span></span>
+          <span>Peak <span class="v">4</span> (Apr 16)</span>
+        </div>
+        <div class="trend-range">
+          <span>7d</span>
+          <span class="active">30d</span>
+          <span>90d</span>
+        </div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart">
+          <div class="bar past"><div class="seg s-news" style="height: 25%"></div></div>
+          <div class="bar past"><div class="seg s-news" style="height: 0%"></div></div>
+          <div class="bar past">
+            <div class="seg s-engineering" style="height: 25%"></div>
+            <div class="seg s-news" style="height: 25%"></div>
+          </div>
+          <div class="bar past"><div class="seg s-news" style="height: 25%"></div></div>
+          <div class="bar past"><div class="seg s-news" style="height: 0%"></div></div>
+          <div class="bar past">
+            <div class="seg s-releases" style="height: 25%"></div>
+            <div class="seg s-news" style="height: 25%"></div>
+          </div>
+          <div class="bar past"><div class="seg s-news" style="height: 25%"></div></div>
+          <div class="bar past"><div class="seg s-engineering" style="height: 50%"></div></div>
+          <div class="bar past"><div class="seg s-news" style="height: 0%"></div></div>
+          <div class="bar past">
+            <div class="seg s-papers" style="height: 25%"></div>
+            <div class="seg s-news" style="height: 25%"></div>
+          </div>
+          <div class="bar past"><div class="seg s-news" style="height: 25%"></div></div>
+          <div class="bar past">
+            <div class="seg s-releases" style="height: 50%"></div>
+            <div class="seg s-news" style="height: 25%"></div>
+          </div>
+          <div class="bar past"><div class="seg s-news" style="height: 0%"></div></div>
+          <div class="bar past"><div class="seg s-news" style="height: 25%"></div></div>
+          <div class="bar past">
+            <div class="seg s-engineering" style="height: 25%"></div>
+            <div class="seg s-news" style="height: 25%"></div>
+          </div>
+          <div class="bar past"><div class="seg s-news" style="height: 25%"></div></div>
+          <div class="bar past"><div class="seg s-news" style="height: 0%"></div></div>
+          <div class="bar past">
+            <div class="seg s-papers" style="height: 25%"></div>
+            <div class="seg s-news" style="height: 25%"></div>
+          </div>
+          <div class="bar past"><div class="seg s-news" style="height: 25%"></div></div>
+          <div class="bar past"><div class="seg s-news" style="height: 25%"></div></div>
+          <div class="bar past"><div class="seg s-engineering" style="height: 50%"></div></div>
+          <div class="bar past"><div class="seg s-news" style="height: 0%"></div></div>
+          <div class="bar past"><div class="seg s-news" style="height: 25%"></div></div>
+          <div class="bar"><div class="seg s-news" style="height: 25%"></div></div>
+          <div class="bar">
+            <div class="seg s-engineering" style="height: 25%"></div>
+            <div class="seg s-news" style="height: 25%"></div>
+          </div>
+          <div class="bar">
+            <div class="seg s-releases" style="height: 50%"></div>
+            <div class="seg s-engineering" style="height: 25%"></div>
+            <div class="seg s-news" style="height: 25%"></div>
+          </div>
+          <div class="bar"><div class="seg s-news" style="height: 25%"></div></div>
+          <div class="bar">
+            <div class="seg s-papers" style="height: 50%"></div>
+            <div class="seg s-news" style="height: 25%"></div>
+          </div>
+          <div class="bar">
+            <div class="seg s-engineering" style="height: 50%"></div>
+            <div class="seg s-news" style="height: 25%"></div>
+          </div>
+          <div class="bar">
+            <div class="seg s-releases" style="height: 50%"></div>
+            <div class="seg s-news" style="height: 25%"></div>
+          </div>
+        </div>
+        <div class="x-axis">
+          <span>Mar 21</span>
+          <span>Mar 28</span>
+          <span>Apr 4</span>
+          <span>Apr 11</span>
+          <span style="color: var(--claude);">Apr 19 ↑today</span>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span><span class="sw s-news"></span>Anthropic News (14)</span>
+        <span><span class="sw s-engineering"></span>Engineering Blog (11)</span>
+        <span><span class="sw s-releases"></span>Model Releases (8)</span>
+        <span><span class="sw s-papers"></span>Research Papers (5)</span>
+        <span class="dim">直近 7 日間は vivid、それ以前は薄色で表示</span>
+      </div>
+    </section>
+
+    <!-- TIMELINE -->
+    <div class="section-header">
+      <h2>All articles <span class="count">38 total</span></h2>
+      <div class="sort">
+        <span class="active">新着順</span>
+        <span>重要度順</span>
+        <span>スコア順</span>
+      </div>
+    </div>
+
+    <div class="day-header">
+      Today <span class="day-count">2026-04-19 · 3 entries</span>
+    </div>
+
+    <!-- Card 1: release with OG thumb -->
+    <div class="card has-thumb important">
+      <div class="card-body">
+        <div class="meta">
+          <span class="new-badge">NEW</span>
+          <span class="badge release">release</span>
+          <span class="badge">claude</span>
+          <span class="spacer"></span>
+          <span class="mono">2h</span>
+          <span>·</span>
+          <span class="favicon fv-anthropic">A</span>
+          <span>Anthropic News</span>
+        </div>
+        <div class="title">Claude Opus 4.7 リリース — 長期推論タスクで大幅改善</div>
+        <div class="summary">SWE-bench Verified で 82.3%、30 分超の連続エージェントタスクで成功率が 2.1 倍。Extended thinking の内部プロセスが可視化可能に。</div>
+        <div class="url">anthropic.com/news/claude-opus-4-7<span class="arrow">→</span></div>
+      </div>
+      <div class="card-thumb">
+        <svg viewBox="0 0 144 96" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="fg1" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#78350f"/>
+              <stop offset="1" stop-color="#451a03"/>
+            </linearGradient>
+          </defs>
+          <rect width="144" height="96" fill="url(#fg1)"/>
+          <g transform="translate(72,48)" fill="#fbbf24">
+            <path d="M0 -26 L6 -8 L24 -8 L9 4 L15 22 L0 10 L-15 22 L-9 4 L-24 -8 L-6 -8 Z" opacity="0.95"/>
+          </g>
+          <g font-family="ui-sans-serif" fill="#fde68a" opacity="0.85">
+            <text x="8" y="88" font-size="8" font-weight="700">CLAUDE OPUS 4.7</text>
+          </g>
+        </svg>
+        <span class="src-mark">og</span>
+      </div>
+    </div>
+
+    <!-- Card 2: engineering blog with code-themed thumb -->
+    <div class="card has-thumb">
+      <div class="card-body">
+        <div class="meta">
+          <span class="new-badge">NEW</span>
+          <span class="badge tutorial">blog</span>
+          <span class="badge">claude</span>
+          <span class="spacer"></span>
+          <span class="mono">5h</span>
+          <span>·</span>
+          <span class="favicon fv-anthropic">A</span>
+          <span>Anthropic Engineering</span>
+        </div>
+        <div class="title">Harness Design 2026-03: What changed and why</div>
+        <div class="summary">Context engineering の Reduce / Offload / Isolate を深掘り。Sub-agent の境界設計、Memory tier の使い分け、failure-mode の回避パターンを実例で解説。</div>
+        <div class="url">anthropic.com/engineering/harness-design-2026-03<span class="arrow">→</span></div>
+      </div>
+      <div class="card-thumb">
+        <svg viewBox="0 0 144 96" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="fg2" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#292524"/>
+              <stop offset="1" stop-color="#1c1917"/>
+            </linearGradient>
+          </defs>
+          <rect width="144" height="96" fill="url(#fg2)"/>
+          <g font-family="ui-monospace, monospace" fill="#fbbf24" font-size="8" opacity="0.9">
+            <text x="10" y="20">harness.config</text>
+            <text x="10" y="34" opacity="0.7" fill="#fde68a">  reduce: true</text>
+            <text x="10" y="46" opacity="0.7" fill="#fde68a">  offload: mem</text>
+            <text x="10" y="58" opacity="0.7" fill="#fde68a">  isolate: ctx</text>
+            <text x="10" y="76" fill="#a7f3d0">OK compiled</text>
+          </g>
+          <rect x="72" y="72" width="6" height="2" fill="#fbbf24" opacity="0.8"/>
+        </svg>
+        <span class="src-mark">og</span>
+      </div>
+    </div>
+
+    <!-- Card 3: release with fallback thumb (no image) -->
+    <div class="card has-thumb">
+      <div class="card-body">
+        <div class="meta">
+          <span class="badge release">release</span>
+          <span class="badge">claude</span>
+          <span class="spacer"></span>
+          <span class="mono">18h</span>
+          <span>·</span>
+          <span class="favicon fv-anthropic">A</span>
+          <span>Anthropic News</span>
+        </div>
+        <div class="title">Claude Code 2.0 announced — MCP-first architecture</div>
+        <div class="summary">ツール呼び出しを MCP プロトコルに統一、ローカル権限モデルを再設計。Hook 機能の API 化、subagent 間の message passing を標準化。</div>
+        <div class="url">anthropic.com/news/claude-code-2-0<span class="arrow">→</span></div>
+      </div>
+      <div class="card-thumb fallback" style="background: linear-gradient(135deg, #2d2a26, #36322e);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 18 22 12 16 6"/>
+          <polyline points="8 6 2 12 8 18"/>
+        </svg>
+        <span class="src-mark">fallback</span>
+      </div>
+    </div>
+
+    <!-- Yesterday group -->
+    <div class="day-header">
+      Yesterday <span class="day-count">2026-04-18 · 2 entries</span>
+    </div>
+
+    <!-- Card 4: paper with fallback (arXiv has no image) -->
+    <div class="card has-thumb">
+      <div class="card-body">
+        <div class="meta">
+          <span class="badge paper">paper</span>
+          <span class="badge">claude</span>
+          <span class="spacer"></span>
+          <span class="mono">1d</span>
+          <span>·</span>
+          <span class="favicon fv-arxiv">aX</span>
+          <span>arXiv cs.CL</span>
+        </div>
+        <div class="title">Constitutional AI at Scale: Lessons from Claude 4 deployment</div>
+        <div class="summary">300M+ daily requests 環境での Constitutional AI の挙動を実証分析。RLHF との hybrid 学習戦略が inference 時の alignment drift を 37% 低減。</div>
+        <div class="url">arxiv.org/abs/2604.xxxxx<span class="arrow">→</span></div>
+      </div>
+      <div class="card-thumb fallback" style="background: linear-gradient(135deg, #2d2a26, #36322e);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fda4af" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 3v6l-5 9a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9V3"/>
+          <line x1="8" y1="3" x2="16" y2="3"/>
+          <line x1="7" y1="14" x2="17" y2="14"/>
+        </svg>
+        <span class="src-mark">fallback</span>
+      </div>
+    </div>
+
+    <!-- Card 5: tutorial with OG -->
+    <div class="card has-thumb">
+      <div class="card-body">
+        <div class="meta">
+          <span class="badge tutorial">tutorial</span>
+          <span class="badge">claude</span>
+          <span class="spacer"></span>
+          <span class="mono">1d</span>
+          <span>·</span>
+          <span class="favicon fv-github">Gh</span>
+          <span>GitHub Blog</span>
+        </div>
+        <div class="title">Claude Code を monorepo で活用するベストプラクティス</div>
+        <div class="summary">パッケージ境界を跨ぐリファクタ時の context 設計、sub-agent による並列テスト実行、CODEOWNERS との連携パターン。</div>
+        <div class="url">github.blog/2026/claude-code-monorepo<span class="arrow">→</span></div>
+      </div>
+      <div class="card-thumb">
+        <svg viewBox="0 0 144 96" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="fg5" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#1e293b"/>
+              <stop offset="1" stop-color="#0f172a"/>
+            </linearGradient>
+          </defs>
+          <rect width="144" height="96" fill="url(#fg5)"/>
+          <g stroke="#fbbf24" stroke-opacity="0.6" fill="none" stroke-width="1.2">
+            <rect x="20" y="26" width="22" height="16" rx="2"/>
+            <rect x="56" y="18" width="22" height="16" rx="2"/>
+            <rect x="56" y="46" width="22" height="16" rx="2"/>
+            <rect x="92" y="26" width="22" height="16" rx="2"/>
+            <line x1="42" y1="34" x2="56" y2="26"/>
+            <line x1="42" y1="34" x2="56" y2="54"/>
+            <line x1="78" y1="26" x2="92" y2="34"/>
+            <line x1="78" y1="54" x2="92" y2="34"/>
+          </g>
+          <text x="8" y="88" font-family="ui-sans-serif" font-size="8" fill="#fbbf24" font-weight="600">MONOREPO PATTERNS</text>
+        </svg>
+        <span class="src-mark">og</span>
+      </div>
+    </div>
+
+    <!-- "... load more" hint -->
+    <div style="text-align: center; margin-top: 18px; padding: 14px; color: var(--muted-2); font-size: 12px; border: 1px dashed var(--border); border-radius: 10px;">
+      残り 33 件 · 下にスクロールで追加読み込み
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

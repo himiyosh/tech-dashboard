@@ -1,0 +1,103 @@
+---
+/**
+ * CategoryHero — big tile + name + KPI + RSS subscribe link.
+ * Mirrors mockup-F §Category Hero.
+ */
+import { weekOverWeek, type Category } from "../lib/data.ts";
+
+export interface Props {
+  slug: Category;
+  name: string;
+  color: string;
+  initial: string;
+  totalCount: number;
+}
+
+const { slug, name, color, initial, totalCount } = Astro.props;
+const wow = weekOverWeek(slug);
+
+const deltaColor =
+  wow.deltaPct > 0 ? "#4ade80" : wow.deltaPct < 0 ? "#f87171" : "var(--muted)";
+const deltaSign = wow.deltaPct > 0 ? "▲" : wow.deltaPct < 0 ? "▼" : "—";
+---
+
+<section class="cat-hero" style={`--cat-color:${color};--cat-bg:${color}22`}>
+  <div class="big-tile">{initial}</div>
+  <div class="cat-info">
+    <h1>{name}</h1>
+    <div class="cat-meta">
+      <span><strong>{totalCount}</strong> articles total</span>
+      <span><strong>{wow.thisWeek}</strong> in last 7 days</span>
+      <span style={`color:${deltaColor}`}>
+        {deltaSign} {Math.abs(wow.deltaPct)}% vs prev 7d
+      </span>
+    </div>
+  </div>
+  <a class="rss" href={`/rss.xml?category=${slug}`}>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 11a9 9 0 0 1 9 9"/>
+      <path d="M4 4a16 16 0 0 1 16 16"/>
+      <circle cx="5" cy="19" r="1"/>
+    </svg>
+    RSS
+  </a>
+</section>
+
+<style>
+  .cat-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 26px;
+    margin-bottom: 22px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px;
+    align-items: center;
+  }
+  .big-tile {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: var(--cat-bg);
+    color: var(--cat-color);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .cat-info h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .cat-meta {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .cat-meta strong {
+    color: var(--text-2);
+    font-weight: 600;
+  }
+  .rss {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    color: var(--text-2);
+    font-size: 12px;
+    text-decoration: none;
+    background: var(--bg-2);
+  }
+  .rss:hover {
+    border-color: var(--cat-color);
+    color: var(--cat-color);
+  }
+</style>

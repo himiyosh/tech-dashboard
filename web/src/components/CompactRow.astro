@@ -1,0 +1,162 @@
+---
+import {
+  relativeTime,
+  isNew,
+  CATEGORY_META,
+  type NormalizedEntry,
+} from "../lib/data.ts";
+
+export interface Props {
+  entry: NormalizedEntry;
+}
+
+const { entry } = Astro.props;
+const rel = relativeTime(entry.publishedAt);
+const fresh = isNew(entry);
+
+const title = entry.titleJa || entry.titleEn || entry.title;
+const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
+const catColor = catMeta?.color ?? "#8a847e";
+
+function host(url: string): string {
+  try {
+    return new URL(url).host.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function typeLabel(t: NormalizedEntry["sourceType"]): string {
+  if (t === "release") return "REL";
+  if (t === "changelog") return "CHG";
+  if (t === "paper") return "PAP";
+  if (t === "blog") return "BLG";
+  return "COM";
+}
+---
+
+<a
+  class:list={["row", { important: entry.importance === 3 }]}
+  href={entry.url}
+  target="_blank"
+  rel="noopener"
+  style={`--cat-color:${catColor}`}
+>
+  <span class="cat-dot" title={entry.category}></span>
+  <span class="type" data-t={entry.sourceType}>{typeLabel(entry.sourceType)}</span>
+  {fresh && <span class="new">NEW</span>}
+  <span class="title">{title}</span>
+  <span class="spacer"></span>
+  <span class="src">{entry.source}</span>
+  <span class="host">{host(entry.url)}</span>
+  <span class="time">{rel}</span>
+</a>
+
+<style>
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 14px 7px 10px;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    color: var(--text-2);
+    font-size: 13px;
+    line-height: 1.3;
+    transition: background 0.12s;
+    text-decoration: none;
+    min-height: 34px;
+  }
+  .row:hover { background: var(--surface); }
+  .row.important { background: rgba(251,191,36,0.04); }
+  .row.important:hover { background: rgba(251,191,36,0.09); }
+  .cat-dot {
+    width: 8px; height: 8px; border-radius: 2px;
+    background: var(--cat-color, var(--muted));
+    flex-shrink: 0;
+  }
+  .type {
+    font-family: ui-monospace, monospace;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    min-width: 32px;
+    text-align: center;
+  }
+  .type[data-t="release"], .type[data-t="changelog"] {
+    color: var(--accent);
+    background: var(--accent-bg-2);
+    border-color: var(--accent-bg);
+  }
+  .type[data-t="paper"] {
+    color: var(--paper);
+    background: var(--paper-bg);
+    border-color: var(--paper-bg);
+  }
+  .new {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #0a0908;
+    background: var(--accent);
+    padding: 1px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .title {
+    color: var(--text);
+    font-weight: 500;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .row:hover .title { color: var(--accent); }
+  .row.important .title {
+    font-weight: 600;
+  }
+  .row.important::before {
+    content: "★";
+    color: var(--important);
+    font-size: 10px;
+    margin-right: -4px;
+  }
+  .spacer { flex: 0 1 8px; }
+  .src {
+    color: var(--muted);
+    font-size: 11px;
+    flex-shrink: 0;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .host {
+    color: var(--muted-2);
+    font-family: ui-monospace, monospace;
+    font-size: 10.5px;
+    flex-shrink: 0;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .time {
+    color: var(--muted-2);
+    font-family: ui-monospace, monospace;
+    font-size: 10.5px;
+    flex-shrink: 0;
+    min-width: 36px;
+    text-align: right;
+  }
+  @media (max-width: 860px) {
+    .src, .host { display: none; }
+  }
+</style>

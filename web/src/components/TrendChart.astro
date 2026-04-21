@@ -1,0 +1,169 @@
+---
+import {
+  trendBuckets,
+  weekOverWeek,
+  type Category,
+  type NormalizedEntry,
+} from "../lib/data.ts";
+
+export interface Props {
+  category: Category;
+  color: string;
+  days?: number;
+}
+
+const { category, color, days = 30 } = Astro.props;
+
+const buckets = trendBuckets(category, days);
+const maxTotal = Math.max(1, ...buckets.map((b) => b.total));
+const wow = weekOverWeek(category);
+
+type SourceType = NormalizedEntry["sourceType"];
+const TYPE_META: Array<{ k: SourceType; label: string; alpha: number }> = [
+  { k: "release", label: "Releases", alpha: 1.0 },
+  { k: "changelog", label: "Changelog", alpha: 0.85 },
+  { k: "blog", label: "Blog", alpha: 0.7 },
+  { k: "paper", label: "Papers", alpha: 0.55 },
+  { k: "community", label: "Community", alpha: 0.4 },
+];
+
+const totalsByType = TYPE_META.map((t) => ({
+  ...t,
+  count: buckets.reduce((s, b) => s + b.byType[t.k], 0),
+})).filter((t) => t.count > 0);
+
+const axisStride = Math.max(1, Math.floor(days / 4));
+const axisTicks = buckets
+  .map((b, i) => ({ key: b.key, i }))
+  .filter((b) => b.i % axisStride === 0 || b.i === buckets.length - 1);
+
+const pct = (n: number): number => Math.round((n / maxTotal) * 100);
+
+const formatTick = (key: string): string =>
+  new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Tokyo",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(`${key}T00:00:00+09:00`));
+
+const deltaColor =
+  wow.deltaPct > 0 ? "#4ade80" : wow.deltaPct < 0 ? "#f87171" : "var(--muted)";
+const deltaSign = wow.deltaPct > 0 ? "▲" : wow.deltaPct < 0 ? "▼" : "—";
+---
+
+<section class="trend" style={`--cat-color:${color}`}>
+  <div class="trend-head">
+    <div class="trend-title">
+      Trend
+      <span class="range-pill">Last {days} days</span>
+    </div>
+    <div class="trend-kpis">
+      <span>
+        This week <span class="v">{wow.thisWeek}</span>
+        <span class="delta" style={`color:${deltaColor}`}>
+          {deltaSign} {Math.abs(wow.deltaPct)}%
+        </span>
+      </span>
+      <span>Last week <span class="v">{wow.prevWeek}</span></span>
+      <span>Daily avg <span class="v">{wow.avgPerDay}</span></span>
+      {wow.peak && wow.peak.count > 0 && (
+        <span>Peak <span class="v">{wow.peak.count}</span></span>
+      )}
+    </div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart">
+      {buckets.map((b, i) => (
+        <div
+          class:list={["bar", { past: i < buckets.length - 7 }]}
+          title={`${b.key}: ${b.total}`}
+        >
+          {TYPE_META.filter((t) => b.byType[t.k] > 0).map((t) => (
+            <div
+              class="seg"
+              style={`height:${pct(b.byType[t.k])}%;background:${color};opacity:${t.alpha}`}
+            ></div>
+          ))}
+        </div>
+      ))}
+    </div>
+    <div class="x-axis">
+      {axisTicks.map((t, idx) => (
+        <span class:list={[{ today: idx === axisTicks.length - 1 }]}>
+          {formatTick(t.key)}{idx === axisTicks.length - 1 ? " ↑today" : ""}
+        </span>
+      ))}
+    </div>
+  </div>
+
+  <div class="legend">
+    {totalsByType.map((t) => (
+      <span>
+        <span class="sw" style={`background:${color};opacity:${t.alpha}`}></span>
+        {t.label} ({t.count})
+      </span>
+    ))}
+    <span class="dim">直近 7 日間は vivid、それ以前は薄色で表示</span>
+  </div>
+</section>
+
+<style>
+  .trend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 26px 18px;
+    margin-bottom: 22px;
+  }
+  .trend-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+  }
+  .trend-title {
+    font-size: 13px; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .trend-title .range-pill {
+    font-size: 11px; font-weight: 500; color: var(--muted);
+    padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px;
+  }
+  .trend-kpis {
+    display: flex; gap: 22px; font-size: 11px; color: var(--muted); flex-wrap: wrap;
+  }
+  .trend-kpis .v {
+    color: var(--text); font-weight: 700; font-size: 13px;
+    font-variant-numeric: tabular-nums; margin-left: 4px;
+  }
+  .trend-kpis .delta { margin-left: 4px; font-size: 11px; }
+  .chart-wrap { position: relative; }
+  .chart {
+    display: flex; align-items: flex-end; gap: 3px; height: 120px;
+    padding-top: 18px; border-bottom: 1px solid var(--border);
+  }
+  .chart .bar {
+    flex: 1; display: flex; flex-direction: column-reverse; min-width: 0;
+    height: 100%;
+    border-radius: 3px 3px 0 0; overflow: hidden; background: transparent;
+    transition: opacity 0.15s;
+  }
+  .chart .bar:hover { opacity: 0.75; }
+  .chart .bar.past .seg { opacity: 0.35 !important; filter: saturate(0.5); }
+  .chart .bar .seg { width: 100%; transition: height 0.2s; min-height: 1px; }
+  .x-axis {
+    display: flex; justify-content: space-between; margin-top: 6px;
+    font-size: 9.5px; color: var(--muted-2); font-family: ui-monospace, monospace;
+  }
+  .x-axis .today { color: var(--cat-color, var(--accent)); }
+  .legend {
+    display: flex; gap: 16px; margin-top: 14px; font-size: 11px;
+    color: var(--muted); flex-wrap: wrap;
+  }
+  .legend .sw {
+    display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+    margin-right: 6px; vertical-align: middle;
+  }
+  .legend .dim {
+    border-left: 1px solid var(--border); padding-left: 16px; color: var(--muted-2);
+  }
+</style>

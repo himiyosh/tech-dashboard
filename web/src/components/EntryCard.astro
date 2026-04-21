@@ -1,0 +1,122 @@
+---
+import {
+  relativeTime,
+  isNew,
+  CATEGORY_META,
+  summaryForLang,
+  titleForLang,
+  type NormalizedEntry,
+} from "../lib/data.ts";
+
+export interface Props {
+  entry: NormalizedEntry;
+}
+
+const { entry } = Astro.props;
+const rel = relativeTime(entry.publishedAt);
+const fresh = isNew(entry);
+
+function badgeClass(t: NormalizedEntry["sourceType"]): string {
+  if (t === "release" || t === "changelog") return "badge release";
+  if (t === "paper") return "badge paper";
+  return "badge";
+}
+
+function host(url: string): string {
+  try {
+    return new URL(url).host.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+const summaryJa = summaryForLang(entry, "ja");
+const summaryEn = summaryForLang(entry, "en");
+const titleJa = titleForLang(entry, "ja");
+const titleEn = titleForLang(entry, "en");
+
+const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
+const catColor = catMeta?.color ?? "#8a847e";
+const catInitial = catMeta?.initial ?? "??";
+
+const img = entry.image;
+const hasUsableImage =
+  !!img && typeof img.src === "string" && img.src.length > 0;
+const thumbMark = hasUsableImage ? img!.source : "fallback";
+---
+
+<article
+  class:list={["card", "has-thumb", { important: entry.importance === 3 }]}
+  data-pagefind-body
+  style={`--cat-color:${catColor}`}
+>
+  <div class="card-body">
+    <div class="meta">
+      {fresh && <span class="badge new">NEW</span>}
+      <span class={badgeClass(entry.sourceType)}>{entry.sourceType}</span>
+      <span class="badge cat">{entry.category}</span>
+      <span class="spacer"></span>
+      <span class="mono">{rel}</span>
+      <span>·</span>
+      <span>{entry.source}</span>
+    </div>
+    <h3 class="title">
+      <a href={entry.url} target="_blank" rel="noopener">
+        <span class="i18n-ja">{titleJa}</span>
+        <span class="i18n-en" lang="en">{titleEn}</span>
+      </a>
+    </h3>
+    {(summaryJa || summaryEn) && (
+      <div class="summary-stack">
+        {summaryJa && (
+          <p class="summary summary-ja i18n-ja" title={summaryJa}>
+            <span class="ai-mark">AI要約</span>
+            <span class="s-text">{summaryJa}</span>
+          </p>
+        )}
+        {summaryEn && (
+          <p class="summary summary-en i18n-en" title={summaryEn} lang="en">
+            <span class="en-mark">EN</span>
+            <span class="s-text">{summaryEn}</span>
+          </p>
+        )}
+      </div>
+    )}
+    {entry.tags.length > 0 && (
+      <div class="tag-row">
+        {entry.tags.slice(0, 4).map((t) => (
+          <a class="tag-chip" href={`/t/${t}`}>#{t}</a>
+        ))}
+      </div>
+    )}
+    <div class="url">
+      <span>{host(entry.url)}</span>
+      <span class="arrow">→</span>
+    </div>
+  </div>
+
+  {hasUsableImage ? (
+    <div class="card-thumb">
+      <img src={img!.src} alt={img!.alt || titleJa} loading="lazy" decoding="async" />
+      <span class="src-mark">{thumbMark}</span>
+    </div>
+  ) : (
+    <div class="card-thumb fallback">
+      <svg viewBox="0 0 144 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <rect width="144" height="96" fill="#2d2a26" />
+        <rect width="144" height="96" fill={catColor} opacity="0.12" />
+        <text
+          x="72"
+          y="58"
+          text-anchor="middle"
+          font-family="ui-monospace, monospace"
+          font-size="26"
+          font-weight="700"
+          fill={catColor}
+          opacity="0.85"
+        >{catInitial}</text>
+      </svg>
+      <span class="src-mark">{thumbMark}</span>
+    </div>
+  )}
+</article>

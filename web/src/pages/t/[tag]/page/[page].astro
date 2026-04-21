@@ -1,0 +1,84 @@
+---
+import Portal from "../../../../layouts/Portal.astro";
+import Sidebar from "../../../../components/Sidebar.astro";
+import EntryCard from "../../../../components/EntryCard.astro";
+import Pager from "../../../../components/Pager.astro";
+import {
+  ALL_ENTRIES,
+  PAGE_SIZE,
+  groupByDay,
+  jstDayLabel,
+} from "../../../../lib/data.ts";
+
+export function getStaticPaths() {
+  const tagToEntries = new Map<string, number>();
+  for (const e of ALL_ENTRIES) {
+    for (const t of e.tags) {
+      tagToEntries.set(t, (tagToEntries.get(t) ?? 0) + 1);
+    }
+  }
+  const out: Array<{
+    params: { tag: string; page: string };
+    props: { tag: string; page: number; total: number };
+  }> = [];
+  for (const [tag, count] of tagToEntries) {
+    const total = Math.max(1, Math.ceil(count / PAGE_SIZE));
+    for (let p = 2; p <= total; p++) {
+      out.push({
+        params: { tag, page: String(p) },
+        props: { tag, page: p, total },
+      });
+    }
+  }
+  return out;
+}
+
+interface Props {
+  tag: string;
+  page: number;
+  total: number;
+}
+
+const { tag, page, total } = Astro.props as Props;
+const all = ALL_ENTRIES.filter((e) => e.tags.includes(tag));
+const start = (page - 1) * PAGE_SIZE;
+const entries = all.slice(start, start + PAGE_SIZE);
+const dayGroups = groupByDay(entries);
+const now = new Date();
+
+const breadcrumb = [
+  { label: "Home", href: "/" },
+  { label: "Tags" },
+  { label: `#${tag}`, href: `/t/${tag}` },
+  { label: `Page ${page}` },
+];
+---
+
+<Portal title={`#${tag} · p.${page} — TECH Dashboard`} breadcrumb={breadcrumb}>
+  <div class="layout">
+    <Sidebar />
+
+    <main>
+      <div class="section-header primary">
+        <h2>
+          #{tag}
+          <span class="count">page {page}/{total} · {all.length} total</span>
+        </h2>
+      </div>
+
+      {dayGroups.map(({ key, items }) => (
+        <>
+          <div class="day-header">
+            <span>{jstDayLabel(key, now)}</span>
+            <span class="day-count">{items.length} entries</span>
+          </div>
+          {items.map((entry) => <EntryCard entry={entry} />)}
+        </>
+      ))}
+
+      <Pager currentPage={page} totalPages={total} baseHref={`/t/${tag}`} />
+    </main>
+
+    <aside class="right"></aside>
+  </div>
+</Portal>

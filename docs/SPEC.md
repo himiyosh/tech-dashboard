@@ -3,7 +3,7 @@
 > 本書は **https://tech-dashboard-6a7.pages.dev/** の **現状実装** を記述した仕様書です。
 > 計画段階の草案は [`04-site-spec.md`](./04-site-spec.md) を参照。アーキテクチャ詳細は [`01-architecture.md`](./01-architecture.md) を参照。
 >
-> **最終更新**: 2026-04-22 / **本番コミット**: `main` ブランチ最新
+> **最終更新**: 2026-04-22 (51 ソース同期) / **本番コミット**: `main` ブランチ最新
 
 ---
 
@@ -12,7 +12,7 @@
 **プロダクト名**: TECH Dashboard — Pulse of the AI Ecosystem
 **目的**: AI 開発ツール / 基盤モデル / 研究の最新動向を **6 時間おきに自動収集・要約・公開** するワンストップ ポータル。
 **想定ユーザ**: Copilot / Claude / Codex / Cursor / Local LLM などを業務で使う開発者・リサーチャ。
-**スケール**: 40 データソース / 14 カテゴリ / index 最大 500 件 / 1 日 4 回実行。
+**スケール**: 51 データソース (Worker 実行時は `user-opml` 除外で 50) / 14 カテゴリ / index 最大 500 件 / 1 日 4 回実行。
 **URL**:
 - 本番: https://tech-dashboard-6a7.pages.dev/
 - リポジトリ: https://github.com/himiyosh/tech-dashboard
@@ -108,20 +108,20 @@ interface NormalizedEntry {
 
 ---
 
-## 4. データソース (40 件)
+## 4. データソース (51 件)
 
 ### 4.1 コレクタ種別
 
 | コレクタ | ファイル | 対応ソース数 | 備考 |
 |---|---|---|---|
-| `rss` | `harness/collectors/rss.ts` | 34 | 汎用 RSS/Atom |
+| `rss` | `harness/collectors/rss.ts` | 45 | 汎用 RSS/Atom (Zenn / Qiita / DORA Insights 含む) |
 | `anthropic` | `harness/collectors/anthropic.ts` | 2 | Anthropic News / Engineering (HTML scraping) |
 | `vscode-updates` | `harness/collectors/vscode-updates.ts` | 1 | VS Code リリースノート |
 | `hn-algolia` | `harness/collectors/hn-algolia.ts` | 1 | HN Algolia API |
 | `youtube` | `harness/collectors/youtube.ts` | 1 | YouTube Channel Atom |
 | `opml` | `harness/collectors/opml.ts` | 1 | ユーザ OPML (ローカルのみ) |
 
-ソース定義は `harness/registry.ts` の `REGISTRY` オブジェクトに集約。Worker 実行時は `user-opml` を除外 (FS 依存) し 39 ソースをフェッチ。
+ソース定義は `harness/registry.ts` の `REGISTRY` オブジェクトに集約。Worker 実行時は `user-opml` を除外 (FS 依存) し 50 ソースをフェッチ。
 
 ### 4.2 カテゴリ定義 (14 分類)
 
@@ -146,7 +146,7 @@ interface NormalizedEntry {
 
 ### 4.3 ソース一覧 (カテゴリ別)
 
-#### Coding (17 ソース)
+#### Coding (22 ソース)
 
 | ID | 表示名 | 種別 | Tier | Feed URL |
 |---|---|---|---|---|
@@ -160,6 +160,11 @@ interface NormalizedEntry {
 | `github-blog-ai` | GitHub Blog (AI & ML) | blog | 1 | github.blog/category/ai-and-ml |
 | `github-changelog` | GitHub Changelog | changelog | 1 | github.blog/changelog |
 | `qiita-copilot` | Qiita GitHub Copilot tag | blog | 1 | qiita.com/tags/githubcopilot |
+| `zenn-copilot` | Zenn GitHub Copilot topic | blog | 2 | zenn.dev/topics/githubcopilot |
+| `zenn-claude` | Zenn Claude Code topic | blog | 2 | zenn.dev/topics/claudecode |
+| `qiita-claude` | Qiita Claude Code tag | blog | 2 | qiita.com/tags/claudecode |
+| `zenn-cursor` | Zenn Cursor topic | blog | 2 | zenn.dev/topics/cursor |
+| `qiita-cursor` | Qiita Cursor tag | blog | 2 | qiita.com/tags/cursor |
 | `continue-releases` | Continue.dev Releases | release | 2 | github.com/continuedev/continue |
 | `cursor-changelog` | Cursor Changelog | changelog | 2 | cursor.com/changelog |
 | `cline-releases` | Cline Releases | release | 2 | github.com/cline/cline |
@@ -168,21 +173,26 @@ interface NormalizedEntry {
 | `autogen-releases` | Microsoft AutoGen Releases | release | 2 | github.com/microsoft/autogen |
 | `langchain-releases` | LangChain Releases | release | 2 | github.com/langchain-ai/langchain |
 
-#### Platform (4 ソース)
+#### Platform (7 ソース)
 
 | ID | 表示名 | 種別 | Tier | Feed URL |
 |---|---|---|---|---|
 | `vscode-updates` | VS Code Updates | release | 1 | code.visualstudio.com/updates |
+| `qiita-vscode` | Qiita VSCode tag | blog | 2 | qiita.com/tags/vscode |
 | `zed-releases` | Zed Editor Releases | release | 2 | github.com/zed-industries/zed |
 | `huggingface-blog` | Hugging Face Blog | blog | 1 | huggingface.co/blog |
 | `ollama-releases` | Ollama Releases | release | 1 | github.com/ollama/ollama |
+| `zenn-llm` | Zenn LLM topic | blog | 2 | zenn.dev/topics/llm |
+| `qiita-llm` | Qiita LLM tag | blog | 2 | qiita.com/tags/llm |
 
-#### Ecosystem (5 ソース: agent-fw / mcp / tech-news 一部)
+#### Ecosystem (4 ソース: agent-fw / mcp)
 
 | ID | 表示名 | 種別 | Tier | Feed URL |
 |---|---|---|---|---|
 | `semantic-kernel-releases` | Semantic Kernel Releases | release | 2 | github.com/microsoft/semantic-kernel |
 | `mcp-servers-releases` | MCP Servers Releases | release | 2 | github.com/modelcontextprotocol/servers |
+| `zenn-mcp` | Zenn MCP topic | blog | 2 | zenn.dev/topics/mcp |
+| `qiita-mcp` | Qiita MCP tag | blog | 2 | qiita.com/tags/mcp |
 
 #### Tech News (9 ソース)
 
@@ -198,7 +208,7 @@ interface NormalizedEntry {
 | `the-verge` | The Verge | blog | 2 | theverge.com |
 | `ars-technica` | Ars Technica | blog | 2 | arstechnica.com |
 
-#### Research (8 ソース)
+#### Research (9 ソース)
 
 | ID | 表示名 | 種別 | Tier | Feed URL |
 |---|---|---|---|---|
@@ -208,6 +218,7 @@ interface NormalizedEntry {
 | `arxiv-cs-lg` | arXiv cs.LG | paper | 2 | rss.arxiv.org/rss/cs.LG |
 | `zenn-ai` | Zenn AI tag | blog | 1 | zenn.dev/topics/ai |
 | `simonw-blog` | Simon Willison's Weblog | blog | 2 | simonwillison.net |
+| `dora-insights` | DORA Insights | blog | 2 | dora.dev/insights/index.xml |
 | `hn-ai` | Hacker News — AI coding | community | 3 | hn.algolia.com (query: AI coding OR LLM OR MCP) |
 | `user-opml` | User OPML (custom feeds) | blog | 3 | `file://data/user-opml.xml` (ローカルのみ) |
 
@@ -249,7 +260,7 @@ interface NormalizedEntry {
 | `/` | Timeline (トップ) | `DailySummary`, `TimelineList`, `Sidebar` |
 | `/c/[slug]` | カテゴリ別 (13 種) | `CategoryHero`, `TimelineList` |
 | `/categories` | カテゴリ一覧 | カテゴリグリッド + 7 日スパークライン |
-| `/sources` | ソース一覧 | 39 ソースのリンク / タイプ |
+| `/sources` | ソース一覧 | 50 ソースのリンク / タイプ |
 | `/status` | ステータス | `generatedAt` / 件数 / ソース健全性 |
 | `/about` | About | サイト説明 / ライセンス |
 | `/page/[n]` | ページネーション | Timeline 2 ページ目以降 |

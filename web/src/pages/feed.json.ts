@@ -17,7 +17,7 @@ export const GET: APIRoute = () => {
       url: e.url,
       title: e.titleJa || e.titleEn || e.title,
       content_text: e.summaryJa || e.summaryEn || "",
-      date_published: e.publishedAt,
+      ...(e.publishedAt ? { date_published: e.publishedAt } : {}),
       tags: [e.category, ...e.tags],
       _source: e.source,
       _importance: e.importance,

@@ -3,8 +3,8 @@ import type { RawEntry } from "../types.ts";
 /**
  * Anthropic News/Engineering HTML scraper.
  * Anthropic does not publish an RSS feed; scrape the listing page and
- * extract article links. Missing publishedAt is synthesized by recency
- * (collection time minus incremental minutes) so dedupe still works.
+ * extract article links. publishedAt is extracted from the listing page
+ * HTML when available; null otherwise.
  *
  * Intentional limits: we do not fetch each article page to avoid rate
  * limits. Title is derived from the slug (readable enough for MVP;
@@ -51,20 +51,37 @@ export async function collectAnthropic(opts: AnthropicScrapeOpts): Promise<RawEn
     if (slugs.length >= limit) break;
   }
 
-  const now = Date.now();
-  return slugs.map((path, i) => {
+  // Try to extract dates from listing page HTML.
+  // Anthropic listing pages sometimes include datetime attributes or
+  // visible date strings near each article link.
+  const dateMap = new Map<string, string>();
+  // Pattern: <time datetime="2025-04-16"> near a link
+  const timeRe = /href="(\/(?:news|engineering)\/[a-z0-9-]+)"[\s\S]*?<time[^>]+datetime="([^"]+)"/g;
+  for (const tm of html.matchAll(timeRe)) {
+    const p = tm[1]!;
+    const d = new Date(tm[2]!);
+    if (!Number.isNaN(d.getTime())) dateMap.set(p, d.toISOString());
+  }
+  // Reverse pattern: <time> before <a href>
+  const timeRe2 = /<time[^>]+datetime="([^"]+)"[\s\S]*?href="(\/(?:news|engineering)\/[a-z0-9-]+)"/g;
+  for (const tm of html.matchAll(timeRe2)) {
+    const p = tm[2]!;
+    if (dateMap.has(p)) continue;
+    const d = new Date(tm[1]!);
+    if (!Number.isNaN(d.getTime())) dateMap.set(p, d.toISOString());
+  }
+
+  return slugs.map((path) => {
     const slug = path.slice(prefix.length);
     const titleFromSlug = slug
       .replace(/-/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase());
-    // Stagger by 2 days per entry to keep ordering stable across runs.
-    const published = new Date(now - i * 2 * 86_400_000).toISOString();
     return {
       externalId: `anthropic-${section}-${slug}`,
       url: `https://www.anthropic.com${path}`,
       title: titleFromSlug,
       contentSnippet: "",
-      publishedAt: published,
+      publishedAt: dateMap.get(path) ?? null,
     };
   });
 }

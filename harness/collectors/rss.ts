@@ -91,11 +91,11 @@ function asLink(v: unknown): string {
   return "";
 }
 
-function asDate(v: unknown): string {
+function asDate(v: unknown): string | null {
   const s = asText(v);
-  if (!s) return new Date().toISOString();
+  if (!s) return null;
   const d = new Date(s);
-  if (Number.isNaN(d.getTime())) return new Date().toISOString();
+  if (Number.isNaN(d.getTime())) return null;
   return d.toISOString();
 }
 

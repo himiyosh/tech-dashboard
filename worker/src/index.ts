@@ -36,6 +36,11 @@ interface Env {
 }
 
 const INDEX_LIMIT = 500;
+
+/** Return epoch ms for sorting; nulls sort to end in descending order. */
+function dateMs(iso: string | null): number {
+  return iso ? new Date(iso).getTime() : -Infinity;
+}
 const SUMMARIZE_CONCURRENCY = 4;
 const COPILOT_ENDPOINT = "https://api.githubcopilot.com/chat/completions";
 const COPILOT_HEADERS = {
@@ -287,11 +292,11 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   }
   const capped: NormalizedEntry[] = [];
   for (const [, arr] of bySource) {
-    arr.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    arr.sort((a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt));
     capped.push(...arr.slice(0, PER_SOURCE_CAP));
   }
   const sorted = capped
-    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+    .sort((a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt))
     .slice(0, INDEX_LIMIT);
 
   // 3) Resolve Copilot token (skip if PAT absent)

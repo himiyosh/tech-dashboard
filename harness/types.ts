@@ -59,8 +59,8 @@ export interface RawEntry {
   title: string;
   /** Raw content snippet / description if available (pre-summarization). */
   contentSnippet?: string;
-  /** ISO 8601 timestamp from source. If missing, collector should default to now. */
-  publishedAt: string;
+  /** ISO 8601 timestamp from source. null if the source doesn't expose a date. */
+  publishedAt: string | null;
   /** Optional thumbnail from RSS <media:thumbnail> or <enclosure>. */
   mediaThumbnail?: string;
   /** Raw author string if source exposes it. */
@@ -88,7 +88,7 @@ export interface NormalizedEntry {
   summaryJa: string;
   summaryEn: string;
   lang: Lang;
-  publishedAt: string;
+  publishedAt: string | null;
   collectedAt: string;
   tags: string[];
   category: Category;

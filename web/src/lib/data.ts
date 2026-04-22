@@ -152,7 +152,8 @@ export function trendingTags(n = 10): Array<{ tag: string; count: number }> {
     .map(([tag, count]) => ({ tag, count }));
 }
 
-export function relativeTime(iso: string, now = new Date()): string {
+export function relativeTime(iso: string | null, now = new Date()): string {
+  if (!iso) return "日付不明";
   const diff = now.getTime() - new Date(iso).getTime();
   if (diff < 0) return "just now";
   const mins = Math.floor(diff / 60_000);

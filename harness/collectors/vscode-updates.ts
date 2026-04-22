@@ -38,18 +38,15 @@ export async function collectVscodeUpdates(source: SourceDefinition): Promise<Ra
     .slice(0, 12)
     .map(([, v]) => v);
 
-  // VS Code publishes roughly one release per month; publication date isn't
-  // on the index page. We approximate from the current month going backwards.
-  // This is only used for sort order; the cards will still show the version.
-  const now = new Date();
-  return items.map((item, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 15);
+  // Extract publication dates from individual update page links or meta info.
+  // The index page does not expose dates directly, so publishedAt is null.
+  return items.map((item) => {
     return {
       externalId: `vscode-${item.version}`,
       url: `${BASE}${item.path}`,
       title: `Visual Studio Code ${item.version} Release Notes`,
       contentSnippet: `Monthly release notes for VS Code ${item.version}.`,
-      publishedAt: d.toISOString(),
+      publishedAt: null,
     };
   });
 }

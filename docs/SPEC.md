@@ -12,6 +12,7 @@
 **プロダクト名**: TECH Dashboard — Pulse of the AI Ecosystem
 **目的**: AI 開発ツール / 基盤モデル / 研究の最新動向を **6 時間おきに自動収集・要約・公開** するワンストップ ポータル。
 **想定ユーザ**: Copilot / Claude / Codex / Cursor / Local LLM などを業務で使う開発者・リサーチャ。
+**スケール**: 40 データソース / 14 カテゴリ / index 最大 500 件 / 1 日 4 回実行。
 **URL**:
 - 本番: https://tech-dashboard-6a7.pages.dev/
 - リポジトリ: https://github.com/himiyosh/tech-dashboard
@@ -107,40 +108,110 @@ interface NormalizedEntry {
 
 ---
 
-## 4. データソース (39 件)
+## 4. データソース (40 件)
 
 ### 4.1 コレクタ種別
 
 | コレクタ | ファイル | 対応ソース数 | 備考 |
 |---|---|---|---|
-| `rss` | `harness/collectors/rss.ts` | 30+ | 汎用 RSS/Atom |
-| `anthropic` | `harness/collectors/anthropic.ts` | 2 | Anthropic News / Engineering |
-| `hn-algolia` | `harness/collectors/hn-algolia.ts` | 1 | HN Algolia API |
+| `rss` | `harness/collectors/rss.ts` | 34 | 汎用 RSS/Atom |
+| `anthropic` | `harness/collectors/anthropic.ts` | 2 | Anthropic News / Engineering (HTML scraping) |
 | `vscode-updates` | `harness/collectors/vscode-updates.ts` | 1 | VS Code リリースノート |
-| `youtube` | `harness/collectors/youtube.ts` | 複数 | YouTube Channel Atom |
-| `opml` | `harness/collectors/opml.ts` | 任意 | ユーザ OPML (ローカルのみ) |
+| `hn-algolia` | `harness/collectors/hn-algolia.ts` | 1 | HN Algolia API |
+| `youtube` | `harness/collectors/youtube.ts` | 1 | YouTube Channel Atom |
+| `opml` | `harness/collectors/opml.ts` | 1 | ユーザ OPML (ローカルのみ) |
 
-ソース一覧は `harness/registry.ts` に定義 (現在 **39 ソース**)。Worker 実行時は `user-opml` を除外。
+ソース定義は `harness/registry.ts` の `REGISTRY` オブジェクトに集約。Worker 実行時は `user-opml` を除外 (FS 依存) し 39 ソースをフェッチ。
 
-### 4.2 カテゴリ (13 分類)
+### 4.2 カテゴリ定義 (14 分類)
 
-| # | Slug | 表示名 | 色 |
-|---|---|---|---|
-| 1 | `copilot` | Copilot | `#5eead4` Teal |
-| 2 | `claude` | Claude | `#fbbf24` Amber |
-| 3 | `codex` | Codex | `#93c5fd` Sky |
-| 4 | `gemini` | Gemini | `#60a5fa` Blue |
-| 5 | `vscode` | VSCode | `#63a2ff` Azure |
-| 6 | `cursor` | Cursor | `#94a3b8` Slate |
-| 7 | `cline` | Cline / Roo | `#c4b5fd` Violet |
-| 8 | `aider` | Aider | `#a3a16a` Olive |
-| 9 | `opencode` | OpenCode | `#a5b4fc` Indigo |
-| 10 | `local-llm` | Local LLM | `#f87171` Red |
-| 11 | `agent-fw` | Agent FW | `#34d399` Emerald |
-| 12 | `mcp` | MCP | `#f472b6` Pink |
-| 13 | `research` | Research | `#fda4af` Rose |
+| # | Slug | 表示名 | 色 | Group |
+|---|---|---|---|---|
+| 1 | `copilot` | Copilot | `#5eead4` | coding |
+| 2 | `claude` | Claude | `#fbbf24` | coding |
+| 3 | `codex` | Codex | `#93c5fd` | coding |
+| 4 | `gemini` | Gemini | `#60a5fa` | coding |
+| 5 | `cursor` | Cursor | `#cbd5e1` | coding |
+| 6 | `cline` | Cline / Roo | `#c4b5fd` | coding |
+| 7 | `aider` | Aider | `#d6d3a1` | coding |
+| 8 | `opencode` | OpenCode | `#a5b4fc` | coding |
+| 9 | `vscode` | VSCode | `#63a2ff` | platform |
+| 10 | `local-llm` | Local LLM | `#f87171` | platform |
+| 11 | `agent-fw` | Agent FW | `#34d399` | ecosystem |
+| 12 | `mcp` | MCP | `#f472b6` | ecosystem |
+| 13 | `tech-news` | Tech News | `#fb923c` | ecosystem |
+| 14 | `research` | Research | `#fda4af` | research |
 
-カテゴリ判定は `harness/pipeline/categorize.ts` で URL / title / tag のキーワードマッチにより実施。
+カテゴリは `harness/registry.ts` で `SourceDefinition.category` に付与される。メタ情報 (色・表示名・ group) は `web/src/lib/data.ts` の `CATEGORY_META` に定義。
+
+### 4.3 ソース一覧 (カテゴリ別)
+
+#### Coding (17 ソース)
+
+| ID | 表示名 | 種別 | Tier | Feed URL |
+|---|---|---|---|---|
+| `anthropic-news` | Anthropic News | blog | 1 | anthropic.com/news |
+| `anthropic-engineering` | Anthropic Engineering | blog | 1 | anthropic.com/engineering |
+| `youtube-anthropic` | YouTube — Anthropic | youtube | 3 | YouTube Channel Atom |
+| `openai-news` | OpenAI News | blog | 1 | openai.com/news/rss.xml |
+| `openai-blog` | OpenAI Blog | blog | 1 | openai.com/blog/rss.xml |
+| `google-deepmind` | Google DeepMind Blog | blog | 1 | deepmind.google/blog/rss.xml |
+| `google-developers` | Google Developers Blog | blog | 1 | developers.googleblog.com |
+| `github-blog-ai` | GitHub Blog (AI & ML) | blog | 1 | github.blog/category/ai-and-ml |
+| `github-changelog` | GitHub Changelog | changelog | 1 | github.blog/changelog |
+| `qiita-copilot` | Qiita GitHub Copilot tag | blog | 1 | qiita.com/tags/githubcopilot |
+| `continue-releases` | Continue.dev Releases | release | 2 | github.com/continuedev/continue |
+| `cursor-changelog` | Cursor Changelog | changelog | 2 | cursor.com/changelog |
+| `cline-releases` | Cline Releases | release | 2 | github.com/cline/cline |
+| `aider-releases` | Aider Releases | release | 2 | github.com/Aider-AI/aider |
+| `openhands-releases` | OpenHands Releases | release | 2 | github.com/All-Hands-AI/OpenHands |
+| `autogen-releases` | Microsoft AutoGen Releases | release | 2 | github.com/microsoft/autogen |
+| `langchain-releases` | LangChain Releases | release | 2 | github.com/langchain-ai/langchain |
+
+#### Platform (4 ソース)
+
+| ID | 表示名 | 種別 | Tier | Feed URL |
+|---|---|---|---|---|
+| `vscode-updates` | VS Code Updates | release | 1 | code.visualstudio.com/updates |
+| `zed-releases` | Zed Editor Releases | release | 2 | github.com/zed-industries/zed |
+| `huggingface-blog` | Hugging Face Blog | blog | 1 | huggingface.co/blog |
+| `ollama-releases` | Ollama Releases | release | 1 | github.com/ollama/ollama |
+
+#### Ecosystem (5 ソース: agent-fw / mcp / tech-news 一部)
+
+| ID | 表示名 | 種別 | Tier | Feed URL |
+|---|---|---|---|---|
+| `semantic-kernel-releases` | Semantic Kernel Releases | release | 2 | github.com/microsoft/semantic-kernel |
+| `mcp-servers-releases` | MCP Servers Releases | release | 2 | github.com/modelcontextprotocol/servers |
+
+#### Tech News (9 ソース)
+
+| ID | 表示名 | 種別 | Tier | Feed URL |
+|---|---|---|---|---|
+| `apple-newsroom` | Apple Newsroom | blog | 2 | apple.com/newsroom |
+| `microsoft-source` | Microsoft Source | blog | 2 | news.microsoft.com/source |
+| `google-keyword` | Google Keyword Blog | blog | 2 | blog.google |
+| `meta-newsroom` | Meta Newsroom | blog | 2 | about.fb.com/news |
+| `aws-news` | AWS News Blog | blog | 2 | aws.amazon.com/blogs/aws |
+| `nvidia-blog` | NVIDIA Blog | blog | 2 | blogs.nvidia.com |
+| `techcrunch` | TechCrunch | blog | 2 | techcrunch.com |
+| `the-verge` | The Verge | blog | 2 | theverge.com |
+| `ars-technica` | Ars Technica | blog | 2 | arstechnica.com |
+
+#### Research (8 ソース)
+
+| ID | 表示名 | 種別 | Tier | Feed URL |
+|---|---|---|---|---|
+| `arxiv-cs-cl` | arXiv cs.CL | paper | 1 | rss.arxiv.org/rss/cs.CL |
+| `arxiv-cs-se` | arXiv cs.SE | paper | 1 | rss.arxiv.org/rss/cs.SE |
+| `arxiv-cs-ai` | arXiv cs.AI | paper | 2 | rss.arxiv.org/rss/cs.AI |
+| `arxiv-cs-lg` | arXiv cs.LG | paper | 2 | rss.arxiv.org/rss/cs.LG |
+| `zenn-ai` | Zenn AI tag | blog | 1 | zenn.dev/topics/ai |
+| `simonw-blog` | Simon Willison's Weblog | blog | 2 | simonwillison.net |
+| `hn-ai` | Hacker News — AI coding | community | 3 | hn.algolia.com (query: AI coding OR LLM OR MCP) |
+| `user-opml` | User OPML (custom feeds) | blog | 3 | `file://data/user-opml.xml` (ローカルのみ) |
+
+> **Tier の意味**: 1 = 一次情報源 (ベンダー公式) / 2 = 次次情報源 (サードパーティ) / 3 = コミュニティ・ユーザカスタム
 
 ---
 

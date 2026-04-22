@@ -429,6 +429,17 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     collect: collectRss,
   },
   // ============ Tier 3 ============
+  "dora-insights": {
+    id: "dora-insights",
+    displayName: "DORA Insights (Google)",
+    category: "research",
+    sourceType: "blog",
+    defaultLang: "en",
+    autoTags: ["dora", "devops", "research"],
+    feedUrl: "https://dora.dev/insights/index.xml",
+    tier: 2,
+    collect: collectRss,
+  },
   "hn-ai": {
     id: "hn-ai",
     displayName: "Hacker News — AI coding",

@@ -25,6 +25,7 @@ import { dirname, join } from "node:path";
 import type { NormalizedEntry } from "../types.ts";
 
 interface CacheEntry {
+  titleJa: string;
   summaryJa: string;
   summaryEn: string;
   importance: 1 | 2 | 3;
@@ -135,6 +136,7 @@ async function callCopilot(
   const text = data.choices?.[0]?.message?.content ?? "";
   const parsed = parseModelResponse(text);
   return {
+    titleJa: parsed.titleJa,
     summaryJa: parsed.summaryJa,
     summaryEn: parsed.summaryEn,
     importance: parsed.importance,
@@ -154,6 +156,7 @@ function buildPrompt(e: NormalizedEntry): string {
     ``,
     `以下の JSON を**余計な文字を付けず**出力してください:`,
     `{`,
+    `  "titleJa": "日本語タイトル (30〜60文字)。原題が日本語ならそのまま。英語なら自然な日本語に翻訳",`,
     `  "summaryJa": "2〜3 行の日本語要約 (120〜200 文字)",`,
     `  "summaryEn": "1-2 sentence English summary (140-260 chars). Plain English only, no Japanese.",`,
     `  "importance": 1 | 2 | 3,`,
@@ -161,20 +164,23 @@ function buildPrompt(e: NormalizedEntry): string {
     `}`,
     ``,
     `importance 基準: 3=メジャーリリース/重大発表、2=機能追加/重要論文、1=通常更新。`,
-    `summaryJa と summaryEn は同じ内容を各言語で表現すること。バージョン番号 (例: 4.7) や固有名詞は正確に保持する。`,
+    `titleJa: 固有名詞 (製品名・企業名) は英語のまま保持。バージョン番号 (例: 4.7) も正確に保持する。`,
+    `summaryJa と summaryEn は同じ内容を各言語で表現すること。`,
   ].join("\n");
 }
 
 function parseModelResponse(text: string): {
+  titleJa: string;
   summaryJa: string;
   summaryEn: string;
   importance: 1 | 2 | 3;
   extraTags: string[];
 } {
   const match = text.match(/\{[\s\S]*\}/);
-  if (!match) return { summaryJa: "", summaryEn: "", importance: 1, extraTags: [] };
+  if (!match) return { titleJa: "", summaryJa: "", summaryEn: "", importance: 1, extraTags: [] };
   try {
     const obj = JSON.parse(match[0]) as {
+      titleJa?: string;
       summaryJa?: string;
       summaryEn?: string;
       importance?: number;
@@ -182,6 +188,7 @@ function parseModelResponse(text: string): {
     };
     const imp = Math.max(1, Math.min(3, Number(obj.importance ?? 1))) as 1 | 2 | 3;
     return {
+      titleJa: String(obj.titleJa ?? "").trim(),
       summaryJa: String(obj.summaryJa ?? "").trim(),
       summaryEn: String(obj.summaryEn ?? "").trim(),
       importance: imp,
@@ -190,7 +197,7 @@ function parseModelResponse(text: string): {
         : [],
     };
   } catch {
-    return { summaryJa: "", summaryEn: "", importance: 1, extraTags: [] };
+    return { titleJa: "", summaryJa: "", summaryEn: "", importance: 1, extraTags: [] };
   }
 }
 
@@ -270,6 +277,7 @@ export async function summarize(
       stats.cached++;
       return {
         ...e,
+        titleJa: hit.titleJa || e.titleJa,
         summaryJa: hit.summaryJa,
         summaryEn: hit.summaryEn,
         importance: hit.importance,
@@ -319,6 +327,7 @@ export async function summarize(
     if (!r) return e;
     return {
       ...e,
+      titleJa: r.titleJa || e.titleJa,
       summaryJa: r.summaryJa,
       summaryEn: r.summaryEn || e.summaryEn,
       importance: r.importance,

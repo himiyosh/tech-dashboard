@@ -114,6 +114,23 @@ function asThumbnail(item: RssItem): string | undefined {
   return undefined;
 }
 
+/** Pick the first usable <img src> from description/content/summary HTML. */
+function extractInlineImage(html: string): string | undefined {
+  if (!html) return undefined;
+  const re = /<img[^>]+src\s*=\s*["']([^"']+)["']/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const src = m[1]?.trim();
+    if (!src) continue;
+    if (src.startsWith("data:")) continue;
+    // Skip tiny tracking pixels and avatar-like assets.
+    if (/(spacer|pixel|1x1|tracker|beacon)/i.test(src)) continue;
+    if (src.startsWith("http://") || src.startsWith("https://")) return src;
+    if (src.startsWith("//")) return "https:" + src;
+  }
+  return undefined;
+}
+
 function stripHtml(s: string): string {
   return s
     .replace(/<[^>]+>/g, " ")
@@ -171,7 +188,7 @@ export async function collectRss(source: SourceDefinition): Promise<RawEntry[]> 
     const publishedAt = asDate(item.pubDate ?? item.published ?? item.updated);
     const descriptionRaw = asText(item.description ?? item.summary ?? item.content);
     const contentSnippet = descriptionRaw ? stripHtml(descriptionRaw).slice(0, 800) : undefined;
-    const mediaThumbnail = asThumbnail(item);
+    const mediaThumbnail = asThumbnail(item) ?? extractInlineImage(descriptionRaw);
     const authorRaw = item.author;
     let author: string | undefined;
     if (typeof authorRaw === "string") author = authorRaw;

@@ -9,6 +9,7 @@ import {
   ALL_ENTRIES,
   GENERATED_AT,
   PAGE_SIZE,
+  CATEGORY_META,
   featured,
   trendingTags,
   relativeTime,
@@ -35,6 +36,22 @@ const todayKey = jstDateKey(now.toISOString());
 const todayCount = ALL_ENTRIES.filter((e) => jstDateKey(e.publishedAt) === todayKey).length;
 const majorCount = ALL_ENTRIES.filter((e) => e.importance === 3).length;
 const sourceCount = new Set(ALL_ENTRIES.map((e) => e.source)).size;
+
+// Top 3 = importance × recency. Recent importance=3 first, then importance=2.
+const rankedPool = ALL_ENTRIES.filter((e) => e.importance >= 2).slice(0, 60);
+const topThree = rankedPool
+  .map((e) => {
+    const ageHours = Math.max(
+      0,
+      (now.getTime() - new Date(e.publishedAt || e.collectedAt).getTime()) / 3600_000,
+    );
+    const score = e.importance * 100 - ageHours * 0.6;
+    return { entry: e, score };
+  })
+  .sort((a, b) => b.score - a.score)
+  .slice(0, 3)
+  .map(({ entry }) => entry);
+const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
 ---
 
 <Portal pageKey="timeline">
@@ -51,12 +68,12 @@ const sourceCount = new Set(ALL_ENTRIES.map((e) => e.source)).size;
       </h1>
       <p class="tagline i18n-ja">
         <strong>Copilot / Claude / Codex / Gemini / Local LLM / Research</strong>
-        の公式情報・論文・リリースを 6 時間おきに自動収集。日本語で要約し、重要度でソートして届けます。
+        の公式情報・論文・リリースを 1 時間おきに自動収集。日本語で要約し、重要度でソートして届けます。
       </p>
       <p class="tagline i18n-en" lang="en">
         Official news, papers, and releases from
         <strong>Copilot / Claude / Codex / Gemini / Local LLM / Research</strong>
-        collected every 6 hours, summarized, and ranked by importance.
+        collected every hour, summarized, and ranked by importance.
       </p>
     </div>
   </section>
@@ -129,6 +146,34 @@ const sourceCount = new Set(ALL_ENTRIES.map((e) => e.source)).size;
 
       <DailySummary entries={ALL_ENTRIES} now={now} />
 
+      {topThree.length > 0 && (
+        <section class="top-rank">
+          <div class="top-rank-head">
+            <span class="top-rank-title">🔥 Today's Top {topThree.length}</span>
+            <span class="top-rank-sub">importance × recency</span>
+          </div>
+          <ol class="top-rank-list">
+            {topThree.map((e, i) => {
+              const meta = CATEGORY_META.find((c) => c.slug === e.category);
+              return (
+                <li class={`top-rank-item rank-${i + 1}`} style={`--cat-color:${meta?.color ?? "#8a847e"}`}>
+                  <span class="medal" aria-hidden="true">{medals[i]}</span>
+                  <span class="rank-cat" aria-hidden="true">{meta?.emoji ?? "\u{1F4C4}"}</span>
+                  <a class="rank-title" href={e.url} target="_blank" rel="noopener">
+                    <span class="i18n-ja">{titleForLang(e, "ja")}</span>
+                    <span class="i18n-en" lang="en">{titleForLang(e, "en") || e.title}</span>
+                  </a>
+                  <span class="rank-meta">
+                    <span class="rank-source">{e.source}</span>
+                    <span class="rank-time mono">{relativeTime(e.publishedAt, now)}</span>
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      )}
+
       <div class="section-header primary">
         <h2>Timeline <span class="count">{ALL_ENTRIES.length} total · page {currentPage}/{totalPages}</span></h2>
       </div>
@@ -161,7 +206,7 @@ const sourceCount = new Set(ALL_ENTRIES.map((e) => e.source)).size;
       <div class="side-card">
         <div class="right-title">About</div>
         <p style="font-size:12px;color:var(--muted);line-height:1.55">
-          24h おきに公式ソースを自動収集し、日本語で要約。
+          1 時間おきに公式ソースを自動収集し、日本語で要約。
           <a href="/about" style="color:var(--accent)">詳しく</a>
         </p>
       </div>

@@ -53,49 +53,44 @@ SUMMARIZE_MAX_NEW=15               # 1 ラン当たりの新規要約上限
 
 > どのトークンも無ければ要約フェーズは自動でスキップされます (ローカル dev を妨げない設計)。
 
-## デプロイ & 自動更新 (Cloudflare ネイティブ構成)
+## デプロイ & 自動更新 (Worker + GitHub Actions + Cloudflare Pages)
 
-GitHub Actions は使用せず、Cloudflare 上で完結する構成:
+Cloudflare Pages プロジェクト `tech-dashboard` は Git Provider 未接続のため、`main` への push / merge を GitHub Actions で受け、Wrangler CLI から Pages に直接デプロイします。
 
 ```
 [Cloudflare Worker Cron] ──6h ごと──→ [GitHub Contents API]
-       ↓ (RSS 収集 + Copilot 要約)              ↓ push
-       ↓                              [Cloudflare Pages Git 統合]
-       └── Summary Cache (KV)                    ↓ auto build & deploy
-                                          [本番サイト配信]
+  │ (RSS 収集 + Copilot 要約)              │ push
+  │                                       ↓
+  │                              [GitHub Actions: deploy-pages]
+  │                                       ↓ wrangler pages deploy
+  └── Summary Cache (KV)          [Cloudflare Pages 本番サイト]
 ```
 
 ### 1. Cloudflare Pages (サイトビルド + デプロイ)
 
 **本番 URL**: https://tech-dashboard-6a7.pages.dev/
 
-セットアップ方法は以下 2 択:
+`main` ブランチへ merge されると `.github/workflows/deploy-pages.yml` が起動し、`web` を build して Cloudflare Pages へ deploy します。
 
-#### A. Git 連携 (推奨 — 完全自動)
+GitHub repository secrets / variables:
 
-Worker が data を push → Pages が自動ビルド & デプロイ、となる理想形。初回のみダッシュボード操作が必要です。
+| 名前 | 種別 | 用途 |
+|---|---|---|
+| `CLOUDFLARE_API_TOKEN` | Secret | Pages deploy 用 Cloudflare API token (`Account:Read` + `Cloudflare Pages:Edit`) |
+| `CLOUDFLARE_ACCOUNT_ID` | Secret または Variable | Cloudflare account ID |
 
-1. Cloudflare ダッシュボード → **Workers & Pages → tech-dashboard → Settings → Builds & deployments**
-2. **Connect to Git** → `himiyosh/tech-dashboard` を接続
-3. ビルド設定:
-   - **Framework preset**: Astro
-   - **Root directory**: `web`
-   - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
-   - **Node version** (環境変数): `NODE_VERSION=22`
+Cloudflare Pages 側は Git Provider が `No` のままで問題ありません。GitHub Actions が direct upload deployment を担当します。
 
-以降、`main` ブランチへの push が自動的にビルド & デプロイされます。
+#### 手動デプロイ
 
-#### B. CLI 直接アップロード (Git 連携なし)
+緊急時やローカル確認後に直接反映したい場合は以下を実行します。
 
-プロジェクト作成 + 初回デプロイは CLI で完了済み。再デプロイは以下 1 コマンド:
+プロジェクト作成 + 初回デプロイは CLI で完了済み。再デプロイは以下 1 コマンドです。
 
 ```bash
 cd web && npm run deploy
 # → ビルド + wrangler pages deploy
 ```
-
-この場合、Worker のデータ更新を本番に反映するには手動で `npm run deploy` を叩く必要があります。
 
 ### 2. Cloudflare Worker (定期ハーネス実行)
 
@@ -119,7 +114,7 @@ npx wrangler deploy
 ```
 
 Cron は `0 15,21,3,9 * * *` (6 時間ごと、JST の 00/06/12/18 時) で起動し、
-変更があれば `data/index.json` を GitHub に commit → Pages が自動的に再デプロイします。
+変更があれば `data/index.json` を GitHub に commit → GitHub Actions が Pages を自動的に再デプロイします。
 
 **手動トリガ** (緊急で回したい時):
 

@@ -34,7 +34,7 @@
        │  github.com/himiyosh/  │  main ブランチ
        │    tech-dashboard      │
        └─────────┬──────────────┘
-                 ↓ push trigger (Git 連携予定) / 手動 `npm run deploy`
+                 ↓ push trigger (GitHub Actions: deploy-pages)
        ┌────────────────────────┐
        │  Cloudflare Pages      │  Astro 静的ビルド + Pagefind
        │  tech-dashboard        │  → 本番配信
@@ -348,10 +348,10 @@ interface NormalizedEntry {
 
 | モード | コマンド / 手順 | 自動化度 |
 |---|---|---|
-| **A. Git 連携** | CF ダッシュボードで GitHub 接続 (OAuth) | 完全自動 (push → build → deploy) |
-| **B. CLI 直接** | `cd web && npm run deploy` | Worker push 後に手動実行が必要 |
+| **A. GitHub Actions** | `.github/workflows/deploy-pages.yml` | 完全自動 (`main` push → build → `wrangler pages deploy`) |
+| **B. CLI 直接** | `cd web && npm run deploy` | 手動実行 |
 
-> 現在は B (CLI) で運用中。A を有効化すれば Worker の data コミットで自動ビルドが走る。
+> 現在は A (GitHub Actions) で運用。Cloudflare Pages プロジェクト `tech-dashboard` は Git Provider 未接続 (`No`) のまま、Actions から direct upload deployment を行う。
 
 ---
 
@@ -372,6 +372,8 @@ interface NormalizedEntry {
 |---|---|---|
 | `COPILOT_PAT` | Copilot Enterprise 一時トークン交換 | Wrangler Secrets (Worker) / `.env` (ローカル) |
 | `GH_TOKEN` | GitHub Contents API + `x-trigger-token` 認証 | Wrangler Secrets |
+| `CLOUDFLARE_API_TOKEN` | Pages direct upload deploy (`Account:Read` + `Cloudflare Pages:Edit`) | GitHub Actions Secrets |
+| `CLOUDFLARE_ACCOUNT_ID` | Pages deploy 対象 account | GitHub Actions Secrets または Variables |
 
 ---
 
@@ -403,7 +405,7 @@ npx wrangler tail            # 実ログ tail
 
 | 項目 | 現状 | 計画 |
 |---|---|---|
-| Pages Git 連携 | 未設定 (CLI で手動デプロイ) | CF ダッシュボードで OAuth 承認 |
+| Pages Git 連携 | 未設定 (GitHub Actions で direct deploy) | 必要なら CF ダッシュボードで OAuth 承認に移行 |
 | 検索の日本語 stem | Pagefind 未対応 | 必要なら kuromoji プラガブル化 |
 | Copilot 要約のレート | 1 実行 5 件まで | フル同期は時間分散で段階的補充 |
 | ライト/ダーク切替 | 固定ダーク | 設定保持付きトグル予定 |
@@ -423,4 +425,4 @@ npx wrangler tail            # 実ログ tail
 
 - Worker 生成: `chore(data): worker run <ISO> (+<N> summaries)`
 - 機能追加: `feat(<scope>): ...` / 修正: `fix(<scope>): ...`
-- `[skip ci]` は使用しない (CF Pages は GH Actions 非依存)
+- `[skip ci]` は使用しない (`main` push の Pages deploy は GitHub Actions で実行)

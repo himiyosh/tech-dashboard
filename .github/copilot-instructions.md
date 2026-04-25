@@ -13,6 +13,12 @@
 - ユーザーが明示的に依頼しない限り、`.github/workflows/` を新設しない。
 - 緊急時のみ `npm --prefix web run deploy:legacy` (Direct Upload) を手動実行可。
 
+### R-001b: main への直接 push / PR merge は必ず事前承認 (ABSOLUTE)
+- `main` への **直接 commit / push** は禁止 (たとえデータファイルや scripts でも)。必ず作業ブランチ + PR 経由とする。
+- `gh pr merge` / GitHub API merge / `git push origin main` を実行する前に **必ずユーザーに「main へ merge / push してよいですか」と確認** すること。
+- 「即時反映したい」「データだけ」という理由で省略しない。Cloudflare Pages の本番 build がトリガーされ、サイトに即影響するため。
+- 例外: ユーザーが当該セッションで明示的に「main に直接 push して」と指示した場合のみ。
+
 ### R-002: Cloudflare Pages project 設定の固定値
 | 項目 | 値 |
 |---|---|

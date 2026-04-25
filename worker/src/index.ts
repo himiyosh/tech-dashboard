@@ -446,7 +446,8 @@ export default {
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(
       runHarness(env).catch((err) => {
-        console.error("[worker] fatal:", err);
+        const stack = err instanceof Error && err.stack ? err.stack : String(err);
+        console.error("[worker] fatal:", stack);
         throw err;
       }),
     );

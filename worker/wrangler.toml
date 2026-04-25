@@ -8,13 +8,10 @@ main = "src/index.ts"
 compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Cron: every 6 hours, aligned to JST business-friendly times.
-#   15:00 UTC = 00:00 JST
-#   21:00 UTC = 06:00 JST
-#   03:00 UTC = 12:00 JST
-#   09:00 UTC = 18:00 JST
+# Cron: every 30 minutes (48 runs/day). Pages builds only fire when
+# data/index.json actually changes (worker no-ops otherwise).
 [triggers]
-crons = ["0 15,21,3,9 * * *"]
+crons = ["*/30 * * * *"]
 
 # Summary cache (replaces data/_summary-cache.json).
 # Create with: wrangler kv namespace create SUMMARY_CACHE

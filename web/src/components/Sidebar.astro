@@ -77,7 +77,7 @@ function initial(slug: Category): string {
           const isActive = active === c.slug;
           return (
             <a class={`side-item ${isActive ? "active" : ""}`} href={href}>
-              <span class={`brand-tile ${tileClass(c.slug)}`}>{initial(c.slug)}</span>
+              <span class={`brand-tile ${tileClass(c.slug)}`} aria-hidden="true">{c.emoji}</span>
               <span class="name">{c.name}</span>
               <span class="spark" title="Past 7 days">
                 {heights.map((h) => (

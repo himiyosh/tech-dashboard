@@ -68,22 +68,23 @@ export const CATEGORY_META: ReadonlyArray<{
   name: string;
   color: string;
   initial: string;
+  emoji: string;
   group: "coding" | "platform" | "ecosystem" | "research";
 }> = [
-    { slug: "copilot", name: "Copilot", color: "#5eead4", initial: "Co", group: "coding" },
-    { slug: "claude", name: "Claude", color: "#fbbf24", initial: "Cl", group: "coding" },
-    { slug: "codex", name: "Codex", color: "#93c5fd", initial: "Cx", group: "coding" },
-    { slug: "gemini", name: "Gemini", color: "#60a5fa", initial: "Gm", group: "coding" },
-    { slug: "cursor", name: "Cursor", color: "#cbd5e1", initial: "Cu", group: "coding" },
-    { slug: "cline", name: "Cline / Roo", color: "#c4b5fd", initial: "Cn", group: "coding" },
-    { slug: "aider", name: "Aider", color: "#d6d3a1", initial: "Ai", group: "coding" },
-    { slug: "opencode", name: "OpenCode", color: "#a5b4fc", initial: "Oc", group: "coding" },
-    { slug: "vscode", name: "VSCode", color: "#63a2ff", initial: "Vs", group: "platform" },
-    { slug: "local-llm", name: "Local LLM", color: "#f87171", initial: "Ll", group: "platform" },
-    { slug: "agent-fw", name: "Agent FW", color: "#34d399", initial: "Af", group: "ecosystem" },
-    { slug: "mcp", name: "MCP", color: "#f472b6", initial: "Mc", group: "ecosystem" },
-    { slug: "tech-news", name: "Tech News", color: "#fb923c", initial: "Tn", group: "ecosystem" },
-    { slug: "research", name: "Research", color: "#fda4af", initial: "Rs", group: "research" },
+    { slug: "copilot", name: "Copilot", color: "#5eead4", initial: "Co", emoji: "\u{1F9E0}", group: "coding" },
+    { slug: "claude", name: "Claude", color: "#fbbf24", initial: "Cl", emoji: "\u{1F9E1}", group: "coding" },
+    { slug: "codex", name: "Codex", color: "#93c5fd", initial: "Cx", emoji: "\u{1F4D8}", group: "coding" },
+    { slug: "gemini", name: "Gemini", color: "#60a5fa", initial: "Gm", emoji: "\u{2728}", group: "coding" },
+    { slug: "cursor", name: "Cursor", color: "#cbd5e1", initial: "Cu", emoji: "\u{1F5B1}\u{FE0F}", group: "coding" },
+    { slug: "cline", name: "Cline / Roo", color: "#c4b5fd", initial: "Cn", emoji: "\u{1F9F5}", group: "coding" },
+    { slug: "aider", name: "Aider", color: "#d6d3a1", initial: "Ai", emoji: "\u{1F91D}", group: "coding" },
+    { slug: "opencode", name: "OpenCode", color: "#a5b4fc", initial: "Oc", emoji: "\u{1F310}", group: "coding" },
+    { slug: "vscode", name: "VSCode", color: "#63a2ff", initial: "Vs", emoji: "\u{1F537}", group: "platform" },
+    { slug: "local-llm", name: "Local LLM", color: "#f87171", initial: "Ll", emoji: "\u{1F3E0}", group: "platform" },
+    { slug: "agent-fw", name: "Agent FW", color: "#34d399", initial: "Af", emoji: "\u{1F916}", group: "ecosystem" },
+    { slug: "mcp", name: "MCP", color: "#f472b6", initial: "Mc", emoji: "\u{1F517}", group: "ecosystem" },
+    { slug: "tech-news", name: "Tech News", color: "#fb923c", initial: "Tn", emoji: "\u{1F4F0}", group: "ecosystem" },
+    { slug: "research", name: "Research", color: "#fda4af", initial: "Rs", emoji: "\u{1F52C}", group: "research" },
   ];
 
 export function countByCategory(): Record<Category, number> {

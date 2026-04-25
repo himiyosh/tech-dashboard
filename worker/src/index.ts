@@ -245,6 +245,72 @@ function dedupeTags(tags: string[]): string[] {
   return [...new Set(tags)].slice(0, 10);
 }
 
+// ---------- OG image extraction ---------------------------------------------
+
+/**
+ * Fetch the article URL with a 5s timeout, look for <meta property="og:image">
+ * (or twitter:image as a fallback), and return an absolute URL or null.
+ * Reads only the first 64 KB to avoid downloading the whole page.
+ */
+async function fetchOgImage(url: string): Promise<string | null> {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    const res = await fetch(url, {
+      headers: {
+        "user-agent": "Mozilla/5.0 (compatible; tech-dashboard-bot/0.1)",
+        accept: "text/html,application/xhtml+xml",
+      },
+      redirect: "follow",
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok || !res.body) return null;
+    const reader = res.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    while (total < 65536) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      total += value.byteLength;
+    }
+    try { await reader.cancel(); } catch { /* ignore */ }
+    const buf = new Uint8Array(total);
+    let offset = 0;
+    for (const c of chunks) { buf.set(c, offset); offset += c.byteLength; }
+    const html = new TextDecoder("utf-8", { fatal: false }).decode(buf);
+    const og = matchMetaContent(html, "og:image") ?? matchMetaContent(html, "twitter:image");
+    if (!og) return null;
+    return absolutizeUrl(og, url);
+  } catch {
+    return null;
+  }
+}
+
+function matchMetaContent(html: string, prop: string): string | null {
+  const escaped = prop.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const patterns = [
+    new RegExp(`<meta[^>]+property\\s*=\\s*["']${escaped}["'][^>]*content\\s*=\\s*["']([^"']+)["']`, "i"),
+    new RegExp(`<meta[^>]+content\\s*=\\s*["']([^"']+)["'][^>]*property\\s*=\\s*["']${escaped}["']`, "i"),
+    new RegExp(`<meta[^>]+name\\s*=\\s*["']${escaped}["'][^>]*content\\s*=\\s*["']([^"']+)["']`, "i"),
+    new RegExp(`<meta[^>]+content\\s*=\\s*["']([^"']+)["'][^>]*name\\s*=\\s*["']${escaped}["']`, "i"),
+  ];
+  for (const re of patterns) {
+    const m = html.match(re);
+    if (m && m[1]) return m[1].trim();
+  }
+  return null;
+}
+
+function absolutizeUrl(src: string, base: string): string | null {
+  try {
+    return new URL(src, base).toString();
+  } catch {
+    return null;
+  }
+}
+
 // ---------- Pipeline ---------------------------------------------------------
 
 async function runSource(
@@ -390,6 +456,63 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   } else if (!token) {
     console.warn("[worker] no Copilot token — skipping summarization");
   }
+
+  // 4.5) OG image enrichment — fetch <meta property="og:image"> for entries
+  //      that still lack a thumbnail. Cached in KV under "og.v1" as a single
+  //      blob keyed by URL. Capped per run to stay within Worker subrequest
+  //      and CPU budgets.
+  const OG_KEY = "og.v1";
+  const OG_BUDGET_PER_RUN = 8;
+  const ogBlob =
+    (await env.SUMMARY_CACHE.get<Record<string, { src: string | null; checkedAt: string }>>(OG_KEY, "json")) ?? {};
+
+  // Apply already-cached og hits.
+  for (let i = 0; i < afterCache.length; i++) {
+    const e = afterCache[i]!;
+    if (e.image) continue;
+    const cached = ogBlob[e.url];
+    if (cached?.src) {
+      afterCache[i] = {
+        ...e,
+        image: { src: cached.src, origSrc: cached.src, alt: e.title, width: 0, height: 0, source: "og" },
+      };
+    }
+  }
+
+  // Pick fresh URLs to fetch (no entry.image after cache; not in ogBlob yet).
+  const ogTargets = afterCache
+    .filter((e) => !e.image && !(e.url in ogBlob))
+    .slice(0, OG_BUDGET_PER_RUN);
+
+  let ogFound = 0;
+  if (ogTargets.length > 0) {
+    console.log(`[worker] og fetch ${ogTargets.length} entries`);
+    const ogResults = await runWithConcurrency(
+      ogTargets,
+      async (e) => {
+        const src = await fetchOgImage(e.url);
+        ogBlob[e.url] = { src, checkedAt: new Date().toISOString() };
+        if (src) ogFound++;
+        return { url: e.url, src };
+      },
+      4,
+    );
+    const byUrl = new Map(ogResults.filter((r) => r.src).map((r) => [r.url, r.src as string]));
+    for (let i = 0; i < afterCache.length; i++) {
+      const e = afterCache[i]!;
+      const src = byUrl.get(e.url);
+      if (src && !e.image) {
+        afterCache[i] = {
+          ...e,
+          image: { src, origSrc: src, alt: e.title, width: 0, height: 0, source: "og" },
+        };
+      }
+    }
+    if (ogTargets.length > 0) {
+      await env.SUMMARY_CACHE.put(OG_KEY, JSON.stringify(ogBlob));
+    }
+  }
+  console.log(`[worker] og: cached=${Object.keys(ogBlob).length}, new hits=${ogFound}`);
 
   // 5) Build payload (cap 500, newest first)
   const finalEntries = afterCache.slice(0, INDEX_LIMIT);

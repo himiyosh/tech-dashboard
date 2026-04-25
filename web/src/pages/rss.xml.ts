@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 import { ALL_ENTRIES, GENERATED_AT } from "../lib/data.ts";
-
-const SITE = "https://tech-dashboard.pages.dev";
+import { SITE_URL } from "../lib/site.ts";
 
 function escape(s: string): string {
   return s
@@ -35,7 +34,7 @@ export const GET: APIRoute = () => {
 <rss version="2.0">
   <channel>
     <title>TECH Dashboard — AI Daily</title>
-    <link>${SITE}</link>
+    <link>${SITE_URL}</link>
     <description>AI コーディング/エコシステムの公式情報を毎日自動収集・要約</description>
     <language>ja</language>
     <lastBuildDate>${new Date(GENERATED_AT).toUTCString()}</lastBuildDate>${items}

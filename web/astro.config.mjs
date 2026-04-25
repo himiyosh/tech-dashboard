@@ -2,7 +2,7 @@ import { defineConfig } from "astro/config";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://tech-dashboard.pages.dev",
+  site: "https://techdb.studio344.net",
   output: "static",
   // "ignore" accepts both /foo and /foo/ — safer for preview + Cloudflare Pages.
   trailingSlash: "ignore",

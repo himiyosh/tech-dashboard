@@ -53,43 +53,86 @@ SUMMARIZE_MAX_NEW=15               # 1 ラン当たりの新規要約上限
 
 > どのトークンも無ければ要約フェーズは自動でスキップされます (ローカル dev を妨げない設計)。
 
-## デプロイ & 自動更新 (Worker + GitHub Actions + Cloudflare Pages)
+## デプロイ & 自動更新 (Cloudflare Worker + Cloudflare Pages Git Integration)
 
-Cloudflare Pages プロジェクト `tech-dashboard` は Git Provider 未接続のため、`main` への push / merge を GitHub Actions で受け、Wrangler CLI から Pages に直接デプロイします。
+通常運用は Cloudflare 内で完結します。Cloudflare Worker が `data/index.json` を GitHub に commit し、Cloudflare Pages の Git Integration が `main` の更新を検知してサイトを build / deploy します。
+
+既存の Pages プロジェクト `tech-dashboard` は Direct Upload 型で Git Provider が未接続です。Cloudflare の仕様上、Direct Upload 型を後から Git Integration 型へ切り替えることはできないため、Git Integration 付きの新しい Pages プロジェクトを作成して移行します。
 
 ```
 [Cloudflare Worker Cron] ──6h ごと──→ [GitHub Contents API]
-  │ (RSS 収集 + Copilot 要約)              │ push
+  │ (RSS 収集 + Copilot 要約)              │ push to main
   │                                       ↓
-  │                              [GitHub Actions: deploy-pages]
-  │                                       ↓ wrangler pages deploy
+  │                              [Cloudflare Pages Git Integration]
+  │                                       ↓ npm run build
   └── Summary Cache (KV)          [Cloudflare Pages 本番サイト]
 ```
 
 ### 1. Cloudflare Pages (サイトビルド + デプロイ)
 
-**本番 URL**: https://tech-dashboard-6a7.pages.dev/
+**本番 URL**: https://techdb.studio344.net/
 
-`main` ブランチへ merge されると `.github/workflows/deploy-pages.yml` が起動し、`web` を build して Cloudflare Pages へ deploy します。
+新しい Pages プロジェクトは Cloudflare dashboard で **Create application** → **Pages** → **Import an existing Git repository** から作成します。
 
-GitHub repository secrets / variables:
+| 設定項目 | 値 |
+|---|---|
+| Git repository | `himiyosh/tech-dashboard` |
+| Production branch | `main` |
+| Framework preset | `Astro` |
+| Root directory | `web` |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Node.js version | `22` (`web/.node-version`) |
+| Production deployments | Enabled |
+| Preview deployments | 任意 |
 
-| 名前 | 種別 | 用途 |
-|---|---|---|
-| `CLOUDFLARE_API_TOKEN` | Secret | Pages deploy 用 Cloudflare API token (`Account:Read` + `Cloudflare Pages:Edit`) |
-| `CLOUDFLARE_ACCOUNT_ID` | Secret または Variable | Cloudflare account ID |
+初回デプロイ成功後、custom domain `techdb.studio344.net` を新しい Pages プロジェクトへ付け替えます。旧 Direct Upload project `tech-dashboard` は切り戻し用として一時保持し、DNS / custom domain の移行後に削除可否を判断します。
 
-Cloudflare Pages 側は Git Provider が `No` のままで問題ありません。GitHub Actions が direct upload deployment を担当します。
+API token (`Pages Write`) がある場合は、以下でも同じ設定を作成できます。Cloudflare GitHub App が `himiyosh/tech-dashboard` へアクセスできる状態で実行します。
+
+```bash
+export CLOUDFLARE_ACCOUNT_ID=0438e47e5e23f7acd006da2e594f3559
+export NEW_PAGES_PROJECT=tech-dashboard-git
+
+curl "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects" \
+  -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "tech-dashboard-git",
+    "production_branch": "main",
+    "build_config": {
+      "build_command": "npm run build",
+      "destination_dir": "dist",
+      "root_dir": "web"
+    },
+    "source": {
+      "type": "github",
+      "config": {
+        "owner": "himiyosh",
+        "owner_id": "61819920",
+        "repo_name": "tech-dashboard",
+        "repo_id": "1216606051",
+        "production_branch": "main",
+        "production_deployments_enabled": true,
+        "preview_deployment_setting": "all",
+        "pr_comments_enabled": true
+      }
+    }
+  }'
+
+curl "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$NEW_PAGES_PROJECT/domains" \
+  -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"techdb.studio344.net"}'
+```
 
 #### 手動デプロイ
 
-緊急時やローカル確認後に直接反映したい場合は以下を実行します。
-
-プロジェクト作成 + 初回デプロイは CLI で完了済み。再デプロイは以下 1 コマンドです。
+通常運用では使用しません。移行前の旧 Direct Upload project へ緊急反映する場合のみ、以下を実行します。
 
 ```bash
-cd web && npm run deploy
-# → ビルド + wrangler pages deploy
+cd web && npm run deploy:legacy
+# → 旧 project tech-dashboard へ direct upload
 ```
 
 ### 2. Cloudflare Worker (定期ハーネス実行)
@@ -114,7 +157,7 @@ npx wrangler deploy
 ```
 
 Cron は `0 15,21,3,9 * * *` (6 時間ごと、JST の 00/06/12/18 時) で起動し、
-変更があれば `data/index.json` を GitHub に commit → GitHub Actions が Pages を自動的に再デプロイします。
+変更があれば `data/index.json` を GitHub に commit → Cloudflare Pages Git Integration が Pages を自動的に再デプロイします。
 
 **手動トリガ** (緊急で回したい時):
 

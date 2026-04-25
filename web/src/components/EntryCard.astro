@@ -38,7 +38,21 @@ const titleEn = titleForLang(entry, "en");
 const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
 const catColor = catMeta?.color ?? "#8a847e";
 const catInitial = catMeta?.initial ?? "??";
+const catName = catMeta?.name ?? entry.category;
 
+// Generate a deterministic pattern seed from the entry id
+const patternSeed = entry.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+const patternRotate = patternSeed % 360;
+const patternScale = 0.8 + (patternSeed % 5) * 0.1;
+
+// Source type icon character
+function sourceIcon(t: string): string {
+  if (t === "release") return "\u{1F680}";
+  if (t === "changelog") return "\u{1F4CB}";
+  if (t === "paper") return "\u{1F4D1}";
+  if (t === "blog") return "\u{270D}\u{FE0F}";
+  return "\u{1F4AC}";
+}
 const img = entry.image;
 const hasUsableImage =
   !!img && typeof img.src === "string" && img.src.length > 0;
@@ -103,20 +117,53 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
   ) : (
     <div class="card-thumb fallback">
       <svg viewBox="0 0 144 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-        <rect width="144" height="96" fill="#2d2a26" />
-        <rect width="144" height="96" fill={catColor} opacity="0.12" />
+        <defs>
+          <linearGradient id={`bg-${entry.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color={catColor} stop-opacity="0.25" />
+            <stop offset="100%" stop-color={catColor} stop-opacity="0.06" />
+          </linearGradient>
+        </defs>
+        <rect width="144" height="96" fill="#1a1917" />
+        <rect width="144" height="96" fill={`url(#bg-${entry.id})`} />
+        <g opacity="0.07" transform={`rotate(${patternRotate} 72 48) scale(${patternScale})`}>
+          <circle cx="20" cy="15" r="18" fill={catColor} />
+          <circle cx="130" cy="80" r="24" fill={catColor} />
+          <rect x="90" y="5" width="40" height="40" rx="8" fill={catColor} />
+        </g>
+        <line x1="0" y1="70" x2="144" y2="70" stroke={catColor} stroke-opacity="0.12" stroke-width="0.5" />
         <text
-          x="72"
-          y="58"
-          text-anchor="middle"
-          font-family="ui-monospace, monospace"
-          font-size="26"
-          font-weight="700"
+          x="12"
+          y="46"
+          font-family="system-ui, -apple-system, sans-serif"
+          font-size="22"
+          font-weight="800"
           fill={catColor}
-          opacity="0.85"
+          opacity="0.7"
         >{catInitial}</text>
+        <text
+          x="12"
+          y="62"
+          font-family="system-ui, -apple-system, sans-serif"
+          font-size="9"
+          fill={catColor}
+          opacity="0.45"
+          letter-spacing="0.06em"
+        >{catName}</text>
+        <text
+          x="12"
+          y="86"
+          font-family="system-ui, -apple-system, sans-serif"
+          font-size="8"
+          fill="#9a948e"
+          opacity="0.5"
+        >{entry.source}</text>
+        <text
+          x="132"
+          y="86"
+          text-anchor="end"
+          font-size="14"
+        >{sourceIcon(entry.sourceType)}</text>
       </svg>
-      <span class="src-mark">{thumbMark}</span>
     </div>
   )}
 </article>

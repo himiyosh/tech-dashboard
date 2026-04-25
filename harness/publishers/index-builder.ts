@@ -8,6 +8,11 @@ import type { NormalizedEntry } from "../types.ts";
 const INDEX_LIMIT = 500;
 const PER_SOURCE_CAP = 15;
 
+/** Return epoch ms for sorting; nulls sort to end in descending order. */
+function dateMs(iso: string | null): number {
+  return iso ? new Date(iso).getTime() : -Infinity;
+}
+
 export interface IndexPayload {
   generatedAt: string;
   count: number;
@@ -28,11 +33,11 @@ export async function writeIndex(
   }
   const capped: NormalizedEntry[] = [];
   for (const [, arr] of bySource) {
-    arr.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    arr.sort((a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt));
     capped.push(...arr.slice(0, PER_SOURCE_CAP));
   }
   const sorted = capped.sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+    (a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt),
   );
   const final = sorted.slice(0, INDEX_LIMIT);
   const payload: IndexPayload = {

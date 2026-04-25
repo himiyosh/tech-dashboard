@@ -129,7 +129,8 @@ async function main(): Promise<void> {
     // entries (which are the ones writeIndex() will keep).
     [...deduped].sort(
       (a, b) =>
-        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+        (b.publishedAt ? new Date(b.publishedAt).getTime() : -Infinity) -
+        (a.publishedAt ? new Date(a.publishedAt).getTime() : -Infinity),
     ),
     opts.dataDir,
   );

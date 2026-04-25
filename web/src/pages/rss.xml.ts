@@ -17,12 +17,13 @@ export const GET: APIRoute = () => {
       const title = escape(e.titleJa || e.titleEn || e.title);
       const desc = escape(e.summaryJa || e.summaryEn || "");
       const cats = e.tags.map((t) => `<category>${escape(t)}</category>`).join("");
+      const pubDate = e.publishedAt ? `<pubDate>${new Date(e.publishedAt).toUTCString()}</pubDate>` : "";
       return `
     <item>
       <title>${title}</title>
       <link>${escape(e.url)}</link>
       <guid isPermaLink="true">${escape(e.url)}</guid>
-      <pubDate>${new Date(e.publishedAt).toUTCString()}</pubDate>
+      ${pubDate}
       <description>${desc}</description>
       <category>${escape(e.category)}</category>
       ${cats}

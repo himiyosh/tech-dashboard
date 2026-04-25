@@ -36,6 +36,11 @@ interface Env {
 }
 
 const INDEX_LIMIT = 500;
+
+/** Return epoch ms for sorting; nulls sort to end in descending order. */
+function dateMs(iso: string | null): number {
+  return iso ? new Date(iso).getTime() : -Infinity;
+}
 const SUMMARIZE_CONCURRENCY = 4;
 const COPILOT_ENDPOINT = "https://api.githubcopilot.com/chat/completions";
 const COPILOT_HEADERS = {
@@ -47,6 +52,7 @@ const COPILOT_HEADERS = {
 } as const;
 
 interface CacheEntry {
+  titleJa: string;
   summaryJa: string;
   summaryEn: string;
   importance: 1 | 2 | 3;
@@ -136,6 +142,7 @@ function buildPrompt(e: NormalizedEntry): string {
     ``,
     `以下の JSON を**余計な文字を付けず**出力してください:`,
     `{`,
+    `  "titleJa": "日本語タイトル (30〜60文字)。原題が日本語ならそのまま。英語なら自然な日本語に翻訳",`,
     `  "summaryJa": "2〜3 行の日本語要約 (120〜200 文字)",`,
     `  "summaryEn": "1-2 sentence English summary (140-260 chars). Plain English only, no Japanese.",`,
     `  "importance": 1 | 2 | 3,`,
@@ -143,20 +150,23 @@ function buildPrompt(e: NormalizedEntry): string {
     `}`,
     ``,
     `importance 基準: 3=メジャーリリース/重大発表、2=機能追加/重要論文、1=通常更新。`,
-    `summaryJa と summaryEn は同じ内容を各言語で表現すること。バージョン番号 (例: 4.7) や固有名詞は正確に保持する。`,
+    `titleJa: 固有名詞 (製品名・企業名) は英語のまま保持。バージョン番号 (例: 4.7) も正確に保持する。`,
+    `summaryJa と summaryEn は同じ内容を各言語で表現すること。`,
   ].join("\n");
 }
 
 function parseResponse(text: string): {
+  titleJa: string;
   summaryJa: string;
   summaryEn: string;
   importance: 1 | 2 | 3;
   extraTags: string[];
 } {
   const match = text.match(/\{[\s\S]*\}/);
-  if (!match) return { summaryJa: "", summaryEn: "", importance: 1, extraTags: [] };
+  if (!match) return { titleJa: "", summaryJa: "", summaryEn: "", importance: 1, extraTags: [] };
   try {
     const obj = JSON.parse(match[0]) as {
+      titleJa?: string;
       summaryJa?: string;
       summaryEn?: string;
       importance?: number;
@@ -164,6 +174,7 @@ function parseResponse(text: string): {
     };
     const imp = Math.max(1, Math.min(3, Number(obj.importance ?? 1))) as 1 | 2 | 3;
     return {
+      titleJa: String(obj.titleJa ?? "").trim(),
       summaryJa: String(obj.summaryJa ?? "").trim(),
       summaryEn: String(obj.summaryEn ?? "").trim(),
       importance: imp,
@@ -172,7 +183,7 @@ function parseResponse(text: string): {
         : [],
     };
   } catch {
-    return { summaryJa: "", summaryEn: "", importance: 1, extraTags: [] };
+    return { titleJa: "", summaryJa: "", summaryEn: "", importance: 1, extraTags: [] };
   }
 }
 
@@ -287,11 +298,11 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   }
   const capped: NormalizedEntry[] = [];
   for (const [, arr] of bySource) {
-    arr.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    arr.sort((a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt));
     capped.push(...arr.slice(0, PER_SOURCE_CAP));
   }
   const sorted = capped
-    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+    .sort((a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt))
     .slice(0, INDEX_LIMIT);
 
   // 3) Resolve Copilot token (skip if PAT absent)
@@ -318,9 +329,11 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   const afterCache: NormalizedEntry[] = [];
   for (const e of sorted) {
     const hit = cacheBlob[e.url];
-    if (hit && hit.summaryJa && hit.summaryEn) {
+    const cachedTitleJa = hit?.titleJa || e.titleJa;
+    if (hit && cachedTitleJa && hit.summaryJa && hit.summaryEn) {
       afterCache.push({
         ...e,
+        titleJa: cachedTitleJa,
         summaryJa: hit.summaryJa,
         summaryEn: hit.summaryEn,
         importance: hit.importance,
@@ -362,6 +375,7 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
       if (r) {
         afterCache[i] = {
           ...e,
+          titleJa: r.titleJa || e.titleJa,
           summaryJa: r.summaryJa,
           summaryEn: r.summaryEn || e.summaryEn,
           importance: r.importance,

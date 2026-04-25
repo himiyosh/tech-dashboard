@@ -246,38 +246,20 @@ export async function summarize(
 ): Promise<SummarizeResult> {
   const stats = { cached: 0, summarized: 0, skipped: 0, errors: 0 };
 
-  let token: string | null;
-  try {
-    token = await resolveCopilotToken();
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`[summarize] token resolve failed — skipping: ${msg}`);
-    stats.skipped = entries.length;
-    return { entries, stats };
-  }
-
-  if (!token) {
-    console.log(
-      "[summarize] COPILOT_TOKEN / COPILOT_PAT not set — skipping",
-    );
-    stats.skipped = entries.length;
-    return { entries, stats };
-  }
-
   const cachePath = join(dataDir, "_summary-cache.json");
   const cache = await loadCache(cachePath);
 
-  // 1) Apply cached summaries.
-  //    Treat entries lacking summaryEn as stale so the prompt upgrade
-  //    (adding summaryEn) re-runs them on the next pipeline pass.
+  // 1) Apply cached summaries before token resolution so local preview keeps
+  // Japanese titles/summaries even when Copilot auth is temporarily unavailable.
   const needsSummary: NormalizedEntry[] = [];
   const out = entries.map((e) => {
     const hit = cache[e.url];
-    if (hit && hit.summaryJa && hit.summaryEn) {
+    const cachedTitleJa = hit?.titleJa || e.titleJa;
+    if (hit && cachedTitleJa && hit.summaryJa && hit.summaryEn) {
       stats.cached++;
       return {
         ...e,
-        titleJa: hit.titleJa || e.titleJa,
+        titleJa: cachedTitleJa,
         summaryJa: hit.summaryJa,
         summaryEn: hit.summaryEn,
         importance: hit.importance,
@@ -287,6 +269,24 @@ export async function summarize(
     needsSummary.push(e);
     return e;
   });
+
+  let token: string | null;
+  try {
+    token = await resolveCopilotToken();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[summarize] token resolve failed — skipping: ${msg}`);
+    stats.skipped = needsSummary.length;
+    return { entries: out, stats };
+  }
+
+  if (!token) {
+    console.log(
+      "[summarize] COPILOT_TOKEN / COPILOT_PAT not set — skipping",
+    );
+    stats.skipped = needsSummary.length;
+    return { entries: out, stats };
+  }
 
   // 2) Budget-cap newcomers.
   const toSummarize = needsSummary.slice(0, MAX_NEW);

@@ -329,10 +329,11 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   const afterCache: NormalizedEntry[] = [];
   for (const e of sorted) {
     const hit = cacheBlob[e.url];
-    if (hit && hit.summaryJa && hit.summaryEn) {
+    const cachedTitleJa = hit?.titleJa || e.titleJa;
+    if (hit && cachedTitleJa && hit.summaryJa && hit.summaryEn) {
       afterCache.push({
         ...e,
-        titleJa: hit.titleJa || e.titleJa,
+        titleJa: cachedTitleJa,
         summaryJa: hit.summaryJa,
         summaryEn: hit.summaryEn,
         importance: hit.importance,

@@ -76,7 +76,7 @@ GitHub repository secrets / variables:
 
 | 名前 | 種別 | 用途 |
 |---|---|---|
-| `CLOUDFLARE_API_TOKEN` | Secret | Pages deploy 用 Cloudflare API token (`Cloudflare Pages:Edit` 権限) |
+| `CLOUDFLARE_API_TOKEN` | Secret | Pages deploy 用 Cloudflare API token (`Account:Read` + `Cloudflare Pages:Edit`) |
 | `CLOUDFLARE_ACCOUNT_ID` | Secret または Variable | Cloudflare account ID |
 
 Cloudflare Pages 側は Git Provider が `No` のままで問題ありません。GitHub Actions が direct upload deployment を担当します。

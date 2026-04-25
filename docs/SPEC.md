@@ -372,7 +372,7 @@ interface NormalizedEntry {
 |---|---|---|
 | `COPILOT_PAT` | Copilot Enterprise 一時トークン交換 | Wrangler Secrets (Worker) / `.env` (ローカル) |
 | `GH_TOKEN` | GitHub Contents API + `x-trigger-token` 認証 | Wrangler Secrets |
-| `CLOUDFLARE_API_TOKEN` | Pages direct upload deploy | GitHub Actions Secrets |
+| `CLOUDFLARE_API_TOKEN` | Pages direct upload deploy (`Account:Read` + `Cloudflare Pages:Edit`) | GitHub Actions Secrets |
 | `CLOUDFLARE_ACCOUNT_ID` | Pages deploy 対象 account | GitHub Actions Secrets または Variables |
 
 ---

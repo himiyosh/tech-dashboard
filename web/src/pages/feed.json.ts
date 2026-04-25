@@ -1,14 +1,13 @@
 import type { APIRoute } from "astro";
 import { ALL_ENTRIES, GENERATED_AT } from "../lib/data.ts";
-
-const SITE = "https://tech-dashboard.pages.dev";
+import { SITE_URL } from "../lib/site.ts";
 
 export const GET: APIRoute = () => {
   const feed = {
     version: "https://jsonfeed.org/version/1.1",
     title: "TECH Dashboard — AI Daily",
-    home_page_url: SITE,
-    feed_url: `${SITE}/feed.json`,
+    home_page_url: SITE_URL,
+    feed_url: `${SITE_URL}/feed.json`,
     description: "AI コーディング/エコシステムの公式情報を毎日自動収集・要約",
     language: "ja",
     _generated_at: GENERATED_AT,

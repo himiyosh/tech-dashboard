@@ -2,13 +2,13 @@
 import Portal from "../layouts/Portal.astro";
 import Sidebar from "../components/Sidebar.astro";
 import { ALL_ENTRIES, GENERATED_AT, relativeTime } from "../lib/data.ts";
-import { REGISTRY } from "../../../harness/registry.ts";
+import { SOURCE_META } from "../lib/source-meta.ts";
 
 const now = new Date();
 const SIX_H = 6 * 3600_000;
 const WARN_H = 42 * 3600_000;
 
-const sources = Object.values(REGISTRY).map((def) => {
+const sources = SOURCE_META.map((def) => {
   const fromSource = ALL_ENTRIES.filter((e) => e.source === def.id);
   const latest = fromSource.reduce(
     (acc, e) => {

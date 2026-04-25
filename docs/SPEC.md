@@ -34,7 +34,7 @@
        │  github.com/himiyosh/  │  main ブランチ
        │    tech-dashboard      │
        └─────────┬──────────────┘
-                 ↓ push trigger (GitHub Actions: deploy-pages)
+                 ↓ push trigger (Cloudflare Pages Git Integration)
        ┌────────────────────────┐
        │  Cloudflare Pages      │  Astro 静的ビルド + Pagefind
        │  tech-dashboard        │  → 本番配信
@@ -337,21 +337,21 @@ interface NormalizedEntry {
 
 | 項目 | 値 |
 |---|---|
-| プロジェクト名 | `tech-dashboard` |
-| 本番 URL | `tech-dashboard-6a7.pages.dev` |
+| プロジェクト名 | Git Integration 付き新規 Pages project |
+| 本番 URL | `techdb.studio344.net` |
 | ビルドコマンド | `npm run build` (= `astro build && pagefind --site dist`) |
-| 出力ディレクトリ | `web/dist` |
+| 出力ディレクトリ | `dist` |
 | Root directory | `web/` |
-| Node バージョン | 22 |
+| Node バージョン | 22 (`web/.node-version`) |
 
 ### 8.2 デプロイ手段
 
 | モード | コマンド / 手順 | 自動化度 |
 |---|---|---|
-| **A. GitHub Actions** | `.github/workflows/deploy-pages.yml` | 完全自動 (`main` push → build → `wrangler pages deploy`) |
-| **B. CLI 直接** | `cd web && npm run deploy` | 手動実行 |
+| **A. Cloudflare Pages Git Integration** | Cloudflare dashboard で `himiyosh/tech-dashboard` を接続 | 完全自動 (`main` push → Cloudflare build → Pages deploy) |
+| **B. CLI 直接 (legacy)** | `cd web && npm run deploy:legacy` | 旧 Direct Upload project への手動実行 |
 
-> 現在は A (GitHub Actions) で運用。Cloudflare Pages プロジェクト `tech-dashboard` は Git Provider 未接続 (`No`) のまま、Actions から direct upload deployment を行う。
+> 現在の方針は A。既存 Direct Upload project `tech-dashboard` は Git Provider 未接続 (`No`) のため、Git Integration 付き新規 Pages project を作成して custom domain を移行する。
 
 ---
 
@@ -372,8 +372,6 @@ interface NormalizedEntry {
 |---|---|---|
 | `COPILOT_PAT` | Copilot Enterprise 一時トークン交換 | Wrangler Secrets (Worker) / `.env` (ローカル) |
 | `GH_TOKEN` | GitHub Contents API + `x-trigger-token` 認証 | Wrangler Secrets |
-| `CLOUDFLARE_API_TOKEN` | Pages direct upload deploy (`Account:Read` + `Cloudflare Pages:Edit`) | GitHub Actions Secrets |
-| `CLOUDFLARE_ACCOUNT_ID` | Pages deploy 対象 account | GitHub Actions Secrets または Variables |
 
 ---
 
@@ -390,7 +388,7 @@ cd web && npm install
 npm run dev                  # http://localhost:4321 (HMR)
 npm run build                # dist/ + Pagefind インデックス
 npm run preview              # build 後のプレビュー (検索検証用)
-npm run deploy               # build + wrangler pages deploy
+npm run deploy:legacy        # 旧 Direct Upload project への緊急手動反映
 
 # ===== Worker =====
 cd worker && npm install
@@ -405,7 +403,7 @@ npx wrangler tail            # 実ログ tail
 
 | 項目 | 現状 | 計画 |
 |---|---|---|
-| Pages Git 連携 | 未設定 (GitHub Actions で direct deploy) | 必要なら CF ダッシュボードで OAuth 承認に移行 |
+| Pages Git 連携 | 新規 Git Integration project へ移行 | 初回 deploy 成功後に `techdb.studio344.net` を移行 |
 | 検索の日本語 stem | Pagefind 未対応 | 必要なら kuromoji プラガブル化 |
 | Copilot 要約のレート | 1 実行 5 件まで | フル同期は時間分散で段階的補充 |
 | ライト/ダーク切替 | 固定ダーク | 設定保持付きトグル予定 |
@@ -425,4 +423,4 @@ npx wrangler tail            # 実ログ tail
 
 - Worker 生成: `chore(data): worker run <ISO> (+<N> summaries)`
 - 機能追加: `feat(<scope>): ...` / 修正: `fix(<scope>): ...`
-- `[skip ci]` は使用しない (`main` push の Pages deploy は GitHub Actions で実行)
+- `[skip ci]` は使用しない (Cloudflare Pages Git Integration の build skip と混同しないため)

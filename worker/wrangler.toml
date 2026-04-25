@@ -8,10 +8,11 @@ main = "src/index.ts"
 compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Cron: every 30 minutes (48 runs/day). Pages builds only fire when
-# data/index.json actually changes (worker no-ops otherwise).
+# Cron: every hour (24 runs/day = ~720/month).
+# Pages builds only fire when data/index.json actually changes (worker no-ops otherwise),
+# so realistic Pages build count stays well under the Free 500 builds/month cap.
 [triggers]
-crons = ["*/30 * * * *"]
+crons = ["0 * * * *"]
 
 # Summary cache (replaces data/_summary-cache.json).
 # Create with: wrangler kv namespace create SUMMARY_CACHE

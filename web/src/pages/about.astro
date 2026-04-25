@@ -1,6 +1,19 @@
 ---
 import Portal from "../layouts/Portal.astro";
 import Sidebar from "../components/Sidebar.astro";
+import {
+  ALL_ENTRIES,
+  GENERATED_AT,
+  CATEGORY_META,
+  relativeTime,
+} from "../lib/data.ts";
+import { SOURCE_META } from "../lib/source-meta.ts";
+
+const now = new Date();
+const totalEntries = ALL_ENTRIES.length;
+const totalSources = SOURCE_META.length;
+const totalCategories = CATEGORY_META.length;
+const lastUpdated = relativeTime(GENERATED_AT, now);
 ---
 
 <Portal pageKey="about" title="About — TECH Dashboard">
@@ -12,24 +25,112 @@ import Sidebar from "../components/Sidebar.astro";
         <h2>About</h2>
       </div>
 
-      <div class="side-card" style="padding:20px">
-        <h3 style="font-size:16px;margin-bottom:12px">TECH Dashboard とは</h3>
-        <p style="color:var(--text-2);line-height:1.7;margin-bottom:12px">
-          AI コーディング/エコシステムの**公式情報のみ**を、毎日 6 時間おきに自動収集する日本語ポータルです。
-          対象は Copilot / Claude / Codex / Gemini / Cursor / Cline / Aider / OpenCode / VSCode / Local LLM / Agent Framework / MCP / Research の 13 カテゴリ。
+      <article class="side-card about-card">
+        <h3>TECH Dashboard とは</h3>
+        <p>
+          AI コーディングおよび関連エコシステムの<strong>公式ソース</strong>を、
+          1 時間ごとに自動収集してまとめる日本語ポータルです。
+          Copilot / Claude / Codex / Gemini / Cursor / Cline / Aider / OpenCode /
+          VSCode / Local LLM / Agent Framework / MCP / Tech News / Research の
+          {totalCategories} カテゴリ、合計 {totalSources} ソースをカバーしています。
         </p>
-        <p style="color:var(--text-2);line-height:1.7;margin-bottom:12px">
-          Runtime Harness (Node + TypeScript) が RSS/Atom/HTML を収集し、Claude Opus 4.7 が日本語で要約・タグ付け・重要度判定。
-          Astro が静的サイトを生成し、Cloudflare Pages で配信しています。
+
+        <h3>仕組み</h3>
+        <ol class="about-list">
+          <li>
+            <strong>Cloudflare Worker (cron)</strong> が 1 時間ごとに発火し、
+            RSS / Atom / HTML / GitHub Releases / arXiv 等から記事メタデータを収集します。
+          </li>
+          <li>
+            正規化・重複除去のあと、<strong>Claude Opus 4.7</strong> が日本語タイトル・要約・
+            タグ・重要度 (1〜3) を生成。結果は Cloudflare KV にキャッシュして再利用します。
+          </li>
+          <li>
+            差分があるときだけ <code>data/index.json</code> を GitHub に commit し、
+            <strong>Cloudflare Pages Git Integration</strong> が自動で Astro ビルド & デプロイします。
+          </li>
+        </ol>
+
+        <h3>現在の状況</h3>
+        <ul class="about-list">
+          <li>収集中の記事: <strong>{totalEntries}</strong> 件</li>
+          <li>カテゴリ: <strong>{totalCategories}</strong></li>
+          <li>ソース: <strong>{totalSources}</strong></li>
+          <li>最終更新: <strong>{lastUpdated}</strong></li>
+        </ul>
+
+        <h3>リンク</h3>
+        <p class="about-links">
+          <a href="/rss.xml">RSS</a>
+          <span class="sep">·</span>
+          <a href="/feed.json">JSON Feed</a>
+          <span class="sep">·</span>
+          <a href="/sources">Sources</a>
+          <span class="sep">·</span>
+          <a href="/status">Status</a>
+          <span class="sep">·</span>
+          <a href="https://github.com/himiyosh/tech-dashboard" target="_blank" rel="noopener">GitHub</a>
         </p>
-        <p style="color:var(--text-2);line-height:1.7">
-          フィード: <a href="/rss.xml" style="color:var(--accent)">RSS</a> ·
-          <a href="/feed.json" style="color:var(--accent)">JSON Feed</a> ·
-          <a href="https://github.com/himiyosh/tech-dashboard" target="_blank" rel="noopener" style="color:var(--accent)">GitHub</a>
+
+        <p class="about-note">
+          表示されているサマリは LLM が自動生成したものであり、原文と差異が生じる場合があります。
+          重要な意思決定の前に必ず原文ソースをご確認ください。
         </p>
-      </div>
+      </article>
     </main>
 
     <aside class="right"></aside>
   </div>
 </Portal>
+
+<style>
+  .about-card {
+    padding: 24px 26px;
+    line-height: 1.75;
+  }
+  .about-card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 18px 0 8px;
+    color: var(--text);
+    letter-spacing: 0.01em;
+  }
+  .about-card h3:first-of-type {
+    margin-top: 0;
+  }
+  .about-card p {
+    color: var(--text-2);
+    margin-bottom: 10px;
+  }
+  .about-card .about-list {
+    color: var(--text-2);
+    padding-left: 22px;
+    margin-bottom: 10px;
+  }
+  .about-card .about-list li {
+    margin-bottom: 4px;
+  }
+  .about-card code {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+  }
+  .about-card .about-links a {
+    color: var(--accent);
+  }
+  .about-card .about-links .sep {
+    color: var(--muted-2);
+    margin: 0 6px;
+  }
+  .about-card .about-note {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+</style>

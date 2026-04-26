@@ -1314,10 +1314,13 @@ html, body {
 
 /* ============ MOBILE LAYOUT (<=720px) ============ */
 @media (max-width: 720px) {
-  /* Header: stack into 2 rows, full-width search */
+  /* Header: stack into 2 rows, full-width search; non-sticky to free up viewport */
+  header {
+    position: static;
+  }
   .header-inner {
     flex-wrap: wrap;
-    gap: 10px 14px;
+    gap: 8px 12px;
     padding: 10px 14px;
   }
   .logo {
@@ -1336,8 +1339,9 @@ html, body {
   .nav::-webkit-scrollbar { display: none; }
   .nav a {
     flex: 0 0 auto;
-    padding: 8px 12px;
+    padding: 9px 12px;
     font-size: 13px;
+    display: inline-block;
   }
   .search {
     order: 4;
@@ -1358,8 +1362,10 @@ html, body {
     margin-left: auto;
   }
   .lang-btn {
-    padding: 10px 14px;
+    padding: 11px 14px;
     min-width: 44px;
+    min-height: 40px;
+    line-height: 1.2;
     font-size: 12px;
   }
   .crumb-inner {

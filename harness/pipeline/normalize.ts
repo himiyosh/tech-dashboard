@@ -68,12 +68,38 @@ function placeholderSummary(raw: RawEntry, lang: Lang): { ja: string; en: string
   return { ja: "", en: short };
 }
 
+/**
+ * GitHub release feeds (and many changelogs) publish entries whose <title> is
+ * just the version number (e.g. "v3.8.0", "1.104.0", "Release 2026.04.21").
+ * Such titles are useless on the dashboard because the reader cannot tell
+ * which product the release belongs to. Prefix them with the source's
+ * display name so the card reads e.g. "Cline Releases — v3.8.0".
+ */
+const VERSION_ONLY_RE = /^(?:release\s+)?v?\d+(?:\.\d+){1,3}(?:[-+][0-9a-z.\-]+)?$/i;
+
+function decorateReleaseTitle(rawTitle: string, source: SourceDefinition): string {
+  if (source.sourceType !== "release" && source.sourceType !== "changelog") {
+    return rawTitle;
+  }
+  const trimmed = rawTitle.trim();
+  if (!trimmed) return rawTitle;
+  // Already contains the source name (case-insensitive) → leave as is.
+  if (trimmed.toLowerCase().includes(source.displayName.toLowerCase())) {
+    return rawTitle;
+  }
+  if (!VERSION_ONLY_RE.test(trimmed)) return rawTitle;
+  return `${source.displayName} ${trimmed}`;
+}
+
 export function normalize(
   raw: RawEntry,
   source: SourceDefinition,
   collectedAt: string,
 ): NormalizedEntry {
   const id = sha256Short(`${source.id}::${raw.url}`);
+  const decoratedTitle = decorateReleaseTitle(raw.title, source);
+  const decoratedRaw: RawEntry = decoratedTitle === raw.title ? raw : { ...raw, title: decoratedTitle };
+  raw = decoratedRaw;
   const lang = detectLang(`${raw.title} ${raw.contentSnippet ?? ""}`, source.defaultLang);
   const summary = placeholderSummary(raw, lang);
   const image = raw.mediaThumbnail

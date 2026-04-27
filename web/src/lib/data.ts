@@ -38,6 +38,10 @@ export interface NormalizedEntry {
   category: Category;
   importance: 1 | 2 | 3;
   clusterId?: string;
+  /** Archive classification (added Phase B, optional during rollout). */
+  archiveTier?: "hot" | "warm" | "cold" | "dropped";
+  halfLife?: "news" | "tutorial" | "architecture" | "fundamental";
+  evergreen?: boolean;
   image?: {
     src: string;
     origSrc: string;

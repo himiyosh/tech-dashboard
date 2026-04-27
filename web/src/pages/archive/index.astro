@@ -1,0 +1,130 @@
+---
+import Portal from "../../layouts/Portal.astro";
+import Sidebar from "../../components/Sidebar.astro";
+import {
+  ARCHIVE_TOTAL_ENTRIES,
+  ARCHIVE_GENERATED_AT,
+  getMonthSummaries,
+} from "../../lib/archive.ts";
+import { relativeTime } from "../../lib/data.ts";
+
+const months = getMonthSummaries();
+
+// Group by year for nicer rendering.
+const byYear = new Map<string, typeof months>();
+for (const m of months) {
+  const y = m.month.slice(0, 4);
+  const arr = byYear.get(y) ?? [];
+  arr.push(m);
+  byYear.set(y, arr);
+}
+const years = [...byYear.keys()].sort().reverse();
+
+const breadcrumb = [
+  { label: "Home", href: "/" },
+  { label: "Archive" },
+];
+---
+
+<Portal pageKey="archive" title="Archive — TECH Dashboard" breadcrumb={breadcrumb}>
+  <div class="layout">
+    <Sidebar />
+
+    <main>
+      <div class="section-header primary">
+        <h2>
+          Archive
+          <span class="count">{ARCHIVE_TOTAL_ENTRIES} entries · {months.length} months</span>
+        </h2>
+      </div>
+
+      <p class="lede">
+        過去の記事を月単位で集約しています。最新は <a href="/">タイムライン</a> をご覧ください。
+        <br />
+        最終更新: {relativeTime(ARCHIVE_GENERATED_AT)}
+      </p>
+
+      {months.length === 0 && (
+        <p style="color:var(--muted);padding:24px 0">
+          まだアーカイブはありません。
+        </p>
+      )}
+
+      {years.map((year) => (
+        <section style="margin-bottom:32px">
+          <h3 class="year-head">{year}</h3>
+          <div class="month-grid">
+            {byYear.get(year)!.map((m) => (
+              <a href={`/archive/${m.month}`} class="month-card">
+                <div class="month-label">{m.label}</div>
+                <div class="month-count">{m.count}</div>
+                <div class="month-meta">
+                  <span class="tier warm">warm {m.warm}</span>
+                  <span class="tier cold">cold {m.cold}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      ))}
+    </main>
+
+    <aside class="right"></aside>
+  </div>
+</Portal>
+
+<style>
+  .lede {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 8px 0 24px;
+    line-height: 1.6;
+  }
+  .year-head {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-subtle, var(--muted));
+    margin: 0 0 12px 4px;
+  }
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .month-card {
+    display: block;
+    padding: 14px 16px;
+    background: var(--bg-2, var(--surface));
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .month-card:hover {
+    border-color: var(--accent, #5eead4);
+    transform: translateY(-1px);
+  }
+  .month-label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .month-count {
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .month-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+  }
+  .tier {
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .tier.warm { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+  .tier.cold { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+</style>

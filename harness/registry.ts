@@ -36,6 +36,8 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     autoTags: ["anthropic", "engineering"],
     feedUrl: "https://www.anthropic.com/engineering",
     tier: 1,
+    // Engineering deep-dives age slower than product announcements.
+    halfLifeOverride: "architecture",
     collect: collectAnthropicEngineering,
   },
 
@@ -92,6 +94,8 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     autoTags: ["github"],
     feedUrl: "https://github.blog/category/ai-and-ml/feed/",
     tier: 1,
+    // Long-form technical explainers, not release announcements.
+    halfLifeOverride: "architecture",
     collect: collectRss,
   },
   "github-changelog": {
@@ -301,6 +305,8 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     autoTags: ["newsletter"],
     feedUrl: "https://simonwillison.net/atom/everything/",
     tier: 2,
+    // Long-form essays referenced for years.
+    halfLifeOverride: "architecture",
     collect: collectRss,
   },
 
@@ -548,6 +554,8 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     autoTags: ["dora", "devops", "research"],
     feedUrl: "https://dora.dev/insights/index.xml",
     tier: 2,
+    // DORA reports are cited for years.
+    halfLifeOverride: "architecture",
     collect: collectRss,
   },
   "hn-ai": {

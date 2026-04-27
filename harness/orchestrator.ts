@@ -16,6 +16,7 @@ import { dedupeByUrl } from "./pipeline/dedupe.ts";
 import { applyTags } from "./pipeline/tag.ts";
 import { summarize } from "./pipeline/summarize.ts";
 import { writeIndex, writeRawSnapshot } from "./publishers/index-builder.ts";
+import { writeArchive } from "./publishers/archive-builder.ts";
 import type {
   CollectorRunResult,
   NormalizedEntry,
@@ -139,8 +140,13 @@ async function main(): Promise<void> {
   );
 
   const indexPath = await writeIndex(enhanced, opts.dataDir);
+  const archiveStats = await writeArchive(enhanced, opts.dataDir);
   await writeRunReport(results, opts.dataDir, collectedAt);
   console.log(`[harness] wrote ${indexPath}`);
+  console.log(
+    `[archive] months=${archiveStats.monthsTouched} archived=${archiveStats.entriesArchived} ` +
+      `dropped=${archiveStats.entriesDropped} hot-skipped=${archiveStats.entriesSkippedHot}`,
+  );
 
   const failed = results.filter((r) => !r.ok);
   if (failed.length > 0) {

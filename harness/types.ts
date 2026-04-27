@@ -51,6 +51,28 @@ export type Lang = "ja" | "en";
 
 export type Importance = 1 | 2 | 3;
 
+/**
+ * Archive tier — current visibility / storage layer of an article.
+ * See harness/half-life.ts for the transition rules.
+ *
+ * - hot   : within Hot window. Featured on top page, sitemap, full HTML.
+ * - warm  : older than Hot but still individually addressable. Category pages, sitemap, full HTML.
+ * - cold  : aggregated into /archive/{year-month}/. Individual URLs 301-redirect to anchor.
+ * - dropped: past Cold threshold. Removed from site (per archive-over-retention policy).
+ *           Kept here as a state value so pipelines can mark before deletion.
+ */
+export type ArchiveTier = "hot" | "warm" | "cold" | "dropped";
+
+/**
+ * Information half-life — how fast the article's value decays.
+ * Determines per-tier day thresholds. See harness/half-life.ts.
+ */
+export type HalfLife =
+  | "news"          // Release notes, announcements (3-7 day half-life)
+  | "tutorial"      // How-to, walkthroughs (6-12 month half-life)
+  | "architecture"  // Design discussions, postmortems (2-5 year half-life)
+  | "fundamental";  // Core CS / theory (10+ year half-life, never dropped)
+
 /** Raw entry produced by a Collector BEFORE normalization/enrichment. */
 export interface RawEntry {
   /** Unique within (sourceId, collector run). Used for content hash. */
@@ -95,6 +117,18 @@ export interface NormalizedEntry {
   importance: Importance;
   clusterId?: string;
   image?: ImageRef;
+  /**
+   * Archive tier — set by pipeline/archive-tier.ts (Phase B).
+   * Optional for backward compatibility with pre-archive-strategy entries.
+   */
+  archiveTier?: ArchiveTier;
+  /** Information half-life classification. Optional during rollout. */
+  halfLife?: HalfLife;
+  /**
+   * If true, this article is exempt from tier downgrade (never enters cold/dropped).
+   * Set manually for editorial picks or automatically when viewsLast30d is high.
+   */
+  evergreen?: boolean;
   /** Minimal raw copy for auditing. */
   raw?: unknown;
 }
@@ -120,6 +154,13 @@ export interface SourceDefinition {
    * 1 = core 15, 2 = Tier 2 additional 15, 3 = future.
    */
   tier: 1 | 2 | 3;
+  /**
+   * Optional half-life override for this source. If unset, the default mapping
+   * in harness/half-life.ts (by category × sourceType) is used.
+   * Use this for sources whose decay profile diverges from category default
+   * (e.g. Anthropic Engineering = "architecture", not "news").
+   */
+  halfLifeOverride?: HalfLife;
 }
 
 /** Result of a single collector run — used for telemetry. */

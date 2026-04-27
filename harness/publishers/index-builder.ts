@@ -23,10 +23,14 @@ export async function writeIndex(
   entries: NormalizedEntry[],
   dataDir: string,
 ): Promise<string> {
+  // Exclude entries past the cold threshold — they exist only as anchors
+  // inside data/archive/{YYYY-MM}.json from this point on.
+  const live = entries.filter((e) => e.archiveTier !== "dropped");
+
   // Cap per source (prevents arxiv's ~400/day dump from drowning out
   // other sources), then sort newest-first, then cap to INDEX_LIMIT.
   const bySource = new Map<string, NormalizedEntry[]>();
-  for (const e of entries) {
+  for (const e of live) {
     const arr = bySource.get(e.source) ?? [];
     arr.push(e);
     bySource.set(e.source, arr);

@@ -10,6 +10,7 @@ import type {
   RawEntry,
   SourceDefinition,
 } from "../types.ts";
+import { decideTier, resolveHalfLife } from "../half-life.ts";
 
 function sha256Short(input: string): string {
   return createHash("sha256").update(input).digest("hex").slice(0, 16);
@@ -113,6 +114,19 @@ export function normalize(
     }
     : undefined;
 
+  // Archive classification (Phase A/B). Computed deterministically on every
+  // run so a registry override flip-flop is reflected next collect.
+  const halfLife = resolveHalfLife({
+    category: source.category,
+    sourceType: source.sourceType,
+    sourceId: source.id,
+    sourceOverride: source.halfLifeOverride,
+  });
+  const archiveTier = decideTier(
+    { publishedAt: raw.publishedAt, halfLife },
+    new Date(collectedAt),
+  );
+
   return {
     id,
     source: source.id,
@@ -129,6 +143,8 @@ export function normalize(
     tags: [...source.autoTags],
     category: source.category,
     importance: scoreImportance(raw, source),
+    halfLife,
+    archiveTier,
     ...(image ? { image } : {}),
   };
 }

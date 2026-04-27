@@ -1,0 +1,118 @@
+---
+import Portal from "../../layouts/Portal.astro";
+import Sidebar from "../../components/Sidebar.astro";
+import EntryCard from "../../components/EntryCard.astro";
+import {
+  ARCHIVE_MONTHS,
+  getMonth,
+  getMonthLabel,
+  getMonthSummaries,
+} from "../../lib/archive.ts";
+import { groupByDay, jstDayLabel } from "../../lib/data.ts";
+
+export function getStaticPaths() {
+  return ARCHIVE_MONTHS.map((month) => ({ params: { month } }));
+}
+
+const { month } = Astro.params as { month: string };
+const file = getMonth(month);
+if (!file) {
+  // Shouldn't happen — getStaticPaths only emits known months.
+  throw new Error(`Unknown archive month: ${month}`);
+}
+const label = getMonthLabel(month);
+const dayGroups = groupByDay(file.entries);
+const now = new Date();
+
+// Adjacent-month navigation.
+const all = getMonthSummaries(); // already newest-first
+const idx = all.findIndex((m) => m.month === month);
+const newer = idx > 0 ? all[idx - 1] : null;
+const older = idx >= 0 && idx < all.length - 1 ? all[idx + 1] : null;
+
+let warm = 0;
+let cold = 0;
+for (const e of file.entries) {
+  if (e.archiveTier === "warm") warm++;
+  else if (e.archiveTier === "cold") cold++;
+}
+
+const breadcrumb = [
+  { label: "Home", href: "/" },
+  { label: "Archive", href: "/archive" },
+  { label },
+];
+---
+
+<Portal pageKey="archive" title={`${label} — Archive — TECH Dashboard`} breadcrumb={breadcrumb}>
+  <div class="layout">
+    <Sidebar />
+
+    <main>
+      <div class="section-header primary">
+        <h2>
+          {label}
+          <span class="count">{file.count} entries</span>
+        </h2>
+      </div>
+
+      <div class="archive-meta">
+        <span class="tier warm">warm {warm}</span>
+        <span class="tier cold">cold {cold}</span>
+      </div>
+
+      <nav class="month-nav">
+        {older
+          ? <a href={`/archive/${older.month}`}>← {older.label}</a>
+          : <span class="dim">— oldest</span>}
+        <a href="/archive" class="all-link">All months</a>
+        {newer
+          ? <a href={`/archive/${newer.month}`}>{newer.label} →</a>
+          : <span class="dim">newest →</span>}
+      </nav>
+
+      {dayGroups.map(({ key, items }) => (
+        <>
+          <div class="day-header">
+            <span>{jstDayLabel(key, now)}</span>
+            <span class="day-count">{items.length} entries</span>
+          </div>
+          {items.map((entry) => <EntryCard entry={entry} />)}
+        </>
+      ))}
+    </main>
+
+    <aside class="right"></aside>
+  </div>
+</Portal>
+
+<style>
+  .archive-meta {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0 16px;
+    font-size: 12px;
+  }
+  .tier {
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .tier.warm { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+  .tier.cold { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+
+  .month-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0 18px;
+    font-size: 13px;
+  }
+  .month-nav a {
+    color: var(--accent, #5eead4);
+    text-decoration: none;
+  }
+  .month-nav a:hover { text-decoration: underline; }
+  .month-nav .all-link { color: var(--muted); }
+  .month-nav .dim { color: var(--muted); opacity: 0.5; }
+</style>

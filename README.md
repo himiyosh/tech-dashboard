@@ -165,6 +165,16 @@ curl -X POST "https://tech-dashboard-harness.<your-subdomain>.workers.dev/run" \
 
 レスポンスは `202 Accepted` が即座に返り、実処理は `ctx.waitUntil` でバックグラウンド実行。進行状況は GitHub のコミット履歴 (`tech-dashboard-worker` 作成者) または Cloudflare ダッシュボードの Worker Logs で確認できます。
 
+#### Worker コードの自動デプロイ (pre-push hook)
+
+Worker は Cloudflare Pages Git Integration の対象外のため、`worker/src/**` を変更したら `wrangler deploy` が必要です。`scripts/git-hooks/pre-push` がこれを自動化します。クローン後 1 度だけ:
+
+```bash
+bash scripts/install-hooks.sh
+```
+
+これ以降、`main` への push に worker/ 差分があれば自動で `npx wrangler@4.85.0 deploy` が走ります。スキップしたい場合は `SKIP_WORKER_DEPLOY=1 git push`。
+
 ### 3. Cloudflare MCP サーバー (任意)
 
 VS Code / Copilot Chat から Cloudflare を直接操作できる公式 MCP 群を `.vscode/mcp.json` に登録済み。認証は Cloudflare アカウントで OAuth。

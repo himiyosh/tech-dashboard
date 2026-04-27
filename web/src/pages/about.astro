@@ -40,6 +40,10 @@ const lastUpdated = relativeTime(GENERATED_AT, now);
           <li>
             <strong>Cloudflare Worker (cron)</strong> が 1 時間ごとに発火し、
             RSS / Atom / HTML / GitHub Releases / arXiv 等から記事メタデータを収集します。
+            Cloudflare Free の subrequest 上限 (50/run) に収めるため、{totalSources} ソースを
+            <strong>4 バッチに分割してローテーション</strong>しており、
+            個別ソースの再収集は <strong>4 時間ごと</strong>になります
+            (毎時の run では別バッチの新着が反映されます)。
           </li>
           <li>
             正規化・重複除去のあと、<strong>Claude Opus 4.7</strong> が日本語タイトル・要約・

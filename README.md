@@ -1,8 +1,8 @@
 # Tech Dashboard - AI Ecosystem Update Portal
 
-AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline / Aider / VSCode / OpenCode / Local LLM / Agent FW / MCP / Research の **13 カテゴリ**) を **一括で追跡** できるポータルサイト。Harness Engineering のプラクティスに沿って、AI エージェントが自律的に情報収集・正規化・公開を行う。
+AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline / Aider / VSCode / OpenCode / Local LLM / Agent FW / MCP / Tech News / Research の **14 カテゴリ**) を **一括で追跡** できるポータルサイト。Harness Engineering のプラクティスに沿って、AI エージェントが自律的に情報収集・正規化・公開を行う。
 
-**現状**: Phase 1〜4 完了 — 31 ソース (Tier 1 / 2 / 3) を自動収集、Astro 静的サイト生成、RSS/JSON Feed 配信、GitHub Copilot Enterprise (Claude Opus 4.7) による要約パイプライン、Pagefind 全文検索、品質監査 Skill、ユーザ OPML カスタマイズ基盤まで動作可能です。
+**現状**: 50 ソース (Tier 1 / 2 / 3) を Cloudflare Worker で **毎時自動収集** (50 ソースを 4 バッチに分割し各ソースは 4 時間ごとに更新)、Astro 静的サイト生成、RSS/JSON Feed 配信、GitHub Copilot Enterprise (Claude Opus 4.7) による要約パイプライン、Pagefind 全文検索、品質監査 Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。
 
 ## ドキュメント構成
 
@@ -12,7 +12,8 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | 01  | [システム設計書](docs/01-architecture.md)                               | アーキテクチャ・データモデル・データフロー   |
 | 02  | [Agent / Skill / Hook / Prompt 構成](docs/02-agents-skills-hooks.md)    | ハーネスの内部構成と責務分割                 |
 | 03  | [UI/UX デザイン案](docs/03-design-mockup.md)                            | 画面構成・ワイヤーフレーム・デザイントークン |
-| 04  | [サイト仕様書 v1.0](docs/04-site-spec.md)                               | 13 カテゴリ / 30 ソース / 画面別仕様         |
+| SPEC | [本番サイト仕様 (現状)](docs/SPEC.md)                                | 14 カテゴリ / 50 ソース / 本番反映済みの仕様 |
+| 04  | [サイト仕様書 v1.0 (草案)](docs/04-site-spec.md)                        | 計画段階の草案 (現状は SPEC.md が正)         |
 | 02c | [ユーザカスタマイズ](docs/02-customization.md)                          | OPML / YouTube / HN クエリの追加方法         |
 
 モック: [`docs/mockups/`](docs/mockups/) (mockup-D が確定デザイン)
@@ -23,7 +24,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 # ============ ハーネス (ルート) ============
 npm install                  # 依存インストール
 npm run typecheck            # 型チェック
-npm run collect              # 31 ソース収集 → data/index.json 生成
+npm run collect              # 50 ソース収集 → data/index.json 生成
 npm run collect:dry          # ドライラン (ファイル書き込みなし)
 
 # ============ Web サイト ============
@@ -57,22 +58,22 @@ SUMMARIZE_MAX_NEW=15               # 1 ラン当たりの新規要約上限
 
 通常運用は Cloudflare 内で完結します。Cloudflare Worker が `data/index.json` を GitHub に commit し、Cloudflare Pages の Git Integration が `main` の更新を検知してサイトを build / deploy します。
 
-既存の Pages プロジェクト `tech-dashboard` は Direct Upload 型で Git Provider が未接続です。Cloudflare の仕様上、Direct Upload 型を後から Git Integration 型へ切り替えることはできないため、Git Integration 付きの新しい Pages プロジェクトを作成して移行します。
+```
+[Cloudflare Worker Cron] ──毎時 (4 batch ローテーション)──→ [GitHub Contents API]
+  │ (RSS 収集 + Copilot 要約 + og:image)                │ push to main
+  │                                                     ↓
+  │                                          [Cloudflare Pages Git Integration]
+  │                                                     ↓ npm run build
+  └── Summary / OG Cache (KV)                  [Cloudflare Pages 本番サイト]
+```
 
-```
-[Cloudflare Worker Cron] ──6h ごと──→ [GitHub Contents API]
-  │ (RSS 収集 + Copilot 要約)              │ push to main
-  │                                       ↓
-  │                              [Cloudflare Pages Git Integration]
-  │                                       ↓ npm run build
-  └── Summary Cache (KV)          [Cloudflare Pages 本番サイト]
-```
+> **構成決定の経緯**: 旧 `tech-dashboard` プロジェクトは Direct Upload 型で Git Integration へ切替不可だったため、いったん削除して同名で Git Integration 付きの新プロジェクトを再作成済みです (詳細は [.github/copilot-instructions.md](.github/copilot-instructions.md) の R-001 / LL-001)。
 
 ### 1. Cloudflare Pages (サイトビルド + デプロイ)
 
 **本番 URL**: https://techdb.studio344.net/
 
-新しい Pages プロジェクトは Cloudflare dashboard で **Create application** → **Pages** → **Import an existing Git repository** から作成します。
+Pages プロジェクトは Cloudflare dashboard で **Create application** → **Pages** → **Import an existing Git repository** から作成します (現行プロジェクトは構築済み)。
 
 | 設定項目 | 値 |
 |---|---|
@@ -86,19 +87,16 @@ SUMMARIZE_MAX_NEW=15               # 1 ラン当たりの新規要約上限
 | Production deployments | Enabled |
 | Preview deployments | 任意 |
 
-初回デプロイ成功後、custom domain `techdb.studio344.net` を新しい Pages プロジェクトへ付け替えます。旧 Direct Upload project `tech-dashboard` は切り戻し用として一時保持し、DNS / custom domain の移行後に削除可否を判断します。
-
-API token (`Pages Write`) がある場合は、以下でも同じ設定を作成できます。Cloudflare GitHub App が `himiyosh/tech-dashboard` へアクセスできる状態で実行します。
+custom domain `techdb.studio344.net` は新プロジェクトに移行済みです。再構築が必要な場合のみ、API token (`Pages Write`) で同じ設定を再現できます。
 
 ```bash
 export CLOUDFLARE_ACCOUNT_ID=0438e47e5e23f7acd006da2e594f3559
-export NEW_PAGES_PROJECT=tech-dashboard-git
 
 curl "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects" \
   -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "tech-dashboard-git",
+    "name": "tech-dashboard",
     "production_branch": "main",
     "build_config": {
       "build_command": "npm run build",
@@ -120,7 +118,7 @@ curl "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages
     }
   }'
 
-curl "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$NEW_PAGES_PROJECT/domains" \
+curl "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/tech-dashboard/domains" \
   -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"techdb.studio344.net"}'
@@ -144,9 +142,9 @@ cd worker
 npm install
 npx wrangler login                              # 初回認証
 
-# KV ネームスペース作成 (Summary Cache 用)
-npx wrangler kv namespace create SUMMARY_CACHE
-# → 出力された id を worker/wrangler.toml の REPLACE_WITH_KV_ID に反映
+# KV ネームスペース (構築済み: id=6d67debb991742efadfec473a121f5fc)
+# 新規環境では: npx wrangler kv namespace create SUMMARY_CACHE
+# → 出力された id を worker/wrangler.toml の [[kv_namespaces]] id に反映
 
 # シークレット登録 (インタラクティブ入力)
 npx wrangler secret put COPILOT_PAT             # Copilot Enterprise 権限付き Classic PAT
@@ -156,8 +154,7 @@ npx wrangler secret put GH_TOKEN                # Contents:Write 権限の Fine-
 npx wrangler deploy
 ```
 
-Cron は `0 15,21,3,9 * * *` (6 時間ごと、JST の 00/06/12/18 時) で起動し、
-変更があれば `data/index.json` を GitHub に commit → Cloudflare Pages Git Integration が Pages を自動的に再デプロイします。
+Cron は `0 * * * *` (毎時) で起動します。Cloudflare Free Workers の subrequest 上限 50/run に収めるため、50 ソースを 4 バッチに分割しローテーションしており、**個別ソースの再収集は 4 時間ごと**となります。各 run で `SUMMARIZE_MAX_NEW=5` の新規要約と最大 4 件の og:image 取得を行い、差分があれば `data/index.json` を GitHub に commit → Cloudflare Pages Git Integration が Pages を自動的に再デプロイします。
 
 **手動トリガ** (緊急で回したい時):
 
@@ -190,7 +187,7 @@ tech-dashboard/
 │  └─ mockups/               # HTML モック (mockup-D が確定)
 ├─ harness/                  # ハーネス本体 (TypeScript)
 │  ├─ orchestrator.ts        # 外側ループ (並列 collect → normalize → dedupe → tag → summarize → publish)
-│  ├─ registry.ts            # ソース定義テーブル (31 ソース)
+│  ├─ registry.ts            # ソース定義テーブル (50 ソース)
 │  ├─ types.ts               # 共通型 (Category / NormalizedEntry / SourceDefinition)
 │  ├─ collectors/
 │  │  ├─ rss.ts              # 汎用 RSS/Atom/RDF コレクター
@@ -209,26 +206,33 @@ tech-dashboard/
 ├─ web/                      # Astro 静的サイト
 │  ├─ src/
 │  │  ├─ layouts/Portal.astro
-│  │  ├─ components/{Sidebar,EntryCard}.astro
+│  │  ├─ components/{Sidebar,EntryCard,DailySummary,DayDigest,TickerBar,TrendChart,Pager,CompactRow,CategoryHero}.astro
 │  │  ├─ lib/data.ts         # data/index.json を型付きで読み込む
+│  │  ├─ lib/source-meta.ts  # web 自己完結用の sources メタ複製 (R-005)
+│  │  ├─ lib/site.ts         # canonical URL 単一情報源 (R-004)
+│  │  ├─ styles/portal.css   # 全 CSS (モバイル最適化済み)
 │  │  └─ pages/
-│  │     ├─ index.astro      # ポータルトップ (mockup-D 準拠)
-│  │     ├─ c/[slug].astro   # カテゴリ別 (13 ページ)
+│  │     ├─ index.astro      # ポータルトップ (Top-3 メダル / DailySummary 等)
+│  │     ├─ c/[slug].astro   # カテゴリ別 (14 ページ)
 │  │     ├─ t/[tag].astro    # タグ別
-│  │     ├─ sources.astro, about.astro, status.astro
+│  │     ├─ sources.astro, about.astro, status.astro, categories.astro
 │  │     └─ {rss.xml,feed.json}.ts  # RSS 2.0 / JSON Feed 1.1
+│  ├─ .node-version          # Cloudflare Pages build 用 Node 22 ピン
 │  └─ astro.config.mjs
 ├─ .claude/skills/
 │  └─ quality-audit/         # 品質監査スキル (SKILL.md + run.ts)
 ├─ worker/                   # Cloudflare Worker (定期ハーネス実行)
-│  ├─ src/index.ts           # Cron 起動 → 収集 → Copilot 要約 → GitHub Contents API に commit
+│  ├─ src/index.ts           # Cron 起動 → 収集 (4 batch ローテーション) → Copilot 要約 → og:image → GitHub commit
 │  ├─ wrangler.toml          # Workers 設定 (Cron / KV / Vars)
 │  └─ package.json
+├─ scripts/
+│  ├─ backfill-og.mjs        # data/index.json の og:image を一括バックフィル
+│  └─ setup-copilot-auth.sh  # Copilot Enterprise PAT セットアップ
 └─ data/                     # 成果物 (git-as-DB)
-   ├─ index.json             # サイト配信用 (最新 500 件)
+   ├─ index.json             # サイト配信用 (最新 500 件 / og:image 付き)
    ├─ raw/                   # 生データ (.gitignore, 監査用ローカル保持)
    ├─ _runs/                 # 実行レポート + 監査レポート (.gitignore)
-   ├─ _summary-cache.json    # Claude 要約キャッシュ (.gitignore、Worker では KV を使用)
+   ├─ _summary-cache.json    # ローカル要約キャッシュ (.gitignore、Worker では KV を使用)
    └─ user-opml.xml          # ユーザ個別 OPML (.gitignore)
 ```
 

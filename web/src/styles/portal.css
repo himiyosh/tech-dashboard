@@ -1087,6 +1087,15 @@ main {
   color: var(--muted);
   z-index: 40;
 }
+/* Reserve space at the bottom of every page so the fixed footer never
+   overlaps the last interactive element (e.g. pagination, especially
+   on mobile where the footer wraps to 2 lines). */
+body {
+  padding-bottom: 56px;
+}
+@media (max-width: 720px) {
+  body { padding-bottom: 88px; }
+}
 
 .footer-inner {
   max-width: 1440px;

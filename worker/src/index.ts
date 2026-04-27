@@ -16,7 +16,6 @@
  */
 import { listSources } from "../../harness/registry.ts";
 import { normalize } from "../../harness/pipeline/normalize.ts";
-import { dedupeByUrl } from "../../harness/pipeline/dedupe.ts";
 import { applyTags } from "../../harness/pipeline/tag.ts";
 import type {
   NormalizedEntry,
@@ -343,21 +342,46 @@ async function runSource(
 async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<string, number> }> {
   const collectedAt = new Date().toISOString();
   // Exclude file-system-backed sources (e.g. user-opml reads data/user-opml.xml).
-  const sources = listSources().filter((s) => s.id !== "user-opml");
-  console.log(`[worker] run ${collectedAt}, ${sources.length} sources`);
+  const allSources = listSources().filter((s) => s.id !== "user-opml");
 
-  // 1) Collect
+  // Cloudflare Free Workers cap subrequests at 50 per invocation, so we cannot
+  // fetch all 50 sources in a single run. Rotate sources across SOURCE_BATCHES
+  // batches keyed by hour, so each source is refreshed every SOURCE_BATCHES hours.
+  // Subrequest budget per run: ~13 sources + 1 GH read + 5 Copilot + 4 OG + 1 GH put = ~24.
+  const SOURCE_BATCHES = 4;
+  const batchIndex = Math.floor(Date.now() / 3600_000) % SOURCE_BATCHES;
+  const sources = allSources.filter((_, i) => i % SOURCE_BATCHES === batchIndex);
+  console.log(`[worker] run ${collectedAt}, batch ${batchIndex + 1}/${SOURCE_BATCHES} (${sources.length} of ${allSources.length} sources)`);
+
+  // 0) Read existing index FIRST so we can merge fresh entries from this batch
+  //    with prior entries from the other batches (avoids losing data).
+  const existing = await ghGetFile(env, "data/index.json");
+  let priorEntries: NormalizedEntry[] = [];
+  if (existing?.content) {
+    try {
+      const parsed = JSON.parse(existing.content) as { entries?: NormalizedEntry[] };
+      priorEntries = parsed.entries ?? [];
+    } catch (err) {
+      console.warn(`[worker] failed to parse existing index: ${err}`);
+    }
+  }
+
+  // 1) Collect (only this batch's sources)
   const settled = await Promise.all(sources.map((s) => runSource(s, collectedAt)));
-  const all = settled.flatMap((s) => s.entries);
-  const deduped = dedupeByUrl(all);
+  const fresh = settled.flatMap((s) => s.entries);
   const okCount = settled.filter((s) => s.result.ok).length;
-  console.log(`[worker] collect ok=${okCount}/${sources.length} entries=${all.length} deduped=${deduped.length}`);
+  console.log(`[worker] collect ok=${okCount}/${sources.length} fresh=${fresh.length} prior=${priorEntries.length}`);
 
-  // 2) Cap per source (prevents arxiv's 400+ daily drop from drowning out
-  //    all other sources), then sort newest-first, then cap to INDEX_LIMIT.
+  // 1.5) Merge fresh + prior. Prefer fresh entries on URL collision (newer data).
+  const byUrl = new Map<string, NormalizedEntry>();
+  for (const e of priorEntries) byUrl.set(e.url, e);
+  for (const e of fresh) byUrl.set(e.url, e);
+  const merged = [...byUrl.values()];
+
+  // 2) Cap per source then sort newest-first then cap to INDEX_LIMIT.
   const PER_SOURCE_CAP = 15;
   const bySource = new Map<string, NormalizedEntry[]>();
-  for (const e of deduped) {
+  for (const e of merged) {
     const arr = bySource.get(e.source) ?? [];
     arr.push(e);
     bySource.set(e.source, arr);
@@ -462,7 +486,7 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   //      blob keyed by URL. Capped per run to stay within Worker subrequest
   //      and CPU budgets.
   const OG_KEY = "og.v1";
-  const OG_BUDGET_PER_RUN = 8;
+  const OG_BUDGET_PER_RUN = 4;
   const ogBlob =
     (await env.SUMMARY_CACHE.get<Record<string, { src: string | null; checkedAt: string }>>(OG_KEY, "json")) ?? {};
 
@@ -523,8 +547,7 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   };
   const json = JSON.stringify(payload, null, 2) + "\n";
 
-  // 6) Compare with existing index.json on GitHub
-  const existing = await ghGetFile(env, "data/index.json");
+  // 6) Compare with existing index.json on GitHub (already loaded at step 0).
   const existingJson = existing?.content ?? "";
   // Compare ignoring `generatedAt` timestamp so unchanged runs don't churn commits.
   const stripGen = (s: string) => s.replace(/"generatedAt"\s*:\s*"[^"]+",?\s*/, "");
@@ -534,8 +557,8 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
       changed: false,
       stats: {
         sources: sources.length,
-        collected: all.length,
-        deduped: deduped.length,
+        collected: fresh.length,
+        merged: merged.length,
         summarized,
         errors,
       },
@@ -545,7 +568,7 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   // 7) Commit to GitHub
   const failedSources = settled.filter((s) => !s.result.ok).map((s) => s.result.sourceId);
   const message =
-    `chore(data): worker run ${collectedAt.slice(0, 16)}Z` +
+    `chore(data): worker run ${collectedAt.slice(0, 16)}Z batch ${batchIndex + 1}/${SOURCE_BATCHES}` +
     (summarized ? ` (+${summarized} summaries)` : "") +
     (failedSources.length ? ` [${failedSources.length} source err]` : "");
   await ghPutFile(env, "data/index.json", json, message, existing?.sha);
@@ -555,8 +578,8 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
     changed: true,
     stats: {
       sources: sources.length,
-      collected: all.length,
-      deduped: deduped.length,
+      collected: fresh.length,
+      merged: merged.length,
       summarized,
       errors,
     },

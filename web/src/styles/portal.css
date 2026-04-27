@@ -1311,3 +1311,215 @@ html, body {
     margin-top: 2px;
   }
 }
+
+/* ============ MOBILE LAYOUT (<=720px) ============ */
+@media (max-width: 720px) {
+  /* Header: stack into 2 rows, full-width search; non-sticky to free up viewport */
+  header {
+    position: static;
+  }
+  .header-inner {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 10px 14px;
+  }
+  .logo {
+    font-size: 15px;
+    flex: 0 0 auto;
+  }
+  .nav {
+    order: 3;
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 2px;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a {
+    flex: 0 0 auto;
+    padding: 9px 12px;
+    font-size: 13px;
+    display: inline-block;
+  }
+  .search {
+    order: 4;
+    width: 100%;
+    margin-left: 0;
+  }
+  .search input {
+    font-size: 16px;            /* avoid iOS zoom-on-focus */
+    background: transparent;
+    border: 0;
+    color: var(--text);
+    width: 100%;
+    outline: none;
+  }
+  .search kbd { display: none; }
+  .lang-toggle {
+    order: 2;
+    margin-left: auto;
+  }
+  .lang-btn {
+    padding: 11px 14px;
+    min-width: 44px;
+    min-height: 40px;
+    line-height: 1.2;
+    font-size: 12px;
+  }
+  .crumb-inner {
+    padding: 6px 14px;
+    font-size: 11px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+  .crumb-inner::-webkit-scrollbar { display: none; }
+
+  /* Banner: tighter padding, smaller grid bg */
+  .banner-inner { padding: 22px 16px 18px; }
+  .banner h1 { font-size: 22px; line-height: 1.25; margin-bottom: 8px; }
+  .banner .tagline { font-size: 12.5px; }
+  .banner-bg-grid { background-size: 32px 32px; }
+
+  /* Stats: compact, no separators that wrap awkwardly */
+  .stats {
+    padding: 10px 14px 6px;
+    gap: 4px 14px;
+  }
+  .stat {
+    padding: 2px 0;
+    border-right: 0;
+    flex: 0 0 auto;
+  }
+  .stat .value { font-size: 14px; }
+
+  /* Layout: single column with side padding */
+  .layout {
+    padding: 0 14px;
+  }
+  main { padding: 0; }
+
+  /* Section headers */
+  .section-header { padding: 12px 0 6px; }
+  .section-header h2 { font-size: 16px; }
+  .section-header h2 .count {
+    display: block;
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  /* Cards: thumb on top, full-width */
+  .card {
+    padding: 14px 14px 12px;
+    border-radius: 12px;
+  }
+  .card.has-thumb {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 0 0 12px;
+  }
+  .card-body {
+    padding: 12px 14px 0;
+    order: 2;
+  }
+  .card-thumb {
+    width: 100%;
+    height: 168px;
+    border-radius: 12px 12px 0 0;
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    order: 1;
+    align-self: stretch;
+  }
+  .card .title { font-size: 15.5px; }
+  .card .summary { font-size: 13px; }
+  .card .summary .s-text {
+    white-space: normal;          /* allow wrap on mobile */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card .summary-en { font-size: 11.5px; }
+
+  /* Featured */
+  .featured {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  .featured-title { font-size: 17px; }
+
+  /* Top-3 ranking */
+  .top-rank { padding: 12px 12px 10px; border-radius: 12px; }
+  .top-rank-title { font-size: 13.5px; }
+  .top-rank-sub { display: none; }
+  .top-rank-item {
+    grid-template-columns: 28px 1fr auto;
+    grid-template-rows: auto auto;
+    padding: 10px;
+    column-gap: 10px;
+    row-gap: 2px;
+  }
+  .top-rank-item .medal { grid-row: 1 / span 2; font-size: 22px; }
+  .top-rank-item .rank-cat { display: none; }
+  .top-rank-item .rank-title {
+    grid-column: 2 / 3;
+    grid-row: 1;
+    white-space: normal;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+  }
+  .top-rank-item .rank-meta {
+    grid-column: 2 / -1;
+    grid-row: 2;
+    margin-top: 0;
+    font-size: 10.5px;
+  }
+  .top-rank-item .rank-time {
+    margin-left: auto;
+  }
+
+  /* Day header */
+  .day-header {
+    padding: 14px 0 6px;
+    font-size: 12px;
+  }
+
+  /* TickerBar — compact */
+  .tb-slide {
+    font-size: 11.5px;
+    padding: 6px 10px;
+    line-height: 1.4;
+  }
+
+  /* Footer: stack */
+  .footer-inner {
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    padding: 8px 14px;
+  }
+  .footer-inner .spacer { display: none; }
+
+  /* About card: tighter */
+  .about-card { padding: 18px 18px; line-height: 1.7; }
+  .about-card h3 { font-size: 14.5px; }
+  .about-card p, .about-card .about-list { font-size: 13.5px; }
+
+  /* Search dropdown: full width minus margin */
+  .search-results { left: 0; right: 0; max-height: 60vh; }
+}
+
+/* Even smaller phones (<=380px) — extra trims */
+@media (max-width: 380px) {
+  .stats { gap: 4px 10px; }
+  .stat span:not(.value) { font-size: 10px; }
+  .banner h1 { font-size: 20px; }
+  .nav a { padding: 8px 10px; font-size: 12.5px; }
+  .lang-btn { padding: 9px 12px; }
+}

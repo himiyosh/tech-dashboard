@@ -397,12 +397,16 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
 
   // 3) Resolve Copilot token (skip if PAT absent)
   let token: string | null = null;
+  let copilotError: string | null = null;
   if (env.COPILOT_PAT) {
     try {
       token = await resolveCopilotToken(env.COPILOT_PAT);
     } catch (err) {
-      console.warn(`[worker] copilot token exchange failed: ${err}`);
+      copilotError = err instanceof Error ? err.message : String(err);
+      console.warn(`[worker] copilot token exchange failed: ${copilotError}`);
     }
+  } else {
+    copilotError = "COPILOT_PAT not configured";
   }
 
   // 4) Summarize — apply KV cache, budget new calls.
@@ -540,9 +544,25 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
 
   // 5) Build payload (cap 500, newest first)
   const finalEntries = afterCache.slice(0, INDEX_LIMIT);
+  const failedSources = settled.filter((s) => !s.result.ok).map((s) => s.result.sourceId);
+  const health = {
+    lastRunAt: new Date().toISOString(),
+    batchIndex: batchIndex + 1,
+    batchTotal: SOURCE_BATCHES,
+    sourcesAttempted: sources.length,
+    sourcesOk: settled.filter((s) => s.result.ok).length,
+    sourcesFailed: failedSources,
+    summarized,
+    summarizeErrors: errors,
+    copilotOk: token !== null,
+    copilotError,
+    ogCached: Object.keys(ogBlob).length,
+    ogNewHits: ogFound,
+  };
   const payload = {
     generatedAt: new Date().toISOString(),
     count: finalEntries.length,
+    health,
     entries: finalEntries,
   };
   const json = JSON.stringify(payload, null, 2) + "\n";
@@ -566,7 +586,6 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   }
 
   // 7) Commit to GitHub
-  const failedSources = settled.filter((s) => !s.result.ok).map((s) => s.result.sourceId);
   const message =
     `chore(data): worker run ${collectedAt.slice(0, 16)}Z batch ${batchIndex + 1}/${SOURCE_BATCHES}` +
     (summarized ? ` (+${summarized} summaries)` : "") +

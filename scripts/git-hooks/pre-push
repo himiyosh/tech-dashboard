@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# pre-push: worker/ に変更が含まれていれば wrangler deploy を実行する。
+# 失敗時は push を中断する (exit 1)。
+#
+# インストール: bash scripts/install-hooks.sh (リポジトリ root で 1 回だけ)
+# スキップ: SKIP_WORKER_DEPLOY=1 git push
+
+set -euo pipefail
+
+if [ "${SKIP_WORKER_DEPLOY:-}" = "1" ]; then
+  echo "[pre-push] SKIP_WORKER_DEPLOY=1 → wrangler deploy をスキップします"
+  exit 0
+fi
+
+# 標準入力を全て読まないと git が SIGPIPE になる (空の場合あり)
+remote="${1:-}"
+url="${2:-}"
+input=$(cat || true)
+
+# main にだけ反応させる (PR 作業 push では deploy しない)
+push_to_main=0
+while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  local_ref=$(echo "$line" | awk '{print $1}')
+  local_sha=$(echo "$line" | awk '{print $2}')
+  remote_ref=$(echo "$line" | awk '{print $3}')
+  remote_sha=$(echo "$line" | awk '{print $4}')
+
+  case "$remote_ref" in
+    refs/heads/main)
+      push_to_main=1
+      # main への push に worker/ 差分があるかを判定する範囲を決める
+      if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+        # 新規ブランチ (=main 新規作成、ほぼ無いケース) は前回 main 比較
+        range="origin/main..$local_sha"
+      else
+        range="$remote_sha..$local_sha"
+      fi
+      ;;
+  esac
+done <<EOF
+$input
+EOF
+
+if [ "$push_to_main" = "0" ]; then
+  exit 0
+fi
+
+# worker/ 配下の差分を確認
+if ! git diff --name-only "$range" -- worker/ 2>/dev/null | grep -q .; then
+  echo "[pre-push] worker/ に差分なし → wrangler deploy はスキップ"
+  exit 0
+fi
+
+echo "[pre-push] worker/ に差分あり → npx wrangler deploy を実行します"
+if ! command -v npx >/dev/null 2>&1; then
+  echo "[pre-push] ERR: npx が見つかりません。手動で wrangler deploy してください"
+  exit 1
+fi
+
+cd "$(git rev-parse --show-toplevel)/worker"
+if ! npx --yes wrangler@4.85.0 deploy; then
+  echo "[pre-push] ERR: wrangler deploy 失敗。push を中断します"
+  echo "[pre-push] 対処案: 認証 (npx wrangler login) を確認、または SKIP_WORKER_DEPLOY=1 git push で一時回避"
+  exit 1
+fi
+
+echo "[pre-push] OK: worker deploy 完了"
+exit 0

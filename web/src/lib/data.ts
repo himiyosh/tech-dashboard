@@ -48,9 +48,25 @@ export interface NormalizedEntry {
   };
 }
 
+export interface WorkerHealth {
+  lastRunAt: string;
+  batchIndex: number;
+  batchTotal: number;
+  sourcesAttempted: number;
+  sourcesOk: number;
+  sourcesFailed: string[];
+  summarized: number;
+  summarizeErrors: number;
+  copilotOk: boolean;
+  copilotError: string | null;
+  ogCached: number;
+  ogNewHits: number;
+}
+
 interface IndexPayload {
   generatedAt: string;
   count: number;
+  health?: WorkerHealth;
   entries: NormalizedEntry[];
 }
 
@@ -58,6 +74,7 @@ const data = indexJson as IndexPayload;
 
 export const ALL_ENTRIES: readonly NormalizedEntry[] = data.entries;
 export const GENERATED_AT = data.generatedAt;
+export const WORKER_HEALTH: WorkerHealth | null = data.health ?? null;
 
 /** Items per page on timeline / category / tag pages. */
 export const PAGE_SIZE = 30;

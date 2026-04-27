@@ -1,20 +1,20 @@
 # Tech Dashboard サイト仕様書 (Production v1.0)
 
-> 本書は **https://tech-dashboard-6a7.pages.dev/** の **現状実装** を記述した仕様書です。
+> 本書は **https://techdb.studio344.net/** の **現状実装** を記述した仕様書です。
 > 計画段階の草案は [`04-site-spec.md`](./04-site-spec.md) を参照。アーキテクチャ詳細は [`01-architecture.md`](./01-architecture.md) を参照。
 >
-> **最終更新**: 2026-04-22 (51 ソース同期) / **本番コミット**: `main` ブランチ最新
+> **最終更新**: 2026-04-27 / **本番コミット**: `main` ブランチ最新
 
 ---
 
 ## 1. 概要
 
 **プロダクト名**: TECH Dashboard — Pulse of the AI Ecosystem
-**目的**: AI 開発ツール / 基盤モデル / 研究の最新動向を **6 時間おきに自動収集・要約・公開** するワンストップ ポータル。
+**目的**: AI 開発ツール / 基盤モデル / 研究の最新動向を **毎時自動収集・要約・公開** するワンストップ ポータル。
 **想定ユーザ**: Copilot / Claude / Codex / Cursor / Local LLM などを業務で使う開発者・リサーチャ。
-**スケール**: 51 データソース (Worker 実行時は `user-opml` 除外で 50) / 14 カテゴリ / index 最大 500 件 / 1 日 4 回実行。
+**スケール**: 51 データソース (Worker 実行時は `user-opml` 除外で 50、各 run で 50/4=約 13 ソースをローテーション) / 14 カテゴリ / index 最大 500 件 / **毎時実行**。
 **URL**:
-- 本番: https://tech-dashboard-6a7.pages.dev/
+- 本番: https://techdb.studio344.net/ (Cloudflare Pages の pages.dev サブドメイン: https://tech-dashboard-6a7.pages.dev/)
 - リポジトリ: https://github.com/himiyosh/tech-dashboard
 - データ収集バッチ: https://tech-dashboard-harness.himiyosh.workers.dev (Cloudflare Worker)
 
@@ -55,11 +55,14 @@
 
 | 項目 | 値 |
 |---|---|
-| Cron 式 | `0 15,21,3,9 * * *` (UTC) |
-| 実行時刻 | JST **00:00 / 06:00 / 12:00 / 18:00** |
+| Cron 式 | `0 * * * *` (UTC) |
+| 実行頻度 | **毎時 / 24 run×日** |
+| ソースローテーション | 50 ソース ÷ 4 batch (`hour % 4`)、個別ソースは 4 時間ごと |
 | 1 実行あたり新規要約上限 | `SUMMARIZE_MAX_NEW = 5` |
+| 1 実行あたり og:image fetch 上限 | `OG_BUDGET_PER_RUN = 4` |
 | ソースあたり取得上限 | `PER_SOURCE_CAP = 15` (arxiv の 400+/日 を抑制) |
 | index エントリ総数上限 | `INDEX_LIMIT = 500` |
+| Cloudflare Workers subrequest 上限 | 50/run (Free)、現状 ~24/run 使用 |
 
 ### 2.3 手動トリガ
 
@@ -417,7 +420,7 @@ npx wrangler tail            # 実ログ tail
 | エンドポイント | メソッド | 認証 | 説明 |
 |---|---|---|---|
 | `/run` | POST | `x-trigger-token: $GH_TOKEN` | Worker 即時実行 (202 Accepted) |
-| (cron) | — | — | `0 15,21,3,9 * * *` で scheduled handler |
+| (cron) | — | — | `0 * * * *` で scheduled handler |
 
 ## 付録 B. コミット規約
 

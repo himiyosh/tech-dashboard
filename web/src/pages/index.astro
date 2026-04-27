@@ -108,7 +108,7 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
 
     <main>
       {feat && (() => {
-        const featSumJa = summaryForLangWithFallback(feat, "ja");
+        const featSumJa = summaryForLang(feat, "ja");
         const featSumEn = summaryForLangWithFallback(feat, "en");
         return (
         <article class="featured" data-pagefind-body>
@@ -122,12 +122,7 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
               <span class="i18n-en" lang="en">{titleForLang(feat, "en") || "(no English title)"}</span>
             </a>
           </h2>
-          {featSumJa.text && (
-            <p class="featured-sum i18n-ja">
-              {featSumJa.isFallback && <span class="lang-badge">[en]</span>}
-              {featSumJa.text}
-            </p>
-          )}
+          {featSumJa && <p class="featured-sum i18n-ja">{featSumJa}</p>}
           {featSumEn.text && (
             <p class="featured-sum i18n-en" lang={featSumEn.isFallback ? "ja" : "en"}>
               {featSumEn.isFallback && <span class="lang-badge">[ja]</span>}

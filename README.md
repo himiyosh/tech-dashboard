@@ -4,6 +4,68 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 
 **現状**: 50 ソース (Tier 1 / 2 / 3) を Cloudflare Worker で **毎時自動収集** (50 ソースを 4 バッチに分割し各ソースは 4 時間ごとに更新)、Astro 静的サイト生成、RSS/JSON Feed 配信、GitHub Copilot Enterprise (Claude Opus 4.7) による要約パイプライン、Pagefind 全文検索、品質監査 Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。
 
+## 🔭 運用ステータス早見表 (Single Source of Truth)
+
+「いま何が自動で動いていて、何が手動か」をここで一目で把握できるようにします。詳細手順は後段の各セクションを参照。
+
+### 自動化されている処理
+
+| 処理 | 実行主体 | トリガ | 失効時の影響 | 監視 |
+|---|---|---|---|---|
+| ソース収集 (50 sources) | Cloudflare Worker `tech-dashboard-harness` | Cron `0 * * * *` (毎時) を 4 batch ローテーション | データ更新が止まる | `/status` の Worker Health |
+| 日本語要約 (`summaryJa` / `titleJa`) | 同 Worker → Copilot Enterprise (claude-opus-4.7) | 上記 cron 内で最大 `SUMMARIZE_MAX_NEW=5` 件/h | 既存表示は維持。新着のみ要約欠落 → JA UI で空欄 | `health.copilotOk` / `health.copilotError` |
+| og:image 取得 | 同 Worker | 上記 cron 内で最大 4 件/h、KV にキャッシュ | サムネが no-image fallback になる | `health.ogCached` |
+| `data/index.json` 更新 commit | Worker → GitHub Contents API (`tech-dashboard-worker` 名義) | 差分があるときのみ | サイトに反映されない | `git log --author=tech-dashboard-worker` |
+| サイト build / deploy | Cloudflare Pages (Git Integration) | `main` の push 検知 | サイトが古いまま | Cloudflare Pages dashboard |
+| Worker コード自動 deploy | `scripts/git-hooks/pre-push` | `main` push に `worker/` 差分があれば `wrangler deploy` | Worker 側のロジック修正が反映されない | push 時の出力 / `wrangler deployments list` |
+
+### 手動運用 (年 1 回程度)
+
+| 作業 | コマンド | 期日の気付き方 |
+|---|---|---|
+| `COPILOT_PAT` 更新 | `cd worker && npx wrangler secret put COPILOT_PAT` | `/status` Worker Health が `summarize disabled` |
+| `GH_TOKEN` 更新 | `cd worker && npx wrangler secret put GH_TOKEN` | Worker run で push 失敗 → commit 履歴が止まる |
+| (緊急) 手動収集 | `npm run collect` | バックログ滞留時 (例: 1h に 5 件以上の新着) |
+| (緊急) 不足要約のバルク補充 | `SUMMARIZE_MAX_NEW=400 npx tsx --env-file-if-exists=.env.local scripts/resummarize.mjs` | 過去エントリの `summaryJa` がまとめて欠けている時 |
+| (緊急) og:image バックフィル | `node scripts/backfill-og.mjs` | `image.source = "fallback"` が大量に残る時 |
+| (緊急) リリースタイトル整形バックフィル | `node --experimental-strip-types scripts/backfill-release-titles.mjs` | バージョン番号のみのタイトルを補正したい時 |
+
+### 構成情報の SoT (Source of Truth)
+
+| 種別 | 場所 |
+|---|---|
+| 絶対ルール / Pages 設定値 / LL | [.github/copilot-instructions.md](.github/copilot-instructions.md) |
+| 自動化アーキテクチャ決定の経緯 | `/memories/repo/automation-decision.md` |
+| Worker cron / batch / KV id | [worker/wrangler.toml](worker/wrangler.toml) |
+| サイト URL (canonical) | [web/src/lib/site.ts](web/src/lib/site.ts) |
+| ソース定義 (50 件) | [harness/registry.ts](harness/registry.ts) |
+| カテゴリ / 型定義 | [harness/types.ts](harness/types.ts) |
+
+### データフロー (1 図に集約)
+
+```
+                ┌───────────────────────────────────────────────┐
+                │ Cloudflare Worker (cron: hourly, 4 batch)    │
+                │  ├ collect (RSS/Atom/HTML, ~13 sources/run)  │
+                │  ├ normalize + dedupe + tag                  │
+                │  ├ summarize (Copilot Enterprise, ≤5/run)    │
+                │  └ og:image fetch (≤4/run, KV cache)         │
+                └───────────────┬───────────────────────────────┘
+                                │ diff があれば
+                                ▼
+                  GitHub Contents API → himiyosh/tech-dashboard:main
+                  (commit 名義: tech-dashboard-worker)
+                                │
+                                ▼
+              Cloudflare Pages Git Integration が build (root=web)
+                                │
+                                ▼
+                   https://techdb.studio344.net/  (本番)
+                   https://tech-dashboard-6a7.pages.dev/
+```
+
+> **GitHub Actions は使いません。** `.github/workflows/` は意図的に空。Pages deploy も harness 実行も Cloudflare 内で完結します ([.github/copilot-instructions.md](.github/copilot-instructions.md) R-001 参照)。
+
 ## ドキュメント構成
 
 | #   | ドキュメント                                                            | 概要                                         |
@@ -262,8 +324,12 @@ tech-dashboard/
 │  ├─ wrangler.toml          # Workers 設定 (Cron / KV / Vars)
 │  └─ package.json
 ├─ scripts/
-│  ├─ backfill-og.mjs        # data/index.json の og:image を一括バックフィル
-│  └─ setup-copilot-auth.sh  # Copilot Enterprise PAT セットアップ
+│  ├─ backfill-og.mjs                  # data/index.json の og:image を一括バックフィル
+│  ├─ backfill-release-titles.mjs      # version-only タイトル ("v3.8.0" 等) に source 名を前置
+│  ├─ resummarize.mjs                  # 既存エントリの不足要約を Copilot で一括補充 (緊急用)
+│  ├─ install-hooks.sh                 # pre-push hook (worker 自動 deploy) 有効化
+│  ├─ git-hooks/pre-push               # main push 時に worker/ 差分があれば wrangler deploy
+│  └─ setup-copilot-auth.sh            # Copilot Enterprise PAT セットアップ
 └─ data/                     # 成果物 (git-as-DB)
    ├─ index.json             # サイト配信用 (最新 500 件 / og:image 付き)
    ├─ raw/                   # 生データ (.gitignore, 監査用ローカル保持)

@@ -21,8 +21,11 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 ## クイックスタート
 
 ```bash
+# ============ 初回セットアップ ============
+npm install                  # ルート依存
+bash scripts/install-hooks.sh # pre-push hook (worker 自動 deploy) を有効化
+
 # ============ ハーネス (ルート) ============
-npm install                  # 依存インストール
 npm run typecheck            # 型チェック
 npm run collect              # 50 ソース収集 → data/index.json 生成
 npm run collect:dry          # ドライラン (ファイル書き込みなし)
@@ -175,7 +178,30 @@ bash scripts/install-hooks.sh
 
 これ以降、`main` への push に worker/ 差分があれば自動で `npx wrangler@4.85.0 deploy` が走ります。スキップしたい場合は `SKIP_WORKER_DEPLOY=1 git push`。
 
-### 3. Cloudflare MCP サーバー (任意)
+#### 監視 / ヘルスチェック
+
+Worker は実行ごとに `data/index.json` の `health` フィールドにメタデータ (`lastRunAt` / `batchIndex` / `sourcesOk` / `sourcesFailed[]` / `copilotOk` / `copilotError` / `summarized` / `ogCached` 等) を埋め込みます。サイトの [https://techdb.studio344.net/status/](https://techdb.studio344.net/status/) 上部の **Worker Health** セクションで一目で確認できます。状態は以下のラベルで表示されます。
+
+- `healthy` — 直近 6h 以内に成功 / Copilot OK / 失敗 source なし
+- `summarize disabled` — Copilot PAT 失効など (収集自体は継続)
+- `no run in 6h+` — Worker が連続で停止
+- `(N) source error` — 個別ソース fetch 失敗
+
+外部通知 (Slack / Discord / Email) は使わず、サイト内完結。
+
+### 3. 自動化サマリ
+
+| 領域 | 仕組み | 頻度 / トリガ |
+|---|---|---|
+| データ収集 + 要約 + og:image | Cloudflare Worker (cron) | 毎時 (50 sources を 4 batch ローテーション) |
+| GitHub commit | Worker → GitHub Contents API | 差分時のみ |
+| サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
+| Worker コード deploy | `scripts/git-hooks/pre-push` | `main` push に worker/ 差分があれば自動 |
+| ヘルス監視 | `data/index.json#health` + `/status` ページ | 実行ごと記録、サイト訪問時に確認 |
+
+**残る手動運用**: 年 1 回の PAT 更新 (`wrangler secret put COPILOT_PAT` / `GH_TOKEN`)。失効時は `/status` の Worker Health が `summarize disabled` に変わるので即気付けます。
+
+### 4. Cloudflare MCP サーバー (任意)
 
 VS Code / Copilot Chat から Cloudflare を直接操作できる公式 MCP 群を `.vscode/mcp.json` に登録済み。認証は Cloudflare アカウントで OAuth。
 

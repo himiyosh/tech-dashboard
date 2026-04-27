@@ -45,10 +45,11 @@
 
 | コンポーネント | ランタイム | 役割 |
 |---|---|---|
-| **Worker `tech-dashboard-harness`** | Cloudflare Workers (Paid) | 6h cron で RSS 収集 → Copilot 要約 → GitHub へ data コミット |
-| **KV `SUMMARY_CACHE`** | Cloudflare KV | 要約結果を単一ブロブ (`cache.v1`) でキャッシュ |
+| **Worker `tech-dashboard-harness`** | Cloudflare Workers (Paid) | 毎時 cron (4 batch ローテーション) で RSS 収集 → Copilot 要約 → og:image 取得 → GitHub へ data コミット |
+| **KV `SUMMARY_CACHE`** | Cloudflare KV | `cache.v1` (要約) と `og.v1` (画像キャッシュ) の二つの単一ブロブを管理 |
 | **harness (ローカル実行版)** | Node.js 22 / TSX | `npm run collect` で同ロジックをローカル実行 (デバッグ用) |
 | **web (Astro)** | Astro 5 + Pagefind | SSG 静的サイト。`data/index.json` をビルド時に読んで全画面生成 |
+| **pre-push hook** | `scripts/git-hooks/pre-push` | `main` への push に worker/ 差分があれば `wrangler deploy` を自動実行 |
 | **MCP config** | VS Code Copilot Chat | `.vscode/mcp.json` で CF 公式 MCP 5 種を接続 |
 
 ### 2.2 定期実行
@@ -73,6 +74,45 @@ curl -X POST https://tech-dashboard-harness.himiyosh.workers.dev/run \
 # → {"ok":true,"status":"accepted"} HTTP 202
 # (ctx.waitUntil でバックグラウンド実行)
 ```
+
+### 2.4 ヘルスメタ (`data/index.json#health`)
+
+Worker は実行のたびに `data/index.json` に以下の `health` フィールドを嵌め込み、 [`/status`](https://techdb.studio344.net/status/) ページ上部の Worker Health セクションで表示される。
+
+```ts
+interface WorkerHealth {
+  lastRunAt: string;        // ISO 8601
+  batchIndex: number;       // 1ー4
+  batchTotal: number;       // 4
+  sourcesAttempted: number;
+  sourcesOk: number;
+  sourcesFailed: string[];
+  summarized: number;
+  summarizeErrors: number;
+  copilotOk: boolean;
+  copilotError: string | null;
+  ogCached: number;
+  ogNewHits: number;
+}
+```
+
+ステータスラベル (表示ロジックは `web/src/pages/status.astro`):
+- `healthy` — 直近 6h 以内に成功 / Copilot OK / 失敗 source なし
+- `summarize disabled` — Copilot PAT 失効等 (収集は継続)
+- `no run in 6h+` — Worker が連続で停止
+- `(N) source error` — 個別ソース fetch 失敗
+
+### 2.5 自動化サマリ
+
+| 領域 | 仕組み | 頻度 / トリガー |
+|---|---|---|
+| データ収集 + 要約 + og:image | Cloudflare Worker (cron) | 毎時 (4 batch ローテーション) |
+| GitHub commit | Worker → GitHub Contents API | 差分時のみ |
+| サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
+| Worker コード deploy | `scripts/git-hooks/pre-push` | `main` push に worker/ 差分があれば自動 |
+| ヘルス監視 | `data/index.json#health` + `/status` ページ | 実行ごと記録、サイト訪問時に確認 |
+
+**残る手動運用**: 年 1 回の PAT 更新 (`wrangler secret put COPILOT_PAT` / `GH_TOKEN`)。失効時は `/status` の Worker Health が `summarize disabled` に変わるので即気付ける。
 
 ---
 

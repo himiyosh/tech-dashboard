@@ -1088,13 +1088,12 @@ main {
   z-index: 40;
 }
 /* Reserve space at the bottom of every page so the fixed footer never
-   overlaps the last interactive element (e.g. pagination, especially
-   on mobile where the footer wraps to 2 lines). */
+   overlaps the last interactive element (e.g. pagination). */
 body {
   padding-bottom: 56px;
 }
 @media (max-width: 720px) {
-  body { padding-bottom: 88px; }
+  body { padding-bottom: 36px; }
 }
 
 .footer-inner {
@@ -1406,9 +1405,24 @@ html, body {
 
   /* Layout: single column with side padding */
   .layout {
-    padding: 0 14px;
+    padding: 0 22px;
   }
   main { padding: 0; }
+
+  /* Slimmer footer on mobile so it never wraps to 2 lines and consumes
+     less screen real estate. */
+  .footer-inner {
+    padding: 5px 12px;
+    gap: 10px;
+    font-size: 9.5px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .footer-inner .item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
 
   /* Section headers */
   .section-header { padding: 12px 0 6px; }
@@ -1507,12 +1521,8 @@ html, body {
     line-height: 1.4;
   }
 
-  /* Footer: stack */
-  .footer-inner {
-    flex-wrap: wrap;
-    gap: 6px 14px;
-    padding: 8px 14px;
-  }
+  /* Footer: keep on a single horizontally-scrollable line.
+     (The compact 1-line variant is defined in the earlier 720px block.) */
   .footer-inner .spacer { display: none; }
 
   /* About card: tighter */

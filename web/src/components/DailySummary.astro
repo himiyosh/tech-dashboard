@@ -424,56 +424,56 @@ const todayDelta =
     min-width: 0;
   }
   @media (max-width: 720px) {
+    /* Let the LED panel use as much horizontal space as possible. */
+    .digest { padding: 14px 6px 14px; }
+    .digest-body { gap: 10px; }
+    .updates.panel {
+      padding: 10px 0;
+      border-left: none;
+      border-right: none;
+      border-radius: 6px;
+    }
+
     .board > li {
       counter-increment: board;
       border-left: 3px solid var(--cat-color, #7cff9a);
       box-shadow: inset 4px 0 8px -4px color-mix(in srgb, var(--cat-color, #7cff9a) 50%, transparent);
     }
-    .board { counter-reset: board; }
-    /* Switch to block layout so num/cat (float left) and tags (float right)
-       inline with the title's first line; subsequent title lines wrap
-       below them. */
+    .board { counter-reset: board; border-left: none; border-right: none; border-radius: 0; }
+
+    /* Two-row layout: meta (num + cat + tags) on row 1, title on row 2. */
     .board .b-row {
-      display: block;
-      padding: 7px 12px 7px 10px;
+      display: grid;
+      grid-template-columns: auto auto 1fr auto;
+      grid-template-areas:
+        "num cat   .     tags"
+        "title title title title";
+      column-gap: 8px;
+      row-gap: 2px;
+      padding: 7px 10px;
       font-size: 13px;
-      overflow: hidden; /* contain the floats AND clip the title at 2 lines */
-      /* Fix the row to exactly 2 title lines + vertical padding so all
-         rows in the board have a uniform height. */
-      height: calc(1.4em * 2 + 14px);
+      align-items: center;
     }
-    .board .b-num {
-      grid-area: auto;
-      float: left;
-      margin-right: 6px;
-      font-size: 10.5px;
-      min-width: 0;
-    }
+    .board .b-num { grid-area: num; font-size: 10.5px; min-width: 0; display: inline; }
     .board .b-cat {
-      grid-area: auto;
-      float: left;
-      margin: 1px 6px 0 0;
-      padding: 1px 5px;
+      grid-area: cat;
+      justify-self: start;
       min-width: 0;
+      padding: 1px 5px;
       font-size: 9.5px;
       letter-spacing: 0.08em;
       white-space: nowrap;
     }
-    .board .b-tags {
-      grid-area: auto;
-      float: right;
-      margin-left: 6px;
-    }
+    .board .b-tags { grid-area: tags; justify-self: end; align-self: center; }
     .board .b-summary { display: none; }
     .board .b-src { display: none; }
+
     .board .b-title {
-      grid-area: auto;
+      grid-area: title;
       display: block;
-      white-space: normal;
-      /* IMPORTANT: no overflow/min-width here — they'd create a new BFC and
-         prevent the text from wrapping around the floated num/cat/tags. */
-      overflow: visible;
-      text-overflow: clip;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: clip; /* hard cut at the right edge, no ellipsis */
       line-height: 1.4;
       font-size: 13.5px;
     }

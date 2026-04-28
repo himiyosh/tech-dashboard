@@ -254,6 +254,32 @@ const catColorOf = (slug: string): string =>
   @media (max-width: 720px) {
     .tb-src { display: none; }
     .tb-counter { display: none; }
+
+    /* Two-row layout: meta + controls on row 1, full-width title on row 2.
+       Without this, the title gets squeezed to a few characters. */
+    .tb-inner {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      grid-template-areas:
+        "label .      controls"
+        "stage stage  stage";
+      column-gap: 8px;
+      row-gap: 4px;
+      padding: 8px 12px;
+      align-items: center;
+    }
+    .tb-label { grid-area: label; padding-right: 0; border-right: none; }
+    .tb-controls { grid-area: controls; padding: 0; margin: 0; border: none; }
+    .tb-stage {
+      grid-area: stage;
+      width: 100%;
+      min-width: 0;
+    }
+    .tb-slide {
+      gap: 6px;
+    }
+    .tb-cat { font-size: 9px; padding: 1px 4px; }
+    .tb-title { font-size: 12.5px; line-height: 1.35; }
   }
 </style>
 

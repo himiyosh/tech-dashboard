@@ -30,6 +30,17 @@ function host(url: string): string {
   }
 }
 
+/**
+ * Build a favicon URL via Google's S2 service. Works for any host without
+ * bundling per-source assets, returns the default globe icon when the
+ * site has no favicon.
+ */
+function faviconUrl(url: string, size = 32): string {
+  const h = host(url);
+  if (!h) return "";
+  return `https://www.google.com/s2/favicons?sz=${size}&domain=${h}`;
+}
+
 const summaryJa = summaryForLang(entry, "ja");
 const summaryEn = summaryForLang(entry, "en");
 const titleJa = titleForLang(entry, "ja");
@@ -74,7 +85,20 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
       <span class="spacer"></span>
       <span class="mono">{rel}</span>
       <span>·</span>
-      <span>{entry.source}</span>
+      <span class="src-tag">
+        <img
+          class="src-favicon"
+          src={faviconUrl(entry.url)}
+          alt=""
+          width="14"
+          height="14"
+          loading="lazy"
+          decoding="async"
+          referrerpolicy="no-referrer"
+          onerror="this.style.display='none'"
+        />
+        <span>{entry.source}</span>
+      </span>
     </div>
     <h3 class="title">
       <a href={entry.url} target="_blank" rel="noopener">
@@ -106,6 +130,17 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
       </div>
     )}
     <div class="url">
+      <img
+        class="url-favicon"
+        src={faviconUrl(entry.url)}
+        alt=""
+        width="16"
+        height="16"
+        loading="lazy"
+        decoding="async"
+        referrerpolicy="no-referrer"
+        onerror="this.style.display='none'"
+      />
       <span>{host(entry.url)}</span>
       <span class="arrow">→</span>
     </div>

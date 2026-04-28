@@ -110,30 +110,65 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
       {feat && (() => {
         const featSumJa = summaryForLang(feat, "ja");
         const featSumEn = summaryForLangWithFallback(feat, "en");
+        const featCat = CATEGORY_META.find((c) => c.slug === feat.category);
+        const featCatColor = featCat?.color ?? "#5eead4";
+        const featCatEmoji = featCat?.emoji ?? "\u{1F4C4}";
+        let featHost = "";
+        try { featHost = new URL(feat.url).host.replace(/^www\./, ""); } catch {}
+        const featFavicon = featHost
+          ? `https://www.google.com/s2/favicons?sz=64&domain=${featHost}`
+          : "";
+        const featImg = feat.image?.src ?? "";
         return (
-        <article class="featured" data-pagefind-body>
-          <div class="featured-label">
-            <span class="i18n-ja">Featured · 注目</span>
-            <span class="i18n-en" lang="en">Featured</span>
+        <article class="featured" data-pagefind-body style={`--cat-color:${featCatColor}`}>
+          <div class="featured-thumb">
+            {featImg ? (
+              <img src={featImg} alt={feat.image?.alt || feat.title} loading="lazy" decoding="async" />
+            ) : (
+              <div class="featured-thumb-fallback" aria-hidden="true">
+                <span class="featured-thumb-emoji">{featCatEmoji}</span>
+              </div>
+            )}
           </div>
-          <h2 class="featured-title">
-            <a href={feat.url} target="_blank" rel="noopener">
-              <span class="i18n-ja">{titleForLang(feat, "ja")}</span>
-              <span class="i18n-en" lang="en">{titleForLang(feat, "en") || "(no English title)"}</span>
-            </a>
-          </h2>
-          {featSumJa && <p class="featured-sum i18n-ja">{featSumJa}</p>}
-          {featSumEn.text && (
-            <p class="featured-sum i18n-en" lang={featSumEn.isFallback ? "ja" : "en"}>
-              {featSumEn.isFallback && <span class="lang-badge">[ja]</span>}
-              {featSumEn.text}
-            </p>
-          )}
-          <div class="featured-meta">
-            <span class="badge release">{feat.sourceType}</span>
-            <span>{feat.source}</span>
-            <span>·</span>
-            <span>{relativeTime(feat.publishedAt, now)}</span>
+          <div class="featured-body">
+            <div class="featured-label">
+              <span class="i18n-ja">Featured · 注目</span>
+              <span class="i18n-en" lang="en">Featured</span>
+            </div>
+            <h2 class="featured-title">
+              <a href={feat.url} target="_blank" rel="noopener">
+                <span class="i18n-ja">{titleForLang(feat, "ja")}</span>
+                <span class="i18n-en" lang="en">{titleForLang(feat, "en") || "(no English title)"}</span>
+              </a>
+            </h2>
+            {featSumJa && <p class="featured-sum i18n-ja">{featSumJa}</p>}
+            {featSumEn.text && (
+              <p class="featured-sum i18n-en" lang={featSumEn.isFallback ? "ja" : "en"}>
+                {featSumEn.isFallback && <span class="lang-badge">[ja]</span>}
+                {featSumEn.text}
+              </p>
+            )}
+            <div class="featured-meta">
+              <span class="badge release">{feat.sourceType}</span>
+              <span class="featured-src">
+                {featFavicon && (
+                  <img
+                    class="featured-favicon"
+                    src={featFavicon}
+                    alt=""
+                    width="16"
+                    height="16"
+                    loading="lazy"
+                    decoding="async"
+                    referrerpolicy="no-referrer"
+                    onerror="this.style.display='none'"
+                  />
+                )}
+                <span>{feat.source}</span>
+              </span>
+              <span>·</span>
+              <span>{relativeTime(feat.publishedAt, now)}</span>
+            </div>
           </div>
         </article>
         );

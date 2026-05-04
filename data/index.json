@@ -1,21 +1,52 @@
 {
-  "generatedAt": "2026-05-04T20:01:24.816Z",
+  "generatedAt": "2026-05-04T23:01:17.735Z",
   "count": 500,
   "health": {
-    "lastRunAt": "2026-05-04T20:01:24.816Z",
-    "batchIndex": 1,
+    "lastRunAt": "2026-05-04T23:01:17.735Z",
+    "batchIndex": 4,
     "batchTotal": 4,
-    "sourcesAttempted": 13,
-    "sourcesOk": 13,
+    "sourcesAttempted": 12,
+    "sourcesOk": 12,
     "sourcesFailed": [],
     "summarized": 5,
     "summarizeErrors": 0,
     "copilotOk": true,
     "copilotError": null,
-    "ogCached": 760,
+    "ogCached": 764,
     "ogNewHits": 4
   },
   "entries": [
+    {
+      "id": "c7363a1e594826c7",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/yurukusa/items/fbe51b3ce6b025dd089c",
+      "title": "Claude Code が API 400 で詰まる時——cache_control 空テキストブロックの根本原因と復旧",
+      "titleJa": "Claude CodeがAPI 400で停止する原因とcache_control空ブロックの復旧法",
+      "titleEn": "",
+      "summaryJa": "Claude Codeで発生するAPI 400エラーの原因として、cache_control付き空テキストブロックの送信があると指摘。会話履歴の壊れたキャッシュ参照が再送されることで詰まる現象を解説し、セッションリセットなど具体的な復旧手順を示す。",
+      "summaryEn": "This article analyzes the root cause of API 400 errors in Claude Code, identifying empty text blocks with cache_control attached as the trigger. It explains how broken cache references in conversation history cause repeated failures and provides recovery steps like session resets.",
+      "lang": "ja",
+      "publishedAt": "2026-05-04T19:45:40.000Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
+      "tags": [
+        "claude",
+        "qiita",
+        "claude-code",
+        "api-error",
+        "debugging"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0MzU0MTk3JTJGNzY4MGMzNmI0MjExOWM0NTJhZGE3NTg4MmZmYTdiZGY2YWM5OWY5MSUyRmxhcmdlLnBuZyUzRjE3NzM1OTE5OTU_aXhsaWI9cmItNC4wLjAmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWY2NzlkNTUyZTUxZTY1YTZkNTE1NWNiMDY1OWY4M2Uz%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dabf9ad6160c15f0825d62e524e5418ea?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9Q2xhdWRlJTIwQ29kZSUyMCVFMyU4MSU4QyUyMEFQSSUyMDQwMCUyMCVFMyU4MSVBNyVFOCVBOSVCMCVFMyU4MSVCRSVFMyU4MiU4QiVFNiU5OSU4MiVFMiU4MCU5NCVFMiU4MCU5NGNhY2hlX2NvbnRyb2wlMjAlRTclQTklQkElRTMlODMlODYlRTMlODIlQUQlRTMlODIlQjklRTMlODMlODglRTMlODMlOTYlRTMlODMlQUQlRTMlODMlODMlRTMlODIlQUYlRTMlODElQUUlRTYlQTAlQjklRTYlOUMlQUMlRTUlOEUlOUYlRTUlOUIlQTAlRTMlODElQTglRTUlQkUlQTklRTYlOTclQTcmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz01MGFiNTI1ZTcyNmM1MGJjOGRlODViZTFiOWEyM2VjYQ&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDB5dXJ1a3VzYSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWUzZjE5NmRiNTgxN2MyNzIyZTk5MDFiZTYxNDUyNTIz&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=04b34b6fd14911290ef85ccf6a8ebaeb",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0MzU0MTk3JTJGNzY4MGMzNmI0MjExOWM0NTJhZGE3NTg4MmZmYTdiZGY2YWM5OWY5MSUyRmxhcmdlLnBuZyUzRjE3NzM1OTE5OTU_aXhsaWI9cmItNC4wLjAmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWY2NzlkNTUyZTUxZTY1YTZkNTE1NWNiMDY1OWY4M2Uz%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dabf9ad6160c15f0825d62e524e5418ea?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9Q2xhdWRlJTIwQ29kZSUyMCVFMyU4MSU4QyUyMEFQSSUyMDQwMCUyMCVFMyU4MSVBNyVFOCVBOSVCMCVFMyU4MSVCRSVFMyU4MiU4QiVFNiU5OSU4MiVFMiU4MCU5NCVFMiU4MCU5NGNhY2hlX2NvbnRyb2wlMjAlRTclQTklQkElRTMlODMlODYlRTMlODIlQUQlRTMlODIlQjklRTMlODMlODglRTMlODMlOTYlRTMlODMlQUQlRTMlODMlODMlRTMlODIlQUYlRTMlODElQUUlRTYlQTAlQjklRTYlOUMlQUMlRTUlOEUlOUYlRTUlOUIlQTAlRTMlODElQTglRTUlQkUlQTklRTYlOTclQTcmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz01MGFiNTI1ZTcyNmM1MGJjOGRlODViZTFiOWEyM2VjYQ&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDB5dXJ1a3VzYSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWUzZjE5NmRiNTgxN2MyNzIyZTk5MDFiZTYxNDUyNTIz&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=04b34b6fd14911290ef85ccf6a8ebaeb",
+        "alt": "Claude Code が API 400 で詰まる時——cache_control 空テキストブロックの根本原因と復旧",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "73e15f7d826cffa5",
       "source": "techcrunch",
@@ -74,6 +105,70 @@
         "src": "https://techcrunch.com/wp-content/uploads/2026/05/GettyImages-1694381544.jpg?w=1024",
         "origSrc": "https://techcrunch.com/wp-content/uploads/2026/05/GettyImages-1694381544.jpg?w=1024",
         "alt": "Katie Haun raises $1B for new venture funds",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "e989b13ab78ae393",
+      "source": "microsoft-source",
+      "sourceType": "blog",
+      "url": "https://blogs.microsoft.com/on-the-issues/2026/05/04/strengthening-cyber-capacity-in-kenya-a-new-toolkit-with-lessons-for-the-region/",
+      "title": "New cyber toolkit from Kenya offers lessons for the region",
+      "titleJa": "ケニア発の新サイバーツールキット、地域への教訓を提示",
+      "titleEn": "New cyber toolkit from Kenya offers lessons for the region",
+      "summaryJa": "Microsoftはケニア政府と連携し、サイバー能力強化のための新しいツールキットを発表した。同国の取り組みから得られた知見をまとめ、アフリカ地域全体のサイバーセキュリティ態勢向上に役立てることを目指している。",
+      "summaryEn": "Microsoft and Kenya have launched a new cyber capacity-building toolkit, sharing lessons from Kenya's experience to help strengthen cybersecurity readiness across the broader African region.",
+      "lang": "en",
+      "publishedAt": "2026-05-04T19:11:00.000Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
+      "tags": [
+        "microsoft",
+        "news",
+        "cybersecurity",
+        "kenya",
+        "africa",
+        "capacity-building"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "image": {
+        "src": "https://blogs.microsoft.com/wp-content/uploads/sites/5/2026/04/FY26_OML-Q4%E2%80%93PA-MGA-Cybersecurity-ARCKenya-BlogHeader-02-1024x576.png",
+        "origSrc": "https://blogs.microsoft.com/wp-content/uploads/sites/5/2026/04/FY26_OML-Q4%E2%80%93PA-MGA-Cybersecurity-ARCKenya-BlogHeader-02-1024x576.png",
+        "alt": "New cyber toolkit from Kenya offers lessons for the region",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "b000c0207f0ebe57",
+      "source": "microsoft-source",
+      "sourceType": "blog",
+      "url": "https://www.microsoft.com/en-us/security/blog/2026/05/04/breaking-the-code-multi-stage-code-of-conduct-phishing-campaign-leads-to-aitm-token-compromise/",
+      "title": "Multi-stage ‘code of conduct’ phishing campaign leads to AiTM token compromise",
+      "titleJa": "多段階「行動規範」フィッシングがAiTMトークン窃取に発展",
+      "titleEn": "Multi-stage ‘code of conduct’ phishing campaign leads to AiTM token compromise",
+      "summaryJa": "Microsoftは、企業の行動規範への同意を装う多段階フィッシング攻撃を報告。被害者を正規サイト風のページに誘導し、Adversary-in-the-Middle(AiTM)手法で認証トークンを窃取してアカウント侵害に至る手口を解説している。",
+      "summaryEn": "Microsoft details a multi-stage phishing campaign that lures victims with fake corporate 'code of conduct' acknowledgments, ultimately using adversary-in-the-middle (AiTM) techniques to steal authentication tokens and compromise accounts.",
+      "lang": "en",
+      "publishedAt": "2026-05-04T19:04:28.000Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
+      "tags": [
+        "microsoft",
+        "news",
+        "phishing",
+        "aitm",
+        "microsoft-security",
+        "token-theft"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "image": {
+        "src": "https://www.microsoft.com/en-us/security/blog/wp-content/uploads/2026/05/featured-image-n-code-of-conduct.png",
+        "origSrc": "https://www.microsoft.com/en-us/security/blog/wp-content/uploads/2026/05/featured-image-n-code-of-conduct.png",
+        "alt": "Multi-stage ‘code of conduct’ phishing campaign leads to AiTM token compromise",
         "width": 0,
         "height": 0,
         "source": "og"
@@ -303,20 +398,32 @@
       "sourceType": "blog",
       "url": "https://techcrunch.com/2026/05/04/sierra-raises-950m-as-the-race-to-own-enterprise-ai-gets-serious/",
       "title": "Sierra raises $950M as the race to own enterprise AI gets serious",
-      "titleJa": "",
+      "titleJa": "Sierra、エンタープライズAI競争激化で9.5億ドル調達",
       "titleEn": "Sierra raises $950M as the race to own enterprise AI gets serious",
-      "summaryJa": "",
-      "summaryEn": "The raise gives Sierra more than $1 billion to work with — capital the company says it will use to become the \"global standard\" for AI-powered customer experiences.",
+      "summaryJa": "AIエージェントスタートアップのSierraが9.5億ドルの大型資金調達を実施した。エンタープライズ向けAI市場の主導権争いが本格化する中、同社の評価額と存在感がさらに高まる。",
+      "summaryEn": "AI agent startup Sierra has raised $950 million as competition to dominate the enterprise AI market intensifies, significantly boosting the company's valuation and standing.",
       "lang": "en",
       "publishedAt": "2026-05-04T16:45:55.000Z",
       "collectedAt": "2026-05-04T20:01:04.568Z",
       "tags": [
         "enterprise",
         "news",
-        "techcrunch"
+        "techcrunch",
+        "funding",
+        "ai-agents",
+        "enterprise-ai",
+        "sierra"
       ],
       "category": "tech-news",
-      "importance": 1
+      "importance": 2,
+      "image": {
+        "src": "https://techcrunch.com/wp-content/uploads/2022/10/AP22166762615783.jpg?resize=1200,800",
+        "origSrc": "https://techcrunch.com/wp-content/uploads/2022/10/AP22166762615783.jpg?resize=1200,800",
+        "alt": "Sierra raises $950M as the race to own enterprise AI gets serious",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "a57efbd186bdafb7",
@@ -354,19 +461,23 @@
       "sourceType": "blog",
       "url": "https://techcrunch.com/2026/05/04/elon-musk-sent-ominous-texts-to-greg-brockman-sam-altman-after-asking-for-a-settlement-openai-claims/",
       "title": "Elon Musk sent ominous texts to Greg Brockman, Sam Altman after asking for a settlement, OpenAI claims",
-      "titleJa": "",
+      "titleJa": "OpenAI主張：Musk氏が和解要求後にAltman氏らへ不穏なメッセージ送信",
       "titleEn": "Elon Musk sent ominous texts to Greg Brockman, Sam Altman after asking for a settlement, OpenAI claims",
-      "summaryJa": "",
-      "summaryEn": "Musk texted OpenAI's president and co-founder saying that he and CEO Sam Altman \"will be the most hated men in America\" if OpenAI doesn't settle the suit.",
+      "summaryJa": "OpenAIによると、Elon Musk氏は和解を求めた後、Greg Brockman氏とSam Altman氏に不穏なテキストメッセージを送ったという。両者の長期的な法的対立がさらにエスカレートしており、OpenAIはMusk氏の行動をハラスメントと位置付けている。",
+      "summaryEn": "OpenAI claims Elon Musk sent ominous text messages to Greg Brockman and Sam Altman after seeking a settlement, escalating the ongoing legal feud between Musk and the AI company he co-founded.",
       "lang": "en",
       "publishedAt": "2026-05-04T16:36:03.000Z",
       "collectedAt": "2026-05-04T20:01:04.568Z",
       "tags": [
         "news",
-        "techcrunch"
+        "techcrunch",
+        "openai",
+        "elon-musk",
+        "sam-altman",
+        "lawsuit"
       ],
       "category": "tech-news",
-      "importance": 1
+      "importance": 2
     },
     {
       "id": "0c430f819755eece",
@@ -528,8 +639,8 @@
       }
     },
     {
-      "id": "b927e13ccf821241",
-      "source": "zenn-copilot",
+      "id": "559aaf5b28054a9b",
+      "source": "zenn-claude",
       "sourceType": "blog",
       "url": "https://zenn.dev/rick2200/articles/9db3f4e32f9286",
       "title": "GitHub ActionsでCopilot SDKを使いClaude Skillsの効果検証をしてみる",
@@ -539,15 +650,15 @@
       "summaryEn": "This article demonstrates verifying the effectiveness of Claude Skills by combining GitHub Actions with the Copilot SDK. It covers building automated workflows and compares output quality before and after applying Skills.",
       "lang": "ja",
       "publishedAt": "2026-05-04T15:51:48.000Z",
-      "collectedAt": "2026-05-04T20:01:04.568Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
-        "copilot",
+        "claude",
         "zenn",
         "github-actions",
         "claude-skills",
         "copilot-sdk"
       ],
-      "category": "copilot",
+      "category": "claude",
       "importance": 1,
       "image": {
         "src": "https://res.cloudinary.com/zenn/image/upload/s--sndtE4Eg--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:GitHub%2520Actions%25E3%2581%25A7Copilot%2520SDK%25E3%2582%2592%25E4%25BD%25BF%25E3%2581%2584Claude%2520Skills%25E3%2581%25AE%25E5%258A%25B9%25E6%259E%259C%25E6%25A4%259C%25E8%25A8%25BC%25E3%2582%2592%25E3%2581%2597%25E3%2581%25A6%25E3%2581%25BF%25E3%2582%258B%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Rick2200%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzUxMTNlOWQzOGMuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
@@ -634,7 +745,7 @@
       "summaryEn": "Microsoft highlights how the spirit of Indonesian women's rights pioneer Kartini lives on in the AI era, showcasing initiatives that empower local women through AI education and skills development to thrive in the technology age.",
       "lang": "en",
       "publishedAt": "2026-05-04T15:32:46.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "microsoft",
         "news",
@@ -665,7 +776,7 @@
       "summaryEn": "The author shares their personal AI stack combining subscriptions and API integrations for individual development, along with a detailed breakdown of March 2026 charges across models including Claude.",
       "lang": "ja",
       "publishedAt": "2026-05-04T15:26:24.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "zenn",
@@ -696,7 +807,7 @@
       "summaryEn": "A personal developer shares their AI model API stack and the actual billing amount for February 2026, detailing combinations of subscriptions like ChatGPT and Claude with API integrations, plus model choices by use case and cost breakdown.",
       "lang": "ja",
       "publishedAt": "2026-05-04T15:26:24.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "zenn",
@@ -808,7 +919,7 @@
       "summaryEn": "Agentic RAGは本当に割に合わないのか？A-RAGを実務データで再検証する",
       "lang": "ja",
       "publishedAt": "2026-05-04T15:00:06.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "claude",
@@ -1045,7 +1156,7 @@
       "summaryEn": "[Google Cloud Next '26 体験記 #3] Anthropic のセッションで聞いた「ソフトウェアの先」のビジョン",
       "lang": "ja",
       "publishedAt": "2026-05-04T14:04:33.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "claude",
@@ -1133,7 +1244,7 @@
       "summaryEn": "【初心者向け】社内PCでClaude Codeを使う前に。絶対に知っておきたいセキュリティの罠と対策",
       "lang": "ja",
       "publishedAt": "2026-05-04T13:49:40.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "zenn"
@@ -1153,7 +1264,7 @@
       "summaryEn": "【初心者向け】社内PCでClaude Codeを使う前に。絶対に知っておきたいセキュリティの罠と対策",
       "lang": "ja",
       "publishedAt": "2026-05-04T13:47:05.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "qiita"
@@ -1381,27 +1492,6 @@
       "importance": 1
     },
     {
-      "id": "f5a8008ec9ffbc28",
-      "source": "the-verge",
-      "sourceType": "blog",
-      "url": "https://www.theverge.com/tech/922571/hisense-cuts-price-ur9",
-      "title": "Hisense aggressively cuts the price of its RGB LED TV on release day",
-      "titleJa": "",
-      "titleEn": "Hisense aggressively cuts the price of its RGB LED TV on release day",
-      "summaryJa": "",
-      "summaryEn": "The Hisense UR9 - the first RGB LED TV to be released this year - is now available for much less than originally revealed. The 65-inch UR9 is now $1,999, while the 75-inch model is $2,999, and the 85-",
-      "lang": "en",
-      "publishedAt": "2026-05-04T13:00:00.000Z",
-      "collectedAt": "2026-05-04T17:00:57.975Z",
-      "tags": [
-        "news",
-        "release",
-        "verge"
-      ],
-      "category": "tech-news",
-      "importance": 2
-    },
-    {
       "id": "7033d8692f6fc124",
       "source": "techcrunch",
       "sourceType": "blog",
@@ -1442,6 +1532,27 @@
       "importance": 1
     },
     {
+      "id": "f5a8008ec9ffbc28",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/tech/922571/hisense-cuts-price-ur9",
+      "title": "Hisense aggressively cuts the price of its RGB LED TV on release day",
+      "titleJa": "",
+      "titleEn": "Hisense aggressively cuts the price of its RGB LED TV on release day",
+      "summaryJa": "",
+      "summaryEn": "The Hisense UR9 - the first RGB LED TV to be released this year - is now available for much less than originally revealed. The 65-inch UR9 is now $1,999, while the 75-inch model is $2,999, and the 85-",
+      "lang": "en",
+      "publishedAt": "2026-05-04T13:00:00.000Z",
+      "collectedAt": "2026-05-04T17:00:57.975Z",
+      "tags": [
+        "news",
+        "release",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 2
+    },
+    {
       "id": "c11b5b792c8b2ef7",
       "source": "apple-newsroom",
       "sourceType": "blog",
@@ -1473,7 +1584,7 @@
       "summaryEn": "AIに頼んだら10分でテトリスができた話",
       "lang": "ja",
       "publishedAt": "2026-05-04T12:52:53.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "qiita"
@@ -1708,7 +1819,7 @@
       "summaryEn": "Claude Code の設定ファイルを GUI で生成する Web アプリを Next.js 16 + Supabase で作った",
       "lang": "ja",
       "publishedAt": "2026-05-04T12:03:07.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "zenn"
@@ -1929,7 +2040,7 @@
       "summaryEn": "JP Bids MCP × Jグランツ MCP × freee MCP — 入札・補助金・会計をひとつの会話で",
       "lang": "ja",
       "publishedAt": "2026-05-04T09:08:34.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "mcp-server",
@@ -2398,7 +2509,7 @@
       "summaryEn": "CLAUDE.mdに「憲法」と「trigger リスト」を書いた理由 — ネット事例10件と比較してわかった設計の異質さ",
       "lang": "ja",
       "publishedAt": "2026-05-04T05:48:35.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "zenn"
@@ -2519,7 +2630,7 @@
       "summaryEn": "Claude Code Hooks を本番運用で踏んだ 4 つの罠と、責務をどう絞ったか",
       "lang": "ja",
       "publishedAt": "2026-05-04T04:01:05.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "mcp-server",
@@ -3299,7 +3410,7 @@
       "summaryEn": "arXiv:2605.00754v1 Announce Type: new Abstract: Reward models (RMs) have become an indispensable fixture of the language model (LM) post-training playbook, enabling policy alignment and test-time scal",
       "lang": "en",
       "publishedAt": "2026-05-04T04:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "arxiv",
         "paper"
@@ -3319,7 +3430,7 @@
       "summaryEn": "arXiv:2605.00179v1 Announce Type: new Abstract: Open-source software (OSS) dependencies introduce systemic risks that are difficult to manage at scale. Existing Software Composition Analysis (SCA) and",
       "lang": "en",
       "publishedAt": "2026-05-04T04:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "arxiv",
         "paper"
@@ -3339,7 +3450,7 @@
       "summaryEn": "arXiv:2605.00191v1 Announce Type: new Abstract: Context: Leadership has been extensively studied in management and agile software development; however, prior research predominantly focuses on formal r",
       "lang": "en",
       "publishedAt": "2026-05-04T04:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "arxiv",
         "paper"
@@ -3359,7 +3470,7 @@
       "summaryEn": "arXiv:2605.00352v1 Announce Type: new Abstract: Modern organizations increasingly rely on log data and monitoring signals to protect products against account takeovers and abuse, yet integrating secur",
       "lang": "en",
       "publishedAt": "2026-05-04T04:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "arxiv",
         "paper"
@@ -3379,7 +3490,7 @@
       "summaryEn": "arXiv:2605.00413v1 Announce Type: new Abstract: Ensuring the reliability of the Rust compiler is of paramount importance, given increasing adoption of Rust for critical systems development, due to its",
       "lang": "en",
       "publishedAt": "2026-05-04T04:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "arxiv",
         "paper"
@@ -3399,7 +3510,7 @@
       "summaryEn": "arXiv:2605.00447v1 Announce Type: new Abstract: Linking issue reports to the commits that resolve them is essential for software traceability, maintenance, and evolution. Accurate issue-commit links h",
       "lang": "en",
       "publishedAt": "2026-05-04T04:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "arxiv",
         "paper"
@@ -3419,7 +3530,7 @@
       "summaryEn": "arXiv:2605.00472v1 Announce Type: new Abstract: As software systems grow in scale, developers face increasing difficulty in selecting appropriate Application Programming Interfaces (APIs) from numerou",
       "lang": "en",
       "publishedAt": "2026-05-04T04:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "arxiv",
         "benchmark",
@@ -3440,7 +3551,7 @@
       "summaryEn": "arXiv:2605.00504v1 Announce Type: new Abstract: Energy efficiency has emerged as a vital attribute of software quality, with significant implications for both environmental sustainability and operatio",
       "lang": "en",
       "publishedAt": "2026-05-04T04:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "arxiv",
         "paper"
@@ -3460,7 +3571,7 @@
       "summaryEn": "arXiv:2605.00531v1 Announce Type: new Abstract: Autonomous driving systems (ADS) are increasingly deployed in real traffic, yet testing remains fundamentally challenging due to open environments, comp",
       "lang": "en",
       "publishedAt": "2026-05-04T04:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "arxiv",
@@ -3481,7 +3592,7 @@
       "summaryEn": "arXiv:2605.00034v1 Announce Type: cross Abstract: This paper presents a system combining symbolic execution (KLEE) with a 4-agent multi-LLM architecture for detecting memory vulnerabilities in Rust un",
       "lang": "en",
       "publishedAt": "2026-05-04T04:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "arxiv",
@@ -3502,8 +3613,90 @@
       "summaryEn": "arXiv:2605.00076v1 Announce Type: cross Abstract: Software Bills of Materials (SBOMs) are increasingly mandated by regulators, yet existing sharing mechanisms impose a binary choice between full discl",
       "lang": "en",
       "publishedAt": "2026-05-04T04:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1
+    },
+    {
+      "id": "914d8b6a7012a5d2",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.00382",
+      "title": "Social Bias in LLM-Generated Code: Benchmark and Mitigation",
+      "titleJa": "",
+      "titleEn": "Social Bias in LLM-Generated Code: Benchmark and Mitigation",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.00382v1 Announce Type: new Abstract: Large Language Models (LLMs) are increasingly deployed to generate code for human-centered applications where demographic fairness is critical. However,",
+      "lang": "en",
+      "publishedAt": "2026-05-04T04:00:00.000Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
+      "tags": [
+        "arxiv",
+        "benchmark",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1
+    },
+    {
+      "id": "16ec2c0fdda43198",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.00433",
+      "title": "Improving LLM Code Generation via Requirement-Aware Curriculum Reinforcement Learning",
+      "titleJa": "",
+      "titleEn": "Improving LLM Code Generation via Requirement-Aware Curriculum Reinforcement Learning",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.00433v1 Announce Type: new Abstract: Code generation, which aims to automatically generate source code from given programming requirements, has the potential to substantially improve softwa",
+      "lang": "en",
+      "publishedAt": "2026-05-04T04:00:00.000Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
+      "tags": [
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1
+    },
+    {
+      "id": "a9a784573f91a943",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.00782",
+      "title": "GeoContra: From Fluent GIS Code to Verifiable Spatial Analysis with Geography-Grounded Repair",
+      "titleJa": "",
+      "titleEn": "GeoContra: From Fluent GIS Code to Verifiable Spatial Analysis with Geography-Grounded Repair",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.00782v1 Announce Type: new Abstract: Reliable spatial analysis in GIScience requires preserving coordinate semantics, topology, units, and geographic plausibility. Current LLM-based GIS sys",
+      "lang": "en",
+      "publishedAt": "2026-05-04T04:00:00.000Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
+      "tags": [
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1
+    },
+    {
+      "id": "9d2828637d0ab6fd",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.00803",
+      "title": "Can Coding Agents Reproduce Findings in Computational Materials Science?",
+      "titleJa": "",
+      "titleEn": "Can Coding Agents Reproduce Findings in Computational Materials Science?",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.00803v1 Announce Type: new Abstract: Large language models are increasingly deployed as autonomous coding agents and have achieved remarkably strong performance on software engineering benc",
+      "lang": "en",
+      "publishedAt": "2026-05-04T04:00:00.000Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
+      "tags": [
+        "agent",
         "arxiv",
         "paper"
       ],
@@ -3522,7 +3715,7 @@
       "summaryEn": "AIエージェントのメモリ設計アーキテクチャ：Markdownと規律の徹底",
       "lang": "ja",
       "publishedAt": "2026-05-04T03:44:23.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "zenn"
@@ -3542,7 +3735,7 @@
       "summaryEn": "Cursor 脆弱性事件を契機に Claude Code の運用を見直す — AIコーディングツールのセキュリティ運用5項目",
       "lang": "ja",
       "publishedAt": "2026-05-04T03:38:18.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "cursor",
         "qiita"
@@ -3562,7 +3755,7 @@
       "summaryEn": "Claude CodeとGitHub ProjectsでIssue駆動開発",
       "lang": "ja",
       "publishedAt": "2026-05-04T03:35:10.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "zenn"
@@ -3582,7 +3775,7 @@
       "summaryEn": "進捗増刊号(3)2026/05/04：文系がClaudeのことサンドボックスゲームだと勘違いしてる 第5回",
       "lang": "ja",
       "publishedAt": "2026-05-04T02:22:52.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "zenn"
@@ -3785,7 +3978,7 @@
       "summaryEn": "Claude Code、Codex、Gemini CLIどのコーディングエージェントが良いエンジニアの振る舞いをするか",
       "lang": "ja",
       "publishedAt": "2026-05-04T00:19:36.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "zenn"
@@ -3805,12 +3998,34 @@
       "summaryEn": "How OpenAI rebuilt its WebRTC stack to power real-time Voice AI with low latency, global scale, and seamless conversational turn-taking.",
       "lang": "en",
       "publishedAt": "2026-05-04T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "openai"
       ],
       "category": "codex",
       "importance": 1
+    },
+    {
+      "id": "ac9a08206a49fa85",
+      "source": "cursor-changelog",
+      "sourceType": "changelog",
+      "url": "https://cursor.com/changelog/05-04-26",
+      "title": "Model controls, spend management, and usage analytics",
+      "titleJa": "",
+      "titleEn": "Model controls, spend management, and usage analytics",
+      "summaryJa": "",
+      "summaryEn": "This release introduces updates for Enterprise admins: a new system for model controls, updated spend management, and more detail for usage analytics.",
+      "lang": "en",
+      "publishedAt": "2026-05-04T00:00:00.000Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
+      "tags": [
+        "changelog",
+        "cursor",
+        "enterprise",
+        "release"
+      ],
+      "category": "cursor",
+      "importance": 2
     },
     {
       "id": "0ad4bafcdcc266af",
@@ -3824,7 +4039,7 @@
       "summaryEn": "The author describes building a personal PR dashboard with Claude's help to overcome the recurring problem of giving up promotional efforts for indie projects after just a few days, aiming to sustain motivation.",
       "lang": "ja",
       "publishedAt": "2026-05-03T23:57:56.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "zenn",
@@ -3855,7 +4070,7 @@
       "summaryEn": "This article argues that the popular vision of automating work by mass-producing AI agents is an illusion, citing structural issues such as task ambiguity, accountability boundaries, and difficulty sharing context that cannot be solved by simply scaling up the number of agents.",
       "lang": "ja",
       "publishedAt": "2026-05-03T23:38:45.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "claude",
         "zenn",
@@ -4245,7 +4460,7 @@
       "summaryEn": "The post Seeing firsthand how people are using our tools to have impact in their daily lives is one of the most rewarding parts of my job. While in Sydney, I enjoyed talking with Trevor Long about the",
       "lang": "en",
       "publishedAt": "2026-05-03T13:06:24.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "microsoft",
         "news"
@@ -4454,7 +4669,7 @@
       "summaryEn": "A practical guide on using llms.txt files with Cursor and Claude Code. Covers rule configuration, step-by-step procedures, and prompt examples to improve AI coding assistance accuracy.",
       "lang": "ja",
       "publishedAt": "2026-05-03T11:56:02.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "cursor",
         "qiita",
@@ -4499,38 +4714,6 @@
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYxOTI1NzA2JTJGNjUwYzk3NDI3YjM5NDJhNjFiNmYxNmRhZWQzN2FmNjEyMWUyM2RkMSUyRmxhcmdlLnBuZyUzRjE2MzA1NjMzODk_aXhsaWI9cmItNC4wLjAmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWYxOTI2YTlhYjViYTk0MzljMWIyZWNmZGMzYWIyZmVm%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De2db3c707b1566a9a9a78ebfacf77444?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgyJUIzJUUzJTgzJUIzJUUzJTgzJTk0JUUzJTgzJUE1JUUzJTgzJUJDJUUzJTgyJUJGJUUzJTgxJUE4JUUzJTgyJUFBJUUzJTgyJUJCJUUzJTgzJUFEJUU1JUFGJUJFJUU2JTg4JUE2NjAlMjAlRUYlQkQlOUVMTE0lRTMlODElQUIlRTMlODIlODglRTMlODIlOEIlRTMlODIlQUElRTMlODIlQkIlRTMlODMlQURBSSVFMyU4MSVBRSVFOSVBQiU5OCVFOSU4MCU5RiVFNSU4QyU5NiVFMyU4MiU5MiVFOCVBOSVBNiVFMyU4MSVCRiVFMyU4MiU4QiVFRiVCRCU5RSZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTIwZjU3MTgyOTdkMjg1MzFiNmRiYTVlZWY0MTY2Yzc0&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDB0dF9hbmRfdGsmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz05ZDg4N2ZkNzY1ZjgzM2RhNjFmZTI5ZGVjMjA1NDE0OQ&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=fa28641581e05fe50a9002a4b728875a",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYxOTI1NzA2JTJGNjUwYzk3NDI3YjM5NDJhNjFiNmYxNmRhZWQzN2FmNjEyMWUyM2RkMSUyRmxhcmdlLnBuZyUzRjE2MzA1NjMzODk_aXhsaWI9cmItNC4wLjAmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWYxOTI2YTlhYjViYTk0MzljMWIyZWNmZGMzYWIyZmVm%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De2db3c707b1566a9a9a78ebfacf77444?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgyJUIzJUUzJTgzJUIzJUUzJTgzJTk0JUUzJTgzJUE1JUUzJTgzJUJDJUUzJTgyJUJGJUUzJTgxJUE4JUUzJTgyJUFBJUUzJTgyJUJCJUUzJTgzJUFEJUU1JUFGJUJFJUU2JTg4JUE2NjAlMjAlRUYlQkQlOUVMTE0lRTMlODElQUIlRTMlODIlODglRTMlODIlOEIlRTMlODIlQUElRTMlODIlQkIlRTMlODMlQURBSSVFMyU4MSVBRSVFOSVBQiU5OCVFOSU4MCU5RiVFNSU4QyU5NiVFMyU4MiU5MiVFOCVBOSVBNiVFMyU4MSVCRiVFMyU4MiU4QiVFRiVCRCU5RSZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTIwZjU3MTgyOTdkMjg1MzFiNmRiYTVlZWY0MTY2Yzc0&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDB0dF9hbmRfdGsmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz05ZDg4N2ZkNzY1ZjgzM2RhNjFmZTI5ZGVjMjA1NDE0OQ&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=fa28641581e05fe50a9002a4b728875a",
         "alt": "コンピュータとオセロ対戦60 ～LLMによるオセロAIの高速化を試みる～",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "d7cd88e43dc3805c",
-      "source": "qiita-claude",
-      "sourceType": "blog",
-      "url": "https://qiita.com/tai0921/items/fe20f48cf99d3bd336df",
-      "title": "Claude Sonnet 4 / Opus 4が6月15日に終わる — 今すぐ始める移行3ステップ",
-      "titleJa": "Claude Sonnet 4 / Opus 4が6月15日に終了 — 今すぐ始める移行3ステップ",
-      "titleEn": "",
-      "summaryJa": "Claude Sonnet 4およびOpus 4が6月15日にサポート終了となるため、移行が必要となる。本記事では既存のAPI利用者やアプリ開発者向けに、新モデルへスムーズに切り替えるための具体的な3ステップを解説している。",
-      "summaryEn": "Claude Sonnet 4 and Opus 4 will be deprecated on June 15, requiring users to migrate. This article outlines three concrete steps for API users and app developers to smoothly transition to newer Claude models.",
-      "lang": "ja",
-      "publishedAt": "2026-05-03T11:22:25.000Z",
-      "collectedAt": "2026-05-03T23:00:56.302Z",
-      "tags": [
-        "claude",
-        "qiita",
-        "deprecation",
-        "migration",
-        "sonnet-4",
-        "opus-4"
-      ],
-      "category": "claude",
-      "importance": 2,
-      "image": {
-        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0Mzc5MTcxJTJGZDRiMDFlMGJhZjI0MWYyMGNhNjVmOGJiNmZlNzFiZGM5NmQzNjY5YiUyRnhfbGFyZ2UucG5nJTNGMTc3NDMzMzc0OD9peGxpYj1yYi00LjAuMCZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MGNlYzQxMjExYWEzYTY3MWRhNjQxMGI5YjI0NWUzYTk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D92b1af22ddb1aa3de0fa8d2b2e7a03d3?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9Q2xhdWRlJTIwU29ubmV0JTIwNCUyMCUyRiUyME9wdXMlMjA0JUUzJTgxJThDNiVFNiU5QyU4ODE1JUU2JTk3JUE1JUUzJTgxJUFCJUU3JUI1JTgyJUUzJTgyJThGJUUzJTgyJThCJTIwJUUyJTgwJTk0JTIwJUU0JUJCJThBJUUzJTgxJTk5JUUzJTgxJTkwJUU1JUE3JThCJUUzJTgyJTgxJUUzJTgyJThCJUU3JUE3JUJCJUU4JUExJThDMyVFMyU4MiVCOSVFMyU4MyU4NiVFMyU4MyU4MyVFMyU4MyU5NyZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWZhMjJmOWY0MmJlNGQ5MmE4YTM4OWNmZDE3NDQ4NWRi&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDB0YWkwOTIxJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NGIzZDFmYWMwMzdkN2YxYmQxMjI0ZDhjMjkzZjJhZjY&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=668255de1d03b9c6af310c5f725112a2",
-        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0Mzc5MTcxJTJGZDRiMDFlMGJhZjI0MWYyMGNhNjVmOGJiNmZlNzFiZGM5NmQzNjY5YiUyRnhfbGFyZ2UucG5nJTNGMTc3NDMzMzc0OD9peGxpYj1yYi00LjAuMCZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MGNlYzQxMjExYWEzYTY3MWRhNjQxMGI5YjI0NWUzYTk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D92b1af22ddb1aa3de0fa8d2b2e7a03d3?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9Q2xhdWRlJTIwU29ubmV0JTIwNCUyMCUyRiUyME9wdXMlMjA0JUUzJTgxJThDNiVFNiU5QyU4ODE1JUU2JTk3JUE1JUUzJTgxJUFCJUU3JUI1JTgyJUUzJTgyJThGJUUzJTgyJThCJTIwJUUyJTgwJTk0JTIwJUU0JUJCJThBJUUzJTgxJTk5JUUzJTgxJTkwJUU1JUE3JThCJUUzJTgyJTgxJUUzJTgyJThCJUU3JUE3JUJCJUU4JUExJThDMyVFMyU4MiVCOSVFMyU4MyU4NiVFMyU4MyU4MyVFMyU4MyU5NyZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWZhMjJmOWY0MmJlNGQ5MmE4YTM4OWNmZDE3NDQ4NWRi&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDB0YWkwOTIxJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NGIzZDFmYWMwMzdkN2YxYmQxMjI0ZDhjMjkzZjJhZjY&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=668255de1d03b9c6af310c5f725112a2",
-        "alt": "Claude Sonnet 4 / Opus 4が6月15日に終わる — 今すぐ始める移行3ステップ",
         "width": 0,
         "height": 0,
         "source": "og"
@@ -4731,7 +4914,7 @@
       "summaryEn": "A critical CVSS 9.9 vulnerability in Cursor allows arbitrary code execution merely by git cloning and opening a malicious repository, exploiting auto-run settings in .vscode/tasks.json. Users should update immediately and avoid opening untrusted repositories.",
       "lang": "ja",
       "publishedAt": "2026-05-03T07:32:16.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "cursor",
         "qiita",
@@ -4821,7 +5004,7 @@
       "summaryEn": "This article presents an AI-First development workflow combining the Google ecosystem with cutting-edge AI tools like Cursor, covering tool selection, integration strategies, and practical use cases to maximize developer productivity.",
       "lang": "ja",
       "publishedAt": "2026-05-03T03:58:54.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "cursor",
         "qiita",
@@ -5977,7 +6160,7 @@
       "summaryEn": "GitHub has announced the upcoming deprecation of the GPT-5.2 and GPT-5.2-Codex models in Copilot. Users should plan to migrate to successor models before the deprecation takes effect.",
       "lang": "en",
       "publishedAt": "2026-05-01T21:30:12.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "changelog",
@@ -6149,7 +6332,7 @@
       "summaryEn": "Microsoft announced the general availability of Agent 365, extending existing enterprise systems for identity, security, governance and management to every AI agent and their interactions across the organization.",
       "lang": "en",
       "publishedAt": "2026-05-01T19:26:50.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "enterprise",
@@ -6173,7 +6356,7 @@
       "summaryEn": "Microsoft has made Agent 365 generally available, providing a control plane to manage, secure, and govern AI agents across the enterprise, with expanded capabilities and integrations for unified visibility and control.",
       "lang": "en",
       "publishedAt": "2026-05-01T19:21:38.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "microsoft",
@@ -6306,7 +6489,7 @@
       "summaryEn": "Added Restore VS Code foreground terminal support and settings. Add latest OpenAI, SAP AI Core, and Z AI models. Fixed Fix hook template JSON escaping. Improve ripgrep file search error handling. Chan",
       "lang": "en",
       "publishedAt": "2026-05-01T16:53:45.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "cline",
         "release"
@@ -6334,7 +6517,7 @@
       "summaryEn": "The post Recommendations for secure foundations in the frontier AI era appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-05-01T16:34:27.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "microsoft",
         "news"
@@ -6354,7 +6537,7 @@
       "summaryEn": "Co-authored-by: Max Paulus 🥪 max@cline.bot",
       "lang": "en",
       "publishedAt": "2026-05-01T16:25:09.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "cline",
         "release"
@@ -6509,7 +6692,7 @@
       "summaryEn": "The post Introducing the Legal Agent in Microsoft Word appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-05-01T13:09:33.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "microsoft",
@@ -6744,7 +6927,7 @@
       "summaryEn": "Admins can now create a team marketplace without connecting a repository first. Add, remove, and configure install behavior for first-party plugins directly in team marketplace settings.",
       "lang": "en",
       "publishedAt": "2026-05-01T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "changelog",
         "cursor"
@@ -6983,7 +7166,7 @@
       "summaryEn": "NVIDIA introduced OpenClaw Agents from Nemotron Labs, designed to help organizations build and deploy open-source agentic AI. The initiative aims to make agentic AI more transparent, flexible, and accessible for enterprise adoption.",
       "lang": "en",
       "publishedAt": "2026-04-30T20:00:39.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "news",
         "nvidia",
@@ -7014,7 +7197,7 @@
       "summaryEn": "The post Xbox mode begins rolling out to players on Windows 11 PCs appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-04-30T19:08:57.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "microsoft",
         "news"
@@ -7053,7 +7236,7 @@
       "summaryEn": "Microsoft provides a roundup of the latest new features, updates, and recent releases across its Microsoft Security product portfolio, highlighting enhancements and additions to various security solutions.",
       "lang": "en",
       "publishedAt": "2026-04-30T17:37:22.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "microsoft",
         "news",
@@ -7239,7 +7422,7 @@
       "summaryEn": "The April 2026 update to Visual Studio centers on agentic workflows: cloud agent sessions launch directly from the IDE, custom agents gain user-level support, and a new Debugger agent validates… The p",
       "lang": "en",
       "publishedAt": "2026-04-30T15:00:18.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "changelog",
@@ -7318,7 +7501,7 @@
       "summaryEn": "NVIDIA announced 16 new games coming to GeForce NOW cloud streaming in May, alongside expanded availability of GeForce RTX 5080-powered servers for higher-quality gameplay.",
       "lang": "en",
       "publishedAt": "2026-04-30T13:00:47.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "news",
         "nvidia",
@@ -7802,7 +7985,7 @@
       "summaryEn": "Introducing Advanced Account Security: phishing-resistant login, stronger recovery, and enhanced protections to safeguard sensitive data and prevent account takeover.",
       "lang": "en",
       "publishedAt": "2026-04-30T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "openai"
       ],
@@ -7821,7 +8004,7 @@
       "summaryEn": "Cursor Security Review is now in beta on Teams and Enterprise plans. You can run two types of always-on security agents: Security Reviewer and Vulnerability Scanner.",
       "lang": "en",
       "publishedAt": "2026-04-30T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "changelog",
         "cursor",
@@ -7987,52 +8170,6 @@
       "importance": 1
     },
     {
-      "id": "c08305cd0d72c086",
-      "source": "microsoft-source",
-      "sourceType": "blog",
-      "url": "https://news.microsoft.com/source/2026/04/29/microsoft-earnings-press-release-available-on-investor-relations-website-29/",
-      "title": "Microsoft earnings press release available on Investor Relations website",
-      "titleJa": "Microsoftの四半期決算プレスリリース、IRサイトで公開",
-      "titleEn": "Microsoft earnings press release available on Investor Relations website",
-      "summaryJa": "Microsoftが四半期決算のプレスリリースを投資家向けIRサイトで公開した。財務実績や業績ハイライトなどの詳細は同社のInvestor Relationsページから確認できる。",
-      "summaryEn": "Microsoft has published its quarterly earnings press release on its Investor Relations website, where investors can access detailed financial results and performance highlights.",
-      "lang": "en",
-      "publishedAt": "2026-04-29T20:14:42.000Z",
-      "collectedAt": "2026-05-01T07:00:38.963Z",
-      "tags": [
-        "microsoft",
-        "news",
-        "release",
-        "earnings",
-        "investor-relations"
-      ],
-      "category": "tech-news",
-      "importance": 1
-    },
-    {
-      "id": "de2492712c2717e8",
-      "source": "microsoft-source",
-      "sourceType": "blog",
-      "url": "https://www.microsoft.com/en-us/Investor/earnings/FY-2026-Q3/press-release-webcast",
-      "title": "Microsoft Cloud and AI strength fuels third quarter results",
-      "titleJa": "Microsoft、クラウドとAIの好調で第3四半期決算が大幅増収",
-      "titleEn": "Microsoft Cloud and AI strength fuels third quarter results",
-      "summaryJa": "Microsoftは2026会計年度第3四半期決算を発表し、クラウドとAI事業の堅調により大幅な増収増益を達成した。Microsoft CloudやAzure関連の需要拡大が業績を牽引している。",
-      "summaryEn": "Microsoft announced its FY2026 Q3 earnings, reporting strong revenue and profit growth driven by robust demand for Microsoft Cloud and AI services, with Azure leading overall performance.",
-      "lang": "en",
-      "publishedAt": "2026-04-29T20:11:58.000Z",
-      "collectedAt": "2026-05-01T07:00:38.963Z",
-      "tags": [
-        "microsoft",
-        "news",
-        "earnings",
-        "azure",
-        "microsoft-cloud"
-      ],
-      "category": "tech-news",
-      "importance": 2
-    },
-    {
       "id": "cdd004942296d028",
       "source": "openai-blog",
       "sourceType": "blog",
@@ -8044,7 +8181,7 @@
       "summaryEn": "How goblin outputs spread in AI models: timeline, root cause, and fixes behind personality-driven quirks in GPT-5 behavior.",
       "lang": "en",
       "publishedAt": "2026-04-29T20:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "openai"
       ],
@@ -8252,7 +8389,7 @@
       "summaryEn": "OpenAI scales Stargate to build the compute infrastructure powering AGI, adding new data center capacity to meet growing AI demand.",
       "lang": "en",
       "publishedAt": "2026-04-29T15:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "openai"
       ],
@@ -8591,7 +8728,7 @@
       "summaryEn": "OpenAI outlines a five-part action plan for strengthening cybersecurity in the Intelligence Age, focused on democratizing AI-powered cyber defense and protecting critical systems.",
       "lang": "en",
       "publishedAt": "2026-04-29T04:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "openai"
       ],
@@ -8670,7 +8807,7 @@
       "summaryEn": "We're introducing the Cursor SDK so you can build agents with the same runtime, harness, and models that power Cursor.",
       "lang": "en",
       "publishedAt": "2026-04-29T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "changelog",
         "cursor"
@@ -8913,7 +9050,7 @@
       "summaryEn": "NVIDIA announced Nemotron 3 Nano Omni, a unified multimodal model integrating vision, audio and language to power AI agents up to 9x more efficiently across tasks like document understanding and speech interaction.",
       "lang": "en",
       "publishedAt": "2026-04-28T16:00:28.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "news",
@@ -9085,7 +9222,7 @@
       "summaryEn": "NVIDIA highlights the arrival of a simulation-first era in manufacturing, where companies like Foxconn use Omniverse to build digital twins and industrial AI for designing, optimizing, and operating factories and robotics in virtual environments.",
       "lang": "en",
       "publishedAt": "2026-04-28T13:00:33.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "news",
         "nvidia",
@@ -9457,7 +9594,7 @@
       "summaryEn": "OpenAI GPT models, Codex, and Managed Agents are now available on AWS, enabling enterprises to build secure AI in their AWS environments.",
       "lang": "en",
       "publishedAt": "2026-04-28T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "openai"
       ],
@@ -9476,7 +9613,7 @@
       "summaryEn": "Learn how OpenAI protects community safety in ChatGPT through model safeguards, misuse detection, policy enforcement, and collaboration with safety experts.",
       "lang": "en",
       "publishedAt": "2026-04-28T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "openai"
       ],
@@ -9515,7 +9652,7 @@
       "summaryEn": "GitHub has removed the GPT-5.3-Codex model from the Copilot model picker for Student plan users. Students will no longer be able to select this model and must switch to other available options.",
       "lang": "en",
       "publishedAt": "2026-04-27T17:01:58.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "changelog",
         "github",
@@ -9546,7 +9683,7 @@
       "summaryEn": "GitHub Copilot's cloud agent now starts 20% faster thanks to the adoption of GitHub Actions custom images. This improvement reduces wait times for developers and boosts overall agent responsiveness when initiating tasks.",
       "lang": "en",
       "publishedAt": "2026-04-27T16:01:40.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "changelog",
@@ -9578,7 +9715,7 @@
       "summaryEn": "GitHub announced that Copilot code review will begin consuming GitHub Actions minutes starting June 1, 2026, shifting the feature from free usage to a metered model that organizations will need to factor into their cost planning.",
       "lang": "en",
       "publishedAt": "2026-04-27T15:59:24.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "changelog",
@@ -9636,7 +9773,7 @@
       "summaryEn": "OpenAI is available at FedRAMP Moderate authorization for ChatGPT Enterprise and the OpenAI API, enabling secure AI adoption for U.S. federal agencies.",
       "lang": "en",
       "publishedAt": "2026-04-27T14:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "enterprise",
         "openai"
@@ -9719,7 +9856,7 @@
       "summaryEn": "OpenAI and Microsoft announce an amended agreement that simplifies the partnership, adds long-term clarity, and supports continued AI innovation at scale.",
       "lang": "en",
       "publishedAt": "2026-04-27T06:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "openai"
       ],
@@ -9757,7 +9894,7 @@
       "summaryEn": "Learn how Symphony, an open-source spec for Codex orchestration, turns issue trackers into always-on agent systems—boosting engineering output and reducing context switching.",
       "lang": "en",
       "publishedAt": "2026-04-27T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "openai"
@@ -9777,7 +9914,7 @@
       "summaryEn": "How Choco used OpenAI APIs to streamline food distribution, boost productivity, and unlock growth—an in-depth customer story on real-world AI impact.",
       "lang": "en",
       "publishedAt": "2026-04-27T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "openai"
       ],
@@ -9817,7 +9954,7 @@
       "summaryEn": "Our mission is to ensure that AGI benefits all of humanity. Sam Altman shares five principles that guide our work.",
       "lang": "en",
       "publishedAt": "2026-04-26T16:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "openai",
         "tutorial"
@@ -9916,7 +10053,7 @@
       "summaryEn": "Starting April 27th 2026 and over the coming weeks, we will begin a staged rollout that updates the format of newly minted GitHub App installation tokens, making them more performant… The post Notice ",
       "lang": "en",
       "publishedAt": "2026-04-24T21:49:19.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "changelog",
         "github"
@@ -9936,7 +10073,7 @@
       "summaryEn": "Two updates will change the way GitHub notifications and repository watches are retained. These updates are rolling out soon, and are expected to be completed over the next few months.… The post Chang",
       "lang": "en",
       "publishedAt": "2026-04-24T20:16:31.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "changelog",
         "github"
@@ -9956,7 +10093,7 @@
       "summaryEn": "GPT-5.5, OpenAI’s latest GPT model, is now rolling out on GitHub Copilot. In our early testing, GPT-5.5 delivers its strongest performance on complex, multi-step agentic coding task and resolves real-",
       "lang": "en",
       "publishedAt": "2026-04-24T17:19:34.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "changelog",
@@ -10006,7 +10143,7 @@
       "summaryEn": "Added Add GPT-5.5 model support for OpenAI Codex subscription users. Fixed Remove hardcoded \"What’s New\" fallback items in webview; only remote-configured welcome banners are shown. Changed Improve cl",
       "lang": "en",
       "publishedAt": "2026-04-24T15:53:06.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "cline",
         "release"
@@ -10034,7 +10171,7 @@
       "summaryEn": "This update introduces inline agent mode in preview, enhancements to Next Edit Suggestions, global auto approve, and more flexible controls for terminal commands and file edits. It also includes sever",
       "lang": "en",
       "publishedAt": "2026-04-24T15:43:08.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "changelog",
@@ -10055,7 +10192,7 @@
       "summaryEn": "Co-authored-by: Max Paulus 🥪 max@cline.bot",
       "lang": "en",
       "publishedAt": "2026-04-24T15:16:35.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "cline",
         "release"
@@ -10200,7 +10337,7 @@
       "summaryEn": "This release introduces a new way to multitask with async subagents, an improved worktrees experience, and multi-root workspaces for making cross-repo changes.",
       "lang": "en",
       "publishedAt": "2026-04-24T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "changelog",
         "cursor",
@@ -10269,7 +10406,7 @@
       "summaryEn": "GitHub Copilot Chat now provides richer context and new capabilities when you’re working with diffs and pull requests. You can access this functionality by asking a question about a pull… The post Cop",
       "lang": "en",
       "publishedAt": "2026-04-23T19:58:34.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "changelog",
         "github"
@@ -10309,7 +10446,7 @@
       "summaryEn": "AI agents have revolutionized developer workflows, and their next frontier is knowledge work: processing information, solving complex problems, coming up with new ideas and driving innovation. Codex, ",
       "lang": "en",
       "publishedAt": "2026-04-23T18:57:55.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "news",
         "nvidia"
@@ -10504,7 +10641,7 @@
       "summaryEn": "GeForce NOW is doubling down on what matters most: gamers. This week’s upgrades bring smarter libraries, making it easier than ever for gamers to turn a PC collection into a cloud-powered flex. It sta",
       "lang": "en",
       "publishedAt": "2026-04-23T13:00:51.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "news",
         "nvidia"
@@ -10524,7 +10661,7 @@
       "summaryEn": "This Spring Astronomy Day, here’s a look at how AI and GPUs are helping astronomers work through unprecedented volumes of cosmic data.",
       "lang": "en",
       "publishedAt": "2026-04-23T13:00:22.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "news",
         "nvidia"
@@ -10572,7 +10709,7 @@
       "summaryEn": "Introducing GPT-5.5, our smartest model yet—faster, more capable, and built for complex tasks like coding, research, and data analysis across tools.",
       "lang": "en",
       "publishedAt": "2026-04-23T11:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "openai"
       ],
@@ -10591,7 +10728,7 @@
       "summaryEn": "GPT-5.5 System Card",
       "lang": "en",
       "publishedAt": "2026-04-23T11:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "openai"
       ],
@@ -10610,7 +10747,7 @@
       "summaryEn": "Learn how to automate tasks in Codex using schedules and triggers to create reports, summaries, and recurring workflows without manual effort.",
       "lang": "en",
       "publishedAt": "2026-04-23T10:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "openai",
         "tutorial"
@@ -10679,7 +10816,7 @@
       "summaryEn": "Added Wire up remote globalSkills from enterprise remote config with full UI, toggle support, and system prompt integration — enterprise-managed skills now appear under a dedicated \"Enterprise Skills\"",
       "lang": "en",
       "publishedAt": "2026-04-22T18:38:12.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "cline",
         "enterprise",
@@ -10737,7 +10874,7 @@
       "summaryEn": "Co-authored-by: Max Paulus 🥪 max@cline.bot",
       "lang": "en",
       "publishedAt": "2026-04-22T18:03:35.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "cline",
         "release"
@@ -10841,7 +10978,7 @@
       "summaryEn": "Across climate, conservation, disaster monitoring and recycling, NVIDIA AI is enabling applications protecting the planet.",
       "lang": "en",
       "publishedAt": "2026-04-22T13:00:42.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "news",
         "nvidia"
@@ -10861,7 +10998,7 @@
       "summaryEn": "NVIDIA and Google Cloud have collaborated for more than a decade, co‑engineering a full‑stack AI platform that spans every technology layer — from performance‑optimized libraries and frameworks to ent",
       "lang": "en",
       "publishedAt": "2026-04-22T12:00:42.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "news",
@@ -10910,7 +11047,7 @@
       "summaryEn": "The DORA Quick Check was recently updated to include deployment rework rate and the latest industry benchmarks. Measure your team’s software delivery performance and compare it to the rest of the indu",
       "lang": "en",
       "publishedAt": "2026-04-22T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "devops",
         "dora",
@@ -11174,7 +11311,7 @@
       "summaryEn": "AI agents are transforming how work gets done across all industries, accelerating everything from content creation to decision-making. NVIDIA’s expanded strategic collaborations with Adobe and WPP are",
       "lang": "en",
       "publishedAt": "2026-04-20T13:00:50.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "news",
@@ -11195,7 +11332,7 @@
       "summaryEn": "Manufacturing is at an inflection point. Across every major industrial economy, the pressure to do more with less — due to faster design cycles, leaner operations and strain on skilled labor pools — i",
       "lang": "en",
       "publishedAt": "2026-04-20T08:30:55.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "news",
         "nvidia"
@@ -11292,7 +11429,7 @@
       "summaryEn": "Added Add Claude Opus 4.7 model support Add Azure Blob Storage as a storage provider Add globalSkills to remote config Inline value reuse in user-level remote-config discovery Fixed Fix cache reflecti",
       "lang": "en",
       "publishedAt": "2026-04-16T20:17:01.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "cline",
         "release"
@@ -11320,7 +11457,7 @@
       "summaryEn": "v3.79.0 Release Notes Co-Authored-By: Claude Sonnet 4.6 (1M context) noreply@anthropic.com 🔮 View transcript: https://agentlogs.beatrixwoo.workers.dev/s/i90f8jfxjc88hit3bs8v2e2k chore(cli): bump CLI ",
       "lang": "en",
       "publishedAt": "2026-04-16T19:26:10.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "cline",
         "release"
@@ -11398,7 +11535,7 @@
       "summaryEn": "Head straight for orbit with GeForce NOW — no space helmet required. PRAGMATA, Capcom’s long-awaited sci-fi action adventure, touches down on GeForce NOW the same day it launches worldwide. The futuri",
       "lang": "en",
       "publishedAt": "2026-04-16T13:00:11.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "news",
         "nvidia",
@@ -11574,7 +11711,7 @@
       "summaryEn": "Traditional data centers only stored, retrieved and processed data. In the generative and agentic AI era, these facilities have evolved into AI token factories. With AI inference becoming their primar",
       "lang": "en",
       "publishedAt": "2026-04-15T15:00:26.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "agent",
         "news",
@@ -11595,7 +11732,7 @@
       "summaryEn": "The NAB Show 2026 trade show, running April 18-22 in Las Vegas, is set to showcase a wave of new features and optimizations for top video editing applications. Bringing together over 60,000 content pr",
       "lang": "en",
       "publishedAt": "2026-04-15T13:00:38.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "news",
         "nvidia"
@@ -11635,7 +11772,7 @@
       "summaryEn": "Cursor can now respond by creating interactive canvases .",
       "lang": "en",
       "publishedAt": "2026-04-15T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "changelog",
         "cursor"
@@ -11725,7 +11862,7 @@
       "summaryEn": "We've shipped quality-of-life improvements to the Cursor CLI to make working with agents in the terminal more delightful.",
       "lang": "en",
       "publishedAt": "2026-04-14T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "changelog",
         "cursor"
@@ -11796,7 +11933,7 @@
       "summaryEn": "This release introduces improvements to our Agents Window interface as part of Cursor 3.",
       "lang": "en",
       "publishedAt": "2026-04-13T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "changelog",
         "cursor",
@@ -11845,7 +11982,7 @@
       "summaryEn": "Added Add a dedicated \"Spend Limit Reached\" error UI when spend caps are hit Docs updates Fixed Show actual read_file line ranges in chat UI Full Changelog : v2.13.0-cli...v3.78.0",
       "lang": "en",
       "publishedAt": "2026-04-10T20:40:53.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "cline",
         "release"
@@ -11873,7 +12010,7 @@
       "summaryEn": "Update changelog files for release Version bump for release Update cli/CHANGELOG.md Co-authored-by: greptile-apps[bot] &lt;165735046+greptile-apps[bot]@users.noreply.github.com&gt; Co-authored-by: gre",
       "lang": "en",
       "publishedAt": "2026-04-10T19:48:17.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "cline",
         "release"
@@ -11901,7 +12038,7 @@
       "summaryEn": "This National Robotics Week, NVIDIA is highlighting the breakthroughs that are bringing AI into the physical world — as well as the growing wave of robots transforming industries, from agricultural an",
       "lang": "en",
       "publishedAt": "2026-04-10T19:40:59.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "news",
         "nvidia"
@@ -12000,7 +12137,7 @@
       "summaryEn": "This release introduces updates to Bugbot including the ability to self-improve in real time, MCP support, improvements to Bugbot Autofix, and the highest resolution rate to date.",
       "lang": "en",
       "publishedAt": "2026-04-08T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "changelog",
         "cursor",
@@ -12253,7 +12390,7 @@
       "summaryEn": "Cursor 3 is now available.",
       "lang": "en",
       "publishedAt": "2026-04-02T00:00:00.000Z",
-      "collectedAt": "2026-05-04T19:01:01.169Z",
+      "collectedAt": "2026-05-04T23:00:58.497Z",
       "tags": [
         "changelog",
         "cursor"
@@ -12643,140 +12780,6 @@
         "src": "https://lh3.googleusercontent.com/jcDZxU6wx4tQ5XBOVae89SPyssJfB24ifHGOA_pGrzdRp9SgP6q2vnx5rr6yeyr_nuFh6b3qHDQzqZFDB3ey-inIlXC2aEEXzUhr_Vy_9AuE7dPuSRs=w528-h297-n-nu-rw-lo",
         "origSrc": "https://lh3.googleusercontent.com/jcDZxU6wx4tQ5XBOVae89SPyssJfB24ifHGOA_pGrzdRp9SgP6q2vnx5rr6yeyr_nuFh6b3qHDQzqZFDB3ey-inIlXC2aEEXzUhr_Vy_9AuE7dPuSRs=w528-h297-n-nu-rw-lo",
         "alt": "Lyria 3 Pro: Create longer tracks in more",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "90bed9cdebb09e4c",
-      "source": "google-deepmind",
-      "sourceType": "blog",
-      "url": "https://deepmind.google/blog/measuring-progress-toward-agi-a-cognitive-framework/",
-      "title": "Measuring progress toward AGI: A cognitive framework",
-      "titleJa": "",
-      "titleEn": "Measuring progress toward AGI: A cognitive framework",
-      "summaryJa": "",
-      "summaryEn": "We’re introducing a framework to measure progress toward AGI, and launching a Kaggle hackathon to build the relevant evaluations.",
-      "lang": "en",
-      "publishedAt": "2026-03-17T16:03:47.000Z",
-      "collectedAt": "2026-05-04T20:01:04.568Z",
-      "tags": [
-        "deepmind",
-        "google",
-        "release"
-      ],
-      "category": "gemini",
-      "importance": 1,
-      "image": {
-        "src": "https://lh3.googleusercontent.com/kOpPqSCIuZr9xSaOZM-eZl314VHQ80Nmv-PfUJgzGOaHU0KY08nNAahjcjoNWT4T_xy5DH6TfOCXwhgR6POERmrPoXnpCsN8J2LJPgoM01rO3nAWPg=w528-h297-n-nu-rw-lo",
-        "origSrc": "https://lh3.googleusercontent.com/kOpPqSCIuZr9xSaOZM-eZl314VHQ80Nmv-PfUJgzGOaHU0KY08nNAahjcjoNWT4T_xy5DH6TfOCXwhgR6POERmrPoXnpCsN8J2LJPgoM01rO3nAWPg=w528-h297-n-nu-rw-lo",
-        "alt": "Measuring progress toward AGI: A cognitive framework",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "b0b62d3acb450019",
-      "source": "google-deepmind",
-      "sourceType": "blog",
-      "url": "https://deepmind.google/blog/10-years-of-alphago/",
-      "title": "From games to biology and beyond: 10 years of AlphaGo’s impact",
-      "titleJa": "",
-      "titleEn": "From games to biology and beyond: 10 years of AlphaGo’s impact",
-      "summaryJa": "",
-      "summaryEn": "Ten years since AlphaGo, we explore how it is catalyzing scientific discovery and paving a path to AGI.",
-      "lang": "en",
-      "publishedAt": "2026-03-09T13:52:36.000Z",
-      "collectedAt": "2026-05-04T20:01:04.568Z",
-      "tags": [
-        "deepmind",
-        "google"
-      ],
-      "category": "gemini",
-      "importance": 1,
-      "image": {
-        "src": "https://lh3.googleusercontent.com/kKeug1hkQnNyG362692WROTmFRkJUTgZ3TnYbLZPTIbjvYL9np0UqAGJS0uxRhZLq_LSBOroG486f9RRLv0mKESv1RP-6JfEdI3SMXsEyeVTaXlnOEg=w528-h297-n-nu-rw-lo",
-        "origSrc": "https://lh3.googleusercontent.com/kKeug1hkQnNyG362692WROTmFRkJUTgZ3TnYbLZPTIbjvYL9np0UqAGJS0uxRhZLq_LSBOroG486f9RRLv0mKESv1RP-6JfEdI3SMXsEyeVTaXlnOEg=w528-h297-n-nu-rw-lo",
-        "alt": "From games to biology and beyond: 10 years of AlphaGo’s impact",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "deff79d69a91b064",
-      "source": "hn-ai",
-      "sourceType": "community",
-      "url": "https://github.com/knowsuchagency/mcp2cli",
-      "title": "Show HN: Mcp2cli – One CLI for every API, 96-99% fewer tokens than native MCP",
-      "titleJa": "",
-      "titleEn": "Show HN: Mcp2cli – One CLI for every API, 96-99% fewer tokens than native MCP",
-      "summaryJa": "",
-      "summaryEn": "HN: 146 points, 100 comments · @knowsuchagency · https://news.ycombinator.com/item?id=47305149",
-      "lang": "en",
-      "publishedAt": "2026-03-09T05:18:46.000Z",
-      "collectedAt": "2026-05-04T20:01:04.568Z",
-      "tags": [
-        "community",
-        "hackernews",
-        "mcp-server"
-      ],
-      "category": "research",
-      "importance": 1
-    },
-    {
-      "id": "caca3485c6a60fb9",
-      "source": "google-deepmind",
-      "sourceType": "blog",
-      "url": "https://deepmind.google/blog/gemini-3-1-flash-lite-built-for-intelligence-at-scale/",
-      "title": "Gemini 3.1 Flash-Lite: Built for intelligence at scale",
-      "titleJa": "",
-      "titleEn": "Gemini 3.1 Flash-Lite: Built for intelligence at scale",
-      "summaryJa": "",
-      "summaryEn": "Gemini 3.1 Flash-Lite is our fastest and most cost-efficient Gemini 3 series model yet.",
-      "lang": "en",
-      "publishedAt": "2026-03-03T16:35:55.000Z",
-      "collectedAt": "2026-05-04T20:01:04.568Z",
-      "tags": [
-        "deepmind",
-        "google"
-      ],
-      "category": "gemini",
-      "importance": 1,
-      "image": {
-        "src": "https://lh3.googleusercontent.com/L943nW-XsLGjzWrBOj8x7RhlajW6yigzhd8q45ia33L0uNyClu_XT600bTZevv5c2end6MZ5dFKekGXGMjfxIsYCdlqYlcnyNEmAy4Gd0B6Ovd6Z=w528-h297-n-nu-rw-lo",
-        "origSrc": "https://lh3.googleusercontent.com/L943nW-XsLGjzWrBOj8x7RhlajW6yigzhd8q45ia33L0uNyClu_XT600bTZevv5c2end6MZ5dFKekGXGMjfxIsYCdlqYlcnyNEmAy4Gd0B6Ovd6Z=w528-h297-n-nu-rw-lo",
-        "alt": "Gemini 3.1 Flash-Lite: Built for intelligence at scale",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "5397956e9165df86",
-      "source": "google-deepmind",
-      "sourceType": "blog",
-      "url": "https://deepmind.google/blog/nano-banana-2-combining-pro-capabilities-with-lightning-fast-speed/",
-      "title": "Nano Banana 2: Combining Pro capabilities with lightning-fast speed",
-      "titleJa": "",
-      "titleEn": "Nano Banana 2: Combining Pro capabilities with lightning-fast speed",
-      "summaryJa": "",
-      "summaryEn": "Our latest image generation model offers advanced world knowledge, production ready specs, subject consistency and more, all at Flash speed.",
-      "lang": "en",
-      "publishedAt": "2026-02-26T16:01:50.000Z",
-      "collectedAt": "2026-05-04T20:01:04.568Z",
-      "tags": [
-        "deepmind",
-        "google"
-      ],
-      "category": "gemini",
-      "importance": 1,
-      "image": {
-        "src": "https://lh3.googleusercontent.com/uzAd6nlnEh3lSFyE5Ay-1tvY6xesJLBuPucsK64LfxUwhMk5odcsyH-pAaIKRDVh1PniKOsihrha1qqspCc2f3CgPv61TSgTReKWdUlPiavUkH3R8lM=w528-h297-n-nu-rw-lo",
-        "origSrc": "https://lh3.googleusercontent.com/uzAd6nlnEh3lSFyE5Ay-1tvY6xesJLBuPucsK64LfxUwhMk5odcsyH-pAaIKRDVh1PniKOsihrha1qqspCc2f3CgPv61TSgTReKWdUlPiavUkH3R8lM=w528-h297-n-nu-rw-lo",
-        "alt": "Nano Banana 2: Combining Pro capabilities with lightning-fast speed",
         "width": 0,
         "height": 0,
         "source": "media"

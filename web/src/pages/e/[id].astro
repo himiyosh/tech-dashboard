@@ -294,16 +294,35 @@ const jsonLd = {
         {renderedParagraphs.length > 0 ? (
           <section class="ed-body">
             <div class="ed-body-prose">
-              {renderedParagraphs.map((p, i) => (
-                <Fragment>
-                  <p id={p.id} set:html={p.html} />
-                  {i < renderedParagraphs.length - 1 && i % 3 === 2 && (
-                    <div class="ed-divider" aria-hidden="true">
-                      <span></span><span></span><span></span>
-                    </div>
-                  )}
-                </Fragment>
-              ))}
+              {renderedParagraphs.map((p, i) => {
+                // Insert a pull-quote roughly halfway through, picking the
+                // longest TL;DR point as the highlighted callout.
+                const mid = Math.floor(renderedParagraphs.length / 2);
+                const showQuote =
+                  pointsJa.length > 1 &&
+                  i === mid &&
+                  renderedParagraphs.length >= 4;
+                const quote = pointsJa
+                  .slice()
+                  .sort((a, b) => b.length - a.length)[0] ?? "";
+                return (
+                  <Fragment>
+                    <p id={p.id} set:html={p.html} />
+                    {showQuote && quote && (
+                      <figure class="ed-pullquote" aria-hidden="false">
+                        <span class="ed-pullquote-mark" aria-hidden="true">“</span>
+                        <blockquote>{quote}</blockquote>
+                        <figcaption>{catEmoji} {catName} · 本記事のポイント</figcaption>
+                      </figure>
+                    )}
+                    {i < renderedParagraphs.length - 1 && i % 3 === 2 && !showQuote && (
+                      <div class="ed-divider" aria-hidden="true">
+                        <span></span><span></span><span></span>
+                      </div>
+                    )}
+                  </Fragment>
+                );
+              })}
             </div>
           </section>
         ) : (
@@ -369,18 +388,24 @@ const jsonLd = {
         <nav class="ed-pn" aria-label="同カテゴリの前後の記事">
           {prev ? (
             <a class="ed-pn-card prev" href={`/e/${prev.id}/`} accesskey="ArrowLeft">
-              <span class="ed-pn-dir">← 新しい</span>
-              <span class="ed-pn-title">{titleForLang(prev, "ja") || titleForLang(prev, "en") || prev.title}</span>
-              <span class="ed-pn-time">{relativeTime(prev.publishedAt, now)}</span>
+              <span class="ed-pn-arrow" aria-hidden="true">←</span>
+              <span class="ed-pn-body">
+                <span class="ed-pn-dir">新しい記事</span>
+                <span class="ed-pn-title">{titleForLang(prev, "ja") || titleForLang(prev, "en") || prev.title}</span>
+                <span class="ed-pn-time">{relativeTime(prev.publishedAt, now)}</span>
+              </span>
             </a>
-          ) : <span class="ed-pn-empty"></span>}
+          ) : <span class="ed-pn-empty" aria-hidden="true"></span>}
           {next ? (
             <a class="ed-pn-card next" href={`/e/${next.id}/`} accesskey="ArrowRight">
-              <span class="ed-pn-dir">古い →</span>
-              <span class="ed-pn-title">{titleForLang(next, "ja") || titleForLang(next, "en") || next.title}</span>
-              <span class="ed-pn-time">{relativeTime(next.publishedAt, now)}</span>
+              <span class="ed-pn-body">
+                <span class="ed-pn-dir">古い記事</span>
+                <span class="ed-pn-title">{titleForLang(next, "ja") || titleForLang(next, "en") || next.title}</span>
+                <span class="ed-pn-time">{relativeTime(next.publishedAt, now)}</span>
+              </span>
+              <span class="ed-pn-arrow" aria-hidden="true">→</span>
             </a>
-          ) : <span class="ed-pn-empty"></span>}
+          ) : <span class="ed-pn-empty" aria-hidden="true"></span>}
         </nav>
       )}
 
@@ -396,16 +421,28 @@ const jsonLd = {
             {sameCategory.map((r) => {
               const rTitle = titleForLang(r, "ja") || titleForLang(r, "en") || r.title;
               const rSum = summaryForLang(r, "ja") || summaryForLang(r, "en");
+              const rMeta = CATEGORY_META.find((c) => c.slug === r.category);
+              const rColor = rMeta?.color ?? catColor;
               return (
-                <a class="ed-rel-card" href={`/e/${r.id}/`} style={`--cat-color:${catColor}`}>
-                  <div class="ed-rel-meta">
-                    <span class="ed-rel-type">{r.sourceType}</span>
-                    {r.importance === 3 && <span class="ed-rel-hot">🔥</span>}
-                    <span class="ed-rel-time">{relativeTime(r.publishedAt, now)}</span>
+                <a class="ed-rel-card" href={`/e/${r.id}/`} style={`--cat-color:${rColor}`}>
+                  <div class="ed-rel-thumb">
+                    {r.image?.src ? (
+                      <img src={r.image.src} alt={r.image.alt || rTitle} loading="lazy" decoding="async" onerror="this.parentElement.classList.add('failed')" />
+                    ) : null}
+                    <div class="ed-rel-thumb-fallback">
+                      <CategoryThumb category={r.category} seed={r.id} height="100%" />
+                    </div>
+                    {r.importance === 3 && <span class="ed-rel-thumb-hot">🔥 HOT</span>}
                   </div>
-                  <div class="ed-rel-title">{rTitle}</div>
-                  {rSum && <div class="ed-rel-sum">{rSum}</div>}
-                  <div class="ed-rel-src">{r.source}</div>
+                  <div class="ed-rel-cardbody">
+                    <div class="ed-rel-meta">
+                      <span class="ed-rel-type">{r.sourceType}</span>
+                      <span class="ed-rel-time">{relativeTime(r.publishedAt, now)}</span>
+                    </div>
+                    <div class="ed-rel-title">{rTitle}</div>
+                    {rSum && <div class="ed-rel-sum">{rSum}</div>}
+                    <div class="ed-rel-src">{r.source}</div>
+                  </div>
                 </a>
               );
             })}
@@ -767,6 +804,42 @@ const jsonLd = {
     width: 4px; height: 4px; border-radius: 50%;
     background: var(--cat-color);
   }
+  .ed-pullquote {
+    margin: 32px 0;
+    padding: 22px 28px 18px;
+    position: relative;
+    border-radius: 14px;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--cat-color) 12%, transparent), color-mix(in srgb, var(--cat-color) 3%, transparent)),
+      var(--bg-2);
+    border: 1px solid color-mix(in srgb, var(--cat-color) 28%, var(--border));
+    border-left: 4px solid var(--cat-color);
+  }
+  .ed-pullquote-mark {
+    position: absolute;
+    top: -8px;
+    left: 16px;
+    font-size: 64px;
+    line-height: 1;
+    font-family: Georgia, "Times New Roman", serif;
+    color: var(--cat-color);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .ed-pullquote blockquote {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.75;
+    color: var(--text);
+    font-weight: 600;
+    font-feature-settings: "palt" 1;
+  }
+  .ed-pullquote figcaption {
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: var(--muted-2);
+    letter-spacing: 0.04em;
+  }
   .ed-body-pending {
     padding: 14px 16px; border: 1px dashed var(--border);
     border-radius: 10px; background: var(--bg-2);
@@ -839,26 +912,70 @@ const jsonLd = {
 
   /* PREV/NEXT */
   .ed-pn {
-    margin: 28px 4px 0;
+    margin: 32px 4px 0;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 14px;
   }
   .ed-pn-card {
-    display: flex; flex-direction: column; gap: 4px;
-    padding: 14px 16px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; text-decoration: none; color: var(--text);
-    transition: all 0.12s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--cat-color) 7%, var(--surface)), var(--surface));
+    border: 1px solid color-mix(in srgb, var(--cat-color) 22%, var(--border));
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.02), 0 6px 16px -10px rgba(0,0,0,0.5);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    position: relative;
+    overflow: hidden;
   }
-  .ed-pn-card:hover { border-color: color-mix(in srgb, var(--cat-color) 45%, var(--border)); transform: translateY(-1px); }
-  .ed-pn-card.next { text-align: right; }
-  .ed-pn-dir { font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.06em; }
+  .ed-pn-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at var(--gx, 50%) -20%, color-mix(in srgb, var(--cat-color) 18%, transparent), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+  }
+  .ed-pn-card:hover {
+    border-color: color-mix(in srgb, var(--cat-color) 55%, var(--border));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 0 rgba(255,255,255,0.03), 0 14px 28px -14px color-mix(in srgb, var(--cat-color) 50%, rgba(0,0,0,0.5));
+  }
+  .ed-pn-card:hover::after { opacity: 1; }
+  .ed-pn-card.next { flex-direction: row; text-align: right; }
+  .ed-pn-card.prev { --gx: 16%; }
+  .ed-pn-card.next { --gx: 84%; }
+  .ed-pn-arrow {
+    flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--cat-color) 18%, var(--bg-2));
+    border: 1px solid color-mix(in srgb, var(--cat-color) 35%, var(--border));
+    color: var(--cat-color);
+    font-size: 16px; font-weight: 700;
+    transition: transform 0.18s ease, background 0.18s ease;
+  }
+  .ed-pn-card:hover .ed-pn-arrow {
+    background: var(--cat-color); color: #0c0c0a;
+  }
+  .ed-pn-card.prev:hover .ed-pn-arrow { transform: translateX(-3px); }
+  .ed-pn-card.next:hover .ed-pn-arrow { transform: translateX(3px); }
+  .ed-pn-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+  .ed-pn-dir {
+    font-size: 10.5px; color: var(--cat-color);
+    text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;
+  }
   .ed-pn-title {
-    font-size: 13.5px; font-weight: 600; line-height: 1.45;
+    font-size: 14px; font-weight: 600; line-height: 1.45; color: var(--text);
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .ed-pn-time { font-size: 11px; color: var(--muted); }
+  .ed-pn-time { font-size: 11px; color: var(--muted-2); }
   .ed-pn-empty { display: block; }
 
   /* RELATED */
@@ -871,26 +988,81 @@ const jsonLd = {
   .ed-rel-h-emoji { font-size: 18px; }
   .ed-rel-h-more { margin-left: auto; font-size: 12px; color: var(--muted); text-decoration: none; }
   .ed-rel-h-more:hover { color: var(--accent); }
-  .ed-rel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .ed-rel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
   .ed-rel-card {
-    display: flex; flex-direction: column; gap: 6px;
-    padding: 14px 16px;
+    display: flex; flex-direction: column;
     background: var(--surface); border: 1px solid var(--border);
-    border-left: 3px solid var(--cat-color); border-radius: 10px;
-    text-decoration: none; color: var(--text); transition: all 0.12s;
+    border-radius: 12px;
+    text-decoration: none; color: var(--text);
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    overflow: hidden;
+    position: relative;
+  }
+  .ed-rel-card::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--cat-color);
+    z-index: 1;
   }
   .ed-rel-card:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--cat-color) 45%, var(--border));
-    background: color-mix(in srgb, var(--cat-color) 4%, var(--surface));
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--cat-color) 55%, var(--border));
+    box-shadow: 0 14px 28px -16px color-mix(in srgb, var(--cat-color) 50%, rgba(0,0,0,0.5));
+  }
+  .ed-rel-thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #1a1917;
+    border-bottom: 1px solid var(--border);
+  }
+  .ed-rel-thumb img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+  .ed-rel-card:hover .ed-rel-thumb img { transform: scale(1.05); }
+  .ed-rel-thumb-fallback {
+    position: absolute; inset: 0;
+    display: none;
+  }
+  .ed-rel-thumb:not(:has(img)) .ed-rel-thumb-fallback,
+  .ed-rel-thumb.failed .ed-rel-thumb-fallback {
+    display: block;
+  }
+  .ed-rel-thumb :global(.cat-thumb) { height: 100%; border: none; }
+  .ed-rel-thumb-hot {
+    position: absolute; left: 8px; top: 8px;
+    padding: 3px 8px; border-radius: 999px;
+    background: rgba(20,18,15,0.78);
+    backdrop-filter: blur(6px);
+    color: #fbbf24;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+    border: 1px solid rgba(245,158,11,0.45);
+    z-index: 2;
+  }
+  .ed-rel-cardbody {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 12px 14px 14px;
+    flex: 1;
+    min-width: 0;
   }
   .ed-rel-meta { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--muted-2); }
-  .ed-rel-type { text-transform: uppercase; letter-spacing: 0.05em; padding: 1px 6px; border: 1px solid var(--border); border-radius: 3px; font-size: 10px; }
-  .ed-rel-hot { color: #fbbf24; }
+  .ed-rel-type {
+    text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 1px 6px; border: 1px solid var(--border);
+    border-radius: 3px; font-size: 10px;
+    color: var(--cat-color);
+    border-color: color-mix(in srgb, var(--cat-color) 40%, var(--border));
+  }
   .ed-rel-time { margin-left: auto; }
-  .ed-rel-title { font-size: 13.5px; font-weight: 600; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .ed-rel-sum { font-size: 12px; color: var(--muted); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .ed-rel-src { font-size: 10.5px; color: var(--muted-2); }
+  .ed-rel-title { font-size: 14px; font-weight: 600; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ed-rel-sum { font-size: 12px; color: var(--muted); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ed-rel-src { font-size: 10.5px; color: var(--muted-2); margin-top: auto; }
 
   /* RIGHT RAIL */
   .rail-title {
@@ -980,6 +1152,8 @@ const jsonLd = {
     .ed-title { font-size: 22px; }
     .ed-tldr-list li { font-size: 14px; line-height: 1.8; }
     .ed-body-prose p { font-size: 14.5px; line-height: 1.95; margin-bottom: 18px; }
+    .ed-pullquote { padding: 18px 18px 14px; }
+    .ed-pullquote blockquote { font-size: 16px; line-height: 1.7; }
     .ed-rel-grid { grid-template-columns: 1fr; }
     .ed-pn { grid-template-columns: 1fr; }
     .ed-fab { right: 14px; bottom: 14px; }

@@ -437,3 +437,54 @@ export function relatedEntries(
   return ALL_ENTRIES.filter((x) => x.id !== e.id && x.category === e.category).slice(0, n);
 }
 
+/** Newest entries from the same source, excluding self. */
+export function entriesBySource(
+  e: NormalizedEntry,
+  n = 5,
+): NormalizedEntry[] {
+  return ALL_ENTRIES.filter((x) => x.id !== e.id && x.source === e.source).slice(0, n);
+}
+
+/** Newest entries sharing any tag with `e`, excluding self and same-category dupes. */
+export function entriesByTag(
+  e: NormalizedEntry,
+  n = 5,
+): NormalizedEntry[] {
+  if (e.tags.length === 0) return [];
+  const tagset = new Set(e.tags.map((t) => t.toLowerCase()));
+  return ALL_ENTRIES.filter((x) => {
+    if (x.id === e.id) return false;
+    return x.tags.some((t) => tagset.has(t.toLowerCase()));
+  }).slice(0, n);
+}
+
+/** Previous and next entries within the same category (newest = index 0). */
+export function adjacentInCategory(
+  e: NormalizedEntry,
+): { prev?: NormalizedEntry; next?: NormalizedEntry } {
+  const cat = ALL_ENTRIES.filter((x) => x.category === e.category);
+  const i = cat.findIndex((x) => x.id === e.id);
+  if (i < 0) return {};
+  return { prev: cat[i - 1], next: cat[i + 1] };
+}
+
+/** Category-relative importance percentile (0-100, higher = more important). */
+export function importancePercentile(e: NormalizedEntry): number {
+  const cat = ALL_ENTRIES.filter((x) => x.category === e.category);
+  if (cat.length === 0) return 50;
+  const lower = cat.filter((x) => x.importance < e.importance).length;
+  return Math.round((lower / cat.length) * 100);
+}
+
+/** Average importance over the last N entries from this source. */
+export function sourceAvgImportance(
+  e: NormalizedEntry,
+  n = 30,
+): number {
+  const recent = ALL_ENTRIES.filter((x) => x.source === e.source).slice(0, n);
+  if (recent.length === 0) return e.importance;
+  return Math.round(
+    (recent.reduce((s, x) => s + x.importance, 0) / recent.length) * 10,
+  ) / 10;
+}
+

@@ -1,11 +1,18 @@
 ---
 import Portal from "../../layouts/Portal.astro";
 import Sidebar from "../../components/Sidebar.astro";
+import CategoryThumb from "../../components/CategoryThumb.astro";
+import { SITE_URL } from "../../lib/site.ts";
 import {
   ALL_ENTRIES,
   CATEGORY_META,
+  adjacentInCategory,
+  entriesBySource,
+  entriesByTag,
+  importancePercentile,
   relatedEntries,
   relativeTime,
+  sourceAvgImportance,
   summaryForLang,
   summaryForLangWithFallback,
   titleForLang,
@@ -13,7 +20,6 @@ import {
   type NormalizedEntry,
 } from "../../lib/data.ts";
 import { SOURCE_META } from "../../lib/source-meta.ts";
-import { buildArticleContext } from "../../lib/article-context.ts";
 
 export function getStaticPaths() {
   return ALL_ENTRIES.map((e) => ({
@@ -22,14 +28,12 @@ export function getStaticPaths() {
   }));
 }
 
-interface Props {
-  entry: NormalizedEntry;
-}
-
+interface Props { entry: NormalizedEntry; }
 const { entry } = Astro.props as Props;
 
 const titleJa = titleForLang(entry, "ja");
 const titleEn = titleForLang(entry, "en");
+const titleDisplay = titleJa || titleEn || entry.title;
 const summaryJa = summaryForLang(entry, "ja");
 const summaryEn = summaryForLangWithFallback(entry, "en");
 
@@ -41,356 +45,434 @@ const catEmoji = catMeta?.emoji ?? "\u{1F4C4}";
 const srcMeta = SOURCE_META.find((s) => s.id === entry.source);
 const srcDisplay = srcMeta?.displayName ?? entry.source;
 const srcTier = srcMeta?.tier;
+const srcAvgImp = sourceAvgImportance(entry, 30);
 
 function host(url: string): string {
-  try {
-    return new URL(url).host.replace(/^www\./, "");
-  } catch {
-    return "";
-  }
+  try { return new URL(url).host.replace(/^www\./, ""); } catch { return ""; }
 }
-
 function faviconUrl(url: string, size = 32): string {
   const h = host(url);
-  if (!h) return "";
-  return `https://www.google.com/s2/favicons?sz=${size}&domain=${h}`;
+  return h ? `https://www.google.com/s2/favicons?sz=${size}&domain=${h}` : "";
 }
 
 function splitJaPoints(s: string): string[] {
   if (!s) return [];
-  return s
-    .split(/(?<=[。！？])\s*/)
-    .map((x) => x.trim())
-    .filter((x) => x.length > 0);
+  return s.split(/(?<=[。！？])\s*/).map((x) => x.trim()).filter(Boolean);
 }
 function splitEnPoints(s: string): string[] {
   if (!s) return [];
-  return s
-    .split(/(?<=[.!?])\s+/)
-    .map((x) => x.trim())
-    .filter((x) => x.length > 0);
+  return s.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter(Boolean);
 }
-
 const pointsJa = splitJaPoints(summaryJa);
 const pointsEn = splitEnPoints(summaryEn.text);
 
 const sourceTypeLabel: Record<NormalizedEntry["sourceType"], string> = {
-  release: "リリース",
-  changelog: "Changelog",
-  paper: "論文",
-  blog: "ブログ",
-  community: "コミュニティ",
+  release: "リリース", changelog: "Changelog", paper: "論文",
+  blog: "ブログ", community: "コミュニティ",
 };
-
 const importanceLabel: Record<1 | 2 | 3, string> = {
-  3: "重要",
-  2: "通常",
-  1: "情報",
+  3: "重要", 2: "通常", 1: "情報",
 };
-
-const halfLifeLabel: Record<string, string> = {
-  news: "短命 (ニュース)",
-  tutorial: "中期 (チュートリアル)",
-  architecture: "長期 (アーキテクチャ)",
-  fundamental: "永続 (基礎知識)",
+const halfLifeLabel: Record<string, { label: string; emoji: string; color: string }> = {
+  news: { label: "短命 (ニュース)", emoji: "⏱️", color: "#f87171" },
+  tutorial: { label: "中期 (チュートリアル)", emoji: "📘", color: "#fbbf24" },
+  architecture: { label: "長期 (アーキテクチャ)", emoji: "🏛️", color: "#60a5fa" },
+  fundamental: { label: "永続 (基礎知識)", emoji: "🌱", color: "#4ade80" },
 };
 
 const now = new Date();
 const rel = relativeTime(entry.publishedAt, now);
-const related = relatedEntries(entry, 6);
+const sameSource = entriesBySource(entry, 5);
+const sameTag = entriesByTag(entry, 5);
+const sameCategory = relatedEntries(entry, 6);
 const tags = trendingTags(12);
+const { prev, next } = adjacentInCategory(entry);
+const impPct = importancePercentile(entry);
 
-const ctx = buildArticleContext(entry, catName, entry.category, srcDisplay, host(entry.url));
+const collectedAge = (Date.now() - new Date(entry.collectedAt).getTime()) / 86_400_000;
+const stale = collectedAge > 14;
 
-// Build a short auto context paragraph from tags / category / source.
-const tagStr = entry.tags.slice(0, 5).map((t) => `「${t}」`).join("、");
-const contextJa = [
-  `本記事は${catName}カテゴリの${sourceTypeLabel[entry.sourceType] ?? entry.sourceType}で、${srcDisplay} (${host(entry.url)}) が公開した情報です。`,
-  tagStr ? `主要トピックは ${tagStr} で、AI コーディング・開発者ツール領域の最新動向として収集されました。` : "",
-  entry.importance === 3
-    ? "TECH Dashboard では本記事を「重要 (HOT)」としてタグ付けしており、業界全体に影響しうる更新と判定しています。"
-    : entry.importance === 2
-      ? "TECH Dashboard では本記事を「通常」レベルの更新として扱っています。"
-      : "AI コーディング領域の補足情報として収集された記事です。",
-].filter(Boolean).join(" ");
+const bodyChars = (entry.bodyJa ?? "").length;
+const readMinutes = bodyChars > 0 ? Math.max(1, Math.round(bodyChars / 500)) : 0;
+
+// Split body and build TOC headings (use first ~24 chars of each paragraph as label).
+const paragraphs: string[] = entry.bodyJa
+  ? entry.bodyJa.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
+  : [];
+
+function tocLabel(s: string): string {
+  const trimmed = s.replace(/\s+/g, " ");
+  const m = trimmed.match(/^[^。．.!?！？]{1,40}[。．.!?！？]/);
+  const label = (m?.[0] ?? trimmed).slice(0, 30);
+  return label.length < trimmed.length ? label.replace(/[。．.!?！？]$/, "") + "…" : label;
+}
+
+// Highlight tag mentions in body — server-side regex replace.
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] || c,
+  );
+}
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function highlightTags(html: string, tagList: string[]): string {
+  if (tagList.length === 0) return html;
+  // Sort by length desc to avoid prefix collisions.
+  const sorted = [...new Set(tagList.map((t) => t.trim()).filter(Boolean))]
+    .sort((a, b) => b.length - a.length);
+  let out = html;
+  for (const tag of sorted) {
+    if (tag.length < 2) continue;
+    const re = new RegExp(`\\b${escapeRegex(tag)}\\b`, "gi");
+    const href = `/t/${encodeURIComponent(tag.toLowerCase())}`;
+    out = out.replace(re, (match) => `<a class="kw" href="${href}">${escapeHtml(match)}</a>`);
+  }
+  return out;
+}
+
+const renderedParagraphs = paragraphs.map((p, i) => ({
+  id: `p-${i + 1}`,
+  label: tocLabel(p),
+  html: highlightTags(escapeHtml(p), entry.tags),
+}));
 
 const breadcrumb = [
   { label: "Home", href: "/" },
   { label: catName, href: `/c/${entry.category}` },
-  { label: titleJa || titleEn || entry.title },
+  { label: titleDisplay },
 ];
-
-const pageTitle = `${titleJa || titleEn || entry.title} — TECH Dashboard`;
+const pageTitle = `${titleDisplay} — TECH Dashboard`;
 const pageDesc = (summaryJa || summaryEn.text || entry.title).slice(0, 160);
+const ogImage = entry.image?.src ?? "";
+const canonicalUrl = `${SITE_URL}/e/${entry.id}/`;
 
 function fmtDate(iso: string): string {
   try {
     return new Intl.DateTimeFormat("ja-JP", {
-      timeZone: "Asia/Tokyo",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
+      timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit",
+      day: "2-digit", hour: "2-digit", minute: "2-digit",
     }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
+  } catch { return iso; }
 }
+
+const halfLifeMeta = entry.halfLife ? halfLifeLabel[entry.halfLife] : null;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "NewsArticle",
+  headline: titleDisplay,
+  description: pageDesc,
+  url: canonicalUrl,
+  datePublished: entry.publishedAt,
+  dateModified: entry.collectedAt,
+  inLanguage: entry.lang === "ja" ? "ja-JP" : "en",
+  image: ogImage || undefined,
+  author: { "@type": "Organization", name: srcDisplay, url: entry.url },
+  publisher: { "@type": "Organization", name: "TECH Dashboard", url: SITE_URL },
+  mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
+  articleSection: catName,
+  keywords: entry.tags.join(", "),
+};
 ---
 
 <Portal title={pageTitle} description={pageDesc} pageKey="timeline" breadcrumb={breadcrumb}>
+  <Fragment slot="head">
+    <link rel="canonical" href={canonicalUrl} />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content={titleDisplay} />
+    <meta property="og:description" content={pageDesc} />
+    <meta property="og:url" content={canonicalUrl} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={titleDisplay} />
+    <meta name="twitter:description" content={pageDesc} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
+    <meta property="article:section" content={catName} />
+    <meta property="article:published_time" content={entry.publishedAt} />
+    <meta property="article:modified_time" content={entry.collectedAt} />
+    {entry.tags.map((t) => <meta property="article:tag" content={t} />)}
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </Fragment>
+
+  {/* Reading progress bar */}
+  <div class="ed-progress" id="ed-progress" style={`--cat-color:${catColor}`}>
+    <div class="ed-progress-bar"></div>
+  </div>
+
   <div class="layout">
     <Sidebar active={entry.category} />
 
-    <main class="entry-main">
-    <article class="entry-detail" data-pagefind-body style={`--cat-color:${catColor}`}>
-      <header class="ed-head">
-        <div class="ed-meta">
-          <a class="ed-cat" href={`/c/${entry.category}`}>
-            <span aria-hidden="true">{catEmoji}</span>
-            <span>{catName}</span>
-          </a>
-          <span class="ed-type">{sourceTypeLabel[entry.sourceType] ?? entry.sourceType}</span>
-          {entry.importance === 3 && <span class="ed-hot">🔥 HOT</span>}
-          <span class="ed-spacer"></span>
-          <span class="ed-time mono">{rel}</span>
-        </div>
-        <h1 class="ed-title">
-          <span class="i18n-ja">{titleJa || titleEn || entry.title}</span>
-          <span class="i18n-en" lang="en">{titleEn || titleJa || entry.title}</span>
-        </h1>
-        <div class="ed-src">
-          <img
-            class="ed-favicon"
-            src={faviconUrl(entry.url)}
-            alt=""
-            width="16"
-            height="16"
-            loading="lazy"
-            decoding="async"
-            referrerpolicy="no-referrer"
-            onerror="this.style.display='none'"
-          />
-          <span class="ed-src-name">{srcDisplay}</span>
-          <span class="ed-dot">·</span>
-          <span class="ed-host">{host(entry.url)}</span>
-          <span class="ed-dot">·</span>
-          <span class="ed-pub mono">{fmtDate(entry.publishedAt)}</span>
-        </div>
-      </header>
-
-      {entry.image?.src && (
-        <div class="ed-hero">
-          <img
-            src={entry.image.src}
-            alt={entry.image.alt || titleJa || entry.title}
-            loading="eager"
-            decoding="async"
-          />
-        </div>
-      )}
-
-      <section class="ed-summary">
-        <div class="ed-summary-head">
-          <span class="ai-mark">AI 要約</span>
-          <span class="ed-summary-note i18n-ja">公式情報をもとに自動生成。詳細は元記事をご確認ください。</span>
-          <span class="ed-summary-note i18n-en" lang="en">Auto-generated. See the original for full details.</span>
-        </div>
-
-        <div class="ed-points-label i18n-ja">主なポイント</div>
-        <div class="ed-points-label i18n-en" lang="en">Key points</div>
-
-        {pointsJa.length > 1 && (
-          <ul class="ed-points i18n-ja">
-            {pointsJa.map((p) => <li>{p}</li>)}
-          </ul>
-        )}
-        {pointsJa.length === 1 && (
-          <p class="ed-summary-body i18n-ja">{pointsJa[0]}</p>
-        )}
-
-        {pointsEn.length > 1 && (
-          <ul class="ed-points i18n-en" lang={summaryEn.isFallback ? "ja" : "en"}>
-            {summaryEn.isFallback && (
-              <li class="lang-fallback"><span class="lang-badge">[ja]</span>English summary not available; showing JA.</li>
-            )}
-            {pointsEn.map((p) => <li>{p}</li>)}
-          </ul>
-        )}
-        {pointsEn.length === 1 && (
-          <p class="ed-summary-body i18n-en" lang={summaryEn.isFallback ? "ja" : "en"}>
-            {summaryEn.isFallback && <span class="lang-badge">[ja]</span>}
-            {pointsEn[0]}
-          </p>
-        )}
-
-        {!summaryJa && !summaryEn.text && (
-          <p class="ed-summary-empty">
-            <span class="i18n-ja">この記事の要約はまだ生成されていません。</span>
-            <span class="i18n-en" lang="en">No summary has been generated yet.</span>
-          </p>
-        )}
-      </section>
-
-      <section class="ed-article">
-        <h2 class="ed-section-title">
-          <span class="i18n-ja">本文</span>
-          <span class="i18n-en" lang="en">Article</span>
-        </h2>
-        {entry.bodyJa ? (
-          <div class="ed-article-prose i18n-ja">
-            {entry.bodyJa.split(/\n{2,}/).map((para) => (
-              <p class="ed-article-body">{para}</p>
-            ))}
+    <main class="entry-main" id="entry-main">
+      <article class="entry-detail" data-pagefind-body style={`--cat-color:${catColor}`}>
+        {/* HERO */}
+        <div class="ed-hero" id="ed-hero">
+          {entry.image?.src ? (
+            <>
+              <div class="ed-hero-skeleton"></div>
+              <img
+                class="ed-hero-img"
+                src={entry.image.src}
+                alt={entry.image.alt || titleDisplay}
+                width={entry.image.width || 1200}
+                height={entry.image.height || 630}
+                loading="eager"
+                decoding="async"
+                onload="this.parentElement.classList.add('ed-hero-loaded')"
+                onerror="this.parentElement.classList.add('ed-hero-failed')"
+              />
+              <div class="ed-hero-fallback">
+                <CategoryThumb category={entry.category} seed={entry.id} height="320px" />
+              </div>
+            </>
+          ) : (
+            <CategoryThumb category={entry.category} seed={entry.id} height="320px" />
+          )}
+          <div class="ed-hero-overlay">
+            <a class="ed-cat-pill" href={`/c/${entry.category}`}>
+              <span aria-hidden="true">{catEmoji}</span>
+              <span>{catName}</span>
+            </a>
+            {entry.importance === 3 && <span class="ed-hot-pill">🔥 HOT</span>}
+            {stale && <span class="ed-stale-pill" title={`Collected ${Math.round(collectedAge)} days ago`}>⚠ 古い情報の可能性</span>}
           </div>
-        ) : (
-          <div class="ed-article-prose i18n-ja">
-            <p class="ed-article-lead">{ctx.lead}</p>
-            <h3 class="ed-article-h3">背景</h3>
-            <p class="ed-article-body">{ctx.background}</p>
-            {ctx.related && (
-              <>
-                <h3 class="ed-article-h3">関連知見</h3>
-                <p class="ed-article-body">{ctx.related}</p>
-              </>
+        </div>
+
+        {/* TITLE */}
+        <header class="ed-head">
+          <h1 class="ed-title">
+            <span class="i18n-ja">{titleJa || titleEn || entry.title}</span>
+            <span class="i18n-en" lang="en">{titleEn || titleJa || entry.title}</span>
+          </h1>
+          <div class="ed-byline">
+            {faviconUrl(entry.url) && (
+              <img class="ed-favicon" src={faviconUrl(entry.url)} alt="" width="18" height="18" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'" />
             )}
-            <div class="ed-article-note">
-              <div class="ed-article-note-title">本サイトでの位置づけ</div>
-              <p class="ed-article-note-text">{ctx.takeaway}</p>
+            <span class="ed-src-name">{srcDisplay}</span>
+            <span class="sep">·</span>
+            <span class="ed-host">{host(entry.url)}</span>
+            <span class="sep">·</span>
+            <span class="mono">{fmtDate(entry.publishedAt)}</span>
+            <span class="sep">·</span>
+            <span class="ed-rel">{rel}</span>
+            {readMinutes > 0 && (<>
+              <span class="sep">·</span>
+              <span class="ed-read">📖 {readMinutes} min</span>
+            </>)}
+          </div>
+        </header>
+
+        {/* TL;DR */}
+        {(pointsJa.length > 0 || summaryJa) && (
+          <section class="ed-tldr">
+            <div class="ed-tldr-label">
+              <span class="ai-badge">AI</span>
+              <span class="ed-tldr-title">3 行サマリ</span>
+              <button class="ed-share-btn" type="button" id="ed-share-btn" data-title={titleDisplay} data-url={canonicalUrl}>
+                <span aria-hidden="true">🔗</span> シェア
+              </button>
             </div>
-            <p class="ed-article-pending">
-              ※ この記事の本文 (掻い摘み + 関連知見) は近日中に AI が生成して差し替わります。
-            </p>
-          </div>
+            {pointsJa.length > 1 ? (
+              <ul class="ed-tldr-list">
+                {pointsJa.slice(0, 4).map((p) => <li>{p}</li>)}
+              </ul>
+            ) : (
+              <p class="ed-tldr-single">{summaryJa}</p>
+            )}
+            {pointsEn.length > 0 && !summaryEn.isFallback && (
+              <details class="ed-tldr-en">
+                <summary>English summary</summary>
+                <ul lang="en">
+                  {pointsEn.slice(0, 4).map((p) => <li>{p}</li>)}
+                </ul>
+              </details>
+            )}
+          </section>
         )}
-      </section>
 
-      <section class="ed-facts">
-        <ul class="ed-facts-inline">
-          <li>
-            <span class="ed-fk">Source</span>
-            <span class="ed-fv">
-              {srcDisplay}
-              {srcTier && <span class="ed-pill tier">T{srcTier}</span>}
-            </span>
-          </li>
-          <li>
-            <span class="ed-fk">Type</span>
-            <span class="ed-fv">{sourceTypeLabel[entry.sourceType] ?? entry.sourceType}</span>
-          </li>
-          <li>
-            <span class="ed-fk">Importance</span>
-            <span class="ed-fv">
-              <span class={`ed-pill imp-${entry.importance}`}>★ {importanceLabel[entry.importance]}</span>
-            </span>
-          </li>
-          <li>
-            <span class="ed-fk">Published</span>
-            <span class="ed-fv mono">{fmtDate(entry.publishedAt)}</span>
-          </li>
-          <li>
-            <span class="ed-fk">Collected</span>
-            <span class="ed-fv mono">{fmtDate(entry.collectedAt)}</span>
-          </li>
-          <li>
-            <span class="ed-fk">Lang</span>
-            <span class="ed-fv">{entry.lang === "ja" ? "JA" : "EN"}</span>
-          </li>
-          {entry.halfLife && (
-            <li>
-              <span class="ed-fk">Half-life</span>
-              <span class="ed-fv">{halfLifeLabel[entry.halfLife] ?? entry.halfLife}</span>
-            </li>
-          )}
-          {entry.archiveTier && (
-            <li>
-              <span class="ed-fk">Archive</span>
-              <span class="ed-fv">{entry.archiveTier}</span>
-            </li>
-          )}
-        </ul>
-      </section>
+        {/* BODY */}
+        {renderedParagraphs.length > 0 ? (
+          <section class="ed-body">
+            <div class="ed-body-prose">
+              {renderedParagraphs.map((p, i) => (
+                <Fragment>
+                  <p id={p.id} set:html={p.html} />
+                  {i < renderedParagraphs.length - 1 && i % 3 === 2 && (
+                    <div class="ed-divider" aria-hidden="true">
+                      <span></span><span></span><span></span>
+                    </div>
+                  )}
+                </Fragment>
+              ))}
+            </div>
+          </section>
+        ) : (
+          <section class="ed-body">
+            <p class="ed-body-pending">
+              ※ この記事の本文は近日中に AI が生成して差し替わります。現時点では上記サマリをご参照ください。
+            </p>
+          </section>
+        )}
 
-      {entry.tags.length > 0 && (
-        <section class="ed-tag-block">
-          <h2 class="ed-section-title">
-            <span class="i18n-ja">タグ</span>
-            <span class="i18n-en" lang="en">Tags</span>
-          </h2>
-          <div class="ed-tags">
+        {/* TAGS */}
+        {entry.tags.length > 0 && (
+          <div class="ed-tag-bar">
             {entry.tags.map((t) => (
               <a class="ed-tag" href={`/t/${t}`}>#{t}</a>
             ))}
           </div>
-        </section>
+        )}
+
+        {/* META STRIP */}
+        <ul class="ed-meta-strip">
+          <li><span class="k">Source</span><span class="v">{srcDisplay}{srcTier && <span class="pill">T{srcTier}</span>}</span></li>
+          <li><span class="k">Source Avg ★</span><span class="v"><span class="mini-bar" style={`--w:${(srcAvgImp / 3) * 100}%`}></span> {srcAvgImp.toFixed(1)}</span></li>
+          <li><span class="k">Type</span><span class="v">{sourceTypeLabel[entry.sourceType] ?? entry.sourceType}</span></li>
+          <li>
+            <span class="k">Importance</span>
+            <span class="v">
+              <span class={`pill imp-${entry.importance}`}>★ {importanceLabel[entry.importance]}</span>
+              <span class="muted-sm">(top {100 - impPct}% in {catName})</span>
+            </span>
+          </li>
+          {halfLifeMeta && (
+            <li>
+              <span class="k">Half-life</span>
+              <span class="v" style={`color:${halfLifeMeta.color}`}>
+                {halfLifeMeta.emoji} {halfLifeMeta.label}
+              </span>
+            </li>
+          )}
+          <li><span class="k">Lang</span><span class="v">{entry.lang === "ja" ? "JA" : "EN"}</span></li>
+          <li><span class="k">Collected</span><span class="v mono">{fmtDate(entry.collectedAt)}</span></li>
+        </ul>
+
+        {/* CTA */}
+        <div class="ed-cta-row">
+          <a class="ed-cta" href={entry.url} target="_blank" rel="noopener nofollow">
+            <span>元記事を読む</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+          <span class="ed-cta-host">
+            {faviconUrl(entry.url) && <img src={faviconUrl(entry.url)} alt="" width="14" height="14" loading="lazy" onerror="this.style.display='none'" />}
+            {host(entry.url)}
+          </span>
+        </div>
+
+        <p class="ed-disclaim">
+          本ページの本文・要約は AI による自動生成です。正確性は元記事 ({host(entry.url)}) をご確認ください。
+        </p>
+      </article>
+
+      {/* PREV / NEXT */}
+      {(prev || next) && (
+        <nav class="ed-pn" aria-label="同カテゴリの前後の記事">
+          {prev ? (
+            <a class="ed-pn-card prev" href={`/e/${prev.id}/`} accesskey="ArrowLeft">
+              <span class="ed-pn-dir">← 新しい</span>
+              <span class="ed-pn-title">{titleForLang(prev, "ja") || titleForLang(prev, "en") || prev.title}</span>
+              <span class="ed-pn-time">{relativeTime(prev.publishedAt, now)}</span>
+            </a>
+          ) : <span class="ed-pn-empty"></span>}
+          {next ? (
+            <a class="ed-pn-card next" href={`/e/${next.id}/`} accesskey="ArrowRight">
+              <span class="ed-pn-dir">古い →</span>
+              <span class="ed-pn-title">{titleForLang(next, "ja") || titleForLang(next, "en") || next.title}</span>
+              <span class="ed-pn-time">{relativeTime(next.publishedAt, now)}</span>
+            </a>
+          ) : <span class="ed-pn-empty"></span>}
+        </nav>
       )}
 
-      <div class="ed-actions">
-        <a class="ed-cta" href={entry.url} target="_blank" rel="noopener nofollow">
-          <span class="i18n-ja">元記事を読む</span>
-          <span class="i18n-en" lang="en">Read original</span>
-          <span aria-hidden="true">↗</span>
-        </a>
-        <span class="ed-actions-host">
-          <img
-            class="ed-favicon"
-            src={faviconUrl(entry.url)}
-            alt=""
-            width="14"
-            height="14"
-            loading="lazy"
-            decoding="async"
-            referrerpolicy="no-referrer"
-            onerror="this.style.display='none'"
-          />
-          {host(entry.url)}
-        </span>
-      </div>
-
-      <p class="ed-disclaimer">
-        <span class="i18n-ja">本ページの要約は AI が自動生成したものです。内容の正確性は元記事をご参照ください。本サイトは元記事の著作権を保有しません。</span>
-        <span class="i18n-en" lang="en">This summary is AI-generated. Please consult the original article for accuracy. We do not claim copyright over the source.</span>
-      </p>
-    </article>
-
-    {related.length > 0 && (
-      <section class="ed-related">
-        <h2 class="ed-section-title">
-          <span class="i18n-ja">関連記事 — {catName}</span>
-          <span class="i18n-en" lang="en">Related — {catName}</span>
-        </h2>
-        <div class="ed-related-grid">
-          {related.map((r) => {
-            const rSum = summaryForLang(r, "ja") || summaryForLang(r, "en");
-            const rTitle = titleForLang(r, "ja") || titleForLang(r, "en") || r.title;
-            const rMeta = CATEGORY_META.find((c) => c.slug === r.category);
-            const rColor = rMeta?.color ?? "#8a847e";
-            return (
-              <a class="ed-rel-card" href={`/e/${r.id}/`} style={`--cat-color:${rColor}`}>
-                <div class="ed-rel-head">
-                  <span class="ed-rel-type">{r.sourceType}</span>
-                  {r.importance === 3 && <span class="ed-rel-hot">🔥</span>}
-                  <span class="ed-rel-time mono">{relativeTime(r.publishedAt, now)}</span>
-                </div>
-                <div class="ed-rel-title">{rTitle}</div>
-                {rSum && <div class="ed-rel-sum">{rSum}</div>}
-                <div class="ed-rel-src">{r.source}</div>
-              </a>
-            );
-          })}
-        </div>
-        <a class="ed-more" href={`/c/${entry.category}`}>
-          <span class="i18n-ja">{catName} の記事をもっと見る →</span>
-          <span class="i18n-en" lang="en">More in {catName} →</span>
-        </a>
-      </section>
-    )}
+      {/* SAME CATEGORY */}
+      {sameCategory.length > 0 && (
+        <section class="ed-rel-block">
+          <h2 class="ed-rel-h">
+            <span class="ed-rel-h-emoji" style={`color:${catColor}`}>{catEmoji}</span>
+            <span>{catName} の他の記事</span>
+            <a class="ed-rel-h-more" href={`/c/${entry.category}`}>もっと見る →</a>
+          </h2>
+          <div class="ed-rel-grid">
+            {sameCategory.map((r) => {
+              const rTitle = titleForLang(r, "ja") || titleForLang(r, "en") || r.title;
+              const rSum = summaryForLang(r, "ja") || summaryForLang(r, "en");
+              return (
+                <a class="ed-rel-card" href={`/e/${r.id}/`} style={`--cat-color:${catColor}`}>
+                  <div class="ed-rel-meta">
+                    <span class="ed-rel-type">{r.sourceType}</span>
+                    {r.importance === 3 && <span class="ed-rel-hot">🔥</span>}
+                    <span class="ed-rel-time">{relativeTime(r.publishedAt, now)}</span>
+                  </div>
+                  <div class="ed-rel-title">{rTitle}</div>
+                  {rSum && <div class="ed-rel-sum">{rSum}</div>}
+                  <div class="ed-rel-src">{r.source}</div>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </main>
 
+    {/* RIGHT RAIL */}
     <aside class="right">
+      {/* TOC */}
+      {renderedParagraphs.length >= 3 && (
+        <div class="side-card toc-card">
+          <div class="rail-title">目次</div>
+          <ol class="toc-list" id="toc-list">
+            {renderedParagraphs.map((p, i) => (
+              <li>
+                <a href={`#${p.id}`} data-toc-target={p.id}>
+                  <span class="toc-num">{String(i + 1).padStart(2, "0")}</span>
+                  <span class="toc-label">{p.label}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {sameSource.length > 0 && (
+        <div class="side-card">
+          <div class="rail-title">
+            {faviconUrl(entry.url) && <img class="rail-fav" src={faviconUrl(entry.url)} alt="" width="14" height="14" referrerpolicy="no-referrer" onerror="this.style.display='none'" />}
+            {srcDisplay} の最新
+          </div>
+          <ul class="rail-list">
+            {sameSource.map((r) => (
+              <li>
+                <a href={`/e/${r.id}/`}>
+                  <span class="rail-item-title">{titleForLang(r, "ja") || titleForLang(r, "en") || r.title}</span>
+                  <span class="rail-item-time">{relativeTime(r.publishedAt, now)}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {sameTag.length > 0 && (
+        <div class="side-card">
+          <div class="rail-title">
+            <span style={`color:${catColor}`}>#</span>
+            関連タグの記事
+          </div>
+          <ul class="rail-list">
+            {sameTag.map((r) => (
+              <li>
+                <a href={`/e/${r.id}/`}>
+                  <span class="rail-item-title">{titleForLang(r, "ja") || titleForLang(r, "en") || r.title}</span>
+                  <span class="rail-item-time">{relativeTime(r.publishedAt, now)}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div class="side-card">
-        <div class="right-title">Trending Tags</div>
+        <div class="rail-title">Trending Tags</div>
         <div class="tag-cloud">
           {tags.map((t) => (
             <a class="tag" href={`/t/${encodeURIComponent(t.tag)}`}>
@@ -400,359 +482,506 @@ function fmtDate(iso: string): string {
         </div>
       </div>
 
-      <div class="side-card">
-        <div class="right-title">{catName}</div>
-        <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 10px">
-          <span class="i18n-ja">同じカテゴリの記事をまとめてチェックできます。</span>
-          <span class="i18n-en" lang="en">Browse all entries in this category.</span>
-        </p>
-        <a href={`/c/${entry.category}`} style={`color:${catColor};font-size:13px;text-decoration:none`}>
-          → /c/{entry.category}
+      <div class="side-card cat-jump" style={`--cat-color:${catColor}`}>
+        <div class="rail-title">Category</div>
+        <a class="cat-jump-link" href={`/c/${entry.category}`}>
+          <span class="cat-jump-emoji">{catEmoji}</span>
+          <span class="cat-jump-name">{catName}</span>
+          <span class="cat-jump-arrow">→</span>
         </a>
-      </div>
-
-      <div class="side-card">
-        <div class="right-title">About</div>
-        <p style="font-size:12px;color:var(--muted);line-height:1.55">
-          <span class="i18n-ja">1 時間おきに公式ソースを自動収集し、日本語で要約。</span>
-          <span class="i18n-en" lang="en">Hourly auto-collected official sources, summarized in JA.</span>
-          <a href="/about" style="color:var(--accent)">詳しく</a>
-        </p>
       </div>
     </aside>
   </div>
+
+  {/* Floating back-to-top */}
+  <button class="ed-fab" id="ed-fab" type="button" aria-label="トップに戻る" style={`--cat-color:${catColor}`}>
+    ↑
+  </button>
+
+  {/* Share toast */}
+  <div class="ed-toast" id="ed-toast" role="status">URL をコピーしました</div>
 </Portal>
+
+<script is:inline>
+  (function () {
+    // Reading progress bar
+    var bar = document.querySelector("#ed-progress .ed-progress-bar");
+    var main = document.getElementById("entry-main");
+    function onScroll() {
+      if (!bar || !main) return;
+      var rect = main.getBoundingClientRect();
+      var total = main.offsetHeight - window.innerHeight;
+      var scrolled = -rect.top;
+      var pct = Math.max(0, Math.min(1, scrolled / Math.max(1, total)));
+      bar.style.width = (pct * 100).toFixed(2) + "%";
+      var fab = document.getElementById("ed-fab");
+      if (fab) fab.classList.toggle("show", scrolled > window.innerHeight * 0.5);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    // FAB back-to-top
+    var fab = document.getElementById("ed-fab");
+    if (fab) fab.addEventListener("click", function () {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    // Share button — Web Share API w/ clipboard fallback
+    var sb = document.getElementById("ed-share-btn");
+    var toast = document.getElementById("ed-toast");
+    function showToast() {
+      if (!toast) return;
+      toast.classList.add("show");
+      setTimeout(function () { toast.classList.remove("show"); }, 1800);
+    }
+    if (sb) sb.addEventListener("click", async function () {
+      var t = sb.dataset.title || document.title;
+      var u = sb.dataset.url || location.href;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: t, url: u });
+          return;
+        }
+      } catch (_) {}
+      try {
+        await navigator.clipboard.writeText(u);
+        showToast();
+      } catch (_) {
+        prompt("Copy URL", u);
+      }
+    });
+
+    // Keyboard nav: ArrowLeft (prev = newer), ArrowRight (next = older)
+    document.addEventListener("keydown", function (e) {
+      if (e.target && /^(input|textarea|select)$/i.test(e.target.tagName)) return;
+      if (e.key === "ArrowLeft") {
+        var p = document.querySelector(".ed-pn-card.prev");
+        if (p && p instanceof HTMLAnchorElement) { e.preventDefault(); location.href = p.href; }
+      } else if (e.key === "ArrowRight") {
+        var n = document.querySelector(".ed-pn-card.next");
+        if (n && n instanceof HTMLAnchorElement) { e.preventDefault(); location.href = n.href; }
+      }
+    });
+
+    // TOC active section highlight
+    var tocLinks = document.querySelectorAll("#toc-list a[data-toc-target]");
+    if (tocLinks.length) {
+      var paras = Array.from(tocLinks).map(function (a) {
+        return document.getElementById(a.getAttribute("data-toc-target"));
+      });
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) {
+            tocLinks.forEach(function (a) { a.classList.remove("active"); });
+            var match = document.querySelector('#toc-list a[data-toc-target="' + en.target.id + '"]');
+            if (match) match.classList.add("active");
+          }
+        });
+      }, { rootMargin: "-30% 0px -55% 0px", threshold: 0 });
+      paras.forEach(function (p) { if (p) io.observe(p); });
+    }
+  })();
+</script>
 
 <style>
   .entry-main { min-width: 0; }
+
+  /* PROGRESS BAR */
+  .ed-progress {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: transparent;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .ed-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--cat-color), color-mix(in srgb, var(--cat-color) 65%, #ffffff));
+    box-shadow: 0 0 8px var(--cat-color);
+    transition: width 0.05s linear;
+  }
+
+  /* HERO */
   .entry-detail {
-    border: 1px solid var(--border);
-    border-radius: 14px;
     background: var(--surface);
-    padding: 24px 28px 22px;
-    border-left: 3px solid var(--cat-color);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.02), 0 24px 48px -24px rgba(0,0,0,0.5);
   }
-  .ed-head { display: flex; flex-direction: column; gap: 10px; }
-  .ed-meta {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 12px; color: var(--text-2); flex-wrap: wrap;
+  .ed-hero {
+    position: relative;
+    background: #1a1917;
+    border-bottom: 1px solid var(--border);
+    height: 320px;
+    overflow: hidden;
   }
-  .ed-cat {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 2px 8px; border-radius: 999px;
-    background: color-mix(in srgb, var(--cat-color) 18%, transparent);
-    color: var(--cat-color); text-decoration: none; font-weight: 600;
+  .ed-hero-skeleton {
+    position: absolute; inset: 0;
+    background: linear-gradient(110deg, #1a1917 30%, #2a2724 50%, #1a1917 70%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
   }
-  .ed-type {
-    text-transform: uppercase; letter-spacing: 0.05em;
-    padding: 2px 6px; border: 1px solid var(--border);
-    border-radius: 4px; font-size: 11px;
+  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  .ed-hero-img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.4s ease, transform 12s ease-out;
+    transform: scale(1.0);
   }
-  .ed-hot { color: #f59e0b; font-weight: 600; }
-  .ed-spacer { flex: 1; }
-  .ed-time { color: var(--text-2); }
+  .ed-hero.ed-hero-loaded .ed-hero-img {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  .ed-hero.ed-hero-loaded .ed-hero-skeleton { display: none; }
+  .ed-hero-fallback { display: none; position: absolute; inset: 0; }
+  .ed-hero.ed-hero-failed .ed-hero-img { display: none; }
+  .ed-hero.ed-hero-failed .ed-hero-skeleton { display: none; }
+  .ed-hero.ed-hero-failed .ed-hero-fallback { display: block; }
+  .ed-hero-overlay {
+    position: absolute;
+    left: 16px; bottom: 14px;
+    display: flex; gap: 8px; align-items: center;
+    z-index: 2;
+  }
+  .ed-cat-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(20,18,15,0.78);
+    backdrop-filter: blur(10px);
+    color: var(--cat-color);
+    border: 1px solid color-mix(in srgb, var(--cat-color) 40%, transparent);
+    font-weight: 700; font-size: 12px;
+    text-decoration: none;
+  }
+  .ed-hot-pill {
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(245,158,11,0.18); border: 1px solid rgba(245,158,11,0.55);
+    color: #fbbf24; font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  }
+  .ed-stale-pill {
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(248,113,113,0.18); border: 1px solid rgba(248,113,113,0.45);
+    color: #f87171; font-size: 11px; font-weight: 600;
+  }
+
+  /* TITLE */
+  .ed-head { padding: 24px 32px 18px; border-bottom: 1px dashed var(--border); }
   .ed-title {
-    font-size: 24px; line-height: 1.4; margin: 4px 0 6px;
-    color: var(--text-1); font-weight: 700;
+    font-size: 28px; line-height: 1.45;
+    color: var(--text); font-weight: 800;
+    letter-spacing: -0.005em; margin: 0 0 12px;
+    font-feature-settings: "palt" 1;
   }
-  .ed-src {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 12.5px; color: var(--text-2); flex-wrap: wrap;
+  .ed-byline {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: 6px 8px; font-size: 12.5px; color: var(--muted);
   }
   .ed-favicon { border-radius: 3px; }
-  .ed-host, .ed-pub, .ed-dot { color: var(--text-3); }
+  .ed-src-name { color: var(--text-2); font-weight: 600; }
+  .ed-host, .sep { color: var(--muted-2); }
+  .ed-rel { color: var(--accent); font-weight: 500; }
+  .ed-read { color: var(--muted); }
 
-  .ed-hero {
-    margin: 18px -28px;
-    background: #1a1917;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
+  /* TL;DR */
+  .ed-tldr {
+    margin: 24px 32px 0; padding: 18px 22px 16px;
+    border-radius: 12px;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--cat-color) 14%, transparent), color-mix(in srgb, var(--cat-color) 4%, transparent)),
+      var(--bg-2);
+    border: 1px solid color-mix(in srgb, var(--cat-color) 28%, var(--border));
   }
-  .ed-hero img {
-    display: block; width: 100%;
-    max-height: 380px; object-fit: cover;
+  .ed-tldr-label { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .ai-badge {
+    display: inline-block; padding: 3px 8px; border-radius: 5px;
+    background: var(--cat-color); color: #0c0c0a;
+    font-weight: 800; font-size: 10.5px; letter-spacing: 0.08em;
   }
-
-  .ed-summary {
-    margin: 18px 0 8px;
-    padding: 16px 18px 14px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--cat-color) 6%, var(--bg));
-  }
-  .ed-summary-head {
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 12px;
-    font-size: 12px; color: var(--text-2); flex-wrap: wrap;
-  }
-  .ai-mark {
-    display: inline-block; padding: 2px 8px;
-    border-radius: 4px;
-    background: color-mix(in srgb, var(--cat-color) 24%, transparent);
-    color: var(--cat-color);
-    font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
-  }
-  .ed-summary-note { color: var(--text-3); font-size: 11.5px; }
-
-  .ed-points {
-    list-style: disc;
-    margin: 0;
-    padding: 0 0 0 20px;
-    display: block;
-  }
-  .ed-points li {
-    padding: 0;
-    font-size: 14.5px;
-    line-height: 1.9;
-    color: var(--text-1);
-    margin: 0 0 8px;
-  }
-  .ed-points.i18n-en li { font-size: 13.5px; line-height: 1.65; }
-  .lang-fallback { color: var(--text-3) !important; font-size: 12px !important; }
-
-  .ed-summary-body {
-    font-size: 14.5px; line-height: 1.8;
-    color: var(--text-1); white-space: pre-wrap; margin: 6px 0;
-  }
-  .lang-badge {
-    display: inline-block; margin-right: 6px;
-    padding: 1px 5px; border-radius: 3px;
-    background: var(--surface); border: 1px solid var(--border);
-    color: var(--text-3); font-size: 10px;
-  }
-  .ed-summary-empty { color: var(--text-3); font-size: 13px; }
-
-  .ed-section-title {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-2);
-    margin: 22px 0 10px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--border);
-    font-weight: 600;
-  }
-
-  .ed-facts {
-    margin-top: 16px;
-  }
-  .ed-facts-inline {
-    list-style: none;
-    margin: 0;
-    padding: 10px 14px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 18px;
-    font-size: 12px;
-    color: var(--text-2);
-  }
-  .ed-facts-inline li {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    line-height: 1.6;
-  }
-  .ed-fk {
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-3);
-    font-size: 10.5px;
-    font-weight: 600;
-  }
-  .ed-fv { color: var(--text-1); }
-  .ed-pill {
-    display: inline-block;
-    margin-left: 4px;
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-size: 10.5px;
+  .ed-tldr-title { font-size: 13px; color: var(--text); font-weight: 700; }
+  .ed-share-btn {
+    margin-left: auto;
+    padding: 4px 10px;
+    border-radius: 999px;
     background: var(--surface);
     border: 1px solid var(--border);
     color: var(--text-2);
+    font-size: 11.5px;
+    cursor: pointer;
+    transition: all 0.12s;
   }
-  .ed-pill.imp-3 { background: rgba(245,158,11,0.15); color: #f59e0b; border-color: rgba(245,158,11,0.4); }
-  .ed-pill.tier { color: var(--cat-color); border-color: color-mix(in srgb, var(--cat-color) 40%, transparent); }
+  .ed-share-btn:hover {
+    border-color: color-mix(in srgb, var(--cat-color) 50%, var(--border));
+    color: var(--cat-color);
+  }
+  .ed-tldr-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .ed-tldr-list li {
+    position: relative; padding-left: 22px;
+    font-size: 15px; line-height: 1.85; color: var(--text);
+  }
+  .ed-tldr-list li::before {
+    content: ""; position: absolute; left: 0; top: 12px;
+    width: 12px; height: 2px; background: var(--cat-color); border-radius: 1px;
+  }
+  .ed-tldr-single { margin: 0; font-size: 15.5px; line-height: 1.85; color: var(--text); }
+  .ed-tldr-en {
+    margin-top: 14px; padding-top: 12px;
+    border-top: 1px dashed color-mix(in srgb, var(--cat-color) 25%, var(--border));
+    font-size: 13px; color: var(--muted);
+  }
+  .ed-tldr-en summary { cursor: pointer; font-weight: 600; color: var(--text-2); }
+  .ed-tldr-en ul { margin: 8px 0 0 18px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 
-  .ed-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-  .ed-tag {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text-2);
+  /* BODY */
+  .ed-body { padding: 28px 32px 8px; }
+  .ed-body-prose p {
+    font-size: 15.5px; line-height: 2.05; color: var(--text);
+    margin: 0 0 22px;
+    text-align: justify; text-justify: inter-character;
+    scroll-margin-top: 84px;
+  }
+  .ed-body-prose .kw {
+    color: var(--cat-color);
     text-decoration: none;
-    font-size: 12px;
+    background: color-mix(in srgb, var(--cat-color) 10%, transparent);
+    padding: 0 3px;
+    border-radius: 3px;
+    border-bottom: 1px dotted color-mix(in srgb, var(--cat-color) 50%, transparent);
+    transition: all 0.1s;
   }
-  .ed-tag:hover { color: var(--cat-color); border-color: var(--cat-color); }
+  .ed-body-prose .kw:hover {
+    background: color-mix(in srgb, var(--cat-color) 22%, transparent);
+    border-bottom-style: solid;
+  }
+  .ed-divider {
+    display: flex; justify-content: center; gap: 8px;
+    margin: 18px 0 28px;
+    opacity: 0.55;
+  }
+  .ed-divider span {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--cat-color);
+  }
+  .ed-body-pending {
+    padding: 14px 16px; border: 1px dashed var(--border);
+    border-radius: 10px; background: var(--bg-2);
+    color: var(--muted); font-size: 13px;
+  }
 
-  .ed-actions {
-    display: flex; align-items: center; gap: 12px;
-    margin-top: 22px; padding-top: 16px;
+  /* TAGS */
+  .ed-tag-bar {
+    margin: 12px 32px 0; padding: 14px 0 0;
     border-top: 1px dashed var(--border);
-    flex-wrap: wrap;
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .ed-tag {
+    display: inline-block; padding: 4px 10px; border-radius: 999px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    color: var(--muted); font-size: 12px; text-decoration: none;
+    transition: all 0.12s;
+  }
+  .ed-tag:hover {
+    color: var(--cat-color);
+    border-color: color-mix(in srgb, var(--cat-color) 50%, var(--border));
+    background: color-mix(in srgb, var(--cat-color) 8%, var(--bg-2));
+  }
+
+  /* META STRIP */
+  .ed-meta-strip {
+    list-style: none;
+    margin: 18px 32px 0; padding: 12px 14px;
+    border-radius: 10px; background: var(--bg-2); border: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 12px;
+  }
+  .ed-meta-strip li { display: inline-flex; align-items: center; gap: 6px; }
+  .ed-meta-strip .k {
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--muted-2); font-size: 10.5px; font-weight: 600;
+  }
+  .ed-meta-strip .v { color: var(--text); display: inline-flex; align-items: center; gap: 6px; }
+  .muted-sm { color: var(--muted-2); font-size: 11px; }
+  .pill {
+    margin-left: 4px; padding: 1px 6px; border-radius: 4px;
+    border: 1px solid var(--border); background: var(--surface);
+    font-size: 10.5px; color: var(--muted);
+  }
+  .pill.imp-3 { background: rgba(245,158,11,0.16); border-color: rgba(245,158,11,0.45); color: #fbbf24; }
+  .mini-bar {
+    display: inline-block; width: 36px; height: 4px;
+    background: var(--border); border-radius: 2px; position: relative;
+  }
+  .mini-bar::after {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    width: var(--w, 0%); background: var(--cat-color); border-radius: 2px;
+  }
+
+  /* CTA */
+  .ed-cta-row {
+    margin: 22px 32px 0; padding-top: 18px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
   }
   .ed-cta {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 11px 18px;
-    border-radius: 8px;
-    background: var(--cat-color);
-    color: #0c0c0a;
-    font-weight: 600;
-    text-decoration: none;
-    font-size: 14px;
+    padding: 12px 22px; background: var(--cat-color); color: #0c0c0a;
+    border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none;
+    box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--cat-color) 60%, transparent);
+    transition: transform 0.12s, box-shadow 0.12s;
   }
-  .ed-cta:hover { filter: brightness(1.08); }
-  .ed-actions-host {
-    display: inline-flex; align-items: center; gap: 5px;
-    color: var(--text-3); font-size: 12px;
-  }
+  .ed-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 18px -6px color-mix(in srgb, var(--cat-color) 70%, transparent); }
+  .ed-cta-host { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 12px; }
+  .ed-disclaim { margin: 14px 32px 24px; color: var(--muted-2); font-size: 11px; line-height: 1.6; }
 
-  .ed-disclaimer {
-    margin: 16px 0 0;
-    padding: 10px 12px;
-    border-radius: 8px;
-    background: var(--bg);
-    border: 1px dashed var(--border);
-    color: var(--text-3);
-    font-size: 11.5px;
-    line-height: 1.6;
-  }
-
-  .ed-related { margin-top: 28px; padding: 0 4px; }
-  .ed-related-grid {
+  /* PREV/NEXT */
+  .ed-pn {
+    margin: 28px 4px 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
   }
+  .ed-pn-card {
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 14px 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; text-decoration: none; color: var(--text);
+    transition: all 0.12s;
+  }
+  .ed-pn-card:hover { border-color: color-mix(in srgb, var(--cat-color) 45%, var(--border)); transform: translateY(-1px); }
+  .ed-pn-card.next { text-align: right; }
+  .ed-pn-dir { font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.06em; }
+  .ed-pn-title {
+    font-size: 13.5px; font-weight: 600; line-height: 1.45;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .ed-pn-time { font-size: 11px; color: var(--muted); }
+  .ed-pn-empty { display: block; }
+
+  /* RELATED */
+  .ed-rel-block { margin-top: 30px; padding: 0 4px; }
+  .ed-rel-h {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 16px; font-weight: 700; color: var(--text);
+    margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  .ed-rel-h-emoji { font-size: 18px; }
+  .ed-rel-h-more { margin-left: auto; font-size: 12px; color: var(--muted); text-decoration: none; }
+  .ed-rel-h-more:hover { color: var(--accent); }
+  .ed-rel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
   .ed-rel-card {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 12px 14px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--cat-color);
-    border-radius: 10px;
-    text-decoration: none;
-    color: var(--text-1);
-    transition: background 0.12s, border-color 0.12s;
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 14px 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--cat-color); border-radius: 10px;
+    text-decoration: none; color: var(--text); transition: all 0.12s;
   }
   .ed-rel-card:hover {
-    background: color-mix(in srgb, var(--cat-color) 5%, var(--surface));
-    border-color: color-mix(in srgb, var(--cat-color) 40%, var(--border));
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--cat-color) 45%, var(--border));
+    background: color-mix(in srgb, var(--cat-color) 4%, var(--surface));
   }
-  .ed-rel-head {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 11px; color: var(--text-3);
-  }
-  .ed-rel-type {
-    text-transform: uppercase; letter-spacing: 0.05em;
-    padding: 1px 6px; border: 1px solid var(--border);
-    border-radius: 3px; font-size: 10px;
-  }
-  .ed-rel-hot { color: #f59e0b; }
+  .ed-rel-meta { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--muted-2); }
+  .ed-rel-type { text-transform: uppercase; letter-spacing: 0.05em; padding: 1px 6px; border: 1px solid var(--border); border-radius: 3px; font-size: 10px; }
+  .ed-rel-hot { color: #fbbf24; }
   .ed-rel-time { margin-left: auto; }
-  .ed-rel-title {
-    font-size: 13.5px; font-weight: 600; line-height: 1.4;
-    color: var(--text-1);
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .ed-rel-sum {
-    font-size: 12px; color: var(--text-2); line-height: 1.55;
-    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .ed-rel-src { font-size: 10.5px; color: var(--text-3); margin-top: 2px; }
+  .ed-rel-title { font-size: 13.5px; font-weight: 600; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ed-rel-sum { font-size: 12px; color: var(--muted); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .ed-rel-src { font-size: 10.5px; color: var(--muted-2); }
 
-  .ed-points-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+  /* RIGHT RAIL */
+  .rail-title {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted-2); font-weight: 700; margin-bottom: 10px;
+  }
+  .rail-fav { border-radius: 3px; }
+  .rail-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; }
+  .rail-list li a {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 8px 6px; border-radius: 6px; text-decoration: none; transition: background 0.1s;
+  }
+  .rail-list li a:hover { background: var(--bg-2); }
+  .rail-item-title { font-size: 12.5px; line-height: 1.45; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .rail-item-time { font-size: 10.5px; color: var(--muted-2); }
+
+  /* TOC */
+  .toc-card { position: sticky; top: 80px; }
+  .toc-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; max-height: 60vh; overflow-y: auto; }
+  .toc-list a {
+    display: flex; gap: 8px; padding: 6px 8px;
+    border-left: 2px solid transparent;
+    text-decoration: none; color: var(--muted);
+    font-size: 12px; line-height: 1.4;
+    transition: all 0.12s;
+  }
+  .toc-list a:hover { color: var(--text); background: var(--bg-2); }
+  .toc-list a.active {
     color: var(--cat-color);
-    font-weight: 700;
-    margin-bottom: 8px;
+    border-left-color: var(--cat-color);
+    background: color-mix(in srgb, var(--cat-color) 6%, transparent);
   }
+  .toc-num { color: var(--muted-2); font-variant-numeric: tabular-nums; font-size: 10.5px; padding-top: 1px; }
+  .toc-label { flex: 1; }
 
-  .ed-article-prose {
-    margin-top: 4px;
-  }
-  .ed-article-lead {
-    font-size: 15px;
-    line-height: 1.85;
-    color: var(--text-1);
-    margin: 0 0 14px;
-    padding-left: 12px;
-    border-left: 3px solid var(--cat-color);
-  }
-  .ed-article-h3 {
-    font-size: 15px;
-    color: var(--text-1);
-    margin: 18px 0 8px;
-    padding-bottom: 4px;
-    font-weight: 600;
-    border-bottom: 1px dashed var(--border);
-  }
-  .ed-article-body {
-    font-size: 14.5px;
-    line-height: 2.05;
-    color: var(--text-1);
-    margin: 0 0 20px;
-    text-align: justify;
-    text-justify: inter-character;
-  }
-  .ed-article-note {
-    margin: 14px 0 6px;
-    padding: 8px 10px;
-    border-radius: 6px;
-    background: color-mix(in srgb, var(--surface) 65%, var(--bg));
-    border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
-  }
-  .ed-article-note-title {
-    font-size: 10.5px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-3);
-    margin-bottom: 4px;
-  }
-  .ed-article-note-text {
-    margin: 0;
-    font-size: 11.5px;
-    line-height: 1.6;
-    color: var(--text-3);
-  }
-  .ed-article-pending {
-    margin-top: 14px;
-    padding: 8px 10px;
-    border-radius: 6px;
-    background: var(--bg);
-    border: 1px dashed var(--border);
-    color: var(--text-3);
-    font-size: 12px;
-  }
+  /* CAT JUMP */
+  .cat-jump { background: linear-gradient(180deg, color-mix(in srgb, var(--cat-color) 8%, var(--surface)), var(--surface)); }
+  .cat-jump-link { display: flex; align-items: center; gap: 8px; padding: 10px 8px; border-radius: 6px; text-decoration: none; color: var(--text); }
+  .cat-jump-link:hover { background: var(--bg-2); }
+  .cat-jump-emoji { font-size: 22px; }
+  .cat-jump-name { flex: 1; font-weight: 600; color: var(--cat-color); }
+  .cat-jump-arrow { color: var(--muted); }
 
-  .ed-more {
-    display: inline-block;
-    margin-top: 12px;
-    color: var(--cat-color);
-    text-decoration: none;
-    font-size: 13px;
+  /* FAB */
+  .ed-fab {
+    position: fixed; right: 24px; bottom: 24px;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--cat-color); color: #0c0c0a;
+    border: none; cursor: pointer;
+    font-size: 20px; font-weight: 700;
+    box-shadow: 0 8px 20px -6px rgba(0,0,0,0.5), 0 0 0 1px color-mix(in srgb, var(--cat-color) 60%, transparent);
+    opacity: 0; pointer-events: none;
+    transform: translateY(8px);
+    transition: all 0.2s ease;
+    z-index: 50;
   }
-  .ed-more:hover { text-decoration: underline; }
+  .ed-fab.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
 
+  /* Toast */
+  .ed-toast {
+    position: fixed; left: 50%; bottom: 32px;
+    transform: translateX(-50%) translateY(16px);
+    padding: 10px 18px; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); font-size: 13px;
+    box-shadow: 0 8px 24px -6px rgba(0,0,0,0.5);
+    opacity: 0; pointer-events: none;
+    transition: all 0.25s ease;
+    z-index: 60;
+  }
+  .ed-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* RESPONSIVE */
   @media (max-width: 1100px) {
-    .ed-related-grid { grid-template-columns: 1fr 1fr; }
+    .ed-rel-grid { grid-template-columns: 1fr 1fr; }
   }
-  @media (max-width: 720px) {
-    .entry-detail { padding: 18px 18px 16px; }
-    .ed-hero { margin: 14px -18px; }
-    .ed-title { font-size: 20px; }
-    .ed-points li { font-size: 14px; }
-    .ed-facts-inline { gap: 4px 12px; padding: 8px 10px; }
-    .ed-related-grid { grid-template-columns: 1fr; }
+  @media (max-width: 820px) {
+    .ed-hero { height: 220px; }
+    .ed-head, .ed-tldr, .ed-body, .ed-tag-bar, .ed-meta-strip, .ed-cta-row, .ed-disclaim {
+      margin-left: 18px; margin-right: 18px;
+    }
+    .ed-head { padding: 18px 0 14px; }
+    .ed-tldr { padding: 14px 16px; }
+    .ed-body { padding: 22px 0 4px; }
+    .ed-title { font-size: 22px; }
+    .ed-tldr-list li { font-size: 14px; line-height: 1.8; }
+    .ed-body-prose p { font-size: 14.5px; line-height: 1.95; margin-bottom: 18px; }
+    .ed-rel-grid { grid-template-columns: 1fr; }
+    .ed-pn { grid-template-columns: 1fr; }
+    .ed-fab { right: 14px; bottom: 14px; }
   }
 </style>

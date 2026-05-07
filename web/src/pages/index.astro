@@ -10,6 +10,7 @@ import {
   GENERATED_AT,
   PAGE_SIZE,
   CATEGORY_META,
+  entryHref,
   featured,
   trendingTags,
   relativeTime,
@@ -136,7 +137,7 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
               <span class="i18n-en" lang="en">Featured</span>
             </div>
             <h2 class="featured-title">
-              <a href={feat.url} target="_blank" rel="noopener">
+              <a href={entryHref(feat)}>
                 <span class="i18n-ja">{titleForLang(feat, "ja")}</span>
                 <span class="i18n-en" lang="en">{titleForLang(feat, "en") || "(no English title)"}</span>
               </a>
@@ -189,7 +190,7 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
                 <li class={`top-rank-item rank-${i + 1}`} style={`--cat-color:${meta?.color ?? "#8a847e"}`}>
                   <span class="medal" aria-hidden="true">{medals[i]}</span>
                   <span class="rank-cat" aria-hidden="true">{meta?.emoji ?? "\u{1F4C4}"}</span>
-                  <a class="rank-title" href={e.url} target="_blank" rel="noopener">
+                  <a class="rank-title" href={entryHref(e)}>
                     <span class="i18n-ja">{titleForLang(e, "ja")}</span>
                     <span class="i18n-en" lang="en">{titleForLang(e, "en") || e.title}</span>
                   </a>

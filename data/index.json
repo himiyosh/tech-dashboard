@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-07T12:01:32.626Z",
+  "generatedAt": "2026-05-07T04:32:52.868Z",
   "count": 500,
   "health": {
     "lastRunAt": "2026-05-07T12:01:32.626Z",
@@ -724,10 +724,10 @@
       "sourceType": "paper",
       "url": "https://arxiv.org/abs/2605.04050",
       "title": "LCM: Lossless Context Management",
-      "titleJa": "LCM: ロスレスなコンテキスト管理手法",
+      "titleJa": "LCM: ロスレスなコンテキスト管理手法の提案",
       "titleEn": "LCM: Lossless Context Management",
-      "summaryJa": "本論文はLLM向けの新しいコンテキスト管理手法「LCM(Lossless Context Management)」を提案する。長文コンテキストを情報損失なく効率的に扱うことを目指し、推論性能とメモリ効率の両立を図る。",
-      "summaryEn": "This paper proposes LCM (Lossless Context Management), a new approach for handling long contexts in LLMs without information loss, aiming to balance inference performance and memory efficiency.",
+      "summaryJa": "本論文はLLMの長文コンテキスト処理における情報損失を回避する「Lossless Context Management(LCM)」を提案する。従来の要約や圧縮型手法と異なり、元情報を保持したままトークン消費を抑える仕組みを示し、エージェントや長期対話での精度低下を緩和する狙いを持つ。",
+      "summaryEn": "This paper introduces LCM (Lossless Context Management), a technique aimed at handling long contexts in LLMs without the information loss typical of summarization or compression methods, targeting better accuracy in agents and long-running dialogues.",
       "lang": "en",
       "publishedAt": "2026-05-07T04:00:00.000Z",
       "collectedAt": "2026-05-07T12:00:38.164Z",
@@ -736,7 +736,9 @@
         "paper",
         "llm",
         "context-management",
-        "long-context"
+        "long-context",
+        "agents",
+        "memory-management"
       ],
       "category": "research",
       "importance": 1,
@@ -750,7 +752,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "bodyJa": "大規模言語モデル(LLM)の応用が広がる中で、コンテキストウィンドウの管理は依然として中心的な課題である。本論文「LCM: Lossless Context Management」は、長文や反復的なエージェント対話においても元情報を欠落させずに扱うことを目指す手法を提案している。\n\n従来のコンテキスト管理手法は、要約・チャンク削除・ベクトル検索による抜粋など、いずれも情報を圧縮または取捨選択する点で「ロッシー(損失あり)」となる傾向が強かった。これに対しLCMは、その名のとおり情報の損失を伴わない管理を志向しており、長期間の会話やマルチステップのツール利用において、過去の文脈に起因する精度劣化を緩和できる可能性がある。具体的には、コンテキストの構造化された保持や参照戦略を組み合わせ、必要な情報を必要な粒度で取り出せるようにする発想と見られる。\n\n背景として、近年はAnthropicのClaudeやGoogleのGemini、OpenAIのGPTシリーズが100K〜数Mトークン級の長コンテキストを実現する一方、長文中の中盤情報を見落とす「lost in the middle」現象や、コスト・レイテンシの増大が問題視されている。これに対しRAG、メモリ機構(MemGPTなど)、KVキャッシュ圧縮(H2O、StreamingLLM)、さらにはエージェント特化のメモリ管理(LangGraphやLlamaIndexのコンテキスト管理機能)など、複数のアプローチが並行して研究・実装されている。\n\nLCMはこの系譜の中で、損失のなさを明示的に強調する点に特徴があると言える。実運用では完全な無損失を保ちつつ計算資源を抑えるトレードオフが論点となるため、実験条件や対象タスクの詳細を確認する価値がある。エージェント型AIの長期運用が現実課題となる現在、関連する設計選択を比較する際の参考になり得る研究と位置付けられる。"
     },
     {
       "id": "5f59e5289ebd8d55",
@@ -980,10 +983,10 @@
       "sourceType": "paper",
       "url": "https://arxiv.org/abs/2605.04100",
       "title": "Regularized Centered Emphatic Temporal Difference Learning",
-      "titleJa": "正則化中心化エンファティックTD学習の提案",
+      "titleJa": "正則化付き中心化Emphatic TD学習(RCETD)の提案",
       "titleEn": "Regularized Centered Emphatic Temporal Difference Learning",
-      "summaryJa": "強化学習における方策オフ評価の安定化を目的に、エンファティックTD学習を中心化と正則化により改良した手法を提案。分散の低減と収束性の向上を理論的・実験的に示し、関数近似下での学習を安定化させる。",
-      "summaryEn": "This paper proposes a regularized and centered variant of Emphatic Temporal Difference learning for off-policy evaluation in reinforcement learning, aiming to reduce variance and improve convergence with function approximation through theoretical and empirical analysis.",
+      "summaryJa": "強化学習の方策評価において、関数近似と方策外学習を併用すると不安定になる問題に対し、Emphatic TD法を改良した正則化中心化Emphatic TD(RCETD)を提案。重み付けの分散を抑え、収束性と推定精度の両立を図る。",
+      "summaryEn": "This paper proposes Regularized Centered Emphatic Temporal Difference (RCETD) learning, which mitigates the high variance of emphatic weights in off-policy linear function approximation while preserving convergence guarantees.",
       "lang": "en",
       "publishedAt": "2026-05-07T04:00:00.000Z",
       "collectedAt": "2026-05-07T12:00:38.164Z",
@@ -992,7 +995,8 @@
         "paper",
         "reinforcement-learning",
         "off-policy",
-        "temporal-difference"
+        "temporal-difference",
+        "function-approximation"
       ],
       "category": "research",
       "importance": 1,
@@ -1003,6 +1007,72 @@
         "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
         "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
         "alt": "Regularized Centered Emphatic Temporal Difference Learning",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "bodyJa": "本論文は、強化学習における方策評価問題に焦点を当て、関数近似・ブートストラップ・方策外学習を同時に用いる際に生じる発散問題、いわゆる「致命的な三重苦(deadly triad)」への対処法を提案している。\n\n従来のEmphatic Temporal Difference (ETD) 学習法は、状態の重み付けを工夫することで線形関数近似下での収束性を保証する画期的な手法だが、強調重み(emphatic weight)の分散が極めて大きくなり、実践上の学習が遅く不安定になるという課題があった。著者らはこの分散問題に対し、強調重みを中心化(centering)し、さらに正則化項を加えることで重みの暴走を抑制するRegularized Centered Emphatic TD (RCETD)を提案している。\n\nRCETDは、ETDの理論的な利点である方策外学習における収束性を維持しつつ、推定の分散を低減する設計と見られる。論文では、線形関数近似の枠組みにおける収束解析や、ベンチマーク的なタスクでの数値実験を通じて、既存のTD・ETD・GTDといった手法と比較した優位性が議論されていると考えられる。\n\n背景として、Sutton らが提唱したGradient TD系列(GTD, TDC)やETDは、いずれも方策外学習での発散を回避する目的で設計されてきた。これらは深層強化学習における経験再生やQ学習の安定化と密接に関係しており、近年の分布型強化学習や安全な方策改善といった研究領域とも接続する。重み付けの分散制御は、Importance Sampling比を扱う場面で普遍的な課題であり、Retrace やV-traceなど実用的なアルゴリズムでも類似の工夫が見られる。RCETDのアプローチは、こうした実用的手法に理論的裏付けを与える方向性として位置づけられる可能性がある。"
+    },
+    {
+      "id": "e8dd1c236b50de3f",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04169",
+      "title": "Actionable Real-Time Modeling of Surgical Team Dynamics via Time-Expanded Interaction Graphs",
+      "titleJa": "時間展開インタラクショングラフによる手術チーム動態のリアルタイムモデリング",
+      "titleEn": "Actionable Real-Time Modeling of Surgical Team Dynamics via Time-Expanded Interaction Graphs",
+      "summaryJa": "本論文は、手術室内のチーム連携を時間展開インタラクショングラフ（TEIG）で表現し、リアルタイムに分析・介入可能なモデルを提案する。チームメンバー間の相互作用を時系列ノード・エッジで捉え、手術の安全性や効率向上に資する実用的洞察を導く枠組みである。",
+      "summaryEn": "This paper proposes Time-Expanded Interaction Graphs (TEIG) to model surgical team dynamics in real time, capturing interactions among team members as temporal nodes and edges to enable actionable insights for improving safety and efficiency in the operating room.",
+      "lang": "en",
+      "publishedAt": "2026-05-07T04:00:00.000Z",
+      "collectedAt": "2026-05-07T04:00:36.515Z",
+      "tags": [
+        "arxiv",
+        "paper",
+        "graph-modeling",
+        "surgical-ai",
+        "team-dynamics",
+        "operating-room"
+      ],
+      "category": "research",
+      "importance": 1,
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "Actionable Real-Time Modeling of Surgical Team Dynamics via Time-Expanded Interaction Graphs",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "bodyJa": "手術室は高度に専門化された人材が密接に連携する典型的なハイステークス環境であり、チームの相互作用がそのまま患者安全と転帰に直結する。本論文は、こうした手術チームの動態をリアルタイムに可視化・分析するための新しい枠組みとして「時間展開インタラクショングラフ（Time-Expanded Interaction Graphs, TEIG）」を提案する。\n\nTEIGは、チームメンバーや器具、役割をノードとして、それらの間で発生する発話・受け渡し・視線・協調動作などの相互作用をエッジとして表現する。さらに時間軸方向にグラフを展開することで、瞬時的なやり取りだけでなく、手術フェーズの遷移に伴う関係性の変化や、ボトルネックとなる連携の遅延を捉えられる点が特徴である。著者らは、このグラフ表現がアクショナブル、すなわち実際の介入や改善提案に直結することを重視しており、単なる事後分析ではなく術中支援への応用を視野に入れているとみられる。\n\n背景として、手術室の動態解析は近年、コンピュータビジョンやウェアラブルセンサ、音声認識の進展を受けて急速に研究が広がっている。CholecT50などの手術ビデオデータセットや、surgical phase recognition、surgical workflow analysisといった研究領域では、個々の動作や工程の認識が中心であった。これに対しTEIGはチーム全体の社会的・協調的構造に焦点を移しており、Human Factors研究やCRM（Crew Resource Management）の知見とも親和性が高い。\n\n関連動向としては、Googleの手術AIプラットフォームや、Intuitive Surgicalによるda Vinciの解析機能、さらにNVIDIA Holoscanのような術中エッジAI基盤など、手術データを実時間で扱う基盤整備が進んでいる。TEIGのような関係性指向のモデルは、これらの基盤と組み合わさることで、術中の早期警告やトレーニング評価、チーム編成最適化などへの展開が期待される可能性がある。"
+    },
+    {
+      "id": "d400138f78241f78",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04193",
+      "title": "ANDRE: An Attention-based Neuro-symbolic Differentiable Rule Extractor",
+      "titleJa": "ANDRE: アテンション機構による微分可能なニューロシンボリックルール抽出器",
+      "titleEn": "ANDRE: An Attention-based Neuro-symbolic Differentiable Rule Extractor",
+      "summaryJa": "本論文ではANDREという、アテンションベースのニューロシンボリック微分可能ルール抽出器を提案する。ニューラルネットワークの学習能力と記号的推論の解釈性を組み合わせ、データから人間に理解可能なルールを抽出する手法である。",
+      "summaryEn": "This paper proposes ANDRE, an attention-based neuro-symbolic differentiable rule extractor that combines the learning power of neural networks with the interpretability of symbolic reasoning to extract human-understandable rules from data.",
+      "lang": "en",
+      "publishedAt": "2026-05-07T04:00:00.000Z",
+      "collectedAt": "2026-05-07T04:00:36.515Z",
+      "tags": [
+        "arxiv",
+        "paper",
+        "neuro-symbolic",
+        "rule-extraction",
+        "attention",
+        "interpretability"
+      ],
+      "category": "research",
+      "importance": 1,
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "ANDRE: An Attention-based Neuro-symbolic Differentiable Rule Extractor",
         "width": 0,
         "height": 0,
         "source": "og"
@@ -3646,10 +3716,10 @@
       "sourceType": "release",
       "url": "https://github.com/zed-industries/zed/releases/tag/collab-staging",
       "title": "collab-staging: ep: Compute kept rate even when there's no matches (#55912)",
-      "titleJa": "Zed collab-staging リリース",
+      "titleJa": "Zed collab-staging: gutter_context_menu非表示問題を修正 (#54574)",
       "titleEn": "collab-staging: ep: Compute kept rate even when there's no matches (#55912)",
-      "summaryJa": "Zedエディタのコラボレーション機能向けステージング環境のリリースタグです。本番展開前の検証用で、エンドユーザー向けの新機能や変更点は含まれていません。",
-      "summaryEn": "A staging release tag for Zed's collaboration backend, used for pre-production validation. It contains no user-facing feature changes.",
+      "summaryJa": "Zedのcollab-stagingリリースで、gutter_context_menuが表示されない不具合を修正するパッチ(#54574)が適用された。コラボレーション機能のステージング環境向けの通常更新。",
+      "summaryEn": "Zed's collab-staging release includes a fix (#54574) for the gutter_context_menu not showing. A routine patch update targeting the collaboration staging environment.",
       "lang": "en",
       "publishedAt": "2026-05-06T16:11:45.000Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
@@ -3658,7 +3728,9 @@
         "release",
         "zed",
         "collaboration",
-        "staging"
+        "staging",
+        "bugfix",
+        "collab"
       ],
       "category": "vscode",
       "importance": 1,
@@ -3898,10 +3970,10 @@
       "sourceType": "release",
       "url": "https://github.com/zed-industries/zed/releases/tag/nightly",
       "title": "nightly: editor: Support file:line:col navigation from hover links (#55877)",
-      "titleJa": "Zed nightly: 新規ファイル作成時のフォーマット適用を修正",
+      "titleJa": "Zed nightly: ガター右クリックメニューのUIを再調整",
       "titleEn": "nightly: editor: Support file:line:col navigation from hover links (#55877)",
-      "summaryJa": "Zedエディタのnightlyビルドにて、新しいファイルが初めて作成される際にフォーマット適用が正しく動作しない不具合を修正した。pane関連の小規模なバグ修正である。",
-      "summaryEn": "A nightly Zed build fixes a bug where formatting was not properly applied when a new file was first created, addressing a minor pane-related issue.",
+      "summaryJa": "Zedエディタのnightlyビルドで、ガター領域の右クリックメニューに関するUI調整が再度行われた（PR #54710）。操作性や表示を改善する細かな調整。",
+      "summaryEn": "Zed editor's nightly build includes another UI adjustment (PR #54710) for the right-click context menus shown on the gutter area, refining usability and presentation.",
       "lang": "en",
       "publishedAt": "2026-05-06T15:47:59.000Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
@@ -3910,7 +3982,8 @@
         "release",
         "zed",
         "bugfix",
-        "formatting"
+        "formatting",
+        "ui"
       ],
       "category": "vscode",
       "importance": 1,
@@ -8171,10 +8244,10 @@
       "sourceType": "release",
       "url": "https://github.com/ollama/ollama/releases/tag/v0.21.3-rc0",
       "title": "v0.21.3",
-      "titleJa": "Ollama v0.21.3 リリース候補版を公開",
+      "titleJa": "Ollama v0.21.3 リリース",
       "titleEn": "v0.21.3",
-      "summaryJa": "OllamaのバージョンアップでリリースキャンディデートのRCバージョンv0.21.3-rc0が公開された。詳細な変更点はリリースノートに記載されており、通常のメンテナンス更新と位置付けられる。",
-      "summaryEn": "Ollama published the v0.21.3-rc0 release candidate, a routine maintenance update with minor changes detailed in its release notes.",
+      "summaryJa": "Ollamaのv0.21.3が公開された。今回はリリース候補(rc0)版で、通常のメンテナンス更新として位置付けられる。詳細な変更点はGitHubのリリースページで確認できる。",
+      "summaryEn": "Ollama has published v0.21.3 (rc0), a routine maintenance release candidate. Detailed changelog and binaries are available on the project's GitHub releases page.",
       "lang": "en",
       "publishedAt": "2026-05-03T21:17:17.000Z",
       "collectedAt": "2026-05-07T01:00:36.452Z",
@@ -11016,10 +11089,10 @@
       "sourceType": "blog",
       "url": "https://deepmind.google/blog/announcing-our-partnership-with-the-republic-of-korea/",
       "title": "Announcing our partnership with the Republic of Korea",
-      "titleJa": "Google DeepMind、韓国政府とのAIパートナーシップを発表",
+      "titleJa": "Google DeepMind、韓国政府とのパートナーシップを発表",
       "titleEn": "Announcing our partnership with the Republic of Korea",
-      "summaryJa": "Google DeepMindは大韓民国政府との戦略的パートナーシップを発表した。AI研究、人材育成、社会的応用の分野で協力し、韓国のAIエコシステムの発展と責任あるAI活用を推進する。",
-      "summaryEn": "Google DeepMind announced a strategic partnership with the Republic of Korea, focusing on collaboration in AI research, talent development, and societal applications to advance Korea's AI ecosystem and responsible AI adoption.",
+      "summaryJa": "Google DeepMindは大韓民国とのパートナーシップを発表した。AI研究、人材育成、責任あるAI開発を推進し、韓国のAIエコシステム強化と社会課題解決への貢献を目指す国家レベルの協力体制を構築する。",
+      "summaryEn": "Google DeepMind announced a partnership with the Republic of Korea to advance AI research, talent development, and responsible AI deployment, strengthening Korea's AI ecosystem and addressing societal challenges.",
       "lang": "en",
       "publishedAt": "2026-04-27T07:00:06.000Z",
       "collectedAt": "2026-05-07T12:00:38.164Z",
@@ -11028,12 +11101,11 @@
         "google",
         "partnership",
         "korea",
-        "ai-policy"
+        "ai-policy",
+        "south-korea"
       ],
       "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot",
+      "importance": 2,
       "image": {
         "src": "https://lh3.googleusercontent.com/3q6uiTEWOv5PKJQYWgYLxCgohyndMqdWTFiwFDbxSzk-tW0HeannPdF7kvqR2hmE_tvSeryfw4IvG7gwuZ11rBgIYGvapEQvHO9RRJXw4JCqyme6uA=w528-h297-n-nu-rw-lo",
         "origSrc": "https://lh3.googleusercontent.com/3q6uiTEWOv5PKJQYWgYLxCgohyndMqdWTFiwFDbxSzk-tW0HeannPdF7kvqR2hmE_tvSeryfw4IvG7gwuZ11rBgIYGvapEQvHO9RRJXw4JCqyme6uA=w528-h297-n-nu-rw-lo",
@@ -11073,16 +11145,19 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-04-24-notice-about-upcoming-new-format-for-github-app-installation-tokens",
       "title": "Notice about upcoming new format for GitHub App installation tokens",
-      "titleJa": "",
+      "titleJa": "GitHub Appインストールトークンの新フォーマット予告",
       "titleEn": "Notice about upcoming new format for GitHub App installation tokens",
-      "summaryJa": "",
-      "summaryEn": "Starting April 27th 2026 and over the coming weeks, we will begin a staged rollout that updates the format of newly minted GitHub App installation tokens, making them more performant… The post Notice ",
+      "summaryJa": "GitHubは、GitHub Appのインストールトークンのフォーマットを近日中に変更すると予告した。トークンを保存・解析しているシステムは新フォーマットへの対応が必要となる。",
+      "summaryEn": "GitHub has announced an upcoming change to the format of GitHub App installation tokens. Systems that store or parse these tokens will need to be updated to support the new format.",
       "lang": "en",
       "publishedAt": "2026-04-24T21:49:19.000Z",
       "collectedAt": "2026-05-06T15:00:45.974Z",
       "tags": [
         "changelog",
-        "github"
+        "github",
+        "github-apps",
+        "authentication",
+        "tokens"
       ],
       "category": "copilot",
       "importance": 2
@@ -11093,19 +11168,21 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-04-24-changes-to-notification-retention-and-archived-repository-watches",
       "title": "Changes to notification retention and archived repository watches",
-      "titleJa": "",
+      "titleJa": "通知保持期間とアーカイブリポジトリのウォッチに関する変更",
       "titleEn": "Changes to notification retention and archived repository watches",
-      "summaryJa": "",
-      "summaryEn": "Two updates will change the way GitHub notifications and repository watches are retained. These updates are rolling out soon, and are expected to be completed over the next few months.… The post Chang",
+      "summaryJa": "GitHubは通知の保持期間と、アーカイブされたリポジトリのウォッチ挙動に関する仕様変更を発表。古い通知の自動削除や、アーカイブ済みリポジトリのウォッチ自動解除などが対象となり、ユーザーの通知管理体験に影響する。",
+      "summaryEn": "GitHub is updating its notification retention policy and changing how watches on archived repositories behave. Older notifications will be automatically removed and watches on archived repos will be unsubscribed, affecting user notification management.",
       "lang": "en",
       "publishedAt": "2026-04-24T20:16:31.000Z",
       "collectedAt": "2026-05-05T23:00:44.496Z",
       "tags": [
         "changelog",
-        "github"
+        "github",
+        "notifications",
+        "repositories"
       ],
       "category": "copilot",
-      "importance": 2
+      "importance": 1
     },
     {
       "id": "d95b198600767261",
@@ -11113,17 +11190,20 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-04-24-gpt-5-5-is-generally-available-for-github-copilot",
       "title": "GPT-5.5 is generally available for GitHub Copilot",
-      "titleJa": "",
+      "titleJa": "GitHub CopilotでGPT-5.5が一般提供開始",
       "titleEn": "GPT-5.5 is generally available for GitHub Copilot",
-      "summaryJa": "",
-      "summaryEn": "GPT-5.5, OpenAI’s latest GPT model, is now rolling out on GitHub Copilot. In our early testing, GPT-5.5 delivers its strongest performance on complex, multi-step agentic coding task and resolves real-",
+      "summaryJa": "GitHubは、GitHub Copilotで利用可能なAIモデルとしてGPT-5.5を一般提供開始したと発表した。すべての対象プランのユーザーがチャットやコード補完などで最新モデルを選択できるようになる。",
+      "summaryEn": "GitHub announced that GPT-5.5 is now generally available as a model option in GitHub Copilot, allowing users on eligible plans to select the latest model for chat and coding tasks.",
       "lang": "en",
       "publishedAt": "2026-04-24T17:19:34.000Z",
       "collectedAt": "2026-05-05T23:00:44.496Z",
       "tags": [
         "agent",
         "changelog",
-        "github"
+        "github",
+        "gpt-5-5",
+        "ai-models",
+        "openai"
       ],
       "category": "copilot",
       "importance": 2
@@ -11134,20 +11214,22 @@
       "sourceType": "release",
       "url": "https://github.com/OpenHands/OpenHands/releases/tag/cloud-1.23.0",
       "title": "cloud-1.23.0: fix: normalize legacy MCP config in migration 108 (#14116)",
-      "titleJa": "",
+      "titleJa": "cloud-1.23.0: マイグレーション108でレガシーMCP設定を正規化",
       "titleEn": "cloud-1.23.0: fix: normalize legacy MCP config in migration 108 (#14116)",
-      "summaryJa": "",
-      "summaryEn": "Co-authored-by: openhands openhands@all-hands.dev",
+      "summaryJa": "OpenHands Cloud 1.23.0がリリース。マイグレーション108において、レガシーなMCP（Model Context Protocol）設定を正規化する修正が含まれる。PR #14116にて対応。",
+      "summaryEn": "OpenHands Cloud 1.23.0 release includes a fix to normalize legacy MCP (Model Context Protocol) configurations within migration 108, addressed in PR #14116.",
       "lang": "en",
       "publishedAt": "2026-04-24T17:12:16.000Z",
       "collectedAt": "2026-05-07T09:00:38.821Z",
       "tags": [
         "mcp-server",
         "openhands",
-        "release"
+        "release",
+        "mcp",
+        "bugfix"
       ],
       "category": "opencode",
-      "importance": 2,
+      "importance": 1,
       "image": {
         "src": "https://avatars.githubusercontent.com/u/398875?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/u/398875?s=60&amp;v=4",
@@ -11163,19 +11245,20 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/v3.81.0",
       "title": "v3.81.0",
-      "titleJa": "",
+      "titleJa": "Cline v3.81.0 リリース",
       "titleEn": "v3.81.0",
-      "summaryJa": "",
-      "summaryEn": "Added Add GPT-5.5 model support for OpenAI Codex subscription users. Fixed Remove hardcoded \"What’s New\" fallback items in webview; only remote-configured welcome banners are shown. Changed Improve cl",
+      "summaryJa": "AIコーディングアシスタントClineのバージョン3.81.0がリリースされました。GitHub上で公開されており、機能追加やバグ修正などの通常アップデートが含まれています。",
+      "summaryEn": "Cline, the AI coding assistant, has released version 3.81.0 on GitHub. This is a routine update containing feature improvements and bug fixes.",
       "lang": "en",
       "publishedAt": "2026-04-24T15:53:06.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "cline",
-        "release"
+        "release",
+        "ai-coding"
       ],
       "category": "cline",
-      "importance": 3,
+      "importance": 1,
       "image": {
         "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
@@ -11191,19 +11274,21 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/v2.17.0-cli",
       "title": "v2.17.0-cli: version bump and changelog (#10395)",
-      "titleJa": "",
+      "titleJa": "Cline CLI v2.17.0 リリース：バージョン更新とチェンジログ",
       "titleEn": "v2.17.0-cli: version bump and changelog (#10395)",
-      "summaryJa": "",
-      "summaryEn": "Co-authored-by: Max Paulus 🥪 max@cline.bot",
+      "summaryJa": "Cline CLIのv2.17.0がリリースされました。バージョン番号の更新とチェンジログの反映が主な内容で、CLI機能の継続的な改善を含む通常のメンテナンスアップデートです。",
+      "summaryEn": "Cline CLI v2.17.0 has been released, primarily containing a version bump and changelog updates. This is a routine maintenance release continuing incremental improvements to the CLI tooling.",
       "lang": "en",
       "publishedAt": "2026-04-24T15:16:35.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "cline",
-        "release"
+        "release",
+        "cli",
+        "version-bump"
       ],
       "category": "cline",
-      "importance": 3,
+      "importance": 1,
       "image": {
         "src": "https://avatars.githubusercontent.com/u/4512696?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/u/4512696?s=60&amp;v=4",
@@ -11219,17 +11304,20 @@
       "sourceType": "blog",
       "url": "https://about.fb.com/news/2026/04/meta-partners-with-aws-on-graviton-chips-to-power-agentic-ai/",
       "title": "Meta Partners With AWS on Graviton Chips to Power Agentic AI",
-      "titleJa": "",
+      "titleJa": "MetaがAWSと提携、Gravitonチップでエージェント型AIを推進",
       "titleEn": "Meta Partners With AWS on Graviton Chips to Power Agentic AI",
-      "summaryJa": "",
-      "summaryEn": "We’re announcing an agreement with AWS to bring tens of millions of AWS Graviton cores into Meta's compute portfolio to support agentic AI workloads. The post Meta Partners With AWS on Graviton Chips ",
+      "summaryJa": "MetaはAWSと複数年契約を締結し、AWSのArmベースGravitonプロセッサを活用してエージェント型AIワークロードを強化する。これにより推論性能とコスト効率を改善し、大規模なAIサービス展開を加速する狙い。",
+      "summaryEn": "Meta has signed a multi-year deal with AWS to leverage Graviton Arm-based processors for powering its agentic AI workloads, aiming to improve inference performance and cost efficiency at scale.",
       "lang": "en",
       "publishedAt": "2026-04-24T12:00:38.000Z",
       "collectedAt": "2026-05-07T09:00:38.821Z",
       "tags": [
         "agent",
         "meta",
-        "news"
+        "news",
+        "aws",
+        "graviton",
+        "agentic-ai"
       ],
       "category": "tech-news",
       "importance": 2,
@@ -11248,10 +11336,10 @@
       "sourceType": "release",
       "url": "https://github.com/ollama/ollama/releases/tag/v0.21.2",
       "title": "v0.21.2",
-      "titleJa": "",
+      "titleJa": "Ollama v0.21.2リリース",
       "titleEn": "v0.21.2",
-      "summaryJa": "",
-      "summaryEn": "What's Changed Improved reliability of the OpenClaw onboarding flow in ollama launch Recommended models in ollama launch now appear in a fixed, canonical order OpenClaw integration now bundles Ollama'",
+      "summaryJa": "Ollamaのマイナーアップデートv0.21.2がリリースされた。ローカルLLM実行環境の継続的な改善を目的とした通常のメンテナンスリリースで、バグ修正や細かな改善が含まれる。",
+      "summaryEn": "Ollama has released v0.21.2, a minor maintenance update for its local LLM runtime environment, including bug fixes and small improvements as part of ongoing refinements.",
       "lang": "en",
       "publishedAt": "2026-04-24T04:25:16.000Z",
       "collectedAt": "2026-05-05T17:00:54.191Z",
@@ -11260,7 +11348,7 @@
         "release"
       ],
       "category": "local-llm",
-      "importance": 2,
+      "importance": 1,
       "image": {
         "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
@@ -11276,21 +11364,22 @@
       "sourceType": "blog",
       "url": "https://huggingface.co/blog/deepseekv4",
       "title": "DeepSeek-V4: a million-token context that agents can actually use",
-      "titleJa": "",
+      "titleJa": "DeepSeek-V4: エージェントが実用できる100万トークン文脈",
       "titleEn": "DeepSeek-V4: a million-token context that agents can actually use",
-      "summaryJa": "",
-      "summaryEn": "DeepSeek-V4: a million-token context that agents can actually use",
+      "summaryJa": "DeepSeek-V4は100万トークンの長大な文脈をエージェントが実際に活用できる形で提供することを目指す次世代モデル。長文処理とエージェント用途に最適化されており、ローカルLLMコミュニティで注目される。",
+      "summaryEn": "DeepSeek-V4 is positioned as a next-gen model offering a one-million-token context window that agents can actually leverage in practice, optimized for long-context and agentic workloads.",
       "lang": "en",
       "publishedAt": "2026-04-24T00:00:00.000Z",
       "collectedAt": "2026-05-07T12:00:38.164Z",
       "tags": [
         "huggingface",
-        "open-model"
+        "open-model",
+        "deepseek",
+        "long-context",
+        "agents"
       ],
       "category": "local-llm",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
+      "importance": 2
     },
     {
       "id": "29dfd675f0bf477c",
@@ -11298,20 +11387,52 @@
       "sourceType": "changelog",
       "url": "https://cursor.com/changelog/04-24-26",
       "title": "Multitask, Worktrees, and Multi-root Workspaces",
-      "titleJa": "",
+      "titleJa": "Cursorにマルチタスク・Worktrees・マルチルートワークスペース機能追加",
       "titleEn": "Multitask, Worktrees, and Multi-root Workspaces",
-      "summaryJa": "",
-      "summaryEn": "This release introduces a new way to multitask with async subagents, an improved worktrees experience, and multi-root workspaces for making cross-repo changes.",
+      "summaryJa": "Cursorに新機能が追加された。複数タスクの並行実行、Git Worktreesによる分離した作業環境、複数のフォルダを単一のワークスペースで扱えるマルチルートワークスペース対応により、開発の柔軟性と生産性が向上する。",
+      "summaryEn": "Cursor adds multitask support for running parallel tasks, Git worktrees for isolated working environments, and multi-root workspaces allowing multiple folders in a single workspace, improving development flexibility and productivity.",
       "lang": "en",
       "publishedAt": "2026-04-24T00:00:00.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "changelog",
         "cursor",
-        "release"
+        "release",
+        "multitask",
+        "git-worktrees",
+        "workspaces"
       ],
       "category": "cursor",
       "importance": 2
+    },
+    {
+      "id": "2221925e36314c81",
+      "source": "ollama-releases",
+      "sourceType": "release",
+      "url": "https://github.com/ollama/ollama/releases/tag/v0.21.2-rc1",
+      "title": "v0.21.2-rc1",
+      "titleJa": "Ollama v0.21.2 リリース候補版を公開",
+      "titleEn": "v0.21.2-rc1",
+      "summaryJa": "Ollamaのバージョンv0.21.2-rc1がリリースされた。通常のアップデートに該当するリリース候補版で、細かな改善や修正が含まれる見込み。正式版リリース前の検証段階に位置付けられる。",
+      "summaryEn": "Ollama has published v0.21.2-rc1, a release candidate version containing minor improvements and fixes ahead of the stable release.",
+      "lang": "en",
+      "publishedAt": "2026-04-23T23:47:20.000Z",
+      "collectedAt": "2026-05-05T13:00:55.300Z",
+      "tags": [
+        "ollama",
+        "release",
+        "release-candidate"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/29360864?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/29360864?s=60&amp;v=4",
+        "alt": "v0.21.2-rc1",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
     },
     {
       "id": "c5f4628b574f3904",
@@ -11319,19 +11440,23 @@
       "sourceType": "blog",
       "url": "https://blogs.nvidia.com/blog/openai-codex-gpt-5-5-ai-agents/",
       "title": "OpenAI’s New GPT-5.5 Powers Codex on NVIDIA Infrastructure — and NVIDIA Is Already Putting It to Work",
-      "titleJa": "",
+      "titleJa": "OpenAIの新GPT-5.5がNVIDIAインフラ上でCodexを駆動、NVIDIAも業務活用",
       "titleEn": "OpenAI’s New GPT-5.5 Powers Codex on NVIDIA Infrastructure — and NVIDIA Is Already Putting It to Work",
-      "summaryJa": "",
-      "summaryEn": "AI agents have revolutionized developer workflows, and their next frontier is knowledge work: processing information, solving complex problems, coming up with new ideas and driving innovation. Codex, ",
+      "summaryJa": "OpenAIが新モデルGPT-5.5を発表し、コーディング支援エージェントCodexをNVIDIAインフラ上で稼働させる。NVIDIA自身も社内開発workflowにCodexを導入し、AIエージェントによるソフトウェア開発の高速化を進めている。",
+      "summaryEn": "OpenAI unveiled GPT-5.5, powering its Codex coding agent on NVIDIA infrastructure. NVIDIA is already deploying Codex internally to accelerate software development workflows with AI agents.",
       "lang": "en",
       "publishedAt": "2026-04-23T18:57:55.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "news",
-        "nvidia"
+        "nvidia",
+        "openai",
+        "gpt-5-5",
+        "codex",
+        "ai-agents"
       ],
       "category": "tech-news",
-      "importance": 1
+      "importance": 2
     },
     {
       "id": "cae996d0403078a8",
@@ -11339,19 +11464,23 @@
       "sourceType": "blog",
       "url": "https://about.fb.com/news/2026/04/meta-account/",
       "title": "Meta Account: The Simpler Way to Access Your Apps and Devices",
-      "titleJa": "",
+      "titleJa": "Metaアカウント登場：アプリやデバイスへのアクセスをよりシンプルに",
       "titleEn": "Meta Account: The Simpler Way to Access Your Apps and Devices",
-      "summaryJa": "",
-      "summaryEn": "Accounts Center will automatically be updated to a Meta Account over the next year. Here's what to expect. The post Meta Account: The Simpler Way to Access Your Apps and Devices appeared first on Meta",
+      "summaryJa": "Metaは、複数のアプリやデバイスへ簡単にアクセスできる新しい「Metaアカウント」を発表した。これによりユーザーはFacebookアカウントを使わずにQuestやRay-Ban Metaなどの製品を利用でき、ログイン体験が統一・簡素化される。",
+      "summaryEn": "Meta introduced the new Meta Account, a unified login system that lets users access apps and devices like Quest and Ray-Ban Meta without needing a Facebook account, simplifying and streamlining the sign-in experience.",
       "lang": "en",
       "publishedAt": "2026-04-23T16:00:04.000Z",
       "collectedAt": "2026-05-07T09:00:38.821Z",
       "tags": [
         "meta",
-        "news"
+        "news",
+        "meta-account",
+        "quest",
+        "ray-ban-meta",
+        "login"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 2,
       "image": {
         "src": "https://about.fb.com/wp-content/uploads/2026/04/Meta-Account-Announcement_Thumbnail.jpg?fit=890%2C501",
         "origSrc": "https://about.fb.com/wp-content/uploads/2026/04/Meta-Account-Announcement_Thumbnail.jpg?fit=890%2C501",
@@ -11367,16 +11496,20 @@
       "sourceType": "blog",
       "url": "https://blogs.nvidia.com/blog/geforce-now-thursday-in-app-labels/",
       "title": "Tag, You’re It: GeForce NOW Levels Up Game Discovery With Xbox Game Pass and Ubisoft+ Labels",
-      "titleJa": "",
+      "titleJa": "GeForce NOW、Xbox Game PassとUbisoft+のラベル表示でゲーム発見を強化",
       "titleEn": "Tag, You’re It: GeForce NOW Levels Up Game Discovery With Xbox Game Pass and Ubisoft+ Labels",
-      "summaryJa": "",
-      "summaryEn": "GeForce NOW is doubling down on what matters most: gamers. This week’s upgrades bring smarter libraries, making it easier than ever for gamers to turn a PC collection into a cloud-powered flex. It sta",
+      "summaryJa": "NVIDIAはクラウドゲーミングサービスGeForce NOWに、Xbox Game PassおよびUbisoft+対応タイトルを示すアプリ内ラベルを追加した。ユーザーは対応サブスクで遊べるゲームを一目で識別可能となり、今週は新作7本も追加される。",
+      "summaryEn": "NVIDIA has added in-app labels to GeForce NOW that identify games available via Xbox Game Pass and Ubisoft+ subscriptions, making it easier for users to discover titles they can play. The update arrives alongside seven new games this week.",
       "lang": "en",
       "publishedAt": "2026-04-23T13:00:51.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "news",
-        "nvidia"
+        "nvidia",
+        "geforce-now",
+        "cloud-gaming",
+        "xbox-game-pass",
+        "ubisoft"
       ],
       "category": "tech-news",
       "importance": 1
@@ -11387,16 +11520,19 @@
       "sourceType": "blog",
       "url": "https://blogs.nvidia.com/blog/ai-gpu-early-universe-astronomy/",
       "title": "Making Sense of the Early Universe",
-      "titleJa": "",
+      "titleJa": "初期宇宙の謎をAIとGPUで解明する",
       "titleEn": "Making Sense of the Early Universe",
-      "summaryJa": "",
-      "summaryEn": "This Spring Astronomy Day, here’s a look at how AI and GPUs are helping astronomers work through unprecedented volumes of cosmic data.",
+      "summaryJa": "研究者らはNVIDIAのGPUとAIを活用し、初期宇宙の観測データを解析している。膨大な天文データから銀河形成や宇宙進化の手がかりを効率的に抽出し、宇宙論研究の加速を目指す取り組みが紹介されている。",
+      "summaryEn": "Researchers are leveraging NVIDIA GPUs and AI to analyze massive astronomical datasets, helping to understand galaxy formation and the evolution of the early universe more efficiently than traditional methods.",
       "lang": "en",
       "publishedAt": "2026-04-23T13:00:22.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "news",
-        "nvidia"
+        "nvidia",
+        "astronomy",
+        "ai-research",
+        "gpu-computing"
       ],
       "category": "tech-news",
       "importance": 1
@@ -11407,19 +11543,22 @@
       "sourceType": "blog",
       "url": "https://about.fb.com/news/2026/04/helping-parents-understand-conversations-their-teens-are-having-with-ai/",
       "title": "Helping Parents Understand the Conversations Their Teens Are Having With AI",
-      "titleJa": "",
+      "titleJa": "Meta、10代とAIの会話を親が把握できる新機能を発表",
       "titleEn": "Helping Parents Understand the Conversations Their Teens Are Having With AI",
-      "summaryJa": "",
-      "summaryEn": "We're introducing new tools for parents supervising Teen Accounts to help them understand how their teens are using AI. The post Helping Parents Understand the Conversations Their Teens Are Having Wit",
+      "summaryJa": "Metaは、ティーンがAIキャラクターと交わす会話のトピックを保護者が確認できる新たな管理機能を導入する。特定のAIキャラクターをブロックする機能も提供し、10代のAI利用に関する親の不安軽減を図る。",
+      "summaryEn": "Meta is rolling out new parental controls that let parents see the topics their teens discuss with AI characters and block specific AI characters, aiming to give families more oversight of teen AI interactions.",
       "lang": "en",
       "publishedAt": "2026-04-23T11:00:17.000Z",
       "collectedAt": "2026-05-07T09:00:38.821Z",
       "tags": [
         "meta",
-        "news"
+        "news",
+        "ai-safety",
+        "parental-controls",
+        "teens"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 2,
       "image": {
         "src": "https://about.fb.com/wp-content/uploads/2026/04/AI-Youth-Saftey_Header.jpg?fit=1920%2C1080",
         "origSrc": "https://about.fb.com/wp-content/uploads/2026/04/AI-Youth-Saftey_Header.jpg?fit=1920%2C1080",
@@ -11435,22 +11574,52 @@
       "sourceType": "blog",
       "url": "https://huggingface.co/blog/transformersjs-chrome-extension",
       "title": "How to Use Transformers.js in a Chrome Extension",
-      "titleJa": "",
+      "titleJa": "Chrome拡張機能でTransformers.jsを使う方法",
       "titleEn": "How to Use Transformers.js in a Chrome Extension",
-      "summaryJa": "",
-      "summaryEn": "How to Use Transformers.js in a Chrome Extension",
+      "summaryJa": "HuggingFaceがTransformers.jsをChrome拡張機能に組み込むチュートリアルを公開。ブラウザ上でローカルにAIモデルを実行する方法を、サンプルコードとともにステップバイステップで解説している。",
+      "summaryEn": "Hugging Face published a tutorial on integrating Transformers.js into a Chrome extension, providing a step-by-step guide with sample code for running AI models locally in the browser.",
       "lang": "en",
       "publishedAt": "2026-04-23T00:00:00.000Z",
       "collectedAt": "2026-05-07T12:00:38.164Z",
       "tags": [
         "huggingface",
         "open-model",
-        "tutorial"
+        "tutorial",
+        "transformers-js",
+        "chrome-extension",
+        "browser-ai"
+      ],
+      "category": "local-llm",
+      "importance": 1
+    },
+    {
+      "id": "4dfe42763b761f3e",
+      "source": "ollama-releases",
+      "sourceType": "release",
+      "url": "https://github.com/ollama/ollama/releases/tag/v0.21.2-rc0",
+      "title": "v0.21.2-rc0",
+      "titleJa": "Ollama v0.21.2-rc0 リリース候補版公開",
+      "titleEn": "v0.21.2-rc0",
+      "summaryJa": "ローカルLLM実行ツールOllamaのリリース候補版v0.21.2-rc0が公開された。正式リリース前のテスト版であり、バグ修正や細かな改善が含まれると見られる。",
+      "summaryEn": "Ollama has published release candidate v0.21.2-rc0, a pre-release version of its local LLM runtime intended for testing ahead of the stable release, likely containing bug fixes and minor improvements.",
+      "lang": "en",
+      "publishedAt": "2026-04-22T23:34:19.000Z",
+      "collectedAt": "2026-05-03T01:01:09.931Z",
+      "tags": [
+        "ollama",
+        "release",
+        "release-candidate"
       ],
       "category": "local-llm",
       "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm"
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/29360864?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/29360864?s=60&amp;v=4",
+        "alt": "v0.21.2-rc0",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
     },
     {
       "id": "32d9c380a0751a22",
@@ -11458,24 +11627,56 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/v3.80.0",
       "title": "v3.80.0",
-      "titleJa": "",
+      "titleJa": "Cline v3.80.0 リリース",
       "titleEn": "v3.80.0",
-      "summaryJa": "",
-      "summaryEn": "Added Wire up remote globalSkills from enterprise remote config with full UI, toggle support, and system prompt integration — enterprise-managed skills now appear under a dedicated \"Enterprise Skills\"",
+      "summaryJa": "CleのAIコーディングアシスタントCline v3.80.0がリリース。通常のマイナーバージョン更新で、機能追加やバグ修正が含まれる。詳細はGitHubリリースノートを参照。",
+      "summaryEn": "Cline v3.80.0 has been released as a routine minor update to the AI coding assistant, including feature additions and bug fixes. See the GitHub release notes for details.",
       "lang": "en",
       "publishedAt": "2026-04-22T18:38:12.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "cline",
         "enterprise",
-        "release"
+        "release",
+        "ai-coding",
+        "vscode-extension"
       ],
       "category": "cline",
-      "importance": 3,
+      "importance": 1,
       "image": {
         "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
         "alt": "v3.80.0",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "21d82f84ea80dc98",
+      "source": "ollama-releases",
+      "sourceType": "release",
+      "url": "https://github.com/ollama/ollama/releases/tag/v0.21.1",
+      "title": "v0.21.1",
+      "titleJa": "Ollama v0.21.1 リリース",
+      "titleEn": "v0.21.1",
+      "summaryJa": "Ollamaのマイナーアップデート版v0.21.1がリリースされた。バグ修正や小規模な改善が含まれる通常更新であり、ローカルLLM実行環境の安定性向上を目的としている。",
+      "summaryEn": "Ollama released v0.21.1, a minor patch update containing bug fixes and small improvements aimed at enhancing the stability of the local LLM runtime environment.",
+      "lang": "en",
+      "publishedAt": "2026-04-22T18:32:50.000Z",
+      "collectedAt": "2026-05-03T01:01:09.931Z",
+      "tags": [
+        "agent",
+        "ollama",
+        "release",
+        "patch-release"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "v0.21.1",
         "width": 0,
         "height": 0,
         "source": "media"
@@ -11487,19 +11688,21 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/v2.16.0-cli",
       "title": "v2.16.0-cli: update changelog (#10356)",
-      "titleJa": "",
+      "titleJa": "Cline CLI v2.16.0 リリース: チェンジログ更新",
       "titleEn": "v2.16.0-cli: update changelog (#10356)",
-      "summaryJa": "",
-      "summaryEn": "Co-authored-by: Max Paulus 🥪 max@cline.bot",
+      "summaryJa": "Cline の CLI 版である v2.16.0-cli がリリースされ、チェンジログが更新された。通常のメンテナンスアップデートで、詳細な変更内容は GitHub リリースページで確認できる。",
+      "summaryEn": "Cline released v2.16.0-cli with an updated changelog. This is a routine maintenance update for the CLI version, with details available on the GitHub releases page.",
       "lang": "en",
       "publishedAt": "2026-04-22T18:03:35.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "cline",
-        "release"
+        "release",
+        "cli",
+        "changelog"
       ],
       "category": "cline",
-      "importance": 3,
+      "importance": 1,
       "image": {
         "src": "https://avatars.githubusercontent.com/u/4512696?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/u/4512696?s=60&amp;v=4",
@@ -11515,19 +11718,22 @@
       "sourceType": "blog",
       "url": "https://about.fb.com/news/2026/04/threads-live-chats/",
       "title": "Live Chats on Threads: Because Big Moments Are Better Together",
-      "titleJa": "",
+      "titleJa": "Threadsにライブチャット機能が登場、大事な瞬間を仲間と共有",
       "titleEn": "Live Chats on Threads: Because Big Moments Are Better Together",
-      "summaryJa": "",
-      "summaryEn": "Creators and fans can now connect in real-time, public group conversations during the biggest cultural events. The post Live Chats on Threads: Because Big Moments Are Better Together appeared first on",
+      "summaryJa": "Metaは、Threadsで最大の盛り上がりを共有できる新機能「ライブチャット」を発表した。ユーザーはリアルタイムでテキストベースの会話に参加でき、スポーツやイベントなどの大きな瞬間を友人やフォロワーと一緒に楽しむことができる。",
+      "summaryEn": "Meta announced Live Chats on Threads, a new feature enabling users to join real-time text-based conversations around big moments like sports and events, making it easier to share and discuss experiences with friends and followers.",
       "lang": "en",
       "publishedAt": "2026-04-22T17:00:40.000Z",
       "collectedAt": "2026-05-07T09:00:38.821Z",
       "tags": [
         "meta",
-        "news"
+        "news",
+        "threads",
+        "live-chats",
+        "social-media"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 2,
       "image": {
         "src": "https://about.fb.com/wp-content/uploads/2026/04/Threads-Live-Chats_Header.jpg?fit=1920%2C1080",
         "origSrc": "https://about.fb.com/wp-content/uploads/2026/04/Threads-Live-Chats_Header.jpg?fit=1920%2C1080",
@@ -11543,19 +11749,24 @@
       "sourceType": "blog",
       "url": "https://huggingface.co/blog/nvidia/gemma4",
       "title": "Gemma 4 VLA Demo on Jetson Orin Nano Super",
-      "titleJa": "",
+      "titleJa": "Jetson Orin Nano SuperでGemma 4 VLAデモを実行",
       "titleEn": "Gemma 4 VLA Demo on Jetson Orin Nano Super",
-      "summaryJa": "",
-      "summaryEn": "Gemma 4 VLA Demo on Jetson Orin Nano Super",
+      "summaryJa": "NVIDIAがJetson Orin Nano Super上でGemma 4ベースのVision-Language-Action (VLA) モデルを動作させるデモを公開。エッジデバイスでのロボティクス向け視覚・言語・行動統合モデルの実行方法を紹介している。",
+      "summaryEn": "NVIDIA demonstrates running a Gemma 4-based Vision-Language-Action (VLA) model on the Jetson Orin Nano Super, showcasing how to deploy multimodal robotics models on edge devices.",
       "lang": "en",
       "publishedAt": "2026-04-22T15:40:50.000Z",
       "collectedAt": "2026-04-28T00:00:36.199Z",
       "tags": [
         "huggingface",
-        "open-model"
+        "open-model",
+        "gemma",
+        "jetson",
+        "vla",
+        "robotics",
+        "edge-ai"
       ],
       "category": "local-llm",
-      "importance": 1
+      "importance": 2
     },
     {
       "id": "a5deec4e645021a3",
@@ -11563,16 +11774,19 @@
       "sourceType": "blog",
       "url": "https://about.fb.com/news/2026/04/one-year-of-edits-built-for-and-with-creators/",
       "title": "One Year of Edits: Built For and With Creators",
-      "titleJa": "",
+      "titleJa": "Edits1周年: クリエイターと共に築いた動画編集アプリ",
       "titleEn": "One Year of Edits: Built For and With Creators",
-      "summaryJa": "",
-      "summaryEn": "As we mark the first year of building Edits, we're sharing a look back and a preview of what we’re excited to build next. The post One Year of Edits: Built For and With Creators appeared first on Meta",
+      "summaryJa": "Metaは動画編集アプリ「Edits」のリリース1周年を迎え、クリエイターの声を反映した新機能の追加や改善を報告。クリエイターと共に作り上げてきた成果を振り返り、今後のさらなる進化への取り組みを強調している。",
+      "summaryEn": "Meta celebrates the first anniversary of its video editing app Edits, highlighting new features and improvements built in collaboration with creators and outlining plans for continued evolution.",
       "lang": "en",
       "publishedAt": "2026-04-22T15:00:28.000Z",
       "collectedAt": "2026-05-07T09:00:38.821Z",
       "tags": [
         "meta",
-        "news"
+        "news",
+        "edits",
+        "video-editing",
+        "creators"
       ],
       "category": "tech-news",
       "importance": 1,
@@ -11591,16 +11805,20 @@
       "sourceType": "blog",
       "url": "https://blogs.nvidia.com/blog/earth-day-2026-ai-accelerated-computing/",
       "title": "From Rainforests to Recycling Plants: 5 Ways NVIDIA AI Is Protecting the Planet",
-      "titleJa": "",
+      "titleJa": "熱帯雨林からリサイクル工場まで:NVIDIA AIが地球を守る5つの方法",
       "titleEn": "From Rainforests to Recycling Plants: 5 Ways NVIDIA AI Is Protecting the Planet",
-      "summaryJa": "",
-      "summaryEn": "Across climate, conservation, disaster monitoring and recycling, NVIDIA AI is enabling applications protecting the planet.",
+      "summaryJa": "NVIDIAは地球の日に合わせ、AIと高速計算が環境保護にどう貢献しているかを紹介。熱帯雨林の監視、野生動物保護、リサイクル工程の最適化、気候モデリング、持続可能な製造など5つの活用事例を取り上げている。",
+      "summaryEn": "For Earth Day, NVIDIA highlights five ways its AI and accelerated computing help protect the planet, including rainforest monitoring, wildlife conservation, recycling optimization, climate modeling, and sustainable manufacturing.",
       "lang": "en",
       "publishedAt": "2026-04-22T13:00:42.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "news",
-        "nvidia"
+        "nvidia",
+        "sustainability",
+        "earth-day",
+        "climate-ai",
+        "conservation"
       ],
       "category": "tech-news",
       "importance": 1
@@ -11611,20 +11829,23 @@
       "sourceType": "blog",
       "url": "https://blogs.nvidia.com/blog/google-cloud-agentic-physical-ai-factories/",
       "title": "NVIDIA and Google Cloud Collaborate to Advance Agentic and Physical AI",
-      "titleJa": "",
+      "titleJa": "NVIDIAとGoogle Cloud、エージェント型・物理AIの推進で提携を拡大",
       "titleEn": "NVIDIA and Google Cloud Collaborate to Advance Agentic and Physical AI",
-      "summaryJa": "",
-      "summaryEn": "NVIDIA and Google Cloud have collaborated for more than a decade, co‑engineering a full‑stack AI platform that spans every technology layer — from performance‑optimized libraries and frameworks to ent",
+      "summaryJa": "NVIDIAとGoogle Cloudは、エージェント型AIと物理AIの発展に向けた協業を拡大。Google CloudにNVIDIA最新GPUを導入し、AIファクトリーやロボティクス、産業シミュレーション分野でのイノベーションを加速する。",
+      "summaryEn": "NVIDIA and Google Cloud are expanding their partnership to advance agentic and physical AI, bringing NVIDIA's latest GPUs to Google Cloud and accelerating innovation across AI factories, robotics, and industrial simulation.",
       "lang": "en",
       "publishedAt": "2026-04-22T12:00:42.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "agent",
         "news",
-        "nvidia"
+        "nvidia",
+        "google-cloud",
+        "agentic-ai",
+        "physical-ai"
       ],
       "category": "tech-news",
-      "importance": 1
+      "importance": 2
     },
     {
       "id": "6443f6ef3e1887b4",
@@ -11632,21 +11853,22 @@
       "sourceType": "blog",
       "url": "https://deepmind.google/blog/decoupled-diloco/",
       "title": "Decoupled DiLoCo: A new frontier for resilient, distributed AI training",
-      "titleJa": "",
+      "titleJa": "Decoupled DiLoCo: 分散AI学習の新境地",
       "titleEn": "Decoupled DiLoCo: A new frontier for resilient, distributed AI training",
-      "summaryJa": "",
-      "summaryEn": "Decoupled DiLoCo: A new frontier for resilient, distributed AI training",
+      "summaryJa": "Google DeepMindは、分散AI学習を効率化する新手法Decoupled DiLoCoを発表。ノード間通信を分離することで、耐障害性を高め、地理的に分散した環境でも大規模モデルの学習を可能にする。",
+      "summaryEn": "Google DeepMind introduces Decoupled DiLoCo, a new distributed AI training method that separates inter-node communication to improve resilience and enable large-scale model training across geographically distributed compute.",
       "lang": "en",
       "publishedAt": "2026-04-22T10:20:03.000Z",
       "collectedAt": "2026-05-07T12:00:38.164Z",
       "tags": [
         "deepmind",
-        "google"
+        "google",
+        "distributed-training",
+        "diloco",
+        "deepmind-research"
       ],
       "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
+      "importance": 2,
       "image": {
         "src": "https://lh3.googleusercontent.com/1-K_kcmoX-fIzTJ13T0-uF4gylS2tK00ZVvx87B2WSayzUS2fxDoDDXFq5hOhxptrBeG8AbjG_URN5OOTpGMqad9zILjMsTdAHWroiDKpziBQjzErw=w528-h297-n-nu-rw-lo",
         "origSrc": "https://lh3.googleusercontent.com/1-K_kcmoX-fIzTJ13T0-uF4gylS2tK00ZVvx87B2WSayzUS2fxDoDDXFq5hOhxptrBeG8AbjG_URN5OOTpGMqad9zILjMsTdAHWroiDKpziBQjzErw=w528-h297-n-nu-rw-lo",
@@ -11662,20 +11884,50 @@
       "sourceType": "blog",
       "url": "https://dora.dev/insights/quickcheck-updates/",
       "title": "Quick Check updates",
-      "titleJa": "",
+      "titleJa": "DORA Quick Checkの最新アップデート",
       "titleEn": "Quick Check updates",
-      "summaryJa": "",
-      "summaryEn": "The DORA Quick Check was recently updated to include deployment rework rate and the latest industry benchmarks. Measure your team’s software delivery performance and compare it to the rest of the indu",
+      "summaryJa": "DORAは、チームのソフトウェアデリバリーパフォーマンスを診断するQuick Checkツールを更新した。最新の研究知見を反映し、質問項目やフィードバックを改善して、より実用的な改善示唆を提供する。",
+      "summaryEn": "DORA has updated its Quick Check tool, which helps teams assess their software delivery performance, incorporating the latest research findings with refined questions and improved feedback for more actionable insights.",
       "lang": "en",
       "publishedAt": "2026-04-22T00:00:00.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "devops",
         "dora",
-        "research"
+        "research",
+        "quick-check"
       ],
       "category": "research",
       "importance": 1
+    },
+    {
+      "id": "d6ea05781972e0db",
+      "source": "ollama-releases",
+      "sourceType": "release",
+      "url": "https://github.com/ollama/ollama/releases/tag/v0.21.1-rc1",
+      "title": "v0.21.1-rc1",
+      "titleJa": "Ollama v0.21.1-rc1 リリース候補版が公開",
+      "titleEn": "v0.21.1-rc1",
+      "summaryJa": "Ollamaのバージョン0.21.1-rc1がリリース候補として公開された。正式版に向けたテスト用ビルドで、マイナーアップデートに位置づけられる。詳細な変更点はリリースノートに記載されている。",
+      "summaryEn": "Ollama has published v0.21.1-rc1 as a release candidate for testing ahead of the official minor update. Detailed changes are available in the release notes on GitHub.",
+      "lang": "en",
+      "publishedAt": "2026-04-21T22:13:20.000Z",
+      "collectedAt": "2026-04-30T01:00:36.556Z",
+      "tags": [
+        "ollama",
+        "release",
+        "release-candidate"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/29360864?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/29360864?s=60&amp;v=4",
+        "alt": "v0.21.1-rc1",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
     },
     {
       "id": "42f2fecd4c9384d5",
@@ -11683,19 +11935,21 @@
       "sourceType": "blog",
       "url": "https://about.fb.com/news/2026/04/breaking-ground-new-ai-optimized-data-center-tulsa-oklahoma/",
       "title": "Breaking Ground on a New AI-Optimized Data Center in Tulsa, Oklahoma",
-      "titleJa": "",
+      "titleJa": "Meta、オクラホマ州TulsaにAI最適化データセンターを着工",
       "titleEn": "Breaking Ground on a New AI-Optimized Data Center in Tulsa, Oklahoma",
-      "summaryJa": "",
-      "summaryEn": "We're breaking ground on a new AI-optimized data center in Tulsa, Oklahoma. The post Breaking Ground on a New AI-Optimized Data Center in Tulsa, Oklahoma appeared first on Meta Newsroom .",
+      "summaryJa": "Metaがオクラホマ州Tulsaで新たなAI最適化データセンターの建設を開始した。同施設はMetaのAIインフラ拡張の一環で、地域雇用の創出と経済効果をもたらす見込み。再生可能エネルギー活用や地域貢献も計画されている。",
+      "summaryEn": "Meta has broken ground on a new AI-optimized data center in Tulsa, Oklahoma, expanding its AI infrastructure footprint. The facility is expected to create jobs, boost the local economy, and operate with renewable energy and community investment commitments.",
       "lang": "en",
       "publishedAt": "2026-04-21T20:30:39.000Z",
       "collectedAt": "2026-05-07T09:00:38.821Z",
       "tags": [
         "meta",
-        "news"
+        "news",
+        "data-center",
+        "ai-infrastructure"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 2,
       "image": {
         "src": "https://about.fb.com/wp-content/uploads/2026/04/Tulsa-Oklahoma-_Header.gif?fit=960%2C540",
         "origSrc": "https://about.fb.com/wp-content/uploads/2026/04/Tulsa-Oklahoma-_Header.gif?fit=960%2C540",
@@ -11711,21 +11965,22 @@
       "sourceType": "blog",
       "url": "https://deepmind.google/blog/partnering-with-industry-leaders-to-accelerate-ai-transformation/",
       "title": "Partnering with industry leaders to accelerate AI transformation",
-      "titleJa": "",
+      "titleJa": "業界リーダーとの提携によりAI変革を加速",
       "titleEn": "Partnering with industry leaders to accelerate AI transformation",
-      "summaryJa": "",
-      "summaryEn": "Google DeepMind partners with global consultancies to bring the power of frontier AI to organizations around the world.",
+      "summaryJa": "GoogleはGeminiを基盤に主要企業との提携を拡大し、AI活用による業務変革を加速。各業界のリーダー企業が生成AIを導入し、生産性向上や新たな顧客体験の創出を推進していることを紹介している。",
+      "summaryEn": "Google announces expanded partnerships with industry leaders to accelerate AI transformation using Gemini, highlighting enterprise adoption driving productivity gains and new customer experiences across sectors.",
       "lang": "en",
       "publishedAt": "2026-04-21T14:54:15.000Z",
       "collectedAt": "2026-05-07T12:00:38.164Z",
       "tags": [
         "deepmind",
-        "google"
+        "google",
+        "enterprise-ai",
+        "partnerships",
+        "gemini"
       ],
       "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
+      "importance": 2,
       "image": {
         "src": "https://lh3.googleusercontent.com/t9KvGjgjHJMLDqzAzXuDUOXFI4IlnMiYLhRmxohCRvB1qGSr8-8-TDEI24qk8ilY4OzRB2et5dSlWOjMs6lm-R718xmtQwdiGBxOO7VjxBfMq4a3yoI=w528-h297-n-nu-rw-lo",
         "origSrc": "https://lh3.googleusercontent.com/t9KvGjgjHJMLDqzAzXuDUOXFI4IlnMiYLhRmxohCRvB1qGSr8-8-TDEI24qk8ilY4OzRB2et5dSlWOjMs6lm-R718xmtQwdiGBxOO7VjxBfMq4a3yoI=w528-h297-n-nu-rw-lo",
@@ -11741,21 +11996,23 @@
       "sourceType": "blog",
       "url": "https://huggingface.co/blog/tiiuae/qimma-arabic-leaderboard",
       "title": "QIMMA قِمّة ⛰: A Quality-First Arabic LLM Leaderboard",
-      "titleJa": "",
+      "titleJa": "QIMMA قِمّة:品質重視のアラビア語LLMリーダーボード",
       "titleEn": "QIMMA قِمّة ⛰: A Quality-First Arabic LLM Leaderboard",
-      "summaryJa": "",
-      "summaryEn": "QIMMA قِمّة ⛰: A Quality-First Arabic LLM Leaderboard",
+      "summaryJa": "TIIがアラビア語LLMの品質評価に特化した新リーダーボード「QIMMA」を公開。量より質を重視し、流暢さや文化的適合性など多面的な基準でモデルを評価する仕組みを提供する。",
+      "summaryEn": "TII launched QIMMA, a new Arabic LLM leaderboard prioritizing quality over quantity, evaluating models on fluency, cultural alignment, and multiple nuanced criteria tailored for Arabic.",
       "lang": "en",
       "publishedAt": "2026-04-21T10:09:58.000Z",
       "collectedAt": "2026-05-07T12:00:38.164Z",
       "tags": [
         "huggingface",
-        "open-model"
+        "open-model",
+        "arabic-llm",
+        "leaderboard",
+        "tii",
+        "evaluation"
       ],
       "category": "local-llm",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm"
+      "importance": 2
     },
     {
       "id": "9c474bcfa06e12b1",
@@ -11763,16 +12020,19 @@
       "sourceType": "blog",
       "url": "https://huggingface.co/blog/cybersecurity-openness",
       "title": "AI and the Future of Cybersecurity: Why Openness Matters",
-      "titleJa": "",
+      "titleJa": "AIとサイバーセキュリティの未来:なぜオープン性が重要か",
       "titleEn": "AI and the Future of Cybersecurity: Why Openness Matters",
-      "summaryJa": "",
-      "summaryEn": "AI and the Future of Cybersecurity: Why Openness Matters",
+      "summaryJa": "Hugging Faceがサイバーセキュリティ分野におけるAIのオープン性の重要性を論じた記事。クローズドなAIシステムの危険性を指摘し、透明性と協調的なオープンソース開発がセキュリティ強化と脅威対応に不可欠であると主張している。",
+      "summaryEn": "Hugging Face argues that openness in AI is critical for cybersecurity, warning against closed systems and advocating transparent, collaborative open-source development to strengthen defenses and respond to evolving threats.",
       "lang": "en",
       "publishedAt": "2026-04-21T00:00:00.000Z",
       "collectedAt": "2026-05-07T12:00:38.164Z",
       "tags": [
         "huggingface",
-        "open-model"
+        "open-model",
+        "cybersecurity",
+        "open-source",
+        "ai-policy"
       ],
       "category": "local-llm",
       "importance": 1,
@@ -11785,19 +12045,22 @@
       "sourceType": "blog",
       "url": "https://www.apple.com/newsroom/2026/04/tim-cook-to-become-apple-executive-chairman-john-ternus-to-become-apple-ceo/",
       "title": "Tim Cook to become Apple Executive Chairman John Ternus to become Apple CEO",
-      "titleJa": "",
+      "titleJa": "Tim CookがApple会長に、John TernusがApple CEOに就任へ",
       "titleEn": "Tim Cook to become Apple Executive Chairman John Ternus to become Apple CEO",
-      "summaryJa": "",
-      "summaryEn": "Apple announced Tim Cook will become executive chairman of Apple’s board of directors and John Ternus will become Apple’s next CEO.",
+      "summaryJa": "AppleはTim Cookが執行会長(Executive Chairman)に就任し、ハードウェアエンジニアリング担当上級副社長のJohn Ternusが新CEOに就任すると発表した。長年の後継者計画に基づく大規模な経営体制の転換となる。",
+      "summaryEn": "Apple announced that Tim Cook will transition to Executive Chairman, with Senior VP of Hardware Engineering John Ternus succeeding him as CEO. The move marks a major leadership transition following Apple's long-planned succession strategy.",
       "lang": "en",
       "publishedAt": "2026-04-20T20:37:37.280Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
       "tags": [
         "apple",
-        "news"
+        "news",
+        "leadership",
+        "tim-cook",
+        "john-ternus"
       ],
       "category": "tech-news",
-      "importance": 1
+      "importance": 3
     },
     {
       "id": "677364d2a7ed64e0",
@@ -11805,19 +12068,22 @@
       "sourceType": "blog",
       "url": "https://www.apple.com/newsroom/2026/04/johny-srouji-named-apples-chief-hardware-officer/",
       "title": "Johny Srouji named Apple’s Chief Hardware Officer",
-      "titleJa": "",
+      "titleJa": "Johny Srouji、Appleのチーフハードウェアオフィサーに就任",
       "titleEn": "Johny Srouji named Apple’s Chief Hardware Officer",
-      "summaryJa": "",
-      "summaryEn": "Apple today announced that, effective immediately, Apple executive Johny Srouji will become chief hardware officer.",
+      "summaryJa": "AppleはJohny Srouji氏を新設のチーフハードウェアオフィサー（CHO）に任命した。同氏は2008年の入社以来、AシリーズやMシリーズなど自社設計シリコンの開発を主導してきた人物で、今後はハードウェア全般を統括する。",
+      "summaryEn": "Apple has named Johny Srouji as its new Chief Hardware Officer. Srouji, who joined Apple in 2008 and led the development of its custom A-series and M-series silicon, will now oversee the company's entire hardware organization.",
       "lang": "en",
       "publishedAt": "2026-04-20T20:31:30.514Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
       "tags": [
         "apple",
-        "news"
+        "news",
+        "executive",
+        "hardware",
+        "apple-silicon"
       ],
       "category": "tech-news",
-      "importance": 1
+      "importance": 2
     },
     {
       "id": "311e009dfd9c30b2",
@@ -11825,10 +12091,10 @@
       "sourceType": "blog",
       "url": "https://aws.amazon.com/blogs/aws/aws-weekly-roundup-claude-opus-4-7-in-amazon-bedrock-aws-interconnect-ga-and-more-april-20-2026/",
       "title": "AWS Weekly Roundup: Claude Opus 4.7 in Amazon Bedrock, AWS Interconnect GA, and more (April 20, 2026)",
-      "titleJa": "",
+      "titleJa": "AWS週刊まとめ: Amazon BedrockでClaude Opus 4.7、AWS Interconnect GAほか (2026年4月20日)",
       "titleEn": "AWS Weekly Roundup: Claude Opus 4.7 in Amazon Bedrock, AWS Interconnect GA, and more (April 20, 2026)",
-      "summaryJa": "",
-      "summaryEn": "Claude Opus 4.7 arrives in Amazon Bedrock with improved agentic coding and a 1M token context window. AWS Interconnect reaches general availability with multicloud private connectivity and a new last-",
+      "summaryJa": "AWSの週刊アップデート。Amazon BedrockでAnthropicのClaude Opus 4.7が利用可能になり、AWS Interconnectが一般提供を開始。その他、主要なサービス更新やイベント情報がまとめられている。",
+      "summaryEn": "AWS weekly roundup highlighting the availability of Anthropic's Claude Opus 4.7 in Amazon Bedrock, the general availability of AWS Interconnect, and other notable service updates and community events.",
       "lang": "en",
       "publishedAt": "2026-04-20T15:53:21.000Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
@@ -11837,7 +12103,11 @@
         "amazon",
         "aws",
         "news",
-        "release"
+        "release",
+        "amazon-bedrock",
+        "claude",
+        "anthropic",
+        "aws-interconnect"
       ],
       "category": "tech-news",
       "importance": 2
@@ -11848,16 +12118,20 @@
       "sourceType": "blog",
       "url": "https://about.fb.com/news/2026/04/meta-cbre-invest-in-american-jobs-new-fiber-technician-training-program/",
       "title": "Meta and CBRE Invest in American Jobs Through New Fiber Technician Training Program",
-      "titleJa": "",
+      "titleJa": "MetaとCBRE、米国で光ファイバー技術者育成プログラムを開始",
       "titleEn": "Meta and CBRE Invest in American Jobs Through New Fiber Technician Training Program",
-      "summaryJa": "",
-      "summaryEn": "The LevelUp Fiber Technician Pathway is a training program designed to prepare people to fill fiber technician jobs at US data centers and our construction sites. The post Meta and CBRE Invest in Amer",
+      "summaryJa": "MetaとCBREが共同で、米国の雇用創出を目的とした新しい光ファイバー技術者トレーニングプログラムに投資する。AIやデータセンターの拡大を支えるインフラ人材を育成し、地域経済の活性化を図る狙い。",
+      "summaryEn": "Meta and CBRE are investing in a new fiber technician training program in the US to build a skilled workforce supporting data center and AI infrastructure expansion, creating American jobs.",
       "lang": "en",
       "publishedAt": "2026-04-20T13:00:55.000Z",
       "collectedAt": "2026-05-05T09:01:01.415Z",
       "tags": [
         "meta",
-        "news"
+        "news",
+        "cbre",
+        "workforce",
+        "fiber",
+        "data-center"
       ],
       "category": "tech-news",
       "importance": 1,
@@ -11876,20 +12150,24 @@
       "sourceType": "blog",
       "url": "https://blogs.nvidia.com/blog/adobe-ai-agents-nvidia-wpp/",
       "title": "Autonomous AI at Scale: Adobe Agents Unlock Breakthrough Creative Intelligence With NVIDIA and WPP",
-      "titleJa": "",
+      "titleJa": "Adobe、NVIDIAとWPPと連携し自律型AIエージェントでクリエイティブ制作を革新",
       "titleEn": "Autonomous AI at Scale: Adobe Agents Unlock Breakthrough Creative Intelligence With NVIDIA and WPP",
-      "summaryJa": "",
-      "summaryEn": "AI agents are transforming how work gets done across all industries, accelerating everything from content creation to decision-making. NVIDIA’s expanded strategic collaborations with Adobe and WPP are",
+      "summaryJa": "AdobeはNVIDIAおよびWPPと協業し、自律型AIエージェントを活用した大規模なクリエイティブインテリジェンス基盤を発表した。Adobe Express等のツールにエージェント機能を統合し、ブランド向けコンテンツ制作の自動化と高速化を実現する。",
+      "summaryEn": "Adobe announced a partnership with NVIDIA and WPP to deploy autonomous AI agents at scale, integrating agentic capabilities into tools like Adobe Express to automate and accelerate brand content creation for enterprises.",
       "lang": "en",
       "publishedAt": "2026-04-20T13:00:50.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "agent",
         "news",
-        "nvidia"
+        "nvidia",
+        "adobe",
+        "wpp",
+        "ai-agents",
+        "creative-ai"
       ],
       "category": "tech-news",
-      "importance": 1
+      "importance": 2
     },
     {
       "id": "7b7db187d9f13e7c",
@@ -11897,19 +12175,23 @@
       "sourceType": "blog",
       "url": "https://blogs.nvidia.com/blog/ai-manufacturing-hannover-messe/",
       "title": "NVIDIA and Partners Showcase the Future of AI-Driven Manufacturing at Hannover Messe 2026",
-      "titleJa": "",
+      "titleJa": "NVIDIAとパートナー、Hannover Messe 2026でAI駆動製造の未来を展示",
       "titleEn": "NVIDIA and Partners Showcase the Future of AI-Driven Manufacturing at Hannover Messe 2026",
-      "summaryJa": "",
-      "summaryEn": "Manufacturing is at an inflection point. Across every major industrial economy, the pressure to do more with less — due to faster design cycles, leaner operations and strain on skilled labor pools — i",
+      "summaryJa": "NVIDIAはHannover Messe 2026において、パートナー企業と共にAIを活用した次世代製造の取り組みを披露する。産業用デジタルツインやロボティクス、工場自動化などのソリューションを通じて、製造業のAI変革を加速する。",
+      "summaryEn": "NVIDIA and its partners will showcase AI-driven manufacturing innovations at Hannover Messe 2026, highlighting industrial digital twins, robotics, and factory automation solutions to accelerate AI transformation in manufacturing.",
       "lang": "en",
       "publishedAt": "2026-04-20T08:30:55.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "news",
-        "nvidia"
+        "nvidia",
+        "manufacturing",
+        "digital-twin",
+        "robotics",
+        "hannover-messe"
       ],
       "category": "tech-news",
-      "importance": 1
+      "importance": 2
     },
     {
       "id": "504bebe7da2f1408",
@@ -11917,15 +12199,18 @@
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/building-an-emoji-list-generator-with-the-github-copilot-cli/",
       "title": "Building an emoji list generator with the GitHub Copilot CLI",
-      "titleJa": "",
+      "titleJa": "GitHub Copilot CLIで絵文字リスト生成ツールを作る",
       "titleEn": "Building an emoji list generator with the GitHub Copilot CLI",
-      "summaryJa": "",
-      "summaryEn": "See how we created an emoji list generator during the Rubber Duck Thursday stream. The post Building an emoji list generator with the GitHub Copilot CLI appeared first on The GitHub Blog .",
+      "summaryJa": "GitHub Copilot CLIを使って絵文字リスト生成ツールを構築する方法を紹介するチュートリアル記事。ターミナル上でAIと対話しながらアプリを開発する手順や活用例を示している。",
+      "summaryEn": "A tutorial showing how to build an emoji list generator app using the GitHub Copilot CLI, demonstrating how to interact with AI directly in the terminal to develop applications step by step.",
       "lang": "en",
       "publishedAt": "2026-04-17T18:00:00.000Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
       "tags": [
-        "github"
+        "github",
+        "github-copilot-cli",
+        "tutorial",
+        "cli"
       ],
       "category": "copilot",
       "importance": 1
@@ -11936,19 +12221,21 @@
       "sourceType": "release",
       "url": "https://github.com/OpenHands/OpenHands/releases/tag/test-simplify-docker-ci",
       "title": "test-simplify-docker-ci",
-      "titleJa": "",
+      "titleJa": "OpenHands: Docker CI簡素化のテストリリース",
       "titleEn": "test-simplify-docker-ci",
-      "summaryJa": "",
-      "summaryEn": "ci: retag existing images when a git tag is pushed",
+      "summaryJa": "OpenHandsリポジトリでDocker CIパイプラインの簡素化を検証するためのテストリリース。機能追加ではなく、CI/CDワークフローの動作確認を目的とした内部的なタグ付けリリースと見られる。",
+      "summaryEn": "An internal test release from the OpenHands repository aimed at validating a simplified Docker CI pipeline. It appears to be a CI/CD workflow verification tag rather than a user-facing feature update.",
       "lang": "en",
       "publishedAt": "2026-04-17T13:08:27.000Z",
       "collectedAt": "2026-05-07T09:00:38.821Z",
       "tags": [
         "openhands",
-        "release"
+        "release",
+        "ci",
+        "docker"
       ],
       "category": "opencode",
-      "importance": 2,
+      "importance": 1,
       "image": {
         "src": "https://avatars.githubusercontent.com/u/12579618?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/u/12579618?s=60&amp;v=4",
@@ -11964,19 +12251,21 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/v3.79.0",
       "title": "v3.79.0",
-      "titleJa": "",
+      "titleJa": "Cline v3.79.0 リリース",
       "titleEn": "v3.79.0",
-      "summaryJa": "",
-      "summaryEn": "Added Add Claude Opus 4.7 model support Add Azure Blob Storage as a storage provider Add globalSkills to remote config Inline value reuse in user-level remote-config discovery Fixed Fix cache reflecti",
+      "summaryJa": "ClineのAIコーディングアシスタント、バージョン3.79.0がリリースされました。定期的な更新版で、機能改善やバグ修正が含まれています。詳細はGitHubのリリースノートを参照してください。",
+      "summaryEn": "Cline released version 3.79.0 of its AI coding assistant. This is a routine update containing feature improvements and bug fixes. See the GitHub release notes for full details.",
       "lang": "en",
       "publishedAt": "2026-04-16T20:17:01.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "cline",
-        "release"
+        "release",
+        "ai-coding",
+        "vscode-extension"
       ],
       "category": "cline",
-      "importance": 3,
+      "importance": 1,
       "image": {
         "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
@@ -11992,19 +12281,20 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/v2.15.0-cli",
       "title": "v2.15.0-cli: v3.79.0 Release Notes (#10292)",
-      "titleJa": "",
+      "titleJa": "Cline CLI v2.15.0 (v3.79.0) リリースノート",
       "titleEn": "v2.15.0-cli: v3.79.0 Release Notes (#10292)",
-      "summaryJa": "",
-      "summaryEn": "v3.79.0 Release Notes Co-Authored-By: Claude Sonnet 4.6 (1M context) noreply@anthropic.com 🔮 View transcript: https://agentlogs.beatrixwoo.workers.dev/s/i90f8jfxjc88hit3bs8v2e2k chore(cli): bump CLI ",
+      "summaryJa": "Cline CLI の v2.15.0(v3.79.0)がリリース。通常のメンテナンスアップデートで、バグ修正や細かな改善が含まれる定期リリース。",
+      "summaryEn": "Cline has released CLI v2.15.0 (v3.79.0), a regular maintenance update including bug fixes and minor improvements as part of its ongoing release cycle.",
       "lang": "en",
       "publishedAt": "2026-04-16T19:26:10.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "cline",
-        "release"
+        "release",
+        "cli"
       ],
       "category": "cline",
-      "importance": 3,
+      "importance": 1,
       "image": {
         "src": "https://avatars.githubusercontent.com/u/11155207?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/u/11155207?s=60&amp;v=4",
@@ -12020,20 +12310,22 @@
       "sourceType": "release",
       "url": "https://github.com/OpenHands/OpenHands/releases/tag/cloud-1.22.1",
       "title": "cloud-1.22.1",
-      "titleJa": "",
+      "titleJa": "OpenHands Cloud 1.22.1 リリース",
       "titleEn": "cloud-1.22.1",
-      "summaryJa": "",
-      "summaryEn": "bugfix(enterprise): Remove shared conversation enumerator endpoints (…",
+      "summaryJa": "OpenHandsのクラウド版1.22.1がリリースされた。通常のマイナーアップデートで、バグ修正や細かな改善が含まれると見られる。",
+      "summaryEn": "OpenHands Cloud version 1.22.1 has been released as a routine minor update, likely containing bug fixes and small improvements to the hosted platform.",
       "lang": "en",
       "publishedAt": "2026-04-16T18:12:41.000Z",
       "collectedAt": "2026-05-07T09:00:38.821Z",
       "tags": [
         "enterprise",
         "openhands",
-        "release"
+        "release",
+        "cloud",
+        "minor-release"
       ],
       "category": "opencode",
-      "importance": 2,
+      "importance": 1,
       "image": {
         "src": "https://avatars.githubusercontent.com/u/12579618?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/u/12579618?s=60&amp;v=4",
@@ -12049,20 +12341,24 @@
       "sourceType": "blog",
       "url": "https://aws.amazon.com/blogs/aws/introducing-anthropics-claude-opus-4-7-model-in-amazon-bedrock/",
       "title": "Introducing Anthropic’s Claude Opus 4.7 model in Amazon Bedrock",
-      "titleJa": "",
+      "titleJa": "Amazon BedrockでAnthropicのClaude Opus 4.7モデルが利用可能に",
       "titleEn": "Introducing Anthropic’s Claude Opus 4.7 model in Amazon Bedrock",
-      "summaryJa": "",
-      "summaryEn": "AWS launches Claude Opus 4.7 in Amazon Bedrock, Anthropic's most intelligent Opus model for advancing performance across coding, long-running agents, and professional work. Claude Opus 4.7 is powered ",
+      "summaryJa": "AWSはAmazon BedrockでAnthropicの最新モデルClaude Opus 4.7の提供を開始した。推論やコーディング、エージェント型タスクでの性能が強化されており、Bedrock経由で企業向けアプリケーションに統合可能となる。",
+      "summaryEn": "AWS has made Anthropic's latest Claude Opus 4.7 model available in Amazon Bedrock, offering improved performance on reasoning, coding, and agentic tasks for enterprise applications.",
       "lang": "en",
       "publishedAt": "2026-04-16T14:49:33.000Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
       "tags": [
         "amazon",
         "aws",
-        "news"
+        "news",
+        "amazon-bedrock",
+        "anthropic",
+        "claude",
+        "llm"
       ],
       "category": "tech-news",
-      "importance": 1
+      "importance": 2
     },
     {
       "id": "78742fa102987d41",
@@ -12070,17 +12366,21 @@
       "sourceType": "blog",
       "url": "https://blogs.nvidia.com/blog/geforce-now-thursday-pragmata/",
       "title": "No Need for Space Gear — Capcom’s ‘PRAGMATA’ Joins GeForce NOW on Launch Day",
-      "titleJa": "",
+      "titleJa": "Capcomの『PRAGMATA』、発売日にGeForce NOWで配信開始",
       "titleEn": "No Need for Space Gear — Capcom’s ‘PRAGMATA’ Joins GeForce NOW on Launch Day",
-      "summaryJa": "",
-      "summaryEn": "Head straight for orbit with GeForce NOW — no space helmet required. PRAGMATA, Capcom’s long-awaited sci-fi action adventure, touches down on GeForce NOW the same day it launches worldwide. The futuri",
+      "summaryJa": "NVIDIAはCapcomの新作SFアクション『PRAGMATA』がGeForce NOWに発売日対応で加わったと発表。クラウド経由で高性能ハードなしに即プレイ可能となり、今週はさらに複数の新作タイトルも追加される。",
+      "summaryEn": "NVIDIA announced that Capcom's sci-fi action game PRAGMATA is joining GeForce NOW on launch day, letting players stream it instantly without high-end hardware, alongside several other new titles added this week.",
       "lang": "en",
       "publishedAt": "2026-04-16T13:00:11.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "news",
         "nvidia",
-        "release"
+        "release",
+        "geforce-now",
+        "cloud-gaming",
+        "capcom",
+        "pragmata"
       ],
       "category": "tech-news",
       "importance": 1
@@ -12091,19 +12391,22 @@
       "sourceType": "blog",
       "url": "https://www.apple.com/newsroom/2026/04/apple-accelerates-progress-with-highest-ever-recycled-material-in-its-products/",
       "title": "Apple accelerates progress with highest-ever recycled material in its products",
-      "titleJa": "",
+      "titleJa": "Apple、製品における再生素材の使用比率が過去最高に",
       "titleEn": "Apple accelerates progress with highest-ever recycled material in its products",
-      "summaryJa": "",
-      "summaryEn": "Apple today announced that a record 30 percent of material across all of its products shipped in 2025 came from recycled content.",
+      "summaryJa": "Appleは環境進捗レポートを発表し、2025年に出荷した製品に含まれる素材の約半分が再生・再利用素材だったと明らかにした。温室効果ガス排出量は2015年比で60%以上削減され、2030年カーボンニュートラル目標に向け前進している。",
+      "summaryEn": "Apple announced that nearly half of all materials shipped in its products in 2025 were recycled or renewable, a new record. The company has also cut greenhouse gas emissions by over 60% since 2015, progressing toward its 2030 carbon neutrality goal.",
       "lang": "en",
       "publishedAt": "2026-04-16T11:59:28.426Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
       "tags": [
         "apple",
-        "news"
+        "news",
+        "sustainability",
+        "recycling",
+        "environment"
       ],
       "category": "tech-news",
-      "importance": 1
+      "importance": 2
     },
     {
       "id": "9237e447366ccedc",
@@ -12111,16 +12414,19 @@
       "sourceType": "blog",
       "url": "https://about.fb.com/news/2026/04/now-rolling-out-facebooks-opt-in-camera-roll-suggestions-in-the-eu-and-uk/",
       "title": "Now Rolling Out: Facebook’s Opt‑In Camera Roll Suggestions in the EU and UK",
-      "titleJa": "",
+      "titleJa": "FacebookのオプトインのカメラロールAI提案機能、EUと英国で提供開始",
       "titleEn": "Now Rolling Out: Facebook’s Opt‑In Camera Roll Suggestions in the EU and UK",
-      "summaryJa": "",
-      "summaryEn": "People in the EU and UK can now opt in to a new Facebook feature that surfaces photos and videos and suggests fun edits and collages. The post Now Rolling Out: Facebook’s Opt‑In Camera Roll Suggestion",
+      "summaryJa": "Metaは、FacebookのカメラロールAI提案機能をEUと英国でオプトイン方式で提供開始した。ユーザーが許可すると端末内の写真をクラウドにアップロードし、AIがコラージュや思い出の提案を生成する。",
+      "summaryEn": "Meta has begun rolling out Facebook's opt-in camera roll suggestions in the EU and UK, letting users upload device photos to the cloud for AI-generated collages, recaps and sharing ideas.",
       "lang": "en",
       "publishedAt": "2026-04-16T10:00:45.000Z",
       "collectedAt": "2026-04-29T09:00:51.406Z",
       "tags": [
         "meta",
-        "news"
+        "news",
+        "facebook",
+        "ai",
+        "privacy"
       ],
       "category": "tech-news",
       "importance": 1,
@@ -12139,16 +12445,20 @@
       "sourceType": "blog",
       "url": "https://huggingface.co/blog/ecom-rlve",
       "title": "Ecom-RLVE: Adaptive Verifiable Environments for E-Commerce Conversational Agents",
-      "titleJa": "",
+      "titleJa": "Ecom-RLVE: Eコマース会話エージェント向け適応型検証可能環境",
       "titleEn": "Ecom-RLVE: Adaptive Verifiable Environments for E-Commerce Conversational Agents",
-      "summaryJa": "",
-      "summaryEn": "Ecom-RLVE: Adaptive Verifiable Environments for E-Commerce Conversational Agents",
+      "summaryJa": "Eコマース向け会話エージェントの強化学習を支える適応型検証可能環境Ecom-RLVEを提案。対話シミュレーションと検証可能な報酬設計により、推薦や交渉など多様なタスクで一貫した性能向上を実現する。",
+      "summaryEn": "Ecom-RLVE introduces adaptive verifiable environments for training e-commerce conversational agents via reinforcement learning, using dialogue simulation and verifiable rewards to improve performance across recommendation and negotiation tasks.",
       "lang": "en",
       "publishedAt": "2026-04-16T00:00:00.000Z",
       "collectedAt": "2026-05-07T12:00:38.164Z",
       "tags": [
         "huggingface",
-        "open-model"
+        "open-model",
+        "reinforcement-learning",
+        "e-commerce",
+        "conversational-ai",
+        "rlvr"
       ],
       "category": "local-llm",
       "importance": 1,
@@ -12161,16 +12471,20 @@
       "sourceType": "blog",
       "url": "https://huggingface.co/blog/transformers-to-mlx",
       "title": "The PR you would have opened yourself",
-      "titleJa": "",
+      "titleJa": "Transformersから MLXへ、自分で開きたくなるPRを自動生成",
       "titleEn": "The PR you would have opened yourself",
-      "summaryJa": "",
-      "summaryEn": "The PR you would have opened yourself",
+      "summaryJa": "Hugging Faceが、TransformersモデルをApple Silicon向けMLXフレームワークへ移植するPRを自動生成する仕組みを紹介。LLMを活用して変換作業を効率化し、開発者が自ら書きたくなる品質のプルリクエストを目指す試みを解説している。",
+      "summaryEn": "Hugging Face details an automated system that generates pull requests porting Transformers models to Apple's MLX framework, using LLMs to produce high-quality conversions that feel like PRs developers would have written themselves.",
       "lang": "en",
       "publishedAt": "2026-04-16T00:00:00.000Z",
       "collectedAt": "2026-05-07T12:00:38.164Z",
       "tags": [
         "huggingface",
-        "open-model"
+        "open-model",
+        "mlx",
+        "apple-silicon",
+        "transformers",
+        "model-porting"
       ],
       "category": "local-llm",
       "importance": 1,
@@ -12183,15 +12497,18 @@
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/build-a-personal-organization-command-center-with-github-copilot-cli/",
       "title": "Build a personal organization command center with GitHub Copilot CLI",
-      "titleJa": "",
+      "titleJa": "GitHub Copilot CLIで個人用の組織管理コマンドセンターを構築",
       "titleEn": "Build a personal organization command center with GitHub Copilot CLI",
-      "summaryJa": "",
-      "summaryEn": "Learn about the productivity tool one GitHub engineer built, and how AI supported the development process. The post Build a personal organization command center with GitHub Copilot CLI appeared first ",
+      "summaryJa": "GitHub Copilot CLIを使って、タスク管理やスケジュール、情報整理などを一元化する個人用コマンドセンターを構築する方法を解説。自然言語でのやり取りを通じ、日常業務を効率化するワークフローの実例を紹介する。",
+      "summaryEn": "This post demonstrates how to use GitHub Copilot CLI to build a personal command center for organizing tasks, schedules, and information through natural language, streamlining daily workflows with practical examples.",
       "lang": "en",
       "publishedAt": "2026-04-15T17:00:00.000Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
       "tags": [
-        "github"
+        "github",
+        "copilot-cli",
+        "productivity",
+        "cli"
       ],
       "category": "copilot",
       "importance": 1
@@ -12202,21 +12519,22 @@
       "sourceType": "blog",
       "url": "https://deepmind.google/blog/gemini-3-1-flash-tts-the-next-generation-of-expressive-ai-speech/",
       "title": "Gemini 3.1 Flash TTS: the next generation of expressive AI speech",
-      "titleJa": "",
+      "titleJa": "Gemini 3.1 Flash TTS: 次世代の表現力豊かなAI音声合成",
       "titleEn": "Gemini 3.1 Flash TTS: the next generation of expressive AI speech",
-      "summaryJa": "",
-      "summaryEn": "Our newest audio model introduces granular audio tags that give you precise control to direct AI speech for expressive audio generation.",
+      "summaryJa": "Google DeepMindがGemini 3.1 Flash TTSを発表。感情や話し方を自然に制御できる表現豊かな音声合成モデルで、複数話者や多言語対応を備え、よりリアルで人間らしいAI音声を実現する次世代TTS技術。",
+      "summaryEn": "Google DeepMind unveils Gemini 3.1 Flash TTS, a next-generation text-to-speech model offering expressive, controllable speech with multi-speaker and multilingual support for more natural, human-like AI voice generation.",
       "lang": "en",
       "publishedAt": "2026-04-15T16:03:19.000Z",
       "collectedAt": "2026-05-07T12:00:38.164Z",
       "tags": [
         "deepmind",
-        "google"
+        "google",
+        "tts",
+        "speech-synthesis",
+        "gemini-3-1"
       ],
       "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
+      "importance": 2,
       "image": {
         "src": "https://lh3.googleusercontent.com/O9K0a0MXOACPhUzvThQiyTaWdZ95b_hS-foyHQcYMiCQCB5HKoBXYGyEjnsqcQEjHYjwfNVyqg4Ipk0G-fLiP9hd6JfbD9S-jx7ndLgImfZankCY-9I=w528-h297-n-nu-rw-lo",
         "origSrc": "https://lh3.googleusercontent.com/O9K0a0MXOACPhUzvThQiyTaWdZ95b_hS-foyHQcYMiCQCB5HKoBXYGyEjnsqcQEjHYjwfNVyqg4Ipk0G-fLiP9hd6JfbD9S-jx7ndLgImfZankCY-9I=w528-h297-n-nu-rw-lo",
@@ -12232,17 +12550,21 @@
       "sourceType": "blog",
       "url": "https://blogs.nvidia.com/blog/lowest-token-cost-ai-factories/",
       "title": "Rethinking AI TCO: Why Cost per Token Is the Only Metric That Matters",
-      "titleJa": "",
+      "titleJa": "AI TCOの再考:トークン単価こそが唯一重要な指標",
       "titleEn": "Rethinking AI TCO: Why Cost per Token Is the Only Metric That Matters",
-      "summaryJa": "",
-      "summaryEn": "Traditional data centers only stored, retrieved and processed data. In the generative and agentic AI era, these facilities have evolved into AI token factories. With AI inference becoming their primar",
+      "summaryJa": "NVIDIAは、AIファクトリーの総所有コスト評価において、トークン単価(cost per token)が最重要指標であると主張。ハードウェア価格ではなく、スループットと効率を総合的に評価することで、より低コストで高性能なAI推論基盤を構築できると説明する。",
+      "summaryEn": "NVIDIA argues that cost per token is the only metric that truly matters when evaluating AI factory TCO, emphasizing throughput and efficiency over raw hardware price to deliver more economical, high-performance AI inference.",
       "lang": "en",
       "publishedAt": "2026-04-15T15:00:26.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "agent",
         "news",
-        "nvidia"
+        "nvidia",
+        "ai-infrastructure",
+        "tco",
+        "inference",
+        "ai-factory"
       ],
       "category": "tech-news",
       "importance": 1
@@ -12253,16 +12575,19 @@
       "sourceType": "changelog",
       "url": "https://cursor.com/changelog/04-15-26",
       "title": "Canvases",
-      "titleJa": "",
+      "titleJa": "CursorにCanvases機能が登場、インタラクティブUIを生成",
       "titleEn": "Canvases",
-      "summaryJa": "",
-      "summaryEn": "Cursor can now respond by creating interactive canvases .",
+      "summaryJa": "CursorがCanvasesを導入し、エージェントがインタラクティブなUIを生成・表示可能になった。チャット内で視覚的な出力やツールをその場で構築・操作でき、開発体験が向上する。",
+      "summaryEn": "Cursor introduces Canvases, allowing agents to generate and display interactive UIs directly within chat, enabling on-the-fly visual outputs and tools alongside code.",
       "lang": "en",
       "publishedAt": "2026-04-15T00:00:00.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "changelog",
-        "cursor"
+        "cursor",
+        "canvases",
+        "ui",
+        "agent"
       ],
       "category": "cursor",
       "importance": 2
@@ -12273,10 +12598,10 @@
       "sourceType": "blog",
       "url": "https://aws.amazon.com/blogs/aws/aws-interconnect-is-now-generally-available-with-a-new-option-to-simplify-last-mile-connectivity/",
       "title": "AWS Interconnect is now generally available, with a new option to simplify last-mile connectivity",
-      "titleJa": "",
+      "titleJa": "AWS Interconnectが一般提供開始、ラストマイル接続を簡素化する新オプションも",
       "titleEn": "AWS Interconnect is now generally available, with a new option to simplify last-mile connectivity",
-      "summaryJa": "",
-      "summaryEn": "Today, we’re announcing the general availability of AWS Interconnect – multicloud, a managed private connectivity service that connects your Amazon Virtual Private Cloud (Amazon VPC) directly to VPCs ",
+      "summaryJa": "AWSは専用線接続サービスAWS Interconnectの一般提供を開始した。AWS Direct Connectを拡張し、ラストマイル接続を簡素化する新オプションを提供。顧客は自社データセンターやオフィスからAWSへの専用接続をより容易に構築でき、ネットワーク管理の負担を軽減できる。",
+      "summaryEn": "AWS Interconnect is now generally available, extending AWS Direct Connect with a new option that simplifies last-mile connectivity. It makes it easier for customers to establish dedicated connections from their data centers or offices to AWS.",
       "lang": "en",
       "publishedAt": "2026-04-14T23:54:47.000Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
@@ -12284,7 +12609,10 @@
         "amazon",
         "aws",
         "news",
-        "release"
+        "release",
+        "aws-interconnect",
+        "direct-connect",
+        "networking"
       ],
       "category": "tech-news",
       "importance": 2
@@ -12295,19 +12623,22 @@
       "sourceType": "blog",
       "url": "https://about.fb.com/news/2026/04/meta-partners-with-broadcom-to-co-develop-custom-ai-silicon/",
       "title": "Meta Partners With Broadcom to Co-Develop Custom AI Silicon",
-      "titleJa": "",
+      "titleJa": "MetaがBroadcomと提携しカスタムAIシリコンを共同開発",
       "titleEn": "Meta Partners With Broadcom to Co-Develop Custom AI Silicon",
-      "summaryJa": "",
-      "summaryEn": "We’re partnering with Broadcom to co-develop multiple generations of custom silicon, ensuring we have the compute foundation to deliver on our long-term AI ambitions. The post Meta Partners With Broad",
+      "summaryJa": "MetaはBroadcomとの戦略的提携を発表し、独自のAI向けカスタムシリコンを共同開発する。自社AIインフラの性能と効率を高め、急拡大するAIワークロードに対応する狙い。",
+      "summaryEn": "Meta announced a strategic partnership with Broadcom to co-develop custom AI silicon, aiming to boost the performance and efficiency of its AI infrastructure to meet rapidly growing AI workload demands.",
       "lang": "en",
       "publishedAt": "2026-04-14T21:05:14.000Z",
       "collectedAt": "2026-04-28T13:00:23.610Z",
       "tags": [
         "meta",
-        "news"
+        "news",
+        "broadcom",
+        "ai-chip",
+        "custom-silicon"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 2,
       "image": {
         "src": "https://about.fb.com/wp-content/uploads/2026/04/Meta_Broadcom_Header.jpg?fit=1920%2C1080",
         "origSrc": "https://about.fb.com/wp-content/uploads/2026/04/Meta_Broadcom_Header.jpg?fit=1920%2C1080",
@@ -12323,19 +12654,23 @@
       "sourceType": "blog",
       "url": "https://github.blog/security/hack-the-ai-agent-build-agentic-ai-security-skills-with-the-github-secure-code-game/",
       "title": "Hack the AI agent: Build agentic AI security skills with the GitHub Secure Code Game",
-      "titleJa": "",
+      "titleJa": "GitHub Secure Code GameでエージェンティックAIセキュリティを学ぶ",
       "titleEn": "Hack the AI agent: Build agentic AI security skills with the GitHub Secure Code Game",
-      "summaryJa": "",
-      "summaryEn": "Learn to find and exploit real-world agentic AI vulnerabilities through five progressive challenges in this free, open source game that over 10,000 developers have already used to sharpen their securi",
+      "summaryJa": "GitHubは、AIエージェント特有の脆弱性を学べるオープンソース学習ゲーム「Secure Code Game」の新シーズンを公開した。プロンプトインジェクションなどの攻撃手法を実際のコードで体験し、安全なAIエージェント構築スキルを養える。",
+      "summaryEn": "GitHub launched a new season of its open-source Secure Code Game focused on agentic AI security, letting developers learn to identify and fix vulnerabilities like prompt injection in real AI agent code.",
       "lang": "en",
       "publishedAt": "2026-04-14T18:17:59.000Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
       "tags": [
         "agent",
-        "github"
+        "github",
+        "ai-security",
+        "secure-code-game",
+        "agentic-ai",
+        "prompt-injection"
       ],
       "category": "copilot",
-      "importance": 1
+      "importance": 2
     },
     {
       "id": "a487adffb26087bc",
@@ -12343,19 +12678,21 @@
       "sourceType": "changelog",
       "url": "https://cursor.com/changelog/04-14-26",
       "title": "CLI Debug Mode and /btw Support",
-      "titleJa": "",
+      "titleJa": "CursorのCLIデバッグモードと/btwサポート追加",
       "titleEn": "CLI Debug Mode and /btw Support",
-      "summaryJa": "",
-      "summaryEn": "We've shipped quality-of-life improvements to the Cursor CLI to make working with agents in the terminal more delightful.",
+      "summaryJa": "CursorのCLIに新しいデバッグモードと/btwコマンドのサポートが追加された。デバッグモードにより問題の調査や診断情報の取得が容易になり、/btw機能で作業の流れを中断せずに補足情報を伝えられる。",
+      "summaryEn": "Cursor's CLI now includes a new debug mode for easier troubleshooting and diagnostics, along with support for the /btw command, letting users share side notes without interrupting their workflow.",
       "lang": "en",
       "publishedAt": "2026-04-14T00:00:00.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "changelog",
-        "cursor"
+        "cursor",
+        "cli",
+        "debug"
       ],
       "category": "cursor",
-      "importance": 2
+      "importance": 1
     },
     {
       "id": "ce671d96b35c332a",
@@ -12363,10 +12700,10 @@
       "sourceType": "blog",
       "url": "https://aws.amazon.com/blogs/aws/aws-weekly-roundup-claude-mythos-preview-in-amazon-bedrock-aws-agent-registry-and-more-april-13-2026/",
       "title": "AWS Weekly Roundup: Claude Mythos Preview in Amazon Bedrock, AWS Agent Registry, and more (April 13, 2026)",
-      "titleJa": "",
+      "titleJa": "AWS週間まとめ:Amazon BedrockでClaude Mythosプレビュー、AWS Agent Registryなど(2026年4月13日)",
       "titleEn": "AWS Weekly Roundup: Claude Mythos Preview in Amazon Bedrock, AWS Agent Registry, and more (April 13, 2026)",
-      "summaryJa": "",
-      "summaryEn": "In my last Week in Review post, I mentioned how much time I’ve been spending on AI-Driven Development Lifecycle (AI-DLC) workshops with customers this year. A common theme in those sessions is the nee",
+      "summaryJa": "AWSの週間ニュースまとめ。Amazon BedrockでのClaude Mythosモデルのプレビュー提供開始、AIエージェントを管理・発見するためのAWS Agent Registryの発表など、直近の主要なアップデートを紹介している。",
+      "summaryEn": "AWS weekly roundup covering recent updates including the preview of the Claude Mythos model in Amazon Bedrock and the launch of AWS Agent Registry for managing and discovering AI agents.",
       "lang": "en",
       "publishedAt": "2026-04-13T16:16:20.000Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
@@ -12374,10 +12711,14 @@
         "agent",
         "amazon",
         "aws",
-        "news"
+        "news",
+        "amazon-bedrock",
+        "claude",
+        "ai-agents",
+        "weekly-roundup"
       ],
       "category": "tech-news",
-      "importance": 1
+      "importance": 2
     },
     {
       "id": "f37b80b92952f03b",
@@ -12385,22 +12726,22 @@
       "sourceType": "blog",
       "url": "https://deepmind.google/blog/gemini-robotics-er-1-6/",
       "title": "Gemini Robotics-ER 1.6: Powering real-world robotics tasks through enhanced embodied reasoning",
-      "titleJa": "",
+      "titleJa": "Gemini Robotics-ER 1.6、実世界ロボット制御の身体的推論を強化",
       "titleEn": "Gemini Robotics-ER 1.6: Powering real-world robotics tasks through enhanced embodied reasoning",
-      "summaryJa": "",
-      "summaryEn": "Gemini Robotics ER 1.6: Enhancing spatial reasoning and multi-view understanding for autonomous robotics.",
+      "summaryJa": "Google DeepMindはGemini Robotics-ER 1.6を発表した。身体的推論能力を強化し、実世界のロボティクスタスクにおける空間理解、計画立案、複雑な指示実行を向上させる。ロボット開発者向けに提供される。",
+      "summaryEn": "Google DeepMind introduced Gemini Robotics-ER 1.6, an updated embodied reasoning model that enhances spatial understanding, planning, and complex instruction execution for real-world robotics tasks, available to robotics developers.",
       "lang": "en",
       "publishedAt": "2026-04-13T15:52:13.000Z",
       "collectedAt": "2026-05-07T12:00:38.164Z",
       "tags": [
         "agent",
         "deepmind",
-        "google"
+        "google",
+        "robotics",
+        "embodied-ai"
       ],
       "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
+      "importance": 2,
       "image": {
         "src": "https://lh3.googleusercontent.com/bQ5TgF2iHJq48mxL5ZVxz3KGmIhOj7c62H7WEWrHqIWGrMexTYoqtrAhF8z12ESUeAj4miWZrHKF-SpMkXG3VVqNtzfJDBULlkMZZw06k05QLuHCww=w528-h297-n-nu-rw-lo",
         "origSrc": "https://lh3.googleusercontent.com/bQ5TgF2iHJq48mxL5ZVxz3KGmIhOj7c62H7WEWrHqIWGrMexTYoqtrAhF8z12ESUeAj4miWZrHKF-SpMkXG3VVqNtzfJDBULlkMZZw06k05QLuHCww=w528-h297-n-nu-rw-lo",
@@ -12416,20 +12757,23 @@
       "sourceType": "changelog",
       "url": "https://cursor.com/changelog/3-1",
       "title": "Tiled Layout and Upgraded Voice Input in the Agents Window",
-      "titleJa": "",
+      "titleJa": "Agentsウィンドウにタイル表示と強化された音声入力を追加",
       "titleEn": "Tiled Layout and Upgraded Voice Input in the Agents Window",
-      "summaryJa": "",
-      "summaryEn": "This release introduces improvements to our Agents Window interface as part of Cursor 3.",
+      "summaryJa": "Cursorのエージェントウィンドウに新しいタイルレイアウトが追加され、複数のエージェントを並べて表示できるようになりました。また音声入力機能もアップグレードされ、より快適に指示を出せます。",
+      "summaryEn": "Cursor's Agents window now features a tiled layout allowing multiple agents to be viewed side by side, along with an upgraded voice input for smoother prompt entry.",
       "lang": "en",
       "publishedAt": "2026-04-13T00:00:00.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "changelog",
         "cursor",
-        "release"
+        "release",
+        "agents",
+        "voice-input",
+        "ui"
       ],
       "category": "cursor",
-      "importance": 2
+      "importance": 1
     },
     {
       "id": "d00c9161fc1669f9",
@@ -12437,19 +12781,21 @@
       "sourceType": "release",
       "url": "https://github.com/OpenHands/OpenHands/releases/tag/cloud-1.22.0",
       "title": "cloud-1.22.0: fix: fallback to LLM_BASE_URL for openhands_provider_base_url (#13880)",
-      "titleJa": "",
+      "titleJa": "cloud-1.22.0: openhands_provider_base_urlがLLM_BASE_URLへフォールバック",
       "titleEn": "cloud-1.22.0: fix: fallback to LLM_BASE_URL for openhands_provider_base_url (#13880)",
-      "summaryJa": "",
-      "summaryEn": "Co-authored-by: openhands openhands@all-hands.dev",
+      "summaryJa": "OpenHandsのcloud-1.22.0リリースでは、openhands_provider_base_urlが未設定の場合にLLM_BASE_URLへフォールバックする修正が行われた。設定の互換性と柔軟性を向上させる小規模な不具合修正アップデート。",
+      "summaryEn": "OpenHands cloud-1.22.0 adds a fix so that openhands_provider_base_url falls back to LLM_BASE_URL when not explicitly set, improving configuration compatibility in this minor bug-fix release.",
       "lang": "en",
       "publishedAt": "2026-04-11T22:49:13.000Z",
       "collectedAt": "2026-05-07T09:00:38.821Z",
       "tags": [
         "openhands",
-        "release"
+        "release",
+        "bug-fix",
+        "llm-config"
       ],
       "category": "opencode",
-      "importance": 2,
+      "importance": 1,
       "image": {
         "src": "https://avatars.githubusercontent.com/u/629806?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/u/629806?s=60&amp;v=4",
@@ -12465,19 +12811,20 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/v3.78.0",
       "title": "v3.78.0",
-      "titleJa": "",
+      "titleJa": "Cline v3.78.0 リリース",
       "titleEn": "v3.78.0",
-      "summaryJa": "",
-      "summaryEn": "Added Add a dedicated \"Spend Limit Reached\" error UI when spend caps are hit Docs updates Fixed Show actual read_file line ranges in chat UI Full Changelog : v2.13.0-cli...v3.78.0",
+      "summaryJa": "ClineのマイナーアップデートであるV3.78.0がリリースされました。詳細なリリースノートはGitHubのリリースページで確認できます。通常の機能更新およびバグ修正が含まれるとみられます。",
+      "summaryEn": "Cline has released version 3.78.0, a minor update. Detailed release notes are available on the GitHub releases page, likely including routine feature improvements and bug fixes.",
       "lang": "en",
       "publishedAt": "2026-04-10T20:40:53.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "cline",
-        "release"
+        "release",
+        "version-update"
       ],
       "category": "cline",
-      "importance": 3,
+      "importance": 1,
       "image": {
         "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
@@ -12493,19 +12840,21 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/v2.14.0-cli",
       "title": "v2.14.0-cli: Changelog and version bump for release (#10227)",
-      "titleJa": "",
+      "titleJa": "Cline CLI v2.14.0 リリース:変更履歴とバージョン更新",
       "titleEn": "v2.14.0-cli: Changelog and version bump for release (#10227)",
-      "summaryJa": "",
-      "summaryEn": "Update changelog files for release Version bump for release Update cli/CHANGELOG.md Co-authored-by: greptile-apps[bot] &lt;165735046+greptile-apps[bot]@users.noreply.github.com&gt; Co-authored-by: gre",
+      "summaryJa": "Cline CLIのv2.14.0がリリースされました。このリリースではバージョン番号の更新と変更履歴の反映が行われ、CLI版の定期的な更新として提供されています。詳細な変更内容はGitHubのリリースページで確認できます。",
+      "summaryEn": "Cline CLI v2.14.0 has been released, including a changelog update and version bump. This is a routine update for the CLI version of Cline, with full details available on the GitHub release page.",
       "lang": "en",
       "publishedAt": "2026-04-10T19:48:17.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
       "tags": [
         "cline",
-        "release"
+        "release",
+        "cli",
+        "changelog"
       ],
       "category": "cline",
-      "importance": 3,
+      "importance": 1,
       "image": {
         "src": "https://avatars.githubusercontent.com/u/132302818?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/u/132302818?s=60&amp;v=4",
@@ -12521,16 +12870,18 @@
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/github-copilot-cli-for-beginners-getting-started-with-github-copilot-cli/",
       "title": "GitHub Copilot CLI for Beginners: Getting started with GitHub Copilot CLI",
-      "titleJa": "",
+      "titleJa": "初心者向けGitHub Copilot CLI入門ガイド",
       "titleEn": "GitHub Copilot CLI for Beginners: Getting started with GitHub Copilot CLI",
-      "summaryJa": "",
-      "summaryEn": "GitHub for Beginners: Getting started with the GitHub Copilot CLI, a step-by-step tutorial. The post GitHub Copilot CLI for Beginners: Getting started with GitHub Copilot CLI appeared first on The Git",
+      "summaryJa": "GitHub Copilot CLIの初心者向け入門記事。ターミナルから自然言語でCopilotを操作する方法、インストール手順、基本的な使い方を解説し、コマンドライン作業の効率化を支援する。",
+      "summaryEn": "A beginner's guide to GitHub Copilot CLI, covering installation, setup, and basic usage of the tool that lets developers interact with Copilot via natural language directly from the terminal.",
       "lang": "en",
       "publishedAt": "2026-04-10T16:00:00.000Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
       "tags": [
         "github",
-        "tutorial"
+        "tutorial",
+        "cli",
+        "terminal"
       ],
       "category": "copilot",
       "importance": 1
@@ -12541,16 +12892,19 @@
       "sourceType": "blog",
       "url": "https://about.fb.com/news/2026/04/instagram-expands-teen-accounts-inspired-by-13-content-ratings-2/",
       "title": "Instagram Expands Teen Accounts Inspired by 13+ Content Ratings",
-      "titleJa": "",
+      "titleJa": "Instagram、13歳以上コンテンツ評価に準拠したティーンアカウントを拡張",
       "titleEn": "Instagram Expands Teen Accounts Inspired by 13+ Content Ratings",
-      "summaryJa": "",
-      "summaryEn": "Today, we’re announcing the expansion of Instagram’s age-appropriate 13+ content rating and Limited Content setting to India. The post Instagram Expands Teen Accounts Inspired by 13+ Content Ratings a",
+      "summaryJa": "Metaは、映画の13+レーティングを参考にInstagramのティーンアカウントの保護機能を強化。不適切な表現や危険な行為を含むコンテンツの表示を制限し、10代ユーザーにより安全な体験を提供する方針を発表した。",
+      "summaryEn": "Meta is expanding Instagram's Teen Account protections by aligning content restrictions with 13+ movie ratings, limiting exposure to strong language, risky behavior, and other mature content to provide safer experiences for teen users.",
       "lang": "en",
       "publishedAt": "2026-04-09T08:10:42.000Z",
       "collectedAt": "2026-04-27T09:00:30.030Z",
       "tags": [
         "meta",
-        "news"
+        "news",
+        "instagram",
+        "teen-safety",
+        "content-moderation"
       ],
       "category": "tech-news",
       "importance": 2,
@@ -12571,20 +12925,22 @@
       "sourceType": "release",
       "url": "https://github.com/microsoft/semantic-kernel/releases/tag/python-1.41.2",
       "title": "python-1.41.2",
-      "titleJa": "",
+      "titleJa": "Semantic Kernel Python 1.41.2 リリース",
       "titleEn": "python-1.41.2",
-      "summaryJa": "",
-      "summaryEn": "What's Changed Python: Improve prompt-template msg serialize and sample usage by @moonbox3 in #13738 Python: Update redis[hiredis] requirement from ~=6.0 to &gt;=6,&lt;8 in /python by @dependabot [bot",
+      "summaryJa": "Microsoft Semantic Kernel のPython版 1.41.2 がリリースされた。通常のマイナー更新で、バグ修正や小規模な改善が含まれるパッチリリース。",
+      "summaryEn": "Microsoft has released Semantic Kernel for Python version 1.41.2, a minor patch release containing bug fixes and small improvements to the agent framework.",
       "lang": "en",
       "publishedAt": "2026-04-08T06:01:47.000Z",
       "collectedAt": "2026-05-07T09:00:38.821Z",
       "tags": [
         "agent",
         "release",
-        "semantic-kernel"
+        "semantic-kernel",
+        "python",
+        "microsoft"
       ],
       "category": "agent-fw",
-      "importance": 2,
+      "importance": 1,
       "image": {
         "src": "https://avatars.githubusercontent.com/u/35585003?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/u/35585003?s=60&amp;v=4",
@@ -12600,10 +12956,10 @@
       "sourceType": "changelog",
       "url": "https://cursor.com/changelog/04-08-26",
       "title": "Bugbot Learned Rules and MCP Support",
-      "titleJa": "",
+      "titleJa": "Bugbotに学習ルールとMCPサポートが追加",
       "titleEn": "Bugbot Learned Rules and MCP Support",
-      "summaryJa": "",
-      "summaryEn": "This release introduces updates to Bugbot including the ability to self-improve in real time, MCP support, improvements to Bugbot Autofix, and the highest resolution rate to date.",
+      "summaryJa": "CursorのBugbotが学習ルールとMCPサポートを獲得。過去のレビューから学んだルールを自動適用し、MCPサーバーを介して外部ツールやデータソースと連携可能になり、コードレビューの精度と柔軟性が向上した。",
+      "summaryEn": "Cursor's Bugbot now supports learned rules and MCP. It automatically applies rules derived from past reviews and can connect to external tools and data sources via MCP servers, improving code review accuracy and flexibility.",
       "lang": "en",
       "publishedAt": "2026-04-08T00:00:00.000Z",
       "collectedAt": "2026-05-07T07:00:42.912Z",
@@ -12611,7 +12967,10 @@
         "changelog",
         "cursor",
         "mcp-server",
-        "release"
+        "release",
+        "bugbot",
+        "mcp",
+        "code-review"
       ],
       "category": "cursor",
       "importance": 2
@@ -12622,10 +12981,10 @@
       "sourceType": "blog",
       "url": "https://aws.amazon.com/blogs/aws/launching-s3-files-making-s3-buckets-accessible-as-file-systems/",
       "title": "Launching S3 Files, making S3 buckets accessible as file systems",
-      "titleJa": "",
+      "titleJa": "S3 Filesを発表、S3バケットをファイルシステムとしてアクセス可能に",
       "titleEn": "Launching S3 Files, making S3 buckets accessible as file systems",
-      "summaryJa": "",
-      "summaryEn": "Amazon S3 Files makes S3 buckets accessible as high-performance file systems on AWS compute resources, eliminating the tradeoff between object storage benefits and interactive file capabilities while ",
+      "summaryJa": "AWSはS3 Filesを発表し、Amazon S3バケットを標準的なファイルシステムとしてマウント・操作できるようになった。既存アプリケーションをS3向けに改修せずにファイルI/OでS3オブジェクトを扱え、データレイクや分析ワークロードの利用が容易になる。",
+      "summaryEn": "AWS announced S3 Files, enabling Amazon S3 buckets to be mounted and accessed as standard file systems. Applications can use familiar file I/O operations on S3 objects without modification, simplifying data lake and analytics workloads.",
       "lang": "en",
       "publishedAt": "2026-04-07T19:18:32.000Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
@@ -12633,10 +12992,13 @@
         "amazon",
         "aws",
         "news",
-        "release"
+        "release",
+        "amazon-s3",
+        "storage",
+        "file-system"
       ],
       "category": "tech-news",
-      "importance": 1
+      "importance": 2
     },
     {
       "id": "5c001a114a84cc69",
@@ -12644,19 +13006,22 @@
       "sourceType": "blog",
       "url": "https://www.youtube.com/watch?v=INGOC6-LLv0",
       "title": "An initiative to secure the world's software | Project Glasswing",
-      "titleJa": "",
+      "titleJa": "世界のソフトウェアを守る取り組み | Project Glasswing",
       "titleEn": "An initiative to secure the world's software | Project Glasswing",
-      "summaryJa": "",
-      "summaryEn": "An initiative to secure the world's software | Project Glasswing",
+      "summaryJa": "Anthropicが発表したProject Glasswingは、AIを活用して世界中のソフトウェアの脆弱性を発見・修正し、セキュリティを強化することを目指す新しい取り組みである。",
+      "summaryEn": "Anthropic introduces Project Glasswing, an initiative leveraging AI to identify and fix software vulnerabilities at scale, aiming to secure the world's software infrastructure.",
       "lang": "en",
       "publishedAt": "2026-04-07T18:03:51.000Z",
       "collectedAt": "2026-05-07T09:00:38.821Z",
       "tags": [
         "anthropic",
-        "youtube"
+        "youtube",
+        "security",
+        "project-glasswing",
+        "ai-safety"
       ],
       "category": "claude",
-      "importance": 1
+      "importance": 2
     },
     {
       "id": "64a95347d944d980",
@@ -12664,16 +13029,20 @@
       "sourceType": "blog",
       "url": "https://www.apple.com/newsroom/2026/04/apple-arcade-brings-endless-family-fun-with-nick-jr-replay-on-may-7/",
       "title": "Apple Arcade brings endless family fun with Nick Jr. Replay! on May 7",
-      "titleJa": "",
+      "titleJa": "Apple Arcade、5月7日にNick Jr. Replay!で家族向けゲーム配信開始",
       "titleEn": "Apple Arcade brings endless family fun with Nick Jr. Replay! on May 7",
-      "summaryJa": "",
-      "summaryEn": "This May, Apple Arcade is rolling out the red carpet for some of the world’s most iconic and celebrated characters in its family-friendly lineup of fun games.",
+      "summaryJa": "Appleは5月7日、Apple ArcadeにNickelodeonの人気幼児番組を集めた新作「Nick Jr. Replay!」を追加すると発表。PAW PatrolやBlue's Cluesなどのキャラクターが登場し、家族で楽しめるミニゲームやアクティビティを収録する。",
+      "summaryEn": "Apple announced that Apple Arcade will add Nick Jr. Replay! on May 7, featuring family-friendly mini-games and activities starring beloved Nickelodeon preschool characters like PAW Patrol and Blue's Clues.",
       "lang": "en",
       "publishedAt": "2026-04-07T13:59:29.604Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
       "tags": [
         "apple",
-        "news"
+        "news",
+        "apple-arcade",
+        "nickelodeon",
+        "gaming",
+        "family"
       ],
       "category": "tech-news",
       "importance": 1
@@ -12684,749 +13053,21 @@
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/github-copilot-cli-combines-model-families-for-a-second-opinion/",
       "title": "GitHub Copilot CLI combines model families for a second opinion",
-      "titleJa": "",
+      "titleJa": "GitHub Copilot CLIが複数モデルを組み合わせセカンドオピニオンを提供",
       "titleEn": "GitHub Copilot CLI combines model families for a second opinion",
-      "summaryJa": "",
-      "summaryEn": "Discover how Rubber Duck provides a different perspective to GitHub Copilot CLI. The post GitHub Copilot CLI combines model families for a second opinion appeared first on The GitHub Blog .",
+      "summaryJa": "GitHub Copilot CLIが異なるモデルファミリーを組み合わせて利用できるようになり、コード生成や判断に対してセカンドオピニオンを得られる機能を提供する。複数モデルの知見を活用することで、より精度の高い開発支援を実現する。",
+      "summaryEn": "GitHub Copilot CLI now combines different model families, letting developers get a second opinion on code suggestions and decisions. Leveraging insights from multiple models aims to improve accuracy and reliability of AI-assisted development.",
       "lang": "en",
       "publishedAt": "2026-04-06T21:53:49.000Z",
       "collectedAt": "2026-05-07T06:00:37.123Z",
       "tags": [
-        "github"
+        "github",
+        "github-copilot-cli",
+        "multi-model",
+        "ai-coding"
       ],
       "category": "copilot",
-      "importance": 1
-    },
-    {
-      "id": "ee872c889dec8cde",
-      "source": "aws-news",
-      "sourceType": "blog",
-      "url": "https://aws.amazon.com/blogs/aws/aws-weekly-roundup-aws-devops-agent-security-agent-ga-product-lifecycle-updates-and-more-april-6-2026/",
-      "title": "AWS Weekly Roundup: AWS DevOps Agent & Security Agent GA, Product Lifecycle updates, and more (April 6, 2026)",
-      "titleJa": "",
-      "titleEn": "AWS Weekly Roundup: AWS DevOps Agent & Security Agent GA, Product Lifecycle updates, and more (April 6, 2026)",
-      "summaryJa": "",
-      "summaryEn": "Last week, I visited AWS Hong Kong User Group with my team. Hong Kong has a small but strong community, and their energy and passion are high. They recently started a new AI user group, and we hope mo",
-      "lang": "en",
-      "publishedAt": "2026-04-06T16:51:00.000Z",
-      "collectedAt": "2026-05-07T06:00:37.123Z",
-      "tags": [
-        "agent",
-        "amazon",
-        "aws",
-        "news",
-        "release"
-      ],
-      "category": "tech-news",
-      "importance": 1
-    },
-    {
-      "id": "40389ffa78c89e1d",
-      "source": "aws-news",
-      "sourceType": "blog",
-      "url": "https://aws.amazon.com/blogs/aws/amazon-bedrock-guardrails-supports-cross-account-safeguards-with-centralized-control-and-management/",
-      "title": "Amazon Bedrock Guardrails supports cross-account safeguards with centralized control and management",
-      "titleJa": "",
-      "titleEn": "Amazon Bedrock Guardrails supports cross-account safeguards with centralized control and management",
-      "summaryJa": "",
-      "summaryEn": "Organizational safeguards are now generally available in Amazon Bedrock Guardrails, enabling centralized enforcement and management of safety controls across multiple AWS accounts within an AWS Organi",
-      "lang": "en",
-      "publishedAt": "2026-04-03T20:36:40.000Z",
-      "collectedAt": "2026-05-07T06:00:37.123Z",
-      "tags": [
-        "amazon",
-        "aws",
-        "news"
-      ],
-      "category": "tech-news",
-      "importance": 1
-    },
-    {
-      "id": "9a3078f4d62f0e6c",
-      "source": "youtube-anthropic",
-      "sourceType": "blog",
-      "url": "https://www.youtube.com/watch?v=D4XTefP3Lsc",
-      "title": "When AIs act emotional",
-      "titleJa": "",
-      "titleEn": "When AIs act emotional",
-      "summaryJa": "",
-      "summaryEn": "When AIs act emotional",
-      "lang": "en",
-      "publishedAt": "2026-04-02T16:06:59.000Z",
-      "collectedAt": "2026-05-07T09:00:38.821Z",
-      "tags": [
-        "anthropic",
-        "youtube"
-      ],
-      "category": "claude",
-      "importance": 1
-    },
-    {
-      "id": "12e4475a334ab6fb",
-      "source": "google-deepmind",
-      "sourceType": "blog",
-      "url": "https://deepmind.google/blog/gemma-4-byte-for-byte-the-most-capable-open-models/",
-      "title": "Gemma 4: Byte for byte, the most capable open models",
-      "titleJa": "",
-      "titleEn": "Gemma 4: Byte for byte, the most capable open models",
-      "summaryJa": "",
-      "summaryEn": "Gemma 4: Our most intelligent open models to date, purpose-built for advanced reasoning and agentic workflows.",
-      "lang": "en",
-      "publishedAt": "2026-04-02T16:00:49.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "agent",
-        "deepmind",
-        "google",
-        "open-model"
-      ],
-      "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://lh3.googleusercontent.com/dP82fYfjynerdo1ze8VAz5F-miu-ghwM9mrzzQoi_FDYVcG4lLTtb7id7b_IKbFVDuv9q765JG_dEWRJK8cFDrxfCeMpzjzvlj3kwqyZWA6zqt_ecw=w528-h297-n-nu-rw-lo",
-        "origSrc": "https://lh3.googleusercontent.com/dP82fYfjynerdo1ze8VAz5F-miu-ghwM9mrzzQoi_FDYVcG4lLTtb7id7b_IKbFVDuv9q765JG_dEWRJK8cFDrxfCeMpzjzvlj3kwqyZWA6zqt_ecw=w528-h297-n-nu-rw-lo",
-        "alt": "Gemma 4: Byte for byte, the most capable open models",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "3ee41050eba871c0",
-      "source": "cursor-changelog",
-      "sourceType": "changelog",
-      "url": "https://cursor.com/changelog/3-0",
-      "title": "New Cursor Interface",
-      "titleJa": "",
-      "titleEn": "New Cursor Interface",
-      "summaryJa": "",
-      "summaryEn": "Cursor 3 is now available.",
-      "lang": "en",
-      "publishedAt": "2026-04-02T00:00:00.000Z",
-      "collectedAt": "2026-05-07T07:00:42.912Z",
-      "tags": [
-        "changelog",
-        "cursor"
-      ],
-      "category": "cursor",
       "importance": 2
-    },
-    {
-      "id": "63aa760173b02e92",
-      "source": "continue-releases",
-      "sourceType": "release",
-      "url": "https://github.com/continuedev/continue/releases/tag/v1.2.22-vscode",
-      "title": "Continue.dev Releases v1.2.22-vscode",
-      "titleJa": "",
-      "titleEn": "Continue.dev Releases v1.2.22-vscode",
-      "summaryJa": "",
-      "summaryEn": "What's Changed fix: ensure config.yaml exists and is populated when accessed by @RomneyDa in #11915 chore: jb-67-vs-38 by @RomneyDa in #11916 chore(deps-dev): bump happy-dom from 20.0.2 to 20.8.9 in /",
-      "lang": "en",
-      "publishedAt": "2026-03-27T21:38:24.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "continue",
-        "release"
-      ],
-      "category": "copilot",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "alt": "Continue.dev Releases v1.2.22-vscode",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "35f4e7dc5ca4193e",
-      "source": "continue-releases",
-      "sourceType": "release",
-      "url": "https://github.com/continuedev/continue/releases/tag/v1.3.38-vscode",
-      "title": "Continue.dev Releases v1.3.38-vscode",
-      "titleJa": "",
-      "titleEn": "Continue.dev Releases v1.3.38-vscode",
-      "summaryJa": "",
-      "summaryEn": "What's Changed fix: ensure config.yaml exists and is populated when accessed by @RomneyDa in #11915 chore: jb-67-vs-38 by @RomneyDa in #11916 chore(deps-dev): bump happy-dom from 20.0.2 to 20.8.9 in /",
-      "lang": "en",
-      "publishedAt": "2026-03-27T21:34:07.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "continue",
-        "release"
-      ],
-      "category": "copilot",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "alt": "Continue.dev Releases v1.3.38-vscode",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "12159b5948eb5b11",
-      "source": "continue-releases",
-      "sourceType": "release",
-      "url": "https://github.com/continuedev/continue/releases/tag/v1.0.67-jetbrains",
-      "title": "Continue.dev Releases v1.0.67-jetbrains",
-      "titleJa": "",
-      "titleEn": "Continue.dev Releases v1.0.67-jetbrains",
-      "summaryJa": "",
-      "summaryEn": "What's Changed fix: redirect Winston logger to stderr to prevent IPC stream corruption + fix binary tests by @RomneyDa in #11914 fix: ensure config.yaml exists and is populated when accessed by @Romne",
-      "lang": "en",
-      "publishedAt": "2026-03-27T21:22:37.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "continue",
-        "release"
-      ],
-      "category": "copilot",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "alt": "Continue.dev Releases v1.0.67-jetbrains",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "4819b879f3add111",
-      "source": "continue-releases",
-      "sourceType": "release",
-      "url": "https://github.com/continuedev/continue/releases/tag/v1.2.21-vscode",
-      "title": "Continue.dev Releases v1.2.21-vscode",
-      "titleJa": "",
-      "titleEn": "Continue.dev Releases v1.2.21-vscode",
-      "summaryJa": "",
-      "summaryEn": "What's Changed chore: jb-66-vs-37 by @RomneyDa in #11909 fix: remove Ollama template-based tool support gate by @RomneyDa in #11905 Full Changelog : v1.2.20-vscode...v1.2.21-vscode",
-      "lang": "en",
-      "publishedAt": "2026-03-27T00:10:30.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "continue",
-        "release"
-      ],
-      "category": "copilot",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "alt": "Continue.dev Releases v1.2.21-vscode",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "6dc758987af47ad2",
-      "source": "continue-releases",
-      "sourceType": "release",
-      "url": "https://github.com/continuedev/continue/releases/tag/v1.3.37-vscode",
-      "title": "Continue.dev Releases v1.3.37-vscode",
-      "titleJa": "",
-      "titleEn": "Continue.dev Releases v1.3.37-vscode",
-      "summaryJa": "",
-      "summaryEn": "What's Changed chore: jb-66-vs-37 by @RomneyDa in #11909 fix: remove Ollama template-based tool support gate by @RomneyDa in #11905 Full Changelog : v1.3.36-vscode...v1.3.37-vscode",
-      "lang": "en",
-      "publishedAt": "2026-03-27T00:05:47.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "continue",
-        "release"
-      ],
-      "category": "copilot",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "alt": "Continue.dev Releases v1.3.37-vscode",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "b807a62b6359ff90",
-      "source": "continue-releases",
-      "sourceType": "release",
-      "url": "https://github.com/continuedev/continue/releases/tag/v1.0.66-jetbrains",
-      "title": "Continue.dev Releases v1.0.66-jetbrains",
-      "titleJa": "",
-      "titleEn": "Continue.dev Releases v1.0.66-jetbrains",
-      "summaryJa": "",
-      "summaryEn": "What's Changed chore: jb-66-vs-37 by @RomneyDa in #11909 fix: remove Ollama template-based tool support gate by @RomneyDa in #11905 Full Changelog : v1.0.65-jetbrains...v1.0.66-jetbrains",
-      "lang": "en",
-      "publishedAt": "2026-03-26T23:52:57.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "continue",
-        "release"
-      ],
-      "category": "copilot",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "alt": "Continue.dev Releases v1.0.66-jetbrains",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "0653c3111132a6cd",
-      "source": "continue-releases",
-      "sourceType": "release",
-      "url": "https://github.com/continuedev/continue/releases/tag/v1.2.20-vscode",
-      "title": "Continue.dev Releases v1.2.20-vscode",
-      "titleJa": "",
-      "titleEn": "Continue.dev Releases v1.2.20-vscode",
-      "summaryJa": "",
-      "summaryEn": "What's Changed fix: add ModelDescription type to binary test callbacks by @RomneyDa in #11888 Fix StringIndexOutOfBoundsException in readRangeInFile by @ivanlen in #11881 fix: resolve critical and hig",
-      "lang": "en",
-      "publishedAt": "2026-03-26T22:57:26.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "continue",
-        "release"
-      ],
-      "category": "copilot",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "alt": "Continue.dev Releases v1.2.20-vscode",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "582c7f2b02669886",
-      "source": "continue-releases",
-      "sourceType": "release",
-      "url": "https://github.com/continuedev/continue/releases/tag/v1.3.36-vscode",
-      "title": "Continue.dev Releases v1.3.36-vscode",
-      "titleJa": "",
-      "titleEn": "Continue.dev Releases v1.3.36-vscode",
-      "summaryJa": "",
-      "summaryEn": "What's Changed fix: add ModelDescription type to binary test callbacks by @RomneyDa in #11888 Fix StringIndexOutOfBoundsException in readRangeInFile by @ivanlen in #11881 fix: resolve critical and hig",
-      "lang": "en",
-      "publishedAt": "2026-03-26T22:43:05.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "continue",
-        "release"
-      ],
-      "category": "copilot",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "alt": "Continue.dev Releases v1.3.36-vscode",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "852dd991d6880092",
-      "source": "google-deepmind",
-      "sourceType": "blog",
-      "url": "https://deepmind.google/blog/gemini-3-1-flash-live-making-audio-ai-more-natural-and-reliable/",
-      "title": "Gemini 3.1 Flash Live: Making audio AI more natural and reliable",
-      "titleJa": "",
-      "titleEn": "Gemini 3.1 Flash Live: Making audio AI more natural and reliable",
-      "summaryJa": "",
-      "summaryEn": "Our latest voice model has improved precision and lower latency to make voice interactions more fluid, natural and precise.",
-      "lang": "en",
-      "publishedAt": "2026-03-26T15:23:35.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "deepmind",
-        "google"
-      ],
-      "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://lh3.googleusercontent.com/X3xXSd8ns-IojsGTjvadPFyaBWT5bBGhubcQd_WSiIgQ9bESUPceaHtfOxwgYzwv3P-Gtz2r3sWs-1XFB5X72HuTMbVz30hqJCKOxBaQdq1Oq6895A=w528-h297-n-nu-rw-lo",
-        "origSrc": "https://lh3.googleusercontent.com/X3xXSd8ns-IojsGTjvadPFyaBWT5bBGhubcQd_WSiIgQ9bESUPceaHtfOxwgYzwv3P-Gtz2r3sWs-1XFB5X72HuTMbVz30hqJCKOxBaQdq1Oq6895A=w528-h297-n-nu-rw-lo",
-        "alt": "Gemini 3.1 Flash Live: Making audio AI more natural and reliable",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "aeb1d20ccc6e1af1",
-      "source": "continue-releases",
-      "sourceType": "release",
-      "url": "https://github.com/continuedev/continue/releases/tag/v1.2.19-vscode",
-      "title": "Continue.dev Releases v1.2.19-vscode",
-      "titleJa": "",
-      "titleEn": "Continue.dev Releases v1.2.19-vscode",
-      "summaryJa": "",
-      "summaryEn": "What's Changed fix: remove Llama 3.1 405B from Groq provider by @RomneyDa in #11804 fix: add keepAlive to YAML completion options schema by @RomneyDa in #11801 fix(llama.cpp): include model name in co",
-      "lang": "en",
-      "publishedAt": "2026-03-26T09:22:19.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "continue",
-        "open-model",
-        "release"
-      ],
-      "category": "copilot",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "alt": "Continue.dev Releases v1.2.19-vscode",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "07bb15a3a5ef73c1",
-      "source": "continue-releases",
-      "sourceType": "release",
-      "url": "https://github.com/continuedev/continue/releases/tag/v1.3.35-vscode",
-      "title": "Continue.dev Releases v1.3.35-vscode",
-      "titleJa": "",
-      "titleEn": "Continue.dev Releases v1.3.35-vscode",
-      "summaryJa": "",
-      "summaryEn": "What's Changed fix: remove Llama 3.1 405B from Groq provider by @RomneyDa in #11804 fix: add keepAlive to YAML completion options schema by @RomneyDa in #11801 fix(llama.cpp): include model name in co",
-      "lang": "en",
-      "publishedAt": "2026-03-26T09:17:47.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "continue",
-        "open-model",
-        "release"
-      ],
-      "category": "copilot",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/6581799?s=60&amp;v=4",
-        "alt": "Continue.dev Releases v1.3.35-vscode",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "9b7fb317f124b10a",
-      "source": "google-deepmind",
-      "sourceType": "blog",
-      "url": "https://deepmind.google/blog/protecting-people-from-harmful-manipulation/",
-      "title": "Protecting people from harmful manipulation",
-      "titleJa": "",
-      "titleEn": "Protecting people from harmful manipulation",
-      "summaryJa": "",
-      "summaryEn": "Google DeepMind researches AI's harmful manipulation risks across areas like finance and health, leading to new safety measures.",
-      "lang": "en",
-      "publishedAt": "2026-03-25T16:46:20.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "deepmind",
-        "google"
-      ],
-      "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://lh3.googleusercontent.com/IH7SOCSd4lrXu8YVkyRw45zg4Jc__pHM0SJlbDssVL3_5XjYGVYE1jt8DCiPgM9JGdwmdO_gYnQ4-QIo2l9Rz04l7KK4jAbsdAyWLriTV-iOC2_Y3bI=w528-h297-n-nu-rw-lo",
-        "origSrc": "https://lh3.googleusercontent.com/IH7SOCSd4lrXu8YVkyRw45zg4Jc__pHM0SJlbDssVL3_5XjYGVYE1jt8DCiPgM9JGdwmdO_gYnQ4-QIo2l9Rz04l7KK4jAbsdAyWLriTV-iOC2_Y3bI=w528-h297-n-nu-rw-lo",
-        "alt": "Protecting people from harmful manipulation",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "c8f4d79c44f71173",
-      "source": "google-deepmind",
-      "sourceType": "blog",
-      "url": "https://deepmind.google/blog/lyria-3-pro-create-longer-tracks-in-more/",
-      "title": "Lyria 3 Pro: Create longer tracks in more",
-      "titleJa": "",
-      "titleEn": "Lyria 3 Pro: Create longer tracks in more",
-      "summaryJa": "",
-      "summaryEn": "Introducing Lyria 3 Pro, which unlocks longer tracks with structural awareness. We’re also bringing Lyria to more Google products and surfaces.",
-      "lang": "en",
-      "publishedAt": "2026-03-25T16:01:39.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "deepmind",
-        "google"
-      ],
-      "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://lh3.googleusercontent.com/jcDZxU6wx4tQ5XBOVae89SPyssJfB24ifHGOA_pGrzdRp9SgP6q2vnx5rr6yeyr_nuFh6b3qHDQzqZFDB3ey-inIlXC2aEEXzUhr_Vy_9AuE7dPuSRs=w528-h297-n-nu-rw-lo",
-        "origSrc": "https://lh3.googleusercontent.com/jcDZxU6wx4tQ5XBOVae89SPyssJfB24ifHGOA_pGrzdRp9SgP6q2vnx5rr6yeyr_nuFh6b3qHDQzqZFDB3ey-inIlXC2aEEXzUhr_Vy_9AuE7dPuSRs=w528-h297-n-nu-rw-lo",
-        "alt": "Lyria 3 Pro: Create longer tracks in more",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "c73bb455c44ea2a0",
-      "source": "semantic-kernel-releases",
-      "sourceType": "release",
-      "url": "https://github.com/microsoft/semantic-kernel/releases/tag/python-1.41.1",
-      "title": "python-1.41.1",
-      "titleJa": "",
-      "titleEn": "python-1.41.1",
-      "summaryJa": "",
-      "summaryEn": "What's Changed Python: fix(python/google): preserve thought_signature in Gemini function call parts by @giulio-leone in #13609 Python: Fix image integration tests that are now blocked due to bot polic",
-      "lang": "en",
-      "publishedAt": "2026-03-25T06:53:52.000Z",
-      "collectedAt": "2026-05-07T09:00:38.821Z",
-      "tags": [
-        "agent",
-        "release",
-        "semantic-kernel"
-      ],
-      "category": "agent-fw",
-      "importance": 2,
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/35585003?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/35585003?s=60&amp;v=4",
-        "alt": "python-1.41.1",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "8af33ea06769a73d",
-      "source": "cursor-changelog",
-      "sourceType": "changelog",
-      "url": "https://cursor.com/changelog/03-25-26",
-      "title": "Self-hosted Cloud Agents",
-      "titleJa": "",
-      "titleEn": "Self-hosted Cloud Agents",
-      "summaryJa": "",
-      "summaryEn": "Cursor now supports self-hosted cloud agents that keep your code and tool execution entirely in your own network.",
-      "lang": "en",
-      "publishedAt": "2026-03-25T00:00:00.000Z",
-      "collectedAt": "2026-05-07T07:00:42.912Z",
-      "tags": [
-        "changelog",
-        "cursor"
-      ],
-      "category": "cursor",
-      "importance": 2
-    },
-    {
-      "id": "90bed9cdebb09e4c",
-      "source": "google-deepmind",
-      "sourceType": "blog",
-      "url": "https://deepmind.google/blog/measuring-progress-toward-agi-a-cognitive-framework/",
-      "title": "Measuring progress toward AGI: A cognitive framework",
-      "titleJa": "",
-      "titleEn": "Measuring progress toward AGI: A cognitive framework",
-      "summaryJa": "",
-      "summaryEn": "We’re introducing a framework to measure progress toward AGI, and launching a Kaggle hackathon to build the relevant evaluations.",
-      "lang": "en",
-      "publishedAt": "2026-03-17T16:03:47.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "deepmind",
-        "google",
-        "release"
-      ],
-      "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://lh3.googleusercontent.com/kOpPqSCIuZr9xSaOZM-eZl314VHQ80Nmv-PfUJgzGOaHU0KY08nNAahjcjoNWT4T_xy5DH6TfOCXwhgR6POERmrPoXnpCsN8J2LJPgoM01rO3nAWPg=w528-h297-n-nu-rw-lo",
-        "origSrc": "https://lh3.googleusercontent.com/kOpPqSCIuZr9xSaOZM-eZl314VHQ80Nmv-PfUJgzGOaHU0KY08nNAahjcjoNWT4T_xy5DH6TfOCXwhgR6POERmrPoXnpCsN8J2LJPgoM01rO3nAWPg=w528-h297-n-nu-rw-lo",
-        "alt": "Measuring progress toward AGI: A cognitive framework",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "b0b62d3acb450019",
-      "source": "google-deepmind",
-      "sourceType": "blog",
-      "url": "https://deepmind.google/blog/10-years-of-alphago/",
-      "title": "From games to biology and beyond: 10 years of AlphaGo’s impact",
-      "titleJa": "",
-      "titleEn": "From games to biology and beyond: 10 years of AlphaGo’s impact",
-      "summaryJa": "",
-      "summaryEn": "Ten years since AlphaGo, we explore how it is catalyzing scientific discovery and paving a path to AGI.",
-      "lang": "en",
-      "publishedAt": "2026-03-09T13:52:36.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "deepmind",
-        "google"
-      ],
-      "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://lh3.googleusercontent.com/kKeug1hkQnNyG362692WROTmFRkJUTgZ3TnYbLZPTIbjvYL9np0UqAGJS0uxRhZLq_LSBOroG486f9RRLv0mKESv1RP-6JfEdI3SMXsEyeVTaXlnOEg=w528-h297-n-nu-rw-lo",
-        "origSrc": "https://lh3.googleusercontent.com/kKeug1hkQnNyG362692WROTmFRkJUTgZ3TnYbLZPTIbjvYL9np0UqAGJS0uxRhZLq_LSBOroG486f9RRLv0mKESv1RP-6JfEdI3SMXsEyeVTaXlnOEg=w528-h297-n-nu-rw-lo",
-        "alt": "From games to biology and beyond: 10 years of AlphaGo’s impact",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "deff79d69a91b064",
-      "source": "hn-ai",
-      "sourceType": "community",
-      "url": "https://github.com/knowsuchagency/mcp2cli",
-      "title": "Show HN: Mcp2cli – One CLI for every API, 96-99% fewer tokens than native MCP",
-      "titleJa": "",
-      "titleEn": "Show HN: Mcp2cli – One CLI for every API, 96-99% fewer tokens than native MCP",
-      "summaryJa": "",
-      "summaryEn": "HN: 146 points, 100 comments · @knowsuchagency · https://news.ycombinator.com/item?id=47305149",
-      "lang": "en",
-      "publishedAt": "2026-03-09T05:18:46.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "community",
-        "hackernews",
-        "mcp-server"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm"
-    },
-    {
-      "id": "caca3485c6a60fb9",
-      "source": "google-deepmind",
-      "sourceType": "blog",
-      "url": "https://deepmind.google/blog/gemini-3-1-flash-lite-built-for-intelligence-at-scale/",
-      "title": "Gemini 3.1 Flash-Lite: Built for intelligence at scale",
-      "titleJa": "",
-      "titleEn": "Gemini 3.1 Flash-Lite: Built for intelligence at scale",
-      "summaryJa": "",
-      "summaryEn": "Gemini 3.1 Flash-Lite is our fastest and most cost-efficient Gemini 3 series model yet.",
-      "lang": "en",
-      "publishedAt": "2026-03-03T16:35:55.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "deepmind",
-        "google"
-      ],
-      "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://lh3.googleusercontent.com/L943nW-XsLGjzWrBOj8x7RhlajW6yigzhd8q45ia33L0uNyClu_XT600bTZevv5c2end6MZ5dFKekGXGMjfxIsYCdlqYlcnyNEmAy4Gd0B6Ovd6Z=w528-h297-n-nu-rw-lo",
-        "origSrc": "https://lh3.googleusercontent.com/L943nW-XsLGjzWrBOj8x7RhlajW6yigzhd8q45ia33L0uNyClu_XT600bTZevv5c2end6MZ5dFKekGXGMjfxIsYCdlqYlcnyNEmAy4Gd0B6Ovd6Z=w528-h297-n-nu-rw-lo",
-        "alt": "Gemini 3.1 Flash-Lite: Built for intelligence at scale",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "5397956e9165df86",
-      "source": "google-deepmind",
-      "sourceType": "blog",
-      "url": "https://deepmind.google/blog/nano-banana-2-combining-pro-capabilities-with-lightning-fast-speed/",
-      "title": "Nano Banana 2: Combining Pro capabilities with lightning-fast speed",
-      "titleJa": "",
-      "titleEn": "Nano Banana 2: Combining Pro capabilities with lightning-fast speed",
-      "summaryJa": "",
-      "summaryEn": "Our latest image generation model offers advanced world knowledge, production ready specs, subject consistency and more, all at Flash speed.",
-      "lang": "en",
-      "publishedAt": "2026-02-26T16:01:50.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "deepmind",
-        "google"
-      ],
-      "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://lh3.googleusercontent.com/uzAd6nlnEh3lSFyE5Ay-1tvY6xesJLBuPucsK64LfxUwhMk5odcsyH-pAaIKRDVh1PniKOsihrha1qqspCc2f3CgPv61TSgTReKWdUlPiavUkH3R8lM=w528-h297-n-nu-rw-lo",
-        "origSrc": "https://lh3.googleusercontent.com/uzAd6nlnEh3lSFyE5Ay-1tvY6xesJLBuPucsK64LfxUwhMk5odcsyH-pAaIKRDVh1PniKOsihrha1qqspCc2f3CgPv61TSgTReKWdUlPiavUkH3R8lM=w528-h297-n-nu-rw-lo",
-        "alt": "Nano Banana 2: Combining Pro capabilities with lightning-fast speed",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "d064c6363cee9cf9",
-      "source": "google-deepmind",
-      "sourceType": "blog",
-      "url": "https://deepmind.google/blog/gemini-3-1-pro-a-smarter-model-for-your-most-complex-tasks/",
-      "title": "Gemini 3.1 Pro: A smarter model for your most complex tasks",
-      "titleJa": "",
-      "titleEn": "Gemini 3.1 Pro: A smarter model for your most complex tasks",
-      "summaryJa": "",
-      "summaryEn": "3.1 Pro is designed for tasks where a simple answer isn’t enough.",
-      "lang": "en",
-      "publishedAt": "2026-02-19T16:06:14.000Z",
-      "collectedAt": "2026-05-07T12:00:38.164Z",
-      "tags": [
-        "deepmind",
-        "google"
-      ],
-      "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "image": {
-        "src": "https://lh3.googleusercontent.com/bZ8aFD7yMP8ue-XfAwrEMPDLgVua4ThZvdZu9mFYcsQTk0QVfc_kd2ygbXCCmTOR6dTvw6FhCkzc55j7-rUW_cYHnsOzmPHrzzJqDLTCCrhnCrOQkg=w528-h297-n-nu-rw-lo",
-        "origSrc": "https://lh3.googleusercontent.com/bZ8aFD7yMP8ue-XfAwrEMPDLgVua4ThZvdZu9mFYcsQTk0QVfc_kd2ygbXCCmTOR6dTvw6FhCkzc55j7-rUW_cYHnsOzmPHrzzJqDLTCCrhnCrOQkg=w528-h297-n-nu-rw-lo",
-        "alt": "Gemini 3.1 Pro: A smarter model for your most complex tasks",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
     }
   ]
 }

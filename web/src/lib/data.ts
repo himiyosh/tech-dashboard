@@ -31,6 +31,8 @@ export interface NormalizedEntry {
   titleEn: string;
   summaryJa: string;
   summaryEn: string;
+  /** Long-form article body in Japanese (optional, populated by worker). */
+  bodyJa?: string;
   lang: "ja" | "en";
   publishedAt: string;
   collectedAt: string;
@@ -410,5 +412,28 @@ export function weekOverWeek(category: Category, now = new Date()): {
     null,
   );
   return { thisWeek: curr, prevWeek: prev, deltaPct, avgPerDay, peak };
+}
+
+/**
+ * Internal href to the in-site article summary page for an entry.
+ * All article links across the site should route through this helper
+ * so that users land on the in-site summary rather than the original
+ * source URL. The original URL is still surfaced on the detail page.
+ */
+export function entryHref(e: Pick<NormalizedEntry, "id">): string {
+  return `/e/${e.id}/`;
+}
+
+/** Look up an entry by id (used by the detail page). */
+export function getEntryById(id: string): NormalizedEntry | undefined {
+  return ALL_ENTRIES.find((e) => e.id === id);
+}
+
+/** Related entries: same category, excluding self, newest first. */
+export function relatedEntries(
+  e: NormalizedEntry,
+  n = 6,
+): NormalizedEntry[] {
+  return ALL_ENTRIES.filter((x) => x.id !== e.id && x.category === e.category).slice(0, n);
 }
 

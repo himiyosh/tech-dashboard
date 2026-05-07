@@ -109,6 +109,8 @@ export interface NormalizedEntry {
   titleEn: string;
   summaryJa: string;
   summaryEn: string;
+  /** Long-form magazine-style article body in Japanese (optional). */
+  bodyJa?: string;
   lang: Lang;
   publishedAt: string | null;
   collectedAt: string;

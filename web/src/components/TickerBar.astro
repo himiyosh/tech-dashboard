@@ -1,5 +1,5 @@
 ---
-import { CATEGORY_META, jstDateKey, titleForLang, type NormalizedEntry } from "../lib/data.ts";
+import { CATEGORY_META, entryHref, jstDateKey, titleForLang, type NormalizedEntry } from "../lib/data.ts";
 
 export interface Props {
   entries: readonly NormalizedEntry[];
@@ -48,9 +48,7 @@ const catColorOf = (slug: string): string =>
           const en = titleForLang(e, "en");
           return (
             <a
-              href={e.url}
-              target="_blank"
-              rel="noopener"
+              href={entryHref(e)}
               class={`tb-slide${i === 0 ? " is-active" : ""}`}
               style={`--cat-color:${catColorOf(e.category)}`}
               data-index={i}

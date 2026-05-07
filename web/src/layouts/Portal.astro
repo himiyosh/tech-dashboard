@@ -137,7 +137,8 @@ const {
 
         let pf: any = null;
         try {
-          pf = await import(/* @vite-ignore */ "/pagefind/pagefind.js");
+          const pfUrl = "/pagefind/pagefind.js";
+          pf = await import(/* @vite-ignore */ pfUrl);
           await pf.init();
           (window as any).__pagefind = pf;
         } catch {

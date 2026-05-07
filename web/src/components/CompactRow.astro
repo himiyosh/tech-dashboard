@@ -3,6 +3,7 @@ import {
   relativeTime,
   isNew,
   CATEGORY_META,
+  entryHref,
   type NormalizedEntry,
 } from "../lib/data.ts";
 
@@ -37,9 +38,7 @@ function typeLabel(t: NormalizedEntry["sourceType"]): string {
 
 <a
   class:list={["row", { important: entry.importance === 3 }]}
-  href={entry.url}
-  target="_blank"
-  rel="noopener"
+  href={entryHref(entry)}
   style={`--cat-color:${catColor}`}
 >
   <span class="cat-dot" title={entry.category}></span>

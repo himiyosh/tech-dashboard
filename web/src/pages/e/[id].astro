@@ -1,0 +1,758 @@
+---
+import Portal from "../../layouts/Portal.astro";
+import Sidebar from "../../components/Sidebar.astro";
+import {
+  ALL_ENTRIES,
+  CATEGORY_META,
+  relatedEntries,
+  relativeTime,
+  summaryForLang,
+  summaryForLangWithFallback,
+  titleForLang,
+  trendingTags,
+  type NormalizedEntry,
+} from "../../lib/data.ts";
+import { SOURCE_META } from "../../lib/source-meta.ts";
+import { buildArticleContext } from "../../lib/article-context.ts";
+
+export function getStaticPaths() {
+  return ALL_ENTRIES.map((e) => ({
+    params: { id: e.id },
+    props: { entry: e },
+  }));
+}
+
+interface Props {
+  entry: NormalizedEntry;
+}
+
+const { entry } = Astro.props as Props;
+
+const titleJa = titleForLang(entry, "ja");
+const titleEn = titleForLang(entry, "en");
+const summaryJa = summaryForLang(entry, "ja");
+const summaryEn = summaryForLangWithFallback(entry, "en");
+
+const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
+const catColor = catMeta?.color ?? "#8a847e";
+const catName = catMeta?.name ?? entry.category;
+const catEmoji = catMeta?.emoji ?? "\u{1F4C4}";
+
+const srcMeta = SOURCE_META.find((s) => s.id === entry.source);
+const srcDisplay = srcMeta?.displayName ?? entry.source;
+const srcTier = srcMeta?.tier;
+
+function host(url: string): string {
+  try {
+    return new URL(url).host.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function faviconUrl(url: string, size = 32): string {
+  const h = host(url);
+  if (!h) return "";
+  return `https://www.google.com/s2/favicons?sz=${size}&domain=${h}`;
+}
+
+function splitJaPoints(s: string): string[] {
+  if (!s) return [];
+  return s
+    .split(/(?<=[。！？])\s*/)
+    .map((x) => x.trim())
+    .filter((x) => x.length > 0);
+}
+function splitEnPoints(s: string): string[] {
+  if (!s) return [];
+  return s
+    .split(/(?<=[.!?])\s+/)
+    .map((x) => x.trim())
+    .filter((x) => x.length > 0);
+}
+
+const pointsJa = splitJaPoints(summaryJa);
+const pointsEn = splitEnPoints(summaryEn.text);
+
+const sourceTypeLabel: Record<NormalizedEntry["sourceType"], string> = {
+  release: "リリース",
+  changelog: "Changelog",
+  paper: "論文",
+  blog: "ブログ",
+  community: "コミュニティ",
+};
+
+const importanceLabel: Record<1 | 2 | 3, string> = {
+  3: "重要",
+  2: "通常",
+  1: "情報",
+};
+
+const halfLifeLabel: Record<string, string> = {
+  news: "短命 (ニュース)",
+  tutorial: "中期 (チュートリアル)",
+  architecture: "長期 (アーキテクチャ)",
+  fundamental: "永続 (基礎知識)",
+};
+
+const now = new Date();
+const rel = relativeTime(entry.publishedAt, now);
+const related = relatedEntries(entry, 6);
+const tags = trendingTags(12);
+
+const ctx = buildArticleContext(entry, catName, entry.category, srcDisplay, host(entry.url));
+
+// Build a short auto context paragraph from tags / category / source.
+const tagStr = entry.tags.slice(0, 5).map((t) => `「${t}」`).join("、");
+const contextJa = [
+  `本記事は${catName}カテゴリの${sourceTypeLabel[entry.sourceType] ?? entry.sourceType}で、${srcDisplay} (${host(entry.url)}) が公開した情報です。`,
+  tagStr ? `主要トピックは ${tagStr} で、AI コーディング・開発者ツール領域の最新動向として収集されました。` : "",
+  entry.importance === 3
+    ? "TECH Dashboard では本記事を「重要 (HOT)」としてタグ付けしており、業界全体に影響しうる更新と判定しています。"
+    : entry.importance === 2
+      ? "TECH Dashboard では本記事を「通常」レベルの更新として扱っています。"
+      : "AI コーディング領域の補足情報として収集された記事です。",
+].filter(Boolean).join(" ");
+
+const breadcrumb = [
+  { label: "Home", href: "/" },
+  { label: catName, href: `/c/${entry.category}` },
+  { label: titleJa || titleEn || entry.title },
+];
+
+const pageTitle = `${titleJa || titleEn || entry.title} — TECH Dashboard`;
+const pageDesc = (summaryJa || summaryEn.text || entry.title).slice(0, 160);
+
+function fmtDate(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat("ja-JP", {
+      timeZone: "Asia/Tokyo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
+---
+
+<Portal title={pageTitle} description={pageDesc} pageKey="timeline" breadcrumb={breadcrumb}>
+  <div class="layout">
+    <Sidebar active={entry.category} />
+
+    <main class="entry-main">
+    <article class="entry-detail" data-pagefind-body style={`--cat-color:${catColor}`}>
+      <header class="ed-head">
+        <div class="ed-meta">
+          <a class="ed-cat" href={`/c/${entry.category}`}>
+            <span aria-hidden="true">{catEmoji}</span>
+            <span>{catName}</span>
+          </a>
+          <span class="ed-type">{sourceTypeLabel[entry.sourceType] ?? entry.sourceType}</span>
+          {entry.importance === 3 && <span class="ed-hot">🔥 HOT</span>}
+          <span class="ed-spacer"></span>
+          <span class="ed-time mono">{rel}</span>
+        </div>
+        <h1 class="ed-title">
+          <span class="i18n-ja">{titleJa || titleEn || entry.title}</span>
+          <span class="i18n-en" lang="en">{titleEn || titleJa || entry.title}</span>
+        </h1>
+        <div class="ed-src">
+          <img
+            class="ed-favicon"
+            src={faviconUrl(entry.url)}
+            alt=""
+            width="16"
+            height="16"
+            loading="lazy"
+            decoding="async"
+            referrerpolicy="no-referrer"
+            onerror="this.style.display='none'"
+          />
+          <span class="ed-src-name">{srcDisplay}</span>
+          <span class="ed-dot">·</span>
+          <span class="ed-host">{host(entry.url)}</span>
+          <span class="ed-dot">·</span>
+          <span class="ed-pub mono">{fmtDate(entry.publishedAt)}</span>
+        </div>
+      </header>
+
+      {entry.image?.src && (
+        <div class="ed-hero">
+          <img
+            src={entry.image.src}
+            alt={entry.image.alt || titleJa || entry.title}
+            loading="eager"
+            decoding="async"
+          />
+        </div>
+      )}
+
+      <section class="ed-summary">
+        <div class="ed-summary-head">
+          <span class="ai-mark">AI 要約</span>
+          <span class="ed-summary-note i18n-ja">公式情報をもとに自動生成。詳細は元記事をご確認ください。</span>
+          <span class="ed-summary-note i18n-en" lang="en">Auto-generated. See the original for full details.</span>
+        </div>
+
+        <div class="ed-points-label i18n-ja">主なポイント</div>
+        <div class="ed-points-label i18n-en" lang="en">Key points</div>
+
+        {pointsJa.length > 1 && (
+          <ul class="ed-points i18n-ja">
+            {pointsJa.map((p) => <li>{p}</li>)}
+          </ul>
+        )}
+        {pointsJa.length === 1 && (
+          <p class="ed-summary-body i18n-ja">{pointsJa[0]}</p>
+        )}
+
+        {pointsEn.length > 1 && (
+          <ul class="ed-points i18n-en" lang={summaryEn.isFallback ? "ja" : "en"}>
+            {summaryEn.isFallback && (
+              <li class="lang-fallback"><span class="lang-badge">[ja]</span>English summary not available; showing JA.</li>
+            )}
+            {pointsEn.map((p) => <li>{p}</li>)}
+          </ul>
+        )}
+        {pointsEn.length === 1 && (
+          <p class="ed-summary-body i18n-en" lang={summaryEn.isFallback ? "ja" : "en"}>
+            {summaryEn.isFallback && <span class="lang-badge">[ja]</span>}
+            {pointsEn[0]}
+          </p>
+        )}
+
+        {!summaryJa && !summaryEn.text && (
+          <p class="ed-summary-empty">
+            <span class="i18n-ja">この記事の要約はまだ生成されていません。</span>
+            <span class="i18n-en" lang="en">No summary has been generated yet.</span>
+          </p>
+        )}
+      </section>
+
+      <section class="ed-article">
+        <h2 class="ed-section-title">
+          <span class="i18n-ja">本文</span>
+          <span class="i18n-en" lang="en">Article</span>
+        </h2>
+        {entry.bodyJa ? (
+          <div class="ed-article-prose i18n-ja">
+            {entry.bodyJa.split(/\n{2,}/).map((para) => (
+              <p class="ed-article-body">{para}</p>
+            ))}
+          </div>
+        ) : (
+          <div class="ed-article-prose i18n-ja">
+            <p class="ed-article-lead">{ctx.lead}</p>
+            <h3 class="ed-article-h3">背景</h3>
+            <p class="ed-article-body">{ctx.background}</p>
+            {ctx.related && (
+              <>
+                <h3 class="ed-article-h3">関連知見</h3>
+                <p class="ed-article-body">{ctx.related}</p>
+              </>
+            )}
+            <div class="ed-article-note">
+              <div class="ed-article-note-title">本サイトでの位置づけ</div>
+              <p class="ed-article-note-text">{ctx.takeaway}</p>
+            </div>
+            <p class="ed-article-pending">
+              ※ この記事の本文 (掻い摘み + 関連知見) は近日中に AI が生成して差し替わります。
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section class="ed-facts">
+        <ul class="ed-facts-inline">
+          <li>
+            <span class="ed-fk">Source</span>
+            <span class="ed-fv">
+              {srcDisplay}
+              {srcTier && <span class="ed-pill tier">T{srcTier}</span>}
+            </span>
+          </li>
+          <li>
+            <span class="ed-fk">Type</span>
+            <span class="ed-fv">{sourceTypeLabel[entry.sourceType] ?? entry.sourceType}</span>
+          </li>
+          <li>
+            <span class="ed-fk">Importance</span>
+            <span class="ed-fv">
+              <span class={`ed-pill imp-${entry.importance}`}>★ {importanceLabel[entry.importance]}</span>
+            </span>
+          </li>
+          <li>
+            <span class="ed-fk">Published</span>
+            <span class="ed-fv mono">{fmtDate(entry.publishedAt)}</span>
+          </li>
+          <li>
+            <span class="ed-fk">Collected</span>
+            <span class="ed-fv mono">{fmtDate(entry.collectedAt)}</span>
+          </li>
+          <li>
+            <span class="ed-fk">Lang</span>
+            <span class="ed-fv">{entry.lang === "ja" ? "JA" : "EN"}</span>
+          </li>
+          {entry.halfLife && (
+            <li>
+              <span class="ed-fk">Half-life</span>
+              <span class="ed-fv">{halfLifeLabel[entry.halfLife] ?? entry.halfLife}</span>
+            </li>
+          )}
+          {entry.archiveTier && (
+            <li>
+              <span class="ed-fk">Archive</span>
+              <span class="ed-fv">{entry.archiveTier}</span>
+            </li>
+          )}
+        </ul>
+      </section>
+
+      {entry.tags.length > 0 && (
+        <section class="ed-tag-block">
+          <h2 class="ed-section-title">
+            <span class="i18n-ja">タグ</span>
+            <span class="i18n-en" lang="en">Tags</span>
+          </h2>
+          <div class="ed-tags">
+            {entry.tags.map((t) => (
+              <a class="ed-tag" href={`/t/${t}`}>#{t}</a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div class="ed-actions">
+        <a class="ed-cta" href={entry.url} target="_blank" rel="noopener nofollow">
+          <span class="i18n-ja">元記事を読む</span>
+          <span class="i18n-en" lang="en">Read original</span>
+          <span aria-hidden="true">↗</span>
+        </a>
+        <span class="ed-actions-host">
+          <img
+            class="ed-favicon"
+            src={faviconUrl(entry.url)}
+            alt=""
+            width="14"
+            height="14"
+            loading="lazy"
+            decoding="async"
+            referrerpolicy="no-referrer"
+            onerror="this.style.display='none'"
+          />
+          {host(entry.url)}
+        </span>
+      </div>
+
+      <p class="ed-disclaimer">
+        <span class="i18n-ja">本ページの要約は AI が自動生成したものです。内容の正確性は元記事をご参照ください。本サイトは元記事の著作権を保有しません。</span>
+        <span class="i18n-en" lang="en">This summary is AI-generated. Please consult the original article for accuracy. We do not claim copyright over the source.</span>
+      </p>
+    </article>
+
+    {related.length > 0 && (
+      <section class="ed-related">
+        <h2 class="ed-section-title">
+          <span class="i18n-ja">関連記事 — {catName}</span>
+          <span class="i18n-en" lang="en">Related — {catName}</span>
+        </h2>
+        <div class="ed-related-grid">
+          {related.map((r) => {
+            const rSum = summaryForLang(r, "ja") || summaryForLang(r, "en");
+            const rTitle = titleForLang(r, "ja") || titleForLang(r, "en") || r.title;
+            const rMeta = CATEGORY_META.find((c) => c.slug === r.category);
+            const rColor = rMeta?.color ?? "#8a847e";
+            return (
+              <a class="ed-rel-card" href={`/e/${r.id}/`} style={`--cat-color:${rColor}`}>
+                <div class="ed-rel-head">
+                  <span class="ed-rel-type">{r.sourceType}</span>
+                  {r.importance === 3 && <span class="ed-rel-hot">🔥</span>}
+                  <span class="ed-rel-time mono">{relativeTime(r.publishedAt, now)}</span>
+                </div>
+                <div class="ed-rel-title">{rTitle}</div>
+                {rSum && <div class="ed-rel-sum">{rSum}</div>}
+                <div class="ed-rel-src">{r.source}</div>
+              </a>
+            );
+          })}
+        </div>
+        <a class="ed-more" href={`/c/${entry.category}`}>
+          <span class="i18n-ja">{catName} の記事をもっと見る →</span>
+          <span class="i18n-en" lang="en">More in {catName} →</span>
+        </a>
+      </section>
+    )}
+    </main>
+
+    <aside class="right">
+      <div class="side-card">
+        <div class="right-title">Trending Tags</div>
+        <div class="tag-cloud">
+          {tags.map((t) => (
+            <a class="tag" href={`/t/${encodeURIComponent(t.tag)}`}>
+              #{t.tag} <span class="c">{t.count}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="right-title">{catName}</div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 10px">
+          <span class="i18n-ja">同じカテゴリの記事をまとめてチェックできます。</span>
+          <span class="i18n-en" lang="en">Browse all entries in this category.</span>
+        </p>
+        <a href={`/c/${entry.category}`} style={`color:${catColor};font-size:13px;text-decoration:none`}>
+          → /c/{entry.category}
+        </a>
+      </div>
+
+      <div class="side-card">
+        <div class="right-title">About</div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.55">
+          <span class="i18n-ja">1 時間おきに公式ソースを自動収集し、日本語で要約。</span>
+          <span class="i18n-en" lang="en">Hourly auto-collected official sources, summarized in JA.</span>
+          <a href="/about" style="color:var(--accent)">詳しく</a>
+        </p>
+      </div>
+    </aside>
+  </div>
+</Portal>
+
+<style>
+  .entry-main { min-width: 0; }
+  .entry-detail {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    padding: 24px 28px 22px;
+    border-left: 3px solid var(--cat-color);
+  }
+  .ed-head { display: flex; flex-direction: column; gap: 10px; }
+  .ed-meta {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text-2); flex-wrap: wrap;
+  }
+  .ed-cat {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 999px;
+    background: color-mix(in srgb, var(--cat-color) 18%, transparent);
+    color: var(--cat-color); text-decoration: none; font-weight: 600;
+  }
+  .ed-type {
+    text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 2px 6px; border: 1px solid var(--border);
+    border-radius: 4px; font-size: 11px;
+  }
+  .ed-hot { color: #f59e0b; font-weight: 600; }
+  .ed-spacer { flex: 1; }
+  .ed-time { color: var(--text-2); }
+  .ed-title {
+    font-size: 24px; line-height: 1.4; margin: 4px 0 6px;
+    color: var(--text-1); font-weight: 700;
+  }
+  .ed-src {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12.5px; color: var(--text-2); flex-wrap: wrap;
+  }
+  .ed-favicon { border-radius: 3px; }
+  .ed-host, .ed-pub, .ed-dot { color: var(--text-3); }
+
+  .ed-hero {
+    margin: 18px -28px;
+    background: #1a1917;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .ed-hero img {
+    display: block; width: 100%;
+    max-height: 380px; object-fit: cover;
+  }
+
+  .ed-summary {
+    margin: 18px 0 8px;
+    padding: 16px 18px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--cat-color) 6%, var(--bg));
+  }
+  .ed-summary-head {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 12px;
+    font-size: 12px; color: var(--text-2); flex-wrap: wrap;
+  }
+  .ai-mark {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--cat-color) 24%, transparent);
+    color: var(--cat-color);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  }
+  .ed-summary-note { color: var(--text-3); font-size: 11.5px; }
+
+  .ed-points {
+    list-style: disc;
+    margin: 0;
+    padding: 0 0 0 20px;
+    display: block;
+  }
+  .ed-points li {
+    padding: 0;
+    font-size: 14.5px;
+    line-height: 1.9;
+    color: var(--text-1);
+    margin: 0 0 8px;
+  }
+  .ed-points.i18n-en li { font-size: 13.5px; line-height: 1.65; }
+  .lang-fallback { color: var(--text-3) !important; font-size: 12px !important; }
+
+  .ed-summary-body {
+    font-size: 14.5px; line-height: 1.8;
+    color: var(--text-1); white-space: pre-wrap; margin: 6px 0;
+  }
+  .lang-badge {
+    display: inline-block; margin-right: 6px;
+    padding: 1px 5px; border-radius: 3px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-3); font-size: 10px;
+  }
+  .ed-summary-empty { color: var(--text-3); font-size: 13px; }
+
+  .ed-section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-2);
+    margin: 22px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+
+  .ed-facts {
+    margin-top: 16px;
+  }
+  .ed-facts-inline {
+    list-style: none;
+    margin: 0;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    font-size: 12px;
+    color: var(--text-2);
+  }
+  .ed-facts-inline li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.6;
+  }
+  .ed-fk {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-3);
+    font-size: 10.5px;
+    font-weight: 600;
+  }
+  .ed-fv { color: var(--text-1); }
+  .ed-pill {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10.5px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+  }
+  .ed-pill.imp-3 { background: rgba(245,158,11,0.15); color: #f59e0b; border-color: rgba(245,158,11,0.4); }
+  .ed-pill.tier { color: var(--cat-color); border-color: color-mix(in srgb, var(--cat-color) 40%, transparent); }
+
+  .ed-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ed-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-2);
+    text-decoration: none;
+    font-size: 12px;
+  }
+  .ed-tag:hover { color: var(--cat-color); border-color: var(--cat-color); }
+
+  .ed-actions {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 22px; padding-top: 16px;
+    border-top: 1px dashed var(--border);
+    flex-wrap: wrap;
+  }
+  .ed-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 18px;
+    border-radius: 8px;
+    background: var(--cat-color);
+    color: #0c0c0a;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .ed-cta:hover { filter: brightness(1.08); }
+  .ed-actions-host {
+    display: inline-flex; align-items: center; gap: 5px;
+    color: var(--text-3); font-size: 12px;
+  }
+
+  .ed-disclaimer {
+    margin: 16px 0 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    color: var(--text-3);
+    font-size: 11.5px;
+    line-height: 1.6;
+  }
+
+  .ed-related { margin-top: 28px; padding: 0 4px; }
+  .ed-related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .ed-rel-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--cat-color);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text-1);
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .ed-rel-card:hover {
+    background: color-mix(in srgb, var(--cat-color) 5%, var(--surface));
+    border-color: color-mix(in srgb, var(--cat-color) 40%, var(--border));
+  }
+  .ed-rel-head {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--text-3);
+  }
+  .ed-rel-type {
+    text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 1px 6px; border: 1px solid var(--border);
+    border-radius: 3px; font-size: 10px;
+  }
+  .ed-rel-hot { color: #f59e0b; }
+  .ed-rel-time { margin-left: auto; }
+  .ed-rel-title {
+    font-size: 13.5px; font-weight: 600; line-height: 1.4;
+    color: var(--text-1);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .ed-rel-sum {
+    font-size: 12px; color: var(--text-2); line-height: 1.55;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .ed-rel-src { font-size: 10.5px; color: var(--text-3); margin-top: 2px; }
+
+  .ed-points-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--cat-color);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .ed-article-prose {
+    margin-top: 4px;
+  }
+  .ed-article-lead {
+    font-size: 15px;
+    line-height: 1.85;
+    color: var(--text-1);
+    margin: 0 0 14px;
+    padding-left: 12px;
+    border-left: 3px solid var(--cat-color);
+  }
+  .ed-article-h3 {
+    font-size: 15px;
+    color: var(--text-1);
+    margin: 18px 0 8px;
+    padding-bottom: 4px;
+    font-weight: 600;
+    border-bottom: 1px dashed var(--border);
+  }
+  .ed-article-body {
+    font-size: 14.5px;
+    line-height: 2.05;
+    color: var(--text-1);
+    margin: 0 0 20px;
+    text-align: justify;
+    text-justify: inter-character;
+  }
+  .ed-article-note {
+    margin: 14px 0 6px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--surface) 65%, var(--bg));
+    border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  }
+  .ed-article-note-title {
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 4px;
+  }
+  .ed-article-note-text {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: var(--text-3);
+  }
+  .ed-article-pending {
+    margin-top: 14px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    color: var(--text-3);
+    font-size: 12px;
+  }
+
+  .ed-more {
+    display: inline-block;
+    margin-top: 12px;
+    color: var(--cat-color);
+    text-decoration: none;
+    font-size: 13px;
+  }
+  .ed-more:hover { text-decoration: underline; }
+
+  @media (max-width: 1100px) {
+    .ed-related-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 720px) {
+    .entry-detail { padding: 18px 18px 16px; }
+    .ed-hero { margin: 14px -18px; }
+    .ed-title { font-size: 20px; }
+    .ed-points li { font-size: 14px; }
+    .ed-facts-inline { gap: 4px 12px; padding: 8px 10px; }
+    .ed-related-grid { grid-template-columns: 1fr; }
+  }
+</style>

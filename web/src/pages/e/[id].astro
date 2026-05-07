@@ -96,15 +96,24 @@ const bodyChars = (entry.bodyJa ?? "").length;
 const readMinutes = bodyChars > 0 ? Math.max(1, Math.round(bodyChars / 500)) : 0;
 
 // Split body and build TOC headings (use first ~24 chars of each paragraph as label).
-const paragraphs: string[] = entry.bodyJa
+const paragraphsJa: string[] = entry.bodyJa
   ? entry.bodyJa.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
   : [];
+const paragraphsEn: string[] = entry.bodyEn
+  ? entry.bodyEn.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
+  : [];
 
-function tocLabel(s: string): string {
+function tocLabelJa(s: string): string {
   const trimmed = s.replace(/\s+/g, " ");
   const m = trimmed.match(/^[^。．.!?！？]{1,40}[。．.!?！？]/);
   const label = (m?.[0] ?? trimmed).slice(0, 30);
   return label.length < trimmed.length ? label.replace(/[。．.!?！？]$/, "") + "…" : label;
+}
+function tocLabelEn(s: string): string {
+  const trimmed = s.replace(/\s+/g, " ");
+  const m = trimmed.match(/^[^.!?]{1,80}[.!?]/);
+  const label = (m?.[0] ?? trimmed).slice(0, 60);
+  return label.length < trimmed.length ? label.replace(/[.!?]$/, "") + "…" : label;
 }
 
 // Highlight tag mentions in body — server-side regex replace.
@@ -131,11 +140,18 @@ function highlightTags(html: string, tagList: string[]): string {
   return out;
 }
 
-const renderedParagraphs = paragraphs.map((p, i) => ({
-  id: `p-${i + 1}`,
-  label: tocLabel(p),
+const renderedJa = paragraphsJa.map((p, i) => ({
+  id: `p-ja-${i + 1}`,
+  label: tocLabelJa(p),
   html: highlightTags(escapeHtml(p), entry.tags),
 }));
+const renderedEn = paragraphsEn.map((p, i) => ({
+  id: `p-en-${i + 1}`,
+  label: tocLabelEn(p),
+  html: highlightTags(escapeHtml(p), entry.tags),
+}));
+// Backwards-compat alias: TOC defaults to JA when present, otherwise EN.
+const renderedParagraphs = renderedJa.length > 0 ? renderedJa : renderedEn;
 
 const breadcrumb = [
   { label: "Home", href: "/" },
@@ -291,39 +307,66 @@ const jsonLd = {
         )}
 
         {/* BODY */}
-        {renderedParagraphs.length > 0 ? (
+        {(renderedJa.length > 0 || renderedEn.length > 0) ? (
           <section class="ed-body">
-            <div class="ed-body-prose">
-              {renderedParagraphs.map((p, i) => {
-                // Insert a pull-quote roughly halfway through, picking the
-                // longest TL;DR point as the highlighted callout.
-                const mid = Math.floor(renderedParagraphs.length / 2);
-                const showQuote =
-                  pointsJa.length > 1 &&
-                  i === mid &&
-                  renderedParagraphs.length >= 4;
-                const quote = pointsJa
-                  .slice()
-                  .sort((a, b) => b.length - a.length)[0] ?? "";
-                return (
-                  <Fragment>
-                    <p id={p.id} set:html={p.html} />
-                    {showQuote && quote && (
-                      <figure class="ed-pullquote" aria-hidden="false">
-                        <span class="ed-pullquote-mark" aria-hidden="true">“</span>
-                        <blockquote>{quote}</blockquote>
-                        <figcaption>{catEmoji} {catName} · 本記事のポイント</figcaption>
-                      </figure>
-                    )}
-                    {i < renderedParagraphs.length - 1 && i % 3 === 2 && !showQuote && (
-                      <div class="ed-divider" aria-hidden="true">
-                        <span></span><span></span><span></span>
-                      </div>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </div>
+            {renderedJa.length > 0 && (
+              <div class="ed-body-prose i18n-ja" lang="ja">
+                {renderedJa.map((p, i) => {
+                  const mid = Math.floor(renderedJa.length / 2);
+                  const showQuote = pointsJa.length > 1 && i === mid && renderedJa.length >= 4;
+                  const quote = pointsJa.slice().sort((a, b) => b.length - a.length)[0] ?? "";
+                  return (
+                    <Fragment>
+                      <p id={p.id} set:html={p.html} />
+                      {showQuote && quote && (
+                        <figure class="ed-pullquote">
+                          <span class="ed-pullquote-mark" aria-hidden="true">“</span>
+                          <blockquote>{quote}</blockquote>
+                          <figcaption>{catEmoji} {catName} · 本記事のポイント</figcaption>
+                        </figure>
+                      )}
+                      {i < renderedJa.length - 1 && i % 3 === 2 && !showQuote && (
+                        <div class="ed-divider" aria-hidden="true">
+                          <span></span><span></span><span></span>
+                        </div>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </div>
+            )}
+            {renderedEn.length > 0 && (
+              <div class="ed-body-prose i18n-en" lang="en">
+                {renderedEn.map((p, i) => {
+                  const mid = Math.floor(renderedEn.length / 2);
+                  const showQuote = pointsEn.length > 1 && i === mid && renderedEn.length >= 4 && !summaryEn.isFallback;
+                  const quote = pointsEn.slice().sort((a, b) => b.length - a.length)[0] ?? "";
+                  return (
+                    <Fragment>
+                      <p id={p.id} set:html={p.html} />
+                      {showQuote && quote && (
+                        <figure class="ed-pullquote">
+                          <span class="ed-pullquote-mark" aria-hidden="true">“</span>
+                          <blockquote>{quote}</blockquote>
+                          <figcaption>{catEmoji} {catName} · Key takeaway</figcaption>
+                        </figure>
+                      )}
+                      {i < renderedEn.length - 1 && i % 3 === 2 && !showQuote && (
+                        <div class="ed-divider" aria-hidden="true">
+                          <span></span><span></span><span></span>
+                        </div>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </div>
+            )}
+            {renderedJa.length === 0 && renderedEn.length > 0 && (
+              <p class="ed-body-pending i18n-ja">※ 日本語版の本文は近日中に AI が生成します。現在は英語版をご覧ください。</p>
+            )}
+            {renderedEn.length === 0 && renderedJa.length > 0 && (
+              <p class="ed-body-pending i18n-en" lang="en">※ The English body is being generated. Japanese version is currently shown.</p>
+            )}
           </section>
         ) : (
           <section class="ed-body">

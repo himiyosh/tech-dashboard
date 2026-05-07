@@ -33,6 +33,8 @@ export interface NormalizedEntry {
   summaryEn: string;
   /** Long-form article body in Japanese (optional, populated by worker). */
   bodyJa?: string;
+  /** Long-form article body in English (optional, populated by worker). */
+  bodyEn?: string;
   lang: "ja" | "en";
   publishedAt: string;
   collectedAt: string;

@@ -17,7 +17,7 @@ const INDEX = "data/index.json";
 const idx = JSON.parse(fs.readFileSync(INDEX, "utf8"));
 
 const before = idx.entries.length;
-const missingBody = idx.entries.filter((e) => !(e.bodyJa || "").trim()).length;
+const missingBody = idx.entries.filter((e) => !(e.bodyJa || "").trim() || !(e.bodyEn || "").trim()).length;
 console.log(`[backfill-bodies] total=${before} missing-body=${missingBody}`);
 
 const { entries, stats } = await summarize(idx.entries, "data");
@@ -27,5 +27,5 @@ idx.entries = entries;
 idx.generatedAt = new Date().toISOString();
 fs.writeFileSync(INDEX, JSON.stringify(idx, null, 2) + "\n");
 
-const after = idx.entries.filter((e) => !(e.bodyJa || "").trim()).length;
+const after = idx.entries.filter((e) => !(e.bodyJa || "").trim() || !(e.bodyEn || "").trim()).length;
 console.log(`[backfill-bodies] missing-body: ${missingBody} -> ${after}`);

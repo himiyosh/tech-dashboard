@@ -164,9 +164,10 @@ describe("data/index.json カバレッジ統計 (情報のみ)", () => {
       (e) => typeof e.bodyEn === "string" && (e.bodyEn as string).trim().length > 0,
     ).length;
     // ログ目的。閾値のアサートはせず、極端なリグレッション検知だけしておく。
-    // worker が新着記事を追加すると body 未生成のエントリが一時的に増えるため
-    // 閾値は 40% に設定し、極端なリグレッションのみ検知する。
-    expect(withJa / total).toBeGreaterThan(0.4);
-    expect(withEn / total).toBeGreaterThan(0.4);
+    // worker が新着記事を追加すると body 未生成のエントリが大量に増える
+    // (INDEX_LIMIT 2000 、全件を順次 LLM 要約して追い付いていく) ため、閾値は低くとる。
+    // 「1件以上は body がある」だけアサートしてそれ以外はログとして記録する。
+    expect(withJa).toBeGreaterThan(0);
+    expect(withEn).toBeGreaterThan(0);
   });
 });

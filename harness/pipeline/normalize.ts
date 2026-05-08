@@ -138,7 +138,7 @@ export function normalize(
     summaryJa: summary.ja,
     summaryEn: summary.en,
     lang,
-    publishedAt: raw.publishedAt,
+    publishedAt: raw.publishedAt ?? collectedAt,
     collectedAt,
     tags: [...source.autoTags],
     category: source.category,

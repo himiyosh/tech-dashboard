@@ -1,21 +1,184 @@
 {
-  "generatedAt": "2026-05-08T07:01:57.925Z",
+  "generatedAt": "2026-05-08T08:01:56.517Z",
   "count": 500,
   "health": {
-    "lastRunAt": "2026-05-08T07:01:57.925Z",
-    "batchIndex": 4,
+    "lastRunAt": "2026-05-08T08:01:56.517Z",
+    "batchIndex": 1,
     "batchTotal": 4,
-    "sourcesAttempted": 12,
-    "sourcesOk": 12,
+    "sourcesAttempted": 13,
+    "sourcesOk": 13,
     "sourcesFailed": [],
     "summarized": 5,
     "summarizeErrors": 0,
     "copilotOk": true,
     "copilotError": null,
-    "ogCached": 1056,
-    "ogNewHits": 4
+    "ogCached": 1060,
+    "ogNewHits": 3
   },
   "entries": [
+    {
+      "id": "c4926d94e0736e1d",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/lablab-ai-amd-developer-hackathon/medqa",
+      "title": "MedQA: Fine-Tuning a Clinical AI on AMD ROCm — No CUDA Required",
+      "titleJa": "MedQA: AMD ROCm上で臨床AIをファインチューニング、CUDA不要",
+      "titleEn": "MedQA: Fine-Tuning a Clinical AI on AMD ROCm — No CUDA Required",
+      "summaryJa": "AMD ROCm環境でCUDAを使わずに医療QAモデルをファインチューニングした事例の紹介。MedQAデータセットを用いてLLMを臨床タスク向けに調整し、AMD GPUでも実用的な学習が可能であることを示している。",
+      "summaryEn": "A walkthrough of fine-tuning a clinical question-answering LLM on AMD ROCm hardware without CUDA, using the MedQA dataset to demonstrate that AMD GPUs are a viable alternative for medical AI training workloads.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T07:54:18.000Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
+      "tags": [
+        "huggingface",
+        "open-model",
+        "amd-rocm",
+        "medqa",
+        "fine-tuning",
+        "medical-ai",
+        "hugging-face"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "bodyJa": "Hugging Faceのブログで公開された本記事は、AMDのROCmスタック上で医療向けQAモデル(MedQA)をファインチューニングする実践例を紹介している。NVIDIAのCUDAに依存せず、AMD GPUだけで臨床AIの学習パイプラインを構築できる点が要点である。\n\n題材となったMedQAは、米国医師国家試験(USMLE)スタイルの選択式問題を集めたデータセットで、医療LLMの評価・学習で広く参照されている。記事では、このデータを用いてベースLLMを微調整し、医学知識に基づく推論能力を強化する流れを示している。学習にはHugging Faceのtransformersやpeft(LoRAなど)といった一般的なツールチェーンが使われており、ROCm版PyTorchの導入により、コードレベルではCUDA環境とほぼ変わらない開発体験が得られると説明されている。\n\n背景として、AMDはMI300シリーズなどデータセンタGPUの拡充とROCmの成熟化を急いでおり、Hugging Face側もOptimumやAccelerate経由でAMDハードウェアの正式サポートを進めてきた。本記事は、lablab.aiが主催したAMD Developer Hackathonの成果物の一つで、CUDA以外の選択肢が現実味を帯びてきた現状を示す事例と見られる。\n\n医療領域ではプライバシーやオンプレ運用の要請が強く、特定ベンダーへのロックイン回避は重要なテーマである。AMD GPU+ROCm+オープンソースLLMという組み合わせは、こうした要件を満たす構成として今後さらに採用が広がる可能性がある。一方で、ROCm対応ライブラリのカバレッジやドライバ周りの安定性は依然としてCUDAに比して発展途上の面もあり、本格運用時には個別検証が必要となるだろう。",
+      "bodyEn": "This Hugging Face blog post documents a practical fine-tuning workflow for a clinical question-answering model on AMD GPUs using the ROCm stack, explicitly avoiding any CUDA dependency. The takeaway is that an end-to-end medical AI training pipeline can now be built entirely on AMD silicon.\n\nThe project uses MedQA, a widely cited benchmark composed of USMLE-style multiple-choice medical questions, as the training and evaluation dataset. The author walks through adapting a base LLM with the standard Hugging Face toolchain — transformers, peft for parameter-efficient methods such as LoRA, and a ROCm build of PyTorch. The key observation is that, once the ROCm runtime and matching PyTorch wheels are in place, the developer experience is largely indistinguishable from a CUDA workflow: the same training scripts, tokenizers, and trainer abstractions apply.\n\nThe broader context matters here. AMD has been pushing hard to make ROCm a credible alternative to CUDA, particularly with the MI300 series targeting data-center AI workloads, and Hugging Face has progressively added first-class AMD support through Optimum and Accelerate. This article emerged from the lablab.ai AMD Developer Hackathon, which is part of a wider effort to seed community know-how around non-NVIDIA training stacks. Similar momentum can be seen in projects like vLLM and bitsandbytes, both of which have been gaining ROCm compatibility.\n\nMedical AI is an especially interesting proving ground for this hardware diversification. Hospitals and research institutions often need on-premise deployment for patient privacy and regulatory reasons, and avoiding single-vendor lock-in is a recurring procurement concern. A stack composed of AMD GPUs, ROCm, and open-weight clinical LLMs fits these constraints well and may see broader adoption if performance and tooling continue to improve.\n\nThat said, some caveats are worth flagging. ROCm's library coverage and driver maturity, while improving rapidly, still lag CUDA in places, and certain kernels or quantization paths may behave differently. Teams planning production clinical deployments would likely need to validate numerical behavior, throughput, and stability on their specific GPU SKUs. Also, MedQA fine-tuning alone does not produce a clinically deployable system — safety evaluation, hallucination control, and regulatory considerations remain separate, substantial challenges beyond the scope of this tutorial."
+    },
+    {
+      "id": "b914263a481eccef",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/emi_ndk/items/4fb1f4760d82d26728fc",
+      "title": "【衝撃】AIが「夢を見て」自己進化する時代が来た！Claude Dreamingで完了率6倍の衝撃",
+      "titleJa": "Claude Dreamingで完了率6倍、AIが「夢を見て」自己進化する時代へ",
+      "titleEn": "",
+      "summaryJa": "Anthropic研究者の発想を基にしたClaude Dreamingは、AIが過去のタスクを「夢」として再生・反芻し、自己進化する手法。タスク完了率が従来の6倍に向上したとされ、自律型エージェントの新たな方向性として注目される。",
+      "summaryEn": "Claude Dreaming, inspired by Anthropic research, lets AI agents replay and reflect on past tasks like dreams to self-improve. Reported task completion rates jumped 6x, signaling a new direction for autonomous agents.",
+      "lang": "ja",
+      "publishedAt": "2026-05-08T07:03:29.000Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
+      "tags": [
+        "llm",
+        "qiita",
+        "claude",
+        "ai-agents",
+        "self-improvement",
+        "anthropic"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "AIエージェントが人間のように「夢を見て」自己進化する——そんなSFめいた手法「Claude Dreaming」が注目を集めている。Anthropic関連の研究的アイデアを基にした実装で、タスク完了率が従来比6倍に達したと報告されている。\n\nClaude Dreamingの核心は、エージェントが実行したタスクのログを後から再生し、成功・失敗パターンを抽出して自身のプロンプトや行動戦略を更新する点にある。人間が睡眠中に記憶を整理・固定化する「記憶の固定化(consolidation)」に着想を得ており、リアルタイムの試行錯誤ではなくオフラインでの反芻によって、コストを抑えつつ汎化性能を高めることを狙う。\n\n技術的には、過去の対話・ツール使用履歴をClaudeに与え、「もし別の判断をしていたらどうなったか」を仮想的にシミュレートさせる。そこで得た教訓を知識ベースやシステムプロンプトに蓄積し、次回以降の実行に反映する仕組みだ。記事では完了率が6倍に向上したケースが紹介されているが、評価対象タスクの粒度や規模は限定的と見られ、すべての領域で同等の効果が出るかは検証が必要だろう。\n\n背景には、自己改善型エージェントへの関心の高まりがある。VoyagerのMinecraftにおけるスキル獲得、ReflexionやSelf-Refineといった自己反省ループ、DeepMindのDreamer系の世界モデル研究など、「経験を内部で再生して学ぶ」アプローチは複数の系譜で研究されてきた。Claude Dreamingはこの流れを大規模言語モデル上で実用的にまとめた一例と位置付けられる。\n\n一方で、誤った教訓を強化してしまう確証バイアス的な失敗や、夢の再生コスト、長期的なプロンプト肥大化といった課題も予想される。とはいえ、追加学習なしでエージェントを継続的に賢くする手法として、今後オープンソースコミュニティでも類似実装が広がる可能性がある。",
+      "bodyEn": "An intriguing technique called Claude Dreaming is gaining attention: it lets AI agents \"dream\" about their past work to improve themselves, reportedly boosting task completion rates by six times compared to baseline approaches.\n\nThe core idea, inspired by research circulating around Anthropic, is that an agent replays logs of previously executed tasks offline, extracts patterns from successes and failures, and updates its own prompts or strategies accordingly. The metaphor borrows from human sleep, where memory consolidation is thought to reorganize and stabilize what we learned during the day. Rather than burning tokens on live trial-and-error, the agent reflects in the background, aiming for cheaper and more generalizable improvement.\n\nMechanically, Claude is fed traces of prior conversations and tool calls and asked to simulate counterfactuals: what would have happened if a different decision had been made at a key step? The lessons extracted are then stored in a knowledge base or system prompt and applied in future runs. The article highlights a 6x improvement in completion rate, though the benchmark scope appears limited and the effect across broader domains will likely need independent validation.\n\nThis fits into a growing wave of self-improving agent research. Voyager demonstrated open-ended skill acquisition in Minecraft; Reflexion and Self-Refine introduced explicit self-critique loops; and DeepMind's Dreamer line of work has long explored learning from imagined rollouts inside a world model. Claude Dreaming can be seen as a pragmatic application of this lineage on top of a frontier LLM, without requiring weight updates.\n\nThere are caveats worth noting. Reflective loops can reinforce wrong conclusions, a kind of confirmation bias where the agent convinces itself that a flawed strategy was actually correct. Replay also costs inference time, and accumulated lessons risk bloating the system prompt until they degrade rather than help performance. Memory management — deciding what to keep, summarize, or discard — may turn out to be the harder engineering problem.\n\nStill, the appeal is clear. For builders of autonomous agents who cannot easily fine-tune a closed model like Claude, dreaming offers a path to continual improvement using only inference and storage. It is plausible that similar patterns will appear in open-source agent frameworks soon, and that vendors such as OpenAI, Google, and Anthropic themselves will formalize background reflection as a first-class feature of their agent platforms.",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjU0MTczODUwJTNGdiUzRDQ_aXhsaWI9cmItNC4wLjAmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTQ5ZGU0OTdkMjMwMjhmNWZmOTcwNmZlNGNmY2E5MDZm%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D29ced0e10c8c1d24806abaf93840cae7?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwJUU4JUExJTlEJUU2JTkyJTgzJUUzJTgwJTkxQUklRTMlODElOEMlRTMlODAlOEMlRTUlQTQlQTIlRTMlODIlOTIlRTglQTYlOEIlRTMlODElQTYlRTMlODAlOEQlRTglODclQUElRTUlQjclQjElRTklODAlQjIlRTUlOEMlOTYlRTMlODElOTklRTMlODIlOEIlRTYlOTklODIlRTQlQkIlQTMlRTMlODElOEMlRTYlOUQlQTUlRTMlODElOUYlRUYlQkMlODFDbGF1ZGUlMjBEcmVhbWluZyVFMyU4MSVBNyVFNSVBRSU4QyVFNCVCQSU4NiVFNyU4RSU4NzYlRTUlODAlOEQlRTMlODElQUUlRTglQTElOUQlRTYlOTIlODMmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz03OGQyODk0YjI2YmQ4OGE5ZTQyMzg1NWQzNWQ2MjZmYQ&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDBlbWlfbmRrJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NzU0NDg1YzBhMGMzNTE3YTkwZWM1ZTU4MzFlOTQyMWY&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=5d2f9cbdfa3ddb6cb9a5bd87fac354c2",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjU0MTczODUwJTNGdiUzRDQ_aXhsaWI9cmItNC4wLjAmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTQ5ZGU0OTdkMjMwMjhmNWZmOTcwNmZlNGNmY2E5MDZm%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D29ced0e10c8c1d24806abaf93840cae7?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwJUU4JUExJTlEJUU2JTkyJTgzJUUzJTgwJTkxQUklRTMlODElOEMlRTMlODAlOEMlRTUlQTQlQTIlRTMlODIlOTIlRTglQTYlOEIlRTMlODElQTYlRTMlODAlOEQlRTglODclQUElRTUlQjclQjElRTklODAlQjIlRTUlOEMlOTYlRTMlODElOTklRTMlODIlOEIlRTYlOTklODIlRTQlQkIlQTMlRTMlODElOEMlRTYlOUQlQTUlRTMlODElOUYlRUYlQkMlODFDbGF1ZGUlMjBEcmVhbWluZyVFMyU4MSVBNyVFNSVBRSU4QyVFNCVCQSU4NiVFNyU4RSU4NzYlRTUlODAlOEQlRTMlODElQUUlRTglQTElOUQlRTYlOTIlODMmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz03OGQyODk0YjI2YmQ4OGE5ZTQyMzg1NWQzNWQ2MjZmYQ&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDBlbWlfbmRrJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NzU0NDg1YzBhMGMzNTE3YTkwZWM1ZTU4MzFlOTQyMWY&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=5d2f9cbdfa3ddb6cb9a5bd87fac354c2",
+        "alt": "【衝撃】AIが「夢を見て」自己進化する時代が来た！Claude Dreamingで完了率6倍の衝撃",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "62ee9d84c827e48a",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/JunSuzukiJapan/items/af022503a760464e9bf2",
+      "title": "【AIロマン】複数LLMを再学習ゼロで合体させる！ Hotswappable LLMの実装と検証",
+      "titleJa": "複数LLMを再学習なしで合体させるHotswappable LLMの実装",
+      "titleEn": "",
+      "summaryJa": "複数の学習済みLLMを再学習せずに統合する「Hotswappable LLM」の実装と検証を紹介する記事。レイヤー単位で重みを切り替えたり融合する手法により、追加学習コストなしで異なるモデルの能力を組み合わせる試みを解説している。",
+      "summaryEn": "This article presents an implementation and evaluation of a Hotswappable LLM that combines multiple pretrained language models without any retraining, swapping or fusing weights at the layer level to mix the capabilities of different models at near-zero cost.",
+      "lang": "ja",
+      "publishedAt": "2026-05-08T06:45:28.000Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
+      "tags": [
+        "llm",
+        "qiita",
+        "model-merging",
+        "hotswap",
+        "pytorch"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "複数の学習済みLLMを再学習なしで合体させる「Hotswappable LLM」というアイデアの実装と検証レポートである。微調整やマージのために高価なGPU資源を使うことなく、推論時に異なるモデルの重みを切り替え・融合する発想は、ローカルLLMコミュニティで関心を集めるテーマと言える。\n\n記事では、同一アーキテクチャを持つ複数のLLM（例えば同じTransformer構造を共有するモデル群）を対象に、レイヤーごとに重みを差し替える、あるいは加重平均で融合するアプローチを取っているとみられる。これにより、モデルAの言語理解力とモデルBの専門知識を組み合わせるなど、単一モデルでは得にくい挙動を狙う。実装はPyTorch上で完結し、追加学習を伴わないため、ホビーユース規模のマシンでも検証可能である点が特徴である。\n\n背景として、近年はMergekitなどによるモデルマージ、SLERPやTIES-Merging、DAREといった重み融合アルゴリズムが活発に研究されている。HuggingFace上にもマージモデルが多数公開されており、Open LLM Leaderboardの上位を占めることもある。Hotswappable LLMはこれらの静的マージとは異なり、推論時に動的に切り替えられる柔軟性を志向する点で、Mixture of Experts的な発想にも近いと言える。\n\n一方で、レイヤーごとの重み交換は同一トークナイザ・同一隠れ次元のモデル間でしか成立せず、性能が崩れる可能性も高い。著者の検証結果が示すように、こうした実験は理論的興味と実用性の境界を探るものであり、今後のローカルLLM活用に新たな視点を与える試みと位置づけられる。",
+      "bodyEn": "This article reports on an experimental implementation of a Hotswappable LLM, an approach that fuses multiple pretrained language models without any additional training. The motivation is appealing: rather than spending GPU hours on fine-tuning or distillation, the author swaps or blends weights between models at inference time, aiming to mix their capabilities on the fly.\n\nThe approach appears to target models that share the same architecture, such as variants built on the same Transformer backbone with identical hidden dimensions and tokenizers. By replacing or weight-averaging individual layers between two or more checkpoints, the system tries to combine, for example, the linguistic fluency of one model with the domain knowledge of another. Because there is no gradient update involved, the entire pipeline can run on modest hardware and is implemented straightforwardly in PyTorch, making it accessible for hobbyist experimentation.\n\nThis line of work sits within a broader trend in the open-weights community. Tools like Mergekit, together with algorithms such as SLERP, TIES-Merging, and DARE, have made static model merging a popular sport on Hugging Face, and merged models frequently top the Open LLM Leaderboard. What distinguishes the Hotswappable concept is its dynamic flavor: instead of producing a single fused checkpoint ahead of time, the weights are swapped at runtime, conceptually closer in spirit to Mixture-of-Experts routing, though without a learned gating network.\n\nThe practical caveats are significant. Layer-wise swapping only makes sense between models with matching shapes and tokenizers, and even then, internal representations across checkpoints are not guaranteed to be aligned, so naive swaps can degrade output quality dramatically. The author's verification results highlight where such combinations succeed and where they break down, providing useful empirical signal rather than a polished product.\n\nOverall, the piece is best read as an exploratory experiment that probes the boundary between theoretical curiosity and practical utility. It may not displace established merging workflows, but it adds a thought-provoking option to the growing toolkit available to local LLM enthusiasts who want to remix existing open models without retraining.",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGMjA3MjIlMkZwcm9maWxlLWltYWdlcyUyRjE0ODI1NDI0Mzg_aXhsaWI9cmItNC4wLjAmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWI5NGIxMTI0NGRkZTczNzdlY2I3N2I0YzgxYzk3Yzkx%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dd4094c48a4bbc897b372f382a20fd8c8?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwQUklRTMlODMlQUQlRTMlODMlOUUlRTMlODMlQjMlRTMlODAlOTElRTglQTQlODclRTYlOTUlQjBMTE0lRTMlODIlOTIlRTUlODYlOEQlRTUlQUQlQTYlRTclQkYlOTIlRTMlODIlQkMlRTMlODMlQUQlRTMlODElQTclRTUlOTAlODglRTQlQkQlOTMlRTMlODElOTUlRTMlODElOUIlRTMlODIlOEIlRUYlQkMlODElMjBIb3Rzd2FwcGFibGUlMjBMTE0lRTMlODElQUUlRTUlQUUlOUYlRTglQTMlODUlRTMlODElQTglRTYlQTQlOUMlRTglQTglQkMmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz04NTA4YjUwZWQ4M2RjMDIyOWMwNTJlZDE3ZGM2NzhkNA&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDBKdW5TdXp1a2lKYXBhbiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWVhZGQwZGM3MWI4ZjBjOGJmNWU1ZjgzNjg5MjIyZDFj&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=eab3ebc1a60b45454a19177523c1e846",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGMjA3MjIlMkZwcm9maWxlLWltYWdlcyUyRjE0ODI1NDI0Mzg_aXhsaWI9cmItNC4wLjAmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWI5NGIxMTI0NGRkZTczNzdlY2I3N2I0YzgxYzk3Yzkx%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dd4094c48a4bbc897b372f382a20fd8c8?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwQUklRTMlODMlQUQlRTMlODMlOUUlRTMlODMlQjMlRTMlODAlOTElRTglQTQlODclRTYlOTUlQjBMTE0lRTMlODIlOTIlRTUlODYlOEQlRTUlQUQlQTYlRTclQkYlOTIlRTMlODIlQkMlRTMlODMlQUQlRTMlODElQTclRTUlOTAlODglRTQlQkQlOTMlRTMlODElOTUlRTMlODElOUIlRTMlODIlOEIlRUYlQkMlODElMjBIb3Rzd2FwcGFibGUlMjBMTE0lRTMlODElQUUlRTUlQUUlOUYlRTglQTMlODUlRTMlODElQTglRTYlQTQlOUMlRTglQTglQkMmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz04NTA4YjUwZWQ4M2RjMDIyOWMwNTJlZDE3ZGM2NzhkNA&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDBKdW5TdXp1a2lKYXBhbiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWVhZGQwZGM3MWI4ZjBjOGJmNWU1ZjgzNjg5MjIyZDFj&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=eab3ebc1a60b45454a19177523c1e846",
+        "alt": "【AIロマン】複数LLMを再学習ゼロで合体させる！ Hotswappable LLMの実装と検証",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "57bce85658430bef",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/taku629/items/e2f34ddb5b2486d8af95",
+      "title": "AIエージェントの「何が起きたか」を完全記録するPythonライブラリを作った",
+      "titleJa": "AIエージェントの動作を完全記録するPythonライブラリを公開",
+      "titleEn": "",
+      "summaryJa": "AIエージェントの実行過程を逐次記録・可視化するPythonライブラリが公開された。LLMの呼び出しやツール実行、入出力を追跡し、デバッグや監査に役立てる狙いがある。OpenTelemetryなど既存トレーシング技術と類似のアプローチを取ると見られる。",
+      "summaryEn": "A new Python library has been released that fully records the execution flow of AI agents, capturing LLM calls, tool invocations, and inputs/outputs for debugging and auditing. The approach resembles existing tracing tools like OpenTelemetry-based observability stacks.",
+      "lang": "ja",
+      "publishedAt": "2026-05-08T06:21:07.000Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
+      "tags": [
+        "llm",
+        "qiita",
+        "agent-observability",
+        "python",
+        "tracing",
+        "llm-agents"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "AIエージェントの挙動を完全に記録するためのPythonライブラリが個人開発者によって公開された。エージェントの推論過程やツール実行履歴を可視化することで、開発・運用時のデバッグや品質改善を支援する狙いがある。\n\nLLMを基盤としたエージェントは、プロンプト、ツール呼び出し、外部API応答など多数の要素が絡み合って動作する。失敗時や想定外の挙動が起きた際、どのステップで何が起きたかを追跡できないと原因特定が困難になる。本ライブラリは、エージェント内部のイベントを時系列で記録し、後から再生・分析できる形に保存する仕組みを提供すると見られる。\n\nこの種の「エージェント可観測性 (agent observability)」は近年急速に注目を集めている領域であり、LangSmith、LangFuse、Arize Phoenix、Weights & Biases Weave、OpenTelemetry GenAI semantic conventions など、商用・OSS問わず多数のソリューションが登場している。OpenAIもAgents SDKにトレーシング機能を組み込むなど、主要プレイヤーが標準化を進めている状況だ。\n\n個人開発のライブラリは、こうした既存ツールに比べて軽量かつ依存関係が少ない点が利点となる可能性がある。一方で、商用サービスが提供する分散トレーシングやUIによる分析機能には及ばないため、用途に応じた使い分けが必要となるだろう。エージェント開発が本格化するなかで、ログ・トレース基盤の重要性は今後さらに高まると考えられる。",
+      "bodyEn": "An individual developer has released a Python library that fully records the execution flow of AI agents, aiming to make their internal behavior transparent for debugging and quality improvement.\n\nLLM-based agents involve many moving parts: prompts, tool calls, external API responses, and intermediate reasoning steps. When something goes wrong or an unexpected behavior occurs, the inability to trace exactly what happened at each step can make root-cause analysis extremely difficult. The new library reportedly captures internal events in chronological order and persists them in a form that can be replayed or analyzed later, giving developers a clearer window into agent behavior.\n\nAgent observability has rapidly become a hot area in the LLM ecosystem. Numerous commercial and open-source solutions already exist, including LangSmith, LangFuse, Arize Phoenix, Weights & Biases Weave, and the emerging OpenTelemetry GenAI semantic conventions. Major vendors are also moving in this direction: OpenAI has built tracing directly into its Agents SDK, and Anthropic and Google have been refining their own tooling for inspecting agent runs. The trend reflects a broader recognition that agents, unlike single-shot chat completions, behave more like distributed systems and demand similar observability tooling.\n\nA lightweight, individually maintained library may appeal to developers who want minimal dependencies and full control over their tracing data, especially when sending logs to a hosted SaaS is undesirable for privacy or cost reasons. On the other hand, it is unlikely to match the polished UIs, distributed tracing, evaluation pipelines, and team collaboration features offered by mature commercial platforms, so the right choice will depend on project scale and requirements.\n\nAs agent-based applications move from prototypes into production, the importance of robust logging and tracing infrastructure is likely to grow further. Standardization efforts around OpenTelemetry's GenAI conventions could eventually make it easier to mix and match libraries like this one with broader observability stacks, reducing lock-in and improving interoperability across the ecosystem.",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjIxMDczOTA1MSUzRnYlM0Q0P2l4bGliPXJiLTQuMC4wJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0yNzAzMTU4MmRhNDJlYzNmM2I2YzA2MDM2YmJkZWFmMw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D6c909225570b363f8d5cea48f130c26d?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9QUklRTMlODIlQTglRTMlODMlQkMlRTMlODIlQjglRTMlODIlQTclRTMlODMlQjMlRTMlODMlODglRTMlODElQUUlRTMlODAlOEMlRTQlQkQlOTUlRTMlODElOEMlRTglQjUlQjclRTMlODElOEQlRTMlODElOUYlRTMlODElOEIlRTMlODAlOEQlRTMlODIlOTIlRTUlQUUlOEMlRTUlODUlQTglRTglQTglOTglRTklOEMlQjIlRTMlODElOTklRTMlODIlOEJQeXRob24lRTMlODMlQTklRTMlODIlQTQlRTMlODMlOTYlRTMlODMlQTklRTMlODMlQUElRTMlODIlOTIlRTQlQkQlOUMlRTMlODElQTMlRTMlODElOUYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0zZjgzZDQ1ZjQ3YmUzOGVmNzgzM2JhMDI1NTVkNGRhYQ&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDB0YWt1NjI5JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9MGVhMTg0Zjg5MzZiZjFmYzZlYzU2N2E0NGQxZmU2OWY&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=3a65ae877ec9f38cb5912f8c22e06b86",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjIxMDczOTA1MSUzRnYlM0Q0P2l4bGliPXJiLTQuMC4wJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0yNzAzMTU4MmRhNDJlYzNmM2I2YzA2MDM2YmJkZWFmMw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D6c909225570b363f8d5cea48f130c26d?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9QUklRTMlODIlQTglRTMlODMlQkMlRTMlODIlQjglRTMlODIlQTclRTMlODMlQjMlRTMlODMlODglRTMlODElQUUlRTMlODAlOEMlRTQlQkQlOTUlRTMlODElOEMlRTglQjUlQjclRTMlODElOEQlRTMlODElOUYlRTMlODElOEIlRTMlODAlOEQlRTMlODIlOTIlRTUlQUUlOEMlRTUlODUlQTglRTglQTglOTglRTklOEMlQjIlRTMlODElOTklRTMlODIlOEJQeXRob24lRTMlODMlQTklRTMlODIlQTQlRTMlODMlOTYlRTMlODMlQTklRTMlODMlQUElRTMlODIlOTIlRTQlQkQlOUMlRTMlODElQTMlRTMlODElOUYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0zZjgzZDQ1ZjQ3YmUzOGVmNzgzM2JhMDI1NTVkNGRhYQ&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDB0YWt1NjI5JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9MGVhMTg0Zjg5MzZiZjFmYzZlYzU2N2E0NGQxZmU2OWY&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=3a65ae877ec9f38cb5912f8c22e06b86",
+        "alt": "AIエージェントの「何が起きたか」を完全記録するPythonライブラリを作った",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "6986fbcaee3569a0",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/murasaki1994/items/557544bcab330c25156d",
+      "title": "就業規則が読めないのでRAGつくってみた",
+      "titleJa": "就業規則が読めないのでRAGを自作してみた事例",
+      "titleEn": "",
+      "summaryJa": "分厚い就業規則を読む手間を省くため、個人でRAG（検索拡張生成）システムを構築した事例。LLMとベクトル検索を組み合わせ、自然言語での質問に対して規則の該当箇所を引用しつつ回答させる仕組みを実装している。",
+      "summaryEn": "A personal project building a RAG (Retrieval-Augmented Generation) system to query a company's lengthy work regulations in natural language, combining an LLM with vector search to return cited answers.",
+      "lang": "ja",
+      "publishedAt": "2026-05-08T05:59:46.000Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
+      "tags": [
+        "llm",
+        "qiita",
+        "rag",
+        "vector-search",
+        "document-qa"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "会社の就業規則は数十ページに及ぶことが多く、読み通すのは骨が折れる。本記事の筆者はこの煩雑さを解消するため、RAG（Retrieval-Augmented Generation）を用いた個人向けQAシステムを自作した事例を紹介している。\n\nRAGは、ユーザーの質問に関連する文書をベクトル検索で取り出し、その内容をプロンプトに組み込んでLLMに回答させる手法である。今回のケースでは、就業規則PDFをチャンクに分割し、埋め込みモデルでベクトル化してデータベースに格納。質問時には類似度の高い章節を抽出し、LLMが該当箇所を参照しながら自然言語で回答する流れとなっている。これにより、ハルシネーションを抑えつつ根拠を明示した回答が得られる点が利点である。\n\n背景として、社内文書のRAG活用は近年エンタープライズAIの主要ユースケースの一つとなっている。LangChainやLlamaIndexといったフレームワーク、ChromaやFAISSなどのベクトルDB、OpenAIや各社のローカルLLMといった選択肢が揃い、個人でも比較的容易に構築できる環境が整った。一方で、PDFの表組みや箇条書きの構造を維持したままチャンク化する前処理、適切な検索粒度の調整、引用箇所の明示など、実用品質に到達するには細かなチューニングが必要とされる。\n\n就業規則のような半構造化された規程文書は、条番号や項立てが明確であるため比較的RAGと相性が良いと見られる。同様の取り組みは社内ヘルプデスクや法務文書検索でも広がっており、個人実装の知見はこうした業務応用への入口としても価値がある。",
+      "bodyEn": "Company work regulations often run to dozens of pages, making them tedious to read end-to-end. In this article, the author shares a personal project that addresses this pain point by building a RAG (Retrieval-Augmented Generation) system to query work regulations in natural language.\n\nRAG is a technique where documents relevant to a user's question are retrieved via vector similarity search and injected into the prompt of an LLM, which then generates an answer grounded in those passages. In this implementation, the regulation PDF is split into chunks, embedded with an embedding model, and stored in a vector database. When a question is asked, the most relevant sections are retrieved and passed to the LLM, which produces an answer that cites the underlying text. This approach reduces hallucinations and provides traceability back to the source.\n\nThe broader context is that internal-document RAG has become one of the dominant enterprise AI use cases over the past two years. With frameworks such as LangChain and LlamaIndex, vector stores like Chroma and FAISS, and a wide selection of hosted or local LLMs, building such a system has become accessible even for individual hobbyists. That said, achieving production-grade quality typically requires careful preprocessing — preserving table structures and bulleted hierarchies in PDFs, tuning chunk size and overlap, and ensuring citations are presented clearly to the user.\n\nWork regulations are a particularly good fit for RAG because they tend to be semi-structured, with numbered articles and clearly demarcated clauses that align well with chunk boundaries. Similar approaches are spreading in internal helpdesks, HR self-service portals, and legal document search. Personal projects like this one serve as a useful stepping stone toward those business applications, and they highlight both the accessibility of modern RAG tooling and the remaining engineering challenges around document parsing and retrieval quality."
+    },
     {
       "id": "077408b2083f5ae9",
       "source": "qiita-claude",
@@ -165,6 +328,28 @@
       }
     },
     {
+      "id": "6c0fbab697a37b0f",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/05/07/the-back-office-problem-that-explains-why-specialists-never-call-you-back/",
+      "title": "Why you can never get your doctor to call you back",
+      "titleJa": "",
+      "titleEn": "Why you can never get your doctor to call you back",
+      "summaryJa": "",
+      "summaryEn": "Like many AI companies automating work that humans currently do, Basata will eventually face a harder question about where the line is between augmenting workers and displacing them. For now, the foun",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:42:29.000Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
       "id": "845be653ce6a87c3",
       "source": "arxiv-cs-ai",
       "sourceType": "paper",
@@ -176,13 +361,13 @@
       "summaryEn": "An arXiv paper titled 'LCM: Lossless Context Management' proposes a technique for handling long LLM contexts without information loss, contrasting with lossy summarization or compression approaches by preserving full recoverability of original tokens.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "arxiv",
         "paper",
         "llm",
-        "context-management",
-        "long-context"
+        "long-context",
+        "context-management"
       ],
       "category": "research",
       "importance": 1,
@@ -211,7 +396,7 @@
       "summaryEn": "This paper investigates how knowledge transfer between agents in multi-agent design exploration can backfire, producing a crossover effect where shared context degrades rather than improves search performance under certain conditions.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "arxiv",
@@ -248,16 +433,15 @@
       "summaryEn": "AuditRepairBench introduces a paired-execution trace corpus designed to measure evaluator-channel ranking instability in LLM agent code repair, exposing how identical patches can be ranked inconsistently across evaluation channels and pushing toward more reliable agent assessment.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "arxiv",
         "paper",
-        "agent-repair",
-        "benchmark",
-        "evaluation",
         "llm-agents",
-        "program-repair"
+        "program-repair",
+        "benchmark",
+        "evaluation"
       ],
       "category": "research",
       "importance": 1,
@@ -286,14 +470,11 @@
       "summaryEn": "This paper argues that model-level alignment evaluations are insufficient to guarantee safety in real deployments, since alignment behavior depends on the surrounding system context. The authors call for system-level evaluation frameworks that capture deployment-relevant risks.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "arxiv",
         "benchmark",
         "paper",
-        "ai-alignment",
-        "ai-safety",
-        "evaluation",
         "llm-safety",
         "alignment-evaluation",
         "ai-governance",
@@ -326,7 +507,7 @@
       "summaryEn": "TSCG proposes a deterministic compilation approach for tool schemas in agentic LLM deployments, aiming to improve reliability and consistency of tool invocations and reduce runtime errors in production environments.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "arxiv",
@@ -364,14 +545,10 @@
       "summaryEn": "This paper proposes an automatic failure management framework for reinforcement fine-tuning (RFT) of LLMs, detecting and recovering from training instabilities such as reward collapse and gradient anomalies to improve robustness and final model quality.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "arxiv",
         "paper",
-        "llm",
-        "reinforcement-learning",
-        "fine-tuning",
-        "post-training",
         "rlhf",
         "rft",
         "llm-post-training",
@@ -404,14 +581,14 @@
       "summaryEn": "This paper examines accountability of AI agents in software engineering by analyzing terms of service of major AI coding services, highlighting how liability and responsibility are allocated, and proposing a research roadmap toward trustworthy and accountable agents.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "arxiv",
         "paper",
         "ai-agents",
-        "software-engineering",
         "accountability",
+        "software-engineering",
         "terms-of-service",
         "governance"
       ],
@@ -442,7 +619,7 @@
       "summaryEn": "This paper proposes a multitask benchmark and unified model for code search, reframing it beyond pure retrieval to include related subtasks. It highlights limitations of current evaluation paradigms and aims for more practical developer assistance.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "arxiv",
         "benchmark",
@@ -478,11 +655,10 @@
       "summaryEn": "CodeEvolve is an LLM-driven evolutionary optimization framework that uses runtime-enriched target selection to automatically improve code performance across multiple programming languages.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "arxiv",
         "paper",
-        "llm",
         "evolutionary-algorithms",
         "code-optimization",
         "llm-agents",
@@ -515,7 +691,7 @@
       "summaryEn": "This paper proposes a regularized and centered variant of Emphatic Temporal Difference (TD) learning for off-policy reinforcement learning, aiming to reduce variance and improve convergence stability under function approximation.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "arxiv",
         "paper",
@@ -552,17 +728,14 @@
       "summaryEn": "Pro$^2$Assist proposes a continuous, step-aware proactive assistant that leverages multimodal egocentric perception (vision and audio) to track user progress on long-horizon procedural tasks and deliver timely guidance without explicit prompts.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "arxiv",
         "paper",
-        "egocentric",
-        "multimodal",
-        "proactive-assistance",
-        "procedural-tasks",
         "egocentric-vision",
         "multimodal-llm",
-        "wearable-ai"
+        "wearable-ai",
+        "procedural-tasks"
       ],
       "category": "research",
       "importance": 1,
@@ -591,14 +764,11 @@
       "summaryEn": "This paper argues that LLM failures in temporal QA stem not from weak temporal reasoning but from probabilistic inconsistencies among extracted temporal facts. It proposes a neuro-symbolic framework to quantify and mitigate such inconsistencies, improving QA accuracy.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "arxiv",
         "paper",
         "neuro-symbolic",
-        "temporal-reasoning",
-        "qa",
-        "llm-evaluation",
         "temporal-qa",
         "llm-reasoning",
         "probabilistic-inference"
@@ -630,13 +800,12 @@
       "summaryEn": "This paper proposes a parallel prefix verification scheme for speculative decoding in large language models, aiming to maximize GPU parallelism and reduce inference latency compared with sequential token-by-token verification.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "arxiv",
         "paper",
         "speculative-decoding",
         "llm-inference",
-        "parallel-verification",
         "gpu-optimization",
         "parallel-algorithms"
       ],
@@ -667,14 +836,13 @@
       "summaryEn": "Agent Island is a new benchmark that evaluates LLM agents through multiagent games, providing a dynamic environment that resists both saturation and training-data contamination, unlike traditional static benchmarks that quickly become outdated.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "arxiv",
         "benchmark",
         "paper",
         "llm-evaluation",
-        "multi-agent",
         "multiagent",
         "agents"
       ],
@@ -705,14 +873,13 @@
       "summaryEn": "This paper investigates how Transformers' implicit deductive reasoning ability scales with model size, training data, and reasoning depth, characterizing empirical scaling laws and connecting findings to grokking phenomena observed during extended training.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "arxiv",
         "paper",
         "transformers",
         "reasoning",
         "scaling-laws",
-        "deductive-reasoning",
         "grokking"
       ],
       "category": "research",
@@ -2243,7 +2410,7 @@
       "summaryEn": "A hands-on experiment where AI agents played the roles of Product Owner, Scrum Master and developers in a Scrum team, with a human quietly intervening to steer reviews and decisions. The author shares insights on how light human guidance improved quality and alignment in an otherwise autonomous AI workflow.",
       "lang": "ja",
       "publishedAt": "2026-05-07T23:36:13.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "copilot",
         "zenn",
@@ -2279,7 +2446,7 @@
       "summaryEn": "A hands-on comparison of major image generation AIs for creating isometric diagrams used in presentation slides, evaluating output quality, prompt adherence, and ease of iterative editing across multiple models.",
       "lang": "ja",
       "publishedAt": "2026-05-07T23:30:05.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "zenn",
         "image-generation",
@@ -2314,7 +2481,7 @@
       "summaryEn": "Corporate card and expense management startup Ramp is reportedly in talks to raise new funding at a valuation exceeding $40 billion, just six months after reaching a $32 billion valuation in late 2025.",
       "lang": "en",
       "publishedAt": "2026-05-07T23:11:43.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "news",
         "techcrunch",
@@ -2537,7 +2704,7 @@
       "summaryEn": "This article warns that companies treating Microsoft Copilot merely as a ghostwriting AI for Excel and Word will fall behind in the AI era. Copilot should be seen as a platform for redesigning workflows and deploying agents, not just for document automation.",
       "lang": "ja",
       "publishedAt": "2026-05-07T22:30:01.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "zenn",
         "microsoft-copilot",
@@ -2573,7 +2740,7 @@
       "summaryEn": "OpenAI has rolled out new voice intelligence features in its API, giving developers better tools to build natural, low-latency voice applications with improved transcription, understanding and real-time response capabilities.",
       "lang": "en",
       "publishedAt": "2026-05-07T22:24:50.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "news",
         "techcrunch",
@@ -2609,7 +2776,7 @@
       "summaryEn": "AIとのゲーム仕様設計で発生する用語揺れ問題と空間定義の固定化手法",
       "lang": "ja",
       "publishedAt": "2026-05-07T22:20:19.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "zenn"
       ],
@@ -2630,7 +2797,7 @@
       "summaryEn": "不動産AIの「中国 vs アメリカ」：同じ業界、違う進化論",
       "lang": "ja",
       "publishedAt": "2026-05-07T22:20:15.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "zenn"
       ],
@@ -2674,7 +2841,7 @@
       "summaryEn": "The company made a series of other announcements during earnings, including a new commercial contract, a pilot program in Canada, and a collaboration.",
       "lang": "en",
       "publishedAt": "2026-05-07T21:49:24.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "news",
         "techcrunch"
@@ -2696,7 +2863,7 @@
       "summaryEn": "Disney CEO Josh D'Amaro, who took over for Bob Iger earlier this year, has emphasized his intent to streamline the Disney experience.",
       "lang": "en",
       "publishedAt": "2026-05-07T21:40:10.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "news",
         "techcrunch"
@@ -2814,7 +2981,7 @@
       "summaryEn": "AI startup Pit is led by the co-founders of European scooter giant Voi and backed by a16z, which is leading the startup’s $16 million seed round.",
       "lang": "en",
       "publishedAt": "2026-05-07T21:02:11.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "news",
         "techcrunch"
@@ -2836,7 +3003,7 @@
       "summaryEn": "The cybercrime group ShinyHunters claimed to have hacked Instructure again, defacing the login pages of several Instructure customer schools with an extortion message.",
       "lang": "en",
       "publishedAt": "2026-05-07T20:59:09.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "news",
         "techcrunch"
@@ -2894,7 +3061,7 @@
       "summaryEn": "Gusto has shared an impressive milestone on its actual revenue, not an ARR number that estimates future income.",
       "lang": "en",
       "publishedAt": "2026-05-07T20:41:27.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "news",
         "techcrunch"
@@ -2953,7 +3120,7 @@
       "summaryEn": "The company is expanding its efforts to protect ChatGPT users in cases where conversations may turn to self-harm.",
       "lang": "en",
       "publishedAt": "2026-05-07T20:20:20.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "news",
         "techcrunch"
@@ -2975,7 +3142,7 @@
       "summaryEn": "The new benchmark rating applies to 2026 Tesla Model Y vehicles assembled on or after November 12, 2025.",
       "lang": "en",
       "publishedAt": "2026-05-07T20:10:48.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "benchmark",
         "news",
@@ -2998,7 +3165,7 @@
       "summaryEn": "Perplexity's Personal Computer brings AI agents to your Mac, and is now open to everyone.",
       "lang": "en",
       "publishedAt": "2026-05-07T19:57:59.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "news",
         "techcrunch"
@@ -3145,7 +3312,7 @@
       "summaryEn": "Elon Musk's legal effort to dismantle OpenAI may hinge on how its for-profit subsidiary enhances or detracts from the frontier lab's founding mission of ensuring that humanity benefits from artificial",
       "lang": "en",
       "publishedAt": "2026-05-07T19:21:21.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "news",
         "techcrunch"
@@ -3225,7 +3392,7 @@
       "summaryEn": "Based on Whitney Wolfe Herd's past comments about Bumble's new direction, the company is expected to lean into AI -- Bumble is even working on an AI dating assistant called Bee, and the CEO has made m",
       "lang": "en",
       "publishedAt": "2026-05-07T19:06:17.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "news",
         "techcrunch"
@@ -3335,7 +3502,7 @@
       "summaryEn": "Built on the back of the sizable and influential BookTok community -- creators who discuss and review books on TikTok -- the app offered readers a place to chronicle and rate their books, get recommen",
       "lang": "en",
       "publishedAt": "2026-05-07T18:38:58.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "news",
         "techcrunch"
@@ -3357,7 +3524,7 @@
       "summaryEn": "Stockholm-based vibe-coding platform Lovable is offering employees an automatic 10% raise as a way to sidestep classic corporate politics.",
       "lang": "en",
       "publishedAt": "2026-05-07T18:36:29.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "news",
         "techcrunch"
@@ -3396,28 +3563,6 @@
         "height": 0,
         "source": "media"
       }
-    },
-    {
-      "id": "fffe873382ea3187",
-      "source": "techcrunch",
-      "sourceType": "blog",
-      "url": "https://techcrunch.com/2026/05/07/hackers-hack-victims-hacked-by-other-hackers/",
-      "title": "Hackers hack victims hacked by other hackers",
-      "titleJa": "",
-      "titleEn": "Hackers hack victims hacked by other hackers",
-      "summaryJa": "",
-      "summaryEn": "An unknown group of hackers is breaking into systems previously breached by the cybercrime group TeamPCP. Once inside, the hackers immediately kick out TeamPCP and remove its hacking tools from the vi",
-      "lang": "en",
-      "publishedAt": "2026-05-07T18:28:52.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "news",
-        "techcrunch"
-      ],
-      "category": "tech-news",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
     },
     {
       "id": "1eaccd3c75bf627f",
@@ -3741,7 +3886,7 @@
       "summaryEn": "Changes since langchain-core==0.3.85 release(core): 0.3.86 ( #37242 ) fix(core): backport path-traversal fix to v0.3 ( CVE-2026-34070 , GHSA-qh6h-p6c9-ff54 ) ( #37233 )",
       "lang": "en",
       "publishedAt": "2026-05-07T16:48:35.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "langchain",
@@ -3867,7 +4012,7 @@
       "summaryEn": "Sign in securely and keep your account accessible with passkeys, Recovery Contacts, Sign in with Google, Password Manager and 2-Step Verification.",
       "lang": "en",
       "publishedAt": "2026-05-07T16:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news"
@@ -3897,7 +4042,7 @@
       "summaryEn": "To mark Teacher Appreciation Week, Google has released a video series honoring educators who made a meaningful difference in people's lives, featuring personal stories of gratitude toward influential teachers.",
       "lang": "en",
       "publishedAt": "2026-05-07T16:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news",
@@ -3931,7 +4076,7 @@
       "summaryEn": "LangChain has published version 0.3.30, a maintenance update on the 0.3.x line that focuses on internal cleanups, bug fixes, and dependency adjustments rather than new user-facing features.",
       "lang": "en",
       "publishedAt": "2026-05-07T15:57:13.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "langchain",
@@ -3966,7 +4111,7 @@
       "summaryEn": "CodexとClaude Codeの併用で学んだこと（Issue整理編）",
       "lang": "ja",
       "publishedAt": "2026-05-07T15:55:29.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "zenn"
       ],
@@ -3987,7 +4132,7 @@
       "summaryEn": "旅行しながらアプリを作って旅行中に使って改善する",
       "lang": "ja",
       "publishedAt": "2026-05-07T15:51:17.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "zenn"
       ],
@@ -4030,7 +4175,7 @@
       "summaryEn": "The LangChain project released langchain-classic 1.0.7, a maintenance update for the legacy compatibility package that preserves the pre-1.0 LangChain API surface, with minor fixes and dependency adjustments.",
       "lang": "en",
       "publishedAt": "2026-05-07T15:47:20.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "langchain",
@@ -4065,7 +4210,7 @@
       "summaryEn": "NeRFの論文解説",
       "lang": "ja",
       "publishedAt": "2026-05-07T15:39:01.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "zenn"
       ],
@@ -4139,7 +4284,7 @@
       "summaryEn": "Claude Codeにオレたち流のコードを書かせる（中編）— 組織のルールを共有する",
       "lang": "ja",
       "publishedAt": "2026-05-07T15:00:11.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "zenn"
       ],
@@ -4160,7 +4305,7 @@
       "summaryEn": "AlphaEvolve has become a powerful engine for scientific and societal progress.",
       "lang": "en",
       "publishedAt": "2026-05-07T15:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news"
@@ -4190,7 +4335,7 @@
       "summaryEn": "New AI-powered bidding and budgeting tools help you meet your goals, manage your budgets and stay ahead of shifting consumer behavior.",
       "lang": "en",
       "publishedAt": "2026-05-07T15:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news"
@@ -4220,7 +4365,7 @@
       "summaryEn": "【最新情報】The Anthropic Institute: AIの現実世界への影響を研究する",
       "lang": "ja",
       "publishedAt": "2026-05-07T14:55:37.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "zenn"
       ],
@@ -4320,8 +4465,8 @@
       }
     },
     {
-      "id": "c2e684f5e4e9cb0d",
-      "source": "zenn-llm",
+      "id": "b7b353f2f31047c3",
+      "source": "zenn-ai",
       "sourceType": "blog",
       "url": "https://zenn.dev/bloomblock_blog/articles/llm-nondeterminism",
       "title": "同じプロンプトなのに毎回答えが変わる——LLMの非決定性という落とし穴",
@@ -4331,13 +4476,12 @@
       "summaryEn": "同じプロンプトなのに毎回答えが変わる——LLMの非決定性という落とし穴",
       "lang": "ja",
       "publishedAt": "2026-05-07T14:27:27.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
-        "llm",
         "zenn"
       ],
-      "category": "local-llm",
+      "category": "research",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot"
@@ -4378,8 +4522,8 @@
       }
     },
     {
-      "id": "48e9b3b36176518c",
-      "source": "zenn-llm",
+      "id": "471effee5faa27cc",
+      "source": "zenn-ai",
       "sourceType": "blog",
       "url": "https://zenn.dev/jian_wang/articles/ai-agents-teaching-lifecycle",
       "title": "教育のライフサイクルを支えるAIエージェント入門：学校現場での設定から活用まで",
@@ -4389,12 +4533,11 @@
       "summaryEn": "教育のライフサイクルを支えるAIエージェント入門：学校現場での設定から活用まで",
       "lang": "ja",
       "publishedAt": "2026-05-07T14:13:09.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
-        "llm",
         "zenn"
       ],
-      "category": "local-llm",
+      "category": "research",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot"
@@ -4433,7 +4576,7 @@
       "summaryEn": "AIエージェントは「フロー販売」ではなく「成果物評価の市場」になるのではないか",
       "lang": "ja",
       "publishedAt": "2026-05-07T14:00:08.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "zenn"
       ],
@@ -4454,7 +4597,7 @@
       "summaryEn": "Google Health Coach, now available globally, provides personalized insights on workouts, sleep, recovery and wellbeing.",
       "lang": "en",
       "publishedAt": "2026-05-07T14:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news"
@@ -4484,7 +4627,7 @@
       "summaryEn": "The new lightweight, screenless Fitbit Air has a long battery life and offers in-depth health and wellness insights.",
       "lang": "en",
       "publishedAt": "2026-05-07T14:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news"
@@ -4514,7 +4657,7 @@
       "summaryEn": "Introducing the lightweight, screenless Fitbit Air, and the brand-new Google Health app.",
       "lang": "en",
       "publishedAt": "2026-05-07T14:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news"
@@ -4544,7 +4687,7 @@
       "summaryEn": "The Fitbit app is now the Google Health app, debuting an all-new logo, look and capabilities.",
       "lang": "en",
       "publishedAt": "2026-05-07T14:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news"
@@ -4574,7 +4717,7 @@
       "summaryEn": "NBA champion and Google Performance Advisor, Stephen Curry, has partnered with Fitbit to debut a special edition band.",
       "lang": "en",
       "publishedAt": "2026-05-07T14:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news"
@@ -4677,7 +4820,7 @@
       "summaryEn": "AIエージェントの用語まとめ",
       "lang": "ja",
       "publishedAt": "2026-05-07T13:48:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "zenn"
@@ -4688,8 +4831,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "1491bb1677630a27",
-      "source": "zenn-mcp",
+      "id": "c7d95c6b77486824",
+      "source": "zenn-ai",
       "sourceType": "blog",
       "url": "https://zenn.dev/nullcontroller/articles/c95d77150aa590",
       "title": "「AIエージェントを0から作る時代」は本当に来るのか？",
@@ -4699,13 +4842,12 @@
       "summaryEn": "「AIエージェントを0から作る時代」は本当に来るのか？",
       "lang": "ja",
       "publishedAt": "2026-05-07T13:47:14.000Z",
-      "collectedAt": "2026-05-08T05:00:54.533Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
-        "mcp",
         "mcp-server",
         "zenn"
       ],
-      "category": "mcp",
+      "category": "research",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot"
@@ -4803,7 +4945,7 @@
       "summaryEn": "AIに「この施策は効いた？」と聞く前に、まず比較対象を決める",
       "lang": "ja",
       "publishedAt": "2026-05-07T13:05:41.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "zenn"
       ],
@@ -4854,7 +4996,7 @@
       "summaryEn": "Explore Asian and Pasifika cultures with curated collections on Google Play, creator spotlights, a new Doodle and more.",
       "lang": "en",
       "publishedAt": "2026-05-07T13:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news"
@@ -4891,28 +5033,6 @@
       "category": "codex",
       "importance": 1,
       "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "83ba33ed38684106",
-      "source": "zenn-llm",
-      "sourceType": "blog",
-      "url": "https://zenn.dev/tsukitsukiss/articles/multirolechat-llm-parallel-quiz-benchmark",
-      "title": "【MultiRoleChat】8つのLLMに同じ問題を同時に解かせたら、正確さより速さの差が面白かった",
-      "titleJa": "【MultiRoleChat】8つのLLMに同じ問題を同時に解かせたら、正確さより速さの差が面白かった",
-      "titleEn": "",
-      "summaryJa": "はじめに 複数のLLMを使い分けているうちに「同じ問題を一斉に投げたらどうなるか」が気になりました。モデル比較記事はよく見るのですが、同一条件・同一問題・並列実行でやったものが少ないと感じていたので、自作ツールで試してみました。 8つのLL",
-      "summaryEn": "【MultiRoleChat】8つのLLMに同じ問題を同時に解かせたら、正確さより速さの差が面白かった",
-      "lang": "ja",
-      "publishedAt": "2026-05-07T12:30:33.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
-      "tags": [
-        "llm",
-        "zenn"
-      ],
-      "category": "local-llm",
-      "importance": 1,
-      "halfLife": "tutorial",
       "archiveTier": "hot"
     },
     {
@@ -5640,7 +5760,7 @@
       "summaryEn": "ディレクトリ管理をしよう",
       "lang": "ja",
       "publishedAt": "2026-05-07T05:49:27.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "copilot",
         "zenn"
@@ -6688,7 +6808,7 @@
       "summaryEn": "ServiceNow AI documents challenges in migrating RL pipelines from vLLM V0 to V1, identifying numerical inconsistencies that degrade training. The post emphasizes verifying correctness before applying optimizations or fixes.",
       "lang": "en",
       "publishedAt": "2026-05-06T19:06:55.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "huggingface",
         "open-model",
@@ -6723,7 +6843,7 @@
       "summaryEn": "LangChain 1.3.0a2 is an alpha pre-release of the upcoming 1.3.0 version, intended for testing new in-development features and not recommended for production use.",
       "lang": "en",
       "publishedAt": "2026-05-06T18:54:44.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "langchain",
@@ -7040,7 +7160,7 @@
       "summaryEn": "Google highlights five ways to use Search for gardening, including identifying plants, looking up care tips, dealing with pests, viewing plants in AR, and using visual search tools to support home gardeners.",
       "lang": "en",
       "publishedAt": "2026-05-06T16:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news",
@@ -7212,7 +7332,7 @@
       "summaryEn": "We're partnering with Believe to offer Google Flow Music to artists, producers and songwriters.",
       "lang": "en",
       "publishedAt": "2026-05-06T15:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news"
@@ -7242,7 +7362,7 @@
       "summaryEn": "GitHub Copilotの使いすぎを防ぐ、消費ペースガイド付きstatuslineを作ってみた",
       "lang": "ja",
       "publishedAt": "2026-05-06T14:53:54.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "copilot",
         "zenn"
@@ -7264,7 +7384,7 @@
       "summaryEn": "Agent Plugins のチーム配布と、それに耐えられるスキル設計",
       "lang": "ja",
       "publishedAt": "2026-05-06T14:47:17.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "copilot",
@@ -7309,7 +7429,7 @@
       "summaryEn": "GitHub Copilotと設計する農業向けルールベース画像処理アルゴリズム",
       "lang": "ja",
       "publishedAt": "2026-05-06T14:00:05.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "copilot",
         "zenn"
@@ -7331,7 +7451,7 @@
       "summaryEn": "GitHub Copilot Metrics Viewerで組織のAI活用状況を分析する",
       "lang": "ja",
       "publishedAt": "2026-05-06T13:35:52.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "copilot",
         "zenn"
@@ -7353,7 +7473,7 @@
       "summaryEn": "AI makes it easy to generate ad creative quickly, but that speed can’t come at the cost of accuracy, brand loyalty or performance.",
       "lang": "en",
       "publishedAt": "2026-05-06T13:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news"
@@ -7383,7 +7503,7 @@
       "summaryEn": "New updates to AI Mode and AI Overviews in Google Search make it easier for you to dive deeper online.",
       "lang": "en",
       "publishedAt": "2026-05-06T13:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news"
@@ -7476,7 +7596,7 @@
       "summaryEn": "Explore how AlphaEvolve's Gemini-powered algorithms are driving impact across business, infrastructure, and science.",
       "lang": "en",
       "publishedAt": "2026-05-06T10:43:49.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "deepmind",
@@ -7529,7 +7649,7 @@
       "summaryEn": "運用編：スカウト評価システムをどう使ったか",
       "lang": "ja",
       "publishedAt": "2026-05-06T10:30:50.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "copilot",
         "zenn"
@@ -7573,7 +7693,7 @@
       "summaryEn": "GitHub Copilot SDK/CLI - A2A Kubernetes マルチエージェントシステム実行ガイド",
       "lang": "ja",
       "publishedAt": "2026-05-06T09:57:29.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "copilot",
         "zenn"
@@ -7595,7 +7715,7 @@
       "summaryEn": "Github Copilot CLI に「同じ指示に同じ実装」を引き出す３つの工夫　— iOSアプリを App Store にリリース",
       "lang": "ja",
       "publishedAt": "2026-05-06T09:34:31.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "copilot",
         "zenn"
@@ -7688,7 +7808,7 @@
       "summaryEn": "GitHub Copilot CLIで英語圏OSSへPRを通し、リリースに含まれた話",
       "lang": "ja",
       "publishedAt": "2026-05-06T08:40:58.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "copilot",
         "zenn"
@@ -7886,7 +8006,7 @@
       "summaryEn": "Adding Benchmaxxer Repellant to the Open ASR Leaderboard",
       "lang": "en",
       "publishedAt": "2026-05-06T00:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -8098,7 +8218,7 @@
       "summaryEn": "langchain-classic 1.0.6 has been released. This package preserves the legacy LangChain APIs separated from the v1.x mainline, providing minor maintenance updates for users still relying on the classic interface.",
       "lang": "en",
       "publishedAt": "2026-05-05T21:02:41.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "langchain",
@@ -8133,7 +8253,7 @@
       "summaryEn": "LangChain 0.3.29 has been released as a routine maintenance update on the 0.3 stable line, containing minor bug fixes and small improvements for existing users.",
       "lang": "en",
       "publishedAt": "2026-05-05T21:02:15.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "langchain",
@@ -8167,7 +8287,7 @@
       "summaryEn": "GitHub Copilot SDK で1週間分の PR を振り返る pr-weekly-report を作ってみた",
       "lang": "ja",
       "publishedAt": "2026-05-05T21:00:05.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "copilot",
         "zenn"
@@ -8217,7 +8337,7 @@
       "summaryEn": "langchain-core 0.3.85 has been released. This is a routine patch update to the foundational package providing core interfaces and abstractions for the LangChain framework, with minor improvements and fixes.",
       "lang": "en",
       "publishedAt": "2026-05-05T20:43:46.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "langchain",
@@ -8285,7 +8405,7 @@
       "summaryEn": "An experiment using GitHub Copilot CLI to attempt building a 1999-era PostgreSQL on a modern Linux system, exploring how AI agents can assist with porting and fixing legacy code for current environments.",
       "lang": "ja",
       "publishedAt": "2026-05-05T19:41:55.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "copilot",
         "zenn",
@@ -8373,7 +8493,7 @@
       "summaryEn": "Patch release of langchain-core 1.3.3 with bug fixes and minor internal improvements, maintaining API compatibility while improving stability.",
       "lang": "en",
       "publishedAt": "2026-05-05T19:02:53.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "langchain",
@@ -8408,7 +8528,7 @@
       "summaryEn": "AIエージェントの Skill は書くだけでは足りない ⇒ Waza で評価して APM で配ろう!【ハーネスエンジニアリング】",
       "lang": "ja",
       "publishedAt": "2026-05-05T18:41:11.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "copilot",
@@ -8431,7 +8551,7 @@
       "summaryEn": "Updates to the Gemini API File Search tool makes building efficient, multimodal file retrieval systems easier for developers.",
       "lang": "en",
       "publishedAt": "2026-05-05T18:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "google",
         "news",
@@ -8500,7 +8620,7 @@
       "summaryEn": "Blogable を使用してZennのマークダウンを作成するスクリプトを書（い｜かせ）た",
       "lang": "ja",
       "publishedAt": "2026-05-05T17:17:13.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "copilot",
         "zenn"
@@ -8559,7 +8679,7 @@
       "summaryEn": "LangChain has released version 1.3.1 of its langchain-fireworks integration package, a minor update including small fixes and dependency adjustments for the Fireworks AI integration.",
       "lang": "en",
       "publishedAt": "2026-05-05T15:43:37.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "langchain",
@@ -8594,7 +8714,7 @@
       "summaryEn": "Patch release of langchain-mistralai version 1.1.4, the LangChain integration package for Mistral AI. Contains minor fixes and maintenance updates.",
       "lang": "en",
       "publishedAt": "2026-05-05T15:29:15.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "langchain",
@@ -8629,7 +8749,7 @@
       "summaryEn": "コーディングエージェントを使って感じた 課題とコツ",
       "lang": "ja",
       "publishedAt": "2026-05-05T13:17:11.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "copilot",
         "zenn"
@@ -9597,7 +9717,7 @@
       "summaryEn": "Researching the path to AI-augmented care and development of an AI co-clinician.",
       "lang": "en",
       "publishedAt": "2026-04-30T12:14:15.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "deepmind",
         "google"
@@ -9650,7 +9770,7 @@
       "summaryEn": "Granite 4.1 LLMs: How They’re Built",
       "lang": "en",
       "publishedAt": "2026-04-29T15:01:48.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -9860,7 +9980,7 @@
       "summaryEn": "DeepInfra on Hugging Face Inference Providers 🔥",
       "lang": "en",
       "publishedAt": "2026-04-29T00:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -9989,7 +10109,7 @@
       "summaryEn": "NVIDIA introduces Nemotron 3 Nano Omni, a long-context multimodal model designed for document, audio and video agents. It integrates text, image, audio and video understanding for advanced multimodal reasoning tasks.",
       "lang": "en",
       "publishedAt": "2026-04-28T15:58:57.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "huggingface",
         "open-model",
@@ -10195,7 +10315,7 @@
       "summaryEn": "Google DeepMind announced a strategic partnership with the Republic of Korea, focusing on collaboration in AI research, talent development, and societal applications to advance Korea's AI ecosystem and responsible AI adoption.",
       "lang": "en",
       "publishedAt": "2026-04-27T07:00:06.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "deepmind",
         "google",
@@ -10230,7 +10350,7 @@
       "summaryEn": "How to build scalable web apps with OpenAI's Privacy Filter",
       "lang": "en",
       "publishedAt": "2026-04-27T00:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "huggingface",
         "open-model",
@@ -10398,7 +10518,7 @@
       "summaryEn": "DeepSeek-V4: a million-token context that agents can actually use",
       "lang": "en",
       "publishedAt": "2026-04-24T00:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -10546,7 +10666,7 @@
       "summaryEn": "How to Use Transformers.js in a Chrome Extension",
       "lang": "en",
       "publishedAt": "2026-04-23T00:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "huggingface",
         "open-model",
@@ -10735,7 +10855,7 @@
       "summaryEn": "Decoupled DiLoCo: A new frontier for resilient, distributed AI training",
       "lang": "en",
       "publishedAt": "2026-04-22T10:20:03.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "deepmind",
         "google"
@@ -10788,7 +10908,7 @@
       "summaryEn": "Google DeepMind partners with global consultancies to bring the power of frontier AI to organizations around the world.",
       "lang": "en",
       "publishedAt": "2026-04-21T14:54:15.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "deepmind",
         "google"
@@ -10818,7 +10938,7 @@
       "summaryEn": "QIMMA قِمّة ⛰: A Quality-First Arabic LLM Leaderboard",
       "lang": "en",
       "publishedAt": "2026-04-21T10:09:58.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -10840,7 +10960,7 @@
       "summaryEn": "AI and the Future of Cybersecurity: Why Openness Matters",
       "lang": "en",
       "publishedAt": "2026-04-21T00:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -11163,7 +11283,7 @@
       "summaryEn": "Ecom-RLVE: Adaptive Verifiable Environments for E-Commerce Conversational Agents",
       "lang": "en",
       "publishedAt": "2026-04-16T00:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -11185,7 +11305,7 @@
       "summaryEn": "The PR you would have opened yourself",
       "lang": "en",
       "publishedAt": "2026-04-16T00:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -11207,7 +11327,7 @@
       "summaryEn": "Training and Finetuning Multimodal Embedding & Reranker Models with Sentence Transformers",
       "lang": "en",
       "publishedAt": "2026-04-16T00:00:00.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -11250,7 +11370,7 @@
       "summaryEn": "Our newest audio model introduces granular audio tags that give you precise control to direct AI speech for expressive audio generation.",
       "lang": "en",
       "publishedAt": "2026-04-15T16:03:19.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "deepmind",
         "google"
@@ -11280,29 +11400,7 @@
       "summaryEn": "Inside VAKRA: Reasoning, Tool Use, and Failure Modes of Agents",
       "lang": "en",
       "publishedAt": "2026-04-15T12:07:25.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "huggingface",
-        "open-model"
-      ],
-      "category": "local-llm",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm"
-    },
-    {
-      "id": "c8bb56bce3f6ceb9",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/Hcompany/holotab",
-      "title": "Meet HoloTab by HCompany. Your AI browser companion.",
-      "titleJa": "",
-      "titleEn": "Meet HoloTab by HCompany. Your AI browser companion.",
-      "summaryJa": "",
-      "summaryEn": "Meet HoloTab by HCompany. Your AI browser companion.",
-      "lang": "en",
-      "publishedAt": "2026-04-15T09:25:20.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -11438,7 +11536,7 @@
       "summaryEn": "Gemini Robotics ER 1.6: Enhancing spatial reasoning and multi-view understanding for autonomous robotics.",
       "lang": "en",
       "publishedAt": "2026-04-13T15:52:13.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "deepmind",
@@ -11774,7 +11872,7 @@
       "summaryEn": "Gemma 4: Our most intelligent open models to date, purpose-built for advanced reasoning and agentic workflows.",
       "lang": "en",
       "publishedAt": "2026-04-02T16:00:49.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "agent",
         "deepmind",
@@ -11899,7 +11997,7 @@
       "summaryEn": "What's Changed fix: ensure config.yaml exists and is populated when accessed by @RomneyDa in #11915 chore: jb-67-vs-38 by @RomneyDa in #11916 chore(deps-dev): bump happy-dom from 20.0.2 to 20.8.9 in /",
       "lang": "en",
       "publishedAt": "2026-03-27T21:38:24.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "continue",
         "release"
@@ -11929,7 +12027,7 @@
       "summaryEn": "What's Changed fix: ensure config.yaml exists and is populated when accessed by @RomneyDa in #11915 chore: jb-67-vs-38 by @RomneyDa in #11916 chore(deps-dev): bump happy-dom from 20.0.2 to 20.8.9 in /",
       "lang": "en",
       "publishedAt": "2026-03-27T21:34:07.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "continue",
         "release"
@@ -11959,7 +12057,7 @@
       "summaryEn": "What's Changed fix: redirect Winston logger to stderr to prevent IPC stream corruption + fix binary tests by @RomneyDa in #11914 fix: ensure config.yaml exists and is populated when accessed by @Romne",
       "lang": "en",
       "publishedAt": "2026-03-27T21:22:37.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "continue",
         "release"
@@ -11989,7 +12087,7 @@
       "summaryEn": "What's Changed chore: jb-66-vs-37 by @RomneyDa in #11909 fix: remove Ollama template-based tool support gate by @RomneyDa in #11905 Full Changelog : v1.2.20-vscode...v1.2.21-vscode",
       "lang": "en",
       "publishedAt": "2026-03-27T00:10:30.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "continue",
         "release"
@@ -12019,7 +12117,7 @@
       "summaryEn": "What's Changed chore: jb-66-vs-37 by @RomneyDa in #11909 fix: remove Ollama template-based tool support gate by @RomneyDa in #11905 Full Changelog : v1.3.36-vscode...v1.3.37-vscode",
       "lang": "en",
       "publishedAt": "2026-03-27T00:05:47.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "continue",
         "release"
@@ -12049,7 +12147,7 @@
       "summaryEn": "What's Changed chore: jb-66-vs-37 by @RomneyDa in #11909 fix: remove Ollama template-based tool support gate by @RomneyDa in #11905 Full Changelog : v1.0.65-jetbrains...v1.0.66-jetbrains",
       "lang": "en",
       "publishedAt": "2026-03-26T23:52:57.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "continue",
         "release"
@@ -12079,7 +12177,7 @@
       "summaryEn": "What's Changed fix: add ModelDescription type to binary test callbacks by @RomneyDa in #11888 Fix StringIndexOutOfBoundsException in readRangeInFile by @ivanlen in #11881 fix: resolve critical and hig",
       "lang": "en",
       "publishedAt": "2026-03-26T22:57:26.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "continue",
         "release"
@@ -12109,7 +12207,7 @@
       "summaryEn": "What's Changed fix: add ModelDescription type to binary test callbacks by @RomneyDa in #11888 Fix StringIndexOutOfBoundsException in readRangeInFile by @ivanlen in #11881 fix: resolve critical and hig",
       "lang": "en",
       "publishedAt": "2026-03-26T22:43:05.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "continue",
         "release"
@@ -12139,7 +12237,7 @@
       "summaryEn": "Our latest voice model has improved precision and lower latency to make voice interactions more fluid, natural and precise.",
       "lang": "en",
       "publishedAt": "2026-03-26T15:23:35.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "deepmind",
         "google"
@@ -12191,7 +12289,7 @@
       "summaryEn": "What's Changed fix: remove Llama 3.1 405B from Groq provider by @RomneyDa in #11804 fix: add keepAlive to YAML completion options schema by @RomneyDa in #11801 fix(llama.cpp): include model name in co",
       "lang": "en",
       "publishedAt": "2026-03-26T09:22:19.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "continue",
         "open-model",
@@ -12222,7 +12320,7 @@
       "summaryEn": "What's Changed fix: remove Llama 3.1 405B from Groq provider by @RomneyDa in #11804 fix: add keepAlive to YAML completion options schema by @RomneyDa in #11801 fix(llama.cpp): include model name in co",
       "lang": "en",
       "publishedAt": "2026-03-26T09:17:47.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "continue",
         "open-model",
@@ -12253,7 +12351,7 @@
       "summaryEn": "Google DeepMind researches AI's harmful manipulation risks across areas like finance and health, leading to new safety measures.",
       "lang": "en",
       "publishedAt": "2026-03-25T16:46:20.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "deepmind",
         "google"
@@ -12283,7 +12381,7 @@
       "summaryEn": "Introducing Lyria 3 Pro, which unlocks longer tracks with structural awareness. We’re also bringing Lyria to more Google products and surfaces.",
       "lang": "en",
       "publishedAt": "2026-03-25T16:01:39.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "deepmind",
         "google"
@@ -12494,7 +12592,7 @@
       "summaryEn": "We’re introducing a framework to measure progress toward AGI, and launching a Kaggle hackathon to build the relevant evaluations.",
       "lang": "en",
       "publishedAt": "2026-03-17T16:03:47.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "deepmind",
         "google",
@@ -12645,7 +12743,7 @@
       "summaryEn": "Ten years since AlphaGo, we explore how it is catalyzing scientific discovery and paving a path to AGI.",
       "lang": "en",
       "publishedAt": "2026-03-09T13:52:36.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "deepmind",
         "google"
@@ -12675,7 +12773,7 @@
       "summaryEn": "HN: 146 points, 100 comments · @knowsuchagency · https://news.ycombinator.com/item?id=47305149",
       "lang": "en",
       "publishedAt": "2026-03-09T05:18:46.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "community",
         "hackernews",
@@ -12760,7 +12858,7 @@
       "summaryEn": "Gemini 3.1 Flash-Lite is our fastest and most cost-efficient Gemini 3 series model yet.",
       "lang": "en",
       "publishedAt": "2026-03-03T16:35:55.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "deepmind",
         "google"
@@ -12790,7 +12888,7 @@
       "summaryEn": "Our latest image generation model offers advanced world knowledge, production ready specs, subject consistency and more, all at Flash speed.",
       "lang": "en",
       "publishedAt": "2026-02-26T16:01:50.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "deepmind",
         "google"
@@ -13926,73 +14024,7 @@
       "summaryEn": "",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "anthropic",
-        "claude"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "2b07ae624ea8e26c",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/claude-design-anthropic-labs",
-      "title": "Claude Design Anthropic Labs",
-      "titleJa": "",
-      "titleEn": "Claude Design Anthropic Labs",
-      "summaryJa": "",
-      "summaryEn": "",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "anthropic",
-        "claude"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "dd81f272a9b20209",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/claude-is-a-space-to-think",
-      "title": "Claude Is A Space To Think",
-      "titleJa": "",
-      "titleEn": "Claude Is A Space To Think",
-      "summaryJa": "",
-      "summaryEn": "",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "anthropic",
-        "claude"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "01db09c3996140ad",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/higher-limits-spacex",
-      "title": "Higher Limits Spacex",
-      "titleJa": "",
-      "titleEn": "Higher Limits Spacex",
-      "summaryJa": "",
-      "summaryEn": "",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T08:00:54.491Z",
       "tags": [
         "anthropic",
         "claude"

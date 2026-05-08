@@ -13,6 +13,10 @@ ROOT="$(git rev-parse --show-toplevel)"
 if [ "${SKIP_TESTS:-}" = "1" ]; then
   echo "[pre-push] SKIP_TESTS=1 → npm test をスキップします"
 else
+  # CI とローカルの差異 (web/node_modules キャッシュ等) をなるべく無くすため
+  # Vite キャッシュをクリアしてから実行する。これにより「ローカル PASS / CI FAIL」が
+  # ローカルでも再現しやすくなる。
+  rm -rf "$ROOT/node_modules/.vite" "$ROOT/node_modules/.cache" 2>/dev/null || true
   echo "[pre-push] npm test を実行しています..."
   if ! npm --prefix "$ROOT" test; then
     echo "[pre-push] ERR: テスト失敗。push を中断します"

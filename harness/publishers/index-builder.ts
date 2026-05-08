@@ -5,12 +5,26 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { NormalizedEntry } from "../types.ts";
 
-const INDEX_LIMIT = 500;
-const PER_SOURCE_CAP = 15;
+const INDEX_LIMIT = 2000;
+const PER_SOURCE_CAP = 50;
 
 /** Return epoch ms for sorting; nulls sort to end in descending order. */
 function dateMs(iso: string | null): number {
   return iso ? new Date(iso).getTime() : -Infinity;
+}
+
+/**
+ * Score for picking which entries to keep when a single source exceeds
+ * PER_SOURCE_CAP. We multiply importance (1-3) by a recency factor so that
+ * high-volume firehoses (e.g. arxiv with hundreds of papers/day) keep their
+ * most important items, while still preferring recent entries among ties.
+ */
+function pickScore(e: NormalizedEntry): number {
+  const recencyDays = e.publishedAt
+    ? (Date.now() - new Date(e.publishedAt).getTime()) / 86_400_000
+    : 365;
+  // importance dominates; recency breaks ties (and decays slowly for ages).
+  return (e.importance ?? 1) * 1000 - recencyDays;
 }
 
 export interface IndexPayload {
@@ -37,8 +51,15 @@ export async function writeIndex(
   }
   const capped: NormalizedEntry[] = [];
   for (const [, arr] of bySource) {
-    arr.sort((a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt));
-    capped.push(...arr.slice(0, PER_SOURCE_CAP));
+    if (arr.length <= PER_SOURCE_CAP) {
+      capped.push(...arr);
+      continue;
+    }
+    // High-volume source: select by importance × recency, then re-sort by date.
+    const picked = [...arr]
+      .sort((a, b) => pickScore(b) - pickScore(a))
+      .slice(0, PER_SOURCE_CAP);
+    capped.push(...picked);
   }
   const sorted = capped.sort(
     (a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt),

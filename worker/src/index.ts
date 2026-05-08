@@ -34,7 +34,7 @@ interface Env {
   SUMMARIZE_MAX_NEW: string;
 }
 
-const INDEX_LIMIT = 500;
+const INDEX_LIMIT = 2000;
 
 /** Return epoch ms for sorting; nulls sort to end in descending order. */
 function dateMs(iso: string | null): number {
@@ -327,18 +327,28 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   for (const e of fresh) byUrl.set(e.url, e);
   const merged = [...byUrl.values()];
 
-  // 2) Cap per source then sort newest-first then cap to INDEX_LIMIT.
-  const PER_SOURCE_CAP = 15;
+  // 2) Cap per source (importance-aware for high-volume sources) then sort newest-first then cap to INDEX_LIMIT.
+  const PER_SOURCE_CAP = 50;
   const bySource = new Map<string, NormalizedEntry[]>();
   for (const e of merged) {
     const arr = bySource.get(e.source) ?? [];
     arr.push(e);
     bySource.set(e.source, arr);
   }
+  const pickScore = (e: NormalizedEntry): number => {
+    const recencyDays = e.publishedAt
+      ? (Date.now() - new Date(e.publishedAt).getTime()) / 86_400_000
+      : 365;
+    return (e.importance ?? 1) * 1000 - recencyDays;
+  };
   const capped: NormalizedEntry[] = [];
   for (const [, arr] of bySource) {
-    arr.sort((a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt));
-    capped.push(...arr.slice(0, PER_SOURCE_CAP));
+    if (arr.length <= PER_SOURCE_CAP) {
+      capped.push(...arr);
+      continue;
+    }
+    const picked = [...arr].sort((a, b) => pickScore(b) - pickScore(a)).slice(0, PER_SOURCE_CAP);
+    capped.push(...picked);
   }
   const sorted = capped
     .sort((a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt))

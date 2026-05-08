@@ -1,21 +1,662 @@
 {
-  "generatedAt": "2026-05-08T03:01:52.251Z",
-  "count": 500,
+  "generatedAt": "2026-05-08T04:01:55.431Z",
+  "count": 492,
   "health": {
-    "lastRunAt": "2026-05-08T03:01:52.251Z",
-    "batchIndex": 4,
+    "lastRunAt": "2026-05-08T04:01:55.431Z",
+    "batchIndex": 1,
     "batchTotal": 4,
-    "sourcesAttempted": 12,
-    "sourcesOk": 12,
+    "sourcesAttempted": 13,
+    "sourcesOk": 13,
     "sourcesFailed": [],
     "summarized": 5,
     "summarizeErrors": 0,
     "copilotOk": true,
     "copilotError": null,
-    "ogCached": 1040,
+    "ogCached": 1044,
     "ogNewHits": 4
   },
   "entries": [
+    {
+      "id": "845be653ce6a87c3",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04050",
+      "title": "LCM: Lossless Context Management",
+      "titleJa": "LCM: ロスレスなコンテキスト管理手法を提案する研究論文",
+      "titleEn": "LCM: Lossless Context Management",
+      "summaryJa": "arXivで公開された論文「LCM: Lossless Context Management」は、LLMの長文コンテキストを情報損失なく効率的に管理する手法を提案する。従来の要約や圧縮ベース手法と異なり、必要時に元情報を完全復元できる点が特徴とされる。",
+      "summaryEn": "An arXiv paper titled 'LCM: Lossless Context Management' proposes a technique for handling long LLM contexts without information loss, contrasting with lossy summarization or compression approaches by preserving full recoverability of original tokens.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "arxiv",
+        "paper",
+        "llm",
+        "context-management",
+        "long-context"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "大規模言語モデル(LLM)の実用化が進むにつれ、長大な会話履歴やドキュメントをいかに扱うかが大きな課題となっている。arXivに掲載された論文「LCM: Lossless Context Management」は、この課題に対し情報を欠落させずにコンテキストを管理するアプローチを提案するものとされる。\n\nLLMのコンテキストウィンドウは年々拡大しており、GPT-4 Turboの128K、Claudeの200K、Gemini 1.5の100万トークンといった大規模化が進む。しかし、ウィンドウが広がっても計算コストやAttentionの希薄化、いわゆる「lost in the middle」問題は残る。これに対し従来は要約圧縮やRAG(Retrieval-Augmented Generation)、KVキャッシュ圧縮といった手法が用いられてきたが、いずれも情報損失や検索ミスのリスクを伴う。\n\nLCMが掲げる「Lossless(無損失)」という概念は、必要に応じて元のトークン情報を完全に復元可能であることを意味すると見られる。実装としては、外部ストアにフルコンテキストを保持しつつ、モデルに渡す部分のみを動的に取捨選択する仕組みや、階層的なメモリ構造を取る可能性がある。これによりタスクの正確性を保ちながら推論コストを抑えることが期待される。\n\n関連分野では、AnthropicのContextual Retrieval、MicrosoftのLLMLingua、AppleのオンデバイスLLMでのKVキャッシュ最適化など、コンテキスト効率化の研究が活発化している。またMamba系の状態空間モデルやリングAttentionなど、アーキテクチャ自体で長文を扱う流れも並行して進む。LCMはこうした潮流の中で、損失ゼロという厳格な性質を保証する点に独自性があると評価できる可能性がある。論文の詳細な評価結果や実装条件は原著を参照する必要がある。",
+      "bodyEn": "As large language models become embedded in production workflows, managing long conversation histories and document contexts efficiently has emerged as a central engineering problem. A paper posted to arXiv under the title 'LCM: Lossless Context Management' proposes an approach that aims to handle extended contexts without sacrificing the original information, distinguishing itself from prevailing lossy techniques.\n\nContext window sizes have grown dramatically across the industry, with GPT-4 Turbo offering 128K tokens, Claude reaching 200K, and Gemini 1.5 stretching to a million. Yet larger windows alone do not solve the underlying issues: quadratic attention costs, attention dilution across long sequences, and the well-documented 'lost in the middle' phenomenon all degrade real-world performance. The standard mitigations — summarization, retrieval-augmented generation, and KV cache compression — each introduce their own forms of information loss or retrieval brittleness.\n\nThe central claim of LCM, as suggested by its title, is losslessness: the system should be able to recover the original token-level context whenever it is needed for a downstream operation. While the precise mechanism would need to be confirmed against the paper itself, such systems typically combine an external full-fidelity store with a dynamic selection or hierarchical memory layer that decides which spans to surface to the model at inference time. The promise is to retain accuracy on long-context tasks while keeping per-call compute bounded.\n\nThe surrounding research landscape is active. Anthropic recently introduced Contextual Retrieval to reduce retrieval failure rates, Microsoft's LLMLingua family explores aggressive prompt compression, and several groups are working on KV cache eviction policies that try to minimize quality loss. In parallel, architectural alternatives such as Mamba and other state-space models, along with ring attention and infini-attention variants, attempt to address the same problem at the model level rather than the orchestration level. Within this crowded space, the distinguishing pitch of LCM appears to be a stricter guarantee — that no information is silently discarded — which could be attractive for high-stakes applications such as legal review, code analysis, or medical reasoning where dropped details may be unacceptable.\n\nReaders interested in benchmark results, the exact memory layout, and the trade-offs in throughput should consult the original paper, as the framing here is necessarily inferential. If the lossless property holds under realistic workloads, the approach may complement rather than replace existing compression and retrieval pipelines.",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "LCM: Lossless Context Management",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "5f59e5289ebd8d55",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04361",
+      "title": "When Context Hurts: The Crossover Effect of Knowledge Transfer on Multi-Agent Design Exploration",
+      "titleJa": "文脈が害となる時: マルチエージェント設計探索における知識転移のクロスオーバー効果",
+      "titleEn": "When Context Hurts: The Crossover Effect of Knowledge Transfer on Multi-Agent Design Exploration",
+      "summaryJa": "本論文はマルチエージェント設計探索において、エージェント間で知識を共有することが必ずしも性能向上につながらず、むしろ探索効率を低下させる「クロスオーバー効果」が生じることを示す。文脈の与え方次第で知識転移が逆効果となる条件を分析している。",
+      "summaryEn": "This paper investigates how knowledge transfer between agents in multi-agent design exploration can backfire, producing a crossover effect where shared context degrades rather than improves search performance under certain conditions.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "agent",
+        "arxiv",
+        "paper",
+        "multi-agent",
+        "knowledge-transfer",
+        "design-exploration",
+        "search"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "マルチエージェントシステムにおける知識共有は、一般に協調や効率向上をもたらすと考えられてきた。しかし本論文は、設計空間探索の文脈において、知識転移が逆に性能を損なう「クロスオーバー効果」が発生しうることを実証的に示している。\n\n著者らは、複数のエージェントが並行して設計候補を探索する設定を想定し、エージェント間で過去の探索履歴や中間結果を共有した場合と、独立に探索した場合の性能を比較した。結果として、共有された文脈が探索の多様性を狭め、エージェント群が局所最適に早期収束してしまう現象が観察された。特に問題が高次元かつ多峰性を持つ場合、初期段階での知識共有はかえって探索範囲を制約し、最終的な解の質を悪化させる傾向がある。\n\nこの「クロスオーバー」とは、知識転移の効果がある閾値を境にプラスからマイナスへ反転する現象を指す。著者らは、共有のタイミング、共有する情報の種類、エージェント数といった要因がこの反転点に影響することを分析している。\n\n関連知見として、強化学習における集団学習(population-based training)や進化計算の島モデルでも、個体群の多様性維持が探索性能の鍵とされてきた点が想起される。近年のLLMベースのマルチエージェント設計支援(例えばコード生成や工学設計の自動化)においても、エージェント間で中間思考を共有する手法が普及しつつあるが、本研究はそうした実装に対し、共有戦略の設計が結果を左右しうるという警鐘を鳴らすものと見られる。実務的には、文脈共有を一律に推奨するのではなく、問題特性に応じた条件付き共有や、多様性保全機構との併用が望ましい可能性がある。",
+      "bodyEn": "Knowledge sharing among agents in multi-agent systems is widely believed to enhance coordination and efficiency. This paper challenges that assumption in the specific context of design space exploration, showing empirically that transferring knowledge between agents can in fact degrade performance — a phenomenon the authors term the crossover effect.\n\nThe study considers a setting in which multiple agents explore a design space in parallel. The authors compare configurations in which agents share their search histories or intermediate findings against configurations in which agents explore independently. They find that shared context can narrow exploratory diversity, causing the collective to converge prematurely on local optima. The effect is most pronounced when the design landscape is high-dimensional and multi-modal: early sharing constrains the breadth of search and ultimately yields lower-quality solutions than independent exploration would have produced.\n\nThe term crossover refers to the way the marginal value of knowledge transfer flips from positive to negative once certain conditions are met. The paper analyzes how the timing of sharing, the type of information shared, and the number of agents involved jointly determine where this inflection point lies. In some regimes, modest sharing helps; beyond a threshold, it actively hurts.\n\nThis result resonates with longstanding observations in adjacent fields. Population-based training in reinforcement learning and island models in evolutionary computation both treat the preservation of population diversity as essential to robust search. More recently, LLM-driven multi-agent systems for tasks such as code generation, scientific reasoning, and engineering design have widely adopted patterns in which agents exchange intermediate chains of thought or candidate artifacts. The present work suggests that such designs should not assume sharing is universally beneficial; the structure and timing of context exchange may materially shape outcomes.\n\nFor practitioners, the takeaway appears to be that context sharing should be treated as a tunable design choice rather than a default. Conditional sharing policies, mechanisms that explicitly preserve diversity, or staged communication schedules that delay information exchange until agents have established distinct exploratory trajectories may all be worth considering. While the paper's experiments are framed around design exploration, the underlying tension between exploitation gained from shared knowledge and exploration lost to premature consensus is likely to generalize to other multi-agent search and optimization problems. Further empirical work would be needed to characterize how the crossover point shifts across domains and agent architectures.",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "When Context Hurts: The Crossover Effect of Knowledge Transfer on Multi-Agent Design Exploration",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "c382f8c2987159f7",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04624",
+      "title": "AuditRepairBench: A Paired-Execution Trace Corpus for Evaluator-Channel Ranking Instability in Agent Repair",
+      "titleJa": "AuditRepairBench: エージェント修復の評価チャネル順位不安定性ベンチマーク",
+      "titleEn": "AuditRepairBench: A Paired-Execution Trace Corpus for Evaluator-Channel Ranking Instability in Agent Repair",
+      "summaryJa": "AuditRepairBenchは、ペア実行トレースを用いてLLMエージェントのコード修復における評価器チャネル間の順位不安定性を測定する新たなコーパス。同一修復案でも評価軸により順位が大きく揺らぐ問題を体系化し、エージェント評価の信頼性向上を目指す。",
+      "summaryEn": "AuditRepairBench introduces a paired-execution trace corpus designed to measure evaluator-channel ranking instability in LLM agent code repair, exposing how identical patches can be ranked inconsistently across evaluation channels and pushing toward more reliable agent assessment.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "agent",
+        "arxiv",
+        "paper",
+        "agent-repair",
+        "benchmark",
+        "evaluation",
+        "llm-agents",
+        "program-repair"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "LLMエージェントによるコード修復(Automated Program Repair, APR)の評価は近年活発化しているが、評価器(evaluator)が異なれば同一の修復案でも順位が大きく入れ替わる「評価チャネル順位不安定性」が指摘されている。本論文が提案するAuditRepairBenchは、この現象を定量的に捉えるためのペア実行トレース型コーパスである。\n\n中核となるのは、同一バグに対する修復試行を複数の評価チャネル(テスト実行、静的解析、LLMジャッジ等と見られる)で並行評価し、その実行トレースをペアとして保持する設計である。これにより、ある評価軸で上位に来た修復が別の評価軸では下位となる事例を再現可能な形で収集し、ランキングの揺らぎを構造的に分析できる。著者らは、この不安定性が単なるノイズではなく、評価器の前提や観測範囲の差に起因する系統的な偏りである可能性を示唆している。\n\n背景として、SWE-benchやAgentBenchといった既存のエージェント評価基盤は、主にテスト通過率に基づく単一指標で性能を測ってきた。しかし実運用では、コード品質、副作用、回帰の有無など多面的な評価が必要であり、LLM-as-a-Judge方式の普及もあって評価器の選択そのものが結論を左右する状況が生まれている。AuditRepairBenchはこうした評価方法論の脆弱性に焦点を当てるもので、再現性研究やメタ評価(evaluation of evaluators)の流れに位置づけられる。\n\n関連領域では、Anthropicの内部評価やOpenAIのSWEエージェント評価でも、判定基準の差による結果のばらつきが報告されており、本研究はその定量化の足場となり得る。今後、修復エージェントを比較する際には単一スコアではなく、チャネル間一致度や順位安定性といった指標の併記が標準化される可能性がある。",
+      "bodyEn": "Evaluating LLM agents that perform automated program repair (APR) has become a crowded research area, but a subtle problem has emerged: depending on which evaluator channel is used, the same candidate patch can be ranked very differently. AuditRepairBench is a new corpus designed to measure exactly this evaluator-channel ranking instability through paired execution traces.\n\nThe corpus is built around the idea of running multiple repair attempts for the same bug through several evaluation channels in parallel — likely including test execution, static analysis, and LLM-as-a-judge style scoring — and preserving the execution traces as paired records. This pairing makes it possible to reproduce cases where a patch ranked highly by one channel falls to the bottom under another, and to study the disagreement structurally rather than as random noise. The authors argue that such disagreements often reflect systematic biases tied to what each evaluator can actually observe, not just stochastic variation.\n\nThe broader context matters. Benchmarks like SWE-bench and AgentBench have largely converged on test-pass rate as the headline metric for repair agents. In practice, though, teams care about code quality, regression risk, and side effects, and the rise of LLM judges has made the choice of evaluator itself a major confound. Recent work on meta-evaluation has shown that LLM judges can disagree with human raters and with each other, and AuditRepairBench extends that line of inquiry into the agentic repair setting where execution traces add another dimension of evidence.\n\nFor practitioners building or comparing repair agents, the implication is that single-number leaderboards may be misleading. A patch that wins on a unit-test channel might lose on a behavioral-trace channel that detects subtle regressions, and vice versa. AuditRepairBench provides the raw material to quantify this gap, and it could plausibly encourage future benchmark reports to include cross-channel agreement scores or rank-stability indices alongside traditional pass@k metrics.\n\nIt is worth noting that the paper's preprint identifier appears unusual, so readers may want to verify the venue and dataset availability directly. Still, the underlying problem — that evaluator choice can dominate apparent agent performance — aligns with concerns voiced by groups at Anthropic, OpenAI, and academic APR labs, and a dedicated trace-level corpus addressing it fills a real gap in the current evaluation toolkit.",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "AuditRepairBench: A Paired-Execution Trace Corpus for Evaluator-Channel Ranking Instability in Agent Repair",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "6c1a0d295e82ce24",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04454",
+      "title": "Deployment-Relevant Alignment Cannot Be Inferred from Model-Level Evaluation Alone",
+      "titleJa": "展開時のアラインメントはモデル単体評価では判定不能",
+      "titleEn": "Deployment-Relevant Alignment Cannot Be Inferred from Model-Level Evaluation Alone",
+      "summaryJa": "本論文は、LLMのアラインメントをモデル単体のベンチマークで測るだけでは、実運用環境での安全性を保証できないと主張する。展開時の文脈依存性を踏まえ、システムレベルでの評価枠組みが必要だと論じている。",
+      "summaryEn": "This paper argues that model-level alignment evaluations are insufficient to guarantee safety in real deployments, since alignment behavior depends on the surrounding system context. The authors call for system-level evaluation frameworks that capture deployment-relevant risks.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "arxiv",
+        "benchmark",
+        "paper",
+        "ai-alignment",
+        "ai-safety",
+        "evaluation",
+        "llm-safety",
+        "alignment-evaluation",
+        "ai-governance",
+        "red-teaming"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "大規模言語モデル(LLM)の安全性評価は近年、標準化されたベンチマークや赤チーム演習を通じて急速に整備されてきた。本論文はこうした潮流に対し、モデル単体の評価だけでは実運用上のアラインメントを推論できないと指摘する研究である。\n\n著者らの主張の核は、アラインメントが本質的に文脈依存だという点にある。LLMは単独で動作するわけではなく、システムプロンプト、ツール呼び出し、検索拡張生成(RAG)、エージェント的ワークフロー、ユーザー介入など、多層的なスタックの一部として展開される。このため、孤立した条件下で測定された有害応答率や拒否率は、実環境下での挙動と必ずしも一致しない。たとえばモデル単体では安全に振る舞っていても、特定のツール権限や長文コンテキストを与えられた途端、リスクが顕在化する可能性がある。\n\n論文ではこの問題に対し、評価をシステムレベルに引き上げる必要性が論じられていると見られる。具体的には、デプロイメント構成全体を含めた評価プロトコル、運用中の継続的モニタリング、そしてモデル提供者と統合者の責任分担を明確化する枠組みが求められる。\n\n関連動向として、AnthropicのResponsible Scaling PolicyやOpenAIのPreparedness Framework、英国AISIや米国AISIによる評価活動など、フロンティアモデルの安全性評価は組織横断的に進展している。一方でMITRE ATLASやNIST AI RMFのように、システム統合レベルでのリスク分類を試みる枠組みも登場している。本論文の問題提起は、こうしたモデル中心評価とシステム中心ガバナンスの間にあるギャップを埋める議論として位置付けられる可能性がある。",
+      "bodyEn": "Safety evaluation of large language models has matured rapidly over the past few years, with standardized benchmarks, red-teaming exercises, and capability evaluations becoming routine parts of frontier model release processes. This paper pushes back on the implicit assumption underlying much of that work: that measuring a model in isolation tells us how aligned it will be once deployed.\n\nThe central argument is that alignment is inherently context-dependent. Modern LLMs are rarely used as bare text generators. They sit inside stacks that include system prompts, tool-use scaffolds, retrieval-augmented generation pipelines, agentic loops, memory stores, and human-in-the-loop interventions. Each of these layers can shift the effective behavior of the model in ways that model-level metrics — refusal rates, harmful-output rates on static benchmarks, jailbreak resistance scores — fail to capture. A model that looks safe in isolation may exhibit qualitatively different risk profiles once granted tool permissions, exposed to long contexts, or chained into multi-step agent workflows.\n\nThe authors appear to argue that this gap cannot be closed by simply expanding the model-level test suite. Instead, evaluations need to be lifted to the system level, accounting for the actual deployment configuration. This implies evaluation protocols that include the surrounding scaffolding, continuous monitoring of deployed systems, and clearer allocation of responsibility between model providers and downstream integrators. Without such frameworks, claims about a model's alignment risk being misleading when the model is embedded into a richer operational context.\n\nThis line of reasoning aligns with several broader trends in AI governance. Anthropic's Responsible Scaling Policy and OpenAI's Preparedness Framework both emphasize capability thresholds tied to deployment contexts, while the UK AI Safety Institute and US AISI have begun publishing pre-deployment evaluations of frontier systems. At the same time, frameworks like MITRE ATLAS and the NIST AI Risk Management Framework attempt to characterize risk at the level of integrated AI systems rather than isolated models. The paper's contribution can be read as theoretical grounding for why such system-level approaches are not merely complementary to model evaluations but strictly necessary.\n\nThere are also practical implications for practitioners. Enterprises building on top of frontier APIs may not be able to inherit safety assurances directly from model cards; they may need their own evaluation harnesses that exercise the full prompt-tool-context stack. Likewise, regulators considering model-level licensing regimes might find that such regimes leave significant residual risk unaddressed if deployment configurations are not in scope. The argument does not necessarily invalidate model-level benchmarks, which remain useful for comparing base capabilities and tracking progress, but it suggests they should not be treated as proxies for deployment safety.\n\nOne caveat worth noting is that system-level evaluation is substantially harder to standardize. Deployments are heterogeneous, often proprietary, and evolve continuously, making apples-to-apples comparisons difficult. The paper's call for new frameworks is therefore likely to be the start of a longer methodological conversation rather than a settled prescription, and it remains to be seen which evaluation paradigms will gain traction across labs, integrators, and oversight bodies.",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "Deployment-Relevant Alignment Cannot Be Inferred from Model-Level Evaluation Alone",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "3daa7917f758af03",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04107",
+      "title": "TSCG: Deterministic Tool-Schema Compilation for Agentic LLM Deployments",
+      "titleJa": "TSCG: エージェントLLM向け決定論的ツールスキーマコンパイル",
+      "titleEn": "TSCG: Deterministic Tool-Schema Compilation for Agentic LLM Deployments",
+      "summaryJa": "TSCGはエージェントLLM運用におけるツールスキーマを決定論的にコンパイルする手法を提案する研究。ツール呼び出しの信頼性と一貫性を高め、実運用でのエラー削減を目指す。",
+      "summaryEn": "TSCG proposes a deterministic compilation approach for tool schemas in agentic LLM deployments, aiming to improve reliability and consistency of tool invocations and reduce runtime errors in production environments.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "agent",
+        "arxiv",
+        "mcp-server",
+        "paper",
+        "llm-agents",
+        "tool-use",
+        "schema",
+        "function-calling"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "大規模言語モデル(LLM)を中核に据えたエージェントシステムでは、外部ツールやAPIをモデルが呼び出す「ツール利用(tool use)」が中心的な役割を担う。本研究TSCG(Tool-Schema Compilation for agentic deployments)は、こうしたツール呼び出しの基盤となるスキーマ定義を決定論的にコンパイルする手法を提案している。\n\nエージェント型LLMの実運用における大きな課題のひとつが、ツール呼び出し時のスキーマ不整合や非決定論的挙動である。モデルが生成する関数引数がスキーマと一致しなかったり、同じ入力でも異なる呼び出しが発生するケースが報告されている。TSCGはツールスキーマをコンパイル段階で正規化・固定化することで、こうした揺らぎを抑制し、実行時の信頼性を高めることを狙うと見られる。\n\n関連分野では、OpenAIのFunction CallingやAnthropicのTool Use API、さらにオープンソースのLangChainやLlamaIndexといったフレームワークが、それぞれ独自のスキーマ表現を採用している。Model Context Protocol(MCP)のような標準化の動きも進むなか、決定論性を担保するコンパイル層は、相互運用性とデバッグ容易性の両面で意義があると考えられる。本論文の手法が広く採用されるかは今後の検証次第だが、エージェント運用の実務課題に正面から取り組む方向性として注目に値する。",
+      "bodyEn": "Agentic deployments of large language models increasingly rely on tool use, where the model invokes external APIs or functions to accomplish tasks. TSCG (Tool-Schema Compilation) addresses one of the more practical pain points in this stack: the deterministic compilation of tool schemas that govern how the model interacts with these external capabilities.\n\nIn production, agentic LLM systems frequently struggle with schema mismatches, malformed arguments, and non-deterministic invocation patterns. The same prompt and tool definition can yield subtly different call signatures across runs, complicating debugging, monitoring, and reproducibility. TSCG appears to tackle this by introducing a compilation layer that normalizes and fixes tool schemas before they are exposed to the model, reducing variance at runtime and presumably improving the rate of valid tool calls.\n\nThe broader ecosystem provides useful context. OpenAI's function calling, Anthropic's tool use API, Google's Gemini function calling, and open-source frameworks like LangChain, LlamaIndex, and Semantic Kernel each define their own schema conventions, often loosely based on JSON Schema. The recent emergence of the Model Context Protocol (MCP) from Anthropic signals a push toward standardization, but interoperability and deterministic behavior across providers remain open problems. A compilation-oriented approach like TSCG could complement these efforts by providing a uniform, deterministic representation regardless of the underlying provider.\n\nDeterminism matters not only for correctness but also for operational concerns such as caching, evaluation, and regulatory auditability. Enterprises deploying agents in regulated domains increasingly need traceable, reproducible tool invocations, and ad-hoc schema handling makes that difficult. By moving schema resolution into a compilation phase, TSCG may also enable static analysis of agent behaviors before deployment, similar to how typed languages catch errors at compile time rather than runtime.\n\nIt remains to be seen how the proposed technique compares empirically to existing validation-based approaches such as constrained decoding, grammar-based generation (e.g., outlines, guidance), or structured output modes offered natively by major LLM providers. These methods already enforce schema conformance during generation, though typically at a per-call rather than system-wide level. TSCG's contribution likely lies in shifting the locus of guarantees from inference time to a precompiled artifact, which could simplify the runtime path.\n\nWhether TSCG sees broad adoption will depend on integration ease with popular agent frameworks and on demonstrated gains in real deployments. Still, the direction—treating tool schemas as first-class compilable artifacts rather than runtime strings—aligns with a broader maturation of the agentic LLM stack from experimental scripts toward engineered, production-grade systems.",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "TSCG: Deterministic Tool-Schema Compilation for Agentic LLM Deployments",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "ed4c62d05cadb3e5",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04431",
+      "title": "Towards Robust LLM Post-Training: Automatic Failure Management for Reinforcement Fine-Tuning",
+      "titleJa": "堅牢なLLM事後学習へ:強化ファインチューニングの自動障害管理",
+      "titleEn": "Towards Robust LLM Post-Training: Automatic Failure Management for Reinforcement Fine-Tuning",
+      "summaryJa": "本論文は強化学習によるLLMファインチューニング(RFT)における障害を自動的に検出・管理する手法を提案する。学習中のクラッシュや報酬崩壊などの失敗ケースに対処することで、安定した事後学習を実現し、モデルの堅牢性を高める。",
+      "summaryEn": "This paper proposes automatic failure management techniques for reinforcement fine-tuning (RFT) of LLMs, addressing issues like training crashes and reward collapse to enable more robust and stable post-training pipelines.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "arxiv",
+        "paper",
+        "llm",
+        "reinforcement-learning",
+        "fine-tuning",
+        "post-training"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "Towards Robust LLM Post-Training: Automatic Failure Management for Reinforcement Fine-Tuning",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "55b1e53bcb5ee34d",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04532",
+      "title": "Accountable Agents in Software Engineering: An Analysis of Terms of Service and a Research Roadmap",
+      "titleJa": "ソフトウェア工学における説明責任あるAIエージェント:利用規約分析と研究ロードマップ",
+      "titleEn": "Accountable Agents in Software Engineering: An Analysis of Terms of Service and a Research Roadmap",
+      "summaryJa": "本論文はソフトウェア工学で利用されるAIエージェントの利用規約(ToS)を分析し、責任の所在や説明責任の課題を明らかにする。著者らは現状の問題点を整理し、説明責任あるエージェント実現に向けた研究ロードマップを提示している。",
+      "summaryEn": "This paper analyzes the Terms of Service of AI agents used in software engineering, identifying gaps in accountability and responsibility, and proposes a research roadmap toward building accountable agents in SE workflows.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "agent",
+        "arxiv",
+        "paper",
+        "ai-agents",
+        "software-engineering",
+        "accountability",
+        "terms-of-service"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "Accountable Agents in Software Engineering: An Analysis of Terms of Service and a Research Roadmap",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "e249c79d8be4f6db",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04615",
+      "title": "Beyond Retrieval: A Multitask Benchmark and Model for Code Search",
+      "titleJa": "検索を超えて: コード検索のためのマルチタスクベンチマークとモデル",
+      "titleEn": "Beyond Retrieval: A Multitask Benchmark and Model for Code Search",
+      "summaryJa": "コード検索を単純な検索タスクではなく、複数の関連サブタスクを含むマルチタスク問題として定式化した新しいベンチマークとモデルを提案する論文。検索精度と理解能力の両面で既存手法を上回る性能を示す。",
+      "summaryEn": "This paper proposes a new multitask benchmark and model for code search, reformulating it beyond pure retrieval to include multiple related subtasks, achieving improvements over existing methods in both retrieval accuracy and code understanding.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "arxiv",
+        "benchmark",
+        "paper",
+        "code-search",
+        "multitask-learning"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "Beyond Retrieval: A Multitask Benchmark and Model for Code Search",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "bed52560c224f655",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04677",
+      "title": "CodeEvolve: LLM-Driven Evolutionary Optimization with Runtime-Enriched Target Selection for Multi-Language Code Enhancement",
+      "titleJa": "CodeEvolve: 多言語コード最適化のためのLLM駆動進化的アルゴリズム",
+      "titleEn": "CodeEvolve: LLM-Driven Evolutionary Optimization with Runtime-Enriched Target Selection for Multi-Language Code Enhancement",
+      "summaryJa": "CodeEvolveは、LLMを活用した進化的最適化フレームワークで、実行時情報を組み込んだターゲット選択により多言語コードの性能改善を実現する。従来手法を上回る最適化精度を複数言語で示した研究成果である。",
+      "summaryEn": "CodeEvolve introduces an LLM-driven evolutionary optimization framework that uses runtime-enriched target selection to enhance code across multiple programming languages, outperforming prior approaches in code optimization tasks.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "arxiv",
+        "paper",
+        "llm",
+        "evolutionary-algorithms",
+        "code-optimization"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "CodeEvolve: LLM-Driven Evolutionary Optimization with Runtime-Enriched Target Selection for Multi-Language Code Enhancement",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "23d8e07a157613d9",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04100",
+      "title": "Regularized Centered Emphatic Temporal Difference Learning",
+      "titleJa": "正則化中心化エンファティックTD学習の提案",
+      "titleEn": "Regularized Centered Emphatic Temporal Difference Learning",
+      "summaryJa": "強化学習における方策オフ評価の安定化を目的に、エンファティックTD学習を中心化と正則化により改良した手法を提案。分散の低減と収束性の向上を理論的・実験的に示し、関数近似下での学習を安定化させる。",
+      "summaryEn": "This paper proposes a regularized and centered variant of Emphatic Temporal Difference learning for off-policy evaluation in reinforcement learning, aiming to reduce variance and improve convergence with function approximation through theoretical and empirical analysis.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "arxiv",
+        "paper",
+        "reinforcement-learning",
+        "off-policy",
+        "temporal-difference"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "Regularized Centered Emphatic Temporal Difference Learning",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "a0f89319b679ed69",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04227",
+      "title": "Pro$^2$Assist: Continuous Step-Aware Proactive Assistance with Multimodal Egocentric Perception for Long-Horizon Procedural Tasks",
+      "titleJa": "Pro²Assist: マルチモーダル一人称視点による長期手順タスクの能動支援",
+      "titleEn": "Pro$^2$Assist: Continuous Step-Aware Proactive Assistance with Multimodal Egocentric Perception for Long-Horizon Procedural Tasks",
+      "summaryJa": "長期的な手順タスクにおいて、一人称視点のマルチモーダル知覚を用い、ステップを継続的に認識して能動的に支援するフレームワークPro²Assistを提案。ユーザの作業状況に応じた適時な助言を実現する。",
+      "summaryEn": "Pro²Assist is a framework for continuous, step-aware proactive assistance in long-horizon procedural tasks, leveraging multimodal egocentric perception to deliver timely guidance based on the user's ongoing activity.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "arxiv",
+        "paper",
+        "egocentric",
+        "multimodal",
+        "proactive-assistance",
+        "procedural-tasks"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "Pro$^2$Assist: Continuous Step-Aware Proactive Assistance with Multimodal Egocentric Perception for Long-Horizon Procedural Tasks",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "e7010a5c16c50144",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04243",
+      "title": "Temporal Reasoning Is Not the Bottleneck: A Probabilistic Inconsistency Framework for Neuro-Symbolic QA",
+      "titleJa": "時間推論はボトルネックではない:ニューロシンボリックQAのための確率的不整合フレームワーク",
+      "titleEn": "Temporal Reasoning Is Not the Bottleneck: A Probabilistic Inconsistency Framework for Neuro-Symbolic QA",
+      "summaryJa": "本論文は、ニューロシンボリックQAにおける誤りの主因が時間推論ではなく確率的不整合であると指摘。LLMの出力の整合性を評価する新たな枠組みを提案し、時間QAタスクで従来の前提を覆す実証結果を示す。",
+      "summaryEn": "This paper argues that the main bottleneck in neuro-symbolic QA is not temporal reasoning but probabilistic inconsistency. It introduces a framework to evaluate LLM output consistency, challenging prior assumptions through experiments on temporal QA tasks.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "arxiv",
+        "paper",
+        "neuro-symbolic",
+        "temporal-reasoning",
+        "qa",
+        "llm-evaluation"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "Temporal Reasoning Is Not the Bottleneck: A Probabilistic Inconsistency Framework for Neuro-Symbolic QA",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "b75172fe24bf55b2",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04263",
+      "title": "Parallel Prefix Verification for Speculative Generation",
+      "titleJa": "投機的生成のための並列プレフィックス検証",
+      "titleEn": "Parallel Prefix Verification for Speculative Generation",
+      "summaryJa": "投機的デコーディングにおいて、ドラフトトークンのプレフィックスを並列に検証する手法を提案。従来の逐次検証に比べ、検証ステップを高速化し、大規模言語モデルの推論レイテンシを削減することを目指す研究である。",
+      "summaryEn": "This paper proposes a parallel prefix verification method for speculative decoding, accelerating the verification step of draft tokens to reduce inference latency in large language models compared to sequential verification.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "arxiv",
+        "paper",
+        "speculative-decoding",
+        "llm-inference",
+        "parallel-verification"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "Parallel Prefix Verification for Speculative Generation",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "11fbe492fe9f4979",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04312",
+      "title": "Agent Island: A Saturation- and Contamination-Resistant Benchmark from Multiagent Games",
+      "titleJa": "Agent Island: マルチエージェントゲームによる飽和・汚染耐性ベンチマーク",
+      "titleEn": "Agent Island: A Saturation- and Contamination-Resistant Benchmark from Multiagent Games",
+      "summaryJa": "マルチエージェントゲームを用いた、飽和や汚染に耐性を持つLLM評価ベンチマーク「Agent Island」を提案する研究。エージェント同士のゲーム形式により、従来の静的ベンチマークの限界を克服する新しい評価枠組みを示している。",
+      "summaryEn": "This paper introduces Agent Island, a benchmark for evaluating LLMs through multiagent games, designed to resist saturation and data contamination issues that plague conventional static benchmarks.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "agent",
+        "arxiv",
+        "benchmark",
+        "paper",
+        "llm-evaluation",
+        "multi-agent"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "Agent Island: A Saturation- and Contamination-Resistant Benchmark from Multiagent Games",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "ac165a1e670dc01f",
+      "source": "arxiv-cs-ai",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.04330",
+      "title": "The Scaling Properties of Implicit Deductive Reasoning in Transformers",
+      "titleJa": "Transformerにおける暗黙的演繹推論のスケーリング特性",
+      "titleEn": "The Scaling Properties of Implicit Deductive Reasoning in Transformers",
+      "summaryJa": "本論文は、Transformerモデルが暗黙的な演繹推論をどの程度学習できるかを、モデルサイズや推論ステップ数などに対するスケーリング特性として分析した研究である。多段推論の能力がパラメータ数や深さとどう関係するかを実験的に検証している。",
+      "summaryEn": "This paper investigates the scaling properties of implicit deductive reasoning in Transformer models, examining how multi-step reasoning capability relates to model size, depth, and inference complexity through systematic empirical analysis.",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "arxiv",
+        "paper",
+        "transformers",
+        "reasoning",
+        "scaling-laws",
+        "deductive-reasoning"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "The Scaling Properties of Implicit Deductive Reasoning in Transformers",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "f4362f78df919da9",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/Shawin/items/bb63ad3f8da6d4d79c9a",
+      "title": "AI黎明期の劇薬：Flipbookと「Vibe-coded」なデザインの終焉",
+      "titleJa": "AI黎明期の劇薬：Flipbookと「Vibe-coded」なデザインの終焉",
+      "titleEn": "",
+      "summaryJa": "執筆者：みこと ＆ Gemini（チグハグな一点ものユニット） はじめに 2026年、AIによる開発効率化は極限に達しました。しかし、Hacker News（HN）を覗けば、そこにあるのは「AIが吐き出した無機質な80点」の山です。本記事で",
+      "summaryEn": "AI黎明期の劇薬：Flipbookと「Vibe-coded」なデザインの終焉",
+      "lang": "ja",
+      "publishedAt": "2026-05-08T03:56:07.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "llm",
+        "qiita"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0MDI4NTAlMkYzZDUzOGQyZjdkODhhYzI2MjBlMDM4MjhkOGY1MTgyNGE1MTAxNWYxJTJGbGFyZ2UucG5nJTNGMTc1Mzk0MzQwOT9peGxpYj1yYi00LjAuMCZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9ZWQ1MmFjZDViMzFhZDYyOTQyZDNlMWQ1OWI5MjBkODM%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D3b95d79c3e3f923246571826906323a6?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9QUklRTklQkIlOEUlRTYlOTglOEUlRTYlOUMlOUYlRTMlODElQUUlRTUlOEElODclRTglOTYlQUMlRUYlQkMlOUFGbGlwYm9vayVFMyU4MSVBOCVFMyU4MCU4Q1ZpYmUtY29kZWQlRTMlODAlOEQlRTMlODElQUElRTMlODMlODclRTMlODIlQjYlRTMlODIlQTQlRTMlODMlQjMlRTMlODElQUUlRTclQjUlODIlRTclODQlODkmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1lNDM2YmZlNjFlNWZmMmJjYTRlMGI5Yzk1OWJjNzg3NA&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDBTaGF3aW4mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz02NDlmNGRhZWM2ZWMxOGQyZDdmYWFhNTc3YWRlODllMw&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=1387cd8917bbbc1d2151ad862280a48a",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0MDI4NTAlMkYzZDUzOGQyZjdkODhhYzI2MjBlMDM4MjhkOGY1MTgyNGE1MTAxNWYxJTJGbGFyZ2UucG5nJTNGMTc1Mzk0MzQwOT9peGxpYj1yYi00LjAuMCZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9ZWQ1MmFjZDViMzFhZDYyOTQyZDNlMWQ1OWI5MjBkODM%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D3b95d79c3e3f923246571826906323a6?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9QUklRTklQkIlOEUlRTYlOTglOEUlRTYlOUMlOUYlRTMlODElQUUlRTUlOEElODclRTglOTYlQUMlRUYlQkMlOUFGbGlwYm9vayVFMyU4MSVBOCVFMyU4MCU4Q1ZpYmUtY29kZWQlRTMlODAlOEQlRTMlODElQUElRTMlODMlODclRTMlODIlQjYlRTMlODIlQTQlRTMlODMlQjMlRTMlODElQUUlRTclQjUlODIlRTclODQlODkmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1lNDM2YmZlNjFlNWZmMmJjYTRlMGI5Yzk1OWJjNzg3NA&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDBTaGF3aW4mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz02NDlmNGRhZWM2ZWMxOGQyZDdmYWFhNTc3YWRlODllMw&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=1387cd8917bbbc1d2151ad862280a48a",
+        "alt": "AI黎明期の劇薬：Flipbookと「Vibe-coded」なデザインの終焉",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "755399efff509e03",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/jyas-protein/items/2d6f5ec6ae76002788a0",
+      "title": "【Claude Code】 Gitコミットを最適化する",
+      "titleJa": "【Claude Code】 Gitコミットを最適化する",
+      "titleEn": "",
+      "summaryJa": "はじめに GitHubを用いて開発を行なっている際、 「気づいたら変更差分が大きくなってしまったので、複数コミットに分割したい」 「コミットメッセージを考えるのが苦手」 といった経験はないでしょうか？ 私はあります！というわけで、Claud",
+      "summaryEn": "【Claude Code】 Gitコミットを最適化する",
+      "lang": "ja",
+      "publishedAt": "2026-05-08T03:09:56.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "llm",
+        "qiita"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "65e42de50ec174c1",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/yurukusa/items/76b3dc871379cc07dc2a",
+      "title": "Claude Code hookのmatcherとifフィールド——不要な実行を減らして高速化する",
+      "titleJa": "Claude Code hookのmatcherとifフィールド——不要な実行を減らして高速化する",
+      "titleEn": "",
+      "summaryJa": "Claude Codeのhookは便利だが、何も考えずに設定すると全ツール呼び出しで毎回実行される。1回のセッションでツールは数百回呼ばれる。hookが重いほどレスポンスが悪くなる。 この記事では、matcherとifフィールドを使ってho",
+      "summaryEn": "Claude Code hookのmatcherとifフィールド——不要な実行を減らして高速化する",
+      "lang": "ja",
+      "publishedAt": "2026-05-08T03:00:06.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "llm",
+        "qiita"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "25feac953c3dab1d",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/5_years_apart/items/b275dda90fb4647c727f",
+      "title": "Grok Connectorsを見て、Python 60行でLLMに社内Notion検索を持たせた話",
+      "titleJa": "Grok Connectorsを見て、Python 60行でLLMに社内Notion検索を持たせた話",
+      "titleEn": "",
+      "summaryJa": "きっかけ先週末、Grok の Connectors 機能が発表されたという記事を流し読みしていた。Gmail、Notion、カレンダー、スプレッドシート — つまり外部アプリを LLM が直接操作できるようにする、という話だ。同僚と昼食をと",
+      "summaryEn": "Grok Connectorsを見て、Python 60行でLLMに社内Notion検索を持たせた話",
+      "lang": "ja",
+      "publishedAt": "2026-05-08T02:19:29.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "llm",
+        "qiita"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
     {
       "id": "94ad3e632b4b57cc",
       "source": "zenn-llm",
@@ -389,7 +1030,7 @@
       "summaryEn": "A hands-on experiment where AI agents played the roles of Product Owner, Scrum Master and developers in a Scrum team, with a human quietly intervening to steer reviews and decisions. The author shares insights on how light human guidance improved quality and alignment in an otherwise autonomous AI workflow.",
       "lang": "ja",
       "publishedAt": "2026-05-07T23:36:13.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "copilot",
         "zenn",
@@ -425,7 +1066,7 @@
       "summaryEn": "A hands-on comparison of major image generation AIs for creating isometric diagrams used in presentation slides, evaluating output quality, prompt adherence, and ease of iterative editing across multiple models.",
       "lang": "ja",
       "publishedAt": "2026-05-07T23:30:05.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "zenn",
         "image-generation",
@@ -460,7 +1101,7 @@
       "summaryEn": "Corporate card and expense management startup Ramp is reportedly in talks to raise new funding at a valuation exceeding $40 billion, just six months after reaching a $32 billion valuation in late 2025.",
       "lang": "en",
       "publishedAt": "2026-05-07T23:11:43.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "news",
         "techcrunch",
@@ -683,7 +1324,7 @@
       "summaryEn": "This article warns that companies treating Microsoft Copilot merely as a ghostwriting AI for Excel and Word will fall behind in the AI era. Copilot should be seen as a platform for redesigning workflows and deploying agents, not just for document automation.",
       "lang": "ja",
       "publishedAt": "2026-05-07T22:30:01.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "zenn",
         "microsoft-copilot",
@@ -719,7 +1360,7 @@
       "summaryEn": "OpenAI has rolled out new voice intelligence features in its API, giving developers better tools to build natural, low-latency voice applications with improved transcription, understanding and real-time response capabilities.",
       "lang": "en",
       "publishedAt": "2026-05-07T22:24:50.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "news",
         "techcrunch",
@@ -755,7 +1396,7 @@
       "summaryEn": "AIとのゲーム仕様設計で発生する用語揺れ問題と空間定義の固定化手法",
       "lang": "ja",
       "publishedAt": "2026-05-07T22:20:19.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "zenn"
       ],
@@ -776,7 +1417,7 @@
       "summaryEn": "不動産AIの「中国 vs アメリカ」：同じ業界、違う進化論",
       "lang": "ja",
       "publishedAt": "2026-05-07T22:20:15.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "zenn"
       ],
@@ -820,7 +1461,7 @@
       "summaryEn": "The company made a series of other announcements during earnings, including a new commercial contract, a pilot program in Canada, and a collaboration.",
       "lang": "en",
       "publishedAt": "2026-05-07T21:49:24.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "news",
         "techcrunch"
@@ -842,7 +1483,7 @@
       "summaryEn": "Disney CEO Josh D'Amaro, who took over for Bob Iger earlier this year, has emphasized his intent to streamline the Disney experience.",
       "lang": "en",
       "publishedAt": "2026-05-07T21:40:10.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "news",
         "techcrunch"
@@ -960,7 +1601,7 @@
       "summaryEn": "AI startup Pit is led by the co-founders of European scooter giant Voi and backed by a16z, which is leading the startup’s $16 million seed round.",
       "lang": "en",
       "publishedAt": "2026-05-07T21:02:11.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "news",
         "techcrunch"
@@ -982,7 +1623,7 @@
       "summaryEn": "The cybercrime group ShinyHunters claimed to have hacked Instructure again, defacing the login pages of several Instructure customer schools with an extortion message.",
       "lang": "en",
       "publishedAt": "2026-05-07T20:59:09.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "news",
         "techcrunch"
@@ -1040,7 +1681,7 @@
       "summaryEn": "Gusto has shared an impressive milestone on its actual revenue, not an ARR number that estimates future income.",
       "lang": "en",
       "publishedAt": "2026-05-07T20:41:27.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "news",
         "techcrunch"
@@ -1099,7 +1740,7 @@
       "summaryEn": "The company is expanding its efforts to protect ChatGPT users in cases where conversations may turn to self-harm.",
       "lang": "en",
       "publishedAt": "2026-05-07T20:20:20.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "news",
         "techcrunch"
@@ -1121,7 +1762,7 @@
       "summaryEn": "The new benchmark rating applies to 2026 Tesla Model Y vehicles assembled on or after November 12, 2025.",
       "lang": "en",
       "publishedAt": "2026-05-07T20:10:48.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "benchmark",
         "news",
@@ -1144,7 +1785,7 @@
       "summaryEn": "Perplexity's Personal Computer brings AI agents to your Mac, and is now open to everyone.",
       "lang": "en",
       "publishedAt": "2026-05-07T19:57:59.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "news",
         "techcrunch"
@@ -1291,7 +1932,7 @@
       "summaryEn": "Elon Musk's legal effort to dismantle OpenAI may hinge on how its for-profit subsidiary enhances or detracts from the frontier lab's founding mission of ensuring that humanity benefits from artificial",
       "lang": "en",
       "publishedAt": "2026-05-07T19:21:21.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "news",
         "techcrunch"
@@ -1371,7 +2012,7 @@
       "summaryEn": "Based on Whitney Wolfe Herd's past comments about Bumble's new direction, the company is expected to lean into AI -- Bumble is even working on an AI dating assistant called Bee, and the CEO has made m",
       "lang": "en",
       "publishedAt": "2026-05-07T19:06:17.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "news",
         "techcrunch"
@@ -1481,7 +2122,7 @@
       "summaryEn": "Built on the back of the sizable and influential BookTok community -- creators who discuss and review books on TikTok -- the app offered readers a place to chronicle and rate their books, get recommen",
       "lang": "en",
       "publishedAt": "2026-05-07T18:38:58.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "news",
         "techcrunch"
@@ -1503,7 +2144,7 @@
       "summaryEn": "Stockholm-based vibe-coding platform Lovable is offering employees an automatic 10% raise as a way to sidestep classic corporate politics.",
       "lang": "en",
       "publishedAt": "2026-05-07T18:36:29.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "news",
         "techcrunch"
@@ -1555,7 +2196,7 @@
       "summaryEn": "An unknown group of hackers is breaking into systems previously breached by the cybercrime group TeamPCP. Once inside, the hackers immediately kick out TeamPCP and remove its hacking tools from the vi",
       "lang": "en",
       "publishedAt": "2026-05-07T18:28:52.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "news",
         "techcrunch"
@@ -1887,7 +2528,7 @@
       "summaryEn": "Changes since langchain-core==0.3.85 release(core): 0.3.86 ( #37242 ) fix(core): backport path-traversal fix to v0.3 ( CVE-2026-34070 , GHSA-qh6h-p6c9-ff54 ) ( #37233 )",
       "lang": "en",
       "publishedAt": "2026-05-07T16:48:35.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "langchain",
@@ -2013,7 +2654,7 @@
       "summaryEn": "Sign in securely and keep your account accessible with passkeys, Recovery Contacts, Sign in with Google, Password Manager and 2-Step Verification.",
       "lang": "en",
       "publishedAt": "2026-05-07T16:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news"
@@ -2043,7 +2684,7 @@
       "summaryEn": "To mark Teacher Appreciation Week, Google has released a video series honoring educators who made a meaningful difference in people's lives, featuring personal stories of gratitude toward influential teachers.",
       "lang": "en",
       "publishedAt": "2026-05-07T16:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news",
@@ -2077,7 +2718,7 @@
       "summaryEn": "LangChain has published version 0.3.30, a maintenance update on the 0.3.x line that focuses on internal cleanups, bug fixes, and dependency adjustments rather than new user-facing features.",
       "lang": "en",
       "publishedAt": "2026-05-07T15:57:13.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "langchain",
@@ -2112,7 +2753,7 @@
       "summaryEn": "CodexとClaude Codeの併用で学んだこと（Issue整理編）",
       "lang": "ja",
       "publishedAt": "2026-05-07T15:55:29.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "zenn"
       ],
@@ -2133,7 +2774,7 @@
       "summaryEn": "旅行しながらアプリを作って旅行中に使って改善する",
       "lang": "ja",
       "publishedAt": "2026-05-07T15:51:17.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "zenn"
       ],
@@ -2176,7 +2817,7 @@
       "summaryEn": "The LangChain project released langchain-classic 1.0.7, a maintenance update for the legacy compatibility package that preserves the pre-1.0 LangChain API surface, with minor fixes and dependency adjustments.",
       "lang": "en",
       "publishedAt": "2026-05-07T15:47:20.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "langchain",
@@ -2246,7 +2887,7 @@
       "summaryEn": "NeRFの論文解説",
       "lang": "ja",
       "publishedAt": "2026-05-07T15:39:01.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "zenn"
       ],
@@ -2320,7 +2961,7 @@
       "summaryEn": "Claude Codeにオレたち流のコードを書かせる（中編）— 組織のルールを共有する",
       "lang": "ja",
       "publishedAt": "2026-05-07T15:00:11.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "zenn"
       ],
@@ -2341,7 +2982,7 @@
       "summaryEn": "AlphaEvolve has become a powerful engine for scientific and societal progress.",
       "lang": "en",
       "publishedAt": "2026-05-07T15:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news"
@@ -2371,7 +3012,7 @@
       "summaryEn": "New AI-powered bidding and budgeting tools help you meet your goals, manage your budgets and stay ahead of shifting consumer behavior.",
       "lang": "en",
       "publishedAt": "2026-05-07T15:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news"
@@ -2401,7 +3042,7 @@
       "summaryEn": "【最新情報】The Anthropic Institute: AIの現実世界への影響を研究する",
       "lang": "ja",
       "publishedAt": "2026-05-07T14:55:37.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "zenn"
       ],
@@ -2501,8 +3142,8 @@
       }
     },
     {
-      "id": "c2e684f5e4e9cb0d",
-      "source": "zenn-llm",
+      "id": "b7b353f2f31047c3",
+      "source": "zenn-ai",
       "sourceType": "blog",
       "url": "https://zenn.dev/bloomblock_blog/articles/llm-nondeterminism",
       "title": "同じプロンプトなのに毎回答えが変わる——LLMの非決定性という落とし穴",
@@ -2512,13 +3153,12 @@
       "summaryEn": "同じプロンプトなのに毎回答えが変わる——LLMの非決定性という落とし穴",
       "lang": "ja",
       "publishedAt": "2026-05-07T14:27:27.000Z",
-      "collectedAt": "2026-05-08T02:00:54.534Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
-        "llm",
         "zenn"
       ],
-      "category": "local-llm",
+      "category": "research",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot"
@@ -2559,8 +3199,8 @@
       }
     },
     {
-      "id": "48e9b3b36176518c",
-      "source": "zenn-llm",
+      "id": "471effee5faa27cc",
+      "source": "zenn-ai",
       "sourceType": "blog",
       "url": "https://zenn.dev/jian_wang/articles/ai-agents-teaching-lifecycle",
       "title": "教育のライフサイクルを支えるAIエージェント入門：学校現場での設定から活用まで",
@@ -2570,12 +3210,11 @@
       "summaryEn": "教育のライフサイクルを支えるAIエージェント入門：学校現場での設定から活用まで",
       "lang": "ja",
       "publishedAt": "2026-05-07T14:13:09.000Z",
-      "collectedAt": "2026-05-08T02:00:54.534Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
-        "llm",
         "zenn"
       ],
-      "category": "local-llm",
+      "category": "research",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot"
@@ -2614,7 +3253,7 @@
       "summaryEn": "AIエージェントは「フロー販売」ではなく「成果物評価の市場」になるのではないか",
       "lang": "ja",
       "publishedAt": "2026-05-07T14:00:08.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "zenn"
       ],
@@ -2635,7 +3274,7 @@
       "summaryEn": "Google Health Coach, now available globally, provides personalized insights on workouts, sleep, recovery and wellbeing.",
       "lang": "en",
       "publishedAt": "2026-05-07T14:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news"
@@ -2665,7 +3304,7 @@
       "summaryEn": "The new lightweight, screenless Fitbit Air has a long battery life and offers in-depth health and wellness insights.",
       "lang": "en",
       "publishedAt": "2026-05-07T14:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news"
@@ -2695,7 +3334,7 @@
       "summaryEn": "Introducing the lightweight, screenless Fitbit Air, and the brand-new Google Health app.",
       "lang": "en",
       "publishedAt": "2026-05-07T14:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news"
@@ -2725,7 +3364,7 @@
       "summaryEn": "The Fitbit app is now the Google Health app, debuting an all-new logo, look and capabilities.",
       "lang": "en",
       "publishedAt": "2026-05-07T14:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news"
@@ -2755,7 +3394,7 @@
       "summaryEn": "NBA champion and Google Performance Advisor, Stephen Curry, has partnered with Fitbit to debut a special edition band.",
       "lang": "en",
       "publishedAt": "2026-05-07T14:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news"
@@ -2858,7 +3497,7 @@
       "summaryEn": "AIエージェントの用語まとめ",
       "lang": "ja",
       "publishedAt": "2026-05-07T13:48:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "zenn"
@@ -2869,8 +3508,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "1491bb1677630a27",
-      "source": "zenn-mcp",
+      "id": "c7d95c6b77486824",
+      "source": "zenn-ai",
       "sourceType": "blog",
       "url": "https://zenn.dev/nullcontroller/articles/c95d77150aa590",
       "title": "「AIエージェントを0から作る時代」は本当に来るのか？",
@@ -2880,13 +3519,12 @@
       "summaryEn": "「AIエージェントを0から作る時代」は本当に来るのか？",
       "lang": "ja",
       "publishedAt": "2026-05-07T13:47:14.000Z",
-      "collectedAt": "2026-05-08T01:00:54.526Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
-        "mcp",
         "mcp-server",
         "zenn"
       ],
-      "category": "mcp",
+      "category": "research",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot"
@@ -2984,7 +3622,7 @@
       "summaryEn": "AIに「この施策は効いた？」と聞く前に、まず比較対象を決める",
       "lang": "ja",
       "publishedAt": "2026-05-07T13:05:41.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "zenn"
       ],
@@ -3035,7 +3673,7 @@
       "summaryEn": "Explore Asian and Pasifika cultures with curated collections on Google Play, creator spotlights, a new Doodle and more.",
       "lang": "en",
       "publishedAt": "2026-05-07T13:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news"
@@ -3072,28 +3710,6 @@
       "category": "codex",
       "importance": 1,
       "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "83ba33ed38684106",
-      "source": "zenn-llm",
-      "sourceType": "blog",
-      "url": "https://zenn.dev/tsukitsukiss/articles/multirolechat-llm-parallel-quiz-benchmark",
-      "title": "【MultiRoleChat】8つのLLMに同じ問題を同時に解かせたら、正確さより速さの差が面白かった",
-      "titleJa": "【MultiRoleChat】8つのLLMに同じ問題を同時に解かせたら、正確さより速さの差が面白かった",
-      "titleEn": "",
-      "summaryJa": "はじめに 複数のLLMを使い分けているうちに「同じ問題を一斉に投げたらどうなるか」が気になりました。モデル比較記事はよく見るのですが、同一条件・同一問題・並列実行でやったものが少ないと感じていたので、自作ツールで試してみました。 8つのLL",
-      "summaryEn": "【MultiRoleChat】8つのLLMに同じ問題を同時に解かせたら、正確さより速さの差が面白かった",
-      "lang": "ja",
-      "publishedAt": "2026-05-07T12:30:33.000Z",
-      "collectedAt": "2026-05-08T02:00:54.534Z",
-      "tags": [
-        "llm",
-        "zenn"
-      ],
-      "category": "local-llm",
-      "importance": 1,
-      "halfLife": "tutorial",
       "archiveTier": "hot"
     },
     {
@@ -3821,7 +4437,7 @@
       "summaryEn": "ディレクトリ管理をしよう",
       "lang": "ja",
       "publishedAt": "2026-05-07T05:49:27.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "copilot",
         "zenn"
@@ -3875,187 +4491,6 @@
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot"
-    },
-    {
-      "id": "1b0ac08ab6d30f1d",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04050",
-      "title": "LCM: Lossless Context Management",
-      "titleJa": "LCM: ロスレスなコンテキスト管理手法",
-      "titleEn": "LCM: Lossless Context Management",
-      "summaryJa": "本論文はLLM向けの新しいコンテキスト管理手法「LCM(Lossless Context Management)」を提案する。長文コンテキストを情報損失なく効率的に扱うことを目指し、推論性能とメモリ効率の両立を図る。",
-      "summaryEn": "This paper proposes LCM (Lossless Context Management), a new approach for handling long contexts in LLMs without information loss, aiming to balance inference performance and memory efficiency.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "arxiv",
-        "paper",
-        "llm",
-        "context-management",
-        "long-context"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "LCM: Lossless Context Management",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "001c48a46dc8981a",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04361",
-      "title": "When Context Hurts: The Crossover Effect of Knowledge Transfer on Multi-Agent Design Exploration",
-      "titleJa": "文脈が逆効果に:マルチエージェント設計探索における知識転移のクロスオーバー効果",
-      "titleEn": "When Context Hurts: The Crossover Effect of Knowledge Transfer on Multi-Agent Design Exploration",
-      "summaryJa": "本研究はマルチエージェント設計探索における知識転移の効果を分析し、文脈情報の共有が必ずしも性能向上に寄与せず、逆に探索を阻害するクロスオーバー効果が生じることを示す。エージェント間の知識共有のタイミングと量が成果を左右する。",
-      "summaryEn": "This paper investigates knowledge transfer in multi-agent design exploration, revealing a crossover effect where shared context can hinder rather than help performance. The timing and quantity of inter-agent knowledge sharing critically determine outcomes.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "agent",
-        "arxiv",
-        "paper",
-        "multi-agent",
-        "knowledge-transfer",
-        "design-exploration"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "When Context Hurts: The Crossover Effect of Knowledge Transfer on Multi-Agent Design Exploration",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "af8ae2bb43af5750",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04624",
-      "title": "AuditRepairBench: A Paired-Execution Trace Corpus for Evaluator-Channel Ranking Instability in Agent Repair",
-      "titleJa": "AuditRepairBench: エージェント修復における評価チャネル順位不安定性のためのペア実行トレースコーパス",
-      "titleEn": "AuditRepairBench: A Paired-Execution Trace Corpus for Evaluator-Channel Ranking Instability in Agent Repair",
-      "summaryJa": "エージェント修復タスクにおける評価器(Evaluator)チャネルのランキング不安定性を検証するため、ペアになった実行トレースのコーパスAuditRepairBenchを提案。評価チャネル間の順位ばらつきを定量化し、修復評価の信頼性を分析する。",
-      "summaryEn": "AuditRepairBench introduces a paired-execution trace corpus designed to study evaluator-channel ranking instability in agent repair tasks, quantifying inconsistencies across evaluation channels to assess repair benchmark reliability.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "agent",
-        "arxiv",
-        "paper",
-        "agent-repair",
-        "benchmark",
-        "evaluation",
-        "llm-agents"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "AuditRepairBench: A Paired-Execution Trace Corpus for Evaluator-Channel Ranking Instability in Agent Repair",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "124e42d68d64c386",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04454",
-      "title": "Deployment-Relevant Alignment Cannot Be Inferred from Model-Level Evaluation Alone",
-      "titleJa": "展開時アラインメントはモデル単体評価だけでは推定できない",
-      "titleEn": "Deployment-Relevant Alignment Cannot Be Inferred from Model-Level Evaluation Alone",
-      "summaryJa": "本論文は、モデル単体での評価だけでは実運用環境におけるAIアラインメントの安全性を十分に判断できないと主張する。展開文脈や運用条件を含めた評価体系の必要性を示し、現行の評価手法の限界を論じている。",
-      "summaryEn": "This paper argues that model-level evaluations alone are insufficient to assess deployment-relevant alignment of AI systems, as safety depends on deployment context and operational conditions, calling for context-aware evaluation frameworks.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "arxiv",
-        "benchmark",
-        "paper",
-        "ai-alignment",
-        "ai-safety",
-        "evaluation"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "Deployment-Relevant Alignment Cannot Be Inferred from Model-Level Evaluation Alone",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "e6591a4ef61399ea",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04107",
-      "title": "TSCG: Deterministic Tool-Schema Compilation for Agentic LLM Deployments",
-      "titleJa": "TSCG: エージェント型LLM向けツールスキーマの決定論的コンパイル",
-      "titleEn": "TSCG: Deterministic Tool-Schema Compilation for Agentic LLM Deployments",
-      "summaryJa": "エージェント型LLMデプロイにおけるツール呼び出しの信頼性を高めるため、ツールスキーマを決定論的にコンパイルする手法TSCGを提案。スキーマの曖昧性を排除し、一貫したツール利用を可能にする研究。",
-      "summaryEn": "This paper introduces TSCG, a deterministic compilation approach for tool schemas in agentic LLM deployments, aiming to remove schema ambiguity and enable more reliable and consistent tool invocation by language model agents.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "agent",
-        "arxiv",
-        "mcp-server",
-        "paper",
-        "llm-agents",
-        "tool-use",
-        "schema"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "TSCG: Deterministic Tool-Schema Compilation for Agentic LLM Deployments",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
     },
     {
       "id": "889a034ac053acb8",
@@ -4174,125 +4609,6 @@
       "archiveTier": "hot"
     },
     {
-      "id": "2352cde7df6498e7",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04431",
-      "title": "Towards Robust LLM Post-Training: Automatic Failure Management for Reinforcement Fine-Tuning",
-      "titleJa": "堅牢なLLM事後学習へ:強化ファインチューニングの自動障害管理",
-      "titleEn": "Towards Robust LLM Post-Training: Automatic Failure Management for Reinforcement Fine-Tuning",
-      "summaryJa": "本論文は強化学習によるLLMファインチューニング(RFT)における障害を自動的に検出・管理する手法を提案する。学習中のクラッシュや報酬崩壊などの失敗ケースに対処することで、安定した事後学習を実現し、モデルの堅牢性を高める。",
-      "summaryEn": "This paper proposes automatic failure management techniques for reinforcement fine-tuning (RFT) of LLMs, addressing issues like training crashes and reward collapse to enable more robust and stable post-training pipelines.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "arxiv",
-        "paper",
-        "llm",
-        "reinforcement-learning",
-        "fine-tuning",
-        "post-training"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "Towards Robust LLM Post-Training: Automatic Failure Management for Reinforcement Fine-Tuning",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "47262b4a2a195a08",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04532",
-      "title": "Accountable Agents in Software Engineering: An Analysis of Terms of Service and a Research Roadmap",
-      "titleJa": "ソフトウェア工学における説明責任あるAIエージェント:利用規約分析と研究ロードマップ",
-      "titleEn": "Accountable Agents in Software Engineering: An Analysis of Terms of Service and a Research Roadmap",
-      "summaryJa": "本論文はソフトウェア工学で利用されるAIエージェントの利用規約(ToS)を分析し、責任の所在や説明責任の課題を明らかにする。著者らは現状の問題点を整理し、説明責任あるエージェント実現に向けた研究ロードマップを提示している。",
-      "summaryEn": "This paper analyzes the Terms of Service of AI agents used in software engineering, identifying gaps in accountability and responsibility, and proposes a research roadmap toward building accountable agents in SE workflows.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "agent",
-        "arxiv",
-        "paper",
-        "ai-agents",
-        "software-engineering",
-        "accountability",
-        "terms-of-service"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "9fa3d7108cab0051",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04615",
-      "title": "Beyond Retrieval: A Multitask Benchmark and Model for Code Search",
-      "titleJa": "検索を超えて: コード検索のためのマルチタスクベンチマークとモデル",
-      "titleEn": "Beyond Retrieval: A Multitask Benchmark and Model for Code Search",
-      "summaryJa": "コード検索を単純な検索タスクではなく、複数の関連サブタスクを含むマルチタスク問題として定式化した新しいベンチマークとモデルを提案する論文。検索精度と理解能力の両面で既存手法を上回る性能を示す。",
-      "summaryEn": "This paper proposes a new multitask benchmark and model for code search, reformulating it beyond pure retrieval to include multiple related subtasks, achieving improvements over existing methods in both retrieval accuracy and code understanding.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "arxiv",
-        "benchmark",
-        "paper",
-        "code-search",
-        "multitask-learning"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "8118a512aa70f69f",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04677",
-      "title": "CodeEvolve: LLM-Driven Evolutionary Optimization with Runtime-Enriched Target Selection for Multi-Language Code Enhancement",
-      "titleJa": "CodeEvolve: 多言語コード最適化のためのLLM駆動進化的アルゴリズム",
-      "titleEn": "CodeEvolve: LLM-Driven Evolutionary Optimization with Runtime-Enriched Target Selection for Multi-Language Code Enhancement",
-      "summaryJa": "CodeEvolveは、LLMを活用した進化的最適化フレームワークで、実行時情報を組み込んだターゲット選択により多言語コードの性能改善を実現する。従来手法を上回る最適化精度を複数言語で示した研究成果である。",
-      "summaryEn": "CodeEvolve introduces an LLM-driven evolutionary optimization framework that uses runtime-enriched target selection to enhance code across multiple programming languages, outperforming prior approaches in code optimization tasks.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "arxiv",
-        "paper",
-        "llm",
-        "evolutionary-algorithms",
-        "code-optimization"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "357c04b5001740f0",
       "source": "arxiv-cs-se",
       "sourceType": "paper",
@@ -4314,390 +4630,6 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot"
-    },
-    {
-      "id": "23d8e07a157613d9",
-      "source": "arxiv-cs-ai",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04100",
-      "title": "Regularized Centered Emphatic Temporal Difference Learning",
-      "titleJa": "正則化中心化エンファティックTD学習の提案",
-      "titleEn": "Regularized Centered Emphatic Temporal Difference Learning",
-      "summaryJa": "強化学習における方策オフ評価の安定化を目的に、エンファティックTD学習を中心化と正則化により改良した手法を提案。分散の低減と収束性の向上を理論的・実験的に示し、関数近似下での学習を安定化させる。",
-      "summaryEn": "This paper proposes a regularized and centered variant of Emphatic Temporal Difference learning for off-policy evaluation in reinforcement learning, aiming to reduce variance and improve convergence with function approximation through theoretical and empirical analysis.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
-      "tags": [
-        "arxiv",
-        "paper",
-        "reinforcement-learning",
-        "off-policy",
-        "temporal-difference"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "Regularized Centered Emphatic Temporal Difference Learning",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "a0f89319b679ed69",
-      "source": "arxiv-cs-ai",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04227",
-      "title": "Pro$^2$Assist: Continuous Step-Aware Proactive Assistance with Multimodal Egocentric Perception for Long-Horizon Procedural Tasks",
-      "titleJa": "Pro²Assist: マルチモーダル一人称視点による長期手順タスクの能動支援",
-      "titleEn": "Pro$^2$Assist: Continuous Step-Aware Proactive Assistance with Multimodal Egocentric Perception for Long-Horizon Procedural Tasks",
-      "summaryJa": "長期的な手順タスクにおいて、一人称視点のマルチモーダル知覚を用い、ステップを継続的に認識して能動的に支援するフレームワークPro²Assistを提案。ユーザの作業状況に応じた適時な助言を実現する。",
-      "summaryEn": "Pro²Assist is a framework for continuous, step-aware proactive assistance in long-horizon procedural tasks, leveraging multimodal egocentric perception to deliver timely guidance based on the user's ongoing activity.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
-      "tags": [
-        "arxiv",
-        "paper",
-        "egocentric",
-        "multimodal",
-        "proactive-assistance",
-        "procedural-tasks"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "Pro$^2$Assist: Continuous Step-Aware Proactive Assistance with Multimodal Egocentric Perception for Long-Horizon Procedural Tasks",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "e7010a5c16c50144",
-      "source": "arxiv-cs-ai",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04243",
-      "title": "Temporal Reasoning Is Not the Bottleneck: A Probabilistic Inconsistency Framework for Neuro-Symbolic QA",
-      "titleJa": "時間推論はボトルネックではない:ニューロシンボリックQAのための確率的不整合フレームワーク",
-      "titleEn": "Temporal Reasoning Is Not the Bottleneck: A Probabilistic Inconsistency Framework for Neuro-Symbolic QA",
-      "summaryJa": "本論文は、ニューロシンボリックQAにおける誤りの主因が時間推論ではなく確率的不整合であると指摘。LLMの出力の整合性を評価する新たな枠組みを提案し、時間QAタスクで従来の前提を覆す実証結果を示す。",
-      "summaryEn": "This paper argues that the main bottleneck in neuro-symbolic QA is not temporal reasoning but probabilistic inconsistency. It introduces a framework to evaluate LLM output consistency, challenging prior assumptions through experiments on temporal QA tasks.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
-      "tags": [
-        "arxiv",
-        "paper",
-        "neuro-symbolic",
-        "temporal-reasoning",
-        "qa",
-        "llm-evaluation"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "Temporal Reasoning Is Not the Bottleneck: A Probabilistic Inconsistency Framework for Neuro-Symbolic QA",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "b75172fe24bf55b2",
-      "source": "arxiv-cs-ai",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04263",
-      "title": "Parallel Prefix Verification for Speculative Generation",
-      "titleJa": "投機的生成のための並列プレフィックス検証",
-      "titleEn": "Parallel Prefix Verification for Speculative Generation",
-      "summaryJa": "投機的デコーディングにおいて、ドラフトトークンのプレフィックスを並列に検証する手法を提案。従来の逐次検証に比べ、検証ステップを高速化し、大規模言語モデルの推論レイテンシを削減することを目指す研究である。",
-      "summaryEn": "This paper proposes a parallel prefix verification method for speculative decoding, accelerating the verification step of draft tokens to reduce inference latency in large language models compared to sequential verification.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
-      "tags": [
-        "arxiv",
-        "paper",
-        "speculative-decoding",
-        "llm-inference",
-        "parallel-verification"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "Parallel Prefix Verification for Speculative Generation",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "11fbe492fe9f4979",
-      "source": "arxiv-cs-ai",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04312",
-      "title": "Agent Island: A Saturation- and Contamination-Resistant Benchmark from Multiagent Games",
-      "titleJa": "Agent Island: マルチエージェントゲームによる飽和・汚染耐性ベンチマーク",
-      "titleEn": "Agent Island: A Saturation- and Contamination-Resistant Benchmark from Multiagent Games",
-      "summaryJa": "マルチエージェントゲームを用いた、飽和や汚染に耐性を持つLLM評価ベンチマーク「Agent Island」を提案する研究。エージェント同士のゲーム形式により、従来の静的ベンチマークの限界を克服する新しい評価枠組みを示している。",
-      "summaryEn": "This paper introduces Agent Island, a benchmark for evaluating LLMs through multiagent games, designed to resist saturation and data contamination issues that plague conventional static benchmarks.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
-      "tags": [
-        "agent",
-        "arxiv",
-        "benchmark",
-        "paper",
-        "llm-evaluation",
-        "multi-agent"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "Agent Island: A Saturation- and Contamination-Resistant Benchmark from Multiagent Games",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "ac165a1e670dc01f",
-      "source": "arxiv-cs-ai",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04330",
-      "title": "The Scaling Properties of Implicit Deductive Reasoning in Transformers",
-      "titleJa": "Transformerにおける暗黙的演繹推論のスケーリング特性",
-      "titleEn": "The Scaling Properties of Implicit Deductive Reasoning in Transformers",
-      "summaryJa": "本論文は、Transformerモデルが暗黙的な演繹推論をどの程度学習できるかを、モデルサイズや推論ステップ数などに対するスケーリング特性として分析した研究である。多段推論の能力がパラメータ数や深さとどう関係するかを実験的に検証している。",
-      "summaryEn": "This paper investigates the scaling properties of implicit deductive reasoning in Transformer models, examining how multi-step reasoning capability relates to model size, depth, and inference complexity through systematic empirical analysis.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
-      "tags": [
-        "arxiv",
-        "paper",
-        "transformers",
-        "reasoning",
-        "scaling-laws",
-        "deductive-reasoning"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "The Scaling Properties of Implicit Deductive Reasoning in Transformers",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "de488db032e86c89",
-      "source": "arxiv-cs-ai",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04488",
-      "title": "How Does Thinking Mode Change LLM Moral Judgments? A Controlled Instant-vs-Thinking Comparison Across Five Frontier Models",
-      "titleJa": "思考モードはLLMの道徳判断をどう変えるか?5つのフロンティアモデルで比較",
-      "titleEn": "How Does Thinking Mode Change LLM Moral Judgments? A Controlled Instant-vs-Thinking Comparison Across Five Frontier Models",
-      "summaryJa": "5つの最先端LLMにおいて、即答モードと思考モードでの道徳的判断の違いを統制比較した研究。思考モードを有効にすることで、モデルの倫理的推論や判断傾向がどのように変化するかを定量的に分析している。",
-      "summaryEn": "A controlled study comparing instant-response and thinking modes across five frontier LLMs to evaluate how extended reasoning affects moral judgments, quantifying shifts in ethical reasoning patterns.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
-      "tags": [
-        "arxiv",
-        "paper",
-        "moral-reasoning",
-        "thinking-mode",
-        "llm-evaluation"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "How Does Thinking Mode Change LLM Moral Judgments? A Controlled Instant-vs-Thinking Comparison Across Five Frontier Models",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "2a0edbd9e080959d",
-      "source": "arxiv-cs-ai",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04608",
-      "title": "SensingAgents: A Multi-Agent Collaborative Framework for Robust IMU Activity Recognition",
-      "titleJa": "SensingAgents: IMU活動認識のためのマルチエージェント協調フレームワーク",
-      "titleEn": "SensingAgents: A Multi-Agent Collaborative Framework for Robust IMU Activity Recognition",
-      "summaryJa": "IMUセンサーによる人間活動認識の頑健性向上を目的に、複数のエージェントが協調して推論する新フレームワーク「SensingAgents」を提案。各エージェントが異なる視点で信号を解析し、議論を通じて最終判断を導くことで、ノイズや個人差に強い認識性能を実現する。",
-      "summaryEn": "SensingAgents proposes a multi-agent collaborative framework for robust IMU-based human activity recognition, where multiple agents analyze signals from different perspectives and reach consensus through discussion to handle noise and individual variability.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
-      "tags": [
-        "agent",
-        "arxiv",
-        "paper",
-        "multi-agent",
-        "imu",
-        "activity-recognition",
-        "sensor-fusion"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "SensingAgents: A Multi-Agent Collaborative Framework for Robust IMU Activity Recognition",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "7be4abdd3c282040",
-      "source": "arxiv-cs-lg",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04169",
-      "title": "Actionable Real-Time Modeling of Surgical Team Dynamics via Time-Expanded Interaction Graphs",
-      "titleJa": "時間展開インタラクショングラフによる手術チーム動態のリアルタイムモデリング",
-      "titleEn": "Actionable Real-Time Modeling of Surgical Team Dynamics via Time-Expanded Interaction Graphs",
-      "summaryJa": "手術チームの相互作用を時間展開グラフとしてモデル化し、リアルタイムで実行可能な分析を可能にする手法を提案。チームメンバー間の動的な関係を捉え、手術中の協調行動の理解と支援に活用できる。",
-      "summaryEn": "This paper proposes a real-time modeling approach for surgical team dynamics using time-expanded interaction graphs, capturing dynamic relationships between team members to enable actionable analysis during surgery.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T01:00:54.526Z",
-      "tags": [
-        "arxiv",
-        "paper",
-        "graph-modeling",
-        "surgical-ai",
-        "team-dynamics"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "Actionable Real-Time Modeling of Surgical Team Dynamics via Time-Expanded Interaction Graphs",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "d07da2cfed7b4c0e",
-      "source": "arxiv-cs-lg",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04193",
-      "title": "ANDRE: An Attention-based Neuro-symbolic Differentiable Rule Extractor",
-      "titleJa": "ANDRE: アテンション機構による微分可能なニューロシンボリックルール抽出器",
-      "titleEn": "ANDRE: An Attention-based Neuro-symbolic Differentiable Rule Extractor",
-      "summaryJa": "本論文ではANDREという、アテンションベースのニューロシンボリック微分可能ルール抽出器を提案する。ニューラルネットワークの学習能力と記号的推論の解釈性を組み合わせ、データから人間に理解可能なルールを抽出する手法である。",
-      "summaryEn": "This paper proposes ANDRE, an attention-based neuro-symbolic differentiable rule extractor that combines the learning power of neural networks with the interpretability of symbolic reasoning to extract human-understandable rules from data.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T01:00:54.526Z",
-      "tags": [
-        "arxiv",
-        "paper",
-        "neuro-symbolic",
-        "rule-extraction",
-        "attention",
-        "interpretability"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
-        "alt": "ANDRE: An Attention-based Neuro-symbolic Differentiable Rule Extractor",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "258c6b423f0ce71d",
-      "source": "arxiv-cs-lg",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04572",
-      "title": "From Parameter Dynamics to Risk Scoring : Quantifying Sample-Level Safety Degradation in LLM Fine-tuning",
-      "titleJa": "パラメータ動態からリスク評価へ:LLMファインチューニングにおけるサンプル単位の安全性劣化の定量化",
-      "titleEn": "From Parameter Dynamics to Risk Scoring : Quantifying Sample-Level Safety Degradation in LLM Fine-tuning",
-      "summaryJa": "本研究は、LLMのファインチューニング時に各学習サンプルが安全性をどの程度劣化させるかを定量化する手法を提案する。パラメータ更新の動態を解析しサンプル単位のリスクスコアを算出することで、有害な学習データを事前に特定可能にする。",
-      "summaryEn": "This paper proposes a method to quantify how individual training samples degrade safety during LLM fine-tuning. By analyzing parameter update dynamics, it derives sample-level risk scores that help identify harmful training data in advance.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T01:00:54.526Z",
-      "tags": [
-        "arxiv",
-        "paper",
-        "llm-safety",
-        "fine-tuning",
-        "risk-scoring"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": ""
     },
     {
       "id": "46ecca4e6b23772f",
@@ -4759,72 +4691,6 @@
       "archiveTier": "hot"
     },
     {
-      "id": "1d6abab0998c9263",
-      "source": "arxiv-cs-lg",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04056",
-      "title": "Transformation Categorization Based on Group Decomposition Theory Using Parameter Division",
-      "titleJa": "",
-      "titleEn": "Transformation Categorization Based on Group Decomposition Theory Using Parameter Division",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04056v1 Announce Type: new Abstract: Representation learning seeks meaningful sensory representations without supervision and can model aspects of human development. Although many neural ne",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T01:00:54.526Z",
-      "tags": [
-        "arxiv",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "cd9275236ceebc69",
-      "source": "arxiv-cs-lg",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04057",
-      "title": "Structured Progressive Knowledge Activation for LLM-Driven Neural Architecture Search",
-      "titleJa": "",
-      "titleEn": "Structured Progressive Knowledge Activation for LLM-Driven Neural Architecture Search",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04057v1 Announce Type: new Abstract: This paper focuses on a key challenge in Neural Architecture Search (NAS): integrating established architectural knowledge while exploring new designs u",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T01:00:54.526Z",
-      "tags": [
-        "arxiv",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "a49e388d9dd5c576",
-      "source": "arxiv-cs-lg",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04058",
-      "title": "MP-ISMoE: Mixed-Precision Interactive Side Mixture-of-Experts for Efficient Transfer Learning",
-      "titleJa": "",
-      "titleEn": "MP-ISMoE: Mixed-Precision Interactive Side Mixture-of-Experts for Efficient Transfer Learning",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04058v1 Announce Type: new Abstract: Parameter-efficient transfer learning (PETL) has emerged as a pivotal paradigm for adapting pre-trained foundation models to downstream tasks, significa",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T01:00:54.526Z",
-      "tags": [
-        "arxiv",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
       "id": "e4e6d8cd39a49426",
       "source": "arxiv-cs-lg",
       "sourceType": "paper",
@@ -4834,72 +4700,6 @@
       "titleEn": "Continual Distillation of Teachers from Different Domains",
       "summaryJa": "",
       "summaryEn": "arXiv:2605.04059v1 Announce Type: new Abstract: Deep learning models continue to scale, with some requiring more storage than many large-scale datasets. Thus, we introduce a new paradigm: Continual Di",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T01:00:54.526Z",
-      "tags": [
-        "arxiv",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "8805f9188156ac9b",
-      "source": "arxiv-cs-lg",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04060",
-      "title": "Lookahead Drifting Model",
-      "titleJa": "",
-      "titleEn": "Lookahead Drifting Model",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04060v1 Announce Type: new Abstract: Recently, a new paradigm named \\emph{drifting model} has been proposed for mapping distributions, which achieves the SOTA image generation performance o",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T01:00:54.526Z",
-      "tags": [
-        "arxiv",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "2e2eac03b4dae146",
-      "source": "arxiv-cs-lg",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04062",
-      "title": "EdgeRazor: A Lightweight Framework for Large Language Models via Mixed-Precision Quantization-Aware Distillation",
-      "titleJa": "",
-      "titleEn": "EdgeRazor: A Lightweight Framework for Large Language Models via Mixed-Precision Quantization-Aware Distillation",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04062v1 Announce Type: new Abstract: Recent years have witnessed an increasing interest in deploying LLMs on resource-constrained devices, among which quantization has emerged as a promisin",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T01:00:54.526Z",
-      "tags": [
-        "arxiv",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "e743c879c8fc0acf",
-      "source": "arxiv-cs-lg",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04063",
-      "title": "Investigating Trustworthiness of Nonparametric Deep Survival Models for Alzheimer's Disease Progression Analysis",
-      "titleJa": "",
-      "titleEn": "Investigating Trustworthiness of Nonparametric Deep Survival Models for Alzheimer's Disease Progression Analysis",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04063v1 Announce Type: new Abstract: Alzheimer's Dementia (AD) is a progressive neurodegenerative disease marked by irreversible decline, making reliable modeling of its progression essenti",
       "lang": "en",
       "publishedAt": "2026-05-07T04:00:00.000Z",
       "collectedAt": "2026-05-08T01:00:54.526Z",
@@ -5001,28 +4801,6 @@
       "archiveTier": "hot"
     },
     {
-      "id": "3c16134126661e1e",
-      "source": "arxiv-cs-cl",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04080",
-      "title": "Connecting online criminal behavior with machine learning: Using authorship attribution to analyze and link potential online traffickers",
-      "titleJa": "",
-      "titleEn": "Connecting online criminal behavior with machine learning: Using authorship attribution to analyze and link potential online traffickers",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04080v1 Announce Type: new Abstract: This research investigated how online criminal activities can be better understood and connected using data-driven machine learning methods. Many illega",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T02:00:54.534Z",
-      "tags": [
-        "arxiv",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
       "id": "087d80589442b099",
       "source": "arxiv-cs-cl",
       "sourceType": "paper",
@@ -5089,28 +4867,6 @@
       "archiveTier": "hot"
     },
     {
-      "id": "9638a5d142ca309c",
-      "source": "arxiv-cs-cl",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04180",
-      "title": "MedFabric and EtHER: A Data-Centric Framework for Word-Level Fabrication Generation and Detection in Medical LLMs",
-      "titleJa": "",
-      "titleEn": "MedFabric and EtHER: A Data-Centric Framework for Word-Level Fabrication Generation and Detection in Medical LLMs",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04180v1 Announce Type: new Abstract: Large Language Models exhibit strong reasoning and semantic understanding capabilities but often hallucinate in domains that require expert knowledge, a",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T02:00:54.534Z",
-      "tags": [
-        "arxiv",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
       "id": "6383321d0c3a1550",
       "source": "arxiv-cs-cl",
       "sourceType": "paper",
@@ -5142,28 +4898,6 @@
       "titleEn": "Nsanku: Evaluating Zero-Shot Translation Performance of LLMs for Ghanaian Languages",
       "summaryJa": "",
       "summaryEn": "arXiv:2605.04208v1 Announce Type: new Abstract: Large language models (LLMs) have demonstrated impressive multilingual capabilities for well-resourced languages, yet their performance on low-resource ",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T02:00:54.534Z",
-      "tags": [
-        "arxiv",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "0cc475f8b84530db",
-      "source": "arxiv-cs-cl",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04221",
-      "title": "Self-Prompting Small Language Models for Privacy-Sensitive Clinical Information Extraction",
-      "titleJa": "",
-      "titleEn": "Self-Prompting Small Language Models for Privacy-Sensitive Clinical Information Extraction",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04221v1 Announce Type: new Abstract: Clinical named entity recognition from dental progress notes is challenging because documentation is highly unstructured, domain-specific, and often pri",
       "lang": "en",
       "publishedAt": "2026-05-07T04:00:00.000Z",
       "collectedAt": "2026-05-08T02:00:54.534Z",
@@ -5209,51 +4943,6 @@
       "titleEn": "Towards Self-Referential Analytic Assessment: A Profile-Based Approach to L2 Writing Evaluation with LLMs",
       "summaryJa": "",
       "summaryEn": "arXiv:2605.04298v1 Announce Type: new Abstract: Automated essay scoring (AES) research often relies on rank-based correlation metrics to validate analytic assessment. However, such metrics obscure bot",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T02:00:54.534Z",
-      "tags": [
-        "arxiv",
-        "benchmark",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "362c465dbe40ec22",
-      "source": "arxiv-cs-cl",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04305",
-      "title": "SWAN: Semantic Watermarking with Abstract Meaning Representation",
-      "titleJa": "",
-      "titleEn": "SWAN: Semantic Watermarking with Abstract Meaning Representation",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04305v1 Announce Type: new Abstract: We introduce SWAN (Semantic Watermarking with Abstract Meaning Representation), a novel framework that embeds watermark signatures into the semantic str",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T02:00:54.534Z",
-      "tags": [
-        "arxiv",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "a3f845b6a59b2567",
-      "source": "arxiv-cs-cl",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04313",
-      "title": "NoisyCausal: A Benchmark for Evaluating Causal Reasoning Under Structured Noise",
-      "titleJa": "",
-      "titleEn": "NoisyCausal: A Benchmark for Evaluating Causal Reasoning Under Structured Noise",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04313v1 Announce Type: new Abstract: Causal reasoning in natural language requires identifying relevant variables, understanding their interactions, and reasoning about effects and interven",
       "lang": "en",
       "publishedAt": "2026-05-07T04:00:00.000Z",
       "collectedAt": "2026-05-08T02:00:54.534Z",
@@ -6260,7 +5949,7 @@
       "summaryEn": "ServiceNow AI documents challenges in migrating RL pipelines from vLLM V0 to V1, identifying numerical inconsistencies that degrade training. The post emphasizes verifying correctness before applying optimizations or fixes.",
       "lang": "en",
       "publishedAt": "2026-05-06T19:06:55.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "huggingface",
         "open-model",
@@ -6295,7 +5984,7 @@
       "summaryEn": "LangChain 1.3.0a2 is an alpha pre-release of the upcoming 1.3.0 version, intended for testing new in-development features and not recommended for production use.",
       "lang": "en",
       "publishedAt": "2026-05-06T18:54:44.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "langchain",
@@ -6612,7 +6301,7 @@
       "summaryEn": "Google highlights five ways to use Search for gardening, including identifying plants, looking up care tips, dealing with pests, viewing plants in AR, and using visual search tools to support home gardeners.",
       "lang": "en",
       "publishedAt": "2026-05-06T16:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news",
@@ -6784,7 +6473,7 @@
       "summaryEn": "We're partnering with Believe to offer Google Flow Music to artists, producers and songwriters.",
       "lang": "en",
       "publishedAt": "2026-05-06T15:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news"
@@ -6814,7 +6503,7 @@
       "summaryEn": "GitHub Copilotの使いすぎを防ぐ、消費ペースガイド付きstatuslineを作ってみた",
       "lang": "ja",
       "publishedAt": "2026-05-06T14:53:54.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "copilot",
         "zenn"
@@ -6836,7 +6525,7 @@
       "summaryEn": "Agent Plugins のチーム配布と、それに耐えられるスキル設計",
       "lang": "ja",
       "publishedAt": "2026-05-06T14:47:17.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "copilot",
@@ -6881,7 +6570,7 @@
       "summaryEn": "GitHub Copilotと設計する農業向けルールベース画像処理アルゴリズム",
       "lang": "ja",
       "publishedAt": "2026-05-06T14:00:05.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "copilot",
         "zenn"
@@ -6903,7 +6592,7 @@
       "summaryEn": "GitHub Copilot Metrics Viewerで組織のAI活用状況を分析する",
       "lang": "ja",
       "publishedAt": "2026-05-06T13:35:52.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "copilot",
         "zenn"
@@ -6925,7 +6614,7 @@
       "summaryEn": "AI makes it easy to generate ad creative quickly, but that speed can’t come at the cost of accuracy, brand loyalty or performance.",
       "lang": "en",
       "publishedAt": "2026-05-06T13:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news"
@@ -6955,7 +6644,7 @@
       "summaryEn": "New updates to AI Mode and AI Overviews in Google Search make it easier for you to dive deeper online.",
       "lang": "en",
       "publishedAt": "2026-05-06T13:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news"
@@ -7048,7 +6737,7 @@
       "summaryEn": "Explore how AlphaEvolve's Gemini-powered algorithms are driving impact across business, infrastructure, and science.",
       "lang": "en",
       "publishedAt": "2026-05-06T10:43:49.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "deepmind",
@@ -7101,7 +6790,7 @@
       "summaryEn": "運用編：スカウト評価システムをどう使ったか",
       "lang": "ja",
       "publishedAt": "2026-05-06T10:30:50.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "copilot",
         "zenn"
@@ -7145,7 +6834,7 @@
       "summaryEn": "GitHub Copilot SDK/CLI - A2A Kubernetes マルチエージェントシステム実行ガイド",
       "lang": "ja",
       "publishedAt": "2026-05-06T09:57:29.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "copilot",
         "zenn"
@@ -7167,7 +6856,7 @@
       "summaryEn": "Github Copilot CLI に「同じ指示に同じ実装」を引き出す３つの工夫　— iOSアプリを App Store にリリース",
       "lang": "ja",
       "publishedAt": "2026-05-06T09:34:31.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "copilot",
         "zenn"
@@ -7260,7 +6949,7 @@
       "summaryEn": "GitHub Copilot CLIで英語圏OSSへPRを通し、リリースに含まれた話",
       "lang": "ja",
       "publishedAt": "2026-05-06T08:40:58.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "copilot",
         "zenn"
@@ -7424,28 +7113,6 @@
       "archiveTier": "hot"
     },
     {
-      "id": "00106b048095bbeb",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/open-asr-leaderboard-private-data",
-      "title": "Adding Benchmaxxer Repellant to the Open ASR Leaderboard",
-      "titleJa": "",
-      "titleEn": "Adding Benchmaxxer Repellant to the Open ASR Leaderboard",
-      "summaryJa": "",
-      "summaryEn": "Adding Benchmaxxer Repellant to the Open ASR Leaderboard",
-      "lang": "en",
-      "publishedAt": "2026-05-06T00:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
-      "tags": [
-        "huggingface",
-        "open-model"
-      ],
-      "category": "local-llm",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
       "id": "6bf805ce51476a46",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -7465,6 +7132,28 @@
       ],
       "category": "cursor",
       "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "00106b048095bbeb",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/open-asr-leaderboard-private-data",
+      "title": "Adding Benchmaxxer Repellant to the Open ASR Leaderboard",
+      "titleJa": "",
+      "titleEn": "Adding Benchmaxxer Repellant to the Open ASR Leaderboard",
+      "summaryJa": "",
+      "summaryEn": "Adding Benchmaxxer Repellant to the Open ASR Leaderboard",
+      "lang": "en",
+      "publishedAt": "2026-05-06T00:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "huggingface",
+        "open-model"
+      ],
+      "category": "local-llm",
+      "importance": 1,
       "halfLife": "news",
       "archiveTier": "hot"
     },
@@ -7670,7 +7359,7 @@
       "summaryEn": "langchain-classic 1.0.6 has been released. This package preserves the legacy LangChain APIs separated from the v1.x mainline, providing minor maintenance updates for users still relying on the classic interface.",
       "lang": "en",
       "publishedAt": "2026-05-05T21:02:41.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "langchain",
@@ -7705,7 +7394,7 @@
       "summaryEn": "LangChain 0.3.29 has been released as a routine maintenance update on the 0.3 stable line, containing minor bug fixes and small improvements for existing users.",
       "lang": "en",
       "publishedAt": "2026-05-05T21:02:15.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "langchain",
@@ -7739,7 +7428,7 @@
       "summaryEn": "GitHub Copilot SDK で1週間分の PR を振り返る pr-weekly-report を作ってみた",
       "lang": "ja",
       "publishedAt": "2026-05-05T21:00:05.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "copilot",
         "zenn"
@@ -7789,7 +7478,7 @@
       "summaryEn": "langchain-core 0.3.85 has been released. This is a routine patch update to the foundational package providing core interfaces and abstractions for the LangChain framework, with minor improvements and fixes.",
       "lang": "en",
       "publishedAt": "2026-05-05T20:43:46.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "langchain",
@@ -7857,7 +7546,7 @@
       "summaryEn": "An experiment using GitHub Copilot CLI to attempt building a 1999-era PostgreSQL on a modern Linux system, exploring how AI agents can assist with porting and fixing legacy code for current environments.",
       "lang": "ja",
       "publishedAt": "2026-05-05T19:41:55.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "copilot",
         "zenn",
@@ -7945,7 +7634,7 @@
       "summaryEn": "Patch release of langchain-core 1.3.3 with bug fixes and minor internal improvements, maintaining API compatibility while improving stability.",
       "lang": "en",
       "publishedAt": "2026-05-05T19:02:53.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "langchain",
@@ -7980,7 +7669,7 @@
       "summaryEn": "AIエージェントの Skill は書くだけでは足りない ⇒ Waza で評価して APM で配ろう!【ハーネスエンジニアリング】",
       "lang": "ja",
       "publishedAt": "2026-05-05T18:41:11.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "copilot",
@@ -8003,7 +7692,7 @@
       "summaryEn": "Updates to the Gemini API File Search tool makes building efficient, multimodal file retrieval systems easier for developers.",
       "lang": "en",
       "publishedAt": "2026-05-05T18:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "google",
         "news",
@@ -8072,7 +7761,7 @@
       "summaryEn": "Blogable を使用してZennのマークダウンを作成するスクリプトを書（い｜かせ）た",
       "lang": "ja",
       "publishedAt": "2026-05-05T17:17:13.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "copilot",
         "zenn"
@@ -8131,7 +7820,7 @@
       "summaryEn": "LangChain has released version 1.3.1 of its langchain-fireworks integration package, a minor update including small fixes and dependency adjustments for the Fireworks AI integration.",
       "lang": "en",
       "publishedAt": "2026-05-05T15:43:37.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "langchain",
@@ -8166,7 +7855,7 @@
       "summaryEn": "Patch release of langchain-mistralai version 1.1.4, the LangChain integration package for Mistral AI. Contains minor fixes and maintenance updates.",
       "lang": "en",
       "publishedAt": "2026-05-05T15:29:15.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "langchain",
@@ -8201,7 +7890,7 @@
       "summaryEn": "コーディングエージェントを使って感じた 課題とコツ",
       "lang": "ja",
       "publishedAt": "2026-05-05T13:17:11.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "copilot",
         "zenn"
@@ -9169,7 +8858,7 @@
       "summaryEn": "Researching the path to AI-augmented care and development of an AI co-clinician.",
       "lang": "en",
       "publishedAt": "2026-04-30T12:14:15.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "deepmind",
         "google"
@@ -9222,7 +8911,7 @@
       "summaryEn": "Granite 4.1 LLMs: How They’re Built",
       "lang": "en",
       "publishedAt": "2026-04-29T15:01:48.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -9399,28 +9088,6 @@
       }
     },
     {
-      "id": "bc05a99fb2524956",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/inference-providers-deepinfra",
-      "title": "DeepInfra on Hugging Face Inference Providers 🔥",
-      "titleJa": "",
-      "titleEn": "DeepInfra on Hugging Face Inference Providers 🔥",
-      "summaryJa": "",
-      "summaryEn": "DeepInfra on Hugging Face Inference Providers 🔥",
-      "lang": "en",
-      "publishedAt": "2026-04-29T00:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
-      "tags": [
-        "huggingface",
-        "open-model"
-      ],
-      "category": "local-llm",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
       "id": "9bbf61c409b5e1e3",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -9439,6 +9106,28 @@
       ],
       "category": "cursor",
       "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "bc05a99fb2524956",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/inference-providers-deepinfra",
+      "title": "DeepInfra on Hugging Face Inference Providers 🔥",
+      "titleJa": "",
+      "titleEn": "DeepInfra on Hugging Face Inference Providers 🔥",
+      "summaryJa": "",
+      "summaryEn": "DeepInfra on Hugging Face Inference Providers 🔥",
+      "lang": "en",
+      "publishedAt": "2026-04-29T00:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "huggingface",
+        "open-model"
+      ],
+      "category": "local-llm",
+      "importance": 1,
       "halfLife": "news",
       "archiveTier": "hot"
     },
@@ -9561,7 +9250,7 @@
       "summaryEn": "NVIDIA introduces Nemotron 3 Nano Omni, a long-context multimodal model designed for document, audio and video agents. It integrates text, image, audio and video understanding for advanced multimodal reasoning tasks.",
       "lang": "en",
       "publishedAt": "2026-04-28T15:58:57.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "huggingface",
         "open-model",
@@ -9767,7 +9456,7 @@
       "summaryEn": "Google DeepMind announced a strategic partnership with the Republic of Korea, focusing on collaboration in AI research, talent development, and societal applications to advance Korea's AI ecosystem and responsible AI adoption.",
       "lang": "en",
       "publishedAt": "2026-04-27T07:00:06.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "deepmind",
         "google",
@@ -9802,7 +9491,7 @@
       "summaryEn": "How to build scalable web apps with OpenAI's Privacy Filter",
       "lang": "en",
       "publishedAt": "2026-04-27T00:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "huggingface",
         "open-model",
@@ -9936,28 +9625,6 @@
       }
     },
     {
-      "id": "30fb7a838eab4d8b",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/deepseekv4",
-      "title": "DeepSeek-V4: a million-token context that agents can actually use",
-      "titleJa": "",
-      "titleEn": "DeepSeek-V4: a million-token context that agents can actually use",
-      "summaryJa": "",
-      "summaryEn": "DeepSeek-V4: a million-token context that agents can actually use",
-      "lang": "en",
-      "publishedAt": "2026-04-24T00:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
-      "tags": [
-        "huggingface",
-        "open-model"
-      ],
-      "category": "local-llm",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm"
-    },
-    {
       "id": "29dfd675f0bf477c",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -9977,6 +9644,28 @@
       ],
       "category": "cursor",
       "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm"
+    },
+    {
+      "id": "30fb7a838eab4d8b",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/deepseekv4",
+      "title": "DeepSeek-V4: a million-token context that agents can actually use",
+      "titleJa": "",
+      "titleEn": "DeepSeek-V4: a million-token context that agents can actually use",
+      "summaryJa": "",
+      "summaryEn": "DeepSeek-V4: a million-token context that agents can actually use",
+      "lang": "en",
+      "publishedAt": "2026-04-24T00:00:00.000Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "huggingface",
+        "open-model"
+      ],
+      "category": "local-llm",
+      "importance": 1,
       "halfLife": "news",
       "archiveTier": "warm"
     },
@@ -10118,7 +9807,7 @@
       "summaryEn": "How to Use Transformers.js in a Chrome Extension",
       "lang": "en",
       "publishedAt": "2026-04-23T00:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "huggingface",
         "open-model",
@@ -10307,7 +9996,7 @@
       "summaryEn": "Decoupled DiLoCo: A new frontier for resilient, distributed AI training",
       "lang": "en",
       "publishedAt": "2026-04-22T10:20:03.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "deepmind",
         "google"
@@ -10360,7 +10049,7 @@
       "summaryEn": "Google DeepMind partners with global consultancies to bring the power of frontier AI to organizations around the world.",
       "lang": "en",
       "publishedAt": "2026-04-21T14:54:15.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "deepmind",
         "google"
@@ -10390,7 +10079,7 @@
       "summaryEn": "QIMMA قِمّة ⛰: A Quality-First Arabic LLM Leaderboard",
       "lang": "en",
       "publishedAt": "2026-04-21T10:09:58.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -10412,7 +10101,7 @@
       "summaryEn": "AI and the Future of Cybersecurity: Why Openness Matters",
       "lang": "en",
       "publishedAt": "2026-04-21T00:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -10735,7 +10424,7 @@
       "summaryEn": "Ecom-RLVE: Adaptive Verifiable Environments for E-Commerce Conversational Agents",
       "lang": "en",
       "publishedAt": "2026-04-16T00:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -10757,7 +10446,7 @@
       "summaryEn": "The PR you would have opened yourself",
       "lang": "en",
       "publishedAt": "2026-04-16T00:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -10779,7 +10468,7 @@
       "summaryEn": "Training and Finetuning Multimodal Embedding & Reranker Models with Sentence Transformers",
       "lang": "en",
       "publishedAt": "2026-04-16T00:00:00.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -10822,7 +10511,7 @@
       "summaryEn": "Our newest audio model introduces granular audio tags that give you precise control to direct AI speech for expressive audio generation.",
       "lang": "en",
       "publishedAt": "2026-04-15T16:03:19.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "deepmind",
         "google"
@@ -10852,7 +10541,7 @@
       "summaryEn": "Inside VAKRA: Reasoning, Tool Use, and Failure Modes of Agents",
       "lang": "en",
       "publishedAt": "2026-04-15T12:07:25.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -10874,7 +10563,7 @@
       "summaryEn": "Meet HoloTab by HCompany. Your AI browser companion.",
       "lang": "en",
       "publishedAt": "2026-04-15T09:25:20.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -11010,7 +10699,7 @@
       "summaryEn": "Gemini Robotics ER 1.6: Enhancing spatial reasoning and multi-view understanding for autonomous robotics.",
       "lang": "en",
       "publishedAt": "2026-04-13T15:52:13.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "deepmind",
@@ -11346,7 +11035,7 @@
       "summaryEn": "Gemma 4: Our most intelligent open models to date, purpose-built for advanced reasoning and agentic workflows.",
       "lang": "en",
       "publishedAt": "2026-04-02T16:00:49.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "agent",
         "deepmind",
@@ -11471,7 +11160,7 @@
       "summaryEn": "What's Changed fix: ensure config.yaml exists and is populated when accessed by @RomneyDa in #11915 chore: jb-67-vs-38 by @RomneyDa in #11916 chore(deps-dev): bump happy-dom from 20.0.2 to 20.8.9 in /",
       "lang": "en",
       "publishedAt": "2026-03-27T21:38:24.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "continue",
         "release"
@@ -11501,7 +11190,7 @@
       "summaryEn": "What's Changed fix: ensure config.yaml exists and is populated when accessed by @RomneyDa in #11915 chore: jb-67-vs-38 by @RomneyDa in #11916 chore(deps-dev): bump happy-dom from 20.0.2 to 20.8.9 in /",
       "lang": "en",
       "publishedAt": "2026-03-27T21:34:07.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "continue",
         "release"
@@ -11531,7 +11220,7 @@
       "summaryEn": "What's Changed fix: redirect Winston logger to stderr to prevent IPC stream corruption + fix binary tests by @RomneyDa in #11914 fix: ensure config.yaml exists and is populated when accessed by @Romne",
       "lang": "en",
       "publishedAt": "2026-03-27T21:22:37.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "continue",
         "release"
@@ -11561,7 +11250,7 @@
       "summaryEn": "What's Changed chore: jb-66-vs-37 by @RomneyDa in #11909 fix: remove Ollama template-based tool support gate by @RomneyDa in #11905 Full Changelog : v1.2.20-vscode...v1.2.21-vscode",
       "lang": "en",
       "publishedAt": "2026-03-27T00:10:30.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "continue",
         "release"
@@ -11591,7 +11280,7 @@
       "summaryEn": "What's Changed chore: jb-66-vs-37 by @RomneyDa in #11909 fix: remove Ollama template-based tool support gate by @RomneyDa in #11905 Full Changelog : v1.3.36-vscode...v1.3.37-vscode",
       "lang": "en",
       "publishedAt": "2026-03-27T00:05:47.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "continue",
         "release"
@@ -11621,7 +11310,7 @@
       "summaryEn": "What's Changed chore: jb-66-vs-37 by @RomneyDa in #11909 fix: remove Ollama template-based tool support gate by @RomneyDa in #11905 Full Changelog : v1.0.65-jetbrains...v1.0.66-jetbrains",
       "lang": "en",
       "publishedAt": "2026-03-26T23:52:57.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "continue",
         "release"
@@ -11651,7 +11340,7 @@
       "summaryEn": "What's Changed fix: add ModelDescription type to binary test callbacks by @RomneyDa in #11888 Fix StringIndexOutOfBoundsException in readRangeInFile by @ivanlen in #11881 fix: resolve critical and hig",
       "lang": "en",
       "publishedAt": "2026-03-26T22:57:26.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "continue",
         "release"
@@ -11681,7 +11370,7 @@
       "summaryEn": "What's Changed fix: add ModelDescription type to binary test callbacks by @RomneyDa in #11888 Fix StringIndexOutOfBoundsException in readRangeInFile by @ivanlen in #11881 fix: resolve critical and hig",
       "lang": "en",
       "publishedAt": "2026-03-26T22:43:05.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "continue",
         "release"
@@ -11711,7 +11400,7 @@
       "summaryEn": "Our latest voice model has improved precision and lower latency to make voice interactions more fluid, natural and precise.",
       "lang": "en",
       "publishedAt": "2026-03-26T15:23:35.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "deepmind",
         "google"
@@ -11763,7 +11452,7 @@
       "summaryEn": "What's Changed fix: remove Llama 3.1 405B from Groq provider by @RomneyDa in #11804 fix: add keepAlive to YAML completion options schema by @RomneyDa in #11801 fix(llama.cpp): include model name in co",
       "lang": "en",
       "publishedAt": "2026-03-26T09:22:19.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "continue",
         "open-model",
@@ -11794,7 +11483,7 @@
       "summaryEn": "What's Changed fix: remove Llama 3.1 405B from Groq provider by @RomneyDa in #11804 fix: add keepAlive to YAML completion options schema by @RomneyDa in #11801 fix(llama.cpp): include model name in co",
       "lang": "en",
       "publishedAt": "2026-03-26T09:17:47.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "continue",
         "open-model",
@@ -11825,7 +11514,7 @@
       "summaryEn": "Google DeepMind researches AI's harmful manipulation risks across areas like finance and health, leading to new safety measures.",
       "lang": "en",
       "publishedAt": "2026-03-25T16:46:20.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "deepmind",
         "google"
@@ -11855,7 +11544,7 @@
       "summaryEn": "Introducing Lyria 3 Pro, which unlocks longer tracks with structural awareness. We’re also bringing Lyria to more Google products and surfaces.",
       "lang": "en",
       "publishedAt": "2026-03-25T16:01:39.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "deepmind",
         "google"
@@ -12066,7 +11755,7 @@
       "summaryEn": "We’re introducing a framework to measure progress toward AGI, and launching a Kaggle hackathon to build the relevant evaluations.",
       "lang": "en",
       "publishedAt": "2026-03-17T16:03:47.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "deepmind",
         "google",
@@ -12217,7 +11906,7 @@
       "summaryEn": "Ten years since AlphaGo, we explore how it is catalyzing scientific discovery and paving a path to AGI.",
       "lang": "en",
       "publishedAt": "2026-03-09T13:52:36.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "deepmind",
         "google"
@@ -12247,7 +11936,7 @@
       "summaryEn": "HN: 146 points, 100 comments · @knowsuchagency · https://news.ycombinator.com/item?id=47305149",
       "lang": "en",
       "publishedAt": "2026-03-09T05:18:46.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "community",
         "hackernews",
@@ -12332,7 +12021,7 @@
       "summaryEn": "Gemini 3.1 Flash-Lite is our fastest and most cost-efficient Gemini 3 series model yet.",
       "lang": "en",
       "publishedAt": "2026-03-03T16:35:55.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "deepmind",
         "google"
@@ -12362,7 +12051,7 @@
       "summaryEn": "Our latest image generation model offers advanced world knowledge, production ready specs, subject consistency and more, all at Flash speed.",
       "lang": "en",
       "publishedAt": "2026-02-26T16:01:50.000Z",
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "deepmind",
         "google"
@@ -13498,7 +13187,7 @@
       "summaryEn": "",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "anthropic",
         "claude"
@@ -13520,7 +13209,7 @@
       "summaryEn": "",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "anthropic",
         "claude"
@@ -13542,7 +13231,7 @@
       "summaryEn": "",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "anthropic",
         "claude"
@@ -13564,7 +13253,7 @@
       "summaryEn": "",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "anthropic",
         "claude"
@@ -13586,7 +13275,7 @@
       "summaryEn": "",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "anthropic",
         "claude"
@@ -13608,7 +13297,7 @@
       "summaryEn": "",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "anthropic",
         "claude",
@@ -13631,7 +13320,7 @@
       "summaryEn": "",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "anthropic",
         "claude"
@@ -13653,7 +13342,7 @@
       "summaryEn": "",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "anthropic",
         "claude"
@@ -13675,7 +13364,7 @@
       "summaryEn": "",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "anthropic",
         "claude"
@@ -13697,7 +13386,7 @@
       "summaryEn": "",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "anthropic",
         "claude"
@@ -13719,7 +13408,7 @@
       "summaryEn": "",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "anthropic",
         "claude"
@@ -13741,7 +13430,7 @@
       "summaryEn": "Monthly release notes for VS Code 1.120.",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "release",
         "vscode"
@@ -13763,7 +13452,7 @@
       "summaryEn": "Monthly release notes for VS Code 1.119.",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "release",
         "vscode"
@@ -13785,7 +13474,7 @@
       "summaryEn": "Monthly release notes for VS Code 1.118.",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "release",
         "vscode"
@@ -13807,7 +13496,7 @@
       "summaryEn": "Monthly release notes for VS Code 1.117.",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "release",
         "vscode"
@@ -13829,7 +13518,7 @@
       "summaryEn": "Monthly release notes for VS Code 1.116.",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "release",
         "vscode"
@@ -13851,7 +13540,7 @@
       "summaryEn": "Monthly release notes for VS Code 1.115.",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "release",
         "vscode"
@@ -13873,7 +13562,117 @@
       "summaryEn": "Monthly release notes for VS Code 1.114.",
       "lang": "en",
       "publishedAt": null,
-      "collectedAt": "2026-05-08T00:00:54.528Z",
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "release",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "b99f409d56b62fb6",
+      "source": "vscode-updates",
+      "sourceType": "release",
+      "url": "https://code.visualstudio.com/updates/v1_113",
+      "title": "Visual Studio Code 1.113 Release Notes",
+      "titleJa": "",
+      "titleEn": "Visual Studio Code 1.113 Release Notes",
+      "summaryJa": "",
+      "summaryEn": "Monthly release notes for VS Code 1.113.",
+      "lang": "en",
+      "publishedAt": null,
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "release",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "182d554d0c81528e",
+      "source": "vscode-updates",
+      "sourceType": "release",
+      "url": "https://code.visualstudio.com/updates/v1_112",
+      "title": "Visual Studio Code 1.112 Release Notes",
+      "titleJa": "",
+      "titleEn": "Visual Studio Code 1.112 Release Notes",
+      "summaryJa": "",
+      "summaryEn": "Monthly release notes for VS Code 1.112.",
+      "lang": "en",
+      "publishedAt": null,
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "release",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "a1c00f44f6b56c6c",
+      "source": "vscode-updates",
+      "sourceType": "release",
+      "url": "https://code.visualstudio.com/updates/v1_111",
+      "title": "Visual Studio Code 1.111 Release Notes",
+      "titleJa": "",
+      "titleEn": "Visual Studio Code 1.111 Release Notes",
+      "summaryJa": "",
+      "summaryEn": "Monthly release notes for VS Code 1.111.",
+      "lang": "en",
+      "publishedAt": null,
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "release",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "1ef2ae93f09136fd",
+      "source": "vscode-updates",
+      "sourceType": "release",
+      "url": "https://code.visualstudio.com/updates/v1_110",
+      "title": "Visual Studio Code 1.110 Release Notes",
+      "titleJa": "",
+      "titleEn": "Visual Studio Code 1.110 Release Notes",
+      "summaryJa": "",
+      "summaryEn": "Monthly release notes for VS Code 1.110.",
+      "lang": "en",
+      "publishedAt": null,
+      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "tags": [
+        "release",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "c760e15bffbe0bfc",
+      "source": "vscode-updates",
+      "sourceType": "release",
+      "url": "https://code.visualstudio.com/updates/v1_109",
+      "title": "Visual Studio Code 1.109 Release Notes",
+      "titleJa": "",
+      "titleEn": "Visual Studio Code 1.109 Release Notes",
+      "summaryJa": "",
+      "summaryEn": "Monthly release notes for VS Code 1.109.",
+      "lang": "en",
+      "publishedAt": null,
+      "collectedAt": "2026-05-08T04:00:54.529Z",
       "tags": [
         "release",
         "vscode"

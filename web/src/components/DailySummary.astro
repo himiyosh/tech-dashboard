@@ -58,15 +58,42 @@ const baseDayEntries = entries.filter((e) => jstDateKey(e.publishedAt) === baseD
 // 主要な更新内容: importance desc → release/changelog 優先 → publishedAt desc で上位 12 件
 const typeWeight = (t: string): number =>
   t === "release" || t === "changelog" ? 2 : t === "paper" ? 1 : 0;
-const topUpdates = [...baseDayEntries]
-  .sort((a, b) => {
-    const imp = (b.importance ?? 1) - (a.importance ?? 1);
-    if (imp !== 0) return imp;
-    const tw = typeWeight(b.sourceType) - typeWeight(a.sourceType);
-    if (tw !== 0) return tw;
-    return (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
-  })
-  .slice(0, 10);
+
+/** Strip trailing version tokens to get a release "stem" for grouping siblings. */
+function releaseStem(title: string): string {
+  return title
+    .replace(/\s*[\(\[]?\s*v?\d+(?:\.\d+){0,3}(?:[-+][\w.]+)?\s*[\)\]]?\s*$/i, "")
+    .replace(/\s+(release|releases|changelog|changes)\s*$/i, "")
+    .trim()
+    .toLowerCase();
+}
+
+const sortedToday = [...baseDayEntries].sort((a, b) => {
+  const imp = (b.importance ?? 1) - (a.importance ?? 1);
+  if (imp !== 0) return imp;
+  const tw = typeWeight(b.sourceType) - typeWeight(a.sourceType);
+  if (tw !== 0) return tw;
+  return (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
+});
+
+// Group successive release/changelog rows that share (source, stem).
+type BoardItem = { entry: NormalizedEntry; siblingCount: number };
+const seenStems = new Map<string, number>(); // key -> first index in topUpdates
+const topUpdates: BoardItem[] = [];
+for (const e of sortedToday) {
+  const isRel = e.sourceType === "release" || e.sourceType === "changelog";
+  if (isRel) {
+    const key = `${e.source}::${releaseStem(e.title)}`;
+    const idx = seenStems.get(key);
+    if (idx !== undefined) {
+      topUpdates[idx]!.siblingCount += 1;
+      continue;
+    }
+    seenStems.set(key, topUpdates.length);
+  }
+  topUpdates.push({ entry: e, siblingCount: 0 });
+  if (topUpdates.length >= 10) break;
+}
 
 const boardItems = topUpdates;
 
@@ -156,7 +183,8 @@ const todayDelta =
         <p class="empty"><span class="i18n-ja">まだ更新がありません。</span><span class="i18n-en" lang="en">No updates yet.</span></p>
       ) : (
         <ol class="board">
-          {boardItems.map((e, i) => {
+          {boardItems.map((item, i) => {
+            const e = item.entry;
             const isRel = e.sourceType === "release" || e.sourceType === "changelog";
             const isImp = e.importance === 3;
             const ja = titleForLang(e, "ja");
@@ -172,6 +200,9 @@ const todayDelta =
                   <span class="b-tags">
                     {isImp && <span class="t-tag imp">★</span>}
                     {isRel && <span class="t-tag rel">REL</span>}
+                    {item.siblingCount > 0 && (
+                      <span class="t-tag more" title={`同シリーズ ${item.siblingCount + 1} 件をまとめて表示`}>+{item.siblingCount}</span>
+                    )}
                   </span>
                   {ja && <span class="b-title i18n-ja">{ja}</span>}
                   {en && <span class="b-title i18n-en" lang="en">{en}</span>}
@@ -566,6 +597,12 @@ const todayDelta =
     color: #000; background: #ff8a2a;
     text-shadow: none;
     box-shadow: 0 0 6px rgba(255, 138, 42, 0.5);
+  }
+  .t-tag.more {
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
   }
   .t-title {
     font-weight: 700;

@@ -29,6 +29,7 @@ interface CacheEntry {
   summaryJa: string;
   summaryEn: string;
   bodyJa: string;
+  bodyEn: string;
   importance: 1 | 2 | 3;
   extraTags: string[];
   model: string;
@@ -176,7 +177,7 @@ function buildPrompt(e: NormalizedEntry): string {
   ].join("\n");
 }
 
-function parseModelResponse(text: string): {
+export function parseModelResponse(text: string): {
   titleJa: string;
   summaryJa: string;
   summaryEn: string;

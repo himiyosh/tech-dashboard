@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# pre-commit: コミット前に TypeScript 型チェックを実行する。
+#
+# インストール: bash scripts/install-hooks.sh (リポジトリ root で 1 回だけ)
+# スキップ: SKIP_TYPECHECK=1 git commit
+
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+
+if [ "${SKIP_TYPECHECK:-}" = "1" ]; then
+  echo "[pre-commit] SKIP_TYPECHECK=1 → 型チェックをスキップします"
+  exit 0
+fi
+
+# TypeScript ファイルがステージされているかチェック
+if ! git diff --cached --name-only | grep -qE '\.(ts|tsx)$'; then
+  # TS ファイルに変更なし → スキップ
+  exit 0
+fi
+
+echo "[pre-commit] TypeScript ファイルの変更を検出 → npm run typecheck を実行します..."
+if ! npm --prefix "$ROOT" run typecheck 2>&1; then
+  echo "[pre-commit] ERR: 型チェック失敗。コミットを中断します"
+  echo "[pre-commit] 型エラーを修正してから再コミットしてください"
+  echo "[pre-commit] スキップしたい場合: SKIP_TYPECHECK=1 git commit"
+  exit 1
+fi
+
+echo "[pre-commit] OK: 型チェック PASS"
+exit 0

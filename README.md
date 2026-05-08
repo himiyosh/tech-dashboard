@@ -64,7 +64,8 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
                    https://tech-dashboard-6a7.pages.dev/
 ```
 
-> **GitHub Actions は使いません。** `.github/workflows/` は意図的に空。Pages deploy も harness 実行も Cloudflare 内で完結します ([.github/copilot-instructions.md](.github/copilot-instructions.md) R-001 参照)。
+> **デプロイは GitHub Actions を使いません。** Pages deploy も harness 実行も Cloudflare 内で完結します ([.github/copilot-instructions.md](.github/copilot-instructions.md) R-001 参照)。
+> `.github/workflows/ci.yml` は **テスト目的のみ** の workflow で、デプロイは行いません。
 
 ## ドキュメント構成
 
@@ -85,7 +86,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 ```bash
 # ============ 初回セットアップ ============
 npm install                  # ルート依存
-bash scripts/install-hooks.sh # pre-push hook (worker 自動 deploy) を有効化
+bash scripts/install-hooks.sh # pre-commit / pre-push hook (typecheck / test / worker 自動 deploy) を有効化
 
 # ============ ハーネス (ルート) ============
 npm run typecheck            # 型チェック
@@ -102,6 +103,25 @@ npm run build                # dist/ に静的ビルド + Pagefind インデッ�
 npx tsx .claude/skills/quality-audit/run.ts
 #   → data/_runs/audit-<ts>.md に Markdown レポート出力
 ```
+
+### 品質ゲート: テスト & Git Hooks
+
+実装変更で壊しやすい箇所を 3 層で守ります。
+
+| 層 | コマンド | 内容 | 速度 |
+|---|---|---|---|
+| Unit | `npm test` | Vitest による関数単位の検証 (要約 JSON パース、Web ロジック、`data/index.json` スキーマ) | 速い (~1s) |
+| E2E | `npm run test:e2e` | Playwright (Chromium) でトップ表示・記事詳細・言語切替を検証 | 中程度 (~30s + build) |
+| 全部 | `npm run test:all` | Unit → E2E をまとめて実行 | |
+
+Git hook は `bash scripts/install-hooks.sh` で 1 回有効化します。
+
+| Hook | 実行内容 | スキップ |
+|---|---|---|
+| `pre-commit` | `.ts/.tsx` がステージされていれば `npm run typecheck` | `SKIP_TYPECHECK=1 git commit` |
+| `pre-push` | `npm test` (unit) → `npm run test:e2e` → 必要なら `wrangler deploy` | `SKIP_TESTS=1` / `SKIP_E2E=1` / `SKIP_WORKER_DEPLOY=1` |
+
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **テスト目的のみ**。push / PR ごとに `typecheck + npm test` (unit) を実行します。E2E は重いのでローカル pre-push が担当する分業にしています。
 
 ### 環境変数 (要約パイプライン)
 

@@ -10,7 +10,12 @@
     "auth:setup": "bash scripts/setup-copilot-auth.sh",
     "auth:rotate": "bash scripts/setup-copilot-auth.sh --rotate",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:all": "npm run test && npm run test:e2e"
   },
   "engines": {
     "node": ">=20"
@@ -19,8 +24,10 @@
     "fast-xml-parser": "^4.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/node": "^22.10.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.5"
   }
 }

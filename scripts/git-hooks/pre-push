@@ -1,11 +1,44 @@
 #!/usr/bin/env bash
-# pre-push: worker/ に変更が含まれていれば wrangler deploy を実行する。
+# pre-push: unit/e2e テストを実行し、worker/ に変更が含まれていれば wrangler deploy を実行する。
 # 失敗時は push を中断する (exit 1)。
 #
 # インストール: bash scripts/install-hooks.sh (リポジトリ root で 1 回だけ)
-# スキップ: SKIP_WORKER_DEPLOY=1 git push
+# スキップ: SKIP_TESTS=1 git push / SKIP_E2E=1 git push / SKIP_WORKER_DEPLOY=1 git push
 
 set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+
+# ---------- テスト実行 ----------
+if [ "${SKIP_TESTS:-}" = "1" ]; then
+  echo "[pre-push] SKIP_TESTS=1 → npm test をスキップします"
+else
+  echo "[pre-push] npm test を実行しています..."
+  if ! npm --prefix "$ROOT" test; then
+    echo "[pre-push] ERR: テスト失敗。push を中断します"
+    echo "[pre-push] テストをスキップして push したい場合: SKIP_TESTS=1 git push"
+    exit 1
+  fi
+  echo "[pre-push] OK: テスト PASS"
+fi
+
+if [ "${SKIP_E2E:-}" = "1" ]; then
+  echo "[pre-push] SKIP_E2E=1 → npm run test:e2e をスキップします"
+else
+  # web/ または data/index.json に差分が無ければ E2E は省略する (ローカル DX)
+  CHANGED=$(git diff --name-only HEAD @{u} 2>/dev/null || git diff --name-only HEAD origin/main 2>/dev/null || echo "")
+  if [ -n "$CHANGED" ] && ! echo "$CHANGED" | grep -qE '^(web/|data/index\.json|tests/e2e/|playwright\.config\.)'; then
+    echo "[pre-push] web/ への影響なし → E2E をスキップ"
+  else
+    echo "[pre-push] npm run test:e2e を実行しています..."
+    if ! npm --prefix "$ROOT" run test:e2e; then
+      echo "[pre-push] ERR: E2E テスト失敗。push を中断します"
+      echo "[pre-push] E2E をスキップして push したい場合: SKIP_E2E=1 git push"
+      exit 1
+    fi
+    echo "[pre-push] OK: E2E PASS"
+  fi
+fi
 
 if [ "${SKIP_WORKER_DEPLOY:-}" = "1" ]; then
   echo "[pre-push] SKIP_WORKER_DEPLOY=1 → wrangler deploy をスキップします"

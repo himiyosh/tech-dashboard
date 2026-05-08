@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-05-08T06:01:59.288Z",
+  "generatedAt": "2026-05-08T07:01:57.925Z",
   "count": 500,
   "health": {
-    "lastRunAt": "2026-05-08T06:01:59.288Z",
-    "batchIndex": 3,
+    "lastRunAt": "2026-05-08T07:01:57.925Z",
+    "batchIndex": 4,
     "batchTotal": 4,
     "sourcesAttempted": 12,
     "sourcesOk": 12,
@@ -12,10 +12,45 @@
     "summarizeErrors": 0,
     "copilotOk": true,
     "copilotError": null,
-    "ogCached": 1052,
+    "ogCached": 1056,
     "ogNewHits": 4
   },
   "entries": [
+    {
+      "id": "077408b2083f5ae9",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/Ngen/items/55a390d484ade52e0782",
+      "title": "金曜の30分、Claudeに「私のプロンプト癖」を3つダメ出しさせた話",
+      "titleJa": "金曜の30分、Claudeに「私のプロンプト癖」を3つダメ出しさせた話",
+      "titleEn": "",
+      "summaryJa": "筆者が金曜夜の30分を使い、Claudeに自分の過去プロンプトを分析させて改善点を3つ指摘してもらった体験を紹介する記事。プロンプトの曖昧さや前提条件の欠落など、自分では気づきにくい癖をAIにメタ的に指摘させることで、プロンプト品質の底上げを図る試みである。",
+      "summaryEn": "A personal experiment where the author spent 30 minutes on a Friday night asking Claude to critique their own prompt habits, identifying three recurring weaknesses. The piece illustrates how using an LLM as a meta-reviewer of one's own prompts can surface blind spots that are hard to notice through self-review.",
+      "lang": "ja",
+      "publishedAt": "2026-05-08T05:55:45.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "claude",
+        "qiita",
+        "prompt-engineering",
+        "self-review",
+        "meta-prompting"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "金曜の夜、筆者は30分という短い時間を使って、Claudeに自分自身のプロンプトの癖を3つ指摘してもらうという実験を行った。自分が普段書いているプロンプトをまとめて貼り付け、Claudeに「ダメ出し役」として分析させたという内容である。\n\n背景には、プロンプトエンジニアリングが個人の文章習慣に強く依存するという課題がある。同じ人が書くプロンプトには無意識のうちに似た構造や前提が埋め込まれており、自分で読み返しても違和感に気づきにくい。そこで、生成AI自身を批評者として使うことで、第三者視点を擬似的に得ようというアプローチである。\n\n記事ではClaudeから指摘された具体的な癖が紹介されている。例えば、目的や評価基準を明示せずに作業だけを依頼してしまう、前提となる文脈を省略する、出力フォーマットの指定が曖昧、といった典型的な弱点が挙げられたとされる。これらはプロンプト設計の教科書でもよく語られる項目だが、自分の実例で指摘されると説得力が異なるという点が示唆に富む。\n\n関連する動向として、AnthropicはClaudeのプロンプト改善機能をConsole上で提供しており、入力したプロンプトを自動的にリライトする仕組みも整備されている。OpenAIもPlaygroundやMeta-prompting機能で類似のサポートを進めており、「AIにプロンプトを書かせる/直させる」流れは業界全体で一般化しつつあると見られる。Claude Codeのようなエージェント型ツールが普及する中、プロンプトの一貫性や明示性は単なるテクニックではなく開発生産性に直結する要素になりつつある。\n\n短時間で自己批評をAIに委ねるという手法は、週次のふりかえりや個人のスキル改善ルーチンに組み込みやすい。自分のチャット履歴をエクスポートしてLLMに分析させる運用は、今後より一般的になる可能性がある。",
+      "bodyEn": "On a Friday evening, the author carved out just thirty minutes for a small but instructive experiment: asking Claude to play the role of a critic and point out three recurring bad habits in their own prompts. The setup was simple — paste a batch of past prompts, then ask the model to analyze them meta-level rather than execute them.\n\nThe motivation is worth noting. Prompt engineering, in practice, is deeply tied to an individual's writing habits. The same author tends to embed the same implicit assumptions, the same omissions, and the same stylistic quirks across every prompt they write. Self-review rarely surfaces these patterns because the writer reads what they meant rather than what they wrote. Using an LLM as a third-party reviewer offers a cheap proxy for an outside perspective.\n\nAccording to the article, Claude flagged the kinds of issues that prompt-engineering guides routinely warn about: requesting tasks without stating goals or success criteria, omitting background context the model would need, and leaving output format under-specified. These are familiar textbook points, but receiving them grounded in one's own concrete examples reportedly carries more weight than reading them in the abstract.\n\nThis approach fits into a broader industry trend. Anthropic already ships a prompt improver in the Claude Console that rewrites user prompts automatically, and OpenAI offers similar meta-prompting capabilities in its Playground. The general pattern of having an AI write or refine prompts for another AI — sometimes called meta-prompting or prompt distillation — is becoming standard practice. As agentic tools like Claude Code and Cursor take on more autonomous work, the clarity and consistency of upstream prompts increasingly determine downstream productivity, which makes auditing one's own prompt style more than a stylistic exercise.\n\nThere is also something practical about the thirty-minute framing. Many engineers struggle to find time for deliberate practice on prompting itself; bundling self-critique into a short, recurring slot — perhaps as part of a weekly retrospective — is a lightweight habit that could plausibly compound over months. Exporting chat histories and feeding them back to an LLM for pattern analysis may well become a more common personal-productivity workflow, though the privacy implications of doing so with proprietary or client data are worth keeping in mind.\n\nThe piece is less a technical breakthrough than a reminder: the models we use to produce work can also be used to inspect how we ask for that work. For individuals serious about improving with LLMs, occasional meta-reviews of one's own prompts may be one of the highest-leverage uses of a spare half hour.",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0NDIzNTUwJTJGYTIyZDJiODFmNjdiYWI4ODE1MmVjYWM3ZjRiZmRhZTkzZWIyZmIzYSUyRmxhcmdlLnBuZyUzRjE3Nzc4NzcxODA_aXhsaWI9cmItNC4wLjAmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTlmYjdkMDUyMWY0OTQwZjAzNTU0Zjg1M2VhMzNiYjFj%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dbdaf139217293a2a27df7429f2c3254f?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9JUU5JTg3JTkxJUU2JTlCJTlDJUUzJTgxJUFFMzAlRTUlODglODYlRTMlODAlODFDbGF1ZGUlRTMlODElQUIlRTMlODAlOEMlRTclQTclODElRTMlODElQUUlRTMlODMlOTclRTMlODMlQUQlRTMlODMlQjMlRTMlODMlOTclRTMlODMlODglRTclOTklOTYlRTMlODAlOEQlRTMlODIlOTIzJUUzJTgxJUE0JUUzJTgzJTgwJUUzJTgzJUExJUU1JTg3JUJBJUUzJTgxJTk3JUUzJTgxJTk1JUUzJTgxJTlCJUUzJTgxJTlGJUU4JUE5JUIxJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MjQyODBhMDNkOWI5NDQxMjBhYTkzZDRiMTZlMjhhYTU&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDBOZ2VuJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9MWQ3OTVjYzgyMDRkZTNjODljMTkwZjg1OWU0NDQwOWM&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=062ea1cbbfd4cde8977a8de687dd4579",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0NDIzNTUwJTJGYTIyZDJiODFmNjdiYWI4ODE1MmVjYWM3ZjRiZmRhZTkzZWIyZmIzYSUyRmxhcmdlLnBuZyUzRjE3Nzc4NzcxODA_aXhsaWI9cmItNC4wLjAmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTlmYjdkMDUyMWY0OTQwZjAzNTU0Zjg1M2VhMzNiYjFj%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dbdaf139217293a2a27df7429f2c3254f?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9JUU5JTg3JTkxJUU2JTlCJTlDJUUzJTgxJUFFMzAlRTUlODglODYlRTMlODAlODFDbGF1ZGUlRTMlODElQUIlRTMlODAlOEMlRTclQTclODElRTMlODElQUUlRTMlODMlOTclRTMlODMlQUQlRTMlODMlQjMlRTMlODMlOTclRTMlODMlODglRTclOTklOTYlRTMlODAlOEQlRTMlODIlOTIzJUUzJTgxJUE0JUUzJTgzJTgwJUUzJTgzJUExJUU1JTg3JUJBJUUzJTgxJTk3JUUzJTgxJTk1JUUzJTgxJTlCJUUzJTgxJTlGJUU4JUE5JUIxJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MjQyODBhMDNkOWI5NDQxMjBhYTkzZDRiMTZlMjhhYTU&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDBOZ2VuJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9MWQ3OTVjYzgyMDRkZTNjODljMTkwZjg1OWU0NDQwOWM&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=062ea1cbbfd4cde8977a8de687dd4579",
+        "alt": "金曜の30分、Claudeに「私のプロンプト癖」を3つダメ出しさせた話",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "e130f15b9862b471",
       "source": "zed-releases",
@@ -53,6 +88,43 @@
       },
       "bodyJa": "Rust製の高速エディタとして知られるZedの最新nightlyビルドにて、デバッグ機能の一部である「auto watch(自動ウォッチ)」の改善がマージされた。プルリクエスト#56126として取り込まれた変更で、デバッグセッション中の変数追跡の挙動を洗練させる狙いがあると見られる。\n\nauto watchは、デバッガで停止した際に注目している変数を自動的にウォッチ式として登録・更新する機能である。VS CodeやJetBrains系IDEにも類似の概念があり、ユーザーが手動で変数を追加する手間を省きつつ、コンテキストに応じた情報を提示する点に価値がある。今回の変更点の詳細はリリースノート単体からは読み取りにくいが、判定ロジックや更新タイミングのチューニングが行われた可能性がある。\n\nZedはここ数年、単なるテキストエディタからAI連携・コラボレーション・デバッグ機能を備えた統合環境への進化を続けている。デバッガはDAP(Debug Adapter Protocol)に基づく実装で、Microsoftが策定したこのプロトコルにより、各言語のデバッガを共通インターフェースで扱えるようになっている。Zedも比較的後発ながら、CodeLLDBやdebugpyといった既存アダプタを活用してマルチ言語デバッグを実現してきた。\n\nnightlyビルドは破壊的変更や不安定さを含む可能性がある一方、新機能をいち早く試せる点で開発者に好まれている。auto watchのような細やかなUX改善は、エディタ全体の使い勝手に直結するため、Zedがプロ開発者向けツールとしての成熟を進めている表れと位置づけられそうだ。",
       "bodyEn": "Zed, the Rust-based high-performance editor, has shipped an improvement to its auto-watch feature in the latest nightly build, merged as pull request #56126. The change refines how the debugger automatically tracks variables during a debugging session, likely targeting a smoother and less manual debugging workflow.\n\nThe auto-watch feature registers and updates variables of interest as watch expressions when the debugger pauses execution. Similar concepts exist in VS Code and JetBrains IDEs, where the appeal lies in surfacing contextually relevant state without forcing developers to manually add each variable to a watch list. While the release note itself is terse, the fix presumably tunes the heuristics or update timing that decide which variables get auto-tracked and when they should refresh.\n\nZed has steadily evolved over the past couple of years from a fast text editor into a more complete development environment, adding AI assistance, real-time collaboration, and a native debugger. The debugger is built on the Debug Adapter Protocol (DAP), the Microsoft-originated standard that lets editors talk to language-specific debuggers like CodeLLDB for Rust and C/C++ or debugpy for Python through a common interface. Although Zed arrived relatively late to the debugging space compared to VS Code, leveraging DAP has allowed it to support multiple languages without reinventing each backend.\n\nNightly builds, by nature, can include rough edges and breaking changes, but they remain attractive to early adopters who want immediate access to incremental improvements. Polishing details like auto-watch behavior may seem minor in isolation, yet such ergonomic refinements compound into the overall feel of an IDE. Taken together with Zed's broader trajectory, this kind of change suggests the project continues to mature as a serious tool for professional developers rather than a niche editor experiment."
+    },
+    {
+      "id": "218c9835f3b21d01",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/moha0918_/items/9dbf420099a35a044f82",
+      "title": "Claude Code v2.1.132 リリース｜毎日Changelog解説",
+      "titleJa": "Claude Code v2.1.132 リリース｜毎日Changelog解説",
+      "titleEn": "",
+      "summaryJa": "AnthropicのCLIコーディングツール「Claude Code」のv2.1.132がリリースされた。今回はマイナーアップデートで、内部的な改善やバグ修正が中心と見られ、機能面での大きな変更は明示されていない。日々進化するClaude Codeの最新動向を追う記事である。",
+      "summaryEn": "Claude Code v2.1.132 has been released. This appears to be a minor update focused on internal improvements and bug fixes rather than major feature additions, continuing Anthropic's rapid iteration cadence on its CLI coding assistant.",
+      "lang": "ja",
+      "publishedAt": "2026-05-08T05:11:57.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "claude",
+        "mcp-server",
+        "qiita",
+        "claude-code",
+        "anthropic",
+        "cli",
+        "changelog"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "Anthropicが提供するCLIベースのコーディングアシスタント「Claude Code」のバージョン2.1.132がリリースされた。本記事はその日次Changelog解説の一環として、最新版の変更点を追ったものである。\n\n今回のv2.1.132は、メジャー機能追加というよりも内部的な改善やバグ修正を中心としたマイナーアップデートと見られる。Claude Codeはここ数か月、パッチバージョンを頻繁に刻むリリースサイクルを採用しており、ユーザー体験の細かなチューニングを継続的に行っている。バージョン番号の刻み方からも、機能の安定性向上やエッジケース対応が積み重ねられている可能性が高い。\n\nClaude CodeはAnthropicのClaudeモデルをバックエンドに、ターミナル上で対話的にコード生成・編集・リファクタリングを行えるツールである。GitHub Copilot CLIやCursor、AiderといったAIコーディングツール群と競合する位置づけにあるが、ファイル全体の文脈理解や長コンテキスト処理に強みを持つClaudeのモデル特性を活かし、エージェント的な自律タスク実行に注力している点が特徴的だ。\n\n関連動向としては、AnthropicがClaude Sonnet 4.5やOpus 4.1など上位モデルを継続的に改良しており、Claude Code側もMCP（Model Context Protocol）対応やサブエージェント機能、プラン機能などを段階的に拡充してきた。日次Changelogを追うことで、こうした大きな機能追加の前段階で行われる地ならし的な改善も把握できる。開発現場でClaude Codeを業務利用するチームにとっては、細かな差分を把握することで予期せぬ挙動変化を回避しやすくなると言えるだろう。",
+      "bodyEn": "Anthropic has released version 2.1.132 of Claude Code, its CLI-based coding assistant. The article tracks daily changelog entries to give developers a closer look at how the tool evolves between major announcements.\n\nThis particular release appears to be a minor update, likely centered on internal refinements and bug fixes rather than headline-grabbing features. Claude Code has settled into a rapid patch cadence over recent months, with version numbers ticking up frequently. That pattern suggests Anthropic is iterating on edge cases, stability, and small UX refinements rather than rolling out user-visible capabilities in every release.\n\nClaude Code positions itself as an agentic terminal companion, leveraging Anthropic's Claude models to read, write, and refactor code interactively in a developer's local environment. It competes with tools like GitHub Copilot CLI, Cursor's agent mode, and the open-source Aider, but tends to lean on Claude's strength in long-context reasoning and multi-step task execution. The CLI form factor also makes it attractive for users who prefer to stay close to their shell and existing toolchains.\n\nIn terms of broader context, Anthropic has been steadily upgrading the underlying models — Claude Sonnet 4.5 and Opus 4.1 among them — and Claude Code itself has progressively gained features such as Model Context Protocol (MCP) support, sub-agents, and planning modes. Following the daily changelog provides visibility into the smaller groundwork changes that often precede these larger feature drops. For teams that have integrated Claude Code into production workflows, paying attention to these incremental diffs can help avoid surprises when behavior shifts subtly between patch versions.",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzOTc3MzU1JTJGZmE1YjA0OWU2YzkwZTQwMmM2ZjM3MWE2ZWYyNGIwYTQxM2RkM2NjYiUyRmxhcmdlLnBuZyUzRjE3NzUyNzQwMzA_aXhsaWI9cmItNC4wLjAmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTQ4NTM1YzI5MDBhN2Y3MjUwMDU4MWQ1OGY3N2VhN2Nh%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D64e0e86204a351a97eadfb6b72da644f?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9Q2xhdWRlJTIwQ29kZSUyMHYyLjEuMTMyJTIwJUUzJTgzJUFBJUUzJTgzJUFBJUUzJTgzJUJDJUUzJTgyJUI5JUVGJUJEJTlDJUU2JUFGJThFJUU2JTk3JUE1Q2hhbmdlbG9nJUU4JUE3JUEzJUU4JUFBJUFDJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MzlhMWFjNjJlNTZiNDk1ODUwMTQ5OWIwZTc5ZTQxNjg&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDBtb2hhMDkxOF8mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz04MjgzZmYxZTFjNzk2MjA0ZmVhYjRlOWU1MjA1OTM1ZQ&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=7fe7129c7f6efe685337666225bfc3a6",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.0.0%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzOTc3MzU1JTJGZmE1YjA0OWU2YzkwZTQwMmM2ZjM3MWE2ZWYyNGIwYTQxM2RkM2NjYiUyRmxhcmdlLnBuZyUzRjE3NzUyNzQwMzA_aXhsaWI9cmItNC4wLjAmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTQ4NTM1YzI5MDBhN2Y3MjUwMDU4MWQ1OGY3N2VhN2Nh%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D64e0e86204a351a97eadfb6b72da644f?ixlib=rb-4.0.0&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTk2MCZoPTMyNCZ0eHQ9Q2xhdWRlJTIwQ29kZSUyMHYyLjEuMTMyJTIwJUUzJTgzJUFBJUUzJTgzJUFBJUUzJTgzJUJDJUUzJTgyJUI5JUVGJUJEJTlDJUU2JUFGJThFJUU2JTk3JUE1Q2hhbmdlbG9nJUU4JUE3JUEzJUU4JUFBJUFDJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MzlhMWFjNjJlNTZiNDk1ODUwMTQ5OWIwZTc5ZTQxNjg&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjAuMCZ3PTgzOCZoPTU4JnR4dD0lNDBtb2hhMDkxOF8mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz04MjgzZmYxZTFjNzk2MjA0ZmVhYjRlOWU1MjA1OTM1ZQ&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=7fe7129c7f6efe685337666225bfc3a6",
+        "alt": "Claude Code v2.1.132 リリース｜毎日Changelog解説",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "bd7fd3682c01b20b",
@@ -589,10 +661,10 @@
       "sourceType": "paper",
       "url": "https://arxiv.org/abs/2605.04312",
       "title": "Agent Island: A Saturation- and Contamination-Resistant Benchmark from Multiagent Games",
-      "titleJa": "Agent Island: マルチエージェントゲームによる飽和・汚染耐性ベンチマーク",
+      "titleJa": "マルチエージェントゲーム由来の汚染耐性ベンチマーク Agent Island",
       "titleEn": "Agent Island: A Saturation- and Contamination-Resistant Benchmark from Multiagent Games",
-      "summaryJa": "マルチエージェントゲームを用いた、飽和や汚染に耐性を持つLLM評価ベンチマーク「Agent Island」を提案する研究。エージェント同士のゲーム形式により、従来の静的ベンチマークの限界を克服する新しい評価枠組みを示している。",
-      "summaryEn": "This paper introduces Agent Island, a benchmark for evaluating LLMs through multiagent games, designed to resist saturation and data contamination issues that plague conventional static benchmarks.",
+      "summaryJa": "Agent Islandは、複数のLLMエージェントがゲーム形式で競い合う動的環境を用いた新しい評価ベンチマークである。従来の静的ベンチマークが抱える飽和や学習データ汚染の問題を回避し、エージェントの推論・交渉・戦略能力を継続的に測定可能とする点が特徴である。",
+      "summaryEn": "Agent Island is a new benchmark that evaluates LLM agents through multiagent games, providing a dynamic environment that resists both saturation and training-data contamination, unlike traditional static benchmarks that quickly become outdated.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
       "collectedAt": "2026-05-08T04:00:54.529Z",
@@ -602,14 +674,16 @@
         "benchmark",
         "paper",
         "llm-evaluation",
-        "multi-agent"
+        "multi-agent",
+        "multiagent",
+        "agents"
       ],
       "category": "research",
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
+      "bodyJa": "大規模言語モデル(LLM)の能力評価において、ベンチマークの飽和と学習データ汚染は深刻な課題となっている。Agent Islandは、マルチエージェントゲームを基盤とする評価枠組みを提案し、これらの問題を構造的に回避することを目指す研究である。\n\n従来のMMLUやHumanEvalといった静的ベンチマークは、モデル性能の急速な向上によって短期間で天井に達し、また問題セットがウェブ上に流出することで事前学習データに混入する「コンタミネーション」のリスクが指摘されてきた。Agent Islandはこれに対し、複数のLLMエージェントが交渉・協調・欺瞞・戦略立案を行うゲーム的環境を構築する。エージェント同士の相互作用が動的に変化するため、単一の正解を暗記するアプローチでは高得点を得られない設計となっている。\n\n評価対象となる能力は、長期的な推論、相手モデルの行動予測、リソース管理、自然言語による交渉などに及ぶ。ゲームの結果は対戦相手の強さに依存するため、相対評価としての性質を持ち、フロンティアモデルが進化しても飽和しにくいと見られる。\n\n関連する潮流として、Anthropicの「Project Vend」やMetaのDiplomacy向けCiceroなど、エージェントの社会的・戦略的能力をゲームで測る試みは増えつつある。またLMSysのChatbot Arenaのように、人間や他モデルとの相対比較で評価する手法も主流化している。Agent IslandはLLM-as-a-judgeに依存せず、ゲームの勝敗という客観的シグナルで評価できる点で、これらの中間に位置づけられる可能性がある。\n\nなお、本論文のarXiv番号は通常の命名規則と異なる体裁であり、詳細な実験設定や対象モデルの範囲については原文の確認が望ましい。エージェント評価の標準化は今後数年の重要テーマであり、汚染耐性のある動的ベンチマークの設計思想は他の評価フレームワークにも波及する可能性がある。",
+      "bodyEn": "Benchmark saturation and training-data contamination have become two of the most pressing methodological problems in evaluating large language models. Agent Island proposes a benchmark framework built around multiagent games, aiming to address both issues by design rather than by patching static test sets.\n\nTraditional benchmarks such as MMLU, GSM8K, or HumanEval tend to plateau quickly as frontier models improve, and their public availability makes it almost inevitable that question sets leak into pretraining corpora. The result is inflated scores that no longer reliably differentiate model capabilities. Agent Island reframes evaluation as a set of interactive games in which multiple LLM agents negotiate, cooperate, deceive, and strategize against one another. Because the environment is shaped by the behavior of co-players, simple memorization of solutions provides little advantage.\n\nThe capabilities probed by such games are broader than those measured by conventional question-answering benchmarks. They include long-horizon reasoning, theory-of-mind style modeling of opponents, resource management under uncertainty, and natural-language negotiation. Crucially, performance is relative: an agent's score depends on the strength of its adversaries, which means the benchmark can in principle continue to discriminate among models even as the overall capability frontier advances. This relative structure is what gives the benchmark its claimed resistance to saturation.\n\nThe approach sits within a growing trend of evaluating LLMs through interactive or social environments. Meta's Cicero demonstrated that language models could play Diplomacy at a competitive level, while Anthropic's Project Vend explored agentic behavior in an open-ended economic simulation. LMSys's Chatbot Arena popularized relative ranking via pairwise comparisons, and recent work on AgentBench and similar suites has emphasized tool use and multi-step planning. Agent Island can be viewed as occupying a middle ground: it preserves the objective win-loss signal of games like Diplomacy while avoiding the subjectivity of LLM-as-a-judge pipelines.\n\nA few caveats are worth noting. Multiagent game benchmarks introduce their own difficulties, including high evaluation cost, sensitivity to the pool of competing agents, and the risk that meta-strategies dominate once the game space is well understood. Reproducibility can also suffer when scores depend on the exact mix of opponents at evaluation time. These tradeoffs are not unique to Agent Island, but they suggest that such benchmarks are likely to complement rather than replace static suites.\n\nThe arXiv identifier associated with this submission appears unusual relative to typical numbering conventions, so readers may want to verify the original paper directly for the precise experimental setup, the set of games used, and the range of models evaluated. Regardless of those specifics, the underlying argument — that contamination-resistant, dynamic, interaction-based evaluation is becoming necessary — is consistent with where the broader research community appears to be heading. Over the next few years, it seems plausible that agentic and game-based benchmarks will play a larger role in tracking frontier model progress, particularly as static leaderboards continue to lose discriminative power.",
       "image": {
         "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
         "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
@@ -627,8 +701,8 @@
       "title": "The Scaling Properties of Implicit Deductive Reasoning in Transformers",
       "titleJa": "Transformerにおける暗黙的演繹推論のスケーリング特性",
       "titleEn": "The Scaling Properties of Implicit Deductive Reasoning in Transformers",
-      "summaryJa": "本論文は、Transformerモデルが暗黙的な演繹推論をどの程度学習できるかを、モデルサイズや推論ステップ数などに対するスケーリング特性として分析した研究である。多段推論の能力がパラメータ数や深さとどう関係するかを実験的に検証している。",
-      "summaryEn": "This paper investigates the scaling properties of implicit deductive reasoning in Transformer models, examining how multi-step reasoning capability relates to model size, depth, and inference complexity through systematic empirical analysis.",
+      "summaryJa": "本論文はTransformerが多段の演繹推論をパラメータ内で暗黙的に行う能力のスケーリング則を分析する。モデル規模・データ量・推論ステップ数を変化させ、推論精度がどう変化するかを実験的に評価し、グロッキング現象との関連も議論している。",
+      "summaryEn": "This paper investigates how Transformers' implicit deductive reasoning ability scales with model size, training data, and reasoning depth, characterizing empirical scaling laws and connecting findings to grokking phenomena observed during extended training.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
       "collectedAt": "2026-05-08T04:00:54.529Z",
@@ -638,14 +712,15 @@
         "transformers",
         "reasoning",
         "scaling-laws",
-        "deductive-reasoning"
+        "deductive-reasoning",
+        "grokking"
       ],
       "category": "research",
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
+      "bodyJa": "本研究はTransformerが連鎖的思考(CoT)などの明示的な中間出力を介さず、内部表現のみで多段階の演繹推論をどこまで遂行できるか、そのスケーリング特性を体系的に調べたものである。\n\n著者らは合成された論理規則と事実の集合を用い、複数ホップにわたる推論タスクを構築。モデルサイズ、訓練データの量と多様性、要求される推論ステップ数を独立変数として変化させ、テスト精度の変化を測定している。結果として、暗黙的推論の達成可能性は単純なパラメータ数のスケーリングだけでなく、訓練データの構造や繰り返し露出量に強く依存することが示唆されている。\n\nまた、長時間学習後に突如として汎化が進むグロッキング現象との関連も議論されており、暗黙的推論能力は学習初期にはほとんど現れず、過剰学習領域に入ってから獲得されるパターンが観察されたと見られる。これは表面的な記憶から構造的一般化への相転移として解釈できる可能性がある。\n\n背景として、近年のLLM研究ではCoTやスクラッチパッドにより推論精度を引き上げるアプローチが主流である一方、Anthropicの解釈可能性研究やGoogle DeepMindのトランスフォーマー回路解析など、モデル内部で実際にどのような計算が行われているかを問う潮流も強まっている。本論文の知見は、外部に思考過程を出力させずに内部で推論を完結させる「暗黙的推論」の限界と可能性を理解する上で示唆的であり、推論特化モデルの設計や合成データによる学習戦略にも影響を与え得る。\n\n一方で、評価が合成タスク中心であるため、自然言語の複雑な推論への外挿には慎重さが求められる。実世界データでの再現性や、スケール則の係数がアーキテクチャ変更でどの程度安定するかは今後の検証課題と言える。",
+      "bodyEn": "This paper offers a systematic empirical study of how Transformer models perform multi-step deductive reasoning entirely within their internal representations, without relying on explicit chain-of-thought (CoT) traces or scratchpad outputs. The question of whether reasoning can be carried out implicitly inside the weights and activations is central to understanding the true reasoning capacity of large language models.\n\nThe authors construct synthetic environments composed of logical rules and atomic facts, then ask the model to compose them across multiple inference hops. By varying model size, the volume and diversity of training data, and the required reasoning depth as independent axes, they trace empirical scaling curves for test accuracy. A key finding is that implicit deductive ability does not scale cleanly with parameter count alone; the structure of the training distribution and the amount of repeated exposure to compositional patterns appear to matter at least as much.\n\nThe work also connects these results to the grokking phenomenon, where generalization emerges suddenly after a long plateau of apparent memorization. The authors observe that implicit reasoning skills tend to appear only deep in the overtraining regime, suggesting a phase-transition-like shift from surface memorization to structural generalization. This framing aligns with prior grokking studies on modular arithmetic and small algorithmic tasks, but extended here to multi-hop logical composition.\n\nIn the broader context, much of the recent progress on reasoning LLMs — including OpenAI's o-series, DeepSeek-R1, and similar reinforcement-learning-tuned models — leans heavily on explicit CoT or long internal monologues. By contrast, this paper probes the complementary question: how much reasoning can be folded silently into the forward pass? The answer has implications for latency-sensitive deployment, for interpretability research from groups like Anthropic and Google DeepMind that decompose transformer circuits, and for the design of synthetic curricula intended to instill compositional skills.\n\nSeveral caveats deserve attention. The experimental setting relies on synthetic logical worlds, which gives clean control over reasoning depth but may not transfer directly to messy natural-language inference. The exact scaling exponents could plausibly shift with architectural changes such as mixture-of-experts, state-space hybrids, or different positional encodings, and the role of optimizer choice and weight decay in triggering grokking-like transitions remains an open variable. Whether the same implicit-reasoning curves hold for pretrained models exposed to web-scale data, rather than from-scratch training on curated tasks, is also unclear.\n\nStill, the paper contributes a useful empirical map of when and how transformers can internalize multi-step deduction. For practitioners, it hints that simply enlarging a model is unlikely to be the most efficient path to robust implicit reasoning; data composition, training duration, and exposure to compositional structure may yield better returns. For theorists, the link to grokking reinforces the view that generalization in deep networks is often a delayed, structural phenomenon rather than a smooth function of loss, and that understanding this transition is likely a prerequisite for building reliably reasoning systems.",
       "image": {
         "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
         "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
@@ -661,16 +736,20 @@
       "sourceType": "paper",
       "url": "https://arxiv.org/abs/2605.04065",
       "title": "Free Energy-Driven Reinforcement Learning with Adaptive Advantage Shaping for Unsupervised Reasoning in LLMs",
-      "titleJa": "",
+      "titleJa": "自由エネルギー駆動の強化学習による教師なしLLM推論の優位性整形",
       "titleEn": "Free Energy-Driven Reinforcement Learning with Adaptive Advantage Shaping for Unsupervised Reasoning in LLMs",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04065v2 Announce Type: replace Abstract: Unsupervised reinforcement learning (RL) has emerged as a promising paradigm for enabling self-improvement in large language models (LLMs). However,",
+      "summaryJa": "本論文は、ラベルなし環境下でのLLM推論能力向上を目指し、自由エネルギー原理に基づく強化学習手法を提案する。適応的なアドバンテージ整形を導入し、報酬信号が乏しい状況でも安定した学習を実現する点が特徴とされる。",
+      "summaryEn": "This paper proposes a free-energy-principle-based reinforcement learning method with adaptive advantage shaping to enhance reasoning in LLMs under unsupervised settings, aiming for stable training when reward signals are sparse or absent.",
       "lang": "en",
       "publishedAt": "2026-05-08T04:00:00.000Z",
       "collectedAt": "2026-05-08T06:00:54.542Z",
       "tags": [
         "arxiv",
-        "paper"
+        "paper",
+        "reinforcement-learning",
+        "llm-reasoning",
+        "free-energy-principle",
+        "unsupervised-learning"
       ],
       "category": "research",
       "importance": 1,
@@ -683,7 +762,9 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "bodyJa": "大規模言語モデル(LLM)の推論能力を強化学習で引き上げる研究が活発化する中、本論文はラベルや明示的報酬に依存しない教師なし設定での学習手法を提案している。鍵となるのは、神経科学・ベイズ推論の文脈で知られる自由エネルギー原理(Free Energy Principle, FEP)を強化学習の目的関数に組み込み、さらにアドバンテージ関数を適応的に整形(shaping)することで学習を安定化させるという発想である。\n\nDeepSeek-R1やOpenAI o1以降、検証可能な報酬を用いるRLVR(Reinforcement Learning with Verifiable Rewards)やGRPOなどの手法が推論能力向上の主流となってきた。しかしこれらは数学やコードのように正解判定が容易なドメインに偏りがちで、正解ラベルが存在しない領域へのスケールが課題となっている。本研究はその空白を埋めることを狙い、モデル自身の予測分布の不確実性を内発的信号として活用する枠組みを採る可能性がある。\n\n自由エネルギー原理は、エージェントが世界モデルの予測誤差(サプライズ)を最小化するよう振る舞うとする理論で、Karl Fristonによって提唱された。これを言語モデルに転用する場合、モデルの確信度や事後分布のエントロピーが擬似的な報酬として機能し得る。近年はエントロピー最小化やself-rewardingといった類似の教師なしRL研究も登場しており、本論文もこの潮流の一つに位置付けられると見られる。\n\nアドバンテージ整形は、PPOやGRPOで知られるアドバンテージ推定にバイアスを加えて勾配を安定させる工夫で、報酬がスパースまたはノイジーな状況で特に有効とされる。教師なし設定では報酬の質が不安定になりやすいため、適応的整形の導入は実用上の意義が大きい可能性がある。\n\nなお本記事の引用URLは内容と一致しない可能性があり、実装詳細やベンチマーク結果については原論文の参照が必要である。",
+      "bodyEn": "Reinforcement learning has become a central tool for improving the reasoning ability of large language models, but most recent successes — from DeepSeek-R1 to GRPO-style training — depend on verifiable rewards in domains like math and code. This paper tackles the harder, less-charted setting of unsupervised reasoning, where ground-truth labels are unavailable, by grounding the RL objective in the Free Energy Principle (FEP) and introducing an adaptive advantage shaping mechanism.\n\nThe Free Energy Principle, popularized by neuroscientist Karl Friston, posits that adaptive agents act to minimize the surprise (or variational free energy) of their sensory observations relative to an internal generative model. Translating this to LLMs, the model's own predictive distribution — its confidence, entropy, or posterior consistency across samples — can serve as an intrinsic learning signal. This sidesteps the need for a verifier or human-labeled reward, which is the main bottleneck preventing RLVR-style training from generalizing beyond narrow domains.\n\nAdvantage shaping, the second pillar of the proposed method, addresses a well-known instability in policy-gradient methods like PPO and GRPO: when rewards are sparse, noisy, or self-generated, raw advantage estimates can produce destructive updates. By adaptively reweighting advantages — presumably as a function of token-level uncertainty or trajectory-level confidence — the authors aim to keep gradients informative without collapsing the policy onto degenerate, overconfident outputs. Mode collapse and entropy collapse are recurring failure modes in unsupervised RL for LLMs, and shaping is a pragmatic countermeasure.\n\nThe work fits into a growing body of research on label-free post-training. Test-Time Reinforcement Learning, self-rewarding language models, entropy-minimization fine-tuning, and majority-vote pseudo-labeling all explore variants of the same idea: extract a learning signal from the model itself. The FEP framing is appealing because it offers a principled, information-theoretic justification for these heuristics rather than treating them as isolated tricks. Whether the theoretical lens translates into measurably better empirical behavior — particularly out-of-distribution or on tasks where the base model is genuinely uncertain — is the open question such work must answer.\n\nReaders should treat detailed claims with care: the URL associated with this listing appears mismatched, so the specific benchmarks, baselines, and ablations should be verified against the original paper. Still, the broader direction — combining a Bayesian-flavored intrinsic objective with stabilization techniques borrowed from modern policy optimization — looks like a plausible path toward extending RL-based reasoning gains beyond the narrow regime of verifiable-reward domains."
     },
     {
       "id": "55345853cab90a96",
@@ -856,7 +937,15 @@
       "category": "research",
       "importance": 1,
       "halfLife": "architecture",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "Generating Query-Focused Summarization Datasets from Query-Free Summarization Datasets",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "f4492f63dfaf68ac",
@@ -878,7 +967,15 @@
       "category": "research",
       "importance": 1,
       "halfLife": "architecture",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "SLAM: Structural Linguistic Activation Marking for Language Models",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "1051fed70537d6c1",
@@ -1287,6 +1384,344 @@
       "archiveTier": "hot"
     },
     {
+      "id": "aed6829fd71eb72a",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.05247",
+      "title": "DADL: A Declarative Description Language for Enterprise Tool Libraries in LLM Agent Systems",
+      "titleJa": "",
+      "titleEn": "DADL: A Declarative Description Language for Enterprise Tool Libraries in LLM Agent Systems",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.05247v1 Announce Type: new Abstract: The Model Context Protocol (MCP) is the standard interface between large language model (LLM) agents and external tools. At organizational scale, howeve",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "agent",
+        "arxiv",
+        "enterprise",
+        "mcp-server",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "6257d97dc6112c89",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.05252",
+      "title": "Automated Population-Level Audit Assurance via AI-Based Document Intelligence",
+      "titleJa": "",
+      "titleEn": "Automated Population-Level Audit Assurance via AI-Based Document Intelligence",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.05252v1 Announce Type: new Abstract: Audit transaction testing validates accuracy and completeness of customer-facing statements against internal systems of record. Traditional manual, samp",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "5f5d387a5788d7cc",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.05258",
+      "title": "PARNESS: A Paper Harness for End-to-End Automated Scientific Research with Dynamic Workflows, Full-Text Indexing, and Cross-Run Knowledge Accumulation",
+      "titleJa": "",
+      "titleEn": "PARNESS: A Paper Harness for End-to-End Automated Scientific Research with Dynamic Workflows, Full-Text Indexing, and Cross-Run Knowledge Accumulation",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.05258v1 Announce Type: new Abstract: Recent autonomous research systems -- AI-Scientist, PaperOrchestra, AutoSOTA, DeepResearch, InternAgent, ResearchAgent and others -- show LLM agents can",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "agent",
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "8e48c54fc27ddccd",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.05267",
+      "title": "Bridging Generation and Training: A Systematic Review of Quality Issues in LLMs for Code",
+      "titleJa": "",
+      "titleEn": "Bridging Generation and Training: A Systematic Review of Quality Issues in LLMs for Code",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.05267v1 Announce Type: new Abstract: Large language models (LLMs) frequently generate defective outputs in code generation tasks, ranging from logical bugs to security vulnerabilities. Whil",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "5cc487ff6564adbe",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.05400",
+      "title": "Mise en Place for Agentic Coding: Deliberate Preparation as Context Engineering Methodology",
+      "titleJa": "",
+      "titleEn": "Mise en Place for Agentic Coding: Deliberate Preparation as Context Engineering Methodology",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.05400v1 Announce Type: new Abstract: The rapid adoption of AI coding agents has produced a dominant workflow pattern -- often called \"vibe coding\" -- that prioritizes speed of implementatio",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "agent",
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "b627e65b2daa9c43",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.05564",
+      "title": "Is this Build Failure Related to my Patch? An Empirical Study of Unrelated Build Failures in Continuous Integration",
+      "titleJa": "",
+      "titleEn": "Is this Build Failure Related to my Patch? An Empirical Study of Unrelated Build Failures in Continuous Integration",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.05564v1 Announce Type: new Abstract: Continuous Integration (CI) systems often run many builds concurrently. In this setting, a legitimate build failure may not be caused by the code push t",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "c2abac0a6baaf7f4",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.05584",
+      "title": "Operationalizing Ethics for AI Agents: How Developers Encode Values into Repository Context Files",
+      "titleJa": "",
+      "titleEn": "Operationalizing Ethics for AI Agents: How Developers Encode Values into Repository Context Files",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.05584v1 Announce Type: new Abstract: As AI coding agents become embedded in software development workflows, developers are beginning to operationalize ethical principles by encoding behavio",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "3b469292f0ade9c4",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.05700",
+      "title": "An Empirical Study of Proactive Coding Assistants in Real-World Software Development",
+      "titleJa": "",
+      "titleEn": "An Empirical Study of Proactive Coding Assistants in Real-World Software Development",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.05700v1 Announce Type: new Abstract: Large language model (LLM)-based coding assistants have made substantial progress, yet most systems remain reactive, requiring developers to explicitly ",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "ee9bf5a774a4d821",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.05828",
+      "title": "From Chat to Interview: Agentic Requirements Elicitation with an Experience Ontology",
+      "titleJa": "",
+      "titleEn": "From Chat to Interview: Agentic Requirements Elicitation with an Experience Ontology",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.05828v1 Announce Type: new Abstract: Requirements elicitation interviews are crucial and time-consuming in requirements engineering, but heavily rely on the experience of requirements analy",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "agent",
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "6ae82e5318e4faaf",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.05867",
+      "title": "On Fixing Insecure AI-Generated Code through Model Fine-Tuning and Prompting Strategies",
+      "titleJa": "",
+      "titleEn": "On Fixing Insecure AI-Generated Code through Model Fine-Tuning and Prompting Strategies",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.05867v1 Announce Type: new Abstract: The security of AI-generated code remains a major obstacle to its widespread adoption. Although code generation models achieve strong performance on fun",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "170c155fe4761157",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.05902",
+      "title": "Evaluating Non-English Developer Support in Machine Learning for Software Engineering",
+      "titleJa": "",
+      "titleEn": "Evaluating Non-English Developer Support in Machine Learning for Software Engineering",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.05902v1 Announce Type: new Abstract: Large Language Models are increasingly used in software engineering, but both code generation and its evaluation remain predominantly English-centric. T",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "arxiv",
+        "benchmark",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "982f27779bb83c58",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.06098",
+      "title": "Exploring the Effectiveness of Abstract Syntax Tree Patterns for Algorithm Recognition",
+      "titleJa": "",
+      "titleEn": "Exploring the Effectiveness of Abstract Syntax Tree Patterns for Algorithm Recognition",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.06098v1 Announce Type: new Abstract: The automated recognition of algorithm implementations can support many software maintenance and re-engineering activities by providing knowledge about ",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "314ffd59baacc94c",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.06111",
+      "title": "Schedule-and-Calibrate: Utility-Guided Multi-Task Reinforcement Learning for Code LLMs",
+      "titleJa": "",
+      "titleEn": "Schedule-and-Calibrate: Utility-Guided Multi-Task Reinforcement Learning for Code LLMs",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.06111v1 Announce Type: new Abstract: Reinforcement learning (RL) with verifiable rewards has proven effective at post-training LLMs for coding, yet deploying separate task-specific speciali",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "aa3cb0aadc9762b8",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.06125",
+      "title": "Breaking, Stale, or Missing? Benchmarking Coding Agents on Project-Level Test Evolution",
+      "titleJa": "",
+      "titleEn": "Breaking, Stale, or Missing? Benchmarking Coding Agents on Project-Level Test Evolution",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.06125v1 Announce Type: new Abstract: As production code evolves, the test suite must co-evolve to remain effective. Existing benchmarks for test evolution operate at method-level granularit",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "3c2310d1a0630b1f",
+      "source": "arxiv-cs-se",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2605.06136",
+      "title": "BUILD-AND-FIND: An Effort-Aware Protocol for Evaluating Agent-Managed Codebases",
+      "titleJa": "",
+      "titleEn": "BUILD-AND-FIND: An Effort-Aware Protocol for Evaluating Agent-Managed Codebases",
+      "summaryJa": "",
+      "summaryEn": "arXiv:2605.06136v1 Announce Type: new Abstract: Most coding-agent benchmarks ask whether generated code behaves correctly. That remains essential, but repository-level engineering is increasingly agen",
+      "lang": "en",
+      "publishedAt": "2026-05-08T04:00:00.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "agent",
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot"
+    },
+    {
       "id": "f4362f78df919da9",
       "source": "qiita-llm",
       "sourceType": "blog",
@@ -1317,8 +1752,8 @@
       }
     },
     {
-      "id": "755399efff509e03",
-      "source": "qiita-llm",
+      "id": "b367180b374b42f3",
+      "source": "qiita-claude",
       "sourceType": "blog",
       "url": "https://qiita.com/jyas-protein/items/2d6f5ec6ae76002788a0",
       "title": "【Claude Code】 Gitコミットを最適化する",
@@ -1328,12 +1763,12 @@
       "summaryEn": "【Claude Code】 Gitコミットを最適化する",
       "lang": "ja",
       "publishedAt": "2026-05-08T03:09:56.000Z",
-      "collectedAt": "2026-05-08T04:00:54.529Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
-        "llm",
+        "claude",
         "qiita"
       ],
-      "category": "local-llm",
+      "category": "claude",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot"
@@ -1518,7 +1953,7 @@
       "summaryEn": "As of the fourth week of April 2026, AI agent adoption has shifted from experimentation to organizational operations, with this article summarizing weekly practical insights on governance, evaluation, and realistic deployment patterns.",
       "lang": "ja",
       "publishedAt": "2026-05-08T01:00:03.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "claude",
@@ -1699,7 +2134,7 @@
       "summaryEn": "GitHub announced the upcoming deprecation of OpenAI's GPT-4.1 model in Copilot, signaling that developers using it should transition to newer successor models in their workflows.",
       "lang": "en",
       "publishedAt": "2026-05-08T00:22:08.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "changelog",
@@ -2079,7 +2514,7 @@
       "summaryEn": "We have deprecated the following model across all GitHub Copilot experiences (including Copilot Chat, inline edits, ask and agent modes, and code completions) on May 6, 2026. Model Deprecation date… T",
       "lang": "en",
       "publishedAt": "2026-05-07T22:30:23.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "changelog",
@@ -2343,7 +2778,7 @@
       "summaryEn": "Microsoft has rolled out OpenAI's GPT-5.5 Instant model in Microsoft 365 Copilot starting today, promising faster responses and improved reasoning for everyday productivity tasks. Users gain access automatically without configuration changes.",
       "lang": "en",
       "publishedAt": "2026-05-07T21:03:09.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "microsoft",
         "news",
@@ -2481,7 +2916,7 @@
       "summaryEn": "GitHub has launched Enterprise Live Migrations in public preview, allowing customers to move organizations, repositories, and user data between Enterprise Cloud tenants to support mergers, acquisitions, and reorganization scenarios.",
       "lang": "en",
       "publishedAt": "2026-05-07T20:28:33.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "enterprise",
@@ -2651,7 +3086,7 @@
       "summaryEn": "Microsoft CEO Satya Nadella announced the rollout of OpenAI's GPT-5.5 Instant to Microsoft 365 Copilot, promising faster, clearer and more accurate responses. The model is also coming to Copilot Studio and Azure AI Foundry as part of Microsoft's push for broader model choice across work, agents and apps.",
       "lang": "en",
       "publishedAt": "2026-05-07T19:28:50.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "microsoft",
         "news",
@@ -2768,7 +3203,7 @@
       "summaryEn": "AI will help build the energy it needs. That’s the case U.S. Energy Secretary Chris Wright and NVIDIA Vice President of Hyperscale and High-Performance Computing Ian Buck made Thursday morning at the ",
       "lang": "en",
       "publishedAt": "2026-05-07T19:14:38.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "news",
         "nvidia"
@@ -3100,7 +3535,7 @@
       "summaryEn": "The post AI@Work: 4 proven patterns show how responsibility shifts as agents take on more work appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-05-07T17:40:52.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "microsoft",
         "news"
@@ -3210,7 +3645,7 @@
       "summaryEn": "The post World Passkey Day: Advancing passwordless authentication appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-05-07T17:06:29.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "microsoft",
         "news"
@@ -3337,7 +3772,7 @@
       "summaryEn": "The post New report: AI use continues to rise worldwide in 2026 appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-05-07T16:24:58.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "microsoft",
         "news"
@@ -3682,7 +4117,7 @@
       "summaryEn": "The post Inside Porsche Cup Brasil’s AI-powered race operations appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-05-07T15:03:19.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "microsoft",
         "news"
@@ -3806,7 +4241,7 @@
       "summaryEn": "GitHub has expanded the range of AI models supported by the Rubber Duck feature in GitHub Copilot CLI, giving developers more flexibility to choose models for interactive coding assistance from the terminal.",
       "lang": "en",
       "publishedAt": "2026-05-07T14:49:28.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "changelog",
@@ -3832,8 +4267,8 @@
       }
     },
     {
-      "id": "af62d4f2a5d15026",
-      "source": "zenn-mcp",
+      "id": "246b0fac578ad3e8",
+      "source": "zenn-claude",
       "sourceType": "blog",
       "url": "https://zenn.dev/btiw/articles/c9ca6cee92ecff",
       "title": "健康データ基盤にMCPサーバーを組み込んで、Claudeから自分のデータにアクセスできるようにした",
@@ -3843,13 +4278,13 @@
       "summaryEn": "健康データ基盤にMCPサーバーを組み込んで、Claudeから自分のデータにアクセスできるようにした",
       "lang": "ja",
       "publishedAt": "2026-05-07T14:37:15.000Z",
-      "collectedAt": "2026-05-08T05:00:54.533Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
-        "mcp",
+        "claude",
         "mcp-server",
         "zenn"
       ],
-      "category": "mcp",
+      "category": "claude",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot"
@@ -3919,7 +4354,7 @@
       "summaryEn": "GitHub has enhanced Repository rulesets with two new capabilities: granting bypass permissions to individual users (in addition to teams), and a new rule to control branch renaming. These improvements give administrators finer-grained governance over repository workflows.",
       "lang": "en",
       "publishedAt": "2026-05-07T14:13:48.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "github",
@@ -4287,7 +4722,7 @@
       "summaryEn": "Claude Code 全コマンド完全版｜スラッシュ・CLI・設定など",
       "lang": "ja",
       "publishedAt": "2026-05-07T13:27:50.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "claude",
         "zenn"
@@ -4346,7 +4781,7 @@
       "summaryEn": "# AIエージェントが「夢を見る」時代が来た — Anthropic Dreaming の技術的意味",
       "lang": "ja",
       "publishedAt": "2026-05-07T13:09:34.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "claude",
         "zenn"
@@ -4389,7 +4824,7 @@
       "summaryEn": "Less typing, more tanking. Faster logins mean more time in the gaming action — and this week provides GeForce NOW members with a smoother path straight into the battlefield. Cloud gaming is all about ",
       "lang": "en",
       "publishedAt": "2026-05-07T13:00:27.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "news",
         "nvidia"
@@ -4438,8 +4873,8 @@
       }
     },
     {
-      "id": "581ecbcb0cbca1fa",
-      "source": "openai-news",
+      "id": "5d662a67666a32c8",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/gpt-5-5-with-trusted-access-for-cyber",
       "title": "Scaling Trusted Access for Cyber with GPT-5.5 and GPT-5.5-Cyber",
@@ -4449,7 +4884,7 @@
       "summaryEn": "OpenAI expands Trusted Access for Cyber with GPT-5.5 and GPT-5.5-Cyber, helping verified defenders accelerate vulnerability research and protect critical infrastructure.",
       "lang": "en",
       "publishedAt": "2026-05-07T13:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "openai"
       ],
@@ -4528,7 +4963,7 @@
       "summaryEn": "Cursor上でClaude Codeを回す「完全自動化」は本当に最適解か？— エージェント駆動開発の現在地",
       "lang": "ja",
       "publishedAt": "2026-05-07T11:40:09.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "claude",
         "zenn"
@@ -4590,8 +5025,8 @@
       "bodyEn": ""
     },
     {
-      "id": "2a4ce101f49ca864",
-      "source": "openai-news",
+      "id": "f1b148d8fe44807b",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/parloa",
       "title": "Parloa builds service agents customers want to talk to",
@@ -4601,7 +5036,7 @@
       "summaryEn": "Parloa leverages OpenAI models to power scalable, voice-driven AI customer service agents, enabling enterprises to design, simulate, and deploy reliable, real-time interactions.",
       "lang": "en",
       "publishedAt": "2026-05-07T11:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "openai"
       ],
@@ -4696,7 +5131,7 @@
       "summaryEn": "Cursor を6ヶ月使ってた俺が、Claude Code に全乗り換えた理由を全部書く",
       "lang": "ja",
       "publishedAt": "2026-05-07T10:15:07.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "cursor",
         "qiita"
@@ -4707,8 +5142,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "6ba06b654d03fd57",
-      "source": "openai-news",
+      "id": "21a41b45486984df",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/advancing-voice-intelligence-with-new-models-in-the-api",
       "title": "Advancing voice intelligence with new models in the API",
@@ -4718,7 +5153,7 @@
       "summaryEn": "Explore new realtime voice models in the OpenAI API that can reason, translate, and transcribe speech, enabling more natural and intelligent voice experiences.",
       "lang": "en",
       "publishedAt": "2026-05-07T10:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "openai"
       ],
@@ -4790,7 +5225,7 @@
       "summaryEn": "寝ると忘れる AI と、それを覚えてくれる私の 14 時間 — OpenClaw + GCP + Claude Code",
       "lang": "ja",
       "publishedAt": "2026-05-07T09:38:09.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "claude",
         "zenn"
@@ -4834,7 +5269,7 @@
       "summaryEn": "Flutter + Firebase アプリ × Claude Code ハーネスエンジニアリング検証レポート",
       "lang": "ja",
       "publishedAt": "2026-05-07T09:33:04.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "claude",
         "mcp-server",
@@ -4857,7 +5292,7 @@
       "summaryEn": "Cursorで「Focus First Editor Group」は実行できるのに⌘1が効かない問題",
       "lang": "ja",
       "publishedAt": "2026-05-07T09:06:09.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "cursor",
         "qiita"
@@ -4945,7 +5380,7 @@
       "summaryEn": "CursorとClaudeから考えるビジネスモデルと経済的合理性",
       "lang": "ja",
       "publishedAt": "2026-05-07T08:24:22.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "cursor",
         "qiita"
@@ -4967,7 +5402,7 @@
       "summaryEn": "Claude Codeの制限が2倍に。Proでも長時間エージェント運用が現実になった",
       "lang": "ja",
       "publishedAt": "2026-05-07T08:09:42.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "claude",
         "zenn"
@@ -5000,8 +5435,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "9ff4729e98750c22",
-      "source": "zenn-llm",
+      "id": "e4ce8e793222f036",
+      "source": "zenn-claude",
       "sourceType": "blog",
       "url": "https://zenn.dev/fusic/articles/7ac5229f4d65f0",
       "title": "Claude CoworkをAmazon Bedrock 経由で使ってみた",
@@ -5011,12 +5446,12 @@
       "summaryEn": "Claude CoworkをAmazon Bedrock 経由で使ってみた",
       "lang": "ja",
       "publishedAt": "2026-05-07T07:33:23.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
-        "llm",
+        "claude",
         "zenn"
       ],
-      "category": "local-llm",
+      "category": "claude",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot"
@@ -5090,7 +5525,7 @@
       "summaryEn": "要件定義で何をAIに任せて何を人間がやるのか🧑‍🤝‍🧑",
       "lang": "ja",
       "publishedAt": "2026-05-07T06:51:34.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "claude",
         "zenn"
@@ -5147,7 +5582,7 @@
       "summaryEn": "Claude Code / Codex では、repoそのものが“記憶”になるのではないか",
       "lang": "ja",
       "publishedAt": "2026-05-07T06:24:18.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "claude",
         "zenn"
@@ -5227,7 +5662,7 @@
       "summaryEn": "【Higher Limits】の発表で起きること、起きないこと",
       "lang": "ja",
       "publishedAt": "2026-05-07T04:36:34.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "claude",
         "zenn"
@@ -5249,7 +5684,7 @@
       "summaryEn": "AIタスクは並列で回せ：Git Worktree × Agent Teams",
       "lang": "ja",
       "publishedAt": "2026-05-07T04:06:11.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "claude",
@@ -5258,145 +5693,6 @@
       "category": "claude",
       "importance": 1,
       "halfLife": "tutorial",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "889a034ac053acb8",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04114",
-      "title": "Semantic Reverse Engineering Legacy Software Applications with ChatGPT, Gemini AI, and Claude AI",
-      "titleJa": "ChatGPT、Gemini、Claudeを用いたレガシーソフトウェアの意味的リバースエンジニアリング",
-      "titleEn": "Semantic Reverse Engineering Legacy Software Applications with ChatGPT, Gemini AI, and Claude AI",
-      "summaryJa": "本論文は、ChatGPT、Gemini AI、Claude AIといった大規模言語モデルを活用し、レガシーソフトウェアアプリケーションの意味的リバースエンジニアリングを行う手法を検証する。各AIの能力比較を通じて、保守性向上と現代化への応用可能性を示している。",
-      "summaryEn": "This paper explores using large language models (ChatGPT, Gemini AI, and Claude AI) to perform semantic reverse engineering on legacy software applications, comparing their capabilities for improving maintainability and modernization.",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "arxiv",
-        "paper",
-        "llm",
-        "reverse-engineering",
-        "legacy-software"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "283e1f2d5c766223",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04132",
-      "title": "Two Integration Pathways in Human-Centered Requirements Engineering: A Systematic Mapping Study of Structural Gaps",
-      "titleJa": "",
-      "titleEn": "Two Integration Pathways in Human-Centered Requirements Engineering: A Systematic Mapping Study of Structural Gaps",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04132v1 Announce Type: new Abstract: Human-centered Requirements Engineering (HC-RE) integrates user cognition, emotions, and social interactions into the RE process through contributions f",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "arxiv",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "2900baaf25b7b51c",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04188",
-      "title": "A Multi-Agent Consensus Protocol for Stable Software Remodularization",
-      "titleJa": "",
-      "titleEn": "A Multi-Agent Consensus Protocol for Stable Software Remodularization",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04188v1 Announce Type: new Abstract: Automatic software remodularisation is typically cast as a single-objective optimization problem. While recent metaheuristics have improved search effic",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "agent",
-        "arxiv",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "5e4cd24e631d04dc",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04259",
-      "title": "EngThrive: Make It Fast and Easy to Do Great Work",
-      "titleJa": "",
-      "titleEn": "EngThrive: Make It Fast and Easy to Do Great Work",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04259v1 Announce Type: new Abstract: Frameworks such as SPACE, DevEx, and DORA established that developer productivity is inherently multidimensional, but left practitioners with a practica",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "arxiv",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "55312dc31ccaf90a",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04320",
-      "title": "Reproduction Test Generation for Java SWE Issues",
-      "titleJa": "",
-      "titleEn": "Reproduction Test Generation for Java SWE Issues",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04320v1 Announce Type: new Abstract: Given an issue on a software repository, a reproduction test confirms its presence in the code before it gets fixed and its absence after. Reproduction ",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "arxiv",
-        "paper"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "357c04b5001740f0",
-      "source": "arxiv-cs-se",
-      "sourceType": "paper",
-      "url": "https://arxiv.org/abs/2605.04763",
-      "title": "How Does Chunking Affect Retrieval-Augmented Code Completion? A Controlled Empirical Study",
-      "titleJa": "",
-      "titleEn": "How Does Chunking Affect Retrieval-Augmented Code Completion? A Controlled Empirical Study",
-      "summaryJa": "",
-      "summaryEn": "arXiv:2605.04763v1 Announce Type: new Abstract: Retrieval-augmented generation (RAG) pipelines for code completion rely on chunking to segment source files into retrievable units, yet chunking strateg",
-      "lang": "en",
-      "publishedAt": "2026-05-07T04:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
-      "tags": [
-        "arxiv",
-        "paper",
-        "rag"
-      ],
-      "category": "research",
-      "importance": 1,
-      "halfLife": "architecture",
       "archiveTier": "hot"
     },
     {
@@ -5554,7 +5850,7 @@
       "summaryEn": "A reflection on moments when Claude Code feels lacking in 'memory,' discussing the limitations of context retention across sessions and the need for persistent memory features in development workflows.",
       "lang": "ja",
       "publishedAt": "2026-05-07T02:53:42.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "claude",
         "zenn",
@@ -5620,7 +5916,7 @@
       "summaryEn": "A short personal anecdote about the author's surprise when their screen started moving on its own during Claude usage, initially fearing a hack but realizing it was the AI agent autonomously controlling the browser.",
       "lang": "ja",
       "publishedAt": "2026-05-07T02:34:16.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "claude",
         "zenn",
@@ -5741,8 +6037,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "ace2a7e75e4f2ed8",
-      "source": "qiita-copilot",
+      "id": "8035c3d08038517b",
+      "source": "qiita-cursor",
       "sourceType": "blog",
       "url": "https://qiita.com/hikariclaude01/items/6b265bd2e0827f06e887",
       "title": "【実測】同じタスクをClaude Code・Cursor・GitHub Copilot Agentで実行して所要時間・コスト・コード品質を定量比較した",
@@ -5752,15 +6048,16 @@
       "summaryEn": "This article quantitatively compares Claude Code, Cursor, and GitHub Copilot Agent by running the same development task on each, measuring execution time, cost, and code quality to reveal practical trade-offs between the tools.",
       "lang": "ja",
       "publishedAt": "2026-05-07T01:01:55.000Z",
-      "collectedAt": "2026-05-08T05:00:54.533Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
+        "cursor",
         "qiita",
         "claude-code",
         "github-copilot",
         "benchmark"
       ],
-      "category": "copilot",
+      "category": "cursor",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -5774,6 +6071,33 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "58047c3772844974",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/mapellion/articles/44499b324995f4",
+      "title": "Claude CodeやCopilotが生成するコードは安全？AIコードに潜む脆弱性パターンを解説",
+      "titleJa": "Claude CodeやCopilotが生成するコードは安全？AIコードの脆弱性パターン",
+      "titleEn": "",
+      "summaryJa": "AIコード生成ツールが出力するコードに潜むセキュリティ脆弱性のパターンを解説する記事。Claude CodeやGitHub Copilotなどが生成するコードに含まれがちな問題点を整理し、開発者が注意すべき観点を示している。",
+      "summaryEn": "This article analyzes security vulnerability patterns commonly found in code generated by AI tools like Claude Code and GitHub Copilot, highlighting key risks developers should watch for when adopting AI-generated code.",
+      "lang": "ja",
+      "publishedAt": "2026-05-07T01:00:08.000Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
+      "tags": [
+        "claude",
+        "zenn",
+        "security",
+        "github-copilot",
+        "ai-coding"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "",
+      "bodyEn": ""
     },
     {
       "id": "378e340cd53dad3f",
@@ -5878,8 +6202,8 @@
       }
     },
     {
-      "id": "f3435251f480214c",
-      "source": "openai-news",
+      "id": "6ce6242998a35360",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/introducing-trusted-contact-in-chatgpt",
       "title": "Introducing Trusted Contact in ChatGPT",
@@ -5889,7 +6213,7 @@
       "summaryEn": "Introducing Trusted Contact in ChatGPT, an optional safety feature that notifies someone you trust if serious self-harm concerns are detected.",
       "lang": "en",
       "publishedAt": "2026-05-07T00:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "openai"
       ],
@@ -5899,8 +6223,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "88604715e73f2ef3",
-      "source": "openai-news",
+      "id": "7c244dfec3c7fd77",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/testing-ads-in-chatgpt",
       "title": "Testing ads in ChatGPT",
@@ -5910,7 +6234,7 @@
       "summaryEn": "OpenAI begins testing ads in ChatGPT to support free access, with clear labeling, answer independence, strong privacy protections, and user control.",
       "lang": "en",
       "publishedAt": "2026-05-07T00:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "openai"
       ],
@@ -5920,8 +6244,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "d05e499602bb056e",
-      "source": "openai-news",
+      "id": "f9a75264c77b061c",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/simplex",
       "title": "Simplex rethinks software development with Codex",
@@ -5931,7 +6255,7 @@
       "summaryEn": "Simplex boosts software development with ChatGPT Enterprise and Codex, reducing design, build, and testing time while scaling AI-driven workflows.",
       "lang": "en",
       "publishedAt": "2026-05-07T00:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "enterprise",
         "openai"
@@ -5953,7 +6277,7 @@
       "summaryEn": "This release introduces a new PR review experience, faster execution on plans through parallel agents, and new quick-action pills for common workflows.",
       "lang": "en",
       "publishedAt": "2026-05-07T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "cursor",
@@ -6049,7 +6373,7 @@
       "summaryEn": "Enterprise-managed plugins for GitHub Copilot CLI are now available in public preview, allowing enterprise administrators to centrally manage and distribute approved plugins across their organization for improved governance and security.",
       "lang": "en",
       "publishedAt": "2026-05-06T22:20:44.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "enterprise",
@@ -6469,7 +6793,7 @@
       "summaryEn": "The April 2026 release of GitHub Copilot in Visual Studio Code introduces multiple updates, including improvements to agent capabilities, chat experience, and developer tooling.",
       "lang": "en",
       "publishedAt": "2026-05-06T17:55:26.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "github",
@@ -6778,7 +7102,7 @@
       "summaryEn": "For National Nurses Week, Microsoft highlights healthcare technologies built with and shaped by nurses, including AI tools like Dragon Copilot that reduce administrative burden and let nurses focus on patient care.",
       "lang": "en",
       "publishedAt": "2026-05-06T15:42:03.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "microsoft",
         "news",
@@ -6844,7 +7168,7 @@
       "summaryEn": "You can now search and filter security advisories directly from your repository’s Security tab. Use the new search bar and filters at the top of the advisory list to find… The post Search and filter b",
       "lang": "en",
       "publishedAt": "2026-05-06T15:35:47.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "github"
@@ -7125,7 +7449,7 @@
       "summaryEn": "NVIDIA has enhanced its open, AI-native Spectrum-X Ethernet fabric with Multi-Rail Connectivity (MRC), positioning it as the standard networking solution for gigascale AI data centers with improved performance and scalability.",
       "lang": "en",
       "publishedAt": "2026-05-06T11:30:20.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "news",
         "nvidia",
@@ -7443,8 +7767,8 @@
       }
     },
     {
-      "id": "ea228a44265eb9d9",
-      "source": "openai-news",
+      "id": "8d8909c11667b60c",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/introducing-chatgpt-futures-class-of-2026",
       "title": "Introducing ChatGPT Futures: Class of 2026",
@@ -7454,7 +7778,7 @@
       "summaryEn": "Meet the ChatGPT Futures Class of 2026—26 student innovators using AI to build, research, and drive real-world impact. Discover how this generation is redefining learning, creativity, and opportunity ",
       "lang": "en",
       "publishedAt": "2026-05-06T00:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "openai"
       ],
@@ -7464,8 +7788,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "2f7e247a7d4e96d4",
-      "source": "openai-news",
+      "id": "7e4ea8591dc24218",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/introducing-b2b-signals",
       "title": "How frontier firms are pulling ahead",
@@ -7475,7 +7799,7 @@
       "summaryEn": "OpenAI’s B2B Signals research shows how frontier enterprises deepen AI adoption, scale Codex-powered agentic workflows, and build durable competitive advantage.",
       "lang": "en",
       "publishedAt": "2026-05-06T00:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "openai"
@@ -7486,8 +7810,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "e0451266e9104fc5",
-      "source": "openai-news",
+      "id": "d440a73111484219",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/singular-bank",
       "title": "Singular Bank helps bankers move fast with ChatGPT and Codex",
@@ -7497,7 +7821,7 @@
       "summaryEn": "Singular Bank built Singularity, an internal assistant using ChatGPT and Codex to help bankers save 60–90 minutes daily on meeting prep, portfolio analysis, and follow-up.",
       "lang": "en",
       "publishedAt": "2026-05-06T00:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "openai"
       ],
@@ -7507,8 +7831,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "9033b166d3333641",
-      "source": "openai-news",
+      "id": "7538d03a3ae8d4b3",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/uber",
       "title": "Uber uses OpenAI to help people earn smarter and book faster",
@@ -7518,7 +7842,7 @@
       "summaryEn": "Uber uses OpenAI to power AI assistants and voice features that help drivers earn smarter and riders book faster across a global real-time marketplace.",
       "lang": "en",
       "publishedAt": "2026-05-06T00:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "openai"
       ],
@@ -7539,7 +7863,7 @@
       "summaryEn": "You can now see a breakdown of your agent's context usage .",
       "lang": "en",
       "publishedAt": "2026-05-06T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "changelog",
@@ -7611,7 +7935,7 @@
       "summaryEn": "Microsoft Flight Simulator unveiled new content honoring the volunteers of the NSW Rural Fire Service, Australia's bushfire-fighting organization, recreating their aircraft and operations to highlight their bravery and contributions.",
       "lang": "en",
       "publishedAt": "2026-05-05T23:15:46.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "microsoft",
         "news",
@@ -7646,7 +7970,7 @@
       "summaryEn": "Microsoft's Satya Nadella argues that every firm must reconceptualize work as they build agentic AI systems. With AI handling more execution, businesses have an opportunity to expand human agency and redesign how work gets done.",
       "lang": "en",
       "publishedAt": "2026-05-05T22:28:29.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "microsoft",
@@ -7700,7 +8024,7 @@
       "summaryEn": "Secret scanning via the GitHub MCP Server is now generally available, enabling AI agents and MCP-compatible clients to access and manage repository secret scanning alerts directly through standardized tooling.",
       "lang": "en",
       "publishedAt": "2026-05-05T22:04:32.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "changelog",
@@ -7865,7 +8189,7 @@
       "summaryEn": "GitHub has launched dependency scanning capabilities through the GitHub MCP Server in public preview, allowing AI agents and tools to access dependency vulnerability information and integrate security management into developer workflows.",
       "lang": "en",
       "publishedAt": "2026-05-05T20:45:38.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "github",
@@ -7996,7 +8320,7 @@
       "summaryEn": "The post New in Copilot Cowork: mobile, skills and plugins. Now available on iOS and Android, so you can delegate work from your phone, pick it back up on your desktop and keep tasks moving without br",
       "lang": "en",
       "publishedAt": "2026-05-05T19:32:17.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "microsoft",
         "news"
@@ -8198,7 +8522,7 @@
       "summaryEn": "NVIDIA and ServiceNow have announced a partnership to develop new autonomous AI agents for enterprises, combining NVIDIA's AI technology with ServiceNow's workflow platform to accelerate business automation.",
       "lang": "en",
       "publishedAt": "2026-05-05T17:00:40.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "enterprise",
@@ -8386,8 +8710,8 @@
       "bodyEn": ""
     },
     {
-      "id": "07d7016d3e74f2e5",
-      "source": "openai-news",
+      "id": "9c950e309ba7defd",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/mrc-supercomputer-networking",
       "title": "Unlocking large scale AI training networks with MRC (Multipath Reliable Connection)",
@@ -8397,7 +8721,7 @@
       "summaryEn": "OpenAI introduces MRC (Multipath Reliable Connection), a new supercomputer networking protocol released via OCP to improve resilience and performance in large-scale AI training clusters.",
       "lang": "en",
       "publishedAt": "2026-05-05T10:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "openai",
         "release"
@@ -8408,8 +8732,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "83570952eca1a946",
-      "source": "openai-news",
+      "id": "9c3170e0410bebc5",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/gpt-5-5-instant",
       "title": "GPT-5.5 Instant: smarter, clearer, and more personalized",
@@ -8419,7 +8743,7 @@
       "summaryEn": "GPT-5.5 Instant updates ChatGPT’s default model with smarter, more accurate answers, reduced hallucinations, and improved personalization controls.",
       "lang": "en",
       "publishedAt": "2026-05-05T10:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "openai"
       ],
@@ -8429,8 +8753,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "df8f686e5e46666e",
-      "source": "openai-news",
+      "id": "e640c00bcf3f5fcc",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/gpt-5-5-instant-system-card",
       "title": "GPT-5.5 Instant System Card",
@@ -8440,7 +8764,7 @@
       "summaryEn": "GPT-5.5 Instant System Card",
       "lang": "en",
       "publishedAt": "2026-05-05T10:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "openai"
       ],
@@ -8519,8 +8843,8 @@
       "bodyEn": ""
     },
     {
-      "id": "481f63401673d928",
-      "source": "openai-news",
+      "id": "1fa998d26da1a4f6",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/new-ways-to-buy-chatgpt-ads",
       "title": "New ways to buy ChatGPT ads",
@@ -8530,7 +8854,7 @@
       "summaryEn": "OpenAI expands ChatGPT ads with a beta self-serve Ads Manager, CPC bidding, and enhanced measurement tools—built to protect privacy and keep conversations separate from ads.",
       "lang": "en",
       "publishedAt": "2026-05-05T00:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "openai"
       ],
@@ -8647,8 +8971,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "943f1292648ad845",
-      "source": "openai-news",
+      "id": "a1fd801ceef963db",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/openai-pwc-finance-collaboration",
       "title": "OpenAI and PwC collaborate to reimagine the office of the CFO",
@@ -8658,7 +8982,7 @@
       "summaryEn": "OpenAI and PwC are partnering to help enterprises use AI agents to automate finance workflows, improve forecasting, strengthen controls, and modernize the CFO function.",
       "lang": "en",
       "publishedAt": "2026-05-04T21:00:00.000Z",
-      "collectedAt": "2026-05-08T06:00:54.542Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "openai"
       ],
@@ -8826,7 +9150,7 @@
       "summaryEn": "This release introduces updates for Enterprise admins: a new system for model controls, updated spend management, and more detail for usage analytics.",
       "lang": "en",
       "publishedAt": "2026-05-04T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "cursor",
@@ -8944,7 +9268,7 @@
       "summaryEn": "Added Restore VS Code foreground terminal support and settings. Add latest OpenAI, SAP AI Core, and Z AI models. Fixed Fix hook template JSON escaping. Improve ripgrep file search error handling. Chan",
       "lang": "en",
       "publishedAt": "2026-05-01T16:53:45.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "cline",
         "release"
@@ -8974,7 +9298,7 @@
       "summaryEn": "Co-authored-by: Max Paulus 🥪 max@cline.bot",
       "lang": "en",
       "publishedAt": "2026-05-01T16:25:09.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "cline",
         "release"
@@ -9034,7 +9358,7 @@
       "summaryEn": "Admins can now create a team marketplace without connecting a repository first. Add, remove, and configure install behavior for first-party plugins directly in team marketplace settings.",
       "lang": "en",
       "publishedAt": "2026-05-01T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "cursor"
@@ -9159,7 +9483,7 @@
       "summaryEn": "NVIDIA introduced OpenClaw Agents from Nemotron Labs, designed to help organizations build and deploy open-source agentic AI. The initiative aims to make agentic AI more transparent, flexible, and accessible for enterprise adoption.",
       "lang": "en",
       "publishedAt": "2026-04-30T20:00:39.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "news",
         "nvidia",
@@ -9246,7 +9570,7 @@
       "summaryEn": "NVIDIA announced 16 new games coming to GeForce NOW cloud streaming in May, alongside expanded availability of GeForce RTX 5080-powered servers for higher-quality gameplay.",
       "lang": "en",
       "publishedAt": "2026-04-30T13:00:47.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "news",
         "nvidia",
@@ -9303,7 +9627,7 @@
       "summaryEn": "Cursor Security Review is now in beta on Teams and Enterprise plans. You can run two types of always-on security agents: Security Reviewer and Vulnerability Scanner.",
       "lang": "en",
       "publishedAt": "2026-04-30T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "cursor",
@@ -9514,7 +9838,7 @@
       "summaryEn": "We're introducing the Cursor SDK so you can build agents with the same runtime, harness, and models that power Cursor.",
       "lang": "en",
       "publishedAt": "2026-04-29T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "cursor"
@@ -9629,7 +9953,7 @@
       "summaryEn": "NVIDIA announced Nemotron 3 Nano Omni, a unified multimodal model integrating vision, audio and language to power AI agents up to 9x more efficiently across tasks like document understanding and speech interaction.",
       "lang": "en",
       "publishedAt": "2026-04-28T16:00:28.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "news",
@@ -9700,7 +10024,7 @@
       "summaryEn": "NVIDIA highlights the arrival of a simulation-first era in manufacturing, where companies like Foxconn use Omniverse to build digital twins and industrial AI for designing, optimizing, and operating factories and robotics in virtual environments.",
       "lang": "en",
       "publishedAt": "2026-04-28T13:00:33.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "news",
         "nvidia",
@@ -9960,7 +10284,7 @@
       "summaryEn": "Added Add GPT-5.5 model support for OpenAI Codex subscription users. Fixed Remove hardcoded \"What’s New\" fallback items in webview; only remote-configured welcome banners are shown. Changed Improve cl",
       "lang": "en",
       "publishedAt": "2026-04-24T15:53:06.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "cline",
         "release"
@@ -9990,7 +10314,7 @@
       "summaryEn": "Co-authored-by: Max Paulus 🥪 max@cline.bot",
       "lang": "en",
       "publishedAt": "2026-04-24T15:16:35.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "cline",
         "release"
@@ -10051,7 +10375,7 @@
       "summaryEn": "This release introduces a new way to multitask with async subagents, an improved worktrees experience, and multi-root workspaces for making cross-repo changes.",
       "lang": "en",
       "publishedAt": "2026-04-24T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "cursor",
@@ -10096,7 +10420,7 @@
       "summaryEn": "AI agents have revolutionized developer workflows, and their next frontier is knowledge work: processing information, solving complex problems, coming up with new ideas and driving innovation. Codex, ",
       "lang": "en",
       "publishedAt": "2026-04-23T18:57:55.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "news",
         "nvidia"
@@ -10148,7 +10472,7 @@
       "summaryEn": "GeForce NOW is doubling down on what matters most: gamers. This week’s upgrades bring smarter libraries, making it easier than ever for gamers to turn a PC collection into a cloud-powered flex. It sta",
       "lang": "en",
       "publishedAt": "2026-04-23T13:00:51.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "news",
         "nvidia"
@@ -10170,7 +10494,7 @@
       "summaryEn": "This Spring Astronomy Day, here’s a look at how AI and GPUs are helping astronomers work through unprecedented volumes of cosmic data.",
       "lang": "en",
       "publishedAt": "2026-04-23T13:00:22.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "news",
         "nvidia"
@@ -10245,7 +10569,7 @@
       "summaryEn": "Added Wire up remote globalSkills from enterprise remote config with full UI, toggle support, and system prompt integration — enterprise-managed skills now appear under a dedicated \"Enterprise Skills\"",
       "lang": "en",
       "publishedAt": "2026-04-22T18:38:12.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "cline",
         "enterprise",
@@ -10276,7 +10600,7 @@
       "summaryEn": "Co-authored-by: Max Paulus 🥪 max@cline.bot",
       "lang": "en",
       "publishedAt": "2026-04-22T18:03:35.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "cline",
         "release"
@@ -10366,7 +10690,7 @@
       "summaryEn": "Across climate, conservation, disaster monitoring and recycling, NVIDIA AI is enabling applications protecting the planet.",
       "lang": "en",
       "publishedAt": "2026-04-22T13:00:42.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "news",
         "nvidia"
@@ -10388,7 +10712,7 @@
       "summaryEn": "NVIDIA and Google Cloud have collaborated for more than a decade, co‑engineering a full‑stack AI platform that spans every technology layer — from performance‑optimized libraries and frameworks to ent",
       "lang": "en",
       "publishedAt": "2026-04-22T12:00:42.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "news",
@@ -10441,7 +10765,7 @@
       "summaryEn": "The DORA Quick Check was recently updated to include deployment rework rate and the latest industry benchmarks. Measure your team’s software delivery performance and compare it to the rest of the indu",
       "lang": "en",
       "publishedAt": "2026-04-22T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "devops",
         "dora",
@@ -10607,7 +10931,7 @@
       "summaryEn": "AI agents are transforming how work gets done across all industries, accelerating everything from content creation to decision-making. NVIDIA’s expanded strategic collaborations with Adobe and WPP are",
       "lang": "en",
       "publishedAt": "2026-04-20T13:00:50.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "news",
@@ -10630,7 +10954,7 @@
       "summaryEn": "Manufacturing is at an inflection point. Across every major industrial economy, the pressure to do more with less — due to faster design cycles, leaner operations and strain on skilled labor pools — i",
       "lang": "en",
       "publishedAt": "2026-04-20T08:30:55.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "news",
         "nvidia"
@@ -10703,7 +11027,7 @@
       "summaryEn": "Added Add Claude Opus 4.7 model support Add Azure Blob Storage as a storage provider Add globalSkills to remote config Inline value reuse in user-level remote-config discovery Fixed Fix cache reflecti",
       "lang": "en",
       "publishedAt": "2026-04-16T20:17:01.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "cline",
         "release"
@@ -10733,7 +11057,7 @@
       "summaryEn": "v3.79.0 Release Notes Co-Authored-By: Claude Sonnet 4.6 (1M context) noreply@anthropic.com 🔮 View transcript: https://agentlogs.beatrixwoo.workers.dev/s/i90f8jfxjc88hit3bs8v2e2k chore(cli): bump CLI ",
       "lang": "en",
       "publishedAt": "2026-04-16T19:26:10.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "cline",
         "release"
@@ -11000,7 +11324,7 @@
       "summaryEn": "Cursor can now respond by creating interactive canvases .",
       "lang": "en",
       "publishedAt": "2026-04-15T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "cursor"
@@ -11068,7 +11392,7 @@
       "summaryEn": "We've shipped quality-of-life improvements to the Cursor CLI to make working with agents in the terminal more delightful.",
       "lang": "en",
       "publishedAt": "2026-04-14T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "cursor"
@@ -11145,7 +11469,7 @@
       "summaryEn": "This release introduces improvements to our Agents Window interface as part of Cursor 3.",
       "lang": "en",
       "publishedAt": "2026-04-13T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "cursor",
@@ -11198,7 +11522,7 @@
       "summaryEn": "Added Add a dedicated \"Spend Limit Reached\" error UI when spend caps are hit Docs updates Fixed Show actual read_file line ranges in chat UI Full Changelog : v2.13.0-cli...v3.78.0",
       "lang": "en",
       "publishedAt": "2026-04-10T20:40:53.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "cline",
         "release"
@@ -11228,7 +11552,7 @@
       "summaryEn": "Update changelog files for release Version bump for release Update cli/CHANGELOG.md Co-authored-by: greptile-apps[bot] &lt;165735046+greptile-apps[bot]@users.noreply.github.com&gt; Co-authored-by: gre",
       "lang": "en",
       "publishedAt": "2026-04-10T19:48:17.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "cline",
         "release"
@@ -11311,7 +11635,7 @@
       "summaryEn": "This release introduces updates to Bugbot including the ability to self-improve in real time, MCP support, improvements to Bugbot Autofix, and the highest resolution rate to date.",
       "lang": "en",
       "publishedAt": "2026-04-08T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "cursor",
@@ -11482,7 +11806,7 @@
       "summaryEn": "Cursor 3 is now available.",
       "lang": "en",
       "publishedAt": "2026-04-02T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "cursor"
@@ -12020,7 +12344,7 @@
       "summaryEn": "Cursor now supports self-hosted cloud agents that keep your code and tool execution entirely in your own network.",
       "lang": "en",
       "publishedAt": "2026-03-25T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "cursor"
@@ -12148,7 +12472,7 @@
       "summaryEn": "Composer 2 is now available in Cursor: frontier-level coding performance with strong results on challenging coding tasks.",
       "lang": "en",
       "publishedAt": "2026-03-19T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "cursor"
@@ -12276,7 +12600,7 @@
       "summaryEn": "We've added more than 30 new plugins from partners such as Atlassian, Datadog, GitLab, Glean, Hugging Face, monday.com, and PlanetScale. Cursor can now read from, write to, and take actions across mor",
       "lang": "en",
       "publishedAt": "2026-03-11T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "changelog",
         "cursor"
@@ -12298,7 +12622,7 @@
       "summaryEn": "While AI accelerates initial code generation and reduces start-up friction, it introduces hidden taxes like heavy verification overhead, skill degradation, and integration challenges. Leaders must ada",
       "lang": "en",
       "publishedAt": "2026-03-10T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "devops",
         "dora",
@@ -12496,7 +12820,7 @@
       "summaryEn": "While AI makes challenging projects feel more accessible, it also sparks anxiety about becoming too dependent. Our research with UC Berkeley students found that students are establishing guardrails fo",
       "lang": "en",
       "publishedAt": "2026-02-17T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "devops",
         "dora",
@@ -12610,7 +12934,7 @@
       "summaryEn": "The DevOps Dozen Awards are an annual program organized by the Techstrong Group. They honor the most influential individuals, innovative tools, and impactful companies within the DevOps community. DOR",
       "lang": "en",
       "publishedAt": "2026-01-15T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "devops",
         "dora",
@@ -12664,7 +12988,7 @@
       "summaryEn": "A look back at the highlights and community contributions from 2025.",
       "lang": "en",
       "publishedAt": "2026-01-07T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "devops",
         "dora",
@@ -12687,7 +13011,7 @@
       "summaryEn": "DORA&rsquo;s software delivery performance metrics have evolved over time to reflect the changing technology landscape. Learn about the transition from the four keys to the current five-metric model.",
       "lang": "en",
       "publishedAt": "2026-01-02T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "devops",
         "dora",
@@ -12741,7 +13065,7 @@
       "summaryEn": "While critics worry students use AI to cheat, our research reveals something different: students are using AI to learn. At UC Berkeley, many students in technical fields are using AI to teach them rat",
       "lang": "en",
       "publishedAt": "2025-12-12T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "devops",
         "dora",
@@ -12795,7 +13119,7 @@
       "summaryEn": "As AI decouples roles from tasks, traditional developer personas are becoming less relevant. This article introduces the &ldquo;Builder Mindset&rdquo; framework, identifying four core intents—Founder,",
       "lang": "en",
       "publishedAt": "2025-10-17T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "devops",
         "dora",
@@ -12818,7 +13142,7 @@
       "summaryEn": "What's Changed Fix docs dotnet core typo by @lach-g in #6950 Fix loading streaming Bedrock response with tool usage with empty argument by @pawel-dabro in #6979 Support linear memory in RedisMemory by",
       "lang": "en",
       "publishedAt": "2025-09-30T06:18:26.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "autogen",
@@ -12880,7 +13204,7 @@
       "summaryEn": "While AI coding assistants excel at mechanical tasks, research with UC Berkeley students reveals they can introduce friction and cognitive load during complex, interpretive work. By customizing AI too",
       "lang": "en",
       "publishedAt": "2025-09-23T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "devops",
         "dora",
@@ -13027,7 +13351,7 @@
       "summaryEn": "What's Changed Update docs for 0.7.3 by @ekzhu in #6948 Update readme with agent-as-tool by @ekzhu in #6949 Fix Redis Deserialization Error by @BenConstable9 in #6952 Redis Doesn't Support Streaming b",
       "lang": "en",
       "publishedAt": "2025-08-19T18:50:49.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "autogen",
@@ -13058,7 +13382,7 @@
       "summaryEn": "What's Changed Update website for 0.7.2 by @ekzhu in #6902 Typo in docs for 'NoOpTracerProvider' by @nicsuzor in #6915 Fix MCP example in readme by @ekzhu in #6919 Extend pydantic model capability for",
       "lang": "en",
       "publishedAt": "2025-08-19T08:07:55.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "autogen",
@@ -13361,7 +13685,7 @@
       "summaryEn": "What's Changed Update website 0.7.1 by @ekzhu in #6869 Update OpenAIAssistantAgent doc by @ekzhu in #6870 Update 0.7.1 website ref by @ekzhu in #6871 Remove assistant related methods from OpenAIAgent ",
       "lang": "en",
       "publishedAt": "2025-08-07T00:29:24.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "autogen",
@@ -13392,7 +13716,7 @@
       "summaryEn": "Measuring software development effectiveness requires choosing the right framework to match your organizational goals. This guide explores popular frameworks like SPACE, DevEx, and DORA, offering prac",
       "lang": "en",
       "publishedAt": "2025-08-06T00:00:00.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "devops",
         "dora",
@@ -13416,7 +13740,7 @@
       "summaryEn": "Update OpenAIAssistantAgent doc ( #6870 )",
       "lang": "en",
       "publishedAt": "2025-07-28T08:52:10.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "autogen",
@@ -13447,7 +13771,7 @@
       "summaryEn": "What's New OpenAIAgent supports all built-in tools Feat/OpenAI agent builtin tools 6657 by @tejas-dharani in #6671 Support nested Team as a participant in a Team Supporting Teams as Participants in a ",
       "lang": "en",
       "publishedAt": "2025-07-28T08:43:20.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "autogen",
@@ -13478,7 +13802,7 @@
       "summaryEn": "Update version to 0.7.0 ( #6865 )",
       "lang": "en",
       "publishedAt": "2025-07-28T06:23:50.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "autogen",
@@ -13509,7 +13833,7 @@
       "summaryEn": "Setup publishing for pyautogen package ( #6813 )",
       "lang": "en",
       "publishedAt": "2025-07-15T00:34:21.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "autogen",
@@ -13540,7 +13864,7 @@
       "summaryEn": "What's New More helps from @copilot-swe-agent for this release. Improvements to GraphFlow Now it behaves the same way as RoundRobinGroupChat , SelectorGroupChat and others after termination condition ",
       "lang": "en",
       "publishedAt": "2025-07-09T17:52:40.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "autogen",
@@ -13571,7 +13895,7 @@
       "summaryEn": "What's New Streaming Tools This release introduces streaming tools and updates AgentTool and TeamTool to support run_json_stream . The new interface exposes the inner events of tools when calling run_",
       "lang": "en",
       "publishedAt": "2025-07-01T00:24:29.000Z",
-      "collectedAt": "2026-05-08T03:00:54.543Z",
+      "collectedAt": "2026-05-08T07:00:54.539Z",
       "tags": [
         "agent",
         "autogen",
@@ -13675,271 +13999,6 @@
       ],
       "category": "claude",
       "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "8c44c9734fa0d76a",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/finance-agents",
-      "title": "Finance Agents",
-      "titleJa": "",
-      "titleEn": "Finance Agents",
-      "summaryJa": "",
-      "summaryEn": "",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "anthropic",
-        "claude"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "e8223e8040f977e4",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/enterprise-ai-services-company",
-      "title": "Enterprise Ai Services Company",
-      "titleJa": "",
-      "titleEn": "Enterprise Ai Services Company",
-      "summaryJa": "",
-      "summaryEn": "",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "anthropic",
-        "claude",
-        "enterprise"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "48eb219e352cf975",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/claude-for-creative-work",
-      "title": "Claude For Creative Work",
-      "titleJa": "",
-      "titleEn": "Claude For Creative Work",
-      "summaryJa": "",
-      "summaryEn": "",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "anthropic",
-        "claude"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "3f498d8acba83a77",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/theo-hourmouzis-general-manager-australia-new-zealand",
-      "title": "Theo Hourmouzis General Manager Australia New Zealand",
-      "titleJa": "",
-      "titleEn": "Theo Hourmouzis General Manager Australia New Zealand",
-      "summaryJa": "",
-      "summaryEn": "",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "anthropic",
-        "claude"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "0ea0172c82ae4c12",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/election-safeguards-update",
-      "title": "Election Safeguards Update",
-      "titleJa": "",
-      "titleEn": "Election Safeguards Update",
-      "summaryJa": "",
-      "summaryEn": "",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "anthropic",
-        "claude"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "69350ca434965bf4",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/anthropic-nec",
-      "title": "Anthropic Nec",
-      "titleJa": "",
-      "titleEn": "Anthropic Nec",
-      "summaryJa": "",
-      "summaryEn": "",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "anthropic",
-        "claude"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "86c34f3a7d60e9a2",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/anthropic-amazon-compute",
-      "title": "Anthropic Amazon Compute",
-      "titleJa": "",
-      "titleEn": "Anthropic Amazon Compute",
-      "summaryJa": "",
-      "summaryEn": "",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "anthropic",
-        "claude"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "ab4417166ac4ca4d",
-      "source": "vscode-updates",
-      "sourceType": "release",
-      "url": "https://code.visualstudio.com/updates/v1_120",
-      "title": "Visual Studio Code 1.120 Release Notes",
-      "titleJa": "",
-      "titleEn": "Visual Studio Code 1.120 Release Notes",
-      "summaryJa": "",
-      "summaryEn": "Monthly release notes for VS Code 1.120.",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "release",
-        "vscode"
-      ],
-      "category": "vscode",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "42090b9fe5456feb",
-      "source": "vscode-updates",
-      "sourceType": "release",
-      "url": "https://code.visualstudio.com/updates/v1_119",
-      "title": "Visual Studio Code 1.119 Release Notes",
-      "titleJa": "",
-      "titleEn": "Visual Studio Code 1.119 Release Notes",
-      "summaryJa": "",
-      "summaryEn": "Monthly release notes for VS Code 1.119.",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "release",
-        "vscode"
-      ],
-      "category": "vscode",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "0f1e75c5cbb6fdef",
-      "source": "vscode-updates",
-      "sourceType": "release",
-      "url": "https://code.visualstudio.com/updates/v1_118",
-      "title": "Visual Studio Code 1.118 Release Notes",
-      "titleJa": "",
-      "titleEn": "Visual Studio Code 1.118 Release Notes",
-      "summaryJa": "",
-      "summaryEn": "Monthly release notes for VS Code 1.118.",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "release",
-        "vscode"
-      ],
-      "category": "vscode",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "585b1b420e4c1d30",
-      "source": "vscode-updates",
-      "sourceType": "release",
-      "url": "https://code.visualstudio.com/updates/v1_117",
-      "title": "Visual Studio Code 1.117 Release Notes",
-      "titleJa": "",
-      "titleEn": "Visual Studio Code 1.117 Release Notes",
-      "summaryJa": "",
-      "summaryEn": "Monthly release notes for VS Code 1.117.",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "release",
-        "vscode"
-      ],
-      "category": "vscode",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot"
-    },
-    {
-      "id": "6c7717daecb83c42",
-      "source": "vscode-updates",
-      "sourceType": "release",
-      "url": "https://code.visualstudio.com/updates/v1_116",
-      "title": "Visual Studio Code 1.116 Release Notes",
-      "titleJa": "",
-      "titleEn": "Visual Studio Code 1.116 Release Notes",
-      "summaryJa": "",
-      "summaryEn": "Monthly release notes for VS Code 1.116.",
-      "lang": "en",
-      "publishedAt": null,
-      "collectedAt": "2026-05-08T04:00:54.529Z",
-      "tags": [
-        "release",
-        "vscode"
-      ],
-      "category": "vscode",
-      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot"
     }

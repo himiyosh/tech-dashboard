@@ -105,6 +105,18 @@
 - **対策**: CI、pre-push、`npm run test:all` に `npm run build:web` を追加し、Pages と同じ build command を必須ゲート化する。
 - **教訓**: デプロイ先が build を行う構成では、テストとは別に本番 build parity を CI に含める。
 
+### LL-008: 長文生成 backfill は timeout / concurrency / model fallback を用意する
+- **事象**: 全記事の `bodyJa` / `bodyEn` を長文生成する際、Copilot hosted model の一部がレスポンスを返さず処理が停止した。
+- **根本原因**: 長文 JSON 生成はモデル・負荷・出力長の影響を受けやすく、単発 request に timeout が無いと bulk backfill 全体が詰まる。
+- **対策**: `SUMMARIZE_TIMEOUT_MS` と `SUMMARIZE_CONCURRENCY` で request timeout / 並列度を制御し、必要に応じて `SUMMARIZE_MODEL` を切り替える。
+- **教訓**: bulk 生成タスクは「生成品質」だけでなく「失敗しても再開できる運用性」を先に組み込む。
+
+### LL-009: 巨大 `data/index.json` の merge conflict は構造マージと単一 backfill で処理する
+- **事象**: `main` 側の最新 worker run と本文 backfill branch の `data/index.json` が競合し、`git show :3:data/index.json` を Node の既定 buffer で読むと `ENOBUFS` になった。また、resummarize を重複起動すると同じ JSON への並行書き込みリスクが発生した。
+- **根本原因**: `data/index.json` は巨大化しやすく、行ベースの conflict 解消や既定 buffer のままの一括読み込みに弱い。backfill script は完了時にまとめて JSON を書くため、並行実行に向かない。
+- **対策**: `execFileSync` で stage blob を読む場合は `maxBuffer` を明示する。解決は URL/ID ベースの構造マージで行い、backfill は `pgrep -af 'resummarize|tsx'` で重複が無いことを確認してから小 batch で単一実行する。
+- **教訓**: data merge 中は「最新 main の entries を保持し、本文・要約だけを構造的に移植する」。生成処理は複数本走らせない。
+
 ---
 
 ## 🔄 自己学習ハーネス手順

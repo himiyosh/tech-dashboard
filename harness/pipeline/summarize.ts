@@ -17,6 +17,8 @@
  *                          他例: "claude-opus-4.6" / "claude-sonnet-4.5" / "gpt-4o"
  *   SUMMARIZE_ENDPOINT   … 既定 "https://api.githubcopilot.com/chat/completions"
  *   SUMMARIZE_MAX_NEW    … 1 ラン当たりの新規要約上限 (既定 15)
+ *   SUMMARIZE_TIMEOUT_MS … Copilot API 呼び出しのタイムアウト (既定 180000)
+ *   SUMMARIZE_CONCURRENCY … Copilot API 呼び出しの並列数 (既定 4)
  *
  * キャッシュ: data/_summary-cache.json (URL キー)
  */
@@ -43,7 +45,8 @@ const ENDPOINT =
   process.env.SUMMARIZE_ENDPOINT ??
   "https://api.githubcopilot.com/chat/completions";
 const MAX_NEW = Number(process.env.SUMMARIZE_MAX_NEW ?? "15");
-const CONCURRENCY = 4;
+const REQUEST_TIMEOUT_MS = Number(process.env.SUMMARIZE_TIMEOUT_MS ?? "180000");
+const CONCURRENCY = Number(process.env.SUMMARIZE_CONCURRENCY ?? "4");
 
 // Copilot Chat API が期待する整合ヘッダ。VS Code 拡張と同一構成を模倣する。
 const COPILOT_HEADERS = {
@@ -107,34 +110,47 @@ async function callCopilot(
   entry: NormalizedEntry,
 ): Promise<CacheEntry> {
   const prompt = buildPrompt(entry);
-  const res = await fetch(ENDPOINT, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${token}`,
-      ...COPILOT_HEADERS,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      temperature: 0.2,
-      max_tokens: 1800,
-      messages: [
-        {
-          role: "system",
-          content:
-            "あなたは技術記事を日本語と英語の両方で要約するエディターです。指示された JSON 形式のみを返してください。You are an editor who summarises tech articles in both Japanese and English. Return only the requested JSON.",
-        },
-        { role: "user", content: prompt },
-      ],
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`copilot ${res.status}: ${body.slice(0, 200)}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let data: { choices?: Array<{ message?: { content?: string } }> };
+  try {
+    const res = await fetch(ENDPOINT, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+        ...COPILOT_HEADERS,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        temperature: 0.2,
+        max_tokens: 1800,
+        messages: [
+          {
+            role: "system",
+            content:
+              "あなたは技術記事を日本語と英語の両方で要約するエディターです。指示された JSON 形式のみを返してください。You are an editor who summarises tech articles in both Japanese and English. Return only the requested JSON.",
+          },
+          { role: "user", content: prompt },
+        ],
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`copilot ${res.status}: ${body.slice(0, 200)}`);
+    }
+    data = (await res.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+  } catch (err) {
+    if (controller.signal.aborted) {
+      throw new Error(`copilot request timeout after ${REQUEST_TIMEOUT_MS}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
-  const data = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
   const text = data.choices?.[0]?.message?.content ?? "";
   const parsed = parseModelResponse(text);
   return {

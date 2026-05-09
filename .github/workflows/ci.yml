@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   unit:
-    name: unit + typecheck
+    name: unit + typecheck + web build
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -39,6 +39,9 @@ jobs:
 
       - name: Unit tests (Vitest)
         run: npm test
+
+      - name: Web build (Cloudflare Pages parity)
+        run: npm run build:web
 
   e2e:
     name: e2e (Playwright)

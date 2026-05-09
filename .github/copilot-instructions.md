@@ -47,6 +47,11 @@
   - 型のみ (`import type`) は許可。
 - 必要な metadata は `web/src/lib/*.ts` に静的データとして複製する（例: `web/src/lib/source-meta.ts`）。
 
+### R-006: CI / pre-push は Cloudflare Pages build を必ず検知する
+- `.github/workflows/ci.yml` はデプロイを行わないが、`npm --prefix web run build` 相当を必須 step に含める。
+- `scripts/git-hooks/pre-push` は `SKIP_WEB_BUILD=1` が明示された場合を除き、push 前に `npm run build:web` を実行する。
+- `npm run test:all` は `typecheck → unit → web build → e2e` の一括ゲートとする。
+
 ---
 
 ## 🧪 完了ゲート (LL Hook)
@@ -93,6 +98,12 @@
 ### LL-006: 同名 project の subdomain は再利用される
 - **事象**: 旧 `tech-dashboard` を削除し同名で再作成したところ、subdomain は `tech-dashboard-6a7.pages.dev` が再付与された。
 - **教訓**: 同名で作り直しても旧 pages.dev URL は維持されるため、外部リンクの差し替えは不要。
+
+### LL-007: テスト PASS と Cloudflare Pages build PASS は別ゲート
+- **事象**: Unit / E2E が通っていても CI / pre-push が `npm --prefix web run build` を実行していないと、Cloudflare Pages build 失敗を事前検知できない。
+- **根本原因**: E2E は dev server 経由で動くため、Astro static build + Pagefind の失敗を完全には代替しない。
+- **対策**: CI、pre-push、`npm run test:all` に `npm run build:web` を追加し、Pages と同じ build command を必須ゲート化する。
+- **教訓**: デプロイ先が build を行う構成では、テストとは別に本番 build parity を CI に含める。
 
 ---
 

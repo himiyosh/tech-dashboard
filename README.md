@@ -86,7 +86,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 ```bash
 # ============ 初回セットアップ ============
 npm install                  # ルート依存
-bash scripts/install-hooks.sh # pre-commit / pre-push hook (typecheck / test / worker 自動 deploy) を有効化
+bash scripts/install-hooks.sh # pre-commit / pre-push hook (typecheck / test / web build / worker 自動 deploy) を有効化
 
 # ============ ハーネス (ルート) ============
 npm run typecheck            # 型チェック
@@ -110,18 +110,20 @@ npx tsx .claude/skills/quality-audit/run.ts
 
 | 層 | コマンド | 内容 | 速度 |
 |---|---|---|---|
+| Typecheck | `npm run typecheck` | TypeScript 型チェック | 速い |
 | Unit | `npm test` | Vitest による関数単位の検証 (要約 JSON パース、Web ロジック、`data/index.json` スキーマ) | 速い (~1s) |
+| Web build | `npm run build:web` | Cloudflare Pages と同じ `web` build (`astro build && pagefind --site dist`) を検証 | 中程度 |
 | E2E | `npm run test:e2e` | Playwright (Chromium) でトップ表示・記事詳細・言語切替を検証 | 中程度 (~30s + build) |
-| 全部 | `npm run test:all` | Unit → E2E をまとめて実行 | |
+| 全部 | `npm run test:all` | Typecheck → Unit → Web build → E2E をまとめて実行 | |
 
 Git hook は `bash scripts/install-hooks.sh` で 1 回有効化します。
 
 | Hook | 実行内容 | スキップ |
 |---|---|---|
 | `pre-commit` | `.ts/.tsx` がステージされていれば `npm run typecheck` | `SKIP_TYPECHECK=1 git commit` |
-| `pre-push` | `npm test` (unit) → `npm run test:e2e` → 必要なら `wrangler deploy` | `SKIP_TESTS=1` / `SKIP_E2E=1` / `SKIP_WORKER_DEPLOY=1` |
+| `pre-push` | `npm test` (unit) → `npm run build:web` → `npm run test:e2e` → 必要なら `wrangler deploy` | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1` / `SKIP_WORKER_DEPLOY=1` |
 
-CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **テスト目的のみ**。push / PR ごとに `typecheck + npm test` (unit) を実行します。E2E は重いのでローカル pre-push が担当する分業にしています。
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的のみ**で、デプロイは行いません。push / PR ごとに `typecheck + npm test + npm run build:web + npm run test:e2e` を実行し、Cloudflare Pages の build 失敗を事前に検知します。
 
 ### 環境変数 (要約パイプライン)
 

@@ -11,11 +11,12 @@
     "auth:rotate": "bash scripts/setup-copilot-auth.sh --rotate",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
+    "build:web": "npm --prefix web run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "test:all": "npm run test && npm run test:e2e"
+    "test:all": "npm run typecheck && npm test && npm run build:web && npm run test:e2e"
   },
   "engines": {
     "node": ">=20"

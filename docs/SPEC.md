@@ -49,7 +49,7 @@
 | **KV `SUMMARY_CACHE`** | Cloudflare KV | `cache.v1` (要約) と `og.v1` (画像キャッシュ) の二つの単一ブロブを管理 |
 | **harness (ローカル実行版)** | Node.js 22 / TSX | `npm run collect` で同ロジックをローカル実行 (デバッグ用) |
 | **web (Astro)** | Astro 5 + Pagefind | SSG 静的サイト。`data/index.json` をビルド時に読んで全画面生成 |
-| **pre-push hook** | `scripts/git-hooks/pre-push` | `main` への push に worker/ 差分があれば `wrangler deploy` を自動実行 |
+| **pre-push hook** | `scripts/git-hooks/pre-push` | ローカル品質ゲートを実行し、`main` への push に worker/ 差分があれば `wrangler deploy` を自動実行 |
 | **MCP config** | VS Code Copilot Chat | `.vscode/mcp.json` で CF 公式 MCP 5 種を接続 |
 
 ### 2.2 定期実行
@@ -109,7 +109,7 @@ interface WorkerHealth {
 | データ収集 + 要約 + og:image | Cloudflare Worker (cron) | 毎時 (4 batch ローテーション) |
 | GitHub commit | Worker → GitHub Contents API | 差分時のみ |
 | サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
-| Worker コード deploy | `scripts/git-hooks/pre-push` | `main` push に worker/ 差分があれば自動 |
+| ローカル品質ゲート + Worker コード deploy | `scripts/git-hooks/pre-push` | push 前に unit / web build / E2E を実行し、`main` push に worker/ 差分があれば自動 deploy |
 | ヘルス監視 | `data/index.json#health` + `/status` ページ | 実行ごと記録、サイト訪問時に確認 |
 
 **残る手動運用**: 年 1 回の PAT 更新 (`wrangler secret put COPILOT_PAT` / `GH_TOKEN`)。失効時は `/status` の Worker Health が `summarize disabled` に変わるので即気付ける。

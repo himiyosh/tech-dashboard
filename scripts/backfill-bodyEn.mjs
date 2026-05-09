@@ -17,7 +17,8 @@ const ENDPOINT =
   process.env.SUMMARIZE_ENDPOINT ??
   "https://api.githubcopilot.com/chat/completions";
 const MAX_NEW = Number(process.env.BACKFILL_MAX ?? "30");
-const CONCURRENCY = 4;
+const REQUEST_TIMEOUT_MS = Number(process.env.SUMMARIZE_TIMEOUT_MS ?? "180000");
+const CONCURRENCY = Number(process.env.SUMMARIZE_CONCURRENCY ?? "4");
 
 const COPILOT_HEADERS = {
   "copilot-integration-id": "vscode-chat",
@@ -72,32 +73,45 @@ function buildPrompt(e) {
 }
 
 async function callCopilot(token, entry) {
-  const res = await fetch(ENDPOINT, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${token}`,
-      ...COPILOT_HEADERS,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      temperature: 0.3,
-      max_tokens: 2000,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a professional English-language tech editor. Return only the requested JSON.",
-        },
-        { role: "user", content: buildPrompt(entry) },
-      ],
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`copilot ${res.status}: ${body.slice(0, 200)}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let data;
+  try {
+    const res = await fetch(ENDPOINT, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+        ...COPILOT_HEADERS,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        temperature: 0.3,
+        max_tokens: 2000,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a professional English-language tech editor. Return only the requested JSON.",
+          },
+          { role: "user", content: buildPrompt(entry) },
+        ],
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`copilot ${res.status}: ${body.slice(0, 200)}`);
+    }
+    data = await res.json();
+  } catch (err) {
+    if (controller.signal.aborted) {
+      throw new Error(`copilot request timeout after ${REQUEST_TIMEOUT_MS}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
-  const data = await res.json();
   const text = data.choices?.[0]?.message?.content ?? "";
   const m = text.match(/\{[\s\S]*\}/);
   if (!m) throw new Error("no JSON in response");

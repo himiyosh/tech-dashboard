@@ -105,6 +105,12 @@
 - **対策**: CI、pre-push、`npm run test:all` に `npm run build:web` を追加し、Pages と同じ build command を必須ゲート化する。
 - **教訓**: デプロイ先が build を行う構成では、テストとは別に本番 build parity を CI に含める。
 
+### LL-008: 長文生成 backfill は timeout / concurrency / model fallback を用意する
+- **事象**: 全記事の `bodyJa` / `bodyEn` を長文生成する際、Copilot hosted model の一部がレスポンスを返さず処理が停止した。
+- **根本原因**: 長文 JSON 生成はモデル・負荷・出力長の影響を受けやすく、単発 request に timeout が無いと bulk backfill 全体が詰まる。
+- **対策**: `SUMMARIZE_TIMEOUT_MS` と `SUMMARIZE_CONCURRENCY` で request timeout / 並列度を制御し、必要に応じて `SUMMARIZE_MODEL` を切り替える。
+- **教訓**: bulk 生成タスクは「生成品質」だけでなく「失敗しても再開できる運用性」を先に組み込む。
+
 ---
 
 ## 🔄 自己学習ハーネス手順

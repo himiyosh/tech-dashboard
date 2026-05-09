@@ -52,6 +52,11 @@
 - `scripts/git-hooks/pre-push` は `SKIP_WEB_BUILD=1` が明示された場合を除き、push 前に `npm run build:web` を実行する。
 - `npm run test:all` は `typecheck → unit → web build → e2e` の一括ゲートとする。
 
+### R-007: 記事要約 / 補完 backfill のモデルは Opus 4.7 または GPT-5.5 に限定する
+- 通常要約も補完/backfill も `SUMMARIZE_MODEL` は `claude-opus-4.7` または `gpt-5.5` のみ使用する。
+- `gpt-4o` は記事要約 / 補完 backfill の代替モデルとして使用しない。
+- 長文生成が詰まる場合は、max_tokens / timeout / concurrency を調整し、それでも必要な場合のみ `gpt-5.5` へ切り替える。`gpt-5.5` は Copilot endpoint で利用可能か小 batch で事前確認する。
+
 ---
 
 ## 🧪 完了ゲート (LL Hook)
@@ -108,7 +113,7 @@
 ### LL-008: 長文生成 backfill は timeout / concurrency / model fallback を用意する
 - **事象**: 全記事の `bodyJa` / `bodyEn` を長文生成する際、Copilot hosted model の一部がレスポンスを返さず処理が停止した。
 - **根本原因**: 長文 JSON 生成はモデル・負荷・出力長の影響を受けやすく、単発 request に timeout が無いと bulk backfill 全体が詰まる。
-- **対策**: `SUMMARIZE_TIMEOUT_MS` と `SUMMARIZE_CONCURRENCY` で request timeout / 並列度を制御し、必要に応じて `SUMMARIZE_MODEL` を切り替える。
+- **対策**: `SUMMARIZE_MAX_TOKENS`、`SUMMARIZE_TIMEOUT_MS`、`SUMMARIZE_CONCURRENCY` で出力長 / request timeout / 並列度を制御し、必要に応じて `SUMMARIZE_MODEL` を `claude-opus-4.7` から `gpt-5.5` に切り替える。
 - **教訓**: bulk 生成タスクは「生成品質」だけでなく「失敗しても再開できる運用性」を先に組み込む。
 
 ### LL-009: 巨大 `data/index.json` の merge conflict は構造マージと単一 backfill で処理する
@@ -116,6 +121,24 @@
 - **根本原因**: `data/index.json` は巨大化しやすく、行ベースの conflict 解消や既定 buffer のままの一括読み込みに弱い。backfill script は完了時にまとめて JSON を書くため、並行実行に向かない。
 - **対策**: `execFileSync` で stage blob を読む場合は `maxBuffer` を明示する。解決は URL/ID ベースの構造マージで行い、backfill は `pgrep -af 'resummarize|tsx'` で重複が無いことを確認してから小 batch で単一実行する。
 - **教訓**: data merge 中は「最新 main の entries を保持し、本文・要約だけを構造的に移植する」。生成処理は複数本走らせない。
+
+### LL-010: 許可モデルでも Copilot endpoint の利用可否を小 batch で確認する
+- **事象**: `SUMMARIZE_MODEL=gpt-5.5` で補完 backfill を再実行したところ、Copilot Chat Completions endpoint が `unsupported_api_for_model` を返した。
+- **根本原因**: 許可モデルであっても、現在使っている endpoint / アカウントで利用可能とは限らない。
+- **対策**: 大量 backfill 前に `SUMMARIZE_MAX_NEW=1` の小 batch でモデルアクセスを smoke test する。`gpt-5.5` が使えない場合は許可モデル内の `claude-opus-4.7` で継続する。
+- **教訓**: モデルポリシーと実 endpoint の対応状況は別ゲート。bulk 実行前に 1 件で確認する。
+
+### LL-011: secret を読む確認は subagent に委譲しない
+- **事象**: Cloudflare deployment 確認で「token を出さない」と指示したにもかかわらず、実行 subagent が Wrangler config の `oauth_token` 行を出力した。
+- **根本原因**: secret を含む file / command を自律実行 subagent に任せると、意図しない debug output が露出し得る。
+- **対策**: secret を読む必要がある command は agent 本体で直接実行し、stdout には status / id 等の非 secret のみ出す。可能なら Wrangler CLI や公開 URL check を優先し、`cat` / `grep` で token 行を表示しない。
+- **教訓**: R-003 は tool 選択にも適用する。secret を含む設定 file は「読める」ではなく「表示しない」まで確認してから実行する。
+
+### LL-012: backfill は最新 `origin/main` の data を基準に実行する
+- **事象**: Opus 4.7 で 668 件を backfill 済みだったが、その後 `main` の worker run が 769 件の `data/index.json` を deploy し、本文未生成の記事で placeholder が再表示された。
+- **根本原因**: backfill 済み branch が `origin/main` から遅れており、最新 worker run の entries に対して本文補完を実行していなかった。
+- **対策**: backfill / deploy 前に必ず `git fetch origin main` と `git rev-list --left-right --count HEAD...origin/main` を確認し、behind があれば最新 `origin/main:data/index.json` を取り込んでから再生成する。完了判定は `data/index.json` と cache の両方で `missSummary=0`、`missBody=0`、`noCache=0`、`incompleteCache=0` を確認する。
+- **教訓**: data worker が頻繁に `main` を進めるリポジトリでは、「ローカルで backfill 完了」だけでは不十分。公開直前の base commit と本番 data の鮮度を同じゲートに含める。
 
 ---
 

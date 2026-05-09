@@ -134,9 +134,11 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的の�
 COPILOT_PAT=ghp_...               # PAT → 一時トークン交換を自動で行う
 COPILOT_TOKEN=tid=...              # 既に交換済みの一時トークンを直接注入する場合
 
-# モデル切替
+# モデル切替 (補完/backfill でも claude-opus-4.7 / gpt-5.5 のみ許可)
 SUMMARIZE_MODEL=claude-opus-4.7    # 既定
+# SUMMARIZE_MODEL=gpt-5.5          # Copilot endpoint で利用可能な環境のみ
 SUMMARIZE_MAX_NEW=15               # 1 ラン当たりの新規要約上限
+SUMMARIZE_MAX_TOKENS=6000          # 本文込み JSON 生成の最大出力 token 数
 ```
 
 > どのトークンも無ければ要約フェーズは自動でスキップされます (ローカル dev を妨げない設計)。

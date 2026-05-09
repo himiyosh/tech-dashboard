@@ -5,7 +5,11 @@
  * AI モデルへのネットワーク呼び出しは一切行わない。
  */
 import { describe, it, expect } from "vitest";
-import { parseModelResponse } from "../harness/pipeline/summarize.ts";
+import {
+  isCompleteSummaryResponse,
+  parseModelResponse,
+  resolveSummarizeModel,
+} from "../harness/pipeline/summarize.ts";
 
 describe("parseModelResponse", () => {
   it("正常な JSON を正しくパースする", () => {
@@ -72,5 +76,39 @@ describe("parseModelResponse", () => {
   it("bodyEn が欠落している場合は空文字列を返す", () => {
     const text = JSON.stringify({ titleJa: "T", summaryJa: "S", summaryEn: "S", bodyJa: "B", importance: 1, extraTags: [] });
     expect(parseModelResponse(text).bodyEn).toBe("");
+  });
+});
+
+describe("resolveSummarizeModel", () => {
+  it("補完/backfill で許可されたモデルを受け付ける", () => {
+    expect(resolveSummarizeModel("claude-opus-4.7")).toBe("claude-opus-4.7");
+    expect(resolveSummarizeModel("gpt-5.5")).toBe("gpt-5.5");
+  });
+
+  it("補完/backfill で許可されていないモデルは拒否する", () => {
+    expect(() => resolveSummarizeModel("gpt-4o")).toThrow(
+      /Unsupported SUMMARIZE_MODEL/,
+    );
+  });
+});
+
+describe("isCompleteSummaryResponse", () => {
+  it("本文込みの完全な応答だけを成功扱いにする", () => {
+    const parsed = parseModelResponse(
+      JSON.stringify({
+        titleJa: "タイトル",
+        summaryJa: "日本語要約",
+        summaryEn: "English summary.",
+        bodyJa: "日本語本文",
+        bodyEn: "English body.",
+        importance: 2,
+        extraTags: [],
+      }),
+    );
+
+    expect(isCompleteSummaryResponse(parsed)).toBe(true);
+    expect(isCompleteSummaryResponse(parseModelResponse("not json"))).toBe(
+      false,
+    );
   });
 });

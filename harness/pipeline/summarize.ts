@@ -1,7 +1,7 @@
 /**
  * summarize.ts — GitHub Copilot Enterprise (Chat Completions) による日本語要約.
  *
- * **Copilot Enterprise 前提**。Claude Opus 4.6 / 4.7 など、Copilot で
+ * **Copilot Enterprise 前提**。Claude Opus 4.7 / GPT-5.5 など、Copilot で
  * 提供されているモデルを直接呼び出す。GitHub Models (別課金) とは別物。
  *
  * 認証フロー:
@@ -14,9 +14,10 @@
  *   COPILOT_TOKEN        … 一時トークン (交換済み)。CI 等で直接注入する場合
  *   COPILOT_PAT          … PAT (classic でよい)。上記より優先度低
  *   SUMMARIZE_MODEL      … 既定 "claude-opus-4.7"
- *                          他例: "claude-opus-4.6" / "claude-sonnet-4.5" / "gpt-4o"
+ *                          補完/backfill も "claude-opus-4.7" / "gpt-5.5" のみ許可
  *   SUMMARIZE_ENDPOINT   … 既定 "https://api.githubcopilot.com/chat/completions"
  *   SUMMARIZE_MAX_NEW    … 1 ラン当たりの新規要約上限 (既定 15)
+ *   SUMMARIZE_MAX_TOKENS … Copilot API の最大出力 token 数 (既定 6000)
  *   SUMMARIZE_TIMEOUT_MS … Copilot API 呼び出しのタイムアウト (既定 180000)
  *   SUMMARIZE_CONCURRENCY … Copilot API 呼び出しの並列数 (既定 4)
  *
@@ -40,11 +41,27 @@ interface CacheEntry {
 
 type Cache = Record<string, CacheEntry>;
 
-const MODEL = process.env.SUMMARIZE_MODEL ?? "claude-opus-4.7";
+const DEFAULT_SUMMARIZE_MODEL = "claude-opus-4.7";
+const ALLOWED_SUMMARIZE_MODELS = new Set([DEFAULT_SUMMARIZE_MODEL, "gpt-5.5"]);
+
+export function resolveSummarizeModel(
+  model = process.env.SUMMARIZE_MODEL,
+): string {
+  const selected = model ?? DEFAULT_SUMMARIZE_MODEL;
+  if (!ALLOWED_SUMMARIZE_MODELS.has(selected)) {
+    throw new Error(
+      `Unsupported SUMMARIZE_MODEL="${selected}". Use claude-opus-4.7 or gpt-5.5 for article summarization and backfill.`,
+    );
+  }
+  return selected;
+}
+
+const MODEL = resolveSummarizeModel();
 const ENDPOINT =
   process.env.SUMMARIZE_ENDPOINT ??
   "https://api.githubcopilot.com/chat/completions";
 const MAX_NEW = Number(process.env.SUMMARIZE_MAX_NEW ?? "15");
+const MAX_TOKENS = Number(process.env.SUMMARIZE_MAX_TOKENS ?? "6000");
 const REQUEST_TIMEOUT_MS = Number(process.env.SUMMARIZE_TIMEOUT_MS ?? "180000");
 const CONCURRENCY = Number(process.env.SUMMARIZE_CONCURRENCY ?? "4");
 
@@ -125,7 +142,7 @@ async function callCopilot(
       body: JSON.stringify({
         model: MODEL,
         temperature: 0.2,
-        max_tokens: 1800,
+        max_tokens: MAX_TOKENS,
         messages: [
           {
             role: "system",
@@ -153,6 +170,9 @@ async function callCopilot(
   }
   const text = data.choices?.[0]?.message?.content ?? "";
   const parsed = parseModelResponse(text);
+  if (!isCompleteSummaryResponse(parsed)) {
+    throw new Error("model response missing required summary/body fields");
+  }
   return {
     titleJa: parsed.titleJa,
     summaryJa: parsed.summaryJa,
@@ -229,6 +249,18 @@ export function parseModelResponse(text: string): {
   } catch {
     return { titleJa: "", summaryJa: "", summaryEn: "", bodyJa: "", bodyEn: "", importance: 1, extraTags: [] };
   }
+}
+
+export function isCompleteSummaryResponse(
+  parsed: ReturnType<typeof parseModelResponse>,
+): boolean {
+  return Boolean(
+    parsed.titleJa &&
+      parsed.summaryJa &&
+      parsed.summaryEn &&
+      parsed.bodyJa &&
+      parsed.bodyEn,
+  );
 }
 
 async function runWithConcurrency<T, R>(
@@ -337,23 +369,42 @@ export async function summarize(
     `[summarize] ${toSummarize.length} entries → ${MODEL} (cache=${stats.cached} skipped=${stats.skipped})`,
   );
 
+  let cacheSaveChain = Promise.resolve();
+  const queueCacheSave = () => {
+    cacheSaveChain = cacheSaveChain.then(() => saveCache(cachePath, cache));
+    return cacheSaveChain;
+  };
+  let completed = 0;
+
   const fetched = await runWithConcurrency(
     toSummarize,
     async (e) => {
-      try {
-        const r = await callCopilot(token, e);
-        cache[e.url] = r;
-        stats.summarized++;
-        return { url: e.url, entry: r, ok: true as const };
-      } catch (err) {
-        stats.errors++;
-        const msg = err instanceof Error ? err.message : String(err);
-        console.warn(`[summarize] err ${e.url}: ${msg}`);
-        return { url: e.url, ok: false as const };
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const r = await callCopilot(token, e);
+          cache[e.url] = r;
+          stats.summarized++;
+          completed++;
+          console.log(`[summarize] ok ${completed}/${toSummarize.length} ${e.url}`);
+          await queueCacheSave();
+          return { url: e.url, entry: r, ok: true as const };
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (attempt === 1) {
+            console.warn(`[summarize] retry ${e.url}: ${msg}`);
+            continue;
+          }
+          stats.errors++;
+          completed++;
+          console.warn(`[summarize] err ${completed}/${toSummarize.length} ${e.url}: ${msg}`);
+          return { url: e.url, ok: false as const };
+        }
       }
+      return { url: e.url, ok: false as const };
     },
     CONCURRENCY,
   );
+  await cacheSaveChain;
 
   // 3) Merge fetched summaries into output.
   const mergedByUrl = new Map(

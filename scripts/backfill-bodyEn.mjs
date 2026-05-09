@@ -12,11 +12,25 @@ import fs from "node:fs";
 
 const INDEX = "data/index.json";
 const CACHE = "data/_summary-cache.json";
-const MODEL = process.env.SUMMARIZE_MODEL ?? "claude-opus-4.7";
+const DEFAULT_SUMMARIZE_MODEL = "claude-opus-4.7";
+const ALLOWED_SUMMARIZE_MODELS = new Set([DEFAULT_SUMMARIZE_MODEL, "gpt-5.5"]);
+
+function resolveSummarizeModel(model = process.env.SUMMARIZE_MODEL) {
+  const selected = model ?? DEFAULT_SUMMARIZE_MODEL;
+  if (!ALLOWED_SUMMARIZE_MODELS.has(selected)) {
+    throw new Error(
+      `Unsupported SUMMARIZE_MODEL="${selected}". Use claude-opus-4.7 or gpt-5.5 for article summarization and backfill.`,
+    );
+  }
+  return selected;
+}
+
+const MODEL = resolveSummarizeModel();
 const ENDPOINT =
   process.env.SUMMARIZE_ENDPOINT ??
   "https://api.githubcopilot.com/chat/completions";
 const MAX_NEW = Number(process.env.BACKFILL_MAX ?? "30");
+const MAX_TOKENS = Number(process.env.SUMMARIZE_MAX_TOKENS ?? "3000");
 const REQUEST_TIMEOUT_MS = Number(process.env.SUMMARIZE_TIMEOUT_MS ?? "180000");
 const CONCURRENCY = Number(process.env.SUMMARIZE_CONCURRENCY ?? "4");
 
@@ -88,7 +102,7 @@ async function callCopilot(token, entry) {
       body: JSON.stringify({
         model: MODEL,
         temperature: 0.3,
-        max_tokens: 2000,
+        max_tokens: MAX_TOKENS,
         messages: [
           {
             role: "system",

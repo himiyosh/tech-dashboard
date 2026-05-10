@@ -2,7 +2,7 @@
 
 AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline / Aider / VSCode / OpenCode / Local LLM / Agent FW / MCP / Tech News / Research の **14 カテゴリ**) を **一括で追跡** できるポータルサイト。Harness Engineering のプラクティスに沿って、AI エージェントが自律的に情報収集・正規化・公開を行う。
 
-**現状**: 50 ソース (Tier 1 / 2 / 3) を Cloudflare Worker で **毎時自動収集** (50 ソースを 4 バッチに分割し各ソースは 4 時間ごとに更新)、Astro 静的サイト生成、RSS/JSON Feed 配信、GitHub Copilot Enterprise (Claude Opus 4.7) による要約パイプライン、Pagefind 全文検索、品質監査 Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。
+**現状**: 50 ソース (Tier 1 / 2 / 3) を Cloudflare Worker で **毎時自動収集** (50 ソースを 4 バッチに分割し各ソースは 4 時間ごとに更新)、Astro 静的サイト生成、RSS/JSON Feed 配信、GitHub Copilot Enterprise (Claude Opus 4.7) による要約パイプライン、Pagefind 全文検索、品質監査 Skill、AI Scrum 開発運用 Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。
 
 ## 🔭 運用ステータス早見表 (Single Source of Truth)
 
@@ -77,6 +77,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | 03  | [UI/UX デザイン案](docs/03-design-mockup.md)                            | 画面構成・ワイヤーフレーム・デザイントークン |
 | SPEC | [本番サイト仕様 (現状)](docs/SPEC.md)                                | 14 カテゴリ / 50 ソース / 本番反映済みの仕様 |
 | 04  | [サイト仕様書 v1.0 (草案)](docs/04-site-spec.md)                        | 計画段階の草案 (現状は SPEC.md が正)         |
+| 05  | [AI Scrum Harness 適用設計](docs/05-ai-scrum-harness.md)                | Orchestrator / サブエージェント運用方針      |
 | 02c | [ユーザカスタマイズ](docs/02-customization.md)                          | OPML / YouTube / HN クエリの追加方法         |
 
 モック: [`docs/mockups/`](docs/mockups/) (mockup-D が確定デザイン)
@@ -102,6 +103,9 @@ npm run build                # dist/ に静的ビルド + Pagefind インデッ�
 # ============ 品質監査 ============
 npx tsx .claude/skills/quality-audit/run.ts
 #   → data/_runs/audit-<ts>.md に Markdown レポート出力
+
+# ============ AI Scrum 開発運用 ============
+# Claude Code / Copilot Agent から /skill ai-scrum を実行
 ```
 
 ### 品質ゲート: テスト & Git Hooks
@@ -345,6 +349,7 @@ tech-dashboard/
 │  ├─ .node-version          # Cloudflare Pages build 用 Node 22 ピン
 │  └─ astro.config.mjs
 ├─ .claude/skills/
+│  ├─ ai-scrum/             # AI Scrum 開発運用スキル (SKILL.md)
 │  └─ quality-audit/         # 品質監査スキル (SKILL.md + run.ts)
 ├─ worker/                   # Cloudflare Worker (定期ハーネス実行)
 │  ├─ src/index.ts           # Cron 起動 → 収集 (4 batch ローテーション) → Copilot 要約 → og:image → GitHub commit

@@ -26,6 +26,7 @@ tech-dashboard/
 │  │  ├─ ui-designer.md
 │  │  └─ quality-auditor.md
 │  ├─ skills/                       ← Skills (SKILL.md)
+│  │  ├─ ai-scrum/
 │  │  ├─ add-source/
 │  │  ├─ re-summarize/
 │  │  ├─ audit-quality/
@@ -229,6 +230,7 @@ description: Use when user asks to add a new AI update source (RSS, GitHub repo,
 
 | Skill             | use when                            | 効果                                             |
 | ----------------- | ----------------------------------- | ------------------------------------------------ |
+| `ai-scrum`        | 複数領域の開発 / 要件整理から検証まで必要 | PO / SM / Developer / QA 観点を分けて成果物を検証 |
 | `re-summarize`    | 要約の品質が悪い / プロンプト変更時 | 指定期間のエントリを再要約                       |
 | `audit-quality`   | 週次 / 月次レビュー                 | ランダムサンプル 20 件を人手監査用にエクスポート |
 | `debug-collector` | Collector が 0 件 / エラー時        | ネットワーク、セレクタ、レート制限を順に切り分け |
@@ -266,6 +268,21 @@ Do NOT return a long narrative - JSON list only.
 ### 6.3 `quality-auditor`
 
 生成済み要約の品質監査専門。hallucination 検知、翻訳精度、タグ適合性をレポート。
+
+### 6.4 AI Scrum ロール
+
+AI Scrum を使うタスクでは、親エージェントが Orchestrator として振る舞い、必要に応じて以下のロールを isolate する。
+
+| ロール | isolate する場面 |
+|---|---|
+| Product Owner | 要望を PBI と受入基準に落とすとき |
+| Scrum Master | DoD、スコープ過多、阻害要因を確認するとき |
+| Developer: Data Harness | `harness/`、`worker/`、`data/` の変更を扱うとき |
+| Developer: Web | `web/`、Astro UI、Feed / search 体験を扱うとき |
+| QA / Verifier | typecheck、unit、web build、E2E、quality-audit の検証計画を作るとき |
+| Security / Release Guard | secret、Cloudflare、main merge / push 影響を確認するとき |
+
+詳細は [05. AI Scrum Harness 適用設計](05-ai-scrum-harness.md) と `.claude/skills/ai-scrum/SKILL.md` を参照する。
 
 ---
 

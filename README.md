@@ -86,7 +86,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 ```bash
 # ============ 初回セットアップ ============
 npm install                  # ルート依存
-bash scripts/install-hooks.sh # pre-commit / pre-push hook (typecheck / test / web build / worker deploy 補助) を有効化
+bash scripts/install-hooks.sh # pre-commit / pre-push hook (secret scan / typecheck / test / web build / worker deploy 補助) を有効化
 
 # ============ ハーネス (ルート) ============
 npm run typecheck            # 型チェック
@@ -114,14 +114,17 @@ npx tsx .claude/skills/quality-audit/run.ts
 | Unit | `npm test` | Vitest による関数単位の検証 (要約 JSON パース、Web ロジック、`data/index.json` スキーマ) | 速い (~1s) |
 | Web build | `npm run build:web` | Cloudflare Pages と同じ `web` build (`astro build && pagefind --site dist`) を検証 | 中程度 |
 | E2E | `npm run test:e2e` | Playwright (Chromium) でトップ表示・記事詳細・言語切替を検証 | 中程度 (~30s + build) |
+| Secret scan | `npm run secrets:scan` | tracked file の secret / private key / 高リスクファイル名を検証 | 速い |
 | 全部 | `npm run test:all` | Typecheck → Unit → Web build → E2E をまとめて実行 | |
 
 Git hook は `bash scripts/install-hooks.sh` で 1 回有効化します。
 
 | Hook | 実行内容 | スキップ |
 |---|---|---|
-| `pre-commit` | `.ts/.tsx` がステージされていれば `npm run typecheck` | `SKIP_TYPECHECK=1 git commit` |
-| `pre-push` | `npm test` (unit) → `npm run build:web` → `npm run test:e2e` → `RUN_WORKER_DEPLOY=1` の場合のみ `wrangler deploy` | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1`。Worker deploy は `RUN_WORKER_DEPLOY=1 git push` |
+| `pre-commit` | staged file の secret scan → `.ts/.tsx` がステージされていれば `npm run typecheck` | Typecheck のみ `SKIP_TYPECHECK=1 git commit` |
+| `pre-push` | push 対象 commit range の secret scan → `npm test` (unit) → `npm run build:web` → `npm run test:e2e` → `RUN_WORKER_DEPLOY=1` の場合のみ `wrangler deploy` | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1`。Worker deploy は `RUN_WORKER_DEPLOY=1 git push` |
+
+Secret scan は値を表示せず、検出種別・ファイル位置・ハッシュだけを出します。全履歴を手動確認する場合は `npm run secrets:scan:history` を使います。
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的のみ**で、デプロイは行いません。push / PR ごとに `typecheck + npm test + npm run build:web + npm run test:e2e` を実行し、Cloudflare Pages の build 失敗を事前に検知します。
 
@@ -351,8 +354,10 @@ tech-dashboard/
 │  ├─ backfill-og.mjs                  # data/index.json の og:image を一括バックフィル
 │  ├─ backfill-release-titles.mjs      # version-only タイトル ("v3.8.0" 等) に source 名を前置
 │  ├─ resummarize.mjs                  # 既存エントリの不足要約を Copilot で一括補充 (緊急用)
-│  ├─ install-hooks.sh                 # pre-push hook (worker deploy 補助) 有効化
-│  ├─ git-hooks/pre-push               # RUN_WORKER_DEPLOY=1 の main push 時だけ wrangler deploy
+│  ├─ scan-secrets.mjs                 # redacted secret scanner (current / staged / history / range)
+│  ├─ install-hooks.sh                 # repo-managed git hooks 有効化
+│  ├─ git-hooks/pre-commit             # staged secret scan + TypeScript 型チェック
+│  ├─ git-hooks/pre-push               # push range secret scan + quality gate + opt-in worker deploy
 │  └─ setup-copilot-auth.sh            # Copilot Enterprise PAT セットアップ
 └─ data/                     # 成果物 (git-as-DB)
    ├─ index.json             # サイト配信用 (最新 500 件 / og:image 付き)

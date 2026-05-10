@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# pre-commit: コミット前に TypeScript 型チェックを実行する。
+# pre-commit: コミット前に secret scan と TypeScript 型チェックを実行する。
 #
 # インストール: bash scripts/install-hooks.sh (リポジトリ root で 1 回だけ)
 # スキップ: SKIP_TYPECHECK=1 git commit
@@ -7,6 +7,13 @@
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
+
+echo "[pre-commit] secret scan を実行しています..."
+if ! node "$ROOT/scripts/scan-secrets.mjs" --staged; then
+  echo "[pre-commit] ERR: secret scan 失敗。コミットを中断します"
+  echo "[pre-commit] secret 値や .env / private key を index から外してください"
+  exit 1
+fi
 
 if [ "${SKIP_TYPECHECK:-}" = "1" ]; then
   echo "[pre-commit] SKIP_TYPECHECK=1 → 型チェックをスキップします"

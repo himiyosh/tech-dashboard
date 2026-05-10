@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# pre-push: unit/web build/e2e テストを実行する。
+# pre-push: secret scan と unit/web build/e2e テストを実行する。
 # worker/ の deploy は RUN_WORKER_DEPLOY=1 が明示された main push のみ実行する。
 # 失敗時は push を中断する (exit 1)。
 #
@@ -10,6 +10,47 @@
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
+
+# 標準入力を全て読まないと git が SIGPIPE になる (空の場合あり)
+remote="${1:-}"
+url="${2:-}"
+input=$(cat || true)
+zero_sha="0000000000000000000000000000000000000000"
+
+# ---------- Secret scan ----------
+secret_scan_ran=0
+while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  local_sha=$(echo "$line" | awk '{print $2}')
+  remote_sha=$(echo "$line" | awk '{print $4}')
+
+  [ -z "$local_sha" ] && continue
+  [ "$local_sha" = "$zero_sha" ] && continue
+
+  if [ "$remote_sha" = "$zero_sha" ]; then
+    range="$local_sha"
+  else
+    range="$remote_sha..$local_sha"
+  fi
+
+  secret_scan_ran=1
+  echo "[pre-push] secret scan を実行しています... ($range)"
+  if ! node "$ROOT/scripts/scan-secrets.mjs" --range "$range"; then
+    echo "[pre-push] ERR: secret scan 失敗。push を中断します"
+    echo "[pre-push] secret 値を commit から取り除いてから再実行してください"
+    exit 1
+  fi
+done <<EOF
+$input
+EOF
+
+if [ "$secret_scan_ran" = "0" ]; then
+  echo "[pre-push] push 対象 range なし → current tree の secret scan を実行しています..."
+  if ! node "$ROOT/scripts/scan-secrets.mjs" --current; then
+    echo "[pre-push] ERR: secret scan 失敗。push を中断します"
+    exit 1
+  fi
+fi
 
 # ---------- テスト実行 ----------
 if [ "${SKIP_TESTS:-}" = "1" ]; then
@@ -62,11 +103,6 @@ if [ "${SKIP_WORKER_DEPLOY:-}" = "1" ]; then
   echo "[pre-push] SKIP_WORKER_DEPLOY=1 → wrangler deploy をスキップします"
   exit 0
 fi
-
-# 標準入力を全て読まないと git が SIGPIPE になる (空の場合あり)
-remote="${1:-}"
-url="${2:-}"
-input=$(cat || true)
 
 # main にだけ反応させる (PR 作業 push では deploy しない)
 push_to_main=0

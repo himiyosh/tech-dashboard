@@ -103,7 +103,7 @@
 | 6   | codex                   | OpenAI Blog               | RSS         | `openai.com/blog/rss.xml`                       |
 | 7   | gemini                  | Google DeepMind Blog      | RSS         | `deepmind.google/discover/blog/rss.xml`         |
 | 8   | gemini                  | Google Developers Blog    | Atom        | `developers.googleblog.com/feeds/posts/default` |
-| 9   | vscode                  | VS Code Updates           | HTML scrape | `code.visualstudio.com/updates` (月次)          |
+| 9   | vscode                  | VS Code Updates           | Atom feed | `code.visualstudio.com/feed.xml` (月次)          |
 | 10  | local-llm               | Hugging Face Blog         | RSS         | `huggingface.co/blog/feed.xml`                  |
 | 11  | local-llm               | Ollama Releases           | GitHub Atom | `github.com/ollama/ollama/releases.atom`        |
 | 12  | research                | arXiv cs.CL               | RSS         | `rss.arxiv.org/rss/cs.CL`                       |

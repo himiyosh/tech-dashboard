@@ -292,7 +292,7 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     sourceType: "release",
     defaultLang: "en",
     autoTags: ["vscode", "release"],
-    feedUrl: "https://code.visualstudio.com/updates",
+    feedUrl: "https://code.visualstudio.com/feed.xml",
     tier: 1,
     collect: collectVscodeUpdates,
   },

@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# pre-push: unit/web build/e2e テストを実行し、worker/ に変更が含まれていれば wrangler deploy を実行する。
+# pre-push: unit/web build/e2e テストを実行する。
+# worker/ の deploy は RUN_WORKER_DEPLOY=1 が明示された main push のみ実行する。
 # 失敗時は push を中断する (exit 1)。
 #
 # インストール: bash scripts/install-hooks.sh (リポジトリ root で 1 回だけ)
-# スキップ: SKIP_TESTS=1 git push / SKIP_WEB_BUILD=1 git push / SKIP_E2E=1 git push / SKIP_WORKER_DEPLOY=1 git push
+# スキップ: SKIP_TESTS=1 git push / SKIP_WEB_BUILD=1 git push / SKIP_E2E=1 git push
+# Worker deploy: RUN_WORKER_DEPLOY=1 git push
 
 set -euo pipefail
 
@@ -101,7 +103,18 @@ if ! git diff --name-only "$range" -- worker/ 2>/dev/null | grep -q .; then
   exit 0
 fi
 
-echo "[pre-push] worker/ に差分あり → npx wrangler deploy を実行します"
+if [ "${RUN_WORKER_DEPLOY:-}" != "1" ]; then
+  echo "[pre-push] worker/ に差分あり → RUN_WORKER_DEPLOY=1 未指定のため wrangler deploy は実行しません"
+  echo "[pre-push] worker を反映する場合: RUN_WORKER_DEPLOY=1 git push"
+  exit 0
+fi
+
+if [ ! -f "$ROOT/worker/wrangler.toml" ]; then
+  echo "[pre-push] ERR: worker/wrangler.toml が見つかりません。worker deploy を中断します"
+  exit 1
+fi
+
+echo "[pre-push] worker/ に差分あり → RUN_WORKER_DEPLOY=1 のため npx wrangler deploy を実行します"
 if ! command -v npx >/dev/null 2>&1; then
   echo "[pre-push] ERR: npx が見つかりません。手動で wrangler deploy してください"
   exit 1

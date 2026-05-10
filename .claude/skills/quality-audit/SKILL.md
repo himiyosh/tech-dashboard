@@ -6,13 +6,14 @@ description: tech-dashboard の index.json を監査し、品質・鮮度・カ�
 
 ## 目的
 
-`data/index.json` を読み取り、以下 5 観点で品質スコアを算出・問題リストを返す:
+`data/index.json` を読み取り、以下 6 観点で品質スコアを算出・問題リストを返す:
 
-1. **鮮度 (freshness)**: ソース別の最新エントリ年齢。42h 超 = stale、168h 超 = error。
-2. **カテゴリ偏り (distribution)**: 13 カテゴリで 0 件のものを特定。
-3. **要約品質 (summary)**: `summaryJa` が空/短すぎる (< 20 chars) / 機械翻訳臭いもの。
-4. **タグ品質 (tags)**: 同一タグのバリエーション (例: "llm" vs "LLM" vs "大規模言語モデル")。
-5. **重複 (dup)**: URL 正規化漏れ (query string 違いの同一記事)。
+1. **鮮度 (freshness)**: ソース別の最新収集時刻 (`collectedAt`) を監査し、最新公開時刻 (`publishedAt`) は上流活動の参考値として併記する。blog は 42h/168h、release/changelog は 30d/120d、paper/research は 14d/60d、community は 7d/30d を stale/error の目安にする。
+2. **ソース整合性 (source coverage)**: `harness/registry.ts` と `data/index.json` の source ID 差分を特定。未出現 source は情報として列挙し、registry に無い data source を warning とする。
+3. **カテゴリ偏り (distribution)**: `harness/types.ts` の全カテゴリで 0 件のものを特定。
+4. **要約品質 (summary)**: `summaryJa` が空/短すぎる (< 20 chars) / 機械翻訳臭いもの。
+5. **タグ品質 (tags)**: 同一タグのバリエーション (例: "llm" vs "LLM" vs "大規模言語モデル")。
+6. **重複 (dup)**: tracking query を除去した URL 正規化漏れ。同一 YouTube watch URL は `v` を動画 ID として保持。
 
 ## 実行手順
 
@@ -22,7 +23,7 @@ description: tech-dashboard の index.json を監査し、品質・鮮度・カ�
 4. `_runs/audit-<timestamp>.md` に Markdown レポートを出力
 5. 深刻度別に以下を返す:
    - 🔴 **高 (Critical)**: データ生成停止・全ソース失敗・index.json 破損
-   - 🟠 **中 (Warning)**: 2 以上のソースが stale、カテゴリ 3 つ以上が 0 件、要約カバレッジ < 50%
+   - 🟠 **中 (Warning)**: 2 以上のソースが stale、registry に無い data source あり、カテゴリ 3 つ以上が 0 件、要約カバレッジ < 50%
    - 🟢 **低 (Minor)**: タグ揺れ 10 以上、URL 重複候補 5 以上
 
 ## 出力フォーマット
@@ -34,9 +35,16 @@ description: tech-dashboard の index.json を監査し、品質・鮮度・カ�
 
 ## 🏥 鮮度
 
-| ソース | 最新 | ステータス |
-|---|---|---|
-| ... | ... | ... |
+| ソース | 最新収集 | 最新公開 | 収集経過 (h) | 状態 |
+|---|---|---|---|---|
+| ... | ... | ... | ... | ... |
+
+## 🧭 ソース整合性
+
+- registry ソース: N
+- data ソース: M
+- registry にあるが data に未出現: ...
+- data にあるが registry に無い: ...
 
 ## 📊 カテゴリ分布
 

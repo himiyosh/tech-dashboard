@@ -16,21 +16,28 @@ function sha256Short(input: string): string {
   return createHash("sha256").update(input).digest("hex").slice(0, 16);
 }
 
-/** Crude but effective: treat entries as Japanese if >10% of chars are CJK. */
+/** Crude but effective: treat entries as Japanese if >10% of signal chars are CJK. */
 export function detectLang(text: string, defaultLang: Lang): Lang {
   if (!text) return defaultLang;
   let cjk = 0;
+  let signal = 0;
   for (const ch of text) {
     const code = ch.codePointAt(0) ?? 0;
-    if (
+    const isCjk =
       (code >= 0x3040 && code <= 0x30ff) || // Hiragana+Katakana
       (code >= 0x4e00 && code <= 0x9fff) || // CJK Unified
-      (code >= 0xff66 && code <= 0xff9f) // Halfwidth Katakana
+      (code >= 0xff66 && code <= 0xff9f); // Halfwidth Katakana
+    if (
+      isCjk ||
+      (code >= 0x30 && code <= 0x39) || // ASCII digits
+      (code >= 0x41 && code <= 0x5a) || // ASCII uppercase
+      (code >= 0x61 && code <= 0x7a) // ASCII lowercase
     ) {
-      cjk++;
+      signal++;
+      if (isCjk) cjk++;
     }
   }
-  return cjk / Math.max(text.length, 1) > 0.1 ? "ja" : "en";
+  return cjk / Math.max(signal, 1) > 0.1 ? "ja" : "en";
 }
 
 /**
@@ -76,7 +83,7 @@ function placeholderSummary(raw: RawEntry, lang: Lang): { ja: string; en: string
  * which product the release belongs to. Prefix them with the source's
  * display name so the card reads e.g. "Cline Releases — v3.8.0".
  */
-const VERSION_ONLY_RE = /^(?:release\s+)?v?\d+(?:\.\d+){1,3}(?:[-+][0-9a-z.\-]+)?$/i;
+const VERSION_ONLY_RE = /^(?:release\s+)?(?:v?\d+(?:\.\d+){1,3}(?:[-+][0-9a-z.\-]+)?|\d{4}[-/.]\d{1,2}[-/.]\d{1,2})$/i;
 
 function decorateReleaseTitle(rawTitle: string, source: SourceDefinition): string {
   if (source.sourceType !== "release" && source.sourceType !== "changelog") {

@@ -61,11 +61,17 @@ const typeWeight = (t: string): number =>
 
 /** Strip trailing version tokens to get a release "stem" for grouping siblings. */
 function releaseStem(title: string): string {
-  return title
-    .replace(/\s*[\(\[]?\s*v?\d+(?:\.\d+){0,3}(?:[-+][\w.]+)?\s*[\)\]]?\s*$/i, "")
-    .replace(/\s+(release|releases|changelog|changes)\s*$/i, "")
+  const stem = title
+    .replace(/\b(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{4}\b/gi, "")
+    .replace(/[\(\[]\s*version\s+v?\d+(?:\.\d+){0,3}(?:[-+][\w.]+)?\s*[\)\]]/gi, "")
+    .replace(/\bversion\s+v?\d+(?:\.\d+){0,3}(?:[-+][\w.]+)?\b/gi, "")
+    .replace(/\bv?\d+(?:\.\d+){1,3}(?:[-+][\w.]+)?\b/gi, "")
+    .replace(/\b(release notes?|releases?|changelog|changes)\b/gi, "")
+    .replace(/[\(\[\]\)]/g, " ")
+    .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
+  return stem;
 }
 
 const sortedToday = [...baseDayEntries].sort((a, b) => {
@@ -79,19 +85,23 @@ const sortedToday = [...baseDayEntries].sort((a, b) => {
 // Group successive release/changelog rows that share (source, stem).
 type BoardItem = { entry: NormalizedEntry; siblingCount: number };
 const seenStems = new Map<string, number>(); // key -> first index in topUpdates
+const sourceRows = new Map<string, number>();
 const topUpdates: BoardItem[] = [];
 for (const e of sortedToday) {
   const isRel = e.sourceType === "release" || e.sourceType === "changelog";
+  let releaseKey = "";
   if (isRel) {
-    const key = `${e.source}::${releaseStem(e.title)}`;
-    const idx = seenStems.get(key);
+    releaseKey = `${e.source}::${releaseStem(e.title) || e.source}`;
+    const idx = seenStems.get(releaseKey);
     if (idx !== undefined) {
       topUpdates[idx]!.siblingCount += 1;
       continue;
     }
-    seenStems.set(key, topUpdates.length);
   }
+  if ((sourceRows.get(e.source) ?? 0) >= 2) continue;
+  if (releaseKey) seenStems.set(releaseKey, topUpdates.length);
   topUpdates.push({ entry: e, siblingCount: 0 });
+  sourceRows.set(e.source, (sourceRows.get(e.source) ?? 0) + 1);
   if (topUpdates.length >= 10) break;
 }
 

@@ -49,7 +49,7 @@
 | **KV `SUMMARY_CACHE`** | Cloudflare KV | `cache.v1` (要約) と `og.v1` (画像キャッシュ) の二つの単一ブロブを管理 |
 | **harness (ローカル実行版)** | Node.js 22 / TSX | `npm run collect` で同ロジックをローカル実行 (デバッグ用) |
 | **web (Astro)** | Astro 5 + Pagefind | SSG 静的サイト。`data/index.json` をビルド時に読んで全画面生成 |
-| **pre-push hook** | `scripts/git-hooks/pre-push` | ローカル品質ゲートを実行し、`main` への push に worker/ 差分があれば `wrangler deploy` を自動実行 |
+| **pre-push hook** | `scripts/git-hooks/pre-push` | ローカル品質ゲートを実行し、`RUN_WORKER_DEPLOY=1` の `main` push に worker/ 差分がある場合だけ `wrangler deploy` を実行 |
 | **MCP config** | VS Code Copilot Chat | `.vscode/mcp.json` で CF 公式 MCP 5 種を接続 |
 
 ### 2.2 定期実行
@@ -109,7 +109,7 @@ interface WorkerHealth {
 | データ収集 + 要約 + og:image | Cloudflare Worker (cron) | 毎時 (4 batch ローテーション) |
 | GitHub commit | Worker → GitHub Contents API | 差分時のみ |
 | サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
-| ローカル品質ゲート + Worker コード deploy | `scripts/git-hooks/pre-push` | push 前に unit / web build / E2E を実行し、`main` push に worker/ 差分があれば自動 deploy |
+| ローカル品質ゲート + Worker コード deploy | `scripts/git-hooks/pre-push` | push 前に unit / web build / E2E を実行し、`RUN_WORKER_DEPLOY=1` の `main` push に worker/ 差分がある場合だけ deploy |
 | ヘルス監視 | `data/index.json#health` + `/status` ページ | 実行ごと記録、サイト訪問時に確認 |
 
 **残る手動運用**: 年 1 回の PAT 更新 (`wrangler secret put COPILOT_PAT` / `GH_TOKEN`)。失効時は `/status` の Worker Health が `summarize disabled` に変わるので即気付ける。
@@ -122,7 +122,7 @@ interface WorkerHealth {
 
 ```ts
 interface NormalizedEntry {
-  id: string;             // SHA-1(source + url)
+  id: string;             // sha256(source + url) の短縮 ID
   source: string;         // ソース ID (例: "anthropic-news")
   category: Category;     // 13 分類
   sourceType: "rss" | "release" | "changelog" | "paper" | "youtube" | "hn";
@@ -220,7 +220,7 @@ interface NormalizedEntry {
 
 | ID | 表示名 | 種別 | Tier | Feed URL |
 |---|---|---|---|---|
-| `vscode-updates` | VS Code Updates | release | 1 | code.visualstudio.com/updates |
+| `vscode-updates` | VS Code Updates | release | 1 | code.visualstudio.com/feed.xml |
 | `qiita-vscode` | Qiita VSCode tag | blog | 2 | qiita.com/tags/vscode |
 | `zed-releases` | Zed Editor Releases | release | 2 | github.com/zed-industries/zed |
 | `huggingface-blog` | Hugging Face Blog | blog | 1 | huggingface.co/blog |
@@ -274,11 +274,11 @@ interface NormalizedEntry {
 ```
 1. collect       各 collector 並列実行 → raw entries
 2. normalize     URL 正規化 / CJK 検出 / タイトル分離
-3. dedupe        SHA-1(source+url) で重複排除
-4. per-source    最新 15 件/ソース にキャップ
+3. dedupe        tracking query を除いた canonical URL key で重複排除
+4. per-source    重要度と鮮度で最大 50 件/ソースにキャップ
 5. sort          publishedAt 降順で INDEX_LIMIT まで
 6. cache-lookup  KV から既存要約を取得
-7. summarize     新規 5 件まで Copilot Enterprise (Claude Opus 4.7) で要約
+7. summarize     `SUMMARIZE_MAX_NEW` 件まで Copilot Enterprise (既定: Claude Opus 4.7) で要約
 8. cache-write   KV に単一ブロブで永続化
 9. categorize    URL / tag でカテゴリ判定
 10. build        `data/index.json` 生成

@@ -8,7 +8,12 @@
  */
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, dirname, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { REGISTRY } from "../../../harness/registry.ts";
+import { canonicalUrlKey } from "../../../harness/pipeline/url.ts";
+import { ALL_CATEGORIES, type SourceDefinition } from "../../../harness/types.ts";
+
+export { canonicalUrlKey } from "../../../harness/pipeline/url.ts";
 
 interface Entry {
   id: string;
@@ -17,6 +22,7 @@ interface Entry {
   title: string;
   summaryJa: string;
   publishedAt: string;
+  collectedAt?: string;
   tags: string[];
   category: string;
   importance: number;
@@ -28,10 +34,58 @@ interface Index {
   entries: Entry[];
 }
 
-const CATS = [
-  "copilot", "claude", "codex", "gemini", "cursor", "cline",
-  "aider", "opencode", "vscode", "local-llm", "agent-fw", "mcp", "research",
-];
+const CATS = [...ALL_CATEGORIES];
+
+interface FreshnessThreshold {
+  staleHrs: number;
+  errorHrs: number;
+}
+
+interface FreshnessRow {
+  id: string;
+  latestPublished: string;
+  latestCollected: string;
+  ageHrs: number;
+  status: string;
+}
+
+function freshnessThresholdFor(source: SourceDefinition): FreshnessThreshold {
+  if (source.sourceType === "release" || source.sourceType === "changelog") {
+    return { staleHrs: 24 * 30, errorHrs: 24 * 120 };
+  }
+  if (source.sourceType === "paper" || source.category === "research") {
+    return { staleHrs: 24 * 14, errorHrs: 24 * 60 };
+  }
+  if (source.sourceType === "community") {
+    return { staleHrs: 24 * 7, errorHrs: 24 * 30 };
+  }
+  return { staleHrs: 42, errorHrs: 168 };
+}
+
+function latestTimestamp<T>(list: T[], select: (entry: T) => string | undefined): string {
+  return list.reduce((latest, entry) => {
+    const value = select(entry);
+    return value && value > latest ? value : latest;
+  }, "1970-01-01T00:00:00Z");
+}
+
+export function freshnessForSource(
+  source: SourceDefinition,
+  entries: Array<Pick<Entry, "publishedAt" | "collectedAt">>,
+  nowMs = Date.now(),
+): Omit<FreshnessRow, "id"> {
+  if (entries.length === 0) {
+    return { latestPublished: "-", latestCollected: "-", ageHrs: -1, status: "ℹ️ no data" };
+  }
+
+  const latestPublished = latestTimestamp(entries, (entry) => entry.publishedAt);
+  const latestCollected = latestTimestamp(entries, (entry) => entry.collectedAt ?? entry.publishedAt);
+  const ageMs = nowMs - new Date(latestCollected).getTime();
+  const ageHrs = Math.round(ageMs / 3600_000);
+  const threshold = freshnessThresholdFor(source);
+  const status = ageHrs > threshold.errorHrs ? "🔴 error" : ageHrs > threshold.staleHrs ? "🟠 stale" : "✅ ok";
+  return { latestPublished, latestCollected, ageHrs, status };
+}
 
 async function main() {
   const root = resolve(new URL("../../..", import.meta.url).pathname);
@@ -40,28 +94,23 @@ async function main() {
   const index = JSON.parse(raw) as Index;
   const now = Date.now();
 
-  // 1. Freshness per source
+  // 1. Freshness per source. Use collection time for pipeline health;
+  // published time is shown only as upstream activity context.
   const bySource = new Map<string, Entry[]>();
   for (const e of index.entries) {
     const arr = bySource.get(e.source) ?? [];
     arr.push(e);
     bySource.set(e.source, arr);
   }
-  const freshness: Array<{ id: string; latest: string; ageHrs: number; status: string }> = [];
+  const registrySourceIds = Object.keys(REGISTRY).sort();
+  const dataSourceIds = [...bySource.keys()].sort();
+  const missingSourceIds = registrySourceIds.filter((id) => !bySource.has(id));
+  const extraSourceIds = dataSourceIds.filter((id) => !(id in REGISTRY));
+
+  const freshness: FreshnessRow[] = [];
   for (const def of Object.values(REGISTRY)) {
     const list = bySource.get(def.id) ?? [];
-    if (list.length === 0) {
-      freshness.push({ id: def.id, latest: "-", ageHrs: -1, status: "🔴 no data" });
-      continue;
-    }
-    const latest = list.reduce(
-      (acc, e) => (e.publishedAt > acc ? e.publishedAt : acc),
-      "1970-01-01T00:00:00Z",
-    );
-    const ageMs = now - new Date(latest).getTime();
-    const ageHrs = Math.round(ageMs / 3600_000);
-    const status = ageHrs > 168 ? "🔴 error" : ageHrs > 42 ? "🟠 stale" : "✅ ok";
-    freshness.push({ id: def.id, latest, ageHrs, status });
+    freshness.push({ id: def.id, ...freshnessForSource(def, list, now) });
   }
 
   // 2. Category distribution
@@ -95,15 +144,11 @@ async function main() {
   // 5. URL dup candidates (normalized host+path)
   const urlGroups = new Map<string, string[]>();
   for (const e of index.entries) {
-    try {
-      const u = new URL(e.url);
-      const key = `${u.host}${u.pathname}`;
-      const arr = urlGroups.get(key) ?? [];
-      arr.push(e.url);
-      urlGroups.set(key, arr);
-    } catch {
-      // ignore malformed URLs
-    }
+    const key = canonicalUrlKey(e.url);
+    if (!key) continue;
+    const arr = urlGroups.get(key) ?? [];
+    arr.push(e.url);
+    urlGroups.set(key, arr);
   }
   const dupCandidates = [...urlGroups.values()].filter((arr) => arr.length > 1).slice(0, 10);
 
@@ -115,6 +160,7 @@ async function main() {
     else if (f.status.includes("stale")) warning++;
   }
   if (emptyCats.length >= 3) warning++;
+  if (extraSourceIds.length > 0) warning++;
   if (covPct < 50) warning++;
   if (tagVariations.length >= 10) minor++;
   if (dupCandidates.length >= 5) minor++;
@@ -126,16 +172,25 @@ async function main() {
   lines.push(`**サマリ**: ${critical + warning + minor} 件の問題 (🔴 ${critical} · 🟠 ${warning} · 🟢 ${minor})`);
   lines.push("");
   lines.push(`- 総エントリ: ${index.entries.length}`);
-  lines.push(`- ソース: ${Object.keys(REGISTRY).length}`);
+  lines.push(`- registry ソース: ${registrySourceIds.length}`);
+  lines.push(`- data ソース: ${dataSourceIds.length}`);
   lines.push(`- index 生成: ${index.generatedAt}`);
+  lines.push("");
+
+  lines.push("## 🧭 ソース整合性");
+  lines.push("");
+  lines.push(`- registry ソース: ${registrySourceIds.length}`);
+  lines.push(`- data ソース: ${dataSourceIds.length}`);
+  lines.push(`- registry にあるが data に未出現: ${missingSourceIds.length === 0 ? "なし ✅" : missingSourceIds.join(", ")}`);
+  lines.push(`- data にあるが registry に無い: ${extraSourceIds.length === 0 ? "なし ✅" : extraSourceIds.join(", ")}`);
   lines.push("");
 
   lines.push("## 🏥 鮮度");
   lines.push("");
-  lines.push("| ソース | 最新 | 経過 (h) | 状態 |");
-  lines.push("|---|---|---|---|");
+  lines.push("| ソース | 最新収集 | 最新公開 | 収集経過 (h) | 状態 |");
+  lines.push("|---|---|---|---|---|");
   for (const f of freshness) {
-    lines.push(`| ${f.id} | ${f.latest} | ${f.ageHrs >= 0 ? f.ageHrs : "-"} | ${f.status} |`);
+    lines.push(`| ${f.id} | ${f.latestCollected} | ${f.latestPublished} | ${f.ageHrs >= 0 ? f.ageHrs : "-"} | ${f.status} |`);
   }
   lines.push("");
 
@@ -190,7 +245,10 @@ async function main() {
   console.log(`[audit] summary coverage: ${covPct}% · empty categories: ${emptyCats.join(", ") || "none"}`);
 }
 
-main().catch((err) => {
-  console.error("[audit] fatal:", err);
-  process.exit(1);
-});
+const invokedPath = process.argv[1] ? pathToFileURL(process.argv[1]).href : "";
+if (import.meta.url === invokedPath) {
+  main().catch((err) => {
+    console.error("[audit] fatal:", err);
+    process.exit(1);
+  });
+}

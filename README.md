@@ -17,7 +17,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | og:image 取得 | 同 Worker | 上記 cron 内で最大 4 件/h、KV にキャッシュ | サムネが no-image fallback になる | `health.ogCached` |
 | `data/index.json` 更新 commit | Worker → GitHub Contents API (`tech-dashboard-worker` 名義) | 差分があるときのみ | サイトに反映されない | `git log --author=tech-dashboard-worker` |
 | サイト build / deploy | Cloudflare Pages (Git Integration) | `main` の push 検知 | サイトが古いまま | Cloudflare Pages dashboard |
-| Worker コード自動 deploy | `scripts/git-hooks/pre-push` | `main` push に `worker/` 差分があれば `wrangler deploy` | Worker 側のロジック修正が反映されない | push 時の出力 / `wrangler deployments list` |
+| Worker コード deploy 補助 | `scripts/git-hooks/pre-push` | `RUN_WORKER_DEPLOY=1 git push` かつ `main` push に `worker/` 差分あり | Worker 側のロジック修正が反映されない | push 時の出力 / `wrangler deployments list` |
 
 ### 手動運用 (年 1 回程度)
 
@@ -86,7 +86,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 ```bash
 # ============ 初回セットアップ ============
 npm install                  # ルート依存
-bash scripts/install-hooks.sh # pre-commit / pre-push hook (typecheck / test / web build / worker 自動 deploy) を有効化
+bash scripts/install-hooks.sh # pre-commit / pre-push hook (typecheck / test / web build / worker deploy 補助) を有効化
 
 # ============ ハーネス (ルート) ============
 npm run typecheck            # 型チェック
@@ -121,7 +121,7 @@ Git hook は `bash scripts/install-hooks.sh` で 1 回有効化します。
 | Hook | 実行内容 | スキップ |
 |---|---|---|
 | `pre-commit` | `.ts/.tsx` がステージされていれば `npm run typecheck` | `SKIP_TYPECHECK=1 git commit` |
-| `pre-push` | `npm test` (unit) → `npm run build:web` → `npm run test:e2e` → 必要なら `wrangler deploy` | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1` / `SKIP_WORKER_DEPLOY=1` |
+| `pre-push` | `npm test` (unit) → `npm run build:web` → `npm run test:e2e` → `RUN_WORKER_DEPLOY=1` の場合のみ `wrangler deploy` | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1`。Worker deploy は `RUN_WORKER_DEPLOY=1 git push` |
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的のみ**で、デプロイは行いません。push / PR ごとに `typecheck + npm test + npm run build:web + npm run test:e2e` を実行し、Cloudflare Pages の build 失敗を事前に検知します。
 
@@ -254,15 +254,15 @@ curl -X POST "https://tech-dashboard-harness.<your-subdomain>.workers.dev/run" \
 
 レスポンスは `202 Accepted` が即座に返り、実処理は `ctx.waitUntil` でバックグラウンド実行。進行状況は GitHub のコミット履歴 (`tech-dashboard-worker` 作成者) または Cloudflare ダッシュボードの Worker Logs で確認できます。
 
-#### Worker コードの自動デプロイ (pre-push hook)
+#### Worker コードの明示デプロイ (pre-push hook)
 
-Worker は Cloudflare Pages Git Integration の対象外のため、`worker/src/**` を変更したら `wrangler deploy` が必要です。`scripts/git-hooks/pre-push` がこれを自動化します。クローン後 1 度だけ:
+Worker は Cloudflare Pages Git Integration の対象外のため、`worker/src/**` を変更したら `wrangler deploy` が必要です。`scripts/git-hooks/pre-push` は品質ゲートを通したうえで、明示指定された場合だけ deploy します。クローン後 1 度だけ:
 
 ```bash
 bash scripts/install-hooks.sh
 ```
 
-これ以降、`main` への push に worker/ 差分があれば自動で `npx wrangler@4.85.0 deploy` が走ります。スキップしたい場合は `SKIP_WORKER_DEPLOY=1 git push`。
+Worker を反映する push では、`RUN_WORKER_DEPLOY=1 git push` を使います。`main` への push に `worker/` 差分がある場合だけ `npx wrangler@4.85.0 deploy` が走ります。通常の push では worker deploy は実行されません。
 
 #### 監視 / ヘルスチェック
 
@@ -282,7 +282,7 @@ Worker は実行ごとに `data/index.json` の `health` フィールドにメ�
 | データ収集 + 要約 + og:image | Cloudflare Worker (cron) | 毎時 (50 sources を 4 batch ローテーション) |
 | GitHub commit | Worker → GitHub Contents API | 差分時のみ |
 | サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
-| Worker コード deploy | `scripts/git-hooks/pre-push` | `main` push に worker/ 差分があれば自動 |
+| Worker コード deploy | `scripts/git-hooks/pre-push` | `RUN_WORKER_DEPLOY=1 git push` かつ `main` push に worker/ 差分あり |
 | ヘルス監視 | `data/index.json#health` + `/status` ページ | 実行ごと記録、サイト訪問時に確認 |
 
 **残る手動運用**: 年 1 回の PAT 更新 (`wrangler secret put COPILOT_PAT` / `GH_TOKEN`)。失効時は `/status` の Worker Health が `summarize disabled` に変わるので即気付けます。
@@ -313,7 +313,7 @@ tech-dashboard/
 │  ├─ types.ts               # 共通型 (Category / NormalizedEntry / SourceDefinition)
 │  ├─ collectors/
 │  │  ├─ rss.ts              # 汎用 RSS/Atom/RDF コレクター
-│  │  ├─ vscode-updates.ts   # VS Code リリースページ HTML スクレイパー
+│  │  ├─ vscode-updates.ts   # VS Code Atom feed collector
 │  │  ├─ anthropic.ts        # Anthropic News / Engineering HTML スクレイパー
 │  │  ├─ hn-algolia.ts       # Hacker News Algolia API
 │  │  ├─ opml.ts             # ユーザ OPML インポート
@@ -351,8 +351,8 @@ tech-dashboard/
 │  ├─ backfill-og.mjs                  # data/index.json の og:image を一括バックフィル
 │  ├─ backfill-release-titles.mjs      # version-only タイトル ("v3.8.0" 等) に source 名を前置
 │  ├─ resummarize.mjs                  # 既存エントリの不足要約を Copilot で一括補充 (緊急用)
-│  ├─ install-hooks.sh                 # pre-push hook (worker 自動 deploy) 有効化
-│  ├─ git-hooks/pre-push               # main push 時に worker/ 差分があれば wrangler deploy
+│  ├─ install-hooks.sh                 # pre-push hook (worker deploy 補助) 有効化
+│  ├─ git-hooks/pre-push               # RUN_WORKER_DEPLOY=1 の main push 時だけ wrangler deploy
 │  └─ setup-copilot-auth.sh            # Copilot Enterprise PAT セットアップ
 └─ data/                     # 成果物 (git-as-DB)
    ├─ index.json             # サイト配信用 (最新 500 件 / og:image 付き)

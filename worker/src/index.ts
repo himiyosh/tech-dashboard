@@ -17,6 +17,7 @@
 import { listSources } from "../../harness/registry.ts";
 import { normalize } from "../../harness/pipeline/normalize.ts";
 import { applyTags } from "../../harness/pipeline/tag.ts";
+import { canonicalUrlKey } from "../../harness/pipeline/url.ts";
 import type {
   NormalizedEntry,
   CollectorRunResult,
@@ -39,6 +40,31 @@ const INDEX_LIMIT = 2000;
 /** Return epoch ms for sorting; nulls sort to end in descending order. */
 function dateMs(iso: string | null): number {
   return iso ? new Date(iso).getTime() : -Infinity;
+}
+
+function entryUrlKey(entry: NormalizedEntry): string {
+  return canonicalUrlKey(entry.url) ?? entry.url;
+}
+
+function preferEntry(current: NormalizedEntry | undefined, candidate: NormalizedEntry): NormalizedEntry {
+  if (!current) return candidate;
+
+  const candidateCollected = dateMs(candidate.collectedAt);
+  const currentCollected = dateMs(current.collectedAt);
+  if (candidateCollected !== currentCollected) {
+    return candidateCollected > currentCollected ? candidate : current;
+  }
+
+  if (candidate.importance !== current.importance) {
+    return candidate.importance > current.importance ? candidate : current;
+  }
+
+  return dateMs(candidate.publishedAt) >= dateMs(current.publishedAt) ? candidate : current;
+}
+
+function setPreferredEntry(byUrl: Map<string, NormalizedEntry>, entry: NormalizedEntry): void {
+  const key = entryUrlKey(entry);
+  byUrl.set(key, preferEntry(byUrl.get(key), entry));
 }
 const SUMMARIZE_CONCURRENCY = 4;
 const COPILOT_ENDPOINT = "https://api.githubcopilot.com/chat/completions";
@@ -321,10 +347,10 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   const okCount = settled.filter((s) => s.result.ok).length;
   console.log(`[worker] collect ok=${okCount}/${sources.length} fresh=${fresh.length} prior=${priorEntries.length}`);
 
-  // 1.5) Merge fresh + prior. Prefer fresh entries on URL collision (newer data).
+  // 1.5) Merge fresh + prior. Prefer the freshest canonical URL on collision.
   const byUrl = new Map<string, NormalizedEntry>();
-  for (const e of priorEntries) byUrl.set(e.url, e);
-  for (const e of fresh) byUrl.set(e.url, e);
+  for (const e of priorEntries) setPreferredEntry(byUrl, e);
+  for (const e of fresh) setPreferredEntry(byUrl, e);
   const merged = [...byUrl.values()];
 
   // 2) Cap per source (importance-aware for high-volume sources) then sort newest-first then cap to INDEX_LIMIT.

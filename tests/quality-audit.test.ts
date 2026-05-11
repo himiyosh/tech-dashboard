@@ -14,6 +14,20 @@ const blogSource: SourceDefinition = {
   tier: 1,
 };
 
+const releaseSource: SourceDefinition = {
+  ...blogSource,
+  id: "example-release",
+  displayName: "Example Releases",
+  sourceType: "release",
+};
+
+const communitySource: SourceDefinition = {
+  ...blogSource,
+  id: "example-community",
+  displayName: "Example Community",
+  sourceType: "community",
+};
+
 describe("quality-audit URL canonical key", () => {
   it("tracking query だけを取り除いて同一記事として扱う", () => {
     expect(canonicalUrlKey("https://example.com/posts/a?utm_source=newsletter&utm_medium=email")).toBe(
@@ -60,5 +74,18 @@ describe("quality-audit freshness", () => {
 
   it("data 未出現 source は warning ではなく informational として扱う", () => {
     expect(freshnessForSource(blogSource, [], Date.now()).status).toBe("ℹ️ no data");
+  });
+
+  it("source type 別 threshold で freshness を判定する", () => {
+    const now = new Date("2026-05-10T12:00:00.000Z").getTime();
+    const entries = [
+      {
+        publishedAt: "2026-05-02T12:00:00.000Z",
+        collectedAt: "2026-05-02T12:00:00.000Z",
+      },
+    ];
+
+    expect(freshnessForSource(releaseSource, entries, now).status).toBe("✅ ok");
+    expect(freshnessForSource(communitySource, entries, now).status).toBe("🟠 stale");
   });
 });

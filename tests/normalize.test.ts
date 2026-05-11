@@ -31,9 +31,19 @@ describe("detectLang", () => {
 });
 
 describe("normalize release title decoration", () => {
+  it("version-only release title に source 名を前置する", () => {
+    const entry = normalize(rawEntry("v3.8.0"), releaseSource, "2026-05-10T01:00:00.000Z");
+    expect(entry.title).toBe("Cline Releases v3.8.0");
+  });
+
   it("date-only release title に source 名を前置する", () => {
     const entry = normalize(rawEntry("Release 2026-05-10"), releaseSource, "2026-05-10T01:00:00.000Z");
     expect(entry.title).toBe("Cline Releases Release 2026-05-10");
+  });
+
+  it("date separator variants も source 名を前置する", () => {
+    const entry = normalize(rawEntry("2026.05.10"), releaseSource, "2026-05-10T01:00:00.000Z");
+    expect(entry.title).toBe("Cline Releases 2026.05.10");
   });
 
   it("source 名が既に含まれる title は二重に前置しない", () => {

@@ -1,8 +1,8 @@
 /**
- * orchestrator.ts — Outer harness loop (Phase 1).
+ * orchestrator.ts - outer harness loop.
  *
  * Runs collectors in parallel, normalizes, dedupes, tags, and writes
- * data/index.json. Stubs the LLM summarize step — that arrives in Phase 2.
+ * data/index.json. New or stale entries are enhanced by the summarize step when auth is available.
  *
  * Usage:
  *   npm run collect              # full run, writes to data/

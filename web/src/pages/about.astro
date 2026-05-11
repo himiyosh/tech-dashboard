@@ -1,140 +1,532 @@
 ---
 import Portal from "../layouts/Portal.astro";
 import Sidebar from "../components/Sidebar.astro";
+import LiveMetrics from "../components/LiveMetrics.astro";
 import {
   ALL_ENTRIES,
-  GENERATED_AT,
   CATEGORY_META,
   relativeTime,
+  type Category,
 } from "../lib/data.ts";
-import { SOURCE_META } from "../lib/source-meta.ts";
+import { DASHBOARD_METRICS } from "../lib/metrics.ts";
+import { STATS } from "../lib/stats.ts";
 
 const now = new Date();
-const totalEntries = ALL_ENTRIES.length;
-const totalSources = SOURCE_META.length;
-const totalCategories = CATEGORY_META.length;
-const lastUpdated = relativeTime(GENERATED_AT, now);
+const lastUpdated = relativeTime(DASHBOARD_METRICS.generatedAt, now);
+const workerLastRun = relativeTime(DASHBOARD_METRICS.workerLastRunAt, now);
+const sourceTypes = [...new Set(ALL_ENTRIES.map((entry) => entry.sourceType))].sort();
+const groupSummary = CATEGORY_META.reduce<Record<string, number>>((acc, category) => {
+  acc[category.group] = (acc[category.group] ?? 0) + 1;
+  return acc;
+}, {});
+const GROUP_LABEL: Record<string, string> = {
+  coding: "Coding Agents",
+  platform: "Platform / Runtime",
+  ecosystem: "Ecosystem",
+  research: "Research",
+};
+const categoryLast30 = (category: Category) =>
+  STATS.byDay.slice(-30).reduce((sum, bucket) => sum + (bucket.byCategory[category] ?? 0), 0);
+const topCategories = CATEGORY_META.map((category) => ({
+  ...category,
+  last30: categoryLast30(category.slug),
+})).sort((a, b) => b.last30 - a.last30).slice(0, 5);
+
+const pipelineSteps = [
+  {
+    label: "Collect",
+    title: "公式 feed と community feed を収集",
+    body: "RSS、Atom、GitHub Releases、arXiv、HTML index から記事候補を取り込みます。Worker は source を 4 batch に分けて毎時 rotation します。",
+  },
+  {
+    label: "Normalize",
+    title: "重複除去とカテゴリ正規化",
+    body: "source、URL、publishedAt、category、importance、archiveTier を揃え、同一記事の重複を canonical URL ベースで抑えます。",
+  },
+  {
+    label: "Summarize",
+    title: "日本語で読み始められる形に変換",
+    body: "タイトル、要約、タグ、重要度を生成し、KV cache を使って再生成を抑えます。原文への導線は記事詳細に残します。",
+  },
+  {
+    label: "Publish",
+    title: "静的サイトとして高速に配信",
+    body: "差分がある場合だけ data artifact を commit し、Cloudflare Pages Git Integration が Astro build と Pagefind index を作成します。",
+  },
+];
 ---
 
-<Portal pageKey="about" title="About — TECH Dashboard">
-  <div class="layout">
+<Portal pageKey="about" title="About - TECH Dashboard">
+  <div class="layout about-layout">
     <Sidebar />
 
-    <main>
-      <div class="section-header primary">
-        <h2>About</h2>
-      </div>
+    <main class="about-main">
+      <section class="about-hero" aria-labelledby="about-heading">
+        <div class="about-hero-copy">
+          <div class="section-header primary">
+            <h2 id="about-heading">About</h2>
+          </div>
+          <p class="about-lede">
+            TECH Dashboard は、AI coding と agent ecosystem の変化を毎日追うための日本語 dashboard です。
+            公式発表、release note、研究、community feed を同じ情報設計に揃え、短時間で「何が増えたか」「どの領域が伸びているか」を確認できます。
+          </p>
+          <div class="about-link-row" aria-label="Primary links">
+            <a href="/rss.xml">RSS</a>
+            <a href="/feed.json">JSON Feed</a>
+            <a href="/status">Status</a>
+          </div>
+        </div>
 
-      <article class="side-card about-card">
-        <h3>TECH Dashboard とは</h3>
+        <div class="about-kpis" aria-label="Site summary">
+          <div><span>Live entries</span><strong data-metric="liveEntries">{DASHBOARD_METRICS.liveEntries}</strong></div>
+          <div><span>All time</span><strong data-metric="allTimeEntries">{DASHBOARD_METRICS.allTimeEntries}</strong></div>
+          <div><span>Sources</span><strong data-metric="totalSourceCount">{DASHBOARD_METRICS.totalSourceCount}</strong></div>
+          <div><span>Categories</span><strong data-metric="totalCategories">{DASHBOARD_METRICS.totalCategories}</strong></div>
+          <div><span>Archive</span><strong data-metric="archiveEntries">{DASHBOARD_METRICS.archiveEntries}</strong></div>
+          <div><span>Last updated</span><strong data-metric="updatedLabel">{lastUpdated}</strong></div>
+        </div>
+      </section>
+
+      <section class="about-section-grid" aria-label="What this site covers">
+        <article class="about-panel large">
+          <span class="panel-kicker">Purpose</span>
+          <h3>速く読むためではなく、見落とさないための dashboard</h3>
+          <p>
+            AI coding のニュースは、product blog、changelog、release、論文、community 記事に分散しています。
+            このサイトではそれらをカテゴリ、重要度、source type、時系列で揃え、日次確認と後追い調査の両方で使えるようにしています。
+          </p>
+        </article>
+
+        <article class="about-panel">
+          <span class="panel-kicker">Freshness</span>
+          <h3>毎時 run、source は 4 batch rotation</h3>
+          <p>
+            Worker は毎時起動し、{DASHBOARD_METRICS.totalSourceCount} sources を batch 分割して収集します。
+            Status では batch、source registry、freshness、summarize 状態を確認できます。
+          </p>
+        </article>
+
+        <article class="about-panel">
+          <span class="panel-kicker">History</span>
+          <h3>Archive と stats で長期推移を保持</h3>
+          <p>
+            live index から外れた記事も archive と stats に集約し、カテゴリ別の月次推移や記事数推移を後から確認できるようにしています。
+          </p>
+        </article>
+      </section>
+
+      <section class="pipeline-section" aria-labelledby="pipeline-heading">
+        <div class="section-header primary compact">
+          <h2 id="pipeline-heading">Pipeline</h2>
+        </div>
+        <div class="pipeline-grid">
+          {pipelineSteps.map((step, index) => (
+            <article class="pipeline-card">
+              <span class="step-index">{String(index + 1).padStart(2, "0")}</span>
+              <span class="panel-kicker">{step.label}</span>
+              <h3>{step.title}</h3>
+              <p>{step.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section class="coverage-section" aria-labelledby="coverage-heading">
+        <div class="section-header primary compact">
+          <h2 id="coverage-heading">Coverage</h2>
+        </div>
+        <div class="coverage-grid">
+          {CATEGORY_META.map((category) => (
+            <a href={`/c/${category.slug}`} class="coverage-chip" style={`--category-color:${category.color}`}>
+              <span>{category.initial}</span>
+              <strong>{category.name}</strong>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <section class="about-note-panel">
+        <h3>利用時の前提</h3>
         <p>
-          AI コーディングおよび関連エコシステムの<strong>公式ソース</strong>を、
-          1 時間ごとに自動収集してまとめる日本語ポータルです。
-          Copilot / Claude / Codex / Gemini / Cursor / Cline / Aider / OpenCode /
-          VSCode / Local LLM / Agent Framework / MCP / Tech News / Research の
-          {totalCategories} カテゴリ、合計 {totalSources} ソースをカバーしています。
+          表示されているタイトル、要約、タグ、重要度は自動生成を含みます。重要な判断を行う場合は、記事詳細から原文 source を確認してください。
+          この dashboard は速報の完全性よりも、継続的な観測と比較しやすさを優先しています。
         </p>
-
-        <h3>仕組み</h3>
-        <ol class="about-list">
-          <li>
-            <strong>Cloudflare Worker (cron)</strong> が 1 時間ごとに発火し、
-            RSS / Atom / HTML / GitHub Releases / arXiv 等から記事メタデータを収集します。
-            Cloudflare Free の subrequest 上限 (50/run) に収めるため、{totalSources} ソースを
-            <strong>4 バッチに分割してローテーション</strong>しており、
-            個別ソースの再収集は <strong>4 時間ごと</strong>になります
-            (毎時の run では別バッチの新着が反映されます)。
-          </li>
-          <li>
-            正規化・重複除去のあと、<strong>Claude Opus 4.7</strong> が日本語タイトル・要約・
-            タグ・重要度 (1〜3) を生成。結果は Cloudflare KV にキャッシュして再利用します。
-          </li>
-          <li>
-            差分があるときだけ <code>data/index.json</code> を GitHub に commit し、
-            <strong>Cloudflare Pages Git Integration</strong> が自動で Astro ビルド & デプロイします。
-          </li>
-        </ol>
-
-        <h3>現在の状況</h3>
-        <ul class="about-list">
-          <li>収集中の記事: <strong>{totalEntries}</strong> 件</li>
-          <li>カテゴリ: <strong>{totalCategories}</strong></li>
-          <li>ソース: <strong>{totalSources}</strong></li>
-          <li>最終更新: <strong>{lastUpdated}</strong></li>
-        </ul>
-
-        <h3>リンク</h3>
-        <p class="about-links">
-          <a href="/rss.xml">RSS</a>
-          <span class="sep">·</span>
-          <a href="/feed.json">JSON Feed</a>
-          <span class="sep">·</span>
-          <a href="/sources">Sources</a>
-          <span class="sep">·</span>
-          <a href="/status">Status</a>
-          <span class="sep">·</span>
-          <a href="https://github.com/himiyosh/tech-dashboard" target="_blank" rel="noopener">GitHub</a>
-        </p>
-
-        <p class="about-note">
-          表示されているサマリは LLM が自動生成したものであり、原文と差異が生じる場合があります。
-          重要な意思決定の前に必ず原文ソースをご確認ください。
-        </p>
-      </article>
+      </section>
     </main>
 
-    <aside class="right"></aside>
+    <aside class="right about-insights">
+      <div class="side-card about-side-card">
+        <div class="rail-title">Current run</div>
+        <dl class="about-dl">
+          <div><dt>Worker</dt><dd data-metric="workerLastRunLabel">{workerLastRun}</dd></div>
+          <div><dt>Batch</dt><dd data-metric="workerBatchLabel">{DASHBOARD_METRICS.workerBatchLabel}</dd></div>
+          <div><dt>Source OK</dt><dd data-metric="workerSourceOkLabel">{DASHBOARD_METRICS.workerSourceOkLabel}</dd></div>
+        </dl>
+      </div>
+
+      <div class="side-card about-side-card">
+        <div class="rail-title">Recent volume</div>
+        <dl class="about-dl">
+          <div><dt>Last 24h</dt><dd data-metric="last24hEntries">{DASHBOARD_METRICS.last24hEntries}</dd></div>
+          <div><dt>Last 7d</dt><dd data-metric="last7dEntries">{DASHBOARD_METRICS.last7dEntries}</dd></div>
+          <div><dt>Last 30d</dt><dd data-metric="last30dEntries">{DASHBOARD_METRICS.last30dEntries}</dd></div>
+          <div><dt>Archive months</dt><dd data-metric="archiveMonths">{DASHBOARD_METRICS.archiveMonths}</dd></div>
+        </dl>
+      </div>
+
+      <div class="side-card about-side-card">
+        <div class="rail-title">Hot categories</div>
+        <ul class="about-rank-list">
+          {topCategories.map((category) => (
+            <li style={`--category-color:${category.color}`}>
+              <span><i></i>{category.name}</span>
+              <strong>{category.last30}</strong>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="side-card about-side-card">
+        <div class="rail-title">Source mix</div>
+        <div class="source-type-list">
+          {sourceTypes.map((type) => <span>{type}</span>)}
+        </div>
+      </div>
+
+      <div class="side-card about-side-card">
+        <div class="rail-title">Groups</div>
+        <ul class="about-rank-list simple">
+          {Object.entries(groupSummary).map(([group, count]) => (
+            <li><span>{GROUP_LABEL[group] ?? group}</span><strong>{count}</strong></li>
+          ))}
+        </ul>
+      </div>
+    </aside>
   </div>
+  <LiveMetrics />
 </Portal>
 
 <style>
-  .about-card {
-    padding: 24px 26px;
-    line-height: 1.75;
+  .about-main {
+    min-width: 0;
   }
-  .about-card h3 {
-    font-size: 15px;
-    font-weight: 700;
-    margin: 18px 0 8px;
-    color: var(--text);
-    letter-spacing: 0.01em;
-  }
-  .about-card h3:first-of-type {
-    margin-top: 0;
-  }
-  .about-card p {
-    color: var(--text-2);
-    margin-bottom: 10px;
-  }
-  .about-card .about-list {
-    color: var(--text-2);
-    padding-left: 22px;
-    margin-bottom: 10px;
-  }
-  .about-card .about-list li {
-    margin-bottom: 4px;
-  }
-  .about-card code {
-    font-family: ui-monospace, "SF Mono", "JetBrains Mono", monospace;
-    font-size: 12.5px;
-    background: var(--bg-2);
+
+  .about-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 0.86fr);
+    gap: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
     border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 1px 6px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
   }
-  .about-card .about-links a {
+
+  .about-lede {
+    max-width: 760px;
+    margin: 8px 0 0;
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  .about-link-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .about-link-row a {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-2);
+    font-size: 12px;
+    text-decoration: none;
+  }
+
+  .about-link-row a:hover {
+    border-color: color-mix(in srgb, var(--accent) 52%, var(--border));
     color: var(--accent);
   }
-  .about-card .about-links .sep {
-    color: var(--muted-2);
-    margin: 0 6px;
+
+  .about-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
   }
-  .about-card .about-note {
-    margin-top: 18px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border);
-    color: var(--muted);
+
+  .about-kpis > div,
+  .about-panel,
+  .pipeline-card,
+  .about-note-panel {
+    min-width: 0;
+    border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-2) 72%, transparent);
+  }
+
+  .about-kpis > div {
+    padding: 10px 12px;
+  }
+
+  .about-kpis span,
+  .panel-kicker,
+  .about-side-card .rail-title {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--muted-2);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .about-kpis strong {
+    display: block;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .about-section-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .about-panel {
+    padding: 18px;
+  }
+
+  .about-panel.large {
+    grid-row: span 2;
+  }
+
+  .about-panel h3,
+  .pipeline-card h3,
+  .about-note-panel h3 {
+    margin: 0 0 8px;
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .about-panel p,
+  .pipeline-card p,
+  .about-note-panel p {
+    margin: 0;
+    color: var(--text-2);
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .pipeline-section,
+  .coverage-section {
+    margin-bottom: 20px;
+  }
+
+  .section-header.compact {
+    margin-bottom: 10px;
+  }
+
+  .pipeline-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .pipeline-card {
+    position: relative;
+    padding: 16px;
+    overflow: hidden;
+  }
+
+  .step-index {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    color: color-mix(in srgb, var(--accent) 42%, transparent);
+    font-family: ui-monospace, monospace;
+    font-size: 26px;
+    font-weight: 700;
+  }
+
+  .coverage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .coverage-chip {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px;
+    border: 1px solid color-mix(in srgb, var(--category-color) 34%, var(--border));
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--category-color) 9%, transparent);
+    color: var(--text-2);
+    text-decoration: none;
+  }
+
+  .coverage-chip:hover {
+    border-color: color-mix(in srgb, var(--category-color) 64%, var(--border));
+    color: var(--text);
+  }
+
+  .coverage-chip span {
+    display: inline-flex;
+    width: 28px;
+    height: 28px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--category-color);
+    color: #061016;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .coverage-chip strong {
+    overflow: hidden;
     font-size: 12.5px;
-    line-height: 1.65;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .about-note-panel {
+    padding: 18px;
+  }
+
+  .about-insights {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .about-dl {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .about-dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 62%, transparent);
+  }
+
+  .about-dl div:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .about-dl dt {
+    color: var(--muted);
+    font-size: 11.5px;
+  }
+
+  .about-dl dd {
+    margin: 0;
+    color: var(--text);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .about-rank-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .about-rank-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--text-2);
+    font-size: 12px;
+  }
+
+  .about-rank-list span {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 7px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .about-rank-list i {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: var(--category-color);
+  }
+
+  .about-rank-list strong {
+    color: var(--text);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .source-type-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .source-type-list span {
+    padding: 4px 7px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--muted);
+    font-family: ui-monospace, monospace;
+    font-size: 10.5px;
+  }
+
+  @media (max-width: 1120px) {
+    .pipeline-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 980px) {
+    .about-hero,
+    .about-section-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .about-panel.large {
+      grid-row: auto;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .about-hero {
+      padding: 14px;
+    }
+
+    .about-kpis {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .pipeline-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

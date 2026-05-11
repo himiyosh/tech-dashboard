@@ -19,13 +19,13 @@
 | F-07 | タグ・ソース・期間でフィルタ                                                                                                                                                        | MUST   |
 | F-08 | 全文検索                                                                                                                                                                            | SHOULD |
 | F-09 | RSS / JSON Feed 出力                                                                                                                                                                | SHOULD |
-| F-10 | 毎日自動更新 (GitHub Actions)                                                                                                                                                       | MUST   |
+| F-10 | 毎時自動更新 (Cloudflare Worker + Pages Git Integration)                                                                                                                           | MUST   |
 
 ### 1.2 非機能要件
 
 | 項目                   | 目標                            |
 | ---------------------- | ------------------------------- |
-| 更新頻度               | 1 日 2-4 回                     |
+| 更新頻度               | Worker cron 毎時。個別ソースは 4 時間ごと |
 | ページロード (LCP)     | < 2.0s (static site)            |
 | Lighthouse Performance | >= 95                           |
 | コスト                 | LLM API 月額 < $20 (個人ユース) |
@@ -63,7 +63,7 @@
 | HTML scrape         | 1      | MCP Servers カタログ                                                                                                       |
 | **計**              | **30** |                                                                                                                            |
 
-**拡張性**: ソース追加は `harness/collectors/*.ts` を 1 ファイル追加 + `registry.ts` に 1 行足すだけで済む構造とする (原則 3: Workflow 志向)。Tier 3 (50+ ソース、Hacker News Algolia, 個人ブログ OPML, YouTube RSS 等) は v1.1 以降で段階的に組み込む。
+**拡張性**: ソース追加は `harness/collectors/*.ts` を 1 ファイル追加 + `registry.ts` に 1 行足すだけで済む構造とする (原則 3: Workflow 志向)。現在は 50 ソースを 4 batch に分け、Hacker News Algolia, 個人ブログ OPML, YouTube RSS 等も段階的に扱う。
 
 ---
 
@@ -73,16 +73,16 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                   GitHub Actions (scheduler)                 │
-│                   = Outer Harness Loop                       │
+│                   Cloudflare Worker Cron                     │
+│                   = Runtime Harness Loop                     │
 └──────────────────┬──────────────────────────────────────────┘
-                   │ cron: */6h
+                   │ cron: 0 * * * * (4 batch rotation)
                    ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Orchestrator (Node/TS CLI)                                 │
+│  Worker Harness (Node/TS, shared collectors/pipeline)        │
 │  ├─ Collectors (1 per source, parallel)                     │
 │  ├─ Pipeline (normalize → dedupe → summarize → tag)         │
-│  └─ Publisher (write data/index.json + data/normalized/*)   │
+│  └─ Publisher (commit data/index.json + archive + stats)     │
 └──────────────────┬──────────────────────────────────────────┘
                    │ git commit + push
                    ▼
@@ -102,7 +102,7 @@
 
 本プロジェクトは **2 つのハーネス** を持つ (Anthropic Initializer+Worker パターンの応用):
 
-- **Runtime Harness** (GitHub Actions + orchestrator): 本番で日次実行される決定論的 Workflow。再現性・検証性を最優先
+- **Runtime Harness** (Cloudflare Worker cron + shared pipeline): 本番で毎時実行される決定論的 Workflow。再現性・検証性を最優先
 - **Dev-time Harness** (Claude Code / Copilot): 開発者が新ソース追加、UI 改善、品質監査を行うためのエージェント環境
 
 Runtime は **Workflow**、Dev-time は **Agent** (原則 3)。
@@ -113,8 +113,8 @@ Runtime は **Workflow**、Dev-time は **Agent** (原則 3)。
 | -------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | Site generator | **Astro**                                                                          | Island architecture で JS 最小、静的配信で高速・低コスト |
 | UI             | React (Island) + Tailwind CSS                                                      | デザインシステム構築容易                                 |
-| Harness        | Node.js 20 + TypeScript                                                            | エコシステム豊富、GitHub Actions 親和性                  |
-| LLM            | **Claude Opus 4.7** (要約・タグ付け) — 1M コンテキスト活用、fallback として 4.6 1M | 長期推論精度が必要な要約品質を優先。ユーザ指定           |
+| Harness        | Node.js 22 + TypeScript                                                            | Cloudflare Pages / Worker とローカル検証の parity を優先 |
+| LLM            | **Claude Opus 4.7** または **GPT-5.5** (要約・タグ付け)                            | 長期推論精度が必要な要約品質を優先。許可モデルのみ使用   |
 | Data store     | **Git** (JSON + Markdown)                                                          | DB 不要、差分可視、バージョン管理、$0                    |
 | 検索           | Pagefind (静的)                                                                    | ビルド時インデックス、クライアント検索、サーバ不要       |
 | デプロイ       | **Cloudflare Pages**                                                               | CDN / DDoS / 無料枠、ユーザ指定                          |
@@ -187,7 +187,11 @@ data/
 │  └─ 2026-04/
 │     └─ <id>.json              # 1 エントリ 1 ファイル (diff 可視)
 ├─ clusters.json                # 重複クラスタマップ
-├─ index.json                   # サイト配信用 (最新 500 件)
+├─ index.json                   # サイト配信用 (最新 2000 件)
+├─ stats.json                   # archive 込みの記事数推移 / source 集計
+├─ archive/
+│  ├─ _index.json               # 月別 archive index
+│  └─ YYYY-MM.json              # warm/cold tier の月別 archive
 └─ feeds/
    ├─ all.rss
    └─ <category>.rss
@@ -200,7 +204,7 @@ data/
 ## 4. データフロー (1 サイクル)
 
 ```
-[trigger] GitHub Actions cron
+[trigger] Cloudflare Worker cron
    │
    ▼
 [1] Collect (parallel, per source)
@@ -221,23 +225,23 @@ data/
    - clusterId 付与
    │
    ▼
-[4] Summarize + Tag (LLM - Claude Haiku)
-   - 新規エントリのみ対象 (既存はスキップ)
-   - バッチ: 1 リクエスト 10 件
-   - Hook: 要約長 120 字以内、禁止ワードチェック
-   - Verifier: 要約に URL のドメインが登場しないことで hallucination 簡易検出
+[4] Summarize + Tag (LLM - Claude Opus 4.7 / GPT-5.5)
+   - 新規エントリと本文欠落 cache を対象
+   - SUMMARIZE_MAX_NEW / SUMMARIZE_MAX_TOKENS / timeout / concurrency で制御
+   - Hook: JSON schema, summary/body 欠落検出、cache 再利用
+   - Verifier: generated body と summary の欠落、model error、cache 不整合を run metadata に記録
    │
    ▼
 [5] Publish
-   - data/index.json 生成 (最新 500 件)
-   - data/feeds/*.rss 生成
-   - git commit + push
+   - data/index.json / data/archive/*.json / data/stats.json を生成
+   - ローカル harness は data/_runs/<timestamp>.json も生成
+   - GitHub Git Data API で data 差分を 1 commit にまとめて main に反映
    │
    ▼
 [6] Site Rebuild
-   - Cloudflare Pages が push を検知してビルド
+   - Cloudflare Pages Git Integration が main push を検知してビルド
    - Pagefind 検索インデックス生成
-   - Lighthouse CI で性能ゲート
+   - `npm run build` (root directory `web`, output `dist`)
 ```
 
 各ステップの出力は **次の入力にしかならない**。横断アクセスを作らない (原則 5: シンプルに)。
@@ -250,17 +254,17 @@ Arize 提言: **agent needs telemetry comparable to human developers**。
 
 | 項目                         | 実装                                                   |
 | ---------------------------- | ------------------------------------------------------ |
-| 各ステップの成否             | GitHub Actions summary + `data/_runs/<timestamp>.json` |
+| 各ステップの成否             | Worker health metadata + `data/_runs/<timestamp>.json` |
 | LLM 呼出数・トークン・コスト | `data/_runs/*.json` に記録                             |
-| Collector 別の収集件数       | 同上、ダッシュボードに `/_status` ページで可視化       |
-| 失敗率 / リトライ            | Actions の再実行ポリシー (指数バックオフ、3 回)        |
+| Collector 別の収集件数       | 同上、ダッシュボードに `/status` ページで可視化        |
+| 失敗率 / リトライ            | Worker run metadata と collector 側 retry で把握       |
 | 異常検知                     | 前日比 ±50% 以上の変動で Slack/Discord 通知 (将来)     |
 
 ---
 
 ## 6. セキュリティ / プライバシー
 
-- API キー (Anthropic, GitHub) は GitHub Actions Secrets のみ。ログ出力禁止
+- API キーと token は Wrangler Secrets / `.env.local` のみ。ログ出力禁止
 - 外部ソース取得は `User-Agent: tech-dashboard-bot/1.0` を明示、`robots.txt` を尊重
 - Reddit / HN 等はレート制限を遵守 (指数バックオフ)
 - サイトにはユーザ追跡 Cookie を設置しない (アクセス解析は Cloudflare Web Analytics のみ)
@@ -271,11 +275,11 @@ Arize 提言: **agent needs telemetry comparable to human developers**。
 
 | フェーズ  | 内容                                                                      | 完了条件                                                    |
 | --------- | ------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| P0 (設計) | 本ドキュメント群 + サイト仕様 v1.0 (13 cat / 30 sources)                  | レビュー完了                                                |
-| P1 (MVP)  | Tier 1 コア 15 ソース + 基本 UI (サイドバー 13 カテゴリ + トレンドパネル) | Cloudflare Pages に自動公開、毎日更新、全 MUST 機能要件完了 |
-| P2        | Tier 2 残り 15 ソース追加 + 全文検索 + タグフィルタ精緻化                 | 全 SHOULD 要件完了 (計 30 ソース)                           |
-| P3        | RSS / JSON Feed、品質監査 Skill、`/_status` ページ、タグ昇格レビュー      | 運用支援機能完了                                            |
-| P4        | Tier 3 (50+ ソース: HN Algolia / OPML / YouTube) + ユーザカスタマイズ     | 任意                                                        |
+| P0 (設計) | 本ドキュメント群 + サイト仕様 v1.0 の初期化                               | 完了                                                        |
+| P1 (MVP)  | Tier 1 コアソース + 基本 UI (サイドバー / トレンド / タイムライン)        | 完了                                                        |
+| P2        | 50 ソース収集、全文検索、タグフィルタ、RSS / JSON Feed                    | 完了                                                        |
+| P3        | 品質監査 Skill、`/status` ページ、Worker Health、secret gate              | 完了                                                        |
+| P4        | OPML / YouTube / HN などの任意ソースと運用品質の継続改善                  | 継続                                                        |
 
 ---
 

@@ -3,9 +3,9 @@
  *
  * Replaces `.github/workflows/harness-daily.yml`. Cron trigger fires every
  * 6 hours; the Worker fetches RSS sources, normalizes, dedupes, summarizes
- * via Copilot Enterprise, and commits `data/index.json` back to GitHub via
- * the Contents API. Cloudflare Pages (Git-integrated) then picks up the push
- * and auto-deploys.
+ * via Copilot Enterprise, and commits `data/index.json`, `data/archive/*`, and
+ * `data/stats.json` back to GitHub via the Contents API. Cloudflare Pages
+ * (Git-integrated) then picks up the push and auto-deploys.
  *
  * Bindings (see wrangler.toml):
  *   - SUMMARY_CACHE (KV)   replaces data/_summary-cache.json
@@ -18,6 +18,15 @@ import { listSources } from "../../harness/registry.ts";
 import { normalize } from "../../harness/pipeline/normalize.ts";
 import { applyTags } from "../../harness/pipeline/tag.ts";
 import { canonicalUrlKey } from "../../harness/pipeline/url.ts";
+import {
+  buildArchiveIndexFile,
+  buildArchiveMonthFile,
+  groupArchiveEntries,
+  mergeArchiveEntries,
+  type ArchiveIndexFile,
+  type ArchiveMonthFile,
+} from "../../harness/publishers/archive-core.ts";
+import { buildStatsPayload } from "../../harness/publishers/stats-core.ts";
 import type {
   NormalizedEntry,
   CollectorRunResult,
@@ -33,9 +42,12 @@ interface Env {
   GITHUB_BRANCH: string;
   SUMMARIZE_MODEL: string;
   SUMMARIZE_MAX_NEW: string;
+  SUMMARIZE_TIMEOUT_MS?: string;
 }
 
 const INDEX_LIMIT = 2000;
+const DEFAULT_SUMMARIZE_TIMEOUT_MS = 25_000;
+const SUMMARIZE_ATTEMPTS = 2;
 
 /** Return epoch ms for sorting; nulls sort to end in descending order. */
 function dateMs(iso: string | null): number {
@@ -88,6 +100,11 @@ interface CacheEntry {
   cachedAt: string;
 }
 
+interface FileChange {
+  path: string;
+  content: string;
+}
+
 // ---------- GitHub Contents API helpers --------------------------------------
 
 async function ghGetFile(env: Env, path: string): Promise<{ content: string; sha: string } | null> {
@@ -111,35 +128,175 @@ async function ghGetFile(env: Env, path: string): Promise<{ content: string; sha
   return { content, sha: body.sha };
 }
 
-async function ghPutFile(
+async function ghJson<T>(
   env: Env,
   path: string,
-  content: string,
-  message: string,
-  sha: string | undefined,
-): Promise<void> {
-  const url = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${path}`;
-  const body = {
-    message,
-    content: btoa(unescape(encodeURIComponent(content))),
-    branch: env.GITHUB_BRANCH,
-    committer: {
-      name: "tech-dashboard-worker",
-      email: "bot@users.noreply.github.com",
-    },
-    ...(sha ? { sha } : {}),
-  };
+  init?: RequestInit,
+): Promise<T> {
+  const url = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}${path}`;
   const res = await fetch(url, {
-    method: "PUT",
+    ...init,
     headers: {
       authorization: `Bearer ${env.GH_TOKEN}`,
       accept: "application/vnd.github+json",
       "content-type": "application/json",
       "user-agent": "tech-dashboard-worker",
+      ...(init?.headers ?? {}),
     },
-    body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`gh put ${path} ${res.status}: ${await res.text()}`);
+  if (!res.ok) throw new Error(`gh ${init?.method ?? "GET"} ${path} ${res.status}: ${await res.text()}`);
+  return (await res.json()) as T;
+}
+
+async function ghCommitFiles(env: Env, message: string, changes: readonly FileChange[]): Promise<string | null> {
+  if (changes.length === 0) return null;
+
+  const refPath = `/git/ref/heads/${env.GITHUB_BRANCH}`;
+  const ref = await ghJson<{ object: { sha: string } }>(env, refPath);
+  const headSha = ref.object.sha;
+  const headCommit = await ghJson<{ tree: { sha: string } }>(env, `/git/commits/${headSha}`);
+  const tree = await ghJson<{ sha: string }>(env, "/git/trees", {
+    method: "POST",
+    body: JSON.stringify({
+      base_tree: headCommit.tree.sha,
+      tree: changes.map((change) => ({
+        path: change.path,
+        mode: "100644",
+        type: "blob",
+        content: change.content,
+      })),
+    }),
+  });
+  const commit = await ghJson<{ sha: string }>(env, "/git/commits", {
+    method: "POST",
+    body: JSON.stringify({
+      message,
+      tree: tree.sha,
+      parents: [headSha],
+      committer: {
+        name: "tech-dashboard-worker",
+        email: "bot@users.noreply.github.com",
+      },
+    }),
+  });
+  await ghJson(env, `/git/refs/heads/${env.GITHUB_BRANCH}`, {
+    method: "PATCH",
+    body: JSON.stringify({ sha: commit.sha, force: false }),
+  });
+  return commit.sha;
+}
+
+function stripGeneratedAt(json: string): string {
+  return json.replace(/"generatedAt":\s*"[^"]+",?\n?/, "");
+}
+
+function stringifyJson(value: unknown): string {
+  return JSON.stringify(value, null, 2) + "\n";
+}
+
+function parseJson<T>(path: string, content: string): T | null {
+  try {
+    return JSON.parse(content) as T;
+  } catch (error) {
+    console.warn(`[worker] invalid json ${path}: ${error}`);
+    return null;
+  }
+}
+
+async function ghJsonChangeIfChanged(
+  env: Env,
+  path: string,
+  payload: unknown,
+  existing?: { content: string; sha: string } | null,
+): Promise<FileChange | null> {
+  const content = stringifyJson(payload);
+  const current = existing === undefined ? await ghGetFile(env, path) : existing;
+  if (current && stripGeneratedAt(current.content) === stripGeneratedAt(content)) {
+    return null;
+  }
+  return { path, content };
+}
+
+function uniqueEntriesById(entries: readonly NormalizedEntry[]): NormalizedEntry[] {
+  const byId = new Map<string, NormalizedEntry>();
+  for (const entry of entries) byId.set(entry.id, entry);
+  return [...byId.values()];
+}
+
+function entriesEqual(
+  existingPayload: { entries?: NormalizedEntry[] } | null,
+  nextEntries: readonly NormalizedEntry[],
+): boolean {
+  return JSON.stringify(existingPayload?.entries ?? []) === JSON.stringify(nextEntries);
+}
+
+function delayMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function publishHistoryFiles(
+  env: Env,
+  archiveInputEntries: readonly NormalizedEntry[],
+  liveEntries: readonly NormalizedEntry[],
+  generatedAt: string,
+): Promise<{
+  archiveMonthsTouched: number;
+  archiveFilesChanged: number;
+  archiveIndexChanged: boolean;
+  statsChanged: boolean;
+  entriesArchived: number;
+  entriesDropped: number;
+  changes: FileChange[];
+}> {
+  const { byMonth, stats } = groupArchiveEntries(archiveInputEntries);
+  const archiveIndexPath = "data/archive/_index.json";
+  const archiveIndexFile = await ghGetFile(env, archiveIndexPath);
+  const archiveIndex = archiveIndexFile
+    ? parseJson<ArchiveIndexFile>(archiveIndexPath, archiveIndexFile.content)
+    : null;
+  const monthNames = new Set<string>([...(archiveIndex?.months ?? []), ...byMonth.keys()]);
+  const monthFiles = new Map<string, ArchiveMonthFile>();
+  const changes: FileChange[] = [];
+  let archiveFilesChanged = 0;
+
+  for (const month of [...monthNames].sort()) {
+    const path = `data/archive/${month}.json`;
+    const existingFile = await ghGetFile(env, path);
+    const existingMonth = existingFile ? parseJson<ArchiveMonthFile>(path, existingFile.content) : null;
+    const incomingEntries = byMonth.get(month) ?? [];
+    const mergedEntries = incomingEntries.length > 0
+      ? mergeArchiveEntries(existingMonth?.entries ?? [], incomingEntries)
+      : existingMonth?.entries ?? [];
+    if (mergedEntries.length === 0) continue;
+
+    const monthPayload = buildArchiveMonthFile(month, mergedEntries, generatedAt);
+    monthFiles.set(month, monthPayload);
+    if (incomingEntries.length > 0) {
+      const change = await ghJsonChangeIfChanged(env, path, monthPayload, existingFile);
+      if (change) {
+        changes.push(change);
+        archiveFilesChanged++;
+      }
+    }
+  }
+
+  const archiveIndexPayload = buildArchiveIndexFile([...monthFiles.values()], generatedAt);
+  const archiveIndexChange = await ghJsonChangeIfChanged(env, archiveIndexPath, archiveIndexPayload, archiveIndexFile);
+  if (archiveIndexChange) changes.push(archiveIndexChange);
+  const archivedEntries = [...monthFiles.values()].flatMap((monthFile) => monthFile.entries);
+  const statsPayload = buildStatsPayload(uniqueEntriesById([...liveEntries, ...archivedEntries]), generatedAt);
+  const statsChange = await ghJsonChangeIfChanged(env, "data/stats.json", statsPayload);
+  if (statsChange) changes.push(statsChange);
+
+  return {
+    archiveMonthsTouched: stats.monthsTouched,
+    archiveFilesChanged,
+    archiveIndexChanged: archiveIndexChange !== null,
+    statsChanged: statsChange !== null,
+    entriesArchived: stats.entriesArchived,
+    entriesDropped: stats.entriesDropped,
+    changes,
+  };
 }
 
 // ---------- Copilot token exchange ------------------------------------------
@@ -161,36 +318,53 @@ async function resolveCopilotToken(pat: string): Promise<string> {
 
 export { buildPrompt, parseResponse } from "./prompt.ts";
 
-async function callCopilot(token: string, model: string, e: NormalizedEntry): Promise<CacheEntry> {
-  const res = await fetch(COPILOT_ENDPOINT, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${token}`,
-      "content-type": "application/json",
-      ...COPILOT_HEADERS,
-    },
-    body: JSON.stringify({
+async function callCopilot(
+  token: string,
+  model: string,
+  e: NormalizedEntry,
+  timeoutMs: number,
+): Promise<CacheEntry> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(COPILOT_ENDPOINT, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+        ...COPILOT_HEADERS,
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        max_tokens: 2400,
+        messages: [
+          {
+            role: "system",
+            content:
+              "あなたは技術記事を日本語と英語の両方で要約するエディターです。指示された JSON 形式のみを返してください。",
+          },
+          { role: "user", content: buildPrompt(e) },
+        ],
+      }),
+    });
+    if (!res.ok) throw new Error(`copilot ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const parsed = parseResponse(data.choices?.[0]?.message?.content ?? "");
+    return {
+      ...parsed,
       model,
-      temperature: 0.2,
-      max_tokens: 2400,
-      messages: [
-        {
-          role: "system",
-          content:
-            "あなたは技術記事を日本語と英語の両方で要約するエディターです。指示された JSON 形式のみを返してください。",
-        },
-        { role: "user", content: buildPrompt(e) },
-      ],
-    }),
-  });
-  if (!res.ok) throw new Error(`copilot ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-  const parsed = parseResponse(data.choices?.[0]?.message?.content ?? "");
-  return {
-    ...parsed,
-    model,
-    cachedAt: new Date().toISOString(),
-  };
+      cachedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    if (controller.signal.aborted) {
+      throw new Error(`copilot request timeout after ${timeoutMs}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function runWithConcurrency<T, R>(
@@ -400,6 +574,7 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   //    Worker wall-time budget of ~30s).
   const model = env.SUMMARIZE_MODEL || "claude-opus-4.7";
   const maxNew = Number(env.SUMMARIZE_MAX_NEW || "25");
+  const summarizeTimeoutMs = Number(env.SUMMARIZE_TIMEOUT_MS || String(DEFAULT_SUMMARIZE_TIMEOUT_MS));
   const CACHE_KEY = "cache.v1";
   const cacheBlob =
     (await env.SUMMARY_CACHE.get<Record<string, CacheEntry>>(CACHE_KEY, "json")) ?? {};
@@ -438,15 +613,23 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
     const results = await runWithConcurrency(
       budget,
       async (e) => {
-        try {
-          const r = await callCopilot(token!, model, e);
-          cacheBlob[e.url] = r;
-          return { url: e.url, entry: r, ok: true as const };
-        } catch (err) {
-          errors++;
-          console.warn(`[worker] summarize err ${e.url}: ${err}`);
-          return { url: e.url, ok: false as const };
+        for (let attempt = 1; attempt <= SUMMARIZE_ATTEMPTS; attempt++) {
+          try {
+            const r = await callCopilot(token!, model, e, summarizeTimeoutMs);
+            cacheBlob[e.url] = r;
+            return { url: e.url, entry: r, ok: true as const };
+          } catch (err) {
+            if (attempt < SUMMARIZE_ATTEMPTS) {
+              console.warn(`[worker] summarize retry ${e.url}: ${err}`);
+              await delayMs(500 * attempt);
+              continue;
+            }
+            errors++;
+            console.warn(`[worker] summarize err ${e.url}: ${err}`);
+            return { url: e.url, ok: false as const };
+          }
         }
+        return { url: e.url, ok: false as const };
       },
       SUMMARIZE_CONCURRENCY,
     );
@@ -535,8 +718,9 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   }
   console.log(`[worker] og: cached=${Object.keys(ogBlob).length}, new hits=${ogFound}`);
 
-  // 5) Build payload (cap 500, newest first)
-  const finalEntries = afterCache.slice(0, INDEX_LIMIT);
+  // 5) Build payload (cap newest entries; dropped tier is retained only in reports)
+  const retainedEntries = afterCache.filter((entry) => entry.archiveTier !== "dropped");
+  const finalEntries = retainedEntries.slice(0, INDEX_LIMIT);
   const failedSources = settled.filter((s) => !s.result.ok).map((s) => s.result.sourceId);
   const health = {
     lastRunAt: new Date().toISOString(),
@@ -562,38 +746,51 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
 
   // 6) Compare with existing index.json on GitHub (already loaded at step 0).
   const existingJson = existing?.content ?? "";
+  const existingPayload = existing ? parseJson<{ entries?: NormalizedEntry[] }>("data/index.json", existing.content) : null;
+  const hasEntryChanges = !entriesEqual(existingPayload, finalEntries);
   // Compare ignoring `generatedAt` timestamp so unchanged runs don't churn commits.
-  const stripGen = (s: string) => s.replace(/"generatedAt"\s*:\s*"[^"]+",?\s*/, "");
-  if (existingJson && stripGen(existingJson) === stripGen(json)) {
-    console.log("[worker] no data changes — skipping commit");
-    return {
-      changed: false,
-      stats: {
-        sources: sources.length,
-        collected: fresh.length,
-        merged: merged.length,
-        summarized,
-        errors,
-      },
-    };
+  if (stripGeneratedAt(existingJson) === stripGeneratedAt(json)) {
+    console.log("[worker] no data changes");
+    return { changed: false, stats: { finalEntries: finalEntries.length, summarized, errors } };
   }
 
-  // 7) Commit to GitHub
-  const message =
-    `chore(data): worker run ${collectedAt.slice(0, 16)}Z batch ${batchIndex + 1}/${SOURCE_BATCHES}` +
-    (summarized ? ` (+${summarized} summaries)` : "") +
-    (failedSources.length ? ` [${failedSources.length} source err]` : "");
-  await ghPutFile(env, "data/index.json", json, message, existing?.sha);
-  console.log(`[worker] committed: ${message}`);
+  const message = `chore(data): update tech dashboard ${payload.generatedAt}`;
+  const historyStats = hasEntryChanges
+    ? await publishHistoryFiles(env, afterCache, finalEntries, payload.generatedAt)
+    : {
+        archiveMonthsTouched: 0,
+        archiveFilesChanged: 0,
+        archiveIndexChanged: false,
+        statsChanged: false,
+        entriesArchived: 0,
+        entriesDropped: 0,
+        changes: [],
+      };
+  if (!hasEntryChanges) {
+    console.log("[worker] entries unchanged; skip archive/stats refresh");
+  }
 
+  // 7) Commit to GitHub. Use one Git Data API commit so index/archive/stats stay in sync.
+  const commitSha = await ghCommitFiles(env, message, [
+    ...historyStats.changes,
+    { path: "data/index.json", content: json },
+  ]);
+  console.log(`[worker] committed data/index.json (${finalEntries.length} entries)`);
+  console.log(
+    `[worker] history archiveChanged=${historyStats.archiveFilesChanged}, statsChanged=${historyStats.statsChanged}, commit=${commitSha}`,
+  );
   return {
     changed: true,
     stats: {
-      sources: sources.length,
-      collected: fresh.length,
-      merged: merged.length,
+      finalEntries: finalEntries.length,
       summarized,
       errors,
+      ogFound,
+      failed: failedSources.length,
+      archived: historyStats.entriesArchived,
+      dropped: historyStats.entriesDropped,
+      archiveFilesChanged: historyStats.archiveFilesChanged,
+      statsChanged: historyStats.statsChanged ? 1 : 0,
     },
   };
 }

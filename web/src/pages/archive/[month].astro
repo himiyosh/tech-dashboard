@@ -8,7 +8,7 @@ import {
   getMonthLabel,
   getMonthSummaries,
 } from "../../lib/archive.ts";
-import { groupByDay, jstDayLabel } from "../../lib/data.ts";
+import { CATEGORY_META, groupByDay, jstDayLabel, relativeTime, type Category } from "../../lib/data.ts";
 
 export function getStaticPaths() {
   return ARCHIVE_MONTHS.map((month) => ({ params: { month } }));
@@ -32,10 +32,33 @@ const older = idx >= 0 && idx < all.length - 1 ? all[idx + 1] : null;
 
 let warm = 0;
 let cold = 0;
+const categoryCounts = new Map<Category, number>();
+const sourceCounts = new Map<string, number>();
 for (const e of file.entries) {
   if (e.archiveTier === "warm") warm++;
   else if (e.archiveTier === "cold") cold++;
+  categoryCounts.set(e.category, (categoryCounts.get(e.category) ?? 0) + 1);
+  sourceCounts.set(e.source, (sourceCounts.get(e.source) ?? 0) + 1);
 }
+
+const categoryBySlug = new Map(CATEGORY_META.map((category) => [category.slug, category]));
+const categoryRows = [...categoryCounts.entries()]
+  .sort(([, a], [, b]) => b - a)
+  .slice(0, 6)
+  .map(([category, count]) => ({
+    category,
+    count,
+    label: categoryBySlug.get(category)?.name ?? category,
+    color: categoryBySlug.get(category)?.color ?? "var(--accent)",
+  }));
+const sourceRows = [...sourceCounts.entries()]
+  .sort(([, a], [, b]) => b - a)
+  .slice(0, 8)
+  .map(([source, count]) => ({ source, count }));
+const warmPct = Math.round((warm / Math.max(file.count, 1)) * 100);
+const coldPct = Math.round((cold / Math.max(file.count, 1)) * 100);
+const dayCount = dayGroups.length;
+const updatedLabel = relativeTime(file.generatedAt, now);
 
 const breadcrumb = [
   { label: "Home", href: "/" },
@@ -49,70 +72,376 @@ const breadcrumb = [
     <Sidebar />
 
     <main>
-      <div class="section-header primary">
-        <h2>
-          {label}
-          <span class="count">{file.count} entries</span>
-        </h2>
-      </div>
+      <section class="month-overview" aria-labelledby="archive-month-heading">
+        <div>
+          <div class="section-header primary">
+            <h2 id="archive-month-heading">
+              {label}
+              <span class="count">{file.count} entries</span>
+            </h2>
+          </div>
+          <p class="month-lede">
+            月内の記事を日付順に並べています。カテゴリと source の偏りを見てから、下のタイムラインで詳細を確認できます。
+          </p>
+        </div>
 
-      <div class="archive-meta">
-        <span class="tier warm">warm {warm}</span>
-        <span class="tier cold">cold {cold}</span>
-      </div>
+        <div class="month-kpis" aria-label="Month summary">
+          <div>
+            <span>Entries</span>
+            <strong>{file.count}</strong>
+          </div>
+          <div>
+            <span>Active days</span>
+            <strong>{dayCount}</strong>
+          </div>
+          <div>
+            <span>Updated</span>
+            <strong>{updatedLabel}</strong>
+          </div>
+        </div>
+      </section>
 
-      <nav class="month-nav">
+      <nav class="month-nav" aria-label="Archive month navigation">
         {older
-          ? <a href={`/archive/${older.month}`}>← {older.label}</a>
-          : <span class="dim">— oldest</span>}
+          ? <a href={`/archive/${older.month}`}><span>Older</span>{older.label}</a>
+          : <span class="dim"><span>Older</span>oldest</span>}
         <a href="/archive" class="all-link">All months</a>
         {newer
-          ? <a href={`/archive/${newer.month}`}>{newer.label} →</a>
-          : <span class="dim">newest →</span>}
+          ? <a href={`/archive/${newer.month}`}><span>Newer</span>{newer.label}</a>
+          : <span class="dim"><span>Newer</span>newest</span>}
       </nav>
 
+      <section class="archive-meta-panel" aria-label="Archive composition">
+        <div class="tier-card warm">
+          <span>warm</span>
+          <strong>{warm}</strong>
+          <small>{warmPct}%</small>
+        </div>
+        <div class="tier-card cold">
+          <span>cold</span>
+          <strong>{cold}</strong>
+          <small>{coldPct}%</small>
+        </div>
+        <div class="category-strip">
+          {categoryRows.map((row) => (
+            <span class="category-pill" style={`--pill-color:${row.color}`}>
+              {row.label} <strong>{row.count}</strong>
+            </span>
+          ))}
+        </div>
+      </section>
+
       {dayGroups.map(({ key, items }) => (
-        <>
+        <section class="archive-day" id={`day-${key}`}>
           <div class="day-header">
             <span>{jstDayLabel(key, now)}</span>
             <span class="day-count">{items.length} entries</span>
           </div>
           {items.map((entry) => <EntryCard entry={entry} />)}
-        </>
+        </section>
       ))}
     </main>
 
-    <aside class="right"></aside>
+    <aside class="right archive-month-insights">
+      <div class="side-card month-insight-card archive-tier-help">
+        <div class="rail-title">Archive tiers</div>
+        <p><strong>warm</strong> は直近寄りのアーカイブ、<strong>cold</strong> は長期保管用の古いアーカイブです。</p>
+      </div>
+
+      <div class="side-card month-insight-card">
+        <div class="rail-title">Top categories</div>
+        <ul class="month-rank-list">
+          {categoryRows.map((row) => (
+            <li>
+              <span><i style={`background:${row.color}`}></i>{row.label}</span>
+              <strong>{row.count}</strong>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="side-card month-insight-card">
+        <div class="rail-title">Top sources</div>
+        <ul class="month-rank-list">
+          {sourceRows.map((row) => (
+            <li>
+              <span>{row.source}</span>
+              <strong>{row.count}</strong>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="side-card month-insight-card">
+        <div class="rail-title">Day index</div>
+        <div class="day-jump-list">
+          {dayGroups.slice(0, 10).map(({ key, items }) => (
+            <a href={`#day-${key}`}>{key}<span>{items.length}</span></a>
+          ))}
+        </div>
+      </div>
+    </aside>
   </div>
 </Portal>
 
 <style>
-  .archive-meta {
+  .month-overview {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    gap: 16px;
+    padding: 18px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+  }
+
+  .month-lede {
+    max-width: 720px;
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .month-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .month-kpis > div,
+  .tier-card {
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-2) 72%, transparent);
+  }
+
+  .month-kpis span,
+  .tier-card span,
+  .month-insight-card .rail-title {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--muted-2);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .month-kpis strong,
+  .tier-card strong {
+    display: block;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tier-card small {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .archive-meta-panel {
+    display: grid;
+    grid-template-columns: 110px 110px minmax(0, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .tier-card.warm {
+    border-color: rgba(251, 191, 36, 0.35);
+  }
+
+  .tier-card.cold {
+    border-color: rgba(96, 165, 250, 0.35);
+  }
+
+  .category-strip {
     display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 8px;
-    margin: 8px 0 16px;
-    font-size: 12px;
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-2) 72%, transparent);
   }
-  .tier {
-    padding: 2px 8px;
-    border-radius: 4px;
+
+  .category-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 8px;
+    border: 1px solid color-mix(in srgb, var(--pill-color) 42%, var(--border));
+    border-radius: 999px;
+    color: var(--text-2);
+    font-size: 11.5px;
   }
-  .tier.warm { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
-  .tier.cold { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+
+  .category-pill::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--pill-color);
+  }
+
+  .category-pill strong {
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
 
   .month-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    padding: 10px 0 18px;
+    padding: 0 0 14px;
     font-size: 13px;
   }
   .month-nav a {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
     color: var(--accent, #5eead4);
     text-decoration: none;
   }
   .month-nav a:hover { text-decoration: underline; }
   .month-nav .all-link { color: var(--muted); }
-  .month-nav .dim { color: var(--muted); opacity: 0.5; }
+  .month-nav span span,
+  .month-nav a span {
+    color: var(--muted-2);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .month-nav .dim {
+    display: flex;
+    flex-direction: column;
+    color: var(--muted);
+    opacity: 0.5;
+  }
+
+  .archive-day {
+    scroll-margin-top: 96px;
+  }
+
+  .archive-month-insights {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .archive-tier-help p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .archive-tier-help strong {
+    color: var(--text);
+  }
+
+  .month-rank-list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .month-rank-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--text-2);
+    font-size: 12px;
+  }
+
+  .month-rank-list span {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 7px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .month-rank-list i {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+  }
+
+  .month-rank-list strong {
+    color: var(--text);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .day-jump-list {
+    display: grid;
+    gap: 7px;
+  }
+
+  .day-jump-list a {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--text-2);
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    text-decoration: none;
+  }
+
+  .day-jump-list a:hover {
+    color: var(--accent);
+  }
+
+  .day-jump-list span {
+    color: var(--muted-2);
+  }
+
+  @media (max-width: 980px) {
+    .month-overview,
+    .archive-meta-panel {
+      grid-template-columns: 1fr;
+    }
+
+    .month-kpis {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .month-overview {
+      padding: 14px;
+    }
+
+    .month-kpis {
+      grid-template-columns: 1fr;
+    }
+
+    .month-nav {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
 </style>

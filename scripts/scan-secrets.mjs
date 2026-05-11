@@ -114,6 +114,29 @@ function stagedFiles() {
     .filter(Boolean);
 }
 
+function worktreeFiles() {
+  return execFileSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], { cwd: repo })
+    .toString("utf8")
+    .split("\0")
+    .filter(Boolean);
+}
+
+function ignoredHighRiskPaths() {
+  const raw = execFileSync("git", ["status", "--ignored", "--short", "-z"], { cwd: repo })
+    .toString("utf8")
+    .split("\0")
+    .filter(Boolean);
+  const warnings = [];
+  for (const item of raw) {
+    if (!item.startsWith("!! ")) continue;
+    const path = item.slice(3);
+    if (!path || safeExamplePathRe.test(path)) continue;
+    const kinds = highRiskPathPatterns.filter(([, pattern]) => pattern.test(path)).map(([kind]) => kind);
+    for (const kind of kinds) warnings.push({ kind, path });
+  }
+  return warnings;
+}
+
 function historyObjects(revArgs) {
   const raw = execFileSync("git", ["rev-list", "--objects", ...revArgs], {
     cwd: repo,
@@ -159,6 +182,7 @@ function uniqueFindings(findings) {
 function parseMode() {
   if (args.includes("--staged")) return { mode: "staged" };
   if (args.includes("--current")) return { mode: "current" };
+  if (args.includes("--worktree")) return { mode: "worktree" };
   if (args.includes("--history")) return { mode: "history", revArgs: ["--all"] };
   const rangeIndex = args.indexOf("--range");
   if (rangeIndex !== -1) {
@@ -172,6 +196,7 @@ function parseMode() {
 function scan() {
   const { mode, revArgs } = parseMode();
   const findings = [];
+  const warnings = [];
   let scanned = 0;
   let skipped = 0;
   let nonBlobObjects = 0;
@@ -199,6 +224,19 @@ function scan() {
       scanned++;
       scanText({ scope: mode, path, text: buffer.toString("utf8"), findings });
     }
+  } else if (mode === "worktree") {
+    warnings.push(...ignoredHighRiskPaths());
+    for (const path of worktreeFiles()) {
+      scanPath({ scope: mode, path, findings });
+      if (!existsSync(path)) continue;
+      const buffer = readFileSync(path);
+      if (buffer.length > MAX_BYTES || !isProbablyText(buffer)) {
+        skipped++;
+        continue;
+      }
+      scanned++;
+      scanText({ scope: mode, path, text: buffer.toString("utf8"), findings });
+    }
   } else {
     for (const { blob, path } of historyObjects(revArgs)) {
       scanPath({ scope: mode, blob, path, findings });
@@ -213,7 +251,7 @@ function scan() {
     }
   }
 
-  return { mode, scanned, skipped, nonBlobObjects, findings: uniqueFindings(findings) };
+  return { mode, scanned, skipped, nonBlobObjects, findings: uniqueFindings(findings), warnings };
 }
 
 function report(result) {
@@ -222,11 +260,14 @@ function report(result) {
       acc[item.kind] = (acc[item.kind] ?? 0) + 1;
       return acc;
     }, {});
-    console.log(JSON.stringify({ ...result, findingCount: result.findings.length, byKind }, null, 2));
+    console.log(JSON.stringify({ ...result, findingCount: result.findings.length, warningCount: result.warnings.length, byKind }, null, 2));
     return;
   }
 
   if (result.findings.length === 0) {
+    for (const warning of result.warnings.slice(0, 50)) {
+      console.warn(`WARN: local ignored high-risk path present ${warning.kind} ${warning.path} (contents not scanned)`);
+    }
     console.log(`OK: secret scan PASS (mode=${result.mode}, scanned=${result.scanned}, skipped=${result.skipped})`);
     return;
   }

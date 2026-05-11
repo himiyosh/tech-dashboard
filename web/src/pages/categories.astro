@@ -2,12 +2,17 @@
 import Portal from "../layouts/Portal.astro";
 import Sidebar from "../components/Sidebar.astro";
 import {
+  ALL_ENTRIES,
   CATEGORY_META,
   countByCategory,
   entriesFor,
   relativeTime,
+  type Category,
+  type NormalizedEntry,
 } from "../lib/data.ts";
+import { categoryMonthlyTrend, STATS } from "../lib/stats.ts";
 
+const now = new Date();
 const counts = countByCategory();
 
 const GROUP_LABEL: Record<string, string> = {
@@ -17,50 +22,192 @@ const GROUP_LABEL: Record<string, string> = {
   research: "Research",
 };
 
+const GROUP_COPY: Record<string, string> = {
+  coding: "IDE 内での実装支援、CLI agent、コード生成体験の更新をまとめます。",
+  platform: "エディタ、ローカル実行基盤、モデル runtime 周辺の変化を追います。",
+  ecosystem: "MCP、agent framework、技術ニュースなど周辺 ecosystem の動きを俯瞰します。",
+  research: "論文、実験、実務知見から、中長期で効く基礎情報を拾います。",
+};
+
+const TYPE_LABEL: Record<NormalizedEntry["sourceType"], string> = {
+  blog: "Blog",
+  release: "Release",
+  changelog: "Changelog",
+  paper: "Paper",
+  community: "Community",
+};
+
+const monthLabel = (month: string) =>
+  new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" })
+    .format(new Date(`${month}-01T00:00:00Z`));
+
+const countDays = (category: Category, days: number): number =>
+  STATS.byDay.slice(-days).reduce((sum, bucket) => sum + (bucket.byCategory[category] ?? 0), 0);
+
+const countPrevDays = (category: Category, days: number): number =>
+  STATS.byDay.slice(-(days * 2), -days).reduce((sum, bucket) => sum + (bucket.byCategory[category] ?? 0), 0);
+
+const pctDelta = (current: number, previous: number): number => {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 100);
+};
+
+const categoryPanels = CATEGORY_META.map((cat) => {
+  const entries = entriesFor(cat.slug);
+  const latest = entries[0] ?? null;
+  const monthly = categoryMonthlyTrend(cat.slug).map((bucket) => ({
+    ...bucket,
+    label: monthLabel(bucket.month),
+  }));
+  const last7 = countDays(cat.slug, 7);
+  const prev7 = countPrevDays(cat.slug, 7);
+  const last30 = countDays(cat.slug, 30);
+  const allTime = STATS.byMonth.reduce((sum, bucket) => sum + (bucket.byCategory[cat.slug] ?? 0), 0);
+  const types = new Map<NormalizedEntry["sourceType"], number>();
+  for (const entry of entries.slice(0, 80)) {
+    types.set(entry.sourceType, (types.get(entry.sourceType) ?? 0) + 1);
+  }
+  const topTypes = [...types.entries()]
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([type, count]) => ({ type, label: TYPE_LABEL[type], count }));
+  return {
+    ...cat,
+    liveCount: counts[cat.slug] ?? 0,
+    allTime,
+    last7,
+    last30,
+    delta: pctDelta(last7, prev7),
+    latest,
+    monthly,
+    topTypes,
+  };
+});
+
+const totalLiveEntries = ALL_ENTRIES.length;
+const topCategory = [...categoryPanels].sort((a, b) => b.last30 - a.last30)[0] ?? null;
+const activeCategories = categoryPanels.filter((panel) => panel.last30 > 0).length;
+
 // Group categories by display group while preserving order.
-const grouped = new Map<string, typeof CATEGORY_META>();
-for (const cat of CATEGORY_META) {
+const grouped = new Map<string, typeof categoryPanels>();
+for (const cat of categoryPanels) {
   const arr = grouped.get(cat.group) ?? [];
   arr.push(cat);
   grouped.set(cat.group, arr);
 }
-
-function latestOf(slug: string): string | null {
-  const list = entriesFor(slug as never);
-  if (list.length === 0) return null;
-  return list[0]!.publishedAt;
-}
 ---
 
-<Portal pageKey="categories" title="Categories — TECH Dashboard">
-  <div class="layout">
+<Portal pageKey="categories" title="Categories - TECH Dashboard">
+  <div class="layout categories-layout">
     <Sidebar />
 
-    <main>
-      <div class="section-header primary">
-        <h2>
-          Categories
-          <span class="count">{CATEGORY_META.length} categories</span>
-        </h2>
-      </div>
+    <main class="categories-main">
+      <section class="categories-overview" aria-labelledby="categories-heading">
+        <div>
+          <div class="section-header primary">
+            <h2 id="categories-heading">
+              Categories
+              <span class="count">{CATEGORY_META.length} categories</span>
+            </h2>
+          </div>
+          <p>
+            カテゴリごとの記事量、直近の勢い、月次推移を同じカード内で比較できます。
+            伸びている領域を見つけたら、そのままカテゴリ詳細へ移動できます。
+          </p>
+        </div>
+
+        <div class="categories-kpis" aria-label="Category summary">
+          <div>
+            <span>Live entries</span>
+            <strong>{totalLiveEntries}</strong>
+          </div>
+          <div>
+            <span>All time</span>
+            <strong>{STATS.totals.allTime}</strong>
+          </div>
+          <div>
+            <span>Last 30d</span>
+            <strong>{STATS.totals.last30d}</strong>
+          </div>
+          <div>
+            <span>Active cats</span>
+            <strong>{activeCategories}</strong>
+          </div>
+          <div>
+            <span>Hot category</span>
+            <strong>{topCategory?.name ?? "none"}</strong>
+          </div>
+          <div>
+            <span>Updated</span>
+            <strong>{relativeTime(STATS.generatedAt, now)}</strong>
+          </div>
+        </div>
+      </section>
 
       {[...grouped.entries()].map(([group, cats]) => (
-        <section style="margin-bottom:32px">
-          <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-subtle);margin:0 0 12px 4px">
-            {GROUP_LABEL[group] ?? group}
-          </h3>
+        <section class="category-group" aria-labelledby={`group-${group}`}>
+          <div class="category-group-head">
+            <div>
+              <h3 id={`group-${group}`}>{GROUP_LABEL[group] ?? group}</h3>
+              <p>{GROUP_COPY[group] ?? "関連カテゴリの更新状況をまとめています。"}</p>
+            </div>
+            <span>{cats.length} categories</span>
+          </div>
           <div class="category-grid">
             {cats.map((cat) => {
-              const latest = latestOf(cat.slug);
               return (
-                <a href={`/c/${cat.slug}`} class="category-card">
+                <a href={`/c/${cat.slug}`} class="category-card" style={`--cat-color:${cat.color}`}>
                   <div class="cat-head">
-                    <span class="cat-dot" style={`background:${cat.color}`}></span>
-                    <span class="cat-name">{cat.name}</span>
-                    <span class="cat-count">{counts[cat.slug] ?? 0}</span>
+                    <span class="cat-dot"></span>
+                    <div class="cat-title-block">
+                      <span class="cat-name">{cat.name}</span>
+                      <span class="cat-group-label">{GROUP_LABEL[cat.group] ?? cat.group}</span>
+                    </div>
+                    <span class="cat-count">{cat.liveCount}</span>
                   </div>
-                  <div class="cat-meta">
-                    {latest ? `最終更新 ${relativeTime(latest)}` : "エントリなし"}
+
+                  <div class="cat-metrics">
+                    <span><strong>{cat.allTime}</strong> all time</span>
+                    <span><strong>{cat.last30}</strong> 30d</span>
+                    <span class:list={["cat-delta", cat.delta > 0 ? "up" : cat.delta < 0 ? "down" : "flat"]}>
+                      {cat.delta > 0 ? "+" : ""}{cat.delta}% 7d
+                    </span>
+                  </div>
+
+                  <div class="cat-trend" role="img" aria-label={`${cat.name} article trend for the last 12 months`}>
+                    {cat.monthly.map((bucket) => (
+                      <span class="cat-bar" title={`${bucket.month}: ${bucket.count}`}>
+                        <i style={`height:${bucket.height}%`}></i>
+                      </span>
+                    ))}
+                  </div>
+
+                  <div class="cat-axis" aria-hidden="true">
+                    <span>{cat.monthly[0]?.label}</span>
+                    <span>{cat.monthly.at(-1)?.label}</span>
+                  </div>
+
+                  <table class="sr-only">
+                    <caption>{cat.name} monthly article counts</caption>
+                    <thead>
+                      <tr><th scope="col">Month</th><th scope="col">Count</th></tr>
+                    </thead>
+                    <tbody>
+                      {cat.monthly.map((bucket) => (
+                        <tr><td>{bucket.month}</td><td>{bucket.count}</td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  <div class="cat-footer">
+                    <div class="cat-meta">
+                      {cat.latest ? `最終更新 ${relativeTime(cat.latest.publishedAt, now)}` : "エントリなし"}
+                    </div>
+                    <div class="cat-types">
+                      {cat.topTypes.map((type) => (
+                        <span>{type.label} {type.count}</span>
+                      ))}
+                    </div>
                   </div>
                 </a>
               );
@@ -73,48 +220,293 @@ function latestOf(slug: string): string | null {
 </Portal>
 
 <style>
+  .categories-main {
+    min-width: 0;
+  }
+
+  .categories-overview {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
+    gap: 16px;
+    padding: 18px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+  }
+
+  .categories-overview p {
+    max-width: 720px;
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .categories-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .categories-kpis > div {
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-2) 72%, transparent);
+  }
+
+  .categories-kpis span,
+  .cat-group-label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--muted-2);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .categories-kpis strong {
+    display: block;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .category-group {
+    margin-bottom: 32px;
+  }
+
+  .category-group-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0 0 12px;
+  }
+
+  .category-group-head h3 {
+    margin: 0 0 4px 4px;
+    color: var(--text-subtle);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .category-group-head p {
+    margin: 0 0 0 4px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .category-group-head > span {
+    color: var(--muted-2);
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
   .category-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 12px;
   }
+
   .category-card {
-    display: block;
-    padding: 14px 16px;
+    display: flex;
+    min-height: 240px;
+    flex-direction: column;
+    gap: 12px;
+    padding: 15px 16px;
     border: 1px solid var(--border);
-    border-radius: 10px;
-    background: var(--surface);
+    border-radius: 8px;
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--cat-color) 10%, transparent), transparent 42%),
+      var(--surface);
     text-decoration: none;
     color: inherit;
     transition: border-color 0.15s ease, transform 0.15s ease;
   }
+
   .category-card:hover {
-    border-color: var(--accent);
+    border-color: color-mix(in srgb, var(--cat-color) 62%, var(--border));
     transform: translateY(-1px);
   }
+
   .cat-head {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
+    align-items: flex-start;
+    gap: 9px;
   }
+
   .cat-dot {
     width: 10px;
     height: 10px;
+    margin-top: 5px;
     border-radius: 999px;
     flex: 0 0 auto;
+    background: var(--cat-color);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--cat-color) 16%, transparent);
   }
-  .cat-name {
-    font-weight: 600;
+
+  .cat-title-block {
+    min-width: 0;
     flex: 1;
   }
-  .cat-count {
-    font-variant-numeric: tabular-nums;
-    color: var(--text-subtle);
-    font-size: 13px;
+
+  .cat-name {
+    display: block;
+    overflow: hidden;
+    color: var(--text);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
+
+  .cat-count {
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cat-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .cat-metrics span {
+    min-width: 0;
+    padding: 7px 8px;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-2) 62%, transparent);
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .cat-metrics strong {
+    color: var(--text);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cat-delta.up {
+    color: var(--success);
+  }
+
+  .cat-delta.down {
+    color: var(--danger);
+  }
+
+  .cat-delta.flat {
+    color: var(--muted);
+  }
+
+  .cat-trend {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: end;
+    gap: 4px;
+    height: 70px;
+    padding: 10px 8px 8px;
+    border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-2) 54%, transparent);
+  }
+
+  .cat-bar {
+    display: flex;
+    height: 100%;
+    align-items: end;
+  }
+
+  .cat-bar i {
+    display: block;
+    width: 100%;
+    min-height: 2px;
+    border-radius: 999px 999px 2px 2px;
+    background: var(--cat-color);
+    opacity: 0.86;
+  }
+
+  .cat-axis {
+    display: flex;
+    justify-content: space-between;
+    margin-top: -7px;
+    color: var(--muted-2);
+    font-size: 10.5px;
+  }
+
+  .cat-footer {
+    display: grid;
+    gap: 8px;
+    margin-top: auto;
+  }
+
   .cat-meta {
     font-size: 12px;
     color: var(--text-subtle);
+  }
+
+  .cat-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .cat-types span {
+    padding: 3px 7px;
+    border: 1px solid color-mix(in srgb, var(--cat-color) 36%, var(--border));
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 10.5px;
+  }
+
+  .sr-only {
+    position: absolute;
+    overflow: hidden;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: 0;
+    margin: -1px;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 980px) {
+    .categories-overview {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .categories-overview {
+      padding: 14px;
+    }
+
+    .categories-kpis,
+    .cat-metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .category-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .category-group-head {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 6px;
+    }
   }
 </style>

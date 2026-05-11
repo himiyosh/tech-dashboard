@@ -1,5 +1,5 @@
 /**
- * summarize.ts — GitHub Copilot Enterprise (Chat Completions) による日本語要約.
+ * summarize.ts - GitHub Copilot Enterprise (Chat Completions) による日本語要約.
  *
  * **Copilot Enterprise 前提**。Claude Opus 4.7 / GPT-5.5 など、Copilot で
  * 提供されているモデルを直接呼び出す。GitHub Models (別課金) とは別物。
@@ -199,8 +199,8 @@ function buildPrompt(e: NormalizedEntry): string {
     `  "titleJa": "日本語タイトル (30〜60文字)。原題が日本語ならそのまま。英語なら自然な日本語に翻訳",`,
     `  "summaryJa": "2〜3 行の日本語要約 (120〜200 文字)",`,
     `  "summaryEn": "1-2 sentence English summary (140-260 chars). Plain English only, no Japanese.",`,
-    `  "bodyJa": "プロライター視点で書かれた日本語本文 (700〜1100 文字)。以下の構成で、独立した記事として読めるように書くこと:\n· リード文: 主題と重要性を 1、2 文で提示\n· 本文: 元記事の主要ポイント・技術的内容・背景を掛い摩んで説明。複数パラグラフを \\n\\n で区切る\n· 関連知見: キーワードに関わる背景・雑学・周辺ツールや他社動向との関連を含めて読み応えを上げる\n· トーン: 中立、事実ベース。誤った断定や推測の単言は避ける\n· 推測を含める際は「と見られる」「可能性がある」等のヘッジ表現を使う\n· 出力はプレーンテキスト。Markdown 見出しやリスト記号は使わず、改行は \\n\\n のみ",`,
-    `  "bodyEn": "Plain English long-form article (500-800 words). Same content and structure as bodyJa but written natively in English (do not translate literally — write as a professional tech editor would in English). Use \\n\\n between paragraphs. No Markdown headings or list symbols. Include the same kind of background context, related ecosystem references, and hedged speculation when appropriate.",`,
+    `  "bodyJa": "プロライター視点で書かれた日本語本文 (700〜1100 文字)。以下の構成で、独立した記事として読めるように書くこと:\n· リード文: 主題と重要性を 1、2 文で提示\n· 本文: 元記事の主要ポイント・技術的内容・背景を噛み砕いて説明。複数パラグラフを \\n\\n で区切る\n· 関連知見: キーワードに関わる背景・雑学・周辺ツールや他社動向との関連を含めて読み応えを上げる\n· トーン: 中立、事実ベース。誤った断定や推測の断言は避ける\n· 推測を含める際は「と見られる」「可能性がある」等のヘッジ表現を使う\n· 出力はプレーンテキスト。Markdown 見出しやリスト記号は使わず、改行は \\n\\n のみ",`,
+    `  "bodyEn": "Plain English long-form article (500-800 words). Same content and structure as bodyJa but written natively in English. Do not translate literally. Write as a professional tech editor would in English. Use \\n\\n between paragraphs. No Markdown headings or list symbols. Include the same kind of background context, related ecosystem references, and hedged speculation when appropriate.",`,
     `  "importance": 1 | 2 | 3,`,
     `  "extraTags": ["英小文字 kebab", ...]`,
     `}`,

@@ -42,7 +42,7 @@ export function detectLang(text: string, defaultLang: Lang): Lang {
 
 /**
  * Heuristic importance: 3 = major release/changelog, 2 = blog with release keywords, 1 = default.
- * Real scoring (engagement, cross-source mentions) comes in Phase 2.
+ * Deterministic fallback scoring. The summarizer may override importance for entries it enhances.
  */
 export function scoreImportance(raw: RawEntry, source: SourceDefinition): Importance {
   const hay = `${raw.title} ${raw.contentSnippet ?? ""}`.toLowerCase();
@@ -64,8 +64,7 @@ export function scoreImportance(raw: RawEntry, source: SourceDefinition): Import
 }
 
 /**
- * Phase 1 placeholder summary: strip HTML and truncate contentSnippet.
- * Phase 2 will replace this with an LLM call (Claude Opus 4.7 per docs/01 §2.3).
+ * Initial summary used before Copilot summarization or cache enrichment runs.
  */
 function placeholderSummary(raw: RawEntry, lang: Lang): { ja: string; en: string } {
   const base = (raw.contentSnippet ?? raw.title).replace(/\s+/g, " ").trim();

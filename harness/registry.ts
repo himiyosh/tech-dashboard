@@ -1,8 +1,8 @@
 /**
- * Source registry — maps SourceId → SourceDefinition.
+ * Source registry - maps SourceId to SourceDefinition.
  *
- * Phase 1: 6 initial RSS/Atom sources covering 4 categories.
- * Phase 2+ will grow this to the full Tier 2 (30 sources) per site-spec §1.4.
+ * Current production registry covers 50 sources across 14 categories.
+ * Keep web/src/lib/source-meta.ts in sync so the Pages build stays self-contained.
  */
 import type { SourceDefinition } from "./types.ts";
 import { collectRss } from "./collectors/rss.ts";

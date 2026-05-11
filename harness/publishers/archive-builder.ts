@@ -24,38 +24,16 @@
  */
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { ArchiveTier, NormalizedEntry } from "../types.ts";
-
-/** Tiers eligible for the persistent archive. "hot" stays only in index.json. */
-const ARCHIVE_TIERS: ReadonlySet<ArchiveTier> = new Set(["warm", "cold"]);
-
-export interface ArchiveMonthFile {
-  generatedAt: string;
-  month: string; // "YYYY-MM"
-  count: number;
-  entries: NormalizedEntry[];
-}
-
-export interface ArchiveIndexFile {
-  generatedAt: string;
-  months: string[];
-  totalEntries: number;
-  /** Per-month counts for quick UI rendering. */
-  perMonth: Record<string, number>;
-}
-
-export interface ArchiveBuildStats {
-  monthsTouched: number;
-  entriesArchived: number;
-  entriesDropped: number;
-  entriesSkippedHot: number;
-}
-
-function bucketOf(entry: NormalizedEntry): string {
-  const iso = entry.publishedAt ?? entry.collectedAt;
-  // Defensive slice — both fields are ISO 8601.
-  return iso.slice(0, 7);
-}
+import type { NormalizedEntry } from "../types.ts";
+import {
+  buildArchiveIndexFile,
+  buildArchiveMonthFile,
+  groupArchiveEntries,
+  mergeArchiveEntries,
+  type ArchiveBuildStats,
+  type ArchiveIndexFile,
+  type ArchiveMonthFile,
+} from "./archive-core.ts";
 
 async function readMonthFile(path: string): Promise<ArchiveMonthFile | null> {
   try {
@@ -67,24 +45,6 @@ async function readMonthFile(path: string): Promise<ArchiveMonthFile | null> {
   }
 }
 
-/**
- * Merge-by-id: new entries overwrite same-id existing entries. Order is
- * preserved by publishedAt desc within the file.
- */
-function mergeEntries(
-  existing: NormalizedEntry[],
-  incoming: NormalizedEntry[],
-): NormalizedEntry[] {
-  const byId = new Map<string, NormalizedEntry>();
-  for (const e of existing) byId.set(e.id, e);
-  for (const e of incoming) byId.set(e.id, e); // newer wins
-  return [...byId.values()].sort((a, b) => {
-    const aTime = a.publishedAt ? Date.parse(a.publishedAt) : 0;
-    const bTime = b.publishedAt ? Date.parse(b.publishedAt) : 0;
-    return bTime - aTime;
-  });
-}
-
 export async function writeArchive(
   entries: NormalizedEntry[],
   dataDir: string,
@@ -92,47 +52,16 @@ export async function writeArchive(
   const archiveDir = join(dataDir, "archive");
   await mkdir(archiveDir, { recursive: true });
 
-  const stats: ArchiveBuildStats = {
-    monthsTouched: 0,
-    entriesArchived: 0,
-    entriesDropped: 0,
-    entriesSkippedHot: 0,
-  };
-
-  // Bucket archivable entries by month.
-  const byMonth = new Map<string, NormalizedEntry[]>();
-  for (const e of entries) {
-    const tier = e.archiveTier;
-    if (tier === "dropped") {
-      stats.entriesDropped++;
-      continue;
-    }
-    if (!tier || tier === "hot") {
-      stats.entriesSkippedHot++;
-      continue;
-    }
-    // tier is "warm" | "cold"
-    const key = bucketOf(e);
-    const arr = byMonth.get(key) ?? [];
-    arr.push(e);
-    byMonth.set(key, arr);
-  }
+  const { byMonth, stats } = groupArchiveEntries(entries);
 
   const generatedAt = new Date().toISOString();
 
   for (const [month, incoming] of byMonth) {
     const path = join(archiveDir, `${month}.json`);
     const existing = await readMonthFile(path);
-    const merged = mergeEntries(existing?.entries ?? [], incoming);
-    const payload: ArchiveMonthFile = {
-      generatedAt,
-      month,
-      count: merged.length,
-      entries: merged,
-    };
+    const merged = mergeArchiveEntries(existing?.entries ?? [], incoming);
+    const payload = buildArchiveMonthFile(month, merged, generatedAt);
     await writeFile(path, JSON.stringify(payload, null, 2) + "\n", "utf8");
-    stats.monthsTouched++;
-    stats.entriesArchived += incoming.length;
   }
 
   // Refresh top-level archive index.
@@ -153,12 +82,11 @@ async function writeArchiveIndex(archiveDir: string, generatedAt: string): Promi
     perMonth[m] = f?.count ?? 0;
     total += f?.count ?? 0;
   }
-  const idx: ArchiveIndexFile = {
+  const idx: ArchiveIndexFile = buildArchiveIndexFile(
+    months.map((month) => ({ generatedAt, month, count: perMonth[month] ?? 0, entries: [] })),
     generatedAt,
-    months,
-    totalEntries: total,
-    perMonth,
-  };
+  );
+  idx.totalEntries = total;
   await writeFile(
     join(archiveDir, "_index.json"),
     JSON.stringify(idx, null, 2) + "\n",

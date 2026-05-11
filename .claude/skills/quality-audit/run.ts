@@ -12,6 +12,7 @@ import { pathToFileURL } from "node:url";
 import { REGISTRY } from "../../../harness/registry.ts";
 import { canonicalUrlKey } from "../../../harness/pipeline/url.ts";
 import { ALL_CATEGORIES, type SourceDefinition } from "../../../harness/types.ts";
+import { sourceFreshnessStatus } from "../../../web/src/lib/freshness.ts";
 
 export { canonicalUrlKey } from "../../../harness/pipeline/url.ts";
 
@@ -36,30 +37,12 @@ interface Index {
 
 const CATS = [...ALL_CATEGORIES];
 
-interface FreshnessThreshold {
-  staleHrs: number;
-  errorHrs: number;
-}
-
 interface FreshnessRow {
   id: string;
   latestPublished: string;
   latestCollected: string;
   ageHrs: number;
   status: string;
-}
-
-function freshnessThresholdFor(source: SourceDefinition): FreshnessThreshold {
-  if (source.sourceType === "release" || source.sourceType === "changelog") {
-    return { staleHrs: 24 * 30, errorHrs: 24 * 120 };
-  }
-  if (source.sourceType === "paper" || source.category === "research") {
-    return { staleHrs: 24 * 14, errorHrs: 24 * 60 };
-  }
-  if (source.sourceType === "community") {
-    return { staleHrs: 24 * 7, errorHrs: 24 * 30 };
-  }
-  return { staleHrs: 42, errorHrs: 168 };
 }
 
 function latestTimestamp<T>(list: T[], select: (entry: T) => string | undefined): string {
@@ -80,10 +63,9 @@ export function freshnessForSource(
 
   const latestPublished = latestTimestamp(entries, (entry) => entry.publishedAt);
   const latestCollected = latestTimestamp(entries, (entry) => entry.collectedAt ?? entry.publishedAt);
-  const ageMs = nowMs - new Date(latestCollected).getTime();
-  const ageHrs = Math.round(ageMs / 3600_000);
-  const threshold = freshnessThresholdFor(source);
-  const status = ageHrs > threshold.errorHrs ? "🔴 error" : ageHrs > threshold.staleHrs ? "🟠 stale" : "✅ ok";
+  const freshness = sourceFreshnessStatus(source, latestCollected, nowMs);
+  const status = freshness.status === "error" ? "🔴 error" : freshness.status === "stale" ? "🟠 stale" : "✅ ok";
+  const ageHrs = freshness.ageHrs;
   return { latestPublished, latestCollected, ageHrs, status };
 }
 

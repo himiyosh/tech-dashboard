@@ -1,8 +1,8 @@
 /**
  * tag.ts — keyword-based tag enrichment.
  *
- * Phase 1: applies a small allowlist of high-signal tags based on title/snippet.
- * Phase 2 will use the summarize LLM call to also propose tags (then validated here).
+ * Applies a small allowlist of high-signal tags based on title/snippet.
+ * The summarize step can add model-proposed tags before this deterministic pass.
  */
 import type { NormalizedEntry } from "../types.ts";
 

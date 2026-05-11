@@ -4,8 +4,11 @@
  * data/index.json の整合性を実データに対して検証する。
  * 新エントリ追加・worker 改修で形が崩れないか早期検知する。
  */
+import { readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import indexJson from "../data/index.json";
+import statsJson from "../data/stats.json";
 
 interface RawEntry {
   id?: unknown;
@@ -28,6 +31,27 @@ interface IndexShape {
   generatedAt: string;
   count: number;
   entries: RawEntry[];
+}
+
+interface StatsBucket {
+  date?: string;
+  month?: string;
+  count: number;
+  byCategory?: Record<string, number>;
+}
+
+interface StatsShape {
+  generatedAt: string;
+  totals: {
+    allTime: number;
+    last30d: number;
+    last7d: number;
+    last24h: number;
+  };
+  byDay: StatsBucket[];
+  byMonth: StatsBucket[];
+  bySource: Array<{ source: string; total: number; last30d: number }>;
+  byImportance: Record<"1" | "2" | "3", number>;
 }
 
 const VALID_SOURCE_TYPES = new Set([
@@ -56,6 +80,12 @@ const VALID_CATEGORIES = new Set([
 ]);
 
 const data = indexJson as unknown as IndexShape;
+const stats = statsJson as unknown as StatsShape;
+const DATA_BUDGET = {
+  indexBytes: 8_000_000,
+  statsBytes: 500_000,
+  archiveMonthBytes: 2_000_000,
+};
 
 describe("data/index.json トップレベル", () => {
   it("generatedAt が ISO 8601 文字列である", () => {
@@ -169,5 +199,65 @@ describe("data/index.json カバレッジ統計 (情報のみ)", () => {
     // 「1件以上は body がある」だけアサートしてそれ以外はログとして記録する。
     expect(withJa).toBeGreaterThan(0);
     expect(withEn).toBeGreaterThan(0);
+  });
+});
+
+describe("data/stats.json", () => {
+  it("トップレベルの数値と生成時刻が有効である", () => {
+    expect(typeof stats.generatedAt).toBe("string");
+    expect(Number.isFinite(Date.parse(stats.generatedAt))).toBe(true);
+    expect(stats.totals.allTime).toBeGreaterThanOrEqual(data.entries.length);
+    expect(stats.totals.last30d).toBeGreaterThanOrEqual(stats.totals.last7d);
+    expect(stats.totals.last7d).toBeGreaterThanOrEqual(stats.totals.last24h);
+    expect(Object.keys(stats.byImportance).sort()).toEqual(["1", "2", "3"]);
+  });
+
+  it("日次・月次 bucket が昇順で、カテゴリ集計が count を超えない", () => {
+    const dayKeys = stats.byDay.map((bucket) => String(bucket.date));
+    const monthKeys = stats.byMonth.map((bucket) => String(bucket.month));
+    expect(dayKeys).toEqual([...dayKeys].sort());
+    expect(monthKeys).toEqual([...monthKeys].sort());
+
+    const buckets = [...stats.byDay, ...stats.byMonth];
+    const badBuckets = buckets.filter((bucket) => {
+      const categoryTotal = Object.values(bucket.byCategory ?? {}).reduce(
+        (total, count) => total + count,
+        0,
+      );
+      return categoryTotal > bucket.count;
+    });
+    expect(badBuckets).toEqual([]);
+  });
+
+  it("source 集計は降順で、値が非負である", () => {
+    const totals = stats.bySource.map((bucket) => bucket.total);
+    expect(totals).toEqual([...totals].sort((left, right) => right - left));
+    const negative = stats.bySource.filter(
+      (bucket) => bucket.total < 0 || bucket.last30d < 0 || bucket.last30d > bucket.total,
+    );
+    expect(negative).toEqual([]);
+  });
+});
+
+describe("data artifact サイズ予算", () => {
+  it("index / stats / archive month が運用上限を超えない", () => {
+    const archiveDir = join(process.cwd(), "data", "archive");
+    const archiveFiles = readdirSync(archiveDir)
+      .filter((fileName) => /^\d{4}-\d{2}\.json$/.test(fileName))
+      .map((fileName) => ({
+        fileName,
+        size: statSync(join(archiveDir, fileName)).size,
+      }));
+    const oversizedArchiveFiles = archiveFiles.filter(
+      (file) => file.size > DATA_BUDGET.archiveMonthBytes,
+    );
+
+    expect(statSync(join(process.cwd(), "data", "index.json")).size).toBeLessThanOrEqual(
+      DATA_BUDGET.indexBytes,
+    );
+    expect(statSync(join(process.cwd(), "data", "stats.json")).size).toBeLessThanOrEqual(
+      DATA_BUDGET.statsBytes,
+    );
+    expect(oversizedArchiveFiles).toEqual([]);
   });
 });

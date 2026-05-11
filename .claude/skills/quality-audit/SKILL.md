@@ -8,7 +8,7 @@ description: tech-dashboard の index.json を監査し、品質・鮮度・カ�
 
 `data/index.json` を読み取り、以下 6 観点で品質スコアを算出・問題リストを返す:
 
-1. **鮮度 (freshness)**: ソース別の最新収集時刻 (`collectedAt`) を監査し、最新公開時刻 (`publishedAt`) は上流活動の参考値として併記する。blog は 42h/168h、release/changelog は 30d/120d、paper/research は 14d/60d、community は 7d/30d を stale/error の目安にする。
+1. **鮮度 (freshness)**: ソース別の最新収集時刻 (`collectedAt`) を監査し、最新公開時刻 (`publishedAt`) は上流活動の参考値として併記する。blog は 42h/168h、release/changelog は 30d/120d、paper/research は 14d/60d、community は 7d/30d を stale/error の目安にする。しきい値は Web UI と同じ `web/src/lib/freshness.ts` を使う。
 2. **ソース整合性 (source coverage)**: `harness/registry.ts` と `data/index.json` の source ID 差分を特定。未出現 source は情報として列挙し、registry に無い data source を warning とする。
 3. **カテゴリ偏り (distribution)**: `harness/types.ts` の全カテゴリで 0 件のものを特定。
 4. **要約品質 (summary)**: `summaryJa` が空/短すぎる (< 20 chars) / 機械翻訳臭いもの。

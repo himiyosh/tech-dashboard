@@ -12,7 +12,7 @@
 **プロダクト名**: TECH Dashboard — Pulse of the AI Ecosystem
 **目的**: AI 開発ツール / 基盤モデル / 研究の最新動向を **毎時自動収集・要約・公開** するワンストップ ポータル。
 **想定ユーザ**: Copilot / Claude / Codex / Cursor / Local LLM などを業務で使う開発者・リサーチャ。
-**スケール**: 51 データソース (Worker 実行時は `user-opml` 除外で 50、各 run で 50/4=約 13 ソースをローテーション) / 14 カテゴリ / index 最大 500 件 / **毎時実行**。
+**スケール**: 51 データソース (Worker 実行時は `user-opml` 除外で 50、各 run で 50/4=約 13 ソースをローテーション) / 14 カテゴリ / index 最大 2000 件 / **毎時実行**。
 **URL**:
 - 本番: https://techdb.studio344.net/ (Cloudflare Pages の pages.dev サブドメイン: https://tech-dashboard-6a7.pages.dev/)
 - リポジトリ: https://github.com/himiyosh/tech-dashboard
@@ -28,8 +28,8 @@
        ┌────────────────────────┐
        │ tech-dashboard-harness │  = Collect → Normalize → Dedupe
        │   (Worker + KV cache)  │  → Summarize (Copilot Enterprise API)
-       └─────────┬──────────────┘  → Commit data/index.json
-                 ↓ GitHub Contents API
+      └─────────┬──────────────┘  → Commit data/index.json / archive / stats
+                 ↓ GitHub Git Data API (1 commit)
        ┌────────────────────────┐
        │  github.com/himiyosh/  │  main ブランチ
        │    tech-dashboard      │
@@ -58,7 +58,7 @@
 |---|---|
 | Cron 式 | `0 * * * *` (UTC) |
 | 実行頻度 | **毎時 / 24 run×日** |
-| ソースローテーション | 50 ソース ÷ 4 batch (`hour % 4`)、個別ソースは 4 時間ごと |
+| ソースローテーション | 50 fetch 対象ソース ÷ 4 batch (`hour % 4`)、個別ソースは 4 時間ごと |
 | 1 実行あたり新規要約上限 | `SUMMARIZE_MAX_NEW = 5` |
 | 1 実行あたり og:image fetch 上限 | `OG_BUDGET_PER_RUN = 4` |
 | ソースあたり取得上限 | `PER_SOURCE_CAP = 15` (arxiv の 400+/日 を抑制) |
@@ -107,7 +107,7 @@ interface WorkerHealth {
 | 領域 | 仕組み | 頻度 / トリガー |
 |---|---|---|
 | データ収集 + 要約 + og:image | Cloudflare Worker (cron) | 毎時 (4 batch ローテーション) |
-| GitHub commit | Worker → GitHub Contents API | 差分時のみ |
+| GitHub commit | Worker → GitHub Git Data API | data 差分を 1 commit にまとめる |
 | サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
 | ローカル品質ゲート + Worker コード deploy | `scripts/git-hooks/pre-push` | push 前に unit / web build / E2E を実行し、`RUN_WORKER_DEPLOY=1` の `main` push に worker/ 差分がある場合だけ deploy |
 | ヘルス監視 | `data/index.json#health` + `/status` ページ | 実行ごと記録、サイト訪問時に確認 |
@@ -143,11 +143,18 @@ interface NormalizedEntry {
 
 | パス | 内容 | 更新タイミング |
 |---|---|---|
-| `data/index.json` | 公開用 (最大 500 件、`generatedAt` 付き) | Worker cron 実行ごと |
+| `data/index.json` | 公開用 (最大 2000 件、`generatedAt` 付き) | Worker cron 実行ごと |
+| `data/archive/*.json` | warm/cold tier の月別永続 archive | Worker cron / `npm run collect` 実行時 |
+| `data/archive/_index.json` | archive 月一覧と件数 | Worker cron / `npm run collect` 実行時 |
+| `data/stats.json` | archive 込みの記事数推移 / source 集計 | Worker cron / `npm run collect` 実行時 |
 | `data/raw/<source>.json` | 収集素材 (デバッグ用、ローカルのみ) | `npm run collect` 時 |
 | `data/_summary-cache.json` | ローカル要約キャッシュ | ローカル実行時 |
 | KV `cache.v1` | Worker 要約キャッシュ (JSON ブロブ) | Worker 実行時 |
 | `data/_runs/audit-*.md` | 品質監査レポート | `quality-audit` Skill 実行時 |
+
+`web/src/lib/metrics.ts` は `data/index.json`、`data/stats.json`、archive index、Worker health から Timeline / About の表示 metrics を組み立てる。`/metrics.json` は同じ値を JSON で公開し、`LiveMetrics.astro` が開いているページの `data-metric` 表示を定期 fetch で更新する。
+
+data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する。現行上限は `data/index.json` 8 MB、`data/stats.json` 500 KB、archive 月別 JSON 2 MB とする。
 
 ---
 
@@ -164,7 +171,7 @@ interface NormalizedEntry {
 | `youtube` | `harness/collectors/youtube.ts` | 1 | YouTube Channel Atom |
 | `opml` | `harness/collectors/opml.ts` | 1 | ユーザ OPML (ローカルのみ) |
 
-ソース定義は `harness/registry.ts` の `REGISTRY` オブジェクトに集約。Worker 実行時は `user-opml` を除外 (FS 依存) し 50 ソースをフェッチ。
+ソース定義は `harness/registry.ts` の `REGISTRY` オブジェクトに集約。登録は 51 ソースで、Worker 実行時は `user-opml` を除外 (FS 依存) し 50 ソースをフェッチ。
 
 ### 4.2 カテゴリ定義 (14 分類)
 
@@ -278,11 +285,11 @@ interface NormalizedEntry {
 4. per-source    重要度と鮮度で最大 50 件/ソースにキャップ
 5. sort          publishedAt 降順で INDEX_LIMIT まで
 6. cache-lookup  KV から既存要約を取得
-7. summarize     `SUMMARIZE_MAX_NEW` 件まで Copilot Enterprise (既定: Claude Opus 4.7) で要約
+7. summarize     `SUMMARIZE_MAX_NEW` 件まで Copilot Enterprise (既定: Claude Opus 4.7) で要約。Worker は timeout + 1 retry を行う
 8. cache-write   KV に単一ブロブで永続化
 9. categorize    URL / tag でカテゴリ判定
-10. build        `data/index.json` 生成
-11. commit       GitHub Contents API で push (既存と同一なら skip)
+10. build        `data/index.json` / `data/archive/*` / `data/stats.json` 生成
+11. commit       GitHub Git Data API で `data/index.json` / archive / stats を 1 commit にまとめる (既存と同一なら skip)
 ```
 
 ### 5.1 要約 API
@@ -303,17 +310,18 @@ interface NormalizedEntry {
 | `/` | Timeline (トップ) | `DailySummary`, `TimelineList`, `Sidebar` |
 | `/c/[slug]` | カテゴリ別 (13 種) | `CategoryHero`, `TimelineList` |
 | `/categories` | カテゴリ一覧 | カテゴリグリッド + 7 日スパークライン |
-| `/sources` | ソース一覧 | 50 ソースのリンク / タイプ |
-| `/status` | ステータス | `generatedAt` / 件数 / ソース健全性 |
+| `/status` | ステータス + ソース一覧 | `generatedAt` / 件数 / Worker health / source registry / ソース健全性 |
+| `/sources` | 互換リダイレクト | `/status` へ誘導 |
 | `/about` | About | サイト説明 / ライセンス |
 | `/page/[n]` | ページネーション | Timeline 2 ページ目以降 |
 | `/t/[tag]` | タグ別 | 横断タグによる絞り込み |
 | `/rss.xml` | RSS 2.0 | 最新 50 件 |
 | `/feed.json` | JSON Feed 1.1 | 最新 50 件 |
+| `/metrics.json` | Dashboard metrics | Timeline / About の自動更新用 counts |
 
 ### 6.2 共通レイアウト (`Portal.astro`)
 
-- **ヘッダ**: ロゴ / Nav (Timeline / Categories / Sources / Status / About) / **検索ボックス (Pagefind インライン)** / 言語トグル (JA/EN)
+- **ヘッダ**: ロゴ / Nav (Timeline / Categories / Archive / Status / About) / **検索ボックス (Pagefind インライン)** / 言語トグル (JA/EN)
 - **フッタ**: Generated at / リポジトリリンク / ライセンス
 - **言語切替**: `localStorage["td:lang"]` に保存、プリペイントで FOUC 回避
 - **ファビコン**: `/favicon.svg` (レーダー + パルスドット)
@@ -414,7 +422,7 @@ interface NormalizedEntry {
 | キー | 用途 | 管理場所 |
 |---|---|---|
 | `COPILOT_PAT` | Copilot Enterprise 一時トークン交換 | Wrangler Secrets (Worker) / `.env` (ローカル) |
-| `GH_TOKEN` | GitHub Contents API + `x-trigger-token` 認証 | Wrangler Secrets |
+| `GH_TOKEN` | GitHub Git Data API + `x-trigger-token` 認証 | Wrangler Secrets |
 
 ---
 
@@ -464,6 +472,6 @@ npx wrangler tail            # 実ログ tail
 
 ## 付録 B. コミット規約
 
-- Worker 生成: `chore(data): worker run <ISO> (+<N> summaries)`
+- Worker 生成: `chore(data): update tech dashboard <ISO>`
 - 機能追加: `feat(<scope>): ...` / 修正: `fix(<scope>): ...`
 - `[skip ci]` は使用しない (Cloudflare Pages Git Integration の build skip と混同しないため)

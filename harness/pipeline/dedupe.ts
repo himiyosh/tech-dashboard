@@ -1,6 +1,6 @@
 /**
- * dedupe.ts — Phase 1: URL-based dedup only.
- * Phase 2 will add title-similarity clustering via embeddings.
+ * dedupe.ts - URL-based dedup for collector and data merge output.
+ * Heavier similarity checks belong in audit/reporting, not the hot publish path.
  */
 import type { NormalizedEntry } from "../types.ts";
 

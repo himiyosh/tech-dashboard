@@ -1,32 +1,94 @@
 ---
 import Portal from "../layouts/Portal.astro";
 import Sidebar from "../components/Sidebar.astro";
-import { ALL_ENTRIES, GENERATED_AT, WORKER_HEALTH, relativeTime } from "../lib/data.ts";
+import {
+  ALL_ENTRIES,
+  CATEGORY_META,
+  GENERATED_AT,
+  WORKER_HEALTH,
+  relativeTime,
+  type Category,
+  type NormalizedEntry,
+} from "../lib/data.ts";
+import { sourceFreshnessStatus, type FreshnessSourceType, type FreshnessStatus } from "../lib/freshness.ts";
 import { SOURCE_META } from "../lib/source-meta.ts";
 
 const now = new Date();
 const SIX_H = 6 * 3600_000;
-const WARN_H = 42 * 3600_000;
+type SourceStatus = Exclude<FreshnessStatus, "no-data">;
+type SourceRow = {
+  id: string;
+  displayName: string;
+  category: Category;
+  categoryName: string;
+  categoryColor: string;
+  tier: number;
+  count: number;
+  latest: string;
+  latestPublished: string;
+  latestTitle: string | null;
+  latestUrl: string | null;
+  sourceType: NormalizedEntry["sourceType"];
+  sourceTypeLabel: string;
+  thresholdHrs: number;
+  status: SourceStatus;
+};
 
-const sources = SOURCE_META.map((def) => {
+const TYPE_LABEL: Record<NormalizedEntry["sourceType"], string> = {
+  blog: "Blog",
+  release: "Release",
+  changelog: "Changelog",
+  paper: "Paper",
+  community: "Community",
+};
+
+const categoryBySlug = new Map(CATEGORY_META.map((category) => [category.slug, category]));
+
+const sources: SourceRow[] = SOURCE_META.map((def) => {
   const fromSource = ALL_ENTRIES.filter((e) => e.source === def.id);
-  const latest = fromSource.reduce(
+  const latestEntry = fromSource.reduce<NormalizedEntry | null>((acc, entry) => {
+    const entryAt = entry.collectedAt ?? entry.publishedAt;
+    const accAt = acc ? (acc.collectedAt ?? acc.publishedAt) : "1970-01-01T00:00:00Z";
+    return entryAt && entryAt > accAt ? entry : acc;
+  }, null);
+  const latestPublished = fromSource.reduce(
     (acc, e) => {
       if (!e.publishedAt) return acc;
       return e.publishedAt > acc ? e.publishedAt : acc;
     },
     "1970-01-01T00:00:00Z",
   );
-  const ageMs = now.getTime() - new Date(latest).getTime();
-  const status =
-    fromSource.length === 0 ? "error" : ageMs > WARN_H ? "stale" : "ok";
+  const latestCollected = fromSource.reduce(
+    (acc, e) => {
+      const collectedAt = e.collectedAt ?? e.publishedAt;
+      return collectedAt && collectedAt > acc ? collectedAt : acc;
+    },
+    "1970-01-01T00:00:00Z",
+  );
+  const sourceType = latestEntry?.sourceType ?? fromSource[0]?.sourceType ?? "blog";
+  const freshness = sourceFreshnessStatus(
+    { category: def.category, sourceType: sourceType as FreshnessSourceType },
+    fromSource.length === 0 ? undefined : latestCollected,
+    now.getTime(),
+  );
+  const status = freshness.status === "no-data" ? "error" : freshness.status;
+  const category = def.category as Category;
+  const categoryMeta = categoryBySlug.get(category);
   return {
     id: def.id,
     displayName: def.displayName,
-    category: def.category,
+    category,
+    categoryName: categoryMeta?.name ?? def.category,
+    categoryColor: categoryMeta?.color ?? "var(--accent)",
     tier: def.tier,
     count: fromSource.length,
-    latest,
+    latest: latestCollected,
+    latestPublished,
+    latestTitle: latestEntry?.titleJa || latestEntry?.title || null,
+    latestUrl: latestEntry?.url ?? null,
+    sourceType,
+    sourceTypeLabel: TYPE_LABEL[sourceType],
+    thresholdHrs: freshness.threshold.staleHrs,
     status,
   };
 });
@@ -34,6 +96,36 @@ const sources = SOURCE_META.map((def) => {
 const ok = sources.filter((s) => s.status === "ok").length;
 const stale = sources.filter((s) => s.status === "stale").length;
 const error = sources.filter((s) => s.status === "error").length;
+const statusOrder = { error: 0, stale: 1, ok: 2 } as const;
+const sortedSources = [...sources].sort(
+  (a, b) =>
+    statusOrder[a.status] - statusOrder[b.status] ||
+    a.tier - b.tier ||
+    a.displayName.localeCompare(b.displayName),
+);
+const errorSources = sortedSources.filter((s) => s.status === "error");
+const staleSources = sortedSources.filter((s) => s.status === "stale");
+const attentionSources = [...errorSources, ...staleSources].slice(0, 8);
+const healthyPct = Math.round((ok / Math.max(sources.length, 1)) * 100);
+const indexAgeLabel = relativeTime(GENERATED_AT, now);
+
+const categoryRows = CATEGORY_META.map((category) => {
+    const rows = sources.filter((source) => source.category === category.slug);
+    return {
+      ...category,
+      total: rows.length,
+      ok: rows.filter((source) => source.status === "ok").length,
+      stale: rows.filter((source) => source.status === "stale").length,
+      error: rows.filter((source) => source.status === "error").length,
+    };
+  })
+  .filter((row) => row.total > 0)
+  .sort((a, b) => b.error - a.error || b.stale - a.stale || b.total - a.total)
+  .slice(0, 8);
+const sourceCategoryRows = CATEGORY_META.map((category) => {
+  const rows = sources.filter((source) => source.category === category.slug);
+  return { ...category, total: rows.length };
+}).filter((row) => row.total > 0);
 
 // Worker health badge: ok / warn / err based on age and copilot status.
 const wh = WORKER_HEALTH;
@@ -56,127 +148,673 @@ if (!wh) {
 }
 const workerColor =
   workerStatus === "ok" ? "var(--success)" : workerStatus === "warn" ? "var(--important)" : "var(--danger)";
+const workerStatusText = workerStatus === "ok" ? "OK" : workerStatus === "warn" ? "WARN" : "ERR";
+const workerSummary = wh
+  ? `Batch ${wh.batchIndex}/${wh.batchTotal} · ${wh.sourcesOk}/${wh.sourcesAttempted} sources · +${wh.summarized} summaries`
+  : "Worker health metadata is not available in this index.";
 ---
 
 <Portal pageKey="status" title="Status — TECH Dashboard">
-  <div class="layout">
+  <div class="layout status-layout">
     <Sidebar />
 
-    <main>
-      <div class="section-header primary">
-        <h2>
-          Worker Health
-          <span class="count">batch ローテーション · 毎時実行</span>
-        </h2>
+    <main class="status-main">
+      <section class={`status-hero status-hero-${workerStatus}`} aria-labelledby="worker-health-heading">
+        <div class="status-hero-copy">
+          <div class="status-kicker">
+            <span class="status-dot" style={`background:${workerColor}`}></span>
+            <span>{workerStatusText}</span>
+            <span>{workerLabel}</span>
+          </div>
+          <div class="section-header primary status-title-row">
+            <h2 id="worker-health-heading">
+              Worker Health
+              <span class="count">batch ローテーション · 毎時実行</span>
+            </h2>
+          </div>
+          <p>{workerSummary}</p>
+        </div>
+
+        <div class="status-hero-grid" aria-label="Worker summary">
+          <div class="status-metric-card">
+            <span>最終実行</span>
+            <strong>{wh ? relativeTime(wh.lastRunAt, now) : "unknown"}</strong>
+          </div>
+          <div class="status-metric-card">
+            <span>収集成功</span>
+            <strong>{wh ? `${wh.sourcesOk}/${wh.sourcesAttempted}` : "n/a"}</strong>
+          </div>
+          <div class="status-metric-card">
+            <span>本 run 要約</span>
+            <strong>{wh ? `+${wh.summarized}` : "n/a"}</strong>
+          </div>
+          <div class="status-metric-card">
+            <span>Index</span>
+            <strong>{indexAgeLabel}</strong>
+          </div>
+        </div>
+      </section>
+
+      {wh ? (
+        <section class="status-detail-grid" aria-label="Worker detail">
+          <div>
+            <span class="detail-label">Copilot 要約</span>
+            {wh.copilotOk ? (
+              <strong class="tone-ok">OK</strong>
+            ) : (
+              <strong class="tone-error" title={wh.copilotError ?? ""}>
+                NG {wh.copilotError ? `(${wh.copilotError.slice(0, 40)})` : ""}
+              </strong>
+            )}
+          </div>
+          <div>
+            <span class="detail-label">要約エラー</span>
+            <strong>{wh.summarizeErrors}</strong>
+          </div>
+          <div>
+            <span class="detail-label">og:image cache</span>
+            <strong>{wh.ogCached} URL</strong>
+            <small>{wh.ogNewHits} new</small>
+          </div>
+          <div class="failed-sources">
+            <span class="detail-label">失敗 source</span>
+            {wh.sourcesFailed.length === 0 ? (
+              <strong class="tone-ok">なし</strong>
+            ) : (
+              <strong class="tone-warn">{wh.sourcesFailed.join(", ")}</strong>
+            )}
+          </div>
+        </section>
+      ) : (
+        <p class="status-note">
+          このバージョンの <code>data/index.json</code> には Worker health メタデータが含まれていません。
+          次回 Worker run 後に表示されます。
+        </p>
+      )}
+
+      <section class="source-health-panel" aria-labelledby="source-health-heading">
+        <div class="section-header primary source-heading-row">
+          <h2 id="source-health-heading">
+            Source Health & Registry
+            <span class="count">{sources.length} sources</span>
+          </h2>
+        </div>
+
+        <div class="source-summary-grid" aria-label="Source summary">
+          <div class="source-summary-card ok">
+            <span>Healthy</span>
+            <strong>{ok}</strong>
+          </div>
+          <div class="source-summary-card stale">
+            <span>Stale</span>
+            <strong>{stale}</strong>
+          </div>
+          <div class="source-summary-card error">
+            <span>Error</span>
+            <strong>{error}</strong>
+          </div>
+          <div class="source-summary-card">
+            <span>Coverage</span>
+            <strong>{healthyPct}%</strong>
+          </div>
+        </div>
+
+        <div class="status-toolbar" role="group" aria-label="Source status filter">
+          <button type="button" class="status-filter is-active" data-source-filter="all" aria-pressed="true">All <span>{sources.length}</span></button>
+          <button type="button" class="status-filter" data-source-filter="error" aria-pressed="false">Error <span>{error}</span></button>
+          <button type="button" class="status-filter" data-source-filter="stale" aria-pressed="false">Stale <span>{stale}</span></button>
+          <button type="button" class="status-filter" data-source-filter="ok" aria-pressed="false">Healthy <span>{ok}</span></button>
+        </div>
+
+        <div class="category-filter-row" role="group" aria-label="Source category filter">
+          <button type="button" class="category-filter is-active" data-category-filter="all" aria-pressed="true">All categories</button>
+          {sourceCategoryRows.map((row) => (
+            <button type="button" class="category-filter" style={`--category-color:${row.color}`} data-category-filter={row.slug} aria-pressed="false">
+              {row.name}<span>{row.total}</span>
+            </button>
+          ))}
+        </div>
+
+        <div class="side-card source-health-list status-source-table" id="source-health-list">
+          {sortedSources.map((s) => (
+            <div class={`source-item source-row-${s.status}`} style={`--category-color:${s.categoryColor}`} data-source-status={s.status} data-source-category={s.category}>
+              <span class={`status ${s.status}`} aria-hidden="true"></span>
+              <span class="name source-name-block">
+                <strong>{s.displayName}</strong>
+                <span class="source-meta-line">
+                  <span class="source-category-chip">{s.categoryName}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>{s.sourceTypeLabel}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>tier {s.tier}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>stale &gt; {s.thresholdHrs}h</span>
+                </span>
+                <span class="source-latest-line">
+                  Latest
+                  {s.latestUrl ? (
+                    <a href={s.latestUrl} target="_blank" rel="noopener noreferrer">{s.latestTitle}</a>
+                  ) : (
+                    <strong>no data</strong>
+                  )}
+                </span>
+              </span>
+              <span class={`source-status-badge ${s.status}`}>{s.status}</span>
+              <span class="time source-time-block">
+                <strong>{s.count}</strong>
+                <span>{s.status === "error" ? "no data" : relativeTime(s.latest, now)}</span>
+              </span>
+            </div>
+          ))}
+          <div class="source-empty" id="source-empty" hidden>No sources match this filter.</div>
+        </div>
+
+        <p class="status-note compact">
+          <strong>status</strong> は source type と category ごとの鮮度しきい値で判定します。
+          <span class="tone-ok">ok</span> は範囲内、<span class="tone-warn">stale</span> は threshold 超過、<span class="tone-error">error</span> はデータなしです。
+        </p>
+      </section>
+    </main>
+
+    <aside class="right status-insights">
+      <div class="side-card status-insight-card status-score-card">
+        <div class="rail-title">Coverage</div>
+        <div class="status-score"><strong>{healthyPct}</strong><span>% 正常</span></div>
+        <div class="status-score-bar"><span style={`width:${healthyPct}%`}></span></div>
+        <p>{ok} / {sources.length} sources が鮮度しきい値内です。</p>
       </div>
 
-      <div class="side-card" style="padding:16px 20px;margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <span class="status" style={`background:${workerColor};width:10px;height:10px;border-radius:50%;display:inline-block`}></span>
-          <strong style="font-size:14px">{workerLabel}</strong>
-          {wh && (
-            <span style="color:var(--muted);font-size:12px;margin-left:auto">
-              最終実行: {relativeTime(wh.lastRunAt, now)}
-            </span>
-          )}
-        </div>
-        {wh ? (
-          <table style="width:100%;font-size:12.5px;color:var(--text-2);border-collapse:collapse">
-            <tbody>
-              <tr>
-                <td style="padding:3px 8px 3px 0;color:var(--muted)">直近 batch</td>
-                <td><strong>{wh.batchIndex} / {wh.batchTotal}</strong></td>
-                <td style="padding:3px 8px 3px 0;color:var(--muted)">収集成功</td>
-                <td><strong>{wh.sourcesOk} / {wh.sourcesAttempted}</strong> sources</td>
-              </tr>
-              <tr>
-                <td style="padding:3px 8px 3px 0;color:var(--muted)">Copilot 要約</td>
-                <td>
-                  {wh.copilotOk ? (
-                    <span style="color:var(--success)">OK</span>
-                  ) : (
-                    <span style="color:var(--danger)" title={wh.copilotError ?? ""}>
-                      NG ({wh.copilotError ? wh.copilotError.slice(0, 40) : "unknown"})
-                    </span>
-                  )}
-                </td>
-                <td style="padding:3px 8px 3px 0;color:var(--muted)">本 run 要約</td>
-                <td><strong>+{wh.summarized}</strong> ({wh.summarizeErrors} err)</td>
-              </tr>
-              <tr>
-                <td style="padding:3px 8px 3px 0;color:var(--muted)">og:image cache</td>
-                <td><strong>{wh.ogCached}</strong> URL ({wh.ogNewHits} new)</td>
-                <td style="padding:3px 8px 3px 0;color:var(--muted)">失敗 source</td>
-                <td>
-                  {wh.sourcesFailed.length === 0
-                    ? "なし"
-                    : <span style="color:var(--important);font-family:ui-monospace,monospace;font-size:11.5px">{wh.sourcesFailed.join(", ")}</span>}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="side-card status-insight-card">
+        <div class="rail-title">要確認</div>
+        {attentionSources.length > 0 ? (
+          <ul class="status-attention-list">
+            {attentionSources.map((s) => (
+              <li class={`attention-${s.status}`}>
+                <span>{s.displayName}</span>
+                <small>{s.status} · {s.category} · tier {s.tier}</small>
+              </li>
+            ))}
+          </ul>
         ) : (
-          <p style="color:var(--muted);font-size:12.5px;line-height:1.6">
-            このバージョンの <code>data/index.json</code> には Worker health メタデータが含まれていません。
-            次回 Worker run 後に表示されます。
-          </p>
+          <p>この index では source error / stale はありません。</p>
         )}
       </div>
 
-      <div class="section-header primary">
-        <h2>
-          Source Health
-          <span class="count">{sources.length} sources</span>
-        </h2>
+      <div class="side-card status-insight-card">
+        <div class="rail-title">カテゴリ別</div>
+        <ul class="category-health-list">
+          {categoryRows.map((row) => (
+            <li>
+              <span>{row.name}</span>
+              <small>
+                {row.ok} ok · {row.stale} stale · {row.error} err
+              </small>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      <div class="stats" style="padding:0 0 16px">
-        <div class="stat">
-          <span>Healthy</span>
-          <span class="value" style="color:var(--success)">{ok}</span>
-        </div>
-        <div class="stat">
-          <span>Stale</span>
-          <span class="value" style="color:var(--important)">{stale}</span>
-        </div>
-        <div class="stat">
-          <span>Error</span>
-          <span class="value" style="color:var(--danger)">{error}</span>
-        </div>
-        <div class="stat">
-          <span>Index</span>
-          <span class="value" style="font-size:13px">{relativeTime(GENERATED_AT, now)}</span>
-        </div>
+      <div class="side-card status-insight-card">
+        <div class="rail-title">鮮度判定</div>
+        <p>source type と category ごとのしきい値で確認し、pipeline health は collectedAt を基準にします。</p>
       </div>
-
-      <div class="side-card">
-        {sources.map((s) => {
-          const dotColor = s.status === "ok" ? "var(--success)" : s.status === "stale" ? "var(--important)" : "var(--danger)";
-          return (
-            <div class="source-item">
-              <span class="status" style={`background:${dotColor}`}></span>
-              <span class="name">
-                {s.displayName}
-                <span style="color:var(--muted-2);margin-left:8px;font-size:11px">
-                  tier {s.tier} · {s.category}
-                </span>
-              </span>
-              <span class="time">
-                {s.count} · {s.status === "error" ? "no data" : relativeTime(s.latest, now)}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      <p style="color:var(--muted);font-size:12px;margin-top:12px;line-height:1.6">
-        <strong style="color:var(--text-2)">status</strong>:
-        <span style="color:var(--success)">ok</span> = 最新が 42h 以内に収集 ·
-        <span style="color:var(--important)">stale</span> = 42h 以上経過 ·
-        <span style="color:var(--danger)">error</span> = 直近 run でデータなし
-      </p>
-    </main>
-
-    <aside class="right"></aside>
+    </aside>
   </div>
 </Portal>
+
+<style>
+  .status-main {
+    min-width: 0;
+  }
+
+  .status-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.9fr);
+    gap: 16px;
+    padding: 18px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--surface) 92%, transparent), color-mix(in srgb, var(--bg-2) 88%, transparent)),
+      var(--surface);
+  }
+
+  .status-hero-ok {
+    border-color: color-mix(in srgb, var(--success) 24%, var(--border));
+  }
+
+  .status-hero-warn {
+    border-color: color-mix(in srgb, var(--important) 32%, var(--border));
+  }
+
+  .status-hero-err {
+    border-color: color-mix(in srgb, var(--danger) 38%, var(--border));
+  }
+
+  .status-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+  }
+
+  .status-title-row {
+    margin-bottom: 6px;
+  }
+
+  .status-hero-copy p {
+    max-width: 720px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .status-hero-grid,
+  .source-summary-grid,
+  .status-detail-grid {
+    display: grid;
+    gap: 10px;
+  }
+
+  .status-hero-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .status-metric-card,
+  .source-summary-card,
+  .status-detail-grid > div {
+    min-width: 0;
+    padding: 11px 12px;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-2) 72%, transparent);
+  }
+
+  .status-metric-card span,
+  .source-summary-card span,
+  .detail-label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--muted-2);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .status-metric-card strong,
+  .source-summary-card strong,
+  .status-detail-grid strong {
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .status-detail-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 20px;
+  }
+
+  .status-detail-grid small {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted-2);
+    font-size: 11px;
+  }
+
+  .failed-sources strong {
+    display: block;
+    overflow-wrap: anywhere;
+    font-family: ui-monospace, monospace;
+    font-size: 11.5px;
+  }
+
+  .source-health-panel {
+    margin-top: 4px;
+  }
+
+  .source-heading-row {
+    margin-bottom: 12px;
+  }
+
+  .source-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 12px;
+  }
+
+  .source-summary-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .source-summary-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: color-mix(in srgb, var(--accent) 58%, transparent);
+  }
+
+  .source-summary-card.ok::before {
+    background: var(--success);
+  }
+
+  .source-summary-card.stale::before {
+    background: var(--important);
+  }
+
+  .source-summary-card.error::before {
+    background: var(--danger);
+  }
+
+  .source-summary-card strong {
+    font-size: 24px;
+  }
+
+  .status-source-table {
+    padding: 6px 14px;
+  }
+
+  .source-name-block {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .source-name-block strong {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 12.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .source-meta-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted-2);
+    font-size: 11px;
+  }
+
+  .source-category-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-2);
+  }
+
+  .source-category-chip::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--category-color, var(--accent));
+  }
+
+  .source-latest-line {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted-2);
+    font-size: 11px;
+  }
+
+  .source-latest-line a,
+  .source-latest-line strong {
+    overflow: hidden;
+    color: var(--text-2);
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .source-latest-line a:hover {
+    color: var(--accent);
+  }
+
+  .category-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: -2px 0 12px;
+  }
+
+  .category-filter {
+    display: inline-flex;
+    min-height: 33px;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text-2);
+    font: inherit;
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .category-filter::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--category-color, var(--accent));
+  }
+
+  .category-filter span {
+    color: var(--muted-2);
+    font-family: ui-monospace, monospace;
+    font-size: 10.5px;
+  }
+
+  .category-filter:hover,
+  .category-filter.is-active {
+    border-color: color-mix(in srgb, var(--category-color, var(--accent)) 50%, var(--border));
+    color: var(--accent);
+  }
+
+  .source-time-block {
+    display: flex;
+    min-width: 96px;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .source-time-block strong {
+    color: var(--text-2);
+    font-size: 12px;
+  }
+
+  .source-time-block span {
+    color: var(--muted-2);
+    font-size: 10.5px;
+  }
+
+  .source-item .status.ok {
+    background: var(--success);
+  }
+
+  .source-item .status.stale {
+    background: var(--important);
+  }
+
+  .source-item .status.error {
+    background: var(--danger);
+  }
+
+  .source-row-error {
+    background: linear-gradient(90deg, rgba(248, 113, 113, 0.08), transparent 48%);
+  }
+
+  .source-row-stale {
+    background: linear-gradient(90deg, rgba(251, 191, 36, 0.08), transparent 48%);
+  }
+
+  .status-note {
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .status-note.compact {
+    margin-top: 12px;
+  }
+
+  .status-note strong {
+    color: var(--text-2);
+  }
+
+  .tone-ok {
+    color: var(--success);
+  }
+
+  .tone-warn {
+    color: var(--important);
+  }
+
+  .tone-error {
+    color: var(--danger);
+  }
+
+  .attention-stale {
+    background: rgba(251, 191, 36, 0.08) !important;
+    border-color: rgba(251, 191, 36, 0.28) !important;
+  }
+
+  .category-health-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .category-health-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  }
+
+  .category-health-list li:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .category-health-list span {
+    color: var(--text);
+    font-size: 12px;
+  }
+
+  .category-health-list small {
+    color: var(--muted-2);
+    font-size: 10.5px;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 980px) {
+    .status-hero,
+    .status-detail-grid,
+    .source-summary-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .status-hero-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .status-hero {
+      padding: 14px;
+    }
+
+    .status-hero-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .source-item {
+      align-items: flex-start;
+    }
+
+    .source-time-block {
+      min-width: 72px;
+    }
+
+    .source-status-badge {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const statusButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-source-filter]"));
+    const categoryButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-category-filter]"));
+    const items = Array.from(document.querySelectorAll<HTMLElement>("[data-source-status]"));
+    const empty = document.getElementById("source-empty") as HTMLElement | null;
+    let statusFilter = "all";
+    let categoryFilter = "all";
+
+    const apply = () => {
+      let visibleCount = 0;
+      for (const button of statusButtons) {
+        const active = button.dataset.sourceFilter === statusFilter;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+      }
+      for (const button of categoryButtons) {
+        const active = button.dataset.categoryFilter === categoryFilter;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+      }
+      for (const item of items) {
+        const matchesStatus = statusFilter === "all" || item.dataset.sourceStatus === statusFilter;
+        const matchesCategory = categoryFilter === "all" || item.dataset.sourceCategory === categoryFilter;
+        const visible = matchesStatus && matchesCategory;
+        item.hidden = !visible;
+        if (visible) visibleCount += 1;
+      }
+      if (empty) empty.hidden = visibleCount > 0;
+    };
+    for (const button of statusButtons) {
+      button.addEventListener("click", () => {
+        statusFilter = button.dataset.sourceFilter ?? "all";
+        apply();
+      });
+    }
+    for (const button of categoryButtons) {
+      button.addEventListener("click", () => {
+        categoryFilter = button.dataset.categoryFilter ?? "all";
+        apply();
+      });
+    }
+  })();
+</script>

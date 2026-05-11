@@ -1,47 +1,22 @@
 ---
-import Portal from "../layouts/Portal.astro";
-import Sidebar from "../components/Sidebar.astro";
-import { ALL_ENTRIES, GENERATED_AT, relativeTime } from "../lib/data.ts";
-
-type Group = { source: string; latestAt: string; count: number };
-const map = new Map<string, Group>();
-for (const e of ALL_ENTRIES) {
-  const g = map.get(e.source) ?? { source: e.source, latestAt: e.publishedAt, count: 0 };
-  g.count += 1;
-  if (e.publishedAt > g.latestAt) g.latestAt = e.publishedAt;
-  map.set(e.source, g);
-}
-const now = new Date();
-const groups = [...map.values()].sort((a, b) => (a.source < b.source ? -1 : 1));
-const SIX_H = 6 * 3600_000;
+const target = "/status/";
 ---
 
-<Portal pageKey="sources" title="Sources — TECH Dashboard">
-  <div class="layout">
-    <Sidebar />
-
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="refresh" content={`0;url=${target}`} />
+    <link rel="canonical" href={target} />
+    <title>Sources moved to Status - TECH Dashboard</title>
+  </head>
+  <body>
+    <script is:inline>
+      window.location.replace("/status/");
+    </script>
     <main>
-      <div class="section-header primary">
-        <h2>Sources <span class="count">{groups.length}</span></h2>
-      </div>
-      <div class="side-card">
-        {groups.map((g) => {
-          const age = now.getTime() - new Date(g.latestAt).getTime();
-          const stale = age > SIX_H * 7; // >42h
-          return (
-            <div class="source-item">
-              <span class={`status ${stale ? "stale" : ""}`}></span>
-              <span class="name">{g.source}</span>
-              <span class="time">{g.count} · {relativeTime(g.latestAt, now)}</span>
-            </div>
-          );
-        })}
-      </div>
-      <p style="color:var(--muted);font-size:12px;margin-top:12px">
-        最終 index 生成: {relativeTime(GENERATED_AT, now)}
-      </p>
+      <p>Sources は Status に統合されました。<a href="/status/">Status を開く</a></p>
     </main>
-
-    <aside class="right"></aside>
-  </div>
-</Portal>
+  </body>
+</html>

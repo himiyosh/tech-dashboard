@@ -3,11 +3,13 @@ import Portal from "../layouts/Portal.astro";
 import Sidebar from "../components/Sidebar.astro";
 import EntryCard from "../components/EntryCard.astro";
 import DailySummary from "../components/DailySummary.astro";
+import LiveMetrics from "../components/LiveMetrics.astro";
 import TickerBar from "../components/TickerBar.astro";
 import Pager from "../components/Pager.astro";
+import { DASHBOARD_METRICS } from "../lib/metrics.ts";
+import { STATS } from "../lib/stats.ts";
 import {
   ALL_ENTRIES,
-  GENERATED_AT,
   PAGE_SIZE,
   CATEGORY_META,
   entryHref,
@@ -15,7 +17,6 @@ import {
   trendingTags,
   relativeTime,
   groupByDay,
-  jstDateKey,
   jstDayLabel,
   summaryForLang,
   summaryForLangWithFallback,
@@ -31,12 +32,7 @@ const feat = featured();
 const tags = trendingTags(12);
 
 const now = new Date();
-const ago = relativeTime(GENERATED_AT, now);
-
-const todayKey = jstDateKey(now.toISOString());
-const todayCount = ALL_ENTRIES.filter((e) => jstDateKey(e.publishedAt) === todayKey).length;
-const majorCount = ALL_ENTRIES.filter((e) => e.importance === 3).length;
-const sourceCount = new Set(ALL_ENTRIES.map((e) => e.source)).size;
+const ago = relativeTime(DASHBOARD_METRICS.generatedAt, now);
 
 // Top 3 = importance × recency. Recent importance=3 first, then importance=2.
 const rankedPool = ALL_ENTRIES.filter((e) => e.importance >= 2).slice(0, 60);
@@ -84,23 +80,23 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
   <section class="stats">
     <div class="stat">
       <span>Today</span>
-      <span class="value">{todayCount}</span>
+      <span class="value" data-metric="todayEntries">{DASHBOARD_METRICS.todayEntries}</span>
     </div>
     <div class="stat">
       <span>Total</span>
-      <span class="value">{ALL_ENTRIES.length}</span>
+      <span class="value" data-metric="liveEntries">{DASHBOARD_METRICS.liveEntries}</span>
     </div>
     <div class="stat">
       <span>Major</span>
-      <span class="value">{majorCount}</span>
+      <span class="value" data-metric="majorEntries">{DASHBOARD_METRICS.majorEntries}</span>
     </div>
     <div class="stat">
-      <span>Sources</span>
-      <span class="value">{sourceCount}</span>
+      <span>Active sources</span>
+      <span class="value compact-value" data-metric="sourceCoverageLabel">{DASHBOARD_METRICS.sourceCoverageLabel}</span>
     </div>
     <div class="stat">
       <span>Updated</span>
-      <span class="value" style="font-size:13px">{ago}</span>
+      <span class="value" style="font-size:13px" data-metric="updatedLabel">{ago}</span>
     </div>
   </section>
 
@@ -175,7 +171,7 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
         );
       })()}
 
-      <DailySummary entries={ALL_ENTRIES} now={now} />
+      <DailySummary entries={ALL_ENTRIES} stats={STATS} now={now} />
 
       {topThree.length > 0 && (
         <section class="top-rank">
@@ -206,7 +202,7 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
       )}
 
       <div class="section-header primary">
-        <h2>Timeline <span class="count">{ALL_ENTRIES.length} total · page {currentPage}/{totalPages}</span></h2>
+        <h2>Timeline <span class="count"><span data-metric="liveEntries">{DASHBOARD_METRICS.liveEntries}</span> total · page {currentPage}/{totalPages}</span></h2>
       </div>
 
       {dayGroups.map(({ key, items }) => (
@@ -243,4 +239,5 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
       </div>
     </aside>
   </div>
+  <LiveMetrics />
 </Portal>

@@ -2,7 +2,7 @@
 
 AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline / Aider / VSCode / OpenCode / Local LLM / Agent FW / MCP / Tech News / Research の **14 カテゴリ**) を **一括で追跡** できるポータルサイト。Harness Engineering のプラクティスに沿って、AI エージェントが自律的に情報収集・正規化・公開を行う。
 
-**現状**: 50 ソース (Tier 1 / 2 / 3) を Cloudflare Worker で **毎時自動収集** (50 ソースを 4 バッチに分割し各ソースは 4 時間ごとに更新)、Astro 静的サイト生成、RSS/JSON Feed 配信、GitHub Copilot Enterprise (Claude Opus 4.7) による要約パイプライン、Pagefind 全文検索、品質監査 Skill、AI Scrum 開発運用 Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。
+**現状**: 51 ソースを登録し、Cloudflare Worker は `user-opml` を除く 50 ソース (Tier 1 / 2 / 3) を **毎時自動収集** (50 ソースを 4 バッチに分割し各ソースは 4 時間ごとに更新)、Astro 静的サイト生成、RSS/JSON Feed 配信、GitHub Copilot Enterprise (Claude Opus 4.7) による要約パイプライン、Pagefind 全文検索、品質監査 Skill、AI Scrum 開発運用 Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。
 
 ## 🔭 運用ステータス早見表 (Single Source of Truth)
 
@@ -13,9 +13,9 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | 処理 | 実行主体 | トリガ | 失効時の影響 | 監視 |
 |---|---|---|---|---|
 | ソース収集 (50 sources) | Cloudflare Worker `tech-dashboard-harness` | Cron `0 * * * *` (毎時) を 4 batch ローテーション | データ更新が止まる | `/status` の Worker Health |
-| 日本語要約 (`summaryJa` / `titleJa`) | 同 Worker → Copilot Enterprise (claude-opus-4.7) | 上記 cron 内で最大 `SUMMARIZE_MAX_NEW=5` 件/h | 既存表示は維持。新着のみ要約欠落 → JA UI で空欄 | `health.copilotOk` / `health.copilotError` |
+| 日本語要約 (`summaryJa` / `titleJa`) | 同 Worker → Copilot Enterprise (claude-opus-4.7) | 上記 cron 内で最大 `SUMMARIZE_MAX_NEW=5` 件/h、timeout + retry 付き | 既存表示は維持。新着のみ要約欠落 → JA UI で空欄 | `health.copilotOk` / `health.copilotError` |
 | og:image 取得 | 同 Worker | 上記 cron 内で最大 4 件/h、KV にキャッシュ | サムネが no-image fallback になる | `health.ogCached` |
-| `data/index.json` 更新 commit | Worker → GitHub Contents API (`tech-dashboard-worker` 名義) | 差分があるときのみ | サイトに反映されない | `git log --author=tech-dashboard-worker` |
+| `data/index.json` / `data/archive/*` / `data/stats.json` 更新 commit | Worker → GitHub Git Data API (`tech-dashboard-worker` 名義) | 差分があるときのみ 1 commit にまとめる | サイトに反映されない、記事数推移が古いまま | `git log --author=tech-dashboard-worker` |
 | サイト build / deploy | Cloudflare Pages (Git Integration) | `main` の push 検知 | サイトが古いまま | Cloudflare Pages dashboard |
 | Worker コード deploy 補助 | `scripts/git-hooks/pre-push` | `RUN_WORKER_DEPLOY=1 git push` かつ `main` push に `worker/` 差分あり | Worker 側のロジック修正が反映されない | push 時の出力 / `wrangler deployments list` |
 
@@ -53,8 +53,8 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
                 └───────────────┬───────────────────────────────┘
                                 │ diff があれば
                                 ▼
-                  GitHub Contents API → himiyosh/tech-dashboard:main
-                  (commit 名義: tech-dashboard-worker)
+                  GitHub Git Data API → himiyosh/tech-dashboard:main
+                  (1 commit / commit 名義: tech-dashboard-worker)
                                 │
                                 ▼
               Cloudflare Pages Git Integration が build (root=web)
@@ -75,7 +75,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | 01  | [システム設計書](docs/01-architecture.md)                               | アーキテクチャ・データモデル・データフロー   |
 | 02  | [Agent / Skill / Hook / Prompt 構成](docs/02-agents-skills-hooks.md)    | ハーネスの内部構成と責務分割                 |
 | 03  | [UI/UX デザイン案](docs/03-design-mockup.md)                            | 画面構成・ワイヤーフレーム・デザイントークン |
-| SPEC | [本番サイト仕様 (現状)](docs/SPEC.md)                                | 14 カテゴリ / 50 ソース / 本番反映済みの仕様 |
+| SPEC | [本番サイト仕様 (現状)](docs/SPEC.md)                                | 14 カテゴリ / 51 登録ソース / 本番反映済みの仕様 |
 | 04  | [サイト仕様書 v1.0 (草案)](docs/04-site-spec.md)                        | 計画段階の草案 (現状は SPEC.md が正)         |
 | 05  | [AI Scrum Harness 適用設計](docs/05-ai-scrum-harness.md)                | Orchestrator / サブエージェント運用方針      |
 | 02c | [ユーザカスタマイズ](docs/02-customization.md)                          | OPML / YouTube / HN クエリの追加方法         |
@@ -119,6 +119,7 @@ npx tsx .claude/skills/quality-audit/run.ts
 | Web build | `npm run build:web` | Cloudflare Pages と同じ `web` build (`astro build && pagefind --site dist`) を検証 | 中程度 |
 | E2E | `npm run test:e2e` | Playwright (Chromium) でトップ表示・記事詳細・言語切替を検証 | 中程度 (~30s + build) |
 | Secret scan | `npm run secrets:scan` | tracked file の secret / private key / 高リスクファイル名を検証 | 速い |
+| Worktree secret scan | `npm run secrets:scan:worktree` | tracked + untracked non-ignored file を検証し、ignored local secret store は値を読まず path だけ警告 | 速い |
 | 全部 | `npm run test:all` | Typecheck → Unit → Web build → E2E をまとめて実行 | |
 
 Git hook は `bash scripts/install-hooks.sh` で 1 回有効化します。
@@ -128,7 +129,7 @@ Git hook は `bash scripts/install-hooks.sh` で 1 回有効化します。
 | `pre-commit` | staged file の secret scan → `.ts/.tsx` がステージされていれば `npm run typecheck` | Typecheck のみ `SKIP_TYPECHECK=1 git commit` |
 | `pre-push` | push 対象 commit range の secret scan → `npm test` (unit) → `npm run build:web` → `npm run test:e2e` → `RUN_WORKER_DEPLOY=1` の場合のみ `wrangler deploy` | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1`。Worker deploy は `RUN_WORKER_DEPLOY=1 git push` |
 
-Secret scan は値を表示せず、検出種別・ファイル位置・ハッシュだけを出します。全履歴を手動確認する場合は `npm run secrets:scan:history` を使います。
+Secret scan は値を表示せず、検出種別・ファイル位置・ハッシュだけを出します。ローカル作業ツリー全体を確認する場合は `npm run secrets:scan:worktree`、全履歴を手動確認する場合は `npm run secrets:scan:history` を使います。
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的のみ**で、デプロイは行いません。push / PR ごとに `typecheck + npm test + npm run build:web + npm run test:e2e` を実行し、Cloudflare Pages の build 失敗を事前に検知します。
 
@@ -152,10 +153,10 @@ SUMMARIZE_MAX_TOKENS=6000          # 本文込み JSON 生成の最大出力 tok
 
 ## デプロイ & 自動更新 (Cloudflare Worker + Cloudflare Pages Git Integration)
 
-通常運用は Cloudflare 内で完結します。Cloudflare Worker が `data/index.json` を GitHub に commit し、Cloudflare Pages の Git Integration が `main` の更新を検知してサイトを build / deploy します。
+通常運用は Cloudflare 内で完結します。Cloudflare Worker が `data/index.json`、`data/archive/*`、`data/stats.json` を GitHub に commit し、Cloudflare Pages の Git Integration が `main` の更新を検知してサイトを build / deploy します。
 
 ```
-[Cloudflare Worker Cron] ──毎時 (4 batch ローテーション)──→ [GitHub Contents API]
+[Cloudflare Worker Cron] ──毎時 (4 batch ローテーション)──→ [GitHub Git Data API]
   │ (RSS 収集 + Copilot 要約 + og:image)                │ push to main
   │                                                     ↓
   │                                          [Cloudflare Pages Git Integration]
@@ -250,7 +251,9 @@ npx wrangler secret put GH_TOKEN                # Contents:Write 権限の Fine-
 npx wrangler deploy
 ```
 
-Cron は `0 * * * *` (毎時) で起動します。Cloudflare Free Workers の subrequest 上限 50/run に収めるため、50 ソースを 4 バッチに分割しローテーションしており、**個別ソースの再収集は 4 時間ごと**となります。各 run で `SUMMARIZE_MAX_NEW=5` の新規要約と最大 4 件の og:image 取得を行い、差分があれば `data/index.json` を GitHub に commit → Cloudflare Pages Git Integration が Pages を自動的に再デプロイします。
+Cron は `0 * * * *` (毎時) で起動します。Cloudflare Free Workers の subrequest 上限 50/run に収めるため、50 ソースを 4 バッチに分割しローテーションしており、**個別ソースの再収集は 4 時間ごと**となります。各 run で `SUMMARIZE_MAX_NEW=5` の新規要約と最大 4 件の og:image 取得を行い、差分があれば `data/index.json`、`data/archive/*`、`data/stats.json` を Git Data API で 1 commit にまとめます。Cloudflare Pages Git Integration はその commit を検知して Pages を自動的に再デプロイします。トップページの記事数推移は `data/stats.json` を優先して参照するため、`data/index.json` の上限や dropped tier による削除後も archive 由来の集計を保持できます。
+
+Copilot 要約は `SUMMARIZE_TIMEOUT_MS` (既定 25000 ms) で timeout し、Worker 内で 1 回 retry します。ローカル harness と同じく、一時的な API timeout / 5xx による欠落を次 run へ持ち越しにくくしています。
 
 **手動トリガ** (緊急で回したい時):
 
@@ -287,7 +290,7 @@ Worker は実行ごとに `data/index.json` の `health` フィールドにメ�
 | 領域 | 仕組み | 頻度 / トリガ |
 |---|---|---|
 | データ収集 + 要約 + og:image | Cloudflare Worker (cron) | 毎時 (50 sources を 4 batch ローテーション) |
-| GitHub commit | Worker → GitHub Contents API | 差分時のみ |
+| GitHub commit | Worker → GitHub Git Data API | `data/index.json` / `data/archive/*` / `data/stats.json` を 1 commit にまとめる |
 | サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
 | Worker コード deploy | `scripts/git-hooks/pre-push` | `RUN_WORKER_DEPLOY=1 git push` かつ `main` push に worker/ 差分あり |
 | ヘルス監視 | `data/index.json#health` + `/status` ページ | 実行ごと記録、サイト訪問時に確認 |
@@ -316,7 +319,7 @@ tech-dashboard/
 │  └─ mockups/               # HTML モック (mockup-D が確定)
 ├─ harness/                  # ハーネス本体 (TypeScript)
 │  ├─ orchestrator.ts        # 外側ループ (並列 collect → normalize → dedupe → tag → summarize → publish)
-│  ├─ registry.ts            # ソース定義テーブル (50 ソース)
+│  ├─ registry.ts            # ソース定義テーブル (51 登録ソース / 50 fetch 対象)
 │  ├─ types.ts               # 共通型 (Category / NormalizedEntry / SourceDefinition)
 │  ├─ collectors/
 │  │  ├─ rss.ts              # 汎用 RSS/Atom/RDF コレクター
@@ -329,14 +332,21 @@ tech-dashboard/
 │  │  ├─ normalize.ts        # RawEntry → NormalizedEntry
 │  │  ├─ dedupe.ts           # URL 正規化ベース重複排除
 │  │  ├─ tag.ts              # キーワードベースのタグ補完
-│  │  └─ summarize.ts        # Claude Opus 4.7 日本語要約 + 重要度判定 (API キー任意)
+│  │  └─ summarize.ts        # 許可モデルによる要約 + 重要度判定 (API キー任意)
 │  └─ publishers/
-│     └─ index-builder.ts    # data/index.json & raw スナップショット
+│     ├─ index-builder.ts    # data/index.json & raw スナップショット
+│     ├─ archive-builder.ts  # data/archive/*.json と archive index
+│     ├─ archive-core.ts     # Worker / Node 共有の archive 純粋ロジック
+│     ├─ stats-builder.ts    # data/stats.json
+│     └─ stats-core.ts       # Worker / Node 共有の stats 純粋ロジック
 ├─ web/                      # Astro 静的サイト
 │  ├─ src/
 │  │  ├─ layouts/Portal.astro
-│  │  ├─ components/{Sidebar,EntryCard,DailySummary,DayDigest,TickerBar,TrendChart,Pager,CompactRow,CategoryHero}.astro
+│  │  ├─ components/{Sidebar,EntryCard,DailySummary,DayDigest,TickerBar,TrendChart,Pager,CompactRow,CategoryHero,LiveMetrics}.astro
 │  │  ├─ lib/data.ts         # data/index.json を型付きで読み込む
+│  │  ├─ lib/stats.ts        # data/stats.json を型付きで読み込む
+│  │  ├─ lib/metrics.ts      # Timeline / About 用の自動更新 metrics SoT
+│  │  ├─ lib/freshness.ts    # source type 別 freshness 判定 (UI / quality-audit 共有)
 │  │  ├─ lib/source-meta.ts  # web 自己完結用の sources メタ複製 (R-005)
 │  │  ├─ lib/site.ts         # canonical URL 単一情報源 (R-004)
 │  │  ├─ styles/portal.css   # 全 CSS (モバイル最適化済み)
@@ -344,15 +354,15 @@ tech-dashboard/
 │  │     ├─ index.astro      # ポータルトップ (Top-3 メダル / DailySummary 等)
 │  │     ├─ c/[slug].astro   # カテゴリ別 (14 ページ)
 │  │     ├─ t/[tag].astro    # タグ別
-│  │     ├─ sources.astro, about.astro, status.astro, categories.astro
-│  │     └─ {rss.xml,feed.json}.ts  # RSS 2.0 / JSON Feed 1.1
+│  │     ├─ status.astro, categories.astro, about.astro, sources.astro (redirect)
+│  │     └─ {rss.xml,feed.json,metrics.json}.ts  # RSS / JSON Feed / 表示 metrics
 │  ├─ .node-version          # Cloudflare Pages build 用 Node 22 ピン
 │  └─ astro.config.mjs
 ├─ .claude/skills/
 │  ├─ ai-scrum/             # AI Scrum 開発運用スキル (SKILL.md)
 │  └─ quality-audit/         # 品質監査スキル (SKILL.md + run.ts)
 ├─ worker/                   # Cloudflare Worker (定期ハーネス実行)
-│  ├─ src/index.ts           # Cron 起動 → 収集 (4 batch ローテーション) → Copilot 要約 → og:image → GitHub commit
+│  ├─ src/index.ts           # Cron 起動 → 収集 (4 batch ローテーション) → Copilot 要約 → og:image → GitHub atomic commit
 │  ├─ wrangler.toml          # Workers 設定 (Cron / KV / Vars)
 │  └─ package.json
 ├─ scripts/
@@ -365,12 +375,16 @@ tech-dashboard/
 │  ├─ git-hooks/pre-push               # push range secret scan + quality gate + opt-in worker deploy
 │  └─ setup-copilot-auth.sh            # Copilot Enterprise PAT セットアップ
 └─ data/                     # 成果物 (git-as-DB)
-   ├─ index.json             # サイト配信用 (最新 500 件 / og:image 付き)
+  ├─ index.json             # サイト配信用 (最新 2000 件 / og:image 付き)
+  ├─ stats.json             # archive 込みの記事数推移 / source 集計
+  ├─ archive/               # warm/cold tier の月別永続 archive
    ├─ raw/                   # 生データ (.gitignore, 監査用ローカル保持)
    ├─ _runs/                 # 実行レポート + 監査レポート (.gitignore)
    ├─ _summary-cache.json    # ローカル要約キャッシュ (.gitignore、Worker では KV を使用)
    └─ user-opml.xml          # ユーザ個別 OPML (.gitignore)
 ```
+
+`tests/data-schema.test.ts` は data artifact のサイズ予算も検証します。現在の上限は `data/index.json` 8 MB、`data/stats.json` 500 KB、archive 月別 JSON 2 MB です。本文生成が増えた場合でも、build と GitHub API payload の肥大化を test gate で検知します。
 
 ## フェーズ進捗
 

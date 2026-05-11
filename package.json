@@ -2,7 +2,7 @@
   "name": "tech-dashboard",
   "version": "0.1.0",
   "private": true,
-  "description": "Daily AI tech dashboard — 13 categories × 30 sources, self-updating",
+  "description": "Daily AI tech dashboard for 14 categories and 50 sources",
   "type": "module",
   "scripts": {
     "collect": "tsx --env-file-if-exists=.env.local harness/orchestrator.ts",
@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "secrets:scan": "node scripts/scan-secrets.mjs --current",
+    "secrets:scan:worktree": "node scripts/scan-secrets.mjs --worktree",
     "secrets:scan:history": "node scripts/scan-secrets.mjs --history",
     "build:web": "npm --prefix web run build",
     "test": "vitest run",

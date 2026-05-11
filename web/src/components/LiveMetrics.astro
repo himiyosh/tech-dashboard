@@ -1,0 +1,65 @@
+<script>
+  type Metrics = Record<string, number | string | null> & {
+    generatedAt?: string;
+    workerLastRunAt?: string | null;
+  };
+
+  const globalState = window as Window & { __techDashboardLiveMetrics?: boolean };
+  const nodes = Array.from(document.querySelectorAll<HTMLElement>("[data-metric]"));
+
+  if (!globalState.__techDashboardLiveMetrics && nodes.length > 0) {
+    globalState.__techDashboardLiveMetrics = true;
+
+    const numberFormatter = new Intl.NumberFormat("en-US");
+    let latestMetrics: Metrics | null = null;
+
+    const relativeTime = (iso: string | null | undefined): string => {
+      if (!iso) return "no data";
+      const timestamp = Date.parse(iso);
+      if (!Number.isFinite(timestamp)) return "no data";
+      const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+      if (seconds < 60) return "just now";
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 48) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      return `${days}d ago`;
+    };
+
+    const formatValue = (name: string, metrics: Metrics): string | null => {
+      if (name === "updatedLabel") return relativeTime(metrics.generatedAt);
+      if (name === "workerLastRunLabel") return relativeTime(metrics.workerLastRunAt);
+      const value = metrics[name];
+      if (typeof value === "number") return numberFormatter.format(value);
+      if (typeof value === "string") return value;
+      return null;
+    };
+
+    const render = (metrics: Metrics) => {
+      for (const node of nodes) {
+        const metricName = node.dataset.metric;
+        if (!metricName) continue;
+        const text = formatValue(metricName, metrics);
+        if (text !== null && node.textContent !== text) node.textContent = text;
+      }
+    };
+
+    const fetchMetrics = async () => {
+      try {
+        const response = await fetch(`/metrics.json?ts=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) return;
+        latestMetrics = await response.json() as Metrics;
+        render(latestMetrics);
+      } catch {
+        // Static fallback remains visible when the endpoint is unreachable.
+      }
+    };
+
+    void fetchMetrics();
+    window.setInterval(fetchMetrics, 300_000);
+    window.setInterval(() => {
+      if (latestMetrics) render(latestMetrics);
+    }, 60_000);
+  }
+</script>

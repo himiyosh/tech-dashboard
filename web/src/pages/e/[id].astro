@@ -20,6 +20,7 @@ import {
   type NormalizedEntry,
 } from "../../lib/data.ts";
 import { SOURCE_META } from "../../lib/source-meta.ts";
+import { sourceFreshnessStatus } from "../../lib/freshness.ts";
 
 export function getStaticPaths() {
   return ALL_ENTRIES.map((e) => ({
@@ -89,8 +90,9 @@ const tags = trendingTags(12);
 const { prev, next } = adjacentInCategory(entry);
 const impPct = importancePercentile(entry);
 
-const collectedAge = (Date.now() - new Date(entry.collectedAt).getTime()) / 86_400_000;
-const stale = collectedAge > 14;
+const freshness = sourceFreshnessStatus(entry, entry.collectedAt, now.getTime());
+const collectedAge = freshness.ageHrs >= 0 ? Math.round(freshness.ageHrs / 24) : 0;
+const stale = freshness.status === "stale" || freshness.status === "error";
 
 const bodyChars = (entry.bodyJa ?? "").length;
 const readMinutes = bodyChars > 0 ? Math.max(1, Math.round(bodyChars / 500)) : 0;
@@ -276,6 +278,16 @@ const jsonLd = {
               <span class="ed-read">📖 {readMinutes} min</span>
             </>)}
           </div>
+          <div class="ed-action-strip">
+            <a class="ed-header-cta" href={entry.url} target="_blank" rel="noopener nofollow">
+              <span>元記事を読む</span>
+              <span aria-hidden="true">↗</span>
+            </a>
+            <button class="ed-share-btn" type="button" id="ed-share-btn" data-title={titleDisplay} data-url={canonicalUrl}>
+              <span aria-hidden="true">🔗</span> シェア
+            </button>
+            <span class={`ed-freshness ${stale ? "warn" : "ok"}`}>{stale ? "古い情報の可能性" : "鮮度 OK"}</span>
+          </div>
         </header>
 
         {/* TL;DR */}
@@ -284,9 +296,6 @@ const jsonLd = {
             <div class="ed-tldr-label">
               <span class="ai-badge">AI</span>
               <span class="ed-tldr-title">3 行サマリ</span>
-              <button class="ed-share-btn" type="button" id="ed-share-btn" data-title={titleDisplay} data-url={canonicalUrl}>
-                <span aria-hidden="true">🔗</span> シェア
-              </button>
             </div>
             {pointsJa.length > 1 ? (
               <ul class="ed-tldr-list">
@@ -494,6 +503,17 @@ const jsonLd = {
 
     {/* RIGHT RAIL */}
     <aside class="right">
+      <div class="side-card reading-card" style={`--cat-color:${catColor}`}>
+        <div class="rail-title">読む前に</div>
+        <div class="rail-metrics">
+          <span><strong>{Math.max(readMinutes, 1)}</strong><small>分</small></span>
+          <span><strong>★ {entry.importance}</strong><small>重要度</small></span>
+          <span><strong>{entry.lang.toUpperCase()}</strong><small>言語</small></span>
+        </div>
+        <div class={`rail-freshness ${stale ? "warn" : "ok"}`}>{stale ? "収集から時間が経過" : "鮮度 OK"}</div>
+        <a class="rail-cta" href={entry.url} target="_blank" rel="noopener nofollow">元記事を読む <span aria-hidden="true">↗</span></a>
+      </div>
+
       {/* TOC */}
       {renderedParagraphs.length >= 3 && (
         <div class="side-card toc-card">
@@ -765,6 +785,32 @@ const jsonLd = {
   .ed-host, .sep { color: var(--muted-2); }
   .ed-rel { color: var(--accent); font-weight: 500; }
   .ed-read { color: var(--muted); }
+  .ed-action-strip {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    margin-top: 16px;
+  }
+  .ed-header-cta {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--cat-color);
+    color: #0c0c0a;
+    text-decoration: none;
+    font-size: 12.5px;
+    font-weight: 800;
+  }
+  .ed-action-strip .ed-share-btn { margin-left: 0; padding: 8px 12px; border-radius: 8px; }
+  .ed-freshness {
+    display: inline-flex; align-items: center;
+    min-height: 32px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11.5px;
+  }
+  .ed-freshness.ok { color: var(--success); border-color: color-mix(in srgb, var(--success) 36%, var(--border)); }
+  .ed-freshness.warn { color: #f87171; border-color: rgba(248,113,113,0.4); }
 
   /* TL;DR */
   .ed-tldr {
@@ -1104,6 +1150,42 @@ const jsonLd = {
     font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
     color: var(--muted-2); font-weight: 700; margin-bottom: 10px;
   }
+  .reading-card {
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--cat-color) 12%, transparent), transparent 74%),
+      var(--surface);
+    border-color: color-mix(in srgb, var(--cat-color) 24%, var(--border));
+  }
+  .rail-metrics {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    margin-bottom: 10px;
+  }
+  .rail-metrics span {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 8px 6px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.025);
+  }
+  .rail-metrics strong { color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .rail-metrics small { color: var(--muted-2); font-size: 10px; }
+  .rail-freshness {
+    margin-bottom: 10px;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .rail-freshness.ok { color: var(--success); }
+  .rail-freshness.warn { color: #f87171; }
+  .rail-cta {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    background: var(--cat-color);
+    color: #0c0c0a;
+    text-decoration: none;
+    font-size: 12.5px;
+    font-weight: 800;
+  }
   .rail-fav { border-radius: 3px; }
   .rail-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; }
   .rail-list li a {
@@ -1176,7 +1258,7 @@ const jsonLd = {
     .ed-rel-grid { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 820px) {
-    .ed-hero { height: 220px; }
+    .ed-hero { height: 190px; }
     .ed-head, .ed-tldr, .ed-body, .ed-tag-bar, .ed-meta-strip, .ed-cta-row, .ed-disclaim {
       margin-left: 18px; margin-right: 18px;
     }

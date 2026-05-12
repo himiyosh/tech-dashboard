@@ -327,7 +327,13 @@ async function resolveCopilotToken(pat: string): Promise<string> {
 
 // ---------- Summarize -------------------------------------------------------
 
-export { buildPrompt, parseResponse } from "./prompt.ts";
+import { buildPrompt, parseResponse } from "./prompt.ts";
+// Re-export for unit tests (tests/worker-parse.test.ts).
+// NOTE: bare `export ... from` would *only* create a module-level re-export
+// and would NOT bring the symbols into this module's local scope, leading to
+// `ReferenceError: buildPrompt is not defined` inside callCopilot at runtime
+// (see LL-030). Always import first, then re-export.
+export { buildPrompt, parseResponse };
 
 async function callCopilot(
   token: string,

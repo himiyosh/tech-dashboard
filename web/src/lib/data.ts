@@ -311,10 +311,37 @@ export function titleForLang(
     if (sumJa) return firstClause(sumJa, 70);
     return title || en;
   }
-  if (en) return en;
-  if (sumEn && !hasCjk(sumEn)) return firstClause(sumEn, 90);
-  if (title && !hasCjk(title)) return title;
+  if (lang === "en") {
+    if (en) return en;
+    if (sumEn && !hasCjk(sumEn)) return firstClause(sumEn, 90);
+    if (title && !hasCjk(title)) return title;
+    return "";
+  }
+  // Defensive fallback for any future lang values.
   return "";
+}
+
+/**
+ * Like titleForLang but returns the original-language title as a
+ * last-resort fallback when the requested language is empty. Callers
+ * should visually flag such fallbacks (e.g. `JA` badge), mirroring the
+ * pattern used by summaryForLangWithFallback.
+ *
+ * Guarantees a non-empty string when the entry has ANY title-like
+ * content, which is always true for normalized entries (collectors
+ * never publish an entry with an empty `title`).
+ */
+export function titleForLangWithFallback(
+  e: NormalizedEntry,
+  lang: "ja" | "en",
+): { text: string; isFallback: boolean; fallbackLang?: "ja" | "en" } {
+  const primary = titleForLang(e, lang);
+  if (primary) return { text: primary, isFallback: false };
+  const other: "ja" | "en" = lang === "en" ? "ja" : "en";
+  const fallback = titleForLang(e, other);
+  if (fallback) return { text: fallback, isFallback: true, fallbackLang: other };
+  // Absolute last resort: raw `title` (always present for normalized entries).
+  return { text: (e.title ?? "").trim(), isFallback: true, fallbackLang: other };
 }
 
 /** YYYY-MM-DD in JST for grouping timelines by day. */

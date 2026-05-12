@@ -7,6 +7,7 @@ import {
   summaryForLang,
   summaryForLangWithFallback,
   titleForLang,
+  titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
 
@@ -46,8 +47,10 @@ function faviconUrl(url: string, size = 32): string {
 const summaryJaResult = summaryForLangWithFallback(entry, "ja");
 const summaryJa = summaryJaResult.text;
 const summaryEn = summaryForLang(entry, "en");
-const titleJa = titleForLang(entry, "ja");
-const titleEn = titleForLang(entry, "en");
+const titleJaResult = titleForLangWithFallback(entry, "ja");
+const titleEnResult = titleForLangWithFallback(entry, "en");
+const titleJa = titleJaResult.text;
+const titleEn = titleEnResult.text;
 
 const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
 const catColor = catMeta?.color ?? "#8a847e";
@@ -105,8 +108,24 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
     </div>
     <h3 class="title">
       <a href={entryHref(entry)}>
-        <span class="i18n-ja">{titleJa}</span>
-        <span class="i18n-en" lang="en">{titleEn}</span>
+        <span
+          class="i18n-ja"
+          lang={titleJaResult.fallbackLang === "en" ? "en" : "ja"}
+        >
+          {titleJaResult.isFallback && (
+            <span class="title-fallback-mark" aria-label="原文言語からのフォールバック表示">EN</span>
+          )}
+          {titleJa}
+        </span>
+        <span
+          class="i18n-en"
+          lang={titleEnResult.fallbackLang === "ja" ? "ja" : "en"}
+        >
+          {titleEnResult.isFallback && (
+            <span class="title-fallback-mark" aria-label="Fallback from the original language">JA</span>
+          )}
+          {titleEn}
+        </span>
       </a>
     </h3>
     {(summaryJa || summaryEn) && (

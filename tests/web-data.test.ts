@@ -75,6 +75,7 @@ const {
   summaryForLang,
   summaryForLangWithFallback,
   titleForLang,
+  titleForLangWithFallback,
   restoreDotsFromUrl,
   jstDateKey,
   entryHref,
@@ -198,6 +199,37 @@ describe("titleForLang", () => {
     const title = titleForLang(entry, "ja");
     // 最初の句点で切れるはず
     expect(title).toBe("Anthropic が発表した");
+  });
+});
+
+// ============================================================
+// titleForLangWithFallback (LL-029)
+// ============================================================
+describe("titleForLangWithFallback", () => {
+  it("EN を要求し EN がある場合は isFallback=false", () => {
+    const result = titleForLangWithFallback(e1, "en");
+    expect(result.isFallback).toBe(false);
+    expect(result.text).toBe("Claude Opus 4.7 Released");
+  });
+
+  it("EN を要求し titleEn / summaryEn / title が全て日本語のときは JA タイトルにフォールバックする", () => {
+    const entry = {
+      ...e1,
+      titleEn: "",
+      title: "日本語のみのタイトル",
+      summaryEn: "",
+      summaryJa: "日本語要約",
+    };
+    const result = titleForLangWithFallback(entry, "en");
+    expect(result.isFallback).toBe(true);
+    expect(result.fallbackLang).toBe("ja");
+    expect(result.text).toBe("Claude Opus 4.7 リリース");
+  });
+
+  it("JA を要求し titleJa が空でも fallback 経由で必ず非空を返す", () => {
+    const entry = { ...e1, titleJa: "", titleEn: "Only English Title", title: "Only English Title", summaryJa: "" };
+    const result = titleForLangWithFallback(entry, "ja");
+    expect(result.text.length).toBeGreaterThan(0);
   });
 });
 

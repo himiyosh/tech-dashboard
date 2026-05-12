@@ -1,5 +1,5 @@
 ---
-import { CATEGORY_META, entryHref, jstDateKey, titleForLang, type NormalizedEntry } from "../lib/data.ts";
+import { CATEGORY_META, entryHref, jstDateKey, titleForLangWithFallback, type NormalizedEntry } from "../lib/data.ts";
 
 export interface Props {
   entries: readonly NormalizedEntry[];
@@ -44,8 +44,8 @@ const catColorOf = (slug: string): string =>
         {items.map((e, i) => {
           const isRel = e.sourceType === "release" || e.sourceType === "changelog";
           const isImp = e.importance === 3;
-          const ja = titleForLang(e, "ja");
-          const en = titleForLang(e, "en");
+          const jaResult = titleForLangWithFallback(e, "ja");
+          const enResult = titleForLangWithFallback(e, "en");
           return (
             <a
               href={entryHref(e)}
@@ -56,12 +56,20 @@ const catColorOf = (slug: string): string =>
               <span class="tb-cat">{e.category}</span>
               {isImp && <span class="tb-tag imp">★</span>}
               {isRel && <span class="tb-tag rel">REL</span>}
-              {ja && <span class="tb-title i18n-ja">{ja}</span>}
-              {en ? (
-                <span class="tb-title i18n-en" lang="en">{en}</span>
-              ) : (
-                <span class="tb-title i18n-en tb-muted" lang="en">(no English title)</span>
-              )}
+              <span
+                class="tb-title i18n-ja"
+                lang={jaResult.fallbackLang === "en" ? "en" : "ja"}
+              >
+                {jaResult.isFallback && <span class="tb-fallback-mark">EN</span>}
+                {jaResult.text}
+              </span>
+              <span
+                class="tb-title i18n-en"
+                lang={enResult.fallbackLang === "ja" ? "ja" : "en"}
+              >
+                {enResult.isFallback && <span class="tb-fallback-mark">JA</span>}
+                {enResult.text}
+              </span>
               <span class="tb-src">[{e.source}]</span>
             </a>
           );
@@ -179,6 +187,19 @@ const catColorOf = (slug: string): string =>
   }
   .tb-tag.rel { color: #000; background: #ffcc00; text-shadow: none; }
   .tb-tag.imp { color: #000; background: #ff8a2a; text-shadow: none; }
+  .tb-fallback-mark {
+    display: inline-block;
+    margin-right: 6px;
+    font-size: 9.5px; font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: #5ab075;
+    background: rgba(124,255,154,0.08);
+    border: 1px solid rgba(124,255,154,0.25);
+    text-shadow: none;
+    vertical-align: 0.12em;
+  }
   .tb-title {
     font-weight: 700;
     color: #e8ffe9;

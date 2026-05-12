@@ -13,7 +13,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | 処理 | 実行主体 | トリガ | 失効時の影響 | 監視 |
 |---|---|---|---|---|
 | ソース収集 (50 sources) | Cloudflare Worker `tech-dashboard-harness` | Cron `0 * * * *` (毎時) を 4 batch ローテーション | データ更新が止まる | `/status` の Worker Health |
-| 日本語要約 (`summaryJa` / `titleJa`) | 同 Worker → Copilot Enterprise (claude-opus-4.7) | 上記 cron 内で最大 `SUMMARIZE_MAX_NEW=5` 件/h、timeout + retry 付き | 既存表示は維持。LLM 失敗時は deterministic fallback で空欄を防止 | `health.copilotOk` / `health.copilotError` |
+| 日本語要約 (`summaryJa` / `titleJa`) | 同 Worker → Copilot Enterprise (claude-sonnet-4.6) | 上記 cron 内で最大 `SUMMARIZE_MAX_NEW=15` 件/h、timeout + retry 付き | 既存表示は維持。LLM 失敗時は deterministic fallback で空欄を防止 | `health.copilotOk` / `health.copilotError` |
 | summary/body deterministic fallback | 同 Worker / `scripts/apply-summary-cache.mjs` | Worker commit 前、または緊急修復時 | LLM timeout / 旧 cache 欠落時でも live index の summary/body 欠落を防止 | `health.summaryFallbacks` / `health.bodyFallbacks` / `tests/data-schema.test.ts` |
 | og:image 取得 | 同 Worker | 上記 cron 内で最大 4 件/h、KV にキャッシュ | サムネが no-image fallback になる | `health.ogCached` |
 | `data/index.json` / `data/archive/*` / `data/stats.json` 更新 commit | Worker → GitHub Git Data API (`tech-dashboard-worker` 名義) | 差分があるときのみ 1 commit にまとめる | サイトに反映されない、記事数推移が古いまま | `git log --author=tech-dashboard-worker` |
@@ -145,9 +145,10 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的の�
 COPILOT_PAT=ghp_...               # PAT → 一時トークン交換を自動で行う
 COPILOT_TOKEN=tid=...              # 既に交換済みの一時トークンを直接注入する場合
 
-# モデル切替 (補完/backfill でも claude-opus-4.7 / gpt-5.5 のみ許可)
-SUMMARIZE_MODEL=claude-opus-4.7    # 既定
-# SUMMARIZE_MODEL=gpt-5.5          # Copilot endpoint で利用可能な環境のみ
+# モデル切替 (要約 / 補完 backfill で利用可能なのは claude-sonnet-4.6 / claude-opus-4.7 のみ)
+SUMMARIZE_MODEL=claude-sonnet-4.6   # 既定 (速度優先、Worker wall-time に収まる)
+# SUMMARIZE_MODEL=claude-opus-4.7   # 品質優先。長文生成は wall-time に収まらない場合あり (LL-031)
+# SUMMARIZE_MODEL=gpt-5.5            # Copilot では /responses 専用のため現 Worker (/chat/completions) からは利用不可 (LL-010)
 SUMMARIZE_MAX_NEW=15               # 1 ラン当たりの新規要約上限
 SUMMARIZE_MAX_TOKENS=6000          # 本文込み JSON 生成の最大出力 token 数
 ```

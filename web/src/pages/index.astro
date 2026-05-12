@@ -21,6 +21,7 @@ import {
   summaryForLang,
   summaryForLangWithFallback,
   titleForLang,
+  titleForLangWithFallback,
 } from "../lib/data.ts";
 
 const currentPage = 1;
@@ -134,8 +135,22 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
             </div>
             <h2 class="featured-title">
               <a href={entryHref(feat)}>
-                <span class="i18n-ja">{titleForLang(feat, "ja")}</span>
-                <span class="i18n-en" lang="en">{titleForLang(feat, "en") || "(no English title)"}</span>
+                {(() => {
+                  const ja = titleForLangWithFallback(feat, "ja");
+                  const en = titleForLangWithFallback(feat, "en");
+                  return (
+                    <>
+                      <span class="i18n-ja" lang={ja.fallbackLang === "en" ? "en" : "ja"}>
+                        {ja.isFallback && <span class="lang-badge">[en]</span>}
+                        {ja.text}
+                      </span>
+                      <span class="i18n-en" lang={en.fallbackLang === "ja" ? "ja" : "en"}>
+                        {en.isFallback && <span class="lang-badge">[ja]</span>}
+                        {en.text}
+                      </span>
+                    </>
+                  );
+                })()}
               </a>
             </h2>
             {featSumJa && <p class="featured-sum i18n-ja">{featSumJa}</p>}
@@ -187,8 +202,22 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
                   <span class="medal" aria-hidden="true">{medals[i]}</span>
                   <span class="rank-cat" aria-hidden="true">{meta?.emoji ?? "\u{1F4C4}"}</span>
                   <a class="rank-title" href={entryHref(e)}>
-                    <span class="i18n-ja">{titleForLang(e, "ja")}</span>
-                    <span class="i18n-en" lang="en">{titleForLang(e, "en") || e.title}</span>
+                    {(() => {
+                      const ja = titleForLangWithFallback(e, "ja");
+                      const en = titleForLangWithFallback(e, "en");
+                      return (
+                        <>
+                          <span class="i18n-ja" lang={ja.fallbackLang === "en" ? "en" : "ja"}>
+                            {ja.isFallback && <span class="lang-badge">[en]</span>}
+                            {ja.text}
+                          </span>
+                          <span class="i18n-en" lang={en.fallbackLang === "ja" ? "ja" : "en"}>
+                            {en.isFallback && <span class="lang-badge">[ja]</span>}
+                            {en.text}
+                          </span>
+                        </>
+                      );
+                    })()}
                   </a>
                   <span class="rank-meta">
                     <span class="rank-source">{e.source}</span>

@@ -194,4 +194,26 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".search-hit").first()).toBeVisible({ timeout: 10_000 });
     await expect(page.locator(".search-hit.is-active").first()).toBeVisible({ timeout: 10_000 });
   });
+
+  test("entry titles never blank in either language mode (LL-029)", async ({ page }) => {
+    await page.goto("/");
+
+    // Sample a wide net across the first timeline page (12 entries) so the
+    // assertion covers JA-source entries with no English title.
+    const titles = await page.locator("article.card h3.title").evaluateAll((nodes) =>
+      nodes.map((node) => {
+        const ja = node.querySelector(".i18n-ja")?.textContent ?? "";
+        const en = node.querySelector(".i18n-en")?.textContent ?? "";
+        return { ja: ja.trim(), en: en.trim() };
+      }),
+    );
+
+    expect(titles.length).toBeGreaterThan(0);
+    for (const t of titles) {
+      // After LL-029 the title must be non-empty in both language slots,
+      // even if the EN slot falls back to the JA original with a `JA` badge.
+      expect(t.ja.length, `ja title blank: ${JSON.stringify(t)}`).toBeGreaterThan(0);
+      expect(t.en.length, `en title blank: ${JSON.stringify(t)}`).toBeGreaterThan(0);
+    }
+  });
 });

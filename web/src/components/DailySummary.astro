@@ -4,7 +4,7 @@ import {
   entryHref,
   jstDateKey,
   summaryForLang,
-  titleForLang,
+  titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
 import type { DayBucket, StatsPayload } from "../lib/stats.ts";
@@ -231,8 +231,8 @@ const todayDelta =
             const e = item.entry;
             const isRel = e.sourceType === "release" || e.sourceType === "changelog";
             const isImp = e.importance === 3;
-            const ja = titleForLang(e, "ja");
-            const en = titleForLang(e, "en");
+            const jaResult = titleForLangWithFallback(e, "ja");
+            const enResult = titleForLangWithFallback(e, "en");
             const summaryJa = summaryForLang(e, "ja");
             const summaryEn = summaryForLang(e, "en");
             const num = String(i + 1).padStart(2, "0");
@@ -248,9 +248,20 @@ const todayDelta =
                       <span class="t-tag more" title={`同シリーズ ${item.siblingCount + 1} 件をまとめて表示`}>+{item.siblingCount}</span>
                     )}
                   </span>
-                  {ja && <span class="b-title i18n-ja">{ja}</span>}
-                  {en && <span class="b-title i18n-en" lang="en">{en}</span>}
-                  {!en && <span class="b-title i18n-en b-muted" lang="en">(no English title)</span>}
+                  <span
+                    class="b-title i18n-ja"
+                    lang={jaResult.fallbackLang === "en" ? "en" : "ja"}
+                  >
+                    {jaResult.isFallback && <span class="b-fallback-mark">EN</span>}
+                    {jaResult.text}
+                  </span>
+                  <span
+                    class="b-title i18n-en"
+                    lang={enResult.fallbackLang === "ja" ? "ja" : "en"}
+                  >
+                    {enResult.isFallback && <span class="b-fallback-mark">JA</span>}
+                    {enResult.text}
+                  </span>
                   {summaryJa && <span class="b-summary i18n-ja">{summaryJa}</span>}
                   {summaryEn && <span class="b-summary i18n-en" lang="en">{summaryEn}</span>}
                   <span class="b-src">[{e.source}]</span>
@@ -494,6 +505,19 @@ const todayDelta =
     font-weight: 400;
     font-style: italic;
     text-shadow: none;
+  }
+  .board .b-fallback-mark {
+    display: inline-block;
+    margin-right: 6px;
+    font-size: 9.5px; font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: #5ab075;
+    background: rgba(124,255,154,0.08);
+    border: 1px solid rgba(124,255,154,0.25);
+    text-shadow: none;
+    vertical-align: 0.12em;
   }
   .board .b-src {
     grid-area: src;

@@ -4,7 +4,7 @@
  * data/index.json の整合性を実データに対して検証する。
  * 新エントリ追加・worker 改修で形が崩れないか早期検知する。
  */
-import { readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import indexJson from "../data/index.json";
@@ -81,6 +81,10 @@ const VALID_CATEGORIES = new Set([
 
 const data = indexJson as unknown as IndexShape;
 const stats = statsJson as unknown as StatsShape;
+const summaryCachePath = join(process.cwd(), "data", "_summary-cache.json");
+const summaryCache = existsSync(summaryCachePath)
+  ? (JSON.parse(readFileSync(summaryCachePath, "utf8")) as Record<string, { bodyJa?: string; bodyEn?: string }>)
+  : {};
 const DATA_BUDGET = {
   indexBytes: 8_000_000,
   statsBytes: 500_000,
@@ -180,6 +184,32 @@ describe("data/index.json 各エントリ", () => {
           (e.bodyEn !== undefined && typeof e.bodyEn !== "string"),
       )
       .map((e) => String(e.id));
+    expect(bad).toEqual([]);
+  });
+
+  it("Timeline と記事詳細用の summary が少なくとも 1 言語で存在する", () => {
+    const bad = data.entries
+      .filter((e) => !String(e.summaryJa ?? "").trim() && !String(e.summaryEn ?? "").trim())
+      .map((e) => `${String(e.source)}:${String(e.title)}`);
+    expect(bad).toEqual([]);
+  });
+
+  it("記事詳細用の body が両言語で存在する", () => {
+    const bad = data.entries
+      .filter((e) => !String(e.bodyJa ?? "").trim() || !String(e.bodyEn ?? "").trim())
+      .map((e) => `${String(e.source)}:${String(e.title)}`);
+    expect(bad).toEqual([]);
+  });
+
+  it("cache に本文があるエントリは data/index.json にも本文が反映されている", () => {
+    const bad = data.entries
+      .filter((entry) => {
+        const cacheHit = summaryCache[String(entry.url)];
+        const cacheHasBody = Boolean(String(cacheHit?.bodyJa ?? "").trim() || String(cacheHit?.bodyEn ?? "").trim());
+        const entryHasBody = Boolean(String(entry.bodyJa ?? "").trim() || String(entry.bodyEn ?? "").trim());
+        return cacheHasBody && !entryHasBody;
+      })
+      .map((entry) => `${String(entry.source)}:${String(entry.title)}`);
     expect(bad).toEqual([]);
   });
 });

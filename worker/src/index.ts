@@ -15,6 +15,7 @@
  *   - SUMMARIZE_MODEL, SUMMARIZE_MAX_NEW (vars)
  */
 import { listSources } from "../../harness/registry.ts";
+import { mergeEntryEnrichment } from "../../harness/pipeline/entry-merge.ts";
 import { normalize } from "../../harness/pipeline/normalize.ts";
 import { applyTags } from "../../harness/pipeline/tag.ts";
 import { canonicalUrlKey } from "../../harness/pipeline/url.ts";
@@ -61,17 +62,26 @@ function entryUrlKey(entry: NormalizedEntry): string {
 function preferEntry(current: NormalizedEntry | undefined, candidate: NormalizedEntry): NormalizedEntry {
   if (!current) return candidate;
 
+  let preferred: NormalizedEntry;
+  let fallback: NormalizedEntry;
+
   const candidateCollected = dateMs(candidate.collectedAt);
   const currentCollected = dateMs(current.collectedAt);
   if (candidateCollected !== currentCollected) {
-    return candidateCollected > currentCollected ? candidate : current;
+    preferred = candidateCollected > currentCollected ? candidate : current;
+    fallback = preferred === candidate ? current : candidate;
+    return mergeEntryEnrichment(preferred, fallback);
   }
 
   if (candidate.importance !== current.importance) {
-    return candidate.importance > current.importance ? candidate : current;
+    preferred = candidate.importance > current.importance ? candidate : current;
+    fallback = preferred === candidate ? current : candidate;
+    return mergeEntryEnrichment(preferred, fallback);
   }
 
-  return dateMs(candidate.publishedAt) >= dateMs(current.publishedAt) ? candidate : current;
+  preferred = dateMs(candidate.publishedAt) >= dateMs(current.publishedAt) ? candidate : current;
+  fallback = preferred === candidate ? current : candidate;
+  return mergeEntryEnrichment(preferred, fallback);
 }
 
 function setPreferredEntry(byUrl: Map<string, NormalizedEntry>, entry: NormalizedEntry): void {

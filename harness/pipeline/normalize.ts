@@ -67,7 +67,9 @@ export function scoreImportance(raw: RawEntry, source: SourceDefinition): Import
  * Initial summary used before Copilot summarization or cache enrichment runs.
  */
 function placeholderSummary(raw: RawEntry, lang: Lang): { ja: string; en: string } {
-  const base = (raw.contentSnippet ?? raw.title).replace(/\s+/g, " ").trim();
+  const snippet = (raw.contentSnippet ?? "").replace(/\s+/g, " ").trim();
+  const title = raw.title.replace(/\s+/g, " ").trim();
+  const base = snippet || title;
   const short = base.slice(0, lang === "ja" ? 120 : 200);
   if (lang === "ja") {
     return { ja: short, en: raw.title };

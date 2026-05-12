@@ -35,7 +35,8 @@ const { entry } = Astro.props as Props;
 const titleJa = titleForLang(entry, "ja");
 const titleEn = titleForLang(entry, "en");
 const titleDisplay = titleJa || titleEn || entry.title;
-const summaryJa = summaryForLang(entry, "ja");
+const summaryJaResult = summaryForLangWithFallback(entry, "ja");
+const summaryJa = summaryJaResult.text;
 const summaryEn = summaryForLangWithFallback(entry, "en");
 
 const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
@@ -64,7 +65,7 @@ function splitEnPoints(s: string): string[] {
   if (!s) return [];
   return s.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter(Boolean);
 }
-const pointsJa = splitJaPoints(summaryJa);
+const pointsJa = summaryJaResult.isFallback ? [] : splitJaPoints(summaryJa);
 const pointsEn = splitEnPoints(summaryEn.text);
 
 const sourceTypeLabel: Record<NormalizedEntry["sourceType"], string> = {
@@ -295,16 +296,16 @@ const jsonLd = {
           <section class="ed-tldr">
             <div class="ed-tldr-label">
               <span class="ai-badge">AI</span>
-              <span class="ed-tldr-title">3 行サマリ</span>
+              <span class="ed-tldr-title">{summaryJaResult.isFallback ? "English summary" : "3 行サマリ"}</span>
             </div>
             {pointsJa.length > 1 ? (
               <ul class="ed-tldr-list">
                 {pointsJa.slice(0, 4).map((p) => <li>{p}</li>)}
               </ul>
             ) : (
-              <p class="ed-tldr-single">{summaryJa}</p>
+              <p class="ed-tldr-single" lang={summaryJaResult.fallbackLang === "en" ? "en" : "ja"}>{summaryJa}</p>
             )}
-            {pointsEn.length > 0 && !summaryEn.isFallback && (
+            {pointsEn.length > 0 && !summaryEn.isFallback && !summaryJaResult.isFallback && (
               <details class="ed-tldr-en">
                 <summary>English summary</summary>
                 <ul lang="en">

@@ -26,7 +26,9 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | `COPILOT_PAT` 更新 | `cd worker && npx wrangler secret put COPILOT_PAT` | `/status` Worker Health が `summarize disabled` |
 | `GH_TOKEN` 更新 | `cd worker && npx wrangler secret put GH_TOKEN` | Worker run で push 失敗 → commit 履歴が止まる |
 | (緊急) 手動収集 | `npm run collect` | バックログ滞留時 (例: 1h に 5 件以上の新着) |
-| (緊急) 不足要約のバルク補充 | `SUMMARIZE_MAX_NEW=400 npx tsx --env-file-if-exists=.env.local scripts/resummarize.mjs` | 過去エントリの `summaryJa` がまとめて欠けている時 |
+| (緊急) cache 済み要約/本文の再反映 | `npm run summaries:apply-cache` | `data/_summary-cache.json` には body があるのに `data/index.json` 側が空の時 |
+| (緊急) 本文欠落の deterministic 補完 | `npm run summaries:apply-cache -- --fill-missing-body` | LLM backfill が一部 URL で詰まり、既存 summary から本文欄を確実に埋めたい時 |
+| (緊急) 不足要約/本文のバルク補充 | `SUMMARIZE_MAX_NEW=400 npx tsx --env-file-if-exists=.env.local scripts/resummarize.mjs` | 過去エントリの `summaryJa` / `bodyJa` / `bodyEn` がまとめて欠けている時 |
 | (緊急) og:image バックフィル | `node scripts/backfill-og.mjs` | `image.source = "fallback"` が大量に残る時 |
 | (緊急) リリースタイトル整形バックフィル | `node --experimental-strip-types scripts/backfill-release-titles.mjs` | バージョン番号のみのタイトルを補正したい時 |
 
@@ -368,7 +370,8 @@ tech-dashboard/
 ├─ scripts/
 │  ├─ backfill-og.mjs                  # data/index.json の og:image を一括バックフィル
 │  ├─ backfill-release-titles.mjs      # version-only タイトル ("v3.8.0" 等) に source 名を前置
-│  ├─ resummarize.mjs                  # 既存エントリの不足要約を Copilot で一括補充 (緊急用)
+│  ├─ apply-summary-cache.mjs          # data/_summary-cache.json の要約/本文を data/index.json に再反映、必要時は deterministic body fallback
+│  ├─ resummarize.mjs                  # 既存エントリの不足要約/本文を Copilot で一括補充 (緊急用)
 │  ├─ scan-secrets.mjs                 # redacted secret scanner (current / staged / history / range)
 │  ├─ install-hooks.sh                 # repo-managed git hooks 有効化
 │  ├─ git-hooks/pre-commit             # staged secret scan + TypeScript 型チェック

@@ -31,6 +31,12 @@ describe("detectLang", () => {
 });
 
 describe("normalize release title decoration", () => {
+  it("空の contentSnippet は title に fallback して summary を空にしない", () => {
+    const raw = { ...rawEntry("Claude Code Auto Mode"), contentSnippet: "" };
+    const entry = normalize(raw, releaseSource, "2026-05-10T01:00:00.000Z");
+    expect(entry.summaryEn).toBe("Claude Code Auto Mode");
+  });
+
   it("version-only release title に source 名を前置する", () => {
     const entry = normalize(rawEntry("v3.8.0"), releaseSource, "2026-05-10T01:00:00.000Z");
     expect(entry.title).toBe("Cline Releases v3.8.0");

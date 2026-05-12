@@ -5,6 +5,7 @@ import {
   CATEGORY_META,
   entryHref,
   summaryForLang,
+  summaryForLangWithFallback,
   titleForLang,
   type NormalizedEntry,
 } from "../lib/data.ts";
@@ -42,7 +43,8 @@ function faviconUrl(url: string, size = 32): string {
   return `https://www.google.com/s2/favicons?sz=${size}&domain=${h}`;
 }
 
-const summaryJa = summaryForLang(entry, "ja");
+const summaryJaResult = summaryForLangWithFallback(entry, "ja");
+const summaryJa = summaryJaResult.text;
 const summaryEn = summaryForLang(entry, "en");
 const titleJa = titleForLang(entry, "ja");
 const titleEn = titleForLang(entry, "en");
@@ -110,8 +112,12 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
     {(summaryJa || summaryEn) && (
       <div class="summary-stack">
         {summaryJa && (
-          <p class="summary summary-ja i18n-ja" title={summaryJa}>
-            <span class="ai-mark">AI要約</span>
+          <p
+            class="summary summary-ja i18n-ja"
+            title={summaryJa}
+            lang={summaryJaResult.fallbackLang === "en" ? "en" : "ja"}
+          >
+            <span class="ai-mark">{summaryJaResult.isFallback ? "EN" : "AI要約"}</span>
             <span class="s-text">{summaryJa}</span>
           </p>
         )}

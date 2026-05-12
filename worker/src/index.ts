@@ -590,7 +590,7 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   //    Cache stored as a single JSON blob keyed by URL to avoid
   //    hundreds of sequential KV gets (each ~30ms, which exhausts the
   //    Worker wall-time budget of ~30s).
-  const model = env.SUMMARIZE_MODEL || "claude-opus-4.7";
+  const model = env.SUMMARIZE_MODEL || "claude-sonnet-4.6";
   const maxNew = Number(env.SUMMARIZE_MAX_NEW || "25");
   const summarizeTimeoutMs = Number(env.SUMMARIZE_TIMEOUT_MS || String(DEFAULT_SUMMARIZE_TIMEOUT_MS));
   const summarizeConcurrency = Math.max(

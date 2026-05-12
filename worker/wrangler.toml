@@ -24,10 +24,12 @@ id = "6d67debb991742efadfec473a121f5fc"
 GITHUB_OWNER = "himiyosh"
 GITHUB_REPO = "tech-dashboard"
 GITHUB_BRANCH = "main"
-SUMMARIZE_MODEL = "claude-opus-4.7"
-# Copilot endpoint can return slowly for opus on busy hours; cap budget so
-# Workers wall-time (~30s) isn't blown out and at least N new entries make it.
-SUMMARIZE_MAX_NEW = "5"
+# LL-031: opus-4.7 long-form generation does not fit in Cloudflare Worker
+# wall-time (~30s). Sonnet 4.6 is 3-5x faster with comparable summary quality
+# and stays well within budget. Switch to opus only when premium quality is
+# required (see R-007).
+SUMMARIZE_MODEL = "claude-sonnet-4.6"
+SUMMARIZE_MAX_NEW = "15"
 SUMMARIZE_CONCURRENCY = "2"
 SUMMARIZE_TIMEOUT_MS = "20000"
 

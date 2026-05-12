@@ -52,10 +52,11 @@
 - `scripts/git-hooks/pre-push` は `SKIP_WEB_BUILD=1` が明示された場合を除き、push 前に `npm run build:web` を実行する。
 - `npm run test:all` は `typecheck → unit → web build → e2e` の一括ゲートとする。
 
-### R-007: 記事要約 / 補完 backfill のモデルは Opus 4.7 または GPT-5.5 に限定する
-- 通常要約も補完/backfill も `SUMMARIZE_MODEL` は `claude-opus-4.7` または `gpt-5.5` のみ使用する。
-- `gpt-4o` は記事要約 / 補完 backfill の代替モデルとして使用しない。
-- 長文生成が詰まる場合は、max_tokens / timeout / concurrency を調整し、それでも必要な場合のみ `gpt-5.5` へ切り替える。`gpt-5.5` は Copilot endpoint で利用可能か小 batch で事前確認する。
+### R-007: 記事要約 / 補完 backfill のモデルは Claude 系 (Sonnet 4.6 / Opus 4.7) または GPT-5.5 に限定する
+- 通常要約も補完/backfill も `SUMMARIZE_MODEL` は `claude-sonnet-4.6` / `claude-opus-4.7` / `gpt-5.5` のみ使用する。既定は **`claude-sonnet-4.6`** (Cloudflare Worker の 30 秒 wall-time に opus の長文生成が収まらず常時 timeout する事象を 2026-05 に確認、LL-031)。
+- `gpt-4o` 等の旧モデルは記事要約 / 補完 backfill の代替モデルとして使用しない。
+- `gpt-5.5` は Copilot の `/responses` 専用なので、現行 Worker (`/chat/completions`) からは利用できない (LL-010)。Worker を `/responses` 仕様に拡張するまで `claude-*` 系のみ実利用可能。
+- 長文生成が詰まる場合は、max_tokens / timeout / concurrency を調整し、それでも必要なら `claude-opus-4.7` (品質優先) と `claude-sonnet-4.6` (速度優先) を切り替える。本番モデル変更は小 batch (`SUMMARIZE_MAX_NEW=1`) で smoke test してから適用する (LL-010)。
 
 ### R-008: Worker deploy は pre-push でも明示 opt-in にする
 - `scripts/git-hooks/pre-push` は unit / web build / e2e の品質ゲートを必ず実行する。
@@ -281,6 +282,12 @@
 - **根本原因**: [worker/src/index.ts](worker/src/index.ts) で `export { buildPrompt, parseResponse } from "./prompt.ts";` と **re-export のみ** していた。ECMAScript 仕様上、`export ... from` は他モジュールの export を中継するだけで、**現モジュールのローカルスコープには binding を作らない**。同モジュール内の `callCopilot` が `buildPrompt(e)` を呼び出した瞬間 `ReferenceError` になる。TypeScript の型チェックは re-export を通じて symbol が見える錯覚を起こすため、`tsc --noEmit` でも検出できなかった。長期間動いていたのは esbuild の古い挙動が偶然 binding を生成していたためで、wrangler/esbuild の更新後に問題が顕在化した。
 - **対策**: `import { buildPrompt, parseResponse } from "./prompt.ts";` を追加し、`export { buildPrompt, parseResponse };` と分離。Worker を即時 deploy。コメントで「import を必ず分離し、`export ... from` のみは禁止」と明記。
 - **教訓**: 同モジュール内で symbol を **呼び出す目的** で必要な場合、re-export 一行で済ませない。`import` + `export` を必ず分離する。TypeScript の `noUnusedLocals` 等は再 export パターンを誤検知から守らないので、runtime テスト (実 fetch を mock で叩く統合テスト or wrangler tail) で初めて気付くことが多い。CI を毎時 run の結果 (`summarized` / `summarizeErrors` ヘルス) で監視する。
+
+### LL-031: Worker wall-time に opus 4.7 の長文生成が収まらない
+- **事象**: LL-030 修正後も Worker の summarize が連続タイムアウト (`copilot request timeout after 20000ms`)。直接 curl で opus 4.7 を叩いた smoke では HTTP 200 が返り (`completion_tokens=2209`, `~8s`)、endpoint 自体は健全だった。並列 2 / 5 件 / 各 20 秒に絞っても Worker の 30 秒予算で 1 batch も完走しない。
+- **根本原因**: Worker prompt が `bodyJa 700-1100 字 + bodyEn 500-800 単語 + reasoning_text` で長文を要求し、claude-opus-4.7 の生成速度 (~30-60 tok/s) では 1 件 30-60 秒かかる。これは Cloudflare Free / Paid の Worker wall-time (~30s) に収まらない構造的ミスマッチ。Copilot endpoint の故障や `unsupported_api_for_model` ではなく、純粋に「opus が 30 秒以内に長文を吐き終わらない」だけ。
+- **対策**: `SUMMARIZE_MODEL` を `claude-sonnet-4.6` (opus 比 3-5 倍速) に切替。R-007 を改訂し、既定モデルを sonnet 4.6、品質優先時のみ opus 4.7 に切り替える運用に変更。`gpt-5.5` は Copilot で `/responses` 専用のため `/chat/completions` ベースの現 Worker からは利用不可、と R-007 に明記。
+- **教訓**: タイムアウトは「endpoint の問題」か「モデルの生成速度の問題」かを切り分ける。直接 curl で同じプロンプトを叩いて `elapsed` と `completion_tokens` を見れば一発でわかる。Cloudflare Worker のような実行時間予算が厳しい環境では、モデル選定は「品質 × トークン速度 × wall-time 予算」の三項で決め、prompt 長と max_tokens を制約条件として明示する。
 
 ---
 

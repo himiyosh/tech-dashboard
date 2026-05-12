@@ -21,12 +21,16 @@ const baseEntry: NormalizedEntry = {
 };
 
 describe("applyDeterministicContentFallback", () => {
-  it("summary と body が空の entry を publish 可能な形に補完する", () => {
+  it("英語タイトルの entry でも summaryJa と summaryEn を両方埋める", () => {
     const result = applyDeterministicContentFallback(baseEntry);
 
-    expect(result.summaryFallbacks).toBe(1);
+    expect(result.summaryFallbacks).toBe(2);
     expect(result.bodyFallbacks).toBe(2);
     expect(result.entry.summaryEn).toBe("Managed Agents");
+    // JA summary must be Japanese (deterministic template) so the JA UI never
+    // shows an EN fallback badge for worker-published entries (LL-028).
+    expect(result.entry.summaryJa).toContain("Managed Agents");
+    expect(result.entry.summaryJa).toMatch(/[\u3040-\u30ff\u3400-\u9fff]/);
     expect(result.entry.bodyJa).toContain("Managed Agents は、anthropic-engineering が伝えた agent-fw 領域の更新です");
     expect(result.entry.bodyEn).toContain("completed from the existing summary and collection metadata");
   });
@@ -34,6 +38,7 @@ describe("applyDeterministicContentFallback", () => {
   it("既存の summary/body は上書きしない", () => {
     const entry = {
       ...baseEntry,
+      summaryJa: "既存の日本語要約",
       summaryEn: "Existing summary",
       bodyJa: "既存本文",
       bodyEn: "Existing body",
@@ -42,12 +47,13 @@ describe("applyDeterministicContentFallback", () => {
 
     expect(result.summaryFallbacks).toBe(0);
     expect(result.bodyFallbacks).toBe(0);
+    expect(result.entry.summaryJa).toBe("既存の日本語要約");
     expect(result.entry.summaryEn).toBe("Existing summary");
     expect(result.entry.bodyJa).toBe("既存本文");
     expect(result.entry.bodyEn).toBe("Existing body");
   });
 
-  it("日本語 title の entry は summaryJa を補完する", () => {
+  it("日本語 title の entry は summaryJa と summaryEn を両方埋める", () => {
     const result = applyDeterministicContentFallback({
       ...baseEntry,
       title: "新しいエージェント基盤",
@@ -57,6 +63,9 @@ describe("applyDeterministicContentFallback", () => {
     });
 
     expect(result.entry.summaryJa).toBe("新しいエージェント基盤");
-    expect(result.entry.summaryEn).toBe("");
+    // EN summary must be English (deterministic template) when only Japanese
+    // title is available.
+    expect(result.entry.summaryEn).not.toBe("");
+    expect(result.entry.summaryEn).toMatch(/^[\x20-\x7e]+$/);
   });
 });

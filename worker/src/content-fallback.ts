@@ -32,12 +32,29 @@ function fallbackTags(entry: NormalizedEntry): string[] {
   return [...new Set((entry.tags ?? []).filter((tag) => typeof tag === "string" && tag.trim()))].slice(0, 4);
 }
 
+function shortenForSummary(value: string, max: number): string {
+  const trimmed = value.replace(/\s+/g, " ").trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, max - 1)}…`;
+}
+
 export function buildFallbackSummary(entry: NormalizedEntry): Pick<NormalizedEntry, "summaryJa" | "summaryEn"> {
-  const title = firstText(entry.titleJa, entry.titleEn, entry.title, entry.url, "TECH Dashboard entry");
-  if (hasCjk(title)) {
-    return { summaryJa: title, summaryEn: englishText(entry.titleEn) || englishText(entry.title) };
-  }
-  return { summaryJa: "", summaryEn: englishText(title) || title };
+  const titleAny = firstText(entry.titleJa, entry.titleEn, entry.title, entry.url, "TECH Dashboard entry");
+  const titleEn = englishText(entry.titleEn) || englishText(entry.title) || englishText(titleAny);
+  const titleJa = hasCjk(entry.titleJa ?? "") ? text(entry.titleJa) : hasCjk(entry.title) ? text(entry.title) : "";
+  const source = firstText(entry.source, "unknown source");
+  const category = firstText(entry.category, "tech-news");
+  // Deterministic summary must be populated in BOTH languages so that the UI
+  // never has to show a cross-language fallback badge on a Worker-published
+  // entry. JA users land on `data-lang=ja` and expect Japanese copy even when
+  // the upstream article is English; EN users expect the opposite. See LL-028.
+  const summaryJa = titleJa
+    ? shortenForSummary(titleJa, 140)
+    : shortenForSummary(`「${titleEn || titleAny}」 (${source}) の ${category} 関連アップデート。AI 要約が未生成のため、後続の Worker run で本文が補完されます。`, 180);
+  const summaryEn = titleEn
+    ? shortenForSummary(titleEn, 200)
+    : shortenForSummary(`${category} update from ${source}. AI summary not yet available; a future Worker run will refresh this entry.`, 200);
+  return { summaryJa, summaryEn };
 }
 
 export function buildFallbackBody(entry: NormalizedEntry): Required<Pick<NormalizedEntry, "bodyJa" | "bodyEn">> {

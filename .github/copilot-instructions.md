@@ -86,8 +86,9 @@
 - fallback は通常の LLM body を上書きしない。空欄補完と cache/index 乖離解消だけに使う。
 
 ### R-013: Worker publish 前に summary/body fallback を必ず適用する
-- production Worker は `data/index.json` を commit する前に deterministic summary/body fallback を全 live entry に適用し、`summaryJa` / `summaryEn` の両方が空、または `bodyJa` / `bodyEn` のどちらかが空の payload を publish しない。
+- production Worker は `data/index.json` を commit する前に deterministic summary/body fallback を全 live entry に適用し、`summaryJa` / `summaryEn` / `bodyJa` / `bodyEn` のいずれかが空の payload を publish しない (両言語必須)。
 - `scripts/apply-summary-cache -- --fill-missing-body` は cache が無い entry も補完できること。ローカル `_summary-cache.json` の有無を publish 可否の前提にしない。
+- 英語タイトルのみの entry でも `summaryJa` は決定的な日本語テンプレートで埋める。逆も同様。JA / EN UI で cross-language fallback バッジを出さないこと (LL-028)。
 - Worker runtime は Cloudflare Pages Git Integration では自動更新されない。`worker/src/**` の品質修正後は、明示承認を得て Worker deploy を実施し、古い Worker が invalid data を再投入しないことを確認する。
 
 ---
@@ -262,6 +263,12 @@
 - **根本原因**: CI は push 後に `tests/data-schema.test.ts` で検知していたが、production Worker の publish 前 gate には同じ summary/body 欠落防止が無かった。さらに Worker runtime は Git Integration では自動 deploy されないため、repo 上の修正と実行中 Worker が乖離し得る。
 - **対策**: Worker publish 前に deterministic summary/body fallback を適用し、`health.summaryFallbacks` / `health.bodyFallbacks` を記録する。ローカル修復 script も cache 不在 entry を補完できるようにする。Worker 修正後は明示承認を得て deploy する。
 - **教訓**: data artifact の CI gate は「検知」だけであり、automated publisher の再発防止にはならない。Worker / bot / cron が main に push する repo では、publisher 側にも同じ publish 前品質 gate を持たせる。
+
+### LL-028: 「少なくとも 1 言語」 gate は JA UI で空欄表示を防げない
+- **事象**: ユーザーが JA 設定でサイトを開いた際、Timeline 上 240 件中 178 件で日本語要約が空欄になり、UI が EN フォールバックバッジを表示した。R-013 の publish 前 gate は通過していた。
+- **根本原因**: `worker/src/content-fallback.ts` の `buildFallbackSummary` が英語タイトルの場合に `summaryJa: ""` を返していた。data-schema test も「少なくとも 1 言語の summary がある」しか検証していなかったため、片言語空欄を許容してしまっていた。UI 側は `summaryForLangWithFallback` で cross-language フォールバックするが、JA UI に EN テキスト + `EN` バッジが出るのは UX 上「日本語要約が表示されない」と認識される。
+- **対策**: Worker fallback と `apply-summary-cache.mjs` の双方で deterministic summary を JA / EN 両言語に必ず populate するよう変更。data-schema test を `summaryJa` AND `summaryEn` 両方非空に強化。fallback テンプレートは英語タイトル時に短い日本語テンプレート (「{title} ({source}) の {category} 関連アップデート。AI 要約未生成。」) を、日本語タイトル時に英語テンプレートを生成する。
+- **教訓**: 多言語 UI を持つ data artifact では「1 言語以上」ではなく「全 UI 言語で非空」を gate 条件にする。fallback ロジックは bilingual を仕様として明示する。
 
 ---
 

@@ -187,9 +187,12 @@ describe("data/index.json 各エントリ", () => {
     expect(bad).toEqual([]);
   });
 
-  it("Timeline と記事詳細用の summary が少なくとも 1 言語で存在する", () => {
+  it("Timeline と記事詳細用の summary が両言語で存在する", () => {
+    // LL-028: deterministic fallback must populate BOTH summaryJa and
+    // summaryEn so the JA / EN toggle never shows a cross-language fallback
+    // badge on Worker-published entries.
     const bad = data.entries
-      .filter((e) => !String(e.summaryJa ?? "").trim() && !String(e.summaryEn ?? "").trim())
+      .filter((e) => !String(e.summaryJa ?? "").trim() || !String(e.summaryEn ?? "").trim())
       .map((e) => `${String(e.source)}:${String(e.title)}`);
     expect(bad).toEqual([]);
   });

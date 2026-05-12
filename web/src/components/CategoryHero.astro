@@ -3,7 +3,8 @@
  * CategoryHero — big tile + name + KPI + RSS subscribe link.
  * Mirrors mockup-F §Category Hero.
  */
-import { weekOverWeek, type Category } from "../lib/data.ts";
+import type { Category } from "../lib/data.ts";
+import { categoryWeekOverWeek } from "../lib/stats.ts";
 
 export interface Props {
   slug: Category;
@@ -14,7 +15,7 @@ export interface Props {
 }
 
 const { slug, name, color, initial, totalCount } = Astro.props;
-const wow = weekOverWeek(slug);
+const wow = categoryWeekOverWeek(slug);
 
 const deltaColor =
   wow.deltaPct > 0 ? "#4ade80" : wow.deltaPct < 0 ? "#f87171" : "var(--muted)";

@@ -1,10 +1,6 @@
 ---
-import {
-  trendBuckets,
-  weekOverWeek,
-  type Category,
-  type NormalizedEntry,
-} from "../lib/data.ts";
+import type { Category } from "../lib/data.ts";
+import { categoryDailyTrend, categoryWeekOverWeek } from "../lib/stats.ts";
 
 export interface Props {
   category: Category;
@@ -14,23 +10,9 @@ export interface Props {
 
 const { category, color, days = 30 } = Astro.props;
 
-const buckets = trendBuckets(category, days);
-const maxTotal = Math.max(1, ...buckets.map((b) => b.total));
-const wow = weekOverWeek(category);
-
-type SourceType = NormalizedEntry["sourceType"];
-const TYPE_META: Array<{ k: SourceType; label: string; alpha: number }> = [
-  { k: "release", label: "Releases", alpha: 1.0 },
-  { k: "changelog", label: "Changelog", alpha: 0.85 },
-  { k: "blog", label: "Blog", alpha: 0.7 },
-  { k: "paper", label: "Papers", alpha: 0.55 },
-  { k: "community", label: "Community", alpha: 0.4 },
-];
-
-const totalsByType = TYPE_META.map((t) => ({
-  ...t,
-  count: buckets.reduce((s, b) => s + b.byType[t.k], 0),
-})).filter((t) => t.count > 0);
+const buckets = categoryDailyTrend(category, days);
+const maxTotal = Math.max(1, ...buckets.map((b) => b.count));
+const wow = categoryWeekOverWeek(category);
 
 const axisStride = Math.max(1, Math.floor(days / 4));
 const axisTicks = buckets
@@ -78,14 +60,14 @@ const chartLabel = `${category} trend chart for the last ${days} days. This week
       {buckets.map((b, i) => (
         <div
           class:list={["bar", { past: i < buckets.length - 7 }]}
-          title={`${b.key}: ${b.total}`}
+          title={`${b.key}: ${b.count}`}
         >
-          {TYPE_META.filter((t) => b.byType[t.k] > 0).map((t) => (
+          {b.count > 0 && (
             <div
               class="seg"
-              style={`height:${pct(b.byType[t.k])}%;background:${color};opacity:${t.alpha}`}
+              style={`height:${pct(b.count)}%;background:${color}`}
             ></div>
-          ))}
+          )}
         </div>
       ))}
     </div>
@@ -101,16 +83,14 @@ const chartLabel = `${category} trend chart for the last ${days} days. This week
       <thead>
         <tr>
           <th scope="col">Date</th>
-          <th scope="col">Total</th>
-          {TYPE_META.map((type) => <th scope="col">{type.label}</th>)}
+          <th scope="col">Count</th>
         </tr>
       </thead>
       <tbody>
         {buckets.map((bucket) => (
           <tr>
             <td>{bucket.key}</td>
-            <td>{bucket.total}</td>
-            {TYPE_META.map((type) => <td>{bucket.byType[type.k]}</td>)}
+            <td>{bucket.count}</td>
           </tr>
         ))}
       </tbody>
@@ -118,13 +98,7 @@ const chartLabel = `${category} trend chart for the last ${days} days. This week
   </div>
 
   <div class="legend">
-    {totalsByType.map((t) => (
-      <span>
-        <span class="sw" style={`background:${color};opacity:${t.alpha}`}></span>
-        {t.label} ({t.count})
-      </span>
-    ))}
-    <span class="dim">直近 7 日間は vivid、それ以前は薄色で表示</span>
+    <span class="dim">data/stats.json (archive + live) を元に、直近 7 日間は vivid、それ以前は薄色で表示</span>
   </div>
 </section>
 

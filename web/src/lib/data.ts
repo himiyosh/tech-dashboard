@@ -359,63 +359,6 @@ export function groupByDay(
     .map(([key, items]) => ({ key, items }));
 }
 
-export interface TrendBucket {
-  key: string;       // YYYY-MM-DD (JST)
-  total: number;
-  byType: Record<NormalizedEntry["sourceType"], number>;
-}
-
-/**
- * Build trailing-`days` day buckets (oldest→newest) for a category.
- * Used by the category-page Trend chart (mockup-F §Trend panel).
- */
-export function trendBuckets(
-  category: Category,
-  days = 30,
-  now = new Date(),
-): TrendBucket[] {
-  const buckets: TrendBucket[] = [];
-  for (let i = days - 1; i >= 0; i--) {
-    const t = new Date(now.getTime() - i * 86_400_000);
-    buckets.push({
-      key: jstDateKey(t.toISOString()),
-      total: 0,
-      byType: { blog: 0, release: 0, changelog: 0, paper: 0, community: 0 },
-    });
-  }
-  const idxByKey = new Map(buckets.map((b, i) => [b.key, i] as const));
-  for (const e of ALL_ENTRIES) {
-    if (e.category !== category) continue;
-    const k = jstDateKey(e.publishedAt);
-    const i = idxByKey.get(k);
-    if (i === undefined) continue;
-    buckets[i]!.total++;
-    buckets[i]!.byType[e.sourceType]++;
-  }
-  return buckets;
-}
-
-/** Stats over the last 7 days vs the 7 days before (for hero KPIs). */
-export function weekOverWeek(category: Category, now = new Date()): {
-  thisWeek: number;
-  prevWeek: number;
-  deltaPct: number;
-  avgPerDay: number;
-  peak: { key: string; count: number } | null;
-} {
-  const b30 = trendBuckets(category, 14, now);
-  const prev = b30.slice(0, 7).reduce((s, b) => s + b.total, 0);
-  const curr = b30.slice(7, 14).reduce((s, b) => s + b.total, 0);
-  const deltaPct = prev === 0 ? (curr > 0 ? 100 : 0) : Math.round(((curr - prev) / prev) * 100);
-  const avgPerDay = Math.round((curr / 7) * 10) / 10;
-  const all = trendBuckets(category, 30, now);
-  const peak = all.reduce<{ key: string; count: number } | null>(
-    (acc, b) => (b.total > (acc?.count ?? -1) ? { key: b.key, count: b.total } : acc),
-    null,
-  );
-  return { thisWeek: curr, prevWeek: prev, deltaPct, avgPerDay, peak };
-}
-
 /**
  * Internal href to the in-site article summary page for an entry.
  * All article links across the site should route through this helper

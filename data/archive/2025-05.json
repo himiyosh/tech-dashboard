@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-10T23:49:54.918Z",
+  "generatedAt": "2026-05-12T23:01:00.135Z",
   "month": "2025-05",
   "count": 2,
   "entries": [
@@ -46,28 +46,24 @@
       "sourceType": "changelog",
       "url": "https://cursor.com/changelog/0-50",
       "title": "Simplified Pricing, Background Agent and Refreshed Inline Edit",
-      "titleJa": "Cursor 0.50: 料金体系を簡素化、Background AgentとInline Editを刷新",
+      "titleJa": "",
       "titleEn": "Simplified Pricing, Background Agent and Refreshed Inline Edit",
-      "summaryJa": "Cursor 0.50では料金体系を統一しリクエスト単位に変更、リモート環境でタスクを並列実行するBackground Agentを全ユーザーに開放した。Inline EditのUI刷新、複数ファイルにまたがるTab補完、長いコンテキスト向けの新モデルなど大型アップデートが揃う。",
-      "summaryEn": "Cursor 0.50 introduces simplified request-based pricing, opens Background Agent (remote parallel task execution) to all users, refreshes the Inline Edit UI, adds multi-file Tab completions, and ships new long-context model options.",
+      "summaryJa": "「Simplified Pricing, Background Agent and Refreshed Inline Edit」 (cursor-changelog) の cursor 関連アップデート。AI 要約が未生成のため、後続の Worker run で本文が補完されます。",
+      "summaryEn": "Introducing unified request-based pricing, Max Mode for all top models, and Background Agent for parallel task execution. Plus, improved context management with `@folders` support, refreshed Inline Ed",
       "lang": "en",
       "publishedAt": "2025-05-15T16:13:00.000Z",
-      "collectedAt": "2026-05-10T03:00:06.972Z",
+      "collectedAt": "2026-05-12T23:00:54.509Z",
       "tags": [
         "agent",
         "changelog",
-        "cursor",
-        "background-agent",
-        "inline-edit",
-        "pricing",
-        "ai-coding"
+        "cursor"
       ],
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "cold",
-      "bodyJa": "AIコーディングエディタCursorはバージョン0.50で、料金体系・エージェント機能・編集UIにわたる広範な刷新を発表した。プラン構造の整理と並列実行型エージェントの一般提供が中心で、開発体験の方向性を大きく前進させる節目のリリースと位置づけられる。\n\n料金面では、これまでモデルごとに異なっていた課金方式をリクエスト単位に統一した。Maxモードはトークンベースで、Gemini 2.5 ProやClaude Sonnetなど主要な最先端モデルに対応する。新たに導入されたToolコールの課金により、長時間のエージェント処理でもコスト感が把握しやすくなった。\n\n機能面の目玉はBackground Agentの全ユーザー開放だ。リモート環境でタスクを並列に走らせられるため、ローカル環境を専有せず複数の修正やリファクタリングを同時進行できる。プライバシーモード時は無効となる点や、現時点ではインフラ強化のためにmax modeでの利用が前提となる点には留意が必要となる。\n\nInline Edit（Cmd/Ctrl+K）はUIが刷新され、ファイル全体を対象にエージェント的に編集する「Send to Agent」、選択範囲をクイックに修正する「Quick question」といった操作が新ショートカットで呼び出せる。さらにTab補完は単一ファイルから複数ファイルにまたがる変更を提案できるようになり、@folders構文での大規模コンテキスト指定や、長文脈に最適化された新モデルも追加された。チャットのエクスポートや複製にも対応している。\n\n背景として、GitHub CopilotのAgent ModeやReplit Agent、Devinなど自律的にタスクを完遂するエージェント型ツールが急速に広がっており、Cursorの今回の更新はこの潮流に沿うものと見られる。とりわけ「リモートで並列に走る常駐エージェント」という設計は、ローカルIDEの制約を超えて長時間タスクへAIを適用しようとする業界共通の方向性を反映していると言える。料金の透明化も、トークン消費が読みにくいというユーザーの不満に応える狙いがあると考えられる。",
-      "bodyEn": "Cursor 0.50 is a wide-ranging release that touches pricing, agent capabilities, and the core editing experience. The headline changes are a unified pricing model and the general availability of Background Agent, signaling a clear push toward longer-running, more autonomous AI workflows inside the editor.\n\nOn pricing, Cursor has consolidated what was previously a patchwork of per-model schemes into a single request-based structure. Max Mode now runs on token-based billing and supports leading frontier models such as Gemini 2.5 Pro and Claude Sonnet. A new tool-call charge has been introduced so that the cost of extended agent sessions, which can fan out into many tool invocations, becomes easier to reason about.\n\nThe most prominent feature change is opening Background Agent to all users. The agent runs in a remote environment and can execute tasks in parallel, freeing the local machine and letting developers dispatch multiple refactors or fixes concurrently. There are caveats: it is disabled under Privacy Mode, and at least initially Cursor is gating it behind Max-style usage while the infrastructure scales.\n\nInline Edit (Cmd/Ctrl+K) has been refreshed with a new UI and shortcuts. Users can now hand a selection off to the agent for full-file edits via Send to Agent, or fire a Quick question for lightweight clarifications. Tab completion has been extended beyond a single file to suggest coordinated multi-file changes, and an @folders syntax plus a new long-context-optimized model make it easier to feed large portions of a codebase into chat. Chats can also be exported and duplicated, smoothing collaboration and branching workflows.\n\nThe broader context matters here. GitHub Copilot's Agent Mode, Replit Agent, Devin, and a growing roster of autonomous coding tools have shifted user expectations from inline autocomplete toward agents that can plan, execute, and verify multi-step tasks. Cursor's emphasis on a remote, parallel background agent appears to align with that trend, and arguably pushes further by treating the agent as a first-class citizen rather than a sidecar. Multi-file Tab completion likewise reflects an industry move from token-level prediction toward repository-aware reasoning.\n\nThe pricing rework can be read as a response to a recurring complaint across AI coding tools: opaque token economics make it hard for teams to budget. By switching to a uniform request unit and being explicit about tool-call charges, Cursor is likely trying to make agent-heavy workflows financially predictable, though the real test will be how costs scale once Background Agent sees broad daily use. Overall, 0.50 looks less like a routine point release and more like a structural step toward agent-centric development."
+      "bodyJa": "Simplified Pricing, Background Agent and Refreshed Inline Edit は、cursor-changelog が伝えた cursor 領域の更新です。「Simplified Pricing, Background Agent and Refreshed Inline Edit」 (cursor-changelog) の cursor 関連アップデート。AI 要約が未生成のため、後続の Worker run で本文が補完されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。changelog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは agent, changelog, cursor です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "Simplified Pricing, Background Agent and Refreshed Inline Edit is a cursor update collected from cursor-changelog. Introducing unified request-based pricing, Max Mode for all top models, and Background Agent for parallel task execution. Plus, improved context management with `@folders` support, refreshed Inline Ed.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For changelog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include agent, changelog, cursor. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     }
   ]
 }

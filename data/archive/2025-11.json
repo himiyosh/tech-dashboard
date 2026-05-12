@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-12T22:55:31.721Z",
+  "generatedAt": "2026-05-12T23:01:00.135Z",
   "month": "2025-11",
   "count": 17,
   "entries": [
@@ -156,26 +156,23 @@
       "sourceType": "changelog",
       "url": "https://cursor.com/changelog/2-1",
       "title": "Improved Plan Mode, AI Code Review in Editor, and Instant Grep",
-      "titleJa": "Cursor 2.1リリース、Plan Mode強化とエディタ内AIコードレビュー追加",
+      "titleJa": "",
       "titleEn": "Improved Plan Mode, AI Code Review in Editor, and Instant Grep",
-      "summaryJa": "CursorはPlan Modeの改善、エディタ内でのAIコードレビュー機能、そして高速なGrep検索を備えた2.1を公開した。計画から実装、レビューまでの流れをエディタ内で完結できるようになり、AIコーディング支援の体験が一段と滑らかになる。",
-      "summaryEn": "Cursor 2.1 ships an improved Plan Mode, in-editor AI code review, and an instant Grep search, tightening the loop between planning, coding, and review inside the editor.",
+      "summaryJa": "「Improved Plan Mode, AI Code Review in Editor, and Instant Grep」 (cursor-changelog) の cursor 関連アップデート。AI 要約が未生成のため、後続の Worker run で本文が補完されます。",
+      "summaryEn": "When creating plans, Cursor responds with clarifying questions to improve the plan quality. Cursor now shows an interactive UI to easily answer questions.",
       "lang": "en",
       "publishedAt": "2025-11-21T19:37:20.000Z",
-      "collectedAt": "2026-05-10T03:00:06.972Z",
+      "collectedAt": "2026-05-12T23:00:54.509Z",
       "tags": [
         "changelog",
-        "cursor",
-        "ai-coding",
-        "code-review",
-        "plan-mode"
+        "cursor"
       ],
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "cold",
-      "bodyJa": "AIコードエディタのCursorが、バージョン2.1のリリースを発表した。今回の更新ではPlan Modeの改良、エディタ内でのAIコードレビュー、そして高速化されたGrep検索という三つの柱が中心となっており、計画立案から実装、レビューに至る開発サイクルをエディタ内で一貫して扱えるようにする狙いがあると見られる。\n\nPlan Modeは、AIに直接コードを書かせる前に作業計画を立てさせる機能で、複雑なタスクや大規模なリファクタリングで有用とされてきた。今回の改善では計画の精度や編集の扱いやすさが強化されており、エージェント的な動作を制御したい開発者に向けた配慮がうかがえる。Anthropic ClaudeやOpenAI Codex CLI、GitHub Copilot Workspaceなどでも、実装前にプランを提示するパターンが一般化しつつあり、Cursorの動きはその流れに沿うものと言える。\n\nAIコードレビューがエディタ内に統合された点も注目に値する。これまでGitHub上のpull request段階で行うのが一般的だったAIレビューを、コミット前の編集中の段階で受けられるようになる。CodeRabbitやGreptile、GitHub Copilotのレビュー機能など、競合がPRレベルのレビュー自動化を進める中で、Cursorはローカルかつ即時という差別化を打ち出している格好だ。\n\n加えて、Instant Grepと呼ばれる高速検索が導入された。大規模リポジトリではコードベース横断の検索性能がエージェントの応答速度に直結するため、ripgrepに代表される高速grep系ツールがCursorのようなAIエディタでも基盤として重要視されている可能性がある。検索が速くなることで、AIエージェントが文脈を集めるコストも下がり、結果的に応答品質と速度の双方に効くと考えられる。\n\n総じてCursor 2.1は派手な新モデル投入ではなく、日常的な開発体験を底上げする実務寄りの更新と位置づけられる。AIエディタ市場ではWindsurfやZed、JetBrains AI Assistantなどとの競争が激しく、計画・実装・レビューを一体化するワークフローの磨き込みは今後の差別化軸になっていくと見られる。",
-      "bodyEn": "Cursor has shipped version 2.1 of its AI-native code editor, focusing on three areas: a refined Plan Mode, AI code review surfaced directly in the editor, and a faster search experience called Instant Grep. Together, the changes aim to keep the planning, coding, and review loop inside a single editor surface rather than scattered across tools.\n\nPlan Mode, introduced earlier as a way to have the AI propose a structured approach before touching code, gets meaningful refinements in this release. The pattern of plan-then-execute has become common across agentic coding tools, with Anthropic's Claude, OpenAI's Codex CLI, and GitHub Copilot Workspace all leaning into similar workflows. The appeal is practical: large refactors and multi-file changes tend to go off the rails when an agent dives straight into edits, and an explicit plan gives developers a checkpoint to steer the work before any diff lands.\n\nThe second headline change brings AI code review into the editor itself. Most AI review tooling today, including products like CodeRabbit, Greptile, and GitHub's own Copilot review features, lives at the pull request layer, commenting on diffs after they have been pushed. Cursor's approach moves that feedback loop earlier, letting developers see review-style suggestions while the code is still being written. That shift could shorten iteration cycles, although it also raises the usual questions about signal-to-noise that any automated reviewer faces; the practical value will likely depend on how aggressively the suggestions surface and how easy they are to dismiss.\n\nInstant Grep rounds out the release. Fast code search may sound mundane next to agent features, but it is foundational for AI editors operating over large repositories. Tools like ripgrep have long been the unsung backbone of modern code navigation, and as agents increasingly rely on retrieving relevant snippets to ground their suggestions, search latency directly shapes both response speed and answer quality. A faster grep is, in effect, a faster context-gathering step for every agent action, which tends to compound across a session.\n\nNotably, 2.1 is not a flashy model launch but an iteration on day-to-day developer ergonomics. The AI editor space has grown crowded, with Windsurf, Zed's AI features, JetBrains AI Assistant, and Copilot's expanding agent surface all competing for similar mindshare. In that context, polishing the plan-implement-review loop is a reasonable bet: differentiation in this market increasingly seems to come from how cohesive the workflow feels, not just which underlying model is wired in. Whether Cursor's bundled approach proves stickier than more modular competitors remains to be seen, but 2.1 is a clear step in that direction."
+      "bodyJa": "Improved Plan Mode, AI Code Review in Editor, and Instant Grep は、cursor-changelog が伝えた cursor 領域の更新です。「Improved Plan Mode, AI Code Review in Editor, and Instant Grep」 (cursor-changelog) の cursor 関連アップデート。AI 要約が未生成のため、後続の Worker run で本文が補完されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。changelog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは changelog, cursor です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "Improved Plan Mode, AI Code Review in Editor, and Instant Grep is a cursor update collected from cursor-changelog. When creating plans, Cursor responds with clarifying questions to improve the plan quality. Cursor now shows an interactive UI to easily answer questions.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For changelog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include changelog, cursor. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "bbb521e4a351db13",

@@ -19,6 +19,7 @@ import { mergeEntryEnrichment } from "../../harness/pipeline/entry-merge.ts";
 import { normalize } from "../../harness/pipeline/normalize.ts";
 import { applyTags } from "../../harness/pipeline/tag.ts";
 import { canonicalUrlKey } from "../../harness/pipeline/url.ts";
+import { applyDeterministicContentFallback } from "./content-fallback.ts";
 import {
   buildArchiveIndexFile,
   buildArchiveMonthFile,
@@ -729,7 +730,15 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   console.log(`[worker] og: cached=${Object.keys(ogBlob).length}, new hits=${ogFound}`);
 
   // 5) Build payload (cap newest entries; dropped tier is retained only in reports)
-  const retainedEntries = afterCache.filter((entry) => entry.archiveTier !== "dropped");
+  let summaryFallbacks = 0;
+  let bodyFallbacks = 0;
+  const contentReady = afterCache.map((entry) => {
+    const result = applyDeterministicContentFallback(entry);
+    summaryFallbacks += result.summaryFallbacks;
+    bodyFallbacks += result.bodyFallbacks;
+    return result.entry;
+  });
+  const retainedEntries = contentReady.filter((entry) => entry.archiveTier !== "dropped");
   const finalEntries = retainedEntries.slice(0, INDEX_LIMIT);
   const failedSources = settled.filter((s) => !s.result.ok).map((s) => s.result.sourceId);
   const health = {
@@ -741,6 +750,8 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
     sourcesFailed: failedSources,
     summarized,
     summarizeErrors: errors,
+    summaryFallbacks,
+    bodyFallbacks,
     copilotOk: token !== null,
     copilotError,
     ogCached: Object.keys(ogBlob).length,
@@ -766,7 +777,7 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
 
   const message = `chore(data): update tech dashboard ${payload.generatedAt}`;
   const historyStats = hasEntryChanges
-    ? await publishHistoryFiles(env, afterCache, finalEntries, payload.generatedAt)
+    ? await publishHistoryFiles(env, contentReady, finalEntries, payload.generatedAt)
     : {
         archiveMonthsTouched: 0,
         archiveFilesChanged: 0,

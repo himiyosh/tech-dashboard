@@ -112,7 +112,7 @@ interface WorkerHealth {
 | ローカル品質ゲート + Worker コード deploy | `scripts/git-hooks/pre-push` | push 前に unit / web build / E2E を実行し、`RUN_WORKER_DEPLOY=1` の `main` push に worker/ 差分がある場合だけ deploy |
 | ヘルス監視 | `data/index.json#health` + `/status` ページ | 実行ごと記録、サイト訪問時に確認 |
 
-**残る手動運用**: 年 1 回の PAT 更新 (`wrangler secret put COPILOT_PAT` / `GH_TOKEN`)。失効時は `/status` の Worker Health が `summarize disabled` に変わるので即気付ける。cache 済み本文が `data/index.json` に未反映の場合は `npm run summaries:apply-cache` で再反映し、本文そのものが不足する場合は `scripts/resummarize.mjs` を小 batch で実行する。LLM backfill が一部 URL で詰まる場合は `npm run summaries:apply-cache -- --fill-missing-body` を実行し、既存 summary と metadata から deterministic body fallback を cache / index の両方に反映する。
+**残る手動運用**: 年 1 回の PAT 更新 (`wrangler secret put COPILOT_PAT` / `GH_TOKEN`)。失効時は `/status` の Worker Health が `summarize disabled` に変わるので即気付ける。Worker は commit 前に deterministic summary/body fallback を適用する。cache 済み本文が `data/index.json` に未反映の場合は `npm run summaries:apply-cache` で再反映し、本文そのものが不足する場合は `scripts/resummarize.mjs` を小 batch で実行する。LLM backfill が一部 URL で詰まる場合は `npm run summaries:apply-cache -- --fill-missing-body` を実行し、cache が無い entry も含めて deterministic summary/body fallback を index に反映する。
 
 ---
 

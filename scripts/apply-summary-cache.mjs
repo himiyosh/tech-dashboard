@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const INDEX = "data/index.json";
 const CACHE = "data/_summary-cache.json";
@@ -8,7 +8,7 @@ const FILL_MISSING_BODY = process.argv.includes("--fill-missing-body");
 const REFRESH_FALLBACK_BODY = process.argv.includes("--refresh-fallback-body");
 
 const index = JSON.parse(readFileSync(INDEX, "utf8"));
-const cache = JSON.parse(readFileSync(CACHE, "utf8"));
+const cache = existsSync(CACHE) ? JSON.parse(readFileSync(CACHE, "utf8")) : {};
 const entries = Array.isArray(index) ? index : index.entries;
 
 const stats = {
@@ -16,6 +16,7 @@ const stats = {
   cacheHits: 0,
   titleApplied: 0,
   summaryApplied: 0,
+  summaryFallbackApplied: 0,
   bodyApplied: 0,
   bodyFallbackApplied: 0,
   cacheFallbackWritten: 0,
@@ -62,6 +63,14 @@ function fallbackTags(entry) {
   return dedupeTags(entry.tags ?? []).slice(0, 4);
 }
 
+function buildFallbackSummary(entry) {
+  const title = firstText(entry.titleJa, entry.titleEn, entry.title, entry.url, "TECH Dashboard entry");
+  if (hasCjk(title)) {
+    return { summaryJa: title, summaryEn: englishText(entry.titleEn) || englishText(entry.title) };
+  }
+  return { summaryJa: "", summaryEn: englishText(title) || title };
+}
+
 function buildFallbackBody(entry) {
   const titleJa = firstText(entry.titleJa, entry.titleEn, entry.title, "TECH Dashboard entry");
   const titleEn = firstText(entry.titleEn, entry.title, entry.titleJa, "TECH Dashboard entry");
@@ -96,8 +105,8 @@ function ensureFallbackCacheEntry(entry, fallback, refresh = false) {
   const existing = cache[entry.url] ?? {};
   const next = {
     titleJa: firstText(existing.titleJa, entry.titleJa, entry.title),
-    summaryJa: firstText(existing.summaryJa, entry.summaryJa, entry.title),
-    summaryEn: firstText(existing.summaryEn, entry.summaryEn, entry.titleEn, entry.title),
+    summaryJa: firstText(existing.summaryJa, entry.summaryJa, fallback.summaryJa, entry.title),
+    summaryEn: firstText(existing.summaryEn, entry.summaryEn, fallback.summaryEn, entry.titleEn, entry.title),
     bodyJa: refresh ? fallback.bodyJa : firstText(existing.bodyJa, fallback.bodyJa),
     bodyEn: refresh ? fallback.bodyEn : firstText(existing.bodyEn, fallback.bodyEn),
     importance: existing.importance ?? entry.importance ?? 1,
@@ -143,7 +152,10 @@ for (const entry of entries) {
 
 if (FILL_MISSING_BODY || REFRESH_FALLBACK_BODY) {
   for (const entry of entries) {
-    const fallback = buildFallbackBody(entry);
+    const fallbackSummary = buildFallbackSummary(entry);
+    if (setIfFilled(entry, "summaryJa", fallbackSummary.summaryJa)) stats.summaryFallbackApplied++;
+    if (setIfFilled(entry, "summaryEn", fallbackSummary.summaryEn)) stats.summaryFallbackApplied++;
+    const fallback = { ...fallbackSummary, ...buildFallbackBody(entry) };
     const shouldRefresh = REFRESH_FALLBACK_BODY && isDeterministicFallback(entry);
     const appliedJa = shouldRefresh ? entry.bodyJa !== fallback.bodyJa : setIfFilled(entry, "bodyJa", fallback.bodyJa);
     const appliedEn = shouldRefresh ? entry.bodyEn !== fallback.bodyEn : setIfFilled(entry, "bodyEn", fallback.bodyEn);
@@ -158,7 +170,7 @@ if (FILL_MISSING_BODY || REFRESH_FALLBACK_BODY) {
 if (!Array.isArray(index)) {
   index.count = entries.length;
   index.entries = entries;
-  if (!DRY && (stats.summaryApplied > 0 || stats.bodyApplied > 0 || stats.bodyFallbackApplied > 0 || stats.titleApplied > 0 || stats.importanceApplied > 0 || stats.tagsApplied > 0)) {
+  if (!DRY && (stats.summaryApplied > 0 || stats.summaryFallbackApplied > 0 || stats.bodyApplied > 0 || stats.bodyFallbackApplied > 0 || stats.titleApplied > 0 || stats.importanceApplied > 0 || stats.tagsApplied > 0)) {
     index.generatedAt = new Date().toISOString();
   }
 }

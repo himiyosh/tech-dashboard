@@ -409,14 +409,18 @@ for (const cat of categoryPanels) {
 
   .cat-trend {
     display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
+    /* One bar per daily bucket on a single row (bucket count is data-driven; do
+       not hard-code a column count or the bars will wrap onto multiple rows). */
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
     align-items: end;
-    gap: 4px;
+    gap: 2px;
     height: 70px;
     padding: 10px 8px 8px;
     border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
     border-radius: 8px;
     background: color-mix(in srgb, var(--bg-2) 54%, transparent);
+    overflow: hidden;
   }
 
   .cat-bar {

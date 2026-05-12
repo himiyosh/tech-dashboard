@@ -13,7 +13,8 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | 処理 | 実行主体 | トリガ | 失効時の影響 | 監視 |
 |---|---|---|---|---|
 | ソース収集 (50 sources) | Cloudflare Worker `tech-dashboard-harness` | Cron `0 * * * *` (毎時) を 4 batch ローテーション | データ更新が止まる | `/status` の Worker Health |
-| 日本語要約 (`summaryJa` / `titleJa`) | 同 Worker → Copilot Enterprise (claude-opus-4.7) | 上記 cron 内で最大 `SUMMARIZE_MAX_NEW=5` 件/h、timeout + retry 付き | 既存表示は維持。新着のみ要約欠落 → JA UI で空欄 | `health.copilotOk` / `health.copilotError` |
+| 日本語要約 (`summaryJa` / `titleJa`) | 同 Worker → Copilot Enterprise (claude-opus-4.7) | 上記 cron 内で最大 `SUMMARIZE_MAX_NEW=5` 件/h、timeout + retry 付き | 既存表示は維持。LLM 失敗時は deterministic fallback で空欄を防止 | `health.copilotOk` / `health.copilotError` |
+| summary/body deterministic fallback | 同 Worker / `scripts/apply-summary-cache.mjs` | Worker commit 前、または緊急修復時 | LLM timeout / 旧 cache 欠落時でも live index の summary/body 欠落を防止 | `health.summaryFallbacks` / `health.bodyFallbacks` / `tests/data-schema.test.ts` |
 | og:image 取得 | 同 Worker | 上記 cron 内で最大 4 件/h、KV にキャッシュ | サムネが no-image fallback になる | `health.ogCached` |
 | `data/index.json` / `data/archive/*` / `data/stats.json` 更新 commit | Worker → GitHub Git Data API (`tech-dashboard-worker` 名義) | 差分があるときのみ 1 commit にまとめる | サイトに反映されない、記事数推移が古いまま | `git log --author=tech-dashboard-worker` |
 | サイト build / deploy | Cloudflare Pages (Git Integration) | `main` の push 検知 | サイトが古いまま | Cloudflare Pages dashboard |
@@ -27,7 +28,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | `GH_TOKEN` 更新 | `cd worker && npx wrangler secret put GH_TOKEN` | Worker run で push 失敗 → commit 履歴が止まる |
 | (緊急) 手動収集 | `npm run collect` | バックログ滞留時 (例: 1h に 5 件以上の新着) |
 | (緊急) cache 済み要約/本文の再反映 | `npm run summaries:apply-cache` | `data/_summary-cache.json` には body があるのに `data/index.json` 側が空の時 |
-| (緊急) 本文欠落の deterministic 補完 | `npm run summaries:apply-cache -- --fill-missing-body` | LLM backfill が一部 URL で詰まり、既存 summary から本文欄を確実に埋めたい時 |
+| (緊急) summary/body 欠落の deterministic 補完 | `npm run summaries:apply-cache -- --fill-missing-body` | LLM backfill が詰まり、cache が無い entry も含めて `data/index.json` の空欄を確実に埋めたい時 |
 | (緊急) 不足要約/本文のバルク補充 | `SUMMARIZE_MAX_NEW=400 npx tsx --env-file-if-exists=.env.local scripts/resummarize.mjs` | 過去エントリの `summaryJa` / `bodyJa` / `bodyEn` がまとめて欠けている時 |
 | (緊急) og:image バックフィル | `node scripts/backfill-og.mjs` | `image.source = "fallback"` が大量に残る時 |
 | (緊急) リリースタイトル整形バックフィル | `node --experimental-strip-types scripts/backfill-release-titles.mjs` | バージョン番号のみのタイトルを補正したい時 |
@@ -253,7 +254,7 @@ npx wrangler secret put GH_TOKEN                # Contents:Write 権限の Fine-
 npx wrangler deploy
 ```
 
-Cron は `0 * * * *` (毎時) で起動します。Cloudflare Free Workers の subrequest 上限 50/run に収めるため、50 ソースを 4 バッチに分割しローテーションしており、**個別ソースの再収集は 4 時間ごと**となります。各 run で `SUMMARIZE_MAX_NEW=5` の新規要約と最大 4 件の og:image 取得を行い、差分があれば `data/index.json`、`data/archive/*`、`data/stats.json` を Git Data API で 1 commit にまとめます。Cloudflare Pages Git Integration はその commit を検知して Pages を自動的に再デプロイします。トップページの記事数推移は `data/stats.json` を優先して参照するため、`data/index.json` の上限や dropped tier による削除後も archive 由来の集計を保持できます。
+Cron は `0 * * * *` (毎時) で起動します。Cloudflare Free Workers の subrequest 上限 50/run に収めるため、50 ソースを 4 バッチに分割しローテーションしており、**個別ソースの再収集は 4 時間ごと**となります。各 run で `SUMMARIZE_MAX_NEW=5` の新規要約と最大 4 件の og:image 取得を行います。Copilot 要約が timeout / error になった entry には commit 前に deterministic summary/body fallback を適用し、差分があれば `data/index.json`、`data/archive/*`、`data/stats.json` を Git Data API で 1 commit にまとめます。Cloudflare Pages Git Integration はその commit を検知して Pages を自動的に再デプロイします。トップページの記事数推移は `data/stats.json` を優先して参照するため、`data/index.json` の上限や dropped tier による削除後も archive 由来の集計を保持できます。
 
 Copilot 要約は `SUMMARIZE_TIMEOUT_MS` (既定 25000 ms) で timeout し、Worker 内で 1 回 retry します。ローカル harness と同じく、一時的な API timeout / 5xx による欠落を次 run へ持ち越しにくくしています。
 
@@ -278,7 +279,7 @@ Worker を反映する push では、`RUN_WORKER_DEPLOY=1 git push` を使いま
 
 #### 監視 / ヘルスチェック
 
-Worker は実行ごとに `data/index.json` の `health` フィールドにメタデータ (`lastRunAt` / `batchIndex` / `sourcesOk` / `sourcesFailed[]` / `copilotOk` / `copilotError` / `summarized` / `ogCached` 等) を埋め込みます。サイトの [https://techdb.studio344.net/status/](https://techdb.studio344.net/status/) 上部の **Worker Health** セクションで一目で確認できます。状態は以下のラベルで表示されます。
+Worker は実行ごとに `data/index.json` の `health` フィールドにメタデータ (`lastRunAt` / `batchIndex` / `sourcesOk` / `sourcesFailed[]` / `copilotOk` / `copilotError` / `summarized` / `summaryFallbacks` / `bodyFallbacks` / `ogCached` 等) を埋め込みます。サイトの [https://techdb.studio344.net/status/](https://techdb.studio344.net/status/) 上部の **Worker Health** セクションで一目で確認できます。状態は以下のラベルで表示されます。
 
 - `healthy` — 直近 6h 以内に成功 / Copilot OK / 失敗 source なし
 - `summarize disabled` — Copilot PAT 失効など (収集自体は継続)

@@ -10,7 +10,7 @@ import {
   type Category,
   type NormalizedEntry,
 } from "../lib/data.ts";
-import { categoryMonthlyTrend, STATS } from "../lib/stats.ts";
+import { categoryDailySpark, STATS } from "../lib/stats.ts";
 
 const now = new Date();
 const counts = countByCategory();
@@ -37,10 +37,6 @@ const TYPE_LABEL: Record<NormalizedEntry["sourceType"], string> = {
   community: "Community",
 };
 
-const monthLabel = (month: string) =>
-  new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" })
-    .format(new Date(`${month}-01T00:00:00Z`));
-
 const countDays = (category: Category, days: number): number =>
   STATS.byDay.slice(-days).reduce((sum, bucket) => sum + (bucket.byCategory[category] ?? 0), 0);
 
@@ -55,9 +51,9 @@ const pctDelta = (current: number, previous: number): number => {
 const categoryPanels = CATEGORY_META.map((cat) => {
   const entries = entriesFor(cat.slug);
   const latest = entries[0] ?? null;
-  const monthly = categoryMonthlyTrend(cat.slug).map((bucket) => ({
+  const daily = categoryDailySpark(cat.slug, 30).map((bucket) => ({
     ...bucket,
-    label: monthLabel(bucket.month),
+    label: bucket.key.slice(5), // MM-DD
   }));
   const last7 = countDays(cat.slug, 7);
   const prev7 = countPrevDays(cat.slug, 7);
@@ -79,7 +75,7 @@ const categoryPanels = CATEGORY_META.map((cat) => {
     last30,
     delta: pctDelta(last7, prev7),
     latest,
-    monthly,
+    daily,
     topTypes,
   };
 });
@@ -111,7 +107,7 @@ for (const cat of categoryPanels) {
             </h2>
           </div>
           <p>
-            カテゴリごとの記事量、直近の勢い、月次推移を同じカード内で比較できます。
+            カテゴリごとの記事量、直近の勢い、過去 30 日の推移を同じカード内で比較できます。
             伸びている領域を見つけたら、そのままカテゴリ詳細へ移動できます。
           </p>
         </div>
@@ -174,27 +170,27 @@ for (const cat of categoryPanels) {
                     </span>
                   </div>
 
-                  <div class="cat-trend" role="img" aria-label={`${cat.name} article trend for the last 12 months`}>
-                    {cat.monthly.map((bucket) => (
-                      <span class="cat-bar" title={`${bucket.month}: ${bucket.count}`}>
+                  <div class="cat-trend" role="img" aria-label={`${cat.name} article trend for the last 30 days`}>
+                    {cat.daily.map((bucket) => (
+                      <span class="cat-bar" title={`${bucket.key}: ${bucket.count}`}>
                         <i style={`height:${bucket.height}%`}></i>
                       </span>
                     ))}
                   </div>
 
                   <div class="cat-axis" aria-hidden="true">
-                    <span>{cat.monthly[0]?.label}</span>
-                    <span>{cat.monthly.at(-1)?.label}</span>
+                    <span>{cat.daily[0]?.label}</span>
+                    <span>{cat.daily.at(-1)?.label}</span>
                   </div>
 
                   <table class="sr-only">
-                    <caption>{cat.name} monthly article counts</caption>
+                    <caption>{cat.name} daily article counts (last 30 days)</caption>
                     <thead>
-                      <tr><th scope="col">Month</th><th scope="col">Count</th></tr>
+                      <tr><th scope="col">Date</th><th scope="col">Count</th></tr>
                     </thead>
                     <tbody>
-                      {cat.monthly.map((bucket) => (
-                        <tr><td>{bucket.month}</td><td>{bucket.count}</td></tr>
+                      {cat.daily.map((bucket) => (
+                        <tr><td>{bucket.key}</td><td>{bucket.count}</td></tr>
                       ))}
                     </tbody>
                   </table>

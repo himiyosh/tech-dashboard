@@ -25,6 +25,25 @@ export interface CategoryMonthlyTrendBucket {
   height: number;
 }
 
+export interface CategoryDailyTrendBucket {
+  key: string;
+  count: number;
+}
+
+export interface CategoryDailySparkBucket {
+  key: string;
+  count: number;
+  height: number;
+}
+
+export interface CategoryWeekOverWeek {
+  thisWeek: number;
+  prevWeek: number;
+  deltaPct: number;
+  avgPerDay: number;
+  peak: { key: string; count: number } | null;
+}
+
 export interface StatsPayload {
   generatedAt: string;
   totals: {
@@ -54,4 +73,74 @@ export function categoryMonthlyTrend(category: Category, months = 12): CategoryM
     ...bucket,
     height: bucket.count === 0 ? 2 : Math.max(12, Math.round((bucket.count / maxMonth) * 100)),
   }));
+}
+
+function jstDateKey(time: number): string {
+  // 9 hour offset to JST, then take YYYY-MM-DD.
+  const jst = new Date(time + 9 * 3600_000);
+  return jst.toISOString().slice(0, 10);
+}
+
+/**
+ * Trailing-`days` daily totals for a category, derived from `data/stats.json`.
+ * This keeps the category detail Trend chart aligned with the sidebar /
+ * categories-index sparkline (single source of truth: stats.json).
+ */
+export function categoryDailyTrend(
+  category: Category,
+  days = 30,
+  now = new Date(),
+): CategoryDailyTrendBucket[] {
+  const buckets: CategoryDailyTrendBucket[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    buckets.push({ key: jstDateKey(now.getTime() - i * 86_400_000), count: 0 });
+  }
+  const idxByKey = new Map(buckets.map((b, i) => [b.key, i] as const));
+  for (const day of STATS.byDay) {
+    const i = idxByKey.get(day.date);
+    if (i === undefined) continue;
+    buckets[i]!.count = day.byCategory[category] ?? 0;
+  }
+  return buckets;
+}
+
+/**
+ * Trailing-`days` daily spark with normalized bar heights. Shared between the
+ * sidebar sparkline, categories-index card chart, and category detail Trend
+ * panel so all three show the same period and shape.
+ */
+export function categoryDailySpark(
+  category: Category,
+  days = 30,
+  now = new Date(),
+): CategoryDailySparkBucket[] {
+  const buckets = categoryDailyTrend(category, days, now);
+  const max = Math.max(1, ...buckets.map((b) => b.count));
+  return buckets.map((b) => ({
+    ...b,
+    height: b.count === 0 ? 2 : Math.max(8, Math.round((b.count / max) * 100)),
+  }));
+}
+
+/** Week-over-week KPIs derived from stats.byDay (matches the daily trend chart). */
+export function categoryWeekOverWeek(
+  category: Category,
+  now = new Date(),
+): CategoryWeekOverWeek {
+  const last14 = categoryDailyTrend(category, 14, now);
+  const prevWeek = last14.slice(0, 7).reduce((s, b) => s + b.count, 0);
+  const thisWeek = last14.slice(7, 14).reduce((s, b) => s + b.count, 0);
+  const deltaPct =
+    prevWeek === 0
+      ? thisWeek > 0
+        ? 100
+        : 0
+      : Math.round(((thisWeek - prevWeek) / prevWeek) * 100);
+  const avgPerDay = Math.round((thisWeek / 7) * 10) / 10;
+  const all = categoryDailyTrend(category, 30, now);
+  const peak = all.reduce<{ key: string; count: number } | null>(
+    (acc, b) => (b.count > (acc?.count ?? -1) ? { key: b.key, count: b.count } : acc),
+    null,
+  );
+  return { thisWeek, prevWeek, deltaPct, avgPerDay, peak };
 }

@@ -1,6 +1,6 @@
 ---
 import { CATEGORY_META, countByCategory, ALL_ENTRIES, type Category } from "../lib/data.ts";
-import { categoryMonthlyTrend } from "../lib/stats.ts";
+import { categoryDailySpark } from "../lib/stats.ts";
 
 export interface Props {
   active?: Category | "all";
@@ -73,16 +73,16 @@ function initial(slug: Category): string {
       <>
         <div class="side-group-label">{groupLabels[g]}</div>
         {CATEGORY_META.filter((c) => c.group === g).map((c) => {
-          const trend = categoryMonthlyTrend(c.slug);
+          const trend = categoryDailySpark(c.slug, 30);
           const href = `/c/${c.slug}`;
           const isActive = active === c.slug;
           return (
             <a class={`side-item ${isActive ? "active" : ""}`} href={href}>
               <span class={`brand-tile ${tileClass(c.slug)}`}>{initial(c.slug)}</span>
               <span class="name">{c.name}</span>
-              <span class="spark" title="Past 12 months" aria-label={`${c.name} article trend for the last 12 months`}>
+              <span class="spark" title="Last 30 days" aria-label={`${c.name} article trend for the last 30 days`}>
                 {trend.map((bucket) => (
-                  <i title={`${bucket.month}: ${bucket.count}`} style={`height:${bucket.height}%`}></i>
+                  <i title={`${bucket.key}: ${bucket.count}`} style={`height:${bucket.height}%`}></i>
                 ))}
               </span>
               <span class="count">{counts[c.slug]}</span>

@@ -135,7 +135,7 @@ test.describe("TECH Dashboard smoke", () => {
 
     expect(trends.length).toBeGreaterThan(0);
     for (const trend of trends) {
-      expect(trend.sidebarBars).toHaveLength(12);
+      expect(trend.sidebarBars).toHaveLength(30);
       expect(trend.cardBars).toEqual(trend.sidebarBars);
     }
   });

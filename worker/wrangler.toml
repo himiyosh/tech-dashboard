@@ -25,7 +25,11 @@ GITHUB_OWNER = "himiyosh"
 GITHUB_REPO = "tech-dashboard"
 GITHUB_BRANCH = "main"
 SUMMARIZE_MODEL = "claude-opus-4.7"
-SUMMARIZE_MAX_NEW = "15"
+# Copilot endpoint can return slowly for opus on busy hours; cap budget so
+# Workers wall-time (~30s) isn't blown out and at least N new entries make it.
+SUMMARIZE_MAX_NEW = "5"
+SUMMARIZE_CONCURRENCY = "2"
+SUMMARIZE_TIMEOUT_MS = "20000"
 
 # Secrets (set via `wrangler secret put`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access

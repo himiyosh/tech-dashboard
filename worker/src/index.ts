@@ -45,10 +45,12 @@ interface Env {
   SUMMARIZE_MODEL: string;
   SUMMARIZE_MAX_NEW: string;
   SUMMARIZE_TIMEOUT_MS?: string;
+  SUMMARIZE_CONCURRENCY?: string;
 }
 
 const INDEX_LIMIT = 2000;
 const DEFAULT_SUMMARIZE_TIMEOUT_MS = 25_000;
+const DEFAULT_SUMMARIZE_CONCURRENCY = 4;
 const SUMMARIZE_ATTEMPTS = 2;
 
 /** Return epoch ms for sorting; nulls sort to end in descending order. */
@@ -89,7 +91,6 @@ function setPreferredEntry(byUrl: Map<string, NormalizedEntry>, entry: Normalize
   const key = entryUrlKey(entry);
   byUrl.set(key, preferEntry(byUrl.get(key), entry));
 }
-const SUMMARIZE_CONCURRENCY = 4;
 const COPILOT_ENDPOINT = "https://api.githubcopilot.com/chat/completions";
 const COPILOT_HEADERS = {
   "copilot-integration-id": "vscode-chat",
@@ -592,6 +593,10 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   const model = env.SUMMARIZE_MODEL || "claude-opus-4.7";
   const maxNew = Number(env.SUMMARIZE_MAX_NEW || "25");
   const summarizeTimeoutMs = Number(env.SUMMARIZE_TIMEOUT_MS || String(DEFAULT_SUMMARIZE_TIMEOUT_MS));
+  const summarizeConcurrency = Math.max(
+    1,
+    Number(env.SUMMARIZE_CONCURRENCY || String(DEFAULT_SUMMARIZE_CONCURRENCY)),
+  );
   const CACHE_KEY = "cache.v1";
   const cacheBlob =
     (await env.SUMMARY_CACHE.get<Record<string, CacheEntry>>(CACHE_KEY, "json")) ?? {};
@@ -648,7 +653,7 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
         }
         return { url: e.url, ok: false as const };
       },
-      SUMMARIZE_CONCURRENCY,
+      summarizeConcurrency,
     );
     const byUrl = new Map(
       results.filter((r): r is { url: string; entry: CacheEntry; ok: true } => r.ok).map((r) => [r.url, r.entry]),

@@ -779,6 +779,22 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   // 6) Compare with existing index.json on GitHub (already loaded at step 0).
   const existingJson = existing?.content ?? "";
   const existingPayload = existing ? parseJson<{ entries?: NormalizedEntry[] }>("data/index.json", existing.content) : null;
+  const existingCount = existingPayload?.entries?.length ?? 0;
+  // SAFEGUARD (LL-032): never publish a data/index.json that drops more than
+  // half of the entries that were live in the prior commit. A sudden collapse
+  // almost always means an upstream read failure (e.g. ghGetFile null) — not a
+  // legitimate edit — and silently overwriting main with an empty index has
+  // catastrophic blast radius (loss of all live entries + archive integrity).
+  // Abort the run and let the next cron retry instead.
+  if (existingCount > 20 && finalEntries.length < existingCount / 2) {
+    console.error(
+      `[worker] aborting publish: finalEntries (${finalEntries.length}) collapsed from prior ${existingCount}; refusing to wipe data/index.json`,
+    );
+    return {
+      changed: false,
+      stats: { finalEntries: finalEntries.length, summarized, errors, abortedCollapse: 1 },
+    };
+  }
   const hasEntryChanges = !entriesEqual(existingPayload, finalEntries);
   // Compare ignoring `generatedAt` timestamp so unchanged runs don't churn commits.
   if (stripGeneratedAt(existingJson) === stripGeneratedAt(json)) {

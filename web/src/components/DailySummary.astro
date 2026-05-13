@@ -222,6 +222,10 @@ const todayDelta =
         <span class="i18n-ja">主要な更新</span>
         <span class="i18n-en" lang="en">Top stories</span>
         <span class="panel-sub">{baseDayKey.slice(5).replace("-", "/")} · {boardItems.length} 件</span>
+        <span class="badge-legend">
+          <span class="t-tag imp">★</span><span class="legend-label i18n-ja">重要</span><span class="legend-label i18n-en" lang="en">Important</span>
+          <span class="t-tag rel">REL</span><span class="legend-label i18n-ja">リリース</span><span class="legend-label i18n-en" lang="en">Release</span>
+        </span>
       </div>
       {boardItems.length === 0 ? (
         <p class="empty"><span class="i18n-ja">まだ更新がありません。</span><span class="i18n-en" lang="en">No updates yet.</span></p>
@@ -343,6 +347,14 @@ const todayDelta =
     font-family: ui-monospace, monospace;
     text-transform: none; letter-spacing: 0;
   }
+  .badge-legend {
+    display: flex; align-items: center; gap: 3px;
+    margin-left: auto;
+    font-size: 9px; color: var(--muted-2);
+    text-transform: none; letter-spacing: 0;
+  }
+  .badge-legend .t-tag { font-size: 8px; padding: 0 3px; }
+  .badge-legend .legend-label { margin-right: 6px; }
 
   .spark {
     display: flex;
@@ -446,7 +458,7 @@ const todayDelta =
   .board > li:last-child { border-bottom: none; }
   .board .b-row {
     display: grid;
-    grid-template-columns: auto auto auto minmax(0, 1fr) auto;
+    grid-template-columns: 22px 84px 68px minmax(0, 1fr) auto;
     grid-template-areas:
       "num cat tags title src"
       "num cat tags summary summary";

@@ -284,12 +284,12 @@
 - **教訓**: 同モジュール内で symbol を **呼び出す目的** で必要な場合、re-export 一行で済ませない。`import` + `export` を必ず分離する。TypeScript の `noUnusedLocals` 等は再 export パターンを誤検知から守らないので、runtime テスト (実 fetch を mock で叩く統合テスト or wrangler tail) で初めて気付くことが多い。CI を毎時 run の結果 (`summarized` / `summarizeErrors` ヘルス) で監視する。
 
 ### LL-031: Worker wall-time に opus 4.7 の長文生成が収まらない
-- **事象**: LL-030 修正後も Worker の summarize が連続タイムアウト (`copilot request timeout after 20000ms`)。直接 curl で opus 4.7 を叩いた smoke では HTTP 200 が返り (`completion_tokens=2209`, `~8s`)、endpoint 自体は健全だった。並列 2 / 5 件 / 各 20 秒に絞っても Worker の 30 秒予算で 1 batch も完走しない。
-- **根本原因**: Worker prompt が `bodyJa 700-1100 字 + bodyEn 500-800 単語 + reasoning_text` で長文を要求し、claude-opus-4.7 の生成速度 (~30-60 tok/s) では 1 件 30-60 秒かかる。これは Cloudflare Free / Paid の Worker wall-time (~30s) に収まらない構造的ミスマッチ。Copilot endpoint の故障や `unsupported_api_for_model` ではなく、純粋に「opus が 30 秒以内に長文を吐き終わらない」だけ。
-- **対策**: `SUMMARIZE_MODEL` を `claude-sonnet-4.6` (opus 比 3-5 倍速) に切替。R-007 を改訂し、既定モデルを sonnet 4.6、品質優先時のみ opus 4.7 に切り替える運用に変更。`gpt-5.5` は Copilot で `/responses` 専用のため `/chat/completions` ベースの現 Worker からは利用不可、と R-007 に明記。
-- **教訓**: タイムアウトは「endpoint の問題」か「モデルの生成速度の問題」かを切り分ける。直接 curl で同じプロンプトを叩いて `elapsed` と `completion_tokens` を見れば一発でわかる。Cloudflare Worker のような実行時間予算が厳しい環境では、モデル選定は「品質 × トークン速度 × wall-time 予算」の三項で決め、prompt 長と max_tokens を制約条件として明示する。
 
----
+### LL-032: 日次バーが Purge で縮むのは PER_SOURCE_CAP と hot tier 未 archive の合わせ技
+- **事象**: `DailySummary` の Last 7 days バーで、05/07=21・05/12=178 のように過去日ほど件数が小さくなり、upstream の実活動を反映していない状態だった。
+- **根本原因**: (a) Worker は merged entries を `PER_SOURCE_CAP=50` で source ごとに切り詰めるが、捨てた entry は archive にも残さない。(b) `groupArchiveEntries` は `archiveTier in {"warm","cold"}` のみ archive 対象で、hot tier は archive されない。Half-life の hot 期間 (news=14 日) 中に PER_SOURCE_CAP で押し出された entry は live にも archive にも残らず、`stats.byDay` から永久に消える。
+- **対策**: `groupArchiveEntries` に `includeHot?: boolean` オプションを追加し、Worker publish 経路では `{ includeHot: true }` を渡して当月 hot entry も `data/archive/{YYYY-MM}.json` に常駐させる。`buildStatsPayload` の入力 (`live + archive`) が安定するため、PER_SOURCE_CAP で live から押し出されても byDay からは消えない。UI 側は日次バー下に「過去日は保持ポリシーで縮みうる」注記と直近 6 ヶ月の月次推移ミニパネルを併設し、長期トレンドは archive 確定済みの `stats.byMonth` を参照させる。
+- **教訓**: 「live + archive を集合した byDay」と言っても、archive が warm/cold tier しか拾わなければ hot 期間内の eviction が穴になる。dashboard の集計が purge 機構と独立に正確であるためには、「eviction の可能性がある層は事前に archive へ複製する」必要がある。tier 分類は live retention のためのもので、stats の母集団とは別軸で考える。
 
 ## 🔄 自己学習ハーネス手順
 

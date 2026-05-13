@@ -47,6 +47,20 @@ describe("archive-core", () => {
     });
   });
 
+  it("includeHot: true で hot tier も月別 archive に含める", () => {
+    const warm = fixtureEntry({ id: "warm", archiveTier: "warm" });
+    const hot = fixtureEntry({ id: "hot", archiveTier: "hot" });
+    const dropped = fixtureEntry({ id: "dropped", archiveTier: "dropped" });
+
+    const { byMonth, stats } = groupArchiveEntries([warm, hot, dropped], { includeHot: true });
+
+    const apr = byMonth.get("2026-04") ?? [];
+    expect(apr.map((e) => e.id).sort()).toEqual(["hot", "warm"]);
+    expect(stats.entriesArchived).toBe(2);
+    expect(stats.entriesDropped).toBe(1);
+    expect(stats.entriesSkippedHot).toBe(0);
+  });
+
   it("同じ id は incoming が勝ち、publishedAt 降順で並ぶ", () => {
     const older = fixtureEntry({ id: "same", title: "old", publishedAt: "2026-04-10T00:00:00.000Z" });
     const newer = fixtureEntry({ id: "newer", publishedAt: "2026-04-20T00:00:00.000Z" });

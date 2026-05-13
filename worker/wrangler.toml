@@ -29,12 +29,12 @@ GITHUB_BRANCH = "main"
 # and stays well within budget. Switch to opus only when premium quality is
 # required (see R-007).
 SUMMARIZE_MODEL = "claude-sonnet-4.6"
-# Temporarily raised from 15 -> 50 to drain ~190 entries of fallback summary
-# left over from the 2026-05-12T22:55Z collect batch. Revert to 15 once the
-# fallback count returns to single digits to keep per-run wall-time safe.
-SUMMARIZE_MAX_NEW = "50"
-SUMMARIZE_CONCURRENCY = "3"
-SUMMARIZE_TIMEOUT_MS = "20000"
+# LL-033: SUMMARIZE_MAX_NEW=50 / CONCURRENCY=3 で Cloudflare waitUntil 制限を
+# 超過し publish 不能になった。安定値 15/2 に復帰。大量バックログは
+# scripts/resummarize.mjs を使ったローカル backfill で消化する運用とする。
+SUMMARIZE_MAX_NEW = "15"
+SUMMARIZE_CONCURRENCY = "2"
+SUMMARIZE_TIMEOUT_MS = "15000"
 
 # Secrets (set via `wrangler secret put`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access

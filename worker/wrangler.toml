@@ -29,8 +29,11 @@ GITHUB_BRANCH = "main"
 # and stays well within budget. Switch to opus only when premium quality is
 # required (see R-007).
 SUMMARIZE_MODEL = "claude-sonnet-4.6"
-SUMMARIZE_MAX_NEW = "15"
-SUMMARIZE_CONCURRENCY = "2"
+# Temporarily raised from 15 -> 50 to drain ~190 entries of fallback summary
+# left over from the 2026-05-12T22:55Z collect batch. Revert to 15 once the
+# fallback count returns to single digits to keep per-run wall-time safe.
+SUMMARIZE_MAX_NEW = "50"
+SUMMARIZE_CONCURRENCY = "3"
 SUMMARIZE_TIMEOUT_MS = "20000"
 
 # Secrets (set via `wrangler secret put`):

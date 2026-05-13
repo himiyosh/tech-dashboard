@@ -47,6 +47,25 @@ const todayCount = perDay[perDay.length - 1]?.count ?? 0;
 const yesterdayCount = perDay[perDay.length - 2]?.count ?? 0;
 const weekCount = perDay.reduce((total, day) => total + day.count, 0);
 
+// Last 6 months trend from stats.byMonth (retention-stable; based on archive).
+const monthKeyOf = (d: Date): string =>
+  `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+const monthKeys: string[] = [];
+for (let i = 5; i >= 0; i--) {
+  const d = new Date(now.getTime());
+  d.setUTCDate(1);
+  d.setUTCMonth(d.getUTCMonth() - i);
+  monthKeys.push(monthKeyOf(d));
+}
+const statsMonthByKey = new Map<string, { count: number }>(
+  (stats?.byMonth ?? []).map((m) => [m.month, { count: m.count }]),
+);
+const perMonth = monthKeys.map((key) => ({
+  key,
+  count: statsMonthByKey.get(key)?.count ?? 0,
+}));
+const maxMonth = Math.max(1, ...perMonth.map((m) => m.count));
+
 // Today's / yesterday's entries.
 const today = entries.filter((e) => jstDateKey(e.publishedAt) === todayKey);
 const yesterday = entries.filter((e) => jstDateKey(e.publishedAt) === yKey);
@@ -183,6 +202,10 @@ const todayDelta =
           </span>
         ))}
       </div>
+      <p class="retention-note">
+        <span class="i18n-ja">過去日のカウントは保持ポリシー（per-source cap / half-life）により縮む場合があります。長期トレンドは下の月次推移をご参照ください。</span>
+        <span class="i18n-en" lang="en">Past-day counts may shrink over time due to retention (per-source cap / half-life). See the monthly trend below for a stable view.</span>
+      </p>
       <table class="sr-only">
         <caption>Last 7 days article counts</caption>
         <thead>
@@ -194,6 +217,27 @@ const todayDelta =
           ))}
         </tbody>
       </table>
+      <div class="month-trend" aria-label="Last 6 months article counts">
+        <div class="month-title">
+          <span class="i18n-ja">月次推移（直近 6 ヶ月）</span>
+          <span class="i18n-en" lang="en">Monthly trend (last 6 months)</span>
+        </div>
+        <div class="bars month-bars" role="group">
+          {perMonth.map((m, i) => (
+            <div class="bar" title={`${m.key}: ${m.count}`}>
+              <div class="fill" style={`height:${Math.round((m.count / maxMonth) * 100)}%`}></div>
+              <span class="n">{m.count}</span>
+            </div>
+          ))}
+        </div>
+        <div class="axis">
+          {perMonth.map((m, i) => (
+            <span class:list={[{ today: i === perMonth.length - 1 }]}>
+              {m.key.slice(2).replace("-", "/")}
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
 
     <div class="panel cats">
@@ -393,6 +437,29 @@ const todayDelta =
     font-family: ui-monospace, monospace;
   }
   .spark .axis .today { color: var(--accent); font-weight: 700; }
+
+  .retention-note {
+    margin-top: 8px;
+    font-size: 10.5px;
+    color: var(--muted-2);
+    line-height: 1.45;
+  }
+  .month-trend {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border, rgba(255, 255, 255, 0.08));
+  }
+  .month-trend .month-title {
+    font-size: 10.5px;
+    color: var(--muted-2);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .month-trend .month-bars {
+    min-height: 56px;
+    margin-top: 8px;
+  }
 
   .cat-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
   .cat-link {

@@ -260,7 +260,10 @@ async function publishHistoryFiles(
   entriesDropped: number;
   changes: FileChange[];
 }> {
-  const { byMonth, stats } = groupArchiveEntries(archiveInputEntries);
+  // includeHot: true keeps current-month hot entries in the monthly archive
+  // so byDay stats remain stable even after entries get evicted from the live
+  // index by PER_SOURCE_CAP or age into `dropped`.
+  const { byMonth, stats } = groupArchiveEntries(archiveInputEntries, { includeHot: true });
   const archiveIndexPath = "data/archive/_index.json";
   const archiveIndexFile = await ghGetFile(env, archiveIndexPath);
   const archiveIndex = archiveIndexFile

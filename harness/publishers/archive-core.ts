@@ -2,6 +2,13 @@ import type { ArchiveTier, NormalizedEntry } from "../types.ts";
 
 export const ARCHIVE_TIERS: ReadonlySet<ArchiveTier> = new Set(["warm", "cold"]);
 
+/**
+ * Tiers retained for stats/byDay continuity. Includes `hot` so live entries
+ * remain countable even after they are evicted from data/index.json by
+ * PER_SOURCE_CAP or by aging into `dropped` (LL: 案 1 — current-month archive).
+ */
+export const RETAINED_TIERS: ReadonlySet<ArchiveTier> = new Set(["hot", "warm", "cold"]);
+
 export interface ArchiveMonthFile {
   generatedAt: string;
   month: string;
@@ -28,10 +35,15 @@ export function archiveBucketOf(entry: NormalizedEntry): string {
   return iso.slice(0, 7);
 }
 
-export function groupArchiveEntries(entries: readonly NormalizedEntry[]): {
+export function groupArchiveEntries(
+  entries: readonly NormalizedEntry[],
+  options: { includeHot?: boolean } = {},
+): {
   byMonth: Map<string, NormalizedEntry[]>;
   stats: ArchiveBuildStats;
 } {
+  const includeHot = options.includeHot ?? false;
+  const accept: ReadonlySet<ArchiveTier> = includeHot ? RETAINED_TIERS : ARCHIVE_TIERS;
   const stats: ArchiveBuildStats = {
     monthsTouched: 0,
     entriesArchived: 0,
@@ -46,7 +58,7 @@ export function groupArchiveEntries(entries: readonly NormalizedEntry[]): {
       stats.entriesDropped++;
       continue;
     }
-    if (!tier || !ARCHIVE_TIERS.has(tier)) {
+    if (!tier || !accept.has(tier)) {
       stats.entriesSkippedHot++;
       continue;
     }

@@ -29,6 +29,7 @@ import {
   type ArchiveMonthFile,
 } from "../../harness/publishers/archive-core.ts";
 import { buildStatsPayload } from "../../harness/publishers/stats-core.ts";
+import type { StatsPayload } from "../../harness/publishers/stats-core.ts";
 import type {
   NormalizedEntry,
   CollectorRunResult,
@@ -269,6 +270,134 @@ function delayMs(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Build a stats payload incrementally from an existing baseline.
+ *
+ * We can no longer afford to re-read every archive month every cron run
+ * (LL-036: ~25 subrequests for untouched months exhausted the 1000/inv
+ * budget through redirect amplification). Instead, treat the existing
+ * data/stats.json as the source of truth for untouched-month contributions,
+ * then subtract the OLD entries of months touched this run and add their
+ * NEW (merged) entries plus the current live entries.
+ *
+ * Invariant: removed ⊆ previous baseline contents. added is the union of
+ * live entries and merged touched-month entries. Untouched-month entries
+ * never enter `removed` or `added` because their archive file is unchanged.
+ *
+ * Bootstrap: if existing is null (first run after deploy of this code), we
+ * fall back to buildStatsPayload(added) — accurate for everything except
+ * untouched-month buckets which will appear empty until the next run that
+ * touches them. The next run that touches each month restores accuracy
+ * incrementally; in practice the local harness or a manual run can rebuild
+ * the full stats once.
+ */
+function buildIncrementalStats(opts: {
+  existing: StatsPayload | null;
+  removed: readonly NormalizedEntry[];
+  added: readonly NormalizedEntry[];
+  generatedAt: string;
+}): StatsPayload {
+  const { existing, removed, added, generatedAt } = opts;
+  if (!existing) return buildStatsPayload(added, generatedAt);
+
+  // Recompute deltas from the entry sets we have.
+  const removedStats = buildStatsPayload(removed, generatedAt);
+  const addedStats = buildStatsPayload(added, generatedAt);
+
+  type CategoryMap = Partial<Record<string, number>>;
+  const mergeCategory = (a: CategoryMap, b: CategoryMap, sign: 1 | -1): CategoryMap => {
+    const out: CategoryMap = { ...a };
+    for (const [k, v] of Object.entries(b)) {
+      const next = (out[k] ?? 0) + sign * (v ?? 0);
+      if (next <= 0) delete out[k];
+      else out[k] = next;
+    }
+    return out;
+  };
+
+  // byMonth: untouched months unchanged; touched months replaced.
+  const monthMap = new Map(existing.byMonth.map((m) => [m.month, { ...m, byCategory: { ...m.byCategory } }]));
+  for (const m of removedStats.byMonth) {
+    const cur = monthMap.get(m.month);
+    if (!cur) continue;
+    cur.count -= m.count;
+    cur.byCategory = mergeCategory(cur.byCategory, m.byCategory, -1);
+    if (cur.count <= 0) monthMap.delete(m.month);
+    else monthMap.set(m.month, cur);
+  }
+  for (const m of addedStats.byMonth) {
+    const cur = monthMap.get(m.month) ?? { month: m.month, count: 0, byCategory: {} as CategoryMap };
+    cur.count += m.count;
+    cur.byCategory = mergeCategory(cur.byCategory, m.byCategory, 1);
+    monthMap.set(m.month, cur);
+  }
+
+  // byDay: same logic, but only last 90d is retained by buildStatsPayload, so
+  // we use addedStats.byDay as the new source of truth for any day it
+  // touches, and remove any baseline day that fell out of the 90d window.
+  const dayMap = new Map(existing.byDay.map((d) => [d.date, { ...d, byCategory: { ...d.byCategory } }]));
+  for (const d of removedStats.byDay) {
+    const cur = dayMap.get(d.date);
+    if (!cur) continue;
+    cur.count -= d.count;
+    cur.byCategory = mergeCategory(cur.byCategory, d.byCategory, -1);
+    if (cur.count <= 0) dayMap.delete(d.date);
+    else dayMap.set(d.date, cur);
+  }
+  for (const d of addedStats.byDay) {
+    const cur = dayMap.get(d.date) ?? { date: d.date, count: 0, byCategory: {} as CategoryMap };
+    cur.count += d.count;
+    cur.byCategory = mergeCategory(cur.byCategory, d.byCategory, 1);
+    dayMap.set(d.date, cur);
+  }
+  // Prune days older than 90 days relative to generatedAt.
+  const cutoffDay = new Date(new Date(generatedAt).getTime() - 90 * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  for (const date of [...dayMap.keys()]) {
+    if (date < cutoffDay) dayMap.delete(date);
+  }
+
+  // bySource: subtract removed contributions, add added.
+  const sourceMap = new Map(existing.bySource.map((s) => [s.source, { ...s }]));
+  for (const s of removedStats.bySource) {
+    const cur = sourceMap.get(s.source);
+    if (!cur) continue;
+    cur.total -= s.total;
+    cur.last30d -= s.last30d;
+    if (cur.total <= 0) sourceMap.delete(s.source);
+    else sourceMap.set(s.source, cur);
+  }
+  for (const s of addedStats.bySource) {
+    const cur = sourceMap.get(s.source) ?? { source: s.source, total: 0, last30d: 0 };
+    cur.total += s.total;
+    cur.last30d += s.last30d;
+    sourceMap.set(s.source, cur);
+  }
+
+  const byImportance: Record<"1" | "2" | "3", number> = {
+    "1": Math.max(0, existing.byImportance["1"] - removedStats.byImportance["1"] + addedStats.byImportance["1"]),
+    "2": Math.max(0, existing.byImportance["2"] - removedStats.byImportance["2"] + addedStats.byImportance["2"]),
+    "3": Math.max(0, existing.byImportance["3"] - removedStats.byImportance["3"] + addedStats.byImportance["3"]),
+  };
+
+  const totals = {
+    allTime: Math.max(0, existing.totals.allTime - removedStats.totals.allTime + addedStats.totals.allTime),
+    last30d: Math.max(0, existing.totals.last30d - removedStats.totals.last30d + addedStats.totals.last30d),
+    last7d: Math.max(0, existing.totals.last7d - removedStats.totals.last7d + addedStats.totals.last7d),
+    last24h: Math.max(0, existing.totals.last24h - removedStats.totals.last24h + addedStats.totals.last24h),
+  };
+
+  return {
+    generatedAt,
+    totals,
+    byDay: [...dayMap.values()].sort((a, b) => a.date.localeCompare(b.date)),
+    byMonth: [...monthMap.values()].sort((a, b) => a.month.localeCompare(b.month)),
+    bySource: [...sourceMap.values()].sort((a, b) => b.total - a.total),
+    byImportance,
+  };
+}
+
 async function publishHistoryFiles(
   env: Env,
   archiveInputEntries: readonly NormalizedEntry[],
@@ -288,55 +417,87 @@ async function publishHistoryFiles(
   // index by PER_SOURCE_CAP or age into `dropped`.
   const { byMonth, stats } = groupArchiveEntries(archiveInputEntries, { includeHot: true });
   const archiveIndexPath = "data/archive/_index.json";
-  const archiveIndexFile = await ghGetFile(env, archiveIndexPath);
+  const statsPath = "data/stats.json";
+
+  // Read archive _index + existing stats in parallel (2 subrequests).
+  // These are read-after-write critical so use the Contents API for _index;
+  // stats is fine via raw CDN because we only use it as a baseline to merge.
+  const [archiveIndexFile, existingStatsRaw] = await Promise.all([
+    ghGetFile(env, archiveIndexPath),
+    ghGetFileRaw(env, statsPath),
+  ]);
   const archiveIndex = archiveIndexFile
     ? parseJson<ArchiveIndexFile>(archiveIndexPath, archiveIndexFile.content)
     : null;
-  const monthNames = new Set<string>([...(archiveIndex?.months ?? []), ...byMonth.keys()]);
+  const existingStats = existingStatsRaw
+    ? parseJson<StatsPayload>(statsPath, existingStatsRaw.content)
+    : null;
+
+  // ONLY read months that received new entries this run. Previously we read
+  // every month in archive_index (~25 months → ~25 subrequests + redirect
+  // amplification on the Standard plan's 1000/inv budget). Untouched months
+  // keep their archive file content as-is; we carry their stats contribution
+  // forward from existing data/stats.json. LL-036.
+  const touchedMonths = [...byMonth.keys()].sort();
+  const existingTouchedFiles = await Promise.all(
+    touchedMonths.map((month) => ghGetFileRaw(env, `data/archive/${month}.json`)),
+  );
+
   const monthFiles = new Map<string, ArchiveMonthFile>();
+  const oldTouchedEntries: NormalizedEntry[] = [];
+  const newTouchedEntries: NormalizedEntry[] = [];
   const changes: FileChange[] = [];
   let archiveFilesChanged = 0;
 
-  // Read all archive month files in parallel via raw.githubusercontent.com
-  // (no auth, no redirect, 1 subrequest each) instead of the previous serial
-  // Contents API loop (28+ subrequests with redirect overhead). LL-036.
-  const sortedMonths = [...monthNames].sort();
-  const existingMonthContents = await Promise.all(
-    sortedMonths.map((month) => ghGetFileRaw(env, `data/archive/${month}.json`)),
-  );
-
-  for (let i = 0; i < sortedMonths.length; i++) {
-    const month = sortedMonths[i];
+  for (let i = 0; i < touchedMonths.length; i++) {
+    const month = touchedMonths[i];
     const path = `data/archive/${month}.json`;
-    const existingFile = existingMonthContents[i];
+    const existingFile = existingTouchedFiles[i];
     const existingMonth = existingFile ? parseJson<ArchiveMonthFile>(path, existingFile.content) : null;
     const incomingEntries = byMonth.get(month) ?? [];
-    const mergedEntries = incomingEntries.length > 0
-      ? mergeArchiveEntries(existingMonth?.entries ?? [], incomingEntries)
-      : existingMonth?.entries ?? [];
+    const mergedEntries = mergeArchiveEntries(existingMonth?.entries ?? [], incomingEntries);
     if (mergedEntries.length === 0) continue;
 
     const monthPayload = buildArchiveMonthFile(month, mergedEntries, generatedAt);
     monthFiles.set(month, monthPayload);
-    if (incomingEntries.length > 0) {
-      // Skip cache-bypass: ghJsonChangeIfChanged just diffs against the raw
-      // content we already have; passing `existing ?? null` avoids a second
-      // fetch for the SHA (we don't need SHA because ghCommitFiles uses
-      // base_tree + content, not Contents API PUT).
-      const change = await ghJsonChangeIfChanged(env, path, monthPayload, existingFile ?? null);
-      if (change) {
-        changes.push(change);
-        archiveFilesChanged++;
-      }
+    oldTouchedEntries.push(...(existingMonth?.entries ?? []));
+    newTouchedEntries.push(...mergedEntries);
+
+    const change = await ghJsonChangeIfChanged(env, path, monthPayload, existingFile ?? null);
+    if (change) {
+      changes.push(change);
+      archiveFilesChanged++;
     }
   }
 
-  const archiveIndexPayload = buildArchiveIndexFile([...monthFiles.values()], generatedAt);
+  // Build archive _index by overlaying touched-month counts onto the existing
+  // perMonth map (untouched months keep their prior count).
+  const newPerMonth: Record<string, number> = { ...(archiveIndex?.perMonth ?? {}) };
+  for (const [month, file] of monthFiles) newPerMonth[month] = file.count;
+  const allKnownMonths = Object.keys(newPerMonth)
+    .filter((m) => /^\d{4}-\d{2}$/.test(m))
+    .sort();
+  const indexInputs: ArchiveMonthFile[] = allKnownMonths.map((month) => ({
+    generatedAt,
+    month,
+    count: newPerMonth[month],
+    entries: [],
+  }));
+  const archiveIndexPayload = buildArchiveIndexFile(indexInputs, generatedAt);
   const archiveIndexChange = await ghJsonChangeIfChanged(env, archiveIndexPath, archiveIndexPayload, archiveIndexFile);
   if (archiveIndexChange) changes.push(archiveIndexChange);
-  const archivedEntries = [...monthFiles.values()].flatMap((monthFile) => monthFile.entries);
-  const statsPayload = buildStatsPayload(uniqueEntriesById([...liveEntries, ...archivedEntries]), generatedAt);
-  const statsChange = await ghJsonChangeIfChanged(env, "data/stats.json", statsPayload);
+
+  // Incremental stats: start from existing baseline, subtract contributions of
+  // old touched-month entries, add contributions of merged touched-month +
+  // live entries. Untouched-month contributions remain accurate because the
+  // archive files themselves were not modified this run.
+  const statsPayload = buildIncrementalStats({
+    existing: existingStats,
+    removed: oldTouchedEntries,
+    added: uniqueEntriesById([...liveEntries, ...newTouchedEntries]),
+    generatedAt,
+  });
+  const statsChange = await ghJsonChangeIfChanged(env, statsPath, statsPayload, existingStatsRaw ?? null);
   if (statsChange) changes.push(statsChange);
 
   return {

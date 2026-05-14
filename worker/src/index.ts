@@ -959,6 +959,64 @@ export default {
       }
       return Response.json(observations, { status: 200 });
     }
+    // Option B diagnostic: time each source in the current batch (or all
+    // sources with ?all=1) and return per-source ok/duration/count/error.
+    // Lets us see whether collection alone is busting wall-time/subrequest
+    // budget and which source(s) are responsible.
+    //   curl -X POST https://<worker>/diag/collect -H "x-trigger-token: ..."
+    if (url.pathname === "/diag/collect" && req.method === "POST") {
+      const authHeader = req.headers.get("x-trigger-token");
+      if (!authHeader || authHeader !== env.GH_TOKEN) {
+        return new Response("unauthorized", { status: 401 });
+      }
+      const all = url.searchParams.get("all") === "1";
+      const allSources = listSources().filter((s) => s.id !== "user-opml");
+      const batchIndex = Math.floor(Date.now() / 3600_000) % 4;
+      const sources = all
+        ? allSources
+        : allSources.filter((_, i) => i % 4 === batchIndex);
+      const collectedAt = new Date().toISOString();
+      const tStart = Date.now();
+      const settled = await Promise.all(
+        sources.map(async (s) => {
+          const t = Date.now();
+          try {
+            const raw = await s.collect(s);
+            return {
+              id: s.id,
+              ok: true as const,
+              count: raw.length,
+              durationMs: Date.now() - t,
+            };
+          } catch (err) {
+            return {
+              id: s.id,
+              ok: false as const,
+              durationMs: Date.now() - t,
+              error: err instanceof Error ? `${err.name}: ${err.message}` : String(err),
+            };
+          }
+        }),
+      );
+      const totalMs = Date.now() - tStart;
+      const okCount = settled.filter((r) => r.ok).length;
+      const totalEntries = settled.reduce((acc, r) => acc + (r.ok ? r.count : 0), 0);
+      return Response.json(
+        {
+          collectedAt,
+          batchIndex: batchIndex + 1,
+          mode: all ? "all" : "current-batch",
+          sourceCount: sources.length,
+          okCount,
+          totalEntries,
+          totalMs,
+          slowest: [...settled].sort((a, b) => b.durationMs - a.durationMs).slice(0, 5),
+          failed: settled.filter((r) => !r.ok),
+          all: settled,
+        },
+        { status: 200 },
+      );
+    }
     return new Response(
       "tech-dashboard harness worker. POST /run (auth: x-trigger-token) to trigger.",
       { status: 200 },

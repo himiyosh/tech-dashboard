@@ -849,14 +849,17 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
 // ---------- Worker entry points ---------------------------------------------
 
 export default {
-  async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
-    ctx.waitUntil(
-      runHarness(env).catch((err) => {
-        const stack = err instanceof Error && err.stack ? err.stack : String(err);
-        console.error("[worker] fatal:", stack);
-        throw err;
-      }),
-    );
+  // Await runHarness directly: the scheduled handler itself can use the full
+  // cron wall-time budget. ctx.waitUntil is bounded to a short window after
+  // invocation end, which previously cancelled mid-collection (LL-033).
+  async scheduled(_event: ScheduledController, env: Env, _ctx: ExecutionContext): Promise<void> {
+    try {
+      await runHarness(env);
+    } catch (err) {
+      const stack = err instanceof Error && err.stack ? err.stack : String(err);
+      console.error("[worker] fatal:", stack);
+      throw err;
+    }
   },
 
   // Manual trigger: `curl -X POST https://<worker>.workers.dev/run -H "x-trigger-token: ..."`

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-10T23:49:54.918Z",
+  "generatedAt": "2026-05-14T23:23:33.252Z",
   "month": "2024-07",
   "count": 2,
   "entries": [
@@ -9,28 +9,23 @@
       "sourceType": "blog",
       "url": "https://huggingface.co/blog/keras-hub-integration",
       "title": "Announcing New Hugging Face and KerasHub integration",
-      "titleJa": "Hugging FaceとKerasHubの新統合を発表",
+      "titleJa": "",
       "titleEn": "Announcing New Hugging Face and KerasHub integration",
-      "summaryJa": "Hugging FaceとKerasがKerasHubで統合され、Hubに公開されたLlamaやGemma、Mistral等のTransformers形式モデルをKerasHubから直接ロード・微調整・再公開できるようになった。JAX・TensorFlow・PyTorchの全バックエンドに対応する。",
-      "summaryEn": "Hugging Face and KerasHub now integrate so users can load, fine-tune and re-upload Transformers-format checkpoints (Llama, Gemma, Mistral, etc.) from the Hub directly into Keras across JAX, TensorFlow and PyTorch backends.",
+      "summaryJa": "「Announcing New Hugging Face and KerasHub integration」 (huggingface-blog) の local-llm 関連アップデート。AI 要約が未生成のため、後続の Worker run で本文が補完されます。",
+      "summaryEn": "Announcing New Hugging Face and KerasHub integration",
       "lang": "en",
       "publishedAt": "2024-07-10T00:00:00.000Z",
-      "collectedAt": "2026-05-10T00:00:05.585Z",
+      "collectedAt": "2026-05-14T23:23:09.000Z",
       "tags": [
         "huggingface",
-        "open-model",
-        "keras",
-        "keras-hub",
-        "hugging-face",
-        "jax",
-        "model-hub"
+        "open-model"
       ],
       "category": "local-llm",
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "cold",
-      "bodyJa": "Hugging FaceとGoogleのKerasチームは、KerasHubライブラリにHugging Face Hubとのネイティブ統合を追加したと発表した。これによりHub上に公開されているTransformers形式のチェックポイントを、Kerasユーザーがそのまま読み込み、学習・微調整し、再びHubへ共有できるようになる。\n\n中核となるのはKerasHubの`from_preset()`メソッドで、`hf://`プレフィックスを付けたモデルIDを渡すだけで、Llama 3、Gemma、Mistral、Qwen、PaliGemmaといった主要アーキテクチャの重みを取得できる。読み込まれたモデルは内部でKerasのレイヤー実装に変換されるため、`fit()`によるトレーニングや量子化、`generate()`での推論まで、Keras標準のワークフローで扱える。\n\n特筆すべき点は、Kerasが採用するマルチバックエンド設計との親和性である。KerasHubで読み込んだモデルはJAX、TensorFlow、PyTorchのいずれのバックエンドでも実行でき、たとえばTPU上ではJAXを選び、既存のPyTorchパイプラインに組み込む際にはPyTorchを選ぶといった切り替えがコード変更なしで可能となる。微調整後のモデルは`save_to_preset()`と`keras_hub.upload_preset()`を用いてHubへ書き戻せ、Transformersユーザーとも資産を共有できる。\n\n背景として、近年は単一フレームワークに閉じない相互運用性が重視されており、Hugging Face Hubは事実上のモデル流通ハブとなっている。KerasはTensorFlow専属だった時代を経て、Keras 3でJAX/PyTorch対応を取り戻し、Google内部のGemma配布基盤としても機能している。今回の統合は、PyTorch中心のTransformersエコシステムとJAX/TPU志向のKerasコミュニティを橋渡しするものと位置付けられ、研究者にとってはバックエンド選択の自由度が、実務者にとっては学習済み資産の再利用性が高まると見られる。",
-      "bodyEn": "Hugging Face and Google's Keras team have announced a native integration between KerasHub and the Hugging Face Hub, allowing Keras practitioners to load, fine-tune and re-share Transformers-format checkpoints hosted on the Hub without leaving their familiar Keras workflow.\n\nThe entry point is KerasHub's `from_preset()` method. By passing a model identifier prefixed with `hf://`, users can pull weights for popular architectures such as Llama 3, Gemma, Mistral, Qwen and PaliGemma directly from the Hub. Under the hood the checkpoint is mapped onto KerasHub's own layer implementations, so once loaded the model behaves like any other Keras model: it can be trained with `fit()`, quantized, evaluated, or used for text generation via `generate()`.\n\nA defining feature of the integration is its alignment with Keras 3's multi-backend design. Because KerasHub models run on JAX, TensorFlow or PyTorch interchangeably, the same checkpoint can be fine-tuned on TPUs through JAX, served inside an existing PyTorch pipeline, or deployed in a TensorFlow Serving stack — all without changes to user code. After fine-tuning, models can be exported with `save_to_preset()` and pushed back to the Hub via `keras_hub.upload_preset()`, where they remain accessible to both Keras and Transformers users.\n\nThe move reflects a broader trend toward framework-agnostic interoperability. The Hugging Face Hub has become the de facto distribution layer for open-weight models, hosting hundreds of thousands of checkpoints originally produced by PyTorch-centric pipelines. Keras, meanwhile, has reinvented itself with Keras 3 by reintroducing first-class JAX and PyTorch support after years of being tied to TensorFlow, and it underpins Google's own Gemma release infrastructure. Bridging the two ecosystems lowers the friction of moving between them and arguably strengthens both: Keras gains immediate access to a much larger model catalog, while Hub authors reach an audience that favors JAX and TPU-based training.\n\nFor researchers, the practical upshot is greater freedom to pick a backend based on hardware availability or experiment requirements rather than checkpoint format. For applied teams, it likely means easier reuse of community-trained weights inside production stacks that may already standardize on Keras for its higher-level APIs. It is also worth noting that similar cross-framework efforts — such as safetensors adoption, the GGUF format in the llama.cpp world, and ONNX conversions — have shown that interoperability tends to accelerate model adoption. KerasHub's native Hub support fits squarely within that pattern, and could plausibly nudge more JAX-trained artifacts back into the broader open-source ecosystem."
+      "bodyJa": "Announcing New Hugging Face and KerasHub integration は、huggingface-blog が伝えた local-llm 領域の更新です。「Announcing New Hugging Face and KerasHub integration」 (huggingface-blog) の local-llm 関連アップデート。AI 要約が未生成のため、後続の Worker run で本文が補完されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは huggingface, open-model です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "Announcing New Hugging Face and KerasHub integration is a local-llm update collected from huggingface-blog. Announcing New Hugging Face and KerasHub integration.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include huggingface, open-model. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "a4e938000e3d6b6a",
@@ -38,26 +33,23 @@
       "sourceType": "blog",
       "url": "https://huggingface.co/blog/datasets-filters",
       "title": "Announcing New Dataset Search Features",
-      "titleJa": "Hugging Face、データセット検索機能を強化",
+      "titleJa": "",
       "titleEn": "Announcing New Dataset Search Features",
-      "summaryJa": "Hugging Faceがデータセットハブの検索機能を刷新。モダリティやサイズ、フォーマットなどによる絞り込みが可能になり、目的に合ったデータセットを効率的に発見できるようになった。",
-      "summaryEn": "Hugging Face has rolled out new dataset search and filtering features on its Hub, letting users narrow datasets by modality, size, format and other facets to find suitable training data faster.",
+      "summaryJa": "「Announcing New Dataset Search Features」 (huggingface-blog) の local-llm 関連アップデート。AI 要約が未生成のため、後続の Worker run で本文が補完されます。",
+      "summaryEn": "Announcing New Dataset Search Features",
       "lang": "en",
       "publishedAt": "2024-07-08T00:00:00.000Z",
-      "collectedAt": "2026-05-10T00:00:05.585Z",
+      "collectedAt": "2026-05-14T23:23:09.000Z",
       "tags": [
         "huggingface",
-        "open-model",
-        "datasets",
-        "search",
-        "ml-tooling"
+        "open-model"
       ],
       "category": "local-llm",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "cold",
-      "bodyJa": "Hugging Faceは、同社のデータセットハブにおける検索・フィルタリング機能を大幅に強化したと発表した。膨大に増え続けるデータセットの中から、目的に合致するものを素早く見つけ出すための改善で、機械学習開発者の日常的なワークフローに直結するアップデートとなる。\n\n新機能では、モダリティ（テキスト、画像、音声、動画など）、データセットのサイズ、ファイルフォーマット、ライセンス、言語といった軸での絞り込みが可能になったとされる。これまでもタグやキーワードによる検索は提供されていたが、faceted search（多面的な絞り込み）の整備により、例えば「100万行以下の日本語テキスト分類データ」のような複合条件での発見が容易になる。学習データの選定はモデル品質を左右する重要工程であり、検索体験の改善はコミュニティ全体の生産性に寄与する可能性がある。\n\n背景として、Hugging Face Hubには現在数十万規模のデータセットが登録されており、合成データやマルチモーダルデータの増加に伴ってカタログの肥大化が進んでいる。Kaggleや学術系のPapers with Codeなど競合的なデータ共有プラットフォームも存在するが、Hugging Faceはdatasetsライブラリとの統合やストリーミング読み込み、Parquet変換の自動化といったエコシステム面で優位性を持つ。\n\nまた、最近はローカルLLMやファインチューニング用途で高品質な小規模データセットを探すニーズが高まっており、サイズや形式によるフィルタリングはそうしたユースケースとも相性が良いと見られる。今後はセマンティック検索やデータ品質スコアの導入なども期待されるところだろう。",
-      "bodyEn": "Hugging Face has announced a substantial upgrade to the search and filtering capabilities of its Datasets Hub. As the platform's catalog has grown to hundreds of thousands of datasets, finding the right corpus for a given task has become an increasingly painful step in the ML workflow, and these new tools aim to address that friction directly.\n\nThe refreshed interface introduces faceted filtering across multiple dimensions, including modality (text, image, audio, video and multimodal), dataset size, file format such as Parquet or JSON, license type, and language. Users can combine these facets to drill down to highly specific subsets — for example, mid-sized Japanese text classification datasets under a permissive license — without having to scroll through endless tag pages or rely on keyword guesswork. Given that data selection is one of the most consequential decisions in training or fine-tuning a model, faster and more precise discovery has tangible downstream effects on model quality and iteration speed.\n\nThe update arrives in a context where the Hub has been expanding rapidly, fueled by the rise of synthetic data generation, multimodal corpora, and community-curated instruction-tuning sets. Hugging Face's datasets library already differentiates the platform from alternatives like Kaggle or Papers with Code through tight integration with streaming loaders, automatic Parquet conversion, and viewer tools that let users inspect rows directly in the browser. Better search complements these strengths by making the catalog itself feel more navigable rather than merely larger.\n\nIt is also worth noting how the timing aligns with broader trends in the open-source AI community. Demand for compact, high-quality datasets has surged as practitioners increasingly fine-tune small local LLMs on domain-specific data rather than training from scratch. Filtering by size and format is particularly relevant here, since researchers running experiments on a single GPU often need datasets that fit within specific memory or token budgets. Similarly, license filtering matters more than ever as enterprises grow cautious about training on data with unclear provenance.\n\nWhile the announcement focuses on the immediate UI improvements, it is plausible that Hugging Face will continue layering on more sophisticated discovery tools over time. Semantic search, automated data-quality signals, deduplication indicators, and contamination checks against popular benchmarks would all be natural extensions, and several of these capabilities already exist in nascent form across the ecosystem. For now, though, the new filters represent a pragmatic, user-visible improvement that should make day-to-day dataset hunting noticeably less tedious for the millions of developers who rely on the Hub."
+      "bodyJa": "Announcing New Dataset Search Features は、huggingface-blog が伝えた local-llm 領域の更新です。「Announcing New Dataset Search Features」 (huggingface-blog) の local-llm 関連アップデート。AI 要約が未生成のため、後続の Worker run で本文が補完されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは huggingface, open-model です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "Announcing New Dataset Search Features is a local-llm update collected from huggingface-blog. Announcing New Dataset Search Features.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include huggingface, open-model. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     }
   ]
 }

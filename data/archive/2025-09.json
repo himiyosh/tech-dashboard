@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-14T22:00:17.549Z",
+  "generatedAt": "2026-05-14T23:23:33.252Z",
   "month": "2025-09",
   "count": 9,
   "entries": [
@@ -125,27 +125,23 @@
       "sourceType": "blog",
       "url": "https://huggingface.co/blog/lerobot-datasets-v3",
       "title": "`LeRobotDataset:v3.0`: Bringing large-scale datasets to `lerobot`",
-      "titleJa": "LeRobotDataset v3.0: 大規模ロボットデータセット対応へ",
+      "titleJa": "",
       "titleEn": "`LeRobotDataset:v3.0`: Bringing large-scale datasets to `lerobot`",
-      "summaryJa": "Hugging Faceがロボット学習ライブラリlerobot向けの新データ形式LeRobotDataset v3.0を公開。エピソード単位の細分ファイルを廃しParquet/MP4のチャンク化やストリーミング対応を導入し、DROIDのような数十万エピソード規模のデータも扱えるようにした。",
-      "summaryEn": "Hugging Face released LeRobotDataset v3.0, a redesigned data format for the lerobot library that replaces per-episode files with chunked Parquet/MP4 shards and adds streaming support, enabling efficient handling of massive robotics datasets like DROID with hundreds of thousands of episodes.",
+      "summaryJa": "「`LeRobotDataset:v3.0`: Bringing large-scale datasets to `lerobot`」 (huggingface-blog) の local-llm 関連アップデート。AI 要約が未生成のため、後続の Worker run で本文が補完されます。",
+      "summaryEn": "`LeRobotDataset:v3.0`: Bringing large-scale datasets to `lerobot`",
       "lang": "en",
       "publishedAt": "2025-09-16T00:00:00.000Z",
-      "collectedAt": "2026-05-10T00:00:05.585Z",
+      "collectedAt": "2026-05-14T23:23:09.000Z",
       "tags": [
         "huggingface",
-        "open-model",
-        "lerobot",
-        "robotics",
-        "dataset",
-        "droid"
+        "open-model"
       ],
       "category": "local-llm",
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "cold",
-      "bodyJa": "Hugging Faceは、ロボット学習ライブラリ lerobot のデータ形式を刷新する LeRobotDataset v3.0 をリリースした。これまでのv2.1ではエピソードごとに個別のParquetファイルや動画を保存する設計だったが、DROIDのような9.5万エピソード超の大規模データセットを扱う際にファイル数が爆発し、ファイルシステムやHugging Face Hub双方で深刻な性能問題を引き起こしていた。\n\nv3.0では、複数エピソードを一つのParquetファイルに連結し、動画も連続するMP4ファイルにまとめてチャンク単位でディレクトリに分割する構造を採用した。エピソード境界やチャンク内オフセット、タイムスタンプ範囲などのメタ情報は episodes/ メタデータに集約され、ランダムアクセス時には該当チャンクのみを参照する。これによりI/O効率が大きく向上し、HubのLFSやGit操作の負荷も軽減される。\n\nもう一つの目玉がストリーミング機能だ。新たに導入された StreamingLeRobotDataset により、データセット全体をローカルにダウンロードせずとも、必要なチャンクだけを逐次取得しながら学習やデータ閲覧が可能になる。これは数TB級のロボットデータを扱う研究者にとって大きな利点で、HFのdatasetsライブラリにおけるストリーミングモードと類似の発想を、動画とテンソル混在のロボットデータに最適化した形と言える。\n\n背景として、ロボット基盤モデル(RFM)競争の本格化がある。Physical IntelligenceのPi0系モデル、Google DeepMindのRT-XやOpen X-Embodimentコレクション、NVIDIAのGR00T構想など、各社がスケール則をロボティクスに持ち込もうとしており、共通データ規格の重要性は増している。lerobotはオープンソース陣営の中核として、HF Hubを中心としたデータ流通エコシステムを担う立ち位置だ。\n\nv2.1ユーザー向けには変換スクリプトが提供されており、移行コストは比較的小さいと見られる。一方でカスタムローダーを書いていたユーザーはエピソードメタデータの参照方法の変更に対応する必要がある。今後はマルチモーダルアノテーションや言語指示付きデータへの拡張も視野に入る可能性がある。",
-      "bodyEn": "Hugging Face has released LeRobotDataset v3.0, a substantial overhaul of the on-disk format used by its open-source robotics library lerobot. The redesign targets a concrete pain point: scaling to datasets with hundreds of thousands of episodes, such as DROID with its 95k+ trajectories, where the previous v2.1 layout simply broke down.\n\nUnder v2.1, each episode was stored as its own Parquet file with separate per-camera MP4 videos. That made small datasets easy to inspect but produced file-count explosions that strained both local filesystems and the Hugging Face Hub's Git/LFS backend. Listing, cloning, or even uploading such repositories became painfully slow, and downstream training pipelines paid the cost in metadata overhead.\n\nv3.0 replaces this with a chunked layout. Multiple episodes are concatenated into shared Parquet files, and videos are merged into longer MP4 segments, all grouped into chunk directories with a configurable size limit. A new episodes/ metadata table records, for each episode, which chunk file it lives in, the byte and frame offsets, and timestamp ranges. Random access by episode index thus requires reading only the relevant shard, while sequential streaming becomes far more I/O efficient.\n\nThe second headline feature is streaming. The new StreamingLeRobotDataset class lets users iterate over a dataset directly from the Hub without downloading it in full, fetching only the chunks needed for the current batch. This mirrors the streaming mode in the broader Hugging Face datasets library but is tuned for the mixed video-plus-tensor nature of robotics data. For researchers working with multi-terabyte corpora on bandwidth- or disk-constrained machines, it is a meaningful unlock.\n\nThe release lands in the middle of an accelerating push toward robot foundation models. Physical Intelligence's Pi0, Google DeepMind's RT-2 and the Open X-Embodiment collaboration, and NVIDIA's GR00T effort all bet that scaling laws extend into manipulation and embodied control, which in turn requires common, web-scale data formats. lerobot has positioned itself as the open-source hub for this ecosystem, and a format that can comfortably hold DROID-class datasets is arguably a prerequisite for that role.\n\nFor existing users, Hugging Face provides a conversion script from v2.1 to v3.0, so most migrations should be straightforward. Projects with custom data loaders will need to adapt to the new metadata schema, particularly around episode-to-chunk lookups and timestamp handling. It also seems plausible that future iterations will extend the format toward richer multimodal annotations, language instructions, and perhaps standardized action spaces, though the current release focuses squarely on scalability and streaming rather than semantic enrichment.\n\nOverall, v3.0 is less a flashy feature drop than a piece of infrastructure work that quietly raises the ceiling on what lerobot users can train on. Whether it becomes the de facto interchange format for open robotics data will depend on adoption by dataset publishers, but the technical direction — chunked shards plus first-class streaming — aligns with where large-scale ML data tooling has been converging for years."
+      "bodyJa": "`LeRobotDataset:v3.0`: Bringing large-scale datasets to `lerobot` は、huggingface-blog が伝えた local-llm 領域の更新です。「`LeRobotDataset:v3.0`: Bringing large-scale datasets to `lerobot`」 (huggingface-blog) の local-llm 関連アップデート。AI 要約が未生成のため、後続の Worker run で本文が補完されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは huggingface, open-model です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "`LeRobotDataset:v3.0`: Bringing large-scale datasets to `lerobot` is a local-llm update collected from huggingface-blog. `LeRobotDataset:v3.0`: Bringing large-scale datasets to `lerobot`.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include huggingface, open-model. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "e1065f13745823b5",

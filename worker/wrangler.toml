@@ -29,10 +29,13 @@ GITHUB_BRANCH = "main"
 # and stays well within budget. Switch to opus only when premium quality is
 # required (see R-007).
 SUMMARIZE_MODEL = "claude-sonnet-4.6"
-# LL-033: SUMMARIZE_MAX_NEW=50 / CONCURRENCY=3 で Cloudflare waitUntil 制限を
-# 超過し publish 不能になった。安定値 15/2 に復帰。大量バックログは
-# scripts/resummarize.mjs を使ったローカル backfill で消化する運用とする。
-SUMMARIZE_MAX_NEW = "15"
+# Option A (2026-05-14): Worker-side summarization disabled to isolate from
+# Cloudflare->Copilot reachability issues and subrequest budget pressure.
+# Worker cron now only does collection + publish. All summarization runs
+# locally via `scripts/resummarize.mjs` (proven-working path with same PAT).
+# Re-enable by setting SUMMARIZE_MAX_NEW > 0 once root cause of Copilot
+# timeouts inside Worker is fixed (see Option B diagnostic plan).
+SUMMARIZE_MAX_NEW = "0"
 SUMMARIZE_CONCURRENCY = "2"
 # 25s: sonnet long-form bilingual JSON output (max_tokens=2400) needs
 # 12-20s typically; 15s killed legitimate responses. See LL-034.

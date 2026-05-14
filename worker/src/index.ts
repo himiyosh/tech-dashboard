@@ -51,7 +51,11 @@ interface Env {
 const INDEX_LIMIT = 2000;
 const DEFAULT_SUMMARIZE_TIMEOUT_MS = 25_000;
 const DEFAULT_SUMMARIZE_CONCURRENCY = 4;
-const SUMMARIZE_ATTEMPTS = 2;
+// Retry on Copilot timeout doubles subrequest cost without meaningfully
+// raising success rate (sonnet long-form responses just need wall-time,
+// not another attempt). Single attempt keeps us within the 1000-subrequest
+// per-invocation budget. See LL-034.
+const SUMMARIZE_ATTEMPTS = 1;
 
 /** Return epoch ms for sorting; nulls sort to end in descending order. */
 function dateMs(iso: string | null): number {

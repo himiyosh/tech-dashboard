@@ -540,8 +540,16 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
     }
   }
 
-  // 1) Collect (only this batch's sources)
-  const settled = await Promise.all(sources.map((s) => runSource(s, collectedAt)));
+  // 1) Collect (only this batch's sources). Throttle to COLLECT_CONCURRENCY
+  // simultaneous fetches so we don't hit Cloudflare Workers' simultaneous
+  // outbound connection ceiling (~6) or burn the 1000-subrequest budget on
+  // redirect chains compounded across parallel fetches. LL-035.
+  const COLLECT_CONCURRENCY = 5;
+  const settled = await runWithConcurrency(
+    [...sources],
+    (s) => runSource(s, collectedAt),
+    COLLECT_CONCURRENCY,
+  );
   const fresh = settled.flatMap((s) => s.entries);
   const okCount = settled.filter((s) => s.result.ok).length;
   console.log(`[worker] collect ok=${okCount}/${sources.length} fresh=${fresh.length} prior=${priorEntries.length}`);
@@ -970,9 +978,12 @@ export default {
         return new Response("unauthorized", { status: 401 });
       }
       const all = url.searchParams.get("all") === "1";
+      const onlyId = url.searchParams.get("only");
       const allSources = listSources().filter((s) => s.id !== "user-opml");
       const batchIndex = Math.floor(Date.now() / 3600_000) % 4;
-      const sources = all
+      const sources = onlyId
+        ? allSources.filter((s) => s.id === onlyId)
+        : all
         ? allSources
         : allSources.filter((_, i) => i % 4 === batchIndex);
       const collectedAt = new Date().toISOString();

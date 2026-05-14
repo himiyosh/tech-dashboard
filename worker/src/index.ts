@@ -890,18 +890,45 @@ export default {
         return new Response("unauthorized", { status: 401 });
       }
       const observations: Record<string, unknown> = {};
+      // Query param ?big=1 sends a max_tokens=2400 bilingual prompt to mimic
+      // the real summarize workload.
+      const big = url.searchParams.get("big") === "1";
       try {
         const tExchangeStart = Date.now();
         const token = await resolveCopilotToken(env.COPILOT_PAT);
         observations.tokenExchangeMs = Date.now() - tExchangeStart;
         observations.tokenLength = token.length;
         observations.tokenPrefix = token.slice(0, 6);
-        // Single minimal chat completion to measure E2E reachability.
+        observations.mode = big ? "big(2400)" : "min(10)";
+        // Single chat completion to measure E2E reachability.
         const controller = new AbortController();
-        const timeoutMs = 25_000;
+        const timeoutMs = 28_000;
         const timer = setTimeout(() => controller.abort("timeout"), timeoutMs);
         const tFetchStart = Date.now();
         try {
+          const body = big
+            ? {
+                model: env.SUMMARIZE_MODEL || "claude-sonnet-4.6",
+                temperature: 0.2,
+                max_tokens: 2400,
+                messages: [
+                  {
+                    role: "system",
+                    content:
+                      "あなたは技術記事を日本語と英語の両方で要約するエディターです。指示された JSON 形式のみを返してください。",
+                  },
+                  {
+                    role: "user",
+                    content:
+                      '以下の記事を日英二言語で要約。JSON: {"titleJa":"...","summaryJa":"...","summaryEn":"...","bodyJa":"...(約400字)","bodyEn":"...(about 400 words)","importance":1,"extraTags":[]}\n\nタイトル: Claude Opus 4.7 announcement\n本文: Anthropic released Claude Opus 4.7 with improvements to coding, reasoning, and tool use. The model achieves state-of-the-art on SWE-bench, supports 1M context, and includes new capabilities for agentic workflows.',
+                  },
+                ],
+              }
+            : {
+                model: env.SUMMARIZE_MODEL || "claude-sonnet-4.6",
+                max_tokens: 10,
+                messages: [{ role: "user", content: "Reply with exactly: OK" }],
+              };
           const res = await fetch(COPILOT_ENDPOINT, {
             method: "POST",
             signal: controller.signal,
@@ -910,11 +937,7 @@ export default {
               "content-type": "application/json",
               ...COPILOT_HEADERS,
             },
-            body: JSON.stringify({
-              model: env.SUMMARIZE_MODEL || "claude-sonnet-4.6",
-              max_tokens: 10,
-              messages: [{ role: "user", content: "Reply with exactly: OK" }],
-            }),
+            body: JSON.stringify(body),
           });
           observations.fetchMs = Date.now() - tFetchStart;
           observations.status = res.status;

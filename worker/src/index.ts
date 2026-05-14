@@ -1040,6 +1040,9 @@ export default {
     // Use to recover sources from batches that were lost during outage.
     //   curl -X POST "https://<worker>/diag/run-batch?batch=3" \
     //     -H "x-trigger-token: ..." --max-time 180
+    // Subrequest profiling is on by default; append `&profile=0` to disable.
+    // Response includes `fetchProfile` with total subrequests, byHost,
+    // byBucket (host + first path segment), slowest URLs, and errors.
     if (url.pathname === "/diag/run-batch" && req.method === "POST") {
       const authHeader = req.headers.get("x-trigger-token");
       if (!authHeader || authHeader !== env.GH_TOKEN) {
@@ -1050,11 +1053,71 @@ export default {
       if (batchOverride !== undefined && !Number.isInteger(batchOverride)) {
         return new Response("invalid batch param", { status: 400 });
       }
+      const profile = url.searchParams.get("profile") !== "0";
       const t = Date.now();
+
+      // Wrap globalThis.fetch to count subrequests by host + path-prefix so we
+      // can see where the 1000-per-invocation budget is being spent. LL-036.
+      const originalFetch = globalThis.fetch;
+      const fetchLog: Array<{ url: string; method: string; status: number; ms: number }> = [];
+      if (profile) {
+        const wrapped: typeof fetch = async (input, init) => {
+          const start = Date.now();
+          const reqUrl =
+            typeof input === "string"
+              ? input
+              : input instanceof URL
+                ? input.toString()
+                : (input as Request).url;
+          const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
+          try {
+            const res = await originalFetch(input as RequestInfo, init);
+            fetchLog.push({ url: reqUrl, method, status: res.status, ms: Date.now() - start });
+            return res;
+          } catch (err) {
+            fetchLog.push({ url: reqUrl, method, status: -1, ms: Date.now() - start });
+            throw err;
+          }
+        };
+        (globalThis as { fetch: typeof fetch }).fetch = wrapped;
+      }
+
+      const buildProfile = () => {
+        const byHost = new Map<string, number>();
+        const byBucket = new Map<string, number>();
+        for (const e of fetchLog) {
+          let host = e.url;
+          let bucket = e.url;
+          try {
+            const u = new URL(e.url);
+            host = u.host;
+            const seg = u.pathname.split("/").filter(Boolean)[0] ?? "";
+            bucket = `${u.host}/${seg}`;
+          } catch {}
+          byHost.set(host, (byHost.get(host) ?? 0) + 1);
+          byBucket.set(bucket, (byBucket.get(bucket) ?? 0) + 1);
+        }
+        const sortDesc = (m: Map<string, number>) =>
+          [...m.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ key: k, count: v }));
+        return {
+          total: fetchLog.length,
+          byHost: sortDesc(byHost),
+          byBucket: sortDesc(byBucket).slice(0, 30),
+          slowest: [...fetchLog].sort((a, b) => b.ms - a.ms).slice(0, 20),
+          errors: fetchLog.filter((e) => e.status < 0 || e.status >= 500).slice(0, 30),
+        };
+      };
+
       try {
         const result = await runHarness(env, { batchOverride });
         return Response.json(
-          { ok: true, batchOverride, elapsedMs: Date.now() - t, ...result },
+          {
+            ok: true,
+            batchOverride,
+            elapsedMs: Date.now() - t,
+            ...result,
+            ...(profile ? { fetchProfile: buildProfile() } : {}),
+          },
           { status: 200 },
         );
       } catch (err) {
@@ -1064,9 +1127,14 @@ export default {
             batchOverride,
             elapsedMs: Date.now() - t,
             error: err instanceof Error ? `${err.name}: ${err.message}` : String(err),
+            ...(profile ? { fetchProfile: buildProfile() } : {}),
           },
           { status: 500 },
         );
+      } finally {
+        if (profile) {
+          (globalThis as { fetch: typeof fetch }).fetch = originalFetch;
+        }
       }
     }
     return new Response(

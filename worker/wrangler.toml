@@ -34,7 +34,9 @@ SUMMARIZE_MODEL = "claude-sonnet-4.6"
 # scripts/resummarize.mjs を使ったローカル backfill で消化する運用とする。
 SUMMARIZE_MAX_NEW = "15"
 SUMMARIZE_CONCURRENCY = "2"
-SUMMARIZE_TIMEOUT_MS = "15000"
+# 25s: sonnet long-form bilingual JSON output (max_tokens=2400) needs
+# 12-20s typically; 15s killed legitimate responses. See LL-034.
+SUMMARIZE_TIMEOUT_MS = "25000"
 
 # Secrets (set via `wrangler secret put`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access

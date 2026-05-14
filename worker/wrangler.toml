@@ -29,10 +29,13 @@ GITHUB_BRANCH = "main"
 # and stays well within budget. Switch to opus only when premium quality is
 # required (see R-007).
 SUMMARIZE_MODEL = "claude-sonnet-4.6"
-# 2026-05-15: subrequest 問題が PR #38/#40/#41 で解消 (batch 0 で論理 47 fetch)
-# したため Option A を段階解除。3 件 → 51 fetch で再失敗したため 1 件に下げる
-# (batch 0 47 + 1 summarize ≈ 48-49)。安定したら段階的に増やす。
-SUMMARIZE_MAX_NEW = "1"
+# 2026-05-15: subrequest 問題は PR #38/#40/#41/#45 で解消したが、Worker
+# CPU 時間 30s 上限を summarize=1 でも超過する (tail: "Worker exceeded
+# CPU time limit"). 長文 bilingual JSON のパースと publishHistoryFiles の
+# 重い stats/archive 処理が合算するため。Worker は collection + publish に
+# 専念させ、要約は `npm run resummarize` (ローカル, CPU 制約なし) で行う
+# 方針。LL-031/LL-037 参照。
+SUMMARIZE_MAX_NEW = "0"
 SUMMARIZE_CONCURRENCY = "2"
 # 25s: sonnet long-form bilingual JSON output (max_tokens=2400) needs
 # 12-20s typically; 15s killed legitimate responses. See LL-034.

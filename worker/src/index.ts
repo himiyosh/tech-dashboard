@@ -144,6 +144,25 @@ async function ghGetFile(env: Env, path: string): Promise<{ content: string; sha
   return { content, sha: body.sha };
 }
 
+// Read a file from raw.githubusercontent.com (public repo, no auth, no
+// redirect). Cheaper in subrequest cost than ghGetFile because Contents API
+// calls go through api.github.com with auth + occasional redirects. Use this
+// for files whose few-minute Fastly cache staleness is acceptable (archives,
+// stats) but NOT for read-after-write-critical files like data/index.json.
+// LL-036.
+async function ghGetFileRaw(env: Env, path: string): Promise<{ content: string } | null> {
+  const url = `https://raw.githubusercontent.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/${env.GITHUB_BRANCH}/${path}`;
+  const res = await fetch(url, {
+    headers: {
+      "user-agent": "tech-dashboard-worker",
+      "cache-control": "no-cache",
+    },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`gh raw ${path} ${res.status}: ${await res.text()}`);
+  return { content: await res.text() };
+}
+
 async function ghJson<T>(
   env: Env,
   path: string,
@@ -223,7 +242,7 @@ async function ghJsonChangeIfChanged(
   env: Env,
   path: string,
   payload: unknown,
-  existing?: { content: string; sha: string } | null,
+  existing?: { content: string; sha?: string } | null,
 ): Promise<FileChange | null> {
   const content = stringifyJson(payload);
   const current = existing === undefined ? await ghGetFile(env, path) : existing;
@@ -278,9 +297,18 @@ async function publishHistoryFiles(
   const changes: FileChange[] = [];
   let archiveFilesChanged = 0;
 
-  for (const month of [...monthNames].sort()) {
+  // Read all archive month files in parallel via raw.githubusercontent.com
+  // (no auth, no redirect, 1 subrequest each) instead of the previous serial
+  // Contents API loop (28+ subrequests with redirect overhead). LL-036.
+  const sortedMonths = [...monthNames].sort();
+  const existingMonthContents = await Promise.all(
+    sortedMonths.map((month) => ghGetFileRaw(env, `data/archive/${month}.json`)),
+  );
+
+  for (let i = 0; i < sortedMonths.length; i++) {
+    const month = sortedMonths[i];
     const path = `data/archive/${month}.json`;
-    const existingFile = await ghGetFile(env, path);
+    const existingFile = existingMonthContents[i];
     const existingMonth = existingFile ? parseJson<ArchiveMonthFile>(path, existingFile.content) : null;
     const incomingEntries = byMonth.get(month) ?? [];
     const mergedEntries = incomingEntries.length > 0
@@ -291,7 +319,11 @@ async function publishHistoryFiles(
     const monthPayload = buildArchiveMonthFile(month, mergedEntries, generatedAt);
     monthFiles.set(month, monthPayload);
     if (incomingEntries.length > 0) {
-      const change = await ghJsonChangeIfChanged(env, path, monthPayload, existingFile);
+      // Skip cache-bypass: ghJsonChangeIfChanged just diffs against the raw
+      // content we already have; passing `existing ?? null` avoids a second
+      // fetch for the SHA (we don't need SHA because ghCommitFiles uses
+      // base_tree + content, not Contents API PUT).
+      const change = await ghJsonChangeIfChanged(env, path, monthPayload, existingFile ?? null);
       if (change) {
         changes.push(change);
         archiveFilesChanged++;

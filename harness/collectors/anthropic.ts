@@ -138,7 +138,11 @@ async function fetchAnthropicArticle(url: string): Promise<AnthropicArticleMeta 
 }
 
 export async function collectAnthropic(opts: AnthropicScrapeOpts): Promise<RawEntry[]> {
-  const { section, limit = 12 } = opts;
+  // Default 5 (was 12) to limit subrequest cost: 1 listing + 5 detail fetches.
+  // With 2 anthropic sources running concurrently in the same cron batch
+  // they previously consumed ~26 subrequests, contributing to the 1000-cap
+  // exhaustion. 5 is enough for the dashboard's hot view.
+  const { section, limit = 5 } = opts;
   const listingUrl =
     section === "engineering"
       ? "https://www.anthropic.com/engineering"

@@ -513,7 +513,10 @@ async function runSource(
   }
 }
 
-async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<string, number> }> {
+async function runHarness(
+  env: Env,
+  opts: { batchOverride?: number } = {},
+): Promise<{ changed: boolean; stats: Record<string, number> }> {
   const collectedAt = new Date().toISOString();
   // Exclude file-system-backed sources (e.g. user-opml reads data/user-opml.xml).
   const allSources = listSources().filter((s) => s.id !== "user-opml");
@@ -523,9 +526,13 @@ async function runHarness(env: Env): Promise<{ changed: boolean; stats: Record<s
   // batches keyed by hour, so each source is refreshed every SOURCE_BATCHES hours.
   // Subrequest budget per run: ~13 sources + 1 GH read + 5 Copilot + 4 OG + 1 GH put = ~24.
   const SOURCE_BATCHES = 4;
-  const batchIndex = Math.floor(Date.now() / 3600_000) % SOURCE_BATCHES;
+  const naturalBatch = Math.floor(Date.now() / 3600_000) % SOURCE_BATCHES;
+  const batchIndex =
+    opts.batchOverride !== undefined
+      ? ((opts.batchOverride % SOURCE_BATCHES) + SOURCE_BATCHES) % SOURCE_BATCHES
+      : naturalBatch;
   const sources = allSources.filter((_, i) => i % SOURCE_BATCHES === batchIndex);
-  console.log(`[worker] run ${collectedAt}, batch ${batchIndex + 1}/${SOURCE_BATCHES} (${sources.length} of ${allSources.length} sources)`);
+  console.log(`[worker] run ${collectedAt}, batch ${batchIndex + 1}/${SOURCE_BATCHES} (${sources.length} of ${allSources.length} sources)${opts.batchOverride !== undefined ? " [forced]" : ""}`);
 
   // 0) Read existing index FIRST so we can merge fresh entries from this batch
   //    with prior entries from the other batches (avoids losing data).
@@ -1027,6 +1034,40 @@ export default {
         },
         { status: 200 },
       );
+    }
+    // Force-run a specific batch (or natural batch) with AWAIT, so the HTTP
+    // response blocks until the harness completes (no waitUntil cancellation).
+    // Use to recover sources from batches that were lost during outage.
+    //   curl -X POST "https://<worker>/diag/run-batch?batch=3" \
+    //     -H "x-trigger-token: ..." --max-time 180
+    if (url.pathname === "/diag/run-batch" && req.method === "POST") {
+      const authHeader = req.headers.get("x-trigger-token");
+      if (!authHeader || authHeader !== env.GH_TOKEN) {
+        return new Response("unauthorized", { status: 401 });
+      }
+      const batchParam = url.searchParams.get("batch");
+      const batchOverride = batchParam !== null ? Number(batchParam) : undefined;
+      if (batchOverride !== undefined && !Number.isInteger(batchOverride)) {
+        return new Response("invalid batch param", { status: 400 });
+      }
+      const t = Date.now();
+      try {
+        const result = await runHarness(env, { batchOverride });
+        return Response.json(
+          { ok: true, batchOverride, elapsedMs: Date.now() - t, ...result },
+          { status: 200 },
+        );
+      } catch (err) {
+        return Response.json(
+          {
+            ok: false,
+            batchOverride,
+            elapsedMs: Date.now() - t,
+            error: err instanceof Error ? `${err.name}: ${err.message}` : String(err),
+          },
+          { status: 500 },
+        );
+      }
     }
     return new Response(
       "tech-dashboard harness worker. POST /run (auth: x-trigger-token) to trigger.",

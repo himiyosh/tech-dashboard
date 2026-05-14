@@ -880,6 +880,62 @@ export default {
       );
       return Response.json({ ok: true, status: "accepted", note: "running in background; check git log" }, { status: 202 });
     }
+    // Option B diagnostic: probe Worker -> Copilot connectivity with full
+    // timing/header capture. Returns observations as JSON so we can compare
+    // to local curl behavior without relying on tail timing.
+    //   curl -X POST https://<worker>/diag/copilot -H "x-trigger-token: ..."
+    if (url.pathname === "/diag/copilot" && req.method === "POST") {
+      const authHeader = req.headers.get("x-trigger-token");
+      if (!authHeader || authHeader !== env.GH_TOKEN) {
+        return new Response("unauthorized", { status: 401 });
+      }
+      const observations: Record<string, unknown> = {};
+      try {
+        const tExchangeStart = Date.now();
+        const token = await resolveCopilotToken(env.COPILOT_PAT);
+        observations.tokenExchangeMs = Date.now() - tExchangeStart;
+        observations.tokenLength = token.length;
+        observations.tokenPrefix = token.slice(0, 6);
+        // Single minimal chat completion to measure E2E reachability.
+        const controller = new AbortController();
+        const timeoutMs = 25_000;
+        const timer = setTimeout(() => controller.abort("timeout"), timeoutMs);
+        const tFetchStart = Date.now();
+        try {
+          const res = await fetch(COPILOT_ENDPOINT, {
+            method: "POST",
+            signal: controller.signal,
+            headers: {
+              authorization: `Bearer ${token}`,
+              "content-type": "application/json",
+              ...COPILOT_HEADERS,
+            },
+            body: JSON.stringify({
+              model: env.SUMMARIZE_MODEL || "claude-sonnet-4.6",
+              max_tokens: 10,
+              messages: [{ role: "user", content: "Reply with exactly: OK" }],
+            }),
+          });
+          observations.fetchMs = Date.now() - tFetchStart;
+          observations.status = res.status;
+          observations.statusText = res.statusText;
+          observations.responseHeaders = Object.fromEntries(res.headers.entries());
+          const text = await res.text();
+          observations.bodyPreview = text.slice(0, 300);
+        } catch (err) {
+          observations.fetchMs = Date.now() - tFetchStart;
+          observations.fetchError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+          observations.aborted = controller.signal.aborted;
+          observations.abortReason = controller.signal.aborted ? String(controller.signal.reason) : null;
+        } finally {
+          clearTimeout(timer);
+        }
+      } catch (err) {
+        observations.tokenExchangeError =
+          err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+      }
+      return Response.json(observations, { status: 200 });
+    }
     return new Response(
       "tech-dashboard harness worker. POST /run (auth: x-trigger-token) to trigger.",
       { status: 200 },

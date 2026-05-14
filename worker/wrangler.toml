@@ -29,11 +29,10 @@ GITHUB_BRANCH = "main"
 # and stays well within budget. Switch to opus only when premium quality is
 # required (see R-007).
 SUMMARIZE_MODEL = "claude-sonnet-4.6"
-# 2026-05-15: Option A 解除フェーズ 1。collection 並列度を 5 に絞った (PR #33)
-# ことで subrequest budget に十分余裕ができたので、summarize を 5 件/run で
-# 段階復活。SUMMARIZE_ATTEMPTS=1 + timeout=25s で 1 件あたり最大 1-2 subrequest。
-# 安定したら 10 → 15 と上げる。
-SUMMARIZE_MAX_NEW = "0"
+# 2026-05-15: subrequest 問題が PR #38/#40/#41 で解消 (batch 0 で論理 47 fetch)
+# したため Option A を段階解除。3 件/run から smoke test → 安定したら 10 まで上げる。
+# 1 件あたり Copilot 呼び出し ~1 subrequest + redirect ~5 で実 5-10 subrequest。
+SUMMARIZE_MAX_NEW = "3"
 SUMMARIZE_CONCURRENCY = "2"
 # 25s: sonnet long-form bilingual JSON output (max_tokens=2400) needs
 # 12-20s typically; 15s killed legitimate responses. See LL-034.

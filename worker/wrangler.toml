@@ -29,13 +29,11 @@ GITHUB_BRANCH = "main"
 # and stays well within budget. Switch to opus only when premium quality is
 # required (see R-007).
 SUMMARIZE_MODEL = "claude-sonnet-4.6"
-# Option A (2026-05-14): Worker-side summarization disabled to isolate from
-# Cloudflare->Copilot reachability issues and subrequest budget pressure.
-# Worker cron now only does collection + publish. All summarization runs
-# locally via `scripts/resummarize.mjs` (proven-working path with same PAT).
-# Re-enable by setting SUMMARIZE_MAX_NEW > 0 once root cause of Copilot
-# timeouts inside Worker is fixed (see Option B diagnostic plan).
-SUMMARIZE_MAX_NEW = "0"
+# 2026-05-15: Option A 解除フェーズ 1。collection 並列度を 5 に絞った (PR #33)
+# ことで subrequest budget に十分余裕ができたので、summarize を 5 件/run で
+# 段階復活。SUMMARIZE_ATTEMPTS=1 + timeout=25s で 1 件あたり最大 1-2 subrequest。
+# 安定したら 10 → 15 と上げる。
+SUMMARIZE_MAX_NEW = "5"
 SUMMARIZE_CONCURRENCY = "2"
 # 25s: sonnet long-form bilingual JSON output (max_tokens=2400) needs
 # 12-20s typically; 15s killed legitimate responses. See LL-034.

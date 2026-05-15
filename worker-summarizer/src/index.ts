@@ -103,7 +103,11 @@ async function callCopilot(
       body: JSON.stringify({
         model,
         temperature: 0.2,
-        max_tokens: 2400,
+        // 2400 in the harness Worker was tuned for offline batch; in the
+        // Worker's 28s CPU/wall budget, sonnet long-form often timed out
+        // before finishing. 1500 keeps bilingual bodies meaningful (~500
+        // chars JA, ~300 words EN) while letting the model finish in time.
+        max_tokens: 1500,
         messages: [
           {
             role: "system",
@@ -136,23 +140,13 @@ async function callCopilot(
 }
 
 async function processJob(env: Env, job: SummaryJob): Promise<void> {
-  const cache =
-    (await env.SUMMARY_CACHE.get<Record<string, CacheEntry>>(CACHE_KEY, "json")) ?? {};
-
-  // Idempotency: if the cache already holds a real summary for this URL,
-  // ack without burning Copilot quota. The producer normally pre-checks,
-  // but the queue may replay a message after producer-side eviction.
-  const existing = cache[job.url];
-  if (
-    existing &&
-    existing.summaryJa &&
-    existing.summaryEn &&
-    existing.bodyJa &&
-    existing.bodyEn &&
-    existing.model !== "deterministic-fallback"
-  ) {
-    return;
-  }
+  // NOTE: We do NOT read the cache here for idempotency. With ~1700 entries
+  // the blob is multi-MB; reading + writing it on every invocation ate so
+  // much wall-time that Copilot fetches consistently hit the 28s abort.
+  // The producer (harness Worker) already filters out cached entries before
+  // enqueuing, so duplicate work is rare. KV.put below merges this entry
+  // into the existing blob via a fresh read just before write, minimising
+  // the race window.
 
   const token = await resolveCopilotToken(env.COPILOT_PAT);
   const model = env.SUMMARIZE_MODEL || "claude-sonnet-4.6";
@@ -166,6 +160,10 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
     throw new Error(`empty summary for ${job.url}`);
   }
 
+  // Read-modify-write the cache blob just before the put so we don't clobber
+  // entries written by parallel invocations.
+  const cache =
+    (await env.SUMMARY_CACHE.get<Record<string, CacheEntry>>(CACHE_KEY, "json")) ?? {};
   cache[job.url] = entry;
   await env.SUMMARY_CACHE.put(CACHE_KEY, JSON.stringify(cache));
 }

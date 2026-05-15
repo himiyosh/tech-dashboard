@@ -48,9 +48,15 @@ export function buildFallbackSummary(entry: NormalizedEntry): Pick<NormalizedEnt
   // never has to show a cross-language fallback badge on a Worker-published
   // entry. JA users land on `data-lang=ja` and expect Japanese copy even when
   // the upstream article is English; EN users expect the opposite. See LL-028.
+  // The JA template intentionally LEADS with a Japanese descriptor (source/
+  // category) so the card opener doesn't look like English — the original
+  // title goes after a 原題: marker.
   const summaryJa = titleJa
     ? shortenForSummary(titleJa, 140)
-    : shortenForSummary(`「${titleEn || titleAny}」 (${source}) の ${category} 関連アップデート。AI 要約が未生成のため、後続の Worker run で本文が補完されます。`, 180);
+    : shortenForSummary(
+        `このエントリは ${source} から収集した ${category} 領域の最新アップデートです。原題:「${titleEn || titleAny}」。AI による日本語要約は次回以降の Worker run で生成されます。`,
+        220,
+      );
   const summaryEn = titleEn
     ? shortenForSummary(titleEn, 200)
     : shortenForSummary(`${category} update from ${source}. AI summary not yet available; a future Worker run will refresh this entry.`, 200);
@@ -61,6 +67,7 @@ export function buildFallbackBody(entry: NormalizedEntry): Required<Pick<Normali
   const titleJa = firstText(entry.titleJa, entry.titleEn, entry.title, "TECH Dashboard entry");
   const titleEn = firstText(entry.titleEn, entry.title, entry.titleJa, "TECH Dashboard entry");
   const titleEnDisplay = englishText(titleEn) || `The source item "${titleEn}"`;
+  const titleJaIsCjk = hasCjk(entry.titleJa ?? "") || hasCjk(entry.title);
   const summaryJa = sentence(firstText(entry.summaryJa, entry.summaryEn, entry.title), titleJa);
   const summaryEn = sentence(englishText(entry.summaryEn), "");
   const source = firstText(entry.source, "unknown source");
@@ -73,9 +80,17 @@ export function buildFallbackBody(entry: NormalizedEntry): Required<Pick<Normali
     ? `${summaryEn}.`
     : "The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.";
 
+  // Lead the JA body with a Japanese descriptor when the upstream title is
+  // English; placing the English title at the start makes the card look
+  // English to readers even though the body language is Japanese. Source
+  // titles in Japanese still appear first naturally.
+  const bodyJaLead = titleJaIsCjk
+    ? `${titleJa} は、${source} が伝えた ${category} 領域の更新です。${summaryJa}。`
+    : `このエントリは ${source} から収集した ${category} 領域の最新アップデートです。原題は「${titleJa}」。${summaryJa}。`;
+
   return {
     bodyJa: [
-      `${titleJa} は、${source} が伝えた ${category} 領域の更新です。${summaryJa}。`,
+      bodyJaLead,
       `このエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。${sourceType} 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。`,
       `${tagJa} 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。`,
     ].join("\n\n"),

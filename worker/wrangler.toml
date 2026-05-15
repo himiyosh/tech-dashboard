@@ -45,7 +45,10 @@ SUMMARIZE_TIMEOUT_MS = "25000"
 # real cache hit. Requires the SUMMARY_QUEUE producer binding to exist
 # (see commented [[queues.producers]] block below) and the
 # tech-dashboard-summarizer Worker to be deployed.
-ENABLE_SUMMARY_QUEUE = "1"
+# 2026-05-15: Queue 経由 backfill は KV cache.v1 blob (~5MB) の read/write
+# が Copilot 応答時間予算を圧迫し全件 AbortError。一時的に enqueue を停止し、
+# ローカル resummarize を継続。本格復旧は per-URL KV キー化 (A 案) 後に再開。
+ENABLE_SUMMARY_QUEUE = "0"
 ENQUEUE_MAX_NEW = "1000"
 
 # Secrets (set via `wrangler secret put`):

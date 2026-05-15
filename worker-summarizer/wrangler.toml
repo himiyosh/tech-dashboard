@@ -32,11 +32,16 @@ SUMMARIZE_TIMEOUT_MS = "28000"
 
 # Queue consumer. Process one entry per invocation so each summarize gets
 # its own CPU budget; Cloudflare auto-retries on throw (up to max_retries).
+# max_concurrency caps how many invocations run at once. Without it,
+# Cloudflare auto-scales to 40+ which fan-outs simultaneous Copilot API
+# calls and causes upstream rate-limiting (every request AbortError).
+# 2 keeps Copilot happy and still drains ~250 messages/h at ~15-25s/msg.
 [[queues.consumers]]
 queue = "tech-dashboard-summary"
 max_batch_size = 1
 max_batch_timeout = 5
 max_retries = 2
+max_concurrency = 2
 dead_letter_queue = "tech-dashboard-summary-dlq"
 
 [observability]

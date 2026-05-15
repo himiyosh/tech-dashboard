@@ -744,7 +744,13 @@ async function runHarness(
 
   // 0) Read existing index FIRST so we can merge fresh entries from this batch
   //    with prior entries from the other batches (avoids losing data).
-  const existing = await ghGetFile(env, "data/index.json");
+  //
+  // CRITICAL (LL-040): Use raw.githubusercontent.com here. GitHub Contents
+  // API silently returns content="" for files >1MB; data/index.json grew
+  // past 1MB which made every cron run drop ALL prior entries (collapsing
+  // ~947 → ~227 each cron). raw.* has up to ~5min Fastly cache but cron
+  // runs are 60min apart so staleness is acceptable.
+  const existing = await ghGetFileRaw(env, "data/index.json");
   let priorEntries: NormalizedEntry[] = [];
   if (existing?.content) {
     try {

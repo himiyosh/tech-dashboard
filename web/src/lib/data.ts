@@ -308,7 +308,10 @@ export function titleForLang(
   if (lang === "ja") {
     if (ja) return ja;
     // AI summary (Japanese) is available for most entries — use its first clause as headline.
-    if (sumJa) return firstClause(sumJa, 70);
+    // Skip deterministic fallback summaries (LL-041 lead): they describe the
+    // entry generically and would make the card title read 「このエントリは…」.
+    // For those, fall through to the original (English) title.
+    if (sumJa && !sumJa.startsWith("このエントリは ")) return firstClause(sumJa, 70);
     return title || en;
   }
   if (lang === "en") {

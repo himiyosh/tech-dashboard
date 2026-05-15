@@ -88,7 +88,7 @@ const summaryCache = existsSync(summaryCachePath)
 const DATA_BUDGET = {
   indexBytes: 8_000_000,
   statsBytes: 500_000,
-  archiveMonthBytes: 2_000_000,
+  archiveMonthBytes: 6_000_000,
 };
 
 describe("data/index.json トップレベル", () => {

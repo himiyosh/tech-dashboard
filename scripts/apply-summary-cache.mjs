@@ -6,6 +6,11 @@ const CACHE = "data/_summary-cache.json";
 const DRY = process.argv.includes("--dry-run");
 const FILL_MISSING_BODY = process.argv.includes("--fill-missing-body");
 const REFRESH_FALLBACK_BODY = process.argv.includes("--refresh-fallback-body");
+// --force-summary: overwrite existing summary/body/title in data/index.json
+// when the cache holds a non-empty real value. Use after running
+// `npm run resummarize` against an outdated index (e.g. a parallel worker
+// cron commit landed and clobbered our local AI summaries).
+const FORCE_SUMMARY = process.argv.includes("--force-summary");
 
 const index = JSON.parse(readFileSync(INDEX, "utf8"));
 const cache = existsSync(CACHE) ? JSON.parse(readFileSync(CACHE, "utf8")) : {};
@@ -32,6 +37,14 @@ function setIfFilled(entry, key, value) {
   const next = text(value);
   if (!next) return false;
   if (text(entry[key])) return false;
+  if (entry[key] === next) return false;
+  entry[key] = next;
+  return true;
+}
+
+function setForce(entry, key, value) {
+  const next = text(value);
+  if (!next) return false;
   if (entry[key] === next) return false;
   entry[key] = next;
   return true;
@@ -148,10 +161,28 @@ for (const entry of entries) {
   stats.cacheHits++;
 
   if (setIfFilled(entry, "titleJa", hit.titleJa)) stats.titleApplied++;
-  if (setIfFilled(entry, "summaryJa", hit.summaryJa)) stats.summaryApplied++;
-  if (setIfFilled(entry, "summaryEn", hit.summaryEn)) stats.summaryApplied++;
-  if (setIfFilled(entry, "bodyJa", hit.bodyJa)) stats.bodyApplied++;
-  if (setIfFilled(entry, "bodyEn", hit.bodyEn)) stats.bodyApplied++;
+  if (FORCE_SUMMARY) {
+    // Skip force-overwrite for entries whose cache is just the deterministic
+    // fallback — we don't want to clobber a real AI summary in the index
+    // with a placeholder that happened to be cached earlier.
+    const isFallbackHit = hit.model === "deterministic-fallback";
+    if (!isFallbackHit) {
+      if (setForce(entry, "summaryJa", hit.summaryJa)) stats.summaryApplied++;
+      if (setForce(entry, "summaryEn", hit.summaryEn)) stats.summaryApplied++;
+      if (setForce(entry, "bodyJa", hit.bodyJa)) stats.bodyApplied++;
+      if (setForce(entry, "bodyEn", hit.bodyEn)) stats.bodyApplied++;
+    } else {
+      if (setIfFilled(entry, "summaryJa", hit.summaryJa)) stats.summaryApplied++;
+      if (setIfFilled(entry, "summaryEn", hit.summaryEn)) stats.summaryApplied++;
+      if (setIfFilled(entry, "bodyJa", hit.bodyJa)) stats.bodyApplied++;
+      if (setIfFilled(entry, "bodyEn", hit.bodyEn)) stats.bodyApplied++;
+    }
+  } else {
+    if (setIfFilled(entry, "summaryJa", hit.summaryJa)) stats.summaryApplied++;
+    if (setIfFilled(entry, "summaryEn", hit.summaryEn)) stats.summaryApplied++;
+    if (setIfFilled(entry, "bodyJa", hit.bodyJa)) stats.bodyApplied++;
+    if (setIfFilled(entry, "bodyEn", hit.bodyEn)) stats.bodyApplied++;
+  }
 
   if (hit.importance && entry.importance !== hit.importance) {
     entry.importance = hit.importance;

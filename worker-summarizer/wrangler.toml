@@ -23,8 +23,9 @@ id = "6d67debb991742efadfec473a121f5fc"
 
 [vars]
 SUMMARIZE_MODEL = "claude-sonnet-4.6"
-# 25s leaves ~5s budget for KV write + JSON parse within the 30s CPU cap.
-SUMMARIZE_TIMEOUT_MS = "25000"
+# 28s leaves ~2s budget for KV write + JSON parse within the 30s CPU cap.
+# Originally 25s but anthropic long-form entries timed out occasionally.
+SUMMARIZE_TIMEOUT_MS = "28000"
 
 # Secrets (set via `wrangler secret put --name tech-dashboard-summarizer`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access

@@ -1126,10 +1126,15 @@ async function maybeEnqueueSummaryJobs(
     });
   }
 
-  // Queue.sendBatch is one API call regardless of message count, so this
-  // costs at most 1 subrequest. Within the 50-subrequest cron budget.
+  // Queue.sendBatch caps at 100 messages and 256 KB per call. Chunk so the
+  // producer can keep sending large backfill waves without hitting
+  // "Payload Too Large".
   if (candidates.length === 0) return 0;
-  await env.SUMMARY_QUEUE.sendBatch(candidates.map((body) => ({ body })));
+  const CHUNK = 100;
+  for (let i = 0; i < candidates.length; i += CHUNK) {
+    const slice = candidates.slice(i, i + CHUNK);
+    await env.SUMMARY_QUEUE.sendBatch(slice.map((body) => ({ body })));
+  }
   return candidates.length;
 }
 

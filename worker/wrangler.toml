@@ -45,8 +45,8 @@ SUMMARIZE_TIMEOUT_MS = "25000"
 # real cache hit. Requires the SUMMARY_QUEUE producer binding to exist
 # (see commented [[queues.producers]] block below) and the
 # tech-dashboard-summarizer Worker to be deployed.
-ENABLE_SUMMARY_QUEUE = "0"
-ENQUEUE_MAX_NEW = "5"
+ENABLE_SUMMARY_QUEUE = "1"
+ENQUEUE_MAX_NEW = "1000"
 
 # Secrets (set via `wrangler secret put`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access
@@ -61,9 +61,9 @@ ENQUEUE_MAX_NEW = "5"
 #   5. Set `ENABLE_SUMMARY_QUEUE = "1"` in [vars] above to start enqueueing
 # Until activated, the producer Worker logs "queue disabled" and skips the
 # enqueue step. See docs/06-worker-split-design.md.
-# [[queues.producers]]
-# binding = "SUMMARY_QUEUE"
-# queue = "tech-dashboard-summary"
+[[queues.producers]]
+binding = "SUMMARY_QUEUE"
+queue = "tech-dashboard-summary"
 
 [observability]
 enabled = true

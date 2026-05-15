@@ -40,10 +40,30 @@ SUMMARIZE_CONCURRENCY = "2"
 # 25s: sonnet long-form bilingual JSON output (max_tokens=2400) needs
 # 12-20s typically; 15s killed legitimate responses. See LL-034.
 SUMMARIZE_TIMEOUT_MS = "25000"
+# Queue split feature flag. "0" = legacy behaviour (no enqueue).
+# "1" = after each cron, enqueue up to ENQUEUE_MAX_NEW entries that lack a
+# real cache hit. Requires the SUMMARY_QUEUE producer binding to exist
+# (see commented [[queues.producers]] block below) and the
+# tech-dashboard-summarizer Worker to be deployed.
+ENABLE_SUMMARY_QUEUE = "0"
+ENQUEUE_MAX_NEW = "5"
 
 # Secrets (set via `wrangler secret put`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access
 #   - GH_TOKEN       Fine-grained PAT with "Contents: Write" on this repo
+
+# Optional: Queue producer for the split summarizer Worker (LL-037 mid-term).
+# Activate by:
+#   1. `wrangler queues create tech-dashboard-summary`
+#   2. `wrangler queues create tech-dashboard-summary-dlq`
+#   3. Uncomment the binding below + redeploy
+#   4. Deploy worker-summarizer (cd ../worker-summarizer && wrangler deploy)
+#   5. Set `ENABLE_SUMMARY_QUEUE = "1"` in [vars] above to start enqueueing
+# Until activated, the producer Worker logs "queue disabled" and skips the
+# enqueue step. See docs/06-worker-split-design.md.
+# [[queues.producers]]
+# binding = "SUMMARY_QUEUE"
+# queue = "tech-dashboard-summary"
 
 [observability]
 enabled = true

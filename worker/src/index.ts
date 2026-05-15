@@ -47,9 +47,24 @@ interface Env {
   SUMMARIZE_MAX_NEW: string;
   SUMMARIZE_TIMEOUT_MS?: string;
   SUMMARIZE_CONCURRENCY?: string;
+  // Optional Queue producer for the split summarizer Worker (LL-037).
+  // Bound only when [[queues.producers]] is uncommented in wrangler.toml.
+  SUMMARY_QUEUE?: Queue<SummaryJob>;
+  ENABLE_SUMMARY_QUEUE?: string;
+  ENQUEUE_MAX_NEW?: string;
+}
+
+interface SummaryJob {
+  url: string;
+  entry: Pick<
+    NormalizedEntry,
+    "id" | "url" | "title" | "category" | "source" | "sourceType"
+  >;
 }
 
 const INDEX_LIMIT = 2000;
+// Shared with worker-summarizer (LL-037 split).
+const CACHE_KEY = "cache.v1";
 const DEFAULT_SUMMARIZE_TIMEOUT_MS = 25_000;
 const DEFAULT_SUMMARIZE_CONCURRENCY = 4;
 // Retry on Copilot timeout doubles subrequest cost without meaningfully
@@ -812,7 +827,6 @@ async function runHarness(
     1,
     Number(env.SUMMARIZE_CONCURRENCY || String(DEFAULT_SUMMARIZE_CONCURRENCY)),
   );
-  const CACHE_KEY = "cache.v1";
   const cacheBlob =
     (await env.SUMMARY_CACHE.get<Record<string, CacheEntry>>(CACHE_KEY, "json")) ?? {};
 
@@ -1042,6 +1056,16 @@ async function runHarness(
   console.log(
     `[worker] history archiveChanged=${historyStats.archiveFilesChanged}, statsChanged=${historyStats.statsChanged}, commit=${commitSha}`,
   );
+
+  // 8) Optional: enqueue uncached entries to the summarizer Queue (LL-037).
+  // Off by default; activate via wrangler.toml (ENABLE_SUMMARY_QUEUE=1 and
+  // [[queues.producers]] binding). Cache is read once here to avoid
+  // double-enqueueing entries the summarizer already processed.
+  const enqueued = await maybeEnqueueSummaryJobs(env, finalEntries);
+  if (enqueued > 0) {
+    console.log(`[worker] enqueued ${enqueued} summary jobs`);
+  }
+
   return {
     changed: true,
     stats: {
@@ -1054,8 +1078,59 @@ async function runHarness(
       dropped: historyStats.entriesDropped,
       archiveFilesChanged: historyStats.archiveFilesChanged,
       statsChanged: historyStats.statsChanged ? 1 : 0,
+      enqueued,
     },
   };
+}
+
+/**
+ * Send up to ENQUEUE_MAX_NEW entries lacking a real cached summary to the
+ * SUMMARY_QUEUE. Returns the number actually enqueued. No-op when disabled
+ * or when the queue binding is missing.
+ */
+async function maybeEnqueueSummaryJobs(
+  env: Env,
+  entries: readonly NormalizedEntry[],
+): Promise<number> {
+  if (env.ENABLE_SUMMARY_QUEUE !== "1") return 0;
+  if (!env.SUMMARY_QUEUE) {
+    console.warn("[worker] ENABLE_SUMMARY_QUEUE=1 but SUMMARY_QUEUE binding missing");
+    return 0;
+  }
+  const cache =
+    (await env.SUMMARY_CACHE.get<Record<string, CacheEntry>>(CACHE_KEY, "json")) ?? {};
+  const cap = Math.max(1, Number(env.ENQUEUE_MAX_NEW ?? 5));
+
+  const candidates: SummaryJob[] = [];
+  for (const e of entries) {
+    if (candidates.length >= cap) break;
+    const hit = cache[e.url];
+    const hasRealCache =
+      hit &&
+      hit.summaryJa &&
+      hit.summaryEn &&
+      hit.bodyJa &&
+      hit.bodyEn &&
+      hit.model !== "deterministic-fallback";
+    if (hasRealCache) continue;
+    candidates.push({
+      url: e.url,
+      entry: {
+        id: e.id,
+        url: e.url,
+        title: e.title,
+        category: e.category,
+        source: e.source,
+        sourceType: e.sourceType,
+      },
+    });
+  }
+
+  // Queue.sendBatch is one API call regardless of message count, so this
+  // costs at most 1 subrequest. Within the 50-subrequest cron budget.
+  if (candidates.length === 0) return 0;
+  await env.SUMMARY_QUEUE.sendBatch(candidates.map((body) => ({ body })));
+  return candidates.length;
 }
 
 // ---------- Worker entry points ---------------------------------------------

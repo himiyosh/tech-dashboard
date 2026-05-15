@@ -1,0 +1,42 @@
+#:schema https://cloudflare.com/workers/wrangler-schema.json
+# tech-dashboard-summarizer — Queue consumer Worker.
+#
+# Receives one entry per invocation from the SUMMARY_QUEUE producer Worker
+# (tech-dashboard-harness), calls Copilot to generate the bilingual JSON
+# summary, and writes the result to the SUMMARY_CACHE KV namespace.
+#
+# Split out from the harness Worker because the combined CPU cost of
+# (long-form Copilot JSON parse) + (publishHistoryFiles JSON aggregation)
+# exceeded the Standard plan's 30s per-invocation CPU cap (LL-037).
+# Per-message invocation gives each summarize its own 30s budget.
+
+name = "tech-dashboard-summarizer"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# KV: same SUMMARY_CACHE as the harness Worker. Both bind to namespace id
+# 6d67debb991742efadfec473a121f5fc.
+[[kv_namespaces]]
+binding = "SUMMARY_CACHE"
+id = "6d67debb991742efadfec473a121f5fc"
+
+[vars]
+SUMMARIZE_MODEL = "claude-sonnet-4.6"
+# 25s leaves ~5s budget for KV write + JSON parse within the 30s CPU cap.
+SUMMARIZE_TIMEOUT_MS = "25000"
+
+# Secrets (set via `wrangler secret put --name tech-dashboard-summarizer`):
+#   - COPILOT_PAT    Classic PAT with Copilot Enterprise access
+
+# Queue consumer. Process one entry per invocation so each summarize gets
+# its own CPU budget; Cloudflare auto-retries on throw (up to max_retries).
+[[queues.consumers]]
+queue = "tech-dashboard-summary"
+max_batch_size = 1
+max_batch_timeout = 5
+max_retries = 2
+dead_letter_queue = "tech-dashboard-summary-dlq"
+
+[observability]
+enabled = true

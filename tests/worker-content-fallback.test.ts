@@ -28,10 +28,14 @@ describe("applyDeterministicContentFallback", () => {
     expect(result.bodyFallbacks).toBe(2);
     expect(result.entry.summaryEn).toBe("Managed Agents");
     // JA summary must be Japanese (deterministic template) so the JA UI never
-    // shows an EN fallback badge for worker-published entries (LL-028).
+    // shows an EN fallback badge for worker-published entries (LL-028). The
+    // JA template must also lead with Japanese characters — placing the EN
+    // title at the start made cards look English (LL-041).
     expect(result.entry.summaryJa).toContain("Managed Agents");
-    expect(result.entry.summaryJa).toMatch(/[\u3040-\u30ff\u3400-\u9fff]/);
-    expect(result.entry.bodyJa).toContain("Managed Agents は、anthropic-engineering が伝えた agent-fw 領域の更新です");
+    expect(result.entry.summaryJa).toMatch(/^[\u3040-\u30ff\u3400-\u9fff]/);
+    expect(result.entry.bodyJa).toMatch(/^[\u3040-\u30ff\u3400-\u9fff]/);
+    expect(result.entry.bodyJa).toContain("anthropic-engineering");
+    expect(result.entry.bodyJa).toContain("Managed Agents");
     expect(result.entry.bodyEn).toContain("completed from the existing summary and collection metadata");
   });
 

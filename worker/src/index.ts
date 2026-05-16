@@ -999,7 +999,15 @@ async function runHarness(
       }
     }
     if (ogTargets.length > 0) {
-      await env.SUMMARY_CACHE.put(OG_KEY, JSON.stringify(ogBlob));
+      try {
+        await env.SUMMARY_CACHE.put(OG_KEY, JSON.stringify(ogBlob));
+      } catch (err) {
+        // LL-043: KV writes have a 1000/day free-tier cap. Swallow this
+        // particular failure so the publish + Queue enqueue path still
+        // completes — the OG blob can refresh on a later cron when the
+        // daily allowance resets at UTC midnight.
+        console.warn(`[worker] og kv put skipped: ${err}`);
+      }
     }
   }
   console.log(`[worker] og: cached=${Object.keys(ogBlob).length}, new hits=${ogFound}`);

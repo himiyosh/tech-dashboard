@@ -114,6 +114,30 @@ async function putKey(key, value) {
   }
 }
 
+const BULK_CHUNK = 5000;
+
+async function bulkPut(items) {
+  // wrangler kv bulk put accepts a JSON array of {key,value} pairs, up to
+  // 10000 entries per call. One subprocess invocation per chunk eliminates
+  // the ~1 s wrangler startup overhead we'd pay per single put.
+  const dir = mkdtempSync(join(tmpdir(), "kv-migrate-"));
+  const file = join(dir, "bulk.json");
+  writeFileSync(file, JSON.stringify(items), "utf8");
+  try {
+    await wrangler([
+      "kv",
+      "bulk",
+      "put",
+      "--namespace-id",
+      NAMESPACE_ID,
+      file,
+      "--remote",
+    ]);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 async function runWithConcurrency(items, fn, concurrency) {
   let idx = 0;
   let done = 0;
@@ -166,14 +190,22 @@ async function main() {
     return;
   }
 
-  console.log(`[kv-migrate] writing ${toWrite.length} keys (concurrency=${CONCURRENCY}) ...`);
-  const stats = await runWithConcurrency(
-    toWrite,
-    (item) => putKey(item.key, item.value),
-    CONCURRENCY,
-  );
-  console.log(`[kv-migrate] done: written=${stats.done} failed=${stats.failed}`);
-  if (stats.failed > 0) process.exitCode = 1;
+  console.log(`[kv-migrate] writing ${toWrite.length} keys in chunks of ${BULK_CHUNK} ...`);
+  let written = 0;
+  let failedChunks = 0;
+  for (let i = 0; i < toWrite.length; i += BULK_CHUNK) {
+    const slice = toWrite.slice(i, i + BULK_CHUNK);
+    try {
+      await bulkPut(slice.map((it) => ({ key: it.key, value: it.value })));
+      written += slice.length;
+      console.log(`  ... ${written}/${toWrite.length}`);
+    } catch (err) {
+      failedChunks++;
+      console.warn(`  ! chunk ${i}-${i + slice.length - 1} failed: ${err.message}`);
+    }
+  }
+  console.log(`[kv-migrate] done: written=${written} failedChunks=${failedChunks}`);
+  if (failedChunks > 0) process.exitCode = 1;
 }
 
 main().catch((err) => {

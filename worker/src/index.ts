@@ -1055,9 +1055,19 @@ async function runHarness(
   }
   const hasEntryChanges = !entriesEqual(existingPayload, finalEntries);
   // Compare ignoring `generatedAt` timestamp so unchanged runs don't churn commits.
+  // NOTE: Queue enqueue must run BEFORE this early-return because cache
+  // state (some entries are still fallbacks) is independent of whether the
+  // index payload changed. A manual /run hitting "no data changes" should
+  // still push outstanding fallback entries onto the Queue so the
+  // summarizer Worker can process them. We intentionally pay one extra
+  // KV.get loop on no-op runs to keep the autonomous backfill flowing.
   if (stripGeneratedAt(existingJson) === stripGeneratedAt(json)) {
     console.log("[worker] no data changes");
-    return { changed: false, stats: { finalEntries: finalEntries.length, summarized, errors } };
+    const enqueuedNoop = await maybeEnqueueSummaryJobs(env, finalEntries, hitsByUrl);
+    if (enqueuedNoop > 0) {
+      console.log(`[worker] enqueued ${enqueuedNoop} summary jobs (no-op publish path)`);
+    }
+    return { changed: false, stats: { finalEntries: finalEntries.length, summarized, errors, enqueued: enqueuedNoop } };
   }
 
   const message = `chore(data): update tech dashboard ${payload.generatedAt}`;

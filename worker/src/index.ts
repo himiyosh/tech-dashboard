@@ -56,6 +56,10 @@ interface Env {
   SUMMARY_QUEUE?: Queue<SummaryJob>;
   ENABLE_SUMMARY_QUEUE?: string;
   ENQUEUE_MAX_NEW?: string;
+  // Max number of fallback entries to look up in KV per cron. Cap exists to
+  // stay under Cloudflare's 1000 subrequests/invocation budget once the
+  // fallback backlog grows. See LL-042 follow-up.
+  KV_LOOKUP_CAP?: string;
 }
 
 interface SummaryJob {
@@ -838,17 +842,29 @@ async function runHarness(
     1,
     Number(env.SUMMARIZE_CONCURRENCY || String(DEFAULT_SUMMARIZE_CONCURRENCY)),
   );
-  // Per-URL KV (LL-038). To stay under the 1000-subrequest/invocation cap
+  // Per-URL KV (LL-038/042). To stay under the 1000-subrequest/invocation cap
   // we only read KV for entries that might need a cache update — entries
   // that already carry a real AI summary in the merged data (summaryJa not
   // empty AND not the deterministic-fallback lead 「このエントリは 」) are
   // trusted as-is and skipped. Fallback entries are checked because the
   // summarizer Worker may have written a real summary into KV since the
   // previous cron run.
+  //
+  // LL-042 follow-up (2026-05-17): cap the per-URL KV reads at a small,
+  // bounded number. With ~225 fallback entries, parallel KV.gets consumed
+  // ~225 subrequests, and combined with collector/archive/commit fetches
+  // we still tipped over the 1000/inv cap on every cron. Capping at 60
+  // keeps total subrequests well under budget; the unread tail will be
+  // discovered on subsequent crons as fresh entries cycle the head.
   const FALLBACK_SUMMARY_PREFIX = "このエントリは ";
-  const needsKvLookup = sorted.filter(
+  const KV_LOOKUP_CAP = Math.max(
+    30,
+    Number(env.KV_LOOKUP_CAP ?? "60"),
+  );
+  const allFallback = sorted.filter(
     (e) => !e.summaryJa || e.summaryJa.startsWith(FALLBACK_SUMMARY_PREFIX),
   );
+  const needsKvLookup = allFallback.slice(0, KV_LOOKUP_CAP);
   // Track which URLs we actually issued a KV.get for. A URL absent from this
   // Set was skipped because it already carries a real AI summary in the
   // merged data (do not enqueue). A URL present in the Set but absent from
@@ -861,7 +877,7 @@ async function runHarness(
     CACHE_KEY,
   );
   console.log(
-    `[worker] cache lookups ${needsKvLookup.length} / ${sorted.length} (skipped ${sorted.length - needsKvLookup.length} entries with real summaries)`,
+    `[worker] cache lookups ${needsKvLookup.length} / ${sorted.length} (fallback total=${allFallback.length}, cap=${KV_LOOKUP_CAP}, skipped ${sorted.length - allFallback.length} entries with real summaries)`,
   );
 
   const needsSummary: NormalizedEntry[] = [];

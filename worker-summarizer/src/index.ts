@@ -159,8 +159,19 @@ export default {
         msg.ack();
       } catch (err) {
         const summary = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-        console.warn(`[summarizer] retry ${msg.body.url}: ${summary}`);
-        msg.retry();
+        // LL-043: KV daily write cap (1000/day on free tier) returns
+        // "KV put() limit exceeded for the day". Retrying just burns through
+        // max_retries and pushes the message to the DLQ — which is exactly
+        // what we don't want for a transient daily-rate problem. Ack instead;
+        // the next cron run after UTC midnight will re-enqueue any still-
+        // fallback entry.
+        if (summary.includes("KV put() limit exceeded")) {
+          console.warn(`[summarizer] ack ${msg.body.url}: daily KV write cap reached, will retry tomorrow`);
+          msg.ack();
+        } else {
+          console.warn(`[summarizer] retry ${msg.body.url}: ${summary}`);
+          msg.retry();
+        }
       }
     }
   },

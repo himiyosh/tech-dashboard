@@ -50,11 +50,17 @@ SUMMARIZE_TIMEOUT_MS = "25000"
 # the 30 s CPU cap on every job — LL-038).
 # 2026-05-16: Re-enabled after Phase A+B (PR #62) split cache.v1 into
 # per-URL KV keys. The consumer now does one KV.put per job, no blob R/M/W.
-# Start small to validate: ENQUEUE_MAX_NEW=50 caps each cron run at 50 new
-# Queue messages so a single bad batch can't flood the DLQ. Raise after a
-# few clean cron cycles confirm summarized > 0 / errors ≈ 0.
+# 2026-05-16 evening: Lowered cap to 30 after hitting "KV put() limit
+# exceeded for the day" (LL-043). Cloudflare Workers KV free tier allows
+# 1000 writes/day per namespace. Daily budget:
+#   24 cron * 30 enqueue = 720 summarizer KV.put/day (worst case)
+#   + ~24 OG cache puts                          = 24 KV.put/day
+#   + occasional manual /run                     = a handful
+# Leaves headroom under the 1000/day cap for ad-hoc backfills.
+# Once the backlog of fallback entries drains, daily writes drop to roughly
+# the count of new articles per day (~480) regardless of this cap.
 ENABLE_SUMMARY_QUEUE = "1"
-ENQUEUE_MAX_NEW = "50"
+ENQUEUE_MAX_NEW = "30"
 
 # Secrets (set via `wrangler secret put`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access

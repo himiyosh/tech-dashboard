@@ -849,6 +849,12 @@ async function runHarness(
   const needsKvLookup = sorted.filter(
     (e) => !e.summaryJa || e.summaryJa.startsWith(FALLBACK_SUMMARY_PREFIX),
   );
+  // Track which URLs we actually issued a KV.get for. A URL absent from this
+  // Set was skipped because it already carries a real AI summary in the
+  // merged data (do not enqueue). A URL present in the Set but absent from
+  // hitsByUrl is a genuine KV miss — the entry has no cached summary yet
+  // and MUST be enqueued so the summarizer Worker can generate one.
+  const lookedUpUrls = new Set(needsKvLookup.map((e) => e.url));
   const hitsByUrl = await getCacheEntriesWithLegacyFallback(
     env.SUMMARY_CACHE,
     needsKvLookup.map((e) => e.url),
@@ -1055,9 +1061,19 @@ async function runHarness(
   }
   const hasEntryChanges = !entriesEqual(existingPayload, finalEntries);
   // Compare ignoring `generatedAt` timestamp so unchanged runs don't churn commits.
+  // NOTE: Queue enqueue must run BEFORE this early-return because cache
+  // state (some entries are still fallbacks) is independent of whether the
+  // index payload changed. A manual /run hitting "no data changes" should
+  // still push outstanding fallback entries onto the Queue so the
+  // summarizer Worker can process them. We intentionally pay one extra
+  // KV.get loop on no-op runs to keep the autonomous backfill flowing.
   if (stripGeneratedAt(existingJson) === stripGeneratedAt(json)) {
     console.log("[worker] no data changes");
-    return { changed: false, stats: { finalEntries: finalEntries.length, summarized, errors } };
+    const enqueuedNoop = await maybeEnqueueSummaryJobs(env, finalEntries, hitsByUrl, lookedUpUrls);
+    if (enqueuedNoop > 0) {
+      console.log(`[worker] enqueued ${enqueuedNoop} summary jobs (no-op publish path)`);
+    }
+    return { changed: false, stats: { finalEntries: finalEntries.length, summarized, errors, enqueued: enqueuedNoop } };
   }
 
   const message = `chore(data): update tech dashboard ${payload.generatedAt}`;
@@ -1091,7 +1107,7 @@ async function runHarness(
   // [[queues.producers]] binding). We reuse `hitsByUrl` collected earlier
   // in this run to avoid a second 900+ per-URL KV.get pass that would blow
   // through the Standard plan's 1000-subrequest/invocation budget.
-  const enqueued = await maybeEnqueueSummaryJobs(env, finalEntries, hitsByUrl);
+  const enqueued = await maybeEnqueueSummaryJobs(env, finalEntries, hitsByUrl, lookedUpUrls);
   if (enqueued > 0) {
     console.log(`[worker] enqueued ${enqueued} summary jobs`);
   }
@@ -1122,28 +1138,31 @@ async function maybeEnqueueSummaryJobs(
   env: Env,
   entries: readonly NormalizedEntry[],
   hitsByUrl: Map<string, CacheEntry>,
+  lookedUpUrls: Set<string>,
 ): Promise<number> {
   if (env.ENABLE_SUMMARY_QUEUE !== "1") return 0;
   if (!env.SUMMARY_QUEUE) {
     console.warn("[worker] ENABLE_SUMMARY_QUEUE=1 but SUMMARY_QUEUE binding missing");
     return 0;
   }
-  // hitsByUrl was populated earlier in runHarness from per-URL KV + legacy
-  // cache.v1 fallback. Reusing it here saves ~900 subrequests per cron and
-  // keeps us under the 1000-subrequest invocation cap.
+  // hitsByUrl + lookedUpUrls were populated earlier in runHarness from
+  // per-URL KV + legacy cache.v1 fallback. Reusing them here saves ~900
+  // subrequests per cron and keeps us under the 1000/inv cap. We need both:
+  // hitsByUrl alone cannot distinguish "entry skipped because real summary
+  // exists" (don't enqueue) from "entry looked up but KV miss" (DO enqueue
+  // — the summarizer Worker must populate cache).
   const cap = Math.max(1, Number(env.ENQUEUE_MAX_NEW ?? 5));
 
   const candidates: SummaryJob[] = [];
   for (const e of entries) {
     if (candidates.length >= cap) break;
-    const hit = hitsByUrl.get(e.url);
-    if (!hit) {
-      // Not in hitsByUrl means runHarness skipped the KV lookup because the
-      // entry already carries a real AI summary in the merged data. Treat
-      // as a real cache hit; do not enqueue.
+    if (!lookedUpUrls.has(e.url)) {
+      // Skipped KV lookup; entry already carries a real AI summary. Skip.
       continue;
     }
+    const hit = hitsByUrl.get(e.url);
     const hasRealCache =
+      hit &&
       hit.summaryJa &&
       hit.summaryEn &&
       hit.bodyJa &&

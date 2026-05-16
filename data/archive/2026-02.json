@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-16T00:59:21.080Z",
+  "generatedAt": "2026-05-16T02:00:51.462Z",
   "month": "2026-02",
   "count": 25,
   "entries": [
@@ -41,7 +41,7 @@
       "summaryEn": "Today we’re announcing $110B in new investment at a $730B pre money valuation. This includes $30B from SoftBank, $30B from NVIDIA, and $50B from Amazon.",
       "lang": "en",
       "publishedAt": "2026-02-27T05:30:00.000Z",
-      "collectedAt": "2026-05-15T22:00:46.513Z",
+      "collectedAt": "2026-05-16T02:00:47.901Z",
       "tags": [
         "openai",
         "ai-infrastructure",
@@ -144,34 +144,6 @@
       "archiveTier": "warm",
       "bodyJa": "Hugging Faceは公式ブログで、Transformersライブラリ内でのMixture of Experts (MoE) 層の実装アプローチを公開した。MoEは大規模言語モデルを効率的にスケールする手法として再注目されており、その統合方針はオープンソースエコシステムにおいて重要な意味を持つ。\n\nMoEは、入力トークンごとにルーターが選択した一部の「専門家(エキスパート)」のみを活性化する仕組みで、総パラメータ数に対して計算コストを大幅に抑えられる。記事では、Mixtral、Qwen MoE、DeepSeek、GPT-OSSなど近年のMoEモデルが急増する中、各モデルが独自実装を持つことで保守性が低下していた点を課題として挙げている。\n\nこれに対しHugging Faceは、MoE層の共通APIを整備し、ルーティング処理やエキスパート計算を統一的に記述できるよう再設計した。さらに、エキスパート計算をバッチ化するためのカーネルや、kernels-community経由で提供される最適化済みカーネルの利用にも言及しており、推論速度の改善が期待される。学習時のロードバランス損失や、推論時のルーティング戦略についても触れられている。\n\n関連知見として、MoEの源流は1990年代のJacobsらの研究に遡るが、現代では2017年のShazeerらの「Outrageously Large Neural Networks」で大規模Transformerに適用された。GoogleのSwitch TransformerやGShard、Mistral AIのMixtral 8x7B、DeepSeek-V3など、各社がMoEを採用する流れが続いている。一方で、エキスパート間の負荷不均衡やメモリ帯域の課題は依然存在し、vLLMやSGLang、TensorRT-LLMなど推論エンジン側でも最適化競争が続いていると見られる。Transformers側の標準化は、研究と実運用の橋渡しとして影響が大きい可能性がある。",
       "bodyEn": "Hugging Face has published a blog post detailing how Mixture of Experts (MoE) layers are implemented inside the Transformers library. As MoE architectures resurge as a leading approach to scaling large language models efficiently, the way an ecosystem-defining library like Transformers handles them carries significant weight for the open-source community.\n\nMoE works by routing each input token through only a small subset of specialized sub-networks, or experts, selected by a learned router. This sparse activation pattern lets total parameter counts grow dramatically while keeping per-token compute roughly constant. The post notes that the recent wave of MoE models — Mixtral, Qwen MoE variants, DeepSeek, GPT-OSS, and others — had each shipped with bespoke implementations, fragmenting the codebase and making maintenance and optimization harder.\n\nTo address this, Hugging Face has consolidated MoE handling around a more standardized API. Routing logic, expert dispatch, and the underlying linear computations are factored so that new MoE models can plug in with minimal duplication. The team also discusses batched expert computation and integration with optimized kernels, including those distributed through the kernels-community channel, which can meaningfully improve inference throughput. Training-time concerns such as load-balancing losses and inference-time routing strategies are also covered.\n\nFor context, MoE is not a new idea — it traces back to Jacobs and colleagues in the early 1990s — but its modern revival began with Shazeer et al.'s 2017 work applying sparse gating to large Transformers. Google's Switch Transformer and GShard, Mistral's Mixtral 8x7B, and DeepSeek's recent V3 release have firmly placed MoE in the mainstream of frontier LLM design. Yet practical challenges remain: experts can become unevenly loaded, memory bandwidth often dominates latency, and serving frameworks like vLLM, SGLang, and TensorRT-LLM continue to compete on MoE-specific optimizations such as expert parallelism and fused grouped GEMM kernels.\n\nBy unifying MoE support inside Transformers, Hugging Face arguably reduces the friction between research prototypes and production deployments. Model authors gain a clearer template to follow, downstream users get consistent behavior across architectures, and kernel developers have a stable surface to target. The longer-term impact will likely depend on how quickly new MoE releases adopt the shared abstractions, but the direction appears aligned with the broader industry move toward sparse, modular foundation models. It also hints at deeper future integration with quantization and distributed-inference tooling, though specifics there remain to be seen."
-    },
-    {
-      "id": "a1da6745492ce980",
-      "source": "aider-releases",
-      "sourceType": "release",
-      "url": "https://github.com/Aider-AI/aider/releases/tag/v0.86.3.dev",
-      "title": "v0.86.3.dev",
-      "titleJa": "Aider v0.86.3.dev 開発版リリース",
-      "titleEn": "v0.86.3.dev",
-      "summaryJa": "AIコーディング支援ツールAiderの開発版v0.86.3.devが公開された。安定版v0.86系の次期バージョンに向けた中間ビルドで、機能追加やバグ修正が継続的に取り込まれているとみられる。",
-      "summaryEn": "Aider, the AI pair-programming CLI, has tagged a v0.86.3.dev development build on GitHub, an interim release between stable 0.86.x versions that likely bundles ongoing fixes and incremental improvements.",
-      "lang": "en",
-      "publishedAt": "2026-02-26T00:00:00.000Z",
-      "collectedAt": "2026-05-15T14:25:21.327Z",
-      "tags": [
-        "changelog",
-        "cursor",
-        "aider",
-        "cli",
-        "pair-programming",
-        "dev-release"
-      ],
-      "category": "cursor",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "bodyJa": "AIによるペアプログラミングを CLI で実現するオープンソースツール Aider が、v0.86.3.dev という開発版タグを GitHub 上で公開した。安定版の v0.86 系統に対する中間ビルドであり、次の正式リリースに向けた変更が逐次取り込まれる位置づけと見られる。\n\nAider は OpenAI の GPT-4 系や Anthropic の Claude、ローカル LLM などを利用し、Git リポジトリ内のコードを対話形式で編集できる点が特徴である。差分を自動でコミットし、テスト実行や lint と組み合わせやすい設計になっており、Cursor や Continue、Cline といった同種ツールが乱立する中でも CLI 中心のミニマルな思想で支持を集めている。\n\n今回の dev タグはリリースノートが詳細化されておらず、ユーザー向けの目玉機能というより、開発中の修正を配布チャネルに乗せるためのスナップショットの可能性が高い。Aider はこれまでも .dev サフィックス付きのバージョンを頻繁に切っており、PyPI への先行配布や内部テスト用途を兼ねていると考えられる。\n\n関連動向として、AI コーディング領域ではモデル側の context window 拡大やツール呼び出し精度の向上が続いており、Aider もリポジトリマップ生成、アーキテクトモード、各種モデルプロバイダ対応などで追随してきた。利用者は安定運用を求めるなら通常の x.y.z リリースを、最新の挙動を試したい場合のみ .dev 版を選ぶのが無難だろう。正式な変更点は後続の安定版リリースノートで明らかになる見込みである。",
-      "bodyEn": "Aider, the open-source command-line tool that turns large language models into a Git-aware pair programmer, has tagged v0.86.3.dev on GitHub. The label marks an interim development build sitting between stable 0.86.x releases rather than a headline feature drop.\n\nAider differentiates itself from GUI-driven competitors like Cursor, Continue and Cline by staying close to the terminal and to Git. It can drive frontier models such as OpenAI's GPT-4 family, Anthropic's Claude, DeepSeek, and various local backends, automatically staging and committing diffs as the conversation progresses. That workflow makes it a natural fit for engineers who already script their builds, tests and linters and want an LLM that respects the same loop.\n\nThe .dev suffix is significant. Aider's maintainers routinely cut development tags between polished releases, typically to push snapshots through PyPI or to gather feedback on in-progress fixes. Because the GitHub release page for v0.86.3.dev does not surface a curated changelog, this build should be read as a rolling work-in-progress rather than a feature milestone. Users seeking stability are generally better served by the most recent non-dev tag.\n\nIn the broader ecosystem, AI coding assistants are evolving quickly along several axes: larger context windows, more reliable tool and function calling, and tighter repository understanding. Aider has tracked these shifts with features like its repository map, architect/editor split mode for separating planning from code edits, and broad provider compatibility. Each minor revision tends to refine prompt formats, edit-application heuristics, or model-specific quirks rather than introduce sweeping UI changes.\n\nFor most teams, the practical takeaway is modest. Those who want to experiment with the latest behavior, perhaps to validate a fix they reported, can install the dev build directly from the tag; everyone else can wait for the consolidated notes that will likely accompany a v0.86.3 or v0.87 stable release. As always with fast-moving AI tooling, pinning a known-good version in CI remains advisable."
     },
     {
       "id": "9aa6f2b23f2573a9",
@@ -615,6 +587,43 @@
       "bodyEn": "Google DeepMind has introduced Deep Think, an enhanced reasoning mode built on top of Gemini 3 Pro and aimed squarely at frontier problems in mathematics, the sciences and software engineering. The release positions Gemini not just as a conversational assistant but as a serious tool for researchers tackling problems that demand sustained, structured thought.\n\nAt the technical core, Deep Think extends inference-time computation through what DeepMind describes as parallel thinking. Rather than committing to a single chain of reasoning, the model explores multiple hypotheses and solution paths simultaneously before converging on an answer. The company reports that this approach yields substantial gains over the standard Gemini 3 Pro on demanding evaluations such as Humanity's Last Exam and ARC-AGI-2, as well as on competition-level mathematics and coding tasks. The implication is that for problems where careful deliberation matters more than fast turnaround, Deep Think can reach answers previously out of reach for general-purpose models.\n\nThe target audience is explicit: scientists, engineers and advanced developers who need a model capable of grinding through proofs, derivations, complex codebases or multi-step research questions. Access is being rolled out through the Gemini app for Google AI Ultra subscribers, signalling that DeepMind sees Deep Think as a premium capability rather than a default behaviour.\n\nIt is worth situating this launch within DeepMind's broader portfolio. The lab has a strong track record of specialised scientific systems, from AlphaFold's protein structure prediction to AlphaProof and AlphaGeometry's medal-level performance at the International Mathematical Olympiad. Deep Think appears to be an attempt to bring that flavour of deep, deliberate reasoning into a general-purpose foundation model, narrowing the gap between bespoke scientific AI and an everyday assistant.\n\nThe wider industry has been converging on similar ideas. OpenAI's o1 and o3 reasoning models, Anthropic's extended thinking modes for Claude, and xAI's reasoning variants of Grok all rely on spending more compute at inference time to crack problems that defeat conventional decoding. Deep Think is Google's most explicit answer in that race, and the benchmark numbers suggest the gap among frontier labs on hard reasoning tasks remains tight.\n\nThere are caveats worth noting. Deep Think is likely to be considerably slower and more expensive per query than the base Gemini 3 Pro, given the parallel exploration and extended reasoning involved. Users will probably need to be selective about when to invoke it, reserving the mode for problems where accuracy genuinely outweighs latency and cost. As with any reasoning-heavy system, careful evaluation in domain-specific workflows will be needed before treating its outputs as authoritative, particularly in scientific contexts where subtle errors can propagate.\n\nStill, the direction of travel is clear. With Deep Think, Google is making a concrete bet that general-purpose LLMs, given enough room to think, can become genuine collaborators in research and engineering rather than merely productivity aids."
     },
     {
+      "id": "a1da6745492ce980",
+      "source": "aider-releases",
+      "sourceType": "release",
+      "url": "https://github.com/Aider-AI/aider/releases/tag/v0.86.3.dev",
+      "title": "v0.86.3.dev",
+      "titleJa": "Aider v0.86.3.dev 開発版リリース",
+      "titleEn": "v0.86.3.dev",
+      "summaryJa": "AIコーディング支援ツールAiderの開発版v0.86.3.devが公開された。安定版v0.86系の次期バージョンに向けた中間ビルドで、機能追加やバグ修正が継続的に取り込まれているとみられる。",
+      "summaryEn": "set version to 0.86.3.dev",
+      "lang": "en",
+      "publishedAt": "2026-02-12T00:42:25.000Z",
+      "collectedAt": "2026-05-16T02:00:47.901Z",
+      "tags": [
+        "aider",
+        "release",
+        "changelog",
+        "cursor",
+        "cli",
+        "pair-programming",
+        "dev-release"
+      ],
+      "category": "aider",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/69695708?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/69695708?s=60&amp;v=4",
+        "alt": "v0.86.3.dev",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "bodyJa": "AIによるペアプログラミングを CLI で実現するオープンソースツール Aider が、v0.86.3.dev という開発版タグを GitHub 上で公開した。安定版の v0.86 系統に対する中間ビルドであり、次の正式リリースに向けた変更が逐次取り込まれる位置づけと見られる。\n\nAider は OpenAI の GPT-4 系や Anthropic の Claude、ローカル LLM などを利用し、Git リポジトリ内のコードを対話形式で編集できる点が特徴である。差分を自動でコミットし、テスト実行や lint と組み合わせやすい設計になっており、Cursor や Continue、Cline といった同種ツールが乱立する中でも CLI 中心のミニマルな思想で支持を集めている。\n\n今回の dev タグはリリースノートが詳細化されておらず、ユーザー向けの目玉機能というより、開発中の修正を配布チャネルに乗せるためのスナップショットの可能性が高い。Aider はこれまでも .dev サフィックス付きのバージョンを頻繁に切っており、PyPI への先行配布や内部テスト用途を兼ねていると考えられる。\n\n関連動向として、AI コーディング領域ではモデル側の context window 拡大やツール呼び出し精度の向上が続いており、Aider もリポジトリマップ生成、アーキテクトモード、各種モデルプロバイダ対応などで追随してきた。利用者は安定運用を求めるなら通常の x.y.z リリースを、最新の挙動を試したい場合のみ .dev 版を選ぶのが無難だろう。正式な変更点は後続の安定版リリースノートで明らかになる見込みである。",
+      "bodyEn": "Aider, the open-source command-line tool that turns large language models into a Git-aware pair programmer, has tagged v0.86.3.dev on GitHub. The label marks an interim development build sitting between stable 0.86.x releases rather than a headline feature drop.\n\nAider differentiates itself from GUI-driven competitors like Cursor, Continue and Cline by staying close to the terminal and to Git. It can drive frontier models such as OpenAI's GPT-4 family, Anthropic's Claude, DeepSeek, and various local backends, automatically staging and committing diffs as the conversation progresses. That workflow makes it a natural fit for engineers who already script their builds, tests and linters and want an LLM that respects the same loop.\n\nThe .dev suffix is significant. Aider's maintainers routinely cut development tags between polished releases, typically to push snapshots through PyPI or to gather feedback on in-progress fixes. Because the GitHub release page for v0.86.3.dev does not surface a curated changelog, this build should be read as a rolling work-in-progress rather than a feature milestone. Users seeking stability are generally better served by the most recent non-dev tag.\n\nIn the broader ecosystem, AI coding assistants are evolving quickly along several axes: larger context windows, more reliable tool and function calling, and tighter repository understanding. Aider has tracked these shifts with features like its repository map, architect/editor split mode for separating planning from code edits, and broad provider compatibility. Each minor revision tends to refine prompt formats, edit-application heuristics, or model-specific quirks rather than introduce sweeping UI changes.\n\nFor most teams, the practical takeaway is modest. Those who want to experiment with the latest behavior, perhaps to validate a fix they reported, can install the dev build directly from the tag; everyone else can wait for the consolidated notes that will likely accompany a v0.86.3 or v0.87 stable release. As always with fast-moving AI tooling, pinning a known-good version in CI remains advisable."
+    },
+    {
       "id": "319dbc640a03470d",
       "source": "aider-releases",
       "sourceType": "release",
@@ -623,10 +632,10 @@
       "titleJa": "AiderがマイナーアップデートのGemini 3対応版v0.86.2を公開",
       "titleEn": "Aider Releases v0.86.2",
       "summaryJa": "AIペアプログラミングCLIツールのAiderが、v0.86.2をリリースした。新たに登場したGoogleのGemini 3 Proモデルに対応するなど、軽微な更新が中心となっている。",
-      "summaryEn": "Aider, the AI pair-programming CLI tool, has released v0.86.2, a minor update that primarily adds support for Google's newly available Gemini 3 Pro model.",
+      "summaryEn": "version bump to 0.86.2",
       "lang": "en",
       "publishedAt": "2026-02-12T00:42:24.000Z",
-      "collectedAt": "2026-05-15T21:29:55.233Z",
+      "collectedAt": "2026-05-16T02:00:47.901Z",
       "tags": [
         "aider",
         "release",
@@ -635,7 +644,7 @@
         "pair-programming"
       ],
       "category": "aider",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "cold",
       "image": {

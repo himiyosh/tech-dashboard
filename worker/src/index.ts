@@ -21,6 +21,10 @@ import { applyTags } from "../../harness/pipeline/tag.ts";
 import { canonicalUrlKey } from "../../harness/pipeline/url.ts";
 import { applyDeterministicContentFallback } from "./content-fallback.ts";
 import {
+  getCacheEntriesWithLegacyFallback,
+  putCacheEntry,
+} from "./kv-cache.ts";
+import {
   buildArchiveIndexFile,
   buildArchiveMonthFile,
   groupArchiveEntries,
@@ -63,7 +67,8 @@ interface SummaryJob {
 }
 
 const INDEX_LIMIT = 2000;
-// Shared with worker-summarizer (LL-037 split).
+// Legacy single-blob key. Read-only fallback during the per-URL migration
+// (LL-038). New writes go through worker/src/kv-cache.ts (per-URL keys).
 const CACHE_KEY = "cache.v1";
 const DEFAULT_SUMMARIZE_TIMEOUT_MS = 25_000;
 const DEFAULT_SUMMARIZE_CONCURRENCY = 4;
@@ -833,13 +838,20 @@ async function runHarness(
     1,
     Number(env.SUMMARIZE_CONCURRENCY || String(DEFAULT_SUMMARIZE_CONCURRENCY)),
   );
-  const cacheBlob =
-    (await env.SUMMARY_CACHE.get<Record<string, CacheEntry>>(CACHE_KEY, "json")) ?? {};
+  // Per-URL KV (LL-038). Read only the entries we may actually use this
+  // batch instead of fetching a multi-MB blob every cron. Legacy `cache.v1`
+  // blob is still consulted as a fallback until the one-shot migration
+  // (scripts/kv-migrate.mjs) finishes populating per-URL keys.
+  const hitsByUrl = await getCacheEntriesWithLegacyFallback(
+    env.SUMMARY_CACHE,
+    sorted.map((e) => e.url),
+    CACHE_KEY,
+  );
 
   const needsSummary: NormalizedEntry[] = [];
   const afterCache: NormalizedEntry[] = [];
   for (const e of sorted) {
-    const hit = cacheBlob[e.url];
+    const hit = hitsByUrl.get(e.url);
     const cachedTitleJa = hit?.titleJa || e.titleJa;
     if (hit && cachedTitleJa && hit.summaryJa && hit.summaryEn) {
       afterCache.push({
@@ -873,7 +885,9 @@ async function runHarness(
         for (let attempt = 1; attempt <= SUMMARIZE_ATTEMPTS; attempt++) {
           try {
             const r = await callCopilot(token!, model, e, summarizeTimeoutMs);
-            cacheBlob[e.url] = r;
+            // Per-URL KV write (LL-038). Independent per entry so parallel
+            // workers never clobber each other.
+            await putCacheEntry(env.SUMMARY_CACHE, e.url, r);
             return { url: e.url, entry: r, ok: true as const };
           } catch (err) {
             if (attempt < SUMMARIZE_ATTEMPTS) {
@@ -909,10 +923,6 @@ async function runHarness(
           tags: dedupeTags([...e.tags, ...r.extraTags]),
         };
       }
-    }
-    // Persist the updated blob (single KV put).
-    if (summarized > 0) {
-      await env.SUMMARY_CACHE.put(CACHE_KEY, JSON.stringify(cacheBlob));
     }
   } else if (!token) {
     console.warn("[worker] no Copilot token — skipping summarization");
@@ -1103,14 +1113,18 @@ async function maybeEnqueueSummaryJobs(
     console.warn("[worker] ENABLE_SUMMARY_QUEUE=1 but SUMMARY_QUEUE binding missing");
     return 0;
   }
-  const cache =
-    (await env.SUMMARY_CACHE.get<Record<string, CacheEntry>>(CACHE_KEY, "json")) ?? {};
+  // Per-URL KV with legacy blob fallback (LL-038).
+  const cache = await getCacheEntriesWithLegacyFallback(
+    env.SUMMARY_CACHE,
+    entries.map((e) => e.url),
+    CACHE_KEY,
+  );
   const cap = Math.max(1, Number(env.ENQUEUE_MAX_NEW ?? 5));
 
   const candidates: SummaryJob[] = [];
   for (const e of entries) {
     if (candidates.length >= cap) break;
-    const hit = cache[e.url];
+    const hit = cache.get(e.url);
     const hasRealCache =
       hit &&
       hit.summaryJa &&

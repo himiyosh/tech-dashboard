@@ -22,24 +22,13 @@
  */
 import type { NormalizedEntry } from "../../harness/types.ts";
 import { buildPrompt, parseResponse } from "../../worker/src/prompt.ts";
+import { type CacheEntry, putCacheEntry } from "../../worker/src/kv-cache.ts";
 
 interface Env {
   SUMMARY_CACHE: KVNamespace;
   COPILOT_PAT: string;
   SUMMARIZE_MODEL: string;
   SUMMARIZE_TIMEOUT_MS?: string;
-}
-
-interface CacheEntry {
-  titleJa: string;
-  summaryJa: string;
-  summaryEn: string;
-  bodyJa: string;
-  bodyEn: string;
-  importance: 1 | 2 | 3;
-  extraTags: string[];
-  model: string;
-  cachedAt: string;
 }
 
 /**
@@ -56,8 +45,10 @@ export interface SummaryJob {
   >;
 }
 
-// Must match the harness Worker constant (worker/src/index.ts).
-const CACHE_KEY = "cache.v1";
+// LL-038 fix: per-URL KV keys instead of a single multi-MB blob. The blob
+// is still read by the harness Worker as a fallback during migration, but
+// the summarizer writes only per-URL keys to avoid the JSON.parse/stringify
+// CPU bomb that was busting the 30 s Worker CPU cap.
 const COPILOT_ENDPOINT = "https://api.githubcopilot.com/chat/completions";
 const COPILOT_HEADERS: Record<string, string> = {
   "editor-version": "vscode/1.95.0",
@@ -140,13 +131,10 @@ async function callCopilot(
 }
 
 async function processJob(env: Env, job: SummaryJob): Promise<void> {
-  // NOTE: We do NOT read the cache here for idempotency. With ~1700 entries
-  // the blob is multi-MB; reading + writing it on every invocation ate so
-  // much wall-time that Copilot fetches consistently hit the 28s abort.
+  // Per-URL KV (LL-038): single KV.put per entry, no read-modify-write.
   // The producer (harness Worker) already filters out cached entries before
-  // enqueuing, so duplicate work is rare. KV.put below merges this entry
-  // into the existing blob via a fresh read just before write, minimising
-  // the race window.
+  // enqueuing, so duplicate work is rare. Each key is independent so parallel
+  // consumer invocations can never clobber each other's writes.
 
   const token = await resolveCopilotToken(env.COPILOT_PAT);
   const model = env.SUMMARIZE_MODEL || "claude-sonnet-4.6";
@@ -160,12 +148,7 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
     throw new Error(`empty summary for ${job.url}`);
   }
 
-  // Read-modify-write the cache blob just before the put so we don't clobber
-  // entries written by parallel invocations.
-  const cache =
-    (await env.SUMMARY_CACHE.get<Record<string, CacheEntry>>(CACHE_KEY, "json")) ?? {};
-  cache[job.url] = entry;
-  await env.SUMMARY_CACHE.put(CACHE_KEY, JSON.stringify(cache));
+  await putCacheEntry(env.SUMMARY_CACHE, job.url, entry);
 }
 
 export default {

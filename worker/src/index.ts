@@ -838,14 +838,24 @@ async function runHarness(
     1,
     Number(env.SUMMARIZE_CONCURRENCY || String(DEFAULT_SUMMARIZE_CONCURRENCY)),
   );
-  // Per-URL KV (LL-038). Read only the entries we may actually use this
-  // batch instead of fetching a multi-MB blob every cron. Legacy `cache.v1`
-  // blob is still consulted as a fallback until the one-shot migration
-  // (scripts/kv-migrate.mjs) finishes populating per-URL keys.
+  // Per-URL KV (LL-038). To stay under the 1000-subrequest/invocation cap
+  // we only read KV for entries that might need a cache update — entries
+  // that already carry a real AI summary in the merged data (summaryJa not
+  // empty AND not the deterministic-fallback lead 「このエントリは 」) are
+  // trusted as-is and skipped. Fallback entries are checked because the
+  // summarizer Worker may have written a real summary into KV since the
+  // previous cron run.
+  const FALLBACK_SUMMARY_PREFIX = "このエントリは ";
+  const needsKvLookup = sorted.filter(
+    (e) => !e.summaryJa || e.summaryJa.startsWith(FALLBACK_SUMMARY_PREFIX),
+  );
   const hitsByUrl = await getCacheEntriesWithLegacyFallback(
     env.SUMMARY_CACHE,
-    sorted.map((e) => e.url),
+    needsKvLookup.map((e) => e.url),
     CACHE_KEY,
+  );
+  console.log(
+    `[worker] cache lookups ${needsKvLookup.length} / ${sorted.length} (skipped ${sorted.length - needsKvLookup.length} entries with real summaries)`,
   );
 
   const needsSummary: NormalizedEntry[] = [];
@@ -868,6 +878,9 @@ async function runHarness(
       if (!hit.bodyJa || !hit.bodyEn) {
         needsSummary.push(e);
       }
+    } else if (!hit && e.summaryJa && !e.summaryJa.startsWith(FALLBACK_SUMMARY_PREFIX)) {
+      // Skipped KV lookup; entry already has a real summary from a prior run.
+      afterCache.push(e);
     } else {
       needsSummary.push(e);
       afterCache.push(e);
@@ -1075,9 +1088,10 @@ async function runHarness(
 
   // 8) Optional: enqueue uncached entries to the summarizer Queue (LL-037).
   // Off by default; activate via wrangler.toml (ENABLE_SUMMARY_QUEUE=1 and
-  // [[queues.producers]] binding). Cache is read once here to avoid
-  // double-enqueueing entries the summarizer already processed.
-  const enqueued = await maybeEnqueueSummaryJobs(env, finalEntries);
+  // [[queues.producers]] binding). We reuse `hitsByUrl` collected earlier
+  // in this run to avoid a second 900+ per-URL KV.get pass that would blow
+  // through the Standard plan's 1000-subrequest/invocation budget.
+  const enqueued = await maybeEnqueueSummaryJobs(env, finalEntries, hitsByUrl);
   if (enqueued > 0) {
     console.log(`[worker] enqueued ${enqueued} summary jobs`);
   }
@@ -1107,26 +1121,29 @@ async function runHarness(
 async function maybeEnqueueSummaryJobs(
   env: Env,
   entries: readonly NormalizedEntry[],
+  hitsByUrl: Map<string, CacheEntry>,
 ): Promise<number> {
   if (env.ENABLE_SUMMARY_QUEUE !== "1") return 0;
   if (!env.SUMMARY_QUEUE) {
     console.warn("[worker] ENABLE_SUMMARY_QUEUE=1 but SUMMARY_QUEUE binding missing");
     return 0;
   }
-  // Per-URL KV with legacy blob fallback (LL-038).
-  const cache = await getCacheEntriesWithLegacyFallback(
-    env.SUMMARY_CACHE,
-    entries.map((e) => e.url),
-    CACHE_KEY,
-  );
+  // hitsByUrl was populated earlier in runHarness from per-URL KV + legacy
+  // cache.v1 fallback. Reusing it here saves ~900 subrequests per cron and
+  // keeps us under the 1000-subrequest invocation cap.
   const cap = Math.max(1, Number(env.ENQUEUE_MAX_NEW ?? 5));
 
   const candidates: SummaryJob[] = [];
   for (const e of entries) {
     if (candidates.length >= cap) break;
-    const hit = cache.get(e.url);
+    const hit = hitsByUrl.get(e.url);
+    if (!hit) {
+      // Not in hitsByUrl means runHarness skipped the KV lookup because the
+      // entry already carries a real AI summary in the merged data. Treat
+      // as a real cache hit; do not enqueue.
+      continue;
+    }
     const hasRealCache =
-      hit &&
       hit.summaryJa &&
       hit.summaryEn &&
       hit.bodyJa &&

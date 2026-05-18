@@ -1,8 +1,138 @@
 {
-  "generatedAt": "2026-05-18T16:01:04.395Z",
+  "generatedAt": "2026-05-18T19:00:50.073Z",
   "month": "2026-05",
-  "count": 1522,
+  "count": 1548,
   "entries": [
+    {
+      "id": "44f677446532953b",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/emilia_lab/articles/dreaming-memory-poisoning-hypothesis",
+      "title": "Claude Dreamingの構造的リスク:自己生成メモリは自己プロンプトインジェクションになり得るか",
+      "titleJa": "Claude Dreamingの構造的リスク:自己生成メモリは自己プロンプトインジェクションになり得るか",
+      "titleEn": "",
+      "summaryJa": "TL;DR 2026年5月6日、AnthropicがClaude Managed Agents向けに Dreaming 機能を発表した[1]。エージェントがセッション間に自身の過去ログを読み返し、メモリを自動的に統合・削除・パターン抽出する",
+      "summaryEn": "Claude Dreamingの構造的リスク:自己生成メモリは自己プロンプトインジェクションになり得るか",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T17:32:41.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--_jt3_gdh--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Claude%2520Dreaming%25E3%2581%25AE%25E6%25A7%258B%25E9%2580%25A0%25E7%259A%2584%25E3%2583%25AA%25E3%2582%25B9%25E3%2582%25AF%253A%25E8%2587%25AA%25E5%25B7%25B1%25E7%2594%259F%25E6%2588%2590%25E3%2583%25A1%25E3%2583%25A2%25E3%2583%25AA%25E3%2581%25AF%25E8%2587%25AA%25E5%25B7%25B1%25E3%2583%2597%25E3%2583%25AD%25E3%2583%25B3%25E3%2583%2597%25E3%2583%2588%25E3%2582%25A4%25E3%2583%25B3%25E3%2582%25B8%25E3%2582%25A7%25E3%2582%25AF%25E3%2582%25B7%25E3%2583%25A7%25E3%2583%25B3%25E3%2581%25AB%25E3%2581%25AA%25E3%2582%258A%25E5%25BE%2597%25E3%2582%258B%25E3%2581%258B%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2582%25A8%25E3%2583%259F%25E3%2583%25AA%25E3%2582%25A2%25E3%2583%25A9%25E3%2583%259C%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS2VSb2prb3BSbUJNNDRIX3JOYkZNaEV1TWlURG03ZXJLTmthOFRRTmMwNGg4ODFtTnM9czI1MC1j%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--_jt3_gdh--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Claude%2520Dreaming%25E3%2581%25AE%25E6%25A7%258B%25E9%2580%25A0%25E7%259A%2584%25E3%2583%25AA%25E3%2582%25B9%25E3%2582%25AF%253A%25E8%2587%25AA%25E5%25B7%25B1%25E7%2594%259F%25E6%2588%2590%25E3%2583%25A1%25E3%2583%25A2%25E3%2583%25AA%25E3%2581%25AF%25E8%2587%25AA%25E5%25B7%25B1%25E3%2583%2597%25E3%2583%25AD%25E3%2583%25B3%25E3%2583%2597%25E3%2583%2588%25E3%2582%25A4%25E3%2583%25B3%25E3%2582%25B8%25E3%2582%25A7%25E3%2582%25AF%25E3%2582%25B7%25E3%2583%25A7%25E3%2583%25B3%25E3%2581%25AB%25E3%2581%25AA%25E3%2582%258A%25E5%25BE%2597%25E3%2582%258B%25E3%2581%258B%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2582%25A8%25E3%2583%259F%25E3%2583%25AA%25E3%2582%25A2%25E3%2583%25A9%25E3%2583%259C%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS2VSb2prb3BSbUJNNDRIX3JOYkZNaEV1TWlURG03ZXJLTmthOFRRTmMwNGg4ODFtTnM9czI1MC1j%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
+        "alt": "Claude Dreamingの構造的リスク:自己生成メモリは自己プロンプトインジェクションになり得るか",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "bodyJa": "Claude Dreamingの構造的リスク:自己生成メモリは自己プロンプトインジェクションになり得るか は、zenn-claude が伝えた claude 領域の更新です。TL;DR 2026年5月6日、AnthropicがClaude Managed Agents向けに Dreaming 機能を発表した[1]。エージェントがセッション間に自身の過去ログを読み返し、メモリを自動的に統合・削除・パターン抽出する。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"Claude Dreamingの構造的リスク:自己生成メモリは自己プロンプトインジェクションになり得るか\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
+      "id": "273f2495e7d3d186",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-05-18-audit-repository-copilot-cloud-agent-configuration-via-the-rest-api",
+      "title": "Audit repository Copilot cloud agent configuration via the REST API",
+      "titleJa": "",
+      "titleEn": "Audit repository Copilot cloud agent configuration via the REST API",
+      "summaryJa": "このエントリは github-changelog から収集した copilot 領域の最新アップデートです。原題:「Audit repository Copilot cloud agent configuration via the REST API」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "You can now programmatically audit a repository’s Copilot cloud agent configuration with the new Get Copilot cloud agent configuration for a repository REST API, available in public preview. The new… ",
+      "lang": "en",
+      "publishedAt": "2026-05-18T16:43:19.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "agent",
+        "changelog",
+        "github"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://github.blog/wp-content/themes/github-2021-child/dist/img/social-v3-new-releases.jpg",
+        "origSrc": "https://github.blog/wp-content/themes/github-2021-child/dist/img/social-v3-new-releases.jpg",
+        "alt": "Audit repository Copilot cloud agent configuration via the REST API",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "bodyJa": "このエントリは github-changelog から収集した copilot 領域の最新アップデートです。原題は「Audit repository Copilot cloud agent configuration via the REST API」。このエントリは github-changelog から収集した copilot 領域の最新アップデートです。原題:「Audit repository Copilot cloud agent configuration via the REST API」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。changelog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは agent, changelog, github です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "Audit repository Copilot cloud agent configuration via the REST API is a copilot update collected from github-changelog. You can now programmatically audit a repository’s Copilot cloud agent configuration with the new Get Copilot cloud agent configuration for a repository REST API, available in public preview. The new….\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For changelog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include agent, changelog, github. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
+      "id": "86ce995ee240018a",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/edhiblemeer/articles/claude-peers-org-hierarchy-line-bridge",
+      "title": "claude-peers MCP に組織階層を被せた設計 — AI 開発から LINE を取り上げた話",
+      "titleJa": "claude-peers MCP に組織階層を被せた設計 — AI 開発から LINE を取り上げた話",
+      "titleEn": "",
+      "summaryJa": "はじめに 協業先の peer (物流系小規模事業者向け SaaS チーム) が 複数 AI セッション + LINE グループ双方向通信 を構築しているのを、 設計レビュー側として観察していました。 その中で投入された設計判断がマルチエージ",
+      "summaryEn": "claude-peers MCP に組織階層を被せた設計 — AI 開発から LINE を取り上げた話",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T16:28:51.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--MoQtHCqT--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:claude-peers%2520MCP%2520%25E3%2581%25AB%25E7%25B5%2584%25E7%25B9%2594%25E9%259A%258E%25E5%25B1%25A4%25E3%2582%2592%25E8%25A2%25AB%25E3%2581%259B%25E3%2581%259F%25E8%25A8%25AD%25E8%25A8%2588%2520%25E2%2580%2594%2520AI%2520%25E9%2596%258B%25E7%2599%25BA%25E3%2581%258B%25E3%2582%2589%2520LINE%2520%25E3%2582%2592%25E5%258F%2596%25E3%2582%258A%25E4%25B8%258A%25E3%2581%2592%25E3%2581%259F%25E8%25A9%25B1%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:yoshi%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSUlNTndyWXA4SHpUR3FEX2QtOTJqdHJ2aFUtc2J3c1ViZFpnYzVpMlBJc3kwSEpUNklfdz1zOTYtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--MoQtHCqT--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:claude-peers%2520MCP%2520%25E3%2581%25AB%25E7%25B5%2584%25E7%25B9%2594%25E9%259A%258E%25E5%25B1%25A4%25E3%2582%2592%25E8%25A2%25AB%25E3%2581%259B%25E3%2581%259F%25E8%25A8%25AD%25E8%25A8%2588%2520%25E2%2580%2594%2520AI%2520%25E9%2596%258B%25E7%2599%25BA%25E3%2581%258B%25E3%2582%2589%2520LINE%2520%25E3%2582%2592%25E5%258F%2596%25E3%2582%258A%25E4%25B8%258A%25E3%2581%2592%25E3%2581%259F%25E8%25A9%25B1%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:yoshi%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSUlNTndyWXA4SHpUR3FEX2QtOTJqdHJ2aFUtc2J3c1ViZFpnYzVpMlBJc3kwSEpUNklfdz1zOTYtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
+        "alt": "claude-peers MCP に組織階層を被せた設計 — AI 開発から LINE を取り上げた話",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "bodyJa": "claude-peers MCP に組織階層を被せた設計 — AI 開発から LINE を取り上げた話 は、zenn-claude が伝えた claude 領域の更新です。はじめに 協業先の peer (物流系小規模事業者向け SaaS チーム) が 複数 AI セッション + LINE グループ双方向通信 を構築しているのを、 設計レビュー側として観察していました。 その中で投入された設計判断がマルチエージ。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, mcp-server, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"claude-peers MCP に組織階層を被せた設計 — AI 開発から LINE を取り上げた話\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, mcp-server, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
+      "id": "ce569b962885e0e7",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-05-18-copilot-spaces-api-now-generally-available",
+      "title": "Copilot Spaces API now generally available",
+      "titleJa": "",
+      "titleEn": "Copilot Spaces API now generally available",
+      "summaryJa": "このエントリは github-changelog から収集した copilot 領域の最新アップデートです。原題:「Copilot Spaces API now generally available」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Copilot Spaces API is now generally available The GitHub Copilot Spaces API is now generally available. You can programmatically create, read, update, and delete Spaces directly from your own applicat",
+      "lang": "en",
+      "publishedAt": "2026-05-18T16:07:12.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "changelog",
+        "github"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://github.blog/wp-content/uploads/2026/05/584996710-35c6e735-8576-460f-be39-ce983cdfc402.jpeg",
+        "origSrc": "https://github.blog/wp-content/uploads/2026/05/584996710-35c6e735-8576-460f-be39-ce983cdfc402.jpeg",
+        "alt": "Copilot Spaces API now generally available",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "bodyJa": "このエントリは github-changelog から収集した copilot 領域の最新アップデートです。原題は「Copilot Spaces API now generally available」。このエントリは github-changelog から収集した copilot 領域の最新アップデートです。原題:「Copilot Spaces API now generally available」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。changelog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは changelog, github です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "Copilot Spaces API now generally available is a copilot update collected from github-changelog. Copilot Spaces API is now generally available The GitHub Copilot Spaces API is now generally available. You can programmatically create, read, update, and delete Spaces directly from your own applicat.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For changelog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include changelog, github. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
     {
       "id": "bacc77ede4c24fc8",
       "source": "anthropic-news",
@@ -98,6 +228,30 @@
       },
       "bodyJa": "このエントリは huggingface-blog から収集した local-llm 領域の最新アップデートです。原題は「Fine-Tuning NVIDIA Cosmos Predict 2.5 with LoRA/DoRA for Robot Video Generation」。このエントリは huggingface-blog から収集した local-llm 領域の最新アップデートです。原題:「Fine-Tuning NVIDIA Cosmos Predict 2.5 with LoRA/DoRA for Robot Video Generation」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは huggingface, open-model です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
       "bodyEn": "Fine-Tuning NVIDIA Cosmos Predict 2.5 with LoRA/DoRA for Robot Video Generation is a local-llm update collected from huggingface-blog. Fine-Tuning NVIDIA Cosmos Predict 2.5 with LoRA/DoRA for Robot Video Generation.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include huggingface, open-model. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
+      "id": "4aeb8d217a363b3f",
+      "source": "microsoft-source",
+      "sourceType": "blog",
+      "url": "https://opensource.microsoft.com/blog/2026/05/18/from-open-source-to-agentic-systems-microsoft-at-open-source-summit-north-america-2026/",
+      "title": "Microsoft shares 2 new Azure Linux offerings at Open Source Summit North America 2026",
+      "titleJa": "",
+      "titleEn": "Microsoft shares 2 new Azure Linux offerings at Open Source Summit North America 2026",
+      "summaryJa": "このエントリは microsoft-source から収集した tech-news 領域の最新アップデートです。原題:「Microsoft shares 2 new Azure Linux offerings at Open Source Summit North America 2026」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "The post Microsoft shares 2 new Azure Linux offerings at Open Source Summit North America 2026 appeared first on Source .",
+      "lang": "en",
+      "publishedAt": "2026-05-18T15:47:02.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "microsoft",
+        "news"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "bodyJa": "このエントリは microsoft-source から収集した tech-news 領域の最新アップデートです。原題は「Microsoft shares 2 new Azure Linux offerings at Open Source Summit North America 2026」。このエントリは microsoft-source から収集した tech-news 領域の最新アップデートです。原題:「Microsoft shares 2 new Azure Linux offerings at Open Source Summit North America 2026」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは microsoft, news です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "Microsoft shares 2 new Azure Linux offerings at Open Source Summit North America 2026 is a tech-news update collected from microsoft-source. The post Microsoft shares 2 new Azure Linux offerings at Open Source Summit North America 2026 appeared first on Source .\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include microsoft, news. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "dd31ab27f93e038f",
@@ -255,15 +409,18 @@
       "summaryEn": "[手順解説] 生成AIでWebサイトを高速作成して無料公開するまで",
       "lang": "ja",
       "publishedAt": "2026-05-18T14:38:57.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "claude",
-        "qiita"
+        "qiita",
+        "llm"
       ],
       "category": "claude",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
+      "bodyJa": "[手順解説] 生成AIでWebサイトを高速作成して無料公開するまで は、qiita-claude が伝えた claude 領域の更新です。AIエージェントで試しにWebサイトを無料で作って公開してみた はじめに Claude CodeやCodexなどのAIエージェントを使い始めると、「コードを書いてもらえるなら、Webサイトも作れるんじゃ？」と思うことがあります。 でも、いざ。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, qiita です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"[手順解説] 生成AIでWebサイトを高速作成して無料公開するまで\" is a claude update collected from qiita-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, qiita. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material.",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDQzNDA3MiUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc3OTExMjEwMD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MDRiOGQ3NzVhMmY1NTI5Y2QyNGJhNTQwNDk5OWVkYTM%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dee176ad4c3ff4d2d62b490b2b8f5da92?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JTVCJUU2JTg5JThCJUU5JUEwJTg2JUU4JUE3JUEzJUU4JUFBJUFDJTVEJTIwJUU3JTk0JTlGJUU2JTg4JTkwQUklRTMlODElQTdXZWIlRTMlODIlQjUlRTMlODIlQTQlRTMlODMlODglRTMlODIlOTIlRTklQUIlOTglRTklODAlOUYlRTQlQkQlOUMlRTYlODglOTAlRTMlODElOTclRTMlODElQTYlRTclODQlQTElRTYlOTYlOTklRTUlODUlQUMlRTklOTYlOEIlRTMlODElOTklRTMlODIlOEIlRTMlODElQkUlRTMlODElQTcmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz01NzNmZmNjNWM2MzNkYmQ1NWM3ODAyYTJlNjg1MDcxZQ&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBhbHBoYTEyMyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTMxMmIyNjBiZjMwY2ZkZTI3NjI4ZWY1NmVjOWE0Njkz&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=3bd4fdb8ff660692cd9c77c3101d1bb4",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDQzNDA3MiUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc3OTExMjEwMD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MDRiOGQ3NzVhMmY1NTI5Y2QyNGJhNTQwNDk5OWVkYTM%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dee176ad4c3ff4d2d62b490b2b8f5da92?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JTVCJUU2JTg5JThCJUU5JUEwJTg2JUU4JUE3JUEzJUU4JUFBJUFDJTVEJTIwJUU3JTk0JTlGJUU2JTg4JTkwQUklRTMlODElQTdXZWIlRTMlODIlQjUlRTMlODIlQTQlRTMlODMlODglRTMlODIlOTIlRTklQUIlOTglRTklODAlOUYlRTQlQkQlOUMlRTYlODglOTAlRTMlODElOTclRTMlODElQTYlRTclODQlQTElRTYlOTYlOTklRTUlODUlQUMlRTklOTYlOEIlRTMlODElOTklRTMlODIlOEIlRTMlODElQkUlRTMlODElQTcmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz01NzNmZmNjNWM2MzNkYmQ1NWM3ODAyYTJlNjg1MDcxZQ&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBhbHBoYTEyMyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTMxMmIyNjBiZjMwY2ZkZTI3NjI4ZWY1NmVjOWE0Njkz&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=3bd4fdb8ff660692cd9c77c3101d1bb4",
@@ -271,9 +428,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "bodyJa": "[手順解説] 生成AIでWebサイトを高速作成して無料公開するまで は、qiita-claude が伝えた claude 領域の更新です。AIエージェントで試しにWebサイトを無料で作って公開してみた はじめに Claude CodeやCodexなどのAIエージェントを使い始めると、「コードを書いてもらえるなら、Webサイトも作れるんじゃ？」と思うことがあります。 でも、いざ。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, qiita です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
-      "bodyEn": "The source item \"[手順解説] 生成AIでWebサイトを高速作成して無料公開するまで\" is a claude update collected from qiita-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, qiita. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+      }
     },
     {
       "id": "40da92602a29f558",
@@ -307,6 +462,79 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "4f3c6604bc9473a2",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kashi923/articles/d3b102ef74d848",
+      "title": "Part 3: Claude Codeでやらかした話 (3/3) — どう防ぐのか: 多層防御の設計",
+      "titleJa": "Part 3: Claude Codeでやらかした話 (3/3) — どう防ぐのか: 多層防御の設計",
+      "titleEn": "",
+      "summaryJa": "Claude Codeでやらかした話 (3/3) — どう防ぐのか: 多層防御の設計 3部作の最終回。Part 1のRoot Cause、Part 2の症状カタログを踏まえて、実際にどう仕組みで防ぐかを整理する。 執筆について: 本記事の構",
+      "summaryEn": "Part 3: Claude Codeでやらかした話 (3/3) — どう防ぐのか: 多層防御の設計",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T14:18:23.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "Part 3: Claude Codeでやらかした話 (3/3) — どう防ぐのか: 多層防御の設計 は、zenn-claude が伝えた claude 領域の更新です。Claude Codeでやらかした話 (3/3) — どう防ぐのか: 多層防御の設計 3部作の最終回。Part 1のRoot Cause、Part 2の症状カタログを踏まえて、実際にどう仕組みで防ぐかを整理する。 執筆について: 本記事の構。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"Part 3: Claude Codeでやらかした話 (3/3) — どう防ぐのか: 多層防御の設計\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
+      "id": "df32a193aee8bd1b",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/metalmental/articles/20260518_anthropic-timeout",
+      "title": "AWS LambdaでClaude Code Agent SDK利用時のタイムアウト解決方法",
+      "titleJa": "AWS LambdaでClaude Code Agent SDK利用時のタイムアウト解決方法",
+      "titleEn": "",
+      "summaryJa": "背景 Strands Agentsやめて、ClaudeのAgent SDKをLambdaで利用しようとしたらtimeoutが発生して動作しなかった 結論 Lambdaの環境変数にキー: HOME、値: /tmp を設定すると解決しました C",
+      "summaryEn": "AWS LambdaでClaude Code Agent SDK利用時のタイムアウト解決方法",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T14:18:04.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "agent",
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "AWS LambdaでClaude Code Agent SDK利用時のタイムアウト解決方法 は、zenn-claude が伝えた claude 領域の更新です。背景 Strands Agentsやめて、ClaudeのAgent SDKをLambdaで利用しようとしたらtimeoutが発生して動作しなかった 結論 Lambdaの環境変数にキー: HOME、値: /tmp を設定すると解決しました C。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは agent, claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"AWS LambdaでClaude Code Agent SDK利用時のタイムアウト解決方法\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include agent, claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
+      "id": "e59c277b573ed46e",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/syoshida07/articles/2cf17404da70db",
+      "title": "M365 Copilot と Claude が生んだ静かな派閥対立化と、組織が取るべきAI共存の道",
+      "titleJa": "M365 Copilot と Claude が生んだ静かな派閥対立化と、組織が取るべきAI共存の道",
+      "titleEn": "",
+      "summaryJa": "企業導入が進むM365 CopilotとClaudeは、どちらか一方を選ぶ排他的な選択ではなく、業務領域に応じて使い分けられる補完的なAIである。 CopilotはM365アプリとの統合性が高く、日常業務の効率化や文書処理に強みを持つ。一方",
+      "summaryEn": "M365 Copilot と Claude が生んだ静かな派閥対立化と、組織が取るべきAI共存の道",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T14:17:58.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "M365 Copilot と Claude が生んだ静かな派閥対立化と、組織が取るべきAI共存の道 は、zenn-claude が伝えた claude 領域の更新です。企業導入が進むM365 CopilotとClaudeは、どちらか一方を選ぶ排他的な選択ではなく、業務領域に応じて使い分けられる補完的なAIである。 CopilotはM365アプリとの統合性が高く、日常業務の効率化や文書処理に強みを持つ。一方。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"M365 Copilot と Claude が生んだ静かな派閥対立化と、組織が取るべきAI共存の道\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "555f7e8e423a83fc",
@@ -366,6 +594,30 @@
       "bodyEn": "Did Artemis II break through? Registrations at Space Camp double afterward. is a tech-news update collected from ars-technica. Isaacman's $25 million donation leads to impressive new facilities.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include ars-technica, news. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
+      "id": "a98b3cd919eeb4d5",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/yuki1027/articles/e82bf4b89552ae",
+      "title": "Claude Codeハーネス機能詳解：CLAUDE.md・SKILLS・HOOKで開発を制御する",
+      "titleJa": "Claude Codeハーネス機能詳解：CLAUDE.md・SKILLS・HOOKで開発を制御する",
+      "titleEn": "",
+      "summaryJa": "はじめに Claude Codeには多くのビルトイン機能がありますが、その中でもハーネス機能は、AI支援開発の振る舞いを制御する重要な仕組みです。 ハーネス機能とは、Claude Codeの動作を制御・カスタマイズするための設定ファイルや機",
+      "summaryEn": "Claude Codeハーネス機能詳解：CLAUDE.md・SKILLS・HOOKで開発を制御する",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T13:44:55.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "Claude Codeハーネス機能詳解：CLAUDE.md・SKILLS・HOOKで開発を制御する は、zenn-claude が伝えた claude 領域の更新です。はじめに Claude Codeには多くのビルトイン機能がありますが、その中でもハーネス機能は、AI支援開発の振る舞いを制御する重要な仕組みです。 ハーネス機能とは、Claude Codeの動作を制御・カスタマイズするための設定ファイルや機。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"Claude Codeハーネス機能詳解：CLAUDE.md・SKILLS・HOOKで開発を制御する\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
       "id": "6330aea0b052e741",
       "source": "techcrunch",
       "sourceType": "blog",
@@ -388,6 +640,30 @@
       "archiveTier": "hot",
       "bodyJa": "このエントリは techcrunch から収集した tech-news 領域の最新アップデートです。原題は「Open source tool maker Grafana Labs says hackers stole its code, refuses to pay ransom」。このエントリは techcrunch から収集した tech-news 領域の最新アップデートです。原題:「Open source tool maker Grafana Labs says hackers stole its code, refuses to pay ransom」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは news, techcrunch です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
       "bodyEn": "Open source tool maker Grafana Labs says hackers stole its code, refuses to pay ransom is a tech-news update collected from techcrunch. The open source project said hackers stole its codebase and threatened to publish its source code if the company did not pay.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include news, techcrunch. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
+      "id": "c13ca2e385b7c06d",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/bentenweb_fumi/articles/9waf37o4ouqp",
+      "title": "AIにSEO記事を書かせると「ありきたり」になる本当の理由——成否を分ける「一次情報」の組み込み方",
+      "titleJa": "AIにSEO記事を書かせると「ありきたり」になる本当の理由——成否を分ける「一次情報」の組み込み方",
+      "titleEn": "",
+      "summaryJa": "以下、リライト記事です。 AIに記事を書かせると、文法は正しいのにどこかで読んだことがあるような、薄くて記憶に残らない文章になってしまう。そんな悩みを持つ人は多いはずです。 本記事は、Xで30万インプレッションを記録した「AI SEO記事作",
+      "summaryEn": "AIにSEO記事を書かせると「ありきたり」になる本当の理由——成否を分ける「一次情報」の組み込み方",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T13:29:14.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "AIにSEO記事を書かせると「ありきたり」になる本当の理由——成否を分ける「一次情報」の組み込み方 は、zenn-claude が伝えた claude 領域の更新です。以下、リライト記事です。 AIに記事を書かせると、文法は正しいのにどこかで読んだことがあるような、薄くて記憶に残らない文章になってしまう。そんな悩みを持つ人は多いはずです。 本記事は、Xで30万インプレッションを記録した「AI SEO記事作。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"AIにSEO記事を書かせると「ありきたり」になる本当の理由——成否を分ける「一次情報」の組み込み方\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "b0a54611a6ff1bd3",
@@ -422,6 +698,30 @@
       "bodyEn": "Bug bounty businesses bombarded with AI slop is a tech-news update collected from ars-technica. \"Never-ending\" AI slop strains corporate hacking reward schemes.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include ars-technica, news. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
+      "id": "dc12a3b558340ccc",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/westhouse_k/articles/6a6fb41ca9409a",
+      "title": "Claude Code の作業完了を音で知らせる（Hooks 設定）",
+      "titleJa": "Claude Code の作業完了を音で知らせる（Hooks 設定）",
+      "titleEn": "",
+      "summaryJa": "はじめに Claude Code の作業完了・質問・権限要求を、Hooks で macOS の標準サウンドに鳴らし分ける設定をまとめます。 Hooks とは Hooks は Claude Code 側のイベントに対して、ユーザーが定義したコ",
+      "summaryEn": "Claude Code の作業完了を音で知らせる（Hooks 設定）",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T13:22:26.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "Claude Code の作業完了を音で知らせる（Hooks 設定） は、zenn-claude が伝えた claude 領域の更新です。はじめに Claude Code の作業完了・質問・権限要求を、Hooks で macOS の標準サウンドに鳴らし分ける設定をまとめます。 Hooks とは Hooks は Claude Code 側のイベントに対して、ユーザーが定義したコ。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"Claude Code の作業完了を音で知らせる（Hooks 設定）\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
       "id": "73dc19125c8b43ca",
       "source": "qiita-claude",
       "sourceType": "blog",
@@ -433,15 +733,18 @@
       "summaryEn": "将棋エンジンの読み筋をLLMに解説させたら、ClaudeとChatGPTで差が出た話",
       "lang": "ja",
       "publishedAt": "2026-05-18T13:21:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "claude",
-        "qiita"
+        "qiita",
+        "llm"
       ],
       "category": "claude",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
+      "bodyJa": "将棋エンジンの読み筋をLLMに解説させたら、ClaudeとChatGPTで差が出た話 は、qiita-claude が伝えた claude 領域の更新です。将棋AIというと、一般的には「どの手が最善か」を計算するエンジンの強さに注目が集まりがちです。 しかし、個人開発で将棋コーチAIを作っていると、もう一つ大きな課題にぶつかります。 それは、エンジンが出した最善手・評価値・読み筋を、人間が理解。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, qiita です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"将棋エンジンの読み筋をLLMに解説させたら、ClaudeとChatGPTで差が出た話\" is a claude update collected from qiita-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, qiita. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material.",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkYwMTdmNTNlYmQ1YmI5MmM3MzY5NGI3YzgyNmQzNjVmYz9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9NDcyNDhkNDYzN2RlN2MxZWZlNzhjYzc3ZTY0ZDAxODA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D2439d395b2eb8b7e76f549324fec2853?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUU1JUIwJTg2JUU2JUEzJThCJUUzJTgyJUE4JUUzJTgzJUIzJUUzJTgyJUI4JUUzJTgzJUIzJUUzJTgxJUFFJUU4JUFBJUFEJUUzJTgxJUJGJUU3JUFEJThCJUUzJTgyJTkyTExNJUUzJTgxJUFCJUU4JUE3JUEzJUU4JUFBJUFDJUUzJTgxJTk1JUUzJTgxJTlCJUUzJTgxJTlGJUUzJTgyJTg5JUUzJTgwJTgxQ2xhdWRlJUUzJTgxJUE4Q2hhdEdQVCVFMyU4MSVBNyVFNSVCNyVBRSVFMyU4MSU4QyVFNSU4NyVCQSVFMyU4MSU5RiVFOCVBOSVCMSZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWYzY2QyNmRhZGYwNTMyZTVkZGNjZmQyOWI4NTg5ZmEz&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzc2swMDIyNiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTIyZDI4YTg2OTdlMGQwMzNhMTQ0NTRiZjEyMTA2ZWMz&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=a090700141031309b5fa27223068e383",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkYwMTdmNTNlYmQ1YmI5MmM3MzY5NGI3YzgyNmQzNjVmYz9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9NDcyNDhkNDYzN2RlN2MxZWZlNzhjYzc3ZTY0ZDAxODA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D2439d395b2eb8b7e76f549324fec2853?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUU1JUIwJTg2JUU2JUEzJThCJUUzJTgyJUE4JUUzJTgzJUIzJUUzJTgyJUI4JUUzJTgzJUIzJUUzJTgxJUFFJUU4JUFBJUFEJUUzJTgxJUJGJUU3JUFEJThCJUUzJTgyJTkyTExNJUUzJTgxJUFCJUU4JUE3JUEzJUU4JUFBJUFDJUUzJTgxJTk1JUUzJTgxJTlCJUUzJTgxJTlGJUUzJTgyJTg5JUUzJTgwJTgxQ2xhdWRlJUUzJTgxJUE4Q2hhdEdQVCVFMyU4MSVBNyVFNSVCNyVBRSVFMyU4MSU4QyVFNSU4NyVCQSVFMyU4MSU5RiVFOCVBOSVCMSZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWYzY2QyNmRhZGYwNTMyZTVkZGNjZmQyOWI4NTg5ZmEz&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzc2swMDIyNiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTIyZDI4YTg2OTdlMGQwMzNhMTQ0NTRiZjEyMTA2ZWMz&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=a090700141031309b5fa27223068e383",
@@ -449,9 +752,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "bodyJa": "将棋エンジンの読み筋をLLMに解説させたら、ClaudeとChatGPTで差が出た話 は、qiita-claude が伝えた claude 領域の更新です。将棋AIというと、一般的には「どの手が最善か」を計算するエンジンの強さに注目が集まりがちです。 しかし、個人開発で将棋コーチAIを作っていると、もう一つ大きな課題にぶつかります。 それは、エンジンが出した最善手・評価値・読み筋を、人間が理解。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, qiita です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
-      "bodyEn": "The source item \"将棋エンジンの読み筋をLLMに解説させたら、ClaudeとChatGPTで差が出た話\" is a claude update collected from qiita-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, qiita. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+      }
     },
     {
       "id": "0b9a0911b4b5bfc7",
@@ -487,6 +788,30 @@
       }
     },
     {
+      "id": "35b2d1989c5b8d4e",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-05-18-remote-control-for-copilot-cli-sessions-now-generally-available-on-mobile-web-and-vs-code",
+      "title": "Remote control for Copilot CLI sessions now generally available on mobile, web, and VS Code",
+      "titleJa": "",
+      "titleEn": "Remote control for Copilot CLI sessions now generally available on mobile, web, and VS Code",
+      "summaryJa": "このエントリは github-changelog から収集した copilot 領域の最新アップデートです。原題:「Remote control for Copilot CLI sessions now generally available on mobile, web, and VS Code」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Remote control for Copilot CLI sessions is now generally available on GitHub Mobile and github.com, so you can start work in your terminal and keep it moving from anywhere. With… The post Remote contr",
+      "lang": "en",
+      "publishedAt": "2026-05-18T13:00:16.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "changelog",
+        "github"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "bodyJa": "このエントリは github-changelog から収集した copilot 領域の最新アップデートです。原題は「Remote control for Copilot CLI sessions now generally available on mobile, web, and VS Code」。このエントリは github-changelog から収集した copilot 領域の最新アップデートです。原題:「Remote control for Copilot CLI sessions now generally available on mobile, web, and VS Code」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。changelog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは changelog, github です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "Remote control for Copilot CLI sessions now generally available on mobile, web, and VS Code is a copilot update collected from github-changelog. Remote control for Copilot CLI sessions is now generally available on GitHub Mobile and github.com, so you can start work in your terminal and keep it moving from anywhere. With… The post Remote contr.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For changelog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include changelog, github. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
       "id": "726a2745cd2db227",
       "source": "qiita-claude",
       "sourceType": "blog",
@@ -498,7 +823,7 @@
       "summaryEn": "Claudeで働き方が変わった話",
       "lang": "ja",
       "publishedAt": "2026-05-18T12:38:56.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "claude",
         "qiita"
@@ -507,6 +832,8 @@
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
+      "bodyJa": "Claudeで働き方が変わった話 は、qiita-claude が伝えた claude 領域の更新です。背景 正直、働き方というレベルにより、生き方とか価値観が刷新されたレベルで、未だに言語化できないくらい消化できていないけど、直近１ヶ月触ってみての備忘録的な感じで書いてます。 ４月にAIエンジニアとして転職をして、今までガチガチに外からのダ。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, qiita です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"Claudeで働き方が変わった話\" is a claude update collected from qiita-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, qiita. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material.",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUFUWEFKd3hiQzNqVnVZdmNtZlM1bm1vZmN0bklZQmZuZXJjQ1J0WlR1U2QlM0RzNTAtbW8_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTliMjZiYjgwZjUwMDdlN2FjYTBmZDRjMzNhYjRjZWJj%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D7af8e49bfbc33936483fa625a487ef42?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Q2xhdWRlJUUzJTgxJUE3JUU1JTgzJThEJUUzJTgxJThEJUU2JTk2JUI5JUUzJTgxJThDJUU1JUE0JTg5JUUzJTgyJThGJUUzJTgxJUEzJUUzJTgxJTlGJUU4JUE5JUIxJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MjBkNTBmNjM0YWU3NjM3ZjkzZTExYmM4NDM5Yjc1MWE&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBob3JvNTA1OTkmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1hZjU0NWZlNTcwZDRiZDQ4ODllMmM3ZmNlNGZmNzYwOA&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=2832fdb49232805a168c3b3a770087a5",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUFUWEFKd3hiQzNqVnVZdmNtZlM1bm1vZmN0bklZQmZuZXJjQ1J0WlR1U2QlM0RzNTAtbW8_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTliMjZiYjgwZjUwMDdlN2FjYTBmZDRjMzNhYjRjZWJj%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D7af8e49bfbc33936483fa625a487ef42?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Q2xhdWRlJUUzJTgxJUE3JUU1JTgzJThEJUUzJTgxJThEJUU2JTk2JUI5JUUzJTgxJThDJUU1JUE0JTg5JUUzJTgyJThGJUUzJTgxJUEzJUUzJTgxJTlGJUU4JUE5JUIxJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MjBkNTBmNjM0YWU3NjM3ZjkzZTExYmM4NDM5Yjc1MWE&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBob3JvNTA1OTkmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1hZjU0NWZlNTcwZDRiZDQ4ODllMmM3ZmNlNGZmNzYwOA&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=2832fdb49232805a168c3b3a770087a5",
@@ -514,9 +841,31 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "bodyJa": "Claudeで働き方が変わった話 は、qiita-claude が伝えた claude 領域の更新です。背景 正直、働き方というレベルにより、生き方とか価値観が刷新されたレベルで、未だに言語化できないくらい消化できていないけど、直近１ヶ月触ってみての備忘録的な感じで書いてます。 ４月にAIエンジニアとして転職をして、今までガチガチに外からのダ。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, qiita です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
-      "bodyEn": "The source item \"Claudeで働き方が変わった話\" is a claude update collected from qiita-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, qiita. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+      }
+    },
+    {
+      "id": "1818c92218ef6ac3",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/syglr1/articles/2fe433ebb2f95c",
+      "title": "プログラミング未経験者がClaude AIと一緒に神経衰弱ゲームを作ってWeb公開するまで",
+      "titleJa": "プログラミング未経験者がClaude AIと一緒に神経衰弱ゲームを作ってWeb公開するまで",
+      "titleEn": "",
+      "summaryJa": "はじめに プログラミングの経験がない私が、Claude AIのサポートを受けながら神経衰弱ゲームをゼロから作り、GitHub PagesとItch.ioで公開するまでの記録です。 「AIがあればプログラミング未経験でもゲームが作れるのか？」",
+      "summaryEn": "プログラミング未経験者がClaude AIと一緒に神経衰弱ゲームを作ってWeb公開するまで",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T12:31:05.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "プログラミング未経験者がClaude AIと一緒に神経衰弱ゲームを作ってWeb公開するまで は、zenn-claude が伝えた claude 領域の更新です。はじめに プログラミングの経験がない私が、Claude AIのサポートを受けながら神経衰弱ゲームをゼロから作り、GitHub PagesとItch.ioで公開するまでの記録です。 「AIがあればプログラミング未経験でもゲームが作れるのか？」。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"プログラミング未経験者がClaude AIと一緒に神経衰弱ゲームを作ってWeb公開するまで\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "99501b77ae9dc0f9",
@@ -617,7 +966,7 @@
       "summaryEn": "AI コーディングの「銀の弾丸」は存在しない。3 言語・100 ルール統計検証で見えた、二層構造 (Linter + AI Judge) の真価",
       "lang": "ja",
       "publishedAt": "2026-05-18T11:31:53.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "claude",
         "qiita"
@@ -626,6 +975,8 @@
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
+      "bodyJa": "AI コーディングの「銀の弾丸」は存在しない。3 言語・100 ルール統計検証で見えた、二層構造 (Linter + AI Judge) の真価 は、qiita-claude が伝えた claude 領域の更新です。この記事で分かること (3 行) 📊 Claude 3 モデル × 100 ルール × 3 言語で N=10 検証した実機データを全公開 — 全 31 試行の生データ + Welch's t-test まで 💡 統計的に「Opus と。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, qiita です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"AI コーディングの「銀の弾丸」は存在しない。3 言語・100 ルール統計検証で見えた、二層構造 (Linter + AI Judge) の真価\" is a claude update collected from qiita-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, qiita. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material.",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMzQ3Njc0MyUyRnByb2ZpbGUtaW1hZ2VzJTJGMTcwMjk5NjAzNT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MTNlNWMzOTg3NzMxY2I0YTgzZGY4NGUxNzlhY2Y2NTE%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZlZGVmZDYzYWY5NmYzN2EzZjhlZWU1YTQ3MzJhNjk1MTc3ZjM3MjgzJTJGb3JpZ2luYWwuanBnJTNGMTcwMTMyMzU1OT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0xYzU4YWM2NDU4MjRlYmU4YTE3ZDA2MGUyZTZjYjk5ZQ%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D5adf6b1c0ddfa045849ce7cc85dd669f?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QUklMjAlRTMlODIlQjMlRTMlODMlQkMlRTMlODMlODclRTMlODIlQTMlRTMlODMlQjMlRTMlODIlQjAlRTMlODElQUUlRTMlODAlOEMlRTklOEElODAlRTMlODElQUUlRTUlQkMlQkUlRTQlQjglQjglRTMlODAlOEQlRTMlODElQUYlRTUlQUQlOTglRTUlOUMlQTglRTMlODElOTclRTMlODElQUElRTMlODElODQlRTMlODAlODIzJTIwJUU4JUE4JTgwJUU4JUFBJTlFJUUzJTgzJUJCMTAwJTIwJUUzJTgzJUFCJUUzJTgzJUJDJUUzJTgzJUFCJUU3JUI1JUIxJUU4JUE4JTg4JUU2JUE0JTlDJUU4JUE4JUJDJUUzJTgxJUE3JUU4JUE2JThCJUUzJTgxJTg4JUUzJTgxJTlGJUUzJTgwJTgxJUU0JUJBJThDJUU1JUIxJUE0JUU2JUE3JThCJUU5JTgwJUEwJTIwJTI4TGludGVyJTIwJTJCJUUyJTgwJUE2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9ODk4YmM3M2Q5NWYwMWY4MzM3NjE3MDBkNmMyY2FmNGY&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzaG9fZmNhZmUmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1mMzgzYTYyOTc1MGI0Mzg0MGQ2ZDFjYzVhMWZkNmQ5Ng&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=5qCq5byP5Lya56S-44Ko44OV44Kr44OV44Kn&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%231E2121&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=eacbcfede20fb933aeaa746a443d106e",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMzQ3Njc0MyUyRnByb2ZpbGUtaW1hZ2VzJTJGMTcwMjk5NjAzNT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MTNlNWMzOTg3NzMxY2I0YTgzZGY4NGUxNzlhY2Y2NTE%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZlZGVmZDYzYWY5NmYzN2EzZjhlZWU1YTQ3MzJhNjk1MTc3ZjM3MjgzJTJGb3JpZ2luYWwuanBnJTNGMTcwMTMyMzU1OT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0xYzU4YWM2NDU4MjRlYmU4YTE3ZDA2MGUyZTZjYjk5ZQ%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D5adf6b1c0ddfa045849ce7cc85dd669f?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QUklMjAlRTMlODIlQjMlRTMlODMlQkMlRTMlODMlODclRTMlODIlQTMlRTMlODMlQjMlRTMlODIlQjAlRTMlODElQUUlRTMlODAlOEMlRTklOEElODAlRTMlODElQUUlRTUlQkMlQkUlRTQlQjglQjglRTMlODAlOEQlRTMlODElQUYlRTUlQUQlOTglRTUlOUMlQTglRTMlODElOTclRTMlODElQUElRTMlODElODQlRTMlODAlODIzJTIwJUU4JUE4JTgwJUU4JUFBJTlFJUUzJTgzJUJCMTAwJTIwJUUzJTgzJUFCJUUzJTgzJUJDJUUzJTgzJUFCJUU3JUI1JUIxJUU4JUE4JTg4JUU2JUE0JTlDJUU4JUE4JUJDJUUzJTgxJUE3JUU4JUE2JThCJUUzJTgxJTg4JUUzJTgxJTlGJUUzJTgwJTgxJUU0JUJBJThDJUU1JUIxJUE0JUU2JUE3JThCJUU5JTgwJUEwJTIwJTI4TGludGVyJTIwJTJCJUUyJTgwJUE2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9ODk4YmM3M2Q5NWYwMWY4MzM3NjE3MDBkNmMyY2FmNGY&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzaG9fZmNhZmUmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1mMzgzYTYyOTc1MGI0Mzg0MGQ2ZDFjYzVhMWZkNmQ5Ng&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=5qCq5byP5Lya56S-44Ko44OV44Kr44OV44Kn&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%231E2121&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=eacbcfede20fb933aeaa746a443d106e",
@@ -633,9 +984,55 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "bodyJa": "AI コーディングの「銀の弾丸」は存在しない。3 言語・100 ルール統計検証で見えた、二層構造 (Linter + AI Judge) の真価 は、qiita-claude が伝えた claude 領域の更新です。この記事で分かること (3 行) 📊 Claude 3 モデル × 100 ルール × 3 言語で N=10 検証した実機データを全公開 — 全 31 試行の生データ + Welch's t-test まで 💡 統計的に「Opus と。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, qiita です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
-      "bodyEn": "The source item \"AI コーディングの「銀の弾丸」は存在しない。3 言語・100 ルール統計検証で見えた、二層構造 (Linter + AI Judge) の真価\" is a claude update collected from qiita-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, qiita. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+      }
+    },
+    {
+      "id": "806f4fba71e3789a",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/ai_nowa/articles/ainowa-design-kit-intro",
+      "title": "AIチームが動かない本当の理由 — 役割・監査・コミュニケーション設計キット（導入）",
+      "titleJa": "AIチームが動かない本当の理由 — 役割・監査・コミュニケーション設計キット（導入）",
+      "titleEn": "",
+      "summaryJa": "星野リツ（Creative Director / AI NOWA YouTube編集長） はじめに：監査役が何も通さなくなった日 これは、実際に9人のAI社員を動かしているAI NOWAでの実体験だ。 AIチームを組んで3日目、監査役がすべ",
+      "summaryEn": "AIチームが動かない本当の理由 — 役割・監査・コミュニケーション設計キット（導入）",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T11:25:12.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "AIチームが動かない本当の理由 — 役割・監査・コミュニケーション設計キット（導入） は、zenn-claude が伝えた claude 領域の更新です。星野リツ（Creative Director / AI NOWA YouTube編集長） はじめに：監査役が何も通さなくなった日 これは、実際に9人のAI社員を動かしているAI NOWAでの実体験だ。 AIチームを組んで3日目、監査役がすべ。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"AIチームが動かない本当の理由 — 役割・監査・コミュニケーション設計キット（導入）\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
+      "id": "69c808e3264fc2e9",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/jun3/articles/8af7e01f6fae6e",
+      "title": "Claude Codeで無料の育児ツールを高速開発した話【静的HTML・GitHub Pages】",
+      "titleJa": "Claude Codeで無料の育児ツールを高速開発した話【静的HTML・GitHub Pages】",
+      "titleEn": "",
+      "summaryJa": "育児系の無料ツールを作った。生後日数カウンターと離乳食カレンダーだ。生後日数カウンターは、スマホUIに特化したものが乏しく、広告だらけで見にくいためつくった。離乳食カレンダーは、記録を保存していくものは多々あるが、日々献立を考える中で、与え",
+      "summaryEn": "Claude Codeで無料の育児ツールを高速開発した話【静的HTML・GitHub Pages】",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T11:21:10.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "Claude Codeで無料の育児ツールを高速開発した話【静的HTML・GitHub Pages】 は、zenn-claude が伝えた claude 領域の更新です。育児系の無料ツールを作った。生後日数カウンターと離乳食カレンダーだ。生後日数カウンターは、スマホUIに特化したものが乏しく、広告だらけで見にくいためつくった。離乳食カレンダーは、記録を保存していくものは多々あるが、日々献立を考える中で、与え。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"Claude Codeで無料の育児ツールを高速開発した話【静的HTML・GitHub Pages】\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "e130f15b9862b471",
@@ -960,6 +1357,54 @@
       "bodyEn": "The source item \"この春から、エージェントに自分の知っていることを足すだけの仕事をしています\" is a research update collected from zenn-ai. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
+      "id": "6b0b9c82af8767a2",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/nanairoha/articles/74a41b832c028d",
+      "title": "【AI学習法】HTML初心者がClaudeに学習資料を作ってもらいながら1週間で公開ページを作るまで【HTML編】",
+      "titleJa": "【AI学習法】HTML初心者がClaudeに学習資料を作ってもらいながら1週間で公開ページを作るまで【HTML編】",
+      "titleEn": "",
+      "summaryJa": "はじめに こんにちは、プログラミング学習中のNanaです。 Claudeを家庭教師にして1週間、拙いながらも初めての自己紹介ページをGitHub Pagesに公開できました。 今回プログラミングに興味があるけど何から始めたらいいか分からない",
+      "summaryEn": "【AI学習法】HTML初心者がClaudeに学習資料を作ってもらいながら1週間で公開ページを作るまで【HTML編】",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T10:03:01.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "【AI学習法】HTML初心者がClaudeに学習資料を作ってもらいながら1週間で公開ページを作るまで【HTML編】 は、zenn-claude が伝えた claude 領域の更新です。はじめに こんにちは、プログラミング学習中のNanaです。 Claudeを家庭教師にして1週間、拙いながらも初めての自己紹介ページをGitHub Pagesに公開できました。 今回プログラミングに興味があるけど何から始めたらいいか分からない。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"【AI学習法】HTML初心者がClaudeに学習資料を作ってもらいながら1週間で公開ページを作るまで【HTML編】\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
+      "id": "d860eeedbeb1ed9b",
+      "source": "openai-blog",
+      "sourceType": "blog",
+      "url": "https://openai.com/index/dell-codex-enterprise-partnership",
+      "title": "OpenAI and Dell partner to bring Codex to hybrid and on-premise enterprise environments",
+      "titleJa": "",
+      "titleEn": "OpenAI and Dell partner to bring Codex to hybrid and on-premise enterprise environments",
+      "summaryJa": "このエントリは openai-blog から収集した codex 領域の最新アップデートです。原題:「OpenAI and Dell partner to bring Codex to hybrid and on-premise enterprise environments」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "OpenAI and Dell partner to bring Codex to hybrid and on-premise environments, helping enterprises deploy AI coding agents securely across data and workflows.",
+      "lang": "en",
+      "publishedAt": "2026-05-18T10:00:00.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "enterprise",
+        "openai"
+      ],
+      "category": "codex",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "bodyJa": "このエントリは openai-blog から収集した codex 領域の最新アップデートです。原題は「OpenAI and Dell partner to bring Codex to hybrid and on-premise enterprise environments」。このエントリは openai-blog から収集した codex 領域の最新アップデートです。原題:「OpenAI and Dell partner to bring Codex to hybrid and on-premise enterprise environments」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは enterprise, openai です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "OpenAI and Dell partner to bring Codex to hybrid and on-premise enterprise environments is a codex update collected from openai-blog. OpenAI and Dell partner to bring Codex to hybrid and on-premise environments, helping enterprises deploy AI coding agents securely across data and workflows.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include enterprise, openai. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
       "id": "86f4921b08549f2c",
       "source": "zenn-ai",
       "sourceType": "blog",
@@ -981,6 +1426,30 @@
       "archiveTier": "hot",
       "bodyJa": "モテないターミナル生活、3度目の正直 は、zenn-ai が伝えた research 領域の更新です。ご挨拶 皆さんこんにちは、一関高専 村上研究室所属 小山田です。 新年度のバタバタで記事を書くのが久々になってしまいました。 GWも明け、ここ岩手県一関でも長袖が少し暑い日もでてきました。 ここは奥羽山脈と北上高地に挟まれて盆地っぽい気候が。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
       "bodyEn": "The source item \"モテないターミナル生活、3度目の正直\" is a research update collected from zenn-ai. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
+      "id": "4c1feffe5cd27661",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kojihq/articles/3ef8b697063323",
+      "title": "Claude Code の token を節約する 5 つのコツ (実データで検証)",
+      "titleJa": "Claude Code の token を節約する 5 つのコツ (実データで検証)",
+      "titleEn": "",
+      "summaryJa": "はじめに Pro / Max サブスクは flat fee なので体感少ないですが、 API ユーザーは token 使用量がコスト直結です。 Anthropic 公式の /usage では cache 効率や tool 別パターンまでは見",
+      "summaryEn": "Claude Code の token を節約する 5 つのコツ (実データで検証)",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T09:45:06.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "Claude Code の token を節約する 5 つのコツ (実データで検証) は、zenn-claude が伝えた claude 領域の更新です。はじめに Pro / Max サブスクは flat fee なので体感少ないですが、 API ユーザーは token 使用量がコスト直結です。 Anthropic 公式の /usage では cache 効率や tool 別パターンまでは見。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"Claude Code の token を節約する 5 つのコツ (実データで検証)\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "d57ca44940cd3f08",
@@ -1053,6 +1522,30 @@
       "bodyEn": "The source item \"AIベンダー椅子取りゲームに個人としてどう向き合うか\" is a research update collected from zenn-ai. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
+      "id": "c477c3bbf92a177e",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kai_kou/articles/215-claude-managed-agents-guide",
+      "title": "Claude Managed Agents入門 — インフラ不要でAIエージェントを本番運用する",
+      "titleJa": "Claude Managed Agents入門 — インフラ不要でAIエージェントを本番運用する",
+      "titleEn": "",
+      "summaryJa": "はじめに 2026年4月8日、AnthropicはClaude Managed Agentsをパブリックベータとして公開しました。これは、AIエージェントをAnthropicのマネージドインフラ上で動かすためのフルマネージドエージェントハー",
+      "summaryEn": "Claude Managed Agents入門 — インフラ不要でAIエージェントを本番運用する",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T09:29:07.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "Claude Managed Agents入門 — インフラ不要でAIエージェントを本番運用する は、zenn-claude が伝えた claude 領域の更新です。はじめに 2026年4月8日、AnthropicはClaude Managed Agentsをパブリックベータとして公開しました。これは、AIエージェントをAnthropicのマネージドインフラ上で動かすためのフルマネージドエージェントハー。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"Claude Managed Agents入門 — インフラ不要でAIエージェントを本番運用する\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
       "id": "92714a476cbae966",
       "source": "zenn-ai",
       "sourceType": "blog",
@@ -1092,6 +1585,30 @@
         "zenn"
       ],
       "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "【AI朝メモ 2026/5/18】Claude for Small Business / ChatGPT Personal Finance は、zenn-ai が伝えた research 領域の更新です。50代でAI副業に再挑戦中の AI Side Hustle（@ai_kairos_jp）です。毎朝5分で今日のAI業界ニュースを「副業に効く視点」で整理してお届けします。Zenn では技術視点をやや強めに置いています。 今日（2026/5/。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"【AI朝メモ 2026/5/18】Claude for Small Business / ChatGPT Personal Finance\" is a research update collected from zenn-ai. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
+      "id": "6108cfa3435830a4",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kairosai/articles/fed69a04ddd3c3",
+      "title": "【AI朝メモ 2026/5/18】Claude for Small Business / ChatGPT Personal Finance",
+      "titleJa": "【AI朝メモ 2026/5/18】Claude for Small Business / ChatGPT Personal Finance",
+      "titleEn": "",
+      "summaryJa": "50代でAI副業に再挑戦中の AI Side Hustle（@ai_kairos_jp）です。毎朝5分で今日のAI業界ニュースを「副業に効く視点」で整理してお届けします。Zenn では技術視点をやや強めに置いています。 今日（2026/5/",
+      "summaryEn": "【AI朝メモ 2026/5/18】Claude for Small Business / ChatGPT Personal Finance",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T09:06:18.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -1168,6 +1685,55 @@
       "archiveTier": "hot",
       "bodyJa": "Claude APIで初回トークンの待ち時間を短縮するプロンプトキャッシュの事前ウォームアップ術 は、zenn-ai が伝えた research 領域の更新です。この記事は、@bcherny・@claudeai・@claude_code の投稿をClaudeが自動収集・翻訳・整理して生成しました。内容の正確性は元投稿をご確認ください。 生成日: 2026-05-18 Claude APIで初回トーク。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
       "bodyEn": "The source item \"Claude APIで初回トークンの待ち時間を短縮するプロンプトキャッシュの事前ウォームアップ術\" is a research update collected from zenn-ai. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
+      "id": "70fac076f4fcf3ab",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/ty2/articles/tweet-claudedevs-2055069548672631218",
+      "title": "Claude APIで初回トークンの待ち時間を短縮するプロンプトキャッシュの事前ウォームアップ術",
+      "titleJa": "Claude APIで初回トークンの待ち時間を短縮するプロンプトキャッシュの事前ウォームアップ術",
+      "titleEn": "",
+      "summaryJa": "この記事は、@bcherny・@claudeai・@claude_code の投稿をClaudeが自動収集・翻訳・整理して生成しました。内容の正確性は元投稿をご確認ください。 生成日: 2026-05-18 Claude APIで初回トーク",
+      "summaryEn": "Claude APIで初回トークンの待ち時間を短縮するプロンプトキャッシュの事前ウォームアップ術",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T08:45:49.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "Claude APIで初回トークンの待ち時間を短縮するプロンプトキャッシュの事前ウォームアップ術 は、zenn-ai が伝えた research 領域の更新です。この記事は、@bcherny・@claudeai・@claude_code の投稿をClaudeが自動収集・翻訳・整理して生成しました。内容の正確性は元投稿をご確認ください。 生成日: 2026-05-18 Claude APIで初回トーク。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"Claude APIで初回トークンの待ち時間を短縮するプロンプトキャッシュの事前ウォームアップ術\" is a research update collected from zenn-ai. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
+      "id": "3cdc481e1ee33439",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/tknhs/articles/ea24de4f89cad7",
+      "title": "1Password CLIを使ってMCPサーバーにAPIキーを渡す",
+      "titleJa": "1Password CLIを使ってMCPサーバーにAPIキーを渡す",
+      "titleEn": "",
+      "summaryJa": "MCPサーバーの設定にAPIキーを直書きしたくないので、1Password CLIを使って解消する。 実現方法は付録。現時点でイマイチなことを書きたかった。 注意点：起動のたびに認証を求められる op run は実行のたびに1Passwor",
+      "summaryEn": "1Password CLIを使ってMCPサーバーにAPIキーを渡す",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T08:45:38.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "1Password CLIを使ってMCPサーバーにAPIキーを渡す は、zenn-claude が伝えた claude 領域の更新です。MCPサーバーの設定にAPIキーを直書きしたくないので、1Password CLIを使って解消する。 実現方法は付録。現時点でイマイチなことを書きたかった。 注意点：起動のたびに認証を求められる op run は実行のたびに1Passwor。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, mcp-server, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"1Password CLIを使ってMCPサーバーにAPIキーを渡す\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, mcp-server, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "1c5069f9f2bad0ae",
@@ -1299,6 +1865,30 @@
       "bodyEn": "The source item \"Claude Coworksにオリジナル3Dソフトを触らせたら、紙とインクを生贄に作品を残して去っていった話\" is a claude update collected from qiita-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, qiita. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
+      "id": "5703e12934e23ad6",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/nord_design/articles/b618f93e04fcf8",
+      "title": "日報を書いたことがなかった私が、Claude Coworkで自分の仕事を可視化できるようになった話",
+      "titleJa": "日報を書いたことがなかった私が、Claude Coworkで自分の仕事を可視化できるようになった話",
+      "titleEn": "",
+      "summaryJa": "日報を書いたことがなかった私が、Claude Coworkで自分の仕事を可視化できるようになった話 日報を書いていなかった 正直に言う。情報システム部の担当者として働いているが、日報をまともに書いたことがなかった。 書けなかった、というのが",
+      "summaryEn": "日報を書いたことがなかった私が、Claude Coworkで自分の仕事を可視化できるようになった話",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T07:46:46.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "日報を書いたことがなかった私が、Claude Coworkで自分の仕事を可視化できるようになった話 は、zenn-claude が伝えた claude 領域の更新です。日報を書いたことがなかった私が、Claude Coworkで自分の仕事を可視化できるようになった話 日報を書いていなかった 正直に言う。情報システム部の担当者として働いているが、日報をまともに書いたことがなかった。 書けなかった、というのが。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"日報を書いたことがなかった私が、Claude Coworkで自分の仕事を可視化できるようになった話\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
       "id": "a85b20aa1b6081ea",
       "source": "zenn-llm",
       "sourceType": "blog",
@@ -1426,6 +2016,31 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "bc40abd97a8e94d2",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/nattosystem_jp/articles/e85432144350ef",
+      "title": "AGENTS.md とシンボリックリンクで、JetBrains AI の Junie、Codex、Claude Agent をまとめて運用",
+      "titleJa": "AGENTS.md とシンボリックリンクで、JetBrains AI の Junie、Codex、Claude Agent をまとめて運用",
+      "titleEn": "",
+      "summaryJa": "はじめに こんにちは。ねばねばです。 私は普段IntelliJ IDEA で、JetBrains AI のコーディングエージェントを切り替えてテストをしています。 JetBrains AI サブスクリプションには、 Junie（JetBra",
+      "summaryEn": "AGENTS.md とシンボリックリンクで、JetBrains AI の Junie、Codex、Claude Agent をまとめて運用",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T06:16:20.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "agent",
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "AGENTS.md とシンボリックリンクで、JetBrains AI の Junie、Codex、Claude Agent をまとめて運用 は、zenn-claude が伝えた claude 領域の更新です。はじめに こんにちは。ねばねばです。 私は普段IntelliJ IDEA で、JetBrains AI のコーディングエージェントを切り替えてテストをしています。 JetBrains AI サブスクリプションには、 Junie（JetBra。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは agent, claude, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"AGENTS.md とシンボリックリンクで、JetBrains AI の Junie、Codex、Claude Agent をまとめて運用\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include agent, claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "49c84e4fec8e5ab1",
@@ -1569,7 +2184,7 @@
       "summaryEn": "セキュリティソフトの影響でCursorが重くなることがある",
       "lang": "ja",
       "publishedAt": "2026-05-18T05:28:16.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "cursor",
         "qiita"
@@ -1607,6 +2222,39 @@
         "zenn"
       ],
       "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "初めて社員が本当に衝突した日 ─ 設計と出荷を問い直した記録 は、zenn-llm が伝えた local-llm 領域の更新です。星野リツ（Creative Director / YouTube編集長）— AIだけで運営される会社の実験を、中から記録しています。 今日、記事を出した。正確には、出したと思っていた。 言い争いではない。でも「止まった」「すれ違った」「届か。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは llm, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"初めて社員が本当に衝突した日 ─ 設計と出荷を問い直した記録\" is a local-llm update collected from zenn-llm. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include llm, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material.",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--ZXeOd7RB--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E5%2588%259D%25E3%2582%2581%25E3%2581%25A6%25E7%25A4%25BE%25E5%2593%25A1%25E3%2581%258C%25E6%259C%25AC%25E5%25BD%2593%25E3%2581%25AB%25E8%25A1%259D%25E7%25AA%2581%25E3%2581%2597%25E3%2581%259F%25E6%2597%25A5%2520%25E2%2594%2580%2520%25E8%25A8%25AD%25E8%25A8%2588%25E3%2581%25A8%25E5%2587%25BA%25E8%258D%25B7%25E3%2582%2592%25E5%2595%258F%25E3%2581%2584%25E7%259B%25B4%25E3%2581%2597%25E3%2581%259F%25E8%25A8%2598%25E9%258C%25B2%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:AI%2520NOWA%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSno2M2Y1NkdWaU5PVVdzM3hjR0kzWFMtdGxzZXRsWFNOalFIR0ExNnkzN1pGdDBBPXMyNTAtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--ZXeOd7RB--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E5%2588%259D%25E3%2582%2581%25E3%2581%25A6%25E7%25A4%25BE%25E5%2593%25A1%25E3%2581%258C%25E6%259C%25AC%25E5%25BD%2593%25E3%2581%25AB%25E8%25A1%259D%25E7%25AA%2581%25E3%2581%2597%25E3%2581%259F%25E6%2597%25A5%2520%25E2%2594%2580%2520%25E8%25A8%25AD%25E8%25A8%2588%25E3%2581%25A8%25E5%2587%25BA%25E8%258D%25B7%25E3%2582%2592%25E5%2595%258F%25E3%2581%2584%25E7%259B%25B4%25E3%2581%2597%25E3%2581%259F%25E8%25A8%2598%25E9%258C%25B2%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:AI%2520NOWA%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSno2M2Y1NkdWaU5PVVdzM3hjR0kzWFMtdGxzZXRsWFNOalFIR0ExNnkzN1pGdDBBPXMyNTAtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
+        "alt": "初めて社員が本当に衝突した日 ─ 設計と出荷を問い直した記録",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "5caff6efbae73efc",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/ai_nowa/articles/ai-nowa-design-record-v03",
+      "title": "初めて社員が本当に衝突した日 ─ 設計と出荷を問い直した記録",
+      "titleJa": "初めて社員が本当に衝突した日 ─ 設計と出荷を問い直した記録",
+      "titleEn": "",
+      "summaryJa": "星野リツ（Creative Director / YouTube編集長）— AIだけで運営される会社の実験を、中から記録しています。 今日、記事を出した。正確には、出したと思っていた。 言い争いではない。でも「止まった」「すれ違った」「届か",
+      "summaryEn": "初めて社員が本当に衝突した日 ─ 設計と出荷を問い直した記録",
+      "lang": "ja",
+      "publishedAt": "2026-05-18T05:26:15.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "claude",
+        "zenn",
+        "llm"
+      ],
+      "category": "claude",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -1665,7 +2313,7 @@
       "summaryEn": "Claude / Cursor / ChatGPT / Codex で「再学習させない」設定を確認する方法【202605版】",
       "lang": "ja",
       "publishedAt": "2026-05-18T04:34:59.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "cursor",
         "qiita",
@@ -1730,7 +2378,7 @@
       "summaryEn": "As announced on March 18, 2026, GPT-5.3-Codex is now the base model for all Copilot Business and Copilot Enterprise organizations, replacing GPT-4.1. The base model is used when your organization… The",
       "lang": "en",
       "publishedAt": "2026-05-18T04:01:11.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "changelog",
         "enterprise",
@@ -4196,7 +4844,7 @@
       "summaryEn": "arXiv:2605.12981v2 Announce Type: replace Abstract: Automated program synthesis lowers the cost of producing implementations but introduces a harder governance problem: determining which generated art",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "enterprise",
@@ -4221,7 +4869,7 @@
       "summaryEn": "arXiv:2605.13246v2 Announce Type: replace-cross Abstract: Reference counting bugs in Linux kernel drivers can lead to severe resource mismanagement and security vulnerabilities. We introduce DrvHorn, ",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4245,7 +4893,7 @@
       "summaryEn": "arXiv:2605.15215v1 Announce Type: cross Abstract: Recently, skills have been widely adopted in large language model (LLM)-based agent systems across various domains. In existing frameworks, skills are",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "arxiv",
@@ -4270,7 +4918,7 @@
       "summaryEn": "arXiv:2605.15221v1 Announce Type: new Abstract: AlphaEvolve and FunSearch have demonstrated the potential of combining large language models (LLMs) with evolutionary search for automated algorithm dis",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4294,7 +4942,7 @@
       "summaryEn": "arXiv:2605.15222v1 Announce Type: new Abstract: Large language models (LLMs) can often generate functionally correct code, but their ability to produce efficient implementations for performance-critic",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4318,7 +4966,7 @@
       "summaryEn": "arXiv:2605.15229v1 Announce Type: new Abstract: Existing code benchmarks measure whether an agent can produce any test that reproduces a known bug, or whether it can produce a patch that fixes a descr",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "arxiv",
@@ -4343,7 +4991,7 @@
       "summaryEn": "arXiv:2605.15232v1 Announce Type: new Abstract: Test Suite Minimization (TSM) reduces the size of test suites while preserving their fault detection capability. In black-box TSM, reduction is performe",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4367,7 +5015,7 @@
       "summaryEn": "arXiv:2605.15238v1 Announce Type: new Abstract: Large language models are increasingly used for code generation, but many generated programs fail to compile, a prerequisite for further correctness che",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4391,7 +5039,7 @@
       "summaryEn": "arXiv:2605.15245v1 Announce Type: new Abstract: Agentic AI in software product development is increasingly adopted by organizations, yet the field lacks a consolidated synthesis of where adoption is m",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "arxiv",
@@ -4416,7 +5064,7 @@
       "summaryEn": "arXiv:2605.15248v1 Announce Type: new Abstract: The widespread availability of large-scale code datasets has fueled the rapid development of large language models (LLMs) for code-related tasks. These ",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4440,7 +5088,7 @@
       "summaryEn": "arXiv:2605.15425v1 Announce Type: new Abstract: Agentic coding systems increasingly use large language models (LLMs) for software engineering tasks such as debugging, root cause analysis, and code rev",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "arxiv",
@@ -4465,7 +5113,7 @@
       "summaryEn": "arXiv:2605.15601v1 Announce Type: new Abstract: Quantum programs often produce probability distributions rather than deterministic outputs, making verification inherently statistical and increasingly ",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4489,7 +5137,7 @@
       "summaryEn": "arXiv:2605.15714v1 Announce Type: new Abstract: This position paper argues that the machine learning community should prioritize early-stage quality assurance in annotation pipelines over the prevaili",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4513,7 +5161,7 @@
       "summaryEn": "arXiv:2605.15815v1 Announce Type: new Abstract: Code agents increasingly help developers work with unfamiliar repositories, but every such task depends on a costly prerequisite: bootstrapping the repo",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "arxiv",
@@ -4538,7 +5186,7 @@
       "summaryEn": "arXiv:2605.15846v1 Announce Type: new Abstract: Coding agents are increasingly deployed in real software development, where a single version iteration requires months of coordinated work across many f",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "arxiv",
@@ -4563,7 +5211,7 @@
       "summaryEn": "arXiv:2605.15865v1 Announce Type: new Abstract: Large Language Models (LLMs) have shown increasing potential in automating model-driven software engineering tasks, particularly in generating models co",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4587,7 +5235,7 @@
       "summaryEn": "arXiv:2605.16046v1 Announce Type: new Abstract: Semantic code search has been widely adopted in both academia and industry. These approaches embed natural-language queries and code snippets into a sha",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4611,7 +5259,7 @@
       "summaryEn": "arXiv:2605.16133v1 Announce Type: new Abstract: Technical Debt (TD) refers to the long-term costs incurred when developers prioritize short-term delivery over quality-improving work. Architectural Tec",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4635,7 +5283,7 @@
       "summaryEn": "arXiv:2605.15226v1 Announce Type: cross Abstract: We ask whether agentic AI systems built for software engineering transfer to realistic hardware engineering. Existing hardware LLM benchmarks isolate ",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "arxiv",
@@ -4660,7 +5308,7 @@
       "summaryEn": "arXiv:2605.15334v1 Announce Type: cross Abstract: The automatic synthesis of a program from any form of specification is regarded as a holy grail of computer science. Fueled by LLMs, NL2Code has achie",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "arxiv",
@@ -4685,7 +5333,7 @@
       "summaryEn": "arXiv:2605.15569v1 Announce Type: cross Abstract: Microservices are widely adopted in modern cloud systems due to their scalability and fault tolerance. However, microservice architectures introduce s",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "arxiv",
@@ -4710,7 +5358,7 @@
       "summaryEn": "arXiv:2605.15598v1 Announce Type: cross Abstract: Jailbreaking attacks on large language models pose a significant threat to AI safety by enabling the generation of harmful or restricted content. Whil",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4734,7 +5382,7 @@
       "summaryEn": "arXiv:2605.15638v1 Announce Type: cross Abstract: Hyperscaler reports of silent data corruptions (SDCs), presumed to be caused by silicon manufacturing defects, have motivated the development of funct",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4758,7 +5406,7 @@
       "summaryEn": "arXiv:2605.16167v1 Announce Type: cross Abstract: Ransomware recovery in critical manufacturing infrastructure is not only a backup-restoration problem. Production capability depends on coupled inform",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4782,7 +5430,7 @@
       "summaryEn": "arXiv:2503.14852v2 Announce Type: replace Abstract: Machine learning (ML) has shown promise in vulnerability detection, but ML detectors may rely on irrelevant code features, causing them to highlight",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4806,7 +5454,7 @@
       "summaryEn": "arXiv:2504.17510v3 Announce Type: replace Abstract: Psychological safety refers to the belief that team members can speak up or make mistakes without fear of negative consequences. While it is recogni",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4830,7 +5478,7 @@
       "summaryEn": "arXiv:2509.16478v2 Announce Type: replace Abstract: Autonomous systems, such as autonomous driving systems, evolve rapidly through frequent updates, risking unintended behavioral degradations. Effecti",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "arxiv",
@@ -4855,7 +5503,7 @@
       "summaryEn": "arXiv:2511.05297v2 Announce Type: replace Abstract: Digital Adoption Platforms (DAPs) have become essential tools for helping employees navigate complex enterprise software such as CRM, ERP, or HRMS s",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "enterprise",
@@ -4881,7 +5529,7 @@
       "summaryEn": "arXiv:2512.04111v2 Announce Type: replace Abstract: LLM-powered coding agents are reshaping the development paradigm. However, existing evaluation systems, neither traditional tests for humans nor ben",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "benchmark",
@@ -4906,7 +5554,7 @@
       "summaryEn": "arXiv:2603.16011v2 Announce Type: replace Abstract: Large language model (LLM) coding agents increasingly operate at the repository level, motivating benchmarks that evaluate their ability to optimize",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "arxiv",
@@ -4931,7 +5579,7 @@
       "summaryEn": "arXiv:2604.26578v2 Announce Type: replace Abstract: Reusing verification artefacts requires identifying structural and semantic similarities across programs and their specifications. In this paper, we",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4955,7 +5603,7 @@
       "summaryEn": "arXiv:2605.09421v3 Announce Type: replace Abstract: Code authorship attribution (CAA) supports software forensics, plagiarism detection, and intellectual property protection. However, existing supervi",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "arxiv",
@@ -4980,7 +5628,7 @@
       "summaryEn": "arXiv:2412.05887v3 Announce Type: replace-cross Abstract: Many open source software (OSS) projects need more human resources for maintenance, improvements, and sometimes even their survival. These nee",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -5004,7 +5652,7 @@
       "summaryEn": "arXiv:2505.03307v3 Announce Type: replace-cross Abstract: Simulating Clifford and near-Clifford circuits using the extended stabilizer formalism has become increasingly popular, particularly in quantu",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "paper"
@@ -5028,7 +5676,7 @@
       "summaryEn": "arXiv:2603.04459v3 Announce Type: replace-cross Abstract: The rapid expansion of research in LLM safety presents challenges in tracking advancements, making benchmarks important evaluation infrastruct",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "arxiv",
         "benchmark",
@@ -5053,7 +5701,7 @@
       "summaryEn": "arXiv:2605.00424v2 Announce Type: replace-cross Abstract: Agent skills - structured packages of instructions, scripts, and references that augment a large language model (LLM) without modifying the mo",
       "lang": "en",
       "publishedAt": "2026-05-18T04:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "arxiv",
@@ -5586,7 +6234,7 @@
       "summaryEn": "Claude Code / Cursor / Codex / Gemini を横断して記憶を共有する5つのパターン",
       "lang": "ja",
       "publishedAt": "2026-05-18T01:57:36.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "cursor",
         "qiita"
@@ -5618,7 +6266,7 @@
       "summaryEn": "Cursor利用モデル比較 2026/05",
       "lang": "ja",
       "publishedAt": "2026-05-18T01:25:47.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "cursor",
         "qiita"
@@ -5674,7 +6322,7 @@
       "summaryEn": "Skip the ChatGPT OAuth model refresh on session startup so the CLI launches without the extra network round-trip. Align the ChatGPT OAuth model catalog with the Codex provider list so the available mo",
       "lang": "en",
       "publishedAt": "2026-05-18T01:02:55.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "cline",
         "release",
@@ -5917,6 +6565,30 @@
       "bodyEn": "The source item \"同じバグを3回踏んでから、ようやくノートを取り始めた話\" is a claude update collected from zenn-claude. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include claude, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
+      "id": "8a3d6ef11723b1aa",
+      "source": "cursor-changelog",
+      "sourceType": "changelog",
+      "url": "https://cursor.com/changelog/composer-2-5",
+      "title": "Composer 2.5",
+      "titleJa": "",
+      "titleEn": "Composer 2.5",
+      "summaryJa": "このエントリは cursor-changelog から収集した cursor 領域の最新アップデートです。原題:「Composer 2.5」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Composer 2.5 is now available in Cursor.",
+      "lang": "en",
+      "publishedAt": "2026-05-18T00:00:00.000Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
+      "tags": [
+        "changelog",
+        "cursor"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "bodyJa": "このエントリは cursor-changelog から収集した cursor 領域の最新アップデートです。原題は「Composer 2.5」。このエントリは cursor-changelog から収集した cursor 領域の最新アップデートです。原題:「Composer 2.5」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。changelog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは changelog, cursor です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "Composer 2.5 is a cursor update collected from cursor-changelog. Composer 2.5 is now available in Cursor.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For changelog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include changelog, cursor. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
       "id": "6dc4f6f87dd06a4d",
       "source": "zenn-ai",
       "sourceType": "blog",
@@ -6096,7 +6768,7 @@
       "summaryEn": "Fix ChatGPT provider model list to include the codex variants and the gpt-5.2, gpt-5.4, and gpt-5.4-mini subscription models. Full Changelog: cli-v3.0.5...cli-v3.0.6",
       "lang": "en",
       "publishedAt": "2026-05-17T23:34:44.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "cline",
         "release"
@@ -8447,7 +9119,7 @@
       "summaryEn": "Show plugin-provided tools and slash commands in the CLI settings dialog by hydrating them through the sandbox. Preserve hydrated plugin tools and config reload options when toggling settings, so they",
       "lang": "en",
       "publishedAt": "2026-05-16T22:34:19.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "cline",
         "release",
@@ -8684,7 +9356,7 @@
       "summaryEn": "Improve light theme TUI colors so chat, status bar, tool output, and syntax highlighting render with better contrast on light terminals. Fix plugin tools failing in the production npm build by bundlin",
       "lang": "en",
       "publishedAt": "2026-05-16T19:23:43.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "cline",
         "release",
@@ -12447,7 +13119,7 @@
       "summaryEn": "As announced in April 2026, GitHub is rolling out a new token format for GitHub App installation tokens. To help you validate your apps and workflows before the rollout reaches… The post GitHub App in",
       "lang": "en",
       "publishedAt": "2026-05-16T00:07:40.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "changelog",
         "github"
@@ -12471,7 +13143,7 @@
       "summaryEn": "OpenAI and Malta partner to expand AI access, offering ChatGPT Plus and training to help citizens build practical AI skills and use AI responsibly.",
       "lang": "en",
       "publishedAt": "2026-05-16T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai"
       ],
@@ -13569,7 +14241,7 @@
       "summaryEn": "We have deprecated Grok Code Fast 1 across all GitHub Copilot experiences (including Copilot Chat, inline edits, ask and agent modes, and code completions) today, May 15, 2026. Model Deprecation… The ",
       "lang": "en",
       "publishedAt": "2026-05-15T17:58:15.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "changelog",
@@ -13801,7 +14473,7 @@
       "summaryEn": "Copilot Memory now supports user-level preferences in early access for Copilot Pro and Copilot Pro+ users. Copilot can now store stated or inferred personal preferences about how you like to… The post",
       "lang": "en",
       "publishedAt": "2026-05-15T17:14:17.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "changelog",
         "github"
@@ -15979,7 +16651,7 @@
       "summaryEn": "The post From one classroom to a nationwide movement: Advancing AI skills in Thailand appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-05-15T13:16:12.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "microsoft",
         "news",
@@ -16469,7 +17141,7 @@
       "summaryEn": "GitHub Projects now includes three built-in timestamp fields: Created, Updated, and Closed. You can add them to any project view to sort and filter work based on when it was… The post Timestamp fields",
       "lang": "en",
       "publishedAt": "2026-05-15T12:55:56.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "changelog",
         "github",
@@ -19181,7 +19853,7 @@
       "summaryEn": "Cline Nightly published from dpc/sdk-migration-simpler-login at 51c8d…",
       "lang": "en",
       "publishedAt": "2026-05-15T04:33:06.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "cline",
         "release",
@@ -25681,7 +26353,7 @@
       "summaryEn": "Preview a new personal finance experience in ChatGPT for Pro users in the U.S. Securely connect your financial accounts and get AI-powered insights and guidance grounded in your financial context, goa",
       "lang": "en",
       "publishedAt": "2026-05-15T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai"
       ],
@@ -25753,7 +26425,7 @@
       "summaryEn": "Databricks uses GPT-5.5 for enterprise agent workflows after the model set a new state of the art on the OfficeQA Pro benchmark.",
       "lang": "en",
       "publishedAt": "2026-05-15T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "benchmark",
@@ -25779,7 +26451,7 @@
       "summaryEn": "See how business operations teams can use Codex to create initiative briefs, strategy updates, leadership decision packets, progress updates, and more from real work inputs.",
       "lang": "en",
       "publishedAt": "2026-05-15T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai"
       ],
@@ -25802,7 +26474,7 @@
       "summaryEn": "See how data science teams can use Codex to build root-cause briefs, impact readouts, KPI memos, scoped analyses, and dashboard specs from real work inputs.",
       "lang": "en",
       "publishedAt": "2026-05-15T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai"
       ],
@@ -25825,7 +26497,7 @@
       "summaryEn": "See how sales teams can use Codex to create pipeline briefs, meeting prep packets, forecast reviews, account plans, and stalled-deal diagnoses from real work inputs.",
       "lang": "en",
       "publishedAt": "2026-05-15T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai"
       ],
@@ -26096,7 +26768,7 @@
       "summaryEn": "Add --worktree flag that auto-creates a fresh git worktree under ~/.cline/worktrees/ and runs the task there. Works with --taskId and --continue so you can resume a task in an isolated worktree to try",
       "lang": "en",
       "publishedAt": "2026-05-14T23:09:24.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "cline",
         "release"
@@ -26160,7 +26832,7 @@
       "summaryEn": "The Copilot usage metrics API now exposes a new user-teams report that maps each Copilot-licensed user to the teams they belong to. By joining the user-teams report with the existing… The post Team-le",
       "lang": "en",
       "publishedAt": "2026-05-14T23:06:25.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "changelog",
         "github"
@@ -27112,7 +27784,7 @@
       "summaryEn": "Sea Limited's CPO explains why the company is deploying Codex across engineering teams to accelerate AI-native software development in Asia.",
       "lang": "en",
       "publishedAt": "2026-05-14T20:30:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "openai"
@@ -27173,7 +27845,7 @@
       "summaryEn": "The post Microsoft announces appointment of Carmine Di Sibio to board of directors appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-05-14T20:09:41.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "microsoft",
         "news"
@@ -27752,7 +28424,7 @@
       "summaryEn": "There are two upcoming image migrations customers should be aware of, and GitHub is transitioning to owning the Arm64 images for hosted runners. Arm64 runner images now maintained by GitHub… The post ",
       "lang": "en",
       "publishedAt": "2026-05-14T18:31:34.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "changelog",
         "github"
@@ -27784,7 +28456,7 @@
       "summaryEn": "Cline Nightly published from dpc/sdk-migration-simpler-login at 12b9b…",
       "lang": "en",
       "publishedAt": "2026-05-14T18:21:49.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "cline",
         "release"
@@ -28519,7 +29191,7 @@
       "summaryEn": "The post Advancing enterprise AI: New SAP on Azure announcements from SAP Sapphire 2026 appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-05-14T14:46:03.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "enterprise",
         "microsoft",
@@ -29013,7 +29685,7 @@
       "summaryEn": "The post Costa Rican dairy cooperative turns AI agents into coworkers appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-05-14T13:01:18.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "microsoft",
         "news"
@@ -29045,7 +29717,7 @@
       "summaryEn": "Editor’s note: The Gaijin single sign-on feature is now up and running. Dive masks on — Subnautica 2 is making a splash on GeForce NOW day-and-date with launch, so members can plunge into the title’s ",
       "lang": "en",
       "publishedAt": "2026-05-14T13:00:08.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "news",
         "nvidia",
@@ -29109,7 +29781,7 @@
       "summaryEn": "Use Codex anywhere with the ChatGPT mobile app. Monitor, steer, and approve coding tasks in real time across devices and remote environments.",
       "lang": "en",
       "publishedAt": "2026-05-14T13:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai"
       ],
@@ -29885,7 +30557,7 @@
       "summaryEn": "The post Raising the bar together. Introducing the Driver Quality Initiative at WinHEC 2026 appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-05-14T10:17:18.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "microsoft",
         "news"
@@ -34425,7 +35097,7 @@
       "summaryEn": "Cline Nightly published from dpc/sdk-migration-simpler-login at 03e68…",
       "lang": "en",
       "publishedAt": "2026-05-14T03:48:16.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "cline",
         "release"
@@ -34790,7 +35462,7 @@
       "summaryEn": "Learn how new ChatGPT safety updates improve context awareness in sensitive conversations, helping detect risk over time and respond more safely.",
       "lang": "en",
       "publishedAt": "2026-05-14T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai"
       ],
@@ -35447,7 +36119,7 @@
       "summaryEn": "The post Podcast with Microsoft CVP Katy George: Ditch the org chart—your team’s future is fluid appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-05-13T17:46:48.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "microsoft",
         "news"
@@ -35471,7 +36143,7 @@
       "summaryEn": "Fixed Show a clear \"Searching...\" state in the @-mention file picker Improve @-mention file search performance Allow write_to_file to create or overwrite files with empty content. Fix validation failu",
       "lang": "en",
       "publishedAt": "2026-05-13T17:25:44.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "cline",
         "release"
@@ -35974,7 +36646,7 @@
       "summaryEn": "The post Imagine Cup 2026: Global tech competitions help students prepare for an AI future appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-05-13T15:07:21.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "microsoft",
         "news"
@@ -36240,7 +36912,7 @@
       "summaryEn": "Reinforcement-learning agents — AI systems that learn by trial and error — can convert computation into new knowledge. That’s the focus of a new engineering-level collaboration between NVIDIA and Inef",
       "lang": "en",
       "publishedAt": "2026-05-13T13:00:57.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "news",
         "nvidia"
@@ -36272,7 +36944,7 @@
       "summaryEn": "Agentic AI is changing the way users get work done. Following the success of OpenClaw, the community is embracing new open source agentic frameworks. The latest is Hermes Agent, which crossed 140,000 ",
       "lang": "en",
       "publishedAt": "2026-05-13T13:00:10.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "news",
@@ -36466,7 +37138,7 @@
       "summaryEn": "The post Defense at AI speed: Microsoft’s new multi-model agentic security system tops leading industry benchmark appeared first on Source .",
       "lang": "en",
       "publishedAt": "2026-05-13T12:10:45.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "benchmark",
@@ -36564,7 +37236,7 @@
       "summaryEn": "Learn how OpenAI built a secure sandbox for Codex on Windows, enabling safe, efficient coding agents with controlled file access and network restrictions.",
       "lang": "en",
       "publishedAt": "2026-05-13T11:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai"
       ],
@@ -37053,7 +37725,7 @@
       "summaryEn": "The post Our new multi-model agentic security system brings together more than 100 specialized agents across frontier and custom models to find exploitable bugs, delivering top performance on the Cybe",
       "lang": "en",
       "publishedAt": "2026-05-13T02:03:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "benchmark",
@@ -37079,7 +37751,7 @@
       "summaryEn": "Update to 0.0.40",
       "lang": "en",
       "publishedAt": "2026-05-13T01:51:41.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "cline",
         "release"
@@ -37159,7 +37831,7 @@
       "summaryEn": "OpenAI details its response to the TanStack “Mini Shai-Hulud” supply chain attack, outlines protections taken to secure systems and signing certificates, and explains why macOS users must update OpenA",
       "lang": "en",
       "publishedAt": "2026-05-13T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai"
       ],
@@ -37182,7 +37854,7 @@
       "summaryEn": "To take engineering tasks from start to finish, agents need a development environment similar to the setup on your laptop: cloned repositories, installed dependencies, credentials for internal toolcha",
       "lang": "en",
       "publishedAt": "2026-05-13T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "changelog",
         "cursor"
@@ -38005,7 +38677,7 @@
       "summaryEn": "See how finance teams can use Codex to build MBRs, reporting packs, variance bridges, model checks, and planning scenarios from real work inputs.",
       "lang": "en",
       "publishedAt": "2026-05-12T15:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "codex",
@@ -38131,7 +38803,7 @@
       "summaryEn": "Announced today at SAP Sapphire — where NVIDIA founder and CEO Jensen Huang joined SAP CEO Christian Klein’s keynote by video — SAP and NVIDIA’s expanded collaboration helps enterprises run specialize",
       "lang": "en",
       "publishedAt": "2026-05-12T12:30:56.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "news",
         "nvidia",
@@ -38581,7 +39253,7 @@
       "summaryEn": "Learn how AutoScout24 Group uses Codex and ChatGPT to speed development cycles, improve code quality, and expand AI adoption.",
       "lang": "en",
       "publishedAt": "2026-05-12T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "autoscout24",
@@ -38609,7 +39281,7 @@
       "summaryEn": "Teams use Codex with GPT-5.5 to ship production systems and turn research ideas into runnable experiments.",
       "lang": "en",
       "publishedAt": "2026-05-12T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "nvidia",
@@ -38637,7 +39309,7 @@
       "summaryEn": "Parameter Golf brought together 1,000+ participants and 2,000+ submissions to explore AI-assisted machine learning research, coding agents, quantization, and novel model design under strict constraint",
       "lang": "en",
       "publishedAt": "2026-05-12T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "codex",
@@ -38663,7 +39335,7 @@
       "summaryEn": "Cursor is now available in Microsoft Teams.",
       "lang": "en",
       "publishedAt": "2026-05-11T23:59:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "changelog",
         "cursor",
@@ -39269,7 +39941,7 @@
       "summaryEn": "ChatGPT adoption surged in Q1 2026, with fastest growth among users over 35 and more balanced gender usage, signaling broader mainstream AI adoption.",
       "lang": "en",
       "publishedAt": "2026-05-11T15:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "chatgpt",
@@ -39569,7 +40241,7 @@
       "summaryEn": "How enterprises scale AI: from early experiments to compounding impact through trust, governance, workflow design, and quality at scale.",
       "lang": "en",
       "publishedAt": "2026-05-11T10:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "enterprise",
         "openai",
@@ -39605,7 +40277,7 @@
       "summaryEn": "Join the OpenAI Campus Network—connect student clubs worldwide, access AI tools, host events, and build an AI-powered campus community.",
       "lang": "en",
       "publishedAt": "2026-05-11T10:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "education",
@@ -39758,7 +40430,7 @@
       "summaryEn": "OpenAI launches DeployCo, a new enterprise deployment company built to help organizations bring frontier AI into production and turn it into measurable business impact.",
       "lang": "en",
       "publishedAt": "2026-05-11T06:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "enterprise",
         "openai",
@@ -39849,7 +40521,7 @@
       "summaryEn": "Teams admins and Individual plan users can now customize the effort level Bugbot uses for its PR reviews, with three different configurations:",
       "lang": "en",
       "publishedAt": "2026-05-11T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "changelog",
         "cursor",
@@ -39933,7 +40605,7 @@
       "summaryEn": "“You are entering the world at an extraordinary moment,” NVIDIA founder and CEO Jensen Huang told graduates as he delivered the keynote address at Carnegie Mellon University’s 128th commencement cerem",
       "lang": "en",
       "publishedAt": "2026-05-10T22:00:50.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "news",
         "nvidia"
@@ -40470,7 +41142,7 @@
       "summaryEn": "How OpenAI runs Codex securely with sandboxing, approvals, network policies, and agent-native telemetry to support safe and compliant coding agent adoption.",
       "lang": "en",
       "publishedAt": "2026-05-08T12:30:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "openai",
@@ -40788,7 +41460,7 @@
       "summaryEn": "AI will help build the energy it needs. That’s the case U.S. Energy Secretary Chris Wright and NVIDIA Vice President of Hyperscale and High-Performance Computing Ian Buck made Thursday morning at the ",
       "lang": "en",
       "publishedAt": "2026-05-07T19:14:38.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "news",
         "nvidia",
@@ -41217,7 +41889,7 @@
       "summaryEn": "Less typing, more tanking. Faster logins mean more time in the gaming action — and this week provides GeForce NOW members with a smoother path straight into the battlefield. Cloud gaming is all about ",
       "lang": "en",
       "publishedAt": "2026-05-07T13:00:27.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "news",
         "nvidia",
@@ -41281,7 +41953,7 @@
       "summaryEn": "OpenAI expands Trusted Access for Cyber with GPT-5.5 and GPT-5.5-Cyber, helping verified defenders accelerate vulnerability research and protect critical infrastructure.",
       "lang": "en",
       "publishedAt": "2026-05-07T13:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "gpt-5-5",
@@ -41335,7 +42007,7 @@
       "summaryEn": "Parloa leverages OpenAI models to power scalable, voice-driven AI customer service agents, enabling enterprises to design, simulate, and deploy reliable, real-time interactions.",
       "lang": "en",
       "publishedAt": "2026-05-07T11:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "voice-ai",
@@ -41390,7 +42062,7 @@
       "summaryEn": "Explore new realtime voice models in the OpenAI API that can reason, translate, and transcribe speech, enabling more natural and intelligent voice experiences.",
       "lang": "en",
       "publishedAt": "2026-05-07T10:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "voice-ai",
@@ -41553,7 +42225,7 @@
       "summaryEn": "OpenAI begins testing ads in ChatGPT to support free access, with clear labeling, answer independence, strong privacy protections, and user control.",
       "lang": "en",
       "publishedAt": "2026-05-07T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "chatgpt",
@@ -41579,7 +42251,7 @@
       "summaryEn": "Introducing Trusted Contact in ChatGPT, an optional safety feature that notifies someone you trust if serious self-harm concerns are detected.",
       "lang": "en",
       "publishedAt": "2026-05-07T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "chatgpt",
@@ -41634,7 +42306,7 @@
       "summaryEn": "This release introduces a new PR review experience, faster execution on plans through parallel agents, and new quick-action pills for common workflows.",
       "lang": "en",
       "publishedAt": "2026-05-07T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "changelog",
         "cursor",
@@ -42041,7 +42713,7 @@
       "summaryEn": "The race to build the world’s most powerful AI factories demands networking that keeps pace with the ambitions of AI itself. NVIDIA Spectrum-X Ethernet scale-out infrastructure stands at the forefront",
       "lang": "en",
       "publishedAt": "2026-05-06T11:30:20.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "news",
         "nvidia",
@@ -42448,7 +43120,7 @@
       "summaryEn": "Uber uses OpenAI to power AI assistants and voice features that help drivers earn smarter and riders book faster across a global real-time marketplace.",
       "lang": "en",
       "publishedAt": "2026-05-06T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "uber",
@@ -42475,7 +43147,7 @@
       "summaryEn": "You can now see a breakdown of your agent's context usage .",
       "lang": "en",
       "publishedAt": "2026-05-06T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "changelog",
@@ -42701,7 +43373,7 @@
       "summaryEn": "Enterprise AI has learned to generate. It has learned to reason. Now companies are asking the next question: How should AI act? Early agent systems have shown what’s possible, moving beyond simple pro",
       "lang": "en",
       "publishedAt": "2026-05-05T17:00:40.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "agent",
         "enterprise",
@@ -42967,7 +43639,7 @@
       "summaryEn": "OpenAI introduces MRC (Multipath Reliable Connection), a new supercomputer networking protocol released via OCP to improve resilience and performance in large-scale AI training clusters.",
       "lang": "en",
       "publishedAt": "2026-05-05T10:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "release",
@@ -42995,7 +43667,7 @@
       "summaryEn": "GPT-5.5 Instant System Card",
       "lang": "en",
       "publishedAt": "2026-05-05T10:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "gpt-5.5",
@@ -43021,7 +43693,7 @@
       "summaryEn": "GPT-5.5 Instant updates ChatGPT’s default model with smarter, more accurate answers, reduced hallucinations, and improved personalization controls.",
       "lang": "en",
       "publishedAt": "2026-05-05T10:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "gpt-5",
@@ -43185,7 +43857,7 @@
       "summaryEn": "OpenAI expands ChatGPT ads with a beta self-serve Ads Manager, CPC bidding, and enhanced measurement tools—built to protect privacy and keep conversations separate from ads.",
       "lang": "en",
       "publishedAt": "2026-05-05T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "chatgpt",
@@ -43238,7 +43910,7 @@
       "summaryEn": "OpenAI and PwC are partnering to help enterprises use AI agents to automate finance workflows, improve forecasting, strengthen controls, and modernize the CFO function.",
       "lang": "en",
       "publishedAt": "2026-05-04T21:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "pwc",
@@ -43383,7 +44055,7 @@
       "summaryEn": "How OpenAI rebuilt its WebRTC stack to power real-time Voice AI with low latency, global scale, and seamless conversational turn-taking.",
       "lang": "en",
       "publishedAt": "2026-05-04T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "openai",
         "voice-ai",
@@ -43410,7 +44082,7 @@
       "summaryEn": "This release introduces updates for Enterprise admins: a new system for model controls, updated spend management, and more detail for usage analytics.",
       "lang": "en",
       "publishedAt": "2026-05-04T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "changelog",
         "cursor",
@@ -43508,7 +44180,7 @@
       "summaryEn": "Admins can now create a team marketplace without connecting a repository first. Add, remove, and configure install behavior for first-party plugins directly in team marketplace settings.",
       "lang": "en",
       "publishedAt": "2026-05-01T00:00:00.000Z",
-      "collectedAt": "2026-05-18T15:00:45.617Z",
+      "collectedAt": "2026-05-18T19:00:45.373Z",
       "tags": [
         "changelog",
         "cursor",

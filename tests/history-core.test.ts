@@ -61,15 +61,49 @@ describe("archive-core", () => {
     expect(stats.entriesSkippedHot).toBe(0);
   });
 
-  it("同じ id は incoming が勝ち、publishedAt 降順で並ぶ", () => {
+  it("同じ canonical URL は incoming が勝ち、publishedAt 降順で並ぶ", () => {
     const older = fixtureEntry({ id: "same", title: "old", publishedAt: "2026-04-10T00:00:00.000Z" });
-    const newer = fixtureEntry({ id: "newer", publishedAt: "2026-04-20T00:00:00.000Z" });
+    const newer = fixtureEntry({ id: "newer", url: "https://example.com/newer", publishedAt: "2026-04-20T00:00:00.000Z" });
     const updated = fixtureEntry({ id: "same", title: "updated", publishedAt: "2026-04-12T00:00:00.000Z" });
 
     const merged = mergeArchiveEntries([older, newer], [updated]);
 
     expect(merged.map((entry) => entry.id)).toEqual(["newer", "same"]);
     expect(merged.find((entry) => entry.id === "same")?.title).toBe("updated");
+  });
+
+  it("同じ URL が別 source/id で入っても archive では 1 件にまとめる", () => {
+    const existing = fixtureEntry({
+      id: "arxiv-lg",
+      source: "arxiv-cs-lg",
+      url: "https://arxiv.org/abs/2605.15334?utm_source=feed",
+      summaryJa: "既存の日本語要約",
+      summaryEn: "Existing English summary",
+      tags: ["lg"],
+      collectedAt: "2026-05-18T21:00:00.000Z",
+      publishedAt: "2026-05-18T04:00:00.000Z",
+    });
+    const incoming = fixtureEntry({
+      id: "arxiv-ai",
+      source: "arxiv-cs-ai",
+      url: "https://arxiv.org/abs/2605.15334",
+      summaryJa: "",
+      summaryEn: "",
+      tags: ["ai"],
+      collectedAt: "2026-05-20T00:00:00.000Z",
+      publishedAt: "2026-05-19T04:00:00.000Z",
+    });
+
+    const merged = mergeArchiveEntries([existing], [incoming]);
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0]).toMatchObject({
+      id: "arxiv-ai",
+      source: "arxiv-cs-ai",
+      summaryJa: "既存の日本語要約",
+      summaryEn: "Existing English summary",
+    });
+    expect(merged[0].tags.sort()).toEqual(["ai", "lg"]);
   });
 
   it("archive index は月降順と件数を保持する", () => {
@@ -86,6 +120,18 @@ describe("archive-core", () => {
     expect(archiveIndex.months).toEqual(["2026-04", "2026-03"]);
     expect(archiveIndex.totalEntries).toBe(3);
     expect(archiveIndex.perMonth).toEqual({ "2026-04": 1, "2026-03": 2 });
+  });
+
+  it("archive month payload は一覧表示に不要な本文を保持しない", () => {
+    const payload = buildArchiveMonthFile(
+      "2026-04",
+      [fixtureEntry({ bodyJa: "長い本文", bodyEn: "Long body" })],
+      "2026-05-10T00:00:00.000Z",
+    );
+
+    expect(payload.entries[0].summaryJa).toBe("summary");
+    expect(payload.entries[0].bodyJa).toBeUndefined();
+    expect(payload.entries[0].bodyEn).toBeUndefined();
   });
 
   it("publishedAt が null の entry は collectedAt の月へ入れる", () => {

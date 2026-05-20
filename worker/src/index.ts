@@ -91,6 +91,22 @@ function entryUrlKey(entry: NormalizedEntry): string {
   return canonicalUrlKey(entry.url) ?? entry.url;
 }
 
+const FALLBACK_SUMMARY_JA_PREFIX = "このエントリは ";
+const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
+
+function needsGeneratedContent(entry: NormalizedEntry): boolean {
+  const summaryJa = entry.summaryJa ?? "";
+  const summaryEn = entry.summaryEn ?? "";
+  return (
+    !summaryJa.trim() ||
+    !summaryEn.trim() ||
+    !String(entry.bodyJa ?? "").trim() ||
+    !String(entry.bodyEn ?? "").trim() ||
+    summaryJa.startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
+    summaryEn.includes(FALLBACK_SUMMARY_EN_NEEDLE)
+  );
+}
+
 function preferEntry(current: NormalizedEntry | undefined, candidate: NormalizedEntry): NormalizedEntry {
   if (!current) return candidate;
 
@@ -277,10 +293,10 @@ async function ghJsonChangeIfChanged(
   return { path, content };
 }
 
-function uniqueEntriesById(entries: readonly NormalizedEntry[]): NormalizedEntry[] {
-  const byId = new Map<string, NormalizedEntry>();
-  for (const entry of entries) byId.set(entry.id, entry);
-  return [...byId.values()];
+function uniqueEntriesByUrl(entries: readonly NormalizedEntry[]): NormalizedEntry[] {
+  const byUrl = new Map<string, NormalizedEntry>();
+  for (const entry of entries) setPreferredEntry(byUrl, entry);
+  return [...byUrl.values()];
 }
 
 function entriesEqual(
@@ -518,7 +534,7 @@ async function publishHistoryFiles(
   const statsPayload = buildIncrementalStats({
     existing: existingStats,
     removed: oldTouchedEntries,
-    added: uniqueEntriesById([...liveEntries, ...newTouchedEntries]),
+    added: uniqueEntriesByUrl([...liveEntries, ...newTouchedEntries]),
     generatedAt,
   });
   const statsChange = await ghJsonChangeIfChanged(env, statsPath, statsPayload, existingStatsRaw ?? null);
@@ -856,14 +872,11 @@ async function runHarness(
   // we still tipped over the 1000/inv cap on every cron. Capping at 60
   // keeps total subrequests well under budget; the unread tail will be
   // discovered on subsequent crons as fresh entries cycle the head.
-  const FALLBACK_SUMMARY_PREFIX = "このエントリは ";
   const KV_LOOKUP_CAP = Math.max(
     30,
     Number(env.KV_LOOKUP_CAP ?? "60"),
   );
-  const allFallback = sorted.filter(
-    (e) => !e.summaryJa || e.summaryJa.startsWith(FALLBACK_SUMMARY_PREFIX),
-  );
+  const allFallback = sorted.filter(needsGeneratedContent);
   const needsKvLookup = allFallback.slice(0, KV_LOOKUP_CAP);
   // Track which URLs we actually issued a KV.get for. A URL absent from this
   // Set was skipped because it already carries a real AI summary in the
@@ -900,7 +913,7 @@ async function runHarness(
       if (!hit.bodyJa || !hit.bodyEn) {
         needsSummary.push(e);
       }
-    } else if (!hit && e.summaryJa && !e.summaryJa.startsWith(FALLBACK_SUMMARY_PREFIX)) {
+    } else if (!hit && !needsGeneratedContent(e)) {
       // Skipped KV lookup; entry already has a real summary from a prior run.
       afterCache.push(e);
     } else {
@@ -1175,7 +1188,7 @@ async function maybeEnqueueSummaryJobs(
   // hitsByUrl alone cannot distinguish "entry skipped because real summary
   // exists" (don't enqueue) from "entry looked up but KV miss" (DO enqueue
   // — the summarizer Worker must populate cache).
-  const cap = Math.max(1, Number(env.ENQUEUE_MAX_NEW ?? 5));
+  const cap = Math.max(1, Number(env.ENQUEUE_MAX_NEW ?? 30));
 
   const candidates: SummaryJob[] = [];
   for (const e of entries) {

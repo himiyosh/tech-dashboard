@@ -1,3 +1,5 @@
+import { mergeEntryEnrichment } from "../pipeline/entry-merge.ts";
+import { canonicalUrlKey } from "../pipeline/url.ts";
 import type { ArchiveTier, NormalizedEntry } from "../types.ts";
 
 export const ARCHIVE_TIERS: ReadonlySet<ArchiveTier> = new Set(["warm", "cold"]);
@@ -33,6 +35,41 @@ export interface ArchiveBuildStats {
 export function archiveBucketOf(entry: NormalizedEntry): string {
   const iso = entry.publishedAt ?? entry.collectedAt;
   return iso.slice(0, 7);
+}
+
+function dateMs(iso: string | null): number {
+  return iso ? Date.parse(iso) : 0;
+}
+
+function archiveMergeKey(entry: NormalizedEntry): string {
+  return canonicalUrlKey(entry.url) ?? entry.url ?? entry.id;
+}
+
+function preferArchiveEntry(current: NormalizedEntry, candidate: NormalizedEntry): NormalizedEntry {
+  const candidateCollected = dateMs(candidate.collectedAt);
+  const currentCollected = dateMs(current.collectedAt);
+  if (candidateCollected !== currentCollected) {
+    return candidateCollected > currentCollected
+      ? mergeEntryEnrichment(candidate, current)
+      : mergeEntryEnrichment(current, candidate);
+  }
+
+  const candidatePublished = dateMs(candidate.publishedAt);
+  const currentPublished = dateMs(current.publishedAt);
+  if (candidatePublished !== currentPublished) {
+    return candidatePublished > currentPublished
+      ? mergeEntryEnrichment(candidate, current)
+      : mergeEntryEnrichment(current, candidate);
+  }
+
+  return mergeEntryEnrichment(candidate, current);
+}
+
+function compactArchiveEntry(entry: NormalizedEntry): NormalizedEntry {
+  const compact = { ...entry };
+  delete compact.bodyJa;
+  delete compact.bodyEn;
+  return compact;
 }
 
 export function groupArchiveEntries(
@@ -77,10 +114,14 @@ export function mergeArchiveEntries(
   existing: readonly NormalizedEntry[],
   incoming: readonly NormalizedEntry[],
 ): NormalizedEntry[] {
-  const byId = new Map<string, NormalizedEntry>();
-  for (const entry of existing) byId.set(entry.id, entry);
-  for (const entry of incoming) byId.set(entry.id, entry);
-  return [...byId.values()].sort((a, b) => {
+  const byUrl = new Map<string, NormalizedEntry>();
+  for (const entry of existing) byUrl.set(archiveMergeKey(entry), entry);
+  for (const entry of incoming) {
+    const key = archiveMergeKey(entry);
+    const current = byUrl.get(key);
+    byUrl.set(key, current ? preferArchiveEntry(current, entry) : entry);
+  }
+  return [...byUrl.values()].sort((a, b) => {
     const aTime = a.publishedAt ? Date.parse(a.publishedAt) : 0;
     const bTime = b.publishedAt ? Date.parse(b.publishedAt) : 0;
     return bTime - aTime;
@@ -96,7 +137,7 @@ export function buildArchiveMonthFile(
     generatedAt,
     month,
     count: entries.length,
-    entries: [...entries],
+    entries: entries.map(compactArchiveEntry),
   };
 }
 

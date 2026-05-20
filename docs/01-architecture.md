@@ -191,7 +191,7 @@ data/
 ├─ stats.json                   # archive 込みの記事数推移 / source 集計
 ├─ archive/
 │  ├─ _index.json               # 月別 archive index
-│  └─ YYYY-MM.json              # warm/cold tier の月別 archive
+│  └─ YYYY-MM.json              # warm/cold tier の月別 archive。一覧用のため本文は省略
 └─ feeds/
    ├─ all.rss
    └─ <category>.rss

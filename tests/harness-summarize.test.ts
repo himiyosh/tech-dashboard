@@ -7,6 +7,7 @@
 import { describe, it, expect } from "vitest";
 import {
   isCompleteSummaryResponse,
+  needsGeneratedContent,
   parseModelResponse,
   resolveSummarizeModel,
 } from "../harness/pipeline/summarize.ts";
@@ -81,6 +82,7 @@ describe("parseModelResponse", () => {
 
 describe("resolveSummarizeModel", () => {
   it("補完/backfill で許可されたモデルを受け付ける", () => {
+    expect(resolveSummarizeModel("claude-sonnet-4.6")).toBe("claude-sonnet-4.6");
     expect(resolveSummarizeModel("claude-opus-4.7")).toBe("claude-opus-4.7");
     expect(resolveSummarizeModel("gpt-5.5")).toBe("gpt-5.5");
   });
@@ -89,6 +91,38 @@ describe("resolveSummarizeModel", () => {
     expect(() => resolveSummarizeModel("gpt-4o")).toThrow(
       /Unsupported SUMMARIZE_MODEL/,
     );
+  });
+});
+
+describe("needsGeneratedContent", () => {
+  it("deterministic fallback summary と本文欠落を backfill 対象にする", () => {
+    expect(needsGeneratedContent({
+      summaryJa: "このエントリは zenn から収集した tech-news 領域の最新アップデートです。",
+      summaryEn: "English summary.",
+      bodyJa: "日本語本文",
+      bodyEn: "English body.",
+    })).toBe(true);
+    expect(needsGeneratedContent({
+      summaryJa: "日本語要約",
+      summaryEn: "tech-news update from zenn. AI summary not yet available; a future Worker run will refresh this entry.",
+      bodyJa: "日本語本文",
+      bodyEn: "English body.",
+    })).toBe(true);
+    expect(needsGeneratedContent({
+      summaryJa: "日本語要約",
+      summaryEn: "English summary.",
+      bodyJa: "",
+      bodyEn: "English body.",
+    })).toBe(true);
+  });
+
+  it("両言語 summary/body が揃った entry は backfill 対象にしない", () => {
+    expect(needsGeneratedContent({
+      summaryJa: "日本語要約",
+      summaryEn: "English summary.",
+      bodyJa: "日本語本文",
+      bodyEn: "English body.",
+    })).toBe(false);
   });
 });
 

@@ -9,6 +9,7 @@ import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import indexJson from "../data/index.json";
 import statsJson from "../data/stats.json";
+import { canonicalUrlKey } from "../harness/pipeline/url.ts";
 
 interface RawEntry {
   id?: unknown;
@@ -273,6 +274,26 @@ describe("data/stats.json", () => {
 });
 
 describe("data artifact サイズ予算", () => {
+    it("archive month 内の entry は canonical URL で重複しない", () => {
+      const archiveDir = join(process.cwd(), "data", "archive");
+      const duplicates = readdirSync(archiveDir)
+        .filter((fileName) => /^\d{4}-\d{2}\.json$/.test(fileName))
+        .flatMap((fileName) => {
+          const parsed = JSON.parse(readFileSync(join(archiveDir, fileName), "utf8")) as { entries?: RawEntry[] };
+          const seen = new Set<string>();
+          const bad: string[] = [];
+          for (const entry of parsed.entries ?? []) {
+            const url = String(entry.url ?? "");
+            const key = canonicalUrlKey(url) ?? url;
+            if (seen.has(key)) bad.push(`${fileName}:${key}`);
+            seen.add(key);
+          }
+          return bad;
+        });
+
+      expect(duplicates).toEqual([]);
+    });
+
   it("index / stats / archive month が運用上限を超えない", () => {
     const archiveDir = join(process.cwd(), "data", "archive");
     const archiveFiles = readdirSync(archiveDir)

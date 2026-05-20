@@ -144,7 +144,7 @@ interface NormalizedEntry {
 | パス | 内容 | 更新タイミング |
 |---|---|---|
 | `data/index.json` | 公開用 (最大 2000 件、`generatedAt` 付き) | Worker cron 実行ごと |
-| `data/archive/*.json` | warm/cold tier の月別永続 archive | Worker cron / `npm run collect` 実行時 |
+| `data/archive/*.json` | warm/cold tier の月別永続 archive。一覧表示用に本文 `bodyJa` / `bodyEn` は保持しない | Worker cron / `npm run collect` 実行時 |
 | `data/archive/_index.json` | archive 月一覧と件数 | Worker cron / `npm run collect` 実行時 |
 | `data/stats.json` | archive 込みの記事数推移 / source 集計 | Worker cron / `npm run collect` 実行時 |
 | `data/raw/<source>.json` | 収集素材 (デバッグ用、ローカルのみ) | `npm run collect` 時 |
@@ -154,7 +154,7 @@ interface NormalizedEntry {
 
 `web/src/lib/metrics.ts` は `data/index.json`、`data/stats.json`、archive index、Worker health から Timeline / About の表示 metrics を組み立てる。`/metrics.json` は同じ値を JSON で公開し、`LiveMetrics.astro` が開いているページの `data-metric` 表示を定期 fetch で更新する。
 
-data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する。現行上限は `data/index.json` 8 MB、`data/stats.json` 500 KB、archive 月別 JSON 2 MB とする。
+data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する。現行上限は `data/index.json` 8 MB、`data/stats.json` 500 KB、archive 月別 JSON 6 MB とする。archive 月別 JSON は canonical URL で重複排除し、一覧表示に使わない本文フィールドを省く。
 
 ---
 

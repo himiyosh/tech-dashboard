@@ -13,8 +13,8 @@
  * 環境変数:
  *   COPILOT_TOKEN        … 一時トークン (交換済み)。CI 等で直接注入する場合
  *   COPILOT_PAT          … PAT (classic でよい)。上記より優先度低
- *   SUMMARIZE_MODEL      … 既定 "claude-opus-4.7"
- *                          補完/backfill も "claude-opus-4.7" / "gpt-5.5" のみ許可
+ *   SUMMARIZE_MODEL      … 既定 "claude-sonnet-4.6"
+ *                          補完/backfill は claude-sonnet-4.6 / claude-opus-4.7 / gpt-5.5 のみ許可
  *   SUMMARIZE_ENDPOINT   … 既定 "https://api.githubcopilot.com/chat/completions"
  *   SUMMARIZE_MAX_NEW    … 1 ラン当たりの新規要約上限 (既定 15)
  *   SUMMARIZE_MAX_TOKENS … Copilot API の最大出力 token 数 (既定 6000)
@@ -41,8 +41,8 @@ interface CacheEntry {
 
 type Cache = Record<string, CacheEntry>;
 
-const DEFAULT_SUMMARIZE_MODEL = "claude-opus-4.7";
-const ALLOWED_SUMMARIZE_MODELS = new Set([DEFAULT_SUMMARIZE_MODEL, "gpt-5.5"]);
+const DEFAULT_SUMMARIZE_MODEL = "claude-sonnet-4.6";
+const ALLOWED_SUMMARIZE_MODELS = new Set([DEFAULT_SUMMARIZE_MODEL, "claude-opus-4.7", "gpt-5.5"]);
 
 export function resolveSummarizeModel(
   model = process.env.SUMMARIZE_MODEL,
@@ -50,7 +50,7 @@ export function resolveSummarizeModel(
   const selected = model ?? DEFAULT_SUMMARIZE_MODEL;
   if (!ALLOWED_SUMMARIZE_MODELS.has(selected)) {
     throw new Error(
-      `Unsupported SUMMARIZE_MODEL="${selected}". Use claude-opus-4.7 or gpt-5.5 for article summarization and backfill.`,
+      `Unsupported SUMMARIZE_MODEL="${selected}". Use claude-sonnet-4.6, claude-opus-4.7, or gpt-5.5 for article summarization and backfill.`,
     );
   }
   return selected;
@@ -64,6 +64,21 @@ const MAX_NEW = Number(process.env.SUMMARIZE_MAX_NEW ?? "15");
 const MAX_TOKENS = Number(process.env.SUMMARIZE_MAX_TOKENS ?? "6000");
 const REQUEST_TIMEOUT_MS = Number(process.env.SUMMARIZE_TIMEOUT_MS ?? "180000");
 const CONCURRENCY = Number(process.env.SUMMARIZE_CONCURRENCY ?? "4");
+const FALLBACK_SUMMARY_JA_PREFIX = "このエントリは ";
+const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
+
+export function needsGeneratedContent(entry: Pick<NormalizedEntry, "summaryJa" | "summaryEn" | "bodyJa" | "bodyEn">): boolean {
+  const summaryJa = entry.summaryJa ?? "";
+  const summaryEn = entry.summaryEn ?? "";
+  return (
+    !summaryJa.trim() ||
+    !summaryEn.trim() ||
+    !String(entry.bodyJa ?? "").trim() ||
+    !String(entry.bodyEn ?? "").trim() ||
+    summaryJa.startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
+    summaryEn.includes(FALLBACK_SUMMARY_EN_NEEDLE)
+  );
+}
 
 // Copilot Chat API が期待する整合ヘッダ。VS Code 拡張と同一構成を模倣する。
 const COPILOT_HEADERS = {
@@ -317,9 +332,9 @@ export async function summarize(
   const out = entries.map((e) => {
     const hit = cache[e.url];
     const cachedTitleJa = hit?.titleJa || e.titleJa;
-    if (hit && cachedTitleJa && hit.summaryJa && hit.summaryEn) {
-      // Re-summarize entries cached before bodyJa/bodyEn was introduced.
-      if (!hit.bodyJa || !hit.bodyEn) {
+      if (hit && cachedTitleJa && hit.summaryJa && hit.summaryEn) {
+        // Re-summarize deterministic fallback entries and entries cached before bodyJa/bodyEn was introduced.
+        if (needsGeneratedContent(hit)) {
         needsSummary.push(e);
       } else {
         stats.cached++;
@@ -335,7 +350,7 @@ export async function summarize(
         tags: dedupeTags([...e.tags, ...hit.extraTags]),
       };
     }
-    needsSummary.push(e);
+    if (needsGeneratedContent(e)) needsSummary.push(e);
     return e;
   });
 

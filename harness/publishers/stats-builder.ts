@@ -19,11 +19,16 @@
  */
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { canonicalUrlKey } from "../pipeline/url.ts";
 import type { NormalizedEntry } from "../types.ts";
 import { buildStatsPayload, type StatsPayload } from "./stats-core.ts";
 
 interface ArchiveMonthShape {
   entries: NormalizedEntry[];
+}
+
+function statsEntryKey(entry: NormalizedEntry): string {
+  return canonicalUrlKey(entry.url) ?? entry.url ?? entry.id;
 }
 
 async function loadAllEntries(dataDir: string): Promise<NormalizedEntry[]> {
@@ -33,7 +38,7 @@ async function loadAllEntries(dataDir: string): Promise<NormalizedEntry[]> {
   try {
     const raw = await readFile(join(dataDir, "index.json"), "utf8");
     const parsed = JSON.parse(raw) as { entries: NormalizedEntry[] };
-    for (const e of parsed.entries) all.set(e.id, e);
+    for (const e of parsed.entries) all.set(statsEntryKey(e), e);
   } catch {
     /* missing on first run */
   }
@@ -50,7 +55,8 @@ async function loadAllEntries(dataDir: string): Promise<NormalizedEntry[]> {
         const parsed = JSON.parse(raw) as ArchiveMonthShape;
         for (const e of parsed.entries ?? []) {
           // Live entries are authoritative (newer summary etc.)
-          if (!all.has(e.id)) all.set(e.id, e);
+          const key = statsEntryKey(e);
+          if (!all.has(key)) all.set(key, e);
         }
       } catch {
         /* skip corrupt month */

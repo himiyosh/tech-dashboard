@@ -68,10 +68,16 @@ function parsePublishedAt(html: string): string | null {
   const direct = datetime ? new Date(datetime) : null;
   if (direct && !Number.isNaN(direct.getTime())) return direct.toISOString();
 
-  const text = textFromHtml(html.slice(0, 60_000));
-  const visible = text.match(/\bPublished\s+([A-Z][a-z]{2,8}\s+\d{1,2},\s+\d{4})\b/);
-  if (!visible) return null;
-  const parsed = new Date(`${visible[1]} 00:00:00 UTC`);
+  // 2026-05: anthropic.com switched to a Next.js layout where the publish
+  // date is rendered as <div class="body-3 agate">Apr 16, 2026</div> in the
+  // PostDetail hero block, with no <time> tag and no leading "Published"
+  // word. Match the bare "Mon DD, YYYY" pattern inside the article hero.
+  const text = textFromHtml(html.slice(0, 80_000));
+  const labeled = text.match(/\bPublished\s+([A-Z][a-z]{2,8}\s+\d{1,2},\s+\d{4})\b/);
+  const bare = text.match(/\b([A-Z][a-z]{2}\s+\d{1,2},\s+\d{4})\b/);
+  const picked = labeled?.[1] ?? bare?.[1];
+  if (!picked) return null;
+  const parsed = new Date(`${picked} 00:00:00 UTC`);
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 

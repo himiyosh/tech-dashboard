@@ -83,6 +83,9 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     autoTags: ["google"],
     feedUrl: "https://developers.googleblog.com/feeds/posts/default",
     tier: 1,
+    // Feed lacks per-item <pubDate>; without this every item would inherit
+    // collectedAt as publish date and surface as "today's update" (LL-045).
+    fetchArticleDate: true,
     collect: collectRss,
   },
   "github-blog-ai": {

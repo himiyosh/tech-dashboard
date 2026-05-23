@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canonicalUrlKey, freshnessForSource } from "../.claude/skills/quality-audit/run.ts";
+import { canonicalUrlKey, freshnessForSource, isDeterministicFallbackEntry } from "../.claude/skills/quality-audit/run.ts";
 import type { SourceDefinition } from "../harness/types.ts";
 
 const blogSource: SourceDefinition = {
@@ -87,5 +87,29 @@ describe("quality-audit freshness", () => {
 
     expect(freshnessForSource(releaseSource, entries, now).status).toBe("✅ ok");
     expect(freshnessForSource(communitySource, entries, now).status).toBe("🟠 stale");
+  });
+});
+
+describe("quality-audit fallback detection", () => {
+  it("detects deterministic fallback summaries as quality debt", () => {
+    expect(
+      isDeterministicFallbackEntry({
+        summaryJa: "このエントリは arxiv-cs-ai から収集した research 領域の最新アップデートです。",
+        summaryEn: "AI summary not yet available.",
+        bodyJa: "",
+        bodyEn: "",
+      }),
+    ).toBe(true);
+  });
+
+  it("does not flag real bilingual summaries", () => {
+    expect(
+      isDeterministicFallbackEntry({
+        summaryJa: "モデル評価手法の改善点を紹介しています。",
+        summaryEn: "The article introduces improvements to model evaluation.",
+        bodyJa: "本文",
+        bodyEn: "Body",
+      }),
+    ).toBe(false);
   });
 });

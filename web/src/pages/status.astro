@@ -6,6 +6,7 @@ import {
   CATEGORY_META,
   GENERATED_AT,
   WORKER_HEALTH,
+  fallbackMetrics,
   relativeTime,
   type Category,
   type NormalizedEntry,
@@ -15,7 +16,7 @@ import { SOURCE_META } from "../lib/source-meta.ts";
 
 const now = new Date();
 const SIX_H = 6 * 3600_000;
-type SourceStatus = Exclude<FreshnessStatus, "no-data">;
+type SourceStatus = FreshnessStatus;
 type SourceRow = {
   id: string;
   displayName: string;
@@ -71,7 +72,7 @@ const sources: SourceRow[] = SOURCE_META.map((def) => {
     fromSource.length === 0 ? undefined : latestCollected,
     now.getTime(),
   );
-  const status = freshness.status === "no-data" ? "error" : freshness.status;
+  const status = freshness.status;
   const category = def.category as Category;
   const categoryMeta = categoryBySlug.get(category);
   return {
@@ -96,7 +97,8 @@ const sources: SourceRow[] = SOURCE_META.map((def) => {
 const ok = sources.filter((s) => s.status === "ok").length;
 const stale = sources.filter((s) => s.status === "stale").length;
 const error = sources.filter((s) => s.status === "error").length;
-const statusOrder = { error: 0, stale: 1, ok: 2 } as const;
+const noData = sources.filter((s) => s.status === "no-data").length;
+const statusOrder = { error: 0, stale: 1, "no-data": 2, ok: 3 } as const;
 const sortedSources = [...sources].sort(
   (a, b) =>
     statusOrder[a.status] - statusOrder[b.status] ||
@@ -108,6 +110,7 @@ const staleSources = sortedSources.filter((s) => s.status === "stale");
 const attentionSources = [...errorSources, ...staleSources].slice(0, 8);
 const healthyPct = Math.round((ok / Math.max(sources.length, 1)) * 100);
 const indexAgeLabel = relativeTime(GENERATED_AT, now);
+const fallback = fallbackMetrics(ALL_ENTRIES);
 
 const categoryRows = CATEGORY_META.map((category) => {
     const rows = sources.filter((source) => source.category === category.slug);
@@ -133,6 +136,8 @@ const lastRunAge = wh ? now.getTime() - new Date(wh.lastRunAt).getTime() : null;
 const lastRunHours = lastRunAge !== null ? lastRunAge / 3600_000 : null;
 let workerStatus: "ok" | "warn" | "err" = "ok";
 let workerLabel = "healthy";
+const fallbackTotal = wh?.fallbackTotal ?? fallback.fallbackEntries;
+const fallbackPercent = wh?.fallbackPercent ?? fallback.fallbackPercent;
 if (!wh) {
   workerStatus = "warn";
   workerLabel = "no data (legacy index)";
@@ -145,12 +150,15 @@ if (!wh) {
 } else if (wh.sourcesFailed.length > 0) {
   workerStatus = "warn";
   workerLabel = `${wh.sourcesFailed.length} source error`;
+} else if (fallbackTotal > 0) {
+  workerStatus = "warn";
+  workerLabel = `${fallbackTotal} fallback entries`;
 }
 const workerColor =
   workerStatus === "ok" ? "var(--success)" : workerStatus === "warn" ? "var(--important)" : "var(--danger)";
 const workerStatusText = workerStatus === "ok" ? "OK" : workerStatus === "warn" ? "WARN" : "ERR";
 const workerSummary = wh
-  ? `Batch ${wh.batchIndex}/${wh.batchTotal} · ${wh.sourcesOk}/${wh.sourcesAttempted} sources · +${wh.summarized} summaries`
+  ? `Batch ${wh.batchIndex}/${wh.batchTotal} · ${wh.sourcesOk}/${wh.sourcesAttempted} sources · +${wh.summarized} summaries · ${fallbackTotal} fallback (${fallbackPercent}%)`
   : "Worker health metadata is not available in this index.";
 ---
 
@@ -189,6 +197,10 @@ const workerSummary = wh
             <strong>{wh ? `+${wh.summarized}` : "n/a"}</strong>
           </div>
           <div class="status-metric-card">
+            <span>Fallback backlog</span>
+            <strong>{fallbackTotal}</strong>
+          </div>
+          <div class="status-metric-card">
             <span>Index</span>
             <strong>{indexAgeLabel}</strong>
           </div>
@@ -210,6 +222,21 @@ const workerSummary = wh
           <div>
             <span class="detail-label">要約エラー</span>
             <strong>{wh.summarizeErrors}</strong>
+          </div>
+          <div>
+            <span class="detail-label">Fallback coverage</span>
+            <strong class={fallbackTotal > 0 ? "tone-warn" : "tone-ok"}>{fallbackPercent}%</strong>
+            <small>{fallback.realSummaryEntries} real / {ALL_ENTRIES.length} entries</small>
+          </div>
+          <div>
+            <span class="detail-label">Summary Queue</span>
+            <strong>{wh.queueMode ?? "unknown"}</strong>
+            <small>{wh.enqueueCandidates ?? 0} candidates · cap {wh.queueCap ?? "n/a"}</small>
+          </div>
+          <div>
+            <span class="detail-label">KV lookups</span>
+            <strong>{wh.kvLookupCount ?? "n/a"}</strong>
+            <small>cap {wh.kvLookupCap ?? "n/a"}</small>
           </div>
           <div>
             <span class="detail-label">og:image cache</span>
@@ -253,6 +280,10 @@ const workerSummary = wh
             <span>Error</span>
             <strong>{error}</strong>
           </div>
+          <div class="source-summary-card no-data">
+            <span>No data</span>
+            <strong>{noData}</strong>
+          </div>
           <div class="source-summary-card">
             <span>Coverage</span>
             <strong>{healthyPct}%</strong>
@@ -263,6 +294,7 @@ const workerSummary = wh
           <button type="button" class="status-filter is-active" data-source-filter="all" aria-pressed="true">All <span>{sources.length}</span></button>
           <button type="button" class="status-filter" data-source-filter="error" aria-pressed="false">Error <span>{error}</span></button>
           <button type="button" class="status-filter" data-source-filter="stale" aria-pressed="false">Stale <span>{stale}</span></button>
+          <button type="button" class="status-filter" data-source-filter="no-data" aria-pressed="false">No data <span>{noData}</span></button>
           <button type="button" class="status-filter" data-source-filter="ok" aria-pressed="false">Healthy <span>{ok}</span></button>
         </div>
 
@@ -302,7 +334,7 @@ const workerSummary = wh
               <span class={`source-status-badge ${s.status}`}>{s.status}</span>
               <span class="time source-time-block">
                 <strong>{s.count}</strong>
-                <span>{s.status === "error" ? "no data" : relativeTime(s.latest, now)}</span>
+                <span>{s.status === "error" || s.status === "no-data" ? "no data" : relativeTime(s.latest, now)}</span>
               </span>
             </div>
           ))}
@@ -311,7 +343,7 @@ const workerSummary = wh
 
         <p class="status-note compact">
           <strong>status</strong> は source type と category ごとの鮮度しきい値で判定します。
-          <span class="tone-ok">ok</span> は範囲内、<span class="tone-warn">stale</span> は threshold 超過、<span class="tone-error">error</span> はデータなしです。
+          <span class="tone-ok">ok</span> は範囲内、<span class="tone-warn">stale</span> は threshold 超過、<span class="tone-error">error</span> は取得失敗、<span class="tone-info">no-data</span> は任意ソース未出現です。
         </p>
       </section>
     </main>
@@ -347,7 +379,7 @@ const workerSummary = wh
             <li>
               <span>{row.name}</span>
               <small>
-                {row.ok} ok · {row.stale} stale · {row.error} err
+                 {row.ok} ok · {row.stale} stale · {row.error} err
               </small>
             </li>
           ))}
@@ -521,6 +553,10 @@ const workerSummary = wh
     background: var(--danger);
   }
 
+  .source-summary-card.no-data::before {
+    background: var(--muted-2);
+  }
+
   .source-summary-card strong {
     font-size: 24px;
   }
@@ -665,12 +701,20 @@ const workerSummary = wh
     background: var(--danger);
   }
 
+  .source-item .status.no-data {
+    background: var(--muted-2);
+  }
+
   .source-row-error {
     background: linear-gradient(90deg, rgba(248, 113, 113, 0.08), transparent 48%);
   }
 
   .source-row-stale {
     background: linear-gradient(90deg, rgba(251, 191, 36, 0.08), transparent 48%);
+  }
+
+  .source-row-no-data {
+    background: linear-gradient(90deg, rgba(138, 132, 126, 0.08), transparent 48%);
   }
 
   .status-note {
@@ -698,6 +742,10 @@ const workerSummary = wh
 
   .tone-error {
     color: var(--danger);
+  }
+
+  .tone-info {
+    color: var(--muted-2);
   }
 
   .attention-stale {

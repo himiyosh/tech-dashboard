@@ -99,6 +99,28 @@
 - Baseline Widely available ではない機能は guide の fallback 方針に従い、既存 Astro / CSS 構成に最小差分で適用する。
 - mobile / fixed / sticky / overflow / z-index / safe-area の表示崩れでは `.claude/skills/ui-display-guard/SKILL.md` も併用し、Playwright viewport 検証まで行う。
 
+### R-015: GPT-5.5 の応答は末尾に絵文字付きサマリを必ず付ける
+- **対象モデル**: GPT-5.5 (または `gpt-5.5` 系モデルと識別できる場合)。
+- **必須フォーマット**: 本文の説明や手順の**後に必ず**、以下の形式でサマリセクションを付ける。
+  ```
+  ---
+  ## 📋 まとめ
+
+  | 📌 項目 | 内容 |
+  |---|---|
+  | ✅ やったこと | ... |
+  | ⚠️ 注意点 | ... |
+  | 🔜 次のステップ | ... |
+  ```
+  テーブルの行は状況に応じて増減してよい。重要度に応じて 🔴/🟠/🟢 などの色付き絵文字も活用する。
+- **絵文字の使い方の目安**:
+  - 🎯 目的・ゴール   　✅ 成功・完了   　❌ 失敗・非対応
+  - ⚠️ 注意・警告     　🔜 次のアクション　📁 ファイル・設定
+  - 💡 ポイント       　🔗 参照・リンク   　🧪 テスト・検証
+  - 🔴 致命的        　🟠 警告          　🟢 正常
+- **本文は変えない**: サマリは末尾の追記のみ。本文の詳しい説明を削ったり、絵文字だらけにしたりしない。
+- **省略条件**: 1-2 文で済む短い回答 (単純な Yes/No 確認など) ではサマリ不要。
+
 ---
 
 ## 🧪 完了ゲート (LL Hook)
@@ -351,6 +373,12 @@
 - **根本原因**: `Portal.astro` の `.mobile-tabbar` は 4 項目だったが、CSS 側が `grid-template-columns: repeat(5, minmax(0, 1fr))` のままで、DOM 子要素数と grid 列数が一致していなかった。既存 E2E は表示と遷移だけを確認しており、bounding box、item 幅、横スクロールを検証していなかった。
 - **対策**: `.mobile-tabbar` を `grid-auto-flow: column` と `grid-auto-columns: minmax(0, 1fr)` に変更し、項目数へ追従させた。`tests/e2e/smoke.spec.ts` の mobile tabbar テストに viewport 幅、横スクロールなし、item count、item bounding box の検証を追加した。再発防止として `.claude/skills/ui-display-guard/SKILL.md` を追加した。
 - **教訓**: モバイル固定導線、sticky header、floating action など viewport 依存 UI は、表示されるだけでは合格にしない。CSS に item 数を二重管理しない設計にし、Playwright で `scrollWidth <= innerWidth` と固定 UI の bounding box を必ず検証する。
+
+### LL-047: 空欄 0 件でも deterministic fallback backlog は品質 debt として可視化する
+- **事象**: `data/index.json` の `summaryJa` / `summaryEn` / `bodyJa` / `bodyEn` は全件非空だったが、実測で 484 件が `「このエントリは ... AI 要約未生成」` 系の deterministic fallback のままだった。従来の `quality-audit` は「空欄なし」だけを見て 0 issues と報告していた。
+- **根本原因**: R-013 / LL-028 で「UI 空欄を防ぐ」fallback gate を強化した一方で、「本物の AI 要約に置き換わっているか」を別指標として扱っていなかった。Queue summarizer の backlog / enqueue candidates / KV lookup cap も `/status` から見えず、運用上の詰まりを検知しづらかった。
+- **対策**: `quality-audit` に deterministic fallback 件数・比率を追加し、10% 以上または 50 件以上で warning、70% 以上で critical とする。Worker health / `/status` / `/metrics.json` に `fallbackTotal`、`fallbackPercent`、`kvLookupCap`、`kvLookupCount`、`queueMode`、`queueCap`、`enqueueCandidates` を出す。
+- **教訓**: 多言語 summary/body の品質ゲートは「非空」と「real AI enrichment」を分ける。fallback は UX safety net であって完了状態ではない。Queue / KV cap を持つ非同期 enrichment は backlog 指標を最初から UI と監査に出す。
 
 ## 🔄 自己学習ハーネス手順
 

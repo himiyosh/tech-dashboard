@@ -10,7 +10,7 @@
 
 | ID   | 要件                                                                                                                                                                                | 優先度 |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| F-01 | 13 カテゴリ × 30 データソース (Tier 2: Copilot / Claude / Codex / Gemini / Cursor / Cline / Aider / VSCode / OpenCode / Local LLM / Agent FW / MCP / Research) の更新情報を自動収集 | MUST   |
+| F-01 | 14 カテゴリ × 51 登録ソース (Worker 実行時は `user-opml` を除く 50 ソース) の更新情報を自動収集 | MUST   |
 | F-02 | 収集したエントリを共通スキーマに正規化                                                                                                                                              | MUST   |
 | F-03 | 重複排除・クラスタリング (同一ニュースの統合)                                                                                                                                       | MUST   |
 | F-04 | 日本語要約 (1-2 文)                                                                                                                                                                 | MUST   |
@@ -31,11 +31,11 @@
 | コスト                 | LLM API 月額 < $20 (個人ユース) |
 | 運用工数               | < 30 分/月                      |
 
-### 1.3 情報ソース (Tier 2 = 30 ソース)
+### 1.3 情報ソース (Production = 51 登録ソース)
 
-ポータル v1.0 では **13 カテゴリ × 30 データソース (Tier 2)** を対象とする。Collector は RSS / HTML / GitHub API / arXiv API / Reddit JSON の 5 パターンを横断的にカバーし、以後の追加コストを最小化する。完全なソース一覧とフィード URL は [04-site-spec.md §1.4](04-site-spec.md#14-データソース一覧-tier-2--30) を正とする。
+Production では **14 カテゴリ × 51 登録ソース** を対象とする。Worker 実行時はローカル FS 依存の `user-opml` を除外し、50 ソースを 4 batch に分割して毎時ローテーションする。完全な現行仕様は [SPEC.md](SPEC.md) と `harness/registry.ts` を正とする。
 
-**13 カテゴリ** (`slug` / 概要):
+**14 カテゴリ** (`slug` / 概要):
 1. `copilot` – GitHub Copilot (CLI/Chat/Enterprise)
 2. `claude` – Anthropic Claude / Claude Code
 3. `codex` – OpenAI Codex / Code Interpreter
@@ -49,21 +49,11 @@
 11. `agent-fw` – LangChain / LlamaIndex / AutoGen / CrewAI
 12. `mcp` – Model Context Protocol エコシステム
 13. `research` – arXiv / Papers with Code / 研究ブログ
+14. `tech-news` – Apple / Microsoft / Google / AWS / NVIDIA / TechCrunch / The Verge / Ars Technica など横断技術ニュース
 
 カテゴリに収まらない概念 (benchmarks, RAG, open models, enterprise 等) はエントリ側の `tags[]` で補完する ([04-site-spec.md §1.1.1](04-site-spec.md#111-タグ補完と昇格ルール) 参照)。
 
-**ソース取得方式内訳 (Tier 2)**:
-
-| 方式                | 件数   | 例                                                                                                                         |
-| ------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
-| RSS                 | 18     | GitHub Changelog, Anthropic News, OpenAI Blog, HF Blog, Cursor Blog, Aider Blog, LangChain Blog, Google Developers Blog 他 |
-| GitHub Releases API | 7      | Ollama, llama.cpp, sst/opencode, Cline, Aider, LangChain, AutoGen                                                          |
-| arXiv API           | 2      | cs.CL (LLM filter), cs.AI (agent filter)                                                                                   |
-| Reddit JSON         | 2      | r/LocalLLaMA, r/ClaudeAI                                                                                                   |
-| HTML scrape         | 1      | MCP Servers カタログ                                                                                                       |
-| **計**              | **30** |                                                                                                                            |
-
-**拡張性**: ソース追加は `harness/collectors/*.ts` を 1 ファイル追加 + `registry.ts` に 1 行足すだけで済む構造とする (原則 3: Workflow 志向)。現在は 50 ソースを 4 batch に分け、Hacker News Algolia, 個人ブログ OPML, YouTube RSS 等も段階的に扱う。
+**拡張性**: ソース追加は `harness/collectors/*.ts` を 1 ファイル追加 + `registry.ts` に 1 行足すだけで済む構造とする (原則 3: Workflow 志向)。RSS/Atom、HTML detail fetch、HN Algolia、YouTube RSS、OPML を既存 collector で扱う。
 
 ---
 
@@ -81,7 +71,7 @@
 ┌─────────────────────────────────────────────────────────────┐
 │  Worker Harness (Node/TS, shared collectors/pipeline)        │
 │  ├─ Collectors (1 per source, parallel)                     │
-│  ├─ Pipeline (normalize → dedupe → summarize → tag)         │
+│  ├─ Pipeline (normalize → dedupe → fallback → queue enqueue)│
 │  └─ Publisher (commit data/index.json + archive + stats)     │
 └──────────────────┬──────────────────────────────────────────┘
                    │ git commit + push
@@ -112,9 +102,9 @@ Runtime は **Workflow**、Dev-time は **Agent** (原則 3)。
 | レイヤ         | 技術                                                                               | 選定理由                                                 |
 | -------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | Site generator | **Astro**                                                                          | Island architecture で JS 最小、静的配信で高速・低コスト |
-| UI             | React (Island) + Tailwind CSS                                                      | デザインシステム構築容易                                 |
+| UI             | Astro components + vanilla client scripts                                           | JS 最小の静的 UI、Pagefind 検索                          |
 | Harness        | Node.js 22 + TypeScript                                                            | Cloudflare Pages / Worker とローカル検証の parity を優先 |
-| LLM            | **Claude Opus 4.7** または **GPT-5.5** (要約・タグ付け)                            | 長期推論精度が必要な要約品質を優先。許可モデルのみ使用   |
+| LLM            | **Claude Sonnet 4.6** (Queue consumer) / ローカル backfill は Sonnet 4.6 または Opus 4.7 | Worker CPU 制約を避けつつ品質を維持                      |
 | Data store     | **Git** (JSON + Markdown)                                                          | DB 不要、差分可視、バージョン管理、$0                    |
 | 検索           | Pagefind (静的)                                                                    | ビルド時インデックス、クライアント検索、サーバ不要       |
 | デプロイ       | **Cloudflare Pages**                                                               | CDN / DDoS / 無料枠、ユーザ指定                          |
@@ -225,10 +215,10 @@ data/
    - clusterId 付与
    │
    ▼
-[4] Summarize + Tag (LLM - Claude Opus 4.7 / GPT-5.5)
-   - 新規エントリと本文欠落 cache を対象
-   - SUMMARIZE_MAX_NEW / SUMMARIZE_MAX_TOKENS / timeout / concurrency で制御
-   - Hook: JSON schema, summary/body 欠落検出、cache 再利用
+[4] Fallback + Queue summarize (Claude Sonnet 4.6)
+   - Worker は deterministic fallback で空欄を防ぎ、Queue に最大 ENQUEUE_MAX_NEW 件/run を投入
+   - worker-summarizer が 1 message/invocation で Copilot 要約を生成
+   - Hook: JSON schema, summary/body 欠落検出、per-URL KV cache 再利用
    - Verifier: generated body と summary の欠落、model error、cache 不整合を run metadata に記録
    │
    ▼

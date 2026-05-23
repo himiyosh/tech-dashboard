@@ -22,6 +22,9 @@ interface Entry {
   url: string;
   title: string;
   summaryJa: string;
+  summaryEn?: string;
+  bodyJa?: string;
+  bodyEn?: string;
   publishedAt: string;
   collectedAt?: string;
   tags: string[];
@@ -36,6 +39,20 @@ interface Index {
 }
 
 const CATS = [...ALL_CATEGORIES];
+const FALLBACK_SUMMARY_JA_PREFIX = "このエントリは ";
+const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
+const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collection metadata";
+
+export function isDeterministicFallbackEntry(entry: Pick<Entry, "summaryJa" | "summaryEn" | "bodyJa" | "bodyEn">): boolean {
+  const summaryJa = entry.summaryJa ?? "";
+  const summaryEn = entry.summaryEn ?? "";
+  const bodyEn = entry.bodyEn ?? "";
+  return (
+    summaryJa.startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
+    summaryEn.includes(FALLBACK_SUMMARY_EN_NEEDLE) ||
+    bodyEn.includes(FALLBACK_BODY_EN_NEEDLE)
+  );
+}
 
 interface FreshnessRow {
   id: string;
@@ -107,6 +124,9 @@ async function main() {
   const shortSummary = index.entries.filter((e) => e.summaryJa && e.summaryJa.length < 20).length;
   const emptySummary = index.entries.filter((e) => !e.summaryJa).length;
   const covPct = index.entries.length === 0 ? 0 : Math.round((withSummary / index.entries.length) * 100);
+  const fallbackEntries = index.entries.filter(isDeterministicFallbackEntry);
+  const fallbackPct = index.entries.length === 0 ? 0 : Math.round((fallbackEntries.length / index.entries.length) * 100);
+  const realSummaryCount = index.entries.length - fallbackEntries.length;
 
   // 4. Tag variations (simple: lowercase → set of originals)
   const tagGroups = new Map<string, Map<string, number>>();
@@ -144,6 +164,8 @@ async function main() {
   if (emptyCats.length >= 3) warning++;
   if (extraSourceIds.length > 0) warning++;
   if (covPct < 50) warning++;
+  if (fallbackPct >= 70) critical++;
+  else if (fallbackPct >= 10 || fallbackEntries.length >= 50) warning++;
   if (tagVariations.length >= 10) minor++;
   if (dupCandidates.length >= 5) minor++;
 
@@ -157,6 +179,7 @@ async function main() {
   lines.push(`- registry ソース: ${registrySourceIds.length}`);
   lines.push(`- data ソース: ${dataSourceIds.length}`);
   lines.push(`- index 生成: ${index.generatedAt}`);
+  lines.push(`- deterministic fallback: ${fallbackEntries.length} 件 (${fallbackPct}%)`);
   lines.push("");
 
   lines.push("## 🧭 ソース整合性");
@@ -191,6 +214,15 @@ async function main() {
   lines.push(`- 要約あり (≥ 20 chars): **${withSummary}** 件 (${covPct}%)`);
   lines.push(`- 短すぎ (< 20 chars): ${shortSummary} 件`);
   lines.push(`- 空要約: ${emptySummary} 件`);
+  lines.push(`- 実 AI 要約相当: ${realSummaryCount} 件`);
+  lines.push(`- deterministic fallback: **${fallbackEntries.length}** 件 (${fallbackPct}%)`);
+  if (fallbackEntries.length > 0) {
+    lines.push("");
+    lines.push("### deterministic fallback サンプル");
+    for (const e of fallbackEntries.slice(0, 8)) {
+      lines.push(`- \`${e.source}\` ${e.title} — <${e.url}>`);
+    }
+  }
   lines.push("");
 
   lines.push("## 🏷️ タグ揺れ候補 (top 10)");
@@ -224,7 +256,7 @@ async function main() {
 
   console.log(`[audit] wrote ${reportPath}`);
   console.log(`[audit] summary: ${critical + warning + minor} issues (🔴 ${critical} · 🟠 ${warning} · 🟢 ${minor})`);
-  console.log(`[audit] summary coverage: ${covPct}% · empty categories: ${emptyCats.join(", ") || "none"}`);
+  console.log(`[audit] summary coverage: ${covPct}% · fallback: ${fallbackEntries.length} (${fallbackPct}%) · empty categories: ${emptyCats.join(", ") || "none"}`);
 }
 
 const invokedPath = process.argv[1] ? pathToFileURL(process.argv[1]).href : "";

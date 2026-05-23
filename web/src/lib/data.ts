@@ -65,6 +65,15 @@ export interface WorkerHealth {
   sourcesFailed: string[];
   summarized: number;
   summarizeErrors: number;
+  summaryFallbacks?: number;
+  bodyFallbacks?: number;
+  fallbackTotal?: number;
+  fallbackPercent?: number;
+  kvLookupCap?: number;
+  kvLookupCount?: number;
+  queueMode?: "enabled" | "disabled" | "missing-binding";
+  queueCap?: number;
+  enqueueCandidates?: number;
   copilotOk: boolean;
   copilotError: string | null;
   ogCached: number;
@@ -206,6 +215,31 @@ const CJK_RE = /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
 /** true when the string contains Japanese/CJK characters. */
 export function hasCjk(s: string | undefined | null): boolean {
   return !!s && CJK_RE.test(s);
+}
+
+const FALLBACK_SUMMARY_JA_PREFIX = "このエントリは ";
+const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
+const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collection metadata";
+
+export function isDeterministicFallbackEntry(e: NormalizedEntry): boolean {
+  return (
+    (e.summaryJa ?? "").startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
+    (e.summaryEn ?? "").includes(FALLBACK_SUMMARY_EN_NEEDLE) ||
+    (e.bodyEn ?? "").includes(FALLBACK_BODY_EN_NEEDLE)
+  );
+}
+
+export function fallbackMetrics(entries: readonly NormalizedEntry[] = ALL_ENTRIES): {
+  fallbackEntries: number;
+  realSummaryEntries: number;
+  fallbackPercent: number;
+} {
+  const fallbackEntries = entries.filter(isDeterministicFallbackEntry).length;
+  return {
+    fallbackEntries,
+    realSummaryEntries: entries.length - fallbackEntries,
+    fallbackPercent: entries.length === 0 ? 0 : Math.round((fallbackEntries / entries.length) * 100),
+  };
 }
 
 /**
@@ -462,4 +496,3 @@ export function sourceAvgImportance(
     (recent.reduce((s, x) => s + x.importance, 0) / recent.length) * 10,
   ) / 10;
 }
-

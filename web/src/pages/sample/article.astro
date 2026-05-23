@@ -5,12 +5,27 @@
  * with the real article page.
  */
 import { ALL_ENTRIES } from "../../lib/data.ts";
+import Portal from "../../layouts/Portal.astro";
 
 const target = ALL_ENTRIES.find((e) => (e.bodyJa ?? "").length > 200) ?? ALL_ENTRIES[0];
-
-if (!target) {
-  return Astro.redirect("/");
-}
-
-return Astro.redirect(`/e/${target.id}/`);
+const targetHref = target ? `/e/${target.id}/` : "/";
 ---
+
+<Portal title="Sample Article — TECH Dashboard">
+  <main class="sample-redirect" data-pagefind-ignore>
+    <h1>Sample Article</h1>
+    <p>デザイン確認用のサンプル記事へ移動します。</p>
+    <p><a href={targetHref}>記事を開く</a></p>
+  </main>
+  <script is:inline define:vars={{ targetHref }}>
+    window.location.replace(targetHref);
+  </script>
+</Portal>
+
+<style>
+  .sample-redirect {
+    max-width: 720px;
+    margin: 80px auto;
+    padding: 24px;
+  }
+</style>

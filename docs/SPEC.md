@@ -3,7 +3,7 @@
 > 本書は **https://techdb.studio344.net/** の **現状実装** を記述した仕様書です。
 > 計画段階の草案は [`04-site-spec.md`](./04-site-spec.md) を参照。アーキテクチャ詳細は [`01-architecture.md`](./01-architecture.md) を参照。
 >
-> **最終更新**: 2026-04-27 / **本番コミット**: `main` ブランチ最新
+> **最終更新**: 2026-05-23 / **本番コミット**: `main` ブランチ最新
 
 ---
 
@@ -24,11 +24,15 @@
 
 ```
 [RSS / Anthropic / HN Algolia / VS Code / YouTube / OPML]
-            ↓ 6h cron  (Cloudflare Worker)
+            ↓ hourly cron  (Cloudflare Worker)
        ┌────────────────────────┐
        │ tech-dashboard-harness │  = Collect → Normalize → Dedupe
-       │   (Worker + KV cache)  │  → Summarize (Copilot Enterprise API)
-      └─────────┬──────────────┘  → Commit data/index.json / archive / stats
+       │   (Worker + KV cache)  │  → Fallback + Queue enqueue
+       └─────────┬──────────────┘  → Commit data/index.json / archive / stats
+                 ↓ Cloudflare Queue
+       ┌───────────────────────────┐
+       │ tech-dashboard-summarizer │  → Copilot Enterprise (Claude Sonnet 4.6)
+       └───────────────────────────┘
                  ↓ GitHub Git Data API (1 commit)
        ┌────────────────────────┐
        │  github.com/himiyosh/  │  main ブランチ
@@ -45,8 +49,9 @@
 
 | コンポーネント | ランタイム | 役割 |
 |---|---|---|
-| **Worker `tech-dashboard-harness`** | Cloudflare Workers (Paid) | 毎時 cron (4 batch ローテーション) で RSS 収集 → Copilot 要約 → og:image 取得 → GitHub へ data コミット |
-| **KV `SUMMARY_CACHE`** | Cloudflare KV | `cache.v1` (要約) と `og.v1` (画像キャッシュ) の二つの単一ブロブを管理 |
+| **Worker `tech-dashboard-harness`** | Cloudflare Workers | 毎時 cron (4 batch ローテーション) で RSS 収集 → fallback 適用 → Queue 投入 → og:image 取得 → GitHub へ data コミット |
+| **Worker `tech-dashboard-summarizer`** | Cloudflare Workers Queue consumer | 1 message / invocation で Copilot 要約を生成し、KV に per-URL cache として保存 |
+| **KV `SUMMARY_CACHE`** | Cloudflare KV | `s:{sha256(url)}` の per-URL summary cache と `og.v1` 画像キャッシュを管理 |
 | **harness (ローカル実行版)** | Node.js 22 / TSX | `npm run collect` で同ロジックをローカル実行 (デバッグ用) |
 | **web (Astro)** | Astro 5 + Pagefind | SSG 静的サイト。`data/index.json` をビルド時に読んで全画面生成 |
 | **pre-push hook** | `scripts/git-hooks/pre-push` | ローカル品質ゲートを実行し、`RUN_WORKER_DEPLOY=1` の `main` push に worker/ 差分がある場合だけ `wrangler deploy` を実行 |
@@ -59,11 +64,11 @@
 | Cron 式 | `0 * * * *` (UTC) |
 | 実行頻度 | **毎時 / 24 run×日** |
 | ソースローテーション | 50 fetch 対象ソース ÷ 4 batch (`hour % 4`)、個別ソースは 4 時間ごと |
-| 1 実行あたり新規要約上限 | `SUMMARIZE_MAX_NEW = 5` |
+| 1 実行あたり Queue 投入上限 | `ENQUEUE_MAX_NEW = 30` |
 | 1 実行あたり og:image fetch 上限 | `OG_BUDGET_PER_RUN = 4` |
 | ソースあたり取得上限 | `PER_SOURCE_CAP = 15` (arxiv の 400+/日 を抑制) |
-| index エントリ総数上限 | `INDEX_LIMIT = 500` |
-| Cloudflare Workers subrequest 上限 | 50/run (Free)、現状 ~24/run 使用 |
+| index エントリ総数上限 | `INDEX_LIMIT = 2000` |
+| Cloudflare Workers subrequest 上限 | 1000/invocation を前提に `KV_LOOKUP_CAP` で制御 |
 
 ### 2.3 手動トリガ
 
@@ -89,6 +94,15 @@ interface WorkerHealth {
   sourcesFailed: string[];
   summarized: number;
   summarizeErrors: number;
+  summaryFallbacks?: number;
+  bodyFallbacks?: number;
+  fallbackTotal?: number;
+  fallbackPercent?: number;
+  kvLookupCap?: number;
+  kvLookupCount?: number;
+  queueMode?: "enabled" | "disabled" | "missing-binding";
+  queueCap?: number;
+  enqueueCandidates?: number;
   copilotOk: boolean;
   copilotError: string | null;
   ogCached: number;
@@ -106,7 +120,7 @@ interface WorkerHealth {
 
 | 領域 | 仕組み | 頻度 / トリガー |
 |---|---|---|
-| データ収集 + 要約 + og:image | Cloudflare Worker (cron) | 毎時 (4 batch ローテーション) |
+| データ収集 + Queue 要約 + og:image | Cloudflare Worker cron + Queue consumer | 毎時 (4 batch ローテーション、要約は最大 30 件/run を Queue 投入) |
 | GitHub commit | Worker → GitHub Git Data API | data 差分を 1 commit にまとめる |
 | サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
 | ローカル品質ゲート + Worker コード deploy | `scripts/git-hooks/pre-push` | push 前に unit / web build / E2E を実行し、`RUN_WORKER_DEPLOY=1` の `main` push に worker/ 差分がある場合だけ deploy |
@@ -124,8 +138,8 @@ interface WorkerHealth {
 interface NormalizedEntry {
   id: string;             // sha256(source + url) の短縮 ID
   source: string;         // ソース ID (例: "anthropic-news")
-  category: Category;     // 13 分類
-  sourceType: "rss" | "release" | "changelog" | "paper" | "youtube" | "hn";
+  category: Category;     // 14 分類
+  sourceType: "blog" | "release" | "changelog" | "paper" | "community";
   url: string;
   title: string;          // 正規化済みタイトル (JA/EN 混在)
   titleJa?: string;       // 日本語タイトル (CJK 検出時のみ)
@@ -135,6 +149,8 @@ interface NormalizedEntry {
   tags: string[];         // 横断タグ (例: "mcp", "agent", "local")
   summaryJa?: string;     // Copilot 生成 (日本語 3 文)
   summaryEn?: string;     // Copilot 生成 (英語 3 文)
+  bodyJa?: string;        // 日本語本文
+  bodyEn?: string;        // 英語本文
   importance: 1 | 2 | 3;  // 3=Major release / 2=Feature / 1=Info
 }
 ```
@@ -149,7 +165,8 @@ interface NormalizedEntry {
 | `data/stats.json` | archive 込みの記事数推移 / source 集計 | Worker cron / `npm run collect` 実行時 |
 | `data/raw/<source>.json` | 収集素材 (デバッグ用、ローカルのみ) | `npm run collect` 時 |
 | `data/_summary-cache.json` | ローカル要約キャッシュ | ローカル実行時 |
-| KV `cache.v1` | Worker 要約キャッシュ (JSON ブロブ) | Worker 実行時 |
+| KV `s:{sha256(url)}` | Worker / Queue 要約キャッシュ (per-URL key) | summarizer Worker 実行時 |
+| KV `cache.v1` | 旧 Worker 要約キャッシュ (read-only fallback) | migration 期間のみ |
 | `data/_runs/audit-*.md` | 品質監査レポート | `quality-audit` Skill 実行時 |
 
 `web/src/lib/metrics.ts` は `data/index.json`、`data/stats.json`、archive index、Worker health から Timeline / About の表示 metrics を組み立てる。`/metrics.json` は同じ値を JSON で公開し、`LiveMetrics.astro` が開いているページの `data-metric` 表示を定期 fetch で更新する。
@@ -284,9 +301,9 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 3. dedupe        tracking query を除いた canonical URL key で重複排除
 4. per-source    重要度と鮮度で最大 50 件/ソースにキャップ
 5. sort          publishedAt 降順で INDEX_LIMIT まで
-6. cache-lookup  KV から既存要約を取得
-7. summarize     `SUMMARIZE_MAX_NEW` 件まで Copilot Enterprise (既定: Claude Opus 4.7) で要約。Worker は timeout + 1 retry を行う
-8. cache-write   KV に単一ブロブで永続化
+6. cache-lookup  KV から既存要約を per-URL key で取得
+7. fallback      summary/body 空欄を deterministic fallback で埋める
+8. enqueue       `ENQUEUE_MAX_NEW` 件まで Queue に投入し、summarizer Worker が Copilot Enterprise (Claude Sonnet 4.6) で要約
 9. categorize    URL / tag でカテゴリ判定
 10. build        `data/index.json` / `data/archive/*` / `data/stats.json` 生成
 11. commit       GitHub Git Data API で `data/index.json` / archive / stats を 1 commit にまとめる (既存と同一なら skip)
@@ -297,7 +314,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 - エンドポイント: GitHub Copilot Enterprise Chat Completions (`https://api.githubcopilot.com/chat/completions`)
 - モデル: `claude-sonnet-4.6` (`SUMMARIZE_MODEL` で変更可)
 - 認証: `COPILOT_PAT` → 一時トークン交換を自動実行 (`x-github-token` ヘッダ経由)
-- 出力: JSON `{ summaryJa, summaryEn, importance, extraTags }` を期待
+- 出力: JSON `{ titleJa, summaryJa, summaryEn, bodyJa, bodyEn, importance, extraTags }` を期待
 
 ---
 
@@ -308,7 +325,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | パス | 画面 | 主要コンポーネント |
 |---|---|---|
 | `/` | Timeline (トップ) | `DailySummary`, `TimelineList`, `Sidebar` |
-| `/c/[slug]` | カテゴリ別 (13 種) | `CategoryHero`, `TimelineList` |
+| `/c/[slug]` | カテゴリ別 (14 種) | `CategoryHero`, `TimelineList` |
 | `/categories` | カテゴリ一覧 | カテゴリグリッド + 7 日スパークライン |
 | `/status` | ステータス + ソース一覧 | `generatedAt` / 件数 / Worker health / source registry / ソース健全性 |
 | `/sources` | 互換リダイレクト | `/status` へ誘導 |

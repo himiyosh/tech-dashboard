@@ -1,8 +1,8 @@
-# Worker 分割設計 (LL-037 解消案)
+# Worker 分割設計 (LL-037 採用済み)
 
 ## 背景
 
-現在の `tech-dashboard-harness` Worker は 1 invocation で以下を全て行っている。
+旧 `tech-dashboard-harness` Worker は 1 invocation で以下を全て行っていた。
 
 1. 全 50 sources を 4 batch に分割し、batch 内 collector を並列実行
 2. RSS / HTML を normalize + tag
@@ -14,9 +14,9 @@
 
 Cloudflare Workers Standard プランの **CPU 時間 30s/invocation** が 3. + 4-7 の合算で枯渇するため、3 を有効化すると HTTP 503 (`Worker exceeded CPU time limit`) になる (LL-037)。
 
-## 目的
+## 目的 / 現状
 
-- Worker 経路で要約生成を復活させ、新着記事に AI 要約を付ける
+- Worker 経路で要約生成を復活させ、新着記事に AI 要約を付ける (Cloudflare Queue consumer `tech-dashboard-summarizer` で採用済み)
 - cron 健全性 (batch 0/1/3 の HTTP 200) を維持
 - ローカル `npm run resummarize` への手動依存を解消
 
@@ -27,7 +27,7 @@ Cloudflare Workers Standard プランの **CPU 時間 30s/invocation** が 3. + 
 | Worker | 責務 | CPU 予算 | 起動 |
 |---|---|---|---|
 | **harness-collector** (現 `tech-dashboard-harness`) | collect → normalize → merge → publish | 30s (現状 25-28s) | `cron 0 * * * *` |
-| **harness-summarizer** (新規) | Queue から URL を pop して Copilot 要約 → KV `SUMMARY_CACHE` に保存 | 30s/メッセージ (1 件 ≒ 15-20s) | `[[queues.consumers]]` |
+| **harness-summarizer** (`tech-dashboard-summarizer`) | Queue から URL を pop して Copilot 要約 → KV `SUMMARY_CACHE` に保存 | 30s/メッセージ (1 件 ≒ 15-25s) | `[[queues.consumers]]` |
 
 ### B. データフロー
 

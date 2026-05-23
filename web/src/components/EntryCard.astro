@@ -43,6 +43,7 @@ function faviconUrl(url: string, size = 32): string {
   if (!h) return "";
   return `https://www.google.com/s2/favicons?sz=${size}&domain=${h}`;
 }
+const entryFavicon = faviconUrl(entry.url);
 
 const summaryJaResult = summaryForLangWithFallback(entry, "ja");
 const summaryJa = summaryJaResult.text;
@@ -82,6 +83,7 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
   data-pagefind-body
   style={`--cat-color:${catColor}`}
 >
+  <a class="card-panel-link" href={entryHref(entry)} tabindex="-1" aria-label={`Open ${titleJa || titleEn || entry.title}`}></a>
   <div class="card-body">
     <div class="meta">
       {entry.importance === 3 && <span class="badge hot" title="重要リリース">🔥 HOT</span>}
@@ -94,7 +96,7 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
       <span class="src-tag">
         <img
           class="src-favicon"
-          src={faviconUrl(entry.url)}
+          src={entryFavicon}
           alt=""
           width="14"
           height="14"
@@ -158,7 +160,7 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
     <div class="url">
       <img
         class="url-favicon"
-        src={faviconUrl(entry.url)}
+        src={entryFavicon}
         alt=""
         width="16"
         height="16"

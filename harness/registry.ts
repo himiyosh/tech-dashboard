@@ -143,6 +143,7 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     autoTags: ["arxiv", "paper"],
     feedUrl: "https://rss.arxiv.org/rss/cs.CL",
     tier: 1,
+    perSourceCap: 20,
     collect: collectRss,
   },
   "arxiv-cs-se": {
@@ -154,6 +155,7 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     autoTags: ["arxiv", "paper"],
     feedUrl: "https://rss.arxiv.org/rss/cs.SE",
     tier: 1,
+    perSourceCap: 15,
     collect: collectRss,
   },
   "zenn-ai": {
@@ -165,6 +167,7 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     autoTags: ["zenn"],
     feedUrl: "https://zenn.dev/topics/ai/feed",
     tier: 1,
+    perSourceCap: 30,
     collect: collectRss,
   },
   "qiita-copilot": {
@@ -433,6 +436,7 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     autoTags: ["arxiv", "paper"],
     feedUrl: "https://rss.arxiv.org/rss/cs.AI",
     tier: 2,
+    perSourceCap: 25,
     collect: collectRss,
   },
   "arxiv-cs-lg": {
@@ -444,6 +448,7 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     autoTags: ["arxiv", "paper"],
     feedUrl: "https://rss.arxiv.org/rss/cs.LG",
     tier: 2,
+    perSourceCap: 20,
     collect: collectRss,
   },
 

@@ -159,6 +159,12 @@ export interface SourceDefinition {
    */
   tier: 1 | 2 | 3;
   /**
+   * Optional per-source entry cap for data/index.json. Defaults to the global
+   * PER_SOURCE_CAP (50). Use lower values for high-volume sources (e.g. arXiv
+   * feeds) that would otherwise dominate a single category.
+   */
+  perSourceCap?: number;
+  /**
    * Optional half-life override for this source. If unset, the default mapping
    * in harness/half-life.ts (by category × sourceType) is used.
    * Use this for sources whose decay profile diverges from category default

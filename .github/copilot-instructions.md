@@ -392,6 +392,30 @@
 - **対策**: mobile tabbar は Categories / Status / Timeline / Search / More の主要 5 項目に整理し、Timeline を中央の強調ボタンにする。Archive / About は accessible More sheet に移動。Categories / Archive の overview に mobile badge + gradient banner + 横スクロール quick links を置き、mobile では主要 KPI だけ表示する。grid 子に `min-width: 0` を明示。EntryCard / Featured は `onerror` で `.failed` を付与し、CategoryThumb fallback を表示する。
 - **教訓**: モバイル固定導線は「全部置く」ではなく頻用導線 + More に分け、最重要導線は中央に置いて視覚的ヒエラルキーを作る。ファーストビュー改善で horizontal chips を入れる場合は `scrollWidth <= innerWidth` を必ず E2E で確認する。KPI は desktop と同じ数を mobile に出さず、主要指標に絞る。外部サムネイルは成功前提にせず、画像ロード失敗時の deterministic fallback を同時に実装する。
 
+### LL-050: OGP 画像バックフィルは YouTube は deterministic URL、その他は og:image/twitter:image 抽出で対応
+- **事象**: data/index.json の live 記事 1407 件中 757 件 (54%) が `image` 未取得で、EntryCard の fallback artwork のみの表示だった。
+- **根本原因**: Cloudflare Worker の OGP fetch は 1 invocation あたりの subrequest 上限 (LL-042) のため、新規記事のみを対象にしており既存 entry への遡及がなかった。arXiv, Cursor changelog, DORA insights, HN AI 等は OGP 画像を構造的に持たない。YouTube はサムネイル URL が video ID から決定論的に導出できる。
+- **対策**: `scripts/fetch-missing-ogp.mjs` を作成。YouTube は `https://img.youtube.com/vi/{videoId}/hqdefault.jpg` を直接セット。OGP 画像が構造的に存在しないソース (arxiv, cursor-changelog, dora-insights, hn-ai) はスキップ。その他は記事 HTML を fetch して `<meta property="og:image">` → `twitter:image` の順で抽出。concurrency=8 で 700 件を処理し 388 件が取得できた (757→349 件に削減)。
+- **教訓**: OGP バックフィルは「全件 fetch」ではなく「構造的に画像がないソースをスキップ」してから残りを取得する。YouTube 等の動画プラットフォームは決定論的 URL が使えるため fetch 不要。fetch 失敗はエラーにせず次の機会に回す。
+
+### LL-051: archive の hot tier entry は summaryJa/summaryEn も除去してファイルサイズを管理する
+- **事象**: LL-032 の対策で hot tier を archive に含めるようにしたところ、2026-05.json が 4.5MB まで膨張した (hot 2807 件、各 entry に long summaryJa/summaryEn あり)。
+- **根本原因**: `compactArchiveEntry` が `bodyJa`/`bodyEn` のみ削除し、`summaryJa`/`summaryEn` を残していた。hot entry は live index に全フィールドが存在するので、archive 側で要約を保持する必要はなかった。warm/cold entry は live index から除外済みのため summary が archive 唯一のコピーとなり削除不可。
+- **対策**: `compactArchiveEntry` を `archiveTier === "hot"` の entry については `summaryJa`/`summaryEn` も削除するよう変更。`scripts/trim-archive-hot-summaries.mjs` で既存ファイルを一括適用。2026-05.json を 4.5MB → 3.2MB に圧縮。archive 月別ページは EntryCard を利用するが、hot entry は live timeline でも閲覧できるため summary なしで許容。
+- **教訓**: archive の size budget を守るには「tier 別に保持フィールドを決める」。hot tier は live index が主、archive はカウント用途のみなので summary は省略可。warm/cold は archive が唯一のコピーなので summary を保持する。
+
+### LL-052: 高ボリュームソースはカテゴリを独占しないよう perSourceCap とカテゴリキャップを併用する
+- **事象**: research カテゴリが 256 件 (18%) で全カテゴリ 2 位。arXiv 4 ソース×50 件 + simonw-blog 50 件 + zenn-ai 50 件 = 200 件超が論文・ブログで埋まり、UI の多様性が損なわれていた。
+- **根本原因**: `PER_SOURCE_CAP=50` がすべてのソースに均一適用されており、日次更新量が多い arXiv feed がキャップ上限まで毎日取得されていた。カテゴリ単位の上限もないため、research は無制限に増加した。
+- **対策**: `SourceDefinition` に `perSourceCap?: number` を追加し、arXiv 4 ソースを個別に制限 (cs.AI=25, cs.CL=20, cs.LG=20, cs.SE=15)。`zenn-ai` も 50→30 に変更。Worker の capping ロジックを `sourceDef.perSourceCap ?? PER_SOURCE_CAP` に切り替え。さらに `CATEGORY_CAPS = { research: 120 }` を追加し、ソースキャップ後にカテゴリ上限でさらに重要度順に絞り込む。
+- **教訓**: 高ボリュームのフィード (arXiv, Zenn タグ) を追加するときは、同一カテゴリの他ソースとのバランスを考慮して `perSourceCap` を明示する。カテゴリ全体の分布は `CATEGORY_CAPS` で上限を設けることで、単一カテゴリのインデックス占有を防ぐ。
+
+### LL-053: titleEn 欠落は summaryEn の先頭文から抽出して補完できる
+- **事象**: JP source (Qiita/Zenn) の live entry 453 件で `titleEn` が空のままで、EN UI に JA バッジ付きフォールバック表示が連続していた。
+- **根本原因**: 日本語 source は AI 要約で `summaryEn` が生成されるが、`titleEn` は独立フィールドで別途生成が必要だった。Worker / harness のどちらも `titleEn` を `summaryEn` から自動生成する処理を持っていなかった。
+- **対策**: `scripts/fill-title-en.mjs` を作成。`summaryEn` が実 AI 要約の場合 (フォールバックマーカーなし) は先頭文 (最大 120 文字) を `titleEn` に設定。AI 要約が未生成の場合は元の `title` を代入する。453 件すべてを補完。
+- **教訓**: `titleEn` と `summaryEn` は独立して管理する必要があるが、`fill-title-en.mjs` の再実行で AI 要約が入った後に titleEn も更新できる。summaryEn の AI 生成が完了した段階で `npm run titleen:fill` を再実行して英語タイトル品質を向上させる。
+
 ## 🔄 自己学習ハーネス手順
 
 1. 作業中に発生した「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。

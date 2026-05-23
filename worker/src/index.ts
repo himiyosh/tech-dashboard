@@ -897,39 +897,52 @@ async function runHarness(
     1,
     Number(env.SUMMARIZE_CONCURRENCY || String(DEFAULT_SUMMARIZE_CONCURRENCY)),
   );
-  // Per-URL KV (LL-038/042). To stay under the 1000-subrequest/invocation cap
-  // we only read KV for entries that might need a cache update — entries
-  // that already carry a real AI summary in the merged data (summaryJa not
-  // empty AND not the deterministic-fallback lead 「このエントリは 」) are
-  // trusted as-is and skipped. Fallback entries are checked because the
-  // summarizer Worker may have written a real summary into KV since the
-  // previous cron run.
+  // Per-URL KV (LL-038/042). We only read KV for entries that might need a
+  // cache update — entries already carrying a real AI summary are skipped.
   //
-  // LL-042 follow-up (2026-05-17): cap the per-URL KV reads at a small,
-  // bounded number. With ~225 fallback entries, parallel KV.gets consumed
-  // ~225 subrequests, and combined with collector/archive/commit fetches
-  // we still tipped over the 1000/inv cap on every cron. Capping at 60
-  // keeps total subrequests well under budget; the unread tail will be
-  // discovered on subsequent crons as fresh entries cycle the head.
+  // Root-cause fix (2026-05-24): the earlier cap of 60 (LL-042 follow-up)
+  // caused a permanent blind-spot. Entries at positions 60+ were never
+  // KV-checked, never entered `lookedUpUrls`, and maybeEnqueueSummaryJobs
+  // incorrectly treated them as "has real summary — skip". Result: a growing
+  // tail (484 entries, 400+ permanently stuck) that never got enqueued.
+  //
+  // After LL-036/040/041 slashed non-KV subrequests to ~60-80/inv, there is
+  // room for 500 KV reads (500 + 80 = 580 < 1000 limit). Raising the default
+  // to 500 covers all currently known fallback entries. Round-robin ensures
+  // every entry eventually gets checked even if the count exceeds the cap.
   const KV_LOOKUP_CAP = Math.max(
-    30,
-    Number(env.KV_LOOKUP_CAP ?? "60"),
+    100,
+    Number(env.KV_LOOKUP_CAP ?? "500"),
   );
   const allFallback = sorted.filter(needsGeneratedContent);
-  const needsKvLookup = allFallback.slice(0, KV_LOOKUP_CAP);
-  // Track which URLs we actually issued a KV.get for. A URL absent from this
-  // Set was skipped because it already carries a real AI summary in the
-  // merged data (do not enqueue). A URL present in the Set but absent from
-  // hitsByUrl is a genuine KV miss — the entry has no cached summary yet
-  // and MUST be enqueued so the summarizer Worker can generate one.
+  // Round-robin: shift start index by 1 each hour so all entries cycle
+  // through even when allFallback.length > KV_LOOKUP_CAP.
+  const rrHourOffset =
+    allFallback.length > KV_LOOKUP_CAP
+      ? Math.floor(Date.now() / 3600_000) % allFallback.length
+      : 0;
+  const needsKvLookup: typeof allFallback = [];
+  for (let i = 0; i < Math.min(KV_LOOKUP_CAP, allFallback.length); i++) {
+    needsKvLookup.push(allFallback[(rrHourOffset + i) % allFallback.length]!);
+  }
+  // lookedUpUrls: URLs we actually issued KV.get for.
+  //   Absent from set  → real AI summary exists; do not enqueue.
+  //   Present but no hitsByUrl hit → KV miss; MUST enqueue.
   const lookedUpUrls = new Set(needsKvLookup.map((e) => e.url));
+  // uncheckedFallbackUrls: fallback entries skipped this cron because
+  // allFallback.length > KV_LOOKUP_CAP. We know they're fallbacks (no real
+  // summary) even without a KV read, so maybeEnqueueSummaryJobs treats them
+  // the same as KV-miss entries.
+  const uncheckedFallbackUrls = new Set(
+    allFallback.filter((e) => !lookedUpUrls.has(e.url)).map((e) => e.url),
+  );
   const hitsByUrl = await getCacheEntriesWithLegacyFallback(
     env.SUMMARY_CACHE,
     needsKvLookup.map((e) => e.url),
     CACHE_KEY,
   );
   console.log(
-    `[worker] cache lookups ${needsKvLookup.length} / ${sorted.length} (fallback total=${allFallback.length}, cap=${KV_LOOKUP_CAP}, skipped ${sorted.length - allFallback.length} entries with real summaries)`,
+    `[worker] cache lookups ${needsKvLookup.length} / ${sorted.length} (fallback total=${allFallback.length}, unchecked=${uncheckedFallbackUrls.size}, cap=${KV_LOOKUP_CAP}, rrOffset=${rrHourOffset})`,
   );
 
   const needsSummary: NormalizedEntry[] = [];
@@ -1160,10 +1173,11 @@ async function runHarness(
   // KV.get loop on no-op runs to keep the autonomous backfill flowing.
   if (stripGeneratedAt(existingJson) === stripGeneratedAt(json)) {
     console.log("[worker] no data changes");
-    const enqueuedNoop = await maybeEnqueueSummaryJobs(env, finalEntries, hitsByUrl, lookedUpUrls);
+    const enqueuedNoop = await maybeEnqueueSummaryJobs(env, finalEntries, hitsByUrl, lookedUpUrls, uncheckedFallbackUrls);
     if (enqueuedNoop > 0) {
       console.log(`[worker] enqueued ${enqueuedNoop} summary jobs (no-op publish path)`);
     }
+    await writeHeartbeat(env, health, false, enqueuedNoop, allFallback.length);
     return { changed: false, stats: { finalEntries: finalEntries.length, summarized, errors, enqueued: enqueuedNoop } };
   }
 
@@ -1195,10 +1209,13 @@ async function runHarness(
 
   // 8) Optional: enqueue uncached entries to the summarizer Queue (LL-037).
   // Off by default; activate via wrangler.toml (ENABLE_SUMMARY_QUEUE=1 and
-  // [[queues.producers]] binding). We reuse `hitsByUrl` collected earlier
-  // in this run to avoid a second 900+ per-URL KV.get pass that would blow
-  // through the Standard plan's 1000-subrequest/invocation budget.
-  const enqueued = await maybeEnqueueSummaryJobs(env, finalEntries, hitsByUrl, lookedUpUrls);
+  // [[queues.producers]] binding). We reuse `hitsByUrl` + `uncheckedFallbackUrls`
+  // collected earlier to avoid a second KV.get pass.
+  const enqueued = await maybeEnqueueSummaryJobs(env, finalEntries, hitsByUrl, lookedUpUrls, uncheckedFallbackUrls);
+  if (enqueued > 0) {
+    console.log(`[worker] enqueued ${enqueued} summary jobs`);
+  }
+  await writeHeartbeat(env, health, true, enqueued, allFallback.length);
   if (enqueued > 0) {
     console.log(`[worker] enqueued ${enqueued} summary jobs`);
   }
@@ -1220,6 +1237,50 @@ async function runHarness(
   };
 }
 
+const HEARTBEAT_KEY = "heartbeat.v1";
+
+/**
+ * Write a lightweight heartbeat to KV on every cron run (even no-op). This
+ * lets the /health endpoint report "last cron checked N minutes ago" even when
+ * no data changed and data/index.json wasn't committed (LL: worker reliability).
+ */
+async function writeHeartbeat(
+  env: Env,
+  health: {
+    batchIndex: number;
+    batchTotal: number;
+    sourcesOk: number;
+    sourcesAttempted: number;
+    sourcesFailed: string[];
+    copilotOk: boolean;
+  },
+  changed: boolean,
+  enqueued: number,
+  fallbackTotal: number,
+): Promise<void> {
+  try {
+    const hb = {
+      lastCronAt: new Date().toISOString(),
+      changed,
+      enqueued,
+      fallbackTotal,
+      batchIndex: health.batchIndex,
+      batchTotal: health.batchTotal,
+      sourcesOk: health.sourcesOk,
+      sourcesAttempted: health.sourcesAttempted,
+      sourcesFailed: health.sourcesFailed,
+      copilotOk: health.copilotOk,
+    };
+    // 7-day TTL: if Worker stops running, the heartbeat expires naturally.
+    await env.SUMMARY_CACHE.put(HEARTBEAT_KEY, JSON.stringify(hb), {
+      expirationTtl: 7 * 24 * 3600,
+    });
+  } catch (err) {
+    // Best-effort; never fail the cron over a heartbeat write error.
+    console.warn("[worker] heartbeat write failed:", err);
+  }
+}
+
 /**
  * Send up to ENQUEUE_MAX_NEW entries lacking a real cached summary to the
  * SUMMARY_QUEUE. Returns the number actually enqueued. No-op when disabled
@@ -1230,20 +1291,59 @@ async function maybeEnqueueSummaryJobs(
   entries: readonly NormalizedEntry[],
   hitsByUrl: Map<string, CacheEntry>,
   lookedUpUrls: Set<string>,
+  uncheckedFallbackUrls: Set<string>,
 ): Promise<number> {
   if (env.ENABLE_SUMMARY_QUEUE !== "1") return 0;
   if (!env.SUMMARY_QUEUE) {
     console.warn("[worker] ENABLE_SUMMARY_QUEUE=1 but SUMMARY_QUEUE binding missing");
     return 0;
   }
-  // hitsByUrl + lookedUpUrls were populated earlier in runHarness from
-  // per-URL KV + legacy cache.v1 fallback. Reusing them here saves ~900
-  // subrequests per cron and keeps us under the 1000/inv cap. We need both:
-  // hitsByUrl alone cannot distinguish "entry skipped because real summary
-  // exists" (don't enqueue) from "entry looked up but KV miss" (DO enqueue
-  // — the summarizer Worker must populate cache).
   const cap = Math.max(1, Number(env.ENQUEUE_MAX_NEW ?? 30));
-  const candidates = selectSummaryJobs(entries, hitsByUrl, lookedUpUrls, cap);
+
+  // Round-robin: shift start index so different hours enqueue different
+  // subsets. Without this, the cap-newest entries always win and old entries
+  // are permanently starved when fallbackTotal >> ENQUEUE_MAX_NEW.
+  const startIdx =
+    entries.length > cap ? Math.floor(Date.now() / 3600_000) % entries.length : 0;
+
+  const candidates: SummaryJob[] = [];
+  for (let i = 0; i < entries.length; i++) {
+    if (candidates.length >= cap) break;
+    const e = entries[(startIdx + i) % entries.length]!;
+
+    const isLookedUp = lookedUpUrls.has(e.url);
+    const isUncheckedFallback = uncheckedFallbackUrls.has(e.url);
+
+    if (!isLookedUp && !isUncheckedFallback) {
+      // Entry carries a real AI summary; not in either fallback set. Skip.
+      continue;
+    }
+
+    if (isLookedUp) {
+      // We KV-read this entry. Only enqueue if the cache lacks a real summary.
+      const hit = hitsByUrl.get(e.url);
+      const hasRealCache =
+        hit &&
+        hit.summaryJa &&
+        hit.summaryEn &&
+        hit.bodyJa &&
+        hit.bodyEn &&
+        hit.model !== "deterministic-fallback";
+      if (hasRealCache) continue;
+    }
+    // isUncheckedFallback (or KV-miss) → no confirmed summary in cache; enqueue.
+    candidates.push({
+      url: e.url,
+      entry: {
+        id: e.id,
+        url: e.url,
+        title: e.title,
+        category: e.category,
+        source: e.source,
+        sourceType: e.sourceType,
+      },
+    });
+  }
 
   // Queue.sendBatch caps at 100 messages and 256 KB per call. Chunk so the
   // producer can keep sending large backfill waves without hitting
@@ -1533,6 +1633,23 @@ export default {
           (globalThis as { fetch: typeof fetch }).fetch = originalFetch;
         }
       }
+    }
+    // Public health endpoint — exposes cron heartbeat for the status page.
+    // No auth required; the response contains only operational metrics.
+    //   curl https://tech-dashboard-harness.himiyosh.workers.dev/health
+    if (url.pathname === "/health" && req.method === "GET") {
+      const hb = await env.SUMMARY_CACHE.get(HEARTBEAT_KEY, "json") as Record<string, unknown> | null;
+      const body = hb
+        ? JSON.stringify({ ok: true, ...hb })
+        : JSON.stringify({ ok: false, error: "no heartbeat yet; cron has not run since deployment" });
+      return new Response(body, {
+        status: hb ? 200 : 503,
+        headers: {
+          "content-type": "application/json;charset=UTF-8",
+          "access-control-allow-origin": "*",
+          "cache-control": "public, max-age=60",
+        },
+      });
     }
     return new Response(
       "tech-dashboard harness worker. POST /run (auth: x-trigger-token) to trigger.",

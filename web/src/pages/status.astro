@@ -13,6 +13,7 @@ import {
 } from "../lib/data.ts";
 import { sourceFreshnessStatus, type FreshnessSourceType, type FreshnessStatus } from "../lib/freshness.ts";
 import { SOURCE_META } from "../lib/source-meta.ts";
+import { WORKER_HEALTH_URL } from "../lib/site.ts";
 
 const now = new Date();
 const SIX_H = 6 * 3600_000;
@@ -185,8 +186,12 @@ const workerSummary = wh
 
         <div class="status-hero-grid" aria-label="Worker summary">
           <div class="status-metric-card">
-            <span>最終実行</span>
+            <span>最終コミット</span>
             <strong>{wh ? relativeTime(wh.lastRunAt, now) : "unknown"}</strong>
+          </div>
+          <div class="status-metric-card" id="hb-last-cron-card" title="Worker の直近 cron 実行時刻 (ライブ取得)">
+            <span>最終 cron チェック</span>
+            <strong id="hb-last-cron">—</strong>
           </div>
           <div class="status-metric-card">
             <span>収集成功</span>
@@ -203,6 +208,10 @@ const workerSummary = wh
           <div class="status-metric-card">
             <span>Index</span>
             <strong>{indexAgeLabel}</strong>
+          </div>
+          <div class="status-metric-card" id="hb-fallback-card" title="deterministic fallback 残件数 (ライブ取得)">
+            <span>fallback 残件</span>
+            <strong id="hb-fallback">—</strong>
           </div>
         </div>
       </section>
@@ -250,6 +259,10 @@ const workerSummary = wh
             ) : (
               <strong class="tone-warn">{wh.sourcesFailed.join(", ")}</strong>
             )}
+          </div>
+          <div id="hb-enqueued-row">
+            <span class="detail-label">Queue 投入 (今回)</span>
+            <strong id="hb-enqueued">—</strong>
           </div>
         </section>
       ) : (
@@ -863,6 +876,39 @@ const workerSummary = wh
         categoryFilter = button.dataset.categoryFilter ?? "all";
         apply();
       });
+    }
+  })();
+</script>
+
+<script define:vars={{ WORKER_HEALTH_URL }}>
+  // Live cron heartbeat: fetch the worker /health endpoint and update
+  // "最終 cron チェック" and "fallback 残件" cards in real time.
+  // The heartbeat is written by the worker on every cron run (even no-op),
+  // so this reflects the true last-checked time regardless of data changes.
+  (async () => {
+    const lastCronEl = document.getElementById("hb-last-cron");
+    const fallbackEl = document.getElementById("hb-fallback");
+    const enqueuedEl = document.getElementById("hb-enqueued");
+    if (!lastCronEl) return;
+    try {
+      const res = await fetch(WORKER_HEALTH_URL, { cache: "no-store" });
+      if (!res.ok) { lastCronEl.textContent = "取得失敗"; return; }
+      const hb = await res.json();
+      if (!hb.lastCronAt) { lastCronEl.textContent = "未記録"; return; }
+      const ms = Date.now() - new Date(hb.lastCronAt).getTime();
+      const mins = Math.floor(ms / 60_000);
+      lastCronEl.textContent = mins < 1 ? "1分以内" : `${mins}分前`;
+      lastCronEl.title = hb.lastCronAt;
+      if (fallbackEl && hb.fallbackTotal !== undefined) {
+        const changed = hb.changed ? " ✅ 更新あり" : " ℹ️ 変化なし";
+        fallbackEl.textContent = String(hb.fallbackTotal);
+        fallbackEl.title = changed.trim();
+      }
+      if (enqueuedEl && hb.enqueued !== undefined) {
+        enqueuedEl.textContent = `+${hb.enqueued}`;
+      }
+    } catch {
+      if (lastCronEl) lastCronEl.textContent = "取得失敗";
     }
   })();
 </script>

@@ -60,7 +60,14 @@ SUMMARIZE_TIMEOUT_MS = "25000"
 # Once the backlog of fallback entries drains, daily writes drop to roughly
 # the count of new articles per day (~480) regardless of this cap.
 ENABLE_SUMMARY_QUEUE = "1"
-ENQUEUE_MAX_NEW = "30"
+ENQUEUE_MAX_NEW = "35"
+# KV_LOOKUP_CAP: max fallback entries to KV-read per cron invocation.
+# After LL-036/040/041 reduced non-KV subrequests to ~60-80/inv, the budget
+# supports 500 KV reads (500+80=580 < 1000 limit). Raising from 60 to 500
+# fixes a blind-spot where entries at positions 60+ were permanently skipped
+# and never enqueued (root-cause of the "fallback debt won't clear" bug).
+# Round-robin in code ensures fairness when allFallback > KV_LOOKUP_CAP.
+KV_LOOKUP_CAP = "500"
 
 # Secrets (set via `wrangler secret put`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access

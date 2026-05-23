@@ -64,6 +64,7 @@ const breadcrumb = [
     <main>
       <section class="archive-overview" aria-labelledby="archive-heading">
         <div>
+          <span class="mobile-page-badge">History map</span>
           <div class="section-header primary">
             <h2 id="archive-heading">
               Archive
@@ -73,6 +74,14 @@ const breadcrumb = [
           <p class="lede">
             過去の記事を月単位で確認できます。最新記事は <a href="/">タイムライン</a>、長期推移はこのページから辿れます。
           </p>
+          <nav class="archive-quick-months" aria-label="Recent archive months">
+            {months.slice(0, 8).map((month) => (
+              <a href={`/archive/${month.month}`} style={`--month-color:${month.topCategoryColor}`}>
+                <strong>{month.label}</strong>
+                <small>{month.count} entries</small>
+              </a>
+            ))}
+          </nav>
         </div>
 
         <div class="archive-kpis" aria-label="Archive summary">
@@ -80,7 +89,7 @@ const breadcrumb = [
             <span>Archived</span>
             <strong>{ARCHIVE_TOTAL_ENTRIES}</strong>
           </div>
-          <div class="archive-kpi">
+          <div class="archive-kpi mobile-secondary-kpi">
             <span>All time</span>
             <strong>{STATS.totals.allTime}</strong>
           </div>
@@ -88,7 +97,7 @@ const breadcrumb = [
             <span>Latest month</span>
             <strong>{latestMonth ? latestMonth.label : "none"}</strong>
           </div>
-          <div class="archive-kpi">
+          <div class="archive-kpi mobile-secondary-kpi">
             <span>Updated</span>
             <strong>{updatedLabel}</strong>
           </div>
@@ -177,6 +186,7 @@ const breadcrumb = [
 
 <style>
   .archive-overview {
+    position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
     gap: 16px;
@@ -185,6 +195,17 @@ const breadcrumb = [
     border: 1px solid var(--border);
     border-radius: 8px;
     background: color-mix(in srgb, var(--surface) 88%, transparent);
+    overflow: hidden;
+  }
+
+  .archive-overview > div {
+    position: relative;
+    min-width: 0;
+    z-index: 1;
+  }
+
+  .mobile-page-badge {
+    display: none;
   }
 
   .lede {
@@ -201,6 +222,46 @@ const breadcrumb = [
 
   .lede a:hover {
     text-decoration: underline;
+  }
+
+  .archive-quick-months {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .archive-quick-months::-webkit-scrollbar {
+    display: none;
+  }
+
+  .archive-quick-months a {
+    flex: 0 0 auto;
+    min-width: 136px;
+    padding: 9px 11px;
+    border: 1px solid color-mix(in srgb, var(--month-color) 44%, var(--border));
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--month-color) 10%, var(--surface));
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .archive-quick-months strong,
+  .archive-quick-months small {
+    display: block;
+  }
+
+  .archive-quick-months strong {
+    font-size: 12.5px;
+    line-height: 1.25;
+  }
+
+  .archive-quick-months small {
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 11px;
   }
 
   .archive-kpis,
@@ -447,11 +508,82 @@ const breadcrumb = [
 
   @media (max-width: 640px) {
     .archive-overview {
-      padding: 14px;
+      gap: 12px;
+      padding: 13px;
+      margin-bottom: 12px;
+      border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 48%),
+        linear-gradient(135deg, color-mix(in srgb, var(--surface) 84%, var(--accent-bg) 16%), color-mix(in srgb, var(--bg-2) 88%, transparent));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .archive-overview::after {
+      content: "";
+      position: absolute;
+      right: -34px;
+      top: -34px;
+      width: 128px;
+      height: 128px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      pointer-events: none;
+    }
+
+    .mobile-page-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      padding: 5px 9px;
+      border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.18);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
     }
 
     .archive-kpis {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .archive-kpis .mobile-secondary-kpi {
+      display: none;
+    }
+
+    .archive-kpi,
+    .archive-spotlight > div {
+      padding: 7px 8px;
+      border-radius: 10px;
+    }
+
+    .archive-kpi span,
+    .archive-spotlight span {
+      margin-bottom: 3px;
+      font-size: 9px;
+      letter-spacing: 0.05em;
+    }
+
+    .archive-kpi strong,
+    .archive-spotlight strong {
+      font-size: 14px;
+    }
+
+    .archive-quick-months {
+      margin-top: 10px;
+    }
+
+    .archive-quick-months a {
+      min-width: 128px;
+    }
+
+    .archive-spotlight {
+      display: none;
     }
 
     .year-header {

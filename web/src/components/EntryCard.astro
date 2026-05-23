@@ -10,6 +10,7 @@ import {
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
+import CategoryThumb from "./CategoryThumb.astro";
 
 export interface Props {
   entry: NormalizedEntry;
@@ -55,23 +56,6 @@ const titleEn = titleEnResult.text;
 
 const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
 const catColor = catMeta?.color ?? "#8a847e";
-const catInitial = catMeta?.initial ?? "??";
-const catName = catMeta?.name ?? entry.category;
-const catEmoji = catMeta?.emoji ?? "\u{1F4C4}";
-
-// Generate a deterministic pattern seed from the entry id
-const patternSeed = entry.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-const patternRotate = patternSeed % 360;
-const patternScale = 0.8 + (patternSeed % 5) * 0.1;
-
-// Source type icon character
-function sourceIcon(t: string): string {
-  if (t === "release") return "\u{1F680}";
-  if (t === "changelog") return "\u{1F4CB}";
-  if (t === "paper") return "\u{1F4D1}";
-  if (t === "blog") return "\u{270D}\u{FE0F}";
-  return "\u{1F4AC}";
-}
 const img = entry.image;
 const hasUsableImage =
   !!img && typeof img.src === "string" && img.src.length > 0;
@@ -174,54 +158,19 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
     </div>
   </div>
 
-  {hasUsableImage ? (
-    <div class="card-thumb">
-      <img src={img!.src} alt={img!.alt || titleJa} loading="lazy" decoding="async" />
-      <span class="src-mark">{thumbMark}</span>
+  <div class:list={["card-thumb", { fallback: !hasUsableImage }]} style={`--cat-color:${catColor}`}>
+    {hasUsableImage && (
+      <img
+        src={img!.src}
+        alt={img!.alt || titleJa}
+        loading="lazy"
+        decoding="async"
+        onerror="this.parentElement.classList.add('failed')"
+      />
+    )}
+    <div class="card-thumb-fallback" aria-hidden="true">
+      <CategoryThumb category={entry.category} seed={entry.id} height="100%" />
     </div>
-  ) : (
-    <div class="card-thumb fallback" style={`--cat-color:${catColor}`}>
-      <svg viewBox="0 0 144 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-        <defs>
-          <linearGradient id={`bg-${entry.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color={catColor} stop-opacity="0.30" />
-            <stop offset="100%" stop-color={catColor} stop-opacity="0.05" />
-          </linearGradient>
-        </defs>
-        <rect width="144" height="96" fill="#1a1917" />
-        <rect width="144" height="96" fill={`url(#bg-${entry.id})`} />
-        <g opacity="0.10" transform={`rotate(${patternRotate} 72 48) scale(${patternScale})`}>
-          <circle cx="20" cy="15" r="18" fill={catColor} />
-          <circle cx="130" cy="80" r="24" fill={catColor} />
-          <rect x="90" y="5" width="40" height="40" rx="8" fill={catColor} />
-        </g>
-        <text
-          x="72"
-          y="54"
-          text-anchor="middle"
-          dominant-baseline="middle"
-          font-size="40"
-          style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4))"
-        >{catEmoji}</text>
-        <text
-          x="72"
-          y="82"
-          text-anchor="middle"
-          font-family="system-ui, -apple-system, sans-serif"
-          font-size="8.5"
-          fill={catColor}
-          opacity="0.7"
-          letter-spacing="0.08em"
-          font-weight="600"
-        >{catName}</text>
-        <text
-          x="132"
-          y="14"
-          text-anchor="end"
-          font-size="12"
-          opacity="0.85"
-        >{sourceIcon(entry.sourceType)}</text>
-      </svg>
-    </div>
-  )}
+    {hasUsableImage && <span class="src-mark">{thumbMark}</span>}
+  </div>
 </article>

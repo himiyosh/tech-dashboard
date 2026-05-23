@@ -204,7 +204,7 @@ test.describe("TECH Dashboard smoke", () => {
       .toBe(true);
 
     const tabItems = tabbar.locator("a, button");
-    await expect(tabItems).toHaveCount(6);
+    await expect(tabItems).toHaveCount(5);
     const itemBoxes = await tabItems.evaluateAll((items) =>
       items.map((item) => {
         const rect = item.getBoundingClientRect();
@@ -215,26 +215,84 @@ test.describe("TECH Dashboard smoke", () => {
     expect(itemBoxes.at(-1)!.right, "last mobile tab item stays inside the padded bar").toBeLessThanOrEqual(383);
     for (const itemBox of itemBoxes) {
       expect(itemBox.width, `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeGreaterThanOrEqual(44);
-      expect(itemBox.width, `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeLessThanOrEqual(80);
+      expect(itemBox.width, `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeLessThanOrEqual(90);
     }
+    const timelineBox = await tabbar.getByRole("link", { name: "Timeline" }).boundingBox();
+    expect(timelineBox, "Timeline tab has a visible centered button").not.toBeNull();
+    const timelineCenter = timelineBox!.x + timelineBox!.width / 2;
+    expect(Math.abs(timelineCenter - 195), "Timeline tab is centered in the 390px viewport").toBeLessThan(10);
+    expect(timelineBox!.height, "Timeline tab is promoted above normal tabs").toBeGreaterThan(52);
 
     await tabbar.getByRole("link", { name: "Categories" }).click();
     await expect(page).toHaveURL(/\/categories\/?$/);
     await expect(page.locator("main h2", { hasText: "Categories" })).toBeVisible();
 
-    await tabbar.getByRole("link", { name: "Archive" }).click();
+    await tabbar.getByRole("button", { name: "More" }).click();
+    const moreNav = page.getByRole("navigation", { name: "More navigation" });
+    await expect(moreNav).toBeVisible();
+    await moreNav.getByRole("link", { name: /Archive/ }).click();
     await expect(page).toHaveURL(/\/archive\/?$/);
+    await expect(tabbar.getByRole("button", { name: "More" })).toHaveClass(/active/);
 
     await tabbar.getByRole("link", { name: "Status" }).click();
     await expect(page).toHaveURL(/\/status\/?$/);
     await expect(page.getByRole("heading", { name: /Source Health/i })).toBeVisible();
 
-    await tabbar.getByRole("link", { name: "About" }).click();
+    await tabbar.getByRole("button", { name: "More" }).click();
+    await moreNav.getByRole("link", { name: /About/ }).click();
     await expect(page).toHaveURL(/\/about\/?$/);
 
     await page.goto("/");
     await tabbar.getByRole("button", { name: "Search" }).click();
     await expect(page.locator("#pagefind-search-input")).toBeFocused();
+  });
+
+  test("mobile categories and archive expose quick links above the fold", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    await page.goto("/categories");
+    await expect(page.locator(".mobile-page-badge", { hasText: "Category map" })).toBeVisible();
+    const categoryShortcuts = page.getByRole("navigation", { name: "Category shortcuts" });
+    await expect(categoryShortcuts).toBeVisible();
+    const firstCategoryShortcut = categoryShortcuts.getByRole("link").first();
+    await expect(firstCategoryShortcut).toBeVisible();
+    const categoryTop = await firstCategoryShortcut.evaluate((el) => el.getBoundingClientRect().top);
+    expect(categoryTop, "category shortcuts appear in the first viewport").toBeLessThan(420);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+    await expect(page.locator(".categories-kpis > div:visible")).toHaveCount(3);
+
+    await page.goto("/archive");
+    await expect(page.locator(".mobile-page-badge", { hasText: "History map" })).toBeVisible();
+    const monthShortcuts = page.getByRole("navigation", { name: "Recent archive months" });
+    await expect(monthShortcuts).toBeVisible();
+    const firstMonthShortcut = monthShortcuts.getByRole("link").first();
+    await expect(firstMonthShortcut).toBeVisible();
+    const monthTop = await firstMonthShortcut.evaluate((el) => el.getBoundingClientRect().top);
+    expect(monthTop, "archive month shortcuts appear in the first viewport").toBeLessThan(420);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+    await expect(page.locator(".archive-kpis > div:visible")).toHaveCount(2);
+    await expect(page.locator(".archive-spotlight")).toBeHidden();
+  });
+
+  test("broken entry thumbnails fall back to category artwork", async ({ page }) => {
+    await page.goto("/");
+
+    const cardThumb = page.locator(".card-thumb").filter({ has: page.locator("img") }).first();
+    await expect(cardThumb).toBeVisible();
+    await cardThumb.locator("img").evaluate((img) => img.dispatchEvent(new Event("error")));
+    await expect(cardThumb).toHaveClass(/failed/);
+    await expect(cardThumb.locator(".card-thumb-fallback")).toBeVisible();
+
+    const featuredThumb = page.locator(".featured-thumb.has-image").first();
+    if ((await featuredThumb.count()) > 0) {
+      await featuredThumb.locator("img").evaluate((img) => img.dispatchEvent(new Event("error")));
+      await expect(featuredThumb).toHaveClass(/failed/);
+      await expect(featuredThumb.locator(".featured-thumb-fallback")).toBeVisible();
+    }
   });
 
   test("pagefind search returns dashboard entries", async ({ page }) => {

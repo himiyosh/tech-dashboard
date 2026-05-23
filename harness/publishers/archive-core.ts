@@ -69,6 +69,15 @@ function compactArchiveEntry(entry: NormalizedEntry): NormalizedEntry {
   const compact = { ...entry };
   delete compact.bodyJa;
   delete compact.bodyEn;
+  // Hot-tier entries are still present in the live index, so strip summaries
+  // to keep the current-month archive file small (LL-044).
+  // Warm/cold tiers retain summaries for archive detail page display.
+  if (entry.archiveTier === "hot") {
+    // summaryJa/summaryEn are required on NormalizedEntry but optional on the
+    // serialised archive payload — cast to Partial to satisfy tsc.
+    delete (compact as Partial<typeof compact>).summaryJa;
+    delete (compact as Partial<typeof compact>).summaryEn;
+  }
   return compact;
 }
 

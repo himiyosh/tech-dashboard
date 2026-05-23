@@ -1493,7 +1493,7 @@ body {
   padding-bottom: 56px;
 }
 @media (max-width: 720px) {
-  body { padding-bottom: 76px; }
+  body { padding-bottom: 88px; }
   .footer-bar { display: none; }
   .mobile-tabbar {
     position: fixed;
@@ -1505,7 +1505,8 @@ body {
     grid-auto-flow: column;
     grid-auto-columns: minmax(0, 1fr);
     gap: 0;
-    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    align-items: end;
+    padding: 9px 8px calc(7px + env(safe-area-inset-bottom));
     background: rgba(10, 9, 8, 0.94);
     border-top: 1px solid var(--border);
     backdrop-filter: blur(12px);
@@ -1527,6 +1528,33 @@ body {
     font: inherit;
     font-size: 10.5px;
     text-decoration: none;
+  }
+
+  .mobile-tabbar .mobile-home {
+    justify-self: center;
+    width: min(86px, calc(100% + 12px));
+    min-height: 58px;
+    transform: translateY(-13px);
+    border: 1px solid color-mix(in srgb, var(--accent) 46%, var(--border));
+    border-radius: 18px;
+    background:
+      radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 68%),
+      color-mix(in srgb, var(--accent-bg) 72%, #050505 28%);
+    color: var(--accent);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55), 0 0 24px color-mix(in srgb, var(--accent) 22%, transparent);
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .mobile-tabbar .mobile-home > span:first-child {
+    font-size: 20px;
+  }
+
+  .mobile-tabbar .mobile-home.active {
+    background:
+      radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent) 44%, transparent), transparent 70%),
+      color-mix(in srgb, var(--accent-bg) 86%, #050505 14%);
+    color: var(--accent);
   }
   .mobile-tabbar a > span:first-child,
   .mobile-tabbar button > span:first-child {

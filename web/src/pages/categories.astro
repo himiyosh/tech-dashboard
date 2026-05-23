@@ -100,6 +100,7 @@ for (const cat of categoryPanels) {
     <main class="categories-main">
       <section class="categories-overview" aria-labelledby="categories-heading">
         <div>
+          <span class="mobile-page-badge">Category map</span>
           <div class="section-header primary">
             <h2 id="categories-heading">
               Categories
@@ -126,7 +127,7 @@ for (const cat of categoryPanels) {
             <span>Live entries</span>
             <strong>{totalLiveEntries}</strong>
           </div>
-          <div>
+          <div class="mobile-secondary-kpi">
             <span>All time</span>
             <strong>{STATS.totals.allTime}</strong>
           </div>
@@ -138,11 +139,11 @@ for (const cat of categoryPanels) {
             <span>Active cats</span>
             <strong>{activeCategories}</strong>
           </div>
-          <div>
+          <div class="mobile-secondary-kpi">
             <span>Hot category</span>
             <strong>{topCategory?.name ?? "none"}</strong>
           </div>
-          <div>
+          <div class="mobile-secondary-kpi">
             <span>Updated</span>
             <strong>{relativeTime(STATS.generatedAt, now)}</strong>
           </div>
@@ -230,6 +231,7 @@ for (const cat of categoryPanels) {
   }
 
   .categories-overview {
+    position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
     gap: 16px;
@@ -238,10 +240,17 @@ for (const cat of categoryPanels) {
     border: 1px solid var(--border);
     border-radius: 8px;
     background: color-mix(in srgb, var(--surface) 88%, transparent);
+    overflow: hidden;
   }
 
   .categories-overview > div {
+    position: relative;
     min-width: 0;
+    z-index: 1;
+  }
+
+  .mobile-page-badge {
+    display: none;
   }
 
   .categories-overview p {
@@ -548,18 +557,64 @@ for (const cat of categoryPanels) {
       gap: 12px;
       padding: 13px;
       margin-bottom: 14px;
+      border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 48%),
+        linear-gradient(135deg, color-mix(in srgb, var(--surface) 84%, var(--accent-bg) 16%), color-mix(in srgb, var(--bg-2) 88%, transparent));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .categories-overview::after {
+      content: "";
+      position: absolute;
+      right: -34px;
+      top: -34px;
+      width: 128px;
+      height: 128px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      pointer-events: none;
+    }
+
+    .mobile-page-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      padding: 5px 9px;
+      border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.18);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
     }
 
     .categories-kpis {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .categories-kpis .mobile-secondary-kpi {
+      display: none;
     }
 
     .categories-kpis > div {
-      padding: 8px 9px;
+      padding: 7px 8px;
+      border-radius: 10px;
+    }
+
+    .categories-kpis span {
+      margin-bottom: 3px;
+      font-size: 9px;
+      letter-spacing: 0.05em;
     }
 
     .categories-kpis strong {
-      font-size: 15px;
+      font-size: 14px;
     }
 
     .category-quick-links {

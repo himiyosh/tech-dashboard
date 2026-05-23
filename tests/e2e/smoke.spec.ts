@@ -217,6 +217,11 @@ test.describe("TECH Dashboard smoke", () => {
       expect(itemBox.width, `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeGreaterThanOrEqual(44);
       expect(itemBox.width, `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeLessThanOrEqual(90);
     }
+    const timelineBox = await tabbar.getByRole("link", { name: "Timeline" }).boundingBox();
+    expect(timelineBox, "Timeline tab has a visible centered button").not.toBeNull();
+    const timelineCenter = timelineBox!.x + timelineBox!.width / 2;
+    expect(Math.abs(timelineCenter - 195), "Timeline tab is centered in the 390px viewport").toBeLessThan(10);
+    expect(timelineBox!.height, "Timeline tab is promoted above normal tabs").toBeGreaterThan(52);
 
     await tabbar.getByRole("link", { name: "Categories" }).click();
     await expect(page).toHaveURL(/\/categories\/?$/);
@@ -246,6 +251,7 @@ test.describe("TECH Dashboard smoke", () => {
     await page.setViewportSize({ width: 390, height: 844 });
 
     await page.goto("/categories");
+    await expect(page.locator(".mobile-page-badge", { hasText: "Category map" })).toBeVisible();
     const categoryShortcuts = page.getByRole("navigation", { name: "Category shortcuts" });
     await expect(categoryShortcuts).toBeVisible();
     const firstCategoryShortcut = categoryShortcuts.getByRole("link").first();
@@ -255,8 +261,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
+    await expect(page.locator(".categories-kpis > div:visible")).toHaveCount(3);
 
     await page.goto("/archive");
+    await expect(page.locator(".mobile-page-badge", { hasText: "History map" })).toBeVisible();
     const monthShortcuts = page.getByRole("navigation", { name: "Recent archive months" });
     await expect(monthShortcuts).toBeVisible();
     const firstMonthShortcut = monthShortcuts.getByRole("link").first();
@@ -266,6 +274,8 @@ test.describe("TECH Dashboard smoke", () => {
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
+    await expect(page.locator(".archive-kpis > div:visible")).toHaveCount(2);
+    await expect(page.locator(".archive-spotlight")).toBeHidden();
   });
 
   test("broken entry thumbnails fall back to category artwork", async ({ page }) => {

@@ -387,10 +387,10 @@
 - **教訓**: `lookedUpUrls` の「absent = real summary」の仮定は、cap で切り捨てた fallback が存在すると崩れる。KV read cap と enqueue 対象の判定は同じ集合で行わなければならない。cap を設けるなら `uncheckedFallbackUrls` を別追跡するか、cap 自体を fallback count 以上に設定する。Queue が動いているのに fallback が減らない場合は「enqueue されていない」を疑う。
 
 ### LL-049: モバイル下部タブは主要導線に絞り、overflow UI には min-width:0 と fallback を持たせる
-- **事象**: 6 項目の mobile tabbar が詰まって見え、Categories / Archive の初期表示も KPI が縦に伸びて「何ができるページか」がファーストビューで分かりづらかった。さらに一部外部 `og:image` が壊れ、カードに broken image が出た。
+- **事象**: 6 項目の mobile tabbar が詰まって見え、最重要導線の Timeline も他の項目に埋もれていた。Categories / Archive の初期表示は KPI が縦に伸びて、ページ上部のバナー感や「何ができるページか」の説明が弱かった。さらに一部外部 `og:image` が壊れ、カードに broken image が出た。
 - **根本原因**: 下部固定ナビに全ページ導線を詰め込んでいた。横スクロールの quick link を grid 子要素に入れる際、親/子に `min-width: 0` が無いと flex contents の min-content 幅でページ全体が横に広がる。外部画像は 404/403/期限切れがあり、`src` が存在するだけでは表示可能とは限らない。
-- **対策**: mobile tabbar は Timeline / Categories / Status / Search / More の主要 5 項目に整理し、Archive / About は accessible More sheet に移動。Categories / Archive の overview に横スクロール quick links を置き、grid 子に `min-width: 0` を明示。EntryCard / Featured は `onerror` で `.failed` を付与し、CategoryThumb fallback を表示する。
-- **教訓**: モバイル固定導線は「全部置く」ではなく頻用導線 + More に分ける。ファーストビュー改善で horizontal chips を入れる場合は `scrollWidth <= innerWidth` を必ず E2E で確認する。外部サムネイルは成功前提にせず、画像ロード失敗時の deterministic fallback を同時に実装する。
+- **対策**: mobile tabbar は Categories / Status / Timeline / Search / More の主要 5 項目に整理し、Timeline を中央の強調ボタンにする。Archive / About は accessible More sheet に移動。Categories / Archive の overview に mobile badge + gradient banner + 横スクロール quick links を置き、mobile では主要 KPI だけ表示する。grid 子に `min-width: 0` を明示。EntryCard / Featured は `onerror` で `.failed` を付与し、CategoryThumb fallback を表示する。
+- **教訓**: モバイル固定導線は「全部置く」ではなく頻用導線 + More に分け、最重要導線は中央に置いて視覚的ヒエラルキーを作る。ファーストビュー改善で horizontal chips を入れる場合は `scrollWidth <= innerWidth` を必ず E2E で確認する。KPI は desktop と同じ数を mobile に出さず、主要指標に絞る。外部サムネイルは成功前提にせず、画像ロード失敗時の deterministic fallback を同時に実装する。
 
 ## 🔄 自己学習ハーネス手順
 

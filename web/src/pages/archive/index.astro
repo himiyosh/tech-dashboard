@@ -73,6 +73,14 @@ const breadcrumb = [
           <p class="lede">
             過去の記事を月単位で確認できます。最新記事は <a href="/">タイムライン</a>、長期推移はこのページから辿れます。
           </p>
+          <nav class="archive-quick-months" aria-label="Recent archive months">
+            {months.slice(0, 8).map((month) => (
+              <a href={`/archive/${month.month}`} style={`--month-color:${month.topCategoryColor}`}>
+                <strong>{month.label}</strong>
+                <small>{month.count} entries</small>
+              </a>
+            ))}
+          </nav>
         </div>
 
         <div class="archive-kpis" aria-label="Archive summary">
@@ -187,6 +195,10 @@ const breadcrumb = [
     background: color-mix(in srgb, var(--surface) 88%, transparent);
   }
 
+  .archive-overview > div {
+    min-width: 0;
+  }
+
   .lede {
     color: var(--muted);
     font-size: 13px;
@@ -201,6 +213,46 @@ const breadcrumb = [
 
   .lede a:hover {
     text-decoration: underline;
+  }
+
+  .archive-quick-months {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .archive-quick-months::-webkit-scrollbar {
+    display: none;
+  }
+
+  .archive-quick-months a {
+    flex: 0 0 auto;
+    min-width: 136px;
+    padding: 9px 11px;
+    border: 1px solid color-mix(in srgb, var(--month-color) 44%, var(--border));
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--month-color) 10%, var(--surface));
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .archive-quick-months strong,
+  .archive-quick-months small {
+    display: block;
+  }
+
+  .archive-quick-months strong {
+    font-size: 12.5px;
+    line-height: 1.25;
+  }
+
+  .archive-quick-months small {
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 11px;
   }
 
   .archive-kpis,
@@ -447,11 +499,31 @@ const breadcrumb = [
 
   @media (max-width: 640px) {
     .archive-overview {
-      padding: 14px;
+      gap: 12px;
+      padding: 13px;
+      margin-bottom: 12px;
     }
 
     .archive-kpis {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .archive-kpi,
+    .archive-spotlight > div {
+      padding: 8px 9px;
+    }
+
+    .archive-kpi strong,
+    .archive-spotlight strong {
+      font-size: 14px;
+    }
+
+    .archive-quick-months {
+      margin-top: 10px;
+    }
+
+    .archive-quick-months a {
+      min-width: 128px;
     }
 
     .year-header {

@@ -2,6 +2,7 @@
 import Portal from "../layouts/Portal.astro";
 import Sidebar from "../components/Sidebar.astro";
 import EntryCard from "../components/EntryCard.astro";
+import CategoryThumb from "../components/CategoryThumb.astro";
 import DailySummary from "../components/DailySummary.astro";
 import LiveMetrics from "../components/LiveMetrics.astro";
 import TickerBar from "../components/TickerBar.astro";
@@ -110,7 +111,6 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
         const featSumEn = summaryForLangWithFallback(feat, "en");
         const featCat = CATEGORY_META.find((c) => c.slug === feat.category);
         const featCatColor = featCat?.color ?? "#5eead4";
-        const featCatEmoji = featCat?.emoji ?? "\u{1F4C4}";
         let featHost = "";
         try { featHost = new URL(feat.url).host.replace(/^www\./, ""); } catch {}
         const featFavicon = featHost
@@ -120,14 +120,19 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
         return (
         <article class="featured" data-pagefind-body style={`--cat-color:${featCatColor}`}>
           <a class="featured-panel-link" href={entryHref(feat)} tabindex="-1" aria-label={`Open ${titleForLang(feat, "ja") || titleForLang(feat, "en") || feat.title}`}></a>
-          <div class="featured-thumb">
-            {featImg ? (
-              <img src={featImg} alt={feat.image?.alt || feat.title} loading="lazy" decoding="async" />
-            ) : (
-              <div class="featured-thumb-fallback" aria-hidden="true">
-                <span class="featured-thumb-emoji">{featCatEmoji}</span>
-              </div>
+          <div class:list={["featured-thumb", { "has-image": !!featImg }]}>
+            {featImg && (
+              <img
+                src={featImg}
+                alt={feat.image?.alt || feat.title}
+                loading="lazy"
+                decoding="async"
+                onerror="this.parentElement.classList.add('failed')"
+              />
             )}
+            <div class="featured-thumb-fallback" aria-hidden="true">
+              <CategoryThumb category={feat.category} seed={feat.id} height="100%" />
+            </div>
           </div>
           <div class="featured-body">
             <div class="featured-label">

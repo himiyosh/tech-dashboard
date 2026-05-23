@@ -386,6 +386,12 @@
 - **対策**: KV_LOOKUP_CAP デフォルトを 60 → 500 に引き上げ (LL-036/040/041 で非 KV subrequest が ~60-80/inv に削減されたため 500+80=580 < 1000 の余裕あり)。`uncheckedFallbackUrls` を導入し cap 超過分も "enqueue すべき fallback" として追跡。`maybeEnqueueSummaryJobs` に round-robin オフセットを追加し、ENQUEUE_MAX_NEW=35 で全 fallback が平均 ~14 時間でキューを一周するよう設計。heartbeat KV + `/health` endpoint で cron の死活を data 変化なしでも監視可能に。
 - **教訓**: `lookedUpUrls` の「absent = real summary」の仮定は、cap で切り捨てた fallback が存在すると崩れる。KV read cap と enqueue 対象の判定は同じ集合で行わなければならない。cap を設けるなら `uncheckedFallbackUrls` を別追跡するか、cap 自体を fallback count 以上に設定する。Queue が動いているのに fallback が減らない場合は「enqueue されていない」を疑う。
 
+### LL-049: モバイル下部タブは主要導線に絞り、overflow UI には min-width:0 と fallback を持たせる
+- **事象**: 6 項目の mobile tabbar が詰まって見え、Categories / Archive の初期表示も KPI が縦に伸びて「何ができるページか」がファーストビューで分かりづらかった。さらに一部外部 `og:image` が壊れ、カードに broken image が出た。
+- **根本原因**: 下部固定ナビに全ページ導線を詰め込んでいた。横スクロールの quick link を grid 子要素に入れる際、親/子に `min-width: 0` が無いと flex contents の min-content 幅でページ全体が横に広がる。外部画像は 404/403/期限切れがあり、`src` が存在するだけでは表示可能とは限らない。
+- **対策**: mobile tabbar は Timeline / Categories / Status / Search / More の主要 5 項目に整理し、Archive / About は accessible More sheet に移動。Categories / Archive の overview に横スクロール quick links を置き、grid 子に `min-width: 0` を明示。EntryCard / Featured は `onerror` で `.failed` を付与し、CategoryThumb fallback を表示する。
+- **教訓**: モバイル固定導線は「全部置く」ではなく頻用導線 + More に分ける。ファーストビュー改善で horizontal chips を入れる場合は `scrollWidth <= innerWidth` を必ず E2E で確認する。外部サムネイルは成功前提にせず、画像ロード失敗時の deterministic fallback を同時に実装する。
+
 ## 🔄 自己学習ハーネス手順
 
 1. 作業中に発生した「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。

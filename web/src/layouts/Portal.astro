@@ -116,11 +116,38 @@ const {
     <nav class="mobile-tabbar" aria-label="Primary">
       <a href="/" class={pageKey === "timeline" ? "active" : ""}><span aria-hidden="true">⌂</span><span>Timeline</span></a>
       <a href="/categories" class={pageKey === "categories" ? "active" : ""}><span aria-hidden="true">▦</span><span>Categories</span></a>
-      <a href="/archive" class={pageKey === "archive" ? "active" : ""}><span aria-hidden="true">🗄</span><span>Archive</span></a>
       <a href="/status" class={pageKey === "status" ? "active" : ""}><span aria-hidden="true">●</span><span>Status</span></a>
-      <a href="/about" class={pageKey === "about" ? "active" : ""}><span aria-hidden="true">ℹ</span><span>About</span></a>
       <button type="button" id="mobile-search-trigger"><span aria-hidden="true">⌕</span><span>Search</span></button>
+      <button
+        type="button"
+        id="mobile-more-trigger"
+        class:list={[{ active: pageKey === "archive" || pageKey === "about" }]}
+        aria-expanded="false"
+        aria-controls="mobile-more-menu"
+      >
+        <span aria-hidden="true">☰</span><span>More</span>
+      </button>
     </nav>
+
+    <div class="mobile-more-menu" id="mobile-more-menu" hidden>
+      <button class="mobile-more-backdrop" type="button" aria-label="Close menu"></button>
+      <nav class="mobile-more-sheet" aria-label="More navigation" tabindex="-1">
+        <div class="mobile-more-head">
+          <span>More</span>
+          <button type="button" class="mobile-more-close" aria-label="Close menu">×</button>
+        </div>
+        <a href="/archive" class={pageKey === "archive" ? "active" : ""}>
+          <span aria-hidden="true">▣</span>
+          <strong>Archive</strong>
+          <small>月別に過去記事をたどる</small>
+        </a>
+        <a href="/about" class={pageKey === "about" ? "active" : ""}>
+          <span aria-hidden="true">i</span>
+          <strong>About</strong>
+          <small>このダッシュボードの目的と仕組み</small>
+        </a>
+      </nav>
+    </div>
 
     <script>
       // Language toggle (Ja / En) — sync with <html data-lang="...">.
@@ -152,6 +179,11 @@ const {
         const panel = document.getElementById("pagefind-results") as HTMLDivElement | null;
         const status = document.getElementById("pagefind-status") as HTMLDivElement | null;
         const mobileTrigger = document.getElementById("mobile-search-trigger") as HTMLButtonElement | null;
+        const mobileMoreTrigger = document.getElementById("mobile-more-trigger") as HTMLButtonElement | null;
+        const mobileMoreMenu = document.getElementById("mobile-more-menu") as HTMLDivElement | null;
+        const mobileMoreSheet = mobileMoreMenu?.querySelector<HTMLElement>(".mobile-more-sheet") ?? null;
+        const mobileMoreBackdrop = mobileMoreMenu?.querySelector<HTMLButtonElement>(".mobile-more-backdrop") ?? null;
+        const mobileMoreClose = mobileMoreMenu?.querySelector<HTMLButtonElement>(".mobile-more-close") ?? null;
         const searchRoot = input?.closest(".search") as HTMLElement | null;
         if (!input || !panel || !searchRoot) return;
 
@@ -177,7 +209,13 @@ const {
           input.setAttribute("aria-expanded", expanded ? "true" : "false");
           panel.hidden = !expanded;
         };
+        const closeMoreMenu = () => {
+          if (!mobileMoreMenu || !mobileMoreTrigger) return;
+          mobileMoreMenu.hidden = true;
+          mobileMoreTrigger.setAttribute("aria-expanded", "false");
+        };
         const openSearch = () => {
+          closeMoreMenu();
           searchRoot.classList.add("is-open");
           input.focus();
         };
@@ -186,6 +224,13 @@ const {
           searchRoot.classList.remove("is-open");
           setExpanded(false);
           input.blur();
+        };
+        const openMoreMenu = () => {
+          if (!mobileMoreMenu || !mobileMoreTrigger) return;
+          closeSearch();
+          mobileMoreMenu.hidden = false;
+          mobileMoreTrigger.setAttribute("aria-expanded", "true");
+          mobileMoreSheet?.focus();
         };
         const hitItems = () => Array.from(panel.querySelectorAll<HTMLAnchorElement>(".search-hit"));
         const setActive = (nextIndex: number) => {
@@ -253,6 +298,26 @@ const {
           if (input.value.trim()) renderResults(input.value.trim());
         });
         mobileTrigger?.addEventListener("click", () => openSearch());
+        mobileMoreTrigger?.addEventListener("click", () => {
+          if (!mobileMoreMenu) return;
+          if (mobileMoreMenu.hidden) {
+            openMoreMenu();
+          } else {
+            closeMoreMenu();
+            mobileMoreTrigger.focus();
+          }
+        });
+        mobileMoreBackdrop?.addEventListener("click", () => {
+          closeMoreMenu();
+          mobileMoreTrigger?.focus();
+        });
+        mobileMoreClose?.addEventListener("click", () => {
+          closeMoreMenu();
+          mobileMoreTrigger?.focus();
+        });
+        mobileMoreMenu?.querySelectorAll<HTMLAnchorElement>("a").forEach((link) => {
+          link.addEventListener("click", () => closeMoreMenu());
+        });
         input.form?.addEventListener("submit", (e) => e.preventDefault());
         document.addEventListener("keydown", (e) => {
           const isTextInput = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
@@ -260,6 +325,9 @@ const {
           if (wantsSearch && !isTextInput) {
             e.preventDefault();
             openSearch();
+          } else if (e.key === "Escape" && mobileMoreMenu && !mobileMoreMenu.hidden) {
+            closeMoreMenu();
+            mobileMoreTrigger?.focus();
           }
         });
         document.addEventListener("click", (e) => {

@@ -110,6 +110,15 @@ for (const cat of categoryPanels) {
             カテゴリごとの記事量、直近の勢い、過去 30 日の推移を同じカード内で比較できます。
             伸びている領域を見つけたら、そのままカテゴリ詳細へ移動できます。
           </p>
+          <nav class="category-quick-links" aria-label="Category shortcuts">
+            {categoryPanels.map((cat) => (
+              <a href={`/c/${cat.slug}`} style={`--cat-color:${cat.color}`}>
+                <span aria-hidden="true">{cat.emoji}</span>
+                <strong>{cat.name}</strong>
+                <small>{cat.liveCount}</small>
+              </a>
+            ))}
+          </nav>
         </div>
 
         <div class="categories-kpis" aria-label="Category summary">
@@ -231,6 +240,10 @@ for (const cat of categoryPanels) {
     background: color-mix(in srgb, var(--surface) 88%, transparent);
   }
 
+  .categories-overview > div {
+    min-width: 0;
+  }
+
   .categories-overview p {
     max-width: 720px;
     margin: 8px 0 0;
@@ -243,6 +256,47 @@ for (const cat of categoryPanels) {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
+  }
+
+  .category-quick-links {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .category-quick-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category-quick-links a {
+    display: inline-grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 7px;
+    align-items: center;
+    flex: 0 0 auto;
+    min-width: 142px;
+    padding: 8px 10px;
+    border: 1px solid color-mix(in srgb, var(--cat-color) 42%, var(--border));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--cat-color) 10%, var(--surface));
+    color: var(--text);
+    font-size: 12px;
+    text-decoration: none;
+  }
+
+  .category-quick-links strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .category-quick-links small {
+    color: var(--muted);
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
   }
 
   .categories-kpis > div {
@@ -491,10 +545,32 @@ for (const cat of categoryPanels) {
 
   @media (max-width: 640px) {
     .categories-overview {
-      padding: 14px;
+      gap: 12px;
+      padding: 13px;
+      margin-bottom: 14px;
     }
 
-    .categories-kpis,
+    .categories-kpis {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .categories-kpis > div {
+      padding: 8px 9px;
+    }
+
+    .categories-kpis strong {
+      font-size: 15px;
+    }
+
+    .category-quick-links {
+      margin-top: 10px;
+    }
+
+    .category-quick-links a {
+      min-width: 132px;
+      padding: 8px 9px;
+    }
+
     .cat-metrics {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }

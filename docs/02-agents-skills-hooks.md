@@ -1,6 +1,8 @@
-# 02. Agent / Skill / Hook / Prompt 構成案
+# 02. Agent / Skill / Hook / Prompt 構成
 
-> **前提**: [01. システム設計書](01-architecture.md) の二重ハーネス構造に基づき、**Runtime** (GitHub Actions) と **Dev-time** (Claude Code / Copilot) の双方を定義する。
+> **現状**: Runtime は Cloudflare Worker + Queue + Cloudflare Pages Git Integration で完結する。GitHub Actions は CI のみで、harness 実行や deploy 経路には使わない。Dev-time は `.github/copilot-instructions.md`、`.claude/skills/*`、`scripts/git-hooks/*` を中心に運用する。
+>
+> **注意**: `.github/prompts/`、`.claude/agents/`、`.claude/hooks/` は導入候補 / 設計パターンとして扱う。実装済みの source of truth は以下の現状マップを優先する。
 
 ---
 
@@ -10,18 +12,14 @@
 tech-dashboard/
 ├─ .github/
 │  ├─ copilot-instructions.md       ← Memory 層 (Copilot)
-│  ├─ prompts/
-│  │  ├─ collect.prompt.md
-│  │  ├─ summarize.prompt.md
-│  │  └─ tag.prompt.md
+│  ├─ prompts/                     ← 任意: Copilot CLI prompt 化する場合
 │  └─ workflows/
-│     ├─ harness-daily.yml          ← Runtime スケジューラ
-│     └─ harness-validate.yml       ← PR バリデーション
+│     └─ ci.yml                     ← 検証のみ。deploy / harness 実行はしない
 │
 ├─ .claude/
-│  ├─ CLAUDE.md                     ← Memory 層 (Claude Code)
-│  ├─ settings.json                 ← Hooks 設定
-│  ├─ agents/                       ← Subagents
+│  ├─ CLAUDE.md                     ← 任意: Claude Code Memory
+│  ├─ settings.json                 ← 任意: Claude hooks 設定
+│  ├─ agents/                       ← 任意: Claude subagents
 │  │  ├─ source-researcher.md
 │  │  ├─ ui-designer.md
 │  │  └─ quality-auditor.md
@@ -29,14 +27,8 @@ tech-dashboard/
 │  │  ├─ ai-scrum/
 │  │  ├─ ui-display-guard/
 │  │  ├─ modern-web-guidance/
-│  │  ├─ add-source/
-│  │  ├─ re-summarize/
-│  │  ├─ audit-quality/
-│  │  └─ debug-collector/
-│  └─ hooks/                        ← Hooks (bash/node)
-│     ├─ pre-tool-validate.sh
-│     ├─ post-edit-schema-check.sh
-│     └─ stop-verify-tasks.sh
+│  │  └─ quality-audit/
+│  └─ hooks/                        ← 任意: Claude hooks。現状は scripts/git-hooks/ を使用
 │
 └─ harness/                         ← Runtime Harness 本体
    ├─ orchestrator.ts               ← Outer loop
@@ -47,20 +39,32 @@ tech-dashboard/
    ├─ pipeline/
    │  ├─ normalize.ts
    │  ├─ dedupe.ts
-   │  ├─ summarize.ts               ← Claude Haiku 呼出
+   │  ├─ summarize.ts               ← ローカル backfill 用 Copilot 呼出
    │  └─ tag.ts
    └─ publishers/
       ├─ index-builder.ts
       └─ rss-builder.ts
 ```
 
+### 1.1 現状インベントリ
+
+| 種別 | 実装 | 備考 |
+|---|---|---|
+| 常時 instruction | `.github/copilot-instructions.md` | tech-dashboard 固有の絶対ルール / LL |
+| User-level instruction | VS Code User `Main.instructions.md` | 全プロジェクト共通の応答スタイル |
+| Prompts | `.github/prompts/quality-audit.prompt.md`, `worker-health.prompt.md` | 単発の監査 / Worker health 確認を slash prompt 化 |
+| Skills | `.claude/skills/ai-scrum`, `quality-audit`, `ui-display-guard`, `modern-web-guidance` | `modern-web-guidance` は `skills-lock.json` で外部 skill として追跡。local skills はリポジトリ内ファイルを source of truth とする |
+| Git hooks | `scripts/git-hooks/pre-commit`, `pre-push` | secret scan / typecheck / unit / web build / E2E / Worker deploy opt-in |
+| CI | `.github/workflows/ci.yml` | dependency audit は soft gate。deploy は行わない |
+| Runtime | `worker/`, `worker-summarizer/` | Cloudflare cron + Queue consumer |
+
 ---
 
-## 2. Runtime Harness (GitHub Actions)
+## 2. Runtime Harness (Cloudflare Worker + Queue)
 
 ### 2.1 Orchestrator (ハーネス中枢)
 
-**責務**: Initializer + Worker パターンを踏襲。初回実行時のみ環境初期化、以後はインクリメンタルに走る。
+**責務**: Initializer + Worker パターンを踏襲。ローカルでは `npm run collect` / `npm run collect:dry`、本番では Cloudflare Worker cron が同系統の collector / pipeline を実行する。要約生成は Queue consumer に分離する。
 
 ```ts
 // harness/orchestrator.ts (擬似コード)
@@ -82,20 +86,24 @@ async function run() {
 
   const normalized = raw.map(normalize);          // 決定論的
   const deduped = dedupe(normalized);
-  const summarized = await summarizeBatch(deduped.filter(isNew));  // LLM
-  const tagged = await tag(summarized);
+  const contentReady = applyDeterministicFallback(deduped);
+  const queued = await enqueueMissingSummaries(contentReady); // Queue
 
-  await publish(tagged);
-  await writeRunLog(runId, { /* metrics */ });     // 可観測性
+  await publish(contentReady);
+  await writeRunLog(runId, { queued });     // 可観測性
 }
 ```
 
 **Hook ポイント (Node 内)**:
 - 各 collector の前後で URL / schema バリデーション
-- Summarize 前に禁止パターン (プロンプト injection) チェック
+- Queue 投入前に deterministic fallback / cache / subrequest budget を確認
 - Publish 前に `index.json` の形式検証 (Zod)
 
-### 2.2 GitHub Actions ワークフロー
+### 2.2 CI と Runtime の分離
+
+GitHub Actions は `.github/workflows/ci.yml` の検証用途だけに限定する。`harness-daily.yml` や deploy job は作らない (R-001)。
+
+以下は旧設計案であり、現在は採用しない。
 
 ```yaml
 # .github/workflows/harness-daily.yml
@@ -114,12 +122,12 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - run: npm ci
-      - run: npm run harness
+      - run: npm run collect
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Validate output          # ← 決定論的 Hook 相当
-        run: npm run validate:data
+        run: npm test
       - name: Commit & push
         run: |
           git config user.name "harness-bot"
@@ -196,9 +204,9 @@ AI エコシステムアップデートの集約ポータル。ハーネスエ�
 - dev データ (data/raw/) の git ignore 忘れ
 
 ## よく使うコマンド
-- `npm run harness:dry` - LLM 呼出なしで pipeline を走らせる
-- `npm run validate:data` - data/ 全体をスキーマ検証
-- `npm run site:dev` - Astro dev server
+- `npm run collect:dry` - LLM 呼出なしで pipeline を走らせる
+- `npm test` - data schema / quality audit / pipeline を検証
+- `npm --prefix web run dev` - Astro dev server
 ```
 
 ### 4.2 `.github/copilot-instructions.md` は上記を Copilot 向けに再記述 (内容は揃える)。
@@ -223,7 +231,7 @@ description: Use when user asks to add a new AI update source (RSS, GitHub repo,
 1. ソースの URL を確認。RSS があれば優先、なければ HTML スクレイプ
 2. `harness/collectors/<source-id>.ts` を作成 (既存ファイルを雛形にコピー)
 3. `harness/collectors/registry.ts` に登録
-4. `npm run harness:dry -- --source=<source-id>` でローカル動作確認
+4. `npm run collect:dry` でローカル動作確認
 5. 収集件数・スキーマ検証結果を報告
 6. docs/01-architecture.md の 1.3 表にソースを追記
 ```
@@ -355,7 +363,7 @@ Hook は **速く、依存を持たず、冪等** であること。LLM を呼�
    → YES: Subagents (.claude/agents/*.md)
 
 5. 本番で決定論的に走らせたいか?
-   → YES: Runtime Harness (GitHub Actions + orchestrator.ts)
+   → YES: Runtime Harness (Cloudflare Worker + Queue + orchestrator.ts)
 
 それ以外 → ユーザとの対話で都度対応 (プロンプトのみ)
 ```

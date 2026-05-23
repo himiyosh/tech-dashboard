@@ -2,9 +2,10 @@
  * Cloudflare Worker — scheduled harness runner.
  *
  * Replaces `.github/workflows/harness-daily.yml`. Cron trigger fires every
- * 6 hours; the Worker fetches RSS sources, normalizes, dedupes, summarizes
- * via Copilot Enterprise, and commits `data/index.json`, `data/archive/*`, and
- * `data/stats.json` back to GitHub via the Contents API. Cloudflare Pages
+ * hour; the Worker fetches RSS sources, normalizes, dedupes, applies
+ * deterministic fallback content, enqueues missing summaries for the
+ * summarizer Worker, and commits `data/index.json`, `data/archive/*`, and
+ * `data/stats.json` back to GitHub via the Git Data API. Cloudflare Pages
  * (Git-integrated) then picks up the push and auto-deploys.
  *
  * Bindings (see wrangler.toml):
@@ -12,7 +13,7 @@
  *   - COPILOT_PAT (secret) classic GH PAT with Copilot Enterprise
  *   - GH_TOKEN    (secret) fine-grained PAT, Contents: Write on this repo
  *   - GITHUB_OWNER, GITHUB_REPO, GITHUB_BRANCH (vars)
- *   - SUMMARIZE_MODEL, SUMMARIZE_MAX_NEW (vars)
+ *   - SUMMARIZE_MODEL, ENQUEUE_MAX_NEW, KV_LOOKUP_CAP (vars)
  */
 import { listSources } from "../../harness/registry.ts";
 import { mergeEntryEnrichment } from "../../harness/pipeline/entry-merge.ts";
@@ -93,8 +94,9 @@ function entryUrlKey(entry: NormalizedEntry): string {
 
 const FALLBACK_SUMMARY_JA_PREFIX = "このエントリは ";
 const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
+const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collection metadata";
 
-function needsGeneratedContent(entry: NormalizedEntry): boolean {
+export function needsGeneratedContent(entry: NormalizedEntry): boolean {
   const summaryJa = entry.summaryJa ?? "";
   const summaryEn = entry.summaryEn ?? "";
   return (
@@ -103,8 +105,45 @@ function needsGeneratedContent(entry: NormalizedEntry): boolean {
     !String(entry.bodyJa ?? "").trim() ||
     !String(entry.bodyEn ?? "").trim() ||
     summaryJa.startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
-    summaryEn.includes(FALLBACK_SUMMARY_EN_NEEDLE)
+    summaryEn.includes(FALLBACK_SUMMARY_EN_NEEDLE) ||
+    String(entry.bodyEn ?? "").includes(FALLBACK_BODY_EN_NEEDLE)
   );
+}
+
+export function selectSummaryJobs(
+  entries: readonly NormalizedEntry[],
+  hitsByUrl: Map<string, CacheEntry>,
+  lookedUpUrls: Set<string>,
+  cap: number,
+): SummaryJob[] {
+  const candidates: SummaryJob[] = [];
+  for (const e of entries) {
+    if (candidates.length >= cap) break;
+    if (!lookedUpUrls.has(e.url)) {
+      continue;
+    }
+    const hit = hitsByUrl.get(e.url);
+    const hasRealCache =
+      hit &&
+      hit.summaryJa &&
+      hit.summaryEn &&
+      hit.bodyJa &&
+      hit.bodyEn &&
+      hit.model !== "deterministic-fallback";
+    if (hasRealCache) continue;
+    candidates.push({
+      url: e.url,
+      entry: {
+        id: e.id,
+        url: e.url,
+        title: e.title,
+        category: e.category,
+        source: e.source,
+        sourceType: e.sourceType,
+      },
+    });
+  }
+  return candidates;
 }
 
 function preferEntry(current: NormalizedEntry | undefined, candidate: NormalizedEntry): NormalizedEntry {
@@ -1053,6 +1092,14 @@ async function runHarness(
   const retainedEntries = contentReady.filter((entry) => entry.archiveTier !== "dropped");
   const finalEntries = retainedEntries.slice(0, INDEX_LIMIT);
   const failedSources = settled.filter((s) => !s.result.ok).map((s) => s.result.sourceId);
+  const queueCap = Math.max(1, Number(env.ENQUEUE_MAX_NEW ?? 30));
+  const queueEnabled = env.ENABLE_SUMMARY_QUEUE === "1";
+  const queueMode = queueEnabled ? (env.SUMMARY_QUEUE ? "enabled" : "missing-binding") : "disabled";
+  const fallbackTotal = finalEntries.filter(needsGeneratedContent).length;
+  const fallbackPercent = finalEntries.length === 0 ? 0 : Math.round((fallbackTotal / finalEntries.length) * 100);
+  const enqueueCandidates = queueEnabled && env.SUMMARY_QUEUE
+    ? selectSummaryJobs(finalEntries, hitsByUrl, lookedUpUrls, queueCap).length
+    : 0;
   const health = {
     lastRunAt: new Date().toISOString(),
     batchIndex: batchIndex + 1,
@@ -1064,6 +1111,13 @@ async function runHarness(
     summarizeErrors: errors,
     summaryFallbacks,
     bodyFallbacks,
+    fallbackTotal,
+    fallbackPercent,
+    kvLookupCap: KV_LOOKUP_CAP,
+    kvLookupCount: needsKvLookup.length,
+    queueMode,
+    queueCap,
+    enqueueCandidates,
     copilotOk: token !== null,
     copilotError,
     ogCached: Object.keys(ogBlob).length,
@@ -1189,35 +1243,7 @@ async function maybeEnqueueSummaryJobs(
   // exists" (don't enqueue) from "entry looked up but KV miss" (DO enqueue
   // — the summarizer Worker must populate cache).
   const cap = Math.max(1, Number(env.ENQUEUE_MAX_NEW ?? 30));
-
-  const candidates: SummaryJob[] = [];
-  for (const e of entries) {
-    if (candidates.length >= cap) break;
-    if (!lookedUpUrls.has(e.url)) {
-      // Skipped KV lookup; entry already carries a real AI summary. Skip.
-      continue;
-    }
-    const hit = hitsByUrl.get(e.url);
-    const hasRealCache =
-      hit &&
-      hit.summaryJa &&
-      hit.summaryEn &&
-      hit.bodyJa &&
-      hit.bodyEn &&
-      hit.model !== "deterministic-fallback";
-    if (hasRealCache) continue;
-    candidates.push({
-      url: e.url,
-      entry: {
-        id: e.id,
-        url: e.url,
-        title: e.title,
-        category: e.category,
-        source: e.source,
-        sourceType: e.sourceType,
-      },
-    });
-  }
+  const candidates = selectSummaryJobs(entries, hitsByUrl, lookedUpUrls, cap);
 
   // Queue.sendBatch caps at 100 messages and 256 KB per call. Chunk so the
   // producer can keep sending large backfill waves without hitting
@@ -1226,7 +1252,12 @@ async function maybeEnqueueSummaryJobs(
   const CHUNK = 100;
   for (let i = 0; i < candidates.length; i += CHUNK) {
     const slice = candidates.slice(i, i + CHUNK);
-    await env.SUMMARY_QUEUE.sendBatch(slice.map((body) => ({ body })));
+    try {
+      await env.SUMMARY_QUEUE.sendBatch(slice.map((body) => ({ body })));
+    } catch (err) {
+      console.warn(`[worker] summary queue enqueue skipped: ${err}`);
+      return i;
+    }
   }
   return candidates.length;
 }

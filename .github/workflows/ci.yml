@@ -28,11 +28,19 @@ jobs:
       - name: Install root deps
         run: npm ci
 
+      - name: Dependency audit (root)
+        continue-on-error: true
+        run: npm run audit:root
+
       - name: Install web deps
         # tests/web-data.test.ts imports web/src/lib/data.ts; vite/oxc walks up
         # to web/tsconfig.json which extends astro/tsconfigs/strict (only
         # available after `npm ci` inside web/).
         run: npm --prefix web ci
+
+      - name: Dependency audit (web)
+        continue-on-error: true
+        run: npm run audit:web
 
       - name: Typecheck (root)
         run: npm run typecheck

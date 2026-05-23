@@ -4,6 +4,7 @@ import {
   CATEGORY_META,
   GENERATED_AT,
   WORKER_HEALTH,
+  fallbackMetrics,
   jstDateKey,
 } from "./data.ts";
 import { SOURCE_META } from "./source-meta.ts";
@@ -29,6 +30,11 @@ export interface DashboardMetrics {
   workerLastRunAt: string | null;
   workerBatchLabel: string;
   workerSourceOkLabel: string;
+  fallbackEntries: number;
+  realSummaryEntries: number;
+  fallbackPercent: number;
+  summaryQueueMode: string;
+  summaryQueueCandidates: number;
 }
 
 function latestIso(values: Array<string | null | undefined>): string {
@@ -48,6 +54,7 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
   const sourceCoverageLabel = activeSourceCount === totalSourceCount
     ? String(activeSourceCount)
     : `${activeSourceCount}/${totalSourceCount}`;
+  const fallback = fallbackMetrics(ALL_ENTRIES);
 
   return {
     generatedAt: latestIso([GENERATED_AT, STATS.generatedAt, WORKER_HEALTH?.lastRunAt ?? null]),
@@ -69,6 +76,11 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
     workerLastRunAt: WORKER_HEALTH?.lastRunAt ?? null,
     workerBatchLabel: WORKER_HEALTH ? `${WORKER_HEALTH.batchIndex}/${WORKER_HEALTH.batchTotal}` : "no data",
     workerSourceOkLabel: WORKER_HEALTH ? `${WORKER_HEALTH.sourcesOk}/${WORKER_HEALTH.sourcesAttempted}` : "no data",
+    fallbackEntries: WORKER_HEALTH?.fallbackTotal ?? fallback.fallbackEntries,
+    realSummaryEntries: fallback.realSummaryEntries,
+    fallbackPercent: WORKER_HEALTH?.fallbackPercent ?? fallback.fallbackPercent,
+    summaryQueueMode: WORKER_HEALTH?.queueMode ?? "unknown",
+    summaryQueueCandidates: WORKER_HEALTH?.enqueueCandidates ?? 0,
   };
 }
 

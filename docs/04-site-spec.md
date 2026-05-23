@@ -1,6 +1,8 @@
 # 04. サイト仕様書 (統合ドラフト)
 
 > **位置づけ**: `01-architecture.md` (システム設計) と `docs/mockups/mockup-D-portal-dark.html` (確定デザイン) を踏まえ、**実装前に確定すべき残り仕様**を網羅する。本書がレビュー合意後、実装フェーズ (P1) に移行する。
+>
+> **現状**: 本書は計画段階のドラフトであり、GitHub Actions / 13 カテゴリ / Tier 2 30 ソースなど古い前提を含む。Production の source of truth は [`SPEC.md`](SPEC.md)、`harness/registry.ts`、`.github/copilot-instructions.md` を参照する。
 
 > **凡例**: ✅ = 確定済み / 🟡 = 本書で提案 (要合意) / ❓ = 未決 (選択肢提示)
 

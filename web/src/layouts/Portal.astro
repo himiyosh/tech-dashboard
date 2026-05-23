@@ -79,7 +79,8 @@ const {
             autocomplete="off"
           />
           <span class="search-keys" aria-hidden="true"><kbd>/</kbd><kbd>⌘K</kbd></span>
-          <div id="pagefind-results" class="search-results" role="listbox" hidden></div>
+          <div id="pagefind-results" class="search-results" role="listbox" aria-live="polite" aria-label="Search results" hidden></div>
+          <div id="pagefind-status" class="sr-only" role="status" aria-live="polite"></div>
         </div>
         <div class="lang-toggle" role="group" aria-label="Language">
           <button type="button" class="lang-btn" data-lang="ja" aria-pressed="true">JA</button>
@@ -106,7 +107,7 @@ const {
       <div class="footer-inner">
         <span class="item"><span class="dot"></span> <strong>healthy</strong></span>
         <span class="item">harness <strong>v0.1</strong></span>
-        <span class="item">powered by <strong>Astro</strong> + <strong>Claude Opus</strong></span>
+        <span class="item">powered by <strong>Astro</strong> + <strong>Claude Sonnet</strong></span>
         <span class="spacer"></span>
         <span class="item">Cloudflare Pages</span>
       </div>
@@ -147,6 +148,7 @@ const {
       (async () => {
         const input = document.getElementById("pagefind-search-input") as HTMLInputElement | null;
         const panel = document.getElementById("pagefind-results") as HTMLDivElement | null;
+        const status = document.getElementById("pagefind-status") as HTMLDivElement | null;
         const mobileTrigger = document.getElementById("mobile-search-trigger") as HTMLButtonElement | null;
         const searchRoot = input?.closest(".search") as HTMLElement | null;
         if (!input || !panel || !searchRoot) return;
@@ -164,6 +166,11 @@ const {
 
         const escapeHtml = (value: string) =>
           value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char] ?? char));
+        const sanitizeExcerpt = (value: string) =>
+          escapeHtml(value).replace(/&lt;(\/?)mark&gt;/g, "<$1mark>");
+        const setStatus = (message: string) => {
+          if (status) status.textContent = message;
+        };
         const setExpanded = (expanded: boolean) => {
           input.setAttribute("aria-expanded", expanded ? "true" : "false");
           panel.hidden = !expanded;
@@ -203,11 +210,13 @@ const {
           if (!q) {
             setExpanded(false);
             panel.innerHTML = "";
+            setStatus("");
             return;
           }
           if (!pf) {
             setExpanded(true);
             panel.innerHTML = `<div class="search-empty">Search index not built yet. Run <code>npm run build</code>.</div>`;
+            setStatus("Search index is not built yet.");
             return;
           }
           const search = await pf.search(q);
@@ -215,14 +224,16 @@ const {
           setExpanded(true);
           if (items.length === 0) {
             panel.innerHTML = `<div class="search-empty">No results for <strong>${escapeHtml(q)}</strong></div>`;
+            setStatus(`No results for ${q}.`);
             return;
           }
+          setStatus(`${items.length} search results for ${q}.`);
           panel.innerHTML = items
             .map(
               (d: any) => `
               <a class="search-hit" id="search-hit-${Math.random().toString(36).slice(2)}" role="option" aria-selected="false" href="${escapeHtml(d.url)}">
                 <div class="search-hit-title">${escapeHtml(d.meta?.title || d.url)}</div>
-                <div class="search-hit-excerpt">${d.excerpt || ""}</div>
+                <div class="search-hit-excerpt">${sanitizeExcerpt(d.excerpt || "")}</div>
                 <div class="search-hit-meta">${escapeHtml(d.url.replace(/^https?:\/\/[^/]+/, "") || "/")}</div>
               </a>`,
             )

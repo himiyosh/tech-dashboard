@@ -46,6 +46,18 @@ body {
   font-family: ui-monospace, "SF Mono", "JetBrains Mono", monospace;
 }
 
+.sr-only {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  margin: -1px;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -799,6 +811,24 @@ main {
   grid-template-columns: 168px 1fr;
   gap: 16px;
   align-items: stretch;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.featured:hover {
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--accent-bg));
+  background:
+    linear-gradient(180deg, rgba(94, 234, 212, 0.12) 0%, transparent 80%),
+    color-mix(in srgb, var(--surface) 92%, var(--accent) 8%);
+}
+.featured-panel-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+.featured:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 66%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
 }
 .featured-thumb {
   position: relative;
@@ -874,6 +904,10 @@ main {
   line-height: 1.3;
   margin-bottom: 10px;
 }
+.featured-title a {
+  position: relative;
+  z-index: 2;
+}
 
 .featured-sum {
   font-size: 13.5px;
@@ -944,11 +978,20 @@ main {
   padding: 14px 18px 14px 20px;
   margin-bottom: 8px;
   position: relative;
-  transition: border-color 0.12s;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
 }
 
 .card:hover {
   border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--surface) 92%, var(--accent) 8%);
+}
+
+.card-panel-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
 }
 
 .card.important::before {
@@ -1091,6 +1134,16 @@ main {
   margin-bottom: 4px;
 }
 
+.card:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.card .title a {
+  position: relative;
+  z-index: 2;
+}
+
 .card .title a:hover {
   color: var(--accent);
 }
@@ -1170,6 +1223,8 @@ main {
 }
 
 .card .tag-chip {
+  position: relative;
+  z-index: 2;
   padding: 2px 7px;
   border-radius: 999px;
   background: var(--bg-2);
@@ -1192,6 +1247,7 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  pointer-events: none;
 }
 
 .card .url .arrow {
@@ -1365,6 +1421,29 @@ main {
 .source-status-badge.error {
   color: var(--danger);
   border-color: color-mix(in srgb, var(--danger) 42%, var(--border));
+}
+
+.source-status-badge.no-data {
+  color: var(--muted-2);
+  border-color: color-mix(in srgb, var(--muted-2) 42%, var(--border));
+}
+
+@supports (content-visibility: auto) {
+  .card,
+  .featured,
+  .digest,
+  .top-rank,
+  .category-card,
+  .source-item,
+  .ed-rel-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 220px;
+  }
+
+  .digest,
+  .featured {
+    contain-intrinsic-size: auto 420px;
+  }
 }
 
 /* FOOTER STATUS BAR */

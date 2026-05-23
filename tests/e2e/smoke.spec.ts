@@ -24,6 +24,29 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator('a.ed-cta[target="_blank"]')).toBeVisible();
   });
 
+  test("clicking featured article panel opens detail page", async ({ page }) => {
+    await page.goto("/");
+
+    const featured = page.locator("article.featured").first();
+    await expect(featured).toBeVisible();
+
+    await featured.click({ position: { x: 24, y: 72 } });
+    await expect(page).toHaveURL(/\/e\/.+\/$/);
+    await expect(page.locator("article.entry-detail")).toBeVisible();
+  });
+
+  test("clicking article card panel opens detail page", async ({ page }) => {
+    await page.goto("/");
+
+    const firstCard = page.locator("article.card").first();
+    await expect(firstCard).toBeVisible();
+
+    await firstCard.scrollIntoViewIfNeeded();
+    await firstCard.click({ position: { x: 24, y: 72 } });
+    await expect(page).toHaveURL(/\/e\/.+\/$/);
+    await expect(page.locator("article.entry-detail")).toBeVisible();
+  });
+
   test("language toggle changes html data-lang", async ({ page }) => {
     await page.goto("/");
 

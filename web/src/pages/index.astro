@@ -119,6 +119,7 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
         const featImg = feat.image?.src ?? "";
         return (
         <article class="featured" data-pagefind-body style={`--cat-color:${featCatColor}`}>
+          <a class="featured-panel-link" href={entryHref(feat)} tabindex="-1" aria-label={`Open ${titleForLang(feat, "ja") || titleForLang(feat, "en") || feat.title}`}></a>
           <div class="featured-thumb">
             {featImg ? (
               <img src={featImg} alt={feat.image?.alt || feat.title} loading="lazy" decoding="async" />

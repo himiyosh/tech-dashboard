@@ -56,6 +56,7 @@ function faviconUrl(url: string, size = 32): string {
   const h = host(url);
   return h ? `https://www.google.com/s2/favicons?sz=${size}&domain=${h}` : "";
 }
+const entryFavicon = faviconUrl(entry.url);
 
 function splitJaPoints(s: string): string[] {
   if (!s) return [];
@@ -211,6 +212,12 @@ const jsonLd = {
     <meta property="article:published_time" content={entry.publishedAt} />
     <meta property="article:modified_time" content={entry.collectedAt} />
     {entry.tags.map((t) => <meta property="article:tag" content={t} />)}
+    <meta data-pagefind-filter="category[content]" content={entry.category} />
+    <meta data-pagefind-filter="source[content]" content={entry.source} />
+    <meta data-pagefind-filter="sourceType[content]" content={entry.sourceType} />
+    <meta data-pagefind-filter="importance[content]" content={String(entry.importance)} />
+    <meta data-pagefind-filter="publishedDay[content]" content={entry.publishedAt.slice(0, 10)} />
+    <meta data-pagefind-sort="published[content]" content={String(Date.parse(entry.publishedAt) || 0)} />
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </Fragment>
 
@@ -264,8 +271,8 @@ const jsonLd = {
             <span class="i18n-en" lang="en">{titleEn || titleJa || entry.title}</span>
           </h1>
           <div class="ed-byline">
-            {faviconUrl(entry.url) && (
-              <img class="ed-favicon" src={faviconUrl(entry.url)} alt="" width="18" height="18" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'" />
+            {entryFavicon && (
+              <img class="ed-favicon" src={entryFavicon} alt="" width="18" height="18" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'" />
             )}
             <span class="ed-src-name">{srcDisplay}</span>
             <span class="sep">·</span>
@@ -426,7 +433,7 @@ const jsonLd = {
             <span aria-hidden="true">↗</span>
           </a>
           <span class="ed-cta-host">
-            {faviconUrl(entry.url) && <img src={faviconUrl(entry.url)} alt="" width="14" height="14" loading="lazy" onerror="this.style.display='none'" />}
+             {entryFavicon && <img src={entryFavicon} alt="" width="14" height="14" loading="lazy" onerror="this.style.display='none'" />}
             {host(entry.url)}
           </span>
         </div>
@@ -535,7 +542,7 @@ const jsonLd = {
       {sameSource.length > 0 && (
         <div class="side-card">
           <div class="rail-title">
-            {faviconUrl(entry.url) && <img class="rail-fav" src={faviconUrl(entry.url)} alt="" width="14" height="14" referrerpolicy="no-referrer" onerror="this.style.display='none'" />}
+             {entryFavicon && <img class="rail-fav" src={entryFavicon} alt="" width="14" height="14" referrerpolicy="no-referrer" onerror="this.style.display='none'" />}
             {srcDisplay} の最新
           </div>
           <ul class="rail-list">

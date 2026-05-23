@@ -1,6 +1,6 @@
 # User Customization
 
-tech-dashboard はデフォルトで Tier 1〜3 の 31 ソースを自動収集しますが、ユーザ個別の購読リストを追加できます。
+tech-dashboard は Tier 1〜3 の 51 登録ソースを持ち、本番 Worker は `user-opml` を除く 50 ソースを自動収集します。ローカル実行ではユーザ個別の購読リストを追加できます。
 
 ## OPML インポート (推奨)
 
@@ -33,7 +33,7 @@ npm run collect
     "<CHANNEL_ID>",   // UCxxxx (24 chars, starts with UC)
     ["<tag>"],
   ),
-  category: "<category>",  // 13 カテゴリのいずれか
+  category: "<category>",  // 14 カテゴリのいずれか
 },
 ```
 

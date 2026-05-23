@@ -172,6 +172,28 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".footer-bar")).toBeHidden();
     await expect(tabbar.getByRole("link", { name: "Timeline" })).toHaveClass(/active/);
 
+    const tabbarBox = await tabbar.boundingBox();
+    expect(tabbarBox, "mobile tabbar has a rendered box").not.toBeNull();
+    expect(Math.round(tabbarBox!.x), "mobile tabbar starts at the viewport edge").toBe(0);
+    expect(Math.round(tabbarBox!.width), "mobile tabbar spans the viewport width").toBe(390);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
+    const tabItems = tabbar.locator("a, button");
+    await expect(tabItems).toHaveCount(4);
+    const itemBoxes = await tabItems.evaluateAll((items) =>
+      items.map((item) => {
+        const rect = item.getBoundingClientRect();
+        return { left: rect.left, right: rect.right, width: rect.width };
+      }),
+    );
+    expect(itemBoxes[0].left, "first mobile tab item starts inside the padded bar").toBeGreaterThanOrEqual(7);
+    expect(itemBoxes.at(-1)!.right, "last mobile tab item stays inside the padded bar").toBeLessThanOrEqual(383);
+    for (const itemBox of itemBoxes) {
+      expect(Math.round(itemBox.width), `mobile tab item width: ${JSON.stringify(itemBox)}`).toBe(94);
+    }
+
     await tabbar.getByRole("link", { name: "Categories" }).click();
     await expect(page).toHaveURL(/\/categories\/?$/);
     await expect(page.locator("main h2", { hasText: "Categories" })).toBeVisible();

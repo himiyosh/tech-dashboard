@@ -2,7 +2,7 @@
 
 AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline / Aider / VSCode / OpenCode / Local LLM / Agent FW / MCP / Tech News / Research の **14 カテゴリ**) を **一括で追跡** できるポータルサイト。Harness Engineering のプラクティスに沿って、AI エージェントが自律的に情報収集・正規化・公開を行う。
 
-**現状**: 51 ソースを登録し、Cloudflare Worker は `user-opml` を除く 50 ソース (Tier 1 / 2 / 3) を **毎時自動収集** (50 ソースを 4 バッチに分割し各ソースは 4 時間ごとに更新)、Astro 静的サイト生成、RSS/JSON Feed 配信、GitHub Copilot Enterprise (Claude Opus 4.7) による要約パイプライン、Pagefind 全文検索、品質監査 Skill、AI Scrum 開発運用 Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。
+**現状**: 51 ソースを登録し、Cloudflare Worker は `user-opml` を除く 50 ソース (Tier 1 / 2 / 3) を **毎時自動収集** (50 ソースを 4 バッチに分割し各ソースは 4 時間ごとに更新)、Astro 静的サイト生成、RSS/JSON Feed 配信、GitHub Copilot Enterprise (Claude Opus 4.7) による要約パイプライン、Pagefind 全文検索、品質監査 Skill、AI Scrum 開発運用 Skill、UI 表示ガード Skill、Modern Web Guidance Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。
 
 ## 🔭 運用ステータス早見表 (Single Source of Truth)
 
@@ -109,6 +109,19 @@ npx tsx .claude/skills/quality-audit/run.ts
 
 # ============ AI Scrum 開発運用 ============
 # Claude Code / Copilot Agent から /skill ai-scrum を実行
+
+# ============ UI 表示ガード ============
+# Claude Code / Copilot Agent から /skill ui-display-guard を実行
+
+# ============ Modern Web Guidance ============
+# 初回導入 / 更新: developer.chrome.com/docs/modern-web-guidance の推奨 CLI
+npx -y modern-web-guidance@latest install
+
+# HTML / CSS / client-side JS / アクセシビリティ / パフォーマンス / セキュリティの変更前に Chrome の最新ガイドを検索
+npx -y modern-web-guidance@latest search "optimize LCP image priority" --skill-version 2026_05_16-c5e7870
+npx -y modern-web-guidance@latest retrieve "optimize-image-priority"
+# 広めの UI 変更では基礎 guide も先に確認する
+npx -y modern-web-guidance@latest retrieve "accessibility,css,performance,security"
 ```
 
 ### 品質ゲート: テスト & Git Hooks
@@ -319,6 +332,7 @@ VS Code で MCP 拡張 or Copilot Chat を開き、初回は OAuth 認可画面�
 
 ```
 tech-dashboard/
+├─ skills-lock.json          # skills CLI が管理する Modern Web Guidance の導入 lock
 ├─ docs/                     # 設計ドキュメント
 │  └─ mockups/               # HTML モック (mockup-D が確定)
 ├─ harness/                  # ハーネス本体 (TypeScript)
@@ -364,7 +378,9 @@ tech-dashboard/
 │  └─ astro.config.mjs
 ├─ .claude/skills/
 │  ├─ ai-scrum/             # AI Scrum 開発運用スキル (SKILL.md)
-│  └─ quality-audit/         # 品質監査スキル (SKILL.md + run.ts)
+│  ├─ quality-audit/         # 品質監査スキル (SKILL.md + run.ts)
+│  ├─ ui-display-guard/      # モバイル/レスポンシブ UI 表示ガードスキル (SKILL.md)
+│  └─ modern-web-guidance/   # Chrome Modern Web Guidance 検索スキル (SKILL.md + guides)
 ├─ worker/                   # Cloudflare Worker (定期ハーネス実行)
 │  ├─ src/index.ts           # Cron 起動 → 収集 (4 batch ローテーション) → Copilot 要約 → og:image → GitHub atomic commit
 │  ├─ wrangler.toml          # Workers 設定 (Cron / KV / Vars)

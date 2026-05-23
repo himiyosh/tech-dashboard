@@ -1,8 +1,97 @@
 {
-  "generatedAt": "2026-05-23T19:00:18.654Z",
+  "generatedAt": "2026-05-23T20:00:28.387Z",
   "month": "2026-05",
-  "count": 2865,
+  "count": 2884,
   "entries": [
+    {
+      "id": "939a328ce39f3c27",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kenjiigarashi/articles/249737952f0171",
+      "title": "なぜ私はMCPサーバーをRustではなく、400行の純粋なC++20で書いたのか 〜作成を決意するまでの裏話〜",
+      "titleJa": "なぜ私はMCPサーバーをRustではなく、400行の純粋なC++20で書いたのか 〜作成を決意するまでの裏話〜",
+      "titleEn": "",
+      "summaryJa": "はじめに：C++20でTree-SitterとMCPの決めたときのこと Zennや海外の技術コミュニティで「Tree-Sitterを使ってソースコードをAST（抽象構文木）に解析し、**MCP（Model Context Protocol）",
+      "summaryEn": "なぜ私はMCPサーバーをRustではなく、400行の純粋なC++20で書いたのか 〜作成を決意するまでの裏話〜",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T19:46:08.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--S7gqCQI5--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2581%25AA%25E3%2581%259C%25E7%25A7%2581%25E3%2581%25AFMCP%25E3%2582%25B5%25E3%2583%25BC%25E3%2583%2590%25E3%2583%25BC%25E3%2582%2592Rust%25E3%2581%25A7%25E3%2581%25AF%25E3%2581%25AA%25E3%2581%258F%25E3%2580%2581400%25E8%25A1%258C%25E3%2581%25AE%25E7%25B4%2594%25E7%25B2%258B%25E3%2581%25AAC%252B%252B20%25E3%2581%25A7%25E6%259B%25B8%25E3%2581%2584%25E3%2581%259F%25E3%2581%25AE%25E3%2581%258B%2520%25E3%2580%259C%25E4%25BD%259C%25E6%2588%2590%25E3%2582%2592%25E6%25B1%25BA%25E6%2584%258F%25E3%2581%2599%25E3%2582%258B%25E3%2581%25BE%25E3%2581%25A7%25E3%2581%25AE%25E8%25A3%258F%25E8%25A9%25B1%25E3%2580%259C%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Kenji%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSVBMQmJVbk02SEF1TzhlLUxpUV93VW1sX0IxWXVvQkdQTm9LeUtFTXBRYTdMVjBnPXMyNTAtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--S7gqCQI5--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2581%25AA%25E3%2581%259C%25E7%25A7%2581%25E3%2581%25AFMCP%25E3%2582%25B5%25E3%2583%25BC%25E3%2583%2590%25E3%2583%25BC%25E3%2582%2592Rust%25E3%2581%25A7%25E3%2581%25AF%25E3%2581%25AA%25E3%2581%258F%25E3%2580%2581400%25E8%25A1%258C%25E3%2581%25AE%25E7%25B4%2594%25E7%25B2%258B%25E3%2581%25AAC%252B%252B20%25E3%2581%25A7%25E6%259B%25B8%25E3%2581%2584%25E3%2581%259F%25E3%2581%25AE%25E3%2581%258B%2520%25E3%2580%259C%25E4%25BD%259C%25E6%2588%2590%25E3%2582%2592%25E6%25B1%25BA%25E6%2584%258F%25E3%2581%2599%25E3%2582%258B%25E3%2581%25BE%25E3%2581%25A7%25E3%2581%25AE%25E8%25A3%258F%25E8%25A9%25B1%25E3%2580%259C%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Kenji%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSVBMQmJVbk02SEF1TzhlLUxpUV93VW1sX0IxWXVvQkdQTm9LeUtFTXBRYTdMVjBnPXMyNTAtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
+        "alt": "なぜ私はMCPサーバーをRustではなく、400行の純粋なC++20で書いたのか 〜作成を決意するまでの裏話〜",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "fa89f61975d85811",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/sijiaoh/items/60586e270ee980a7bbe6",
+      "title": "AIは記憶も学習もしない",
+      "titleJa": "AIは記憶も学習もしない",
+      "titleEn": "",
+      "summaryJa": "特に非エンジニアへの説明に苦労するので、まとめておきます。 よくある誤解 AIは会話を記憶しているから、会話が成り立っている。 AIはリアルタイムで学習しているから、読ませた資料に対する質問に答えられる。 実際には、AIは記憶もしませんし、",
+      "summaryEn": "AIは記憶も学習もしない",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T18:33:14.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "llm",
+        "qiita"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMTg4ODcyJTJGcHJvZmlsZS1pbWFnZXMlMkYxNzY0NDAyNjgwP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz05OTZlYmE0MWIxYjUwZjRmM2ViYTg5YjI1OTlkODk3Mg%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D9fe0c3e41214287dfce0e5c418384706?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QUklRTMlODElQUYlRTglQTglOTglRTYlODYlQjYlRTMlODIlODIlRTUlQUQlQTYlRTclQkYlOTIlRTMlODIlODIlRTMlODElOTclRTMlODElQUElRTMlODElODQmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1hNjNjZGIwOTc0MjEyYzJkM2ZmZjkxZDY2YWZjNGEzMA&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzaWppYW9oJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9MmRkZWIyZDdiMTUzMjcwNzMwNzk0YTRjZThjZjFmZDM&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=8b3e80c04662d8d5be2942cccdec2782",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMTg4ODcyJTJGcHJvZmlsZS1pbWFnZXMlMkYxNzY0NDAyNjgwP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz05OTZlYmE0MWIxYjUwZjRmM2ViYTg5YjI1OTlkODk3Mg%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D9fe0c3e41214287dfce0e5c418384706?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QUklRTMlODElQUYlRTglQTglOTglRTYlODYlQjYlRTMlODIlODIlRTUlQUQlQTYlRTclQkYlOTIlRTMlODIlODIlRTMlODElOTclRTMlODElQUElRTMlODElODQmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1hNjNjZGIwOTc0MjEyYzJkM2ZmZjkxZDY2YWZjNGEzMA&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzaWppYW9oJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9MmRkZWIyZDdiMTUzMjcwNzMwNzk0YTRjZThjZjFmZDM&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=8b3e80c04662d8d5be2942cccdec2782",
+        "alt": "AIは記憶も学習もしない",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "f15db80255a6c9aa",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/mantis_ryuji/articles/0faceb3e34e9ab",
+      "title": "Group DRO 論文解説：過剰パラメータ化モデルの最悪グループ汎化",
+      "titleJa": "Group DRO 論文解説：過剰パラメータ化モデルの最悪グループ汎化",
+      "titleEn": "",
+      "summaryJa": "Group DRO 論文解説：過剰パラメータ化モデルの最悪グループ汎化 本記事では、Sagawa et al. による論文 Distributionally Robust Neural Networks for Group Shifts: ",
+      "summaryEn": "Group DRO 論文解説：過剰パラメータ化モデルの最悪グループ汎化",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T18:15:06.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--j1R5oQF1--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Group%2520DRO%2520%25E8%25AB%2596%25E6%2596%2587%25E8%25A7%25A3%25E8%25AA%25AC%25EF%25BC%259A%25E9%2581%258E%25E5%2589%25B0%25E3%2583%2591%25E3%2583%25A9%25E3%2583%25A1%25E3%2583%25BC%25E3%2582%25BF%25E5%258C%2596%25E3%2583%25A2%25E3%2583%2587%25E3%2583%25AB%25E3%2581%25AE%25E6%259C%2580%25E6%2582%25AA%25E3%2582%25B0%25E3%2583%25AB%25E3%2583%25BC%25E3%2583%2597%25E6%25B1%258E%25E5%258C%2596%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:mantis_ryuji%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2FlM2I2MGZlZGIuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--j1R5oQF1--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Group%2520DRO%2520%25E8%25AB%2596%25E6%2596%2587%25E8%25A7%25A3%25E8%25AA%25AC%25EF%25BC%259A%25E9%2581%258E%25E5%2589%25B0%25E3%2583%2591%25E3%2583%25A9%25E3%2583%25A1%25E3%2583%25BC%25E3%2582%25BF%25E5%258C%2596%25E3%2583%25A2%25E3%2583%2587%25E3%2583%25AB%25E3%2581%25AE%25E6%259C%2580%25E6%2582%25AA%25E3%2582%25B0%25E3%2583%25AB%25E3%2583%25BC%25E3%2583%2597%25E6%25B1%258E%25E5%258C%2596%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:mantis_ryuji%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2FlM2I2MGZlZGIuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
+        "alt": "Group DRO 論文解説：過剰パラメータ化モデルの最悪グループ汎化",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "932746d4d646eb6f",
       "source": "qiita-claude",
@@ -56,8 +145,80 @@
       "archiveTier": "hot"
     },
     {
-      "id": "13f64817637f3b0e",
-      "source": "zenn-llm",
+      "id": "b712d02b698796ce",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/satoh_y_0323/articles/ccd0e425eb541d",
+      "title": "worktree auto-cleanup を 11 検体で実証確定・SKILL.md と人間向け docs の責務分離",
+      "titleJa": "worktree auto-cleanup を 11 検体で実証確定・SKILL.md と人間向け docs の責務分離",
+      "titleEn": "",
+      "summaryJa": "前回記事: https://zenn.dev/satoh_y_0323/articles/323d82002f6e71 C3 GitHub: https://github.com/satoh-y-0323/claude-code-condu",
+      "summaryEn": "worktree auto-cleanup を 11 検体で実証確定・SKILL.md と人間向け docs の責務分離",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T17:29:15.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--qiAG9k4c--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:worktree%2520auto-cleanup%2520%25E3%2582%2592%252011%2520%25E6%25A4%259C%25E4%25BD%2593%25E3%2581%25A7%25E5%25AE%259F%25E8%25A8%25BC%25E7%25A2%25BA%25E5%25AE%259A%25E3%2583%25BBSKILL.md%2520%25E3%2581%25A8%25E4%25BA%25BA%25E9%2596%2593%25E5%2590%2591%25E3%2581%2591%2520docs%2520%25E3%2581%25AE%25E8%25B2%25AC%25E5%258B%2599%25E5%2588%2586%25E9%259B%25A2%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:satoh-y-0323%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzAwMDMzNjljMTMuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--qiAG9k4c--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:worktree%2520auto-cleanup%2520%25E3%2582%2592%252011%2520%25E6%25A4%259C%25E4%25BD%2593%25E3%2581%25A7%25E5%25AE%259F%25E8%25A8%25BC%25E7%25A2%25BA%25E5%25AE%259A%25E3%2583%25BBSKILL.md%2520%25E3%2581%25A8%25E4%25BA%25BA%25E9%2596%2593%25E5%2590%2591%25E3%2581%2591%2520docs%2520%25E3%2581%25AE%25E8%25B2%25AC%25E5%258B%2599%25E5%2588%2586%25E9%259B%25A2%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:satoh-y-0323%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzAwMDMzNjljMTMuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
+        "alt": "worktree auto-cleanup を 11 検体で実証確定・SKILL.md と人間向け docs の責務分離",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "bb456bec7d11ce88",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/yuitonn/articles/f88ddcf21ce172",
+      "title": "【アーキテクチャ】大量の類似 Feature を持つ Enterprise なフロントエンド設計",
+      "titleJa": "【アーキテクチャ】大量の類似 Feature を持つ Enterprise なフロントエンド設計",
+      "titleEn": "",
+      "summaryJa": "はじめに Reactのフロントエンド開発において、似たような画面が増えてくると必ずぶつかる問題があります。「ほぼ同じコードが複数箇所に存在する」「新しい画面を追加するたびに同じ作業が繰り返される」—この問題に対して、共通コンポーネントや既存",
+      "summaryEn": "【アーキテクチャ】大量の類似 Feature を持つ Enterprise なフロントエンド設計",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T17:17:57.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "enterprise",
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "94c100f68dca4b33",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/harunamix/articles/multicli-discord-bridge-story-20260524",
+      "title": "multiCLI-discord-bridgeができるまで",
+      "titleJa": "multiCLI-discord-bridgeができるまで",
+      "titleEn": "",
+      "summaryJa": "discordとAIツールと私 これは、今の multiCLI-discord-bridge にたどり着くまでの個人的な記録です。 完成したツールの紹介というより、Discord と AI ツールをどうつなぎたかったのか、どこで失敗して、ど",
+      "summaryEn": "multiCLI-discord-bridgeができるまで",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T17:09:50.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "f574073b4ab13b1a",
+      "source": "zenn-ai",
       "sourceType": "blog",
       "url": "https://zenn.dev/ojt/articles/claude-code-memory-index-design",
       "title": "Claude Code MEMORY.md のインデックス設計 — 150字ルールと読み込み順序でコンテキストを軽くする",
@@ -67,12 +228,12 @@
       "summaryEn": "Claude Code MEMORY.md のインデックス設計 — 150字ルールと読み込み順序でコンテキストを軽くする",
       "lang": "ja",
       "publishedAt": "2026-05-23T16:24:42.000Z",
-      "collectedAt": "2026-05-23T18:00:08.670Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
-        "llm",
-        "zenn"
+        "zenn",
+        "llm"
       ],
-      "category": "local-llm",
+      "category": "research",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -86,6 +247,71 @@
       }
     },
     {
+      "id": "22d348427c4b6520",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/05/23/you-dont-have-to-click-anything-to-get-hacked-anymore-heres-how-to-fight-back/",
+      "title": "These special phone and app features can help protect you from spyware",
+      "titleJa": "",
+      "titleEn": "These special phone and app features can help protect you from spyware",
+      "summaryJa": "このエントリは techcrunch から収集した tech-news 領域の最新アップデートです。原題:「These special phone and app features can help protect you from spyware」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Apple, Meta, and Google offer special security modes that provide your devices more secure against targeted spyware attacks. Here are how those modes work, what they do, and how to switch them on.",
+      "lang": "en",
+      "publishedAt": "2026-05-23T16:00:00.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "news",
+        "techcrunch",
+        "tutorial"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "2e5f717d077c4991",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/yamada_ai_dev/articles/harness-intro",
+      "title": "Claude Codeを1ヶ月使って気づいた「指示の改善では解決しない問題」",
+      "titleJa": "Claude Codeを1ヶ月使って気づいた「指示の改善では解決しない問題」",
+      "titleEn": "",
+      "summaryJa": "TL;DR Claude Codeを使い込んでいくと、「プロンプトを改善する」アプローチに限界を感じる瞬間がある。その限界を突破するのが「ハーネスエンジニアリング」という考え方だ。 この記事では、私が実際に体験した限界と、それを解決した具体",
+      "summaryEn": "Claude Codeを1ヶ月使って気づいた「指示の改善では解決しない問題」",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T15:27:47.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "e78ad1e06cbda822",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/yamada_ai_dev/articles/article03-free",
+      "title": "Claude Codeで「危険なコマンドを自動ブロック」する設定",
+      "titleJa": "Claude Codeで「危険なコマンドを自動ブロック」する設定",
+      "titleEn": "",
+      "summaryJa": "Claude Codeで「危険なコマンドを自動ブロック」する設定 この記事でやること Claude Codeがgit pushやrm -rfなどの危険なコマンドを実行しようとしたとき、自動的にブロックする仕組みを5分で設定する。 なぜ必要か",
+      "summaryEn": "Claude Codeで「危険なコマンドを自動ブロック」する設定",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T15:27:47.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
       "id": "6284c263014af8a9",
       "source": "techcrunch",
       "sourceType": "blog",
@@ -97,7 +323,7 @@
       "summaryEn": "IBM and Scuderia Ferrari HP take TechCrunch inside how they are redefining the fan experience.",
       "lang": "en",
       "publishedAt": "2026-05-23T15:08:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -116,6 +342,70 @@
       }
     },
     {
+      "id": "25d13048a5f481db",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/amdracat/articles/d3521e6dd21642",
+      "title": "AIエージェント時代の組み込みソフトと境界設計",
+      "titleJa": "AIエージェント時代の組み込みソフトと境界設計",
+      "titleEn": "",
+      "summaryJa": "組み込みソフトは新しいものが入ってきづらい傾向がある。 しかし近年のAIエージェントの波は少なくとも私の所属する企業の開発環境に颯爽と現れ、様々な変革をもたらし続けている。 2026年時点のAIエージェントに関する私の考えを整理する。 AI",
+      "summaryEn": "AIエージェント時代の組み込みソフトと境界設計",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T15:05:39.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "c9f3d880e6e88d2c",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/sonicgarden/articles/claude-code-self-improving-loop",
+      "title": "Claude Codeのスキルが毎日勝手に改善されていく仕組みを作った",
+      "titleJa": "Claude Codeのスキルが毎日勝手に改善されていく仕組みを作った",
+      "titleEn": "",
+      "summaryJa": "この記事は Claude on SonicGarden の記事です。ソニックガーデンのプログラマが、Claude Codeの活用について書いています。#claude_on_sonicgarden きっかけ 最近は dev-workflow ",
+      "summaryEn": "Claude Codeのスキルが毎日勝手に改善されていく仕組みを作った",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T15:00:05.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "1813e7928f5a2d73",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/atsushi11o7/articles/zenn-writing-with-claude-code",
+      "title": "Claude Code の Skill と Agent で Zenn の執筆ワークフローを組み立ててみる",
+      "titleJa": "Claude Code の Skill と Agent で Zenn の執筆ワークフローを組み立ててみる",
+      "titleEn": "",
+      "summaryJa": "はじめに 前回の記事「Dev Container で Zenn の執筆環境を整えて、GitHub 連携で記事を投稿するまで」の続編です。今回は、新規記事の作成から公開・更新までをリポジトリ内で行えるように Claude Code に組み込ん",
+      "summaryEn": "Claude Code の Skill と Agent で Zenn の執筆ワークフローを組み立ててみる",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T14:59:22.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "agent",
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
       "id": "55f507899836a534",
       "source": "techcrunch",
       "sourceType": "blog",
@@ -127,7 +417,7 @@
       "summaryEn": "Deep Fission is seeking an IPO that could raise $157 million, though investors may have trouble buying the nuclear startup's story.",
       "lang": "en",
       "publishedAt": "2026-05-23T14:50:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -157,7 +447,7 @@
       "summaryEn": "GitHub Copilot app を加えて考える CLI / VS Code / app の使い分け",
       "lang": "ja",
       "publishedAt": "2026-05-23T14:45:34.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "copilot",
@@ -298,8 +588,29 @@
       }
     },
     {
-      "id": "749a584839269af5",
-      "source": "zenn-llm",
+      "id": "7c682795fe714d4d",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/headwaters/articles/bcf6e9f5fb2c7e",
+      "title": "WindowsローカルAI実践 第3回:ONNX Runtime GenAI で SLM をローカル実行する(量子化とメモリの壁)",
+      "titleJa": "WindowsローカルAI実践 第3回:ONNX Runtime GenAI で SLM をローカル実行する(量子化とメモリの壁)",
+      "titleEn": "",
+      "summaryJa": "この記事について 連載「WindowsローカルAI実践入門」の第3回です。第1回は本連載の全体像を1枚の技術地図として示し、第2回はその中の ONNX → ONNX Runtime(ORT)→ Execution Provider(EP) ",
+      "summaryEn": "WindowsローカルAI実践 第3回:ONNX Runtime GenAI で SLM をローカル実行する(量子化とメモリの壁)",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T14:32:58.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "65f33efdc9fc538d",
+      "source": "zenn-ai",
       "sourceType": "blog",
       "url": "https://zenn.dev/hanav1ye/articles/note2zenn-vol4",
       "title": "LLMの出力を安定させたい ｜ note2Zenn開発記（LLM編 / Vol.4）",
@@ -309,12 +620,12 @@
       "summaryEn": "LLMの出力を安定させたい ｜ note2Zenn開発記（LLM編 / Vol.4）",
       "lang": "ja",
       "publishedAt": "2026-05-23T14:04:43.000Z",
-      "collectedAt": "2026-05-23T18:00:08.670Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
-        "llm",
-        "zenn"
+        "zenn",
+        "llm"
       ],
-      "category": "local-llm",
+      "category": "research",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -328,8 +639,8 @@
       }
     },
     {
-      "id": "a40197bd80103e85",
-      "source": "zenn-llm",
+      "id": "b1c58ebddd3fb674",
+      "source": "zenn-ai",
       "sourceType": "blog",
       "url": "https://zenn.dev/hanav1ye/articles/note2zenn-vol5",
       "title": "AIが出力した安心を担保したい ｜ note2Zenn開発記（セキュリティ編 / Vol.5）",
@@ -339,12 +650,76 @@
       "summaryEn": "AIが出力した安心を担保したい ｜ note2Zenn開発記（セキュリティ編 / Vol.5）",
       "lang": "ja",
       "publishedAt": "2026-05-23T14:04:21.000Z",
-      "collectedAt": "2026-05-23T18:00:08.670Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
-        "llm",
+        "zenn",
+        "llm"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "2cc96ad4b2ed154d",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/rkpg/articles/claude-code-content-factory",
+      "title": "Claude Codeを「コンテンツ工場」にした話。スラッシュコマンド60個 + Agent Teamsで個人メディアを半自動化する",
+      "titleJa": "Claude Codeを「コンテンツ工場」にした話。スラッシュコマンド60個 + Agent Teamsで個人メディアを半自動化する",
+      "titleEn": "",
+      "summaryJa": "僕は一人で、ブログ（400記事）、note、栄養特化サイト、音楽、動画、それと個人開発のアプリ8本を回しています。完全にキャパオーバーでした。 そこで、Claude Code を「賢いチャットツール」として使うのをやめました。コンテンツ制作",
+      "summaryEn": "Claude Codeを「コンテンツ工場」にした話。スラッシュコマンド60個 + Agent Teamsで個人メディアを半自動化する",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T13:54:47.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "agent",
         "zenn"
       ],
-      "category": "local-llm",
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "d67d6423940ea806",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/sngjpw/articles/98e4a66b8d0849",
+      "title": "Claude のセッション活用術 〜 記憶の仕組みと使い分け方",
+      "titleJa": "Claude のセッション活用術 〜 記憶の仕組みと使い分け方",
+      "titleEn": "",
+      "summaryJa": "はじめに Claude を使い続けていると、こんな疑問が出てきます。 「長く話していると、なんか前の話を忘れてる気がする・・・」 「セッションって分けた方がいいの？」 この記事では Claude のセッションの仕組み・メリデメ・上手な使い分",
+      "summaryEn": "Claude のセッション活用術 〜 記憶の仕組みと使い分け方",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T13:39:05.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "a8e4c2a9b7257327",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/tigerone1945/articles/78aafacb80bbf5",
+      "title": "GAS × Difyで問い合わせ分類AIを作る方法｜非エンジニア向け",
+      "titleJa": "GAS × Difyで問い合わせ分類AIを作る方法｜非エンジニア向け",
+      "titleEn": "",
+      "summaryJa": "はじめに 最近、 ChatGPT Dify AIエージェント などがかなり話題になっています。 ただ実際の現場では、 「AIを導入したけど業務に組み込めない」 というケースもかなり多いです。 特に問い合わせ対応は、 内容確認 優先度判定 担",
+      "summaryEn": "GAS × Difyで問い合わせ分類AIを作る方法｜非エンジニア向け",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T13:37:18.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "zenn"
+      ],
+      "category": "research",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot"
@@ -382,6 +757,27 @@
       }
     },
     {
+      "id": "de3e1946dc7a567e",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/yasunami_daichi/articles/parallel-agent-context-grill-with-docs",
+      "title": "独立コンテキストの subagent には grill-with-docs を渡せ",
+      "titleJa": "独立コンテキストの subagent には grill-with-docs を渡せ",
+      "titleEn": "",
+      "summaryJa": "TL;DR subagent は 独立したコンテキスト で動く。メインの長い会話を引き継がないので「察してくれ」が一切効かない。渡した文脈が全て だ だから薄い指示を投げると、薄い仕事が返ってくる。並列で 3 つ回せば薄い仕事が 3 つ並ぶ",
+      "summaryEn": "独立コンテキストの subagent には grill-with-docs を渡せ",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T13:12:23.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
       "id": "bf927f439bb2a675",
       "source": "techcrunch",
       "sourceType": "blog",
@@ -393,7 +789,7 @@
       "summaryEn": "Elon Muks's xAI has gone all in on natural gas, while SpaceX is obsessed with orbital data centers. What happened to the \"solar-electric economy\" he promised?",
       "lang": "en",
       "publishedAt": "2026-05-23T13:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -412,8 +808,29 @@
       }
     },
     {
-      "id": "5c7ba73012d414dc",
-      "source": "qiita-claude",
+      "id": "5b0dc37a3c9b3fbd",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/yasunami_daichi/articles/worktree-handoff-codex-augment",
+      "title": "worktree の『バトンタッチ』問題を、自前 skill・Codex・Augment で比べて反省した",
+      "titleJa": "worktree の『バトンタッチ』問題を、自前 skill・Codex・Augment で比べて反省した",
+      "titleEn": "",
+      "summaryJa": "TL;DR 前回、Claude Code の git worktree + skill + subagent で並行開発フローを自前で組んだ だがその後 Codex app の「Handoff」 と Augment の三層アーキテクチャ を",
+      "summaryEn": "worktree の『バトンタッチ』問題を、自前 skill・Codex・Augment で比べて反省した",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T12:44:10.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "41633c4af9bd7d8f",
+      "source": "qiita-llm",
       "sourceType": "blog",
       "url": "https://qiita.com/ai_nowa/items/a548101cf0056733e955",
       "title": "Python + Discord.py でマルチLLMエージェントチームを作った設計とハマりポイント",
@@ -423,13 +840,13 @@
       "summaryEn": "Python + Discord.py でマルチLLMエージェントチームを作った設計とハマりポイント",
       "lang": "ja",
       "publishedAt": "2026-05-23T12:36:25.000Z",
-      "collectedAt": "2026-05-23T19:00:08.543Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
-        "claude",
+        "llm",
         "qiita",
-        "llm"
+        "claude"
       ],
-      "category": "claude",
+      "category": "local-llm",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -443,6 +860,28 @@
       }
     },
     {
+      "id": "787998abb3b2a10e",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/tigerone1945/articles/33bdf9fe8d3f2a",
+      "title": "AI Native時代とは何か｜「AIを使う」から「AI前提で業務を作る」へ",
+      "titleJa": "AI Native時代とは何か｜「AIを使う」から「AI前提で業務を作る」へ",
+      "titleEn": "",
+      "summaryJa": "はじめに 最近、 ChatGPT AIエージェント RAG Workflow など、AI活用が広がっています。 ただ最近感じるのは、 「AIを使う」 段階から、 「AI前提で業務を再設計する」 段階へ移り始めていることです。 これは単なる業",
+      "summaryEn": "AI Native時代とは何か｜「AIを使う」から「AI前提で業務を作る」へ",
+      "lang": "ja",
+      "publishedAt": "2026-05-23T12:20:05.000Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
+      "tags": [
+        "rag",
+        "zenn"
+      ],
+      "category": "research",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
       "id": "f2337f955b048406",
       "source": "qiita-llm",
       "sourceType": "blog",
@@ -454,7 +893,7 @@
       "summaryEn": "jetfitでJetson上のLLM選びの迷いを一掃するかも？",
       "lang": "ja",
       "publishedAt": "2026-05-23T12:15:39.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "llm",
         "qiita"
@@ -536,7 +975,7 @@
       "summaryEn": "# Gemini 3.5 FlashをMLエンジニアが試したらコーディング速度がこう上がった",
       "lang": "ja",
       "publishedAt": "2026-05-23T11:42:28.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "llm",
         "qiita"
@@ -655,7 +1094,7 @@
       "summaryEn": "ここがいいぞCodeRabbit",
       "lang": "ja",
       "publishedAt": "2026-05-23T10:55:25.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn"
@@ -997,7 +1436,7 @@
       "summaryEn": "Peec, which helps brands track their presence in AI searches, offers proof of a key trend among European startups.",
       "lang": "en",
       "publishedAt": "2026-05-23T07:01:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -2053,7 +2492,7 @@
       "summaryEn": "arXiv:2605.20246v2 Announce Type: replace-cross Abstract: Recently, vision-language model (VLM) agents have shown promising progress in open-world tasks, where successful task completion often require",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2075,7 +2514,7 @@
       "summaryEn": "arXiv:2605.17998v2 Announce Type: replace-cross Abstract: As multi-agent systems move from short interactions to tool-using workflows with specialized roles and persistent state, completion becomes a ",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "arxiv",
@@ -2106,7 +2545,7 @@
       "summaryEn": "arXiv:2605.16299v2 Announce Type: replace-cross Abstract: Large Language Models (LLMs) excel at code generation but remain heavily reliant on large-scale annotated solutions and verification-based sup",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2136,7 +2575,7 @@
       "summaryEn": "arXiv:2512.04111v3 Announce Type: replace-cross Abstract: LLM-powered coding agents are reshaping the development paradigm. However, existing evaluation systems, neither traditional tests for humans n",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "arxiv",
@@ -2168,7 +2607,7 @@
       "summaryEn": "arXiv:2605.21545v1 Announce Type: cross Abstract: Frontier large language models are increasingly deployed as orchestration backbones for biological research workflows, yet no shared evidence base exi",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2198,7 +2637,7 @@
       "summaryEn": "arXiv:2605.21996v1 Announce Type: cross Abstract: Supervised fine-tuning (SFT) on long teacher trajectories is the dominant way to instill investigation and reasoning in open software-engineering (SWE",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2228,7 +2667,7 @@
       "summaryEn": "arXiv:2605.22175v1 Announce Type: cross Abstract: Evaluating software engineering capabilities has become a core component of modern large language models (LLMs); however, the key bottleneck hindering",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2258,7 +2697,7 @@
       "summaryEn": "arXiv:2605.22634v1 Announce Type: cross Abstract: Skills are increasingly used to package agent instructions, workflows, scripts, and reference materials. In enterprise settings, however, skills often",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "arxiv",
@@ -2290,7 +2729,7 @@
       "summaryEn": "arXiv:2605.21602v1 Announce Type: new Abstract: Many safety and alignment failures of large language models (LLMs) occur due to out-of-distribution (OOD) situations: unusual prompt or response pattern",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2320,7 +2759,7 @@
       "summaryEn": "arXiv:2605.22321v1 Announce Type: cross Abstract: As autonomous agents (e.g., OpenClaw) increasingly operate with deep system-level privileges to execute complex tasks, they introduce severe, unmitiga",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "arxiv",
@@ -2351,7 +2790,7 @@
       "summaryEn": "arXiv:2605.22343v1 Announce Type: cross Abstract: Autonomous research systems increasingly make the scientific workflow executable: agents can propose ideas, run code, inspect results, and draft paper",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "arxiv",
@@ -2382,7 +2821,7 @@
       "summaryEn": "arXiv:2605.22368v1 Announce Type: cross Abstract: As large language models (LLMs) are increasingly deployed for software engineering, constructing high-quality benchmarks is crucial for evaluating not",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2404,7 +2843,7 @@
       "summaryEn": "arXiv:2605.22604v1 Announce Type: cross Abstract: The advent of cardless artificial intelligence (AI) banking heralds a paradigm shift in the financial landscape, offering users unprecedented security",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2426,7 +2865,7 @@
       "summaryEn": "arXiv:2605.22733v1 Announce Type: new Abstract: Every Python function deployed as an LLM tool must today exist in two forms: an HTTP endpoint for human-facing clients and CI pipelines, and an MCP tool",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "mcp-server",
@@ -2457,7 +2896,7 @@
       "summaryEn": "arXiv:2305.12138v5 Announce Type: replace-cross Abstract: Code analysis is fundamental in Software Engineering, supporting debugging, optimization, and security assessment. Human developers approach i",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2487,7 +2926,7 @@
       "summaryEn": "arXiv:2511.06428v2 Announce Type: replace-cross Abstract: Background: Large Language Models emerged with the potential of provoking a revolution in software development (e.g., automating processes, wo",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2517,7 +2956,7 @@
       "summaryEn": "arXiv:2602.11210v4 Announce Type: replace-cross Abstract: Reinforcement learning (RL) has become a key paradigm for training software engineering (SWE) agents, but existing pipelines typically rely on",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2539,7 +2978,7 @@
       "summaryEn": "arXiv:2603.15676v2 Announce Type: replace-cross Abstract: LLM applications are AI systems whose nondeterministic outputs and evolving model behavior make traditional testing insufficient for release g",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper",
@@ -2570,7 +3009,7 @@
       "summaryEn": "arXiv:2605.08380v2 Announce Type: replace-cross Abstract: AI agents are increasingly framed as software-engineering teammates, yet most studies examine them inside human-centered workflows. Little is ",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2600,7 +3039,7 @@
       "summaryEn": "arXiv:2603.27355v2 Announce Type: replace Abstract: We present a readiness harness for LLM and RAG applications that turns evaluation into a deployment decision workflow. The system combines automated",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "benchmark",
@@ -2632,7 +3071,7 @@
       "summaryEn": "arXiv:2605.22355v1 Announce Type: cross Abstract: Public transit route planning traditionally depends on structured map infrastructure and complex routing engines, and no existing dataset supports tra",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "benchmark",
@@ -2663,7 +3102,7 @@
       "summaryEn": "arXiv:2605.21609v1 Announce Type: cross Abstract: Large language models (LLMs) are increasingly embedded in adolescent digital environments, mediating information seeking, advice, and emotionally sens",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2685,7 +3124,7 @@
       "summaryEn": "arXiv:2605.21726v1 Announce Type: cross Abstract: The generative nature of Large Language Models (LLMs) is reflected in the conditional probabilities they compute to sample each response token given t",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2707,7 +3146,7 @@
       "summaryEn": "arXiv:2605.21792v1 Announce Type: cross Abstract: Text-to-SQL ensembles improve over single-candidate generation by drawing multiple SQL candidates and selecting one, but their effectiveness is bounde",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2729,7 +3168,7 @@
       "summaryEn": "arXiv:2605.21827v1 Announce Type: cross Abstract: Do language models preserve the ordinal meaning of intensity words when those words must produce numeric actions? I study a researcher-constructed sca",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2751,7 +3190,7 @@
       "summaryEn": "arXiv:2605.21845v1 Announce Type: cross Abstract: Suicide is a leading cause of death in the United States, and understanding the circumstances that precede it requires extracting structured informati",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2773,7 +3212,7 @@
       "summaryEn": "arXiv:2605.21850v1 Announce Type: cross Abstract: Recent development of agents has renewed demand for long-context reasoning capacity of LLMs. However, training LLMs for this capacity requires costly ",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "arxiv",
@@ -2796,7 +3235,7 @@
       "summaryEn": "arXiv:2605.22003v1 Announce Type: cross Abstract: Sentiment analysis, also referred to as opinion mining, primarily tries to extract opinion from any text-based data. In the context of movie reviews a",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2818,7 +3257,7 @@
       "summaryEn": "arXiv:2605.22411v1 Announce Type: cross Abstract: Large language model (LLM) agents still struggle with long-term memory question answering, where answer-supporting evidence is often scattered across ",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2840,7 +3279,7 @@
       "summaryEn": "arXiv:2605.22462v1 Announce Type: cross Abstract: We propose a five-stage methodology for causal feature analysis in transformer language models (probe design, feature extraction, causal validation, r",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2862,7 +3301,7 @@
       "summaryEn": "arXiv:2605.22018v1 Announce Type: cross Abstract: The Flooded Road Environments Dataset (FRED) is, to our knowledge, the first multi-modal autonomous driving dataset specifically targeting the collect",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "arxiv",
@@ -2893,7 +3332,7 @@
       "summaryEn": "arXiv:2605.22060v1 Announce Type: cross Abstract: Closed-weight generative services are increasingly deployed through query-based APIs, where users can obtain generated outputs while model parameters ",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2923,7 +3362,7 @@
       "summaryEn": "arXiv:2605.22080v1 Announce Type: cross Abstract: We introduce JMed48k, a multi-profession Japanese healthcare licensing benchmark for evaluating vision-language models. Built from official PDF materi",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "benchmark",
@@ -2954,7 +3393,7 @@
       "summaryEn": "arXiv:2605.21622v1 Announce Type: new Abstract: Topology optimization can generate efficient structures, but designers often must manually translate qualitative intent, such as desired visual style, p",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "arxiv",
@@ -2977,7 +3416,7 @@
       "summaryEn": "arXiv:2605.21623v1 Announce Type: new Abstract: Researchers in Holocaust studies have often distinguished between two styles of oral survivor testimony: the USC Shoah Foundation's interviews tend to f",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2999,7 +3438,7 @@
       "summaryEn": "arXiv:2605.21630v1 Announce Type: new Abstract: Although LLMs have made substantial progress in reasoning, systematically producing frontier-level reasoning data remains difficult. Existing synthesis ",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -3021,7 +3460,7 @@
       "summaryEn": "arXiv:2605.21645v1 Announce Type: new Abstract: Adverse Outcome Pathways (AOP) are logic models that causally link biological mechanisms that can be measured in a lab to adverse outcomes, relevant to ",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "arxiv",
@@ -3045,7 +3484,7 @@
       "summaryEn": "arXiv:2605.21683v1 Announce Type: new Abstract: Developing AI systems with a human-like understanding of everyday concepts is a key step towards developing safe, reliable systems whose behavior makes ",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -3067,7 +3506,7 @@
       "summaryEn": "arXiv:2605.21695v1 Announce Type: new Abstract: Artificial intelligence (AI) is being increasingly integrated into human problem-solving, yet its effects on individual skill development remain unclear",
       "lang": "en",
       "publishedAt": "2026-05-23T04:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4467,7 +4906,7 @@
       "summaryEn": "Towards Speed-of-Light Text Generation with Nemotron-Labs Diffusion Language Models",
       "lang": "en",
       "publishedAt": "2026-05-23T00:02:03.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -4575,7 +5014,7 @@
       "summaryEn": "People used AI on a spectrogram image of cockpit recordings to reconstruct them, forcing the NTSB to temporarily block access to its docket system.",
       "lang": "en",
       "publishedAt": "2026-05-22T23:03:33.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -4597,7 +5036,7 @@
       "summaryEn": "The company had a mostly successful first launch of its upgraded Starship V3, which it needs to power its many ambitious goals in the years to come.",
       "lang": "en",
       "publishedAt": "2026-05-22T22:55:57.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "release",
@@ -4741,7 +5180,7 @@
       "summaryEn": "Jeff Bezos' rocket company confirmed an engine failure led to the loss of an AST SpaceMobile satellite last month, but offered little detail.",
       "lang": "en",
       "publishedAt": "2026-05-22T21:37:17.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -4785,7 +5224,7 @@
       "summaryEn": "You can now disco ball-ify your entire Pixel home screen, says Google.",
       "lang": "en",
       "publishedAt": "2026-05-22T21:02:36.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -4807,7 +5246,7 @@
       "summaryEn": "Some AI startups are stretching traditional revenue metrics when talking about progress publicly. And their investors are fully aware.",
       "lang": "en",
       "publishedAt": "2026-05-22T20:40:48.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -5267,7 +5706,7 @@
       "summaryEn": "A recap of the 2026 I/O Dialogues, where leaders discuss the future of AI, quantum computing, robotics and creativity.",
       "lang": "en",
       "publishedAt": "2026-05-22T18:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news",
@@ -5657,7 +6096,7 @@
       "summaryEn": "According to users on X, the website was hijacked by hackers in an attempt to trick visitors into installing malware.",
       "lang": "en",
       "publishedAt": "2026-05-22T16:28:06.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -5687,7 +6126,7 @@
       "summaryEn": "Apple is asking the Supreme Court to narrow the App Store injunction won by Epic Games and overturn the court’s contempt ruling over external payment fees.",
       "lang": "en",
       "publishedAt": "2026-05-22T16:27:57.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -5761,7 +6200,7 @@
       "summaryEn": "Spotify has released a bunch of AI-powered tools that nudge users to create more content. It can be a bit much.",
       "lang": "en",
       "publishedAt": "2026-05-22T16:18:10.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "release",
@@ -5822,7 +6261,7 @@
       "summaryEn": "After Google Search's AI update, the word \"disregard\" now effectively breaks the search interface.",
       "lang": "en",
       "publishedAt": "2026-05-22T16:16:48.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -5888,7 +6327,7 @@
       "summaryEn": "Google demoed prototype Android XR glasses that overlay Gemini-powered translation, navigation, and other information directly into your field of view.",
       "lang": "en",
       "publishedAt": "2026-05-22T15:37:15.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -5981,7 +6420,7 @@
       "summaryEn": "Specialization Beats Scale: A Strategic Variable Most AI Procurement Decisions Overlook",
       "lang": "en",
       "publishedAt": "2026-05-22T15:25:59.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -6186,7 +6625,7 @@
       "summaryEn": "President Trump’s branded cell phone maker and cell provider said the exposure was linked to a third-party platform and was evaluating whether it needs to notify customers.",
       "lang": "en",
       "publishedAt": "2026-05-22T14:30:52.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -6208,7 +6647,7 @@
       "summaryEn": "The SpaceX S-1 is finally here, and the story it tells goes way further than rockets. The filing runs to 36 pages of risk factors alone, and the numbers inside match the ambition: a $28 trillion total",
       "lang": "en",
       "publishedAt": "2026-05-22T14:30:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -6252,7 +6691,7 @@
       "summaryEn": "The company describes the app as a \"dedicated space built for deeper discussions, real answers and communities you care about.\"",
       "lang": "en",
       "publishedAt": "2026-05-22T14:24:16.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -6318,7 +6757,7 @@
       "summaryEn": "The Finnish company said in September that it has sold 5.5 million smart rings to date.",
       "lang": "en",
       "publishedAt": "2026-05-22T14:03:35.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -6340,7 +6779,7 @@
       "summaryEn": "Huxe said that it has pulled its app from App Store and Play Store, and that it will stop working later this month.",
       "lang": "en",
       "publishedAt": "2026-05-22T13:48:03.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "news",
         "techcrunch"
@@ -7224,7 +7663,7 @@
       "summaryEn": "Gmailから特定のメールを取得するGitHub Copilotのskills作成",
       "lang": "ja",
       "publishedAt": "2026-05-22T08:15:25.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn"
@@ -7556,8 +7995,8 @@
       }
     },
     {
-      "id": "b37cdcb52b0aca51",
-      "source": "zenn-claude",
+      "id": "aca4e95acc180126",
+      "source": "zenn-copilot",
       "sourceType": "blog",
       "url": "https://zenn.dev/mavericks/articles/5c0afc418be18d",
       "title": "GitHub CopilotでOpus 4.7の消費トークンが15倍に。制限の理由と今後の賢い使い分け方",
@@ -7567,13 +8006,13 @@
       "summaryEn": "GitHub CopilotでOpus 4.7の消費トークンが15倍に。制限の理由と今後の賢い使い分け方",
       "lang": "ja",
       "publishedAt": "2026-05-22T06:00:06.000Z",
-      "collectedAt": "2026-05-23T19:00:08.543Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
-        "claude",
+        "copilot",
         "zenn",
-        "copilot"
+        "claude"
       ],
-      "category": "claude",
+      "category": "copilot",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot"
@@ -11160,7 +11599,7 @@
       "summaryEn": "Microsoft 公式の WinUI agent plugin で WinUI 3 アプリ開発がぐっと楽になった話",
       "lang": "ja",
       "publishedAt": "2026-05-21T23:33:10.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "copilot",
@@ -11472,7 +11911,7 @@
       "summaryEn": "Changes since langchain-openai==1.2.1 release(openai): 1.2.2 ( #37617 ) chore(infra): bump langchain-tests floor to 1.1.9 ( #37610 ) test(openai): unbreak audio chat and Azure embedding integration te",
       "lang": "en",
       "publishedAt": "2026-05-21T22:08:45.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "langchain",
@@ -11971,7 +12410,7 @@
       "summaryEn": "We’re launching the Google DeepMind Accelerator program in Asia Pacific to tackle environmental risks",
       "lang": "en",
       "publishedAt": "2026-05-21T19:46:42.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "deepmind",
         "google",
@@ -12293,7 +12732,7 @@
       "summaryEn": "Changes since langchain-tests==1.1.8 release(standard-tests): 1.1.9 ( #37609 ) test(standard-tests): allow extra content blocks in streaming assertions ( #37592 ) chore: bump idna from 3.11 to 3.15 in",
       "lang": "en",
       "publishedAt": "2026-05-21T18:24:27.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "langchain",
@@ -12517,7 +12956,7 @@
       "summaryEn": "At Google I/O, we introduced new ways for developers to expand their reach and scale their business with less complexity.We’re expanding their reach by meeting users whe…",
       "lang": "en",
       "publishedAt": "2026-05-21T17:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -12830,7 +13269,7 @@
       "summaryEn": "The Texas Energy Impact Fund announced its first grant recipients from its $30 million commitment to energy efficiency in the Lone Star State.",
       "lang": "en",
       "publishedAt": "2026-05-21T16:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -12860,7 +13299,7 @@
       "summaryEn": "How a school division eliminated barriers for students by adopting Face control — an accessibility feature built into every Chromebook.",
       "lang": "en",
       "publishedAt": "2026-05-21T16:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -14584,7 +15023,7 @@
       "summaryEn": "Changes since langchain-fireworks==1.4.0 release(fireworks): 1.4.1 ( #37603 ) fix(fireworks): retry on bare APIConnectionError , default max_retries=2 ( #37602 ) test(fireworks): stabilize integration",
       "lang": "en",
       "publishedAt": "2026-05-21T06:38:55.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "langchain",
@@ -17504,7 +17943,7 @@
       "summaryEn": "Soccer is the most searched sport in the world, and U.S. fans’ passion is reaching new heights. To fuel that excitement, we’re partnering with the U.S. Men’s and Women’s…",
       "lang": "en",
       "publishedAt": "2026-05-21T02:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -18029,7 +18468,7 @@
       "summaryEn": "Changes since langchain-fireworks==1.3.1 release(fireworks): 1.4.0 ( #37582 ) feat(fireworks): migrate to fireworks-ai 1.x SDK ( #37581 ) chore(model-profiles): refresh model profile data ( #37574 ) c",
       "lang": "en",
       "publishedAt": "2026-05-20T21:57:13.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "langchain",
@@ -18318,7 +18757,7 @@
       "summaryEn": "We’re helping build the state’s next-generation workforce and investing in energy programs.",
       "lang": "en",
       "publishedAt": "2026-05-20T20:40:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -18535,7 +18974,7 @@
       "summaryEn": "This year at Google I/O 2026, we announced Gemini Omni, Google Antigravity, Universal Cart and so much more. Here are the highlights.",
       "lang": "en",
       "publishedAt": "2026-05-20T19:30:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -19030,7 +19469,7 @@
       "summaryEn": "Learn what's new in Visual Studio Code 1.121 Read the full article",
       "lang": "en",
       "publishedAt": "2026-05-20T17:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "release",
         "vscode"
@@ -19060,7 +19499,7 @@
       "summaryEn": "See and hear your colleagues in true-to-life size and sound, making hybrid meetings feel more inclusive and connected.",
       "lang": "en",
       "publishedAt": "2026-05-20T16:45:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -19311,7 +19750,7 @@
       "summaryEn": "Boost performance with YouTube Demand Gen. Use Gemini AI, Google Maps reach, and new creator tools to turn viewer intent into growth.",
       "lang": "en",
       "publishedAt": "2026-05-20T16:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -19341,7 +19780,7 @@
       "summaryEn": "We’re introducing new multimodal capabilities into Google Ads’ Asset Studio — your creative destination to create, build and test your assets.",
       "lang": "en",
       "publishedAt": "2026-05-20T16:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -19371,7 +19810,7 @@
       "summaryEn": "New UCP-powered features and AI tools will create a more intuitive, agentic shopping experience for consumers and retailers.",
       "lang": "en",
       "publishedAt": "2026-05-20T16:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "google",
@@ -19402,7 +19841,7 @@
       "summaryEn": "Google is introducing new ad formats built with Gemini in Search and expanding the Direct Offers pilot for shoppers.",
       "lang": "en",
       "publishedAt": "2026-05-20T16:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -19432,7 +19871,7 @@
       "summaryEn": "We’re bringing Meridian, our open-source MMM to Google Analytics and introducing Future Long-Term Conversions.",
       "lang": "en",
       "publishedAt": "2026-05-20T16:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -19462,7 +19901,7 @@
       "summaryEn": "At Google Marketing Live 2026, we announced new AI-powered advertising solutions to help marketers grow across Google and YouTube.",
       "lang": "en",
       "publishedAt": "2026-05-20T16:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -19492,7 +19931,7 @@
       "summaryEn": "Our new cross product AI agent, Ask Advisor, creates a continuous thread of intelligence to help you turn insights into action.",
       "lang": "en",
       "publishedAt": "2026-05-20T16:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "google",
@@ -20693,7 +21132,7 @@
       "summaryEn": "【実例】AIは忘れる。だから仕様書に全部書く — GitHub Copilot を\"記憶喪失\"から救う6つのドキュメント管理術",
       "lang": "ja",
       "publishedAt": "2026-05-20T12:17:13.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn"
@@ -21895,7 +22334,7 @@
       "summaryEn": "GitHubCopilot(VSCode/CLI)でローカルLLMを使う",
       "lang": "ja",
       "publishedAt": "2026-05-20T04:18:32.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn",
@@ -25113,7 +25552,7 @@
       "summaryEn": "Today, we’re deepening our AI investments in Singapore through a new partnership.",
       "lang": "en",
       "publishedAt": "2026-05-20T01:30:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -25301,7 +25740,7 @@
       "summaryEn": "Running Guide agent is an AI agent that provides real-time audio navigation and obstacle detection to help BLV athletes run independently.",
       "lang": "en",
       "publishedAt": "2026-05-20T00:01:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "google",
@@ -26603,7 +27042,7 @@
       "summaryEn": "OlmoEarth v1.1: A more efficient family of Earth observation models",
       "lang": "en",
       "publishedAt": "2026-05-19T18:38:09.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -27381,7 +27820,7 @@
       "summaryEn": "At Google I/O 2026, we shared how we’re making AI more helpful for everyone. See everything we announced.",
       "lang": "en",
       "publishedAt": "2026-05-19T17:45:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -27411,7 +27850,7 @@
       "summaryEn": "One year after launch, see how AI Mode’s users are shifting from keywords to natural language queries.",
       "lang": "en",
       "publishedAt": "2026-05-19T17:45:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news",
@@ -27442,7 +27881,7 @@
       "summaryEn": "Announcing new voice capabilities in Gmail, Docs and Keep, a new design tool called Google Pics and updates to AI Inbox.",
       "lang": "en",
       "publishedAt": "2026-05-19T17:45:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "google",
         "news"
@@ -29732,7 +30171,7 @@
       "summaryEn": "GitHub Copilot CLI v1.0.49 でメモリ効率が圧倒的に改善",
       "lang": "ja",
       "publishedAt": "2026-05-19T12:56:01.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn",
@@ -30480,7 +30919,7 @@
       "summaryEn": "同じモデルなのに、なぜCopilotは“伸び切らない”のか——ハーネスという視点",
       "lang": "ja",
       "publishedAt": "2026-05-19T10:13:31.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn"
@@ -30794,7 +31233,7 @@
       "summaryEn": "GitHub Copilot Agent Skillsを活用して、Reactのコードレビュースキルを作ってみた。",
       "lang": "ja",
       "publishedAt": "2026-05-19T07:21:08.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "copilot",
@@ -30913,7 +31352,7 @@
       "summaryEn": "【GitHub Copilot 】【iOSアプリ】カスタムエージェントで実装後にビルドチェックするようにしてみた",
       "lang": "ja",
       "publishedAt": "2026-05-19T05:56:43.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn"
@@ -34861,7 +35300,7 @@
       "summaryEn": "Introducing the Ettin Reranker Family",
       "lang": "en",
       "publishedAt": "2026-05-19T00:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -34956,7 +35395,7 @@
       "summaryEn": "GitHub Copilot CLIでWebアクセシビリティを改善した話",
       "lang": "ja",
       "publishedAt": "2026-05-18T23:39:16.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn"
@@ -35385,7 +35824,7 @@
       "summaryEn": "Changes since langchain-tests==1.1.7 hotfix(standard-tests): set langchain-core version bounds ( #37509 ) hotfix: bump lockfiles ( #37508 ) release(standard-tests): 1.1.8 ( #37507 ) test(standard-test",
       "lang": "en",
       "publishedAt": "2026-05-18T21:33:45.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "langchain",
@@ -35989,7 +36428,7 @@
       "summaryEn": "Biologists use Co-Scientist to find novel factors that successfully rejuvenate human cells.",
       "lang": "en",
       "publishedAt": "2026-05-18T18:21:39.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "deepmind",
         "google"
@@ -36697,7 +37136,7 @@
       "summaryEn": "HN: 61 points, 7 comments · @mrcoldbrew · https://news.ycombinator.com/item?id=48181342",
       "lang": "en",
       "publishedAt": "2026-05-18T15:40:42.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "community",
         "hackernews"
@@ -36779,7 +37218,7 @@
       "summaryEn": "PaddleOCR 3.5: Running OCR and Document Parsing Tasks with a Transformers Backend",
       "lang": "en",
       "publishedAt": "2026-05-18T15:12:46.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -37135,7 +37574,7 @@
       "summaryEn": "The Open Agent Leaderboard",
       "lang": "en",
       "publishedAt": "2026-05-18T14:12:58.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "huggingface",
@@ -37490,7 +37929,7 @@
       "summaryEn": "Github Copilotでバイブコーディングしてみた1",
       "lang": "ja",
       "publishedAt": "2026-05-18T13:19:09.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn"
@@ -37860,8 +38299,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "5e6f729efcae5ac4",
-      "source": "zenn-cursor",
+      "id": "3fac25b59cfac004",
+      "source": "zenn-copilot",
       "sourceType": "blog",
       "url": "https://zenn.dev/dedetools/articles/19a6e81dbad453",
       "title": "AIコーディングで毎回同じ注意をしているなら、ルールファイルを置いた方がいい",
@@ -37871,13 +38310,13 @@
       "summaryEn": "AIコーディングで毎回同じ注意をしているなら、ルールファイルを置いた方がいい",
       "lang": "ja",
       "publishedAt": "2026-05-18T11:09:35.000Z",
-      "collectedAt": "2026-05-23T18:00:08.670Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
-        "cursor",
+        "copilot",
         "zenn",
-        "copilot"
+        "cursor"
       ],
-      "category": "cursor",
+      "category": "copilot",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot"
@@ -43460,7 +43899,7 @@
       "summaryEn": "RPi 5 で AI コーディング CLI は速くなる？Claude Code・Codex・Copilot を 630 試行で比較",
       "lang": "ja",
       "publishedAt": "2026-05-17T22:15:19.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn"
@@ -43594,7 +44033,7 @@
       "summaryEn": "We’re expanding access to Google AI Ultra subscribers globally and introducing a new capability powered by Street View.",
       "lang": "en",
       "publishedAt": "2026-05-17T19:53:18.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "deepmind",
         "google"
@@ -43616,7 +44055,7 @@
       "summaryEn": "Introducing Gemini Omni",
       "lang": "en",
       "publishedAt": "2026-05-17T19:50:57.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "deepmind",
         "google"
@@ -43660,7 +44099,7 @@
       "summaryEn": "Introducing Google Antigravity 2.0",
       "lang": "en",
       "publishedAt": "2026-05-17T19:43:45.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "deepmind",
         "google"
@@ -44017,7 +44456,7 @@
       "summaryEn": "コーディングエージェント時代にエンジニアは必要なのか本気で考えてみる",
       "lang": "ja",
       "publishedAt": "2026-05-17T14:50:17.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn"
@@ -44151,7 +44590,7 @@
       "summaryEn": "A collection of science tools and experiments to expand the scale and precision of scientific exploration.",
       "lang": "en",
       "publishedAt": "2026-05-17T13:50:34.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "deepmind",
         "google"
@@ -44900,7 +45339,7 @@
       "summaryEn": "MacBook Pro on The Air Pattern ｗ もしくはローカルLLMの現実と希望",
       "lang": "ja",
       "publishedAt": "2026-05-17T06:21:16.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn"
@@ -46389,7 +46828,7 @@
       "summaryEn": "GitHub Copilot app で、チャットから PR 作成・マージまで進める流れ",
       "lang": "ja",
       "publishedAt": "2026-05-16T09:14:45.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn"
@@ -46792,7 +47231,7 @@
       "summaryEn": "GitHub Copilot Hooks × Claude Code Hooks 互換性分析",
       "lang": "ja",
       "publishedAt": "2026-05-16T06:24:18.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn"
@@ -47767,7 +48206,7 @@
       "summaryEn": "Copilot の課金が token 単位になるらしい、うちへの影響メモ",
       "lang": "ja",
       "publishedAt": "2026-05-16T00:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "copilot",
         "zenn"
@@ -48641,7 +49080,7 @@
       "summaryEn": "Changes since langchain==1.3.0 release(langchain): 1.3.1 ( #37454 ) fix(langchain): alias Bedrock providers in summarization token check ( #37453 )",
       "lang": "en",
       "publishedAt": "2026-05-15T18:15:13.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "langchain",
@@ -59514,7 +59953,7 @@
       "summaryEn": "Granite Embedding Multilingual R2: Open Apache 2.0 Multilingual Embeddings with 32K Context — Best Sub-100M Retrieval Quality",
       "lang": "en",
       "publishedAt": "2026-05-14T18:55:01.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "huggingface",
         "open-model",
@@ -65584,7 +66023,7 @@
       "summaryEn": "Unlocking asynchronicity in continuous batching",
       "lang": "en",
       "publishedAt": "2026-05-14T00:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -66316,7 +66755,7 @@
       "summaryEn": "Learn what's new in Visual Studio Code 1.120 Read the full article",
       "lang": "en",
       "publishedAt": "2026-05-13T17:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "release",
         "vscode",
@@ -68506,7 +68945,7 @@
       "summaryEn": "This release adds support for version=\"v3\" in stream_events / astream_events for langchain agents. Refer to the event streaming guide for details.",
       "lang": "en",
       "publishedAt": "2026-05-12T14:47:15.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "langchain",
@@ -69061,7 +69500,7 @@
       "summaryEn": "Building Blocks for Foundation Model Training and Inference on AWS",
       "lang": "en",
       "publishedAt": "2026-05-11T23:18:26.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "huggingface",
         "open-model",
@@ -69291,7 +69730,7 @@
       "summaryEn": "Changes since langchain-core==0.3.86 chore(infra): merge v1.4 into master ( #37350 ) chore: bump urllib3 from 2.6.3 to 2.7.0 in /libs/core ( #37329 ) fix(core): avoid eager pydantic.v1 import in @depr",
       "lang": "en",
       "publishedAt": "2026-05-11T18:42:53.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "langchain",
@@ -70524,7 +70963,7 @@
       "summaryEn": "Changes since langchain==1.2.17 release(langchain): 1.2.18 ( #37250 ) revert: feat(langchain): ls_agent_type tag on create_agent calls ( #37249 ) chore(langchain-classic): deprecate hub, limit loads/d",
       "lang": "en",
       "publishedAt": "2026-05-08T13:59:43.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "langchain",
@@ -71120,7 +71559,7 @@
       "summaryEn": "Changes since langchain-core==0.3.85 release(core): 0.3.86 ( #37242 ) fix(core): backport path-traversal fix to v0.3 ( CVE-2026-34070 , GHSA-qh6h-p6c9-ff54 ) ( #37233 )",
       "lang": "en",
       "publishedAt": "2026-05-07T16:48:35.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "langchain",
@@ -71591,7 +72030,7 @@
       "summaryEn": "vLLM V0 to V1: Correctness Before Corrections in RL",
       "lang": "en",
       "publishedAt": "2026-05-06T19:06:55.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "huggingface",
         "open-model",
@@ -71660,7 +72099,7 @@
       "summaryEn": "Learn what's new in Visual Studio Code 1.119 Read the full article",
       "lang": "en",
       "publishedAt": "2026-05-06T17:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "release",
         "vscode",
@@ -71904,7 +72343,7 @@
       "summaryEn": "Explore how AlphaEvolve's Gemini-powered algorithms are driving impact across business, infrastructure, and science.",
       "lang": "en",
       "publishedAt": "2026-05-06T10:43:49.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "agent",
         "deepmind",
@@ -72179,7 +72618,7 @@
       "summaryEn": "Adding Benchmaxxer Repellant to the Open ASR Leaderboard",
       "lang": "en",
       "publishedAt": "2026-05-06T00:00:00.000Z",
-      "collectedAt": "2026-05-23T16:00:09.173Z",
+      "collectedAt": "2026-05-23T20:00:08.519Z",
       "tags": [
         "huggingface",
         "open-model",

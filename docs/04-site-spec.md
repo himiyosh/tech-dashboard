@@ -25,21 +25,21 @@
 
 ### 1.1 カテゴリ定義 ✅ (13 カテゴリ)
 
-| #   | Slug        | 表示名      | 色                | カバー範囲                                                    |
-| --- | ----------- | ----------- | ----------------- | ------------------------------------------------------------- |
-| 1   | `copilot`   | Copilot     | `#5eead4` Teal    | GitHub Copilot / Workspace / Copilot CLI / Copilot Enterprise |
-| 2   | `claude`    | Claude      | `#fbbf24` Amber   | Claude Code / Opus・Sonnet・Haiku / Anthropic API             |
-| 3   | `codex`     | Codex       | `#93c5fd` Sky     | Codex CLI / ChatGPT Code / OpenAI o-series                    |
-| 4   | `gemini`    | Gemini      | `#60a5fa` Blue    | Gemini Code Assist / Jules / Vertex AI / Gemini CLI           |
-| 5   | `vscode`    | VSCode      | `#63a2ff` Azure   | エディタ本体 / Marketplace / Insiders                         |
-| 6   | `cursor`    | Cursor      | `#94a3b8` Slate   | Cursor IDE / Background Agents                                |
-| 7   | `cline`     | Cline / Roo | `#c4b5fd` Violet  | Cline / Roo Code など VSCode 拡張エージェント                 |
-| 8   | `aider`     | Aider       | `#a3a16a` Olive   | Aider CLI / SWE-bench 関連                                    |
-| 9   | `opencode`  | OpenCode    | `#a5b4fc` Indigo  | OpenCode (SST)                                                |
-| 10  | `local-llm` | Local LLM   | `#f87171` Red     | Ollama / llama.cpp / vLLM / HF / Open WebUI                   |
-| 11  | `agent-fw`  | Agent FW    | `#34d399` Emerald | Microsoft Agent Framework / LangGraph / AutoGen / CrewAI      |
-| 12  | `mcp`       | MCP         | `#f472b6` Pink    | Model Context Protocol 本体・server/client エコシステム       |
-| 13  | `research`  | Research    | `#fda4af` Rose    | arXiv / ニュースレター / 論文                                 |
+| #   | Slug        | 表示名          | 色                | カバー範囲                                                    |
+| --- | ----------- | --------------- | ----------------- | ------------------------------------------------------------- |
+| 1   | `copilot`   | GitHub Copilot  | `#5eead4` Teal    | GitHub Copilot / Workspace / Copilot CLI / Copilot Enterprise (Microsoft 365 Copilot は `tech-news`) |
+| 2   | `claude`    | Claude          | `#fbbf24` Amber   | Claude Code / Opus・Sonnet・Haiku / Anthropic API             |
+| 3   | `codex`     | Codex           | `#93c5fd` Sky     | Codex CLI / ChatGPT Code / OpenAI o-series                    |
+| 4   | `gemini`    | Gemini          | `#60a5fa` Blue    | Gemini Code Assist / Jules / Vertex AI / Gemini CLI           |
+| 5   | `vscode`    | Editors         | `#63a2ff` Azure   | VS Code / Zed / エディタ本体・拡張・Insiders                  |
+| 6   | `cursor`    | Cursor          | `#94a3b8` Slate   | Cursor IDE / Background Agents                                |
+| 7   | `cline`     | Cline / Roo     | `#c4b5fd` Violet  | Cline / Roo Code など VSCode 拡張エージェント                 |
+| 8   | `aider`     | Aider           | `#a3a16a` Olive   | Aider CLI / SWE-bench 関連                                    |
+| 9   | `opencode`  | Open Tools      | `#a5b4fc` Indigo  | OpenCode (SST) など OSS コーディングツール                    |
+| 10  | `local-llm` | Local LLM       | `#f87171` Red     | Ollama / llama.cpp / vLLM / HF / Open WebUI                   |
+| 11  | `agent-fw`  | Agent FW        | `#34d399` Emerald | AutoGen / LangChain / Semantic Kernel / Continue.dev / OpenHands |
+| 12  | `mcp`       | MCP             | `#f472b6` Pink    | Model Context Protocol 本体・server/client エコシステム       |
+| 13  | `research`  | Research        | `#fda4af` Rose    | arXiv / ニュースレター / 論文                                 |
 
 **分類ルール**:
 - 各エントリは**必ず 1 つのカテゴリに分類** (主軸)。横断的な属性は §1.1.1 のタグで表現

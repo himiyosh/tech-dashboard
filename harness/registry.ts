@@ -339,7 +339,7 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
   "continue-releases": {
     id: "continue-releases",
     displayName: "Continue.dev Releases",
-    category: "copilot",
+    category: "agent-fw",
     sourceType: "release",
     defaultLang: "en",
     autoTags: ["continue", "release"],
@@ -350,7 +350,7 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
   "openhands-releases": {
     id: "openhands-releases",
     displayName: "OpenHands Releases",
-    category: "opencode",
+    category: "agent-fw",
     sourceType: "release",
     defaultLang: "en",
     autoTags: ["openhands", "release"],

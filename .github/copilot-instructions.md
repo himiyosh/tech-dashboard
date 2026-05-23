@@ -380,6 +380,12 @@
 - **対策**: `quality-audit` に deterministic fallback 件数・比率を追加し、10% 以上または 50 件以上で warning、70% 以上で critical とする。Worker health / `/status` / `/metrics.json` に `fallbackTotal`、`fallbackPercent`、`kvLookupCap`、`kvLookupCount`、`queueMode`、`queueCap`、`enqueueCandidates` を出す。
 - **教訓**: 多言語 summary/body の品質ゲートは「非空」と「real AI enrichment」を分ける。fallback は UX safety net であって完了状態ではない。Queue / KV cap を持つ非同期 enrichment は backlog 指標を最初から UI と監査に出す。
 
+### LL-048: KV_LOOKUP_CAP=60 が fallback の永続化を引き起こす (Queue starve)
+- **事象**: 484 件の `summaryJa` fallback が存在し、Queue consumer が動いているにもかかわらず 7 日以上解消しなかった。
+- **根本原因**: `worker/src/index.ts` の `allFallback.slice(0, KV_LOOKUP_CAP)` が cap=60 のため、484 件中 424 件はKV チェックされず `lookedUpUrls` にも入らない。`maybeEnqueueSummaryJobs` は `!lookedUpUrls.has(e.url)` を「real summary あり → skip」と解釈していたため、これらの 424 件は Queue にも投入されず永久に fallback のまま固定された。さらに round-robin なしの enqueue では、常に最新 30 件が選ばれ、古い fallback は cap の外に出た瞬間に詰まる。
+- **対策**: KV_LOOKUP_CAP デフォルトを 60 → 500 に引き上げ (LL-036/040/041 で非 KV subrequest が ~60-80/inv に削減されたため 500+80=580 < 1000 の余裕あり)。`uncheckedFallbackUrls` を導入し cap 超過分も "enqueue すべき fallback" として追跡。`maybeEnqueueSummaryJobs` に round-robin オフセットを追加し、ENQUEUE_MAX_NEW=35 で全 fallback が平均 ~14 時間でキューを一周するよう設計。heartbeat KV + `/health` endpoint で cron の死活を data 変化なしでも監視可能に。
+- **教訓**: `lookedUpUrls` の「absent = real summary」の仮定は、cap で切り捨てた fallback が存在すると崩れる。KV read cap と enqueue 対象の判定は同じ集合で行わなければならない。cap を設けるなら `uncheckedFallbackUrls` を別追跡するか、cap 自体を fallback count 以上に設定する。Queue が動いているのに fallback が減らない場合は「enqueue されていない」を疑う。
+
 ## 🔄 自己学習ハーネス手順
 
 1. 作業中に発生した「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。

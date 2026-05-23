@@ -847,6 +847,13 @@ async function runHarness(
 
   // 2) Cap per source (importance-aware for high-volume sources) then sort newest-first then cap to INDEX_LIMIT.
   const PER_SOURCE_CAP = 50;
+  // Per-category cap: categories that would otherwise dominate the index
+  // get an additional ceiling applied after per-source capping.
+  const CATEGORY_CAPS: Partial<Record<string, number>> = {
+    research: 120,
+  };
+  // Build source-def lookup so we can use per-source overrides (perSourceCap).
+  const sourceDefMap = new Map(listSources().map((s) => [s.id, s]));
   const bySource = new Map<string, NormalizedEntry[]>();
   for (const e of merged) {
     const arr = bySource.get(e.source) ?? [];
@@ -860,15 +867,34 @@ async function runHarness(
     return (e.importance ?? 1) * 1000 - recencyDays;
   };
   const capped: NormalizedEntry[] = [];
-  for (const [, arr] of bySource) {
-    if (arr.length <= PER_SOURCE_CAP) {
+  for (const [sourceId, arr] of bySource) {
+    const sourceCap = sourceDefMap.get(sourceId)?.perSourceCap ?? PER_SOURCE_CAP;
+    if (arr.length <= sourceCap) {
       capped.push(...arr);
       continue;
     }
-    const picked = [...arr].sort((a, b) => pickScore(b) - pickScore(a)).slice(0, PER_SOURCE_CAP);
+    const picked = [...arr].sort((a, b) => pickScore(b) - pickScore(a)).slice(0, sourceCap);
     capped.push(...picked);
   }
-  const sorted = capped
+  // Apply per-category cap (keeps highest-scoring entries within each category).
+  const byCategory = new Map<string, NormalizedEntry[]>();
+  for (const e of capped) {
+    const arr = byCategory.get(e.category) ?? [];
+    arr.push(e);
+    byCategory.set(e.category, arr);
+  }
+  const categoryCapped: NormalizedEntry[] = [];
+  for (const [category, arr] of byCategory) {
+    const cap = CATEGORY_CAPS[category];
+    if (!cap || arr.length <= cap) {
+      categoryCapped.push(...arr);
+      continue;
+    }
+    const picked = [...arr].sort((a, b) => pickScore(b) - pickScore(a)).slice(0, cap);
+    categoryCapped.push(...picked);
+    console.log(`[worker] category cap: ${category} ${arr.length} → ${picked.length}`);
+  }
+  const sorted = categoryCapped
     .sort((a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt))
     .slice(0, INDEX_LIMIT);
 

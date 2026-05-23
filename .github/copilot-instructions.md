@@ -404,6 +404,18 @@
 - **対策**: `compactArchiveEntry` を `archiveTier === "hot"` の entry については `summaryJa`/`summaryEn` も削除するよう変更。`scripts/trim-archive-hot-summaries.mjs` で既存ファイルを一括適用。2026-05.json を 4.5MB → 3.2MB に圧縮。archive 月別ページは EntryCard を利用するが、hot entry は live timeline でも閲覧できるため summary なしで許容。
 - **教訓**: archive の size budget を守るには「tier 別に保持フィールドを決める」。hot tier は live index が主、archive はカウント用途のみなので summary は省略可。warm/cold は archive が唯一のコピーなので summary を保持する。
 
+### LL-052: 高ボリュームソースはカテゴリを独占しないよう perSourceCap とカテゴリキャップを併用する
+- **事象**: research カテゴリが 256 件 (18%) で全カテゴリ 2 位。arXiv 4 ソース×50 件 + simonw-blog 50 件 + zenn-ai 50 件 = 200 件超が論文・ブログで埋まり、UI の多様性が損なわれていた。
+- **根本原因**: `PER_SOURCE_CAP=50` がすべてのソースに均一適用されており、日次更新量が多い arXiv feed がキャップ上限まで毎日取得されていた。カテゴリ単位の上限もないため、research は無制限に増加した。
+- **対策**: `SourceDefinition` に `perSourceCap?: number` を追加し、arXiv 4 ソースを個別に制限 (cs.AI=25, cs.CL=20, cs.LG=20, cs.SE=15)。`zenn-ai` も 50→30 に変更。Worker の capping ロジックを `sourceDef.perSourceCap ?? PER_SOURCE_CAP` に切り替え。さらに `CATEGORY_CAPS = { research: 120 }` を追加し、ソースキャップ後にカテゴリ上限でさらに重要度順に絞り込む。
+- **教訓**: 高ボリュームのフィード (arXiv, Zenn タグ) を追加するときは、同一カテゴリの他ソースとのバランスを考慮して `perSourceCap` を明示する。カテゴリ全体の分布は `CATEGORY_CAPS` で上限を設けることで、単一カテゴリのインデックス占有を防ぐ。
+
+### LL-053: titleEn 欠落は summaryEn の先頭文から抽出して補完できる
+- **事象**: JP source (Qiita/Zenn) の live entry 453 件で `titleEn` が空のままで、EN UI に JA バッジ付きフォールバック表示が連続していた。
+- **根本原因**: 日本語 source は AI 要約で `summaryEn` が生成されるが、`titleEn` は独立フィールドで別途生成が必要だった。Worker / harness のどちらも `titleEn` を `summaryEn` から自動生成する処理を持っていなかった。
+- **対策**: `scripts/fill-title-en.mjs` を作成。`summaryEn` が実 AI 要約の場合 (フォールバックマーカーなし) は先頭文 (最大 120 文字) を `titleEn` に設定。AI 要約が未生成の場合は元の `title` を代入する。453 件すべてを補完。
+- **教訓**: `titleEn` と `summaryEn` は独立して管理する必要があるが、`fill-title-en.mjs` の再実行で AI 要約が入った後に titleEn も更新できる。summaryEn の AI 生成が完了した段階で `npm run titleen:fill` を再実行して英語タイトル品質を向上させる。
+
 ## 🔄 自己学習ハーネス手順
 
 1. 作業中に発生した「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。

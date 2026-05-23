@@ -204,7 +204,7 @@ test.describe("TECH Dashboard smoke", () => {
       .toBe(true);
 
     const tabItems = tabbar.locator("a, button");
-    await expect(tabItems).toHaveCount(4);
+    await expect(tabItems).toHaveCount(6);
     const itemBoxes = await tabItems.evaluateAll((items) =>
       items.map((item) => {
         const rect = item.getBoundingClientRect();
@@ -214,17 +214,25 @@ test.describe("TECH Dashboard smoke", () => {
     expect(itemBoxes[0].left, "first mobile tab item starts inside the padded bar").toBeGreaterThanOrEqual(7);
     expect(itemBoxes.at(-1)!.right, "last mobile tab item stays inside the padded bar").toBeLessThanOrEqual(383);
     for (const itemBox of itemBoxes) {
-      expect(Math.round(itemBox.width), `mobile tab item width: ${JSON.stringify(itemBox)}`).toBe(94);
+      expect(itemBox.width, `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeGreaterThanOrEqual(44);
+      expect(itemBox.width, `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeLessThanOrEqual(80);
     }
 
     await tabbar.getByRole("link", { name: "Categories" }).click();
     await expect(page).toHaveURL(/\/categories\/?$/);
     await expect(page.locator("main h2", { hasText: "Categories" })).toBeVisible();
 
+    await tabbar.getByRole("link", { name: "Archive" }).click();
+    await expect(page).toHaveURL(/\/archive\/?$/);
+
     await tabbar.getByRole("link", { name: "Status" }).click();
     await expect(page).toHaveURL(/\/status\/?$/);
     await expect(page.getByRole("heading", { name: /Source Health/i })).toBeVisible();
 
+    await tabbar.getByRole("link", { name: "About" }).click();
+    await expect(page).toHaveURL(/\/about\/?$/);
+
+    await page.goto("/");
     await tabbar.getByRole("button", { name: "Search" }).click();
     await expect(page.locator("#pagefind-search-input")).toBeFocused();
   });

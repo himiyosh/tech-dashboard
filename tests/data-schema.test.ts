@@ -165,6 +165,28 @@ describe("data/index.json 各エントリ", () => {
     expect(bad).toEqual([]);
   });
 
+  // LL-045: publishedAt === collectedAt は normalize の fallback で「収集時刻 = 公開日」と
+  // 偽装された強い兆候。古い記事が日次グループ・TickerBar・DailySummary・stats.byDay の
+  // 上位を汚染する原因になる。閾値超過で fail させて collector 側の date 取得バグを検知する。
+  it("publishedAt === collectedAt の entry が閾値以下", () => {
+    const suspicious = data.entries.filter(
+      (e) =>
+        typeof e.publishedAt === "string" &&
+        typeof e.collectedAt === "string" &&
+        Date.parse(String(e.publishedAt)) === Date.parse(String(e.collectedAt)),
+    );
+    const bySource: Record<string, number> = {};
+    for (const e of suspicious) {
+      const s = String((e as { source?: unknown }).source ?? "?");
+      bySource[s] = (bySource[s] ?? 0) + 1;
+    }
+    // 5% を超えたら fail。1 source あたり 5 件超も fail。
+    const ratio = suspicious.length / Math.max(1, data.entries.length);
+    expect(ratio, `suspicious ratio too high: ${suspicious.length}/${data.entries.length} ${JSON.stringify(bySource)}`).toBeLessThan(0.05);
+    const overflowing = Object.entries(bySource).filter(([, n]) => n > 5);
+    expect(overflowing, `sources with > 5 suspicious entries: ${JSON.stringify(overflowing)}`).toEqual([]);
+  });
+
   it("url が URL コンストラクタで解釈できる", () => {
     const bad: string[] = [];
     for (const e of data.entries) {

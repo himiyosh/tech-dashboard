@@ -165,6 +165,14 @@ export interface SourceDefinition {
    * (e.g. Anthropic Engineering = "architecture", not "news").
    */
   halfLifeOverride?: HalfLife;
+  /**
+   * Opt-in: if the RSS/Atom feed does not expose per-item publish dates
+   * (e.g. Google Developers Blog only ships <lastBuildDate>), the RSS
+   * collector will fetch each article page and extract the date from
+   * <meta property="article:published_time">, JSON-LD datePublished,
+   * or <time datetime="...">. Capped to MAX_DATE_FETCHES per run.
+   */
+  fetchArticleDate?: boolean;
 }
 
 /** Result of a single collector run — used for telemetry. */

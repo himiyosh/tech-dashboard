@@ -99,6 +99,59 @@ function asDate(v: unknown): string | null {
   return d.toISOString();
 }
 
+/**
+ * Extract a publish date from an article HTML page. Tries in order:
+ *  1. <meta property="article:published_time" content="...">
+ *  2. JSON-LD "datePublished":"..."  (accepts YYYY-MM-DD; treats as UTC midnight)
+ *  3. <time datetime="..."> (first occurrence)
+ * Returns null if no usable date is found.
+ */
+export function extractPublishedAtFromHtml(html: string): string | null {
+  const meta = html.match(/<meta[^>]+property="article:published_time"[^>]+content="([^"]+)"/i)
+    ?? html.match(/<meta[^>]+content="([^"]+)"[^>]+property="article:published_time"/i);
+  if (meta) {
+    const d = new Date(meta[1]!);
+    if (!Number.isNaN(d.getTime())) return d.toISOString();
+  }
+  const ld = html.match(/"datePublished"\s*:\s*"([^"]+)"/);
+  if (ld) {
+    let s = ld[1]!;
+    // Bare YYYY-MM-DD → anchor to UTC midnight so it parses deterministically.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) s = `${s}T00:00:00Z`;
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) return d.toISOString();
+  }
+  const tm = html.match(/<time[^>]+datetime="([^"]+)"/i);
+  if (tm) {
+    const d = new Date(tm[1]!);
+    if (!Number.isNaN(d.getTime())) return d.toISOString();
+  }
+  return null;
+}
+
+/** Per-run cap on per-article date fetches (subrequest budget — see LL-036/037). */
+const MAX_ARTICLE_DATE_FETCHES = 15;
+
+async function fetchArticleDate(url: string): Promise<string | null> {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 8000);
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "tech-dashboard-bot/0.1 (+https://github.com/himiyosh/tech-dashboard)",
+        Accept: "text/html,application/xhtml+xml",
+      },
+      redirect: "follow",
+      signal: ctrl.signal,
+    });
+    clearTimeout(t);
+    if (!res.ok) return null;
+    return extractPublishedAtFromHtml(await res.text());
+  } catch {
+    return null;
+  }
+}
+
 function asThumbnail(item: RssItem): string | undefined {
   const thumb = item["media:thumbnail"];
   if (Array.isArray(thumb)) {
@@ -206,5 +259,19 @@ export async function collectRss(source: SourceDefinition): Promise<RawEntry[]> 
       ...(author !== undefined ? { author } : {}),
     });
   }
+
+  // Opt-in: feeds without per-item dates (e.g. Google Developers Blog) get
+  // their publishedAt populated by fetching each article HTML. Capped per run.
+  if (source.fetchArticleDate) {
+    let budget = MAX_ARTICLE_DATE_FETCHES;
+    for (const e of entries) {
+      if (budget <= 0) break;
+      if (e.publishedAt) continue;
+      budget--;
+      const real = await fetchArticleDate(e.url);
+      if (real) e.publishedAt = real;
+    }
+  }
+
   return entries;
 }

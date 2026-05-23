@@ -27,6 +27,8 @@ tech-dashboard/
 │  │  └─ quality-auditor.md
 │  ├─ skills/                       ← Skills (SKILL.md)
 │  │  ├─ ai-scrum/
+│  │  ├─ ui-display-guard/
+│  │  ├─ modern-web-guidance/
 │  │  ├─ add-source/
 │  │  ├─ re-summarize/
 │  │  ├─ audit-quality/
@@ -231,9 +233,21 @@ description: Use when user asks to add a new AI update source (RSS, GitHub repo,
 | Skill             | use when                            | 効果                                             |
 | ----------------- | ----------------------------------- | ------------------------------------------------ |
 | `ai-scrum`        | 複数領域の開発 / 要件整理から検証まで必要 | PO / SM / Developer / QA 観点を分けて成果物を検証 |
+| `ui-display-guard` | モバイル / レスポンシブ UI の表示崩れ修正 | viewport 寸法、固定 UI、overflow、導線操作を Playwright で検証 |
+| `modern-web-guidance` | HTML / CSS / client-side JS / アクセシビリティ / パフォーマンス / セキュリティの実装 | Chrome Modern Web Guidance の use case を search / retrieve し、Baseline、fallback、基礎 guide を確認 |
 | `re-summarize`    | 要約の品質が悪い / プロンプト変更時 | 指定期間のエントリを再要約                       |
 | `audit-quality`   | 週次 / 月次レビュー                 | ランダムサンプル 20 件を人手監査用にエクスポート |
 | `debug-collector` | Collector が 0 件 / エラー時        | ネットワーク、セレクタ、レート制限を順に切り分け |
+
+---
+
+### 5.3 Chrome Modern Web Guidance の適用ルール
+
+- プロジェクトには `.claude/skills/modern-web-guidance/` を同梱し、`skills-lock.json` で `GoogleChrome/modern-web-guidance` を追跡する。
+- Web UI 変更では、実装目的を 1 文にして `npx -y modern-web-guidance@latest search "<query>" --skill-version 2026_05_16-c5e7870` を先に実行する。
+- 検索結果の該当 guide は `npx -y modern-web-guidance@latest retrieve "<id>"` で読み、Astro / CSS の既存構成に最小差分で適用する。
+- 広めの UI / CSS / パフォーマンス / セキュリティ変更では `accessibility`、`css`、`performance`、`security` を基礎 guide として確認する。
+- Baseline Widely available ではない機能は guide の fallback 方針に従う。mobile / fixed / sticky / overflow / z-index / safe-area の表示崩れを伴う場合は `ui-display-guard` も併用する。
 
 ---
 

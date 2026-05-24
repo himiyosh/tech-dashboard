@@ -19,6 +19,7 @@ interface RawEntry {
   title?: unknown;
   titleJa?: unknown;
   summaryJa?: unknown;
+  summaryEn?: unknown;
   publishedAt?: unknown;
   collectedAt?: unknown;
   tags?: unknown;
@@ -86,6 +87,16 @@ const summaryCachePath = join(process.cwd(), "data", "_summary-cache.json");
 const summaryCache = existsSync(summaryCachePath)
   ? (JSON.parse(readFileSync(summaryCachePath, "utf8")) as Record<string, { bodyJa?: string; bodyEn?: string }>)
   : {};
+const archiveDir = join(process.cwd(), "data", "archive");
+const archiveEntries = existsSync(archiveDir)
+  ? readdirSync(archiveDir)
+    .filter((fileName) => /^\d{4}-\d{2}\.json$/.test(fileName))
+    .flatMap((fileName) => {
+      const parsed = JSON.parse(readFileSync(join(archiveDir, fileName), "utf8")) as { entries?: RawEntry[] };
+      return (parsed.entries ?? []).map((entry) => ({ ...entry, archiveFile: fileName }));
+    })
+  : [];
+const allDataEntries = [...data.entries, ...archiveEntries];
 const DATA_BUDGET = {
   indexBytes: 8_000_000,
   statsBytes: 500_000,
@@ -255,6 +266,54 @@ describe("data/index.json カバレッジ統計 (情報のみ)", () => {
     // 「1件以上は body がある」だけアサートしてそれ以外はログとして記録する。
     expect(withJa).toBeGreaterThan(0);
     expect(withEn).toBeGreaterThan(0);
+  });
+});
+
+describe("カテゴリ品質ガード", () => {
+  it("Zed は VSCode ではなく Cursor 系カテゴリとして扱う", () => {
+    const bad = allDataEntries
+      .filter((entry) => String(entry.source) === "zed-releases" && String(entry.category) !== "cursor")
+      .map((entry) => `${String(entry.source)}:${String(entry.category)}:${String(entry.title)}`);
+    expect(bad).toEqual([]);
+
+    const zedInVscode = allDataEntries
+      .filter((entry) => String(entry.category) === "vscode")
+      .filter((entry) => /\bzed\b/i.test(`${String(entry.source)} ${String(entry.title)} ${String(entry.url)}`))
+      .map((entry) => `${String(entry.source)}:${String(entry.title)}`);
+    expect(zedInVscode).toEqual([]);
+  });
+
+  it("VSCode カテゴリはタイトル/要約が VSCode 中心の記事だけを含む", () => {
+    const allowed = /(vs\s*code|vscode|visual studio code|code\.visualstudio|devcontainer|dev container|extension|拡張機能|live share|VSコード|VS Code)/i;
+    const bad = allDataEntries
+      .filter((entry) => String(entry.category) === "vscode")
+      .filter((entry) => !allowed.test(`${String(entry.title)} ${String(entry.titleJa ?? "")} ${String(entry.summaryJa ?? "")} ${String(entry.summaryEn ?? "")}`))
+      .map((entry) => `${String(entry.source)}:${String(entry.title)}`);
+    expect(bad).toEqual([]);
+  });
+
+  it("Research は broad feed 由来の汎用 AI 記事で膨らまない", () => {
+    const researchLive = data.entries.filter((entry) => String(entry.category) === "research");
+    expect(researchLive.length, `research live count: ${researchLive.length}`).toBeLessThanOrEqual(140);
+
+    const offTopic = researchLive
+      .filter((entry) =>
+        /(autonomous driving|flooded road|medical|biological|protein|molecule|genome|text-to-image|vision-language|segmentation|robotics?)/i
+          .test(`${String(entry.title)} ${String(entry.summaryJa)} ${String(entry.summaryEn)}`),
+      )
+      .map((entry) => `${String(entry.source)}:${String(entry.title)}`);
+    expect(offTopic).toEqual([]);
+  });
+
+  it("Tech News は consumer deal / space などのノイズを含めない", () => {
+    const noisy = allDataEntries
+      .filter((entry) => String(entry.category) === "tech-news")
+      .filter((entry) =>
+        /(memorial day|deal|sale|airfly|govee|water bottle|spacex|starship|rocket|blue origin|dead pilots|summer travel)/i
+          .test(`${String(entry.title)} ${String(entry.summaryJa)} ${String(entry.summaryEn)} ${String(entry.url)}`),
+      )
+      .map((entry) => `${String(entry.source)}:${String(entry.title)}`);
+    expect(noisy).toEqual([]);
   });
 });
 

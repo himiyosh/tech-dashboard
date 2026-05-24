@@ -21,7 +21,6 @@ import {
   jstDayLabel,
   summaryForLang,
   summaryForLangWithFallback,
-  titleForLang,
   titleForLangWithFallback,
 } from "../lib/data.ts";
 
@@ -51,29 +50,94 @@ const topThree = rankedPool
   .slice(0, 3)
   .map(({ entry }) => entry);
 const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
+
+function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: string } {
+  const category = CATEGORY_META.find((c) => c.slug === entry.category)?.name ?? entry.category;
+  const type =
+    entry.sourceType === "release" || entry.sourceType === "changelog"
+      ? { ja: "公式リリース/変更履歴", en: "official release/changelog" }
+      : entry.sourceType === "paper"
+        ? { ja: "論文/研究", en: "paper/research" }
+        : { ja: "公式/技術記事", en: "official/technical post" };
+  const importance =
+    entry.importance === 3
+      ? { ja: "重要度 High", en: "High importance" }
+      : { ja: "重要度 Medium", en: "Medium importance" };
+  return {
+    ja: `${importance.ja} · ${type.ja} · ${category}`,
+    en: `${importance.en} · ${type.en} · ${category}`,
+  };
+}
 ---
 
 <Portal pageKey="timeline">
   <section class="banner">
     <div class="banner-bg-grid"></div>
     <div class="banner-inner">
-      <h1 class="i18n-ja">
-        AI の<span class="brand-accent">脈動</span>を、<br />
-        ひとつのダッシュボードに。
-      </h1>
-      <h1 class="i18n-en" lang="en">
-        The <span class="brand-accent">pulse</span> of AI,<br />
-        on a single dashboard.
-      </h1>
-      <p class="tagline i18n-ja">
-        <strong>Copilot / Claude / Codex / Gemini / Local LLM / Research</strong>
-        の公式情報・論文・リリースを 1 時間おきに自動収集。日本語で要約し、重要度でソートして届けます。
-      </p>
-      <p class="tagline i18n-en" lang="en">
-        Official news, papers, and releases from
-        <strong>Copilot / Claude / Codex / Gemini / Local LLM / Research</strong>
-        collected every hour, summarized, and ranked by importance.
-      </p>
+      <div class="banner-copy">
+        <p class="banner-kicker">TECH UPDATE ROUTER</p>
+        <h1 class="i18n-ja">
+          今日読むべき技術更新を、<br />
+          <span class="brand-accent">判断できる</span>形で。
+        </h1>
+        <h1 class="i18n-en" lang="en">
+          Decide what to read today,<br />
+          from one <span class="brand-accent">ranked</span> dashboard.
+        </h1>
+        <p class="tagline i18n-ja">
+          Microsoft / GitHub、Anthropic、OpenAI、Google、AI Coding Tools などの
+          公式情報・リリース・論文・業界ニュースを 1 時間おきに収集し、要約と重要度で並べます。
+        </p>
+        <p class="tagline i18n-en" lang="en">
+          Official posts, releases, papers, and industry news across Microsoft / GitHub, Anthropic, OpenAI, Google, and AI Coding Tools,
+          collected hourly and ranked with summaries.
+        </p>
+        <div class="banner-actions" aria-label="First actions">
+          <a class="banner-cta primary" href="#today-priority">
+            <span class="i18n-ja">今日の重要記事を見る</span>
+            <span class="i18n-en" lang="en">View today's priorities</span>
+          </a>
+          <button type="button" class="banner-cta" data-search-trigger>
+            <span class="i18n-ja">検索する</span>
+            <span class="i18n-en" lang="en">Search</span>
+          </button>
+          <a class="banner-cta" href="/categories">
+            <span class="i18n-ja">カテゴリで探す</span>
+            <span class="i18n-en" lang="en">Browse categories</span>
+          </a>
+        </div>
+      </div>
+      <div class="banner-facts" aria-label="Dashboard overview">
+        <div class="banner-fact">
+          <strong class="i18n-ja">できること</strong>
+          <strong class="i18n-en" lang="en">What it does</strong>
+          <span class="i18n-ja">要約・重要度・出典から、読む/共有する判断を短時間で行えます。</span>
+          <span class="i18n-en" lang="en">Use summaries, importance, and sources to decide what to read or share.</span>
+        </div>
+        <div class="banner-fact">
+          <strong class="i18n-ja">集約ソース</strong>
+          <strong class="i18n-en" lang="en">Sources</strong>
+          <span class="i18n-ja">{DASHBOARD_METRICS.sourceCoverageLabel} sources · 公式 blog / release / paper / news</span>
+          <span class="i18n-en" lang="en">{DASHBOARD_METRICS.sourceCoverageLabel} sources · official blogs, releases, papers, news</span>
+        </div>
+        <div class="banner-fact">
+          <strong class="i18n-ja">更新頻度</strong>
+          <strong class="i18n-en" lang="en">Cadence</strong>
+          <span class="i18n-ja">毎時更新 · 最新 index は {ago}</span>
+          <span class="i18n-en" lang="en">Hourly collection · latest index {ago}</span>
+        </div>
+        <div class="banner-filter-links" aria-label="Explore by filter">
+          <a href="/categories">
+            <span class="i18n-ja">カテゴリ</span><span class="i18n-en" lang="en">Categories</span>
+          </a>
+          <a href="/status">
+            <span class="i18n-ja">ソース状況</span><span class="i18n-en" lang="en">Source status</span>
+          </a>
+          <a href="/archive">
+            <span class="i18n-ja">期間別アーカイブ</span><span class="i18n-en" lang="en">Archive by month</span>
+          </a>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -106,6 +170,22 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
     <Sidebar active="all" />
 
     <main>
+      <section class="priority-section" id="today-priority" aria-labelledby="priority-heading">
+        <div class="section-header primary section-header-stacked">
+          <p class="section-kicker">Start here</p>
+          <h2 id="priority-heading">
+            <span class="i18n-ja">今日見るべきもの</span>
+            <span class="i18n-en" lang="en">Today's decision list</span>
+            <span class="count">featured · summary · top items</span>
+          </h2>
+          <p class="section-note i18n-ja">
+            短時間で読む優先度を決める領域です。重要度、更新鮮度、source type を優先して表示します。
+          </p>
+          <p class="section-note i18n-en" lang="en">
+            A quick decision area for busy readers, prioritizing importance, recency, and source type.
+          </p>
+        </div>
+
       {feat && (() => {
         const featSumJa = summaryForLang(feat, "ja");
         const featSumEn = summaryForLangWithFallback(feat, "en");
@@ -203,6 +283,7 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
           <ol class="top-rank-list">
             {topThree.map((e, i) => {
               const meta = CATEGORY_META.find((c) => c.slug === e.category);
+              const reason = topReason(e);
               return (
                 <li class={`top-rank-item rank-${i + 1}`} style={`--cat-color:${meta?.color ?? "#8a847e"}`}>
                   <span class="medal" aria-hidden="true">{medals[i]}</span>
@@ -229,28 +310,54 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
                     <span class="rank-source">{e.source}</span>
                     <span class="rank-time mono">{relativeTime(e.publishedAt, now)}</span>
                   </span>
+                  <span class="rank-reason i18n-ja">{reason.ja}</span>
+                  <span class="rank-reason i18n-en" lang="en">{reason.en}</span>
                 </li>
               );
             })}
           </ol>
         </section>
       )}
+      </section>
 
-      <div class="section-header primary">
-        <h2>Timeline <span class="count"><span data-metric="liveEntries">{DASHBOARD_METRICS.liveEntries}</span> total · page {currentPage}/{totalPages}</span></h2>
-      </div>
+      <section class="timeline-section" id="timeline" aria-labelledby="timeline-heading">
+        <div class="section-header primary section-header-stacked">
+          <p class="section-kicker">Deep dive</p>
+          <h2 id="timeline-heading">
+            <span class="i18n-ja">深掘り一覧</span>
+            <span class="i18n-en" lang="en">Deep-dive timeline</span>
+            <span class="count"><span data-metric="liveEntries">{DASHBOARD_METRICS.liveEntries}</span> total · page {currentPage}/{totalPages}</span>
+          </h2>
+          <p class="section-note i18n-ja">
+            すべての更新を新着順に確認する領域です。カテゴリ・タグ・検索で絞り込んで詳細へ進めます。
+          </p>
+          <p class="section-note i18n-en" lang="en">
+            Browse all updates by recency, then narrow with category, tags, or search.
+          </p>
+        </div>
 
-      {dayGroups.map(({ key, items }) => (
-        <>
-          <div class="day-header">
-            <span>{jstDayLabel(key, now)}</span>
-            <span class="day-count">{items.length} entries</span>
+        {pageEntries.length === 0 ? (
+          <div class="empty-state">
+            <strong class="i18n-ja">表示できる更新がありません。</strong>
+            <strong class="i18n-en" lang="en">No updates are available.</strong>
+            <p class="i18n-ja">次回の毎時収集後に再度確認するか、Status で source 更新状況を確認してください。</p>
+            <p class="i18n-en" lang="en">Check again after the next hourly run, or open Status to inspect source freshness.</p>
+            <a href="/status">Status</a>
           </div>
-          {items.map((entry) => <EntryCard entry={entry} />)}
-        </>
-      ))}
+        ) : (
+          dayGroups.map(({ key, items }) => (
+            <>
+              <div class="day-header">
+                <span>{jstDayLabel(key, now)}</span>
+                <span class="day-count">{items.length} entries</span>
+              </div>
+              {items.map((entry) => <EntryCard entry={entry} />)}
+            </>
+          ))
+        )}
 
-      <Pager currentPage={currentPage} totalPages={totalPages} baseHref="" />
+        <Pager currentPage={currentPage} totalPages={totalPages} baseHref="" />
+      </section>
     </main>
 
     <aside class="right">

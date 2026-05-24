@@ -1,5 +1,5 @@
 ---
-import { CATEGORY_META, countByCategory, ALL_ENTRIES, type Category } from "../lib/data.ts";
+import { CATEGORY_META, countByCategory, ALL_ENTRIES, type Category, type CategoryGroup } from "../lib/data.ts";
 import { categoryDailySpark } from "../lib/stats.ts";
 
 export interface Props {
@@ -10,14 +10,29 @@ const { active = "all" } = Astro.props;
 const counts = countByCategory();
 const total = ALL_ENTRIES.length;
 
-const groupLabels: Record<"coding" | "platform" | "ecosystem" | "research", string> = {
-  coding: "Coding Agents",
-  platform: "Platforms & Runtime",
-  ecosystem: "Ecosystem",
+const groupLabels: Record<CategoryGroup, string> = {
+  microsoft: "Microsoft",
+  anthropic: "Anthropic",
+  openai: "OpenAI",
+  google: "Google",
+  "coding-tools": "AI Coding Tools",
+  "open-models": "Open Models",
+  "agent-tools": "Agent Tools",
   research: "Research",
+  industry: "Industry",
 };
 
-const groupOrder: Array<keyof typeof groupLabels> = ["coding", "platform", "ecosystem", "research"];
+const groupOrder: CategoryGroup[] = [
+  "microsoft",
+  "anthropic",
+  "openai",
+  "google",
+  "coding-tools",
+  "open-models",
+  "agent-tools",
+  "research",
+  "industry",
+];
 
 function tileClass(slug: Category): string {
   const map: Record<Category, string> = {
@@ -58,6 +73,26 @@ function initial(slug: Category): string {
   };
   return map[slug];
 }
+
+function compactLabel(slug: Category): string {
+  const map: Record<Category, string> = {
+    copilot: "Copilot",
+    claude: "Claude Code",
+    codex: "Codex",
+    gemini: "Gemini/Gemma",
+    cursor: "AI Editors",
+    cline: "Cline/Roo",
+    aider: "Aider",
+    opencode: "OpenHands/OpenCode",
+    vscode: "VS Code",
+    "local-llm": "Local Models",
+    "agent-fw": "Agent Frameworks",
+    mcp: "MCP",
+    "tech-news": "News/Policy",
+    research: "Papers/Benchmarks",
+  };
+  return map[slug];
+}
 ---
 
 <aside class="left">
@@ -65,7 +100,7 @@ function initial(slug: Category): string {
     <div class="side-title">Categories <span class="sub">{total}</span></div>
     <a class={`side-item ${active === "all" ? "active" : ""}`} href="/">
       <span class="brand-tile bt-all">•</span>
-      <span class="name">All</span>
+      <span class="name" title="All"><span class="name-marquee">All</span></span>
       <span class="count">{total}</span>
     </a>
 
@@ -74,13 +109,19 @@ function initial(slug: Category): string {
         <div class="side-group-label">{groupLabels[g]}</div>
         {CATEGORY_META.filter((c) => c.group === g).map((c) => {
           const trend = categoryDailySpark(c.slug, 30);
+          const label = compactLabel(c.slug);
+          const title = `${groupLabels[c.group]}: ${c.name}`;
           const href = `/c/${c.slug}`;
           const isActive = active === c.slug;
           return (
-            <a class={`side-item ${isActive ? "active" : ""}`} href={href}>
+            <a
+              class={`side-item ${isActive ? "active" : ""}`}
+              href={href}
+              aria-label={`${label}, ${title}, ${counts[c.slug]} entries`}
+            >
               <span class={`brand-tile ${tileClass(c.slug)}`}>{initial(c.slug)}</span>
-              <span class="name">{c.name}</span>
-              <span class="spark" title="Last 30 days" aria-label={`${c.name} article trend for the last 30 days`}>
+              <span class="name" title={title}><span class="name-marquee">{label}</span></span>
+              <span class="spark" title="Last 30 days" aria-label={`${label} article trend for the last 30 days`}>
                 {trend.map((bucket) => (
                   <i title={`${bucket.key}: ${bucket.count}`} style={`height:${bucket.height}%`}></i>
                 ))}
@@ -93,3 +134,36 @@ function initial(slug: Category): string {
     ))}
   </div>
 </aside>
+
+<script>
+  (() => {
+    const setupSidebarMarquees = () => {
+      document.querySelectorAll<HTMLElement>(".side-item").forEach((item) => {
+        const label = item.querySelector<HTMLElement>(".name");
+        const marquee = item.querySelector<HTMLElement>(".name-marquee");
+        if (!label || !marquee) return;
+
+        const distance = marquee.scrollWidth - label.clientWidth;
+        const overflows = distance > 1;
+        item.toggleAttribute("data-marquee", overflows);
+
+        if (overflows) {
+          marquee.style.setProperty("--marquee-distance", `-${Math.ceil(distance)}px`);
+          marquee.style.setProperty("--marquee-duration", `${Math.min(5.5, Math.max(2.4, distance / 18))}s`);
+        } else {
+          marquee.style.removeProperty("--marquee-distance");
+          marquee.style.removeProperty("--marquee-duration");
+        }
+      });
+    };
+
+    let resizeTimer: number | undefined;
+    const scheduleSetup = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(setupSidebarMarquees, 80);
+    };
+
+    window.requestAnimationFrame(setupSidebarMarquees);
+    window.addEventListener("resize", scheduleSetup, { passive: true });
+  })();
+</script>

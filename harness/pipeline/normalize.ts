@@ -4,6 +4,7 @@
  */
 import { createHash } from "node:crypto";
 import type {
+  Category,
   Importance,
   Lang,
   NormalizedEntry,
@@ -100,6 +101,20 @@ function decorateReleaseTitle(rawTitle: string, source: SourceDefinition): strin
   return `${source.displayName} ${trimmed}`;
 }
 
+function resolveCategory(raw: RawEntry, source: SourceDefinition): Category {
+  if (source.id !== "qiita-vscode") return source.category;
+
+  const signal = `${raw.title} ${raw.contentSnippet ?? ""}`.toLowerCase();
+  if (/\b(cursor|zed)\b/.test(signal)) return "cursor";
+  if (/(claude|anthropic)/.test(signal)) return "claude";
+  if (/(gemini|antigravity)/.test(signal)) return "gemini";
+  if (/(codex|openai|chatgpt)/.test(signal)) return "codex";
+  if (/(copilot|github copilot)/.test(signal)) return "copilot";
+  if (/(ollama|local llm|ローカルllm|gemma|continue)/i.test(signal)) return "local-llm";
+  if (/\bmcp\b|model context protocol/.test(signal)) return "mcp";
+  return source.category;
+}
+
 export function normalize(
   raw: RawEntry,
   source: SourceDefinition,
@@ -110,6 +125,7 @@ export function normalize(
   const decoratedRaw: RawEntry = decoratedTitle === raw.title ? raw : { ...raw, title: decoratedTitle };
   raw = decoratedRaw;
   const lang = detectLang(`${raw.title} ${raw.contentSnippet ?? ""}`, source.defaultLang);
+  const category = resolveCategory(raw, source);
   const summary = placeholderSummary(raw, lang);
   const image = raw.mediaThumbnail
     ? {
@@ -125,7 +141,7 @@ export function normalize(
   // Archive classification (Phase A/B). Computed deterministically on every
   // run so a registry override flip-flop is reflected next collect.
   const halfLife = resolveHalfLife({
-    category: source.category,
+    category,
     sourceType: source.sourceType,
     sourceId: source.id,
     sourceOverride: source.halfLifeOverride,
@@ -149,7 +165,7 @@ export function normalize(
     publishedAt: raw.publishedAt ?? collectedAt,
     collectedAt,
     tags: [...source.autoTags],
-    category: source.category,
+    category,
     importance: scoreImportance(raw, source),
     halfLife,
     archiveTier,

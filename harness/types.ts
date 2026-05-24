@@ -179,6 +179,17 @@ export interface SourceDefinition {
    * or <time datetime="...">. Capped to MAX_DATE_FETCHES per run.
    */
   fetchArticleDate?: boolean;
+  /**
+   * Optional deterministic relevance filters applied by the generic RSS
+   * collector before normalization. If includeKeywords is set, at least one
+   * keyword must appear in title/snippet/url. excludeKeywords always wins.
+   */
+  includeKeywords?: readonly string[];
+  excludeKeywords?: readonly string[];
+  /** `title` is useful for noisy tag feeds where snippets mention the tag incidentally. */
+  keywordFilterScope?: "title" | "title-snippet-url";
+  /** Optional hard cap after filtering, newest feed order first. */
+  maxEntriesPerRun?: number;
 }
 
 /** Result of a single collector run — used for telemetry. */

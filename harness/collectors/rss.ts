@@ -191,6 +191,19 @@ function stripHtml(s: string): string {
     .trim();
 }
 
+function matchesKeywordFilter(entry: RawEntry, source: SourceDefinition): boolean {
+  const haystack = (source.keywordFilterScope === "title"
+    ? entry.title
+    : `${entry.title} ${entry.contentSnippet ?? ""} ${entry.url}`).toLowerCase();
+  if (source.excludeKeywords?.some((keyword) => haystack.includes(keyword.toLowerCase()))) {
+    return false;
+  }
+  if (source.includeKeywords && source.includeKeywords.length > 0) {
+    return source.includeKeywords.some((keyword) => haystack.includes(keyword.toLowerCase()));
+  }
+  return true;
+}
+
 /** Fetch a feed URL and parse it into RawEntry[]. */
 export async function collectRss(source: SourceDefinition): Promise<RawEntry[]> {
   const res = await fetch(source.feedUrl, {
@@ -260,11 +273,15 @@ export async function collectRss(source: SourceDefinition): Promise<RawEntry[]> 
     });
   }
 
+  const filteredEntries = entries
+    .filter((entry) => matchesKeywordFilter(entry, source))
+    .slice(0, source.maxEntriesPerRun ?? entries.length);
+
   // Opt-in: feeds without per-item dates (e.g. Google Developers Blog) get
   // their publishedAt populated by fetching each article HTML. Capped per run.
   if (source.fetchArticleDate) {
     let budget = MAX_ARTICLE_DATE_FETCHES;
-    for (const e of entries) {
+    for (const e of filteredEntries) {
       if (budget <= 0) break;
       if (e.publishedAt) continue;
       budget--;
@@ -273,5 +290,5 @@ export async function collectRss(source: SourceDefinition): Promise<RawEntry[]> 
     }
   }
 
-  return entries;
+  return filteredEntries;
 }

@@ -1,23 +1,22 @@
 ---
 import Portal from "../layouts/Portal.astro";
+import PageHero from "../components/PageHero.astro";
 import Sidebar from "../components/Sidebar.astro";
 import {
   ALL_ENTRIES,
   CATEGORY_META,
   GENERATED_AT,
   WORKER_HEALTH,
-  fallbackMetrics,
   relativeTime,
   type Category,
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { sourceFreshnessStatus, type FreshnessSourceType, type FreshnessStatus } from "../lib/freshness.ts";
 import { SOURCE_META } from "../lib/source-meta.ts";
-import { WORKER_HEALTH_URL } from "../lib/site.ts";
 
 const now = new Date();
 const SIX_H = 6 * 3600_000;
-type SourceStatus = FreshnessStatus;
+type SourceStatus = Exclude<FreshnessStatus, "no-data">;
 type SourceRow = {
   id: string;
   displayName: string;
@@ -73,7 +72,7 @@ const sources: SourceRow[] = SOURCE_META.map((def) => {
     fromSource.length === 0 ? undefined : latestCollected,
     now.getTime(),
   );
-  const status = freshness.status;
+  const status = freshness.status === "no-data" ? "error" : freshness.status;
   const category = def.category as Category;
   const categoryMeta = categoryBySlug.get(category);
   return {
@@ -98,8 +97,7 @@ const sources: SourceRow[] = SOURCE_META.map((def) => {
 const ok = sources.filter((s) => s.status === "ok").length;
 const stale = sources.filter((s) => s.status === "stale").length;
 const error = sources.filter((s) => s.status === "error").length;
-const noData = sources.filter((s) => s.status === "no-data").length;
-const statusOrder = { error: 0, stale: 1, "no-data": 2, ok: 3 } as const;
+const statusOrder = { error: 0, stale: 1, ok: 2 } as const;
 const sortedSources = [...sources].sort(
   (a, b) =>
     statusOrder[a.status] - statusOrder[b.status] ||
@@ -111,7 +109,6 @@ const staleSources = sortedSources.filter((s) => s.status === "stale");
 const attentionSources = [...errorSources, ...staleSources].slice(0, 8);
 const healthyPct = Math.round((ok / Math.max(sources.length, 1)) * 100);
 const indexAgeLabel = relativeTime(GENERATED_AT, now);
-const fallback = fallbackMetrics(ALL_ENTRIES);
 
 const categoryRows = CATEGORY_META.map((category) => {
     const rows = sources.filter((source) => source.category === category.slug);
@@ -137,8 +134,6 @@ const lastRunAge = wh ? now.getTime() - new Date(wh.lastRunAt).getTime() : null;
 const lastRunHours = lastRunAge !== null ? lastRunAge / 3600_000 : null;
 let workerStatus: "ok" | "warn" | "err" = "ok";
 let workerLabel = "healthy";
-const fallbackTotal = wh?.fallbackTotal ?? fallback.fallbackEntries;
-const fallbackPercent = wh?.fallbackPercent ?? fallback.fallbackPercent;
 if (!wh) {
   workerStatus = "warn";
   workerLabel = "no data (legacy index)";
@@ -151,19 +146,39 @@ if (!wh) {
 } else if (wh.sourcesFailed.length > 0) {
   workerStatus = "warn";
   workerLabel = `${wh.sourcesFailed.length} source error`;
-} else if (fallbackTotal > 0) {
-  workerStatus = "warn";
-  workerLabel = `${fallbackTotal} fallback entries`;
 }
 const workerColor =
   workerStatus === "ok" ? "var(--success)" : workerStatus === "warn" ? "var(--important)" : "var(--danger)";
 const workerStatusText = workerStatus === "ok" ? "OK" : workerStatus === "warn" ? "WARN" : "ERR";
 const workerSummary = wh
-  ? `Batch ${wh.batchIndex}/${wh.batchTotal} · ${wh.sourcesOk}/${wh.sourcesAttempted} sources · +${wh.summarized} summaries · ${fallbackTotal} fallback (${fallbackPercent}%)`
+  ? `Batch ${wh.batchIndex}/${wh.batchTotal} · ${wh.sourcesOk}/${wh.sourcesAttempted} sources · +${wh.summarized} summaries`
   : "Worker health metadata is not available in this index.";
 ---
 
 <Portal pageKey="status" title="Status — TECH Dashboard">
+  <PageHero
+    className={`page-hero-top-level page-hero-status page-hero-status-${workerStatus}`}
+    accent={workerColor}
+    kicker="Status & Sources"
+    title="Status"
+    count={`${workerStatusText} · ${ok}/${sources.length} healthy`}
+    headingId="status-heading"
+    description="Worker の毎時実行、source freshness、registry の収集状況をここで確認できます。更新遅延や要約未生成がある場合も、原因と対象 source を追える運用画面です。"
+    actions={[
+      { href: "#worker-health-heading", label: "Worker health" },
+      { href: "#source-health-heading", label: "Source registry" },
+      { href: "/archive", label: "Open archive" },
+    ]}
+    metrics={[
+      { label: "Status", value: workerStatusText },
+      { label: "Healthy", value: ok },
+      { label: "Attention", value: stale + error },
+      { label: "Sources", value: sources.length },
+      { label: "Last run", value: wh ? relativeTime(wh.lastRunAt, now) : "unknown" },
+      { label: "Index", value: indexAgeLabel },
+    ]}
+  />
+
   <div class="layout status-layout">
     <Sidebar />
 
@@ -186,12 +201,8 @@ const workerSummary = wh
 
         <div class="status-hero-grid" aria-label="Worker summary">
           <div class="status-metric-card">
-            <span>最終コミット</span>
+            <span>最終実行</span>
             <strong>{wh ? relativeTime(wh.lastRunAt, now) : "unknown"}</strong>
-          </div>
-          <div class="status-metric-card" id="hb-last-cron-card" title="Worker の直近 cron 実行時刻 (ライブ取得)">
-            <span>最終 cron チェック</span>
-            <strong id="hb-last-cron">—</strong>
           </div>
           <div class="status-metric-card">
             <span>収集成功</span>
@@ -202,16 +213,8 @@ const workerSummary = wh
             <strong>{wh ? `+${wh.summarized}` : "n/a"}</strong>
           </div>
           <div class="status-metric-card">
-            <span>Fallback backlog</span>
-            <strong>{fallbackTotal}</strong>
-          </div>
-          <div class="status-metric-card">
             <span>Index</span>
             <strong>{indexAgeLabel}</strong>
-          </div>
-          <div class="status-metric-card" id="hb-fallback-card" title="deterministic fallback 残件数 (ライブ取得)">
-            <span>fallback 残件</span>
-            <strong id="hb-fallback">—</strong>
           </div>
         </div>
       </section>
@@ -233,21 +236,6 @@ const workerSummary = wh
             <strong>{wh.summarizeErrors}</strong>
           </div>
           <div>
-            <span class="detail-label">Fallback coverage</span>
-            <strong class={fallbackTotal > 0 ? "tone-warn" : "tone-ok"}>{fallbackPercent}%</strong>
-            <small>{fallback.realSummaryEntries} real / {ALL_ENTRIES.length} entries</small>
-          </div>
-          <div>
-            <span class="detail-label">Summary Queue</span>
-            <strong>{wh.queueMode ?? "unknown"}</strong>
-            <small>{wh.enqueueCandidates ?? 0} candidates · cap {wh.queueCap ?? "n/a"}</small>
-          </div>
-          <div>
-            <span class="detail-label">KV lookups</span>
-            <strong>{wh.kvLookupCount ?? "n/a"}</strong>
-            <small>cap {wh.kvLookupCap ?? "n/a"}</small>
-          </div>
-          <div>
             <span class="detail-label">og:image cache</span>
             <strong>{wh.ogCached} URL</strong>
             <small>{wh.ogNewHits} new</small>
@@ -259,10 +247,6 @@ const workerSummary = wh
             ) : (
               <strong class="tone-warn">{wh.sourcesFailed.join(", ")}</strong>
             )}
-          </div>
-          <div id="hb-enqueued-row">
-            <span class="detail-label">Queue 投入 (今回)</span>
-            <strong id="hb-enqueued">—</strong>
           </div>
         </section>
       ) : (
@@ -293,10 +277,6 @@ const workerSummary = wh
             <span>Error</span>
             <strong>{error}</strong>
           </div>
-          <div class="source-summary-card no-data">
-            <span>No data</span>
-            <strong>{noData}</strong>
-          </div>
           <div class="source-summary-card">
             <span>Coverage</span>
             <strong>{healthyPct}%</strong>
@@ -307,7 +287,6 @@ const workerSummary = wh
           <button type="button" class="status-filter is-active" data-source-filter="all" aria-pressed="true">All <span>{sources.length}</span></button>
           <button type="button" class="status-filter" data-source-filter="error" aria-pressed="false">Error <span>{error}</span></button>
           <button type="button" class="status-filter" data-source-filter="stale" aria-pressed="false">Stale <span>{stale}</span></button>
-          <button type="button" class="status-filter" data-source-filter="no-data" aria-pressed="false">No data <span>{noData}</span></button>
           <button type="button" class="status-filter" data-source-filter="ok" aria-pressed="false">Healthy <span>{ok}</span></button>
         </div>
 
@@ -347,16 +326,20 @@ const workerSummary = wh
               <span class={`source-status-badge ${s.status}`}>{s.status}</span>
               <span class="time source-time-block">
                 <strong>{s.count}</strong>
-                <span>{s.status === "error" || s.status === "no-data" ? "no data" : relativeTime(s.latest, now)}</span>
+                <span>{s.status === "error" ? "no data" : relativeTime(s.latest, now)}</span>
               </span>
             </div>
           ))}
-          <div class="source-empty" id="source-empty" hidden>No sources match this filter.</div>
+          <div class="source-empty" id="source-empty" hidden>
+            <strong>No sources match this filter.</strong>
+            <span>ステータスまたはカテゴリ条件を外して確認してください。</span>
+          </div>
         </div>
 
         <p class="status-note compact">
           <strong>status</strong> は source type と category ごとの鮮度しきい値で判定します。
-          <span class="tone-ok">ok</span> は範囲内、<span class="tone-warn">stale</span> は threshold 超過、<span class="tone-error">error</span> は取得失敗、<span class="tone-info">no-data</span> は任意ソース未出現です。
+          <span class="tone-ok">ok</span> は範囲内、<span class="tone-warn">stale</span> は threshold 超過、<span class="tone-error">error</span> はデータなしです。
+          stale は「上流が更新されていない」または「収集が遅れている」状態の目安なので、最新 run と source 個別行を合わせて確認してください。
         </p>
       </section>
     </main>
@@ -392,7 +375,7 @@ const workerSummary = wh
             <li>
               <span>{row.name}</span>
               <small>
-                 {row.ok} ok · {row.stale} stale · {row.error} err
+                {row.ok} ok · {row.stale} stale · {row.error} err
               </small>
             </li>
           ))}
@@ -566,10 +549,6 @@ const workerSummary = wh
     background: var(--danger);
   }
 
-  .source-summary-card.no-data::before {
-    background: var(--muted-2);
-  }
-
   .source-summary-card strong {
     font-size: 24px;
   }
@@ -714,20 +693,12 @@ const workerSummary = wh
     background: var(--danger);
   }
 
-  .source-item .status.no-data {
-    background: var(--muted-2);
-  }
-
   .source-row-error {
     background: linear-gradient(90deg, rgba(248, 113, 113, 0.08), transparent 48%);
   }
 
   .source-row-stale {
     background: linear-gradient(90deg, rgba(251, 191, 36, 0.08), transparent 48%);
-  }
-
-  .source-row-no-data {
-    background: linear-gradient(90deg, rgba(138, 132, 126, 0.08), transparent 48%);
   }
 
   .status-note {
@@ -755,10 +726,6 @@ const workerSummary = wh
 
   .tone-error {
     color: var(--danger);
-  }
-
-  .tone-info {
-    color: var(--muted-2);
   }
 
   .attention-stale {
@@ -876,39 +843,6 @@ const workerSummary = wh
         categoryFilter = button.dataset.categoryFilter ?? "all";
         apply();
       });
-    }
-  })();
-</script>
-
-<script define:vars={{ WORKER_HEALTH_URL }}>
-  // Live cron heartbeat: fetch the worker /health endpoint and update
-  // "最終 cron チェック" and "fallback 残件" cards in real time.
-  // The heartbeat is written by the worker on every cron run (even no-op),
-  // so this reflects the true last-checked time regardless of data changes.
-  (async () => {
-    const lastCronEl = document.getElementById("hb-last-cron");
-    const fallbackEl = document.getElementById("hb-fallback");
-    const enqueuedEl = document.getElementById("hb-enqueued");
-    if (!lastCronEl) return;
-    try {
-      const res = await fetch(WORKER_HEALTH_URL, { cache: "no-store" });
-      if (!res.ok) { lastCronEl.textContent = "取得失敗"; return; }
-      const hb = await res.json();
-      if (!hb.lastCronAt) { lastCronEl.textContent = "未記録"; return; }
-      const ms = Date.now() - new Date(hb.lastCronAt).getTime();
-      const mins = Math.floor(ms / 60_000);
-      lastCronEl.textContent = mins < 1 ? "1分以内" : `${mins}分前`;
-      lastCronEl.title = hb.lastCronAt;
-      if (fallbackEl && hb.fallbackTotal !== undefined) {
-        const changed = hb.changed ? " ✅ 更新あり" : " ℹ️ 変化なし";
-        fallbackEl.textContent = String(hb.fallbackTotal);
-        fallbackEl.title = changed.trim();
-      }
-      if (enqueuedEl && hb.enqueued !== undefined) {
-        enqueuedEl.textContent = `+${hb.enqueued}`;
-      }
-    } catch {
-      if (lastCronEl) lastCronEl.textContent = "取得失敗";
     }
   })();
 </script>

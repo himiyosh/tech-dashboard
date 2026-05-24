@@ -1,5 +1,6 @@
 ---
 import Portal from "../layouts/Portal.astro";
+import PageHero from "../components/PageHero.astro";
 import Sidebar from "../components/Sidebar.astro";
 import LiveMetrics from "../components/LiveMetrics.astro";
 import {
@@ -7,6 +8,7 @@ import {
   CATEGORY_META,
   relativeTime,
   type Category,
+  type CategoryGroup,
 } from "../lib/data.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { STATS } from "../lib/stats.ts";
@@ -15,15 +17,20 @@ const now = new Date();
 const lastUpdated = relativeTime(DASHBOARD_METRICS.generatedAt, now);
 const workerLastRun = relativeTime(DASHBOARD_METRICS.workerLastRunAt, now);
 const sourceTypes = [...new Set(ALL_ENTRIES.map((entry) => entry.sourceType))].sort();
-const groupSummary = CATEGORY_META.reduce<Record<string, number>>((acc, category) => {
+const groupSummary = CATEGORY_META.reduce<Record<CategoryGroup, number>>((acc, category) => {
   acc[category.group] = (acc[category.group] ?? 0) + 1;
   return acc;
-}, {});
-const GROUP_LABEL: Record<string, string> = {
-  coding: "Coding Agents",
-  platform: "Platform / Runtime",
-  ecosystem: "Ecosystem",
-  research: "Research",
+}, {} as Record<CategoryGroup, number>);
+const GROUP_LABEL: Record<CategoryGroup, string> = {
+  microsoft: "Microsoft / GitHub",
+  anthropic: "Anthropic",
+  openai: "OpenAI",
+  google: "Google",
+  "coding-tools": "AI Coding Tools",
+  "open-models": "Local & Open Models",
+  "agent-tools": "Agent Tools & Protocols",
+  research: "Research & Benchmarks",
+  industry: "Industry & Policy",
 };
 const categoryLast30 = (category: Category) =>
   STATS.byDay.slice(-30).reduce((sum, bucket) => sum + (bucket.byCategory[category] ?? 0), 0);
@@ -57,36 +64,32 @@ const pipelineSteps = [
 ---
 
 <Portal pageKey="about" title="About - TECH Dashboard">
+  <PageHero
+    className="page-hero-top-level page-hero-about"
+    kicker="About TECH Dashboard"
+    title="About"
+    count={`${DASHBOARD_METRICS.totalSourceCount} sources`}
+    headingId="about-heading"
+    description="TECH Dashboard は、AI coding と agent ecosystem の変化を毎日追うための日本語 dashboard です。公式発表、release note、研究、community feed を同じ情報設計に揃え、短時間で確認できます。"
+    actions={[
+      { href: "/rss.xml", label: "RSS" },
+      { href: "/feed.json", label: "JSON Feed" },
+      { href: "/status", label: "Status" },
+    ]}
+    metrics={[
+      { label: "Live entries", value: DASHBOARD_METRICS.liveEntries },
+      { label: "All time", value: DASHBOARD_METRICS.allTimeEntries },
+      { label: "Sources", value: DASHBOARD_METRICS.totalSourceCount },
+      { label: "Categories", value: DASHBOARD_METRICS.totalCategories },
+      { label: "Archive", value: DASHBOARD_METRICS.archiveEntries },
+      { label: "Last updated", value: lastUpdated },
+    ]}
+  />
+
   <div class="layout about-layout">
     <Sidebar />
 
     <main class="about-main">
-      <section class="about-hero" aria-labelledby="about-heading">
-        <div class="about-hero-copy">
-          <div class="section-header primary">
-            <h2 id="about-heading">About</h2>
-          </div>
-          <p class="about-lede">
-            TECH Dashboard は、AI coding と agent ecosystem の変化を毎日追うための日本語 dashboard です。
-            公式発表、release note、研究、community feed を同じ情報設計に揃え、短時間で「何が増えたか」「どの領域が伸びているか」を確認できます。
-          </p>
-          <div class="about-link-row" aria-label="Primary links">
-            <a href="/rss.xml">RSS</a>
-            <a href="/feed.json">JSON Feed</a>
-            <a href="/status">Status</a>
-          </div>
-        </div>
-
-        <div class="about-kpis" aria-label="Site summary">
-          <div><span>Live entries</span><strong data-metric="liveEntries">{DASHBOARD_METRICS.liveEntries}</strong></div>
-          <div><span>All time</span><strong data-metric="allTimeEntries">{DASHBOARD_METRICS.allTimeEntries}</strong></div>
-          <div><span>Sources</span><strong data-metric="totalSourceCount">{DASHBOARD_METRICS.totalSourceCount}</strong></div>
-          <div><span>Categories</span><strong data-metric="totalCategories">{DASHBOARD_METRICS.totalCategories}</strong></div>
-          <div><span>Archive</span><strong data-metric="archiveEntries">{DASHBOARD_METRICS.archiveEntries}</strong></div>
-          <div><span>Last updated</span><strong data-metric="updatedLabel">{lastUpdated}</strong></div>
-        </div>
-      </section>
-
       <section class="about-section-grid" aria-label="What this site covers">
         <article class="about-panel large">
           <span class="panel-kicker">Purpose</span>
@@ -197,7 +200,7 @@ const pipelineSteps = [
         <div class="rail-title">Groups</div>
         <ul class="about-rank-list simple">
           {Object.entries(groupSummary).map(([group, count]) => (
-            <li><span>{GROUP_LABEL[group] ?? group}</span><strong>{count}</strong></li>
+            <li><span>{GROUP_LABEL[group as CategoryGroup] ?? group}</span><strong>{count}</strong></li>
           ))}
         </ul>
       </div>
@@ -211,53 +214,6 @@ const pipelineSteps = [
     min-width: 0;
   }
 
-  .about-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 0.86fr);
-    gap: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: color-mix(in srgb, var(--surface) 88%, transparent);
-  }
-
-  .about-lede {
-    max-width: 760px;
-    margin: 8px 0 0;
-    color: var(--text-2);
-    font-size: 14px;
-    line-height: 1.8;
-  }
-
-  .about-link-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 16px;
-  }
-
-  .about-link-row a {
-    padding: 7px 10px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text-2);
-    font-size: 12px;
-    text-decoration: none;
-  }
-
-  .about-link-row a:hover {
-    border-color: color-mix(in srgb, var(--accent) 52%, var(--border));
-    color: var(--accent);
-  }
-
-  .about-kpis {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .about-kpis > div,
   .about-panel,
   .pipeline-card,
   .about-note-panel {
@@ -267,11 +223,6 @@ const pipelineSteps = [
     background: color-mix(in srgb, var(--bg-2) 72%, transparent);
   }
 
-  .about-kpis > div {
-    padding: 10px 12px;
-  }
-
-  .about-kpis span,
   .panel-kicker,
   .about-side-card .rail-title {
     display: block;
@@ -281,17 +232,6 @@ const pipelineSteps = [
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-  }
-
-  .about-kpis strong {
-    display: block;
-    overflow: hidden;
-    color: var(--text);
-    font-size: 18px;
-    font-variant-numeric: tabular-nums;
-    line-height: 1.2;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .about-section-grid {
@@ -506,7 +446,6 @@ const pipelineSteps = [
   }
 
   @media (max-width: 980px) {
-    .about-hero,
     .about-section-grid {
       grid-template-columns: 1fr;
     }
@@ -517,14 +456,6 @@ const pipelineSteps = [
   }
 
   @media (max-width: 640px) {
-    .about-hero {
-      padding: 14px;
-    }
-
-    .about-kpis {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .pipeline-grid {
       grid-template-columns: 1fr;
     }

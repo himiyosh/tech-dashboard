@@ -65,15 +65,6 @@ export interface WorkerHealth {
   sourcesFailed: string[];
   summarized: number;
   summarizeErrors: number;
-  summaryFallbacks?: number;
-  bodyFallbacks?: number;
-  fallbackTotal?: number;
-  fallbackPercent?: number;
-  kvLookupCap?: number;
-  kvLookupCount?: number;
-  queueMode?: "enabled" | "disabled" | "missing-binding";
-  queueCap?: number;
-  enqueueCandidates?: number;
   copilotOk: boolean;
   copilotError: string | null;
   ogCached: number;
@@ -96,29 +87,40 @@ export const WORKER_HEALTH: WorkerHealth | null = data.health ?? null;
 /** Items per page on timeline / category / tag pages. */
 export const PAGE_SIZE = 30;
 
-/** 13 categories in display order (matches site-spec §1.1 and mockup-D sidebar). */
+export type CategoryGroup =
+  | "microsoft"
+  | "anthropic"
+  | "openai"
+  | "google"
+  | "coding-tools"
+  | "open-models"
+  | "agent-tools"
+  | "research"
+  | "industry";
+
+/** Category slugs are stable URLs; group/name provide the visible taxonomy. */
 export const CATEGORY_META: ReadonlyArray<{
   slug: Category;
   name: string;
   color: string;
   initial: string;
   emoji: string;
-  group: "coding" | "platform" | "ecosystem" | "research";
+  group: CategoryGroup;
 }> = [
-    { slug: "copilot", name: "GitHub Copilot", color: "#5eead4", initial: "Co", emoji: "\u{1F9E0}", group: "coding" },
-    { slug: "claude", name: "Claude", color: "#fbbf24", initial: "Cl", emoji: "\u{1F9E1}", group: "coding" },
-    { slug: "codex", name: "Codex", color: "#93c5fd", initial: "Cx", emoji: "\u{1F4D8}", group: "coding" },
-    { slug: "gemini", name: "Gemini", color: "#60a5fa", initial: "Gm", emoji: "\u{2728}", group: "coding" },
-    { slug: "cursor", name: "Cursor", color: "#cbd5e1", initial: "Cu", emoji: "\u{1F5B1}\u{FE0F}", group: "coding" },
-    { slug: "cline", name: "Cline / Roo", color: "#c4b5fd", initial: "Cn", emoji: "\u{1F9F5}", group: "coding" },
-    { slug: "aider", name: "Aider", color: "#d6d3a1", initial: "Ai", emoji: "\u{1F91D}", group: "coding" },
-    { slug: "opencode", name: "Open Tools", color: "#a5b4fc", initial: "Ot", emoji: "\u{1F9F0}", group: "coding" },
-    { slug: "vscode", name: "Editors", color: "#63a2ff", initial: "Ed", emoji: "\u{1F4DD}", group: "platform" },
-    { slug: "local-llm", name: "Local LLM", color: "#f87171", initial: "Ll", emoji: "\u{1F3E0}", group: "platform" },
-    { slug: "agent-fw", name: "Agent FW", color: "#34d399", initial: "Af", emoji: "\u{1F916}", group: "ecosystem" },
-    { slug: "mcp", name: "MCP", color: "#f472b6", initial: "Mc", emoji: "\u{1F517}", group: "ecosystem" },
-    { slug: "tech-news", name: "Tech News", color: "#fb923c", initial: "Tn", emoji: "\u{1F4F0}", group: "ecosystem" },
-    { slug: "research", name: "Research", color: "#fda4af", initial: "Rs", emoji: "\u{1F52C}", group: "research" },
+    { slug: "copilot", name: "GitHub Copilot", color: "#5eead4", initial: "Co", emoji: "\u{1F9E0}", group: "microsoft" },
+    { slug: "vscode", name: "VS Code / Dev Env", color: "#63a2ff", initial: "Vs", emoji: "\u{1F537}", group: "microsoft" },
+    { slug: "claude", name: "Claude / Claude Code", color: "#fbbf24", initial: "Cl", emoji: "\u{1F9E1}", group: "anthropic" },
+    { slug: "codex", name: "OpenAI / Codex", color: "#93c5fd", initial: "Cx", emoji: "\u{1F4D8}", group: "openai" },
+    { slug: "gemini", name: "Gemini / Gemma", color: "#60a5fa", initial: "Gm", emoji: "\u{2728}", group: "google" },
+    { slug: "cursor", name: "AI Editors", color: "#cbd5e1", initial: "Ed", emoji: "\u{1F5B1}\u{FE0F}", group: "coding-tools" },
+    { slug: "cline", name: "Cline / Roo", color: "#c4b5fd", initial: "Cn", emoji: "\u{1F9F5}", group: "coding-tools" },
+    { slug: "aider", name: "Aider", color: "#d6d3a1", initial: "Ai", emoji: "\u{1F91D}", group: "coding-tools" },
+    { slug: "opencode", name: "OpenHands / OpenCode", color: "#a5b4fc", initial: "Oh", emoji: "\u{1F310}", group: "coding-tools" },
+    { slug: "local-llm", name: "Local LLM / Open Models", color: "#f87171", initial: "Lm", emoji: "\u{1F3E0}", group: "open-models" },
+    { slug: "agent-fw", name: "Agent Frameworks", color: "#34d399", initial: "Af", emoji: "\u{1F916}", group: "agent-tools" },
+    { slug: "mcp", name: "MCP / Tooling", color: "#f472b6", initial: "Mc", emoji: "\u{1F517}", group: "agent-tools" },
+    { slug: "research", name: "Papers / Benchmarks", color: "#fda4af", initial: "Pb", emoji: "\u{1F52C}", group: "research" },
+    { slug: "tech-news", name: "Industry & Policy", color: "#fb923c", initial: "Ip", emoji: "\u{1F4F0}", group: "industry" },
   ];
 
 export function countByCategory(): Record<Category, number> {
@@ -215,31 +217,6 @@ const CJK_RE = /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
 /** true when the string contains Japanese/CJK characters. */
 export function hasCjk(s: string | undefined | null): boolean {
   return !!s && CJK_RE.test(s);
-}
-
-const FALLBACK_SUMMARY_JA_PREFIX = "このエントリは ";
-const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
-const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collection metadata";
-
-export function isDeterministicFallbackEntry(e: NormalizedEntry): boolean {
-  return (
-    (e.summaryJa ?? "").startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
-    (e.summaryEn ?? "").includes(FALLBACK_SUMMARY_EN_NEEDLE) ||
-    (e.bodyEn ?? "").includes(FALLBACK_BODY_EN_NEEDLE)
-  );
-}
-
-export function fallbackMetrics(entries: readonly NormalizedEntry[] = ALL_ENTRIES): {
-  fallbackEntries: number;
-  realSummaryEntries: number;
-  fallbackPercent: number;
-} {
-  const fallbackEntries = entries.filter(isDeterministicFallbackEntry).length;
-  return {
-    fallbackEntries,
-    realSummaryEntries: entries.length - fallbackEntries,
-    fallbackPercent: entries.length === 0 ? 0 : Math.round((fallbackEntries / entries.length) * 100),
-  };
 }
 
 /**

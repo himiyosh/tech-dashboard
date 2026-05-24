@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 
 const args = process.argv.slice(2);
 const repo = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
@@ -170,6 +170,16 @@ function readStagedFile(path) {
   return readGitBlob(blob);
 }
 
+function readWorktreeFile(path) {
+  if (!existsSync(path)) return { skipped: true, missing: true };
+  const stat = statSync(path);
+  if (!stat.isFile()) return { skipped: true, nonFile: true };
+  if (stat.size > MAX_BYTES) return { skipped: true, size: stat.size };
+  const buffer = readFileSync(path);
+  if (!isProbablyText(buffer)) return { skipped: true, size: stat.size, binary: true };
+  return { text: buffer.toString("utf8"), size: stat.size };
+}
+
 function uniqueFindings(findings) {
   const unique = new Map();
   for (const finding of findings) {
@@ -215,27 +225,25 @@ function scan() {
   } else if (mode === "current") {
     for (const path of trackedFiles()) {
       scanPath({ scope: mode, path, findings });
-      if (!existsSync(path)) continue;
-      const buffer = readFileSync(path);
-      if (buffer.length > MAX_BYTES || !isProbablyText(buffer)) {
+      const result = readWorktreeFile(path);
+      if (result.skipped) {
         skipped++;
         continue;
       }
       scanned++;
-      scanText({ scope: mode, path, text: buffer.toString("utf8"), findings });
+      scanText({ scope: mode, path, text: result.text, findings });
     }
   } else if (mode === "worktree") {
     warnings.push(...ignoredHighRiskPaths());
     for (const path of worktreeFiles()) {
       scanPath({ scope: mode, path, findings });
-      if (!existsSync(path)) continue;
-      const buffer = readFileSync(path);
-      if (buffer.length > MAX_BYTES || !isProbablyText(buffer)) {
+      const result = readWorktreeFile(path);
+      if (result.skipped) {
         skipped++;
         continue;
       }
       scanned++;
-      scanText({ scope: mode, path, text: buffer.toString("utf8"), findings });
+      scanText({ scope: mode, path, text: result.text, findings });
     }
   } else {
     for (const { blob, path } of historyObjects(revArgs)) {

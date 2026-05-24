@@ -6,11 +6,9 @@ import {
   entryHref,
   summaryForLang,
   summaryForLangWithFallback,
-  titleForLang,
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
-import CategoryThumb from "./CategoryThumb.astro";
 
 export interface Props {
   entry: NormalizedEntry;
@@ -44,11 +42,11 @@ function faviconUrl(url: string, size = 32): string {
   if (!h) return "";
   return `https://www.google.com/s2/favicons?sz=${size}&domain=${h}`;
 }
-const entryFavicon = faviconUrl(entry.url);
 
 const summaryJaResult = summaryForLangWithFallback(entry, "ja");
 const summaryJa = summaryJaResult.text;
 const summaryEn = summaryForLang(entry, "en");
+const hasSummary = Boolean(summaryJa || summaryEn);
 const titleJaResult = titleForLangWithFallback(entry, "ja");
 const titleEnResult = titleForLangWithFallback(entry, "en");
 const titleJa = titleJaResult.text;
@@ -56,6 +54,76 @@ const titleEn = titleEnResult.text;
 
 const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
 const catColor = catMeta?.color ?? "#8a847e";
+const catName = catMeta?.name ?? entry.category;
+const catEmoji = catMeta?.emoji ?? "\u{1F4C4}";
+
+const sourceTypeJa: Record<NormalizedEntry["sourceType"], string> = {
+  blog: "技術記事",
+  release: "公式リリース",
+  changelog: "変更履歴",
+  paper: "論文/研究",
+  community: "コミュニティ",
+};
+const sourceTypeEn: Record<NormalizedEntry["sourceType"], string> = {
+  blog: "technical post",
+  release: "official release",
+  changelog: "changelog",
+  paper: "paper/research",
+  community: "community",
+};
+const priorityTone =
+  entry.importance === 3 ? "high" : entry.importance === 2 ? "medium" : "normal";
+const priorityLabelJa =
+  entry.importance === 3 ? "重要度 High" : entry.importance === 2 ? "重要度 Medium" : "通常";
+const priorityLabelEn =
+  entry.importance === 3 ? "High priority" : entry.importance === 2 ? "Medium priority" : "Normal";
+const rankReasonJa =
+  entry.importance >= 2
+    ? `${priorityLabelJa} · ${sourceTypeJa[entry.sourceType]} · ${catName}`
+    : fresh
+      ? `新着 · ${sourceTypeJa[entry.sourceType]} · ${catName}`
+      : `深掘り候補 · ${sourceTypeJa[entry.sourceType]} · ${catName}`;
+const rankReasonEn =
+  entry.importance >= 2
+    ? `${priorityLabelEn} · ${sourceTypeEn[entry.sourceType]} · ${catName}`
+    : fresh
+      ? `New · ${sourceTypeEn[entry.sourceType]} · ${catName}`
+      : `Deep-dive candidate · ${sourceTypeEn[entry.sourceType]} · ${catName}`;
+const publishedJa = new Intl.DateTimeFormat("ja-JP", {
+  timeZone: "Asia/Tokyo",
+  month: "short",
+  day: "numeric",
+}).format(new Date(entry.publishedAt));
+const publishedEn = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Tokyo",
+  month: "short",
+  day: "numeric",
+}).format(new Date(entry.publishedAt));
+
+function isPendingSummary(text: string): boolean {
+  return text.startsWith("このエントリは ") || /AI\s*要約未生成|AI summary pending/i.test(text);
+}
+
+const summaryJaMark = summaryJaResult.isFallback
+  ? "原文EN"
+  : isPendingSummary(summaryJa)
+    ? "要約待ち"
+    : "AI要約";
+const summaryEnMark = isPendingSummary(summaryEn) ? "Pending" : "EN";
+
+// Generate a deterministic pattern seed from the entry id
+const patternSeed = entry.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+const patternRotate = patternSeed % 360;
+const patternScale = 0.8 + (patternSeed % 5) * 0.1;
+
+// Source type icon character
+function sourceIcon(t: string): string {
+  if (t === "release") return "\u{1F680}";
+  if (t === "changelog") return "\u{1F4CB}";
+  if (t === "paper") return "\u{1F4D1}";
+  if (t === "blog") return "\u{270D}\u{FE0F}";
+  return "\u{1F4AC}";
+}
 const img = entry.image;
 const hasUsableImage =
   !!img && typeof img.src === "string" && img.src.length > 0;
@@ -67,7 +135,6 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
   data-pagefind-body
   style={`--cat-color:${catColor}`}
 >
-  <a class="card-panel-link" href={entryHref(entry)} tabindex="-1" aria-label={`Open ${titleJa || titleEn || entry.title}`}></a>
   <div class="card-body">
     <div class="meta">
       {entry.importance === 3 && <span class="badge hot" title="重要リリース">🔥 HOT</span>}
@@ -80,7 +147,7 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
       <span class="src-tag">
         <img
           class="src-favicon"
-          src={entryFavicon}
+          src={faviconUrl(entry.url)}
           alt=""
           width="14"
           height="14"
@@ -114,7 +181,19 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
         </span>
       </a>
     </h3>
-    {(summaryJa || summaryEn) && (
+    <div class="card-insight" aria-label="Reading priority">
+      <span class={`insight-priority ${priorityTone}`}>
+        <span class="i18n-ja">{priorityLabelJa}</span>
+        <span class="i18n-en" lang="en">{priorityLabelEn}</span>
+      </span>
+      <span class="insight-reason i18n-ja">{rankReasonJa}</span>
+      <span class="insight-reason i18n-en" lang="en">{rankReasonEn}</span>
+      <span class="insight-date">
+        <span class="i18n-ja">公開 {publishedJa}</span>
+        <span class="i18n-en" lang="en">Published {publishedEn}</span>
+      </span>
+    </div>
+    {hasSummary ? (
       <div class="summary-stack">
         {summaryJa && (
           <p
@@ -122,17 +201,22 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
             title={summaryJa}
             lang={summaryJaResult.fallbackLang === "en" ? "en" : "ja"}
           >
-            <span class="ai-mark">{summaryJaResult.isFallback ? "EN" : "AI要約"}</span>
+            <span class="ai-mark">{summaryJaMark}</span>
             <span class="s-text">{summaryJa}</span>
           </p>
         )}
         {summaryEn && (
           <p class="summary summary-en i18n-en" title={summaryEn} lang="en">
-            <span class="en-mark">EN</span>
+            <span class="en-mark">{summaryEnMark}</span>
             <span class="s-text">{summaryEn}</span>
           </p>
         )}
       </div>
+    ) : (
+      <p class="summary-state">
+        <span class="i18n-ja">要約は未生成です。タイトル、ソース、カテゴリ、重要度を手がかりに判断できます。</span>
+        <span class="i18n-en" lang="en">Summary is not generated yet. Use the title, source, category, and priority cues to decide.</span>
+      </p>
     )}
     {entry.tags.length > 0 && (
       <div class="tag-row">
@@ -144,7 +228,7 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
     <div class="url">
       <img
         class="url-favicon"
-        src={entryFavicon}
+        src={faviconUrl(entry.url)}
         alt=""
         width="16"
         height="16"
@@ -158,19 +242,54 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
     </div>
   </div>
 
-  <div class:list={["card-thumb", { fallback: !hasUsableImage }]} style={`--cat-color:${catColor}`}>
-    {hasUsableImage && (
-      <img
-        src={img!.src}
-        alt={img!.alt || titleJa}
-        loading="lazy"
-        decoding="async"
-        onerror="this.parentElement.classList.add('failed')"
-      />
-    )}
-    <div class="card-thumb-fallback" aria-hidden="true">
-      <CategoryThumb category={entry.category} seed={entry.id} height="100%" />
+  {hasUsableImage ? (
+    <div class="card-thumb">
+      <img src={img!.src} alt={img!.alt || titleJa} loading="lazy" decoding="async" />
+      <span class="src-mark">{thumbMark}</span>
     </div>
-    {hasUsableImage && <span class="src-mark">{thumbMark}</span>}
-  </div>
+  ) : (
+    <div class="card-thumb fallback" style={`--cat-color:${catColor}`}>
+      <svg viewBox="0 0 144 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <linearGradient id={`bg-${entry.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color={catColor} stop-opacity="0.30" />
+            <stop offset="100%" stop-color={catColor} stop-opacity="0.05" />
+          </linearGradient>
+        </defs>
+        <rect width="144" height="96" fill="#1a1917" />
+        <rect width="144" height="96" fill={`url(#bg-${entry.id})`} />
+        <g opacity="0.10" transform={`rotate(${patternRotate} 72 48) scale(${patternScale})`}>
+          <circle cx="20" cy="15" r="18" fill={catColor} />
+          <circle cx="130" cy="80" r="24" fill={catColor} />
+          <rect x="90" y="5" width="40" height="40" rx="8" fill={catColor} />
+        </g>
+        <text
+          x="72"
+          y="54"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          font-size="40"
+          style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4))"
+        >{catEmoji}</text>
+        <text
+          x="72"
+          y="82"
+          text-anchor="middle"
+          font-family="system-ui, -apple-system, sans-serif"
+          font-size="8.5"
+          fill={catColor}
+          opacity="0.7"
+          letter-spacing="0.08em"
+          font-weight="600"
+        >{catName}</text>
+        <text
+          x="132"
+          y="14"
+          text-anchor="end"
+          font-size="12"
+          opacity="0.85"
+        >{sourceIcon(entry.sourceType)}</text>
+      </svg>
+    </div>
+  )}
 </article>

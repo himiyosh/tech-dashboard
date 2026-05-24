@@ -1,5 +1,6 @@
 ---
 import Portal from "../layouts/Portal.astro";
+import PageHero from "../components/PageHero.astro";
 import Sidebar from "../components/Sidebar.astro";
 import {
   ALL_ENTRIES,
@@ -8,6 +9,7 @@ import {
   entriesFor,
   relativeTime,
   type Category,
+  type CategoryGroup,
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { categoryDailySpark, STATS } from "../lib/stats.ts";
@@ -15,19 +17,41 @@ import { categoryDailySpark, STATS } from "../lib/stats.ts";
 const now = new Date();
 const counts = countByCategory();
 
-const GROUP_LABEL: Record<string, string> = {
-  coding: "Coding Agents",
-  platform: "Platform / Runtime",
-  ecosystem: "Ecosystem",
-  research: "Research",
+const GROUP_LABEL: Record<CategoryGroup, string> = {
+  microsoft: "Microsoft / GitHub",
+  anthropic: "Anthropic",
+  openai: "OpenAI",
+  google: "Google",
+  "coding-tools": "AI Coding Tools",
+  "open-models": "Local & Open Models",
+  "agent-tools": "Agent Tools & Protocols",
+  research: "Research & Benchmarks",
+  industry: "Industry & Policy",
 };
 
-const GROUP_COPY: Record<string, string> = {
-  coding: "IDE 内での実装支援、CLI agent、コード生成体験の更新をまとめます。",
-  platform: "エディタ、ローカル実行基盤、モデル runtime 周辺の変化を追います。",
-  ecosystem: "MCP、agent framework、技術ニュースなど周辺 ecosystem の動きを俯瞰します。",
-  research: "論文、実験、実務知見から、中長期で効く基礎情報を拾います。",
+const GROUP_COPY: Record<CategoryGroup, string> = {
+  microsoft: "GitHub Copilot、VS Code、Microsoft 系の開発者向け更新をまとめます。",
+  anthropic: "Claude、Claude Code、Anthropic API / research の動きを追います。",
+  openai: "OpenAI、Codex、ChatGPT、API / agent 関連の更新をまとめます。",
+  google: "Gemini、Gemma、Vertex AI、DeepMind、Google Developers AI を整理します。",
+  "coding-tools": "Cursor、Zed、Cline、Aider、OpenHands など AI coding tool をまとめます。",
+  "open-models": "Ollama、Hugging Face、open models、local inference の更新です。",
+  "agent-tools": "MCP、LangChain、AutoGen、Semantic Kernel など agent tooling を扱います。",
+  research: "論文、benchmark、DORA など評価・研究・長期知見をまとめます。",
+  industry: "AI 業界、cloud / GPU、市場、政策、security incident など横断ニュースです。",
 };
+
+const GROUP_ORDER: CategoryGroup[] = [
+  "microsoft",
+  "anthropic",
+  "openai",
+  "google",
+  "coding-tools",
+  "open-models",
+  "agent-tools",
+  "research",
+  "industry",
+];
 
 const TYPE_LABEL: Record<NormalizedEntry["sourceType"], string> = {
   blog: "Blog",
@@ -37,11 +61,19 @@ const TYPE_LABEL: Record<NormalizedEntry["sourceType"], string> = {
   community: "Community",
 };
 
-const countDays = (category: Category, days: number): number =>
-  STATS.byDay.slice(-days).reduce((sum, bucket) => sum + (bucket.byCategory[category] ?? 0), 0);
-
-const countPrevDays = (category: Category, days: number): number =>
-  STATS.byDay.slice(-(days * 2), -days).reduce((sum, bucket) => sum + (bucket.byCategory[category] ?? 0), 0);
+const entryTime = (entry: NormalizedEntry): number => Date.parse(entry.publishedAt ?? entry.collectedAt ?? "") || 0;
+const countLiveDays = (entries: NormalizedEntry[], days: number): number => {
+  const cutoff = now.getTime() - days * 86_400_000;
+  return entries.filter((entry) => entryTime(entry) >= cutoff).length;
+};
+const countLivePrevDays = (entries: NormalizedEntry[], days: number): number => {
+  const end = now.getTime() - days * 86_400_000;
+  const start = now.getTime() - days * 2 * 86_400_000;
+  return entries.filter((entry) => {
+    const time = entryTime(entry);
+    return time >= start && time < end;
+  }).length;
+};
 
 const pctDelta = (current: number, previous: number): number => {
   if (previous === 0) return current > 0 ? 100 : 0;
@@ -55,10 +87,10 @@ const categoryPanels = CATEGORY_META.map((cat) => {
     ...bucket,
     label: bucket.key.slice(5), // MM-DD
   }));
-  const last7 = countDays(cat.slug, 7);
-  const prev7 = countPrevDays(cat.slug, 7);
-  const last30 = countDays(cat.slug, 30);
-  const allTime = STATS.byMonth.reduce((sum, bucket) => sum + (bucket.byCategory[cat.slug] ?? 0), 0);
+  const last7 = countLiveDays(entries, 7);
+  const prev7 = countLivePrevDays(entries, 7);
+  const last30 = countLiveDays(entries, 30);
+  const sourceCount = new Set(entries.map((entry) => entry.source)).size;
   const types = new Map<NormalizedEntry["sourceType"], number>();
   for (const entry of entries.slice(0, 80)) {
     types.set(entry.sourceType, (types.get(entry.sourceType) ?? 0) + 1);
@@ -70,9 +102,9 @@ const categoryPanels = CATEGORY_META.map((cat) => {
   return {
     ...cat,
     liveCount: counts[cat.slug] ?? 0,
-    allTime,
     last7,
     last30,
+    sourceCount,
     delta: pctDelta(last7, prev7),
     latest,
     daily,
@@ -81,81 +113,84 @@ const categoryPanels = CATEGORY_META.map((cat) => {
 });
 
 const totalLiveEntries = ALL_ENTRIES.length;
-const topCategory = [...categoryPanels].sort((a, b) => b.last30 - a.last30)[0] ?? null;
+const topCategory = [...categoryPanels].sort((a, b) => b.liveCount - a.liveCount)[0] ?? null;
 const activeCategories = categoryPanels.filter((panel) => panel.last30 > 0).length;
+const researchPanel = categoryPanels.find((panel) => panel.slug === "research");
+const techNewsPanel = categoryPanels.find((panel) => panel.slug === "tech-news");
 
 // Group categories by display group while preserving order.
-const grouped = new Map<string, typeof categoryPanels>();
-for (const cat of categoryPanels) {
-  const arr = grouped.get(cat.group) ?? [];
-  arr.push(cat);
-  grouped.set(cat.group, arr);
-}
+const grouped = new Map<CategoryGroup, typeof categoryPanels>(
+  GROUP_ORDER.map((group) => [group, categoryPanels.filter((cat) => cat.group === group)]),
+);
 ---
 
 <Portal pageKey="categories" title="Categories - TECH Dashboard">
+  <PageHero
+    className="page-hero-top-level page-hero-categories"
+    kicker="Explore by category"
+    title="Categories"
+    count={`${CATEGORY_META.length} categories`}
+    headingId="categories-heading"
+    description="カテゴリごとの記事量、直近の勢い、過去 30 日の推移を比較できます。伸びている領域を見つけたら、そのままカテゴリ詳細へ移動できます。"
+    actions={[
+      { href: topCategory ? `/c/${topCategory.slug}` : "#category-groups", label: "Hot category" },
+      { href: "#category-directory", label: "Category list" },
+      { href: "/status", label: "Check source health" },
+    ]}
+    metrics={[
+      { label: "Live entries", value: totalLiveEntries },
+      { label: "Active cats", value: activeCategories },
+      { label: "Top live cat", value: topCategory?.name ?? "none" },
+      { label: "Research live", value: researchPanel?.liveCount ?? 0 },
+      { label: "Tech News live", value: techNewsPanel?.liveCount ?? 0 },
+      { label: "Updated", value: relativeTime(STATS.generatedAt, now) },
+    ]}
+  />
+
   <div class="layout categories-layout">
     <Sidebar />
 
     <main class="categories-main">
-      <section class="categories-overview" aria-labelledby="categories-heading">
-        <div>
-          <span class="mobile-page-badge">Category map</span>
-          <div class="section-header primary">
-            <h2 id="categories-heading">
-              Categories
-              <span class="count">{CATEGORY_META.length} categories</span>
+      <section id="category-directory" class="category-directory" aria-labelledby="category-directory-heading">
+        <div class="category-directory-head">
+          <div>
+            <span class="category-directory-kicker">Quick directory</span>
+            <h2 id="category-directory-heading">
+              カテゴリ一覧
+              <span>{CATEGORY_META.length} categories</span>
             </h2>
           </div>
           <p>
-            カテゴリごとの記事量、直近の勢い、過去 30 日の推移を同じカード内で比較できます。
-            伸びている領域を見つけたら、そのままカテゴリ詳細へ移動できます。
+            名前と件数だけを先に確認できます。詳細な 30 日推移は下のカテゴリカードで確認してください。
           </p>
-          <nav class="category-quick-links" aria-label="Category shortcuts">
-            {categoryPanels.map((cat) => (
-              <a href={`/c/${cat.slug}`} style={`--cat-color:${cat.color}`}>
-                <span aria-hidden="true">{cat.emoji}</span>
-                <strong>{cat.name}</strong>
-                <small>{cat.liveCount}</small>
-              </a>
-            ))}
-          </nav>
         </div>
 
-        <div class="categories-kpis" aria-label="Category summary">
-          <div>
-            <span>Live entries</span>
-            <strong>{totalLiveEntries}</strong>
-          </div>
-          <div class="mobile-secondary-kpi">
-            <span>All time</span>
-            <strong>{STATS.totals.allTime}</strong>
-          </div>
-          <div>
-            <span>Last 30d</span>
-            <strong>{STATS.totals.last30d}</strong>
-          </div>
-          <div>
-            <span>Active cats</span>
-            <strong>{activeCategories}</strong>
-          </div>
-          <div class="mobile-secondary-kpi">
-            <span>Hot category</span>
-            <strong>{topCategory?.name ?? "none"}</strong>
-          </div>
-          <div class="mobile-secondary-kpi">
-            <span>Updated</span>
-            <strong>{relativeTime(STATS.generatedAt, now)}</strong>
-          </div>
-        </div>
+        <nav class="category-directory-grid" aria-label="Category quick links">
+          {categoryPanels.map((cat) => (
+            <a
+              href={`/c/${cat.slug}`}
+              class="category-directory-item"
+              style={`--cat-color:${cat.color}`}
+              aria-label={`${cat.name}: ${cat.liveCount} live entries, ${cat.last30} entries in the last 30 days`}
+            >
+              <span class="category-directory-dot"></span>
+              <span class="category-directory-text">
+                <span class="category-directory-name">{cat.name}</span>
+                <span class="category-directory-group-label">{GROUP_LABEL[cat.group]}</span>
+              </span>
+              <span class="category-directory-count">{cat.liveCount}</span>
+            </a>
+          ))}
+        </nav>
       </section>
 
+      <div id="category-groups"></div>
       {[...grouped.entries()].map(([group, cats]) => (
         <section class="category-group" aria-labelledby={`group-${group}`}>
           <div class="category-group-head">
             <div>
-              <h3 id={`group-${group}`}>{GROUP_LABEL[group] ?? group}</h3>
-              <p>{GROUP_COPY[group] ?? "関連カテゴリの更新状況をまとめています。"}</p>
+              <h3 id={`group-${group}`}>{GROUP_LABEL[group]}</h3>
+              <p>{GROUP_COPY[group]}</p>
             </div>
             <span>{cats.length} categories</span>
           </div>
@@ -167,14 +202,15 @@ for (const cat of categoryPanels) {
                     <span class="cat-dot"></span>
                     <div class="cat-title-block">
                       <span class="cat-name">{cat.name}</span>
-                      <span class="cat-group-label">{GROUP_LABEL[cat.group] ?? cat.group}</span>
+                      <span class="cat-group-label">{GROUP_LABEL[cat.group]}</span>
                     </div>
                     <span class="cat-count">{cat.liveCount}</span>
                   </div>
 
                   <div class="cat-metrics">
-                    <span><strong>{cat.allTime}</strong> all time</span>
-                    <span><strong>{cat.last30}</strong> 30d</span>
+                    <span><strong>{cat.liveCount}</strong> live</span>
+                    <span><strong>{cat.last30}</strong> live 30d</span>
+                    <span><strong>{cat.sourceCount}</strong> sources</span>
                     <span class:list={["cat-delta", cat.delta > 0 ? "up" : cat.delta < 0 ? "down" : "flat"]}>
                       {cat.delta > 0 ? "+" : ""}{cat.delta}% 7d
                     </span>
@@ -230,93 +266,130 @@ for (const cat of categoryPanels) {
     min-width: 0;
   }
 
-  .categories-overview {
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
-    gap: 16px;
+  .category-directory {
     padding: 18px;
-    margin-bottom: 20px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: color-mix(in srgb, var(--surface) 88%, transparent);
-    overflow: hidden;
+    margin-bottom: 24px;
+    border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
+    border-radius: 12px;
+    background:
+      radial-gradient(ellipse 440px 180px at 0% 0%, rgba(94, 234, 212, 0.08), transparent 72%),
+      color-mix(in srgb, var(--surface) 86%, transparent);
   }
 
-  .categories-overview > div {
-    position: relative;
-    min-width: 0;
-    z-index: 1;
+  .category-directory-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
   }
 
-  .mobile-page-badge {
-    display: none;
+  .category-directory-kicker {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--accent);
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
 
-  .categories-overview p {
-    max-width: 720px;
-    margin: 8px 0 0;
+  .category-directory h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0;
+    color: var(--text);
+    font-size: 16px;
+    letter-spacing: -0.01em;
+  }
+
+  .category-directory h2 span {
     color: var(--muted);
-    font-size: 13px;
-    line-height: 1.7;
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 500;
   }
 
-  .categories-kpis {
+  .category-directory-head p {
+    max-width: 430px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .category-directory-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 10px;
   }
 
-  .category-quick-links {
-    display: flex;
-    gap: 8px;
-    margin-top: 14px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-  }
-
-  .category-quick-links::-webkit-scrollbar {
-    display: none;
-  }
-
-  .category-quick-links a {
-    display: inline-grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 7px;
+  .category-directory-item {
+    display: grid;
+    grid-template-columns: 8px minmax(0, 1fr) auto;
     align-items: center;
-    flex: 0 0 auto;
-    min-width: 142px;
-    padding: 8px 10px;
-    border: 1px solid color-mix(in srgb, var(--cat-color) 42%, var(--border));
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--cat-color) 10%, var(--surface));
-    color: var(--text);
-    font-size: 12px;
-    text-decoration: none;
+    gap: 9px;
+    min-height: 44px;
+    padding: 9px 10px;
+    border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+    border-radius: 10px;
+    color: var(--text-2);
+    background: color-mix(in srgb, var(--bg-2) 66%, transparent);
   }
 
-  .category-quick-links strong {
+  .category-directory-item:hover,
+  .category-directory-item:focus-visible {
+    border-color: color-mix(in srgb, var(--cat-color) 58%, var(--border));
+    color: var(--text);
+    outline: 0;
+  }
+
+  .category-directory-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--cat-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--cat-color) 16%, transparent);
+  }
+
+  .category-directory-text {
+    min-width: 0;
+  }
+
+  .category-directory-name,
+  .category-directory-group-label {
+    display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .category-quick-links small {
+  .category-directory-name {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.18;
+  }
+
+  .category-directory-group-label {
     color: var(--muted);
+    font-size: 9.5px;
+    line-height: 1.2;
+  }
+
+  .category-directory-count {
+    min-width: 24px;
+    padding: 2px 5px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--cat-color) 16%, transparent);
+    color: var(--text);
     font-family: ui-monospace, monospace;
-    font-size: 11px;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-align: center;
   }
 
-  .categories-kpis > div {
-    min-width: 0;
-    padding: 10px 12px;
-    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
-    border-radius: 8px;
-    background: color-mix(in srgb, var(--bg-2) 72%, transparent);
-  }
-
-  .categories-kpis span,
   .cat-group-label {
     display: block;
     margin-bottom: 5px;
@@ -327,19 +400,8 @@ for (const cat of categoryPanels) {
     text-transform: uppercase;
   }
 
-  .categories-kpis strong {
-    display: block;
-    overflow: hidden;
-    color: var(--text);
-    font-size: 18px;
-    font-variant-numeric: tabular-nums;
-    line-height: 1.2;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   .category-group {
-    margin-bottom: 32px;
+    margin-bottom: 26px;
   }
 
   .category-group-head {
@@ -374,16 +436,16 @@ for (const cat of categoryPanels) {
 
   .category-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 10px;
   }
 
   .category-card {
     display: flex;
-    min-height: 240px;
+    min-height: 174px;
     flex-direction: column;
-    gap: 12px;
-    padding: 15px 16px;
+    gap: 8px;
+    padding: 11px 12px;
     border: 1px solid var(--border);
     border-radius: 8px;
     background:
@@ -402,13 +464,13 @@ for (const cat of categoryPanels) {
   .cat-head {
     display: flex;
     align-items: flex-start;
-    gap: 9px;
+    gap: 8px;
   }
 
   .cat-dot {
-    width: 10px;
-    height: 10px;
-    margin-top: 5px;
+    width: 8px;
+    height: 8px;
+    margin-top: 6px;
     border-radius: 999px;
     flex: 0 0 auto;
     background: var(--cat-color);
@@ -425,36 +487,38 @@ for (const cat of categoryPanels) {
     overflow: hidden;
     color: var(--text);
     font-weight: 600;
+    line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .cat-count {
     color: var(--text);
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
 
   .cat-metrics {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
   }
 
   .cat-metrics span {
-    min-width: 0;
-    padding: 7px 8px;
+    min-width: auto;
+    padding: 3px 7px;
     border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
-    border-radius: 8px;
+    border-radius: 999px;
     background: color-mix(in srgb, var(--bg-2) 62%, transparent);
     color: var(--muted);
-    font-size: 11px;
+    font-size: 10.5px;
+    line-height: 1.25;
   }
 
   .cat-metrics strong {
     color: var(--text);
-    font-size: 13px;
+    font-size: 12px;
     font-variant-numeric: tabular-nums;
   }
 
@@ -477,9 +541,9 @@ for (const cat of categoryPanels) {
     grid-auto-flow: column;
     grid-auto-columns: minmax(0, 1fr);
     align-items: end;
-    gap: 2px;
-    height: 70px;
-    padding: 10px 8px 8px;
+    gap: 1px;
+    height: 46px;
+    padding: 6px 7px;
     border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
     border-radius: 8px;
     background: color-mix(in srgb, var(--bg-2) 54%, transparent);
@@ -504,126 +568,95 @@ for (const cat of categoryPanels) {
   .cat-axis {
     display: flex;
     justify-content: space-between;
-    margin-top: -7px;
+    margin-top: -5px;
     color: var(--muted-2);
-    font-size: 10.5px;
+    font-size: 10px;
   }
 
   .cat-footer {
-    display: grid;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 8px;
-    margin-top: auto;
+    margin-top: 0;
   }
 
   .cat-meta {
-    font-size: 12px;
+    min-width: 0;
     color: var(--text-subtle);
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .cat-types {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    gap: 4px;
+    max-width: 54%;
+    overflow: hidden;
   }
 
   .cat-types span {
-    padding: 3px 7px;
+    flex: 0 0 auto;
+    padding: 2px 6px;
     border: 1px solid color-mix(in srgb, var(--cat-color) 36%, var(--border));
     border-radius: 999px;
     color: var(--muted);
-    font-size: 10.5px;
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  .cat-types span:nth-child(n+3) {
+    display: none;
   }
 
   .sr-only {
-    position: absolute;
-    overflow: hidden;
-    width: 1px;
-    height: 1px;
+    position: absolute !important;
+    display: block !important;
+    overflow: hidden !important;
+    width: 1px !important;
+    max-width: 1px !important;
+    height: 1px !important;
     padding: 0;
     border: 0;
     margin: -1px;
     clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
     white-space: nowrap;
   }
 
-  @media (max-width: 980px) {
-    .categories-overview {
-      grid-template-columns: 1fr;
-    }
-  }
-
   @media (max-width: 640px) {
-    .categories-overview {
-      gap: 12px;
-      padding: 13px;
-      margin-bottom: 14px;
-      border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
-      border-radius: 16px;
-      background:
-        radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 48%),
-        linear-gradient(135deg, color-mix(in srgb, var(--surface) 84%, var(--accent-bg) 16%), color-mix(in srgb, var(--bg-2) 88%, transparent));
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    .category-directory {
+      padding: 14px;
+      margin-bottom: 18px;
     }
 
-    .categories-overview::after {
-      content: "";
-      position: absolute;
-      right: -34px;
-      top: -34px;
-      width: 128px;
-      height: 128px;
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--accent) 12%, transparent);
-      pointer-events: none;
-    }
-
-    .mobile-page-badge {
-      display: inline-flex;
-      align-items: center;
+    .category-directory-head {
+      align-items: flex-start;
+      flex-direction: column;
       gap: 6px;
-      margin-bottom: 8px;
-      padding: 5px 9px;
-      border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.18);
-      color: var(--accent);
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.13em;
-      text-transform: uppercase;
+      margin-bottom: 10px;
     }
 
-    .categories-kpis {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 7px;
+    .category-directory-head p {
+      font-size: 11.5px;
     }
 
-    .categories-kpis .mobile-secondary-kpi {
-      display: none;
+    .category-directory-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
     }
 
-    .categories-kpis > div {
-      padding: 7px 8px;
-      border-radius: 10px;
-    }
-
-    .categories-kpis span {
-      margin-bottom: 3px;
-      font-size: 9px;
-      letter-spacing: 0.05em;
-    }
-
-    .categories-kpis strong {
-      font-size: 14px;
-    }
-
-    .category-quick-links {
-      margin-top: 10px;
-    }
-
-    .category-quick-links a {
-      min-width: 132px;
+    .category-directory-item {
+      min-height: 40px;
       padding: 8px 9px;
+    }
+
+    .category-directory-name {
+      font-size: 11.5px;
     }
 
     .cat-metrics {
@@ -632,6 +665,27 @@ for (const cat of categoryPanels) {
 
     .category-grid {
       grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .category-card {
+      min-height: 0;
+      padding: 12px;
+    }
+
+    .cat-trend {
+      height: 50px;
+    }
+
+    .cat-footer {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .cat-types {
+      justify-content: flex-start;
+      max-width: none;
     }
 
     .category-group-head {

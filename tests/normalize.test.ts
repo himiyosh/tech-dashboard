@@ -57,3 +57,47 @@ describe("normalize release title decoration", () => {
     expect(entry.title).toBe("Cline Releases v3.8.0");
   });
 });
+
+describe("normalize category override", () => {
+  const qiitaVscodeSource: SourceDefinition = {
+    id: "qiita-vscode",
+    displayName: "Qiita VSCode tag",
+    category: "vscode",
+    sourceType: "blog",
+    defaultLang: "ja",
+    autoTags: ["qiita", "vscode"],
+    feedUrl: "https://example.com/vscode.atom",
+    collect: async () => [],
+    tier: 2,
+  };
+
+  it("Qiita vscode タグ由来でも Gemini / Antigravity 記事は gemini に再分類する", () => {
+    const entry = normalize(
+      {
+        externalId: "antigravity",
+        url: "https://example.com/antigravity",
+        title: "Antigravity 2.0 × Gemini 3.5 Flash で変わる次世代の開発体験",
+        contentSnippet: "",
+        publishedAt: "2026-05-10T00:00:00.000Z",
+      },
+      qiitaVscodeSource,
+      "2026-05-10T01:00:00.000Z",
+    );
+    expect(entry.category).toBe("gemini");
+  });
+
+  it("Qiita vscode タグ由来でも Copilot 記事は copilot に再分類する", () => {
+    const entry = normalize(
+      {
+        externalId: "copilot",
+        url: "https://example.com/copilot",
+        title: "GitHub Copilot Appはgit worktree派にとても便利",
+        contentSnippet: "",
+        publishedAt: "2026-05-10T00:00:00.000Z",
+      },
+      qiitaVscodeSource,
+      "2026-05-10T01:00:00.000Z",
+    );
+    expect(entry.category).toBe("copilot");
+  });
+});

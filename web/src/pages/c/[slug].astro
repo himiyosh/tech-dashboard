@@ -1,8 +1,8 @@
 ---
 import Portal from "../../layouts/Portal.astro";
+import PageHero from "../../components/PageHero.astro";
 import Sidebar from "../../components/Sidebar.astro";
 import EntryCard from "../../components/EntryCard.astro";
-import CategoryHero from "../../components/CategoryHero.astro";
 import TrendChart from "../../components/TrendChart.astro";
 import Pager from "../../components/Pager.astro";
 import {
@@ -13,6 +13,7 @@ import {
   jstDayLabel,
   type Category,
 } from "../../lib/data.ts";
+import { categoryWeekOverWeek } from "../../lib/stats.ts";
 
 export function getStaticPaths() {
   return CATEGORY_META.map((c) => ({
@@ -33,6 +34,8 @@ const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
 const entries = all.slice(0, PAGE_SIZE);
 const dayGroups = groupByDay(entries);
 const now = new Date();
+const wow = categoryWeekOverWeek(slug);
+const deltaSign = wow.deltaPct > 0 ? "+" : wow.deltaPct < 0 ? "-" : "";
 
 const breadcrumb = [
   { label: "Home", href: "/" },
@@ -46,18 +49,31 @@ const breadcrumb = [
   title={`${category.name} — TECH Dashboard`}
   breadcrumb={breadcrumb}
 >
+  <PageHero
+    className="page-hero-category-detail"
+    accent={category.color}
+    kicker="Category detail"
+    title={category.name}
+    count={`${all.length} total`}
+    headingId="category-heading"
+    description={`${category.name} に分類された更新を、新着順・30日トレンド・関連記事として確認できます。`}
+    actions={[
+      { href: "/categories", label: "All categories" },
+      { href: `/rss.xml?category=${slug}`, label: "RSS" },
+      { href: "/status", label: "Source health" },
+    ]}
+    metrics={[
+      { label: "Total", value: all.length },
+      { label: "Last 7d", value: wow.thisWeek },
+      { label: "Vs prev 7d", value: `${deltaSign}${Math.abs(wow.deltaPct)}%` },
+      { label: "Avg/day", value: wow.avgPerDay },
+    ]}
+  />
+
   <div class="layout">
     <Sidebar active={slug} />
 
     <main>
-      <CategoryHero
-        slug={slug}
-        name={category.name}
-        color={category.color}
-        initial={category.initial}
-        totalCount={all.length}
-      />
-
       <TrendChart category={slug} color={category.color} days={30} />
 
       <div

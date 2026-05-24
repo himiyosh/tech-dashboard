@@ -187,41 +187,62 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("mobile tabbar links navigate and search trigger focuses input", async ({ page }) => {
+    const assertMobileTabbarLayout = async (viewportWidth: number) => {
+      const tabbar = page.getByRole("navigation", { name: "Primary" });
+      await expect(tabbar).toBeVisible();
+      await expect(page.locator(".footer-bar")).toBeHidden();
+      await expect(tabbar.getByRole("link", { name: "Timeline" })).toHaveClass(/active/);
+
+      const tabbarBox = await tabbar.boundingBox();
+      expect(tabbarBox, "mobile tabbar has a rendered box").not.toBeNull();
+      expect(Math.round(tabbarBox!.x), "mobile tabbar starts at the viewport edge").toBe(0);
+      expect(Math.round(tabbarBox!.width), "mobile tabbar spans the viewport width").toBe(viewportWidth);
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+        .toBe(true);
+
+      const tabItems = tabbar.locator("a, button");
+      await expect(tabItems).toHaveCount(5);
+      const itemBoxes = await tabItems.evaluateAll((items) =>
+        items.map((item) => {
+          const rect = item.getBoundingClientRect();
+          return { bottom: rect.bottom, height: rect.height, left: rect.left, right: rect.right, top: rect.top, width: rect.width };
+        }),
+      );
+      expect(itemBoxes[0].left, "first mobile tab item starts inside the padded bar").toBeGreaterThanOrEqual(7);
+      expect(itemBoxes.at(-1)!.right, "last mobile tab item stays inside the padded bar").toBeLessThanOrEqual(viewportWidth - 7);
+      for (let index = 1; index < itemBoxes.length; index += 1) {
+        expect(
+          itemBoxes[index - 1].right - itemBoxes[index].left,
+          `mobile tab items do not overlap: ${JSON.stringify(itemBoxes)}`,
+        ).toBeLessThanOrEqual(0.5);
+      }
+      for (const itemBox of itemBoxes) {
+        expect(itemBox.width, `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeGreaterThanOrEqual(44);
+        expect(itemBox.width, `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeLessThanOrEqual(90);
+        expect(itemBox.height, `mobile tab item height: ${JSON.stringify(itemBox)}`).toBeLessThanOrEqual(50);
+      }
+      const topEdges = itemBoxes.map((itemBox) => itemBox.top);
+      const bottomEdges = itemBoxes.map((itemBox) => itemBox.bottom);
+      expect(Math.max(...topEdges) - Math.min(...topEdges), `mobile tab items share one row: ${JSON.stringify(itemBoxes)}`).toBeLessThanOrEqual(1);
+      expect(Math.max(...bottomEdges) - Math.min(...bottomEdges), `mobile tab items share one row: ${JSON.stringify(itemBoxes)}`).toBeLessThanOrEqual(1);
+      const timelineBox = await tabbar.getByRole("link", { name: "Timeline" }).boundingBox();
+      expect(timelineBox, "Timeline tab has a visible centered button").not.toBeNull();
+      const timelineCenter = timelineBox!.x + timelineBox!.width / 2;
+      expect(Math.abs(timelineCenter - viewportWidth / 2), `Timeline tab is centered in ${viewportWidth}px viewport`).toBeLessThan(10);
+      expect(timelineBox!.y, "Timeline tab stays on the same row inside the tabbar").toBeGreaterThanOrEqual(tabbarBox!.y);
+      expect(itemBoxes[1].right, "Timeline tab does not cover Status").toBeLessThanOrEqual(timelineBox!.x + 0.5);
+      expect(timelineBox!.x + timelineBox!.width, "Timeline tab does not cover Search").toBeLessThanOrEqual(itemBoxes[3].left + 0.5);
+    };
+
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
+    await assertMobileTabbarLayout(390);
+    await page.setViewportSize({ width: 375, height: 667 });
+    await assertMobileTabbarLayout(375);
+    await page.setViewportSize({ width: 390, height: 844 });
 
     const tabbar = page.getByRole("navigation", { name: "Primary" });
-    await expect(tabbar).toBeVisible();
-    await expect(page.locator(".footer-bar")).toBeHidden();
-    await expect(tabbar.getByRole("link", { name: "Timeline" })).toHaveClass(/active/);
-
-    const tabbarBox = await tabbar.boundingBox();
-    expect(tabbarBox, "mobile tabbar has a rendered box").not.toBeNull();
-    expect(Math.round(tabbarBox!.x), "mobile tabbar starts at the viewport edge").toBe(0);
-    expect(Math.round(tabbarBox!.width), "mobile tabbar spans the viewport width").toBe(390);
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-      .toBe(true);
-
-    const tabItems = tabbar.locator("a, button");
-    await expect(tabItems).toHaveCount(5);
-    const itemBoxes = await tabItems.evaluateAll((items) =>
-      items.map((item) => {
-        const rect = item.getBoundingClientRect();
-        return { left: rect.left, right: rect.right, width: rect.width };
-      }),
-    );
-    expect(itemBoxes[0].left, "first mobile tab item starts inside the padded bar").toBeGreaterThanOrEqual(7);
-    expect(itemBoxes.at(-1)!.right, "last mobile tab item stays inside the padded bar").toBeLessThanOrEqual(383);
-    for (const itemBox of itemBoxes) {
-      expect(itemBox.width, `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeGreaterThanOrEqual(44);
-      expect(itemBox.width, `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeLessThanOrEqual(90);
-    }
-    const timelineBox = await tabbar.getByRole("link", { name: "Timeline" }).boundingBox();
-    expect(timelineBox, "Timeline tab has a visible centered button").not.toBeNull();
-    const timelineCenter = timelineBox!.x + timelineBox!.width / 2;
-    expect(Math.abs(timelineCenter - 195), "Timeline tab is centered in the 390px viewport").toBeLessThan(10);
-    expect(timelineBox!.height, "Timeline tab is promoted above normal tabs").toBeGreaterThan(52);
 
     await tabbar.getByRole("link", { name: "Categories" }).click();
     await expect(page).toHaveURL(/\/categories\/?$/);

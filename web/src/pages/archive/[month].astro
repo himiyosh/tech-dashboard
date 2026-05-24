@@ -1,5 +1,6 @@
 ---
 import Portal from "../../layouts/Portal.astro";
+import PageHero from "../../components/PageHero.astro";
 import Sidebar from "../../components/Sidebar.astro";
 import EntryCard from "../../components/EntryCard.astro";
 import {
@@ -65,42 +66,35 @@ const breadcrumb = [
   { label: "Archive", href: "/archive" },
   { label },
 ];
+const monthHeroActions = [
+  older ? { href: `/archive/${older.month}`, label: `Older: ${older.label}` } : null,
+  { href: "/archive", label: "All months" },
+  newer ? { href: `/archive/${newer.month}`, label: `Newer: ${newer.label}` } : null,
+].filter((action): action is { href: string; label: string } => action !== null);
 ---
 
 <Portal pageKey="archive" title={`${label} — Archive — TECH Dashboard`} breadcrumb={breadcrumb}>
+  <PageHero
+    className="page-hero-archive-month"
+    kicker="Archive month"
+    title={label}
+    count={`${file.count} entries`}
+    headingId="archive-month-heading"
+    description="月内の記事を日付順に並べています。カテゴリと source の偏りを見てから、下のタイムラインで詳細を確認できます。"
+    actions={monthHeroActions}
+    metrics={[
+      { label: "Entries", value: file.count },
+      { label: "Active days", value: dayCount },
+      { label: "Warm", value: warm },
+      { label: "Cold", value: cold },
+      { label: "Updated", value: updatedLabel },
+    ]}
+  />
+
   <div class="layout">
     <Sidebar />
 
     <main>
-      <section class="month-overview" aria-labelledby="archive-month-heading">
-        <div>
-          <div class="section-header primary">
-            <h2 id="archive-month-heading">
-              {label}
-              <span class="count">{file.count} entries</span>
-            </h2>
-          </div>
-          <p class="month-lede">
-            月内の記事を日付順に並べています。カテゴリと source の偏りを見てから、下のタイムラインで詳細を確認できます。
-          </p>
-        </div>
-
-        <div class="month-kpis" aria-label="Month summary">
-          <div>
-            <span>Entries</span>
-            <strong>{file.count}</strong>
-          </div>
-          <div>
-            <span>Active days</span>
-            <strong>{dayCount}</strong>
-          </div>
-          <div>
-            <span>Updated</span>
-            <strong>{updatedLabel}</strong>
-          </div>
-        </div>
-      </section>
-
       <nav class="month-nav" aria-label="Archive month navigation">
         {older
           ? <a href={`/archive/${older.month}`}><span>Older</span>{older.label}</a>
@@ -185,32 +179,6 @@ const breadcrumb = [
 </Portal>
 
 <style>
-  .month-overview {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-    gap: 16px;
-    padding: 18px;
-    margin-bottom: 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: color-mix(in srgb, var(--surface) 88%, transparent);
-  }
-
-  .month-lede {
-    max-width: 720px;
-    margin: 8px 0 0;
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.6;
-  }
-
-  .month-kpis {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .month-kpis > div,
   .tier-card {
     min-width: 0;
     padding: 10px 12px;
@@ -219,7 +187,6 @@ const breadcrumb = [
     background: color-mix(in srgb, var(--bg-2) 72%, transparent);
   }
 
-  .month-kpis span,
   .tier-card span,
   .month-insight-card .rail-title {
     display: block;
@@ -231,7 +198,6 @@ const breadcrumb = [
     text-transform: uppercase;
   }
 
-  .month-kpis strong,
   .tier-card strong {
     display: block;
     overflow: hidden;
@@ -420,25 +386,12 @@ const breadcrumb = [
   }
 
   @media (max-width: 980px) {
-    .month-overview,
     .archive-meta-panel {
       grid-template-columns: 1fr;
-    }
-
-    .month-kpis {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
   @media (max-width: 640px) {
-    .month-overview {
-      padding: 14px;
-    }
-
-    .month-kpis {
-      grid-template-columns: 1fr;
-    }
-
     .month-nav {
       align-items: stretch;
       flex-direction: column;

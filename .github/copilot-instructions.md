@@ -99,7 +99,36 @@
 - Baseline Widely available ではない機能は guide の fallback 方針に従い、既存 Astro / CSS 構成に最小差分で適用する。
 - mobile / fixed / sticky / overflow / z-index / safe-area の表示崩れでは `.claude/skills/ui-display-guard/SKILL.md` も併用し、Playwright viewport 検証まで行う。
 
-### R-015: GPT-5.5 の応答は末尾に絵文字付きサマリを必ず付ける
+### R-015: Primary navigation は hamburger menu に集約する
+- desktop / tablet の header に複数リンクを横並び表示しない。通常は `Categories` shortcut + `Menu` button + `#site-menu` を primary navigation の source of truth とする。
+- mobile bottom tabbar は `Home / Categories / Menu` の 3 action に限定する。Search / Archive / Status / About などは `#site-menu` 内に集約する。
+- `Categories` は direct shortcut なので `#site-menu` には含めない。Categories ページでは Categories だけを active にし、Menu trigger を active にしない。
+- mobile (`max-width: 720px`) では header 内に nav link row を表示しない。Archive / About だけを上部に残すなど、header nav の一部を page top に露出させない。
+- nav 変更時は E2E で desktop Categories shortcut、desktop hamburger 表示、menu 内 secondary links、menu 内 Categories 非表示、mobile tabbar 3 item、Categories 選択時に Menu 非 active、menu open/close、Archive / About / Search を含む menu 動線、Categories 直接遷移、横スクロールなしを必ず検証する。
+
+### R-016: トップレベルページに breadcrumb を出さない
+- Header nav / mobile tabbar の primary destination (`/`, `/categories/`, `/archive/`, `/status/`, `/about/`) には `.crumb-bar` を表示しない。ページの入口情報は `banner` / `PageHero` に集約する。
+- Breadcrumb は article detail、category detail、tag detail、archive month、pagination など「親階層へ戻る文脈が必要な深いページ」に限定する。
+- top-level page に `breadcrumb={...}` を渡す変更をした場合は、同時に理由を明記し、E2E の top-level crumb 非表示ゲートを更新する。原則は禁止。
+
+### R-017: broad feed はカテゴリ品質フィルタと上限を必ず持つ
+- `arxiv-*`、`techcrunch`、`the-verge`、`ars-technica`、vendor newsroom など broad feed は `includeKeywords` / `excludeKeywords` / `maxEntriesPerRun` を `harness/registry.ts` に設定し、汎用ニュースや無関係論文を大量流入させない。
+- Zed は VSCode ではなく `cursor` 系カテゴリとして扱う。`zed-releases` を `vscode` に戻さない。
+- Research は paper / report / long-lived research に寄せる。Zenn AI や Simon Willison のような実務・LLM essay feed は `local-llm` 等に分類し、Research を汎用 AI 記事の受け皿にしない。
+- registry の category を変更したら `web/src/lib/source-meta.ts` と既存 `data/index.json` / `data/archive/*` / `data/stats.json` を同時に修復し、`tests/data-schema.test.ts` のカテゴリ品質ゲートを更新する。
+
+### R-018: 完了前に自己批判スキルを必ず実行する
+- すべてのタスクで「完了」と報告する前に `.claude/skills/self-critique/SKILL.md` を読み、C-01〜C-08 を今回の変更範囲に合わせて実行する。
+- UI / ナビ / taxonomy / data artifact / 空状態 / テストに触れた場合は、該当 C 項目の検査コマンドを省略しない。
+- 🔴 Critical / 🟠 Warning が出た場合は、ユーザーへ完了報告する前に修正し、再検査する。未解消で止める場合は理由と残リスクを明記する。
+- 新しい再発パターンや根本原因を見つけた場合は、同一セッション内で本ファイルの LL に追記する。
+
+### R-019: UX / taxonomy / navigation 変更はペルソナ回遊監査を使う
+- 競争力評価、UX 改善、トップページ、検索、mobile nav、taxonomy、Status / About の信頼性表示を変更する場合は、`.github/agents/TechDBAgent.agent.md` を使い、複数 persona の Playwright / browser 回遊観点で問題を抽出する。
+- persona audit は自己批判スキルを置き換えない。自己批判は規則・回帰・品質ゲート、persona audit は実ユーザー行動・競争力・判断摩擦の検出に使う。
+- 2 つ以上の persona が同じ根本原因を報告した場合、severity を 1 段階上げ、完了前に修正または未解消リスクとして明記する。
+
+### R-020: GPT-5.5 の応答は末尾に絵文字付きサマリを必ず付ける
 - **対象モデル**: GPT-5.5 (または `gpt-5.5` 系モデルと識別できる場合)。
 - **必須フォーマット**: 本文の説明や手順の**後に必ず**、以下の形式でサマリセクションを付ける。
   ```
@@ -127,11 +156,38 @@
 
 タスクを「完了」と報告する前に、以下を **必ず実行** すること。
 
-1. ✅ `npm --prefix web run build` がローカルで PASS する
-2. ✅ Cloudflare Pages の最新 production deployment が `latest=deploy status=success`
-3. ✅ `https://techdb.studio344.net/` と `https://tech-dashboard-6a7.pages.dev/` が `200`
-4. ✅ 変更内容に応じて README / docs / 本ファイル (LL) を同一 commit で更新
-5. ✅ 推論禁止ゲート: 出典のない断定を出力に含めない
+1. ✅ **自己批判スキルを実行する** — `.claude/skills/self-critique/SKILL.md` の C-01〜C-08 を確認し、🔴 Critical / 🟠 Warning をすべて解消してから次へ進む
+2. ✅ `npm --prefix web run build` がローカルで PASS する
+3. ✅ Cloudflare Pages の最新 production deployment が `latest=deploy status=success`
+4. ✅ `https://techdb.studio344.net/` と `https://tech-dashboard-6a7.pages.dev/` が `200`
+5. ✅ 変更内容に応じて README / docs / 本ファイル (LL) を同一 commit で更新
+6. ✅ 推論禁止ゲート: 出典のない断定を出力に含めない
+
+### 自己批判スキルの使い方
+
+```bash
+# E2E 全件 (ナビ・モバイル・サイドバー・検索)
+npx playwright test tests/e2e/smoke.spec.ts --reporter=line
+
+# ナビ・モバイル絞り込み
+npx playwright test tests/e2e/smoke.spec.ts -g "hamburger|mobile tabbar|navigation|sidebar" --reporter=line
+
+# taxonomy / data quality チェック
+node -e "
+const fs=require('fs');
+const d=JSON.parse(fs.readFileSync('./data/index.json','utf8'));
+const live=d.entries;
+const bycat={};
+live.forEach(e=>{bycat[e.category]=(bycat[e.category]||0)+1;});
+const total=live.length;
+console.log('total entries:', total);
+Object.entries(bycat).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>
+  console.log('  '+k+': '+v+' ('+(v/total*100).toFixed(1)+'%)'));
+const noSumJa=live.filter(e=>!e.summaryJa).length;
+const noBody=live.filter(e=>!e.bodyJa&&!e.bodyEn).length;
+console.log('no summaryJa:', noSumJa, 'no body:', noBody);
+" 2>/dev/null
+```
 
 ---
 
@@ -374,53 +430,138 @@
 - **対策**: `.mobile-tabbar` を `grid-auto-flow: column` と `grid-auto-columns: minmax(0, 1fr)` に変更し、項目数へ追従させた。`tests/e2e/smoke.spec.ts` の mobile tabbar テストに viewport 幅、横スクロールなし、item count、item bounding box の検証を追加した。再発防止として `.claude/skills/ui-display-guard/SKILL.md` を追加した。
 - **教訓**: モバイル固定導線、sticky header、floating action など viewport 依存 UI は、表示されるだけでは合格にしない。CSS に item 数を二重管理しない設計にし、Playwright で `scrollWidth <= innerWidth` と固定 UI の bounding box を必ず検証する。
 
-### LL-047: 空欄 0 件でも deterministic fallback backlog は品質 debt として可視化する
+### LL-047: web build と Playwright webServer build を並列実行しない
+- **事象**: UX 変更の検証で `npm --prefix web run build` と `npx playwright test ...` を並列に実行したところ、両方が `web/dist` を同時に削除/生成し、`ENOENT ... _noop-middleware.mjs` や `manifest_*.mjs` で失敗した。
+- **根本原因**: `playwright.config.ts` の `webServer.command` は `npm --prefix web run build && npm --prefix web run preview ...` であり、単体 build と同じ `web/dist` を mutation する。並列検証すると Astro/Pagefind の生成物が競合する。
+- **対策**: UI 検証は `npm --prefix web run build` を単独実行し、その完了後に Playwright を実行する。競合後は `rm -rf web/dist web/.astro && npm --prefix web run build` で生成物を掃除してから再検証する。
+- **教訓**: tool 呼び出しは独立している場合だけ並列化する。`web/dist`、`.astro`、Pagefind index など同じ生成物を触る build/test は逐次実行する。
+
+### LL-048: ページ上部バナーは個別カードではなく共通 PageHero にする
+- **事象**: Categories / Status のページ上部感が再び弱くなり、モバイル・PC ともページに入った直後に「どの画面か」が分かりにくくなった。
+- **根本原因**: Categories は `main` 内の overview card、Status は Worker Health card をページ入口の代替としており、レイアウトや個別ページ改修で簡単にページバナー感が失われる構造だった。トップページ UX 改善時も `index.astro` 専用の `banner` だけを整え、一覧系ページの共通入口パターンを作らなかった。
+- **対策**: `web/src/components/PageHero.astro` と `web/src/styles/portal.css` の共通 `.page-hero` / `.page-hero-metrics` / `.page-hero-actions` を使い、通常ページでは `layout` の前に配置する。モバイルでは説明文を 2 行 clamp、actions を非表示、metrics を 2 列・最大 4 件にしてファーストビューを圧迫しない。E2E で desktop/mobile の page-hero 表示、compact height、横スクロールなしを検証する。
+- **教訓**: ページの入口情報 (title / purpose / KPI / primary anchors) は個別ページ内カードに紛れ込ませず、共通 page-level component/class と E2E 寸法ゲートで守る。特に mobile は「存在する」だけでなく高さ上限も検証する。
+
+### LL-049: Categories は詳細カードだけでなく compact directory を先に置く
+- **事象**: Categories ページに page hero と大きなカテゴリカードはあるが、全カテゴリ名を一望できず、ユーザーがページ全体をスクロールしないとカテゴリ構成を把握できなかった。
+- **根本原因**: 詳細カードは trend / type / 最新更新まで載せるため 1 カードあたりの高さが大きく、一覧把握には情報量が多すぎた。Sidebar は desktop では補助になるが mobile では非表示で、ページ本体に compact な category index が無かった。
+- **対策**: `categories.astro` の詳細カード群の前に `#category-directory` を追加し、全カテゴリを 2〜5 列のコンパクトリンクグリッドで表示する。表示内容はカテゴリ名、group、live count に絞り、30d / delta は aria-label に含める。E2E でリンク数、desktop/mobile の高さ上限、横スクロールなし、リンク遷移を検証する。
+- **教訓**: 「探索用の詳細カード」と「一望用の一覧」は別UIにする。カテゴリや source のような情報アーキテクチャページでは、詳細カードより先に compact directory / index を置き、モバイルでも Sidebar 依存にしない。
+
+### LL-050: mobile で header nav の一部を page top に残さない
+- **事象**: Archive / About が mobile bottom navigation に含まれず、代わりに header 内 `.nav` の残りリンクとしてページ上部に表示され続けた。ユーザーから「ナビゲーションバーになく、ページ上部に表示される」と再指摘された。
+- **根本原因**: mobile CSS が `.nav [data-mobile-primary] { display: none; }` で Timeline / Categories / Status だけを隠し、Archive / About を header nav の折り返し行として残していた。さらに primary navigation の所有者が header と tabbar に分裂していた。
+- **対策**: header の inline nav を廃止し、desktop / mobile とも hamburger `Menu` + `#site-menu` に primary links を集約する。mobile bottom tabbar は `Home / Search / Menu` の 3 action に限定し、Archive / About などは `#site-menu` から遷移する。
+- **教訓**: viewport ごとに primary navigation の source of truth を分裂させない。表示リンクが増えたら tabbar や header row を増やすのではなく、hamburger menu に集約する。
+
+### LL-051: top-level Archive にだけ breadcrumb が出る不一致を防ぐ
+- **事象**: Categories / Status / About には breadcrumb が無い一方で、top-level の `/archive/` にだけ `Home › Archive` の breadcrumb が表示され、ページ構造が不揃いに見えた。
+- **根本原因**: `archive/index.astro` が古い overview 構成のまま `breadcrumb={breadcrumb}` を `Portal` に渡していた。PageHero 導入後も、top-level page の breadcrumb 有無を検証する E2E が無かった。
+- **対策**: `/archive/` から breadcrumb prop を削除し、top-level primary destination (`/categories/`, `/status/`, `/about/`, `/archive/`) では `.crumb-bar` が描画されないことを E2E で検証する。Breadcrumb は archive month や detail page など深い階層だけに残す。
+- **教訓**: top-level nav destination の page context は `PageHero` に統一する。breadcrumb は「戻る親階層が必要な深いページ」専用とし、top-level には混在させない。
+
+### LL-052: top-level PageHero は width / KPI grid を揃える
+- **事象**: Timeline 以外の top-level page で PageHero の幅感が揺れ、サイトデザインの一体感が弱く見えた。
+- **根本原因**: `.page-hero` の外側幅は同じでも、Categories / About は 6 KPI・3列、Archive / Status は 4 KPI・2列で、右側 KPI ブロックのカード幅と余白密度がページごとに違っていた。E2E も「表示されること」しか見ておらず、top-level hero の幅・KPI数・KPIカード幅を比較していなかった。
+- **対策**: top-level page (`/categories/`, `/archive/`, `/status/`, `/about/`) の PageHero に `page-hero-top-level` を付け、6 KPI / 3列 / 同一 inner width / 同一 metric width を標準にする。Archive / Status は KPI を 6 件に補い、E2E で top-level hero class、inner width、metric count、metric width 差を検証する。
+- **教訓**: 共通コンポーネントでもデータ件数・列数がページごとに違うと見た目の幅感は揺れる。top-level の visual system は class と寸法テストで固定し、ページ個別の KPI 数に任せない。
+
+### LL-053: ナビ項目が増えたら hamburger に集約し、tabbar は 3 action に保つ
+- **事象**: mobile tabbar が `Home / Categories / Archive / Status / About / Search` の 6 項目になり、ユーザーから「ナビゲーションメニューが多すぎる」と指摘された。
+- **根本原因**: 以前の再発防止で「全リンクを mobile tabbar に載せる」方向に寄せたため、項目数が増えるほど固定 UI が圧縮され、primary action の優先順位も分かりにくくなった。
+- **対策**: `Portal.astro` に shared hamburger menu (`#site-menu`) を置き、desktop header も mobile bottom tabbar も同じ menu を開く。Categories は Search より優先度が高い探索導線として header / mobile tabbar に直接表示し、Search は desktop input と menu 内補助 action に移す。mobile tabbar は `Home / Categories / Menu` の 3 action に戻し、E2E で item count、menu open/close、menu link 遷移、Search 補助 action、横スクロールなしを検証する。
+- **追加対策**: `#site-menu` は banner / search / tabbar より上の layer に置き、mobile header には `z-index` を付与する。E2E では menu link の実クリックを通し、背面 CTA が pointer event を奪わないことを確認する。
+- **教訓**: fixed bottom navigation は 3〜4 action 程度に抑える。5 個以上の destination link を直接並べるより、重要 action と menu trigger に分ける。検索より重要な探索入口 (Categories など) は hamburger に隠しすぎない。
+
+### LL-054: direct shortcut は hamburger の active state / menu item から除外する
+- **事象**: Categories を直接導線として header / mobile tabbar に出した後も、Categories 選択時に Menu button まで active 表示になり、PC の hamburger 内にも Categories が残っているように見えた。
+- **根本原因**: mobile Menu button の active 条件が `pageKey !== "timeline"` で、Categories のような direct shortcut page まで menu-owned page と見なしていた。さらに E2E は Home から menu を開いた時の Categories 非表示だけを確認し、Categories ページ上での menu active state / menu contents を検証していなかった。
+- **対策**: `menuOwnsCurrentPage` を `navItems` (hamburger 内の item) 由来にし、Categories を除外する。E2E で Categories ページの mobile tabbar は Categories のみ active、Menu は非 active、PC / mobile の `#site-menu` に Categories が無いことを確認する。
+- **教訓**: direct shortcut と hamburger-owned destination を明確に分ける。shortcut に昇格した page は menu item / menu active 判定 / E2E のすべてから除外する。
+
+### LL-055: broad feed は source registry で絞り、既存 data も同時修復する
+- **事象**: 以前修正したはずのカテゴリ品質が戻り、VSCode に Zed 記事が混入、Research が arXiv / Zenn AI / Simon Willison で膨張、Tech News が TechCrunch / The Verge の一般ニュース・セール・宇宙ニュースを大量取得していた。
+- **根本原因**: `harness/registry.ts` で `zed-releases` が `vscode` のまま、`zenn-ai` / `simonw-blog` が `research` のまま残っていた。さらに broad RSS feed に include / exclude / cap が無く、`PER_SOURCE_CAP=50` まで無関係記事を受け入れた。既存 `data/index.json` / archive / stats を同時修復するゲートも無かった。
+- **対策**: `SourceDefinition` に `includeKeywords` / `excludeKeywords` / `maxEntriesPerRun` を追加し、RSS collector で deterministic にフィルタする。Zed は `cursor`、Zenn AI / Simon Willison は `local-llm` に再分類。arXiv と Tech News broad sources に relevance filter と per-run cap を設定し、既存 index / archive / stats を同ルールで修復。`tests/data-schema.test.ts` に Zed in VSCode、Research live count、Tech News noise の品質ゲートを追加。
+- **教訓**: カテゴリ品質は UI ではなく collector / registry の責務。broad feed を追加・変更したら、future collection のフィルタと past data の修復、source-meta sync、data-schema gate を同一変更に含める。
+
+### LL-056: Categories 表示は live index を主指標にし、archive stats を前面に出しすぎない
+- **事象**: data 修復後も Categories ページの詳細カードが `all time` / `30d` (archive + stats 由来) を前面に出しており、修正前のカテゴリ偏りが残って見えた。
+- **根本原因**: category directory は live count を表示していたが、詳細カードと hero は `STATS.byMonth` / `STATS.byDay` を主表示していた。archive を含む履歴統計と現在の live index の目的が混ざっていた。
+- **対策**: Categories の詳細カードは `live` / `live 30d` / `sources` を主指標にし、`all time` を前面から外す。Research group label も `Research / Papers` にして `Research Research` の重複表示を避ける。E2E で category card が `live` を含み、`all time` を含まないことを検証する。
+- **教訓**: Categories は「今どのカテゴリを読むか」の画面なので live index を主表示にする。長期推移や all-time は Archive / stats 文脈に寄せ、カテゴリカードでは補助以下にする。
+
+### LL-057: カテゴリは parent group + child category + tags の3層で表示する
+- **事象**: 製品名カテゴリを横並びにした結果、粒度が混ざり、`VSCode` に開発環境記事が混ざる・`Cursor` に Zed が入る・Tech News の受け皿が曖昧、などがユーザーに分かりづらく見えた。
+- **根本原因**: `CATEGORY_META.name` が vendor / product / domain / news type を同じ階層で表していた。タグは存在するが、UI 上はカテゴリ1層だけに見えていたため、将来の Microsoft 365 Copilot や Claude Code のような子分類を表現しづらかった。
+- **対策**: URL slug は維持しつつ、`CATEGORY_META.group` を大カテゴリ (`Microsoft / GitHub`, `Anthropic`, `AI Coding Tools`, `Industry & Policy` など) に再設計し、`CATEGORY_META.name` を子カテゴリ表示にする。個別プロダクト差分 (`zed`, `cursor`, `devcontainer`, `benchmark`, `gpu` 等) はタグで細分化する。
+- **教訓**: taxonomy は「大カテゴリ = 読者の入口」「子カテゴリ = 収集/表示単位」「tags = 詳細フィルタ」で分ける。カテゴリ名だけで細分化しすぎず、UI では parent group を明示する。
+
+### LL-058: 修正の回帰は「完了前の自己批判」でしか防げない
+- **事象**: 複数の変更サイクルを経るうち、一度修正した箇所 (Archive/About のナビ消失、Categories のハンバーガー混入、taxonomy のカテゴリ崩れ) が別の変更で元に戻る回帰が繰り返し発生した。
+- **根本原因**: 「テストが通った = 完了」と判断していたが、テストはその時点で書かれた仕様しか守らない。変更の blast radius (他箇所への影響) をその都度全体スキャンしていなかった。
+- **対策**: `.claude/skills/self-critique/SKILL.md` を作成し、完了ゲートの **最初のステップ** として C-01〜C-08 の全観点チェックを義務化。チェック項目はナビ・taxonomy・サイドバー・ビルド・data quality・絶対ルール遵守・空状態 UX・ペルソナ回遊を網羅する。
+- **教訓**: 自己批判は「気が向いたら」ではなく「完了の前提条件」として手順に組み込む。スキル定義がその実行を強制する仕組みにする。
+
+### LL-059: 競争力はテストだけでなく persona journey で検証する
+- **事象**: build / E2E が通っていても、「大手競合と対等か」「忙しい技術者が実際に読む判断をできるか」はテスト結果だけでは判断できなかった。
+- **根本原因**: 既存テストは DOM・遷移・データ品質を検証するが、ユーザーの行動目的、迷い、信頼、共有判断、深掘り導線の摩擦を表現しない。
+- **対策**: `.github/agents/TechDBAgent.agent.md` と persona agents を作成し、Dev Lead / Mobile Commuter / Tech PM / AI Researcher の複数視点で Playwright 回遊を行う。自己批判スキルの C-08 に組み込み、persona 間で重複した問題は severity を上げる。
+- **教訓**: 競争力レビューは「仕様通り動く」ではなく「実ユーザーが目的を達成できる」ことを検証する。UX / taxonomy / navigation / trust 表示の変更では persona journey を完了ゲートに含める。
+
+### LL-060: worktree secret scan は未追跡ディレクトリをファイルとして読まない
+- **事象**: `.github/agents/` を新規作成した直後に `npm run secrets:scan:worktree` が `EISDIR: illegal operation on a directory, read` で失敗した。
+- **根本原因**: `git ls-files --cached --others --exclude-standard` が未追跡ディレクトリを返す場合があり、scanner が `readFileSync(path)` 前に file / directory 判定をしていなかった。
+- **対策**: worktree/current scan では `statSync(path).isFile()` を確認し、非 file は skipped として扱う。binary / size skip と同じく scan 自体は失敗させない。
+- **教訓**: secret gate は「検出」だけでなく「新規ディレクトリ追加時にも落ちない」ことが重要。worktree scan は Git の返す path が常に regular file とは限らない前提で実装する。
+
+### LL-061: 空欄 0 件でも deterministic fallback backlog は品質 debt として可視化する
 - **事象**: `data/index.json` の `summaryJa` / `summaryEn` / `bodyJa` / `bodyEn` は全件非空だったが、実測で 484 件が `「このエントリは ... AI 要約未生成」` 系の deterministic fallback のままだった。従来の `quality-audit` は「空欄なし」だけを見て 0 issues と報告していた。
 - **根本原因**: R-013 / LL-028 で「UI 空欄を防ぐ」fallback gate を強化した一方で、「本物の AI 要約に置き換わっているか」を別指標として扱っていなかった。Queue summarizer の backlog / enqueue candidates / KV lookup cap も `/status` から見えず、運用上の詰まりを検知しづらかった。
 - **対策**: `quality-audit` に deterministic fallback 件数・比率を追加し、10% 以上または 50 件以上で warning、70% 以上で critical とする。Worker health / `/status` / `/metrics.json` に `fallbackTotal`、`fallbackPercent`、`kvLookupCap`、`kvLookupCount`、`queueMode`、`queueCap`、`enqueueCandidates` を出す。
 - **教訓**: 多言語 summary/body の品質ゲートは「非空」と「real AI enrichment」を分ける。fallback は UX safety net であって完了状態ではない。Queue / KV cap を持つ非同期 enrichment は backlog 指標を最初から UI と監査に出す。
 
-### LL-048: KV_LOOKUP_CAP=60 が fallback の永続化を引き起こす (Queue starve)
+### LL-062: KV_LOOKUP_CAP=60 が fallback の永続化を引き起こす (Queue starve)
 - **事象**: 484 件の `summaryJa` fallback が存在し、Queue consumer が動いているにもかかわらず 7 日以上解消しなかった。
-- **根本原因**: `worker/src/index.ts` の `allFallback.slice(0, KV_LOOKUP_CAP)` が cap=60 のため、484 件中 424 件はKV チェックされず `lookedUpUrls` にも入らない。`maybeEnqueueSummaryJobs` は `!lookedUpUrls.has(e.url)` を「real summary あり → skip」と解釈していたため、これらの 424 件は Queue にも投入されず永久に fallback のまま固定された。さらに round-robin なしの enqueue では、常に最新 30 件が選ばれ、古い fallback は cap の外に出た瞬間に詰まる。
-- **対策**: KV_LOOKUP_CAP デフォルトを 60 → 500 に引き上げ (LL-036/040/041 で非 KV subrequest が ~60-80/inv に削減されたため 500+80=580 < 1000 の余裕あり)。`uncheckedFallbackUrls` を導入し cap 超過分も "enqueue すべき fallback" として追跡。`maybeEnqueueSummaryJobs` に round-robin オフセットを追加し、ENQUEUE_MAX_NEW=35 で全 fallback が平均 ~14 時間でキューを一周するよう設計。heartbeat KV + `/health` endpoint で cron の死活を data 変化なしでも監視可能に。
-- **教訓**: `lookedUpUrls` の「absent = real summary」の仮定は、cap で切り捨てた fallback が存在すると崩れる。KV read cap と enqueue 対象の判定は同じ集合で行わなければならない。cap を設けるなら `uncheckedFallbackUrls` を別追跡するか、cap 自体を fallback count 以上に設定する。Queue が動いているのに fallback が減らない場合は「enqueue されていない」を疑う。
+- **根本原因**: `worker/src/index.ts` の `allFallback.slice(0, KV_LOOKUP_CAP)` が cap=60 のため、484 件中 424 件は KV チェックされず `lookedUpUrls` にも入らない。`maybeEnqueueSummaryJobs` は `!lookedUpUrls.has(e.url)` を「real summary あり → skip」と解釈していたため、424 件は Queue にも投入されず永久に fallback のまま固定された。round-robin なしの enqueue では常に最新 30 件が選ばれ、古い fallback は cap の外に出た瞬間に詰まる。
+- **対策**: KV_LOOKUP_CAP デフォルトを 60 → 500 に引き上げ。`uncheckedFallbackUrls` を導入し cap 超過分も "enqueue すべき fallback" として追跡。`maybeEnqueueSummaryJobs` に round-robin オフセットを追加し、ENQUEUE_MAX_NEW=35 で全 fallback が平均 ~14 時間でキューを一周するよう設計。heartbeat KV + `/health` endpoint で cron の死活を監視可能に。
+- **教訓**: `lookedUpUrls` の「absent = real summary」の仮定は、cap で切り捨てた fallback が存在すると崩れる。KV read cap と enqueue 対象の判定は同じ集合で行わなければならない。
 
-### LL-049: モバイル下部タブは主要導線に絞り、overflow UI には min-width:0 と fallback を持たせる
-- **事象**: 6 項目の mobile tabbar が詰まって見え、最重要導線の Timeline も他の項目に埋もれていた。Categories / Archive の初期表示は KPI が縦に伸びて、ページ上部のバナー感や「何ができるページか」の説明が弱かった。さらに一部外部 `og:image` が壊れ、カードに broken image が出た。
-- **根本原因**: 下部固定ナビに全ページ導線を詰め込んでいた。横スクロールの quick link を grid 子要素に入れる際、親/子に `min-width: 0` が無いと flex contents の min-content 幅でページ全体が横に広がる。外部画像は 404/403/期限切れがあり、`src` が存在するだけでは表示可能とは限らない。
-- **対策**: mobile tabbar は Categories / Status / Timeline / Search / More の主要 5 項目に整理し、Timeline を中央の強調ボタンにする。Archive / About は accessible More sheet に移動。Categories / Archive の overview に mobile badge + gradient banner + 横スクロール quick links を置き、mobile では主要 KPI だけ表示する。grid 子に `min-width: 0` を明示。EntryCard / Featured は `onerror` で `.failed` を付与し、CategoryThumb fallback を表示する。
-- **教訓**: モバイル固定導線は「全部置く」ではなく頻用導線 + More に分け、最重要導線は中央に置いて視覚的ヒエラルキーを作る。ファーストビュー改善で horizontal chips を入れる場合は `scrollWidth <= innerWidth` を必ず E2E で確認する。KPI は desktop と同じ数を mobile に出さず、主要指標に絞る。外部サムネイルは成功前提にせず、画像ロード失敗時の deterministic fallback を同時に実装する。
+### LL-063: モバイル下部タブは主要導線に絞り、overflow UI には min-width:0 と fallback を持たせる
+- **事象**: 6 項目の mobile tabbar が詰まって見え、最重要導線の Timeline も他の項目に埋もれていた。Categories / Archive の初期表示は KPI が縦に伸びて、ページ上部のバナー感や「何ができるページか」の説明が弱かった。
+- **根本原因**: 下部固定ナビに全ページ導線を詰め込んでいた。横スクロールの quick link を grid 子要素に入れる際、親/子に `min-width: 0` が無いと flex contents の min-content 幅でページ全体が横に広がる。
+- **対策**: mobile tabbar は Categories / Status / Timeline / Search / More の主要 5 項目に整理し、Timeline を中央の強調ボタンにする。grid 子に `min-width: 0` を明示。EntryCard / Featured は `onerror` で `.failed` を付与し、fallback を表示する。
+- **教訓**: モバイル固定導線は「全部置く」ではなく頻用導線 + More に分け、最重要導線は中央に置いて視覚的ヒエラルキーを作る。
 
-### LL-050: OGP 画像バックフィルは YouTube は deterministic URL、その他は og:image/twitter:image 抽出で対応
-- **事象**: data/index.json の live 記事 1407 件中 757 件 (54%) が `image` 未取得で、EntryCard の fallback artwork のみの表示だった。
-- **根本原因**: Cloudflare Worker の OGP fetch は 1 invocation あたりの subrequest 上限 (LL-042) のため、新規記事のみを対象にしており既存 entry への遡及がなかった。arXiv, Cursor changelog, DORA insights, HN AI 等は OGP 画像を構造的に持たない。YouTube はサムネイル URL が video ID から決定論的に導出できる。
-- **対策**: `scripts/fetch-missing-ogp.mjs` を作成。YouTube は `https://img.youtube.com/vi/{videoId}/hqdefault.jpg` を直接セット。OGP 画像が構造的に存在しないソース (arxiv, cursor-changelog, dora-insights, hn-ai) はスキップ。その他は記事 HTML を fetch して `<meta property="og:image">` → `twitter:image` の順で抽出。concurrency=8 で 700 件を処理し 388 件が取得できた (757→349 件に削減)。
-- **教訓**: OGP バックフィルは「全件 fetch」ではなく「構造的に画像がないソースをスキップ」してから残りを取得する。YouTube 等の動画プラットフォームは決定論的 URL が使えるため fetch 不要。fetch 失敗はエラーにせず次の機会に回す。
+### LL-064: OGP 画像バックフィルは YouTube は deterministic URL、その他は og:image/twitter:image 抽出で対応
+- **事象**: data/index.json の live 記事中 54% が `image` 未取得で、EntryCard の fallback artwork のみの表示だった。
+- **根本原因**: Cloudflare Worker の OGP fetch は subrequest 上限のため、新規記事のみを対象にしており既存 entry への遡及がなかった。
+- **対策**: `scripts/fetch-missing-ogp.mjs` を作成。YouTube は `https://img.youtube.com/vi/{videoId}/hqdefault.jpg` を直接セット。arXiv/cursor-changelog 等は構造的に OGP 画像がないのでスキップ。その他は記事 HTML を fetch して `<meta og:image>` → `twitter:image` の順で抽出。
+- **教訓**: OGP バックフィルは「全件 fetch」ではなく「構造的に画像がないソースをスキップ」してから残りを取得する。
 
-### LL-051: archive の hot tier entry は summaryJa/summaryEn も除去してファイルサイズを管理する
-- **事象**: LL-032 の対策で hot tier を archive に含めるようにしたところ、2026-05.json が 4.5MB まで膨張した (hot 2807 件、各 entry に long summaryJa/summaryEn あり)。
-- **根本原因**: `compactArchiveEntry` が `bodyJa`/`bodyEn` のみ削除し、`summaryJa`/`summaryEn` を残していた。hot entry は live index に全フィールドが存在するので、archive 側で要約を保持する必要はなかった。warm/cold entry は live index から除外済みのため summary が archive 唯一のコピーとなり削除不可。
-- **対策**: `compactArchiveEntry` を `archiveTier === "hot"` の entry については `summaryJa`/`summaryEn` も削除するよう変更。`scripts/trim-archive-hot-summaries.mjs` で既存ファイルを一括適用。2026-05.json を 4.5MB → 3.2MB に圧縮。archive 月別ページは EntryCard を利用するが、hot entry は live timeline でも閲覧できるため summary なしで許容。
-- **教訓**: archive の size budget を守るには「tier 別に保持フィールドを決める」。hot tier は live index が主、archive はカウント用途のみなので summary は省略可。warm/cold は archive が唯一のコピーなので summary を保持する。
+### LL-065: archive の hot tier entry は summaryJa/summaryEn も除去してファイルサイズを管理する
+- **事象**: hot tier を archive に含めるようにしたところ、2026-05.json が 4.5MB まで膨張した。
+- **根本原因**: `compactArchiveEntry` が `bodyJa`/`bodyEn` のみ削除し、`summaryJa`/`summaryEn` を残していた。hot entry は live index に全フィールドが存在するので、archive 側で要約を保持する必要はなかった。
+- **対策**: `compactArchiveEntry` を `archiveTier === "hot"` の entry については `summaryJa`/`summaryEn` も削除するよう変更。2026-05.json を 4.5MB → 3.2MB に圧縮。
+- **教訓**: archive の size budget を守るには「tier 別に保持フィールドを決める」。hot tier は live index が主、archive はカウント用途のみなので summary は省略可。
 
-### LL-052: 高ボリュームソースはカテゴリを独占しないよう perSourceCap とカテゴリキャップを併用する
+### LL-066: 高ボリュームソースはカテゴリを独占しないよう perSourceCap とカテゴリキャップを併用する
 - **事象**: research カテゴリが 256 件 (18%) で全カテゴリ 2 位。arXiv 4 ソース×50 件 + simonw-blog 50 件 + zenn-ai 50 件 = 200 件超が論文・ブログで埋まり、UI の多様性が損なわれていた。
-- **根本原因**: `PER_SOURCE_CAP=50` がすべてのソースに均一適用されており、日次更新量が多い arXiv feed がキャップ上限まで毎日取得されていた。カテゴリ単位の上限もないため、research は無制限に増加した。
-- **対策**: `SourceDefinition` に `perSourceCap?: number` を追加し、arXiv 4 ソースを個別に制限 (cs.AI=25, cs.CL=20, cs.LG=20, cs.SE=15)。`zenn-ai` も 50→30 に変更。Worker の capping ロジックを `sourceDef.perSourceCap ?? PER_SOURCE_CAP` に切り替え。さらに `CATEGORY_CAPS = { research: 120 }` を追加し、ソースキャップ後にカテゴリ上限でさらに重要度順に絞り込む。
-- **教訓**: 高ボリュームのフィード (arXiv, Zenn タグ) を追加するときは、同一カテゴリの他ソースとのバランスを考慮して `perSourceCap` を明示する。カテゴリ全体の分布は `CATEGORY_CAPS` で上限を設けることで、単一カテゴリのインデックス占有を防ぐ。
+- **根本原因**: `PER_SOURCE_CAP=50` がすべてのソースに均一適用されており、日次更新量が多い arXiv feed がキャップ上限まで毎日取得されていた。
+- **対策**: `SourceDefinition` に `perSourceCap?: number` を追加し、arXiv 4 ソースを個別に制限 (cs.AI=25, cs.CL=20, cs.LG=20, cs.SE=15)。Worker の capping ロジックを `sourceDef.perSourceCap ?? PER_SOURCE_CAP` に切り替え。`CATEGORY_CAPS = { research: 120 }` を追加し、ソースキャップ後にカテゴリ上限でさらに絞り込む。
+- **教訓**: 高ボリュームのフィードを追加するときは、同一カテゴリの他ソースとのバランスを考慮して `perSourceCap` を明示する。
 
-### LL-053: titleEn 欠落は summaryEn の先頭文から抽出して補完できる
-- **事象**: JP source (Qiita/Zenn) の live entry 453 件で `titleEn` が空のままで、EN UI に JA バッジ付きフォールバック表示が連続していた。
-- **根本原因**: 日本語 source は AI 要約で `summaryEn` が生成されるが、`titleEn` は独立フィールドで別途生成が必要だった。Worker / harness のどちらも `titleEn` を `summaryEn` から自動生成する処理を持っていなかった。
-- **対策**: `scripts/fill-title-en.mjs` を作成。`summaryEn` が実 AI 要約の場合 (フォールバックマーカーなし) は先頭文 (最大 120 文字) を `titleEn` に設定。AI 要約が未生成の場合は元の `title` を代入する。453 件すべてを補完。
-- **教訓**: `titleEn` と `summaryEn` は独立して管理する必要があるが、`fill-title-en.mjs` の再実行で AI 要約が入った後に titleEn も更新できる。summaryEn の AI 生成が完了した段階で `npm run titleen:fill` を再実行して英語タイトル品質を向上させる。
+### LL-067: titleEn 欠落は summaryEn の先頭文から抽出して補完できる
+- **事象**: JP source (Qiita/Zenn) の live entry で `titleEn` が空のままで、EN UI に JA バッジ付きフォールバック表示が連続していた。
+- **根本原因**: 日本語 source は AI 要約で `summaryEn` が生成されるが、`titleEn` は独立フィールドで別途生成が必要だった。
+- **対策**: `scripts/fill-title-en.mjs` を作成。`summaryEn` が実 AI 要約の場合は先頭文 (最大 120 文字) を `titleEn` に設定。AI 要約が未生成の場合は元の `title` を代入する。
+- **教訓**: `titleEn` と `summaryEn` は独立して管理する。`summaryEn` の AI 生成が完了した段階で `npm run titleen:fill` を再実行して英語タイトル品質を向上させる。
 
-### LL-054: モバイル中央アクションは同列配置のまま強調する
+### LL-068: モバイル中央アクションは同列配置のまま強調する
 - **事象**: mobile tabbar の Timeline 中央ボタンが大きく浮きすぎ、Status / Search の表示領域へ被って見えた。
-- **根本原因**: `.mobile-home` が `width: calc(100% + 12px)` と `translateY(-13px)` で grid track より横・縦に意図的にはみ出していた。縮小後も `translateY()` が残ると「別列に浮いたボタン」に見え、同列ナビとしての一体感を損なった。既存 E2E は item 幅や viewport 内収まりは見ていたが、全 item の top/bottom が同じ行に揃うことを検証していなかった。
-- **対策**: 中央ボタンの `translateY()` を撤廃し、全タブと同じ `min-height` / row に揃える。強調は枠線、背景色、font-weight だけで表現する。Playwright で 390x844 と 375x667 の tabbar bounding box、横スクロールなし、隣接 item の非重なり、全 item の top/bottom 一致を検証する。
-- **教訓**: 固定ナビの中央アクションは、同列配置を崩してまで floating button 化しない。目立たせる場合はサイズや位置ではなく、色・枠線・active 状態で表現する。E2E には `previous.right <= current.left` / `current.right <= next.left` に加え、全タブの top/bottom alignment を入れる。
+- **根本原因**: `.mobile-home` が `translateY(-13px)` で grid track より縦にはみ出していた。縮小後も `translateY()` が残ると「別列に浮いたボタン」に見え、同列ナビとしての一体感を損なった。
+- **対策**: 中央ボタンの `translateY()` を撤廃し、全タブと同じ `min-height` / row に揃える。強調は枠線、背景色、font-weight だけで表現する。
+- **教訓**: 固定ナビの中央アクションは、同列配置を崩してまで floating button 化しない。目立たせる場合はサイズや位置ではなく、色・枠線・active 状態で表現する。
 
 ## 🔄 自己学習ハーネス手順
 

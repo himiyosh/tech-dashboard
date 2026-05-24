@@ -10,10 +10,18 @@ export interface Props {
 
 const {
   title = "TECH Dashboard — Pulse of the AI Ecosystem",
-  description = "Copilot / Claude / Codex / Local LLM / Research の公式情報を 1 時間ごとに自動収集・要約。",
+  description = "Microsoft / GitHub、Anthropic、OpenAI、Google、AI Coding Tools の公式情報を 1 時間ごとに自動収集・要約。",
   pageKey = "timeline",
   breadcrumb,
 } = Astro.props;
+
+const navItems = [
+  { href: "/", key: "timeline", label: "Timeline", detail: "最新記事と今日見るべき更新" },
+  { href: "/archive", key: "archive", label: "Archive", detail: "月別に過去記事を確認" },
+  { href: "/status", key: "status", label: "Status", detail: "収集 source と Worker 状態" },
+  { href: "/about", key: "about", label: "About", detail: "サイトの目的と収集方針" },
+] as const;
+const menuOwnsCurrentPage = navItems.some((item) => item.key === pageKey && item.key !== "timeline");
 ---
 
 <!doctype html>
@@ -59,34 +67,70 @@ const {
           <span class="logo-mark"></span>
           <span class="logo-text">TECH <span class="logo-accent">Dashboard</span></span>
         </a>
-        <nav class="nav">
-          <a href="/" data-mobile-primary class={pageKey === "timeline" ? "active" : ""}>Timeline</a>
-          <a href="/categories" data-mobile-primary class={pageKey === "categories" ? "active" : ""}>Categories</a>
-          <a href="/archive" data-mobile-primary class={pageKey === "archive" ? "active" : ""}>Archive</a>
-          <a href="/status" data-mobile-primary class={pageKey === "status" ? "active" : ""}>Status</a>
-          <a href="/about" data-mobile-primary class={pageKey === "about" ? "active" : ""}>About</a>
-        </nav>
+        <a
+          href="/categories"
+          class={pageKey === "categories" ? "nav-shortcut active" : "nav-shortcut"}
+          aria-current={pageKey === "categories" ? "page" : undefined}
+        >
+          Categories
+        </a>
         <div class="search">
           <span aria-hidden="true">🔍</span>
+          <span id="search-help" class="visually-hidden">
+            Search by keyword, source, category, tag, or language.
+          </span>
           <input
             type="search"
             id="pagefind-search-input"
             aria-label="Search updates"
+            aria-describedby="search-help"
             aria-controls="pagefind-results"
             aria-expanded="false"
             role="combobox"
-            placeholder="search updates..."
+            placeholder="Search updates, source, category..."
             autocomplete="off"
           />
           <span class="search-keys" aria-hidden="true"><kbd>/</kbd><kbd>⌘K</kbd></span>
-          <div id="pagefind-results" class="search-results" role="listbox" aria-live="polite" aria-label="Search results" hidden></div>
-          <div id="pagefind-status" class="sr-only" role="status" aria-live="polite"></div>
+          <div id="pagefind-results" class="search-results" role="listbox" aria-live="polite" hidden></div>
         </div>
         <div class="lang-toggle" role="group" aria-label="Language">
           <button type="button" class="lang-btn" data-lang="ja" aria-pressed="true">JA</button>
           <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
         </div>
+        <button
+          type="button"
+          class="menu-trigger"
+          data-menu-trigger
+          aria-label="Open navigation menu"
+          aria-controls="site-menu"
+          aria-expanded="false"
+        >
+          <span aria-hidden="true">☰</span>
+          <span class="menu-trigger-label">Menu</span>
+        </button>
       </div>
+      <nav id="site-menu" class="site-menu" aria-label="Site menu" hidden>
+        <div class="site-menu-head">
+          <span>Navigation</span>
+          <button type="button" class="site-menu-close" data-menu-close aria-label="Close navigation menu">×</button>
+        </div>
+        <div class="site-menu-list">
+          {navItems.map((item) => (
+            <a
+              href={item.href}
+              class={pageKey === item.key ? "active" : ""}
+              aria-current={pageKey === item.key ? "page" : undefined}
+            >
+              <span>{item.label}</span>
+              <small>{item.detail}</small>
+            </a>
+          ))}
+          <button type="button" class="site-menu-action" data-search-trigger>
+            <span>Search</span>
+            <small>キーワード・source・tag で検索</small>
+          </button>
+        </div>
+      </nav>
       {breadcrumb && breadcrumb.length > 0 && (
         <div class="crumb-bar">
           <div class="crumb-inner">
@@ -107,47 +151,17 @@ const {
       <div class="footer-inner">
         <span class="item"><span class="dot"></span> <strong>healthy</strong></span>
         <span class="item">harness <strong>v0.1</strong></span>
-        <span class="item">powered by <strong>Astro</strong> + <strong>Claude Sonnet</strong></span>
+        <span class="item">powered by <strong>Astro</strong> + <strong>Claude Opus</strong></span>
         <span class="spacer"></span>
         <span class="item">Cloudflare Pages</span>
       </div>
     </div>
 
     <nav class="mobile-tabbar" aria-label="Primary">
-      <a href="/categories" class={pageKey === "categories" ? "active" : ""}><span aria-hidden="true">▦</span><span>Categories</span></a>
-      <a href="/status" class={pageKey === "status" ? "active" : ""}><span aria-hidden="true">●</span><span>Status</span></a>
-      <a href="/" class:list={["mobile-home", pageKey === "timeline" ? "active" : ""]}><span aria-hidden="true">⌂</span><span>Timeline</span></a>
-      <button type="button" id="mobile-search-trigger"><span aria-hidden="true">⌕</span><span>Search</span></button>
-      <button
-        type="button"
-        id="mobile-more-trigger"
-        class:list={[{ active: pageKey === "archive" || pageKey === "about" }]}
-        aria-expanded="false"
-        aria-controls="mobile-more-menu"
-      >
-        <span aria-hidden="true">☰</span><span>More</span>
-      </button>
+      <a href="/" class={pageKey === "timeline" ? "active" : ""} aria-current={pageKey === "timeline" ? "page" : undefined}><span aria-hidden="true">⌂</span><span>Home</span></a>
+      <a href="/categories" class={pageKey === "categories" ? "active" : ""} aria-current={pageKey === "categories" ? "page" : undefined}><span aria-hidden="true">▦</span><span>Categories</span></a>
+      <button type="button" data-menu-trigger aria-controls="site-menu" aria-expanded="false" class={menuOwnsCurrentPage ? "active" : ""}><span aria-hidden="true">☰</span><span>Menu</span></button>
     </nav>
-
-    <div class="mobile-more-menu" id="mobile-more-menu" hidden>
-      <button class="mobile-more-backdrop" type="button" aria-label="Close menu"></button>
-      <nav class="mobile-more-sheet" aria-label="More navigation" tabindex="-1">
-        <div class="mobile-more-head">
-          <span>More</span>
-          <button type="button" class="mobile-more-close" aria-label="Close menu">×</button>
-        </div>
-        <a href="/archive" class={pageKey === "archive" ? "active" : ""}>
-          <span aria-hidden="true">▣</span>
-          <strong>Archive</strong>
-          <small>月別に過去記事をたどる</small>
-        </a>
-        <a href="/about" class={pageKey === "about" ? "active" : ""}>
-          <span aria-hidden="true">i</span>
-          <strong>About</strong>
-          <small>このダッシュボードの目的と仕組み</small>
-        </a>
-      </nav>
-    </div>
 
     <script>
       // Language toggle (Ja / En) — sync with <html data-lang="...">.
@@ -173,18 +187,62 @@ const {
         });
       })();
 
+      // Shared hamburger menu — used by desktop header and mobile tabbar.
+      (() => {
+        const menu = document.getElementById("site-menu") as HTMLElement | null;
+        const triggers = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-menu-trigger]"));
+        const closeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-menu-close]"));
+        if (!menu || triggers.length === 0) return;
+
+        let lastTrigger: HTMLButtonElement | null = null;
+        const setMenuOpen = (open: boolean, restoreFocus = false) => {
+          menu.hidden = !open;
+          triggers.forEach((trigger) => {
+            trigger.setAttribute("aria-expanded", open ? "true" : "false");
+            trigger.classList.toggle("is-open", open);
+          });
+          if (open) {
+            const active = menu.querySelector<HTMLElement>("a.active");
+            window.requestAnimationFrame(() => (active ?? menu.querySelector<HTMLElement>("a, button"))?.focus());
+          } else if (restoreFocus) {
+            lastTrigger?.focus();
+          }
+        };
+        const openMenu = (trigger: HTMLButtonElement) => {
+          lastTrigger = trigger;
+          (window as any).__tdCloseSearch?.();
+          setMenuOpen(true);
+        };
+        const closeMenu = (restoreFocus = false) => setMenuOpen(false, restoreFocus);
+        (window as any).__tdCloseMenu = closeMenu;
+
+        triggers.forEach((trigger) => {
+          trigger.addEventListener("click", () => {
+            if (menu.hidden) openMenu(trigger);
+            else closeMenu(true);
+          });
+        });
+        closeButtons.forEach((button) => button.addEventListener("click", () => closeMenu(true)));
+        menu.querySelectorAll<HTMLAnchorElement>("a").forEach((link) => {
+          link.addEventListener("click", () => closeMenu(false));
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && !menu.hidden) closeMenu(true);
+        });
+        document.addEventListener("click", (e) => {
+          const target = e.target as Node;
+          if (!menu.hidden && !menu.contains(target) && !triggers.some((trigger) => trigger.contains(target))) {
+            closeMenu(false);
+          }
+        });
+      })();
+
       // Lazy-load Pagefind and wire to the existing input.
       (async () => {
         const input = document.getElementById("pagefind-search-input") as HTMLInputElement | null;
         const panel = document.getElementById("pagefind-results") as HTMLDivElement | null;
-        const status = document.getElementById("pagefind-status") as HTMLDivElement | null;
-        const mobileTrigger = document.getElementById("mobile-search-trigger") as HTMLButtonElement | null;
-        const mobileMoreTrigger = document.getElementById("mobile-more-trigger") as HTMLButtonElement | null;
-        const mobileMoreMenu = document.getElementById("mobile-more-menu") as HTMLDivElement | null;
-        const mobileMoreSheet = mobileMoreMenu?.querySelector<HTMLElement>(".mobile-more-sheet") ?? null;
-        const mobileMoreBackdrop = mobileMoreMenu?.querySelector<HTMLButtonElement>(".mobile-more-backdrop") ?? null;
-        const mobileMoreClose = mobileMoreMenu?.querySelector<HTMLButtonElement>(".mobile-more-close") ?? null;
         const searchRoot = input?.closest(".search") as HTMLElement | null;
+        const searchTriggers = Array.from(document.querySelectorAll<HTMLElement>("[data-search-trigger]"));
         if (!input || !panel || !searchRoot) return;
 
         let pf: any = null;
@@ -200,38 +258,47 @@ const {
 
         const escapeHtml = (value: string) =>
           value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char] ?? char));
-        const sanitizeExcerpt = (value: string) =>
-          escapeHtml(value).replace(/&lt;(\/?)mark&gt;/g, "<$1mark>");
-        const setStatus = (message: string) => {
-          if (status) status.textContent = message;
-        };
         const setExpanded = (expanded: boolean) => {
           input.setAttribute("aria-expanded", expanded ? "true" : "false");
           panel.hidden = !expanded;
         };
-        const closeMoreMenu = () => {
-          if (!mobileMoreMenu || !mobileMoreTrigger) return;
-          mobileMoreMenu.hidden = true;
-          mobileMoreTrigger.setAttribute("aria-expanded", "false");
+        const setTriggerActive = (active: boolean) => {
+          searchTriggers.forEach((trigger) => {
+            trigger.classList.toggle("active", active);
+            if (trigger instanceof HTMLButtonElement) {
+              trigger.setAttribute("aria-pressed", active ? "true" : "false");
+            }
+          });
+        };
+        const renderSearchHelp = () => {
+          panel.removeAttribute("aria-busy");
+          setExpanded(true);
+          panel.innerHTML = `
+            <div class="search-empty search-help-panel">
+              <strong>Search updates</strong>
+              <p>Try a product, source, category, tag, or short phrase. Examples: <code>Copilot</code>, <code>MCP</code>, <code>release</code>.</p>
+              <div class="search-empty-actions">
+                <a href="/categories">Browse categories</a>
+                <a href="/status">Check sources</a>
+                <a href="/archive">Browse archive</a>
+              </div>
+            </div>`;
         };
         const openSearch = () => {
-          closeMoreMenu();
+          (window as any).__tdCloseMenu?.();
           searchRoot.classList.add("is-open");
+          setTriggerActive(true);
           input.focus();
+          if (!input.value.trim()) renderSearchHelp();
         };
         const closeSearch = () => {
           input.value = "";
           searchRoot.classList.remove("is-open");
+          setTriggerActive(false);
           setExpanded(false);
           input.blur();
         };
-        const openMoreMenu = () => {
-          if (!mobileMoreMenu || !mobileMoreTrigger) return;
-          closeSearch();
-          mobileMoreMenu.hidden = false;
-          mobileMoreTrigger.setAttribute("aria-expanded", "true");
-          mobileMoreSheet?.focus();
-        };
+        (window as any).__tdCloseSearch = closeSearch;
         const hitItems = () => Array.from(panel.querySelectorAll<HTMLAnchorElement>(".search-hit"));
         const setActive = (nextIndex: number) => {
           const hits = hitItems();
@@ -255,32 +322,59 @@ const {
         const renderResults = async (q: string) => {
           activeIndex = -1;
           if (!q) {
-            setExpanded(false);
-            panel.innerHTML = "";
-            setStatus("");
+            renderSearchHelp();
             return;
           }
           if (!pf) {
             setExpanded(true);
-            panel.innerHTML = `<div class="search-empty">Search index not built yet. Run <code>npm run build</code>.</div>`;
-            setStatus("Search index is not built yet.");
+            panel.innerHTML = `
+              <div class="search-empty">
+                <strong>Search index is not ready.</strong>
+                <p>The static Pagefind index is created during <code>npm run build</code>. Use categories or status until the index is available.</p>
+                <div class="search-empty-actions">
+                  <a href="/categories">Browse categories</a>
+                  <a href="/status">Check sources</a>
+                </div>
+              </div>`;
             return;
           }
-          const search = await pf.search(q);
-          const items = await Promise.all(search.results.slice(0, 10).map((r: any) => r.data()));
+          setExpanded(true);
+          panel.setAttribute("aria-busy", "true");
+          panel.innerHTML = `<div class="search-empty">Searching for <strong>${escapeHtml(q)}</strong>...</div>`;
+          let items: any[] = [];
+          try {
+            const search = await pf.search(q);
+            items = await Promise.all(search.results.slice(0, 10).map((r: any) => r.data()));
+          } catch (error) {
+            panel.removeAttribute("aria-busy");
+            panel.innerHTML = `
+              <div class="search-empty">
+                <strong>Search temporarily failed.</strong>
+                <p>${escapeHtml(error instanceof Error ? error.message : "Pagefind could not return results.")}</p>
+                <div class="search-empty-actions"><a href="/categories">Browse categories instead</a></div>
+              </div>`;
+            return;
+          }
+          panel.removeAttribute("aria-busy");
           setExpanded(true);
           if (items.length === 0) {
-            panel.innerHTML = `<div class="search-empty">No results for <strong>${escapeHtml(q)}</strong></div>`;
-            setStatus(`No results for ${q}.`);
+            panel.innerHTML = `
+              <div class="search-empty">
+                <strong>No results for ${escapeHtml(q)}</strong>
+                <p>Try a shorter keyword, remove source/category words, or search in the other language (JA/EN).</p>
+                <div class="search-empty-actions">
+                  <a href="/categories">Browse categories</a>
+                  <a href="/archive">Browse by month</a>
+                </div>
+              </div>`;
             return;
           }
-          setStatus(`${items.length} search results for ${q}.`);
           panel.innerHTML = items
             .map(
               (d: any) => `
               <a class="search-hit" id="search-hit-${Math.random().toString(36).slice(2)}" role="option" aria-selected="false" href="${escapeHtml(d.url)}">
                 <div class="search-hit-title">${escapeHtml(d.meta?.title || d.url)}</div>
-                <div class="search-hit-excerpt">${sanitizeExcerpt(d.excerpt || "")}</div>
+                <div class="search-hit-excerpt">${d.excerpt || ""}</div>
                 <div class="search-hit-meta">${escapeHtml(d.url.replace(/^https?:\/\/[^/]+/, "") || "/")}</div>
               </a>`,
             )
@@ -296,27 +390,10 @@ const {
         });
         input.addEventListener("focus", () => {
           if (input.value.trim()) renderResults(input.value.trim());
+          else renderSearchHelp();
         });
-        mobileTrigger?.addEventListener("click", () => openSearch());
-        mobileMoreTrigger?.addEventListener("click", () => {
-          if (!mobileMoreMenu) return;
-          if (mobileMoreMenu.hidden) {
-            openMoreMenu();
-          } else {
-            closeMoreMenu();
-            mobileMoreTrigger.focus();
-          }
-        });
-        mobileMoreBackdrop?.addEventListener("click", () => {
-          closeMoreMenu();
-          mobileMoreTrigger?.focus();
-        });
-        mobileMoreClose?.addEventListener("click", () => {
-          closeMoreMenu();
-          mobileMoreTrigger?.focus();
-        });
-        mobileMoreMenu?.querySelectorAll<HTMLAnchorElement>("a").forEach((link) => {
-          link.addEventListener("click", () => closeMoreMenu());
+        searchTriggers.forEach((trigger) => {
+          trigger.addEventListener("click", () => openSearch());
         });
         input.form?.addEventListener("submit", (e) => e.preventDefault());
         document.addEventListener("keydown", (e) => {
@@ -325,18 +402,14 @@ const {
           if (wantsSearch && !isTextInput) {
             e.preventDefault();
             openSearch();
-          } else if (e.key === "Escape" && mobileMoreMenu && !mobileMoreMenu.hidden) {
-            closeMoreMenu();
-            mobileMoreTrigger?.focus();
           }
         });
         document.addEventListener("click", (e) => {
           const target = e.target as Node;
-          if (!searchRoot.contains(target) && !mobileTrigger?.contains(target)) {
-            if (input.value.trim()) {
-              setExpanded(false);
-            }
+          if (!searchRoot.contains(target) && !searchTriggers.some((trigger) => trigger.contains(target))) {
+            setExpanded(false);
             searchRoot.classList.remove("is-open");
+            setTriggerActive(false);
           }
         });
         input.addEventListener("keydown", (e) => {

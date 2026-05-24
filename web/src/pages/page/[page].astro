@@ -1,13 +1,16 @@
 ---
 import Portal from "../../layouts/Portal.astro";
+import PageHero from "../../components/PageHero.astro";
 import Sidebar from "../../components/Sidebar.astro";
 import EntryCard from "../../components/EntryCard.astro";
 import Pager from "../../components/Pager.astro";
 import {
   ALL_ENTRIES,
+  GENERATED_AT,
   PAGE_SIZE,
   groupByDay,
   jstDayLabel,
+  relativeTime,
 } from "../../lib/data.ts";
 
 export function getStaticPaths() {
@@ -37,12 +40,32 @@ const breadcrumb = [
 ---
 
 <Portal pageKey="timeline" title={`Timeline · p.${page} — TECH Dashboard`} breadcrumb={breadcrumb}>
+  <PageHero
+    className="page-hero-timeline"
+    kicker="Timeline archive"
+    title="Timeline"
+    count={`page ${page}/${total}`}
+    headingId="timeline-page-heading"
+    description="最新順の深掘り一覧です。Top items から外れた更新も、日付ごとに追って後から確認できます。"
+    actions={[
+      { href: "/", label: "Back to latest" },
+      { href: "/categories", label: "Browse categories" },
+      { href: "/archive", label: "Open archive" },
+    ]}
+    metrics={[
+      { label: "Showing", value: pageEntries.length },
+      { label: "Total", value: ALL_ENTRIES.length },
+      { label: "Page", value: `${page}/${total}` },
+      { label: "Updated", value: relativeTime(GENERATED_AT, now) },
+    ]}
+  />
+
   <div class="layout">
     <Sidebar active="all" />
 
     <main>
       <div class="section-header primary">
-        <h2>Timeline <span class="count">page {page}/{total} · {ALL_ENTRIES.length} total</span></h2>
+        <h2>Entries <span class="count">{pageEntries.length} on this page · {ALL_ENTRIES.length} total</span></h2>
       </div>
 
       {dayGroups.map(({ key, items }) => (

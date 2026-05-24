@@ -1,5 +1,6 @@
 ---
 import Portal from "../../../../layouts/Portal.astro";
+import PageHero from "../../../../components/PageHero.astro";
 import Sidebar from "../../../../components/Sidebar.astro";
 import EntryCard from "../../../../components/EntryCard.astro";
 import Pager from "../../../../components/Pager.astro";
@@ -8,6 +9,7 @@ import {
   PAGE_SIZE,
   groupByDay,
   jstDayLabel,
+  relativeTime,
 } from "../../../../lib/data.ts";
 
 export function getStaticPaths() {
@@ -55,13 +57,33 @@ const breadcrumb = [
 ---
 
 <Portal title={`#${tag} · p.${page} — TECH Dashboard`} breadcrumb={breadcrumb}>
+  <PageHero
+    className="page-hero-tag"
+    kicker="Tag timeline"
+    title={`#${tag}`}
+    count={`page ${page}/${total}`}
+    headingId="tag-heading"
+    description="同じキーワードで束ねられた更新の続きです。カテゴリをまたいだ関連ニュースや実装トピックの追跡に使えます。"
+    actions={[
+      { href: `/t/${tag}`, label: "First page" },
+      { href: "/categories", label: "Browse categories" },
+      { href: "/archive", label: "Open archive" },
+    ]}
+    metrics={[
+      { label: "Total", value: all.length },
+      { label: "Showing", value: entries.length },
+      { label: "Page", value: `${page}/${total}` },
+      { label: "Updated", value: relativeTime(ALL_ENTRIES[0]?.collectedAt ?? ALL_ENTRIES[0]?.publishedAt ?? null, now) },
+    ]}
+  />
+
   <div class="layout">
     <Sidebar />
 
     <main>
       <div class="section-header primary">
         <h2>
-          #{tag}
+          Entries
           <span class="count">page {page}/{total} · {all.length} total</span>
         </h2>
       </div>

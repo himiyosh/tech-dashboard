@@ -1,9 +1,8 @@
 ---
 import Portal from "../../../../layouts/Portal.astro";
+import PageHero from "../../../../components/PageHero.astro";
 import Sidebar from "../../../../components/Sidebar.astro";
 import EntryCard from "../../../../components/EntryCard.astro";
-import CategoryHero from "../../../../components/CategoryHero.astro";
-import TrendChart from "../../../../components/TrendChart.astro";
 import Pager from "../../../../components/Pager.astro";
 import {
   CATEGORY_META,
@@ -13,6 +12,7 @@ import {
   jstDayLabel,
   type Category,
 } from "../../../../lib/data.ts";
+import { categoryWeekOverWeek } from "../../../../lib/stats.ts";
 
 export function getStaticPaths() {
   const out: Array<{
@@ -49,6 +49,8 @@ const start = (page - 1) * PAGE_SIZE;
 const entries = all.slice(start, start + PAGE_SIZE);
 const dayGroups = groupByDay(entries);
 const now = new Date();
+const wow = categoryWeekOverWeek(slug);
+const deltaSign = wow.deltaPct > 0 ? "+" : wow.deltaPct < 0 ? "-" : "";
 
 const breadcrumb = [
   { label: "Home", href: "/" },
@@ -63,18 +65,31 @@ const breadcrumb = [
   title={`${category.name} · p.${page} — TECH Dashboard`}
   breadcrumb={breadcrumb}
 >
+  <PageHero
+    className="page-hero-category-detail"
+    accent={category.color}
+    kicker="Category detail"
+    title={category.name}
+    count={`page ${page}/${total}`}
+    headingId="category-heading"
+    description={`${category.name} に分類された更新の続きです。ページを移動してもカテゴリ文脈と主要指標を維持します。`}
+    actions={[
+      { href: `/c/${slug}`, label: "First page" },
+      { href: "/categories", label: "All categories" },
+      { href: `/rss.xml?category=${slug}`, label: "RSS" },
+    ]}
+    metrics={[
+      { label: "Total", value: all.length },
+      { label: "Showing", value: entries.length },
+      { label: "Last 7d", value: wow.thisWeek },
+      { label: "Vs prev 7d", value: `${deltaSign}${Math.abs(wow.deltaPct)}%` },
+    ]}
+  />
+
   <div class="layout">
     <Sidebar active={slug} />
 
     <main>
-      <CategoryHero
-        slug={slug}
-        name={category.name}
-        color={category.color}
-        initial={category.initial}
-        totalCount={all.length}
-      />
-
       <div
         class="section-header"
         style={`border-bottom:2px solid ${category.color}`}

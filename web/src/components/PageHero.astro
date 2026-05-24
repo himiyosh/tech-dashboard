@@ -1,0 +1,68 @@
+---
+export interface PageHeroMetric {
+  label: string;
+  value: string | number;
+}
+
+export interface PageHeroAction {
+  href: string;
+  label: string;
+}
+
+export interface Props {
+  kicker: string;
+  title: string;
+  count?: string;
+  description: string;
+  headingId: string;
+  accent?: string;
+  className?: string;
+  metrics?: PageHeroMetric[];
+  actions?: PageHeroAction[];
+}
+
+const {
+  kicker,
+  title,
+  count,
+  description,
+  headingId,
+  accent,
+  className = "",
+  metrics = [],
+  actions = [],
+} = Astro.props;
+---
+
+<section
+  class:list={["page-hero", className]}
+  style={accent ? `--page-hero-accent:${accent}` : undefined}
+  aria-labelledby={headingId}
+>
+  <div class="page-hero-inner">
+    <div class="page-hero-copy">
+      <p class="page-kicker">{kicker}</p>
+      <h1 id={headingId}>
+        {title}
+        {count && <span class="page-count">{count}</span>}
+      </h1>
+      <p>{description}</p>
+      {actions.length > 0 && (
+        <div class="page-hero-actions" aria-label={`${title} shortcuts`}>
+          {actions.map((action) => <a href={action.href}>{action.label}</a>)}
+        </div>
+      )}
+    </div>
+
+    {metrics.length > 0 && (
+      <div class="page-hero-metrics" aria-label={`${title} summary`}>
+        {metrics.map((metric) => (
+          <div class="page-hero-metric">
+            <span>{metric.label}</span>
+            <strong>{metric.value}</strong>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</section>

@@ -6,8 +6,13 @@ test.describe("TECH Dashboard smoke", () => {
 
     await expect(page.getByRole("link", { name: /TECH Dashboard/i })).toBeVisible();
     await expect(page.locator("section.banner h1.i18n-ja")).toBeVisible();
+    await expect(page.locator(".banner-fact")).toHaveCount(3);
+    await expect(page.getByRole("link", { name: /今日の重要記事/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /検索/ })).toBeVisible();
+    await expect(page.locator(".banner-actions").getByRole("link", { name: /カテゴリ/ })).toBeVisible();
     await expect(page.locator("section.stats .stat")).toHaveCount(5);
-    await expect(page.getByRole("heading", { name: /Timeline/i })).toBeVisible();
+    await expect(page.locator("#priority-heading")).toBeVisible();
+    await expect(page.locator("#timeline-heading")).toBeVisible();
   });
 
   test("first internal article link opens detail page", async ({ page }) => {
@@ -24,27 +29,53 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator('a.ed-cta[target="_blank"]')).toBeVisible();
   });
 
-  test("clicking featured article panel opens detail page", async ({ page }) => {
+  test("sidebar category labels stay single-line and marquee on hover", async ({ page }) => {
+    await page.setViewportSize({ width: 900, height: 900 });
     await page.goto("/");
 
-    const featured = page.locator("article.featured").first();
-    await expect(featured).toBeVisible();
+    const copilotItem = page.locator('a.side-item[href="/c/copilot"]').first();
+    const opencodeItem = page.locator('a.side-item[href="/c/opencode"]').first();
+    const label = opencodeItem.locator(".name");
+    const marquee = opencodeItem.locator(".name-marquee");
 
-    await featured.click({ position: { x: 24, y: 72 } });
-    await expect(page).toHaveURL(/\/e\/.+\/$/);
-    await expect(page.locator("article.entry-detail")).toBeVisible();
-  });
+    await expect(copilotItem).toBeVisible();
+    await expect(copilotItem.locator(".name-marquee")).toHaveText("Copilot");
+    await expect(copilotItem.locator(".name")).toHaveAttribute("title", "Microsoft: GitHub Copilot");
+    await expect(opencodeItem).toBeVisible();
+    await expect(label).toHaveAttribute("title", "AI Coding Tools: OpenHands / OpenCode");
+    await expect
+      .poll(() => opencodeItem.evaluate((item) => item.hasAttribute("data-marquee")))
+      .toBe(true);
 
-  test("clicking article card panel opens detail page", async ({ page }) => {
-    await page.goto("/");
+    const labelMetrics = await label.evaluate((node) => {
+      const rect = node.getBoundingClientRect();
+      const style = window.getComputedStyle(node);
+      const parsedLineHeight = Number.parseFloat(style.lineHeight);
+      const parsedFontSize = Number.parseFloat(style.fontSize);
+      const lineHeight = Number.isFinite(parsedLineHeight) ? parsedLineHeight : parsedFontSize * 1.4;
+      return {
+        whiteSpace: style.whiteSpace,
+        height: rect.height,
+        lineHeight,
+        clientWidth: node.clientWidth,
+      };
+    });
+    const marqueeScrollWidth = await marquee.evaluate((node) => node.scrollWidth);
+    expect(labelMetrics.whiteSpace).toBe("nowrap");
+    expect(marqueeScrollWidth, "label text should overflow within the narrow sidebar").toBeGreaterThan(
+      labelMetrics.clientWidth,
+    );
+    expect(labelMetrics.height, "label should not wrap onto multiple lines").toBeLessThanOrEqual(
+      labelMetrics.lineHeight + 2,
+    );
 
-    const firstCard = page.locator("article.card").first();
-    await expect(firstCard).toBeVisible();
-
-    await firstCard.scrollIntoViewIfNeeded();
-    await firstCard.click({ position: { x: 24, y: 72 } });
-    await expect(page).toHaveURL(/\/e\/.+\/$/);
-    await expect(page.locator("article.entry-detail")).toBeVisible();
+    await opencodeItem.hover();
+    await expect
+      .poll(() => marquee.evaluate((node) => window.getComputedStyle(node).animationName))
+      .toBe("side-label-marquee");
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
   });
 
   test("language toggle changes html data-lang", async ({ page }) => {
@@ -67,6 +98,7 @@ test.describe("TECH Dashboard smoke", () => {
   test("status page renders worker and source health", async ({ page }) => {
     await page.goto("/status/");
 
+    await expect(page.locator(".page-hero #status-heading")).toBeVisible();
     await expect(page.getByRole("heading", { name: /Worker Health/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: /Source Health/i })).toBeVisible();
     await expect(page.locator('[data-source-filter="all"]')).toBeVisible();
@@ -74,6 +106,107 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".source-item").first()).toBeVisible();
     await expect(page.getByText(/stale > \d+h/).first()).toBeVisible();
     await expect(page.locator(".source-latest-line").first()).toBeVisible();
+  });
+
+  test("section page heroes give page context on desktop and mobile", async ({ page }) => {
+    const topLevelPaths = ["/categories/", "/status/", "/about/", "/archive/"];
+    const paths = [...topLevelPaths, "/page/2/"];
+
+    for (const path of topLevelPaths) {
+      await page.goto(path);
+      await expect(page.locator(".crumb-bar"), `${path} should not render breadcrumbs`).toHaveCount(0);
+    }
+
+    await page.goto("/categories/");
+    const firstCategoryHref = await page.locator(".category-card").first().getAttribute("href");
+    if (firstCategoryHref) paths.push(firstCategoryHref);
+
+    await page.goto("/archive/");
+    const firstMonthHref = await page.locator(".month-card").first().getAttribute("href");
+    if (firstMonthHref) paths.push(firstMonthHref);
+
+    await page.goto("/");
+    const firstTag = page.locator('a[href^="/t/"]').first();
+    if ((await firstTag.count()) > 0) {
+      const firstTagHref = await firstTag.getAttribute("href");
+      if (firstTagHref) paths.push(firstTagHref);
+    }
+
+    for (const path of paths) {
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.goto(path);
+      const hero = page.locator(".page-hero").first();
+      await expect(hero).toBeVisible();
+      const desktopBox = await hero.boundingBox();
+      expect(desktopBox, `${path} desktop hero box`).not.toBeNull();
+      expect(desktopBox!.height, `${path} desktop hero has page-banner presence`).toBeGreaterThan(120);
+      const innerBox = await hero.locator(".page-hero-inner").boundingBox();
+      expect(innerBox, `${path} desktop hero inner box`).not.toBeNull();
+      expect(Math.round(innerBox!.width), `${path} desktop hero inner width`).toBe(1280);
+      if (topLevelPaths.includes(path)) {
+        await expect(hero, `${path} top-level hero class`).toHaveClass(/page-hero-top-level/);
+        const metricBoxes = await hero.locator(".page-hero-metric").evaluateAll((items) =>
+          items.map((item) => item.getBoundingClientRect().width),
+        );
+        expect(metricBoxes, `${path} top-level hero metric count`).toHaveLength(6);
+        expect(Math.max(...metricBoxes) - Math.min(...metricBoxes), `${path} top-level metric widths match`).toBeLessThanOrEqual(1);
+      }
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+        .toBe(true);
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.reload();
+      await expect(hero).toBeVisible();
+      const mobileBox = await hero.boundingBox();
+      expect(mobileBox, `${path} mobile hero box`).not.toBeNull();
+      expect(mobileBox!.height, `${path} mobile hero stays compact`).toBeLessThan(310);
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+        .toBe(true);
+    }
+  });
+
+  test("categories page exposes compact category directory", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/categories/");
+
+    const directory = page.locator("#category-directory");
+    await expect(directory).toBeVisible();
+    await expect(page.locator("#category-directory-heading")).toBeVisible();
+    await expect(directory.locator("a.category-directory-item")).toHaveCount(14);
+    await expect(directory.getByRole("link", { name: /Copilot/ })).toBeVisible();
+    await expect(directory.getByRole("link", { name: /Papers/ })).toBeVisible();
+    await expect(page.locator(".category-card")).toHaveCount(14);
+    await expect(page.locator(".category-card").first()).toContainText("live");
+    await expect(page.locator(".category-card").first()).not.toContainText("all time");
+
+    const desktopBox = await directory.boundingBox();
+    expect(desktopBox, "category directory desktop box").not.toBeNull();
+    expect(desktopBox!.height, "category directory stays scannable on desktop").toBeLessThan(480);
+    const desktopCardBoxes = await page.locator(".category-card").evaluateAll((cards) =>
+      cards.map((card) => card.getBoundingClientRect().height),
+    );
+    expect(Math.max(...desktopCardBoxes), "category panels stay dense on desktop").toBeLessThan(220);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.reload();
+    await expect(directory).toBeVisible();
+    const mobileBox = await directory.boundingBox();
+    expect(mobileBox, "category directory mobile box").not.toBeNull();
+    expect(mobileBox!.height, "category directory stays compact on mobile").toBeLessThan(540);
+    const mobileCardBox = await page.locator(".category-card").first().boundingBox();
+    expect(mobileCardBox, "mobile category card box").not.toBeNull();
+    expect(mobileCardBox!.height, "category panels stay dense on mobile").toBeLessThan(230);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
+    await directory.getByRole("link", { name: /Copilot/ }).click();
+    await expect(page).toHaveURL(/\/c\/copilot\/?$/);
   });
 
   test("status source filters only show matching rows", async ({ page }) => {
@@ -178,142 +311,112 @@ test.describe("TECH Dashboard smoke", () => {
   test("archive page links to monthly archive pages", async ({ page }) => {
     await page.goto("/archive/");
 
-    await expect(page.locator("main h2", { hasText: "Archive" })).toBeVisible();
+    await expect(page.locator(".crumb-bar")).toHaveCount(0);
+    await expect(page.locator("#archive-heading")).toBeVisible();
     const firstMonth = page.locator("a.month-card").first();
     await expect(firstMonth).toBeVisible();
     await firstMonth.click();
     await expect(page).toHaveURL(/\/archive\/\d{4}-\d{2}\/?$/);
-    await expect(page.locator("main h2")).toBeVisible();
+    await expect(page.locator("#archive-month-heading")).toBeVisible();
   });
 
-  test("mobile tabbar links navigate and search trigger focuses input", async ({ page }) => {
-    const assertMobileTabbarLayout = async (viewportWidth: number) => {
-      const tabbar = page.getByRole("navigation", { name: "Primary" });
-      await expect(tabbar).toBeVisible();
-      await expect(page.locator(".footer-bar")).toBeHidden();
-      await expect(tabbar.getByRole("link", { name: "Timeline" })).toHaveClass(/active/);
-
-      const tabbarBox = await tabbar.boundingBox();
-      expect(tabbarBox, "mobile tabbar has a rendered box").not.toBeNull();
-      expect(Math.round(tabbarBox!.x), "mobile tabbar starts at the viewport edge").toBe(0);
-      expect(Math.round(tabbarBox!.width), "mobile tabbar spans the viewport width").toBe(viewportWidth);
-      await expect
-        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-        .toBe(true);
-
-      const tabItems = tabbar.locator("a, button");
-      await expect(tabItems).toHaveCount(5);
-      const itemBoxes = await tabItems.evaluateAll((items) =>
-        items.map((item) => {
-          const rect = item.getBoundingClientRect();
-          return { bottom: rect.bottom, height: rect.height, left: rect.left, right: rect.right, top: rect.top, width: rect.width };
-        }),
-      );
-      expect(itemBoxes[0].left, "first mobile tab item starts inside the padded bar").toBeGreaterThanOrEqual(7);
-      expect(itemBoxes.at(-1)!.right, "last mobile tab item stays inside the padded bar").toBeLessThanOrEqual(viewportWidth - 7);
-      for (let index = 1; index < itemBoxes.length; index += 1) {
-        expect(
-          itemBoxes[index - 1].right - itemBoxes[index].left,
-          `mobile tab items do not overlap: ${JSON.stringify(itemBoxes)}`,
-        ).toBeLessThanOrEqual(0.5);
-      }
-      for (const itemBox of itemBoxes) {
-        expect(itemBox.width, `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeGreaterThanOrEqual(44);
-        expect(itemBox.width, `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeLessThanOrEqual(90);
-        expect(itemBox.height, `mobile tab item height: ${JSON.stringify(itemBox)}`).toBeLessThanOrEqual(50);
-      }
-      const topEdges = itemBoxes.map((itemBox) => itemBox.top);
-      const bottomEdges = itemBoxes.map((itemBox) => itemBox.bottom);
-      expect(Math.max(...topEdges) - Math.min(...topEdges), `mobile tab items share one row: ${JSON.stringify(itemBoxes)}`).toBeLessThanOrEqual(1);
-      expect(Math.max(...bottomEdges) - Math.min(...bottomEdges), `mobile tab items share one row: ${JSON.stringify(itemBoxes)}`).toBeLessThanOrEqual(1);
-      const timelineBox = await tabbar.getByRole("link", { name: "Timeline" }).boundingBox();
-      expect(timelineBox, "Timeline tab has a visible centered button").not.toBeNull();
-      const timelineCenter = timelineBox!.x + timelineBox!.width / 2;
-      expect(Math.abs(timelineCenter - viewportWidth / 2), `Timeline tab is centered in ${viewportWidth}px viewport`).toBeLessThan(10);
-      expect(timelineBox!.y, "Timeline tab stays on the same row inside the tabbar").toBeGreaterThanOrEqual(tabbarBox!.y);
-      expect(itemBoxes[1].right, "Timeline tab does not cover Status").toBeLessThanOrEqual(timelineBox!.x + 0.5);
-      expect(timelineBox!.x + timelineBox!.width, "Timeline tab does not cover Search").toBeLessThanOrEqual(itemBoxes[3].left + 0.5);
-    };
+  test("hamburger menu owns navigation and mobile tabbar stays compact", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    await expect(page.locator("header .nav")).toHaveCount(0);
+    await expect(page.locator("header .nav-shortcut", { hasText: "Categories" })).toBeVisible();
+    const desktopMenuButton = page.locator("header .menu-trigger");
+    await expect(desktopMenuButton).toBeVisible();
+    await expect(desktopMenuButton).toHaveAttribute("aria-expanded", "false");
+    await desktopMenuButton.click();
+    const menu = page.locator("#site-menu");
+    await expect(menu).toBeVisible();
+    await expect(desktopMenuButton).toHaveAttribute("aria-expanded", "true");
+    await expect(menu.getByRole("link", { name: /Categories/ })).toHaveCount(0);
+    await expect(menu.getByRole("link", { name: /Archive/ })).toBeVisible();
+    await expect(menu.getByRole("link", { name: /About/ })).toBeVisible();
+    await expect(menu.getByRole("button", { name: /Search/ })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(menu).toBeHidden();
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
-    await assertMobileTabbarLayout(390);
-    await page.setViewportSize({ width: 375, height: 667 });
-    await assertMobileTabbarLayout(375);
-    await page.setViewportSize({ width: 390, height: 844 });
 
     const tabbar = page.getByRole("navigation", { name: "Primary" });
+    await expect(tabbar).toBeVisible();
+    await expect(page.locator(".footer-bar")).toBeHidden();
+    await expect(page.locator("header .nav")).toHaveCount(0);
+    await expect(page.locator("header .nav-shortcut")).toBeHidden();
+    await expect(tabbar.getByRole("link", { name: "Home" })).toHaveClass(/active/);
+    await expect(tabbar.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
+
+    const tabbarBox = await tabbar.boundingBox();
+    expect(tabbarBox, "mobile tabbar has a rendered box").not.toBeNull();
+    expect(Math.round(tabbarBox!.x), "mobile tabbar starts at the viewport edge").toBe(0);
+    expect(Math.round(tabbarBox!.width), "mobile tabbar spans the viewport width").toBe(390);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
+    const tabItems = tabbar.locator("a, button");
+    await expect(tabItems).toHaveCount(3);
+    const itemBoxes = await tabItems.evaluateAll((items) =>
+      items.map((item) => {
+        const rect = item.getBoundingClientRect();
+        return { left: rect.left, right: rect.right, width: rect.width };
+      }),
+    );
+    expect(itemBoxes[0].left, "first mobile tab item starts inside the padded bar").toBeGreaterThanOrEqual(7);
+    expect(itemBoxes.at(-1)!.right, "last mobile tab item stays inside the padded bar").toBeLessThanOrEqual(383);
+    for (const itemBox of itemBoxes) {
+      // 3 items in (390 - 16px padding) ≈ 124-125px each
+      expect(Math.round(itemBox.width), `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeGreaterThanOrEqual(120);
+      expect(Math.round(itemBox.width), `mobile tab item width too large: ${JSON.stringify(itemBox)}`).toBeLessThanOrEqual(130);
+    }
+
+    const openMobileMenu = async () => {
+      await tabbar.getByRole("button", { name: /Menu/ }).click();
+      await expect(menu).toBeVisible();
+    };
 
     await tabbar.getByRole("link", { name: "Categories" }).click();
     await expect(page).toHaveURL(/\/categories\/?$/);
-    await expect(page.locator("main h2", { hasText: "Categories" })).toBeVisible();
+    await expect(page.locator("#categories-heading")).toBeVisible();
+    await expect(tabbar.getByRole("link", { name: "Categories" })).toHaveClass(/active/);
+    await expect(tabbar.getByRole("button", { name: /Menu/ })).not.toHaveClass(/active/);
+    await openMobileMenu();
+    await expect(menu.getByRole("link", { name: /Categories/ })).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(menu).toBeHidden();
 
-    await tabbar.getByRole("button", { name: "More" }).click();
-    const moreNav = page.getByRole("navigation", { name: "More navigation" });
-    await expect(moreNav).toBeVisible();
-    await moreNav.getByRole("link", { name: /Archive/ }).click();
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/categories/");
+    await expect(page.locator("header .nav-shortcut", { hasText: "Categories" })).toHaveClass(/active/);
+    await page.locator("header .menu-trigger").click();
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole("link", { name: /Categories/ })).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(menu).toBeHidden();
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openMobileMenu();
+    await menu.getByRole("link", { name: /Archive/ }).click();
     await expect(page).toHaveURL(/\/archive\/?$/);
-    await expect(tabbar.getByRole("button", { name: "More" })).toHaveClass(/active/);
 
-    await tabbar.getByRole("link", { name: "Status" }).click();
+    await openMobileMenu();
+    await menu.getByRole("link", { name: /Status/ }).click();
     await expect(page).toHaveURL(/\/status\/?$/);
     await expect(page.getByRole("heading", { name: /Source Health/i })).toBeVisible();
 
-    await tabbar.getByRole("button", { name: "More" }).click();
-    await moreNav.getByRole("link", { name: /About/ }).click();
+    await openMobileMenu();
+    await menu.getByRole("link", { name: /About/ }).click();
     await expect(page).toHaveURL(/\/about\/?$/);
+    await expect(page.locator("#about-heading")).toBeVisible();
 
-    await page.goto("/");
-    await tabbar.getByRole("button", { name: "Search" }).click();
+    await openMobileMenu();
+    await menu.getByRole("button", { name: /Search/ }).click();
     await expect(page.locator("#pagefind-search-input")).toBeFocused();
-  });
-
-  test("mobile categories and archive expose quick links above the fold", async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-
-    await page.goto("/categories");
-    await expect(page.locator(".mobile-page-badge", { hasText: "Category map" })).toBeVisible();
-    const categoryShortcuts = page.getByRole("navigation", { name: "Category shortcuts" });
-    await expect(categoryShortcuts).toBeVisible();
-    const firstCategoryShortcut = categoryShortcuts.getByRole("link").first();
-    await expect(firstCategoryShortcut).toBeVisible();
-    const categoryTop = await firstCategoryShortcut.evaluate((el) => el.getBoundingClientRect().top);
-    expect(categoryTop, "category shortcuts appear in the first viewport").toBeLessThan(420);
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-      .toBe(true);
-    await expect(page.locator(".categories-kpis > div:visible")).toHaveCount(3);
-
-    await page.goto("/archive");
-    await expect(page.locator(".mobile-page-badge", { hasText: "History map" })).toBeVisible();
-    const monthShortcuts = page.getByRole("navigation", { name: "Recent archive months" });
-    await expect(monthShortcuts).toBeVisible();
-    const firstMonthShortcut = monthShortcuts.getByRole("link").first();
-    await expect(firstMonthShortcut).toBeVisible();
-    const monthTop = await firstMonthShortcut.evaluate((el) => el.getBoundingClientRect().top);
-    expect(monthTop, "archive month shortcuts appear in the first viewport").toBeLessThan(420);
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-      .toBe(true);
-    await expect(page.locator(".archive-kpis > div:visible")).toHaveCount(2);
-    await expect(page.locator(".archive-spotlight")).toBeHidden();
-  });
-
-  test("broken entry thumbnails fall back to category artwork", async ({ page }) => {
-    await page.goto("/");
-
-    const cardThumb = page.locator(".card-thumb").filter({ has: page.locator("img") }).first();
-    await expect(cardThumb).toBeVisible();
-    await cardThumb.locator("img").evaluate((img) => img.dispatchEvent(new Event("error")));
-    await expect(cardThumb).toHaveClass(/failed/);
-    await expect(cardThumb.locator(".card-thumb-fallback")).toBeVisible();
-
-    const featuredThumb = page.locator(".featured-thumb.has-image").first();
-    if ((await featuredThumb.count()) > 0) {
-      await featuredThumb.locator("img").evaluate((img) => img.dispatchEvent(new Event("error")));
-      await expect(featuredThumb).toHaveClass(/failed/);
-      await expect(featuredThumb.locator(".featured-thumb-fallback")).toBeVisible();
-    }
+    await expect(page.locator("#pagefind-results")).toBeVisible();
   });
 
   test("pagefind search returns dashboard entries", async ({ page }) => {
@@ -325,6 +428,19 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("#pagefind-results")).toBeVisible({ timeout: 10_000 });
     await expect(page.locator(".search-hit").first()).toBeVisible({ timeout: 10_000 });
     await expect(page.locator(".search-hit.is-active").first()).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("pagefind search zero state gives next actions", async ({ page }) => {
+    await page.goto("/");
+
+    await page.keyboard.press("Control+K");
+    await expect(page.locator("#pagefind-search-input")).toBeFocused();
+    await page.locator("#pagefind-search-input").fill("漢字未存在語彙魑魅魍魎");
+
+    await expect(page.locator("#pagefind-results")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator(".search-empty")).toContainText("No results", { timeout: 10_000 });
+    await expect(page.locator(".search-empty")).toContainText("Try a shorter keyword");
+    await expect(page.locator(".search-empty a", { hasText: "Browse categories" })).toBeVisible();
   });
 
   test("entry titles never blank in either language mode (LL-029)", async ({ page }) => {

@@ -416,6 +416,12 @@
 - **対策**: `scripts/fill-title-en.mjs` を作成。`summaryEn` が実 AI 要約の場合 (フォールバックマーカーなし) は先頭文 (最大 120 文字) を `titleEn` に設定。AI 要約が未生成の場合は元の `title` を代入する。453 件すべてを補完。
 - **教訓**: `titleEn` と `summaryEn` は独立して管理する必要があるが、`fill-title-en.mjs` の再実行で AI 要約が入った後に titleEn も更新できる。summaryEn の AI 生成が完了した段階で `npm run titleen:fill` を再実行して英語タイトル品質を向上させる。
 
+### LL-054: モバイル中央アクションは同列配置のまま強調する
+- **事象**: mobile tabbar の Timeline 中央ボタンが大きく浮きすぎ、Status / Search の表示領域へ被って見えた。
+- **根本原因**: `.mobile-home` が `width: calc(100% + 12px)` と `translateY(-13px)` で grid track より横・縦に意図的にはみ出していた。縮小後も `translateY()` が残ると「別列に浮いたボタン」に見え、同列ナビとしての一体感を損なった。既存 E2E は item 幅や viewport 内収まりは見ていたが、全 item の top/bottom が同じ行に揃うことを検証していなかった。
+- **対策**: 中央ボタンの `translateY()` を撤廃し、全タブと同じ `min-height` / row に揃える。強調は枠線、背景色、font-weight だけで表現する。Playwright で 390x844 と 375x667 の tabbar bounding box、横スクロールなし、隣接 item の非重なり、全 item の top/bottom 一致を検証する。
+- **教訓**: 固定ナビの中央アクションは、同列配置を崩してまで floating button 化しない。目立たせる場合はサイズや位置ではなく、色・枠線・active 状態で表現する。E2E には `previous.right <= current.left` / `current.right <= next.left` に加え、全タブの top/bottom alignment を入れる。
+
 ## 🔄 自己学習ハーネス手順
 
 1. 作業中に発生した「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。

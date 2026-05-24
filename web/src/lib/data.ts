@@ -473,3 +473,31 @@ export function sourceAvgImportance(
     (recent.reduce((s, x) => s + x.importance, 0) / recent.length) * 10,
   ) / 10;
 }
+
+// Fallback detection constants (from main's data quality improvements).
+const FALLBACK_SUMMARY_JA_PREFIX = "このエントリは ";
+const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
+const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collection metadata";
+
+/** Returns true if this entry still has a deterministic (non-AI) summary/body. */
+export function isDeterministicFallbackEntry(e: NormalizedEntry): boolean {
+  return (
+    (e.summaryJa ?? "").startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
+    (e.summaryEn ?? "").includes(FALLBACK_SUMMARY_EN_NEEDLE) ||
+    (e.bodyEn ?? "").includes(FALLBACK_BODY_EN_NEEDLE)
+  );
+}
+
+/** Aggregate fallback metrics for a set of entries. */
+export function fallbackMetrics(entries: readonly NormalizedEntry[] = ALL_ENTRIES): {
+  fallbackEntries: number;
+  realSummaryEntries: number;
+  fallbackPercent: number;
+} {
+  const fallbackEntries = entries.filter(isDeterministicFallbackEntry).length;
+  return {
+    fallbackEntries,
+    realSummaryEntries: entries.length - fallbackEntries,
+    fallbackPercent: entries.length === 0 ? 0 : Math.round((fallbackEntries / entries.length) * 100),
+  };
+}

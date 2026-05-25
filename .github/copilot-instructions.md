@@ -152,7 +152,7 @@
 
 ### R-021: Visual review は DOM 寸法と画像 fallback まで見る
 - mobile navigation を変更したら、`390x844` で `header .menu-trigger` が非表示、bottom tabbar が `Home / Categories / Menu` の 3 action、`#site-menu` が tabbar 由来の bottom-sheet として viewport 内に収まることを Playwright で検証する。
-- Featured / article card の layout を変更したら、空リンクや fallback 要素が grid/flex の通常 flow に参加していないこと、thumb/body の bounding box が期待位置にあること、panel height が異常に伸びないことを検証する。
+- Featured / article card の layout を変更したら、空リンクや fallback 要素が grid/flex の通常 flow に参加していないこと、thumb/body の bounding box が期待位置にあること、panel height が異常に伸びないこと、mobile 通常カードの thumbnail が本文幅を削らず article panel の境界 gap が見えることを検証する。通常カードの OGP thumbnail は mobile では非表示にしてよい。
 - mobile home density を変更したら、`390x844` で hero 直下に重複 stats / 長い説明文の余白がないこと、最初の Featured/article が `y <= 340` 目安で見えることを Playwright 寸法で検証する。
 - 外部 OGP / media image は失敗前提で扱う。`img.onerror` で deterministic fallback artwork を表示し、broken image icon を残さない。E2E は synthetic `error` event で fallback 表示を検証する。
 - Persona audit はスクリーンショット印象だけで合格にしない。DOM metrics、console/network、画像 naturalWidth/error、focus state のいずれかを evidence として要求する。
@@ -581,6 +581,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: レビュー基準が overflow / fixed nav / クリック可否に偏り、「最初の判断対象が何 px で出るか」「重複情報が first-view を押し下げていないか」を測っていなかった。
 - **対策**: mobile では hero と重複する stats を非表示にし、section note / count を畳んで Featured を 326px 付近まで上げた。E2E に `featuredBox.y <= 340` の寸法ゲートを追加する。
 - **教訓**: UX レビューでは vertical density を定量化する。`scrollWidth` だけでなく、first actionable content / first article の `y` 座標、前後セクションの gap、重複 KPI の有無を Playwright で記録する。
+
+### LL-071: mobile 通常カードのサムネイルは補助情報として扱う
+- **事象**: Deep-dive timeline の mobile 通常カードで OGP thumbnail がカード幅いっぱい・高さ 168px で表示され、画像の存在感が本文より強く、どこまでが 1 つの記事パネルか分かりづらかった。
+- **根本原因**: desktop の media card を mobile で単純に縦積みし、thumbnail をカード上端に全面表示したため、カード境界より画像の白背景や次カード画像が視覚的な区切りになっていた。E2E も thumbnail fallback と panel height は見ていたが、通常カードの thumbnail サイズとカード間 gap を測っていなかった。
+- **対策**: mobile 通常カードは本文を full-width のまま維持し、OGP thumbnail は非表示にする。要約バッジは本文と横並びにせず縦積みにして、要約テキストも full-width で読ませる。カードごとに border / shadow / margin gap を強め、E2E で本文幅、summary text 幅、mobile thumbnail 非表示、隣接カード gap、desktop thumbnail fallback を検証する。
+- **教訓**: mobile の記事一覧では OGP 画像を主役にしない。読む判断に必要な title / summary / source を優先し、通常カードの thumbnail は mobile では省略してよい。通常カードの表示修正では「画像が出るか」だけでなく「画像・バッジ・横並び UI が記事境界や本文折り返しを邪魔していないか」を寸法で確認する。
+
+### LL-072: UX merge で data artifact を古い状態へ巻き戻さない
+- **事象**: `chore(data): update tech dashboard 2026-05-24T23:00:46.610Z` で `data/index.json` は 1419 件まで更新されていたが、その直後の UX / taxonomy merge commit で `data/index.json` が 980 件・`generatedAt=2026-05-23T05:00:49.636Z` に巻き戻り、本番表示が「記事更新停止」に見えた。`data/stats.json` はより新しい時刻のまま残り、artifact 間の generatedAt が乖離していた。
+- **根本原因**: 大きな merge conflict 解消時に UI / taxonomy 差分と data artifact 差分を同時に扱い、最新 `origin/main` の worker-generated data を構造的に保持する確認が不足した。既存 `tests/data-schema.test.ts` は schema / body coverage は見ていたが、`generatedAt` の鮮度と `index` / `stats` / `archive` 間の時刻整合性を検査していなかった。
+- **対策**: 復旧時は最新正常 worker commit (`48bf5ad`) の `data/index.json` / `data/archive/*` / `data/stats.json` をローカルに戻す。`tests/data-schema.test.ts` に `generatedAt` の古さ (既定 36h、緊急時のみ `ALLOW_STALE_DATA=1`) と artifact generatedAt skew (6h 以内) のゲートを追加する。
+- **教訓**: UI / taxonomy merge では data files を「ついでに解決」しない。完了前に `git log -- data/index.json` と generatedAt / count を確認し、最新 worker commit より古い data を main に載せない。data artifact は index / stats / archive の時刻整合性まで CI で守る。
 
 ## 🔄 自己学習ハーネス手順
 

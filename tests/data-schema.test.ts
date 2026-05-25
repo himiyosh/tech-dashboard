@@ -83,6 +83,10 @@ const VALID_CATEGORIES = new Set([
 
 const data = indexJson as unknown as IndexShape;
 const stats = statsJson as unknown as StatsShape;
+const archiveIndexPath = join(process.cwd(), "data", "archive", "_index.json");
+const archiveIndex = existsSync(archiveIndexPath)
+  ? (JSON.parse(readFileSync(archiveIndexPath, "utf8")) as { generatedAt?: string })
+  : null;
 const summaryCachePath = join(process.cwd(), "data", "_summary-cache.json");
 const summaryCache = existsSync(summaryCachePath)
   ? (JSON.parse(readFileSync(summaryCachePath, "utf8")) as Record<string, { bodyJa?: string; bodyEn?: string }>)
@@ -102,11 +106,34 @@ const DATA_BUDGET = {
   statsBytes: 500_000,
   archiveMonthBytes: 6_000_000,
 };
+const STALE_DATA_MAX_AGE_HOURS = 36;
+const ARTIFACT_TIMESTAMP_SKEW_HOURS = 6;
 
 describe("data/index.json トップレベル", () => {
   it("generatedAt が ISO 8601 文字列である", () => {
     expect(typeof data.generatedAt).toBe("string");
     expect(Number.isFinite(Date.parse(data.generatedAt))).toBe(true);
+  });
+
+  it("generatedAt が古すぎない", () => {
+    if (process.env.ALLOW_STALE_DATA === "1") return;
+    const ageHours = (Date.now() - Date.parse(data.generatedAt)) / 3_600_000;
+    expect(ageHours).toBeLessThanOrEqual(STALE_DATA_MAX_AGE_HOURS);
+  });
+
+  it("data artifact の generatedAt が大きく乖離していない", () => {
+    const timestamps = [
+      ["index", data.generatedAt],
+      ["stats", stats.generatedAt],
+      ["archive-index", archiveIndex?.generatedAt],
+    ].filter((item): item is [string, string] => typeof item[1] === "string");
+    const parsed = timestamps.map(([name, iso]) => [name, Date.parse(iso)] as const);
+    for (const [name, ms] of parsed) {
+      expect(Number.isFinite(ms), `${name} generatedAt should parse`).toBe(true);
+    }
+    const values = parsed.map(([, ms]) => ms);
+    const skewHours = (Math.max(...values) - Math.min(...values)) / 3_600_000;
+    expect(skewHours).toBeLessThanOrEqual(ARTIFACT_TIMESTAMP_SKEW_HOURS);
   });
 
   it("count が entries.length と一致する", () => {

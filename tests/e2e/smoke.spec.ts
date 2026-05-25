@@ -454,14 +454,36 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(featuredThumb.locator(".featured-thumb-fallback")).toBeVisible();
     }
 
-    const cardThumb = page.locator("article.card .card-thumb.has-image").first();
-    if ((await cardThumb.count()) > 0) {
-      const cardImage = cardThumb.locator("img").first();
+    const cards = page.locator("article.card.has-thumb");
+    await expect(cards.first()).toBeVisible();
+    const [firstCardBox, secondCardBox, firstThumbBox, firstBodyBox] = await Promise.all([
+      cards.nth(0).boundingBox(),
+      cards.nth(1).boundingBox(),
+      cards.nth(0).locator(".card-thumb").boundingBox(),
+      cards.nth(0).locator(".card-body").boundingBox(),
+    ]);
+    const firstSummaryTextBox = await cards.nth(0).locator(".summary .s-text").first().boundingBox();
+    expect(firstCardBox, "first mobile timeline card has a visible panel box").not.toBeNull();
+    expect(secondCardBox, "second mobile timeline card has a visible panel box").not.toBeNull();
+    expect(firstBodyBox, "mobile card body has a box").not.toBeNull();
+    expect(firstSummaryTextBox, "mobile summary text has a readable box").not.toBeNull();
+    expect(firstThumbBox, "regular mobile card thumbnail is hidden to keep text readable").toBeNull();
+    expect(firstBodyBox!.width, "mobile card text keeps near-full card width to avoid awkward wrapping").toBeGreaterThanOrEqual(firstCardBox!.width - 28);
+    expect(firstSummaryTextBox!.x, "mobile summary text starts at card body edge, not after the AI badge").toBeLessThanOrEqual(firstBodyBox!.x + 2);
+    expect(firstSummaryTextBox!.width, "mobile summary text keeps full readable width").toBeGreaterThanOrEqual(firstBodyBox!.width - 2);
+    expect(secondCardBox!.y - (firstCardBox!.y + firstCardBox!.height), "mobile cards have a visible gap between panels").toBeGreaterThanOrEqual(12);
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.reload();
+    const desktopCardThumb = page.locator("article.card .card-thumb.has-image").first();
+    if ((await desktopCardThumb.count()) > 0) {
+      await expect(desktopCardThumb).toBeVisible();
+      const cardImage = desktopCardThumb.locator("img").first();
       await cardImage.evaluate((img) => img.dispatchEvent(new Event("error")));
-      await expect(cardThumb).toHaveClass(/failed/);
+      await expect(desktopCardThumb).toHaveClass(/failed/);
       await expect(cardImage).toBeHidden();
-      await expect(cardThumb.locator("svg")).toBeVisible();
-      await expect(cardThumb.locator(".fallback-src-mark")).toBeVisible();
+      await expect(desktopCardThumb.locator("svg")).toBeVisible();
+      await expect(desktopCardThumb.locator(".fallback-src-mark")).toBeVisible();
     }
   });
 

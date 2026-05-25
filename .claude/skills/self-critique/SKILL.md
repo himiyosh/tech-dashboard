@@ -112,6 +112,8 @@ npx playwright test tests/e2e/smoke.spec.ts -g "sidebar category labels" --repor
 - [ ] `npm --prefix web run build` が成功するか
 - [ ] `npx playwright test tests/e2e/smoke.spec.ts --reporter=line` が全件 PASS するか
 - [ ] Featured / EntryCard の thumbnail fallback テストがあり、画像エラー時に broken image icon ではなく fallback artwork が表示されるか
+- [ ] Mobile 通常カードの thumbnail が本文幅を削らず、非表示または省スペース表示になっており、隣接カードとの gap が見えるか
+- [ ] Mobile 通常カードの summary text が `AI要約` などのバッジ横で狭くならず、本文幅いっぱいで自然に折り返すか
 - [ ] `npm run typecheck 2>/dev/null` (または `cd web && npx tsc --noEmit`) でエラーがないか
 
 **検査コマンド**:
@@ -124,6 +126,7 @@ npx playwright test tests/e2e/smoke.spec.ts --reporter=line
 
 - [ ] `data/index.json` のサイズが極端に大きくないか (目安: 15 MB 未満)
 - [ ] archive 月別ファイルが 8 MB 未満か
+- [ ] `data/index.json` の `generatedAt` が古すぎず、`data/stats.json` / `data/archive/_index.json` と大きく乖離していないか
 - [ ] `publishedAt === collectedAt` のミリ秒一致が全体の 5% 未満か
 - [ ] `titleEn` が空の live entry が全体の 10% 未満か
 

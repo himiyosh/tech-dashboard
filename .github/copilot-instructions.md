@@ -594,6 +594,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: 復旧時は最新正常 worker commit (`48bf5ad`) の `data/index.json` / `data/archive/*` / `data/stats.json` をローカルに戻す。`tests/data-schema.test.ts` に `generatedAt` の古さ (既定 36h、緊急時のみ `ALLOW_STALE_DATA=1`) と artifact generatedAt skew (6h 以内) のゲートを追加する。
 - **教訓**: UI / taxonomy merge では data files を「ついでに解決」しない。完了前に `git log -- data/index.json` と generatedAt / count を確認し、最新 worker commit より古い data を main に載せない。data artifact は index / stats / archive の時刻整合性まで CI で守る。
 
+### LL-073: taxonomy 修正後に Worker を deploy しないと古い分類で再汚染される
+- **事象**: main の data を復旧後、`/diag/run-batch` で Worker を手動実行すると `zed-releases` が再び `vscode` として publish され、Tech News / Research ノイズや stats bucket 不整合も再発した。
+- **根本原因**: Cloudflare Pages は main push で更新されるが、Worker runtime は Git Integration の対象外。repo 上の `harness/registry.ts` / collector / stats 修正を main に入れても、Worker を deploy しない限り本番 cron は古い registry / publish logic のまま動く。
+- **対策**: taxonomy / source filter / archive-stats logic に触れたら、data 修復 commit 後に明示承認を得て `worker/` を deploy する。deploy 前後で `/health` と `tests/data-schema.test.ts` を確認し、古い Worker が data を再汚染しないことを確認する。
+- **教訓**: data artifact の修復だけでは publisher の再発を止められない。Worker-generated data が schema gate を破った場合は「data を直す」だけでなく「Worker runtime が最新か」を同じ incident の必須確認にする。
+
 ## 🔄 自己学習ハーネス手順
 
 1. 作業中に発生した「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。

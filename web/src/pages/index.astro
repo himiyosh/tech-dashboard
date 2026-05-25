@@ -21,7 +21,6 @@ import {
   jstDayLabel,
   summaryForLang,
   summaryForLangWithFallback,
-  titleForLang,
   titleForLangWithFallback,
 } from "../lib/data.ts";
 
@@ -200,7 +199,6 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
         const featImg = feat.image?.src ?? "";
         return (
         <article class="featured" data-pagefind-body style={`--cat-color:${featCatColor}`}>
-          <a class="featured-panel-link" href={entryHref(feat)} tabindex="-1" aria-label={`Open ${titleForLang(feat, "ja") || titleForLang(feat, "en") || feat.title}`}></a>
           <div class:list={["featured-thumb", { "has-image": !!featImg }]}>
             {featImg && (
               <img
@@ -208,7 +206,7 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
                 alt={feat.image?.alt || feat.title}
                 loading="lazy"
                 decoding="async"
-                onerror="this.parentElement.classList.add('failed')"
+                onerror="this.closest('.featured-thumb')?.classList.add('failed')"
               />
             )}
             <div class="featured-thumb-fallback" aria-hidden="true">

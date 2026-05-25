@@ -1352,22 +1352,36 @@ main {
   position: relative;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 168px 1fr;
+  grid-template-columns: minmax(148px, 168px) minmax(0, 1fr);
   gap: 16px;
-  align-items: stretch;
+  align-items: start;
 }
 .featured-thumb {
   position: relative;
+  z-index: 2;
+  display: grid;
   border-radius: 8px;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.25);
   min-height: 122px;
+  aspect-ratio: 4 / 3;
+}
+.featured-thumb img,
+.featured-thumb-fallback {
+  grid-area: 1 / 1;
 }
 .featured-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+.featured-thumb.has-image .featured-thumb-fallback,
+.featured-thumb.has-image.failed img {
+  display: none;
+}
+.featured-thumb.has-image.failed .featured-thumb-fallback {
+  display: flex;
 }
 .featured-thumb-fallback {
   width: 100%;
@@ -1387,7 +1401,7 @@ main {
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
   opacity: 0.95;
 }
-.featured-body { min-width: 0; }
+.featured-body { min-width: 0; position: relative; z-index: 2; }
 .featured-src {
   display: inline-flex;
   align-items: center;
@@ -1537,9 +1551,16 @@ main {
   border-radius: 8px;
   overflow: hidden;
   position: relative;
+  display: grid;
+  place-items: stretch;
   background: var(--bg-2);
   border: 1px solid var(--border);
   align-self: start;
+}
+
+.card-thumb img,
+.card-thumb svg {
+  grid-area: 1 / 1;
 }
 
 .card-thumb img {
@@ -1550,13 +1571,24 @@ main {
 }
 
 .card-thumb.fallback {
-  display: grid;
   place-items: center;
 }
 
 .card-thumb svg {
   width: 100%;
   height: 100%;
+  display: block;
+}
+
+.card-thumb.has-image svg,
+.card-thumb.has-image .fallback-src-mark,
+.card-thumb.has-image.failed img,
+.card-thumb.has-image.failed .image-src-mark {
+  display: none;
+}
+
+.card-thumb.has-image.failed svg,
+.card-thumb.has-image.failed .fallback-src-mark {
   display: block;
 }
 
@@ -2388,20 +2420,17 @@ html, body {
     order: 2;
     margin-left: auto;
   }
-  .menu-trigger {
-    order: 3;
-    min-width: 44px;
-    min-height: 38px;
-    padding: 8px 10px;
-  }
-  .menu-trigger-label {
+  .header-inner > .menu-trigger {
     display: none;
   }
   .site-menu {
-    top: 54px;
-    right: 14px;
-    left: 14px;
+    top: auto;
+    right: 10px;
+    bottom: calc(68px + env(safe-area-inset-bottom));
+    left: 10px;
     width: auto;
+    max-height: min(70vh, 520px);
+    overflow: auto;
   }
   .lang-btn {
     padding: 9px 12px;
@@ -2499,21 +2528,14 @@ html, body {
     font-size: 15px;
   }
 
-  /* Stats: compact, no separators that wrap awkwardly */
+  /* Stats repeat data already present in the hero and push first articles down on mobile. */
   .stats {
-    padding: 10px 14px 6px;
-    gap: 4px 14px;
+    display: none;
   }
-  .stat {
-    padding: 2px 0;
-    border-right: 0;
-    flex: 0 0 auto;
-  }
-  .stat .value { font-size: 14px; }
 
   /* Layout: single column with side padding */
   .layout {
-    padding: 12px 22px 48px;
+    padding: 6px 22px 48px;
   }
   main { padding: 0; }
 
@@ -2533,12 +2555,20 @@ html, body {
   }
 
   /* Section headers */
-  .section-header { padding: 12px 0 6px; }
+  .section-header {
+    margin: 10px 0;
+    padding: 8px 0 5px;
+  }
+  .section-header.primary {
+    margin: 8px 0 10px;
+  }
   .section-header h2 { font-size: 16px; }
   .section-header h2 .count {
-    display: block;
-    font-size: 11px;
-    margin-top: 2px;
+    display: none;
+  }
+  .section-kicker { margin-bottom: 2px; }
+  .section-note {
+    display: none;
   }
 
   /* Cards: thumb on top, full-width */
@@ -2588,11 +2618,11 @@ html, body {
   .featured {
     padding: 12px;
     border-radius: 12px;
-    grid-template-columns: 96px 1fr;
+    grid-template-columns: 96px minmax(0, 1fr);
     gap: 12px;
-    align-items: center;
+    align-items: start;
   }
-  .featured-thumb { min-height: 0; aspect-ratio: 1; }
+  .featured-thumb { min-height: 0; aspect-ratio: 1; width: 96px; }
   .featured-thumb-fallback { min-height: 0; }
   .featured-thumb-emoji { font-size: 38px; }
   .featured-label { margin-bottom: 5px; }

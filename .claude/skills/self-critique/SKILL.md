@@ -54,6 +54,9 @@ argument-hint: "scope or suspected regression"
 - [ ] Desktop: `Categories` がハンバーガー内に**含まれない** (`#site-menu a[href="/categories/"]` が 0 件)
 - [ ] Desktop: `Categories` ページを開いてもハンバーガーボタンが active にならない
 - [ ] Mobile: 下部 tabbar は `Home`, `Categories`, `Menu` の 3 action に限定されている
+- [ ] Mobile: `header .menu-trigger` が表示されず、ハンバーガー/Menu は下部 tabbar に統一されている
+- [ ] Mobile: `#site-menu` は下部 tabbar の Menu から開き、tabbar 上に収まる bottom-sheet として表示される
+- [ ] Mobile: hero 直下に重複 stats / 長い説明文の余白がなく、最初の Featured/article が `390x844` で十分上に見える (目安: `y <= 340`)
 - [ ] Mobile: tabbar の item 数と CSS grid 列数が一致している (item 数と `grid-auto-columns` か `repeat(N,...)` を比較)
 - [ ] Mobile: 横スクロールが発生しない (`scrollWidth <= innerWidth`)
 - [ ] Mobile: tabbar の `safe-area-inset-bottom` が考慮されている
@@ -108,6 +111,7 @@ npx playwright test tests/e2e/smoke.spec.ts -g "sidebar category labels" --repor
 
 - [ ] `npm --prefix web run build` が成功するか
 - [ ] `npx playwright test tests/e2e/smoke.spec.ts --reporter=line` が全件 PASS するか
+- [ ] Featured / EntryCard の thumbnail fallback テストがあり、画像エラー時に broken image icon ではなく fallback artwork が表示されるか
 - [ ] `npm run typecheck 2>/dev/null` (または `cd web && npx tsc --noEmit`) でエラーがないか
 
 **検査コマンド**:
@@ -163,7 +167,7 @@ npx playwright test tests/e2e/smoke.spec.ts -g "search|empty|zero" --reporter=li
 `.github/agents/TechDBAgent.agent.md` を使い、実ユーザーに近い行動パターンで UI / taxonomy / trust / mobile の摩擦を検査する。
 
 - [ ] `persona-dev-lead` が desktop で「今日読むべきもの」を 5 分以内に判断できるか
-- [ ] `persona-mobile-commuter` が mobile で Home / Categories / Menu / Search を迷わず使えるか
+- [ ] `persona-mobile-commuter` が mobile で Home / Categories / Menu / Search を迷わず使え、重複 hamburger・Featured 崩れ・broken thumbnail を寸法/DOMで検査したか
 - [ ] `persona-tech-pm` が source freshness / summary pending / shareability を信頼できるか
 - [ ] `persona-ai-researcher` が Research / Local LLM / Tech News / tags の分類品質を deep-dive できるか
 - [ ] 2 つ以上の persona が同じ問題を報告した場合、severity を 1 段階上げたか

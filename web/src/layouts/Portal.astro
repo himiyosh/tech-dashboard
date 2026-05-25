@@ -109,28 +109,6 @@ const menuOwnsCurrentPage = navItems.some((item) => item.key === pageKey && item
           <span class="menu-trigger-label">Menu</span>
         </button>
       </div>
-      <nav id="site-menu" class="site-menu" aria-label="Site menu" hidden>
-        <div class="site-menu-head">
-          <span>Navigation</span>
-          <button type="button" class="site-menu-close" data-menu-close aria-label="Close navigation menu">×</button>
-        </div>
-        <div class="site-menu-list">
-          {navItems.map((item) => (
-            <a
-              href={item.href}
-              class={pageKey === item.key ? "active" : ""}
-              aria-current={pageKey === item.key ? "page" : undefined}
-            >
-              <span>{item.label}</span>
-              <small>{item.detail}</small>
-            </a>
-          ))}
-          <button type="button" class="site-menu-action" data-search-trigger>
-            <span>Search</span>
-            <small>キーワード・source・tag で検索</small>
-          </button>
-        </div>
-      </nav>
       {breadcrumb && breadcrumb.length > 0 && (
         <div class="crumb-bar">
           <div class="crumb-inner">
@@ -144,6 +122,29 @@ const menuOwnsCurrentPage = navItems.some((item) => item.key === pageKey && item
         </div>
       )}
     </header>
+
+    <nav id="site-menu" class="site-menu" aria-label="Site menu" hidden>
+      <div class="site-menu-head">
+        <span>Navigation</span>
+        <button type="button" class="site-menu-close" data-menu-close aria-label="Close navigation menu">×</button>
+      </div>
+      <div class="site-menu-list">
+        {navItems.map((item) => (
+          <a
+            href={item.href}
+            class={pageKey === item.key ? "active" : ""}
+            aria-current={pageKey === item.key ? "page" : undefined}
+          >
+            <span>{item.label}</span>
+            <small>{item.detail}</small>
+          </a>
+        ))}
+        <button type="button" class="site-menu-action" data-search-trigger>
+          <span>Search</span>
+          <small>キーワード・source・tag で検索</small>
+        </button>
+      </div>
+    </nav>
 
     <slot />
 

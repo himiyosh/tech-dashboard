@@ -347,6 +347,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".footer-bar")).toBeHidden();
     await expect(page.locator("header .nav")).toHaveCount(0);
     await expect(page.locator("header .nav-shortcut")).toBeHidden();
+    await expect(page.locator("header .menu-trigger")).toBeHidden();
     await expect(tabbar.getByRole("link", { name: "Home" })).toHaveClass(/active/);
     await expect(tabbar.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
 
@@ -417,6 +418,51 @@ test.describe("TECH Dashboard smoke", () => {
     await menu.getByRole("button", { name: /Search/ }).click();
     await expect(page.locator("#pagefind-search-input")).toBeFocused();
     await expect(page.locator("#pagefind-results")).toBeVisible();
+  });
+
+  test("mobile featured panel and thumbnails keep fallback layout", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+
+    await expect(page.locator("header .menu-trigger")).toBeHidden();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
+    const featured = page.locator("article.featured").first();
+    await expect(featured).toBeVisible();
+    const featuredThumb = featured.locator(".featured-thumb").first();
+    const featuredBody = featured.locator(".featured-body").first();
+    const [featuredBox, thumbBox, bodyBox] = await Promise.all([
+      featured.boundingBox(),
+      featuredThumb.boundingBox(),
+      featuredBody.boundingBox(),
+    ]);
+    expect(featuredBox, "featured panel has a box").not.toBeNull();
+    expect(thumbBox, "featured thumb has a box").not.toBeNull();
+    expect(bodyBox, "featured body has a box").not.toBeNull();
+    expect(Math.round(featuredBox!.width), "featured stays inside mobile content width").toBeLessThanOrEqual(390);
+    expect(Math.round(featuredBox!.y), "first featured article appears without wasted top whitespace").toBeLessThanOrEqual(340);
+    expect(Math.round(featuredBox!.height), "featured panel is not expanded by hidden fallback/image stacking").toBeLessThanOrEqual(260);
+    expect(Math.round(thumbBox!.width), "featured thumb keeps compact mobile column").toBeLessThanOrEqual(110);
+    expect(bodyBox!.x, "featured body sits to the right of the thumbnail").toBeGreaterThanOrEqual(thumbBox!.x + thumbBox!.width - 1);
+
+    const featuredImage = featured.locator(".featured-thumb.has-image img").first();
+    if ((await featuredImage.count()) > 0) {
+      await featuredImage.evaluate((img) => img.dispatchEvent(new Event("error")));
+      await expect(featuredThumb).toHaveClass(/failed/);
+      await expect(featuredThumb.locator(".featured-thumb-fallback")).toBeVisible();
+    }
+
+    const cardThumb = page.locator("article.card .card-thumb.has-image").first();
+    if ((await cardThumb.count()) > 0) {
+      const cardImage = cardThumb.locator("img").first();
+      await cardImage.evaluate((img) => img.dispatchEvent(new Event("error")));
+      await expect(cardThumb).toHaveClass(/failed/);
+      await expect(cardImage).toBeHidden();
+      await expect(cardThumb.locator("svg")).toBeVisible();
+      await expect(cardThumb.locator(".fallback-src-mark")).toBeVisible();
+    }
   });
 
   test("pagefind search returns dashboard entries", async ({ page }) => {

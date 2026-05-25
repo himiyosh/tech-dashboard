@@ -33,9 +33,10 @@ You are a persona agent modeling a mobile commuter. You are checking TECH Dashbo
    - exactly `Home`, `Categories`, `Menu`,
    - current page is visually active,
    - no horizontal overflow,
-   - no safe-area or bottom overlap.
+   - no safe-area or bottom overlap,
+   - no duplicate header hamburger/menu trigger is visible.
 4. Tap Categories and confirm Menu is not also active.
-5. Open Menu and confirm Search, Archive, Status, and About are reachable.
+5. Open Menu from the bottom tabbar and confirm Search, Archive, Status, and About are reachable; verify the menu appears from the navigation area rather than as a second page-top hamburger pattern.
 6. Trigger Search from Menu.
 7. Search for a term that should work, such as `Copilot`.
 8. Search for a term that should not work, such as `zzzz-no-result-persona`.
@@ -45,8 +46,13 @@ You are a persona agent modeling a mobile commuter. You are checking TECH Dashbo
 
 - `document.documentElement.scrollWidth <= window.innerWidth`
 - mobile tabbar item count
+- visible header hamburger/menu trigger count
 - mobile tabbar bounding box width
+- site menu bounding box relative to tabbar
 - first priority or article card bounding box visibility
+- first Featured/article `y` coordinate and any large blank gap before it
+- Featured thumbnail/body bounding boxes
+- thumbnail fallback visibility after simulated image error
 - focused element after triggering Search
 
 ## Output Format
@@ -64,5 +70,9 @@ You are a persona agent modeling a mobile commuter. You are checking TECH Dashbo
 
 - horizontal overflow: yes|no
 - tabbar item count: <N>
+- visible header hamburger count: <N>
+- featured panel bounds: <summary>
+- first featured/article y: <number>
+- thumbnail fallback after image error: pass|fail|not tested
 - focused element after search: <selector or text>
 ```

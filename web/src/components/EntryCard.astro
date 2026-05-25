@@ -242,54 +242,58 @@ const thumbMark = hasUsableImage ? img!.source : "fallback";
     </div>
   </div>
 
-  {hasUsableImage ? (
-    <div class="card-thumb">
-      <img src={img!.src} alt={img!.alt || titleJa} loading="lazy" decoding="async" />
-      <span class="src-mark">{thumbMark}</span>
-    </div>
-  ) : (
-    <div class="card-thumb fallback" style={`--cat-color:${catColor}`}>
-      <svg viewBox="0 0 144 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-        <defs>
-          <linearGradient id={`bg-${entry.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color={catColor} stop-opacity="0.30" />
-            <stop offset="100%" stop-color={catColor} stop-opacity="0.05" />
-          </linearGradient>
-        </defs>
-        <rect width="144" height="96" fill="#1a1917" />
-        <rect width="144" height="96" fill={`url(#bg-${entry.id})`} />
-        <g opacity="0.10" transform={`rotate(${patternRotate} 72 48) scale(${patternScale})`}>
-          <circle cx="20" cy="15" r="18" fill={catColor} />
-          <circle cx="130" cy="80" r="24" fill={catColor} />
-          <rect x="90" y="5" width="40" height="40" rx="8" fill={catColor} />
-        </g>
-        <text
-          x="72"
-          y="54"
-          text-anchor="middle"
-          dominant-baseline="middle"
-          font-size="40"
-          style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4))"
-        >{catEmoji}</text>
-        <text
-          x="72"
-          y="82"
-          text-anchor="middle"
-          font-family="system-ui, -apple-system, sans-serif"
-          font-size="8.5"
-          fill={catColor}
-          opacity="0.7"
-          letter-spacing="0.08em"
-          font-weight="600"
-        >{catName}</text>
-        <text
-          x="132"
-          y="14"
-          text-anchor="end"
-          font-size="12"
-          opacity="0.85"
-        >{sourceIcon(entry.sourceType)}</text>
-      </svg>
-    </div>
-  )}
+  <div class:list={["card-thumb", { fallback: !hasUsableImage, "has-image": hasUsableImage }]} style={`--cat-color:${catColor}`}>
+    {hasUsableImage && (
+      <img
+        src={img!.src}
+        alt={img!.alt || titleJa}
+        loading="lazy"
+        decoding="async"
+        onerror="this.closest('.card-thumb')?.classList.add('failed')"
+      />
+    )}
+    <svg viewBox="0 0 144 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id={`bg-${entry.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color={catColor} stop-opacity="0.30" />
+          <stop offset="100%" stop-color={catColor} stop-opacity="0.05" />
+        </linearGradient>
+      </defs>
+      <rect width="144" height="96" fill="#1a1917" />
+      <rect width="144" height="96" fill={`url(#bg-${entry.id})`} />
+      <g opacity="0.10" transform={`rotate(${patternRotate} 72 48) scale(${patternScale})`}>
+        <circle cx="20" cy="15" r="18" fill={catColor} />
+        <circle cx="130" cy="80" r="24" fill={catColor} />
+        <rect x="90" y="5" width="40" height="40" rx="8" fill={catColor} />
+      </g>
+      <text
+        x="72"
+        y="54"
+        text-anchor="middle"
+        dominant-baseline="middle"
+        font-size="40"
+        style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4))"
+      >{catEmoji}</text>
+      <text
+        x="72"
+        y="82"
+        text-anchor="middle"
+        font-family="system-ui, -apple-system, sans-serif"
+        font-size="8.5"
+        fill={catColor}
+        opacity="0.7"
+        letter-spacing="0.08em"
+        font-weight="600"
+      >{catName}</text>
+      <text
+        x="132"
+        y="14"
+        text-anchor="end"
+        font-size="12"
+        opacity="0.85"
+      >{sourceIcon(entry.sourceType)}</text>
+    </svg>
+    {hasUsableImage && <span class="src-mark image-src-mark">{thumbMark}</span>}
+    <span class="src-mark fallback-src-mark">fallback</span>
+  </div>
 </article>

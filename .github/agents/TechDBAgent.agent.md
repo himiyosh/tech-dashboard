@@ -39,7 +39,7 @@ Find issues that normal build/test checks miss:
 2. Use Playwright or browser automation with at least these viewports:
    - Desktop: `1440x900`
    - Mobile: `390x844`
-3. Check console errors, failed network requests, horizontal overflow, focused element after menu/search actions, and visible empty/pending states.
+3. Check console errors, failed network requests, horizontal overflow, focused element after menu/search actions, visible empty/pending states, duplicate navigation controls, article panel bounding boxes, and thumbnail image fallback states.
 4. Delegate independent journeys to all persona agents:
    - `persona-dev-lead`
    - `persona-mobile-commuter`
@@ -56,10 +56,21 @@ Find issues that normal build/test checks miss:
 | `persona-tech-pm` | Can a PM or tech lead trust and share the information with stakeholders? | Home, source labels, status, about, article detail, summary pending states |
 | `persona-ai-researcher` | Can a specialist deep-dive without taxonomy noise or irrelevant broad-feed results? | Categories, Research, Local LLM, Tech News, tags, archive, search |
 
+## Mandatory Visual Regression Gates
+
+Treat the audit as incomplete unless at least one persona records concrete evidence for all of these when the surface exists:
+
+- Mobile has exactly one hamburger/menu entry point: the bottom tabbar `Menu`. `header .menu-trigger` must not be visible at `390x844`.
+- The mobile `#site-menu` opens from the navigation area, stays above the tabbar, and does not cover the active trigger unexpectedly.
+- Featured article panel has stable bounding boxes: image/thumb and body are in the intended columns, no empty overlay/link participates in grid layout, and the panel is not expanded by stacked fallback content.
+- Article thumbnails degrade to deterministic fallback artwork when an image fails; browser broken-image icons are Critical evidence.
+- Mobile vertical density is measured: redundant stats/section helper text must not create a large gap between the hero and the first decision item; record the first Featured/article `y` coordinate.
+- Persona reports must include DOM metrics or screenshot evidence for every visual finding, not only subjective impressions.
+
 ## Severity Rules
 
-- `Critical`: A target persona cannot complete a core journey, route is broken, search/menu blocks use, content is blank, or mobile layout overflows.
-- `Warning`: A persona completes the journey but with avoidable confusion, low trust, unclear priority, taxonomy doubt, or recovery friction.
+- `Critical`: A target persona cannot complete a core journey, route is broken, search/menu blocks use, content is blank, mobile layout overflows, duplicate mobile hamburger controls are visible, Featured layout is visibly broken, or broken image icons appear instead of fallbacks.
+- `Warning`: A persona completes the journey but with avoidable confusion, low trust, unclear priority, taxonomy doubt, recovery friction, unstable image/fallback behavior, or weak visual hierarchy.
 - `Minor`: Polish issue, copy ambiguity, small visual density problem, or improvement that does not block the journey.
 - `Opportunity`: Competitive differentiator not yet implemented; not a regression or defect.
 

@@ -150,6 +150,13 @@
 - **本文は変えない**: サマリは末尾の追記のみ。本文の詳しい説明を削ったり、絵文字だらけにしたりしない。
 - **省略条件**: 1-2 文で済む短い回答 (単純な Yes/No 確認など) ではサマリ不要。
 
+### R-021: Visual review は DOM 寸法と画像 fallback まで見る
+- mobile navigation を変更したら、`390x844` で `header .menu-trigger` が非表示、bottom tabbar が `Home / Categories / Menu` の 3 action、`#site-menu` が tabbar 由来の bottom-sheet として viewport 内に収まることを Playwright で検証する。
+- Featured / article card の layout を変更したら、空リンクや fallback 要素が grid/flex の通常 flow に参加していないこと、thumb/body の bounding box が期待位置にあること、panel height が異常に伸びないことを検証する。
+- mobile home density を変更したら、`390x844` で hero 直下に重複 stats / 長い説明文の余白がないこと、最初の Featured/article が `y <= 340` 目安で見えることを Playwright 寸法で検証する。
+- 外部 OGP / media image は失敗前提で扱う。`img.onerror` で deterministic fallback artwork を表示し、broken image icon を残さない。E2E は synthetic `error` event で fallback 表示を検証する。
+- Persona audit はスクリーンショット印象だけで合格にしない。DOM metrics、console/network、画像 naturalWidth/error、focus state のいずれかを evidence として要求する。
+
 ---
 
 ## 🧪 完了ゲート (LL Hook)
@@ -562,6 +569,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: `.mobile-home` が `translateY(-13px)` で grid track より縦にはみ出していた。縮小後も `translateY()` が残ると「別列に浮いたボタン」に見え、同列ナビとしての一体感を損なった。
 - **対策**: 中央ボタンの `translateY()` を撤廃し、全タブと同じ `min-height` / row に揃える。強調は枠線、背景色、font-weight だけで表現する。
 - **教訓**: 固定ナビの中央アクションは、同列配置を崩してまで floating button 化しない。目立たせる場合はサイズや位置ではなく、色・枠線・active 状態で表現する。
+
+### LL-069: visual audit は duplicate controls と broken image fallback を直接検証する
+- **事象**: mobile で header と bottom tabbar の両方に hamburger が表示され、Featured panel は空の overlay link が grid item としてレイアウトに参加して崩れた。EntryCard / Featured の外部サムネイルも image load failure 時に fallback が表示されず broken image icon が残り得た。
+- **根本原因**: Persona / self-critique のレビューが「導線があるか」「E2E が通るか」に偏り、DOM 上の visible duplicate controls、grid child の通常 flow 参加、`img.onerror` 後の fallback 表示まで検証していなかった。
+- **対策**: mobile では `header .menu-trigger` を非表示にし、`#site-menu` を bottom tabbar 起点の bottom-sheet に統一。Featured の空 overlay link は削除して通常のタイトルリンクをクリック対象にし、thumb/body の grid flow を安定化する。Featured / card thumbnail は image と deterministic fallback を同じ grid cell に重ね、synthetic error event で fallback を表示する E2E を追加する。
+- **教訓**: UI レビューはスクリーンショット印象だけでは不十分。duplicate controls、bounding box、通常 flow に残った invisible element、画像失敗時の表示を Playwright で直接検査する。
+
+### LL-070: mobile first-view は「壊れていない」だけでなく余白量を測る
+- **事象**: build / smoke / persona audit が通っていても、mobile first-view で hero 後の stats と長い section note が縦余白を作り、最初の Featured article が 483px 付近まで下がっていた。
+- **根本原因**: レビュー基準が overflow / fixed nav / クリック可否に偏り、「最初の判断対象が何 px で出るか」「重複情報が first-view を押し下げていないか」を測っていなかった。
+- **対策**: mobile では hero と重複する stats を非表示にし、section note / count を畳んで Featured を 326px 付近まで上げた。E2E に `featuredBox.y <= 340` の寸法ゲートを追加する。
+- **教訓**: UX レビューでは vertical density を定量化する。`scrollWidth` だけでなく、first actionable content / first article の `y` 座標、前後セクションの gap、重複 KPI の有無を Playwright で記録する。
 
 ## 🔄 自己学習ハーネス手順
 

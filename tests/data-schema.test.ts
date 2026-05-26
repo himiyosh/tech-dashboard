@@ -336,10 +336,21 @@ describe("カテゴリ品質ガード", () => {
     const noisy = allDataEntries
       .filter((entry) => String(entry.category) === "tech-news")
       .filter((entry) =>
-        /(memorial day|deal|sale|airfly|govee|water bottle|spacex|starship|rocket|blue origin|dead pilots|summer travel)/i
+        /(memorial day|deal|sale|airfly|govee|water bottle|spacex|starship|rocket|blue origin|dead pilots|summer travel|witcher|on trails|hiking|bee wearable|esports?|beluga|space shuttle|astronaut hall|seafood sanctions|ebola|chromecast|the view|the boys|mandalorian|solar market|superfans|shark finning|russian satellites|international space station|vpn where criminals)/i
           .test(`${String(entry.title)} ${String(entry.summaryJa)} ${String(entry.summaryEn)} ${String(entry.url)}`),
       )
       .map((entry) => `${String(entry.source)}:${String(entry.title)}`);
+    expect(noisy).toEqual([]);
+  });
+  it("Local LLM category excludes workflow and business noise", () => {
+    const noisy = allDataEntries
+      .filter((entry) => String(entry.category) === "local-llm")
+      .filter((entry) => ["zenn-ai", "zenn-llm", "qiita-llm", "simonw-blog"].includes(String(entry.source)))
+      .filter((entry) =>
+        /(saas is dead|claude code|workflow|billing|invoice|startup|profit|profitable|\u55b6\u696d|\u9ed2\u5b57|\u53ce\u76ca|\u8acb\u6c42)/i
+          .test(String(entry.title) + " " + String(entry.summaryJa) + " " + String(entry.summaryEn) + " " + String(entry.url)),
+      )
+      .map((entry) => String(entry.source) + ":" + String(entry.title));
     expect(noisy).toEqual([]);
   });
 });

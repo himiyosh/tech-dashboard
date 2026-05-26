@@ -13,6 +13,7 @@ import {
 } from "../lib/data.ts";
 import { sourceFreshnessStatus, type FreshnessSourceType, type FreshnessStatus } from "../lib/freshness.ts";
 import { SOURCE_META } from "../lib/source-meta.ts";
+import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 
 const now = new Date();
 const SIX_H = 6 * 3600_000;
@@ -33,6 +34,7 @@ type SourceRow = {
   sourceTypeLabel: string;
   thresholdHrs: number;
   status: SourceStatus;
+  reason: string;
 };
 
 const TYPE_LABEL: Record<NormalizedEntry["sourceType"], string> = {
@@ -73,6 +75,11 @@ const sources: SourceRow[] = SOURCE_META.map((def) => {
     now.getTime(),
   );
   const status = freshness.status === "no-data" ? "error" : freshness.status;
+  const reason = fromSource.length === 0
+    ? "No live entry yet; registry exists but this index has no collected item."
+    : status === "stale"
+      ? "Past the freshness threshold; upstream may be quiet or collection delayed."
+      : "Latest collected entry is inside the freshness threshold.";
   const category = def.category as Category;
   const categoryMeta = categoryBySlug.get(category);
   return {
@@ -91,6 +98,7 @@ const sources: SourceRow[] = SOURCE_META.map((def) => {
     sourceTypeLabel: TYPE_LABEL[sourceType],
     thresholdHrs: freshness.threshold.staleHrs,
     status,
+    reason,
   };
 });
 
@@ -109,6 +117,18 @@ const staleSources = sortedSources.filter((s) => s.status === "stale");
 const attentionSources = [...errorSources, ...staleSources].slice(0, 8);
 const healthyPct = Math.round((ok / Math.max(sources.length, 1)) * 100);
 const indexAgeLabel = relativeTime(GENERATED_AT, now);
+const pendingSummaryEntries = DASHBOARD_METRICS.fallbackEntries;
+const pendingSummaryPercent = DASHBOARD_METRICS.fallbackPercent;
+const tierRows = [1, 2, 3].map((tier) => {
+  const rows = sources.filter((source) => source.tier === tier);
+  return {
+    tier,
+    total: rows.length,
+    ok: rows.filter((source) => source.status === "ok").length,
+    stale: rows.filter((source) => source.status === "stale").length,
+    error: rows.filter((source) => source.status === "error").length,
+  };
+}).filter((row) => row.total > 0);
 
 const categoryRows = CATEGORY_META.map((category) => {
     const rows = sources.filter((source) => source.category === category.slug);
@@ -146,12 +166,15 @@ if (!wh) {
 } else if (wh.sourcesFailed.length > 0) {
   workerStatus = "warn";
   workerLabel = `${wh.sourcesFailed.length} source error`;
+} else if (pendingSummaryPercent >= 10) {
+  workerStatus = "warn";
+  workerLabel = `${pendingSummaryEntries} summaries pending`;
 }
 const workerColor =
   workerStatus === "ok" ? "var(--success)" : workerStatus === "warn" ? "var(--important)" : "var(--danger)";
 const workerStatusText = workerStatus === "ok" ? "OK" : workerStatus === "warn" ? "WARN" : "ERR";
 const workerSummary = wh
-  ? `Batch ${wh.batchIndex}/${wh.batchTotal} · ${wh.sourcesOk}/${wh.sourcesAttempted} sources · +${wh.summarized} summaries`
+  ? `Batch ${wh.batchIndex}/${wh.batchTotal} - ${wh.sourcesOk}/${wh.sourcesAttempted} sources - +${wh.summarized} summaries - ${pendingSummaryEntries} pending`
   : "Worker health metadata is not available in this index.";
 ---
 
@@ -173,7 +196,7 @@ const workerSummary = wh
       { label: "Status", value: workerStatusText },
       { label: "Healthy", value: ok },
       { label: "Attention", value: stale + error },
-      { label: "Sources", value: sources.length },
+      { label: "Pending", value: pendingSummaryEntries },
       { label: "Last run", value: wh ? relativeTime(wh.lastRunAt, now) : "unknown" },
       { label: "Index", value: indexAgeLabel },
     ]}
@@ -212,6 +235,11 @@ const workerSummary = wh
             <span>本 run 要約</span>
             <strong>{wh ? `+${wh.summarized}` : "n/a"}</strong>
           </div>
+          <div class:list={["status-metric-card", { warn: pendingSummaryEntries > 0, ok: pendingSummaryEntries === 0 }]}>
+            <span>Summary backlog</span>
+            <strong>{pendingSummaryEntries}</strong>
+            <small>{pendingSummaryPercent}% fallback</small>
+          </div>
           <div class="status-metric-card">
             <span>Index</span>
             <strong>{indexAgeLabel}</strong>
@@ -232,8 +260,13 @@ const workerSummary = wh
             )}
           </div>
           <div>
-            <span class="detail-label">要約エラー</span>
+            <span class="detail-label">Summarize errors</span>
             <strong>{wh.summarizeErrors}</strong>
+          </div>
+          <div>
+            <span class="detail-label">Summary backlog</span>
+            <strong class={pendingSummaryEntries > 0 ? "tone-warn" : "tone-ok"}>{pendingSummaryEntries}</strong>
+            <small>real {DASHBOARD_METRICS.realSummaryEntries} - queue {DASHBOARD_METRICS.summaryQueueMode}</small>
           </div>
           <div>
             <span class="detail-label">og:image cache</span>
@@ -314,6 +347,7 @@ const workerSummary = wh
                   <span aria-hidden="true">·</span>
                   <span>stale &gt; {s.thresholdHrs}h</span>
                 </span>
+                <span class="source-reason-line">{s.reason}</span>
                 <span class="source-latest-line">
                   Latest
                   {s.latestUrl ? (
@@ -369,7 +403,19 @@ const workerSummary = wh
       </div>
 
       <div class="side-card status-insight-card">
-        <div class="rail-title">カテゴリ別</div>
+        <div class="rail-title">Tier freshness</div>
+        <ul class="category-health-list">
+          {tierRows.map((row) => (
+            <li>
+              <span>T{row.tier} sources</span>
+              <small>{row.ok}/{row.total} ok - {row.stale} stale - {row.error} err</small>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="side-card status-insight-card">
+        <div class="rail-title">Category health</div>
         <ul class="category-health-list">
           {categoryRows.map((row) => (
             <li>
@@ -492,6 +538,22 @@ const workerSummary = wh
     font-variant-numeric: tabular-nums;
   }
 
+  .status-metric-card small {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted-2);
+    font-size: 11px;
+  }
+
+  .status-metric-card.warn {
+    border-color: color-mix(in srgb, var(--important) 42%, var(--border));
+    background: color-mix(in srgb, var(--tutorial-bg) 30%, transparent);
+  }
+
+  .status-metric-card.ok {
+    border-color: color-mix(in srgb, var(--success) 28%, var(--border));
+  }
+
   .status-detail-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     margin-bottom: 20px;
@@ -562,6 +624,14 @@ const workerSummary = wh
     min-width: 0;
     flex-direction: column;
     gap: 2px;
+  }
+
+  .source-reason-line {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted-2);
+    font-size: 11px;
+    line-height: 1.35;
   }
 
   .source-name-block strong {

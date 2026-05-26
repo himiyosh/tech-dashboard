@@ -69,6 +69,15 @@ export interface WorkerHealth {
   copilotError: string | null;
   ogCached: number;
   ogNewHits: number;
+  summaryFallbacks?: number;
+  bodyFallbacks?: number;
+  fallbackTotal?: number;
+  fallbackPercent?: number;
+  queueMode?: string;
+  queueCap?: number;
+  enqueueCandidates?: number;
+  kvLookupCap?: number;
+  kvLookupCount?: number;
 }
 
 interface IndexPayload {
@@ -171,9 +180,14 @@ export function latest(n: number): NormalizedEntry[] {
   return ALL_ENTRIES.slice(0, n);
 }
 
-/** Entries with importance === 3 (major releases). Newest first. */
+/** Entries with importance === 3 (major releases). Prefer real summaries. */
 export function featured(): NormalizedEntry | undefined {
-  return ALL_ENTRIES.find((e) => e.importance === 3) ?? ALL_ENTRIES.find((e) => e.importance === 2);
+  return (
+    ALL_ENTRIES.find((e) => e.importance === 3 && !isDeterministicFallbackEntry(e)) ??
+    ALL_ENTRIES.find((e) => e.importance === 2 && !isDeterministicFallbackEntry(e)) ??
+    ALL_ENTRIES.find((e) => e.importance === 3) ??
+    ALL_ENTRIES.find((e) => e.importance === 2)
+  );
 }
 
 /** Top tags from the most recent 200 entries. */
@@ -261,7 +275,7 @@ export function summaryForLang(
   const ja = (e.summaryJa ?? "").trim();
   const en = (e.summaryEn ?? "").trim();
   if (lang === "ja") {
-    if (ja) return ja;
+    if (ja && !isSyntheticFallbackTitle(e, ja)) return ja;
     return hasCjk(en) ? en : "";
   }
   if (en && !hasCjk(en)) return en;
@@ -317,17 +331,17 @@ export function titleForLang(
   };
 
   if (lang === "ja") {
-    if (ja) return ja;
+    if (ja && !isSyntheticFallbackTitle(e, ja)) return ja;
     // AI summary (Japanese) is available for most entries — use its first clause as headline.
     // Skip deterministic fallback summaries (LL-041 lead): they describe the
     // entry generically and would make the card title read 「このエントリは…」.
     // For those, fall through to the original (English) title.
-    if (sumJa && !sumJa.startsWith("このエントリは ")) return firstClause(sumJa, 70);
+    if (sumJa && !isPendingSummaryText(sumJa)) return firstClause(sumJa, 70);
     return title || en;
   }
   if (lang === "en") {
-    if (en) return en;
-    if (sumEn && !hasCjk(sumEn)) return firstClause(sumEn, 90);
+    if (en && !isSyntheticFallbackTitle(e, en)) return en;
+    if (sumEn && !hasCjk(sumEn) && !isPendingSummaryText(sumEn)) return firstClause(sumEn, 90);
     if (title && !hasCjk(title)) return title;
     return "";
   }
@@ -475,15 +489,43 @@ export function sourceAvgImportance(
 }
 
 // Fallback detection constants (from main's data quality improvements).
-const FALLBACK_SUMMARY_JA_PREFIX = "このエントリは ";
+const FALLBACK_SUMMARY_JA_PREFIX = "\u3053\u306e\u30a8\u30f3\u30c8\u30ea\u306f ";
 const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
 const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collection metadata";
+const FALLBACK_SUMMARY_JA_NEEDLES = [
+  "AI \u8981\u7d04\u672a\u751f\u6210",
+  "\u5f8c\u7d9a\u306e Worker run",
+  "\u8981\u7d04\u304c\u672a\u751f\u6210",
+] as const;
+const FALLBACK_SUMMARY_EN_NEEDLES = [
+  FALLBACK_SUMMARY_EN_NEEDLE,
+  "AI summary pending",
+  "summary is pending",
+] as const;
+
+export function isPendingSummaryText(text: string | undefined | null): boolean {
+  const value = (text ?? "").trim();
+  if (!value) return false;
+  return (
+    value.startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
+    FALLBACK_SUMMARY_JA_NEEDLES.some((needle) => value.includes(needle)) ||
+    FALLBACK_SUMMARY_EN_NEEDLES.some((needle) => value.toLowerCase().includes(needle.toLowerCase()))
+  );
+}
+
+export function isSyntheticFallbackTitle(e: NormalizedEntry, text: string | undefined | null): boolean {
+  const value = (text ?? "").trim();
+  if (!value) return false;
+  return value.includes(`(${e.source})`) && /\u95a2\u9023\u30a2\u30c3\u30d7\u30c7\u30fc\u30c8|related update/i.test(value);
+}
 
 /** Returns true if this entry still has a deterministic (non-AI) summary/body. */
 export function isDeterministicFallbackEntry(e: NormalizedEntry): boolean {
   return (
-    (e.summaryJa ?? "").startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
-    (e.summaryEn ?? "").includes(FALLBACK_SUMMARY_EN_NEEDLE) ||
+    isPendingSummaryText(e.summaryJa) ||
+    isPendingSummaryText(e.summaryEn) ||
+    isSyntheticFallbackTitle(e, e.titleJa) ||
+    isSyntheticFallbackTitle(e, e.titleEn) ||
     (e.bodyEn ?? "").includes(FALLBACK_BODY_EN_NEEDLE)
   );
 }

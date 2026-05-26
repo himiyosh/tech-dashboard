@@ -1,5 +1,6 @@
 ---
 import "../styles/portal.css";
+import { SITE_URL } from "../lib/site.ts";
 
 export interface Props {
   title?: string;
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/about", key: "about", label: "About", detail: "サイトの目的と収集方針" },
 ] as const;
 const menuOwnsCurrentPage = navItems.some((item) => item.key === pageKey && item.key !== "timeline");
+const productionHost = new URL(SITE_URL).hostname;
 ---
 
 <!doctype html>
@@ -54,11 +56,17 @@ const menuOwnsCurrentPage = navItems.some((item) => item.key === pageKey && item
         }
       })();
     </script>
-    <script
-      async
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3044810068333301"
-      crossorigin="anonymous"
-    ></script>
+    <script is:inline define:vars={{ productionHost }}>
+      // Load ads only on the production custom domain; local preview and pages.dev stay quiet for QA/trust review.
+      (function () {
+        if (location.hostname !== productionHost) return;
+        var script = document.createElement("script");
+        script.async = true;
+        script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3044810068333301";
+        script.crossOrigin = "anonymous";
+        document.head.appendChild(script);
+      })();
+    </script>
   </head>
   <body>
     <header>
@@ -88,6 +96,7 @@ const menuOwnsCurrentPage = navItems.some((item) => item.key === pageKey && item
             aria-expanded="false"
             role="combobox"
             placeholder="Search updates, source, category..."
+            title="Press / or Command-K to search"
             autocomplete="off"
           />
           <span class="search-keys" aria-hidden="true"><kbd>/</kbd><kbd>⌘K</kbd></span>
@@ -320,6 +329,27 @@ const menuOwnsCurrentPage = navItems.some((item) => item.key === pageKey && item
           });
         };
 
+        const classifyResult = (url: string): { label: string; className: string } => {
+          const path = url.replace(/^https?:\/\/[^/]+/, "");
+          if (/^\/e\//.test(path)) return { label: "ARTICLE", className: "article" };
+          if (/^\/c\//.test(path) || path === "/categories/" || path === "/categories") return { label: "CATEGORY", className: "category" };
+          if (/^\/t\//.test(path)) return { label: "TAG", className: "tag" };
+          if (/^\/archive/.test(path)) return { label: "ARCHIVE", className: "archive" };
+          if (/^\/status/.test(path)) return { label: "STATUS", className: "status" };
+          return { label: "PAGE", className: "page" };
+        };
+        const stripTags = (value: string) => value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+        const resultText = (d: any) => stripTags(`${d.meta?.title || ""} ${d.excerpt || ""} ${d.url || ""}`).toLowerCase();
+        const queryTerms = (q: string) => q.toLowerCase().split(/\s+/).filter((term) => term.length >= 2);
+        const hasExactResult = (items: any[], q: string) => {
+          const terms = queryTerms(q);
+          if (terms.length === 0) return false;
+          return items.some((d) => {
+            const text = resultText(d);
+            return text.includes(q.toLowerCase()) || terms.every((term) => text.includes(term));
+          });
+        };
+
         const renderResults = async (q: string) => {
           activeIndex = -1;
           if (!q) {
@@ -370,15 +400,24 @@ const menuOwnsCurrentPage = navItems.some((item) => item.key === pageKey && item
               </div>`;
             return;
           }
-          panel.innerHTML = items
-            .map(
-              (d: any) => `
-              <a class="search-hit" id="search-hit-${Math.random().toString(36).slice(2)}" role="option" aria-selected="false" href="${escapeHtml(d.url)}">
+          const exact = hasExactResult(items, q);
+          const heading = exact
+            ? `Results for <strong>${escapeHtml(q)}</strong>`
+            : `No exact matches for <strong>${escapeHtml(q)}</strong> - showing closest matches`;
+          panel.innerHTML = `<div class="search-results-heading ${exact ? "" : "closest"}">${heading}</div>` + items
+            .map((d: any) => {
+              const type = classifyResult(d.url || "");
+              const path = (d.url || "").replace(/^https?:\/\/[^/]+/, "") || "/";
+              return `
+              <a class="search-hit search-hit-${type.className}" id="search-hit-${Math.random().toString(36).slice(2)}" role="option" aria-selected="false" href="${escapeHtml(d.url)}">
+                <div class="search-hit-topline">
+                  <span class="search-hit-type ${type.className}">${type.label}</span>
+                  <span class="search-hit-meta">${escapeHtml(path)}</span>
+                </div>
                 <div class="search-hit-title">${escapeHtml(d.meta?.title || d.url)}</div>
                 <div class="search-hit-excerpt">${d.excerpt || ""}</div>
-                <div class="search-hit-meta">${escapeHtml(d.url.replace(/^https?:\/\/[^/]+/, "") || "/")}</div>
-              </a>`,
-            )
+              </a>`;
+            })
             .join("");
           setActive(0);
         };

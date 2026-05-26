@@ -11,6 +11,9 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.getByRole("button", { name: /検索/ })).toBeVisible();
     await expect(page.locator(".banner-actions").getByRole("link", { name: /カテゴリ/ })).toBeVisible();
     await expect(page.locator("section.stats .stat")).toHaveCount(5);
+    await expect(page.locator('script[src*="googlesyndication"]')).toHaveCount(0);
+    await expect(page.locator("article.featured")).not.toContainText(/AI \u8981\u7d04\u672a\u751f\u6210|Summary pending|\u5f8c\u7d9a\u306e Worker run/);
+    await expect(page.locator(".top-rank")).not.toContainText(/AI \u8981\u7d04\u672a\u751f\u6210|Summary pending|\u5f8c\u7d9a\u306e Worker run/);
     await expect(page.locator("#priority-heading")).toBeVisible();
     await expect(page.locator("#timeline-heading")).toBeVisible();
   });
@@ -101,6 +104,8 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".page-hero #status-heading")).toBeVisible();
     await expect(page.getByRole("heading", { name: /Worker Health/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: /Source Health/i })).toBeVisible();
+    await expect(page.getByText("Summary backlog").first()).toBeVisible();
+    await expect(page.locator(".source-reason-line").first()).toBeVisible();
     await expect(page.locator('[data-source-filter="all"]')).toBeVisible();
     await expect(page.locator('[data-category-filter="all"]')).toBeVisible();
     await expect(page.locator(".source-item").first()).toBeVisible();
@@ -495,6 +500,8 @@ test.describe("TECH Dashboard smoke", () => {
     await page.locator("#pagefind-search-input").fill("Copilot");
     await expect(page.locator("#pagefind-results")).toBeVisible({ timeout: 10_000 });
     await expect(page.locator(".search-hit").first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator(".search-hit-type").first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator(".search-results-heading")).toContainText(/Results|closest/i);
     await expect(page.locator(".search-hit.is-active").first()).toBeVisible({ timeout: 10_000 });
   });
 

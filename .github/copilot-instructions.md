@@ -600,6 +600,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: taxonomy / source filter / archive-stats logic に触れたら、data 修復 commit 後に明示承認を得て `worker/` を deploy する。deploy 前後で `/health` と `tests/data-schema.test.ts` を確認し、古い Worker が data を再汚染しないことを確認する。
 - **教訓**: data artifact の修復だけでは publisher の再発を止められない。Worker-generated data が schema gate を破った場合は「data を直す」だけでなく「Worker runtime が最新か」を同じ incident の必須確認にする。
 
+### LL-074: Pending AI summaries must not occupy decision-critical slots
+- **Incident**: Persona UX audit found Home Featured / Top-3 and article detail using deterministic fallback text such as pending AI summary as the most prominent decision content.
+- **Root cause**: Data quality gates guaranteed non-empty summaries, but UI ranking treated deterministic fallback as equivalent to real AI enrichment. Status also showed collection health without an explicit summary backlog count.
+- **Mitigation**: Shared fallback detection is used by Featured / Top-3 / article detail / metrics. Decision-critical slots prefer real summaries, article detail shows a pending state instead of boilerplate body, and Status exposes summary backlog metrics.
+- **Lesson**: Non-empty content is not the same as trustworthy content. Ranking, share UI, and health dashboards must treat deterministic fallback as pending work, not as completed enrichment.
+
 ## 🔄 自己学習ハーネス手順
 
 1. 作業中に発生した「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。

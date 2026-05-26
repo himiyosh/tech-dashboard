@@ -22,6 +22,7 @@ import {
   summaryForLang,
   summaryForLangWithFallback,
   titleForLangWithFallback,
+  isDeterministicFallbackEntry,
 } from "../lib/data.ts";
 
 const currentPage = 1;
@@ -35,20 +36,41 @@ const tags = trendingTags(12);
 const now = new Date();
 const ago = relativeTime(DASHBOARD_METRICS.generatedAt, now);
 
-// Top 3 = importance × recency. Recent importance=3 first, then importance=2.
-const rankedPool = ALL_ENTRIES.filter((e) => e.importance >= 2).slice(0, 60);
-const topThree = rankedPool
+// Top 3 = importance x recency, but only entries with real summaries.
+// Limit repeated source/category so the decision list is useful at a glance.
+const rankedPool = ALL_ENTRIES.filter((e) => e.importance >= 2 && !isDeterministicFallbackEntry(e)).slice(0, 120);
+const scoredTopCandidates = rankedPool
   .map((e) => {
     const ageHours = Math.max(
       0,
       (now.getTime() - new Date(e.publishedAt || e.collectedAt).getTime()) / 3600_000,
     );
-    const score = e.importance * 100 - ageHours * 0.6;
+    const sourceTypeBoost = e.sourceType === "release" || e.sourceType === "changelog" ? -8 : 0;
+    const score = e.importance * 100 - ageHours * 0.6 + sourceTypeBoost;
     return { entry: e, score };
   })
-  .sort((a, b) => b.score - a.score)
-  .slice(0, 3)
-  .map(({ entry }) => entry);
+  .sort((a, b) => b.score - a.score);
+const topThree = (() => {
+  const picked: typeof ALL_ENTRIES[number][] = [];
+  const sourceCount = new Map<string, number>();
+  const categoryCount = new Map<string, number>();
+  for (const { entry } of scoredTopCandidates) {
+    if ((sourceCount.get(entry.source) ?? 0) >= 1) continue;
+    if ((categoryCount.get(entry.category) ?? 0) >= 2) continue;
+    picked.push(entry);
+    sourceCount.set(entry.source, (sourceCount.get(entry.source) ?? 0) + 1);
+    categoryCount.set(entry.category, (categoryCount.get(entry.category) ?? 0) + 1);
+    if (picked.length === 3) break;
+  }
+  if (picked.length < 3) {
+    for (const { entry } of scoredTopCandidates) {
+      if (picked.some((item) => item.id === entry.id)) continue;
+      picked.push(entry);
+      if (picked.length === 3) break;
+    }
+  }
+  return picked;
+})();
 const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
 
 function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: string } {

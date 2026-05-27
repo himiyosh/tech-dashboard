@@ -21,7 +21,7 @@
  *   - After max_retries, message goes to the DLQ for manual triage.
  */
 import type { NormalizedEntry } from "../../harness/types.ts";
-import { buildPrompt, parseResponse } from "../../worker/src/prompt.ts";
+import { buildQueuePrompt, parseResponse } from "../../worker/src/prompt.ts";
 import { type CacheEntry, putCacheEntry } from "../../worker/src/kv-cache.ts";
 
 interface Env {
@@ -29,20 +29,36 @@ interface Env {
   COPILOT_PAT: string;
   SUMMARIZE_MODEL: string;
   SUMMARIZE_TIMEOUT_MS?: string;
+  SUMMARIZE_MAX_TOKENS?: string;
 }
 
 /**
  * Shape of a queue message produced by the harness Worker. Keep small —
- * Queues caps message size and we only need what buildPrompt reads.
+ * Queues caps message size and we only need what buildQueuePrompt reads.
  */
 export interface SummaryJob {
   url: string;
   // The full NormalizedEntry would be more than we need; we only ship the
-  // fields buildPrompt uses. Avoids bloating the queue payload.
+  // fields buildQueuePrompt uses. Avoids bloating the queue payload while
+  // still carrying the RSS/Atom snippet that normalization placed in
+  // summaryEn/summaryJa.
   entry: Pick<
     NormalizedEntry,
     "id" | "url" | "title" | "category" | "source" | "sourceType"
-  >;
+  > &
+    Partial<
+      Pick<
+        NormalizedEntry,
+        | "titleJa"
+        | "titleEn"
+        | "summaryJa"
+        | "summaryEn"
+        | "lang"
+        | "publishedAt"
+        | "tags"
+        | "importance"
+      >
+    >;
 }
 
 // LL-038 fix: per-URL KV keys instead of a single multi-MB blob. The blob
@@ -58,6 +74,7 @@ const COPILOT_HEADERS: Record<string, string> = {
 };
 
 const DEFAULT_TIMEOUT_MS = 25_000;
+const DEFAULT_MAX_TOKENS = 1600;
 
 async function resolveCopilotToken(pat: string): Promise<string> {
   const res = await fetch("https://api.github.com/copilot_internal/v2/token", {
@@ -79,6 +96,7 @@ async function callCopilot(
   model: string,
   entry: SummaryJob["entry"],
   timeoutMs: number,
+  maxTokens: number,
 ): Promise<CacheEntry> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -94,11 +112,10 @@ async function callCopilot(
       body: JSON.stringify({
         model,
         temperature: 0.2,
-        // 2400 in the harness Worker was tuned for offline batch; in the
-        // Worker's 28s CPU/wall budget, sonnet long-form often timed out
-        // before finishing. 1500 keeps bilingual bodies meaningful (~500
-        // chars JA, ~300 words EN) while letting the model finish in time.
-        max_tokens: 1500,
+        // Keep this aligned with buildQueuePrompt(): compact enough to close
+        // JSON inside the 28s Worker timeout, but large enough for useful
+        // bilingual context notes.
+        max_tokens: maxTokens,
         messages: [
           {
             role: "system",
@@ -107,7 +124,7 @@ async function callCopilot(
           },
           {
             role: "user",
-            content: buildPrompt(entry as NormalizedEntry),
+            content: buildQueuePrompt(entry),
           },
         ],
       }),
@@ -139,13 +156,14 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
   const token = await resolveCopilotToken(env.COPILOT_PAT);
   const model = env.SUMMARIZE_MODEL || "claude-sonnet-4.6";
   const timeoutMs = Number(env.SUMMARIZE_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
+  const maxTokens = Number(env.SUMMARIZE_MAX_TOKENS ?? DEFAULT_MAX_TOKENS);
 
-  const entry = await callCopilot(token, model, job.entry, timeoutMs);
+  const entry = await callCopilot(token, model, job.entry, timeoutMs, maxTokens);
 
   // Empty summaryJa indicates the model returned malformed JSON. Don't
   // poison the cache — let the message hit the DLQ for triage.
-  if (!entry.summaryJa || !entry.summaryEn) {
-    throw new Error(`empty summary for ${job.url}`);
+  if (!entry.titleJa || !entry.summaryJa || !entry.summaryEn || !entry.bodyJa || !entry.bodyEn) {
+    throw new Error(`incomplete summary for ${job.url}`);
   }
 
   await putCacheEntry(env.SUMMARY_CACHE, job.url, entry);

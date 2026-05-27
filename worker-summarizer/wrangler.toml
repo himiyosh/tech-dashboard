@@ -26,6 +26,10 @@ SUMMARIZE_MODEL = "claude-sonnet-4.6"
 # 28s leaves ~2s budget for KV write + JSON parse within the 30s CPU cap.
 # Originally 25s but anthropic long-form entries timed out occasionally.
 SUMMARIZE_TIMEOUT_MS = "28000"
+# Keep in sync with the compact Queue prompt in worker/src/prompt.ts. This is
+# intentionally lower than local backfill scripts; the Queue consumer must
+# finish and close valid JSON inside one Worker invocation.
+SUMMARIZE_MAX_TOKENS = "1600"
 
 # Secrets (set via `wrangler secret put --name tech-dashboard-summarizer`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access

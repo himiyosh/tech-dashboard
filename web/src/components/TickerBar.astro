@@ -40,7 +40,7 @@ const catColorOf = (slug: string): string =>
         <span class="tb-live-dot" aria-hidden="true"></span>
         LIVE · {baseDayKey.slice(5).replace("-", "/")}
       </span>
-      <div class="tb-stage" aria-live="polite">
+      <div class="tb-stage" aria-live="off">
         {items.map((e, i) => {
           const isRel = e.sourceType === "release" || e.sourceType === "changelog";
           const isImp = e.importance === 3;
@@ -52,6 +52,8 @@ const catColorOf = (slug: string): string =>
               class={`tb-slide${i === 0 ? " is-active" : ""}`}
               style={`--cat-color:${catColorOf(e.category)}`}
               data-index={i}
+              aria-hidden={i === 0 ? "false" : "true"}
+              tabindex={i === 0 ? undefined : "-1"}
             >
               <span class="tb-cat">{e.category}</span>
               {isImp && <span class="tb-tag imp">★</span>}
@@ -300,6 +302,21 @@ const catColorOf = (slug: string): string =>
     .tb-cat { font-size: 9px; padding: 1px 4px; }
     .tb-title { font-size: 12.5px; line-height: 1.35; }
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tb-live-dot {
+      animation: none;
+    }
+    .tb-slide {
+      filter: none;
+      transform: none;
+      transition: none;
+    }
+    .tb-slide.is-leaving {
+      transform: none;
+      filter: none;
+    }
+  }
 </style>
 
 <script>
@@ -325,8 +342,12 @@ const catColorOf = (slug: string): string =>
       const prev = idx;
       slides[prev].classList.remove("is-active");
       slides[prev].classList.add("is-leaving");
+      slides[prev].setAttribute("aria-hidden", "true");
+      slides[prev].setAttribute("tabindex", "-1");
       window.setTimeout(() => slides[prev].classList.remove("is-leaving"), 1200);
       slides[target].classList.add("is-active");
+      slides[target].setAttribute("aria-hidden", "false");
+      slides[target].removeAttribute("tabindex");
       idx = target;
       if (counterEl) counterEl.textContent = String(target + 1);
     };

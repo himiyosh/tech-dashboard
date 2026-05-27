@@ -96,7 +96,7 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
   <section class="banner">
     <div class="banner-bg-grid"></div>
     <div class="banner-inner">
-      <div class="banner-copy">
+      <div class="banner-copy" data-reveal="hero-copy">
         <p class="banner-kicker">TECH UPDATE ROUTER</p>
         <h1 class="i18n-ja">
           今日読むべき技術更新を、<br />
@@ -129,35 +129,51 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
           </a>
         </div>
       </div>
-      <div class="banner-facts" aria-label="Dashboard overview">
-        <div class="banner-fact">
-          <strong class="i18n-ja">できること</strong>
-          <strong class="i18n-en" lang="en">What it does</strong>
-          <span class="i18n-ja">要約・重要度・出典から、読む/共有する判断を短時間で行えます。</span>
-          <span class="i18n-en" lang="en">Use summaries, importance, and sources to decide what to read or share.</span>
+      <div class="banner-right" data-reveal="hero-panel">
+        <div class="dynamic-orbit" aria-hidden="true">
+          <span class="orbit-ring orbit-ring-a"></span>
+          <span class="orbit-ring orbit-ring-b"></span>
+          <span class="scan-beam"></span>
+          <div class="orbit-core">
+            <span>HOURLY ROUTING</span>
+            <strong>{DASHBOARD_METRICS.todayEntries}</strong>
+            <small>today</small>
+          </div>
+          <span class="signal-node node-source">{DASHBOARD_METRICS.sourceCoverageLabel} sources</span>
+          <span class="signal-node node-rank">rank</span>
+          <span class="signal-node node-summary">AI summary</span>
+          <span class="signal-node node-publish">publish</span>
         </div>
-        <div class="banner-fact">
-          <strong class="i18n-ja">集約ソース</strong>
-          <strong class="i18n-en" lang="en">Sources</strong>
-          <span class="i18n-ja">{DASHBOARD_METRICS.sourceCoverageLabel} sources · 公式 blog / release / paper / news</span>
-          <span class="i18n-en" lang="en">{DASHBOARD_METRICS.sourceCoverageLabel} sources · official blogs, releases, papers, news</span>
-        </div>
-        <div class="banner-fact">
-          <strong class="i18n-ja">更新頻度</strong>
-          <strong class="i18n-en" lang="en">Cadence</strong>
-          <span class="i18n-ja">毎時更新 · 最新 index は {ago}</span>
-          <span class="i18n-en" lang="en">Hourly collection · latest index {ago}</span>
-        </div>
-        <div class="banner-filter-links" aria-label="Explore by filter">
-          <a href="/categories">
-            <span class="i18n-ja">カテゴリ</span><span class="i18n-en" lang="en">Categories</span>
-          </a>
-          <a href="/status">
-            <span class="i18n-ja">ソース状況</span><span class="i18n-en" lang="en">Source status</span>
-          </a>
-          <a href="/archive">
-            <span class="i18n-ja">期間別アーカイブ</span><span class="i18n-en" lang="en">Archive by month</span>
-          </a>
+        <div class="banner-facts" aria-label="Dashboard overview">
+          <div class="banner-fact">
+            <strong class="i18n-ja">できること</strong>
+            <strong class="i18n-en" lang="en">What it does</strong>
+            <span class="i18n-ja">要約・重要度・出典から、読む/共有する判断を短時間で行えます。</span>
+            <span class="i18n-en" lang="en">Use summaries, importance, and sources to decide what to read or share.</span>
+          </div>
+          <div class="banner-fact">
+            <strong class="i18n-ja">集約ソース</strong>
+            <strong class="i18n-en" lang="en">Sources</strong>
+            <span class="i18n-ja">{DASHBOARD_METRICS.sourceCoverageLabel} sources · 公式 blog / release / paper / news</span>
+            <span class="i18n-en" lang="en">{DASHBOARD_METRICS.sourceCoverageLabel} sources · official blogs, releases, papers, news</span>
+          </div>
+          <div class="banner-fact">
+            <strong class="i18n-ja">更新頻度</strong>
+            <strong class="i18n-en" lang="en">Cadence</strong>
+            <span class="i18n-ja">毎時更新 · 最新 index は {ago}</span>
+            <span class="i18n-en" lang="en">Hourly collection · latest index {ago}</span>
+          </div>
+          <div class="banner-filter-links" aria-label="Explore by filter">
+            <a href="/categories">
+              <span class="i18n-ja">カテゴリ</span><span class="i18n-en" lang="en">Categories</span>
+            </a>
+            <a href="/status">
+              <span class="i18n-ja">ソース状況</span><span class="i18n-en" lang="en">Source status</span>
+            </a>
+            <a href="/archive">
+              <span class="i18n-ja">期間別アーカイブ</span><span class="i18n-en" lang="en">Archive by month</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -192,7 +208,7 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
     <Sidebar active="all" />
 
     <main>
-      <section class="priority-section" id="today-priority" aria-labelledby="priority-heading">
+        <section class="priority-section" id="today-priority" aria-labelledby="priority-heading">
         <div class="section-header primary section-header-stacked">
           <p class="section-kicker">Start here</p>
           <h2 id="priority-heading">
@@ -220,7 +236,7 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
           : "";
         const featImg = feat.image?.src ?? "";
         return (
-        <article class="featured" data-pagefind-body style={`--cat-color:${featCatColor}`}>
+        <article class="featured" data-pagefind-body data-reveal="featured" style={`--cat-color:${featCatColor}`}>
           <div class:list={["featured-thumb", { "has-image": !!featImg }]}>
             {featImg && (
               <img
@@ -296,7 +312,7 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
       <DailySummary entries={ALL_ENTRIES} stats={STATS} now={now} />
 
       {topThree.length > 0 && (
-        <section class="top-rank">
+        <section class="top-rank" data-reveal="top-rank">
           <div class="top-rank-head">
             <span class="top-rank-title">🔥 Today's Top {topThree.length}</span>
             <span class="top-rank-sub">importance × recency</span>

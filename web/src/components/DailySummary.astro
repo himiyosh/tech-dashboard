@@ -656,7 +656,14 @@ const todayDelta =
     to   { transform: translateX(-50%); }
   }
   @media (prefers-reduced-motion: reduce) {
-    .ticker-track { animation-duration: 1200s; }
+    .ticker-panel .panel-title .panel-sub::before {
+      animation: none;
+    }
+    .ticker-track {
+      animation: none;
+      transform: none;
+      will-change: auto;
+    }
   }
 
   .t-item {

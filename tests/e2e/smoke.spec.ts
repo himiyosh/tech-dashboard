@@ -6,6 +6,11 @@ test.describe("TECH Dashboard smoke", () => {
 
     await expect(page.getByRole("link", { name: /TECH Dashboard/i })).toBeVisible();
     await expect(page.locator("section.banner h1.i18n-ja")).toBeVisible();
+    await expect(page.locator(".dynamic-orbit")).toBeVisible();
+    await expect(page.locator(".signal-node")).toHaveCount(4);
+    await expect(page.locator(".tb-slide.is-active").first()).toHaveAttribute("aria-hidden", "false");
+    await expect(page.locator(".tb-slide:not(.is-active)").first()).toHaveAttribute("aria-hidden", "true");
+    await expect(page.locator(".tb-slide:not(.is-active)").first()).toHaveAttribute("tabindex", "-1");
     await expect(page.locator(".banner-fact")).toHaveCount(3);
     await expect(page.getByRole("link", { name: /今日の重要記事/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /検索/ })).toBeVisible();
@@ -16,6 +21,49 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".top-rank")).not.toContainText(/AI \u8981\u7d04\u672a\u751f\u6210|Summary pending|\u5f8c\u7d9a\u306e Worker run/);
     await expect(page.locator("#priority-heading")).toBeVisible();
     await expect(page.locator("#timeline-heading")).toBeVisible();
+  });
+
+  test("dynamic home motion stays responsive and honors reduced motion", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+
+    const orbit = page.locator(".dynamic-orbit");
+    await expect(orbit).toBeVisible();
+    const orbitBox = await orbit.boundingBox();
+    expect(orbitBox, "dynamic orbit has a desktop box").not.toBeNull();
+    expect(orbitBox!.height, "dynamic orbit is visually substantial on desktop").toBeGreaterThan(180);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+    await expect(page.locator("[data-reveal].is-visible").first()).toBeVisible({ timeout: 5000 });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.reload();
+    await expect(orbit, "dynamic orbit is hidden on mobile to keep first-view dense").toBeHidden();
+    const firstArticle = page.locator("article.featured").first();
+    await expect(firstArticle).toHaveClass(/is-visible/, { timeout: 5000 });
+    const firstArticleBox = await firstArticle.boundingBox();
+    expect(firstArticleBox, "first article visible on mobile").not.toBeNull();
+    expect(firstArticleBox!.y, "mobile first article remains near the first viewport").toBeLessThanOrEqual(360);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.reload();
+    await expect(page.locator("[data-reveal]").first()).toBeVisible();
+    await expect
+      .poll(() => page.locator(".scan-beam").evaluate((el) => getComputedStyle(el).animationName))
+      .toBe("none");
+    await expect
+      .poll(() => page.locator(".tb-live-dot").evaluate((el) => getComputedStyle(el).animationName))
+      .toBe("none");
+    if ((await page.locator(".ticker-track").count()) > 0) {
+      await expect
+        .poll(() => page.locator(".ticker-track").first().evaluate((el) => getComputedStyle(el).animationName))
+        .toBe("none");
+    }
   });
 
   test("first internal article link opens detail page", async ({ page }) => {

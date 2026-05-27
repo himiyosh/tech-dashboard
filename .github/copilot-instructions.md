@@ -624,6 +624,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **Mitigation**: Share `matchesKeywordFilter()` in `harness/pipeline/source-filter.ts` and apply it to merged Worker entries before per-source/category caps.
 - **Lesson**: Registry filter changes are migration rules, not only collection rules. Automated publishers must revalidate existing merged artifacts on every run.
 
+### LL-078: Decorative motion must still pass reduced-motion and focus semantics
+- **Incident**: A homepage motion refresh added scroll reveal and animated hero layers, but persona review found existing ticker/marquee components still animated under `prefers-reduced-motion: reduce`, and inactive ticker slides remained exposed as focusable links.
+- **Root cause**: Global motion safeguards do not cover component-scoped styles, and visually hidden carousel slides are not automatically hidden from keyboard or assistive technology.
+- **Mitigation**: Add reduced-motion overrides inside component styles, disable auto-advance for reduced motion, set inactive ticker slides to `aria-hidden="true"` and `tabindex="-1"`, and add Playwright checks for reduced motion plus mobile first-view density.
+- **Lesson**: Animation features need accessibility acceptance criteria from the start: compositor-only properties, `prefers-reduced-motion`, no hidden focus targets, and viewport metrics for first actionable content.
+
 ## 🔄 自己学習ハーネス手順
 
 1. 作業中に発生した「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。

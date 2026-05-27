@@ -35,6 +35,8 @@ export interface DashboardMetrics {
   fallbackPercent: number;
   summaryQueueMode: string;
   summaryQueueCandidates: number;
+  summaryQueueBacklog: number;
+  summaryQueueDrainEstimateHours: number;
 }
 
 function latestIso(values: Array<string | null | undefined>): string {
@@ -81,6 +83,8 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
     fallbackPercent: WORKER_HEALTH?.fallbackPercent ?? fallback.fallbackPercent,
     summaryQueueMode: WORKER_HEALTH?.queueMode ?? "unknown",
     summaryQueueCandidates: WORKER_HEALTH?.enqueueCandidates ?? 0,
+    summaryQueueBacklog: WORKER_HEALTH?.summaryQueueBacklog ?? WORKER_HEALTH?.fallbackTotal ?? fallback.fallbackEntries,
+    summaryQueueDrainEstimateHours: WORKER_HEALTH?.summaryQueueDrainEstimateHours ?? 0,
   };
 }
 

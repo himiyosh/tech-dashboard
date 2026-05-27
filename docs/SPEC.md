@@ -103,6 +103,9 @@ interface WorkerHealth {
   queueMode?: "enabled" | "disabled" | "missing-binding";
   queueCap?: number;
   enqueueCandidates?: number;
+  summaryQueueBacklog?: number;
+  summaryQueueDrainEstimateHours?: number;
+  summaryQueueStartIndex?: number;
   copilotOk: boolean;
   copilotError: string | null;
   ogCached: number;

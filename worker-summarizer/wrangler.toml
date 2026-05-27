@@ -45,6 +45,9 @@ queue = "tech-dashboard-summary"
 max_batch_size = 1
 max_batch_timeout = 5
 max_retries = 2
+# Back off timed-out Copilot calls instead of retrying immediately into the
+# same upstream pressure window.
+retry_delay = 120
 max_concurrency = 2
 dead_letter_queue = "tech-dashboard-summary-dlq"
 

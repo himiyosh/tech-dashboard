@@ -75,8 +75,20 @@ const COPILOT_HEADERS: Record<string, string> = {
 
 const DEFAULT_TIMEOUT_MS = 25_000;
 const DEFAULT_MAX_TOKENS = 1600;
+const TOKEN_REFRESH_SKEW_MS = 60_000;
+const DEFAULT_TOKEN_TTL_MS = 20 * 60_000;
+
+let cachedCopilotToken: { pat: string; token: string; expiresAtMs: number } | null = null;
 
 async function resolveCopilotToken(pat: string): Promise<string> {
+  const now = Date.now();
+  if (
+    cachedCopilotToken?.pat === pat &&
+    cachedCopilotToken.expiresAtMs - TOKEN_REFRESH_SKEW_MS > now
+  ) {
+    return cachedCopilotToken.token;
+  }
+
   const res = await fetch("https://api.github.com/copilot_internal/v2/token", {
     headers: {
       authorization: `token ${pat}`,
@@ -87,7 +99,12 @@ async function resolveCopilotToken(pat: string): Promise<string> {
   if (!res.ok) {
     throw new Error(`copilot token exchange ${res.status}: ${await res.text()}`);
   }
-  const body = (await res.json()) as { token: string };
+  const body = (await res.json()) as { token: string; expires_at?: number };
+  const expiresAtMs =
+    typeof body.expires_at === "number" && Number.isFinite(body.expires_at)
+      ? body.expires_at * 1000
+      : now + DEFAULT_TOKEN_TTL_MS;
+  cachedCopilotToken = { pat, token: body.token, expiresAtMs };
   return body.token;
 }
 

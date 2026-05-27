@@ -22,6 +22,11 @@ import { applyTags } from "../../harness/pipeline/tag.ts";
 import { canonicalUrlKey } from "../../harness/pipeline/url.ts";
 import { applyDeterministicContentFallback } from "./content-fallback.ts";
 import {
+  needsGeneratedContent,
+  selectSummaryJobBatch,
+  type SummaryJob,
+} from "./summary-queue.ts";
+import {
   getCacheEntriesWithLegacyFallback,
   putCacheEntry,
 } from "./kv-cache.ts";
@@ -53,7 +58,6 @@ interface Env {
   SUMMARIZE_TIMEOUT_MS?: string;
   SUMMARIZE_CONCURRENCY?: string;
   // Optional Queue producer for the split summarizer Worker (LL-037).
-  // Bound only when [[queues.producers]] is uncommented in wrangler.toml.
   SUMMARY_QUEUE?: Queue<SummaryJob>;
   ENABLE_SUMMARY_QUEUE?: string;
   ENQUEUE_MAX_NEW?: string;
@@ -61,27 +65,6 @@ interface Env {
   // stay under Cloudflare's 1000 subrequests/invocation budget once the
   // fallback backlog grows. See LL-042 follow-up.
   KV_LOOKUP_CAP?: string;
-}
-
-interface SummaryJob {
-  url: string;
-  entry: Pick<
-    NormalizedEntry,
-    "id" | "url" | "title" | "category" | "source" | "sourceType"
-  > &
-    Partial<
-      Pick<
-        NormalizedEntry,
-        | "titleJa"
-        | "titleEn"
-        | "summaryJa"
-        | "summaryEn"
-        | "lang"
-        | "publishedAt"
-        | "tags"
-        | "importance"
-      >
-    >;
 }
 
 const INDEX_LIMIT = 2000;
@@ -103,78 +86,6 @@ function dateMs(iso: string | null): number {
 
 function entryUrlKey(entry: NormalizedEntry): string {
   return canonicalUrlKey(entry.url) ?? entry.url;
-}
-
-const FALLBACK_SUMMARY_JA_PREFIX = "このエントリは ";
-const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
-const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collection metadata";
-
-export function needsGeneratedContent(entry: NormalizedEntry): boolean {
-  const summaryJa = entry.summaryJa ?? "";
-  const summaryEn = entry.summaryEn ?? "";
-  return (
-    !summaryJa.trim() ||
-    !summaryEn.trim() ||
-    !String(entry.bodyJa ?? "").trim() ||
-    !String(entry.bodyEn ?? "").trim() ||
-    summaryJa.startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
-    summaryEn.includes(FALLBACK_SUMMARY_EN_NEEDLE) ||
-    String(entry.bodyEn ?? "").includes(FALLBACK_BODY_EN_NEEDLE)
-  );
-}
-
-function hasRealCacheEntry(hit: CacheEntry | undefined): boolean {
-  return Boolean(
-    hit &&
-      hit.summaryJa &&
-      hit.summaryEn &&
-      hit.bodyJa &&
-      hit.bodyEn &&
-      hit.model !== "deterministic-fallback",
-  );
-}
-
-function toSummaryJob(entry: NormalizedEntry): SummaryJob {
-  return {
-    url: entry.url,
-    entry: {
-      id: entry.id,
-      url: entry.url,
-      title: entry.title,
-      titleJa: entry.titleJa,
-      titleEn: entry.titleEn,
-      summaryJa: entry.summaryJa,
-      summaryEn: entry.summaryEn,
-      lang: entry.lang,
-      publishedAt: entry.publishedAt ?? undefined,
-      tags: entry.tags,
-      category: entry.category,
-      source: entry.source,
-      sourceType: entry.sourceType,
-      importance: entry.importance,
-    },
-  };
-}
-
-export function selectSummaryJobs(
-  entries: readonly NormalizedEntry[],
-  hitsByUrl: Map<string, CacheEntry>,
-  lookedUpUrls: Set<string>,
-  cap: number,
-  uncheckedFallbackUrls = new Set<string>(),
-): SummaryJob[] {
-  const candidates: SummaryJob[] = [];
-  for (const e of entries) {
-    if (candidates.length >= cap) break;
-    const isLookedUp = lookedUpUrls.has(e.url);
-    const isUncheckedFallback = uncheckedFallbackUrls.has(e.url);
-    if (!isLookedUp && !isUncheckedFallback) {
-      continue;
-    }
-    if (isLookedUp && hasRealCacheEntry(hitsByUrl.get(e.url))) continue;
-    candidates.push(toSummaryJob(e));
-  }
-  return candidates;
 }
 
 function preferEntry(current: NormalizedEntry | undefined, candidate: NormalizedEntry): NormalizedEntry {
@@ -1167,9 +1078,8 @@ async function runHarness(
   const queueMode = queueEnabled ? (env.SUMMARY_QUEUE ? "enabled" : "missing-binding") : "disabled";
   const fallbackTotal = finalEntries.filter(needsGeneratedContent).length;
   const fallbackPercent = finalEntries.length === 0 ? 0 : Math.round((fallbackTotal / finalEntries.length) * 100);
-  const enqueueCandidates = queueEnabled && env.SUMMARY_QUEUE
-    ? selectSummaryJobs(finalEntries, hitsByUrl, lookedUpUrls, queueCap, uncheckedFallbackUrls).length
-    : 0;
+  const summaryQueueBatch = selectSummaryJobBatch(finalEntries, hitsByUrl, lookedUpUrls, queueCap, uncheckedFallbackUrls);
+  const enqueueCandidates = queueEnabled && env.SUMMARY_QUEUE ? summaryQueueBatch.jobs.length : 0;
   const health = {
     lastRunAt: new Date().toISOString(),
     batchIndex: batchIndex + 1,
@@ -1188,6 +1098,9 @@ async function runHarness(
     queueMode,
     queueCap,
     enqueueCandidates,
+    summaryQueueBacklog: summaryQueueBatch.eligibleCount,
+    summaryQueueDrainEstimateHours: summaryQueueBatch.drainEstimateHours,
+    summaryQueueStartIndex: summaryQueueBatch.startIndex,
     copilotOk: token !== null,
     copilotError,
     ogCached: Object.keys(ogBlob).length,
@@ -1314,6 +1227,9 @@ async function writeHeartbeat(
     queueMode?: string;
     queueCap?: number;
     enqueueCandidates?: number;
+    summaryQueueBacklog?: number;
+    summaryQueueDrainEstimateHours?: number;
+    summaryQueueStartIndex?: number;
     kvLookupCount?: number;
     kvLookupCap?: number;
   },
@@ -1337,6 +1253,9 @@ async function writeHeartbeat(
       queueMode: health.queueMode,
       queueCap: health.queueCap,
       enqueueCandidates: health.enqueueCandidates,
+      summaryQueueBacklog: health.summaryQueueBacklog,
+      summaryQueueDrainEstimateHours: health.summaryQueueDrainEstimateHours,
+      summaryQueueStartIndex: health.summaryQueueStartIndex,
       kvLookupCount: health.kvLookupCount,
       kvLookupCap: health.kvLookupCap,
     };
@@ -1368,29 +1287,17 @@ async function maybeEnqueueSummaryJobs(
     return 0;
   }
   const cap = Math.max(1, Number(env.ENQUEUE_MAX_NEW ?? 30));
-
-  // Round-robin: shift start index so different hours enqueue different
-  // subsets. Without this, the cap-newest entries always win and old entries
-  // are permanently starved when fallbackTotal >> ENQUEUE_MAX_NEW.
-  const startIdx =
-    entries.length > cap ? Math.floor(Date.now() / 3600_000) % entries.length : 0;
-
-  const candidates: SummaryJob[] = [];
-  for (let i = 0; i < entries.length; i++) {
-    if (candidates.length >= cap) break;
-    const e = entries[(startIdx + i) % entries.length]!;
-
-    const isLookedUp = lookedUpUrls.has(e.url);
-    const isUncheckedFallback = uncheckedFallbackUrls.has(e.url);
-
-    if (!isLookedUp && !isUncheckedFallback) {
-      // Entry carries a real AI summary; not in either fallback set. Skip.
-      continue;
-    }
-
-    if (isLookedUp && hasRealCacheEntry(hitsByUrl.get(e.url))) continue;
-    // isUncheckedFallback (or KV-miss) → no confirmed summary in cache; enqueue.
-    candidates.push(toSummaryJob(e));
+  const { jobs: candidates, eligibleCount, startIndex, drainEstimateHours } = selectSummaryJobBatch(
+    entries,
+    hitsByUrl,
+    lookedUpUrls,
+    cap,
+    uncheckedFallbackUrls,
+  );
+  if (eligibleCount > 0) {
+    console.log(
+      `[worker] summary queue candidates=${eligibleCount}, enqueue=${candidates.length}, start=${startIndex}, estimatedDrainHours=${drainEstimateHours}`,
+    );
   }
 
   // Queue.sendBatch caps at 100 messages and 256 KB per call. Chunk so the
@@ -1458,7 +1365,6 @@ export default {
         const token = await resolveCopilotToken(env.COPILOT_PAT);
         observations.tokenExchangeMs = Date.now() - tExchangeStart;
         observations.tokenLength = token.length;
-        observations.tokenPrefix = token.slice(0, 6);
         observations.mode = big ? "big(2400)" : "min(10)";
         // Single chat completion to measure E2E reachability.
         const controller = new AbortController();

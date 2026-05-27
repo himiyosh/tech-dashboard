@@ -612,6 +612,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **Mitigation**: Keep a separate compact `buildQueuePrompt()` contract for `worker-summarizer`, with `SUMMARIZE_MAX_TOKENS=1600`, mandatory complete JSON validation, and source snippet fields carried in the queue payload. Local/offline backfills can still use the longer prompt.
 - **Lesson**: Splitting work into a Queue is not enough; each Queue message must have an output contract sized for the consumer's actual wall-time and token budget. Backlog metrics must compare real enqueue selection logic, including KV-lookup-cap-skipped fallback entries.
 
+### LL-076: Queue round-robin must advance by the enqueue cap, not by one entry
+- **Incident**: `fallbackTotal` stayed high even while `queueMode=enabled` and `enqueueCandidates=35`, because the producer selected a moving window that advanced only one entry per hour across the full live index.
+- **Root cause**: A 35/job hourly cap needs cap-sized windows over eligible fallback jobs. Advancing by one index position means hundreds of fallback entries may wait weeks to be retried when earlier jobs fail or remain uncached.
+- **Mitigation**: Move summary job selection into `worker/src/summary-queue.ts`, compute the eligible backlog first, and rotate by `hour * ENQUEUE_MAX_NEW` over that eligible list. Expose `summaryQueueBacklog` and `summaryQueueDrainEstimateHours` in Worker health.
+- **Lesson**: Rate limits need a fairness model. A cap without cap-sized round-robin can look active in health metrics while starving most of the backlog.
+
 ## 🔄 自己学習ハーネス手順
 
 1. 作業中に発生した「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。

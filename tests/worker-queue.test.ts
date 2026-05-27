@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { NormalizedEntry } from "../harness/types.ts";
 import type { CacheEntry } from "../worker/src/kv-cache.ts";
-import { needsGeneratedContent, selectSummaryJobs } from "../worker/src/index.ts";
+import { needsGeneratedContent, selectSummaryJobBatch, selectSummaryJobs } from "../worker/src/summary-queue.ts";
 
 const baseEntry: NormalizedEntry = {
   id: "entry-1",
@@ -73,5 +73,36 @@ describe("worker summary queue selection", () => {
       30,
     );
     expect(jobs).toEqual([]);
+  });
+
+  it("round-robins by cap-sized windows so large backlogs drain predictably", () => {
+    const entries = Array.from({ length: 10 }, (_, i) => ({
+      ...baseEntry,
+      id: `entry-${i}`,
+      url: `https://example.com/paper-${i}`,
+    }));
+    const lookedUp = new Set(entries.map((entry) => entry.url));
+
+    const first = selectSummaryJobBatch(entries, new Map(), lookedUp, 3, new Set(), { nowMs: 0 });
+    const second = selectSummaryJobBatch(entries, new Map(), lookedUp, 3, new Set(), { nowMs: 3_600_000 });
+    const fourth = selectSummaryJobBatch(entries, new Map(), lookedUp, 3, new Set(), { nowMs: 3 * 3_600_000 });
+
+    expect(first.jobs.map((job) => job.url)).toEqual([
+      "https://example.com/paper-0",
+      "https://example.com/paper-1",
+      "https://example.com/paper-2",
+    ]);
+    expect(first.eligibleCount).toBe(10);
+    expect(first.drainEstimateHours).toBe(4);
+    expect(second.jobs.map((job) => job.url)).toEqual([
+      "https://example.com/paper-3",
+      "https://example.com/paper-4",
+      "https://example.com/paper-5",
+    ]);
+    expect(fourth.jobs.map((job) => job.url)).toEqual([
+      "https://example.com/paper-9",
+      "https://example.com/paper-0",
+      "https://example.com/paper-1",
+    ]);
   });
 });

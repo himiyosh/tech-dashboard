@@ -13,7 +13,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | 処理 | 実行主体 | トリガ | 失効時の影響 | 監視 |
 |---|---|---|---|---|
 | ソース収集 (50 sources) | Cloudflare Worker `tech-dashboard-harness` | Cron `0 * * * *` (毎時) を 4 batch ローテーション | データ更新が止まる | `/status` の Worker Health |
-| 日本語/英語要約 (`summary*` / `body*`) | Worker → Queue `tech-dashboard-summarizer` → Copilot Enterprise (claude-sonnet-4.6) | cron 後に最大 `ENQUEUE_MAX_NEW=35` 件/run を投入、consumer は 1 message/invocation | 既存表示は維持。LLM 失敗時は deterministic fallback で空欄を防止 | `health.fallbackTotal` / `health.queueMode` / `health.enqueueCandidates` |
+| 日本語/英語要約 (`summary*` / `body*`) | Worker → Queue `tech-dashboard-summarizer` → Copilot Enterprise (claude-sonnet-4.6) | cron 後に最大 `ENQUEUE_MAX_NEW=35` 件/run を投入、consumer は 1 message/invocation | 既存表示は維持。LLM 失敗時は deterministic fallback で空欄を防止 | `health.fallbackTotal` / `health.summaryQueueBacklog` / `health.summaryQueueDrainEstimateHours` |
 | summary/body deterministic fallback | 同 Worker / `scripts/apply-summary-cache.mjs` | Worker commit 前、または緊急修復時 | LLM timeout / 旧 cache 欠落時でも live index の summary/body 欠落を防止 | `health.summaryFallbacks` / `health.bodyFallbacks` / `tests/data-schema.test.ts` |
 | og:image 取得 | 同 Worker | 上記 cron 内で最大 4 件/h、KV にキャッシュ | サムネが no-image fallback になる | `health.ogCached` |
 | `data/index.json` / `data/archive/*` / `data/stats.json` 更新 commit | Worker → GitHub Git Data API (`tech-dashboard-worker` 名義) | 差分があるときのみ 1 commit にまとめる | サイトに反映されない、記事数推移が古いまま | `git log --author=tech-dashboard-worker` |
@@ -305,7 +305,7 @@ Worker を反映する push では、`RUN_WORKER_DEPLOY=1 git push` を使いま
 
 #### 監視 / ヘルスチェック
 
-Worker は実行ごとに `data/index.json` の `health` フィールドにメタデータ (`lastRunAt` / `batchIndex` / `sourcesOk` / `sourcesFailed[]` / `copilotOk` / `fallbackTotal` / `queueMode` / `enqueueCandidates` / `summaryFallbacks` / `bodyFallbacks` / `ogCached` 等) を埋め込みます。サイトの [https://techdb.studio344.net/status/](https://techdb.studio344.net/status/) 上部の **Worker Health** セクションで一目で確認できます。状態は以下のラベルで表示されます。
+Worker は実行ごとに `data/index.json` の `health` フィールドにメタデータ (`lastRunAt` / `batchIndex` / `sourcesOk` / `sourcesFailed[]` / `copilotOk` / `fallbackTotal` / `queueMode` / `enqueueCandidates` / `summaryQueueBacklog` / `summaryQueueDrainEstimateHours` / `summaryFallbacks` / `bodyFallbacks` / `ogCached` 等) を埋め込みます。サイトの [https://techdb.studio344.net/status/](https://techdb.studio344.net/status/) 上部の **Worker Health** セクションで一目で確認できます。状態は以下のラベルで表示されます。
 
 - `healthy` — 直近 6h 以内に成功 / Copilot OK / 失敗 source なし
 - `summarize disabled` — Copilot PAT 失効など (収集自体は継続)

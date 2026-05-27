@@ -119,6 +119,13 @@ const healthyPct = Math.round((ok / Math.max(sources.length, 1)) * 100);
 const indexAgeLabel = relativeTime(GENERATED_AT, now);
 const pendingSummaryEntries = DASHBOARD_METRICS.fallbackEntries;
 const pendingSummaryPercent = DASHBOARD_METRICS.fallbackPercent;
+const summaryQueueBacklog = DASHBOARD_METRICS.summaryQueueBacklog;
+const summaryQueueDrainEstimateHours = DASHBOARD_METRICS.summaryQueueDrainEstimateHours;
+const summaryQueueDrainLabel = summaryQueueDrainEstimateHours > 0
+  ? summaryQueueDrainEstimateHours <= 24
+    ? `約 ${summaryQueueDrainEstimateHours}h`
+    : `約 ${Math.ceil(summaryQueueDrainEstimateHours / 24)}d`
+  : "n/a";
 const tierRows = [1, 2, 3].map((tier) => {
   const rows = sources.filter((source) => source.tier === tier);
   return {
@@ -240,6 +247,11 @@ const workerSummary = wh
             <strong>{pendingSummaryEntries}</strong>
             <small>{pendingSummaryPercent}% fallback</small>
           </div>
+          <div class:list={["status-metric-card", { warn: summaryQueueBacklog > 0, ok: summaryQueueBacklog === 0 }]}>
+            <span>Queue drain</span>
+            <strong>{summaryQueueDrainLabel}</strong>
+            <small>{summaryQueueBacklog} eligible</small>
+          </div>
           <div class="status-metric-card">
             <span>Index</span>
             <strong>{indexAgeLabel}</strong>
@@ -267,6 +279,11 @@ const workerSummary = wh
             <span class="detail-label">Summary backlog</span>
             <strong class={pendingSummaryEntries > 0 ? "tone-warn" : "tone-ok"}>{pendingSummaryEntries}</strong>
             <small>real {DASHBOARD_METRICS.realSummaryEntries} - queue {DASHBOARD_METRICS.summaryQueueMode}</small>
+          </div>
+          <div>
+            <span class="detail-label">Queue drain estimate</span>
+            <strong class={summaryQueueBacklog > 0 ? "tone-warn" : "tone-ok"}>{summaryQueueDrainLabel}</strong>
+            <small>{DASHBOARD_METRICS.summaryQueueCandidates} enqueued/run · {summaryQueueBacklog} eligible</small>
           </div>
           <div>
             <span class="detail-label">og:image cache</span>

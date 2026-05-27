@@ -88,6 +88,7 @@ cron tick (next hour, collector)
 7. **段階解放**
    - 初期 enqueue cap: 5 件/cron tick
    - 現行 enqueue cap: 35 件/cron tick (KV free tier の 1000 writes/day に収める)
+   - producer は eligible fallback jobs の中で `cap` 件ずつ hour-based round-robin するため、同じ先頭 35 件に固定されない
    - backlog 解消後は新着記事数に応じて自然に低下する
 
 ### E. 失敗モード/対策

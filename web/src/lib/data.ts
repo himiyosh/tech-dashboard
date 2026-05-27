@@ -76,6 +76,9 @@ export interface WorkerHealth {
   queueMode?: string;
   queueCap?: number;
   enqueueCandidates?: number;
+  summaryQueueBacklog?: number;
+  summaryQueueDrainEstimateHours?: number;
+  summaryQueueStartIndex?: number;
   kvLookupCap?: number;
   kvLookupCount?: number;
 }

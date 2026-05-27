@@ -495,7 +495,7 @@ test.describe("TECH Dashboard smoke", () => {
   test("pagefind search returns dashboard entries", async ({ page }) => {
     await page.goto("/");
 
-    await page.keyboard.press("Control+K");
+    await page.locator("button[data-search-trigger]:visible").first().click();
     await expect(page.locator("#pagefind-search-input")).toBeFocused();
     await page.locator("#pagefind-search-input").fill("Copilot");
     await expect(page.locator("#pagefind-results")).toBeVisible({ timeout: 10_000 });
@@ -508,7 +508,7 @@ test.describe("TECH Dashboard smoke", () => {
   test("pagefind search zero state gives next actions", async ({ page }) => {
     await page.goto("/");
 
-    await page.keyboard.press("Control+K");
+    await page.locator("button[data-search-trigger]:visible").first().click();
     await expect(page.locator("#pagefind-search-input")).toBeFocused();
     await page.locator("#pagefind-search-input").fill("漢字未存在語彙魑魅魍魎");
 

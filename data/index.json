@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-26T22:00:45.642Z",
-  "count": 748,
+  "generatedAt": "2026-05-27T02:00:45.432Z",
+  "count": 749,
   "health": {
-    "lastRunAt": "2026-05-26T22:00:45.642Z",
+    "lastRunAt": "2026-05-27T02:00:45.432Z",
     "batchIndex": 3,
     "batchTotal": 4,
     "sourcesAttempted": 12,
@@ -10,19 +10,19 @@
     "sourcesFailed": [],
     "summarized": 0,
     "summarizeErrors": 0,
-    "summaryFallbacks": 2,
-    "bodyFallbacks": 4,
-    "fallbackTotal": 439,
+    "summaryFallbacks": 0,
+    "bodyFallbacks": 2,
+    "fallbackTotal": 440,
     "fallbackPercent": 59,
     "kvLookupCap": 500,
-    "kvLookupCount": 439,
+    "kvLookupCount": 440,
     "queueMode": "enabled",
     "queueCap": 35,
     "enqueueCandidates": 35,
     "copilotOk": true,
     "copilotError": null,
-    "ogCached": 2564,
-    "ogNewHits": 2
+    "ogCached": 2572,
+    "ogNewHits": 4
   },
   "entries": [
     {
@@ -30,19 +30,19 @@
       "source": "zed-releases",
       "sourceType": "release",
       "url": "https://github.com/zed-industries/zed/releases/tag/nightly",
-      "title": "nightly: Allow agent tools to edit global skills (#57678)",
+      "title": "nightly",
       "titleJa": "Zed nightly、ホバーリンクからfile:line:col形式の遷移をサポート",
-      "titleEn": "nightly: Allow agent tools to edit global skills (#57678)",
+      "titleEn": "nightly",
       "summaryJa": "Zedエディタのnightlyビルドで、ホバー時に表示されるリンクから「file:line:col」形式のパス指定によるナビゲーションが可能になった。エラーログやスタックトレースに含まれる位置情報付きのファイル参照を直接クリックして開けるようになり、デバッグ作業の効率化に寄与する更新となっている。",
-      "summaryEn": "Summary Allow write_file and edit_file to create or modify files under ~/.agents/skills. Keep the global skills exception constrained to that directory and preserve existing project-path behavior. Doc",
+      "summaryEn": "Fix the filtering of index.lock + COMMIT_MESSAGE FS events to work in…",
       "lang": "en",
-      "publishedAt": "2026-05-26T20:16:43.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "publishedAt": "2026-05-27T00:04:30.000Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
-        "agent",
         "editor",
         "release",
         "zed",
+        "agent",
         "open-model",
         "navigation",
         "debugging"
@@ -52,15 +52,47 @@
       "halfLife": "news",
       "archiveTier": "hot",
       "image": {
-        "src": "https://avatars.githubusercontent.com/u/52641447?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/52641447?s=60&amp;v=4",
-        "alt": "nightly: Allow agent tools to edit global skills (#57678)",
+        "src": "https://avatars.githubusercontent.com/u/326587?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/326587?s=60&amp;v=4",
+        "alt": "nightly",
         "width": 0,
         "height": 0,
         "source": "media"
       },
       "bodyJa": "Rust製の高速エディタZedのnightlyビルドにおいて、ホバー時に表示されるリンクから「file:line:col」形式のパス指定によるナビゲーションがサポートされた。プルリクエスト#55877によって追加された比較的小さな改善ながら、日常のデバッグ作業に直接効くアップデートである。\n\nプログラミングにおいて、エラーメッセージやスタックトレース、コンパイラ出力には「src/main.rs:42:10」のように、ファイルパスに加えて行番号と列番号がコロン区切りで付加された参照表記が広く使われる。RustやTypeScript、Pythonなど多くの言語のツールチェーンがこの形式を採用しており、ターミナルエミュレータ側でも同形式のリンク化対応が進んでいる。今回の変更により、Zed内部のホバー表示でこうした参照を検出した際に、クリック一つで該当ファイルの該当行・該当列にカーソルを移動できる。\n\n類似の機能はVS CodeやJetBrains系IDEでも長らく標準的にサポートされてきたほか、iTerm2やWezTerm、Ghosttyといったモダンなターミナルでも「Cmd+クリック」によるエディタ起動に対応している。Zedはコラボレーション機能やGPUレンダリングを売りに急速に機能追加を進めており、こうした地味だが重要なエディタとしての基本的な使い勝手の底上げを継続している点が特徴的だ。\n\nなお本変更はnightlyチャネルへの取り込みであり、stableリリースに反映される時期は別途のリリースサイクルに依存すると見られる。挙動の詳細やエッジケース(相対パスの解決基準、Windowsスタイルのドライブレター付きパスへの対応など)については、実際にnightlyを試すか、PRの議論を確認するのが確実だろう。",
       "bodyEn": "The nightly build of Zed, the Rust-based collaborative code editor, has gained support for navigating from hover links that use the common file:line:col path format. Introduced via PR #55877, the change is small in scope but directly improves day-to-day debugging workflows.\n\nIn most language ecosystems, error messages, stack traces, and compiler diagnostics conventionally encode source locations as a path followed by colon-separated line and column numbers, such as src/main.rs:42:10. Rust's compiler, TypeScript's tsc, Python tracebacks, and countless linters all emit this format. With this update, when Zed renders such a reference inside a hover popup, clicking it will jump straight to the indicated file at the precise row and column rather than merely opening the file at its top.\n\nThis kind of navigation has long been table stakes for editors like VS Code and the JetBrains family, and modern terminal emulators such as iTerm2, WezTerm, and Ghostty have also embraced the file:line:col convention for Cmd-click handoff to an editor. Zed has been aggressive about shipping headline features like real-time collaboration and GPU-accelerated rendering, but updates like this one show ongoing investment in the more mundane plumbing that determines whether an editor feels pleasant under daily use.\n\nBecause the change lands on the nightly channel, it will likely take some time before it propagates to the stable release, depending on Zed's normal promotion cadence. Edge cases — for example, how relative paths are resolved against the current workspace, or whether Windows-style paths with drive letters are handled gracefully — are not fully clear from the release note alone, and interested users may want to consult the PR discussion or experiment with the nightly build directly to confirm the exact behavior."
+    },
+    {
+      "id": "f70bff1506324c5c",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/rytaTechNote/items/ef709834fdfb4e8b218f",
+      "title": "Visual Studio Codeのショートカットや設定まとめ",
+      "titleJa": "Visual Studio Codeのショートカットや設定まとめ",
+      "titleEn": "",
+      "summaryJa": "本記事について Visual Studio Codeでコーディング中に得たショートカットや、自分好みの設定をまとめていきます。 ※ショートカットはWindows版の内容を記載しています。 ■ショートカット 設定をキーワードで呼び出せるように",
+      "summaryEn": "Visual Studio Codeのショートカットや設定まとめ",
+      "lang": "ja",
+      "publishedAt": "2026-05-26T22:34:11.000Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkY5ZDViYzQ1NzMyZmQ1ZWI1Zjc2MGIyN2JjMmQzODIwZD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9ZjE0M2NmMDQzY2FkMTUzMjA1YTE0NDQ3OWRmODg0ODY%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Daaf21ac7943baa57f46a9933485d5b36?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VmlzdWFsJTIwU3R1ZGlvJTIwQ29kZSVFMyU4MSVBRSVFMyU4MiVCNyVFMyU4MyVBNyVFMyU4MyVCQyVFMyU4MyU4OCVFMyU4MiVBQiVFMyU4MyU4MyVFMyU4MyU4OCVFMyU4MiU4NCVFOCVBOCVBRCVFNSVBRSU5QSVFMyU4MSVCRSVFMyU4MSVBOCVFMyU4MiU4MSZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTI2MmQwYWFiOWQyNmY2YTc4MGJlOGU2N2Q5YWZkMTdm&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDByeXRhVGVjaE5vdGUmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz05ZTdhZGE4OWE5YjMxMGRmZTJlZTIwZjc2NzcwYTA3ZQ&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=c504c1c86879daf3b529bd2a0e61465b",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkY5ZDViYzQ1NzMyZmQ1ZWI1Zjc2MGIyN2JjMmQzODIwZD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9ZjE0M2NmMDQzY2FkMTUzMjA1YTE0NDQ3OWRmODg0ODY%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Daaf21ac7943baa57f46a9933485d5b36?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VmlzdWFsJTIwU3R1ZGlvJTIwQ29kZSVFMyU4MSVBRSVFMyU4MiVCNyVFMyU4MyVBNyVFMyU4MyVCQyVFMyU4MyU4OCVFMyU4MiVBQiVFMyU4MyU4MyVFMyU4MyU4OCVFMyU4MiU4NCVFOCVBOCVBRCVFNSVBRSU5QSVFMyU4MSVCRSVFMyU4MSVBOCVFMyU4MiU4MSZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTI2MmQwYWFiOWQyNmY2YTc4MGJlOGU2N2Q5YWZkMTdm&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDByeXRhVGVjaE5vdGUmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz05ZTdhZGE4OWE5YjMxMGRmZTJlZTIwZjc2NzcwYTA3ZQ&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=c504c1c86879daf3b529bd2a0e61465b",
+        "alt": "Visual Studio Codeのショートカットや設定まとめ",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "bodyJa": "Visual Studio Codeのショートカットや設定まとめ は、qiita-vscode が伝えた vscode 領域の更新です。本記事について Visual Studio Codeでコーディング中に得たショートカットや、自分好みの設定をまとめていきます。 ※ショートカットはWindows版の内容を記載しています。 ■ショートカット 設定をキーワードで呼び出せるように。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは qiita, vscode です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"Visual Studio Codeのショートカットや設定まとめ\" is a vscode update collected from qiita-vscode. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include qiita, vscode. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "58161cc9860149f9",
@@ -74,7 +106,7 @@
       "summaryEn": "\"BadHost\" was found in Starlette, a package with 325 million weekly downloads.",
       "lang": "en",
       "publishedAt": "2026-05-26T19:50:33.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "ars-technica",
         "news"
@@ -130,7 +162,7 @@
       "summaryEn": "Getting carbon and sulfur into Earth’s interior may be part of oxygen’s story.",
       "lang": "en",
       "publishedAt": "2026-05-26T18:30:58.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "ars-technica",
         "news"
@@ -187,7 +219,7 @@
       "summaryEn": "A creepy saved post on Instagram linked man to AI porn account, FBI says.",
       "lang": "en",
       "publishedAt": "2026-05-26T17:46:01.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "ars-technica",
@@ -212,7 +244,7 @@
       "summaryEn": "Hugging Face debuts $2,500 bipedal robot project for builders and researchers.",
       "lang": "en",
       "publishedAt": "2026-05-26T17:16:07.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "ars-technica",
         "news"
@@ -301,7 +333,7 @@
       "summaryEn": "But there are some real-world constraints that virtual pinball could easily ignore.",
       "lang": "en",
       "publishedAt": "2026-05-26T16:24:02.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "ars-technica",
         "news"
@@ -325,7 +357,7 @@
       "summaryEn": "Self-Review Checklist: I've reviewed my own diff for quality, security, and reliability Unsafe blocks (if any) have justifying comments (I am not adding new unsafe blocks) The content is consistent wi",
       "lang": "en",
       "publishedAt": "2026-05-26T16:22:19.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "editor",
         "release",
@@ -489,7 +521,7 @@
       "summaryEn": "VS Code + GitHub Copilot + Java で開発環境がぶつかるポイントと回避策",
       "lang": "ja",
       "publishedAt": "2026-05-26T15:52:23.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "qiita",
         "vscode"
@@ -553,7 +585,7 @@
       "summaryEn": "開発環境の主役が、エディタからAIエージェントに変わり始めた",
       "lang": "ja",
       "publishedAt": "2026-05-26T15:35:52.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn",
@@ -746,7 +778,7 @@
       "summaryEn": "Big News Gemini 3.5 Flash / Gemini Spark / Gemini Omni リリース（Google I/O 2026） https://blog.google/innovation-and-ai/technology/developers-tools/google-io-2026-collection/ https://www.marktechpost.com/2",
       "lang": "en",
       "publishedAt": "2026-05-26T15:21:06.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "zenn",
@@ -844,7 +876,7 @@
       "summaryEn": "**疲弊したアインシュタインAIに講演させた ─ vital state をシステムプロンプトに注入したら何が起きたか**",
       "lang": "ja",
       "publishedAt": "2026-05-26T15:02:05.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "zenn"
@@ -941,7 +973,7 @@
       "summaryEn": "M5 Max のローカル LLM ベンチ — MoE は GPU 性能、Dense はメモリ帯域幅がボトルネック、発熱の影響も調査",
       "lang": "ja",
       "publishedAt": "2026-05-26T14:43:11.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "open-model",
@@ -952,7 +984,15 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "bodyJa": "M5 Max のローカル LLM ベンチ — MoE は GPU 性能、Dense はメモリ帯域幅がボトルネック、発熱の影響も調査 は、zenn-llm が伝えた local-llm 領域の更新です。! 本記事は「M5 Max × DeepSeek V4 Flash」シリーズ（全3編）の後編です。 前編: ds4/DeepSeek V4 Flash を macOS にセットアップし常駐化 中編: ds4 / DeepSeek V4 Fl。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは llm, open-model, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
-      "bodyEn": "The source item \"M5 Max のローカル LLM ベンチ — MoE は GPU 性能、Dense はメモリ帯域幅がボトルネック、発熱の影響も調査\" is a local-llm update collected from zenn-llm. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include llm, open-model, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+      "bodyEn": "The source item \"M5 Max のローカル LLM ベンチ — MoE は GPU 性能、Dense はメモリ帯域幅がボトルネック、発熱の影響も調査\" is a local-llm update collected from zenn-llm. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include llm, open-model, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material.",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--DLlnj5xI--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:M5%2520Max%2520%25E3%2581%25AE%25E3%2583%25AD%25E3%2583%25BC%25E3%2582%25AB%25E3%2583%25AB%2520LLM%2520%25E3%2583%2599%25E3%2583%25B3%25E3%2583%2581%2520%25E2%2580%2594%2520MoE%2520%25E3%2581%25AF%2520GPU%2520%25E6%2580%25A7%25E8%2583%25BD%25E3%2580%2581Dense%2520%25E3%2581%25AF%25E3%2583%25A1%25E3%2583%25A2%25E3%2583%25AA%25E5%25B8%25AF%25E5%259F%259F%25E5%25B9%2585%25E3%2581%258C%25E3%2583%259C%25E3%2583%2588%25E3%2583%25AB%25E3%2583%258D%25E3%2583%2583%25E3%2582%25AF%25E3%2580%2581...%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:kamo%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS0VJZjZzamhKRGJ4c2F1andwMVBQaldsd2ItbDgwQ3M1ai1GZXYwV250azNNaz1zOTYtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--DLlnj5xI--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:M5%2520Max%2520%25E3%2581%25AE%25E3%2583%25AD%25E3%2583%25BC%25E3%2582%25AB%25E3%2583%25AB%2520LLM%2520%25E3%2583%2599%25E3%2583%25B3%25E3%2583%2581%2520%25E2%2580%2594%2520MoE%2520%25E3%2581%25AF%2520GPU%2520%25E6%2580%25A7%25E8%2583%25BD%25E3%2580%2581Dense%2520%25E3%2581%25AF%25E3%2583%25A1%25E3%2583%25A2%25E3%2583%25AA%25E5%25B8%25AF%25E5%259F%259F%25E5%25B9%2585%25E3%2581%258C%25E3%2583%259C%25E3%2583%2588%25E3%2583%25AB%25E3%2583%258D%25E3%2583%2583%25E3%2582%25AF%25E3%2580%2581...%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:kamo%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS0VJZjZzamhKRGJ4c2F1andwMVBQaldsd2ItbDgwQ3M1ai1GZXYwV250azNNaz1zOTYtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
+        "alt": "M5 Max のローカル LLM ベンチ — MoE は GPU 性能、Dense はメモリ帯域幅がボトルネック、発熱の影響も調査",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "cf84d9a979bbd0be",
@@ -976,7 +1016,15 @@
       "halfLife": "news",
       "archiveTier": "hot",
       "bodyJa": "このエントリは techcrunch から収集した tech-news 領域の最新アップデートです。原題は「Spotify now lets you stream narrated magazine articles, too」。このエントリは techcrunch から収集した tech-news 領域の最新アップデートです。原題:「Spotify now lets you stream narrated magazine articles, too」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは news, techcrunch です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
-      "bodyEn": "Spotify now lets you stream narrated magazine articles, too is a tech-news update collected from techcrunch. Spotify is adding narrated magazine articles to its app as it expands beyond music into audiobooks, podcasts, AI audio, and more.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include news, techcrunch. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+      "bodyEn": "Spotify now lets you stream narrated magazine articles, too is a tech-news update collected from techcrunch. Spotify is adding narrated magazine articles to its app as it expands beyond music into audiobooks, podcasts, AI audio, and more.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include news, techcrunch. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material.",
+      "image": {
+        "src": "https://techcrunch.com/wp-content/uploads/2026/05/Articles-FTR-banner-1920x733-1.png?resize=1200,458",
+        "origSrc": "https://techcrunch.com/wp-content/uploads/2026/05/Articles-FTR-banner-1920x733-1.png?resize=1200,458",
+        "alt": "Spotify now lets you stream narrated magazine articles, too",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "6f757b856f9d0074",
@@ -1000,7 +1048,15 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "bodyJa": "自称世界初！？社会シミュラクラ簡易デモ は、qiita-llm が伝えた local-llm 領域の更新です。以前、 こういう記事を書きました。 では実装をどうするんだと。コードも公開されていますが、基本はローカルLLMや公開のLLMのAPIとの連携が必要です。 もっと気軽に試せないかと。 作りました おもちゃレベルですがプロンプトだけで社会シミュ。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは llm, qiita です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
-      "bodyEn": "The source item \"自称世界初！？社会シミュラクラ簡易デモ\" is a local-llm update collected from qiita-llm. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include llm, qiita. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+      "bodyEn": "The source item \"自称世界初！？社会シミュラクラ簡易デモ\" is a local-llm update collected from qiita-llm. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include llm, qiita. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material.",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGMTE2MDQ5JTJGcHJvZmlsZS1pbWFnZXMlMkYxNDczNzEzMTIyP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1kNjc3ODJiM2I0OTlhMmQxODRlYTAzZGViZWJjYmZiOA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D904c882823d2c1d5aa4ba6744ebae7d2?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUU4JTg3JUFBJUU3JUE3JUIwJUU0JUI4JTk2JUU3JTk1JThDJUU1JTg4JTlEJUVGJUJDJTgxJUVGJUJDJTlGJUU3JUE0JUJFJUU0JUJDJTlBJUUzJTgyJUI3JUUzJTgzJTlGJUUzJTgzJUE1JUUzJTgzJUE5JUUzJTgyJUFGJUUzJTgzJUE5JUU3JUIwJUExJUU2JTk4JTkzJUUzJTgzJTg3JUUzJTgzJUEyJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MWJlMTc2ZjBkMWNhNWJlZjQzYmQxOGQ2MmQ1YzVjNWM&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBhb2tpa2VuaWNoaSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWEwZjBkYjM5M2FlZDZiYTlhNGI2NmI3MDk4ZjZiYWNk&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=4c6d995b6479b8e6c676b81870e4fa18",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGMTE2MDQ5JTJGcHJvZmlsZS1pbWFnZXMlMkYxNDczNzEzMTIyP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1kNjc3ODJiM2I0OTlhMmQxODRlYTAzZGViZWJjYmZiOA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D904c882823d2c1d5aa4ba6744ebae7d2?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUU4JTg3JUFBJUU3JUE3JUIwJUU0JUI4JTk2JUU3JTk1JThDJUU1JTg4JTlEJUVGJUJDJTgxJUVGJUJDJTlGJUU3JUE0JUJFJUU0JUJDJTlBJUUzJTgyJUI3JUUzJTgzJTlGJUUzJTgzJUE1JUUzJTgzJUE5JUUzJTgyJUFGJUUzJTgzJUE5JUU3JUIwJUExJUU2JTk4JTkzJUUzJTgzJTg3JUUzJTgzJUEyJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MWJlMTc2ZjBkMWNhNWJlZjQzYmQxOGQ2MmQ1YzVjNWM&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBhb2tpa2VuaWNoaSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWEwZjBkYjM5M2FlZDZiYTlhNGI2NmI3MDk4ZjZiYWNk&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=4c6d995b6479b8e6c676b81870e4fa18",
+        "alt": "自称世界初！？社会シミュラクラ簡易デモ",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "da48502cd44827f6",
@@ -1095,7 +1151,7 @@
       "summaryEn": "AIによる消費者調査パネル化に向けて：個人モデルを作ってアンケートに回答させる",
       "lang": "ja",
       "publishedAt": "2026-05-26T14:02:26.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "zenn",
@@ -1120,7 +1176,7 @@
       "summaryEn": "【 MCPの富豪設計に敗北宣言 】ローカルLLM運用は自作のTool組み込みの方が圧倒的に有利な件",
       "lang": "ja",
       "publishedAt": "2026-05-26T13:58:39.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "mcp-server",
@@ -1145,7 +1201,7 @@
       "summaryEn": "Dify で社内問い合わせ AI を作ってみた — 情シス・人事・経費の質問に答える 5 つの Knowledge",
       "lang": "ja",
       "publishedAt": "2026-05-26T13:57:52.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "zenn",
@@ -1170,7 +1226,7 @@
       "summaryEn": "「この契約、危ないかも」を問いに変えるAgent設計",
       "lang": "ja",
       "publishedAt": "2026-05-26T13:55:12.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "llm",
@@ -1359,7 +1415,7 @@
       "summaryEn": "AIが、開発者に聞く ── R.E.V.I.S. #1 「最初の一行と、その足場」※無料テスター募集中！詳しくは末尾に記載",
       "lang": "ja",
       "publishedAt": "2026-05-26T12:01:05.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "zenn"
@@ -1415,7 +1471,7 @@
       "summaryEn": "LLMエージェントの失敗でCADを汚さないロールバック設計",
       "lang": "ja",
       "publishedAt": "2026-05-26T11:00:05.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "zenn"
@@ -1439,7 +1495,7 @@
       "summaryEn": "Anthropicに学ぶエージェント「設計」と「評価」——複雑なフレームワークより、シンプルなパターン",
       "lang": "ja",
       "publishedAt": "2026-05-26T10:30:05.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "zenn"
@@ -1495,7 +1551,7 @@
       "summaryEn": "LLMの安全判定をSNNで補完する試み — Brian2による反射層プロトタイプ",
       "lang": "ja",
       "publishedAt": "2026-05-26T09:41:24.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "zenn",
@@ -1520,7 +1576,7 @@
       "summaryEn": "LLM観測性ツール5社の実装思想を並べてみた",
       "lang": "ja",
       "publishedAt": "2026-05-26T09:30:56.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "zenn"
@@ -1544,7 +1600,7 @@
       "summaryEn": "AIエージェントのツール定義設計原則：スキーマ・命名・レスポンスの実践ガイド",
       "lang": "ja",
       "publishedAt": "2026-05-26T09:27:53.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "zenn"
@@ -1656,7 +1712,7 @@
       "summaryEn": "ハーネスエンジニアなら知っておきたい Claude Code Plugin の落とし穴",
       "lang": "ja",
       "publishedAt": "2026-05-26T08:30:05.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "zenn"
@@ -1712,7 +1768,7 @@
       "summaryEn": "レガシープロジェクトに単体テストフレームワークを導入し、生成AIを活用したが失敗した話",
       "lang": "ja",
       "publishedAt": "2026-05-26T08:18:05.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "zenn"
@@ -1768,7 +1824,7 @@
       "summaryEn": "Gemma 4 の MMLU-Pro スコアを NVIDIA B200 で再現する：ステップ・バイ・ステップガイド",
       "lang": "ja",
       "publishedAt": "2026-05-26T07:54:16.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "open-model",
@@ -1793,7 +1849,7 @@
       "summaryEn": "【MindLab】Agent を「暗記」から「思考」へ：ReAct・Reflection・Self-Consistency 実装ガイド",
       "lang": "ja",
       "publishedAt": "2026-05-26T07:43:44.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "llm",
@@ -1914,7 +1970,7 @@
       "summaryEn": "Claude Code同士でプランをレビューさせよう。",
       "lang": "ja",
       "publishedAt": "2026-05-26T07:00:06.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "zenn"
@@ -1938,7 +1994,7 @@
       "summaryEn": "ik_llama.cpp を Windows でビルドして動かしてみる",
       "lang": "ja",
       "publishedAt": "2026-05-26T06:35:12.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "open-model",
@@ -1995,7 +2051,7 @@
       "summaryEn": "AnthropicがプロンプトにXMLタグを推奨する理由を公式ドキュメントから整理する",
       "lang": "ja",
       "publishedAt": "2026-05-26T06:03:14.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "llm",
         "zenn",
@@ -2610,7 +2666,7 @@
       "summaryEn": "arXiv:2605.23912v1 Announce Type: new Abstract: We present Raon-Speech, a top-performing 9B-parameter speech language model (SpeechLM) for English and Korean speech understanding, answering, and gener",
       "lang": "en",
       "publishedAt": "2026-05-26T04:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2642,7 +2698,7 @@
       "summaryEn": "arXiv:2605.23917v1 Announce Type: new Abstract: Modern scientific discovery is bottlenecked not by data scarcity, but by the inability to synthesize fragmented knowledge into actionable hypotheses. Th",
       "lang": "en",
       "publishedAt": "2026-05-26T04:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2674,7 +2730,7 @@
       "summaryEn": "arXiv:2605.23924v1 Announce Type: new Abstract: Segment-level disclosures are a central component of financial reporting, providing insight into firms' internal organization and the allocation of econ",
       "lang": "en",
       "publishedAt": "2026-05-26T04:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2706,7 +2762,7 @@
       "summaryEn": "arXiv:2605.23954v1 Announce Type: new Abstract: Audio Large Language Models (ALLMs) are highly vulnerable to real-world noise, which often induces severe semantic drift and hallucinations. Existing ro",
       "lang": "en",
       "publishedAt": "2026-05-26T04:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2738,7 +2794,7 @@
       "summaryEn": "arXiv:2605.23966v1 Announce Type: new Abstract: Optimization modeling serves as the pivotal bridge between natural-language problem descriptions and optimization solvers, and remains a cornerstone for",
       "lang": "en",
       "publishedAt": "2026-05-26T04:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2770,7 +2826,7 @@
       "summaryEn": "arXiv:2605.23969v1 Announce Type: new Abstract: Instruction tuning has optimized the specialized capabilities of large language models (LLMs), but it often requires extensive datasets and prolonged tr",
       "lang": "en",
       "publishedAt": "2026-05-26T04:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2802,7 +2858,7 @@
       "summaryEn": "arXiv:2605.23970v1 Announce Type: new Abstract: Large language models (LLMs) are increasingly used as automatic judges for summarization and dialogue evaluation. Prior work has documented biases such ",
       "lang": "en",
       "publishedAt": "2026-05-26T04:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "arxiv",
         "benchmark",
@@ -2835,7 +2891,7 @@
       "summaryEn": "arXiv:2605.23974v1 Announce Type: new Abstract: Current language models create two safety challenges: risk must be detected early enough to avoid exposing harmful continuation, and the harmfulness its",
       "lang": "en",
       "publishedAt": "2026-05-26T04:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2867,7 +2923,7 @@
       "summaryEn": "arXiv:2605.23975v1 Announce Type: new Abstract: Audio large language models (Audio LLMs) exhibit systematic failures in transcribing code-switching speech despite strong multilingual capabilities. Foc",
       "lang": "en",
       "publishedAt": "2026-05-26T04:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2899,7 +2955,7 @@
       "summaryEn": "arXiv:2605.23977v1 Announce Type: new Abstract: This paper audits benchmark evaluation in clinical-interview depression detection through four complementary probes across DAIC/E-DAIC, CMDC, ANDROIDS, ",
       "lang": "en",
       "publishedAt": "2026-05-26T04:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "arxiv",
         "benchmark",
@@ -2924,7 +2980,7 @@
       "summaryEn": "arXiv:2605.24000v1 Announce Type: new Abstract: Toxicity in online gaming communities remains a persistent challenge, manifesting across genres, platforms, and player interactions. While much research",
       "lang": "en",
       "publishedAt": "2026-05-26T04:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "arxiv",
         "paper"
@@ -2948,7 +3004,7 @@
       "summaryEn": "arXiv:2605.24164v1 Announce Type: new Abstract: We describe our submission to the CLPsych~2026 Shared Task on capturing and characterizing mental health changes through social media timeline dynamics.",
       "lang": "en",
       "publishedAt": "2026-05-26T04:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "arxiv",
         "paper"
@@ -4174,7 +4230,7 @@
       "summaryEn": "In an age of AI, Pope looks for \"artisans of hope.\"",
       "lang": "en",
       "publishedAt": "2026-05-25T21:07:42.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "ars-technica",
         "news"
@@ -4206,7 +4262,7 @@
       "summaryEn": "There’s something genuinely energizing about working with startups — something I’ve been doing intensely for more than two years now. Startups operate at a different frequency: the urgency is real, th",
       "lang": "en",
       "publishedAt": "2026-05-25T20:11:10.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "amazon",
         "aws",
@@ -4239,7 +4295,7 @@
       "summaryEn": "Fixed a bug on macOS where Git operations could be blocked depending on the timing of spawning child processes. ( #57662 )",
       "lang": "en",
       "publishedAt": "2026-05-25T19:28:34.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "editor",
         "release",
@@ -4328,7 +4384,7 @@
       "summaryEn": "Fixed a bug on macOS where Git operations could be blocked depending on the timing of spawning child processes. ( #57661 )",
       "lang": "en",
       "publishedAt": "2026-05-25T18:22:42.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "editor",
         "release",
@@ -4621,7 +4677,7 @@
       "summaryEn": "Snowflakeの開発環境をVSCodeで構築する",
       "lang": "ja",
       "publishedAt": "2026-05-25T16:05:17.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "qiita",
         "vscode"
@@ -4838,7 +4894,7 @@
       "summaryEn": "Cursor から乗り換えた人向け、VSCode 版 Claude Code を使いやすくする6つの設定",
       "lang": "ja",
       "publishedAt": "2026-05-25T15:00:05.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn",
@@ -5425,7 +5481,7 @@
       "summaryEn": "Cursorがクラウドエージェント運用1年で学んだ5つの教訓",
       "lang": "ja",
       "publishedAt": "2026-05-25T08:37:02.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn",
@@ -5474,7 +5530,7 @@
       "summaryEn": "Dockerコンテナ内のMCPサーバーをCursorから使う",
       "lang": "ja",
       "publishedAt": "2026-05-25T07:53:58.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "mcp-server",
@@ -5620,7 +5676,7 @@
       "summaryEn": "Movable Type を MCP で操作する mt-plugin-mcp を作った話",
       "lang": "ja",
       "publishedAt": "2026-05-25T04:21:46.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "mcp-server",
@@ -6444,7 +6500,7 @@
       "summaryEn": "Cursor Agent × Rubydex MCP 本当にトークン節約になる？ Rails モノリスで検証してみた",
       "lang": "ja",
       "publishedAt": "2026-05-25T01:16:51.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "cursor",
@@ -6665,7 +6721,7 @@
       "summaryEn": "Cursor Composer 2.5 を Codens の executor lane に追加した話 (Opus の 1/10 コスト +",
       "lang": "ja",
       "publishedAt": "2026-05-24T23:58:57.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "benchmark",
         "cursor",
@@ -6722,7 +6778,7 @@
       "summaryEn": "Claude CodeのAuto Modeは「承認ボタンを減らす機能」ではなく、開発の任せ方を変える話",
       "lang": "ja",
       "publishedAt": "2026-05-24T23:41:03.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn"
@@ -7313,7 +7369,7 @@
       "summaryEn": "仕様駆動開発と2026年のAIコーディングエージェント全景",
       "lang": "ja",
       "publishedAt": "2026-05-24T05:39:25.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn"
@@ -7382,7 +7438,7 @@
       "summaryEn": "Splunk MCP Server と Cursor を連携して Splunk NVD App を自動生成してみた",
       "lang": "ja",
       "publishedAt": "2026-05-24T03:27:14.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "enterprise",
@@ -7581,7 +7637,7 @@
       "summaryEn": "AIが出力した安心を担保したい ｜ note2Zenn開発記（セキュリティ編 / Vol.5）",
       "lang": "ja",
       "publishedAt": "2026-05-23T14:04:21.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn"
@@ -8240,7 +8296,7 @@
       "summaryEn": "We are committed to empowering every developer by building an open, secure, and AI-powered platform that defines the future of software development. The post GitHub recognized as a Leader in the Gartn",
       "lang": "en",
       "publishedAt": "2026-05-22T16:10:21.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "enterprise",
         "github"
@@ -8264,7 +8320,7 @@
       "summaryEn": "【Obsidian × Cursor】メモ管理の沼から抜け出し、AIで自分専用のエコシステムを構築する方法",
       "lang": "ja",
       "publishedAt": "2026-05-22T13:40:01.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn"
@@ -8288,7 +8344,7 @@
       "summaryEn": "AIと作ったWebGPU×センサーPWA 開発記（01）— 要件定義からソース地図まで",
       "lang": "ja",
       "publishedAt": "2026-05-22T11:40:43.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn"
@@ -8392,7 +8448,7 @@
       "summaryEn": "AIを型で律する「設計図」の書き方 ｜ note2Zenn開発記（構成編 / Vol.3）",
       "lang": "ja",
       "publishedAt": "2026-05-22T03:10:12.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn"
@@ -8473,7 +8529,7 @@
       "summaryEn": "Fixed npm-backed tool installs to better respect npm release-age filters. ( #57439 ) google: Support thinking levels for Google models. ( #57394 ) Added support for Gemini 3.5 Flash in the Google AI m",
       "lang": "en",
       "publishedAt": "2026-05-21T23:10:28.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "editor",
         "release",
@@ -8510,7 +8566,7 @@
       "summaryEn": "Fixed a crash when clicking a built-in skill mention in the agent panel while connected to a remote project (Preview only). ( #57442 ) Add agent::NewTerminalThread for defining custom shortcuts to lau",
       "lang": "en",
       "publishedAt": "2026-05-21T22:33:46.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "editor",
@@ -8585,7 +8641,7 @@
       "summaryEn": "This week's release includes support for skills, a global AGENTS.md file for user-wide agent instructions, the ability to choose a base branch in the branch diff view, and a new editor: toggle all dif",
       "lang": "en",
       "publishedAt": "2026-05-21T20:23:35.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "editor",
@@ -8956,7 +9012,7 @@
       "summaryEn": "Cursorの新モデル「Composer 2.5」とは？開発体験を劇的に変える『ふるまい』の進化と技術的背景",
       "lang": "ja",
       "publishedAt": "2026-05-21T13:09:04.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn"
@@ -9084,7 +9140,7 @@
       "summaryEn": "Cursor公式ベストプラクティス準拠：.cursor/rules自動生成プロンプト（Skills収集機能付き）",
       "lang": "ja",
       "publishedAt": "2026-05-21T07:00:18.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn"
@@ -9480,7 +9536,7 @@
       "summaryEn": "This week's release includes the ability to create Terminal Threads from the sidebar and Agent Panel , a Git panel branch history view and support for running custom Git commands from the Git Graph co",
       "lang": "en",
       "publishedAt": "2026-05-20T16:11:53.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "editor",
@@ -9739,7 +9795,7 @@
       "summaryEn": "【チートシート】Cursor エージェント：Cloud / Local / Worktree / Multitask の使い分け",
       "lang": "ja",
       "publishedAt": "2026-05-19T23:27:18.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn"
@@ -9763,7 +9819,7 @@
       "summaryEn": "AIの出力待ち時間を、レビュー準備の時間に変えた",
       "lang": "ja",
       "publishedAt": "2026-05-19T23:00:07.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn"
@@ -9849,7 +9905,7 @@
       "summaryEn": "git: Fix git blame processes not getting dropped properly. ( #56912 )",
       "lang": "en",
       "publishedAt": "2026-05-19T20:51:23.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "editor",
         "release",
@@ -9918,7 +9974,7 @@
       "summaryEn": "Fixed an issue where git state would be stale in some cases. ( #57176 )",
       "lang": "en",
       "publishedAt": "2026-05-19T20:16:04.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "editor",
         "release",
@@ -10091,7 +10147,7 @@
       "summaryEn": "Apple Sports is now available in more than 170 countries and regions, including more than 90 new markets.",
       "lang": "en",
       "publishedAt": "2026-05-19T15:59:11.649Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "apple",
         "news"
@@ -10580,7 +10636,7 @@
       "summaryEn": "Just a year ago, we launched AWS Transform for .NET, Mainframe and VMware workloads, the first agentic AI service purpose-built for modernizing enterprise applications at scale. At re:Invent 2025, we ",
       "lang": "en",
       "publishedAt": "2026-05-18T19:13:20.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "amazon",
@@ -10608,7 +10664,7 @@
       "summaryEn": "Apple today unveiled an exciting lineup for its annual Worldwide Developers Conference (WWDC), taking place June 8-12.",
       "lang": "en",
       "publishedAt": "2026-05-18T17:08:25.624Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "apple",
         "news",
@@ -10674,7 +10730,7 @@
       "summaryEn": "Kick off work in VS Code or the CLI, finish it from your phone. Remote control for GitHub Copilot sessions is now generally available on github.com and GitHub Mobile. The post Take your local GitHub s",
       "lang": "en",
       "publishedAt": "2026-05-18T16:54:53.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "github"
       ],
@@ -10851,7 +10907,7 @@
       "summaryEn": "AIコーディングで毎回同じ注意をしているなら、ルールファイルに移した方がいい",
       "lang": "ja",
       "publishedAt": "2026-05-18T11:09:35.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn",
@@ -10948,7 +11004,7 @@
       "summaryEn": "Claude とは何か?日本人開発者のための完全入門 2026",
       "lang": "ja",
       "publishedAt": "2026-05-17T14:28:09.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "cursor",
         "zenn"
@@ -11120,7 +11176,7 @@
       "summaryEn": "Learn about the experimental general-purpose accessibility agent that GitHub is piloting. The post Building a general-purpose accessibility agent—and what we learned in the process appeared first on T",
       "lang": "en",
       "publishedAt": "2026-05-15T16:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "github",
@@ -11228,7 +11284,7 @@
       "summaryEn": "Amazon Bedrock Advanced Prompt Optimization enables customers to optimize their prompts for their current model or migrate prompts to new models faster than before with built-in evaluation feedback lo",
       "lang": "en",
       "publishedAt": "2026-05-14T22:03:39.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "amazon",
         "aws",
@@ -11727,7 +11783,7 @@
       "summaryEn": "Learn how one Hubber used GitHub Copilot CLI to build an extension that turns any codebase into a unique, roguelike dungeon. The post Dungeons & Desktops: Building a procedurally generated roguelike w",
       "lang": "en",
       "publishedAt": "2026-05-12T15:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "github",
         "github-copilot-cli",
@@ -11920,7 +11976,7 @@
       "summaryEn": "Teams use Codex with GPT-5.5 to ship production systems and turn research ideas into runnable experiments.",
       "lang": "en",
       "publishedAt": "2026-05-12T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "nvidia",
@@ -12047,7 +12103,7 @@
       "summaryEn": "Apple and Google collaborate with the GSMA to roll out end-to-end encrypted RCS messaging in beta, enhancing cross-platform communication security.",
       "lang": "en",
       "publishedAt": "2026-05-11T17:10:35.204Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "apple",
         "news"
@@ -12079,7 +12135,7 @@
       "summaryEn": "My most exciting news of last week: Amazon Bedrock AgentCore previewed the first managed payment capabilities enabling AI agents to autonomously access and pay for APIs, MCP servers, web content, and ",
       "lang": "en",
       "publishedAt": "2026-05-11T16:08:26.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "amazon",
@@ -12106,7 +12162,7 @@
       "summaryEn": "ChatGPT adoption surged in Q1 2026, with fastest growth among users over 35 and more balanced gender usage, signaling broader mainstream AI adoption.",
       "lang": "en",
       "publishedAt": "2026-05-11T15:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "chatgpt",
@@ -12176,7 +12232,7 @@
       "summaryEn": "OpenAI launches DeployCo, a new enterprise deployment company built to help organizations bring frontier AI into production and turn it into measurable business impact.",
       "lang": "en",
       "publishedAt": "2026-05-11T06:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "enterprise",
         "openai",
@@ -12303,7 +12359,7 @@
       "summaryEn": "How OpenAI runs Codex securely with sandboxing, approvals, network policies, and agent-native telemetry to support safe and compliant coding agent adoption.",
       "lang": "en",
       "publishedAt": "2026-05-08T12:30:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "openai",
@@ -12331,7 +12387,7 @@
       "summaryEn": "Agentic workflows that run on every pull request can quietly accumulate large API bills. Here's how we instrumented our own production workflows, found the inefficiencies, and built agents to fix them",
       "lang": "en",
       "publishedAt": "2026-05-07T23:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "github",
@@ -12395,7 +12451,7 @@
       "summaryEn": "A practical guide to reviewing agent-generated pull requests: what to look for, where issues hide, and how to catch technical debt before it ships. The post Agent pull requests are everywhere. Here’s ",
       "lang": "en",
       "publishedAt": "2026-05-07T19:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "github",
@@ -12533,7 +12589,7 @@
       "summaryEn": "Meet four Swift Student Challenge winners who are creating innovative apps that leverage AI and focus on accessibility.",
       "lang": "en",
       "publishedAt": "2026-05-07T13:59:24.632Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "apple",
         "news",
@@ -12570,7 +12626,7 @@
       "summaryEn": "OpenAI expands Trusted Access for Cyber with GPT-5.5 and GPT-5.5-Cyber, helping verified defenders accelerate vulnerability research and protect critical infrastructure.",
       "lang": "en",
       "publishedAt": "2026-05-07T13:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-5-5",
@@ -12597,7 +12653,7 @@
       "summaryEn": "Explore new realtime voice models in the OpenAI API that can reason, translate, and transcribe speech, enabling more natural and intelligent voice experiences.",
       "lang": "en",
       "publishedAt": "2026-05-07T10:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "voice-ai",
@@ -12654,7 +12710,7 @@
       "summaryEn": "Introducing Trusted Contact in ChatGPT, an optional safety feature that notifies someone you trust if serious self-harm concerns are detected.",
       "lang": "en",
       "publishedAt": "2026-05-07T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "chatgpt",
@@ -12681,7 +12737,7 @@
       "summaryEn": "OpenAI begins testing ads in ChatGPT to support free access, with clear labeling, answer independence, strong privacy protections, and user control.",
       "lang": "en",
       "publishedAt": "2026-05-07T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "chatgpt",
@@ -12704,10 +12760,10 @@
       "titleJa": "正解が一意に定まらないAIエージェントの挙動を検証する手法",
       "titleEn": "Validating agentic behavior when “correct” isn’t deterministic",
       "summaryJa": "GitHubは、エージェント型AIの出力が非決定的である場合に、従来のテスト手法では品質保証が困難であることを指摘。LLM-as-a-judgeやシナリオベース評価、トレース分析など、確率的システムを継続的に検証するためのアプローチを紹介している。",
-      "summaryEn": "How to build the “Trust Layer” for Github Copilot cloud agent without brittle scripts or black-box judgements by using dominatory analysis. The post Validating agentic behavior when “correct” isn’t de",
+      "summaryEn": "How to build the “Trust Layer” for GitHub Copilot cloud agent without brittle scripts or black-box judgements by using dominatory analysis. The post Validating agentic behavior when “correct” isn’t de",
       "lang": "en",
       "publishedAt": "2026-05-06T21:16:31.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "github",
@@ -12816,7 +12872,7 @@
       "summaryEn": "AWS announces the general availability of the AWS MCP Server, a managed remote Model Context Protocol (MCP) server that gives AI agents and coding assistants secure, authenticated access to all AWS se",
       "lang": "en",
       "publishedAt": "2026-05-06T15:36:44.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "amazon",
         "aws",
@@ -12872,6 +12928,34 @@
       "bodyEn": "Google DeepMind has shared an update on AlphaEvolve, its Gemini-powered evolutionary coding agent, describing how the system has broadened its real-world impact across scientific and engineering domains in the roughly six months since its initial unveiling.\n\nAlphaEvolve combines Gemini's code-generation capabilities with evolutionary search. Rather than asking a model to produce a single answer, the system generates large populations of candidate programs, mutates and recombines them, and uses automated evaluators to select the most promising variants across many generations. This loop allows it to discover algorithms and constructions that human experts may overlook, particularly in problems where solution quality can be measured precisely.\n\nWhen first introduced earlier this year, AlphaEvolve was credited with improvements to matrix multiplication algorithms, gains in Google data center scheduling efficiency, and contributions to TPU circuit design. The new update emphasizes that this footprint is widening: collaborations with mathematicians on open problems, further hardware design optimizations, and steps toward giving researchers and external partners more structured access to the system. The framing has shifted somewhat — AlphaEvolve is increasingly positioned not as a one-off research artifact but as a collaborative tool that plugs into expert workflows.\n\nThe approach builds on a lineage that DeepMind itself helped establish with FunSearch in 2023, which showed that LLM-driven program search could yield novel mathematical results. AlphaEvolve generalizes that idea to more complex, multi-file code and a wider variety of evaluation signals. It also lands in an increasingly crowded landscape of autonomous coding agents. Tools like GitHub Copilot, Cursor, Cognition's Devin, and the open SWE-agent project tend to focus on day-to-day software engineering — writing features, fixing bugs, navigating repositories. AlphaEvolve targets a different niche: discovery-oriented optimization, where the goal is to find a better algorithm rather than to ship a feature.\n\nThat distinction matters for how the technology is likely to diffuse. Domains where success can be quantified by a clean objective function — combinatorial optimization, hardware layout, numerical kernels, certain classes of mathematical conjectures — appear to be the natural fit. Areas with fuzzier evaluation, such as user-facing product code, are harder to attack with pure evolutionary search. Observers may reasonably expect future extensions to incorporate richer evaluators, possibly learned reward models, to widen the applicable scope.\n\nThere is also a broader strategic context. Frontier labs are converging on the idea that scaling raw model capability is necessary but not sufficient; pairing strong base models with structured search and verification is emerging as a recipe for reliable gains on hard reasoning tasks. OpenAI's work on reasoning models and Anthropic's investment in agentic coding point in similar directions, though their public emphasis has been on general-purpose assistants rather than evolutionary discovery. AlphaEvolve's continued progress suggests that the search-plus-LLM paradigm has durable value, particularly for problems where a correct answer is expensive to find but cheap to verify.\n\nFor researchers, the practical question now is access. DeepMind has signaled expanded availability pathways, which could determine whether AlphaEvolve becomes an internal Google asset or a more broadly used scientific instrument. Either way, the trajectory illustrates how general-purpose models like Gemini are being repackaged into specialized agents tuned for concrete, measurable impact."
     },
     {
+      "id": "6bf805ce51476a46",
+      "source": "cursor-changelog",
+      "sourceType": "changelog",
+      "url": "https://cursor.com/changelog/05-06-26",
+      "title": "Context Usage Breakdown",
+      "titleJa": "Cursor、コンテキスト使用量の内訳表示機能を追加",
+      "titleEn": "Context Usage Breakdown",
+      "summaryJa": "CursorがAIエージェントのコンテキスト使用量を詳細に可視化する機能を導入した。各種要素ごとの消費量が確認できるようになり、ユーザーはトークン管理やプロンプト最適化を行いやすくなる。",
+      "summaryEn": "You can now see a breakdown of your agent's context usage .",
+      "lang": "en",
+      "publishedAt": "2026-05-06T00:00:00.000Z",
+      "collectedAt": "2026-05-26T19:00:38.325Z",
+      "tags": [
+        "agent",
+        "changelog",
+        "cursor",
+        "context-window",
+        "developer-tools",
+        "llm"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "AIコーディング支援ツールのCursorが、エージェントのコンテキスト使用状況を細かく可視化する「Context Usage Breakdown」機能を追加した。これにより、モデルのコンテキストウィンドウのどの部分が何に使われているかをユーザーが一目で把握できるようになる。\n\nLLMを用いたコーディング支援では、コンテキストウィンドウのサイズが性能や応答品質に直結する。システムプロンプト、ユーザープロンプト、添付ファイル、過去の会話履歴、ツール呼び出しの結果など、さまざまな要素がトークンを消費するため、限られた枠を効率的に使うことが重要となる。今回の内訳表示は、こうした要素ごとの消費量を明示することで、長いセッションや大規模リポジトリを扱う際の挙動を理解しやすくする狙いがあると見られる。\n\n背景として、近年はClaudeやGPTシリーズなど主要モデルでコンテキスト長が拡大しつつあるものの、長文ほど精度が落ちる「lost in the middle」現象や、コストの増大が課題として知られている。GitHub CopilotやWindsurfなど競合ツールでも、コンテキスト管理の透明性向上は共通テーマとなっており、Cursorの今回の対応もその流れに沿うものと位置付けられる。\n\n開発者にとっては、不要な履歴の整理や、添付するコードの粒度調整など、プロンプト設計を改善するための判断材料が得られる点が実用的なメリットとなる。特にエージェント型ワークフローでは、ツール呼び出しの応答が肥大化しやすいため、内訳の可視化はデバッグや効率化に役立つ可能性が高い。",
+      "bodyEn": "Cursor, the AI-assisted coding environment, has rolled out a Context Usage Breakdown feature that gives users a granular view of how their agent is consuming the model's context window. The addition is intended to make it easier to see, at a glance, exactly which components are filling up the available token budget during a session.\n\nIn LLM-based coding workflows, the size and composition of the context window have a direct bearing on response quality and reliability. System prompts, user prompts, attached files, prior conversation history, and the outputs of tool calls all draw from the same finite pool of tokens. The new breakdown surfaces the contribution of each of these categories individually, so developers can see whether, for example, a long chain of tool responses or a large attached file is dominating the window.\n\nThe feature appears aimed at users running longer agentic sessions or working inside large repositories, where context exhaustion can quietly degrade an agent's performance. Rather than guessing why an agent has begun to lose track of earlier instructions or repeat itself, developers can inspect the breakdown and identify which elements to trim, summarize, or detach. For agent-style workflows in particular, where iterative tool calls can accumulate verbose JSON payloads or command output, the visibility may prove useful for both debugging and cost control.\n\nThe move comes against a broader backdrop of expanding context windows across major frontier models. Anthropic's Claude family and OpenAI's GPT series have both pushed context lengths well into the hundreds of thousands of tokens, and some offerings now reach into the millions. Yet longer is not automatically better: the well-documented \"lost in the middle\" phenomenon shows that models tend to attend less reliably to information buried in the middle of very long inputs, and token costs scale with usage. As a result, simply pouring more content into the prompt is rarely an optimal strategy, and tooling that helps developers shape what goes into the window has become increasingly important.\n\nCompetitors in the AI coding space, including GitHub Copilot, Windsurf, and a growing number of open-source agent frameworks, have also been investing in better context management and transparency. Some expose retrieved file lists or indexing status; others let users pin or exclude specific files. Cursor's breakdown view fits within this broader trend toward making the previously opaque mechanics of prompt assembly more legible to end users.\n\nFor day-to-day use, the practical payoff is likely to be improved prompt and session hygiene. Developers can decide when to start a fresh chat instead of continuing a bloated one, choose smaller or more targeted file attachments, or adjust how aggressively they invoke tools that return large outputs. Teams managing usage-based billing may also find the data helpful for understanding which patterns of interaction are most token-intensive, and for setting internal guidelines around when to compact or reset agent sessions.\n\nCursor has not detailed exactly how the breakdown is computed or whether it will eventually feed into automated context-pruning behavior, but such an extension would be a natural next step. Several agent frameworks already experiment with automatic summarization of older turns or selective eviction of stale tool outputs once a threshold is crossed. If Cursor follows a similar path, the new breakdown view could serve as both a diagnostic surface for users and a foundation for more aggressive context-optimization features down the line.\n\nIn the near term, the change is a relatively modest but welcome quality-of-life improvement. It does not expand what the underlying models can do, but it gives developers clearer feedback about how their choices interact with model limits—an area that, as agentic coding tools mature, is becoming as important as raw model capability itself."
+    },
+    {
       "id": "00106b048095bbeb",
       "source": "huggingface-blog",
       "sourceType": "blog",
@@ -12901,34 +12985,6 @@
       "bodyEn": "Hugging Face has updated its Open ASR Leaderboard with a private, held-out test set, an effort framed as a defense against the increasingly common practice of optimizing models specifically for public benchmarks — sometimes called \"benchmaxxing.\" The change is intended to give a clearer picture of how speech recognition systems actually generalize beyond the datasets that researchers and engineers have come to know intimately.\n\nThe Open ASR Leaderboard has, over the past few years, become one of the de facto reference points for comparing automatic speech recognition models. It aggregates Word Error Rate (WER) scores across a battery of public corpora including LibriSpeech, Common Voice, TED-LIUM, GigaSpeech, SPGISpeech, VoxPopuli, Earnings-22 and AMI. While that breadth helps, all of those datasets share a common vulnerability: their test splits are downloadable. Developers can inspect failure cases, tune decoding heuristics around known quirks, or — intentionally or not — let test audio leak into training pipelines. The result is leaderboard scores that do not always translate to production performance.\n\nThe newly added private evaluation reportedly consists of test data held only by the leaderboard maintainers, with submitted models scored internally rather than against publicly accessible audio and transcripts. According to the post, comparing the same models on public versus private data surfaces meaningful re-orderings: systems that look state-of-the-art on familiar benchmarks do not necessarily retain their lead when faced with audio they could not have seen during development. That gap is precisely the signal a leaderboard is supposed to provide.\n\nThe move mirrors a broader shift across machine learning evaluation. In the LLM world, contamination of benchmarks such as MMLU, GSM8K and HumanEval has been a recurring concern, and projects like Scale AI's SEAL Leaderboard, LMSYS's arena-style human preference evaluations, and various private-eval initiatives have emerged in response. Speech recognition has historically been somewhat insulated from this dynamic because acoustic data is harder to memorize incidentally than text, but as ASR models trend toward general-purpose audio foundation models trained on web-scale corpora, the same contamination risks apply. Whisper-style training recipes that scrape thousands of hours from the open internet can easily ingest portions of public test sets without the developers realizing it.\n\nThe competitive backdrop helps explain why the maintainers see this as urgent. The ASR field has grown crowded with strong entrants: OpenAI's Whisper family remains a baseline, while NVIDIA has pushed Canary and Parakeet to the top of public rankings, AssemblyAI has promoted its Universal models, and a steady stream of open-weight releases from labs such as Mistral-affiliated efforts and Chinese research groups continue to claim incremental WER wins. When fractions of a percentage point determine bragging rights, the incentive to overfit to the leaderboard — even unconsciously — grows accordingly.\n\nFor practitioners choosing a model, a private evaluation track should make the rankings more trustworthy as a proxy for real-world deployment. For model providers, however, it introduces logistical friction. Submitting to a private benchmark typically requires handing over model weights or, at minimum, an inference container that the maintainers can run on held-out audio. That is straightforward for open-weight releases but awkward for closed commercial APIs, which may need bespoke arrangements or rate-limited endpoints. How the leaderboard handles proprietary systems — and whether vendors such as Deepgram, AssemblyAI, Google, or Microsoft will participate on equal footing — is likely to shape its long-term credibility.\n\nThere are also open methodological questions. A single private set can itself become stale or biased toward particular acoustic conditions, and rotating it periodically introduces its own comparability problems. The maintainers will need to balance freshness, domain coverage (telephony, broadcast, conversational, accented speech) and reproducibility. Even so, the direction of travel is clear: as foundation models absorb more of the open web, evaluation infrastructure has to move in the opposite direction, holding back data the models cannot have seen. The Open ASR Leaderboard's update brings speech recognition in line with that emerging norm, and may pressure other audio benchmarks to follow."
     },
     {
-      "id": "6bf805ce51476a46",
-      "source": "cursor-changelog",
-      "sourceType": "changelog",
-      "url": "https://cursor.com/changelog/05-06-26",
-      "title": "Context Usage Breakdown",
-      "titleJa": "Cursor、コンテキスト使用量の内訳表示機能を追加",
-      "titleEn": "Context Usage Breakdown",
-      "summaryJa": "CursorがAIエージェントのコンテキスト使用量を詳細に可視化する機能を導入した。各種要素ごとの消費量が確認できるようになり、ユーザーはトークン管理やプロンプト最適化を行いやすくなる。",
-      "summaryEn": "You can now see a breakdown of your agent's context usage .",
-      "lang": "en",
-      "publishedAt": "2026-05-06T00:00:00.000Z",
-      "collectedAt": "2026-05-26T19:00:38.325Z",
-      "tags": [
-        "agent",
-        "changelog",
-        "cursor",
-        "context-window",
-        "developer-tools",
-        "llm"
-      ],
-      "category": "cursor",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "bodyJa": "AIコーディング支援ツールのCursorが、エージェントのコンテキスト使用状況を細かく可視化する「Context Usage Breakdown」機能を追加した。これにより、モデルのコンテキストウィンドウのどの部分が何に使われているかをユーザーが一目で把握できるようになる。\n\nLLMを用いたコーディング支援では、コンテキストウィンドウのサイズが性能や応答品質に直結する。システムプロンプト、ユーザープロンプト、添付ファイル、過去の会話履歴、ツール呼び出しの結果など、さまざまな要素がトークンを消費するため、限られた枠を効率的に使うことが重要となる。今回の内訳表示は、こうした要素ごとの消費量を明示することで、長いセッションや大規模リポジトリを扱う際の挙動を理解しやすくする狙いがあると見られる。\n\n背景として、近年はClaudeやGPTシリーズなど主要モデルでコンテキスト長が拡大しつつあるものの、長文ほど精度が落ちる「lost in the middle」現象や、コストの増大が課題として知られている。GitHub CopilotやWindsurfなど競合ツールでも、コンテキスト管理の透明性向上は共通テーマとなっており、Cursorの今回の対応もその流れに沿うものと位置付けられる。\n\n開発者にとっては、不要な履歴の整理や、添付するコードの粒度調整など、プロンプト設計を改善するための判断材料が得られる点が実用的なメリットとなる。特にエージェント型ワークフローでは、ツール呼び出しの応答が肥大化しやすいため、内訳の可視化はデバッグや効率化に役立つ可能性が高い。",
-      "bodyEn": "Cursor, the AI-assisted coding environment, has rolled out a Context Usage Breakdown feature that gives users a granular view of how their agent is consuming the model's context window. The addition is intended to make it easier to see, at a glance, exactly which components are filling up the available token budget during a session.\n\nIn LLM-based coding workflows, the size and composition of the context window have a direct bearing on response quality and reliability. System prompts, user prompts, attached files, prior conversation history, and the outputs of tool calls all draw from the same finite pool of tokens. The new breakdown surfaces the contribution of each of these categories individually, so developers can see whether, for example, a long chain of tool responses or a large attached file is dominating the window.\n\nThe feature appears aimed at users running longer agentic sessions or working inside large repositories, where context exhaustion can quietly degrade an agent's performance. Rather than guessing why an agent has begun to lose track of earlier instructions or repeat itself, developers can inspect the breakdown and identify which elements to trim, summarize, or detach. For agent-style workflows in particular, where iterative tool calls can accumulate verbose JSON payloads or command output, the visibility may prove useful for both debugging and cost control.\n\nThe move comes against a broader backdrop of expanding context windows across major frontier models. Anthropic's Claude family and OpenAI's GPT series have both pushed context lengths well into the hundreds of thousands of tokens, and some offerings now reach into the millions. Yet longer is not automatically better: the well-documented \"lost in the middle\" phenomenon shows that models tend to attend less reliably to information buried in the middle of very long inputs, and token costs scale with usage. As a result, simply pouring more content into the prompt is rarely an optimal strategy, and tooling that helps developers shape what goes into the window has become increasingly important.\n\nCompetitors in the AI coding space, including GitHub Copilot, Windsurf, and a growing number of open-source agent frameworks, have also been investing in better context management and transparency. Some expose retrieved file lists or indexing status; others let users pin or exclude specific files. Cursor's breakdown view fits within this broader trend toward making the previously opaque mechanics of prompt assembly more legible to end users.\n\nFor day-to-day use, the practical payoff is likely to be improved prompt and session hygiene. Developers can decide when to start a fresh chat instead of continuing a bloated one, choose smaller or more targeted file attachments, or adjust how aggressively they invoke tools that return large outputs. Teams managing usage-based billing may also find the data helpful for understanding which patterns of interaction are most token-intensive, and for setting internal guidelines around when to compact or reset agent sessions.\n\nCursor has not detailed exactly how the breakdown is computed or whether it will eventually feed into automated context-pruning behavior, but such an extension would be a natural next step. Several agent frameworks already experiment with automatic summarization of older turns or selective eviction of stale tool outputs once a threshold is crossed. If Cursor follows a similar path, the new breakdown view could serve as both a diagnostic surface for users and a foundation for more aggressive context-optimization features down the line.\n\nIn the near term, the change is a relatively modest but welcome quality-of-life improvement. It does not expand what the underlying models can do, but it gives developers clearer feedback about how their choices interact with model limits—an area that, as agentic coding tools mature, is becoming as important as raw model capability itself."
-    },
-    {
       "id": "9033b166d3333641",
       "source": "openai-news",
       "sourceType": "blog",
@@ -12940,7 +12996,7 @@
       "summaryEn": "Uber uses OpenAI to power AI assistants and voice features that help drivers earn smarter and riders book faster across a global real-time marketplace.",
       "lang": "en",
       "publishedAt": "2026-05-06T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "uber",
@@ -13001,7 +13057,7 @@
       "summaryEn": "Amazon WorkSpaces now lets AI agents securely operate legacy desktop applications—without APIs or modernization—using IAM authentication, MCP support, and computer vision within existing security fram",
       "lang": "en",
       "publishedAt": "2026-05-05T17:23:40.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "amazon",
         "aws",
@@ -13039,7 +13095,7 @@
       "summaryEn": "Apple’s Manufacturing Academy hosted its inaugural Spring Forum, bringing together U.S. manufacturers to accelerate the use of AI in supply chains.",
       "lang": "en",
       "publishedAt": "2026-05-05T12:59:35.638Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "apple",
         "news",
@@ -13075,7 +13131,7 @@
       "summaryEn": "GPT-5.5 Instant updates ChatGPT’s default model with smarter, more accurate answers, reduced hallucinations, and improved personalization controls.",
       "lang": "en",
       "publishedAt": "2026-05-05T10:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-5",
@@ -13101,7 +13157,7 @@
       "summaryEn": "OpenAI introduces MRC (Multipath Reliable Connection), a new supercomputer networking protocol released via OCP to improve resilience and performance in large-scale AI training clusters.",
       "lang": "en",
       "publishedAt": "2026-05-05T10:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "release",
@@ -13129,7 +13185,7 @@
       "summaryEn": "Last week, I took some time off in York, England, often described as the most haunted city in the country. I wandered through the ruins of abbeys that have stood for nearly a thousand years, walked al",
       "lang": "en",
       "publishedAt": "2026-05-04T17:05:41.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "amazon",
         "aws",
@@ -13166,7 +13222,7 @@
       "summaryEn": "OpenClaw builders will gather at GitHub HQ during Microsoft Build 2026 for demos and conversations. Join in person, or watch the livestream on Twitch. The post Register now for OpenClaw: After Hours @",
       "lang": "en",
       "publishedAt": "2026-05-04T15:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "github",
         "community-event",
@@ -13411,7 +13467,7 @@
       "summaryEn": "Learn the difference between CLI interactive v. non-interactive modes. The post GitHub Copilot CLI for Beginners: Interactive v. non-interactive mode appeared first on The GitHub Blog .",
       "lang": "en",
       "publishedAt": "2026-04-30T16:09:02.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "github",
         "copilot-cli",
@@ -13856,7 +13912,7 @@
       "summaryEn": "At the \"What's Next with AWS\" 2026 event, AWS launched Amazon Quick—an AI assistant for work with a desktop app and expanded integrations—and expanded Amazon Connect into four agentic AI solutions for",
       "lang": "en",
       "publishedAt": "2026-04-28T18:11:39.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "amazon",
@@ -14001,7 +14057,7 @@
       "summaryEn": "OpenAI GPT models, Codex, and Managed Agents are now available on AWS, enabling enterprises to build secure AI in their AWS environments.",
       "lang": "en",
       "publishedAt": "2026-04-28T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "aws",
@@ -14103,7 +14159,7 @@
       "summaryEn": "OpenAI and Microsoft announce an amended agreement that simplifies the partnership, adds long-term clarity, and supports continued AI innovation at scale.",
       "lang": "en",
       "publishedAt": "2026-04-27T06:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "microsoft",
@@ -14118,34 +14174,6 @@
       "archiveTier": "warm",
       "bodyJa": "OpenAIは、Microsoftとの長期戦略的提携を新たな段階に進めることを発表した。両社の関係はAI業界における最大級のパートナーシップであり、ChatGPTやCopilot、Azure OpenAI Serviceといった主要製品の基盤を支えてきた。\n\n今回の発表は、OpenAIが営利子会社をPublic Benefit Corporation (PBC) へ再編する組織再編に伴うものとされる。再編後の新契約では、Microsoftの出資比率や知的財産権の扱い、AGI到達時の取り扱いといった、これまで業界で注目されてきた論点が改めて整理される見込みである。報道ベースでは、Microsoftは引き続き大きな経済的権益を保持しつつ、OpenAIに対するAzure上での独占的なクラウド提供契約は緩和され、OpenAIが他社クラウドも利用できる柔軟性を獲得する方向と見られる。\n\n背景には、AI需要の急拡大に伴う計算資源の確保競争がある。OpenAIはOracleやSoftBankと連携した大型データセンター構想「Stargate」を進めるなど、Azure以外の調達経路を拡大しており、Microsoft側もAnthropicモデルをCopilotに組み込むなどマルチモデル戦略にシフトしている。両社の関係は「独占から協調的競争へ」と位置付けが変化しつつある可能性がある。\n\nまた、AGI(汎用人工知能)が達成されたと判定された場合にMicrosoftの一部権利が制限されるという従来条項についても、第三者パネルによる検証プロセスを設けるなど、より明確な枠組みに置き換えられる見通しと報じられている。投資家保護と公益性のバランスを取るうえで、再編後のガバナンス構造がどう機能するかが今後の焦点となるだろう。",
       "bodyEn": "OpenAI has announced that its strategic partnership with Microsoft is entering a new phase, marking one of the most consequential resets in the AI industry's most prominent corporate alliance. The relationship underpins flagship products including ChatGPT, GitHub Copilot, Microsoft 365 Copilot, and the Azure OpenAI Service, so any shift in its terms reverberates across the broader ecosystem.\n\nThe announcement coincides with OpenAI's recapitalization, in which its for-profit arm has been restructured into a Public Benefit Corporation (PBC) sitting beneath the original nonprofit. Under the revised agreement, several long-debated questions appear to be clarified: Microsoft's economic stake, its intellectual property rights to OpenAI models and research, and the treatment of artificial general intelligence (AGI) once it is declared. Reporting around the deal suggests Microsoft retains a substantial equity position—reportedly worth well over one hundred billion dollars—while gaining longer-term access to OpenAI technology, even as some prior exclusivities are softened.\n\nA notable change is the loosening of Azure's exclusive role as OpenAI's compute provider. OpenAI is expected to gain more flexibility to source compute from other clouds and infrastructure partners, a shift that aligns with its participation in the Stargate initiative alongside Oracle and SoftBank, and with separate compute deals reportedly explored with Google and CoreWeave. The scale of frontier model training has simply outgrown what any single hyperscaler can comfortably supply.\n\nMicrosoft, for its part, has been quietly diversifying as well. It has integrated Anthropic's Claude models into parts of Copilot, invested in its own in-house MAI models, and continues to court a broader portfolio of AI suppliers. The bilateral exclusivity that defined the 2019 and 2023 versions of the partnership is giving way to something closer to coopetition, where each side hedges while remaining deeply intertwined commercially.\n\nThe AGI clause—long a source of speculation—also appears to be reworked. Previously, OpenAI's board could unilaterally declare AGI achieved, an event that would limit Microsoft's rights to future technology. The updated structure reportedly introduces an independent expert panel to verify any such declaration, reducing the risk of a contested unilateral call while preserving the mission-driven guardrails that distinguish OpenAI from a conventional startup.\n\nFor developers and enterprise customers, the immediate practical impact is likely modest. Azure OpenAI Service remains a primary distribution channel, and the Codex family, GPT-series APIs, and Copilot integrations continue under the new terms. Over the longer term, however, OpenAI's expanded freedom to deploy across multiple clouds could accelerate availability in regions and verticals previously constrained by Azure's footprint, while Microsoft's multi-model strategy may push more competition into its own product surfaces.\n\nThe deeper question is governance. As OpenAI transitions to a PBC with a nonprofit parent retaining oversight, the interplay between fiduciary duties to investors, the public benefit mandate, and the safety commitments embedded in the charter will be tested in ways that have few precedents. How this restructured partnership performs—commercially, technically, and ethically—may end up shaping the template other frontier labs and their backers adopt."
-    },
-    {
-      "id": "30fb7a838eab4d8b",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/deepseekv4",
-      "title": "DeepSeek-V4: a million-token context that agents can actually use",
-      "titleJa": "DeepSeek-V4登場、エージェントが実用可能な100万トークン文脈を実現",
-      "titleEn": "DeepSeek-V4: a million-token context that agents can actually use",
-      "summaryJa": "DeepSeek-V4は最大100万トークンの長文コンテキストを扱えるオープンモデルとして公開された。単なる長さの拡張に留まらず、エージェント用途で実際に有効活用できる検索・推論性能を狙った設計が特徴とされる。",
-      "summaryEn": "DeepSeek-V4: a million-token context that agents can actually use",
-      "lang": "en",
-      "publishedAt": "2026-04-24T00:00:00.000Z",
-      "collectedAt": "2026-05-26T20:00:38.328Z",
-      "tags": [
-        "huggingface",
-        "open-model",
-        "deepseek",
-        "long-context",
-        "agents",
-        "moe"
-      ],
-      "category": "local-llm",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "bodyJa": "中国発のオープンウェイト大規模言語モデルを手がけるDeepSeekが、最新世代となるDeepSeek-V4を発表した。最大の特徴は100万トークン級のコンテキストウィンドウを備えつつ、エージェント用途で実際に役立つ長文処理性能を志向している点にある。\n\nこれまでも長大なコンテキストを謳うモデルは多数登場してきたが、実際には文脈の中盤で情報を取りこぼす「lost in the middle」現象や、トークン数が増えるほど推論コストとレイテンシが急増する問題が指摘されてきた。DeepSeek-V4ではアテンション機構やキャッシュ管理を見直し、長文中での検索・参照精度を高めることでツール呼び出しを伴うエージェント処理に耐えうる挙動を目指したと説明されている。\n\n背景として、長文コンテキストはコード補完、リポジトリ全体の解析、複数ドキュメントを横断する調査エージェント、長期記憶を要する対話エージェントなどで需要が高まっている領域である。GoogleのGemini 1.5 Proが100万〜200万トークンを実用化し、AnthropicのClaudeやOpenAIのGPT系も段階的に拡張してきたが、オープンウェイトでこの水準を提供する選択肢はまだ限られていた。Qwenシリーズの長文版や、Mambaなど状態空間モデルを取り入れたハイブリッド手法も研究が進んでおり、DeepSeek-V4はそうした潮流の中でMoE路線を継承しつつ長文性能を伸ばすアプローチと見られる。\n\nまた、Hugging Face上での公開は、ローカル推論やファインチューニングを行いたい開発者にとって重要な意味を持つ。vLLMやSGLangといった推論基盤がMoEと長文KVキャッシュ最適化に対応しつつあるため、自前環境で100万トークン級モデルを運用するハードルは下がりつつある。ただし実運用ではメモリ消費や速度面の制約が大きく、量子化やコンテキスト圧縮との併用が現実的な選択肢となる可能性がある。",
-      "bodyEn": "DeepSeek, the Chinese lab behind a fast-growing family of open-weight large language models, has unveiled DeepSeek-V4, its newest flagship release. The headline feature is a context window pushing into the million-token range, paired with a stated focus on making that long context actually useful for agentic workloads rather than serving as a benchmark trophy.\n\nLong-context claims have become almost routine in the LLM space, but practitioners have repeatedly run into the same failure modes. Models tend to drop information buried in the middle of a prompt — the well-documented \"lost in the middle\" problem — and inference cost and latency balloon as token counts climb. According to DeepSeek's accompanying notes, V4 reworks the attention mechanism and key-value cache handling to improve retrieval and reference accuracy deep inside long inputs, with the explicit goal of supporting multi-step agent loops that involve tool calls, intermediate reasoning traces, and accumulated state.\n\nThe practical motivation is clear. Demand for genuinely usable long context has grown across several workloads: whole-repository code understanding and refactoring, research agents that traverse many documents, customer-facing assistants that need durable memory across sessions, and pipelines that ingest large logs or transcripts in a single pass. In each of these, the bottleneck has rarely been raw window size — it has been whether the model can reliably pick out the right span when the window is mostly full.\n\nOn the architecture side, DeepSeek-V4 appears to continue the Mixture-of-Experts direction the lab has pursued since V2 and V3, with sparse expert activation keeping per-token compute manageable even as parameter counts grow. Combined with the long-context optimizations, this positions V4 as an attempt to push the MoE recipe further into territory previously dominated by closed frontier models. Specific numbers around active parameters, expert routing, and benchmark scores will need independent verification as the community runs its own evaluations.\n\nThe competitive backdrop matters here. Google's Gemini 1.5 Pro put one-to-two-million-token contexts into production use, and both Anthropic's Claude family and OpenAI's GPT line have steadily extended their windows. Open-weight options at this scale, however, have been comparatively scarce. Alibaba's Qwen series has shipped long-context variants, and hybrid approaches incorporating state-space models such as Mamba continue to attract research interest as a way to escape the quadratic cost of standard attention. DeepSeek-V4 slots into that landscape as an MoE-first answer that prioritizes long-range fidelity over architectural novelty.\n\nThe choice to publish on Hugging Face carries real weight for developers who want to run or fine-tune the model themselves. Inference stacks such as vLLM and SGLang have been actively adding support for MoE routing and long-context KV cache optimizations, including paged attention, prefix caching, and disaggregated prefill. That trajectory has steadily lowered the barrier to operating million-token-class models outside hyperscaler APIs, though the engineering remains nontrivial.\n\nIn practice, memory footprint and throughput will likely be the limiting factors for most teams. Holding a million-token KV cache in GPU memory is expensive even with grouped-query or multi-head latent attention schemes, and prefill latency on prompts of that length can be measured in tens of seconds without careful batching. Quantization down to 8- or 4-bit weights, along with context-compression techniques such as summarization, retrieval pre-filtering, or learned token pruning, may turn out to be necessary companions rather than optional tweaks for cost-sensitive deployments.\n\nThere are also open questions the release itself does not fully resolve. How V4 behaves on adversarial long-context evaluations such as needle-in-a-haystack variants with distractors, RULER, or agent-oriented benchmarks like SWE-bench and τ-bench will determine whether the agent-readiness pitch holds up. Licensing terms, training data disclosures, and tool-use fine-tunes will similarly shape adoption in regulated environments. For now, DeepSeek-V4 reads as a credible attempt to close the gap between nominal context length and the long-horizon reasoning that real agent systems demand — and, importantly, to do so with weights that anyone can download."
     },
     {
       "id": "29dfd675f0bf477c",
@@ -14177,6 +14205,34 @@
       "bodyEn": "Cursor, the AI-assisted code editor, has rolled out three updates aimed squarely at developers who juggle multiple codebases and concurrent streams of work: multitasking for agents, native Git worktree support, and multi-root workspaces. Together they push the editor further from a single-file assistant toward an orchestration layer for parallel agent work.\n\nThe multitasking feature allows several agent tasks to run simultaneously, with progress for each surfaced in a consolidated view. Previously, developers had to wait for one task to finish before kicking off the next. Now a more asynchronous workflow becomes practical: while reviewing the diff produced by one agent, a user can dispatch another to start on an unrelated change, and check back when it has made progress.\n\nGit worktree support addresses a subtler but increasingly common pain point. Worktrees let a single repository have multiple branches checked out in separate directories at the same time. By giving an agent its own worktree, its in-progress edits no longer collide with the files the developer is actively editing, and long-running refactors or experimental branches can be isolated cleanly. The pattern has been gaining traction across the AI coding tool ecosystem, with projects such as Cline and Aider also leaning on worktrees as a way to keep autonomous edits from stepping on human work.\n\nMulti-root workspaces, meanwhile, let users bundle several distinct repositories — a frontend and a backend, or a set of services that live outside any monorepo — into a single workspace, and expose that combined context to the agent. The underlying capability has long existed in VS Code, on which Cursor is built, but extending it so that an AI agent can reason across project boundaries rather than within a single root is the meaningful shift here.\n\nThe broader context is a clear industry move toward parallel, longer-running agents. Anthropic has publicly championed workflows in which multiple Claude instances work side by side, and competing products such as Devin and Claude Code have made concurrent task execution a central selling point. Cursor's incremental additions appear to position it along the same trajectory, repackaging the IDE as a control surface for fleets of background agents rather than a tool focused purely on inline completion or single-file edits.\n\nThere are practical reasons this matters beyond marketing posture. Parallel agent execution stresses assumptions that traditional editors were never designed for: file locking, branch state, dependency installation, and test runs all become contested resources when several autonomous processes are touching the same checkout. Worktrees and multi-root workspaces are, in effect, plumbing that makes parallelism safe to use in everyday development rather than a demo-only feature.\n\nFor teams already invested in Cursor, the immediate appeal is likely the ability to keep one agent grinding on a tedious migration in an isolated worktree while another handles a quick bug fix and the developer continues hand-editing a third branch. For those evaluating AI coding tools more broadly, the update is another data point suggesting that the line between IDE and agent runtime is steadily blurring. Whether that convergence ultimately favors editor-led products like Cursor or platform-led offerings from model vendors remains an open question, but the direction of travel looks consistent across the field."
     },
     {
+      "id": "30fb7a838eab4d8b",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/deepseekv4",
+      "title": "DeepSeek-V4: a million-token context that agents can actually use",
+      "titleJa": "DeepSeek-V4登場、エージェントが実用可能な100万トークン文脈を実現",
+      "titleEn": "DeepSeek-V4: a million-token context that agents can actually use",
+      "summaryJa": "DeepSeek-V4は最大100万トークンの長文コンテキストを扱えるオープンモデルとして公開された。単なる長さの拡張に留まらず、エージェント用途で実際に有効活用できる検索・推論性能を狙った設計が特徴とされる。",
+      "summaryEn": "DeepSeek-V4: a million-token context that agents can actually use",
+      "lang": "en",
+      "publishedAt": "2026-04-24T00:00:00.000Z",
+      "collectedAt": "2026-05-26T20:00:38.328Z",
+      "tags": [
+        "huggingface",
+        "open-model",
+        "deepseek",
+        "long-context",
+        "agents",
+        "moe"
+      ],
+      "category": "local-llm",
+      "importance": 3,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "中国発のオープンウェイト大規模言語モデルを手がけるDeepSeekが、最新世代となるDeepSeek-V4を発表した。最大の特徴は100万トークン級のコンテキストウィンドウを備えつつ、エージェント用途で実際に役立つ長文処理性能を志向している点にある。\n\nこれまでも長大なコンテキストを謳うモデルは多数登場してきたが、実際には文脈の中盤で情報を取りこぼす「lost in the middle」現象や、トークン数が増えるほど推論コストとレイテンシが急増する問題が指摘されてきた。DeepSeek-V4ではアテンション機構やキャッシュ管理を見直し、長文中での検索・参照精度を高めることでツール呼び出しを伴うエージェント処理に耐えうる挙動を目指したと説明されている。\n\n背景として、長文コンテキストはコード補完、リポジトリ全体の解析、複数ドキュメントを横断する調査エージェント、長期記憶を要する対話エージェントなどで需要が高まっている領域である。GoogleのGemini 1.5 Proが100万〜200万トークンを実用化し、AnthropicのClaudeやOpenAIのGPT系も段階的に拡張してきたが、オープンウェイトでこの水準を提供する選択肢はまだ限られていた。Qwenシリーズの長文版や、Mambaなど状態空間モデルを取り入れたハイブリッド手法も研究が進んでおり、DeepSeek-V4はそうした潮流の中でMoE路線を継承しつつ長文性能を伸ばすアプローチと見られる。\n\nまた、Hugging Face上での公開は、ローカル推論やファインチューニングを行いたい開発者にとって重要な意味を持つ。vLLMやSGLangといった推論基盤がMoEと長文KVキャッシュ最適化に対応しつつあるため、自前環境で100万トークン級モデルを運用するハードルは下がりつつある。ただし実運用ではメモリ消費や速度面の制約が大きく、量子化やコンテキスト圧縮との併用が現実的な選択肢となる可能性がある。",
+      "bodyEn": "DeepSeek, the Chinese lab behind a fast-growing family of open-weight large language models, has unveiled DeepSeek-V4, its newest flagship release. The headline feature is a context window pushing into the million-token range, paired with a stated focus on making that long context actually useful for agentic workloads rather than serving as a benchmark trophy.\n\nLong-context claims have become almost routine in the LLM space, but practitioners have repeatedly run into the same failure modes. Models tend to drop information buried in the middle of a prompt — the well-documented \"lost in the middle\" problem — and inference cost and latency balloon as token counts climb. According to DeepSeek's accompanying notes, V4 reworks the attention mechanism and key-value cache handling to improve retrieval and reference accuracy deep inside long inputs, with the explicit goal of supporting multi-step agent loops that involve tool calls, intermediate reasoning traces, and accumulated state.\n\nThe practical motivation is clear. Demand for genuinely usable long context has grown across several workloads: whole-repository code understanding and refactoring, research agents that traverse many documents, customer-facing assistants that need durable memory across sessions, and pipelines that ingest large logs or transcripts in a single pass. In each of these, the bottleneck has rarely been raw window size — it has been whether the model can reliably pick out the right span when the window is mostly full.\n\nOn the architecture side, DeepSeek-V4 appears to continue the Mixture-of-Experts direction the lab has pursued since V2 and V3, with sparse expert activation keeping per-token compute manageable even as parameter counts grow. Combined with the long-context optimizations, this positions V4 as an attempt to push the MoE recipe further into territory previously dominated by closed frontier models. Specific numbers around active parameters, expert routing, and benchmark scores will need independent verification as the community runs its own evaluations.\n\nThe competitive backdrop matters here. Google's Gemini 1.5 Pro put one-to-two-million-token contexts into production use, and both Anthropic's Claude family and OpenAI's GPT line have steadily extended their windows. Open-weight options at this scale, however, have been comparatively scarce. Alibaba's Qwen series has shipped long-context variants, and hybrid approaches incorporating state-space models such as Mamba continue to attract research interest as a way to escape the quadratic cost of standard attention. DeepSeek-V4 slots into that landscape as an MoE-first answer that prioritizes long-range fidelity over architectural novelty.\n\nThe choice to publish on Hugging Face carries real weight for developers who want to run or fine-tune the model themselves. Inference stacks such as vLLM and SGLang have been actively adding support for MoE routing and long-context KV cache optimizations, including paged attention, prefix caching, and disaggregated prefill. That trajectory has steadily lowered the barrier to operating million-token-class models outside hyperscaler APIs, though the engineering remains nontrivial.\n\nIn practice, memory footprint and throughput will likely be the limiting factors for most teams. Holding a million-token KV cache in GPU memory is expensive even with grouped-query or multi-head latent attention schemes, and prefill latency on prompts of that length can be measured in tens of seconds without careful batching. Quantization down to 8- or 4-bit weights, along with context-compression techniques such as summarization, retrieval pre-filtering, or learned token pruning, may turn out to be necessary companions rather than optional tweaks for cost-sensitive deployments.\n\nThere are also open questions the release itself does not fully resolve. How V4 behaves on adversarial long-context evaluations such as needle-in-a-haystack variants with distractors, RULER, or agent-oriented benchmarks like SWE-bench and τ-bench will determine whether the agent-readiness pitch holds up. Licensing terms, training data disclosures, and tool-use fine-tunes will similarly shape adoption in regulated environments. For now, DeepSeek-V4 reads as a credible attempt to close the gap between nominal context length and the long-horizon reasoning that real agent systems demand — and, importantly, to do so with weights that anyone can download."
+    },
+    {
       "id": "b10832bafd2abef8",
       "source": "openai-news",
       "sourceType": "blog",
@@ -14188,7 +14244,7 @@
       "summaryEn": "Introducing GPT-5.5, our smartest model yet—faster, more capable, and built for complex tasks like coding, research, and data analysis across tools.",
       "lang": "en",
       "publishedAt": "2026-04-23T11:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-5-5",
@@ -14405,7 +14461,7 @@
       "summaryEn": "Apple announced Tim Cook will become executive chairman of Apple’s board of directors and John Ternus will become Apple’s next CEO.",
       "lang": "en",
       "publishedAt": "2026-04-20T20:37:37.280Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "apple",
         "news",
@@ -14484,7 +14540,7 @@
       "summaryEn": "See how we created an emoji list generator during the Rubber Duck Thursday stream. The post Building an emoji list generator with the GitHub Copilot CLI appeared first on The GitHub Blog .",
       "lang": "en",
       "publishedAt": "2026-04-17T18:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "github",
         "copilot-cli",
@@ -14596,7 +14652,7 @@
       "summaryEn": "OpenAI introduces GPT-Rosalind, a frontier reasoning model built to accelerate drug discovery, genomics analysis, protein reasoning, and scientific research workflows.",
       "lang": "en",
       "publishedAt": "2026-04-16T01:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-rosalind",
@@ -15098,34 +15154,6 @@
       "bodyEn": "Microsoft has published Semantic Kernel for Python 1.41.2 on GitHub Releases. As a patch-level update within the 1.41 line, it appears to focus on bug fixes, dependency adjustments, and general stability rather than new features.\n\nSemantic Kernel is Microsoft's SDK for orchestrating large language models and building agentic applications across C#, Python, and Java. It provides primitives such as prompt functions, plugins, memory, and agent abstractions, with recent development effort directed at higher-level layers including the Agent Framework and Process Framework. The Python edition in particular has drawn attention from AI engineers as a point of comparison with LangChain, and its coverage of OpenAI, Azure OpenAI, various open-weight models, and vector store integrations has continued to expand release by release.\n\nGiven its character as a patch release, 1.41.2 is likely to preserve API compatibility while addressing issues reported by existing users. The 1.41 series has introduced new agent capabilities and connector additions, and it is plausible that this update resolves defects surfaced by production usage of those components, tightens type definitions, or refreshes pinned dependencies. Users are advised to consult the CHANGELOG for the precise scope before upgrading, although patch releases in this project have generally been low-risk to adopt.\n\nThe broader context is notable. Since late 2024, Microsoft has signaled intent to converge Semantic Kernel and AutoGen, and discussion around a unified Microsoft Agent Framework that consolidates agent abstractions across the company's AI tooling has been gaining momentum. Competing open-source projects such as LangChain and LangGraph, LlamaIndex, and CrewAI continue to ship at a rapid cadence, and Semantic Kernel's willingness to push out incremental patch releases suggests an emphasis on the kind of maintenance discipline that enterprise adopters tend to expect.\n\nFor teams already running Semantic Kernel in production, 1.41.2 looks like a routine maintenance pickup rather than a disruptive change. Reviewing the release notes and validating against existing test suites should be sufficient in most cases, and the upgrade may be worth taking simply to stay current ahead of more substantive changes expected as the agent-framework consolidation work progresses."
     },
     {
-      "id": "c106626544da12c5",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/safetensors-joins-pytorch-foundation",
-      "title": "Safetensors is Joining the PyTorch Foundation",
-      "titleJa": "SafetensorsがPyTorch Foundationに参加",
-      "titleEn": "Safetensors is Joining the PyTorch Foundation",
-      "summaryJa": "Hugging Faceが開発した安全で高速なテンソル保存形式Safetensorsが、PyTorch Foundationに寄贈された。これによりオープンガバナンス下で運営され、エコシステム全体で標準フォーマットとしての普及が加速する見通し。",
-      "summaryEn": "Safetensors is Joining the PyTorch Foundation",
-      "lang": "en",
-      "publishedAt": "2026-04-08T00:00:00.000Z",
-      "collectedAt": "2026-05-26T20:00:38.328Z",
-      "tags": [
-        "huggingface",
-        "open-model",
-        "safetensors",
-        "pytorch-foundation",
-        "hugging-face",
-        "model-format"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "bodyJa": "Hugging Faceが開発したテンソル保存フォーマットSafetensorsが、PyTorch Foundationの傘下プロジェクトとして加わることが発表された。AI/MLモデルの配布と読み込みにおける事実上の標準として広く採用されている同フォーマットが、オープンガバナンスへ移行する重要な節目となる。\n\nSafetensorsは、従来PyTorchで一般的だったpickleベースの.ptや.binファイルが抱えるセキュリティリスク、すなわちロード時に任意コードが実行され得る問題を解決するために設計された。ファイルはヘッダにJSONメタデータ、本体に純粋なバイナリテンソルを格納するシンプルな構造で、メモリマップによるゼロコピー読み込みに対応し、大規模モデルの起動時間を大幅に短縮する。安全性と速度を両立した点が、LLM時代のモデル配布で広く支持された理由といえる。\n\n現在、Hugging Face Hub上の多くのモデル、Llama系列、Mistral、Stable Diffusionなど主要モデルがsafetensors形式で配布されている。vLLM、llama.cpp、Diffusers、Transformersなど推論・学習スタックも標準対応しており、エコシステム全体に深く根付いている。\n\nPyTorch FoundationはLinux Foundation傘下で運営される中立組織で、最近ではvLLMやDeepSpeedといったプロジェクトもホストする方向に拡大しつつある。Safetensorsの参加は、フォーマット仕様の長期的な安定性と、複数ベンダーによる共同メンテナンスを担保する狙いがあると見られる。Hugging Faceは引き続き主要メンテナとして関与する一方、ガバナンスの分散により他フレームワーク(JAX、MLXなど)からの貢献も受け入れやすくなる可能性がある。\n\nGGUFのような量子化特化フォーマットとは棲み分けつつ、フル精度・学習可能な重みの標準コンテナとしての地位は当面揺るがないだろう。今回の寄贈は、オープンソースAIインフラの中立化という大きな潮流の一部と位置づけられる。",
-      "bodyEn": "Hugging Face has announced that Safetensors, its widely adopted tensor serialization format, is joining the PyTorch Foundation as a hosted project. The move places one of the most ubiquitous file formats in modern machine learning under open, vendor-neutral governance.\n\nSafetensors was originally created to address a long-standing security concern with PyTorch's default serialization. The traditional .pt and .bin files rely on Python's pickle module, which can execute arbitrary code during deserialization — a real risk when downloading model weights from the internet. Safetensors replaces this with a minimal format consisting of a JSON header describing tensor shapes, dtypes and offsets, followed by a contiguous block of raw tensor bytes. Loading is purely a parse-and-mmap operation, with no code execution path.\n\nBeyond safety, the format delivers tangible performance benefits. Zero-copy memory mapping means very large models can be loaded almost instantly, with pages faulted in on demand. This is particularly valuable in the era of multi-hundred-billion-parameter LLMs, where startup time and memory pressure matter operationally. These properties are a significant reason Safetensors became the default distribution format on the Hugging Face Hub, used by Llama, Mistral, Qwen, Stable Diffusion and countless fine-tunes.\n\nThe broader ecosystem has followed suit. Transformers, Diffusers, vLLM, TGI, llama.cpp tooling, ComfyUI and many others read or write Safetensors natively. In practice, if you download an open-weights model today, there is a good chance it ships in this format.\n\nThe PyTorch Foundation, operating under the Linux Foundation umbrella, has recently been broadening its scope beyond the core PyTorch framework to host adjacent infrastructure projects such as vLLM and DeepSpeed. Bringing Safetensors into this structure formalizes its status as shared infrastructure rather than a single-company project. Hugging Face is expected to remain a primary maintainer, but distributed governance should make it easier for contributors from other frameworks — JAX, MLX, candle, or hardware-vendor stacks — to participate in spec evolution and tooling.\n\nIt is worth noting how Safetensors fits alongside other formats. GGUF, popularized by llama.cpp, focuses on quantized inference with embedded metadata and tokenizer information, optimized for CPU and edge deployment. Safetensors, by contrast, remains the dominant container for full-precision and training-ready weights, where preserving exact dtypes and clean tensor layouts matters more than packaging an entire runnable model. The two are likely to continue coexisting, serving different points in the lifecycle.\n\nThe contribution also reflects a wider trend in open-source AI infrastructure: foundational components — model formats, inference engines, training libraries — are increasingly migrating to neutral foundations to encourage cross-vendor collaboration and long-term stability. For practitioners, the practical impact is mostly invisible in the short term: APIs and file compatibility will not change. Over a longer horizon, however, foundation stewardship may translate into a more formal specification, clearer versioning policies, and broader native support across runtimes and hardware backends, which would benefit the entire community building on open weights."
-    },
-    {
       "id": "a5d6c6efda53aa30",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -15153,6 +15181,34 @@
       "archiveTier": "warm",
       "bodyJa": "Cursorは、AIコードレビュー機能であるBugbotに二つの大きな機能拡張を加えた。一つは過去のレビューフィードバックから自動的にルールを学習する仕組み、もう一つはMCP（Model Context Protocol）サーバーとの連携対応である。これによりBugbotは、より組織固有の文脈に沿った指摘ができるようになる。\n\n学習ルール機能では、開発者がBugbotの指摘に対して行った修正や反応のパターンを蓄積し、レビュー基準として再利用する。同じ種類の誤検知を繰り返したり、特定のコーディング規約を毎回明示したりする手間が減ると見られる。チーム独自の慣習やレビュー文化を、明示的にルールを記述しなくてもBugbotが体得していく形になる。\n\nもう一方のMCP対応により、Bugbotは外部のデータソースやツールから情報を取得しながらレビューを実施できる。MCPはAnthropicが提唱したオープン仕様で、AIエージェントと外部システムを標準化された方法で接続するためのプロトコルである。たとえば、社内のチケット管理システム、ドキュメント、データベーススキーマなどをMCPサーバー経由で参照させることで、コード変更が要件と整合しているか、既存スキーマと矛盾しないかといった観点での指摘も期待できる。\n\nAIによるコードレビューは、GitHub CopilotのCode ReviewやGraphiteのDiamond、CodeRabbitなど競合が増えている領域である。汎用的な静的解析を超え、組織固有のコンテキストをいかに取り込むかが差別化のポイントになりつつあり、Cursorの今回の更新もその潮流に沿うものと位置付けられる。",
       "bodyEn": "Cursor has rolled out two significant upgrades to Bugbot, its AI-powered code review tool: an automatic rule-learning mechanism that derives review criteria from past feedback, and integration support for Model Context Protocol (MCP) servers. Together, the changes are aimed at making Bugbot's comments more attuned to the specific conventions and context of each engineering organization.\n\nThe learned-rules feature works by observing how developers respond to Bugbot's suggestions over time. When a team repeatedly dismisses certain types of comments, applies similar fixes, or pushes back on particular kinds of warnings, Bugbot accumulates those patterns and reuses them as implicit review standards. The intended outcome is fewer repeated false positives and less need to spell out coding conventions on every pull request. In effect, team-specific habits and review culture should propagate into Bugbot's behavior without anyone having to author explicit rule files, although Cursor still allows manually defined rules for cases where teams want tighter control.\n\nThe second addition, MCP support, lets Bugbot pull in information from external data sources and tools while performing a review. MCP is an open specification originally proposed by Anthropic that standardizes how AI agents connect to outside systems. By pointing Bugbot at MCP servers for issue trackers, internal documentation, design specs, or database schemas, teams can in principle ask the reviewer to check whether a code change actually satisfies the linked ticket's requirements, whether it conflicts with an existing schema, or whether it contradicts documented architectural decisions. That moves Bugbot beyond the boundaries of the diff itself and into the surrounding organizational context that human reviewers typically rely on.\n\nThe two features are complementary. Learned rules capture tacit knowledge that emerges from review interactions, while MCP exposes explicit knowledge stored elsewhere in a company's stack. Used together, they appear designed to address one of the most common complaints about generic AI code review: that suggestions are technically reasonable but disconnected from how a specific codebase or team actually operates.\n\nAI code review has become a crowded space. GitHub's Copilot Code Review, Graphite's Diamond, CodeRabbit, Greptile, and several smaller entrants are all competing to embed AI reviewers into pull request workflows. As the underlying models converge in raw capability, differentiation is increasingly shifting toward how well a tool can ingest organization-specific context — repository history, prior reviews, internal documentation, ticketing systems — rather than how well it performs generic static analysis. Cursor's latest update fits squarely within that trend.\n\nThere are also open questions that the announcement does not fully resolve. Learned rules raise the usual concerns about transparency and drift: if Bugbot internalizes patterns from past behavior, teams may want visibility into what it has inferred and the ability to audit or override those inferences, particularly when reviewers' historical responses were inconsistent. MCP integration similarly broadens the surface area for both capability and risk, since granting a reviewer agent access to internal systems implies trust boundaries that organizations will need to manage carefully. Cursor has not detailed how learned rules can be inspected or edited in the changelog entry, and behavior in practice will likely become clearer as teams adopt the features.\n\nFor existing Bugbot users, the practical upshot is that reviews should gradually feel more aligned with house style, and that integrators can begin wiring in the same MCP servers they may already be using elsewhere in the Cursor ecosystem. For the broader market, the update is another signal that the next phase of AI-assisted code review will be defined less by model quality alone and more by how deeply these tools can be embedded into the context where engineering work actually happens."
+    },
+    {
+      "id": "c106626544da12c5",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/safetensors-joins-pytorch-foundation",
+      "title": "Safetensors is Joining the PyTorch Foundation",
+      "titleJa": "SafetensorsがPyTorch Foundationに参加",
+      "titleEn": "Safetensors is Joining the PyTorch Foundation",
+      "summaryJa": "Hugging Faceが開発した安全で高速なテンソル保存形式Safetensorsが、PyTorch Foundationに寄贈された。これによりオープンガバナンス下で運営され、エコシステム全体で標準フォーマットとしての普及が加速する見通し。",
+      "summaryEn": "Safetensors is Joining the PyTorch Foundation",
+      "lang": "en",
+      "publishedAt": "2026-04-08T00:00:00.000Z",
+      "collectedAt": "2026-05-26T20:00:38.328Z",
+      "tags": [
+        "huggingface",
+        "open-model",
+        "safetensors",
+        "pytorch-foundation",
+        "hugging-face",
+        "model-format"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "Hugging Faceが開発したテンソル保存フォーマットSafetensorsが、PyTorch Foundationの傘下プロジェクトとして加わることが発表された。AI/MLモデルの配布と読み込みにおける事実上の標準として広く採用されている同フォーマットが、オープンガバナンスへ移行する重要な節目となる。\n\nSafetensorsは、従来PyTorchで一般的だったpickleベースの.ptや.binファイルが抱えるセキュリティリスク、すなわちロード時に任意コードが実行され得る問題を解決するために設計された。ファイルはヘッダにJSONメタデータ、本体に純粋なバイナリテンソルを格納するシンプルな構造で、メモリマップによるゼロコピー読み込みに対応し、大規模モデルの起動時間を大幅に短縮する。安全性と速度を両立した点が、LLM時代のモデル配布で広く支持された理由といえる。\n\n現在、Hugging Face Hub上の多くのモデル、Llama系列、Mistral、Stable Diffusionなど主要モデルがsafetensors形式で配布されている。vLLM、llama.cpp、Diffusers、Transformersなど推論・学習スタックも標準対応しており、エコシステム全体に深く根付いている。\n\nPyTorch FoundationはLinux Foundation傘下で運営される中立組織で、最近ではvLLMやDeepSpeedといったプロジェクトもホストする方向に拡大しつつある。Safetensorsの参加は、フォーマット仕様の長期的な安定性と、複数ベンダーによる共同メンテナンスを担保する狙いがあると見られる。Hugging Faceは引き続き主要メンテナとして関与する一方、ガバナンスの分散により他フレームワーク(JAX、MLXなど)からの貢献も受け入れやすくなる可能性がある。\n\nGGUFのような量子化特化フォーマットとは棲み分けつつ、フル精度・学習可能な重みの標準コンテナとしての地位は当面揺るがないだろう。今回の寄贈は、オープンソースAIインフラの中立化という大きな潮流の一部と位置づけられる。",
+      "bodyEn": "Hugging Face has announced that Safetensors, its widely adopted tensor serialization format, is joining the PyTorch Foundation as a hosted project. The move places one of the most ubiquitous file formats in modern machine learning under open, vendor-neutral governance.\n\nSafetensors was originally created to address a long-standing security concern with PyTorch's default serialization. The traditional .pt and .bin files rely on Python's pickle module, which can execute arbitrary code during deserialization — a real risk when downloading model weights from the internet. Safetensors replaces this with a minimal format consisting of a JSON header describing tensor shapes, dtypes and offsets, followed by a contiguous block of raw tensor bytes. Loading is purely a parse-and-mmap operation, with no code execution path.\n\nBeyond safety, the format delivers tangible performance benefits. Zero-copy memory mapping means very large models can be loaded almost instantly, with pages faulted in on demand. This is particularly valuable in the era of multi-hundred-billion-parameter LLMs, where startup time and memory pressure matter operationally. These properties are a significant reason Safetensors became the default distribution format on the Hugging Face Hub, used by Llama, Mistral, Qwen, Stable Diffusion and countless fine-tunes.\n\nThe broader ecosystem has followed suit. Transformers, Diffusers, vLLM, TGI, llama.cpp tooling, ComfyUI and many others read or write Safetensors natively. In practice, if you download an open-weights model today, there is a good chance it ships in this format.\n\nThe PyTorch Foundation, operating under the Linux Foundation umbrella, has recently been broadening its scope beyond the core PyTorch framework to host adjacent infrastructure projects such as vLLM and DeepSpeed. Bringing Safetensors into this structure formalizes its status as shared infrastructure rather than a single-company project. Hugging Face is expected to remain a primary maintainer, but distributed governance should make it easier for contributors from other frameworks — JAX, MLX, candle, or hardware-vendor stacks — to participate in spec evolution and tooling.\n\nIt is worth noting how Safetensors fits alongside other formats. GGUF, popularized by llama.cpp, focuses on quantized inference with embedded metadata and tokenizer information, optimized for CPU and edge deployment. Safetensors, by contrast, remains the dominant container for full-precision and training-ready weights, where preserving exact dtypes and clean tensor layouts matters more than packaging an entire runnable model. The two are likely to continue coexisting, serving different points in the lifecycle.\n\nThe contribution also reflects a wider trend in open-source AI infrastructure: foundational components — model formats, inference engines, training libraries — are increasingly migrating to neutral foundations to encourage cross-vendor collaboration and long-term stability. For practitioners, the practical impact is mostly invisible in the short term: APIs and file compatibility will not change. Over a longer horizon, however, foundation stewardship may translate into a more formal specification, clearer versioning policies, and broader native support across runtimes and hardware backends, which would benefit the entire community building on open weights."
     },
     {
       "id": "d37dc3e157551d8e",
@@ -15380,6 +15436,34 @@
       "bodyEn": "Google DeepMind has announced Gemma 4, the latest generation of its open-weight model family, positioning it as the most capable open model available on a byte-for-byte basis. The framing emphasizes efficiency: how much capability you can pack into a given parameter count or file size, rather than chasing raw scale.\n\nThe Gemma family was introduced as an open counterpart to the proprietary Gemini line, sharing research lineage but distributed under a license that permits commercial use. Earlier generations spawned a growing collection of variants — CodeGemma for programming, MedGemma for medical applications, PaliGemma for vision-language tasks, and ShieldGemma for safety classification. It would not be surprising if Gemma 4 follows a similar pattern, with size tiers and domain-specialized derivatives rolling out over time.\n\nThe byte-for-byte framing is a deliberate response to a crowded open-model landscape. Meta's Llama series, Alibaba's Qwen, Mistral's releases, and DeepSeek's models have all pushed the frontier of what open weights can deliver, and the competition has shifted from headline parameter counts toward efficiency at deployment. For developers running models on laptops, smartphones, or single-GPU servers, the relevant question is no longer just which model scores highest on a leaderboard but which one fits in available memory while still producing strong outputs. Quantization robustness, long-context handling, and multimodal capability have become standard evaluation axes alongside traditional reasoning and coding benchmarks.\n\nDistribution and tooling matter as much as the weights themselves. Previous Gemma releases landed quickly on Hugging Face, Kaggle, and Google's own Vertex AI, with day-one support in popular local inference runtimes such as llama.cpp, Ollama, and Apple's MLX. Comparable breadth is likely for Gemma 4, given Google's interest in seeing the model adopted across the developer ecosystem rather than confined to its own cloud. Fine-tuning support through libraries like Hugging Face's TRL, Unsloth, and Google's own recipes will probably arrive in short order as well.\n\nClaims of being the strongest open model in any category tend to be short-lived in the current pace of releases, so independent evaluation will be important. Real-world signal usually comes from community fine-tunes, third-party benchmarks such as LMSYS arena scores, and practical reports on how well a model holds up under aggressive quantization to 4-bit or below. Until that data accumulates, the byte-for-byte claim should be read as a positioning statement supported by Google's internal evaluations rather than a settled consensus.\n\nFor researchers and builders, the more interesting question may be what Gemma 4 enables that earlier generations did not. If the new release meaningfully improves the capability-per-byte curve, it could expand the range of applications that are practical to run on-device or behind a corporate firewall, where API-based frontier models are not an option. That would matter not only for cost-sensitive deployments but also for privacy-sensitive workloads in regulated industries, where the ability to run a strong model entirely under local control is increasingly viewed as a strategic asset."
     },
     {
+      "id": "3ee41050eba871c0",
+      "source": "cursor-changelog",
+      "sourceType": "changelog",
+      "url": "https://cursor.com/changelog/3-0",
+      "title": "New Cursor Interface",
+      "titleJa": "Cursor 3.0、エージェント中心の新インターフェースを公開",
+      "titleEn": "New Cursor Interface",
+      "summaryJa": "AIコードエディタCursorが3.0をリリースし、UIをエージェント中心の設計に刷新した。複数のAIエージェントを並列に管理・監視できる新ビューを導入し、長時間タスクや自律的なコーディング作業の運用効率を高めることを狙う。",
+      "summaryEn": "Cursor 3 is now available.",
+      "lang": "en",
+      "publishedAt": "2026-04-02T00:00:00.000Z",
+      "collectedAt": "2026-05-26T19:00:38.325Z",
+      "tags": [
+        "changelog",
+        "cursor",
+        "ai-coding",
+        "ide",
+        "agents",
+        "developer-tools"
+      ],
+      "category": "cursor",
+      "importance": 3,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "AIコードエディタを手がけるCursorが、メジャーアップデートとなる3.0をリリースした。最大の変更点はインターフェースの刷新で、従来のファイルとエディタを中心にした設計から、AIエージェントを主役に据えたレイアウトへと舵を切った。\n\n新インターフェースでは、ユーザーが複数のエージェントを同時に走らせ、それぞれの進捗・差分・出力をひと目で把握できるよう設計されている。バックグラウンドで自律的に動くエージェントの数が増えるほど、状況の俯瞰と介入のしやすさが生産性を左右するため、ダッシュボード的な見せ方への移行は自然な流れと言える。エディタ機能自体は維持しつつ、人間がコードを書く場と、エージェントの作業を監督する場を切り分けたかたちだ。\n\n背景には、ここ1年で急速に進んだ「エージェント型コーディング」のトレンドがある。Anthropic の Claude Code、GitHub の Copilot Workspace や Coding Agent、Devin を擁する Cognition、Replit Agent、OpenAI の Codex 系機能など、競合各社がこぞって自律実行型のコーディング体験を強化してきた。Cursor も Background Agents を投入し、クラウドで長時間タスクをこなす方向にシフトしてきており、3.0 の UI 刷新はその延長線上に位置付けられる。\n\n一方で、エージェント中心 UI への転換は既存ユーザーの作業フローに影響を与える可能性がある。手動編集とエージェント委譲のバランスをどう取るか、レビュー負荷をどう下げるかは引き続き課題と見られる。詳細な機能差分や対応モデルについては公式チェンジログでの確認が望ましい。",
+      "bodyEn": "Cursor, the AI-first code editor that has become one of the most visible challengers to traditional IDEs, has shipped a major 3.0 release whose headline change is a redesigned interface organized around AI agents rather than files.\n\nThe new UI is built on the assumption that developers increasingly delegate coding work to autonomous agents and need a way to oversee several of them at once. Instead of putting the editor pane front and center, the 3.0 layout treats agents as first-class objects, letting users spawn, monitor and review multiple parallel runs, inspect their diffs and intervene when needed. The conventional editing surface remains, but it now coexists with what is effectively a control panel for background work.\n\nThis shift mirrors a broader industry move toward agentic coding. Over the past year, Anthropic's Claude Code, GitHub's Copilot Workspace and Coding Agent, Cognition's Devin, Replit Agent, and OpenAI's Codex-style features have all pushed the idea that an AI should be able to plan, execute and iterate on multi-step tasks with minimal supervision. Cursor itself had already introduced Background Agents that run longer jobs in the cloud, so reorienting the entire interface around agent management can be read as the logical next step rather than a sudden pivot.\n\nThe practical appeal is straightforward. When one agent is refactoring a module, another is writing tests and a third is investigating a bug report, switching between them in a traditional tabbed editor quickly becomes unwieldy. A dedicated agents view, with status, progress and proposed changes surfaced together, lowers the cognitive overhead of running several long-horizon tasks concurrently. It also makes review — arguably the new bottleneck in AI-assisted development — more systematic.\n\nThere are open questions, however. Putting agents at the center of the experience changes muscle memory for users who think of Cursor primarily as a fast, AI-augmented editor, and the balance between hand-written code and delegated work will likely vary by team. Review fatigue, merge conflicts between parallel agent branches and the cost of running multiple models in parallel are concerns that the broader category still has to work through, and Cursor 3.0's approach to them will become clearer as the community puts the release through real projects. Specifics on supported models, pricing implications and migration details are best confirmed via Cursor's official changelog."
+    },
+    {
       "id": "e5bf99f0f0027b15",
       "source": "huggingface-blog",
       "sourceType": "blog",
@@ -15407,34 +15491,6 @@
       "archiveTier": "warm",
       "bodyJa": "Googleはオープンウェイトモデル群「Gemma」の新世代となるGemma 4を公開した。テキストに加えて画像など複数モダリティを統合的に扱え、しかもオンデバイスでの実行を視野に入れた設計が特徴とされる。Hugging Faceブログでは公開と同時にエコシステム統合が告知されている。\n\nGemma 4はマルチモーダル入力に対応し、ローカル環境やモバイルクラスのハードウェアでも動かせる効率性を打ち出している。サイズ別の複数バリアントが用意され、用途に応じて選択できる構成と見られる。重みはHugging Face Hubで配布され、Transformers、llama.cpp、MLX、vLLMといった主要推論ランタイムにday-0で統合されているため、ローカル実験から本番デプロイまで導入の摩擦が小さい点が利点となる。\n\n背景として、オープンウェイトの小型〜中型モデル領域はMeta Llama、Mistral、Microsoft Phi、Alibaba Qwenなどが激しく競合しており、特に「フロンティア級の性能をデバイス上で」という方向性は、AppleのApple Intelligenceや各種オンデバイスLLMの潮流と軌を一にしている。Googleは商用大規模モデルGemini本体と区別しつつ、Gemmaを通じて研究コミュニティやアプリ開発者に対して開かれたモデルを提供する戦略を継続していると言える。\n\nマルチモーダル対応については、前世代のPaliGemmaやGemma 3で培った視覚言語処理の知見が反映されている可能性がある。オンデバイス動作は、プライバシー保護やレイテンシ削減、オフライン利用といった実用上の利点をもたらす一方で、量子化やKVキャッシュ最適化などランタイム側の工夫が引き続き重要になる。利用にあたってはGemma利用規約への同意が必要で、商用利用条件やセーフティポリシーを確認したうえで導入することが推奨される。",
       "bodyEn": "Google has unveiled Gemma 4, the next generation of its open-weight model family, positioning it as a frontier-class multimodal system designed with on-device execution in mind. The Hugging Face announcement coincides with broad ecosystem availability, signaling Google's continued push to make capable open models a practical default for developers.\n\nGemma 4 accepts multimodal inputs, combining text with images, and is engineered to run efficiently on hardware ranging from consumer GPUs down to mobile-class devices. Multiple size variants are offered so teams can balance latency, memory, and quality. Weights are distributed via the Hugging Face Hub, with day-0 integration into mainstream runtimes including Transformers, llama.cpp, MLX, and vLLM. That breadth of support meaningfully reduces friction whether the target is a laptop prototype, an Apple Silicon workstation, or a production inference cluster.\n\nThe release lands in a fiercely competitive open-weight landscape. Meta's Llama line, Mistral, Microsoft's Phi family, and Alibaba's Qwen series have all pushed the small-to-mid model frontier rapidly, and the specific theme of frontier-grade quality on-device echoes broader industry trends, including Apple Intelligence and a wave of efficient local LLM stacks. Google appears to be maintaining a clear separation between its proprietary flagship Gemini models and the Gemma family, using the latter to court researchers, indie developers, and product teams who need transparent weights they can fine-tune or deploy on their own infrastructure.\n\nOn the multimodal front, Gemma 4 likely builds on lessons from earlier vision-language work such as PaliGemma and the multimodal extensions introduced in Gemma 3, though specifics around the vision encoder and training mixture should be verified against the official model card. On-device deployment brings real-world benefits — better privacy posture, lower latency, and offline operation — but also places extra weight on quantization quality, KV-cache management, and tokenizer efficiency. The vibrant ecosystems around GGUF, MLX, and ONNX runtime are likely to accelerate community ports within days of release.\n\nDevelopers planning to adopt Gemma 4 should review the Gemma terms of use, including its acceptable use policy and commercial conditions, before integrating it into products. With its combination of multimodality, on-device focus, and immediate ecosystem support, Gemma 4 looks set to become a notable reference point for open multimodal models over the coming months, though independent benchmarks will ultimately determine how it compares to the strongest open competitors."
-    },
-    {
-      "id": "3ee41050eba871c0",
-      "source": "cursor-changelog",
-      "sourceType": "changelog",
-      "url": "https://cursor.com/changelog/3-0",
-      "title": "New Cursor Interface",
-      "titleJa": "Cursor 3.0、エージェント中心の新インターフェースを公開",
-      "titleEn": "New Cursor Interface",
-      "summaryJa": "AIコードエディタCursorが3.0をリリースし、UIをエージェント中心の設計に刷新した。複数のAIエージェントを並列に管理・監視できる新ビューを導入し、長時間タスクや自律的なコーディング作業の運用効率を高めることを狙う。",
-      "summaryEn": "Cursor 3 is now available.",
-      "lang": "en",
-      "publishedAt": "2026-04-02T00:00:00.000Z",
-      "collectedAt": "2026-05-26T19:00:38.325Z",
-      "tags": [
-        "changelog",
-        "cursor",
-        "ai-coding",
-        "ide",
-        "agents",
-        "developer-tools"
-      ],
-      "category": "cursor",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "bodyJa": "AIコードエディタを手がけるCursorが、メジャーアップデートとなる3.0をリリースした。最大の変更点はインターフェースの刷新で、従来のファイルとエディタを中心にした設計から、AIエージェントを主役に据えたレイアウトへと舵を切った。\n\n新インターフェースでは、ユーザーが複数のエージェントを同時に走らせ、それぞれの進捗・差分・出力をひと目で把握できるよう設計されている。バックグラウンドで自律的に動くエージェントの数が増えるほど、状況の俯瞰と介入のしやすさが生産性を左右するため、ダッシュボード的な見せ方への移行は自然な流れと言える。エディタ機能自体は維持しつつ、人間がコードを書く場と、エージェントの作業を監督する場を切り分けたかたちだ。\n\n背景には、ここ1年で急速に進んだ「エージェント型コーディング」のトレンドがある。Anthropic の Claude Code、GitHub の Copilot Workspace や Coding Agent、Devin を擁する Cognition、Replit Agent、OpenAI の Codex 系機能など、競合各社がこぞって自律実行型のコーディング体験を強化してきた。Cursor も Background Agents を投入し、クラウドで長時間タスクをこなす方向にシフトしてきており、3.0 の UI 刷新はその延長線上に位置付けられる。\n\n一方で、エージェント中心 UI への転換は既存ユーザーの作業フローに影響を与える可能性がある。手動編集とエージェント委譲のバランスをどう取るか、レビュー負荷をどう下げるかは引き続き課題と見られる。詳細な機能差分や対応モデルについては公式チェンジログでの確認が望ましい。",
-      "bodyEn": "Cursor, the AI-first code editor that has become one of the most visible challengers to traditional IDEs, has shipped a major 3.0 release whose headline change is a redesigned interface organized around AI agents rather than files.\n\nThe new UI is built on the assumption that developers increasingly delegate coding work to autonomous agents and need a way to oversee several of them at once. Instead of putting the editor pane front and center, the 3.0 layout treats agents as first-class objects, letting users spawn, monitor and review multiple parallel runs, inspect their diffs and intervene when needed. The conventional editing surface remains, but it now coexists with what is effectively a control panel for background work.\n\nThis shift mirrors a broader industry move toward agentic coding. Over the past year, Anthropic's Claude Code, GitHub's Copilot Workspace and Coding Agent, Cognition's Devin, Replit Agent, and OpenAI's Codex-style features have all pushed the idea that an AI should be able to plan, execute and iterate on multi-step tasks with minimal supervision. Cursor itself had already introduced Background Agents that run longer jobs in the cloud, so reorienting the entire interface around agent management can be read as the logical next step rather than a sudden pivot.\n\nThe practical appeal is straightforward. When one agent is refactoring a module, another is writing tests and a third is investigating a bug report, switching between them in a traditional tabbed editor quickly becomes unwieldy. A dedicated agents view, with status, progress and proposed changes surfaced together, lowers the cognitive overhead of running several long-horizon tasks concurrently. It also makes review — arguably the new bottleneck in AI-assisted development — more systematic.\n\nThere are open questions, however. Putting agents at the center of the experience changes muscle memory for users who think of Cursor primarily as a fast, AI-augmented editor, and the balance between hand-written code and delegated work will likely vary by team. Review fatigue, merge conflicts between parallel agent branches and the cost of running multiple models in parallel are concerns that the broader category still has to work through, and Cursor 3.0's approach to them will become clearer as the community puts the release through real projects. Specifics on supported models, pricing implications and migration details are best confirmed via Cursor's official changelog."
     },
     {
       "id": "09a9968e9080b804",
@@ -16324,7 +16380,7 @@
       "summaryEn": "Apple today announced it will host its annual Worldwide Developers Conference (WWDC) online from June 8-12.",
       "lang": "en",
       "publishedAt": "2026-03-23T17:00:08.050Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "apple",
         "news",
@@ -16584,7 +16640,7 @@
       "summaryEn": "GPT-5.4 mini and nano are smaller, faster versions of GPT-5.4 optimized for coding, tool use, multimodal reasoning, and high-volume API and sub-agent workloads.",
       "lang": "en",
       "publishedAt": "2026-03-17T10:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "openai",
@@ -16945,7 +17001,7 @@
       "summaryEn": "GPT-5.4 Thinking System Card",
       "lang": "en",
       "publishedAt": "2026-03-05T10:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-5",
@@ -16971,7 +17027,7 @@
       "summaryEn": "Introducing GPT-5.4, OpenAI’s most most capable and efficient frontier model for professional work, with state-of-the-art coding, computer use, tool search, and 1M-token context.",
       "lang": "en",
       "publishedAt": "2026-03-05T10:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-5",
@@ -16983,34 +17039,6 @@
       "archiveTier": "warm",
       "bodyJa": "GPT-5.4の発表 は、openai-news が伝えた codex 領域の更新です。OpenAIが新モデル「GPT-5.4」を発表した。Codex関連の機能として位置付けられ、コーディングや開発支援の性能が強化されているとみられる。従来モデルからの改良版として提供される。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは openai, gpt-5, llm です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
       "bodyEn": "Introducing GPT-5.4 is a codex update collected from openai-news. OpenAI announced GPT-5.4, a new model update positioned within its Codex lineup. The release is expected to bring improvements in coding and developer-focused capabilities over prior versions.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include openai, gpt-5, llm. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
-    },
-    {
-      "id": "776912ebc8e404f1",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/modular-diffusers",
-      "title": "Introducing Modular Diffusers - Composable Building Blocks for Diffusion Pipelines",
-      "titleJa": "Hugging Face、拡散パイプラインを部品化するModular Diffusersを発表",
-      "titleEn": "Introducing Modular Diffusers - Composable Building Blocks for Diffusion Pipelines",
-      "summaryJa": "Hugging Faceは、拡散モデルのパイプラインをブロック単位で組み立てられる新フレームワーク「Modular Diffusers」を発表した。再利用可能なPipelineBlockを組み合わせることで、独自ワークフローの構築や既存コンポーネントの共有が容易になる。",
-      "summaryEn": "Introducing Modular Diffusers - Composable Building Blocks for Diffusion Pipelines",
-      "lang": "en",
-      "publishedAt": "2026-03-05T00:00:00.000Z",
-      "collectedAt": "2026-05-26T20:00:38.328Z",
-      "tags": [
-        "huggingface",
-        "open-model",
-        "diffusers",
-        "hugging-face",
-        "diffusion-models",
-        "image-generation"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "bodyJa": "Hugging Faceは、Diffusersライブラリに新しい設計思想を持ち込む「Modular Diffusers」を発表した。これまでモノリシックだった拡散パイプラインを、再利用可能な部品として組み立て直せるようにするフレームワークである。\n\n従来のDiffusersでは、StableDiffusionPipelineやFluxPipelineのように、用途ごとに専用のパイプラインクラスが用意されていた。利便性は高い一方で、ControlNet、IP-Adapter、Differential Diffusionといった派生機能を組み合わせようとすると、似たコードが何度も複製され、メンテナンス負荷が増していた。Modular Diffusersはこの課題に対し、推論ステップを「PipelineBlock」という単位に分解し、ブロックを差し替え・連結する方式で再構成する。\n\n中心となる概念はPipelineBlock、ModularPipelineBlocks(複数ブロックの合成)、そしてComponentsManagerである。開発者はテキストエンコード、ノイズ予測、デコードといった処理単位を定義し、それらをグラフ的に組み合わせて新しいパイプラインを構築できる。さらに、ブロック単位でHugging Face Hubにアップロード・共有できるため、コミュニティが新手法を公開した際の取り込みが従来より迅速になると見られる。\n\n背景には、画像・動画生成モデルの多様化がある。FLUX、Stable Diffusion 3、HunyuanVideo、Wanなど次々登場するアーキテクチャごとに専用パイプラインを書く方式は、もはや持続可能ではない。ComfyUIがノードベースUIで支持を集めているのも同じ流れであり、Modular DiffusersはそれをPython API側で実現する試みと位置づけられる。\n\nHugging Faceは互換性を重視しており、既存のDiffusersパイプラインは引き続き利用可能としている。Modular Diffusersは現時点でベータ的な位置付けと見られ、今後LoRAや量子化、各種アダプタとの統合が進むことで、研究者と実プロダクト開発者の双方にとって標準的な構築基盤となる可能性がある。",
-      "bodyEn": "Hugging Face has unveiled Modular Diffusers, a new architectural layer for its popular Diffusers library that reimagines diffusion pipelines as compositions of reusable building blocks rather than monolithic classes.\n\nUntil now, Diffusers has shipped a dedicated pipeline class for nearly every model family and task — StableDiffusionPipeline, FluxPipeline, StableDiffusionControlNetImg2ImgPipeline, and so on. While this gave users a clean one-line entry point, it also led to substantial code duplication. Adding a new technique such as ControlNet, IP-Adapter, or differential diffusion typically required forking an entire pipeline file, and combining several techniques meant maintaining yet another bespoke variant. Modular Diffusers addresses this by decomposing inference into discrete PipelineBlocks that can be swapped, chained, and reused.\n\nThe framework centers on a few key abstractions: PipelineBlock, which encapsulates a single logical step such as text encoding, denoising, or VAE decoding; ModularPipelineBlocks, which compose multiple blocks; and a ComponentsManager that handles shared models and memory across the graph. Developers can publish their own blocks to the Hugging Face Hub, meaning a new sampler or guidance trick can be distributed as a standalone unit and dropped into any compatible pipeline. The blog post walks through assembling text-to-image, image-to-image, and ControlNet workflows from the same underlying parts.\n\nThe motivation is partly ecosystem pressure. The pace of new diffusion architectures — FLUX, Stable Diffusion 3.5, HunyuanVideo, Wan, and a steady stream of fine-tuned variants — has made the per-model pipeline approach increasingly hard to scale. Tools like ComfyUI have demonstrated strong community appetite for node-based, composable workflows, and Modular Diffusers can be seen as bringing a similar philosophy to the Python API surface that researchers and backend engineers prefer. It also aligns with Hugging Face's broader trend of pushing modularity into Transformers and PEFT.\n\nImportantly, the team emphasises backward compatibility: existing Diffusers pipelines continue to work unchanged, and Modular Diffusers is positioned as an additive option rather than a replacement. The current release appears to be an initial cut, with documentation and tutorials covering the core blocks; deeper integration with LoRA loading, quantisation backends like bitsandbytes and torchao, and adapter ecosystems is likely to follow in subsequent updates.\n\nFor practitioners, the practical upshot is that experimenting with custom inference logic — say, mixing a ControlNet branch with a differential diffusion mask and a custom scheduler — should require considerably less boilerplate. For library maintainers, it offers a path to reduce the combinatorial explosion of pipeline classes. Whether the community embraces the new abstractions will depend on how cleanly third-party blocks can be authored and published, but the design direction is consistent with where much of the open-source generative stack appears to be heading."
     },
     {
       "id": "5e4b5a55bd35da2a",
@@ -17039,6 +17067,34 @@
       "archiveTier": "warm",
       "bodyJa": "AIコーディング環境のCursorは、エージェントタスクをスケジュール実行できる新機能「Automations」を発表した。開発者が繰り返し行う定型作業をバックグラウンドで自動化することで、生産性向上を狙う取り組みとなる。\n\nAutomationsは、指定したタイミングや定期的なトリガーに基づいてエージェントタスクを自動的に走らせる仕組みである。ユーザーはCursorのWeb版、モバイル版、そしてSlack連携を通じて設定・管理が可能で、IDEに張り付かなくても継続的なタスク実行を指示できる点が特徴とされる。例えば、毎朝のリポジトリレビュー、依存関係の更新確認、定期的なコード品質チェック、issueトリアージといった用途が想定されると見られる。\n\n背景として、AIコーディング分野では「同期的なペアプログラミング」から「非同期で動くバックグラウンドエージェント」へと焦点が移りつつある。GitHub Copilot Workspace、Devin、OpenAIのCodex Cloud、AnthropicのClaude Codeなどが、いずれも開発者の介在なしにタスクを進められる方向性を強めている。CursorもすでにBackground Agentsを提供しており、今回のAutomationsはその延長線上で「いつ動かすか」をプログラム可能にしたものと位置づけられる。\n\nSlackからのトリガーに対応している点は、チームのワークフローへの統合を意識した設計と考えられる。CIの結果通知やレビュー依頼に応じてエージェントが自動的に動く、といった運用も視野に入る可能性がある。一方で、自動実行されるエージェントはコスト管理や権限設計、誤った変更のリスクといった運用上の課題も伴うため、組織導入時にはガードレールの検討が重要になるだろう。",
       "bodyEn": "Cursor has announced Automations, a new capability that lets users schedule agent tasks and run them on recurring triggers. The feature pushes Cursor further into the realm of asynchronous, background-driven AI development workflows.\n\nWith Automations, developers can configure agent tasks to run at specific times or on a recurring cadence rather than invoking them manually each session. The feature is exposed across Cursor's Web app, mobile app, and Slack integration, meaning users can set up, monitor, and receive results from these tasks without having to be actively in the IDE. Likely use cases include morning repository reviews, dependency update checks, recurring code quality audits, and routine issue triage — anything that benefits from being handled quietly in the background on a schedule.\n\nThe move fits a broader industry shift away from purely synchronous pair-programming AI toward longer-running, more autonomous coding agents. GitHub Copilot Workspace, Cognition's Devin, OpenAI's Codex Cloud offerings, and Anthropic's Claude Code have all been moving in a similar direction, where the developer delegates work and reviews the result rather than babysitting each suggestion. Cursor already offers Background Agents, and Automations can be seen as a natural extension that adds a scheduling and triggering layer on top of that execution substrate.\n\nThe Slack integration is particularly notable. By letting Automations be triggered from chat, Cursor positions the feature as a team-level workflow primitive rather than an individual productivity hack. One can imagine agents kicked off in response to CI failures, review requests, or even periodic standup-style summaries posted into a channel — though the exact range of trigger types available at launch is not detailed in the announcement.\n\nAs with any autonomous-execution feature, there are tradeoffs worth flagging. Recurring agent runs can accumulate compute costs, and tasks that touch repositories or external systems raise questions about permissions, secret handling, and the blast radius of unintended changes. Organizations adopting Automations at scale will likely want guardrails around which repos and actions are eligible, plus clear audit trails. Still, for individual developers and small teams, the ability to offload recurring chores to a scheduled agent is a meaningful step toward treating AI coding assistants less like autocomplete and more like always-on collaborators."
+    },
+    {
+      "id": "776912ebc8e404f1",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/modular-diffusers",
+      "title": "Introducing Modular Diffusers - Composable Building Blocks for Diffusion Pipelines",
+      "titleJa": "Hugging Face、拡散パイプラインを部品化するModular Diffusersを発表",
+      "titleEn": "Introducing Modular Diffusers - Composable Building Blocks for Diffusion Pipelines",
+      "summaryJa": "Hugging Faceは、拡散モデルのパイプラインをブロック単位で組み立てられる新フレームワーク「Modular Diffusers」を発表した。再利用可能なPipelineBlockを組み合わせることで、独自ワークフローの構築や既存コンポーネントの共有が容易になる。",
+      "summaryEn": "Introducing Modular Diffusers - Composable Building Blocks for Diffusion Pipelines",
+      "lang": "en",
+      "publishedAt": "2026-03-05T00:00:00.000Z",
+      "collectedAt": "2026-05-26T20:00:38.328Z",
+      "tags": [
+        "huggingface",
+        "open-model",
+        "diffusers",
+        "hugging-face",
+        "diffusion-models",
+        "image-generation"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "Hugging Faceは、Diffusersライブラリに新しい設計思想を持ち込む「Modular Diffusers」を発表した。これまでモノリシックだった拡散パイプラインを、再利用可能な部品として組み立て直せるようにするフレームワークである。\n\n従来のDiffusersでは、StableDiffusionPipelineやFluxPipelineのように、用途ごとに専用のパイプラインクラスが用意されていた。利便性は高い一方で、ControlNet、IP-Adapter、Differential Diffusionといった派生機能を組み合わせようとすると、似たコードが何度も複製され、メンテナンス負荷が増していた。Modular Diffusersはこの課題に対し、推論ステップを「PipelineBlock」という単位に分解し、ブロックを差し替え・連結する方式で再構成する。\n\n中心となる概念はPipelineBlock、ModularPipelineBlocks(複数ブロックの合成)、そしてComponentsManagerである。開発者はテキストエンコード、ノイズ予測、デコードといった処理単位を定義し、それらをグラフ的に組み合わせて新しいパイプラインを構築できる。さらに、ブロック単位でHugging Face Hubにアップロード・共有できるため、コミュニティが新手法を公開した際の取り込みが従来より迅速になると見られる。\n\n背景には、画像・動画生成モデルの多様化がある。FLUX、Stable Diffusion 3、HunyuanVideo、Wanなど次々登場するアーキテクチャごとに専用パイプラインを書く方式は、もはや持続可能ではない。ComfyUIがノードベースUIで支持を集めているのも同じ流れであり、Modular DiffusersはそれをPython API側で実現する試みと位置づけられる。\n\nHugging Faceは互換性を重視しており、既存のDiffusersパイプラインは引き続き利用可能としている。Modular Diffusersは現時点でベータ的な位置付けと見られ、今後LoRAや量子化、各種アダプタとの統合が進むことで、研究者と実プロダクト開発者の双方にとって標準的な構築基盤となる可能性がある。",
+      "bodyEn": "Hugging Face has unveiled Modular Diffusers, a new architectural layer for its popular Diffusers library that reimagines diffusion pipelines as compositions of reusable building blocks rather than monolithic classes.\n\nUntil now, Diffusers has shipped a dedicated pipeline class for nearly every model family and task — StableDiffusionPipeline, FluxPipeline, StableDiffusionControlNetImg2ImgPipeline, and so on. While this gave users a clean one-line entry point, it also led to substantial code duplication. Adding a new technique such as ControlNet, IP-Adapter, or differential diffusion typically required forking an entire pipeline file, and combining several techniques meant maintaining yet another bespoke variant. Modular Diffusers addresses this by decomposing inference into discrete PipelineBlocks that can be swapped, chained, and reused.\n\nThe framework centers on a few key abstractions: PipelineBlock, which encapsulates a single logical step such as text encoding, denoising, or VAE decoding; ModularPipelineBlocks, which compose multiple blocks; and a ComponentsManager that handles shared models and memory across the graph. Developers can publish their own blocks to the Hugging Face Hub, meaning a new sampler or guidance trick can be distributed as a standalone unit and dropped into any compatible pipeline. The blog post walks through assembling text-to-image, image-to-image, and ControlNet workflows from the same underlying parts.\n\nThe motivation is partly ecosystem pressure. The pace of new diffusion architectures — FLUX, Stable Diffusion 3.5, HunyuanVideo, Wan, and a steady stream of fine-tuned variants — has made the per-model pipeline approach increasingly hard to scale. Tools like ComfyUI have demonstrated strong community appetite for node-based, composable workflows, and Modular Diffusers can be seen as bringing a similar philosophy to the Python API surface that researchers and backend engineers prefer. It also aligns with Hugging Face's broader trend of pushing modularity into Transformers and PEFT.\n\nImportantly, the team emphasises backward compatibility: existing Diffusers pipelines continue to work unchanged, and Modular Diffusers is positioned as an additive option rather than a replacement. The current release appears to be an initial cut, with documentation and tutorials covering the core blocks; deeper integration with LoRA loading, quantisation backends like bitsandbytes and torchao, and adapter ecosystems is likely to follow in subsequent updates.\n\nFor practitioners, the practical upshot is that experimenting with custom inference logic — say, mixing a ControlNet branch with a differential diffusion mask and a custom scheduler — should require considerably less boilerplate. For library maintainers, it offers a path to reduce the combinatorial explosion of pipeline classes. Whether the community embraces the new abstractions will depend on how cleanly third-party blocks can be authored and published, but the design direction is consistent with where much of the open-source generative stack appears to be heading."
     },
     {
       "id": "1ef2ae93f09136fd",
@@ -17212,7 +17268,7 @@
       "summaryEn": "OpenAI and Amazon announce a strategic partnership bringing OpenAI’s Frontier platform to AWS, expanding AI infrastructure, custom models, and enterprise AI agents.",
       "lang": "en",
       "publishedAt": "2026-02-27T05:30:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "enterprise",
         "openai",
@@ -17641,7 +17697,7 @@
       "summaryEn": "set version to 0.86.3.dev",
       "lang": "en",
       "publishedAt": "2026-02-12T00:42:25.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "aider",
         "release",
@@ -17676,7 +17732,7 @@
       "summaryEn": "version bump to 0.86.2",
       "lang": "en",
       "publishedAt": "2026-02-12T00:42:24.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "aider",
         "release",
@@ -17698,6 +17754,33 @@
       },
       "bodyJa": "オープンソースのAIペアプログラミングCLIツール「Aider」が、バージョン0.86.2をリリースした。今回はメジャーな機能刷新ではなく、新しい大規模言語モデルへの追従を主眼とした小規模アップデートである。\n\n中心となる変更点は、Googleが新たに公開したGemini 3 Proモデルへの対応だ。Aiderは複数のLLMプロバイダ(OpenAI、Anthropic、Google、ローカルモデル等)に横断的に対応していることが特徴で、新モデルが登場するたびにモデル定義やトークナイザ設定を追従する形でリリースを重ねている。今回もその流れの一環と見られる。\n\nAider自体は、ターミナル上でGitリポジトリと統合しながらAIにコード編集を依頼できるツールとして知られる。ファイルの差分を直接適用し、コミットメッセージも自動生成する設計で、CursorやClineなどGUI/IDE統合型のAIコーディングツールとは異なり、CLI志向の開発者から支持を集めている。ベンチマーク「Aider polyglot benchmark」を独自に運用し、各モデルのコード編集精度を比較公開している点も特徴的だ。\n\n背景として、2025年後半はGoogleのGeminiシリーズ、AnthropicのClaude、OpenAIのGPT系列がコーディング性能で激しく競合しており、Aiderのようなモデル非依存のフロントエンドにとっては各社新モデルへの即応がユーザー体験の核となっている。Gemini 3 Proは長文コンテキストや推論性能の強化が見込まれており、リポジトリ全体を扱うコーディングタスクで効果を発揮する可能性がある。\n\nv0.86.2はパッチリリースであるため、既存ユーザーは通常のpipアップグレードで適用可能と考えられる。新モデルを試したい開発者は、対応するAPIキーを設定の上、--modelオプションで指定すれば利用できる見込みだ。",
       "bodyEn": "Aider, the open-source AI pair-programming command-line tool, has shipped version 0.86.2. Rather than a feature overhaul, this release is a small maintenance update focused on keeping pace with the rapidly evolving landscape of large language models.\n\nThe headline change is support for Google's newly released Gemini 3 Pro. Aider is designed to work across multiple LLM providers — including OpenAI, Anthropic, Google, and local models via Ollama or similar runtimes — so each major model launch typically triggers a follow-up release that adjusts model metadata, context window definitions, and tokenizer settings. The 0.86.2 release appears to fit squarely into that pattern.\n\nAider itself has carved out a distinctive niche among AI coding tools. It runs in the terminal, integrates tightly with Git, applies diffs directly to source files, and even generates commit messages automatically. That CLI-first philosophy contrasts with IDE-embedded competitors such as Cursor, GitHub Copilot, and Cline, and it has earned Aider a loyal following among developers who prefer scriptable, editor-agnostic workflows. The project also maintains the widely cited Aider polyglot benchmark, which evaluates how accurately various frontier models can perform real code edits across multiple programming languages.\n\nThe broader context matters here. Late 2025 has seen intense competition among Google's Gemini line, Anthropic's Claude family, and OpenAI's GPT series, particularly around coding ability and long-context reasoning. For a model-agnostic front end like Aider, fast turnaround on new models is a core part of the value proposition: users expect to be able to swap in whichever model currently leads on their workload. Gemini 3 Pro is reportedly positioned as a step up in reasoning and long-context handling, which could prove useful for repository-wide refactors or tasks that require holding many files in mind at once, though real-world performance will depend on how it compares to Claude and GPT counterparts on Aider's own benchmark.\n\nBecause 0.86.2 is a patch release, existing users should be able to upgrade through the usual pip install --upgrade aider-chat workflow. Trying the new Gemini model should be a matter of configuring the appropriate Google API credentials and selecting it via the --model flag. Users on older releases may also want to review the changelog for any related model-routing tweaks before upgrading in production environments."
+    },
+    {
+      "id": "bb22b3d209efc0a0",
+      "source": "cursor-changelog",
+      "sourceType": "changelog",
+      "url": "https://cursor.com/changelog/02-12-26",
+      "title": "Long-running Agents in Research Preview",
+      "titleJa": "Cursor、長時間稼働エージェントをResearch Previewで公開",
+      "titleEn": "Long-running Agents in Research Preview",
+      "summaryJa": "Cursorはクラウド上で長時間稼働する自律型エージェント機能をResearch Previewとして公開した。複数のタスクを並列で実行し、開発者の介入なしに長期的な作業を継続できる点が特徴で、AIコーディング支援の新たな段階を示す。",
+      "summaryEn": "Cursor can now work autonomously over longer horizons to complete larger, more complex tasks. Long-running agents plan first and finish more difficult work without human intervention.",
+      "lang": "en",
+      "publishedAt": "2026-02-12T00:00:00.000Z",
+      "collectedAt": "2026-05-26T19:00:38.325Z",
+      "tags": [
+        "changelog",
+        "cursor",
+        "ai-agents",
+        "coding-agent",
+        "research-preview"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "bodyJa": "Cursorは、長時間にわたり自律的にコーディングタスクを遂行する「Long-running Agents」をResearch Previewとして公開した。これまでのエディタ内で対話的に動くAI補助とは異なり、クラウド側で持続的に動作する点が大きな特徴である。\n\n長時間稼働エージェントは、開発者が指示を与えた後もバックグラウンドで作業を続け、複数ステップに渡るタスクや、調査・実装・検証を含む複合的な作業を一気通貫で進められると想定される。エディタを閉じても処理が継続する設計と見られ、ローカルマシンのリソースに縛られない利点がある。Research Previewという位置付けから、機能や制限はまだ実験的であり、フィードバックを集めながら段階的に拡張される可能性が高い。\n\n背景には、AIコーディング領域における「エージェント化」競争の激化がある。GitHub CopilotのCoding Agent、Devin (Cognition)、OpenAIのCodex、AnthropicのClaude Codeなど、各社が長時間自律実行型のコーディングエージェントを相次いで投入しており、Cursorもこの流れに本格的に参入した形だ。短い対話的な補完から、PR単位で完結する自律的タスク実行へと、開発支援の重心が移りつつある。\n\n一方で、長時間自律エージェントには、誤った変更が蓄積するリスク、レビュー負荷の増大、シークレットや本番環境へのアクセス制御といった運用上の課題も指摘されている。Cursorがどのようなサンドボックス設計や承認フローを採用しているかは今後の詳細公開を待つ必要があるが、既存の高速なローカル編集体験と、クラウド側の長時間実行を組み合わせるハイブリッド型の使い方が現実的な落としどころになると考えられる。",
+      "bodyEn": "Cursor has introduced Long-running Agents as a Research Preview, extending its AI coding capabilities beyond the interactive, in-editor assistance it is best known for. The new agents are designed to operate autonomously in the cloud over extended periods, taking on multi-step engineering tasks without continuous developer supervision.\n\nUnlike the inline completions and chat-driven edits that have defined Cursor so far, long-running agents persist beyond a single session. A developer can hand off a task and let the agent continue working in the background, potentially spanning planning, implementation, and verification phases. Because execution happens server-side, progress is not tied to whether the user keeps their laptop open or the editor running, which is a meaningful shift for workflows involving large refactors, bug investigations, or feature scaffolding.\n\nThe Research Preview label signals that the feature is still evolving. Specific limits, supported task shapes, and integration points are likely to change as Cursor gathers usage data and feedback. It is reasonable to expect iteration on areas such as task scoping, repository permissions, and how the agent surfaces intermediate results back to the user.\n\nThe move places Cursor squarely in the increasingly crowded space of autonomous coding agents. GitHub recently rolled out its Copilot Coding Agent that can pick up issues and open pull requests, Cognition's Devin pioneered the long-horizon software engineer framing, and both OpenAI's Codex agent and Anthropic's Claude Code push similar capabilities from the model-vendor side. The center of gravity in AI-assisted development is visibly shifting from millisecond completions toward agents that own a task end-to-end at the pull request level.\n\nThat shift brings real operational questions. Long-running agents amplify the consequences of subtle mistakes: hallucinated APIs, broken tests, or insecure patterns can accumulate across many commits before a human reviews them. Access control also becomes more delicate, since cloud agents may need credentials, repository write access, or the ability to run code against staging environments. How Cursor sandboxes execution, gates risky actions, and integrates with existing review workflows will likely determine how widely teams trust the feature in production settings.\n\nFor now, the most plausible adoption pattern is hybrid: developers continue using Cursor's fast local editing for tight feedback loops while delegating longer, more mechanical tasks — dependency upgrades, test backfills, repetitive migrations — to the cloud agent. If the Research Preview matures, it could meaningfully expand what a single engineer can keep in flight at once, though the exact reliability envelope remains to be proven."
     },
     {
       "id": "b8d7a7a607718ef2",
@@ -17726,33 +17809,6 @@
       "archiveTier": "cold",
       "bodyJa": "OpenEnv実践:実環境でのツール使用エージェント評価 は、huggingface-blog が伝えた local-llm 領域の更新です。Hugging FaceがOpenEnvを用いて、実環境でツールを使うエージェントを評価する手法を解説。Turingベンチマークを通じて、エージェントの能力を現実的なタスクで測定する枠組みを示す。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは huggingface, open-model, openenv, agents です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
       "bodyEn": "OpenEnv in Practice: Evaluating Tool-Using Agents in Real-World Environments is a local-llm update collected from huggingface-blog. Hugging Face demonstrates how to use OpenEnv to evaluate tool-using agents in real-world environments, showcasing the Turing benchmark as a practical framework for measuring agent capabilities on realistic tasks.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include huggingface, open-model, openenv, agents. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
-    },
-    {
-      "id": "bb22b3d209efc0a0",
-      "source": "cursor-changelog",
-      "sourceType": "changelog",
-      "url": "https://cursor.com/changelog/02-12-26",
-      "title": "Long-running Agents in Research Preview",
-      "titleJa": "Cursor、長時間稼働エージェントをResearch Previewで公開",
-      "titleEn": "Long-running Agents in Research Preview",
-      "summaryJa": "Cursorはクラウド上で長時間稼働する自律型エージェント機能をResearch Previewとして公開した。複数のタスクを並列で実行し、開発者の介入なしに長期的な作業を継続できる点が特徴で、AIコーディング支援の新たな段階を示す。",
-      "summaryEn": "Cursor can now work autonomously over longer horizons to complete larger, more complex tasks. Long-running agents plan first and finish more difficult work without human intervention.",
-      "lang": "en",
-      "publishedAt": "2026-02-12T00:00:00.000Z",
-      "collectedAt": "2026-05-26T19:00:38.325Z",
-      "tags": [
-        "changelog",
-        "cursor",
-        "ai-agents",
-        "coding-agent",
-        "research-preview"
-      ],
-      "category": "cursor",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "bodyJa": "Cursorは、長時間にわたり自律的にコーディングタスクを遂行する「Long-running Agents」をResearch Previewとして公開した。これまでのエディタ内で対話的に動くAI補助とは異なり、クラウド側で持続的に動作する点が大きな特徴である。\n\n長時間稼働エージェントは、開発者が指示を与えた後もバックグラウンドで作業を続け、複数ステップに渡るタスクや、調査・実装・検証を含む複合的な作業を一気通貫で進められると想定される。エディタを閉じても処理が継続する設計と見られ、ローカルマシンのリソースに縛られない利点がある。Research Previewという位置付けから、機能や制限はまだ実験的であり、フィードバックを集めながら段階的に拡張される可能性が高い。\n\n背景には、AIコーディング領域における「エージェント化」競争の激化がある。GitHub CopilotのCoding Agent、Devin (Cognition)、OpenAIのCodex、AnthropicのClaude Codeなど、各社が長時間自律実行型のコーディングエージェントを相次いで投入しており、Cursorもこの流れに本格的に参入した形だ。短い対話的な補完から、PR単位で完結する自律的タスク実行へと、開発支援の重心が移りつつある。\n\n一方で、長時間自律エージェントには、誤った変更が蓄積するリスク、レビュー負荷の増大、シークレットや本番環境へのアクセス制御といった運用上の課題も指摘されている。Cursorがどのようなサンドボックス設計や承認フローを採用しているかは今後の詳細公開を待つ必要があるが、既存の高速なローカル編集体験と、クラウド側の長時間実行を組み合わせるハイブリッド型の使い方が現実的な落としどころになると考えられる。",
-      "bodyEn": "Cursor has introduced Long-running Agents as a Research Preview, extending its AI coding capabilities beyond the interactive, in-editor assistance it is best known for. The new agents are designed to operate autonomously in the cloud over extended periods, taking on multi-step engineering tasks without continuous developer supervision.\n\nUnlike the inline completions and chat-driven edits that have defined Cursor so far, long-running agents persist beyond a single session. A developer can hand off a task and let the agent continue working in the background, potentially spanning planning, implementation, and verification phases. Because execution happens server-side, progress is not tied to whether the user keeps their laptop open or the editor running, which is a meaningful shift for workflows involving large refactors, bug investigations, or feature scaffolding.\n\nThe Research Preview label signals that the feature is still evolving. Specific limits, supported task shapes, and integration points are likely to change as Cursor gathers usage data and feedback. It is reasonable to expect iteration on areas such as task scoping, repository permissions, and how the agent surfaces intermediate results back to the user.\n\nThe move places Cursor squarely in the increasingly crowded space of autonomous coding agents. GitHub recently rolled out its Copilot Coding Agent that can pick up issues and open pull requests, Cognition's Devin pioneered the long-horizon software engineer framing, and both OpenAI's Codex agent and Anthropic's Claude Code push similar capabilities from the model-vendor side. The center of gravity in AI-assisted development is visibly shifting from millisecond completions toward agents that own a task end-to-end at the pull request level.\n\nThat shift brings real operational questions. Long-running agents amplify the consequences of subtle mistakes: hallucinated APIs, broken tests, or insecure patterns can accumulate across many commits before a human reviews them. Access control also becomes more delicate, since cloud agents may need credentials, repository write access, or the ability to run code against staging environments. How Cursor sandboxes execution, gates risky actions, and integrates with existing review workflows will likely determine how widely teams trust the feature in production settings.\n\nFor now, the most plausible adoption pattern is hybrid: developers continue using Cursor's fast local editing for tight feedback loops while delegating longer, more mechanical tasks — dependency upgrades, test backfills, repetitive migrations — to the cloud agent. If the Research Preview matures, it could meaningfully expand what a single engineer can keep in flight at once, though the exact reliability envelope remains to be proven."
     },
     {
       "id": "0e87eb41d8f2ea9f",
@@ -17885,7 +17941,7 @@
       "summaryEn": "GPT-5.3-Codex is a Codex-native agent that pairs frontier coding performance with general reasoning to support long-horizon, real-world technical work.",
       "lang": "en",
       "publishedAt": "2026-02-05T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "openai",
@@ -17912,7 +17968,7 @@
       "summaryEn": "GPT‑5.3-Codex is the most capable agentic coding model to date, combining the frontier coding performance of GPT‑5.2-Codex with the reasoning and professional knowledge capabilities of GPT‑5.2.",
       "lang": "en",
       "publishedAt": "2026-02-05T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "openai",
@@ -18166,7 +18222,7 @@
       "summaryEn": "Release : v2026.1.26 Updated packages @modelcontextprotocol/server-everything@2026.1.26 @modelcontextprotocol/server-memory@2026.1.26 mcp-server-time@2026.1.26",
       "lang": "en",
       "publishedAt": "2026-01-27T12:11:26.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -18492,7 +18548,7 @@
       "summaryEn": "Release : v2026.1.14 Updated packages @modelcontextprotocol/server-everything@2026.1.14 @modelcontextprotocol/server-filesystem@2026.1.14 mcp-server-git@2026.1.14",
       "lang": "en",
       "publishedAt": "2026-01-14T16:35:35.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -18854,7 +18910,7 @@
       "summaryEn": "Release : v2025.12.18 Updated packages @modelcontextprotocol/server-sequential-thinking@2025.12.18 @modelcontextprotocol/server-everything@2025.12.18 @modelcontextprotocol/server-filesystem@2025.12.18",
       "lang": "en",
       "publishedAt": "2025-12-18T16:33:28.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -18945,7 +19001,7 @@
       "summaryEn": "GPT-5.2-Codex is OpenAI’s most advanced coding model, offering long-horizon reasoning, large-scale code transformations, and enhanced cybersecurity capabilities.",
       "lang": "en",
       "publishedAt": "2025-12-18T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-5.2",
@@ -19192,7 +19248,7 @@
       "summaryEn": "GPT-5.2 is OpenAI’s strongest model yet for math and science, setting new state-of-the-art results on benchmarks like GPQA Diamond and FrontierMath. This post shows how those gains translate into real",
       "lang": "en",
       "publishedAt": "2025-12-11T10:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "benchmark",
         "openai",
@@ -19256,7 +19312,7 @@
       "summaryEn": "GPT-5.2 is our most advanced frontier model for everyday professional work, with state-of-the-art reasoning, long-context understanding, coding, and vision. Use it in ChatGPT and the OpenAI API to pow",
       "lang": "en",
       "publishedAt": "2025-12-11T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-5.2",
@@ -19281,7 +19337,7 @@
       "summaryEn": "Disney and OpenAI have reached an agreement to bring more than 200 Disney, Marvel, Pixar and Star Wars characters to Sora for fan-inspired short videos. The agreement emphasizes responsible AI in ente",
       "lang": "en",
       "publishedAt": "2025-12-11T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "sora",
@@ -19472,7 +19528,7 @@
       "summaryEn": "Release : v2025.11.25 Updated packages @modelcontextprotocol/server-sequential-thinking@2025.11.25 @modelcontextprotocol/server-everything@2025.11.25 @modelcontextprotocol/server-filesystem@2025.11.25",
       "lang": "en",
       "publishedAt": "2025-11-25T19:03:57.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -19892,7 +19948,7 @@
       "summaryEn": "GPT-5.1 is now available in the API, bringing faster adaptive reasoning, extended prompt caching, improved coding performance, and new apply_patch and shell tools.",
       "lang": "en",
       "publishedAt": "2025-11-13T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-5.1",
@@ -19918,7 +19974,7 @@
       "summaryEn": "We’re upgrading the GPT-5 series with warmer, more capable models and new ways to customize ChatGPT’s tone and style. GPT-5.1 starts rolling out today to paid users.",
       "lang": "en",
       "publishedAt": "2025-11-12T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-5.1",
@@ -19981,7 +20037,7 @@
       "summaryEn": "OpenAI and AWS have entered a multi-year, $38 billion partnership to scale advanced AI workloads. AWS will provide world-class infrastructure and compute capacity to power OpenAI’s next generation of ",
       "lang": "en",
       "publishedAt": "2025-11-03T06:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "aws",
@@ -20065,7 +20121,7 @@
       "summaryEn": "Microsoft and OpenAI sign a new agreement that strengthens its long-term partnership, expands innovation, and ensures responsible AI progress.",
       "lang": "en",
       "publishedAt": "2025-10-28T06:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "microsoft",
@@ -20404,7 +20460,7 @@
       "summaryEn": "ChatGPT Atlas, the browser with ChatGPT built it. Get instant answers, summaries, and smart web help—right from any page. With privacy settings you can control. Available now for MacOS.",
       "lang": "en",
       "publishedAt": "2025-10-21T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "chatgpt-atlas",
@@ -20458,7 +20514,7 @@
       "summaryEn": "OpenAI and Broadcom announce a multi-year partnership to deploy 10 gigawatts of OpenAI-designed AI accelerators, co-developing next-generation systems and Ethernet solutions to power scalable, energy-",
       "lang": "en",
       "publishedAt": "2025-10-13T06:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "broadcom",
@@ -20485,7 +20541,7 @@
       "summaryEn": "OpenAI Codex is now generally available with powerful new features for developers: a Slack integration, Codex SDK, and admin tools like usage dashboards and workspace management—making Codex easier to",
       "lang": "en",
       "publishedAt": "2025-10-06T10:50:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "coding-agent",
@@ -20511,7 +20567,7 @@
       "summaryEn": "We’re introducing a new generation of apps you can chat with, right inside ChatGPT. Developers can start building them today with the new Apps SDK, available in preview.",
       "lang": "en",
       "publishedAt": "2025-10-06T10:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "chatgpt",
@@ -20537,7 +20593,7 @@
       "summaryEn": "AMD and OpenAI have announced a multi-year partnership to deploy 6 gigawatts of AMD Instinct GPUs, beginning with 1 gigawatt in 2026, to power OpenAI’s next-generation AI infrastructure and accelerate",
       "lang": "en",
       "publishedAt": "2025-10-06T06:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "amd",
@@ -20564,7 +20620,7 @@
       "summaryEn": "Today, we’re releasing new tools to help developers go from prototype to production faster: AgentKit, expanded evals capabilities, and reinforcement fine-tuning for agents.",
       "lang": "en",
       "publishedAt": "2025-10-06T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "agentkit",
@@ -20627,7 +20683,7 @@
       "summaryEn": "Sora 2 is our new state of the art video and audio generation model. Building on the foundation of Sora, this new model introduces capabilities that have been difficult for prior video models to achie",
       "lang": "en",
       "publishedAt": "2025-09-30T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "sora-2",
@@ -20654,7 +20710,7 @@
       "summaryEn": "Our latest video generation model is more physically accurate, realistic, and controllable than prior systems. It also features synchronized dialogue and sound effects. Create with it in the new Sora ",
       "lang": "en",
       "publishedAt": "2025-09-30T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "sora",
@@ -20708,7 +20764,7 @@
       "summaryEn": "We’re taking first steps toward agentic commerce in ChatGPT with new ways for people, AI agents, and businesses to shop together.",
       "lang": "en",
       "publishedAt": "2025-09-29T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "agent",
         "openai",
@@ -20737,7 +20793,7 @@
       "summaryEn": "Release : v2025.9.25 Updated packages @modelcontextprotocol/server-everything@2025.9.25 @modelcontextprotocol/server-memory@2025.9.25 mcp-server-git@2025.9.25 mcp-server-time@2025.9.25",
       "lang": "en",
       "publishedAt": "2025-09-25T21:26:20.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -20773,7 +20829,7 @@
       "summaryEn": "OpenAI, Oracle, and SoftBank announce five new Stargate AI datacenter sites, accelerating a $500B, 10-gigawatt U.S. infrastructure buildout to power next-generation AI and create tens of thousands of ",
       "lang": "en",
       "publishedAt": "2025-09-23T14:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "stargate",
@@ -20828,7 +20884,7 @@
       "summaryEn": "OpenAI and NVIDIA announce a strategic partnership to deploy 10 gigawatts of AI datacenters powered by NVIDIA systems, with the first phase launching in 2026.",
       "lang": "en",
       "publishedAt": "2025-09-22T08:45:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "release",
@@ -20856,7 +20912,7 @@
       "summaryEn": "Release 2025.9.12",
       "lang": "en",
       "publishedAt": "2025-09-12T19:58:34.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -20921,7 +20977,7 @@
       "summaryEn": "Release 2025.9.3",
       "lang": "en",
       "publishedAt": "2025-09-03T17:58:52.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -20958,7 +21014,7 @@
       "summaryEn": "Release 2025.9.1",
       "lang": "en",
       "publishedAt": "2025-09-01T10:14:56.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -20995,7 +21051,7 @@
       "summaryEn": "We’re releasing a more advanced speech-to-speech model and new API capabilities including MCP server support, image input, and SIP phone calling support.",
       "lang": "en",
       "publishedAt": "2025-08-28T10:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "mcp-server",
         "openai",
@@ -21051,7 +21107,7 @@
       "summaryEn": "Release 2025.8.21",
       "lang": "en",
       "publishedAt": "2025-08-21T14:30:48.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -21160,7 +21216,7 @@
       "summaryEn": "Release 2025.8.18",
       "lang": "en",
       "publishedAt": "2025-08-18T15:41:30.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -21196,7 +21252,7 @@
       "summaryEn": "set version to 0.86.2.dev",
       "lang": "en",
       "publishedAt": "2025-08-13T15:46:02.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "aider",
         "release",
@@ -21231,7 +21287,7 @@
       "summaryEn": "version bump to 0.86.1",
       "lang": "en",
       "publishedAt": "2025-08-13T15:46:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "aider",
         "release",
@@ -21267,7 +21323,7 @@
       "summaryEn": "Added support for all GPT-5 models. Added support for Grok-4 via xai/grok-4 and openrouter/x-ai/grok-4 model names. Added support for gemini/gemini-2.5-flash-lite-preview-06-17 model, by Tamir Zahavi-",
       "lang": "en",
       "publishedAt": "2025-08-09T17:42:19.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "aider",
         "release",
@@ -21303,7 +21359,7 @@
       "summaryEn": "set version to 0.86.1.dev",
       "lang": "en",
       "publishedAt": "2025-08-09T15:55:11.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "aider",
         "release",
@@ -21337,7 +21393,7 @@
       "summaryEn": "set version to 0.85.6.dev",
       "lang": "en",
       "publishedAt": "2025-08-07T20:54:56.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "aider",
         "release",
@@ -21372,7 +21428,7 @@
       "summaryEn": "version bump to 0.85.5",
       "lang": "en",
       "publishedAt": "2025-08-07T20:54:54.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "aider",
         "release",
@@ -21407,7 +21463,7 @@
       "summaryEn": "set version to 0.85.5.dev",
       "lang": "en",
       "publishedAt": "2025-08-07T18:33:44.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "aider",
         "release",
@@ -21442,7 +21498,7 @@
       "summaryEn": "version bump to 0.85.4",
       "lang": "en",
       "publishedAt": "2025-08-07T18:33:43.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "aider",
         "release",
@@ -21478,7 +21534,7 @@
       "summaryEn": "Introducing GPT-5 in our API platform—offering high reasoning performance, new controls for devs, and best-in-class results on real coding tasks.",
       "lang": "en",
       "publishedAt": "2025-08-07T10:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-5",
@@ -21540,7 +21596,7 @@
       "summaryEn": "See how a group of leading developers use GPT-5 for the first time.",
       "lang": "en",
       "publishedAt": "2025-08-07T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-5",
@@ -21565,7 +21621,7 @@
       "summaryEn": "This GPT-5 system card explains how a unified model routing system powers fast and smart responses using gpt-5-main, gpt-5-thinking, and lightweight versions like gpt-5-thinking-nano, optimized for di",
       "lang": "en",
       "publishedAt": "2025-08-07T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-5",
@@ -21591,7 +21647,7 @@
       "summaryEn": "We are introducing GPT‑5, our best AI system yet. GPT‑5 is a significant leap in intelligence over all our previous models, featuring state-of-the-art performance across coding, math, writing, health,",
       "lang": "en",
       "publishedAt": "2025-08-07T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-5",
@@ -21702,7 +21758,7 @@
       "summaryEn": "We introduce gpt-oss-120b and gpt-oss-20b, two open-weight reasoning models available under the Apache 2.0 license and our gpt-oss usage policy.",
       "lang": "en",
       "publishedAt": "2025-08-05T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "open-weights",
@@ -21728,7 +21784,7 @@
       "summaryEn": "We’re releasing gpt-oss-120b and gpt-oss-20b—two state-of-the-art open-weight language models that deliver strong real-world performance at low cost. Available under the flexible Apache 2.0 license, t",
       "lang": "en",
       "publishedAt": "2025-08-05T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "gpt-oss",
@@ -21754,7 +21810,7 @@
       "summaryEn": "We’re launching Stargate Norway—OpenAI’s first AI data center initiative in Europe under our OpenAI for Countries program. Stargate is OpenAI’s overarching infrastructure platform and is a critical pa",
       "lang": "en",
       "publishedAt": "2025-07-31T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "release",
@@ -21919,7 +21975,7 @@
       "summaryEn": "Oracle and OpenAI have entered an agreement to develop 4.5 gigawatts of additional Stargate data center capacity in the U.S. This investment will create new jobs, accelerate America’s reindustrializat",
       "lang": "en",
       "publishedAt": "2025-07-22T00:00:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "stargate",
@@ -22228,7 +22284,7 @@
       "summaryEn": "Announcing The Stargate Project",
       "lang": "en",
       "publishedAt": "2025-01-21T13:30:00.000Z",
-      "collectedAt": "2026-05-26T22:00:38.278Z",
+      "collectedAt": "2026-05-27T02:00:38.332Z",
       "tags": [
         "openai",
         "stargate",

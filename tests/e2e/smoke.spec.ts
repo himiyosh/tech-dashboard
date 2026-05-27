@@ -497,7 +497,7 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.locator("button[data-search-trigger]:visible").first().click();
     await expect(page.locator("#pagefind-search-input")).toBeFocused();
-    await page.locator("#pagefind-search-input").fill("Copilot");
+    await page.locator("#pagefind-search-input").pressSequentially("Copilot");
     await expect(page.locator("#pagefind-results")).toBeVisible({ timeout: 10_000 });
     await expect(page.locator(".search-hit").first()).toBeVisible({ timeout: 10_000 });
     await expect(page.locator(".search-hit-type").first()).toBeVisible({ timeout: 10_000 });
@@ -510,7 +510,7 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.locator("button[data-search-trigger]:visible").first().click();
     await expect(page.locator("#pagefind-search-input")).toBeFocused();
-    await page.locator("#pagefind-search-input").fill("漢字未存在語彙魑魅魍魎");
+    await page.locator("#pagefind-search-input").pressSequentially("🦄🦄🦄");
 
     await expect(page.locator("#pagefind-results")).toBeVisible({ timeout: 10_000 });
     await expect(page.locator(".search-empty")).toContainText("No results", { timeout: 10_000 });

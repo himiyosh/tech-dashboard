@@ -6,6 +6,7 @@
  */
 import { XMLParser } from "fast-xml-parser";
 import type { RawEntry, SourceDefinition } from "../types.ts";
+import { matchesKeywordFilter } from "../pipeline/source-filter.ts";
 
 interface RssItem {
   title?: string | { "#text"?: string };
@@ -189,19 +190,6 @@ function stripHtml(s: string): string {
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-function matchesKeywordFilter(entry: RawEntry, source: SourceDefinition): boolean {
-  const haystack = (source.keywordFilterScope === "title"
-    ? entry.title
-    : `${entry.title} ${entry.contentSnippet ?? ""} ${entry.url}`).toLowerCase();
-  if (source.excludeKeywords?.some((keyword) => haystack.includes(keyword.toLowerCase()))) {
-    return false;
-  }
-  if (source.includeKeywords && source.includeKeywords.length > 0) {
-    return source.includeKeywords.some((keyword) => haystack.includes(keyword.toLowerCase()));
-  }
-  return true;
 }
 
 /** Fetch a feed URL and parse it into RawEntry[]. */

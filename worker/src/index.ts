@@ -18,6 +18,7 @@
 import { listSources } from "../../harness/registry.ts";
 import { mergeEntryEnrichment } from "../../harness/pipeline/entry-merge.ts";
 import { normalize } from "../../harness/pipeline/normalize.ts";
+import { matchesKeywordFilter } from "../../harness/pipeline/source-filter.ts";
 import { applyTags } from "../../harness/pipeline/tag.ts";
 import { canonicalUrlKey } from "../../harness/pipeline/url.ts";
 import { applyDeterministicContentFallback } from "./content-fallback.ts";
@@ -116,6 +117,20 @@ function preferEntry(current: NormalizedEntry | undefined, candidate: Normalized
 function setPreferredEntry(byUrl: Map<string, NormalizedEntry>, entry: NormalizedEntry): void {
   const key = entryUrlKey(entry);
   byUrl.set(key, preferEntry(byUrl.get(key), entry));
+}
+
+function entryPassesCurrentSourceFilter(entry: NormalizedEntry, sourceDef: SourceDefinition | undefined): boolean {
+  if (!sourceDef) return true;
+  return matchesKeywordFilter(
+    {
+      title: entry.title,
+      url: entry.url,
+      contentSnippet: [entry.titleJa, entry.titleEn, entry.summaryJa, entry.summaryEn]
+        .filter(Boolean)
+        .join(" "),
+    },
+    sourceDef,
+  );
 }
 const COPILOT_ENDPOINT = "https://api.githubcopilot.com/chat/completions";
 const COPILOT_HEADERS = {
@@ -786,6 +801,14 @@ async function runHarness(
   for (const e of priorEntries) setPreferredEntry(byUrl, e);
   for (const e of fresh) setPreferredEntry(byUrl, e);
   const merged = [...byUrl.values()];
+  const sourceDefMap = new Map(listSources().map((s) => [s.id, s]));
+  const qualityFiltered = merged.filter((entry) =>
+    entryPassesCurrentSourceFilter(entry, sourceDefMap.get(entry.source)),
+  );
+  const filteredByCurrentRules = merged.length - qualityFiltered.length;
+  if (filteredByCurrentRules > 0) {
+    console.log(`[worker] source keyword filters removed ${filteredByCurrentRules} merged entries`);
+  }
 
   // 2) Cap per source (importance-aware for high-volume sources) then sort newest-first then cap to INDEX_LIMIT.
   const PER_SOURCE_CAP = 50;
@@ -794,10 +817,8 @@ async function runHarness(
   const CATEGORY_CAPS: Partial<Record<string, number>> = {
     research: 120,
   };
-  // Build source-def lookup so we can use per-source overrides (perSourceCap).
-  const sourceDefMap = new Map(listSources().map((s) => [s.id, s]));
   const bySource = new Map<string, NormalizedEntry[]>();
-  for (const e of merged) {
+  for (const e of qualityFiltered) {
     const arr = bySource.get(e.source) ?? [];
     arr.push(e);
     bySource.set(e.source, arr);

@@ -618,6 +618,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **Mitigation**: Move summary job selection into `worker/src/summary-queue.ts`, compute the eligible backlog first, and rotate by `hour * ENQUEUE_MAX_NEW` over that eligible list. Expose `summaryQueueBacklog` and `summaryQueueDrainEstimateHours` in Worker health.
 - **Lesson**: Rate limits need a fairness model. A cap without cap-sized round-robin can look active in health metrics while starving most of the backlog.
 
+### LL-077: Source keyword filters must also clean previously merged entries
+- **Incident**: CI kept failing on Worker-generated `data/index.json` because an old `qiita-vscode` entry (`C言語のコンパイル時に文字化けが発生する`) reappeared after a cron run, even though the RSS collector had title-only VSCode filters.
+- **Root cause**: The Worker filtered fresh collector output, but then merged it with prior `data/index.json` entries and kept old entries without reapplying the current source rules. A stale raw GitHub read or pre-filter artifact could therefore survive forever and fail data-schema quality gates.
+- **Mitigation**: Share `matchesKeywordFilter()` in `harness/pipeline/source-filter.ts` and apply it to merged Worker entries before per-source/category caps.
+- **Lesson**: Registry filter changes are migration rules, not only collection rules. Automated publishers must revalidate existing merged artifacts on every run.
+
 ## 🔄 自己学習ハーネス手順
 
 1. 作業中に発生した「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。

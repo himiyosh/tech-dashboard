@@ -49,6 +49,20 @@ describe("worker summary queue selection", () => {
     const jobs = selectSummaryJobs([baseEntry], new Map(), new Set([baseEntry.url]), 30);
     expect(jobs).toHaveLength(1);
     expect(jobs[0]!.url).toBe(baseEntry.url);
+    expect(jobs[0]!.entry.summaryEn).toBe(baseEntry.summaryEn);
+    expect(jobs[0]!.entry.tags).toEqual(baseEntry.tags);
+  });
+
+  it("enqueues known fallback entries even when they were skipped by KV lookup cap", () => {
+    const jobs = selectSummaryJobs(
+      [baseEntry],
+      new Map(),
+      new Set(),
+      30,
+      new Set([baseEntry.url]),
+    );
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]!.url).toBe(baseEntry.url);
   });
 
   it("skips entries with a complete non-fallback cache hit", () => {

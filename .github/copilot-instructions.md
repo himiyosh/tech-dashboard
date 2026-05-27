@@ -606,6 +606,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **Mitigation**: Shared fallback detection is used by Featured / Top-3 / article detail / metrics. Decision-critical slots prefer real summaries, article detail shows a pending state instead of boilerplate body, and Status exposes summary backlog metrics.
 - **Lesson**: Non-empty content is not the same as trustworthy content. Ranking, share UI, and health dashboards must treat deterministic fallback as pending work, not as completed enrichment.
 
+### LL-075: Queue summarizer prompt must fit Worker time/token budget
+- **Incident**: `data/index.json` showed a large deterministic fallback backlog even though the collector Worker had `queueMode=enabled`, `copilotOk=true`, and enqueue candidates available.
+- **Root cause**: The Queue consumer used the long-form article prompt while capping output at a Worker-safe token budget. The prompt asked for 700-1100 Japanese characters and 500-800 English words, so Sonnet often could not finish valid JSON inside the 28s Worker timeout / ~1500 token budget.
+- **Mitigation**: Keep a separate compact `buildQueuePrompt()` contract for `worker-summarizer`, with `SUMMARIZE_MAX_TOKENS=1600`, mandatory complete JSON validation, and source snippet fields carried in the queue payload. Local/offline backfills can still use the longer prompt.
+- **Lesson**: Splitting work into a Queue is not enough; each Queue message must have an output contract sized for the consumer's actual wall-time and token budget. Backlog metrics must compare real enqueue selection logic, including KV-lookup-cap-skipped fallback entries.
+
 ## 🔄 自己学習ハーネス手順
 
 1. 作業中に発生した「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。

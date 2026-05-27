@@ -68,7 +68,20 @@ interface SummaryJob {
   entry: Pick<
     NormalizedEntry,
     "id" | "url" | "title" | "category" | "source" | "sourceType"
-  >;
+  > &
+    Partial<
+      Pick<
+        NormalizedEntry,
+        | "titleJa"
+        | "titleEn"
+        | "summaryJa"
+        | "summaryEn"
+        | "lang"
+        | "publishedAt"
+        | "tags"
+        | "importance"
+      >
+    >;
 }
 
 const INDEX_LIMIT = 2000;
@@ -110,38 +123,56 @@ export function needsGeneratedContent(entry: NormalizedEntry): boolean {
   );
 }
 
+function hasRealCacheEntry(hit: CacheEntry | undefined): boolean {
+  return Boolean(
+    hit &&
+      hit.summaryJa &&
+      hit.summaryEn &&
+      hit.bodyJa &&
+      hit.bodyEn &&
+      hit.model !== "deterministic-fallback",
+  );
+}
+
+function toSummaryJob(entry: NormalizedEntry): SummaryJob {
+  return {
+    url: entry.url,
+    entry: {
+      id: entry.id,
+      url: entry.url,
+      title: entry.title,
+      titleJa: entry.titleJa,
+      titleEn: entry.titleEn,
+      summaryJa: entry.summaryJa,
+      summaryEn: entry.summaryEn,
+      lang: entry.lang,
+      publishedAt: entry.publishedAt ?? undefined,
+      tags: entry.tags,
+      category: entry.category,
+      source: entry.source,
+      sourceType: entry.sourceType,
+      importance: entry.importance,
+    },
+  };
+}
+
 export function selectSummaryJobs(
   entries: readonly NormalizedEntry[],
   hitsByUrl: Map<string, CacheEntry>,
   lookedUpUrls: Set<string>,
   cap: number,
+  uncheckedFallbackUrls = new Set<string>(),
 ): SummaryJob[] {
   const candidates: SummaryJob[] = [];
   for (const e of entries) {
     if (candidates.length >= cap) break;
-    if (!lookedUpUrls.has(e.url)) {
+    const isLookedUp = lookedUpUrls.has(e.url);
+    const isUncheckedFallback = uncheckedFallbackUrls.has(e.url);
+    if (!isLookedUp && !isUncheckedFallback) {
       continue;
     }
-    const hit = hitsByUrl.get(e.url);
-    const hasRealCache =
-      hit &&
-      hit.summaryJa &&
-      hit.summaryEn &&
-      hit.bodyJa &&
-      hit.bodyEn &&
-      hit.model !== "deterministic-fallback";
-    if (hasRealCache) continue;
-    candidates.push({
-      url: e.url,
-      entry: {
-        id: e.id,
-        url: e.url,
-        title: e.title,
-        category: e.category,
-        source: e.source,
-        sourceType: e.sourceType,
-      },
-    });
+    if (isLookedUp && hasRealCacheEntry(hitsByUrl.get(e.url))) continue;
+    candidates.push(toSummaryJob(e));
   }
   return candidates;
 }
@@ -607,13 +638,13 @@ async function resolveCopilotToken(pat: string): Promise<string> {
 
 // ---------- Summarize -------------------------------------------------------
 
-import { buildPrompt, parseResponse } from "./prompt.ts";
+import { buildPrompt, buildQueuePrompt, parseResponse } from "./prompt.ts";
 // Re-export for unit tests (tests/worker-parse.test.ts).
 // NOTE: bare `export ... from` would *only* create a module-level re-export
 // and would NOT bring the symbols into this module's local scope, leading to
 // `ReferenceError: buildPrompt is not defined` inside callCopilot at runtime
 // (see LL-030). Always import first, then re-export.
-export { buildPrompt, parseResponse };
+export { buildPrompt, buildQueuePrompt, parseResponse };
 
 async function callCopilot(
   token: string,
@@ -642,7 +673,7 @@ async function callCopilot(
             content:
               "あなたは技術記事を日本語と英語の両方で要約するエディターです。指示された JSON 形式のみを返してください。",
           },
-          { role: "user", content: buildPrompt(e) },
+          { role: "user", content: buildQueuePrompt(e) },
         ],
       }),
     });
@@ -724,7 +755,7 @@ async function fetchOgImage(url: string): Promise<string | null> {
     const buf = new Uint8Array(total);
     let offset = 0;
     for (const c of chunks) { buf.set(c, offset); offset += c.byteLength; }
-    const html = new TextDecoder("utf-8", { fatal: false }).decode(buf);
+    const html = new TextDecoder("utf-8", { fatal: false, ignoreBOM: false }).decode(buf);
     const og = matchMetaContent(html, "og:image") ?? matchMetaContent(html, "twitter:image");
     if (!og) return null;
     return absolutizeUrl(og, url);
@@ -1137,7 +1168,7 @@ async function runHarness(
   const fallbackTotal = finalEntries.filter(needsGeneratedContent).length;
   const fallbackPercent = finalEntries.length === 0 ? 0 : Math.round((fallbackTotal / finalEntries.length) * 100);
   const enqueueCandidates = queueEnabled && env.SUMMARY_QUEUE
-    ? selectSummaryJobs(finalEntries, hitsByUrl, lookedUpUrls, queueCap).length
+    ? selectSummaryJobs(finalEntries, hitsByUrl, lookedUpUrls, queueCap, uncheckedFallbackUrls).length
     : 0;
   const health = {
     lastRunAt: new Date().toISOString(),
@@ -1279,6 +1310,12 @@ async function writeHeartbeat(
     sourcesAttempted: number;
     sourcesFailed: string[];
     copilotOk: boolean;
+    fallbackPercent?: number;
+    queueMode?: string;
+    queueCap?: number;
+    enqueueCandidates?: number;
+    kvLookupCount?: number;
+    kvLookupCap?: number;
   },
   changed: boolean,
   enqueued: number,
@@ -1296,6 +1333,12 @@ async function writeHeartbeat(
       sourcesAttempted: health.sourcesAttempted,
       sourcesFailed: health.sourcesFailed,
       copilotOk: health.copilotOk,
+      fallbackPercent: health.fallbackPercent,
+      queueMode: health.queueMode,
+      queueCap: health.queueCap,
+      enqueueCandidates: health.enqueueCandidates,
+      kvLookupCount: health.kvLookupCount,
+      kvLookupCap: health.kvLookupCap,
     };
     // 7-day TTL: if Worker stops running, the heartbeat expires naturally.
     await env.SUMMARY_CACHE.put(HEARTBEAT_KEY, JSON.stringify(hb), {
@@ -1345,30 +1388,9 @@ async function maybeEnqueueSummaryJobs(
       continue;
     }
 
-    if (isLookedUp) {
-      // We KV-read this entry. Only enqueue if the cache lacks a real summary.
-      const hit = hitsByUrl.get(e.url);
-      const hasRealCache =
-        hit &&
-        hit.summaryJa &&
-        hit.summaryEn &&
-        hit.bodyJa &&
-        hit.bodyEn &&
-        hit.model !== "deterministic-fallback";
-      if (hasRealCache) continue;
-    }
+    if (isLookedUp && hasRealCacheEntry(hitsByUrl.get(e.url))) continue;
     // isUncheckedFallback (or KV-miss) → no confirmed summary in cache; enqueue.
-    candidates.push({
-      url: e.url,
-      entry: {
-        id: e.id,
-        url: e.url,
-        title: e.title,
-        category: e.category,
-        source: e.source,
-        sourceType: e.sourceType,
-      },
-    });
+    candidates.push(toSummaryJob(e));
   }
 
   // Queue.sendBatch caps at 100 messages and 256 KB per call. Chunk so the

@@ -5,7 +5,7 @@
  * Cloudflare Worker 環境・ネットワーク呼び出しには依存しない。
  */
 import { describe, it, expect } from "vitest";
-import { buildPrompt, parseResponse } from "../worker/src/prompt.ts";
+import { buildPrompt, buildQueuePrompt, parseResponse } from "../worker/src/prompt.ts";
 import type { NormalizedEntry } from "../harness/types.ts";
 
 // テスト用エントリフィクスチャ
@@ -55,6 +55,38 @@ describe("buildPrompt", () => {
     const prompt = buildPrompt(mockEntry);
     expect(typeof prompt).toBe("string");
     expect(prompt.length).toBeGreaterThan(100);
+  });
+});
+
+// ============================================================
+// buildQueuePrompt
+// ============================================================
+describe("buildQueuePrompt", () => {
+  it("Worker Queue 用に短い本文制約を含み、長文 backfill 制約を含まない", () => {
+    const prompt = buildQueuePrompt(mockEntry);
+    expect(prompt).toContain("240-420 chars");
+    expect(prompt).toContain("140-220 words");
+    expect(prompt).not.toContain("500-800 words");
+    expect(prompt).not.toContain("700〜1100");
+  });
+
+  it("収集済み snippet を fallback でなければ含める", () => {
+    const prompt = buildQueuePrompt({
+      ...mockEntry,
+      summaryEn: "Release notes mention stronger coding and tool-use behavior.",
+    });
+    expect(prompt).toContain("Existing English note/snippet");
+    expect(prompt).toContain("stronger coding");
+  });
+
+  it("deterministic fallback text はプロンプトの根拠として渡さない", () => {
+    const prompt = buildQueuePrompt({
+      ...mockEntry,
+      summaryJa: "このエントリは anthropic-news から収集した claude 領域の最新アップデートです。",
+      summaryEn: "AI summary not yet available.",
+    });
+    expect(prompt).not.toContain("最新アップデートです");
+    expect(prompt).not.toContain("AI summary not yet available.");
   });
 });
 

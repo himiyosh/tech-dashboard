@@ -13,7 +13,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | 処理 | 実行主体 | トリガ | 失効時の影響 | 監視 |
 |---|---|---|---|---|
 | ソース収集 (50 sources) | Cloudflare Worker `tech-dashboard-harness` | Cron `0 * * * *` (毎時) を 4 batch ローテーション | データ更新が止まる | `/status` の Worker Health |
-| 日本語/英語要約 (`summary*` / `body*`) | Worker → Queue `tech-dashboard-summarizer` → Copilot Enterprise (claude-sonnet-4.6) | cron 後に最大 `ENQUEUE_MAX_NEW=30` 件/run を投入、consumer は 1 message/invocation | 既存表示は維持。LLM 失敗時は deterministic fallback で空欄を防止 | `health.fallbackTotal` / `health.queueMode` / `health.enqueueCandidates` |
+| 日本語/英語要約 (`summary*` / `body*`) | Worker → Queue `tech-dashboard-summarizer` → Copilot Enterprise (claude-sonnet-4.6) | cron 後に最大 `ENQUEUE_MAX_NEW=35` 件/run を投入、consumer は 1 message/invocation | 既存表示は維持。LLM 失敗時は deterministic fallback で空欄を防止 | `health.fallbackTotal` / `health.queueMode` / `health.enqueueCandidates` |
 | summary/body deterministic fallback | 同 Worker / `scripts/apply-summary-cache.mjs` | Worker commit 前、または緊急修復時 | LLM timeout / 旧 cache 欠落時でも live index の summary/body 欠落を防止 | `health.summaryFallbacks` / `health.bodyFallbacks` / `tests/data-schema.test.ts` |
 | og:image 取得 | 同 Worker | 上記 cron 内で最大 4 件/h、KV にキャッシュ | サムネが no-image fallback になる | `health.ogCached` |
 | `data/index.json` / `data/archive/*` / `data/stats.json` 更新 commit | Worker → GitHub Git Data API (`tech-dashboard-worker` 名義) | 差分があるときのみ 1 commit にまとめる | サイトに反映されない、記事数推移が古いまま | `git log --author=tech-dashboard-worker` |
@@ -51,7 +51,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
                 │ Cloudflare Worker (cron: hourly, 4 batch)    │
                 │  ├ collect (RSS/Atom/HTML, ~13 sources/run)  │
                 │  ├ normalize + dedupe + tag                  │
-                │  ├ summarize (Copilot Enterprise, ≤5/run)    │
+                │  ├ enqueue summaries (Queue, ≤35/run)        │
                 │  └ og:image fetch (≤4/run, KV cache)         │
                 └───────────────┬───────────────────────────────┘
                                 │ diff があれば
@@ -131,6 +131,7 @@ npx -y modern-web-guidance@latest retrieve "accessibility,css,performance,securi
 | 層 | コマンド | 内容 | 速度 |
 |---|---|---|---|
 | Typecheck | `npm run typecheck` | TypeScript 型チェック | 速い |
+| Worker Typecheck | `npm --prefix worker run typecheck && npm --prefix worker-summarizer run typecheck` | Cloudflare Worker / Queue consumer の型チェック | 速い |
 | Unit | `npm test` | Vitest による関数単位の検証 (要約 JSON パース、Web ロジック、`data/index.json` スキーマ) | 速い (~1s) |
 | Web build | `npm run build:web` | Cloudflare Pages と同じ `web` build (`astro build && pagefind --site dist`) を検証 | 中程度 |
 | E2E | `npm run test:e2e` | Playwright (Chromium) でトップ表示・記事詳細・言語切替を検証 | 中程度 (~30s + build) |
@@ -172,8 +173,9 @@ COPILOT_TOKEN=tid=...              # 既に交換済みの一時トークンを�
 SUMMARIZE_MODEL=claude-sonnet-4.6   # 既定 (速度優先、Worker wall-time に収まる)
 # SUMMARIZE_MODEL=claude-opus-4.7   # 品質優先。長文生成は wall-time に収まらない場合あり (LL-031)
 # SUMMARIZE_MODEL=gpt-5.5            # Copilot では /responses 専用のため現 Worker (/chat/completions) からは利用不可 (LL-010)
-ENQUEUE_MAX_NEW=30                 # Worker 1 run 当たりの Queue 投入上限
+ENQUEUE_MAX_NEW=35                 # Worker 1 run 当たりの Queue 投入上限
 SUMMARIZE_TIMEOUT_MS=28000          # summarizer Worker の Copilot timeout
+SUMMARIZE_MAX_TOKENS=1600           # summarizer Worker 用の短い JSON 完走予算
 ```
 
 > どのトークンも無ければ要約フェーズは自動でスキップされます (ローカル dev を妨げない設計)。
@@ -278,7 +280,7 @@ npx wrangler secret put GH_TOKEN                # Contents:Write 権限の Fine-
 npx wrangler deploy
 ```
 
-Cron は `0 * * * *` (毎時) で起動します。Cloudflare Workers の subrequest 上限に収めるため、50 ソースを 4 バッチに分割しローテーションしており、**個別ソースの再収集は 4 時間ごと**となります。Worker は収集・正規化・fallback・publish に専念し、要約不足 entry を最大 `ENQUEUE_MAX_NEW=30` 件/run だけ Cloudflare Queue へ投入します。Copilot 要約は `worker-summarizer/` が 1 message / invocation で生成し、per-URL KV cache に保存します。Copilot 要約が timeout / error になった entry には commit 前に deterministic summary/body fallback を適用し、差分があれば `data/index.json`、`data/archive/*`、`data/stats.json` を Git Data API で 1 commit にまとめます。Cloudflare Pages Git Integration はその commit を検知して Pages を自動的に再デプロイします。トップページの記事数推移は `data/stats.json` を優先して参照するため、`data/index.json` の上限や dropped tier による削除後も archive 由来の集計を保持できます。
+Cron は `0 * * * *` (毎時) で起動します。Cloudflare Workers の subrequest 上限に収めるため、50 ソースを 4 バッチに分割しローテーションしており、**個別ソースの再収集は 4 時間ごと**となります。Worker は収集・正規化・fallback・publish に専念し、要約不足 entry を最大 `ENQUEUE_MAX_NEW=35` 件/run だけ Cloudflare Queue へ投入します。Copilot 要約は `worker-summarizer/` が 1 message / invocation で生成し、per-URL KV cache に保存します。Queue consumer は Worker の 28 秒 timeout 内で JSON が閉じるよう、短めの bilingual summary/body contract (`SUMMARIZE_MAX_TOKENS=1600`) を使います。Copilot 要約が timeout / error になった entry には commit 前に deterministic summary/body fallback を適用し、差分があれば `data/index.json`、`data/archive/*`、`data/stats.json` を Git Data API で 1 commit にまとめます。Cloudflare Pages Git Integration はその commit を検知して Pages を自動的に再デプロイします。トップページの記事数推移は `data/stats.json` を優先して参照するため、`data/index.json` の上限や dropped tier による削除後も archive 由来の集計を保持できます。
 
 Copilot 要約は summarizer Worker 側の `SUMMARIZE_TIMEOUT_MS` (既定 28000 ms) で timeout します。Queue retry と次回 cron の cache 再読みにより、一時的な API timeout / 5xx による欠落を次 run へ持ち越しにくくしています。
 
@@ -316,7 +318,7 @@ Worker は実行ごとに `data/index.json` の `health` フィールドにメ�
 
 | 領域 | 仕組み | 頻度 / トリガ |
 |---|---|---|
-| データ収集 + Queue 要約 + og:image | Cloudflare Worker cron + `worker-summarizer` Queue consumer | 毎時 (50 sources を 4 batch ローテーション、要約は最大 30 件/run を Queue 投入) |
+| データ収集 + Queue 要約 + og:image | Cloudflare Worker cron + `worker-summarizer` Queue consumer | 毎時 (50 sources を 4 batch ローテーション、要約は最大 35 件/run を Queue 投入) |
 | GitHub commit | Worker → GitHub Git Data API | `data/index.json` / `data/archive/*` / `data/stats.json` を 1 commit にまとめる |
 | サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
 | Worker コード deploy | `scripts/git-hooks/pre-push` | `RUN_WORKER_DEPLOY=1 git push` かつ `main` push に worker/ 差分あり |

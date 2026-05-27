@@ -36,12 +36,12 @@ cron tick (collector)
   ├─ collect 12-13 sources
   ├─ merge with prior data/index.json
   ├─ for each entry without cached summary:
-  │    SUMMARY_QUEUE.send({ url, title, source, contentSnippet, lang })
-  └─ commit data/index.json + archive + stats (placeholder summary のまま)
+  │    SUMMARY_QUEUE.send({ url, title, source, summary snippet, lang, tags })
+  └─ commit data/index.json + archive + stats (deterministic fallback 適用済み)
 
 Queue consumer (summarizer)
   ├─ ack 1 メッセージ
-  ├─ Copilot /chat/completions 呼び出し
+  ├─ Copilot /chat/completions 呼び出し (compact Queue prompt)
   ├─ JSON parse
   └─ SUMMARY_CACHE.put(url, { summaryJa, summaryEn, bodyJa, bodyEn, generatedAt })
 
@@ -73,7 +73,8 @@ cron tick (next hour, collector)
 3. **summarizer Worker 新規作成**
    - `worker-summarizer/src/index.ts`
    - `queue(batch, env)` handler: 1 メッセージごとに Copilot → KV write
-   - 失敗時は throw → Queue が自動 retry (最大 3 回, exponential backoff)
+   - `buildQueuePrompt()` で 28s / 1600 tokens 内に閉じる短い JSON contract を使う
+   - 失敗時は throw → Queue が自動 retry (最大 2 回, exponential backoff)
 4. **KV `SUMMARY_CACHE` を両 Worker に bind**
 5. **collector 側で `SUMMARY_CACHE` 参照を強化**
    - 既に部分的に実装済み (`worker/src/index.ts` で cache hit を merge)
@@ -86,17 +87,17 @@ cron tick (next hour, collector)
    - `wrangler tail tech-dashboard-summarizer` で consumer が処理しているか確認
 7. **段階解放**
    - 初期 enqueue cap: 5 件/cron tick
-   - 4 batch × 5 件 = 20 件/h → 24h で 480 件
-   - 安定したら 10 → 20 に上げる
+   - 現行 enqueue cap: 35 件/cron tick (KV free tier の 1000 writes/day に収める)
+   - backlog 解消後は新着記事数に応じて自然に低下する
 
 ### E. 失敗モード/対策
 
 | 失敗 | 検知 | 対策 |
 |---|---|---|
-| Copilot 30s timeout | Queue retry | max 3 回で Dead Letter Queue へ。手動 backfill |
+| Copilot 30s timeout | Queue retry | max 2 回で Dead Letter Queue へ。手動 backfill |
 | KV write 失敗 | throw → retry | Queues が自動再送 |
 | Queue 滞留 (生成 < 投入) | `wrangler queues info` の Pending 数監視 | producer 側 cap を下げる |
-| Worker CPU 30s 超過 (consumer 側) | `wrangler tail` | max_tokens を下げる / Sonnet に切り替え |
+| Worker CPU 30s 超過 (consumer 側) | `wrangler tail` | `SUMMARIZE_MAX_TOKENS` を下げる / `buildQueuePrompt()` の本文長を短くする |
 | 重複 enqueue | KV key 重複だけだが double-spend で課金増 | producer で `SUMMARY_CACHE.get` を必ず先行 |
 
 ### F. コスト試算 (Workers Paid Standard, $5/月 基本料金)
@@ -104,7 +105,7 @@ cron tick (next hour, collector)
 - 現在: collector cron 24 invocations/day = 720/月。requests 込みで $5 範囲内
 - 追加: summarizer は Queue で起動。1 件 1 invocation。20 件/h × 24h × 30d = **14,400 invocations/月**
 - Queue 単体料金: 100 万 operation まで含む。14,400 は誤差
-- Copilot API 課金: 1 件あたり ≒ 0.5-1 セント (max_tokens=2400 / claude-opus)
+- Copilot API 課金: 1 件あたり ≒ 0.5-1 セント (Queue default max_tokens=1600 / claude-sonnet)
   - 14,400 件 × $0.01 = **$144/月** (見積もり最大値)
   - キャッシュヒット率が高ければ大幅に下がる
 

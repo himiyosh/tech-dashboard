@@ -187,6 +187,33 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
 }
 
 export default {
+  async fetch(req: Request, env: Env): Promise<Response> {
+    const url = new URL(req.url);
+    if (url.pathname === "/health" && req.method === "GET") {
+      return Response.json(
+        {
+          ok: true,
+          role: "queue-consumer",
+          model: env.SUMMARIZE_MODEL || "claude-sonnet-4.6",
+          timeoutMs: Number(env.SUMMARIZE_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS),
+          maxTokens: Number(env.SUMMARIZE_MAX_TOKENS ?? DEFAULT_MAX_TOKENS),
+          cacheBinding: Boolean(env.SUMMARY_CACHE),
+          copilotSecretConfigured: Boolean(env.COPILOT_PAT),
+        },
+        {
+          headers: {
+            "access-control-allow-origin": "*",
+            "cache-control": "public, max-age=60",
+          },
+        },
+      );
+    }
+    return new Response("tech-dashboard summarizer worker. Queue consumer is active.", {
+      status: 200,
+      headers: { "content-type": "text/plain;charset=UTF-8" },
+    });
+  },
+
   async queue(batch: MessageBatch<SummaryJob>, env: Env): Promise<void> {
     for (const msg of batch.messages) {
       try {

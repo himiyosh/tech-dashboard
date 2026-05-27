@@ -314,6 +314,8 @@ Worker は実行ごとに `data/index.json` の `health` フィールドにメ�
 
 外部通知 (Slack / Discord / Email) は使わず、サイト内完結。
 
+Queue consumer 単体の疎通は `https://tech-dashboard-summarizer.himiyosh.workers.dev/health` で確認できます。ここでは秘密値は返さず、binding / model / timeout 設定が有効かだけを公開します。
+
 ### 3. 自動化サマリ
 
 | 領域 | 仕組み | 頻度 / トリガ |

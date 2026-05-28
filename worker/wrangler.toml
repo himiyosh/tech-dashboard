@@ -89,13 +89,6 @@ queue = "tech-dashboard-summary"
 [observability]
 enabled = true
 
-# The harness does large JSON merges/stringification before committing
-# data/index.json. Without an explicit limit, cron invocations have been
-# observed to terminate with `outcome=exceededCpu` after collection but before
-# publish/queue/heartbeat. Workers Paid allows this to be raised up to 5 min.
-[limits]
-cpu_ms = 300_000
-
 # Cron runs are billed against the Workers Paid plan limits.
 # Expected monthly usage: 24 runs/day * 30 days = ~720 runs/month.
 # CPU budget per run: ~5-30s (mostly fetch waits, not CPU).

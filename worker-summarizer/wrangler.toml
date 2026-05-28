@@ -53,3 +53,9 @@ dead_letter_queue = "tech-dashboard-summary-dlq"
 
 [observability]
 enabled = true
+
+# Queue consumers occasionally need extra CPU for Copilot JSON parsing and KV
+# serialization. Keep the cap explicit so a config reset cannot silently return
+# the consumer to a too-small default.
+[limits]
+cpu_ms = 300_000

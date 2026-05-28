@@ -1082,6 +1082,58 @@ async function runHarness(
   }
   console.log(`[worker] og: cached=${Object.keys(ogBlob).length}, new hits=${ogFound}`);
 
+  const failedSources = settled.filter((s) => !s.result.ok).map((s) => s.result.sourceId);
+  const queueCap = Math.max(1, Number(env.ENQUEUE_MAX_NEW ?? 30));
+  const queueEnabled = env.ENABLE_SUMMARY_QUEUE === "1";
+  const queueMode = queueEnabled ? (env.SUMMARY_QUEUE ? "enabled" : "missing-binding") : "disabled";
+  const prePublishFallbackTotal = afterCache.filter(needsGeneratedContent).length;
+  const prePublishFallbackPercent =
+    afterCache.length === 0 ? 0 : Math.round((prePublishFallbackTotal / afterCache.length) * 100);
+  const prePublishQueueBatch = selectSummaryJobBatch(
+    afterCache,
+    hitsByUrl,
+    lookedUpUrls,
+    queueCap,
+    uncheckedFallbackUrls,
+  );
+
+  // Enqueue before the CPU-heavy data/index.json stringify + GitHub publish
+  // phase. This keeps the AI backfill moving even if a later publish step hits
+  // Cloudflare CPU limits or a transient GitHub failure.
+  const earlyEnqueued = await maybeEnqueueSummaryJobs(
+    env,
+    afterCache,
+    hitsByUrl,
+    lookedUpUrls,
+    uncheckedFallbackUrls,
+  );
+  if (earlyEnqueued > 0) {
+    console.log(`[worker] enqueued ${earlyEnqueued} summary jobs (pre-publish path)`);
+  }
+  await writeHeartbeat(
+    env,
+    {
+      batchIndex: batchIndex + 1,
+      batchTotal: SOURCE_BATCHES,
+      sourcesAttempted: sources.length,
+      sourcesOk: settled.filter((s) => s.result.ok).length,
+      sourcesFailed: failedSources,
+      copilotOk: token !== null,
+      fallbackPercent: prePublishFallbackPercent,
+      queueMode,
+      queueCap,
+      enqueueCandidates: queueEnabled && env.SUMMARY_QUEUE ? prePublishQueueBatch.jobs.length : 0,
+      summaryQueueBacklog: prePublishQueueBatch.eligibleCount,
+      summaryQueueDrainEstimateHours: prePublishQueueBatch.drainEstimateHours,
+      summaryQueueStartIndex: prePublishQueueBatch.startIndex,
+      kvLookupCount: needsKvLookup.length,
+      kvLookupCap: KV_LOOKUP_CAP,
+    },
+    false,
+    earlyEnqueued,
+    prePublishFallbackTotal,
+  );
+
   // 5) Build payload (cap newest entries; dropped tier is retained only in reports)
   let summaryFallbacks = 0;
   let bodyFallbacks = 0;
@@ -1093,10 +1145,6 @@ async function runHarness(
   });
   const retainedEntries = contentReady.filter((entry) => entry.archiveTier !== "dropped");
   const finalEntries = retainedEntries.slice(0, INDEX_LIMIT);
-  const failedSources = settled.filter((s) => !s.result.ok).map((s) => s.result.sourceId);
-  const queueCap = Math.max(1, Number(env.ENQUEUE_MAX_NEW ?? 30));
-  const queueEnabled = env.ENABLE_SUMMARY_QUEUE === "1";
-  const queueMode = queueEnabled ? (env.SUMMARY_QUEUE ? "enabled" : "missing-binding") : "disabled";
   const fallbackTotal = finalEntries.filter(needsGeneratedContent).length;
   const fallbackPercent = finalEntries.length === 0 ? 0 : Math.round((fallbackTotal / finalEntries.length) * 100);
   const summaryQueueBatch = selectSummaryJobBatch(finalEntries, hitsByUrl, lookedUpUrls, queueCap, uncheckedFallbackUrls);
@@ -1134,6 +1182,9 @@ async function runHarness(
     entries: finalEntries,
   };
   const json = JSON.stringify(payload, null, 2) + "\n";
+  console.log(
+    `[worker] payload ready entries=${finalEntries.length}, fallback=${fallbackTotal}, summaryFallbacks=${summaryFallbacks}, bodyFallbacks=${bodyFallbacks}, bytes=${json.length}`,
+  );
 
   // 6) Compare with existing index.json on GitHub (already loaded at step 0).
   const existingJson = existing?.content ?? "";
@@ -1156,20 +1207,13 @@ async function runHarness(
   }
   const hasEntryChanges = !entriesEqual(existingPayload, finalEntries);
   // Compare ignoring `generatedAt` timestamp so unchanged runs don't churn commits.
-  // NOTE: Queue enqueue must run BEFORE this early-return because cache
-  // state (some entries are still fallbacks) is independent of whether the
-  // index payload changed. A manual /run hitting "no data changes" should
-  // still push outstanding fallback entries onto the Queue so the
-  // summarizer Worker can process them. We intentionally pay one extra
-  // KV.get loop on no-op runs to keep the autonomous backfill flowing.
+  // Queue enqueue already happened in the pre-publish path above, because
+  // cache state (some entries are still fallbacks) is independent of whether
+  // the index payload changed.
   if (stripGeneratedAt(existingJson) === stripGeneratedAt(json)) {
     console.log("[worker] no data changes");
-    const enqueuedNoop = await maybeEnqueueSummaryJobs(env, finalEntries, hitsByUrl, lookedUpUrls, uncheckedFallbackUrls);
-    if (enqueuedNoop > 0) {
-      console.log(`[worker] enqueued ${enqueuedNoop} summary jobs (no-op publish path)`);
-    }
-    await writeHeartbeat(env, health, false, enqueuedNoop, allFallback.length);
-    return { changed: false, stats: { finalEntries: finalEntries.length, summarized, errors, enqueued: enqueuedNoop } };
+    await writeHeartbeat(env, health, false, earlyEnqueued, allFallback.length);
+    return { changed: false, stats: { finalEntries: finalEntries.length, summarized, errors, enqueued: earlyEnqueued } };
   }
 
   const message = `chore(data): update tech dashboard ${payload.generatedAt}`;
@@ -1198,18 +1242,11 @@ async function runHarness(
     `[worker] history archiveChanged=${historyStats.archiveFilesChanged}, statsChanged=${historyStats.statsChanged}, commit=${commitSha}`,
   );
 
-  // 8) Optional: enqueue uncached entries to the summarizer Queue (LL-037).
-  // Off by default; activate via wrangler.toml (ENABLE_SUMMARY_QUEUE=1 and
-  // [[queues.producers]] binding). We reuse `hitsByUrl` + `uncheckedFallbackUrls`
-  // collected earlier to avoid a second KV.get pass.
-  const enqueued = await maybeEnqueueSummaryJobs(env, finalEntries, hitsByUrl, lookedUpUrls, uncheckedFallbackUrls);
-  if (enqueued > 0) {
-    console.log(`[worker] enqueued ${enqueued} summary jobs`);
-  }
+  // 8) Record the pre-publish enqueue result in the final heartbeat. Queue
+  // dispatch happens before GitHub publish so AI backfill is not blocked by
+  // large JSON serialization or transient GitHub failures.
+  const enqueued = earlyEnqueued;
   await writeHeartbeat(env, health, true, enqueued, allFallback.length);
-  if (enqueued > 0) {
-    console.log(`[worker] enqueued ${enqueued} summary jobs`);
-  }
 
   return {
     changed: true,

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { NormalizedEntry } from "../harness/types.ts";
 import type { CacheEntry } from "../worker/src/kv-cache.ts";
 import { needsGeneratedContent, selectSummaryJobBatch, selectSummaryJobs } from "../worker/src/summary-queue.ts";
+import summarizerWorker from "../worker-summarizer/src/index.ts";
 
 const baseEntry: NormalizedEntry = {
   id: "entry-1",
@@ -104,5 +105,30 @@ describe("worker summary queue selection", () => {
       "https://example.com/paper-0",
       "https://example.com/paper-1",
     ]);
+  });
+});
+
+describe("worker summarizer health endpoint", () => {
+  it("responds to /health instead of throwing a missing fetch handler error", async () => {
+    const response = await summarizerWorker.fetch!(
+      new Request("https://tech-dashboard-summarizer.example/health"),
+      {
+        SUMMARY_CACHE: {} as KVNamespace,
+        COPILOT_PAT: "configured",
+        SUMMARIZE_MODEL: "claude-sonnet-4.6",
+        SUMMARIZE_TIMEOUT_MS: "28000",
+        SUMMARIZE_MAX_TOKENS: "1600",
+      },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      role: "queue-consumer",
+      model: "claude-sonnet-4.6",
+      cacheBinding: true,
+      copilotSecretConfigured: true,
+    });
   });
 });

@@ -630,6 +630,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **Mitigation**: Add reduced-motion overrides inside component styles, disable auto-advance for reduced motion, set inactive ticker slides to `aria-hidden="true"` and `tabindex="-1"`, and add Playwright checks for reduced motion plus mobile first-view density.
 - **Lesson**: Animation features need accessibility acceptance criteria from the start: compositor-only properties, `prefers-reduced-motion`, no hidden focus targets, and viewport metrics for first actionable content.
 
+### LL-079: Queue-only Workers still need a fetch health endpoint
+- **Incident**: While investigating fallback debt, `tech-dashboard-summarizer` returned Cloudflare error 1101 for `/health`, which looked like a Worker outage even though the Queue consumer binding still existed.
+- **Root cause**: The Worker exported only `queue()`. Cloudflare treats direct HTTP requests as FetchEvents, and a queue-only script without `fetch()` throws "Handler does not export a fetch() function."
+- **Mitigation**: Add a minimal `/health` fetch handler that returns non-secret runtime configuration (`model`, timeout, max tokens, binding/secret presence). Keep it read-only and do not write KV from health checks.
+- **Lesson**: Queue consumer liveness and HTTP fetch liveness are separate. Public health checks must be implemented explicitly; otherwise diagnostics create false 500s and obscure the real backlog issue.
+
 ## 🔄 自己学習ハーネス手順
 
 1. 作業中に発生した「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。

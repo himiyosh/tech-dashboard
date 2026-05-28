@@ -1,0 +1,29 @@
+name: Worker Health
+
+on:
+  schedule:
+    - cron: "15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: worker-health
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  production-health:
+    name: production health check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check Cloudflare Workers health
+        run: npm run health:prod

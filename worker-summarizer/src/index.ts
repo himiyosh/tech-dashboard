@@ -77,6 +77,9 @@ const DEFAULT_TIMEOUT_MS = 25_000;
 const DEFAULT_MAX_TOKENS = 1600;
 const TOKEN_REFRESH_SKEW_MS = 60_000;
 const DEFAULT_TOKEN_TTL_MS = 20 * 60_000;
+const ISSUE_KEY = "summarizer.issue.v1";
+const ISSUE_TTL_SECONDS = 6 * 60 * 60;
+const RECENT_ISSUE_MS = 60 * 60_000;
 
 let cachedCopilotToken: { pat: string; token: string; expiresAtMs: number } | null = null;
 
@@ -186,24 +189,62 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
   await putCacheEntry(env.SUMMARY_CACHE, job.url, entry);
 }
 
+function issueSummary(err: unknown): string {
+  const text = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+  return text.slice(0, 500);
+}
+
+async function writeIssue(
+  env: Env,
+  status: "retry" | "deferred",
+  job: SummaryJob,
+  err: unknown,
+): Promise<void> {
+  try {
+    await env.SUMMARY_CACHE.put(
+      ISSUE_KEY,
+      JSON.stringify({
+        ok: status === "deferred",
+        status,
+        at: new Date().toISOString(),
+        url: job.url,
+        source: job.entry.source,
+        category: job.entry.category,
+        error: issueSummary(err),
+      }),
+      { expirationTtl: ISSUE_TTL_SECONDS },
+    );
+  } catch (issueErr) {
+    console.warn("[summarizer] issue heartbeat write failed:", issueErr);
+  }
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
     if (url.pathname === "/health" && req.method === "GET") {
+      const issue = await env.SUMMARY_CACHE.get<Record<string, unknown>>(ISSUE_KEY, "json");
+      const issueAt = typeof issue?.at === "string" ? Date.parse(issue.at) : Number.NaN;
+      const recentIssue = Number.isFinite(issueAt) && Date.now() - issueAt <= RECENT_ISSUE_MS;
+      const issueStatus = typeof issue?.status === "string" ? issue.status : null;
+      const ok = Boolean(env.SUMMARY_CACHE) && Boolean(env.COPILOT_PAT) && !(recentIssue && issueStatus === "retry");
       return Response.json(
         {
-          ok: true,
+          ok,
           role: "queue-consumer",
           model: env.SUMMARIZE_MODEL || "claude-sonnet-4.6",
           timeoutMs: Number(env.SUMMARIZE_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS),
           maxTokens: Number(env.SUMMARIZE_MAX_TOKENS ?? DEFAULT_MAX_TOKENS),
           cacheBinding: Boolean(env.SUMMARY_CACHE),
           copilotSecretConfigured: Boolean(env.COPILOT_PAT),
+          recentIssue,
+          issue,
         },
         {
+          status: ok ? 200 : 503,
           headers: {
             "access-control-allow-origin": "*",
-            "cache-control": "public, max-age=60",
+            "cache-control": "no-store",
           },
         },
       );
@@ -229,9 +270,11 @@ export default {
         // fallback entry.
         if (summary.includes("KV put() limit exceeded")) {
           console.warn(`[summarizer] ack ${msg.body.url}: daily KV write cap reached, will retry tomorrow`);
+          await writeIssue(env, "deferred", msg.body, summary);
           msg.ack();
         } else {
           console.warn(`[summarizer] retry ${msg.body.url}: ${summary}`);
+          await writeIssue(env, "retry", msg.body, summary);
           msg.retry();
         }
       }

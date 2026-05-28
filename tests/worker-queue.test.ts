@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { NormalizedEntry } from "../harness/types.ts";
 import type { CacheEntry } from "../worker/src/kv-cache.ts";
+import { evaluateHarnessHealth } from "../worker/src/index.ts";
 import { needsGeneratedContent, selectSummaryJobBatch, selectSummaryJobs } from "../worker/src/summary-queue.ts";
 import summarizerWorker from "../worker-summarizer/src/index.ts";
 
@@ -35,6 +36,13 @@ const realCache: CacheEntry = {
   model: "claude-sonnet-4.6",
   cachedAt: "2026-05-23T01:30:00.000Z",
 };
+
+function mockKv(json: unknown = null): KVNamespace {
+  return {
+    get: vi.fn(async () => json),
+    put: vi.fn(async () => undefined),
+  } as unknown as KVNamespace;
+}
 
 describe("worker summary queue selection", () => {
   it("deterministic fallback entries are treated as needing generated content", () => {
@@ -108,12 +116,75 @@ describe("worker summary queue selection", () => {
   });
 });
 
+describe("worker harness health evaluation", () => {
+  const nowMs = Date.parse("2026-05-29T00:00:00.000Z");
+
+  it("marks pre-publish heartbeats as failed when they are stuck too long", () => {
+    const health = evaluateHarnessHealth(
+      {
+        ok: true,
+        status: "pre-publish",
+        lastCronAt: "2026-05-28T23:20:00.000Z",
+        queueMode: "enabled",
+        copilotOk: true,
+        sourcesAttempted: 10,
+        sourcesOk: 10,
+        sourcesFailed: [],
+      },
+      nowMs,
+    );
+
+    expect(health.ok).toBe(false);
+    expect(health.errors.join("\n")).toContain("stuck after pre-publish");
+  });
+
+  it("fails closed when cron is stale or the summary queue is not enabled", () => {
+    const health = evaluateHarnessHealth(
+      {
+        ok: true,
+        status: "checked",
+        lastCronAt: "2026-05-28T21:00:00.000Z",
+        queueMode: "disabled",
+        copilotOk: true,
+        sourcesAttempted: 10,
+        sourcesOk: 10,
+        sourcesFailed: [],
+      },
+      nowMs,
+    );
+
+    expect(health.ok).toBe(false);
+    expect(health.errors.join("\n")).toContain("cron heartbeat is stale");
+    expect(health.errors.join("\n")).toContain("summary queue is disabled");
+  });
+
+  it("keeps non-fatal collection issues as warnings", () => {
+    const health = evaluateHarnessHealth(
+      {
+        ok: true,
+        status: "published",
+        lastCronAt: "2026-05-28T23:50:00.000Z",
+        queueMode: "enabled",
+        copilotOk: true,
+        sourcesAttempted: 10,
+        sourcesOk: 9,
+        sourcesFailed: ["example-source"],
+      },
+      nowMs,
+    );
+
+    expect(health.ok).toBe(true);
+    expect(health.status).toBe("warn");
+    expect(health.warnings.join("\n")).toContain("source collection error");
+  });
+});
+
 describe("worker summarizer health endpoint", () => {
   it("responds to /health instead of throwing a missing fetch handler error", async () => {
     const response = await summarizerWorker.fetch!(
       new Request("https://tech-dashboard-summarizer.example/health"),
       {
-        SUMMARY_CACHE: {} as KVNamespace,
+        SUMMARY_CACHE: mockKv(),
         COPILOT_PAT: "configured",
         SUMMARIZE_MODEL: "claude-sonnet-4.6",
         SUMMARIZE_TIMEOUT_MS: "28000",
@@ -129,6 +200,33 @@ describe("worker summarizer health endpoint", () => {
       model: "claude-sonnet-4.6",
       cacheBinding: true,
       copilotSecretConfigured: true,
+    });
+  });
+
+  it("returns 503 when the queue consumer has a recent retry issue", async () => {
+    const response = await summarizerWorker.fetch!(
+      new Request("https://tech-dashboard-summarizer.example/health"),
+      {
+        SUMMARY_CACHE: mockKv({
+          status: "retry",
+          at: new Date().toISOString(),
+          url: "https://example.com/failing-entry",
+          error: "Error: Copilot timeout",
+        }),
+        COPILOT_PAT: "configured",
+        SUMMARIZE_MODEL: "claude-sonnet-4.6",
+      },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      recentIssue: true,
+      issue: {
+        status: "retry",
+        url: "https://example.com/failing-entry",
+      },
     });
   });
 });

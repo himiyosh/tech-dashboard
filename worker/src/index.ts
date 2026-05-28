@@ -1132,6 +1132,7 @@ async function runHarness(
     false,
     earlyEnqueued,
     prePublishFallbackTotal,
+    "pre-publish",
   );
 
   // 5) Build payload (cap newest entries; dropped tier is retained only in reports)
@@ -1197,9 +1198,11 @@ async function runHarness(
   // catastrophic blast radius (loss of all live entries + archive integrity).
   // Abort the run and let the next cron retry instead.
   if (existingCount > 20 && finalEntries.length < existingCount / 2) {
-    console.error(
-      `[worker] aborting publish: finalEntries (${finalEntries.length}) collapsed from prior ${existingCount}; refusing to wipe data/index.json`,
+    const err = new Error(
+      `aborting publish: finalEntries (${finalEntries.length}) collapsed from prior ${existingCount}; refusing to wipe data/index.json`,
     );
+    console.error(`[worker] ${err.message}`);
+    await writeFailureHeartbeat(env, err, "collapse-guard");
     return {
       changed: false,
       stats: { finalEntries: finalEntries.length, summarized, errors, abortedCollapse: 1 },
@@ -1266,6 +1269,16 @@ async function runHarness(
 }
 
 const HEARTBEAT_KEY = "heartbeat.v1";
+const HEALTH_STALE_MS = 150 * 60_000;
+const HEALTH_PREPUBLISH_STUCK_MS = 30 * 60_000;
+const HEALTH_ERROR_FRESH_MS = 6 * 60 * 60_000;
+
+type HarnessHeartbeatStatus = "pre-publish" | "published" | "checked" | "aborted" | "error";
+
+function errorSummary(err: unknown): string {
+  const text = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+  return text.slice(0, 500);
+}
 
 /**
  * Write a lightweight heartbeat to KV on every cron run (even no-op). This
@@ -1294,9 +1307,12 @@ async function writeHeartbeat(
   changed: boolean,
   enqueued: number,
   fallbackTotal: number,
+  status: HarnessHeartbeatStatus = changed ? "published" : "checked",
 ): Promise<void> {
   try {
     const hb = {
+      ok: status !== "aborted" && status !== "error",
+      status,
       lastCronAt: new Date().toISOString(),
       changed,
       enqueued,
@@ -1325,6 +1341,108 @@ async function writeHeartbeat(
     // Best-effort; never fail the cron over a heartbeat write error.
     console.warn("[worker] heartbeat write failed:", err);
   }
+}
+
+async function writeFailureHeartbeat(
+  env: Env,
+  err: unknown,
+  trigger: "scheduled" | "manual-run" | "collapse-guard",
+): Promise<void> {
+  try {
+    const now = new Date().toISOString();
+    const existing = (await env.SUMMARY_CACHE.get<Record<string, unknown>>(HEARTBEAT_KEY, "json")) ?? {};
+    const previousFailureCount =
+      typeof existing.failureCount === "number" && Number.isFinite(existing.failureCount)
+        ? existing.failureCount
+        : 0;
+    const hb = {
+      ...existing,
+      ok: false,
+      status: trigger === "collapse-guard" ? "aborted" : "error",
+      lastCronAt: now,
+      lastErrorAt: now,
+      lastError: errorSummary(err),
+      lastErrorTrigger: trigger,
+      failureCount: previousFailureCount + 1,
+    };
+    await env.SUMMARY_CACHE.put(HEARTBEAT_KEY, JSON.stringify(hb), {
+      expirationTtl: 7 * 24 * 3600,
+    });
+  } catch (heartbeatErr) {
+    console.warn("[worker] failure heartbeat write failed:", heartbeatErr);
+  }
+}
+
+export function evaluateHarnessHealth(
+  hb: Record<string, unknown> | null,
+  nowMs = Date.now(),
+): { ok: boolean; status: "ok" | "warn" | "error"; errors: string[]; warnings: string[]; ageSeconds?: number } {
+  if (!hb) {
+    return {
+      ok: false,
+      status: "error",
+      errors: ["no heartbeat yet; cron has not run since deployment"],
+      warnings: [],
+    };
+  }
+
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const lastCronAt = typeof hb.lastCronAt === "string" ? hb.lastCronAt : "";
+  const lastCronMs = Date.parse(lastCronAt);
+  const ageMs = Number.isFinite(lastCronMs) ? Math.max(0, nowMs - lastCronMs) : Number.POSITIVE_INFINITY;
+  const ageSeconds = Number.isFinite(ageMs) ? Math.round(ageMs / 1000) : undefined;
+  const status = typeof hb.status === "string" ? hb.status : "unknown";
+
+  if (!Number.isFinite(lastCronMs)) {
+    errors.push("heartbeat is missing a valid lastCronAt");
+  } else if (ageMs > HEALTH_STALE_MS) {
+    errors.push(`cron heartbeat is stale (${Math.round(ageMs / 60_000)}m old)`);
+  }
+
+  if (status === "error" || status === "aborted") {
+    const lastErrorAt = typeof hb.lastErrorAt === "string" ? Date.parse(hb.lastErrorAt) : Number.NaN;
+    const errorAgeMs = Number.isFinite(lastErrorAt) ? nowMs - lastErrorAt : 0;
+    if (!Number.isFinite(lastErrorAt) || errorAgeMs <= HEALTH_ERROR_FRESH_MS) {
+      errors.push(typeof hb.lastError === "string" ? hb.lastError : `last cron status is ${status}`);
+    }
+  }
+
+  if (status === "pre-publish" && Number.isFinite(ageMs) && ageMs > HEALTH_PREPUBLISH_STUCK_MS) {
+    errors.push(`cron appears stuck after pre-publish heartbeat (${Math.round(ageMs / 60_000)}m old)`);
+  }
+
+  if (hb.queueMode !== "enabled") {
+    errors.push(`summary queue is ${String(hb.queueMode ?? "unknown")}`);
+  }
+
+  if (hb.copilotOk === false) {
+    warnings.push("Copilot token exchange failed; summaries may not refresh");
+  }
+
+  const sourcesAttempted =
+    typeof hb.sourcesAttempted === "number" && Number.isFinite(hb.sourcesAttempted) ? hb.sourcesAttempted : 0;
+  const sourcesOk = typeof hb.sourcesOk === "number" && Number.isFinite(hb.sourcesOk) ? hb.sourcesOk : 0;
+  const sourcesFailed = Array.isArray(hb.sourcesFailed) ? hb.sourcesFailed.length : 0;
+  if (sourcesAttempted > 0 && sourcesOk === 0) {
+    errors.push("all source collection attempts failed");
+  } else if (sourcesFailed > 0) {
+    warnings.push(`${sourcesFailed} source collection error(s) in the latest batch`);
+  }
+
+  const fallbackPercent =
+    typeof hb.fallbackPercent === "number" && Number.isFinite(hb.fallbackPercent) ? hb.fallbackPercent : 0;
+  if (fallbackPercent >= 25) {
+    warnings.push(`summary fallback rate is high (${fallbackPercent}%)`);
+  }
+
+  return {
+    ok: errors.length === 0,
+    status: errors.length > 0 ? "error" : warnings.length > 0 ? "warn" : "ok",
+    errors,
+    warnings,
+    ageSeconds,
+  };
 }
 
 /**
@@ -1387,6 +1505,7 @@ export default {
     } catch (err) {
       const stack = err instanceof Error && err.stack ? err.stack : String(err);
       console.error("[worker] fatal:", stack);
+      await writeFailureHeartbeat(env, err, "scheduled");
       throw err;
     }
   },
@@ -1401,7 +1520,10 @@ export default {
         return new Response("unauthorized", { status: 401 });
       }
       ctx.waitUntil(
-        runHarness(env).catch((err) => console.error("[worker] manual run fatal:", err)),
+        runHarness(env).catch(async (err) => {
+          console.error("[worker] manual run fatal:", err);
+          await writeFailureHeartbeat(env, err, "manual-run");
+        }),
       );
       return Response.json({ ok: true, status: "accepted", note: "running in background; check git log" }, { status: 202 });
     }
@@ -1651,15 +1773,18 @@ export default {
     //   curl https://tech-dashboard-harness.himiyosh.workers.dev/health
     if (url.pathname === "/health" && req.method === "GET") {
       const hb = await env.SUMMARY_CACHE.get(HEARTBEAT_KEY, "json") as Record<string, unknown> | null;
-      const body = hb
-        ? JSON.stringify({ ok: true, ...hb })
-        : JSON.stringify({ ok: false, error: "no heartbeat yet; cron has not run since deployment" });
+      const health = evaluateHarnessHealth(hb);
+      const body = JSON.stringify({
+        ...(hb ?? {}),
+        ...health,
+        ...(health.errors[0] ? { error: health.errors[0] } : {}),
+      });
       return new Response(body, {
-        status: hb ? 200 : 503,
+        status: health.ok ? 200 : 503,
         headers: {
           "content-type": "application/json;charset=UTF-8",
           "access-control-allow-origin": "*",
-          "cache-control": "public, max-age=60",
+          "cache-control": "no-store",
         },
       });
     }

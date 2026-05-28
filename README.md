@@ -312,9 +312,15 @@ Worker は実行ごとに `data/index.json` の `health` フィールドにメ�
 - `no run in 6h+` — Worker が連続で停止
 - `(N) source error` — 個別ソース fetch 失敗
 
-外部通知 (Slack / Discord / Email) は使わず、サイト内完結。
+公開 health endpoint はより厳しめに fail-close します。`https://tech-dashboard-harness.himiyosh.workers.dev/health` は、cron heartbeat が 150 分以上古い、publish 前 heartbeat のまま 30 分以上止まる、Queue binding が無効、直近 cron が abort/error、全 source collection が失敗、などを `HTTP 503` として返します。これにより、GitHub Actions などの外部監視から「静かに止まる」状態を検知できます。
 
-Queue consumer 単体の疎通は `https://tech-dashboard-summarizer.himiyosh.workers.dev/health` で確認できます。ここでは秘密値は返さず、binding / model / timeout 設定が有効かだけを公開します。
+Queue consumer 単体の疎通は `https://tech-dashboard-summarizer.himiyosh.workers.dev/health` で確認できます。ここでは秘密値は返さず、binding / model / timeout 設定が有効かだけを公開します。Queue consumer の直近 retry / KV write cap defer は短期 TTL 付きで KV に記録され、recent retry は `HTTP 503` になります。
+
+本番監視は `.github/workflows/worker-health.yml` が毎時 `:15` に `npm run health:prod` を実行します。cron は毎時 `:00` なので、通常は新しい heartbeat を 15 分後に検証できます。手元からも同じチェックを実行できます。
+
+```bash
+npm run health:prod
+```
 
 ### 3. 自動化サマリ
 
@@ -324,7 +330,7 @@ Queue consumer 単体の疎通は `https://tech-dashboard-summarizer.himiyosh.wo
 | GitHub commit | Worker → GitHub Git Data API | `data/index.json` / `data/archive/*` / `data/stats.json` を 1 commit にまとめる |
 | サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
 | Worker コード deploy | `scripts/git-hooks/pre-push` | `RUN_WORKER_DEPLOY=1 git push` かつ `main` push に worker/ 差分あり |
-| ヘルス監視 | `data/index.json#health` + `/status` ページ | 実行ごと記録、サイト訪問時に確認 |
+| ヘルス監視 | Worker `/health` + GitHub Actions `worker-health.yml` + `/status` ページ | 毎時 `:15` に外形監視、サイト訪問時にも確認 |
 
 **残る手動運用**: 年 1 回の PAT 更新 (`wrangler secret put COPILOT_PAT` / `GH_TOKEN`)。失効時は `/status` の Worker Health が `summarize disabled` に変わるので即気付けます。
 

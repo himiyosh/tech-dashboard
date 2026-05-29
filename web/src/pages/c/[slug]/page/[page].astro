@@ -4,6 +4,7 @@ import PageHero from "../../../../components/PageHero.astro";
 import Sidebar from "../../../../components/Sidebar.astro";
 import EntryCard from "../../../../components/EntryCard.astro";
 import Pager from "../../../../components/Pager.astro";
+import CategorySidePanel from "../../../../components/CategorySidePanel.astro";
 import {
   CATEGORY_META,
   PAGE_SIZE,
@@ -90,6 +91,19 @@ const breadcrumb = [
     <Sidebar active={slug} />
 
     <main>
+      {slug === "research" && (
+        <section class="research-split-callout" aria-labelledby="research-split-heading">
+          <div>
+            <p class="section-kicker">Research navigation</p>
+            <h2 id="research-split-heading">arXiv 論文は専用ページで分離表示しています</h2>
+            <p>
+              件数の多い arXiv cs.AI / cs.CL / cs.SE / cs.LG は、通常のカテゴリ閲覧とは別に専用レーンで確認できます。
+            </p>
+          </div>
+          <a href="/arxiv/">arXiv Papers</a>
+        </section>
+      )}
+
       <div
         class="section-header"
         style={`border-bottom:2px solid ${category.color}`}
@@ -121,7 +135,7 @@ const breadcrumb = [
       <Pager currentPage={page} totalPages={total} baseHref={`/c/${slug}`} />
     </main>
 
-    <aside class="right"></aside>
+    <CategorySidePanel category={category} entries={all} now={now} />
   </div>
 </Portal>
 

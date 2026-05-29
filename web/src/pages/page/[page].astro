@@ -5,8 +5,9 @@ import Sidebar from "../../components/Sidebar.astro";
 import EntryCard from "../../components/EntryCard.astro";
 import Pager from "../../components/Pager.astro";
 import {
-  ALL_ENTRIES,
+  ARXIV_ENTRIES,
   GENERATED_AT,
+  MAIN_TIMELINE_ENTRIES,
   PAGE_SIZE,
   groupByDay,
   jstDayLabel,
@@ -14,7 +15,7 @@ import {
 } from "../../lib/data.ts";
 
 export function getStaticPaths() {
-  const total = Math.max(1, Math.ceil(ALL_ENTRIES.length / PAGE_SIZE));
+  const total = Math.max(1, Math.ceil(MAIN_TIMELINE_ENTRIES.length / PAGE_SIZE));
   const paths: Array<{ params: { page: string }; props: { page: number; total: number } }> = [];
   for (let p = 2; p <= total; p++) {
     paths.push({ params: { page: String(p) }, props: { page: p, total } });
@@ -29,7 +30,7 @@ interface Props {
 
 const { page, total } = Astro.props as Props;
 const start = (page - 1) * PAGE_SIZE;
-const pageEntries = ALL_ENTRIES.slice(start, start + PAGE_SIZE);
+const pageEntries = MAIN_TIMELINE_ENTRIES.slice(start, start + PAGE_SIZE);
 const dayGroups = groupByDay(pageEntries);
 const now = new Date();
 
@@ -46,15 +47,17 @@ const breadcrumb = [
     title="Timeline"
     count={`page ${page}/${total}`}
     headingId="timeline-page-heading"
-    description="最新順の深掘り一覧です。Top items から外れた更新も、日付ごとに追って後から確認できます。"
+    description="arXiv 論文を分離した通常更新の深掘り一覧です。Top items から外れた更新も、日付ごとに追って後から確認できます。"
     actions={[
       { href: "/", label: "Back to latest" },
+      { href: "/arxiv", label: "arXiv papers" },
       { href: "/categories", label: "Browse categories" },
       { href: "/archive", label: "Open archive" },
     ]}
     metrics={[
       { label: "Showing", value: pageEntries.length },
-      { label: "Total", value: ALL_ENTRIES.length },
+      { label: "Timeline", value: MAIN_TIMELINE_ENTRIES.length },
+      { label: "arXiv moved", value: ARXIV_ENTRIES.length },
       { label: "Page", value: `${page}/${total}` },
       { label: "Updated", value: relativeTime(GENERATED_AT, now) },
     ]}
@@ -65,7 +68,7 @@ const breadcrumb = [
 
     <main>
       <div class="section-header primary">
-        <h2>Entries <span class="count">{pageEntries.length} on this page · {ALL_ENTRIES.length} total</span></h2>
+        <h2>Entries <span class="count">{pageEntries.length} on this page · {MAIN_TIMELINE_ENTRIES.length} timeline · {ARXIV_ENTRIES.length} arXiv moved</span></h2>
       </div>
 
       {dayGroups.map(({ key, items }) => (

@@ -1,14 +1,22 @@
 ---
-import { CATEGORY_META, countByCategory, ALL_ENTRIES, type Category, type CategoryGroup } from "../lib/data.ts";
+import {
+  ARXIV_ENTRIES,
+  CATEGORY_META,
+  MAIN_TIMELINE_ENTRIES,
+  countByCategory,
+  type Category,
+  type CategoryGroup,
+} from "../lib/data.ts";
 import { categoryDailySpark } from "../lib/stats.ts";
 
 export interface Props {
-  active?: Category | "all";
+  active?: Category | "all" | "arxiv";
 }
 
 const { active = "all" } = Astro.props;
 const counts = countByCategory();
-const total = ALL_ENTRIES.length;
+const total = MAIN_TIMELINE_ENTRIES.length;
+const arxivTotal = ARXIV_ENTRIES.length;
 
 const groupLabels: Record<CategoryGroup, string> = {
   microsoft: "Microsoft",
@@ -100,8 +108,13 @@ function compactLabel(slug: Category): string {
     <div class="side-title">Categories <span class="sub">{total}</span></div>
     <a class={`side-item ${active === "all" ? "active" : ""}`} href="/">
       <span class="brand-tile bt-all">•</span>
-      <span class="name" title="All"><span class="name-marquee">All</span></span>
+      <span class="name" title="Timeline"><span class="name-marquee">Timeline</span></span>
       <span class="count">{total}</span>
+    </a>
+    <a class={`side-item side-item-paper ${active === "arxiv" ? "active" : ""}`} href="/arxiv">
+      <span class="brand-tile bt-arxiv">Ax</span>
+      <span class="name" title="arXiv Papers"><span class="name-marquee">arXiv Papers</span></span>
+      <span class="count">{arxivTotal}</span>
     </a>
 
     {groupOrder.map((g) => (

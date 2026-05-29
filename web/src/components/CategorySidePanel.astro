@@ -1,0 +1,134 @@
+---
+import {
+  ARXIV_ENTRIES,
+  CATEGORY_META,
+  entryHref,
+  isArxivEntry,
+  relativeTime,
+  titleForLangWithFallback,
+  type NormalizedEntry,
+} from "../lib/data.ts";
+import { SOURCE_META } from "../lib/source-meta.ts";
+import { ARXIV_SOURCE_INFO } from "../lib/arxiv-meta.ts";
+
+interface Props {
+  category: (typeof CATEGORY_META)[number];
+  entries: readonly NormalizedEntry[];
+  now?: Date;
+}
+
+const { category, entries, now = new Date() } = Astro.props as Props;
+
+const sourceLabel = (source: string): string =>
+  SOURCE_META.find((item) => item.id === source)?.displayName ?? source;
+
+const countMap = <T extends string>(items: readonly T[]): Array<{ key: T; count: number }> => {
+  const counts = new Map<T, number>();
+  for (const item of items) counts.set(item, (counts.get(item) ?? 0) + 1);
+  return [...counts.entries()]
+    .sort(([, a], [, b]) => b - a)
+    .map(([key, count]) => ({ key, count }));
+};
+
+const topSources = countMap(entries.slice(0, 160).map((entry) => entry.source)).slice(0, 5);
+const topTags = countMap(entries.slice(0, 160).flatMap((entry) => entry.tags)).slice(0, 12);
+const relatedCategories = CATEGORY_META.filter(
+  (item) => item.group === category.group && item.slug !== category.slug,
+).slice(0, 5);
+const latest = entries[0] ?? null;
+const latestTitle = latest ? titleForLangWithFallback(latest, "ja").text : "";
+const arxivCount = entries.filter(isArxivEntry).length;
+const nonArxivResearchCount = Math.max(0, entries.length - arxivCount);
+const categoryInitial = category.initial;
+---
+
+<aside class="right category-side-panel" aria-label={`${category.name} insights`}>
+  {category.slug === "research" && (
+    <div class="side-card category-side-note">
+      <div class="right-title">Research split</div>
+      <p>
+        arXiv 論文は件数が多いため、通常の研究カテゴリとは別に専用ページで確認できます。
+      </p>
+      <div class="category-side-note-stats">
+        <span><strong>{ARXIV_ENTRIES.length}</strong> arXiv</span>
+        <span><strong>{nonArxivResearchCount}</strong> other</span>
+      </div>
+      <a class="side-action" href="/arxiv/">arXiv Papers を開く</a>
+    </div>
+  )}
+
+  <div class="side-card category-focus-card" style={`--cat-color:${category.color}`}>
+    <div class="right-title">Category focus</div>
+    <div class="category-focus-row">
+      <span class="category-focus-mark">{categoryInitial}</span>
+      <div>
+        <strong>{category.name}</strong>
+        <span>{entries.length} total entries</span>
+      </div>
+    </div>
+    {latest ? (
+      <a class="category-latest-link" href={entryHref(latest)}>
+        <span>Latest</span>
+        <strong>{latestTitle}</strong>
+        <em>{relativeTime(latest.publishedAt, now)}</em>
+      </a>
+    ) : (
+      <p class="category-side-muted">まだエントリがありません。</p>
+    )}
+  </div>
+
+  {topSources.length > 0 && (
+    <div class="side-card">
+      <div class="right-title">Top sources</div>
+      <div class="category-side-list">
+        {topSources.map((source) => (
+          <div class="category-source-row">
+            <span>{sourceLabel(source.key)}</span>
+            <strong>{source.count}</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {topTags.length > 0 && (
+    <div class="side-card">
+      <div class="right-title">Trending tags</div>
+      <div class="tag-cloud category-side-tags">
+        {topTags.map((tag) => (
+          <a class="tag" href={`/t/${encodeURIComponent(tag.key)}`}>
+            #{tag.key} <span class="c">{tag.count}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {category.slug === "research" && (
+    <div class="side-card">
+      <div class="right-title">arXiv codes</div>
+      <div class="arxiv-code-list">
+        {ARXIV_SOURCE_INFO.map((info) => (
+          <a class="arxiv-code-item" href={`/arxiv/#${info.id}`}>
+            <strong>{info.code}</strong>
+            <span>{info.shortJa}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {relatedCategories.length > 0 && (
+    <div class="side-card">
+      <div class="right-title">Related categories</div>
+      <div class="category-related-grid">
+        {relatedCategories.map((item) => (
+          <a href={`/c/${item.slug}`} style={`--cat-color:${item.color}`}>
+            <span>{item.initial}</span>
+            <strong>{item.name}</strong>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+</aside>

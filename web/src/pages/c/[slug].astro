@@ -5,6 +5,7 @@ import Sidebar from "../../components/Sidebar.astro";
 import EntryCard from "../../components/EntryCard.astro";
 import TrendChart from "../../components/TrendChart.astro";
 import Pager from "../../components/Pager.astro";
+import CategorySidePanel from "../../components/CategorySidePanel.astro";
 import {
   CATEGORY_META,
   PAGE_SIZE,
@@ -74,6 +75,19 @@ const breadcrumb = [
     <Sidebar active={slug} />
 
     <main>
+      {slug === "research" && (
+        <section class="research-split-callout" aria-labelledby="research-split-heading">
+          <div>
+            <p class="section-kicker">Research navigation</p>
+            <h2 id="research-split-heading">arXiv 論文は専用ページで分離表示しています</h2>
+            <p>
+              Papers / Benchmarks には研究・評価系の更新を残しつつ、件数の多い arXiv cs.AI / cs.CL / cs.SE / cs.LG は専用レーンでまとめて確認できます。
+            </p>
+          </div>
+          <a href="/arxiv/">arXiv Papers</a>
+        </section>
+      )}
+
       <TrendChart category={slug} color={category.color} days={30} />
 
       <div
@@ -117,7 +131,7 @@ const breadcrumb = [
       />
     </main>
 
-    <aside class="right"></aside>
+    <CategorySidePanel category={category} entries={all} now={now} />
   </div>
 </Portal>
 

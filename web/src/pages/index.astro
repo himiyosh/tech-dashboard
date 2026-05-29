@@ -8,14 +8,14 @@ import LiveMetrics from "../components/LiveMetrics.astro";
 import TickerBar from "../components/TickerBar.astro";
 import Pager from "../components/Pager.astro";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
-import { STATS } from "../lib/stats.ts";
 import {
   ALL_ENTRIES,
+  ARXIV_ENTRIES,
+  MAIN_TIMELINE_ENTRIES,
   PAGE_SIZE,
   CATEGORY_META,
   entryHref,
   featured,
-  trendingTags,
   relativeTime,
   groupByDay,
   jstDayLabel,
@@ -26,19 +26,20 @@ import {
 } from "../lib/data.ts";
 
 const currentPage = 1;
-const totalPages = Math.max(1, Math.ceil(ALL_ENTRIES.length / PAGE_SIZE));
-const pageEntries = ALL_ENTRIES.slice(0, PAGE_SIZE);
+const primaryEntries = MAIN_TIMELINE_ENTRIES;
+const arxivEntries = ARXIV_ENTRIES;
+const totalPages = Math.max(1, Math.ceil(primaryEntries.length / PAGE_SIZE));
+const pageEntries = primaryEntries.slice(0, PAGE_SIZE);
 const dayGroups = groupByDay(pageEntries);
 
 const feat = featured();
-const tags = trendingTags(12);
 
 const now = new Date();
 const ago = relativeTime(DASHBOARD_METRICS.generatedAt, now);
 
 // Top 3 = importance x recency, but only entries with real summaries.
 // Limit repeated source/category so the decision list is useful at a glance.
-const rankedPool = ALL_ENTRIES.filter((e) => e.importance >= 2 && !isDeterministicFallbackEntry(e)).slice(0, 120);
+const rankedPool = primaryEntries.filter((e) => e.importance >= 2 && !isDeterministicFallbackEntry(e)).slice(0, 120);
 const scoredTopCandidates = rankedPool
   .map((e) => {
     const ageHours = Math.max(
@@ -108,11 +109,11 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
         </h1>
         <p class="tagline i18n-ja">
           Microsoft / GitHub、Anthropic、OpenAI、Google、AI Coding Tools などの
-          公式情報・リリース・論文・業界ニュースを 1 時間おきに収集し、要約と重要度で並べます。
+          公式情報・リリース・業界ニュースを 1 時間おきに収集し、要約と重要度で並べます。arXiv 論文は専用ページに分けました。
         </p>
         <p class="tagline i18n-en" lang="en">
-          Official posts, releases, papers, and industry news across Microsoft / GitHub, Anthropic, OpenAI, Google, and AI Coding Tools,
-          collected hourly and ranked with summaries.
+          Official posts, releases, and industry news across Microsoft / GitHub, Anthropic, OpenAI, Google, and AI Coding Tools,
+          collected hourly and ranked with summaries. arXiv papers now live in a dedicated lane.
         </p>
         <div class="banner-actions" aria-label="First actions">
           <a class="banner-cta primary" href="#today-priority">
@@ -123,9 +124,17 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
             <span class="i18n-ja">検索する</span>
             <span class="i18n-en" lang="en">Search</span>
           </button>
-          <a class="banner-cta" href="/categories">
-            <span class="i18n-ja">カテゴリで探す</span>
-            <span class="i18n-en" lang="en">Browse categories</span>
+        </div>
+        <div class="banner-quick-links" aria-label="Explore sections">
+          <a href="/categories">
+            <span class="quick-icon" aria-hidden="true">▦</span>
+            <span class="i18n-ja">カテゴリ一覧</span>
+            <span class="i18n-en" lang="en">Categories</span>
+          </a>
+          <a href="/arxiv">
+            <span class="quick-icon paper" aria-hidden="true">⌁</span>
+            <span class="i18n-ja">arXiv 論文</span>
+            <span class="i18n-en" lang="en">arXiv papers</span>
           </a>
         </div>
       </div>
@@ -173,38 +182,18 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
             <a href="/archive">
               <span class="i18n-ja">期間別アーカイブ</span><span class="i18n-en" lang="en">Archive by month</span>
             </a>
+            <a href="/arxiv">
+              <span class="i18n-ja">arXiv 論文</span><span class="i18n-en" lang="en">arXiv papers</span>
+            </a>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <TickerBar entries={ALL_ENTRIES} now={now} />
+  <TickerBar entries={primaryEntries} now={now} />
 
-  <section class="stats">
-    <div class="stat">
-      <span>Today</span>
-      <span class="value" data-metric="todayEntries">{DASHBOARD_METRICS.todayEntries}</span>
-    </div>
-    <div class="stat">
-      <span>Total</span>
-      <span class="value" data-metric="liveEntries">{DASHBOARD_METRICS.liveEntries}</span>
-    </div>
-    <div class="stat">
-      <span>Major</span>
-      <span class="value" data-metric="majorEntries">{DASHBOARD_METRICS.majorEntries}</span>
-    </div>
-    <div class="stat">
-      <span>Active sources</span>
-      <span class="value compact-value" data-metric="sourceCoverageLabel">{DASHBOARD_METRICS.sourceCoverageLabel}</span>
-    </div>
-    <div class="stat">
-      <span>Updated</span>
-      <span class="value" style="font-size:13px" data-metric="updatedLabel">{ago}</span>
-    </div>
-  </section>
-
-  <div class="layout">
+  <div class="layout home-layout">
     <Sidebar active="all" />
 
     <main>
@@ -309,7 +298,7 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
         );
       })()}
 
-      <DailySummary entries={ALL_ENTRIES} stats={STATS} now={now} />
+      <DailySummary entries={primaryEntries} now={now} />
 
       {topThree.length > 0 && (
         <section class="top-rank" data-reveal="top-rank">
@@ -363,13 +352,13 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
           <h2 id="timeline-heading">
             <span class="i18n-ja">深掘り一覧</span>
             <span class="i18n-en" lang="en">Deep-dive timeline</span>
-            <span class="count"><span data-metric="liveEntries">{DASHBOARD_METRICS.liveEntries}</span> total · page {currentPage}/{totalPages}</span>
+            <span class="count">{primaryEntries.length} timeline · {arxivEntries.length} arXiv moved · page {currentPage}/{totalPages}</span>
           </h2>
           <p class="section-note i18n-ja">
-            すべての更新を新着順に確認する領域です。カテゴリ・タグ・検索で絞り込んで詳細へ進めます。
+            arXiv 論文を分離した通常更新の一覧です。カテゴリ・タグ・検索で絞り込んで詳細へ進めます。
           </p>
           <p class="section-note i18n-en" lang="en">
-            Browse all updates by recency, then narrow with category, tags, or search.
+            Browse the non-arXiv update stream by recency, then narrow with category, tags, or search.
           </p>
         </div>
 
@@ -397,26 +386,6 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
       </section>
     </main>
 
-    <aside class="right">
-      <div class="side-card">
-        <div class="right-title">Trending Tags</div>
-        <div class="tag-cloud">
-          {tags.map((t) => (
-            <a class="tag" href={`/t/${encodeURIComponent(t.tag)}`}>
-              #{t.tag} <span class="c">{t.count}</span>
-            </a>
-          ))}
-        </div>
-      </div>
-
-      <div class="side-card">
-        <div class="right-title">About</div>
-        <p style="font-size:12px;color:var(--muted);line-height:1.55">
-          1 時間おきに公式ソースを自動収集し、日本語で要約。
-          <a href="/about" style="color:var(--accent)">詳しく</a>
-        </p>
-      </div>
-    </aside>
   </div>
   <LiveMetrics />
 </Portal>

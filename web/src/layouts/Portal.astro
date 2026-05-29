@@ -5,7 +5,7 @@ import { SITE_URL } from "../lib/site.ts";
 export interface Props {
   title?: string;
   description?: string;
-  pageKey?: "timeline" | "categories" | "sources" | "archive" | "status" | "about";
+  pageKey?: "timeline" | "categories" | "arxiv" | "sources" | "archive" | "status" | "about";
   breadcrumb?: Array<{ label: string; href?: string }>;
 }
 
@@ -75,13 +75,24 @@ const productionHost = new URL(SITE_URL).hostname;
           <span class="logo-mark"></span>
           <span class="logo-text">TECH <span class="logo-accent">Dashboard</span></span>
         </a>
-        <a
-          href="/categories"
-          class={pageKey === "categories" ? "nav-shortcut active" : "nav-shortcut"}
-          aria-current={pageKey === "categories" ? "page" : undefined}
-        >
-          Categories
-        </a>
+        <nav class="header-switcher" aria-label="Explore sections">
+          <a
+            href="/categories"
+            class={pageKey === "categories" ? "nav-shortcut active" : "nav-shortcut"}
+            aria-current={pageKey === "categories" ? "page" : undefined}
+          >
+            <span class="nav-icon" aria-hidden="true">▦</span>
+            <span>Categories</span>
+          </a>
+          <a
+            href="/arxiv"
+            class={pageKey === "arxiv" ? "nav-shortcut active paper" : "nav-shortcut paper"}
+            aria-current={pageKey === "arxiv" ? "page" : undefined}
+          >
+            <span class="nav-icon" aria-hidden="true">⌁</span>
+            <span>arXiv</span>
+          </a>
+        </nav>
         <div class="search">
           <span aria-hidden="true">🔍</span>
           <span id="search-help" class="visually-hidden">
@@ -170,6 +181,7 @@ const productionHost = new URL(SITE_URL).hostname;
     <nav class="mobile-tabbar" aria-label="Primary">
       <a href="/" class={pageKey === "timeline" ? "active" : ""} aria-current={pageKey === "timeline" ? "page" : undefined}><span aria-hidden="true">⌂</span><span>Home</span></a>
       <a href="/categories" class={pageKey === "categories" ? "active" : ""} aria-current={pageKey === "categories" ? "page" : undefined}><span aria-hidden="true">▦</span><span>Categories</span></a>
+      <a href="/arxiv" class={pageKey === "arxiv" ? "active" : ""} aria-current={pageKey === "arxiv" ? "page" : undefined}><span aria-hidden="true">⌁</span><span>arXiv</span></a>
       <button type="button" data-menu-trigger aria-controls="site-menu" aria-expanded="false" class={menuOwnsCurrentPage ? "active" : ""}><span aria-hidden="true">☰</span><span>Menu</span></button>
     </nav>
 
@@ -333,6 +345,7 @@ const productionHost = new URL(SITE_URL).hostname;
           const path = url.replace(/^https?:\/\/[^/]+/, "");
           if (/^\/e\//.test(path)) return { label: "ARTICLE", className: "article" };
           if (/^\/c\//.test(path) || path === "/categories/" || path === "/categories") return { label: "CATEGORY", className: "category" };
+          if (/^\/arxiv/.test(path)) return { label: "ARXIV", className: "paper" };
           if (/^\/t\//.test(path)) return { label: "TAG", className: "tag" };
           if (/^\/archive/.test(path)) return { label: "ARCHIVE", className: "archive" };
           if (/^\/status/.test(path)) return { label: "STATUS", className: "status" };

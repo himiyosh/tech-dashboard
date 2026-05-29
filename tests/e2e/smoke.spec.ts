@@ -14,8 +14,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".banner-fact")).toHaveCount(3);
     await expect(page.getByRole("link", { name: /今日の重要記事/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /検索/ })).toBeVisible();
-    await expect(page.locator(".banner-actions").getByRole("link", { name: /カテゴリ/ })).toBeVisible();
-    await expect(page.locator("section.stats .stat")).toHaveCount(5);
+    await expect(page.locator(".banner-quick-links").getByRole("link", { name: /カテゴリ/ })).toBeVisible();
+    await expect(page.locator(".banner-quick-links").getByRole("link", { name: /arXiv/ })).toBeVisible();
+    await expect(page.locator("section.stats")).toHaveCount(0);
+    await expect(page.locator(".home-layout > aside.right")).toHaveCount(0);
     await expect(page.locator('script[src*="googlesyndication"]')).toHaveCount(0);
     await expect(page.locator("article.featured")).not.toContainText(/AI \u8981\u7d04\u672a\u751f\u6210|Summary pending|\u5f8c\u7d9a\u306e Worker run/);
     await expect(page.locator(".top-rank")).not.toContainText(/AI \u8981\u7d04\u672a\u751f\u6210|Summary pending|\u5f8c\u7d9a\u306e Worker run/);
@@ -399,7 +401,8 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(tabbar).toBeVisible();
     await expect(page.locator(".footer-bar")).toBeHidden();
     await expect(page.locator("header .nav")).toHaveCount(0);
-    await expect(page.locator("header .nav-shortcut")).toBeHidden();
+    await expect(page.locator("header .header-switcher")).toBeHidden();
+    await expect(page.locator("header .nav-shortcut")).toHaveCount(2);
     await expect(page.locator("header .menu-trigger")).toBeHidden();
     await expect(tabbar.getByRole("link", { name: "Home" })).toHaveClass(/active/);
     await expect(tabbar.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
@@ -413,7 +416,7 @@ test.describe("TECH Dashboard smoke", () => {
       .toBe(true);
 
     const tabItems = tabbar.locator("a, button");
-    await expect(tabItems).toHaveCount(3);
+    await expect(tabItems).toHaveCount(4);
     const itemBoxes = await tabItems.evaluateAll((items) =>
       items.map((item) => {
         const rect = item.getBoundingClientRect();
@@ -423,8 +426,8 @@ test.describe("TECH Dashboard smoke", () => {
     expect(itemBoxes[0].left, "first mobile tab item starts inside the padded bar").toBeGreaterThanOrEqual(7);
     expect(itemBoxes.at(-1)!.right, "last mobile tab item stays inside the padded bar").toBeLessThanOrEqual(383);
     for (const itemBox of itemBoxes) {
-      // 3 items in (390 - 16px padding) ≈ 124-125px each
-      expect(Math.round(itemBox.width), `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeGreaterThanOrEqual(120);
+      // 4 items in (390 - 16px padding) ≈ 93-94px each
+      expect(Math.round(itemBox.width), `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeGreaterThanOrEqual(88);
       expect(Math.round(itemBox.width), `mobile tab item width too large: ${JSON.stringify(itemBox)}`).toBeLessThanOrEqual(130);
     }
 
@@ -440,6 +443,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(tabbar.getByRole("button", { name: /Menu/ })).not.toHaveClass(/active/);
     await openMobileMenu();
     await expect(menu.getByRole("link", { name: /Categories/ })).toHaveCount(0);
+    await expect(menu.getByRole("link", { name: /arXiv/ })).toHaveCount(0);
     await page.keyboard.press("Escape");
     await expect(menu).toBeHidden();
 

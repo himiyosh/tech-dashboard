@@ -1,0 +1,363 @@
+---
+import Portal from "../layouts/Portal.astro";
+import PageHero from "../components/PageHero.astro";
+import Sidebar from "../components/Sidebar.astro";
+import EntryCard from "../components/EntryCard.astro";
+import CompactRow from "../components/CompactRow.astro";
+import {
+  ARXIV_ENTRIES,
+  GENERATED_AT,
+  MAIN_TIMELINE_ENTRIES,
+  groupByDay,
+  jstDayLabel,
+  relativeTime,
+  type NormalizedEntry,
+} from "../lib/data.ts";
+import { ARXIV_SOURCE_INFO, arxivSourceInfo } from "../lib/arxiv-meta.ts";
+import { SOURCE_META } from "../lib/source-meta.ts";
+
+const entries = ARXIV_ENTRIES;
+const dayGroups = groupByDay(entries);
+const now = new Date();
+
+const sourceLabel = (source: string): string =>
+  SOURCE_META.find((item) => item.id === source)?.displayName ?? source;
+
+const entryTime = (entry: NormalizedEntry): number =>
+  Date.parse(entry.publishedAt ?? entry.collectedAt ?? "") || 0;
+
+const countSince = (items: readonly NormalizedEntry[], days: number): number => {
+  const cutoff = now.getTime() - days * 86_400_000;
+  return items.filter((entry) => entryTime(entry) >= cutoff).length;
+};
+
+const sourceRows = ARXIV_SOURCE_INFO
+  .map((info) => {
+    const source = info.id;
+    const sourceEntries = ARXIV_ENTRIES.filter((entry) => entry.source === source);
+    const tags = new Map<string, number>();
+    for (const entry of sourceEntries.slice(0, 40)) {
+      for (const tag of entry.tags) tags.set(tag, (tags.get(tag) ?? 0) + 1);
+    }
+    const topTag = [...tags.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "paper";
+    return {
+      source,
+      label: sourceLabel(source),
+      code: info.code,
+      title: info.title,
+      descriptionJa: info.descriptionJa,
+      total: sourceEntries.length,
+      last7: countSince(sourceEntries, 7),
+      latest: sourceEntries[0] ?? null,
+      topTag,
+    };
+  });
+
+const sourceButtonLabel = (source: string): string =>
+  arxivSourceInfo(source)?.code ?? sourceLabel(source);
+
+const topTags = (() => {
+  const counts = new Map<string, number>();
+  for (const entry of ARXIV_ENTRIES.slice(0, 160)) {
+    for (const tag of entry.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12)
+    .map(([tag, count]) => ({ tag, count }));
+})();
+
+const breadcrumb = [
+  { label: "Home", href: "/" },
+  { label: "arXiv Papers" },
+];
+---
+
+<Portal
+  pageKey="arxiv"
+  title="arXiv Papers — TECH Dashboard"
+  description="arXiv 論文ソースを通常タイムラインから分離し、研究更新だけをまとめて確認できるページです。"
+  breadcrumb={breadcrumb}
+>
+  <PageHero
+    className="page-hero-arxiv"
+    accent="#fda4af"
+    kicker="Research lane"
+    title="arXiv Papers"
+    count={`${ARXIV_ENTRIES.length} papers`}
+    headingId="arxiv-heading"
+    description="arXiv 系ソースは通常タイムラインから分離しました。論文だけをまとめて追いたい時は、このページで cs.AI / cs.CL / cs.SE / cs.LG を確認できます。"
+    actions={[
+      { href: "/", label: "Main timeline" },
+      { href: "#arxiv-timeline", label: "Latest papers" },
+      { href: "/c/research", label: "Research category" },
+      { href: "/status", label: "Source health" },
+    ]}
+    metrics={[
+      { label: "Papers", value: ARXIV_ENTRIES.length },
+      { label: "Showing", value: entries.length },
+      { label: "Last 7d", value: countSince(ARXIV_ENTRIES, 7) },
+      { label: "Sources", value: sourceRows.length },
+      { label: "Main timeline", value: MAIN_TIMELINE_ENTRIES.length },
+      { label: "Updated", value: relativeTime(GENERATED_AT, now) },
+    ]}
+  />
+
+  <div class="layout arxiv-layout">
+    <Sidebar active="arxiv" />
+
+    <main data-paper-browser>
+      <section class="paper-lane" aria-labelledby="paper-lane-heading">
+        <div class="paper-lane-head">
+          <div>
+            <p class="section-kicker">Source split</p>
+            <h2 id="paper-lane-heading">arXiv source overview</h2>
+          </div>
+          <p>
+            通常タイムラインは公式 blog / release / news を中心に保ち、論文はここでまとめて確認できるようにしました。
+          </p>
+        </div>
+
+        <div class="paper-source-grid">
+          {sourceRows.map((row) => (
+            <button
+              id={row.source}
+              type="button"
+              class="paper-source-card"
+              data-paper-filter={row.source}
+              aria-pressed="false"
+            >
+              <div class="paper-source-top">
+                <span class="paper-source-mark">{row.code}</span>
+                <span>{row.title}</span>
+              </div>
+              <p class="paper-source-desc">{row.descriptionJa}</p>
+              <div class="paper-source-count">{row.total}</div>
+              <div class="paper-source-meta">
+                <span>{row.last7} in 7d</span>
+                <span>top #{row.topTag}</span>
+              </div>
+              {row.latest && (
+                <span class="paper-source-latest">
+                  latest {relativeTime(row.latest.publishedAt, now)}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section class="paper-controls" aria-label="arXiv display controls">
+        <div>
+          <p class="section-kicker">Filter</p>
+          <div class="paper-filter-tabs" role="group" aria-label="arXiv source filters">
+            <button type="button" class="paper-filter-btn is-active" data-paper-filter="all" aria-pressed="true">
+              All <span>{ARXIV_ENTRIES.length}</span>
+            </button>
+            {sourceRows.map((row) => (
+              <button
+                type="button"
+                class="paper-filter-btn"
+                data-paper-filter={row.source}
+                data-source-label={sourceButtonLabel(row.source)}
+                aria-pressed="false"
+              >
+                {row.code} <span>{row.total}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p class="section-kicker">View</p>
+          <div class="paper-view-toggle" role="group" aria-label="arXiv display mode">
+            <button type="button" class="paper-view-btn is-active" data-paper-view="cards" aria-pressed="true">
+              Cards
+            </button>
+            <button type="button" class="paper-view-btn" data-paper-view="compact" aria-pressed="false">
+              Compact
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="arxiv-timeline" class="timeline-section" aria-labelledby="arxiv-timeline-heading">
+        <div class="section-header primary section-header-stacked">
+          <p class="section-kicker">Latest papers</p>
+          <h2 id="arxiv-timeline-heading">
+            arXiv 論文一覧
+            <span class="count">
+              <span data-paper-filter-label>All</span> · <span data-paper-result-count>{entries.length} papers</span>
+            </span>
+          </h2>
+          <p class="section-note">
+            論文ソースだけを新着順に表示します。source filter で cs.AI / cs.CL / cs.SE / cs.LG を絞り込み、読み込み量に応じて Compact 表示へ切り替えられます。
+          </p>
+        </div>
+
+        {entries.length === 0 ? (
+          <div class="empty-state">
+            <strong>arXiv 論文はまだありません。</strong>
+            <p>次回の収集後に再度確認してください。</p>
+            <a href="/status">Status</a>
+          </div>
+        ) : (
+          <>
+            <div class="paper-card-stack" data-paper-view-panel="cards">
+              {dayGroups.map(({ key, items }) => (
+                <section class="paper-day-group" data-paper-day-group>
+                  <div class="day-header">
+                    <span>{jstDayLabel(key, now)}</span>
+                    <span class="day-count" data-paper-day-count>{items.length} papers</span>
+                  </div>
+                  {items.map((entry) => (
+                    <div data-paper-entry data-source={entry.source}>
+                      <EntryCard entry={entry} />
+                    </div>
+                  ))}
+                </section>
+              ))}
+            </div>
+
+            <div class="paper-compact-list" data-paper-view-panel="compact" hidden>
+              {entries.map((entry) => (
+                <div data-paper-entry data-source={entry.source}>
+                  <CompactRow entry={entry} />
+                </div>
+              ))}
+            </div>
+
+            <div class="empty-state paper-filter-empty" data-paper-filter-empty hidden>
+              <strong>このフィルタに一致する論文はありません。</strong>
+              <p>別の arXiv カテゴリを選択してください。</p>
+            </div>
+          </>
+        )}
+      </section>
+    </main>
+
+    <aside class="right">
+      <div class="side-card paper-note-card">
+        <div class="right-title">Why split?</div>
+        <p>
+          arXiv は更新数が多いため、日々の意思決定用タイムラインから独立させています。必要な時だけ研究レーンでまとめて追えます。
+        </p>
+      </div>
+
+      <div class="side-card">
+        <div class="right-title">Code meaning</div>
+        <div class="arxiv-code-list">
+          {ARXIV_SOURCE_INFO.map((info) => (
+            <button type="button" class="arxiv-code-item" data-paper-filter={info.id}>
+              <strong>{info.code}</strong>
+              <span>{info.shortJa}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="right-title">Paper Tags</div>
+        <div class="tag-cloud">
+          {topTags.map((tag) => (
+            <a class="tag" href={`/t/${encodeURIComponent(tag.tag)}`}>
+              #{tag.tag} <span class="c">{tag.count}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </aside>
+  </div>
+</Portal>
+
+<script>
+  const paperBrowser = document.querySelector("[data-paper-browser]");
+
+  if (paperBrowser) {
+    const filterButtons = [...document.querySelectorAll("[data-paper-filter]")];
+    const viewButtons = [...paperBrowser.querySelectorAll("[data-paper-view]")];
+    const panels = [...paperBrowser.querySelectorAll("[data-paper-view-panel]")];
+    const emptyState = paperBrowser.querySelector("[data-paper-filter-empty]");
+    const resultCount = paperBrowser.querySelector("[data-paper-result-count]");
+    const filterLabel = paperBrowser.querySelector("[data-paper-filter-label]");
+    const sourceLabels = {
+      all: "All",
+      "arxiv-cs-ai": "cs.AI",
+      "arxiv-cs-cl": "cs.CL",
+      "arxiv-cs-se": "cs.SE",
+      "arxiv-cs-lg": "cs.LG",
+    };
+
+    let selectedFilter = "all";
+    let selectedView = "cards";
+
+    try {
+      selectedView = localStorage.getItem("tech-dashboard-arxiv-view") || "cards";
+    } catch {
+      selectedView = "cards";
+    }
+
+    const countVisibleEntries = (panel) =>
+      [...panel.querySelectorAll("[data-paper-entry]")].filter((entry) => !entry.hidden).length;
+
+    const applyPaperState = () => {
+      filterButtons.forEach((button) => {
+        const active = button.dataset.paperFilter === selectedFilter;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+
+      viewButtons.forEach((button) => {
+        const active = button.dataset.paperView === selectedView;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+
+      let visibleTotal = 0;
+
+      panels.forEach((panel) => {
+        const activePanel = panel.dataset.paperViewPanel === selectedView;
+        panel.hidden = !activePanel;
+
+        panel.querySelectorAll("[data-paper-entry]").forEach((entry) => {
+          const matches = selectedFilter === "all" || entry.dataset.source === selectedFilter;
+          entry.hidden = !matches;
+        });
+
+        panel.querySelectorAll("[data-paper-day-group]").forEach((group) => {
+          const visibleInGroup = countVisibleEntries(group);
+          group.hidden = visibleInGroup === 0;
+          const dayCount = group.querySelector("[data-paper-day-count]");
+          if (dayCount) dayCount.textContent = `${visibleInGroup} papers`;
+        });
+
+        if (activePanel) visibleTotal = countVisibleEntries(panel);
+      });
+
+      if (resultCount) resultCount.textContent = `${visibleTotal} papers`;
+      if (filterLabel) filterLabel.textContent = sourceLabels[selectedFilter] || selectedFilter;
+      if (emptyState) emptyState.hidden = visibleTotal > 0;
+    };
+
+    filterButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedFilter = button.dataset.paperFilter || "all";
+        applyPaperState();
+        document.querySelector("#arxiv-timeline")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+
+    viewButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedView = button.dataset.paperView || "cards";
+        try {
+          localStorage.setItem("tech-dashboard-arxiv-view", selectedView);
+        } catch {
+          // Ignore storage restrictions; the current interaction still works.
+        }
+        applyPaperState();
+      });
+    });
+
+    applyPaperState();
+  }
+</script>

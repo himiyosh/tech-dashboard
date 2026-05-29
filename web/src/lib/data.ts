@@ -96,6 +96,13 @@ export const ALL_ENTRIES: readonly NormalizedEntry[] = data.entries;
 export const GENERATED_AT = data.generatedAt;
 export const WORKER_HEALTH: WorkerHealth | null = data.health ?? null;
 
+export function isArxivEntry(entry: Pick<NormalizedEntry, "source" | "sourceType" | "url">): boolean {
+  return entry.source.startsWith("arxiv-") || (entry.sourceType === "paper" && entry.url.includes("arxiv.org"));
+}
+
+export const ARXIV_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter(isArxivEntry);
+export const MAIN_TIMELINE_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter((entry) => !isArxivEntry(entry));
+
 /** Items per page on timeline / category / tag pages. */
 export const PAGE_SIZE = 30;
 
@@ -180,16 +187,16 @@ export function entriesFor(category: Category): NormalizedEntry[] {
 
 /** Newest N entries across all categories. */
 export function latest(n: number): NormalizedEntry[] {
-  return ALL_ENTRIES.slice(0, n);
+  return MAIN_TIMELINE_ENTRIES.slice(0, n);
 }
 
 /** Entries with importance === 3 (major releases). Prefer real summaries. */
 export function featured(): NormalizedEntry | undefined {
   return (
-    ALL_ENTRIES.find((e) => e.importance === 3 && !isDeterministicFallbackEntry(e)) ??
-    ALL_ENTRIES.find((e) => e.importance === 2 && !isDeterministicFallbackEntry(e)) ??
-    ALL_ENTRIES.find((e) => e.importance === 3) ??
-    ALL_ENTRIES.find((e) => e.importance === 2)
+    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 3 && !isDeterministicFallbackEntry(e)) ??
+    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 2 && !isDeterministicFallbackEntry(e)) ??
+    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 3) ??
+    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 2)
   );
 }
 

@@ -8,6 +8,7 @@ import {
   countByCategory,
   entriesFor,
   relativeTime,
+  titleForLangWithFallback,
   type Category,
   type CategoryGroup,
   type NormalizedEntry,
@@ -107,6 +108,7 @@ const categoryPanels = CATEGORY_META.map((cat) => {
     sourceCount,
     delta: pctDelta(last7, prev7),
     latest,
+    latestTitle: latest ? titleForLangWithFallback(latest, "ja").text : "",
     daily,
     topTypes,
   };
@@ -156,12 +158,12 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
           <div>
             <span class="category-directory-kicker">Quick directory</span>
             <h2 id="category-directory-heading">
-              カテゴリ一覧
+              Jump to category
               <span>{CATEGORY_META.length} categories</span>
             </h2>
           </div>
           <p>
-            名前と件数だけを先に確認できます。詳細な 30 日推移は下のカテゴリカードで確認してください。
+            ここは移動用のミニ目次です。比較や傾向確認は下のカードで行えます。
           </p>
         </div>
 
@@ -229,6 +231,13 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
                     <span>{cat.daily.at(-1)?.label}</span>
                   </div>
 
+                  {cat.latest && (
+                    <div class="cat-latest">
+                      <span>Latest</span>
+                      <strong>{cat.latestTitle}</strong>
+                    </div>
+                  )}
+
                   <table class="sr-only">
                     <caption>{cat.name} daily article counts (last 30 days)</caption>
                     <thead>
@@ -267,26 +276,30 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
   }
 
   .category-directory {
-    padding: 18px;
-    margin-bottom: 24px;
+    position: sticky;
+    top: 72px;
+    z-index: 5;
+    padding: 12px;
+    margin-bottom: 18px;
     border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
-    border-radius: 12px;
+    border-radius: 8px;
     background:
-      radial-gradient(ellipse 440px 180px at 0% 0%, rgba(94, 234, 212, 0.08), transparent 72%),
-      color-mix(in srgb, var(--surface) 86%, transparent);
+      linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, transparent), color-mix(in srgb, var(--surface) 84%, transparent)),
+      color-mix(in srgb, var(--bg) 80%, transparent);
+    backdrop-filter: blur(14px);
   }
 
   .category-directory-head {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
   }
 
   .category-directory-kicker {
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     color: var(--accent);
     font-family: ui-monospace, "SF Mono", monospace;
     font-size: 10.5px;
@@ -301,8 +314,8 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
     gap: 8px;
     margin: 0;
     color: var(--text);
-    font-size: 16px;
-    letter-spacing: -0.01em;
+    font-size: 14px;
+    letter-spacing: 0;
   }
 
   .category-directory h2 span {
@@ -313,28 +326,28 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
   }
 
   .category-directory-head p {
-    max-width: 430px;
+    max-width: 360px;
     margin: 0;
     color: var(--muted);
-    font-size: 12px;
-    line-height: 1.55;
+    font-size: 11.5px;
+    line-height: 1.45;
   }
 
   .category-directory-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+    gap: 6px;
   }
 
   .category-directory-item {
     display: grid;
-    grid-template-columns: 8px minmax(0, 1fr) auto;
+    grid-template-columns: 7px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 9px;
-    min-height: 44px;
-    padding: 9px 10px;
+    gap: 8px;
+    min-height: 34px;
+    padding: 6px 8px;
     border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
-    border-radius: 10px;
+    border-radius: 6px;
     color: var(--text-2);
     background: color-mix(in srgb, var(--bg-2) 66%, transparent);
   }
@@ -347,8 +360,8 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
   }
 
   .category-directory-dot {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 18px;
     border-radius: 999px;
     background: var(--cat-color);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--cat-color) 16%, transparent);
@@ -369,19 +382,20 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
   .category-directory-name {
     font-size: 12px;
     font-weight: 700;
-    line-height: 1.18;
+    line-height: 1.15;
   }
 
   .category-directory-group-label {
+    display: none;
     color: var(--muted);
     font-size: 9.5px;
     line-height: 1.2;
   }
 
   .category-directory-count {
-    min-width: 24px;
+    min-width: 22px;
     padding: 2px 5px;
-    border-radius: 999px;
+    border-radius: 5px;
     background: color-mix(in srgb, var(--cat-color) 16%, transparent);
     color: var(--text);
     font-family: ui-monospace, monospace;
@@ -442,10 +456,10 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
 
   .category-card {
     display: flex;
-    min-height: 174px;
+    min-height: 0;
     flex-direction: column;
-    gap: 8px;
-    padding: 11px 12px;
+    gap: 5px;
+    padding: 8px 9px;
     border: 1px solid var(--border);
     border-radius: 8px;
     background:
@@ -464,7 +478,7 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
   .cat-head {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
+    gap: 7px;
   }
 
   .cat-dot {
@@ -502,23 +516,23 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
   .cat-metrics {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 4px;
   }
 
   .cat-metrics span {
     min-width: auto;
-    padding: 3px 7px;
+    padding: 2px 6px;
     border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
     border-radius: 999px;
     background: color-mix(in srgb, var(--bg-2) 62%, transparent);
     color: var(--muted);
-    font-size: 10.5px;
+    font-size: 10px;
     line-height: 1.25;
   }
 
   .cat-metrics strong {
     color: var(--text);
-    font-size: 12px;
+    font-size: 11px;
     font-variant-numeric: tabular-nums;
   }
 
@@ -542,8 +556,8 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
     grid-auto-columns: minmax(0, 1fr);
     align-items: end;
     gap: 1px;
-    height: 46px;
-    padding: 6px 7px;
+    height: 32px;
+    padding: 4px 6px;
     border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
     border-radius: 8px;
     background: color-mix(in srgb, var(--bg-2) 54%, transparent);
@@ -566,11 +580,41 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
   }
 
   .cat-axis {
-    display: flex;
+    display: none;
     justify-content: space-between;
-    margin-top: -5px;
+    margin-top: -4px;
     color: var(--muted-2);
-    font-size: 10px;
+    font-size: 9px;
+  }
+
+  .cat-latest {
+    display: grid;
+    gap: 2px;
+    min-height: 0;
+    padding: 6px 8px;
+    border: 1px solid color-mix(in srgb, var(--cat-color) 24%, var(--border));
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-2) 62%, transparent);
+  }
+
+  .cat-latest span {
+    color: var(--muted-2);
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .cat-latest strong {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--text-2);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.25;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
   }
 
   .cat-footer {
@@ -584,7 +628,7 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
   .cat-meta {
     min-width: 0;
     color: var(--text-subtle);
-    font-size: 11px;
+    font-size: 10.5px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -601,11 +645,11 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
 
   .cat-types span {
     flex: 0 0 auto;
-    padding: 2px 6px;
+    padding: 2px 5px;
     border: 1px solid color-mix(in srgb, var(--cat-color) 36%, var(--border));
     border-radius: 999px;
     color: var(--muted);
-    font-size: 10px;
+    font-size: 9.5px;
     line-height: 1.2;
   }
 
@@ -630,6 +674,7 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
 
   @media (max-width: 640px) {
     .category-directory {
+      position: static;
       padding: 14px;
       margin-bottom: 18px;
     }
@@ -673,8 +718,13 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
       padding: 12px;
     }
 
+    .cat-axis,
+    .cat-latest {
+      display: none;
+    }
+
     .cat-trend {
-      height: 50px;
+      height: 38px;
     }
 
     .cat-footer {

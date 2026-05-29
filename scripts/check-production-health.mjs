@@ -82,7 +82,7 @@ function validateSummarizer(body) {
   if (body.recentIssue) {
     const issue = body.issue ?? {};
     const message = `${issue.status ?? "issue"} at ${issue.at ?? "unknown"}: ${issue.error ?? "unknown"}`;
-    if (issue.status === "retry") errors.push(`recent summarizer retry: ${message}`);
+    if (body.issueSeverity === "error") errors.push(`repeated summarizer retry: ${message}`);
     else warnings.push(`recent summarizer issue: ${message}`);
   }
 

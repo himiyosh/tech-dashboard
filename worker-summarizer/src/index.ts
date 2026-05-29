@@ -80,6 +80,7 @@ const DEFAULT_TOKEN_TTL_MS = 20 * 60_000;
 const ISSUE_KEY = "summarizer.issue.v1";
 const ISSUE_TTL_SECONDS = 6 * 60 * 60;
 const RECENT_ISSUE_MS = 60 * 60_000;
+const ERROR_REPEAT_THRESHOLD = 3;
 
 let cachedCopilotToken: { pat: string; token: string; expiresAtMs: number } | null = null;
 
@@ -201,15 +202,22 @@ async function writeIssue(
   err: unknown,
 ): Promise<void> {
   try {
+    const existing = await env.SUMMARY_CACHE.get<Record<string, unknown>>(ISSUE_KEY, "json");
+    const sameIssue = existing?.status === status && existing?.url === job.url;
+    const repeatCount =
+      sameIssue && typeof existing?.repeatCount === "number" && Number.isFinite(existing.repeatCount)
+        ? existing.repeatCount + 1
+        : 1;
     await env.SUMMARY_CACHE.put(
       ISSUE_KEY,
       JSON.stringify({
-        ok: status === "deferred",
+        ok: status === "deferred" || repeatCount < ERROR_REPEAT_THRESHOLD,
         status,
         at: new Date().toISOString(),
         url: job.url,
         source: job.entry.source,
         category: job.entry.category,
+        repeatCount,
         error: issueSummary(err),
       }),
       { expirationTtl: ISSUE_TTL_SECONDS },
@@ -227,7 +235,19 @@ export default {
       const issueAt = typeof issue?.at === "string" ? Date.parse(issue.at) : Number.NaN;
       const recentIssue = Number.isFinite(issueAt) && Date.now() - issueAt <= RECENT_ISSUE_MS;
       const issueStatus = typeof issue?.status === "string" ? issue.status : null;
-      const ok = Boolean(env.SUMMARY_CACHE) && Boolean(env.COPILOT_PAT) && !(recentIssue && issueStatus === "retry");
+      const repeatCount =
+        typeof issue?.repeatCount === "number" && Number.isFinite(issue.repeatCount)
+          ? issue.repeatCount
+          : recentIssue && issueStatus === "retry"
+          ? 1
+          : 0;
+      const issueSeverity =
+        recentIssue && issueStatus === "retry" && repeatCount >= ERROR_REPEAT_THRESHOLD
+          ? "error"
+          : recentIssue
+          ? "warn"
+          : "ok";
+      const ok = Boolean(env.SUMMARY_CACHE) && Boolean(env.COPILOT_PAT) && issueSeverity !== "error";
       return Response.json(
         {
           ok,
@@ -238,6 +258,7 @@ export default {
           cacheBinding: Boolean(env.SUMMARY_CACHE),
           copilotSecretConfigured: Boolean(env.COPILOT_PAT),
           recentIssue,
+          issueSeverity,
           issue,
         },
         {

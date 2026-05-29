@@ -203,7 +203,7 @@ describe("worker summarizer health endpoint", () => {
     });
   });
 
-  it("returns 503 when the queue consumer has a recent retry issue", async () => {
+  it("keeps a single recent retry as a warning", async () => {
     const response = await summarizerWorker.fetch!(
       new Request("https://tech-dashboard-summarizer.example/health"),
       {
@@ -219,13 +219,44 @@ describe("worker summarizer health endpoint", () => {
       {} as ExecutionContext,
     );
 
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      recentIssue: true,
+      issueSeverity: "warn",
+      issue: {
+        status: "retry",
+        url: "https://example.com/failing-entry",
+      },
+    });
+  });
+
+  it("returns 503 when the queue consumer repeats the same retry issue", async () => {
+    const response = await summarizerWorker.fetch!(
+      new Request("https://tech-dashboard-summarizer.example/health"),
+      {
+        SUMMARY_CACHE: mockKv({
+          status: "retry",
+          at: new Date().toISOString(),
+          url: "https://example.com/failing-entry",
+          repeatCount: 3,
+          error: "Error: Copilot timeout",
+        }),
+        COPILOT_PAT: "configured",
+        SUMMARIZE_MODEL: "claude-sonnet-4.6",
+      },
+      {} as ExecutionContext,
+    );
+
     expect(response.status).toBe(503);
     await expect(response.json()).resolves.toMatchObject({
       ok: false,
       recentIssue: true,
+      issueSeverity: "error",
       issue: {
         status: "retry",
         url: "https://example.com/failing-entry",
+        repeatCount: 3,
       },
     });
   });

@@ -7,12 +7,19 @@ function readConfig(path: string): string {
 }
 
 describe("Cloudflare Worker deploy config", () => {
-  it("does not set unsupported CPU limits on the current Workers plan", () => {
+  it("omits per-Worker CPU limits for the current Cloudflare plan", () => {
     const harnessConfig = readConfig("worker/wrangler.toml");
     const summarizerConfig = readConfig("worker-summarizer/wrangler.toml");
 
     expect(harnessConfig).not.toMatch(/\[limits\][\s\S]*cpu_ms\s*=/);
     expect(summarizerConfig).not.toMatch(/\[limits\][\s\S]*cpu_ms\s*=/);
+  });
+
+  it("uses the long-form budget for queue summarization", () => {
+    const summarizerConfig = readConfig("worker-summarizer/wrangler.toml");
+
+    expect(summarizerConfig).toContain('SUMMARIZE_TIMEOUT_MS = "180000"');
+    expect(summarizerConfig).toContain('SUMMARIZE_MAX_TOKENS = "6000"');
   });
 
   it("keeps the summary queue producer and consumer wired", () => {

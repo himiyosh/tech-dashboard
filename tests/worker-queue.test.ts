@@ -187,8 +187,8 @@ describe("worker summarizer health endpoint", () => {
         SUMMARY_CACHE: mockKv(),
         COPILOT_PAT: "configured",
         SUMMARIZE_MODEL: "claude-sonnet-4.6",
-        SUMMARIZE_TIMEOUT_MS: "28000",
-        SUMMARIZE_MAX_TOKENS: "1600",
+        SUMMARIZE_TIMEOUT_MS: "180000",
+        SUMMARIZE_MAX_TOKENS: "6000",
       },
       {} as ExecutionContext,
     );

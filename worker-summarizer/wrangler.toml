@@ -7,8 +7,11 @@
 #
 # Split out from the harness Worker because the combined CPU cost of
 # (long-form Copilot JSON parse) + (publishHistoryFiles JSON aggregation)
-# exceeded the Standard plan's 30s per-invocation CPU cap (LL-037).
-# Per-message invocation gives each summarize its own 30s budget.
+# exceeded the default 30s per-invocation CPU cap (LL-037). The summarizer is
+# intentionally quality-first: one queue message gets a longer timeout and
+# output budget so the site can publish article-like summaries instead of thin
+# notes. CPU limits are intentionally omitted because the current Cloudflare
+# plan rejects per-Worker cpu_ms settings.
 
 name = "tech-dashboard-summarizer"
 main = "src/index.ts"
@@ -23,13 +26,11 @@ id = "6d67debb991742efadfec473a121f5fc"
 
 [vars]
 SUMMARIZE_MODEL = "claude-sonnet-4.6"
-# 28s leaves ~2s budget for KV write + JSON parse within the 30s CPU cap.
-# Originally 25s but anthropic long-form entries timed out occasionally.
-SUMMARIZE_TIMEOUT_MS = "28000"
-# Keep in sync with the compact Queue prompt in worker/src/prompt.ts. This is
-# intentionally lower than local backfill scripts; the Queue consumer must
-# finish and close valid JSON inside one Worker invocation.
-SUMMARIZE_MAX_TOKENS = "1600"
+# Quality-first Queue summarization. The consumer uses the same long-form
+# prompt as local backfill, so give Copilot enough room to finish bilingual
+# article bodies and still leave time for JSON parse + KV write.
+SUMMARIZE_TIMEOUT_MS = "180000"
+SUMMARIZE_MAX_TOKENS = "6000"
 
 # Secrets (set via `wrangler secret put --name tech-dashboard-summarizer`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access
@@ -39,7 +40,8 @@ SUMMARIZE_MAX_TOKENS = "1600"
 # max_concurrency caps how many invocations run at once. Without it,
 # Cloudflare auto-scales to 40+ which fan-outs simultaneous Copilot API
 # calls and causes upstream rate-limiting (every request AbortError).
-# 2 keeps Copilot happy and still drains ~250 messages/h at ~15-25s/msg.
+# 2 keeps Copilot pressure moderate while allowing slow, high-quality jobs to
+# drain in parallel. Lower to 1 if Copilot starts rate-limiting long requests.
 [[queues.consumers]]
 queue = "tech-dashboard-summary"
 max_batch_size = 1

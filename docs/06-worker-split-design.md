@@ -27,7 +27,7 @@ Cloudflare Workers Standard プランの **CPU 時間 30s/invocation** が 3. + 
 | Worker | 責務 | CPU 予算 | 起動 |
 |---|---|---|---|
 | **harness-collector** (現 `tech-dashboard-harness`) | collect → normalize → merge → publish | 30s (現状 25-28s) | `cron 0 * * * *` |
-| **harness-summarizer** (`tech-dashboard-summarizer`) | Queue から URL を pop して Copilot 要約 → KV `SUMMARY_CACHE` に保存 | 30s/メッセージ (1 件 ≒ 15-25s) | `[[queues.consumers]]` |
+| **harness-summarizer** (`tech-dashboard-summarizer`) | Queue から URL を pop して Copilot 要約 → KV `SUMMARY_CACHE` に保存 | quality-first: timeout 180s / 6000 tokens | `[[queues.consumers]]` |
 
 ### B. データフロー
 
@@ -41,7 +41,7 @@ cron tick (collector)
 
 Queue consumer (summarizer)
   ├─ ack 1 メッセージ
-  ├─ Copilot /chat/completions 呼び出し (compact Queue prompt)
+  ├─ Copilot /chat/completions 呼び出し (long-form prompt)
   ├─ JSON parse
   └─ SUMMARY_CACHE.put(url, { summaryJa, summaryEn, bodyJa, bodyEn, generatedAt })
 
@@ -73,7 +73,7 @@ cron tick (next hour, collector)
 3. **summarizer Worker 新規作成**
    - `worker-summarizer/src/index.ts`
    - `queue(batch, env)` handler: 1 メッセージごとに Copilot → KV write
-   - `buildQueuePrompt()` で 28s / 1600 tokens 内に閉じる短い JSON contract を使う
+   - `buildPrompt()` の長文 JSON contract を使い、`SUMMARIZE_MAX_TOKENS=6000` / `SUMMARIZE_TIMEOUT_MS=180000` で品質を優先する
    - 失敗時は throw → Queue が自動 retry (最大 2 回, exponential backoff)
 4. **KV `SUMMARY_CACHE` を両 Worker に bind**
 5. **collector 側で `SUMMARY_CACHE` 参照を強化**
@@ -95,10 +95,10 @@ cron tick (next hour, collector)
 
 | 失敗 | 検知 | 対策 |
 |---|---|---|
-| Copilot 30s timeout | Queue retry | max 2 回で Dead Letter Queue へ。手動 backfill |
+| Copilot timeout | Queue retry | max 2 回で Dead Letter Queue へ。手動 backfill |
 | KV write 失敗 | throw → retry | Queues が自動再送 |
 | Queue 滞留 (生成 < 投入) | `wrangler queues info` の Pending 数監視 | producer 側 cap を下げる |
-| Worker CPU 30s 超過 (consumer 側) | `wrangler tail` | `SUMMARIZE_MAX_TOKENS` を下げる / `buildQueuePrompt()` の本文長を短くする |
+| Worker CPU 超過 (consumer 側) | `wrangler tail` | timeout / concurrency を確認。Free plan では `cpu_ms` を設定できないため、必要なら Paid plan 化か専用Nodeジョブ化を検討する |
 | 重複 enqueue | KV key 重複だけだが double-spend で課金増 | producer で `SUMMARY_CACHE.get` を必ず先行 |
 
 ### F. コスト試算 (Workers Paid Standard, $5/月 基本料金)
@@ -106,7 +106,7 @@ cron tick (next hour, collector)
 - 現在: collector cron 24 invocations/day = 720/月。requests 込みで $5 範囲内
 - 追加: summarizer は Queue で起動。1 件 1 invocation。20 件/h × 24h × 30d = **14,400 invocations/月**
 - Queue 単体料金: 100 万 operation まで含む。14,400 は誤差
-- Copilot API 課金: 1 件あたり ≒ 0.5-1 セント (Queue default max_tokens=1600 / claude-sonnet)
+- Copilot API 課金: Copilot Enterprise 権限で実行。現在は quality-first の `max_tokens=6000` を前提に、Queue の `max_concurrency=2` で上流 rate を抑える
   - 14,400 件 × $0.01 = **$144/月** (見積もり最大値)
   - キャッシュヒット率が高ければ大幅に下がる
 

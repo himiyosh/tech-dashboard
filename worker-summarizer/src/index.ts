@@ -4,14 +4,15 @@
  * Receives one entry per invocation from the SUMMARY_QUEUE producer
  * (tech-dashboard-harness). For each message:
  *   1. Resolve Copilot token from COPILOT_PAT.
- *   2. Call Copilot /chat/completions with the bilingual JSON prompt.
+ *   2. Call Copilot /chat/completions with the long-form bilingual JSON prompt.
  *   3. Parse the response.
  *   4. Write the result into SUMMARY_CACHE KV under the entry URL.
  *
  * Why a separate Worker (LL-037):
- *   The harness Worker hit Cloudflare's 30 s/invocation CPU cap when running
- *   summarize alongside publishHistoryFiles. Splitting summarize into its
- *   own Queue consumer gives every entry its own 30 s budget.
+ *   The harness Worker hit Cloudflare's default 30 s/invocation CPU cap when
+ *   running summarize alongside publishHistoryFiles. Splitting summarize into
+ *   its own Queue consumer lets this Worker use a larger CPU/timeout budget
+ *   for quality-first article bodies.
  *
  * Failure handling:
  *   - Copilot timeout / token error: throw -> Cloudflare Queues retries
@@ -21,7 +22,7 @@
  *   - After max_retries, message goes to the DLQ for manual triage.
  */
 import type { NormalizedEntry } from "../../harness/types.ts";
-import { buildQueuePrompt, parseResponse } from "../../worker/src/prompt.ts";
+import { buildPrompt, parseResponse } from "../../worker/src/prompt.ts";
 import { type CacheEntry, putCacheEntry } from "../../worker/src/kv-cache.ts";
 
 interface Env {
@@ -33,15 +34,15 @@ interface Env {
 }
 
 /**
- * Shape of a queue message produced by the harness Worker. Keep small —
- * Queues caps message size and we only need what buildQueuePrompt reads.
+ * Shape of a queue message produced by the harness Worker. Keep small:
+ * queues cap message size, and the prompt derives context from collected
+ * metadata plus RSS/Atom snippets carried in summaryEn/summaryJa.
  */
 export interface SummaryJob {
   url: string;
-  // The full NormalizedEntry would be more than we need; we only ship the
-  // fields buildQueuePrompt uses. Avoids bloating the queue payload while
-  // still carrying the RSS/Atom snippet that normalization placed in
-  // summaryEn/summaryJa.
+  // The full NormalizedEntry would be more than we need. Avoids bloating the
+  // queue payload while still carrying the RSS/Atom snippet that normalization
+  // placed in summaryEn/summaryJa.
   entry: Pick<
     NormalizedEntry,
     "id" | "url" | "title" | "category" | "source" | "sourceType"
@@ -73,8 +74,8 @@ const COPILOT_HEADERS: Record<string, string> = {
   "user-agent": "GitHubCopilotChat/0.22.0",
 };
 
-const DEFAULT_TIMEOUT_MS = 25_000;
-const DEFAULT_MAX_TOKENS = 1600;
+const DEFAULT_TIMEOUT_MS = 180_000;
+const DEFAULT_MAX_TOKENS = 6000;
 const TOKEN_REFRESH_SKEW_MS = 60_000;
 const DEFAULT_TOKEN_TTL_MS = 20 * 60_000;
 const ISSUE_KEY = "summarizer.issue.v1";
@@ -133,9 +134,9 @@ async function callCopilot(
       body: JSON.stringify({
         model,
         temperature: 0.2,
-        // Keep this aligned with buildQueuePrompt(): compact enough to close
-        // JSON inside the 28s Worker timeout, but large enough for useful
-        // bilingual context notes.
+        // Quality-first queue mode: this Worker has a larger CPU/timeout budget
+        // than the harness Worker, so use the same long-form contract as local
+        // backfills.
         max_tokens: maxTokens,
         messages: [
           {
@@ -145,7 +146,7 @@ async function callCopilot(
           },
           {
             role: "user",
-            content: buildQueuePrompt(entry),
+            content: buildPrompt(entry),
           },
         ],
       }),

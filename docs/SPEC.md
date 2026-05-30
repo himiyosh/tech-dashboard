@@ -123,7 +123,7 @@ interface WorkerHealth {
 
 | 領域 | 仕組み | 頻度 / トリガー |
 |---|---|---|
-| データ収集 + Queue 要約 + og:image | Cloudflare Worker cron + Queue consumer | 毎時 (4 batch ローテーション、要約は最大 35 件/run を Queue 投入) |
+| データ収集 + Queue 要約 + og:image | Cloudflare Worker cron + Queue consumer | 毎時 (4 batch ローテーション、要約は最大 30 件/run を Queue 投入) |
 | GitHub commit | Worker → GitHub Git Data API | data 差分を 1 commit にまとめる |
 | サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
 | ローカル品質ゲート + Worker コード deploy | `scripts/git-hooks/pre-push` | push 前に unit / web build / E2E を実行し、`RUN_WORKER_DEPLOY=1` の `main` push に worker/ 差分がある場合だけ deploy |

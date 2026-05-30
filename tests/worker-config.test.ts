@@ -27,6 +27,7 @@ describe("Cloudflare Worker deploy config", () => {
     const summarizerConfig = readConfig("worker-summarizer/wrangler.toml");
 
     expect(harnessConfig).toContain('ENABLE_SUMMARY_QUEUE = "1"');
+    expect(harnessConfig).toContain('ENQUEUE_MAX_NEW = "30"');
     expect(harnessConfig).toContain('binding = "SUMMARY_QUEUE"');
     expect(harnessConfig).toContain('queue = "tech-dashboard-summary"');
     expect(summarizerConfig).toContain('queue = "tech-dashboard-summary"');

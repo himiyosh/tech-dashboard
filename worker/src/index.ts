@@ -63,9 +63,11 @@ interface Env {
   ENABLE_SUMMARY_QUEUE?: string;
   ENQUEUE_MAX_NEW?: string;
   // Max number of fallback entries to look up in KV per cron. Cap exists to
-  // stay under Cloudflare's 1000 subrequests/invocation budget once the
-  // fallback backlog grows. See LL-042 follow-up.
+  // stay under Cloudflare's Worker subrequest budgets once the fallback
+  // backlog grows. See LL-042 follow-up.
   KV_LOOKUP_CAP?: string;
+  // Max number of missing thumbnails to fetch from article pages per cron.
+  OG_BUDGET_PER_RUN?: string;
 }
 
 const INDEX_LIMIT = 2000;
@@ -861,17 +863,27 @@ async function runHarness(
     .sort((a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt))
     .slice(0, INDEX_LIMIT);
 
-  // 3) Resolve Copilot token (skip if PAT absent)
+  const model = env.SUMMARIZE_MODEL || "claude-sonnet-4.6";
+  const maxNew = Number(env.SUMMARIZE_MAX_NEW || "25");
+  const inlineSummarizeEnabled = maxNew > 0;
+
+  // 3) Resolve Copilot token only for legacy inline summarization. Queue
+  // summarization is handled by worker-summarizer, whose /health verifies its
+  // own COPILOT_PAT. Skipping this exchange saves one external subrequest from
+  // the already tight harness Free-plan budget.
   let token: string | null = null;
   let copilotError: string | null = null;
-  if (env.COPILOT_PAT) {
+  const copilotOk = inlineSummarizeEnabled ? false : true;
+  let inlineCopilotOk = copilotOk;
+  if (inlineSummarizeEnabled && env.COPILOT_PAT) {
     try {
       token = await resolveCopilotToken(env.COPILOT_PAT);
+      inlineCopilotOk = true;
     } catch (err) {
       copilotError = err instanceof Error ? err.message : String(err);
       console.warn(`[worker] copilot token exchange failed: ${copilotError}`);
     }
-  } else {
+  } else if (inlineSummarizeEnabled) {
     copilotError = "COPILOT_PAT not configured";
   }
 
@@ -879,8 +891,6 @@ async function runHarness(
   //    Cache stored as a single JSON blob keyed by URL to avoid
   //    hundreds of sequential KV gets (each ~30ms, which exhausts the
   //    Worker wall-time budget of ~30s).
-  const model = env.SUMMARIZE_MODEL || "claude-sonnet-4.6";
-  const maxNew = Number(env.SUMMARIZE_MAX_NEW || "25");
   const summarizeTimeoutMs = Number(env.SUMMARIZE_TIMEOUT_MS || String(DEFAULT_SUMMARIZE_TIMEOUT_MS));
   const summarizeConcurrency = Math.max(
     1,
@@ -895,13 +905,12 @@ async function runHarness(
   // incorrectly treated them as "has real summary — skip". Result: a growing
   // tail (484 entries, 400+ permanently stuck) that never got enqueued.
   //
-  // After LL-036/040/041 slashed non-KV subrequests to ~60-80/inv, there is
-  // room for 500 KV reads (500 + 80 = 580 < 1000 limit). Raising the default
-  // to 500 covers all currently known fallback entries. Round-robin ensures
-  // every entry eventually gets checked even if the count exceeds the cap.
+  // The harness is still constrained by the Free-plan external subrequest cap,
+  // and scheduled invocations also do GitHub/raw/source/OG fetches. Keep KV
+  // reads low and rely on round-robin so every fallback is eventually checked.
   const KV_LOOKUP_CAP = Math.max(
-    100,
-    Number(env.KV_LOOKUP_CAP ?? "500"),
+    1,
+    Number(env.KV_LOOKUP_CAP ?? "20"),
   );
   const allFallback = sorted.filter(needsGeneratedContent);
   // Round-robin: shift start index by 1 each hour so all entries cycle
@@ -1013,7 +1022,7 @@ async function runHarness(
         };
       }
     }
-  } else if (!token) {
+  } else if (inlineSummarizeEnabled && !token) {
     console.warn("[worker] no Copilot token — skipping summarization");
   }
 
@@ -1022,7 +1031,7 @@ async function runHarness(
   //      blob keyed by URL. Capped per run to stay within Worker subrequest
   //      and CPU budgets.
   const OG_KEY = "og.v1";
-  const OG_BUDGET_PER_RUN = 4;
+  const OG_BUDGET_PER_RUN = Math.max(0, Number(env.OG_BUDGET_PER_RUN ?? "1"));
   const ogBlob =
     (await env.SUMMARY_CACHE.get<Record<string, { src: string | null; checkedAt: string }>>(OG_KEY, "json")) ?? {};
 
@@ -1118,7 +1127,7 @@ async function runHarness(
       sourcesAttempted: sources.length,
       sourcesOk: settled.filter((s) => s.result.ok).length,
       sourcesFailed: failedSources,
-      copilotOk: token !== null,
+      copilotOk: inlineCopilotOk,
       fallbackPercent: prePublishFallbackPercent,
       queueMode,
       queueCap,
@@ -1171,7 +1180,7 @@ async function runHarness(
     summaryQueueBacklog: summaryQueueBatch.eligibleCount,
     summaryQueueDrainEstimateHours: summaryQueueBatch.drainEstimateHours,
     summaryQueueStartIndex: summaryQueueBatch.startIndex,
-    copilotOk: token !== null,
+    copilotOk: inlineCopilotOk,
     copilotError,
     ogCached: Object.keys(ogBlob).length,
     ogNewHits: ogFound,

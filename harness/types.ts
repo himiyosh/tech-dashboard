@@ -176,9 +176,11 @@ export interface SourceDefinition {
    * (e.g. Google Developers Blog only ships <lastBuildDate>), the RSS
    * collector will fetch each article page and extract the date from
    * <meta property="article:published_time">, JSON-LD datePublished,
-   * or <time datetime="...">. Capped to MAX_DATE_FETCHES per run.
+   * or <time datetime="...">. Capped by maxArticleDateFetches per run.
    */
   fetchArticleDate?: boolean;
+  /** Per-source cap for fetchArticleDate. Defaults to the collector budget. */
+  maxArticleDateFetches?: number;
   /**
    * Optional deterministic relevance filters applied by the generic RSS
    * collector before normalization. If includeKeywords is set, at least one

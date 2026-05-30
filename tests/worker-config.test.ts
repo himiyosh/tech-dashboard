@@ -25,9 +25,13 @@ describe("Cloudflare Worker deploy config", () => {
   it("keeps the summary queue producer and consumer wired", () => {
     const harnessConfig = readConfig("worker/wrangler.toml");
     const summarizerConfig = readConfig("worker-summarizer/wrangler.toml");
+    const registry = readConfig("harness/registry.ts");
 
     expect(harnessConfig).toContain('ENABLE_SUMMARY_QUEUE = "1"');
-    expect(harnessConfig).toContain('ENQUEUE_MAX_NEW = "30"');
+    expect(harnessConfig).toContain('ENQUEUE_MAX_NEW = "10"');
+    expect(harnessConfig).toContain('KV_LOOKUP_CAP = "20"');
+    expect(harnessConfig).toContain('OG_BUDGET_PER_RUN = "1"');
+    expect(registry).toContain("maxArticleDateFetches: 4");
     expect(harnessConfig).toContain('binding = "SUMMARY_QUEUE"');
     expect(harnessConfig).toContain('queue = "tech-dashboard-summary"');
     expect(summarizerConfig).toContain('queue = "tech-dashboard-summary"');

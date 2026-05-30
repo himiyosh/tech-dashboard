@@ -50,24 +50,23 @@ SUMMARIZE_TIMEOUT_MS = "25000"
 # the 30 s CPU cap on every job — LL-038).
 # 2026-05-16: Re-enabled after Phase A+B (PR #62) split cache.v1 into
 # per-URL KV keys. The consumer now does one KV.put per job, no blob R/M/W.
-# 2026-05-16 evening: Lowered cap to 30 after hitting "KV put() limit
-# exceeded for the day" (LL-043). Cloudflare Workers KV free tier allows
-# 1000 writes/day per namespace. Daily budget:
-#   24 cron * 30 enqueue = 720 summarizer KV.put/day (worst case)
-#   + ~24 OG cache puts                          = 24 KV.put/day
-#   + occasional manual /run                     = a handful
-# Leaves headroom under the 1000/day cap for ad-hoc backfills.
-# Once the backlog of fallback entries drains, daily writes drop to roughly
-# the count of new articles per day (~480) regardless of this cap.
+# 2026-05-31: Lowered cap to 10 after the 21:00Z cron hit the Free-plan
+# subrequest ceiling. This slows backlog drain but keeps quality-first
+# long-form summaries stable and leaves KV write headroom.
+# Daily write budget:
+#   24 cron * 10 enqueue = 240 summarizer KV.put/day (worst case)
+#   + ~24 OG cache puts  = 24 KV.put/day
+#   + occasional manual /run = a handful
 ENABLE_SUMMARY_QUEUE = "1"
-ENQUEUE_MAX_NEW = "30"
+ENQUEUE_MAX_NEW = "10"
 # KV_LOOKUP_CAP: max fallback entries to KV-read per cron invocation.
-# After LL-036/040/041 reduced non-KV subrequests to ~60-80/inv, the budget
-# supports 500 KV reads (500+80=580 < 1000 limit). Raising from 60 to 500
-# fixes a blind-spot where entries at positions 60+ were permanently skipped
-# and never enqueued (root-cause of the "fallback debt won't clear" bug).
-# Round-robin in code ensures fairness when allFallback > KV_LOOKUP_CAP.
-KV_LOOKUP_CAP = "500"
+# 2026-05-31: Lowered from 500 after the 21:00Z cron hit the Worker
+# subrequest limit. Round-robin in code preserves fairness while we favor
+# stability and high-quality Queue summaries over rapid backlog drain.
+KV_LOOKUP_CAP = "20"
+# Missing thumbnail backfill is useful but non-critical. Keep it tiny so data
+# collection + GitHub publish stay under the Free-plan external subrequest cap.
+OG_BUDGET_PER_RUN = "1"
 
 # Secrets (set via `wrangler secret put`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access

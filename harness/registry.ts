@@ -233,6 +233,9 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     // Feed lacks per-item <pubDate>; without this every item would inherit
     // collectedAt as publish date and surface as "today's update" (LL-045).
     fetchArticleDate: true,
+    // Worker Free plan has a 50 external subrequest/invocation cap. This
+    // source can otherwise spend 15 extra article-page fetches in one batch.
+    maxArticleDateFetches: 4,
     collect: collectRss,
   },
   "github-blog-ai": {

@@ -131,7 +131,7 @@ export function extractPublishedAtFromHtml(html: string): string | null {
 }
 
 /** Per-run cap on per-article date fetches (subrequest budget — see LL-036/037). */
-const MAX_ARTICLE_DATE_FETCHES = 15;
+const DEFAULT_MAX_ARTICLE_DATE_FETCHES = 15;
 
 async function fetchArticleDate(url: string): Promise<string | null> {
   try {
@@ -268,7 +268,7 @@ export async function collectRss(source: SourceDefinition): Promise<RawEntry[]> 
   // Opt-in: feeds without per-item dates (e.g. Google Developers Blog) get
   // their publishedAt populated by fetching each article HTML. Capped per run.
   if (source.fetchArticleDate) {
-    let budget = MAX_ARTICLE_DATE_FETCHES;
+    let budget = Math.max(0, source.maxArticleDateFetches ?? DEFAULT_MAX_ARTICLE_DATE_FETCHES);
     for (const e of filteredEntries) {
       if (budget <= 0) break;
       if (e.publishedAt) continue;

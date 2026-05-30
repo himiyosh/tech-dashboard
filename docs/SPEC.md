@@ -64,11 +64,11 @@
 | Cron 式 | `0 * * * *` (UTC) |
 | 実行頻度 | **毎時 / 24 run×日** |
 | ソースローテーション | 50 fetch 対象ソース ÷ 4 batch (`hour % 4`)、個別ソースは 4 時間ごと |
-| 1 実行あたり Queue 投入上限 | `ENQUEUE_MAX_NEW = 30` |
-| 1 実行あたり og:image fetch 上限 | `OG_BUDGET_PER_RUN = 4` |
+| 1 実行あたり Queue 投入上限 | `ENQUEUE_MAX_NEW = 10` |
+| 1 実行あたり og:image fetch 上限 | `OG_BUDGET_PER_RUN = 1` |
 | ソースあたり取得上限 | `PER_SOURCE_CAP = 15` (arxiv の 400+/日 を抑制) |
 | index エントリ総数上限 | `INDEX_LIMIT = 2000` |
-| Cloudflare Workers subrequest 上限 | 1000/invocation を前提に `KV_LOOKUP_CAP` で制御 |
+| Cloudflare Workers subrequest 上限 | Free plan の外部 50/request を前提に `KV_LOOKUP_CAP = 20` と source-side fetch cap で制御 |
 
 ### 2.3 手動トリガ
 
@@ -123,7 +123,7 @@ interface WorkerHealth {
 
 | 領域 | 仕組み | 頻度 / トリガー |
 |---|---|---|
-| データ収集 + Queue 要約 + og:image | Cloudflare Worker cron + Queue consumer | 毎時 (4 batch ローテーション、要約は最大 30 件/run を Queue 投入) |
+| データ収集 + Queue 要約 + og:image | Cloudflare Worker cron + Queue consumer | 毎時 (4 batch ローテーション、要約は最大 10 件/run を Queue 投入) |
 | GitHub commit | Worker → GitHub Git Data API | data 差分を 1 commit にまとめる |
 | サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
 | ローカル品質ゲート + Worker コード deploy | `scripts/git-hooks/pre-push` | push 前に unit / web build / E2E を実行し、`RUN_WORKER_DEPLOY=1` の `main` push に worker/ 差分がある場合だけ deploy |

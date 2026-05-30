@@ -5,8 +5,8 @@
  * (tech-dashboard-harness). For each message:
  *   1. Resolve Copilot token from COPILOT_PAT.
  *   2. Call Copilot /chat/completions with the long-form bilingual JSON prompt.
- *   3. Parse the response.
- *   4. Write the result into SUMMARY_CACHE KV under the entry URL.
+ *   3. If the response is incomplete, retry once with a compact recovery prompt.
+ *   4. Parse the response and write it into SUMMARY_CACHE KV under the entry URL.
  *
  * Why a separate Worker (LL-037):
  *   The harness Worker hit Cloudflare's default 30 s/invocation CPU cap when
@@ -17,12 +17,12 @@
  * Failure handling:
  *   - Copilot timeout / token error: throw -> Cloudflare Queues retries
  *     with exponential backoff (max_retries=2, see wrangler.toml).
- *   - parseResponse empty (model returned non-JSON or empty summaryJa):
- *     skip cache write but ack (don't burn retries on the same message).
+ *   - Incomplete model output: retry once in-process with a compact JSON-only
+ *     prompt before handing the message back to Cloudflare Queues.
  *   - After max_retries, message goes to the DLQ for manual triage.
  */
 import type { NormalizedEntry } from "../../harness/types.ts";
-import { buildPrompt, parseResponse } from "../../worker/src/prompt.ts";
+import { buildPrompt, buildQueuePrompt, parseResponse } from "../../worker/src/prompt.ts";
 import { type CacheEntry, putCacheEntry } from "../../worker/src/kv-cache.ts";
 
 interface Env {
@@ -82,6 +82,8 @@ const ISSUE_KEY = "summarizer.issue.v1";
 const ISSUE_TTL_SECONDS = 6 * 60 * 60;
 const RECENT_ISSUE_MS = 60 * 60_000;
 const ERROR_REPEAT_THRESHOLD = 3;
+const RECOVERY_TIMEOUT_MS = 90_000;
+const RECOVERY_MAX_TOKENS = 3500;
 
 let cachedCopilotToken: { pat: string; token: string; expiresAtMs: number } | null = null;
 
@@ -116,7 +118,7 @@ async function resolveCopilotToken(pat: string): Promise<string> {
 async function callCopilot(
   token: string,
   model: string,
-  entry: SummaryJob["entry"],
+  prompt: string,
   timeoutMs: number,
   maxTokens: number,
 ): Promise<CacheEntry> {
@@ -146,7 +148,7 @@ async function callCopilot(
           },
           {
             role: "user",
-            content: buildPrompt(entry),
+            content: prompt,
           },
         ],
       }),
@@ -169,6 +171,16 @@ async function callCopilot(
   }
 }
 
+export function isCompleteCacheEntry(entry: CacheEntry): boolean {
+  return Boolean(
+    entry.titleJa.trim() &&
+      entry.summaryJa.trim() &&
+      entry.summaryEn.trim() &&
+      entry.bodyJa.trim() &&
+      entry.bodyEn.trim(),
+  );
+}
+
 async function processJob(env: Env, job: SummaryJob): Promise<void> {
   // Per-URL KV (LL-038): single KV.put per entry, no read-modify-write.
   // The producer (harness Worker) already filters out cached entries before
@@ -180,15 +192,26 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
   const timeoutMs = Number(env.SUMMARIZE_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
   const maxTokens = Number(env.SUMMARIZE_MAX_TOKENS ?? DEFAULT_MAX_TOKENS);
 
-  const entry = await callCopilot(token, model, job.entry, timeoutMs, maxTokens);
+  let entry = await callCopilot(token, model, buildPrompt(job.entry), timeoutMs, maxTokens);
 
-  // Empty summaryJa indicates the model returned malformed JSON. Don't
-  // poison the cache — let the message hit the DLQ for triage.
-  if (!entry.titleJa || !entry.summaryJa || !entry.summaryEn || !entry.bodyJa || !entry.bodyEn) {
+  if (!isCompleteCacheEntry(entry)) {
+    console.warn(`[summarizer] recovery prompt ${job.url}: primary output was incomplete`);
+    entry = await callCopilot(
+      token,
+      model,
+      buildQueuePrompt(job.entry),
+      Math.min(timeoutMs, RECOVERY_TIMEOUT_MS),
+      Math.min(maxTokens, RECOVERY_MAX_TOKENS),
+    );
+  }
+
+  // Do not poison the cache with malformed JSON or missing long-form fields.
+  if (!isCompleteCacheEntry(entry)) {
     throw new Error(`incomplete summary for ${job.url}`);
   }
 
   await putCacheEntry(env.SUMMARY_CACHE, job.url, entry);
+  await clearIssue(env, job.url);
 }
 
 function issueSummary(err: unknown): string {
@@ -225,6 +248,17 @@ async function writeIssue(
     );
   } catch (issueErr) {
     console.warn("[summarizer] issue heartbeat write failed:", issueErr);
+  }
+}
+
+async function clearIssue(env: Env, url: string): Promise<void> {
+  try {
+    const existing = await env.SUMMARY_CACHE.get<Record<string, unknown>>(ISSUE_KEY, "json");
+    if (existing?.url === url) {
+      await env.SUMMARY_CACHE.delete(ISSUE_KEY);
+    }
+  } catch (issueErr) {
+    console.warn("[summarizer] issue heartbeat clear failed:", issueErr);
   }
 }
 

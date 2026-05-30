@@ -3,7 +3,7 @@ import type { NormalizedEntry } from "../harness/types.ts";
 import type { CacheEntry } from "../worker/src/kv-cache.ts";
 import { evaluateHarnessHealth } from "../worker/src/index.ts";
 import { needsGeneratedContent, selectSummaryJobBatch, selectSummaryJobs } from "../worker/src/summary-queue.ts";
-import summarizerWorker from "../worker-summarizer/src/index.ts";
+import summarizerWorker, { isCompleteCacheEntry } from "../worker-summarizer/src/index.ts";
 
 const baseEntry: NormalizedEntry = {
   id: "entry-1",
@@ -41,6 +41,7 @@ function mockKv(json: unknown = null): KVNamespace {
   return {
     get: vi.fn(async () => json),
     put: vi.fn(async () => undefined),
+    delete: vi.fn(async () => undefined),
   } as unknown as KVNamespace;
 }
 
@@ -259,5 +260,119 @@ describe("worker summarizer health endpoint", () => {
         repeatCount: 3,
       },
     });
+  });
+});
+
+describe("worker summarizer queue consumer", () => {
+  it("retries once with a compact prompt when the long-form response is incomplete", async () => {
+    const put = vi.fn(async () => undefined);
+    const del = vi.fn(async () => undefined);
+    const kv = {
+      get: vi.fn(async () => ({
+        status: "retry",
+        at: new Date().toISOString(),
+        url: baseEntry.url,
+      })),
+      put,
+      delete: del,
+    } as unknown as KVNamespace;
+    const ack = vi.fn();
+    const retry = vi.fn();
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (url.includes("api.github.com/copilot_internal/v2/token")) {
+        return Response.json({
+          token: "copilot-token",
+          expires_at: Math.floor(Date.now() / 1000) + 1200,
+        });
+      }
+
+      const body = JSON.parse(String(init?.body ?? "{}")) as {
+        messages?: Array<{ role: string; content: string }>;
+      };
+      const prompt = body.messages?.find((message) => message.role === "user")?.content ?? "";
+      if (prompt.includes("Return exactly one valid JSON object")) {
+        return Response.json({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  titleJa: "Example Paper",
+                  summaryJa: "短い日本語要約です。",
+                  summaryEn: "A concise English summary.",
+                  bodyJa: "日本語本文です。\\n\\n背景も含めて説明します。",
+                  bodyEn: "This is an English body with useful context and cautious framing.",
+                  importance: 2,
+                  extraTags: ["example"],
+                }),
+              },
+            },
+          ],
+        });
+      }
+
+      return Response.json({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                titleJa: "Example Paper",
+                summaryJa: "短い日本語要約です。",
+                summaryEn: "A concise English summary.",
+                bodyJa: "",
+                bodyEn: "",
+                importance: 2,
+                extraTags: ["example"],
+              }),
+            },
+          },
+        ],
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await summarizerWorker.queue!(
+      {
+        messages: [
+          {
+            body: {
+              url: baseEntry.url,
+              entry: {
+                id: baseEntry.id,
+                url: baseEntry.url,
+                title: baseEntry.title,
+                category: baseEntry.category,
+                source: baseEntry.source,
+                sourceType: baseEntry.sourceType,
+                summaryEn: baseEntry.summaryEn,
+              },
+            },
+            ack,
+            retry,
+          },
+        ],
+      } as unknown as MessageBatch,
+      {
+        SUMMARY_CACHE: kv,
+        COPILOT_PAT: "test-pat-recovery",
+        SUMMARIZE_MODEL: "claude-sonnet-4.6",
+        SUMMARIZE_TIMEOUT_MS: "180000",
+        SUMMARIZE_MAX_TOKENS: "6000",
+      },
+      {} as ExecutionContext,
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(ack).toHaveBeenCalledTimes(1);
+    expect(retry).not.toHaveBeenCalled();
+    expect(put).toHaveBeenCalledTimes(1);
+    expect(del).toHaveBeenCalledWith("summarizer.issue.v1");
+
+    vi.unstubAllGlobals();
+  });
+
+  it("identifies missing body fields as incomplete cache entries", () => {
+    expect(isCompleteCacheEntry({ ...realCache, bodyEn: "" })).toBe(false);
+    expect(isCompleteCacheEntry(realCache)).toBe(true);
   });
 });

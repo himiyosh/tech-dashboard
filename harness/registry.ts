@@ -234,8 +234,11 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     // collectedAt as publish date and surface as "today's update" (LL-045).
     fetchArticleDate: true,
     // Worker Free plan has a 50 external subrequest/invocation cap. This
-    // source can otherwise spend 15 extra article-page fetches in one batch.
+    // source can otherwise spend 15+ extra article-page fetches in one batch.
+    // Keep the entry slice aligned with the date-fetch cap so undated feed
+    // items never fall through to normalize() as "collectedAt = publishedAt".
     maxArticleDateFetches: 4,
+    maxEntriesPerRun: 4,
     collect: collectRss,
   },
   "github-blog-ai": {

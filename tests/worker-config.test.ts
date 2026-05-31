@@ -32,6 +32,7 @@ describe("Cloudflare Worker deploy config", () => {
     expect(harnessConfig).toContain('KV_LOOKUP_CAP = "20"');
     expect(harnessConfig).toContain('OG_BUDGET_PER_RUN = "1"');
     expect(registry).toContain("maxArticleDateFetches: 4");
+    expect(registry).toContain("maxEntriesPerRun: 4");
     expect(harnessConfig).toContain('binding = "SUMMARY_QUEUE"');
     expect(harnessConfig).toContain('queue = "tech-dashboard-summary"');
     expect(summarizerConfig).toContain('queue = "tech-dashboard-summary"');

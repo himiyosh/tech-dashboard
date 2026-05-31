@@ -26,6 +26,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { NormalizedEntry } from "../types.ts";
+import { parseResponse } from "../../worker/src/prompt.ts";
 
 interface CacheEntry {
   titleJa: string;
@@ -237,33 +238,7 @@ export function parseModelResponse(text: string): {
   importance: 1 | 2 | 3;
   extraTags: string[];
 } {
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) return { titleJa: "", summaryJa: "", summaryEn: "", bodyJa: "", bodyEn: "", importance: 1, extraTags: [] };
-  try {
-    const obj = JSON.parse(match[0]) as {
-      titleJa?: string;
-      summaryJa?: string;
-      summaryEn?: string;
-      bodyJa?: string;
-      bodyEn?: string;
-      importance?: number;
-      extraTags?: string[];
-    };
-    const imp = Math.max(1, Math.min(3, Number(obj.importance ?? 1))) as 1 | 2 | 3;
-    return {
-      titleJa: String(obj.titleJa ?? "").trim(),
-      summaryJa: String(obj.summaryJa ?? "").trim(),
-      summaryEn: String(obj.summaryEn ?? "").trim(),
-      bodyJa: String(obj.bodyJa ?? "").trim(),
-      bodyEn: String(obj.bodyEn ?? "").trim(),
-      importance: imp,
-      extraTags: Array.isArray(obj.extraTags)
-        ? obj.extraTags.filter((t): t is string => typeof t === "string").slice(0, 6)
-        : [],
-    };
-  } catch {
-    return { titleJa: "", summaryJa: "", summaryEn: "", bodyJa: "", bodyEn: "", importance: 1, extraTags: [] };
-  }
+  return parseResponse(text);
 }
 
 export function isCompleteSummaryResponse(

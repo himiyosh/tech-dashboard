@@ -31,6 +31,16 @@ const FALLBACK_SUMMARY_JA_NEEDLE = "AI 要約が未生成";
 const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
 const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collection metadata";
 
+export interface ParsedSummaryResponse {
+  titleJa: string;
+  summaryJa: string;
+  summaryEn: string;
+  bodyJa: string;
+  bodyEn: string;
+  importance: 1 | 2 | 3;
+  extraTags: string[];
+}
+
 function compact(value: string | undefined, max: number): string {
   const text = (value ?? "").replace(/\s+/g, " ").trim();
   if (!text) return "";
@@ -124,40 +134,147 @@ export function buildQueuePrompt(e: PromptEntry): string {
   ].join("\n");
 }
 
-export function parseResponse(text: string): {
-  titleJa: string;
-  summaryJa: string;
-  summaryEn: string;
-  bodyJa: string;
-  bodyEn: string;
-  importance: 1 | 2 | 3;
-  extraTags: string[];
-} {
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) return { titleJa: "", summaryJa: "", summaryEn: "", bodyJa: "", bodyEn: "", importance: 1, extraTags: [] };
-  try {
-    const obj = JSON.parse(match[0]) as {
-      titleJa?: string;
-      summaryJa?: string;
-      summaryEn?: string;
-      bodyJa?: string;
-      bodyEn?: string;
-      importance?: number;
-      extraTags?: string[];
-    };
-    const imp = Math.max(1, Math.min(3, Number(obj.importance ?? 1))) as 1 | 2 | 3;
-    return {
-      titleJa: String(obj.titleJa ?? "").trim(),
-      summaryJa: String(obj.summaryJa ?? "").trim(),
-      summaryEn: String(obj.summaryEn ?? "").trim(),
-      bodyJa: String(obj.bodyJa ?? "").trim(),
-      bodyEn: String(obj.bodyEn ?? "").trim(),
-      importance: imp,
-      extraTags: Array.isArray(obj.extraTags)
-        ? obj.extraTags.filter((t): t is string => typeof t === "string").slice(0, 6)
-        : [],
-    };
-  } catch {
-    return { titleJa: "", summaryJa: "", summaryEn: "", bodyJa: "", bodyEn: "", importance: 1, extraTags: [] };
+function emptyParsedResponse(): ParsedSummaryResponse {
+  return { titleJa: "", summaryJa: "", summaryEn: "", bodyJa: "", bodyEn: "", importance: 1, extraTags: [] };
+}
+
+function extractJsonObjectCandidates(text: string): string[] {
+  const candidates: string[] = [];
+  let start = -1;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]!;
+    if (start === -1) {
+      if (ch === "{") {
+        start = i;
+        depth = 1;
+        inString = false;
+        escaped = false;
+      }
+      continue;
+    }
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === "\\") {
+        escaped = true;
+      } else if (ch === "\"") {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (ch === "\"") {
+      inString = true;
+    } else if (ch === "{") {
+      depth++;
+    } else if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        candidates.push(text.slice(start, i + 1));
+        start = -1;
+      }
+    }
   }
+
+  if (candidates.length) return candidates;
+  const match = text.match(/\{[\s\S]*\}/);
+  return match ? [match[0]] : [];
+}
+
+function escapeRawControlCharsInJsonStrings(candidate: string): string {
+  let out = "";
+  let inString = false;
+  let escaped = false;
+
+  for (const ch of candidate) {
+    if (inString) {
+      if (escaped) {
+        out += ch;
+        escaped = false;
+        continue;
+      }
+      if (ch === "\\") {
+        out += ch;
+        escaped = true;
+        continue;
+      }
+      if (ch === "\"") {
+        out += ch;
+        inString = false;
+        continue;
+      }
+      if (ch === "\n") {
+        out += "\\n";
+        continue;
+      }
+      if (ch === "\r") continue;
+      if (ch === "\t") {
+        out += "\\t";
+        continue;
+      }
+      if (ch.charCodeAt(0) < 0x20) {
+        out += " ";
+        continue;
+      }
+    } else if (ch === "\"") {
+      inString = true;
+    }
+    out += ch;
+  }
+
+  return out;
+}
+
+function stripTrailingCommas(candidate: string): string {
+  return candidate.replace(/,\s*([}\]])/g, "$1");
+}
+
+function parseJsonObjectCandidate(candidate: string): Record<string, unknown> | null {
+  const escapedControls = escapeRawControlCharsInJsonStrings(candidate);
+  const variants = [
+    candidate,
+    escapedControls,
+    stripTrailingCommas(escapedControls),
+  ];
+  for (const variant of variants) {
+    try {
+      const obj = JSON.parse(variant) as unknown;
+      if (obj && typeof obj === "object" && !Array.isArray(obj)) {
+        return obj as Record<string, unknown>;
+      }
+    } catch {
+      // Try the next recovery variant.
+    }
+  }
+  return null;
+}
+
+function coerceParsedResponse(obj: Record<string, unknown>): ParsedSummaryResponse {
+  const imp = Math.max(1, Math.min(3, Number(obj.importance ?? 1))) as 1 | 2 | 3;
+  return {
+    titleJa: String(obj.titleJa ?? "").trim(),
+    summaryJa: String(obj.summaryJa ?? "").trim(),
+    summaryEn: String(obj.summaryEn ?? "").trim(),
+    bodyJa: String(obj.bodyJa ?? "").trim(),
+    bodyEn: String(obj.bodyEn ?? "").trim(),
+    importance: imp,
+    extraTags: Array.isArray(obj.extraTags)
+      ? obj.extraTags.filter((t): t is string => typeof t === "string").slice(0, 6)
+      : [],
+  };
+}
+
+export function parseResponse(text: string): ParsedSummaryResponse {
+  const candidates = extractJsonObjectCandidates(text);
+  if (!candidates.length) return emptyParsedResponse();
+  for (const candidate of candidates) {
+    const obj = parseJsonObjectCandidate(candidate);
+    if (obj) return coerceParsedResponse(obj);
+  }
+  return emptyParsedResponse();
 }

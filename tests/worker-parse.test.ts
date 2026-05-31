@@ -120,6 +120,33 @@ describe("parseResponse", () => {
     expect(parseResponse(text).titleJa).toBe("T");
   });
 
+  it("本文文字列に生の改行が混ざっても JSON として復旧する", () => {
+    const text = `{
+      "titleJa": "T",
+      "summaryJa": "S",
+      "summaryEn": "S",
+      "bodyJa": "1段落目
+
+2段落目",
+      "bodyEn": "First paragraph.
+
+Second paragraph.",
+      "importance": 2,
+      "extraTags": ["copilot"]
+    }`;
+
+    const result = parseResponse(text);
+    expect(result.bodyJa).toBe("1段落目\n\n2段落目");
+    expect(result.bodyEn).toBe("First paragraph.\n\nSecond paragraph.");
+    expect(result.extraTags).toEqual(["copilot"]);
+  });
+
+  it("複数の波括弧ブロックがある場合は最初の妥当な JSON オブジェクトを読む", () => {
+    const json = JSON.stringify({ titleJa: "T", summaryJa: "S", summaryEn: "S", bodyJa: "B", bodyEn: "E", importance: 2, extraTags: [] });
+    const text = `${json}\n補足: {これは JSON ではありません}`;
+    expect(parseResponse(text).titleJa).toBe("T");
+  });
+
   it("JSON が含まれない場合は空のデフォルトを返す", () => {
     const result = parseResponse("No JSON here.");
     expect(result.titleJa).toBe("");

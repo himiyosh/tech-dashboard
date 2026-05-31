@@ -40,6 +40,25 @@ describe("parseModelResponse", () => {
     expect(result.titleJa).toBe("タイトル");
   });
 
+  it("JSON 文字列内の生改行を復旧してパースする", () => {
+    const text = `{
+      "titleJa": "タイトル",
+      "summaryJa": "要約",
+      "summaryEn": "summary",
+      "bodyJa": "前半
+
+後半",
+      "bodyEn": "First paragraph.
+
+Second paragraph.",
+      "importance": 1,
+      "extraTags": []
+    }`;
+    const result = parseModelResponse(text);
+    expect(result.bodyJa).toBe("前半\n\n後半");
+    expect(result.bodyEn).toBe("First paragraph.\n\nSecond paragraph.");
+  });
+
   it("JSON が空の場合は空文字列のデフォルトを返す", () => {
     const result = parseModelResponse("JSON が見当たりません");
     expect(result.titleJa).toBe("");

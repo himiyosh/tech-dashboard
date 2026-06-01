@@ -256,6 +256,9 @@ test.describe("TECH Dashboard smoke", () => {
     const mobileCardBox = await page.locator(".category-card").first().boundingBox();
     expect(mobileCardBox, "mobile category card box").not.toBeNull();
     expect(mobileCardBox!.height, "category panels stay dense on mobile").toBeLessThan(230);
+    const mobileTrendBox = await page.locator(".category-card .cat-trend").first().boundingBox();
+    expect(mobileTrendBox, "mobile category card trend box").not.toBeNull();
+    expect(mobileTrendBox!.height, "category card trend should stay readable on mobile").toBeGreaterThanOrEqual(54);
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
@@ -349,6 +352,25 @@ test.describe("TECH Dashboard smoke", () => {
       expect(trend.sidebarBars).toHaveLength(30);
       expect(trend.cardBars).toEqual(trend.sidebarBars);
     }
+  });
+
+  test("category detail trend chart keeps readable height on mobile", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/c/tech-news/");
+
+    const chart = page.locator(".trend .chart");
+    await expect(chart).toBeVisible();
+    const chartBox = await chart.boundingBox();
+    expect(chartBox, "mobile category trend chart box").not.toBeNull();
+    expect(chartBox!.height, "mobile trend chart should not look vertically crushed").toBeGreaterThanOrEqual(160);
+
+    const trendBox = await page.locator(".trend").boundingBox();
+    expect(trendBox, "mobile category trend panel").not.toBeNull();
+    expect(trendBox!.width, "trend panel stays within mobile viewport").toBeLessThanOrEqual(390);
+
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
   });
 
   test("metrics endpoint exposes auto-refresh counts", async ({ request }) => {

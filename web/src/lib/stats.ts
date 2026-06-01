@@ -1,5 +1,5 @@
 import statsJson from "../../../data/stats.json";
-import type { Category } from "./data.ts";
+import { ALL_ENTRIES, type Category } from "./data.ts";
 
 export interface DayBucket {
   date: string;
@@ -60,14 +60,18 @@ export interface StatsPayload {
 
 export const STATS = statsJson as StatsPayload;
 
+const publicEntriesForCategory = (category: Category) =>
+  ALL_ENTRIES.filter((entry) => entry.category === category);
+
 export function categoryMonthlyTrend(category: Category, months = 12): CategoryMonthlyTrendBucket[] {
+  const entries = publicEntriesForCategory(category);
   const buckets = [...STATS.byMonth]
     .sort((a, b) => a.month.localeCompare(b.month))
     .slice(-months)
-    .map((bucket) => ({
-      month: bucket.month,
-      count: bucket.byCategory[category] ?? 0,
-    }));
+    .map((bucket) => {
+      const count = entries.filter((entry) => entry.publishedAt.startsWith(bucket.month)).length;
+      return { month: bucket.month, count };
+    });
   const maxMonth = Math.max(1, ...buckets.map((bucket) => bucket.count));
   return buckets.map((bucket) => ({
     ...bucket,
@@ -95,11 +99,13 @@ export function categoryDailyTrend(
   for (let i = days - 1; i >= 0; i--) {
     buckets.push({ key: jstDateKey(now.getTime() - i * 86_400_000), count: 0 });
   }
-  const idxByKey = new Map(buckets.map((b, i) => [b.key, i] as const));
-  for (const day of STATS.byDay) {
-    const i = idxByKey.get(day.date);
+  const idxByKey = new Map(buckets.map((bucket, i) => [bucket.key, i] as const));
+  for (const entry of publicEntriesForCategory(category)) {
+    const publishedAt = Date.parse(entry.publishedAt);
+    if (!Number.isFinite(publishedAt)) continue;
+    const i = idxByKey.get(jstDateKey(publishedAt));
     if (i === undefined) continue;
-    buckets[i]!.count = day.byCategory[category] ?? 0;
+    buckets[i]!.count += 1;
   }
   return buckets;
 }

@@ -115,6 +115,28 @@ describe("worker summary queue selection", () => {
       "https://example.com/paper-1",
     ]);
   });
+
+  it("skips recently failing summary URLs while keeping other jobs moving", () => {
+    const entries = Array.from({ length: 4 }, (_, i) => ({
+      ...baseEntry,
+      id: `entry-${i}`,
+      url: `https://example.com/paper-${i}`,
+    }));
+    const lookedUp = new Set(entries.map((entry) => entry.url));
+
+    const batch = selectSummaryJobBatch(entries, new Map(), lookedUp, 3, new Set(), {
+      nowMs: 0,
+      skipUrls: new Set(["https://example.com/paper-1"]),
+    });
+
+    expect(batch.cooldownCount).toBe(1);
+    expect(batch.eligibleCount).toBe(3);
+    expect(batch.jobs.map((job) => job.url)).toEqual([
+      "https://example.com/paper-0",
+      "https://example.com/paper-2",
+      "https://example.com/paper-3",
+    ]);
+  });
 });
 
 describe("worker harness health evaluation", () => {
@@ -367,6 +389,110 @@ describe("worker summarizer queue consumer", () => {
     expect(retry).not.toHaveBeenCalled();
     expect(put).toHaveBeenCalledTimes(1);
     expect(del).toHaveBeenCalledWith("summarizer.issue.v1");
+
+    vi.unstubAllGlobals();
+  });
+
+  it("repairs missing fields when both primary and compact recovery are still incomplete", async () => {
+    const put = vi.fn(async () => undefined);
+    const kv = {
+      get: vi.fn(async () => null),
+      put,
+      delete: vi.fn(async () => undefined),
+    } as unknown as KVNamespace;
+    const ack = vi.fn();
+    const retry = vi.fn();
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (url.includes("api.github.com/copilot_internal/v2/token")) {
+        return Response.json({
+          token: "copilot-token",
+          expires_at: Math.floor(Date.now() / 1000) + 1200,
+        });
+      }
+
+      const body = JSON.parse(String(init?.body ?? "{}")) as {
+        messages?: Array<{ role: string; content: string }>;
+      };
+      const prompt = body.messages?.find((message) => message.role === "user")?.content ?? "";
+      if (prompt.includes("Repair the incomplete JSON summary")) {
+        return Response.json({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  titleJa: "Example Paper",
+                  summaryJa: "短い日本語要約です。",
+                  summaryEn: "A concise English summary.",
+                  bodyJa: "日本語本文です。\\n\\n背景も含めて説明します。",
+                  bodyEn: "This is the repaired English body with useful context and cautious framing.",
+                  importance: 2,
+                  extraTags: ["example", "repair"],
+                }),
+              },
+            },
+          ],
+        });
+      }
+
+      return Response.json({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                titleJa: "Example Paper",
+                summaryJa: "短い日本語要約です。",
+                summaryEn: "A concise English summary.",
+                bodyJa: "日本語本文です。\\n\\n背景も含めて説明します。",
+                bodyEn: "",
+                importance: 2,
+                extraTags: ["example"],
+              }),
+            },
+          },
+        ],
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await summarizerWorker.queue!(
+      {
+        messages: [
+          {
+            body: {
+              url: baseEntry.url,
+              entry: {
+                id: baseEntry.id,
+                url: baseEntry.url,
+                title: baseEntry.title,
+                category: baseEntry.category,
+                source: baseEntry.source,
+                sourceType: baseEntry.sourceType,
+                summaryEn: baseEntry.summaryEn,
+              },
+            },
+            ack,
+            retry,
+          },
+        ],
+      } as unknown as MessageBatch,
+      {
+        SUMMARY_CACHE: kv,
+        COPILOT_PAT: "test-pat-field-repair",
+        SUMMARIZE_MODEL: "claude-sonnet-4.6",
+        SUMMARIZE_TIMEOUT_MS: "180000",
+        SUMMARIZE_MAX_TOKENS: "6000",
+      },
+      {} as ExecutionContext,
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(ack).toHaveBeenCalledTimes(1);
+    expect(retry).not.toHaveBeenCalled();
+    expect(put).toHaveBeenCalledTimes(1);
+    const stored = JSON.parse(String(put.mock.calls[0]?.[1] ?? "{}")) as CacheEntry;
+    expect(stored.bodyEn).toContain("repaired English body");
+    expect(stored.extraTags).toEqual(["example", "repair"]);
 
     vi.unstubAllGlobals();
   });

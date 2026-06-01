@@ -636,6 +636,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **Mitigation**: Add a minimal `/health` fetch handler that returns non-secret runtime configuration (`model`, timeout, max tokens, binding/secret presence). Keep it read-only and do not write KV from health checks.
 - **Lesson**: Queue consumer liveness and HTTP fetch liveness are separate. Public health checks must be implemented explicitly; otherwise diagnostics create false 500s and obscure the real backlog issue.
 
+### LL-080: Repeated summarizer retries need producer-side cooldown
+- **Incident**: Production health repeatedly showed `recentIssue=true` for the same Zenn URLs with `Error: incomplete summary`, while the harness kept enqueueing new summary jobs every cron and `summaryQueueBacklog` stayed high or grew.
+- **Root cause**: The summarizer recorded the latest retry in `summarizer.issue.v1`, but the harness producer did not read that issue before selecting the next queue batch. The same URL could therefore be selected again in the next cap-sized window even though the latest attempt had just failed.
+- **Mitigation**: Harness queue selection reads the recent summarizer retry issue and temporarily excludes that URL via a short `SUMMARY_RETRY_COOLDOWN_MS` cooldown. The excluded count is exposed as `summaryQueueCooldownCount` in heartbeat health. The summarizer still retries later, but the producer keeps other fallback jobs moving meanwhile.
+- **Lesson**: Queue retry state should feed back into producer selection. Otherwise one pathological URL can create noisy health warnings and consume queue capacity while unrelated fallback entries wait.
+
 ## 🔄 自己学習ハーネス手順
 
 1. 作業中に発生した「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。

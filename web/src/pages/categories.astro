@@ -335,17 +335,17 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
 
   .category-directory-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
-    gap: 6px;
+    grid-template-columns: repeat(auto-fit, minmax(218px, 1fr));
+    gap: 8px;
   }
 
   .category-directory-item {
     display: grid;
-    grid-template-columns: 7px minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 8px;
-    min-height: 34px;
-    padding: 6px 8px;
+    grid-template-columns: 8px minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px;
+    min-height: 48px;
+    padding: 8px 10px;
     border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
     border-radius: 6px;
     color: var(--text-2);
@@ -360,8 +360,9 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
   }
 
   .category-directory-dot {
-    width: 7px;
-    height: 18px;
+    width: 8px;
+    height: 26px;
+    margin-top: 2px;
     border-radius: 999px;
     background: var(--cat-color);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--cat-color) 16%, transparent);
@@ -374,25 +375,27 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
   .category-directory-name,
   .category-directory-group-label {
     display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .category-directory-name {
     font-size: 12px;
     font-weight: 700;
-    line-height: 1.15;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
   }
 
   .category-directory-group-label {
-    display: none;
     color: var(--muted);
     font-size: 9.5px;
-    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.25;
+    margin-top: 3px;
+    text-transform: uppercase;
   }
 
   .category-directory-count {
+    align-self: start;
     min-width: 22px;
     padding: 2px 5px;
     border-radius: 5px;
@@ -692,16 +695,36 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
 
     .category-directory-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
+      gap: 7px;
     }
 
     .category-directory-item {
-      min-height: 40px;
-      padding: 8px 9px;
+      grid-template-columns: 7px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 7px;
+      min-height: 42px;
+      padding: 7px 8px;
+    }
+
+    .category-directory-dot {
+      width: 7px;
+      height: 22px;
+      margin-top: 0;
     }
 
     .category-directory-name {
       font-size: 11.5px;
+      line-height: 1.2;
+    }
+
+    .category-directory-group-label {
+      display: none;
+    }
+
+    .category-directory-count {
+      min-width: 20px;
+      padding: 2px 4px;
+      font-size: 10px;
     }
 
     .cat-metrics {

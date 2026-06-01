@@ -5,19 +5,22 @@ import Sidebar from "../../components/Sidebar.astro";
 import {
   ARCHIVE_TOTAL_ENTRIES,
   ARCHIVE_GENERATED_AT,
+  getMonth,
   getMonthSummaries,
 } from "../../lib/archive.ts";
 import { CATEGORY_META, relativeTime, type Category } from "../../lib/data.ts";
-import { STATS } from "../../lib/stats.ts";
 
 const baseMonths = getMonthSummaries();
-const statsByMonth = new Map(STATS.byMonth.map((bucket) => [bucket.month, bucket]));
 const categoryBySlug = new Map(CATEGORY_META.map((category) => [category.slug, category]));
 const maxMonthCount = Math.max(1, ...baseMonths.map((month) => month.count));
 
 const months = baseMonths.map((month) => {
-  const stats = statsByMonth.get(month.month);
-  const topCategory = Object.entries(stats?.byCategory ?? {})
+  const file = getMonth(month.month);
+  const categoryCounts = new Map<Category, number>();
+  for (const entry of file?.entries ?? []) {
+    categoryCounts.set(entry.category, (categoryCounts.get(entry.category) ?? 0) + 1);
+  }
+  const topCategory = [...categoryCounts.entries()]
     .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))[0] as [Category, number] | undefined;
   const categoryMeta = topCategory ? categoryBySlug.get(topCategory[0]) : null;
   return {
@@ -70,7 +73,7 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
     metrics={[
       { label: "Archived", value: ARCHIVE_TOTAL_ENTRIES },
       { label: "Months", value: months.length },
-      { label: "All time", value: STATS.totals.allTime },
+      { label: "All time", value: ARCHIVE_TOTAL_ENTRIES },
       { label: "Latest month", value: latestMonth ? latestMonth.label : "none" },
       { label: "Peak month", value: peakMonth ? peakMonth.label : "none" },
       { label: "Updated", value: updatedLabel },

@@ -6,7 +6,7 @@
  * inline every month file at build time. This keeps the runtime free of
  * fetches (consistent with how lib/data.ts inlines index.json).
  */
-import type { NormalizedEntry } from "./data.ts";
+import { isPublishableEntry, type NormalizedEntry } from "./data.ts";
 
 interface ArchiveMonthFile {
   generatedAt: string;
@@ -42,16 +42,24 @@ export const ARCHIVE_BY_MONTH: Readonly<Record<string, ArchiveMonthFile>> = (() 
   const out: Record<string, ArchiveMonthFile> = {};
   for (const [path, payload] of Object.entries(monthModules)) {
     const m = path.match(/(\d{4}-\d{2})\.json$/)?.[1];
-    if (m && payload) out[m] = payload;
+    if (!m || !payload) continue;
+    const entries = payload.entries.filter(isPublishableEntry);
+    out[m] = {
+      ...payload,
+      count: entries.length,
+      entries,
+    };
   }
   return out;
 })();
 
 /** All available months, newest first. */
-export const ARCHIVE_MONTHS: ReadonlyArray<string> = Object.keys(ARCHIVE_BY_MONTH).sort().reverse();
+export const ARCHIVE_MONTHS: ReadonlyArray<string> = Object.keys(ARCHIVE_BY_MONTH)
+  .filter((month) => (ARCHIVE_BY_MONTH[month]?.count ?? 0) > 0)
+  .sort()
+  .reverse();
 
-export const ARCHIVE_TOTAL_ENTRIES = indexFile?.totalEntries
-  ?? Object.values(ARCHIVE_BY_MONTH).reduce((sum, m) => sum + m.count, 0);
+export const ARCHIVE_TOTAL_ENTRIES = Object.values(ARCHIVE_BY_MONTH).reduce((sum, m) => sum + m.count, 0);
 
 export const ARCHIVE_GENERATED_AT = indexFile?.generatedAt
   ?? Object.values(ARCHIVE_BY_MONTH)[0]?.generatedAt

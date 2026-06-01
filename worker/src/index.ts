@@ -62,6 +62,9 @@ interface Env {
   SUMMARY_QUEUE?: Queue<SummaryJob>;
   ENABLE_SUMMARY_QUEUE?: string;
   ENQUEUE_MAX_NEW?: string;
+  // Recent summarizer retry URLs can be skipped briefly to avoid repeatedly
+  // enqueueing the same incomplete-output failure every cron.
+  SUMMARY_RETRY_COOLDOWN_MS?: string;
   // Max number of fallback entries to look up in KV per cron. Cap exists to
   // stay under Cloudflare's Worker subrequest budgets once the fallback
   // backlog grows. See LL-042 follow-up.
@@ -74,13 +77,21 @@ const INDEX_LIMIT = 2000;
 // Legacy single-blob key. Read-only fallback during the per-URL migration
 // (LL-038). New writes go through worker/src/kv-cache.ts (per-URL keys).
 const CACHE_KEY = "cache.v1";
+const SUMMARIZER_ISSUE_KEY = "summarizer.issue.v1";
 const DEFAULT_SUMMARIZE_TIMEOUT_MS = 25_000;
 const DEFAULT_SUMMARIZE_CONCURRENCY = 4;
+const DEFAULT_SUMMARY_RETRY_COOLDOWN_MS = 2 * 60 * 60_000;
 // Retry on Copilot timeout doubles subrequest cost without meaningfully
 // raising success rate (sonnet long-form responses just need wall-time,
 // not another attempt). Single attempt keeps us within the 1000-subrequest
 // per-invocation budget. See LL-034.
 const SUMMARIZE_ATTEMPTS = 1;
+
+interface SummarizerIssue {
+  status?: unknown;
+  at?: unknown;
+  url?: unknown;
+}
 
 /** Return epoch ms for sorting; nulls sort to end in descending order. */
 function dateMs(iso: string | null): number {
@@ -119,6 +130,33 @@ function preferEntry(current: NormalizedEntry | undefined, candidate: Normalized
 function setPreferredEntry(byUrl: Map<string, NormalizedEntry>, entry: NormalizedEntry): void {
   const key = entryUrlKey(entry);
   byUrl.set(key, preferEntry(byUrl.get(key), entry));
+}
+
+function recentRetryCooldownUrls(
+  issue: SummarizerIssue | null,
+  nowMs: number,
+  cooldownMs: number,
+): Set<string> {
+  if (cooldownMs <= 0) return new Set();
+  if (issue?.status !== "retry" || typeof issue.url !== "string" || typeof issue.at !== "string") {
+    return new Set();
+  }
+  const issueAt = Date.parse(issue.at);
+  if (!Number.isFinite(issueAt) || nowMs - issueAt > cooldownMs) {
+    return new Set();
+  }
+  return new Set([issue.url]);
+}
+
+async function readSummaryRetryCooldownUrls(env: Env): Promise<Set<string>> {
+  const cooldownMs = Number(env.SUMMARY_RETRY_COOLDOWN_MS ?? DEFAULT_SUMMARY_RETRY_COOLDOWN_MS);
+  try {
+    const issue = await env.SUMMARY_CACHE.get<SummarizerIssue>(SUMMARIZER_ISSUE_KEY, "json");
+    return recentRetryCooldownUrls(issue, Date.now(), Number.isFinite(cooldownMs) ? cooldownMs : 0);
+  } catch (err) {
+    console.warn(`[worker] summarizer retry cooldown read failed: ${err}`);
+    return new Set();
+  }
 }
 
 function entryPassesCurrentSourceFilter(entry: NormalizedEntry, sourceDef: SourceDefinition | undefined): boolean {
@@ -939,6 +977,12 @@ async function runHarness(
     needsKvLookup.map((e) => e.url),
     CACHE_KEY,
   );
+  const summaryRetryCooldownUrls = await readSummaryRetryCooldownUrls(env);
+  if (summaryRetryCooldownUrls.size > 0) {
+    console.log(
+      `[worker] summary retry cooldown active for ${summaryRetryCooldownUrls.size} url(s)`,
+    );
+  }
   console.log(
     `[worker] cache lookups ${needsKvLookup.length} / ${sorted.length} (fallback total=${allFallback.length}, unchecked=${uncheckedFallbackUrls.size}, cap=${KV_LOOKUP_CAP}, rrOffset=${rrHourOffset})`,
   );
@@ -1104,6 +1148,7 @@ async function runHarness(
     lookedUpUrls,
     queueCap,
     uncheckedFallbackUrls,
+    { skipUrls: summaryRetryCooldownUrls },
   );
 
   // Enqueue before the CPU-heavy data/index.json stringify + GitHub publish
@@ -1115,6 +1160,7 @@ async function runHarness(
     hitsByUrl,
     lookedUpUrls,
     uncheckedFallbackUrls,
+    summaryRetryCooldownUrls,
   );
   if (earlyEnqueued > 0) {
     console.log(`[worker] enqueued ${earlyEnqueued} summary jobs (pre-publish path)`);
@@ -1135,6 +1181,7 @@ async function runHarness(
       summaryQueueBacklog: prePublishQueueBatch.eligibleCount,
       summaryQueueDrainEstimateHours: prePublishQueueBatch.drainEstimateHours,
       summaryQueueStartIndex: prePublishQueueBatch.startIndex,
+      summaryQueueCooldownCount: prePublishQueueBatch.cooldownCount,
       kvLookupCount: needsKvLookup.length,
       kvLookupCap: KV_LOOKUP_CAP,
     },
@@ -1157,7 +1204,14 @@ async function runHarness(
   const finalEntries = retainedEntries.slice(0, INDEX_LIMIT);
   const fallbackTotal = finalEntries.filter(needsGeneratedContent).length;
   const fallbackPercent = finalEntries.length === 0 ? 0 : Math.round((fallbackTotal / finalEntries.length) * 100);
-  const summaryQueueBatch = selectSummaryJobBatch(finalEntries, hitsByUrl, lookedUpUrls, queueCap, uncheckedFallbackUrls);
+  const summaryQueueBatch = selectSummaryJobBatch(
+    finalEntries,
+    hitsByUrl,
+    lookedUpUrls,
+    queueCap,
+    uncheckedFallbackUrls,
+    { skipUrls: summaryRetryCooldownUrls },
+  );
   const enqueueCandidates = queueEnabled && env.SUMMARY_QUEUE ? summaryQueueBatch.jobs.length : 0;
   const health = {
     lastRunAt: new Date().toISOString(),
@@ -1180,6 +1234,7 @@ async function runHarness(
     summaryQueueBacklog: summaryQueueBatch.eligibleCount,
     summaryQueueDrainEstimateHours: summaryQueueBatch.drainEstimateHours,
     summaryQueueStartIndex: summaryQueueBatch.startIndex,
+    summaryQueueCooldownCount: summaryQueueBatch.cooldownCount,
     copilotOk: inlineCopilotOk,
     copilotError,
     ogCached: Object.keys(ogBlob).length,
@@ -1310,6 +1365,7 @@ async function writeHeartbeat(
     summaryQueueBacklog?: number;
     summaryQueueDrainEstimateHours?: number;
     summaryQueueStartIndex?: number;
+    summaryQueueCooldownCount?: number;
     kvLookupCount?: number;
     kvLookupCap?: number;
   },
@@ -1339,6 +1395,7 @@ async function writeHeartbeat(
       summaryQueueBacklog: health.summaryQueueBacklog,
       summaryQueueDrainEstimateHours: health.summaryQueueDrainEstimateHours,
       summaryQueueStartIndex: health.summaryQueueStartIndex,
+      summaryQueueCooldownCount: health.summaryQueueCooldownCount,
       kvLookupCount: health.kvLookupCount,
       kvLookupCap: health.kvLookupCap,
     };
@@ -1465,6 +1522,7 @@ async function maybeEnqueueSummaryJobs(
   hitsByUrl: Map<string, CacheEntry>,
   lookedUpUrls: Set<string>,
   uncheckedFallbackUrls: Set<string>,
+  summaryRetryCooldownUrls: ReadonlySet<string>,
 ): Promise<number> {
   if (env.ENABLE_SUMMARY_QUEUE !== "1") return 0;
   if (!env.SUMMARY_QUEUE) {
@@ -1478,6 +1536,7 @@ async function maybeEnqueueSummaryJobs(
     lookedUpUrls,
     cap,
     uncheckedFallbackUrls,
+    { skipUrls: summaryRetryCooldownUrls },
   );
   if (eligibleCount > 0) {
     console.log(

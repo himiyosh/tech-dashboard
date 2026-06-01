@@ -84,6 +84,8 @@ const RECENT_ISSUE_MS = 60 * 60_000;
 const ERROR_REPEAT_THRESHOLD = 3;
 const RECOVERY_TIMEOUT_MS = 90_000;
 const RECOVERY_MAX_TOKENS = 3500;
+const FIELD_REPAIR_TIMEOUT_MS = 60_000;
+const FIELD_REPAIR_MAX_TOKENS = 2500;
 
 let cachedCopilotToken: { pat: string; token: string; expiresAtMs: number } | null = null;
 
@@ -181,6 +183,59 @@ export function isCompleteCacheEntry(entry: CacheEntry): boolean {
   );
 }
 
+function missingFields(entry: CacheEntry): Array<keyof Pick<CacheEntry, "titleJa" | "summaryJa" | "summaryEn" | "bodyJa" | "bodyEn">> {
+  return (["titleJa", "summaryJa", "summaryEn", "bodyJa", "bodyEn"] as const).filter(
+    (field) => !entry[field].trim(),
+  );
+}
+
+function mergeCacheEntry(base: CacheEntry, patch: CacheEntry): CacheEntry {
+  return {
+    ...base,
+    titleJa: patch.titleJa.trim() || base.titleJa,
+    summaryJa: patch.summaryJa.trim() || base.summaryJa,
+    summaryEn: patch.summaryEn.trim() || base.summaryEn,
+    bodyJa: patch.bodyJa.trim() || base.bodyJa,
+    bodyEn: patch.bodyEn.trim() || base.bodyEn,
+    importance: patch.importance || base.importance,
+    extraTags: [...new Set([...base.extraTags, ...patch.extraTags])].slice(0, 6),
+    model: patch.model || base.model,
+    cachedAt: patch.cachedAt || base.cachedAt,
+  };
+}
+
+function buildFieldRepairPrompt(job: SummaryJob, partial: CacheEntry): string {
+  const missing = missingFields(partial).join(", ");
+  return [
+    `Repair the incomplete JSON summary for this article.`,
+    `Return one complete valid JSON object with all required fields non-empty.`,
+    `Missing fields: ${missing}`,
+    ``,
+    `Article title: ${job.entry.title}`,
+    `Category: ${job.entry.category}`,
+    `Source: ${job.entry.source} (${job.entry.sourceType})`,
+    `URL: ${job.entry.url}`,
+    job.entry.summaryEn ? `Collected English context: ${job.entry.summaryEn}` : "",
+    job.entry.summaryJa ? `Collected Japanese context: ${job.entry.summaryJa}` : "",
+    ``,
+    `Preserve these existing non-empty values exactly unless they are clearly malformed:`,
+    JSON.stringify(partial, null, 2),
+    ``,
+    `Required JSON shape:`,
+    `{`,
+    `  "titleJa": "non-empty Japanese title",`,
+    `  "summaryJa": "non-empty Japanese summary, 80-140 chars",`,
+    `  "summaryEn": "non-empty English summary, 90-170 chars",`,
+    `  "bodyJa": "non-empty Japanese context note, 240-420 chars, 2-3 paragraphs separated by \\\\n\\\\n",`,
+    `  "bodyEn": "non-empty native English context note, 140-220 words, 2-3 paragraphs separated by \\\\n\\\\n",`,
+    `  "importance": 1 | 2 | 3,`,
+    `  "extraTags": ["lowercase-kebab"]`,
+    `}`,
+    ``,
+    `Use only facts supported by the title and collected context. Hedge uncertain implications.`,
+  ].filter(Boolean).join("\n");
+}
+
 async function processJob(env: Env, job: SummaryJob): Promise<void> {
   // Per-URL KV (LL-038): single KV.put per entry, no read-modify-write.
   // The producer (harness Worker) already filters out cached entries before
@@ -203,6 +258,20 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
       Math.min(timeoutMs, RECOVERY_TIMEOUT_MS),
       Math.min(maxTokens, RECOVERY_MAX_TOKENS),
     );
+  }
+
+  if (!isCompleteCacheEntry(entry)) {
+    console.warn(
+      `[summarizer] field repair prompt ${job.url}: missing ${missingFields(entry).join(", ")}`,
+    );
+    const repaired = await callCopilot(
+      token,
+      model,
+      buildFieldRepairPrompt(job, entry),
+      Math.min(timeoutMs, FIELD_REPAIR_TIMEOUT_MS),
+      Math.min(maxTokens, FIELD_REPAIR_MAX_TOKENS),
+    );
+    entry = mergeCacheEntry(entry, repaired);
   }
 
   // Do not poison the cache with malformed JSON or missing long-form fields.

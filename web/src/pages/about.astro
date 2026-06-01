@@ -11,7 +11,6 @@ import {
   type CategoryGroup,
 } from "../lib/data.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
-import { STATS } from "../lib/stats.ts";
 
 const now = new Date();
 const lastUpdated = relativeTime(DASHBOARD_METRICS.generatedAt, now);
@@ -32,8 +31,10 @@ const GROUP_LABEL: Record<CategoryGroup, string> = {
   research: "Research & Benchmarks",
   industry: "Industry & Policy",
 };
-const categoryLast30 = (category: Category) =>
-  STATS.byDay.slice(-30).reduce((sum, bucket) => sum + (bucket.byCategory[category] ?? 0), 0);
+const categoryLast30 = (category: Category) => {
+  const cutoff = now.getTime() - 30 * 86_400_000;
+  return ALL_ENTRIES.filter((entry) => entry.category === category && Date.parse(entry.publishedAt) >= cutoff).length;
+};
 const topCategories = CATEGORY_META.map((category) => ({
   ...category,
   last30: categoryLast30(category.slug),
@@ -158,8 +159,8 @@ const pipelineSteps = [
       <section class="about-note-panel">
         <h3>Sharing checklist</h3>
         <p>
-          Before sharing an item, open the article detail and confirm there is no Summary pending notice, then check source tier, publish time, and the original URL.
-          Pending entries prefer the upstream URL in the share buttons so stakeholders do not receive unfinished AI text.
+          Public article pages, RSS, JSON Feed, category pages, and archive timelines only include entries whose AI summary is already available.
+          Before sharing an item, open the article detail and check source tier, publish time, and the original URL.
         </p>
         <p>
           The ad script loads only on the production custom domain. Local preview and pages.dev stay quiet for UX and trust audits.

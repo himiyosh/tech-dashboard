@@ -79,6 +79,7 @@ export interface WorkerHealth {
   summaryQueueBacklog?: number;
   summaryQueueDrainEstimateHours?: number;
   summaryQueueStartIndex?: number;
+  summaryQueueCooldownCount?: number;
   kvLookupCap?: number;
   kvLookupCount?: number;
 }
@@ -92,7 +93,67 @@ interface IndexPayload {
 
 const data = indexJson as IndexPayload;
 
-export const ALL_ENTRIES: readonly NormalizedEntry[] = data.entries;
+// Fallback detection constants (from main's data quality improvements).
+const FALLBACK_SUMMARY_JA_PREFIX = "\u3053\u306e\u30a8\u30f3\u30c8\u30ea\u306f ";
+const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
+const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collection metadata";
+const FALLBACK_SUMMARY_JA_NEEDLES = [
+  "AI \u8981\u7d04\u672a\u751f\u6210",
+  "\u5f8c\u7d9a\u306e Worker run",
+  "\u8981\u7d04\u304c\u672a\u751f\u6210",
+] as const;
+const FALLBACK_SUMMARY_EN_NEEDLES = [
+  FALLBACK_SUMMARY_EN_NEEDLE,
+  "AI summary pending",
+  "summary is pending",
+] as const;
+
+export function isPendingSummaryText(text: string | undefined | null): boolean {
+  const value = (text ?? "").trim();
+  if (!value) return false;
+  return (
+    value.startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
+    FALLBACK_SUMMARY_JA_NEEDLES.some((needle) => value.includes(needle)) ||
+    FALLBACK_SUMMARY_EN_NEEDLES.some((needle) => value.toLowerCase().includes(needle.toLowerCase()))
+  );
+}
+
+export function isSyntheticFallbackTitle(e: NormalizedEntry, text: string | undefined | null): boolean {
+  const value = (text ?? "").trim();
+  if (!value) return false;
+  return value.includes(`(${e.source})`) && /\u95a2\u9023\u30a2\u30c3\u30d7\u30c7\u30fc\u30c8|related update/i.test(value);
+}
+
+/** Returns true if this entry still has a deterministic (non-AI) summary/body. */
+export function isDeterministicFallbackEntry(e: NormalizedEntry): boolean {
+  return (
+    isPendingSummaryText(e.summaryJa) ||
+    isPendingSummaryText(e.summaryEn) ||
+    isSyntheticFallbackTitle(e, e.titleJa) ||
+    isSyntheticFallbackTitle(e, e.titleEn) ||
+    (e.bodyEn ?? "").includes(FALLBACK_BODY_EN_NEEDLE)
+  );
+}
+
+function hasGeneratedSummary(e: NormalizedEntry): boolean {
+  const summaryJa = (e.summaryJa ?? "").trim();
+  const summaryEn = (e.summaryEn ?? "").trim();
+  return (
+    (!!summaryJa && !isPendingSummaryText(summaryJa)) ||
+    (!!summaryEn && !isPendingSummaryText(summaryEn))
+  );
+}
+
+/** Public pages only publish entries that already have a generated summary. */
+export function isPublishableEntry(e: NormalizedEntry): boolean {
+  return hasGeneratedSummary(e) && !isDeterministicFallbackEntry(e);
+}
+
+export const RAW_ENTRIES: readonly NormalizedEntry[] = data.entries;
+export const PENDING_SUMMARY_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.filter(
+  (entry) => !isPublishableEntry(entry),
+);
+export const ALL_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.filter(isPublishableEntry);
 export const GENERATED_AT = data.generatedAt;
 export const WORKER_HEALTH: WorkerHealth | null = data.health ?? null;
 
@@ -496,48 +557,6 @@ export function sourceAvgImportance(
   return Math.round(
     (recent.reduce((s, x) => s + x.importance, 0) / recent.length) * 10,
   ) / 10;
-}
-
-// Fallback detection constants (from main's data quality improvements).
-const FALLBACK_SUMMARY_JA_PREFIX = "\u3053\u306e\u30a8\u30f3\u30c8\u30ea\u306f ";
-const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
-const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collection metadata";
-const FALLBACK_SUMMARY_JA_NEEDLES = [
-  "AI \u8981\u7d04\u672a\u751f\u6210",
-  "\u5f8c\u7d9a\u306e Worker run",
-  "\u8981\u7d04\u304c\u672a\u751f\u6210",
-] as const;
-const FALLBACK_SUMMARY_EN_NEEDLES = [
-  FALLBACK_SUMMARY_EN_NEEDLE,
-  "AI summary pending",
-  "summary is pending",
-] as const;
-
-export function isPendingSummaryText(text: string | undefined | null): boolean {
-  const value = (text ?? "").trim();
-  if (!value) return false;
-  return (
-    value.startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
-    FALLBACK_SUMMARY_JA_NEEDLES.some((needle) => value.includes(needle)) ||
-    FALLBACK_SUMMARY_EN_NEEDLES.some((needle) => value.toLowerCase().includes(needle.toLowerCase()))
-  );
-}
-
-export function isSyntheticFallbackTitle(e: NormalizedEntry, text: string | undefined | null): boolean {
-  const value = (text ?? "").trim();
-  if (!value) return false;
-  return value.includes(`(${e.source})`) && /\u95a2\u9023\u30a2\u30c3\u30d7\u30c7\u30fc\u30c8|related update/i.test(value);
-}
-
-/** Returns true if this entry still has a deterministic (non-AI) summary/body. */
-export function isDeterministicFallbackEntry(e: NormalizedEntry): boolean {
-  return (
-    isPendingSummaryText(e.summaryJa) ||
-    isPendingSummaryText(e.summaryEn) ||
-    isSyntheticFallbackTitle(e, e.titleJa) ||
-    isSyntheticFallbackTitle(e, e.titleEn) ||
-    (e.bodyEn ?? "").includes(FALLBACK_BODY_EN_NEEDLE)
-  );
 }
 
 /** Aggregate fallback metrics for a set of entries. */

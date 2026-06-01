@@ -17,6 +17,29 @@ interface AnthropicArticleMeta {
   publishedAt: string | null;
 }
 
+const ANTHROPIC_LISTING_TIMEOUT_MS = 10_000;
+const ANTHROPIC_ARTICLE_TIMEOUT_MS = 8_000;
+const ANTHROPIC_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (compatible; tech-dashboard-harness/0.1)",
+} as const;
+
+async function fetchAnthropicHtml(url: string, timeoutMs: number): Promise<string> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      headers: ANTHROPIC_HEADERS,
+      signal: ctrl.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    return await res.text();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function decodeHtml(input: string): string {
   return input
     .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => String.fromCodePoint(Number.parseInt(hex, 16)))
@@ -131,13 +154,7 @@ export function parseAnthropicArticleHtml(html: string): AnthropicArticleMeta {
 
 async function fetchAnthropicArticle(url: string): Promise<AnthropicArticleMeta | null> {
   try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; tech-dashboard-harness/0.1)",
-      },
-    });
-    if (!res.ok) return null;
-    return parseAnthropicArticleHtml(await res.text());
+    return parseAnthropicArticleHtml(await fetchAnthropicHtml(url, ANTHROPIC_ARTICLE_TIMEOUT_MS));
   } catch {
     return null;
   }
@@ -155,15 +172,13 @@ export async function collectAnthropic(opts: AnthropicScrapeOpts): Promise<RawEn
       ? "https://www.anthropic.com/engineering"
       : "https://www.anthropic.com/news";
 
-  const res = await fetch(listingUrl, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; tech-dashboard-harness/0.1)",
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`anthropic-${section} HTTP ${res.status}`);
+  let html: string;
+  try {
+    html = await fetchAnthropicHtml(listingUrl, ANTHROPIC_LISTING_TIMEOUT_MS);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`anthropic-${section} fetch failed: ${message}`);
   }
-  const html = await res.text();
 
   const prefix = section === "engineering" ? "/engineering/" : "/news/";
   const re = new RegExp(`href="(${prefix}[a-z0-9][a-z0-9-]+)"`, "g");

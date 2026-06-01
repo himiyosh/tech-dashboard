@@ -27,6 +27,12 @@ export interface SummaryJobBatch {
   eligibleCount: number;
   startIndex: number;
   drainEstimateHours: number;
+  cooldownCount: number;
+}
+
+export interface SummaryJobSelectionOpts {
+  nowMs?: number;
+  skipUrls?: ReadonlySet<string>;
 }
 
 const FALLBACK_SUMMARY_JA_PREFIX = "このエントリは ";
@@ -105,14 +111,21 @@ export function selectSummaryJobBatch(
   lookedUpUrls: ReadonlySet<string>,
   cap: number,
   uncheckedFallbackUrls: ReadonlySet<string> = new Set(),
-  opts: { nowMs?: number } = {},
+  opts: SummaryJobSelectionOpts = {},
 ): SummaryJobBatch {
   const safeCap = Math.max(1, Math.floor(cap));
-  const eligible = entries.filter((entry) =>
+  const maybeEligible = entries.filter((entry) =>
     isEligibleSummaryJob(entry, hitsByUrl, lookedUpUrls, uncheckedFallbackUrls),
   );
+  const skipUrls = opts.skipUrls ?? new Set<string>();
+  const cooldownCount = skipUrls.size
+    ? maybeEligible.filter((entry) => skipUrls.has(entry.url)).length
+    : 0;
+  const eligible = skipUrls.size
+    ? maybeEligible.filter((entry) => !skipUrls.has(entry.url))
+    : maybeEligible;
   if (eligible.length === 0) {
-    return { jobs: [], eligibleCount: 0, startIndex: 0, drainEstimateHours: 0 };
+    return { jobs: [], eligibleCount: 0, startIndex: 0, drainEstimateHours: 0, cooldownCount };
   }
 
   // Advance by one full cap-sized window per hour. Advancing by one entry per
@@ -129,6 +142,7 @@ export function selectSummaryJobBatch(
     eligibleCount: eligible.length,
     startIndex,
     drainEstimateHours: Math.ceil(eligible.length / safeCap),
+    cooldownCount,
   };
 }
 
@@ -138,7 +152,7 @@ export function selectSummaryJobs(
   lookedUpUrls: ReadonlySet<string>,
   cap: number,
   uncheckedFallbackUrls: ReadonlySet<string> = new Set(),
-  opts: { nowMs?: number } = {},
+  opts: SummaryJobSelectionOpts = {},
 ): SummaryJob[] {
   return selectSummaryJobBatch(entries, hitsByUrl, lookedUpUrls, cap, uncheckedFallbackUrls, opts).jobs;
 }

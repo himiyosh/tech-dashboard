@@ -49,8 +49,11 @@ function latestIso(values: Array<string | null | undefined>): string {
 
 export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
   const todayKey = jstDateKey(now.toISOString());
-  const statsToday = STATS.byDay.find((bucket) => bucket.date === todayKey)?.count;
   const liveToday = ALL_ENTRIES.filter((entry) => jstDateKey(entry.publishedAt) === todayKey).length;
+  const countSince = (ms: number): number => {
+    const cutoff = now.getTime() - ms;
+    return ALL_ENTRIES.filter((entry) => Date.parse(entry.publishedAt) >= cutoff).length;
+  };
   const activeSourceCount = new Set(ALL_ENTRIES.map((entry) => entry.source)).size;
   const totalSourceCount = SOURCE_META.length;
   const sourceCoverageLabel = activeSourceCount === totalSourceCount
@@ -63,8 +66,8 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
     indexGeneratedAt: GENERATED_AT,
     statsGeneratedAt: STATS.generatedAt,
     liveEntries: ALL_ENTRIES.length,
-    allTimeEntries: STATS.totals.allTime,
-    todayEntries: statsToday ?? liveToday,
+    allTimeEntries: ARCHIVE_TOTAL_ENTRIES || ALL_ENTRIES.length,
+    todayEntries: liveToday,
     majorEntries: ALL_ENTRIES.filter((entry) => entry.importance === 3).length,
     activeSourceCount,
     totalSourceCount,
@@ -72,9 +75,9 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
     totalCategories: CATEGORY_META.length,
     archiveEntries: ARCHIVE_TOTAL_ENTRIES,
     archiveMonths: ARCHIVE_MONTHS.length,
-    last24hEntries: STATS.totals.last24h,
-    last7dEntries: STATS.totals.last7d,
-    last30dEntries: STATS.totals.last30d,
+    last24hEntries: countSince(24 * 3600_000),
+    last7dEntries: countSince(7 * 86_400_000),
+    last30dEntries: countSince(30 * 86_400_000),
     workerLastRunAt: WORKER_HEALTH?.lastRunAt ?? null,
     workerBatchLabel: WORKER_HEALTH ? `${WORKER_HEALTH.batchIndex}/${WORKER_HEALTH.batchTotal}` : "no data",
     workerSourceOkLabel: WORKER_HEALTH ? `${WORKER_HEALTH.sourcesOk}/${WORKER_HEALTH.sourcesAttempted}` : "no data",

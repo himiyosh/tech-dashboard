@@ -362,7 +362,8 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(chart).toBeVisible();
     const chartBox = await chart.boundingBox();
     expect(chartBox, "mobile category trend chart box").not.toBeNull();
-    expect(chartBox!.height, "mobile trend chart should not look vertically crushed").toBeGreaterThanOrEqual(160);
+    expect(chartBox!.height, "mobile trend chart should not look vertically crushed").toBeGreaterThanOrEqual(148);
+    expect(chartBox!.height, "mobile trend chart should stay compact").toBeLessThanOrEqual(156);
 
     const trendBox = await page.locator(".trend").boundingBox();
     expect(trendBox, "mobile category trend panel").not.toBeNull();

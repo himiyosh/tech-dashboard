@@ -6,7 +6,18 @@ import { collectRss } from "./rss.ts";
  *   https://www.youtube.com/feeds/videos.xml?channel_id=UCxxx
  * This is a thin wrapper around collectRss for readability.
  */
-export const collectYoutube = collectRss;
+export async function collectYoutube(source: SourceDefinition) {
+  try {
+    return await collectRss(source);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes("HTTP 404") && source.feedUrl.includes("youtube.com/feeds/videos.xml")) {
+      console.warn(`[youtube] feed returned 404, treating as empty: ${source.id}`);
+      return [];
+    }
+    throw err;
+  }
+}
 
 /** Builds a channel-id SourceDefinition stub for the registry. */
 export function youtubeChannel(

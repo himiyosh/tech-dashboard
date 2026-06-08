@@ -1,8 +1,533 @@
 {
-  "generatedAt": "2026-06-07T05:00:39.062Z",
+  "generatedAt": "2026-06-08T01:00:37.279Z",
   "month": "2026-06",
-  "count": 476,
+  "count": 500,
   "entries": [
+    {
+      "id": "b78fae16d130fccf",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/edinetdb/items/34248bb85b13faf53811",
+      "title": "ChatGPT/Claude/CursorからEDINET DBのMCPで日本株データを引く(接続まとめ)",
+      "titleJa": "ChatGPT/Claude/CursorからEDINET DBのMCPで日本株データを引く(接続まとめ)",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-08T00:39:44.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDM1OTgxMSUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc3MTMwODc3Mj9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YWM4MzM3MzViZDQ3MzU3ZGYzMDgyNDRlYmZkMzRmMzI%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De2f3e4d13e4bd586984888ec5e04a8b5?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Q2hhdEdQVCUyRkNsYXVkZSUyRkN1cnNvciVFMyU4MSU4QiVFMyU4MiU4OUVESU5FVCUyMERCJUUzJTgxJUFFTUNQJUUzJTgxJUE3JUU2JTk3JUE1JUU2JTlDJUFDJUU2JUEwJUFBJUUzJTgzJTg3JUUzJTgzJUJDJUUzJTgyJUJGJUUzJTgyJTkyJUU1JUJDJTk1JUUzJTgxJThGJTI4JUU2JThFJUE1JUU3JUI2JTlBJUUzJTgxJUJFJUUzJTgxJUE4JUUzJTgyJTgxJTI5JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9NTVkYjY2ZTNmODZjMzAwZGFiYWIyYTcyMGYxYmQ3MWE&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBlZGluZXRkYiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTkyN2U3YzM5MTM0OWM0OWIzMmZlZmIwYzJjODcxNGRj&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=ab15c460fd400b6caedceb651d6ff3b1",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDM1OTgxMSUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc3MTMwODc3Mj9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YWM4MzM3MzViZDQ3MzU3ZGYzMDgyNDRlYmZkMzRmMzI%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De2f3e4d13e4bd586984888ec5e04a8b5?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Q2hhdEdQVCUyRkNsYXVkZSUyRkN1cnNvciVFMyU4MSU4QiVFMyU4MiU4OUVESU5FVCUyMERCJUUzJTgxJUFFTUNQJUUzJTgxJUE3JUU2JTk3JUE1JUU2JTlDJUFDJUU2JUEwJUFBJUUzJTgzJTg3JUUzJTgzJUJDJUUzJTgyJUJGJUUzJTgyJTkyJUU1JUJDJTk1JUUzJTgxJThGJTI4JUU2JThFJUE1JUU3JUI2JTlBJUUzJTgxJUJFJUUzJTgxJUE4JUUzJTgyJTgxJTI5JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9NTVkYjY2ZTNmODZjMzAwZGFiYWIyYTcyMGYxYmQ3MWE&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBlZGluZXRkYiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTkyN2U3YzM5MTM0OWM0OWIzMmZlZmIwYzJjODcxNGRj&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=ab15c460fd400b6caedceb651d6ff3b1",
+        "alt": "ChatGPT/Claude/CursorからEDINET DBのMCPで日本株データを引く(接続まとめ)",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "25d0c0583b30ea0e",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/edinetdb/items/482ff9f276f021ee98a4",
+      "title": "AIに同じ質問を3経路で投げたら、入力トークンが約1,200倍違った — Claudeの「プログラム利用専用クレジット」と構造化APIの関係",
+      "titleJa": "AIに同じ質問を3経路で投げたら、入力トークンが約1,200倍違った — Claudeの「プログラム利用専用クレジット」と構造化APIの関係",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-08T00:36:24.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "5a750a08520776ef",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/shinkai_/items/8f88307b7cb13b748e57",
+      "title": "AIエージェントのトークン代を節約する CLAUDE.md と copilot-instructions.md 実践ガイド  AIエージェントでは毎ターン何が起きているのか",
+      "titleJa": "AIエージェントのトークン代を節約する CLAUDE.md と copilot-instructions.md 実践ガイド  AIエージェントでは毎ターン何が起きているのか",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T23:17:13.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "7746e6f7f5c64353",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/tedorigawa001/items/14d7c898ef55dfca8517",
+      "title": "ServiceNow を AI から自然言語で操作する MCP サーバーを作ってみた",
+      "titleJa": "ServiceNow を AI から自然言語で操作する MCP サーバーを作ってみた",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T22:02:40.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "e43af2d606a3f564",
+      "source": "ollama-releases",
+      "sourceType": "release",
+      "url": "https://github.com/ollama/ollama/releases/tag/v0.30.7-rc1",
+      "title": "Ollama Releases v0.30.7",
+      "titleJa": "",
+      "titleEn": "Ollama Releases v0.30.7",
+      "lang": "en",
+      "publishedAt": "2026-06-07T21:55:58.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "ollama",
+        "release"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "Ollama Releases v0.30.7",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "e6c0b94d9526f0e4",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/rick2200/articles/52a269e6c52ff0",
+      "title": "ChatGPT App で美容ECサイトAIコンシェルジュを作ってみる - with YouCamAPI",
+      "titleJa": "ChatGPT App で美容ECサイトAIコンシェルジュを作ってみる - with YouCamAPI",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T21:35:32.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "4d56b2e5e2d17cbf",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/muratatsu/articles/163d6b6be16845",
+      "title": "Claude / ChatGPT / Slack / LINE / n8n から請求システムを操作する（GooodBilling AI連携）",
+      "titleJa": "Claude / ChatGPT / Slack / LINE / n8n から請求システムを操作する（GooodBilling AI連携）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T21:04:31.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "abae42a09595c3b2",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/muratatsu/articles/046cc413d67b66",
+      "title": "第5回 スマホから LINE だけで請求書を発行する（GooodBilling）",
+      "titleJa": "第5回 スマホから LINE だけで請求書を発行する（GooodBilling）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T21:00:16.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "dfea759eae2ba104",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/muratatsu/articles/b678e06771bb6b",
+      "title": "第4回 チームの Slack に請求アシスタントを置く（GooodBilling）",
+      "titleJa": "第4回 チームの Slack に請求アシスタントを置く（GooodBilling）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T20:59:36.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "fc95cd5acbc856cf",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/muratatsu/articles/266cd39c26e0e4",
+      "title": "第3回「未入金を毎朝 Slack に通知」を n8n で作る（GooodBilling）",
+      "titleJa": "第3回「未入金を毎朝 Slack に通知」を n8n で作る（GooodBilling）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T20:58:50.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "5f2441eedbb85bd5",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/muratatsu/articles/0720c1b170f11b",
+      "title": "第2回 ChatGPT に「A社へ30万円の請求書を作って」と言うだけで請求書を作成する（GooodBilling）",
+      "titleJa": "第2回 ChatGPT に「A社へ30万円の請求書を作って」と言うだけで請求書を作成する（GooodBilling）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T20:56:39.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "5189392dcdf28a29",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/muratatsu/articles/5c5afd29479630",
+      "title": "第1回 Claudeに「A社へ30万円の請求書を作って」と言うだけで請求書を作成する（GooodBilling）",
+      "titleJa": "第1回 Claudeに「A社へ30万円の請求書を作って」と言うだけで請求書を作成する（GooodBilling）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T20:55:24.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "e92e346c04a72a45",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/entertainment/945445/summer-game-fest-2026-biggest-stories",
+      "title": "The 7 biggest storylines from Summer Game Fest 2026",
+      "titleJa": "",
+      "titleEn": "The 7 biggest storylines from Summer Game Fest 2026",
+      "lang": "en",
+      "publishedAt": "2026-06-07T18:45:33.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "news",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "ddf04f4c033163a3",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/entertainment/945256/persona-6-teaser",
+      "title": "Persona 6 exists, and that’s all we know",
+      "titleJa": "",
+      "titleEn": "Persona 6 exists, and that’s all we know",
+      "lang": "en",
+      "publishedAt": "2026-06-07T18:00:41.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "news",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "492503b0671c9ffe",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/games/939551/minecraft-dungeons-ii-2-release-date-trailer",
+      "title": "Minecraft Dungeons 2 gets a September release date",
+      "titleJa": "",
+      "titleEn": "Minecraft Dungeons 2 gets a September release date",
+      "lang": "en",
+      "publishedAt": "2026-06-07T17:45:25.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "news",
+        "release",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "96b150cd2696197a",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/games/939564/halo-campaign-evolved-xbox-games-showcase-2026",
+      "title": "Halo: Campaign Evolved arrives July 28th",
+      "titleJa": "",
+      "titleEn": "Halo: Campaign Evolved arrives July 28th",
+      "lang": "en",
+      "publishedAt": "2026-06-07T17:14:08.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "news",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "5e8224b3aa7e41a7",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/entertainment/945269/gears-of-war-e-day-ps5-launch",
+      "title": "Gears of War: E-Day isn’t coming to the PS5",
+      "titleJa": "",
+      "titleEn": "Gears of War: E-Day isn’t coming to the PS5",
+      "lang": "en",
+      "publishedAt": "2026-06-07T17:08:56.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "news",
+        "release",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "331c366535d948a8",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/entertainment/943285/the-verge-weekend-questionnaire",
+      "title": "The Verge Weekend Questionnaire",
+      "titleJa": "",
+      "titleEn": "The Verge Weekend Questionnaire",
+      "lang": "en",
+      "publishedAt": "2026-06-07T17:00:00.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "news",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "8023cd7acd708248",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/entertainment/944191/xbox-games-showcase-2026-news-trailers",
+      "title": "Xbox Games Showcase 2026: All the news and trailers",
+      "titleJa": "",
+      "titleEn": "Xbox Games Showcase 2026: All the news and trailers",
+      "lang": "en",
+      "publishedAt": "2026-06-07T16:40:00.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "news",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "f253b1f8527b04ab",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/masuda_masuo/articles/2026-06-07-aws-mcp-selection",
+      "title": "便利だからといって、AWS API MCPを使っていないか？用途別サーバーの選び方と権限設計",
+      "titleJa": "便利だからといって、AWS API MCPを使っていないか？用途別サーバーの選び方と権限設計",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T15:04:37.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "d1e30628b41df23d",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/iigtn/items/e0e066bf8ddb54784bf9",
+      "title": "Claude Code で MCP サーバを 9 個導入してみた: 実運用の所感と効率化のコツ",
+      "titleJa": "Claude Code で MCP サーバを 9 個導入してみた: 実運用の所感と効率化のコツ",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T12:49:06.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "7155d7abdc5bda6e",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/souma_ai/articles/cursor-mcp-bigquery-setup",
+      "title": "Cursor / Claude Code × MCP × BigQuery で「自然言語データ分析」環境を作る",
+      "titleJa": "Cursor / Claude Code × MCP × BigQuery で「自然言語データ分析」環境を作る",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T11:18:35.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "ed43008eb6a96535",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/optimisuke/articles/perfectcorp-mcp-skin-analysis",
+      "title": "「肌分析して」と頼んだら肌年齢50歳と言われた👼  by Claude x YouCam API",
+      "titleJa": "「肌分析して」と頼んだら肌年齢50歳と言われた👼  by Claude x YouCam API",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T11:00:06.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "f0f4f6624e3d41dc",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kitepon/articles/claude-drives-codex",
+      "title": "Claudeに対話型コマンドを握らせたら、Codex CLIごと子分にできた話",
+      "titleJa": "Claudeに対話型コマンドを握らせたら、Codex CLIごと子分にできた話",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T10:41:02.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "0d0676078e82a355",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/truestar/articles/2fb1ed60845d70",
+      "title": "Slackを起点としたTableau MCP活用を考える #3 - Tableau MCP Hosted対応で何がどう変わる・改善されるのか",
+      "titleJa": "Slackを起点としたTableau MCP活用を考える #3 - Tableau MCP Hosted対応で何がどう変わる・改善されるのか",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-07T10:13:37.000Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
     {
       "id": "ce3e5c5c62ab3c73",
       "source": "qiita-mcp",
@@ -150,7 +675,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-07T02:38:52.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "qiita"
       ],
@@ -270,7 +795,7 @@
       "titleEn": "Ollama Releases v0.30.6",
       "lang": "en",
       "publishedAt": "2026-06-07T00:12:11.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "ollama",
         "open-model",
@@ -300,7 +825,7 @@
       "titleEn": "Ollama Releases v0.30.4",
       "lang": "en",
       "publishedAt": "2026-06-07T00:10:26.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "agent",
         "ollama",
@@ -330,7 +855,7 @@
       "titleEn": "Ollama Releases v0.30.5",
       "lang": "en",
       "publishedAt": "2026-06-07T00:09:50.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "ollama",
         "release"
@@ -358,7 +883,7 @@
       "titleEn": "Ollama Releases v0.30.3",
       "lang": "en",
       "publishedAt": "2026-06-07T00:08:34.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "ollama",
         "open-model",
@@ -552,7 +1077,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-06T13:17:18.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "qiita"
       ],
@@ -870,7 +1395,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-06T03:59:19.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "agent",
         "qiita",
@@ -950,34 +1475,6 @@
       }
     },
     {
-      "id": "e43af2d606a3f564",
-      "source": "ollama-releases",
-      "sourceType": "release",
-      "url": "https://github.com/ollama/ollama/releases/tag/v0.30.7-rc1",
-      "title": "Ollama Releases v0.30.7-rc1",
-      "titleJa": "",
-      "titleEn": "Ollama Releases v0.30.7-rc1",
-      "lang": "en",
-      "publishedAt": "2026-06-06T00:59:05.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
-      "tags": [
-        "ollama",
-        "release"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/29360864?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/29360864?s=60&amp;v=4",
-        "alt": "Ollama Releases v0.30.7-rc1",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
       "id": "f76459774357e556",
       "source": "zenn-mcp",
       "sourceType": "blog",
@@ -1007,7 +1504,7 @@
       "titleEn": "Ollama Releases v0.30.7-rc0",
       "lang": "en",
       "publishedAt": "2026-06-06T00:29:19.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "ollama",
         "release"
@@ -2782,7 +3279,7 @@
       "titleEn": "Ollama Releases v0.30.6-rc0",
       "lang": "en",
       "publishedAt": "2026-06-05T00:49:49.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "ollama",
         "release"
@@ -2857,7 +3354,7 @@
       "titleEn": "Introducing the Google Colab CLI",
       "lang": "en",
       "publishedAt": "2026-06-05T00:00:00.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "google"
       ],
@@ -3375,7 +3872,7 @@
       "titleEn": "cloud-1.37.3",
       "lang": "en",
       "publishedAt": "2026-06-04T20:32:56.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "openhands",
         "release"
@@ -3798,7 +4295,7 @@
       "titleEn": "v0.30.5-rc0: llama.cpp version update (#16511)",
       "lang": "en",
       "publishedAt": "2026-06-04T15:20:57.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "ollama",
         "open-model",
@@ -3827,7 +4324,7 @@
       "titleEn": "Introducing Creator Assistant, Plus More Languages For AI Translations on Facebook",
       "lang": "en",
       "publishedAt": "2026-06-04T15:00:34.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "meta",
         "news"
@@ -4274,7 +4771,7 @@
       "titleEn": "python-1.43.0",
       "lang": "en",
       "publishedAt": "2026-06-03T22:40:50.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "agent",
         "release",
@@ -4466,7 +4963,7 @@
       "titleEn": "v0.30.4-rc1: llama-server: fix gemma4 patch wiring (#16477)",
       "lang": "en",
       "publishedAt": "2026-06-03T21:41:03.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "ollama",
         "open-model",
@@ -4657,7 +5154,7 @@
       "titleEn": "cloud-1.37.2: Cascade-delete sole-org requester on DELETE /api/organizations (#14617)",
       "lang": "en",
       "publishedAt": "2026-06-03T18:37:35.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "openhands",
         "release"
@@ -4706,7 +5203,7 @@
       "titleEn": "v0.30.4-rc0: Kill llama-server during Windows cleanup (#16458)",
       "lang": "en",
       "publishedAt": "2026-06-03T17:25:12.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "ollama",
         "open-model",
@@ -5267,7 +5764,7 @@
       "titleEn": "Be There for Every Customer With Meta Business Agent",
       "lang": "en",
       "publishedAt": "2026-06-03T13:40:12.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "agent",
         "meta",
@@ -6339,7 +6836,7 @@
       "titleEn": "Gemma 4 12B: The Developer Guide",
       "lang": "en",
       "publishedAt": "2026-06-03T00:00:00.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "google",
         "open-model",
@@ -6366,7 +6863,7 @@
       "titleEn": "Bringing Gemma 4 12B to your Laptop: Unlocking Local, Agentic Workflows with Google AI Edge",
       "lang": "en",
       "publishedAt": "2026-06-03T00:00:00.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "agent",
         "google",
@@ -7820,7 +8317,7 @@
       "titleEn": "cloud-1.37.1: Update default agent server image to 1.23.1 (#14612)",
       "lang": "en",
       "publishedAt": "2026-06-02T12:59:19.000Z",
-      "collectedAt": "2026-06-07T05:00:19.961Z",
+      "collectedAt": "2026-06-08T01:00:17.743Z",
       "tags": [
         "agent",
         "openhands",

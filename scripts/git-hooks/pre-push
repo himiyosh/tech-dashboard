@@ -73,11 +73,18 @@ if [ "${SKIP_WEB_BUILD:-}" = "1" ]; then
   echo "[pre-push] SKIP_WEB_BUILD=1 → npm run build:web をスキップします"
 else
   echo "[pre-push] npm run build:web を実行しています..."
-  if ! npm --prefix "$ROOT" run build:web; then
+  # 出力を log に退避 (astro はページ毎に数千行出力する)。成功時はサマリのみ、
+  # 失敗時のみ全文を表示してターミナルが溢れるのを防ぐ。
+  build_log="$(mktemp -t prepush-webbuild.XXXXXX)"
+  if ! npm --prefix "$ROOT" run build:web > "$build_log" 2>&1; then
+    tail -60 "$build_log"
+    rm -f "$build_log"
     echo "[pre-push] ERR: web build 失敗。push を中断します"
     echo "[pre-push] web build をスキップして push したい場合: SKIP_WEB_BUILD=1 git push"
     exit 1
   fi
+  grep -E "\[build\]|Pagefind|Indexed" "$build_log" | tail -3 || true
+  rm -f "$build_log"
   echo "[pre-push] OK: web build PASS"
 fi
 

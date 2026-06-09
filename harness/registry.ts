@@ -114,6 +114,10 @@ const TECH_NEWS_EXCLUDE_KEYWORDS = [
   "superfans",
   "solar",
   "vpn where criminals",
+  "satellite",
+  "space station",
+  "the view",
+  "shark finning",
 ] as const;
 
 const LOCAL_LLM_RELEVANCE_KEYWORDS = [

@@ -644,6 +644,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **Mitigation**: Harness queue selection reads the recent summarizer retry issue and temporarily excludes that URL via a short `SUMMARY_RETRY_COOLDOWN_MS` cooldown. The excluded count is exposed as `summaryQueueCooldownCount` in heartbeat health. The summarizer still retries later, but the producer keeps other fallback jobs moving meanwhile.
 - **Lesson**: Queue retry state should feed back into producer selection. Otherwise one pathological URL can create noisy health warnings and consume queue capacity while unrelated fallback entries wait.
 
+### LL-081: テストのノイズ検出語と registry の excludeKeywords を同期させる
+- **事象**: ars-technica の宇宙ニュース「Tests suggest Russian satellites can jam GPS on a continental scale」が tech-news カテゴリに混入し、`tests/data-schema.test.ts` の「Tech News は consumer deal / space などのノイズを含めない」ゲートで CI (unit job) が毎時 fail。Worker が毎時 `data/index.json` を main へ push するたびに同じノイズが再投入され、2026-06-09 02:00 以降の CI run が連続 failure になっていた。
+- **根本原因**: テストのノイズ検出正規表現には `russian satellites` / `international space station` 等の宇宙系キーワードがあったが、`harness/registry.ts` の `TECH_NEWS_EXCLUDE_KEYWORDS` には `satellite` / `space station` が無かった。収集・マージ時の `matchesKeywordFilter` を素通りして tech-news として保存され、テストだけが検出して fail するループになっていた。品質ゲート (検出) と収集フィルタ (予防) のキーワードが乖離していた。
+- **対策**: `TECH_NEWS_EXCLUDE_KEYWORDS` に `satellite` / `space station` / `the view` / `shark finning` を追加。`scripts/clean-source-noise.mjs` (新規) で「registry に今回追加した excludeKeywords」を既存 live/archive に migration し、該当ノイズ 6 件を除去して stats を再生成 (generatedAt は index に揃えて skew 0 を維持)。`harness/registry.ts` の Worker を再デプロイして本番 runtime にも反映 (LL-073 と同じく Pages Git Integration では Worker は自動更新されない)。
+- **教訓**: broad feed のノイズ対策は「テストの検出キーワード」と「registry の excludeKeywords」を同期させる。片方だけだと収集は素通り → テストで毎時 fail のループになる。migration スクリプトは過剰除去を避けるため、既存の短いキーワード (`tv` / `solar` / `gadget` 等) を全 data に遡及適用せず、今回追加した語だけに限定する (短い語は title/summary/url の substring に偶然マッチし、GPU / Windows Update 等の有効な開発記事を巻き込む)。
+
+### LL-082: ローカル e2e の TickerBar テストはデータ鮮度依存で誤検知する
+- **事象**: data-schema 修正後にローカル e2e を実行すると `home renders primary sections` が 1 件 fail。`.tb-slide:not(.is-active)` が 0 件 (TickerBar のスライドが 1 枚だけ) になっていた。
+- **根本原因**: `TickerBar.astro` は `publishedAt` が「今日 (JST)」、今日が 0 件なら「昨日」の `MAIN_TIMELINE_ENTRIES` だけをスライド化する。ローカルの `data/index.json` は前日収集 (generatedAt 06-09 17:01) で、テスト実行日 (06-10) には今日の MAIN_TIMELINE 記事が 1 件に枯渇していた。`git stash` で元データ (origin/main HEAD) に戻してビルドしても 1 スライドで再現し、私の変更とは無関係と確認できた。CI は 2026-06-08 21:00 まで success (e2e 含め 3 分台で完走) しており、Worker push 直後の新鮮データでは today 記事が複数あって PASS する。
+- **対策**: テスト仕様変更はせず (テストコード保護)。私の data-schema 修正と無関係な既存の鮮度依存挙動として扱う。切り分けには CI の success 実績確認と `git stash` での元データビルド再現が有効だった。
+- **教訓**: 自分の変更後に e2e が落ちたら、まず「元データでも再現するか」を `git stash` + クリーンビルドで確認し、blast radius を切り分ける。`now = new Date()` をビルド時に評価する日付依存コンポーネントは、古いローカルデータで誤検知しやすい。`reuseExistingServer: true` の preview が古い dist を配信する場合もあるため、port を kill して `web/dist` / `web/.astro` を消してから再ビルドして検証する。
+
 ## 🔄 自己学習ハーネス手順
 
 汎用的な記録規律（3 点セット・自己学習の判断フロー・完了報告前 Hook・LL フォーマット・絶対禁止事項）は `.github/instructions/agent-persona-rules.instructions.md` の「8. 自己改善プロトコル」に従う。本プロジェクト固有の運用は次のとおり。

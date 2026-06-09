@@ -115,6 +115,8 @@
 
 ### R-017: broad feed はカテゴリ品質フィルタと上限を必ず持つ
 - `arxiv-*`、`techcrunch`、`the-verge`、`ars-technica`、vendor newsroom など broad feed は `includeKeywords` / `excludeKeywords` / `maxEntriesPerRun` を `harness/registry.ts` に設定し、汎用ニュースや無関係論文を大量流入させない。
+- **ノイズキーワードは registry の `*_EXCLUDE_KEYWORDS` を単一ソースにする (LL-081)**。テスト (`tests/data-schema.test.ts` の「registry の excludeKeywords が適用漏れしていない」) はこの registry を `import` して参照するので、テスト側の正規表現に独自のノイズ語を足さない (足すと検出と予防が乖離し、収集素通り → 毎時 CI fail になる)。新種ノイズを見つけたら registry に追加し、`npm run noise:clean` で既存 live/archive を migration し、Worker を再デプロイする。
+- ノイズ判定は **title スコープ**に限定する。url を含めると `arstechnica.com/gadgets/` のようなサイトセクション名に `gadget` 等が部分一致し、有効な開発記事を巻き込む。
 - Zed は VSCode ではなく `cursor` 系カテゴリとして扱う。`zed-releases` を `vscode` に戻さない。
 - Research は paper / report / long-lived research に寄せる。Zenn AI や Simon Willison のような実務・LLM essay feed は `local-llm` 等に分類し、Research を汎用 AI 記事の受け皿にしない。
 - registry の category を変更したら `web/src/lib/source-meta.ts` と既存 `data/index.json` / `data/archive/*` / `data/stats.json` を同時に修復し、`tests/data-schema.test.ts` のカテゴリ品質ゲートを更新する。
@@ -644,11 +646,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **Mitigation**: Harness queue selection reads the recent summarizer retry issue and temporarily excludes that URL via a short `SUMMARY_RETRY_COOLDOWN_MS` cooldown. The excluded count is exposed as `summaryQueueCooldownCount` in heartbeat health. The summarizer still retries later, but the producer keeps other fallback jobs moving meanwhile.
 - **Lesson**: Queue retry state should feed back into producer selection. Otherwise one pathological URL can create noisy health warnings and consume queue capacity while unrelated fallback entries wait.
 
-### LL-081: テストのノイズ検出語と registry の excludeKeywords を同期させる
+### LL-081: テストのノイズ検出語と registry の excludeKeywords を単一ソース化する
 - **事象**: ars-technica の宇宙ニュース「Tests suggest Russian satellites can jam GPS on a continental scale」が tech-news カテゴリに混入し、`tests/data-schema.test.ts` の「Tech News は consumer deal / space などのノイズを含めない」ゲートで CI (unit job) が毎時 fail。Worker が毎時 `data/index.json` を main へ push するたびに同じノイズが再投入され、2026-06-09 02:00 以降の CI run が連続 failure になっていた。
-- **根本原因**: テストのノイズ検出正規表現には `russian satellites` / `international space station` 等の宇宙系キーワードがあったが、`harness/registry.ts` の `TECH_NEWS_EXCLUDE_KEYWORDS` には `satellite` / `space station` が無かった。収集・マージ時の `matchesKeywordFilter` を素通りして tech-news として保存され、テストだけが検出して fail するループになっていた。品質ゲート (検出) と収集フィルタ (予防) のキーワードが乖離していた。
-- **対策**: `TECH_NEWS_EXCLUDE_KEYWORDS` に `satellite` / `space station` / `the view` / `shark finning` を追加。`scripts/clean-source-noise.mjs` (新規) で「registry に今回追加した excludeKeywords」を既存 live/archive に migration し、該当ノイズ 6 件を除去して stats を再生成 (generatedAt は index に揃えて skew 0 を維持)。`harness/registry.ts` の Worker を再デプロイして本番 runtime にも反映 (LL-073 と同じく Pages Git Integration では Worker は自動更新されない)。
-- **教訓**: broad feed のノイズ対策は「テストの検出キーワード」と「registry の excludeKeywords」を同期させる。片方だけだと収集は素通り → テストで毎時 fail のループになる。migration スクリプトは過剰除去を避けるため、既存の短いキーワード (`tv` / `solar` / `gadget` 等) を全 data に遡及適用せず、今回追加した語だけに限定する (短い語は title/summary/url の substring に偶然マッチし、GPU / Windows Update 等の有効な開発記事を巻き込む)。
+- **根本原因**: テストのノイズ検出正規表現には `russian satellites` / `international space station` 等の宇宙系キーワードがあったが、`harness/registry.ts` の `TECH_NEWS_EXCLUDE_KEYWORDS` には `satellite` / `space station` が無かった。収集・マージ時の `matchesKeywordFilter` を素通りして tech-news として保存され、テストだけが検出して fail するループになっていた。**品質ゲート (検出 = テストの正規表現) と収集フィルタ (予防 = registry) のキーワードが別管理で乖離していた**のが構造的な真因。
+- **対策 (初期)**: `TECH_NEWS_EXCLUDE_KEYWORDS` に `satellite` / `space station` / `the view` / `shark finning` を追加し、`scripts/clean-source-noise.mjs` で既存 live/archive から該当ノイズを除去、Worker を再デプロイ。
+- **対策 (構造的・恒久)**: 二重管理を排除するため、**registry の `excludeKeywords` を唯一のノイズ定義 (単一ソース) にした**。`tests/data-schema.test.ts` に「registry の excludeKeywords が live/archive に適用漏れしていない」テストを追加し、`REGISTRY` を import して各 source の `excludeKeywords` を直接参照する。`clean-source-noise.mjs` も同じ registry を参照する `npm run noise:clean` に統一。両者とも **title スコープのみ**で判定する (url を含めると `arstechnica.com/gadgets/` のサイトセクション名に `gadget` が部分一致し、Windows Update 等の有効記事を巻き込む false positive を生む。summary も AI 生成で偶然一致しやすい)。これで「registry に追加 → 既存データの適用漏れをテストが即検出 → `npm run noise:clean` で migration」という一方向フローになり、乖離が構造的に発生しない。
+- **教訓**: 「検出 (テスト)」と「予防 (収集フィルタ)」で同じ概念のキーワードを別々に持たない。一方を単一ソースにし、もう一方はそれを参照する。ノイズ語の判定は title スコープに限定する (url のサイトセクション名・summary の AI 生成文は部分一致 false positive の温床)。registry の broad feed フィルタを変更したら `npm run noise:clean` で既存データを migration し、Worker を再デプロイする (LL-073)。新種ノイズはテストの正規表現ではなく registry の `*_EXCLUDE_KEYWORDS` に追加する。
 
 ### LL-082: ローカル e2e の TickerBar テストはデータ鮮度依存で誤検知する
 - **事象**: data-schema 修正後にローカル e2e を実行すると `home renders primary sections` が 1 件 fail。`.tb-slide:not(.is-active)` が 0 件 (TickerBar のスライドが 1 枚だけ) になっていた。

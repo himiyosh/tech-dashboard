@@ -4,18 +4,21 @@
  * registry の excludeKeywords を既存 data に再適用し、収集後に分類ノイズとして
  * 残ったエントリを live index / archive から除去する migration スクリプト。
  *
- * LL-055 / LL-077: source の keyword filter 変更は「収集ルール」であると同時に
- * 「既存 merged data の migration ルール」でもある。registry を更新したら、
+ * LL-055 / LL-077 / LL-081: source の keyword filter 変更は「収集ルール」であると
+ * 同時に「既存 merged data の migration ルール」でもある。registry を更新したら、
  * Worker が再収集する前に既存 data からも同じノイズを掃除しておく。
  *
- * 判定は tests/data-schema.test.ts のカテゴリ品質ガードと同じ haystack
- * (title + summaryJa + summaryEn + url) を使う。
+ * 単一ソース: registry の excludeKeywords を唯一のノイズ定義として全件適用する。
+ * tests/data-schema.test.ts の「registry の excludeKeywords が適用漏れしていない」
+ * テストと同じ title スコープ判定を使うため、migration 後はそのテストが 0 件で通る。
  *
- * 適用対象は MIGRATED_KEYWORDS (今回 registry の excludeKeywords に新規追加した
- * キーワード) に限定する。tv / solar / gadget のような既存の短いキーワードまで
- * 全 data に遡及適用すると、include 対象の開発記事 (GPU / Windows Update 等) を
- * 巻き込む過剰除去になるため。新キーワードを registry へ足したら、この配列も
- * 更新して再実行する運用とする。
+ * スコープは title のみ。url を含めると、ars-technica の `arstechnica.com/gadgets/`
+ * のようなサイトセクション名に `gadget` が部分一致し、有効な開発記事 (Windows Update
+ * 等) を巻き込む過剰除去になる (LL-081)。summary も AI 生成で短いキーワードに偶然
+ * 一致しやすいため含めない。記事の主題は title に現れるので title 判定で十分。
+ *
+ * 新しいノイズ種別を見つけたら registry の *_EXCLUDE_KEYWORDS に追加し、このスクリプトを
+ * 再実行する。スクリプト側にキーワードを二重定義しない (それが LL-081 の乖離の原因)。
  *
  * 実行: npx tsx scripts/clean-source-noise.mjs
  */
@@ -26,25 +29,17 @@ import { writeStats } from "../harness/publishers/stats-builder.ts";
 
 const DATA_DIR = "./data";
 
-// 今回 registry の excludeKeywords に新規追加した分だけを既存 data へ migration する。
-const MIGRATED_KEYWORDS = ["satellite", "space station", "the view", "shark finning"];
-
 function haystackFor(entry) {
-  return [entry.title, entry.summaryJa, entry.summaryEn, entry.url]
-    .map((value) => String(value ?? ""))
-    .join(" ")
-    .toLowerCase();
+  // title のみ。url / summary を含めない (LL-081: 部分一致 false positive 回避)。
+  return String(entry.title ?? "").toLowerCase();
 }
 
 function isNoise(entry) {
   const source = REGISTRY[String(entry.source)];
   const exclude = source?.excludeKeywords;
   if (!exclude || exclude.length === 0) return false;
-  // 当該 source が実際に持つ excludeKeywords のうち、今回 migration 対象のものだけを使う。
-  const active = MIGRATED_KEYWORDS.filter((keyword) => exclude.includes(keyword));
-  if (active.length === 0) return false;
   const haystack = haystackFor(entry);
-  return active.some((keyword) => haystack.includes(keyword.toLowerCase()));
+  return exclude.some((keyword) => haystack.includes(String(keyword).toLowerCase()));
 }
 
 async function main() {

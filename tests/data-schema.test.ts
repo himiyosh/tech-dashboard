@@ -10,6 +10,7 @@ import { describe, it, expect } from "vitest";
 import indexJson from "../data/index.json";
 import statsJson from "../data/stats.json";
 import { canonicalUrlKey } from "../harness/pipeline/url.ts";
+import { REGISTRY } from "../harness/registry.ts";
 
 interface RawEntry {
   id?: unknown;
@@ -342,6 +343,38 @@ describe("カテゴリ品質ガード", () => {
       .map((entry) => `${String(entry.source)}:${String(entry.title)}`);
     expect(noisy).toEqual([]);
   });
+
+  // LL-081 の構造的対策: registry の excludeKeywords を「収集フィルタの単一ソース」として、
+  // それが既存 live/archive データに漏れなく適用されているかを検証する。
+  //
+  // これ以前は「テストのハードコード正規表現 (検出)」と「registry の excludeKeywords (予防)」が
+  // 別管理で、片方に追加してももう片方が古いまま → 収集素通り → テストだけ fail という乖離が
+  // 起きていた (LL-055 / LL-081)。このテストにより、registry に excludeKeyword を追加すれば
+  // それにマッチする既存 entry が即検出され、migration (scripts/clean-source-noise.mjs) の
+  // 必要が分かる。新種ノイズは registry の *_EXCLUDE_KEYWORDS に追加する運用とし、テストの
+  // 正規表現に独自キーワードを足さない (足すと再び乖離する)。
+  //
+  // スコープは title のみ。url を含めると `arstechnica.com/gadgets/` のようなサイトセクション名に
+  // `gadget` が部分一致し、有効な開発記事を巻き込む false positive を生む。summary も AI 生成で
+  // 短いキーワードに偶然一致しやすいため除外する (LL-081)。migration スクリプトと同じスコープ。
+  it("registry の excludeKeywords が live/archive データに適用漏れしていない (LL-081)", () => {
+    const leaked = allDataEntries
+      .filter((entry) => {
+        const source = REGISTRY[String(entry.source)];
+        const exclude = source?.excludeKeywords;
+        if (!exclude || exclude.length === 0) return false;
+        const haystack = String(entry.title ?? "").toLowerCase();
+        return exclude.some((keyword) => haystack.includes(String(keyword).toLowerCase()));
+      })
+      .map((entry) => {
+        const exclude = REGISTRY[String(entry.source)]?.excludeKeywords ?? [];
+        const haystack = String(entry.title ?? "").toLowerCase();
+        const hit = exclude.find((keyword) => haystack.includes(String(keyword).toLowerCase()));
+        return `${String(entry.source)} [${String(hit)}]: ${String(entry.title)}`;
+      });
+    expect(leaked, "registry の excludeKeywords にマッチする entry が残存。scripts/clean-source-noise.mjs で migration し、Worker を再デプロイすること").toEqual([]);
+  });
+
   it("Local LLM category excludes workflow and business noise", () => {
     const noisy = allDataEntries
       .filter((entry) => String(entry.category) === "local-llm")

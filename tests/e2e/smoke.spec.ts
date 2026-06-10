@@ -9,8 +9,15 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".dynamic-orbit")).toBeVisible();
     await expect(page.locator(".signal-node")).toHaveCount(4);
     await expect(page.locator(".tb-slide.is-active").first()).toHaveAttribute("aria-hidden", "false");
-    await expect(page.locator(".tb-slide:not(.is-active)").first()).toHaveAttribute("aria-hidden", "true");
-    await expect(page.locator(".tb-slide:not(.is-active)").first()).toHaveAttribute("tabindex", "-1");
+    // Inactive ticker slides must be hidden from AT and unfocusable (LL-078).
+    // When the current JST day has only one published entry there are no
+    // inactive slides yet (data-freshness dependent, LL-082) — a valid state,
+    // so only assert the hidden semantics when inactive slides actually exist.
+    const inactiveSlides = page.locator(".tb-slide:not(.is-active)");
+    if ((await inactiveSlides.count()) > 0) {
+      await expect(inactiveSlides.first()).toHaveAttribute("aria-hidden", "true");
+      await expect(inactiveSlides.first()).toHaveAttribute("tabindex", "-1");
+    }
     await expect(page.locator(".banner-fact")).toHaveCount(3);
     await expect(page.getByRole("link", { name: /今日の重要記事/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /検索/ })).toBeVisible();
@@ -23,6 +30,21 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".top-rank")).not.toContainText(/AI \u8981\u7d04\u672a\u751f\u6210|Summary pending|\u5f8c\u7d9a\u306e Worker run/);
     await expect(page.locator("#priority-heading")).toBeVisible();
     await expect(page.locator("#timeline-heading")).toBeVisible();
+  });
+
+  // Regression guard: the "Last 7 days" chart must be driven by stats.byDay
+  // (archive-backed daily activity), not the publishable-live fallback. When
+  // index.astro forgot to pass the `stats` prop the chart silently collapsed to
+  // single-digit bars and looked like collection had stopped (see LL).
+  test("home Last 7 days chart reflects stats.byDay activity", async ({ page }) => {
+    await page.goto("/");
+    const bars = page.locator(".digest .spark .bars .bar .n");
+    await expect(bars).toHaveCount(7);
+    const counts = (await bars.allInnerTexts()).map((t) => Number(t.trim()));
+    // Past days routinely have 30-120 articles in stats.byDay; the broken
+    // fallback maxed out at single digits. A max over 20 proves stats wins.
+    const max = Math.max(...counts);
+    expect(max, `7-day bar counts were ${counts.join(",")}`).toBeGreaterThan(20);
   });
 
   test("dynamic home motion stays responsive and honors reduced motion", async ({ page }) => {

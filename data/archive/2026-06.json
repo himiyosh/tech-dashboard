@@ -1,8 +1,219 @@
 {
-  "generatedAt": "2026-06-13T14:00:39.262Z",
+  "generatedAt": "2026-06-14T05:00:48.067Z",
   "month": "2026-06",
-  "count": 985,
+  "count": 995,
   "entries": [
+    {
+      "id": "f3540c5cc82bde6d",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/aktsmm/items/b335cd0e343c717f0841",
+      "title": "🔥 GitHub Copilot なにもしてないのにこわれた 2 〜system prompt を約 90% 減らした話〜",
+      "titleJa": "🔥 GitHub Copilot なにもしてないのにこわれた 2 〜system prompt を約 90% 減らした話〜",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-14T04:21:39.000Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
+      "tags": [
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMjk4MjUwOCUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc0OTQ5OTc1OD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YzczOGZkYjQ4NmY3MjA0MzI2M2IzMjExMTRmMTQyZDM%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZiYWU2ZDNhMDgyOGMwMTlmZjI1OWNkYjQ3YTg5ODhjOTg2MzYzODlmJTJGb3JpZ2luYWwuanBnJTNGMTU4MzcyMTg2NT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0yZTZmZDNmZTU4ZjI4NDMwMWExYjZlMGM4OWJhOWMxZg%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D7e6d65178421daa2217c309b4e18f6e8?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUYwJTlGJTk0JUE1JTIwR2l0SHViJTIwQ29waWxvdCUyMCVFMyU4MSVBQSVFMyU4MSVBQiVFMyU4MiU4MiVFMyU4MSU5NyVFMyU4MSVBNiVFMyU4MSVBQSVFMyU4MSU4NCVFMyU4MSVBRSVFMyU4MSVBQiVFMyU4MSU5MyVFMyU4MiU4RiVFMyU4MiU4QyVFMyU4MSU5RiUyMDIlMjAlRTMlODAlOUNzeXN0ZW0lMjBwcm9tcHQlMjAlRTMlODIlOTIlRTclQjQlODQlMjA5MCUyNSUyMCVFNiVCOCU5QiVFMyU4MiU4OSVFMyU4MSU5NyVFMyU4MSU5RiVFOCVBOSVCMSVFMyU4MCU5QyZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTI3YjNkNjI1OTE3NTUzYTE3Mjk2NDYxNDUyOTU1OWZj&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBha3RzbW0mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1hZWFkMDc4MDlhZGZmMzQwMTRjMjRmMWU4ZDFjZDMzZA&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=TWljcm9zb2Z0&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%231E2121&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=3fd5be5387aec56b0f94cbae13b4b3dd",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMjk4MjUwOCUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc0OTQ5OTc1OD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YzczOGZkYjQ4NmY3MjA0MzI2M2IzMjExMTRmMTQyZDM%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZiYWU2ZDNhMDgyOGMwMTlmZjI1OWNkYjQ3YTg5ODhjOTg2MzYzODlmJTJGb3JpZ2luYWwuanBnJTNGMTU4MzcyMTg2NT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0yZTZmZDNmZTU4ZjI4NDMwMWExYjZlMGM4OWJhOWMxZg%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D7e6d65178421daa2217c309b4e18f6e8?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUYwJTlGJTk0JUE1JTIwR2l0SHViJTIwQ29waWxvdCUyMCVFMyU4MSVBQSVFMyU4MSVBQiVFMyU4MiU4MiVFMyU4MSU5NyVFMyU4MSVBNiVFMyU4MSVBQSVFMyU4MSU4NCVFMyU4MSVBRSVFMyU4MSVBQiVFMyU4MSU5MyVFMyU4MiU4RiVFMyU4MiU4QyVFMyU4MSU5RiUyMDIlMjAlRTMlODAlOUNzeXN0ZW0lMjBwcm9tcHQlMjAlRTMlODIlOTIlRTclQjQlODQlMjA5MCUyNSUyMCVFNiVCOCU5QiVFMyU4MiU4OSVFMyU4MSU5NyVFMyU4MSU5RiVFOCVBOSVCMSVFMyU4MCU5QyZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTI3YjNkNjI1OTE3NTUzYTE3Mjk2NDYxNDUyOTU1OWZj&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBha3RzbW0mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1hZWFkMDc4MDlhZGZmMzQwMTRjMjRmMWU4ZDFjZDMzZA&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=TWljcm9zb2Z0&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%231E2121&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=3fd5be5387aec56b0f94cbae13b4b3dd",
+        "alt": "🔥 GitHub Copilot なにもしてないのにこわれた 2 〜system prompt を約 90% 減らした話〜",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "508ecfd90c0d8500",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/jjking/items/f0dd293bfc6d109012ea",
+      "title": "ステートレス化するMCP：新仕様「2026-07-28」が解決するスケーラビリティの壁",
+      "titleJa": "ステートレス化するMCP：新仕様「2026-07-28」が解決するスケーラビリティの壁",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-14T02:44:07.000Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "54bf66ab902f22f9",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/Bacchus/items/1a8d6f15a73d3bc144fe",
+      "title": "Google Custom Search APIが2027年に終了するので代替を調査",
+      "titleJa": "Google Custom Search APIが2027年に終了するので代替を調査",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-14T01:45:49.000Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "849c2b3c4d1166aa",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/ai-artificial-intelligence/949601/amazon-anthropic-fablemythos-government-ban",
+      "title": "Amazon security research reportedly led to the White House’s Anthropic Fable ban",
+      "titleJa": "",
+      "titleEn": "Amazon security research reportedly led to the White House’s Anthropic Fable ban",
+      "lang": "en",
+      "publishedAt": "2026-06-13T21:39:26.000Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
+      "tags": [
+        "news",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "72249c2a11c06e8c",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/entertainment/947064/xmen-97-season-2-disney-plus-marvel-masters-of-the-universe-mattel",
+      "title": "X-Men ’97 has what Master of the Universe is missing",
+      "titleJa": "",
+      "titleEn": "X-Men ’97 has what Master of the Universe is missing",
+      "lang": "en",
+      "publishedAt": "2026-06-13T20:00:00.000Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
+      "tags": [
+        "news",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "aee8a85620eb5f03",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/teruq/items/b2d0eb1108cf757827f1",
+      "title": "IBM BobからObsidianを操作する（MCP）",
+      "titleJa": "IBM BobからObsidianを操作する（MCP）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-13T16:05:30.000Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "3c9a987af764dd97",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/Tadataka_Takahashi/items/817d7073a7f66bb0396c",
+      "title": "SalesforceのAgentforce Vibesとは？AIコーディング環境をざっくり整理する",
+      "titleJa": "SalesforceのAgentforce Vibesとは？AIコーディング環境をざっくり整理する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-13T15:22:51.000Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
+      "tags": [
+        "mcp",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "ad579aea49afe9be",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/tech/949502/apple-macos-27-golden-gate-siri-ai-apple-intelligence",
+      "title": "My first 24 hours with Siri AI on the Mac",
+      "titleJa": "",
+      "titleEn": "My first 24 hours with Siri AI on the Mac",
+      "lang": "en",
+      "publishedAt": "2026-06-13T15:00:00.000Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
+      "tags": [
+        "news",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "bf1bc33b05ae6150",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/report/949073/mike-rugnetta-youtube-never-post-podcast-questionnaire",
+      "title": "Never Post’s Mike Rugnetta on the creative process and the value of reliable power",
+      "titleJa": "",
+      "titleEn": "Never Post’s Mike Rugnetta on the creative process and the value of reliable power",
+      "lang": "en",
+      "publishedAt": "2026-06-13T14:00:00.000Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
+      "tags": [
+        "news",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "4f33b4864f3e5f2c",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/takumi_engineer/articles/92591f1872f873",
+      "title": "WinRM × MCP サーバーを Clean Architecture で作った話",
+      "titleJa": "WinRM × MCP サーバーを Clean Architecture で作った話",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-13T13:29:54.000Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
     {
       "id": "5dcabba86769957c",
       "source": "the-verge",
@@ -13,7 +224,7 @@
       "titleEn": "My yard is dying, so I made an app for that",
       "lang": "en",
       "publishedAt": "2026-06-13T13:00:00.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "news",
         "verge"
@@ -41,7 +252,7 @@
       "titleEn": "Anthropic cuts off Fable 5 and Mythos 5 access following government order",
       "lang": "en",
       "publishedAt": "2026-06-13T12:55:49.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "news",
         "verge"
@@ -89,7 +300,7 @@
       "titleEn": "Echo Isle is a pint-sized adventure inspired by classic Zelda",
       "lang": "en",
       "publishedAt": "2026-06-13T12:00:00.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "news",
         "verge"
@@ -288,7 +499,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-13T09:25:10.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "agent",
         "qiita"
@@ -418,7 +629,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-13T06:01:37.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "qiita"
       ],
@@ -508,7 +719,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-13T04:26:12.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "qiita",
         "claude"
@@ -536,7 +747,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-13T04:00:05.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -741,7 +952,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-13T00:22:17.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "agent",
         "mcp",
@@ -763,7 +974,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-13T00:00:00.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -832,7 +1043,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-12T22:27:08.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -892,7 +1103,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-12T21:32:08.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -964,7 +1175,7 @@
       "titleEn": "Ollama Releases v0.30.8",
       "lang": "en",
       "publishedAt": "2026-06-12T19:57:22.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "ollama",
         "release"
@@ -1409,7 +1620,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-12T16:24:58.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "agent",
         "mcp",
@@ -1533,7 +1744,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-12T14:12:56.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "mcp",
         "zenn"
@@ -1553,7 +1764,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-12T14:06:35.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "mcp",
         "zenn"
@@ -1626,7 +1837,7 @@
       "titleEn": "The Future Is for Everyone: Free AI Glasses for Every Blind Veteran in America",
       "lang": "en",
       "publishedAt": "2026-06-12T12:33:26.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "meta",
         "news"
@@ -1654,7 +1865,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-12T12:20:11.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -1818,7 +2029,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-12T07:51:16.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "mcp",
         "zenn"
@@ -2039,7 +2250,7 @@
       "titleEn": "Ollama Releases v0.30.8-rc0",
       "lang": "en",
       "publishedAt": "2026-06-12T00:21:46.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "ollama",
         "release"
@@ -4061,7 +4272,7 @@
       "titleEn": "DiffusionGemma",
       "lang": "en",
       "publishedAt": "2026-06-10T20:00:54.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "llm",
         "newsletter",
@@ -4437,7 +4648,7 @@
       "titleEn": "1.8.0 - 2026-06-10",
       "lang": "en",
       "publishedAt": "2026-06-10T16:58:51.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "agent",
         "openhands",
@@ -4881,7 +5092,7 @@
       "titleEn": "Infrastructure Explained: Compute Power",
       "lang": "en",
       "publishedAt": "2026-06-10T14:30:04.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "meta",
         "news"
@@ -5898,7 +6109,7 @@
       "titleEn": "Meta Partners With Reliance on AI-Enabled Data Center in India",
       "lang": "en",
       "publishedAt": "2026-06-10T02:30:40.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "meta",
         "news"
@@ -6403,7 +6614,7 @@
       "titleEn": "DiffusionGemma: The Developer Guide",
       "lang": "en",
       "publishedAt": "2026-06-10T00:00:00.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "google",
         "open-model",
@@ -6554,7 +6765,7 @@
       "titleEn": "cloud-1.38.0: perf: skip runtime API call in webhook auth via SandboxRecord (#14732)",
       "lang": "en",
       "publishedAt": "2026-06-09T21:38:56.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "openhands",
         "release"
@@ -7394,7 +7605,7 @@
       "titleEn": "Introducing Claude Fable 5",
       "lang": "en",
       "publishedAt": "2026-06-09T17:00:05.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "anthropic",
         "youtube"
@@ -9394,7 +9605,7 @@
       "titleEn": "America’s Workforce Academy: The Future Is for Everyone",
       "lang": "en",
       "publishedAt": "2026-06-08T21:15:51.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "meta",
         "news",
@@ -9499,7 +9710,7 @@
       "titleEn": "Ollama Releases v0.30.7",
       "lang": "en",
       "publishedAt": "2026-06-08T20:18:26.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "agent",
         "ollama",
@@ -12222,7 +12433,7 @@
       "titleEn": "Ollama Releases v0.30.6",
       "lang": "en",
       "publishedAt": "2026-06-07T00:12:11.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "ollama",
         "open-model",
@@ -12252,7 +12463,7 @@
       "titleEn": "Ollama Releases v0.30.4",
       "lang": "en",
       "publishedAt": "2026-06-07T00:10:26.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "agent",
         "ollama",
@@ -12282,7 +12493,7 @@
       "titleEn": "Ollama Releases v0.30.5",
       "lang": "en",
       "publishedAt": "2026-06-07T00:09:50.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "ollama",
         "release"
@@ -12998,7 +13209,7 @@
       "titleEn": "Ollama Releases v0.30.7-rc1",
       "lang": "en",
       "publishedAt": "2026-06-06T00:59:05.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "ollama",
         "release"
@@ -13046,7 +13257,7 @@
       "titleEn": "Ollama Releases v0.30.7-rc0",
       "lang": "en",
       "publishedAt": "2026-06-06T00:29:19.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "ollama",
         "release"
@@ -14783,7 +14994,7 @@
       "titleEn": "Ollama Releases v0.30.6-rc0",
       "lang": "en",
       "publishedAt": "2026-06-05T00:49:49.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "ollama",
         "release"
@@ -14858,7 +15069,7 @@
       "titleEn": "Introducing the Google Colab CLI",
       "lang": "en",
       "publishedAt": "2026-06-05T00:00:00.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "google"
       ],
@@ -15376,7 +15587,7 @@
       "titleEn": "cloud-1.37.3",
       "lang": "en",
       "publishedAt": "2026-06-04T20:32:56.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "openhands",
         "release"
@@ -15771,7 +15982,7 @@
       "titleEn": "v0.30.5-rc0: llama.cpp version update (#16511)",
       "lang": "en",
       "publishedAt": "2026-06-04T15:20:57.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "ollama",
         "open-model",
@@ -15800,7 +16011,7 @@
       "titleEn": "Introducing Creator Assistant, Plus More Languages For AI Translations on Facebook",
       "lang": "en",
       "publishedAt": "2026-06-04T15:00:34.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "meta",
         "news"
@@ -16259,7 +16470,7 @@
       "titleEn": "python-1.43.0",
       "lang": "en",
       "publishedAt": "2026-06-03T22:40:50.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "agent",
         "release",
@@ -16617,7 +16828,7 @@
       "titleEn": "cloud-1.37.2: Cascade-delete sole-org requester on DELETE /api/organizations (#14617)",
       "lang": "en",
       "publishedAt": "2026-06-03T18:37:35.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "openhands",
         "release"
@@ -18326,7 +18537,7 @@
       "titleEn": "Bringing Gemma 4 12B to your Laptop: Unlocking Local, Agentic Workflows with Google AI Edge",
       "lang": "en",
       "publishedAt": "2026-06-03T00:00:00.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "agent",
         "google",
@@ -18361,7 +18572,7 @@
       "titleEn": "Gemma 4 12B: The Developer Guide",
       "lang": "en",
       "publishedAt": "2026-06-03T00:00:00.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "google",
         "open-model",
@@ -19815,7 +20026,7 @@
       "titleEn": "cloud-1.37.1: Update default agent server image to 1.23.1 (#14612)",
       "lang": "en",
       "publishedAt": "2026-06-02T12:59:19.000Z",
-      "collectedAt": "2026-06-13T13:00:32.260Z",
+      "collectedAt": "2026-06-14T05:00:32.253Z",
       "tags": [
         "agent",
         "openhands",

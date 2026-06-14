@@ -227,7 +227,8 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | `openai-blog` | OpenAI Blog | blog | 1 | openai.com/blog/rss.xml |
 | `google-deepmind` | Google DeepMind Blog | blog | 1 | deepmind.google/blog/rss.xml |
 | `google-developers` | Google Developers Blog | blog | 1 | developers.googleblog.com |
-| `github-blog-ai` | GitHub Blog (AI & ML) | blog | 1 | github.blog/category/ai-and-ml |
+| `github-blog-ai` | GitHub Blog (AI & ML) | blog | 1 | github.blog/ai-and-ml/feed |
+| `github-copilot` | GitHub Copilot Blog | blog | 1 | github.blog/ai-and-ml/github-copilot/feed |
 | `github-changelog` | GitHub Changelog | changelog | 1 | github.blog/changelog |
 | `qiita-copilot` | Qiita GitHub Copilot tag | blog | 1 | qiita.com/tags/githubcopilot |
 | `zenn-copilot` | Zenn GitHub Copilot topic | blog | 2 | zenn.dev/topics/githubcopilot |
@@ -293,6 +294,8 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | `user-opml` | User OPML (custom feeds) | blog | 3 | `file://data/user-opml.xml` (ローカルのみ) |
 
 > **Tier の意味**: 1 = 一次情報源 (ベンダー公式) / 2 = 次次情報源 (サードパーティ) / 3 = コミュニティ・ユーザカスタム
+>
+> **evergreen ソース (R-022)**: `anthropic-engineering` / `github-blog-ai` / `github-copilot` はベストプラクティス/知見系のため `evergreen: true`。hot window 経過後も warm (個別URL) に留まり、cold (/archive 月次集約) / dropped にせず蓄積する。判定は `harness/half-life.ts` の `decideTier`、検証は `tests/half-life.test.ts` と `tests/data-schema.test.ts` の evergreen ゲート。
 
 ---
 

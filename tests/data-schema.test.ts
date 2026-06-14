@@ -388,6 +388,34 @@ describe("カテゴリ品質ガード", () => {
   });
 });
 
+describe("evergreen 蓄積ポリシー (R-022)", () => {
+  // best-practice / knowledge entries は「アーカイブせず蓄積」: hot window 後も
+  // warm (個別URL) に留まり、cold (/archive 月次集約) / dropped にしない。
+  // 不変条件は evergreen フラグに対して検証する (検出)。生成側 (normalize.ts +
+  // decideTier) と migration が予防する。stale worker が evergreen を剥がしても
+  // この gate は flap しない (剥がれた entry は対象外になるだけ) ため、LL-073 の
+  // 通り完了後に Worker を deploy して再付与する。
+  it("evergreen エントリは live index で cold / dropped にならない", () => {
+    const violations = data.entries
+      .filter((entry) => (entry as { evergreen?: unknown }).evergreen === true)
+      .filter((entry) => {
+        const tier = String((entry as { archiveTier?: unknown }).archiveTier ?? "");
+        return tier === "cold" || tier === "dropped";
+      })
+      .map((entry) => `${String(entry.source)} [${String((entry as { archiveTier?: unknown }).archiveTier)}]: ${String(entry.title)}`);
+    expect(violations, "evergreen エントリが cold/dropped。decideTier / migrate-evergreen を確認すること").toEqual([]);
+  });
+
+  it("registry の evergreen ソースが少なくとも 1 件 live で蓄積されている", () => {
+    const evergreenSources = Object.keys(REGISTRY).filter((id) => REGISTRY[id]?.evergreen);
+    expect(evergreenSources.length).toBeGreaterThan(0);
+    const accumulated = data.entries.filter(
+      (entry) => (entry as { evergreen?: unknown }).evergreen === true,
+    );
+    expect(accumulated.length).toBeGreaterThan(0);
+  });
+});
+
 describe("data/stats.json", () => {
   it("トップレベルの数値と生成時刻が有効である", () => {
     expect(typeof stats.generatedAt).toBe("string");

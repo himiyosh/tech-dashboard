@@ -192,6 +192,15 @@ export interface SourceDefinition {
   keywordFilterScope?: "title" | "title-snippet-url";
   /** Optional hard cap after filtering, newest feed order first. */
   maxEntriesPerRun?: number;
+  /**
+   * Mark this source as evergreen best-practices / knowledge content. Entries
+   * from an evergreen source accumulate instead of being archived: after the
+   * Hot window they stay individually addressable ("warm") indefinitely and are
+   * never folded into the monthly /archive aggregate ("cold") or dropped.
+   * Use for vendor engineering blogs, best-practice guides, and how-to content
+   * whose value does not decay like a release note. (User direction 2026-06-15.)
+   */
+  evergreen?: boolean;
 }
 
 /** Result of a single collector run — used for telemetry. */

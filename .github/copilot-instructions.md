@@ -161,6 +161,13 @@
 - 外部 OGP / media image は失敗前提で扱う。`img.onerror` で deterministic fallback artwork を表示し、broken image icon を残さない。E2E は synthetic `error` event で fallback 表示を検証する。
 - Persona audit はスクリーンショット印象だけで合格にしない。DOM metrics、console/network、画像 naturalWidth/error、focus state のいずれかを evidence として要求する。
 
+### R-022: ベストプラクティス/知見ソースは evergreen で蓄積する (アーカイブしない)
+- 各社のエンジニアリングブログ・ベストプラクティス・how-to など「鮮度で価値が減衰しない知見」は `harness/registry.ts` の `SourceDefinition.evergreen: true` を設定する。現行対象は `anthropic-engineering` / `github-blog-ai` / `github-copilot`。
+- evergreen エントリは hot window 経過後も `warm` (個別 URL で addressable) に留め、`cold` (/archive 月次集約) / `dropped` (削除) にしない。判定は `harness/half-life.ts` の `decideTier` が `evergreen` を `hot` の次に評価して `warm` を返すことで行う。`normalize.ts` が全 fresh collect に `evergreen` / `halfLife` / `archiveTier` を stamp する。
+- evergreen ソースを追加・変更したら: (1) `web/src/lib/source-meta.ts` に同期、(2) 既存 `data/index.json` を `npm run migrate:evergreen` (scripts/migrate-evergreen.mjs) で再 stamp、(3) `tests/half-life.test.ts` と `tests/data-schema.test.ts` の evergreen ゲートを通す、(4) Worker は Git Integration 非対象 (LL-073) なので明示承認のうえ deploy する。未 deploy だと stale Worker が evergreen を stamp せず既存知見が cold/dropped に戻りうる。
+- broad feed のノイズ対策 (R-017) と両立させる。evergreen は「減衰させない」だけで、includeKeywords/excludeKeywords の品質フィルタは従来どおり適用する。
+- 新しい feed を追加するときは、まず実 feed の per-item 日付有無 (LL-045) と RSS 可否を curl で確認する。RSS が無いサイト (例: Anthropic) は HTML スクレイパになり subrequest 予算と相談しながら collector limit を決める。
+
 ---
 
 ## 🧪 完了ゲート (LL Hook)
@@ -677,6 +684,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: `worker/src/index.ts` の `buildIncrementalStats` が `bySource.last30d` を rolling 30 日窓として増分維持している。`generatedAt` が毎時進むと entry が 30 日境界を跨ぐが、`removed` 集合 (= touched archive month + live) に入る entry しか `last30d` を減算しない。**untouched month 内で 30 日を超えた entry は減算されず** `last30d` が過大方向に drift し、`total` がほかの削除で減ると `last30d > total` という論理破綻に至る。`totals.last30d` は `Math.max(0, …)` で clamp 済みだったが、source 単位の `last30d` には `≤ total` clamp が無かった。
 - **対策**: `buildIncrementalStats` の最終組み立てで各 source を `0 <= last30d <= total` に clamp (`last30d = min(max(0,last30d), max(0,total))`)。既存 `data/stats.json` も同じ clamp を 1 回適用して現行データの違反を解消 (openai-blog last30d 23→22、1 行 diff)。typecheck + 全 157 unit PASS。**Worker は Git Integration で自動 deploy されないため (LL-073)、本番で再発を止めるには明示承認のうえ Worker deploy が必要**。未 deploy だと次の毎時 run が再び drift データを main に push し CI が再度 red になりうる。
 - **教訓**: 増分集計の rolling time-window カウンタは境界移動で必ず drift する。窓カウンタは「論理上の上限 (ここでは total)」と「下限 0」で最終 clamp して invariant を強制する。data artifact の不変条件 (`0 ≤ last30d ≤ total` 等) は test だけでなく **生成器側 (Worker/harness) にも同じ clamp** を入れて、検知と予防を単一ロジックに寄せる (LL-027 と同型: CI 検知だけでは automated publisher の再発を止められない)。
+
+### LL-086: ベストプラクティス知見ソースは evergreen 蓄積にし、feed の実在を curl で先に確認する
+- **事象**: ユーザーから「各社ブログ/アナウンス (Anthropic news/learn, GitHub Copilot blog 等) の取得が弱い。ベストプラクティス知見はアーカイブせず蓄積したい」と要望。実測すると anthropic-news=7件 (collector limit=2/run)、anthropic-engineering=3件、github-blog-ai=14件で、`evergreen` フラグは型に存在するのに **一度も使われていなかった** (live 0 件)。
+- **根本原因**: (a) `github-blog-ai` の feed URL `https://github.blog/category/ai-and-ml/feed/` が 301 redirect 化 (canonical は `/ai-and-ml/feed/`) し、毎 run 余分な redirect subrequest を消費。(b) GitHub Copilot 専用 feed `https://github.blog/ai-and-ml/github-copilot/feed/` (200/10件、CLI 記事を含む) が未登録。(c) Anthropic は RSS 無し (rss.xml/feed.xml 全て 404 の Next.js)、HTML スクレイパの limit=2 (inline summarize の subrequest 予算確保のため絞っていたが、現在は `SUMMARIZE_MAX_NEW=0` で予算が空いていた)。(d) `decideTier` は `evergreen` を「cold 閾値超過後の最後の安全網」でしか見ておらず、`normalize.ts` も `source.evergreen` を entry に伝播していなかった。
+- **対策**: (1) `github-blog-ai` を canonical feed に修正。(2) `github-copilot` ソースを新規追加。(3) Anthropic collector limit 2→6。(4) `SourceDefinition.evergreen` を `normalize.ts` 経由で entry に stamp し、`decideTier` を「`hot` の次に `evergreen` を評価して `warm` 固定 (cold/dropped にしない)」へ変更。(5) `anthropic-engineering` / `github-blog-ai` / `github-copilot` を evergreen 指定。(6) `scripts/migrate-evergreen.mjs` で既存 17 件を再 stamp (cold/dropped 0 件)。(7) `tests/half-life.test.ts` (evergreen 不変条件) と `tests/data-schema.test.ts` (evergreen が live で cold/dropped にならない) を追加。(8) source-meta.ts / SPEC.md / R-022 を同期。
+- **教訓**: 新 feed を足す前に必ず curl で「RSS の有無」「301 redirect の有無」「per-item 日付の有無 (LL-045)」を確認する。型に存在するフラグ (`evergreen`) が配線されているとは限らない — 生成パイプライン (normalize → entry → decideTier) を端から端まで追って実際に伝播するか確認する。「アーカイブせず蓄積」は decideTier の評価順序 (`hot` → `evergreen warm` → 通常減衰) で表現し、検知 (test) と予防 (生成器 + migration) を両方そろえる。Worker は Git Integration 非対象 (LL-073) なので、retention ロジック変更後は明示承認のうえ deploy しないと stale Worker が evergreen を stamp せず知見が cold/dropped に戻る。
 
 ## 🔄 自己学習ハーネス手順
 

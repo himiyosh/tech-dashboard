@@ -189,6 +189,8 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     tier: 1,
     // Engineering deep-dives age slower than product announcements.
     halfLifeOverride: "architecture",
+    // Best-practice / how-to knowledge: accumulate, never archive (R-022).
+    evergreen: true,
     collect: collectAnthropicEngineering,
   },
 
@@ -252,10 +254,30 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     sourceType: "blog",
     defaultLang: "en",
     autoTags: ["github"],
-    feedUrl: "https://github.blog/category/ai-and-ml/feed/",
+    // Canonical feed. /category/ai-and-ml/feed/ now 301-redirects here; using
+    // the canonical URL avoids an extra redirect subrequest every run (LL-086).
+    feedUrl: "https://github.blog/ai-and-ml/feed/",
     tier: 1,
     // Long-form technical explainers, not release announcements.
     halfLifeOverride: "architecture",
+    // Best-practice / how-to knowledge: accumulate, never archive (R-022).
+    evergreen: true,
+    collect: collectRss,
+  },
+  "github-copilot": {
+    id: "github-copilot",
+    displayName: "GitHub Copilot Blog",
+    category: "copilot",
+    sourceType: "blog",
+    defaultLang: "en",
+    autoTags: ["github", "copilot"],
+    // Dedicated Copilot sub-feed: deeper coverage than the broad AI & ML feed
+    // (e.g. "GitHub Copilot CLI combines model families"). Best-practice and
+    // how-to posts about Copilot — accumulate as knowledge (R-022).
+    feedUrl: "https://github.blog/ai-and-ml/github-copilot/feed/",
+    tier: 1,
+    halfLifeOverride: "architecture",
+    evergreen: true,
     collect: collectRss,
   },
   "github-changelog": {

@@ -161,12 +161,13 @@ async function fetchAnthropicArticle(url: string): Promise<AnthropicArticleMeta 
 }
 
 export async function collectAnthropic(opts: AnthropicScrapeOpts): Promise<RawEntry[]> {
-  // Default 2 (was 5, then 12) to free subrequest budget for Worker
-  // summarize. batch 0 with limit=5 used 47 logical fetches with summarize=0,
-  // hit the cap (51) the moment 1 summarize call was added. Cutting detail
-  // fetches to 2 leaves ~5 fetches of summarize headroom. The dashboard's
-  // hot view only surfaces the top few Anthropic posts anyway.
-  const { section, limit = 2 } = opts;
+  // Default 6 (history: 12 -> 5 -> 2). Inline Worker summarize is now disabled
+  // (SUMMARIZE_MAX_NEW=0; summaries run via the queue / local backfill), which
+  // frees the subrequest budget that previously forced limit=2. Anthropic has
+  // no RSS feed, so this listing scrape is the only way to accumulate their
+  // news / engineering best-practice posts — 6 detail fetches per run lets the
+  // archive build up without busting the per-invocation subrequest ceiling.
+  const { section, limit = 6 } = opts;
   const listingUrl =
     section === "engineering"
       ? "https://www.anthropic.com/engineering"

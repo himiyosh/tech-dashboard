@@ -659,6 +659,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: テスト仕様変更はせず (テストコード保護)。私の data-schema 修正と無関係な既存の鮮度依存挙動として扱う。切り分けには CI の success 実績確認と `git stash` での元データビルド再現が有効だった。
 - **教訓**: 自分の変更後に e2e が落ちたら、まず「元データでも再現するか」を `git stash` + クリーンビルドで確認し、blast radius を切り分ける。`now = new Date()` をビルド時に評価する日付依存コンポーネントは、古いローカルデータで誤検知しやすい。`reuseExistingServer: true` の preview が古い dist を配信する場合もあるため、port を kill して `web/dist` / `web/.astro` を消してから再ビルドして検証する。
 
+### LL-084: カテゴリ trend/sparkline は live index ではなく stats.byDay を集計源にする (LL-083 の兄弟)
+- **事象**: トップ「LAST 7 DAYS」と同じ「記事が更新されない」誤認が、サイドバー / カテゴリページの30日スパークラインでも発生。本番 HTML 実測で直近日 (例 copilot 06-10:0, 06-12:0, 06-14:0) が 0 付近に潰れて見えていた。実際の収集は健全 (origin/main は毎時更新・直近24時間で224件)。
+- **根本原因**: `web/src/lib/stats.ts` の `categoryDailyTrend` が、コメントには「derived from data/stats.json」と書いてあるのに実装は live `ALL_ENTRIES` を `publishedAt` で数えていた。live index は per-source cap / retention tier (LL-032/LL-066) で古い entry を evict するため、直近日が過少カウントされる。この関数は `categoryDailySpark`・`categoryWeekOverWeek` 経由でサイドバー・カテゴリカード・カテゴリ詳細 Trend・WoW KPI の4面に波及していた。
+- **対策**: `categoryDailyTrend` を `STATS.byDay` (archive 込み全件日次, LL-022/LL-032 の単一情報源) の `byCategory[category]` を集計源にするよう変更。コメントどおりの contract に実装を一致させた。typecheck / build:web / e2e (`category trends match`, `category detail trend chart`) で検証。`stats.byDay.byCategory` は直近日も 7〜11 カテゴリ分の実数を保持済み。
+- **教訓**: 「LAST 7 DAYS」(LL-083, DailySummary) と同じ root-cause family。日次/週次の trend 可視化は live index ではなく stats.byDay を集計源にする。コメントに source of truth を書いたら実装が本当にそれを読んでいるか確認する (コメントと実装の乖離は静かに退行する)。新しい trend UI を足すときは `categoryDailyTrend` / `stats.byDay` を経由させ、live entries を直接 `publishedAt` で数えない。
+
 ## 🔄 自己学習ハーネス手順
 
 汎用的な記録規律（3 点セット・自己学習の判断フロー・完了報告前 Hook・LL フォーマット・絶対禁止事項）は `.github/instructions/agent-persona-rules.instructions.md` の「8. 自己改善プロトコル」に従う。本プロジェクト固有の運用は次のとおり。

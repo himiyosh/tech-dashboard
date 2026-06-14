@@ -8,6 +8,7 @@ import LiveMetrics from "../components/LiveMetrics.astro";
 import TickerBar from "../components/TickerBar.astro";
 import Pager from "../components/Pager.astro";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
+import { STATS } from "../lib/stats.ts";
 import {
   ALL_ENTRIES,
   ARXIV_ENTRIES,
@@ -298,7 +299,7 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
         );
       })()}
 
-      <DailySummary entries={primaryEntries} now={now} />
+      <DailySummary entries={primaryEntries} stats={STATS} now={now} />
 
       {topThree.length > 0 && (
         <section class="top-rank" data-reveal="top-rank">

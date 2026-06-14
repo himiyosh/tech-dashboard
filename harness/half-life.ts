@@ -145,10 +145,15 @@ export function decideTier(
   const cold = t.cold === Number.POSITIVE_INFINITY ? Number.POSITIVE_INFINITY : t.cold * boost;
 
   if (ageDays < hot) return "hot";
+
+  // Evergreen knowledge accumulates instead of being archived: once past the
+  // Hot window it stays individually addressable ("warm") indefinitely and is
+  // never folded into the monthly /archive aggregate ("cold") or dropped.
+  // (User direction 2026-06-15 — best-practice / how-to content should pile up
+  // as a reference, not decay like a release note.)
+  if (article.evergreen) return "warm";
+
   if (ageDays < warm) return "warm";
   if (ageDays < cold) return "cold";
-
-  // Evergreen safety net: never drop. Pin to "warm" to keep an individual URL.
-  if (article.evergreen) return "warm";
   return "dropped";
 }

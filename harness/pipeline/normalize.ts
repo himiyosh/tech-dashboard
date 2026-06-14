@@ -146,8 +146,9 @@ export function normalize(
     sourceId: source.id,
     sourceOverride: source.halfLifeOverride,
   });
+  const evergreen = source.evergreen ?? false;
   const archiveTier = decideTier(
-    { publishedAt: raw.publishedAt, halfLife },
+    { publishedAt: raw.publishedAt, halfLife, evergreen },
     new Date(collectedAt),
   );
 
@@ -169,6 +170,7 @@ export function normalize(
     importance: scoreImportance(raw, source),
     halfLife,
     archiveTier,
+    ...(evergreen ? { evergreen: true } : {}),
     ...(image ? { image } : {}),
   };
 }

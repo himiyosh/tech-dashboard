@@ -100,12 +100,16 @@ export function categoryDailyTrend(
     buckets.push({ key: jstDateKey(now.getTime() - i * 86_400_000), count: 0 });
   }
   const idxByKey = new Map(buckets.map((bucket, i) => [bucket.key, i] as const));
-  for (const entry of publicEntriesForCategory(category)) {
-    const publishedAt = Date.parse(entry.publishedAt);
-    if (!Number.isFinite(publishedAt)) continue;
-    const i = idxByKey.get(jstDateKey(publishedAt));
+  // Source of truth: stats.byDay (archive-backed daily counts). Counting live
+  // ALL_ENTRIES by publishedAt under-counts recent days because per-source caps
+  // and retention tiers evict entries from data/index.json, while stats.byDay
+  // keeps the full daily history (see LL-022 / LL-032 / LL-083). Using live
+  // entries made the sidebar / categories sparklines collapse toward 0 for the
+  // most recent days even though collection was healthy.
+  for (const day of STATS.byDay) {
+    const i = idxByKey.get(day.date);
     if (i === undefined) continue;
-    buckets[i]!.count += 1;
+    buckets[i]!.count = day.byCategory?.[category] ?? 0;
   }
   return buckets;
 }

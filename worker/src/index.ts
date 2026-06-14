@@ -469,7 +469,17 @@ function buildIncrementalStats(opts: {
     totals,
     byDay: [...dayMap.values()].sort((a, b) => a.date.localeCompare(b.date)),
     byMonth: [...monthMap.values()].sort((a, b) => a.month.localeCompare(b.month)),
-    bySource: [...sourceMap.values()].sort((a, b) => b.total - a.total),
+    // Clamp each source to the logical invariant 0 <= last30d <= total. The
+    // incremental rolling 30d window drifts over time: entries that cross the
+    // 30-day boundary inside an *untouched* archive month never enter `removed`,
+    // so their last30d contribution is not decremented and last30d can exceed
+    // total (data-schema invariant violation, CI red hourly). See LL-085.
+    bySource: [...sourceMap.values()]
+      .map((s) => {
+        const total = Math.max(0, s.total);
+        return { ...s, total, last30d: Math.min(Math.max(0, s.last30d), total) };
+      })
+      .sort((a, b) => b.total - a.total),
     byImportance,
   };
 }

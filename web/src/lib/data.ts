@@ -164,6 +164,35 @@ export function isArxivEntry(entry: Pick<NormalizedEntry, "source" | "sourceType
 export const ARXIV_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter(isArxivEntry);
 export const MAIN_TIMELINE_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter((entry) => !isArxivEntry(entry));
 
+/**
+ * Evergreen knowledge / best-practice entries (R-022). These come from sources
+ * marked `evergreen: true` in the registry (vendor engineering blogs, how-to,
+ * best-practice guides). They accumulate instead of decaying, so they get a
+ * dedicated page separate from the time-sensitive news Timeline. Newest first.
+ */
+export const KNOWLEDGE_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter(
+  (entry) => entry.evergreen === true,
+);
+
+/** Knowledge entries grouped by source, each group newest-first, groups by size desc. */
+export function knowledgeBySource(): Array<{ source: string; items: NormalizedEntry[] }> {
+  const bySource = new Map<string, NormalizedEntry[]>();
+  for (const entry of KNOWLEDGE_ENTRIES) {
+    const arr = bySource.get(entry.source) ?? [];
+    arr.push(entry);
+    bySource.set(entry.source, arr);
+  }
+  return [...bySource.entries()]
+    .map(([source, items]) => ({
+      source,
+      items: [...items].sort(
+        (a, b) => Date.parse(b.publishedAt ?? "") - Date.parse(a.publishedAt ?? ""),
+      ),
+    }))
+    .sort((a, b) => b.items.length - a.items.length);
+}
+
+
 /** Items per page on timeline / category / tag pages. */
 export const PAGE_SIZE = 30;
 

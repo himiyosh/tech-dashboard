@@ -1,0 +1,227 @@
+---
+import Portal from "../layouts/Portal.astro";
+import PageHero from "../components/PageHero.astro";
+import Sidebar from "../components/Sidebar.astro";
+import EntryCard from "../components/EntryCard.astro";
+import {
+  KNOWLEDGE_ENTRIES,
+  knowledgeBySource,
+  MAIN_TIMELINE_ENTRIES,
+  GENERATED_AT,
+  relativeTime,
+  type NormalizedEntry,
+} from "../lib/data.ts";
+import { SOURCE_META } from "../lib/source-meta.ts";
+
+const now = new Date();
+const groups = knowledgeBySource();
+
+const sourceLabel = (source: string): string =>
+  SOURCE_META.find((item) => item.id === source)?.displayName ?? source;
+
+/** Short JA description per evergreen source for the knowledge lane. */
+const SOURCE_COPY: Record<string, string> = {
+  "anthropic-engineering":
+    "Anthropic Engineering の設計・運用ディープダイブ。Claude Code やエージェント開発の実践知見。",
+  "github-blog-ai":
+    "GitHub Blog (AI & ML) の技術解説。Copilot や AI 開発ワークフローの長文ガイド。",
+  "github-copilot":
+    "GitHub Copilot 公式ブログ。CLI・カスタムエージェントなど Copilot 活用の how-to。",
+};
+
+const entryTime = (entry: NormalizedEntry): number =>
+  Date.parse(entry.publishedAt ?? entry.collectedAt ?? "") || 0;
+
+const countSince = (items: readonly NormalizedEntry[], days: number): number => {
+  const cutoff = now.getTime() - days * 86_400_000;
+  return items.filter((entry) => entryTime(entry) >= cutoff).length;
+};
+
+const breadcrumb = [
+  { label: "Home", href: "/" },
+  { label: "Knowledge" },
+];
+---
+
+<Portal
+  pageKey="knowledge"
+  title="Knowledge — ベストプラクティス & 知見 | TECH Dashboard"
+  description="各社のエンジニアリングブログやベストプラクティスを、流れていくニュースとは別に蓄積するページです。時間が経っても価値が減らない知見をソース別にまとめています。"
+  breadcrumb={breadcrumb}
+>
+  <PageHero
+    className="page-hero-top-level page-hero-knowledge"
+    accent="#34d399"
+    kicker="Knowledge lane"
+    title="Knowledge & Best Practices"
+    count={`${KNOWLEDGE_ENTRIES.length} guides`}
+    headingId="knowledge-heading"
+    description="各社のエンジニアリングブログやベストプラクティスは、流れていくニュースとは別にここで蓄積します。アーカイブで消えず、いつでも参照できる「知見の置き場」です。"
+    actions={[
+      { href: "/", label: "Main timeline" },
+      { href: "#knowledge-sources", label: "Browse sources" },
+      { href: "/about", label: "収集方針" },
+    ]}
+    metrics={[
+      { label: "Guides", value: KNOWLEDGE_ENTRIES.length },
+      { label: "Sources", value: groups.length },
+      { label: "Last 30d", value: countSince(KNOWLEDGE_ENTRIES, 30) },
+      { label: "News timeline", value: MAIN_TIMELINE_ENTRIES.length },
+      { label: "Updated", value: relativeTime(GENERATED_AT, now) },
+    ]}
+  />
+
+  <div class="layout">
+    <Sidebar active="all" />
+
+    <main>
+      <section class="knowledge-intro" aria-labelledby="knowledge-why-heading">
+        <p class="section-kicker">Why a separate lane?</p>
+        <h2 id="knowledge-why-heading">ニュースは流す、知見は貯める</h2>
+        <p class="section-note">
+          リリースやアナウンスは鮮度が命なので Timeline で流していきます。一方、エンジニアリングブログやベストプラクティスは時間が経っても価値が減りません。これらは <strong>evergreen</strong> として保持し、cold アーカイブに送らずこのページに蓄積します。
+        </p>
+      </section>
+
+      {groups.length === 0 ? (
+        <div class="empty-state">
+          <strong>蓄積された知見はまだありません。</strong>
+          <p>次回の収集後に、各社のエンジニアリングブログやベストプラクティスがここに貯まっていきます。</p>
+          <a href="/status">Status</a>
+        </div>
+      ) : (
+        <div id="knowledge-sources" class="knowledge-source-stack">
+          {groups.map((group) => (
+            <section class="knowledge-source-group" aria-labelledby={`kg-${group.source}`}>
+              <div class="knowledge-source-head">
+                <div>
+                  <h2 id={`kg-${group.source}`}>{sourceLabel(group.source)}</h2>
+                  <p class="knowledge-source-desc">{SOURCE_COPY[group.source] ?? "ベストプラクティス / 技術知見ソース。"}</p>
+                </div>
+                <div class="knowledge-source-meta">
+                  <span class="knowledge-source-count">{group.items.length}</span>
+                  <span class="knowledge-source-sub">guides · {countSince(group.items, 30)} in 30d</span>
+                </div>
+              </div>
+              <div class="knowledge-card-grid">
+                {group.items.map((entry) => (
+                  <EntryCard entry={entry} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+    </main>
+
+    <aside class="right">
+      <div class="side-card knowledge-note-card">
+        <div class="right-title">Knowledge lane</div>
+        <p>
+          このページは「時間が経っても読み返したい知見」をまとめています。日々の更新は <a href="/">Timeline</a> を確認してください。
+        </p>
+      </div>
+
+      <div class="side-card">
+        <div class="right-title">Sources</div>
+        <div class="knowledge-source-list">
+          {groups.map((group) => (
+            <a class="knowledge-source-link" href={`#kg-${group.source}`}>
+              <strong>{sourceLabel(group.source)}</strong>
+              <span class="c">{group.items.length}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </aside>
+  </div>
+</Portal>
+
+<style>
+  .knowledge-intro {
+    margin-bottom: 1rem;
+  }
+  .knowledge-intro h2 {
+    margin: 0.15rem 0 0.4rem;
+    font-size: 1.05rem;
+  }
+  .knowledge-source-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .knowledge-source-group {
+    border: 1px solid var(--border, rgba(148, 163, 184, 0.18));
+    border-radius: 14px;
+    background: var(--surface, rgba(255, 255, 255, 0.02));
+    padding: 1rem 1rem 1.1rem;
+  }
+  .knowledge-source-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--border, rgba(148, 163, 184, 0.16));
+  }
+  .knowledge-source-head h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.02rem;
+  }
+  .knowledge-source-desc {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--text-muted, #94a3b8);
+    max-width: 52ch;
+  }
+  .knowledge-source-meta {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .knowledge-source-count {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #34d399;
+  }
+  .knowledge-source-sub {
+    font-size: 0.72rem;
+    color: var(--text-muted, #94a3b8);
+  }
+  .knowledge-card-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  @media (min-width: 900px) {
+    .knowledge-card-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .knowledge-source-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .knowledge-source-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.4rem 0.55rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    text-decoration: none;
+    color: inherit;
+    background: var(--surface, rgba(148, 163, 184, 0.06));
+  }
+  .knowledge-source-link:hover {
+    background: rgba(52, 211, 153, 0.12);
+  }
+  .knowledge-source-link .c {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted, #94a3b8);
+  }
+</style>

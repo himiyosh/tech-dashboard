@@ -433,6 +433,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(menu).toBeVisible();
     await expect(desktopMenuButton).toHaveAttribute("aria-expanded", "true");
     await expect(menu.getByRole("link", { name: /Categories/ })).toHaveCount(0);
+    await expect(menu.getByRole("link", { name: /Knowledge/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /Archive/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /About/ })).toBeVisible();
     await expect(menu.getByRole("button", { name: /Search/ })).toBeVisible();
@@ -636,4 +637,47 @@ test.describe("TECH Dashboard smoke", () => {
       expect(t.en.length, `en title blank: ${JSON.stringify(t)}`).toBeGreaterThan(0);
     }
   });
+
+  test("knowledge lane is reachable from the menu and groups by source", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+
+    // Knowledge is a secondary destination: it lives in the hamburger menu,
+    // not as a header shortcut or in the mobile tabbar (R-015).
+    await page.goto("/");
+    await page.locator("header .menu-trigger").click();
+    const menu = page.locator("#site-menu");
+    await expect(menu).toBeVisible();
+    const knowledgeLink = menu.getByRole("link", { name: /Knowledge/ });
+    await expect(knowledgeLink).toBeVisible();
+    await knowledgeLink.click();
+    await expect(page).toHaveURL(/\/knowledge\/?$/);
+
+    // Page renders its hero and at least one source group, separate from news.
+    await expect(page.locator("#knowledge-heading")).toBeVisible();
+    const groups = page.locator(".knowledge-source-group");
+    await expect(groups.first()).toBeVisible();
+    const groupCount = await groups.count();
+    expect(groupCount, "knowledge page shows source groups").toBeGreaterThan(0);
+
+    // Every group exposes a source heading + at least one article card.
+    for (let i = 0; i < groupCount; i++) {
+      await expect(groups.nth(i).locator("h2")).toBeVisible();
+      expect(
+        await groups.nth(i).locator("article.card").count(),
+        "each knowledge source group has at least one card",
+      ).toBeGreaterThan(0);
+    }
+
+    // Selecting Knowledge marks the Menu trigger active (it is menu-owned).
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/knowledge/");
+    const tabbar = page.getByRole("navigation", { name: "Primary" });
+    await expect(tabbar.getByRole("button", { name: /Menu/ })).toHaveClass(/active/);
+    // Knowledge must not leak into the mobile tabbar as a direct shortcut.
+    await expect(tabbar.getByRole("link", { name: /Knowledge/ })).toHaveCount(0);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+  });
 });
+

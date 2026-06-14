@@ -103,10 +103,11 @@
 
 ### R-015: Primary navigation は hamburger menu に集約する
 - desktop / tablet の header に複数リンクを横並び表示しない。通常は `Categories` shortcut + `Menu` button + `#site-menu` を primary navigation の source of truth とする。
-- mobile bottom tabbar は `Home / Categories / Menu` の 3 action に限定する。Search / Archive / Status / About などは `#site-menu` 内に集約する。
+- mobile bottom tabbar は `Home / Categories / Menu` の 3 action に限定する。Search / Archive / Status / About / Knowledge などは `#site-menu` 内に集約する。
 - `Categories` は direct shortcut なので `#site-menu` には含めない。Categories ページでは Categories だけを active にし、Menu trigger を active にしない。
+- `Knowledge` (`/knowledge`, R-022 の evergreen 知見レーン) は secondary destination として `#site-menu` (`navItems`) に置く。direct shortcut や mobile tabbar には出さない。Knowledge ページでは Menu trigger が active になる (menu-owned)。
 - mobile (`max-width: 720px`) では header 内に nav link row を表示しない。Archive / About だけを上部に残すなど、header nav の一部を page top に露出させない。
-- nav 変更時は E2E で desktop Categories shortcut、desktop hamburger 表示、menu 内 secondary links、menu 内 Categories 非表示、mobile tabbar 3 item、Categories 選択時に Menu 非 active、menu open/close、Archive / About / Search を含む menu 動線、Categories 直接遷移、横スクロールなしを必ず検証する。
+- nav 変更時は E2E で desktop Categories shortcut、desktop hamburger 表示、menu 内 secondary links (Knowledge / Archive / Status / About / Search)、menu 内 Categories 非表示、mobile tabbar 3 item、Categories 選択時に Menu 非 active、Knowledge 選択時に Menu active、menu open/close、Knowledge / Archive / About / Search を含む menu 動線、Categories 直接遷移、横スクロールなしを必ず検証する。
 
 ### R-016: トップレベルページに breadcrumb を出さない
 - Header nav / mobile tabbar の primary destination (`/`, `/categories/`, `/archive/`, `/status/`, `/about/`) には `.crumb-bar` を表示しない。ページの入口情報は `banner` / `PageHero` に集約する。
@@ -167,6 +168,7 @@
 - evergreen ソースを追加・変更したら: (1) `web/src/lib/source-meta.ts` に同期、(2) 既存 `data/index.json` を `npm run migrate:evergreen` (scripts/migrate-evergreen.mjs) で再 stamp、(3) `tests/half-life.test.ts` と `tests/data-schema.test.ts` の evergreen ゲートを通す、(4) Worker は Git Integration 非対象 (LL-073) なので明示承認のうえ deploy する。未 deploy だと stale Worker が evergreen を stamp せず既存知見が cold/dropped に戻りうる。
 - broad feed のノイズ対策 (R-017) と両立させる。evergreen は「減衰させない」だけで、includeKeywords/excludeKeywords の品質フィルタは従来どおり適用する。
 - 新しい feed を追加するときは、まず実 feed の per-item 日付有無 (LL-045) と RSS 可否を curl で確認する。RSS が無いサイト (例: Anthropic) は HTML スクレイパになり subrequest 予算と相談しながら collector limit を決める。
+- evergreen 知見は news Timeline とは別の `/knowledge` レーンに蓄積表示する。`web/src/lib/data.ts` の `KNOWLEDGE_ENTRIES` (`evergreen === true`) と `knowledgeBySource()` を単一情報源にし、ソース別グルーピングで出す。ページは `#site-menu` の `Knowledge` から遷移する (R-015)。hot 期間の新着は Timeline にも出るが、恒久の置き場は `/knowledge`。evergreen ソースを増減したら `/knowledge` の E2E (menu 動線・ソース別グループ・mobile tabbar 非露出) を通す。
 
 ---
 

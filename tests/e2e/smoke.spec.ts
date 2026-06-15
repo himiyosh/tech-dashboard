@@ -674,6 +674,32 @@ test.describe("TECH Dashboard smoke", () => {
       .toBe(true);
   });
 
+  test("lane pages never collapse into a 3-column timeline grid (LL-091)", async ({ page }) => {
+    // The timeline .layout has responsive media queries (a 200px sidebar and a
+    // 3-col :has(aside.right) rule for 901-1180px) that previously bled into
+    // .lane-layout, adding a phantom empty left column at mid widths. Lane
+    // pages must stay 2-col (>=981px) or 1-col (<=980px), never 3-col, and
+    // never show aside.left, at any width.
+    for (const path of ["/knowledge/", "/arxiv/"]) {
+      for (const width of [1280, 1180, 1100, 1000, 981, 980, 901, 768, 390]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await page.goto(path);
+        const info = await page.evaluate(() => {
+          const layout = document.querySelector(".layout") as HTMLElement | null;
+          const cols = layout ? getComputedStyle(layout).gridTemplateColumns : "";
+          return {
+            colCount: cols ? cols.split(/\s+/).filter(Boolean).length : 0,
+            hasLeft: !!document.querySelector(".layout aside.left"),
+            hscroll: document.documentElement.scrollWidth > window.innerWidth,
+          };
+        });
+        expect(info.hasLeft, `${path} @${width} must not show Timeline sidebar`).toBe(false);
+        expect(info.colCount, `${path} @${width} column count`).toBeLessThanOrEqual(2);
+        expect(info.hscroll, `${path} @${width} horizontal scroll`).toBe(false);
+      }
+    }
+  });
+
   test("knowledge lane is a primary explore shortcut and groups by source", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
 

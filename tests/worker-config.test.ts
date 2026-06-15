@@ -28,8 +28,8 @@ describe("Cloudflare Worker deploy config", () => {
     const registry = readConfig("harness/registry.ts");
 
     expect(harnessConfig).toContain('ENABLE_SUMMARY_QUEUE = "1"');
-    expect(harnessConfig).toContain('ENQUEUE_MAX_NEW = "10"');
-    expect(harnessConfig).toContain('KV_LOOKUP_CAP = "20"');
+    expect(harnessConfig).toContain('ENQUEUE_MAX_NEW = "30"');
+    expect(harnessConfig).toContain('KV_LOOKUP_CAP = "40"');
     expect(harnessConfig).toContain('OG_BUDGET_PER_RUN = "1"');
     expect(registry).toContain("maxArticleDateFetches: 4");
     expect(registry).toContain("maxEntriesPerRun: 4");

@@ -161,6 +161,32 @@ export function isArxivEntry(entry: Pick<NormalizedEntry, "source" | "sourceType
   return entry.source.startsWith("arxiv-") || (entry.sourceType === "paper" && entry.url.includes("arxiv.org"));
 }
 
+/**
+ * Low-signal release builds: nightly snapshots, pre-releases, release
+ * candidates, betas/alphas, and internal staging builds. These are dev
+ * artifacts, not notable updates, yet the collector over-scores release feeds
+ * (any "vN." match) to importance 3 (see harness/pipeline/normalize.ts). A
+ * fast-releasing source (e.g. Zed nightly/-pre) would otherwise dominate the
+ * Featured hero and Top-3 decision slots.
+ *
+ * Detected from the title so the web layer stays robust to imperfect stored
+ * importance, even before a corrected collector is redeployed (LL-083 style:
+ * fix the display, don't depend on the data being perfect).
+ */
+const LOW_SIGNAL_RELEASE_RE =
+  /\b(?:nightly|canary|snapshot)\b|\bcollab-(?:staging|production|prod)\b|[-_.](?:pre|preview|rc|alpha|beta)\d*\b|\(#\d+\)\s*$/i;
+
+export function isLowSignalRelease(
+  entry: Pick<NormalizedEntry, "sourceType" | "title" | "titleEn" | "titleJa">,
+): boolean {
+  if (entry.sourceType !== "release" && entry.sourceType !== "changelog") return false;
+  // Test each title independently so the trailing "(#1234)" PR-ref anchor works
+  // (joining titles with spaces would break the end-of-string match).
+  return [entry.title, entry.titleEn, entry.titleJa].some(
+    (t) => !!t && LOW_SIGNAL_RELEASE_RE.test(t),
+  );
+}
+
 export const ARXIV_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter(isArxivEntry);
 export const MAIN_TIMELINE_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter((entry) => !isArxivEntry(entry));
 
@@ -280,13 +306,35 @@ export function latest(n: number): NormalizedEntry[] {
   return MAIN_TIMELINE_ENTRIES.slice(0, n);
 }
 
-/** Entries with importance === 3 (major releases). Prefer real summaries. */
+/**
+ * The Featured hero. Prefer a genuinely notable update over a routine version
+ * bump: real announcements/blogs (importance 3, non-release) first, then stable
+ * releases. Low-signal builds (nightly/pre/rc/beta/staging) are never eligible,
+ * so a fast-releasing source cannot dominate the hero (see isLowSignalRelease).
+ */
 export function featured(): NormalizedEntry | undefined {
+  const isRoutineRelease = (e: NormalizedEntry) =>
+    e.sourceType === "release" || e.sourceType === "changelog";
+  const eligible = (e: NormalizedEntry) => !isLowSignalRelease(e);
   return (
-    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 3 && !isDeterministicFallbackEntry(e)) ??
-    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 2 && !isDeterministicFallbackEntry(e)) ??
-    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 3) ??
-    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 2)
+    // 1. High-importance real announcement/blog with a real summary.
+    MAIN_TIMELINE_ENTRIES.find(
+      (e) => e.importance === 3 && !isRoutineRelease(e) && !isDeterministicFallbackEntry(e) && eligible(e),
+    ) ??
+    // 2. High-importance stable release with a real summary.
+    MAIN_TIMELINE_ENTRIES.find(
+      (e) => e.importance === 3 && !isDeterministicFallbackEntry(e) && eligible(e),
+    ) ??
+    // 3. Medium-importance announcement/blog with a real summary.
+    MAIN_TIMELINE_ENTRIES.find(
+      (e) => e.importance === 2 && !isRoutineRelease(e) && !isDeterministicFallbackEntry(e) && eligible(e),
+    ) ??
+    MAIN_TIMELINE_ENTRIES.find(
+      (e) => e.importance === 2 && !isDeterministicFallbackEntry(e) && eligible(e),
+    ) ??
+    // 4. Last resort: any high/medium entry that is not a low-signal build.
+    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 3 && eligible(e)) ??
+    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 2 && eligible(e))
   );
 }
 

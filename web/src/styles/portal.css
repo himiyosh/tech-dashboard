@@ -18,6 +18,8 @@
   --success: #4ade80;
   --paper: #93c5fd;
   --paper-bg: #253449;
+  --know: #34d399;
+  --know-bg: #123a30;
   --tutorial: #fbbf24;
   --tutorial-bg: #4d2d0a;
 }
@@ -189,6 +191,39 @@ header {
   line-height: 1;
 }
 
+/* Resting per-destination icon tints so the three explore shortcuts stay
+   visually distinct at a glance (text stays muted until hover/active). */
+.nav-shortcut:not(.paper):not(.knowledge) .nav-icon {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: color-mix(in srgb, var(--accent) 72%, var(--muted-2));
+}
+.nav-shortcut.paper .nav-icon {
+  background: color-mix(in srgb, var(--paper) 12%, transparent);
+  color: color-mix(in srgb, var(--paper) 72%, var(--muted-2));
+}
+.nav-shortcut.knowledge .nav-icon {
+  background: color-mix(in srgb, var(--know) 12%, transparent);
+  color: color-mix(in srgb, var(--know) 72%, var(--muted-2));
+}
+
+/* arXiv document icon (SVG): render block and size slightly above 1em so its
+   stroke weight visually matches the geometric glyph icons next to it. */
+.arxiv-ic {
+  display: block;
+}
+.nav-shortcut .nav-icon .arxiv-ic {
+  width: 13px;
+  height: 13px;
+}
+.quick-icon .arxiv-ic {
+  width: 13px;
+  height: 13px;
+}
+.mobile-tabbar .arxiv-ic {
+  width: 16px;
+  height: 16px;
+}
+
 .nav-shortcut:hover,
 .nav-shortcut:focus-visible,
 .nav-shortcut.active {
@@ -218,6 +253,21 @@ header {
 .nav-shortcut.paper.active .nav-icon {
   background: color-mix(in srgb, var(--paper) 16%, transparent);
   color: var(--paper);
+}
+
+.nav-shortcut.knowledge:hover,
+.nav-shortcut.knowledge:focus-visible,
+.nav-shortcut.knowledge.active {
+  background: color-mix(in srgb, var(--know-bg) 60%, transparent);
+  border-color: color-mix(in srgb, var(--know) 38%, var(--border));
+  color: var(--know);
+}
+
+.nav-shortcut.knowledge:hover .nav-icon,
+.nav-shortcut.knowledge:focus-visible .nav-icon,
+.nav-shortcut.knowledge.active .nav-icon {
+  background: color-mix(in srgb, var(--know) 16%, transparent);
+  color: var(--know);
 }
 
 .menu-trigger {
@@ -891,6 +941,11 @@ html:not([data-lang="en"]) .i18n-en {
 .quick-icon.paper {
   background: color-mix(in srgb, var(--paper) 14%, transparent);
   color: var(--paper);
+}
+
+.quick-icon.knowledge {
+  background: color-mix(in srgb, var(--know) 14%, transparent);
+  color: var(--know);
 }
 
 .banner-cta {

@@ -443,6 +443,8 @@ test.describe("TECH Dashboard smoke", () => {
     await page.goto("/");
     await expect(page.locator("header .nav")).toHaveCount(0);
     await expect(page.locator("header .nav-shortcut", { hasText: "Categories" })).toBeVisible();
+    await expect(page.locator("header .nav-shortcut", { hasText: "arXiv" })).toBeVisible();
+    await expect(page.locator("header .nav-shortcut", { hasText: "Knowledge" })).toBeVisible();
     const desktopMenuButton = page.locator("header .menu-trigger");
     await expect(desktopMenuButton).toBeVisible();
     await expect(desktopMenuButton).toHaveAttribute("aria-expanded", "false");
@@ -450,8 +452,10 @@ test.describe("TECH Dashboard smoke", () => {
     const menu = page.locator("#site-menu");
     await expect(menu).toBeVisible();
     await expect(desktopMenuButton).toHaveAttribute("aria-expanded", "true");
+    // Primary explore shortcuts (Categories, arXiv, Knowledge) live in the
+    // header switcher, never in the hamburger menu (LL-054 avoids duplicates).
     await expect(menu.getByRole("link", { name: /Categories/ })).toHaveCount(0);
-    await expect(menu.getByRole("link", { name: /Knowledge/ })).toBeVisible();
+    await expect(menu.getByRole("link", { name: /Knowledge/ })).toHaveCount(0);
     await expect(menu.getByRole("link", { name: /Archive/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /About/ })).toBeVisible();
     await expect(menu.getByRole("button", { name: /Search/ })).toBeVisible();
@@ -466,7 +470,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".footer-bar")).toBeHidden();
     await expect(page.locator("header .nav")).toHaveCount(0);
     await expect(page.locator("header .header-switcher")).toBeHidden();
-    await expect(page.locator("header .nav-shortcut")).toHaveCount(2);
+    await expect(page.locator("header .nav-shortcut")).toHaveCount(3);
     await expect(page.locator("header .menu-trigger")).toBeHidden();
     await expect(tabbar.getByRole("link", { name: "Home" })).toHaveClass(/active/);
     await expect(tabbar.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
@@ -480,7 +484,7 @@ test.describe("TECH Dashboard smoke", () => {
       .toBe(true);
 
     const tabItems = tabbar.locator("a, button");
-    await expect(tabItems).toHaveCount(4);
+    await expect(tabItems).toHaveCount(5);
     const itemBoxes = await tabItems.evaluateAll((items) =>
       items.map((item) => {
         const rect = item.getBoundingClientRect();
@@ -490,9 +494,9 @@ test.describe("TECH Dashboard smoke", () => {
     expect(itemBoxes[0].left, "first mobile tab item starts inside the padded bar").toBeGreaterThanOrEqual(7);
     expect(itemBoxes.at(-1)!.right, "last mobile tab item stays inside the padded bar").toBeLessThanOrEqual(383);
     for (const itemBox of itemBoxes) {
-      // 4 items in (390 - 16px padding) ≈ 93-94px each
-      expect(Math.round(itemBox.width), `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeGreaterThanOrEqual(88);
-      expect(Math.round(itemBox.width), `mobile tab item width too large: ${JSON.stringify(itemBox)}`).toBeLessThanOrEqual(130);
+      // 5 items in (390 - 16px padding) ≈ 74-75px each
+      expect(Math.round(itemBox.width), `mobile tab item width: ${JSON.stringify(itemBox)}`).toBeGreaterThanOrEqual(66);
+      expect(Math.round(itemBox.width), `mobile tab item width too large: ${JSON.stringify(itemBox)}`).toBeLessThanOrEqual(120);
     }
 
     const openMobileMenu = async () => {
@@ -656,19 +660,20 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
-  test("knowledge lane is reachable from the menu and groups by source", async ({ page }) => {
+  test("knowledge lane is a primary explore shortcut and groups by source", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
 
-    // Knowledge is a secondary destination: it lives in the hamburger menu,
-    // not as a header shortcut or in the mobile tabbar (R-015).
+    // Knowledge is a primary explore destination: it lives in the header
+    // switcher (alongside Categories and arXiv), not in the hamburger menu
+    // (LL-054 keeps direct shortcuts out of the menu to avoid duplicates).
     await page.goto("/");
-    await page.locator("header .menu-trigger").click();
-    const menu = page.locator("#site-menu");
-    await expect(menu).toBeVisible();
-    const knowledgeLink = menu.getByRole("link", { name: /Knowledge/ });
-    await expect(knowledgeLink).toBeVisible();
-    await knowledgeLink.click();
+    const knowledgeShortcut = page.locator("header .nav-shortcut", { hasText: "Knowledge" });
+    await expect(knowledgeShortcut).toBeVisible();
+    await knowledgeShortcut.click();
     await expect(page).toHaveURL(/\/knowledge\/?$/);
+    // On the Knowledge page the header shortcut is active and the menu does
+    // not own the current page.
+    await expect(page.locator("header .nav-shortcut.knowledge")).toHaveClass(/active/);
 
     // Page renders its hero and at least one source group, separate from news.
     await expect(page.locator("#knowledge-heading")).toBeVisible();
@@ -686,13 +691,17 @@ test.describe("TECH Dashboard smoke", () => {
       ).toBeGreaterThan(0);
     }
 
-    // Selecting Knowledge marks the Menu trigger active (it is menu-owned).
+    // On mobile, Knowledge is a direct tab in the bottom tabbar (not in the
+    // menu). Selecting it marks the Knowledge tab active, not the Menu trigger.
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/knowledge/");
     const tabbar = page.getByRole("navigation", { name: "Primary" });
-    await expect(tabbar.getByRole("button", { name: /Menu/ })).toHaveClass(/active/);
-    // Knowledge must not leak into the mobile tabbar as a direct shortcut.
-    await expect(tabbar.getByRole("link", { name: /Knowledge/ })).toHaveCount(0);
+    await expect(tabbar.getByRole("link", { name: /Knowledge/ })).toHaveClass(/active/);
+    await expect(tabbar.getByRole("button", { name: /Menu/ })).not.toHaveClass(/active/);
+    // Knowledge must not also appear inside the hamburger menu (no duplicate).
+    await tabbar.getByRole("button", { name: /Menu/ }).click();
+    await expect(page.locator("#site-menu").getByRole("link", { name: /Knowledge/ })).toHaveCount(0);
+    await page.keyboard.press("Escape");
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);

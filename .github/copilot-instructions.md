@@ -101,13 +101,15 @@
 - Baseline Widely available ではない機能は guide の fallback 方針に従い、既存 Astro / CSS 構成に最小差分で適用する。
 - mobile / fixed / sticky / overflow / z-index / safe-area の表示崩れでは `.claude/skills/ui-display-guard/SKILL.md` も併用し、Playwright viewport 検証まで行う。
 
-### R-015: Primary navigation は hamburger menu に集約する
-- desktop / tablet の header に複数リンクを横並び表示しない。通常は `Categories` shortcut + `Menu` button + `#site-menu` を primary navigation の source of truth とする。
-- mobile bottom tabbar は `Home / Categories / Menu` の 3 action に限定する。Search / Archive / Status / About / Knowledge などは `#site-menu` 内に集約する。
-- `Categories` は direct shortcut なので `#site-menu` には含めない。Categories ページでは Categories だけを active にし、Menu trigger を active にしない。
-- `Knowledge` (`/knowledge`, R-022 の evergreen 知見レーン) は secondary destination として `#site-menu` (`navItems`) に置く。direct shortcut や mobile tabbar には出さない。Knowledge ページでは Menu trigger が active になる (menu-owned)。
-- mobile (`max-width: 720px`) では header 内に nav link row を表示しない。Archive / About だけを上部に残すなど、header nav の一部を page top に露出させない。
-- nav 変更時は E2E で desktop Categories shortcut、desktop hamburger 表示、menu 内 secondary links (Knowledge / Archive / Status / About / Search)、menu 内 Categories 非表示、mobile tabbar 3 item、Categories 選択時に Menu 非 active、Knowledge 選択時に Menu active、menu open/close、Knowledge / Archive / About / Search を含む menu 動線、Categories 直接遷移、横スクロールなしを必ず検証する。
+### R-015: Primary navigation は explore shortcuts + hamburger menu の 2 層にする
+- desktop / tablet の header は `Categories` / `arXiv` / `Knowledge` の 3 explore shortcut (`.header-switcher .nav-shortcut`) と `Menu` button (`#site-menu`) を primary navigation の source of truth とする。雑多なリンクを横並びに増やさない。
+- explore shortcut は **direct shortcut** であり、`#site-menu` (`navItems`) には **含めない** (LL-054: direct shortcut を menu に重複表示しない)。`navItems` に置く secondary destination は `Timeline` / `Archive` / `Status` / `About` + `Search` action のみ。
+- 3 explore shortcut は per-destination のアクセント色で識別する: Categories=`--accent` (teal), arXiv=`--paper` (blue, `.paper`), Knowledge=`--know` (emerald `#34d399`, `.knowledge`)。idle 時も nav-icon に薄い destination 色を付け、一覧性を保つ。Knowledge ページの accent (`#34d399`) と nav ボタン色を一致させる。
+- mobile bottom tabbar は `Home / Categories / arXiv / Knowledge / Menu` の 5 action とする。explore shortcut (Categories / arXiv / Knowledge) は desktop header と mobile tabbar の両方に出し、どちらの viewport でも到達できるようにする。Search / Archive / Status / About は `#site-menu` に集約する。
+- explore shortcut のページ (`/categories/`, `/arxiv/`, `/knowledge/`) では、その shortcut だけを active にし、`Menu` trigger を active にしない (`menuOwnsCurrentPage` は `navItems` 由来なので explore shortcut を含めない)。
+- mobile (`max-width: 720px`) では header の `.header-switcher` を `display:none` にし、explore は bottom tabbar に集約する。header nav link row を page top に露出させない。
+- homepage banner の `.banner-quick-links` も Categories / arXiv / Knowledge の 3 link を同じアクセント色で並べる。
+- nav 変更時は E2E で desktop 3 explore shortcut 表示、desktop hamburger 表示、menu 内 secondary links (Archive / Status / About / Search)、menu 内 Categories / arXiv / Knowledge 非表示 (重複なし)、mobile tabbar 5 item と各 item 幅・横スクロールなし、Categories / Knowledge ページで該当 shortcut が active かつ Menu 非 active、menu open/close、Archive / About / Status / Search の menu 動線を必ず検証する。
 
 ### R-016: トップレベルページに breadcrumb を出さない
 - Header nav / mobile tabbar の primary destination (`/`, `/categories/`, `/archive/`, `/status/`, `/about/`) には `.crumb-bar` を表示しない。ページの入口情報は `banner` / `PageHero` に集約する。
@@ -168,7 +170,7 @@
 - evergreen ソースを追加・変更したら: (1) `web/src/lib/source-meta.ts` に同期、(2) 既存 `data/index.json` を `npm run migrate:evergreen` (scripts/migrate-evergreen.mjs) で再 stamp、(3) `tests/half-life.test.ts` と `tests/data-schema.test.ts` の evergreen ゲートを通す、(4) Worker は Git Integration 非対象 (LL-073) なので明示承認のうえ deploy する。未 deploy だと stale Worker が evergreen を stamp せず既存知見が cold/dropped に戻りうる。
 - broad feed のノイズ対策 (R-017) と両立させる。evergreen は「減衰させない」だけで、includeKeywords/excludeKeywords の品質フィルタは従来どおり適用する。
 - 新しい feed を追加するときは、まず実 feed の per-item 日付有無 (LL-045) と RSS 可否を curl で確認する。RSS が無いサイト (例: Anthropic) は HTML スクレイパになり subrequest 予算と相談しながら collector limit を決める。
-- evergreen 知見は news Timeline とは別の `/knowledge` レーンに蓄積表示する。`web/src/lib/data.ts` の `KNOWLEDGE_ENTRIES` (`evergreen === true`) と `knowledgeBySource()` を単一情報源にし、ソース別グルーピングで出す。ページは `#site-menu` の `Knowledge` から遷移する (R-015)。hot 期間の新着は Timeline にも出るが、恒久の置き場は `/knowledge`。evergreen ソースを増減したら `/knowledge` の E2E (menu 動線・ソース別グループ・mobile tabbar 非露出) を通す。
+- evergreen 知見は news Timeline とは別の `/knowledge` レーンに蓄積表示する。`web/src/lib/data.ts` の `KNOWLEDGE_ENTRIES` (`evergreen === true`) と `knowledgeBySource()` を単一情報源にし、ソース別グルーピングで出す。ページは header の `Knowledge` explore shortcut と mobile tabbar の `Knowledge` タブから遷移する (R-015)。hot 期間の新着は Timeline にも出るが、恒久の置き場は `/knowledge`。evergreen ソースを増減したら `/knowledge` の E2E (header/tabbar の Knowledge shortcut 動線・ソース別グループ・menu 内 Knowledge 非重複) を通す。
 
 ---
 
@@ -704,6 +706,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 2 つの cap は subrequest への効き方が**全く違う**のに、2026-05-31 incident で**まとめて**下げられていた。(a) **enqueue は `Queue.sendBatch` (最大100件で1 subrequest)** なので `ENQUEUE_MAX_NEW` を 10→30 にしても collector の subrequest は増えない (1 sendBatch のまま)。`ENQUEUE_MAX_NEW` の唯一のコストは consumer 側の **KV write** (1 job=1 KV.put) で、これは Free-tier 1000 writes/day (LL-043) で律速される。(b) **`KV_LOOKUP_CAP` は 1 entry=1 KV GET subrequest** なので、これが subrequest の真のレバー。2026-05-31 に上限を超えたのは `KV_LOOKUP_CAP=500` (+collection+archive+redirect) のため。(c) consumer は `max_concurrency=2`・~120 jobs/h 容量で、producer cap (10/h) が真のボトルネック。consumer は generate 前に KV を pre-check しない (`processJob` は直接 Copilot を叩く) ので、`KV_LOOKUP_CAP < ENQUEUE_MAX_NEW` だと未検証 (uncheckedFallbackUrls) の speculative enqueue が増え、既に cached な URL を無駄に再生成しうる。
 - **対策**: `ENQUEUE_MAX_NEW` 10→30 (LL-043 文書化済み安全値。30×24=720 + OG/heartbeat ≈770/day < 1000 KV cap)、`KV_LOOKUP_CAP` 20→40 (verified-missing で 30 enqueue を満たす。40 GET/cron は cron を壊した 500 の 8% で subrequest 余裕大)。`KV_LOOKUP_CAP ≥ ENQUEUE_MAX_NEW` を維持して speculative 無駄を抑える。typecheck + `wrangler deploy --dry-run` で toml 妥当性を確認し、明示承認のうえ collector worker を deploy (R-008/LL-073)。デプロイ後は `/metrics.json` の `summaryQueueDrainEstimateHours` 低下とエラー無しを確認する。
 - **教訓**: Worker の throttle を上げ下げする前に、各 cap が **どの budget (subrequest / KV write / CPU / wall-time)** を消費するかを 1 つずつ特定する。「subrequest 超過したから関連 var を全部下げる」と、subrequest と無関係な var (sendBatch 経由の enqueue 数) まで巻き添えで絞られ、不要に性能を落とす。`sendBatch`/`getMany` のような batch API は「件数 ≠ subrequest 数」なので、件数 cap を subrequest コストと混同しない。変更は典型1 inv の subrequest 実測 (LL-036 の profiler) か、安全側の小幅増 + デプロイ後 tail 監視で検証する。
+
+### LL-089: 編集前に対象ファイルが HEAD と一致するか確認する (stale working tree が LL を巻き戻す)
+- **事象**: ナビ改良作業で `.github/copilot-instructions.md` の R-015 を書き換えた後、commit 直前に `git diff` を確認したところ、自分が触っていない `LL-087` / `LL-088` セクション (同一セッションで直前に追加・merge 済み) が **削除差分** として出ていた。作業ツリーは 705 行で、HEAD (8d01335) の 715 行より 10 行少なく、LL-087/088 を欠いていた。
+- **根本原因**: 作業ツリーの `copilot-instructions.md` が、LL-087/088 を追加する前の stale な状態だった。`edit` ツールは disk 上の現ファイルに対して old_str→new_str を適用するため、stale なベースに編集を重ねると、そのまま commit した時に HEAD にあった新しい内容 (LL-087/088) を**消す巻き戻し差分**になる。`edit` の各操作自体は成功扱いになり、対象範囲 (R-015) だけ見ていると気づけない。LL-072 (data artifact の巻き戻し) と同型の、instructions ファイル版。
+- **対策**: (1) commit 前に必ず `git diff --stat` と、重要ファイルは `git diff <file>` で**意図しない削除差分が無いか**を確認する。特に同一セッションで追記した LL/ルールが消えていないかを見る。(2) stale を検知したら `git checkout HEAD -- <file>` で HEAD 版に戻し、自分の編集 (R-015 / R-022 等) を**正しいベースに再適用**する。(3) 長いセッションで同じファイルを複数ブランチ・複数 PR にまたいで編集する場合、新しいブランチを切る前に対象ファイルが最新 origin/main と一致するか (`git show origin/main:<file> | diff - <file>`) を確認する。
+- **教訓**: 「`edit` が成功した」=「正しいベースに適用された」ではない。編集対象が HEAD/origin と一致している前提を、commit 前の `git diff` レビューで必ず検証する。自分が触っていないセクションが diff に現れたら、それは stale working tree か巻き戻しのサイン。完了ゲート (agentic §4: 差分が要件に対応しているか) に「意図しない削除が無いこと」を含める。
 
 ### LL-090: Featured/Top を低シグナル release が独占する (importance 過大付与 + 単純な最新 imp3 選択)
 - **事象**: ユーザーから「最近 Zed の記事しか上がっていない」と指摘。実データを確認すると収集は健全 (直近24hで36ソース・402件、Zed は10件のみ) で Timeline 本体 (publishedAt 降順) も多様だったが、トップの **Featured (注目ヒーロー) カードが Zed の `nightly:` ビルドを表示**し続けていた。

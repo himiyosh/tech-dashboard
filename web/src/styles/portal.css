@@ -1509,6 +1509,21 @@ html.motion-ready [data-reveal].is-visible {
   grid-template-columns: 232px minmax(0, 1fr);
 }
 
+/* Lane pages (arXiv, Knowledge) are separate from the news timeline, so they
+   must NOT show the Timeline category sidebar. Two columns: main + right rail. */
+.lane-layout {
+  max-width: 1240px;
+  grid-template-columns: minmax(0, 1fr) 300px;
+}
+@media (max-width: 980px) {
+  .lane-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lane-layout aside.right {
+    display: none;
+  }
+}
+
 aside.left,
 aside.right {
   font-size: 13px;

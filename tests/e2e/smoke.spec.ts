@@ -660,6 +660,20 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
+  test("arxiv lane page has no Timeline category sidebar", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/arxiv/");
+    // Lane pages are separate from the news timeline; the Timeline category
+    // sidebar (aside.left) must not appear here.
+    await expect(page.locator(".layout aside.left")).toHaveCount(0);
+    await expect(page.locator(".layout.lane-layout")).toBeVisible();
+    // The arXiv-specific right rail (code meaning / tags) is still present.
+    await expect(page.locator(".layout aside.right")).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+  });
+
   test("knowledge lane is a primary explore shortcut and groups by source", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
 
@@ -675,6 +689,10 @@ test.describe("TECH Dashboard smoke", () => {
     // not own the current page.
     await expect(page.locator("header .nav-shortcut.knowledge")).toHaveClass(/active/);
 
+    // Lane pages must NOT show the Timeline category sidebar (aside.left).
+    await expect(page.locator(".layout aside.left")).toHaveCount(0);
+    await expect(page.locator(".layout.lane-layout")).toBeVisible();
+
     // Page renders its hero and at least one source group, separate from news.
     await expect(page.locator("#knowledge-heading")).toBeVisible();
     const groups = page.locator(".knowledge-source-group");
@@ -682,13 +700,19 @@ test.describe("TECH Dashboard smoke", () => {
     const groupCount = await groups.count();
     expect(groupCount, "knowledge page shows source groups").toBeGreaterThan(0);
 
-    // Every group exposes a source heading + at least one article card.
+    // Every group exposes a source heading + at least one compact list item,
+    // and stays vertically compact (no giant whitespace from heavy cards).
     for (let i = 0; i < groupCount; i++) {
-      await expect(groups.nth(i).locator("h2")).toBeVisible();
-      expect(
-        await groups.nth(i).locator("article.card").count(),
-        "each knowledge source group has at least one card",
-      ).toBeGreaterThan(0);
+      const group = groups.nth(i);
+      await expect(group.locator("h2")).toBeVisible();
+      const items = await group.locator(".knowledge-item").count();
+      expect(items, "each knowledge source group has at least one item").toBeGreaterThan(0);
+      const box = await group.boundingBox();
+      // A compact list averages well under ~120px/item incl. heading; a heavy
+      // EntryCard grid regressed to ~250px/item with large empty panels.
+      expect(box!.height, `group ${i} height ${box!.height} for ${items} items`).toBeLessThan(
+        180 + items * 140,
+      );
     }
 
     // On mobile, Knowledge is a direct tab in the bottom tabbar (not in the

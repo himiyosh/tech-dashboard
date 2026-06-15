@@ -1,6 +1,7 @@
 ---
 import "../styles/portal.css";
 import { SITE_URL } from "../lib/site.ts";
+import ArxivIcon from "../components/icons/ArxivIcon.astro";
 
 export interface Props {
   title?: string;
@@ -92,7 +93,7 @@ const productionHost = new URL(SITE_URL).hostname;
             class={pageKey === "arxiv" ? "nav-shortcut active paper" : "nav-shortcut paper"}
             aria-current={pageKey === "arxiv" ? "page" : undefined}
           >
-            <span class="nav-icon" aria-hidden="true">⌁</span>
+            <span class="nav-icon" aria-hidden="true"><ArxivIcon /></span>
             <span>arXiv</span>
           </a>
           <a
@@ -192,7 +193,7 @@ const productionHost = new URL(SITE_URL).hostname;
     <nav class="mobile-tabbar" aria-label="Primary">
       <a href="/" class={pageKey === "timeline" ? "active" : ""} aria-current={pageKey === "timeline" ? "page" : undefined}><span aria-hidden="true">⌂</span><span>Home</span></a>
       <a href="/categories" class={pageKey === "categories" ? "active" : ""} aria-current={pageKey === "categories" ? "page" : undefined}><span aria-hidden="true">▦</span><span>Categories</span></a>
-      <a href="/arxiv" class={pageKey === "arxiv" ? "active" : ""} aria-current={pageKey === "arxiv" ? "page" : undefined}><span aria-hidden="true">⌁</span><span>arXiv</span></a>
+      <a href="/arxiv" class={pageKey === "arxiv" ? "active" : ""} aria-current={pageKey === "arxiv" ? "page" : undefined}><span aria-hidden="true"><ArxivIcon /></span><span>arXiv</span></a>
       <a href="/knowledge" class={pageKey === "knowledge" ? "active" : ""} aria-current={pageKey === "knowledge" ? "page" : undefined}><span aria-hidden="true">✦</span><span>Knowledge</span></a>
       <button type="button" data-menu-trigger aria-controls="site-menu" aria-expanded="false" class={menuOwnsCurrentPage ? "active" : ""}><span aria-hidden="true">☰</span><span>Menu</span></button>
     </nav>

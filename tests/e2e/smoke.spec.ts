@@ -47,6 +47,24 @@ test.describe("TECH Dashboard smoke", () => {
     expect(max, `7-day bar counts were ${counts.join(",")}`).toBeGreaterThan(20);
   });
 
+  test("featured hero and top-3 are not low-signal release builds", async ({ page }) => {
+    await page.goto("/");
+    // A nightly / pre-release / RC / staging / per-commit CI build must never
+    // occupy the Featured hero or Top-3 decision slots, so a fast-releasing
+    // source (e.g. Zed nightly) cannot dominate the prominent area.
+    const lowSignal = /nightly|collab-(?:staging|production)|[-_.](?:pre|rc|alpha|beta)\d*\b|\(#\d+\)\s*$/i;
+
+    const featuredTitle = (await page.locator(".featured .featured-title").first().innerText()).trim();
+    expect(featuredTitle.length, "featured hero has a title").toBeGreaterThan(0);
+    expect(lowSignal.test(featuredTitle), `featured was low-signal: ${featuredTitle}`).toBe(false);
+
+    const topTitles = await page.locator(".top-rank-list .top-rank-item a").allInnerTexts();
+    expect(topTitles.length, "top-3 list rendered").toBeGreaterThan(0);
+    for (const t of topTitles) {
+      expect(lowSignal.test(t.trim()), `top-3 entry was low-signal: ${t.trim()}`).toBe(false);
+    }
+  });
+
   test("dynamic home motion stays responsive and honors reduced motion", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/");

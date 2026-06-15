@@ -44,7 +44,15 @@ export function detectLang(text: string, defaultLang: Lang): Lang {
 /**
  * Heuristic importance: 3 = major release/changelog, 2 = blog with release keywords, 1 = default.
  * Deterministic fallback scoring. The summarizer may override importance for entries it enhances.
+ *
+ * Low-signal builds (nightly, pre-release, RC, beta/alpha, internal staging)
+ * are capped at importance 2 so fast-releasing feeds (e.g. Zed -pre / nightly)
+ * do not flood the high-importance Featured/Top slots. See isLowSignalRelease
+ * in web/src/lib/data.ts for the matching display-side guard.
  */
+const LOW_SIGNAL_RELEASE_RE =
+  /\b(?:nightly|canary|snapshot)\b|\bcollab-(?:staging|production|prod)\b|[-_.](?:pre|preview|rc|alpha|beta)\d*\b|\(#\d+\)\s*$/i;
+
 export function scoreImportance(raw: RawEntry, source: SourceDefinition): Importance {
   const hay = `${raw.title} ${raw.contentSnippet ?? ""}`.toLowerCase();
   const majorKeywords = [
@@ -58,6 +66,7 @@ export function scoreImportance(raw: RawEntry, source: SourceDefinition): Import
     "major update",
   ];
   if (source.sourceType === "release" || source.sourceType === "changelog") {
+    if (LOW_SIGNAL_RELEASE_RE.test(raw.title)) return 2;
     return majorKeywords.some((k) => hay.includes(k)) ? 3 : 2;
   }
   if (majorKeywords.some((k) => hay.includes(k))) return 2;

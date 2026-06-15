@@ -85,6 +85,7 @@ const {
   entriesBySource,
   entriesByTag,
   adjacentInCategory,
+  isLowSignalRelease,
   ALL_ENTRIES,
 } = await import("../web/src/lib/data.ts");
 
@@ -360,5 +361,48 @@ describe("adjacentInCategory", () => {
     const { prev, next } = adjacentInCategory(e3);
     expect(prev?.id).toBe("entry-001");
     expect(next).toBeUndefined();
+  });
+});
+
+// ============================================================
+// isLowSignalRelease
+// ============================================================
+describe("isLowSignalRelease", () => {
+  const rel = (title: string, sourceType = "release") =>
+    ({ sourceType, title, titleEn: title, titleJa: title }) as Parameters<typeof isLowSignalRelease>[0];
+
+  it("非 release/changelog ソースは常に false", () => {
+    expect(isLowSignalRelease(rel("nightly: anything (#123)", "blog"))).toBe(false);
+    expect(isLowSignalRelease(rel("v1.0.0-pre", "paper"))).toBe(false);
+  });
+
+  it("nightly / collab-staging / collab-production を検出する", () => {
+    expect(isLowSignalRelease(rel("nightly: git: Optimize (#59044)"))).toBe(true);
+    expect(isLowSignalRelease(rel("collab-staging: markdown (#59291)"))).toBe(true);
+    expect(isLowSignalRelease(rel("collab-production ep: ctx (#58572)"))).toBe(true);
+  });
+
+  it("pre-release / rc / beta サフィックスを検出する", () => {
+    expect(isLowSignalRelease(rel("Zed Editor Releases v1.7.2-pre"))).toBe(true);
+    expect(isLowSignalRelease(rel("v0.30.0-rc32: llama-server (#16353)"))).toBe(true);
+    expect(isLowSignalRelease(rel("Some Tool v2.0.0-beta1"))).toBe(true);
+  });
+
+  it("末尾が PR 番号 (#NNNN) の per-commit CI 項目を検出する", () => {
+    expect(isLowSignalRelease(rel("extension-cli: parallel build (#55160)"))).toBe(true);
+    expect(isLowSignalRelease(rel("glsl-v0.2.4: Bump (#58704)"))).toBe(true);
+  });
+
+  it("安定版リリースは false (誤除外しない)", () => {
+    expect(isLowSignalRelease(rel("Zed Editor Releases v1.6.3"))).toBe(false);
+    expect(isLowSignalRelease(rel("Cline Releases v3.89.2"))).toBe(false);
+    expect(isLowSignalRelease(rel("CLI v3.0.24"))).toBe(false);
+    expect(isLowSignalRelease(rel("Continue.dev Releases v1.2.22-vscode"))).toBe(false);
+    expect(isLowSignalRelease(rel("langchain-core==1.4.0"))).toBe(false);
+  });
+
+  it("一般的なアナウンス系タイトルは false", () => {
+    expect(isLowSignalRelease(rel("Introducing Gemma 4 12B", "changelog"))).toBe(false);
+    expect(isLowSignalRelease(rel("GitHub Copilot now generally available", "changelog"))).toBe(false);
   });
 });

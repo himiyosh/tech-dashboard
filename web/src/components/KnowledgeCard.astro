@@ -46,31 +46,27 @@ const siteHost = host(entry.url);
 const favicon = faviconUrl(entry.url);
 const tags = (entry.tags ?? []).slice(0, 3);
 
-// Deterministic artwork seed → stable gradient angle per entry.
-const seed = Array.from(entry.id).reduce((a, c) => a + c.charCodeAt(0), 0);
-const angle = seed % 360;
-const hasImage = Boolean(entry.image);
+const imgSrc = typeof entry.image?.src === "string" && entry.image.src.length > 0 ? entry.image.src : "";
+const hasImage = imgSrc.length > 0;
 ---
 
-<article class="kg-card" style={`--cat-color:${catColor}`}>
+<article class={`kg-card${hasImage ? "" : " no-image"}`} style={`--cat-color:${catColor}`}>
   <a class="kg-card-link" href={entryHref(entry)}>
-    <div class={`kg-thumb${hasImage ? " has-image" : ""}`}>
-      {hasImage && (
+    {hasImage && (
+      <div class="kg-thumb has-image">
         <img
-          src={entry.image}
+          src={imgSrc}
           alt=""
           loading="lazy"
           decoding="async"
-          onerror="this.closest('.kg-thumb')?.classList.remove('has-image')"
+          onerror="this.closest('.kg-card')?.classList.add('no-image'); this.closest('.kg-thumb')?.remove()"
         />
-      )}
-      <div class="kg-thumb-art" aria-hidden="true" style={`--angle:${angle}deg`}>
-        <span class="kg-thumb-emoji">{catEmoji}</span>
       </div>
-    </div>
+    )}
 
     <div class="kg-body">
       <div class="kg-src">
+        <span class="kg-src-mark" aria-hidden="true">{catEmoji}</span>
         {favicon && <img class="kg-favicon" src={favicon} alt="" width="16" height="16" loading="lazy" />}
         <span class="kg-host">{siteHost}</span>
         <span class="kg-dot" aria-hidden="true">·</span>
@@ -139,27 +135,21 @@ const hasImage = Boolean(entry.image);
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: none;
-  }
-  .kg-thumb.has-image img {
     display: block;
   }
-  .kg-thumb-art {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    background:
-      radial-gradient(120% 120% at 18% 12%, color-mix(in srgb, var(--cat-color) 34%, transparent), transparent 60%),
-      linear-gradient(var(--angle, 120deg), color-mix(in srgb, var(--cat-color) 22%, transparent), rgba(20, 19, 15, 0.92));
+  /* No-image cards: no big artwork — a thin category accent on the left edge
+     keeps them visually grouped without wasting a 16:9 block (LL-094). */
+  .kg-card.no-image .kg-card-link {
+    border-left: 3px solid color-mix(in srgb, var(--cat-color) 70%, var(--border));
   }
-  .kg-thumb.has-image .kg-thumb-art {
+  .kg-src-mark {
+    font-size: 0.92rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  /* Image cards already show the picture, so the small emoji mark is redundant. */
+  .kg-card:not(.no-image) .kg-src-mark {
     display: none;
-  }
-  .kg-thumb-emoji {
-    font-size: 2.6rem;
-    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
-    opacity: 0.92;
   }
   .kg-body {
     display: flex;

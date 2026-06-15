@@ -726,23 +726,28 @@ test.describe("TECH Dashboard smoke", () => {
     const groupCount = await groups.count();
     expect(groupCount, "knowledge page shows source groups").toBeGreaterThan(0);
 
-    // Every group exposes a source heading + at least one card, and each card
-    // shows a 16:9 thumbnail (real OGP image or deterministic artwork — never
-    // a collapsed/blank thumb, the LL-093 regression).
+    // Every group exposes a source heading + at least one card. Cards must NOT
+    // render a wasted 16:9 emoji-art block when there is no image (LL-094): a
+    // no-image card shows no .kg-thumb at all, an image card shows a real 16:9
+    // thumbnail (height > 80px, not the LL-093 collapsed strip).
     for (let i = 0; i < groupCount; i++) {
       const group = groups.nth(i);
       await expect(group.locator("h2")).toBeVisible();
       const cards = group.locator(".kg-card");
       const cardCount = await cards.count();
       expect(cardCount, "each knowledge source group has at least one card").toBeGreaterThan(0);
-      // First card's thumbnail must have real height (aspect-ratio applied),
-      // not a collapsed ~22px strip.
-      const thumbBox = await cards.first().locator(".kg-thumb").boundingBox();
-      expect(thumbBox, `group ${i} first card has a thumb`).not.toBeNull();
-      expect(
-        thumbBox!.height,
-        `group ${i} thumb height ${thumbBox!.height} (must be a real 16:9 thumb)`,
-      ).toBeGreaterThan(80);
+      // Any thumbnail that IS rendered must be a real 16:9 image (height > 80),
+      // never a collapsed strip or a big artwork placeholder.
+      const thumbs = group.locator(".kg-thumb");
+      const thumbCount = await thumbs.count();
+      for (let t = 0; t < thumbCount; t++) {
+        const box = await thumbs.nth(t).boundingBox();
+        expect(box, `group ${i} thumb ${t} renders`).not.toBeNull();
+        expect(
+          box!.height,
+          `group ${i} thumb ${t} height ${box!.height} (real 16:9, not collapsed)`,
+        ).toBeGreaterThan(80);
+      }
     }
 
     // On mobile, Knowledge is a direct tab in the bottom tabbar (not in the

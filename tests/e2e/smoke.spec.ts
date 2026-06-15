@@ -726,19 +726,23 @@ test.describe("TECH Dashboard smoke", () => {
     const groupCount = await groups.count();
     expect(groupCount, "knowledge page shows source groups").toBeGreaterThan(0);
 
-    // Every group exposes a source heading + at least one compact list item,
-    // and stays vertically compact (no giant whitespace from heavy cards).
+    // Every group exposes a source heading + at least one card, and each card
+    // shows a 16:9 thumbnail (real OGP image or deterministic artwork — never
+    // a collapsed/blank thumb, the LL-093 regression).
     for (let i = 0; i < groupCount; i++) {
       const group = groups.nth(i);
       await expect(group.locator("h2")).toBeVisible();
-      const items = await group.locator(".knowledge-item").count();
-      expect(items, "each knowledge source group has at least one item").toBeGreaterThan(0);
-      const box = await group.boundingBox();
-      // A compact list averages well under ~120px/item incl. heading; a heavy
-      // EntryCard grid regressed to ~250px/item with large empty panels.
-      expect(box!.height, `group ${i} height ${box!.height} for ${items} items`).toBeLessThan(
-        180 + items * 140,
-      );
+      const cards = group.locator(".kg-card");
+      const cardCount = await cards.count();
+      expect(cardCount, "each knowledge source group has at least one card").toBeGreaterThan(0);
+      // First card's thumbnail must have real height (aspect-ratio applied),
+      // not a collapsed ~22px strip.
+      const thumbBox = await cards.first().locator(".kg-thumb").boundingBox();
+      expect(thumbBox, `group ${i} first card has a thumb`).not.toBeNull();
+      expect(
+        thumbBox!.height,
+        `group ${i} thumb height ${thumbBox!.height} (must be a real 16:9 thumb)`,
+      ).toBeGreaterThan(80);
     }
 
     // On mobile, Knowledge is a direct tab in the bottom tabbar (not in the

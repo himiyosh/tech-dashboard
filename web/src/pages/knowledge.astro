@@ -1,15 +1,13 @@
 ---
 import Portal from "../layouts/Portal.astro";
 import PageHero from "../components/PageHero.astro";
+import KnowledgeCard from "../components/KnowledgeCard.astro";
 import {
   KNOWLEDGE_ENTRIES,
   knowledgeBySource,
   MAIN_TIMELINE_ENTRIES,
   GENERATED_AT,
   relativeTime,
-  entryHref,
-  titleForLangWithFallback,
-  summaryForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { SOURCE_META } from "../lib/source-meta.ts";
@@ -102,37 +100,11 @@ const breadcrumb = [
                   <span class="knowledge-source-sub">guides · {countSince(group.items, 30)} in 30d</span>
                 </div>
               </div>
-              <ul class="knowledge-list">
-                {group.items.map((entry) => {
-                  const title = titleForLangWithFallback(entry, "ja");
-                  const titleEn = titleForLangWithFallback(entry, "en");
-                  const sum = summaryForLangWithFallback(entry, "ja");
-                  const sumEn = summaryForLangWithFallback(entry, "en");
-                  return (
-                    <li class="knowledge-item">
-                      <a class="knowledge-item-link" href={entryHref(entry)}>
-                        <span class="knowledge-item-title i18n-ja" lang={title.fallbackLang === "en" ? "en" : "ja"}>
-                          {title.isFallback && <span class="lang-badge">[en]</span>}
-                          {title.text}
-                        </span>
-                        <span class="knowledge-item-title i18n-en" lang={titleEn.fallbackLang === "ja" ? "ja" : "en"}>
-                          {titleEn.isFallback && <span class="lang-badge">[ja]</span>}
-                          {titleEn.text}
-                        </span>
-                        {sum.text && (
-                          <span class="knowledge-item-sum i18n-ja" lang={sum.fallbackLang === "en" ? "en" : "ja"}>{sum.text}</span>
-                        )}
-                        {sumEn.text && (
-                          <span class="knowledge-item-sum i18n-en" lang={sumEn.fallbackLang === "ja" ? "ja" : "en"}>{sumEn.text}</span>
-                        )}
-                        <span class="knowledge-item-meta">
-                          <time datetime={entry.publishedAt}>{relativeTime(entry.publishedAt ?? entry.collectedAt, now)}</time>
-                        </span>
-                      </a>
-                    </li>
-                  );
-                })}
-              </ul>
+              <div class="knowledge-card-grid">
+                {group.items.map((entry) => (
+                  <KnowledgeCard entry={entry} />
+                ))}
+              </div>
             </section>
           ))}
         </div>
@@ -218,64 +190,15 @@ const breadcrumb = [
     font-size: 0.72rem;
     color: var(--text-muted, #94a3b8);
   }
-  .knowledge-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
+  .knowledge-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
   }
-  .knowledge-item-link {
-    display: block;
-    padding: 0.65rem 0.8rem;
-    border: 1px solid var(--border, rgba(148, 163, 184, 0.16));
-    border-radius: 10px;
-    background: var(--bg-2, rgba(148, 163, 184, 0.04));
-    text-decoration: none;
-    color: inherit;
-    transition: border-color 0.14s ease, background 0.14s ease;
-  }
-  .knowledge-item-link:hover,
-  .knowledge-item-link:focus-visible {
-    border-color: color-mix(in srgb, #34d399 42%, var(--border));
-    background: rgba(52, 211, 153, 0.08);
-    outline: 0;
-  }
-  .knowledge-item-title {
-    display: block;
-    font-size: 0.92rem;
-    font-weight: 600;
-    line-height: 1.4;
-    color: var(--text, #e5e7eb);
-  }
-  .knowledge-item-sum {
-    margin-top: 0.25rem;
-    font-size: 0.8rem;
-    line-height: 1.5;
-    color: var(--text-muted, #94a3b8);
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
-  .knowledge-item-meta {
-    display: block;
-    margin-top: 0.35rem;
-    font-size: 0.72rem;
-    color: var(--text-muted, #94a3b8);
-    font-variant-numeric: tabular-nums;
-  }
-  .lang-badge {
-    display: inline-block;
-    margin-right: 0.3rem;
-    padding: 0 0.3rem;
-    border-radius: 4px;
-    font-size: 0.66rem;
-    font-weight: 700;
-    background: rgba(148, 163, 184, 0.18);
-    color: var(--text-muted, #94a3b8);
-    vertical-align: middle;
+  @media (max-width: 620px) {
+    .knowledge-card-grid {
+      grid-template-columns: 1fr;
+    }
   }
   .knowledge-source-list {
     display: flex;

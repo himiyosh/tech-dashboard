@@ -660,6 +660,46 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
+  test("arxiv lane page has no Timeline category sidebar", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/arxiv/");
+    // Lane pages are separate from the news timeline; the Timeline category
+    // sidebar (aside.left) must not appear here.
+    await expect(page.locator(".layout aside.left")).toHaveCount(0);
+    await expect(page.locator(".layout.lane-layout")).toBeVisible();
+    // The arXiv-specific right rail (code meaning / tags) is still present.
+    await expect(page.locator(".layout aside.right")).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+  });
+
+  test("lane pages never collapse into a 3-column timeline grid (LL-091)", async ({ page }) => {
+    // The timeline .layout has responsive media queries (a 200px sidebar and a
+    // 3-col :has(aside.right) rule for 901-1180px) that previously bled into
+    // .lane-layout, adding a phantom empty left column at mid widths. Lane
+    // pages must stay 2-col (>=981px) or 1-col (<=980px), never 3-col, and
+    // never show aside.left, at any width.
+    for (const path of ["/knowledge/", "/arxiv/"]) {
+      for (const width of [1280, 1180, 1100, 1000, 981, 980, 901, 768, 390]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await page.goto(path);
+        const info = await page.evaluate(() => {
+          const layout = document.querySelector(".layout") as HTMLElement | null;
+          const cols = layout ? getComputedStyle(layout).gridTemplateColumns : "";
+          return {
+            colCount: cols ? cols.split(/\s+/).filter(Boolean).length : 0,
+            hasLeft: !!document.querySelector(".layout aside.left"),
+            hscroll: document.documentElement.scrollWidth > window.innerWidth,
+          };
+        });
+        expect(info.hasLeft, `${path} @${width} must not show Timeline sidebar`).toBe(false);
+        expect(info.colCount, `${path} @${width} column count`).toBeLessThanOrEqual(2);
+        expect(info.hscroll, `${path} @${width} horizontal scroll`).toBe(false);
+      }
+    }
+  });
+
   test("knowledge lane is a primary explore shortcut and groups by source", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
 
@@ -675,6 +715,10 @@ test.describe("TECH Dashboard smoke", () => {
     // not own the current page.
     await expect(page.locator("header .nav-shortcut.knowledge")).toHaveClass(/active/);
 
+    // Lane pages must NOT show the Timeline category sidebar (aside.left).
+    await expect(page.locator(".layout aside.left")).toHaveCount(0);
+    await expect(page.locator(".layout.lane-layout")).toBeVisible();
+
     // Page renders its hero and at least one source group, separate from news.
     await expect(page.locator("#knowledge-heading")).toBeVisible();
     const groups = page.locator(".knowledge-source-group");
@@ -682,13 +726,19 @@ test.describe("TECH Dashboard smoke", () => {
     const groupCount = await groups.count();
     expect(groupCount, "knowledge page shows source groups").toBeGreaterThan(0);
 
-    // Every group exposes a source heading + at least one article card.
+    // Every group exposes a source heading + at least one compact list item,
+    // and stays vertically compact (no giant whitespace from heavy cards).
     for (let i = 0; i < groupCount; i++) {
-      await expect(groups.nth(i).locator("h2")).toBeVisible();
-      expect(
-        await groups.nth(i).locator("article.card").count(),
-        "each knowledge source group has at least one card",
-      ).toBeGreaterThan(0);
+      const group = groups.nth(i);
+      await expect(group.locator("h2")).toBeVisible();
+      const items = await group.locator(".knowledge-item").count();
+      expect(items, "each knowledge source group has at least one item").toBeGreaterThan(0);
+      const box = await group.boundingBox();
+      // A compact list averages well under ~120px/item incl. heading; a heavy
+      // EntryCard grid regressed to ~250px/item with large empty panels.
+      expect(box!.height, `group ${i} height ${box!.height} for ${items} items`).toBeLessThan(
+        180 + items * 140,
+      );
     }
 
     // On mobile, Knowledge is a direct tab in the bottom tabbar (not in the

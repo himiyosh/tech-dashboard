@@ -166,6 +166,61 @@ const LOCAL_LLM_EXCLUDE_KEYWORDS = [
   "agents",
 ] as const;
 
+// Google Cloud Blog (cloudblog.withgoogle.com/rss/) is a broad firmwide feed
+// covering security, public-sector, threat-intel, storage, etc. For the
+// knowledge lane we only want AI / data / developer engineering guidance, so
+// require at least one of these terms (title scope, LL-081) and drop the rest.
+const GCLOUD_RELEVANCE_KEYWORDS = [
+  "ai",
+  "ml",
+  "machine learning",
+  "gen ai",
+  "generative",
+  "gemini",
+  "agent",
+  "agents",
+  "antigravity",
+  "llm",
+  "model",
+  "data",
+  "analytics",
+  "bigquery",
+  "developer",
+  "build",
+  "open",
+  "vertex",
+  "rag",
+  "embedding",
+  "mlops",
+  "kubernetes",
+  "database",
+  "coding",
+  "software",
+  "devops",
+  "api",
+  "serverless",
+] as const;
+
+// Hard noise for the knowledge lane: threat reports, sector/marketing posts,
+// and routine roundups are not evergreen engineering knowledge (title scope).
+const GCLOUD_EXCLUDE_KEYWORDS = [
+  "threat",
+  "apt",
+  "espionage",
+  "ransomware",
+  "phishing",
+  "cyberattack",
+  "public sector",
+  "government",
+  "healthcare",
+  "retail",
+  "financial services",
+  "what's new with google cloud",
+  "weekly roundup",
+  "partner",
+  "sponsor",
+] as const;
+
 export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freeze({
   "anthropic-news": {
     id: "anthropic-news",
@@ -278,6 +333,44 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     tier: 1,
     halfLifeOverride: "architecture",
     evergreen: true,
+    collect: collectRss,
+  },
+  "microsoft-foundry": {
+    id: "microsoft-foundry",
+    displayName: "Microsoft Foundry Blog",
+    category: "copilot",
+    sourceType: "blog",
+    defaultLang: "en",
+    autoTags: ["microsoft", "foundry", "ai"],
+    // Microsoft AI engineering knowledge: agent design/memory, toolboxes,
+    // cost/quality guidance. The microsoft/ai-engineering-coach GitHub repo the
+    // user cited has no releases and commit-tracking would be noise (LL-091),
+    // so this official knowledge feed is the right capture point (LL-086).
+    feedUrl: "https://devblogs.microsoft.com/foundry/feed/",
+    tier: 1,
+    halfLifeOverride: "architecture",
+    // Best-practice / how-to knowledge: accumulate, never archive (R-022).
+    evergreen: true,
+    collect: collectRss,
+  },
+  "google-cloud-blog": {
+    id: "google-cloud-blog",
+    displayName: "Google Cloud Blog",
+    category: "gemini",
+    sourceType: "blog",
+    defaultLang: "en",
+    autoTags: ["google", "cloud"],
+    // Firmwide blog (cloudblog.withgoogle.com/rss/ is the real RSS; the
+    // cloud.google.com/blog/rss SPA returns HTML, not items — LL-086). Broad,
+    // so apply AI/data/dev relevance + threat/sector noise filters (R-017).
+    feedUrl: "https://cloudblog.withgoogle.com/rss/",
+    tier: 1,
+    halfLifeOverride: "architecture",
+    evergreen: true,
+    keywordFilterScope: "title",
+    includeKeywords: GCLOUD_RELEVANCE_KEYWORDS,
+    excludeKeywords: GCLOUD_EXCLUDE_KEYWORDS,
+    maxEntriesPerRun: 8,
     collect: collectRss,
   },
   "github-changelog": {

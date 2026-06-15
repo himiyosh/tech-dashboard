@@ -7,6 +7,8 @@ export const SOURCE_META = [
   { id: "google-developers", displayName: "Google Developers Blog", category: "gemini", tier: 1 },
   { id: "github-blog-ai", displayName: "GitHub Blog (AI & ML)", category: "copilot", tier: 1 },
   { id: "github-copilot", displayName: "GitHub Copilot Blog", category: "copilot", tier: 1 },
+  { id: "microsoft-foundry", displayName: "Microsoft Foundry Blog", category: "copilot", tier: 1 },
+  { id: "google-cloud-blog", displayName: "Google Cloud Blog", category: "gemini", tier: 1 },
   { id: "github-changelog", displayName: "GitHub Changelog", category: "copilot", tier: 1 },
   { id: "huggingface-blog", displayName: "Hugging Face Blog", category: "local-llm", tier: 1 },
   { id: "ollama-releases", displayName: "Ollama Releases", category: "local-llm", tier: 1 },

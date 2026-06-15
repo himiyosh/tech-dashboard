@@ -18,11 +18,13 @@ const {
 
 const navItems = [
   { href: "/", key: "timeline", label: "Timeline", detail: "最新記事と今日見るべき更新" },
-  { href: "/knowledge", key: "knowledge", label: "Knowledge", detail: "ベストプラクティス・知見を蓄積" },
   { href: "/archive", key: "archive", label: "Archive", detail: "月別に過去記事を確認" },
   { href: "/status", key: "status", label: "Status", detail: "収集 source と Worker 状態" },
   { href: "/about", key: "about", label: "About", detail: "サイトの目的と収集方針" },
 ] as const;
+// Primary explore shortcuts live in the header switcher / mobile tabbar
+// (Categories, arXiv, Knowledge), so they are intentionally excluded from
+// navItems (the hamburger menu) to avoid duplicate controls (LL-054).
 const menuOwnsCurrentPage = navItems.some((item) => item.key === pageKey && item.key !== "timeline");
 const productionHost = new URL(SITE_URL).hostname;
 ---
@@ -92,6 +94,14 @@ const productionHost = new URL(SITE_URL).hostname;
           >
             <span class="nav-icon" aria-hidden="true">⌁</span>
             <span>arXiv</span>
+          </a>
+          <a
+            href="/knowledge"
+            class={pageKey === "knowledge" ? "nav-shortcut active knowledge" : "nav-shortcut knowledge"}
+            aria-current={pageKey === "knowledge" ? "page" : undefined}
+          >
+            <span class="nav-icon" aria-hidden="true">✦</span>
+            <span>Knowledge</span>
           </a>
         </nav>
         <div class="search">
@@ -183,6 +193,7 @@ const productionHost = new URL(SITE_URL).hostname;
       <a href="/" class={pageKey === "timeline" ? "active" : ""} aria-current={pageKey === "timeline" ? "page" : undefined}><span aria-hidden="true">⌂</span><span>Home</span></a>
       <a href="/categories" class={pageKey === "categories" ? "active" : ""} aria-current={pageKey === "categories" ? "page" : undefined}><span aria-hidden="true">▦</span><span>Categories</span></a>
       <a href="/arxiv" class={pageKey === "arxiv" ? "active" : ""} aria-current={pageKey === "arxiv" ? "page" : undefined}><span aria-hidden="true">⌁</span><span>arXiv</span></a>
+      <a href="/knowledge" class={pageKey === "knowledge" ? "active" : ""} aria-current={pageKey === "knowledge" ? "page" : undefined}><span aria-hidden="true">✦</span><span>Knowledge</span></a>
       <button type="button" data-menu-trigger aria-controls="site-menu" aria-expanded="false" class={menuOwnsCurrentPage ? "active" : ""}><span aria-hidden="true">☰</span><span>Menu</span></button>
     </nav>
 

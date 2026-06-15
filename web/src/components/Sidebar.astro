@@ -1,6 +1,5 @@
 ---
 import {
-  ARXIV_ENTRIES,
   CATEGORY_META,
   MAIN_TIMELINE_ENTRIES,
   countByCategory,
@@ -16,7 +15,6 @@ export interface Props {
 const { active = "all" } = Astro.props;
 const counts = countByCategory();
 const total = MAIN_TIMELINE_ENTRIES.length;
-const arxivTotal = ARXIV_ENTRIES.length;
 
 const groupLabels: Record<CategoryGroup, string> = {
   microsoft: "Microsoft",
@@ -110,11 +108,6 @@ function compactLabel(slug: Category): string {
       <span class="brand-tile bt-all">•</span>
       <span class="name" title="Timeline"><span class="name-marquee">Timeline</span></span>
       <span class="count">{total}</span>
-    </a>
-    <a class={`side-item side-item-paper ${active === "arxiv" ? "active" : ""}`} href="/arxiv">
-      <span class="brand-tile bt-arxiv">Ax</span>
-      <span class="name" title="arXiv Papers"><span class="name-marquee">arXiv Papers</span></span>
-      <span class="count">{arxivTotal}</span>
     </a>
 
     {groupOrder.map((g) => (

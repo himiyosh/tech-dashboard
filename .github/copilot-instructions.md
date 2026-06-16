@@ -172,12 +172,13 @@
 - 新しい feed を追加するときは、まず実 feed の per-item 日付有無 (LL-045) と RSS 可否を curl で確認する。RSS が無いサイト (例: Anthropic) は HTML スクレイパになり subrequest 予算と相談しながら collector limit を決める。
 - evergreen 知見は news Timeline とは別の `/knowledge` レーンに蓄積表示する。`web/src/lib/data.ts` の `KNOWLEDGE_ENTRIES` (`evergreen === true`) と `knowledgeBySource()` を単一情報源にし、ソース別グルーピングで出す。ページは header の `Knowledge` explore shortcut と mobile tabbar の `Knowledge` タブから遷移する (R-015)。hot 期間の新着は Timeline にも出るが、恒久の置き場は `/knowledge`。evergreen ソースを増減したら `/knowledge` の E2E (header/tabbar の Knowledge shortcut 動線・ソース別グループ・menu 内 Knowledge 非重複) を通す。
 
-### R-023: lane ページ (arXiv / Knowledge) に Timeline カテゴリサイドバーを出さない
+### R-023: lane ページ (arXiv / Knowledge) は Timeline カテゴリサイドバーを出さず、左 rail にナビを揃える
 - `Sidebar.astro` (`aside.left`, Timeline カテゴリ一覧) は **news Timeline 系ページ専用**である。`/`, `/page/[n]`, `/c/[slug]`, `/categories`, `/archive`, `/about` 等で使う。
-- **lane ページ (`/arxiv`, `/knowledge`) は Timeline とは別レーン**なので、`Sidebar` (Timeline カテゴリ) を import / 配置しない。これらは `.layout.lane-layout` (2カラム: main + 右 rail) を使い、左サイドバーを持たない。`lane-layout` は `max-width: 980px` で右 rail を畳んで 1 カラムにする。
-- lane ページ固有の補助情報 (arXiv の code meaning / paper tags、Knowledge の sources ナビ) は右 `aside.right` に置く。左 `aside.left` には置かない。
-- Knowledge の知見一覧は Timeline 用の重い `EntryCard` を使わず、`.knowledge-item` の軽量リストカード (タイトル + 2行 clamp 要約 + 相対時刻) にする。`EntryCard` を 2 列 grid で並べるとカード高 250-300px × グループ高が異常に伸び、巨大な空白パネルになる (LL-091)。
-- lane ページのレイアウトを変えたら E2E で「`.layout aside.left` が 0 件」「`.layout.lane-layout` 表示」「Knowledge は `.knowledge-item` が各グループ 1 件以上かつグループ高が item 数に対して過大でない」「横スクロールなし」を検証する。
+- **lane ページ (`/arxiv`, `/knowledge`) は Timeline とは別レーン**なので、`Sidebar` (Timeline カテゴリ) を import / 配置しない。これらは `.layout.lane-layout` を使う。
+- **ナビは左 rail に置く (LL-095)**。Timeline / Categories が左ナビなので、lane も `aside.lane-rail` を **main より前 (左)** に置き、`grid-template-columns: 264px minmax(0,1fr)` で左ナビに統一する。右 `aside.right` は使わない。`max-width: 980px` で rail を畳んで 1 カラムにする。
+- lane rail は簡素にしない。`.lane-rail-id` (カテゴリ色アイコン + レーン名 + 説明 + 大きな件数 stat) を先頭に置き、その下に lane 固有の補助 (arXiv の code meaning / paper tags、Knowledge の sources ナビ + Tip) を `side-card` で並べる。`--cat-color` を lane の色 (arXiv=`#93c5fd`, Knowledge=`#34d399`) に設定する。
+- Knowledge の知見一覧は Timeline 用の重い `EntryCard` を使わず、`KnowledgeCard.astro` (画像ありは 16:9 サムネ、無ければサムネ無し + 左アクセント) の 2 列グリッドにする (LL-091/093/094)。
+- lane ページのレイアウトを変えたら E2E で「`.layout aside.left` が 0 件」「`.layout aside.right` が 0 件」「`aside.lane-rail` が main より左」「`.layout.lane-layout` 表示」「全幅 (1280〜390) で 3 カラムにならない・横スクロールなし」を検証する。
 
 ---
 
@@ -750,6 +751,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: (a) 「画像が無いなら必ず artwork で埋める」を一律適用したのが過剰。一覧では**画像がある記事だけサムネイルを出し、無い記事はサムネイル領域ごと省く**のが密度・情報量ともに最適。artwork は「全カードを 16:9 に揃える」ための装飾だったが、内容ゼロの 16:9 が大量に並ぶと逆に無駄スペースになる。(b) `entry.image` の型を確認せず文字列と仮定した。既存の EntryCard が `image.src` を使っていたのを見れば気付けた (横展開の確認不足)。
 - **対策**: (1) `hasImage = typeof entry.image?.src === "string" && len>0` に修正し、`<img src={entry.image.src}>` にする。(2) 画像が**無い/壊れた**カードは `.kg-thumb` を**描画しない** (`{hasImage && <div class="kg-thumb">}`、`onerror` で card に `no-image` を付け thumb を `remove()`)。(3) 画像無しカードは殺風景化を防ぐため、**左端にカテゴリ色の細い 3px アクセント** + favicon 左の小さな絵文字マークだけにする (大きな artwork は廃止)。(4) 画像ありは従来どおり 16:9 サムネイル。(5) E2E を「描画された `.kg-thumb` は全て高さ >80px (=実画像、潰れ無し)。no-image カードは `.kg-thumb` を持たない」に更新。実測で画像あり4件 (naturalWidth 1920)・画像なし9件 (thumb 無し・カード高 153px) を確認。
 - **教訓**: (1) fallback は「全要素を埋める」より「無いものは出さない」方が良い場合がある。一覧サムネイルは「画像がある時だけ出す」+「無い時はテキスト中心 + 小さなアクセント」が密度・情報量で優れる。装飾で 16:9 を無理に揃えると content の無い大箱が並ぶ。(2) **データフィールドの型を仮定しない**。`entry.image` のような構造体を `<img src>` に渡す前に型定義 (`data.ts` の `image?: { src: ... }`) と既存の使用箇所 (EntryCard) を確認する。`[object Object]` 系のバグは型を見れば防げる。(3) 同種 UI (EntryCard) が既にある場合、その実装の data の扱い方を横展開で参照する。
+
+### LL-095: ナビ位置 (左/右) はサイト全体で揃える + lane rail は簡素にしない
+- **事象**: ユーザーから「Timeline や Categories ページは左にナビがあるのに、arXiv や Knowledge は右にあって分かりづらい。見栄えも簡素でつまらない」と指摘。実際 Timeline/Categories は `Sidebar` (`aside.left`) が左、lane ページ (arXiv/Knowledge) は補助情報を `aside.right` に置いており、ページ間でナビ位置が左右に割れていた。
+- **根本原因**: R-023 で「lane に Timeline カテゴリ sidebar を出さない」を正しく決めたが、**ナビの左右位置の一貫性**を考慮せず、lane を作るとき「補助だから右」と安易に右 rail にした。サイト内でナビ位置が割れると、ユーザーは毎ページ目線を左右に振り直すことになり摩擦になる。さらに lane rail は `side-card` にテキストを並べただけで、Timeline sidebar のようなブランド感・情報密度が無く簡素だった。
+- **対策**: (1) `.layout.lane-layout` を `grid-template-columns: 264px minmax(0,1fr)` (左 rail + main) に変更し、DOM でも `aside.lane-rail` を main より前に置く。Timeline/Categories と同じ**左ナビ**に統一。`aside.right` は廃止。(2) lane rail をリッチ化: 先頭に `.lane-rail-id` (カテゴリ色グラデ背景 + 色付きアイコン + レーン名 + 説明 + 大きな件数 stat) を置き、その下に lane 固有補助 (arXiv=code meaning/paper tags、Knowledge=sources/Tip) を並べる。`--cat-color` を lane 色 (arXiv `#93c5fd` / Knowledge `#34d399`) に設定。(3) 既存の lane-layout 用 media query (LL-091 の `:not(.lane-layout)` スコープ) はそのまま活かし、≥981px=2カラム / ≤980px=1カラム + rail 非表示。E2E に「`aside.lane-rail` が main より左」「`aside.right` 0 件」「全幅で 3 カラム化なし・横スクロールなし」を追加。実測で rail left 48 < main left 336、全幅 OK。
+- **教訓**: (1) **ナビゲーション位置 (左/右、上/下) はサイト全体で統一する** (NN/g の一貫性原則)。1 ページだけ違う側にナビを置くと「補助情報としては正しい」配置でも、回遊時の認知負荷になる。新ページを作るときは既存ページのナビ位置を確認し揃える。(2) サイドバー/レールは `side-card` を並べるだけにせず、ページの identity (アイコン + 名前 + 主要 stat) を先頭に置いて情報の入口にする。簡素 = つまらない。(3) UI の「分かりやすさ」はコンポーネント単体でなく**ページ間の一貫性**で決まる。レイアウト変更時は単ページのスクショだけでなく、姉妹ページ (Timeline ⇔ lane) と並べて構成が揃っているか確認する。
 
 汎用的な記録規律（3 点セット・自己学習の判断フロー・完了報告前 Hook・LL フォーマット・絶対禁止事項）は `.github/instructions/agent-persona-rules.instructions.md` の「8. 自己改善プロトコル」に従う。本プロジェクト固有の運用は次のとおり。
 

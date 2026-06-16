@@ -1510,17 +1510,19 @@ html.motion-ready [data-reveal].is-visible {
 }
 
 /* Lane pages (arXiv, Knowledge) are separate from the news timeline, so they
-   must NOT show the Timeline category sidebar. Two columns: main + right rail.
-   Uses .layout.lane-layout specificity and its own responsive set so the
-   timeline-only .layout media queries (3-col :has(aside.right), 200px sidebar)
-   never apply here (LL-091). */
+   must NOT show the Timeline category sidebar (R-023). For navigation
+   consistency they use a LEFT rail (like Timeline/Categories), not a right one
+   (LL-095). The rail (aside.lane-rail) comes first in the DOM. Uses
+   .layout.lane-layout specificity + its own responsive set so the timeline-only
+   .layout media queries (3-col :has(aside.right), 200px sidebar) never apply
+   here (LL-091). */
 .layout.lane-layout {
   max-width: 1240px;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: 264px minmax(0, 1fr);
 }
 @media (max-width: 1180px) and (min-width: 981px) {
   .layout.lane-layout {
-    grid-template-columns: minmax(0, 1fr) 260px;
+    grid-template-columns: 232px minmax(0, 1fr);
     gap: 18px;
   }
 }
@@ -1528,9 +1530,72 @@ html.motion-ready [data-reveal].is-visible {
   .layout.lane-layout {
     grid-template-columns: minmax(0, 1fr);
   }
-  .layout.lane-layout aside.right {
+  .layout.lane-layout aside.lane-rail {
     display: none;
   }
+}
+
+/* Lane left rail — richer than the old plain right aside. */
+.lane-rail {
+  position: sticky;
+  top: 80px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 13px;
+}
+.lane-rail-id {
+  border: 1px solid color-mix(in srgb, var(--cat-color, #34d399) 32%, var(--border));
+  border-radius: 14px;
+  padding: 16px 16px 18px;
+  background:
+    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--cat-color, #34d399) 18%, transparent), transparent 65%),
+    var(--surface);
+}
+.lane-rail-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  margin-bottom: 10px;
+  font-size: 20px;
+  background: color-mix(in srgb, var(--cat-color, #34d399) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cat-color, #34d399) 40%, transparent);
+}
+.lane-rail-id h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.lane-rail-id p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.lane-rail-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+.lane-rail-stat strong {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--cat-color, #34d399);
+  font-variant-numeric: tabular-nums;
+}
+.lane-rail-stat span {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 aside.left,

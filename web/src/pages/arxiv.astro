@@ -102,7 +102,42 @@ const breadcrumb = [
     ]}
   />
 
-  <div class="layout lane-layout arxiv-layout">
+  <div class="layout lane-layout arxiv-layout" style="--cat-color:#93c5fd">
+    <aside class="lane-rail" aria-label="arXiv navigation">
+      <div class="lane-rail-id">
+        <div class="lane-rail-icon" aria-hidden="true">⌁</div>
+        <h2>arXiv Papers</h2>
+        <p>更新数の多い研究論文を、日々の意思決定用タイムラインから分離した専用レーンです。</p>
+        <div class="lane-rail-stat">
+          <strong>{ARXIV_ENTRIES.length}</strong>
+          <span>papers</span>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="right-title">Code meaning</div>
+        <div class="arxiv-code-list">
+          {ARXIV_SOURCE_INFO.map((info) => (
+            <button type="button" class="arxiv-code-item" data-paper-filter={info.id}>
+              <strong>{info.code}</strong>
+              <span>{info.shortJa}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="right-title">Paper Tags</div>
+        <div class="tag-cloud">
+          {topTags.map((tag) => (
+            <a class="tag" href={`/t/${encodeURIComponent(tag.tag)}`}>
+              #{tag.tag} <span class="c">{tag.count}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </aside>
+
     <main data-paper-browser>
       <section class="paper-lane" aria-labelledby="paper-lane-heading">
         <div class="paper-lane-head">
@@ -231,38 +266,6 @@ const breadcrumb = [
         )}
       </section>
     </main>
-
-    <aside class="right">
-      <div class="side-card paper-note-card">
-        <div class="right-title">Why split?</div>
-        <p>
-          arXiv は更新数が多いため、日々の意思決定用タイムラインから独立させています。必要な時だけ研究レーンでまとめて追えます。
-        </p>
-      </div>
-
-      <div class="side-card">
-        <div class="right-title">Code meaning</div>
-        <div class="arxiv-code-list">
-          {ARXIV_SOURCE_INFO.map((info) => (
-            <button type="button" class="arxiv-code-item" data-paper-filter={info.id}>
-              <strong>{info.code}</strong>
-              <span>{info.shortJa}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div class="side-card">
-        <div class="right-title">Paper Tags</div>
-        <div class="tag-cloud">
-          {topTags.map((tag) => (
-            <a class="tag" href={`/t/${encodeURIComponent(tag.tag)}`}>
-              #{tag.tag} <span class="c">{tag.count}</span>
-            </a>
-          ))}
-        </div>
-      </div>
-    </aside>
   </div>
 </Portal>
 

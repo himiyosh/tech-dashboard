@@ -1,10 +1,11 @@
 ---
 /**
  * Card for the Knowledge lane (evergreen best-practice / engineering guides).
- * Always shows a visual: the entry's OGP image when available, otherwise a
- * deterministic category-tinted artwork (never a blank/broken thumb). Compact
- * but polished — avoids the heavy Timeline EntryCard that over-inflated the
- * lane layout (LL-091) and the bare text list that looked sparse (LL-093).
+ * Uniform horizontal layout: every card has the SAME structure and height
+ * whether or not it has an image (LL-096). A fixed-width thumbnail slot on the
+ * left shows the OGP image when present, otherwise a small, subtle
+ * category-tinted placeholder (not the wasteful full-width 16:9 artwork of
+ * LL-094). Body on the right: source, title, summary.
  */
 import {
   CATEGORY_META,
@@ -44,7 +45,7 @@ const sumEn = summaryForLangWithFallback(entry, "en");
 const rel = relativeTime(entry.publishedAt ?? entry.collectedAt);
 const siteHost = host(entry.url);
 const favicon = faviconUrl(entry.url);
-const tags = (entry.tags ?? []).slice(0, 3);
+const tags = (entry.tags ?? []).slice(0, 2);
 
 const imgSrc = typeof entry.image?.src === "string" && entry.image.src.length > 0 ? entry.image.src : "";
 const hasImage = imgSrc.length > 0;
@@ -52,21 +53,21 @@ const hasImage = imgSrc.length > 0;
 
 <article class={`kg-card${hasImage ? "" : " no-image"}`} style={`--cat-color:${catColor}`}>
   <a class="kg-card-link" href={entryHref(entry)}>
-    {hasImage && (
-      <div class="kg-thumb has-image">
+    <div class="kg-thumb">
+      {hasImage && (
         <img
           src={imgSrc}
           alt=""
           loading="lazy"
           decoding="async"
-          onerror="this.closest('.kg-card')?.classList.add('no-image'); this.closest('.kg-thumb')?.remove()"
+          onerror="this.closest('.kg-card')?.classList.add('no-image'); this.remove()"
         />
-      </div>
-    )}
+      )}
+      <span class="kg-thumb-mark" aria-hidden="true">{catEmoji}</span>
+    </div>
 
     <div class="kg-body">
       <div class="kg-src">
-        <span class="kg-src-mark" aria-hidden="true">{catEmoji}</span>
         {favicon && <img class="kg-favicon" src={favicon} alt="" width="16" height="16" loading="lazy" />}
         <span class="kg-host">{siteHost}</span>
         <span class="kg-dot" aria-hidden="true">·</span>
@@ -103,11 +104,15 @@ const hasImage = imgSrc.length > 0;
 <style>
   .kg-card {
     --cat-color: #34d399;
-  }
-  .kg-card-link {
     display: flex;
-    flex-direction: column;
-    height: 100%;
+  }
+  /* Uniform horizontal card: SAME structure & height for every entry, with or
+     without an image (LL-096). Fixed-width thumbnail slot on the left. */
+  .kg-card-link {
+    display: grid;
+    grid-template-columns: 116px minmax(0, 1fr);
+    width: 100%;
+    min-height: 116px;
     border: 1px solid var(--border, rgba(148, 163, 184, 0.16));
     border-radius: 12px;
     overflow: hidden;
@@ -123,11 +128,15 @@ const hasImage = imgSrc.length > 0;
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
     outline: 0;
   }
+  /* Thumbnail slot — always present so layout is identical regardless of image. */
   .kg-thumb {
     position: relative;
-    aspect-ratio: 16 / 9;
-    width: 100%;
-    background: #14130f;
+    display: grid;
+    place-items: center;
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--cat-color) 24%, transparent), rgba(20, 19, 15, 0.85)),
+      #14130f;
+    overflow: hidden;
   }
   .kg-thumb img {
     position: absolute;
@@ -135,28 +144,21 @@ const hasImage = imgSrc.length > 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
   }
-  /* No-image cards: no big artwork — a thin category accent on the left edge
-     keeps them visually grouped without wasting a 16:9 block (LL-094). */
-  .kg-card.no-image .kg-card-link {
-    border-left: 3px solid color-mix(in srgb, var(--cat-color) 70%, var(--border));
-  }
-  .kg-src-mark {
-    font-size: 0.92rem;
+  /* Small subtle emoji placeholder — only visible when there is no image (it
+     sits behind the img). Far smaller than the old wasteful 16:9 block (LL-094). */
+  .kg-thumb-mark {
+    font-size: 1.7rem;
     line-height: 1;
-    flex-shrink: 0;
-  }
-  /* Image cards already show the picture, so the small emoji mark is redundant. */
-  .kg-card:not(.no-image) .kg-src-mark {
-    display: none;
+    opacity: 0.85;
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.4));
   }
   .kg-body {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
-    padding: 0.7rem 0.8rem 0.8rem;
-    flex: 1;
+    gap: 0.32rem;
+    padding: 0.6rem 0.75rem 0.65rem;
+    min-width: 0;
   }
   .kg-src {
     display: flex;
@@ -181,22 +183,23 @@ const hasImage = imgSrc.length > 0;
   .kg-time {
     flex-shrink: 0;
     font-variant-numeric: tabular-nums;
+    margin-left: auto;
   }
   .kg-title {
     margin: 0;
-    font-size: 0.94rem;
+    font-size: 0.9rem;
     font-weight: 600;
-    line-height: 1.42;
+    line-height: 1.4;
     color: var(--text, #e9e7e3);
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
   }
   .kg-sum {
     margin: 0;
-    font-size: 0.8rem;
-    line-height: 1.55;
+    font-size: 0.78rem;
+    line-height: 1.5;
     color: var(--text-muted, #94a3b8);
     overflow: hidden;
     display: -webkit-box;
@@ -208,11 +211,11 @@ const hasImage = imgSrc.length > 0;
     flex-wrap: wrap;
     gap: 0.3rem;
     margin-top: auto;
-    padding-top: 0.15rem;
+    padding-top: 0.1rem;
   }
   .kg-tag {
-    font-size: 0.68rem;
-    padding: 0.12rem 0.45rem;
+    font-size: 0.67rem;
+    padding: 0.1rem 0.42rem;
     border-radius: 999px;
     background: color-mix(in srgb, var(--cat-color) 14%, transparent);
     color: color-mix(in srgb, var(--cat-color) 80%, #cbd5e1);
@@ -227,5 +230,11 @@ const hasImage = imgSrc.length > 0;
     background: rgba(148, 163, 184, 0.18);
     color: var(--text-muted, #94a3b8);
     vertical-align: middle;
+  }
+  @media (max-width: 460px) {
+    .kg-card-link {
+      grid-template-columns: 92px minmax(0, 1fr);
+      min-height: 100px;
+    }
   }
 </style>

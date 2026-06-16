@@ -736,29 +736,32 @@ test.describe("TECH Dashboard smoke", () => {
     const groupCount = await groups.count();
     expect(groupCount, "knowledge page shows source groups").toBeGreaterThan(0);
 
-    // Every group exposes a source heading + at least one card. Cards must NOT
-    // render a wasted 16:9 emoji-art block when there is no image (LL-094): a
-    // no-image card shows no .kg-thumb at all, an image card shows a real 16:9
-    // thumbnail (height > 80px, not the LL-093 collapsed strip).
+    // Every group exposes a source heading + at least one card. All cards use
+    // the SAME uniform layout & height whether or not they have an image
+    // (LL-096): every card has a .kg-thumb slot, and all cards share one height.
+    const allHeights: number[] = [];
     for (let i = 0; i < groupCount; i++) {
       const group = groups.nth(i);
       await expect(group.locator("h2")).toBeVisible();
       const cards = group.locator(".kg-card");
       const cardCount = await cards.count();
       expect(cardCount, "each knowledge source group has at least one card").toBeGreaterThan(0);
-      // Any thumbnail that IS rendered must be a real 16:9 image (height > 80),
-      // never a collapsed strip or a big artwork placeholder.
-      const thumbs = group.locator(".kg-thumb");
-      const thumbCount = await thumbs.count();
-      for (let t = 0; t < thumbCount; t++) {
-        const box = await thumbs.nth(t).boundingBox();
-        expect(box, `group ${i} thumb ${t} renders`).not.toBeNull();
-        expect(
-          box!.height,
-          `group ${i} thumb ${t} height ${box!.height} (real 16:9, not collapsed)`,
-        ).toBeGreaterThan(80);
+      // Every card has exactly one thumbnail slot (image or subtle placeholder).
+      expect(
+        await group.locator(".kg-card .kg-thumb").count(),
+        `group ${i} every card has a thumb slot`,
+      ).toBe(cardCount);
+      for (let c = 0; c < cardCount; c++) {
+        const box = await cards.nth(c).boundingBox();
+        if (box) allHeights.push(Math.round(box.height));
       }
     }
+    // All knowledge cards must be the same height (uniform grid, image-agnostic).
+    const uniqueHeights = [...new Set(allHeights)];
+    expect(
+      uniqueHeights.length,
+      `all knowledge cards share one height, got ${JSON.stringify(uniqueHeights)}`,
+    ).toBe(1);
 
     // On mobile, Knowledge is a direct tab in the bottom tabbar (not in the
     // menu). Selecting it marks the Knowledge tab active, not the Menu trigger.

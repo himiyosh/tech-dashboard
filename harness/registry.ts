@@ -373,6 +373,56 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     maxEntriesPerRun: 8,
     collect: collectRss,
   },
+  "aws-ml-blog": {
+    id: "aws-ml-blog",
+    displayName: "AWS Machine Learning Blog",
+    category: "agent-fw",
+    sourceType: "blog",
+    defaultLang: "en",
+    autoTags: ["aws", "ml", "bedrock"],
+    // AWS ML/AI engineering knowledge: agent design, Bedrock, evaluation,
+    // RAG/document pipelines. Practical best-practice content (R-022). Feed is
+    // already AI/ML focused, so no broad-noise filter needed.
+    feedUrl: "https://aws.amazon.com/blogs/machine-learning/feed/",
+    tier: 1,
+    halfLifeOverride: "architecture",
+    evergreen: true,
+    maxEntriesPerRun: 8,
+    collect: collectRss,
+  },
+  "meta-engineering": {
+    id: "meta-engineering",
+    displayName: "Meta Engineering",
+    category: "tech-news",
+    sourceType: "blog",
+    defaultLang: "en",
+    autoTags: ["meta", "engineering"],
+    // Large-scale systems / ML infra deep-dives (retrieval, data ingestion,
+    // reliability). Evergreen engineering knowledge (R-022).
+    feedUrl: "https://engineering.fb.com/feed/",
+    tier: 1,
+    halfLifeOverride: "architecture",
+    evergreen: true,
+    maxEntriesPerRun: 6,
+    collect: collectRss,
+  },
+  "netflix-techblog": {
+    id: "netflix-techblog",
+    displayName: "Netflix TechBlog",
+    category: "tech-news",
+    sourceType: "blog",
+    defaultLang: "en",
+    autoTags: ["netflix", "engineering"],
+    // Distributed-systems / data-platform engineering deep-dives. Medium feed
+    // (medium.com/feed/netflix-techblog) is the real RSS; netflixtechblog.com
+    // /feed returns HTML, not items (LL-086). Evergreen knowledge (R-022).
+    feedUrl: "https://medium.com/feed/netflix-techblog",
+    tier: 1,
+    halfLifeOverride: "architecture",
+    evergreen: true,
+    maxEntriesPerRun: 6,
+    collect: collectRss,
+  },
   "github-changelog": {
     id: "github-changelog",
     displayName: "GitHub Changelog",

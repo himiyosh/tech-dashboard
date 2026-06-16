@@ -57,7 +57,7 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
 
 describe("knowledge evergreen sources (R-022)", () => {
   it("Microsoft Foundry and Google Cloud blogs are configured as evergreen", () => {
-    for (const id of ["anthropic-engineering", "github-copilot", "microsoft-foundry", "google-cloud-blog"]) {
+    for (const id of ["anthropic-engineering", "github-copilot", "microsoft-foundry", "google-cloud-blog", "aws-ml-blog", "meta-engineering", "netflix-techblog"]) {
       const src = REGISTRY[id];
       expect(src, `${id} is registered`).toBeTruthy();
       expect(src.evergreen, `${id} is evergreen`).toBe(true);

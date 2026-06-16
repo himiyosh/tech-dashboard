@@ -1,0 +1,356 @@
+---
+import Portal from "../layouts/Portal.astro";
+import PageHero from "../components/PageHero.astro";
+import {
+  GLOSSARY,
+  GLOSSARY_TRENDING,
+  GLOSSARY_CATEGORY_META,
+  glossaryByCategory,
+} from "../lib/glossary.ts";
+
+const groups = glossaryByCategory();
+
+function host(url?: string): string {
+  if (!url) return "";
+  try {
+    return new URL(url).host.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+const breadcrumb = [
+  { label: "Home", href: "/" },
+  { label: "Glossary" },
+];
+---
+
+<Portal
+  pageKey="glossary"
+  title="AI Glossary — 用語集 | TECH Dashboard"
+  description="プロンプト・コンテキスト・ハーネスエンジニアリングなど、AI/LLM の用語とトレンドをすばやくキャッチアップできるキュレーション用語集です。"
+  breadcrumb={breadcrumb}
+>
+  <PageHero
+    className="page-hero-top-level page-hero-glossary"
+    accent="#c4b5fd"
+    kicker="AI Glossary"
+    title="AI / LLM 用語集"
+    count={`${GLOSSARY.length} terms`}
+    headingId="glossary-heading"
+    description="プロンプト・コンテキスト・ハーネスエンジニアリングのような AI 用語やトレンドを、いち早く把握するためのキュレーション用語集です。各用語は日本語の短い解説と一次情報へのリンク付き。"
+    actions={[
+      { href: "/knowledge", label: "Knowledge" },
+      { href: "#glossary-terms", label: "Browse terms" },
+    ]}
+    metrics={[
+      { label: "Terms", value: GLOSSARY.length },
+      { label: "Categories", value: groups.length },
+      { label: "Trending", value: GLOSSARY_TRENDING.length },
+    ]}
+  />
+
+  <div class="layout lane-layout" style="--cat-color:#c4b5fd">
+    <aside class="lane-rail" aria-label="Glossary navigation">
+      <div class="lane-rail-id">
+        <div class="lane-rail-icon" aria-hidden="true">📖</div>
+        <h2>Glossary</h2>
+        <p>AI/LLM の用語とトレンドをすばやく把握するための用語集です。</p>
+        <div class="lane-rail-stat">
+          <strong>{GLOSSARY.length}</strong>
+          <span>terms</span>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="right-title">Categories</div>
+        <div class="gl-cat-list">
+          {groups.map((group) => {
+            const meta = GLOSSARY_CATEGORY_META[group.category];
+            return (
+              <a class="gl-cat-link" href={`#gl-${group.category}`}>
+                <span class="gl-cat-emoji" aria-hidden="true">{meta.emoji}</span>
+                <strong>{meta.label}</strong>
+                <span class="c">{group.items.length}</span>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+
+      <div class="side-card gl-tip-card">
+        <div class="right-title">Tip</div>
+        <p>キーワードで絞り込めます。新着トレンドには <span class="gl-trend-dot" aria-hidden="true"></span> が付きます。</p>
+      </div>
+    </aside>
+
+    <main>
+      <div class="gl-search-bar">
+        <span aria-hidden="true">🔎</span>
+        <input
+          type="search"
+          id="glossary-search"
+          placeholder="用語を検索 (例: context, RAG, harness, エージェント)"
+          aria-label="用語を検索"
+          autocomplete="off"
+        />
+        <span class="gl-search-count" data-gl-count></span>
+      </div>
+
+      <div class="gl-empty" data-gl-empty hidden>
+        <strong>一致する用語が見つかりませんでした。</strong>
+        <p>別のキーワードでお試しください。</p>
+      </div>
+
+      <div id="glossary-terms" class="gl-stack">
+        {groups.map((group) => {
+          const meta = GLOSSARY_CATEGORY_META[group.category];
+          return (
+            <section class="gl-group" id={`gl-${group.category}`} data-gl-group style={`--cat-color:${meta.color}`}>
+              <div class="gl-group-head">
+                <span class="gl-group-emoji" aria-hidden="true">{meta.emoji}</span>
+                <h2>{meta.label}</h2>
+                <span class="gl-group-count">{group.items.length}</span>
+              </div>
+              <div class="gl-grid">
+                {group.items.map((t) => (
+                  <article
+                    class="gl-card"
+                    data-gl-term
+                    data-gl-text={`${t.term} ${(t.aliases ?? []).join(" ")} ${t.ja} ${t.note ?? ""}`.toLowerCase()}
+                  >
+                    <div class="gl-card-head">
+                      <h3 class="gl-term">{t.term}</h3>
+                      {t.trending && <span class="gl-trend" title="トレンド">▲ trending</span>}
+                    </div>
+                    {t.aliases && t.aliases.length > 0 && (
+                      <div class="gl-aliases">{t.aliases.join(" · ")}</div>
+                    )}
+                    <p class="gl-def">{t.ja}</p>
+                    {t.note && <p class="gl-note">{t.note}</p>}
+                    {t.link && (
+                      <a class="gl-link" href={t.link} target="_blank" rel="noopener noreferrer">
+                        {host(t.link)} ↗
+                      </a>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </main>
+  </div>
+</Portal>
+
+<script>
+  (() => {
+    const input = document.getElementById("glossary-search") as HTMLInputElement | null;
+    const cards = Array.from(document.querySelectorAll<HTMLElement>("[data-gl-term]"));
+    const groups = Array.from(document.querySelectorAll<HTMLElement>("[data-gl-group]"));
+    const empty = document.querySelector<HTMLElement>("[data-gl-empty]");
+    const countEl = document.querySelector<HTMLElement>("[data-gl-count]");
+    if (!input) return;
+
+    const total = cards.length;
+    const apply = (q: string) => {
+      const query = q.trim().toLowerCase();
+      let visible = 0;
+      for (const card of cards) {
+        const text = card.getAttribute("data-gl-text") ?? "";
+        const match = query === "" || text.includes(query);
+        card.hidden = !match;
+        if (match) visible++;
+      }
+      for (const group of groups) {
+        const anyVisible = group.querySelector("[data-gl-term]:not([hidden])");
+        group.hidden = !anyVisible;
+      }
+      if (empty) empty.hidden = visible !== 0;
+      if (countEl) countEl.textContent = query === "" ? `${total} terms` : `${visible} / ${total}`;
+    };
+
+    apply("");
+    input.addEventListener("input", () => apply(input.value));
+  })();
+</script>
+
+<style>
+  .gl-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.1rem;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--border, rgba(148, 163, 184, 0.18));
+    border-radius: 11px;
+    background: var(--surface, rgba(148, 163, 184, 0.05));
+  }
+  .gl-search-bar input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text, #e9e7e3);
+    font: inherit;
+    font-size: 0.9rem;
+    outline: 0;
+  }
+  .gl-search-count {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    color: var(--text-muted, #94a3b8);
+    font-variant-numeric: tabular-nums;
+  }
+  .gl-empty {
+    padding: 1.2rem;
+    border: 1px dashed var(--border, rgba(148, 163, 184, 0.3));
+    border-radius: 12px;
+    text-align: center;
+    color: var(--text-muted, #94a3b8);
+  }
+  .gl-empty strong {
+    color: var(--text, #e9e7e3);
+  }
+  .gl-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .gl-group-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.7rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--cat-color, #c4b5fd) 30%, var(--border));
+  }
+  .gl-group-emoji {
+    font-size: 1.05rem;
+  }
+  .gl-group-head h2 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text, #e9e7e3);
+  }
+  .gl-group-count {
+    margin-left: auto;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--cat-color, #c4b5fd);
+    font-variant-numeric: tabular-nums;
+  }
+  .gl-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+  @media (max-width: 620px) {
+    .gl-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .gl-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.32rem;
+    padding: 0.7rem 0.8rem 0.75rem;
+    border: 1px solid var(--border, rgba(148, 163, 184, 0.16));
+    border-left: 3px solid color-mix(in srgb, var(--cat-color, #c4b5fd) 70%, var(--border));
+    border-radius: 10px;
+    background: var(--bg-2, rgba(148, 163, 184, 0.04));
+  }
+  .gl-card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .gl-term {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text, #f5f5f4);
+  }
+  .gl-trend {
+    flex-shrink: 0;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 0.08rem 0.4rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--cat-color, #c4b5fd) 20%, transparent);
+    color: color-mix(in srgb, var(--cat-color, #c4b5fd) 85%, #f5f5f4);
+    letter-spacing: 0.02em;
+  }
+  .gl-aliases {
+    font-size: 0.7rem;
+    color: var(--text-muted, #94a3b8);
+  }
+  .gl-def {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--text-2, #d6d3d1);
+  }
+  .gl-note {
+    margin: 0;
+    font-size: 0.74rem;
+    line-height: 1.5;
+    color: var(--text-muted, #94a3b8);
+    padding-left: 0.5rem;
+    border-left: 2px solid color-mix(in srgb, var(--cat-color, #c4b5fd) 40%, transparent);
+  }
+  .gl-link {
+    align-self: flex-start;
+    margin-top: 0.1rem;
+    font-size: 0.72rem;
+    color: var(--cat-color, #c4b5fd);
+    text-decoration: none;
+  }
+  .gl-link:hover {
+    text-decoration: underline;
+  }
+  /* Rail category list */
+  .gl-cat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .gl-cat-link {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    text-decoration: none;
+    color: inherit;
+    background: var(--surface, rgba(148, 163, 184, 0.06));
+  }
+  .gl-cat-link:hover {
+    background: rgba(196, 181, 253, 0.14);
+  }
+  .gl-cat-emoji {
+    font-size: 0.85rem;
+  }
+  .gl-cat-link strong {
+    font-weight: 600;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .gl-cat-link .c {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted, #94a3b8);
+  }
+  .gl-trend-dot {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #c4b5fd;
+    vertical-align: middle;
+  }
+</style>

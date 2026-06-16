@@ -778,5 +778,65 @@ test.describe("TECH Dashboard smoke", () => {
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
   });
+
+  test("glossary is a menu destination with working search filter", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+
+    // Glossary is a SECONDARY destination: it lives in the hamburger menu
+    // (#site-menu navItems), not in the header explore switcher (R-015).
+    await page.goto("/");
+    await expect(page.locator("header .nav-shortcut", { hasText: "Glossary" })).toHaveCount(0);
+    await page.locator("header .menu-trigger").click();
+    const menuLink = page.locator("#site-menu").getByRole("link", { name: /Glossary/ });
+    await expect(menuLink).toBeVisible();
+    await menuLink.click();
+    await expect(page).toHaveURL(/\/glossary\/?$/);
+
+    // Lane page must NOT show the Timeline category sidebar (aside.left).
+    await expect(page.locator(".layout aside.left")).toHaveCount(0);
+    await expect(page.locator(".layout.lane-layout")).toBeVisible();
+
+    // Hero + term cards + category groups render.
+    await expect(page.locator("#glossary-heading")).toBeVisible();
+    const cards = page.locator("[data-gl-term]");
+    const totalCards = await cards.count();
+    expect(totalCards, "glossary renders term cards").toBeGreaterThan(20);
+    const groups = page.locator("[data-gl-group]");
+    expect(await groups.count(), "glossary groups terms by category").toBeGreaterThan(1);
+
+    // Search filters down to matching terms.
+    const search = page.locator("#glossary-search");
+    await search.fill("harness");
+    await expect.poll(async () => cards.evaluateAll((els) =>
+      els.filter((e) => !(e as HTMLElement).hidden).length,
+    )).toBeLessThan(totalCards);
+    expect(await cards.evaluateAll((els) =>
+      els.filter((e) => !(e as HTMLElement).hidden).length,
+    )).toBeGreaterThan(0);
+
+    // No matches shows an explicit empty state.
+    await search.fill("zzzznotarealterm");
+    await expect(page.locator("[data-gl-empty]")).toBeVisible();
+    await search.fill("");
+    await expect(page.locator("[data-gl-empty]")).toBeHidden();
+
+    // No horizontal scroll on desktop.
+    expect(await page.evaluate(() =>
+      document.documentElement.scrollWidth <= window.innerWidth,
+    )).toBe(true);
+
+    // On mobile, glossary is menu-owned: the Menu trigger is active and the
+    // Glossary link is reachable from the hamburger menu. No horizontal scroll.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/glossary/");
+    const tabbar = page.getByRole("navigation", { name: "Primary" });
+    await expect(tabbar.getByRole("button", { name: /Menu/ })).toHaveClass(/active/);
+    await tabbar.getByRole("button", { name: /Menu/ }).click();
+    await expect(page.locator("#site-menu").getByRole("link", { name: /Glossary/ })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+  });
 });
 

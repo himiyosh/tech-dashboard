@@ -781,6 +781,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: (1) ユーザーには「RSS 窓の限界で個別記事の後付け収集は不可」と説明。(2) 鮮度で価値が減衰しない **AI/LLM 用語集ページ `/glossary`** を新設し (`web/src/lib/glossary.ts` = 約 50 語のキュレーション静的データ + `web/src/pages/glossary.astro`)、収集できない重要記事を**用語の一次情報リンクとして到達可能**にした (例: Rubber Duck Debugging 用語の link に second-opinion 記事を組込み)。用語集は feed 非依存の静的キュレーションなので RSS 窓の影響を受けない。プロンプト/コンテキスト/ハーネスエンジニアリング等のトレンド語を `trending` フラグでマークし、カテゴリ別・検索フィルタ付きで表示。ナビは menu-owned secondary destination (R-015)。
 - **教訓**: (1) RSS/Atom feed は「最新 N 件」のスナップショットであり**アーカイブではない**。ソースを追加した瞬間に窓外の記事は永久に未収集になる。新ソース追加時は「いつから収集が始まるか (= 追加時点の feed 窓)」を意識し、それ以前の重要記事は別手段 (用語集リンク・手動キュレーション) で補う。(2) 個別記事を「なぜ出ないか」と問われたら、まず **(a) データに有るか (b) 現 feed に有るか** の 2 点を確認してから原因を切り分ける (収集ロジックのバグか、feed 窓の構造的限界かで対処が全く違う)。(3) feed で拾えない知見 (用語・ベストプラクティス・トレンド) は、feed 非依存の**静的キュレーションページ**で蓄積するのが堅い。
 
+### LL-100: class の `display` は UA の `[hidden]{display:none}` を打ち消す → toggle/filter が無効化される
+- **事象**: glossary に「カテゴリ別 / A-Z」ビュー切替と検索フィルタを実装したが、Playwright で `offsetParent` ベースに表示カード数を測ると、切替後も**両パネルが同時表示** (50+50=100 枚) され、JS の `panel.hidden = true` / `card.hidden = true` が視覚的に効いていなかった。論理的な属性カウント (`:not([hidden])`) では正常に見えたためテストを最初すり抜けた。
+- **根本原因**: `.gl-stack { display:flex }` / `.gl-card { display:flex }` という **author の class セレクタ (詳細度 0,1,0)** が、ブラウザ UA スタイルシートの `[hidden] { display:none }` を上書きしていた。`[hidden]` の UA ルールも詳細度 0,1,0 だが、**author スタイルは UA スタイルより優先**されるため、`display:flex` が常に勝ち、`hidden` 属性を付けても要素が消えなかった。JS の `el.hidden = true` は属性を立てるだけなので、CSS 側で打ち消されると無効になる。前バージョンの検索フィルタも実は同じ理由で視覚的にカードを隠せていなかった (属性ベースの e2e がそれを見逃していた)。
+- **対策**: `display` を class で当てる要素には、必ず `[hidden]` 変種を同梱して属性を勝たせる: `.gl-stack[hidden], .gl-group[hidden] { display:none; }` / `.gl-card[hidden] { display:none; }` (属性付きセレクタは詳細度 0,2,0 で class 単独に勝つ)。e2e は属性 (`:not([hidden])`) ではなく **`offsetParent !== null` の視覚的レンダリング数**で検証し、「非アクティブ panel が本当に消えている (表示カード数が 1 panel 分=50 で、100 でない)」を回帰ガードにした。
+- **教訓**: `el.hidden`/`hidden` 属性で表示制御する要素に、`display:flex|grid|block` を class で当てると **UA の `[hidden]` が打ち消されて hidden が無言で壊れる**。`display` を持つ class には `&[hidden]{display:none}` を必ずセットにする (または `[hidden]{display:none !important}` を global reset に入れる)。表示/非表示の e2e は属性ではなく `offsetParent`/`toBeVisible`/`toBeHidden` で**実レンダリング**を見る (属性カウントは CSS 打ち消しを検出できない)。複数要素を出し分ける toggle は「合計レンダリング数が 1 ビュー分か」を数えると二重表示を一発で検出できる。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

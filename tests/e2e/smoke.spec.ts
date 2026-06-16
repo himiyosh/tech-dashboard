@@ -804,15 +804,42 @@ test.describe("TECH Dashboard smoke", () => {
     const groups = page.locator("[data-gl-group]");
     expect(await groups.count(), "glossary groups terms by category").toBeGreaterThan(1);
 
-    // Search filters down to matching terms.
+    // Decorative hero illustration + a category icon tile on every card.
+    await expect(page.locator(".gl-hero-art")).toBeVisible();
+    expect(
+      await page.locator('[data-view-panel="category"] .gl-card .gl-icon').count(),
+      "every category-view card has an icon tile",
+    ).toBeGreaterThan(20);
+
+    // Both view panels exist in the DOM but only the active one is RENDERED.
+    // (Regression guard: a class-level `display` must not defeat [hidden], or
+    // both panels show at once and the toggle becomes a no-op.)
+    const renderedCards = () =>
+      cards.evaluateAll((els) => els.filter((e) => (e as HTMLElement).offsetParent !== null).length);
+    const catTerms = await page.locator('[data-view-panel="category"] [data-gl-term]').count();
+    expect(await renderedCards(), "only the category panel renders by default").toBe(catTerms);
+
+    // A-Z 目次: an alphabetical index bar with jump links.
+    const azLinks = page.locator(".gl-az a[data-az-letter]");
+    expect(await azLinks.count(), "A-Z index exposes jump links").toBeGreaterThan(5);
+
+    // Toggle to A-Z view: category panel hides, alphabetical panel shows, and
+    // the rendered card count stays at one panel's worth (not doubled).
+    await page.locator('[data-view-btn="alpha"]').click();
+    await expect(page.locator('[data-view-panel="alpha"]')).toBeVisible();
+    await expect(page.locator('[data-view-panel="category"]')).toBeHidden();
+    expect(await renderedCards(), "only the alpha panel renders after toggle").toBe(catTerms);
+
+    // Clicking an A-Z letter scrolls its letter section into view.
+    const firstLetter = await azLinks.first().getAttribute("data-az-letter");
+    await azLinks.first().click();
+    await expect(page.locator(`#gl-az-${firstLetter}`)).toBeVisible();
+
+    // Search filters down to matching terms (visually, not just by attribute).
     const search = page.locator("#glossary-search");
     await search.fill("harness");
-    await expect.poll(async () => cards.evaluateAll((els) =>
-      els.filter((e) => !(e as HTMLElement).hidden).length,
-    )).toBeLessThan(totalCards);
-    expect(await cards.evaluateAll((els) =>
-      els.filter((e) => !(e as HTMLElement).hidden).length,
-    )).toBeGreaterThan(0);
+    await expect.poll(renderedCards).toBeLessThan(catTerms);
+    await expect.poll(renderedCards).toBeGreaterThan(0);
 
     // No matches shows an explicit empty state.
     await search.fill("zzzznotarealterm");

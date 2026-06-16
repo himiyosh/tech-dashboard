@@ -1,0 +1,533 @@
+---
+import Portal from "../layouts/Portal.astro";
+import PageHero from "../components/PageHero.astro";
+import GlossaryTermCard from "../components/GlossaryTermCard.astro";
+import {
+  GLOSSARY,
+  GLOSSARY_TRENDING,
+  GLOSSARY_CATEGORY_META,
+  glossaryByCategory,
+  type GlossaryTerm,
+} from "../lib/glossary.ts";
+
+const groups = glossaryByCategory();
+
+// Alphabetical index (A-Z 目次): group every term by its first letter.
+function azKey(term: GlossaryTerm): string {
+  const c = term.term.charAt(0).toUpperCase();
+  return /[A-Z]/.test(c) ? c : "#";
+}
+const azMap = new Map<string, GlossaryTerm[]>();
+for (const t of [...GLOSSARY].sort((a, b) => a.term.localeCompare(b.term))) {
+  const k = azKey(t);
+  if (!azMap.has(k)) azMap.set(k, []);
+  azMap.get(k)!.push(t);
+}
+const azGroups = [...azMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+const azLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const presentLetters = new Set(azGroups.map(([k]) => k));
+
+const breadcrumb = [
+  { label: "Home", href: "/" },
+  { label: "Glossary" },
+];
+---
+
+<Portal
+  pageKey="glossary"
+  title="AI Glossary — 用語集 | TECH Dashboard"
+  description="プロンプト・コンテキスト・ハーネスエンジニアリングなど、AI/LLM の用語とトレンドをすばやくキャッチアップできるキュレーション用語集です。"
+  breadcrumb={breadcrumb}
+>
+  <PageHero
+    className="page-hero-top-level page-hero-glossary"
+    accent="#c4b5fd"
+    kicker="AI Glossary"
+    title="AI / LLM 用語集"
+    count={`${GLOSSARY.length} terms`}
+    headingId="glossary-heading"
+    description="プロンプト・コンテキスト・ハーネスエンジニアリングのような AI 用語やトレンドを、いち早く把握するためのキュレーション用語集です。各用語は日本語の短い解説と一次情報へのリンク付き。"
+    actions={[
+      { href: "/knowledge", label: "Knowledge" },
+      { href: "#glossary-terms", label: "Browse terms" },
+    ]}
+    metrics={[
+      { label: "Terms", value: GLOSSARY.length },
+      { label: "Categories", value: groups.length },
+      { label: "Trending", value: GLOSSARY_TRENDING.length },
+    ]}
+  />
+
+  <div id="glossary-app" class="layout lane-layout" style="--cat-color:#c4b5fd">
+    <aside class="lane-rail" aria-label="Glossary navigation">
+      <div class="lane-rail-id gl-rail-id">
+        <svg class="gl-hero-art" viewBox="0 0 220 110" aria-hidden="true">
+          <defs>
+            <linearGradient id="glHeroGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#c4b5fd" />
+              <stop offset="0.55" stop-color="#93c5fd" />
+              <stop offset="1" stop-color="#5eead4" />
+            </linearGradient>
+          </defs>
+          <g stroke="url(#glHeroGrad)" stroke-width="1.4" fill="none" opacity="0.5">
+            <line x1="40" y1="30" x2="96" y2="20" />
+            <line x1="40" y1="30" x2="64" y2="68" />
+            <line x1="96" y1="20" x2="150" y2="40" />
+            <line x1="96" y1="20" x2="118" y2="70" />
+            <line x1="150" y1="40" x2="186" y2="26" />
+            <line x1="150" y1="40" x2="170" y2="84" />
+            <line x1="64" y1="68" x2="118" y2="70" />
+            <line x1="118" y1="70" x2="170" y2="84" />
+            <line x1="64" y1="68" x2="92" y2="96" />
+          </g>
+          <g fill="url(#glHeroGrad)">
+            <circle cx="40" cy="30" r="6" />
+            <circle cx="96" cy="20" r="8" />
+            <circle cx="150" cy="40" r="7" />
+            <circle cx="186" cy="26" r="4.5" />
+            <circle cx="64" cy="68" r="5.5" />
+            <circle cx="118" cy="70" r="6.5" />
+            <circle cx="170" cy="84" r="5" />
+            <circle cx="92" cy="96" r="4" />
+          </g>
+        </svg>
+        <h2>Glossary</h2>
+        <p>AI/LLM の用語とトレンドをすばやく把握するための用語集です。</p>
+        <div class="lane-rail-stat">
+          <strong>{GLOSSARY.length}</strong>
+          <span>terms</span>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="right-title">Categories</div>
+        <div class="gl-cat-list">
+          {groups.map((group) => {
+            const meta = GLOSSARY_CATEGORY_META[group.category];
+            return (
+              <a class="gl-cat-link" href={`#gl-${group.category}`} data-cat-jump={group.category}>
+                <span class="gl-cat-emoji" aria-hidden="true">{meta.emoji}</span>
+                <strong>{meta.label}</strong>
+                <span class="c">{group.items.length}</span>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+
+      <div class="side-card gl-tip-card">
+        <div class="right-title">Tip</div>
+        <p>キーワード検索、カテゴリ別 / A-Z 目次で探せます。新着トレンドには <span class="gl-trend-dot" aria-hidden="true"></span> が付きます。</p>
+      </div>
+    </aside>
+
+    <main>
+      <div id="glossary-terms" class="gl-toolbar">
+        <div class="gl-search-bar">
+          <span aria-hidden="true">🔎</span>
+          <input
+            type="search"
+            id="glossary-search"
+            placeholder="用語を検索 (例: context, RAG, harness, エージェント)"
+            aria-label="用語を検索"
+            autocomplete="off"
+          />
+          <span class="gl-search-count" data-gl-count></span>
+        </div>
+        <div class="gl-viewtoggle" role="group" aria-label="一覧の並び順">
+          <button type="button" data-view-btn="category" aria-pressed="true">カテゴリ別</button>
+          <button type="button" data-view-btn="alpha" aria-pressed="false">A-Z 目次</button>
+        </div>
+      </div>
+
+      <nav class="gl-az" aria-label="アルファベット索引">
+        <ul>
+          {azLetters.map((L) =>
+            presentLetters.has(L) ? (
+              <li><a href={`#gl-az-${L}`} data-az-letter={L}>{L}</a></li>
+            ) : (
+              <li><span class="is-empty">{L}</span></li>
+            ),
+          )}
+        </ul>
+      </nav>
+
+      <div class="gl-empty" data-gl-empty hidden>
+        <strong>一致する用語が見つかりませんでした。</strong>
+        <p>別のキーワードでお試しください。</p>
+      </div>
+
+      <div class="gl-stack" data-view-panel="category">
+        {groups.map((group) => {
+          const meta = GLOSSARY_CATEGORY_META[group.category];
+          return (
+            <section class="gl-group" id={`gl-${group.category}`} data-gl-group style={`--cat-color:${meta.color}`}>
+              <div class="gl-group-head">
+                <span class="gl-group-emoji" aria-hidden="true">{meta.emoji}</span>
+                <h2>{meta.label}</h2>
+                <span class="gl-group-count">{group.items.length}</span>
+              </div>
+              <div class="gl-grid">
+                {group.items.map((t) => <GlossaryTermCard term={t} />)}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+
+      <div class="gl-stack" data-view-panel="alpha" hidden>
+        {azGroups.map(([letter, items]) => (
+          <section class="gl-group gl-letter" id={`gl-az-${letter}`} data-gl-group>
+            <div class="gl-group-head gl-letter-head">
+              <span class="gl-letter-badge" aria-hidden="true">{letter}</span>
+              <h2>{letter}</h2>
+              <span class="gl-group-count">{items.length}</span>
+            </div>
+            <div class="gl-grid">
+              {items.map((t) => <GlossaryTermCard term={t} />)}
+            </div>
+          </section>
+        ))}
+      </div>
+    </main>
+  </div>
+</Portal>
+
+<script>
+  (() => {
+    const root = document.getElementById("glossary-app");
+    if (!root) return;
+    const input = document.getElementById("glossary-search") as HTMLInputElement | null;
+    const empty = root.querySelector<HTMLElement>("[data-gl-empty]");
+    const countEl = root.querySelector<HTMLElement>("[data-gl-count]");
+    const catPanel = root.querySelector<HTMLElement>('[data-view-panel="category"]');
+    const alphaPanel = root.querySelector<HTMLElement>('[data-view-panel="alpha"]');
+    const toggleBtns = Array.from(root.querySelectorAll<HTMLButtonElement>("[data-view-btn]"));
+    const azLinks = Array.from(root.querySelectorAll<HTMLAnchorElement>("[data-az-letter]"));
+    const catLinks = Array.from(root.querySelectorAll<HTMLAnchorElement>("[data-cat-jump]"));
+    const allCards = Array.from(root.querySelectorAll<HTMLElement>("[data-gl-term]"));
+    const allGroups = Array.from(root.querySelectorAll<HTMLElement>("[data-gl-group]"));
+    const total = catPanel ? catPanel.querySelectorAll("[data-gl-term]").length : allCards.length;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let view: "category" | "alpha" = "category";
+
+    const activePanel = () => (view === "alpha" ? alphaPanel : catPanel);
+
+    const applyFilter = () => {
+      const query = (input?.value ?? "").trim().toLowerCase();
+      for (const card of allCards) {
+        const match = query === "" || (card.getAttribute("data-gl-text") ?? "").includes(query);
+        card.hidden = !match;
+      }
+      for (const g of allGroups) {
+        g.hidden = !g.querySelector("[data-gl-term]:not([hidden])");
+      }
+      const panel = activePanel();
+      const visible = panel ? panel.querySelectorAll("[data-gl-term]:not([hidden])").length : 0;
+      if (empty) empty.hidden = visible !== 0;
+      if (countEl) countEl.textContent = query === "" ? `${total} terms` : `${visible} / ${total}`;
+      for (const a of azLinks) {
+        const letter = a.getAttribute("data-az-letter");
+        const sec = alphaPanel?.querySelector<HTMLElement>(`#gl-az-${letter}`) ?? null;
+        const has = !!sec && !sec.hidden && !!sec.querySelector("[data-gl-term]:not([hidden])");
+        a.classList.toggle("is-dim", !has);
+      }
+    };
+
+    const setView = (next: "category" | "alpha") => {
+      view = next;
+      if (catPanel) catPanel.hidden = next !== "category";
+      if (alphaPanel) alphaPanel.hidden = next !== "alpha";
+      for (const b of toggleBtns) {
+        b.setAttribute("aria-pressed", String(b.getAttribute("data-view-btn") === next));
+      }
+      applyFilter();
+    };
+
+    const jumpTo = (el: HTMLElement | null) => {
+      if (!el) return;
+      el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    };
+
+    for (const b of toggleBtns) {
+      b.addEventListener("click", () => setView((b.getAttribute("data-view-btn") as "category" | "alpha") ?? "category"));
+    }
+
+    for (const a of azLinks) {
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        const letter = a.getAttribute("data-az-letter");
+        setView("alpha");
+        const target = alphaPanel?.querySelector<HTMLElement>(`#gl-az-${letter}`) ?? null;
+        jumpTo(target);
+        if (letter) history.replaceState(null, "", `#gl-az-${letter}`);
+      });
+    }
+
+    for (const a of catLinks) {
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        const cat = a.getAttribute("data-cat-jump");
+        setView("category");
+        const target = catPanel?.querySelector<HTMLElement>(`#gl-${cat}`) ?? null;
+        jumpTo(target);
+        if (cat) history.replaceState(null, "", `#gl-${cat}`);
+      });
+    }
+
+    input?.addEventListener("input", applyFilter);
+
+    if (location.hash.startsWith("#gl-az-")) {
+      setView("alpha");
+      const target = alphaPanel?.querySelector<HTMLElement>(location.hash) ?? null;
+      requestAnimationFrame(() => jumpTo(target));
+    } else {
+      setView("category");
+    }
+  })();
+</script>
+
+<style>
+  .gl-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.7rem;
+  }
+  .gl-search-bar {
+    flex: 1;
+    min-width: 220px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--border, rgba(148, 163, 184, 0.18));
+    border-radius: 11px;
+    background: var(--surface, rgba(148, 163, 184, 0.05));
+  }
+  .gl-search-bar input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text, #e9e7e3);
+    font: inherit;
+    font-size: 0.9rem;
+    outline: 0;
+  }
+  .gl-search-count {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    color: var(--text-muted, #94a3b8);
+    font-variant-numeric: tabular-nums;
+  }
+  .gl-viewtoggle {
+    display: inline-flex;
+    padding: 0.2rem;
+    gap: 0.2rem;
+    border: 1px solid var(--border, rgba(148, 163, 184, 0.18));
+    border-radius: 10px;
+    background: var(--surface, rgba(148, 163, 184, 0.05));
+  }
+  .gl-viewtoggle button {
+    border: 0;
+    background: transparent;
+    color: var(--text-muted, #94a3b8);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.34rem 0.7rem;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .gl-viewtoggle button[aria-pressed="true"] {
+    background: color-mix(in srgb, #c4b5fd 22%, transparent);
+    color: var(--text, #f5f5f4);
+  }
+  .gl-viewtoggle button:hover {
+    color: var(--text, #f5f5f4);
+  }
+
+  /* A-Z index (目次) */
+  .gl-az {
+    position: sticky;
+    top: var(--gl-az-top, 64px);
+    z-index: 5;
+    margin-bottom: 1rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--border, rgba(148, 163, 184, 0.16));
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--bg, #15151a) 88%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  .gl-az ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.22rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .gl-az li {
+    display: flex;
+  }
+  .gl-az a,
+  .gl-az span {
+    display: grid;
+    place-items: center;
+    min-width: 1.55rem;
+    height: 1.55rem;
+    padding: 0 0.2rem;
+    border-radius: 7px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-decoration: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .gl-az a {
+    color: color-mix(in srgb, #c4b5fd 92%, #fff);
+    background: color-mix(in srgb, #c4b5fd 13%, transparent);
+  }
+  .gl-az a:hover {
+    background: color-mix(in srgb, #c4b5fd 26%, transparent);
+  }
+  .gl-az a.is-dim {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  .gl-az span.is-empty {
+    color: var(--text-muted, #94a3b8);
+    opacity: 0.35;
+  }
+
+  .gl-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  /* class-level display must not defeat the [hidden] attribute */
+  .gl-stack[hidden],
+  .gl-group[hidden] {
+    display: none;
+  }
+  .gl-group {
+    scroll-margin-top: 116px;
+  }
+  .gl-group-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.7rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--cat-color, #c4b5fd) 30%, var(--border));
+  }
+  .gl-group-emoji {
+    font-size: 1.05rem;
+  }
+  .gl-group-head h2 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text, #e9e7e3);
+  }
+  .gl-group-count {
+    margin-left: auto;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--cat-color, #c4b5fd);
+    font-variant-numeric: tabular-nums;
+  }
+  .gl-letter-head {
+    border-bottom-color: color-mix(in srgb, #c4b5fd 35%, var(--border));
+  }
+  .gl-letter-badge {
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 9px;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #15151a;
+    background: linear-gradient(135deg, #c4b5fd, #5eead4);
+  }
+  .gl-letter-head h2 {
+    font-size: 1.1rem;
+  }
+  .gl-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+  @media (max-width: 620px) {
+    .gl-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .gl-empty {
+    padding: 1.2rem;
+    border: 1px dashed var(--border, rgba(148, 163, 184, 0.3));
+    border-radius: 12px;
+    text-align: center;
+    color: var(--text-muted, #94a3b8);
+  }
+  .gl-empty strong {
+    color: var(--text, #e9e7e3);
+  }
+
+  /* Rail hero illustration */
+  .gl-rail-id {
+    text-align: center;
+  }
+  .gl-hero-art {
+    width: 100%;
+    max-width: 220px;
+    height: auto;
+    margin: 0 auto 0.4rem;
+    display: block;
+    filter: drop-shadow(0 4px 14px rgba(196, 181, 253, 0.18));
+  }
+  /* Rail category list */
+  .gl-cat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .gl-cat-link {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    text-decoration: none;
+    color: inherit;
+    background: var(--surface, rgba(148, 163, 184, 0.06));
+  }
+  .gl-cat-link:hover {
+    background: rgba(196, 181, 253, 0.14);
+  }
+  .gl-cat-emoji {
+    font-size: 0.85rem;
+  }
+  .gl-cat-link strong {
+    font-weight: 600;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .gl-cat-link .c {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted, #94a3b8);
+  }
+  .gl-trend-dot {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #c4b5fd;
+    vertical-align: middle;
+  }
+</style>

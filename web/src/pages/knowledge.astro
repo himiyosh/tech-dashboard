@@ -70,7 +70,38 @@ const breadcrumb = [
     ]}
   />
 
-  <div class="layout lane-layout">
+  <div class="layout lane-layout" style="--cat-color:#34d399">
+    <aside class="lane-rail" aria-label="Knowledge navigation">
+      <div class="lane-rail-id">
+        <div class="lane-rail-icon" aria-hidden="true">✦</div>
+        <h2>Knowledge</h2>
+        <p>時間が経っても価値が減らない知見を、ニュースとは別に蓄積するレーンです。</p>
+        <div class="lane-rail-stat">
+          <strong>{KNOWLEDGE_ENTRIES.length}</strong>
+          <span>guides</span>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="right-title">Sources</div>
+        <div class="knowledge-source-list">
+          {groups.map((group) => (
+            <a class="knowledge-source-link" href={`#kg-${group.source}`}>
+              <strong>{sourceLabel(group.source)}</strong>
+              <span class="c">{group.items.length}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div class="side-card knowledge-note-card">
+        <div class="right-title">Tip</div>
+        <p>
+          日々のリリース・アナウンスは <a href="/">Timeline</a> へ。ここは恒久的に読み返したい知見の置き場です。
+        </p>
+      </div>
+    </aside>
+
     <main>
       <section class="knowledge-intro" aria-labelledby="knowledge-why-heading">
         <p class="section-kicker">Why a separate lane?</p>
@@ -110,27 +141,6 @@ const breadcrumb = [
         </div>
       )}
     </main>
-
-    <aside class="right">
-      <div class="side-card knowledge-note-card">
-        <div class="right-title">Knowledge lane</div>
-        <p>
-          このページは「時間が経っても読み返したい知見」をまとめています。日々の更新は <a href="/">Timeline</a> を確認してください。
-        </p>
-      </div>
-
-      <div class="side-card">
-        <div class="right-title">Sources</div>
-        <div class="knowledge-source-list">
-          {groups.map((group) => (
-            <a class="knowledge-source-link" href={`#kg-${group.source}`}>
-              <strong>{sourceLabel(group.source)}</strong>
-              <span class="c">{group.items.length}</span>
-            </a>
-          ))}
-        </div>
-      </div>
-    </aside>
   </div>
 </Portal>
 

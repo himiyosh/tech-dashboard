@@ -660,18 +660,28 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
-  test("arxiv lane page has no Timeline category sidebar", async ({ page }) => {
+  test("lane pages use a LEFT rail like Timeline, not a right one (LL-095)", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto("/arxiv/");
-    // Lane pages are separate from the news timeline; the Timeline category
-    // sidebar (aside.left) must not appear here.
-    await expect(page.locator(".layout aside.left")).toHaveCount(0);
-    await expect(page.locator(".layout.lane-layout")).toBeVisible();
-    // The arXiv-specific right rail (code meaning / tags) is still present.
-    await expect(page.locator(".layout aside.right")).toBeVisible();
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-      .toBe(true);
+    for (const path of ["/arxiv/", "/knowledge/"]) {
+      await page.goto(path);
+      // Lane pages must NOT show the Timeline category sidebar (aside.left).
+      await expect(page.locator(".layout aside.left")).toHaveCount(0);
+      await expect(page.locator(".layout.lane-layout")).toBeVisible();
+      // The lane rail (code meaning / tags / sources + identity) is present and
+      // on the LEFT — same navigation side as Timeline/Categories.
+      const rail = page.locator(".layout aside.lane-rail");
+      await expect(rail).toBeVisible();
+      await expect(page.locator(".layout aside.right")).toHaveCount(0);
+      const sides = await page.evaluate(() => {
+        const r = document.querySelector(".lane-rail") as HTMLElement;
+        const m = document.querySelector(".layout main") as HTMLElement;
+        return { railLeft: r.getBoundingClientRect().left, mainLeft: m.getBoundingClientRect().left };
+      });
+      expect(sides.railLeft, `${path} rail is left of main`).toBeLessThan(sides.mainLeft);
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+        .toBe(true);
+    }
   });
 
   test("lane pages never collapse into a 3-column timeline grid (LL-091)", async ({ page }) => {

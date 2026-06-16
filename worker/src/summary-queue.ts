@@ -128,13 +128,32 @@ export function selectSummaryJobBatch(
     return { jobs: [], eligibleCount: 0, startIndex: 0, drainEstimateHours: 0, cooldownCount };
   }
 
+  // Prioritize evergreen (Knowledge lane) entries: they belong to a small,
+  // curated set of best-practice sources, but the Knowledge page only shows
+  // entries with a real bilingual summary (isPublishableEntry). Without
+  // priority they compete with the whole news backlog (500+) and can take many
+  // hours to surface, making newly added Knowledge sources look "missing"
+  // (LL-098). Summarize evergreen first, then fill the rest of the cap with the
+  // fair round-robin window so the news backlog still drains predictably.
+  const evergreenEligible = eligible.filter((entry) => entry.evergreen === true);
+  const restEligible = eligible.filter((entry) => entry.evergreen !== true);
+
+  const jobs: SummaryJob[] = [];
+  const seen = new Set<string>();
+  const pushJob = (entry: NormalizedEntry) => {
+    if (seen.has(entry.url) || jobs.length >= safeCap) return;
+    seen.add(entry.url);
+    jobs.push(toSummaryJob(entry));
+  };
+
+  for (const entry of evergreenEligible) pushJob(entry);
+
   // Advance by one full cap-sized window per hour. Advancing by one entry per
   // hour makes a 400+ item backlog take weeks to cycle when failures persist.
   const hour = Math.floor((opts.nowMs ?? Date.now()) / 3_600_000);
-  const startIndex = eligible.length > safeCap ? (hour * safeCap) % eligible.length : 0;
-  const jobs: SummaryJob[] = [];
-  for (let i = 0; i < Math.min(safeCap, eligible.length); i++) {
-    jobs.push(toSummaryJob(eligible[(startIndex + i) % eligible.length]!));
+  const startIndex = restEligible.length > safeCap ? (hour * safeCap) % restEligible.length : 0;
+  for (let i = 0; i < restEligible.length && jobs.length < safeCap; i++) {
+    pushJob(restEligible[(startIndex + i) % restEligible.length]!);
   }
 
   return {

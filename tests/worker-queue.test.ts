@@ -116,6 +116,37 @@ describe("worker summary queue selection", () => {
     ]);
   });
 
+  it("prioritizes evergreen (Knowledge) entries ahead of the news backlog (LL-098)", () => {
+    // 8 news entries + 2 evergreen entries scattered in the list. With cap 3,
+    // the evergreen entries must always be picked first regardless of the
+    // hourly round-robin offset, so Knowledge sources surface fast.
+    const entries = [
+      ...Array.from({ length: 8 }, (_, i) => ({
+        ...baseEntry,
+        id: `news-${i}`,
+        url: `https://example.com/news-${i}`,
+      })),
+      { ...baseEntry, id: "ev-0", url: "https://example.com/evergreen-0", evergreen: true },
+      { ...baseEntry, id: "ev-1", url: "https://example.com/evergreen-1", evergreen: true },
+    ];
+    const lookedUp = new Set(entries.map((entry) => entry.url));
+
+    for (const nowMs of [0, 3_600_000, 5 * 3_600_000]) {
+      const batch = selectSummaryJobBatch(entries, new Map(), lookedUp, 3, new Set(), { nowMs });
+      const urls = batch.jobs.map((job) => job.url);
+      // Both evergreen entries always come first.
+      expect(urls.slice(0, 2)).toEqual([
+        "https://example.com/evergreen-0",
+        "https://example.com/evergreen-1",
+      ]);
+      // The remaining slot is a news entry (fills from the round-robin window).
+      expect(urls).toHaveLength(3);
+      expect(urls[2]).toMatch(/\/news-\d+$/);
+      // No duplicates.
+      expect(new Set(urls).size).toBe(3);
+    }
+  });
+
   it("skips recently failing summary URLs while keeping other jobs moving", () => {
     const entries = Array.from({ length: 4 }, (_, i) => ({
       ...baseEntry,

@@ -1,34 +1,128 @@
 {
-  "generatedAt": "2026-06-18T13:00:22.872Z",
+  "generatedAt": "2026-06-18T16:00:30.197Z",
   "count": 1611,
   "health": {
-    "lastRunAt": "2026-06-18T13:00:22.872Z",
-    "batchIndex": 2,
+    "lastRunAt": "2026-06-18T16:00:30.197Z",
+    "batchIndex": 1,
     "batchTotal": 4,
     "sourcesAttempted": 14,
     "sourcesOk": 14,
     "sourcesFailed": [],
     "summarized": 0,
     "summarizeErrors": 0,
-    "summaryFallbacks": 32,
-    "bodyFallbacks": 74,
-    "fallbackTotal": 593,
+    "summaryFallbacks": 0,
+    "bodyFallbacks": 6,
+    "fallbackTotal": 594,
     "fallbackPercent": 37,
     "kvLookupCap": 40,
     "kvLookupCount": 40,
     "queueMode": "enabled",
     "queueCap": 30,
     "enqueueCandidates": 30,
-    "summaryQueueBacklog": 592,
+    "summaryQueueBacklog": 594,
     "summaryQueueDrainEstimateHours": 20,
-    "summaryQueueStartIndex": 375,
-    "summaryQueueCooldownCount": 1,
+    "summaryQueueStartIndex": 48,
+    "summaryQueueCooldownCount": 0,
     "copilotOk": true,
     "copilotError": null,
-    "ogCached": 3006,
+    "ogCached": 3007,
     "ogNewHits": 1
   },
   "entries": [
+    {
+      "id": "e130f15b9862b471",
+      "source": "zed-releases",
+      "sourceType": "release",
+      "url": "https://github.com/zed-industries/zed/releases/tag/nightly",
+      "title": "nightly",
+      "titleJa": "Zed nightly、ホバーリンクからfile:line:col形式の遷移をサポート",
+      "titleEn": "nightly",
+      "summaryJa": "Zedエディタのnightlyビルドで、ホバー時に表示されるリンクから「file:line:col」形式のパス指定によるナビゲーションが可能になった。エラーログやスタックトレースに含まれる位置情報付きのファイル参照を直接クリックして開けるようになり、デバッグ作業の効率化に寄与する更新となっている。",
+      "summaryEn": "vim: Fix cw with count greater than 1 not preserving whitespace cor…",
+      "lang": "en",
+      "publishedAt": "2026-06-18T14:50:31.000Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
+      "tags": [
+        "editor",
+        "release",
+        "zed",
+        "agent",
+        "tutorial",
+        "open-model",
+        "navigation",
+        "debugging"
+      ],
+      "category": "cursor",
+      "importance": 3,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/77309510?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/77309510?s=60&amp;v=4",
+        "alt": "nightly",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "bodyJa": "Rust製の高速エディタZedのnightlyビルドにおいて、ホバー時に表示されるリンクから「file:line:col」形式のパス指定によるナビゲーションがサポートされた。プルリクエスト#55877によって追加された比較的小さな改善ながら、日常のデバッグ作業に直接効くアップデートである。\n\nプログラミングにおいて、エラーメッセージやスタックトレース、コンパイラ出力には「src/main.rs:42:10」のように、ファイルパスに加えて行番号と列番号がコロン区切りで付加された参照表記が広く使われる。RustやTypeScript、Pythonなど多くの言語のツールチェーンがこの形式を採用しており、ターミナルエミュレータ側でも同形式のリンク化対応が進んでいる。今回の変更により、Zed内部のホバー表示でこうした参照を検出した際に、クリック一つで該当ファイルの該当行・該当列にカーソルを移動できる。\n\n類似の機能はVS CodeやJetBrains系IDEでも長らく標準的にサポートされてきたほか、iTerm2やWezTerm、Ghosttyといったモダンなターミナルでも「Cmd+クリック」によるエディタ起動に対応している。Zedはコラボレーション機能やGPUレンダリングを売りに急速に機能追加を進めており、こうした地味だが重要なエディタとしての基本的な使い勝手の底上げを継続している点が特徴的だ。\n\nなお本変更はnightlyチャネルへの取り込みであり、stableリリースに反映される時期は別途のリリースサイクルに依存すると見られる。挙動の詳細やエッジケース(相対パスの解決基準、Windowsスタイルのドライブレター付きパスへの対応など)については、実際にnightlyを試すか、PRの議論を確認するのが確実だろう。",
+      "bodyEn": "The nightly build of Zed, the Rust-based collaborative code editor, has gained support for navigating from hover links that use the common file:line:col path format. Introduced via PR #55877, the change is small in scope but directly improves day-to-day debugging workflows.\n\nIn most language ecosystems, error messages, stack traces, and compiler diagnostics conventionally encode source locations as a path followed by colon-separated line and column numbers, such as src/main.rs:42:10. Rust's compiler, TypeScript's tsc, Python tracebacks, and countless linters all emit this format. With this update, when Zed renders such a reference inside a hover popup, clicking it will jump straight to the indicated file at the precise row and column rather than merely opening the file at its top.\n\nThis kind of navigation has long been table stakes for editors like VS Code and the JetBrains family, and modern terminal emulators such as iTerm2, WezTerm, and Ghostty have also embraced the file:line:col convention for Cmd-click handoff to an editor. Zed has been aggressive about shipping headline features like real-time collaboration and GPU-accelerated rendering, but updates like this one show ongoing investment in the more mundane plumbing that determines whether an editor feels pleasant under daily use.\n\nBecause the change lands on the nightly channel, it will likely take some time before it propagates to the stable release, depending on Zed's normal promotion cadence. Edge cases — for example, how relative paths are resolved against the current workspace, or whether Windows-style paths with drive letters are handled gracefully — are not fully clear from the release note alone, and interested users may want to consult the PR discussion or experiment with the nightly build directly to confirm the exact behavior."
+    },
+    {
+      "id": "61eb50c7d4c8961f",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/shun_producer/articles/ollama-local-llm-first-step",
+      "title": "OllamaでローカルLLM入門——自分のPCでAIを「飼う」最初の一歩",
+      "titleJa": "OllamaでローカルLLM入門——自分のPCでAIを「飼う」最初の一歩",
+      "titleEn": "",
+      "summaryJa": "「ChatGPTやClaudeは便利だけど、毎回ネットの向こうに送るのはちょっと不安」 「API代を気にせず、好きなだけAIを動かしてみたい」 そう思ったことがあるなら、ローカルLLMの出番です。この記事では、Ollama（オラマ） という",
+      "summaryEn": "OllamaでローカルLLM入門——自分のPCでAIを「飼う」最初の一歩",
+      "lang": "ja",
+      "publishedAt": "2026-06-18T14:06:28.000Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--G_Ivg0wi--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Ollama%25E3%2581%25A7%25E3%2583%25AD%25E3%2583%25BC%25E3%2582%25AB%25E3%2583%25ABLLM%25E5%2585%25A5%25E9%2596%2580%25E2%2580%2594%25E2%2580%2594%25E8%2587%25AA%25E5%2588%2586%25E3%2581%25AEPC%25E3%2581%25A7AI%25E3%2582%2592%25E3%2580%258C%25E9%25A3%25BC%25E3%2581%2586%25E3%2580%258D%25E6%259C%2580%25E5%2588%259D%25E3%2581%25AE%25E4%25B8%2580%25E6%25AD%25A9%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2582%25B7%25E3%2583%25A5%25E3%2583%25B3%25E3%2582%25AF%25E5%25A0%2582%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSVh1QWozU2dVaFYwSVM5T2kwM3RJWmlBeUU0YTZxcTRGWExzWDRKZGl2QW54UUtVcml0Zz1zMjUwLWM=%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--G_Ivg0wi--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Ollama%25E3%2581%25A7%25E3%2583%25AD%25E3%2583%25BC%25E3%2582%25AB%25E3%2583%25ABLLM%25E5%2585%25A5%25E9%2596%2580%25E2%2580%2594%25E2%2580%2594%25E8%2587%25AA%25E5%2588%2586%25E3%2581%25AEPC%25E3%2581%25A7AI%25E3%2582%2592%25E3%2580%258C%25E9%25A3%25BC%25E3%2581%2586%25E3%2580%258D%25E6%259C%2580%25E5%2588%259D%25E3%2581%25AE%25E4%25B8%2580%25E6%25AD%25A9%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2582%25B7%25E3%2583%25A5%25E3%2583%25B3%25E3%2582%25AF%25E5%25A0%2582%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSVh1QWozU2dVaFYwSVM5T2kwM3RJWmlBeUU0YTZxcTRGWExzWDRKZGl2QW54UUtVcml0Zz1zMjUwLWM=%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "OllamaでローカルLLM入門——自分のPCでAIを「飼う」最初の一歩",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "bodyJa": "OllamaでローカルLLM入門——自分のPCでAIを「飼う」最初の一歩 は、zenn-llm が伝えた local-llm 領域の更新です。「ChatGPTやClaudeは便利だけど、毎回ネットの向こうに送るのはちょっと不安」 「API代を気にせず、好きなだけAIを動かしてみたい」 そう思ったことがあるなら、ローカルLLMの出番です。この記事では、Ollama（オラマ） という。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは llm, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"OllamaでローカルLLM入門——自分のPCでAIを「飼う」最初の一歩\" is a local-llm update collected from zenn-llm. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include llm, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
+      "id": "6c9621c27522b3cc",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/kenimo49/items/3757bbce49b638a54a7d",
+      "title": "あなたのCursor拡張はコード全文を読んでいる。人気拡張の権限を監査した",
+      "titleJa": "あなたのCursor拡張はコード全文を読んでいる。人気拡張の権限を監査した",
+      "titleEn": "",
+      "summaryJa": "「便利だから入れる」。私もずっとそうでした。 VSCodeやCursorの拡張は、クリック1回で入ります。そして入れた瞬間から、その拡張はあなたのワークスペース全文を読む権限を持ちます。確認も同意も求められません。 これは煽りではなく、設計",
+      "summaryEn": "あなたのCursor拡張はコード全文を読んでいる。人気拡張の権限を監査した",
+      "lang": "ja",
+      "publishedAt": "2026-06-18T13:30:00.000Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "あなたのCursor拡張はコード全文を読んでいる。人気拡張の権限を監査した は、qiita-vscode が伝えた cursor 領域の更新です。「便利だから入れる」。私もずっとそうでした。 VSCodeやCursorの拡張は、クリック1回で入ります。そして入れた瞬間から、その拡張はあなたのワークスペース全文を読む権限を持ちます。確認も同意も求められません。 これは煽りではなく、設計。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは qiita, vscode です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"あなたのCursor拡張はコード全文を読んでいる。人気拡張の権限を監査した\" is a cursor update collected from qiita-vscode. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include qiita, vscode. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
     {
       "id": "3a0a8870867035cd",
       "source": "qiita-claude",
@@ -73,7 +167,7 @@
       "summaryEn": "CursorでGLM 5.2と連携して費用を節約する",
       "lang": "ja",
       "publishedAt": "2026-06-18T11:40:04.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -82,6 +176,8 @@
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
+      "bodyJa": "CursorでGLM 5.2と連携して費用を節約する は、zenn-cursor が伝えた cursor 領域の更新です。Z.aiが2026年6月16日にリリースしたコーディング向けフラッグシップモデル GLM-5.2 は、オープンウェイト最高水準のコーディング性能を誇りながら、Claude Opus 4.8 や GPT-5.5 の数分の一のコストで利用できま。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは cursor, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"CursorでGLM 5.2と連携して費用を節約する\" is a cursor update collected from zenn-cursor. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include cursor, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material.",
       "image": {
         "src": "https://res.cloudinary.com/zenn/image/upload/s--aXdYsnor--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Cursor%25E3%2581%25A7GLM%25205.2%25E3%2581%25A8%25E9%2580%25A3%25E6%2590%25BA%25E3%2581%2597%25E3%2581%25A6%25E8%25B2%25BB%25E7%2594%25A8%25E3%2582%2592%25E7%25AF%2580%25E7%25B4%2584%25E3%2581%2599%25E3%2582%258B%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:ShintaroAmaike%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzVmNWYzMmE0MWIuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
         "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--aXdYsnor--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Cursor%25E3%2581%25A7GLM%25205.2%25E3%2581%25A8%25E9%2580%25A3%25E6%2590%25BA%25E3%2581%2597%25E3%2581%25A6%25E8%25B2%25BB%25E7%2594%25A8%25E3%2582%2592%25E7%25AF%2580%25E7%25B4%2584%25E3%2581%2599%25E3%2582%258B%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:ShintaroAmaike%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzVmNWYzMmE0MWIuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
@@ -89,9 +185,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "bodyJa": "CursorでGLM 5.2と連携して費用を節約する は、zenn-cursor が伝えた cursor 領域の更新です。Z.aiが2026年6月16日にリリースしたコーディング向けフラッグシップモデル GLM-5.2 は、オープンウェイト最高水準のコーディング性能を誇りながら、Claude Opus 4.8 や GPT-5.5 の数分の一のコストで利用できま。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは cursor, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
-      "bodyEn": "The source item \"CursorでGLM 5.2と連携して費用を節約する\" is a cursor update collected from zenn-cursor. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include cursor, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+      }
     },
     {
       "id": "9b68d2bf75db1187",
@@ -130,7 +224,7 @@
       "summaryEn": "Python環境セットアップ完全ガイド【Windows / Mac / Linux対応・venv・VSCode実行まで】",
       "lang": "ja",
       "publishedAt": "2026-06-18T08:01:12.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "qiita",
         "vscode"
@@ -143,42 +237,28 @@
       "bodyEn": "The source item \"Python環境セットアップ完全ガイド【Windows / Mac / Linux対応・venv・VSCode実行まで】\" is a vscode update collected from qiita-vscode. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include qiita, vscode. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
-      "id": "e130f15b9862b471",
-      "source": "zed-releases",
-      "sourceType": "release",
-      "url": "https://github.com/zed-industries/zed/releases/tag/nightly",
-      "title": "nightly: git: Use fast access check for repository in git panel (#59514)",
-      "titleJa": "Zed nightly、ホバーリンクからfile:line:col形式の遷移をサポート",
-      "titleEn": "nightly: git: Use fast access check for repository in git panel (#59514)",
-      "summaryJa": "Zedエディタのnightlyビルドで、ホバー時に表示されるリンクから「file:line:col」形式のパス指定によるナビゲーションが可能になった。エラーログやスタックトレースに含まれる位置情報付きのファイル参照を直接クリックして開けるようになり、デバッグ作業の効率化に寄与する更新となっている。",
-      "summaryEn": "Objective The git panel currently runs a full git status for checking whether git has access to the repository. This was introduced in #43693 and currently runs on every file save which is problematic",
-      "lang": "en",
-      "publishedAt": "2026-06-18T07:47:47.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "id": "96c3c942a8bbd802",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/techotakulab/books/ai-gpu-cost-optimization",
+      "title": "画像生成AI・ローカルLLMを“安く速く”動かす実測ガイド：GPU/VRAM/クラウドのコスト最適化",
+      "titleJa": "画像生成AI・ローカルLLMを“安く速く”動かす実測ガイド：GPU/VRAM/クラウドのコスト最適化",
+      "titleEn": "",
+      "summaryJa": "VRAM不足・GPU選び・クラウド課金を、感覚でなく数字で判断するための一冊。SDXLとローカルLLMを自分のGPUで実測し、量子化・オフロード・スライス・クラウド料金の「実際の効果」を確かめます。「4bitは速い」「スライスを盛ればVRA",
+      "summaryEn": "画像生成AI・ローカルLLMを“安く速く”動かす実測ガイド：GPU/VRAM/クラウドのコスト最適化",
+      "lang": "ja",
+      "publishedAt": "2026-06-18T07:42:45.000Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
-        "editor",
-        "release",
-        "zed",
-        "agent",
-        "tutorial",
-        "open-model",
-        "navigation",
-        "debugging"
+        "llm",
+        "zenn"
       ],
-      "category": "cursor",
-      "importance": 3,
-      "halfLife": "news",
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
       "archiveTier": "hot",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/13285808?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/13285808?s=60&amp;v=4",
-        "alt": "nightly: git: Use fast access check for repository in git panel (#59514)",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      },
-      "bodyJa": "Rust製の高速エディタZedのnightlyビルドにおいて、ホバー時に表示されるリンクから「file:line:col」形式のパス指定によるナビゲーションがサポートされた。プルリクエスト#55877によって追加された比較的小さな改善ながら、日常のデバッグ作業に直接効くアップデートである。\n\nプログラミングにおいて、エラーメッセージやスタックトレース、コンパイラ出力には「src/main.rs:42:10」のように、ファイルパスに加えて行番号と列番号がコロン区切りで付加された参照表記が広く使われる。RustやTypeScript、Pythonなど多くの言語のツールチェーンがこの形式を採用しており、ターミナルエミュレータ側でも同形式のリンク化対応が進んでいる。今回の変更により、Zed内部のホバー表示でこうした参照を検出した際に、クリック一つで該当ファイルの該当行・該当列にカーソルを移動できる。\n\n類似の機能はVS CodeやJetBrains系IDEでも長らく標準的にサポートされてきたほか、iTerm2やWezTerm、Ghosttyといったモダンなターミナルでも「Cmd+クリック」によるエディタ起動に対応している。Zedはコラボレーション機能やGPUレンダリングを売りに急速に機能追加を進めており、こうした地味だが重要なエディタとしての基本的な使い勝手の底上げを継続している点が特徴的だ。\n\nなお本変更はnightlyチャネルへの取り込みであり、stableリリースに反映される時期は別途のリリースサイクルに依存すると見られる。挙動の詳細やエッジケース(相対パスの解決基準、Windowsスタイルのドライブレター付きパスへの対応など)については、実際にnightlyを試すか、PRの議論を確認するのが確実だろう。",
-      "bodyEn": "The nightly build of Zed, the Rust-based collaborative code editor, has gained support for navigating from hover links that use the common file:line:col path format. Introduced via PR #55877, the change is small in scope but directly improves day-to-day debugging workflows.\n\nIn most language ecosystems, error messages, stack traces, and compiler diagnostics conventionally encode source locations as a path followed by colon-separated line and column numbers, such as src/main.rs:42:10. Rust's compiler, TypeScript's tsc, Python tracebacks, and countless linters all emit this format. With this update, when Zed renders such a reference inside a hover popup, clicking it will jump straight to the indicated file at the precise row and column rather than merely opening the file at its top.\n\nThis kind of navigation has long been table stakes for editors like VS Code and the JetBrains family, and modern terminal emulators such as iTerm2, WezTerm, and Ghostty have also embraced the file:line:col convention for Cmd-click handoff to an editor. Zed has been aggressive about shipping headline features like real-time collaboration and GPU-accelerated rendering, but updates like this one show ongoing investment in the more mundane plumbing that determines whether an editor feels pleasant under daily use.\n\nBecause the change lands on the nightly channel, it will likely take some time before it propagates to the stable release, depending on Zed's normal promotion cadence. Edge cases — for example, how relative paths are resolved against the current workspace, or whether Windows-style paths with drive letters are handled gracefully — are not fully clear from the release note alone, and interested users may want to consult the PR discussion or experiment with the nightly build directly to confirm the exact behavior."
+      "bodyJa": "画像生成AI・ローカルLLMを“安く速く”動かす実測ガイド：GPU/VRAM/クラウドのコスト最適化 は、zenn-llm が伝えた local-llm 領域の更新です。VRAM不足・GPU選び・クラウド課金を、感覚でなく数字で判断するための一冊。SDXLとローカルLLMを自分のGPUで実測し、量子化・オフロード・スライス・クラウド料金の「実際の効果」を確かめます。「4bitは速い」「スライスを盛ればVRA。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは llm, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "The source item \"画像生成AI・ローカルLLMを“安く速く”動かす実測ガイド：GPU/VRAM/クラウドのコスト最適化\" is a local-llm update collected from zenn-llm. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include llm, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "860534e6575fcc33",
@@ -192,7 +272,7 @@
       "summaryEn": "デザインシステムのskillの精度が上がった8つの方法",
       "lang": "ja",
       "publishedAt": "2026-06-18T07:22:12.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -242,7 +322,7 @@
       "summaryEn": "Peter Parker to Bruce Banner: \"I didn't know you could get that big.\"",
       "lang": "en",
       "publishedAt": "2026-06-18T06:37:59.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "ars-technica",
         "news"
@@ -386,7 +466,7 @@
       "summaryEn": "AI駆動開発でWAFログ解析を楽にやりたい — Cursor で Log Explorer のログ解析ツールを作ってみた",
       "lang": "ja",
       "publishedAt": "2026-06-18T04:18:31.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -638,7 +718,7 @@
       "summaryEn": "Maggot therapy lacks robust data, but it has fans and a fail-safe \"bacon therapy.\"",
       "lang": "en",
       "publishedAt": "2026-06-17T22:11:20.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "ars-technica",
         "news"
@@ -836,7 +916,7 @@
       "summaryEn": "The affected include Oracle, Lenovo, FedEx, a NATO contractor, and Fortinet.",
       "lang": "en",
       "publishedAt": "2026-06-17T19:54:31.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "ars-technica",
         "news"
@@ -868,7 +948,7 @@
       "summaryEn": "Tesco claimed Broadcom hiked its VMware prices by about 175 percent in UK court filings.",
       "lang": "en",
       "publishedAt": "2026-06-17T19:43:13.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "ars-technica",
         "news"
@@ -922,7 +1002,7 @@
       "summaryEn": "Nvidia's self-improvement program for robots enlists teams of AI coding agents.",
       "lang": "en",
       "publishedAt": "2026-06-17T19:25:19.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "ars-technica",
         "news",
@@ -1077,7 +1157,7 @@
       "summaryEn": "AI models with advanced hacking capabilities will soon be the norm.",
       "lang": "en",
       "publishedAt": "2026-06-17T17:50:46.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "ars-technica",
         "news"
@@ -1200,7 +1280,7 @@
       "summaryEn": "This week's release includes the ability to create a new worktree right from the sidebar's new-thread button, a new agent.terminal_init_command setting to automatically run a command when opening a ne",
       "lang": "en",
       "publishedAt": "2026-06-17T17:00:30.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "editor",
@@ -1396,7 +1476,7 @@
       "summaryEn": "Google's new smart speaker is more about Gemini than audio quality.",
       "lang": "en",
       "publishedAt": "2026-06-17T15:57:14.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "ars-technica",
         "news"
@@ -1420,7 +1500,7 @@
       "summaryEn": "This week's release includes automatic agent context compaction that you can also trigger manually with the new /compact command, cleaner and more legible Markdown preview styling, and support for run",
       "lang": "en",
       "publishedAt": "2026-06-17T15:41:19.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "editor",
@@ -1480,7 +1560,7 @@
       "summaryEn": "Amazon Bedrock's new Fully Managed Knowledge Bases simplifies building enterprise RAG pipelines by providing native data connectors Smart Parsing for automatic multi-format data preparation, and an Ag",
       "lang": "en",
       "publishedAt": "2026-06-17T15:09:20.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "amazon",
         "aws",
@@ -1507,7 +1587,7 @@
       "summaryEn": "Adds a step to the release and run_bundling workflows to build a statically-linked bubblewrap binary and upload it Release Notes: N/A or Added/Fixed/Improved ... Co-authored-by: Tom Houlé tom@tomhoule",
       "lang": "en",
       "publishedAt": "2026-06-17T15:03:03.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "editor",
         "release",
@@ -1546,7 +1626,7 @@
       "summaryEn": "AWS introduces Web Search on Amazon Bedrock AgentCore, a fully managed tool that enables agents to ground responses in current, cited web knowledge with zero data egress from customer's secured AWS en",
       "lang": "en",
       "publishedAt": "2026-06-17T15:00:11.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "amazon",
         "aws",
@@ -1628,7 +1708,7 @@
       "summaryEn": "AWS Transform – continuous modernization (preview) automatically scans code repositories to detect, prioritize, and remediate technical debt at scale.",
       "lang": "en",
       "publishedAt": "2026-06-17T14:58:00.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "amazon",
         "aws",
@@ -1653,7 +1733,7 @@
       "summaryEn": "AWS DevOps Agent now offers release management capability in preview, reviewing code changes for release readiness and running autonomous release testing to help you ship code to production safely and",
       "lang": "en",
       "publishedAt": "2026-06-17T14:57:34.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "amazon",
@@ -1680,7 +1760,7 @@
       "summaryEn": "AWS Security Agent now adds STRIDE-based threat modeling, full repo and PR code scanning with remediation across major Git platforms, and IDE integrations via Kiro power, Claude Code plugin, and MCP —",
       "lang": "en",
       "publishedAt": "2026-06-17T14:54:55.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "amazon",
@@ -1731,7 +1811,7 @@
       "summaryEn": "初心者がOllamaをVSCodeにつなごうとして詰まった話",
       "lang": "ja",
       "publishedAt": "2026-06-17T14:30:45.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "qiita",
         "vscode"
@@ -1998,7 +2078,7 @@
       "summaryEn": "The bigger battery is standard and there are now simulated \"E-Shifts.\"",
       "lang": "en",
       "publishedAt": "2026-06-17T12:00:45.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "ars-technica",
         "news"
@@ -2990,6 +3070,30 @@
       "bodyEn": "Ollama Releases v0.30.9 is a local-llm update collected from ollama-releases. What's Changed Support for Cohere2Moe architecture Fixed LFM2 parser/render for cases where thinking was not emitted Fixed issue where ollama launch claude and other coding agent or assistant use case.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For release sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include agent, ollama, release. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
+      "id": "0c002e4942002f64",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/seoul-office-partnerships-korean-ai-ecosystem",
+      "title": "Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem",
+      "titleJa": "",
+      "titleEn": "Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem",
+      "summaryJa": "このエントリは anthropic-news から収集した claude 領域の最新アップデートです。原題:「Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "We’ve just opened our Seoul office . Alongside it, we’re announcing new partnerships across the Korean AI ecosystem, with the enterprises, startups, and researchers behind some of the most ambitious u",
+      "lang": "en",
+      "publishedAt": "2026-06-17T00:00:00.000Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
+      "tags": [
+        "anthropic",
+        "claude"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "bodyJa": "このエントリは anthropic-news から収集した claude 領域の最新アップデートです。原題は「Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem」。このエントリは anthropic-news から収集した claude 領域の最新アップデートです。原題:「Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは anthropic, claude です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem is a claude update collected from anthropic-news. Our Seoul office is now open. Alongside it, we are announcing new partnerships across the Korean AI ecosystem-with the enterprises, startups, and researchers behind some of the most ambitious deployme.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include anthropic, claude. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
       "id": "f0fee891d4cc5882",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -3013,30 +3117,6 @@
       "archiveTier": "hot",
       "bodyJa": "このエントリは cursor-changelog から収集した cursor 領域の最新アップデートです。原題は「Cloud Environment Setup and Cloud Subagents in Agents Window」。このエントリは cursor-changelog から収集した cursor 領域の最新アップデートです。原題:「Cloud Environment Setup and Cloud Subagents in Agents Window」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。changelog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは changelog, cursor, release です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
       "bodyEn": "Cloud Environment Setup and Cloud Subagents in Agents Window is a cursor update collected from cursor-changelog. This release introduces updates to cloud agents in the Agents Window of the Cursor desktop app.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For changelog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include changelog, cursor, release. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
-    },
-    {
-      "id": "0c002e4942002f64",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/seoul-office-partnerships-korean-ai-ecosystem",
-      "title": "Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem",
-      "titleJa": "",
-      "titleEn": "Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem",
-      "summaryJa": "このエントリは anthropic-news から収集した claude 領域の最新アップデートです。原題:「Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "We’ve just opened our Seoul office . Alongside it, we’re announcing new partnerships across the Korean AI ecosystem, with the enterprises, startups, and researchers behind some of the most ambitious u",
-      "lang": "en",
-      "publishedAt": "2026-06-17T00:00:00.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
-      "tags": [
-        "anthropic",
-        "claude"
-      ],
-      "category": "claude",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot",
-      "bodyJa": "このエントリは anthropic-news から収集した claude 領域の最新アップデートです。原題は「Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem」。このエントリは anthropic-news から収集した claude 領域の最新アップデートです。原題:「Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは anthropic, claude です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
-      "bodyEn": "Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem is a claude update collected from anthropic-news. Our Seoul office is now open. Alongside it, we are announcing new partnerships across the Korean AI ecosystem-with the enterprises, startups, and researchers behind some of the most ambitious deployme.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include anthropic, claude. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "b3a2b2f9c2f15dff",
@@ -3174,7 +3254,7 @@
       "summaryEn": "Amazon S3 now lets you attach up to 1 GB of rich, mutable, and queryable context directly to your objects using annotations, purpose-built for AI agents and autonomous workflows that need to discover,",
       "lang": "en",
       "publishedAt": "2026-06-16T23:13:10.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "amazon",
@@ -4050,7 +4130,7 @@
       "summaryEn": "Release 2026.6.16",
       "lang": "en",
       "publishedAt": "2026-06-16T14:53:11.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -4413,7 +4493,7 @@
       "summaryEn": "Claude CodeやCursorの記憶喪失と意図のずれを、3つの呪文で見える化する方法（5分で解決）",
       "lang": "ja",
       "publishedAt": "2026-06-16T08:30:41.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -4599,7 +4679,7 @@
       "summaryEn": "AIエージェントを放置で走らせたい、でも rm -rf は怖い——危険操作だけスマホ承認にした",
       "lang": "ja",
       "publishedAt": "2026-06-16T06:13:46.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -4623,7 +4703,7 @@
       "summaryEn": "MCPサーバが「failed to connect」しか言わない問題を、診断するCLIにした",
       "lang": "ja",
       "publishedAt": "2026-06-16T06:13:46.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "mcp-server",
@@ -4696,7 +4776,7 @@
       "summaryEn": "Objective When reviewing changes in the Git Panel, the only ways to open a file were through a diff view (\"Open Diff\" or \"Open Diff (File)\"). There was no way to open the file directly in the editor t",
       "lang": "en",
       "publishedAt": "2026-06-16T03:57:51.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "editor",
         "release",
@@ -4757,7 +4837,7 @@
       "summaryEn": "CursorのAI利用料、誰がどれだけ使ってる？Admin API + GASでSlack日次レポートを自動化する",
       "lang": "ja",
       "publishedAt": "2026-06-16T03:00:09.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -5256,7 +5336,7 @@
       "summaryEn": "AWS WAF launches AI traffic monetization, a new Bot Control capability that enables content providers and publishers price, meter, and collect payment from AI bots and agents accessing their content a",
       "lang": "en",
       "publishedAt": "2026-06-15T20:42:13.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "amazon",
         "aws",
@@ -5808,7 +5888,7 @@
       "summaryEn": "This week, New York City is hosting AWS Summit, bringing together builders, customers, and AWS teams for a full day of announcements, demos, and technical sessions at the Javits Center. I wrote blog p",
       "lang": "en",
       "publishedAt": "2026-06-15T11:41:48.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "amazon",
@@ -6138,7 +6218,7 @@
       "summaryEn": "Claude Fable 5停止で見えた、AI駆動開発のいちばん怖いリスク",
       "lang": "ja",
       "publishedAt": "2026-06-14T23:59:05.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -6516,7 +6596,7 @@
       "summaryEn": "AIエージェント全盛時代の趣味ワーク管理とポートフォリオ運営の最適解",
       "lang": "ja",
       "publishedAt": "2026-06-14T12:51:29.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn",
@@ -6640,7 +6720,7 @@
       "summaryEn": "Github Copilot のトークン消費を抑えるコツ",
       "lang": "ja",
       "publishedAt": "2026-06-14T09:16:29.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -6722,7 +6802,7 @@
       "summaryEn": "AIが書いたコミットの下書きを、自分で調整してからコミットするVS Code拡張を作りました",
       "lang": "ja",
       "publishedAt": "2026-06-14T07:49:49.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -7030,7 +7110,7 @@
       "summaryEn": "Cursor Global Commands & Skills 調査リスト",
       "lang": "ja",
       "publishedAt": "2026-06-13T10:50:05.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "cursor",
@@ -7113,7 +7193,7 @@
       "summaryEn": "Cursorの設定ファイルまとめ",
       "lang": "ja",
       "publishedAt": "2026-06-13T10:15:39.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn",
@@ -7222,7 +7302,7 @@
       "summaryEn": "5年止まっていた個人開発が Kiro / Cursor で動き出した話",
       "lang": "ja",
       "publishedAt": "2026-06-13T09:13:17.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -7510,7 +7590,7 @@
       "summaryEn": "Claude Fable 5は「性能の話」より「リミッターの話」として読むと面白い",
       "lang": "ja",
       "publishedAt": "2026-06-12T23:39:14.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -7542,7 +7622,7 @@
       "summaryEn": "Claude Fable 5 の ZDR（ゼロデータ保持）は利用不可なので注意が必要",
       "lang": "ja",
       "publishedAt": "2026-06-12T23:10:31.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -7641,7 +7721,7 @@
       "summaryEn": "Fixed not being able to drag the settings UI window on macOS. ( #59216 ) Fixed an issue where the close button could overflow within a workspace error popup. ( #59186 )",
       "lang": "en",
       "publishedAt": "2026-06-12T20:56:50.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "editor",
         "release",
@@ -8123,7 +8203,7 @@
       "summaryEn": "賢さの値段が、3日で1桁落ちた日",
       "lang": "ja",
       "publishedAt": "2026-06-12T07:22:28.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -8272,7 +8352,7 @@
       "summaryEn": "The US government, citing national security authorities, has issued an export control directive to suspend all access to Fable 5 and Mythos 5 by any foreign national, whether inside or outside the Uni",
       "lang": "en",
       "publishedAt": "2026-06-12T00:00:00.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "anthropic",
         "claude"
@@ -9256,7 +9336,7 @@
       "summaryEn": "ぼくがかんがえたさいきょうのはーねす",
       "lang": "ja",
       "publishedAt": "2026-06-11T06:31:16.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -9304,7 +9384,7 @@
       "summaryEn": "動画生成AIではなく「Remotion」を選んだ理由",
       "lang": "ja",
       "publishedAt": "2026-06-11T04:15:16.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -9514,7 +9594,7 @@
       "summaryEn": "We’re launching Claude Corps , a national fellowship program for people early in their careers who are passionate about extending the benefits of AI to communities across America. We’ll teach 1,000 fe",
       "lang": "en",
       "publishedAt": "2026-06-11T00:00:00.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "anthropic",
         "claude",
@@ -9880,7 +9960,7 @@
       "summaryEn": "This week's release includes automatic agent context compaction that you can also trigger manually with the new /compact command, cleaner and more legible Markdown preview styling, and support for run",
       "lang": "en",
       "publishedAt": "2026-06-10T20:39:30.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "editor",
@@ -10060,7 +10140,7 @@
       "summaryEn": "This week's release includes the ability to open a Git diff for a single file in its own dedicated tab from the Git panel, \"Fast mode\" for Anthropic and OpenAI models in the agent panel, shareable age",
       "lang": "en",
       "publishedAt": "2026-06-10T18:33:08.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "editor",
@@ -10127,7 +10207,7 @@
       "summaryEn": "v1.7.x preview for @JosephTLyons",
       "lang": "en",
       "publishedAt": "2026-06-10T17:20:54.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "editor",
         "release",
@@ -11057,7 +11137,7 @@
       "summaryEn": "Fixed a hang that could occur when opening a new workspace. ( #58994 )",
       "lang": "en",
       "publishedAt": "2026-06-10T04:27:37.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "editor",
         "release",
@@ -11543,7 +11623,7 @@
       "summaryEn": "Claude Fable 5で見えてきた、「作るコストが下がるほど、作りたいものが増える」時代",
       "lang": "ja",
       "publishedAt": "2026-06-10T00:04:36.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "cursor",
         "zenn"
@@ -12352,7 +12432,7 @@
       "summaryEn": "With the 2027 software releases coming this fall, Apple is bringing powerful new features to services users.",
       "lang": "en",
       "publishedAt": "2026-06-09T13:00:15.876Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "apple",
         "news"
@@ -13112,7 +13192,7 @@
       "summaryEn": "Apple today introduced new intelligence capabilities, expanded productivity features in Xcode, and platform improvements.",
       "lang": "en",
       "publishedAt": "2026-06-08T21:00:15.643Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "apple",
         "news"
@@ -13259,7 +13339,7 @@
       "summaryEn": "Today, Apple previewed its upcoming software releases that will deliver the next generation of Apple Intelligence and introduce Siri AI.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:18:43.157Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "apple",
         "news"
@@ -13283,7 +13363,7 @@
       "summaryEn": "Apple unveils the next generation of Apple Intelligence, integrating powerful AI capabilities into iPhone, iPad, and Mac for more personal and helpful everyday experiences.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:17:44.449Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "apple",
         "news"
@@ -13307,7 +13387,7 @@
       "summaryEn": "Apple introduces Siri AI, a profoundly more capable and personal assistant powered by Apple Intelligence, with personal context, world knowledge, and onscreen awareness.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:15:52.996Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "apple",
         "news"
@@ -13331,7 +13411,7 @@
       "summaryEn": "Due to the Digital Markets Act, Apple will not be able to ship Siri AI in the European Union with the release of iOS 27 and iPadOS 27.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:13:26.639Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "apple",
         "news",
@@ -13356,7 +13436,7 @@
       "summaryEn": "New App Store capabilities will give developers more flexibility to market their apps, acquire users, and manage subscriptions.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:13:03.084Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "apple",
         "news"
@@ -13752,30 +13832,6 @@
       "bodyEn": "NVIDIA and LG Group Build an AI Factory to Advance Physical AI, Mobility and AI Infrastructure is a tech-news update collected from nvidia-blog. NVIDIA and LG Group are building an AI factory to accelerate LG Group’s next wave of AI-driven businesses, spanning robotics, autonomous driving, data center technologies and GPU cloud services. The A.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include agent, news, nvidia. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
-      "id": "236c3f31a62e6579",
-      "source": "zenn-llm",
-      "sourceType": "blog",
-      "url": "https://zenn.dev/neurestx/articles/76a0aceb19331b",
-      "title": "Codex CLIでGemma4を実行してみた",
-      "titleJa": "Codex CLIでGemma4を実行してみた",
-      "titleEn": "",
-      "summaryJa": "はじめに 初めまして。株式会社NeurestXの桑山です。 先日、 Ollama がCodex Appに対応するというニュースを見て、Codex 上でローカルLLMを動かすための検証を行いました。本来はCodex App上で動かす予定だった",
-      "summaryEn": "Codex CLIでGemma4を実行してみた",
-      "lang": "ja",
-      "publishedAt": "2026-06-08T03:00:07.000Z",
-      "collectedAt": "2026-06-08T22:00:19.762Z",
-      "tags": [
-        "llm",
-        "zenn"
-      ],
-      "category": "local-llm",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "hot",
-      "bodyJa": "Codex CLIでGemma4を実行してみた は、zenn-llm が伝えた local-llm 領域の更新です。はじめに 初めまして。株式会社NeurestXの桑山です。 先日、 Ollama がCodex Appに対応するというニュースを見て、Codex 上でローカルLLMを動かすための検証を行いました。本来はCodex App上で動かす予定だった。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは llm, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
-      "bodyEn": "The source item \"Codex CLIでGemma4を実行してみた\" is a local-llm update collected from zenn-llm. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include llm, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
-    },
-    {
       "id": "ac673e45c9d7da3a",
       "source": "zenn-copilot",
       "sourceType": "blog",
@@ -14005,31 +14061,6 @@
       "archiveTier": "hot",
       "bodyJa": "Zephyr RTOS 〜 Arduino Uno Q を VSCode でビルド・書き込み・デバッグ 〜 は、qiita-vscode が伝えた vscode 領域の更新です。1. はじめに この記事では、Arduino Uno Q に搭載されている STM32U585 を VSCode 上で開発する環境を紹介します。 2026年6月現時点では、Zephyr 公式ドキュメントには以下のように記載されており、実際の。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは qiita, vscode です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
       "bodyEn": "The source item \"Zephyr RTOS 〜 Arduino Uno Q を VSCode でビルド・書き込み・デバッグ 〜\" is a vscode update collected from qiita-vscode. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include qiita, vscode. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
-    },
-    {
-      "id": "9212dd90d98ad0ea",
-      "source": "zenn-llm",
-      "sourceType": "blog",
-      "url": "https://zenn.dev/elvisyao/articles/ae00088688620b",
-      "title": "RAGのfaithfulnessは0.67。それでも3回に1回間違っていた",
-      "titleJa": "RAGのfaithfulnessは0.67。それでも3回に1回間違っていた",
-      "titleEn": "",
-      "summaryJa": "この記事は英語版（dev.to）を原文とする日本語版です。 小さな日本語RAGシステムを作り、すべて自前のハードウェア（RTX 5090、Ollama）で動かし、生成モデルとは別の独立した判定モデルで評価しました。生成モデルに自分の答案を採",
-      "summaryEn": "RAGのfaithfulnessは0.67。それでも3回に1回間違っていた",
-      "lang": "ja",
-      "publishedAt": "2026-06-07T17:30:40.000Z",
-      "collectedAt": "2026-06-08T02:00:17.596Z",
-      "tags": [
-        "llm",
-        "rag",
-        "zenn"
-      ],
-      "category": "local-llm",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "hot",
-      "bodyJa": "RAGのfaithfulnessは0.67。それでも3回に1回間違っていた は、zenn-llm が伝えた local-llm 領域の更新です。この記事は英語版（dev.to）を原文とする日本語版です。 小さな日本語RAGシステムを作り、すべて自前のハードウェア（RTX 5090、Ollama）で動かし、生成モデルとは別の独立した判定モデルで評価しました。生成モデルに自分の答案を採。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは llm, rag, zenn です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
-      "bodyEn": "The source item \"RAGのfaithfulnessは0.67。それでも3回に1回間違っていた\" is a local-llm update collected from zenn-llm. The original summary for this entry is not available in English, so this note stays close to the collected metadata and avoids adding claims beyond the source.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include llm, rag, zenn. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "ed0ec4ab19efa0b0",
@@ -16408,7 +16439,7 @@
       "summaryEn": "Why edge AI development is still hard AI is no longer confined to cloud experiments. Developers are increasingly expected to deliver AI inside apps, devices, and edge systems where responsiveness, pri",
       "lang": "en",
       "publishedAt": "2026-06-04T13:00:24.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "ai",
         "foundry",
@@ -16550,7 +16581,7 @@
       "summaryEn": "Release 2026.6.3",
       "lang": "en",
       "publishedAt": "2026-06-04T01:19:41.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -16631,7 +16662,7 @@
       "summaryEn": "9 min read · June 3, 2026 · Sebastian Kohlmeier Shipping an AI agent is the easy part. Keeping it accurate, safe, and accountable in production is where teams get stuck. Agents are non-deterministic. ",
       "lang": "en",
       "publishedAt": "2026-06-03T22:44:01.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "ai",
@@ -17040,6 +17071,32 @@
       "bodyEn": "Lights Out, Systems On: Validating Instant Power Loss Readiness is a tech-news update collected from meta-engineering. We’re introducing Instantaneous PowerLoss Storm, a new testing paradigm within Meta’s infrastructure for handling and mitigating instant or zero-notice power loss in our data centers. We’re sharing: h.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include engineering, meta. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
+      "id": "37803898e498b24d",
+      "source": "microsoft-foundry",
+      "sourceType": "blog",
+      "url": "https://devblogs.microsoft.com/foundry/document-translation-build-2026/",
+      "title": "Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build",
+      "titleJa": "",
+      "titleEn": "Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build",
+      "summaryJa": "このエントリは microsoft-foundry から収集した copilot 領域の最新アップデートです。原題:「Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Learn how new Document Translation capabilities in Azure Translator, available in Foundry Tools, help developers translate images, PDFs, Office files, DITA, XLIFF, and future LLM-powered document work",
+      "lang": "en",
+      "publishedAt": "2026-06-03T17:00:00.000Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
+      "tags": [
+        "ai",
+        "foundry",
+        "microsoft"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "evergreen": true,
+      "bodyJa": "このエントリは microsoft-foundry から収集した copilot 領域の最新アップデートです。原題は「Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build」。このエントリは microsoft-foundry から収集した copilot 領域の最新アップデートです。原題:「Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは ai, foundry, microsoft です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build is a copilot update collected from microsoft-foundry. Learn how new Document Translation capabilities in Azure Translator, available in Foundry Tools, help developers translate images, PDFs, Office files, DITA, XLIFF, and future LLM-powered document work.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include ai, foundry, microsoft. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
       "id": "cc91996a80b78154",
       "source": "vscode-updates",
       "sourceType": "release",
@@ -17075,32 +17132,6 @@
       },
       "bodyJa": "Microsoft が Visual Studio Code のバージョン 1.123 を公開した。毎月ほぼ定期的にリリースされる VS Code のアップデートは、世界で最も広く使われるコードエディタのひとつとして開発者コミュニティから高い注目を集めており、今回のリリースもその例外ではないと見られる。\n\nVS Code 1.123 では、エディタコアの安定性向上に加え、AI 支援機能である GitHub Copilot との統合がさらに深化している可能性がある。近年の VS Code リリースでは、インライン補完の精度向上やチャット機能の拡充、エージェントモードの強化が繰り返し取り上げられてきた。1.123 でも同様の方向性が継続されると見るのが自然だろう。\n\nデバッグ体験の改善も注目ポイントのひとつだ。VS Code はマルチランタイム対応のデバッグアダプタープロトコル (DAP) を通じて Python、JavaScript/TypeScript、Go、Rust など幅広い言語のデバッグをサポートしており、各リリースでステップ実行の安定性や変数ウォッチの使い勝手が着実に向上してきた。\n\n拡張機能 API の拡張も開発者にとって見逃せない領域だ。VS Code の拡張機能エコシステムは 5 万件を超えるマーケットプレース公開数を誇り、Microsoft はリリースごとに新しい API サーフェスを提供して拡張機能作者の表現力を高めてきた。1.123 でも何らかの新規 API が追加されている可能性がある。\n\nVS Code は 2015 年に初公開されて以来、オープンソース (MIT ライセンス) として開発が進められており、月次リリースサイクルを維持しながら継続的に機能を拡充してきた。競合する JetBrains IDE 群や新興の Cursor、Zed といったエディタがシェアを争う中、Microsoft は Copilot エコシステムとの緊密な統合を最大の差別化要因として位置づけていると見られる。今後のリリースでもこの方向性が続くと考えるのが妥当だろう。公式リリースノートで各機能の詳細を確認し、自身のワークフローへの影響を把握しておくことが推奨される。",
       "bodyEn": "Microsoft has shipped Visual Studio Code 1.123, the latest in its near-monthly cadence of updates to one of the world's most widely used code editors. While the full changelog lives in the official release notes, each VS Code release has consistently delivered a mix of editor core improvements, AI-assisted coding enhancements, and expanded extension APIs — and 1.123 appears to follow that same pattern.\n\nGitHub Copilot integration continues to be a central theme across recent VS Code releases. Over the past year, Microsoft has steadily deepened the connection between the editor and its AI pair-programmer, adding inline suggestions, a persistent chat panel, and more recently an agent mode capable of multi-step autonomous edits. Version 1.123 likely carries further refinements in this area, though the precise scope would require consulting the official notes.\n\nDebugging improvements are another perennial focus. VS Code's debugger ecosystem is built on the open Debug Adapter Protocol (DAP), which allows a single UI to work across dozens of runtimes — Python, JavaScript, Go, Rust, and beyond. Each release tends to smooth out edge cases in step execution, variable inspection, and conditional breakpoints, quietly raising the floor for day-to-day debugging sessions.\n\nThe extension API surface is also worth watching. With more than 50,000 extensions listed in the VS Code Marketplace, third-party developers are deeply invested in each API addition Microsoft ships. New APIs unlock richer editor integrations, from custom tree views and webview panels to tighter language server interactions, and it's reasonable to expect incremental additions in 1.123 as well.\n\nZooming out, VS Code exists in an increasingly competitive landscape. JetBrains continues to push its family of language-specific IDEs, while newer entrants like Cursor and Zed are explicitly positioning themselves as AI-first alternatives. Microsoft's clearest counter is the depth of Copilot integration — a combination of first-party access to OpenAI models and tight editor-level hooks that third-party tools struggle to replicate out of the box. Each VS Code release reinforces that strategic bet.\n\nDevelopers running VS Code on stable channel will receive the 1.123 update through the built-in update mechanism. Reviewing the release notes before updating is a good habit, particularly for extension authors who need to track API changes that could affect published extensions. The full notes are available at the official VS Code website and provide the authoritative breakdown of every change shipped in this cycle."
-    },
-    {
-      "id": "37803898e498b24d",
-      "source": "microsoft-foundry",
-      "sourceType": "blog",
-      "url": "https://devblogs.microsoft.com/foundry/document-translation-build-2026/",
-      "title": "Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build",
-      "titleJa": "",
-      "titleEn": "Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build",
-      "summaryJa": "このエントリは microsoft-foundry から収集した copilot 領域の最新アップデートです。原題:「Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "Learn how new Document Translation capabilities in Azure Translator, available in Foundry Tools, help developers translate images, PDFs, Office files, DITA, XLIFF, and future LLM-powered document work",
-      "lang": "en",
-      "publishedAt": "2026-06-03T17:00:00.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
-      "tags": [
-        "ai",
-        "foundry",
-        "microsoft"
-      ],
-      "category": "copilot",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "evergreen": true,
-      "bodyJa": "このエントリは microsoft-foundry から収集した copilot 領域の最新アップデートです。原題は「Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build」。このエントリは microsoft-foundry から収集した copilot 領域の最新アップデートです。原題:「Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは ai, foundry, microsoft です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
-      "bodyEn": "Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build is a copilot update collected from microsoft-foundry. Learn how new Document Translation capabilities in Azure Translator, available in Foundry Tools, help developers translate images, PDFs, Office files, DITA, XLIFF, and future LLM-powered document work.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include ai, foundry, microsoft. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "c6cb8d772d1bbb31",
@@ -17255,7 +17286,7 @@
       "summaryEn": "Microsoft Foundry Managed Compute is a new GPU platform-as-a-service for hosting open-source and custom AI models behind the same endpoint, SDKs, and bill as frontier models. The post Announcing Found",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:54.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "ai",
         "foundry",
@@ -17281,7 +17312,7 @@
       "summaryEn": "With hosted agents, we made it straightforward to build and deploy agents on Foundry. You write your logic, run azd deploy, and your agent is live. But “live” and “production-ready” aren’t the same th",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:43.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "ai",
@@ -17308,7 +17339,7 @@
       "summaryEn": "Memory has always mattered for personalization and continuity. But as customers move agents from demos into production, another requirement becomes just as important: reliability. Enterprise teams nee",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:30.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "ai",
@@ -17336,7 +17367,7 @@
       "summaryEn": "Tooling doesn’t break at a small scale—it breaks when teams move to production. AI adoption accelerates, so does the number of tools available to them. Discovering, managing and securing the right too",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:15.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "ai",
         "foundry",
@@ -17362,7 +17393,7 @@
       "summaryEn": "The past year was about building agents. The next year is about putting them to work. Organizations have moved quickly from experimenting with AI agents to building ones that perform complex business ",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:04.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "ai",
@@ -18249,7 +18280,7 @@
       "summaryEn": "Dynamic Repartitioning for Time Series Workloads",
       "lang": "en",
       "publishedAt": "2026-06-03T02:05:05.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "engineering",
         "netflix"
@@ -18304,7 +18335,7 @@
       "summaryEn": "Azure Content Understanding (CU) in Foundry Tools is Microsoft’s comprehensive content AI service. It ingests diverse data types — documents, audio, images, and video — and extracts the most critical ",
       "lang": "en",
       "publishedAt": "2026-06-03T00:40:21.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "ai",
         "foundry",
@@ -19280,7 +19311,7 @@
       "summaryEn": "Learn a practical model lifecycle for Microsoft Foundry: select the right model, evaluate quality, optimize cost, operate safely, and improve as production needs change. The post A Developer’s Guide t",
       "lang": "en",
       "publishedAt": "2026-06-02T17:20:00.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "ai",
         "foundry",
@@ -20135,7 +20166,7 @@
       "summaryEn": "Project Glasswing is our collaborative effort to secure the world’s most important software. In early April, we announced that roughly 50 initial partners had access to Claude Mythos Preview, and sinc",
       "lang": "en",
       "publishedAt": "2026-06-02T00:00:00.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "anthropic",
         "claude"
@@ -23747,7 +23778,7 @@
       "summaryEn": "High-Throughput Graph Abstraction at Netflix: Part I",
       "lang": "en",
       "publishedAt": "2026-05-29T18:49:13.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "engineering",
         "netflix"
@@ -24148,7 +24179,7 @@
       "summaryEn": "This year marks the Apple Developer Academy in Detroit’s fifth commencement in collaboration with MSU and the Gilbert Family Foundation.",
       "lang": "en",
       "publishedAt": "2026-05-29T15:59:14.435Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "apple",
         "news",
@@ -24483,7 +24514,7 @@
       "summaryEn": "From Silos to Service Topology: Why Netflix Built a Real-Time Service Map",
       "lang": "en",
       "publishedAt": "2026-05-29T14:01:02.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "engineering",
         "netflix"
@@ -28875,7 +28906,7 @@
       "summaryEn": "We’re upgrading Claude Opus to a new version: Claude Opus 4.8. It builds on Opus 4.7 with improvements across benchmarks, and is a more effective collaborator. It’s available today for the same price.",
       "lang": "en",
       "publishedAt": "2026-05-28T00:00:00.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "anthropic",
         "claude",
@@ -32390,43 +32421,6 @@
       }
     },
     {
-      "id": "fd87edffabc01751",
-      "source": "qiita-vscode",
-      "sourceType": "blog",
-      "url": "https://qiita.com/y104autumn/items/95183d800ada3adc4fc3",
-      "title": "VS Code + GitHub Copilot + Java で開発環境がぶつかるポイントと回避策",
-      "titleJa": "VS Code + GitHub Copilot + Java で開発環境がぶつかるポイントと回避策",
-      "titleEn": "",
-      "summaryJa": "VS Code で Java 開発を行う際、GitHub Copilot を含む複数の拡張機能が競合しやすいポイントと、その回避策をまとめた実践的な解説記事。",
-      "summaryEn": "A practical guide covering common conflict points that arise when using VS Code, GitHub Copilot, and Java extensions together, along with concrete workarounds for each issue.",
-      "lang": "ja",
-      "publishedAt": "2026-05-26T15:52:23.000Z",
-      "collectedAt": "2026-05-27T10:00:35.160Z",
-      "tags": [
-        "qiita",
-        "vscode",
-        "java",
-        "github-copilot",
-        "extensions",
-        "developer-tooling",
-        "troubleshooting"
-      ],
-      "category": "copilot",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "hot",
-      "bodyJa": "VS Code で Java 開発を行う場合、Language Support for Java や Extension Pack for Java、そして GitHub Copilot が同時に稼働するため、補完候補の重複やインデックス処理の競合など、予期しない干渉が起きやすい環境になります。\n\n本記事はそうした「ぶつかるポイント」を整理し、設定変更や拡張機能の優先度調整といった具体的な回避策を提示していると推察されます。詳細な手順や設定値については元記事を参照して確認してください。\n\n2026年5月公開の情報であるため、各拡張機能のバージョンによっては挙動が異なる場合があります。自身の環境と照らし合わせながら適用することを推奨します。",
-      "bodyEn": "When developing Java applications in VS Code, multiple extensions—such as the Extension Pack for Java and GitHub Copilot—run concurrently. This can lead to interference in areas like code completion, background indexing, and diagnostics, making the development experience less predictable than in a dedicated IDE.\n\nThis article, published in May 2026, appears to catalog specific conflict points in this toolchain and offer practical workarounds such as adjusting extension settings, controlling activation order, or disabling overlapping features. The exact configurations and steps should be verified at the source, as behavior may vary depending on the versions of each extension installed.\n\nDevelopers who rely on Java in VS Code alongside AI-assisted coding tools like Copilot are likely to find the troubleshooting guidance useful for stabilizing their workflow.",
-      "image": {
-        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDQwNDc0OSUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc3Njc0NzkyMT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YzE4NzQzZmZmNmEyZWFiZDE2ZGVhZmU4YzczZDYxYjQ%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D22214c9a2fa71835e64888dcaf968132?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJTIwJTJCJTIwR2l0SHViJTIwQ29waWxvdCUyMCUyQiUyMEphdmElMjAlRTMlODElQTclRTklOTYlOEIlRTclOTklQkElRTclOTIlQjAlRTUlQTIlODMlRTMlODElOEMlRTMlODElQjYlRTMlODElQTQlRTMlODElOEIlRTMlODIlOEIlRTMlODMlOUQlRTMlODIlQTQlRTMlODMlQjMlRTMlODMlODglRTMlODElQTglRTUlOUIlOUUlRTklODElQkYlRTclQUQlOTYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz03NzM0MGQwNDA5ODdjYzdhODdjOTc4ZWIxNGRmYzI3OQ&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5MTA0YXV0dW1uJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9Mzc3NWRmMmIzZmYyNmUzMmM5ZWI2OGY4NDYyOWE5NDI&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=f19b1dae68f347b71726617e11786661",
-        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDQwNDc0OSUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc3Njc0NzkyMT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YzE4NzQzZmZmNmEyZWFiZDE2ZGVhZmU4YzczZDYxYjQ%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D22214c9a2fa71835e64888dcaf968132?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJTIwJTJCJTIwR2l0SHViJTIwQ29waWxvdCUyMCUyQiUyMEphdmElMjAlRTMlODElQTclRTklOTYlOEIlRTclOTklQkElRTclOTIlQjAlRTUlQTIlODMlRTMlODElOEMlRTMlODElQjYlRTMlODElQTQlRTMlODElOEIlRTMlODIlOEIlRTMlODMlOUQlRTMlODIlQTQlRTMlODMlQjMlRTMlODMlODglRTMlODElQTglRTUlOUIlOUUlRTklODElQkYlRTclQUQlOTYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz03NzM0MGQwNDA5ODdjYzdhODdjOTc4ZWIxNGRmYzI3OQ&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5MTA0YXV0dW1uJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9Mzc3NWRmMmIzZmYyNmUzMmM5ZWI2OGY4NDYyOWE5NDI&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=f19b1dae68f347b71726617e11786661",
-        "alt": "VS Code + GitHub Copilot + Java で開発環境がぶつかるポイントと回避策",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
       "id": "9fdbac3857e78b7d",
       "source": "techcrunch",
       "sourceType": "blog",
@@ -35138,7 +35132,7 @@
       "summaryEn": "On Monday May 25, 2026, Pope Leo XIV released an encyclical on the topic of AI: \"Magnifica humanitas: On safeguarding the human person in the time of artificial intelligence.\" Anthropic co-founder Chr",
       "lang": "en",
       "publishedAt": "2026-05-25T00:00:00.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "anthropic",
         "claude",
@@ -40045,7 +40039,7 @@
       "summaryEn": "Scaling ArchUnit with Nebula ArchRules",
       "lang": "en",
       "publishedAt": "2026-05-08T15:55:59.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "engineering",
         "netflix"
@@ -40617,7 +40611,7 @@
       "summaryEn": "Explore how AlphaEvolve's Gemini-powered algorithms are driving impact across business, infrastructure, and science.",
       "lang": "en",
       "publishedAt": "2026-05-06T10:43:49.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "deepmind",
@@ -40671,6 +40665,33 @@
       "bodyEn": "Cursor, the AI-assisted coding environment, has rolled out a Context Usage Breakdown feature that gives users a granular view of how their agent is consuming the model's context window. The addition is intended to make it easier to see, at a glance, exactly which components are filling up the available token budget during a session.\n\nIn LLM-based coding workflows, the size and composition of the context window have a direct bearing on response quality and reliability. System prompts, user prompts, attached files, prior conversation history, and the outputs of tool calls all draw from the same finite pool of tokens. The new breakdown surfaces the contribution of each of these categories individually, so developers can see whether, for example, a long chain of tool responses or a large attached file is dominating the window.\n\nThe feature appears aimed at users running longer agentic sessions or working inside large repositories, where context exhaustion can quietly degrade an agent's performance. Rather than guessing why an agent has begun to lose track of earlier instructions or repeat itself, developers can inspect the breakdown and identify which elements to trim, summarize, or detach. For agent-style workflows in particular, where iterative tool calls can accumulate verbose JSON payloads or command output, the visibility may prove useful for both debugging and cost control.\n\nThe move comes against a broader backdrop of expanding context windows across major frontier models. Anthropic's Claude family and OpenAI's GPT series have both pushed context lengths well into the hundreds of thousands of tokens, and some offerings now reach into the millions. Yet longer is not automatically better: the well-documented \"lost in the middle\" phenomenon shows that models tend to attend less reliably to information buried in the middle of very long inputs, and token costs scale with usage. As a result, simply pouring more content into the prompt is rarely an optimal strategy, and tooling that helps developers shape what goes into the window has become increasingly important.\n\nCompetitors in the AI coding space, including GitHub Copilot, Windsurf, and a growing number of open-source agent frameworks, have also been investing in better context management and transparency. Some expose retrieved file lists or indexing status; others let users pin or exclude specific files. Cursor's breakdown view fits within this broader trend toward making the previously opaque mechanics of prompt assembly more legible to end users.\n\nFor day-to-day use, the practical payoff is likely to be improved prompt and session hygiene. Developers can decide when to start a fresh chat instead of continuing a bloated one, choose smaller or more targeted file attachments, or adjust how aggressively they invoke tools that return large outputs. Teams managing usage-based billing may also find the data helpful for understanding which patterns of interaction are most token-intensive, and for setting internal guidelines around when to compact or reset agent sessions.\n\nCursor has not detailed exactly how the breakdown is computed or whether it will eventually feed into automated context-pruning behavior, but such an extension would be a natural next step. Several agent frameworks already experiment with automatic summarization of older turns or selective eviction of stale tool outputs once a threshold is crossed. If Cursor follows a similar path, the new breakdown view could serve as both a diagnostic surface for users and a foundation for more aggressive context-optimization features down the line.\n\nIn the near term, the change is a relatively modest but welcome quality-of-life improvement. It does not expand what the underlying models can do, but it gives developers clearer feedback about how their choices interact with model limits—an area that, as agentic coding tools mature, is becoming as important as raw model capability itself."
     },
     {
+      "id": "7538d03a3ae8d4b3",
+      "source": "openai-blog",
+      "sourceType": "blog",
+      "url": "https://openai.com/index/uber",
+      "title": "Uber uses OpenAI to help people earn smarter and book faster",
+      "titleJa": "UberがOpenAIを活用、ドライバーの収益向上と予約高速化を実現",
+      "titleEn": "Uber uses OpenAI to help people earn smarter and book faster",
+      "summaryJa": "UberはOpenAIの技術を業務に組み込み、ドライバーや配達員の収益機会を最適化するとともに、配車・配達の予約プロセスを高速化する取り組みを進めている。社内ツールと顧客体験の双方でAI活用を拡大している。",
+      "summaryEn": "Uber uses OpenAI to power AI assistants and voice features that help drivers earn smarter and riders book faster across a global real-time marketplace.",
+      "lang": "en",
+      "publishedAt": "2026-05-06T00:00:00.000Z",
+      "collectedAt": "2026-06-18T07:00:00.721Z",
+      "tags": [
+        "openai",
+        "uber",
+        "ride-sharing",
+        "enterprise-ai",
+        "partnership"
+      ],
+      "category": "codex",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "配車・配達大手のUberが、OpenAIの基盤モデルを自社サービスに本格的に組み込み、ドライバーや配達員の収益機会の最適化と、ユーザーの予約体験の高速化を進めていることが明らかになった。プラットフォーム型ビジネスにおけるAI実装の代表事例として注目される。\n\nUberはこれまでも機械学習を需要予測やマッチング、ETA算出などに広く活用してきたが、今回の取り組みでは生成AIを通じてドライバー向けのガイダンスやサポート体験を強化するものと見られる。具体的には、稼働ピーク時間帯やエリアの提示、収益を伸ばすための推奨アクションの提供などが想定される。\n\n一方の利用者側では、配車・フードデリバリーの予約フローにおいて、自然言語によるリクエスト処理やレコメンドの精度向上を通じて、入力ステップの削減や検索の効率化を図る方向と推測される。Uber Eatsでのメニュー検索や、複雑な行先指定への対応などはAIの恩恵を受けやすい領域だ。\n\n背景として、ライドシェア業界ではLyftや海外のDiDi、Grabなども生成AI活用を加速しており、社内開発者向けのコーディング支援から顧客サポート自動化まで適用範囲が広がっている。OpenAIにとっても、世界規模で稼働する大規模オペレーション企業との連携は、現実世界のワークフローにモデルを組み込む実証の場となる。\n\nプラットフォーム事業者にとってAIは、サプライ側(ドライバー)の生産性とデマンド側(利用者)の利便性を同時に底上げできる数少ないレバーであり、UberとOpenAIの協業はこの領域における今後のベンチマークとなる可能性がある。",
+      "bodyEn": "Ride-hailing and delivery giant Uber is deepening its integration of OpenAI's foundation models across its platform, in an effort to optimize earnings opportunities for drivers and couriers while accelerating the booking experience for riders and diners. The collaboration stands out as a notable case study in how large-scale, two-sided marketplaces are operationalizing generative AI.\n\nUber has long relied on machine learning for core functions such as demand forecasting, matching riders with drivers, calculating ETAs, and optimizing routes. The latest initiative appears to extend that foundation by layering generative AI on top of driver-facing tools, with the aim of providing more conversational guidance and support. In practice, this could include surfacing peak demand windows, suggesting high-opportunity zones, and offering personalized recommendations on actions drivers can take to increase weekly earnings. Such guidance has historically been delivered through static dashboards or rule-based notifications; large language models open the door to more contextual, dialog-based interactions.\n\nOn the consumer side, the company is reportedly working to streamline the booking flow for both rides and food delivery by improving natural-language understanding and recommendation quality. The goal appears to be reducing the number of taps and form fields required to complete a request, while making search results more relevant. Uber Eats, in particular, may benefit from generative AI in areas such as menu exploration, dietary-aware recommendations, and handling complex queries — for example, ordering from multiple cuisines for a group, or specifying nuanced pickup and drop-off instructions in a single utterance.\n\nThe partnership also reflects broader competitive dynamics in the mobility sector. Rivals including Lyft in the United States, along with DiDi in China and Grab in Southeast Asia, have been ramping up their own generative AI investments, spanning internal developer productivity tools, automated customer support, and AI-assisted driver onboarding. Customer service in particular has become an early target, since the high volume and relatively bounded nature of support interactions lend themselves well to LLM-based automation.\n\nFor OpenAI, the deal carries strategic weight beyond a single enterprise win. Uber operates one of the world's largest real-time logistics networks, processing millions of trips and deliveries per day across dozens of countries. Embedding models into that environment provides a high-stakes proving ground for how foundation models perform when wired into latency-sensitive, transaction-heavy workflows — a very different challenge from the chat-style applications that have dominated early enterprise deployments. Lessons from such an integration could inform how OpenAI tunes its products for other operations-heavy customers in retail, travel, and logistics.\n\nThe move also fits a wider pattern in which platform businesses view AI as one of the few levers that can simultaneously raise productivity on the supply side and improve convenience on the demand side. For Uber, drivers who earn more efficiently are more likely to stay active on the platform, which in turn improves liquidity and wait times for riders. Generative AI tools that personalize guidance to individual driver patterns, or that reduce friction in the rider funnel, could compound these effects over time.\n\nDetails on which specific OpenAI models are being used, and the exact scope of deployment, have not been fully disclosed. It remains to be seen how Uber will balance generative AI features against its existing in-house ML stack, and how it will manage issues such as hallucination, latency, and cost at the scale of its global operations. Still, the announcement signals that AI is moving from back-end optimization into the primary user experience for one of the most widely used apps in the world, and the Uber–OpenAI collaboration may well become a reference point for how marketplace platforms adopt foundation models in the years ahead."
+    },
+    {
       "id": "00106b048095bbeb",
       "source": "huggingface-blog",
       "sourceType": "blog",
@@ -40698,33 +40719,6 @@
       "archiveTier": "warm",
       "bodyJa": "Hugging Faceが運営するOpen ASR Leaderboardに、ベンチマーク不正最適化（benchmaxxing）対策として非公開のテストデータセットが追加された。音声認識モデルの真の汎化性能を測る上で重要な改善である。\n\nOpen ASR Leaderboardは、LibriSpeechやCommon Voice、TED-LIUMなど複数の公開データセットでWord Error Rate（WER）を比較する代表的な評価基盤として知られる。しかし公開データセットには根本的な弱点があり、開発者がテストセットの内容を見て調整したり、訓練データに混入させたりすることで、実用環境では再現しない高スコアを得られてしまう。これが「benchmaxxing」と呼ばれる問題である。\n\n今回導入された非公開テストセットは、リーダーボードの運営者のみが保持し、提出されたモデルを内部で評価する仕組みと見られる。これにより、公開ベンチマークに過学習したモデルと、汎化性能の高いモデルとを区別できるようになる。記事では、複数モデルを公開データと非公開データで比較した結果、ランキングが入れ替わる事例も示されている可能性が高い。\n\n背景として、ASR領域ではOpenAIのWhisper、NVIDIAのCanaryやParakeet、AssemblyAIのUniversalなど、商用・オープン双方で競争が激化している。一方でLLM分野でも、MMLUやHumanEvalといった主要ベンチマークでの汚染（contamination）が長く議論されており、ScaleAIのSEAL Leaderboardのように非公開評価を採用する流れが広がっている。今回のOpen ASR Leaderboardの方針転換は、このトレンドを音声分野に持ち込むものといえる。\n\nユーザーや研究者にとっては、モデル選定の信頼性が向上する一方、提出側はモデルウェイトや推論コードを運営に渡す必要があるため、クローズドな商用APIをどう扱うかは今後の運用課題となるだろう。",
       "bodyEn": "Hugging Face has updated its Open ASR Leaderboard with a private, held-out test set, an effort framed as a defense against the increasingly common practice of optimizing models specifically for public benchmarks — sometimes called \"benchmaxxing.\" The change is intended to give a clearer picture of how speech recognition systems actually generalize beyond the datasets that researchers and engineers have come to know intimately.\n\nThe Open ASR Leaderboard has, over the past few years, become one of the de facto reference points for comparing automatic speech recognition models. It aggregates Word Error Rate (WER) scores across a battery of public corpora including LibriSpeech, Common Voice, TED-LIUM, GigaSpeech, SPGISpeech, VoxPopuli, Earnings-22 and AMI. While that breadth helps, all of those datasets share a common vulnerability: their test splits are downloadable. Developers can inspect failure cases, tune decoding heuristics around known quirks, or — intentionally or not — let test audio leak into training pipelines. The result is leaderboard scores that do not always translate to production performance.\n\nThe newly added private evaluation reportedly consists of test data held only by the leaderboard maintainers, with submitted models scored internally rather than against publicly accessible audio and transcripts. According to the post, comparing the same models on public versus private data surfaces meaningful re-orderings: systems that look state-of-the-art on familiar benchmarks do not necessarily retain their lead when faced with audio they could not have seen during development. That gap is precisely the signal a leaderboard is supposed to provide.\n\nThe move mirrors a broader shift across machine learning evaluation. In the LLM world, contamination of benchmarks such as MMLU, GSM8K and HumanEval has been a recurring concern, and projects like Scale AI's SEAL Leaderboard, LMSYS's arena-style human preference evaluations, and various private-eval initiatives have emerged in response. Speech recognition has historically been somewhat insulated from this dynamic because acoustic data is harder to memorize incidentally than text, but as ASR models trend toward general-purpose audio foundation models trained on web-scale corpora, the same contamination risks apply. Whisper-style training recipes that scrape thousands of hours from the open internet can easily ingest portions of public test sets without the developers realizing it.\n\nThe competitive backdrop helps explain why the maintainers see this as urgent. The ASR field has grown crowded with strong entrants: OpenAI's Whisper family remains a baseline, while NVIDIA has pushed Canary and Parakeet to the top of public rankings, AssemblyAI has promoted its Universal models, and a steady stream of open-weight releases from labs such as Mistral-affiliated efforts and Chinese research groups continue to claim incremental WER wins. When fractions of a percentage point determine bragging rights, the incentive to overfit to the leaderboard — even unconsciously — grows accordingly.\n\nFor practitioners choosing a model, a private evaluation track should make the rankings more trustworthy as a proxy for real-world deployment. For model providers, however, it introduces logistical friction. Submitting to a private benchmark typically requires handing over model weights or, at minimum, an inference container that the maintainers can run on held-out audio. That is straightforward for open-weight releases but awkward for closed commercial APIs, which may need bespoke arrangements or rate-limited endpoints. How the leaderboard handles proprietary systems — and whether vendors such as Deepgram, AssemblyAI, Google, or Microsoft will participate on equal footing — is likely to shape its long-term credibility.\n\nThere are also open methodological questions. A single private set can itself become stale or biased toward particular acoustic conditions, and rotating it periodically introduces its own comparability problems. The maintainers will need to balance freshness, domain coverage (telephony, broadcast, conversational, accented speech) and reproducibility. Even so, the direction of travel is clear: as foundation models absorb more of the open web, evaluation infrastructure has to move in the opposite direction, holding back data the models cannot have seen. The Open ASR Leaderboard's update brings speech recognition in line with that emerging norm, and may pressure other audio benchmarks to follow."
-    },
-    {
-      "id": "7538d03a3ae8d4b3",
-      "source": "openai-blog",
-      "sourceType": "blog",
-      "url": "https://openai.com/index/uber",
-      "title": "Uber uses OpenAI to help people earn smarter and book faster",
-      "titleJa": "UberがOpenAIを活用、ドライバーの収益向上と予約高速化を実現",
-      "titleEn": "Uber uses OpenAI to help people earn smarter and book faster",
-      "summaryJa": "UberはOpenAIの技術を業務に組み込み、ドライバーや配達員の収益機会を最適化するとともに、配車・配達の予約プロセスを高速化する取り組みを進めている。社内ツールと顧客体験の双方でAI活用を拡大している。",
-      "summaryEn": "Uber uses OpenAI to power AI assistants and voice features that help drivers earn smarter and riders book faster across a global real-time marketplace.",
-      "lang": "en",
-      "publishedAt": "2026-05-06T00:00:00.000Z",
-      "collectedAt": "2026-06-18T07:00:00.721Z",
-      "tags": [
-        "openai",
-        "uber",
-        "ride-sharing",
-        "enterprise-ai",
-        "partnership"
-      ],
-      "category": "codex",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "bodyJa": "配車・配達大手のUberが、OpenAIの基盤モデルを自社サービスに本格的に組み込み、ドライバーや配達員の収益機会の最適化と、ユーザーの予約体験の高速化を進めていることが明らかになった。プラットフォーム型ビジネスにおけるAI実装の代表事例として注目される。\n\nUberはこれまでも機械学習を需要予測やマッチング、ETA算出などに広く活用してきたが、今回の取り組みでは生成AIを通じてドライバー向けのガイダンスやサポート体験を強化するものと見られる。具体的には、稼働ピーク時間帯やエリアの提示、収益を伸ばすための推奨アクションの提供などが想定される。\n\n一方の利用者側では、配車・フードデリバリーの予約フローにおいて、自然言語によるリクエスト処理やレコメンドの精度向上を通じて、入力ステップの削減や検索の効率化を図る方向と推測される。Uber Eatsでのメニュー検索や、複雑な行先指定への対応などはAIの恩恵を受けやすい領域だ。\n\n背景として、ライドシェア業界ではLyftや海外のDiDi、Grabなども生成AI活用を加速しており、社内開発者向けのコーディング支援から顧客サポート自動化まで適用範囲が広がっている。OpenAIにとっても、世界規模で稼働する大規模オペレーション企業との連携は、現実世界のワークフローにモデルを組み込む実証の場となる。\n\nプラットフォーム事業者にとってAIは、サプライ側(ドライバー)の生産性とデマンド側(利用者)の利便性を同時に底上げできる数少ないレバーであり、UberとOpenAIの協業はこの領域における今後のベンチマークとなる可能性がある。",
-      "bodyEn": "Ride-hailing and delivery giant Uber is deepening its integration of OpenAI's foundation models across its platform, in an effort to optimize earnings opportunities for drivers and couriers while accelerating the booking experience for riders and diners. The collaboration stands out as a notable case study in how large-scale, two-sided marketplaces are operationalizing generative AI.\n\nUber has long relied on machine learning for core functions such as demand forecasting, matching riders with drivers, calculating ETAs, and optimizing routes. The latest initiative appears to extend that foundation by layering generative AI on top of driver-facing tools, with the aim of providing more conversational guidance and support. In practice, this could include surfacing peak demand windows, suggesting high-opportunity zones, and offering personalized recommendations on actions drivers can take to increase weekly earnings. Such guidance has historically been delivered through static dashboards or rule-based notifications; large language models open the door to more contextual, dialog-based interactions.\n\nOn the consumer side, the company is reportedly working to streamline the booking flow for both rides and food delivery by improving natural-language understanding and recommendation quality. The goal appears to be reducing the number of taps and form fields required to complete a request, while making search results more relevant. Uber Eats, in particular, may benefit from generative AI in areas such as menu exploration, dietary-aware recommendations, and handling complex queries — for example, ordering from multiple cuisines for a group, or specifying nuanced pickup and drop-off instructions in a single utterance.\n\nThe partnership also reflects broader competitive dynamics in the mobility sector. Rivals including Lyft in the United States, along with DiDi in China and Grab in Southeast Asia, have been ramping up their own generative AI investments, spanning internal developer productivity tools, automated customer support, and AI-assisted driver onboarding. Customer service in particular has become an early target, since the high volume and relatively bounded nature of support interactions lend themselves well to LLM-based automation.\n\nFor OpenAI, the deal carries strategic weight beyond a single enterprise win. Uber operates one of the world's largest real-time logistics networks, processing millions of trips and deliveries per day across dozens of countries. Embedding models into that environment provides a high-stakes proving ground for how foundation models perform when wired into latency-sensitive, transaction-heavy workflows — a very different challenge from the chat-style applications that have dominated early enterprise deployments. Lessons from such an integration could inform how OpenAI tunes its products for other operations-heavy customers in retail, travel, and logistics.\n\nThe move also fits a wider pattern in which platform businesses view AI as one of the few levers that can simultaneously raise productivity on the supply side and improve convenience on the demand side. For Uber, drivers who earn more efficiently are more likely to stay active on the platform, which in turn improves liquidity and wait times for riders. Generative AI tools that personalize guidance to individual driver patterns, or that reduce friction in the rider funnel, could compound these effects over time.\n\nDetails on which specific OpenAI models are being used, and the exact scope of deployment, have not been fully disclosed. It remains to be seen how Uber will balance generative AI features against its existing in-house ML stack, and how it will manage issues such as hallucination, latency, and cost at the scale of its global operations. Still, the announcement signals that AI is moving from back-end optimization into the primary user experience for one of the most widely used apps in the world, and the Uber–OpenAI collaboration may well become a reference point for how marketplace platforms adopt foundation models in the years ahead."
     },
     {
       "id": "9e0fc25d14481b1f",
@@ -40937,7 +40931,7 @@
       "summaryEn": "Democratizing Machine Learning at Netflix: Building the Model Lifecycle Graph",
       "lang": "en",
       "publishedAt": "2026-05-04T16:01:02.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "engineering",
         "netflix"
@@ -41087,7 +41081,7 @@
       "summaryEn": "State of Routing in Model Serving",
       "lang": "en",
       "publishedAt": "2026-05-01T21:03:13.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "engineering",
         "netflix"
@@ -41262,7 +41256,7 @@
       "summaryEn": "Researching the path to AI-augmented care and development of an AI co-clinician.",
       "lang": "en",
       "publishedAt": "2026-04-30T12:14:15.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -41820,7 +41814,7 @@
       "summaryEn": "Google DeepMind and Korea partner to accelerate scientific breakthroughs using frontier AI models",
       "lang": "en",
       "publishedAt": "2026-04-27T07:00:06.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -42068,7 +42062,7 @@
       "summaryEn": "Decoupled DiLoCo: A new frontier for resilient, distributed AI training",
       "lang": "en",
       "publishedAt": "2026-04-22T10:20:03.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -42442,6 +42436,33 @@
       "bodyEn": "OpenAI announced GPT-Rosalind in April 2026, positioning it as a frontier reasoning model purpose-built for life sciences research. The name likely pays homage to Rosalind Franklin, the scientist whose X-ray crystallography work was pivotal to discovering the structure of DNA. According to the available context, the model is designed to support drug discovery, genomics analysis, protein reasoning, and scientific research workflows more broadly.\n\nUnlike general-purpose models, GPT-Rosalind appears tailored to handle the specialized reasoning demands of biology and medicine—though precise benchmark figures, pricing, and access details have not been confirmed in the collected context here. Readers should consult the official OpenAI announcement page for authoritative technical specifications, availability, and any partnership or API access information."
     },
     {
+      "id": "bacc77ede4c24fc8",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/claude-opus-4-7",
+      "title": "Introducing Claude Opus 4.7",
+      "titleJa": "Anthropic、Claude Opus 4.7を発表 — 推論とコーディング性能を強化",
+      "titleEn": "Introducing Claude Opus 4.7",
+      "summaryJa": "Anthropicがフラッグシップモデル Claude Opus 4.7 を公開した。推論、長文処理、エージェント的タスクの精度を高め、コーディングや複雑な業務自動化での実用性を引き上げたとされる。API および Claude.ai から利用可能になる見込み。",
+      "summaryEn": "Our latest model, Claude Opus 4.7, is now generally available. Opus 4.7 is a notable improvement on Opus 4.6 in advanced software engineering, with particular gains on the most difficult tasks. Users ",
+      "lang": "en",
+      "publishedAt": "2026-04-16T00:00:00.000Z",
+      "collectedAt": "2026-05-28T16:00:08.575Z",
+      "tags": [
+        "anthropic",
+        "claude",
+        "claude-opus",
+        "llm",
+        "agentic-coding"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "Anthropic はフラッグシップ大規模言語モデルの新バージョンとして Claude Opus 4.7 を公開した。Opus 系列は同社のラインアップで最も高性能な層に位置づけられ、研究開発・コーディング・エージェント用途を主な想定としている。\n\n発表によれば、4.7 は推論の堅牢性、長い文脈における一貫性、ツール使用を伴うエージェントタスクでの完遂率といった領域で改善が図られたと見られる。特にコーディングではマルチファイルのリファクタリングやテスト駆動的な作業での安定性が課題とされてきたが、Opus 系では Claude Code などの公式エージェント環境との組み合わせで長時間自律実行できる点を強みとしてきており、4.7 はその延長線上の改良版と位置付けられる可能性が高い。\n\n背景として、フロンティアモデル市場は OpenAI の GPT-5 系、Google の Gemini 2.5/3 系、xAI の Grok 4 などが激しく競合しており、ベンチマーク上の優位性は数か月単位で入れ替わっている。Anthropic は SWE-bench や Terminal-Bench など実務寄りのコーディング評価で上位を占めることを重視してきており、4.7 でも同様の指標で訴求してくるものと見られる。\n\nまた、Opus はコスト面では Sonnet/Haiku より高価な層であるため、用途は「高難度の推論や長尺タスクには Opus、日常的な処理は Sonnet」という使い分けが定着しつつある。エンタープライズ側では Bedrock、Vertex AI 経由での提供も継続される可能性が高く、既存の Claude API 利用者は呼び出すモデル ID を切り替えるだけで移行できる構成になると考えられる。\n\n安全性については、Anthropic は Responsible Scaling Policy に基づく事前評価と System Card の公開を慣例としており、4.7 についても同様のドキュメントが順次公開されるものと予想される。実利用での性能改善幅や価格設定については、公式ドキュメントとサードパーティのベンチマーク結果を併せて確認することが推奨される。",
+      "bodyEn": "Anthropic has announced Claude Opus 4.7, the latest iteration of its top-tier large language model. The Opus line sits at the high end of Anthropic's lineup, aimed at demanding workloads such as research, software engineering and long-running agentic tasks where capability matters more than per-token cost.\n\nBased on the announcement, 4.7 is positioned as a refinement focused on reasoning robustness, long-context coherence and reliability when the model is driving multi-step tool use. While exact benchmark deltas should be confirmed against the official model card, Anthropic has consistently emphasised real-world coding evaluations like SWE-bench Verified and Terminal-Bench, and 4.7 is likely to be pitched along similar lines. Improvements in autonomous coding sessions — where the model edits files, runs tests and iterates over hours — appear to be a recurring theme for the Opus family.\n\nThe release lands in an unusually crowded frontier-model market. OpenAI's GPT-5 series, Google's Gemini 2.5 and 3 lines, and xAI's Grok 4 have all traded leaderboard positions over the past several months, and the gap between releases has compressed to weeks rather than quarters. Anthropic's differentiator has tended to be agentic coding behaviour, particularly in combination with first-party tooling such as Claude Code and the Anthropic-hosted Computer Use APIs. A point release like 4.7, rather than a full version bump, suggests targeted improvements in those workflows rather than a wholesale architectural change, though the company has not always disclosed such details.\n\nFor developers, the practical pattern of using Opus for hard reasoning and long-horizon work while routing routine traffic to Sonnet or Haiku is likely to remain unchanged. Distribution through Amazon Bedrock and Google Vertex AI is expected to continue alongside the direct Anthropic API and Claude.ai, so migration for existing customers should largely amount to switching the model identifier in API calls. Pricing for Opus tiers has historically been a meaningful step up from Sonnet, and buyers should weigh that against the measured uplift on their own workloads rather than headline benchmarks alone.\n\nOn safety, Anthropic typically publishes a system card and pre-deployment evaluations under its Responsible Scaling Policy, covering areas such as cyber-offence, biosecurity-related uplift and autonomous replication risks. A comparable document for 4.7 can reasonably be expected, and it tends to be the most informative source for understanding where the model genuinely improved and where capability gains were intentionally constrained. As always, teams adopting a new frontier model should validate behaviour on their own evaluation suites before promoting it to production traffic."
+    },
+    {
       "id": "597a97a3fbbbdf74",
       "source": "huggingface-blog",
       "sourceType": "blog",
@@ -42524,33 +42545,6 @@
       "archiveTier": "warm",
       "bodyJa": "Hugging Faceが公開した本記事は、Sentence Transformersライブラリを用いてテキストと画像を共通の埋め込み空間に写像するマルチモーダルモデル、および検索結果を並べ替える再ランカー(クロスエンコーダ)を学習・微調整する手順を解説するものである。RAGや画像検索の実装で需要が高まっている領域であり、実装上の勘所を体系的にまとめた内容となっている。\n\n記事ではまず、CLIPに代表されるビジョン言語モデルをバックボーンに据え、Sentence TransformersのTrainer APIで扱う構成を示す。データセットはテキストとペアになる画像、もしくはトリプレット(アンカー・正例・負例)を用意し、MultipleNegativesRankingLossなど対照学習系の損失で最適化する流れが中心となる。再ランカー側はCrossEncoderTrainerを用い、クエリと候補(テキストや画像)を同時に入力してスコアを直接予測する設計で、検索の二段階パイプラインにおける精度向上を担う。\n\n評価面では、Recall@kやNDCGなどの情報検索指標を組み込んだEvaluatorクラスを利用し、学習中にバリデーションを行える。Hugging Face Hubへのモデル公開や、PEFT・量子化と組み合わせた省リソース学習にも触れられていると見られる。\n\n背景として、Sentence Transformersはv3以降でTransformersのTrainer統合や複数データセット同時学習に対応し、v5系ではスパース埋め込みやリランカー学習機能が拡充されてきた。マルチモーダル対応はその延長線上にあり、JinaやNomic、CohereなどがマルチモーダルEmbedding APIを展開する潮流とも符合する。社内データでドメイン特化のCLIP系モデルを微調整したい開発者にとって、本記事は実用的な出発点となる可能性がある。",
       "bodyEn": "Hugging Face has published a detailed walkthrough on how to train and finetune multimodal embedding models and rerankers using the Sentence Transformers library. As retrieval-augmented generation and cross-modal search become standard components of modern AI stacks, having an opinionated, end-to-end recipe for adapting text-image models to custom domains addresses a clear practitioner need.\n\nThe core of the article centers on using vision-language backbones such as CLIP within the Sentence Transformers framework, leveraging its Trainer API that builds on Hugging Face Transformers. For bi-encoder embedding models, the typical setup pairs text with images (or constructs anchor/positive/negative triplets) and optimizes a contrastive objective such as MultipleNegativesRankingLoss, pulling matched pairs together in a shared embedding space while pushing unrelated samples apart. The piece highlights how dataset format, batch composition, and in-batch negatives materially affect retrieval quality.\n\nFor rerankers, the post turns to the CrossEncoder side of the library. Unlike bi-encoders, cross-encoders jointly process the query and candidate — which can now include images — to predict a relevance score directly. This is the second stage in a typical retrieve-then-rerank pipeline, where a fast embedding model fetches candidates and a heavier cross-encoder reorders them for higher precision. The article walks through CrossEncoderTrainer usage, loss choices, and how to feed multimodal inputs through the model.\n\nEvaluation is treated as a first-class concern. Sentence Transformers ships Evaluator classes that compute information retrieval metrics like Recall@k, MRR, and NDCG during training, allowing developers to track progress on held-out queries instead of relying solely on training loss. The blog likely also touches on pushing trained checkpoints to the Hugging Face Hub and integrating efficiency techniques such as PEFT adapters or quantization, although exact coverage may vary.\n\nIn terms of broader context, Sentence Transformers has evolved rapidly: version 3 introduced tight integration with the Transformers Trainer and multi-dataset training, while the v5 line expanded support for sparse embeddings and reranker training. Multimodal training fits naturally into that trajectory. The wider ecosystem is moving in the same direction, with providers like Jina AI, Nomic, Voyage, and Cohere offering multimodal embedding APIs, and open models such as SigLIP and ColPali pushing the quality frontier for image-text and document retrieval.\n\nFor teams that need domain-specific behavior — product catalogs, medical imagery, technical diagrams, or screenshots — off-the-shelf CLIP variants often underperform, and finetuning on in-domain pairs tends to deliver outsized gains. By consolidating the training loop, losses, evaluators, and Hub publishing into a single library, Sentence Transformers lowers the barrier to producing competitive in-house multimodal retrievers and rerankers. Readers building search or RAG systems that mix text and images will likely find this guide a practical starting point, though production deployments will still require careful attention to data curation, hard-negative mining, and latency trade-offs between bi-encoder and cross-encoder stages."
-    },
-    {
-      "id": "bacc77ede4c24fc8",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/claude-opus-4-7",
-      "title": "Introducing Claude Opus 4.7",
-      "titleJa": "Anthropic、Claude Opus 4.7を発表 — 推論とコーディング性能を強化",
-      "titleEn": "Introducing Claude Opus 4.7",
-      "summaryJa": "Anthropicがフラッグシップモデル Claude Opus 4.7 を公開した。推論、長文処理、エージェント的タスクの精度を高め、コーディングや複雑な業務自動化での実用性を引き上げたとされる。API および Claude.ai から利用可能になる見込み。",
-      "summaryEn": "Our latest model, Claude Opus 4.7, is now generally available. Opus 4.7 is a notable improvement on Opus 4.6 in advanced software engineering, with particular gains on the most difficult tasks. Users ",
-      "lang": "en",
-      "publishedAt": "2026-04-16T00:00:00.000Z",
-      "collectedAt": "2026-05-28T16:00:08.575Z",
-      "tags": [
-        "anthropic",
-        "claude",
-        "claude-opus",
-        "llm",
-        "agentic-coding"
-      ],
-      "category": "claude",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "bodyJa": "Anthropic はフラッグシップ大規模言語モデルの新バージョンとして Claude Opus 4.7 を公開した。Opus 系列は同社のラインアップで最も高性能な層に位置づけられ、研究開発・コーディング・エージェント用途を主な想定としている。\n\n発表によれば、4.7 は推論の堅牢性、長い文脈における一貫性、ツール使用を伴うエージェントタスクでの完遂率といった領域で改善が図られたと見られる。特にコーディングではマルチファイルのリファクタリングやテスト駆動的な作業での安定性が課題とされてきたが、Opus 系では Claude Code などの公式エージェント環境との組み合わせで長時間自律実行できる点を強みとしてきており、4.7 はその延長線上の改良版と位置付けられる可能性が高い。\n\n背景として、フロンティアモデル市場は OpenAI の GPT-5 系、Google の Gemini 2.5/3 系、xAI の Grok 4 などが激しく競合しており、ベンチマーク上の優位性は数か月単位で入れ替わっている。Anthropic は SWE-bench や Terminal-Bench など実務寄りのコーディング評価で上位を占めることを重視してきており、4.7 でも同様の指標で訴求してくるものと見られる。\n\nまた、Opus はコスト面では Sonnet/Haiku より高価な層であるため、用途は「高難度の推論や長尺タスクには Opus、日常的な処理は Sonnet」という使い分けが定着しつつある。エンタープライズ側では Bedrock、Vertex AI 経由での提供も継続される可能性が高く、既存の Claude API 利用者は呼び出すモデル ID を切り替えるだけで移行できる構成になると考えられる。\n\n安全性については、Anthropic は Responsible Scaling Policy に基づく事前評価と System Card の公開を慣例としており、4.7 についても同様のドキュメントが順次公開されるものと予想される。実利用での性能改善幅や価格設定については、公式ドキュメントとサードパーティのベンチマーク結果を併せて確認することが推奨される。",
-      "bodyEn": "Anthropic has announced Claude Opus 4.7, the latest iteration of its top-tier large language model. The Opus line sits at the high end of Anthropic's lineup, aimed at demanding workloads such as research, software engineering and long-running agentic tasks where capability matters more than per-token cost.\n\nBased on the announcement, 4.7 is positioned as a refinement focused on reasoning robustness, long-context coherence and reliability when the model is driving multi-step tool use. While exact benchmark deltas should be confirmed against the official model card, Anthropic has consistently emphasised real-world coding evaluations like SWE-bench Verified and Terminal-Bench, and 4.7 is likely to be pitched along similar lines. Improvements in autonomous coding sessions — where the model edits files, runs tests and iterates over hours — appear to be a recurring theme for the Opus family.\n\nThe release lands in an unusually crowded frontier-model market. OpenAI's GPT-5 series, Google's Gemini 2.5 and 3 lines, and xAI's Grok 4 have all traded leaderboard positions over the past several months, and the gap between releases has compressed to weeks rather than quarters. Anthropic's differentiator has tended to be agentic coding behaviour, particularly in combination with first-party tooling such as Claude Code and the Anthropic-hosted Computer Use APIs. A point release like 4.7, rather than a full version bump, suggests targeted improvements in those workflows rather than a wholesale architectural change, though the company has not always disclosed such details.\n\nFor developers, the practical pattern of using Opus for hard reasoning and long-horizon work while routing routine traffic to Sonnet or Haiku is likely to remain unchanged. Distribution through Amazon Bedrock and Google Vertex AI is expected to continue alongside the direct Anthropic API and Claude.ai, so migration for existing customers should largely amount to switching the model identifier in API calls. Pricing for Opus tiers has historically been a meaningful step up from Sonnet, and buyers should weigh that against the measured uplift on their own workloads rather than headline benchmarks alone.\n\nOn safety, Anthropic typically publishes a system card and pre-deployment evaluations under its Responsible Scaling Policy, covering areas such as cyber-offence, biosecurity-related uplift and autonomous replication risks. A comparable document for 4.7 can reasonably be expected, and it tends to be the most informative source for understanding where the model genuinely improved and where capability gains were intentionally constrained. As always, teams adopting a new frontier model should validate behaviour on their own evaluation suites before promoting it to production traffic."
     },
     {
       "id": "9a2667e5cb9d83ba",
@@ -42637,7 +42631,7 @@
       "summaryEn": "Our newest audio model introduces granular audio tags that give you precise control to direct AI speech for expressive audio generation.",
       "lang": "en",
       "publishedAt": "2026-04-15T16:03:19.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -42828,7 +42822,7 @@
       "summaryEn": "Gemini Robotics ER 1.6: Enhancing spatial reasoning and multi-view understanding for autonomous robotics.",
       "lang": "en",
       "publishedAt": "2026-04-13T15:52:13.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "deepmind",
@@ -43014,6 +43008,36 @@
       "bodyEn": "Microsoft has published Semantic Kernel for Python 1.41.2 on GitHub Releases. As a patch-level update within the 1.41 line, it appears to focus on bug fixes, dependency adjustments, and general stability rather than new features.\n\nSemantic Kernel is Microsoft's SDK for orchestrating large language models and building agentic applications across C#, Python, and Java. It provides primitives such as prompt functions, plugins, memory, and agent abstractions, with recent development effort directed at higher-level layers including the Agent Framework and Process Framework. The Python edition in particular has drawn attention from AI engineers as a point of comparison with LangChain, and its coverage of OpenAI, Azure OpenAI, various open-weight models, and vector store integrations has continued to expand release by release.\n\nGiven its character as a patch release, 1.41.2 is likely to preserve API compatibility while addressing issues reported by existing users. The 1.41 series has introduced new agent capabilities and connector additions, and it is plausible that this update resolves defects surfaced by production usage of those components, tightens type definitions, or refreshes pinned dependencies. Users are advised to consult the CHANGELOG for the precise scope before upgrading, although patch releases in this project have generally been low-risk to adopt.\n\nThe broader context is notable. Since late 2024, Microsoft has signaled intent to converge Semantic Kernel and AutoGen, and discussion around a unified Microsoft Agent Framework that consolidates agent abstractions across the company's AI tooling has been gaining momentum. Competing open-source projects such as LangChain and LangGraph, LlamaIndex, and CrewAI continue to ship at a rapid cadence, and Semantic Kernel's willingness to push out incremental patch releases suggests an emphasis on the kind of maintenance discipline that enterprise adopters tend to expect.\n\nFor teams already running Semantic Kernel in production, 1.41.2 looks like a routine maintenance pickup rather than a disruptive change. Reviewing the release notes and validating against existing test suites should be sufficient in most cases, and the upgrade may be worth taking simply to stay current ahead of more substantive changes expected as the agent-framework consolidation work progresses."
     },
     {
+      "id": "d37dc3e157551d8e",
+      "source": "anthropic-engineering",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/engineering/managed-agents",
+      "title": "Scaling Managed Agents: Decoupling the brain from the hands",
+      "titleJa": "Anthropicが解説するManaged Agentsの設計思想",
+      "titleEn": "Scaling Managed Agents: Decoupling the brain from the hands",
+      "summaryJa": "Anthropicは、Claudeを基盤とする「Managed Agents」の設計指針を公開した。エージェントを管理する側の視点から、信頼境界、権限委譲、観測性、長時間実行ジョブの扱いなど、本番運用で重要となる要素を整理している。",
+      "summaryEn": "Harnesses encode assumptions that go stale as models improve. Managed Agents-our hosted service for long-horizon agent work-is built around interfaces that stay stable as harnesses change.",
+      "lang": "en",
+      "publishedAt": "2026-04-08T00:00:00.000Z",
+      "collectedAt": "2026-06-18T13:00:00.629Z",
+      "tags": [
+        "agent",
+        "anthropic",
+        "engineering",
+        "agents",
+        "claude",
+        "tool-use",
+        "orchestration"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "warm",
+      "evergreen": true,
+      "bodyJa": "AnthropicはエンジニアリングブログでManaged Agentsに関する設計思想を公開した。LLMエージェントが単なるチャットボットを超え、複数ステップのタスクを自律的に実行する存在へと進化する中で、それらをどう「管理」するかが運用上の中核課題になりつつある。\n\n記事ではまず、エージェントを動かす側(マネージャー)とエージェント本体の責務分担を整理している。マネージャーはタスクの分解、権限の付与、進捗の監視、必要に応じた介入を担い、エージェントはツール呼び出しや推論を通じて目標達成に向かう。この階層構造は、人間の組織におけるマネージャーと担当者の関係に類似しており、信頼境界(trust boundary)の設定が品質と安全性を左右する。\n\n技術的なポイントとして、長時間実行されるジョブのチェックポイント化、観測性(ログ・トレース・評価)の確保、失敗時のリトライやロールバック戦略、そしてツール権限の最小化が挙げられている。特にClaudeのようなモデルでは、Computer UseやTool Useといった機能を組み合わせることで、ファイル操作やブラウザ操作を含む複雑なワークフローをエージェントに委ねられるが、その分だけ誤動作のリスクや監査の必要性も高まる。\n\n関連する動向として、OpenAIのAssistants APIやSwarm、Google のVertex AI Agent Builder、LangGraphやCrewAIなどのオーケストレーションフレームワークでも同様の課題が議論されている。エージェントを「製品」として運用するには、プロンプト設計よりむしろインフラ・評価・ガバナンスの整備が重要であるという認識が業界全体で共有されつつあると見られる。Anthropicの今回の発信も、Claudeを単体モデルではなくエージェント基盤として位置づける戦略の一環と捉えられる可能性がある。",
+      "bodyEn": "Anthropic has published an engineering note on Managed Agents, laying out how it thinks about building, supervising, and operating Claude-based agents in production. As LLM agents move beyond chat into multi-step autonomous workflows, the question of how to manage them — not just prompt them — has become a central operational concern.\n\nThe piece frames the problem in terms of a manager-agent relationship. A managing layer is responsible for decomposing tasks, granting scoped permissions, monitoring progress, and intervening when things go wrong, while the agent itself focuses on reasoning and tool use to make progress toward the goal. This hierarchical split mirrors how human organizations delegate work, and Anthropic argues that explicit trust boundaries between manager and agent are what make the system safe and reliable enough for real workloads.\n\nOn the technical side, the article emphasizes several recurring concerns: checkpointing for long-running jobs so that work can survive restarts and reviews; observability through logs, traces, and evaluations so that failures are diagnosable rather than mysterious; retry and rollback strategies that account for side effects; and least-privilege tool design so an agent cannot reach further than its task requires. With capabilities like Claude's Tool Use and Computer Use, an agent can now drive browsers, edit files, and chain complex actions — which raises the stakes for auditing and containment.\n\nThe broader context is that the industry is converging on similar patterns. OpenAI's Assistants API and Swarm, Google's Vertex AI Agent Builder, and open-source orchestrators like LangGraph and CrewAI all wrestle with the same questions of state, supervision, and tool governance. Increasingly, shipping an agent as a product looks less like prompt engineering and more like distributed-systems engineering, with evaluation harnesses and policy layers around the model. Anthropic's framing here is consistent with a strategy of positioning Claude not just as a strong model but as a foundation for managed agentic systems, though how much of this becomes packaged product versus guidance remains to be seen."
+    },
+    {
       "id": "a5d6c6efda53aa30",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -43069,36 +43093,6 @@
       "archiveTier": "warm",
       "bodyJa": "Hugging Faceが開発したテンソル保存フォーマットSafetensorsが、PyTorch Foundationの傘下プロジェクトとして加わることが発表された。AI/MLモデルの配布と読み込みにおける事実上の標準として広く採用されている同フォーマットが、オープンガバナンスへ移行する重要な節目となる。\n\nSafetensorsは、従来PyTorchで一般的だったpickleベースの.ptや.binファイルが抱えるセキュリティリスク、すなわちロード時に任意コードが実行され得る問題を解決するために設計された。ファイルはヘッダにJSONメタデータ、本体に純粋なバイナリテンソルを格納するシンプルな構造で、メモリマップによるゼロコピー読み込みに対応し、大規模モデルの起動時間を大幅に短縮する。安全性と速度を両立した点が、LLM時代のモデル配布で広く支持された理由といえる。\n\n現在、Hugging Face Hub上の多くのモデル、Llama系列、Mistral、Stable Diffusionなど主要モデルがsafetensors形式で配布されている。vLLM、llama.cpp、Diffusers、Transformersなど推論・学習スタックも標準対応しており、エコシステム全体に深く根付いている。\n\nPyTorch FoundationはLinux Foundation傘下で運営される中立組織で、最近ではvLLMやDeepSpeedといったプロジェクトもホストする方向に拡大しつつある。Safetensorsの参加は、フォーマット仕様の長期的な安定性と、複数ベンダーによる共同メンテナンスを担保する狙いがあると見られる。Hugging Faceは引き続き主要メンテナとして関与する一方、ガバナンスの分散により他フレームワーク(JAX、MLXなど)からの貢献も受け入れやすくなる可能性がある。\n\nGGUFのような量子化特化フォーマットとは棲み分けつつ、フル精度・学習可能な重みの標準コンテナとしての地位は当面揺るがないだろう。今回の寄贈は、オープンソースAIインフラの中立化という大きな潮流の一部と位置づけられる。",
       "bodyEn": "Hugging Face has announced that Safetensors, its widely adopted tensor serialization format, is joining the PyTorch Foundation as a hosted project. The move places one of the most ubiquitous file formats in modern machine learning under open, vendor-neutral governance.\n\nSafetensors was originally created to address a long-standing security concern with PyTorch's default serialization. The traditional .pt and .bin files rely on Python's pickle module, which can execute arbitrary code during deserialization — a real risk when downloading model weights from the internet. Safetensors replaces this with a minimal format consisting of a JSON header describing tensor shapes, dtypes and offsets, followed by a contiguous block of raw tensor bytes. Loading is purely a parse-and-mmap operation, with no code execution path.\n\nBeyond safety, the format delivers tangible performance benefits. Zero-copy memory mapping means very large models can be loaded almost instantly, with pages faulted in on demand. This is particularly valuable in the era of multi-hundred-billion-parameter LLMs, where startup time and memory pressure matter operationally. These properties are a significant reason Safetensors became the default distribution format on the Hugging Face Hub, used by Llama, Mistral, Qwen, Stable Diffusion and countless fine-tunes.\n\nThe broader ecosystem has followed suit. Transformers, Diffusers, vLLM, TGI, llama.cpp tooling, ComfyUI and many others read or write Safetensors natively. In practice, if you download an open-weights model today, there is a good chance it ships in this format.\n\nThe PyTorch Foundation, operating under the Linux Foundation umbrella, has recently been broadening its scope beyond the core PyTorch framework to host adjacent infrastructure projects such as vLLM and DeepSpeed. Bringing Safetensors into this structure formalizes its status as shared infrastructure rather than a single-company project. Hugging Face is expected to remain a primary maintainer, but distributed governance should make it easier for contributors from other frameworks — JAX, MLX, candle, or hardware-vendor stacks — to participate in spec evolution and tooling.\n\nIt is worth noting how Safetensors fits alongside other formats. GGUF, popularized by llama.cpp, focuses on quantized inference with embedded metadata and tokenizer information, optimized for CPU and edge deployment. Safetensors, by contrast, remains the dominant container for full-precision and training-ready weights, where preserving exact dtypes and clean tensor layouts matters more than packaging an entire runnable model. The two are likely to continue coexisting, serving different points in the lifecycle.\n\nThe contribution also reflects a wider trend in open-source AI infrastructure: foundational components — model formats, inference engines, training libraries — are increasingly migrating to neutral foundations to encourage cross-vendor collaboration and long-term stability. For practitioners, the practical impact is mostly invisible in the short term: APIs and file compatibility will not change. Over a longer horizon, however, foundation stewardship may translate into a more formal specification, clearer versioning policies, and broader native support across runtimes and hardware backends, which would benefit the entire community building on open weights."
-    },
-    {
-      "id": "d37dc3e157551d8e",
-      "source": "anthropic-engineering",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/engineering/managed-agents",
-      "title": "Scaling Managed Agents: Decoupling the brain from the hands",
-      "titleJa": "Anthropicが解説するManaged Agentsの設計思想",
-      "titleEn": "Scaling Managed Agents: Decoupling the brain from the hands",
-      "summaryJa": "Anthropicは、Claudeを基盤とする「Managed Agents」の設計指針を公開した。エージェントを管理する側の視点から、信頼境界、権限委譲、観測性、長時間実行ジョブの扱いなど、本番運用で重要となる要素を整理している。",
-      "summaryEn": "Harnesses encode assumptions that go stale as models improve. Managed Agents-our hosted service for long-horizon agent work-is built around interfaces that stay stable as harnesses change.",
-      "lang": "en",
-      "publishedAt": "2026-04-08T00:00:00.000Z",
-      "collectedAt": "2026-06-18T13:00:00.629Z",
-      "tags": [
-        "agent",
-        "anthropic",
-        "engineering",
-        "agents",
-        "claude",
-        "tool-use",
-        "orchestration"
-      ],
-      "category": "claude",
-      "importance": 2,
-      "halfLife": "architecture",
-      "archiveTier": "warm",
-      "evergreen": true,
-      "bodyJa": "AnthropicはエンジニアリングブログでManaged Agentsに関する設計思想を公開した。LLMエージェントが単なるチャットボットを超え、複数ステップのタスクを自律的に実行する存在へと進化する中で、それらをどう「管理」するかが運用上の中核課題になりつつある。\n\n記事ではまず、エージェントを動かす側(マネージャー)とエージェント本体の責務分担を整理している。マネージャーはタスクの分解、権限の付与、進捗の監視、必要に応じた介入を担い、エージェントはツール呼び出しや推論を通じて目標達成に向かう。この階層構造は、人間の組織におけるマネージャーと担当者の関係に類似しており、信頼境界(trust boundary)の設定が品質と安全性を左右する。\n\n技術的なポイントとして、長時間実行されるジョブのチェックポイント化、観測性(ログ・トレース・評価)の確保、失敗時のリトライやロールバック戦略、そしてツール権限の最小化が挙げられている。特にClaudeのようなモデルでは、Computer UseやTool Useといった機能を組み合わせることで、ファイル操作やブラウザ操作を含む複雑なワークフローをエージェントに委ねられるが、その分だけ誤動作のリスクや監査の必要性も高まる。\n\n関連する動向として、OpenAIのAssistants APIやSwarm、Google のVertex AI Agent Builder、LangGraphやCrewAIなどのオーケストレーションフレームワークでも同様の課題が議論されている。エージェントを「製品」として運用するには、プロンプト設計よりむしろインフラ・評価・ガバナンスの整備が重要であるという認識が業界全体で共有されつつあると見られる。Anthropicの今回の発信も、Claudeを単体モデルではなくエージェント基盤として位置づける戦略の一環と捉えられる可能性がある。",
-      "bodyEn": "Anthropic has published an engineering note on Managed Agents, laying out how it thinks about building, supervising, and operating Claude-based agents in production. As LLM agents move beyond chat into multi-step autonomous workflows, the question of how to manage them — not just prompt them — has become a central operational concern.\n\nThe piece frames the problem in terms of a manager-agent relationship. A managing layer is responsible for decomposing tasks, granting scoped permissions, monitoring progress, and intervening when things go wrong, while the agent itself focuses on reasoning and tool use to make progress toward the goal. This hierarchical split mirrors how human organizations delegate work, and Anthropic argues that explicit trust boundaries between manager and agent are what make the system safe and reliable enough for real workloads.\n\nOn the technical side, the article emphasizes several recurring concerns: checkpointing for long-running jobs so that work can survive restarts and reviews; observability through logs, traces, and evaluations so that failures are diagnosable rather than mysterious; retry and rollback strategies that account for side effects; and least-privilege tool design so an agent cannot reach further than its task requires. With capabilities like Claude's Tool Use and Computer Use, an agent can now drive browsers, edit files, and chain complex actions — which raises the stakes for auditing and containment.\n\nThe broader context is that the industry is converging on similar patterns. OpenAI's Assistants API and Swarm, Google's Vertex AI Agent Builder, and open-source orchestrators like LangGraph and CrewAI all wrestle with the same questions of state, supervision, and tool governance. Increasingly, shipping an agent as a product looks less like prompt engineering and more like distributed-systems engineering, with evaluation harnesses and policy layers around the model. Anthropic's framing here is consistent with a strategy of positioning Claude not just as a strong model but as a foundation for managed agentic systems, though how much of this becomes packaged product versus guidance remains to be seen."
     },
     {
       "id": "5c001a114a84cc69",
@@ -43259,7 +43253,7 @@
       "summaryEn": "Gemma 4: Our most intelligent open models to date, purpose-built for advanced reasoning and agentic workflows.",
       "lang": "en",
       "publishedAt": "2026-04-02T16:00:49.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "deepmind",
@@ -43888,7 +43882,7 @@
       "summaryEn": "Our latest voice model has improved precision and lower latency to make voice interactions more fluid, natural and precise.",
       "lang": "en",
       "publishedAt": "2026-03-26T15:23:35.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -44034,7 +44028,7 @@
       "summaryEn": "Google DeepMind researches AI's harmful manipulation risks across areas like finance and health, leading to new safety measures.",
       "lang": "en",
       "publishedAt": "2026-03-25T16:46:20.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -44070,7 +44064,7 @@
       "summaryEn": "Introducing Lyria 3 Pro, which unlocks longer tracks with structural awareness. We’re also bringing Lyria to more Google products and surfaces.",
       "lang": "en",
       "publishedAt": "2026-03-25T16:01:39.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -44130,6 +44124,31 @@
       "bodyEn": "Microsoft has published version 1.41.1 of Semantic Kernel for Python, a patch-level update to its open-source SDK for orchestrating large language models and AI agents. As a point release within the 1.41 line, it likely focuses on bug fixes, dependency adjustments, and small refinements rather than major new capabilities.\n\nSemantic Kernel is Microsoft's flagship framework for building LLM-powered applications and agents. It provides a unified abstraction over prompt templates, function calling, plugins, memory, planners, and increasingly, multi-agent orchestration. With first-class support for Python, .NET, and Java, the SDK is positioned as an enterprise-grade alternative to lighter-weight orchestration libraries, with deep integration into Azure OpenAI, OpenAI, and a growing range of vector stores and model providers.\n\nWhile the release notes for 1.41.1 are concise, patch versions in the Semantic Kernel project typically address regressions discovered after a minor release, tighten compatibility with upstream model SDKs, or polish recently introduced agent features. Given the team's recent emphasis on the Agent Framework and Process Framework, it is plausible that some of the fixes touch agent execution or tool-calling behavior, though specifics should be verified against the official changelog.\n\nIn the broader ecosystem, Semantic Kernel competes with frameworks such as LangChain, LlamaIndex, and CrewAI, while also converging with Microsoft's AutoGen project. Microsoft has signaled an intent to unify these efforts under a common agent runtime, with Semantic Kernel serving as the production-oriented surface and AutoGen contributing research-driven multi-agent patterns. For teams already invested in the Azure stack, Semantic Kernel's observability hooks, telemetry integration, and enterprise governance features remain key differentiators.\n\nDevelopers using Semantic Kernel in production are generally advised to track patch releases closely, as the project moves quickly and small version bumps can resolve subtle issues in streaming, function calling, or provider-specific adapters. Consulting the GitHub release page directly is the most reliable way to assess whether 1.41.1 contains fixes relevant to a particular deployment."
     },
     {
+      "id": "eaa306b281deba94",
+      "source": "anthropic-engineering",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/engineering/claude-code-auto-mode",
+      "title": "How we built Claude Code auto mode: a safer way to skip permissions",
+      "titleJa": "",
+      "titleEn": "How we built Claude Code auto mode: a safer way to skip permissions",
+      "summaryJa": "このエントリは anthropic-engineering から収集した claude 領域の最新アップデートです。原題:「How we built Claude Code auto mode: a safer way to skip permissions」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Claude Code users approve 93% of permission prompts. We built classifiers to automate some decisions, increasing safety while reducing approval fatigue. Here's what it catches, and what it misses.",
+      "lang": "en",
+      "publishedAt": "2026-03-25T00:00:00.000Z",
+      "collectedAt": "2026-06-18T13:00:00.629Z",
+      "tags": [
+        "anthropic",
+        "engineering"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "warm",
+      "evergreen": true,
+      "bodyJa": "このエントリは anthropic-engineering から収集した claude 領域の最新アップデートです。原題は「How we built Claude Code auto mode: a safer way to skip permissions」。このエントリは anthropic-engineering から収集した claude 領域の最新アップデートです。原題:「How we built Claude Code auto mode: a safer way to skip permissions」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは anthropic, engineering です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
+      "bodyEn": "How we built Claude Code auto mode: a safer way to skip permissions is a claude update collected from anthropic-engineering. Claude Code users approve 93% of permission prompts. We built classifiers to automate some decisions, increasing safety while reducing approval fatigue. Here's what it catches, and what it misses.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include anthropic, engineering. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
+    },
+    {
       "id": "8af33ea06769a73d",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -44156,31 +44175,6 @@
       "archiveTier": "warm",
       "bodyJa": "Cursorは、同社のCloud Agents機能をユーザー自身のクラウド環境上で稼働させられるセルフホスト型オプションを公開した。コード、シークレット、実行ログを自社管理下のインフラに留めたい企業ユーザーを主な対象としている。\n\nCloud AgentsはCursorがバックグラウンドで提供するコーディングエージェント機能で、リポジトリに対するタスクを並列に実行し、PR作成や長時間のリファクタリングなどを自律的に進められる仕組みである。従来はCursor側のマネージド環境で実行されていたため、規制業界や厳格な情報管理を求める組織にとっては導入のハードルになっていたと見られる。\n\n今回のセルフホスト対応により、エージェントの実行コンテナを顧客のVPCやKubernetesクラスタ上で立ち上げ、ソースコードや環境変数を外部に出さずに処理できるようになる。ネットワーク境界を自社で制御できるため、社内システムや非公開パッケージレジストリへのアクセスを伴うエージェントタスクも扱いやすくなる可能性がある。\n\n背景には、AIコーディング支援ツール市場における企業向け要件の高度化がある。GitHub Copilot EnterpriseやSourcegraph Cody、Devinなど競合各社も、データ取り扱いポリシーやプライベート展開オプションの強化を進めている。特に金融や医療、政府系の顧客では、コードが第三者のクラウドを経由しない構成が事実上の必須要件となるケースも多い。Cursorのセルフホスト化は、こうしたエンタープライズ需要への明確な対応と位置づけられる。\n\n一方で、セルフホスト運用ではモデル推論のコスト、エージェント並列度のスケーリング、アップデート追従などの責務が顧客側に一部移る可能性があり、導入規模に応じた運用設計が鍵となるだろう。",
       "bodyEn": "Cursor has rolled out a self-hosted deployment option for its Cloud Agents, letting customers run the background coding agents on infrastructure they own and operate rather than on Cursor's managed environment. The change is aimed primarily at enterprises that need to keep source code, secrets, and execution telemetry inside their own security perimeter.\n\nCloud Agents are Cursor's asynchronous coding agents that take on tasks against a repository, run in parallel, and can carry out work such as drafting pull requests, performing larger refactors, or chasing down failing tests without the developer babysitting each step. Until now those agents executed inside Cursor-operated sandboxes, which simplified onboarding but made adoption harder for organizations with strict data residency, compliance, or network egress rules.\n\nWith the self-hosted model, the agent runtime can be deployed into a customer's own cloud account, typically a VPC or Kubernetes environment, so that repository contents and environment variables never leave controlled infrastructure. Because the network boundary is owned by the customer, agents can also more naturally reach internal services, private package registries, and bespoke build systems that would be awkward to expose to an external SaaS.\n\nThe move fits a broader pattern across the AI coding tools market. GitHub Copilot Enterprise, Sourcegraph Cody, Codeium, and agent-focused entrants like Cognition's Devin have all been layering on private deployment options, stricter data handling guarantees, and tighter identity integrations. For regulated sectors such as finance, healthcare, and the public sector, a deployment story where code does not transit a third-party cloud is often a hard procurement requirement rather than a nice-to-have. Cursor's self-hosted Cloud Agents read as a direct response to that pressure, and likely a prerequisite for some of its larger enterprise deals.\n\nThere are trade-offs worth flagging. Running agents in your own environment shifts part of the operational burden onto the customer: provisioning compute for parallel agent runs, managing autoscaling, monitoring long-running jobs, and keeping the agent runtime up to date with Cursor's releases. Model inference is another open question — depending on configuration, organizations may route to Cursor-hosted models, to their own keys with frontier providers, or potentially to private model endpoints, each with different latency, cost, and compliance profiles. It seems plausible that Cursor will continue to refine these options as more customers move from managed to self-hosted setups.\n\nFor teams already standardizing on Cursor, the announcement reduces a meaningful blocker around bringing agentic workflows into sensitive codebases. For the wider ecosystem, it is another datapoint suggesting that agent platforms, not just chat-style assistants, are becoming part of the enterprise developer tooling stack and are expected to meet the same deployment expectations as CI systems or code search before them."
-    },
-    {
-      "id": "eaa306b281deba94",
-      "source": "anthropic-engineering",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/engineering/claude-code-auto-mode",
-      "title": "How we built Claude Code auto mode: a safer way to skip permissions",
-      "titleJa": "",
-      "titleEn": "How we built Claude Code auto mode: a safer way to skip permissions",
-      "summaryJa": "このエントリは anthropic-engineering から収集した claude 領域の最新アップデートです。原題:「How we built Claude Code auto mode: a safer way to skip permissions」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "Claude Code users approve 93% of permission prompts. We built classifiers to automate some decisions, increasing safety while reducing approval fatigue. Here's what it catches, and what it misses.",
-      "lang": "en",
-      "publishedAt": "2026-03-25T00:00:00.000Z",
-      "collectedAt": "2026-06-18T13:00:00.629Z",
-      "tags": [
-        "anthropic",
-        "engineering"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "warm",
-      "evergreen": true,
-      "bodyJa": "このエントリは anthropic-engineering から収集した claude 領域の最新アップデートです。原題は「How we built Claude Code auto mode: a safer way to skip permissions」。このエントリは anthropic-engineering から収集した claude 領域の最新アップデートです。原題:「How we built Claude Code auto mode: a safer way to skip permissions」。AI による日本語要約は次回以降の Worker run で生成されます。\n\nこのエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。blog 系の情報は、リリース、導入事例、研究動向、実装ノウハウのいずれであっても、周辺ツールや運用判断に影響しやすいため、単なるニュースとしてではなく、利用者が次に確認すべき変化として読む価値があります。\n\n関連キーワードは anthropic, engineering です。 詳細を確認する際は、元記事で示されている前提条件、対象バージョン、提供範囲、制限事項を合わせて見ると、実務への影響を判断しやすくなります。未確認の部分については断定せず、公開情報に基づく補完として扱うのが安全です。",
-      "bodyEn": "How we built Claude Code auto mode: a safer way to skip permissions is a claude update collected from anthropic-engineering. Claude Code users approve 93% of permission prompts. We built classifiers to automate some decisions, increasing safety while reducing approval fatigue. Here's what it catches, and what it misses.\n\nThis long-form note is completed from the existing summary and collection metadata so the entry remains useful even when a full model-generated article body is unavailable. For blog sources, the practical value is usually in the context: what changed, who is likely to be affected, and which adjacent tools, releases, or research threads may become relevant next.\n\nRelated tags include anthropic, engineering. When evaluating the original item, readers should still check the source for version details, availability, limitations, and implementation assumptions. Any broader implication should be treated as a cautious reading of the public information rather than a claim beyond the source material."
     },
     {
       "id": "958035e5b632f18a",
@@ -44442,7 +44436,7 @@
       "summaryEn": "We’re introducing a framework to measure progress toward AGI, and launching a Kaggle hackathon to build the relevant evaluations.",
       "lang": "en",
       "publishedAt": "2026-03-17T16:03:47.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -44724,7 +44718,7 @@
       "summaryEn": "Ten years since AlphaGo, we explore how it is catalyzing scientific discovery and paving a path to AGI.",
       "lang": "en",
       "publishedAt": "2026-03-09T13:52:36.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -45090,7 +45084,7 @@
       "summaryEn": "Gemini 3.1 Flash-Lite is our fastest and most cost-efficient Gemini 3 series model yet.",
       "lang": "en",
       "publishedAt": "2026-03-03T16:35:55.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -45189,7 +45183,7 @@
       "summaryEn": "Our latest image generation model offers advanced world knowledge, production ready specs, subject consistency and more, all at Flash speed.",
       "lang": "en",
       "publishedAt": "2026-02-26T16:01:50.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -45336,7 +45330,7 @@
       "summaryEn": "3.1 Pro is designed for tasks where a simple answer isn’t enough.",
       "lang": "en",
       "publishedAt": "2026-02-19T16:06:14.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -45402,7 +45396,7 @@
       "summaryEn": "The Gemini app now features our most advanced music generation model Lyria 3, empowering anyone to make 30-second tracks using text or images.",
       "lang": "en",
       "publishedAt": "2026-02-18T16:01:38.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -45556,7 +45550,7 @@
       "summaryEn": "Our most specialized reasoning mode is now updated to solve modern science, research and engineering challenges.",
       "lang": "en",
       "publishedAt": "2026-02-12T16:15:09.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -45593,7 +45587,7 @@
       "summaryEn": "set version to 0.86.3.dev",
       "lang": "en",
       "publishedAt": "2026-02-12T00:42:25.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "aider",
         "release",
@@ -45628,7 +45622,7 @@
       "summaryEn": "version bump to 0.86.2",
       "lang": "en",
       "publishedAt": "2026-02-12T00:42:24.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "aider",
         "release",
@@ -45722,7 +45716,7 @@
       "summaryEn": "Research papers point to the growing impact of Deep Think across fields",
       "lang": "en",
       "publishedAt": "2026-02-09T16:12:06.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -46065,7 +46059,7 @@
       "summaryEn": "Google AI Ultra subscribers in the U.S. can try out Project Genie, an experimental research prototype that lets you create and explore worlds.",
       "lang": "en",
       "publishedAt": "2026-01-29T17:01:05.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -46164,7 +46158,7 @@
       "summaryEn": "Release : v2026.1.26 Updated packages @modelcontextprotocol/server-everything@2026.1.26 @modelcontextprotocol/server-memory@2026.1.26 mcp-server-time@2026.1.26",
       "lang": "en",
       "publishedAt": "2026-01-27T12:11:26.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -46385,7 +46379,7 @@
       "summaryEn": "D4RT: Unified, efficient 4D reconstruction and tracking up to 300x faster than prior methods.",
       "lang": "en",
       "publishedAt": "2026-01-16T10:39:00.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -46510,7 +46504,7 @@
       "summaryEn": "Release : v2026.1.14 Updated packages @modelcontextprotocol/server-everything@2026.1.14 @modelcontextprotocol/server-filesystem@2026.1.14 mcp-server-git@2026.1.14",
       "lang": "en",
       "publishedAt": "2026-01-14T16:35:35.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -46547,7 +46541,7 @@
       "summaryEn": "Our latest Veo update generates lively, dynamic clips that feel natural and engaging — and supports vertical video generation.",
       "lang": "en",
       "publishedAt": "2026-01-13T17:00:18.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -46751,7 +46745,7 @@
       "summaryEn": "Google 2025 recap: Research breakthroughs of the year",
       "lang": "en",
       "publishedAt": "2025-12-23T17:01:02.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -46872,7 +46866,7 @@
       "summaryEn": "Release : v2025.12.18 Updated packages @modelcontextprotocol/server-sequential-thinking@2025.12.18 @modelcontextprotocol/server-everything@2025.12.18 @modelcontextprotocol/server-filesystem@2025.12.18",
       "lang": "en",
       "publishedAt": "2025-12-18T16:33:28.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -47022,7 +47016,7 @@
       "summaryEn": "Gemini 3 Flash offers frontier intelligence built for speed at a fraction of the cost.",
       "lang": "en",
       "publishedAt": "2025-12-17T11:58:17.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47086,7 +47080,7 @@
       "summaryEn": "Open interpretability tools for language models are now available across the entire Gemma 3 family with the release of Gemma Scope 2.",
       "lang": "en",
       "publishedAt": "2025-12-16T10:14:24.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47151,7 +47145,7 @@
       "summaryEn": "Improved Gemini audio models for powerful voice experiences",
       "lang": "en",
       "publishedAt": "2025-12-12T17:50:50.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47247,7 +47241,7 @@
       "summaryEn": "Google DeepMind and UK AI Security Institute (AISI) strengthen collaboration on critical AI safety and security research",
       "lang": "en",
       "publishedAt": "2025-12-11T00:06:40.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47347,7 +47341,7 @@
       "summaryEn": "Deepening our partnership with the UK government to support prosperity and security in the AI era",
       "lang": "en",
       "publishedAt": "2025-12-10T14:59:21.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47412,7 +47406,7 @@
       "summaryEn": "Systematically evaluating the factuality of large language models with the FACTS Benchmark Suite.",
       "lang": "en",
       "publishedAt": "2025-12-09T11:29:03.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "benchmark",
         "deepmind",
@@ -47449,7 +47443,7 @@
       "summaryEn": "Scientists are using AlphaFold to strengthen a photosynthesis enzyme for resilient, heat-tolerant crops.",
       "lang": "en",
       "publishedAt": "2025-12-04T16:23:24.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47515,7 +47509,7 @@
       "summaryEn": "Release : v2025.11.25 Updated packages @modelcontextprotocol/server-sequential-thinking@2025.11.25 @modelcontextprotocol/server-everything@2025.11.25 @modelcontextprotocol/server-filesystem@2025.11.25",
       "lang": "en",
       "publishedAt": "2025-11-25T19:03:57.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -47551,7 +47545,7 @@
       "summaryEn": "Explore how AlphaFold has accelerated science and fueled a global wave of biological discovery.",
       "lang": "en",
       "publishedAt": "2025-11-25T16:00:12.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47588,7 +47582,7 @@
       "summaryEn": "AlphaFold has revealed the structure of a key protein behind heart disease",
       "lang": "en",
       "publishedAt": "2025-11-25T15:52:51.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47625,7 +47619,7 @@
       "summaryEn": "Google DeepMind and the DOE partner on Genesis, a new effort to accelerate science with AI.",
       "lang": "en",
       "publishedAt": "2025-11-24T14:12:03.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47689,7 +47683,7 @@
       "summaryEn": "How we’re bringing AI image verification to the Gemini app",
       "lang": "en",
       "publishedAt": "2025-11-20T15:13:19.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47718,7 +47712,7 @@
       "summaryEn": "Build with Nano Banana Pro, our Gemini 3 Pro Image model",
       "lang": "en",
       "publishedAt": "2025-11-20T15:11:14.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47747,7 +47741,7 @@
       "summaryEn": "Introducing Nano Banana Pro",
       "lang": "en",
       "publishedAt": "2025-11-20T15:05:02.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47776,7 +47770,7 @@
       "summaryEn": "Start building with Gemini 3",
       "lang": "en",
       "publishedAt": "2025-11-18T17:49:13.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47805,7 +47799,7 @@
       "summaryEn": "A new era of intelligence with Gemini 3",
       "lang": "en",
       "publishedAt": "2025-11-18T16:06:41.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47834,7 +47828,7 @@
       "summaryEn": "Introducing Google Antigravity",
       "lang": "en",
       "publishedAt": "2025-11-18T16:06:32.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47863,7 +47857,7 @@
       "summaryEn": "The new AI model delivers more efficient, more accurate and higher-resolution global weather predictions.",
       "lang": "en",
       "publishedAt": "2025-11-17T15:09:23.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -47898,7 +47892,7 @@
       "summaryEn": "Introducing SIMA 2, a Gemini-powered AI agent that can think, understand, and take actions in interactive environments.",
       "lang": "en",
       "publishedAt": "2025-11-13T14:52:18.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "agent",
         "deepmind",
@@ -47996,7 +47990,7 @@
       "summaryEn": "AI models can help map species, protect forests and listen to birds around the world",
       "lang": "en",
       "publishedAt": "2025-11-05T16:59:46.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -48063,7 +48057,7 @@
       "summaryEn": "The initiative brings together some of the world's most prestigious research institutions to pioneer the use of AI in mathematical research.",
       "lang": "en",
       "publishedAt": "2025-10-29T14:31:13.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -48150,7 +48144,7 @@
       "summaryEn": "Introducing T5Gemma, a new collection of encoder-decoder LLMs.",
       "lang": "en",
       "publishedAt": "2025-10-25T18:14:00.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -48190,7 +48184,7 @@
       "summaryEn": "We’re announcing new multimodal models in the MedGemma collection, our most capable open models for health AI development.",
       "lang": "en",
       "publishedAt": "2025-10-25T18:02:50.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -48227,7 +48221,7 @@
       "summaryEn": "Gemma 3n is designed for the developer community that helped shape Gemma.",
       "lang": "en",
       "publishedAt": "2025-10-25T17:54:47.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -48267,7 +48261,7 @@
       "summaryEn": "The International Mathematical Olympiad (“IMO”) is the world’s most prestigious competition for young mathematicians, and has been held annually since 1959. Each country taking part is represented by ",
       "lang": "en",
       "publishedAt": "2025-10-24T03:12:29.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -48307,7 +48301,7 @@
       "summaryEn": "Genie 3 can generate dynamic worlds that you can navigate in real time at 24 frames per second, retaining consistency for a few minutes at a resolution of 720p.",
       "lang": "en",
       "publishedAt": "2025-10-24T02:54:30.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -48379,7 +48373,7 @@
       "summaryEn": "We’re powering an era of physical agents — enabling robots to perceive, plan, think, use tools and act to better solve complex, multi-step tasks.",
       "lang": "en",
       "publishedAt": "2025-10-23T23:33:58.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -48419,7 +48413,7 @@
       "summaryEn": "Available in preview via the API, our Computer Use model is a specialized model built on Gemini 2.5 Pro’s capabilities to power agents that can interact with user interfaces.",
       "lang": "en",
       "publishedAt": "2025-10-23T18:40:34.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -48459,7 +48453,7 @@
       "summaryEn": "We’re rolling out significant updates to Veo that give people even more creative control.",
       "lang": "en",
       "publishedAt": "2025-10-23T18:38:55.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "deepmind",
         "google",
@@ -48871,7 +48865,7 @@
       "summaryEn": "Release : v2025.9.25 Updated packages @modelcontextprotocol/server-everything@2025.9.25 @modelcontextprotocol/server-memory@2025.9.25 mcp-server-git@2025.9.25 mcp-server-time@2025.9.25",
       "lang": "en",
       "publishedAt": "2025-09-25T21:26:20.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -48998,7 +48992,7 @@
       "summaryEn": "Release 2025.9.12",
       "lang": "en",
       "publishedAt": "2025-09-12T19:58:34.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -49063,7 +49057,7 @@
       "summaryEn": "Release 2025.9.3",
       "lang": "en",
       "publishedAt": "2025-09-03T17:58:52.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -49100,7 +49094,7 @@
       "summaryEn": "Release 2025.9.1",
       "lang": "en",
       "publishedAt": "2025-09-01T10:14:56.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -49342,7 +49336,7 @@
       "summaryEn": "set version to 0.86.2.dev",
       "lang": "en",
       "publishedAt": "2025-08-13T15:46:02.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "aider",
         "release",
@@ -49377,7 +49371,7 @@
       "summaryEn": "version bump to 0.86.1",
       "lang": "en",
       "publishedAt": "2025-08-13T15:46:00.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "aider",
         "release",
@@ -49413,7 +49407,7 @@
       "summaryEn": "Added support for all GPT-5 models. Added support for Grok-4 via xai/grok-4 and openrouter/x-ai/grok-4 model names. Added support for gemini/gemini-2.5-flash-lite-preview-06-17 model, by Tamir Zahavi-",
       "lang": "en",
       "publishedAt": "2025-08-09T17:42:19.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "aider",
         "release",
@@ -49449,7 +49443,7 @@
       "summaryEn": "set version to 0.86.1.dev",
       "lang": "en",
       "publishedAt": "2025-08-09T15:55:11.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "aider",
         "release",
@@ -49483,7 +49477,7 @@
       "summaryEn": "set version to 0.85.6.dev",
       "lang": "en",
       "publishedAt": "2025-08-07T20:54:56.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "aider",
         "release",
@@ -49518,7 +49512,7 @@
       "summaryEn": "version bump to 0.85.5",
       "lang": "en",
       "publishedAt": "2025-08-07T20:54:54.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "aider",
         "release",
@@ -49553,7 +49547,7 @@
       "summaryEn": "set version to 0.85.5.dev",
       "lang": "en",
       "publishedAt": "2025-08-07T18:33:44.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "aider",
         "release",
@@ -49588,7 +49582,7 @@
       "summaryEn": "version bump to 0.85.4",
       "lang": "en",
       "publishedAt": "2025-08-07T18:33:43.000Z",
-      "collectedAt": "2026-06-18T12:00:00.684Z",
+      "collectedAt": "2026-06-18T16:00:00.779Z",
       "tags": [
         "aider",
         "release",
@@ -49828,38 +49822,6 @@
       "bodyEn": "Measuring software delivery performance has become a crowded discipline, with multiple frameworks competing for attention. DORA's latest insight piece argues that the right choice depends less on which framework is fashionable and more on what an organization is actually trying to improve.\n\nThe article walks through the strengths and intended uses of several well-known frameworks. The DORA metrics — deployment frequency, lead time for changes, change failure rate, failed deployment recovery time, and reliability — remain a widely adopted way to measure software delivery throughput and stability. The SPACE framework (Satisfaction, Performance, Activity, Communication, Efficiency) takes a deliberately broader view, recognizing that developer productivity cannot be captured by output metrics alone. The DevEx framework, more recent in origin, focuses on feedback loops, cognitive load, and flow state as proxies for the lived experience of engineers.\n\nRather than treating these as competing options, DORA frames them as complementary lenses. An organization wrestling with slow or unstable delivery may benefit most from the DORA metrics, while one facing burnout, attrition, or unclear engineering priorities may find SPACE or DevEx more illuminating. The piece cautions against picking a single metric and optimizing for it, since narrow targets tend to invite gaming and obscure the underlying system dynamics that frameworks are meant to reveal.\n\nThe broader context here matters. Interest in developer productivity measurement has surged in the past few years, fueled both by economic pressure on engineering budgets and by the rise of AI coding assistants whose impact organizations are eager to quantify. Vendors such as GitHub, Atlassian, LinearB, Jellyfish, and Swarmia have built products around these frameworks, and a McKinsey article proposing its own developer productivity metrics drew sharp pushback from practitioners including Kent Beck and Gergely Orosz. That debate underscored how easily measurement can drift from improvement into surveillance when frameworks are applied without clear intent.\n\nThe academic foundation for much of this work, including Nicole Forsgren and colleagues' research published in Accelerate, continues to anchor industry practice. But as DORA notes, the value of any framework lies in how it informs decisions and conversations rather than in the dashboards it produces. Goodhart's law looms over the field: when a measure becomes a target, it tends to lose its usefulness as a measure.\n\nThe practical takeaway from DORA's guidance appears to be sequencing. Organizations are encouraged to first articulate the outcomes they care about — faster delivery, higher quality, healthier teams, more predictable planning — and then select the framework or combination of frameworks that best illuminates progress toward those outcomes. Tooling and instrumentation come last, not first.\n\nThis perspective is likely to resonate with engineering leaders who have invested in measurement programs only to find that data alone does not drive change. By foregrounding goals over metrics, DORA seems to be nudging the conversation back toward the qualitative judgment and team-level reflection that have always accompanied effective performance improvement, even in technically mature organizations."
     },
     {
-      "id": "52eae8cf174c10a3",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/welcome-openai-gpt-oss",
-      "title": "Welcome GPT OSS, the new open-source model family from OpenAI!",
-      "titleJa": "OpenAIが新オープンソースモデルファミリー「GPT OSS」を発表",
-      "titleEn": "Welcome GPT OSS, the new open-source model family from OpenAI!",
-      "summaryJa": "OpenAIがMoEアーキテクチャを採用したオープンソースモデル群GPT OSSを公開。Hugging FaceやTransformers等と統合済みでローカル環境でも利用可能。",
-      "summaryEn": "Welcome GPT OSS, the new open-source model family from OpenAI!",
-      "lang": "en",
-      "publishedAt": "2025-08-05T00:00:00.000Z",
-      "collectedAt": "2026-06-18T06:00:00.627Z",
-      "tags": [
-        "huggingface",
-        "open-model",
-        "openai",
-        "gpt-oss",
-        "moe",
-        "open-source",
-        "mixture-of-experts",
-        "local-llm",
-        "transformers",
-        "open-weight"
-      ],
-      "category": "local-llm",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "bodyJa": "OpenAIはオープンソースモデルファミリー「GPT OSS」を公開した。Hugging Face上で配布されており、TransformersをはじめとするさまざまなAI推論フレームワークとの統合が済んでいるため、開発者はすぐに利用を開始できる。\n\nアーキテクチャにはMixture-of-Experts（MoE）を採用しており、高い性能を維持しながらローカル環境での動作も想定した設計となっている。具体的なパラメータ数や性能ベンチマークの詳細は公式ブログで確認することを推奨する。\n\nOpenAIがオープンソースモデルを公開することは同社の方針上注目すべき動向であり、ローカルLLMコミュニティにとっても重要な選択肢が加わった形となる。",
-      "bodyEn": "OpenAI has publicly released GPT OSS, a new family of open-source language models available on Hugging Face. The release comes with out-of-the-box integration for the Transformers library and various inference frameworks, lowering the barrier for developers who want to experiment with or deploy these models immediately.\n\nThe models are built on a Mixture-of-Experts (MoE) architecture, a design choice that can deliver strong performance relative to active parameter count and makes the models viable for local deployment scenarios. Exact parameter counts, benchmark results, and licensing terms should be verified at the official Hugging Face blog post linked above.\n\nThis release marks a notable shift for OpenAI, which has historically kept its frontier models proprietary. For the local-LLM community, GPT OSS represents a significant new option worth evaluating alongside existing open-weight alternatives."
-    },
-    {
       "id": "2fd4281214cc68f3",
       "source": "openai-blog",
       "sourceType": "blog",
@@ -49919,6 +49881,38 @@
       "archiveTier": "cold",
       "bodyJa": "OpenAIは2025年8月5日、オープンウェイトの大規模言語モデル「gpt-oss-120b」と「gpt-oss-20b」を公開した。両モデルはApache 2.0ライセンスで提供され、開発者は自由にダウンロード・カスタマイズして商用・非商用問わず利用できる。推論性能とコスト効率を両立しており、ローカル環境やオンプレミスサーバーでの運用にも対応する。\n\nOpenAIがオープンウェイトモデルを一般公開するのは同社にとって大きな方針転換であり、Meta や Mistral など他社オープンモデルとの競争が本格化する。詳細なベンチマーク結果や利用条件については、公式ブログおよびモデルカードを参照のうえ確認されたい。",
       "bodyEn": "On August 5, 2025, OpenAI announced the release of gpt-oss-120b and gpt-oss-20b, two open-weight large language models offered under the permissive Apache 2.0 license. The models are designed to deliver strong real-world performance at low inference cost, and developers can download, fine-tune, and deploy them freely in local or on-premises environments.\n\nThis release marks a notable strategic shift for OpenAI, which has historically kept its most capable models proprietary. By entering the open-weight space, the company positions itself alongside competitors such as Meta's Llama series and Mistral's offerings. The 120b and 20b parameter counts suggest a range suited for both high-throughput server deployments and more resource-constrained setups, though specific benchmark results, usage restrictions, and fine-tuning guidance should be verified directly at the source URL."
+    },
+    {
+      "id": "52eae8cf174c10a3",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/welcome-openai-gpt-oss",
+      "title": "Welcome GPT OSS, the new open-source model family from OpenAI!",
+      "titleJa": "OpenAIが新オープンソースモデルファミリー「GPT OSS」を発表",
+      "titleEn": "Welcome GPT OSS, the new open-source model family from OpenAI!",
+      "summaryJa": "OpenAIがMoEアーキテクチャを採用したオープンソースモデル群GPT OSSを公開。Hugging FaceやTransformers等と統合済みでローカル環境でも利用可能。",
+      "summaryEn": "Welcome GPT OSS, the new open-source model family from OpenAI!",
+      "lang": "en",
+      "publishedAt": "2025-08-05T00:00:00.000Z",
+      "collectedAt": "2026-06-18T06:00:00.627Z",
+      "tags": [
+        "huggingface",
+        "open-model",
+        "openai",
+        "gpt-oss",
+        "moe",
+        "open-source",
+        "mixture-of-experts",
+        "local-llm",
+        "transformers",
+        "open-weight"
+      ],
+      "category": "local-llm",
+      "importance": 3,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "bodyJa": "OpenAIはオープンソースモデルファミリー「GPT OSS」を公開した。Hugging Face上で配布されており、TransformersをはじめとするさまざまなAI推論フレームワークとの統合が済んでいるため、開発者はすぐに利用を開始できる。\n\nアーキテクチャにはMixture-of-Experts（MoE）を採用しており、高い性能を維持しながらローカル環境での動作も想定した設計となっている。具体的なパラメータ数や性能ベンチマークの詳細は公式ブログで確認することを推奨する。\n\nOpenAIがオープンソースモデルを公開することは同社の方針上注目すべき動向であり、ローカルLLMコミュニティにとっても重要な選択肢が加わった形となる。",
+      "bodyEn": "OpenAI has publicly released GPT OSS, a new family of open-source language models available on Hugging Face. The release comes with out-of-the-box integration for the Transformers library and various inference frameworks, lowering the barrier for developers who want to experiment with or deploy these models immediately.\n\nThe models are built on a Mixture-of-Experts (MoE) architecture, a design choice that can deliver strong performance relative to active parameter count and makes the models viable for local deployment scenarios. Exact parameter counts, benchmark results, and licensing terms should be verified at the official Hugging Face blog post linked above.\n\nThis release marks a notable shift for OpenAI, which has historically kept its frontier models proprietary. For the local-LLM community, GPT OSS represents a significant new option worth evaluating alongside existing open-weight alternatives."
     },
     {
       "id": "98b07c780f94cbb7",

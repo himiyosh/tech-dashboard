@@ -76,7 +76,11 @@ const COPILOT_HEADERS: Record<string, string> = {
 
 const DEFAULT_TIMEOUT_MS = 180_000;
 const DEFAULT_MAX_TOKENS = 6000;
-const TOKEN_REFRESH_SKEW_MS = 60_000;
+// Refresh the IDE token when fewer than this many ms remain. Must exceed the
+// longest single callCopilot timeout (DEFAULT_TIMEOUT_MS = 180s) so a token
+// that passes the freshness check cannot expire *during* a long LLM call
+// and return `401 IDE token expired` (LL-105).
+const TOKEN_REFRESH_SKEW_MS = 240_000;
 const DEFAULT_TOKEN_TTL_MS = 20 * 60_000;
 const ISSUE_KEY = "summarizer.issue.v1";
 const ISSUE_TTL_SECONDS = 6 * 60 * 60;
@@ -89,14 +93,16 @@ const FIELD_REPAIR_MAX_TOKENS = 2500;
 
 let cachedCopilotToken: { pat: string; token: string; expiresAtMs: number } | null = null;
 
-async function resolveCopilotToken(pat: string): Promise<string> {
+async function resolveCopilotToken(pat: string, forceRefresh = false): Promise<string> {
   const now = Date.now();
   if (
+    !forceRefresh &&
     cachedCopilotToken?.pat === pat &&
     cachedCopilotToken.expiresAtMs - TOKEN_REFRESH_SKEW_MS > now
   ) {
     return cachedCopilotToken.token;
   }
+  if (forceRefresh) cachedCopilotToken = null;
 
   const res = await fetch("https://api.github.com/copilot_internal/v2/token", {
     headers: {
@@ -118,58 +124,71 @@ async function resolveCopilotToken(pat: string): Promise<string> {
 }
 
 async function callCopilot(
-  token: string,
+  pat: string,
   model: string,
   prompt: string,
   timeoutMs: number,
   maxTokens: number,
 ): Promise<CacheEntry> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(COPILOT_ENDPOINT, {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        authorization: `Bearer ${token}`,
-        "content-type": "application/json",
-        ...COPILOT_HEADERS,
-      },
-      body: JSON.stringify({
+  // Resolve the IDE token here (not in the caller) so a single processJob
+  // that issues up to three long LLM calls always re-checks freshness. On a
+  // `401 IDE token expired` we force a fresh exchange and retry the call once;
+  // the cached token had likely expired mid-batch (LL-105).
+  for (let attempt = 0; ; attempt++) {
+    const token = await resolveCopilotToken(pat, attempt > 0);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(COPILOT_ENDPOINT, {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+          ...COPILOT_HEADERS,
+        },
+        body: JSON.stringify({
+          model,
+          temperature: 0.2,
+          // Quality-first queue mode: this Worker has a larger CPU/timeout budget
+          // than the harness Worker, so use the same long-form contract as local
+          // backfills.
+          max_tokens: maxTokens,
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a bilingual technical editor. Always return only the JSON object the user requested. Do not include code fences, prose preface, or commentary. Use natural Japanese for *Ja fields and native English for *En fields.",
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+        }),
+      });
+      if (res.status === 401 && attempt === 0) {
+        // IDE token rejected as expired. Drain the body, force a fresh
+        // exchange, and retry once before giving up.
+        await res.text().catch(() => "");
+        continue;
+      }
+      if (!res.ok) {
+        throw new Error(`copilot ${res.status}: ${await res.text()}`);
+      }
+      const body = (await res.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      const content = body.choices?.[0]?.message?.content ?? "";
+      const parsed = parseResponse(content);
+      return {
+        ...parsed,
         model,
-        temperature: 0.2,
-        // Quality-first queue mode: this Worker has a larger CPU/timeout budget
-        // than the harness Worker, so use the same long-form contract as local
-        // backfills.
-        max_tokens: maxTokens,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a bilingual technical editor. Always return only the JSON object the user requested. Do not include code fences, prose preface, or commentary. Use natural Japanese for *Ja fields and native English for *En fields.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-      }),
-    });
-    if (!res.ok) {
-      throw new Error(`copilot ${res.status}: ${await res.text()}`);
+        cachedAt: new Date().toISOString(),
+      };
+    } finally {
+      clearTimeout(timeout);
     }
-    const body = (await res.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-    const content = body.choices?.[0]?.message?.content ?? "";
-    const parsed = parseResponse(content);
-    return {
-      ...parsed,
-      model,
-      cachedAt: new Date().toISOString(),
-    };
-  } finally {
-    clearTimeout(timeout);
   }
 }
 
@@ -256,17 +275,17 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
   // enqueuing, so duplicate work is rare. Each key is independent so parallel
   // consumer invocations can never clobber each other's writes.
 
-  const token = await resolveCopilotToken(env.COPILOT_PAT);
+  const pat = env.COPILOT_PAT;
   const model = env.SUMMARIZE_MODEL || "claude-sonnet-4.6";
   const timeoutMs = Number(env.SUMMARIZE_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
   const maxTokens = Number(env.SUMMARIZE_MAX_TOKENS ?? DEFAULT_MAX_TOKENS);
 
-  let entry = await callCopilot(token, model, buildPrompt(job.entry), timeoutMs, maxTokens);
+  let entry = await callCopilot(pat, model, buildPrompt(job.entry), timeoutMs, maxTokens);
 
   if (!isCompleteCacheEntry(entry)) {
     console.warn(`[summarizer] recovery prompt ${job.url}: primary output was incomplete`);
     entry = await callCopilot(
-      token,
+      pat,
       model,
       buildQueuePrompt(job.entry),
       Math.min(timeoutMs, RECOVERY_TIMEOUT_MS),
@@ -279,7 +298,7 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
       `[summarizer] field repair prompt ${job.url}: missing ${missingFields(entry).join(", ")}`,
     );
     const repaired = await callCopilot(
-      token,
+      pat,
       model,
       buildFieldRepairPrompt(job, entry),
       Math.min(timeoutMs, FIELD_REPAIR_TIMEOUT_MS),

@@ -497,6 +497,94 @@ describe("worker summarizer queue consumer", () => {
     vi.unstubAllGlobals();
   });
 
+  it("force-refreshes the IDE token and retries once on a 401 (LL-105)", async () => {
+    const put = vi.fn(async () => undefined);
+    const del = vi.fn(async () => undefined);
+    const kv = {
+      get: vi.fn(async () => null),
+      put,
+      delete: del,
+    } as unknown as KVNamespace;
+    const ack = vi.fn();
+    const retry = vi.fn();
+    let tokenExchanges = 0;
+    let chatCalls = 0;
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (url.includes("api.github.com/copilot_internal/v2/token")) {
+        tokenExchanges += 1;
+        return Response.json({
+          token: `copilot-token-${tokenExchanges}`,
+          expires_at: Math.floor(Date.now() / 1000) + 1200,
+        });
+      }
+      chatCalls += 1;
+      // First chat call: the cached IDE token expired mid-batch -> 401.
+      if (chatCalls === 1) {
+        return new Response("unauthorized: token expired", { status: 401 });
+      }
+      // Retry after a forced token refresh succeeds with a complete summary.
+      return Response.json({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                titleJa: "Example Paper",
+                summaryJa: "短い日本語要約です。",
+                summaryEn: "A concise English summary.",
+                bodyJa: "日本語本文です。\\n\\n背景も含めて説明します。",
+                bodyEn: "This is an English body with useful context and cautious framing.",
+                importance: 2,
+                extraTags: ["example"],
+              }),
+            },
+          },
+        ],
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await summarizerWorker.queue!(
+      {
+        messages: [
+          {
+            body: {
+              url: baseEntry.url,
+              entry: {
+                id: baseEntry.id,
+                url: baseEntry.url,
+                title: baseEntry.title,
+                category: baseEntry.category,
+                source: baseEntry.source,
+                sourceType: baseEntry.sourceType,
+                summaryEn: baseEntry.summaryEn,
+              },
+            },
+            ack,
+            retry,
+          },
+        ],
+      } as unknown as MessageBatch,
+      {
+        SUMMARY_CACHE: kv,
+        COPILOT_PAT: "test-pat-401",
+        SUMMARIZE_MODEL: "claude-sonnet-4.6",
+        SUMMARIZE_TIMEOUT_MS: "180000",
+        SUMMARIZE_MAX_TOKENS: "6000",
+      },
+      {} as ExecutionContext,
+    );
+
+    // 401 on first chat -> force a second token exchange -> retry chat succeeds.
+    expect(tokenExchanges).toBe(2);
+    expect(chatCalls).toBe(2);
+    expect(put).toHaveBeenCalledTimes(1);
+    expect(ack).toHaveBeenCalledTimes(1);
+    expect(retry).not.toHaveBeenCalled();
+
+    vi.unstubAllGlobals();
+  });
+
   it("repairs missing fields when both primary and compact recovery are still incomplete", async () => {
     const put = vi.fn(async () => undefined);
     const kv = {

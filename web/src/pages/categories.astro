@@ -120,9 +120,21 @@ const activeCategories = categoryPanels.filter((panel) => panel.last30 > 0).leng
 const researchPanel = categoryPanels.find((panel) => panel.slug === "research");
 const techNewsPanel = categoryPanels.find((panel) => panel.slug === "tech-news");
 
-// Group categories by display group while preserving order.
+// Compact directory: a flat A→Z list so the order is predictable (not the
+// vendor-group authoring order, which read as "scattered").
+const directoryPanels = [...categoryPanels].sort((a, b) => a.name.localeCompare(b.name));
+
+// Detailed cards keep the ecosystem grouping (LL-057) but everything is now
+// alphabetical: groups by label A→Z, categories within each group A→Z.
 const grouped = new Map<CategoryGroup, typeof categoryPanels>(
-  GROUP_ORDER.map((group) => [group, categoryPanels.filter((cat) => cat.group === group)]),
+  [...GROUP_ORDER]
+    .sort((a, b) => GROUP_LABEL[a].localeCompare(GROUP_LABEL[b]))
+    .map((group) => [
+      group,
+      categoryPanels
+        .filter((cat) => cat.group === group)
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    ]),
 );
 ---
 
@@ -168,14 +180,14 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
         </div>
 
         <nav class="category-directory-grid" aria-label="Category quick links">
-          {categoryPanels.map((cat) => (
+          {directoryPanels.map((cat) => (
             <a
               href={`/c/${cat.slug}`}
               class="category-directory-item"
               style={`--cat-color:${cat.color}`}
               aria-label={`${cat.name}: ${cat.liveCount} live entries, ${cat.last30} entries in the last 30 days`}
             >
-              <span class="category-directory-dot"></span>
+              <span class="category-directory-icon" aria-hidden="true">{cat.emoji}</span>
               <span class="category-directory-text">
                 <span class="category-directory-name">{cat.name}</span>
                 <span class="category-directory-group-label">{GROUP_LABEL[cat.group]}</span>
@@ -201,7 +213,7 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
               return (
                 <a href={`/c/${cat.slug}`} class="category-card" style={`--cat-color:${cat.color}`}>
                   <div class="cat-head">
-                    <span class="cat-dot"></span>
+                    <span class="cat-icon" aria-hidden="true">{cat.emoji}</span>
                     <div class="cat-title-block">
                       <span class="cat-name">{cat.name}</span>
                       <span class="cat-group-label">{GROUP_LABEL[cat.group]}</span>
@@ -341,8 +353,8 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
 
   .category-directory-item {
     display: grid;
-    grid-template-columns: 8px minmax(0, 1fr) auto;
-    align-items: start;
+    grid-template-columns: 26px minmax(0, 1fr) auto;
+    align-items: center;
     gap: 10px;
     min-height: 48px;
     padding: 8px 10px;
@@ -359,13 +371,16 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
     outline: 0;
   }
 
-  .category-directory-dot {
-    width: 8px;
+  .category-directory-icon {
+    display: grid;
+    place-items: center;
+    width: 26px;
     height: 26px;
-    margin-top: 2px;
-    border-radius: 999px;
-    background: var(--cat-color);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--cat-color) 16%, transparent);
+    border-radius: 7px;
+    font-size: 15px;
+    line-height: 1;
+    background: color-mix(in srgb, var(--cat-color) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--cat-color) 30%, transparent);
   }
 
   .category-directory-text {
@@ -480,18 +495,22 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
 
   .cat-head {
     display: flex;
-    align-items: flex-start;
-    gap: 7px;
+    align-items: center;
+    gap: 9px;
   }
 
-  .cat-dot {
-    width: 8px;
-    height: 8px;
-    margin-top: 6px;
-    border-radius: 999px;
+  .cat-icon {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    margin-top: 0;
+    border-radius: 8px;
     flex: 0 0 auto;
-    background: var(--cat-color);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--cat-color) 16%, transparent);
+    font-size: 17px;
+    line-height: 1;
+    background: color-mix(in srgb, var(--cat-color) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--cat-color) 30%, transparent);
   }
 
   .cat-title-block {
@@ -699,17 +718,17 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
     }
 
     .category-directory-item {
-      grid-template-columns: 7px minmax(0, 1fr) auto;
+      grid-template-columns: 22px minmax(0, 1fr) auto;
       align-items: center;
       gap: 7px;
       min-height: 42px;
       padding: 7px 8px;
     }
 
-    .category-directory-dot {
-      width: 7px;
+    .category-directory-icon {
+      width: 22px;
       height: 22px;
-      margin-top: 0;
+      font-size: 13px;
     }
 
     .category-directory-name {

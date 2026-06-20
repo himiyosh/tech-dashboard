@@ -5,6 +5,7 @@ import Sidebar from "../components/Sidebar.astro";
 import LiveMetrics from "../components/LiveMetrics.astro";
 import {
   ALL_ENTRIES,
+  CATEGORIES_BY_NAME,
   CATEGORY_META,
   relativeTime,
   type Category,
@@ -140,9 +141,9 @@ const pipelineSteps = [
           <h2 id="coverage-heading">Coverage</h2>
         </div>
         <div class="coverage-grid">
-          {CATEGORY_META.map((category) => (
+          {CATEGORIES_BY_NAME.map((category) => (
             <a href={`/c/${category.slug}`} class="coverage-chip" style={`--category-color:${category.color}`}>
-              <span>{category.initial}</span>
+              <span class="coverage-chip-icon" aria-hidden="true">{category.emoji}</span>
               <strong>{category.name}</strong>
             </a>
           ))}
@@ -332,17 +333,18 @@ const pipelineSteps = [
     color: var(--text);
   }
 
-  .coverage-chip span {
+  .coverage-chip-icon {
     display: inline-flex;
     width: 28px;
     height: 28px;
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    background: var(--category-color);
-    color: #061016;
-    font-size: 11px;
-    font-weight: 800;
+    flex: 0 0 auto;
+    background: color-mix(in srgb, var(--category-color) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--category-color) 32%, transparent);
+    font-size: 16px;
+    line-height: 1;
   }
 
   .coverage-chip strong {

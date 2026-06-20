@@ -1,6 +1,6 @@
 ---
 import {
-  CATEGORY_META,
+  CATEGORIES_BY_SHORT_LABEL,
   MAIN_TIMELINE_ENTRIES,
   countByCategory,
   type Category,
@@ -28,18 +28,6 @@ const groupLabels: Record<CategoryGroup, string> = {
   industry: "Industry",
 };
 
-const groupOrder: CategoryGroup[] = [
-  "microsoft",
-  "anthropic",
-  "openai",
-  "google",
-  "coding-tools",
-  "open-models",
-  "agent-tools",
-  "research",
-  "industry",
-];
-
 function tileClass(slug: Category): string {
   const map: Record<Category, string> = {
     copilot: "bt-copilot",
@@ -59,46 +47,6 @@ function tileClass(slug: Category): string {
   };
   return map[slug];
 }
-
-function initial(slug: Category): string {
-  const map: Record<Category, string> = {
-    copilot: "Co",
-    claude: "Cl",
-    codex: "Cx",
-    gemini: "Gm",
-    cursor: "Cu",
-    cline: "Cn",
-    aider: "Ai",
-    opencode: "Oc",
-    vscode: "Vs",
-    "local-llm": "Ll",
-    "agent-fw": "Af",
-    mcp: "Mc",
-    "tech-news": "Tn",
-    research: "Rs",
-  };
-  return map[slug];
-}
-
-function compactLabel(slug: Category): string {
-  const map: Record<Category, string> = {
-    copilot: "Copilot",
-    claude: "Claude Code",
-    codex: "Codex",
-    gemini: "Gemini/Gemma",
-    cursor: "AI Editors",
-    cline: "Cline/Roo",
-    aider: "Aider",
-    opencode: "OpenHands/OpenCode",
-    vscode: "VS Code",
-    "local-llm": "Local Models",
-    "agent-fw": "Agent Frameworks",
-    mcp: "MCP",
-    "tech-news": "News/Policy",
-    research: "Papers/Benchmarks",
-  };
-  return map[slug];
-}
 ---
 
 <aside class="left">
@@ -110,34 +58,29 @@ function compactLabel(slug: Category): string {
       <span class="count">{total}</span>
     </a>
 
-    {groupOrder.map((g) => (
-      <>
-        <div class="side-group-label">{groupLabels[g]}</div>
-        {CATEGORY_META.filter((c) => c.group === g).map((c) => {
-          const trend = categoryDailySpark(c.slug, 30);
-          const label = compactLabel(c.slug);
-          const title = `${groupLabels[c.group]}: ${c.name}`;
-          const href = `/c/${c.slug}`;
-          const isActive = active === c.slug;
-          return (
-            <a
-              class={`side-item ${isActive ? "active" : ""}`}
-              href={href}
-              aria-label={`${label}, ${title}, ${counts[c.slug]} entries`}
-            >
-              <span class={`brand-tile ${tileClass(c.slug)}`}>{initial(c.slug)}</span>
-              <span class="name" title={title}><span class="name-marquee">{label}</span></span>
-              <span class="spark" title="Last 30 days" aria-label={`${label} article trend for the last 30 days`}>
-                {trend.map((bucket) => (
-                  <i title={`${bucket.key}: ${bucket.count}`} style={`height:${bucket.height}%`}></i>
-                ))}
-              </span>
-              <span class="count">{counts[c.slug]}</span>
-            </a>
-          );
-        })}
-      </>
-    ))}
+    {CATEGORIES_BY_SHORT_LABEL.map((c) => {
+      const trend = categoryDailySpark(c.slug, 30);
+      const label = c.shortLabel;
+      const title = `${groupLabels[c.group]}: ${c.name}`;
+      const href = `/c/${c.slug}`;
+      const isActive = active === c.slug;
+      return (
+        <a
+          class={`side-item ${isActive ? "active" : ""}`}
+          href={href}
+          aria-label={`${label}, ${title}, ${counts[c.slug]} entries`}
+        >
+          <span class={`brand-tile bt-emoji ${tileClass(c.slug)}`} aria-hidden="true">{c.emoji}</span>
+          <span class="name" title={title}><span class="name-marquee">{label}</span></span>
+          <span class="spark" title="Last 30 days" aria-label={`${label} article trend for the last 30 days`}>
+            {trend.map((bucket) => (
+              <i title={`${bucket.key}: ${bucket.count}`} style={`height:${bucket.height}%`}></i>
+            ))}
+          </span>
+          <span class="count">{counts[c.slug]}</span>
+        </a>
+      );
+    })}
   </div>
 </aside>
 

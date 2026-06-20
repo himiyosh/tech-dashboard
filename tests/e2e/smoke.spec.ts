@@ -815,6 +815,21 @@ test.describe("TECH Dashboard smoke", () => {
       `all knowledge cards share one height, got ${JSON.stringify(uniqueHeights)}`,
     ).toBe(1);
 
+    // Lane rail "Sources" nav is alphabetical (A->Z by label) with favicon icons,
+    // matching the rest of the site's category/source lists (LL-103).
+    const sourceLabels = await page
+      .locator(".knowledge-source-list .knowledge-source-link strong")
+      .allInnerTexts();
+    expect(sourceLabels.length, "knowledge sources nav has entries").toBeGreaterThan(1);
+    const sortedLabels = [...sourceLabels].sort((a, b) => a.localeCompare(b));
+    expect(sourceLabels, `knowledge sources should be alphabetical: ${sourceLabels.join(", ")}`).toEqual(
+      sortedLabels,
+    );
+    expect(
+      await page.locator(".knowledge-source-list .kg-src-favicon").count(),
+      "each knowledge source has a favicon icon",
+    ).toBe(sourceLabels.length);
+
     // On mobile, Knowledge is a direct tab in the bottom tabbar (not in the
     // menu). Selecting it marks the Knowledge tab active, not the Menu trigger.
     await page.setViewportSize({ width: 390, height: 844 });

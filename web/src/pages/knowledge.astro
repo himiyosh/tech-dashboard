@@ -13,10 +13,24 @@ import {
 import { SOURCE_META } from "../lib/source-meta.ts";
 
 const now = new Date();
-const groups = knowledgeBySource();
-
 const sourceLabel = (source: string): string =>
   SOURCE_META.find((item) => item.id === source)?.displayName ?? source;
+
+// Knowledge sources, ordered alphabetically by display label (predictable A->Z,
+// not by item count) so the Sources nav matches the rest of the site's
+// category/source lists (LL-103).
+const groups = knowledgeBySource().sort((a, b) =>
+  sourceLabel(a.source).localeCompare(sourceLabel(b.source)),
+);
+
+const sourceFavicon = (group: { items: readonly NormalizedEntry[] }): string => {
+  try {
+    const host = new URL(group.items[0]?.url ?? "").host.replace(/^www\./, "");
+    return host ? `https://www.google.com/s2/favicons?sz=64&domain=${host}` : "";
+  } catch {
+    return "";
+  }
+};
 
 /** Short JA description per evergreen source for the knowledge lane. */
 const SOURCE_COPY: Record<string, string> = {
@@ -87,7 +101,12 @@ const breadcrumb = [
         <div class="knowledge-source-list">
           {groups.map((group) => (
             <a class="knowledge-source-link" href={`#kg-${group.source}`}>
-              <strong>{sourceLabel(group.source)}</strong>
+              <span class="kg-src-id">
+                {sourceFavicon(group) && (
+                  <img class="kg-src-favicon" src={sourceFavicon(group)} alt="" width="16" height="16" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display='none'" />
+                )}
+                <strong>{sourceLabel(group.source)}</strong>
+              </span>
               <span class="c">{group.items.length}</span>
             </a>
           ))}
@@ -123,7 +142,12 @@ const breadcrumb = [
             <section class="knowledge-source-group" aria-labelledby={`kg-${group.source}`}>
               <div class="knowledge-source-head">
                 <div class="knowledge-source-headings">
-                  <h2 id={`kg-${group.source}`}>{sourceLabel(group.source)}</h2>
+                  <h2 id={`kg-${group.source}`}>
+                    {sourceFavicon(group) && (
+                      <img class="kg-head-favicon" src={sourceFavicon(group)} alt="" width="22" height="22" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display='none'" />
+                    )}
+                    {sourceLabel(group.source)}
+                  </h2>
                   <p class="knowledge-source-desc">{SOURCE_COPY[group.source] ?? "ベストプラクティス / 技術知見ソース。"}</p>
                 </div>
                 <div class="knowledge-source-meta">
@@ -233,5 +257,30 @@ const breadcrumb = [
   .knowledge-source-link .c {
     font-variant-numeric: tabular-nums;
     color: var(--text-muted, #94a3b8);
+  }
+  .kg-src-id {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+  }
+  .kg-src-favicon {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .knowledge-source-link strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .kg-head-favicon {
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    vertical-align: -5px;
+    margin-right: 8px;
   }
 </style>

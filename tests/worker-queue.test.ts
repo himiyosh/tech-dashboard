@@ -390,7 +390,7 @@ describe("worker summarizer health endpoint", () => {
 });
 
 describe("worker summarizer queue consumer", () => {
-  it("retries once with a compact prompt when the long-form response is incomplete", async () => {
+  it("generates a summary from the summary-only prompt without requesting a body (LL-106)", async () => {
     const put = vi.fn(async () => undefined);
     const del = vi.fn(async () => undefined);
     const kv = {
@@ -404,6 +404,7 @@ describe("worker summarizer queue consumer", () => {
     } as unknown as KVNamespace;
     const ack = vi.fn();
     const retry = vi.fn();
+    let requestedBody = false;
     const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       const url = input instanceof Request ? input.url : String(input);
       if (url.includes("api.github.com/copilot_internal/v2/token")) {
@@ -412,31 +413,12 @@ describe("worker summarizer queue consumer", () => {
           expires_at: Math.floor(Date.now() / 1000) + 1200,
         });
       }
-
       const body = JSON.parse(String(init?.body ?? "{}")) as {
         messages?: Array<{ role: string; content: string }>;
       };
       const prompt = body.messages?.find((message) => message.role === "user")?.content ?? "";
-      if (prompt.includes("Return exactly one valid JSON object")) {
-        return Response.json({
-          choices: [
-            {
-              message: {
-                content: JSON.stringify({
-                  titleJa: "Example Paper",
-                  summaryJa: "短い日本語要約です。",
-                  summaryEn: "A concise English summary.",
-                  bodyJa: "日本語本文です。\\n\\n背景も含めて説明します。",
-                  bodyEn: "This is an English body with useful context and cautious framing.",
-                  importance: 2,
-                  extraTags: ["example"],
-                }),
-              },
-            },
-          ],
-        });
-      }
-
+      // LL-106: the queue prompt must NOT request a long bilingual body.
+      if (/bodyJa|bodyEn/.test(prompt)) requestedBody = true;
       return Response.json({
         choices: [
           {
@@ -480,7 +462,7 @@ describe("worker summarizer queue consumer", () => {
       } as unknown as MessageBatch,
       {
         SUMMARY_CACHE: kv,
-        COPILOT_PAT: "test-pat-recovery",
+        COPILOT_PAT: "test-pat-summary-only",
         SUMMARIZE_MODEL: "claude-sonnet-4.6",
         SUMMARIZE_TIMEOUT_MS: "180000",
         SUMMARIZE_MAX_TOKENS: "6000",
@@ -488,7 +470,9 @@ describe("worker summarizer queue consumer", () => {
       {} as ExecutionContext,
     );
 
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(requestedBody).toBe(false);
+    // token exchange + a single chat call (no recovery/field-repair chain).
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(ack).toHaveBeenCalledTimes(1);
     expect(retry).not.toHaveBeenCalled();
     expect(put).toHaveBeenCalledTimes(1);
@@ -585,7 +569,7 @@ describe("worker summarizer queue consumer", () => {
     vi.unstubAllGlobals();
   });
 
-  it("repairs missing fields when both primary and compact recovery are still incomplete", async () => {
+  it("retries the summary-only prompt once when the first output is empty (LL-106)", async () => {
     const put = vi.fn(async () => undefined);
     const kv = {
       get: vi.fn(async () => null),
@@ -594,6 +578,7 @@ describe("worker summarizer queue consumer", () => {
     } as unknown as KVNamespace;
     const ack = vi.fn();
     const retry = vi.fn();
+    let chatCalls = 0;
     const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       const url = input instanceof Request ? input.url : String(input);
       if (url.includes("api.github.com/copilot_internal/v2/token")) {
@@ -602,31 +587,12 @@ describe("worker summarizer queue consumer", () => {
           expires_at: Math.floor(Date.now() / 1000) + 1200,
         });
       }
-
-      const body = JSON.parse(String(init?.body ?? "{}")) as {
-        messages?: Array<{ role: string; content: string }>;
-      };
-      const prompt = body.messages?.find((message) => message.role === "user")?.content ?? "";
-      if (prompt.includes("Repair the incomplete JSON summary")) {
-        return Response.json({
-          choices: [
-            {
-              message: {
-                content: JSON.stringify({
-                  titleJa: "Example Paper",
-                  summaryJa: "短い日本語要約です。",
-                  summaryEn: "A concise English summary.",
-                  bodyJa: "日本語本文です。\\n\\n背景も含めて説明します。",
-                  bodyEn: "This is the repaired English body with useful context and cautious framing.",
-                  importance: 2,
-                  extraTags: ["example", "repair"],
-                }),
-              },
-            },
-          ],
-        });
+      chatCalls += 1;
+      // First chat call mirrors the reasoning-exhausted response: HTTP 200 with
+      // an empty choices array (LL-106). The retry then succeeds.
+      if (chatCalls === 1) {
+        return Response.json({ choices: [] });
       }
-
       return Response.json({
         choices: [
           {
@@ -635,7 +601,7 @@ describe("worker summarizer queue consumer", () => {
                 titleJa: "Example Paper",
                 summaryJa: "短い日本語要約です。",
                 summaryEn: "A concise English summary.",
-                bodyJa: "日本語本文です。\\n\\n背景も含めて説明します。",
+                bodyJa: "",
                 bodyEn: "",
                 importance: 2,
                 extraTags: ["example"],
@@ -670,7 +636,7 @@ describe("worker summarizer queue consumer", () => {
       } as unknown as MessageBatch,
       {
         SUMMARY_CACHE: kv,
-        COPILOT_PAT: "test-pat-field-repair",
+        COPILOT_PAT: "test-pat-summary-retry",
         SUMMARIZE_MODEL: "claude-sonnet-4.6",
         SUMMARIZE_TIMEOUT_MS: "180000",
         SUMMARIZE_MAX_TOKENS: "6000",
@@ -678,13 +644,13 @@ describe("worker summarizer queue consumer", () => {
       {} as ExecutionContext,
     );
 
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(chatCalls).toBe(2);
     expect(ack).toHaveBeenCalledTimes(1);
     expect(retry).not.toHaveBeenCalled();
     expect(put).toHaveBeenCalledTimes(1);
     const stored = JSON.parse(String(put.mock.calls[0]?.[1] ?? "{}")) as CacheEntry;
-    expect(stored.bodyEn).toContain("repaired English body");
-    expect(stored.extraTags).toEqual(["example", "repair"]);
+    expect(stored.summaryJa).toBe("短い日本語要約です。");
+    expect(stored.summaryEn).toBe("A concise English summary.");
 
     vi.unstubAllGlobals();
   });

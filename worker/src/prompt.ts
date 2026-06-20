@@ -134,6 +134,44 @@ export function buildQueuePrompt(e: PromptEntry): string {
   ].join("\n");
 }
 
+/**
+ * Summary-only prompt for the Queue consumer (LL-106).
+ *
+ * claude-sonnet-4.6 is a reasoning model: it emits opaque reasoning tokens
+ * that count against max_tokens. When the prompt also asks for a long
+ * bilingual body (700-1100 JA chars + 500-800 EN words), reasoning + the long
+ * output exhausts the budget and the Copilot chat endpoint returns
+ * {"choices":[]} (empty) -- surfacing as "incomplete summary" and writing ZERO
+ * summaries to KV. Asking for only title + JA/EN summary keeps the output
+ * short enough that reasoning + answer fit, so the model finishes
+ * (finish_reason=stop) and returns valid JSON. The long-form body is filled
+ * deterministically by the collector (R-012/R-013), so it is not requested.
+ */
+export function buildSummaryPrompt(e: PromptEntry): string {
+  const context = sourceContextLines(e);
+  return [
+    `# Article`,
+    `Title: ${e.title}`,
+    `Category: ${e.category}`,
+    `Source: ${e.source} (${e.sourceType})`,
+    `URL: ${e.url}`,
+    ...(context.length ? [``, `# Collected context`, ...context] : []),
+    ``,
+    `Return exactly one valid JSON object with ONLY these fields. All strings must be non-empty.`,
+    `Do NOT write a body or any long-form text. Keep the whole response short.`,
+    `{`,
+    `  "titleJa": "Natural Japanese title. Keep product/company names and version numbers unchanged.",`,
+    `  "summaryJa": "Japanese summary, 80-140 chars.",`,
+    `  "summaryEn": "English summary, 90-170 chars.",`,
+    `  "importance": 1 | 2 | 3,`,
+    `  "extraTags": ["lowercase-kebab", ...]`,
+    `}`,
+    ``,
+    `importance: 3=major release/critical announcement, 2=important feature/research, 1=routine update.`,
+    `Never copy deterministic fallback text such as "AI summary not yet available".`,
+  ].join("\n");
+}
+
 function emptyParsedResponse(): ParsedSummaryResponse {
   return { titleJa: "", summaryJa: "", summaryEn: "", bodyJa: "", bodyEn: "", importance: 1, extraTags: [] };
 }

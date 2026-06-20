@@ -822,6 +822,14 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策 (運用, 本命)**: 上記コードは**トークンが再交換で復活する場合のみ**有効。`s:` キー 0 = 全 batch の先頭 job から失敗 = **systematic 失敗**なので、最有力原因は **`COPILOT_PAT` secret 自体の期限切れ/劣化** (GitHub が劣化 PAT に対し既に失効した IDE token を mint している)。これは秘密情報のローテーションで、エージェントは扱えない → **ユーザーが `cd worker-summarizer && npx wrangler secret put COPILOT_PAT` で有効な Copilot PAT を再設定**する必要がある。コード修正だけで realSummaryJa の増加が確認できなければ、PAT 再設定が必須。デプロイ後は `wrangler kv key list --prefix s:` が増えること・`/health` の recentIssue が消えること・realSummaryJa が cron 毎に増えることを**実測検証**してから「解消」と報告する (LL-104 の教訓: 推測で fixed と言わない)。
 - **教訓**: 非同期 enrichment が「スタック」して見えるとき、ボトルネックは**層になって**いる: 表示ゲート (LL-101) → merge 窓 (LL-102) → 書き込み条件 (LL-104) → **認証 (LL-105)**。1 層直すたびに**実データ (ここでは `s:` キー数と `wrangler tail` の生エラー) で次の層を確認**する。「生成済みだが反映されない」と「そもそも生成されない」は KV を直接読めば一発で分かる。`s:` キー 0 件は「生成が 0」の動かぬ証拠で、その上流 (auth) を tail で見れば `401 token expired` に行き着く。認証失効はコードで完全には直せない (secret はユーザー資産) ので、(a) コードは token 失効に self-heal する防御 (401 リトライ + skew>timeout) を持たせ、(b) systematic 失敗時は secret 再設定をユーザーに明示する、の二段構えにする。token cache の freshness skew は**最長の単一呼び出し timeout より必ず大きく**する (skew < timeout は「check を通った token が呼び出し中に失効」する静かなバグ)。
 
+### LL-106: 要約スタックの真因は「推論モデル × 長文本文要求」で API が choices:[] を返すこと（トークン/ヘッダは無実）
+- **事象**: LL-101/102/104/105 とトークン再設定まで行っても summarizer は `s:` キーを1件も書けず（0件）、`incomplete summary` が継続。
+- **誤った仮説の連鎖（教訓）**: (a)「PAT 劣化」誤り（交換は 200 成功）。(b)「copilot-integration-id ヘッダ不足」誤り（有無どちらも chat 成功）。(c)「古い ghu_ 失効」も無関係（交換成功）。実証なしに3回断定しユーザーに訂正された。
+- **決定的切り分け（実 API 再現）**: `.env.local` の COPILOT_PAT（`ghu_`）で worker と同じ流れを node で再現。短いプロンプト（要約3項目, max_tokens=2000）→ 200 + 正常 JSON（finish_reason=stop）。長い本文要求（bodyJa 700-1100字 + bodyEn 500-800語）→ 200 だが `{"choices":[]}`（空）。completion_tokens が max_tokens と完全一致 + `reasoning_opaque` あり。
+- **根本原因**: `claude-sonnet-4.6` は推論モデルで、応答前の reasoning トークンが max_tokens を消費する。長いバイリンガル本文を要求すると reasoning + 出力が超過し、message に到達せず `choices:[]` を返す → content 空 → `incomplete summary` → KV 書き込み0。**生成失敗でトークン認証ではない**。既存1273件は旧 inline collector(cache.v1 blob)由来で、分離後 summarizer は一度も成功していなかった。
+- **対策**: `buildSummaryPrompt`（title+summaryJa+summaryEn のみ、本文なし）を追加。processJob を「1回 + 不足なら1回 retry、isSummaryComplete で保存」に簡素化（3段チェーン廃止）。本文は collector が deterministic 補完(R-012)。デッドコード削除、テスト書き換え、194 unit PASS。
+- **教訓**: (1) 推論モデルは max_tokens を reasoning で消費する。出力契約を短く保ち、長文と要約を別呼び出しに分ける。`completion_tokens==max_tokens` かつ `choices:[]` は reasoning 枯渇の固有シグネチャ。(2) 推論で根本原因を断定しない（Hook 4）。実トークンで実 API を再現して初めて真因に到達。HTTP 200 でも choices 空なら usage/finish_reason/reasoning_* を見る。(3) 多層症状は各層を実データで潰し次の層を実測する。(4) トークン種別: ghu_=user-to-server(~8h失効/refresh token必要), gho_=OAuth App(Copilot交換404のことあり), ghp_=classic PAT。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

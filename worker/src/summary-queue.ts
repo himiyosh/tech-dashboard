@@ -45,6 +45,27 @@ function dateMs(value: string | null | undefined): number {
   return Number.isFinite(ms) ? ms : 0;
 }
 
+/**
+ * Start index for an hourly round-robin window over `total` items, advancing by
+ * a FULL `cap`-sized window each hour (NOT one item per hour).
+ *
+ * This is the single source of truth for BOTH the summary enqueue window and the
+ * collector's KV-lookup / merge-back window. Keeping them symmetric is the whole
+ * point: LL-076 fixed the enqueue side to advance by `cap`, but the merge-back
+ * window in the collector was left advancing by 1/hour. The result was that
+ * summaries were generated quickly (enqueue cycled in hours) yet merged into the
+ * index at a crawl (the lookup window took `total` hours — weeks — to cycle), so
+ * summaries piled up in KV unmerged and the visible backlog never drained
+ * (LL-102). Both sides now call this helper so the bug cannot reappear on one
+ * side only.
+ */
+export function roundRobinStart(nowMs: number, total: number, cap: number): number {
+  const safeCap = Math.max(1, Math.floor(cap));
+  if (total <= safeCap) return 0;
+  const hour = Math.floor(nowMs / 3_600_000);
+  return ((hour * safeCap) % total + total) % total;
+}
+
 export function needsGeneratedContent(
   entry: Pick<NormalizedEntry, "summaryJa" | "summaryEn" | "bodyJa" | "bodyEn">,
 ): boolean {
@@ -177,9 +198,8 @@ export function selectSummaryJobBatch(
 
   // Fill the rest with a fair cap-sized round-robin window over the older
   // backlog so nothing starves (LL-076). Advancing by a full cap per hour keeps
-  // a 400+ item backlog cycling predictably.
-  const hour = Math.floor((opts.nowMs ?? Date.now()) / 3_600_000);
-  const startIndex = restEligible.length > safeCap ? (hour * safeCap) % restEligible.length : 0;
+  // a 400+ item backlog cycling predictably (shared roundRobinStart helper).
+  const startIndex = roundRobinStart(opts.nowMs ?? Date.now(), restEligible.length, safeCap);
   for (let i = 0; i < restEligible.length && jobs.length < safeCap; i++) {
     pushJob(restEligible[(startIndex + i) % restEligible.length]!);
   }

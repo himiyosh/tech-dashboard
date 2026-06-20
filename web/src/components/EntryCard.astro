@@ -4,7 +4,6 @@ import {
   isNew,
   CATEGORY_META,
   entryHref,
-  summaryForLang,
   summaryForLangWithFallback,
   titleForLangWithFallback,
   type NormalizedEntry,
@@ -44,8 +43,13 @@ function faviconUrl(url: string, size = 32): string {
 }
 
 const summaryJaResult = summaryForLangWithFallback(entry, "ja");
+const summaryEnResult = summaryForLangWithFallback(entry, "en");
+// summaryForLangWithFallback returns "" for pending boilerplate / title echoes
+// and cross-falls-back to the other language's real summary. So an entry whose
+// JA summary is not generated yet still shows its real EN summary (flagged with
+// a language badge) instead of placeholder text or an empty card (LL-074).
 const summaryJa = summaryJaResult.text;
-const summaryEn = summaryForLang(entry, "en");
+const summaryEn = summaryEnResult.text;
 const hasSummary = Boolean(summaryJa || summaryEn);
 const titleJaResult = titleForLangWithFallback(entry, "ja");
 const titleEnResult = titleForLangWithFallback(entry, "en");
@@ -100,16 +104,8 @@ const publishedEn = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
 }).format(new Date(entry.publishedAt));
 
-function isPendingSummary(text: string): boolean {
-  return text.startsWith("このエントリは ") || /AI\s*要約未生成|AI summary pending/i.test(text);
-}
-
-const summaryJaMark = summaryJaResult.isFallback
-  ? "原文EN"
-  : isPendingSummary(summaryJa)
-    ? "要約待ち"
-    : "AI要約";
-const summaryEnMark = isPendingSummary(summaryEn) ? "Pending" : "EN";
+const summaryJaMark = summaryJaResult.isFallback ? "原文EN" : "AI要約";
+const summaryEnMark = summaryEnResult.isFallback ? "原文JA" : "EN";
 
 // Generate a deterministic pattern seed from the entry id
 const patternSeed = entry.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
@@ -210,7 +206,11 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
           </p>
         )}
         {summaryEn && (
-          <p class="summary summary-en i18n-en" title={summaryEn} lang="en">
+          <p
+            class="summary summary-en i18n-en"
+            title={summaryEn}
+            lang={summaryEnResult.fallbackLang === "ja" ? "ja" : "en"}
+          >
             <span class="en-mark">{summaryEnMark}</span>
             <span class="s-text">{summaryEn}</span>
           </p>
@@ -218,8 +218,12 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
       </div>
     ) : (
       <p class="summary-state">
-        <span class="i18n-ja">要約は未生成です。タイトル、ソース、カテゴリ、重要度を手がかりに判断できます。</span>
-        <span class="i18n-en" lang="en">Summary is not generated yet. Use the title, source, category, and priority cues to decide.</span>
+        <span class="summary-pending-badge">
+          <span class="i18n-ja">AI要約 生成中</span>
+          <span class="i18n-en" lang="en">AI summary generating</span>
+        </span>
+        <span class="i18n-ja">タイトル・ソース・カテゴリ・重要度で判断できます。要約は生成され次第このカードに反映されます。</span>
+        <span class="i18n-en" lang="en">Decide from the title, source, category, and priority. The summary appears here once generated.</span>
       </p>
     )}
     <div class="card-footer">

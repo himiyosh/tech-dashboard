@@ -144,16 +144,66 @@ function hasGeneratedSummary(e: NormalizedEntry): boolean {
   );
 }
 
-/** Public pages only publish entries that already have a generated summary. */
+/** Decision-critical slots (Featured / Top-3) and feeds require a real summary. */
 export function isPublishableEntry(e: NormalizedEntry): boolean {
   return hasGeneratedSummary(e) && !isDeterministicFallbackEntry(e);
 }
 
+/**
+ * An entry is "listable" when it should appear in the Timeline / category / tag
+ * listings. It is listable if it is publishable (real AI summary) OR it is still
+ * waiting for its summary but has a real, human-readable title to show.
+ *
+ * This is the LL-074 / LL-083 / LL-087 family fix: do NOT hide a freshly
+ * collected article just because its async AI summary has not been generated
+ * yet. The summary queue drains at a capped rate, so the newest entries are
+ * disproportionately still in the fallback state — hiding them makes recent days
+ * look empty even though collection is healthy. Listing them (with a "summary
+ * generating" state in the card) keeps the site reflecting reality, while the
+ * real summary upgrades in place once the queue catches up.
+ *
+ * Synthetic-title-only entries (no real title, just "X (source) related
+ * update") are still excluded — there is nothing meaningful to list.
+ */
+export function isListableEntry(e: NormalizedEntry): boolean {
+  if (isPublishableEntry(e)) return true;
+  return (
+    (!!(e.titleEn ?? "").trim() && !isSyntheticFallbackTitle(e, e.titleEn)) ||
+    (!!(e.titleJa ?? "").trim() && !isSyntheticFallbackTitle(e, e.titleJa)) ||
+    (!!(e.title ?? "").trim() && !isSyntheticFallbackTitle(e, e.title))
+  );
+}
+
+/**
+ * True when `text` is not a genuine summary to display: empty, deterministic
+ * pending boilerplate ("このエントリは ..."), or a bare echo of the entry title
+ * (some feeds set summary = title for un-summarized items). Cards use this to
+ * fall back to a clean "summary generating" state instead of showing
+ * placeholder text (agentic §4.7 / LL-074).
+ */
+export function isSummaryNoise(e: NormalizedEntry, text: string | undefined | null): boolean {
+  const value = (text ?? "").trim();
+  if (!value) return true;
+  if (isPendingSummaryText(value)) return true;
+  const lower = value.toLowerCase();
+  return [e.title, e.titleEn, e.titleJa].some(
+    (t) => !!t && t.trim().toLowerCase() === lower,
+  );
+}
+
 export const RAW_ENTRIES: readonly NormalizedEntry[] = data.entries;
+/** Entries with a real, generated AI summary (decision-critical slots, feeds). */
+export const PUBLISHABLE_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.filter(isPublishableEntry);
+/** Entries still waiting for an AI summary (rendered with a pending state). */
 export const PENDING_SUMMARY_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.filter(
   (entry) => !isPublishableEntry(entry),
 );
-export const ALL_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.filter(isPublishableEntry);
+/**
+ * Everything shown in listings (Timeline / category / tag / archive). Includes
+ * pending-summary entries with a real title so newly collected articles are
+ * visible immediately instead of hidden behind the async summary gate (LL-087).
+ */
+export const ALL_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.filter(isListableEntry);
 export const GENERATED_AT = data.generatedAt;
 export const WORKER_HEALTH: WorkerHealth | null = data.health ?? null;
 
@@ -195,8 +245,15 @@ export const MAIN_TIMELINE_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.fil
  * marked `evergreen: true` in the registry (vendor engineering blogs, how-to,
  * best-practice guides). They accumulate instead of decaying, so they get a
  * dedicated page separate from the time-sensitive news Timeline. Newest first.
+ *
+ * Unlike the news Timeline, the Knowledge lane stays publishable-only: it is a
+ * curated lane whose cards rely on a real bilingual summary (uniform card
+ * layout, LL-096) and whose value is the digested insight, not breaking news.
+ * Evergreen entries get summary-queue priority (LL-098) so they surface quickly
+ * after collection; until then they simply aren't listed here (the news
+ * Timeline is where freshly collected, not-yet-summarized items show up).
  */
-export const KNOWLEDGE_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter(
+export const KNOWLEDGE_ENTRIES: readonly NormalizedEntry[] = PUBLISHABLE_ENTRIES.filter(
   (entry) => entry.evergreen === true,
 );
 
@@ -422,11 +479,19 @@ export function summaryForLang(
 ): string {
   const ja = (e.summaryJa ?? "").trim();
   const en = (e.summaryEn ?? "").trim();
+  // A field is a usable summary only when it is not deterministic pending
+  // boilerplate, a synthetic "(source) related update" string, or a bare echo
+  // of the entry title (isSummaryNoise). Returning "" for noise lets
+  // summaryForLangWithFallback fall back across languages instead of surfacing
+  // placeholder text (LL-074). Classification (isPublishableEntry) is unaffected
+  // because it reads the raw fields, not this display helper.
+  const usable = (text: string) =>
+    !isSummaryNoise(e, text) && !isSyntheticFallbackTitle(e, text);
   if (lang === "ja") {
-    if (ja && !isSyntheticFallbackTitle(e, ja)) return ja;
-    return hasCjk(en) ? en : "";
+    if (usable(ja)) return ja;
+    return hasCjk(en) && usable(en) ? en : "";
   }
-  if (en && !hasCjk(en)) return en;
+  if (usable(en) && !hasCjk(en)) return en;
   return "";
 }
 
@@ -441,14 +506,13 @@ export function summaryForLangWithFallback(
 ): { text: string; isFallback: boolean; fallbackLang?: "ja" | "en" } {
   const primary = summaryForLang(e, lang);
   if (primary) return { text: primary, isFallback: false };
-  const ja = (e.summaryJa ?? "").trim();
-  const en = (e.summaryEn ?? "").trim();
-  if (lang === "en" && ja) {
-    return { text: ja, isFallback: true, fallbackLang: "ja" };
-  }
-  if (lang === "ja" && en && !hasCjk(en)) {
-    return { text: en, isFallback: true, fallbackLang: "en" };
-  }
+  // Fall back to the other language's usable summary (e.g. an English-source
+  // entry whose Japanese summary has not been generated yet still shows its real
+  // English summary, flagged with a language badge). Uses summaryForLang so the
+  // fallback is noise-filtered too (no boilerplate / title-echo leaks).
+  const other: "ja" | "en" = lang === "ja" ? "en" : "ja";
+  const fallback = summaryForLang(e, other);
+  if (fallback) return { text: fallback, isFallback: true, fallbackLang: other };
   return { text: "", isFallback: false };
 }
 

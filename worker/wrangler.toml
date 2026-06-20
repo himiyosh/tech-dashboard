@@ -56,26 +56,28 @@ SUMMARIZE_TIMEOUT_MS = "25000"
 # Queue.sendBatch (one subrequest for up to 100 messages), so raising
 # ENQUEUE_MAX_NEW costs ~0 extra collector subrequests. The only cost of a
 # higher ENQUEUE_MAX_NEW is consumer-side KV writes (one KV.put per job),
-# bounded by the Free-tier 1000 writes/day cap (LL-043). Restored to 30
-# (the LL-043 documented-safe value) to drain the ~455 backlog faster.
+# bounded by the Free-tier 1000 writes/day cap (LL-043).
+# 2026-06-20: raised 30 -> 35 to drain the ~628 backlog (38%) a bit faster.
 # Daily write budget:
-#   24 cron * 30 enqueue = 720 summarizer KV.put/day (worst case)
+#   24 cron * 35 enqueue = 840 summarizer KV.put/day (worst case)
 #   + ~24 OG cache puts  = 24 KV.put/day
 #   + ~24 heartbeat      = 24 KV.put/day
 #   + occasional manual /run = a handful
-#   => ~770/day, under the 1000/day Free-tier KV write cap (LL-043).
+#   => ~890/day, still under the 1000/day Free-tier KV write cap (LL-043).
 ENABLE_SUMMARY_QUEUE = "1"
-ENQUEUE_MAX_NEW = "30"
+ENQUEUE_MAX_NEW = "35"
 # KV_LOOKUP_CAP: max fallback entries to KV-read per cron invocation. Each is
 # one subrequest, so this is the real subrequest lever (not ENQUEUE_MAX_NEW).
 # 2026-05-31: Lowered from 500 after the 21:00Z cron hit the subrequest limit.
 # 2026-06-15 (LL-088): raised 20 -> 40 so the producer verifies enough
-# missing entries to feed ENQUEUE_MAX_NEW=30 (keeping KV_LOOKUP_CAP >=
+# missing entries to feed ENQUEUE_MAX_NEW (keeping KV_LOOKUP_CAP >=
 # ENQUEUE_MAX_NEW minimizes speculative enqueues of already-cached URLs, since
-# the consumer does not pre-check KV before generating). 40 KV GETs/cron is 8%
-# of the 500 that broke cron, leaving a wide subrequest margin. Round-robin in
-# code preserves fairness across the backlog.
-KV_LOOKUP_CAP = "40"
+# the consumer does not pre-check KV before generating).
+# 2026-06-20: raised 40 -> 80 so more already-generated summaries merge into the
+# index per cron (subrequest-bound, not write-bound). 80 KV GETs/cron is 16% of
+# the 500 that broke cron, leaving a wide subrequest margin. Round-robin + recent
+# priority in code preserves fairness across the backlog.
+KV_LOOKUP_CAP = "80"
 # Missing thumbnail backfill is useful but non-critical. Keep it tiny so data
 # collection + GitHub publish stay under the Free-plan external subrequest cap.
 OG_BUDGET_PER_RUN = "1"

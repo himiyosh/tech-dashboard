@@ -192,6 +192,37 @@ test.describe("TECH Dashboard smoke", () => {
       .toBe(true);
   });
 
+  test("sidebar categories are alphabetical with emoji icons (no scattered group order)", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    const items = page.locator("aside.left a.side-item[href^='/c/']");
+    const count = await items.count();
+    expect(count, "sidebar lists every category").toBe(14);
+
+    const labels: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const item = items.nth(i);
+      // Each category tile shows an emoji icon (non-ASCII glyph), not a 2-letter code.
+      const icon = (await item.locator(".brand-tile").innerText()).trim();
+      expect(icon.length, `category ${i} has an icon`).toBeGreaterThan(0);
+      expect(/[A-Za-z0-9]/.test(icon), `category ${i} icon is an emoji, not letters: ${icon}`).toBe(false);
+      labels.push((await item.locator(".name-marquee").innerText()).trim());
+    }
+    // Labels are in case-insensitive A→Z order.
+    const sorted = [...labels].sort((a, b) => a.localeCompare(b));
+    expect(labels, `sidebar order should be alphabetical: ${labels.join(", ")}`).toEqual(sorted);
+
+    // The categories directory is alphabetical too.
+    await page.goto("/categories/");
+    const dirNames = await page
+      .locator("#category-directory .category-directory-name")
+      .allInnerTexts();
+    const dirSorted = [...dirNames].sort((a, b) => a.localeCompare(b));
+    expect(dirNames, "category directory should be alphabetical").toEqual(dirSorted);
+    // Directory items carry emoji icons.
+    await expect(page.locator("#category-directory .category-directory-icon").first()).toBeVisible();
+  });
+
   test("language toggle changes html data-lang", async ({ page }) => {
     await page.goto("/");
 

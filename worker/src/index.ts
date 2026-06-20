@@ -24,6 +24,7 @@ import { canonicalUrlKey } from "../../harness/pipeline/url.ts";
 import { applyDeterministicContentFallback } from "./content-fallback.ts";
 import {
   needsGeneratedContent,
+  roundRobinStart,
   selectSummaryJobBatch,
   type SummaryJob,
 } from "./summary-queue.ts";
@@ -961,12 +962,13 @@ async function runHarness(
     Number(env.KV_LOOKUP_CAP ?? "20"),
   );
   const allFallback = sorted.filter(needsGeneratedContent);
-  // Round-robin: shift start index by 1 each hour so all entries cycle
-  // through even when allFallback.length > KV_LOOKUP_CAP.
-  const rrHourOffset =
-    allFallback.length > KV_LOOKUP_CAP
-      ? Math.floor(Date.now() / 3600_000) % allFallback.length
-      : 0;
+  // Round-robin the KV-lookup/merge-back window by a FULL cap each hour (shared
+  // roundRobinStart helper, symmetric with the enqueue window). Advancing by
+  // only 1 entry/hour (the old behaviour) made this window take `allFallback`
+  // hours — WEEKS — to cycle, so summaries the summarizer had already written to
+  // KV were merged into the index at a crawl (~0.4/h) and the visible backlog
+  // never drained even though generation was working (LL-102).
+  const rrHourOffset = roundRobinStart(Date.now(), allFallback.length, KV_LOOKUP_CAP);
   const needsKvLookup: typeof allFallback = [];
   for (let i = 0; i < Math.min(KV_LOOKUP_CAP, allFallback.length); i++) {
     needsKvLookup.push(allFallback[(rrHourOffset + i) % allFallback.length]!);

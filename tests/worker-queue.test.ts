@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { NormalizedEntry } from "../harness/types.ts";
 import type { CacheEntry } from "../worker/src/kv-cache.ts";
 import { evaluateHarnessHealth } from "../worker/src/index.ts";
-import { needsGeneratedContent, selectSummaryJobBatch, selectSummaryJobs } from "../worker/src/summary-queue.ts";
+import { needsGeneratedContent, roundRobinStart, selectSummaryJobBatch, selectSummaryJobs } from "../worker/src/summary-queue.ts";
 import summarizerWorker, { isCompleteCacheEntry } from "../worker-summarizer/src/index.ts";
 
 const baseEntry: NormalizedEntry = {
@@ -208,6 +208,38 @@ describe("worker summary queue selection", () => {
       "https://example.com/paper-2",
       "https://example.com/paper-3",
     ]);
+  });
+});
+
+describe("roundRobinStart (shared enqueue + KV-lookup window, LL-102)", () => {
+  const H = 3_600_000;
+  it("advances by a FULL cap each hour, not one item", () => {
+    // 627 fallbacks, cap 80: the window must jump 80 per hour so the merge-back
+    // window cycles in ~8h, not 627h. The old 1/hour bug returned hour%627.
+    expect(roundRobinStart(0 * H, 627, 80)).toBe(0);
+    expect(roundRobinStart(1 * H, 627, 80)).toBe(80);
+    expect(roundRobinStart(2 * H, 627, 80)).toBe(160);
+    // Definitely NOT the old 1/hour behaviour.
+    expect(roundRobinStart(1 * H, 627, 80)).not.toBe(1);
+  });
+  it("wraps around the total", () => {
+    expect(roundRobinStart(8 * H, 627, 80)).toBe((8 * 80) % 627); // 13
+    expect(roundRobinStart(100 * H, 627, 80)).toBe((100 * 80) % 627);
+  });
+  it("returns 0 when the backlog fits in one window", () => {
+    expect(roundRobinStart(5 * H, 40, 80)).toBe(0);
+    expect(roundRobinStart(5 * H, 80, 80)).toBe(0);
+  });
+  it("cycles the whole backlog within ceil(total/cap) hours", () => {
+    const total = 627, cap = 80;
+    const covered = new Set<number>();
+    const hours = Math.ceil(total / cap);
+    for (let h = 0; h < hours; h++) {
+      const start = roundRobinStart(h * H, total, cap);
+      for (let i = 0; i < cap; i++) covered.add((start + i) % total);
+    }
+    // Every fallback entry is looked up at least once within ceil(627/80)=8 hours.
+    expect(covered.size).toBe(total);
   });
 });
 

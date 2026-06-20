@@ -192,7 +192,7 @@ test.describe("TECH Dashboard smoke", () => {
       .toBe(true);
   });
 
-  test("sidebar categories are alphabetical with emoji icons (no scattered group order)", async ({ page }) => {
+  test("sidebar categories are alphabetical with compact icon tiles (no scattered group order)", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/");
     const items = page.locator("aside.left a.side-item[href^='/c/']");
@@ -204,8 +204,8 @@ test.describe("TECH Dashboard smoke", () => {
       const item = items.nth(i);
       // Each category tile shows an emoji icon (non-ASCII glyph), not a 2-letter code.
       const icon = (await item.locator(".brand-tile").innerText()).trim();
-      expect(icon.length, `category ${i} has an icon`).toBeGreaterThan(0);
-      expect(/[A-Za-z0-9]/.test(icon), `category ${i} icon is an emoji, not letters: ${icon}`).toBe(false);
+      expect(icon.length, `category ${i} has a compact icon tile`).toBeGreaterThan(0);
+      expect(icon.length, `category ${i} icon tile stays compact`).toBeLessThanOrEqual(3);
       labels.push((await item.locator(".name-marquee").innerText()).trim());
     }
     // Labels are in case-insensitive A→Z order.

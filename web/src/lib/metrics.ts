@@ -1,6 +1,7 @@
 import { ARCHIVE_MONTHS, ARCHIVE_TOTAL_ENTRIES } from "./archive.ts";
 import {
   ALL_ENTRIES,
+  PUBLISHABLE_ENTRIES,
   CATEGORY_META,
   GENERATED_AT,
   WORKER_HEALTH,
@@ -65,10 +66,13 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
     generatedAt: latestIso([GENERATED_AT, STATS.generatedAt, WORKER_HEALTH?.lastRunAt ?? null]),
     indexGeneratedAt: GENERATED_AT,
     statsGeneratedAt: STATS.generatedAt,
-    liveEntries: ALL_ENTRIES.length,
+    // liveEntries = entries with a real AI summary (quality/health count). Kept
+    // distinct from the listed Timeline set (ALL_ENTRIES, which also includes
+    // pending-summary entries) so allTimeEntries >= liveEntries stays true.
+    liveEntries: PUBLISHABLE_ENTRIES.length,
     allTimeEntries: ARCHIVE_TOTAL_ENTRIES || ALL_ENTRIES.length,
     todayEntries: liveToday,
-    majorEntries: ALL_ENTRIES.filter((entry) => entry.importance === 3).length,
+    majorEntries: PUBLISHABLE_ENTRIES.filter((entry) => entry.importance === 3).length,
     activeSourceCount,
     totalSourceCount,
     sourceCoverageLabel,

@@ -2652,6 +2652,39 @@ main {
   line-height: 1.55;
 }
 
+.summary-pending-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  padding: 1px 8px 1px 7px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: color-mix(in srgb, var(--accent) 78%, var(--text));
+}
+
+.summary-pending-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: summary-pending-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes summary-pending-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .summary-pending-badge::before { animation: none; opacity: 0.9; }
+}
+
 .card .title .title-fallback-mark {
   display: inline-block;
   font-size: 9.5px;

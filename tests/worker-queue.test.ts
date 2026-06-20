@@ -85,11 +85,13 @@ describe("worker summary queue selection", () => {
     expect(jobs).toEqual([]);
   });
 
-  it("round-robins by cap-sized windows so large backlogs drain predictably", () => {
+  it("prioritizes the newest entry, then round-robins the backlog (LL-074 + LL-076)", () => {
+    // Distinct publishedAt so "newest" is meaningful: paper-0 newest .. paper-9 oldest.
     const entries = Array.from({ length: 10 }, (_, i) => ({
       ...baseEntry,
       id: `entry-${i}`,
       url: `https://example.com/paper-${i}`,
+      publishedAt: new Date(Date.UTC(2026, 4, 23) - i * 3_600_000).toISOString(),
     }));
     const lookedUp = new Set(entries.map((entry) => entry.url));
 
@@ -97,23 +99,37 @@ describe("worker summary queue selection", () => {
     const second = selectSummaryJobBatch(entries, new Map(), lookedUp, 3, new Set(), { nowMs: 3_600_000 });
     const fourth = selectSummaryJobBatch(entries, new Map(), lookedUp, 3, new Set(), { nowMs: 3 * 3_600_000 });
 
-    expect(first.jobs.map((job) => job.url)).toEqual([
+    // The newest un-summarized entry is always queued first so fresh articles
+    // get a real summary fast (cap 3 -> floor(3/2)=1 reserved recent slot).
+    expect(first.jobs[0]!.url).toBe("https://example.com/paper-0");
+    expect(second.jobs[0]!.url).toBe("https://example.com/paper-0");
+    expect(fourth.jobs[0]!.url).toBe("https://example.com/paper-0");
+
+    expect(first.eligibleCount).toBe(10);
+    expect(first.drainEstimateHours).toBe(4);
+
+    // The remaining slots are a fair round-robin window that advances each hour
+    // so the older backlog still drains predictably (no starvation).
+    expect(first.jobs.map((j) => j.url)).toEqual([
       "https://example.com/paper-0",
       "https://example.com/paper-1",
       "https://example.com/paper-2",
     ]);
-    expect(first.eligibleCount).toBe(10);
-    expect(first.drainEstimateHours).toBe(4);
-    expect(second.jobs.map((job) => job.url)).toEqual([
+    expect(second.jobs.map((j) => j.url)).toEqual([
+      "https://example.com/paper-0",
       "https://example.com/paper-3",
       "https://example.com/paper-4",
-      "https://example.com/paper-5",
     ]);
-    expect(fourth.jobs.map((job) => job.url)).toEqual([
-      "https://example.com/paper-9",
+    expect(fourth.jobs.map((j) => j.url)).toEqual([
       "https://example.com/paper-0",
+      "https://example.com/paper-9",
       "https://example.com/paper-1",
     ]);
+
+    // No duplicates within a batch.
+    for (const batch of [first, second, fourth]) {
+      expect(new Set(batch.jobs.map((j) => j.url)).size).toBe(batch.jobs.length);
+    }
   });
 
   it("prioritizes evergreen (Knowledge) entries ahead of the news backlog (LL-098)", () => {
@@ -145,6 +161,31 @@ describe("worker summary queue selection", () => {
       // No duplicates.
       expect(new Set(urls).size).toBe(3);
     }
+  });
+
+  it("queues the newest eligible entry even when it is last in the input (LL-074)", () => {
+    // Older entries first, newest LAST, to prove the recency slot sorts by
+    // publishedAt rather than relying on input order.
+    const entries = [
+      ...Array.from({ length: 6 }, (_, i) => ({
+        ...baseEntry,
+        id: `old-${i}`,
+        url: `https://example.com/old-${i}`,
+        publishedAt: new Date(Date.UTC(2026, 0, 1) + i * 86_400_000).toISOString(),
+      })),
+      {
+        ...baseEntry,
+        id: "fresh",
+        url: "https://example.com/fresh",
+        publishedAt: new Date(Date.UTC(2026, 5, 1)).toISOString(),
+      },
+    ];
+    const lookedUp = new Set(entries.map((entry) => entry.url));
+    // cap 4 -> floor(4/2)=2 recent slots; the freshest URL must be queued first.
+    const batch = selectSummaryJobBatch(entries, new Map(), lookedUp, 4, new Set(), { nowMs: 0 });
+    expect(batch.jobs[0]!.url).toBe("https://example.com/fresh");
+    expect(batch.jobs).toHaveLength(4);
+    expect(new Set(batch.jobs.map((j) => j.url)).size).toBe(4);
   });
 
   it("skips recently failing summary URLs while keeping other jobs moving", () => {

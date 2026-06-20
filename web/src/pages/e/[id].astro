@@ -39,7 +39,14 @@ const titleDisplay = titleJa || titleEn || entry.title;
 const summaryJaResult = summaryForLangWithFallback(entry, "ja");
 const summaryJa = summaryJaResult.text;
 const summaryEn = summaryForLangWithFallback(entry, "en");
-const pendingSummary = isDeterministicFallbackEntry(entry);
+// "Summary pending" only when there is no usable summary in ANY language.
+// summaryForLangWithFallback cross-falls-back and blanks boilerplate / title
+// echoes, so an English-source entry with a real EN summary is NOT treated as
+// pending just because its JA summary has not been generated yet (LL-074).
+const summaryAbsent = !summaryJa && !summaryEn.text;
+// Body is treated as pending whenever the entry is any deterministic fallback,
+// so boilerplate / un-generated bodies are never rendered as prose.
+const bodyIsFallback = isDeterministicFallbackEntry(entry);
 
 const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
 const catColor = catMeta?.color ?? "#8a847e";
@@ -68,8 +75,8 @@ function splitEnPoints(s: string): string[] {
   if (!s) return [];
   return s.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter(Boolean);
 }
-const pointsJa = pendingSummary || summaryJaResult.isFallback ? [] : splitJaPoints(summaryJa);
-const pointsEn = pendingSummary ? [] : splitEnPoints(summaryEn.text);
+const pointsJa = summaryAbsent || summaryJaResult.isFallback ? [] : splitJaPoints(summaryJa);
+const pointsEn = summaryAbsent ? [] : splitEnPoints(summaryEn.text);
 
 const sourceTypeLabel: Record<NormalizedEntry["sourceType"], string> = {
   release: "リリース", changelog: "Changelog", paper: "論文",
@@ -102,10 +109,10 @@ const bodyChars = (entry.bodyJa ?? "").length;
 const readMinutes = bodyChars > 0 ? Math.max(1, Math.round(bodyChars / 500)) : 0;
 
 // Split body and build TOC headings (use first ~24 chars of each paragraph as label).
-const paragraphsJa: string[] = !pendingSummary && entry.bodyJa
+const paragraphsJa: string[] = !bodyIsFallback && entry.bodyJa
   ? entry.bodyJa.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
   : [];
-const paragraphsEn: string[] = !pendingSummary && entry.bodyEn
+const paragraphsEn: string[] = !bodyIsFallback && entry.bodyEn
   ? entry.bodyEn.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
   : [];
 
@@ -165,10 +172,10 @@ const breadcrumb = [
   { label: titleDisplay },
 ];
 const pageTitle = `${titleDisplay} — TECH Dashboard`;
-const pageDesc = (summaryJa || summaryEn.text || entry.title).slice(0, 160);
+const pageDesc = (summaryAbsent ? titleDisplay : summaryJa || summaryEn.text || entry.title).slice(0, 160);
 const ogImage = entry.image?.src ?? "";
 const canonicalUrl = `${SITE_URL}/e/${entry.id}/`;
-const shareUrl = pendingSummary ? entry.url : canonicalUrl;
+const shareUrl = summaryAbsent ? entry.url : canonicalUrl;
 const importanceStanding = entry.importance === 1
   ? `lower priority in ${catName}`
   : `top ${Math.max(1, 100 - impPct)}% in ${catName}`;
@@ -307,7 +314,7 @@ const jsonLd = {
           </div>
         </header>
 
-        {pendingSummary && (
+        {summaryAbsent && (
           <section class="ed-pending-summary" aria-label="Summary pending">
             <strong>Summary pending</strong>
             <p>This entry is waiting for AI enrichment. Use the source, title, category, and original article before sharing.</p>
@@ -316,7 +323,7 @@ const jsonLd = {
         )}
 
         {/* TL;DR */}
-        {!pendingSummary && (pointsJa.length > 0 || summaryJa) && (
+        {!summaryAbsent && (pointsJa.length > 0 || summaryJa) && (
           <section class="ed-tldr">
             <div class="ed-tldr-label">
               <span class="ai-badge">AI</span>
@@ -341,7 +348,7 @@ const jsonLd = {
         )}
 
         {/* BODY */}
-        {!pendingSummary && (renderedJa.length > 0 || renderedEn.length > 0) ? (
+        {!bodyIsFallback && (renderedJa.length > 0 || renderedEn.length > 0) ? (
           <section class="ed-body">
             {renderedJa.length > 0 && (
               <div class="ed-body-prose i18n-ja" lang="ja">

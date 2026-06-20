@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { ALL_ENTRIES, GENERATED_AT } from "../lib/data.ts";
+import { PUBLISHABLE_ENTRIES, GENERATED_AT } from "../lib/data.ts";
 import { SITE_URL } from "../lib/site.ts";
 
 function escape(s: string): string {
@@ -11,7 +11,7 @@ function escape(s: string): string {
 }
 
 export const GET: APIRoute = () => {
-  const items = ALL_ENTRIES.slice(0, 100)
+  const items = PUBLISHABLE_ENTRIES.slice(0, 100)
     .map((e) => {
       const title = escape(e.titleJa || e.titleEn || e.title);
       const desc = escape(e.summaryJa || e.summaryEn || "");

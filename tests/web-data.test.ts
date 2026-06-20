@@ -86,6 +86,9 @@ const {
   entriesByTag,
   adjacentInCategory,
   isLowSignalRelease,
+  isListableEntry,
+  isSummaryNoise,
+  isPublishableEntry,
   ALL_ENTRIES,
 } = await import("../web/src/lib/data.ts");
 
@@ -180,6 +183,97 @@ describe("summaryForLangWithFallback", () => {
     const result = summaryForLangWithFallback(entry, "en");
     expect(result.text).toBe("");
     expect(result.isFallback).toBe(false);
+  });
+});
+
+// ============================================================
+// isSummaryNoise / isListableEntry / pending cross-language fallback (LL-074)
+// ============================================================
+const PENDING_JA = "このエントリは ollama-releases から収集した local-llm 領域の最新アップデートです。";
+
+describe("isSummaryNoise", () => {
+  it("空文字 / 未定義は noise", () => {
+    expect(isSummaryNoise(e1, "")).toBe(true);
+    expect(isSummaryNoise(e1, undefined)).toBe(true);
+  });
+  it("決定論的 pending boilerplate は noise", () => {
+    expect(isSummaryNoise(e1, PENDING_JA)).toBe(true);
+  });
+  it("タイトルの単純な echo は noise", () => {
+    // e1.title = "Claude Opus 4.7 released"
+    expect(isSummaryNoise(e1, "Claude Opus 4.7 released")).toBe(true);
+    expect(isSummaryNoise(e1, "  claude opus 4.7 released  ")).toBe(true);
+  });
+  it("本物の要約は noise ではない", () => {
+    expect(isSummaryNoise(e1, "Anthropic announced Claude Opus 4.7.")).toBe(false);
+  });
+});
+
+describe("isListableEntry", () => {
+  it("publishable なエントリは listable", () => {
+    expect(isListableEntry(e1)).toBe(true);
+    expect(isPublishableEntry(e1)).toBe(true);
+  });
+  it("要約待ちでも実タイトルがあれば listable (LL-074)", () => {
+    const pending = {
+      ...e1,
+      titleJa: "",
+      titleEn: "Ollama v0.30.9",
+      title: "Ollama v0.30.9",
+      summaryJa: PENDING_JA,
+      summaryEn: "What's Changed: support for new architecture.",
+    };
+    expect(isPublishableEntry(pending)).toBe(false);
+    expect(isListableEntry(pending)).toBe(true);
+  });
+  it("synthetic タイトルしか無いエントリは listable ではない", () => {
+    const synthetic = {
+      ...e1,
+      source: "ollama-releases",
+      titleJa: "",
+      titleEn: "",
+      title: "Ollama (ollama-releases) 関連アップデート",
+      summaryJa: PENDING_JA,
+      summaryEn: "",
+    };
+    expect(isListableEntry(synthetic)).toBe(false);
+  });
+});
+
+describe("pending entry の要約はクロス言語フォールバックする (LL-074)", () => {
+  // 英語ソースで JA 要約が未生成 (boilerplate) だが EN 要約は実在するケース。
+  const type1 = {
+    ...e1,
+    titleJa: "",
+    titleEn: "Ollama v0.30.9",
+    title: "Ollama v0.30.9",
+    summaryJa: PENDING_JA,
+    summaryEn: "What's Changed: support for the new Cohere2 architecture.",
+  };
+  it("summaryForLang(ja) は boilerplate を空に潰す", () => {
+    expect(summaryForLang(type1, "ja")).toBe("");
+  });
+  it("JA ビューは実 EN 要約に原文フォールバックする (空欄/boilerplate を出さない)", () => {
+    const r = summaryForLangWithFallback(type1, "ja");
+    expect(r.text).toBe("What's Changed: support for the new Cohere2 architecture.");
+    expect(r.isFallback).toBe(true);
+    expect(r.fallbackLang).toBe("en");
+  });
+  it("EN ビューは実 EN 要約をそのまま出す", () => {
+    const r = summaryForLangWithFallback(type1, "en");
+    expect(r.text).toBe("What's Changed: support for the new Cohere2 architecture.");
+    expect(r.isFallback).toBe(false);
+  });
+  it("どの言語にも実要約が無いときだけ空 (= pending 状態を表示)", () => {
+    const noSummary = {
+      ...e1,
+      titleEn: "Some Title",
+      title: "Some Title",
+      summaryJa: PENDING_JA,
+      summaryEn: "Some Title", // title echo
+    };
+    expect(summaryForLangWithFallback(noSummary, "ja").text).toBe("");
+    expect(summaryForLangWithFallback(noSummary, "en").text).toBe("");
   });
 });
 

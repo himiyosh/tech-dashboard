@@ -32,7 +32,28 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("#timeline-heading")).toBeVisible();
   });
 
-  // Regression guard: the "Last 7 days" chart must be driven by stats.byDay
+  // Regression guard for the pending-summary display fix (LL-074/LL-087):
+  // newly collected articles are listed even before their AI summary is ready,
+  // BUT cards must never show deterministic boilerplate, and must never render
+  // an empty summary region (the cross-language fallback must surface the real
+  // other-language summary or an explicit "generating" state).
+  test("timeline cards show a summary or a pending state, never boilerplate", async ({ page }) => {
+    await page.goto("/");
+    // No deterministic placeholder text leaks into any visible card.
+    await expect(page.locator("#timeline")).not.toContainText(/このエントリは|AI 要約未生成|後続の Worker run/);
+    const cards = page.locator("#timeline article.card");
+    const count = await cards.count();
+    expect(count, "timeline has cards").toBeGreaterThan(0);
+    // Every card carries real summary text OR an explicit pending state — no
+    // empty summary area (which the JA view showed before the fallback fix).
+    for (let i = 0; i < Math.min(count, 30); i++) {
+      const card = cards.nth(i);
+      const hasSummary = (await card.locator(".summary-stack .summary .s-text").count()) > 0;
+      const hasPending = (await card.locator(".summary-state").count()) > 0;
+      expect(hasSummary || hasPending, `card ${i} has summary or pending state`).toBe(true);
+    }
+  });
+
   // (archive-backed daily activity), not the publishable-live fallback. When
   // index.astro forgot to pass the `stats` prop the chart silently collapsed to
   // single-digit bars and looked like collection had stopped (see LL).

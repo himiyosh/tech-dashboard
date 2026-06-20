@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { ALL_ENTRIES, GENERATED_AT } from "../lib/data.ts";
+import { PUBLISHABLE_ENTRIES, GENERATED_AT } from "../lib/data.ts";
 import { SITE_URL } from "../lib/site.ts";
 
 export const GET: APIRoute = () => {
@@ -11,7 +11,7 @@ export const GET: APIRoute = () => {
     description: "AI コーディング/エコシステムの公式情報を毎日自動収集・要約",
     language: "ja",
     _generated_at: GENERATED_AT,
-    items: ALL_ENTRIES.slice(0, 100).map((e) => ({
+    items: PUBLISHABLE_ENTRIES.slice(0, 100).map((e) => ({
       id: e.id,
       url: e.url,
       title: e.titleJa || e.titleEn || e.title,

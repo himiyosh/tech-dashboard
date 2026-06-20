@@ -39,6 +39,12 @@ const FALLBACK_SUMMARY_JA_PREFIX = "このエントリは ";
 const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
 const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collection metadata";
 
+function dateMs(value: string | null | undefined): number {
+  if (!value) return 0;
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? ms : 0;
+}
+
 export function needsGeneratedContent(
   entry: Pick<NormalizedEntry, "summaryJa" | "summaryEn" | "bodyJa" | "bodyEn">,
 ): boolean {
@@ -148,8 +154,30 @@ export function selectSummaryJobBatch(
 
   for (const entry of evergreenEligible) pushJob(entry);
 
-  // Advance by one full cap-sized window per hour. Advancing by one entry per
-  // hour makes a 400+ item backlog take weeks to cycle when failures persist.
+  // Reserve part of the remaining cap for the NEWEST un-summarized entries so
+  // freshly collected articles get a real bilingual summary within an hour or
+  // two, instead of waiting for the fair round-robin to reach them
+  // (LL-074 / LL-087: recent articles are what readers notice first). Once an
+  // entry gets a real summary it leaves the eligible pool, so this front-loads
+  // fresh articles WITHOUT permanently starving the older backlog.
+  const remainingAfterEvergreen = safeCap - jobs.length;
+  const recentSlots = Math.floor(remainingAfterEvergreen / 2);
+  if (recentSlots > 0) {
+    const byNewest = [...restEligible].sort(
+      (a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt),
+    );
+    let recentTaken = 0;
+    for (const entry of byNewest) {
+      if (recentTaken >= recentSlots || jobs.length >= safeCap) break;
+      const before = jobs.length;
+      pushJob(entry);
+      if (jobs.length > before) recentTaken += 1;
+    }
+  }
+
+  // Fill the rest with a fair cap-sized round-robin window over the older
+  // backlog so nothing starves (LL-076). Advancing by a full cap per hour keeps
+  // a 400+ item backlog cycling predictably.
   const hour = Math.floor((opts.nowMs ?? Date.now()) / 3_600_000);
   const startIndex = restEligible.length > safeCap ? (hour * safeCap) % restEligible.length : 0;
   for (let i = 0; i < restEligible.length && jobs.length < safeCap; i++) {

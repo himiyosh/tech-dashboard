@@ -3,7 +3,7 @@ import type { NormalizedEntry } from "../harness/types.ts";
 import type { CacheEntry } from "../worker/src/kv-cache.ts";
 import { evaluateHarnessHealth } from "../worker/src/index.ts";
 import { needsGeneratedContent, roundRobinStart, selectSummaryJobBatch, selectSummaryJobs } from "../worker/src/summary-queue.ts";
-import summarizerWorker, { isCompleteCacheEntry } from "../worker-summarizer/src/index.ts";
+import summarizerWorker, { isCompleteCacheEntry, isSummaryComplete } from "../worker-summarizer/src/index.ts";
 
 const baseEntry: NormalizedEntry = {
   id: "entry-1",
@@ -604,5 +604,89 @@ describe("worker summarizer queue consumer", () => {
   it("identifies missing body fields as incomplete cache entries", () => {
     expect(isCompleteCacheEntry({ ...realCache, bodyEn: "" })).toBe(false);
     expect(isCompleteCacheEntry(realCache)).toBe(true);
+  });
+
+  it("treats title+JA/EN summary as a complete summary even without a body (LL-104)", () => {
+    expect(isSummaryComplete({ ...realCache, bodyJa: "", bodyEn: "" })).toBe(true);
+    expect(isSummaryComplete({ ...realCache, summaryEn: "" })).toBe(false);
+    expect(isSummaryComplete({ ...realCache, titleJa: "" })).toBe(false);
+  });
+
+  it("persists a complete summary even if the body stays empty after all attempts (LL-104)", async () => {
+    const put = vi.fn(async () => undefined);
+    const del = vi.fn(async () => undefined);
+    const kv = {
+      get: vi.fn(async () => null),
+      put,
+      delete: del,
+    } as unknown as KVNamespace;
+    const ack = vi.fn();
+    const retry = vi.fn();
+    // Every generation attempt returns a complete summary but an empty body.
+    const fetchMock = vi.fn(async (input: string | URL | Request) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (url.includes("api.github.com/copilot_internal/v2/token")) {
+        return Response.json({ token: "copilot-token", expires_at: Math.floor(Date.now() / 1000) + 1200 });
+      }
+      return Response.json({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                titleJa: "完全な日本語タイトル",
+                summaryJa: "本物の日本語要約です。",
+                summaryEn: "A real English summary.",
+                bodyJa: "",
+                bodyEn: "",
+                importance: 2,
+                extraTags: ["example"],
+              }),
+            },
+          },
+        ],
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await summarizerWorker.queue!(
+      {
+        messages: [
+          {
+            body: {
+              url: baseEntry.url,
+              entry: {
+                id: baseEntry.id,
+                url: baseEntry.url,
+                title: baseEntry.title,
+                category: baseEntry.category,
+                source: baseEntry.source,
+                sourceType: baseEntry.sourceType,
+                summaryEn: baseEntry.summaryEn,
+              },
+            },
+            ack,
+            retry,
+          },
+        ],
+      } as unknown as MessageBatch,
+      {
+        SUMMARY_CACHE: kv,
+        COPILOT_PAT: "test-pat-summary-only",
+        SUMMARIZE_MODEL: "claude-sonnet-4.6",
+        SUMMARIZE_TIMEOUT_MS: "180000",
+        SUMMARIZE_MAX_TOKENS: "6000",
+      },
+      {} as ExecutionContext,
+    );
+
+    // Summary is written (not thrown away), the job is acked, and no retry.
+    expect(put).toHaveBeenCalledTimes(1);
+    expect(ack).toHaveBeenCalledTimes(1);
+    expect(retry).not.toHaveBeenCalled();
+    const stored = JSON.parse(String(put.mock.calls[0]?.[1] ?? "{}")) as CacheEntry;
+    expect(stored.summaryJa).toBe("本物の日本語要約です。");
+    expect(stored.summaryEn).toBe("A real English summary.");
+
+    vi.unstubAllGlobals();
   });
 });

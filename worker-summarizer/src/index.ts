@@ -183,6 +183,20 @@ export function isCompleteCacheEntry(entry: CacheEntry): boolean {
   );
 }
 
+/**
+ * The dashboard publishes a real (non-fallback) entry from the SUMMARY alone:
+ * a Japanese title plus a JA and EN summary. The long bilingual body is shown
+ * only on the article detail page and is acceptable as a deterministic fallback
+ * until a real one is generated. So the queue consumer must persist an entry as
+ * soon as the summary is complete — discarding a perfectly good summary because
+ * the (longest, most truncation-prone) body field came back empty was the main
+ * generation bottleneck: most fallback entries had NO KV summary at all and
+ * stayed boilerplate forever (LL-104).
+ */
+export function isSummaryComplete(entry: CacheEntry): boolean {
+  return Boolean(entry.titleJa.trim() && entry.summaryJa.trim() && entry.summaryEn.trim());
+}
+
 function missingFields(entry: CacheEntry): Array<keyof Pick<CacheEntry, "titleJa" | "summaryJa" | "summaryEn" | "bodyJa" | "bodyEn">> {
   return (["titleJa", "summaryJa", "summaryEn", "bodyJa", "bodyEn"] as const).filter(
     (field) => !entry[field].trim(),
@@ -274,8 +288,12 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
     entry = mergeCacheEntry(entry, repaired);
   }
 
-  // Do not poison the cache with malformed JSON or missing long-form fields.
-  if (!isCompleteCacheEntry(entry)) {
+  // Persist as soon as the summary is complete, even if the long-form body is
+  // still missing after all recovery attempts. The collector merges entries on
+  // title+summaryJa+summaryEn and fills bodies deterministically; throwing away
+  // a complete summary because the body truncated left most fallback entries
+  // with no KV summary at all and was the real "stuck summaries" cause (LL-104).
+  if (!isSummaryComplete(entry)) {
     throw new Error(`incomplete summary for ${job.url}`);
   }
 

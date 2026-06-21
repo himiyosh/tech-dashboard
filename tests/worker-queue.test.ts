@@ -37,6 +37,21 @@ const realCache: CacheEntry = {
   cachedAt: "2026-05-23T01:30:00.000Z",
 };
 
+// Summary-only KV entry: the queue summarizer (LL-106) writes real bilingual
+// summaries but EMPTY bodies on purpose. These must count as a real cache hit
+// so the entry is not re-enqueued forever (LL-107).
+const summaryOnlyCache: CacheEntry = {
+  titleJa: "要約のみキャッシュ",
+  summaryJa: "実 AI 日本語要約 (本文なし)。",
+  summaryEn: "Real AI summary with no long-form body.",
+  bodyJa: "",
+  bodyEn: "",
+  importance: 2,
+  extraTags: [],
+  model: "claude-sonnet-4.6",
+  cachedAt: "2026-06-21T00:08:00.000Z",
+};
+
 function mockKv(json: unknown = null): KVNamespace {
   return {
     get: vi.fn(async () => json),
@@ -83,6 +98,30 @@ describe("worker summary queue selection", () => {
       30,
     );
     expect(jobs).toEqual([]);
+  });
+
+  it("treats a summary-only cache hit (no body) as real and does not re-enqueue (LL-107)", () => {
+    const jobs = selectSummaryJobs(
+      [baseEntry],
+      new Map([[baseEntry.url, summaryOnlyCache]]),
+      new Set([baseEntry.url]),
+      30,
+    );
+    expect(jobs).toEqual([]);
+  });
+
+  it("needsGeneratedContent is summary-only: real summary + deterministic body is complete (LL-107)", () => {
+    const realSummaryDeterministicBody: NormalizedEntry = {
+      ...baseEntry,
+      summaryJa: "実 AI 日本語要約です。",
+      summaryEn: "Real English summary.",
+      // Body stays deterministic (R-012) and must NOT keep the entry in the
+      // enqueue pool now that the summarizer is summary-only (LL-107).
+      bodyJa: "このエントリは arxiv-cs-ai から収集した research 領域の最新アップデートです。",
+      bodyEn:
+        "This long-form note is completed from the existing summary and collection metadata.",
+    };
+    expect(needsGeneratedContent(realSummaryDeterministicBody)).toBe(false);
   });
 
   it("prioritizes the newest entry, then round-robins the backlog (LL-074 + LL-076)", () => {

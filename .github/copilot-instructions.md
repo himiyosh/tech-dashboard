@@ -830,6 +830,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: `buildSummaryPrompt`（title+summaryJa+summaryEn のみ、本文なし）を追加。processJob を「1回 + 不足なら1回 retry、isSummaryComplete で保存」に簡素化（3段チェーン廃止）。本文は collector が deterministic 補完(R-012)。デッドコード削除、テスト書き換え、194 unit PASS。
 - **教訓**: (1) 推論モデルは max_tokens を reasoning で消費する。出力契約を短く保ち、長文と要約を別呼び出しに分ける。`completion_tokens==max_tokens` かつ `choices:[]` は reasoning 枯渇の固有シグネチャ。(2) 推論で根本原因を断定しない（Hook 4）。実トークンで実 API を再現して初めて真因に到達。HTTP 200 でも choices 空なら usage/finish_reason/reasoning_* を見る。(3) 多層症状は各層を実データで潰し次の層を実測する。(4) トークン種別: ghu_=user-to-server(~8h失効/refresh token必要), gho_=OAuth App(Copilot交換404のことあり), ghp_=classic PAT。
 
+### LL-108: 「s: キー 0 件」は wrangler の local vs remote の罠 (--remote 必須)。summarizer は最初から正常だった
+- **事象**: 引き継ぎでは「summarizer が per-URL KV キー (s:) を 1 件も書けていない (0 件)」が最大ブロッカーとされ、LL-101〜106・トークン再設定まで投じられた。だが実際は remote KV に **2879 件の s: キー**が存在し、summarizer は正常に要約を書き続けていた (確認した AWS Bedrock エントリの cachedAt は調査中の /run 直後=12 分前)。
+- **根本原因**: `wrangler kv key list/get/put` は **デフォルトで LOCAL (miniflare) の KV を見る**。`--remote` を付けないと、デプロイ済み Worker が書く本番 remote KV ではなく、空のローカル KV を読む。引き継ぎ・前セッションの `wrangler kv key list --namespace-id=... --prefix s: | grep -c name` は `--remote` 無しで実行され、ローカルの 0 件を「summarizer が書けていない」と誤認していた。`put` 時に wrangler が "Use --remote if you want to access the remote instance." と警告して発覚。
+- **対策**: KV 診断は必ず `--remote` を付ける。`wrangler kv key list --remote --namespace-id=6d67debb... --prefix s: | grep -c name` で 2879 件を確認。issue marker も remote では 404 (失敗記録なし=正常)。これで「summarizer が壊れている」前提が崩れ、真の問題 (LL-107: 完了判定のミスマッチ) に到達した。
+- **教訓**: (1) **wrangler の KV/D1/R2 コマンドは `--remote` 必須**。付けないと本番ではなくローカル emulation を見る。「0 件/空/存在しない」を本番の事実と扱う前に測定方法を疑う (Hook 5 不在断定ゲート: 「0 件」断定の前に検証手段の正しさを確認)。(2) 引き継ぎの前提 (「X が壊れている」) を鵜呑みにせず、まず実 remote 状態を再測定する。前提が測定アーティファクトのことがある。(3) 「失敗もしないが成功もしない」(outcome ok・logs 空・例外なし・KV 書き込みなし) の矛盾は、見ている KV が書き込み先と違う (local vs remote、別 namespace) を強く示唆する。
+
+### LL-107: 要約バックログが drain しない真因は「本文必須の完了判定 vs 要約のみ生成」のミスマッチ
+- **事象**: LL-106 で summarizer を要約のみ生成に変えた後も summaryQueueBacklog が 628 (38%) に張り付き、収集済み記事の多く (348 件で日本語要約が fallback) が決定的 fallback のまま。remote KV には 2879 件の実要約 (s: キー) が存在し、summarizer は正常稼働していた (LL-108)。
+- **根本原因**: collector (harness) の完了判定 `needsGeneratedContent` と enqueue 適格判定 `hasRealCacheEntry` (worker/src/summary-queue.ts) が **bodyJa/bodyEn の存在を必須**にしていた。LL-104/LL-106 で summarizer は要約のみ (titleJa+summaryJa+summaryEn、body は空) を書くよう変えたのに、完了判定側は旧来の「本文も必須」のまま。結果、要約が完成済みのエントリ (280 件) も「未完了」と判定され続け、毎時 enqueue/KV-lookup の枠を浪費。真に未要約の 333 件 (cline の per-commit release tag や新規 AWS/GCP evergreen) が枠を奪い合い、永久に drain しなかった。本文は R-012/R-013 で deterministic 補完される設計 (LL-106 で確定) なので、本文を「生成完了」の条件にするのは矛盾。
+- **対策**: `needsGeneratedContent` を「実 summary (summaryJa+summaryEn が非空・非 fallback) を欠くか」だけで判定するよう変更 (body チェックを削除)。`hasRealCacheEntry` も summarizer の `isSummaryComplete` と同じ契約 (titleJa+summaryJa+summaryEn、model≠deterministic-fallback) に揃え、body 要求を削除。実データで pool が 628→348 に縮小 (280 件の summary 完了エントリを解放) を確認。unit 196 PASS / typecheck PASS。harness Worker の再デプロイで反映 (R-008/LL-073)。デプロイ後は remote の summaryQueueBacklog が 348 付近へ下がり、以降 drain することを実測確認する。
+- **教訓**: 非同期 enrichment の「生成」側を変えたら、「完了判定」側も同じ契約に揃える (生成=要約のみなら、完了=要約のみ)。生成器と判定器で必須フィールドがずれると、生成完了済みのアイテムが永久に未完了扱いになり backlog が drain しない (LL-104 の「生成と判定の非対称」族)。完了判定を変えるときは実データで pool サイズの before/after を測る。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

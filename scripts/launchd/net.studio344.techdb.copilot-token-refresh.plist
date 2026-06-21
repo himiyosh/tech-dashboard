@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  launchd job: refresh the workers' COPILOT_PAT before it expires.
+
+  Install:
+    cp scripts/launchd/net.studio344.techdb.copilot-token-refresh.plist \
+       ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/net.studio344.techdb.copilot-token-refresh.plist
+
+  Prerequisite: run `./scripts/refresh-copilot-token.sh bootstrap` once first
+  (interactive device flow) so the Keychain holds a refresh token.
+
+  Uninstall:
+    launchctl unload ~/Library/LaunchAgents/net.studio344.techdb.copilot-token-refresh.plist
+
+  Adjust StartInterval (seconds) and the repo path below for your machine.
+  PATH includes Homebrew (Apple Silicon + Intel) and node/npx locations so
+  launchd's minimal environment can find npx/wrangler/jq/curl/security.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>net.studio344.techdb.copilot-token-refresh</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/himiyosh/GH_himiyosh/tech-dashboard/scripts/refresh-copilot-token.sh</string>
+    <string>refresh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/himiyosh/GH_himiyosh/tech-dashboard</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+
+  <!-- Every 4 hours, comfortably under the ~6-8h ghu_ access-token lifetime. -->
+  <key>StartInterval</key>
+  <integer>14400</integer>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/himiyosh/GH_himiyosh/tech-dashboard/.copilot-token-refresh.launchd.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/himiyosh/GH_himiyosh/tech-dashboard/.copilot-token-refresh.launchd.log</string>
+</dict>
+</plist>

@@ -849,6 +849,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: トークン自動更新インフラ（launchd / cloud refresh）は **作らない・不要**。COPILOT_PAT は長命 ghu_ のまま運用（手当て不要）。PR #107（launchd ツール）は close する。device-flow token の寿命は **`expires_in` の有無で判定**する（無ければ長命）。クラウド refresh は「refresh_token あり + client_secret 無し更新可」が前提だが、そもそも refresh_token が出ない＝その前提が崩れる＝不要。
 - **教訓**: 「トークンが失効する」という前提こそ実機検証する（LL-106 と同型の「推測で作らない」）。`ghu_=~8h失効` は GitHub App の token-expiration 設定依存で普遍ではない。`expires_in` の有無が判定基準。短命な IDE token と長命な ghu_ を分けて考える。要望の背景前提（「失効するから更新が要る」）が誤っていれば、求められた実装より「不要」が正解になりうる。4 日連続稼働の実績が長命トークンの動かぬ証拠だった。実装を作る前に数分の検証 probe を回す価値は大きい（PR #107 の launchd 実装は前提誤りで無駄になった）。
 
+### LL-110: 増分 stats の totals も clamp する（allTime が live 件数を下回り CI red）
+- **事象**: `data-schema.test.ts` の `stats.totals.allTime >= entries.length` が失敗。origin/main の最新データで `allTime=1312 < entries=1662`（allTime が約 350 件**過少**）。`last30d=3047` とも整合せず（allTime < last30d は論理矛盾）。毎時の harness データ commit でこのテストが落ち続け **main CI が red** になっていた。LL-109 の doc push もこのテストでブロックされて発覚。
+- **根本原因**: worker の `buildIncrementalStats` が totals を増分式 `existing - removed + added` で維持している（LL-036 の差分 stats）。LL-085 で `bySource.last30d` は clamp 済みだったが、**`totals` (allTime/last30d/last7d/last24h) は clamp していなかった**。多数 run の累積誤差で `allTime` が drift し、論理下限（live 件数・last30d）を下回った。`allTime` は「全期間累計（live ⊆ allTime）」なので live 件数を下回るのは不変条件違反。
+- **対策**: `buildIncrementalStats` に `liveCount` (finalEntries.length) を渡し、totals を論理不変条件で clamp: `last7d=max(raw,last24h)`, `last30d=max(raw,last7d)`, `allTime=max(raw,last30d,liveCount)`。LL-085 と同じ「生成器側で clamp」方針。`tests/worker-stats.test.ts` で clamp を検証し、worker 再デプロイ + `/run` で main の stats.json を再生成して `allTime>=entries` を実測確認する。
+- **教訓**: 増分集計のカウンタは**全て** drift する前提で、生成時に論理不変条件（A>=B>=C, X>=下限）を clamp で強制する。LL-085 は `bySource` だけ直して `totals` を見落としていた（同じ不具合族の取りこぼし — 不変条件の clamp は**全カウンタに**適用する）。data artifact の不変条件は test（検知）だけでなく生成器（予防）にも入れる（LL-027/085 と同型）。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

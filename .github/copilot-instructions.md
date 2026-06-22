@@ -842,6 +842,13 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: `needsGeneratedContent` を「実 summary (summaryJa+summaryEn が非空・非 fallback) を欠くか」だけで判定するよう変更 (body チェックを削除)。`hasRealCacheEntry` も summarizer の `isSummaryComplete` と同じ契約 (titleJa+summaryJa+summaryEn、model≠deterministic-fallback) に揃え、body 要求を削除。実データで pool が 628→348 に縮小 (280 件の summary 完了エントリを解放) を確認。unit 196 PASS / typecheck PASS。harness Worker の再デプロイで反映 (R-008/LL-073)。デプロイ後は remote の summaryQueueBacklog が 348 付近へ下がり、以降 drain することを実測確認する。
 - **教訓**: 非同期 enrichment の「生成」側を変えたら、「完了判定」側も同じ契約に揃える (生成=要約のみなら、完了=要約のみ)。生成器と判定器で必須フィールドがずれると、生成完了済みのアイテムが永久に未完了扱いになり backlog が drain しない (LL-104 の「生成と判定の非対称」族)。完了判定を変えるときは実データで pool サイズの before/after を測る。
 
+### LL-109: Copilot device-flow の ghu_ は長命でトークン自動更新は不要だった（「8h 失効」は誤前提）
+- **事象**: ユーザーが「COPILOT_PAT (ghu_) は ~8h で失効する」前提で、トークンの定期自動更新（当初 launchd、その後「Mac 常時起動でないのでクラウド側で自走」）を要望し、PR #107 で launchd ツールまで作成した。
+- **検証（推測でなく実機）**: device flow probe を実行（client_id=`Iv1.b507a08c87ecfe98`、editor Copilot GitHub App）。結果: access_token は `ghu_`(40 char)、**`expires_in` フィールドが無い（= 長命/無期限）**、**refresh_token は発行されない**、Copilot 交換は 200。加えて summarizer は 2026-06-19〜23 の 4 日間連続で s: キー（実要約）を書き続けており、トークンが失効していない実証もあった。
+- **根本原因**: GitHub App の user-to-server token は「Expire user authorization tokens」設定が **有効な時だけ** ~8h で失効し refresh_token を伴う。editor Copilot app はこの設定が無効 → ghu_ は**長命（失効しない）**ので refresh_token も発行されない。短命なのは Copilot 交換で得る **IDE token (`/copilot_internal/v2/token`, ~30min)** のみで、これは worker が毎回交換して自動更新済み（resolveCopilotToken）。LL-105 の "IDE token expired" 401 はこの IDE token の話で、ghu_(COPILOT_PAT) の失効ではなかった。両者を混同していた。
+- **対策**: トークン自動更新インフラ（launchd / cloud refresh）は **作らない・不要**。COPILOT_PAT は長命 ghu_ のまま運用（手当て不要）。PR #107（launchd ツール）は close する。device-flow token の寿命は **`expires_in` の有無で判定**する（無ければ長命）。クラウド refresh は「refresh_token あり + client_secret 無し更新可」が前提だが、そもそも refresh_token が出ない＝その前提が崩れる＝不要。
+- **教訓**: 「トークンが失効する」という前提こそ実機検証する（LL-106 と同型の「推測で作らない」）。`ghu_=~8h失効` は GitHub App の token-expiration 設定依存で普遍ではない。`expires_in` の有無が判定基準。短命な IDE token と長命な ghu_ を分けて考える。要望の背景前提（「失効するから更新が要る」）が誤っていれば、求められた実装より「不要」が正解になりうる。4 日連続稼働の実績が長命トークンの動かぬ証拠だった。実装を作る前に数分の検証 probe を回す価値は大きい（PR #107 の launchd 実装は前提誤りで無駄になった）。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

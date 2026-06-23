@@ -368,13 +368,15 @@ function delayMs(ms: number): Promise<void> {
  * incrementally; in practice the local harness or a manual run can rebuild
  * the full stats once.
  */
-function buildIncrementalStats(opts: {
+export function buildIncrementalStats(opts: {
   existing: StatsPayload | null;
   removed: readonly NormalizedEntry[];
   added: readonly NormalizedEntry[];
+  /** Published live entry count (finalEntries.length); hard lower bound for allTime. */
+  liveCount: number;
   generatedAt: string;
 }): StatsPayload {
-  const { existing, removed, added, generatedAt } = opts;
+  const { existing, removed, added, liveCount, generatedAt } = opts;
   if (!existing) return buildStatsPayload(added, generatedAt);
 
   // Recompute deltas from the entry sets we have.
@@ -458,12 +460,24 @@ function buildIncrementalStats(opts: {
     "3": Math.max(0, existing.byImportance["3"] - removedStats.byImportance["3"] + addedStats.byImportance["3"]),
   };
 
-  const totals = {
-    allTime: Math.max(0, existing.totals.allTime - removedStats.totals.allTime + addedStats.totals.allTime),
-    last30d: Math.max(0, existing.totals.last30d - removedStats.totals.last30d + addedStats.totals.last30d),
-    last7d: Math.max(0, existing.totals.last7d - removedStats.totals.last7d + addedStats.totals.last7d),
-    last24h: Math.max(0, existing.totals.last24h - removedStats.totals.last24h + addedStats.totals.last24h),
-  };
+  // Clamp totals to their logical invariants. The incremental rolling counters
+  // drift over many runs (entries crossing a window boundary inside an
+  // *untouched* archive month never enter `removed`), so the raw deltas can
+  // violate allTime >= last30d >= last7d >= last24h and, worse, allTime can
+  // fall BELOW the live entry count — breaking the data-schema invariant
+  // `allTime >= entries.length` and turning CI red every hour. Same drift class
+  // as bySource.last30d (LL-085); see LL-110. liveCount (finalEntries.length) is
+  // a hard lower bound for allTime.
+  const last24h = Math.max(0, existing.totals.last24h - removedStats.totals.last24h + addedStats.totals.last24h);
+  const last7d = Math.max(0, existing.totals.last7d - removedStats.totals.last7d + addedStats.totals.last7d, last24h);
+  const last30d = Math.max(0, existing.totals.last30d - removedStats.totals.last30d + addedStats.totals.last30d, last7d);
+  const allTime = Math.max(
+    0,
+    existing.totals.allTime - removedStats.totals.allTime + addedStats.totals.allTime,
+    last30d,
+    liveCount,
+  );
+  const totals = { allTime, last30d, last7d, last24h };
 
   return {
     generatedAt,
@@ -582,6 +596,7 @@ async function publishHistoryFiles(
     existing: existingStats,
     removed: oldTouchedEntries,
     added: uniqueEntriesByUrl([...liveEntries, ...newTouchedEntries]),
+    liveCount: liveEntries.length,
     generatedAt,
   });
   const statsChange = await ghJsonChangeIfChanged(env, statsPath, statsPayload, existingStatsRaw ?? null);

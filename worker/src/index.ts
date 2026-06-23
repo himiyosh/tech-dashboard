@@ -201,15 +201,93 @@ interface FileChange {
 
 // ---------- GitHub Contents API helpers --------------------------------------
 
+// A bare fetch() has no timeout. If GitHub (api.github.com / raw.githubusercontent.com)
+// stalls, the request hangs until Cloudflare kills the whole invocation *without
+// a catchable error* — so scheduled()'s catch never runs, no failure heartbeat is
+// written, and the last "pre-publish" heartbeat goes stale, tripping the
+// "cron appears stuck after pre-publish heartbeat" health alert (LL-111). Bound
+// every GitHub call with an AbortController so a hang throws instead, letting the
+// run fail cleanly (error heartbeat) and the next cron retry. The collectors
+// already do this (rss/anthropic use an 8s timeout); the GitHub helpers did not.
+const GITHUB_FETCH_TIMEOUT_MS = 15_000;
+const GITHUB_FETCH_RETRIES = 2;
+
+export async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+  label: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetchImpl(url, { ...init, signal: controller.signal });
+  } catch (err) {
+    if (controller.signal.aborted) {
+      throw new Error(`${label} timeout after ${timeoutMs}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+interface GhFetchOptions {
+  fetchImpl?: typeof fetch;
+  timeoutMs?: number;
+  retries?: number;
+  backoffMs?: (attempt: number) => number;
+}
+
+// GitHub fetch with timeout + retry on transient failures: a request that never
+// got a response (timeout / network error) or a 429/5xx server error is retried.
+// 4xx (incl. 404) is returned to the caller unretried because it is deterministic
+// (auth, not-found). Retrying the Git Data API calls in ghCommitFiles is safe:
+// blobs/trees are content-addressed, an orphaned commit is GC'd, and a ref PATCH
+// to an already-applied sha is a no-op. This absorbs transient GitHub blips inside
+// the same cron so they never produce an error heartbeat (no health flapping),
+// while a persistent outage still throws once the retries are exhausted.
+export async function ghFetch(
+  url: string,
+  init: RequestInit,
+  label: string,
+  options: GhFetchOptions = {},
+): Promise<Response> {
+  const timeoutMs = options.timeoutMs ?? GITHUB_FETCH_TIMEOUT_MS;
+  const retries = options.retries ?? GITHUB_FETCH_RETRIES;
+  const backoffMs = options.backoffMs ?? ((attempt) => attempt * 750);
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    if (attempt > 0) await delayMs(backoffMs(attempt));
+    try {
+      const res = await fetchWithTimeout(url, init, timeoutMs, label, options.fetchImpl);
+      if ((res.status === 429 || res.status >= 500) && attempt < retries) {
+        lastErr = new Error(`${label} ${res.status}`);
+        continue;
+      }
+      return res;
+    } catch (err) {
+      lastErr = err;
+      if (attempt >= retries) throw err;
+    }
+  }
+  throw lastErr ?? new Error(`${label} failed after ${retries} retries`);
+}
+
 async function ghGetFile(env: Env, path: string): Promise<{ content: string; sha: string } | null> {
   const url = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${path}?ref=${env.GITHUB_BRANCH}`;
-  const res = await fetch(url, {
-    headers: {
-      authorization: `Bearer ${env.GH_TOKEN}`,
-      accept: "application/vnd.github+json",
-      "user-agent": "tech-dashboard-worker",
+  const res = await ghFetch(
+    url,
+    {
+      headers: {
+        authorization: `Bearer ${env.GH_TOKEN}`,
+        accept: "application/vnd.github+json",
+        "user-agent": "tech-dashboard-worker",
+      },
     },
-  });
+    `gh get ${path}`,
+  );
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`gh get ${path} ${res.status}: ${await res.text()}`);
   const body = (await res.json()) as { content: string; sha: string; encoding: string };
@@ -230,12 +308,16 @@ async function ghGetFile(env: Env, path: string): Promise<{ content: string; sha
 // LL-036.
 async function ghGetFileRaw(env: Env, path: string): Promise<{ content: string } | null> {
   const url = `https://raw.githubusercontent.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/${env.GITHUB_BRANCH}/${path}`;
-  const res = await fetch(url, {
-    headers: {
-      "user-agent": "tech-dashboard-worker",
-      "cache-control": "no-cache",
+  const res = await ghFetch(
+    url,
+    {
+      headers: {
+        "user-agent": "tech-dashboard-worker",
+        "cache-control": "no-cache",
+      },
     },
-  });
+    `gh raw ${path}`,
+  );
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`gh raw ${path} ${res.status}: ${await res.text()}`);
   return { content: await res.text() };
@@ -247,16 +329,20 @@ async function ghJson<T>(
   init?: RequestInit,
 ): Promise<T> {
   const url = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}${path}`;
-  const res = await fetch(url, {
-    ...init,
-    headers: {
-      authorization: `Bearer ${env.GH_TOKEN}`,
-      accept: "application/vnd.github+json",
-      "content-type": "application/json",
-      "user-agent": "tech-dashboard-worker",
-      ...(init?.headers ?? {}),
+  const res = await ghFetch(
+    url,
+    {
+      ...init,
+      headers: {
+        authorization: `Bearer ${env.GH_TOKEN}`,
+        accept: "application/vnd.github+json",
+        "content-type": "application/json",
+        "user-agent": "tech-dashboard-worker",
+        ...(init?.headers ?? {}),
+      },
     },
-  });
+    `gh ${init?.method ?? "GET"} ${path}`,
+  );
   if (!res.ok) throw new Error(`gh ${init?.method ?? "GET"} ${path} ${res.status}: ${await res.text()}`);
   return (await res.json()) as T;
 }
@@ -616,13 +702,18 @@ async function publishHistoryFiles(
 // ---------- Copilot token exchange ------------------------------------------
 
 async function resolveCopilotToken(pat: string): Promise<string> {
-  const res = await fetch("https://api.github.com/copilot_internal/v2/token", {
-    headers: {
-      authorization: `token ${pat}`,
-      "user-agent": COPILOT_HEADERS["user-agent"],
-      "editor-version": COPILOT_HEADERS["editor-version"],
+  const res = await fetchWithTimeout(
+    "https://api.github.com/copilot_internal/v2/token",
+    {
+      headers: {
+        authorization: `token ${pat}`,
+        "user-agent": COPILOT_HEADERS["user-agent"],
+        "editor-version": COPILOT_HEADERS["editor-version"],
+      },
     },
-  });
+    GITHUB_FETCH_TIMEOUT_MS,
+    "copilot token exchange",
+  );
   if (!res.ok) throw new Error(`copilot token exchange ${res.status}: ${await res.text()}`);
   const body = (await res.json()) as { token: string };
   return body.token;

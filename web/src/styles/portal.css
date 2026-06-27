@@ -1154,9 +1154,9 @@ html.motion-ready [data-reveal].is-visible {
   opacity: 1;
   transform: none;
   transition:
-    opacity 0.56s ease,
-    transform 0.56s cubic-bezier(0.2, 0.8, 0.2, 1);
-  transition-delay: calc(var(--reveal-index, 0) * 35ms);
+    opacity 0.4s ease,
+    transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition-delay: calc(var(--reveal-index, 0) * 22ms);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1209,14 +1209,6 @@ html.motion-ready [data-reveal].is-visible {
   .stat:hover {
     transform: translateY(-2px);
   }
-
-  @supports ((animation-timeline: view()) and (animation-range: entry)) {
-    .timeline-section .card {
-      animation: card-scroll-reveal both linear;
-      animation-timeline: view(block);
-      animation-range: entry 0% entry 42%;
-    }
-  }
 }
 
 @keyframes grid-drift {
@@ -1248,13 +1240,6 @@ html.motion-ready [data-reveal].is-visible {
   50% { transform: translateY(-7px); }
 }
 
-@keyframes card-scroll-reveal {
-  from {
-    opacity: 0.72;
-    transform: translateY(18px) scale(0.985);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .banner-bg-grid,
   .banner::before,
@@ -1263,8 +1248,7 @@ html.motion-ready [data-reveal].is-visible {
   .orbit-ring,
   .scan-beam,
   .signal-node,
-  .badge.new,
-  .timeline-section .card {
+  .badge.new {
     animation: none !important;
   }
 

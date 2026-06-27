@@ -1,8 +1,127 @@
 {
-  "generatedAt": "2026-06-27T05:01:26.486Z",
+  "generatedAt": "2026-06-27T07:00:55.173Z",
   "month": "2026-06",
-  "count": 1752,
+  "count": 1763,
   "entries": [
+    {
+      "id": "0e0a2c5ee20e1f5c",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/Shiro_Shihi/items/29df86bd487cf314cc77",
+      "title": "【設定ファイルも全公開】Claude Code + GitHub MCP で Issue → 実装 → PR まで全自動にしてみる",
+      "titleJa": "【設定ファイルも全公開】Claude Code + GitHub MCP で Issue → 実装 → PR まで全自動にしてみる",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-27T06:34:00.000Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Ftech-festa-ogp-background-4b5015b2c518c7e6b9062a7c9f5f5e90.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMzE5NDE5MSUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc2NDQ3NzM4OD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MGFiMTk2Nzc2Nzk0ZmFjZDBjYzlmM2Q5NjU4ZWIxMDM%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZhYmFmMDczOTgzZDI1YzFhOTZmYmZhZDE3YzFmYWE0YjIyNTk2YzhkJTJGb3JpZ2luYWwuanBnJTNGMTczMDkzODc5Mj9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1iYzhmM2JiYmM0MDBkYWY1MGEwNzY3NDM4MzM0YzJiZQ%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D29e324bd8f64844e0fe8cd72bbf9490f?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwJUU4JUE4JUFEJUU1JUFFJTlBJUUzJTgzJTk1JUUzJTgyJUExJUUzJTgyJUE0JUUzJTgzJUFCJUUzJTgyJTgyJUU1JTg1JUE4JUU1JTg1JUFDJUU5JTk2JThCJUUzJTgwJTkxQ2xhdWRlJTIwQ29kZSUyMCUyQiUyMEdpdEh1YiUyME1DUCUyMCVFMyU4MSVBNyUyMElzc3VlJTIwJUUyJTg2JTkyJTIwJUU1JUFFJTlGJUU4JUEzJTg1JTIwJUUyJTg2JTkyJTIwUFIlMjAlRTMlODElQkUlRTMlODElQTclRTUlODUlQTglRTglODclQUElRTUlOEIlOTUlRTMlODElQUIlRTMlODElOTclRTMlODElQTYlRTMlODElQkYlRTMlODIlOEImdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyM0ZGRkZGRiZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz00MDVlMjMzNjFjOTU0NTQ1OTNjYjNjYmE3YTQxZjZiYw&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBTaGlyb19TaGloaSZ0eHQtY29sb3I9JTIzRkZGRkZGJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTcxMDBmMWI5NDUxZDE3NWZiNDY1OWVjZTU4YWExZGJm&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=44OH44K444K_44Or5Ym15L2c44K144O844Kv44OrVW5pUHJvamVjdA&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%23FFFFFF&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=eb3385792df01bc14e3dffccfd07f900",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Ftech-festa-ogp-background-4b5015b2c518c7e6b9062a7c9f5f5e90.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMzE5NDE5MSUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc2NDQ3NzM4OD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MGFiMTk2Nzc2Nzk0ZmFjZDBjYzlmM2Q5NjU4ZWIxMDM%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZhYmFmMDczOTgzZDI1YzFhOTZmYmZhZDE3YzFmYWE0YjIyNTk2YzhkJTJGb3JpZ2luYWwuanBnJTNGMTczMDkzODc5Mj9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1iYzhmM2JiYmM0MDBkYWY1MGEwNzY3NDM4MzM0YzJiZQ%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D29e324bd8f64844e0fe8cd72bbf9490f?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwJUU4JUE4JUFEJUU1JUFFJTlBJUUzJTgzJTk1JUUzJTgyJUExJUUzJTgyJUE0JUUzJTgzJUFCJUUzJTgyJTgyJUU1JTg1JUE4JUU1JTg1JUFDJUU5JTk2JThCJUUzJTgwJTkxQ2xhdWRlJTIwQ29kZSUyMCUyQiUyMEdpdEh1YiUyME1DUCUyMCVFMyU4MSVBNyUyMElzc3VlJTIwJUUyJTg2JTkyJTIwJUU1JUFFJTlGJUU4JUEzJTg1JTIwJUUyJTg2JTkyJTIwUFIlMjAlRTMlODElQkUlRTMlODElQTclRTUlODUlQTglRTglODclQUElRTUlOEIlOTUlRTMlODElQUIlRTMlODElOTclRTMlODElQTYlRTMlODElQkYlRTMlODIlOEImdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyM0ZGRkZGRiZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz00MDVlMjMzNjFjOTU0NTQ1OTNjYjNjYmE3YTQxZjZiYw&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBTaGlyb19TaGloaSZ0eHQtY29sb3I9JTIzRkZGRkZGJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTcxMDBmMWI5NDUxZDE3NWZiNDY1OWVjZTU4YWExZGJm&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=44OH44K444K_44Or5Ym15L2c44K144O844Kv44OrVW5pUHJvamVjdA&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%23FFFFFF&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=eb3385792df01bc14e3dffccfd07f900",
+        "alt": "【設定ファイルも全公開】Claude Code + GitHub MCP で Issue → 実装 → PR まで全自動にしてみる",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "a677e8718fa44d7d",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/sgrs38/items/39ba17ccb9b06c477443",
+      "title": "OAuth 2.1とMCP｜2.0との違いと、AIエージェント時代の認可を図解で整理する🔥",
+      "titleJa": "OAuth 2.1とMCP｜2.0との違いと、AIエージェント時代の認可を図解で整理する🔥",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-27T06:32:04.000Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "a692c2ae07a8c1df",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/renatomarinho/items/fcb6a82ab1ea3a56f63a",
+      "title": "AIエージェントにDevOpsを任せる：AlpicによるMCPサーバーのインフラ自動化",
+      "titleJa": "AIエージェントにDevOpsを任せる：AlpicによるMCPサーバーのインフラ自動化",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-27T03:13:10.000Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "a755379f6f5d5934",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/OnuuuumaX/items/c3f15e4007fcfb900622",
+      "title": "【Godot 4.x】2D脱出ゲームを作ってみる④〜Claude CodeとMCPでタイトル画面を実装してシーン遷移＋ビューポート調整〜",
+      "titleJa": "【Godot 4.x】2D脱出ゲームを作ってみる④〜Claude CodeとMCPでタイトル画面を実装してシーン遷移＋ビューポート調整〜",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-27T02:21:33.000Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkYxMjg5ZWY1NGEzZjZmZDQzZGU3NjA3MGIxZjNmMzJhNj9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MjZhYTU1OTQ3MzQ5OGVjY2FjNDFhMjYyYWZjMWU5YWM%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZlYmQ5Njg3Yjk0MzAwMWI5NzlkNmU0YWY1MGFiYWU4YTc5MWE4ZGE1JTJGb3JpZ2luYWwuanBnJTNGMTc1NjE4NjM1Mz9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1hOTMyMDU4NWNlNzJmY2QyNGJiNGQ0MDNkYTA2MGM1OA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D1be0236a1ee859e48bb82511798ad812?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwR29kb3QlMjA0LnglRTMlODAlOTEyRCVFOCU4NCVCMSVFNSU4NyVCQSVFMyU4MiVCMiVFMyU4MyVCQyVFMyU4MyVBMCVFMyU4MiU5MiVFNCVCRCU5QyVFMyU4MSVBMyVFMyU4MSVBNiVFMyU4MSVCRiVFMyU4MiU4QiVFMiU5MSVBMyVFMyU4MCU5Q0NsYXVkZSUyMENvZGUlRTMlODElQThNQ1AlRTMlODElQTclRTMlODIlQkYlRTMlODIlQTQlRTMlODMlODglRTMlODMlQUIlRTclOTQlQkIlRTklOUQlQTIlRTMlODIlOTIlRTUlQUUlOUYlRTglQTMlODUlRTMlODElOTclRTMlODElQTYlRTMlODIlQjclRTMlODMlQkMlRTMlODMlQjMlRTklODElQjclRTclQTclQkIlRTIlODAlQTYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0wMGIzZGE1ZTE5NDY1MDE4YzYzZDcyNzM0YjhiYjk5Zg&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBPbnV1dXVtYVgmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iMmQ3MzA2OGNkOTk3ODcyNjIxNWNmNDE5MjA0OTZhNg&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=R01P44Kz44ON44Kv44OI5qCq5byP5Lya56S-&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%231E2121&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=8dcf53cee60d8c75d858ccf3f7d2e0f8",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkYxMjg5ZWY1NGEzZjZmZDQzZGU3NjA3MGIxZjNmMzJhNj9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MjZhYTU1OTQ3MzQ5OGVjY2FjNDFhMjYyYWZjMWU5YWM%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZlYmQ5Njg3Yjk0MzAwMWI5NzlkNmU0YWY1MGFiYWU4YTc5MWE4ZGE1JTJGb3JpZ2luYWwuanBnJTNGMTc1NjE4NjM1Mz9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1hOTMyMDU4NWNlNzJmY2QyNGJiNGQ0MDNkYTA2MGM1OA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D1be0236a1ee859e48bb82511798ad812?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwR29kb3QlMjA0LnglRTMlODAlOTEyRCVFOCU4NCVCMSVFNSU4NyVCQSVFMyU4MiVCMiVFMyU4MyVCQyVFMyU4MyVBMCVFMyU4MiU5MiVFNCVCRCU5QyVFMyU4MSVBMyVFMyU4MSVBNiVFMyU4MSVCRiVFMyU4MiU4QiVFMiU5MSVBMyVFMyU4MCU5Q0NsYXVkZSUyMENvZGUlRTMlODElQThNQ1AlRTMlODElQTclRTMlODIlQkYlRTMlODIlQTQlRTMlODMlODglRTMlODMlQUIlRTclOTQlQkIlRTklOUQlQTIlRTMlODIlOTIlRTUlQUUlOUYlRTglQTMlODUlRTMlODElOTclRTMlODElQTYlRTMlODIlQjclRTMlODMlQkMlRTMlODMlQjMlRTklODElQjclRTclQTclQkIlRTIlODAlQTYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0wMGIzZGE1ZTE5NDY1MDE4YzYzZDcyNzM0YjhiYjk5Zg&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBPbnV1dXVtYVgmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iMmQ3MzA2OGNkOTk3ODcyNjIxNWNmNDE5MjA0OTZhNg&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=R01P44Kz44ON44Kv44OI5qCq5byP5Lya56S-&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%231E2121&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=8dcf53cee60d8c75d858ccf3f7d2e0f8",
+        "alt": "【Godot 4.x】2D脱出ゲームを作ってみる④〜Claude CodeとMCPでタイトル画面を実装してシーン遷移＋ビューポート調整〜",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "920cff7d0123f6b6",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/baku2san/items/459a1b9b8332f943e2e2",
+      "title": "VS Code Copilot の「128ツール制限」を気にせず全部ONにできる：virtual tools (大袈裟",
+      "titleJa": "VS Code Copilot の「128ツール制限」を気にせず全部ONにできる：virtual tools (大袈裟",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-27T01:29:19.000Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
+      "tags": [
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
     {
       "id": "72aa59221bb27f5a",
       "source": "cline-releases",
@@ -225,6 +344,38 @@
       }
     },
     {
+      "id": "826d9fb1d65437ca",
+      "source": "openhands-releases",
+      "sourceType": "release",
+      "url": "https://github.com/OpenHands/OpenHands/releases/tag/cloud-1.40.0",
+      "title": "cloud: 1.40.0",
+      "titleJa": "cloud: 1.40.0 リリース",
+      "titleEn": "cloud: 1.40.0",
+      "lang": "en",
+      "publishedAt": "2026-06-26T20:36:25.000Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
+      "tags": [
+        "enterprise",
+        "openhands",
+        "release",
+        "git",
+        "user-provisioning",
+        "settings"
+      ],
+      "category": "opencode",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/225919603?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/225919603?s=60&amp;v=4",
+        "alt": "cloud: 1.40.0",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
       "id": "04151c0e46274d6f",
       "source": "cline-releases",
       "sourceType": "release",
@@ -267,8 +418,8 @@
       "titleJa": "Ollama v0.30.11 リリース",
       "titleEn": "Ollama Releases v0.30.11",
       "lang": "en",
-      "publishedAt": "2026-06-26T19:00:44.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "publishedAt": "2026-06-26T19:46:28.000Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "ollama",
         "release",
@@ -386,6 +537,35 @@
         "width": 0,
         "height": 0,
         "source": "media"
+      }
+    },
+    {
+      "id": "06246e5396c2a55b",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/syoyo/articles/df78b5418dac8e",
+      "title": "linux firefox 153+ で headless HW accelerated webgpu を MCP  で",
+      "titleJa": "linux firefox 153+ で headless HW accelerated webgpu を MCP  で",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-26T17:45:28.000Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--XWgucQg7--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:linux%2520firefox%2520153%252B%2520%25E3%2581%25A7%2520headless%2520HW%2520accelerated%2520webgpu%2520%25E3%2582%2592%2520MCP%2520%2520%25E3%2581%25A7%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:syoyo%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2FiZTYxMTY5ZTYuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--XWgucQg7--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:linux%2520firefox%2520153%252B%2520%25E3%2581%25A7%2520headless%2520HW%2520accelerated%2520webgpu%2520%25E3%2582%2592%2520MCP%2520%2520%25E3%2581%25A7%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:syoyo%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2FiZTYxMTY5ZTYuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "linux firefox 153+ で headless HW accelerated webgpu を MCP  で",
+        "width": 0,
+        "height": 0,
+        "source": "og"
       }
     },
     {
@@ -545,8 +725,8 @@
       }
     },
     {
-      "id": "7652702690ae523a",
-      "source": "qiita-vscode",
+      "id": "4d676021c8247b6c",
+      "source": "qiita-copilot",
       "sourceType": "blog",
       "url": "https://qiita.com/baku2san/items/188c1efe7a64ac794fde",
       "title": "VS Code の Toolset 切り替えでお気楽トークン節約…と思ったら現状バグだらけだった話",
@@ -554,7 +734,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-26T13:29:06.000Z",
-      "collectedAt": "2026-06-27T00:00:50.263Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "qiita",
         "vscode"
@@ -571,6 +751,47 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "6ef711cbd7c4fd60",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/believe/articles/f69da29d8f1385",
+      "title": "AI人材育成勉強 part3：MCPを初学者向けに整理してみた",
+      "titleJa": "AI人材育成勉強 part3：MCPを初学者向けに整理してみた",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-26T13:28:23.000Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "2910943733cc62c3",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kant9612/articles/7f2490c62a5d50",
+      "title": "AIチームに異動した1週目、「概要・類似語・反対語」でAI基礎用語を整理してみた",
+      "titleJa": "AIチームに異動した1週目、「概要・類似語・反対語」でAI基礎用語を整理してみた",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-26T12:32:33.000Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
     },
     {
       "id": "319be133ac5748b8",
@@ -707,6 +928,27 @@
       "archiveTier": "hot"
     },
     {
+      "id": "792df64789189e7f",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/sdb_blog/articles/ooba-blog-008",
+      "title": "MCPサーバーで始める不具合分析の自動化に挑戦中2",
+      "titleJa": "MCPサーバーで始める不具合分析の自動化に挑戦中2",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-26T08:00:05.000Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
+    },
+    {
       "id": "903c02bdce0e0509",
       "source": "qiita-cursor",
       "sourceType": "blog",
@@ -734,6 +976,27 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "2f0a8285835aedb3",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/keiichi_okamoto/articles/xx-260626-xcode-claude",
+      "title": "xcrun mcpbridge run-agent claude ——魔法の呪文を求めて",
+      "titleJa": "xcrun mcpbridge run-agent claude ——魔法の呪文を求めて",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-26T07:28:46.000Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
+      "tags": [
+        "agent",
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot"
     },
     {
       "id": "144d1c6d0f4d9baf",
@@ -790,7 +1053,7 @@
       "titleEn": "Ollama Releases v0.30.11-rc1",
       "lang": "en",
       "publishedAt": "2026-06-26T06:18:47.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "ollama",
         "release",
@@ -822,7 +1085,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-26T06:00:06.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -851,7 +1114,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-26T06:00:06.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -927,7 +1190,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-26T01:39:06.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "mcp",
         "zenn"
@@ -1112,7 +1375,7 @@
       "titleEn": "Evaluating performance and efficiency of the GitHub Copilot agentic harness across models and tasks",
       "lang": "en",
       "publishedAt": "2026-06-25T22:59:45.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "agent",
         "copilot",
@@ -1147,7 +1410,7 @@
       "titleEn": "Privacy-Aware Infrastructure in the AI-Native Era: An Asset Classification Case Study",
       "lang": "en",
       "publishedAt": "2026-06-25T22:30:51.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "engineering",
         "meta",
@@ -1181,7 +1444,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-25T22:30:41.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "agent",
         "mcp",
@@ -1285,7 +1548,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-25T21:22:17.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "agent",
         "qiita",
@@ -1869,7 +2132,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-25T01:37:36.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "qiita",
         "vscode"
@@ -2068,7 +2331,7 @@
       "titleEn": "Ollama Releases v0.30.11-rc0",
       "lang": "en",
       "publishedAt": "2026-06-24T21:03:12.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "ollama",
         "open-model",
@@ -2590,7 +2853,7 @@
       "titleEn": "cloud: 1.39.0",
       "lang": "en",
       "publishedAt": "2026-06-24T15:41:03.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "openhands",
         "release",
@@ -3612,7 +3875,7 @@
       "titleEn": "How Meta Engineered Ultra-Narrow Batteries for AI Glasses",
       "lang": "en",
       "publishedAt": "2026-06-23T16:00:38.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "engineering",
         "meta",
@@ -3698,7 +3961,7 @@
       "titleEn": "I automated my job (and it made me a better leader)",
       "lang": "en",
       "publishedAt": "2026-06-23T16:00:00.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "copilot",
         "github",
@@ -3855,7 +4118,7 @@
       "titleEn": "We’re Partnering With EssilorLuxottica to Launch Meta Glasses",
       "lang": "en",
       "publishedAt": "2026-06-23T13:00:32.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "meta",
         "news",
@@ -3889,7 +4152,7 @@
       "titleEn": "Launch of Meta’s Small Business Growth Academy Across Asia-Pacific to Boost AI Adoption and Digital Skills",
       "lang": "en",
       "publishedAt": "2026-06-23T13:00:09.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "meta",
         "news",
@@ -5558,7 +5821,7 @@
       "titleEn": "Adopting AV1 for Real-Time Communication (RTC) at Scale",
       "lang": "en",
       "publishedAt": "2026-06-22T16:00:08.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "engineering",
         "meta",
@@ -9460,7 +9723,7 @@
       "titleEn": "How we built an internal data analytics agent",
       "lang": "en",
       "publishedAt": "2026-06-19T16:00:00.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "agent",
         "copilot",
@@ -11508,7 +11771,7 @@
       "titleEn": "Ollama Releases v0.30.10",
       "lang": "en",
       "publishedAt": "2026-06-18T04:26:41.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "ollama",
         "open-model",
@@ -11757,7 +12020,7 @@
       "titleEn": "GLM-5.2 is probably the most powerful text-only open weights LLM",
       "lang": "en",
       "publishedAt": "2026-06-17T23:58:39.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "llm",
         "newsletter",
@@ -11995,7 +12258,7 @@
       "titleEn": "Ollama Releases v0.30.10-rc1",
       "lang": "en",
       "publishedAt": "2026-06-17T20:01:10.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "ollama",
         "release",
@@ -12085,7 +12348,7 @@
       "titleEn": "Getting more from each token: How Copilot improves context handling and model routing",
       "lang": "en",
       "publishedAt": "2026-06-17T19:41:46.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "copilot",
         "github",
@@ -13402,7 +13665,7 @@
       "titleEn": "python-1.43.1",
       "lang": "en",
       "publishedAt": "2026-06-17T07:28:05.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "agent",
         "release",
@@ -13520,7 +13783,7 @@
       "titleEn": "Ollama Releases v0.30.10-rc0",
       "lang": "en",
       "publishedAt": "2026-06-17T06:15:52.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "ollama",
         "open-model",
@@ -14083,7 +14346,7 @@
       "titleEn": "Ollama Releases v0.30.9",
       "lang": "en",
       "publishedAt": "2026-06-17T00:25:33.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "agent",
         "ollama",
@@ -14528,7 +14791,7 @@
       "titleEn": "What are git worktrees, and why should I use them?",
       "lang": "en",
       "publishedAt": "2026-06-16T20:58:54.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "copilot",
         "github",
@@ -14655,7 +14918,7 @@
       "titleEn": "Ollama Releases v0.30.9-rc2",
       "lang": "en",
       "publishedAt": "2026-06-16T19:55:52.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "ollama",
         "release",
@@ -16754,7 +17017,7 @@
       "titleEn": "GitHub Copilot CLI for Beginners: Overview of common slash commands",
       "lang": "en",
       "publishedAt": "2026-06-15T20:15:31.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "agent",
         "copilot",
@@ -16867,7 +17130,7 @@
       "titleEn": "Ollama Releases v0.30.9-rc1",
       "lang": "en",
       "publishedAt": "2026-06-15T18:36:50.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "ollama",
         "release",
@@ -17203,7 +17466,7 @@
       "titleEn": "New AI Tools to Help You Make Things Happen on Facebook",
       "lang": "en",
       "publishedAt": "2026-06-15T16:00:23.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "meta",
         "news",
@@ -17747,7 +18010,7 @@
       "titleEn": "Ollama Releases v0.30.9-rc0",
       "lang": "en",
       "publishedAt": "2026-06-15T03:05:08.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "ollama",
         "open-model",
@@ -19823,7 +20086,7 @@
       "titleEn": "How we made GitHub Copilot CLI more selective about delegation",
       "lang": "en",
       "publishedAt": "2026-06-12T22:26:23.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "copilot",
         "github",
@@ -20712,7 +20975,7 @@
       "summaryEn": "We're donating Ray-Ban Meta glasses to every blind veteran in America, giving them transformative AI technology. The post The Future Is for Everyone: Free AI Glasses for Every Blind Veteran in America",
       "lang": "en",
       "publishedAt": "2026-06-12T12:33:26.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "meta",
         "news",
@@ -23879,7 +24142,7 @@
       "summaryEn": "What's Changed Added Added LLM profiles by @VascoSch92 in #14149 Users can select the sandbox grouping strategy by @tofarr in #14291 Enabled sub-agent delegation by @xingyaoww in #14122 Minimal generi",
       "lang": "en",
       "publishedAt": "2026-06-10T16:58:51.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "agent",
         "openhands",
@@ -24129,7 +24392,7 @@
       "titleEn": "Give GitHub Copilot CLI real code intelligence with language servers",
       "lang": "en",
       "publishedAt": "2026-06-10T16:00:00.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "copilot",
         "github",
@@ -26215,7 +26478,7 @@
       "summaryEn": "Co-authored-by: openhands openhands@all-hands.dev",
       "lang": "en",
       "publishedAt": "2026-06-09T21:38:56.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "openhands",
         "release",
@@ -27100,7 +27363,7 @@
       "summaryEn": "Introducing Claude Fable 5",
       "lang": "en",
       "publishedAt": "2026-06-09T17:00:05.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -27247,7 +27510,7 @@
       "titleEn": "From one-off prompts to workflows: How to use custom agents in GitHub Copilot CLI",
       "lang": "en",
       "publishedAt": "2026-06-09T16:00:00.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "copilot",
         "github",
@@ -35357,7 +35620,7 @@
       "summaryEn": "PLTF-2895: event_callback index — use plain CREATE INDEX ( #14651 )",
       "lang": "en",
       "publishedAt": "2026-06-04T20:32:56.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "openhands",
         "release",
@@ -36341,7 +36604,7 @@
       "summaryEn": "What's Changed Python: Improve function call invocation parameter consistency by @SergeyMenshykh in #14014 Python: [Breaking] Update OpenAPI document parsing options by @SergeyMenshykh in #14009 ci: h",
       "lang": "en",
       "publishedAt": "2026-06-03T22:40:50.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "agent",
         "release",
@@ -36705,7 +36968,7 @@
       "summaryEn": "Co-authored-by: openhands openhands@all-hands.dev Co-authored-by: hieptl hieptl.developer@gmail.com",
       "lang": "en",
       "publishedAt": "2026-06-03T18:37:35.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "openhands",
         "release",
@@ -36790,7 +37053,7 @@
       "titleEn": "Lights Out, Systems On: Validating Instant Power Loss Readiness",
       "lang": "en",
       "publishedAt": "2026-06-03T17:00:44.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "engineering",
         "meta",
@@ -40189,7 +40452,7 @@
       "summaryEn": "Co-authored-by: openhands openhands@all-hands.dev",
       "lang": "en",
       "publishedAt": "2026-06-02T12:59:19.000Z",
-      "collectedAt": "2026-06-26T19:00:50.300Z",
+      "collectedAt": "2026-06-27T07:00:50.308Z",
       "tags": [
         "agent",
         "openhands",

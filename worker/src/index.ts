@@ -28,6 +28,16 @@ import {
   selectSummaryJobBatch,
   type SummaryJob,
 } from "./summary-queue.ts";
+import { type BodyJob } from "./body-generate.ts";
+import { selectBodyJobBatch } from "./body-queue.ts";
+import { getBodyCacheEntries } from "./body-cache.ts";
+import {
+  bodiesPresentSet,
+  mergeBodies,
+  parseBodies,
+  serializeBodies,
+  type NewBody,
+} from "./bodies-file.ts";
 import {
   getCacheEntriesWithLegacyFallback,
   putCacheEntry,
@@ -72,6 +82,17 @@ interface Env {
   KV_LOOKUP_CAP?: string;
   // Max number of missing thumbnails to fetch from article pages per cron.
   OG_BUDGET_PER_RUN?: string;
+  // Optional Queue producer for the body Worker (body-file Phase B, LL-115).
+  // When ENABLE_BODY_QUEUE !== "1" the whole body pipeline is a no-op, so the
+  // collector can deploy this code safely before the body queue + worker exist.
+  BODY_QUEUE?: Queue<BodyJob>;
+  ENABLE_BODY_QUEUE?: string;
+  // Max body jobs to enqueue per cron (consumer writes one `b:` KV per job,
+  // bounded by the shared KV daily write budget, LL-043).
+  BODY_ENQUEUE_MAX_NEW?: string;
+  // Max `b:` KV entries to read per cron when merging generated bodies into
+  // data/bodies.json. Each is one subrequest (LL-088 subrequest budget).
+  BODY_LOOKUP_CAP?: string;
 }
 
 const INDEX_LIMIT = 2000;
@@ -929,6 +950,11 @@ async function runHarness(
   // ~947 → ~227 each cron). raw.* has up to ~5min Fastly cache but cron
   // runs are 60min apart so staleness is acceptable.
   const existing = await ghGetFileRaw(env, "data/index.json");
+  // Body-file architecture (LL-115): read the committed bodies.json so the body
+  // pipeline can merge newly generated bodies and prune stale ones. Only read
+  // when the body pipeline is active to save a subrequest otherwise.
+  const existingBodies =
+    env.ENABLE_BODY_QUEUE === "1" ? await ghGetFileRaw(env, "data/bodies.json") : null;
   let priorEntries: NormalizedEntry[] = [];
   if (existing?.content) {
     try {
@@ -1331,6 +1357,15 @@ async function runHarness(
     { skipUrls: summaryRetryCooldownUrls },
   );
   const enqueueCandidates = queueEnabled && env.SUMMARY_QUEUE ? summaryQueueBatch.jobs.length : 0;
+  // Body-file pipeline (LL-115): merge generated bodies into data/bodies.json
+  // and enqueue body-less entries. No-op unless ENABLE_BODY_QUEUE=1.
+  const bodyGeneratedAt = new Date().toISOString();
+  const bodyPipeline = await runBodyPipeline(
+    env,
+    finalEntries,
+    existingBodies?.content ?? null,
+    bodyGeneratedAt,
+  );
   const health = {
     lastRunAt: new Date().toISOString(),
     batchIndex: batchIndex + 1,
@@ -1357,14 +1392,15 @@ async function runHarness(
     copilotError,
     ogCached: Object.keys(ogBlob).length,
     ogNewHits: ogFound,
+    ...bodyPipeline.health,
   };
-  // Body-file architecture (LL-113): the long-form body is NOT stored in
-  // data/index.json. It lives in data/bodies.json (migrated out; Phase B will
-  // generate new ones via a dedicated cloud worker). Strip body fields from the
-  // published index regardless of what the cache merge produced, so the index
-  // stays well under the CI size budget (LL-112) and a stale `s:` cache hit
-  // carrying a legacy body can never re-bloat it (LL-073). `finalEntries` keeps
-  // its shape for archive/stats (archive compacts body away anyway).
+  // Body-file architecture (LL-115): the long-form body is NOT stored in
+  // data/index.json. It lives in data/bodies.json (managed by the body pipeline
+  // above). Strip body fields from the published index regardless of what the
+  // cache merge produced, so the index stays well under the CI size budget
+  // (LL-112) and a stale `s:` cache hit carrying a legacy body can never
+  // re-bloat it (LL-073). `finalEntries` keeps its shape for archive/stats
+  // (archive compacts body away anyway).
   const indexEntries = finalEntries.map((e) => ({ ...e, bodyJa: "", bodyEn: "" }));
   const payload = {
     generatedAt: new Date().toISOString(),
@@ -1399,11 +1435,14 @@ async function runHarness(
     };
   }
   const hasEntryChanges = !entriesEqual(existingPayload, indexEntries);
+  const indexUnchanged = stripGeneratedAt(existingJson) === stripGeneratedAt(json);
+  const bodiesChanged = bodyPipeline.bodiesFileContent !== null;
   // Compare ignoring `generatedAt` timestamp so unchanged runs don't churn commits.
   // Queue enqueue already happened in the pre-publish path above, because
   // cache state (some entries are still fallbacks) is independent of whether
-  // the index payload changed.
-  if (stripGeneratedAt(existingJson) === stripGeneratedAt(json)) {
+  // the index payload changed. Body-file (LL-115): also commit when only
+  // data/bodies.json changed (new bodies merged / stale ones pruned).
+  if (indexUnchanged && !bodiesChanged) {
     console.log("[worker] no data changes");
     await writeHeartbeat(env, health, false, earlyEnqueued, allFallback.length);
     return { changed: false, stats: { finalEntries: finalEntries.length, summarized, errors, enqueued: earlyEnqueued } };
@@ -1425,14 +1464,21 @@ async function runHarness(
     console.log("[worker] entries unchanged; skip archive/stats refresh");
   }
 
-  // 7) Commit to GitHub. Use one Git Data API commit so index/archive/stats stay in sync.
-  const commitSha = await ghCommitFiles(env, message, [
-    ...historyStats.changes,
-    { path: "data/index.json", content: json },
-  ]);
-  console.log(`[worker] committed data/index.json (${finalEntries.length} entries)`);
+  // 7) Commit to GitHub. Use one Git Data API commit so index/archive/stats/
+  // bodies stay in sync. Only include index.json when its content actually
+  // changed (avoid churning generatedAt on a bodies-only update); always
+  // include bodies.json when the body pipeline produced a new version.
+  const commitFiles = [...historyStats.changes];
+  if (!indexUnchanged) {
+    commitFiles.push({ path: "data/index.json", content: json });
+  }
+  if (bodyPipeline.bodiesFileContent) {
+    commitFiles.push({ path: "data/bodies.json", content: bodyPipeline.bodiesFileContent });
+  }
+  const commitSha = await ghCommitFiles(env, message, commitFiles);
+  console.log(`[worker] committed ${commitFiles.map((f) => f.path).join(", ")} (${finalEntries.length} entries)`);
   console.log(
-    `[worker] history archiveChanged=${historyStats.archiveFilesChanged}, statsChanged=${historyStats.statsChanged}, commit=${commitSha}`,
+    `[worker] history archiveChanged=${historyStats.archiveFilesChanged}, statsChanged=${historyStats.statsChanged}, bodiesMerged=${bodyPipeline.health.bodyMerged}, bodyEnqueued=${bodyPipeline.enqueued}, commit=${commitSha}`,
   );
 
   // 8) Record the pre-publish enqueue result in the final heartbeat. Queue
@@ -1685,6 +1731,141 @@ async function maybeEnqueueSummaryJobs(
     }
   }
   return candidates.length;
+}
+
+// ---------- Body pipeline (body-file Phase B, LL-115) -----------------------
+
+interface BodyPipelineResult {
+  /** Serialized data/bodies.json to commit, or null when unchanged. */
+  bodiesFileContent: string | null;
+  enqueued: number;
+  health: {
+    bodyQueueMode: string;
+    bodyEnqueueCandidates: number;
+    bodyBacklog: number;
+    bodyDrainEstimateHours: number;
+    bodyLookupCount: number;
+    bodyMerged: number;
+    bodyPruned: number;
+    bodiesTotal: number;
+  };
+}
+
+/**
+ * Body-file pipeline (LL-115). Runs after the index payload is built:
+ *   1. Merge newly generated bodies (`b:` KV) into data/bodies.json and prune
+ *      bodies whose entry is no longer live.
+ *   2. Enqueue live entries that have a real summary but no body yet.
+ *
+ * Fully gated behind ENABLE_BODY_QUEUE so the collector can ship this code
+ * before the body queue + worker exist (no-op until activated). Best-effort:
+ * never throws into the publish path.
+ */
+async function runBodyPipeline(
+  env: Env,
+  liveEntries: readonly NormalizedEntry[],
+  existingBodiesContent: string | null,
+  generatedAt: string,
+): Promise<BodyPipelineResult> {
+  const disabled = (mode: string): BodyPipelineResult => ({
+    bodiesFileContent: null,
+    enqueued: 0,
+    health: {
+      bodyQueueMode: mode,
+      bodyEnqueueCandidates: 0,
+      bodyBacklog: 0,
+      bodyDrainEstimateHours: 0,
+      bodyLookupCount: 0,
+      bodyMerged: 0,
+      bodyPruned: 0,
+      bodiesTotal: parseBodies(existingBodiesContent).count,
+    },
+  });
+
+  if (env.ENABLE_BODY_QUEUE !== "1") return disabled("disabled");
+  if (!env.BODY_QUEUE) {
+    console.warn("[worker] ENABLE_BODY_QUEUE=1 but BODY_QUEUE binding missing");
+    return disabled("missing-binding");
+  }
+
+  try {
+    const existingBodies = parseBodies(existingBodiesContent);
+    const present = bodiesPresentSet(existingBodies);
+    const liveIds = new Set(liveEntries.map((e) => e.id));
+
+    // Entries that still need a body (real summary, no body yet).
+    const needing = liveEntries.filter(
+      (e) => !present.has(e.id) && !needsGeneratedContent(e),
+    );
+
+    // 1) Merge: read a capped slice of `b:` KV for needing entries and fold any
+    //    freshly generated bodies into bodies.json. Round-robin over the needing
+    //    list so the merge window cycles the whole backlog (LL-102 symmetry).
+    const lookupCap = Math.max(0, Number(env.BODY_LOOKUP_CAP ?? 25));
+    const lookupSlice =
+      needing.length <= lookupCap
+        ? needing
+        : (() => {
+            const start = roundRobinStart(Date.now(), needing.length, lookupCap);
+            const out: NormalizedEntry[] = [];
+            for (let i = 0; i < lookupCap; i++) out.push(needing[(start + i) % needing.length]!);
+            return out;
+          })();
+    const hits = lookupSlice.length
+      ? await getBodyCacheEntries(env.SUMMARY_CACHE, lookupSlice.map((e) => e.url))
+      : new Map();
+    const byUrlId = new Map(lookupSlice.map((e) => [e.url, e.id]));
+    const newBodies: NewBody[] = [];
+    for (const [url, hit] of hits) {
+      const id = byUrlId.get(url);
+      if (!id) continue;
+      newBodies.push({ id, bodyJa: hit.bodyJa, bodyEn: hit.bodyEn, model: hit.model, cachedAt: hit.cachedAt });
+    }
+
+    const merge = mergeBodies(existingBodies, newBodies, liveIds, generatedAt);
+
+    // 2) Enqueue body jobs for entries still missing a body after the merge.
+    const presentAfter = bodiesPresentSet(merge.payload);
+    const cap = Math.max(1, Number(env.BODY_ENQUEUE_MAX_NEW ?? 20));
+    const batch = selectBodyJobBatch(liveEntries, presentAfter, cap);
+    let enqueued = 0;
+    if (batch.jobs.length > 0) {
+      const CHUNK = 100;
+      for (let i = 0; i < batch.jobs.length; i += CHUNK) {
+        const slice = batch.jobs.slice(i, i + CHUNK);
+        try {
+          await env.BODY_QUEUE.sendBatch(slice.map((body) => ({ body })));
+          enqueued += slice.length;
+        } catch (err) {
+          console.warn(`[worker] body queue enqueue skipped: ${err}`);
+          break;
+        }
+      }
+    }
+    if (batch.eligibleCount > 0 || merge.changed) {
+      console.log(
+        `[worker] body pipeline: backlog=${batch.eligibleCount}, merged=${merge.added}, pruned=${merge.pruned}, enqueue=${enqueued}, drainHours=${batch.drainEstimateHours}`,
+      );
+    }
+
+    return {
+      bodiesFileContent: merge.changed ? serializeBodies(merge.payload) : null,
+      enqueued,
+      health: {
+        bodyQueueMode: "enabled",
+        bodyEnqueueCandidates: batch.jobs.length,
+        bodyBacklog: batch.eligibleCount,
+        bodyDrainEstimateHours: batch.drainEstimateHours,
+        bodyLookupCount: lookupSlice.length,
+        bodyMerged: merge.added,
+        bodyPruned: merge.pruned,
+        bodiesTotal: merge.payload.count,
+      },
+    };
+  } catch (err) {
+    console.warn(`[worker] body pipeline error (non-fatal): ${err}`);
+    return disabled("error");
+  }
 }
 
 // ---------- Worker entry points ---------------------------------------------

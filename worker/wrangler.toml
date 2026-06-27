@@ -81,6 +81,23 @@ KV_LOOKUP_CAP = "80"
 # Missing thumbnail backfill is useful but non-critical. Keep it tiny so data
 # collection + GitHub publish stay under the Free-plan external subrequest cap.
 OG_BUDGET_PER_RUN = "1"
+# Body-file architecture Phase B (LL-115). Body generation is OFF until the
+# body queue + worker-body are provisioned. Activation steps:
+#   1. `wrangler queues create tech-dashboard-body`
+#   2. `wrangler queues create tech-dashboard-body-dlq`
+#   3. Deploy worker-body (cd ../worker-body && wrangler deploy) + set its
+#      COPILOT_PAT secret.
+#   4. Set ENABLE_BODY_QUEUE = "1" here + redeploy this collector.
+# Until ENABLE_BODY_QUEUE = "1" the whole body pipeline is a no-op (no extra
+# subrequests, bodies.json untouched).
+ENABLE_BODY_QUEUE = "1"
+# Body jobs enqueued per cron. Each consumed job writes one `b:` KV entry, so
+# this shares the KV daily write budget with summaries (LL-043). Backlog ~760
+# entries drains in ~1-2 days at 20/hr. Raise once steady-state.
+BODY_ENQUEUE_MAX_NEW = "20"
+# `b:` KV reads per cron to merge generated bodies into data/bodies.json. Each
+# is one subrequest; keep modest alongside KV_LOOKUP_CAP (LL-088).
+BODY_LOOKUP_CAP = "25"
 
 # Secrets (set via `wrangler secret put`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access
@@ -98,6 +115,14 @@ OG_BUDGET_PER_RUN = "1"
 [[queues.producers]]
 binding = "SUMMARY_QUEUE"
 queue = "tech-dashboard-summary"
+
+# Body queue producer (body-file Phase B, LL-115). The queue must exist before
+# this Worker can deploy with this binding (`wrangler queues create
+# tech-dashboard-body`). The body pipeline is still gated behind
+# ENABLE_BODY_QUEUE so binding presence alone does not start generation.
+[[queues.producers]]
+binding = "BODY_QUEUE"
+queue = "tech-dashboard-body"
 
 [observability]
 enabled = true

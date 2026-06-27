@@ -90,7 +90,6 @@ const {
   isSummaryNoise,
   isPublishableEntry,
   isDeterministicFallbackEntry,
-  hasRealBodyContent,
   ALL_ENTRIES,
 } = await import("../web/src/lib/data.ts");
 
@@ -245,7 +244,7 @@ describe("isListableEntry", () => {
 // ============================================================
 // Summary-first (LL-112): body is decoupled from publishable status
 // ============================================================
-describe("summary-first: filler body は publishable を阻害しない (LL-112)", () => {
+describe("body は publishable 分類に影響しない (LL-112/LL-113)", () => {
   const EN_FILLER =
     "This long-form note is completed from the existing summary and collection metadata so the entry remains useful.";
   const JA_FILLER =
@@ -268,26 +267,6 @@ describe("summary-first: filler body は publishable を阻害しない (LL-112)
     const pendingSummary = { ...e1, summaryJa: PENDING_JA, summaryEn: "", bodyJa: "", bodyEn: "" };
     expect(isDeterministicFallbackEntry(pendingSummary)).toBe(true);
     expect(isPublishableEntry(pendingSummary)).toBe(false);
-  });
-});
-
-describe("hasRealBodyContent (LL-112)", () => {
-  const EN_FILLER =
-    "X is a tech-news update collected from src. This long-form note is completed from the existing summary and collection metadata so the entry remains useful.";
-  const JA_FILLER =
-    "このエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。";
-
-  it("実 body があれば true", () => {
-    expect(hasRealBodyContent({ ...e1, bodyJa: "詳細な解説本文です。", bodyEn: "A real detailed body." })).toBe(true);
-  });
-  it("空 body は false", () => {
-    expect(hasRealBodyContent({ ...e1, bodyJa: "", bodyEn: "" })).toBe(false);
-  });
-  it("EN filler body は false", () => {
-    expect(hasRealBodyContent({ ...e1, bodyJa: "", bodyEn: EN_FILLER })).toBe(false);
-  });
-  it("JA filler body は false", () => {
-    expect(hasRealBodyContent({ ...e1, bodyJa: JA_FILLER, bodyEn: "" })).toBe(false);
   });
 });
 

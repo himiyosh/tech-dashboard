@@ -83,17 +83,19 @@
 - `data/_summary-cache.json` に body がある場合は `npm run summaries:apply-cache` で `data/index.json` に明示反映し、cache 済み body が index 側で空の状態を残さない。
 - 完了前に `tests/data-schema.test.ts` の cache/index body 反映チェックを通す。
 
-### R-012: live index は要約必須・本文は任意 (summary-first / LL-112)
+### R-012: live index は要約のみ・本文は別ファイル (body-file architecture / LL-115)
 - `data/index.json` の live entries は `summaryJa` / `summaryEn` の**両方を必ず非空**にする (両言語必須)。完了前に `tests/data-schema.test.ts` の summary 欠落ゲートを通す。
-- **本文 (`bodyJa` / `bodyEn`) は任意**。要約のみ生成 (LL-106) になったため、collector は本文を生成しない (空のまま publish してよい)。決定論的 filler body は**生成しない** (LL-112: filler は index を肥大化させ CI サイズ予算を超過させ、記事詳細に偽の「本文は近日中に AI が生成」を出し続け、実要約エントリを Featured/Top から除外していた)。
-- 過去に生成された実 AI 本文 (少数の旧エントリ) は cache merge で保持され、記事詳細でそのまま表示する。`tests/data-schema.test.ts` の「filler body が残っていない」ゲートを通す。
-- 記事詳細の本文判定は `web/src/lib/data.ts` の `hasRealBodyContent` を使う。本文が無いエントリは要約を主役にし、原文リンクを出す (偽の生成予告を出さない)。
+- **本文 (`bodyJa` / `bodyEn`) は index に格納しない**。本文は `data/bodies.json` (`{ generatedAt, count, bodies: { [id]: {bodyJa, bodyEn, model, generatedAt} } }`) に entry id をキーに格納する。index は本文フリーで軽量維持し CI サイズ予算 (8MB, LL-112) を超えない。完了前に `tests/data-schema.test.ts` の「live index は本文を持たない」ゲートを通す。
+- 本文は専用クラウド worker (Phase B: opus-4.8 reasoning=max) が生成し `data/bodies.json` に蓄積する。生成は I/O 主体で Cloudflare の CPU 予算に当たらない (LL-115)。決定論的 filler body は**生成・格納しない** (LL-112)。
+- 記事詳細の本文表示は `web/src/lib/bodies.ts` の `bodyForEntry(id)` を使う。本文が無いエントリは要約を主役にし原文リンクを出す (偽の生成予告を出さない)。`isDeterministicFallbackEntry` (web 分類) は本文を見ない。
+- 既存本文の index→bodies.json 移行は `npm run body:migrate` (`scripts/migrate-bodies-to-file.mjs`)。
 
-### R-013: Worker publish 前に summary fallback を必ず適用する (本文は対象外)
-- production Worker は `data/index.json` を commit する前に deterministic **summary** fallback を全 live entry に適用し、`summaryJa` / `summaryEn` のいずれかが空の payload を publish しない (両言語必須)。本文は fallback 対象にしない (空のままでよい / LL-112)。
+### R-013: Worker publish 前に summary fallback を適用し、index を本文フリーに保つ
+- production Worker は `data/index.json` を commit する前に deterministic **summary** fallback を全 live entry に適用し、`summaryJa` / `summaryEn` のいずれかが空の payload を publish しない (両言語必須)。本文は fallback 対象にしない。
+- Worker は publish 時に index entry の `bodyJa` / `bodyEn` を**必ず空にする** (LL-115)。`s:` cache hit が旧 body を持っていても index には載せない (LL-073 family: stale cache 由来の本文混入で index を再肥大化させない)。本文は `data/bodies.json` 経路でのみ更新する。
 - 英語タイトルのみの entry でも `summaryJa` は決定的な日本語テンプレートで埋める。逆も同様。JA / EN UI で cross-language fallback バッジを出さないこと (LL-028)。
 - `isDeterministicFallbackEntry` (web) / `needsGeneratedContent` (worker) はいずれも**要約のみ**で fallback 判定する。本文の有無で publishable を切り替えない (LL-107/LL-112)。
-- Worker runtime は Cloudflare Pages Git Integration では自動更新されない。`worker/src/**` の品質修正後は、明示承認を得て Worker deploy を実施し、古い Worker が invalid data (filler body 含む) を再投入しないことを確認する。
+- Worker runtime は Cloudflare Pages Git Integration では自動更新されない。`worker/src/**` の品質修正後は、明示承認を得て Worker deploy を実施し、古い Worker が index に本文を再投入しないことを確認する。
 
 ### R-014: Web UI 変更は Chrome Modern Web Guidance を先に検索する
 - `developer.chrome.com/docs/modern-web-guidance` の方針に合わせ、`web/src/**/*.astro`、`web/src/**/*.ts`、`web/src/styles/**/*.css` で HTML / CSS / client-side JS、アクセシビリティ、パフォーマンス、セキュリティ、フォーム、モダン Web API に関わる変更を行う前に `.claude/skills/modern-web-guidance/SKILL.md` を参照する。
@@ -879,6 +881,13 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 両ページとも同じ `.layout` (sidebar + main grid, `max-width:1440px`) を使うのに、Dashboard だけ `.home-layout` で `max-width:1180px` を**ページ別にハードコード上書き**していた。記事ページは `.layout` の 1440px を使うのでワイド画面いっぱいに広がり sidebar が左寄せ。Dashboard は 1180px で中央寄せのため、同じ sidebar 幅・同じ grid なのに「中央パネルが狭い」体感になっていた。ユーザーの「記事ページの方が中央パネルが広い」は視覚的には正しいが、技術的には Dashboard の main **カラム**自体はむしろ広かった (right rail が無いため)。真因は「キャンバス全体の max-width 上限」がページ別にずれていたこと。
 - **対策**: `.home-layout` から `max-width:1180px` を**削除**し、基底 `.layout` の 1440px を継承させた (`grid-template-columns: 232px minmax(0,1fr)` は維持し right rail 無しの 2 カラムは保つ)。1440 を再ハードコードせず「継承」にしたのは、将来 `.layout` の canvas 幅を変えたとき両ページが自動追従し、**単一情報源**になるため。Playwright で 1512/1440/1280/1100/760px を実測し、両ページが同一キャンバス幅・同一 sidebar 左位置・横スクロール無し・モバイル単一カラム化を確認。
 - **教訓**: 同じレイアウト基底を共有するページで「幅が違う」と言われたら、ページ別の `max-width` / `width` ハードコード上書きを疑う。差分を修正するときは**別の固定値を再ハードコードせず基底から継承**させ、単一情報源にする (LL-022/032/083 の「単一情報源」原則と同型)。レイアウト幅の体感差は印象でなく Playwright で複数 viewport の canvas/sidebar/main の bounding box を実測して切り分ける (R-021)。「中央パネルが狭い」の正体が main カラム幅ではなくキャンバス全体の中央寄せだった、のように体感と実測がずれることがある。
+
+### LL-115: 記事全文(本文)の AI 生成は index ではなく別ファイル化 + クラウド常時生成 (body-file architecture)
+- **事象**: LL-112 で本文を summary-first 化し「本文は近日中に生成」の偽予告を撤去したが、ユーザーは「記事が要約されない (= 全文の AI 本文が出ない) のは不満。クラウドで常時生成してほしい」と要望。LL-106 で本文 AI 生成を廃止したのは「Cloudflare Worker の 30 秒制限に長文が収まらない」と理解していたが、これは**不正確**だった。
+- **根本原因 (実 API で再検証)**: (1) LL-106 の真因は CPU/wall-time 制限ではなく、**`claude-sonnet-4.6` が日本語長文を要求されると推論ループに入りトークン予算を全消費して空 (`choices:[]`) を返す**ことだった (実測: 日英まとめて 1 回要求 → 空。英語のみ → 4218字 OK)。`claude-opus-4.8` は日英とも長文を生成できる (JA 984字/23s, EN 4705字/28s, reasoning=max でも 924字/29s で finish=stop)。(2) Cloudflare Worker のコストは **CPU 時間のみ**で、`await fetch(LLM)` の応答待ち (20-29s) は I/O であり **CPU 時間に算入されない = 課金・30s 制限に当たらない** (LL-037/038 の Queue が実証済み)。つまり「処理時間が長い ≠ Cloudflare コスト増」。トークン消費は Copilot サブスク内。(3) よって長文本文のクラウド常時生成は技術的に可能。ただし全 ~1740 件にフル本文 (1記事 2-4KB) を index.json に戻すと再び 8MB 予算超過 (LL-112 の逆戻り) になるため、**本文は index と分離して別ファイル化**が必須。
+- **対策 (Phase A: 別ファイル化基盤・本 LL)**: (1) `data/bodies.json` (`{ generatedAt, count, bodies: { [id]: {bodyJa, bodyEn, model, generatedAt} } }`) を本文の単一情報源に新設。`scripts/migrate-bodies-to-file.mjs` (`npm run body:migrate`) で既存 index の実本文 979 件を移行し index から strip (index 6.46MB→3.14MB、bodies.json 3.46MB)。(2) web は `web/src/lib/bodies.ts` の `bodyForEntry(id)` で本文を読む。記事詳細 `e/[id].astro` は本文があれば prose、無ければ summary-first ダイジェスト + 原文リンク。`data.ts` から `hasRealBodyContent` を撤去 (本文は entry でなく bodies.json 由来に)。(3) collector は publish 時に index entry の `bodyJa`/`bodyEn` を必ず空にする (stale `s:` cache の旧 body 混入で index 再肥大化を防ぐ, LL-073 family)。`entriesEqual` 比較も body-free な `indexEntries` 基準に。(4) `tests/data-schema.test.ts` を「index は本文を持たない」+「bodies.json スキーマ/filler 無し/10MB 上限」ゲートに更新、`tests/web-bodies.test.ts` 新設。R-012/R-013 を body-file architecture に改訂。
+- **対策 (Phase B: クラウド生成・別 PR)**: 新 KV `BODY_CACHE` + 新 queue `tech-dashboard-body` + 新 consumer worker `worker-body` (opus-4.8 reasoning=max、JA/EN を 2 回に分けて呼ぶ — 日英まとめは推論ループ再発リスク)。collector が本文未生成エントリを enqueue し、`b:` KV を bodies.json に merge。安定稼働中の summarizer (LL-108) は触らない。KV write 1000/日 (LL-043) を独立 namespace で確保、backfill は ~1-2 日で drain。
+- **教訓**: (1) 「できない」と諦めた設計判断 (LL-106: 本文 AI 生成廃止) は、その**根拠を実 API で再検証**する。真因は「Worker の時間制限」ではなく「推論モデルが日本語長文で空を返す」+「モデル選択」だった。推論で根拠を断定せず実測する (Hook 4)。(2) **Cloudflare Worker のコスト軸を正しく理解する**: 課金・制限は CPU 時間であり、LLM/外部 API の応答待ち (I/O) は算入されない。「処理に時間がかかる = コスト増/制限超過」は誤り。重い JSON parse/集計のような実 CPU だけが 30s 制限に当たる (LL-037)。(3) 自動生成物 (本文) を足すときは**サイズ予算 (LL-112)** を最初に設計する。index に戻すと CI 再 red なので、index と分離した別ファイル + capped storage にする。(4) 大規模機能は CI 安全な単位で**フェーズ分割** (Phase A=基盤・無害、Phase B=生成) し、PR ごとにレビュー・ロールバック可能にする (agentic §1.2/1.3)。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

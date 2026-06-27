@@ -1,0 +1,58 @@
+#:schema https://cloudflare.com/workers/wrangler-schema.json
+# tech-dashboard-body — Queue consumer Worker (body-file architecture Phase B, LL-115).
+#
+# Receives one entry per invocation from the BODY_QUEUE producer
+# (tech-dashboard-harness). For each message it generates the Japanese and
+# English long-form article body as TWO separate plain-text Copilot calls
+# (claude-opus-4.8, reasoning_effort=max) and writes the result to the
+# SUMMARY_CACHE KV namespace under a `b:` per-URL key. The collector then merges
+# `b:` keys into data/bodies.json on publish.
+#
+# Split out from the harness + summarizer Workers (mirrors LL-037/LL-108):
+# body generation is the heaviest LLM work (two long opus calls per entry).
+# Its own consumer keeps the stable summarizer untouched and isolates body
+# throughput tuning. Body generation is I/O-bound (LLM response wait is NOT
+# billed as CPU time), so the 30s CPU cap is not a constraint (LL-115).
+
+name = "tech-dashboard-body"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Same SUMMARY_CACHE namespace as the harness + summarizer Workers. Bodies use
+# a `b:` key prefix so they never collide with `s:` summaries (LL-115). Reusing
+# the namespace avoids provisioning a second KV; the prefix scopes the spaces.
+[[kv_namespaces]]
+binding = "SUMMARY_CACHE"
+id = "6d67debb991742efadfec473a121f5fc"
+
+[vars]
+# opus-4.8 generates full bilingual bodies without the reasoning-loop-empties
+# failure that sonnet hits on Japanese long-form (LL-106/LL-115). reasoning=max
+# is affordable: token cost is inside the Copilot subscription and the LLM wait
+# is I/O, not CPU (LL-115).
+BODY_MODEL = "claude-opus-4.8"
+BODY_REASONING_EFFORT = "max"
+# Each single-language call needs ~20-30s wall (I/O). 120s leaves margin for
+# reasoning=max without killing legitimate responses.
+BODY_TIMEOUT_MS = "120000"
+BODY_MAX_TOKENS = "4000"
+
+# Secrets (set via `wrangler secret put --name tech-dashboard-body`):
+#   - COPILOT_PAT    device-flow Copilot token (ghu_, long-lived; LL-109)
+
+# Queue consumer. Process one entry per invocation so each entry's two opus
+# calls get their own budget. max_concurrency=2 keeps Copilot pressure moderate
+# (two long opus calls already make each invocation slow); raise cautiously.
+# retry_delay backs off timed-out Copilot calls instead of hammering upstream.
+[[queues.consumers]]
+queue = "tech-dashboard-body"
+max_batch_size = 1
+max_batch_timeout = 5
+max_retries = 2
+retry_delay = 120
+max_concurrency = 2
+dead_letter_queue = "tech-dashboard-body-dlq"
+
+[observability]
+enabled = true

@@ -1358,11 +1358,19 @@ async function runHarness(
     ogCached: Object.keys(ogBlob).length,
     ogNewHits: ogFound,
   };
+  // Body-file architecture (LL-113): the long-form body is NOT stored in
+  // data/index.json. It lives in data/bodies.json (migrated out; Phase B will
+  // generate new ones via a dedicated cloud worker). Strip body fields from the
+  // published index regardless of what the cache merge produced, so the index
+  // stays well under the CI size budget (LL-112) and a stale `s:` cache hit
+  // carrying a legacy body can never re-bloat it (LL-073). `finalEntries` keeps
+  // its shape for archive/stats (archive compacts body away anyway).
+  const indexEntries = finalEntries.map((e) => ({ ...e, bodyJa: "", bodyEn: "" }));
   const payload = {
     generatedAt: new Date().toISOString(),
-    count: finalEntries.length,
+    count: indexEntries.length,
     health,
-    entries: finalEntries,
+    entries: indexEntries,
   };
   const json = JSON.stringify(payload, null, 2) + "\n";
   console.log(
@@ -1390,7 +1398,7 @@ async function runHarness(
       stats: { finalEntries: finalEntries.length, summarized, errors, abortedCollapse: 1 },
     };
   }
-  const hasEntryChanges = !entriesEqual(existingPayload, finalEntries);
+  const hasEntryChanges = !entriesEqual(existingPayload, indexEntries);
   // Compare ignoring `generatedAt` timestamp so unchanged runs don't churn commits.
   // Queue enqueue already happened in the pre-publish path above, because
   // cache state (some entries are still fallbacks) is independent of whether

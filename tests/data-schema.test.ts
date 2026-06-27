@@ -255,41 +255,60 @@ describe("data/index.json 各エントリ", () => {
     expect(bad).toEqual([]);
   });
 
-  it("live index に決定論的 filler body が残っていない (summary-first / LL-112)", () => {
-    // Summary-first design: the long-form body is no longer generated. The
-    // Worker must not re-introduce the legacy filler body (it bloated index.json
-    // past the size budget and forced a false "本文は近日中に AI が生成" promise on
-    // the detail page). This gate detects a stale Worker re-adding filler
-    // (LL-027 family: CI must catch the automated publisher regression).
-    const JA_FILLER = "元記事の要約と収集時のメタデータから";
-    const EN_FILLER = "completed from the existing summary and collection metadata";
+  it("live index は本文を持たない (body-file architecture / LL-113)", () => {
+    // Body-file architecture: the long-form body lives in data/bodies.json, NOT
+    // in index.json. The index must stay body-free so it remains well under the
+    // CI size budget (LL-112). This also catches a stale Worker re-adding a
+    // legacy `s:`-cache body into the index (LL-027 / LL-073 family).
     const bad = data.entries
-      .filter(
-        (e) =>
-          String(e.bodyJa ?? "").includes(JA_FILLER) ||
-          String(e.bodyEn ?? "").includes(EN_FILLER),
-      )
+      .filter((e) => String(e.bodyJa ?? "").trim() || String(e.bodyEn ?? "").trim())
       .map((e) => `${String(e.source)}:${String(e.title)}`);
     expect(bad).toEqual([]);
   });
 });
 
-describe("data/index.json カバレッジ統計 (情報のみ)", () => {
-  it("bodyJa / bodyEn のカバレッジを記録する", () => {
-    const total = data.entries.length;
-    const withJa = data.entries.filter(
-      (e) => typeof e.bodyJa === "string" && (e.bodyJa as string).trim().length > 0,
-    ).length;
-    const withEn = data.entries.filter(
-      (e) => typeof e.bodyEn === "string" && (e.bodyEn as string).trim().length > 0,
-    ).length;
-    // Summary-first (LL-112): body is OPTIONAL. New entries have no body — the
-    // AI summary is the primary content. Body coverage can legitimately trend to
-    // zero as older real-body entries age out, so this is informational only.
-    // The real quality gate is the bilingual SUMMARY presence test above.
-    expect(total).toBeGreaterThan(0);
-    expect(withJa).toBeGreaterThanOrEqual(0);
-    expect(withEn).toBeGreaterThanOrEqual(0);
+describe("data/bodies.json (body-file architecture / LL-113)", () => {
+  const bodiesPath = join(process.cwd(), "data", "bodies.json");
+  const bodies = existsSync(bodiesPath)
+    ? (JSON.parse(readFileSync(bodiesPath, "utf8")) as {
+        generatedAt?: string;
+        count?: number;
+        bodies?: Record<string, { bodyJa?: unknown; bodyEn?: unknown }>;
+      })
+    : null;
+
+  it("data/bodies.json が存在し、スキーマが妥当である", () => {
+    expect(bodies).not.toBeNull();
+    expect(bodies && typeof bodies.bodies === "object").toBe(true);
+  });
+
+  it("各 body レコードの bodyJa / bodyEn は文字列である", () => {
+    const records = Object.entries(bodies?.bodies ?? {});
+    const bad = records
+      .filter(
+        ([, r]) =>
+          (r.bodyJa !== undefined && typeof r.bodyJa !== "string") ||
+          (r.bodyEn !== undefined && typeof r.bodyEn !== "string"),
+      )
+      .map(([id]) => id);
+    expect(bad).toEqual([]);
+  });
+
+  it("bodies.json に決定論的 filler body が残っていない", () => {
+    const JA_FILLER = "元記事の要約と収集時のメタデータから";
+    const EN_FILLER = "completed from the existing summary and collection metadata";
+    const bad = Object.entries(bodies?.bodies ?? {})
+      .filter(
+        ([, r]) =>
+          String(r.bodyJa ?? "").includes(JA_FILLER) || String(r.bodyEn ?? "").includes(EN_FILLER),
+      )
+      .map(([id]) => id);
+    expect(bad).toEqual([]);
+  });
+
+  it("bodies.json は運用上限を超えない (10MB)", () => {
+    if (!existsSync(bodiesPath)) return;
+    expect(statSync(bodiesPath).size).toBeLessThanOrEqual(10_000_000);
   });
 });
 

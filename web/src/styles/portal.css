@@ -1489,7 +1489,11 @@ html.motion-ready [data-reveal].is-visible {
 }
 
 .home-layout {
-  max-width: 1180px;
+  /* Inherit .layout's 1440px canvas instead of hardcoding a narrower cap.
+     A per-page max-width (1180px) made the Dashboard look narrower than the
+     article page even though both share the same sidebar + main grid, causing
+     visible width drift between pages. Inheriting keeps a single source of
+     truth for the canvas width (LL-114). */
   grid-template-columns: 232px minmax(0, 1fr);
 }
 

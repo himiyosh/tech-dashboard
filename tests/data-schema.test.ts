@@ -88,10 +88,6 @@ const archiveIndexPath = join(process.cwd(), "data", "archive", "_index.json");
 const archiveIndex = existsSync(archiveIndexPath)
   ? (JSON.parse(readFileSync(archiveIndexPath, "utf8")) as { generatedAt?: string })
   : null;
-const summaryCachePath = join(process.cwd(), "data", "_summary-cache.json");
-const summaryCache = existsSync(summaryCachePath)
-  ? (JSON.parse(readFileSync(summaryCachePath, "utf8")) as Record<string, { bodyJa?: string; bodyEn?: string }>)
-  : {};
 const archiveDir = join(process.cwd(), "data", "archive");
 const archiveEntries = existsSync(archiveDir)
   ? readdirSync(archiveDir)
@@ -259,22 +255,21 @@ describe("data/index.json 各エントリ", () => {
     expect(bad).toEqual([]);
   });
 
-  it("記事詳細用の body が両言語で存在する", () => {
+  it("live index に決定論的 filler body が残っていない (summary-first / LL-112)", () => {
+    // Summary-first design: the long-form body is no longer generated. The
+    // Worker must not re-introduce the legacy filler body (it bloated index.json
+    // past the size budget and forced a false "本文は近日中に AI が生成" promise on
+    // the detail page). This gate detects a stale Worker re-adding filler
+    // (LL-027 family: CI must catch the automated publisher regression).
+    const JA_FILLER = "元記事の要約と収集時のメタデータから";
+    const EN_FILLER = "completed from the existing summary and collection metadata";
     const bad = data.entries
-      .filter((e) => !String(e.bodyJa ?? "").trim() || !String(e.bodyEn ?? "").trim())
+      .filter(
+        (e) =>
+          String(e.bodyJa ?? "").includes(JA_FILLER) ||
+          String(e.bodyEn ?? "").includes(EN_FILLER),
+      )
       .map((e) => `${String(e.source)}:${String(e.title)}`);
-    expect(bad).toEqual([]);
-  });
-
-  it("cache に本文があるエントリは data/index.json にも本文が反映されている", () => {
-    const bad = data.entries
-      .filter((entry) => {
-        const cacheHit = summaryCache[String(entry.url)];
-        const cacheHasBody = Boolean(String(cacheHit?.bodyJa ?? "").trim() || String(cacheHit?.bodyEn ?? "").trim());
-        const entryHasBody = Boolean(String(entry.bodyJa ?? "").trim() || String(entry.bodyEn ?? "").trim());
-        return cacheHasBody && !entryHasBody;
-      })
-      .map((entry) => `${String(entry.source)}:${String(entry.title)}`);
     expect(bad).toEqual([]);
   });
 });
@@ -288,12 +283,13 @@ describe("data/index.json カバレッジ統計 (情報のみ)", () => {
     const withEn = data.entries.filter(
       (e) => typeof e.bodyEn === "string" && (e.bodyEn as string).trim().length > 0,
     ).length;
-    // ログ目的。閾値のアサートはせず、極端なリグレッション検知だけしておく。
-    // worker が新着記事を追加すると body 未生成のエントリが大量に増える
-    // (INDEX_LIMIT 2000 、全件を順次 LLM 要約して追い付いていく) ため、閾値は低くとる。
-    // 「1件以上は body がある」だけアサートしてそれ以外はログとして記録する。
-    expect(withJa).toBeGreaterThan(0);
-    expect(withEn).toBeGreaterThan(0);
+    // Summary-first (LL-112): body is OPTIONAL. New entries have no body — the
+    // AI summary is the primary content. Body coverage can legitimately trend to
+    // zero as older real-body entries age out, so this is informational only.
+    // The real quality gate is the bilingual SUMMARY presence test above.
+    expect(total).toBeGreaterThan(0);
+    expect(withJa).toBeGreaterThanOrEqual(0);
+    expect(withEn).toBeGreaterThanOrEqual(0);
   });
 });
 

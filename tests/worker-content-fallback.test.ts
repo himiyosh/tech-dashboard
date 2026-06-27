@@ -25,7 +25,9 @@ describe("applyDeterministicContentFallback", () => {
     const result = applyDeterministicContentFallback(baseEntry);
 
     expect(result.summaryFallbacks).toBe(2);
-    expect(result.bodyFallbacks).toBe(2);
+    // Summary-first (LL-112): the long-form body is no longer generated. Only
+    // the bilingual summary is filled deterministically; body stays empty.
+    expect(result.bodyFallbacks).toBe(0);
     expect(result.entry.summaryEn).toBe("Managed Agents");
     // JA summary must be Japanese (deterministic template) so the JA UI never
     // shows an EN fallback badge for worker-published entries (LL-028). The
@@ -33,10 +35,10 @@ describe("applyDeterministicContentFallback", () => {
     // title at the start made cards look English (LL-041).
     expect(result.entry.summaryJa).toContain("Managed Agents");
     expect(result.entry.summaryJa).toMatch(/^[\u3040-\u30ff\u3400-\u9fff]/);
-    expect(result.entry.bodyJa).toMatch(/^[\u3040-\u30ff\u3400-\u9fff]/);
-    expect(result.entry.bodyJa).toContain("anthropic-engineering");
-    expect(result.entry.bodyJa).toContain("Managed Agents");
-    expect(result.entry.bodyEn).toContain("completed from the existing summary and collection metadata");
+    // No filler body is produced (LL-112): body must stay empty, NOT the legacy
+    // "...完了..." / "completed from the existing summary..." filler.
+    expect(result.entry.bodyJa ?? "").toBe("");
+    expect(result.entry.bodyEn ?? "").toBe("");
   });
 
   it("既存の summary/body は上書きしない", () => {
@@ -53,6 +55,7 @@ describe("applyDeterministicContentFallback", () => {
     expect(result.bodyFallbacks).toBe(0);
     expect(result.entry.summaryJa).toBe("既存の日本語要約");
     expect(result.entry.summaryEn).toBe("Existing summary");
+    // Pre-existing real AI bodies are preserved (still rendered on detail page).
     expect(result.entry.bodyJa).toBe("既存本文");
     expect(result.entry.bodyEn).toBe("Existing body");
   });

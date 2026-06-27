@@ -16,7 +16,7 @@ import {
   summaryForLang,
   summaryForLangWithFallback,
   titleForLang,
-  isDeterministicFallbackEntry,
+  hasRealBodyContent,
   trendingTags,
   type NormalizedEntry,
 } from "../../lib/data.ts";
@@ -44,9 +44,11 @@ const summaryEn = summaryForLangWithFallback(entry, "en");
 // echoes, so an English-source entry with a real EN summary is NOT treated as
 // pending just because its JA summary has not been generated yet (LL-074).
 const summaryAbsent = !summaryJa && !summaryEn.text;
-// Body is treated as pending whenever the entry is any deterministic fallback,
-// so boilerplate / un-generated bodies are never rendered as prose.
-const bodyIsFallback = isDeterministicFallbackEntry(entry);
+// Body is rendered only when a real, model-generated long-form body exists.
+// Summary-first (LL-112): new entries have no body — the AI summary above is the
+// primary content and we link to the original instead of promising a body that
+// will never be generated.
+const hasRealBody = hasRealBodyContent(entry);
 
 const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
 const catColor = catMeta?.color ?? "#8a847e";
@@ -109,10 +111,10 @@ const bodyChars = (entry.bodyJa ?? "").length;
 const readMinutes = bodyChars > 0 ? Math.max(1, Math.round(bodyChars / 500)) : 0;
 
 // Split body and build TOC headings (use first ~24 chars of each paragraph as label).
-const paragraphsJa: string[] = !bodyIsFallback && entry.bodyJa
+const paragraphsJa: string[] = hasRealBody && entry.bodyJa
   ? entry.bodyJa.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
   : [];
-const paragraphsEn: string[] = !bodyIsFallback && entry.bodyEn
+const paragraphsEn: string[] = hasRealBody && entry.bodyEn
   ? entry.bodyEn.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
   : [];
 
@@ -348,7 +350,7 @@ const jsonLd = {
         )}
 
         {/* BODY */}
-        {!bodyIsFallback && (renderedJa.length > 0 || renderedEn.length > 0) ? (
+        {hasRealBody && (renderedJa.length > 0 || renderedEn.length > 0) ? (
           <section class="ed-body">
             {renderedJa.length > 0 && (
               <div class="ed-body-prose i18n-ja" lang="ja">
@@ -403,18 +405,29 @@ const jsonLd = {
               </div>
             )}
             {renderedJa.length === 0 && renderedEn.length > 0 && (
-              <p class="ed-body-pending i18n-ja">※ 日本語版の本文は近日中に AI が生成します。現在は英語版をご覧ください。</p>
+              <p class="ed-body-note i18n-ja">※ 日本語の要点は上記サマリをご参照ください。全文は元記事をご覧ください。</p>
             )}
             {renderedEn.length === 0 && renderedJa.length > 0 && (
-              <p class="ed-body-pending i18n-en" lang="en">※ The English body is being generated. Japanese version is currently shown.</p>
+              <p class="ed-body-note i18n-en" lang="en">※ See the summary above; the full article is at the original source.</p>
             )}
           </section>
         ) : (
-          <section class="ed-body">
-            <p class="ed-body-pending">
-              ※ この記事の本文は近日中に AI が生成して差し替わります。現時点では上記サマリをご参照ください。
+          <aside class="ed-summary-only">
+            <div class="ed-summary-only-head">
+              <span class="ai-badge">AI</span>
+              <span class="i18n-ja">AI 要約ダイジェスト</span>
+              <span class="i18n-en" lang="en">AI summary digest</span>
+            </div>
+            <p class="ed-summary-only-note">
+              <span class="i18n-ja">この記事は上記の AI 要約で要点を把握できます。技術的な詳細・コード・図表は元記事に掲載されています。</span>
+              <span class="i18n-en" lang="en">The AI summary above captures the key points. Full detail, code, and figures live in the original article.</span>
             </p>
-          </section>
+            <a class="ed-summary-only-link" href={entry.url} target="_blank" rel="noopener nofollow">
+              <span class="i18n-ja">元記事で全文を読む</span>
+              <span class="i18n-en" lang="en">Read the full article</span>
+              <span aria-hidden="true">↗</span>
+            </a>
+          </aside>
         )}
 
         {/* TAGS */}
@@ -992,11 +1005,34 @@ const jsonLd = {
     color: var(--muted-2);
     letter-spacing: 0.04em;
   }
-  .ed-body-pending {
+  .ed-body-note {
     padding: 14px 16px; border: 1px dashed var(--border);
     border-radius: 10px; background: var(--bg-2);
     color: var(--muted); font-size: 13px;
   }
+
+  /* Summary-first (LL-112): entries with no long-form body show an honest AI
+     digest note + read-original link, not a false "body coming soon" promise. */
+  .ed-summary-only {
+    margin: 4px 32px 4px; padding: 18px 20px;
+    border: 1px solid var(--border); border-radius: 12px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--cat-color) 7%, var(--bg-2)), var(--bg-2));
+    display: flex; flex-direction: column; gap: 10px; align-items: flex-start;
+  }
+  .ed-summary-only-head {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 800; color: var(--text);
+  }
+  .ed-summary-only-note {
+    margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.7;
+  }
+  .ed-summary-only-link {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 14px; border-radius: 8px;
+    background: var(--cat-color); color: #0c0c0a;
+    text-decoration: none; font-size: 12.5px; font-weight: 800;
+  }
+  .ed-summary-only-link:hover { filter: brightness(1.06); }
 
   /* TAGS */
   .ed-tag-bar {
@@ -1330,6 +1366,7 @@ const jsonLd = {
     .ed-head { padding: 18px 0 14px; }
     .ed-tldr { padding: 14px 16px; }
     .ed-body { padding: 22px 0 4px; }
+    .ed-summary-only { margin-left: 0; margin-right: 0; }
     .ed-title { font-size: 22px; }
     .ed-tldr-list li { font-size: 14px; line-height: 1.8; }
     .ed-body-prose p { font-size: 14.5px; line-height: 1.95; margin-bottom: 18px; }

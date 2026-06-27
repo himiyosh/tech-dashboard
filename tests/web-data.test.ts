@@ -89,6 +89,8 @@ const {
   isListableEntry,
   isSummaryNoise,
   isPublishableEntry,
+  isDeterministicFallbackEntry,
+  hasRealBodyContent,
   ALL_ENTRIES,
 } = await import("../web/src/lib/data.ts");
 
@@ -237,6 +239,55 @@ describe("isListableEntry", () => {
       summaryEn: "",
     };
     expect(isListableEntry(synthetic)).toBe(false);
+  });
+});
+
+// ============================================================
+// Summary-first (LL-112): body is decoupled from publishable status
+// ============================================================
+describe("summary-first: filler body は publishable を阻害しない (LL-112)", () => {
+  const EN_FILLER =
+    "This long-form note is completed from the existing summary and collection metadata so the entry remains useful.";
+  const JA_FILLER =
+    "このエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。";
+
+  it("実要約 + filler body のエントリは fallback 扱いされず publishable", () => {
+    const fillerBody = { ...e1, bodyJa: JA_FILLER, bodyEn: EN_FILLER };
+    // Real bilingual summary present → must be publishable regardless of body.
+    expect(isDeterministicFallbackEntry(fillerBody)).toBe(false);
+    expect(isPublishableEntry(fillerBody)).toBe(true);
+  });
+
+  it("実要約 + 空 body のエントリも publishable", () => {
+    const emptyBody = { ...e1, bodyJa: "", bodyEn: "" };
+    expect(isDeterministicFallbackEntry(emptyBody)).toBe(false);
+    expect(isPublishableEntry(emptyBody)).toBe(true);
+  });
+
+  it("pending 要約のエントリは body に関わらず fallback のまま", () => {
+    const pendingSummary = { ...e1, summaryJa: PENDING_JA, summaryEn: "", bodyJa: "", bodyEn: "" };
+    expect(isDeterministicFallbackEntry(pendingSummary)).toBe(true);
+    expect(isPublishableEntry(pendingSummary)).toBe(false);
+  });
+});
+
+describe("hasRealBodyContent (LL-112)", () => {
+  const EN_FILLER =
+    "X is a tech-news update collected from src. This long-form note is completed from the existing summary and collection metadata so the entry remains useful.";
+  const JA_FILLER =
+    "このエントリでは、元記事の要約と収集時のメタデータから、読者が押さえるべき文脈を補っています。";
+
+  it("実 body があれば true", () => {
+    expect(hasRealBodyContent({ ...e1, bodyJa: "詳細な解説本文です。", bodyEn: "A real detailed body." })).toBe(true);
+  });
+  it("空 body は false", () => {
+    expect(hasRealBodyContent({ ...e1, bodyJa: "", bodyEn: "" })).toBe(false);
+  });
+  it("EN filler body は false", () => {
+    expect(hasRealBodyContent({ ...e1, bodyJa: "", bodyEn: EN_FILLER })).toBe(false);
+  });
+  it("JA filler body は false", () => {
+    expect(hasRealBodyContent({ ...e1, bodyJa: JA_FILLER, bodyEn: "" })).toBe(false);
   });
 });
 

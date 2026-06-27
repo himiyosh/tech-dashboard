@@ -97,6 +97,7 @@ const data = indexJson as IndexPayload;
 const FALLBACK_SUMMARY_JA_PREFIX = "\u3053\u306e\u30a8\u30f3\u30c8\u30ea\u306f ";
 const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
 const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collection metadata";
+const FALLBACK_BODY_JA_NEEDLE = "元記事の要約と収集時のメタデータから";
 const FALLBACK_SUMMARY_JA_NEEDLES = [
   "AI \u8981\u7d04\u672a\u751f\u6210",
   "\u5f8c\u7d9a\u306e Worker run",
@@ -124,15 +125,39 @@ export function isSyntheticFallbackTitle(e: NormalizedEntry, text: string | unde
   return value.includes(`(${e.source})`) && /\u95a2\u9023\u30a2\u30c3\u30d7\u30c7\u30fc\u30c8|related update/i.test(value);
 }
 
-/** Returns true if this entry still has a deterministic (non-AI) summary/body. */
+/**
+ * Returns true if this entry still lacks a real AI **summary** (pending
+ * boilerplate or synthetic title). Summary-first design (LL-112): the long-form
+ * body is no longer generated (LL-106), so a deterministic / empty body must NOT
+ * flip a real-summary entry to "fallback". Doing so previously dropped ~43% of
+ * entries (every recent one, since new bodies are filler) out of Featured /
+ * Top-3 / feeds even though their AI summary was perfectly good. Body presence
+ * is judged separately by `hasRealBodyContent` for detail-page rendering only.
+ */
 export function isDeterministicFallbackEntry(e: NormalizedEntry): boolean {
   return (
     isPendingSummaryText(e.summaryJa) ||
     isPendingSummaryText(e.summaryEn) ||
     isSyntheticFallbackTitle(e, e.titleJa) ||
-    isSyntheticFallbackTitle(e, e.titleEn) ||
-    (e.bodyEn ?? "").includes(FALLBACK_BODY_EN_NEEDLE)
+    isSyntheticFallbackTitle(e, e.titleEn)
   );
+}
+
+/**
+ * True when the entry has a real, model-generated long-form body to render on
+ * the detail page (as opposed to empty or the legacy deterministic filler).
+ * New entries have no body (summary-first / LL-112); a minority of older entries
+ * still carry a real AI body and keep rendering it. The detail page uses this to
+ * decide between "render body prose" and "show summary + read-original CTA",
+ * instead of the old false "本文は近日中に AI が生成" promise that never resolves.
+ */
+export function hasRealBodyContent(e: NormalizedEntry): boolean {
+  const ja = (e.bodyJa ?? "").trim();
+  const en = (e.bodyEn ?? "").trim();
+  if (!ja && !en) return false;
+  if (en.includes(FALLBACK_BODY_EN_NEEDLE)) return false;
+  if (ja.includes(FALLBACK_BODY_JA_NEEDLE)) return false;
+  return true;
 }
 
 function hasGeneratedSummary(e: NormalizedEntry): boolean {

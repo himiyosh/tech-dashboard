@@ -70,7 +70,11 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
     // distinct from the listed Timeline set (ALL_ENTRIES, which also includes
     // pending-summary entries) so allTimeEntries >= liveEntries stays true.
     liveEntries: PUBLISHABLE_ENTRIES.length,
-    allTimeEntries: ARCHIVE_TOTAL_ENTRIES || ALL_ENTRIES.length,
+    // All-time must be >= the live index size (LL-110 invariant). Summary-first
+    // (LL-112) made nearly every entry publishable, so the live index can now
+    // exceed the archive-derived total (the archive undercounts un-aged recent
+    // entries). Clamp to max so the invariant holds.
+    allTimeEntries: Math.max(ARCHIVE_TOTAL_ENTRIES, ALL_ENTRIES.length),
     todayEntries: liveToday,
     majorEntries: PUBLISHABLE_ENTRIES.filter((entry) => entry.importance === 3).length,
     activeSourceCount,

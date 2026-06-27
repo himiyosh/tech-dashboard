@@ -112,7 +112,10 @@ const hasImage = imgSrc.length > 0;
     display: grid;
     grid-template-columns: 116px minmax(0, 1fr);
     width: 100%;
-    min-height: 116px;
+    /* Fixed height so every card is identical regardless of content (LL-096).
+       min-height let cards vary when an entry lacked tags or had a 1-line title
+       (exposed once summary-first made more evergreen entries publishable). */
+    height: 152px;
     border: 1px solid var(--border, rgba(148, 163, 184, 0.16));
     border-radius: 12px;
     overflow: hidden;
@@ -195,6 +198,9 @@ const hasImage = imgSrc.length > 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    /* Reserve exactly 2 lines so 1-line and 2-line titles take equal space
+       (keeps card height uniform under fixed-height layout, LL-096). */
+    min-height: 2.52rem;
   }
   .kg-sum {
     margin: 0;
@@ -205,6 +211,7 @@ const hasImage = imgSrc.length > 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    min-height: 2.34rem;
   }
   .kg-tags {
     display: flex;
@@ -234,7 +241,7 @@ const hasImage = imgSrc.length > 0;
   @media (max-width: 460px) {
     .kg-card-link {
       grid-template-columns: 92px minmax(0, 1fr);
-      min-height: 100px;
+      height: 148px;
     }
   }
 </style>

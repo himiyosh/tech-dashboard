@@ -141,6 +141,20 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("article.entry-detail")).toBeVisible();
     await expect(page.locator("h1.ed-title")).toBeVisible();
     await expect(page.locator('a.ed-cta[target="_blank"]')).toBeVisible();
+
+    // Summary-first (LL-112): the false "本文は近日中に AI が生成して差し替わります"
+    // promise must be gone (body generation was removed; the promise never
+    // resolved). The body region must instead show real prose OR the honest
+    // AI-summary digest with a read-original link.
+    await expect(page.locator("body")).not.toContainText("近日中に AI が生成");
+    const hasProse = await page.locator(".ed-body-prose").count();
+    const hasDigest = await page.locator(".ed-summary-only").count();
+    expect(hasProse + hasDigest).toBeGreaterThan(0);
+    if (hasDigest > 0) {
+      await expect(
+        page.locator('.ed-summary-only-link[target="_blank"]').first(),
+      ).toBeVisible();
+    }
   });
 
   test("sidebar category labels stay single-line and marquee on hover", async ({ page }) => {

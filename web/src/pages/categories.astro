@@ -3,7 +3,7 @@ import Portal from "../layouts/Portal.astro";
 import PageHero from "../components/PageHero.astro";
 import Sidebar from "../components/Sidebar.astro";
 import {
-  ALL_ENTRIES,
+  MAIN_TIMELINE_ENTRIES,
   CATEGORY_META,
   countByCategory,
   entriesFor,
@@ -114,7 +114,10 @@ const categoryPanels = CATEGORY_META.map((cat) => {
   };
 });
 
-const totalLiveEntries = ALL_ENTRIES.length;
+// Categories hero total must equal the categories this page lists (the news
+// Timeline = sidebar total), not the all-lanes count. Using ALL_ENTRIES here
+// made the hero (1740) contradict the per-category sums (1660). LL data-trust.
+const totalLiveEntries = MAIN_TIMELINE_ENTRIES.length;
 const topCategory = [...categoryPanels].sort((a, b) => b.liveCount - a.liveCount)[0] ?? null;
 const activeCategories = categoryPanels.filter((panel) => panel.last30 > 0).length;
 const researchPanel = categoryPanels.find((panel) => panel.slug === "research");

@@ -7,6 +7,7 @@ import {
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
+import { sourceLabel } from "../lib/source-meta.ts";
 import type { DayBucket, StatsPayload } from "../lib/stats.ts";
 
 export interface Props {
@@ -272,7 +273,7 @@ const todayDelta =
                   </span>
                   {summaryJa && <span class="b-summary i18n-ja">{summaryJa}</span>}
                   {summaryEn && <span class="b-summary i18n-en" lang="en">{summaryEn}</span>}
-                  <span class="b-src">[{e.source}]</span>
+                  <span class="b-src">[{sourceLabel(e.source)}]</span>
                 </a>
               </li>
             );
@@ -380,7 +381,6 @@ const todayDelta =
     background: linear-gradient(180deg, var(--accent), var(--accent-2));
     border-radius: 3px 3px 0 0;
     min-height: 2px;
-    transition: height 0.2s;
   }
   .spark .bar:last-child .fill {
     background: var(--accent);

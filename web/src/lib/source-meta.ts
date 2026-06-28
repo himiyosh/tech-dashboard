@@ -57,3 +57,21 @@ export const SOURCE_META = [
   { id: "user-opml", displayName: "User OPML (custom feeds)", category: "research", tier: 3 },
   { id: "youtube-anthropic", displayName: "YouTube - Anthropic", category: "claude", tier: 3 },
 ] as const;
+
+const SOURCE_META_BY_ID = new Map(SOURCE_META.map((s) => [s.id, s] as const));
+
+/**
+ * Human-readable feed name for a source id, used wherever a source is shown to
+ * readers. Strips the internal " tag"/" feed" suffix and never leaks a raw
+ * slug: an unregistered id is title-cased (e.g. "qiita-mcp" -> "Qiita Mcp").
+ * Single source of truth so cards, ticker, daily summary and the rail agree.
+ */
+export function sourceLabel(id: string): string {
+  const name = SOURCE_META_BY_ID.get(id)?.displayName;
+  if (name) return name.replace(/\s+(?:tag|feed)$/i, "");
+  return id
+    .split(/[-_]+/)
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .join(" ");
+}

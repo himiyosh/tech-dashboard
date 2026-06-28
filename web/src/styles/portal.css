@@ -2930,23 +2930,58 @@ main {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
-  padding: 7px 0;
+  padding: 7px 4px 7px 6px;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.15s ease;
 }
 
 .home-source-row:last-child {
   border-bottom: 0;
 }
 
-.home-source-row span {
+a.home-source-row:hover,
+a.home-source-row:focus-visible {
+  outline: 0;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.home-source-main {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.home-source-name {
+  overflow: hidden;
   color: var(--text-2);
   font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-source-cat {
+  color: var(--muted-2);
+  font-size: 10px;
+}
+
+a.home-source-row:hover .home-source-cat,
+a.home-source-row:focus-visible .home-source-cat {
+  color: var(--accent);
 }
 
 .home-source-row strong {
   color: var(--muted);
   font-family: ui-monospace, "SF Mono", monospace;
   font-size: 11px;
+}
+
+.rail-action {
+  display: flex;
+  margin-top: 10px;
 }
 
 .research-split-callout {

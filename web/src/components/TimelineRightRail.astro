@@ -1,0 +1,151 @@
+---
+import {
+  trendingTags,
+  relativeTime,
+  CATEGORY_META,
+  type NormalizedEntry,
+} from "../lib/data.ts";
+import { SOURCE_META } from "../lib/source-meta.ts";
+
+interface Props {
+  /** Entries used to compute the rankings/freshness for this surface. */
+  entries: readonly NormalizedEntry[];
+  now?: Date;
+  /** How many trending tags to show. */
+  tagCount?: number;
+  /** Accessible label for the landmark (varies per surface). */
+  label?: string;
+}
+
+const {
+  entries,
+  now = new Date(),
+  tagCount = 10,
+  label = "Timeline insights",
+} = Astro.props as Props;
+
+// Platform / feed-origin tags describe *where* an item came from, not *what*
+// it is about. Drop them so the rail surfaces real topics (mcp, agent, cursor)
+// instead of qiita/zenn (persona R-05).
+const PLATFORM_TAGS: ReadonlySet<string> = new Set([
+  "qiita",
+  "zenn",
+  "github",
+  "hacker-news",
+  "hackernews",
+  "reddit",
+  "youtube",
+  "note",
+  "medium",
+  "dev-to",
+  "devto",
+  "x",
+  "twitter",
+  "rss",
+  "blog",
+]);
+
+const sourceMetaById = new Map(SOURCE_META.map((s) => [s.id, s]));
+const categoryMetaBySlug = new Map(CATEGORY_META.map((c) => [c.slug, c]));
+
+/** Tidy a feed display name for rail use (e.g. "Qiita MCP tag" -> "Qiita MCP"). */
+const cleanSourceLabel = (id: string): string => {
+  const name = sourceMetaById.get(id)?.displayName ?? id;
+  return name.replace(/\s+(?:tag|feed)$/i, "");
+};
+
+// Most active sources within the recent window of this surface, linked to the
+// source's category so each row is a real destination (persona R-04).
+const recent = entries.slice(0, 200);
+const sourceCounts = new Map<string, number>();
+for (const e of recent) {
+  sourceCounts.set(e.source, (sourceCounts.get(e.source) ?? 0) + 1);
+}
+const topSources = [...sourceCounts.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 5)
+  .map(([id, count]) => {
+    const cat = sourceMetaById.get(id)?.category;
+    const catMeta = cat ? categoryMetaBySlug.get(cat) : undefined;
+    return {
+      id,
+      label: cleanSourceLabel(id),
+      count,
+      catSlug: cat,
+      catLabel: catMeta?.shortLabel ?? catMeta?.name,
+    };
+  });
+
+const tags = trendingTags(tagCount, { exclude: PLATFORM_TAGS });
+
+// Freshness for THIS surface, derived from the same entries that drive the
+// adjacent timeline/DailySummary. This avoids the global-vs-timeline "today"
+// contradiction that arose from DASHBOARD_METRICS (persona R-01).
+const nowMs = now.getTime();
+const newestMs = entries.reduce((max, e) => {
+  const t = Date.parse(e.publishedAt);
+  return Number.isNaN(t) ? max : Math.max(max, t);
+}, 0);
+const updatedLabel =
+  newestMs > 0 ? relativeTime(new Date(newestMs).toISOString(), now) : "不明";
+const last7d = entries.filter((e) => {
+  const t = Date.parse(e.publishedAt);
+  return !Number.isNaN(t) && nowMs - t <= 7 * 86_400_000;
+}).length;
+---
+
+<aside class="right home-right" aria-label={label}>
+  {tags.length > 0 && (
+    <div class="side-card">
+      <div class="right-title">Trending topics</div>
+      <div class="tag-cloud">
+        {tags.map((t) => (
+          <a class="tag" href={`/t/${encodeURIComponent(t.tag)}`}>
+            #{t.tag} <span class="c">{t.count}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {topSources.length > 0 && (
+    <div class="side-card">
+      <div class="right-title">Most active sources</div>
+      <div class="home-source-list">
+        {topSources.map((s) =>
+          s.catSlug ? (
+            <a class="home-source-row" href={`/c/${s.catSlug}`}>
+              <span class="home-source-main">
+                <span class="home-source-name">{s.label}</span>
+                {s.catLabel && <span class="home-source-cat">{s.catLabel}</span>}
+              </span>
+              <strong>{s.count}</strong>
+            </a>
+          ) : (
+            <div class="home-source-row is-static">
+              <span class="home-source-main">
+                <span class="home-source-name">{s.label}</span>
+              </span>
+              <strong>{s.count}</strong>
+            </div>
+          ),
+        )}
+      </div>
+      <a class="side-action rail-action" href="/status">ソースの稼働状況 →</a>
+    </div>
+  )}
+
+  <div class="side-card">
+    <div class="right-title">Freshness</div>
+    <div class="home-side-metrics">
+      <div class="home-side-metric">
+        <span>最新記事</span>
+        <strong>{updatedLabel}</strong>
+      </div>
+      <div class="home-side-metric">
+        <span>過去7日</span>
+        <strong>{last7d}</strong>
+      </div>
+    </div>
+  </div>
+</aside>

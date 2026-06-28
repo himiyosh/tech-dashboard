@@ -6,6 +6,7 @@ import CategoryThumb from "../components/CategoryThumb.astro";
 import DailySummary from "../components/DailySummary.astro";
 import LiveMetrics from "../components/LiveMetrics.astro";
 import TickerBar from "../components/TickerBar.astro";
+import TimelineRightRail from "../components/TimelineRightRail.astro";
 import Pager from "../components/Pager.astro";
 import ArxivIcon from "../components/icons/ArxivIcon.astro";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
@@ -203,17 +204,15 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
 
   <TickerBar entries={primaryEntries} now={now} />
 
-  <div class="layout home-layout">
+  <div class="layout">
     <Sidebar active="all" />
 
     <main>
         <section class="priority-section" id="today-priority" aria-labelledby="priority-heading">
         <div class="section-header primary section-header-stacked">
-          <p class="section-kicker">Start here</p>
           <h2 id="priority-heading">
             <span class="i18n-ja">今日見るべきもの</span>
             <span class="i18n-en" lang="en">Today's decision list</span>
-            <span class="count">featured · summary · top items</span>
           </h2>
           <p class="section-note i18n-ja">
             短時間で読む優先度を決める領域です。重要度、更新鮮度、source type を優先して表示します。
@@ -396,6 +395,7 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
       </section>
     </main>
 
+    <TimelineRightRail entries={primaryEntries} now={now} label="Timeline insights" />
   </div>
   <LiveMetrics />
 </Portal>

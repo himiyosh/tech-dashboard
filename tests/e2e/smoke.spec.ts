@@ -24,12 +24,62 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".banner-quick-links").getByRole("link", { name: /カテゴリ/ })).toBeVisible();
     await expect(page.locator(".banner-quick-links").getByRole("link", { name: /arXiv/ })).toBeVisible();
     await expect(page.locator("section.stats")).toHaveCount(0);
-    await expect(page.locator(".home-layout > aside.right")).toHaveCount(0);
+    // Timeline right rail: the home page is now a 3-column .layout with a right
+    // insight rail so article cards don't sprawl full-width (間延び fix, LL-118).
+    // The rail is visible at the desktop test viewport with its three cards.
+    const homeRail = page.locator(".layout aside.right.home-right");
+    await expect(homeRail).toBeVisible();
+    await expect(homeRail.locator(".home-side-metrics")).toBeVisible();
+    await expect(homeRail.locator(".home-source-list")).toBeVisible();
+    await expect(homeRail.locator(".tag-cloud")).toBeVisible();
+    // The old 2-column home-layout class must be gone (single canvas width source).
+    await expect(page.locator(".home-layout")).toHaveCount(0);
     await expect(page.locator('script[src*="googlesyndication"]')).toHaveCount(0);
     await expect(page.locator("article.featured")).not.toContainText(/AI \u8981\u7d04\u672a\u751f\u6210|Summary pending|\u5f8c\u7d9a\u306e Worker run/);
     await expect(page.locator(".top-rank")).not.toContainText(/AI \u8981\u7d04\u672a\u751f\u6210|Summary pending|\u5f8c\u7d9a\u306e Worker run/);
     await expect(page.locator("#priority-heading")).toBeVisible();
     await expect(page.locator("#timeline-heading")).toBeVisible();
+  });
+
+  // Timeline right rail: constrains the main column on desktop, hides on mobile,
+  // never causes horizontal scroll, and must NOT leak onto lane pages (R-023).
+  test("timeline right rail constrains layout and stays responsive", async ({ page }) => {
+    // Desktop: rail visible and taking real width, main column constrained, 3 grid tracks.
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    const rail = page.locator(".layout aside.right.home-right");
+    await expect(rail).toBeVisible();
+    const desktop = await page.evaluate(() => {
+      const layout = document.querySelector(".layout");
+      const right = document.querySelector(".layout aside.right");
+      const main = document.querySelector(".layout main");
+      const cols = layout ? getComputedStyle(layout).gridTemplateColumns.split(" ").filter(Boolean).length : 0;
+      return {
+        cols,
+        railW: right ? Math.round(right.getBoundingClientRect().width) : 0,
+        mainW: main ? Math.round(main.getBoundingClientRect().width) : 0,
+        noScroll: document.documentElement.scrollWidth <= window.innerWidth,
+      };
+    });
+    expect(desktop.cols).toBe(3);
+    expect(desktop.railW).toBeGreaterThanOrEqual(200);
+    // 2-col home would give main ~990px; the rail must constrain it well below that.
+    expect(desktop.mainW).toBeLessThan(850);
+    expect(desktop.noScroll).toBe(true);
+
+    // Mobile: rail hidden, no horizontal scroll.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await expect(rail).toBeHidden();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
+    // Lane page (R-023): no Timeline right rail, left lane-rail present instead.
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/arxiv");
+    await expect(page.locator(".layout aside.right")).toHaveCount(0);
+    await expect(page.locator(".layout aside.lane-rail")).toBeVisible();
   });
 
   // Regression guard for the pending-summary display fix (LL-074/LL-087):

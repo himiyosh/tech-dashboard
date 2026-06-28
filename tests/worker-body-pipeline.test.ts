@@ -85,6 +85,16 @@ describe("selectBodyJobBatch (LL-115)", () => {
     expect(new Set(ids).size).toBe(ids.length);
     expect(batch.drainEstimateHours).toBeGreaterThan(0);
   });
+
+  it("同じ入力・同じ nowMs では決定的に同じ選択を返す (merge/enqueue 対称性 / LL-116)", () => {
+    // The collector body pipeline uses ONE selectBodyJobBatch call for BOTH the
+    // `b:` KV merge-lookup and the enqueue. If selection were nondeterministic,
+    // the merge would look up different URLs than were enqueued and generated,
+    // leaving bodies stranded in KV (the LL-116 bug). Guard determinism.
+    const a = selectBodyJobBatch(entries, new Set(["hasbody"]), 3, { nowMs: 123456 });
+    const b = selectBodyJobBatch(entries, new Set(["hasbody"]), 3, { nowMs: 123456 });
+    expect(a.jobs.map((j) => j.url)).toEqual(b.jobs.map((j) => j.url));
+  });
 });
 
 describe("isRealBody / parseBodies / bodiesPresentSet (LL-115)", () => {

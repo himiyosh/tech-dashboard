@@ -1793,46 +1793,39 @@ async function runBodyPipeline(
     const present = bodiesPresentSet(existingBodies);
     const liveIds = new Set(liveEntries.map((e) => e.id));
 
-    // Entries that still need a body (real summary, no body yet).
-    const needing = liveEntries.filter(
-      (e) => !present.has(e.id) && !needsGeneratedContent(e),
-    );
+    // SHARED selection for BOTH merge-lookup and enqueue (LL-116 / LL-102
+    // symmetry). The merge MUST look up `b:` keys for the SAME entries the
+    // enqueue targets — otherwise generated bodies pile up in KV unmerged
+    // because the two windows never coincide (observed: 40 bodies generated, 0
+    // merged). selectBodyJobBatch gives recent-priority + round-robin over the
+    // entries still needing a body, so the newest enqueued entries are also the
+    // ones checked for a ready body each run.
+    const lookupCap = Math.max(1, Number(env.BODY_LOOKUP_CAP ?? 25));
+    const enqueueCap = Math.max(1, Number(env.BODY_ENQUEUE_MAX_NEW ?? 20));
+    const selection = selectBodyJobBatch(liveEntries, present, Math.max(lookupCap, enqueueCap));
 
-    // 1) Merge: read a capped slice of `b:` KV for needing entries and fold any
-    //    freshly generated bodies into bodies.json. Round-robin over the needing
-    //    list so the merge window cycles the whole backlog (LL-102 symmetry).
-    const lookupCap = Math.max(0, Number(env.BODY_LOOKUP_CAP ?? 25));
-    const lookupSlice =
-      needing.length <= lookupCap
-        ? needing
-        : (() => {
-            const start = roundRobinStart(Date.now(), needing.length, lookupCap);
-            const out: NormalizedEntry[] = [];
-            for (let i = 0; i < lookupCap; i++) out.push(needing[(start + i) % needing.length]!);
-            return out;
-          })();
-    const hits = lookupSlice.length
-      ? await getBodyCacheEntries(env.SUMMARY_CACHE, lookupSlice.map((e) => e.url))
+    // 1) Merge: read `b:` KV for the selected entries and fold any freshly
+    //    generated bodies into bodies.json (prune happens in mergeBodies).
+    const hits = selection.jobs.length
+      ? await getBodyCacheEntries(env.SUMMARY_CACHE, selection.jobs.map((j) => j.url))
       : new Map();
-    const byUrlId = new Map(lookupSlice.map((e) => [e.url, e.id]));
     const newBodies: NewBody[] = [];
-    for (const [url, hit] of hits) {
-      const id = byUrlId.get(url);
-      if (!id) continue;
-      newBodies.push({ id, bodyJa: hit.bodyJa, bodyEn: hit.bodyEn, model: hit.model, cachedAt: hit.cachedAt });
+    for (const job of selection.jobs) {
+      const hit = hits.get(job.url);
+      if (hit) {
+        newBodies.push({ id: job.entry.id, bodyJa: hit.bodyJa, bodyEn: hit.bodyEn, model: hit.model, cachedAt: hit.cachedAt });
+      }
     }
-
     const merge = mergeBodies(existingBodies, newBodies, liveIds, generatedAt);
 
-    // 2) Enqueue body jobs for entries still missing a body after the merge.
-    const presentAfter = bodiesPresentSet(merge.payload);
-    const cap = Math.max(1, Number(env.BODY_ENQUEUE_MAX_NEW ?? 20));
-    const batch = selectBodyJobBatch(liveEntries, presentAfter, cap);
+    // 2) Enqueue the selected entries that do NOT yet have a generated body (KV
+    //    miss), so worker-body generates them for a future run's merge.
+    const toEnqueue = selection.jobs.filter((j) => !hits.has(j.url)).slice(0, enqueueCap);
     let enqueued = 0;
-    if (batch.jobs.length > 0) {
+    if (toEnqueue.length > 0) {
       const CHUNK = 100;
-      for (let i = 0; i < batch.jobs.length; i += CHUNK) {
-        const slice = batch.jobs.slice(i, i + CHUNK);
+      for (let i = 0; i < toEnqueue.length; i += CHUNK) {
+        const slice = toEnqueue.slice(i, i + CHUNK);
         try {
           await env.BODY_QUEUE.sendBatch(slice.map((body) => ({ body })));
           enqueued += slice.length;
@@ -1842,9 +1835,9 @@ async function runBodyPipeline(
         }
       }
     }
-    if (batch.eligibleCount > 0 || merge.changed) {
+    if (selection.eligibleCount > 0 || merge.changed) {
       console.log(
-        `[worker] body pipeline: backlog=${batch.eligibleCount}, merged=${merge.added}, pruned=${merge.pruned}, enqueue=${enqueued}, drainHours=${batch.drainEstimateHours}`,
+        `[worker] body pipeline: backlog=${selection.eligibleCount}, lookup=${selection.jobs.length}, merged=${merge.added}, pruned=${merge.pruned}, enqueue=${enqueued}, drainHours=${selection.drainEstimateHours}`,
       );
     }
 
@@ -1853,10 +1846,10 @@ async function runBodyPipeline(
       enqueued,
       health: {
         bodyQueueMode: "enabled",
-        bodyEnqueueCandidates: batch.jobs.length,
-        bodyBacklog: batch.eligibleCount,
-        bodyDrainEstimateHours: batch.drainEstimateHours,
-        bodyLookupCount: lookupSlice.length,
+        bodyEnqueueCandidates: toEnqueue.length,
+        bodyBacklog: selection.eligibleCount,
+        bodyDrainEstimateHours: selection.drainEstimateHours,
+        bodyLookupCount: selection.jobs.length,
         bodyMerged: merge.added,
         bodyPruned: merge.pruned,
         bodiesTotal: merge.payload.count,

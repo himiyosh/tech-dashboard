@@ -27,6 +27,7 @@ import {
   titleForLangWithFallback,
   isDeterministicFallbackEntry,
   isLowSignalRelease,
+  isOffTopicForHero,
 } from "../lib/data.ts";
 
 const currentPage = 1;
@@ -44,7 +45,13 @@ const ago = relativeTime(DASHBOARD_METRICS.generatedAt, now);
 // Top 3 = importance x recency, but only entries with real summaries.
 // Limit repeated source/category so the decision list is useful at a glance.
 const rankedPool = primaryEntries
-  .filter((e) => e.importance >= 2 && !isDeterministicFallbackEntry(e) && !isLowSignalRelease(e))
+  .filter(
+    (e) =>
+      e.importance >= 2 &&
+      !isDeterministicFallbackEntry(e) &&
+      !isLowSignalRelease(e) &&
+      !isOffTopicForHero(e),
+  )
   .slice(0, 120);
 const scoredTopCandidates = rankedPool
   .map((e) => {

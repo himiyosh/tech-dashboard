@@ -86,6 +86,7 @@ const {
   entriesByTag,
   adjacentInCategory,
   isLowSignalRelease,
+  isOffTopicForHero,
   isListableEntry,
   isSummaryNoise,
   isPublishableEntry,
@@ -528,5 +529,39 @@ describe("isLowSignalRelease", () => {
   it("一般的なアナウンス系タイトルは false", () => {
     expect(isLowSignalRelease(rel("Introducing Gemma 4 12B", "changelog"))).toBe(false);
     expect(isLowSignalRelease(rel("GitHub Copilot now generally available", "changelog"))).toBe(false);
+  });
+});
+
+// ============================================================
+// isOffTopicForHero (Featured hero + Today's Top 3 のみ除外する consumer gaming ノイズ)
+// ============================================================
+describe("isOffTopicForHero", () => {
+  const t = (title: string) =>
+    ({ title, titleEn: title, titleJa: title }) as Parameters<typeof isOffTopicForHero>[0];
+
+  it("named console / gaming タイトルを検出する", () => {
+    expect(isOffTopicForHero(t("GTA VI is a worrying sign for the future of physical games"))).toBe(true);
+    expect(isOffTopicForHero(t("PlayStation State of Play June 2026: All the news and trailers"))).toBe(true);
+    expect(isOffTopicForHero(t("The Steam Machine is the start of an even more expensive future"))).toBe(true);
+    expect(isOffTopicForHero(t("Epic wants to let you bring your Fortnite skins to other games"))).toBe(true);
+    expect(isOffTopicForHero(t("Bungie hit with significant layoffs after ending Destiny 2"))).toBe(true);
+  });
+
+  it("gaming-hardware 複合語 / cloud gaming を検出する", () => {
+    expect(isOffTopicForHero(t("The QD-OLED gaming monitor that started it all got a big upgrade"))).toBe(true);
+    expect(isOffTopicForHero(t("Cloud Gaming: '007 First Light' Launches on GeForce NOW"))).toBe(true);
+  });
+
+  it("bare 'game' / 'gaming' は誤検出しない", () => {
+    expect(isOffTopicForHero(t("Our AI Wearables Are Changing the Game for Disabled People"))).toBe(false);
+    expect(isOffTopicForHero(t("GUI Agents for Continual Game Generation"))).toBe(false);
+    expect(isOffTopicForHero(t("From games to biology and beyond: 10 years of AlphaGo"))).toBe(false);
+  });
+
+  it("AI/dev の通常記事は false (誤除外しない)", () => {
+    expect(isOffTopicForHero(t("We're Partnering With EssilorLuxottica to Launch Meta Glasses"))).toBe(false);
+    expect(isOffTopicForHero(t("Nvidia says its AI data center design runs hotter to use less water"))).toBe(false);
+    expect(isOffTopicForHero(t("Midjourney goes from generating cat images to full-body ultrasound"))).toBe(false);
+    expect(isOffTopicForHero(t("Introducing Claude Opus 4.8"))).toBe(false);
   });
 });

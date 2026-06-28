@@ -241,6 +241,32 @@ export function isLowSignalRelease(
   );
 }
 
+/**
+ * Consumer gaming / entertainment-hardware noise that broad tech-news feeds
+ * (the-verge, nvidia GeForce NOW, etc.) emit. These are legitimately "tech
+ * news" so they stay in the Timeline, but they must never occupy the single
+ * most prominent decision slots (Featured hero + Today's Top 3) on an AI/dev
+ * dashboard, even when the collector stamped importance 3 (e.g. "GTA VI is a
+ * worrying sign for the future of physical games").
+ *
+ * Title-scoped only (LL-081: url/summary substring matches cause false
+ * positives) and intentionally tight: it targets named consoles/titles and
+ * gaming-hardware compounds, never the bare words "game"/"gaming" (which would
+ * wrongly catch "Changing the Game", "Game Generation" research, etc.). This
+ * is hero/Top-3 editorial curation in the web layer, robust to imperfect
+ * stored importance without a collector redeploy (LL-090 style).
+ */
+const OFF_TOPIC_HERO_RE =
+  /\b(?:gta|grand theft auto|playstation|ps5|ps6|xbox|nintendo|switch\s*2|fortnite|call of duty|bungie|destiny\s*2|steam\s*(?:machine|deck)|cloud gaming|geforce now|gaming\s*(?:monitor|laptop|handheld|pc|rig|chair|mouse|keyboard|headset)|qd-?oled|handheld console|game console)\b/i;
+
+export function isOffTopicForHero(
+  entry: Pick<NormalizedEntry, "title" | "titleEn" | "titleJa">,
+): boolean {
+  return [entry.title, entry.titleEn, entry.titleJa].some(
+    (t) => !!t && OFF_TOPIC_HERO_RE.test(t),
+  );
+}
+
 export const ARXIV_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter(isArxivEntry);
 export const MAIN_TIMELINE_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter((entry) => !isArxivEntry(entry));
 
@@ -395,7 +421,7 @@ export function latest(n: number): NormalizedEntry[] {
 export function featured(): NormalizedEntry | undefined {
   const isRoutineRelease = (e: NormalizedEntry) =>
     e.sourceType === "release" || e.sourceType === "changelog";
-  const eligible = (e: NormalizedEntry) => !isLowSignalRelease(e);
+  const eligible = (e: NormalizedEntry) => !isLowSignalRelease(e) && !isOffTopicForHero(e);
   return (
     // 1. High-importance real announcement/blog with a real summary.
     MAIN_TIMELINE_ENTRIES.find(
@@ -419,13 +445,18 @@ export function featured(): NormalizedEntry | undefined {
 }
 
 /** Top tags from the most recent 200 entries. */
-export function trendingTags(n = 10): Array<{ tag: string; count: number }> {
+export function trendingTags(
+  n = 10,
+  opts: { exclude?: ReadonlySet<string> } = {},
+): Array<{ tag: string; count: number }> {
   const recent = ALL_ENTRIES.slice(0, 200);
   const counts = new Map<string, number>();
   for (const e of recent) {
     for (const t of e.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
   }
+  const exclude = opts.exclude;
   return [...counts.entries()]
+    .filter(([tag]) => !exclude?.has(tag.toLowerCase()))
     .sort((a, b) => b[1] - a[1])
     .slice(0, n)
     .map(([tag, count]) => ({ tag, count }));

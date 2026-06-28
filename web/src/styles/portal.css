@@ -871,17 +871,11 @@ html:not([data-lang="en"]) .i18n-en {
   letter-spacing: -0.02em;
   line-height: 1.2;
   margin-bottom: 10px;
-  background: linear-gradient(180deg, #ffffff 0%, #a8a29e 120%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--text);
 }
 
 .banner h1 .brand-accent {
-  background: linear-gradient(90deg, var(--accent) 0%, #fbbf24 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--accent);
 }
 
 .banner .tagline {
@@ -1071,9 +1065,10 @@ html:not([data-lang="en"]) .i18n-en {
 
 .orbit-core strong {
   color: var(--text);
-  font-size: 36px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
 }
 
 .signal-node {
@@ -1177,11 +1172,11 @@ html.motion-ready [data-reveal].is-visible {
   }
 
   .orbit-ring-a {
-    animation: ring-wobble 9s ease-in-out infinite alternate;
+    animation: ring-drift 9s ease-in-out infinite alternate;
   }
 
   .orbit-ring-b {
-    animation: ring-wobble 11s ease-in-out -2s infinite alternate-reverse;
+    animation: ring-drift 11s ease-in-out -2s infinite alternate-reverse;
   }
 
   .scan-beam {
@@ -1224,7 +1219,7 @@ html.motion-ready [data-reveal].is-visible {
   to { transform: rotate(1turn); }
 }
 
-@keyframes ring-wobble {
+@keyframes ring-drift {
   from { rotate: -2deg; scale: 0.98; }
   to { rotate: 3deg; scale: 1.02; }
 }
@@ -1486,15 +1481,6 @@ html.motion-ready [data-reveal].is-visible {
   grid-template-columns: 232px 1fr 280px;
   gap: 24px;
   padding: 16px 28px 48px;
-}
-
-.home-layout {
-  /* Inherit .layout's 1440px canvas instead of hardcoding a narrower cap.
-     A per-page max-width (1180px) made the Dashboard look narrower than the
-     article page even though both share the same sidebar + main grid, causing
-     visible width drift between pages. Inheriting keeps a single source of
-     truth for the canvas width (LL-114). */
-  grid-template-columns: 232px minmax(0, 1fr);
 }
 
 /* Lane pages (arXiv, Knowledge) are separate from the news timeline, so they

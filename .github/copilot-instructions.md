@@ -54,11 +54,12 @@
 - `scripts/git-hooks/pre-push` は `SKIP_WEB_BUILD=1` が明示された場合を除き、push 前に `npm run build:web` を実行する。
 - `npm run test:all` は `typecheck → unit → web build → e2e` の一括ゲートとする。
 
-### R-007: 記事要約 / 補完 backfill のモデルは Claude 系 (Sonnet 4.6 / Opus 4.7) または GPT-5.5 に限定する
-- 通常要約も補完/backfill も `SUMMARIZE_MODEL` は `claude-sonnet-4.6` / `claude-opus-4.7` / `gpt-5.5` のみ使用する。既定は **`claude-sonnet-4.6`** (Cloudflare Worker の 30 秒 wall-time に opus の長文生成が収まらず常時 timeout する事象を 2026-05 に確認、LL-031)。
+### R-007: 記事要約 / 補完 backfill のモデルは Claude 系 (Sonnet 4.6 / Opus 4.7 / Opus 4.8) または GPT-5.5 に限定する
+- 通常要約も補完/backfill も `SUMMARIZE_MODEL` は `claude-sonnet-4.6` / `claude-opus-4.7` / `claude-opus-4.8` / `gpt-5.5` のみ使用する。既定は **`claude-sonnet-4.6`** (Cloudflare Worker の 30 秒 wall-time に opus の長文生成が収まらず常時 timeout する事象を 2026-05 に確認、LL-031)。
 - `gpt-4o` 等の旧モデルは記事要約 / 補完 backfill の代替モデルとして使用しない。
 - `gpt-5.5` は Copilot の `/responses` 専用なので、現行 Worker (`/chat/completions`) からは利用できない (LL-010)。Worker を `/responses` 仕様に拡張するまで `claude-*` 系のみ実利用可能。
-- 長文生成が詰まる場合は、max_tokens / timeout / concurrency を調整し、それでも必要なら `claude-opus-4.7` (品質優先) と `claude-sonnet-4.6` (速度優先) を切り替える。本番モデル変更は小 batch (`SUMMARIZE_MAX_NEW=1`) で smoke test してから適用する (LL-010)。
+- 長文生成が詰まる場合は、max_tokens / timeout / concurrency を調整し、それでも必要なら `claude-opus-4.8` / `claude-opus-4.7` (品質優先) と `claude-sonnet-4.6` (速度優先) を切り替える。本番モデル変更は小 batch (`SUMMARIZE_MAX_NEW=1` または backfill の `--limit 1`) で smoke test してから適用する (LL-010)。
+- **ローカル backfill (要約のみ・短プロンプト) は `claude-opus-4.8` を使ってよい**。Worker の 30 秒 wall-time 制約 (LL-031) は CPU 時間ではなく長文 body 生成のトークン枯渇が主因 (LL-106/115) で、ローカルかつ要約のみ (`buildSummaryPrompt`) なら opus でも budget 内で完了する。Worker 既定を opus に変えるわけではない (本番収集は引き続き sonnet)。
 
 ### R-008: Worker deploy は pre-push でも明示 opt-in にする
 - `scripts/git-hooks/pre-push` は unit / web build / e2e の品質ゲートを必ず実行する。
@@ -902,6 +903,28 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **LL-087 との関係 (なぜ今回は安全か)**: LL-087 は「automated publisher が継続更新する artifact のローカル一括 drain は巻き戻し危険」と警告した。今回が安全なのは **body-file architecture (LL-115) で bodies.json が index.json と分離され、collector も script も `mergeBodies` (additive・非 live のみ prune) で書く**から。commit 直前に `git checkout origin/main -- data/bodies.json` で**最新 main の bodies.json に cache を再 apply** すれば、生成中に cloud が足した本文も保持される (clobber しない)。summary の LL-087 は index.json 全体が巻き戻る構造だったが、body は additive merge なので局所的・冪等。
 - **教訓**: クラウド非同期 enrichment の backlog が「正しく動いているが遅すぎてユーザーが不満」のとき、(a) クラウドの cap を上げる (KV/subrequest 予算内) か、(b) **同一 contract のローカル一括 backfill** で加速する、の 2 択。(b) は worker のロジックを**コピーせず import 再利用**して出力の drift を防ぎ、**additive merge + 最新 artifact への再 apply** で automated publisher との race を無害化する。分離された capped storage (bodies.json) は index と違いローカル backfill と相性が良い。「遅い」と「壊れている」は別問題 — まず実測で coverage 分布 (最新/中間/古い) を見てから加速手段を選ぶ。
 
+### LL-118: 要約が「途切れて要約になっていない」真因は AI 未通過の生 snippet 機械切り (snippet-masquerade ゲート回避) — モデル問題ではなかった
+- **事象**: ユーザーから「AI 要約が毎回途切れている。要約とはいえないレベルのまとめなのでモデルを変えるなり真剣に取り組んでほしい」と強い指摘。live 1740 件中 **909 件**が文の途中でブツ切れの「要約」だった。当初「モデルの長文生成失敗 (LL-106 系)」を疑ったが誤り。
+- **根本原因**: 旧 `placeholderSummary()` (normalize.ts) が RSS の生 snippet を **summaryJa=120字 / summaryEn=200字で機械的に切り詰めて**保存し、JA ソースでは `summaryEn = raw.title` (日本語タイトル) を入れていた。これらは**非空・fallback マーカー無し**なので worker の `needsGeneratedContent()` が「要約完成済み」と誤判定 → AI 要約キューに一度も乗らず → 永久に途切れ snippet のまま固定。つまり 909 件は**一度も AI に渡っていない**生 RSS 抜粋で、モデルの生成失敗ではなく**完了判定のゲート回避 (masquerade)** が真因。LL-107 (要約のみ生成への切替) で生成・判定は揃えたが、`placeholderSummary` の「snippet を完成要約として出す」旧挙動が残っていた。
+- **対策**: (1) `placeholderSummary` を `snippetContext()` に置換 — 表示用 `summaryJa`/`summaryEn` は**空**にし、生 snippet は新フィールド `contentSnippet` (AI 入力 context 専用・非表示) に温存。空要約は `needsGeneratedContent` が確実に拾う。(2) `summaryEn=title` バグ除去。(3) backfill: 既存 909 件を opus-4.8 (要約のみ・max_tokens 1600・concurrency 8) で再生成 → 完成バイリンガル要約 (JA 平均 104字・終端句点、空 0 件、masquerade 0 件)。(4) prompt は worker `buildSummaryPrompt` が `contentSnippet` を入力に使うよう拡張。
+- **教訓**: 「途切れ要約」を見たらモデルを疑う前に**そもそも AI に渡っているか**を確認する。`length===120/200` ちょうど + 終端句読点なし + summaryEn===title は「機械切り snippet が要約のフリ」のシグネチャ。**非空 ≠ 完成** (agentic §4.7) — fallback/placeholder を非空にすると完了判定をすり抜けて永久に enrichment されない。完了判定 (`needsGeneratedContent`) を変えたら placeholder 生成側も「空 or 明示 pending」に揃える (LL-104/107 の生成/判定対称性と同型)。pipeline 修正は worker deploy まで本番の新規 entry に効かない (LL-073) ので、stale worker が再収集で masquerade を再投入しないようデプロイ必須。
+
+### LL-119: monorepo release feed の component タグは branding 漏れで "CLI" だけのタイトルになる
+- **事象**: ユーザーから「"CLI" という記事が多く、何の CLI か分からない」と指摘。cline-releases の "CLI v3.0.31" / "sdk/core/v0.0.53" 等が製品名なしで表示されていた。
+- **根本原因**: `decorateReleaseTitle()` が純バージョン (`VERSION_ONLY_RE`) のみ branding。monorepo feed は component-prefixed git tag (`CLI v3.0.31` `nightly-main-…`) を出すため対象外で製品名が付かなかった。
+- **対策**: `decorateReleaseTitle` を export 化し regex (VERSION_DATE_RE/HAS_VERSION_RE/WORD_VERSION_RE/NIGHTLY_TS_RE) + `brandName()`/`prettyComponentTag()` で component タグも branding ("Cline CLI v3.0.31")。既存 84 件を `npm run titles:backfill` で migration、7 regression test 追加。
+- **教訓**: release feed を追加したら版だけでなく component-prefix/nightly tag の命名も確認する。「製品名 + 種別 + 版」を必ず title に残す。
+
+### LL-120: 縮んではいけないロゴ/ticker 見出しは中間幅 (721-960px) で潰れる — 固定 + 中間 breakpoint で防ぐ
+- **事象**: ユーザーから「幅を狭めるとサイトロゴが縮む、ticker (主要な更新) の記事タイトルが潰れて何の記事か分からない」と指摘。
+- **根本原因**: `.logo` に `flex-shrink:0`/`white-space:nowrap` がなく中間幅で圧縮/折返し。ticker の 2 行フル幅レイアウトが ≤720px のみで、721-960px の「中間 squeeze zone」で見出しが潰れていた。
+- **対策**: `.logo`/`.logo-mark` を `flex-shrink:0`、`.logo` に nowrap。TickerBar に `@media (max-width:960px)` 2 行 grid を追加し squeeze zone を被覆。R-021 検証で logo 全幅 168x25px 固定、見出し 768px=523/900px=655px と可読、横スクロール 0。
+- **教訓**: ロゴ等「縮めてはいけない要素」は flex-shrink:0 + nowrap を初手で。レスポンシブは 1 幅でなく **breakpoint 前後 (720/768/900/960)** を実測し中間 squeeze zone を塞ぐ (LL-091 と同型)。
+
+### LL-121: ローカル要約 backfill は device-flow で ghu_ を発行する (gho_ は交換不可)
+- **事象**: 909 件の opus-4.8 要約 backfill にローカル Copilot 認証が必要だったが `gh auth token` の `gho_` は交換不可 (LL-109 の穴)。
+- **対策**: `scripts/copilot-device-login.mjs` (npm run auth:device) で editor Copilot client_id `Iv1.b507a08c87ecfe98` (public) に device flow → `ghu_` を `.env.local` (mode 600・gitignore) に保存。token は非表示、`/copilot_internal/v2/token` で検証。backfill は `tsx --env-file-if-exists=.env.local` で読込。opus-4.8 は `/chat/completions` で実利用可・要約品質良好 (888+20 ok / 0 fail)。要約のみ短契約なので推論枯渇 (LL-106) なし。
+- **教訓**: ローカル一括生成の認証は `ghu_` 必須。device flow が ghu_ 取得手段。secret は .env.local 600 + gitignore、画面非表示。一時的 502 は resume cache で再実行 retry。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

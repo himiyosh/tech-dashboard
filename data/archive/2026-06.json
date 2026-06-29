@@ -1,8 +1,142 @@
 {
-  "generatedAt": "2026-06-29T11:00:52.161Z",
+  "generatedAt": "2026-06-29T13:01:25.726Z",
   "month": "2026-06",
-  "count": 1848,
+  "count": 1879,
   "entries": [
+    {
+      "id": "9a4234b48516493d",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/arairuca/items/d74aaff3b22488b8e996",
+      "title": "ラグランジュ補間法の理論と実装：母関数を用いたPython実装と正弦波との精度比較",
+      "titleJa": "ラグランジュ補間法の理論と実装：母関数を用いたPython実装と正弦波との精度比較",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T11:54:00.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "qiita"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 数値解析において，有限個の離散データ点から連続関数を推定する多項式補間は，実験データの可視化・数値積分・微分方程式の数値解法など幅広い場面で用いられる基礎技術である． 本稿では，多項式補間の代表的手法であるラグランジュ補間法について，ラグランジュ基底多項式の定義...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYxNjg2MDE5JTJGZjE2YjNmZDkxNTM1YzVkNTg3MDI4MmU1NDU0YjU5NDE3MTljN2NkMyUyRnhfbGFyZ2UucG5nJTNGMTc0MTg2MjMyMT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YzY0MWFlYmUwZWU2YzlmMzFiNjQxYTBkMDdjMTkzMDA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D11a7ef7cf13d96af3df15d588de2e347?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgzJUE5JUUzJTgyJUIwJUUzJTgzJUE5JUUzJTgzJUIzJUUzJTgyJUI4JUUzJTgzJUE1JUU4JUEzJTlDJUU5JTk2JTkzJUU2JUIzJTk1JUUzJTgxJUFFJUU3JTkwJTg2JUU4JUFCJTk2JUUzJTgxJUE4JUU1JUFFJTlGJUU4JUEzJTg1JUVGJUJDJTlBJUU2JUFGJThEJUU5JTk2JUEyJUU2JTk1JUIwJUUzJTgyJTkyJUU3JTk0JUE4JUUzJTgxJTg0JUUzJTgxJTlGUHl0aG9uJUU1JUFFJTlGJUU4JUEzJTg1JUUzJTgxJUE4JUU2JUFEJUEzJUU1JUJDJUE2JUU2JUIzJUEyJUUzJTgxJUE4JUUzJTgxJUFFJUU3JUIyJUJFJUU1JUJBJUE2JUU2JUFGJTk0JUU4JUJDJTgzJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MTU4MTFmYTY5NTc5N2Q0NGQ1ZDUyMjU1NDNjN2MwMjE&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBhcmFpcnVjYSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTMzMWJkYjRhNzczNGM1YzJiN2E4YjA3OGFlYTYxODcz&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=d16fba7bd7209610355fcc63a6ca5863",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYxNjg2MDE5JTJGZjE2YjNmZDkxNTM1YzVkNTg3MDI4MmU1NDU0YjU5NDE3MTljN2NkMyUyRnhfbGFyZ2UucG5nJTNGMTc0MTg2MjMyMT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YzY0MWFlYmUwZWU2YzlmMzFiNjQxYTBkMDdjMTkzMDA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D11a7ef7cf13d96af3df15d588de2e347?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgzJUE5JUUzJTgyJUIwJUUzJTgzJUE5JUUzJTgzJUIzJUUzJTgyJUI4JUUzJTgzJUE1JUU4JUEzJTlDJUU5JTk2JTkzJUU2JUIzJTk1JUUzJTgxJUFFJUU3JTkwJTg2JUU4JUFCJTk2JUUzJTgxJUE4JUU1JUFFJTlGJUU4JUEzJTg1JUVGJUJDJTlBJUU2JUFGJThEJUU5JTk2JUEyJUU2JTk1JUIwJUUzJTgyJTkyJUU3JTk0JUE4JUUzJTgxJTg0JUUzJTgxJTlGUHl0aG9uJUU1JUFFJTlGJUU4JUEzJTg1JUUzJTgxJUE4JUU2JUFEJUEzJUU1JUJDJUE2JUU2JUIzJUEyJUUzJTgxJUE4JUUzJTgxJUFFJUU3JUIyJUJFJUU1JUJBJUE2JUU2JUFGJTk0JUU4JUJDJTgzJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MTU4MTFmYTY5NTc5N2Q0NGQ1ZDUyMjU1NDNjN2MwMjE&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBhcmFpcnVjYSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTMzMWJkYjRhNzczNGM1YzJiN2E4YjA3OGFlYTYxODcz&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=d16fba7bd7209610355fcc63a6ca5863",
+        "alt": "ラグランジュ補間法の理論と実装：母関数を用いたPython実装と正弦波との精度比較",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "d08c5665fc60445f",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/Y-Misaki/items/02033958755e7dbc7b5f",
+      "title": "ClaudeCode Skillをうまく作るための前準備",
+      "titleJa": "ClaudeCode Skillをうまく作るための前準備",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T11:31:36.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "qiita"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 調査のような時間のかかる作業に対し、Skillを作って効率化を図っています。Skillの作り方は以下のとおりです。 ベースはClaudeCodeに作成させる 「こういうことをしたいんだよね」という情報を渡してから実際の作業を行い、Skillを作成させる 想定と..."
+    },
+    {
+      "id": "eca5b6b62ea9a908",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/taka_yayoi/items/f352c14507a2d83ff45b",
+      "title": "DatabricksのOmnigentを動かす(2) Pollyのクロスレビューをスモークテストで最後まで通す",
+      "titleJa": "DatabricksのOmnigentを動かす(2) Pollyのクロスレビューをスモークテストで最後まで通す",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T11:06:49.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "qiita"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "前回、Databricksがオープンソース化したメタハーネス Omnigent の概要を紹介しました(前回の記事)。ハーネス/メタハーネスという考え方、合成・制御・協働という3つの価値、インストールとUIツアーまでを扱いましたが、目玉であるPollyのクロスレビューについて..."
+    },
+    {
+      "id": "9bbd0afebd5bfd9d",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/hisa_tech_2973/articles/a7d7d43db6011a",
+      "title": "ローカルAI Gateway - Anthropic Tool Use を試してみました",
+      "titleJa": "ローカルAI Gateway - Anthropic Tool Use を試してみました",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T11:06:15.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "前回の記事では、ローカルAI GatewayにProvider Adapterを実装しました。 https://zenn.dev/hisa_tech_2973/articles/cada005f5e26fe 今回は実装の話ではなく、 次の実装に向けた動作確認 の内容を紹介します。 次に実装したいこと これまでのローカルAI Gatewayでは、 機密情報の検出（APIキー・メールアドレスなどを検知） 監査ログ（全リクエストを記録） Policy Engine（検出結果をYAMLで制御） Provider Adapter（OpenAI・Anthropicへ"
+    },
+    {
+      "id": "385c10ba482f4f45",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/yujmatsu/articles/20260629_cca_foundations_02_basics",
+      "title": "【CCA-F学習ログ #2】基礎編：Anthropic Academy のレベル100で土台を固める",
+      "titleJa": "【CCA-F学習ログ #2】基礎編：Anthropic Academy のレベル100で土台を固める",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T11:00:08.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに この記事は、Claude Certified Architect – Foundations（CCA-F）合格を目指す学習ログの第2弾です。 #1（概要編）では、CCA-F がどういう試験か・どのコースを使って学ぶかの地図を整理しました。#2 の本記事では、試験ドメインに入る前の土台を固めます。具体的には、Anthropic Academy のレベル100コース（基礎）5つのうち「考え方の土台」と「手を動かす土台」に分けて整理し、Claude API の最小実装から順に動くコードを積み上げていきます。 この記事で扱う範囲のスコープ 基礎編はレベ"
+    },
+    {
+      "id": "bca18136f0ad9e31",
+      "source": "nvidia-blog",
+      "sourceType": "blog",
+      "url": "https://blogs.nvidia.com/blog/palantir-secure-ai-us-agencies-nemotron-open-models/",
+      "title": "Open Models, Closed Environments: Palantir Brings Secure AI to US Agencies With NVIDIA Nemotron",
+      "titleJa": "",
+      "titleEn": "Open Models, Closed Environments: Palantir Brings Secure AI to US Agencies With NVIDIA Nemotron",
+      "lang": "en",
+      "publishedAt": "2026-06-29T10:59:38.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "news",
+        "nvidia"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Showcasing the importance of open source innovation in American AI, Palantir’s new intelligent engine — introduced today — uses NVIDIA Nemotron open models to serve the needs of U.S. government agencies. Open source software has long been a pillar of U.S. technology leadership. I"
+    },
     {
       "id": "0f97d0ff2842a69e",
       "source": "qiita-mcp",
@@ -17,10 +151,15 @@
       "tags": [
         "mcp",
         "mcp-server",
-        "qiita"
+        "qiita",
+        "clickhouse",
+        "claude-code",
+        "agent",
+        "operations",
+        "database"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "今回の記事でやることは一言で言うとこれです。Claude Code に「直近で遅かったクエリTOP5は？」と日本語で聞くと、Claude が system.query_log を自分で掘ってレポートを返す。 分析用途と違って、運用診断は「調べるべきテーブルとカラムがだいたい...",
@@ -34,22 +173,69 @@
       }
     },
     {
+      "id": "0322328149cc412d",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/masato_emata/articles/46b2c2be412ca1",
+      "title": "【rtk】Claude Codeの履歴8,600コマンドから探るトークン削減率90%の実態",
+      "titleJa": "【rtk】Claude Codeの履歴8,600コマンドから探るトークン削減率90%の実態",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T09:59:22.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "「RTK」（Rust Token Killer）は、Claude Code のトークン消費量を抑えるプロキシツールです。 ツールの基本的な導入方法と仕組みについてはすでに公式ドキュメントやいくつかのブログ記事が存在するため、本記事では一歩進んで、どの操作でどれだけ削れたかという数値、そして圧縮が出力をどう歪めたかというリスクについて報告できればと思います。 データとしては、私がRTKを使用した約40日間・8,587コマンドの実行履歴データベース（history.db）を使用します。 留意点 環境: 検証環境は単一の devcontainer 環境・単一プ"
+    },
+    {
+      "id": "67f61fb46d3eb248",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/kai_kou/items/f9ec25db4d858809e227",
+      "title": "Claude Opus 4.8 入門 — コード審査4倍・新API機能の全貌",
+      "titleJa": "Claude Opus 4.8 入門 — コード審査4倍・新API機能の全貌",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T09:58:00.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "qiita"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに Anthropicは2026年5月28日、最新の汎用モデル Claude Opus 4.8 をリリースしました。Claude Opus 4.7 からの継続的な改善として、コードレビュー精度の大幅向上と複数の新API機能が追加されています。 この記事では以下につい..."
+    },
+    {
       "id": "6bca0b9e4a2749e7",
       "source": "qiita-mcp",
       "sourceType": "blog",
       "url": "https://qiita.com/engchina/items/abd5b62772c859314701",
       "title": "AG-UIってなに？ - AIエージェントとアプリ画面を、イベントでなかよくつなぐしくみだよ",
-      "titleJa": "AG-UIってなに？ - AIエージェントとアプリ画面を、イベントでなかよくつなぐしくみだよ",
+      "titleJa": "AG-UIってなに？ - AIエージェントとアプリ画面をイベントでつなぐプロトコル解説",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-29T09:19:17.000Z",
       "collectedAt": "2026-06-29T11:00:46.619Z",
       "tags": [
         "mcp",
-        "qiita"
+        "qiita",
+        "ag-ui",
+        "ai-agent",
+        "event-driven",
+        "protocol",
+        "frontend-integration"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "元記事："
@@ -60,7 +246,7 @@
       "sourceType": "blog",
       "url": "https://qiita.com/nnoti0810/items/96cb1640293b42d17c77",
       "title": "Stitch MCPとAgentSkills使用してみた",
-      "titleJa": "Stitch MCPとAgentSkills使用してみた",
+      "titleJa": "Stitch MCPとAgentSkillsを使ってみた",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-29T09:08:00.000Z",
@@ -68,10 +254,14 @@
       "tags": [
         "mcp",
         "mcp-server",
-        "qiita"
+        "qiita",
+        "agent-skills",
+        "stitch",
+        "ai-agent",
+        "tool-use"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "この記事について 実案件で検証した体験をベースに、AIに全体の構成をアシストしてまとめています！内容は100%リアルな現場の生の声です。 はじめに こんにちは！ 今回は、「画面のデザインシステムがない ＆ デザイナーさんがいない」というプロジェクトを、最新のAIツール群（..."
@@ -90,13 +280,39 @@
       "tags": [
         "mcp",
         "mcp-server",
-        "qiita"
+        "qiita",
+        "flutter",
+        "multimodal",
+        "image-to-code",
+        "ui-generation",
+        "claude"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに 「UIのラフなイメージはあるけど、コードに起こすのが面倒…」 そんなとき、手書きのメモ画像をローカルパスごとClaude Codeに渡すだけでFlutterのUIコードが生成できます。 というような記事はすでにたくさんあるかもしれないですが、自分の目で確かめてみ..."
+    },
+    {
+      "id": "532a05dbda43abce",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/jambo_dev/articles/f53a9986948829",
+      "title": "Crashlytics の急増クラッシュを GitHub Actions + Claude で自動 Issue 化する",
+      "titleJa": "Crashlytics の急増クラッシュを GitHub Actions + Claude で自動 Issue 化する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T07:39:02.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに モバイルアプリを運用していると、毎朝 Crashlytics を眺めて「急増しているクラッシュ」を探し、手で GitHub Issue を立てる……という作業が地味に発生します。見落とすし、起票は雑になるし、見る人によってバラつく。いわゆる トイル（価値を生まない繰り返しの手作業） です。 そこで「急増クラッシュを毎朝自動で見つけて、原因の見当をつけた Issue を勝手に立てる」仕組みを作りました。この記事は、コードの写経よりも 仕組みの考え方 を中心に紹介します！ 全体像 毎朝、ざっくりこう動きます。 ポイントはひとつだけ。「起票するかどう"
     },
     {
       "id": "56d13058224bc666",
@@ -104,20 +320,252 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/muramasa0228/articles/2026-06-29-agent-memory-3-layer",
       "title": "エージェントの長期記憶を3層構造で設計する：mcp__memoryを捨ててファイル＋grepに振った話",
-      "titleJa": "エージェントの長期記憶を3層構造で設計する：mcp__memoryを捨ててファイル＋grepに振った話",
+      "titleJa": "エージェントの長期記憶を3層構造で設計する：mcp__memory を捨ててファイル＋grep に振った話",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-29T07:01:52.000Z",
       "collectedAt": "2026-06-29T11:00:46.619Z",
       "tags": [
         "mcp",
-        "zenn"
+        "zenn",
+        "agent",
+        "memory",
+        "file-system",
+        "grep",
+        "architecture",
+        "long-term-memory"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "「会話が長くなると、少し前に決めたことをエージェントが忘れる」。LLMエージェントを継続して使うと、ほぼ全員がこの壁に当たる。 この記事は、その忘却を場当たりで殴らず、メモリを3層に分けて整理する\"考え方\"を共有するもの。 先に結論を書く。長期記憶は「賢い検索DBを建てる」より前に、ホット／索引／コールドの3層へ役割を分け、アクセスパターンから保存方式を逆算するのが効いた。派手な実装より、この設計順序のほうが効く。 出発点：作業記憶は有限である コンテキストウィンドウは、エージェントにとっての作業記憶（RAM）に近い。容量は決まっていて、長い会話や複数セ"
+    },
+    {
+      "id": "5c3fc81bd48e441b",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/cli-v3.0.33",
+      "title": "Cline CLI v3.0.33",
+      "titleJa": "CLI v3.0.33",
+      "titleEn": "Cline CLI v3.0.33",
+      "lang": "en",
+      "publishedAt": "2026-06-29T06:53:57.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "cline",
+        "release",
+        "onboarding",
+        "ux",
+        "clinepass",
+        "subscription"
+      ],
+      "category": "cline",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Show a ClinePass subscription URL as a fallback during onboarding so you can still subscribe if the subscription screen can't open automatically Hide the ClinePass promo for users who already have a ClinePass subscription Use an adaptive plan accent color for ClinePass prompts so",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "Cline CLI v3.0.33",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "73d5858c362210b7",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/cli-v3.0.32",
+      "title": "Cline CLI v3.0.32",
+      "titleJa": "CLI v3.0.32",
+      "titleEn": "Cline CLI v3.0.32",
+      "lang": "en",
+      "publishedAt": "2026-06-29T04:47:47.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "cline",
+        "release",
+        "clinepass",
+        "onboarding",
+        "ux"
+      ],
+      "category": "cline",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Improved the ClinePass onboarding experience Added an intermediate step before going to ClinePass model selection Made the ClinePass subscription screen selectable Promoted ClinePass in the startup notice Used \"ClinePass\" as one word consistently and refined the provider UI copy ",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "Cline CLI v3.0.32",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "712234c831807591",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fsdk%2Fv0.0.54",
+      "title": "Cline sdk/sdk v0.0.54",
+      "titleJa": "Cline SDK v0.0.54 リリース",
+      "titleEn": "Cline sdk/sdk v0.0.54",
+      "lang": "en",
+      "publishedAt": "2026-06-29T04:39:57.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "cline",
+        "release",
+        "sdk",
+        "npm-package",
+        "patch-release"
+      ],
+      "category": "cline",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "@cline/sdk@0.0.54",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "Cline sdk/sdk v0.0.54",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "9fdca4eb42e276c2",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fcore%2Fv0.0.54",
+      "title": "Cline sdk/core v0.0.54",
+      "titleJa": "sdk/core/v0.0.54 リリース",
+      "titleEn": "Cline sdk/core v0.0.54",
+      "lang": "en",
+      "publishedAt": "2026-06-29T04:39:56.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "cline",
+        "release",
+        "sdk",
+        "npm-package",
+        "core"
+      ],
+      "category": "cline",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "@cline/core@0.0.54",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "Cline sdk/core v0.0.54",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "c588e4777e50a677",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fagents%2Fv0.0.54",
+      "title": "Cline sdk/agents v0.0.54",
+      "titleJa": "sdk/agents v0.0.54 リリース",
+      "titleEn": "Cline sdk/agents v0.0.54",
+      "lang": "en",
+      "publishedAt": "2026-06-29T04:39:54.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "cline",
+        "release",
+        "sdk",
+        "agents",
+        "npm-package"
+      ],
+      "category": "cline",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "@cline/agents@0.0.54",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "Cline sdk/agents v0.0.54",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "208c06b038d82b09",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fllms%2Fv0.0.54",
+      "title": "Cline sdk/llms v0.0.54",
+      "titleJa": "sdk/llms v0.0.54 リリース",
+      "titleEn": "Cline sdk/llms v0.0.54",
+      "lang": "en",
+      "publishedAt": "2026-06-29T04:39:52.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "cline",
+        "release",
+        "sdk",
+        "npm-package",
+        "llm"
+      ],
+      "category": "cline",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "@cline/llms@0.0.54",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "Cline sdk/llms v0.0.54",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "be885310d563ba6d",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fshared%2Fv0.0.54",
+      "title": "Cline sdk/shared v0.0.54",
+      "titleJa": "sdk/shared v0.0.54 リリース",
+      "titleEn": "Cline sdk/shared v0.0.54",
+      "lang": "en",
+      "publishedAt": "2026-06-29T04:39:51.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "cline",
+        "release",
+        "sdk",
+        "npm-package",
+        "patch-release",
+        "shared-module"
+      ],
+      "category": "cline",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "@cline/shared@0.0.54",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "Cline sdk/shared v0.0.54",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
     },
     {
       "id": "b1b521daab139c01",
@@ -132,31 +580,95 @@
       "collectedAt": "2026-06-29T11:00:46.619Z",
       "tags": [
         "mcp",
-        "zenn"
+        "zenn",
+        "rag",
+        "cost-optimization",
+        "search",
+        "doordash",
+        "llm-optimization"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "「最終的な答えだけを、説明抜きで返せ」とプロンプトで念を押す。なのにWeb検索ツールを与えた瞬間、モデルは「検索結果によると、200 West Streetは749フィートで、888 7th Avenueは628フィートなので…」と語り出し、本来欲しかった Yes の一語が説明文の海に沈む。出力を後段でパースしているエンジニアなら、これがどれだけ厄介かすぐ分かるはずだ。 DoorDashの5人のエンジニアが6月17日にarXivへ出した論文 Decoupling Search from Reasoning は、この「検索を使わせると壊れる出力契約」を入口"
     },
     {
-      "id": "aceda77fb62709d3",
-      "source": "zenn-mcp",
+      "id": "85ac39ffb4cb616d",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/v4.0.2",
+      "title": "Cline Releases v4.0.2",
+      "titleJa": "Cline v4.0.2 リリース",
+      "titleEn": "Cline Releases v4.0.2",
+      "lang": "en",
+      "publishedAt": "2026-06-29T04:14:31.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "cline",
+        "release",
+        "deepseek",
+        "reasoning",
+        "model-support"
+      ],
+      "category": "cline",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Added Add reasoning effort support (including xhigh ) for DeepSeek thinking models. Improve the ClinePass provider experience with clearer reasoning controls and model selection. Fixed Show reasoning effort controls for ClinePass models and align ClinePass model resolution with t",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "Cline Releases v4.0.2",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "4a25abbd029be0e7",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/i_n_dev/articles/70304fcd695ae6",
+      "title": "個人的にAIセキュリティの勉強するならGrok",
+      "titleJa": "個人的にAIセキュリティの勉強するならGrok",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T03:46:42.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに メイン言語としてPHPを使い、とりあえず htmlspecialchars を書いていれば安心、という環境で働いていた時期がありました。SQLインジェクションやXSSといった言葉や仕組みは知っていても、実際にどのように攻撃が仕掛けられるのか、リアルなイメージが沸きませんでした。 でも、AI登場で実際の攻撃事例を見て勉強になる機会が増えました。 なぜセキュリティ勉強にGrokがおすすめなのか？ https://grok.com/ 各AIのアクセス権（スクレイピング）を軸に考えると、X（旧Twitter）にアクセスできるのはgrokだけだからです。"
+    },
+    {
+      "id": "0eefa630a1f77b67",
+      "source": "zenn-claude",
       "sourceType": "blog",
       "url": "https://zenn.dev/ryunotezenn/articles/3da3403bb2c30f",
       "title": "「Notionで良くない？」と思ってた私がObsidianにハマって、ついにClaudeと連携させた話",
-      "titleJa": "「Notionで良くない？」と思ってた私がObsidianにハマって、ついにClaudeと連携させた話",
+      "titleJa": "「Notionで良くない？」と思っていた私がObsidianにハマり、ついにClaudeとMCP連携させた話",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-29T02:25:27.000Z",
-      "collectedAt": "2026-06-29T11:00:46.619Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
+        "claude",
+        "zenn",
         "mcp",
-        "zenn"
+        "obsidian",
+        "notion",
+        "personal-knowledge-management",
+        "pkm",
+        "local-files"
       ],
-      "category": "mcp",
-      "importance": 1,
+      "category": "claude",
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "「Notionで良くない？」と思ってた私がObsidianにハマって、ついにClaudeと連携させた話 最初は正直、懐疑的でした Obsidianって名前、エンジニアなら一度は聞いたことあると思います。でも最初に触ったとき、私の感想はこうでした。 「……あれ、これただのMarkdownエディタじゃないの？」 Notionならデータベース機能もあるし、チームで共有もできるし、UIも洗練されてる。それに比べてObsidianはローカルで動くだけの地味なアプリに見えて、「わざわざ乗り換える理由なくない？」と思ってたんですよね。 でも実際に使い込んでいくうちに、",
@@ -181,10 +693,15 @@
       "publishedAt": "2026-06-29T02:02:58.000Z",
       "collectedAt": "2026-06-29T11:00:46.619Z",
       "tags": [
-        "qiita"
+        "qiita",
+        "loop-engineering",
+        "ai-agents",
+        "agent-design",
+        "autonomous-ai",
+        "agentic-workflow"
       ],
       "category": "copilot",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "こんにちは、エージェントに毎日同じ指示を打ち込んでたアーキテクトのやまぱん！です 😅 補足コメントや質問、いいね、拡散、ぜひお願いします 🥺！ 間違っていたら 優しく 教えてください！ 最近、自分が VS Code や Claude Code の前で同じ指示を朝から繰り返し...",
@@ -211,13 +728,145 @@
       "tags": [
         "mcp",
         "mcp-server",
-        "zenn"
+        "zenn",
+        "streamable-http",
+        "stateless",
+        "capability-discovery",
+        "production",
+        "scaling",
+        "architecture"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "「ローカルでstdio接続のMCPサーバーは一発で動いたのに、リモートに置いてロードバランサ下にデプロイした途端、tools/list は通るのに tools/call が 404 Not Found で落ちる」 こうした状況でつまずいたことがある方は少なくありません。原因はコードのバグではなく、MCPの「セッション」をステートフルに持ったまま複数インスタンスへ水平展開したことにあります。リクエストがセッションを作ったインスタンスとは別のインスタンスに着地し、そのインスタンスは当該セッションを知らないため 404 を返す、という典型的な事故です。 本記事"
+    },
+    {
+      "id": "63525919fe21fc3b",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/jinjer_techblog/articles/28536927ad3fe2",
+      "title": "AIに嘘をつかせないために",
+      "titleJa": "AIに嘘をつかせないために",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T01:28:58.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 「AIって嘘をつくから信用できないよね」 という言葉は、IT業界に関わる人なら必ず聞いたことはあるでしょうし、その他業種の方でも度々目にする言葉だと思います。 ただ、果たしてAIは、意図的に嘘をつきたくてついているのでしょうか（もしかしたら、そういうパターンも我々の知らぬところであるかもしれないですが...）。 人間の場合は悪意や焦り、保身、気まぐれ、さまざまな状況によって嘘をつく理由が生まれます。が、本当に嘘をつきたくてAIは嘘をついているのでしょうか。 人間もAIも嘘をつく ざっくり言うと、生成AIは「事実を知ってる機械」というより、「次に"
+    },
+    {
+      "id": "1fbcae72506508dc",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kk_ai_kaihatsu/books/ai-native-pm",
+      "title": "IT未経験だからこそ、AIネイティブな体制をゼロから作った",
+      "titleJa": "IT未経験だからこそ、AIネイティブな体制をゼロから作った",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T01:11:41.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "AIにコードを書かせるだけでなく、AIに事業開発を前に進めてもらうための実践記録です。PM AIを使って複数の個人開発・新規事業アイデアを並行して進めるための、情報設計・進捗報告・優先順位付け・事業部AIへの引き継ぎ・失敗と改善、そしてそのまま使えるテンプレートをまとめます。成功保証や収益ノウハウではありません。散らかりがちなプロジェクトを少しずつ前に進めるための運用設計とテンプレート集です。"
+    },
+    {
+      "id": "ff24e78cf07868b5",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/gamedev_toollab/articles/a7364d37455a50",
+      "title": "UnityプロジェクトでAIを効率よく使うためのトークン節約術",
+      "titleJa": "UnityプロジェクトでAIを効率よく使うためのトークン節約術",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T01:00:09.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 開発中、または運用中のUnityプロジェクトでAIコーディングエージェントを使うと、調査・実装・レビューの速度はかなり上がります。 一方で、プロジェクトが大きくなるほど次の問題が起きやすくなります。 関係ないフォルダまで読みに行く Library/ や Temp/ などの生成物を読もうとする Scene / Prefab / ScriptableObject の巨大YAMLを丸ごと読む Addressablesの生成物やログを読み込んでトークンを消費する 毎回同じプロジェクト説明をチャットで繰り返す AGENTS.md / CLAUDE.md "
+    },
+    {
+      "id": "025f6007d913118a",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/branbran/articles/5730c47e1abac9",
+      "title": "超便利なClaude Designの実践的な活用方法",
+      "titleJa": "超便利なClaude Designの実践的な活用方法",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T00:30:05.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 先日Claudeから登場したデザインプラットフォーム Claude Design を、ここ数週間にわたって一通り使ってみました。本記事では、その中で見つけた実践的な使い方を紹介します。 これから Claude Designを使ってみたい方、あるいは Figma Makeなどのツールから乗り換えを検討している方の参考になれば幸いです。 ! 本記事は、英語学習アプリ（仮）を題材に、実際の操作画面やデモ動画を交えて解説していきます。各セクションのキャプチャ・動画とあわせてご覧ください。 Claude Designの基本 詳しい活用方法に入る前に、まず"
+    },
+    {
+      "id": "fb309ed628cbe427",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/shimizu/articles/c1d19c39202eb3",
+      "title": "AIエージェントをUIにすることで、誰でも地理データを扱えるWebGISができた。",
+      "titleJa": "AIエージェントをUIにすることで、誰でも地理データを扱えるWebGISができた。",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T00:21:17.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "概要 GIS(地理情報システム)ソフトは難しい。 まず、ボタンがたくさんあってどれを押せば良いのかわからない。 QGIS 知っておかねばならない前提知識も難しい。 指定した地点の半径5kmにある喫茶店の数を数えたいだけなのに「このデータの単位は度数なのでメートル単位の座標系に変換してから5kmのバッファを作る必要が…」とか訳のわからないことを言われる。 とても辛い。 これこそAIの力を使うべきなのでは？と思ってQGISをAIに操作させるMCPやプラグインを試してみたけれど、そもそもQGISが多機能すぎてこちらのやりたいことに対してAIが複雑すぎる手順を選"
+    },
+    {
+      "id": "e14dc475a83ce316",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/jamesbob/articles/openmythos-fable5-verification",
+      "title": "OpenMythosはFable 5 / Mythos 5を再現できているのか",
+      "titleJa": "OpenMythosはFable 5 / Mythos 5を再現できているのか",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T00:20:23.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "! この記事は2026-06-29時点の公開情報だけで検証しています。結論はシンプルです。OpenMythosは「公式再現」ではありません。公開論文を組み合わせた「仮説実装」として読むのが精確です。 0. まず結論 判定: 公式モデルの正しい再現ではない。RDT・MoE・MLAなどを使った、教育的で面白い「推測アーキテクチャ」です。 1. 今回の情報源 ZennはMermaidを公式に表示できます。この記事の図は、すべてZenn上でそのままレンダリングされるMarkdown図です[1]。 2. Fable 5 / Mythos 5で公式に言えること 公式"
     },
     {
       "id": "b43356ca2a7a4f99",
@@ -233,10 +882,13 @@
       "tags": [
         "mcp",
         "mcp-server",
-        "zenn"
+        "zenn",
+        "model-context-protocol",
+        "tutorial",
+        "ai-integration"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "こんにちは、楽天グループ株式会社の林です。 Claude Codeを使い始めてから、MCPサーバーにはお世話になりっぱなしですが、MCPが内部的にどのように動いているかがずっとふわっとしたままでした。なんとなく使えているという状態があまり良くないなと思い、ちゃんと調べることにしました。 この記事では、MCPを概念的に理解したのち、実際にMCPサーバーを実装してみるところまでをやってみます。MCPサーバー自体は、Codexなど他のAIでも使えますが、ここではClaude Codeの例で説明します（他のAIでもほぼ同じです）。 基礎編 MCPとは何か MCP"
@@ -255,10 +907,15 @@
       "tags": [
         "mcp",
         "mcp-server",
-        "zenn"
+        "zenn",
+        "claude-code",
+        "subagent",
+        "hooks",
+        "mac",
+        "tutorial"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "Claude Code は 2024 年末から 2026 年までで、ずいぶん別物になりました。 2025 年の頃は「ターミナルで使えるチャット型 AI」くらいの位置づけでしたが、2026 年現在は subagent（役割を分けた複数 AI）、MCP（外部ツール接続）、hook（イベントフック）といった、エージェント開発基盤としての機能が一通り揃っています。「インストール手順」も以前とは違っていて、公式の curl インストーラ一発で済むようになりました。 この記事では、Mac で Claude Code を新しく入れる人向けに、インストール → 初期設定"
@@ -276,10 +933,14 @@
       "collectedAt": "2026-06-29T11:00:46.619Z",
       "tags": [
         "mcp",
-        "zenn"
+        "zenn",
+        "security",
+        "html-injection",
+        "ai-generated-code",
+        "input-validation"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "AI が返してきた文字列を、信頼できる入力として扱っていないでしょうか。自分はしばらく、無自覚にそうしていました。 最初の実装 作っていたのは、ユーザーの質問に対して LLM が生成した回答を、そのまま画面に表示する機能でした。モデルが返す文章は、こちらが書いたプロンプトに沿った素直なテキストだろう。そう思い込んでいたので、返ってきた文字列を整形して HTML に流し込んでいました。フォームから来るユーザー入力には当然エスケープをかけていたのに、モデルの出力には何もしていなかった。いま振り返ると、ここに線引きの誤りがありました。フォーム入力は「外から来る"
@@ -297,13 +958,40 @@
       "collectedAt": "2026-06-29T11:00:46.619Z",
       "tags": [
         "mcp",
-        "zenn"
+        "zenn",
+        "playwright",
+        "browser-automation",
+        "e2e-testing",
+        "session-management",
+        "multi-session"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "TL;DR Playwright を複数並行で使うときの「分離」には、混同しやすい 2 つの軸があります ① ブラウザインスタンスの分離: 複数のセッションが、それぞれ別プロセス・別プロファイルのブラウザを操作する ② アカウント / ログイン状態の分離: 同じサービスの複数アカウントを、取り違えずに保持・使い分ける ①は、MCP 経由なら何もしなくても勝手に分離されていました。サーバーインスタンスごとに専用プロファイルが自動生成されます ②は、自動では解決しません。storageState の保存・復元、保存先パスの一意化、保存後の検証まで自前で設計す"
+    },
+    {
+      "id": "1baaa72c9600002f",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/sktt_panda/articles/claude-agent-sdk-billing-split-paused-2026-06",
+      "title": "【6/15当日撤回】Claude Agent SDK・claude -p のサブスク別枠化は何だったのか",
+      "titleJa": "【6/15当日撤回】Claude Agent SDK・claude -p のサブスク別枠化は何だったのか",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-28T22:50:12.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "agent",
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "2026年6月15日、Anthropic は Claude のサブスクリプション利用枠を「対話（Interactive）」と「自動化（Programmatic）」に分割し、Agent SDK や claude -p、GitHub Actions 経由の利用を別建ての月額クレジットに切り出す——という大きな課金変更を予定していた。5月中旬に告知され、6月に入ってからは英語圏の個人開発者界隈でかなり騒がれていた。 ところが、施行予定日だった 6/15 当日に、この変更そのものが撤回（保留）された。「対話と自動化の分離」は幻に終わり、いまのところ何も変わってい"
     },
     {
       "id": "764616e5d9bdbe56",
@@ -311,13 +999,18 @@
       "sourceType": "blog",
       "url": "https://qiita.com/masakinihirota/items/3417f6003d8a495bb918",
       "title": "GitHub Copilotのコスパに限界を感じ、オープンソースAI GLM-5.2[MAX] をGitHub CopilotのBYOKで導入を「検討」している話し",
-      "titleJa": "GitHub Copilotのコスパに限界を感じ、オープンソースAI GLM-5.2[MAX] をGitHub CopilotのBYOKで導入を「検討」している話し",
+      "titleJa": "GitHub Copilotのコスパに限界を感じ、オープンソースAI GLM-5.2[MAX] をBYOK機能で導入検討する話",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-28T22:47:33.000Z",
       "collectedAt": "2026-06-29T11:00:46.619Z",
       "tags": [
-        "qiita"
+        "qiita",
+        "byok",
+        "glm",
+        "open-source-llm",
+        "cost-optimization",
+        "github-copilot"
       ],
       "category": "copilot",
       "importance": 1,
@@ -332,6 +1025,56 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "7f042fab1044444f",
+      "source": "qiita-cursor",
+      "sourceType": "blog",
+      "url": "https://qiita.com/amanity-haray/items/5a1d9b07d25820024992",
+      "title": "CLAUDE.md と .cursorrules に書く「アーキテクチャルール」完全ガイド——AIに設計を守らせる具体的な書き方",
+      "titleJa": "CLAUDE.md と .cursorrules に書く「アーキテクチャルール」完全ガイド——AIに設計を守らせる具体的な書き方",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-28T22:32:49.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "cursor",
+        "qiita"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "AI コーディングツール（Cursor / Claude Code / GitHub Copilot）を使い始めると、よく起きる問題があります。「動くけど設計がカオス」です。 この記事では、なぜ AI がルールなしで混在したコードを書くのかを技術的に掘り下げ、CLAUDE...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0NDUwNjAzJTJGM2I1NWY0ZmI3ODRiZjNiNTMzODRlODE1MzMzY2I4ZjQyZjcxMDUyYSUyRmxhcmdlLnBuZyUzRjE3ODI0NDc1NTE_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTVlYjg1ZTA4ZTkyYWM3YWYzMmEwYzNlZWQ3NWNkZDkw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D0cf0384c29b4cac7a989481809906e13?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Q0xBVURFLm1kJTIwJUUzJTgxJUE4JTIwLmN1cnNvcnJ1bGVzJTIwJUUzJTgxJUFCJUU2JTlCJUI4JUUzJTgxJThGJUUzJTgwJThDJUUzJTgyJUEyJUUzJTgzJUJDJUUzJTgyJUFEJUUzJTgzJTg2JUUzJTgyJUFGJUUzJTgzJTgxJUUzJTgzJUEzJUUzJTgzJUFCJUUzJTgzJUJDJUUzJTgzJUFCJUUzJTgwJThEJUU1JUFFJThDJUU1JTg1JUE4JUUzJTgyJUFDJUUzJTgyJUE0JUUzJTgzJTg5JUUyJTgwJTk0JUUyJTgwJTk0QUklRTMlODElQUIlRTglQTglQUQlRTglQTglODglRTMlODIlOTIlRTUlQUUlODglRTMlODIlODklRTMlODElOUIlRTMlODIlOEIlRTUlODUlQjclRTQlQkQlOTMlRTIlODAlQTYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1hY2YzNTViZTk4MTE5NjU0M2QxZTA2Mjk4ZDIxMmJkOA&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBhbWFuaXR5LWhhcmF5JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9OTEzZTE0NzQ2MzA1ZjY1NTkyMzZjMmRiODNhZWU0MjQ&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=d84b1768bdde76b7618b56e5a175c71f",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0NDUwNjAzJTJGM2I1NWY0ZmI3ODRiZjNiNTMzODRlODE1MzMzY2I4ZjQyZjcxMDUyYSUyRmxhcmdlLnBuZyUzRjE3ODI0NDc1NTE_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTVlYjg1ZTA4ZTkyYWM3YWYzMmEwYzNlZWQ3NWNkZDkw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D0cf0384c29b4cac7a989481809906e13?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Q0xBVURFLm1kJTIwJUUzJTgxJUE4JTIwLmN1cnNvcnJ1bGVzJTIwJUUzJTgxJUFCJUU2JTlCJUI4JUUzJTgxJThGJUUzJTgwJThDJUUzJTgyJUEyJUUzJTgzJUJDJUUzJTgyJUFEJUUzJTgzJTg2JUUzJTgyJUFGJUUzJTgzJTgxJUUzJTgzJUEzJUUzJTgzJUFCJUUzJTgzJUJDJUUzJTgzJUFCJUUzJTgwJThEJUU1JUFFJThDJUU1JTg1JUE4JUUzJTgyJUFDJUUzJTgyJUE0JUUzJTgzJTg5JUUyJTgwJTk0JUUyJTgwJTk0QUklRTMlODElQUIlRTglQTglQUQlRTglQTglODglRTMlODIlOTIlRTUlQUUlODglRTMlODIlODklRTMlODElOUIlRTMlODIlOEIlRTUlODUlQjclRTQlQkQlOTMlRTIlODAlQTYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1hY2YzNTViZTk4MTE5NjU0M2QxZTA2Mjk4ZDIxMmJkOA&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBhbWFuaXR5LWhhcmF5JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9OTEzZTE0NzQ2MzA1ZjY1NTkyMzZjMmRiODNhZWU0MjQ&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=d84b1768bdde76b7618b56e5a175c71f",
+        "alt": "CLAUDE.md と .cursorrules に書く「アーキテクチャルール」完全ガイド——AIに設計を守らせる具体的な書き方",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "dc04ca9883018dc0",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/lingmu/articles/2026-06-29-gpt-5-6-sol-next-generation",
+      "title": "GPT-5.6 Sol登場、AIが科学を変える",
+      "titleJa": "GPT-5.6 Sol登場、AIが科学を変える",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-28T22:09:20.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "GPT-5.6 Sol登場、AIが科学を変える 2026-06-29 | 読了 4分 | #OpenAI #生成AI #開発者向け OpenAIが次世代モデル「GPT-5.6 Sol」を予告した。コーディング・科学・サイバーセキュリティで劇的な性能向上を実現するという。同時期にGoogleとAnthropicも大型アップデートを投入し、AI業界はいよいよ「実装フェーズ」の本番へ突入しつつある。 GPT-5.6 Solって何が違うの？ OpenAIは[1]、新モデル「GPT-5.6 Sol」のプレビューを公開した。これまでのGPT-4系とは一線を画す「次世"
     },
     {
       "id": "d13c83c4f08954f0",
@@ -373,7 +1116,7 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/numarn/articles/codegraph-mcp-handson-index",
       "title": "コードグラフ系MCPを実機で叩いてみた — 26.6K行を約1.9秒でindex、つまずきも全部書く",
-      "titleJa": "コードグラフ系MCPを実機で叩いてみた — 26.6K行を約1.9秒でindex、つまずきも全部書く",
+      "titleJa": "コードグラフ系MCPを実機で検証 — 26.6K行を約1.9秒でインデックス、つまずきも全公開",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-28T17:29:13.000Z",
@@ -381,10 +1124,14 @@
       "tags": [
         "mcp",
         "mcp-server",
-        "zenn"
+        "zenn",
+        "code-graph",
+        "code-analysis",
+        "developer-tools",
+        "performance-benchmark"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "これは何か AI生成コード向けの静的セキュリティスキャナーを個人で作っている。スキャン時にLLMを使わない、完全ローカルの決定的解析に振り切った構成だ。同じ思想の隣人を見つけたくて GitHub Trending を眺めていたら、DeusData/codebase-memory-mcp という C製のMCPサーバが目に入った。 謳い文句は「tree-sitterで関数・クラス・呼び出し・HTTPルートの知識グラフを静的に構築する。LLM不使用・完全ローカル・依存ゼロ・単一バイナリ」。自分のスキャナーと設計思想が同系統だ。READMEには「平均的なリポをミ"
@@ -401,7 +1148,12 @@
       "publishedAt": "2026-06-28T17:01:22.000Z",
       "collectedAt": "2026-06-29T11:00:46.619Z",
       "tags": [
-        "qiita"
+        "qiita",
+        "github-copilot",
+        "cli",
+        "cheat-sheet",
+        "command-reference",
+        "developer-tools"
       ],
       "category": "copilot",
       "importance": 2,
@@ -416,6 +1168,90 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "55e5549e9ec9b8ca",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/cvl/articles/c2d6f157cd0b60",
+      "title": "デザイン・コーディング未経験から、Claude Designで動きのあるWebサイトを作る",
+      "titleJa": "デザイン・コーディング未経験から、Claude Designで動きのあるWebサイトを作る",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-28T16:29:45.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 自分の運営するサッカーチーム(とランニングコミュニティ)の公式サイトを作りたかった。メンバー紹介、試合スケジュール、ユニフォーム紹介、ギャラリー——やりたいことは明確にある。でも、デザインができる人もいなければ、コードを書ける人もいない。 外注するには小さすぎる規模で、かといってWordPressをゼロから触るには時間が足りない。そんな状況で試したのが Claude Design だ。 Anthropic Labsが2026年4月17日にリリースしたばかりのプロダクトで、「チャットしながらビジュアルを作る」という新しいスタイルのデザインツール。"
+    },
+    {
+      "id": "207e5c4d05fe7a3e",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/yamamoshu/articles/llm-agent-no-langchain",
+      "title": "LangChainなしでLLMエージェントを作る【Claude API + Python実装】",
+      "titleJa": "LangChainなしでLLMエージェントを作る【Claude API + Python実装】",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-28T14:19:27.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "LangChainは便利ですが、ブラックボックスになりがち。Claude APIのFunction Callingを使えば、エージェントの仕組みを理解しながら自分でゼロから実装できます。 エージェントの基本構造 ユーザー入力 ↓ LLM（何をすべきか判断） ↓ ツール呼び出しが必要 ツール実行（Python関数） ↓ 結果をLLMに返す LLM（結果を見て次の行動を決める） ↓ ... ループ 最終回答 これを「ReAct（Reasoning + Acting）」と呼びます。 ツールの定義 import anthropic import jso..."
+    },
+    {
+      "id": "a0f08ea52f4f7988",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/yamamoshu/articles/claude-api-streaming-ros2",
+      "title": "Claude APIのストリーミング応答をROS2で使う【リアルタイム音声合成・UI更新】",
+      "titleJa": "Claude APIのストリーミング応答をROS2で使う【リアルタイム音声合成・UI更新】",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-28T14:19:27.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "LLMの応答は全部揃ってから届くより、生成されるたびに届く方が体験がいい。Claude APIのストリーミングをROS2と組み合わせて、ロボットの応答をリアルタイムに処理する方法を解説します。 なぜストリーミングが必要か 通常の呼び出し： リクエスト → [3〜10秒待つ] → 全文が届く → 音声合成開始 ストリーミング： リクエスト → [0.5秒] → 最初の単語 → 音声合成開始 → [逐次届く] → テキストをROSトピックに流す ユーザーへの体験が大きく変わります。 基本的なストリーミング実装 import anthropic client."
+    },
+    {
+      "id": "e44fb81207c16315",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kaigiai/articles/d97ce9c0f5d5bc",
+      "title": "Whisper + Claude で「日本語の議事録」を自動生成するSaaSを個人開発した（設計と詰まりどころ）",
+      "titleJa": "Whisper + Claude で「日本語の議事録」を自動生成するSaaSを個人開発した（設計と詰まりどころ）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-28T12:25:09.000Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "エンジニアとして、会議の音声・動画から日本語の議事録（決定事項・アクションアイテム付き）を自動生成するサービスを開発しています。文字起こしに OpenAI Whisper、議事録生成に Anthropic Claude を使った構成と、実装で詰まった点を共有します。 全体構成 フロント: Next.js (App Router) / バックエンド: FastAPI (Python) 文字起こし: OpenAI Whisper API / 議事録生成: Anthropic Claude / 保管: AWS東京リージョン 流れ: アップロード →（動画なら）"
     },
     {
       "id": "33a54d4f332c2c41",
@@ -461,10 +1297,15 @@
       "collectedAt": "2026-06-29T11:00:46.619Z",
       "tags": [
         "mcp",
-        "zenn"
+        "zenn",
+        "onnx",
+        "vector-search",
+        "embeddings",
+        "japanese-nlp",
+        "semantic-search"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "前回の記事で、qmd の日本語 BM25 を Vaporetto WASM で直した。 そのあと気になっていたのが、ベクトル検索の方だった。 BM25 はキーワード検索なので、形態素解析さえ正確なら日本語でも機能する。 ベクトル検索は話が違う。 テキストを数百次元のベクトルに圧縮して意味の近さで検索する仕組みなので、モデルがその言語の語義空間を正確に持っていないといけない。 使っていたのは Qwen3-Embedding-0.6B、119 言語に対応した多言語モデルだ。 日本語にも一応対応しているが、自分の Obsidian Vault の中身はほぼ日本"
@@ -603,7 +1444,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-28T07:40:27.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "cursor",
         "qiita",
@@ -616,6 +1457,7 @@
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
+      "contentSnippet": "「生成AIで開発効率10倍！」 そんな夢のような話を聞いて、私は思った。 じゃあ、うちの現場に投入したらどうなるんだろう？ 結果から言う。 AIは優秀だった。 優秀すぎた。 だからこそ途中で絶望した。 今回は、AIを限界開発現場に放り込んだら何が起きるのか、「こんなシス...",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Ftech-festa-ogp-background-4b5015b2c518c7e6b9062a7c9f5f5e90.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDMzODcwNyUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc3Nzc1NjY4MT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9ODVmZmQwMGIwMjE1OWM5ODVjZTA3NzY0MzA3OTZmYTM%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dafd4151b1cf8bb7d9f88cc440521ce42?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJThFJUUzJTgxJTkzJUUzJTgyJTkzJUUzJTgxJUFBJUUzJTgyJUI3JUUzJTgyJUI5JUUzJTgzJTg2JUUzJTgzJUEwJUU5JTk2JThCJUU3JTk5JUJBJUU3JThGJUJFJUU1JUEwJUI0JUUzJTgxJUFGJUU1JUFCJThDJUUzJTgxJUEwJUVGJUJDJTgxJUUzJTgwJThGJUUzJTgxJUE3JUU2JTg5JTkzJUU3JUI3JTlBJUUzJTgyJTkyJUU3JUI1JTg0JUUzJTgyJTkzJUUzJTgxJUEwJUUzJTgyJTg5JUUzJTgwJTgxQUklRTMlODElOEMlRTklODAlOTQlRTQlQjglQUQlRTMlODElQTclRTYlODIlOUYlRTMlODIlOEElRTMlODIlOTIlRTklOTYlOEIlRTMlODElODQlRTMlODElOUYlRTglQTklQjEmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyM0ZGRkZGRiZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz04OTkxZjM3NjE3OTU5NzAzZmVlMGJhMzRlZTI4ZDRiMg&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBkOTQyMzEmdHh0LWNvbG9yPSUyM0ZGRkZGRiZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1jYTJiMGEwZmI2NDE1YTQ0ZGYwZDM1YWFiNWI4Y2Y4Yw&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=924645d472dba58de498a9f5c229baa8",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Ftech-festa-ogp-background-4b5015b2c518c7e6b9062a7c9f5f5e90.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDMzODcwNyUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc3Nzc1NjY4MT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9ODVmZmQwMGIwMjE1OWM5ODVjZTA3NzY0MzA3OTZmYTM%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dafd4151b1cf8bb7d9f88cc440521ce42?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJThFJUUzJTgxJTkzJUUzJTgyJTkzJUUzJTgxJUFBJUUzJTgyJUI3JUUzJTgyJUI5JUUzJTgzJTg2JUUzJTgzJUEwJUU5JTk2JThCJUU3JTk5JUJBJUU3JThGJUJFJUU1JUEwJUI0JUUzJTgxJUFGJUU1JUFCJThDJUUzJTgxJUEwJUVGJUJDJTgxJUUzJTgwJThGJUUzJTgxJUE3JUU2JTg5JTkzJUU3JUI3JTlBJUUzJTgyJTkyJUU3JUI1JTg0JUUzJTgyJTkzJUUzJTgxJUEwJUUzJTgyJTg5JUUzJTgwJTgxQUklRTMlODElOEMlRTklODAlOTQlRTQlQjglQUQlRTMlODElQTclRTYlODIlOUYlRTMlODIlOEElRTMlODIlOTIlRTklOTYlOEIlRTMlODElODQlRTMlODElOUYlRTglQTklQjEmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyM0ZGRkZGRiZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz04OTkxZjM3NjE3OTU5NzAzZmVlMGJhMzRlZTI4ZDRiMg&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBkOTQyMzEmdHh0LWNvbG9yPSUyM0ZGRkZGRiZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1jYTJiMGEwZmI2NDE1YTQ0ZGYwZDM1YWFiNWI4Y2Y4Yw&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=924645d472dba58de498a9f5c229baa8",
@@ -753,10 +1595,15 @@
       "collectedAt": "2026-06-29T11:00:46.619Z",
       "tags": [
         "mcp",
-        "zenn"
+        "zenn",
+        "certification",
+        "claude",
+        "anthropic",
+        "study-guide",
+        "exam-prep"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "> 本教材は、Anthropic が提供する Claude 関連の入門レベル資格「Claude Certified Architect – Foundations（CCA-F）」の合格を目指す方のための、出題範囲を網羅した日本語学習テキストです。 Claude を業務や個人開発で触ったことがあるものの、エージェントアーキテクチャ・MCP・Claude Code・プロンプト設計・コンテキスト管理といった試験出題範囲を「資格試験で問われる粒度」で言語化できていない初中級者を対象としています。 > - ドメイン1：エージェントアーキテクチャとオーケストレーショ"
@@ -943,7 +1790,7 @@
       "titleEn": "Cline Releases v4.0.1",
       "lang": "en",
       "publishedAt": "2026-06-28T02:48:39.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "cline",
         "release",
@@ -959,6 +1806,7 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
+      "contentSnippet": "Changed Roll the stable VS Code extension back to the pre-SDK-migration codebase to resolve regressions reported in 4.0.0. This release ships the 3.89.2 extension code under a higher version number so existing 4.0.0 users receive the update. SDK-migration work continues separatel",
       "image": {
         "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
@@ -2222,7 +3070,7 @@
       "titleEn": "Cline sdk/shared v0.0.53",
       "lang": "en",
       "publishedAt": "2026-06-27T00:31:34.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "cline",
         "release",
@@ -2234,10 +3082,11 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
+      "contentSnippet": "@cline/shared@0.0.53",
       "image": {
         "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
-        "alt": "sdk/shared/v0.0.53",
+        "alt": "Cline sdk/shared v0.0.53",
         "width": 0,
         "height": 0,
         "source": "media"
@@ -2339,7 +3188,7 @@
       "titleEn": "Track total merges by adoption phase in enterprise and organization reports",
       "lang": "en",
       "publishedAt": "2026-06-26T20:55:03.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "enterprise",
@@ -2356,6 +3205,7 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
+      "contentSnippet": "Building on the AI adoption phase cohorts added to the Copilot usage metrics API, organization and enterprise reports now report the total number of pull requests merged by each adoption… The post Track total merges by adoption phase in enterprise and organization reports appeare",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/06/613879507-f347394e-32ed-47cf-a012-5f3f6b2dea6b.jpg",
         "origSrc": "https://github.blog/wp-content/uploads/2026/06/613879507-f347394e-32ed-47cf-a012-5f3f6b2dea6b.jpg",
@@ -2516,7 +3366,7 @@
       "titleEn": "Securing agentic AI with perimeter guardrails: What's new in VPC Service Controls",
       "lang": "en",
       "publishedAt": "2026-06-26T18:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "agent",
         "cloud",
@@ -2534,6 +3384,7 @@
       "halfLife": "architecture",
       "archiveTier": "hot",
       "evergreen": true,
+      "contentSnippet": "As enterprises scale autonomous AI agents into production, enabling safe innovation requires robust architectural guardrails. AI agents connect across tools and datasets, so it’s essential to establish clear network-level boundaries for comprehensive data protection. To help orga",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/Pratiks_blog_image_1.max-1000x1000.jpg",
         "origSrc": "https://storage.googleapis.com/gweb-cloudblog-publish/images/Pratiks_blog_image_1.max-1000x1000.jpg",
@@ -2582,7 +3433,7 @@
       "titleEn": "MAI-Code-1-Flash for Copilot Business and Copilot Enterprise",
       "lang": "en",
       "publishedAt": "2026-06-26T16:35:06.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "enterprise",
@@ -2599,6 +3450,7 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
+      "contentSnippet": "MAI-Code-1-Flash, Microsoft AI’s in-house coding model, is now generally available for GitHub Copilot Business and Copilot Enterprise, building on its recent expansion across Copilot surfaces. Purpose-built for coding and optimized… The post MAI-Code-1-Flash for Copilot Business ",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/06/github-copilot-social-card-3.png",
         "origSrc": "https://github.blog/wp-content/uploads/2026/06/github-copilot-social-card-3.png",
@@ -2618,7 +3470,7 @@
       "titleEn": "From query to action: Introducing SQL alerting in Cloud Monitoring Observability Analytics",
       "lang": "en",
       "publishedAt": "2026-06-26T16:30:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "cloud",
         "google",
@@ -2636,6 +3488,7 @@
       "halfLife": "architecture",
       "archiveTier": "hot",
       "evergreen": true,
+      "contentSnippet": "Traditional alerting systems often force a compromise: you can either alert immediately on simple, noisy log events, or monitor rigid, pre-configured metrics that fail when faced with data with many unique answers like user sessions or IP addresses. But the most critical system i",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/sql_alert_image_for_blog_post_pEYZzMK.max-1000x1000.png",
         "origSrc": "https://storage.googleapis.com/gweb-cloudblog-publish/images/sql_alert_image_for_blog_post_pEYZzMK.max-1000x1000.png",
@@ -2655,7 +3508,7 @@
       "titleEn": "How AI is helping scientists better understand the human brain",
       "lang": "en",
       "publishedAt": "2026-06-26T16:25:13.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "microsoft",
         "news",
@@ -2667,7 +3520,8 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "The post How AI is helping scientists better understand the human brain appeared first on Source ."
     },
     {
       "id": "08d26d834452c1e0",
@@ -2920,7 +3774,7 @@
       "titleEn": "GitHub Desktop 3.6: Worktrees and deeper Copilot integration",
       "lang": "en",
       "publishedAt": "2026-06-26T10:32:58.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "github",
@@ -2936,7 +3790,8 @@
       "category": "copilot",
       "importance": 3,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "GitHub Desktop 3.6 brings more of your day-to-day Git flow into one place with GitHub Copilot now powering commit authoring and merge conflict resolution, plus new Git worktree support. The… The post GitHub Desktop 3.6: Worktrees and deeper Copilot integration appeared first on T"
     },
     {
       "id": "a8c91509c86bd2d0",
@@ -3049,7 +3904,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-26T09:35:20.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "cursor",
         "qiita",
@@ -3060,7 +3915,8 @@
       "category": "cursor",
       "importance": 1,
       "halfLife": "tutorial",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "こんにちは。E-kan株式会社の池側です。 Cursorを使いこなして色々なコードを書くようになってきた方に向けた、安全に開発するための「簡単なセキュリティのコツ」を2つご紹介します！ ●大事なパスワードや個人情報をAIに送らない設定にする 開発をしていると、APIの鍵やパ..."
     },
     {
       "id": "792df64789189e7f",
@@ -3093,7 +3949,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-26T07:29:12.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "cursor",
         "qiita",
@@ -3107,6 +3963,7 @@
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
+      "contentSnippet": "はじめに 個人開発でも業務開発でも、READMEの更新はつい後回しにしがちです。 機能追加をしたあとに、 起動方法が変わった 環境変数が増えた ディレクトリ構成が変わった セットアップ手順が古くなった テスト実行方法を書き忘れた みたいなことがよくあります。 READ...",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jSk51d1JNZS1oRnFmMWNLOVk3RDRlTThOSk9fbC1RZE5IQ2pvTmZ5UVk2MDhKd1lRJTNEczk2LWM_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTkyMmRmODgzMTZkOTlmNTgzZTkxYTQ5NTJmZjFhZDM3%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZjYjkzMTQ1ODFkOTYxZGM1YzQ3ZTkyYzViNDFkYmNmMWUzMmI4N2I0JTJGb3JpZ2luYWwuanBnJTNGMTczNDY4MzE3Mj9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0xMGU1NDY4YjExMzdkZDVhN2ZmMzE3NGIwZDYxMDlmYQ%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D4c811cad5e464a2ab6a9b07fbd7935ec?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9UkVBRE1FJUU2JTlCJUI0JUU2JTk2JUIwJUUzJTgwJTgxJUU2JUFGJThFJUU1JTlCJTlFJUU1JUJGJTk4JUUzJTgyJThDJUUzJTgyJThCJUUzJTgxJUFFJUUzJTgxJUE3Q3Vyc29yJTIwQ0xJJUUzJTgxJUE4dGFza3MuanNvbiVFMyU4MSVBNyVFOCU4NyVBQSVFNSU4QiU5NSVFNSU4QyU5NiVFMyU4MSU5NyVFMyU4MSU5RiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTUxNDY5MTg4NmIxYWE5M2M0NDYwMjMwZjQ0ODEzZmZk&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzaGltaXp1X2tva2kmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1hNDFmOTlhN2NmNDZkZmRiM2RmOTAyZTI2YmFjODMzZA&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=44K644Kj44O844OQ44O844Kz44Of44Ol44OL44Kx44O844K344On44Oz44K6&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%231E2121&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=db9d4c34b89f20db8f9effc3bc05c7a8",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jSk51d1JNZS1oRnFmMWNLOVk3RDRlTThOSk9fbC1RZE5IQ2pvTmZ5UVk2MDhKd1lRJTNEczk2LWM_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTkyMmRmODgzMTZkOTlmNTgzZTkxYTQ5NTJmZjFhZDM3%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZjYjkzMTQ1ODFkOTYxZGM1YzQ3ZTkyYzViNDFkYmNmMWUzMmI4N2I0JTJGb3JpZ2luYWwuanBnJTNGMTczNDY4MzE3Mj9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0xMGU1NDY4YjExMzdkZDVhN2ZmMzE3NGIwZDYxMDlmYQ%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D4c811cad5e464a2ab6a9b07fbd7935ec?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9UkVBRE1FJUU2JTlCJUI0JUU2JTk2JUIwJUUzJTgwJTgxJUU2JUFGJThFJUU1JTlCJTlFJUU1JUJGJTk4JUUzJTgyJThDJUUzJTgyJThCJUUzJTgxJUFFJUUzJTgxJUE3Q3Vyc29yJTIwQ0xJJUUzJTgxJUE4dGFza3MuanNvbiVFMyU4MSVBNyVFOCU4NyVBQSVFNSU4QiU5NSVFNSU4QyU5NiVFMyU4MSU5NyVFMyU4MSU5RiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTUxNDY5MTg4NmIxYWE5M2M0NDYwMjMwZjQ0ODEzZmZk&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzaGltaXp1X2tva2kmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1hNDFmOTlhN2NmNDZkZmRiM2RmOTAyZTI2YmFjODMzZA&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=44K644Kj44O844OQ44O844Kz44Of44Ol44OL44Kx44O844K344On44Oz44K6&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%231E2121&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=db9d4c34b89f20db8f9effc3bc05c7a8",
@@ -3697,7 +4554,7 @@
       "titleEn": "Copilot code review: Analysis depth and efficiency updates",
       "lang": "en",
       "publishedAt": "2026-06-25T21:41:18.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "github",
@@ -3712,6 +4569,7 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
+      "contentSnippet": "Copilot code review now uses the built-in file exploration tools available in the Copilot CLI and SDK, significantly improving review cost efficiency with no change to your existing workflow. If… The post Copilot code review: Analysis depth and efficiency updates appeared first o",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/06/612815754-d8355674-4d06-4b8a-8464-8dd875f4a0c7.jpeg",
         "origSrc": "https://github.blog/wp-content/uploads/2026/06/612815754-d8355674-4d06-4b8a-8464-8dd875f4a0c7.jpeg",
@@ -3731,7 +4589,7 @@
       "titleEn": "Enterprise-managed settings now support strictKnownMarketplaces in VS Code and GitHub Copilot CLI",
       "lang": "en",
       "publishedAt": "2026-06-25T21:30:42.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "enterprise",
@@ -3747,7 +4605,8 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "Enterprises can now control which plugins their users can install in GitHub Copilot CLI and VS Code. This setting is now available in public preview. Add strictKnownMarketplaces to your enterprise-managed… The post Enterprise-managed settings now support strictKnownMarketplaces i"
     },
     {
       "id": "3bdcc8aeb8870805",
@@ -3759,7 +4618,7 @@
       "titleEn": "Copilot in Excel: Built for the era of Frontier Finance",
       "lang": "en",
       "publishedAt": "2026-06-25T21:25:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "microsoft",
         "news",
@@ -3772,7 +4631,8 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "The post Copilot in Excel: Built for the era of Frontier Finance appeared first on Source ."
     },
     {
       "id": "666984013ce0a991",
@@ -3850,7 +4710,7 @@
       "titleEn": "Saved views for repository issues – Public Preview and adjustable row heights in projects",
       "lang": "en",
       "publishedAt": "2026-06-25T18:29:01.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "github",
@@ -3866,7 +4726,8 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "Saved views for repository issues Repository Issues pages now support saved views, making it easier for teams to create and share filtered views of their issues. With saved views, anyone… The post Saved views for repository issues – Public Preview and adjustable row heights in pr"
     },
     {
       "id": "a9f7760a346da7a4",
@@ -3878,7 +4739,7 @@
       "titleEn": "More control over your GitHub-hosted runners",
       "lang": "en",
       "publishedAt": "2026-06-25T18:16:46.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "github",
@@ -3894,7 +4755,8 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "Organizations now have more control over who can use GitHub-hosted runners in Actions. Admins can now disable the standard labels for hosted runners such as ubuntu-latest, as well as add… The post More control over your GitHub-hosted runners appeared first on The GitHub Blog ."
     },
     {
       "id": "d51479abfeaa5435",
@@ -3935,7 +4797,7 @@
       "titleEn": "Actions steps can now be run in parallel",
       "lang": "en",
       "publishedAt": "2026-06-25T16:46:09.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "github",
@@ -3950,7 +4812,8 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "GitHub Actions now supports running steps concurrently using background. Previously, all steps in a workflow ran in sequence, with each step starting only after the previous step completed. Previously, you… The post Actions steps can now be run in parallel appeared first on The G"
     },
     {
       "id": "970713edc295e906",
@@ -4098,7 +4961,7 @@
       "titleEn": "npm adds preventive account protection for high-impact accounts",
       "lang": "en",
       "publishedAt": "2026-06-25T16:02:09.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "github",
@@ -4114,7 +4977,8 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "npm now adds a temporary, preventive safeguard for high-impact accounts—those responsible for the registry’s most widely used packages—whenever it detects a sensitive account change, strengthening protection against account-takeover attacks. When… The post npm adds preventive acc"
     },
     {
       "id": "75de796fc48d6315",
@@ -4181,7 +5045,7 @@
       "titleEn": "Red Hat Enterprise Linux runner images are now in public preview",
       "lang": "en",
       "publishedAt": "2026-06-25T15:40:04.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "enterprise",
@@ -4197,7 +5061,8 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "GitHub-hosted larger runners now support Red Hat Enterprise Linux (RHEL) 9 and RHEL 10 images in public preview, introduced in partnership with Red Hat. Organizations can use these RHEL images… The post Red Hat Enterprise Linux runner images are now in public preview appeared fir"
     },
     {
       "id": "e603e14107cfbf4c",
@@ -4900,7 +5765,7 @@
       "titleEn": "Scaling cybercrime disruption through innovation and AI",
       "lang": "en",
       "publishedAt": "2026-06-24T20:54:24.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "microsoft",
         "news",
@@ -4913,6 +5778,7 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
+      "contentSnippet": "The post Scaling cybercrime disruption through innovation and AI appeared first on Source .",
       "image": {
         "src": "https://blogs.microsoft.com/wp-content/uploads/sites/5/2026/06/FY26_OML-Q4%E2%80%93PA-MGA-Scaling-Cybercrime-Disruption-Through-Innovation-and-AI-Header_02-1024x576.png",
         "origSrc": "https://blogs.microsoft.com/wp-content/uploads/sites/5/2026/06/FY26_OML-Q4%E2%80%93PA-MGA-Scaling-Cybercrime-Disruption-Through-Innovation-and-AI-Header_02-1024x576.png",
@@ -5178,7 +6044,7 @@
       "titleEn": "Enhanced data resilience with cross-region backups in Backup and DR Service",
       "lang": "en",
       "publishedAt": "2026-06-24T17:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "cloud",
         "google",
@@ -5196,6 +6062,7 @@
       "halfLife": "architecture",
       "archiveTier": "hot",
       "evergreen": true,
+      "contentSnippet": "To maintain business continuity, you need a robust data-backup strategy. While multi-region backups offer the highest availability, many organizations want a more cost-effective way to protect their data against a regional outage, but still adhere to data residency requirements. ",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/image1_4ERVGNz.max-1000x1000.png",
         "origSrc": "https://storage.googleapis.com/gweb-cloudblog-publish/images/image1_4ERVGNz.max-1000x1000.png",
@@ -5331,7 +6198,7 @@
       "titleEn": "How AI is finding more answers about rare diseases",
       "lang": "en",
       "publishedAt": "2026-06-24T16:21:07.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "microsoft",
         "news",
@@ -5343,7 +6210,8 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "The post How AI is finding more answers about rare diseases appeared first on Source ."
     },
     {
       "id": "aa6bdc97952695eb",
@@ -5567,7 +6435,7 @@
       "titleEn": "Microsoft’s New AI in Education Report highlights widespread adoption and increasing demand for support",
       "lang": "en",
       "publishedAt": "2026-06-24T13:00:04.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "microsoft",
         "news",
@@ -5578,7 +6446,8 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "The post Microsoft’s New AI in Education Report highlights widespread adoption and increasing demand for support appeared first on Source ."
     },
     {
       "id": "ad13954b08c078d1",
@@ -5891,7 +6760,7 @@
       "titleEn": "NVIDIA and AWS Collaborate to Bring AI to Production at Scale",
       "lang": "en",
       "publishedAt": "2026-06-24T00:05:37.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "news",
         "nvidia",
@@ -5908,6 +6777,7 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
+      "contentSnippet": "Building AI systems at scale is demanding, requiring low-latency inference, fast vector search, strong GPU price-performance and infrastructure that can grow without multiplying operational complexity. NVIDIA’s latest work with Amazon Web Services (AWS) addresses each of those co",
       "image": {
         "src": "https://blogs.nvidia.com/wp-content/uploads/2026/06/logo-lockup-tech-blog-aws-1920x1080-2.jpg",
         "origSrc": "https://blogs.nvidia.com/wp-content/uploads/2026/06/logo-lockup-tech-blog-aws-1920x1080-2.jpg",
@@ -6313,7 +7183,7 @@
       "titleEn": "Rethinking cloud operations with agentic observability",
       "lang": "en",
       "publishedAt": "2026-06-23T17:30:01.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "agent",
         "microsoft",
@@ -6327,7 +7197,8 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "The post Rethinking cloud operations with agentic observability appeared first on Source ."
     },
     {
       "id": "1a6b91d175c6e510",
@@ -6497,7 +7368,7 @@
       "titleEn": "Log Analytics is now Observability Analytics: Query logs and traces with SQL",
       "lang": "en",
       "publishedAt": "2026-06-23T16:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "cloud",
         "google",
@@ -6514,7 +7385,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "To effectively operate and troubleshoot applications, developers and site reliability engineers (SREs) need to understand the full context of their system's behavior, typically as part of their logging and observability tooling. Today, we’re excited to announce a variety of new c"
     },
     {
       "id": "5a4894d9c347c94c",
@@ -6526,7 +7398,7 @@
       "titleEn": "Verifiable, private AI: Google Cloud expands Confidential Computing frontiers",
       "lang": "en",
       "publishedAt": "2026-06-23T16:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "cloud",
         "google",
@@ -6544,6 +7416,7 @@
       "halfLife": "architecture",
       "archiveTier": "hot",
       "evergreen": true,
+      "contentSnippet": "Protecting sensitive data used with AI is a critical part of our commitment to providing advanced and secure cloud infrastructure. Confidential Computing cryptographically protects data in use in hardware-based Trusted Execution Environments (TEEs) with verifiable data integrity.",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/promt_encryption_diagram.max-1000x1000.png",
         "origSrc": "https://storage.googleapis.com/gweb-cloudblog-publish/images/promt_encryption_diagram.max-1000x1000.png",
@@ -6811,7 +7684,7 @@
       "titleEn": "How Businesses Are Building Specialized AI They Can Trust",
       "lang": "en",
       "publishedAt": "2026-06-23T13:00:07.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "news",
         "nvidia",
@@ -6828,6 +7701,7 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
+      "contentSnippet": "Editor’s note: This post is part of the Nemotron Labs blog series, which explores how the latest open models, datasets and training techniques help businesses build specialized AI systems and applications on NVIDIA platforms. Each post highlights practical ways to use an open sta",
       "image": {
         "src": "https://blogs.nvidia.com/wp-content/uploads/2026/06/agentic-ai-agent-toolkit-kv-r3b-1920x1080-2.png",
         "origSrc": "https://blogs.nvidia.com/wp-content/uploads/2026/06/agentic-ai-agent-toolkit-kv-r3b-1920x1080-2.png",
@@ -7036,7 +7910,7 @@
       "titleEn": "Open models, global networks: How AT&T and GSMA are accelerating telecom innovation with Gemma",
       "lang": "en",
       "publishedAt": "2026-06-23T12:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "cloud",
         "google",
@@ -7053,7 +7927,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "Telecommunications is an incredibly complex, highly specialized domain. Modern mobile networks are inherently multi-vendor, featuring diverse and often proprietary data structures. While AI has made massive leaps in general language and coding, telecom domain knowledge is rarely "
     },
     {
       "id": "39f27d284a910fee",
@@ -7233,7 +8108,7 @@
       "titleEn": "NVIDIA Powers Over 400 of the World’s 500 Fastest Supercomputers",
       "lang": "en",
       "publishedAt": "2026-06-23T09:00:38.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "news",
         "nvidia",
@@ -7249,7 +8124,8 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "NVIDIA technologies power more than 400 of the world’s 500 fastest supercomputers — 81% of the TOP500 — according to the latest rankings released this week at the ISC High Performance conference in Hamburg, Germany."
     },
     {
       "id": "2da59e261cfcb5d5",
@@ -7378,7 +8254,7 @@
       "titleEn": "NVIDIA Brings Trusted, 24/7 AI Agents to Telecom Operations",
       "lang": "en",
       "publishedAt": "2026-06-23T06:00:09.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "news",
         "nvidia",
@@ -7394,7 +8270,8 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "Telecom operators have seen remarkable returns from using generative AI to automate network management, customer care and back-office operations. Most of that impact has been task‑based: automation that speeds up predetermined steps while people manually correlate insights and di"
     },
     {
       "id": "9ff7cfad7410f3b6",
@@ -8481,7 +9358,7 @@
       "titleEn": "Boost BigQuery with Python: Managed Python UDFs now generally available",
       "lang": "en",
       "publishedAt": "2026-06-22T17:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "cloud",
         "google",
@@ -8498,7 +9375,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "SQL is the industry standard for high-performance structured data analysis. However, expressing complex procedural logic, scientific computations, advanced string manipulations, or machine learning workflows in pure SQL can be highly challenging, if not impossible. That kind of w"
     },
     {
       "id": "685645a64df03d40",
@@ -8818,7 +9696,7 @@
       "titleEn": "The Starter Tier for Google AI Studio explained",
       "lang": "en",
       "publishedAt": "2026-06-22T14:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "cloud",
         "google",
@@ -8836,6 +9714,7 @@
       "halfLife": "architecture",
       "archiveTier": "hot",
       "evergreen": true,
+      "contentSnippet": "You've got a working prototype in Google AI Studio . A React frontend, a Node.js backend, maybe a database. Now you want a live URL to share with your team, your users, or a friend who wants to try it. Google Cloud gives you a full platform for deploying production applications, ",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/updated_architecture.max-1000x1000.png",
         "origSrc": "https://storage.googleapis.com/gweb-cloudblog-publish/images/updated_architecture.max-1000x1000.png",
@@ -8855,7 +9734,7 @@
       "titleEn": "Powering the next wave of AI: Expanding capacity with our new datacenter in Pecos",
       "lang": "en",
       "publishedAt": "2026-06-22T13:52:37.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "microsoft",
         "news",
@@ -8868,7 +9747,8 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "The post Powering the next wave of AI: Expanding capacity with our new datacenter in Pecos appeared first on Source ."
     },
     {
       "id": "1120e21f88c777ad",
@@ -8947,7 +9827,7 @@
       "titleEn": "At ISC, JUPITER Shows What Exascale Science Looks Like",
       "lang": "en",
       "publishedAt": "2026-06-22T13:00:48.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "news",
         "nvidia",
@@ -8963,7 +9843,8 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "JUPITER, Europe’s first exascale supercomputer at Germany’s Forschungszentrum Jülich, runs on NVIDIA Grace Hopper Superchips and NVIDIA Quantum-X800 InfiniBand networking — and it’s had a busy year. As the international supercomputing community gathers at ISC in Hamburg this week"
     },
     {
       "id": "172a3c50f7e20874",
@@ -8975,7 +9856,7 @@
       "titleEn": "NAIRR Science Program Reshapes Scientific Research, Powered by NVIDIA AI Infrastructure",
       "lang": "en",
       "publishedAt": "2026-06-22T13:00:38.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "news",
         "nvidia",
@@ -8991,7 +9872,8 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "For the past two years, the U.S. National Science Foundation’s National Artificial Intelligence Research Resource (NAIRR) pilot program has driven innovative research across the U.S. for over 700 projects — spanning protein prediction and infectious disease outbreak management. N"
     },
     {
       "id": "1049e862c636bd43",
@@ -9003,7 +9885,7 @@
       "titleEn": "From Materials Simulation to Experimental Astronomy, New NVIDIA AI Software Unlocks Scientific Discoveries",
       "lang": "en",
       "publishedAt": "2026-06-22T13:00:20.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "news",
         "nvidia",
@@ -9019,7 +9901,8 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "At the ISC conference running in Hamburg this week, NVIDIA is introducing new software that speeds AI for science, from chemistry and materials discovery to the search for dark matter. The NVIDIA DAQIRI library and new NVIDIA ALCHEMI NIM microservices — as well as the NVIDIA cuPh"
     },
     {
       "id": "b63e2046284c5d9f",
@@ -9672,7 +10555,7 @@
       "titleEn": "Measuring What Matters with Jules",
       "lang": "en",
       "publishedAt": "2026-06-22T00:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "google",
         "jules",
@@ -9684,7 +10567,8 @@
       "category": "gemini",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "AI coding agents are rapidly shifting from reactive assistants that complete tasks when prompted to ..."
     },
     {
       "id": "3ce8d9261e142c20",
@@ -9696,11 +10580,11 @@
       "titleEn": "Build Cross-Language Multi-Agent Team with Google’s Agent Development Kit and A2A",
       "lang": "en",
       "publishedAt": "2026-06-22T00:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "agent",
-        "enterprise",
         "google",
+        "enterprise",
         "adk",
         "a2a",
         "multi-agent",
@@ -9711,7 +10595,8 @@
       "category": "gemini",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "How a Python agent and a Go agent collaborate on contract compliance using the Agent2Agent protocolY..."
     },
     {
       "id": "0f31b1d3f4455ef9",
@@ -9723,7 +10608,7 @@
       "titleEn": "Customize Cursor",
       "lang": "en",
       "publishedAt": "2026-06-22T00:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "cursor",
@@ -9736,7 +10621,8 @@
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "Plugins, skills, and MCPs let you customize Cursor for your workflows. The new Customize page brings them into one place."
     },
     {
       "id": "32c9c1dcc1f91e2f",
@@ -15183,10 +16069,10 @@
       "titleEn": "How A2A is Building a World of Collaborative Agents",
       "lang": "en",
       "publishedAt": "2026-06-18T00:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
-        "agent",
         "google",
+        "agent",
         "a2a",
         "multi-agent",
         "protocol",
@@ -15198,7 +16084,8 @@
       "category": "gemini",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "Celebrating the first anniversary of the Agent-to-Agent (A2A) protocol, this blog post highlights how the framework enables autonomous AI agents to securely collaborate and hand off tasks without the rigidity of traditional APIs. By delegating complex workflows to specialized pee"
     },
     {
       "id": "7ff96fa315614a27",
@@ -15210,7 +16097,7 @@
       "titleEn": "Improvements to Cursor Automations",
       "lang": "en",
       "publishedAt": "2026-06-18T00:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "cursor",
@@ -15224,7 +16111,8 @@
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "Cursor Automations save you time by automating repetitive tasks with always-on agents. This release introduces the **/automate** skill, new triggers for GitHub and Slack, and support for computer use."
     },
     {
       "id": "5ea30ecf68e27c27",
@@ -17769,7 +18657,7 @@
       "titleEn": "Cloud Environment Setup and Cloud Subagents in Agents Window",
       "lang": "en",
       "publishedAt": "2026-06-17T00:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "cursor",
@@ -17782,7 +18670,8 @@
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "This release introduces updates to cloud agents in the Agents Window of the Cursor desktop app."
     },
     {
       "id": "b3a2b2f9c2f15dff",
@@ -17823,7 +18712,7 @@
       "titleEn": "A2UI + MCP Apps: Combining the best of declarative and custom agentic UIs",
       "lang": "en",
       "publishedAt": "2026-06-17T00:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "agent",
         "google",
@@ -17839,7 +18728,8 @@
       "category": "gemini",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "This post introduces three architectural patterns designed to integrate Model Context Protocol (MCP) Apps and Agent-to-User Interface (A2UI) to solve the tradeoff between highly custom iframe environments and native, declarative rendering. By combining these approaches, developer"
     },
     {
       "id": "f0a66db346a7675c",
@@ -30044,7 +30934,7 @@
       "summaryEn": "Bugbot is now over 3x faster, 22% cheaper, and finds 10% more bugs per review, plus a new /review command to run reviews before you push.",
       "lang": "en",
       "publishedAt": "2026-06-10T00:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "cursor",
@@ -30056,7 +30946,8 @@
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "warm"
+      "archiveTier": "warm",
+      "contentSnippet": "Bugbot is now over 3x faster, 22% cheaper, and finds 10% more bugs per review, plus a new /review command to run reviews before you push."
     },
     {
       "id": "2b535ff6a821e343",
@@ -38926,7 +39817,7 @@
       "summaryEn": "With Design Mode in the Cursor browser, you can click, draw, or describe changes by voice to help agents update your UI.",
       "lang": "en",
       "publishedAt": "2026-06-05T00:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "cursor",
@@ -38939,7 +39830,8 @@
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "warm"
+      "archiveTier": "warm",
+      "contentSnippet": "With Design Mode in the Cursor browser, you can click, draw, or describe changes by voice to help agents update your UI."
     },
     {
       "id": "3363c5c946ca0669",
@@ -40287,7 +41179,7 @@
       "summaryEn": "With canvases , agents can create interactive artifacts like dashboards, reports, and internal tools that you can share with your team .",
       "lang": "en",
       "publishedAt": "2026-06-04T00:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "cursor",
@@ -40300,7 +41192,8 @@
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "warm"
+      "archiveTier": "warm",
+      "contentSnippet": "With canvases , agents can create interactive artifacts like dashboards, reports, and internal tools that you can share with your team ."
     },
     {
       "id": "92196149397c199d",
@@ -40314,7 +41207,7 @@
       "summaryEn": "New stores, custom tools, auto-review, and nested subagents for the TypeScript and Python SDKs, plus run correlation IDs, lighter imports, and reliability fixes.",
       "lang": "en",
       "publishedAt": "2026-06-04T00:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "cursor",
@@ -40327,7 +41220,8 @@
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "warm"
+      "archiveTier": "warm",
+      "contentSnippet": "New stores, custom tools, auto-review, and nested subagents for the TypeScript and Python SDKs, plus run correlation IDs, lighter imports, and reliability fixes."
     },
     {
       "id": "b2f5a73d1d6acb19",
@@ -42868,7 +43762,7 @@
       "summaryEn": "Cursor Enterprise has made Organizations generally available, letting customers manage multiple Cursor teams from one place with separate security, governance, budget, and feature controls per team.",
       "lang": "en",
       "publishedAt": "2026-06-03T00:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "changelog",
         "cursor",
@@ -42884,7 +43778,8 @@
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "warm"
+      "archiveTier": "warm",
+      "contentSnippet": "Enterprise customers can now manage multiple Cursor teams from one place, with different security, governance, budget, and feature controls for each. These capabilities are now generally available to all Enterprise customers."
     },
     {
       "id": "662e24c63a2bb249",
@@ -45689,7 +46584,7 @@
       "titleEn": "Finding balance in the era of tokenmaxxing",
       "lang": "en",
       "publishedAt": "2026-06-02T00:00:00.000Z",
-      "collectedAt": "2026-06-28T13:00:52.543Z",
+      "collectedAt": "2026-06-29T13:00:46.629Z",
       "tags": [
         "devops",
         "dora",
@@ -45705,7 +46600,8 @@
       "category": "research",
       "importance": 2,
       "halfLife": "architecture",
-      "archiveTier": "hot"
+      "archiveTier": "hot",
+      "contentSnippet": "A new trend has emerged in software development: &rsquo;tokenmaxxing&rsquo;, where organizations track and reward raw AI token consumption via internal leaderboards to spur adoption. While this gamification can nudge AI-hesitant developers to experiment, treating token spend as a"
     },
     {
       "id": "c774bef494c520a7",

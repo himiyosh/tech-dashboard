@@ -1,15 +1,295 @@
 {
-  "generatedAt": "2026-06-29T22:00:52.620Z",
+  "generatedAt": "2026-06-30T01:01:07.908Z",
   "month": "2026-06",
-  "count": 1886,
+  "count": 1914,
   "entries": [
+    {
+      "id": "87a0974ef27b8e1f",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/studist/articles/opentelemetry-genai-reasoning-level",
+      "title": "OpenTelemetry に reasoning.level 属性を追加しました",
+      "titleJa": "OpenTelemetry に reasoning.level 属性を追加しました",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T23:00:11.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "! この記事は、 2026年6月のスタディストブログリレー の記事です。 はじめに 最近、私が出した open-telemetry/semantic-conventions-genai に対する gen_ai.request.reasoning.level という属性を追加する PR #258 がマージされました。 この記事では、なぜこの属性が必要だと考えたのか、Issue → PR → マージに至る過程で得た学びを共有します。 open-telemetry/semantic-conventions-genai とは OpenTelemetry は、分散",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--tFoq8lAJ--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:OpenTelemetry%2520%25E3%2581%25AB%2520reasoning.level%2520%25E5%25B1%259E%25E6%2580%25A7%25E3%2582%2592%25E8%25BF%25BD%25E5%258A%25A0%25E3%2581%2597%25E3%2581%25BE%25E3%2581%2597%25E3%2581%259F%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_34:Katsuhisa%2520Kitano%2Cx_220%2Cy_108/bo_3px_solid_rgb:d6e3ed%2Cg_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzNkYzhkNDkyZTQuanBlZw==%2Cr_20%2Cw_90%2Cx_92%2Cy_102/g_south_west%2Ch_34%2Cl_default:og-publication-pro-mark-xcosax%2Cw_34%2Cx_217%2Cy_158/co_rgb:6e7b85%2Cg_south_west%2Cl_text:notosansjp-medium.otf_30:%25E3%2582%25B9%25E3%2582%25BF%25E3%2583%2587%25E3%2582%25A3%25E3%2582%25B9%25E3%2583%2588%2520Tech%2520Blog%2Cx_255%2Cy_160/bo_4px_solid_white%2Cg_south_west%2Ch_50%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EtL0FPaDE0R2dDLXBIdjhQNXozNUtaVUZGaDlsRENMSGdScFI1VmVNZUo2Mi1MPXMyNTAtYw==%2Cr_max%2Cw_50%2Cx_139%2Cy_84/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--tFoq8lAJ--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:OpenTelemetry%2520%25E3%2581%25AB%2520reasoning.level%2520%25E5%25B1%259E%25E6%2580%25A7%25E3%2582%2592%25E8%25BF%25BD%25E5%258A%25A0%25E3%2581%2597%25E3%2581%25BE%25E3%2581%2597%25E3%2581%259F%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_34:Katsuhisa%2520Kitano%2Cx_220%2Cy_108/bo_3px_solid_rgb:d6e3ed%2Cg_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzNkYzhkNDkyZTQuanBlZw==%2Cr_20%2Cw_90%2Cx_92%2Cy_102/g_south_west%2Ch_34%2Cl_default:og-publication-pro-mark-xcosax%2Cw_34%2Cx_217%2Cy_158/co_rgb:6e7b85%2Cg_south_west%2Cl_text:notosansjp-medium.otf_30:%25E3%2582%25B9%25E3%2582%25BF%25E3%2583%2587%25E3%2582%25A3%25E3%2582%25B9%25E3%2583%2588%2520Tech%2520Blog%2Cx_255%2Cy_160/bo_4px_solid_white%2Cg_south_west%2Ch_50%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EtL0FPaDE0R2dDLXBIdjhQNXozNUtaVUZGaDlsRENMSGdScFI1VmVNZUo2Mi1MPXMyNTAtYw==%2Cr_max%2Cw_50%2Cx_139%2Cy_84/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "OpenTelemetry に reasoning.level 属性を追加しました",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "64ad6a2cbdee48c5",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/ruri/articles/claude-code-permission-guard",
+      "title": "Claude Code の承認はどう決まるのか — 安全ガードの判断ロジックと --dangerously-skip-permissions",
+      "titleJa": "Claude Code の承認はどう決まるのか — 安全ガードの判断ロジックと --dangerously-skip-permissions",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T23:00:11.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "TL;DR Claude Code がツール実行のたびに出す「承認するか？」のプロンプトは、deny > ask > allow の優先順位で機械的に判定されています --dangerously-skip-permissions（= bypassPermissions モード）は承認を一括スキップしますが、root/sudo では起動できず、危険な一部操作には安全装置が残ります 承認を「賢く減らす」正攻法は、フラグで全部切ることではなく、settings.json の allow/deny ルールと PreToolUse フックを設計することです さらに"
+    },
+    {
+      "id": "1757fdc64378548b",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/acntechjp/articles/6f74e9a6aef835",
+      "title": "Claude Code の Agent Teams による、複数課題を同時並行で処理し自己改善を繰り返すAIチーム（PM＋作業者）の構築",
+      "titleJa": "Claude Code の Agent Teams による、複数課題を同時並行で処理し自己改善を繰り返すAIチーム（PM＋作業者）の構築",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T23:00:10.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "agent",
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "! この記事は、筆者の試行錯誤のメモを AI（Claude）を用いて整理・執筆 したものです。 はじめに（この記事の立ち位置） 筆者は開発作業をやるうえで、TAKT などを使って作業順序を決め打ちにすることで品質を上げていました。決まった流れに沿わせれば、抜け漏れが減って結果が安定します。 ただ、課題が増えるにつれて困りごとが出てきました。 複数の課題を同時並行で進めないと回らない場面が増えた。 TAKT を複数立ち上げると、お互いがぶつかったり、片方で得た知見をもう片方に渡すのが難しかったりしました。 毎回決まりきった流れだと、複雑な課題に融通が利かな"
+    },
+    {
+      "id": "a6384b9568d8b752",
+      "source": "google-cloud-blog",
+      "sourceType": "blog",
+      "url": "https://cloud.google.com/blog/products/databases/the-power-of-multi-model-spanner-for-the-agentic-era/",
+      "title": "Supercharging the agentic era with Spanner’s multi-model architecture",
+      "titleJa": "",
+      "titleEn": "Supercharging the agentic era with Spanner’s multi-model architecture",
+      "lang": "en",
+      "publishedAt": "2026-06-29T23:00:00.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "agent",
+        "cloud",
+        "google"
+      ],
+      "category": "gemini",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "evergreen": true,
+      "contentSnippet": "In the agentic era, the role of the database has fundamentally changed. It is no longer a passive repository; it’s a critical context engine designed to ground generative AI apps, models and power autonomous workflows. To do this effectively, databases must move beyond fragmented",
+      "image": {
+        "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/image1_XCfyf3z.max-1000x1000.png",
+        "origSrc": "https://storage.googleapis.com/gweb-cloudblog-publish/images/image1_XCfyf3z.max-1000x1000.png",
+        "alt": "Supercharging the agentic era with Spanner’s multi-model architecture",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "e289a04245cf50b4",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/headwaters/articles/aa57a319060bb5",
+      "title": "AIエージェントをシステムに組み込むとき、指示はどう書くべきか — システムプロンプトとAgent Skillの使い分け",
+      "titleJa": "AIエージェントをシステムに組み込むとき、指示はどう書くべきか — システムプロンプトとAgent Skillの使い分け",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T22:30:07.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "agent",
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに こんにちは。直近でAIエージェントを使ったサポートシステムの開発に取り組んだのですが、その際に意外と困ったのがAIにどうコンテキストを渡して、期待通りに動作を制御するかという部分で悩んだのでそれに対して考えたことを記事として残します！ Agentic Workflowでは、各エージェントに役割を与え、その振る舞いをシステムプロンプトで定義するのが基本的なアプローチです。最初のうちはシンプルで管理しやすいのですが、機能を詳細化・追加するにつれて問題が積み重なっていきます。 従来アプローチの課題 課題 内容 運用コスト システムプロンプトが肥大化し"
+    },
+    {
+      "id": "4f31ea03590dad97",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/otakumesi/items/414c2e1836df4d8e278d",
+      "title": "TypeScriptではじめるAIエージェント開発",
+      "titleJa": "TypeScriptではじめるAIエージェント開発",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T22:21:05.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "claude",
+        "qiita"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "自分でAIエージェントを作ってみたいと思ったことはありませんか？ コーディングエージェントを使っていると、「内部はどう設計されていて、どう実装されているのか」が気になることがあります。 そこで触ってみたいのが Pi SDK です。 Pi SDK は、TypeScrip..."
+    },
+    {
+      "id": "ec9c70fad7d885f4",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/moha0918_/items/8bd90fc2c1391c4769a1",
+      "title": "Claude Code v0.2.21〜v2.1.195｜CLIからマルチエージェント基盤への全履歴｜毎日Changelog解説",
+      "titleJa": "Claude Code v0.2.21〜v2.1.195｜CLIからマルチエージェント基盤への全履歴｜毎日Changelog解説",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T22:12:29.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "claude",
+        "qiita"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Claude Codeの公式Changelogをリリースから最速で翻訳・解説しています。 Claude Code の changelog を、最初の公開 v0.2.21 から最新 v2.1.195 まで一本に通して振り返ります。単純な CLI 補助だったツールが、サ..."
+    },
+    {
+      "id": "f05c021857103135",
+      "source": "qiita-cursor",
+      "sourceType": "blog",
+      "url": "https://qiita.com/REAPR1/items/7d01dce6ea9da03c0322",
+      "title": "Claude APIを使ったVS Code環境の構築方法（Docker + Cloudflare Tunnels）",
+      "titleJa": "Claude APIを使ったVS Code環境の構築方法（Docker + Cloudflare Tunnels）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T22:03:43.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "cursor",
+        "qiita"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 本記事では、Claude APIを組み込んだVS Code環境を構築する技術的なアプローチを説明します。 アーキテクチャ ユーザー → Cloudflare Tunnel → Docker Container → code-server ..."
+    },
+    {
+      "id": "cc4d2ac43e08a8da",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/k_yoshiya/articles/claude-code-remote-control-watchdog",
+      "title": "Claude Code の Remote Control が固まる問題を、Python ウォッチドッグで自動復旧する",
+      "titleJa": "Claude Code の Remote Control が固まる問題を、Python ウォッチドッグで自動復旧する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T22:00:10.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに Claude Code の Remote Control（claude --remote-control、スマホから手元のセッションを操作する機能）を使っていると、承認操作のあとにセッションが固まることがあります。スマホから承認してもターミナルに反映されず、status が waiting（承認待ち）のままロックする——手元の PC でマウスを動かせば復旧しますが、画面がスリープしていると外からは手の打ちようがありません。 この問題を、2 つのスクリプトだけで自動復旧できるようにしました。仕組みは次の 2 点だけです。 検知: Claude C"
+    },
+    {
+      "id": "df229a126f3b7892",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/Rapls/items/ac05434441e57348d5ed",
+      "title": "正直に言います。初心者のClaude Codeは、9割「頼み方」で損してます【コピペで直せる10個】",
+      "titleJa": "正直に言います。初心者のClaude Codeは、9割「頼み方」で損してます【コピペで直せる10個】",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T21:43:17.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "claude",
+        "qiita"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "先に答えから書きます。初心者がClaude Codeで消耗する原因は、ツールでも才能でもなく、ほぼ「頼み方」です。雑に頼んで、雑な答えが返って、やり直す。この往復で時間が溶けます。 逆に言えば、頼み方の型を10個だけ覚えれば、同じツールでも結果が変わります。全部コピペで使え..."
+    },
+    {
+      "id": "b1cd41dca94272e7",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/v4.0.4",
+      "title": "Cline Releases v4.0.4",
+      "titleJa": "",
+      "titleEn": "Cline Releases v4.0.4",
+      "lang": "en",
+      "publishedAt": "2026-06-29T20:32:02.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "cline",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Changed Fully remove the ClinePass feature flag so ClinePass is available everywhere in the UI — onboarding, settings, the welcome promo banner, and the credit-limit \"Switch to ClinePass\" action. Full Changelog : v4.0.3...v4.0.4",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "Cline Releases v4.0.4",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "c5a89b20f65be9e9",
+      "source": "qiita-cursor",
+      "sourceType": "blog",
+      "url": "https://qiita.com/picnic/items/6b5b1444bffe8dea64d6",
+      "title": "Cursor for iOS公開ベータ開始：スマホからAIエージェントを操作する",
+      "titleJa": "Cursor for iOS公開ベータ開始：スマホからAIエージェントを操作する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T20:09:53.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "cursor",
+        "qiita"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 2026年6月29日、AIコードエディタ「Cursor」のiOSモバイルアプリが全有料プランで公開ベータとして提供開始されました。 これまでCursorはデスクトップ専用ツールでしたが、今回のリリースによってスマートフォンからリポジトリを選択し、クラウド上でAI..."
+    },
     {
       "id": "12a424e74bc8a9b9",
       "source": "langchain-releases",
       "sourceType": "release",
       "url": "https://github.com/langchain-ai/langchain/releases/tag/langchain-openrouter%3D%3D0.2.5",
       "title": "langchain-openrouter==0.2.5",
-      "titleJa": "",
+      "titleJa": "langchain-openrouter==0.2.5 リリース",
       "titleEn": "langchain-openrouter==0.2.5",
       "lang": "en",
       "publishedAt": "2026-06-29T19:47:29.000Z",
@@ -17,7 +297,11 @@
       "tags": [
         "agent",
         "langchain",
-        "release"
+        "release",
+        "openrouter",
+        "llm",
+        "integration",
+        "patch"
       ],
       "category": "agent-fw",
       "importance": 2,
@@ -39,7 +323,7 @@
       "sourceType": "blog",
       "url": "https://aws.amazon.com/blogs/machine-learning/implement-a-backup-strategy-for-amazon-quick-sight-bi-assets/",
       "title": "Implement a backup strategy for Amazon Quick Sight BI assets",
-      "titleJa": "",
+      "titleJa": "Amazon QuickSight BIアセットのバックアップ戦略を実装する",
       "titleEn": "Implement a backup strategy for Amazon Quick Sight BI assets",
       "lang": "en",
       "publishedAt": "2026-06-29T18:15:14.000Z",
@@ -47,10 +331,15 @@
       "tags": [
         "aws",
         "bedrock",
-        "ml"
+        "ml",
+        "quicksight",
+        "backup",
+        "bi",
+        "bedrock-agent",
+        "disaster-recovery"
       ],
       "category": "agent-fw",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
       "evergreen": true,
@@ -98,6 +387,35 @@
         "width": 0,
         "height": 0,
         "source": "og"
+      }
+    },
+    {
+      "id": "d0916fed47ec5169",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/v4.0.3",
+      "title": "Cline Releases v4.0.3",
+      "titleJa": "",
+      "titleEn": "Cline Releases v4.0.3",
+      "lang": "en",
+      "publishedAt": "2026-06-29T17:41:25.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "cline",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Changed Enable the ClinePass provider for all users by removing the feature-flag gate that previously fell back to the standard Cline provider. Full Changelog : v4.0.2...v4.0.3",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "Cline Releases v4.0.3",
+        "width": 0,
+        "height": 0,
+        "source": "media"
       }
     },
     {
@@ -184,6 +502,305 @@
       "archiveTier": "hot",
       "evergreen": true,
       "contentSnippet": "In this post, you learn how to debug production agent failures using built-in observability capabilities. We walk through common failure patterns, show how to analyze agent behavior with traces and metrics, and provide structured workflows for resolving issues such as infinite lo"
+    },
+    {
+      "id": "7663c09f15f77553",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/cli-v3.0.34",
+      "title": "Cline CLI v3.0.34",
+      "titleJa": "",
+      "titleEn": "Cline CLI v3.0.34",
+      "lang": "en",
+      "publishedAt": "2026-06-29T17:06:12.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "cline",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 3,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Fixed the ClinePass upgrade notice appearing immediately after completing onboarding. Improved the wording of the ClinePass onboarding step. Streamlined the Cline provider picker by merging the subscription and usage/billing options into one and removing the credits link. Full Ch",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "Cline CLI v3.0.34",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "78dcf45071c85a97",
+      "source": "nvidia-blog",
+      "sourceType": "blog",
+      "url": "https://blogs.nvidia.com/blog/anthropic-nvidia-gb300-blackwell-ultra-microsoft-azure/",
+      "title": "Claude Meets Blackwell Ultra: Anthropic’s Models Now Run on NVIDIA GB300 in Azure",
+      "titleJa": "",
+      "titleEn": "Claude Meets Blackwell Ultra: Anthropic’s Models Now Run on NVIDIA GB300 in Azure",
+      "lang": "en",
+      "publishedAt": "2026-06-29T17:00:19.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "news",
+        "nvidia"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Anthropic’s Claude models in Microsoft Foundry — hosted on Microsoft Azure and running on NVIDIA GB300 Blackwell Ultra GPUs — are now generally available, giving Azure-native enterprises a powerful new way to build autonomous and domain-specific AI agents. As agentic AI continues"
+    },
+    {
+      "id": "494a0957d534fa13",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-06-29-claude-opus-4-8-fast-mode-is-now-in-preview-for-github-copilot",
+      "title": "Claude Opus 4.8 (fast mode) is now in preview for GitHub Copilot",
+      "titleJa": "",
+      "titleEn": "Claude Opus 4.8 (fast mode) is now in preview for GitHub Copilot",
+      "lang": "en",
+      "publishedAt": "2026-06-29T16:47:16.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "changelog",
+        "github"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Claude Opus 4.8 (fast mode) is now rolling out in preview on GitHub Copilot. Fast mode delivers significantly faster output token speeds while maintaining the same intelligence as Claude Opus… The post Claude Opus 4.8 (fast mode) is now in preview for GitHub Copilot appeared firs"
+    },
+    {
+      "id": "24d7adf77e5d01bd",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/devnestio/articles/devnestio-tool-base64-image-encoder",
+      "title": "Base64画像エンコーダーをVanilla JSで作った話（PNG/JPG/SVGをData URLに変換、ゼロ依存）",
+      "titleJa": "Base64画像エンコーダーをVanilla JSで作った話（PNG/JPG/SVGをData URLに変換、ゼロ依存）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T16:13:42.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "作ったもの 開発者向け無料ツール群「devnestio」に Base64 Image Encoder を追加しました。PNG・JPG・GIF・WebP・SVG画像をBase64 data URLに変換できます。外部ライブラリゼロ、すべてブラウザ内で完結し、画像データはサーバーに送信されません。 👉 https://base64-image-encoder.pages.dev なぜ作ったか CSSのbackground-imageやHTMLの にインライン画像を埋め込みたいとき、小さなアイコン画像をHTTP requestなしで使いたいとき、Bas..."
+    },
+    {
+      "id": "7aba78f9ea017c7f",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/devnestio/articles/devnestio-tool-base64-encoder-decoder",
+      "title": "Base64エンコーダー/デコーダーを作った — ブラウザ完結で安全に変換する",
+      "titleJa": "Base64エンコーダー/デコーダーを作った — ブラウザ完結で安全に変換する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T16:13:41.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "どんなツール？ 文字列やファイルをBase64に変換したり、Base64から元に戻したりできるシンプルなWebツールです。すべてブラウザ内で完結し、データは一切サーバーに送信されません。 👉 https://base64-encoder-decoder-3yw.pages.dev devnestio（devnestio.pages.dev）で公開している開発者向け無料ツール群の一つとして作りました。 なぜ作ったか Base64変換は地味だけど頻度が高い作業です。データURIの埋め込み、JWTのペイロード確認、APIのBasic認証ヘッダー生成、メール添"
+    },
+    {
+      "id": "cf2ef01dbe56fec1",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-06-29-restrict-issue-creation-to-collaborators-only",
+      "title": "Restrict issue creation to collaborators only",
+      "titleJa": "",
+      "titleEn": "Restrict issue creation to collaborators only",
+      "lang": "en",
+      "publishedAt": "2026-06-29T16:08:23.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "changelog",
+        "github"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Repository admins can now restrict issue creation to collaborators with write access. This gives you more control over who can open issues and helps reduce unwanted issue creation, while keeping… The post Restrict issue creation to collaborators only appeared first on The GitHub "
+    },
+    {
+      "id": "1a833b8e9ce333f7",
+      "source": "google-cloud-blog",
+      "sourceType": "blog",
+      "url": "https://cloud.google.com/blog/products/data-analytics/fraud-prevention-with-bigquery-graph/",
+      "title": "Scaling Network Analysis for Fraud Prevention with BigQuery Graph",
+      "titleJa": "",
+      "titleEn": "Scaling Network Analysis for Fraud Prevention with BigQuery Graph",
+      "lang": "en",
+      "publishedAt": "2026-06-29T16:00:00.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "cloud",
+        "google"
+      ],
+      "category": "gemini",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "evergreen": true,
+      "contentSnippet": "Based in the UK, Curve are building a financial super-app, a smart wallet that consolidates all your debit and credit cards into a single app and card, simplifying how millions of users spend, send and save money. However, operating at this scale means confronting a high-volume, "
+    },
+    {
+      "id": "b7b5ab02f74d3370",
+      "source": "google-cloud-blog",
+      "sourceType": "blog",
+      "url": "https://cloud.google.com/blog/products/data-analytics/deep-dive-into-bigquery-ai-agg-function/",
+      "title": "Synthesize the big picture and analyze trends with BigQuery's AI.AGG function",
+      "titleJa": "",
+      "titleEn": "Synthesize the big picture and analyze trends with BigQuery's AI.AGG function",
+      "lang": "en",
+      "publishedAt": "2026-06-29T16:00:00.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "cloud",
+        "google"
+      ],
+      "category": "gemini",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "evergreen": true,
+      "contentSnippet": "We recently announced the preview of the BigQuery AI.AGG() function. With AI.AGG() , you can use natural-language instructions within a single line of SQL to summarize or synthesize information over millions of rows of unstructured or even multimodal data. Summarize millions of r",
+      "image": {
+        "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/1_-_Log_Results.max-1000x1000.png",
+        "origSrc": "https://storage.googleapis.com/gweb-cloudblog-publish/images/1_-_Log_Results.max-1000x1000.png",
+        "alt": "Synthesize the big picture and analyze trends with BigQuery's AI.AGG function",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "be4e95c1f252ba9b",
+      "source": "google-cloud-blog",
+      "sourceType": "blog",
+      "url": "https://cloud.google.com/blog/products/identity-security/cloud-ciso-perspectives-how-google-cloud-security-uses-ai-internally/",
+      "title": "Cloud CISO Perspectives: How Google Cloud Security uses AI internally",
+      "titleJa": "",
+      "titleEn": "Cloud CISO Perspectives: How Google Cloud Security uses AI internally",
+      "lang": "en",
+      "publishedAt": "2026-06-29T16:00:00.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "cloud",
+        "google"
+      ],
+      "category": "gemini",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "evergreen": true,
+      "contentSnippet": "Welcome to the second Cloud CISO Perspectives for June 2026. Today, we’re discussing how we use AI to chart a path to autonomous software development lifecycle security. As with all Cloud CISO Perspectives, the contents of this newsletter are posted to the Google Cloud blog . If ",
+      "image": {
+        "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/Chris_Betz.max-1000x1000.png",
+        "origSrc": "https://storage.googleapis.com/gweb-cloudblog-publish/images/Chris_Betz.max-1000x1000.png",
+        "alt": "Cloud CISO Perspectives: How Google Cloud Security uses AI internally",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "58e606a5cbea780a",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/kai_kou/items/392f9353d4bb73b56ee5",
+      "title": "Claude Mythos 1入門 — AWS BedrockとClaude Codeで使うフロンティアセキュリティAI",
+      "titleJa": "Claude Mythos 1入門 — AWS BedrockとClaude Codeで使うフロンティアセキュリティAI",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T15:31:34.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "claude",
+        "qiita"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 2026年4月7日にAnthropicが「gated research preview」として公開した Claude Mythos Preview が、いよいよ Claude CodeとClaude Securityへの統合準備段階 に入りました。 2026年..."
+    },
+    {
+      "id": "289beee94115b7ae",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/inapvision/articles/loop-engineering-blog",
+      "title": "Claude Code の /goal を使ったら anyだらけのコードが11分で型安全になった",
+      "titleJa": "Claude Code の /goal を使ったら anyだらけのコードが11分で型安全になった",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T15:00:05.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Loop Engineeringという考え方が、開発の自動化を変えるかもしれない AIを使って開発効率を上げようとしているのに、自分がボトルネックになっていることはないでしょうか。 プロンプトを書いて、AIが応答して、自分がレビューして、修正して、また書く。このサイクルの中心に常に自分がいる。AIを使っているはずなのに、結局すべての判断と確認が自分を通る。 この問題を解決する考え方が Loop Engineering です。 Loop Engineering とは Loop Engineering とは、AIに「指示」を与えるのではなく、AIが自律的に回"
+    },
+    {
+      "id": "fa5854ef59ff29d7",
+      "source": "nvidia-blog",
+      "sourceType": "blog",
+      "url": "https://blogs.nvidia.com/blog/firefly-aerospace-nvidia-jetson-lunar-orbit/",
+      "title": "Firefly Aerospace Operates NVIDIA Jetson in Lunar Orbit for the First Time",
+      "titleJa": "",
+      "titleEn": "Firefly Aerospace Operates NVIDIA Jetson in Lunar Orbit for the First Time",
+      "lang": "en",
+      "publishedAt": "2026-06-29T15:00:04.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "news",
+        "nvidia"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot"
+    },
+    {
+      "id": "ca8a21dde14e6d70",
+      "source": "qiita-cursor",
+      "sourceType": "blog",
+      "url": "https://qiita.com/yurukusa/items/e682164cb327dbcacafd",
+      "title": "「AIにファイルを消された」のは Claude Code だけの話ではない。Cursor・Codex・Gemini CLI・Copilot の実例で見る、横断する5つの失敗の形と防ぎ方",
+      "titleJa": "「AIにファイルを消された」のは Claude Code だけの話ではない。Cursor・Codex・Gemini CLI・Copilot の実例で見る、横断する5つの失敗の形と防ぎ方",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-06-29T14:39:04.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "cursor",
+        "qiita"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "事故の話は、いつも特定のツールの話として語られる 「Claude Code に作業を消された」「rm -rf でデータが飛んだ」——こうした事故の報告は、たいてい特定のツールの問題として語られます。ですが、複数のツールの一次情報(公式の issue、本人の報告、技術メディ..."
     },
     {
       "id": "9a4234b48516493d",
@@ -334,7 +951,7 @@
       "titleEn": "Open Models, Closed Environments: Palantir Brings Secure AI to US Agencies With NVIDIA Nemotron",
       "lang": "en",
       "publishedAt": "2026-06-29T10:59:38.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "news",
         "nvidia",
@@ -396,7 +1013,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-29T09:59:22.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "claude",
         "zenn",
@@ -527,7 +1144,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-29T07:39:02.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "claude",
         "zenn",
@@ -581,7 +1198,7 @@
       "titleEn": "Cline CLI v3.0.33",
       "lang": "en",
       "publishedAt": "2026-06-29T06:53:57.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "cline",
         "release",
@@ -591,7 +1208,7 @@
         "subscription"
       ],
       "category": "cline",
-      "importance": 1,
+      "importance": 3,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "Show a ClinePass subscription URL as a fallback during onboarding so you can still subscribe if the subscription screen can't open automatically Hide the ClinePass promo for users who already have a ClinePass subscription Use an adaptive plan accent color for ClinePass prompts so",
@@ -646,7 +1263,7 @@
       "titleEn": "Cline sdk/sdk v0.0.54",
       "lang": "en",
       "publishedAt": "2026-06-29T04:39:57.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "cline",
         "release",
@@ -655,7 +1272,7 @@
         "patch-release"
       ],
       "category": "cline",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "@cline/sdk@0.0.54",
@@ -678,7 +1295,7 @@
       "titleEn": "Cline sdk/core v0.0.54",
       "lang": "en",
       "publishedAt": "2026-06-29T04:39:56.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "cline",
         "release",
@@ -687,7 +1304,7 @@
         "core"
       ],
       "category": "cline",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "@cline/core@0.0.54",
@@ -710,7 +1327,7 @@
       "titleEn": "Cline sdk/agents v0.0.54",
       "lang": "en",
       "publishedAt": "2026-06-29T04:39:54.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "cline",
         "release",
@@ -719,7 +1336,7 @@
         "npm-package"
       ],
       "category": "cline",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "@cline/agents@0.0.54",
@@ -742,7 +1359,7 @@
       "titleEn": "Cline sdk/llms v0.0.54",
       "lang": "en",
       "publishedAt": "2026-06-29T04:39:52.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "cline",
         "release",
@@ -751,7 +1368,7 @@
         "llm"
       ],
       "category": "cline",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "@cline/llms@0.0.54",
@@ -774,7 +1391,7 @@
       "titleEn": "Cline sdk/shared v0.0.54",
       "lang": "en",
       "publishedAt": "2026-06-29T04:39:51.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "cline",
         "release",
@@ -784,7 +1401,7 @@
         "shared-module"
       ],
       "category": "cline",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "@cline/shared@0.0.54",
@@ -833,7 +1450,7 @@
       "titleEn": "Cline Releases v4.0.2",
       "lang": "en",
       "publishedAt": "2026-06-29T04:14:31.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "cline",
         "release",
@@ -842,7 +1459,7 @@
         "model-support"
       ],
       "category": "cline",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "Added Add reasoning effort support (including xhigh ) for DeepSeek thinking models. Improve the ClinePass provider experience with clearer reasoning controls and model selection. Fixed Show reasoning effort controls for ClinePass models and align ClinePass model resolution with t",
@@ -886,11 +1503,11 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/ryunotezenn/articles/3da3403bb2c30f",
       "title": "「Notionで良くない？」と思ってた私がObsidianにハマって、ついにClaudeと連携させた話",
-      "titleJa": "「Notionで良くない？」と思っていた私がObsidianにハマり、ついにClaudeとMCP連携させた話",
+      "titleJa": "「Notionで良くない？」と思ってた私がObsidianにハマって、ついにClaudeと連携させた話",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-29T02:25:27.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "claude",
         "zenn",
@@ -986,7 +1603,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-29T01:28:58.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "claude",
         "zenn",
@@ -1129,6 +1746,27 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "! この記事は2026-06-29時点の公開情報だけで検証しています。結論はシンプルです。OpenMythosは「公式再現」ではありません。公開論文を組み合わせた「仮説実装」として読むのが精確です。 0. まず結論 判定: 公式モデルの正しい再現ではない。RDT・MoE・MLAなどを使った、教育的で面白い「推測アーキテクチャ」です。 1. 今回の情報源 ZennはMermaidを公式に表示できます。この記事の図は、すべてZenn上でそのままレンダリングされるMarkdown図です[1]。 2. Fable 5 / Mythos 5で公式に言えること 公式"
+    },
+    {
+      "id": "c60a3f22953ad6e1",
+      "source": "cursor-changelog",
+      "sourceType": "changelog",
+      "url": "https://cursor.com/changelog/ios-mobile-app",
+      "title": "Cursor Mobile App for iOS",
+      "titleJa": "",
+      "titleEn": "Cursor Mobile App for iOS",
+      "lang": "en",
+      "publishedAt": "2026-06-29T00:00:00.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "changelog",
+        "cursor"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Cursor for iOS is now available in public beta on all paid plans. Launch and manage always-on agents from anywhere."
     },
     {
       "id": "b43356ca2a7a4f99",
@@ -1303,7 +1941,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-06-28T22:32:49.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "cursor",
         "qiita",
@@ -3525,7 +4163,7 @@
       "titleEn": "Track total merges by adoption phase in enterprise and organization reports",
       "lang": "en",
       "publishedAt": "2026-06-26T20:55:03.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "enterprise",
@@ -3661,6 +4299,27 @@
       }
     },
     {
+      "id": "f594ca98c235d632",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-06-26-read-only-actions-cache-for-untrusted-triggers",
+      "title": "Read-only Actions cache for untrusted triggers",
+      "titleJa": "",
+      "titleEn": "Read-only Actions cache for untrusted triggers",
+      "lang": "en",
+      "publishedAt": "2026-06-26T18:31:43.000Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
+      "tags": [
+        "changelog",
+        "github"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "GitHub Actions now issues read-only cache tokens to the default branch for workflow events that can be triggered without write permissions to the repository. This applies least privilege to the… The post Read-only Actions cache for untrusted triggers appeared first on The GitHub "
+    },
+    {
       "id": "a20f3cdb5af36505",
       "source": "qiita-mcp",
       "sourceType": "blog",
@@ -3703,7 +4362,7 @@
       "titleEn": "Securing agentic AI with perimeter guardrails: What's new in VPC Service Controls",
       "lang": "en",
       "publishedAt": "2026-06-26T18:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "agent",
         "cloud",
@@ -3770,7 +4429,7 @@
       "titleEn": "MAI-Code-1-Flash for Copilot Business and Copilot Enterprise",
       "lang": "en",
       "publishedAt": "2026-06-26T16:35:06.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "enterprise",
@@ -3807,7 +4466,7 @@
       "titleEn": "From query to action: Introducing SQL alerting in Cloud Monitoring Observability Analytics",
       "lang": "en",
       "publishedAt": "2026-06-26T16:30:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "cloud",
         "google",
@@ -3845,7 +4504,7 @@
       "titleEn": "How AI is helping scientists better understand the human brain",
       "lang": "en",
       "publishedAt": "2026-06-26T16:25:13.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "microsoft",
         "news",
@@ -4114,7 +4773,7 @@
       "titleEn": "GitHub Desktop 3.6: Worktrees and deeper Copilot integration",
       "lang": "en",
       "publishedAt": "2026-06-26T10:32:58.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "github",
@@ -4896,7 +5555,7 @@
       "titleEn": "Copilot code review: Analysis depth and efficiency updates",
       "lang": "en",
       "publishedAt": "2026-06-25T21:41:18.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "github",
@@ -4931,7 +5590,7 @@
       "titleEn": "Enterprise-managed settings now support strictKnownMarketplaces in VS Code and GitHub Copilot CLI",
       "lang": "en",
       "publishedAt": "2026-06-25T21:30:42.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "enterprise",
@@ -4960,7 +5619,7 @@
       "titleEn": "Copilot in Excel: Built for the era of Frontier Finance",
       "lang": "en",
       "publishedAt": "2026-06-25T21:25:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "microsoft",
         "news",
@@ -5052,7 +5711,7 @@
       "titleEn": "Saved views for repository issues – Public Preview and adjustable row heights in projects",
       "lang": "en",
       "publishedAt": "2026-06-25T18:29:01.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "github",
@@ -5081,7 +5740,7 @@
       "titleEn": "More control over your GitHub-hosted runners",
       "lang": "en",
       "publishedAt": "2026-06-25T18:16:46.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "github",
@@ -6109,7 +6768,7 @@
       "titleEn": "Scaling cybercrime disruption through innovation and AI",
       "lang": "en",
       "publishedAt": "2026-06-24T20:54:24.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "microsoft",
         "news",
@@ -6388,7 +7047,7 @@
       "titleEn": "Enhanced data resilience with cross-region backups in Backup and DR Service",
       "lang": "en",
       "publishedAt": "2026-06-24T17:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "cloud",
         "google",
@@ -6543,7 +7202,7 @@
       "titleEn": "How AI is finding more answers about rare diseases",
       "lang": "en",
       "publishedAt": "2026-06-24T16:21:07.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "microsoft",
         "news",
@@ -6780,7 +7439,7 @@
       "titleEn": "Microsoft’s New AI in Education Report highlights widespread adoption and increasing demand for support",
       "lang": "en",
       "publishedAt": "2026-06-24T13:00:04.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "microsoft",
         "news",
@@ -7107,7 +7766,7 @@
       "titleEn": "NVIDIA and AWS Collaborate to Bring AI to Production at Scale",
       "lang": "en",
       "publishedAt": "2026-06-24T00:05:37.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "news",
         "nvidia",
@@ -7715,7 +8374,7 @@
       "titleEn": "Log Analytics is now Observability Analytics: Query logs and traces with SQL",
       "lang": "en",
       "publishedAt": "2026-06-23T16:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "cloud",
         "google",
@@ -8031,7 +8690,7 @@
       "titleEn": "How Businesses Are Building Specialized AI They Can Trust",
       "lang": "en",
       "publishedAt": "2026-06-23T13:00:07.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "news",
         "nvidia",
@@ -8456,7 +9115,7 @@
       "titleEn": "NVIDIA Powers Over 400 of the World’s 500 Fastest Supercomputers",
       "lang": "en",
       "publishedAt": "2026-06-23T09:00:38.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "news",
         "nvidia",
@@ -8602,7 +9261,7 @@
       "titleEn": "NVIDIA Brings Trusted, 24/7 AI Agents to Telecom Operations",
       "lang": "en",
       "publishedAt": "2026-06-23T06:00:09.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "news",
         "nvidia",
@@ -10180,7 +10839,7 @@
       "titleEn": "At ISC, JUPITER Shows What Exascale Science Looks Like",
       "lang": "en",
       "publishedAt": "2026-06-22T13:00:48.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "news",
         "nvidia",
@@ -10908,7 +11567,7 @@
       "titleEn": "Measuring What Matters with Jules",
       "lang": "en",
       "publishedAt": "2026-06-22T00:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "google",
         "jules",
@@ -10933,7 +11592,7 @@
       "titleEn": "Build Cross-Language Multi-Agent Team with Google’s Agent Development Kit and A2A",
       "lang": "en",
       "publishedAt": "2026-06-22T00:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "agent",
         "google",
@@ -10961,7 +11620,7 @@
       "titleEn": "Customize Cursor",
       "lang": "en",
       "publishedAt": "2026-06-22T00:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "cursor",
@@ -16435,7 +17094,7 @@
       "titleEn": "How A2A is Building a World of Collaborative Agents",
       "lang": "en",
       "publishedAt": "2026-06-18T00:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "google",
         "agent",
@@ -16463,7 +17122,7 @@
       "titleEn": "Improvements to Cursor Automations",
       "lang": "en",
       "publishedAt": "2026-06-18T00:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "cursor",
@@ -19024,7 +19683,7 @@
       "titleEn": "Cloud Environment Setup and Cloud Subagents in Agents Window",
       "lang": "en",
       "publishedAt": "2026-06-17T00:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "cursor",
@@ -19079,7 +19738,7 @@
       "titleEn": "A2UI + MCP Apps: Combining the best of declarative and custom agentic UIs",
       "lang": "en",
       "publishedAt": "2026-06-17T00:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "agent",
         "google",
@@ -31315,7 +31974,7 @@
       "summaryEn": "Bugbot is now over 3x faster, 22% cheaper, and finds 10% more bugs per review, plus a new /review command to run reviews before you push.",
       "lang": "en",
       "publishedAt": "2026-06-10T00:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "cursor",
@@ -40198,7 +40857,7 @@
       "summaryEn": "With Design Mode in the Cursor browser, you can click, draw, or describe changes by voice to help agents update your UI.",
       "lang": "en",
       "publishedAt": "2026-06-05T00:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "cursor",
@@ -41560,7 +42219,7 @@
       "summaryEn": "With canvases , agents can create interactive artifacts like dashboards, reports, and internal tools that you can share with your team .",
       "lang": "en",
       "publishedAt": "2026-06-04T00:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "cursor",
@@ -41588,7 +42247,7 @@
       "summaryEn": "New stores, custom tools, auto-review, and nested subagents for the TypeScript and Python SDKs, plus run correlation IDs, lighter imports, and reliability fixes.",
       "lang": "en",
       "publishedAt": "2026-06-04T00:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "cursor",
@@ -44144,7 +44803,7 @@
       "summaryEn": "Cursor Enterprise has made Organizations generally available, letting customers manage multiple Cursor teams from one place with separate security, governance, budget, and feature controls per team.",
       "lang": "en",
       "publishedAt": "2026-06-03T00:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "changelog",
         "cursor",
@@ -46966,7 +47625,7 @@
       "titleEn": "Finding balance in the era of tokenmaxxing",
       "lang": "en",
       "publishedAt": "2026-06-02T00:00:00.000Z",
-      "collectedAt": "2026-06-29T13:00:46.629Z",
+      "collectedAt": "2026-06-30T01:00:46.640Z",
       "tags": [
         "devops",
         "dora",

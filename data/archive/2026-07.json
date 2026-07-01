@@ -1,8 +1,80 @@
 {
-  "generatedAt": "2026-07-01T07:00:22.222Z",
+  "generatedAt": "2026-07-01T11:00:22.820Z",
   "month": "2026-07",
-  "count": 8,
+  "count": 11,
   "entries": [
+    {
+      "id": "bd890253c1f2b360",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/OnuuuumaX/items/e7dd3ae5eace801a5a88",
+      "title": "【Godot 4.x】脱出ゲームを作ってみる⑤〜Claude CodeとMCPで背景の特定領域をタップしてフェード遷移する〜",
+      "titleJa": "【Godot 4.x】脱出ゲームを作ってみる⑤〜Claude CodeとMCPで背景の特定領域をタップしてフェード遷移する〜",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-01T10:04:57.000Z",
+      "collectedAt": "2026-07-01T11:00:09.136Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに この記事は、Godot 4.xで脱出ゲームを作る連載の第5回です。 第1回：環境構築とプロジェクト作成 第2回：Claude Code + godot-mcpのセットアップ 第3回：Claude CodeとMCPでスプラッシュ画面を実装する 第4回：Claud...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkYxMjg5ZWY1NGEzZjZmZDQzZGU3NjA3MGIxZjNmMzJhNj9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MjZhYTU1OTQ3MzQ5OGVjY2FjNDFhMjYyYWZjMWU5YWM%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZlYmQ5Njg3Yjk0MzAwMWI5NzlkNmU0YWY1MGFiYWU4YTc5MWE4ZGE1JTJGb3JpZ2luYWwuanBnJTNGMTc1NjE4NjM1Mz9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1hOTMyMDU4NWNlNzJmY2QyNGJiNGQ0MDNkYTA2MGM1OA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D1be0236a1ee859e48bb82511798ad812?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwR29kb3QlMjA0LnglRTMlODAlOTElRTglODQlQjElRTUlODclQkElRTMlODIlQjIlRTMlODMlQkMlRTMlODMlQTAlRTMlODIlOTIlRTQlQkQlOUMlRTMlODElQTMlRTMlODElQTYlRTMlODElQkYlRTMlODIlOEIlRTIlOTElQTQlRTMlODAlOUNDbGF1ZGUlMjBDb2RlJUUzJTgxJUE4TUNQJUUzJTgxJUE3JUU4JTgzJThDJUU2JTk5JUFGJUUzJTgxJUFFJUU3JTg5JUI5JUU1JUFFJTlBJUU5JUEwJTk4JUU1JTlGJTlGJUUzJTgyJTkyJUUzJTgyJUJGJUUzJTgzJTgzJUUzJTgzJTk3JUUzJTgxJTk3JUUzJTgxJUE2JUUzJTgzJTk1JUUzJTgyJUE3JUUzJTgzJUJDJUUzJTgzJTg5JUUyJTgwJUE2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9YzdkOWI0ZjczODRkZWZkOWVkN2E3ODlhOTBmZjJlY2M&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBPbnV1dXVtYVgmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iMmQ3MzA2OGNkOTk3ODcyNjIxNWNmNDE5MjA0OTZhNg&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=R01P44Kz44ON44Kv44OI5qCq5byP5Lya56S-&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%231E2121&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=61bccae3819b8da78cc9c525536caca9",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkYxMjg5ZWY1NGEzZjZmZDQzZGU3NjA3MGIxZjNmMzJhNj9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MjZhYTU1OTQ3MzQ5OGVjY2FjNDFhMjYyYWZjMWU5YWM%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZlYmQ5Njg3Yjk0MzAwMWI5NzlkNmU0YWY1MGFiYWU4YTc5MWE4ZGE1JTJGb3JpZ2luYWwuanBnJTNGMTc1NjE4NjM1Mz9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1hOTMyMDU4NWNlNzJmY2QyNGJiNGQ0MDNkYTA2MGM1OA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D1be0236a1ee859e48bb82511798ad812?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwR29kb3QlMjA0LnglRTMlODAlOTElRTglODQlQjElRTUlODclQkElRTMlODIlQjIlRTMlODMlQkMlRTMlODMlQTAlRTMlODIlOTIlRTQlQkQlOUMlRTMlODElQTMlRTMlODElQTYlRTMlODElQkYlRTMlODIlOEIlRTIlOTElQTQlRTMlODAlOUNDbGF1ZGUlMjBDb2RlJUUzJTgxJUE4TUNQJUUzJTgxJUE3JUU4JTgzJThDJUU2JTk5JUFGJUUzJTgxJUFFJUU3JTg5JUI5JUU1JUFFJTlBJUU5JUEwJTk4JUU1JTlGJTlGJUUzJTgyJTkyJUUzJTgyJUJGJUUzJTgzJTgzJUUzJTgzJTk3JUUzJTgxJTk3JUUzJTgxJUE2JUUzJTgzJTk1JUUzJTgyJUE3JUUzJTgzJUJDJUUzJTgzJTg5JUUyJTgwJUE2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9YzdkOWI0ZjczODRkZWZkOWVkN2E3ODlhOTBmZjJlY2M&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBPbnV1dXVtYVgmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iMmQ3MzA2OGNkOTk3ODcyNjIxNWNmNDE5MjA0OTZhNg&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=R01P44Kz44ON44Kv44OI5qCq5byP5Lya56S-&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%231E2121&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=61bccae3819b8da78cc9c525536caca9",
+        "alt": "【Godot 4.x】脱出ゲームを作ってみる⑤〜Claude CodeとMCPで背景の特定領域をタップしてフェード遷移する〜",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "6974ab6416cd5fbb",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/FlatkeyAI/items/79ca604807a91be76050",
+      "title": "AIコーディングツール徹底比較2026 — Claude Code・Cursor・Cline・GitHub Copilotをどう使い分けるか",
+      "titleJa": "AIコーディングツール徹底比較2026 — Claude Code・Cursor・Cline・GitHub Copilotをどう使い分けるか",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-01T07:47:18.000Z",
+      "collectedAt": "2026-07-01T11:00:09.136Z",
+      "tags": [
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 2026年現在、AIコーディングツールの選択肢が増えすぎて「結局どれを使えばいいのか」と迷っている方も多いのではないでしょうか。 本記事では、Claude Code・Cursor・Cline・GitHub Copilotの4つを実際に使った上で、特徴・コスト・向..."
+    },
+    {
+      "id": "69c2936ae8d2b43e",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/renatomarinho/items/529789ca123f38a8f26a",
+      "title": "R&D・製薬研究における「情報の信頼性」を担保するためのMCP実装",
+      "titleJa": "R&D・製薬研究における「情報の信頼性」を担保するためのMCP実装",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-01T07:14:15.000Z",
+      "collectedAt": "2026-07-01T11:00:09.136Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "医療系データや医薬品の調査、あるいは臨床試験の研究現場にAIエージェントを導入する場合、最大のボトルネックはLLMによるハルシネーションと情報源の曖昧さにある。単に「web検索を使って調べて」という指示では、特定の疾患に対する試薬の状態（フェーズ）、契約組織、最新の結果を正..."
+    },
     {
       "id": "6330a1ef141177b1",
       "source": "qiita-mcp",
@@ -13,13 +85,19 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-01T04:59:23.000Z",
-      "collectedAt": "2026-07-01T07:00:09.219Z",
+      "collectedAt": "2026-07-01T11:00:09.136Z",
       "tags": [
         "mcp",
-        "qiita"
+        "qiita",
+        "kilo-cli",
+        "health-check",
+        "parallel-processing",
+        "ai-models",
+        "cli-tools",
+        "model-management"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに コーディングエージェントのOSS CLIは、Aider・OpenCode・Pi・Goose……と、この数ヶ月で選択肢が急増しました。そこに新たに加わったのが Kilo（Kilo-Org/kilocode）です。GitHub Star数は本記事執筆時点（2026年...",
@@ -38,17 +116,21 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/straydog/articles/193437bbd08d5a",
       "title": "AIエージェントに、AIエージェントが使いやすい？CLIを好きに作らせた",
-      "titleJa": "AIエージェントに、AIエージェントが使いやすい？CLIを好きに作らせた",
+      "titleJa": "AIエージェントに、AIエージェント向けCLIを自由に設計・実装させてみた",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-01T03:29:53.000Z",
-      "collectedAt": "2026-07-01T07:00:09.219Z",
+      "collectedAt": "2026-07-01T11:00:09.136Z",
       "tags": [
         "mcp",
-        "zenn"
+        "zenn",
+        "cli",
+        "ai-agent",
+        "tool-design",
+        "developer-experience"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに AIエージェントに作業を任せていると、よく使われるCLIがだいたい決まっていることに気づきます。 jq、yq、mlr、rg、duckdb などを使い、必要に応じてパイプラインでつないでデータを整形したり、検証したり、差分を見たりします。 これは便利なのですが、エージェントの文脈では少し気になる点がありました。毎回複数のCLIを組み合わせると、コマンド列も説明も長くなります。出力形式や終了コードの意味もツールごとに変わるため、エージェントがそれを解釈するためのトークンも増えます。 そこで、よく使う複数CLIの組み合わせを、契約のある一つのCLIに"
@@ -63,14 +145,19 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-01T03:05:44.000Z",
-      "collectedAt": "2026-07-01T07:00:09.219Z",
+      "collectedAt": "2026-07-01T11:00:09.136Z",
       "tags": [
         "mcp",
         "mcp-server",
-        "zenn"
+        "zenn",
+        "debugger",
+        "developer-tools",
+        "tui",
+        "cli",
+        "open-source"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "MCP サーバーを自作するときのデバッグが辛い Model Context Protocol サーバーを自分で書きはじめると、最初の壁は「動いてるかどうかが分からない」だ。標準入出力の JSON-RPC を喋るプロセスなので、console.log は protocol を壊し、stderr は見えにくい。公式の MCP Inspector は便利だが、ブ ラウザ前提で、tmux + neovim で 1 日中ターミナルにいる開発者には毎回ブラウザを開くのが摩擦になる。 tools 一覧を見て、引数を組み立てて、invoke して、JSON-RPC のリ"
@@ -85,7 +172,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-01T02:29:22.000Z",
-      "collectedAt": "2026-07-01T07:00:09.219Z",
+      "collectedAt": "2026-07-01T11:00:09.136Z",
       "tags": [
         "qiita",
         "github-copilot",
@@ -118,7 +205,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-01T02:10:36.000Z",
-      "collectedAt": "2026-07-01T07:00:09.219Z",
+      "collectedAt": "2026-07-01T11:00:09.136Z",
       "tags": [
         "qiita",
         "token-management",
@@ -151,7 +238,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-01T00:28:14.000Z",
-      "collectedAt": "2026-07-01T07:00:09.219Z",
+      "collectedAt": "2026-07-01T11:00:09.136Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -177,7 +264,7 @@
       "titleEn": "Ollama Releases v0.31.1",
       "lang": "en",
       "publishedAt": "2026-07-01T00:25:40.000Z",
-      "collectedAt": "2026-07-01T07:00:09.219Z",
+      "collectedAt": "2026-07-01T11:00:09.136Z",
       "tags": [
         "ollama",
         "release",

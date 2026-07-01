@@ -1,8 +1,80 @@
 {
-  "generatedAt": "2026-07-01T03:00:22.057Z",
+  "generatedAt": "2026-07-01T07:00:22.222Z",
   "month": "2026-07",
-  "count": 5,
+  "count": 8,
   "entries": [
+    {
+      "id": "6330a1ef141177b1",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/kai_kou/items/906e900ab41771de224d",
+      "title": "Kilo CLI実践 — roll-callで500+モデルを並列ヘルスチェックする",
+      "titleJa": "Kilo CLI実践 — roll-callで500+モデルを並列ヘルスチェックする",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-01T04:59:23.000Z",
+      "collectedAt": "2026-07-01T07:00:09.219Z",
+      "tags": [
+        "mcp",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに コーディングエージェントのOSS CLIは、Aider・OpenCode・Pi・Goose……と、この数ヶ月で選択肢が急増しました。そこに新たに加わったのが Kilo（Kilo-Org/kilocode）です。GitHub Star数は本記事執筆時点（2026年...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGNDg1NDklMkZwcm9maWxlLWltYWdlcyUyRjE1MjQxMzIyMDk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWY4Y2RhNWUwYjAyYzZhMDEwMTRiOTEwZjliYTRkZjY3%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Da8e3712665b37e28e8194f64fe1c50c4?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9S2lsbyUyMENMSSVFNSVBRSU5RiVFOCVCNyVCNSUyMCVFMiU4MCU5NCUyMHJvbGwtY2FsbCVFMyU4MSVBNzUwMCUyQiVFMyU4MyVBMiVFMyU4MyU4NyVFMyU4MyVBQiVFMyU4MiU5MiVFNCVCOCVBNiVFNSU4OCU5NyVFMyU4MyU5OCVFMyU4MyVBQiVFMyU4MiVCOSVFMyU4MyU4MSVFMyU4MiVBNyVFMyU4MyU4MyVFMyU4MiVBRiVFMyU4MSU5OSVFMyU4MiU4QiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWU0MzNiZGViMjM4ZDE3Y2UyNDljNzc1MzIzMzAzYmY1&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBrYWlfa291JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NWY2ZTkxOGU3MmQxNWJiYWRkODAzMjQ5NGVhMzVmNzI&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=96a07e68b7a09a4747d8cd57a477a952",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGNDg1NDklMkZwcm9maWxlLWltYWdlcyUyRjE1MjQxMzIyMDk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWY4Y2RhNWUwYjAyYzZhMDEwMTRiOTEwZjliYTRkZjY3%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Da8e3712665b37e28e8194f64fe1c50c4?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9S2lsbyUyMENMSSVFNSVBRSU5RiVFOCVCNyVCNSUyMCVFMiU4MCU5NCUyMHJvbGwtY2FsbCVFMyU4MSVBNzUwMCUyQiVFMyU4MyVBMiVFMyU4MyU4NyVFMyU4MyVBQiVFMyU4MiU5MiVFNCVCOCVBNiVFNSU4OCU5NyVFMyU4MyU5OCVFMyU4MyVBQiVFMyU4MiVCOSVFMyU4MyU4MSVFMyU4MiVBNyVFMyU4MyU4MyVFMyU4MiVBRiVFMyU4MSU5OSVFMyU4MiU4QiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWU0MzNiZGViMjM4ZDE3Y2UyNDljNzc1MzIzMzAzYmY1&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBrYWlfa291JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NWY2ZTkxOGU3MmQxNWJiYWRkODAzMjQ5NGVhMzVmNzI&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=96a07e68b7a09a4747d8cd57a477a952",
+        "alt": "Kilo CLI実践 — roll-callで500+モデルを並列ヘルスチェックする",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "3779ff5d3bc0631c",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/straydog/articles/193437bbd08d5a",
+      "title": "AIエージェントに、AIエージェントが使いやすい？CLIを好きに作らせた",
+      "titleJa": "AIエージェントに、AIエージェントが使いやすい？CLIを好きに作らせた",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-01T03:29:53.000Z",
+      "collectedAt": "2026-07-01T07:00:09.219Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに AIエージェントに作業を任せていると、よく使われるCLIがだいたい決まっていることに気づきます。 jq、yq、mlr、rg、duckdb などを使い、必要に応じてパイプラインでつないでデータを整形したり、検証したり、差分を見たりします。 これは便利なのですが、エージェントの文脈では少し気になる点がありました。毎回複数のCLIを組み合わせると、コマンド列も説明も長くなります。出力形式や終了コードの意味もツールごとに変わるため、エージェントがそれを解釈するためのトークンも増えます。 そこで、よく使う複数CLIの組み合わせを、契約のある一つのCLIに"
+    },
+    {
+      "id": "bcd0bc903d2b8adc",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/mutton/articles/c34184010eea8f",
+      "title": "ターミナルで動く MCP デバッガー「mcpscope」を作った — Postman for MCP",
+      "titleJa": "ターミナルで動く MCP デバッガー「mcpscope」を作った — Postman for MCP",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-01T03:05:44.000Z",
+      "collectedAt": "2026-07-01T07:00:09.219Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "MCP サーバーを自作するときのデバッグが辛い Model Context Protocol サーバーを自分で書きはじめると、最初の壁は「動いてるかどうかが分からない」だ。標準入出力の JSON-RPC を喋るプロセスなので、console.log は protocol を壊し、stderr は見えにくい。公式の MCP Inspector は便利だが、ブ ラウザ前提で、tmux + neovim で 1 日中ターミナルにいる開発者には毎回ブラウザを開くのが摩擦になる。 tools 一覧を見て、引数を組み立てて、invoke して、JSON-RPC のリ"
+    },
     {
       "id": "5968962a90a2f8d1",
       "source": "qiita-copilot",
@@ -13,12 +85,17 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-01T02:29:22.000Z",
-      "collectedAt": "2026-07-01T03:00:08.998Z",
+      "collectedAt": "2026-07-01T07:00:09.219Z",
       "tags": [
-        "qiita"
+        "qiita",
+        "github-copilot",
+        "cli",
+        "slash-commands",
+        "experimental-features",
+        "developer-tools"
       ],
       "category": "copilot",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "こんにちは、CLI の実験機能を見るとつい記事ネタにしてしまうアーキテクトのやまぱん！です 😅 補足コメントや質問、いいね、拡散、ぜひお願いします 🥺！ 間違っていたら 優しく 教えてください！ 先日、GitHub Copilot CLI 実機ヘルプから作る完全版チートシー...",
@@ -41,15 +118,28 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-01T02:10:36.000Z",
-      "collectedAt": "2026-07-01T03:00:08.998Z",
+      "collectedAt": "2026-07-01T07:00:09.219Z",
       "tags": [
-        "qiita"
+        "qiita",
+        "token-management",
+        "vscode",
+        "settings",
+        "context-window",
+        "cost-optimization"
       ],
       "category": "copilot",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
-      "contentSnippet": "概要 GitHub Copilot Chatでは、現在開いているファイル（アクティブファイル）がチャットのコンテキストとして自動的に利用される場合があります。 この機能は回答精度の向上に役立つ一方で、質問内容に直接関係のないファイルまでコンテキストへ含まれることで、不要な..."
+      "contentSnippet": "概要 GitHub Copilot Chatでは、現在開いているファイル（アクティブファイル）がチャットのコンテキストとして自動的に利用される場合があります。 この機能は回答精度の向上に役立つ一方で、質問内容に直接関係のないファイルまでコンテキストへ含まれることで、不要な...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Ftech-festa-ogp-background-4b5015b2c518c7e6b9062a7c9f5f5e90.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzODkxMCUyRjU2NmY3YTgwMDRhYTMxZjM5ODk2Yzg2Mzk0YzM0ZDZhZjQzZTYxNjQlMkZsYXJnZS5wbmclM0YxNTgwMTI1NjY3P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1kOTEwOTU4MjM1ZGQwMzdmNjFhNThmYzA1MjY4NzAwYQ%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D189c6a59d5f8e90fcf2dc7a9bf65305c?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9R2l0SHViJTIwQ29waWxvdCVFMyU4MSVBRSVFMyU4MyU4OCVFMyU4MyVCQyVFMyU4MiVBRiVFMyU4MyVCMyVFNSU4OSU4QSVFNiVCOCU5QiVFMyU4MSVBRSVFMyU4MSU5RiVFMyU4MiU4MSVFMyU4MSVBQiVFMyU4MiVBMiVFMyU4MiVBRiVFMyU4MyU4NiVFMyU4MiVBMyVFMyU4MyU5NiVFMyU4MyU5NSVFMyU4MiVBMSVFMyU4MiVBNCVFMyU4MyVBQiVFMyU4MSVBRSVFOCU4NyVBQSVFNSU4QiU5NSVFNiVCNyVCQiVFNCVCQiU5OCVFMyU4MiU5MiVFNyU4NCVBMSVFNSU4QSVCOSVFNSU4QyU5NiVFMyU4MSU5OSVFMyU4MiU4QiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzRkZGRkZGJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPThiNGQ5NGM3MjZmMzkzYzIzN2IwNjQyNzI1YWViZTNl&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBoYW11NTAyJnR4dC1jb2xvcj0lMjNGRkZGRkYmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9ZTI4NTAzYjI4NmU5NTE2ZmE5NGZhMmU3ZDEwZWEzZWQ&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=110fafeb2b6326568ffddcb06512f498",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Ftech-festa-ogp-background-4b5015b2c518c7e6b9062a7c9f5f5e90.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzODkxMCUyRjU2NmY3YTgwMDRhYTMxZjM5ODk2Yzg2Mzk0YzM0ZDZhZjQzZTYxNjQlMkZsYXJnZS5wbmclM0YxNTgwMTI1NjY3P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1kOTEwOTU4MjM1ZGQwMzdmNjFhNThmYzA1MjY4NzAwYQ%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D189c6a59d5f8e90fcf2dc7a9bf65305c?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9R2l0SHViJTIwQ29waWxvdCVFMyU4MSVBRSVFMyU4MyU4OCVFMyU4MyVCQyVFMyU4MiVBRiVFMyU4MyVCMyVFNSU4OSU4QSVFNiVCOCU5QiVFMyU4MSVBRSVFMyU4MSU5RiVFMyU4MiU4MSVFMyU4MSVBQiVFMyU4MiVBMiVFMyU4MiVBRiVFMyU4MyU4NiVFMyU4MiVBMyVFMyU4MyU5NiVFMyU4MyU5NSVFMyU4MiVBMSVFMyU4MiVBNCVFMyU4MyVBQiVFMyU4MSVBRSVFOCU4NyVBQSVFNSU4QiU5NSVFNiVCNyVCQiVFNCVCQiU5OCVFMyU4MiU5MiVFNyU4NCVBMSVFNSU4QSVCOSVFNSU4QyU5NiVFMyU4MSU5OSVFMyU4MiU4QiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzRkZGRkZGJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPThiNGQ5NGM3MjZmMzkzYzIzN2IwNjQyNzI1YWViZTNl&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBoYW11NTAyJnR4dC1jb2xvcj0lMjNGRkZGRkYmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9ZTI4NTAzYjI4NmU5NTE2ZmE5NGZhMmU3ZDEwZWEzZWQ&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=110fafeb2b6326568ffddcb06512f498",
+        "alt": "GitHub Copilotのトークン削減のためにアクティブファイルの自動添付を無効化する",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "82eefbc6f80e9d23",
@@ -61,11 +151,15 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-01T00:28:14.000Z",
-      "collectedAt": "2026-07-01T03:00:08.998Z",
+      "collectedAt": "2026-07-01T07:00:09.219Z",
       "tags": [
         "mcp",
         "mcp-server",
-        "qiita"
+        "qiita",
+        "claude-code",
+        "wsl",
+        "context-mode",
+        "ai-coding"
       ],
       "category": "mcp",
       "importance": 1,
@@ -83,7 +177,7 @@
       "titleEn": "Ollama Releases v0.31.1",
       "lang": "en",
       "publishedAt": "2026-07-01T00:25:40.000Z",
-      "collectedAt": "2026-07-01T03:00:08.998Z",
+      "collectedAt": "2026-07-01T07:00:09.219Z",
       "tags": [
         "ollama",
         "release",

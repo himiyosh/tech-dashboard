@@ -1,8 +1,203 @@
 {
-  "generatedAt": "2026-07-02T10:00:23.447Z",
+  "generatedAt": "2026-07-02T15:00:24.410Z",
   "month": "2026-07",
-  "count": 43,
+  "count": 51,
   "entries": [
+    {
+      "id": "a8eddd6b96cd5a90",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/asahide/items/a5df6cb7173c2fc534a2",
+      "title": "AWS 公式の Postgres MCP Server を Claude Desktop から Aurora につないでみた — Data API と直接接続を同一クラスタで比較",
+      "titleJa": "AWS 公式の Postgres MCP Server を Claude Desktop から Aurora につないでみた — Data API と直接接続を同一クラスタで比較",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-02T14:03:48.000Z",
+      "collectedAt": "2026-07-02T15:00:08.936Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "1. はじめに これまで OCI Database Tools MCP Server1 や SQLcl MCP2、Google の MCP Toolbox for Databases3 と、「MCP サーバ経由で LLM クライアントから DB につなぐ」検証を続けてきま...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Ftech-festa-ogp-background-4b5015b2c518c7e6b9062a7c9f5f5e90.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYyMzEzOTI2JTJGY2QxYmUzYmMxYmQ4ZTZhNzUzYjg5MTNlNzgwNGYxNGY4MjhhYzgzYyUyRnhfbGFyZ2UucG5nJTNGMTY5NjU1OTU3NT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9ZTc1MzJiZDkzMzI1NjE4MDQ2MTg4OGZhZmVhMjRkOTY%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY0M2Q5ZDBkOWYwNWM3ZDg4ZTk0OGQ2YjU0ZjdiMDcyNjg2MzM2MDg3JTJGb3JpZ2luYWwuanBnJTNGMTcyMDQwNzIxND9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz02MGM5YjEyZGUwOWI2MWYyMTAwYmM3N2JhZjkzYzQ2MA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3Df296e3e1baf6aaecc03878dc04eb211e?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QVdTJTIwJUU1JTg1JUFDJUU1JUJDJThGJUUzJTgxJUFFJTIwUG9zdGdyZXMlMjBNQ1AlMjBTZXJ2ZXIlMjAlRTMlODIlOTIlMjBDbGF1ZGUlMjBEZXNrdG9wJTIwJUUzJTgxJThCJUUzJTgyJTg5JTIwQXVyb3JhJTIwJUUzJTgxJUFCJUUzJTgxJUE0JUUzJTgxJUFBJUUzJTgxJTg0JUUzJTgxJUE3JUUzJTgxJUJGJUUzJTgxJTlGJTIwJUUyJTgwJTk0JTIwRGF0YSUyMEFQSSUyMCVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzRkZGRkZGJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTc0Yjg0NDE0ZTU4NzVkNzA1NWQwYzRmMzZhMzM5Y2Ji&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBhc2FoaWRlJnR4dC1jb2xvcj0lMjNGRkZGRkYmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9YjE5ZTEyZTU2NDE4MGNmMjE4NjI0OTgzMDhiOTdiY2Q&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=5qCq5byP5Lya56S-6YeO5p2R57eP5ZCI56CU56m25omA&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%23FFFFFF&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=b178f6871abe138cc9975f4b3a07358f",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Ftech-festa-ogp-background-4b5015b2c518c7e6b9062a7c9f5f5e90.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYyMzEzOTI2JTJGY2QxYmUzYmMxYmQ4ZTZhNzUzYjg5MTNlNzgwNGYxNGY4MjhhYzgzYyUyRnhfbGFyZ2UucG5nJTNGMTY5NjU1OTU3NT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9ZTc1MzJiZDkzMzI1NjE4MDQ2MTg4OGZhZmVhMjRkOTY%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY0M2Q5ZDBkOWYwNWM3ZDg4ZTk0OGQ2YjU0ZjdiMDcyNjg2MzM2MDg3JTJGb3JpZ2luYWwuanBnJTNGMTcyMDQwNzIxND9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz02MGM5YjEyZGUwOWI2MWYyMTAwYmM3N2JhZjkzYzQ2MA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3Df296e3e1baf6aaecc03878dc04eb211e?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QVdTJTIwJUU1JTg1JUFDJUU1JUJDJThGJUUzJTgxJUFFJTIwUG9zdGdyZXMlMjBNQ1AlMjBTZXJ2ZXIlMjAlRTMlODIlOTIlMjBDbGF1ZGUlMjBEZXNrdG9wJTIwJUUzJTgxJThCJUUzJTgyJTg5JTIwQXVyb3JhJTIwJUUzJTgxJUFCJUUzJTgxJUE0JUUzJTgxJUFBJUUzJTgxJTg0JUUzJTgxJUE3JUUzJTgxJUJGJUUzJTgxJTlGJTIwJUUyJTgwJTk0JTIwRGF0YSUyMEFQSSUyMCVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzRkZGRkZGJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTc0Yjg0NDE0ZTU4NzVkNzA1NWQwYzRmMzZhMzM5Y2Ji&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBhc2FoaWRlJnR4dC1jb2xvcj0lMjNGRkZGRkYmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9YjE5ZTEyZTU2NDE4MGNmMjE4NjI0OTgzMDhiOTdiY2Q&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=5qCq5byP5Lya56S-6YeO5p2R57eP5ZCI56CU56m25omA&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%23FFFFFF&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=b178f6871abe138cc9975f4b3a07358f",
+        "alt": "AWS 公式の Postgres MCP Server を Claude Desktop から Aurora につないでみた — Data API と直接接続を同一クラスタで比較",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "4d4a510057a4c3bb",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/yhoguro/items/666b7923be9f34ddf3f1",
+      "title": "AIがブラウザを操作する時代へ ~ Playwright MCPを触ってみた ~",
+      "titleJa": "AIがブラウザを操作する時代へ ~ Playwright MCPを触ってみた ~",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-02T13:07:07.000Z",
+      "collectedAt": "2026-07-02T15:00:08.936Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 最近、GitHub Copilot や Claude Desktop などで MCP (Model Context Protocol) という言葉を見かけるようになりました。 「最近よく聞くけど、結局MCPって何？ 」 私自身もそう思い、実際に Playwrig..."
+    },
+    {
+      "id": "b6663f4e6bdc9fef",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/sgrs38/items/d25a3411a72e0ebea005",
+      "title": "VS Code を開くと勝手に出てくる Copilot Chat を止める",
+      "titleJa": "VS Code を開くと勝手に出てくる Copilot Chat を止める",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-02T12:54:14.000Z",
+      "collectedAt": "2026-07-02T15:00:08.936Z",
+      "tags": [
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Markdown エディタとして使うつもりで VSCode をセットアップしていたら、ウィンドウの右側に Copilot Chat のパネルが勝手に開くようになっていました。 普段は PhpStorm の民で、AI は別のツールで使っており、VSCode 側の AI 機能は..."
+    },
+    {
+      "id": "0a74bfd02d8be196",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/YushiYamamoto/items/048dd35b7428fed89401",
+      "title": "GitHub Models終了(7/30)とKimi K2.7・ブラウザツールGA、Codex CLIログ漏洩修正まとめ",
+      "titleJa": "GitHub Models終了(7/30)とKimi K2.7・ブラウザツールGA、Codex CLIログ漏洩修正まとめ",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-02T12:36:41.000Z",
+      "collectedAt": "2026-07-02T15:00:08.936Z",
+      "tags": [
+        "qiita",
+        "release"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "2026年7月1日、GitHubは1日のうちに3件のCopilot/開発者向け発表を続けて出した。GitHub Modelsを7月30日に完全終了する予告、初のオープンウェイトモデルKimi K2.7 CodeのCopilot一般提供、そしてVS Code版Copilot..."
+    },
+    {
+      "id": "18c75ecc8ea0b6e1",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/tedorigawa001/items/f0eeeff9dcb78b77dcec",
+      "title": "ServiceNow Discovery を  MID Server で完走させて、Discovery→CMDB→SAM のルートを ServiceNow MCP から一気通貫でトレースしてみた",
+      "titleJa": "ServiceNow Discovery を  MID Server で完走させて、Discovery→CMDB→SAM のルートを ServiceNow MCP から一気通貫でトレースしてみた",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-02T11:53:23.000Z",
+      "collectedAt": "2026-07-02T15:00:08.936Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "ServiceNow を AI から自然言語で操作する MCP サーバーに Discovery 運用可視化ツール(実行履歴・デバイス単位の結果・ログ・MID ヘルス)を追加し、Docker Desktop 上に建てた MID Server で実スキャンを完走させて検証しまし..."
+    },
+    {
+      "id": "1eac8ffc0c352e0d",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/thashi/items/ed2373a4719dbf4417b5",
+      "title": "Amazon Bedrock MCP Gateway, MCP Server(Lambda)の作成例",
+      "titleJa": "Amazon Bedrock MCP Gateway, MCP Server(Lambda)の作成例",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-02T11:18:58.000Z",
+      "collectedAt": "2026-07-02T15:00:08.936Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "概要 本文書は、Amazon Bedrock AgentCore Gateway 経由で実行するMCPツール（lambda）を対象に、以下の3つの作業を実施した記録です。 MCP ツールの呼び出し実行（Lambda → Bedrock） AWS Agent Regist..."
+    },
+    {
+      "id": "2beabc2a34d771c5",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/syeimee/items/8366fe88b6c9cc45d31d",
+      "title": "【補足】Spec Kit 実践編 ― バグ修正・機能追加・エラー対応の進め方",
+      "titleJa": "【補足】Spec Kit 実践編 ― バグ修正・機能追加・エラー対応の進め方",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-02T10:30:56.000Z",
+      "collectedAt": "2026-07-02T15:00:08.936Z",
+      "tags": [
+        "qiita",
+        "spec-kit",
+        "bug-fix",
+        "feature-development",
+        "github-copilot",
+        "workflow"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに Spec Kit（GitHub Spec Kit）で最初の実装まで終えると、次に待っているのは「その先」です。実装したのに思ったとおり動かない、新しい機能を足したい、実行するとエラーが出る——こうした場面は、開発を続けるかぎり必ず出てきます。 この記事は、そうし...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzODk2MzIzJTJGYTQ0YTYzZTlkNTk3N2NmZTZhNWUwOTQwODZhZTg5NWQ0NDAwN2JmOSUyRnhfbGFyZ2UucG5nJTNGMTc4Mjk1NjE3ND9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9NTIwM2QxYzM1YjBkYzE2NmJiOTBlYjRjYjkxZmY4NmU%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D3d5de3785e3cdbf9e6c0720dcc840978?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwJUU4JUEzJTlDJUU4JUI2JUIzJUUzJTgwJTkxU3BlYyUyMEtpdCUyMCVFNSVBRSU5RiVFOCVCNyVCNSVFNyVCNyVBOCUyMCVFMiU4MCU5NSUyMCVFMyU4MyU5MCVFMyU4MiVCMCVFNCVCRiVBRSVFNiVBRCVBMyVFMyU4MyVCQiVFNiVBOSU5RiVFOCU4MyVCRCVFOCVCRiVCRCVFNSU4QSVBMCVFMyU4MyVCQiVFMyU4MiVBOCVFMyU4MyVBOSVFMyU4MyVCQyVFNSVBRiVCRSVFNSVCRiU5QyVFMyU4MSVBRSVFOSU4MCVCMiVFMyU4MiU4MSVFNiU5NiVCOSZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTZhYzc1MGI5Y2YwNjY0NzA1NmEyNzk2ZTQ4ZjNkZDYz&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzeWVpbWVlJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9MzU4OWZlMDZiNmQ1MDQ1YzI1NjJmMjdjYzBlMDE3NjA&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=441247ce401e5ac5661bb393085f0883",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzODk2MzIzJTJGYTQ0YTYzZTlkNTk3N2NmZTZhNWUwOTQwODZhZTg5NWQ0NDAwN2JmOSUyRnhfbGFyZ2UucG5nJTNGMTc4Mjk1NjE3ND9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9NTIwM2QxYzM1YjBkYzE2NmJiOTBlYjRjYjkxZmY4NmU%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D3d5de3785e3cdbf9e6c0720dcc840978?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwJUU4JUEzJTlDJUU4JUI2JUIzJUUzJTgwJTkxU3BlYyUyMEtpdCUyMCVFNSVBRSU5RiVFOCVCNyVCNSVFNyVCNyVBOCUyMCVFMiU4MCU5NSUyMCVFMyU4MyU5MCVFMyU4MiVCMCVFNCVCRiVBRSVFNiVBRCVBMyVFMyU4MyVCQiVFNiVBOSU5RiVFOCU4MyVCRCVFOCVCRiVCRCVFNSU4QSVBMCVFMyU4MyVCQiVFMyU4MiVBOCVFMyU4MyVBOSVFMyU4MyVCQyVFNSVBRiVCRSVFNSVCRiU5QyVFMyU4MSVBRSVFOSU4MCVCMiVFMyU4MiU4MSVFNiU5NiVCOSZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTZhYzc1MGI5Y2YwNjY0NzA1NmEyNzk2ZTQ4ZjNkZDYz&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzeWVpbWVlJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9MzU4OWZlMDZiNmQ1MDQ1YzI1NjJmMjdjYzBlMDE3NjA&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=441247ce401e5ac5661bb393085f0883",
+        "alt": "【補足】Spec Kit 実践編 ― バグ修正・機能追加・エラー対応の進め方",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "145a7fd86a3c2c4f",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/syeimee/items/3d0802a11e578da829f5",
+      "title": "【解説】Spec Kit の実装フェーズ ― `/speckit.implement` で仕様がコードになる仕組み",
+      "titleJa": "【解説】Spec Kit の実装フェーズ ― `/speckit.implement` で仕様がコードになる仕組み",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-02T10:29:59.000Z",
+      "collectedAt": "2026-07-02T15:00:08.936Z",
+      "tags": [
+        "qiita",
+        "spec-kit",
+        "github-copilot",
+        "ai-coding",
+        "code-generation",
+        "developer-tools"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに Spec Kit（GitHub Spec Kit）による仕様駆動開発では、いきなりコードを書き始めるのではなく、「憲法（原則）→ 仕様 → 計画 → タスク」という順で設計を固めてから実装に入ります。その最後の工程が /speckit.implement、つまり..."
+    },
     {
       "id": "4ba35d8ef697716c",
       "source": "qiita-mcp",
@@ -701,7 +896,7 @@
       "titleEn": "Meta’s AI Storage Blueprint at Scale",
       "lang": "en",
       "publishedAt": "2026-07-01T16:00:36.000Z",
-      "collectedAt": "2026-07-02T07:00:09.017Z",
+      "collectedAt": "2026-07-02T15:00:08.936Z",
       "tags": [
         "engineering",
         "meta",
@@ -1095,7 +1290,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-01T03:29:53.000Z",
-      "collectedAt": "2026-07-02T07:00:09.017Z",
+      "collectedAt": "2026-07-02T15:00:08.936Z",
       "tags": [
         "mcp",
         "zenn",
@@ -1147,7 +1342,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-01T03:05:44.000Z",
-      "collectedAt": "2026-07-02T07:00:09.017Z",
+      "collectedAt": "2026-07-02T15:00:08.936Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -1266,7 +1461,7 @@
       "titleEn": "Ollama Releases v0.31.1",
       "lang": "en",
       "publishedAt": "2026-07-01T00:25:40.000Z",
-      "collectedAt": "2026-07-02T07:00:09.017Z",
+      "collectedAt": "2026-07-02T15:00:08.936Z",
       "tags": [
         "ollama",
         "release",

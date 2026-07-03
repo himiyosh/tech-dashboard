@@ -1,8 +1,81 @@
 {
-  "generatedAt": "2026-07-03T11:00:33.212Z",
+  "generatedAt": "2026-07-03T15:00:33.448Z",
   "month": "2026-07",
-  "count": 69,
+  "count": 72,
   "entries": [
+    {
+      "id": "eaed3279d0fa6d02",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/yukisnow0704/items/713393bc29571d0bb76d",
+      "title": "【続編】ノーガードだったMCPサーバーに認証をつける（Bearer Token編）",
+      "titleJa": "【続編】ノーガードだったMCPサーバーに認証をつける（Bearer Token編）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-03T13:52:56.000Z",
+      "collectedAt": "2026-07-03T15:00:26.937Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 前回まで作ってきた Todo MCP サーバー、実は致命的な問題があります。 誰でも繋げて、誰でも TODO を読み書きできる状態です。 app = mcp.streamable_http_app() このまま uvicorn で起動すると、ポートにアクセスで...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMTExNDg3JTJGcHJvZmlsZS1pbWFnZXMlMkYxNzgyMDM1Mjc5P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0wODhhM2UwMWNmODkyMDMzMjQzYjg0ZmE3YjgzYmIzMA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dddc77243e475df1e36465a67fa1038ec?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwJUU3JUI2JTlBJUU3JUI3JUE4JUUzJTgwJTkxJUUzJTgzJThFJUUzJTgzJUJDJUUzJTgyJUFDJUUzJTgzJUJDJUUzJTgzJTg5JUUzJTgxJUEwJUUzJTgxJUEzJUUzJTgxJTlGTUNQJUUzJTgyJUI1JUUzJTgzJUJDJUUzJTgzJTkwJUUzJTgzJUJDJUUzJTgxJUFCJUU4JUFBJThEJUU4JUE4JUJDJUUzJTgyJTkyJUUzJTgxJUE0JUUzJTgxJTkxJUUzJTgyJThCJUVGJUJDJTg4QmVhcmVyJTIwVG9rZW4lRTclQjclQTglRUYlQkMlODkmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0wNDRiMGY1Zjg4NTg2YjM2YmQzOWY4ZjE0ZDVhNzNhMw&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5dWtpc25vdzA3MDQmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iYjg5N2M5N2Y5MjRjMzlmZTIwYmFjNWNiZmI2ZWM4OA&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=8ee922564b73c3474fd76c6cbd27bf62",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMTExNDg3JTJGcHJvZmlsZS1pbWFnZXMlMkYxNzgyMDM1Mjc5P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0wODhhM2UwMWNmODkyMDMzMjQzYjg0ZmE3YjgzYmIzMA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dddc77243e475df1e36465a67fa1038ec?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwJUU3JUI2JTlBJUU3JUI3JUE4JUUzJTgwJTkxJUUzJTgzJThFJUUzJTgzJUJDJUUzJTgyJUFDJUUzJTgzJUJDJUUzJTgzJTg5JUUzJTgxJUEwJUUzJTgxJUEzJUUzJTgxJTlGTUNQJUUzJTgyJUI1JUUzJTgzJUJDJUUzJTgzJTkwJUUzJTgzJUJDJUUzJTgxJUFCJUU4JUFBJThEJUU4JUE4JUJDJUUzJTgyJTkyJUUzJTgxJUE0JUUzJTgxJTkxJUUzJTgyJThCJUVGJUJDJTg4QmVhcmVyJTIwVG9rZW4lRTclQjclQTglRUYlQkMlODkmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0wNDRiMGY1Zjg4NTg2YjM2YmQzOWY4ZjE0ZDVhNzNhMw&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5dWtpc25vdzA3MDQmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iYjg5N2M5N2Y5MjRjMzlmZTIwYmFjNWNiZmI2ZWM4OA&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=8ee922564b73c3474fd76c6cbd27bf62",
+        "alt": "【続編】ノーガードだったMCPサーバーに認証をつける（Bearer Token編）",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "b27e5471477a8ce4",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/yukisnow0704/items/1a488f9de16db0e89d84",
+      "title": "【続編】MCPはToolsだけじゃない！Resources・Promptsまで実装して理解するチュートリアル",
+      "titleJa": "【続編】MCPはToolsだけじゃない！Resources・Promptsまで実装して理解するチュートリアル",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-03T13:51:06.000Z",
+      "collectedAt": "2026-07-03T15:00:26.937Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 前回、MCPを実装理解！Python + FastAPIでAIアシスタントを開発するチュートリアル で Todo アプリを題材に MCP の Tools を実装しました。 ただ、実は MCP には Tools 以外にも重要な機能が2つあります。 Resour..."
+    },
+    {
+      "id": "066dd5b824017efc",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/ai-artificial-intelligence/961265/midjourney-medical-ultrasound-scanner-behind-the-scenes-video",
+      "title": "A behind-the-scenes look at Midjourney’s medical scanner leaves many questions unanswered",
+      "titleJa": "",
+      "titleEn": "A behind-the-scenes look at Midjourney’s medical scanner leaves many questions unanswered",
+      "lang": "en",
+      "publishedAt": "2026-07-03T11:49:10.000Z",
+      "collectedAt": "2026-07-03T15:00:26.937Z",
+      "tags": [
+        "news",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Midjourney has shown more of its futuristic medical scanner. It still hasn't shown much proof it works. The AI startup, best known for generating images, released a behind-the-scenes video of its dunk-tank ultrasound scanner, which it plans to deploy in spas and hopes will transf"
+    },
     {
       "id": "981e28b1e2528484",
       "source": "qiita-mcp",
@@ -95,7 +168,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-03T05:23:19.000Z",
-      "collectedAt": "2026-07-03T11:00:26.843Z",
+      "collectedAt": "2026-07-03T15:00:26.937Z",
       "tags": [
         "qiita",
         "azure",
@@ -188,7 +261,7 @@
       "titleEn": "OpenHands cloud-1.40.1",
       "lang": "en",
       "publishedAt": "2026-07-02T23:27:53.000Z",
-      "collectedAt": "2026-07-03T11:00:26.843Z",
+      "collectedAt": "2026-07-03T15:00:26.937Z",
       "tags": [
         "openhands",
         "release",
@@ -220,7 +293,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-02T21:00:05.000Z",
-      "collectedAt": "2026-07-03T11:00:26.843Z",
+      "collectedAt": "2026-07-03T15:00:26.937Z",
       "tags": [
         "mcp",
         "zenn",
@@ -635,7 +708,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-02T12:54:14.000Z",
-      "collectedAt": "2026-07-03T11:00:26.843Z",
+      "collectedAt": "2026-07-03T15:00:26.937Z",
       "tags": [
         "qiita",
         "vscode",
@@ -660,7 +733,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-02T12:36:41.000Z",
-      "collectedAt": "2026-07-03T11:00:26.843Z",
+      "collectedAt": "2026-07-03T15:00:26.937Z",
       "tags": [
         "qiita",
         "release",
@@ -740,7 +813,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-02T10:30:56.000Z",
-      "collectedAt": "2026-07-03T11:00:26.843Z",
+      "collectedAt": "2026-07-03T15:00:26.937Z",
       "tags": [
         "qiita",
         "spec-kit",
@@ -1464,7 +1537,7 @@
       "titleEn": "Meta’s AI Storage Blueprint at Scale",
       "lang": "en",
       "publishedAt": "2026-07-01T16:00:36.000Z",
-      "collectedAt": "2026-07-03T11:00:26.843Z",
+      "collectedAt": "2026-07-03T15:00:26.937Z",
       "tags": [
         "engineering",
         "meta",
@@ -2029,7 +2102,7 @@
       "titleEn": "Ollama Releases v0.31.1",
       "lang": "en",
       "publishedAt": "2026-07-01T00:25:40.000Z",
-      "collectedAt": "2026-07-03T11:00:26.843Z",
+      "collectedAt": "2026-07-03T15:00:26.937Z",
       "tags": [
         "ollama",
         "release",

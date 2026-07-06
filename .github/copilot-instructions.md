@@ -938,6 +938,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: `scripts/copilot-device-login.mjs` (npm run auth:device) で editor Copilot client_id `Iv1.b507a08c87ecfe98` (public) に device flow → `ghu_` を `.env.local` (mode 600・gitignore) に保存。token は非表示、`/copilot_internal/v2/token` で検証。backfill は `tsx --env-file-if-exists=.env.local` で読込。opus-4.8 は `/chat/completions` で実利用可・要約品質良好 (888+20 ok / 0 fail)。要約のみ短契約なので推論枯渇 (LL-106) なし。
 - **教訓**: ローカル一括生成の認証は `ghu_` 必須。device flow が ghu_ 取得手段。secret は .env.local 600 + gitignore、画面非表示。一時的 502 は resume cache で再実行 retry。
 
+### LL-124: 本番デプロイ検証は取得手段のアーティファクトを疑う (per-deploy URL と compound curl の落とし穴)
+- **事象**: PR #121 (Timeline 右 rail) を main マージ後の本番検証で、右 rail が本番 HTML に無い (16KB・`<aside>` 0 件・"TODAY" のみ) ように見え、レンダリング不具合を疑って調査に時間を浪費した。実際にはレールは正しく本番稼働 (219KB フル HTML に `aside.right home-right`・カード3枚・`home-source-row` 5行) しており、不具合は存在しなかった。
+- **根本原因**: 2 つの検証アーティファクトの合わせ技。(a) Cloudflare Pages の per-deploy サブドメイン `https://<deploy-id>.<project>.pages.dev/` は仕様上 `<title>Deployment Not Found</title>` の ~16KB HTML を返す (実デプロイ内容ではない)。内容検証にこの URL を使ったため空に見えた。(b) 1 つの複合 bash コマンド内で同一 URL を `curl` で何度も連鎖 (for ループでマーカーごとに再 fetch 等) すると、大きなページで body が部分取得・切り詰めされ、存在する要素を「無い」と誤判定した。
+- **対策**: (1) デプロイ内容の検証は per-deploy サブドメインを使わず、カスタムドメイン (`techdb.studio344.net`, `cf-cache-status: DYNAMIC` で origin 直取得) かメイン pages.dev エイリアスを使う。(2) HTML マーカー確認は 1 回だけ fetch してファイル (`/tmp/live-home.html`) に保存し、そのファイルを繰り返し grep する。1 コマンド内で同一 URL を複数回 curl しない。(3) ビルド成否は CF API の deployment stages (queued/init/clone/build/deploy が全 success) で確認し、HTML の見た目だけで判断しない。完了ゲートは「URL 200」「CF stages success」「カスタムドメインのフル HTML に marker あり」の 3 点を分けて確認する。
+- **教訓**: 「本番に要素が無い」と結論する前に取得手段のアーティファクトを疑う (LL-108 の wrangler local vs remote、Hook 5 不在断定ゲートと同型)。大きなページの要素有無は 1-fetch-to-file + grep で確定し、compound curl のパイプ切り詰めや per-deploy URL の "Deployment Not Found" を実バグと誤認しない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -73,18 +73,31 @@ export function scoreImportance(raw: RawEntry, source: SourceDefinition): Import
   return 1;
 }
 
+const SNIPPET_CONTEXT_MAX = 280;
+
 /**
- * Initial summary used before Copilot summarization or cache enrichment runs.
+ * Extract the raw RSS/Atom snippet to keep as AI input context for the
+ * summarizer (NOT for display).
+ *
+ * A raw snippet must never be written into summaryJa/summaryEn. Doing so
+ * (the previous behavior) had two failure modes that the user reported as
+ * "summaries are always truncated and aren't real summaries":
+ *   1. Slicing the snippet to a fixed length (120/200 chars) cuts it
+ *      mid-sentence, so the UI shows a truncated excerpt, not a summary.
+ *   2. A non-empty summaryJa/summaryEn makes the "needs generation" gates
+ *      (harness summarize.ts + worker summary-queue.ts) treat the entry as
+ *      already summarized, so it is never queued for a real AI summary and
+ *      stays stuck on the truncated excerpt forever (snippet-masquerade).
+ *
+ * Instead we leave summaryJa/summaryEn empty so the gates flag the entry, the
+ * deterministic bilingual pending fallback fills them before publish
+ * (R-013/LL-028), and the AI queue replaces them with a real summary. The raw
+ * snippet is preserved separately in `contentSnippet` and fed to the prompt
+ * builders as collected context to improve summary quality (especially for the
+ * terse Japanese release/Q&A titles this most affects).
  */
-function placeholderSummary(raw: RawEntry, lang: Lang): { ja: string; en: string } {
-  const snippet = (raw.contentSnippet ?? "").replace(/\s+/g, " ").trim();
-  const title = raw.title.replace(/\s+/g, " ").trim();
-  const base = snippet || title;
-  const short = base.slice(0, lang === "ja" ? 120 : 200);
-  if (lang === "ja") {
-    return { ja: short, en: raw.title };
-  }
-  return { ja: "", en: short };
+function snippetContext(raw: RawEntry): string {
+  return (raw.contentSnippet ?? "").replace(/\s+/g, " ").trim().slice(0, SNIPPET_CONTEXT_MAX);
 }
 
 /**
@@ -92,22 +105,81 @@ function placeholderSummary(raw: RawEntry, lang: Lang): { ja: string; en: string
  * just the version number (e.g. "v3.8.0", "1.104.0", "Release 2026.04.21").
  * Such titles are useless on the dashboard because the reader cannot tell
  * which product the release belongs to. Prefix them with the source's
- * display name so the card reads e.g. "Cline Releases — v3.8.0".
+ * display name so the card reads e.g. "Cline Releases v3.8.0".
  */
 const VERSION_ONLY_RE = /^(?:release\s+)?(?:v?\d+(?:\.\d+){1,3}(?:[-+][0-9a-z.\-]+)?|\d{4}[-/.]\d{1,2}[-/.]\d{1,2})$/i;
+/** Bare version with a trailing release date, e.g. "1.7.0 - 2026-05-01". */
+const VERSION_DATE_RE = /^v?\d+(?:\.\d+){1,3}\s*[-–]\s*\d{4}[-/.]\d{1,2}[-/.]\d{1,2}$/i;
+/** Any embedded semantic-ish version token (used to detect component tags). */
+const HAS_VERSION_RE = /v?\d+(?:\.\d+){1,3}/;
+/** "Word v1.2.3" or "Word: 1.2.3" — a component name plus a version, nothing else. */
+const WORD_VERSION_RE = /^[A-Za-z][\w.+-]*[:\s]\s*v?\d+(?:\.\d+){1,3}(?:[-+][0-9a-z.\-]+)?$/;
+/** Nightly/dev tags embed a 14-digit YYYYMMDDHHMMSS stamp, e.g.
+ * "nightly-main-20260622175622-ee59f8170698". */
+const NIGHTLY_TS_RE = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})\d{2}/;
 
-function decorateReleaseTitle(rawTitle: string, source: SourceDefinition): string {
+/**
+ * Strip a trailing "Releases"/"Changelog"/"Blog" noun from a source's display
+ * name so it can be used as a short product brand prefix ("Cline Releases" →
+ * "Cline"). Falls back to the full display name when nothing remains.
+ */
+function brandName(source: SourceDefinition): string {
+  const stripped = source.displayName.replace(/\s+(?:releases?|changelog|blog)$/i, "").trim();
+  return stripped || source.displayName;
+}
+
+/** "sdk/core/v0.0.53" → "sdk/core v0.0.53"; "cloud: 1.40.0" → "cloud 1.40.0". */
+function prettyComponentTag(tag: string): string {
+  const slash = tag.match(/^(.*)\/(v?\d+(?:\.\d+){1,3}(?:[-+][0-9a-z.\-]+)?)$/);
+  if (slash) return `${slash[1]} ${slash[2]}`;
+  const colon = tag.match(/^([A-Za-z][\w.+-]*):\s*(v?\d+(?:\.\d+){1,3}(?:[-+][0-9a-z.\-]+)?)$/);
+  if (colon) return `${colon[1]} ${colon[2]}`;
+  return tag;
+}
+
+/**
+ * Make release/changelog titles identify their product. Monorepo release feeds
+ * (e.g. cline/cline) publish raw git tags such as "CLI v3.0.31",
+ * "sdk/core/v0.0.53" or "nightly-main-20260622175622-…" that give the reader no
+ * idea which product (or even which CLI) the entry is about. We prefix a short
+ * brand and tidy the tag, while leaving descriptive release notes
+ * ("ui: Fix … (#123)") and already-branded titles ("langchain-core==1.4.0")
+ * untouched. Pure idempotent: re-running on branded output is a no-op.
+ */
+export function decorateReleaseTitle(rawTitle: string, source: SourceDefinition): string {
   if (source.sourceType !== "release" && source.sourceType !== "changelog") {
     return rawTitle;
   }
   const trimmed = rawTitle.trim();
   if (!trimmed) return rawTitle;
-  // Already contains the source name (case-insensitive) → leave as is.
-  if (trimmed.toLowerCase().includes(source.displayName.toLowerCase())) {
+  const brand = brandName(source);
+  // Already identifies the product (full display name or short brand) → leave.
+  if (
+    trimmed.toLowerCase().includes(source.displayName.toLowerCase()) ||
+    trimmed.toLowerCase().includes(brand.toLowerCase())
+  ) {
     return rawTitle;
   }
-  if (!VERSION_ONLY_RE.test(trimmed)) return rawTitle;
-  return `${source.displayName} ${trimmed}`;
+  // Nightly/dev build tag → "Brand Nightly (YYYY-MM-DD HH:MM)".
+  if (/\bnightly\b/i.test(trimmed)) {
+    const ts = trimmed.match(NIGHTLY_TS_RE);
+    if (ts) {
+      const [, y, mo, da, h, mi] = ts;
+      return `${brand} Nightly (${y}-${mo}-${da} ${h}:${mi})`;
+    }
+  }
+  // Bare version (optionally with a release date) → "Display Name v1.2.3".
+  if (VERSION_ONLY_RE.test(trimmed) || VERSION_DATE_RE.test(trimmed)) {
+    return `${source.displayName} ${trimmed}`;
+  }
+  // Clean component tag (single token, or "Word v1.2.3") → prefix the brand.
+  const singleToken = !/\s/.test(trimmed);
+  const isComponentTag =
+    (singleToken && HAS_VERSION_RE.test(trimmed)) || WORD_VERSION_RE.test(trimmed);
+  if (isComponentTag) {
+    return `${brand} ${prettyComponentTag(trimmed)}`;
+  }
+  return rawTitle;
 }
 
 function resolveCategory(raw: RawEntry, source: SourceDefinition): Category {
@@ -135,7 +207,7 @@ export function normalize(
   raw = decoratedRaw;
   const lang = detectLang(`${raw.title} ${raw.contentSnippet ?? ""}`, source.defaultLang);
   const category = resolveCategory(raw, source);
-  const summary = placeholderSummary(raw, lang);
+  const contentSnippet = snippetContext(raw);
   const image = raw.mediaThumbnail
     ? {
       src: raw.mediaThumbnail,
@@ -169,8 +241,8 @@ export function normalize(
     title: raw.title,
     titleJa: lang === "ja" ? raw.title : "",
     titleEn: lang === "en" ? raw.title : "",
-    summaryJa: summary.ja,
-    summaryEn: summary.en,
+    summaryJa: "",
+    summaryEn: "",
     lang,
     publishedAt: raw.publishedAt ?? collectedAt,
     collectedAt,
@@ -180,6 +252,7 @@ export function normalize(
     halfLife,
     archiveTier,
     ...(evergreen ? { evergreen: true } : {}),
+    ...(contentSnippet ? { contentSnippet } : {}),
     ...(image ? { image } : {}),
   };
 }

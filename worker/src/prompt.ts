@@ -17,6 +17,7 @@ export type PromptEntry = Pick<
       | "titleEn"
       | "summaryJa"
       | "summaryEn"
+      | "contentSnippet"
       | "bodyJa"
       | "bodyEn"
       | "lang"
@@ -63,6 +64,12 @@ function sourceContextLines(e: PromptEntry): string[] {
   if (e.titleEn) lines.push(`English title candidate: ${compact(e.titleEn, 160)}`);
   if (e.publishedAt) lines.push(`公開日時: ${e.publishedAt}`);
   if (e.tags?.length) lines.push(`既存タグ: ${e.tags.slice(0, 8).join(", ")}`);
+  // Raw pre-summarization snippet is the primary material for a real summary.
+  // Prefer the dedicated field; fall back to legacy summaryJa/summaryEn that
+  // still hold a raw snippet for entries collected before the field existed.
+  if (e.contentSnippet && !isFallbackText(e.contentSnippet)) {
+    lines.push(`元記事の抜粋 (要約の主材料): ${compact(e.contentSnippet, 700)}`);
+  }
   if (e.summaryJa && !isFallbackText(e.summaryJa)) {
     lines.push(`既存日本語メモ: ${compact(e.summaryJa, 420)}`);
   }
@@ -159,10 +166,12 @@ export function buildSummaryPrompt(e: PromptEntry): string {
     ``,
     `Return exactly one valid JSON object with ONLY these fields. All strings must be non-empty.`,
     `Do NOT write a body or any long-form text. Keep the whole response short.`,
+    `Write a genuine summary of what the article is about and why it matters -- do NOT copy or truncate the opening sentence of the excerpt.`,
+    `Every summary must be grammatically complete: never cut off mid-sentence or mid-word, and always end with proper punctuation.`,
     `{`,
     `  "titleJa": "Natural Japanese title. Keep product/company names and version numbers unchanged.",`,
-    `  "summaryJa": "Japanese summary, 80-140 chars.",`,
-    `  "summaryEn": "English summary, 90-170 chars.",`,
+    `  "summaryJa": "Complete Japanese summary in 1-2 full sentences (90-150 chars). State what changed and why it matters.",`,
+    `  "summaryEn": "Complete English summary in 1-2 full sentences (100-180 chars). State what changed and why it matters.",`,
     `  "importance": 1 | 2 | 3,`,
     `  "extraTags": ["lowercase-kebab", ...]`,
     `}`,

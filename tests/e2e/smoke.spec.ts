@@ -25,7 +25,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".banner-quick-links").getByRole("link", { name: /arXiv/ })).toBeVisible();
     await expect(page.locator("section.stats")).toHaveCount(0);
     // Timeline right rail: the home page is now a 3-column .layout with a right
-    // insight rail so article cards don't sprawl full-width (間延び fix, LL-118).
+    // insight rail so article cards don't sprawl full-width (間延び fix, LL-122).
     // The rail is visible at the desktop test viewport with its three cards.
     const homeRail = page.locator(".layout aside.right.home-right");
     await expect(homeRail).toBeVisible();

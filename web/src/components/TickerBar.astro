@@ -273,12 +273,13 @@ const catColorOf = (slug: string): string =>
   :global(html[data-lang="en"]) .tb-title.i18n-ja { display: none !important; }
   :global(html:not([data-lang="en"])) .tb-title.i18n-en { display: none !important; }
 
-  @media (max-width: 720px) {
-    .tb-src { display: none; }
+  /* Tablet + mobile: stack the ticker into two rows so the headline title is
+     never squeezed by the LIVE label / controls. Row 1: label + controls.
+     Row 2: full-width headline. Triggers across the whole tablet "squeeze
+     zone" (721-960px), not just phones, otherwise the title is cut to a few
+     characters and the article is unidentifiable. */
+  @media (max-width: 960px) {
     .tb-counter { display: none; }
-
-    /* Two-row layout: meta + controls on row 1, full-width title on row 2.
-       Without this, the title gets squeezed to a few characters. */
     .tb-inner {
       display: grid;
       grid-template-columns: auto 1fr auto;
@@ -287,7 +288,7 @@ const catColorOf = (slug: string): string =>
         "stage stage  stage";
       column-gap: 8px;
       row-gap: 4px;
-      padding: 8px 12px;
+      padding: 10px 16px;
       align-items: center;
     }
     .tb-label { grid-area: label; padding-right: 0; border-right: none; }
@@ -297,9 +298,12 @@ const catColorOf = (slug: string): string =>
       width: 100%;
       min-width: 0;
     }
-    .tb-slide {
-      gap: 6px;
-    }
+  }
+
+  @media (max-width: 720px) {
+    .tb-src { display: none; }
+    .tb-inner { padding: 8px 12px; }
+    .tb-slide { gap: 6px; }
     .tb-cat { font-size: 9px; padding: 1px 4px; }
     .tb-title { font-size: 12.5px; line-height: 1.35; }
   }

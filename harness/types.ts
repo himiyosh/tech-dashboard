@@ -109,6 +109,15 @@ export interface NormalizedEntry {
   titleEn: string;
   summaryJa: string;
   summaryEn: string;
+  /**
+   * Raw pre-summarization content snippet (RSS/Atom description), kept ONLY as
+   * AI input context for the summarizer. NOT displayed in the UI. A raw snippet
+   * must never be placed in summaryJa/summaryEn: slicing it to a fixed length
+   * produces mid-sentence truncation and makes the "needs generation" gate
+   * treat the entry as already summarized, so it never receives a real AI
+   * summary (snippet-masquerade bug). Optional / may be dropped once unneeded.
+   */
+  contentSnippet?: string;
   /** Long-form magazine-style article body in Japanese (optional). */
   bodyJa?: string;
   /** Long-form magazine-style article body in English (optional). */

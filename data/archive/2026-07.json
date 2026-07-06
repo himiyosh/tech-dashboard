@@ -1,8 +1,74 @@
 {
-  "generatedAt": "2026-07-06T03:00:35.227Z",
+  "generatedAt": "2026-07-06T08:01:04.647Z",
   "month": "2026-07",
-  "count": 127,
+  "count": 137,
   "entries": [
+    {
+      "id": "46c695d5dfb056cc",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/rkJun/items/dc438517495a93cb7ae6",
+      "title": "VS Code Remote-SSH がタイムアウトする原因は、リモート側の fish シェルだった",
+      "titleJa": "VS Code Remote-SSH がタイムアウトする原因は、リモート側の fish シェルだった",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-06T06:49:35.000Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに Mac mini をリモートサーバーとして運用し、MacBook Air の VS Code から、標準機能の Remote-SSH を使って接続しようとしたところ、ターミナルからは問題なく SSH 接続できるのに、VS Code Remote-SSH から接続...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMjc0MTAlMkZwcm9maWxlLWltYWdlcyUyRjE3MjQyOTUxOTQ_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTkyNzA1ZTE5MWVkYmVmYWNmYjE1OTQ0YzU5NmY2MTU2%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D231d7de0cc212ee4e41d592919e2ea54?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJTIwUmVtb3RlLVNTSCUyMCVFMyU4MSU4QyVFMyU4MiVCRiVFMyU4MiVBNCVFMyU4MyVBMCVFMyU4MiVBMiVFMyU4MiVBNiVFMyU4MyU4OCVFMyU4MSU5OSVFMyU4MiU4QiVFNSU4RSU5RiVFNSU5QiVBMCVFMyU4MSVBRiVFMyU4MCU4MSVFMyU4MyVBQSVFMyU4MyVBMiVFMyU4MyVCQyVFMyU4MyU4OCVFNSU4MSVCNCVFMyU4MSVBRSUyMGZpc2glMjAlRTMlODIlQjclRTMlODIlQTclRTMlODMlQUIlRTMlODElQTAlRTMlODElQTMlRTMlODElOUYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1iMmJkYzgxNzA0OWI4ZWRjZTEzYWE4ZDUzYmI2ZDUxYg&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBya0p1biZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTM5MDk5ODE1MDViZWE2ZjRmNmI1MGQ4NWVmOWY4OTc4&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=07fbffc40e75f869ad5449bd26ffe177",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMjc0MTAlMkZwcm9maWxlLWltYWdlcyUyRjE3MjQyOTUxOTQ_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTkyNzA1ZTE5MWVkYmVmYWNmYjE1OTQ0YzU5NmY2MTU2%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D231d7de0cc212ee4e41d592919e2ea54?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJTIwUmVtb3RlLVNTSCUyMCVFMyU4MSU4QyVFMyU4MiVCRiVFMyU4MiVBNCVFMyU4MyVBMCVFMyU4MiVBMiVFMyU4MiVBNiVFMyU4MyU4OCVFMyU4MSU5OSVFMyU4MiU4QiVFNSU4RSU5RiVFNSU5QiVBMCVFMyU4MSVBRiVFMyU4MCU4MSVFMyU4MyVBQSVFMyU4MyVBMiVFMyU4MyVCQyVFMyU4MyU4OCVFNSU4MSVCNCVFMyU4MSVBRSUyMGZpc2glMjAlRTMlODIlQjclRTMlODIlQTclRTMlODMlQUIlRTMlODElQTAlRTMlODElQTMlRTMlODElOUYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1iMmJkYzgxNzA0OWI4ZWRjZTEzYWE4ZDUzYmI2ZDUxYg&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBya0p1biZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTM5MDk5ODE1MDViZWE2ZjRmNmI1MGQ4NWVmOWY4OTc4&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=07fbffc40e75f869ad5449bd26ffe177",
+        "alt": "VS Code Remote-SSH がタイムアウトする原因は、リモート側の fish シェルだった",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "e130f15b9862b471",
+      "source": "zed-releases",
+      "sourceType": "release",
+      "url": "https://github.com/zed-industries/zed/releases/tag/nightly",
+      "title": "nightly: Show type-changed files in commit diffs (#60422)",
+      "titleJa": "Zed nightly、折りたたみ時にコードレンズのブロックを非表示化",
+      "titleEn": "nightly: Show type-changed files in commit diffs (#60422)",
+      "lang": "en",
+      "publishedAt": "2026-07-06T03:15:43.000Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
+      "tags": [
+        "editor",
+        "release",
+        "zed",
+        "agent",
+        "tutorial",
+        "open-model",
+        "navigation",
+        "debugging",
+        "code-lens",
+        "code-folding"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Objective Zed ignores files marked by Git as type-changed (T), causing commits containing only these changes to show 0 Changed Files. For example, commit d7cc949 changes crates/eval_utils/LICENSE-GPL from a regular file to a symlink, but Zed displays no changes. Solution Handle T",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/17625015?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/17625015?s=60&amp;v=4",
+        "alt": "nightly: Show type-changed files in commit diffs (#60422)",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
     {
       "id": "812981e9bd9f331b",
       "source": "anthropic-engineering",
@@ -44,10 +110,16 @@
       "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "mcp",
-        "qiita"
+        "qiita",
+        "security",
+        "sql-injection",
+        "rce",
+        "vulnerability",
+        "litellm",
+        "llm-security"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 3,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに 複数のLLMプロバイダーを単一のOpenAI互換APIで束ねるAIゲートウェイ「LiteLLM」で、2026年4月から6月にかけて立て続けに2件の重大脆弱性が公表されました。 CVE-2026-42208（SQLインジェクション・CVSS 9.3） CVE...",
@@ -92,6 +164,76 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "e015bda3ed2e7ff0",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/akkodis_jp/articles/c7cbcc6f572079",
+      "title": "Azure VM × vLLM で始める高速 LLM 推論環境構",
+      "titleJa": "Azure VM × vLLM で始める高速 LLM 推論環境構",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-06T00:20:51.000Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "〜 Dify 初心者のための完全セットアップガイド 〜 2026年7月3日 1. はじめに Dify は、ノーコード・ローコードで AI アプリを構築できる人気のプラットフォームです。 ChatGPT や Claude などのクラウド API を使うのが一般的ですが、クラウド APIを使い続けると以下の課題に直面します： コストが高い 機密データを外部に送れない モデルを自由にカスタマイズできない このような場面では自前の LLM 推論サーバーを立てるという選択肢が非常に有効です。 本記事では、Azure GPU VM上にvLLMを構築し、Difyから利"
+    },
+    {
+      "id": "f5b84dc5bc460be8",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/crosspoint/articles/bfb8f468e3dc2b",
+      "title": "AIエージェントの暴走は「指示」では止まらない——ガードレールで境界を機械的に守る",
+      "titleJa": "AIエージェントの暴走は「指示」では止まらない——ガードレールで境界を機械的に守る",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-05T23:07:41.000Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
+      "tags": [
+        "cursor",
+        "zenn",
+        "ai-agents",
+        "guardrails",
+        "ai-safety",
+        "agent-control"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "AIエージェントの暴走は「指示」では止まらない——ガードレールで境界を機械的に守る AIコーディングエージェントを使っていて、こんな経験はないでしょうか。 「この設定ファイルは絶対に触らないで」とプロンプトにはっきり書いたのに、長い作業の途中でしれっと書き換えられていた。「完了する前に必ずテストを走らせて」と念押ししたのに、テストなしで「完了しました」と宣言された——。 指示は、ちゃんと伝えたはずなのに守られない。これはエージェントが反抗しているのではなく、指示というものが、そもそも破られうる前提でしか機能しないからです。 この記事では、その前提を受け入"
+    },
+    {
+      "id": "50ff6f4a2cf71415",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/crosspoint/articles/16c7e5cbd91777",
+      "title": "AIエージェントが必ずやらかす2つの失敗——「残りは同様」と「完了しました（未検証）」",
+      "titleJa": "AIエージェントが必ずやらかす2つの失敗——「残りは同様」と「完了しました（未検証）」",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-05T23:04:44.000Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
+      "tags": [
+        "cursor",
+        "zenn",
+        "ai-agent",
+        "llm",
+        "prompt-engineering"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "AIエージェントが必ずやらかす2つの失敗——「残りは同様」と「完了しました（未検証）」 AIコーディングエージェントを実務で使い始めた人の多くが、ある時期を境に同じ壁にぶつかります。 最初は感動します。「テストを書いて」「この関数をリファクタして」と頼めば、それらしいコードが返ってくる。ところが、任せる範囲が大きくなるほど様子がおかしくなる。10個のファイルに同じ修正を頼んだら、3つ目までは丁寧にやって、残りは「以下同様です」で片付けてしまう。「実装が完了しました」と言うので信じてマージしたら、テストを一度も走らせていなかった——。 こうした失敗は、あな"
     },
     {
       "id": "67d9dcf34710ee8d",
@@ -146,6 +288,59 @@
       "contentSnippet": "TL;DR: Claude Code が標準搭載する deep-research（公式分類はビルトインWorkflow）はトリガーフレーズで自動起動し、disable-model-invocation では止められない。CLAUDE.md に禁止ルールを書くことで自動起動を..."
     },
     {
+      "id": "93a5760e142be69f",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/fukachi_ai/articles/187b2df66c6b5b",
+      "title": "Claude Codeを使ったRoblox開発の環境構築と開発ループ｜Claude×Roblox個人開発",
+      "titleJa": "Claude Codeを使ったRoblox開発の環境構築と開発ループ｜Claude×Roblox個人開発",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-05T22:30:05.000Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
+      "tags": [
+        "cursor",
+        "zenn",
+        "claude-code",
+        "roblox",
+        "game-development",
+        "lua",
+        "workflow",
+        "personal-development"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "1. はじめに 個人でRobloxゲームを、Claude.aiで設計し、Claude Codeで実装するというワークフローで開発しています。第1弾・第2弾では、このワークフローで実際に踏んだ具体的な問題（os.date の週番号、DataStoreの書き込み予算）を書いてきました。 前回：DataStoreの書き込み予算が枯渇 → WRITE_QUEUEで捌いた話 今回は個別のバグ話ではなく、その手前の**「どんな環境で、どういう流れで開発しているか」の全体像**をまとめます。前2弾で当たり前のように出てきた「Claude Codeに指示書を渡す」「St"
+    },
+    {
+      "id": "01d5117662151864",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/masaki130/items/786f08522196900019e0",
+      "title": "【SSH接続】VSCodeでパスワード無しのリモート接続をする方法",
+      "titleJa": "【SSH接続】VSCodeでパスワード無しのリモート接続をする方法",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-05T22:01:06.000Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
+      "tags": [
+        "qiita",
+        "vscode",
+        "ssh",
+        "remote-development",
+        "ssh-key",
+        "remote-ssh",
+        "public-key-authentication"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "やりたいこと ラズパイにリモート接続する際にパスワード無しで接続したい windows11のvscodeからラズパイのフォルダを操作したい ラズパイのSSH有効化 ラズパイで以下を実行 $ sudo raspi-config 5, Interfacing O..."
+    },
+    {
       "id": "935c55a079fd5d76",
       "source": "qiita-cursor",
       "sourceType": "blog",
@@ -170,6 +365,32 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "こんにちは、豆太郎です。 フルスタックエンジニア 5 年目で、普段は Web / AWS まわりを触ることが多いです。最近は PM 寄りの仕事も増えてきました。 そんな自分が、初めて iOS アプリを作って、TestFlight で配布できるところまで持っていきました。 こ..."
+    },
+    {
+      "id": "44f3a6b738e93021",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/s-sato_ts/items/78ff9dda67f6028085b3",
+      "title": "VS Code × WSL × Rails初心者向け デバッグ実行の設定方法とハマったポイント",
+      "titleJa": "VS Code × WSL × Rails初心者向け デバッグ実行の設定方法とハマったポイント",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-05T13:37:54.000Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
+      "tags": [
+        "qiita",
+        "vscode",
+        "wsl",
+        "rails",
+        "debugging",
+        "launch-json",
+        "ruby"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに Rails開発をしていると、 処理がどのように流れているのか分からない Serviceクラスの中で何が起きているのか確認したい GraphQLのリクエストを1行ずつ追いたい という場面があります。 そのようなときに便利なのがVS Codeのデバッグ機能です。..."
     },
     {
       "id": "da3f6e806290108b",
@@ -280,7 +501,13 @@
       "publishedAt": "2026-07-05T11:24:53.000Z",
       "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
-        "qiita"
+        "qiita",
+        "knowledge-graph",
+        "localstack",
+        "ai-agent",
+        "weekly-digest",
+        "developer-tools",
+        "aws"
       ],
       "category": "copilot",
       "importance": 1,
@@ -300,7 +527,12 @@
       "publishedAt": "2026-07-05T09:57:53.000Z",
       "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
-        "qiita"
+        "qiita",
+        "github-copilot",
+        "ai-credits",
+        "script",
+        "billing-cycle",
+        "usage-tracking"
       ],
       "category": "copilot",
       "importance": 1,
@@ -314,16 +546,21 @@
       "sourceType": "blog",
       "url": "https://qiita.com/mayochan32/items/edb2897c32bce69076de",
       "title": "【AI】AIの実行時間・トークン・コストをローカルログだけで可視化する「aimet」",
-      "titleJa": "【AI】AIの実行時間・トークン・コストをローカルログだけで可視化する「aimet」",
+      "titleJa": "AIの実行時間・トークン・コストをローカルログだけで可視化する「aimet」",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-05T09:41:44.000Z",
       "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
-        "qiita"
+        "qiita",
+        "ai-monitoring",
+        "token-tracking",
+        "cost-visibility",
+        "local-logging",
+        "developer-tools"
       ],
       "category": "copilot",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "AIの実行時間・トークン・コストをローカルログだけで可視化する「aimet」 対応ツール: Claude Code / Codex CLI / GitHub Copilot (VS Code Chat) タグ: Claude, ClaudeCode, OpenAI, G..."
@@ -355,6 +592,31 @@
       "contentSnippet": "はじめに Claude Desktop アプリは AWS Bedrock をバックエンドにして動かせます。今回これを設定するにあたって、次の 2 点で困りました。 Claude Code と違って、Claude Desktop から Bedrock を使うには「開発者モードを有効化」→「サードパーティ推論を設定」という設定手順を踏む必要がある。この手順はヘルプメニューにあって見つけにくく、ピンポイントで解説している記事も見当たらなかった これまでは IAM ユーザーのアクセスキーを ~/.aws/credentials に置いて使っていたが、クレデンシャ"
     },
     {
+      "id": "c4e740ea393af7e9",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/natsuk75/articles/eb9005b98368b5",
+      "title": "AI時代に再考する、エンジニアとしての「働き方」とこれからの生存戦略",
+      "titleJa": "AI時代に再考する、エンジニアとしての「働き方」とこれからの生存戦略",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-05T09:24:04.000Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
+      "tags": [
+        "cursor",
+        "zenn",
+        "career-strategy",
+        "ai-workflow",
+        "developer-productivity",
+        "engineering-mindset"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "! この記事の要約（TL;DR） AIツール（Cursor/Copilot）の普及により、エンジニアの主業務は「コードのタイピング」から「文脈（コンテキスト）のデザイン」へシフトした。 すでにフロントからバックエンドまで扱うフルスタックエンジニアにとって、AIは「複数スタック間のコンテキストスイッチ」の脳内負荷を劇的に下げてくれる存在。 これからの生存戦略は、 「Why（なぜ作るか）を握るビジネス・PdM視点」 と 「AIが理解しやすい綺麗な設計（文脈）を作る力」 にある。 はじめに CursorやGitHub CopilotといったAIエディタ・開発ア"
+    },
+    {
       "id": "591db2b503e1afe9",
       "source": "qiita-copilot",
       "sourceType": "blog",
@@ -366,13 +628,86 @@
       "publishedAt": "2026-07-05T08:22:52.000Z",
       "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
-        "qiita"
+        "qiita",
+        "obsidian",
+        "knowledge-management",
+        "note-taking",
+        "workflow",
+        "productivity"
       ],
       "category": "copilot",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "〜ギター練習の管理 + 知的資産化 + AI連携〜 私はソエジマトシキさんが運営している Soul Guitar Lab というオンラインサロンでネオソウルを学んでいますが、最近は練習そのものを知識管理として運用し、AI（GitHub Copilot）と Obsidian..."
+    },
+    {
+      "id": "0c430f819755eece",
+      "source": "zed-releases",
+      "sourceType": "release",
+      "url": "https://github.com/zed-industries/zed/releases/tag/collab-staging",
+      "title": "collab-staging: Fix agent hyperlinks do not open files (#56283)",
+      "titleJa": "Zed collab-staging: マッチ無しでも編集予測の保持率を計算",
+      "titleEn": "collab-staging: Fix agent hyperlinks do not open files (#56283)",
+      "lang": "en",
+      "publishedAt": "2026-07-05T03:54:54.000Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
+      "tags": [
+        "agent",
+        "editor",
+        "release",
+        "zed",
+        "open-model",
+        "tutorial",
+        "edit-prediction",
+        "telemetry",
+        "ai-coding"
+      ],
+      "category": "cursor",
+      "importance": 3,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Summary Fix agent message hyperlinks that point to Windows file paths but are not parsed as openable project paths. This covers links like: [ Cargo.toml ] ( &lt; /C:/Projects/Example Workspace/Cargo.toml:2 &gt; ) [ filename.ext ] ( C:\\Projects\\Example%20Workspace\\path\\to\\filename",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/24538301?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/24538301?s=60&amp;v=4",
+        "alt": "collab-staging: Fix agent hyperlinks do not open files (#56283)",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "aad5d20522a6820a",
+      "source": "mcp-servers-releases",
+      "sourceType": "release",
+      "url": "https://github.com/modelcontextprotocol/servers/releases/tag/2026.7.4",
+      "title": "MCP Servers Releases Release 2026.7.4",
+      "titleJa": "MCP Servers リリース 2026.7.4",
+      "titleEn": "MCP Servers Releases Release 2026.7.4",
+      "lang": "en",
+      "publishedAt": "2026-07-04T23:05:56.000Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "release",
+        "model-context-protocol",
+        "open-source"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Release : v2026.7.4 Updated packages @modelcontextprotocol/server-everything@2026.7.4 @modelcontextprotocol/server-filesystem@2026.7.4 @modelcontextprotocol/server-sequential-thinking@2026.7.4 @modelcontextprotocol/server-memory@2026.7.4",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "MCP Servers Releases Release 2026.7.4",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
     },
     {
       "id": "30c595f364f4e09a",
@@ -399,6 +734,31 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "タグ: AI / Claude Code / Cursor / LOC / 生成AI きっかけ 最近、とある経営者の方のインタビュー記事を見かけました。 「非エンジニアの自分が、2ヶ月でコードを10万行書いた」 最初に思ったのは、これだけです。 10万行って……短期..."
+    },
+    {
+      "id": "d6e80e14075974a3",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/53able/articles/b1f87c8200284a",
+      "title": "なぜ prompt-master はAIの出力を安定させやすいのか",
+      "titleJa": "なぜ prompt-master はAIの出力を安定させやすいのか",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-04T08:41:08.000Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
+      "tags": [
+        "cursor",
+        "zenn",
+        "prompt-engineering",
+        "prompt-master",
+        "ai-output",
+        "reproducibility"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "この記事で見ること AIに何かを頼むとき、私たちはついこう書いてしまいます。 いい感じに直して もっと分かりやすくして このコードを改善して プロっぽいデザインにして チャットAIに軽く相談するだけなら、これでも返事は返ってきます。 ただ、Claude Code、Cursor、Devin のように、AIがファイルを編集したり、コマンドを実行したりする場面では、この曖昧さが手戻りにつながります。 関係ないファイルまで触る 必要か分からない依存関係を追加する 頼んでいないリファクタまで始める 何をもって完了なのか分からず、やり取りが長引く prompt-ma"
     },
     {
       "id": "4c25886697fa33e9",
@@ -660,43 +1020,6 @@
       }
     },
     {
-      "id": "e130f15b9862b471",
-      "source": "zed-releases",
-      "sourceType": "release",
-      "url": "https://github.com/zed-industries/zed/releases/tag/nightly",
-      "title": "nightly: Do not redownload same Nightly updates over and over (#59994)",
-      "titleJa": "Zed nightly、折りたたみ時にコードレンズのブロックを非表示化",
-      "titleEn": "nightly: Do not redownload same Nightly updates over and over (#59994)",
-      "lang": "en",
-      "publishedAt": "2026-07-03T23:29:01.000Z",
-      "collectedAt": "2026-07-04T04:00:27.060Z",
-      "tags": [
-        "editor",
-        "release",
-        "zed",
-        "agent",
-        "tutorial",
-        "open-model",
-        "navigation",
-        "debugging",
-        "code-lens",
-        "code-folding"
-      ],
-      "category": "cursor",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot",
-      "contentSnippet": "If one gets a Nightly update but does not restart and rather dismisses the notification, the next update check will do the update again. This is caused by the fact that the version check is done based on semver, but Nightly has the very same version that differs by the SHA only. ",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/2690773?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/2690773?s=60&amp;v=4",
-        "alt": "nightly: Do not redownload same Nightly updates over and over (#59994)",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
       "id": "d93ee56f72d003f4",
       "source": "qiita-vscode",
       "sourceType": "blog",
@@ -891,42 +1214,6 @@
       }
     },
     {
-      "id": "0c430f819755eece",
-      "source": "zed-releases",
-      "sourceType": "release",
-      "url": "https://github.com/zed-industries/zed/releases/tag/collab-staging",
-      "title": "collab-staging: bedrock: Add Claude Sonnet 5 (#60360)",
-      "titleJa": "Zed collab-staging: マッチ無しでも編集予測の保持率を計算",
-      "titleEn": "collab-staging: bedrock: Add Claude Sonnet 5 (#60360)",
-      "lang": "en",
-      "publishedAt": "2026-07-03T15:26:15.000Z",
-      "collectedAt": "2026-07-04T04:00:27.060Z",
-      "tags": [
-        "editor",
-        "release",
-        "zed",
-        "agent",
-        "open-model",
-        "tutorial",
-        "edit-prediction",
-        "telemetry",
-        "ai-coding"
-      ],
-      "category": "cursor",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "hot",
-      "contentSnippet": "Also orders the Claude models from most to least capable. Release Notes: Added Sonnet 5 to Bedrock provider Co-authored-by: David Irvine aviddiviner@gmail.com",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/15526918?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/15526918?s=60&amp;v=4",
-        "alt": "collab-staging: bedrock: Add Claude Sonnet 5 (#60360)",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
       "id": "ce56bb89fb164140",
       "source": "qiita-vscode",
       "sourceType": "blog",
@@ -971,7 +1258,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-03T14:55:22.000Z",
-      "collectedAt": "2026-07-04T04:00:27.060Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
       "tags": [
         "cursor",
         "zenn",
@@ -1139,7 +1426,7 @@
       "titleEn": "collab-production: livekit_api: Fix LiveKit token revocation timestamps (#60157)",
       "lang": "en",
       "publishedAt": "2026-07-03T09:50:42.000Z",
-      "collectedAt": "2026-07-04T04:00:27.060Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
       "tags": [
         "editor",
         "release",
@@ -1394,7 +1681,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-03T01:52:17.000Z",
-      "collectedAt": "2026-07-04T04:00:27.060Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
       "tags": [
         "cursor",
         "zenn",
@@ -2144,7 +2431,7 @@
       "titleEn": "Zed Editor Releases v1.9.0",
       "lang": "en",
       "publishedAt": "2026-07-02T06:02:55.000Z",
-      "collectedAt": "2026-07-04T04:00:27.060Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
       "tags": [
         "editor",
         "release",
@@ -2432,7 +2719,7 @@
       "titleEn": "More details on Fable 5’s cyber safeguards and our jailbreak framework",
       "lang": "en",
       "publishedAt": "2026-07-02T00:00:00.000Z",
-      "collectedAt": "2026-07-04T04:00:27.060Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
       "tags": [
         "anthropic",
         "claude",
@@ -2845,7 +3132,7 @@
       "titleEn": "Zed Editor Releases v1.10.0-pre",
       "lang": "en",
       "publishedAt": "2026-07-01T17:31:57.000Z",
-      "collectedAt": "2026-07-04T04:00:27.060Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
       "tags": [
         "editor",
         "release",

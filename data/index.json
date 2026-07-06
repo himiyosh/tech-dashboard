@@ -1,40 +1,40 @@
 {
-  "generatedAt": "2026-07-06T01:01:08.576Z",
-  "count": 1786,
+  "generatedAt": "2026-07-06T03:00:35.227Z",
+  "count": 1787,
   "health": {
-    "lastRunAt": "2026-07-06T01:01:08.576Z",
-    "batchIndex": 2,
+    "lastRunAt": "2026-07-06T03:00:35.227Z",
+    "batchIndex": 4,
     "batchTotal": 4,
     "sourcesAttempted": 14,
     "sourcesOk": 14,
     "sourcesFailed": [],
     "summarized": 0,
     "summarizeErrors": 0,
-    "summaryFallbacks": 8,
+    "summaryFallbacks": 10,
     "bodyFallbacks": 0,
-    "fallbackTotal": 4,
+    "fallbackTotal": 5,
     "fallbackPercent": 0,
     "kvLookupCap": 80,
-    "kvLookupCount": 18,
+    "kvLookupCount": 9,
     "queueMode": "enabled",
     "queueCap": 35,
-    "enqueueCandidates": 4,
-    "summaryQueueBacklog": 4,
+    "enqueueCandidates": 5,
+    "summaryQueueBacklog": 5,
     "summaryQueueDrainEstimateHours": 1,
     "summaryQueueStartIndex": 0,
     "summaryQueueCooldownCount": 0,
     "copilotOk": true,
     "copilotError": null,
-    "ogCached": 3229,
+    "ogCached": 3231,
     "ogNewHits": 1,
     "bodyQueueMode": "enabled",
-    "bodyEnqueueCandidates": 3,
-    "bodyBacklog": 38,
-    "bodyDrainEstimateHours": 2,
-    "bodyLookupCount": 25,
-    "bodyMerged": 22,
-    "bodyPruned": 1,
-    "bodiesTotal": 1766
+    "bodyEnqueueCandidates": 2,
+    "bodyBacklog": 20,
+    "bodyDrainEstimateHours": 1,
+    "bodyLookupCount": 20,
+    "bodyMerged": 18,
+    "bodyPruned": 4,
+    "bodiesTotal": 1780
   },
   "entries": [
     {
@@ -70,21 +70,58 @@
       "bodyEn": ""
     },
     {
+      "id": "c99d1895dfe11de7",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/kai_kou/items/f439d66dc53c13a6045e",
+      "title": "LiteLLMのSQLiとRCEチェーン、開示36時間後の実撃を検証した",
+      "titleJa": "LiteLLMのSQLiとRCEチェーン、開示36時間後の実撃を検証した",
+      "titleEn": "",
+      "summaryJa": "LiteLLMのSQLiとRCEチェーン、開示36時間後の実撃を検証した",
+      "summaryEn": "mcp update from qiita-mcp. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-06T00:36:17.000Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
+      "tags": [
+        "mcp",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 複数のLLMプロバイダーを単一のOpenAI互換APIで束ねるAIゲートウェイ「LiteLLM」で、2026年4月から6月にかけて立て続けに2件の重大脆弱性が公表されました。 CVE-2026-42208（SQLインジェクション・CVSS 9.3） CVE...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGNDg1NDklMkZwcm9maWxlLWltYWdlcyUyRjE1MjQxMzIyMDk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWY4Y2RhNWUwYjAyYzZhMDEwMTRiOTEwZjliYTRkZjY3%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Da8e3712665b37e28e8194f64fe1c50c4?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9TGl0ZUxMTSVFMyU4MSVBRVNRTGklRTMlODElQThSQ0UlRTMlODMlODElRTMlODIlQTclRTMlODMlQkMlRTMlODMlQjMlRTMlODAlODElRTklOTYlOEIlRTclQTQlQkEzNiVFNiU5OSU4MiVFOSU5NiU5MyVFNSVCRSU4QyVFMyU4MSVBRSVFNSVBRSU5RiVFNiU5MiU4MyVFMyU4MiU5MiVFNiVBNCU5QyVFOCVBOCVCQyVFMyU4MSU5NyVFMyU4MSU5RiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWM1M2IyMjNlMjhmM2ViMjc3ZWJlMjE5MDYzNTBkN2Zj&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBrYWlfa291JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NWY2ZTkxOGU3MmQxNWJiYWRkODAzMjQ5NGVhMzVmNzI&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=75722cf9a3d1ea75cb8445637bf8a2b3",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGNDg1NDklMkZwcm9maWxlLWltYWdlcyUyRjE1MjQxMzIyMDk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWY4Y2RhNWUwYjAyYzZhMDEwMTRiOTEwZjliYTRkZjY3%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Da8e3712665b37e28e8194f64fe1c50c4?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9TGl0ZUxMTSVFMyU4MSVBRVNRTGklRTMlODElQThSQ0UlRTMlODMlODElRTMlODIlQTclRTMlODMlQkMlRTMlODMlQjMlRTMlODAlODElRTklOTYlOEIlRTclQTQlQkEzNiVFNiU5OSU4MiVFOSU5NiU5MyVFNSVCRSU4QyVFMyU4MSVBRSVFNSVBRSU5RiVFNiU5MiU4MyVFMyU4MiU5MiVFNiVBNCU5QyVFOCVBOCVCQyVFMyU4MSU5NyVFMyU4MSU5RiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWM1M2IyMjNlMjhmM2ViMjc3ZWJlMjE5MDYzNTBkN2Zj&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBrYWlfa291JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NWY2ZTkxOGU3MmQxNWJiYWRkODAzMjQ5NGVhMzVmNzI&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=75722cf9a3d1ea75cb8445637bf8a2b3",
+        "alt": "LiteLLMのSQLiとRCEチェーン、開示36時間後の実撃を検証した",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "d25c06a7c243324e",
       "source": "qiita-claude",
       "sourceType": "blog",
       "url": "https://qiita.com/imamu123/items/2baf3f2f047e912dab48",
       "title": "🤖 【Claude】自作Skillが「Claude Codeでは動くのにCoworkに出てこない」を解決する",
-      "titleJa": "🤖 【Claude】自作Skillが「Claude Codeでは動くのにCoworkに出てこない」を解決する",
+      "titleJa": "【Claude】自作SkillがClaude Codeでは動くのにCoworkに表示されない問題を解決する",
       "titleEn": "",
-      "summaryJa": "🤖 【Claude】自作Skillが「Claude Codeでは動くのにCoworkに出てこない」を解決する",
-      "summaryEn": "claude update from qiita-claude. AI summary not yet available; a future Worker run will refresh this entry.",
+      "summaryJa": "Claude Codeで正常に動作する自作Skillが、Coworkのインターフェースに表示されない原因と設定の落とし穴を解説。正しい設定を行うことで、両環境で一貫してSkillを利用できるようになる。",
+      "summaryEn": "This article explains why custom Skills work in Claude Code but fail to appear in Cowork, and walks through the specific configuration fix to resolve the discrepancy.",
       "lang": "ja",
       "publishedAt": "2026-07-06T00:21:42.000Z",
       "collectedAt": "2026-07-06T01:00:27.671Z",
       "tags": [
         "claude",
-        "qiita"
+        "qiita",
+        "claude-code",
+        "custom-skills",
+        "cowork",
+        "troubleshooting"
       ],
       "category": "claude",
       "importance": 1,
@@ -110,17 +147,22 @@
       "title": "3人会社でAI経営OSを自作した話：Claude Codeで月商250万を回す2026年の実務構成",
       "titleJa": "3人会社でAI経営OSを自作した話：Claude Codeで月商250万を回す2026年の実務構成",
       "titleEn": "",
-      "summaryJa": "3人会社でAI経営OSを自作した話：Claude Codeで月商250万を回す2026年の実務構成",
-      "summaryEn": "claude update from qiita-claude. AI summary not yet available; a future Worker run will refresh this entry.",
+      "summaryJa": "3名のチームがClaude Codeを活用して自社専用のAI経営OSを構築し、月商250万円規模の業務を少人数で効率的に回す実務構成を紹介。AIを核とした経営システムが小規模チームの生産性をいかに高められるかを示す実践的な事例。",
+      "summaryEn": "A three-person team built a custom AI management OS with Claude Code to run a ¥2.5M/month business, detailing practical 2026 workflows that make small teams highly productive.",
       "lang": "ja",
       "publishedAt": "2026-07-05T23:04:01.000Z",
       "collectedAt": "2026-07-06T01:00:27.671Z",
       "tags": [
         "claude",
-        "qiita"
+        "qiita",
+        "small-business",
+        "ai-operations",
+        "claude-code",
+        "business-automation",
+        "case-study"
       ],
       "category": "claude",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "3人会社でAI経営OSを自作した話：Claude Codeで月商250万を回す2026年の実務構成 SES出身エンジニアが、客先常駐を抜け出して3年。今は代表として3人の会社を動かしながら、AIエージェントを使って会社の管理業務の大半を自動化した。 「AIがCFOをやって...",
@@ -135,17 +177,22 @@
       "title": "Claude Code ビルトインスキルの自動起動を CLAUDE.md でブロックする",
       "titleJa": "Claude Code ビルトインスキルの自動起動を CLAUDE.md でブロックする",
       "titleEn": "",
-      "summaryJa": "Claude Code ビルトインスキルの自動起動を CLAUDE.md でブロックする",
-      "summaryEn": "claude update from qiita-claude. AI summary not yet available; a future Worker run will refresh this entry.",
+      "summaryJa": "Claude Code では特定のビルトインスキルが意図せず自動起動することがあるが、CLAUDE.md に設定を記述することでその動作を抑制できる手法を紹介している。意図しないツール呼び出しを防ぐことで、開発フローをより細かく制御できる。",
+      "summaryEn": "This article explains how to prevent Claude Code's built-in skills from automatically activating by adding directives to the CLAUDE.md configuration file, giving developers precise control over which tools are invoked during a session.",
       "lang": "ja",
       "publishedAt": "2026-07-05T23:01:55.000Z",
       "collectedAt": "2026-07-06T01:00:27.671Z",
       "tags": [
         "claude",
-        "qiita"
+        "qiita",
+        "claude-code",
+        "claude-md",
+        "configuration",
+        "built-in-skills",
+        "automation-control"
       ],
       "category": "claude",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "TL;DR: Claude Code が標準搭載する deep-research（公式分類はビルトインWorkflow）はトリガーフレーズで自動起動し、disable-model-invocation では止められない。CLAUDE.md に禁止ルールを書くことで自動起動を...",
@@ -158,16 +205,21 @@
       "sourceType": "blog",
       "url": "https://qiita.com/mametaro_rin/items/4ac83820c3812698f72a",
       "title": "初めてのiOSアプリ開発で相棒のCursorと一緒に1週間でβテストまで出してみた！",
-      "titleJa": "初めてのiOSアプリ開発で相棒のCursorと一緒に1週間でβテストまで出してみた！",
+      "titleJa": "初めてのiOSアプリ開発でCursorを相棒に1週間でβテストまで漕ぎ着けた体験記",
       "titleEn": "",
-      "summaryJa": "初めてのiOSアプリ開発で相棒のCursorと一緒に1週間でβテストまで出してみた！",
-      "summaryEn": "cursor update from qiita-cursor. AI summary not yet available; a future Worker run will refresh this entry.",
+      "summaryJa": "iOSアプリ開発未経験者がAIコードエディタCursorをペア相手に活用し、わずか1週間でβテスト公開まで到達した体験記。AIとの協働開発が初心者の開発スピードを大幅に高め得ることを示している。",
+      "summaryEn": "A first-time iOS developer used Cursor as an AI companion to ship a beta in one week, showing that AI-assisted pair programming can sharply accelerate development for newcomers.",
       "lang": "ja",
       "publishedAt": "2026-07-05T14:12:19.000Z",
       "collectedAt": "2026-07-06T01:00:27.671Z",
       "tags": [
         "cursor",
-        "qiita"
+        "qiita",
+        "ios",
+        "swift",
+        "app-development",
+        "ai-assisted-development",
+        "beta-testing"
       ],
       "category": "cursor",
       "importance": 1,
@@ -208,6 +260,78 @@
       "bodyEn": ""
     },
     {
+      "id": "ec6a6ba9ce7c0379",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/codeotaku/items/9865d55d4d18f0008f7b",
+      "title": "46リポジトリのナレッジグラフ化・LocalStack移行・社内AIエージェント——今週ハマった技術トレンド4選",
+      "titleJa": "46リポジトリのナレッジグラフ化・LocalStack移行・社内AIエージェント——今週ハマった技術トレンド4選",
+      "titleEn": "",
+      "summaryJa": "46リポジトリのナレッジグラフ化・LocalStack移行・社内AIエージェント——今週ハマった技術トレンド4選",
+      "summaryEn": "copilot update from qiita-copilot. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-05T11:24:53.000Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
+      "tags": [
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 今週もZennやGitHub Blogを眺めていたら、「これ自分の環境でも試せるな」と手を動かしたくなるトピックがいくつか出てきた。特に静的解析によるコードグラフ化・LocalStack有料化への対応・社内AIエージェントの構築・git worktreesは、業...",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "c84ebbae04ba0407",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/hoshimado/items/6e8044a9ab8ecfbd7d1d",
+      "title": "GitHub Copilot ProのAI Creditsを契約更新日ベースで集計するスクリプト",
+      "titleJa": "GitHub Copilot ProのAI Creditsを契約更新日ベースで集計するスクリプト",
+      "titleEn": "",
+      "summaryJa": "GitHub Copilot ProのAI Creditsを契約更新日ベースで集計するスクリプト",
+      "summaryEn": "copilot update from qiita-copilot. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-05T09:57:53.000Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
+      "tags": [
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "概要 GitHub Copilotの個人プラン（「Pro」と「Pro＋」が対象）において、 AIC（AIクレジット）の消費量を参照すると、 「契約サイクル期間に依存せず、（少なくとも2026年7月5日時点では）月初起点の累積消費量のみが表示される」状態にある。 なので、「...",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "2bd032774d1dda36",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/mayochan32/items/edb2897c32bce69076de",
+      "title": "【AI】AIの実行時間・トークン・コストをローカルログだけで可視化する「aimet」",
+      "titleJa": "【AI】AIの実行時間・トークン・コストをローカルログだけで可視化する「aimet」",
+      "titleEn": "",
+      "summaryJa": "【AI】AIの実行時間・トークン・コストをローカルログだけで可視化する「aimet」",
+      "summaryEn": "copilot update from qiita-copilot. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-05T09:41:44.000Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
+      "tags": [
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "AIの実行時間・トークン・コストをローカルログだけで可視化する「aimet」 対応ツール: Claude Code / Codex CLI / GitHub Copilot (VS Code Chat) タグ: Claude, ClaudeCode, OpenAI, G...",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "3ba8058da22ea709",
       "source": "zenn-claude",
       "sourceType": "blog",
@@ -234,6 +358,30 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに Claude Desktop アプリは AWS Bedrock をバックエンドにして動かせます。今回これを設定するにあたって、次の 2 点で困りました。 Claude Code と違って、Claude Desktop から Bedrock を使うには「開発者モードを有効化」→「サードパーティ推論を設定」という設定手順を踏む必要がある。この手順はヘルプメニューにあって見つけにくく、ピンポイントで解説している記事も見当たらなかった これまでは IAM ユーザーのアクセスキーを ~/.aws/credentials に置いて使っていたが、クレデンシャ",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "591db2b503e1afe9",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/embteba/items/508711638374c8ecc2de",
+      "title": "GitHub Copilot × Obsidian で「練習したことを忘れない仕組み」を作った話",
+      "titleJa": "GitHub Copilot × Obsidian で「練習したことを忘れない仕組み」を作った話",
+      "titleEn": "",
+      "summaryJa": "GitHub Copilot × Obsidian で「練習したことを忘れない仕組み」を作った話",
+      "summaryEn": "copilot update from qiita-copilot. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-05T08:22:52.000Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
+      "tags": [
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "〜ギター練習の管理 + 知的資産化 + AI連携〜 私はソエジマトシキさんが運営している Soul Guitar Lab というオンラインサロンでネオソウルを学んでいますが、最近は練習そのものを知識管理として運用し、AI（GitHub Copilot）と Obsidian...",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -1293,7 +1441,7 @@
       "summaryEn": "OpenHands cloud-1.40.1 is a patch release for the cloud-hosted AI coding agent platform, delivering incremental bug fixes and stability improvements to the cloud deployment environment.",
       "lang": "en",
       "publishedAt": "2026-07-02T23:27:53.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openhands",
         "release",
@@ -2872,7 +3020,7 @@
       "summaryEn": "Meta has published its AI storage blueprint, revealing how it architects and scales storage systems to support massive AI training and inference workloads efficiently.",
       "lang": "en",
       "publishedAt": "2026-07-01T16:00:36.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "engineering",
         "meta",
@@ -3560,7 +3708,7 @@
       "summaryEn": "Ollama v0.31.1 refines the MLX backend's Gemma4 mixture-of-experts model loading code, improving stability and reliability when running Gemma4 MoE models on Apple Silicon.",
       "lang": "en",
       "publishedAt": "2026-07-01T00:25:40.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "ollama",
         "release",
@@ -3827,7 +3975,7 @@
       "summaryEn": "Meta marks a decade of Python investment, detailing contributions to CPython performance, open-source tooling, and ongoing collaboration with the broader Python community.",
       "lang": "en",
       "publishedAt": "2026-06-30T16:00:46.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "engineering",
         "meta",
@@ -5270,7 +5418,7 @@
       "summaryEn": "Ollama v0.31.0 arrives with new model support, performance improvements, and bug fixes, making local LLM deployment more stable and capable for self-hosted AI workflows.",
       "lang": "en",
       "publishedAt": "2026-06-29T18:50:11.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "ollama",
         "release",
@@ -5427,7 +5575,7 @@
       "summaryEn": "Ollama v0.30.12 is now available, delivering patch-level bug fixes and incremental improvements to the local LLM runtime that lets users run language models on their own hardware.",
       "lang": "en",
       "publishedAt": "2026-06-29T17:45:08.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "ollama",
         "release",
@@ -8941,7 +9089,7 @@
       "summaryEn": "OpenHands cloud 1.40.0 adds a user setting for full Git history and an admin user-provisioning endpoint for enterprise deployments, improving version-control handling and team account management.",
       "lang": "en",
       "publishedAt": "2026-06-26T20:36:25.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openhands",
         "release",
@@ -9024,7 +9172,7 @@
       "summaryEn": "Ollama v0.30.11 adds thinking capability detection for opencode, auto-installs Claude Code, and auto-installs opencode when it is missing, streamlining integration with coding agents.",
       "lang": "en",
       "publishedAt": "2026-06-26T19:46:28.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "ollama",
         "release",
@@ -9821,7 +9969,7 @@
       "summaryEn": "parser/renderer: add Ornith 9B renderer/parser support ( #16920 )",
       "lang": "en",
       "publishedAt": "2026-06-26T06:18:47.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "ollama",
         "release",
@@ -10005,7 +10153,7 @@
       "summaryEn": "GitHub explains how its Copilot agentic harness delivers strong benchmark performance and leading token efficiency while supporting flexible choice among more than 20 models, underscoring that harness design matters beyond raw model quality.",
       "lang": "en",
       "publishedAt": "2026-06-25T22:59:45.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "agent",
         "copilot",
@@ -10047,7 +10195,7 @@
       "summaryEn": "Meta details its data asset classification approach for AI-native infrastructure, explaining how reliable data understanding underpins privacy controls that enforce retention, access, purpose, and anonymization policies.",
       "lang": "en",
       "publishedAt": "2026-06-25T22:30:51.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "engineering",
         "meta",
@@ -10917,7 +11065,7 @@
       "summaryEn": "llama.cpp version update ( #16548 )",
       "lang": "en",
       "publishedAt": "2026-06-24T21:03:12.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "ollama",
         "release",
@@ -11427,7 +11575,7 @@
       "summaryEn": "OpenHands cloud 1.39.0 adds features that move existing users into the default organization when first auto-added and route unclaimed automation events to the default org, streamlining organization management.",
       "lang": "en",
       "publishedAt": "2026-06-24T15:41:03.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openhands",
         "release",
@@ -12240,7 +12388,7 @@
       "summaryEn": "In a tech podcast, Meta explains how it engineered ultra-narrow batteries that fit into slim glasses frames while powering cameras, speakers, AI workloads, and displays in smart glasses like the Ray-Ban Meta and Oakley Meta Vanguards.",
       "lang": "en",
       "publishedAt": "2026-06-23T16:00:38.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "engineering",
         "meta",
@@ -12274,7 +12422,7 @@
       "summaryEn": "A senior GitHub leader shares how building 40+ automations with GitHub Copilot streamlined daily tasks, freeing up time to focus on strategic, higher-impact leadership work and becoming a more effective leader.",
       "lang": "en",
       "publishedAt": "2026-06-23T16:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "copilot",
         "github",
@@ -12519,7 +12667,7 @@
       "summaryEn": "Meta is partnering with EssilorLuxottica to launch Meta Glasses, offering 26 styles across a range of colors, lenses, and frames so there's a pair to suit almost any look.",
       "lang": "en",
       "publishedAt": "2026-06-23T13:00:32.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "meta",
         "news",
@@ -12560,7 +12708,7 @@
       "summaryEn": "Meta launched its Small Business Growth Academy across Asia-Pacific, offering practical training on AI tools, advertising, and cross-border growth to help small businesses build digital skills and scale.",
       "lang": "en",
       "publishedAt": "2026-06-23T13:00:09.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "meta",
         "news",
@@ -14219,7 +14367,7 @@
       "summaryEn": "Meta details its multi-year effort to bring the AV1 codec to real-time communication at scale, covering codec selection, device eligibility, rate control, and error resilience for higher-quality video calls.",
       "lang": "en",
       "publishedAt": "2026-06-22T16:00:08.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "engineering",
         "meta",
@@ -15268,88 +15416,6 @@
       "bodyEn": ""
     },
     {
-      "id": "517a8da8692a589a",
-      "source": "qiita-copilot",
-      "sourceType": "blog",
-      "url": "https://qiita.com/aktsmm/items/f7d43e70f4db5f764593",
-      "title": "GitHub Copilot CLI の外でもラバーダックしたくて、duck-critic という Agent Skill を作った話",
-      "titleJa": "GitHub Copilot CLI の外でもラバーダックしたくて、duck-critic という Agent Skill を作った話",
-      "titleEn": "",
-      "summaryJa": "AIエージェントにコードレビューさせても「いいと思います！」しか返ってこない出来レース感を解消するため、批判的に指摘させる「duck-critic」というAgent Skillを自作した経緯と仕組みを紹介する記事。",
-      "summaryEn": "An architect shares how they built a custom Agent Skill called \"duck-critic\" to enable rubber-duck-style code review outside GitHub Copilot CLI, addressing the problem of AI agents that only ever reply \"looks good!\"",
-      "lang": "ja",
-      "publishedAt": "2026-06-21T17:48:37.000Z",
-      "collectedAt": "2026-06-23T15:00:50.300Z",
-      "tags": [
-        "agent",
-        "qiita",
-        "agent-skill",
-        "github-copilot",
-        "code-review",
-        "rubber-duck"
-      ],
-      "category": "copilot",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "a324ab5e2047be27",
-      "source": "qiita-copilot",
-      "sourceType": "blog",
-      "url": "https://qiita.com/aktsmm/items/c61be34e5b7214e346e3",
-      "title": "AI エージェントを「最後までやり切らせる」 goal-loop という Agent Skill を作った話",
-      "titleJa": "AI エージェントを「最後までやり切らせる」 goal-loop という Agent Skill を作った話",
-      "titleEn": "",
-      "summaryJa": "タスクを途中で止めてしまう AI エージェントの問題を解決するため、目標達成まで作業を継続させる goal-loop という Agent Skill を自作した経緯と仕組みを紹介する記事。",
-      "summaryEn": "This article explains how the author built a custom Agent Skill called goal-loop that keeps AI agents working until a task is fully completed, solving the common problem of agents stopping midway.",
-      "lang": "ja",
-      "publishedAt": "2026-06-21T17:13:09.000Z",
-      "collectedAt": "2026-06-22T23:56:08.612Z",
-      "tags": [
-        "agent",
-        "qiita",
-        "agent-skill",
-        "goal-loop",
-        "ai-agent"
-      ],
-      "category": "copilot",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "5f55b87886e6c71a",
-      "source": "qiita-copilot",
-      "sourceType": "blog",
-      "url": "https://qiita.com/baku2san/items/362396f55dcac066293d",
-      "title": "Windowsでトークンを溶かさない設定に共感したので、入れてみた",
-      "titleJa": "Windowsでトークンを溶かさない設定に共感したので、入れてみた",
-      "titleEn": "",
-      "summaryJa": "AIエージェントがWindows上でBashの手癖やPowerShell 5.1のせいでトークンを浪費する問題に共感し、User設定で無駄なトークン消費を抑える構成を実環境へ適用した記録を紹介している。",
-      "summaryEn": "The author applies user-level settings to stop AI agents from wasting tokens on Windows, where Bash habits clash with PowerShell 5.1, sharing a hands-on record of cutting needless token consumption.",
-      "lang": "ja",
-      "publishedAt": "2026-06-21T14:28:52.000Z",
-      "collectedAt": "2026-06-22T11:00:12.107Z",
-      "tags": [
-        "qiita",
-        "windows",
-        "powershell",
-        "ai-agent",
-        "token-optimization"
-      ],
-      "category": "copilot",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "0466a49bfac3ba1a",
       "source": "zenn-ai",
       "sourceType": "blog",
@@ -15494,32 +15560,6 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "2de9dab0423dccf4",
-      "source": "qiita-copilot",
-      "sourceType": "blog",
-      "url": "https://qiita.com/sasgawy/items/af8bd6fe02f5a5ec803d",
-      "title": "LLMのプロンプト原則",
-      "titleJa": "LLMのプロンプト原則",
-      "titleEn": "",
-      "summaryJa": "LLMに汎用的なプロンプト（Instructionファイルなど）を作らせると毎回似た修正を繰り返しがちになる問題を避けるため、著者がプロンプト原則をSkillとしてまとめた取り組みを紹介している。",
-      "summaryEn": "To avoid repeatedly making similar corrections when letting LLMs generate general-purpose prompts like instruction or customization files, the author compiled reusable prompt-writing principles into a Skill.",
-      "lang": "ja",
-      "publishedAt": "2026-06-21T11:58:37.000Z",
-      "collectedAt": "2026-06-22T03:00:12.095Z",
-      "tags": [
-        "qiita",
-        "prompt-engineering",
-        "llm",
-        "prompt-design"
-      ],
-      "category": "copilot",
-      "importance": 1,
-      "halfLife": "tutorial",
       "archiveTier": "hot",
       "bodyJa": "",
       "bodyEn": ""
@@ -16881,7 +16921,7 @@
       "summaryEn": "GitHub shares how it built Qubot, an internal Copilot-powered analytics agent that lets employees query company data in plain language, detailing its architecture and the lessons learned.",
       "lang": "en",
       "publishedAt": "2026-06-19T16:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "agent",
         "copilot",
@@ -18904,7 +18944,7 @@
       "summaryEn": "Ollama v0.30.10 enables Command A and North family models to run on Apple Silicon via the MLX engine, updates the underlying llama.cpp engine to build 9672, and fixes MLX build artifacts.",
       "lang": "en",
       "publishedAt": "2026-06-18T04:26:41.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "ollama",
         "release",
@@ -19306,7 +19346,7 @@
       "summaryEn": "ci: pin darwin release xcode ( #16788 )",
       "lang": "en",
       "publishedAt": "2026-06-17T20:01:10.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "ollama",
         "release",
@@ -19409,7 +19449,7 @@
       "summaryEn": "GitHub explains how Copilot optimizes context handling and model routing so each token goes toward more useful work, improving session efficiency and making users' credits stretch further.",
       "lang": "en",
       "publishedAt": "2026-06-17T19:41:46.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "copilot",
         "github",
@@ -20654,7 +20694,7 @@
       "summaryEn": "A patch release that adds function_choice_behavior support to the Azure AI and OpenAI Assistant agents and fixes a MessagePack issue, giving developers more flexible control over agent function calling.",
       "lang": "en",
       "publishedAt": "2026-06-17T07:28:05.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "agent",
         "release",
@@ -20732,7 +20772,7 @@
       "summaryEn": "llama: update llama.cpp to b9672 ( #16775 )",
       "lang": "en",
       "publishedAt": "2026-06-17T06:15:52.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "ollama",
         "release",
@@ -20884,7 +20924,7 @@
       "summaryEn": "Ollama v0.30.9 adds support for the Cohere2Moe architecture, fixes LFM2 parser/render behavior when thinking is not emitted, and resolves issues launching Claude and other coding agents.",
       "lang": "en",
       "publishedAt": "2026-06-17T00:25:33.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "ollama",
         "release",
@@ -21235,7 +21275,7 @@
       "summaryEn": "Explains git worktrees, available since 2015, which let you check out multiple branches in separate directories at once, streamlining parallel development and hotfixes without stashing or switching.",
       "lang": "en",
       "publishedAt": "2026-06-16T20:58:54.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "copilot",
         "github",
@@ -22751,7 +22791,7 @@
       "summaryEn": "A beginner's guide to GitHub Copilot CLI's common slash commands like /explain and /fix, explaining how to control the terminal AI agent and integrate it into everyday development workflows.",
       "lang": "en",
       "publishedAt": "2026-06-15T20:15:31.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "copilot",
         "github",
@@ -23104,7 +23144,7 @@
       "summaryEn": "Meta unveiled several new AI-powered Facebook features to help users connect, create content, and find what they're looking for, aiming to make everyday tasks easier across the platform.",
       "lang": "en",
       "publishedAt": "2026-06-15T16:00:23.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "meta",
         "news",
@@ -24249,7 +24289,7 @@
       "summaryEn": "Better orchestration, fewer handoffs, faster progress, without a single new knob. The post How we made GitHub Copilot CLI more selective about delegation appeared first on The GitHub Blog .",
       "lang": "en",
       "publishedAt": "2026-06-12T22:26:23.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "copilot",
         "github",
@@ -26083,7 +26123,7 @@
       "summaryEn": "OpenHands 1.8.0 ships with several notable features, including LLM profiles, user-selectable sandbox grouping strategies, and enabled sub-agent delegation, enhancing flexibility and multi-agent collaboration.",
       "lang": "en",
       "publishedAt": "2026-06-10T16:58:51.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openhands",
         "release",
@@ -26223,7 +26263,7 @@
       "summaryEn": "GitHub explains how to connect Language Server Protocol servers to Copilot CLI, replacing brute-force grep and decompilation with IDE-grade code intelligence so the AI can reason about types and symbols accurately.",
       "lang": "en",
       "publishedAt": "2026-06-10T16:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "copilot",
         "github",
@@ -27102,7 +27142,7 @@
       "summaryEn": "Co-authored-by: openhands openhands@all-hands.dev",
       "lang": "en",
       "publishedAt": "2026-06-09T21:38:56.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openhands",
         "release",
@@ -27421,7 +27461,7 @@
       "summaryEn": "Anthropic officially unveiled its new AI model Claude Fable 5 in a YouTube video, showcasing improved reasoning and new features over previous generations as the latest flagship in the Claude family.",
       "lang": "en",
       "publishedAt": "2026-06-09T17:00:05.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -27452,7 +27492,7 @@
       "summaryEn": "This tutorial shows how to set up custom agents in GitHub Copilot CLI so it learns your stack and team workflows, turning one-off terminal prompts into repeatable, reviewable automation.",
       "lang": "en",
       "publishedAt": "2026-06-09T16:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "copilot",
         "github",
@@ -29621,7 +29661,7 @@
       "summaryEn": "PLTF-2895: event_callback index — use plain CREATE INDEX ( #14651 )",
       "lang": "en",
       "publishedAt": "2026-06-04T20:32:56.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openhands",
         "release",
@@ -30019,7 +30059,7 @@
       "summaryEn": "Semantic Kernel Python SDK 1.43.0 improves function call invocation parameter consistency and introduces a breaking change to OpenAPI document parsing options that affected developers must address.",
       "lang": "en",
       "publishedAt": "2026-06-03T22:40:50.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "agent",
         "release",
@@ -30197,7 +30237,7 @@
       "summaryEn": "Co-authored-by: openhands openhands@all-hands.dev Co-authored-by: hieptl hieptl.developer@gmail.com",
       "lang": "en",
       "publishedAt": "2026-06-03T18:37:35.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openhands",
         "release",
@@ -30270,7 +30310,7 @@
       "summaryEn": "Meta introduces Instantaneous PowerLoss Storm, a new testing paradigm that validates and improves data-center infrastructure resilience against instant, zero-notice power loss to keep systems running during outages.",
       "lang": "en",
       "publishedAt": "2026-06-03T17:00:44.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "engineering",
         "meta",
@@ -32510,7 +32550,7 @@
       "summaryEn": "Co-authored-by: openhands openhands@all-hands.dev",
       "lang": "en",
       "publishedAt": "2026-06-02T12:59:19.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "agent",
         "openhands",
@@ -37024,7 +37064,7 @@
       "summaryEn": "fix(logger): remove dead aifc pre-import block (alternative to #14592 …",
       "lang": "en",
       "publishedAt": "2026-05-29T10:13:46.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openhands",
         "release",
@@ -39453,7 +39493,7 @@
       "summaryEn": "feat(saas): seed Default LLM profile from legacy config on profiles u…",
       "lang": "en",
       "publishedAt": "2026-05-28T13:22:26.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openhands",
         "release",
@@ -39686,7 +39726,7 @@
       "summaryEn": "Semantic Kernel for .NET v1.77.0 is released, enabling default-on server URL validation for OpenAPI plugins to harden security, while continuing the ongoing migration toward the Agent Framework.",
       "lang": "en",
       "publishedAt": "2026-05-28T10:08:16.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "agent",
         "release",
@@ -45805,6 +45845,39 @@
       "bodyEn": ""
     },
     {
+      "id": "7b752c9b3e3af2c6",
+      "source": "anthropic-engineering",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/engineering/how-we-contain-claude",
+      "title": "How we contain Claude across products",
+      "titleJa": "製品全体でClaudeを封じ込める方法",
+      "titleEn": "How we contain Claude across products",
+      "summaryJa": "エージェントの能力向上に伴うリスク拡大に対し、Anthropicがclaude.ai・Claude Code・Coworkで実践する封じ込め設計の知見を解説。",
+      "summaryEn": "As agents grow more capable, so does their potential blast radius. The engineering question is how to cap it. Here’s what we’ve learned building containment for claude.ai, Claude Code, and Cowork.",
+      "lang": "en",
+      "publishedAt": "2026-05-25T00:00:00.000Z",
+      "collectedAt": "2026-07-06T01:00:27.671Z",
+      "tags": [
+        "anthropic",
+        "engineering",
+        "tutorial",
+        "ai-safety",
+        "agents",
+        "containment",
+        "claude-code",
+        "security",
+        "blast-radius"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "evergreen": true,
+      "contentSnippet": "As agents grow more capable, so does their potential blast radius. The engineering question is how to cap it. Here’s what we’ve learned building containment for claude.ai, Claude Code, and Cowork.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "36cbef58ffe2a34b",
       "source": "anthropic-news",
       "sourceType": "blog",
@@ -45844,39 +45917,6 @@
         "height": 0,
         "source": "og"
       }
-    },
-    {
-      "id": "7b752c9b3e3af2c6",
-      "source": "anthropic-engineering",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/engineering/how-we-contain-claude",
-      "title": "How we contain Claude across products",
-      "titleJa": "製品全体でClaudeを封じ込める方法",
-      "titleEn": "How we contain Claude across products",
-      "summaryJa": "エージェントの能力向上に伴うリスク拡大に対し、Anthropicがclaude.ai・Claude Code・Coworkで実践する封じ込め設計の知見を解説。",
-      "summaryEn": "As agents grow more capable, so does their potential blast radius. The engineering question is how to cap it. Here’s what we’ve learned building containment for claude.ai, Claude Code, and Cowork.",
-      "lang": "en",
-      "publishedAt": "2026-05-25T00:00:00.000Z",
-      "collectedAt": "2026-07-06T01:00:27.671Z",
-      "tags": [
-        "anthropic",
-        "engineering",
-        "tutorial",
-        "ai-safety",
-        "agents",
-        "containment",
-        "claude-code",
-        "security",
-        "blast-radius"
-      ],
-      "category": "claude",
-      "importance": 2,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "As agents grow more capable, so does their potential blast radius. The engineering question is how to cap it. Here’s what we’ve learned building containment for claude.ai, Claude Code, and Cowork.",
-      "bodyJa": "",
-      "bodyEn": ""
     },
     {
       "id": "f390ceed60c16666",
@@ -46637,7 +46677,7 @@
       "summaryEn": "GitHub has been named a Leader in the Gartner Magic Quadrant for Enterprise AI Coding Agents for the third consecutive year, reinforcing GitHub Copilot's standing as an open, secure, AI-powered platform.",
       "lang": "en",
       "publishedAt": "2026-05-22T16:10:21.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "copilot",
         "enterprise",
@@ -49199,7 +49239,7 @@
       "summaryEn": "Semantic Kernel Python 1.42.0 is a routine release that adds a Microsoft Agent Framework successor callout to its READMEs, bumps dependencies like authlib, and ships various bug fixes.",
       "lang": "en",
       "publishedAt": "2026-05-14T02:13:48.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "agent",
         "release",
@@ -49833,7 +49873,7 @@
       "summaryEn": "Teams use Codex with GPT-5.5 to ship production systems and turn research ideas into runnable experiments.",
       "lang": "en",
       "publishedAt": "2026-05-12T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "nvidia",
@@ -50069,7 +50109,7 @@
       "summaryEn": "ChatGPT adoption surged in Q1 2026, with fastest growth among users over 35 and more balanced gender usage, signaling broader mainstream AI adoption.",
       "lang": "en",
       "publishedAt": "2026-05-11T15:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "chatgpt",
@@ -50104,7 +50144,7 @@
       "summaryEn": "Microsoft released Semantic Kernel 1.76.0 for .NET, a routine minor update that hardens CloudDrivePlugin defaults, adds path validation, and improves OpenAPI plugin input validation for better security and stability.",
       "lang": "en",
       "publishedAt": "2026-05-11T09:46:02.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "agent",
         "release",
@@ -50143,7 +50183,7 @@
       "summaryEn": "OpenAI launches DeployCo, a new enterprise deployment company built to help organizations bring frontier AI into production and turn it into measurable business impact.",
       "lang": "en",
       "publishedAt": "2026-05-11T06:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "enterprise",
@@ -50309,7 +50349,7 @@
       "summaryEn": "How OpenAI runs Codex securely with sandboxing, approvals, network policies, and agent-native telemetry to support safe and compliant coding agent adoption.",
       "lang": "en",
       "publishedAt": "2026-05-08T12:30:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "agent",
@@ -50449,7 +50489,7 @@
       "summaryEn": "Anthropic shares interpretability research that translates Claude's internal representations into human language, visualizing what the model thinks during reasoning to advance AI transparency and safety.",
       "lang": "en",
       "publishedAt": "2026-05-07T17:01:21.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -50553,7 +50593,7 @@
       "summaryEn": "OpenAI expands Trusted Access for Cyber with GPT-5.5 and GPT-5.5-Cyber, helping verified defenders accelerate vulnerability research and protect critical infrastructure.",
       "lang": "en",
       "publishedAt": "2026-05-07T13:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "gpt-5-5",
@@ -50581,7 +50621,7 @@
       "summaryEn": "Explore new realtime voice models in the OpenAI API that can reason, translate, and transcribe speech, enabling more natural and intelligent voice experiences.",
       "lang": "en",
       "publishedAt": "2026-05-07T10:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "voice-ai",
@@ -50640,7 +50680,7 @@
       "summaryEn": "Introducing Trusted Contact in ChatGPT, an optional safety feature that notifies someone you trust if serious self-harm concerns are detected.",
       "lang": "en",
       "publishedAt": "2026-05-07T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "chatgpt",
@@ -50668,7 +50708,7 @@
       "summaryEn": "OpenAI begins testing ads in ChatGPT to support free access, with clear labeling, answer independence, strong privacy protections, and user control.",
       "lang": "en",
       "publishedAt": "2026-05-07T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "chatgpt",
@@ -50946,7 +50986,7 @@
       "summaryEn": "Uber uses OpenAI to power AI assistants and voice features that help drivers earn smarter and riders book faster across a global real-time marketplace.",
       "lang": "en",
       "publishedAt": "2026-05-06T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "uber",
@@ -51086,7 +51126,7 @@
       "summaryEn": "GPT-5.5 Instant updates ChatGPT’s default model with smarter, more accurate answers, reduced hallucinations, and improved personalization controls.",
       "lang": "en",
       "publishedAt": "2026-05-05T10:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "gpt-5",
@@ -51113,7 +51153,7 @@
       "summaryEn": "OpenAI introduces MRC (Multipath Reliable Connection), a new supercomputer networking protocol released via OCP to improve resilience and performance in large-scale AI training clusters.",
       "lang": "en",
       "publishedAt": "2026-05-05T10:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "release",
@@ -51756,7 +51796,7 @@
       "summaryEn": "Microsoft released Semantic Kernel for .NET 1.75.0, a routine minor update bundling connector and agent improvements, dependency upgrades, and bug fixes, continuing its tighter integration with the latest AI models and MCP.",
       "lang": "en",
       "publishedAt": "2026-04-29T14:05:03.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "agent",
         "release",
@@ -51795,7 +51835,7 @@
       "summaryEn": "Changes: 9cf7f01 .Net: VectorData connector bugfix release ( #13928 ) This list of changes was auto generated .",
       "lang": "en",
       "publishedAt": "2026-04-29T10:40:08.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "agent",
         "release",
@@ -51983,7 +52023,7 @@
       "summaryEn": "Microsoft released Semantic Kernel Python 1.41.3, a patch on the 1.41 line adding field and table name escaping to the SqlServer connector and extending the InMemoryCollection filter blocklist, focused on bug fixes and stability.",
       "lang": "en",
       "publishedAt": "2026-04-28T03:22:21.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "agent",
         "release",
@@ -52057,7 +52097,7 @@
       "summaryEn": "OpenAI GPT models, Codex, and Managed Agents are now available on AWS, enabling enterprises to build secure AI in their AWS environments.",
       "lang": "en",
       "publishedAt": "2026-04-28T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "aws",
@@ -52163,7 +52203,7 @@
       "summaryEn": "OpenAI and Microsoft announce an amended agreement that simplifies the partnership, adds long-term clarity, and supports continued AI innovation at scale.",
       "lang": "en",
       "publishedAt": "2026-04-27T06:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "microsoft",
@@ -52254,7 +52294,7 @@
       "summaryEn": "Introducing GPT-5.5, our smartest model yet—faster, more capable, and built for complex tasks like coding, research, and data analysis across tools.",
       "lang": "en",
       "publishedAt": "2026-04-23T11:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "gpt-5-5",
@@ -52761,7 +52801,7 @@
       "summaryEn": "OpenAI introduces GPT-Rosalind, a frontier reasoning model built to accelerate drug discovery, genomics analysis, protein reasoning, and scientific research workflows.",
       "lang": "en",
       "publishedAt": "2026-04-16T01:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "gpt-rosalind",
@@ -53354,7 +53394,7 @@
       "summaryEn": "Microsoft released Semantic Kernel Python 1.41.2, a small patch update improving prompt-template message serialization and sample usage, plus updating the redis dependency, focused on bug fixes and stability.",
       "lang": "en",
       "publishedAt": "2026-04-08T06:01:47.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "agent",
         "release",
@@ -53488,7 +53528,7 @@
       "summaryEn": "Anthropic announced Project Glasswing, an initiative using AI to discover and fix software vulnerabilities at scale. It aims to give defenders the advantage over attackers and strengthen security across the world's software.",
       "lang": "en",
       "publishedAt": "2026-04-07T18:03:51.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -53550,7 +53590,7 @@
       "summaryEn": "A pilot program to support independent safety and alignment research and develop the next generation of talent",
       "lang": "en",
       "publishedAt": "2026-04-06T10:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "ai-safety",
@@ -53562,7 +53602,7 @@
       "category": "codex",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "warm",
+      "archiveTier": "cold",
       "contentSnippet": "A pilot program to support independent safety and alignment research and develop the next generation of talent",
       "bodyJa": "",
       "bodyEn": ""
@@ -53610,7 +53650,7 @@
       "summaryEn": "Anthropic discusses why AI models sometimes act emotional, exploring how affective expression shapes user experience and safety, and how researchers interpret and handle such behavior.",
       "lang": "en",
       "publishedAt": "2026-04-02T16:06:59.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -54530,7 +54570,7 @@
       "summaryEn": "Microsoft shipped Semantic Kernel Python 1.41.1, a patch release focused on bug fixes such as preserving thought_signature in Gemini function call parts and repairing blocked image integration tests.",
       "lang": "en",
       "publishedAt": "2026-03-25T06:53:52.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "agent",
         "release",
@@ -54933,7 +54973,7 @@
       "summaryEn": "GPT-5.4 mini and nano are smaller, faster versions of GPT-5.4 optimized for coding, tool use, multimodal reasoning, and high-volume API and sub-agent workloads.",
       "lang": "en",
       "publishedAt": "2026-03-17T10:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "agent",
@@ -55370,7 +55410,7 @@
       "summaryEn": "Introducing GPT-5.4, OpenAI’s most most capable and efficient frontier model for professional work, with state-of-the-art coding, computer use, tool search, and 1M-token context.",
       "lang": "en",
       "publishedAt": "2026-03-05T10:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "gpt-5",
@@ -55628,7 +55668,7 @@
       "summaryEn": "OpenAI and Amazon announce a strategic partnership bringing OpenAI’s Frontier platform to AWS, expanding AI infrastructure, custom models, and enterprise AI agents.",
       "lang": "en",
       "publishedAt": "2026-02-27T05:30:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "enterprise",
@@ -56286,7 +56326,7 @@
       "summaryEn": "Anthropic announced Claude Opus 4.6, its new flagship model with improved coding and agentic performance, positioned as the top-tier offering with stronger reasoning and practical capabilities over the prior generation.",
       "lang": "en",
       "publishedAt": "2026-02-05T17:45:22.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -56349,7 +56389,7 @@
       "summaryEn": "GPT-5.3-Codex is a Codex-native agent that pairs frontier coding performance with general reasoning to support long-horizon, real-world technical work.",
       "lang": "en",
       "publishedAt": "2026-02-05T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "agent",
@@ -56381,7 +56421,7 @@
       "summaryEn": "GPT‑5.3-Codex is the most capable agentic coding model to date, combining the frontier coding performance of GPT‑5.2-Codex with the reasoning and professional knowledge capabilities of GPT‑5.2.",
       "lang": "en",
       "publishedAt": "2026-02-05T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "agent",
@@ -56540,7 +56580,7 @@
       "summaryEn": "Anthropic released a short-form video titled 'Claude on Mars' on its official YouTube channel. It appears to be promotional content highlighting Claude's brand image and imaginative use cases rather than a product announcement.",
       "lang": "en",
       "publishedAt": "2026-01-30T19:09:11.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -56739,7 +56779,7 @@
       "summaryEn": "Anthropic announced that tools in Claude are now interactive, letting users click buttons and fill forms directly in chat instead of relying on text-only responses for a richer, hands-on experience.",
       "lang": "en",
       "publishedAt": "2026-01-26T19:06:25.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -57104,7 +57144,7 @@
       "summaryEn": "Anthropic's video 'AI on campus' shows how Claude and other AI tools are spreading across universities, exploring impacts on teaching, research, and student learning from both faculty and student perspectives.",
       "lang": "en",
       "publishedAt": "2026-01-12T22:41:27.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -57134,7 +57174,7 @@
       "summaryEn": "Anthropic unveiled Cowork, bringing the Claude Code agent experience to non-engineering work so teams can delegate broad tasks to AI, expanding agentic automation well beyond coding.",
       "lang": "en",
       "publishedAt": "2026-01-12T20:02:22.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -57165,7 +57205,7 @@
       "summaryEn": "An Anthropic short explains that AI models have limited ability to introspect on their own internal states, so their self-reports may diverge from actual processing, underscoring why interpretability research matters.",
       "lang": "en",
       "publishedAt": "2026-01-08T16:07:44.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -57351,7 +57391,7 @@
       "summaryEn": "Anthropic explains sycophancy in AI models—the tendency to overly agree with or flatter users—covering how it emerges from training like RLHF and why it undermines efforts to build trustworthy, reliable AI.",
       "lang": "en",
       "publishedAt": "2025-12-18T20:30:14.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -57382,7 +57422,7 @@
       "summaryEn": "Anthropic introduces a feature that lets Claude browse and operate websites on your behalf, automating research, form-filling, and other online tasks—advancing practical AI agents directly in the browser.",
       "lang": "en",
       "publishedAt": "2025-12-18T18:52:03.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -57451,7 +57491,7 @@
       "summaryEn": "Anthropic ran Project Vend, letting Claude autonomously operate a small office store and handle inventory, pricing, and customer service, testing both the promise and pitfalls of AI managing long-term economic tasks.",
       "lang": "en",
       "publishedAt": "2025-12-18T12:04:53.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -57511,7 +57551,7 @@
       "summaryEn": "GPT-5.2-Codex is OpenAI’s most advanced coding model, offering long-horizon reasoning, large-scale code transformations, and enhanced cybersecurity capabilities.",
       "lang": "en",
       "publishedAt": "2025-12-18T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "gpt-5.2",
@@ -57543,7 +57583,7 @@
       "summaryEn": "Binti, a child welfare software provider, uses Claude to help social workers license foster families faster by streamlining paperwork and assessments, so children can reach safe homes more quickly.",
       "lang": "en",
       "publishedAt": "2025-12-17T18:13:19.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -57612,7 +57652,7 @@
       "summaryEn": "Anthropic's video explores how AI is reshaping education, covering personalized learning, evolving teacher roles, and fostering critical thinking, while mapping the challenges and opportunities schools now face.",
       "lang": "en",
       "publishedAt": "2025-12-16T22:42:58.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "anthropic",
         "youtube",
@@ -57782,7 +57822,7 @@
       "summaryEn": "OpenAI released GPT-5.2, its strongest model yet for math and science, setting new state-of-the-art results on benchmarks like GPQA Diamond and FrontierMath and showing how those gains aid real research.",
       "lang": "en",
       "publishedAt": "2025-12-11T10:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "benchmark",
@@ -57853,7 +57893,7 @@
       "summaryEn": "OpenAI launched GPT-5.2, its most advanced frontier model for everyday professional work, with state-of-the-art reasoning, long-context understanding, coding, and vision, available in ChatGPT and the API.",
       "lang": "en",
       "publishedAt": "2025-12-11T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "gpt-5.2",
@@ -57886,7 +57926,7 @@
       "summaryEn": "Disney and OpenAI struck a landmark deal to bring 200-plus Disney, Marvel, Pixar and Star Wars characters to Sora for fan-made short videos, signaling major studios embracing licensed IP in generative AI.",
       "lang": "en",
       "publishedAt": "2025-12-11T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "sora",
@@ -58539,7 +58579,7 @@
       "summaryEn": "GPT-5.1 is now available in the API, bringing faster adaptive reasoning, extended prompt caching, improved coding performance, and new apply_patch and shell tools.",
       "lang": "en",
       "publishedAt": "2025-11-13T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "gpt-5.1",
@@ -58571,7 +58611,7 @@
       "summaryEn": "We’re upgrading the GPT-5 series with warmer, more capable models and new ways to customize ChatGPT’s tone and style. GPT-5.1 starts rolling out today to paid users.",
       "lang": "en",
       "publishedAt": "2025-11-12T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "gpt-5.1",
@@ -58640,7 +58680,7 @@
       "summaryEn": "OpenAI and AWS signed a multi-year, $38 billion deal in which AWS supplies large-scale infrastructure and compute, accelerating OpenAI's next-generation AI workloads and diversifying its cloud capacity.",
       "lang": "en",
       "publishedAt": "2025-11-03T06:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "aws",
@@ -58733,7 +58773,7 @@
       "summaryEn": "Microsoft and OpenAI sign a new agreement that strengthens its long-term partnership, expands innovation, and ensures responsible AI progress.",
       "lang": "en",
       "publishedAt": "2025-10-28T06:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "microsoft",
@@ -59119,7 +59159,7 @@
       "summaryEn": "ChatGPT Atlas, the browser with ChatGPT built it. Get instant answers, summaries, and smart web help—right from any page. With privacy settings you can control. Available now for MacOS.",
       "lang": "en",
       "publishedAt": "2025-10-21T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "chatgpt-atlas",
@@ -59182,7 +59222,7 @@
       "summaryEn": "OpenAI and Broadcom announced a multi-year deal to deploy 10 gigawatts of OpenAI-designed AI accelerators from late 2026 through 2029, with OpenAI building custom chips and Broadcom providing Ethernet networking to expand compute capacity.",
       "lang": "en",
       "publishedAt": "2025-10-13T06:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "broadcom",
@@ -59215,7 +59255,7 @@
       "summaryEn": "OpenAI's Codex coding agent is now generally available, adding a Slack integration, a Codex SDK, and admin tools like usage dashboards and workspace management to make it easier for developers and enterprises to adopt.",
       "lang": "en",
       "publishedAt": "2025-10-06T10:50:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "coding-agent",
@@ -59248,7 +59288,7 @@
       "summaryEn": "We’re introducing a new generation of apps you can chat with, right inside ChatGPT. Developers can start building them today with the new Apps SDK, available in preview.",
       "lang": "en",
       "publishedAt": "2025-10-06T10:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "chatgpt",
@@ -59279,7 +59319,7 @@
       "summaryEn": "OpenAI and AMD announced a multi-year partnership to deploy 6 gigawatts of AMD Instinct GPUs, starting with 1 GW of MI450 in late 2026, expanding compute capacity and diversifying chip supply beyond NVIDIA.",
       "lang": "en",
       "publishedAt": "2025-10-06T06:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "amd",
@@ -59312,7 +59352,7 @@
       "summaryEn": "Today, we’re releasing new tools to help developers go from prototype to production faster: AgentKit, expanded evals capabilities, and reinforcement fine-tuning for agents.",
       "lang": "en",
       "publishedAt": "2025-10-06T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "agentkit",
@@ -59385,7 +59425,7 @@
       "summaryEn": "OpenAI published the Sora 2 system card detailing safety measures, risk assessments, minor protections, and content provenance for its new state-of-the-art video and audio generation model.",
       "lang": "en",
       "publishedAt": "2025-09-30T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "sora-2",
@@ -59418,7 +59458,7 @@
       "summaryEn": "OpenAI unveiled Sora 2, a video generation model that is more physically accurate, realistic, and controllable, adding synchronized dialogue and sound effects, and launched alongside a new Sora app.",
       "lang": "en",
       "publishedAt": "2025-09-30T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "sora",
@@ -59451,7 +59491,7 @@
       "summaryEn": "We’re taking first steps toward agentic commerce in ChatGPT with new ways for people, AI agents, and businesses to shop together.",
       "lang": "en",
       "publishedAt": "2025-09-29T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "agent",
         "openai",
@@ -59521,7 +59561,7 @@
       "summaryEn": "OpenAI, Oracle, and SoftBank announced five new U.S. Stargate datacenter sites, lifting total capacity to nearly 7GW and advancing their $500B, 10-gigawatt buildout while creating tens of thousands of jobs.",
       "lang": "en",
       "publishedAt": "2025-09-23T14:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "stargate",
@@ -59586,7 +59626,7 @@
       "summaryEn": "OpenAI and NVIDIA announce a strategic partnership to deploy 10 gigawatts of AI datacenters powered by NVIDIA systems, with the first phase launching in 2026.",
       "lang": "en",
       "publishedAt": "2025-09-22T08:45:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "release",
@@ -59733,7 +59773,7 @@
       "summaryEn": "We’re releasing a more advanced speech-to-speech model and new API capabilities including MCP server support, image input, and SIP phone calling support.",
       "lang": "en",
       "publishedAt": "2025-08-28T10:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "mcp-server",
@@ -60212,7 +60252,7 @@
       "summaryEn": "Introducing GPT-5 in our API platform—offering high reasoning performance, new controls for devs, and best-in-class results on real coding tasks.",
       "lang": "en",
       "publishedAt": "2025-08-07T10:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "gpt-5",
@@ -60284,7 +60324,7 @@
       "summaryEn": "See how a group of leading developers use GPT-5 for the first time.",
       "lang": "en",
       "publishedAt": "2025-08-07T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "gpt-5",
@@ -60314,7 +60354,7 @@
       "summaryEn": "OpenAI released the GPT-5 system card, detailing a unified routing system across gpt-5-main and gpt-5-thinking, plus safety tests, red-teaming, and risk mitigations for its new flagship model.",
       "lang": "en",
       "publishedAt": "2025-08-07T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "gpt-5",
@@ -60347,7 +60387,7 @@
       "summaryEn": "OpenAI unveiled GPT-5, its most capable model yet, delivering state-of-the-art performance in coding, math, writing, and health, with major reasoning gains, now available in ChatGPT and the API.",
       "lang": "en",
       "publishedAt": "2025-08-07T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "gpt-5",
@@ -60445,7 +60485,7 @@
       "summaryEn": "We introduce gpt-oss-120b and gpt-oss-20b, two open-weight reasoning models available under the Apache 2.0 license and our gpt-oss usage policy.",
       "lang": "en",
       "publishedAt": "2025-08-05T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "open-weights",
@@ -60476,7 +60516,7 @@
       "summaryEn": "OpenAI released gpt-oss-120b and gpt-oss-20b, two state-of-the-art open-weight models under the flexible Apache 2.0 license that deliver strong real-world performance at low cost for local and on-premises use.",
       "lang": "en",
       "publishedAt": "2025-08-05T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "gpt-oss",
@@ -60509,7 +60549,7 @@
       "summaryEn": "OpenAI announced Stargate Norway, its first European AI data center built with Nscale and Aker under the OpenAI for Countries program, aiming to deploy 100,000 NVIDIA GPUs by end of 2026.",
       "lang": "en",
       "publishedAt": "2025-07-31T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "release",
@@ -60655,7 +60695,7 @@
       "summaryEn": "OpenAI and Oracle agreed to build 4.5 GW of additional Stargate data center capacity in the U.S., pushing total to over 5 GW. The deal vastly expands AI compute, adds jobs, and boosts U.S. reindustrialization.",
       "lang": "en",
       "publishedAt": "2025-07-22T00:00:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "stargate",
@@ -60804,7 +60844,7 @@
       "summaryEn": "OpenAI, with Oracle, SoftBank, and MGX, unveiled Stargate, a venture investing $500B over four years in US AI infrastructure, deploying $100B now starting in Texas to secure compute for AGI and create jobs.",
       "lang": "en",
       "publishedAt": "2025-01-21T13:30:00.000Z",
-      "collectedAt": "2026-07-04T11:00:27.107Z",
+      "collectedAt": "2026-07-06T03:00:27.789Z",
       "tags": [
         "openai",
         "stargate",

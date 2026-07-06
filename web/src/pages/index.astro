@@ -6,9 +6,11 @@ import CategoryThumb from "../components/CategoryThumb.astro";
 import DailySummary from "../components/DailySummary.astro";
 import LiveMetrics from "../components/LiveMetrics.astro";
 import TickerBar from "../components/TickerBar.astro";
+import TimelineRightRail from "../components/TimelineRightRail.astro";
 import Pager from "../components/Pager.astro";
 import ArxivIcon from "../components/icons/ArxivIcon.astro";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
+import { sourceLabel } from "../lib/source-meta.ts";
 import { STATS } from "../lib/stats.ts";
 import {
   ALL_ENTRIES,
@@ -26,6 +28,7 @@ import {
   titleForLangWithFallback,
   isDeterministicFallbackEntry,
   isLowSignalRelease,
+  isOffTopicForHero,
 } from "../lib/data.ts";
 
 const currentPage = 1;
@@ -43,7 +46,13 @@ const ago = relativeTime(DASHBOARD_METRICS.generatedAt, now);
 // Top 3 = importance x recency, but only entries with real summaries.
 // Limit repeated source/category so the decision list is useful at a glance.
 const rankedPool = primaryEntries
-  .filter((e) => e.importance >= 2 && !isDeterministicFallbackEntry(e) && !isLowSignalRelease(e))
+  .filter(
+    (e) =>
+      e.importance >= 2 &&
+      !isDeterministicFallbackEntry(e) &&
+      !isLowSignalRelease(e) &&
+      !isOffTopicForHero(e),
+  )
   .slice(0, 120);
 const scoredTopCandidates = rankedPool
   .map((e) => {
@@ -154,9 +163,9 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
           <span class="orbit-ring orbit-ring-b"></span>
           <span class="scan-beam"></span>
           <div class="orbit-core">
-            <span>HOURLY ROUTING</span>
-            <strong>{DASHBOARD_METRICS.todayEntries}</strong>
-            <small>today</small>
+            <span>Hourly</span>
+            <strong>Routing</strong>
+            <small>ranked feed</small>
           </div>
           <span class="signal-node node-source">{DASHBOARD_METRICS.sourceCoverageLabel} sources</span>
           <span class="signal-node node-rank">rank</span>
@@ -203,17 +212,15 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
 
   <TickerBar entries={primaryEntries} now={now} />
 
-  <div class="layout home-layout">
+  <div class="layout">
     <Sidebar active="all" />
 
     <main>
         <section class="priority-section" id="today-priority" aria-labelledby="priority-heading">
         <div class="section-header primary section-header-stacked">
-          <p class="section-kicker">Start here</p>
           <h2 id="priority-heading">
             <span class="i18n-ja">今日見るべきもの</span>
             <span class="i18n-en" lang="en">Today's decision list</span>
-            <span class="count">featured · summary · top items</span>
           </h2>
           <p class="section-note i18n-ja">
             短時間で読む優先度を決める領域です。重要度、更新鮮度、source type を優先して表示します。
@@ -298,7 +305,7 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
                     onerror="this.style.display='none'"
                   />
                 )}
-                <span>{feat.source}</span>
+                <span>{sourceLabel(feat.source)}</span>
               </span>
               <span>·</span>
               <span>{relativeTime(feat.publishedAt, now)}</span>
@@ -343,7 +350,7 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
                     })()}
                   </a>
                   <span class="rank-meta">
-                    <span class="rank-source">{e.source}</span>
+                    <span class="rank-source">{sourceLabel(e.source)}</span>
                     <span class="rank-time mono">{relativeTime(e.publishedAt, now)}</span>
                   </span>
                   <span class="rank-reason i18n-ja">{reason.ja}</span>
@@ -358,7 +365,6 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
 
       <section class="timeline-section" id="timeline" aria-labelledby="timeline-heading">
         <div class="section-header primary section-header-stacked">
-          <p class="section-kicker">Deep dive</p>
           <h2 id="timeline-heading">
             <span class="i18n-ja">深掘り一覧</span>
             <span class="i18n-en" lang="en">Deep-dive timeline</span>
@@ -396,6 +402,7 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
       </section>
     </main>
 
+    <TimelineRightRail entries={primaryEntries} now={now} label="Timeline insights" />
   </div>
   <LiveMetrics />
 </Portal>

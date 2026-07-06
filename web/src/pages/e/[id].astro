@@ -20,7 +20,7 @@ import {
   type NormalizedEntry,
 } from "../../lib/data.ts";
 import { bodyForEntry } from "../../lib/bodies.ts";
-import { SOURCE_META } from "../../lib/source-meta.ts";
+import { SOURCE_META, sourceLabel } from "../../lib/source-meta.ts";
 import { sourceFreshnessStatus } from "../../lib/freshness.ts";
 
 export function getStaticPaths() {
@@ -57,7 +57,7 @@ const catName = catMeta?.name ?? entry.category;
 const catEmoji = catMeta?.emoji ?? "\u{1F4C4}";
 
 const srcMeta = SOURCE_META.find((s) => s.id === entry.source);
-const srcDisplay = srcMeta?.displayName ?? entry.source;
+const srcDisplay = sourceLabel(entry.source);
 const srcTier = srcMeta?.tier;
 const srcAvgImp = sourceAvgImportance(entry, 30);
 
@@ -229,7 +229,7 @@ const jsonLd = {
     <meta property="article:modified_time" content={entry.collectedAt} />
     {entry.tags.map((t) => <meta property="article:tag" content={t} />)}
     <meta data-pagefind-filter="category[content]" content={entry.category} />
-    <meta data-pagefind-filter="source[content]" content={entry.source} />
+    <meta data-pagefind-filter="source[content]" content={sourceLabel(entry.source)} />
     <meta data-pagefind-filter="sourceType[content]" content={entry.sourceType} />
     <meta data-pagefind-filter="importance[content]" content={String(entry.importance)} />
     <meta data-pagefind-filter="publishedDay[content]" content={entry.publishedAt.slice(0, 10)} />
@@ -535,7 +535,7 @@ const jsonLd = {
                   <div class="ed-rel-cardbody">
                     <div class="ed-rel-title">{rTitle}</div>
                     <div class="ed-rel-meta">
-                      <span class="ed-rel-src">{r.source}</span>
+                      <span class="ed-rel-src">{sourceLabel(r.source)}</span>
                       <span class="ed-rel-time">{relativeTime(r.publishedAt, now)}</span>
                     </div>
                   </div>
@@ -657,7 +657,7 @@ const jsonLd = {
       var total = main.offsetHeight - window.innerHeight;
       var scrolled = -rect.top;
       var pct = Math.max(0, Math.min(1, scrolled / Math.max(1, total)));
-      bar.style.width = (pct * 100).toFixed(2) + "%";
+      bar.style.transform = "scaleX(" + pct.toFixed(4) + ")";
       var fab = document.getElementById("ed-fab");
       if (fab) fab.classList.toggle("show", scrolled > window.innerHeight * 0.5);
     }
@@ -745,10 +745,12 @@ const jsonLd = {
   }
   .ed-progress-bar {
     height: 100%;
-    width: 0%;
+    width: 100%;
+    transform: scaleX(0);
+    transform-origin: left center;
     background: linear-gradient(90deg, var(--cat-color), color-mix(in srgb, var(--cat-color) 65%, #ffffff));
     box-shadow: 0 0 8px var(--cat-color);
-    transition: width 0.05s linear;
+    transition: transform 0.05s linear;
   }
 
   /* HERO */
@@ -979,7 +981,6 @@ const jsonLd = {
       linear-gradient(180deg, color-mix(in srgb, var(--cat-color) 12%, transparent), color-mix(in srgb, var(--cat-color) 3%, transparent)),
       var(--bg-2);
     border: 1px solid color-mix(in srgb, var(--cat-color) 28%, var(--border));
-    border-left: 4px solid var(--cat-color);
   }
   .ed-pullquote-mark {
     position: absolute;

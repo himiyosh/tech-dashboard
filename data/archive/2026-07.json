@@ -1,8 +1,34 @@
 {
-  "generatedAt": "2026-07-07T12:01:25.774Z",
+  "generatedAt": "2026-07-07T13:01:28.412Z",
   "month": "2026-07",
-  "count": 186,
+  "count": 188,
   "entries": [
+    {
+      "id": "5f96978a8cfa6f21",
+      "source": "anthropic-engineering",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/engineering/april-23-postmortem",
+      "title": "April 23 Postmortem",
+      "titleJa": "Anthropic、Claudeの応答品質を低下させた4月23日障害の事後分析を公開",
+      "titleEn": "April 23 Postmortem",
+      "lang": "en",
+      "publishedAt": "2026-07-07T13:00:40.169Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
+      "tags": [
+        "anthropic",
+        "engineering",
+        "postmortem",
+        "reliability",
+        "inference-infrastructure",
+        "llmops"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "evergreen": true,
+      "contentSnippet": "April 23 Postmortem"
+    },
     {
       "id": "d33cb088918ef6f1",
       "source": "anthropic-news",
@@ -44,7 +70,11 @@
       "collectedAt": "2026-07-07T12:00:40.349Z",
       "tags": [
         "qiita",
-        "vscode"
+        "vscode",
+        "claude-code",
+        "vscode-extension",
+        "token-optimization",
+        "developer-tools"
       ],
       "category": "claude",
       "importance": 1,
@@ -55,6 +85,35 @@
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYxOTI1NzA2JTJGNjUwYzk3NDI3YjM5NDJhNjFiNmYxNmRhZWQzN2FmNjEyMWUyM2RkMSUyRmxhcmdlLnBuZyUzRjE2MzA1NjMzODk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTA5MjkzNmIwZmJjZTY0ZDM3MTUzMWY0Mjg2YzFhZWQ3%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D8d11949acd330a4b56db243e5230b89a?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUU5JTgxJUI4JUU2JThBJTlFJUU5JUEwJTk4JUU1JTlGJTlGJUUzJTgxJThDJUU3JTg0JUExJUU5JUE3JTg0JUUzJTgxJUFCQ2xhdWRlJTIwQ29kZSVFMyU4MSVCOCVFNiVCOCVBMSVFMyU4MSU5NSVFMyU4MiU4QyVFMyU4MSVBQSVFMyU4MSU4NCVFMyU4MiU4OCVFMyU4MSU4NiVFMyU4MSVBQiVFMyU4MSU5OSVFMyU4MiU4QlZTQ29kZSVFNiU4QiVBMSVFNSVCQyVCNSVFNiVBOSU5RiVFOCU4MyVCRCVFMyU4MiU5MiVFNCVCRCU5QyVFMyU4MSVBMyVFMyU4MSU5RiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTU2MGU4ZmVlY2FjZmQ0ZTdmNDM5ZTljODhhYjFhNGIz&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB0dF9hbmRfdGsmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz05NGU4MTUzYThlODc3MTZjZmJkYmE1NTI2OGE1YmRmMQ&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=b1b2273e3508866ed70c50cd47da3153",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYxOTI1NzA2JTJGNjUwYzk3NDI3YjM5NDJhNjFiNmYxNmRhZWQzN2FmNjEyMWUyM2RkMSUyRmxhcmdlLnBuZyUzRjE2MzA1NjMzODk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTA5MjkzNmIwZmJjZTY0ZDM3MTUzMWY0Mjg2YzFhZWQ3%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D8d11949acd330a4b56db243e5230b89a?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUU5JTgxJUI4JUU2JThBJTlFJUU5JUEwJTk4JUU1JTlGJTlGJUUzJTgxJThDJUU3JTg0JUExJUU5JUE3JTg0JUUzJTgxJUFCQ2xhdWRlJTIwQ29kZSVFMyU4MSVCOCVFNiVCOCVBMSVFMyU4MSU5NSVFMyU4MiU4QyVFMyU4MSVBQSVFMyU4MSU4NCVFMyU4MiU4OCVFMyU4MSU4NiVFMyU4MSVBQiVFMyU4MSU5OSVFMyU4MiU4QlZTQ29kZSVFNiU4QiVBMSVFNSVCQyVCNSVFNiVBOSU5RiVFOCU4MyVCRCVFMyU4MiU5MiVFNCVCRCU5QyVFMyU4MSVBMyVFMyU4MSU5RiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTU2MGU4ZmVlY2FjZmQ0ZTdmNDM5ZTljODhhYjFhNGIz&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB0dF9hbmRfdGsmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz05NGU4MTUzYThlODc3MTZjZmJkYmE1NTI2OGE1YmRmMQ&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=b1b2273e3508866ed70c50cd47da3153",
         "alt": "選択領域が無駄にClaude Codeへ渡されないようにするVSCode拡張機能を作った",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "f165c59a2782ee93",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/bari/articles/5e104867bd53ee",
+      "title": "【2026年5〜7月】Claude Code アップデート総まとめ ― サブエージェント・権限・スキル",
+      "titleJa": "【2026年5〜7月】Claude Code アップデート総まとめ ― サブエージェント・権限・スキル",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-07T11:38:27.000Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Claude Code はほぼ毎日パッチが出ており、2〜3週間見ないうちにサブエージェントや権限まわりの前提が変わっていることがあります。この記事は、公式 CHANGELOG をもとに 2026年5月〜7月（v2.1.136 → v2.1.202）の差分をテーマ別に整理したものです。 対象範囲 差分の起点: v2.1.136（2026-05-08） 差分の終点: v2.1.202（2026-07-06） 集計日: 2026-07-07 つまり「2026年5月上旬から7月上旬までの約2ヶ月」で入った変更のまとめです。バージョン番号は追跡しやすいよう各項目に",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--TV-5ASqX--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2580%25902026%25E5%25B9%25B45%25E3%2580%259C7%25E6%259C%2588%25E3%2580%2591Claude%2520Code%2520%25E3%2582%25A2%25E3%2583%2583%25E3%2583%2597%25E3%2583%2587%25E3%2583%25BC%25E3%2583%2588%25E7%25B7%258F%25E3%2581%25BE%25E3%2581%25A8%25E3%2582%2581%2520%25E2%2580%2595%2520%25E3%2582%25B5%25E3%2583%2596%25E3%2582%25A8%25E3%2583%25BC%25E3%2582%25B8%25E3%2582%25A7%25E3%2583%25B3%25E3%2583%2588%25E3%2583%25BB%25E6%25A8%25A9%25E9%2599%2590%25E3%2583%25BB%25E3%2582%25B9%25E3%2582%25AD%25E3%2583%25AB%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:bari%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2UzNTAxOTI5MTUuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--TV-5ASqX--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2580%25902026%25E5%25B9%25B45%25E3%2580%259C7%25E6%259C%2588%25E3%2580%2591Claude%2520Code%2520%25E3%2582%25A2%25E3%2583%2583%25E3%2583%2597%25E3%2583%2587%25E3%2583%25BC%25E3%2583%2588%25E7%25B7%258F%25E3%2581%25BE%25E3%2581%25A8%25E3%2582%2581%2520%25E2%2580%2595%2520%25E3%2582%25B5%25E3%2583%2596%25E3%2582%25A8%25E3%2583%25BC%25E3%2582%25B8%25E3%2582%25A7%25E3%2583%25B3%25E3%2583%2588%25E3%2583%25BB%25E6%25A8%25A9%25E9%2599%2590%25E3%2583%25BB%25E3%2582%25B9%25E3%2582%25AD%25E3%2583%25AB%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:bari%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2UzNTAxOTI5MTUuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "【2026年5〜7月】Claude Code アップデート総まとめ ― サブエージェント・権限・スキル",
         "width": 0,
         "height": 0,
         "source": "og"
@@ -138,11 +197,11 @@
       "sourceType": "blog",
       "url": "https://qiita.com/okssusucha/items/70c096f31b9d71f8f5b2",
       "title": "AIに何回ダメ出ししたかを測る、対話型ベンチSWE-Together",
-      "titleJa": "AIへのダメ出し回数を測定する対話型ベンチマーク「SWE-Together」",
+      "titleJa": "AIに何回ダメ出ししたかを測る、対話型ベンチSWE-Together",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-07T04:56:13.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "claude",
         "qiita",
@@ -171,12 +230,12 @@
       "source": "zenn-claude",
       "sourceType": "blog",
       "url": "https://zenn.dev/seo_crawler/articles/92e18719186fbc",
-      "title": "ClaudeCodeでエージェントをバックエンドで複数稼働させる方法",
-      "titleJa": "Claude Codeでエージェントをバックエンドで複数稼働させる方法",
+      "title": "ClaudeCodeでエージェントをバックグラウンドで複数稼働させる方法",
+      "titleJa": "ClaudeCodeでエージェントをバックグラウンドで複数稼働させる方法",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-07T03:35:14.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "claude",
         "zenn",
@@ -189,7 +248,7 @@
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
-      "contentSnippet": "いつも自分は複数処理を同時に走らせる場合、ターミナルを複数起動して claudecodeを起動、もしくはcmuxを利用していた。 でもこれ毎回毎回ポチポチするのめんどくさいし、そういえばバックエンドで走らせること できるよなって思ったので、やり方を備忘録として残す。 エージェントを複数起動させ並行処理するシチュエーション これは自分の日々のタスクにおけるケースとする。 Fan-out型（同じ処理を対象違いで一斉に行う） 複数サイトのスクレイピングを同時で行いたい時。 複数KWのSerpsを調査したいとき 探索型(1つのことに対し、異なる戦略・プロンプトの",
+      "contentSnippet": "いつも自分は複数処理を同時に走らせる場合、ターミナルを複数起動して claudecodeを起動、もしくはcmuxを利用していた。 でもこれ毎回毎回ポチポチするのめんどくさいし、そういえばバックグラウンドで走らせること できるよなって思ったので、やり方を備忘録として残す。 エージェントを複数起動させ並行処理するシチュエーション これは自分の日々のタスクにおけるケースとする。 Fan-out型（同じ処理を対象違いで一斉に行う） 複数サイトのスクレイピングを同時で行いたい時。 複数KWのSerpsを調査したいとき 探索型(1つのことに対し、異なる戦略・プロンプ",
       "image": {
         "src": "https://res.cloudinary.com/zenn/image/upload/s--GpLSeJD---/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:ClaudeCode%25E3%2581%25A7%25E3%2582%25A8%25E3%2583%25BC%25E3%2582%25B8%25E3%2582%25A7%25E3%2583%25B3%25E3%2583%2588%25E3%2582%2592%25E3%2583%2590%25E3%2583%2583%25E3%2582%25AF%25E3%2582%25B0%25E3%2583%25A9%25E3%2582%25A6%25E3%2583%25B3%25E3%2583%2589%25E3%2581%25A7%25E8%25A4%2587%25E6%2595%25B0%25E7%25A8%25BC%25E5%2583%258D%25E3%2581%2595%25E3%2581%259B%25E3%2582%258B%25E6%2596%25B9%25E6%25B3%2595%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2582%25AF%25E3%2583%25AD%25E3%2583%25BC%25E3%2583%25A9%25E3%2583%25BC%25E5%2590%259B%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2M0MTBlOWNlMjQuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
         "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--GpLSeJD---/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:ClaudeCode%25E3%2581%25A7%25E3%2582%25A8%25E3%2583%25BC%25E3%2582%25B8%25E3%2582%25A7%25E3%2583%25B3%25E3%2583%2588%25E3%2582%2592%25E3%2583%2590%25E3%2583%2583%25E3%2582%25AF%25E3%2582%25B0%25E3%2583%25A9%25E3%2582%25A6%25E3%2583%25B3%25E3%2583%2589%25E3%2581%25A7%25E8%25A4%2587%25E6%2595%25B0%25E7%25A8%25BC%25E5%2583%258D%25E3%2581%2595%25E3%2581%259B%25E3%2582%258B%25E6%2596%25B9%25E6%25B3%2595%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2582%25AF%25E3%2583%25AD%25E3%2583%25BC%25E3%2583%25A9%25E3%2583%25BC%25E5%2590%259B%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2M0MTBlOWNlMjQuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
@@ -235,7 +294,7 @@
       "titleEn": "Cline sdk/sdk v0.0.58",
       "lang": "en",
       "publishedAt": "2026-07-07T02:05:58.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cline",
         "release",
@@ -267,7 +326,7 @@
       "titleEn": "Cline sdk/core v0.0.58",
       "lang": "en",
       "publishedAt": "2026-07-07T02:05:57.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cline",
         "release",
@@ -299,7 +358,7 @@
       "titleEn": "Cline sdk/agents v0.0.58",
       "lang": "en",
       "publishedAt": "2026-07-07T02:05:55.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cline",
         "release",
@@ -331,7 +390,7 @@
       "titleEn": "Cline sdk/llms v0.0.58",
       "lang": "en",
       "publishedAt": "2026-07-07T02:05:54.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cline",
         "release",
@@ -363,7 +422,7 @@
       "titleEn": "Cline sdk/shared v0.0.58",
       "lang": "en",
       "publishedAt": "2026-07-07T02:05:53.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cline",
         "release",
@@ -395,7 +454,7 @@
       "titleEn": "Cline sdk/sdk v0.0.57",
       "lang": "en",
       "publishedAt": "2026-07-07T01:36:05.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cline",
         "release",
@@ -426,7 +485,7 @@
       "titleEn": "Cline sdk/core v0.0.57",
       "lang": "en",
       "publishedAt": "2026-07-07T01:36:03.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cline",
         "release",
@@ -458,7 +517,7 @@
       "titleEn": "Cline sdk/agents v0.0.57",
       "lang": "en",
       "publishedAt": "2026-07-07T01:36:01.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cline",
         "release",
@@ -490,7 +549,7 @@
       "titleEn": "Cline sdk/llms v0.0.57",
       "lang": "en",
       "publishedAt": "2026-07-07T01:36:00.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cline",
         "release",
@@ -522,7 +581,7 @@
       "titleEn": "Cline sdk/shared v0.0.57",
       "lang": "en",
       "publishedAt": "2026-07-07T01:35:58.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cline",
         "release",
@@ -778,7 +837,7 @@
       "titleEn": "Shift into high gear with agents: Securing the software-defined vehicle",
       "lang": "en",
       "publishedAt": "2026-07-06T16:00:00.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cloud",
         "google",
@@ -1016,7 +1075,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-06T12:51:59.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cursor",
         "qiita",
@@ -1092,7 +1151,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-06T08:39:18.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cursor",
         "qiita",
@@ -1118,7 +1177,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-06T07:36:48.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cursor",
         "mcp-server",
@@ -1211,7 +1270,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-06T01:10:38.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cursor",
         "qiita",
@@ -1410,7 +1469,7 @@
       "titleEn": "We terminated a TPU mid-training and it recovered in seconds:  Introduction to elastic training with MaxText",
       "lang": "en",
       "publishedAt": "2026-07-06T00:00:00.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "google",
         "tpu",
@@ -3203,7 +3262,7 @@
       "titleEn": "Improved accuracy and coverage in Copilot usage metrics reports",
       "lang": "en",
       "publishedAt": "2026-07-02T23:19:06.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "changelog",
         "github",
@@ -3228,7 +3287,7 @@
       "titleEn": "Upcoming deprecation of Gemini 2.5 Pro and Gemini 3 Flash",
       "lang": "en",
       "publishedAt": "2026-07-02T23:07:06.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "changelog",
         "github",
@@ -3314,7 +3373,7 @@
       "titleEn": "Copilot CLI no longer needs a personal access token in GitHub Actions",
       "lang": "en",
       "publishedAt": "2026-07-02T20:25:32.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "changelog",
         "github",
@@ -3340,7 +3399,7 @@
       "titleEn": "Copilot agent session streaming is now in public preview",
       "lang": "en",
       "publishedAt": "2026-07-02T18:05:05.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "agent",
         "changelog",
@@ -3464,7 +3523,7 @@
       "titleEn": "Cost centers now support AI credit pools",
       "lang": "en",
       "publishedAt": "2026-07-02T16:00:51.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "changelog",
         "github",
@@ -3862,7 +3921,7 @@
       "titleEn": "Issue fields are now generally available",
       "lang": "en",
       "publishedAt": "2026-07-02T08:17:17.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "changelog",
         "github",
@@ -4151,7 +4210,7 @@
       "titleEn": "Secret scanning public monitoring for enterprises",
       "lang": "en",
       "publishedAt": "2026-07-02T00:37:55.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "changelog",
         "github",
@@ -4201,7 +4260,7 @@
       "titleEn": "Enterprises can default to auto model selection",
       "lang": "en",
       "publishedAt": "2026-07-01T22:27:16.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "changelog",
         "github",
@@ -4225,7 +4284,7 @@
       "titleEn": "GitHub Models is being fully retired on July 30, 2026",
       "lang": "en",
       "publishedAt": "2026-07-01T21:30:20.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "changelog",
         "github",
@@ -4284,7 +4343,7 @@
       "titleEn": "Enterprise managed-settings.json is generally available",
       "lang": "en",
       "publishedAt": "2026-07-01T20:57:26.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "changelog",
         "enterprise",
@@ -4468,7 +4527,7 @@
       "titleEn": "AlloyDB AI Functions - now with revolutionary performance boosts and cost savings",
       "lang": "en",
       "publishedAt": "2026-07-01T18:00:00.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cloud",
         "google",
@@ -4723,7 +4782,7 @@
       "titleEn": "Google named a Leader in 2026 Gartner® Magic Quadrant™ for Analytics and Business Intelligence Platforms for third year in a row",
       "lang": "en",
       "publishedAt": "2026-07-01T16:00:00.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cloud",
         "google",
@@ -4808,7 +4867,7 @@
       "titleEn": "Beyond Static Prompts: Building Scale-Proof, Polymorphic Multi-Agent Systems with Google's ADK",
       "lang": "en",
       "publishedAt": "2026-07-01T14:00:00.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "agent",
         "cloud",
@@ -5091,7 +5150,7 @@
       "titleEn": "Scaling LLM Inference: Multi-Node KV Cache Offloading with GKE & Managed Lustre",
       "lang": "en",
       "publishedAt": "2026-07-01T07:00:00.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "cloud",
         "google",
@@ -5429,7 +5488,7 @@
       "titleEn": "ML Development in VS Code with Google Cloud Power: Workbench Extension Now Available",
       "lang": "en",
       "publishedAt": "2026-07-01T00:00:00.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "google",
         "vs-code",
@@ -5454,7 +5513,7 @@
       "titleEn": "Why we built ADK 2.0",
       "lang": "en",
       "publishedAt": "2026-07-01T00:00:00.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "google",
         "agent-development-kit",
@@ -5479,7 +5538,7 @@
       "titleEn": "Build agentic full-stack apps with Genkit",
       "lang": "en",
       "publishedAt": "2026-07-01T00:00:00.000Z",
-      "collectedAt": "2026-07-07T05:00:28.020Z",
+      "collectedAt": "2026-07-07T13:00:40.169Z",
       "tags": [
         "agent",
         "google",

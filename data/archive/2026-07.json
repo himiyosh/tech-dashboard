@@ -1,8 +1,212 @@
 {
-  "generatedAt": "2026-07-10T10:00:29.132Z",
+  "generatedAt": "2026-07-10T20:00:48.509Z",
   "month": "2026-07",
-  "count": 252,
+  "count": 270,
   "entries": [
+    {
+      "id": "757d8a2e803396ea",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/_Altair_/items/544b5a469c078f4551b1",
+      "title": "VScodeでSTM32F446REを開発する",
+      "titleJa": "VScodeでSTM32F446REを開発する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-10T19:13:38.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "環境構築 STM32の開発といえば「STM32CubeIDE」が主流でしたが、最近では公式の拡張機能により Visual Studio Code (VS Code) での本格的な開発が可能になりました． 今回は自作基板のセットアップをしていきます． マイコンはSTM32F...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjExNTcyMjMyMCUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz03ZGZjYzAwMTNlNDliNTU2YmNhZTQ3YWQ1YTQ4ODA3Yg%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D83a45bae8d6c2475ac5d0be46d2a0355?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNjb2RlJUUzJTgxJUE3U1RNMzJGNDQ2UkUlRTMlODIlOTIlRTklOTYlOEIlRTclOTklQkElRTMlODElOTklRTMlODIlOEImdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz00NDUxNjIyYjE1YmYyZGY5YjFjZTg1Nzg4ZWFlMDZmOA&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBfQWx0YWlyXyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWNiMTcwOTk4ZDcxYzRmN2FhNWMwYTk0ZmJlMjU0NTYw&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=2a4da1cecbe33d5bce8ca4dd61c1761a",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjExNTcyMjMyMCUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz03ZGZjYzAwMTNlNDliNTU2YmNhZTQ3YWQ1YTQ4ODA3Yg%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D83a45bae8d6c2475ac5d0be46d2a0355?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNjb2RlJUUzJTgxJUE3U1RNMzJGNDQ2UkUlRTMlODIlOTIlRTklOTYlOEIlRTclOTklQkElRTMlODElOTklRTMlODIlOEImdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz00NDUxNjIyYjE1YmYyZGY5YjFjZTg1Nzg4ZWFlMDZmOA&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBfQWx0YWlyXyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWNiMTcwOTk4ZDcxYzRmN2FhNWMwYTk0ZmJlMjU0NTYw&amp;blend-x=242&amp;blend-y=480&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;s=2a4da1cecbe33d5bce8ca4dd61c1761a",
+        "alt": "VScodeでSTM32F446REを開発する",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "e130f15b9862b471",
+      "source": "zed-releases",
+      "sourceType": "release",
+      "url": "https://github.com/zed-industries/zed/releases/tag/nightly",
+      "title": "nightly",
+      "titleJa": "Zed nightly、折りたたみ時にコードレンズのブロックを非表示化",
+      "titleEn": "nightly",
+      "lang": "en",
+      "publishedAt": "2026-07-10T15:32:21.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "editor",
+        "release",
+        "zed",
+        "agent",
+        "tutorial",
+        "open-model",
+        "navigation",
+        "debugging",
+        "code-lens",
+        "code-folding"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "lmstudio: Fix context wheel by including token usage in streaming res…",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/42274306?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/42274306?s=60&amp;v=4",
+        "alt": "nightly",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "0c430f819755eece",
+      "source": "zed-releases",
+      "sourceType": "release",
+      "url": "https://github.com/zed-industries/zed/releases/tag/collab-staging",
+      "title": "collab-staging",
+      "titleJa": "Zed collab-staging: マッチ無しでも編集予測の保持率を計算",
+      "titleEn": "collab-staging",
+      "lang": "en",
+      "publishedAt": "2026-07-10T15:32:21.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "editor",
+        "release",
+        "zed",
+        "agent",
+        "open-model",
+        "tutorial",
+        "edit-prediction",
+        "telemetry",
+        "ai-coding"
+      ],
+      "category": "cursor",
+      "importance": 3,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "lmstudio: Fix context wheel by including token usage in streaming res…",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/42274306?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/42274306?s=60&amp;v=4",
+        "alt": "collab-staging",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "0b3b9a5574088d4f",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/phpmyadmin/articles/f243076e9ec1fe",
+      "title": "DGX Spark (GB10) でローカルLLMを7本ベンチマークした【2026年7月】",
+      "titleJa": "DGX Spark (GB10) でローカルLLMを7本ベンチマークした【2026年7月】",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-10T11:23:33.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "NVIDIA DGX Spark(MSI EdgeXpert、GB10 / ユニファイドメモリ128GB)を入手したので、2026年7月時点の最新オープンウェイトLLMを一通り動かしてベンチマークしました。「128GBで何がどこまで動くか」の参考に。 環境 項目 値 マシン MSI EdgeXpert(NVIDIA DGX Spark) SoC NVIDIA GB10(Grace Blackwell) メモリ 128GB ユニファイド(実効 121GB) OS Ubuntu 24.04.4 LTS(DGX OS) ドライバ / CUDA 580.159."
+    },
+    {
+      "id": "51e8fe5307d38a57",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/sorapenguin/articles/598d6bed47156c",
+      "title": "# ローカルLLMで無料IT問題演習サービスを作った話（CCNP/LPIC/IPA対応・音声再生あり）",
+      "titleJa": "# ローカルLLMで無料IT問題演習サービスを作った話（CCNP/LPIC/IPA対応・音声再生あり）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-10T10:12:22.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに tech-lab（https://tech-lab.sorapenguin.dev）は、CCNP ENARSI・LPIC・Javaなどのスキルアップ向け問題演習を無料で使えるWebサービスです。 主な特徴： 無料・ゲスト利用可能 音声読み上げ・自動再生対応（ながら学習ができる） 前回から時間が経った問題だけ出す絞り込み機能 XP・レベル・スタミナのゲーミフィケーション 問題は継続的に追加中 この記事では「問題をどうやって量産したか」と「サービスの独自機能」について書きます。 なぜ作ったか CCNP ENARSIやLPICなど、Web上で無料演習"
+    },
+    {
+      "id": "a381db4976a3da86",
+      "source": "zed-releases",
+      "sourceType": "release",
+      "url": "https://github.com/zed-industries/zed/releases/tag/v1.11.2-pre",
+      "title": "Zed Editor Releases v1.11.2-pre",
+      "titleJa": "",
+      "titleEn": "Zed Editor Releases v1.11.2-pre",
+      "lang": "en",
+      "publishedAt": "2026-07-10T09:36:08.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "editor",
+        "release",
+        "zed"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "agent: Added GPT 5.6 Sol &amp; Terra for ChatGPT subscription. Note: GPT 5.6 Luna is not available yet, since OpenAI has not unlocked access for third-party clients ( #60744 )",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/79345384?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/79345384?s=60&amp;v=4",
+        "alt": "Zed Editor Releases v1.11.2-pre",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "76393ae15648e409",
+      "source": "zed-releases",
+      "sourceType": "release",
+      "url": "https://github.com/zed-industries/zed/releases/tag/v1.10.2",
+      "title": "Zed Editor Releases v1.10.2",
+      "titleJa": "",
+      "titleEn": "Zed Editor Releases v1.10.2",
+      "lang": "en",
+      "publishedAt": "2026-07-10T09:27:05.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "editor",
+        "release",
+        "zed"
+      ],
+      "category": "cursor",
+      "importance": 3,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "agent: Added GPT 5.6 Sol &amp; Terra for ChatGPT subscription. Note: GPT 5.6 Luna is not available yet, since OpenAI has not unlocked access for third-party clients ( #60745 )",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/79345384?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/79345384?s=60&amp;v=4",
+        "alt": "Zed Editor Releases v1.10.2",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
     {
       "id": "4be48eea82db3d4f",
       "source": "zenn-copilot",
@@ -16,10 +220,15 @@
       "collectedAt": "2026-07-10T10:00:22.104Z",
       "tags": [
         "copilot",
-        "zenn"
+        "zenn",
+        "azure",
+        "network",
+        "copilot-studio",
+        "infrastructure",
+        "diagram"
       ],
       "category": "copilot",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに Azure を仕事で使っていますが、複雑なシステムになってくると、Azure リソースの構成図を把握するの大変ですよね。。 例えば App Service が VNet 統合して DB へ接続しており、DB へ接続できないという問題があったとします。そのトラシューをする場合、「最初は VNet 統合の設定見よ。次は NSG。次はルートテーブル。と思ったら Firewall あったのでそっち。おっとロードバランサーもあった。あれVNet ピアリングしている...」のように、結構複雑になりがちだと思います。 そこで、リソース名を伝えるだけで、ネット",
@@ -56,7 +265,108 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "arXiv:2607.06764v1 Announce Type: new Abstract: Recent progress on ARC-AGI-1 from disclosed architectures has come broadly from two regimes: heavy test-time compute over frontier models (evolutionary search, exhaustive sampling, extended chain-of-thought), or benchmark-specific t"
+      "contentSnippet": "arXiv:2607.06764v1 Announce Type: new Abstract: Recent progress on ARC-AGI-1 from disclosed architectures has come broadly from two regimes: heavy test-time compute over frontier models (evolutionary search, exhaustive sampling, extended chain-of-thought), or benchmark-specific t",
+      "image": {
+        "src": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "origSrc": "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png",
+        "alt": "Cost-Effective Agent Harnesses for Abstract Reasoning and Generalization on ARC-AGI-1",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "3f358a8428352d93",
+      "source": "arxiv-cs-cl",
+      "sourceType": "paper",
+      "url": "https://arxiv.org/abs/2607.08027",
+      "title": "Structured Pruning of Large Language Models via Power Transformation and Sign-Preserving Score Aggregation with Adaptive Feature Retention",
+      "titleJa": "",
+      "titleEn": "Structured Pruning of Large Language Models via Power Transformation and Sign-Preserving Score Aggregation with Adaptive Feature Retention",
+      "lang": "en",
+      "publishedAt": "2026-07-10T04:00:00.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "arxiv",
+        "paper"
+      ],
+      "category": "research",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "arXiv:2607.08027v1 Announce Type: new Abstract: This paper proposes an improved structured pruning method for large language models (LLMs) that addresses key challenges in adapting Adaptive Feature Retention (AFR), an unstructured pruning technique, to structured pruning. When ap"
+    },
+    {
+      "id": "916b9fbd35a135e3",
+      "source": "mcp-servers-releases",
+      "sourceType": "release",
+      "url": "https://github.com/modelcontextprotocol/servers/releases/tag/2026.7.10",
+      "title": "MCP Servers Releases Release 2026.7.10",
+      "titleJa": "",
+      "titleEn": "MCP Servers Releases Release 2026.7.10",
+      "lang": "en",
+      "publishedAt": "2026-07-10T03:39:07.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "release"
+      ],
+      "category": "mcp",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Release : v2026.7.10 Updated packages @modelcontextprotocol/server-filesystem@2026.7.10 mcp-server-time@2026.7.10 mcp-server-fetch@2026.7.10 mcp-server-git@2026.7.10",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "MCP Servers Releases Release 2026.7.10",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "b6acf969f6e12ad1",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/hanav1ye/articles/claude-startup1",
+      "title": "Cursorを契約していた私がClaudeを試すことにしました。",
+      "titleJa": "Cursorを契約していた私がClaudeを試すことにしました。",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-10T03:16:28.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "cursor",
+        "zenn"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "タイトルの通り、今更ながらClaudeを試してみることにしました。 もうFable5が使えなくなるのに？というのもありますが、 正直、私にはあまり関係がありません。 新しいモデルを使うことに特に興味があるわけでもないので。 ちなみに私はまだCursorに契約しています。（今月末に切れます） 前に悩みに悩んでCursorを選びました。 経緯は下記の記事に詳細を書いていますが、 今振り返ると、 IDE（開発統合環境）上で動作する安心感が コーディング目的だった私には大きかったと思います。 そんな私がなぜ今Claudeを試すことにしたのか、 その理由をお話しし"
+    },
+    {
+      "id": "081d16e6fbb101fe",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/ryuka_lucas/articles/grok45-cursor-cost-performance",
+      "title": "Grok4.5「1/10コスト」の実態を数字で検証する",
+      "titleJa": "Grok4.5「1/10コスト」の実態を数字で検証する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-10T02:49:35.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "cursor",
+        "zenn"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "2026年7月8日、AIコーディングエディタのCursorが、xAI（イーロン・マスク氏のAI企業）と提携してGrok 4.5を統合した。全プラン・デスクトップ/Web/iOS/CLI/SDKで即日利用でき、標準搭載されている。発表直後から「AnthropicのAIモデルFable 5（AnthropicのAIコーディングツールClaude Codeで使われるモデル）に迫る性能を1/10のコストで出せる」という言説がSNS・ニュースサイトを駆け巡った。「1/10なら乗り換えた方が得では」と心が動いた人も多いはずだ。 この数字の出どころをたどると、評価機関"
     },
     {
       "id": "a59da1c663113422",
@@ -64,20 +374,55 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/headwaters/articles/gpt-5-6-sol-terra-luna-github-copilot_8658",
       "title": "GitHub CopilotにSol・Terra・LunaのGPT-5.6ファミリーが登場｜3つのバリアントを使い分ける",
-      "titleJa": "GitHub CopilotにSol・Terra・LunaのGPT-5.6ファミリーが登場｜3つのバリアントを使い分ける",
+      "titleJa": "GitHub CopilotにGPT-5.6ファミリー（Sol・Terra・Luna）が登場｜3つのバリアントを使い分ける",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-10T02:00:07.000Z",
       "collectedAt": "2026-07-10T10:00:22.104Z",
       "tags": [
         "copilot",
-        "zenn"
+        "zenn",
+        "gpt-5-6",
+        "github-copilot",
+        "llm"
       ],
       "category": "copilot",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "https://github.blog/changelog/2026-07-09-openais-gpt-5-6-sol-terra-and-luna-are-now-available-in-github-copilot/ はじめに OpenAIのGPT-5.6ファミリーがGitHub Copilotで順次利用可能になりました。 今回のポイントは、GPT-5.6が単一のモデルではなくSol・Terra・Lunaという3つのバリアントで提供されることです。 タスクの性質に合わせてモデルを選び分けられるようになり、大規模コードベースの推論から日常的なエージ"
+    },
+    {
+      "id": "36b90cf5fa53697f",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/citrus_fff/articles/8018d5df88a4af",
+      "title": "AIにコードレビューを頼むとき、差分だけ貼っていませんか？——「渡し方」で精度が変わる実務テンプレートの話",
+      "titleJa": "AIコードレビューの精度は「差分の渡し方」で変わる——実務テンプレート解説",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-09T23:37:50.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "cursor",
+        "zenn",
+        "code-review",
+        "prompt-engineering",
+        "ai-tools"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "この記事でやること AIにコードレビューを頼んだとき、こうなったことはありませんか。 「素晴らしいコードです！」と褒められて終わる 逆に、呼び出し元で検証済みの箇所を「入力検証がない」と指摘してくる console.log を消せとか、変数名をもっと長くしろとか、重箱の隅だけ突いてくる 原因はツールの性能ではなく、渡し方です。 この記事では、AIレビューの精度を実用レベルに引き上げるプロンプトテンプレートを全文公開します。なぜその書き方なのかの「理由」と、ChatGPT・Claudeで挙動がどう違うかも書きます。 さらに後半では、レビュー以外に「テストコ",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--yKyYZATK--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:AI%25E3%2581%25AB%25E3%2582%25B3%25E3%2583%25BC%25E3%2583%2589%25E3%2583%25AC%25E3%2583%2593%25E3%2583%25A5%25E3%2583%25BC%25E3%2582%2592%25E9%25A0%25BC%25E3%2582%2580%25E3%2581%25A8%25E3%2581%258D%25E3%2580%2581%25E5%25B7%25AE%25E5%2588%2586%25E3%2581%25A0%25E3%2581%2591%25E8%25B2%25BC%25E3%2581%25A3%25E3%2581%25A6%25E3%2581%2584%25E3%2581%25BE%25E3%2581%259B%25E3%2582%2593%25E3%2581%258B%25EF%25BC%259F%25E2%2580%2594%25E2%2580%2594%25E3%2580%258C%25E6%25B8%25A1%25E3%2581%2597%25E6%2596%25B9%25E3%2580%258D%25E3%2581%25A7%25E7%25B2%25BE%25E5%25BA%25A6%25E3%2581%258C%25E5%25A4%2589%25E3%2582%258F%25E3%2582%258B%25E5%25AE%259F%25E5%258B%2599%25E3%2583%2586%25E3%2583%25B3%25E3%2583%2597%25E3%2583%25AC%25E3%2583%25BC%25E3%2583%2588%25E3%2581%25AE%25E8%25A9%25B1%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2582%2586%25E3%2581%259A%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jTEQ3dWhGSXVWcXRjVmVkenh5VklLX1NoUFRIT1JIWlktN1NWVjJMX1Y0MnpRUUthRT1zMjUwLWM=%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--yKyYZATK--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:AI%25E3%2581%25AB%25E3%2582%25B3%25E3%2583%25BC%25E3%2583%2589%25E3%2583%25AC%25E3%2583%2593%25E3%2583%25A5%25E3%2583%25BC%25E3%2582%2592%25E9%25A0%25BC%25E3%2582%2580%25E3%2581%25A8%25E3%2581%258D%25E3%2580%2581%25E5%25B7%25AE%25E5%2588%2586%25E3%2581%25A0%25E3%2581%2591%25E8%25B2%25BC%25E3%2581%25A3%25E3%2581%25A6%25E3%2581%2584%25E3%2581%25BE%25E3%2581%259B%25E3%2582%2593%25E3%2581%258B%25EF%25BC%259F%25E2%2580%2594%25E2%2580%2594%25E3%2580%258C%25E6%25B8%25A1%25E3%2581%2597%25E6%2596%25B9%25E3%2580%258D%25E3%2581%25A7%25E7%25B2%25BE%25E5%25BA%25A6%25E3%2581%258C%25E5%25A4%2589%25E3%2582%258F%25E3%2582%258B%25E5%25AE%259F%25E5%258B%2599%25E3%2583%2586%25E3%2583%25B3%25E3%2583%2597%25E3%2583%25AC%25E3%2583%25BC%25E3%2583%2588%25E3%2581%25AE%25E8%25A9%25B1%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2582%2586%25E3%2581%259A%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jTEQ3dWhGSXVWcXRjVmVkenh5VklLX1NoUFRIT1JIWlktN1NWVjJMX1Y0MnpRUUthRT1zMjUwLWM=%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "AIにコードレビューを頼むとき、差分だけ貼っていませんか？——「渡し方」で精度が変わる実務テンプレートの話",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "3834b1cdc680037c",
@@ -175,6 +520,38 @@
       }
     },
     {
+      "id": "248ba5419419532a",
+      "source": "zed-releases",
+      "sourceType": "release",
+      "url": "https://github.com/zed-industries/zed/releases/tag/v1.10.1",
+      "title": "Zed Editor Releases v1.10.1",
+      "titleJa": "Zed Editor v1.10.1 リリース",
+      "titleEn": "Zed Editor Releases v1.10.1",
+      "lang": "en",
+      "publishedAt": "2026-07-09T19:36:47.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "editor",
+        "release",
+        "zed",
+        "patch",
+        "open-source"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "open_ai: Added support for GPT 5.6 Sol/Terra/Luna ( #60699 ) cli: Fixed an issue where the previous workspace would not be restored when using cli_default_open_behavior: new_window and no path was provided ( #60672 )",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/79345384?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/79345384?s=60&amp;v=4",
+        "alt": "Zed Editor Releases v1.10.1",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
       "id": "04cbb69e89ad467f",
       "source": "openhands-releases",
       "sourceType": "release",
@@ -200,6 +577,38 @@
         "src": "https://avatars.githubusercontent.com/u/225919603?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/u/225919603?s=60&amp;v=4",
         "alt": "OpenHands cloud 1.45.0",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "06d2487a259bcbce",
+      "source": "zed-releases",
+      "sourceType": "release",
+      "url": "https://github.com/zed-industries/zed/releases/tag/v1.11.1-pre",
+      "title": "Zed Editor Releases v1.11.1-pre",
+      "titleJa": "Zed Editor v1.11.1-pre リリース",
+      "titleEn": "Zed Editor Releases v1.11.1-pre",
+      "lang": "en",
+      "publishedAt": "2026-07-09T19:28:12.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "editor",
+        "release",
+        "zed",
+        "pre-release",
+        "v1.11"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "open_ai: Added support for GPT 5.6 Sol/Terra/Luna ( #60698 ) cli: Fixed an issue where the previous workspace would not be restored when using cli_default_open_behavior: new_window and no path was provided ( #60671 )",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/79345384?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/79345384?s=60&amp;v=4",
+        "alt": "Zed Editor Releases v1.11.1-pre",
         "width": 0,
         "height": 0,
         "source": "media"
@@ -296,6 +705,31 @@
       }
     },
     {
+      "id": "ef2adec533ca908e",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/DanielOkada/items/b10cd4c39355607ec37b",
+      "title": "WSLはCLIだけじゃない。VS CodeでGUI開発する方法",
+      "titleJa": "WSLはCLIだけじゃない。VS CodeでGUI開発する方法",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-09T03:30:28.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "qiita",
+        "vscode",
+        "wsl",
+        "remote-development",
+        "linux",
+        "windows"
+      ],
+      "category": "vscode",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 最近、C++を書く必要が出てきました。 本番環境はLinuxです。 でも、私が使っているPCはWindows。 だったらWindowsで書けばいいじゃないか、と思いますよね。 でも、本番がLinuxなら、開発環境もLinuxに近づけたくなります。 Windows..."
+    },
+    {
       "id": "3d422f06010f9102",
       "source": "qiita-copilot",
       "sourceType": "blog",
@@ -343,6 +777,75 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに 今週流れてきたトレンドの中から、実際に手を動かして確かめたものをまとめる。Git worktreesはずっと存在は知りつつ本腰入れて使ったことがなかった。Go 1.26のスタックアロケーション改善も気になっていたし、Copilotのトークン効率話は業務への影響が..."
+    },
+    {
+      "id": "4dec3fa8c27348de",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/hard-questions",
+      "title": "Inviting hard questions",
+      "titleJa": "難しい質問を歓迎する",
+      "titleEn": "Inviting hard questions",
+      "lang": "en",
+      "publishedAt": "2026-07-09T00:00:00.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "anthropic",
+        "claude",
+        "ai-safety",
+        "transparency",
+        "public-engagement"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Who decides the rules for AI? Can AI give my children a better future?"
+    },
+    {
+      "id": "13ec026b9c51b288",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/ust-claude",
+      "title": "UST is bringing Claude to physical AI",
+      "titleJa": "",
+      "titleEn": "UST is bringing Claude to physical AI",
+      "lang": "en",
+      "publishedAt": "2026-07-09T00:00:00.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "anthropic",
+        "claude"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Before a factory commits to manufacturing millions of chips, engineers stress-test the design in the fab. Before a product ships, a fault on the assembly line has to be caught before it becomes a recall. When AI does this kind of work, it’s called physical AI: intelligence built "
+    },
+    {
+      "id": "69b854bf6d33c678",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/ben-bernanke",
+      "title": "Ben Bernanke appointed to Anthropic’s Long-Term Benefit Trust",
+      "titleJa": "ベン・バーナンキ氏がAnthropicの長期利益信託に就任",
+      "titleEn": "Ben Bernanke appointed to Anthropic’s Long-Term Benefit Trust",
+      "lang": "en",
+      "publishedAt": "2026-07-09T00:00:00.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "anthropic",
+        "claude",
+        "governance",
+        "long-term-benefit-trust",
+        "ben-bernanke"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Anthropic's Long-Term Benefit Trust (LTBT) has appointed Dr. Ben Bernanke, a Distinguished Fellow at the Brookings Institution and former Chair of the Federal Reserve, as its newest member. He joins an independent body that works to hold Anthropic to its mission: the responsible "
     },
     {
       "id": "4b7ac20b40131775",
@@ -405,6 +908,38 @@
         "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
         "alt": "langchain==1.3.12",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "cb7c961c26c6a6c8",
+      "source": "zed-releases",
+      "sourceType": "release",
+      "url": "https://github.com/zed-industries/zed/releases/tag/v1.11.0-pre",
+      "title": "Zed Editor Releases v1.11.0-pre",
+      "titleJa": "Zed Editor v1.11.0-pre リリース",
+      "titleEn": "Zed Editor Releases v1.11.0-pre",
+      "lang": "en",
+      "publishedAt": "2026-07-08T22:03:49.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "editor",
+        "release",
+        "zed",
+        "pre-release",
+        "open-source"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "This week's release includes new git: view staged changes and git: view unstaged changes views for seeing and acting on exactly what will go into your next commit, a preview pane in the project symbols picker, and diff stats in the uncommitted changes toolbar and per-file in diff",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/79345384?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/79345384?s=60&amp;v=4",
+        "alt": "Zed Editor Releases v1.11.0-pre",
         "width": 0,
         "height": 0,
         "source": "media"
@@ -658,6 +1193,38 @@
         "src": "https://avatars.githubusercontent.com/u/225919603?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/u/225919603?s=60&amp;v=4",
         "alt": "OpenHands Releases 1.9.3",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "765f741f663f66a4",
+      "source": "zed-releases",
+      "sourceType": "release",
+      "url": "https://github.com/zed-industries/zed/releases/tag/v1.10.0",
+      "title": "Zed Editor Releases v1.10.0",
+      "titleJa": "Zed Editor v1.10.0 リリース",
+      "titleEn": "Zed Editor Releases v1.10.0",
+      "lang": "en",
+      "publishedAt": "2026-07-08T16:12:33.000Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
+      "tags": [
+        "editor",
+        "release",
+        "zed",
+        "v1.10.0",
+        "open-source"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "This week's release includes llama.cpp as a new language model provider, a new git.inline_blame.location setting to control where current-line blame is shown (inline or status bar), and disabling format-on-save by default, alongside the move of LLM providers, external agents, and",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/79345384?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/79345384?s=60&amp;v=4",
+        "alt": "Zed Editor Releases v1.10.0",
         "width": 0,
         "height": 0,
         "source": "media"
@@ -1014,11 +1581,11 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/si_ka/articles/92a7f1ed34561a",
       "title": "【実録】社内向けアプリが海外Botに目を付けられ、1日で20万リクエストを浴びて爆死した話と、私が施した生存戦略",
-      "titleJa": "【実録】社内アプリが海外Botに1日20万リクエストを浴びて爆死した話と生存戦略",
+      "titleJa": "【実録】社内向けアプリが海外Botに目を付けられ、1日で20万リクエストを浴びて爆死した話と、私が施した生存戦略",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-08T04:52:07.000Z",
-      "collectedAt": "2026-07-08T12:00:11.908Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
       "tags": [
         "cursor",
         "zenn",
@@ -1199,43 +1766,6 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "2026年7月1日、AIコーディング環境を狙う2件の攻撃が同日に公開された。ひとつはCursor IDEのゼロクリックRCE「DuneSlide」（Cato Networks）、もうひとつは北朝鮮系のサプライチェーン攻撃「PolinRider」（Socket）だ。どちらも..."
-    },
-    {
-      "id": "e130f15b9862b471",
-      "source": "zed-releases",
-      "sourceType": "release",
-      "url": "https://github.com/zed-industries/zed/releases/tag/nightly",
-      "title": "nightly: cloud_api_client: Make `send_authenticated_json_request` public (#60562)",
-      "titleJa": "Zed nightly、折りたたみ時にコードレンズのブロックを非表示化",
-      "titleEn": "nightly: cloud_api_client: Make `send_authenticated_json_request` public (#60562)",
-      "lang": "en",
-      "publishedAt": "2026-07-07T23:00:12.000Z",
-      "collectedAt": "2026-07-08T12:00:11.908Z",
-      "tags": [
-        "editor",
-        "release",
-        "zed",
-        "agent",
-        "tutorial",
-        "open-model",
-        "navigation",
-        "debugging",
-        "code-lens",
-        "code-folding"
-      ],
-      "category": "cursor",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot",
-      "contentSnippet": "This PR makes the send_authenticated_json_request method on the CloudApiClient public. This way we can use it to make requests by external callers. The build_request method was also inlined into send_authenticated_request to make the contract simpler. Release Notes: N/A",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/1486634?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/1486634?s=60&amp;v=4",
-        "alt": "nightly: cloud_api_client: Make `send_authenticated_json_request` public (#60562)",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
     },
     {
       "id": "fd5c6ea631b210f2",
@@ -1510,42 +2040,6 @@
         "src": "https://avatars.githubusercontent.com/u/13853051?s=60&amp;v=4",
         "origSrc": "https://avatars.githubusercontent.com/u/13853051?s=60&amp;v=4",
         "alt": "Semantic Kernel dotnet-1.78.0",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
-      "id": "0c430f819755eece",
-      "source": "zed-releases",
-      "sourceType": "release",
-      "url": "https://github.com/zed-industries/zed/releases/tag/collab-staging",
-      "title": "collab-staging: fs: Skip parent watch for poll watcher symlink targets (#57049)",
-      "titleJa": "Zed collab-staging: マッチ無しでも編集予測の保持率を計算",
-      "titleEn": "collab-staging: fs: Skip parent watch for poll watcher symlink targets (#57049)",
-      "lang": "en",
-      "publishedAt": "2026-07-07T16:26:30.000Z",
-      "collectedAt": "2026-07-08T12:00:11.908Z",
-      "tags": [
-        "editor",
-        "release",
-        "zed",
-        "agent",
-        "open-model",
-        "tutorial",
-        "edit-prediction",
-        "telemetry",
-        "ai-coding"
-      ],
-      "category": "cursor",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "hot",
-      "contentSnippet": "Problem Since the release of the new git UI, when ~/.gitconfig on a remote server is a symlink pointing to a file on a virtual filesystem (a common setup when using OrbStack on macOS), Zed fails to connect with \"Timed out pinging remote client\". Cause When setting up a file watch",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/49880655?s=60&amp;v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/49880655?s=60&amp;v=4",
-        "alt": "collab-staging: fs: Skip parent watch for poll watcher symlink targets (#57049)",
         "width": 0,
         "height": 0,
         "source": "media"
@@ -2075,7 +2569,7 @@
       "titleEn": "What’s New in Microsoft Foundry | June 2026",
       "lang": "en",
       "publishedAt": "2026-07-07T07:10:25.000Z",
-      "collectedAt": "2026-07-08T12:00:11.908Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
       "tags": [
         "ai",
         "foundry",
@@ -2852,7 +3346,7 @@
       "titleEn": "AWS Weekly Roundup: Claude Sonnet 5 on AWS, Amazon WorkSpaces for AI agents, AWS service availability updates, and more (July 6, 2026)",
       "lang": "en",
       "publishedAt": "2026-07-06T15:46:43.000Z",
-      "collectedAt": "2026-07-08T12:00:11.908Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
       "tags": [
         "amazon",
         "aws",
@@ -3482,7 +3976,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-05T23:07:41.000Z",
-      "collectedAt": "2026-07-08T12:00:11.908Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
       "tags": [
         "cursor",
         "zenn",
@@ -3507,7 +4001,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-05T23:04:44.000Z",
-      "collectedAt": "2026-07-08T12:00:11.908Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
       "tags": [
         "cursor",
         "zenn",
@@ -3583,7 +4077,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-05T22:30:05.000Z",
-      "collectedAt": "2026-07-08T12:00:11.908Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
       "tags": [
         "cursor",
         "zenn",
@@ -3988,7 +4482,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-05T09:24:04.000Z",
-      "collectedAt": "2026-07-08T12:00:11.908Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
       "tags": [
         "cursor",
         "zenn",
@@ -4089,7 +4583,7 @@
       "titleEn": "MCP Servers Releases Release 2026.7.4",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-07-08T12:00:11.908Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -4197,7 +4691,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-04T08:41:08.000Z",
-      "collectedAt": "2026-07-08T12:00:11.908Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
       "tags": [
         "cursor",
         "zenn",
@@ -4710,7 +5204,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-03T14:55:22.000Z",
-      "collectedAt": "2026-07-08T12:00:11.908Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
       "tags": [
         "cursor",
         "zenn",
@@ -4878,7 +5372,7 @@
       "titleEn": "collab-production: livekit_api: Fix LiveKit token revocation timestamps (#60157)",
       "lang": "en",
       "publishedAt": "2026-07-03T09:50:42.000Z",
-      "collectedAt": "2026-07-08T12:00:11.908Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
       "tags": [
         "editor",
         "release",
@@ -5175,8 +5669,8 @@
       }
     },
     {
-      "id": "1f49350ffe861c2f",
-      "source": "zenn-copilot",
+      "id": "69717ef780d747db",
+      "source": "zenn-cursor",
       "sourceType": "blog",
       "url": "https://zenn.dev/shizuku/articles/ai-generated-code-comments",
       "title": "AIが書いたコメント、残す？消す？ ― AI時代のコメントとの付き合い方",
@@ -5184,17 +5678,17 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-03T01:52:17.000Z",
-      "collectedAt": "2026-07-10T10:00:22.104Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
       "tags": [
-        "copilot",
-        "zenn",
         "cursor",
+        "zenn",
+        "copilot",
         "code-comments",
         "ai-generated",
         "best-practices",
         "developer-workflow"
       ],
-      "category": "copilot",
+      "category": "cursor",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -6635,7 +7129,7 @@
       "titleEn": "Zed Editor Releases v1.10.0-pre",
       "lang": "en",
       "publishedAt": "2026-07-01T17:31:57.000Z",
-      "collectedAt": "2026-07-08T12:00:11.908Z",
+      "collectedAt": "2026-07-10T20:00:22.215Z",
       "tags": [
         "editor",
         "release",

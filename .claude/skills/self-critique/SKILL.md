@@ -41,19 +41,19 @@ argument-hint: "scope or suspected regression"
 | R-001: GitHub Actions に deploy job を追加していないか | `.github/workflows/*.yml` に `wrangler pages deploy` が含まれていないことを確認 |
 | R-001b: main への直接 push / merge をしていないか | `git log origin/main..HEAD` で未マージ commit を確認 |
 | R-003: web build が web で自己完結しているか | `web/src/**` から `../../../harness/` への runtime import がないことを grep で確認 |
-| R-009: secret が staged / tracked に混入していないか | `npm run secrets:scan:staged` を実行 |
-| R-012: live index の body 欠落が 0 件か | `data/index.json` で `bodyJa === "" && bodyEn === ""` の件数を確認 |
-| R-013: summary/body fallback が全 live entry に適用済みか | `summaryJa` / `summaryEn` いずれかが空の件数を確認 |
+| R-009: secret が staged / tracked に混入していないか | `npm run secrets:scan` と `npm run secrets:scan:worktree` を実行 |
+| R-012: live index が body-free architecture を守っているか | `data/index.json` で非空 `bodyJa` / `bodyEn` 件数が 0、本文は `data/bodies.json` にあることを確認 |
+| R-013: summary fallback が全 live entry に適用済みか | `summaryJa` / `summaryEn` の両方が非空であることを確認し、body は `data/bodies.json` 側で管理する |
 
 ### C-02: ナビゲーション状態 (NAVIGATION)
 
 `.github/copilot-instructions.md` の LL-019, LL-046 を参照。
 
-- [ ] Desktop: `Categories` が primary nav shortcut として表示される (`header .nav-shortcut`)
+- [ ] Desktop: `Categories` / `arXiv` / `Knowledge` が primary nav shortcut として表示される (`header .nav-shortcut`)
 - [ ] Desktop: `Archive` / `About` がハンバーガー内に存在する (`#site-menu a`)
 - [ ] Desktop: `Categories` がハンバーガー内に**含まれない** (`#site-menu a[href="/categories/"]` が 0 件)
 - [ ] Desktop: `Categories` ページを開いてもハンバーガーボタンが active にならない
-- [ ] Mobile: 下部 tabbar は `Home`, `Categories`, `Menu` の 3 action に限定されている
+- [ ] Mobile: 下部 tabbar は `Home`, `Categories`, `arXiv`, `Knowledge`, `Menu` の 5 action で表示される
 - [ ] Mobile: `header .menu-trigger` が表示されず、ハンバーガー/Menu は下部 tabbar に統一されている
 - [ ] Mobile: `#site-menu` は下部 tabbar の Menu から開き、tabbar 上に収まる bottom-sheet として表示される
 - [ ] Mobile: hero 直下に重複 stats / 長い説明文の余白がなく、最初の Featured/article が `390x844` で十分上に見える (目安: `y <= 340`)
@@ -125,6 +125,8 @@ npx playwright test tests/e2e/smoke.spec.ts --reporter=line
 ### C-06: data artifact 品質 (DATA QUALITY)
 
 - [ ] `data/index.json` のサイズが極端に大きくないか (目安: 15 MB 未満)
+- [ ] `data/index.json` に非空 `bodyJa` / `bodyEn` が残っていないか (expected: 0)
+- [ ] `data/bodies.json` が存在し、record count / coverage が確認できるか
 - [ ] archive 月別ファイルが 8 MB 未満か
 - [ ] `data/index.json` の `generatedAt` が古すぎず、`data/stats.json` / `data/archive/_index.json` と大きく乖離していないか
 - [ ] `publishedAt === collectedAt` のミリ秒一致が全体の 5% 未満か
@@ -136,19 +138,21 @@ npx playwright test tests/e2e/smoke.spec.ts --reporter=line
 node -e "
 const fs=require('fs');
 const d=JSON.parse(fs.readFileSync('./data/index.json','utf8'));
+const bodies=JSON.parse(fs.readFileSync('./data/bodies.json','utf8'));
 const live=d.entries;
 const total=live.length;
 const noSumJa=live.filter(e=>!e.summaryJa).length;
 const noSumEn=live.filter(e=>!e.summaryEn).length;
-const noBodyJa=live.filter(e=>!e.bodyJa).length;
-const noBodyEn=live.filter(e=>!e.bodyEn).length;
+const indexBodyPresent=live.filter(e=>String(e.bodyJa??'').trim()||String(e.bodyEn??'').trim()).length;
+const bodyRecords=Object.keys(bodies.bodies||{}).length;
+const bodyCoverage=(bodyRecords/Math.max(1,total)*100).toFixed(1);
 const noTitleEn=live.filter(e=>!e.titleEn).length;
 const staleDate=live.filter(e=>e.publishedAt&&e.collectedAt&&Math.abs(new Date(e.publishedAt)-new Date(e.collectedAt))<100).length;
 console.log('entries:', total);
 console.log('no summaryJa:', noSumJa, '('+(noSumJa/total*100).toFixed(1)+'%)');
 console.log('no summaryEn:', noSumEn, '('+(noSumEn/total*100).toFixed(1)+'%)');
-console.log('no bodyJa:', noBodyJa);
-console.log('no bodyEn:', noBodyEn);
+console.log('index body present:', indexBodyPresent);
+console.log('bodies.json count:', bodyRecords, '('+bodyCoverage+'% of live entries)');
 console.log('no titleEn:', noTitleEn, '('+(noTitleEn/total*100).toFixed(1)+'%)');
 console.log('publishedAt==collectedAt:', staleDate, '('+(staleDate/total*100).toFixed(1)+'%)');
 "
@@ -214,7 +218,7 @@ Agent selector で TechDBAgent を選び、対象 URL または local preview UR
 ## ✅ 問題なし
 
 - C-05 build & E2E: 全件 PASS
-- C-06 data quality: body 欠落 0 件, titleEn 欠落 X% (閾値内)
+- C-06 data quality: index body populated 0 件, bodies.json coverage X%, titleEn 欠落 X% (閾値内)
 - C-08 persona journey: Critical / Warning なし
 
 ## 新規 LL

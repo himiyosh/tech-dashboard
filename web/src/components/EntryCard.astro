@@ -4,6 +4,7 @@ import {
   isNew,
   CATEGORY_META,
   entryHref,
+  importanceLabel,
   summaryForLangWithFallback,
   titleForLangWithFallback,
   type NormalizedEntry,
@@ -60,6 +61,7 @@ const titleEn = titleEnResult.text;
 const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
 const catColor = catMeta?.color ?? "#8a847e";
 const catName = catMeta?.name ?? entry.category;
+const catShortLabel = catMeta?.shortLabel ?? catName;
 const catEmoji = catMeta?.emoji ?? "\u{1F4C4}";
 
 const sourceTypeJa: Record<NormalizedEntry["sourceType"], string> = {
@@ -76,21 +78,16 @@ const sourceTypeEn: Record<NormalizedEntry["sourceType"], string> = {
   paper: "paper/research",
   community: "community",
 };
-const priorityTone =
-  entry.importance === 3 ? "high" : entry.importance === 2 ? "medium" : "normal";
-const priorityLabelJa =
-  entry.importance === 3 ? "重要度 High" : entry.importance === 2 ? "重要度 Medium" : "通常";
-const priorityLabelEn =
-  entry.importance === 3 ? "High priority" : entry.importance === 2 ? "Medium priority" : "Normal";
+const priority = importanceLabel(entry.importance);
 const rankReasonJa =
   entry.importance >= 2
-    ? `${priorityLabelJa} · ${sourceTypeJa[entry.sourceType]} · ${catName}`
+    ? `${priority.ja} · ${sourceTypeJa[entry.sourceType]} · ${catName}`
     : fresh
       ? `新着 · ${sourceTypeJa[entry.sourceType]} · ${catName}`
       : `深掘り候補 · ${sourceTypeJa[entry.sourceType]} · ${catName}`;
 const rankReasonEn =
   entry.importance >= 2
-    ? `${priorityLabelEn} · ${sourceTypeEn[entry.sourceType]} · ${catName}`
+    ? `${priority.en} · ${sourceTypeEn[entry.sourceType]} · ${catName}`
     : fresh
       ? `New · ${sourceTypeEn[entry.sourceType]} · ${catName}`
       : `Deep-dive candidate · ${sourceTypeEn[entry.sourceType]} · ${catName}`;
@@ -124,7 +121,7 @@ function sourceIcon(t: string): string {
 const img = entry.image;
 const hasUsableImage =
   !!img && typeof img.src === "string" && img.src.length > 0;
-const thumbMark = hasUsableImage ? img!.source : "fallback";
+const thumbMark = hasUsableImage ? img!.source : "";
 const entryHost = host(entry.url);
 const visibleTags = entry.tags.slice(0, 3);
 const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
@@ -141,9 +138,14 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
       {entry.importance === 3 && <span class="badge hot" title="重要リリース">🔥 HOT</span>}
       {fresh && <span class="badge new">NEW</span>}
       <span class={badgeClass(entry.sourceType)}>{entry.sourceType}</span>
-      <span class="badge cat">{entry.category}</span>
+      <span
+        class="badge cat"
+        data-category={entry.category}
+        title={catName}
+        aria-label={`Category: ${catName}`}
+      >{catShortLabel}</span>
       <span class="spacer"></span>
-      <span class="mono">{rel}</span>
+      <time class="mono" datetime={entry.publishedAt}>{rel}</time>
       <span>·</span>
       <span class="src-tag">
         <img
@@ -183,16 +185,16 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
       </a>
     </h3>
     <div class="card-insight" aria-label="Reading priority">
-      <span class={`insight-priority ${priorityTone}`}>
-        <span class="i18n-ja">{priorityLabelJa}</span>
-        <span class="i18n-en" lang="en">{priorityLabelEn}</span>
+      <span class={`insight-priority ${priority.tone}`}>
+        <span class="i18n-ja">{priority.ja}</span>
+        <span class="i18n-en" lang="en">{priority.en}</span>
       </span>
       <span class="insight-reason i18n-ja">{rankReasonJa}</span>
       <span class="insight-reason i18n-en" lang="en">{rankReasonEn}</span>
-      <span class="insight-date">
+      <time class="insight-date" datetime={entry.publishedAt}>
         <span class="i18n-ja">公開 {publishedJa}</span>
         <span class="i18n-en" lang="en">Published {publishedEn}</span>
-      </span>
+      </time>
     </div>
     {hasSummary ? (
       <div class="summary-stack">
@@ -306,6 +308,6 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
       >{sourceIcon(entry.sourceType)}</text>
     </svg>
     {hasUsableImage && <span class="src-mark image-src-mark">{thumbMark}</span>}
-    <span class="src-mark fallback-src-mark">fallback</span>
+    <span class="src-mark fallback-src-mark">NO PREVIEW</span>
   </div>
 </article>

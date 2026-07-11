@@ -53,7 +53,7 @@ export const SOURCE_META = [
   { id: "the-verge", displayName: "The Verge", category: "tech-news", tier: 2 },
   { id: "ars-technica", displayName: "Ars Technica", category: "tech-news", tier: 2 },
   { id: "dora-insights", displayName: "DORA Insights (Google)", category: "research", tier: 2 },
-  { id: "hn-ai", displayName: "Hacker News - AI coding", category: "research", tier: 3 },
+  { id: "hn-ai", displayName: "Hacker News - AI coding", category: "tech-news", tier: 3 },
   { id: "user-opml", displayName: "User OPML (custom feeds)", category: "research", tier: 3 },
   { id: "youtube-anthropic", displayName: "YouTube - Anthropic", category: "claude", tier: 3 },
 ] as const;
@@ -74,4 +74,13 @@ export function sourceLabel(id: string): string {
     .filter(Boolean)
     .map((w) => w[0].toUpperCase() + w.slice(1))
     .join(" ");
+}
+
+export function sourceAnchorId(id: string): string {
+  const normalized = id
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return `source-${normalized || "unknown"}`;
 }

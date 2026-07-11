@@ -2,12 +2,12 @@
   "name": "tech-dashboard",
   "version": "0.1.0",
   "private": true,
-  "description": "Daily AI tech dashboard for 14 categories and 50 sources",
+  "description": "Daily AI tech dashboard driven by registry-defined categories and sources",
   "type": "module",
   "scripts": {
     "collect": "tsx --env-file-if-exists=.env.local harness/orchestrator.ts",
     "collect:dry": "tsx --env-file-if-exists=.env.local harness/orchestrator.ts --dry-run",
-    "summaries:apply-cache": "node scripts/apply-summary-cache.mjs",
+    "summaries:apply-cache": "tsx scripts/apply-summary-cache.mjs",
     "ogp:backfill": "node scripts/fetch-missing-ogp.mjs",
     "archive:trim-hot": "node scripts/trim-archive-hot-summaries.mjs",
     "noise:clean": "tsx scripts/clean-source-noise.mjs",
@@ -48,8 +48,8 @@
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "@types/node": "^22.10.0",
-    "tsx": "^4.19.0",
+    "tsx": "^4.23.0",
     "typescript": "^5.7.0",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.10"
   }
 }

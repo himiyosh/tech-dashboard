@@ -1,30 +1,15 @@
 #!/usr/bin/env node
-/**
- * Backfill missing `titleEn` for data/index.json entries.
- *
- * Strategy (in priority order):
- *  1. If `titleEn` already has a value → skip
- *  2. If `summaryEn` starts with a real sentence (not a fallback marker) →
- *     extract the first sentence (up to 120 chars) as a descriptive titleEn
- *  3. Fall back to `title` if the entry has an English summaryEn (the article
- *     itself may be in Japanese, but a title stub is better than nothing)
- *
- * Usage:
- *   node scripts/fill-title-en.mjs [--dry-run]
- */
 
-import { readFileSync, writeFileSync } from "fs";
-import { join, dirname } from "path";
+import { readFileSync, writeFileSync, renameSync, unlinkSync } from "fs";
+import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const ROOT = join(__dirname, "..");
 const INDEX_PATH = join(ROOT, "data", "index.json");
 
-const DRY_RUN = process.argv.includes("--dry-run");
-
-// Phrases that indicate a placeholder / fallback summary — not a real title.
-const FALLBACK_MARKERS = [
+export const FALLBACK_MARKERS = [
   "AI summary",
   "このエントリは",
   "このエントリ",
@@ -34,77 +19,233 @@ const FALLBACK_MARKERS = [
   "AI-generated summary",
 ];
 
-function isFallbackSummary(text) {
-  if (!text) return true;
-  return FALLBACK_MARKERS.some((m) => text.includes(m));
+export function isFallbackSummary(text) {
+  const value = typeof text === "string" ? text.trim() : "";
+  if (!value) return true;
+  return FALLBACK_MARKERS.some((marker) => value.includes(marker));
 }
 
-/**
- * Extract a short descriptive title from an English summary.
- * Grabs up to the first sentence-end (period/exclamation/question) within
- * 120 characters, or the first 80 chars of the first line if no sentence-end.
- */
-function extractTitleFromSummary(summary) {
-  const line = summary.split("\n")[0].trim();
-  // Try first sentence up to 120 chars
+function clampTitle(title) {
+  const line = String(title ?? "").trim().replace(/[.!?]+$/, "").trim();
+  if (!line) return "";
+  if (line.length <= 80) return line;
+  const trimmed = line.slice(0, 80);
+  const lastSpace = trimmed.lastIndexOf(" ");
+  return lastSpace > 40 ? `${trimmed.slice(0, lastSpace)}…` : `${trimmed}…`;
+}
+
+export function extractLegacyTitleFromSummary(summary) {
+  const line = String(summary ?? "").split("\n")[0].trim();
+  if (!line) return "";
   const sentenceEnd = line.search(/[.!?]/);
   if (sentenceEnd > 10 && sentenceEnd <= 120) {
     return line.slice(0, sentenceEnd).trim();
   }
-  // Trim to 80 chars at word boundary
-  if (line.length <= 80) return line;
-  const trimmed = line.slice(0, 80);
-  const lastSpace = trimmed.lastIndexOf(" ");
-  return lastSpace > 40 ? trimmed.slice(0, lastSpace) + "…" : trimmed + "…";
+  return clampTitle(line);
 }
 
-function main() {
-  const data = JSON.parse(readFileSync(INDEX_PATH, "utf8"));
-  const entries = data.entries ?? [];
+function normalizeSummary(summary) {
+  return String(summary ?? "").replace(/\s+/g, " ").trim();
+}
 
-  let skipped = 0;
-  let fromSummary = 0;
-  let fromTitle = 0;
-  let unchanged = 0;
-
-  for (const entry of entries) {
-    // Already has a titleEn → skip
-    if ((entry.titleEn ?? "").trim()) {
-      unchanged++;
-      continue;
+function fallbackSentenceMatch(text) {
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (!/[.!?]/.test(char)) continue;
+    if (char === "!") {
+      if (i < text.length - 1 && !/\s/.test(text[i + 1])) continue;
+      return text.slice(0, i + 1);
     }
+    if (char === "?") {
+      if (i < text.length - 1 && !/\s/.test(text[i + 1])) continue;
+      return text.slice(0, i + 1);
+    }
+    const next = text[i + 1] ?? "";
+    if (next && !/\s/.test(next)) continue;
+    const nextNonSpace = text.slice(i + 1).trimStart()[0] ?? "";
+    if (nextNonSpace && !/["'([{A-Z0-9]/.test(nextNonSpace)) continue;
+    return text.slice(0, i + 1);
+  }
+  return text;
+}
 
-    const summaryEn = (entry.summaryEn ?? "").trim();
-    const title = (entry.title ?? "").trim();
-
-    if (summaryEn && !isFallbackSummary(summaryEn)) {
-      // Good real summary → extract first sentence as title
-      const derived = extractTitleFromSummary(summaryEn);
-      if (!DRY_RUN) entry.titleEn = derived;
-      fromSummary++;
-    } else if (title) {
-      // Use original title as a stub (might be Japanese, but better than empty)
-      if (!DRY_RUN) entry.titleEn = title;
-      fromTitle++;
-    } else {
-      skipped++;
+export function extractTitleFromSummary(summary) {
+  const text = normalizeSummary(summary);
+  if (!text) return "";
+  if (typeof Intl?.Segmenter === "function") {
+    const segments = new Intl.Segmenter("en", { granularity: "sentence" }).segment(text);
+    for (const segment of segments) {
+      const rawSegment = segment.segment;
+      if (!rawSegment?.trim()) continue;
+      const segmentText = rawSegment.replace(/\s+$/, "");
+      const terminalMatch = segmentText.match(/[.!?]+$/);
+      if (terminalMatch) {
+        const punctuationIndex = segment.index + segmentText.length - terminalMatch[0].length;
+        const nextChar = text[punctuationIndex + terminalMatch[0].length] ?? "";
+        if (nextChar && !/\s/.test(nextChar)) {
+          return clampTitle(fallbackSentenceMatch(text));
+        }
+      }
+      const candidate = clampTitle(segment.segment);
+      if (candidate) return candidate;
     }
   }
+  return clampTitle(fallbackSentenceMatch(text));
+}
 
-  const total = fromSummary + fromTitle;
-  console.log(`📝 fill-title-en${DRY_RUN ? " [dry-run]" : ""}`);
-  console.log(`  from summaryEn: ${fromSummary}`);
-  console.log(`  from title:     ${fromTitle}`);
-  console.log(`  total updated:  ${total}`);
-  console.log(`  already set:    ${unchanged}`);
-  console.log(`  skipped:        ${skipped}`);
+export function deriveTitleEnFromEntry(entry) {
+  const summaryEn = (entry?.summaryEn ?? "").trim();
+  if (!summaryEn || isFallbackSummary(summaryEn)) return "";
 
-  if (!DRY_RUN && total > 0) {
-    writeFileSync(INDEX_PATH, JSON.stringify(data, null, 2));
-    console.log(`  💾 Saved ${INDEX_PATH}`);
-  } else if (DRY_RUN) {
-    console.log("  [dry-run] No files written.");
+  return extractTitleFromSummary(summaryEn);
+}
+
+export function shouldCorrectLegacyDerivedTitle(entry) {
+  const existing = (entry?.titleEn ?? "").trim();
+  if (!existing) return false;
+  const originalTitle = (entry?.title ?? "").trim();
+  if (originalTitle && existing === originalTitle) return false;
+  const summaryEn = (entry?.summaryEn ?? "").trim();
+  if (!summaryEn || isFallbackSummary(summaryEn)) return false;
+  const legacy = extractLegacyTitleFromSummary(summaryEn);
+  const derived = extractTitleFromSummary(summaryEn);
+  return existing === legacy && derived !== legacy;
+}
+
+export function fillMissingTitleEn(data) {
+  const entries = Array.isArray(data?.entries) ? data.entries : [];
+  let alreadySet = 0;
+  let missing = 0;
+  let fromSummaryEn = 0;
+  let correctedDerivedTitles = 0;
+  let pendingOrFallback = 0;
+
+  const nextEntries = entries.map((entry) => {
+    const existing = (entry?.titleEn ?? "").trim();
+    const derived = deriveTitleEnFromEntry(entry);
+    if (existing) {
+      if (derived && shouldCorrectLegacyDerivedTitle(entry)) {
+        correctedDerivedTitles++;
+        return { ...entry, titleEn: derived };
+      }
+      alreadySet++;
+      return entry;
+    }
+
+    missing++;
+    if (!derived) {
+      pendingOrFallback++;
+      return entry;
+    }
+
+    fromSummaryEn++;
+    return { ...entry, titleEn: derived };
+  });
+
+  return {
+    nextData: { ...data, entries: nextEntries },
+    counts: {
+      alreadySet,
+      missing,
+      fromSummaryEn,
+      correctedDerivedTitles,
+      pendingOrFallback,
+      totalUpdated: fromSummaryEn + correctedDerivedTitles,
+    },
+  };
+}
+
+export function parseCliArgs(args) {
+  const allowed = new Set(["--dry-run", "--apply", "--help", "-h"]);
+  const unknown = args.filter((arg) => !allowed.has(arg));
+  if (unknown.length > 0) {
+    return { ok: false, exitCode: 1, message: `ERR: unknown argument(s): ${unknown.join(", ")}` };
+  }
+
+  if (args.includes("--help") || args.includes("-h")) {
+    if (args.length !== 1) {
+      return { ok: false, exitCode: 1, message: "ERR: --help/-h cannot be combined with other arguments" };
+    }
+    return { ok: true, mode: "help" };
+  }
+
+  if (args.includes("--dry-run") && args.includes("--apply")) {
+    return { ok: false, exitCode: 1, message: "ERR: choose either --dry-run or --apply, not both" };
+  }
+
+  if (args.length === 0) {
+    return { ok: false, exitCode: 1, message: "ERR: missing mode; use --dry-run, --apply, or --help" };
+  }
+
+  if (args.length !== 1) {
+    return { ok: false, exitCode: 1, message: "ERR: expected exactly one mode flag" };
+  }
+
+  if (args[0] === "--dry-run") return { ok: true, mode: "dry-run" };
+  if (args[0] === "--apply") return { ok: true, mode: "apply" };
+
+  return { ok: false, exitCode: 1, message: "ERR: unsupported mode" };
+}
+
+function writeJsonAtomically(path, value) {
+  const tempPath = `${path}.fill-title-en.${process.pid}.${Date.now()}.tmp`;
+  try {
+    writeFileSync(tempPath, JSON.stringify(value, null, 2), "utf8");
+    renameSync(tempPath, path);
+  } catch (error) {
+    try {
+      unlinkSync(tempPath);
+    } catch {
+      // ignore cleanup failure
+    }
+    throw error;
   }
 }
 
-main();
+function usage() {
+  console.log("Usage: npm run titleen:fill -- --dry-run");
+  console.log("       npm run titleen:fill -- --apply");
+  console.log("       npm run titleen:fill -- --help");
+}
+
+export function runCli(args, options = {}) {
+  const parsed = parseCliArgs(args);
+  if (!parsed.ok) {
+    console.error(parsed.message);
+    usage();
+    return parsed.exitCode;
+  }
+
+  if (parsed.mode === "help") {
+    usage();
+    return 0;
+  }
+
+  const indexPath = options.indexPath ?? INDEX_PATH;
+  const raw = readFileSync(indexPath, "utf8");
+  const data = JSON.parse(raw);
+  const { nextData, counts } = fillMissingTitleEn(data);
+
+  console.log(`fill-title-en [${parsed.mode}]`);
+  console.log(`missing titleEn: ${counts.missing}`);
+  console.log(`real summaryEn: ${counts.fromSummaryEn}`);
+  console.log(`corrected legacy-derived titleEn: ${counts.correctedDerivedTitles}`);
+  console.log(`deterministic/pending summaryEn: ${counts.pendingOrFallback}`);
+  console.log(`already set: ${counts.alreadySet}`);
+  console.log(`total updated: ${counts.totalUpdated}`);
+
+  if (parsed.mode === "apply" && counts.totalUpdated > 0) {
+    writeJsonAtomically(indexPath, nextData);
+    console.log(`OK: wrote ${indexPath}`);
+  } else if (parsed.mode === "apply") {
+    console.log("OK: no changes needed");
+  } else {
+    console.log("OK: dry-run only; no files written");
+  }
+
+  return 0;
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === __filename) {
+  process.exitCode = runCli(process.argv.slice(2));
+}

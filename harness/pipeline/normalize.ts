@@ -5,6 +5,7 @@
 import { createHash } from "node:crypto";
 import type {
   Category,
+  HalfLife,
   Importance,
   Lang,
   NormalizedEntry,
@@ -12,6 +13,7 @@ import type {
   SourceDefinition,
 } from "../types.ts";
 import { decideTier, resolveHalfLife } from "../half-life.ts";
+import { normalizeTags } from "./tag.ts";
 
 function sha256Short(input: string): string {
   return createHash("sha256").update(input).digest("hex").slice(0, 16);
@@ -182,7 +184,9 @@ export function decorateReleaseTitle(rawTitle: string, source: SourceDefinition)
   return rawTitle;
 }
 
-function resolveCategory(raw: RawEntry, source: SourceDefinition): Category {
+type CategorySignal = Pick<RawEntry, "title" | "contentSnippet" | "publishedAt">;
+
+function resolveCategory(raw: CategorySignal, source: SourceDefinition): Category {
   if (source.id !== "qiita-vscode") return source.category;
 
   const signal = `${raw.title} ${raw.contentSnippet ?? ""}`.toLowerCase();
@@ -196,6 +200,80 @@ function resolveCategory(raw: RawEntry, source: SourceDefinition): Category {
   return source.category;
 }
 
+interface SourceOwnedFields {
+  sourceType: SourceDefinition["sourceType"];
+  category: Category;
+  importance: Importance;
+  halfLife: HalfLife;
+  archiveTier: NormalizedEntry["archiveTier"];
+  evergreen?: true;
+}
+
+function sourceOwnedFields(
+  signal: CategorySignal,
+  source: SourceDefinition,
+  referenceAt: string,
+): SourceOwnedFields {
+  const category = resolveCategory(signal, source);
+  const importance = scoreImportance(
+    {
+      externalId: signal.title,
+      url: "",
+      title: signal.title,
+      contentSnippet: signal.contentSnippet,
+      publishedAt: signal.publishedAt,
+    },
+    source,
+  );
+  const halfLife = resolveHalfLife({
+    category,
+    sourceType: source.sourceType,
+    sourceId: source.id,
+    sourceOverride: source.halfLifeOverride,
+  });
+  const evergreen = source.evergreen ?? false;
+  const archiveTier = decideTier(
+    { publishedAt: signal.publishedAt, halfLife, evergreen },
+    new Date(referenceAt),
+  );
+  return {
+    sourceType: source.sourceType,
+    category,
+    importance,
+    halfLife,
+    archiveTier,
+    ...(evergreen ? { evergreen: true as const } : {}),
+  };
+}
+
+export function restampEntryFromSource(
+  entry: NormalizedEntry,
+  source: SourceDefinition,
+  referenceAt: string,
+  options: { preserveImportance?: boolean; preserveArchiveTier?: boolean } = {},
+): NormalizedEntry {
+  const metadata = sourceOwnedFields(
+    {
+      title: entry.title,
+      contentSnippet: entry.contentSnippet,
+      publishedAt: entry.publishedAt,
+    },
+    source,
+    referenceAt,
+  );
+  const { evergreen: _priorEvergreen, ...base } = entry;
+  const tags = normalizeTags([...source.autoTags, ...entry.tags]);
+  const preserveImportance = options.preserveImportance ?? true;
+  const preserveArchiveTier = options.preserveArchiveTier ?? false;
+  return {
+    ...base,
+    ...metadata,
+    importance: preserveImportance ? entry.importance : metadata.importance,
+    archiveTier: preserveArchiveTier ? entry.archiveTier : metadata.archiveTier,
+    tags,
+  };
+}
+
 export function normalize(
   raw: RawEntry,
   source: SourceDefinition,
@@ -206,7 +284,6 @@ export function normalize(
   const decoratedRaw: RawEntry = decoratedTitle === raw.title ? raw : { ...raw, title: decoratedTitle };
   raw = decoratedRaw;
   const lang = detectLang(`${raw.title} ${raw.contentSnippet ?? ""}`, source.defaultLang);
-  const category = resolveCategory(raw, source);
   const contentSnippet = snippetContext(raw);
   const image = raw.mediaThumbnail
     ? {
@@ -221,22 +298,12 @@ export function normalize(
 
   // Archive classification (Phase A/B). Computed deterministically on every
   // run so a registry override flip-flop is reflected next collect.
-  const halfLife = resolveHalfLife({
-    category,
-    sourceType: source.sourceType,
-    sourceId: source.id,
-    sourceOverride: source.halfLifeOverride,
-  });
-  const evergreen = source.evergreen ?? false;
-  const archiveTier = decideTier(
-    { publishedAt: raw.publishedAt, halfLife, evergreen },
-    new Date(collectedAt),
-  );
+  const metadata = sourceOwnedFields(raw, source, collectedAt);
 
   return {
     id,
     source: source.id,
-    sourceType: source.sourceType,
+    sourceType: metadata.sourceType,
     url: raw.url,
     title: raw.title,
     titleJa: lang === "ja" ? raw.title : "",
@@ -246,12 +313,12 @@ export function normalize(
     lang,
     publishedAt: raw.publishedAt ?? collectedAt,
     collectedAt,
-    tags: [...source.autoTags],
-    category,
-    importance: scoreImportance(raw, source),
-    halfLife,
-    archiveTier,
-    ...(evergreen ? { evergreen: true } : {}),
+    tags: normalizeTags(source.autoTags),
+    category: metadata.category,
+    importance: metadata.importance,
+    halfLife: metadata.halfLife,
+    archiveTier: metadata.archiveTier,
+    ...(metadata.evergreen ? { evergreen: true } : {}),
     ...(contentSnippet ? { contentSnippet } : {}),
     ...(image ? { image } : {}),
   };

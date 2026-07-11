@@ -1,4 +1,5 @@
 import type { RawEntry, SourceDefinition } from "../types.ts";
+import { matchesKeywordFilter } from "../pipeline/source-filter.ts";
 
 /**
  * HN Algolia collector — queries the public Algolia API for recent front-page
@@ -34,7 +35,7 @@ export async function collectHnAlgolia(
     }>;
   };
 
-  return data.hits
+  const candidates = data.hits
     .filter((h) => h.url && h.points >= 50) // skip low-signal
     .map((h) => ({
       externalId: `hn-${h.objectID}`,
@@ -43,4 +44,8 @@ export async function collectHnAlgolia(
       contentSnippet: `HN: ${h.points} points, ${h.num_comments} comments · @${h.author} · https://news.ycombinator.com/item?id=${h.objectID}`,
       publishedAt: new Date(h.created_at).toISOString(),
     }));
+
+  return candidates
+    .filter((entry) => matchesKeywordFilter(entry, source))
+    .slice(0, source.maxEntriesPerRun ?? candidates.length);
 }

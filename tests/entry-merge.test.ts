@@ -85,4 +85,23 @@ describe("mergeEntryEnrichment", () => {
     expect(merged.bodyEn).toBe("New body");
     expect(merged.importance).toBe(2);
   });
+
+  it("normalizes aliases while merging fresh and cached tags", () => {
+    const fresh = entry({
+      tags: ["ai-agent", "prerelease", "benchmarks"],
+    });
+    const previous = entry({
+      tags: ["ai-agents", "pre-release", "benchmark", "patch", "zed-editor"],
+    });
+
+    const merged = mergeEntryEnrichment(fresh, previous);
+
+    expect(merged.tags).toEqual([
+      "ai-agents",
+      "benchmark",
+      "patch-release",
+      "pre-release",
+      "zed",
+    ]);
+  });
 });

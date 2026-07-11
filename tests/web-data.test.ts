@@ -72,6 +72,8 @@ vi.mock("../data/index.json", () => ({
 // モック後に import する (Vitest の hoisting により vi.mock は先行する)
 const {
   relativeTime,
+  latestListedActivityForSource,
+  latestListedCollectedAtForEntry,
   summaryForLang,
   summaryForLangWithFallback,
   titleForLang,
@@ -186,6 +188,88 @@ describe("summaryForLangWithFallback", () => {
     expect(result.text).toBe("");
     expect(result.isFallback).toBe(false);
   });
+  it("contaminated English summary は有効な日本語要約へフォールバックする", () => {
+    const entry = {
+      ...e1,
+      summaryJa: "編集予測の品質計測を改善した。",
+      summaryEn:
+        "Left some junk in the readme and forgot to remove oopsies Release Notes: N/A or Added/Fixed/Improved",
+    };
+    const result = summaryForLangWithFallback(entry, "en");
+    expect(result).toEqual({
+      text: entry.summaryJa,
+      isFallback: true,
+      fallbackLang: "ja",
+    });
+    expect(isPublishableEntry(entry)).toBe(false);
+    expect(isListableEntry(entry)).toBe(true);
+  });
+});
+
+describe("latestListedActivityForSource", () => {
+  it("returns the newest collected timestamp for the same source and ignores other sources", () => {
+    const activity = latestListedActivityForSource("anthropic-news", [
+      {
+        source: "anthropic-news",
+        publishedAt: "2026-04-01T09:00:00.000Z",
+        collectedAt: "2026-04-01T10:00:00.000Z",
+      },
+      {
+        source: "openai-blog",
+        publishedAt: "2026-05-03T09:00:00.000Z",
+        collectedAt: "2026-05-03T10:00:00.000Z",
+      },
+      {
+        source: "anthropic-news",
+        publishedAt: "2026-05-02T09:00:00.000Z",
+        collectedAt: "2026-05-02T10:00:00.000Z",
+      },
+    ]);
+
+    expect(activity.latestCollectedAt).toBe("2026-05-02T10:00:00.000Z");
+    expect(activity.latestPublishedAt).toBe("2026-05-02T09:00:00.000Z");
+  });
+});
+
+describe("latestListedCollectedAtForEntry", () => {
+  it("uses the newest listed timestamp from the selected entry's source", () => {
+    const selected = {
+      ...e1,
+      publishedAt: "2026-04-01T09:00:00.000Z",
+      collectedAt: "2026-04-01T10:00:00.000Z",
+    };
+    const entries = [
+      selected,
+      {
+        ...e1,
+        id: "newer-same-source",
+        publishedAt: "2026-05-02T09:00:00.000Z",
+        collectedAt: "2026-05-02T10:00:00.000Z",
+      },
+      {
+        ...e2,
+        id: "newer-other-source",
+        publishedAt: "2026-05-03T09:00:00.000Z",
+        collectedAt: "2026-05-03T10:00:00.000Z",
+      },
+    ];
+
+    expect(latestListedCollectedAtForEntry(selected, entries)).toBe(
+      "2026-05-02T10:00:00.000Z",
+    );
+  });
+
+  it("falls back to the selected entry collectedAt, then publishedAt", () => {
+    const selected = {
+      ...e1,
+      collectedAt: "2026-04-01T10:00:00.000Z",
+      publishedAt: "2026-04-01T09:00:00.000Z",
+    };
+    expect(latestListedCollectedAtForEntry(selected, [])).toBe(selected.collectedAt);
+    expect(
+      latestListedCollectedAtForEntry({ ...selected, collectedAt: "" }, []),
+    ).toBe(selected.publishedAt);
+  });
 });
 
 // ============================================================
@@ -208,6 +292,12 @@ describe("isSummaryNoise", () => {
   });
   it("本物の要約は noise ではない", () => {
     expect(isSummaryNoise(e1, "Anthropic announced Claude Opus 4.7.")).toBe(false);
+  });
+  it("生成途中の junk marker は noise", () => {
+    expect(isSummaryNoise(
+      e1,
+      "Left some junk in the readme and forgot to remove oopsies Release Notes: N/A or Added/Fixed/Improved",
+    )).toBe(true);
   });
 });
 

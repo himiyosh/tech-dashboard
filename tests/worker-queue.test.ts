@@ -2,7 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 import type { NormalizedEntry } from "../harness/types.ts";
 import type { CacheEntry } from "../worker/src/kv-cache.ts";
 import { evaluateHarnessHealth } from "../worker/src/index.ts";
-import { needsGeneratedContent, roundRobinStart, selectSummaryJobBatch, selectSummaryJobs } from "../worker/src/summary-queue.ts";
+import {
+  needsGeneratedContent,
+  orderSummaryCandidates,
+  roundRobinStart,
+  selectSummaryJobBatch,
+  selectSummaryJobs,
+  selectSummaryLookupEntries,
+} from "../worker/src/summary-queue.ts";
 import summarizerWorker, { isCompleteCacheEntry, isSummaryComplete } from "../worker-summarizer/src/index.ts";
 
 const baseEntry: NormalizedEntry = {
@@ -50,6 +57,12 @@ const summaryOnlyCache: CacheEntry = {
   extraTags: [],
   model: "claude-sonnet-4.6",
   cachedAt: "2026-06-21T00:08:00.000Z",
+};
+
+const contaminatedCache: CacheEntry = {
+  ...summaryOnlyCache,
+  summaryEn:
+    "Left some junk in the readme and forgot to remove oopsies Release Notes: N/A or Added/Fixed/Improved",
 };
 
 function mockKv(json: unknown = null): KVNamespace {
@@ -108,6 +121,23 @@ describe("worker summary queue selection", () => {
       30,
     );
     expect(jobs).toEqual([]);
+  });
+
+  it("enqueues a contaminated entry and does not accept a contaminated KV cache hit", () => {
+    const contaminatedEntry = {
+      ...baseEntry,
+      summaryJa: "編集予測の品質計測を改善した。",
+      summaryEn: contaminatedCache.summaryEn,
+    };
+    expect(needsGeneratedContent(contaminatedEntry)).toBe(true);
+    const jobs = selectSummaryJobs(
+      [contaminatedEntry],
+      new Map([[contaminatedEntry.url, contaminatedCache]]),
+      new Set([contaminatedEntry.url]),
+      30,
+    );
+    expect(jobs.map((job) => job.url)).toEqual([contaminatedEntry.url]);
+    expect(isSummaryComplete(contaminatedCache)).toBe(false);
   });
 
   it("needsGeneratedContent is summary-only: real summary + deterministic body is complete (LL-107)", () => {
@@ -247,6 +277,81 @@ describe("worker summary queue selection", () => {
       "https://example.com/paper-2",
       "https://example.com/paper-3",
     ]);
+  });
+
+  it("keeps lookup and all-miss enqueue URL order symmetric", () => {
+    const entries = [
+      ...Array.from({ length: 8 }, (_, i) => ({
+        ...baseEntry,
+        id: `news-${i}`,
+        url: `https://example.com/news-${i}`,
+        publishedAt: new Date(Date.UTC(2026, 5, 10) - i * 86_400_000).toISOString(),
+      })),
+      { ...baseEntry, id: "evergreen", url: "https://example.com/evergreen", evergreen: true },
+    ];
+    const nowMs = 4 * 3_600_000;
+    const cap = 5;
+    const lookup = selectSummaryLookupEntries(entries, cap, { nowMs });
+    const lookedUp = new Set(lookup.entries.map((entry) => entry.url));
+    const unchecked = new Set(
+      entries.filter((entry) => !lookedUp.has(entry.url)).map((entry) => entry.url),
+    );
+    const enqueue = selectSummaryJobBatch(entries, new Map(), lookedUp, cap, unchecked, { nowMs });
+
+    expect(lookup.entries.map((entry) => entry.url)).toEqual(
+      enqueue.jobs.map((job) => job.url),
+    );
+  });
+
+  it("applies the same cooldown exclusion to lookup and enqueue selection", () => {
+    const entries = Array.from({ length: 6 }, (_, i) => ({
+      ...baseEntry,
+      id: `cooldown-${i}`,
+      url: `https://example.com/cooldown-${i}`,
+      publishedAt: new Date(Date.UTC(2026, 5, 10) - i * 86_400_000).toISOString(),
+    }));
+    const skipUrls = new Set(["https://example.com/cooldown-0"]);
+    const nowMs = 2 * 3_600_000;
+    const lookup = selectSummaryLookupEntries(entries, 4, { nowMs, skipUrls });
+    const lookedUp = new Set(lookup.entries.map((entry) => entry.url));
+    const unchecked = new Set(
+      entries.filter((entry) => !lookedUp.has(entry.url)).map((entry) => entry.url),
+    );
+    const enqueue = selectSummaryJobBatch(entries, new Map(), lookedUp, 4, unchecked, {
+      nowMs,
+      skipUrls,
+    });
+
+    expect(lookup.entries.map((entry) => entry.url)).toEqual(
+      enqueue.jobs.map((job) => job.url),
+    );
+    expect(lookup.entries.map((entry) => entry.url)).not.toContain(
+      "https://example.com/cooldown-0",
+    );
+    expect(lookup.cooldownCount).toBe(1);
+    expect(enqueue.cooldownCount).toBe(1);
+  });
+
+  it("shared ordering prioritizes evergreen, reserves recent work, and removes duplicate URLs", () => {
+    const duplicate = { ...baseEntry, id: "duplicate", url: "https://example.com/news-0" };
+    const entries = [
+      ...Array.from({ length: 6 }, (_, i) => ({
+        ...baseEntry,
+        id: `news-${i}`,
+        url: `https://example.com/news-${i}`,
+        publishedAt: new Date(Date.UTC(2026, 5, 10) - i * 86_400_000).toISOString(),
+      })),
+      duplicate,
+      { ...baseEntry, id: "evergreen", url: "https://example.com/evergreen", evergreen: true },
+    ];
+
+    const ordered = orderSummaryCandidates(entries, 5, { nowMs: 0 });
+    const urls = ordered.entries.map((entry) => entry.url);
+    expect(urls[0]).toBe("https://example.com/evergreen");
+    expect(urls[1]).toBe("https://example.com/news-0");
+    expect(urls).toHaveLength(5);
+    expect(new Set(urls).size).toBe(urls.length);
+    expect(ordered.eligibleCount).toBe(7);
   });
 });
 

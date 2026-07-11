@@ -6,6 +6,15 @@ function readConfig(path: string): string {
   return readFileSync(join(process.cwd(), path), "utf8");
 }
 
+function numericVar(config: string, key: string): number {
+  const match = config.match(new RegExp("^" + key + " = \"(\\d+)\"$", "m"));
+  if (!match) throw new Error("missing numeric Worker variable: " + key);
+  return Number(match[1]);
+}
+
+// Retry issue, OG blob, legacy summary blob, and two heartbeat operations.
+const FIXED_KV_OPERATIONS_PER_RUN = 5;
+
 describe("Cloudflare Worker deploy config", () => {
   it("omits per-Worker CPU limits for the current Cloudflare plan", () => {
     const harnessConfig = readConfig("worker/wrangler.toml");
@@ -29,7 +38,7 @@ describe("Cloudflare Worker deploy config", () => {
 
     expect(harnessConfig).toContain('ENABLE_SUMMARY_QUEUE = "1"');
     expect(harnessConfig).toContain('ENQUEUE_MAX_NEW = "35"');
-    expect(harnessConfig).toContain('KV_LOOKUP_CAP = "80"');
+    expect(harnessConfig).toContain('KV_LOOKUP_CAP = "35"');
     expect(harnessConfig).toContain('OG_BUDGET_PER_RUN = "1"');
     expect(registry).toContain("maxArticleDateFetches: 4");
     expect(registry).toContain("maxEntriesPerRun: 4");
@@ -40,6 +49,19 @@ describe("Cloudflare Worker deploy config", () => {
     expect(summarizerConfig).toContain("max_retries = 2");
     expect(summarizerConfig).toContain("max_concurrency = 2");
     expect(summarizerConfig).toContain('dead_letter_queue = "tech-dashboard-summary-dlq"');
+  });
+
+  it("reserves subrequest headroom around the enrichment queues", () => {
+    const harnessConfig = readConfig("worker/wrangler.toml");
+    const summaryLookupCap = numericVar(harnessConfig, "KV_LOOKUP_CAP");
+    const summaryEnqueueCap = numericVar(harnessConfig, "ENQUEUE_MAX_NEW");
+    const bodyLookupCap = numericVar(harnessConfig, "BODY_LOOKUP_CAP");
+    const bodyEnqueueCap = numericVar(harnessConfig, "BODY_ENQUEUE_MAX_NEW");
+
+    expect(summaryLookupCap).toBeGreaterThanOrEqual(summaryEnqueueCap);
+    expect(bodyLookupCap).toBeGreaterThanOrEqual(bodyEnqueueCap);
+    expect(summaryLookupCap + bodyLookupCap).toBeLessThanOrEqual(45);
+    expect(summaryLookupCap + bodyLookupCap + FIXED_KV_OPERATIONS_PER_RUN).toBeLessThanOrEqual(50);
   });
 
   it("keeps Worker observability and hourly production monitoring enabled", () => {

@@ -56,6 +56,24 @@ export interface NormalizedEntry {
   };
 }
 
+export type ImportanceTone = "high" | "medium" | "normal";
+
+export interface ImportanceLabel {
+  tone: ImportanceTone;
+  ja: string;
+  en: string;
+}
+
+const IMPORTANCE_LABELS: Record<NormalizedEntry["importance"], ImportanceLabel> = {
+  3: { tone: "high", ja: "重要度 High", en: "High priority" },
+  2: { tone: "medium", ja: "重要度 Medium", en: "Medium priority" },
+  1: { tone: "normal", ja: "重要度 Info", en: "Informational" },
+};
+
+export function importanceLabel(level: NormalizedEntry["importance"]): ImportanceLabel {
+  return IMPORTANCE_LABELS[level];
+}
+
 export interface WorkerHealth {
   lastRunAt: string;
   batchIndex: number;
@@ -106,6 +124,19 @@ const FALLBACK_SUMMARY_EN_NEEDLES = [
   "AI summary pending",
   "summary is pending",
 ] as const;
+// Keep these pure patterns synchronized with
+// harness/pipeline/summary-quality.ts. The web package must remain build-time
+// self-contained and cannot import repo-root runtime code (R-005).
+const CONTAMINATED_SUMMARY_MARKERS = [
+  "left some junk in the readme",
+  "forgot to remove oopsies",
+  "release notes: n/a or added/fixed/improved",
+] as const;
+
+function isContaminatedSummaryText(text: string | undefined | null): boolean {
+  const value = (text ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+  return Boolean(value && CONTAMINATED_SUMMARY_MARKERS.some((marker) => value.includes(marker)));
+}
 
 export function isPendingSummaryText(text: string | undefined | null): boolean {
   const value = (text ?? "").trim();
@@ -134,6 +165,8 @@ export function isDeterministicFallbackEntry(e: NormalizedEntry): boolean {
   return (
     isPendingSummaryText(e.summaryJa) ||
     isPendingSummaryText(e.summaryEn) ||
+    isContaminatedSummaryText(e.summaryJa) ||
+    isContaminatedSummaryText(e.summaryEn) ||
     isSyntheticFallbackTitle(e, e.titleJa) ||
     isSyntheticFallbackTitle(e, e.titleEn)
   );
@@ -190,6 +223,7 @@ export function isSummaryNoise(e: NormalizedEntry, text: string | undefined | nu
   if (!value) return true;
   if (isPendingSummaryText(value)) return true;
   const lower = value.toLowerCase();
+  if (isContaminatedSummaryText(value)) return true;
   return [e.title, e.titleEn, e.titleJa].some(
     (t) => !!t && t.trim().toLowerCase() === lower,
   );
@@ -693,6 +727,52 @@ export function entryHref(e: Pick<NormalizedEntry, "id">): string {
 /** Look up an entry by id (used by the detail page). */
 export function getEntryById(id: string): NormalizedEntry | undefined {
   return ALL_ENTRIES.find((e) => e.id === id);
+}
+
+export interface SourceListedActivity {
+  latestCollectedAt?: string;
+  latestPublishedAt?: string;
+}
+
+/**
+ * Latest listed-entry activity for a source using the same truthful entry set
+ * that powers the web UI (`ALL_ENTRIES` by default). This intentionally tracks
+ * the latest collected/published entry retained for the source, not the viewed
+ * article's own age.
+ */
+export function latestListedActivityForSource(
+  sourceId: string,
+  entries: readonly Pick<NormalizedEntry, "source" | "publishedAt" | "collectedAt">[] = ALL_ENTRIES,
+): SourceListedActivity {
+  let latestCollectedAt: string | undefined;
+  let latestPublishedAt: string | undefined;
+  for (const entry of entries) {
+    if (entry.source !== sourceId) continue;
+    const collectedAt = entry.collectedAt ?? entry.publishedAt;
+    if (collectedAt && (!latestCollectedAt || collectedAt > latestCollectedAt)) {
+      latestCollectedAt = collectedAt;
+    }
+    if (entry.publishedAt && (!latestPublishedAt || entry.publishedAt > latestPublishedAt)) {
+      latestPublishedAt = entry.publishedAt;
+    }
+  }
+  return { latestCollectedAt, latestPublishedAt };
+}
+
+/**
+ * Source-feed freshness reference for a selected entry. Home and detail views
+ * use this helper so an older article is not mistaken for a stale source when
+ * the same source has a newer listed entry.
+ */
+export function latestListedCollectedAtForEntry(
+  entry: Pick<NormalizedEntry, "source" | "publishedAt" | "collectedAt">,
+  entries: readonly Pick<NormalizedEntry, "source" | "publishedAt" | "collectedAt">[] = ALL_ENTRIES,
+): string {
+  return (
+    latestListedActivityForSource(entry.source, entries).latestCollectedAt ||
+    entry.collectedAt ||
+    entry.publishedAt
+  );
 }
 
 /** Related entries: same category, excluding self, newest first. */

@@ -1,5 +1,5 @@
 /**
- * summarize.ts - GitHub Copilot Enterprise (Chat Completions) による日本語要約.
+ * summarize.ts - GitHub Copilot Enterprise (Chat Completions) による summary-only 補完.
  *
  * **Copilot Enterprise 前提**。Claude Opus 4.7 / GPT-5.5 など、Copilot で
  * 提供されているモデルを直接呼び出す。GitHub Models (別課金) とは別物。
@@ -17,16 +17,24 @@
  *                          補完/backfill は claude-sonnet-4.6 / claude-opus-4.7 / gpt-5.5 のみ許可
  *   SUMMARIZE_ENDPOINT   … 既定 "https://api.githubcopilot.com/chat/completions"
  *   SUMMARIZE_MAX_NEW    … 1 ラン当たりの新規要約上限 (既定 15)
- *   SUMMARIZE_MAX_TOKENS … Copilot API の最大出力 token 数 (既定 6000)
+ *   SUMMARIZE_MAX_TOKENS … Copilot API の最大出力 token 数 (既定 1600)
  *   SUMMARIZE_TIMEOUT_MS … Copilot API 呼び出しのタイムアウト (既定 180000)
  *   SUMMARIZE_CONCURRENCY … Copilot API 呼び出しの並列数 (既定 4)
  *
  * キャッシュ: data/_summary-cache.json (URL キー)
+ * 現行 contract は summary-only。bodyJa/bodyEn は legacy cache の保持用で、
+ * 新規補完では空文字列のまま保存する。
  */
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { NormalizedEntry } from "../types.ts";
-import { parseResponse } from "../../worker/src/prompt.ts";
+import { buildSummaryPrompt, parseResponse } from "../../worker/src/prompt.ts";
+import {
+  hasUsableBilingualSummary,
+  needsSummaryGeneration,
+  type SummaryQualityInput,
+} from "./summary-quality.ts";
+import { normalizeTags } from "./tag.ts";
 
 interface CacheEntry {
   titleJa: string;
@@ -67,23 +75,11 @@ const ENDPOINT =
   process.env.SUMMARIZE_ENDPOINT ??
   "https://api.githubcopilot.com/chat/completions";
 const MAX_NEW = Number(process.env.SUMMARIZE_MAX_NEW ?? "15");
-const MAX_TOKENS = Number(process.env.SUMMARIZE_MAX_TOKENS ?? "6000");
+const MAX_TOKENS = Number(process.env.SUMMARIZE_MAX_TOKENS ?? "1600");
 const REQUEST_TIMEOUT_MS = Number(process.env.SUMMARIZE_TIMEOUT_MS ?? "180000");
 const CONCURRENCY = Number(process.env.SUMMARIZE_CONCURRENCY ?? "4");
-const FALLBACK_SUMMARY_JA_PREFIX = "このエントリは ";
-const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
-
-export function needsGeneratedContent(entry: Pick<NormalizedEntry, "summaryJa" | "summaryEn" | "bodyJa" | "bodyEn">): boolean {
-  const summaryJa = entry.summaryJa ?? "";
-  const summaryEn = entry.summaryEn ?? "";
-  return (
-    !summaryJa.trim() ||
-    !summaryEn.trim() ||
-    !String(entry.bodyJa ?? "").trim() ||
-    !String(entry.bodyEn ?? "").trim() ||
-    summaryJa.startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
-    summaryEn.includes(FALLBACK_SUMMARY_EN_NEEDLE)
-  );
+export function needsGeneratedContent(entry: SummaryQualityInput): boolean {
+  return needsSummaryGeneration(entry);
 }
 
 // Copilot Chat API が期待する整合ヘッダ。VS Code 拡張と同一構成を模倣する。
@@ -147,7 +143,7 @@ async function callCopilot(
   token: string,
   entry: NormalizedEntry,
 ): Promise<CacheEntry> {
-  const prompt = buildPrompt(entry);
+  const prompt = buildSummaryPrompt(entry);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   let data: { choices?: Array<{ message?: { content?: string } }> };
@@ -192,48 +188,19 @@ async function callCopilot(
   const text = data.choices?.[0]?.message?.content ?? "";
   const parsed = parseModelResponse(text);
   if (!isCompleteSummaryResponse(parsed)) {
-    throw new Error("model response missing required summary/body fields");
+    throw new Error("model response missing required clean summary fields");
   }
   return {
     titleJa: parsed.titleJa,
     summaryJa: parsed.summaryJa,
     summaryEn: parsed.summaryEn,
-    bodyJa: parsed.bodyJa,
-    bodyEn: parsed.bodyEn,
+    bodyJa: "",
+    bodyEn: "",
     importance: parsed.importance,
     extraTags: parsed.extraTags,
     model: MODEL,
     cachedAt: new Date().toISOString(),
   };
-}
-
-function buildPrompt(e: NormalizedEntry): string {
-  const snippet = (e.contentSnippet ?? "").replace(/\s+/g, " ").trim();
-  return [
-    `# 記事`,
-    `タイトル: ${e.title}`,
-    `カテゴリ: ${e.category}`,
-    `ソース: ${e.source} (${e.sourceType})`,
-    `URL: ${e.url}`,
-    ...(snippet ? [`収集時の抜粋 (要約の素材。タイトルが短い記事ほど重視する): ${snippet}`] : []),
-    ``,
-    `以下の JSON を**余計な文字を付けず**出力してください:`,
-    `{`,
-    `  "titleJa": "日本語タイトル (30〜60文字)。原題が日本語ならそのまま。英語なら自然な日本語に翻訳",`,
-    `  "summaryJa": "2〜3 行の日本語要約 (120〜200 文字)。記事の結論まで含む完結した文にする。途中で切らない",`,
-    `  "summaryEn": "1-2 sentence English summary (140-260 chars). Complete sentences, not a cut-off excerpt. Plain English only, no Japanese.",`,
-    `  "bodyJa": "プロライター視点で書かれた日本語本文 (700〜1100 文字)。以下の構成で、独立した記事として読めるように書くこと:\n· リード文: 主題と重要性を 1、2 文で提示\n· 本文: 元記事の主要ポイント・技術的内容・背景を噛み砕いて説明。複数パラグラフを \\n\\n で区切る\n· 関連知見: キーワードに関わる背景・雑学・周辺ツールや他社動向との関連を含めて読み応えを上げる\n· トーン: 中立、事実ベース。誤った断定や推測の断言は避ける\n· 推測を含める際は「と見られる」「可能性がある」等のヘッジ表現を使う\n· 出力はプレーンテキスト。Markdown 見出しやリスト記号は使わず、改行は \\n\\n のみ",`,
-    `  "bodyEn": "Plain English long-form article (500-800 words). Same content and structure as bodyJa but written natively in English. Do not translate literally. Write as a professional tech editor would in English. Use \\n\\n between paragraphs. No Markdown headings or list symbols. Include the same kind of background context, related ecosystem references, and hedged speculation when appropriate.",`,
-    `  "importance": 1 | 2 | 3,`,
-    `  "extraTags": ["英小文字 kebab", ...]`,
-    `}`,
-    ``,
-    `importance 基準: 3=メジャーリリース/重大発表、2=機能追加/重要論文、1=通常更新。`,
-    `titleJa: 固有名詞 (製品名・企業名) は英語のまま保持。バージョン番号 (例: 4.7) も正確に保持する。`,
-    `summaryJa と summaryEn は同じ内容を各言語で表現すること。`,
-    `bodyJa は読んで価値のある独立した記事にすること。要約の重複を避け、背景・関連知見を付加して厚みを出す。`,
-    `bodyEn must be written natively in English with the same depth as bodyJa (not a literal translation).`,
-  ].join("\n");
 }
 
 export function parseModelResponse(text: string): {
@@ -251,13 +218,7 @@ export function parseModelResponse(text: string): {
 export function isCompleteSummaryResponse(
   parsed: ReturnType<typeof parseModelResponse>,
 ): boolean {
-  return Boolean(
-    parsed.titleJa &&
-      parsed.summaryJa &&
-      parsed.summaryEn &&
-      parsed.bodyJa &&
-      parsed.bodyEn,
-  );
+  return Boolean(parsed.titleJa && hasUsableBilingualSummary(parsed));
 }
 
 async function runWithConcurrency<T, R>(
@@ -295,6 +256,14 @@ export interface SummarizeResult {
   };
 }
 
+export function stripIndexBodies(entry: NormalizedEntry): NormalizedEntry {
+  return {
+    ...entry,
+    bodyJa: "",
+    bodyEn: "",
+  };
+}
+
 /**
  * Enhances entries with summaryJa/importance/extra tags via Copilot Enterprise.
  * トークンが解決できない場合は no-op で透過 (ローカル dev を妨げない)。
@@ -314,26 +283,30 @@ export async function summarize(
   const out = entries.map((e) => {
     const hit = cache[e.url];
     const cachedTitleJa = hit?.titleJa || e.titleJa;
-      if (hit && cachedTitleJa && hit.summaryJa && hit.summaryEn) {
-        // Re-summarize deterministic fallback entries and entries cached before bodyJa/bodyEn was introduced.
-        if (needsGeneratedContent(hit)) {
+    if (hit && cachedTitleJa && hit.summaryJa && hit.summaryEn) {
+      // Re-summarize only missing/fallback summaries. Legacy body fields may
+      // exist in cache, but index entries must stay body-free (LL-115).
+      if (needsGeneratedContent({
+        ...hit,
+        title: e.title,
+        titleJa: cachedTitleJa,
+        titleEn: e.titleEn,
+      })) {
         needsSummary.push(e);
       } else {
         stats.cached++;
       }
-      return {
+      return stripIndexBodies({
         ...e,
         titleJa: cachedTitleJa,
         summaryJa: hit.summaryJa,
         summaryEn: hit.summaryEn,
-        bodyJa: hit.bodyJa || e.bodyJa,
-        bodyEn: hit.bodyEn || e.bodyEn,
         importance: hit.importance,
         tags: dedupeTags([...e.tags, ...hit.extraTags]),
-      };
+      });
     }
     if (needsGeneratedContent(e)) needsSummary.push(e);
-    return e;
+    return stripIndexBodies(e);
   });
 
   let token: string | null;
@@ -409,17 +382,15 @@ export async function summarize(
   );
   const finalEntries = out.map((e) => {
     const r = mergedByUrl.get(e.url);
-    if (!r) return e;
-    return {
+    if (!r) return stripIndexBodies(e);
+    return stripIndexBodies({
       ...e,
       titleJa: r.titleJa || e.titleJa,
       summaryJa: r.summaryJa,
       summaryEn: r.summaryEn || e.summaryEn,
-      bodyJa: r.bodyJa || e.bodyJa,
-      bodyEn: r.bodyEn || e.bodyEn,
       importance: r.importance,
       tags: dedupeTags([...e.tags, ...r.extraTags]),
-    };
+    });
   });
 
   await saveCache(cachePath, cache);
@@ -427,5 +398,5 @@ export async function summarize(
 }
 
 function dedupeTags(tags: string[]): string[] {
-  return [...new Set(tags)].slice(0, 10);
+  return normalizeTags(tags, 10);
 }

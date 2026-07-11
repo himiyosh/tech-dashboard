@@ -10,7 +10,9 @@ import {
   needsGeneratedContent,
   parseModelResponse,
   resolveSummarizeModel,
+  stripIndexBodies,
 } from "../harness/pipeline/summarize.ts";
+import { buildSummaryPrompt } from "../worker/src/prompt.ts";
 
 describe("parseModelResponse", () => {
   it("正常な JSON を正しくパースする", () => {
@@ -114,46 +116,44 @@ describe("resolveSummarizeModel", () => {
 });
 
 describe("needsGeneratedContent", () => {
-  it("deterministic fallback summary と本文欠落を backfill 対象にする", () => {
+  it("deterministic fallback summary は backfill 対象にする", () => {
     expect(needsGeneratedContent({
       summaryJa: "このエントリは zenn から収集した tech-news 領域の最新アップデートです。",
       summaryEn: "English summary.",
-      bodyJa: "日本語本文",
-      bodyEn: "English body.",
     })).toBe(true);
     expect(needsGeneratedContent({
       summaryJa: "日本語要約",
       summaryEn: "tech-news update from zenn. AI summary not yet available; a future Worker run will refresh this entry.",
-      bodyJa: "日本語本文",
-      bodyEn: "English body.",
-    })).toBe(true);
-    expect(needsGeneratedContent({
-      summaryJa: "日本語要約",
-      summaryEn: "English summary.",
-      bodyJa: "",
-      bodyEn: "English body.",
     })).toBe(true);
   });
 
-  it("両言語 summary/body が揃った entry は backfill 対象にしない", () => {
+  it("empty bodies でも real bilingual summaries が揃っていれば backfill 対象にしない", () => {
     expect(needsGeneratedContent({
       summaryJa: "日本語要約",
       summaryEn: "English summary.",
-      bodyJa: "日本語本文",
-      bodyEn: "English body.",
     })).toBe(false);
   });
+
+  it("non-empty contaminated summary は backfill 対象にする", () => {
+    expect(needsGeneratedContent({
+      title: "collab-staging",
+      titleEn: "collab-staging",
+      summaryJa: "編集予測の品質計測を改善した。",
+      summaryEn: "Left some junk in the readme and forgot to remove oopsies Release Notes: N/A or Added/Fixed/Improved",
+    })).toBe(true);
+  });
+
 });
 
 describe("isCompleteSummaryResponse", () => {
-  it("本文込みの完全な応答だけを成功扱いにする", () => {
+  it("titleJa + bilingual summary があれば本文なしでも成功扱いにする", () => {
     const parsed = parseModelResponse(
       JSON.stringify({
         titleJa: "タイトル",
         summaryJa: "日本語要約",
         summaryEn: "English summary.",
-        bodyJa: "日本語本文",
-        bodyEn: "English body.",
+        bodyJa: "",
+        bodyEn: "",
         importance: 2,
         extraTags: [],
       }),
@@ -163,5 +163,63 @@ describe("isCompleteSummaryResponse", () => {
     expect(isCompleteSummaryResponse(parseModelResponse("not json"))).toBe(
       false,
     );
+  });
+
+  it("contaminated summary response は成功扱いにしない", () => {
+    const parsed = parseModelResponse(JSON.stringify({
+      titleJa: "タイトル",
+      summaryJa: "有効な日本語要約。",
+      summaryEn: "Forgot to remove oopsies before publishing.",
+      importance: 2,
+      extraTags: [],
+    }));
+    expect(isCompleteSummaryResponse(parsed)).toBe(false);
+  });
+});
+
+describe("buildSummaryPrompt", () => {
+  it("summary-only contract で body fields や long-form 要求を含まない", () => {
+    const prompt = buildSummaryPrompt({
+      title: "Amazon Bedrock introduces new advanced prompt optimization and migration tool",
+      category: "agent-fw",
+      source: "aws-ml-blog",
+      sourceType: "blog",
+      url: "https://example.com/bedrock",
+      contentSnippet: "AWS announced prompt optimization improvements for Bedrock.",
+    });
+
+    expect(prompt).toContain('"titleJa"');
+    expect(prompt).toContain('"summaryJa"');
+    expect(prompt).toContain('"summaryEn"');
+    expect(prompt).not.toContain('"bodyJa"');
+    expect(prompt).not.toContain('"bodyEn"');
+    expect(prompt).not.toContain("700〜1100");
+    expect(prompt).not.toContain("500-800 words");
+  });
+});
+
+describe("stripIndexBodies", () => {
+  it("legacy cache hit body values cannot repopulate index entries", () => {
+    const stripped = stripIndexBodies({
+      id: "entry-1",
+      source: "aws-ml-blog",
+      sourceType: "blog",
+      url: "https://example.com/bedrock",
+      title: "Amazon Bedrock introduces new advanced prompt optimization and migration tool",
+      titleJa: "Bedrock の高度な最適化",
+      titleEn: "Amazon Bedrock introduces new advanced prompt optimization and migration tool",
+      summaryJa: "日本語要約",
+      summaryEn: "English summary.",
+      bodyJa: "legacy cached body",
+      bodyEn: "legacy cached english body",
+      lang: "en",
+      publishedAt: "2026-07-01T00:00:00.000Z",
+      collectedAt: "2026-07-01T01:00:00.000Z",
+      tags: ["aws"],
+      category: "agent-fw",
+      importance: 2,
+    });
+    expect(stripped.bodyJa).toBe("");
+    expect(stripped.bodyEn).toBe("");
   });
 });

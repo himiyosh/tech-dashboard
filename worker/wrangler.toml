@@ -73,11 +73,10 @@ ENQUEUE_MAX_NEW = "35"
 # missing entries to feed ENQUEUE_MAX_NEW (keeping KV_LOOKUP_CAP >=
 # ENQUEUE_MAX_NEW minimizes speculative enqueues of already-cached URLs, since
 # the consumer does not pre-check KV before generating).
-# 2026-06-20: raised 40 -> 80 so more already-generated summaries merge into the
-# index per cron (subrequest-bound, not write-bound). 80 KV GETs/cron is 16% of
-# the 500 that broke cron, leaving a wide subrequest margin. Round-robin + recent
-# priority in code preserves fairness across the backlog.
-KV_LOOKUP_CAP = "80"
+# 2026-07-11 (LL-152): 80 -> 40 still exhausted the budget in the same natural
+# batch. Keep summary lookup equal to ENQUEUE_MAX_NEW=35 and reserve the rest
+# for collection, body lookup, redirects, heartbeat writes, and GitHub publish.
+KV_LOOKUP_CAP = "35"
 # Missing thumbnail backfill is useful but non-critical. Keep it tiny so data
 # collection + GitHub publish stay under the Free-plan external subrequest cap.
 OG_BUDGET_PER_RUN = "1"
@@ -93,11 +92,12 @@ OG_BUDGET_PER_RUN = "1"
 ENABLE_BODY_QUEUE = "1"
 # Body jobs enqueued per cron. Each consumed job writes one `b:` KV entry, so
 # this shares the KV daily write budget with summaries (LL-043). Backlog ~760
-# entries drains in ~1-2 days at 20/hr. Raise once steady-state.
-BODY_ENQUEUE_MAX_NEW = "20"
+# entries drains in roughly one day at 10/hr. Raise only after measured headroom.
+BODY_ENQUEUE_MAX_NEW = "10"
 # `b:` KV reads per cron to merge generated bodies into data/bodies.json. Each
-# is one subrequest; keep modest alongside KV_LOOKUP_CAP (LL-088).
-BODY_LOOKUP_CAP = "25"
+# is one subrequest; keep the combined summary/body lookup cap at 45 so
+# collection and the GitHub publish transaction retain bounded headroom.
+BODY_LOOKUP_CAP = "10"
 
 # Secrets (set via `wrangler secret put`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access

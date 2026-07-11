@@ -1,5 +1,6 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S npx tsx
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { normalizeTags } from "../harness/pipeline/tag.ts";
 
 const INDEX = "data/index.json";
 const CACHE = "data/_summary-cache.json";
@@ -51,7 +52,7 @@ function setForce(entry, key, value) {
 }
 
 function dedupeTags(tags) {
-  return [...new Set(tags.filter((tag) => typeof tag === "string" && tag.trim()))].slice(0, 10);
+  return normalizeTags(tags.filter((tag) => typeof tag === "string"), 10);
 }
 
 function firstText(...values) {

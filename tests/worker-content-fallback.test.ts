@@ -75,4 +75,16 @@ describe("applyDeterministicContentFallback", () => {
     expect(result.entry.summaryEn).not.toBe("");
     expect(result.entry.summaryEn).toMatch(/^[\x20-\x7e]+$/);
   });
+
+  it("contaminated summary を欠落扱いにして deterministic fallback へ置換する", () => {
+    const result = applyDeterministicContentFallback({
+      ...baseEntry,
+      summaryJa: "既存の有効な日本語要約",
+      summaryEn:
+        "Left some junk in the readme and forgot to remove oopsies Release Notes: N/A or Added/Fixed/Improved",
+    });
+    expect(result.summaryFallbacks).toBe(1);
+    expect(result.entry.summaryJa).toBe("既存の有効な日本語要約");
+    expect(result.entry.summaryEn).toBe("Managed Agents");
+  });
 });

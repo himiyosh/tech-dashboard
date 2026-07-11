@@ -1,4 +1,5 @@
 import type { Importance, NormalizedEntry } from "../types.ts";
+import { normalizeTags } from "./tag.ts";
 
 function filled(value: string | undefined): string {
   return typeof value === "string" && value.trim() ? value : "";
@@ -13,7 +14,7 @@ function maxImportance(primary: Importance, fallback: Importance): Importance {
 }
 
 function dedupeTags(tags: string[]): string[] {
-  return [...new Set(tags.filter(Boolean))].slice(0, 10);
+  return normalizeTags(tags, 10);
 }
 
 export function mergeEntryEnrichment(

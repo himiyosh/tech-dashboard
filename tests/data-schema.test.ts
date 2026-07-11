@@ -9,8 +9,20 @@ import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import indexJson from "../data/index.json";
 import statsJson from "../data/stats.json";
+import { restampEntryFromSource } from "../harness/pipeline/normalize.ts";
+import {
+  evaluateKeywordFilter,
+  keywordFilterEntryFromNormalized,
+} from "../harness/pipeline/source-filter.ts";
+import { isContaminatedSummaryText } from "../harness/pipeline/summary-quality.ts";
+import { normalizeTag } from "../harness/pipeline/tag.ts";
 import { canonicalUrlKey } from "../harness/pipeline/url.ts";
 import { REGISTRY } from "../harness/registry.ts";
+import type { NormalizedEntry } from "../harness/types.ts";
+import {
+  DEFAULT_BODY_RETENTION_DAYS,
+  isBodyRetentionEligible,
+} from "../worker/src/body-queue.ts";
 
 interface RawEntry {
   id?: unknown;
@@ -19,8 +31,10 @@ interface RawEntry {
   url?: unknown;
   title?: unknown;
   titleJa?: unknown;
+  titleEn?: unknown;
   summaryJa?: unknown;
   summaryEn?: unknown;
+  contentSnippet?: unknown;
   publishedAt?: unknown;
   collectedAt?: unknown;
   tags?: unknown;
@@ -28,6 +42,9 @@ interface RawEntry {
   importance?: unknown;
   bodyJa?: unknown;
   bodyEn?: unknown;
+  archiveTier?: unknown;
+  halfLife?: unknown;
+  evergreen?: unknown;
 }
 
 interface IndexShape {
@@ -98,6 +115,38 @@ const archiveEntries = existsSync(archiveDir)
     })
   : [];
 const allDataEntries = [...data.entries, ...archiveEntries];
+
+function asNormalizedEntry(entry: RawEntry): NormalizedEntry {
+  return {
+    id: String(entry.id ?? ""),
+    source: String(entry.source ?? ""),
+    sourceType: (String(entry.sourceType ?? "blog")) as NormalizedEntry["sourceType"],
+    url: String(entry.url ?? ""),
+    title: String(entry.title ?? ""),
+    titleJa: String(entry.titleJa ?? ""),
+    titleEn: String(entry.titleEn ?? ""),
+    summaryJa: String(entry.summaryJa ?? ""),
+    summaryEn: String(entry.summaryEn ?? ""),
+    ...(typeof entry.contentSnippet === "string" && entry.contentSnippet
+      ? { contentSnippet: entry.contentSnippet }
+      : {}),
+    ...(typeof entry.bodyJa === "string" ? { bodyJa: entry.bodyJa } : {}),
+    ...(typeof entry.bodyEn === "string" ? { bodyEn: entry.bodyEn } : {}),
+    lang: "en",
+    publishedAt: typeof entry.publishedAt === "string" ? entry.publishedAt : null,
+    collectedAt: typeof entry.collectedAt === "string" ? entry.collectedAt : data.generatedAt,
+    tags: Array.isArray(entry.tags) ? entry.tags.map(String) : [],
+    category: String(entry.category ?? "tech-news") as NormalizedEntry["category"],
+    importance: Number(entry.importance ?? 1) as NormalizedEntry["importance"],
+    ...(typeof entry.archiveTier === "string"
+      ? { archiveTier: entry.archiveTier as NormalizedEntry["archiveTier"] }
+      : {}),
+    ...(typeof entry.halfLife === "string"
+      ? { halfLife: entry.halfLife as NormalizedEntry["halfLife"] }
+      : {}),
+    ...(entry.evergreen === true ? { evergreen: true } : {}),
+  };
+}
 const DATA_BUDGET = {
   indexBytes: 8_000_000,
   statsBytes: 500_000,
@@ -189,6 +238,16 @@ describe("data/index.json 各エントリ", () => {
     expect(invalid).toEqual([]);
   });
 
+  it("live/archive tags use canonical aliases", () => {
+    const invalid = allDataEntries.flatMap((entry) =>
+      (Array.isArray(entry.tags) ? entry.tags : [])
+        .filter((tag): tag is string => typeof tag === "string" && normalizeTag(tag) !== tag)
+        .map((tag) => `${String(entry.id)}:${tag}->${normalizeTag(tag)}`),
+    );
+
+    expect(invalid).toEqual([]);
+  });
+
   it("publishedAt と collectedAt が ISO 8601 として解釈可能", () => {
     const bad = data.entries
       .filter(
@@ -255,6 +314,16 @@ describe("data/index.json 各エントリ", () => {
     expect(bad).toEqual([]);
   });
 
+  it("live summary に生成途中の contamination marker が残っていない", () => {
+    const bad = data.entries
+      .filter((entry) =>
+        isContaminatedSummaryText(String(entry.summaryJa ?? "")) ||
+        isContaminatedSummaryText(String(entry.summaryEn ?? "")),
+      )
+      .map((entry) => `${String(entry.id)}:${String(entry.source)}:${String(entry.title)}`);
+    expect(bad).toEqual([]);
+  });
+
   it("live index は本文を持たない (body-file architecture / LL-113)", () => {
     // Body-file architecture: the long-form body lives in data/bodies.json, NOT
     // in index.json. The index must stay body-free so it remains well under the
@@ -310,6 +379,24 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     if (!existsSync(bodiesPath)) return;
     expect(statSync(bodiesPath).size).toBeLessThanOrEqual(10_000_000);
   });
+
+  it("bodies.json は evergreen・重要記事・直近30日の本文だけを保持する", () => {
+    const entriesById = new Map(data.entries.map((entry) => [String(entry.id), entry]));
+    const referenceMs = Date.parse(data.generatedAt);
+    const invalid = Object.keys(bodies?.bodies ?? {}).filter((id) => {
+      const entry = entriesById.get(id);
+      if (!entry) return true;
+      return !isBodyRetentionEligible(
+        entry as Pick<
+          NormalizedEntry,
+          "evergreen" | "importance" | "publishedAt" | "collectedAt"
+        >,
+        referenceMs,
+        DEFAULT_BODY_RETENTION_DAYS,
+      );
+    });
+    expect(invalid).toEqual([]);
+  });
 });
 
 describe("カテゴリ品質ガード", () => {
@@ -348,46 +435,38 @@ describe("カテゴリ品質ガード", () => {
     expect(offTopic).toEqual([]);
   });
 
-  it("Tech News は consumer deal / space などのノイズを含めない", () => {
-    const noisy = allDataEntries
-      .filter((entry) => String(entry.category) === "tech-news")
-      .filter((entry) =>
-        /(memorial day|deal|sale|airfly|govee|water bottle|spacex|starship|rocket|blue origin|dead pilots|summer travel|witcher|on trails|hiking|bee wearable|esports?|beluga|space shuttle|astronaut hall|seafood sanctions|ebola|chromecast|the view|the boys|mandalorian|solar market|superfans|shark finning|russian satellites|international space station|vpn where criminals)/i
-          .test(`${String(entry.title)} ${String(entry.summaryJa)} ${String(entry.summaryEn)} ${String(entry.url)}`),
-      )
-      .map((entry) => `${String(entry.source)}:${String(entry.title)}`);
-    expect(noisy).toEqual([]);
-  });
-
-  // LL-081 の構造的対策: registry の excludeKeywords を「収集フィルタの単一ソース」として、
-  // それが既存 live/archive データに漏れなく適用されているかを検証する。
-  //
-  // これ以前は「テストのハードコード正規表現 (検出)」と「registry の excludeKeywords (予防)」が
-  // 別管理で、片方に追加してももう片方が古いまま → 収集素通り → テストだけ fail という乖離が
-  // 起きていた (LL-055 / LL-081)。このテストにより、registry に excludeKeyword を追加すれば
-  // それにマッチする既存 entry が即検出され、migration (scripts/clean-source-noise.mjs) の
-  // 必要が分かる。新種ノイズは registry の *_EXCLUDE_KEYWORDS に追加する運用とし、テストの
-  // 正規表現に独自キーワードを足さない (足すと再び乖離する)。
-  //
-  // スコープは title のみ。url を含めると `arstechnica.com/gadgets/` のようなサイトセクション名に
-  // `gadget` が部分一致し、有効な開発記事を巻き込む false positive を生む。summary も AI 生成で
-  // 短いキーワードに偶然一致しやすいため除外する (LL-081)。migration スクリプトと同じスコープ。
-  it("registry の excludeKeywords が live/archive データに適用漏れしていない (LL-081)", () => {
-    const leaked = allDataEntries
-      .filter((entry) => {
-        const source = REGISTRY[String(entry.source)];
-        const exclude = source?.excludeKeywords;
-        if (!exclude || exclude.length === 0) return false;
-        const haystack = String(entry.title ?? "").toLowerCase();
-        return exclude.some((keyword) => haystack.includes(String(keyword).toLowerCase()));
-      })
-      .map((entry) => {
-        const exclude = REGISTRY[String(entry.source)]?.excludeKeywords ?? [];
-        const haystack = String(entry.title ?? "").toLowerCase();
-        const hit = exclude.find((keyword) => haystack.includes(String(keyword).toLowerCase()));
-        return `${String(entry.source)} [${String(hit)}]: ${String(entry.title)}`;
+  // LL-081 / LL-129 / LL-144: source filter と category restamp の単一ソースは
+  // registry。既存 live/archive も shared helper で current rule に再適用した結果と
+  // 一致していなければならない。ただし normalized live/archive artifact は raw
+  // snippet を失っていることがあるため、non-title scope source では missing include
+  // だけでは destructive drop の証拠にならない。gate も Worker/migration と同じ
+  // lossy-prior evaluator を使い、keep=false だけを violation として扱う。
+  it("registry の current source filter / category が live/archive データに適用漏れしていない", () => {
+    const leaked = allDataEntries.flatMap((entry) => {
+      const source = REGISTRY[String(entry.source)];
+      if (!source) return [];
+      const normalized = asNormalizedEntry(entry);
+      const failures: string[] = [];
+      const filterDecision = evaluateKeywordFilter(keywordFilterEntryFromNormalized(normalized), source, {
+        allowLossyMissingInclude: true,
       });
-    expect(leaked, "registry の excludeKeywords にマッチする entry が残存。scripts/clean-source-noise.mjs で migration し、Worker を再デプロイすること").toEqual([]);
+      if (!filterDecision.keep) {
+        failures.push(
+          `${String(entry.source)} [filter:${filterDecision.reason}${filterDecision.keyword ? `:${filterDecision.keyword}` : ""}]: ${String(entry.title)}`,
+        );
+      }
+      const restamped = restampEntryFromSource(normalized, source, data.generatedAt);
+      if (normalized.category !== restamped.category) {
+        failures.push(
+          `${String(entry.source)} [category ${String(normalized.category)} -> ${String(restamped.category)}]: ${String(entry.title)}`,
+        );
+      }
+      return failures;
+    });
+    expect(
+      leaked,
+      "registry の current source filter / category と不一致の entry が残存。lossy normalized artifact は non-title scope の missing include を単独では証明できないため、gate は Worker/migration と同じ evaluator を使う。filter keep=false か category drift のみを scripts/clean-source-noise.mjs + Worker deploy で是正すること",
+    ).toEqual([]);
   });
 
   it("Local LLM category excludes workflow and business noise", () => {
@@ -469,6 +548,19 @@ describe("data/stats.json", () => {
 });
 
 describe("data artifact サイズ予算", () => {
+    it("live index entries are unique by canonical URL", () => {
+      const seen = new Set<string>();
+      const duplicates: string[] = [];
+      for (const entry of data.entries) {
+        const url = String(entry.url ?? "");
+        const key = canonicalUrlKey(url) ?? url;
+        if (seen.has(key)) duplicates.push(key);
+        seen.add(key);
+      }
+
+      expect(duplicates).toEqual([]);
+    });
+
     it("archive month 内の entry は canonical URL で重複しない", () => {
       const archiveDir = join(process.cwd(), "data", "archive");
       const duplicates = readdirSync(archiveDir)
@@ -488,6 +580,20 @@ describe("data artifact サイズ予算", () => {
 
       expect(duplicates).toEqual([]);
     });
+
+  it("archive warm/cold entries are bilingual; compact summary-free rows must remain hot", () => {
+    const invalid = archiveEntries
+      .filter((entry) => {
+        const tier = String(entry.archiveTier ?? "");
+        if (tier !== "warm" && tier !== "cold") return false;
+        return !String(entry.summaryJa ?? "").trim() || !String(entry.summaryEn ?? "").trim();
+      })
+      .map((entry) => `${String((entry as { archiveFile?: unknown }).archiveFile ?? "?")}:${String(entry.id ?? entry.url ?? "?")}`);
+    expect(
+      invalid,
+      "archive warm/cold entries missing bilingual summaries detected; run `npm run noise:clean -- --apply` to repair corrupted compact rows back to hot",
+    ).toEqual([]);
+  });
 
   it("index / stats / archive month が運用上限を超えない", () => {
     const archiveDir = join(process.cwd(), "data", "archive");

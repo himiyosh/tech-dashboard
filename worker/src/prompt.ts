@@ -151,8 +151,9 @@ export function buildQueuePrompt(e: PromptEntry): string {
  * {"choices":[]} (empty) -- surfacing as "incomplete summary" and writing ZERO
  * summaries to KV. Asking for only title + JA/EN summary keeps the output
  * short enough that reasoning + answer fit, so the model finishes
- * (finish_reason=stop) and returns valid JSON. The long-form body is filled
- * deterministically by the collector (R-012/R-013), so it is not requested.
+ * (finish_reason=stop) and returns valid JSON. Long-form body generation is
+ * handled separately by worker-body and stored in data/bodies.json, so this
+ * summary contract intentionally does not request or synthesize body text.
  */
 export function buildSummaryPrompt(e: PromptEntry): string {
   const context = sourceContextLines(e);

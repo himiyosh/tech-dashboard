@@ -20,6 +20,8 @@ import {
   CATEGORY_META,
   entryHref,
   featured,
+  importanceLabel,
+  latestListedCollectedAtForEntry,
   relativeTime,
   groupByDay,
   jstDayLabel,
@@ -29,7 +31,17 @@ import {
   isDeterministicFallbackEntry,
   isLowSignalRelease,
   isOffTopicForHero,
+  WORKER_HEALTH,
 } from "../lib/data.ts";
+import { sourceFreshnessStatus } from "../lib/freshness.ts";
+import { deriveWorkerRunStatus } from "../lib/run-health.ts";
+
+// Shared aggregate run state (same derivation as the footer + /status, LL-126).
+const runStatus = deriveWorkerRunStatus({
+  workerHealth: WORKER_HEALTH,
+  fallbackPercent: DASHBOARD_METRICS.fallbackPercent,
+  pendingSummaryEntries: DASHBOARD_METRICS.fallbackEntries,
+});
 
 const currentPage = 1;
 const primaryEntries = MAIN_TIMELINE_ENTRIES;
@@ -39,9 +51,14 @@ const pageEntries = primaryEntries.slice(0, PAGE_SIZE);
 const dayGroups = groupByDay(pageEntries);
 
 const feat = featured();
+const featuredId = feat?.id ?? null;
+const featuredSource = feat?.source ?? null;
 
 const now = new Date();
 const ago = relativeTime(DASHBOARD_METRICS.generatedAt, now);
+const activeSourcesLabel = `${DASHBOARD_METRICS.sourceCoverageLabel} active sources`;
+const activeSourcesJa = `${DASHBOARD_METRICS.sourceCoverageLabel} registry sources with live entries`;
+const activeSourcesEn = `${DASHBOARD_METRICS.sourceCoverageLabel} registry sources with live entries`;
 
 // Top 3 = importance x recency, but only entries with real summaries.
 // Limit repeated source/category so the decision list is useful at a glance.
@@ -49,6 +66,8 @@ const rankedPool = primaryEntries
   .filter(
     (e) =>
       e.importance >= 2 &&
+      e.id !== featuredId &&
+      e.source !== featuredSource &&
       !isDeterministicFallbackEntry(e) &&
       !isLowSignalRelease(e) &&
       !isOffTopicForHero(e),
@@ -88,6 +107,12 @@ const topThree = (() => {
 })();
 const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
 
+function sourceTypeBadgeModifier(type: (typeof ALL_ENTRIES)[number]["sourceType"]): "release" | "paper" | "" {
+  if (type === "paper") return "paper";
+  if (type === "release" || type === "changelog") return "release";
+  return "";
+}
+
 function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: string } {
   const category = CATEGORY_META.find((c) => c.slug === entry.category)?.name ?? entry.category;
   const type =
@@ -96,13 +121,22 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
       : entry.sourceType === "paper"
         ? { ja: "論文/研究", en: "paper/research" }
         : { ja: "公式/技術記事", en: "official/technical post" };
-  const importance =
-    entry.importance === 3
-      ? { ja: "重要度 High", en: "High importance" }
-      : { ja: "重要度 Medium", en: "Medium importance" };
+  const importance = importanceLabel(entry.importance);
+  const recency = relativeTime(entry.publishedAt || entry.collectedAt, now);
   return {
-    ja: `${importance.ja} · ${type.ja} · ${category}`,
-    en: `${importance.en} · ${type.en} · ${category}`,
+    ja: `${importance.ja} · ${recency} · ${type.ja} · ${category}`,
+    en: `${importance.en} · ${recency} · ${type.en} · ${category}`,
+  };
+}
+
+function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: string } {
+  const category = CATEGORY_META.find((c) => c.slug === entry.category)?.name ?? entry.category;
+  const importance = importanceLabel(entry.importance);
+  const source = sourceLabel(entry.source);
+  const recency = relativeTime(entry.publishedAt || entry.collectedAt, now);
+  return {
+    ja: `${importance.ja} · ${source} · ${category} · ${recency}`,
+    en: `${importance.en} · ${source} · ${category} · ${recency}`,
   };
 }
 ---
@@ -167,7 +201,7 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
             <strong>Routing</strong>
             <small>ranked feed</small>
           </div>
-          <span class="signal-node node-source">{DASHBOARD_METRICS.sourceCoverageLabel} sources</span>
+          <span class="signal-node node-source">{activeSourcesLabel}</span>
           <span class="signal-node node-rank">rank</span>
           <span class="signal-node node-summary">AI summary</span>
           <span class="signal-node node-publish">publish</span>
@@ -180,14 +214,27 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
             <span class="i18n-en" lang="en">Use summaries, importance, and sources to decide what to read or share.</span>
           </div>
           <div class="banner-fact">
-            <strong class="i18n-ja">集約ソース</strong>
-            <strong class="i18n-en" lang="en">Sources</strong>
-            <span class="i18n-ja">{DASHBOARD_METRICS.sourceCoverageLabel} sources · 公式 blog / release / paper / news</span>
-            <span class="i18n-en" lang="en">{DASHBOARD_METRICS.sourceCoverageLabel} sources · official blogs, releases, papers, news</span>
+            <strong class="i18n-ja">収録中ソース</strong>
+            <strong class="i18n-en" lang="en">Active registry sources</strong>
+            <span class="i18n-ja">{activeSourcesJa}</span>
+            <span class="i18n-en" lang="en">{activeSourcesEn}</span>
           </div>
           <div class="banner-fact">
-            <strong class="i18n-ja">更新頻度</strong>
-            <strong class="i18n-en" lang="en">Cadence</strong>
+            <div class="banner-fact-head">
+              <strong class="i18n-ja">更新頻度</strong>
+              <strong class="i18n-en" lang="en">Cadence</strong>
+              <a
+                class="banner-run-state"
+                href="/status"
+                data-run-tone={runStatus.tone}
+                aria-label={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
+                title={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
+              >
+                <span class={`dot ${runStatus.tone}`} data-run-tone={runStatus.tone} aria-hidden="true"></span>
+                <span class="i18n-ja">{runStatus.statusText}</span>
+                <span class="i18n-en" lang="en">{runStatus.statusText}</span>
+              </a>
+            </div>
             <span class="i18n-ja">毎時更新 · 最新 index は {ago}</span>
             <span class="i18n-en" lang="en">Hourly collection · latest index {ago}</span>
           </div>
@@ -235,14 +282,29 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
         const featSumEn = summaryForLangWithFallback(feat, "en");
         const featCat = CATEGORY_META.find((c) => c.slug === feat.category);
         const featCatColor = featCat?.color ?? "#5eead4";
+        const featFreshness = sourceFreshnessStatus(
+          feat,
+          latestListedCollectedAtForEntry(feat),
+          now.getTime(),
+        );
+        const featStale = featFreshness.status === "stale" || featFreshness.status === "error";
+        const featImportance = importanceLabel(feat.importance);
+        const featTypeBadgeClass = ["badge", sourceTypeBadgeModifier(feat.sourceType)].filter(Boolean).join(" ");
         let featHost = "";
         try { featHost = new URL(feat.url).host.replace(/^www\./, ""); } catch {}
         const featFavicon = featHost
           ? `https://www.google.com/s2/favicons?sz=64&domain=${featHost}`
           : "";
         const featImg = feat.image?.src ?? "";
+        const featReason = spotlightReason(feat);
         return (
-        <article class="featured" data-pagefind-body data-reveal="featured" style={`--cat-color:${featCatColor}`}>
+        <article
+          class="featured"
+          data-pagefind-body
+          data-reveal="featured"
+          data-source={feat.source}
+          style={`--cat-color:${featCatColor}`}
+        >
           <div class:list={["featured-thumb", { "has-image": !!featImg }]}>
             {featImg && (
               <img
@@ -258,9 +320,13 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
             </div>
           </div>
           <div class="featured-body">
-            <div class="featured-label">
-              <span class="i18n-ja">Featured · 注目</span>
-              <span class="i18n-en" lang="en">Featured</span>
+            <div class="featured-label featured-rationale">
+              <span class="i18n-ja">
+                Spotlight · 自動選定 · <strong>注目する理由:</strong> {featReason.ja}
+              </span>
+              <span class="i18n-en" lang="en">
+                Spotlight · system-ranked · <strong>Why it matters:</strong> {featReason.en}
+              </span>
             </div>
             <h2 class="featured-title">
               <a href={entryHref(feat)}>
@@ -282,15 +348,17 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
                 })()}
               </a>
             </h2>
-            {featSumJa && <p class="featured-sum i18n-ja">{featSumJa}</p>}
-            {featSumEn.text && (
-              <p class="featured-sum i18n-en" lang={featSumEn.isFallback ? "ja" : "en"}>
-                {featSumEn.isFallback && <span class="lang-badge">[ja]</span>}
-                {featSumEn.text}
-              </p>
-            )}
             <div class="featured-meta">
-              <span class="badge release">{feat.sourceType}</span>
+              <span class={featTypeBadgeClass} data-source-type={feat.sourceType}>{feat.sourceType}</span>
+              <span
+                class={`badge importance-badge ${featImportance.tone}`}
+                data-featured-importance
+                data-importance-tone={featImportance.tone}
+                data-importance-level={String(feat.importance)}
+              >
+                <span class="i18n-ja">{featImportance.ja}</span>
+                <span class="i18n-en" lang="en">{featImportance.en}</span>
+              </span>
               <span class="featured-src">
                 {featFavicon && (
                   <img
@@ -308,27 +376,49 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
                 <span>{sourceLabel(feat.source)}</span>
               </span>
               <span>·</span>
-              <span>{relativeTime(feat.publishedAt, now)}</span>
+              <time datetime={feat.publishedAt}>{relativeTime(feat.publishedAt, now)}</time>
+              <span class:list={["featured-freshness", { stale: featStale, ok: !featStale }]}>
+                <span class="i18n-ja">{featStale ? "収集元 更新遅延" : "収集元 更新OK"}</span>
+                <span class="i18n-en" lang="en">{featStale ? "Source feed stale" : "Source feed fresh"}</span>
+              </span>
             </div>
+            {featSumJa && <p class="featured-sum featured-summary i18n-ja">{featSumJa}</p>}
+            {featSumEn.text && (
+              <p class="featured-sum featured-summary i18n-en" lang={featSumEn.isFallback ? "ja" : "en"}>
+                {featSumEn.isFallback && <span class="lang-badge">[ja]</span>}
+                {featSumEn.text}
+              </p>
+            )}
           </div>
         </article>
         );
       })()}
 
-      <DailySummary entries={primaryEntries} stats={STATS} now={now} />
-
       {topThree.length > 0 && (
         <section class="top-rank" data-reveal="top-rank">
           <div class="top-rank-head">
-            <span class="top-rank-title">🔥 Today's Top {topThree.length}</span>
+            <span class="top-rank-title">
+              <span class="i18n-ja">Spotlightを除く優先度 Top {topThree.length}</span>
+              <span class="i18n-en" lang="en">Ranked Top {topThree.length} excluding Spotlight</span>
+            </span>
             <span class="top-rank-sub">importance × recency</span>
           </div>
           <ol class="top-rank-list">
             {topThree.map((e, i) => {
               const meta = CATEGORY_META.find((c) => c.slug === e.category);
               const reason = topReason(e);
+              const freshness = sourceFreshnessStatus(
+                e,
+                latestListedCollectedAtForEntry(e),
+                now.getTime(),
+              );
+              const stale = freshness.status === "stale" || freshness.status === "error";
               return (
-                <li class={`top-rank-item rank-${i + 1}`} style={`--cat-color:${meta?.color ?? "#8a847e"}`}>
+                <li
+                  class={`top-rank-item rank-${i + 1}`}
+                  data-source={e.source}
+                  style={`--cat-color:${meta?.color ?? "#8a847e"}`}
+                >
                   <span class="medal" aria-hidden="true">{medals[i]}</span>
                   <span class="rank-cat" aria-hidden="true">{meta?.emoji ?? "\u{1F4C4}"}</span>
                   <a class="rank-title" href={entryHref(e)}>
@@ -351,7 +441,11 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
                   </a>
                   <span class="rank-meta">
                     <span class="rank-source">{sourceLabel(e.source)}</span>
-                    <span class="rank-time mono">{relativeTime(e.publishedAt, now)}</span>
+                    <time class="rank-time mono" datetime={e.publishedAt}>{relativeTime(e.publishedAt, now)}</time>
+                    <span class:list={["rank-freshness", { stale, ok: !stale }]}>
+                      <span class="i18n-ja">{stale ? "収集元 更新遅延" : "収集元 更新OK"}</span>
+                      <span class="i18n-en" lang="en">{stale ? "Source feed stale" : "Source feed fresh"}</span>
+                    </span>
                   </span>
                   <span class="rank-reason i18n-ja">{reason.ja}</span>
                   <span class="rank-reason i18n-en" lang="en">{reason.en}</span>
@@ -361,6 +455,7 @@ function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: strin
           </ol>
         </section>
       )}
+      <DailySummary entries={primaryEntries} stats={STATS} now={now} />
       </section>
 
       <section class="timeline-section" id="timeline" aria-labelledby="timeline-heading">

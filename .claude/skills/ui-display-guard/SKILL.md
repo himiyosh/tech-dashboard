@@ -33,6 +33,7 @@ description: tech-dashboard のモバイル/レスポンシブ UI、固定ヘッ
    - fixed UI の z-index は既存レイヤー (`footer=40`, `tabbar=70`, `search=90`) と矛盾させない
 4. Playwright で viewport 検証を追加または更新する
    - 代表 viewport: `390x844`、必要なら `375x667` も確認する
+   - 右 rail / 中間幅の崩れ確認では境界幅 `1181/1180/1100/1000/981/960/901/900/768/390` を行列で検証する
    - `document.documentElement.scrollWidth <= window.innerWidth` を確認する
    - fixed UI の `boundingBox()` が viewport 内に収まることを確認する
    - tabbar / toolbar は item count、first item left、last item right、item width の期待値を検証する

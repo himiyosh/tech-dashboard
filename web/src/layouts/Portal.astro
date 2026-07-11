@@ -1,6 +1,9 @@
 ---
 import "../styles/portal.css";
 import { SITE_URL } from "../lib/site.ts";
+import { WORKER_HEALTH } from "../lib/data.ts";
+import { DASHBOARD_METRICS } from "../lib/metrics.ts";
+import { deriveWorkerRunStatus } from "../lib/run-health.ts";
 import ArxivIcon from "../components/icons/ArxivIcon.astro";
 
 export interface Props {
@@ -16,6 +19,9 @@ const {
   pageKey = "timeline",
   breadcrumb,
 } = Astro.props;
+const currentPath = Astro.url.pathname.replace(/\/+$/, "") || "/";
+const isCurrentHref = (href: string) =>
+  currentPath === (href.replace(/\/+$/, "") || "/");
 
 const navItems = [
   { href: "/", key: "timeline", label: "Timeline", detail: "最新記事と今日見るべき更新" },
@@ -29,6 +35,16 @@ const navItems = [
 // navItems (the hamburger menu) to avoid duplicate controls (LL-054).
 const menuOwnsCurrentPage = navItems.some((item) => item.key === pageKey && item.key !== "timeline");
 const productionHost = new URL(SITE_URL).hostname;
+const footerRun = deriveWorkerRunStatus({
+  workerHealth: WORKER_HEALTH,
+  fallbackPercent: DASHBOARD_METRICS.fallbackPercent,
+  pendingSummaryEntries: DASHBOARD_METRICS.fallbackEntries,
+});
+const footerRunTone = footerRun.tone;
+const footerRunStatus = footerRun.runLabel;
+const footerRunDetail = !WORKER_HEALTH
+  ? "open /status"
+  : `last batch ${WORKER_HEALTH.sourcesOk}/${WORKER_HEALTH.sourcesAttempted} src · ${DASHBOARD_METRICS.fallbackEntries} pending`;
 ---
 
 <!doctype html>
@@ -74,6 +90,10 @@ const productionHost = new URL(SITE_URL).hostname;
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#content-start">
+      <span class="i18n-ja">本文へスキップ</span>
+      <span class="i18n-en" lang="en">Skip to content</span>
+    </a>
     <header>
       <div class="header-inner">
         <a class="logo" href="/">
@@ -84,7 +104,7 @@ const productionHost = new URL(SITE_URL).hostname;
           <a
             href="/categories"
             class={pageKey === "categories" ? "nav-shortcut active" : "nav-shortcut"}
-            aria-current={pageKey === "categories" ? "page" : undefined}
+            aria-current={isCurrentHref("/categories") ? "page" : undefined}
           >
             <span class="nav-icon" aria-hidden="true">▦</span>
             <span>Categories</span>
@@ -92,7 +112,7 @@ const productionHost = new URL(SITE_URL).hostname;
           <a
             href="/arxiv"
             class={pageKey === "arxiv" ? "nav-shortcut active paper" : "nav-shortcut paper"}
-            aria-current={pageKey === "arxiv" ? "page" : undefined}
+            aria-current={isCurrentHref("/arxiv") ? "page" : undefined}
           >
             <span class="nav-icon" aria-hidden="true"><ArxivIcon /></span>
             <span>arXiv</span>
@@ -100,7 +120,7 @@ const productionHost = new URL(SITE_URL).hostname;
           <a
             href="/knowledge"
             class={pageKey === "knowledge" ? "nav-shortcut active knowledge" : "nav-shortcut knowledge"}
-            aria-current={pageKey === "knowledge" ? "page" : undefined}
+            aria-current={isCurrentHref("/knowledge") ? "page" : undefined}
           >
             <span class="nav-icon" aria-hidden="true">✦</span>
             <span>Knowledge</span>
@@ -124,6 +144,9 @@ const productionHost = new URL(SITE_URL).hostname;
             autocomplete="off"
           />
           <span class="search-keys" aria-hidden="true"><kbd>/</kbd><kbd>⌘K</kbd></span>
+          <button type="button" class="search-close" data-search-close aria-label="Close search" hidden>
+            <span aria-hidden="true">×</span>
+          </button>
           <div id="pagefind-results" class="search-results" role="listbox" aria-live="polite" hidden></div>
         </div>
         <div class="lang-toggle" role="group" aria-label="Language">
@@ -134,7 +157,7 @@ const productionHost = new URL(SITE_URL).hostname;
           type="button"
           class="menu-trigger"
           data-menu-trigger
-          aria-label="Open navigation menu"
+          aria-label="Open Menu"
           aria-controls="site-menu"
           aria-expanded="false"
         >
@@ -166,7 +189,7 @@ const productionHost = new URL(SITE_URL).hostname;
           <a
             href={item.href}
             class={pageKey === item.key ? "active" : ""}
-            aria-current={pageKey === item.key ? "page" : undefined}
+            aria-current={isCurrentHref(item.href) ? "page" : undefined}
           >
             <span>{item.label}</span>
             <small>{item.detail}</small>
@@ -179,11 +202,36 @@ const productionHost = new URL(SITE_URL).hostname;
       </div>
     </nav>
 
+    <nav class="mobile-tabbar" aria-label="Primary">
+      <a href="/" class={pageKey === "timeline" ? "active" : ""} aria-current={isCurrentHref("/") ? "page" : undefined}><span aria-hidden="true">⌂</span><span>Home</span></a>
+      <a href="/categories" class={pageKey === "categories" ? "active" : ""} aria-current={isCurrentHref("/categories") ? "page" : undefined}><span aria-hidden="true">▦</span><span>Categories</span></a>
+      <a href="/arxiv" class={pageKey === "arxiv" ? "active" : ""} aria-current={isCurrentHref("/arxiv") ? "page" : undefined}><span aria-hidden="true"><ArxivIcon /></span><span>arXiv</span></a>
+      <a href="/knowledge" class={pageKey === "knowledge" ? "active" : ""} aria-current={isCurrentHref("/knowledge") ? "page" : undefined}><span aria-hidden="true">✦</span><span>Knowledge</span></a>
+      <button
+        type="button"
+        data-menu-trigger
+        aria-label="Open Menu"
+        aria-controls="site-menu"
+        aria-expanded="false"
+        class={menuOwnsCurrentPage ? "active" : ""}
+      ><span aria-hidden="true">☰</span><span>Menu</span></button>
+    </nav>
+
+    <div id="content-start" class="content-start-anchor" tabindex="-1" aria-label="Main content"></div>
     <slot />
 
     <div class="footer-bar">
       <div class="footer-inner">
-        <span class="item"><span class="dot"></span> <strong>healthy</strong></span>
+        <a
+          class="item footer-run-link"
+          href="/status"
+          aria-label={`Collection health: ${footerRunStatus}. ${footerRunDetail}`}
+          title={`Collection health: ${footerRunStatus}. ${footerRunDetail}`}
+        >
+          <span class={`dot ${footerRunTone}`} data-run-tone={footerRunTone} aria-hidden="true"></span>
+          <strong>{footerRunStatus}</strong>
+          <span class="mono">{footerRunDetail}</span>
+        </a>
         <span class="item">harness <strong>v0.1</strong></span>
         <span class="item">powered by <strong>Astro</strong> + <strong>Claude Opus</strong></span>
         <span class="spacer"></span>
@@ -191,15 +239,9 @@ const productionHost = new URL(SITE_URL).hostname;
       </div>
     </div>
 
-    <nav class="mobile-tabbar" aria-label="Primary">
-      <a href="/" class={pageKey === "timeline" ? "active" : ""} aria-current={pageKey === "timeline" ? "page" : undefined}><span aria-hidden="true">⌂</span><span>Home</span></a>
-      <a href="/categories" class={pageKey === "categories" ? "active" : ""} aria-current={pageKey === "categories" ? "page" : undefined}><span aria-hidden="true">▦</span><span>Categories</span></a>
-      <a href="/arxiv" class={pageKey === "arxiv" ? "active" : ""} aria-current={pageKey === "arxiv" ? "page" : undefined}><span aria-hidden="true"><ArxivIcon /></span><span>arXiv</span></a>
-      <a href="/knowledge" class={pageKey === "knowledge" ? "active" : ""} aria-current={pageKey === "knowledge" ? "page" : undefined}><span aria-hidden="true">✦</span><span>Knowledge</span></a>
-      <button type="button" data-menu-trigger aria-controls="site-menu" aria-expanded="false" class={menuOwnsCurrentPage ? "active" : ""}><span aria-hidden="true">☰</span><span>Menu</span></button>
-    </nav>
-
     <script>
+      import { normalizeSearchText } from "../lib/search-normalize.ts";
+
       // Language toggle (Ja / En) — sync with <html data-lang="...">.
       (() => {
         const apply = (l: "ja" | "en") => {
@@ -235,6 +277,7 @@ const productionHost = new URL(SITE_URL).hostname;
           menu.hidden = !open;
           triggers.forEach((trigger) => {
             trigger.setAttribute("aria-expanded", open ? "true" : "false");
+            trigger.setAttribute("aria-label", open ? "Close Menu" : "Open Menu");
             trigger.classList.toggle("is-open", open);
           });
           if (open) {
@@ -279,13 +322,15 @@ const productionHost = new URL(SITE_URL).hostname;
         const panel = document.getElementById("pagefind-results") as HTMLDivElement | null;
         const searchRoot = input?.closest(".search") as HTMLElement | null;
         const searchTriggers = Array.from(document.querySelectorAll<HTMLElement>("[data-search-trigger]"));
+        const closeButton = searchRoot?.querySelector<HTMLButtonElement>("[data-search-close]");
         if (!input || !panel || !searchRoot) return;
 
         let pf: any = null;
         let activeIndex = -1;
+        let requestGeneration = 0;
         try {
           const pfUrl = "/pagefind/pagefind.js";
-          pf = await import(/* @vite-ignore */ pfUrl);
+          pf = { ...await import(/* @vite-ignore */ pfUrl) };
           await pf.init();
           (window as any).__pagefind = pf;
         } catch {
@@ -320,21 +365,62 @@ const productionHost = new URL(SITE_URL).hostname;
               </div>
             </div>`;
         };
-        const openSearch = () => {
+        // Focus restoration: remember what opened search so close-button / Escape
+        // can return focus, mirroring the menu IIFE's lastTrigger behaviour.
+        let lastSearchTrigger: HTMLElement | null = null;
+        const isVisible = (el: HTMLElement | null): el is HTMLElement =>
+          !!el && el.isConnected && el.getClientRects().length > 0 && !(el as HTMLButtonElement).disabled;
+        const restoreSearchFocus = () => {
+          if (isVisible(lastSearchTrigger)) {
+            lastSearchTrigger.focus();
+            return;
+          }
+          // The opener is no longer visible (e.g. the in-menu Search trigger after
+          // the menu closed). Fall back to a visible menu trigger so the mobile
+          // Menu -> Search flow still returns focus to a reachable control.
+          const menuTrigger = Array.from(
+            document.querySelectorAll<HTMLElement>("[data-menu-trigger]"),
+          ).find(isVisible);
+          menuTrigger?.focus();
+        };
+        const establishSearchState = () => {
           (window as any).__tdCloseMenu?.();
           searchRoot.classList.add("is-open");
+          if (closeButton) closeButton.hidden = false;
           setTriggerActive(true);
-          input.focus();
-          if (!input.value.trim()) renderSearchHelp();
         };
-        const closeSearch = () => {
+        const nextRequestGeneration = () => ++requestGeneration;
+        const isCurrentRequest = (generation: number) =>
+          generation === requestGeneration && searchRoot.classList.contains("is-open");
+        const openSearch = (opener?: HTMLElement | null) => {
+          lastSearchTrigger = opener instanceof HTMLElement && opener !== input ? opener : null;
+          const generation = nextRequestGeneration();
+          establishSearchState();
+          if (document.activeElement !== input) {
+            input.focus();
+          } else if (input.value.trim()) {
+            void renderResults(input.value.trim(), generation);
+          } else {
+            renderSearchHelp();
+          }
+        };
+        const closeSearch = (restoreFocus = false) => {
+          nextRequestGeneration();
+          window.clearTimeout(t);
           input.value = "";
+          activeIndex = -1;
+          input.removeAttribute("aria-activedescendant");
+          panel.removeAttribute("aria-busy");
+          panel.replaceChildren();
           searchRoot.classList.remove("is-open");
+          if (closeButton) closeButton.hidden = true;
           setTriggerActive(false);
           setExpanded(false);
           input.blur();
+          if (restoreFocus) restoreSearchFocus();
         };
         (window as any).__tdCloseSearch = closeSearch;
+        closeButton?.addEventListener("click", () => closeSearch(true));
         const hitItems = () => Array.from(panel.querySelectorAll<HTMLAnchorElement>(".search-hit"));
         const setActive = (nextIndex: number) => {
           const hits = hitItems();
@@ -366,18 +452,46 @@ const productionHost = new URL(SITE_URL).hostname;
           return { label: "PAGE", className: "page" };
         };
         const stripTags = (value: string) => value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-        const resultText = (d: any) => stripTags(`${d.meta?.title || ""} ${d.excerpt || ""} ${d.url || ""}`).toLowerCase();
-        const queryTerms = (q: string) => q.toLowerCase().split(/\s+/).filter((term) => term.length >= 2);
-        const hasExactResult = (items: any[], q: string) => {
+        const resultText = (d: any) =>
+          normalizeSearchText(stripTags(`${d.meta?.title || ""} ${d.excerpt || ""} ${d.url || ""}`));
+        const queryTerms = (q: string) =>
+          normalizeSearchText(q).split(/\s+/).filter((term) => term.length >= 2);
+        const isExactResult = (item: any, q: string) => {
           const terms = queryTerms(q);
           if (terms.length === 0) return false;
-          return items.some((d) => {
-            const text = resultText(d);
-            return text.includes(q.toLowerCase()) || terms.every((term) => text.includes(term));
-          });
+          const text = resultText(item);
+          return text.includes(normalizeSearchText(q)) || terms.every((term) => text.includes(term));
+        };
+        const hasExactResult = (items: any[], q: string) => items.some((item) => isExactResult(item, q));
+
+        const relativeAge = (day: string): string => {
+          const parsed = Date.parse(day);
+          if (Number.isNaN(parsed)) return "";
+          const days = Math.floor((Date.now() - parsed) / 86400000);
+          if (days <= 0) return "today";
+          if (days === 1) return "1d ago";
+          if (days < 30) return `${days}d ago`;
+          const months = Math.floor(days / 30);
+          if (months < 12) return `${months}mo ago`;
+          return `${Math.floor(days / 365)}y ago`;
+        };
+        const hitMeta = (d: any, type: { className: string }): string => {
+          if (type.className === "article" && d.filters) {
+            const parts: string[] = [];
+            const source = d.filters.source?.[0];
+            const category = d.filters.category?.[0];
+            const day = d.filters.publishedDay?.[0];
+            if (source) parts.push(source);
+            if (category) parts.push(category);
+            const age = day ? relativeAge(day) : "";
+            if (age) parts.push(age);
+            if (parts.length) return parts.join(" · ");
+          }
+          return (d.url || "").replace(/^https?:\/\/[^/]+/, "") || "/";
         };
 
-        const renderResults = async (q: string) => {
+        const renderResults = async (q: string, generation = nextRequestGeneration()) => {
+          if (!isCurrentRequest(generation)) return;
           activeIndex = -1;
           if (!q) {
             renderSearchHelp();
@@ -402,44 +516,53 @@ const productionHost = new URL(SITE_URL).hostname;
           let items: any[] = [];
           try {
             const search = await pf.search(q);
-            items = await Promise.all(search.results.slice(0, 10).map((r: any) => r.data()));
+            items = await Promise.all(search.results.slice(0, 30).map((r: any) => r.data()));
           } catch (error) {
+            if (!isCurrentRequest(generation)) return;
             panel.removeAttribute("aria-busy");
             panel.innerHTML = `
               <div class="search-empty">
                 <strong>Search temporarily failed.</strong>
                 <p>${escapeHtml(error instanceof Error ? error.message : "Pagefind could not return results.")}</p>
-                <div class="search-empty-actions"><a href="/categories">Browse categories instead</a></div>
+                <div class="search-empty-actions">
+                  <a href="/categories">Browse categories instead</a>
+                  <a href="/status">Check sources</a>
+                </div>
               </div>`;
             return;
           }
+          if (!isCurrentRequest(generation)) return;
           panel.removeAttribute("aria-busy");
           setExpanded(true);
-          if (items.length === 0) {
+          const exactItems = items
+            .map((item, index) => ({ item, index, type: classifyResult(item.url || "") }))
+            .filter(({ item }) => Boolean(item.url) && isExactResult(item, q))
+            .sort((a, b) => {
+              const typeOrder = Number(b.type.className === "article") - Number(a.type.className === "article");
+              return typeOrder || a.index - b.index;
+            })
+            .slice(0, 10);
+          if (!hasExactResult(items, q) || exactItems.length === 0) {
             panel.innerHTML = `
               <div class="search-empty">
                 <strong>No results for ${escapeHtml(q)}</strong>
                 <p>Try a shorter keyword, remove source/category words, or search in the other language (JA/EN).</p>
                 <div class="search-empty-actions">
                   <a href="/categories">Browse categories</a>
+                  <a href="/status">Check sources</a>
                   <a href="/archive">Browse by month</a>
                 </div>
               </div>`;
             return;
           }
-          const exact = hasExactResult(items, q);
-          const heading = exact
-            ? `Results for <strong>${escapeHtml(q)}</strong>`
-            : `No exact matches for <strong>${escapeHtml(q)}</strong> - showing closest matches`;
-          panel.innerHTML = `<div class="search-results-heading ${exact ? "" : "closest"}">${heading}</div>` + items
-            .map((d: any) => {
-              const type = classifyResult(d.url || "");
-              const path = (d.url || "").replace(/^https?:\/\/[^/]+/, "") || "/";
+          const heading = `Results for <strong>${escapeHtml(q)}</strong>`;
+          panel.innerHTML = `<div class="search-results-heading">${heading}</div>` + exactItems
+            .map(({ item: d, type }) => {
               return `
               <a class="search-hit search-hit-${type.className}" id="search-hit-${Math.random().toString(36).slice(2)}" role="option" aria-selected="false" href="${escapeHtml(d.url)}">
                 <div class="search-hit-topline">
                   <span class="search-hit-type ${type.className}">${type.label}</span>
-                  <span class="search-hit-meta">${escapeHtml(path)}</span>
+                  <span class="search-hit-meta">${escapeHtml(hitMeta(d, type))}</span>
                 </div>
                 <div class="search-hit-title">${escapeHtml(d.meta?.title || d.url)}</div>
                 <div class="search-hit-excerpt">${d.excerpt || ""}</div>
@@ -452,15 +575,18 @@ const productionHost = new URL(SITE_URL).hostname;
         let t: number | undefined;
         input.addEventListener("input", () => {
           const q = input.value.trim();
+          const generation = nextRequestGeneration();
           window.clearTimeout(t);
-          t = window.setTimeout(() => renderResults(q), 120);
+          t = window.setTimeout(() => renderResults(q, generation), 120);
         });
         input.addEventListener("focus", () => {
-          if (input.value.trim()) renderResults(input.value.trim());
+          const generation = nextRequestGeneration();
+          establishSearchState();
+          if (input.value.trim()) renderResults(input.value.trim(), generation);
           else renderSearchHelp();
         });
         searchTriggers.forEach((trigger) => {
-          trigger.addEventListener("click", () => openSearch());
+          trigger.addEventListener("click", () => openSearch(trigger));
         });
         input.form?.addEventListener("submit", (e) => e.preventDefault());
         document.addEventListener("keydown", (e) => {
@@ -468,20 +594,21 @@ const productionHost = new URL(SITE_URL).hostname;
           const wantsSearch = e.key === "/" || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k");
           if (wantsSearch && !isTextInput) {
             e.preventDefault();
-            openSearch();
+            const activeElement = document.activeElement;
+            openSearch(activeElement instanceof HTMLElement && activeElement !== document.body
+              ? activeElement
+              : null);
           }
         });
         document.addEventListener("click", (e) => {
           const target = e.target as Node;
           if (!searchRoot.contains(target) && !searchTriggers.some((trigger) => trigger.contains(target))) {
-            setExpanded(false);
-            searchRoot.classList.remove("is-open");
-            setTriggerActive(false);
+            closeSearch();
           }
         });
         input.addEventListener("keydown", (e) => {
           if (e.key === "Escape") {
-            closeSearch();
+            closeSearch(true);
           } else if (e.key === "ArrowDown") {
             e.preventDefault();
             setActive(activeIndex + 1);

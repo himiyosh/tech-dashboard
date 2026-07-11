@@ -5,7 +5,11 @@
  */
 import { describe, it, expect } from "vitest";
 import type { NormalizedEntry } from "../harness/types.ts";
-import { needsBody, selectBodyJobBatch } from "../worker/src/body-queue.ts";
+import {
+  isBodyRetentionEligible,
+  needsBody,
+  selectBodyJobBatch,
+} from "../worker/src/body-queue.ts";
 import {
   bodiesPresentSet,
   isRealBody,
@@ -48,6 +52,40 @@ describe("needsBody (LL-115)", () => {
   });
   it("要約が pending fallback → false (先に要約が要る)", () => {
     expect(needsBody(entry({ id: "a", summaryJa: PENDING_JA, summaryEn: "" }), new Set())).toBe(false);
+  });
+});
+
+describe("body retention policy", () => {
+  const nowMs = Date.parse("2026-07-11T00:00:00.000Z");
+
+  it("keeps evergreen and important entries regardless of age", () => {
+    expect(
+      isBodyRetentionEligible(
+        entry({ id: "evergreen", evergreen: true, importance: 1, publishedAt: "2025-01-01T00:00:00.000Z" }),
+        nowMs,
+      ),
+    ).toBe(true);
+    expect(
+      isBodyRetentionEligible(
+        entry({ id: "important", importance: 2, publishedAt: "2025-01-01T00:00:00.000Z" }),
+        nowMs,
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps recent low-importance entries and prunes old ones", () => {
+    expect(
+      isBodyRetentionEligible(
+        entry({ id: "recent", importance: 1, publishedAt: "2026-06-20T00:00:00.000Z" }),
+        nowMs,
+      ),
+    ).toBe(true);
+    expect(
+      isBodyRetentionEligible(
+        entry({ id: "old", importance: 1, publishedAt: "2026-05-01T00:00:00.000Z" }),
+        nowMs,
+      ),
+    ).toBe(false);
   });
 });
 

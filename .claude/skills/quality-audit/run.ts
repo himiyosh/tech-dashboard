@@ -13,6 +13,7 @@ import { REGISTRY } from "../../../harness/registry.ts";
 import { canonicalUrlKey } from "../../../harness/pipeline/url.ts";
 import { ALL_CATEGORIES, type SourceDefinition } from "../../../harness/types.ts";
 import { sourceFreshnessStatus } from "../../../web/src/lib/freshness.ts";
+import { deriveWorkerRunStatus, type WorkerHealthSnapshot } from "../../../web/src/lib/run-health.ts";
 
 export { canonicalUrlKey } from "../../../harness/pipeline/url.ts";
 
@@ -35,6 +36,13 @@ interface Entry {
 interface Index {
   generatedAt: string;
   count: number;
+  health?: {
+    lastRunAt?: string;
+    copilotOk?: boolean;
+    sourcesAttempted?: number;
+    sourcesOk?: number;
+    sourcesFailed?: string[];
+  };
   entries: Entry[];
 }
 
@@ -75,15 +83,111 @@ export function freshnessForSource(
   nowMs = Date.now(),
 ): Omit<FreshnessRow, "id"> {
   if (entries.length === 0) {
-    return { latestPublished: "-", latestCollected: "-", ageHrs: -1, status: "ℹ️ no data" };
+    return { latestPublished: "-", latestCollected: "-", ageHrs: -1, status: "ℹ️ no listed entry" };
   }
 
   const latestPublished = latestTimestamp(entries, (entry) => entry.publishedAt);
   const latestCollected = latestTimestamp(entries, (entry) => entry.collectedAt ?? entry.publishedAt);
   const freshness = sourceFreshnessStatus(source, latestCollected, nowMs);
-  const status = freshness.status === "error" ? "🔴 error" : freshness.status === "stale" ? "🟠 stale" : "✅ ok";
+  const status = freshness.status === "error" ? "🟠 inactive" : freshness.status === "stale" ? "🟠 stale" : "✅ ok";
   const ageHrs = freshness.ageHrs;
   return { latestPublished, latestCollected, ageHrs, status };
+}
+
+interface AuditSeverityInput {
+  indexCount: number;
+  health?: Index["health"];
+  freshnessRows: Array<Pick<FreshnessRow, "status">>;
+  emptyCategoryCount: number;
+  extraSourceCount: number;
+  summaryCoveragePct: number;
+  fallbackPct: number;
+  fallbackCount: number;
+  tagVariationCount: number;
+  dupCandidateCount: number;
+  nowMs?: number;
+}
+
+function effectiveFailedCount(health?: Index["health"]): number | null {
+  if (!health) return null;
+  const explicit = Array.isArray(health.sourcesFailed) ? health.sourcesFailed.length : 0;
+  const inferred =
+    isFiniteNonnegative(health.sourcesAttempted) && isFiniteNonnegative(health.sourcesOk)
+      ? Math.max(0, health.sourcesAttempted - health.sourcesOk)
+      : 0;
+  return Math.max(explicit, inferred);
+}
+
+function isFiniteNonnegative(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0;
+}
+
+function runHealthSnapshot(health?: Index["health"]): WorkerHealthSnapshot | null {
+  if (!health?.lastRunAt || !Number.isFinite(Date.parse(health.lastRunAt))) return null;
+  if (typeof health.copilotOk !== "boolean") return null;
+  if (!isFiniteNonnegative(health.sourcesAttempted)) return null;
+  if (!isFiniteNonnegative(health.sourcesOk)) return null;
+  if (!Array.isArray(health.sourcesFailed)) return null;
+  const failed = effectiveFailedCount(health) ?? 0;
+  return {
+    lastRunAt: health.lastRunAt,
+    copilotOk: health.copilotOk,
+    sourcesAttempted: health.sourcesAttempted,
+    sourcesOk: health.sourcesOk,
+    sourcesFailed:
+      Array.isArray(health.sourcesFailed) && health.sourcesFailed.length > 0
+        ? health.sourcesFailed
+        : failed > 0
+          ? Array.from({ length: failed }, (_, index) => `failed-${index + 1}`)
+          : [],
+  };
+}
+
+export function summarizeAuditSeverity(input: AuditSeverityInput): { critical: number; warning: number; minor: number } {
+  let critical = 0;
+  let warning = 0;
+  let minor = 0;
+
+  if (input.indexCount === 0) critical++;
+
+  const attempted = input.health?.sourcesAttempted;
+  const ok = input.health?.sourcesOk;
+  const failed = effectiveFailedCount(input.health) ?? 0;
+  const explicitFailed = Array.isArray(input.health?.sourcesFailed)
+    ? input.health.sourcesFailed.length
+    : 0;
+  const allAttemptedFailed =
+    isFiniteNonnegative(attempted) &&
+    attempted > 0 &&
+    failed >= attempted &&
+    (ok === 0 || (!isFiniteNonnegative(ok) && explicitFailed >= attempted));
+  const aggregateRun = runHealthSnapshot(input.health);
+  if (allAttemptedFailed) {
+    critical++;
+  } else if (!aggregateRun) {
+    critical++;
+  } else {
+    const runStatus = deriveWorkerRunStatus({
+      workerHealth: aggregateRun,
+      nowMs: input.nowMs,
+      fallbackPercent: 0,
+      pendingSummaryEntries: 0,
+    });
+    if (runStatus.tone === "err") critical++;
+    else if (runStatus.tone === "warn") warning++;
+  }
+
+  const inactiveOrStale = input.freshnessRows.filter((row) => row.status === "🟠 inactive" || row.status === "🟠 stale").length;
+  if (inactiveOrStale >= 2) warning++;
+  if (input.emptyCategoryCount >= 3) warning++;
+  if (input.extraSourceCount > 0) warning++;
+  if (input.summaryCoveragePct < 50) warning++;
+  if (input.fallbackPct >= 70) critical++;
+  else if (input.fallbackPct >= 10 || input.fallbackCount >= 50) warning++;
+  if (input.tagVariationCount >= 10) minor++;
+  if (input.dupCandidateCount >= 5) minor++;
+
+  return { critical, warning, minor };
 }
 
 async function main() {
@@ -93,8 +197,8 @@ async function main() {
   const index = JSON.parse(raw) as Index;
   const now = Date.now();
 
-  // 1. Freshness per source. Use collection time for pipeline health;
-  // published time is shown only as upstream activity context.
+  // 1. Retained/listed-entry activity per source. Collection time tracks the
+  // latest qualifying listed entry; published time is shown only as upstream context.
   const bySource = new Map<string, Entry[]>();
   for (const e of index.entries) {
     const arr = bySource.get(e.source) ?? [];
@@ -127,6 +231,15 @@ async function main() {
   const fallbackEntries = index.entries.filter(isDeterministicFallbackEntry);
   const fallbackPct = index.entries.length === 0 ? 0 : Math.round((fallbackEntries.length / index.entries.length) * 100);
   const realSummaryCount = index.entries.length - fallbackEntries.length;
+  const aggregateRun = runHealthSnapshot(index.health);
+  const aggregateRunStatus = aggregateRun
+    ? deriveWorkerRunStatus({
+        workerHealth: aggregateRun,
+        nowMs: now,
+        fallbackPercent: 0,
+        pendingSummaryEntries: 0,
+      })
+    : null;
 
   // 4. Tag variations (simple: lowercase → set of originals)
   const tagGroups = new Map<string, Map<string, number>>();
@@ -154,20 +267,19 @@ async function main() {
   }
   const dupCandidates = [...urlGroups.values()].filter((arr) => arr.length > 1).slice(0, 10);
 
-  // Severity summary
-  let critical = 0, warning = 0, minor = 0;
-  if (index.entries.length === 0) critical++;
-  for (const f of freshness) {
-    if (f.status.includes("error")) critical++;
-    else if (f.status.includes("stale")) warning++;
-  }
-  if (emptyCats.length >= 3) warning++;
-  if (extraSourceIds.length > 0) warning++;
-  if (covPct < 50) warning++;
-  if (fallbackPct >= 70) critical++;
-  else if (fallbackPct >= 10 || fallbackEntries.length >= 50) warning++;
-  if (tagVariations.length >= 10) minor++;
-  if (dupCandidates.length >= 5) minor++;
+  const { critical, warning, minor } = summarizeAuditSeverity({
+    indexCount: index.entries.length,
+    health: index.health,
+    freshnessRows: freshness,
+    emptyCategoryCount: emptyCats.length,
+    extraSourceCount: extraSourceIds.length,
+    summaryCoveragePct: covPct,
+    fallbackPct,
+    fallbackCount: fallbackEntries.length,
+    tagVariationCount: tagVariations.length,
+    dupCandidateCount: dupCandidates.length,
+    nowMs: now,
+  });
 
   const ts = new Date().toISOString();
   const lines: string[] = [];
@@ -182,6 +294,30 @@ async function main() {
   lines.push(`- deterministic fallback: ${fallbackEntries.length} 件 (${fallbackPct}%)`);
   lines.push("");
 
+  lines.push("## 🚦 パイプライン実行状態");
+  lines.push("");
+  if (index.health) {
+    const failed = effectiveFailedCount(index.health) ?? 0;
+    const explicitFailed = Array.isArray(index.health.sourcesFailed) ? index.health.sourcesFailed : [];
+    lines.push(`- aggregate run: ${aggregateRunStatus ? `${aggregateRunStatus.statusText} (${aggregateRunStatus.detail})` : "ERR (aggregate health telemetry missing, invalid, or incomplete)"}`);
+    lines.push(`- lastRunAt: ${index.health.lastRunAt ?? "-"}`);
+    lines.push(`- copilotOk: ${index.health.copilotOk ?? "-"}`);
+    lines.push(`- sourcesAttempted: ${index.health.sourcesAttempted ?? "-"}`);
+    lines.push(`- sourcesOk: ${index.health.sourcesOk ?? "-"}`);
+    lines.push(
+      `- sourcesFailed: ${
+        explicitFailed.length > 0
+          ? explicitFailed.join(", ")
+          : failed > 0
+            ? `${failed} (attempted-ok から推定 / source IDs omitted)`
+            : "なし ✅"
+      }`,
+    );
+  } else {
+    lines.push("- health telemetry: なし");
+  }
+  lines.push("");
+
   lines.push("## 🧭 ソース整合性");
   lines.push("");
   lines.push(`- registry ソース: ${registrySourceIds.length}`);
@@ -190,7 +326,10 @@ async function main() {
   lines.push(`- data にあるが registry に無い: ${extraSourceIds.length === 0 ? "なし ✅" : extraSourceIds.join(", ")}`);
   lines.push("");
 
-  lines.push("## 🏥 鮮度");
+  lines.push("## 🏥 掲載エントリ活動");
+  lines.push("");
+  lines.push("- ここで見る `最新収集` / `状態` は **live index に残っている qualifying entry** の最新時刻です。");
+  lines.push("- include/exclude filter で最近の項目が全て落ちた source は古く見えても、**collector failure を直接証明しません**。pipeline failure は上の aggregate health で判断します。");
   lines.push("");
   lines.push("| ソース | 最新収集 | 最新公開 | 収集経過 (h) | 状態 |");
   lines.push("|---|---|---|---|---|");

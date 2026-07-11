@@ -7,6 +7,7 @@
 import { XMLParser } from "fast-xml-parser";
 import type { RawEntry, SourceDefinition } from "../types.ts";
 import { matchesKeywordFilter } from "../pipeline/source-filter.ts";
+import { normalizeMediaUrl } from "../pipeline/url.ts";
 
 interface RssItem {
   title?: string | { "#text"?: string };
@@ -157,13 +158,13 @@ function asThumbnail(item: RssItem): string | undefined {
   const thumb = item["media:thumbnail"];
   if (Array.isArray(thumb)) {
     const first = thumb[0];
-    if (first?.["@_url"]) return first["@_url"];
+    if (first?.["@_url"]) return normalizeMediaUrl(first["@_url"]);
   } else if (thumb && typeof thumb === "object") {
-    if (thumb["@_url"]) return thumb["@_url"];
+    if (thumb["@_url"]) return normalizeMediaUrl(thumb["@_url"]);
   }
   const enc = item.enclosure;
   if (enc && typeof enc === "object" && enc["@_url"] && typeof enc["@_type"] === "string" && enc["@_type"].startsWith("image/")) {
-    return enc["@_url"];
+    return normalizeMediaUrl(enc["@_url"]);
   }
   return undefined;
 }
@@ -174,7 +175,7 @@ function extractInlineImage(html: string): string | undefined {
   const re = /<img[^>]+src\s*=\s*["']([^"']+)["']/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) !== null) {
-    const src = m[1]?.trim();
+    const src = m[1] ? normalizeMediaUrl(m[1]) : "";
     if (!src) continue;
     if (src.startsWith("data:")) continue;
     // Skip tiny tracking pixels and avatar-like assets.

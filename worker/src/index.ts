@@ -17,19 +17,26 @@
  */
 import { listSources } from "../../harness/registry.ts";
 import { mergeEntryEnrichment } from "../../harness/pipeline/entry-merge.ts";
-import { normalize } from "../../harness/pipeline/normalize.ts";
-import { matchesKeywordFilter } from "../../harness/pipeline/source-filter.ts";
-import { applyTags } from "../../harness/pipeline/tag.ts";
-import { canonicalUrlKey } from "../../harness/pipeline/url.ts";
+import { normalize, restampEntryFromSource } from "../../harness/pipeline/normalize.ts";
+import {
+  evaluateKeywordFilter,
+  keywordFilterEntryFromNormalized,
+} from "../../harness/pipeline/source-filter.ts";
+import { applyTags, normalizeTags } from "../../harness/pipeline/tag.ts";
+import { canonicalUrlKey, normalizeMediaUrl } from "../../harness/pipeline/url.ts";
 import { applyDeterministicContentFallback } from "./content-fallback.ts";
 import {
   needsGeneratedContent,
-  roundRobinStart,
   selectSummaryJobBatch,
+  selectSummaryLookupEntries,
   type SummaryJob,
 } from "./summary-queue.ts";
 import { type BodyJob } from "./body-generate.ts";
-import { selectBodyJobBatch } from "./body-queue.ts";
+import {
+  DEFAULT_BODY_RETENTION_DAYS,
+  isBodyRetentionEligible,
+  selectBodyJobBatch,
+} from "./body-queue.ts";
 import { getBodyCacheEntries } from "./body-cache.ts";
 import {
   bodiesPresentSet,
@@ -90,6 +97,7 @@ interface Env {
   // Max body jobs to enqueue per cron (consumer writes one `b:` KV per job,
   // bounded by the shared KV daily write budget, LL-043).
   BODY_ENQUEUE_MAX_NEW?: string;
+  BODY_RETENTION_DAYS?: string;
   // Max `b:` KV entries to read per cron when merging generated bodies into
   // data/bodies.json. Each is one subrequest (LL-088 subrequest budget).
   BODY_LOOKUP_CAP?: string;
@@ -103,11 +111,16 @@ const SUMMARIZER_ISSUE_KEY = "summarizer.issue.v1";
 const DEFAULT_SUMMARIZE_TIMEOUT_MS = 25_000;
 const DEFAULT_SUMMARIZE_CONCURRENCY = 4;
 const DEFAULT_SUMMARY_RETRY_COOLDOWN_MS = 2 * 60 * 60_000;
+export const SOURCE_BATCHES = 6;
 // Retry on Copilot timeout doubles subrequest cost without meaningfully
 // raising success rate (sonnet long-form responses just need wall-time,
 // not another attempt). Single attempt keeps us within the 1000-subrequest
 // per-invocation budget. See LL-034.
 const SUMMARIZE_ATTEMPTS = 1;
+
+export function sourceBatchIndexAt(nowMs: number): number {
+  return Math.floor(nowMs / 3600_000) % SOURCE_BATCHES;
+}
 
 interface SummarizerIssue {
   status?: unknown;
@@ -181,18 +194,42 @@ async function readSummaryRetryCooldownUrls(env: Env): Promise<Set<string>> {
   }
 }
 
-function entryPassesCurrentSourceFilter(entry: NormalizedEntry, sourceDef: SourceDefinition | undefined): boolean {
+function entryPassesCurrentSourceFilter(
+  entry: NormalizedEntry,
+  sourceDef: SourceDefinition | undefined,
+): boolean {
   if (!sourceDef) return true;
-  return matchesKeywordFilter(
-    {
-      title: entry.title,
-      url: entry.url,
-      contentSnippet: [entry.titleJa, entry.titleEn, entry.summaryJa, entry.summaryEn]
-        .filter(Boolean)
-        .join(" "),
-    },
-    sourceDef,
-  );
+  return evaluateKeywordFilter(keywordFilterEntryFromNormalized(entry), sourceDef, {
+    allowLossyMissingInclude: true,
+  }).keep;
+}
+
+export function applyCurrentSourceRules(
+  entry: NormalizedEntry,
+  sourceDef: SourceDefinition | undefined,
+  referenceAt: string,
+): NormalizedEntry | null {
+  if (!sourceDef) return entry;
+  const restamped = applyTags(restampEntryFromSource(entry, sourceDef, referenceAt));
+  return entryPassesCurrentSourceFilter(restamped, sourceDef) ? restamped : null;
+}
+
+export function mergeFreshAndPriorEntries(
+  fresh: readonly NormalizedEntry[],
+  priorEntries: readonly NormalizedEntry[],
+  sourceDefMap: ReadonlyMap<string, SourceDefinition>,
+  referenceAt: string,
+): { entries: NormalizedEntry[]; filteredPriorCount: number } {
+  const filteredPrior = priorEntries
+    .map((entry) => applyCurrentSourceRules(entry, sourceDefMap.get(entry.source), referenceAt))
+    .filter((entry): entry is NormalizedEntry => entry !== null);
+  const byUrl = new Map<string, NormalizedEntry>();
+  for (const entry of filteredPrior) setPreferredEntry(byUrl, entry);
+  for (const entry of fresh) setPreferredEntry(byUrl, entry);
+  return {
+    entries: [...byUrl.values()],
+    filteredPriorCount: priorEntries.length - filteredPrior.length,
+  };
 }
 const COPILOT_ENDPOINT = "https://api.githubcopilot.com/chat/completions";
 const COPILOT_HEADERS = {
@@ -423,6 +460,42 @@ function parseJson<T>(path: string, content: string): T | null {
   }
 }
 
+export function parseBaselineJson<T>(
+  path: string,
+  file: { content: string } | null,
+): T | null {
+  if (!file) return null;
+  try {
+    return JSON.parse(file.content) as T;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`refusing to publish with invalid baseline ${path}: ${reason}`);
+  }
+}
+
+export function assertHistoryBaselinePair(
+  archiveIndexFile: { content: string } | null,
+  statsFile: { content: string } | null,
+): void {
+  if (Boolean(archiveIndexFile) === Boolean(statsFile)) return;
+
+  const missingPath = archiveIndexFile ? "data/stats.json" : "data/archive/_index.json";
+  throw new Error(`refusing to publish: history baseline pair is incomplete; ${missingPath} is missing`);
+}
+
+export function assertArchiveMonthBaseline(
+  month: string,
+  archiveIndex: Pick<ArchiveIndexFile, "perMonth"> | null,
+  existingFile: { content: string } | null,
+): void {
+  const indexedCount = archiveIndex?.perMonth?.[month] ?? 0;
+  if (indexedCount > 0 && !existingFile) {
+    throw new Error(
+      `refusing to publish: archive index records ${indexedCount} entries for ${month}, but data/archive/${month}.json is missing`,
+    );
+  }
+}
+
 async function ghJsonChangeIfChanged(
   env: Env,
   path: string,
@@ -450,6 +523,20 @@ function entriesEqual(
   return JSON.stringify(existingPayload?.entries ?? []) === JSON.stringify(nextEntries);
 }
 
+export function selectArchiveUpdateEntries(
+  existingPayload: { entries?: NormalizedEntry[] } | null,
+  nextEntries: readonly NormalizedEntry[],
+): NormalizedEntry[] {
+  if (!existingPayload?.entries) return [...nextEntries];
+  const existingByUrl = new Map(
+    existingPayload.entries.map((entry) => [canonicalUrlKey(entry.url) ?? entry.url ?? entry.id, entry]),
+  );
+  return nextEntries.filter((entry) => {
+    const key = canonicalUrlKey(entry.url) ?? entry.url ?? entry.id;
+    return JSON.stringify(existingByUrl.get(key)) !== JSON.stringify(entry);
+  });
+}
+
 function delayMs(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -461,12 +548,12 @@ function delayMs(ms: number): Promise<void> {
  * (LL-036: ~25 subrequests for untouched months exhausted the 1000/inv
  * budget through redirect amplification). Instead, treat the existing
  * data/stats.json as the source of truth for untouched-month contributions,
- * then subtract the OLD entries of months touched this run and add their
- * NEW (merged) entries plus the current live entries.
+ * then subtract the OLD entries of months touched this run and add the fully
+ * merged replacement content for those same months.
  *
- * Invariant: removed ⊆ previous baseline contents. added is the union of
- * live entries and merged touched-month entries. Untouched-month entries
- * never enter `removed` or `added` because their archive file is unchanged.
+ * Invariant: removed is the previous content of touched months and added is
+ * the replacement content of those same months. Untouched-month entries never
+ * enter either set because their archive files are unchanged.
  *
  * Bootstrap: if existing is null (first run after deploy of this code), we
  * fall back to buildStatsPayload(added) — accurate for everything except
@@ -623,7 +710,6 @@ async function publishHistoryFiles(
   // includeHot: true keeps current-month hot entries in the monthly archive
   // so byDay stats remain stable even after entries get evicted from the live
   // index by PER_SOURCE_CAP or age into `dropped`.
-  const { byMonth, stats } = groupArchiveEntries(archiveInputEntries, { includeHot: true });
   const archiveIndexPath = "data/archive/_index.json";
   const statsPath = "data/stats.json";
 
@@ -634,14 +720,17 @@ async function publishHistoryFiles(
     ghGetFile(env, archiveIndexPath),
     ghGetFileRaw(env, statsPath),
   ]);
-  const archiveIndex = archiveIndexFile
-    ? parseJson<ArchiveIndexFile>(archiveIndexPath, archiveIndexFile.content)
-    : null;
-  const existingStats = existingStatsRaw
-    ? parseJson<StatsPayload>(statsPath, existingStatsRaw.content)
-    : null;
+  assertHistoryBaselinePair(archiveIndexFile, existingStatsRaw);
+  const archiveIndex = parseBaselineJson<ArchiveIndexFile>(archiveIndexPath, archiveIndexFile);
+  const existingStats = parseBaselineJson<StatsPayload>(statsPath, existingStatsRaw);
 
-  // ONLY read months that received new entries this run. Previously we read
+  // A missing baseline requires one full bootstrap. Normal runs merge only
+  // entries whose published index representation changed, so untouched archive
+  // months remain in the existing archive/stats baseline without being fetched.
+  const entriesToMerge = archiveIndex && existingStats ? archiveInputEntries : liveEntries;
+  const { byMonth, stats } = groupArchiveEntries(entriesToMerge, { includeHot: true });
+
+  // ONLY read months that received new or changed entries this run. Previously we read
   // every month in archive_index (~25 months → ~25 subrequests + redirect
   // amplification on the Standard plan's 1000/inv budget). Untouched months
   // keep their archive file content as-is; we carry their stats contribution
@@ -661,7 +750,8 @@ async function publishHistoryFiles(
     const month = touchedMonths[i];
     const path = `data/archive/${month}.json`;
     const existingFile = existingTouchedFiles[i];
-    const existingMonth = existingFile ? parseJson<ArchiveMonthFile>(path, existingFile.content) : null;
+    assertArchiveMonthBaseline(month, archiveIndex, existingFile);
+    const existingMonth = parseBaselineJson<ArchiveMonthFile>(path, existingFile);
     const incomingEntries = byMonth.get(month) ?? [];
     const mergedEntries = mergeArchiveEntries(existingMonth?.entries ?? [], incomingEntries);
     if (mergedEntries.length === 0) continue;
@@ -695,14 +785,14 @@ async function publishHistoryFiles(
   const archiveIndexChange = await ghJsonChangeIfChanged(env, archiveIndexPath, archiveIndexPayload, archiveIndexFile);
   if (archiveIndexChange) changes.push(archiveIndexChange);
 
-  // Incremental stats: start from existing baseline, subtract contributions of
-  // old touched-month entries, add contributions of merged touched-month +
-  // live entries. Untouched-month contributions remain accurate because the
-  // archive files themselves were not modified this run.
+  // Incremental stats: start from the existing baseline, subtract the old
+  // touched-month files, and add the fully merged replacement for those same
+  // months. Untouched-month contributions remain in the baseline and must not
+  // be added again.
   const statsPayload = buildIncrementalStats({
     existing: existingStats,
     removed: oldTouchedEntries,
-    added: uniqueEntriesByUrl([...liveEntries, ...newTouchedEntries]),
+    added: uniqueEntriesByUrl(newTouchedEntries),
     liveCount: liveEntries.length,
     generatedAt,
   });
@@ -822,7 +912,7 @@ async function runWithConcurrency<T, R>(
 }
 
 function dedupeTags(tags: string[]): string[] {
-  return [...new Set(tags)].slice(0, 10);
+  return normalizeTags(tags, 10);
 }
 
 // ---------- OG image extraction ---------------------------------------------
@@ -885,7 +975,7 @@ function matchMetaContent(html: string, prop: string): string | null {
 
 function absolutizeUrl(src: string, base: string): string | null {
   try {
-    return new URL(src, base).toString();
+    return new URL(normalizeMediaUrl(src), base).toString();
   } catch {
     return null;
   }
@@ -928,12 +1018,10 @@ async function runHarness(
   // Exclude file-system-backed sources (e.g. user-opml reads data/user-opml.xml).
   const allSources = listSources().filter((s) => s.id !== "user-opml");
 
-  // Cloudflare Free Workers cap subrequests at 50 per invocation, so we cannot
-  // fetch all 50 sources in a single run. Rotate sources across SOURCE_BATCHES
-  // batches keyed by hour, so each source is refreshed every SOURCE_BATCHES hours.
-  // Subrequest budget per run: ~13 sources + 1 GH read + 5 Copilot + 4 OG + 1 GH put = ~24.
-  const SOURCE_BATCHES = 4;
-  const naturalBatch = Math.floor(Date.now() / 3600_000) % SOURCE_BATCHES;
+  // Rotate sources across six hourly batches. This lowers the peak collection
+  // and parsing load from roughly fourteen to nine sources per invocation while
+  // keeping each registry source on a predictable six-hour refresh cadence.
+  const naturalBatch = sourceBatchIndexAt(Date.now());
   const batchIndex =
     opts.batchOverride !== undefined
       ? ((opts.batchOverride % SOURCE_BATCHES) + SOURCE_BATCHES) % SOURCE_BATCHES
@@ -979,18 +1067,16 @@ async function runHarness(
   const okCount = settled.filter((s) => s.result.ok).length;
   console.log(`[worker] collect ok=${okCount}/${sources.length} fresh=${fresh.length} prior=${priorEntries.length}`);
 
-  // 1.5) Merge fresh + prior. Prefer the freshest canonical URL on collision.
-  const byUrl = new Map<string, NormalizedEntry>();
-  for (const e of priorEntries) setPreferredEntry(byUrl, e);
-  for (const e of fresh) setPreferredEntry(byUrl, e);
-  const merged = [...byUrl.values()];
   const sourceDefMap = new Map(listSources().map((s) => [s.id, s]));
-  const qualityFiltered = merged.filter((entry) =>
-    entryPassesCurrentSourceFilter(entry, sourceDefMap.get(entry.source)),
-  );
-  const filteredByCurrentRules = merged.length - qualityFiltered.length;
+  // 1.5) Reapply current source rules ONLY to prior merged entries before
+  // canonical merge. Fresh entries already passed the current registry during
+  // collection, often with a longer raw snippet than normalize() keeps in
+  // contentSnippet; re-filtering the normalized fresh record can falsely drop
+  // it after truncation.
+  const { entries: qualityFiltered, filteredPriorCount: filteredByCurrentRules } =
+    mergeFreshAndPriorEntries(fresh, priorEntries, sourceDefMap, collectedAt);
   if (filteredByCurrentRules > 0) {
-    console.log(`[worker] source keyword filters removed ${filteredByCurrentRules} merged entries`);
+    console.log(`[worker] source keyword filters removed ${filteredByCurrentRules} prior merged entries`);
   }
 
   // 2) Cap per source (importance-aware for high-volume sources) then sort newest-first then cap to INDEX_LIMIT.
@@ -1093,18 +1179,14 @@ async function runHarness(
     1,
     Number(env.KV_LOOKUP_CAP ?? "20"),
   );
+  const summarySelectionNowMs = Date.now();
   const allFallback = sorted.filter(needsGeneratedContent);
-  // Round-robin the KV-lookup/merge-back window by a FULL cap each hour (shared
-  // roundRobinStart helper, symmetric with the enqueue window). Advancing by
-  // only 1 entry/hour (the old behaviour) made this window take `allFallback`
-  // hours — WEEKS — to cycle, so summaries the summarizer had already written to
-  // KV were merged into the index at a crawl (~0.4/h) and the visible backlog
-  // never drained even though generation was working (LL-102).
-  const rrHourOffset = roundRobinStart(Date.now(), allFallback.length, KV_LOOKUP_CAP);
-  const needsKvLookup: typeof allFallback = [];
-  for (let i = 0; i < Math.min(KV_LOOKUP_CAP, allFallback.length); i++) {
-    needsKvLookup.push(allFallback[(rrHourOffset + i) % allFallback.length]!);
-  }
+  const summaryRetryCooldownUrls = await readSummaryRetryCooldownUrls(env);
+  const lookupSelection = selectSummaryLookupEntries(sorted, KV_LOOKUP_CAP, {
+    nowMs: summarySelectionNowMs,
+    skipUrls: summaryRetryCooldownUrls,
+  });
+  const needsKvLookup = lookupSelection.entries;
   // lookedUpUrls: URLs we actually issued KV.get for.
   //   Absent from set  → real AI summary exists; do not enqueue.
   //   Present but no hitsByUrl hit → KV miss; MUST enqueue.
@@ -1121,14 +1203,13 @@ async function runHarness(
     needsKvLookup.map((e) => e.url),
     CACHE_KEY,
   );
-  const summaryRetryCooldownUrls = await readSummaryRetryCooldownUrls(env);
   if (summaryRetryCooldownUrls.size > 0) {
     console.log(
       `[worker] summary retry cooldown active for ${summaryRetryCooldownUrls.size} url(s)`,
     );
   }
   console.log(
-    `[worker] cache lookups ${needsKvLookup.length} / ${sorted.length} (fallback total=${allFallback.length}, unchecked=${uncheckedFallbackUrls.size}, cap=${KV_LOOKUP_CAP}, rrOffset=${rrHourOffset})`,
+    `[worker] cache lookups ${needsKvLookup.length} / ${sorted.length} (fallback total=${allFallback.length}, unchecked=${uncheckedFallbackUrls.size}, cap=${KV_LOOKUP_CAP}, priorityOffset=${lookupSelection.startIndex})`,
   );
 
   const needsSummary: NormalizedEntry[] = [];
@@ -1229,9 +1310,11 @@ async function runHarness(
     if (e.image) continue;
     const cached = ogBlob[e.url];
     if (cached?.src) {
+      const src = normalizeMediaUrl(cached.src);
+      cached.src = src;
       afterCache[i] = {
         ...e,
-        image: { src: cached.src, origSrc: cached.src, alt: e.title, width: 0, height: 0, source: "og" },
+        image: { src, origSrc: src, alt: e.title, width: 0, height: 0, source: "og" },
       };
     }
   }
@@ -1257,7 +1340,8 @@ async function runHarness(
     const byUrl = new Map(ogResults.filter((r) => r.src).map((r) => [r.url, r.src as string]));
     for (let i = 0; i < afterCache.length; i++) {
       const e = afterCache[i]!;
-      const src = byUrl.get(e.url);
+      const rawSrc = byUrl.get(e.url);
+      const src = rawSrc ? normalizeMediaUrl(rawSrc) : "";
       if (src && !e.image) {
         afterCache[i] = {
           ...e,
@@ -1292,7 +1376,7 @@ async function runHarness(
     lookedUpUrls,
     queueCap,
     uncheckedFallbackUrls,
-    { skipUrls: summaryRetryCooldownUrls },
+    { nowMs: summarySelectionNowMs, skipUrls: summaryRetryCooldownUrls },
   );
 
   // Enqueue before the CPU-heavy data/index.json stringify + GitHub publish
@@ -1305,6 +1389,7 @@ async function runHarness(
     lookedUpUrls,
     uncheckedFallbackUrls,
     summaryRetryCooldownUrls,
+    summarySelectionNowMs,
   );
   if (earlyEnqueued > 0) {
     console.log(`[worker] enqueued ${earlyEnqueued} summary jobs (pre-publish path)`);
@@ -1354,7 +1439,7 @@ async function runHarness(
     lookedUpUrls,
     queueCap,
     uncheckedFallbackUrls,
-    { skipUrls: summaryRetryCooldownUrls },
+    { nowMs: summarySelectionNowMs, skipUrls: summaryRetryCooldownUrls },
   );
   const enqueueCandidates = queueEnabled && env.SUMMARY_QUEUE ? summaryQueueBatch.jobs.length : 0;
   // Body-file pipeline (LL-115): merge generated bodies into data/bodies.json
@@ -1435,6 +1520,7 @@ async function runHarness(
     };
   }
   const hasEntryChanges = !entriesEqual(existingPayload, indexEntries);
+  const archiveUpdateEntries = selectArchiveUpdateEntries(existingPayload, indexEntries);
   const indexUnchanged = stripGeneratedAt(existingJson) === stripGeneratedAt(json);
   const bodiesChanged = bodyPipeline.bodiesFileContent !== null;
   // Compare ignoring `generatedAt` timestamp so unchanged runs don't churn commits.
@@ -1450,7 +1536,7 @@ async function runHarness(
 
   const message = `chore(data): update tech dashboard ${payload.generatedAt}`;
   const historyStats = hasEntryChanges
-    ? await publishHistoryFiles(env, contentReady, finalEntries, payload.generatedAt)
+    ? await publishHistoryFiles(env, archiveUpdateEntries, finalEntries, payload.generatedAt)
     : {
         archiveMonthsTouched: 0,
         archiveFilesChanged: 0,
@@ -1695,6 +1781,7 @@ async function maybeEnqueueSummaryJobs(
   lookedUpUrls: Set<string>,
   uncheckedFallbackUrls: Set<string>,
   summaryRetryCooldownUrls: ReadonlySet<string>,
+  nowMs: number,
 ): Promise<number> {
   if (env.ENABLE_SUMMARY_QUEUE !== "1") return 0;
   if (!env.SUMMARY_QUEUE) {
@@ -1708,7 +1795,7 @@ async function maybeEnqueueSummaryJobs(
     lookedUpUrls,
     cap,
     uncheckedFallbackUrls,
-    { skipUrls: summaryRetryCooldownUrls },
+    { nowMs, skipUrls: summaryRetryCooldownUrls },
   );
   if (eligibleCount > 0) {
     console.log(
@@ -1748,6 +1835,8 @@ interface BodyPipelineResult {
     bodyMerged: number;
     bodyPruned: number;
     bodiesTotal: number;
+    bodyRetentionDays: number;
+    bodyRetentionEligible: number;
   };
 }
 
@@ -1767,6 +1856,18 @@ async function runBodyPipeline(
   existingBodiesContent: string | null,
   generatedAt: string,
 ): Promise<BodyPipelineResult> {
+  const retentionDays = Math.max(
+    1,
+    Number(env.BODY_RETENTION_DAYS ?? DEFAULT_BODY_RETENTION_DAYS),
+  );
+  const referenceMs = Date.parse(generatedAt);
+  const retainedEntries = liveEntries.filter((entry) =>
+    isBodyRetentionEligible(
+      entry,
+      Number.isFinite(referenceMs) ? referenceMs : Date.now(),
+      retentionDays,
+    ),
+  );
   const disabled = (mode: string): BodyPipelineResult => ({
     bodiesFileContent: null,
     enqueued: 0,
@@ -1779,6 +1880,8 @@ async function runBodyPipeline(
       bodyMerged: 0,
       bodyPruned: 0,
       bodiesTotal: parseBodies(existingBodiesContent).count,
+      bodyRetentionDays: retentionDays,
+      bodyRetentionEligible: retainedEntries.length,
     },
   });
 
@@ -1791,7 +1894,7 @@ async function runBodyPipeline(
   try {
     const existingBodies = parseBodies(existingBodiesContent);
     const present = bodiesPresentSet(existingBodies);
-    const liveIds = new Set(liveEntries.map((e) => e.id));
+    const retainedIds = new Set(retainedEntries.map((e) => e.id));
 
     // SHARED selection for BOTH merge-lookup and enqueue (LL-116 / LL-102
     // symmetry). The merge MUST look up `b:` keys for the SAME entries the
@@ -1800,9 +1903,15 @@ async function runBodyPipeline(
     // merged). selectBodyJobBatch gives recent-priority + round-robin over the
     // entries still needing a body, so the newest enqueued entries are also the
     // ones checked for a ready body each run.
-    const lookupCap = Math.max(1, Number(env.BODY_LOOKUP_CAP ?? 25));
-    const enqueueCap = Math.max(1, Number(env.BODY_ENQUEUE_MAX_NEW ?? 20));
-    const selection = selectBodyJobBatch(liveEntries, present, Math.max(lookupCap, enqueueCap));
+    const lookupCap = Math.max(1, Number(env.BODY_LOOKUP_CAP ?? 10));
+    const configuredEnqueueCap = Math.max(1, Number(env.BODY_ENQUEUE_MAX_NEW ?? 10));
+    if (configuredEnqueueCap > lookupCap) {
+      console.warn(
+        "[worker] BODY_ENQUEUE_MAX_NEW exceeds BODY_LOOKUP_CAP; clamping enqueue to the lookup budget",
+      );
+    }
+    const enqueueCap = Math.min(configuredEnqueueCap, lookupCap);
+    const selection = selectBodyJobBatch(retainedEntries, present, lookupCap);
 
     // 1) Merge: read `b:` KV for the selected entries and fold any freshly
     //    generated bodies into bodies.json (prune happens in mergeBodies).
@@ -1816,7 +1925,7 @@ async function runBodyPipeline(
         newBodies.push({ id: job.entry.id, bodyJa: hit.bodyJa, bodyEn: hit.bodyEn, model: hit.model, cachedAt: hit.cachedAt });
       }
     }
-    const merge = mergeBodies(existingBodies, newBodies, liveIds, generatedAt);
+    const merge = mergeBodies(existingBodies, newBodies, retainedIds, generatedAt);
 
     // 2) Enqueue the selected entries that do NOT yet have a generated body (KV
     //    miss), so worker-body generates them for a future run's merge.
@@ -1853,6 +1962,8 @@ async function runBodyPipeline(
         bodyMerged: merge.added,
         bodyPruned: merge.pruned,
         bodiesTotal: merge.payload.count,
+        bodyRetentionDays: retentionDays,
+        bodyRetentionEligible: retainedEntries.length,
       },
     };
   } catch (err) {
@@ -1986,12 +2097,12 @@ export default {
       const all = url.searchParams.get("all") === "1";
       const onlyId = url.searchParams.get("only");
       const allSources = listSources().filter((s) => s.id !== "user-opml");
-      const batchIndex = Math.floor(Date.now() / 3600_000) % 4;
+      const batchIndex = sourceBatchIndexAt(Date.now());
       const sources = onlyId
         ? allSources.filter((s) => s.id === onlyId)
         : all
         ? allSources
-        : allSources.filter((_, i) => i % 4 === batchIndex);
+        : allSources.filter((_, i) => i % SOURCE_BATCHES === batchIndex);
       const collectedAt = new Date().toISOString();
       const tStart = Date.now();
       const settled = await Promise.all(

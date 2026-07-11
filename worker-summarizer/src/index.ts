@@ -4,15 +4,15 @@
  * Receives one entry per invocation from the SUMMARY_QUEUE producer
  * (tech-dashboard-harness). For each message:
  *   1. Resolve Copilot token from COPILOT_PAT.
- *   2. Call Copilot /chat/completions with the long-form bilingual JSON prompt.
+ *   2. Call Copilot /chat/completions with the compact bilingual summary prompt.
  *   3. If the response is incomplete, retry once with a compact recovery prompt.
  *   4. Parse the response and write it into SUMMARY_CACHE KV under the entry URL.
  *
  * Why a separate Worker (LL-037):
  *   The harness Worker hit Cloudflare's default 30 s/invocation CPU cap when
  *   running summarize alongside publishHistoryFiles. Splitting summarize into
- *   its own Queue consumer lets this Worker use a larger CPU/timeout budget
- *   for quality-first article bodies.
+ *   its own Queue consumer gives summary generation an isolated retry and
+ *   timeout budget.
  *
  * Failure handling:
  *   - Copilot timeout / token error: throw -> Cloudflare Queues retries
@@ -22,6 +22,7 @@
  *   - After max_retries, message goes to the DLQ for manual triage.
  */
 import type { NormalizedEntry } from "../../harness/types.ts";
+import { hasUsableBilingualSummary } from "../../harness/pipeline/summary-quality.ts";
 import { buildSummaryPrompt, parseResponse } from "../../worker/src/prompt.ts";
 import { type CacheEntry, putCacheEntry } from "../../worker/src/kv-cache.ts";
 
@@ -74,10 +75,10 @@ const COPILOT_HEADERS: Record<string, string> = {
   "user-agent": "GitHubCopilotChat/0.22.0",
 };
 
-const DEFAULT_TIMEOUT_MS = 180_000;
-const DEFAULT_MAX_TOKENS = 6000;
+const DEFAULT_TIMEOUT_MS = 60_000;
+const DEFAULT_MAX_TOKENS = 1600;
 // Refresh the IDE token when fewer than this many ms remain. Must exceed the
-// longest single callCopilot timeout (DEFAULT_TIMEOUT_MS = 180s) so a token
+// longest single callCopilot timeout (DEFAULT_TIMEOUT_MS = 60s) so a token
 // that passes the freshness check cannot expire *during* a long LLM call
 // and return `401 IDE token expired` (LL-105).
 const TOKEN_REFRESH_SKEW_MS = 240_000;
@@ -86,7 +87,7 @@ const ISSUE_KEY = "summarizer.issue.v1";
 const ISSUE_TTL_SECONDS = 6 * 60 * 60;
 const RECENT_ISSUE_MS = 60 * 60_000;
 const ERROR_REPEAT_THRESHOLD = 3;
-const RECOVERY_TIMEOUT_MS = 90_000;
+const RECOVERY_TIMEOUT_MS = 45_000;
 
 let cachedCopilotToken: { pat: string; token: string; expiresAtMs: number } | null = null;
 
@@ -209,8 +210,19 @@ export function isCompleteCacheEntry(entry: CacheEntry): boolean {
  * generation bottleneck: most fallback entries had NO KV summary at all and
  * stayed boilerplate forever (LL-104).
  */
-export function isSummaryComplete(entry: CacheEntry): boolean {
-  return Boolean(entry.titleJa.trim() && entry.summaryJa.trim() && entry.summaryEn.trim());
+export function isSummaryComplete(
+  entry: CacheEntry,
+  titles: Partial<Pick<NormalizedEntry, "title" | "titleJa" | "titleEn">> = {},
+): boolean {
+  return Boolean(
+    entry.titleJa.trim() &&
+      hasUsableBilingualSummary({
+        ...entry,
+        title: titles.title,
+        titleJa: entry.titleJa || titles.titleJa,
+        titleEn: titles.titleEn,
+      }),
+  );
 }
 
 async function processJob(env: Env, job: SummaryJob): Promise<void> {
@@ -228,11 +240,11 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
   // tokens that count against max_tokens; asking for a long bilingual body in
   // the same call exhausts the budget and the chat endpoint returns
   // {"choices":[]} (empty) -> "incomplete summary" -> ZERO summaries written.
-  // We request only title + JA/EN summary so reasoning + answer fit; the body
-  // is filled deterministically by the collector (R-012/R-013).
+  // We request only title + JA/EN summary so reasoning + answer fit. Long-form
+  // body generation is handled by the separate body-file pipeline.
   let entry = await callCopilot(pat, model, buildSummaryPrompt(job.entry), timeoutMs, maxTokens);
 
-  if (!isSummaryComplete(entry)) {
+  if (!isSummaryComplete(entry, job.entry)) {
     console.warn(`[summarizer] retry summary prompt ${job.url}: first output was incomplete`);
     entry = await callCopilot(
       pat,
@@ -248,7 +260,7 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
   // title+summaryJa+summaryEn and fills bodies deterministically; throwing away
   // a complete summary because the body truncated left most fallback entries
   // with no KV summary at all and was the real "stuck summaries" cause (LL-104).
-  if (!isSummaryComplete(entry)) {
+  if (!isSummaryComplete(entry, job.entry)) {
     throw new Error(`incomplete summary for ${job.url}`);
   }
 

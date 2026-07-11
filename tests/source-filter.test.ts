@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { matchesKeywordFilter } from "../harness/pipeline/source-filter.ts";
+import {
+  evaluateKeywordFilter,
+  keywordMatchesHaystack,
+  matchesKeywordFilter,
+} from "../harness/pipeline/source-filter.ts";
 import { REGISTRY } from "../harness/registry.ts";
 import type { SourceDefinition } from "../harness/types.ts";
 
@@ -32,6 +36,110 @@ describe("matchesKeywordFilter", () => {
       contentSnippet: "",
     }, source)).toBe(true);
   });
+
+  it("preserves non-title prior entries when missing include is untrustworthy after lossy normalization", () => {
+    const nonTitleSource: SourceDefinition = {
+      ...source,
+      keywordFilterScope: undefined,
+      includeKeywords: ["developer tool"],
+      excludeKeywords: ["sale"],
+    };
+    expect(
+      evaluateKeywordFilter(
+        {
+          title: "Neutral headline",
+          url: "https://example.com/story",
+          contentSnippet: "",
+        },
+        nonTitleSource,
+        { allowLossyMissingInclude: true },
+      ),
+    ).toEqual({
+      keep: true,
+      reason: "missing-include-unverified",
+      keyword: null,
+      trusted: false,
+    });
+    expect(
+      evaluateKeywordFilter(
+        {
+          title: "Neutral headline",
+          url: "https://example.com/story",
+          contentSnippet: "",
+        },
+        source,
+        { allowLossyMissingInclude: true },
+      ),
+    ).toEqual({
+      keep: false,
+      reason: "missing-include",
+      keyword: null,
+      trusted: true,
+    });
+    expect(
+      evaluateKeywordFilter(
+        {
+          title: "Developer tool roundup",
+          url: "https://example.com/story",
+          contentSnippet: "",
+        },
+        nonTitleSource,
+        { allowLossyMissingInclude: true },
+      ),
+    ).toEqual({
+      keep: true,
+      reason: "include",
+      keyword: "developer tool",
+      trusted: true,
+    });
+    expect(
+      evaluateKeywordFilter(
+        {
+          title: "Holiday sale for consumer gadgets",
+          url: "https://example.com/story",
+          contentSnippet: "developer tool",
+        },
+        nonTitleSource,
+        { allowLossyMissingInclude: true },
+      ),
+    ).toEqual({
+      keep: false,
+      reason: "exclude",
+      keyword: "sale",
+      trusted: true,
+    });
+  });
+
+  it("matches standalone ASCII keywords but not substrings inside alnum words", () => {
+    expect(keywordMatchesHaystack("AI coding tools", "ai")).toBe(true);
+    expect(keywordMatchesHaystack("AIs for developer tooling", "ai")).toBe(true);
+    expect(keywordMatchesHaystack("paid feature rollout", "ai")).toBe(false);
+    expect(keywordMatchesHaystack("electric air taxis are stuck", "ai")).toBe(false);
+    expect(keywordMatchesHaystack("new trailer breakdown", "ai")).toBe(false);
+    expect(keywordMatchesHaystack("OpenAI rolls out new tooling", "openai")).toBe(true);
+    expect(keywordMatchesHaystack(
+      "TRACER: A Semantic-Aware Framework for Fine-Grained Contamination Detection in Code LLMs",
+      "llm",
+    )).toBe(true);
+    expect(keywordMatchesHaystack("How to use Google’s new information agents", "agent")).toBe(true);
+    expect(keywordMatchesHaystack(
+      "Prompting language influences diagnostic reasoning and accuracy of large language models",
+      "language model",
+    )).toBe(true);
+    expect(keywordMatchesHaystack(
+      "Tabular foundation models for robust calibration of near-infrared chemical sensing data",
+      "foundation model",
+    )).toBe(true);
+    expect(keywordMatchesHaystack("Enterprise policies for AI agents", "policy")).toBe(true);
+    expect(keywordMatchesHaystack(
+      "Amazon EC2 C9g instances powered by AWS Graviton5 processors",
+      "graviton",
+    )).toBe(true);
+    expect(keywordMatchesHaystack(
+      "Fed up with vibe coders, dev sneaks data-nuking prompt injection into their code",
+      "prompt injection",
+    )).toBe(true);
+  });
 });
 
 describe("Google Cloud Blog knowledge filter (R-017)", () => {
@@ -45,6 +153,191 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
     expect(check("Architecting a trusted agentic platform with graph technologies")).toBe(true);
     expect(check("How I learned Go in a Day with Antigravity 2.0")).toBe(true);
     expect(check("BigQuery ML: training models at scale")).toBe(true);
+  });
+
+  describe("shared tech news relevance filters (LL-129)", () => {
+    const techNews = REGISTRY["the-verge"];
+    const hnAi = REGISTRY["hn-ai"];
+    const broadTechNewsIds = [
+      "apple-newsroom",
+      "microsoft-source",
+      "google-keyword",
+      "meta-newsroom",
+      "aws-news",
+      "nvidia-blog",
+      "techcrunch",
+      "the-verge",
+      "ars-technica",
+    ] as const;
+    const check = (source: SourceDefinition, title: string, contentSnippet = "") =>
+      matchesKeywordFilter({ title, url: "https://example.com/story", contentSnippet }, source);
+    const techNewsKeepCases = [
+      ["meta-newsroom", "Introducing Muse Image: Image Generation Built for Your World"],
+      ["google-keyword", "DiffusionGemma: 4x faster text generation"],
+      ["microsoft-source", "MAI-Image-2.5 launches at No. 3 on Arena text-to-image leaderboard"],
+      ["google-keyword", "See what 3 builders are making with Gemma 4"],
+      ["ars-technica", "Microsoft discovers new lightweight backdoor that steals cryptocurrency"],
+      ["ars-technica", "Dozens of Red Hat packages backdoored through its official NPM channel"],
+      ["the-verge", "Microsoft is threatening legal action for disclosing exploits"],
+      ["microsoft-source", "Microsoft Research’s Vega lets you prove who you are while protecting your privacy"],
+      ["microsoft-source", "Microsoft targets service hiding malware in plain sight"],
+      ["ars-technica", "Zero-day exploit completely defeats default Windows 11 BitLocker protections"],
+      ["ars-technica", "Patch for Windows Defender 0-day could allow attackers to fill hard disk"],
+      ["ars-technica", "For the 2nd time in weeks, Microsoft packages laced with credential stealer"],
+      ["ars-technica", "Dashlane explains how attackers managed to download encrypted password vaults"],
+      ["aws-news", "Proactively reduce tech debt autonomously with AWS Transform – continuous modernization (preview)"],
+      ["aws-news", "Amazon S3 annotations: attach rich, queryable context directly to your objects"],
+      ["aws-news", "AWS Interconnect is now generally available, with a new option to simplify last-mile connectivity"],
+      ["aws-news", "Announcing managed daemon support for Amazon ECS Managed Instances"],
+      ["aws-news", "Announcing Amazon Aurora PostgreSQL serverless database creation in seconds"],
+      ["aws-news", "Launching S3 Files, making S3 buckets accessible as file systems"],
+      ["aws-news", "Amazon ECS introduces new high-resolution metrics for faster service auto scaling"],
+    ] as const;
+    const techNewsGenericKeepCases = [
+      ["aws-news", "Amazon EC2 C9g and C9gd instances powered by AWS Graviton5 processors are now available"],
+      ["aws-news", "Now available: Amazon EC2 M9g and M9gd instances powered by new AWS Graviton5 processors"],
+      ["ars-technica", "Fed up with vibe coders, dev sneaks data-nuking prompt injection into their code"],
+      ["aws-news", "Amazon Bedrock introduces new advanced prompt optimization and migration tool"],
+    ] as const;
+    const techNewsGenericDropCases = [
+      [
+        "ars-technica",
+        "Quantum error correction can constantly recalibrate a processor",
+        "This AI platform ships new developer tools for enterprise agents.",
+      ],
+      [
+        "ars-technica",
+        "Like a cheat code for your car: We investigate ECU tuning",
+        "Developers used AI tooling and coding agents to automate diagnostics.",
+      ],
+      [
+        "google-keyword",
+        "Cannes Lions 2026: Strengthen creative campaigns with new tools from YouTube",
+        "AI platform updates help developers build model workflows for ads.",
+      ],
+      [
+        "techcrunch",
+        "Airbnb-backed WeRoad raises $58M to take its group travel platform to the US",
+        "The startup says AI developer agents and model tooling power the platform.",
+      ],
+    ] as const;
+    const evidenceBackedLowSignalCases = [
+      ["google-keyword", "Here’s how to make study notebooks in the Gemini app."],
+      ["google-keyword", "3 ways this coffee shop is growing with Gemini"],
+      [
+        "meta-newsroom",
+        "Launch of Meta’s Small Business Growth Academy Across Asia-Pacific to Boost AI Adoption and Digital Skills",
+      ],
+      ["google-keyword", "How we’re helping schools prepare for the AI era at ISTE 2026"],
+      ["google-keyword", "Our 2025 Annual Report: Local currency pricing, AI training and more"],
+      ["google-keyword", "New York City educators and industry leaders come together to build the future with AI"],
+      ["google-keyword", "How 5 foundations are bringing bold ideas to education and AI"],
+      ["google-keyword", "AI literacy, by 5 leading experts"],
+      ["google-keyword", "How universities are preparing students for the AI economy"],
+      ["microsoft-source", "AI for good: Announcing the 2026 Imagine Cup World Champion"],
+      ["google-keyword", "Google.org provides $2 million to ISM University to advance education and AI across CEE"],
+    ] as const;
+
+    it("keeps legitimate AI / developer stories that need explicit named-entity matches", () => {
+      const techCrunch = REGISTRY["techcrunch"];
+      const arxivSe = REGISTRY["arxiv-cs-se"];
+      const arxivLg = REGISTRY["arxiv-cs-lg"];
+      expect(check(techNews, "Claude adds new enterprise controls")).toBe(true);
+      expect(check(techNews, "Midjourney opens up a new image editing workflow")).toBe(true);
+      expect(check(techNews, "OpenAI ships a new coding workflow for developers")).toBe(true);
+      expect(check(techCrunch, "How to use Google’s new information agents")).toBe(true);
+      expect(check(
+        arxivSe,
+        "TRACER: A Semantic-Aware Framework for Fine-Grained Contamination Detection in Code LLMs",
+      )).toBe(true);
+      expect(check(
+        arxivLg,
+        "Tabular foundation models for robust calibration of near-infrared chemical sensing data",
+      )).toBe(true);
+    });
+
+    it("keeps the 19 high-confidence title-scope false negatives with the shared relevance vocabulary", () => {
+      for (const [sourceId, title] of techNewsKeepCases) {
+        expect(check(REGISTRY[sourceId], title), `${sourceId}: ${title}`).toBe(true);
+      }
+    });
+
+    it("keeps validated broad-feed stories with narrow product-family and security terms", () => {
+      for (const [sourceId, title] of techNewsGenericKeepCases) {
+        expect(check(REGISTRY[sourceId], title), `${sourceId}: ${title}`).toBe(true);
+      }
+    });
+
+    it("drops consumer / gaming noise from broad tech-news feeds", () => {
+      expect(check(techNews, "Sony’s AI Camera Assistant is exactly as bad as it looks")).toBe(false);
+      expect(check(techNews, "Bungie hit with significant layoffs after ending Destiny 2")).toBe(false);
+      expect(check(techNews, "GTA VI is a worrying sign for the future of physical games")).toBe(false);
+      expect(check(techNews, "Electric air taxis are stuck in the courtroom")).toBe(false);
+    });
+
+    it("drops generic code/tool/platform/processor titles even when snippets mention AI or developers", () => {
+      for (const [sourceId, title, snippet] of techNewsGenericDropCases) {
+        expect(check(REGISTRY[sourceId], title, snippet), `${sourceId}: ${title}`).toBe(false);
+      }
+    });
+
+    it("drops the evidence-backed low-signal business and consumer titles", () => {
+      for (const [sourceId, title] of evidenceBackedLowSignalCases) {
+        expect(check(REGISTRY[sourceId], title), `${sourceId}: ${title}`).toBe(false);
+      }
+      expect(check(
+        REGISTRY["google-keyword"],
+        "Gemini Code Assist adds agentic developer workflows",
+      )).toBe(true);
+      expect(check(
+        REGISTRY["meta-newsroom"],
+        "Meta releases an open model toolkit for AI developers",
+      )).toBe(true);
+    });
+
+    it("drops DORA awards and site-update posts while keeping research reports", () => {
+      const dora = REGISTRY["dora-insights"];
+      expect(check(dora, "DevOps Dozen Awards 2025: Voting Is Open!")).toBe(false);
+      expect(check(dora, "Quick Check updates: the latest improvements to DORA tools")).toBe(false);
+      expect(check(dora, "Accelerate State of DevOps Report 2026")).toBe(true);
+      expect(dora.keywordFilterScope).toBe("title");
+    });
+
+    it("uses title scope for every broad tech-news source that shares the registry filters", () => {
+      for (const sourceId of broadTechNewsIds) {
+        expect(REGISTRY[sourceId].keywordFilterScope, `${sourceId} uses title scope`).toBe("title");
+      }
+    });
+
+    it("does not let snippet-only AI keywords rescue consumer titles on broad tech-news feeds", () => {
+      const techCrunch = REGISTRY["techcrunch"];
+      expect(check(
+        techCrunch,
+        "SOND, a sleep tech startup from Bose’s former head of sleep, exits stealth with $7M",
+        "The platform uses AI agents and developer tooling to scale enterprise workflows.",
+      )).toBe(false);
+      expect(check(
+        techNews,
+        "The QD-OLED gaming monitor that started it all got a big upgrade",
+        "This platform adds AI developer agents and model tooling for enterprise workflows.",
+      )).toBe(false);
+    });
+
+    it("keeps hn-ai product and MCP stories while reclassing the source to tech-news", () => {
+      expect(hnAi.category).toBe("tech-news");
+      expect(hnAi.keywordFilterScope).toBe("title");
+      expect(hnAi.maxEntriesPerRun).toBeGreaterThan(0);
+      expect(check(
+        hnAi,
+        "Show HN: InsForge – Open-source Heroku for coding agents",
+        "Open-source platform for coding agents",
+      )).toBe(true);
+      expect(check(
+        hnAi,
+        "Show HN: Mcp2cli – One CLI for every API, 96-99% fewer tokens than native MCP",
+        "One CLI for every API with MCP compatibility",
+      )).toBe(true);
+    });
   });
 
   it("drops threat-intel / sector / roundup noise", () => {

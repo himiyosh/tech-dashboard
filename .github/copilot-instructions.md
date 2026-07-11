@@ -79,15 +79,16 @@
 - サブエージェントの結果は助言として扱い、最終判断、差分統合、DoD 判定は親エージェントが行う。
 - AI Scrum を使っても main merge / push、Cloudflare deploy、Worker deploy の事前承認ルールは緩和しない。
 
-### R-011: fresh entry merge で既存の要約/本文 enrichment を落とさない
-- Worker が fresh entry と既存 `data/index.json` を canonical URL で merge する時、fresh entry が選ばれても既存 entry の `summaryJa` / `summaryEn` / `bodyJa` / `bodyEn` を保持する。
-- `data/_summary-cache.json` に body がある場合は `npm run summaries:apply-cache` で `data/index.json` に明示反映し、cache 済み body が index 側で空の状態を残さない。
-- 完了前に `tests/data-schema.test.ts` の cache/index body 反映チェックを通す。
+### R-011: fresh entry merge で既存の summary enrichment を落とさない
+- Worker が fresh entry と既存 `data/index.json` を canonical URL で merge する時、fresh entry が選ばれても既存 entry の `titleJa` / `summaryJa` / `summaryEn` を保持する。
+- `npm run summaries:apply-cache` は品質 gate を通過した title / summary / importance / tags だけを `data/index.json` に反映する。本文を index へ書き戻してはならない。
+- index に旧 `bodyJa` / `bodyEn` が残る migration では、実本文を `data/bodies.json` へ移してから index を空にする。完了前に `tests/data-schema.test.ts` の summary 必須、index 本文なし、bodies schema の各 gate を通す。
 
 ### R-012: live index は要約のみ・本文は別ファイル (body-file architecture / LL-115)
 - `data/index.json` の live entries は `summaryJa` / `summaryEn` の**両方を必ず非空**にする (両言語必須)。完了前に `tests/data-schema.test.ts` の summary 欠落ゲートを通す。
 - **本文 (`bodyJa` / `bodyEn`) は index に格納しない**。本文は `data/bodies.json` (`{ generatedAt, count, bodies: { [id]: {bodyJa, bodyEn, model, generatedAt} } }`) に entry id をキーに格納する。index は本文フリーで軽量維持し CI サイズ予算 (8MB, LL-112) を超えない。完了前に `tests/data-schema.test.ts` の「live index は本文を持たない」ゲートを通す。
 - 本文は専用クラウド worker (Phase B: opus-4.8 reasoning=max) が生成し `data/bodies.json` に蓄積する。生成は I/O 主体で Cloudflare の CPU 予算に当たらない (LL-115)。決定論的 filler body は**生成・格納しない** (LL-112)。
+- 本文の保持対象は **evergreen、importance 2/3、直近 `BODY_RETENTION_DAYS` 日**に限定する。対象外の古い低重要度本文は `scripts/clean-source-noise.mjs` が prune し、要約と原文リンクは維持する。Worker、migration、`tests/data-schema.test.ts` は `worker/src/body-queue.ts` の同じ retention helper を使う。
 - 記事詳細の本文表示は `web/src/lib/bodies.ts` の `bodyForEntry(id)` を使う。本文が無いエントリは要約を主役にし原文リンクを出す (偽の生成予告を出さない)。`isDeterministicFallbackEntry` (web 分類) は本文を見ない。
 - 既存本文の index→bodies.json 移行は `npm run body:migrate` (`scripts/migrate-bodies-to-file.mjs`)。
 
@@ -183,6 +184,17 @@
 - lane rail は簡素にしない。`.lane-rail-id` (カテゴリ色アイコン + レーン名 + 説明 + 大きな件数 stat) を先頭に置き、その下に lane 固有の補助 (arXiv の code meaning / paper tags、Knowledge の sources ナビ + Tip) を `side-card` で並べる。`--cat-color` を lane の色 (arXiv=`#93c5fd`, Knowledge=`#34d399`) に設定する。
 - Knowledge の知見一覧は Timeline 用の重い `EntryCard` を使わず、`KnowledgeCard.astro` (画像ありは 16:9 サムネ、無ければサムネ無し + 左アクセント) の 2 列グリッドにする (LL-091/093/094)。
 - lane ページのレイアウトを変えたら E2E で「`.layout aside.left` が 0 件」「`.layout aside.right` が 0 件」「`aside.lane-rail` が main より左」「`.layout.lane-layout` 表示」「全幅 (1280〜390) で 3 カラムにならない・横スクロールなし」を検証する。
+
+### R-024: PR merge 後は同一セッションで branch / worktree を安全に整理する
+- PR を main へ merge したら、同一セッション内で head の remote branch、local branch、関連 worktree を精査して整理する。
+- 削除前に対象 worktree の `status` が clean、必要な内容が main に反映済み、open PR が無い、固有 commit・patch・file が無いことを確認する。squash merge では `git branch --merged` だけに依存せず、PR 状態、patch 差分、`git cherry`、worktree の dirty 状態を合わせて判定する。
+- dirty、open PR、固有 commit、固有 file のいずれかがある branch / worktree は削除しない。保持理由と固有差分を具体的に報告し、force delete は使わない。
+- 整理後は `git fetch --prune`、`git branch -vv --all`、`git worktree list --porcelain`、`gh pr list --state open`、main の clean status を再確認する。
+
+### R-025: TechDBAgent は audit / delivery / release の権限境界を明示する
+- `.github/agents/TechDBAgent.agent.md` は `tools` allowlist を固定せず、runtime が公開する tool を利用できる Product Delivery Orchestrator とする。session lifecycle、編集、テスト、Issue / PR、release follow-through は runtime が対応する範囲で delivery / release mode に限り利用できる。
+- audit mode は read-only を維持する。delivery / release mode でも secret 表示、main 直接 push、force / reset / rebase / amend、未承認 deploy / `wrangler secret put`、本番データ変更、dirty または固有作業を持つ branch / worktree の削除は禁止する。
+- persona 子 agent は read-only reviewer のままにし、Git、credentials、deploy、破壊的 cleanup を委譲しない。session を作成する場合は独立した non-overlapping scope に限定し、親 orchestrator が結果を検証して統合する。
 
 ---
 
@@ -366,17 +378,17 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: blank `contentSnippet` は title に fallback する。Anthropic collector は記事ページを取得して title / publishedAt / hero summary を抽出する。`data/index.json` は少なくとも 1 言語の summary を必須にするテストで守る。
 - **教訓**: listing-only scraper を追加・変更する場合、記事 preview と publish date を detail page から取れるか確認する。取得できない場合でも collector / normalize のどちらかで deterministic fallback を必ず用意する。
 
-### LL-025: body cache と live index の乖離を完了前に解消する
+### LL-025: summary cache と live index の乖離を完了前に解消する
 - **事象**: 最新 `data/index.json` では 669 件中 663 件の `bodyJa` / `bodyEn` が空で、そのうち 415 件はローカル `data/_summary-cache.json` に body が存在していた。
 - **根本原因**: cache に body があっても live index へ再反映する gate が弱く、Worker の fresh/prior merge でも fresh raw entry が選ばれると既存 enrichment を落とし得る状態だった。さらにローカル cache と production KV cache は別物であるため、片方の充足をもう片方の publish 済みと見なせなかった。
-- **対策**: `npm run summaries:apply-cache` を追加し、cache 済み要約/本文を明示的に `data/index.json` へ再反映する。Worker merge は `mergeEntryEnrichment` で既存 `summaryJa` / `summaryEn` / `bodyJa` / `bodyEn` を保持する。data schema test で cache に body がある entry は index 側にも body があることを検証する。
-- **教訓**: summary と body は別の coverage 指標として扱う。deploy / 完了報告前には index と cache の両方を照合し、cache 済み body の未反映件数を 0 にする。
+- **対策**: body-file architecture 導入後は `npm run summaries:apply-cache` を summary-only writer に限定し、品質 gate を通過した要約だけを index へ反映する。本文は `data/bodies.json` で照合し、旧 index 本文は `npm run body:migrate` または migration の transfer 処理で sidecar へ移す。
+- **教訓**: summary と body は別の artifact と coverage 指標として扱う。summary cache の反映で本文を index へ戻さず、index 本文 0 件と bodies sidecar の整合を別々に検証する。
 
-### LL-026: LLM body backfill が特定 URL で詰まる場合は fallback を使う
+### LL-026: LLM body backfill が特定 URL で詰まっても filler を index に戻さない
 - **事象**: 既存記事の `bodyJa` / `bodyEn` backfill 中、Opus 4.7 が一部 URL で長時間応答せず、batch が完了せずに `data/index.json` への反映が遅れた。
 - **根本原因**: 長文 body 生成は URL / ソース / 入力内容によって model latency が大きく、retry しても同一 entry で詰まり続けることがある。cache は成功ごとに増えるが、index は batch 完了まで更新されない。
-- **対策**: 生成は小 batch で行い、詰まったら process を止めて `npm run summaries:apply-cache` で cache を回収する。LLM が通らない残件は `npm run summaries:apply-cache -- --fill-missing-body` で既存 summary と metadata から deterministic body fallback を作り、cache / index の両方へ書く。`tests/data-schema.test.ts` で `bodyJa` / `bodyEn` の欠落 0 件を gate 化する。
-- **教訓**: LLM 品質を優先して粘りすぎると publish gate が詰まる。live UI には空欄を残さず、deterministic fallback を最後の安全網として用意する。
+- **対策**: 本文生成は `data/bodies.json` を対象に resume 可能な小 batch で行う。未生成本文は空のまま要約と原文リンクを表示し、`--fill-missing-body` のような deterministic filler を index/cache へ書く旧経路は拒否する。
+- **教訓**: 本文未生成は許容状態であり、偽本文で埋めない。要約の publish gate と本文 sidecar の coverage を分離し、長文生成の失敗で summary-first UI を止めない。
 
 ### LL-027: CI success 後も stale Worker が invalid data を再投入する
 - **事象**: `f800209` で `data/index.json` の summary/body 欠落を 0 件にして CI が success したが、その後の毎時 Worker run が `bodyJa` / `bodyEn` 欠落 entry を main に再投入し、CI failure が連続した。
@@ -588,8 +600,8 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-067: titleEn 欠落は summaryEn の先頭文から抽出して補完できる
 - **事象**: JP source (Qiita/Zenn) の live entry で `titleEn` が空のままで、EN UI に JA バッジ付きフォールバック表示が連続していた。
 - **根本原因**: 日本語 source は AI 要約で `summaryEn` が生成されるが、`titleEn` は独立フィールドで別途生成が必要だった。
-- **対策**: `scripts/fill-title-en.mjs` を作成。`summaryEn` が実 AI 要約の場合は先頭文 (最大 120 文字) を `titleEn` に設定。AI 要約が未生成の場合は元の `title` を代入する。
-- **教訓**: `titleEn` と `summaryEn` は独立して管理する。`summaryEn` の AI 生成が完了した段階で `npm run titleen:fill` を再実行して英語タイトル品質を向上させる。
+- **対策**: `scripts/fill-title-en.mjs` を作成。`summaryEn` が実 AI 要約の場合だけ先頭文 (最大 120 文字) を `titleEn` に設定する。`summaryEn` が deterministic fallback / pending の場合は `titleEn` を空のままにし、UI の `titleForLangWithFallback` が JA 原題 + 言語バッジで truthful にフォールバックできる状態を維持する。実行は `npm run titleen:fill -- --apply`。
+- **教訓**: `titleEn` と `summaryEn` は独立して管理するが、**target-language field を source-language title で埋めない**。`summaryEn` の AI 生成が完了した段階でだけ `npm run titleen:fill -- --apply` を再実行して英語タイトル品質を向上させる。
 
 ### LL-068: モバイル中央アクションは同列配置のまま強調する
 - **事象**: mobile tabbar の Timeline 中央ボタンが大きく浮きすぎ、Status / Search の表示領域へ被って見えた。
@@ -795,7 +807,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **事象**: ユーザーから「新しい記事が一向に追加されない」と報告。本番トップの Timeline は TODAY 2件 / YESTERDAY 1件 / Jun17 3件 しか表示せず、収集が止まったように見えた。実際は収集は完全に正常 (origin/main は毎時更新、直近24hで553件収集、`sourcesOk=14/14`、生データの publishedAt は Jun19=46 / Jun18=57 / Jun17=81 件)。
 - **根本原因**: サイト全体が `ALL_ENTRIES = RAW_ENTRIES.filter(isPublishableEntry)` (実 AI 要約済みのみ) でフィルタしており、**AI 要約待ちのエントリ (本番 628件 / 38%) を完全非表示**にしていた。要約キューの drain (≈30/h) が intake に追いつかず backlog が増加 (LL-087 時 456件→628件)、しかも新着ほど要約待ちなので recent days が 1-3件に潰れていた。さらに pending には 2 種あった: **Type 1** (英語ソースで `summaryEn` は実在するが `summaryJa` が boilerplate=`このエントリは…`) と **真の pending** (どの言語にも実要約なし)。Type 1 は本来「英語要約を JA ビューに原文フォールバック表示」すべきだが、`summaryForLang("ja")` が boilerplate を valid とみなして返し、`summaryForLangWithFallback` のクロス言語フォールバックが発火しなかった。これが「収集済みなのに見えない」の核心 (LL-074/083/087 と同系統、最悪化)。
 - **対策 (表示=Cloudflare Pages のみ・即反映)**: (1) `isListableEntry`(publishable **または** 実タイトルを持つ pending) を導入し `ALL_ENTRIES` をこれに変更 → Timeline/カテゴリ/タグに新着が即表示。(2) `summaryForLang` を `isSummaryNoise`(空/boilerplate/タイトルecho) + synthetic 拒否に修正し、`summaryForLangWithFallback` を両言語とも `summaryForLang` 経由のクロス言語フォールバックに変更 → **Type 1 は JA ビューで実英語要約を「原文EN」バッジ付きで表示**、真の pending だけ「AI要約 生成中」状態。分類 (`isPublishableEntry`) は raw フィールド参照なので不変。(3) Featured/Top-3 は既存の `!isDeterministicFallbackEntry` 自己フィルタで publishable 維持、RSS/JSON feed は `PUBLISHABLE_ENTRIES` に限定、**Knowledge レーンは publishable-only 維持** (curated・カード均一高さ LL-096・要約品質重視)。(4) 詳細ページは `summaryAbsent`(全言語で実要約なし) と `bodyIsFallback`(本文未生成) を分離し、Type 1 で英語要約 TL;DR を出しつつ boilerplate 本文は出さない。(5) `metrics.liveEntries` は publishable 据え置き (`allTimeEntries >= liveEntries` 不変条件維持)、recency 系カウントは listed ベースで実態反映。
-- **対策 (スループット=要承認 Worker deploy・R-008/LL-073)**: 要約キュー (`selectSummaryJobBatch`) を evergreen 優先 (LL-098) の次に **recent 優先** (cap の半分を最新 publishedAt に予約) + 残りを round-robin (LL-076 公平性維持) に変更 → 新着が 1-2 cron で実要約化。`KV_LOOKUP_CAP` 40→80 (subrequest-bound)、`ENQUEUE_MAX_NEW` 30→35 (KV write 840+α/day < 1000 LL-043)。
+- **対策 (スループット=要承認 Worker deploy・R-008/LL-073)**: 要約キュー (`selectSummaryJobBatch`) を evergreen 優先 (LL-098) の次に **recent 優先** (cap の半分を最新 publishedAt に予約) + 残りを round-robin (LL-076 公平性維持) に変更 → 新着が 1-2 cron で実要約化。`KV_LOOKUP_CAP` 40→80 (subrequest-bound、後に LL-152 で 40 へ戻した)、`ENQUEUE_MAX_NEW` 30→35 (KV write 840+α/day < 1000 LL-043)。
 - **教訓**: 「収集された」と「表示される」は別。automated publisher が継続更新する artifact で「新着が出ない」症状は、まず **収集実態 (origin/main の毎時 commit・collectedAt 直近24h・publishedAt 分布) と表示フィルタを分けて切り分ける** (LL-083/087 と同型・多くは表示側)。`filter(isPublishableEntry)` のような品質ゲートを**サイト全体の表示母集団**に掛けると、非同期 enrichment の backlog がそのまま「新着の不可視化」に直結する。pending を隠すのではなく、(a) 実タイトルがあれば listable にして出す、(b) 片言語だけ要約済みなら他言語へクロスフォールバック表示 (原文バッジ付き)、(c) どの言語にも無いときだけ明示的な「生成中」状態、を多層で用意する。boilerplate を valid 要約として返す helper があるとフォールバックが死ぬので、表示 helper は noise を必ず空に潰す。ローカル checkout が automated data で数日遅れると鮮度依存 e2e (TickerBar LL-082) が誤検知するので、検証は `git checkout origin/main -- data/` で fresh data を入れてから行う。
 
 ### LL-102: 要約 backlog が drain しない真因は「merge 側 round-robin が 1件/時間」— enqueue 側だけ LL-076 で直し対称側を直し忘れていた
@@ -943,6 +955,324 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 2 つの検証アーティファクトの合わせ技。(a) Cloudflare Pages の per-deploy サブドメイン `https://<deploy-id>.<project>.pages.dev/` は仕様上 `<title>Deployment Not Found</title>` の ~16KB HTML を返す (実デプロイ内容ではない)。内容検証にこの URL を使ったため空に見えた。(b) 1 つの複合 bash コマンド内で同一 URL を `curl` で何度も連鎖 (for ループでマーカーごとに再 fetch 等) すると、大きなページで body が部分取得・切り詰めされ、存在する要素を「無い」と誤判定した。
 - **対策**: (1) デプロイ内容の検証は per-deploy サブドメインを使わず、カスタムドメイン (`techdb.studio344.net`, `cf-cache-status: DYNAMIC` で origin 直取得) かメイン pages.dev エイリアスを使う。(2) HTML マーカー確認は 1 回だけ fetch してファイル (`/tmp/live-home.html`) に保存し、そのファイルを繰り返し grep する。1 コマンド内で同一 URL を複数回 curl しない。(3) ビルド成否は CF API の deployment stages (queued/init/clone/build/deploy が全 success) で確認し、HTML の見た目だけで判断しない。完了ゲートは「URL 200」「CF stages success」「カスタムドメインのフル HTML に marker あり」の 3 点を分けて確認する。
 - **教訓**: 「本番に要素が無い」と結論する前に取得手段のアーティファクトを疑う (LL-108 の wrangler local vs remote、Hook 5 不在断定ゲートと同型)。大きなページの要素有無は 1-fetch-to-file + grep で確定し、compound curl のパイプ切り詰めや per-deploy URL の "Deployment Not Found" を実バグと誤認しない。
+
+### LL-125: E2E は「先頭カード」を前提にしない。要件状態を持つカードを選んで検証する
+- **事象**: `mobile featured panel and thumbnails keep fallback layout` が、先頭の `article.card.has-thumb` に `.summary .s-text` がある前提で落ちた。実データでは先頭 2 件が pending-summary カードでも正常で、テストだけが deterministic に失敗した。
+- **根本原因**: レイアウト検証と内容状態検証を同じ要素（先頭カード）に混在させ、`pending` を正常状態として扱っていなかった。加えて Status では「count>0 の error source」に `no data` や inside-threshold 理由を許すと意味論が崩れるが、テストがその不変条件を持っていなかった。
+- **対策**: E2E は (1) レイアウト検証は先頭カード等の位置/寸法に限定、(2) summary 幅検証は `.summary .s-text` を持つカードを明示選択、(3) pending カードは `.summary-state` が見え summary text が無いことを正常として明示検証、に分離する。記事詳細の回遊テストも、最初の `/e/` リンクが常に enrich 済みだと仮定せず、**prose / digest / pending の 3 状態を有効状態として分岐検証**する。pending detail 専用の回遊は arbitrary first-link loop をやめ、**ホーム上で実際に `.summary-state` を持つ card を selector で見つけ、その href だけを検証**する。pending card が 0 件なら fully summarized data を valid とする count guard を置く。mobile card 系の summary 幅・pending 状態検証も、**その状態を持つカード数を先に数え、0 件なら fully summarized / no-pending data を valid と扱う**。Status には「count>0 の error row は `no data` / `inside freshness threshold` を表示しない」回帰テストを追加する。
+- **教訓**: feed 駆動 UI の E2E は「最初の N 件」や「必ず pending がある」を仕様化しない。まず必要状態を selector で絞ってから assert し、pending/fallback を valid state として個別に検証する。詳細ページでも「先頭リンクは本文/要約済み」を前提にせず、**そのデータ状態ごとの honest UI (prose, summary-only, pending)** を state-specific assertion で確認し、対象 state が 0 件なら count guard で fully summarized data も valid と扱う。意味論の不変条件（Status の error/no-data など）は DOM テキストで明示的にゲート化して再発を防ぐ。
+
+### LL-126: Status の run 判定は hero/footer で単一 helper を共有し、同一ページ矛盾を E2E で検知する
+- **事象**: `/status` で hero は `Run ERR` なのに footer が `run ok` を表示し、同一ページ内で run 状態が矛盾した。
+- **根本原因**: `status.astro` は `lastRunHours > 6` を err 判定していたが、`Portal.astro` footer は stale run を見ず `copilotOk/sourcesFailed/fallbackPercent` だけで run ラベルを決めていた。判定ロジックが 2 箇所に分散して drift し、text と dot tone の visual state まで揃っていなかった。
+- **対策**: `web/src/lib/run-health.ts` に typed helper `deriveWorkerRunStatus()` を追加し、hero/footer の run 判定を共通化。`lastRunAt`・`copilotOk`・`sourcesFailed`・`fallbackPercent`・pending 件数を同一入力で評価し、footer の dot も同じ derived tone を class/data 属性で受けるようにした。E2E に「Status hero の `Run (OK|WARN|ERR)` と footer の `run ...` が一致する」回帰テストと dot tone 検証を追加した。
+- **教訓**: 同じ意味の状態ラベル (run health) を複数 UI 領域で出す場合、判定を各コンポーネントに書かない。単一 helper に集約し、text だけでなく visual tone も DOM 上の同一ページ整合性として E2E で直接ゲート化する。
+
+### LL-127: 検証スキルは実行可能コマンドと現行ナビ不変条件に同期させる
+- **事象**: self-critique 実行時に `npm run secrets:scan:staged` が存在せず検証ゲートが停止し、C-02 も mobile tabbar を 3 action 前提で判定していたため現行仕様 (5 action) とズレた。
+- **根本原因**: `.claude/skills/self-critique/SKILL.md` の検証手順が package scripts と R-015 の最新ナビ仕様に追従しておらず、運用手順だけが古い状態で残っていた。
+- **対策**: C-01 を `npm run secrets:scan` + `npm run secrets:scan:worktree` に更新し、C-02 を desktop shortcuts (`Categories/arXiv/Knowledge`) と mobile tabbar 5 action (`Home/Categories/arXiv/Knowledge/Menu`) の現行不変条件に同期した。
+- **教訓**: 自己批判スキルは「実行できること」自体が品質ゲート。scripts 名・ナビ不変条件・E2E 前提が変わったら、コード修正と同一セッションで検証スキルも更新する。
+
+### LL-128: グリッドの列再定義時は子要素の明示配置と境界幅検証を同時に行う
+- **事象**: 901-1180px の中間幅で `.top-rank-item` を 3 トラック化した際、`rank-meta` が暗黙 auto-placement で 24px 列に落ち、鮮度バッジが 1 文字縦積みになってカード高さが 700px 近くまで暴走した。
+- **根本原因**: ブレークポイントで `grid-template-columns` だけを変更し、`rank-title` / `rank-meta` / `rank-reason` の列・行を全レイアウトで明示しなかった。ページ右 rail の有無で Top-3 パネル幅が大きく変わるのに、viewport 単位の見た目確認だけで component 幅の再配置を検証していなかった。
+- **対策**: Top-3 パネルを named inline-size container にし、container query で狭幅時の再配置（title→meta→reason）を制御。`rank-meta` / `rank-title` / `rank-reason` を全 relevant レイアウトで明示配置し、`rank-freshness` / `featured-freshness` は `white-space: nowrap` + 最小幅で atomic に保つ。E2E に境界幅行列 (1181/1180/1100/1050/1000/981/960/901/900/768/390) の bbox・高さ・overflow・badge 寸法チェックを追加。
+- **教訓**: グリッド列を再定義するときは「子要素の配置定義」と「境界幅検証」を必ずセットで行う。右 rail 等で利用可能幅が変わる画面は、viewport ブレークポイントだけでなく component 幅を基準に container query で再配置する。
+
+### LL-129: 短い ASCII keyword の substring 一致は `paid/air/trailer` を誤通過させ、token 境界だけでは `LLMs/agents/models` の正当複数形を落とす。filter/category 変更は fresh・prior merge・既存 artifact に対称適用する
+- **事象**: `TECH_NEWS_RELEVANCE_KEYWORDS` に短い `ai` を含めたまま `includes()` で判定していたため、The Verge など broad feed で `paid`, `air`, `trailer` のような英数字語中の `ai` に誤一致し、consumer/gaming ノイズが tech-news に混入した。加えて token-aware 境界一致へ修正した直後、`llm` / `agent` / `model` のような singular keyword が `Code LLMs` / `information agents` / `foundation models` を拾えず、TRACER を含む正当な research / tech-news 記事を archive migration で落とした。さらに `hn-ai` の registry category を変更しても、prior merged entry や既存 live/archive artifact には旧 `research` が残り得た。
+- **根本原因**: keyword filter が substring 一致からの脱却時に「ASCII keyword と英数字境界」は導入したが、「安全な一般的複数形」は考慮していなかった。つまり token-aware 化が singular 完全一致になり、`llm -> LLMs`, `agent -> agents`, `language model -> language models` のような自然な複数形を false negative にした。さらに registry 変更を fresh collect にしか効かせず、Worker の prior merge path と migration script が current registry filter/category を対称適用していなかった。
+- **対策**: `harness/pipeline/source-filter.ts` を shared helper 化し、短い ASCII keyword/phrase は英数字境界一致を維持しつつ、最後の token にだけ安全な一般複数形 variant (`s` / `es` / `consonant+y -> ies`) を許可する。これで `AI` は `paid/air/trailer` に不一致のまま、`LLMs/agents/models/policies` などの正当複数形を保持できる。非 ASCII/JA keyword と URL/title scope は既存契約を維持する。Worker merge は current registry rule で prior merged entry を再 filter + re-stamp し、`scripts/clean-source-noise.mjs` も同じ helper/registry を使って live/archive を再評価・再分類する。
+- **教訓**: broad feed の relevance/noise 判定は `includes()` を直書きしない。ASCII token 境界を入れるときは、`ai` のような短語の false positive だけでなく `llm/agent/model` の false negative も同時に防ぐ。検出 (tests) / 予防 (collector+Worker) / migration (既存 artifact 修復) を shared helper と registry の単一ソースに揃え、fresh data だけ直して prior merged data を放置しない。
+
+### LL-130: broad tech-news feed は `keywordFilterScope: "title"` を明示しないと snippet が consumer title を relevance 通過させる
+- **事象**: 本番 deploy 後の 00:00 cron で live registry violations は 0 なのに、`The QD-OLED gaming monitor that started it all got a big upgrade` (The Verge) と `SOND, a sleep tech startup from Bose’s former head of sleep, exits stealth with $7M` (TechCrunch) の known-bad 2 件が残存した。どちらもタイトル自体は consumer / gaming で不適切だが、snippet 内の AI / developer 語に引っ張られて include を通過していた。
+- **根本原因**: `TECH_NEWS_RELEVANCE_KEYWORDS` / `TECH_NEWS_EXCLUDE_KEYWORDS` を共有する broad source に `keywordFilterScope: "title"` が明示されておらず、default の `title + contentSnippet + url` haystack が使われていた。shared helper 違反 0 でも、scope 自体が誤っていると policy gap は検出されない。
+- **対策**: `apple-newsroom`, `microsoft-source`, `google-keyword`, `meta-newsroom`, `aws-news`, `nvidia-blog`, `techcrunch`, `the-verge`, `ars-technica` など shared TECH_NEWS filter 利用 source すべてに `keywordFilterScope: "title"` を明示し、registry test で invariant を固定する。known-bad title は snippet に AI/platform/developer 語を含めても drop する回帰テストを追加する。
+- **教訓**: broad feed のノイズ判定は keyword 集合だけでなく **scope も policy の一部**。shared helper の violations=0 だけでは不十分で、deploy 後の known-bad sample scan で scope 漏れを補足する必要がある。shared filter を使う broad source には `keywordFilterScope: "title"` を必須 invariant として registry test で固定する。
+
+### LL-131: title-only 化は snippet false-positive を止める一方、model family / security / cloud service 語彙不足で高信頼 false-negative を作る
+- **事象**: `keywordFilterScope: "title"` を broad tech-news source に強制した後、Bose / gaming monitor の known-bad は消えたが、全量監査で高信頼 false-negative 19 件が残った。内訳は (A) 生成 AI / model / modality (`Muse Image`, `DiffusionGemma`, `MAI-Image`, `Gemma 4`)、(B) security / privacy (`backdoor`, `backdoored`, `exploit`, `malware`, `credential stealer`, `password vault`, `privacy`)、(C) cloud / infra / devops (`tech debt`, `S3`, `Interconnect`, `ECS`, `Aurora PostgreSQL`) の 3 系統だった。
+- **根本原因**: title-only 化で snippet からの救済がなくなった結果、shared `TECH_NEWS_RELEVANCE_KEYWORDS` 自体の語彙が不足している source では、タイトルだけを見た時に AI / developer 記事だと判定できなかった。特に `DiffusionGemma` のような camel-case product family や、security / cloud サービス名は `ai` / `developer` の汎用語だけでは拾えない。shared helper 違反 0 でも、「必要語が registry に無い」場合は policy gap が残る。
+- **対策**: source 固有タイトルの場当たり追加ではなく、shared `TECH_NEWS_RELEVANCE_KEYWORDS` に 3 系統を一般化する最小語彙 (`image generation`, `text generation`, `text-to-image`, `gemma`, `backdoor`, `backdoored`, `malware`, `exploit`, `credential stealer`, `password vault`, `privacy`, `tech debt`, `s3`, `interconnect`, `ecs`, `aurora postgresql`) を追加した。migration の前後で `origin/main` と current artifact を **canonical URL** で diff し、対象 19 URL が 19/19 残ることを機械確認したうえで apply した。回帰防止として 19 タイトルすべてを actual registry definitions ベースの table-driven test に固定した。
+- **教訓**: title-only 化は必要だが、それだけで broad feed の品質は完結しない。**false-positive を減らした次の層で false-negative corpus を点検し、shared relevance 語彙を最小拡張する**のが恒久対策。migration は件数だけでなく canonical URL diff で「残すべき記事が残っているか」を確認する。keep corpus は推測でなく actual registry test に固定し、snippet 依存の救済に戻さない。
+
+### LL-132: mutation CLI は no-arg も含めて fail-closed にし、同時 write は atomic rename で partial JSON を見せない
+- **事象**: `scripts/clean-source-noise.mjs` を usage 確認のつもりで `--help` 実行したところ、引数未解釈のまま apply 経路に入り `APPLIED - removed=1200` を実行した。後に no-arg 実行でも同じ apply 経路へ落ちる回帰が見つかった。同時に別の `--dry-run` が同じ `data/index.json` を読みに行き、直接 `writeFileSync(path, ...)` 中の途中状態を拾って `SyntaxError: Unterminated string in JSON` になった。
+- **根本原因**: CLI 引数が明示 parse されておらず、`process.argv.includes("--dry-run")` 以外の判定が無かったため、help・no-arg・未知引数も apply へ落ちていた。さらに JSON 書き込みが同一パスへの direct overwrite だったので、並行 reader が partial JSON を読める状態だった。
+- **対策**: mutation CLI は **`--apply` を明示した時だけ**書き込みを許可し、`--help` / `-h` は no-op で 0 exit、`--dry-run` は no-op preview、no-arg / unknown / conflict (`--dry-run --apply`) は fail-closed で nonzero exit にする。書き込みは同一 directory の temp file へ `writeFileSync(..., "utf8")` した後に `renameSync` で atomic swap し、partial JSON を表に出さない。安全テストは help / unknown だけでなく **no-arg と conflict でも data tree 全体の snapshot を比較**し、非 mutation を固定する。
+- **教訓**: destructive / mutation 系 CLI は「引数を読める」ではなく「**明示 apply 以外では絶対に書かない**」ことが重要。help は no-op、no-arg / unknown / conflict は fail-closed、書き込みは atomic rename を標準にする。並列 reader が存在する artifact は direct overwrite しない。
+
+### LL-133: TS を import する CLI は repository の tsx 経由で起動し、Node20 smoke と docs/tests を一致させる
+- **事象**: `scripts/clean-source-noise.mjs` は `.ts` モジュールを import しているのに、テストや説明が direct `node scripts/...` を前提にしており、Node22 では見逃せても Node20 では `ERR_UNKNOWN_FILE_EXTENSION` になりうる経路差が残った。
+- **根本原因**: executable docs と safety tests が実際の launcher とズレていた。`tsx` が必要な CLI を direct node で起動する前提だと、同じ repo でも runtime によって挙動が変わる。
+- **対策**: `.ts` を読む CLI は repository 同梱の `tsx` か `node --import tsx` で起動する前提に統一し、Node20 smoke は `npx -y node@20 --import tsx ...` のように最小サポート runtime で確認する。tests も同じ launcher を使い、global dependency に依存しない。
+- **教訓**: CLI の互換性は「実行できる」ではなく「**同じ launcher で実行できる**」までを docs/tests に書く。Node22 の偶然の成功を Node20 互換の証拠にしない。説明・テスト・スモークは実際の起動経路と一致させる。
+
+### LL-134: Truthful labels still mislead when identical words hide different semantics
+- **事象**: Home の `sources`、Status hero の `Source coverage`、footer の `last batch ... src` がすべて truthful な値なのに、実際には「live entries を持つ active registry sources」「freshness threshold 内の sources」「直近 batch で成功した sources」という**別の母集団**を指していたため、4-persona audit で「同じ sources なのに意味が違う」「pending の横の鮮度 OK が要約完了に見える」と誤読された。さらに Featured と Top-3 は entry ID だけ重複排除していたため、同一 source stream (例: Zed Releases) が両方の decision slot を占有できた。
+- **根本原因**: 数値自体は正しくても、ラベルが generic すぎると UI 上で意味が衝突する。特に decision slot / health metric / pending state のような判断導線では、「何の freshness か」「どの source 集合か」「stream 単位か entry 単位か」を明示しないと、truthful data でも誤解を生む。
+- **対策**: Home は `Active registry sources` / `収録中ソース` として live-entry coverage を明示し、Status hero は `Fresh sources` と freshness semantics を名指しする。footer の `last batch ... src` は batch semantics のまま維持する。detail の freshness badge には `data-freshness-scope="collection"` と `収集鮮度 OK` / `Source fresh` を付け、Summary pending の隣でも要約完了と誤読されないようにする。Top-3 の候補プールは Featured の **source** も除外し、decision slot の source diversity を保証する。
+- **教訓**: UI の warning は「値が嘘か」だけでなく「値の意味が一意に読めるか」で発生する。generic label (`sources`, `freshness`) が複数の母集団・工程に跨るなら、semantic name に分解する。decision-critical slots の重複排除は entry ID だけでなく **source stream 単位**で行う。pending enrichment の隣に出す badge は scope (`collection`, `summary`, `body`) を機械可読属性でも明示する。
+
+### LL-135: broad shared relevance に `code/tool/platform/processor` のような generic 単語を残すと consumer/automotive/marketing タイトルが通過する
+- **事象**: shared `TECH_NEWS_RELEVANCE_KEYWORDS` の generic 単語だけで、`Quantum error correction can constantly recalibrate a processor`、`Like a cheat code for your car: We investigate ECU tuning`、`Cannes Lions 2026: Strengthen creative campaigns with new tools from YouTube`、`Airbnb-backed WeRoad raises $58M to take its group travel platform to the US` が broad feed live entry として通過した。
+- **根本原因**: `code` / `tool` / `tools` / `platform` / `processor` / `processors` は title-only 判定でも意味が広すぎ、consumer / automotive / marketing の一般記事が tech-news relevance を満たしてしまう。一方で AWS Graviton / Bedrock や prompt-injection 記事のように、従来その generic 単語しか一致しない正当記事もあり、削除前に「その候補語だけで通る live entry」を列挙して保護しないと false negative を作る。
+- **対策**: shared relevance から generic 単語を削除し、`prompt injection` / `graviton` / `bedrock` のような compound developer/security terms と named product families に置き換える。回帰防止として「候補語だけで通る keep corpus / drop corpus」を actual-registry table test に固定し、snippet に AI/developer 語があっても title scope では drop されることを確認する。
+- **教訓**: broad shared relevance を削る前に、**削除候補語が唯一の一致になる実 entry を全列挙**する。generic 単語は source 固有 exclude で塞がず、shared relevance を compound term / product family へ狭める。検証は heuristic ではなく actual registry + actual title の table-driven test で keep/drop の両側を固定する。
+
+### LL-136: verification skill は architecture contract が変わったら同時更新する
+- **事象**: `self-critique` スキルが LL-115 後も旧「index に本文がある」前提のままで、C-01 で `body 欠落 0 件` を要求し、C-06 でも `noBodyJa/noBodyEn` を bad と扱っていた。実際の contract は `data/index.json` body-free + `data/bodies.json` 保持なので、検証スキル自体が drift していた。
+- **根本原因**: body-file architecture への移行時に、コード / tests / ルールは更新したが、**検証スキルのチェック文言と実行コマンド**を同じ contract に揃える横展開が漏れた。verification skill はコードの consumer でもあるのに、architecture change の更新対象として扱われていなかった。
+- **対策**: self-critique の R-012/R-013 と C-06 を body-file architecture に同期し、`index body present (expected 0)` と `bodies.json count/coverage` を確認するコマンドへ差し替える。architecture contract が変わる変更では、README / tests / rules に加えて **verification skills / runbooks / CLI examples** も同一セッションで更新する。
+- **教訓**: 検証スキルが古い前提を持つと、正しい実装を false warning 扱いし、逆に本物の drift を見逃す。storage contract・publish contract・nav contract のような設計変更では、**検証文言・サンプルコマンド・完了報告テンプレートまで含めて更新**することを必須にする。
+
+### LL-137: filtered feed の `collectedAt` は source last-checked telemetry ではないので、quality audit は inactivity を Critical にしない
+- **事象**: `quality-audit` が zenn-ai / simonw-blog / techcrunch を `Critical` と判定したが、根拠は「live index に残る最新 qualifying entry の `collectedAt` が古い」だけだった。include/exclude filter で recent item が全落ちすると、source は正常収集でも retained entry は古く見える。
+- **根本原因**: `quality-audit/run.ts` が per-entry `collectedAt` を pipeline health と同一視し、freshness `error` を source ごとに `Critical` 加算していた。`data/index.json` は retained entries しか持たず、「その source を最後にいつチェックしたか」は aggregate telemetry (`health.sourcesAttempted` / `sourcesOk` / `sourcesFailed`) にしか存在しないのに、この2種類のシグナルを混同していた。
+- **対策**: quality audit は retained/listed-entry freshness を `🟠 inactive` / `🟠 stale` として**非 Critical の活動シグナル**に格下げし、severity 集計は (a) empty index、(b) aggregate telemetry で attempted 全件 failed のみを `Critical` にする。partial source failure は 1 Warning、stale/inactive listed source が 2 つ以上ある場合も 1 Warning にグループ化する。SKILL.md / tests も同じ契約に同期する。
+- **教訓**: filtered feed の `collectedAt` は「その source の最新 retained item の age」であって「collector の最終成功時刻」ではない。quality audit では **pipeline run health と listed-entry activity を分離**し、Critical は aggregate run telemetry から、stale/inactive は grouped Warning として扱う。activity gap を隠さず出しつつ、pipeline outage と誤判定しないことが重要。
+
+### LL-138: target-language field を source-language fallback で埋めると provenance が壊れる。data mutator CLI は毎回 fail-closed + atomic write にする
+- **事象**: `scripts/fill-title-en.mjs` が `summaryEn` fallback / pending の entry に対し、元の日本語 `title` を `titleEn` にコピーしていた。これで `titleForLangWithFallback` が本来出すべき JA fallback badge が消え、英語欄に source-language title が「本物の English title」のように見えていた。加えて CLI は no-arg / unknown / help でも apply 経路に落ち、直接 overwrite で LL-132 と同じ mutation safety 欠陥を持っていた。
+- **根本原因**: 「空よりまし」として target-language field を source-language 値で埋めると、UI は provenance (どの言語が原文か) を失う。さらに単発修復 script だからといって fail-closed/atomic write の共通安全規約を横展開していなかった。
+- **対策**: `titleEn` は **real non-fallback `summaryEn`** からだけ導出し、deterministic/pending `summaryEn` の場合は空のまま残して UI の cross-language fallback + language badge に委ねる。導出は `Intl.Segmenter("en", { granularity: "sentence" })` を優先しつつ、**原文で terminal punctuation の直後が非 whitespace (`.NET` など) ならその境界を拒否**して portable scanner に fallback し、`GPT-5.6` / `v2.1.205` / `launch.json` / `.NET MAUI` のような token 内 punctuation で切らない sentence-aware 抽出にする。既存 `titleEn` は、同じ `summaryEn` から得た **旧 legacy extractor の値と完全一致する場合だけ**安全に補正し、genuine title は上書きしない。`scripts/fill-title-en.mjs` は pure helper export + direct-invoke 時のみ auto-run に refactorし、`--dry-run|--apply|--help` 以外は拒否、no-arg/unknown/conflict は nonzero、apply は same-dir temp + atomic rename に統一する。apply 後は **再 dry-run で `totalUpdated=0`** を確認して idempotence を検証する。
+- **教訓**: i18n field の補完では **target-language field を source-language fallback で埋めない**。truthful provenance (JA/EN badge と actual field origin) を壊すから。補完は real target-language content からだけ行い、無い場合は空のまま UI fallback に委ねる。sentence 抽出は token 内 punctuation を文末扱いしないだけでなく、**segment boundary が原文の隣接文字と矛盾しないか**まで確認すること。既存値の repair も「旧機械抽出値と完全一致する場合のみ」に限定し、genuine title を推測で上書きしない。さらに JSON/data mutator CLI は例外なく LL-132 の安全規約 (help no-op、unknown fail-closed、atomic rename) を適用し、post-apply dry-run で 0 update を確認する。
+
+### LL-139: body-file architecture 後はローカル harness の summarize も summary-only に揃える。queue/worker だけ直しても orchestrator が全件再処理する
+- **事象**: body-file architecture (R-012 / LL-115) へ移行した後も、`harness/pipeline/summarize.ts` のローカル `summarize()` は `bodyJa/bodyEn` 欠落を incomplete とみなし、長文 bilingual body を要求する旧 `buildPrompt` を使い続けていた。結果として body-free index entry が every run で再要約対象になり、LL-106 の reasoning exhaustion 系失敗や高コスト生成をローカル経路だけで再導入し得る状態だった。
+- **根本原因**: cloud path (worker prompt / summary queue / completion contract) は summary-only に更新されたが、local orchestrator path の prompt・completion・eligibility が**対称更新されていなかった**。queue/worker だけ直せば全経路が直ると思い込み、同じ summary contract を共有 helper に寄せる横展開が漏れた。
+- **対策**: local harness は `worker/src/prompt.ts` の `buildSummaryPrompt` + `parseResponse` を直接再利用し、`SUMMARIZE_MAX_TOKENS` 既定を 1600 に下げる。`needsGeneratedContent` は summary-only (`summaryJa` / `summaryEn` 非空・非 fallback で完了)、`isCompleteSummaryResponse` は `titleJa + summaryJa + summaryEn` のみ必須にする。新規 cache record の `bodyJa/bodyEn` は空文字列で保持し、legacy cache body は読むだけで温存する。
+- **教訓**: architecture contract を変えるときは **local path と cloud path の prompt / generation / completion / cache contract を対称化**する。queue/worker だけ summary-only にしても orchestrator が旧 contract のままなら、body-free index を「未完了」と誤判定して全件再処理する。shared prompt/parser を 1 箇所に寄せ、完了判定も同じ contract で揃えること。
+
+### LL-140: taxonomy restamp / archive migration は downstream enrichment と related artifacts を上書きしない
+- **事象**: independent review で taxonomy restamp が AI/cache 由来の `entry.importance` を heuristic `scoreImportance` で上書きし、live で **1,146 件**の importance 変化 (うち **126 件が 3->1、906 件が 2->1**) を発生させていた。archive migration では compact hot entries を warm/cold/dropped へ再計算し得るうえ、`data/bodies.json` の orphan body ID と health/stats count が index とずれていた。
+- **根本原因**: migration が「source-owned field の restamp」と「downstream enrichment / storage-tier field」の境界を列挙せず、`importance` や `archiveTier` のような後段で確定した値まで再計算対象に含めていた。さらに related artifacts (`index` / `archive` / `bodies` / `stats`) を同じ ID 集合・同じ reference clock で再構成していなかった。
+- **対策**: fresh `normalize()` だけが heuristic importance を計算し、既存 entry の restamp は `importance` を preserve する。archive migration は既存 `archiveTier` を preserve し、`dropped` は再公開せず除外する。すでに壊れている warm/cold compact rows で summary が欠けているものは、**summary を捏造せず、履歴件数も捨てずに stats-only の `hot` へ戻す**。write 前に index/archive/bodies payload を **consumer-facing schema 全体** (enum、timestamp、summary/title/image/body record 型、live summary 必須、warm/cold bilingual summary 必須) まで strict validate し、`data/bodies.json` は final live IDs に対して reconcile、health の body count も再計算する。stats は `index.generatedAt` を reference clock に 1 回だけ再構築し、**multi-file batch transaction + rollback** で更新する。
+- **教訓**: migration では **どの field が migration-owned で、どの field が downstream enrichment / storage-tier owned かを先に列挙**してから触る。`importance`、`archiveTier`、body sidecar、stats clock のような後段責務を restamp で上書きしない。historical に壊れた compact archive rows は summary を発明せず、公開 tier を `hot` に戻して historical counts を保持する。validation も top-level JSON だけでなく、読者向けに解釈される field 型 (image/body/lang/enum) と context-specific summary invariants まで fail-closed に見る。related artifacts は同じ ID 集合と同じ reference clock を共有し、partial write を許さない batch mutate にする。
+
+### LL-141: raw filter を lossy normalization 後に fresh entries へ再適用すると valid article を落とす。collector contract には cap も含まれる
+- **事象**: Worker が fresh normalized entries に current-rule filter を再適用していたため、RSS raw snippet では 800 文字以内に relevance keyword があって pass した記事が、normalize 後に `contentSnippet` 280 文字へ truncate された結果、keyword が見えなくなって drop されていた。あわせて `collectHnAlgolia()` は `maxEntriesPerRun` を無視していた。
+- **根本原因**: raw collection 時点の filter 契約と、lossy normalization 後の entry shape を同一視し、fresh entries まで再 filter していた。snippet length を縮めた後に raw filter をもう一度掛ければ、collector が pass させた valid entry を false negative 化する。HN collector では cap も collector contract の一部なのに未適用だった。
+- **対策**: current-rule reapply は **prior merged entries のみ**に限定し、fresh entries は「current collector + current registry で既に filter 済み」とみなしてそのまま merge する。prior normalized entries は `keywordFilterScope !== "title"` なら、lossy/truncated snippet のため **missing include だけでは destructive drop しない**。exclude hit は従来どおり safe に drop し、title-scope source は missing include drop を維持する。fresh collector 側も shared registry contract を自前で守る必要があるため、`collectHnAlgolia()` には RSS collector と同様に **shared keyword filter を cap 前に適用し、その後 `maxEntriesPerRun` で slice** する。`hn-ai` の filter scope は title-only に固定する。
+- **教訓**: **lossy normalization の後に raw filter を再実行しない**。migration で再評価すべきなのは prior artifact だけで、fresh collector output は current collector contract を信頼する。ただし、その前提は「各 fresh collector が shared keyword filter と per-source cap を raw output に対して正しく適用している」こと。normalized prior は raw snippet を失っているため、**non-title scope の missing include は ‘未検証’ であって ‘不適格’ ではない**。collector contract には keyword filter だけでなく scope と cap の順序も含まれるので、全 collector で同じ制約を適用する。
+
+### LL-142: freshness の scope は article / source / run を分離して明示する
+- **事象**: article detail が viewed entry 自身の `collectedAt` を source freshness として表示していたため、古い記事を読むと source 自体が stale に見えた。一方 quality audit は aggregate `health.lastRunAt` の stale run を severity に反映しておらず、実際には data generation が止まっていても Critical にならなかった。
+- **根本原因**: `collectedAt` という 1 つの時刻を、(a) その記事の収集時刻、(b) source の最新 listed activity、(c) pipeline run health の 3 つの意味で混用していた。scope ごとの helper が分かれておらず、article/source/run の freshness が UI と audit で混線していた。
+- **対策**: article detail には `latestListedActivityForSource()` を追加し、同一 source の最新 listed entry collectedAt を source freshness に使う。aggregate run health は `deriveWorkerRunStatus()` を quality audit から再利用し、`lastRunAt > 6h` を Critical、`copilotOk=false` を Warning に統一する。viewed article の age (`publishedAt` / own `collectedAt`) は source freshness と分けて扱う。
+- **教訓**: freshness は **article age / source activity / pipeline run health** の 3 scope を明示的に分ける。同じ `collectedAt` を使っていても、どの集合の最新値かで意味が全く違う。helper と UI ラベルは scope 単位で共有し、混同を防ぐ。
+
+### LL-143: shell helper の可搬性を前提にしない。宣言済みツールと portable scan を使う
+- **事象**: このセッションの修正中、shell から `apply_patch` を使える前提で進めようとしたが runtime には無く、macOS/BSD の `grep` も `-P` を受け付けず U+FFFD scan コマンドがそのまま動かなかった。
+- **根本原因**: Linux 環境でよく使う shell helper (`apply_patch`, GNU grep PCRE) を、runtime が宣言していないのに portable だと仮定していた。実際の実行環境は「提供された編集ツール」と BSD userland であり、shell helper の可用性保証が無かった。
+- **対策**: file edit は runtime が提供する editor/file operation ツールを使い、shell helper を前提にしない。U+FFFD scan のような byte/codepoint 確認は `grep -P` ではなく Node/Python で file bytes を直接読む portable 実装に置き換える。
+- **教訓**: **宣言されているツールだけを使う**。`apply_patch` や GNU `grep -P` を shell の既定能力だと思わない。portable validation は Node など repo 依存で確実に使える runtime で書き、OS 差分のある one-liner に依存しない。
+
+### LL-144: lossy normalized prior では missing include だけで destructive drop しない
+- **事象**: current-rule cleanup が normalized/compact prior entry に shared include filter を再適用すると、raw snippet にあった include hit が normalize 後の欠損/短縮 `contentSnippet` で消え、valid prior article が migration/Worker merge で drop され得た。
+- **根本原因**: non-title scope source の include 判定は本来 `title + raw snippet + url` 契約だが、prior artifact は raw snippet を保持していない。lossy normalized context で include miss を「不適格」と断定していたのが過剰だった。
+- **対策**: shared source-filter に decision helper を追加し、**exclude hit は常に drop、title-scope の missing include は drop、non-title scope prior normalized の missing include は `missing-include-unverified` として preserve/restamp** する。fresh collector は raw/full context の strict contract を維持し、`hn-ai` は title-only scope に固定する。`tests/data-schema.test.ts` の artifact gate も同じ evaluator (`allowLossyMissingInclude:true`) に同期し、keep=false と category drift だけを violation にする。
+- **教訓**: **lossy normalized context は destructive cleanup の根拠に使わない**。raw input が失われた後は missing include を「確認不能」と扱い、drop するのは exclude hit か title-only のように証拠が十分な場合だけにする。fresh raw path、prior normalized path、artifact test gate の 3 者で同じ evaluator 契約を共有しないと、migration/Worker は通るのに test gate だけが過剰検出する drift が起こる。
+
+### LL-145: i18n toggle は heading だけでなく本文コンテナ自体を切り替える
+- **事象**: article detail の TL;DR は言語 toggle で heading だけ EN に変わる一方、本文は常に JA block が見え、EN bullets は `<details>` を開かないと読めなかった。EN user には「見出しだけ英語で本文は日本語」という半端な状態だった。
+- **根本原因**: optional support content を隠す `<details>` と、active language の primary body を分けずに実装していた。`i18n-ja`/`i18n-en` class は heading には使われていたが、本文ブロックには適用されていなかった。
+- **対策**: TL;DR body を `.i18n-ja` / `.i18n-en` の **別コンテナ**で描画し、JA は `pointsJa/summaryJa`、EN は `pointsEn/summaryEn.text` を active language で直接表示する。fallback text の `lang` は実際の言語に合わせ、duplicate English details は撤去する。E2E で detail page の JA body hidden / EN body visible を直接検証する。
+- **教訓**: i18n toggle は **heading だけでなく primary content body まで切り替わって初めて完了**。`<details>` は補助情報には使えても、active language user が最初に読む主要本文を隠す場所ではない。visibility と `lang` は body container 単位で検証する。
+
+### LL-146: multi-file mutator は per-file atomic では不十分。全出力を stage して batch rollback する
+- **事象**: `clean-source-noise` は各 JSON file を temp + rename で個別 atomic write していたが、`index` / `archive` / `stats` / `bodies` を順次書く途中で後段 rename が失敗すると、先に置き換わった artifact だけ新状態、残りは旧状態という partial apply が起こり得た。
+- **根本原因**: per-file atomicity を multi-file mutation の整合性まで保証すると誤解していた。related artifact 一式に対しては「全成功か全復旧か」の batch semantics が別途必要だった。
+- **対策**: write 前に全 payload を serialize/validate し、same-dir temp と backup を全部 stage、journal を残してから swap する batch helper に統一した。swap 中に失敗したら、先に置換済み target も backup から全復旧し、temp/backup/journal を cleanup する。起動時に stale journal があれば自動 recovery する。SIGKILL の完全原子性は主張しない。
+- **教訓**: related artifact を複数同時に更新する mutator では、**per-file atomic = safe** ではない。更新単位が 1 つの logical transaction なら、validate/stage/swap/rollback も transaction 単位にする。failure test は「後段 rename 失敗でも全 original hash が戻る」ことまで見る。
+
+### LL-147: repair migration は input permissive / output strict を分けないと修復経路が到達不能になる
+- **事象**: real `origin/main` data で `npm run noise:clean -- --dry-run` が `data/archive/2024-05.json.entries[0].summaryJa must be a non-empty string` で即時失敗した。warm/cold に誤って残った legacy compact row を `repairArchiveTierForMigration()` で hot へ戻す前に、strict archive validator が read 時点で落としていた。
+- **根本原因**: 既知の historical corruption を修復する migration なのに、archive input read と final archive output validate の両方で同じ strict bilingual-summary rule を使っていた。strict pre-validation が repair path より先に走るため、修復ロジック自体が到達不能だった。
+- **対策**: archive validation を **input structural validation** と **output invariant validation** に分離した。input 側は enum/type/timestamp など consumer-facing shape は strict に維持しつつ、known corruption である warm/cold missing summary だけを repairable として通す。transform 後の `buildArchiveMonthFile()` payload は write 前に strict validator へ通し、warm/cold bilingual required、hot のみ summary omission 可、dropped absent を保証する。
+- **教訓**: repair migration では **読めること** と **最終出力として許されること** を分ける。known-corrupt input を直す処理なのに strict rule を read 時点で掛けると、修復経路が永久に発火しない。input は「この corruption だけは修復前提で許容」、output は「修復後 invariant を満たす」を明示的に二段化する。
+
+### LL-148: Pagefind の近似候補を exact match 不在時に表示すると recovery state が偽装される
+- **事象**: 検索語を含む結果が無い場合でも Pagefind 上位 10 件の近似候補を表示し、カテゴリやタグの navigation page が記事より上位に出た。
+- **根本原因**: Pagefind ranking をそのまま actionable result と扱い、候補解決後の exact 判定と result type の優先順位を表示条件にしていなかった。
+- **対策**: 上位 30 候補を解決して exact result だけを残し、article を navigation result より先に stable sort する。exact 0 件は closest match を出さず recovery links を表示する。
+- **教訓**: 全文検索の近似候補は exact hit の代替ではない。検索 UI は exact 判定、result type 優先度、0 件 recovery を分離して検証する。
+
+### LL-149: 非空 summary に生成途中の junk が混ざると completion gate を通過する
+- **事象**: `zed-releases` の英語要約に README 作業メモと release note template が混入したが、非空だったため生成済みとして扱われた。
+- **根本原因**: completion 判定が blank と deterministic pending marker だけを見ており、unsafe content と bare title echo を検査していなかった。生成、queue、fallback、web 表示、data schema の判定も分散していた。
+- **対策**: root pipeline に shared summary quality contract を追加し、contamination、pending、title echo、bilingual completeness を統一判定する。web は R-005 のため同じ静的 marker を同期し、汚染言語を他言語へ fallback する。
+- **教訓**: **非空は生成完了の証拠ではない**。unsafe-content contract は生成完了、queue/cache、publish fallback、表示、artifact gate の全層で共有する。
+
+### LL-150: 後勝ちの重複 media query は非表示にした rail を再表示する
+- **事象**: max-width 1100px で right rail を隠しても、後方の 901-1180px ルールが `display:block` を再適用し、980px 付近で 3 カラムが復活した。
+- **根本原因**: 同じ selector 群の breakpoint 範囲が非対称で、後に宣言された compact 3-column rule が hide rule と重なっていた。
+- **対策**: 3-column range を 981-1180px に限定し、980px 以下は既存 2-column layout と hidden rail を維持する。境界 981/980 の track 数、rail visibility、main 幅、overflow を E2E で固定する。
+- **教訓**: responsive range は表示側と非表示側を同じ境界で対称に定義する。重複 media query は CSS 順序で再有効化されるため、境界直前と直後を必ず測る。
+
+### LL-151: source freshness は選択記事の age ではなく source aggregate activity を参照する
+- **事象**: Home の Spotlight / Ranked Top 3 が選択記事自身の `collectedAt` で source-feed freshness を判定し、同じ source に新しい listed entry があっても古い記事を stale 表示し得た。
+- **根本原因**: 表示ラベルを source-feed freshness に明確化した一方、Home の参照時刻は article age のままで、detail page の source 集約判定とも分岐していた。
+- **対策**: `latestListedCollectedAtForEntry()` を共通 helper とし、同 source の最新 listed collection 時刻、選択記事の `collectedAt`、`publishedAt` の順で参照する。Home と detail の両方を同 helper に統一した。
+- **教訓**: source freshness は source aggregate activity から判定し、選択記事の age と混同しない。同じ status を出す画面は参照時刻 helper まで共有して drift を防ぐ。
+
+### LL-152: subrequest budget は enrichment 合算と archive touched scope の両方で守る
+- **事象**: harness Worker 更新後の batch 2/4 は sources 14/14 と summary enqueue 35 まで完了したが、pre-publish heartbeat 後に Too many subrequests by single Worker invocation で失敗し、data commit が作られなかった。summary/body lookup を 80+25 から 40+20、さらに 35+10 へ下げても同じ batch は再失敗した。
+- **根本原因**: publishHistoryFiles のコメントは変更月だけ読む契約だったが、呼び出し側が全 contentReady entries を渡していたため、変更の有無に関係なく live entry を持つ最大 15 archive 月を毎回 raw fetch していた。incremental stats も old touched months を引いた後に全 live entries を再加算する実装で、この全月 read を暗黙の前提にしていた。lookup cap だけを下げても archive read の無駄が残るため budget exhaustion は解消しなかった。
+- **対策**: body-free index の prior/next を canonical URL で比較し、新規または変更 entry の月だけを archive merge 対象にした。stats は old touched-month 全体を引き、merged touched-month 全体だけを足す対称 delta に修正し、baseline 欠落時のみ全 live 月を bootstrap する。加えて summary lookup/enqueue を 35、body lookup/enqueue を 10、固定 KV overhead 込み 50 以下へ制約した。同じ batch 2/4 を 2026-07-11 06:25 UTC に強制実行し、HTTP 200、sources 14/14、data commit c737c984 の作成を確認後、診断 cron と batch 固定を撤去した。
+- **教訓**: subrequest cap は KV など個別 pipeline の局所値だけでなく、archive/history の fan-out を含む invocation 全体で設計する。incremental 処理のコメントが changed/touched-only を約束するなら、入力集合と stats delta も同じ touched 集合へ揃える。Worker deploy の完了判定には、失敗した同一 batch の publish 成功と通常 schedule への復帰を含める。
+
+### LL-153: HTML entity のまま保存した media URL は画像 CDN で 403 / text/plain になり ORB を起こす
+- **事象**: Qiita の画像 URL に `&amp;` が残り、raw URL は 403 text/plain、`&` へ戻した URL は image/jpeg を返した。
+- **根本原因**: feed / OGP の HTML entity を URL として保存し、ブラウザが誤った query を画像 CDN へ送っていた。
+- **対策**: shared media URL normalizer で named / numeric entity を反復 decode し、RSS、Worker OGP、既存 artifact migration に対称適用する。percent-encoded path/query は decode しない。
+- **教訓**: media URL は ingestion 時に HTML serialization だけを正規化し、既存データにも同じ migration を適用する。画像失敗時は status だけでなく Content-Type と ORB も確認する。
+
+### LL-154: provider の既知 domain alias は canonical helper を全 pipeline で共有する
+- **事象**: Netflix TechBlog の Medium publication URL と custom-domain URL が同じ記事を別 entry として live/archive に残した。
+- **根本原因**: collector dedupe が独自の弱い canonicalizer を持ち、Worker merge、archive/stats、tests、migration の alias contract と一致していなかった。
+- **対策**: known publication path だけを shared `canonicalUrlKey` で custom domain へ写像し、collector dedupe も同 helper を使う。migration で live/archive/stats/index/bodies を一括再構築する。
+- **教訓**: domain alias の正規化は provider 固有範囲に限定し、生成、merge、保存、監査、migration の全層で同じ canonical key を使う。
+
+### LL-155: dismiss 経路は 1 つの close contract に集約する
+- **事象**: search の Escape は値・結果・active state・focus を全て閉じたが、outside click は一部 state だけを閉じ、値と focus を残した。
+- **根本原因**: close state transition を経路ごとに重複実装していた。
+- **対策**: close button、Escape、outside click を shared `closeSearch()` に統一し、input focus も trigger と同じ open state を確立する。mobile の native close target は 44px 以上で検証する。
+- **教訓**: dismissible widget は開閉の副作用を単一 contract に集約し、全 close 経路で value、results、ARIA/state、focus の後始末を同じにする。
+
+### LL-156: archive migration は tier と canonical loser の enrichment sidecar を先に保全する
+- **事象**: 過去の archive migration で共通 453 件が warm/cold から hot に変わり、hot compaction により EN のみの要約 452 件と bilingual 要約 1 件が失われた。synthetic fallback を canonical merge 前に足すと loser の実要約を妨げ、filter 後に body alias を作ると除外された canonical loser の sidecar も失われた。
+- **根本原因**: tier、canonical enrichment、body sidecar の保全順序が migration の破壊的処理より後だった。
+- **対策**: archive tier を維持し、canonical merge/enrichment 後に欠落言語を補修する。original-live から final-winner の alias を導出し、body を prune 前に移送する。最新 `origin/main` data を復元して再実行し、`lostJa=0`、`lostEn=0`、`tierChanged=0`、`warmColdMissing=0`、`lostBodies=0` を確認した。
+- **教訓**: migration は canonical loser の要約と sidecar を final winner へ移してから filter、compaction、prune を行う。
+
+### LL-157: multi-file transaction は committed marker を cleanup より先に永続化する
+- **事象**: backup を durable committed state より先に削除する transaction は、crash 後に複数世代が混ざった状態を復旧し得る。journal を自動復旧する dry-run も read-only ではなかった。
+- **根本原因**: commit point と cleanup の順序が逆で、dry-run が recovery write を許していた。
+- **対策**: active journal 作成、全 target replace、atomic な committed journal marker、cleanup の順にする。recovery は active を rollback し、committed は保持する。dry-run は pending journal を検出したら書き込まず中止する。
+- **教訓**: transaction の durable commit point を明示し、dry-run は recovery を含めて一切書き込まない。
+
+### LL-158: async search の close は世代 token で未完了 Promise を無効化する
+- **事象**: overlay を閉じても未完了の Pagefind Promise が後から DOM を更新し、検索 UI を再表示できた。また exact match で Unicode 表記差を吸収できなかった。
+- **根本原因**: close が非同期処理の所有世代を無効化せず、await 後の DOM write に open state 検査がなかった。
+- **対策**: monotonic generation token を close 時に更新し、全 await 後に generation と open state を確認してから DOM を更新する。exact-match policy は維持し、query と result の両方を Unicode normalize して `cafe` と `café` を一致させる。
+- **教訓**: dismissible async UI は state を閉じるだけでなく、過去世代の非同期結果を全て失効させる。
+
+### LL-159: subagent の read-only 指示は filesystem 境界ではない
+- **事象**: read-only audit agent が指示に反して一時 Playwright file を 5 件作成した。
+- **根本原因**: read-only は意図の指定であり、filesystem write を強制的に禁止する境界ではなかった。
+- **対策**: subagent 完了直後に `git status --untracked-files=all` を確認し、生成元を確認できた一時 file だけを削除して commit に含めない。secret と branch 操作は LL-018 の通り親だけが行う。
+- **教訓**: subagent の副作用は指示で防げると仮定せず、親が worktree 差分を監査して確定した一時成果物だけを除去する。
+
+### LL-160: health telemetry は snapshot 全体の完全性を先に検証する
+- **事象**: 個別 field の nullish default により、欠落 telemetry が false green になり得た。
+- **根本原因**: aggregate health 判定前に telemetry snapshot の必須 field と型を検証していなかった。
+- **対策**: `lastRunAt`、boolean の `copilotOk`、有限かつ非負の `sourcesAttempted` と `sourcesOk`、array の `sourcesFailed` が全て存在する場合だけ aggregate health を評価する。
+- **教訓**: 必須 telemetry が 1 つでも欠ける snapshot は non-healthy とし、field 単位の default で正常化しない。
+
+### LL-161: focus 復帰は「opener が自分の副作用で消える」場合に可視 fallback を用意する
+- **事象**: search を閉じたとき opener (起動要素) に focus を戻す実装で、mobile の Menu→Search 経路だけ focus が `<body>` に落ちた。Menu 内の Search trigger で search を開くと、その副作用で Menu が閉じて **opener 自身が hidden になる**ため、閉じたとき復帰先が非表示要素になっていた。
+- **根本原因**: focus 復帰先を「opener の参照」1 点に固定していた。dismissible widget を開く動作が別の overlay (menu) を閉じる副作用を持つと、opener がその場で不可視になり、復帰先として無効になる。
+- **対策**: `restoreSearchFocus()` は保存した opener が可視 (`isConnected && getClientRects().length>0 && !disabled`) な場合のみそこへ戻し、不可視または keyboard shortcut 起動で opener が `null` の場合は同種の可視コントロール (最初の可視 `[data-menu-trigger]`) へ fallback する。E2E は「復帰先が hidden な特定要素と等しい」ではなく「focus 先が可視かつ同種 role の要素」を assert する。
+- **教訓**: focus 復帰は「元の要素」ではなく「到達可能な等価コントロール」を最終目標にする。opener が hidden 化する場合だけでなく、`/` や `Cmd/Ctrl+K` を `<body>` focus から使って opener が無い場合も early return せず可視 fallback に切り替える。テストも要素同一性でなく可視性・role で検証する。
+
+### LL-162: transaction journal と backup も target と同じ atomic contract で保護する
+- **事象**: `clean-source-noise` の multi-file transaction は target の atomic rename と committed marker を持っていたが、active journal と backup を直接書いていた。process crash で journal が途中 JSON になると、次の `--apply` が `JSON.parse` で停止し recovery に入れない状態だった。
+- **根本原因**: transaction の安全対象を最終 target file に限定し、復旧の source of truth である journal と backup の durability を同じ contract に含めていなかった。
+- **対策**: active journal と backup も同一 directory の temp file へ書いて atomic rename し、target replace より先に active journal を永続化する。journal の parse / schema が壊れている場合は自動削除や推測復旧をせず fail-closed にし、journal と `.bak` / `.tmp` を保持したまま手動復旧手順をエラーに出す。truncated journal と rename order の回帰テストを追加する。
+- **教訓**: multi-file transaction の metadata と backup は target と同じ重要度を持つ。壊れた journal を消すと復旧証拠まで失うため、atomic write、shape validation、fail-closed preservation を一体で実装する。
+
+### LL-163: migration transaction は recovery・read・write を同一の排他 ownership で囲む
+- **事象**: `clean-source-noise --apply` を複数起動すると、同じ journal と data artifact に対して recovery と write が並行し得た。また rollback 中の restore が失敗しても cleanup が走り、次回復旧に必要な journal / backup を失う経路があった。
+- **根本原因**: atomic rename は各 file の置換だけを保護し、migration 全体の単一 writer 性を保証しない。cleanup も rollback の成否と分離されていた。
+- **対策**: journal sibling の lock file を exclusive create し、recovery、artifact read、migration compute、transaction write の全区間を同じ owner token で保護する。cleanup 前に ownership を再検証し、rollback が全 target で成功した場合だけ journal / backup / temp を削除する。rollback 失敗時は証拠を保持し、次回 recovery で復旧可能な回帰テストを追加する。
+- **教訓**: multi-file migration の安全性は atomic write だけでは成立しない。単一 writer ownership と「復旧完了後だけ証拠を消す」条件を transaction contract に含める。
+
+### LL-164: 品質不合格 cache は再生成対象にするだけでなく read path からも除外する
+- **事象**: summary cache の汚染を検出して再生成対象へ追加しても、同じ cache 値を output entry へ適用していたため、認証不在や生成失敗時に有効な既存要約が汚染値で上書きされた。
+- **根本原因**: cache 品質判定を scheduling にだけ使い、cache read / apply の可否判定へ共有していなかった。
+- **対策**: cache と entry を合成した候補が summary quality contract を満たす場合だけ output に適用する。不合格 cache は entry の現行値を保持したまま再生成対象へ入れ、生成不能時にも汚染を publish しないテストを追加する。
+- **教訓**: validation は「後で直す対象の選定」だけでなく「今その値を利用してよいか」の gate にもする。同じ validation 結果を scheduling と read path で対称に使う。
+
+### LL-165: canonical URL key は hostname だけでなく非 default port を含む authority を保持する
+- **事象**: `canonicalUrlKey` が `URL.hostname` だけで key を作り、同一 host の `:8443` と `:9443` を同じ記事として dedupe していた。
+- **根本原因**: 一般的な公開 URL に port が無い前提で authority を hostname へ縮退し、origin を区別する非 default port を落としていた。
+- **対策**: `URL.port` が非空の場合は `hostname:port` を canonical authority に使い、異なる custom port が別 key になるテストを追加する。default port は URL parser の正規化に従い省略する。
+- **教訓**: URL identity の正規化では tracking query や default port は除去してよいが、origin を変える authority 情報は保持する。
+
+### LL-166: visual active と `aria-current="page"` は別の状態として判定する
+- **事象**: category detail や archive month で親 section の shortcut を visual active にする目的で `pageKey` を使った結果、現在 URL と一致しない親 link にも `aria-current="page"` が付いていた。top-level page の bare `Sidebar` では Timeline まで active になっていた。
+- **根本原因**: section context を示す見た目の highlight と、現在の page そのものを示す accessibility semantic を 1 つの boolean で表現していた。
+- **対策**: visual active は `pageKey` / sidebar の明示 `active` で維持し、`aria-current="page"` は正規化した pathname と href が完全一致する link だけに付ける。Sidebar の default は neutral にし、Timeline 系ページだけ `active="all"` を明示する。
+- **教訓**: ancestor section の強調は navigation context、`aria-current` は exact destination である。両者を分離し、1 page 内で current page link が重複しないことを E2E で確認する。
+
+### LL-167: bilingual DOM を検索 index に渡すときは title metadata を単一値で明示する
+- **事象**: 記事 detail の H1 に JA / EN span を同居させたところ、Pagefind の自動 title 抽出が両方の text を連結し、検索結果 title が重複して見えた。
+- **根本原因**: CSS で片方を非表示にしても static indexer は DOM text を読み、表示言語の状態を推測しない。
+- **対策**: article head に `data-pagefind-meta="title[content]"` の meta を置き、表示用に選定した単一 title を明示する。E2E で metadata が 1 件で JA title と一致することを確認する。
+- **教訓**: 多言語表示の DOM 構造と検索 index の文書 model は分ける。indexer が読む title / filter / sort は explicit metadata で単一値を渡す。
+
+### LL-168: 同じ data artifact を更新する migration/cache writer は共有 lock を使う
+- **事象**: migration の単一 writer lock は process が `SIGKILL` されると残り続け、後続実行を永久に拒否した。一方で summary cache writer は同じ index を lock なしで更新し、migration の結果を stale snapshot で上書きできた。
+- **根本原因**: lock に owner の生存判定と安全な回収手順がなく、同じ artifact を更新する writer 間でも排他 contract を共有していなかった。
+- **対策**: migration と summary cache apply が同じ journal sibling lock を使う。既存 lock は schema を検証し、PID が確実に存在しない場合だけ固有 quarantine path へ atomic rename してから `wx` で再取得する。alive、権限不明、malformed lock は証拠を保持して fail-closed にする。
+- **教訓**: stale lock の自動削除は競合を再導入する。dead owner の確証、atomic claim、再取得の3条件を満たす場合だけ回収し、read-modify-write の全区間を同じ ownership で囲む。
+
+### LL-169: body-file migration は index 本文を sidecar へ移してから strip する
+- **事象**: cleaner が live entry の `bodyJa` / `bodyEn` を先に空にし、その後 `data/bodies.json` を canonical alias だけで整合していたため、index にだけ残る実本文を失い得た。
+- **根本原因**: 破壊的 strip が enrichment sidecar への transfer より先に実行され、reconciliation の入力にも元 index entry を渡していなかった。
+- **対策**: original index entry の実 bilingual body を final live ID または canonical winner ID へ `legacy-index-migration` として mergeし、その payload を transaction に含めてから index を本文フリーにする。
+- **教訓**: artifact 分離 migration は copy、検証、strip の順にする。sidecar の既存値だけでなく、破壊前の source artifact 自体を transfer 入力に含める。
+
+### LL-170: summary 品質 gate は元記事 title を含め、全 cache apply 経路へ対称適用する
+- **事象**: model response の title が翻訳されていると、summary が元記事 title の裸 echo でも response 内だけの比較では合格した。また `--force-summary` は contaminated/pending/title-echo cache を index へ強制適用できた。
+- **根本原因**: 品質判定の title candidates に original entry context がなく、通常生成と cache apply、force apply が同じ validation contract を共有していなかった。
+- **対策**: `hasUsableBilingualSummary` に original `title` / `titleJa` / `titleEn` を追加候補として渡し、通常生成、cache read、force apply の全経路で同じ gate を通す。不合格 cache は title、summary、importance、tags を一切適用しない。
+- **教訓**: 生成物の自己整合だけでは source echo を検出できない。validation は元入力を含む end-to-end contract とし、強制オプションでも品質 gate を迂回させない。
+
+### LL-171: 検索の Unicode 正規化と focus 復帰は script と起動経路を限定しない
+- **事象**: exact search が NFKD 後に全 combining mark を削除し、日本語の濁点・半濁点まで失った。また `/` shortcut は opener を保存せず、Escape 後の focus が body に落ちた。
+- **根本原因**: Latin accent folding を全 script に一律適用し、click trigger だけを search opener と仮定していた。
+- **対策**: combining mark は Latin 文字に続く場合だけ除去し、他 script は保持して NFC へ戻す。keyboard shortcut は起動時の active element が到達可能なら opener として保存し、close 時に focus を復帰する。
+- **教訓**: Unicode normalization は言語横断の文字削除にしない。dismissible UI の opener は click、keyboard、programmatic の全経路で記録する。
+
+### LL-172: broad-feed の security 語彙と run severity は境界ケースを end-to-end で固定する
+- **事象**: 有効な Windows Defender `0-day` 記事が Tech News の include vocabulary に一致せず migration で archive から消えた。全 source failure は audit severity では Critical なのに共有表示は Warning だった。
+- **根本原因**: broad-feed の妥当な security 表現と aggregate health の全滅条件が、それぞれ単一ソースの filter/status contract に含まれていなかった。
+- **対策**: registry の Tech News relevance に `0-day` / `zero-day` を追加して実タイトルを regression test に固定する。共有 run-health に `sourcesAttempted` / `sourcesOk` を渡し、fresh run でも `attempted > 0 && ok === 0` は ERR とする。
+- **教訓**: filter false negative は実際に失われた title を fixture にし、severity は監査と UI が同じ aggregate telemetry から導出する。検出側だけ Critical にして表示側を Warning に残さない。
+
+### LL-173: custom agent の権限は mode と runtime tool の両方で設計する
+- **事象**: TechDBAgent が audit 専用の role と固定 tool 制限を持ち、session 作成、実装、テスト、PR follow-through など通常の delivery 操作を担当できなかった。
+- **根本原因**: persona audit の安全境界と親 orchestrator の実行権限を同じ agent 定義で一律に制限し、依頼内容に応じた mode 分離が無かった。
+- **対策**: `tools` allowlist を省略して runtime 公開 tool を利用可能にし、audit / delivery / release の 3 mode を定義した。audit と persona 子 agent は read-only、delivery / release は session・編集・検証・PR 操作を許可する一方、secret、main 直接 push、force 系、未承認 deploy / secret mutation、危険な cleanup は全 mode 共通で禁止した。
+- **教訓**: custom agent の権限拡張は「全操作を許す」ことではない。runtime が公開する capability と依頼 mode の二段階で許可し、承認境界と破壊的操作禁止は agent file 内に残す。
+
+### LL-174: CI の頻発失敗は artifact 上限、Worker fan-out、browser wait を別々に制御する
+- **事象**: 直近 workflow 履歴で CI と Worker Health の失敗が繰り返され、data artifact サイズ、Worker の invocation 負荷、Playwright の locator 待機がそれぞれ release を阻害していた。
+- **根本原因**: `data/bodies.json` が本文を無期限保持し、collector は 1 run の source fan-out が大きく、E2E は複数 locator の `boundingBox()` を並列に待っていた。異なる budget を 1 つの「CI flake」として扱うと、局所 retry だけで再発する。
+- **対策**: body retention を evergreen / importance 2-3 / 直近 30 日に限定して `bodies.json` を 1,432 件から 1,021 件、約 6.74 MB に縮小した。source rotation は 4 から 6 batch に分け、1 invocation の collection fan-out を抑えた。E2E の関連寸法計測は、表示待機後に 1 回の DOM evaluation で複数 `DOMRect` を取得する形へ変更した。
+- **教訓**: CI / health failure は disk size、subrequest / CPU、browser implicit wait の budget ごとに測る。artifact は retention policy、Worker は bounded batch、E2E は explicit state wait と synchronous DOM snapshot で予防し、retry 回数を増やして隠さない。
+
+### LL-175: summary-only consumer は timeout と token budget も短い contract に揃える
+- **事象**: summarizer は `titleJa + summaryJa + summaryEn` だけを生成する summary-only contract へ移行済みなのに、設定は旧 long-form body 時代の 180 秒 timeout と 6000 tokens を保持していた。
+- **根本原因**: prompt / completion contract の変更時に worker config と retry budget を対称更新せず、失敗 request が queue slot を長時間占有できる状態を残した。
+- **対策**: primary timeout を 60 秒、recovery timeout を 45 秒、max tokens を 1600 に縮小し、`worker-summarizer/wrangler.toml` と config test を同じ値へ同期した。既存の Queue retry と concurrency 2 は維持する。
+- **教訓**: 非同期 enrichment の contract を短くしたら、prompt だけでなく token、timeout、retry、health 表示を同時に揃える。長い旧 budget は品質余白ではなく backlog の slot 占有時間になる。
+
+### LL-176: fixed mobile navigation の視覚位置と DOM / keyboard 順序を分離しない
+- **事象**: mobile tabbar は CSS で画面下部に fixed 表示されていたが、DOM では footer 後に置かれ、主要 content より後の keyboard navigation 順序になっていた。寸法 E2E も複数 `boundingBox()` の暗黙待機に依存していた。
+- **根本原因**: CSS の視覚配置だけを primary navigation の順序とみなし、DOM 順序と一括レイアウト snapshot を acceptance criteria に含めていなかった。
+- **対策**: tabbar を header / site menu 直後、main content より前へ移し、DOM order を E2E で固定した。関連するカード寸法は visible state を先に確認し、1 回の `getBoundingClientRect()` snapshot で検証する。
+- **教訓**: fixed UI は見た目が下にあっても DOM / focus 順序は別である。primary navigation は content より前に置き、視覚位置、DOM 順序、focus、viewport 寸法を別々に検証する。
+
+### LL-177: operational status は表示文、programmatic scope、クリック領域を同じ意味単位にする
+- **事象**: Status hero の scope 説明が日本語だけで、説明語と実カード見出しも一致していなかった。3 枚の summary card は同じ `data-health-scope` を持ち、`+0` が run 差分か backlog 総数か判別しにくかった。footer は run label だけが link で、隣接する詳細文は同じ表示単位に見えてもクリックできなかった。
+- **根本原因**: 運用指標を追加する際、表示 copy、i18n、機械可読属性、pointer affordance を別々に実装し、同じ scope を一意に追跡できる end-to-end contract を持たせていなかった。
+- **対策**: `PageHero` に optional bilingual description を追加し、Status 説明を実カード名へ一致させた。summary throughput / backlog / ETA に固有 `data-health-scope` と共通 domain を与え、run 差分値には説明を付けた。footer は run label と batch / pending detail を 1 つの link に統合し、E2E で各 scope、言語切替、全クリック領域を検証した。
+- **教訓**: operational dashboard の metric は、見出し、説明、値の母集団、機械可読 scope、クリック領域を 1 つの意味単位として設計する。多言語画面では hero の補助文も toggle 対象にし、隣接して一体に見える status text は一部だけを link にしない。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

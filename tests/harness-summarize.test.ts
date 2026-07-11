@@ -4,13 +4,20 @@
  * harness/pipeline/summarize.ts の parseModelResponse() 単体テスト。
  * AI モデルへのネットワーク呼び出しは一切行わない。
  */
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import {
   isCompleteSummaryResponse,
   needsGeneratedContent,
   parseModelResponse,
   resolveSummarizeModel,
+  stripIndexBodies,
+  summarize,
 } from "../harness/pipeline/summarize.ts";
+import type { NormalizedEntry } from "../harness/types.ts";
+import { buildSummaryPrompt } from "../worker/src/prompt.ts";
 
 describe("parseModelResponse", () => {
   it("正常な JSON を正しくパースする", () => {
@@ -114,46 +121,100 @@ describe("resolveSummarizeModel", () => {
 });
 
 describe("needsGeneratedContent", () => {
-  it("deterministic fallback summary と本文欠落を backfill 対象にする", () => {
+  it("deterministic fallback summary は backfill 対象にする", () => {
     expect(needsGeneratedContent({
       summaryJa: "このエントリは zenn から収集した tech-news 領域の最新アップデートです。",
       summaryEn: "English summary.",
-      bodyJa: "日本語本文",
-      bodyEn: "English body.",
     })).toBe(true);
     expect(needsGeneratedContent({
       summaryJa: "日本語要約",
       summaryEn: "tech-news update from zenn. AI summary not yet available; a future Worker run will refresh this entry.",
-      bodyJa: "日本語本文",
-      bodyEn: "English body.",
-    })).toBe(true);
-    expect(needsGeneratedContent({
-      summaryJa: "日本語要約",
-      summaryEn: "English summary.",
-      bodyJa: "",
-      bodyEn: "English body.",
     })).toBe(true);
   });
 
-  it("両言語 summary/body が揃った entry は backfill 対象にしない", () => {
+  it("empty bodies でも real bilingual summaries が揃っていれば backfill 対象にしない", () => {
     expect(needsGeneratedContent({
       summaryJa: "日本語要約",
       summaryEn: "English summary.",
-      bodyJa: "日本語本文",
-      bodyEn: "English body.",
     })).toBe(false);
+  });
+
+  it("non-empty contaminated summary は backfill 対象にする", () => {
+    expect(needsGeneratedContent({
+      title: "collab-staging",
+      titleEn: "collab-staging",
+      summaryJa: "編集予測の品質計測を改善した。",
+      summaryEn: "Left some junk in the readme and forgot to remove oopsies Release Notes: N/A or Added/Fixed/Improved",
+    })).toBe(true);
+  });
+
+});
+
+describe("summarize cache application", () => {
+  it("does not overwrite a valid entry with contaminated cache when generation is unavailable", async () => {
+    const dataDir = mkdtempSync(join(tmpdir(), "tech-dashboard-summary-cache-"));
+    const url = "https://example.com/clean-entry";
+    const entry: NormalizedEntry = {
+      id: "clean-entry",
+      source: "example",
+      sourceType: "blog",
+      url,
+      title: "A clean release",
+      titleJa: "クリーンなリリース",
+      titleEn: "A clean release",
+      summaryJa: "既存の有効な日本語要約。",
+      summaryEn: "The existing English summary is valid.",
+      lang: "en",
+      publishedAt: "2026-07-01T00:00:00.000Z",
+      collectedAt: "2026-07-01T01:00:00.000Z",
+      tags: ["release"],
+      category: "tech-news",
+      importance: 2,
+    };
+    writeFileSync(
+      join(dataDir, "_summary-cache.json"),
+      JSON.stringify({
+        [url]: {
+          titleJa: "汚染されたタイトル",
+          summaryJa: "汚染された日本語要約。",
+          summaryEn: "Forgot to remove oopsies before publishing.",
+          importance: 3,
+          extraTags: ["contaminated"],
+        },
+      }),
+      "utf8",
+    );
+
+    const previousToken = process.env.COPILOT_TOKEN;
+    const previousPat = process.env.COPILOT_PAT;
+    delete process.env.COPILOT_TOKEN;
+    delete process.env.COPILOT_PAT;
+    try {
+      const result = await summarize([entry], dataDir);
+      expect(result.entries[0]?.titleJa).toBe(entry.titleJa);
+      expect(result.entries[0]?.summaryJa).toBe(entry.summaryJa);
+      expect(result.entries[0]?.summaryEn).toBe(entry.summaryEn);
+      expect(result.entries[0]?.tags).toEqual(entry.tags);
+      expect(result.stats).toMatchObject({ cached: 0, skipped: 1 });
+    } finally {
+      if (previousToken === undefined) delete process.env.COPILOT_TOKEN;
+      else process.env.COPILOT_TOKEN = previousToken;
+      if (previousPat === undefined) delete process.env.COPILOT_PAT;
+      else process.env.COPILOT_PAT = previousPat;
+      rmSync(dataDir, { recursive: true, force: true });
+    }
   });
 });
 
 describe("isCompleteSummaryResponse", () => {
-  it("本文込みの完全な応答だけを成功扱いにする", () => {
+  it("titleJa + bilingual summary があれば本文なしでも成功扱いにする", () => {
     const parsed = parseModelResponse(
       JSON.stringify({
         titleJa: "タイトル",
         summaryJa: "日本語要約",
         summaryEn: "English summary.",
-        bodyJa: "日本語本文",
-        bodyEn: "English body.",
+        bodyJa: "",
+        bodyEn: "",
         importance: 2,
         extraTags: [],
       }),
@@ -163,5 +224,77 @@ describe("isCompleteSummaryResponse", () => {
     expect(isCompleteSummaryResponse(parseModelResponse("not json"))).toBe(
       false,
     );
+  });
+
+  it("contaminated summary response は成功扱いにしない", () => {
+    const parsed = parseModelResponse(JSON.stringify({
+      titleJa: "タイトル",
+      summaryJa: "有効な日本語要約。",
+      summaryEn: "Forgot to remove oopsies before publishing.",
+      importance: 2,
+      extraTags: [],
+    }));
+    expect(isCompleteSummaryResponse(parsed)).toBe(false);
+  });
+
+  it("元記事タイトルをそのまま返す summary response は成功扱いにしない", () => {
+    const parsed = parseModelResponse(JSON.stringify({
+      titleJa: "モデルが生成した日本語タイトル",
+      summaryJa: "更新の要点を日本語で説明した。",
+      summaryEn: "Original release title.",
+      importance: 2,
+      extraTags: [],
+    }));
+
+    expect(
+      isCompleteSummaryResponse(parsed, ["Original release title"]),
+    ).toBe(false);
+  });
+});
+
+describe("buildSummaryPrompt", () => {
+  it("summary-only contract で body fields や long-form 要求を含まない", () => {
+    const prompt = buildSummaryPrompt({
+      title: "Amazon Bedrock introduces new advanced prompt optimization and migration tool",
+      category: "agent-fw",
+      source: "aws-ml-blog",
+      sourceType: "blog",
+      url: "https://example.com/bedrock",
+      contentSnippet: "AWS announced prompt optimization improvements for Bedrock.",
+    });
+
+    expect(prompt).toContain('"titleJa"');
+    expect(prompt).toContain('"summaryJa"');
+    expect(prompt).toContain('"summaryEn"');
+    expect(prompt).not.toContain('"bodyJa"');
+    expect(prompt).not.toContain('"bodyEn"');
+    expect(prompt).not.toContain("700〜1100");
+    expect(prompt).not.toContain("500-800 words");
+  });
+});
+
+describe("stripIndexBodies", () => {
+  it("legacy cache hit body values cannot repopulate index entries", () => {
+    const stripped = stripIndexBodies({
+      id: "entry-1",
+      source: "aws-ml-blog",
+      sourceType: "blog",
+      url: "https://example.com/bedrock",
+      title: "Amazon Bedrock introduces new advanced prompt optimization and migration tool",
+      titleJa: "Bedrock の高度な最適化",
+      titleEn: "Amazon Bedrock introduces new advanced prompt optimization and migration tool",
+      summaryJa: "日本語要約",
+      summaryEn: "English summary.",
+      bodyJa: "legacy cached body",
+      bodyEn: "legacy cached english body",
+      lang: "en",
+      publishedAt: "2026-07-01T00:00:00.000Z",
+      collectedAt: "2026-07-01T01:00:00.000Z",
+      tags: ["aws"],
+      category: "agent-fw",
+      importance: 2,
+    });
+    expect(stripped.bodyJa).toBe("");
+    expect(stripped.bodyEn).toBe("");
   });
 });

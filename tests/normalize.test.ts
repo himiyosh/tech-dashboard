@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { decorateReleaseTitle, detectLang, normalize } from "../harness/pipeline/normalize.ts";
+import { decorateReleaseTitle, detectLang, normalize, restampEntryFromSource } from "../harness/pipeline/normalize.ts";
+import { normalizeTag, normalizeTags } from "../harness/pipeline/tag.ts";
 import type { RawEntry, SourceDefinition } from "../harness/types.ts";
 
 const releaseSource: SourceDefinition = {
@@ -65,6 +66,63 @@ describe("normalize summary fields", () => {
     const long = "x".repeat(400);
     const entry = normalize({ ...rawEntry("Long"), contentSnippet: long }, releaseSource, "2026-05-10T01:00:00.000Z");
     expect(entry.contentSnippet?.length).toBe(280);
+  });
+});
+
+describe("tag normalization", () => {
+  it("collapses known singular, spelling, and release aliases", () => {
+    expect(normalizeTag("AI Agent")).toBe("ai-agents");
+    expect(normalizeTags([
+      "ai-agent",
+      "ai-agents",
+      "prerelease",
+      "pre-release",
+      "patch",
+      "benchmarks",
+      "zed-editor",
+      "vs-code",
+      "open-models",
+      "agents",
+      "open-source",
+    ])).toEqual([
+      "agent",
+      "ai-agents",
+      "benchmark",
+      "open-model",
+      "open-source",
+      "patch-release",
+      "pre-release",
+      "vscode",
+      "zed",
+    ]);
+    expect(normalizeTag("open-source")).toBe("open-source");
+  });
+
+  it("normalizes source auto tags before publishing a fresh entry", () => {
+    const aliasedSource: SourceDefinition = {
+      ...releaseSource,
+      autoTags: ["ai-agent", "benchmarks", "zed-editor"],
+    };
+    const entry = normalize(rawEntry("v3.8.0"), aliasedSource, "2026-05-10T01:00:00.000Z");
+    expect(entry.tags).toEqual(["ai-agents", "benchmark", "zed"]);
+  });
+
+  it("applies the tag cap before display sorting so later tags cannot displace authoritative tags", () => {
+    const authoritative = [
+      "source-z",
+      "source-y",
+      "source-x",
+      "source-w",
+      "source-v",
+      "source-u",
+      "source-t",
+      "source-s",
+      "source-r",
+      "source-q",
+    ];
+    expect(normalizeTags([...authoritative, "aaa-model-extra"], 10)).toEqual(
+      [...authoritative].sort(),
+    );
   });
 });
 
@@ -168,5 +226,22 @@ describe("normalize category override", () => {
       "2026-05-10T01:00:00.000Z",
     );
     expect(entry.category).toBe("copilot");
+  });
+});
+
+describe("restampEntryFromSource", () => {
+  it("preserves existing AI/cache-derived importance during restamp", () => {
+    const entry = normalize(rawEntry("v3.8.0"), releaseSource, "2026-05-10T01:00:00.000Z");
+    const restamped = restampEntryFromSource(
+      {
+        ...entry,
+        importance: 3,
+        summaryJa: "実要約",
+        summaryEn: "Real summary",
+      },
+      releaseSource,
+      "2026-06-10T01:00:00.000Z",
+    );
+    expect(restamped.importance).toBe(3);
   });
 });

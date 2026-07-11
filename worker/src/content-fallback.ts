@@ -1,4 +1,5 @@
 import type { NormalizedEntry } from "../../harness/types.ts";
+import { isContaminatedSummaryText } from "../../harness/pipeline/summary-quality.ts";
 
 export interface ContentFallbackResult {
   entry: NormalizedEntry;
@@ -56,7 +57,9 @@ export function buildFallbackSummary(entry: NormalizedEntry): Pick<NormalizedEnt
 
 export function applyDeterministicContentFallback(entry: NormalizedEntry): ContentFallbackResult {
   const next: NormalizedEntry = { ...entry };
-  const summary = buildFallbackSummary(entry);
+  if (isContaminatedSummaryText(next.summaryJa)) next.summaryJa = "";
+  if (isContaminatedSummaryText(next.summaryEn)) next.summaryEn = "";
+  const summary = buildFallbackSummary(next);
   let summaryFallbacks = 0;
 
   if (!text(next.summaryJa) && text(summary.summaryJa)) {

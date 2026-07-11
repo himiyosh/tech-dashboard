@@ -1,8 +1,159 @@
 import { describe, expect, it } from "vitest";
 import { buildStatsPayload } from "../harness/publishers/stats-core.ts";
-import { buildIncrementalStats } from "../worker/src/index.ts";
+import type { NormalizedEntry } from "../harness/types.ts";
+import {
+  assertArchiveMonthBaseline,
+  assertHistoryBaselinePair,
+  buildIncrementalStats,
+  parseBaselineJson,
+  selectArchiveUpdateEntries,
+} from "../worker/src/index.ts";
 
 const GEN = "2026-06-23T00:00:00.000Z";
+
+function entry(id: string, publishedAt: string, category = "tech-news"): NormalizedEntry {
+  return {
+    id,
+    source: "test-source",
+    sourceType: "blog",
+    url: "https://example.com/" + id,
+    title: "Title " + id,
+    titleJa: "Title " + id,
+    titleEn: "Title " + id,
+    summaryJa: "日本語要約 " + id,
+    summaryEn: "English summary " + id,
+    bodyJa: "",
+    bodyEn: "",
+    lang: "en",
+    publishedAt,
+    collectedAt: "2026-06-23T00:00:00.000Z",
+    tags: ["test"],
+    category,
+    importance: 2,
+    archiveTier: "hot",
+    halfLife: "news",
+  } as NormalizedEntry;
+}
+
+describe("archive incremental scope (LL-152)", () => {
+  it("selects only new or changed index entries for archive reads", () => {
+    const unchanged = entry("unchanged", "2026-06-20T00:00:00.000Z");
+    const changed = entry("changed", "2026-06-21T00:00:00.000Z");
+    const next = [
+      { ...unchanged },
+      { ...changed, summaryEn: "Updated English summary" },
+      entry("new", "2026-06-22T00:00:00.000Z"),
+    ];
+
+    expect(selectArchiveUpdateEntries({ entries: [unchanged, changed] }, next).map((item) => item.id)).toEqual([
+      "changed",
+      "new",
+    ]);
+    expect(selectArchiveUpdateEntries(null, [unchanged]).map((item) => item.id)).toEqual(["unchanged"]);
+  });
+
+  describe("archive baseline publish guards", () => {
+    it("throws when a fetched archive index, stats file, or month is invalid JSON", () => {
+      for (const path of [
+        "data/archive/_index.json",
+        "data/stats.json",
+        "data/archive/2026-06.json",
+      ]) {
+        expect(() => parseBaselineJson(path, { content: "{broken" })).toThrow(
+          `refusing to publish with invalid baseline ${path}`,
+        );
+      }
+    });
+
+    it("allows an absent baseline artifact to bootstrap", () => {
+      expect(parseBaselineJson("data/stats.json", null)).toBeNull();
+    });
+
+    it("throws when the archive index exists without stats", () => {
+      expect(() => assertHistoryBaselinePair({ content: "{}" }, null)).toThrow(
+        "history baseline pair is incomplete; data/stats.json is missing",
+      );
+    });
+
+    it("throws when stats exist without the archive index", () => {
+      expect(() => assertHistoryBaselinePair(null, { content: "{}" })).toThrow(
+        "history baseline pair is incomplete; data/archive/_index.json is missing",
+      );
+    });
+
+    it("allows both history baseline files to exist or both to be missing", () => {
+      expect(() => assertHistoryBaselinePair({ content: "{}" }, { content: "{}" })).not.toThrow();
+      expect(() => assertHistoryBaselinePair(null, null)).not.toThrow();
+    });
+
+    it("throws when the archive index records entries for a missing touched month", () => {
+      expect(() =>
+        assertArchiveMonthBaseline(
+          "2026-06",
+          { perMonth: { "2026-06": 42 } },
+          null,
+        ),
+      ).toThrow("archive index records 42 entries for 2026-06");
+    });
+
+    it("allows a genuinely new touched month to start without a file", () => {
+      expect(() =>
+        assertArchiveMonthBaseline(
+          "2026-07",
+          { perMonth: { "2026-06": 42 } },
+          null,
+        ),
+      ).not.toThrow();
+    });
+  });
+
+  it("removes exhausted touched days and prunes stale baseline days", () => {
+    const removed = [
+      entry("day-a", "2026-06-01T00:00:00.000Z"),
+      entry("day-b", "2026-06-01T00:00:00.000Z"),
+    ];
+    const existing = buildStatsPayload(removed, GEN);
+    existing.byDay.push({ date: "2026-01-01", count: 1, byCategory: { "tech-news": 1 } });
+
+    const out = buildIncrementalStats({
+      existing,
+      removed,
+      added: [],
+      liveCount: 0,
+      generatedAt: GEN,
+    });
+
+    expect(out.byDay.some((day) => day.date === "2026-06-01")).toBe(false);
+    expect(out.byDay.some((day) => day.date === "2026-01-01")).toBe(false);
+  });
+
+  it("replaces touched-month stats without re-adding untouched live entries", () => {
+    const oldJune = [
+      entry("june-a", "2026-06-01T00:00:00.000Z"),
+      entry("june-b", "2026-06-02T00:00:00.000Z"),
+    ];
+    const untouchedMay = entry("may", "2026-05-20T00:00:00.000Z");
+    const existing = buildStatsPayload([...oldJune, untouchedMay], GEN);
+    const newJune = [
+      { ...oldJune[0]!, category: "research" as const },
+      oldJune[1]!,
+      entry("june-new", "2026-06-03T00:00:00.000Z"),
+    ];
+
+    const out = buildIncrementalStats({
+      existing,
+      removed: oldJune,
+      added: newJune,
+      liveCount: 4,
+      generatedAt: GEN,
+    });
+
+    expect(out.totals.allTime).toBe(4);
+    expect(out.byMonth.find((month) => month.month === "2026-05")?.count).toBe(1);
+    expect(out.byMonth.find((month) => month.month === "2026-06")?.count).toBe(3);
+    expect(out.byMonth.find((month) => month.month === "2026-06")?.byCategory.research).toBe(1);
+  });
+});
 
 describe("buildIncrementalStats totals clamp (LL-110)", () => {
   it("clamps a drifted allTime up to >= liveCount and >= last30d", () => {

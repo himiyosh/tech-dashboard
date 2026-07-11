@@ -1274,6 +1274,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: `PageHero` に optional bilingual description を追加し、Status 説明を実カード名へ一致させた。summary throughput / backlog / ETA に固有 `data-health-scope` と共通 domain を与え、run 差分値には説明を付けた。footer は run label と batch / pending detail を 1 つの link に統合し、E2E で各 scope、言語切替、全クリック領域を検証した。
 - **教訓**: operational dashboard の metric は、見出し、説明、値の母集団、機械可読 scope、クリック領域を 1 つの意味単位として設計する。多言語画面では hero の補助文も toggle 対象にし、隣接して一体に見える status text は一部だけを link にしない。
 
+### LL-178: rotating UI の E2E は DOM 先頭ではなく安定した操作面を選ぶ
+- **事象**: detail 導線の E2E が `a[href^="/e/"]` の DOM 先頭を click し、ticker の inactive slide (`aria-hidden="true"`, `tabindex="-1"`) を選んだ。auto-advance 中の active slide や sticky header が pointer event を奪い、初回は 30 秒 timeout、retry だけ成功した。
+- **根本原因**: global selector の先頭がユーザー操作可能だと仮定し、同じ URL pattern を持つ rotating ticker と静的 Timeline card を区別していなかった。retry 成功を selector の正しさの代替にできない。
+- **対策**: detail page を開く smoke test は `main article.card h3.title` 内の静的 Timeline link を共通 selector にし、ticker の hidden state を click 対象から除外した。retry 回数は増やさず、テスト対象の surface と状態を selector 自体に含める。
+- **教訓**: carousel / ticker / tab panel の hidden node は DOM に残る。E2E の click selector は URL や tag 名だけでなく、所有 surface と actionable state を指定する。初回失敗後の retry PASS は成功ではなく flake として修正する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

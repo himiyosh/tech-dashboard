@@ -1,6 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 
+const TIMELINE_ENTRY_LINK_SELECTOR = 'main article.card h3.title > a[href^="/e/"]';
+
 test.describe("TECH Dashboard smoke", () => {
   test("home renders primary sections", async ({ page }) => {
     await page.goto("/");
@@ -400,7 +402,7 @@ test.describe("TECH Dashboard smoke", () => {
   test("first internal article link opens detail page", async ({ page }) => {
     await page.goto("/");
 
-    const firstEntryLink = page.locator('a[href^="/e/"]').first();
+    const firstEntryLink = page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first();
     await expect(firstEntryLink).toBeVisible();
 
     await firstEntryLink.click();
@@ -457,7 +459,7 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("entry freshness badge links to matching status source row", async ({ page }) => {
     await page.goto("/");
-    const firstEntryLink = page.locator('a[href^="/e/"]').first();
+    const firstEntryLink = page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first();
     await expect(firstEntryLink).toBeVisible();
     await firstEntryLink.click();
     await expect(page).toHaveURL(/\/e\/.+\/$/);
@@ -691,7 +693,7 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("detail page exposes one explicit Pagefind title instead of concatenating language variants", async ({ page }) => {
     await page.goto("/");
-    const detailHref = await page.locator('a[href^="/e/"]').first().getAttribute("href");
+    const detailHref = await page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first().getAttribute("href");
     expect(detailHref, "home should link to at least one detail page").toBeTruthy();
     await page.goto(detailHref!);
 
@@ -1713,7 +1715,7 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("article detail explains source tier and source-average denominator", async ({ page }) => {
     await page.goto("/");
-    const firstEntryLink = page.locator('a[href^="/e/"]').first();
+    const firstEntryLink = page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first();
     await expect(firstEntryLink).toBeVisible();
     await firstEntryLink.click();
     await expect(page).toHaveURL(/\/e\/.+\/$/);

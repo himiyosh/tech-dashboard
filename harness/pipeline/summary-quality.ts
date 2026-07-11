@@ -28,6 +28,10 @@ function normalized(value: string | null | undefined): string {
   return (value ?? "").replace(/\s+/g, " ").trim().toLowerCase();
 }
 
+function normalizedTitleEchoCandidate(value: string | null | undefined): string {
+  return normalized(value).replace(/^\p{P}+|\p{P}+$/gu, "").trim();
+}
+
 export function isDeterministicPendingSummaryText(value: string | null | undefined): boolean {
   const text = (value ?? "").trim();
   const lower = text.toLowerCase();
@@ -50,12 +54,18 @@ export function isBareTitleEcho(
   value: string | null | undefined,
   titles: ReadonlyArray<string | null | undefined>,
 ): boolean {
-  const summary = normalized(value);
-  return Boolean(summary && titles.some((title) => normalized(title) === summary));
+  const summary = normalizedTitleEchoCandidate(value);
+  return Boolean(
+    summary
+      && titles.some((title) => normalizedTitleEchoCandidate(title) === summary),
+  );
 }
 
-export function hasUsableBilingualSummary(input: SummaryQualityInput): boolean {
-  const titles = [input.title, input.titleJa, input.titleEn];
+export function hasUsableBilingualSummary(
+  input: SummaryQualityInput,
+  additionalTitleCandidates: ReadonlyArray<string | null | undefined> = [],
+): boolean {
+  const titles = [input.title, input.titleJa, input.titleEn, ...additionalTitleCandidates];
   return [input.summaryJa, input.summaryEn].every((summary) => {
     const value = (summary ?? "").trim();
     return Boolean(

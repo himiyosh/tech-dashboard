@@ -28,9 +28,9 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | `COPILOT_PAT` 更新 | `cd worker && npx wrangler secret put COPILOT_PAT` | `/status` Worker Health が `summarize disabled` |
 | `GH_TOKEN` 更新 | `cd worker && npx wrangler secret put GH_TOKEN` | Worker run で push 失敗 → commit 履歴が止まる |
 | (緊急) 手動収集 | `npm run collect` | バックログ滞留時 (例: 1h に 5 件以上の新着) |
-| (緊急) cache 済み要約/本文の再反映 | `npm run summaries:apply-cache` | `data/_summary-cache.json` には body があるのに `data/index.json` 側が空の時 |
-| (緊急) summary/body 欠落の deterministic 補完 | `npm run summaries:apply-cache -- --fill-missing-body` | LLM backfill が詰まり、cache が無い entry も含めて `data/index.json` の空欄を確実に埋めたい時 |
-| (緊急) 不足要約/本文のバルク補充 | `SUMMARIZE_MAX_NEW=400 npx tsx --env-file-if-exists=.env.local scripts/resummarize.mjs` | 過去エントリの `summaryJa` / `bodyJa` / `bodyEn` がまとめて欠けている時 |
+| (緊急) cache 済み要約の再反映 | `npm run summaries:apply-cache` | `data/_summary-cache.json` に有効な bilingual summary があるのに `data/index.json` 側が未反映の時 |
+| (緊急) 不足要約のバルク補充 | `SUMMARIZE_MAX_NEW=400 npx tsx --env-file-if-exists=.env.local scripts/resummarize.mjs` | 過去エントリの `summaryJa` / `summaryEn` がまとめて欠けている時 |
+| (migration) 旧 index 本文の sidecar 移行 | `npm run body:migrate` | `data/index.json` の旧 `bodyJa` / `bodyEn` を `data/bodies.json` へ移して index を本文フリーにする時 |
 | (緊急) og:image バックフィル | `node scripts/backfill-og.mjs` | `image.source = "fallback"` が大量に残る時 |
 | (緊急) リリースタイトル整形バックフィル | `node --experimental-strip-types scripts/backfill-release-titles.mjs` | バージョン番号のみのタイトルを補正したい時 |
 
@@ -409,7 +409,7 @@ tech-dashboard/
 ├─ scripts/
 │  ├─ backfill-og.mjs                  # data/index.json の og:image を一括バックフィル
 │  ├─ backfill-release-titles.mjs      # version-only タイトル ("v3.8.0" 等) に source 名を前置
-│  ├─ apply-summary-cache.mjs          # data/_summary-cache.json の要約/本文を data/index.json に再反映、必要時は deterministic body fallback
+│  ├─ apply-summary-cache.mjs          # 品質 gate 済みの要約を data/_summary-cache.json から data/index.json へ再反映
 │  ├─ resummarize.mjs                  # 既存エントリの不足要約/本文を Copilot で一括補充 (緊急用)
 │  ├─ scan-secrets.mjs                 # redacted secret scanner (current / staged / history / range)
 │  ├─ install-hooks.sh                 # repo-managed git hooks 有効化

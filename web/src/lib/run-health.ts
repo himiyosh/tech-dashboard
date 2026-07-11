@@ -4,6 +4,8 @@ export interface WorkerHealthSnapshot {
   lastRunAt: string;
   copilotOk: boolean;
   sourcesFailed: string[];
+  sourcesAttempted?: number;
+  sourcesOk?: number;
 }
 
 export interface WorkerRunStatusOptions {
@@ -51,6 +53,13 @@ export function deriveWorkerRunStatus({
   const lastRunHours = Number.isFinite(lastRunMs) ? (nowMs - lastRunMs) / 3600_000 : Number.POSITIVE_INFINITY;
   if (lastRunHours > staleRunHours) {
     return buildStatus("err", `no run in ${staleRunHours}h+`);
+  }
+  if (
+    typeof workerHealth.sourcesAttempted === "number"
+    && workerHealth.sourcesAttempted > 0
+    && workerHealth.sourcesOk === 0
+  ) {
+    return buildStatus("err", `all ${workerHealth.sourcesAttempted} sources failed`);
   }
   if (!workerHealth.copilotOk) {
     return buildStatus("warn", "summarize disabled");

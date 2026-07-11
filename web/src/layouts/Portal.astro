@@ -19,6 +19,9 @@ const {
   pageKey = "timeline",
   breadcrumb,
 } = Astro.props;
+const currentPath = Astro.url.pathname.replace(/\/+$/, "") || "/";
+const isCurrentHref = (href: string) =>
+  currentPath === (href.replace(/\/+$/, "") || "/");
 
 const navItems = [
   { href: "/", key: "timeline", label: "Timeline", detail: "最新記事と今日見るべき更新" },
@@ -101,7 +104,7 @@ const footerRunDetail = !WORKER_HEALTH
           <a
             href="/categories"
             class={pageKey === "categories" ? "nav-shortcut active" : "nav-shortcut"}
-            aria-current={pageKey === "categories" ? "page" : undefined}
+            aria-current={isCurrentHref("/categories") ? "page" : undefined}
           >
             <span class="nav-icon" aria-hidden="true">▦</span>
             <span>Categories</span>
@@ -109,7 +112,7 @@ const footerRunDetail = !WORKER_HEALTH
           <a
             href="/arxiv"
             class={pageKey === "arxiv" ? "nav-shortcut active paper" : "nav-shortcut paper"}
-            aria-current={pageKey === "arxiv" ? "page" : undefined}
+            aria-current={isCurrentHref("/arxiv") ? "page" : undefined}
           >
             <span class="nav-icon" aria-hidden="true"><ArxivIcon /></span>
             <span>arXiv</span>
@@ -117,7 +120,7 @@ const footerRunDetail = !WORKER_HEALTH
           <a
             href="/knowledge"
             class={pageKey === "knowledge" ? "nav-shortcut active knowledge" : "nav-shortcut knowledge"}
-            aria-current={pageKey === "knowledge" ? "page" : undefined}
+            aria-current={isCurrentHref("/knowledge") ? "page" : undefined}
           >
             <span class="nav-icon" aria-hidden="true">✦</span>
             <span>Knowledge</span>
@@ -141,7 +144,7 @@ const footerRunDetail = !WORKER_HEALTH
             autocomplete="off"
           />
           <span class="search-keys" aria-hidden="true"><kbd>/</kbd><kbd>⌘K</kbd></span>
-          <button type="button" class="search-close" data-search-close aria-label="Close search">
+          <button type="button" class="search-close" data-search-close aria-label="Close search" hidden>
             <span aria-hidden="true">×</span>
           </button>
           <div id="pagefind-results" class="search-results" role="listbox" aria-live="polite" hidden></div>
@@ -154,7 +157,7 @@ const footerRunDetail = !WORKER_HEALTH
           type="button"
           class="menu-trigger"
           data-menu-trigger
-          aria-label="Open navigation menu"
+          aria-label="Open Menu"
           aria-controls="site-menu"
           aria-expanded="false"
         >
@@ -186,7 +189,7 @@ const footerRunDetail = !WORKER_HEALTH
           <a
             href={item.href}
             class={pageKey === item.key ? "active" : ""}
-            aria-current={pageKey === item.key ? "page" : undefined}
+            aria-current={isCurrentHref(item.href) ? "page" : undefined}
           >
             <span>{item.label}</span>
             <small>{item.detail}</small>
@@ -219,13 +222,14 @@ const footerRunDetail = !WORKER_HEALTH
     </div>
 
     <nav class="mobile-tabbar" aria-label="Primary">
-      <a href="/" class={pageKey === "timeline" ? "active" : ""} aria-current={pageKey === "timeline" ? "page" : undefined}><span aria-hidden="true">⌂</span><span>Home</span></a>
-      <a href="/categories" class={pageKey === "categories" ? "active" : ""} aria-current={pageKey === "categories" ? "page" : undefined}><span aria-hidden="true">▦</span><span>Categories</span></a>
-      <a href="/arxiv" class={pageKey === "arxiv" ? "active" : ""} aria-current={pageKey === "arxiv" ? "page" : undefined}><span aria-hidden="true"><ArxivIcon /></span><span>arXiv</span></a>
-      <a href="/knowledge" class={pageKey === "knowledge" ? "active" : ""} aria-current={pageKey === "knowledge" ? "page" : undefined}><span aria-hidden="true">✦</span><span>Knowledge</span></a>
+      <a href="/" class={pageKey === "timeline" ? "active" : ""} aria-current={isCurrentHref("/") ? "page" : undefined}><span aria-hidden="true">⌂</span><span>Home</span></a>
+      <a href="/categories" class={pageKey === "categories" ? "active" : ""} aria-current={isCurrentHref("/categories") ? "page" : undefined}><span aria-hidden="true">▦</span><span>Categories</span></a>
+      <a href="/arxiv" class={pageKey === "arxiv" ? "active" : ""} aria-current={isCurrentHref("/arxiv") ? "page" : undefined}><span aria-hidden="true"><ArxivIcon /></span><span>arXiv</span></a>
+      <a href="/knowledge" class={pageKey === "knowledge" ? "active" : ""} aria-current={isCurrentHref("/knowledge") ? "page" : undefined}><span aria-hidden="true">✦</span><span>Knowledge</span></a>
       <button
         type="button"
         data-menu-trigger
+        aria-label="Open Menu"
         aria-controls="site-menu"
         aria-expanded="false"
         class={menuOwnsCurrentPage ? "active" : ""}
@@ -233,6 +237,8 @@ const footerRunDetail = !WORKER_HEALTH
     </nav>
 
     <script>
+      import { normalizeSearchText } from "../lib/search-normalize.ts";
+
       // Language toggle (Ja / En) — sync with <html data-lang="...">.
       (() => {
         const apply = (l: "ja" | "en") => {
@@ -268,6 +274,7 @@ const footerRunDetail = !WORKER_HEALTH
           menu.hidden = !open;
           triggers.forEach((trigger) => {
             trigger.setAttribute("aria-expanded", open ? "true" : "false");
+            trigger.setAttribute("aria-label", open ? "Close Menu" : "Open Menu");
             trigger.classList.toggle("is-open", open);
           });
           if (open) {
@@ -377,6 +384,7 @@ const footerRunDetail = !WORKER_HEALTH
         const establishSearchState = () => {
           (window as any).__tdCloseMenu?.();
           searchRoot.classList.add("is-open");
+          if (closeButton) closeButton.hidden = false;
           setTriggerActive(true);
         };
         const nextRequestGeneration = () => ++requestGeneration;
@@ -403,6 +411,7 @@ const footerRunDetail = !WORKER_HEALTH
           panel.removeAttribute("aria-busy");
           panel.replaceChildren();
           searchRoot.classList.remove("is-open");
+          if (closeButton) closeButton.hidden = true;
           setTriggerActive(false);
           setExpanded(false);
           input.blur();
@@ -441,17 +450,15 @@ const footerRunDetail = !WORKER_HEALTH
           return { label: "PAGE", className: "page" };
         };
         const stripTags = (value: string) => value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-        const normalizeExactText = (value: string) =>
-          value.normalize("NFKD").replace(/\p{M}+/gu, "").toLowerCase();
         const resultText = (d: any) =>
-          normalizeExactText(stripTags(`${d.meta?.title || ""} ${d.excerpt || ""} ${d.url || ""}`));
+          normalizeSearchText(stripTags(`${d.meta?.title || ""} ${d.excerpt || ""} ${d.url || ""}`));
         const queryTerms = (q: string) =>
-          normalizeExactText(q).split(/\s+/).filter((term) => term.length >= 2);
+          normalizeSearchText(q).split(/\s+/).filter((term) => term.length >= 2);
         const isExactResult = (item: any, q: string) => {
           const terms = queryTerms(q);
           if (terms.length === 0) return false;
           const text = resultText(item);
-          return text.includes(normalizeExactText(q)) || terms.every((term) => text.includes(term));
+          return text.includes(normalizeSearchText(q)) || terms.every((term) => text.includes(term));
         };
         const hasExactResult = (items: any[], q: string) => items.some((item) => isExactResult(item, q));
 
@@ -585,7 +592,10 @@ const footerRunDetail = !WORKER_HEALTH
           const wantsSearch = e.key === "/" || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k");
           if (wantsSearch && !isTextInput) {
             e.preventDefault();
-            openSearch();
+            const activeElement = document.activeElement;
+            openSearch(activeElement instanceof HTMLElement && activeElement !== document.body
+              ? activeElement
+              : null);
           }
         });
         document.addEventListener("click", (e) => {

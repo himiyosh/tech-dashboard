@@ -30,4 +30,32 @@ describe("summary quality contract", () => {
       summaryEn: "Left some junk in the readme and forgot to remove oopsies",
     })).toBe(true);
   });
+
+  it.each([
+    ["Zed collab-staging.", "summaryEn"],
+    ['"Zed collab-staging"', "summaryEn"],
+    ["「Zed コラボレーション更新」", "summaryJa"],
+  ])("treats a punctuated or quoted title echo as incomplete: %s", (summary, field) => {
+    const input = {
+      title: "Zed collab-staging",
+      titleJa: "Zed コラボレーション更新",
+      titleEn: "Zed collab-staging",
+      summaryJa: "編集予測の品質計測を改善した。",
+      summaryEn: "Zed improved edit prediction quality metrics.",
+      [field]: summary,
+    };
+    expect(needsSummaryGeneration(input)).toBe(true);
+  });
+
+  it("rejects a model summary that echoes an original title outside the response", () => {
+    const response = {
+      titleJa: "モデルが生成した別タイトル",
+      summaryJa: "元記事の内容を日本語で要約した。",
+      summaryEn: "Original source title.",
+    };
+
+    expect(
+      hasUsableBilingualSummary(response, ["Original source title"]),
+    ).toBe(false);
+  });
 });

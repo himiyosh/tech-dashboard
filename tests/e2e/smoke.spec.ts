@@ -689,6 +689,20 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(fallbackBody.locator('[lang="ja"]')).not.toHaveText("");
   });
 
+  test("detail page exposes one explicit Pagefind title instead of concatenating language variants", async ({ page }) => {
+    await page.goto("/");
+    const detailHref = await page.locator('a[href^="/e/"]').first().getAttribute("href");
+    expect(detailHref, "home should link to at least one detail page").toBeTruthy();
+    await page.goto(detailHref!);
+
+    const pagefindTitle = page.locator('meta[data-pagefind-meta="title[content]"]');
+    await expect(pagefindTitle).toHaveCount(1);
+    const indexedTitle = ((await pagefindTitle.getAttribute("content")) ?? "").trim();
+    const visibleJaTitle = ((await page.locator(".ed-title .i18n-ja").textContent()) ?? "").trim();
+    expect(indexedTitle).toBeTruthy();
+    expect(indexedTitle).toBe(visibleJaTitle);
+  });
+
   test("skip link is keyboard visible and focuses content start", async ({ page }) => {
     await page.goto("/");
     const skip = page.locator(".skip-link");
@@ -1045,6 +1059,66 @@ test.describe("TECH Dashboard smoke", () => {
     await firstMonth.click();
     await expect(page).toHaveURL(/\/archive\/\d{4}-\d{2}\/?$/);
     await expect(page.locator("#archive-month-heading")).toBeVisible();
+  });
+
+  test("navigation highlights sections without marking ancestor links as the current page", async ({ page }) => {
+    await page.goto("/categories/");
+    const categoriesShortcut = page.locator('header .nav-shortcut[href="/categories"]');
+    await expect(categoriesShortcut).toHaveClass(/active/);
+    await expect(categoriesShortcut).toHaveAttribute("aria-current", "page");
+    await expect(page.locator('aside.left a.side-item[href="/"]')).not.toHaveClass(/active/);
+    await expect(page.locator('aside.left a.side-item[href="/"]')).not.toHaveAttribute("aria-current");
+
+    await page.goto("/c/copilot/");
+    await expect(categoriesShortcut).toHaveClass(/active/);
+    await expect(categoriesShortcut).not.toHaveAttribute("aria-current");
+    const copilotSidebarLink = page.locator('aside.left a.side-item[href="/c/copilot"]');
+    await expect(copilotSidebarLink).toHaveClass(/active/);
+    await expect(copilotSidebarLink).toHaveAttribute("aria-current", "page");
+    await expect(page.locator('.mobile-tabbar a[href="/categories"]')).toHaveClass(/active/);
+    await expect(page.locator('.mobile-tabbar a[href="/categories"]')).not.toHaveAttribute("aria-current");
+
+    await page.goto("/archive/");
+    await page.locator("header .menu-trigger").click();
+    const archiveMenuLink = page.locator('#site-menu a[href="/archive"]');
+    await expect(archiveMenuLink).toHaveClass(/active/);
+    await expect(archiveMenuLink).toHaveAttribute("aria-current", "page");
+    await archiveMenuLink.click();
+    const firstMonthHref = await page.locator("a.month-card").first().getAttribute("href");
+    expect(firstMonthHref).toBeTruthy();
+    await page.goto(firstMonthHref!);
+    await page.locator("header .menu-trigger").click();
+    await expect(archiveMenuLink).toHaveClass(/active/);
+    await expect(archiveMenuLink).not.toHaveAttribute("aria-current");
+    await expect(page.locator('aside.left a.side-item[href="/"]')).not.toHaveClass(/active/);
+
+    await page.goto("/");
+    const firstTagHref = await page.locator('a[href^="/t/"]').first().getAttribute("href");
+    expect(firstTagHref).toBeTruthy();
+    await page.goto(firstTagHref!);
+    const timelineSidebarLink = page.locator('aside.left a.side-item[href="/"]');
+    await expect(timelineSidebarLink).toHaveClass(/active/);
+    await expect(timelineSidebarLink).not.toHaveAttribute("aria-current");
+  });
+
+  test("search close control only enters the focus order while search is open", async ({ page }) => {
+    await page.goto("/");
+    const closeSearch = page.getByRole("button", { name: "Close search", includeHidden: true });
+    await expect(closeSearch).toBeHidden();
+    await expect(closeSearch).toHaveAttribute("hidden", "");
+
+    const shortcutOpener = page.locator('header .nav-shortcut[href="/categories"]');
+    await shortcutOpener.focus();
+    await expect(shortcutOpener).toBeFocused();
+    await page.keyboard.press("/");
+    await expect(page.locator("#pagefind-search-input")).toBeFocused();
+    await expect(closeSearch).toBeVisible();
+    await expect(closeSearch).not.toHaveAttribute("hidden");
+
+    await page.keyboard.press("Escape");
+    await expect(closeSearch).toBeHidden();
+    await expect(closeSearch).toHaveAttribute("hidden", "");
+    await expect(shortcutOpener).toBeFocused();
   });
 
   test("hamburger menu owns navigation and mobile tabbar stays compact", async ({ page }) => {

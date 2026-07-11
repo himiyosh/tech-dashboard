@@ -4,6 +4,9 @@
  * harness/pipeline/summarize.ts の parseModelResponse() 単体テスト。
  * AI モデルへのネットワーク呼び出しは一切行わない。
  */
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import {
   isCompleteSummaryResponse,
@@ -11,7 +14,9 @@ import {
   parseModelResponse,
   resolveSummarizeModel,
   stripIndexBodies,
+  summarize,
 } from "../harness/pipeline/summarize.ts";
+import type { NormalizedEntry } from "../harness/types.ts";
 import { buildSummaryPrompt } from "../worker/src/prompt.ts";
 
 describe("parseModelResponse", () => {
@@ -145,6 +150,62 @@ describe("needsGeneratedContent", () => {
 
 });
 
+describe("summarize cache application", () => {
+  it("does not overwrite a valid entry with contaminated cache when generation is unavailable", async () => {
+    const dataDir = mkdtempSync(join(tmpdir(), "tech-dashboard-summary-cache-"));
+    const url = "https://example.com/clean-entry";
+    const entry: NormalizedEntry = {
+      id: "clean-entry",
+      source: "example",
+      sourceType: "blog",
+      url,
+      title: "A clean release",
+      titleJa: "クリーンなリリース",
+      titleEn: "A clean release",
+      summaryJa: "既存の有効な日本語要約。",
+      summaryEn: "The existing English summary is valid.",
+      lang: "en",
+      publishedAt: "2026-07-01T00:00:00.000Z",
+      collectedAt: "2026-07-01T01:00:00.000Z",
+      tags: ["release"],
+      category: "tech-news",
+      importance: 2,
+    };
+    writeFileSync(
+      join(dataDir, "_summary-cache.json"),
+      JSON.stringify({
+        [url]: {
+          titleJa: "汚染されたタイトル",
+          summaryJa: "汚染された日本語要約。",
+          summaryEn: "Forgot to remove oopsies before publishing.",
+          importance: 3,
+          extraTags: ["contaminated"],
+        },
+      }),
+      "utf8",
+    );
+
+    const previousToken = process.env.COPILOT_TOKEN;
+    const previousPat = process.env.COPILOT_PAT;
+    delete process.env.COPILOT_TOKEN;
+    delete process.env.COPILOT_PAT;
+    try {
+      const result = await summarize([entry], dataDir);
+      expect(result.entries[0]?.titleJa).toBe(entry.titleJa);
+      expect(result.entries[0]?.summaryJa).toBe(entry.summaryJa);
+      expect(result.entries[0]?.summaryEn).toBe(entry.summaryEn);
+      expect(result.entries[0]?.tags).toEqual(entry.tags);
+      expect(result.stats).toMatchObject({ cached: 0, skipped: 1 });
+    } finally {
+      if (previousToken === undefined) delete process.env.COPILOT_TOKEN;
+      else process.env.COPILOT_TOKEN = previousToken;
+      if (previousPat === undefined) delete process.env.COPILOT_PAT;
+      else process.env.COPILOT_PAT = previousPat;
+      rmSync(dataDir, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("isCompleteSummaryResponse", () => {
   it("titleJa + bilingual summary があれば本文なしでも成功扱いにする", () => {
     const parsed = parseModelResponse(
@@ -174,6 +235,20 @@ describe("isCompleteSummaryResponse", () => {
       extraTags: [],
     }));
     expect(isCompleteSummaryResponse(parsed)).toBe(false);
+  });
+
+  it("元記事タイトルをそのまま返す summary response は成功扱いにしない", () => {
+    const parsed = parseModelResponse(JSON.stringify({
+      titleJa: "モデルが生成した日本語タイトル",
+      summaryJa: "更新の要点を日本語で説明した。",
+      summaryEn: "Original release title.",
+      importance: 2,
+      extraTags: [],
+    }));
+
+    expect(
+      isCompleteSummaryResponse(parsed, ["Original release title"]),
+    ).toBe(false);
   });
 });
 

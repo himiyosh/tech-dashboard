@@ -187,7 +187,7 @@ async function callCopilot(
   }
   const text = data.choices?.[0]?.message?.content ?? "";
   const parsed = parseModelResponse(text);
-  if (!isCompleteSummaryResponse(parsed)) {
+  if (!isCompleteSummaryResponse(parsed, [entry.title, entry.titleJa, entry.titleEn])) {
     throw new Error("model response missing required clean summary fields");
   }
   return {
@@ -217,8 +217,12 @@ export function parseModelResponse(text: string): {
 
 export function isCompleteSummaryResponse(
   parsed: ReturnType<typeof parseModelResponse>,
+  originalTitleCandidates: ReadonlyArray<string | null | undefined> = [],
 ): boolean {
-  return Boolean(parsed.titleJa && hasUsableBilingualSummary(parsed));
+  return Boolean(
+    parsed.titleJa
+      && hasUsableBilingualSummary(parsed, originalTitleCandidates),
+  );
 }
 
 async function runWithConcurrency<T, R>(
@@ -284,19 +288,7 @@ export async function summarize(
     const hit = cache[e.url];
     const cachedTitleJa = hit?.titleJa || e.titleJa;
     if (hit && cachedTitleJa && hit.summaryJa && hit.summaryEn) {
-      // Re-summarize only missing/fallback summaries. Legacy body fields may
-      // exist in cache, but index entries must stay body-free (LL-115).
-      if (needsGeneratedContent({
-        ...hit,
-        title: e.title,
-        titleJa: cachedTitleJa,
-        titleEn: e.titleEn,
-      })) {
-        needsSummary.push(e);
-      } else {
-        stats.cached++;
-      }
-      return stripIndexBodies({
+      const cachedEntry = stripIndexBodies({
         ...e,
         titleJa: cachedTitleJa,
         summaryJa: hit.summaryJa,
@@ -304,6 +296,14 @@ export async function summarize(
         importance: hit.importance,
         tags: dedupeTags([...e.tags, ...hit.extraTags]),
       });
+      // Re-summarize only missing/fallback summaries. Legacy body fields may
+      // exist in cache, but index entries must stay body-free (LL-115).
+      if (needsGeneratedContent(cachedEntry)) {
+        needsSummary.push(e);
+        return stripIndexBodies(e);
+      }
+      stats.cached++;
+      return cachedEntry;
     }
     if (needsGeneratedContent(e)) needsSummary.push(e);
     return stripIndexBodies(e);

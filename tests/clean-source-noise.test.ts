@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { NormalizedEntry } from "../harness/types.ts";
 import {
+  acquireWriteTransactionLock,
   buildOriginalLiveAliases,
   buildMigrationStatsPayload,
   dedupeByCanonical,
@@ -570,6 +571,33 @@ describe("clean-source-noise bodies reconciliation", () => {
     expect(merge.payload.bodies["filtered-alias"]).toBeUndefined();
     expect(merge.payload.bodies["filtered-unrelated"]).toBeUndefined();
   });
+
+  it("moves real legacy index bodies into bodies.json before stripping index fields", () => {
+    const merge = reconcileBodiesPayload(
+      {
+        generatedAt: "2026-07-01T00:00:00.000Z",
+        count: 0,
+        bodies: {},
+      },
+      new Set(["winner"]),
+      "2026-07-02T00:00:00.000Z",
+      new Map([["legacy-alias", "winner"]]),
+      [
+        entry({
+          id: "legacy-alias",
+          bodyJa: "index にだけ残っていた実際の日本語本文",
+          bodyEn: "A real English body that existed only in the index.",
+        }),
+      ],
+    );
+
+    expect(merge.payload.bodies.winner).toEqual({
+      bodyJa: "index にだけ残っていた実際の日本語本文",
+      bodyEn: "A real English body that existed only in the index.",
+      model: "legacy-index-migration",
+      generatedAt: "2026-07-02T00:00:00.000Z",
+    });
+  });
 });
 
 describe("clean-source-noise stats rebuild", () => {
@@ -669,6 +697,147 @@ describe("clean-source-noise batch writes", () => {
       }
       expect(existsSync(journalPath)).toBe(false);
       expect(readdirSync(dir).sort()).toEqual(["2026-07.json", "index.json", "stats.json"]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("preserves the journal and backups when rollback itself fails, then allows a later recovery", () => {
+    const dir = scratchDir("rollback-failure");
+    try {
+      const indexPath = join(dir, "index.json");
+      const archivePath = join(dir, "2026-07.json");
+      const journalPath = join(dir, ".txn.json");
+      const indexOriginal = '{"generation":"old-index"}\n';
+      const archiveOriginal = '{"generation":"old-archive"}\n';
+      writeFileSync(indexPath, indexOriginal, "utf8");
+      writeFileSync(archivePath, archiveOriginal, "utf8");
+
+      let targetFailureTriggered = false;
+      expect(() =>
+        writeJsonTransaction(
+          [
+            { path: indexPath, value: { generation: "new-index" } },
+            { path: archivePath, value: { generation: "new-archive" } },
+          ],
+          {
+            journalPath,
+            registerSignalHandlers: false,
+            renameImpl(from, to) {
+              if (!targetFailureTriggered && to === archivePath && from.endsWith(".tmp")) {
+                targetFailureTriggered = true;
+                throw new Error("simulated target replacement failure");
+              }
+              if (targetFailureTriggered && to === indexPath && from.includes(".bak")) {
+                throw new Error("simulated rollback restore failure");
+              }
+              renameSync(from, to);
+            },
+          },
+        )
+      ).toThrow(/rollback was incomplete/);
+
+      const artifacts = readdirSync(dir);
+      expect(existsSync(journalPath)).toBe(true);
+      expect(artifacts.some((name) => name.includes(".bak"))).toBe(true);
+      expect(artifacts.some((name) => name.includes(".tmp"))).toBe(true);
+
+      expect(recoverWriteTransaction(journalPath)).toBe(true);
+      expect(readFileSync(indexPath, "utf8")).toBe(indexOriginal);
+      expect(readFileSync(archivePath, "utf8")).toBe(archiveOriginal);
+      expect(readdirSync(dir).sort()).toEqual(["2026-07.json", "index.json"]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a second transaction while the journal lock is owned", () => {
+    const dir = scratchDir("exclusive-lock");
+    try {
+      const indexPath = join(dir, "index.json");
+      const journalPath = join(dir, ".txn.json");
+      writeFileSync(indexPath, '{"generation":"old"}\n', "utf8");
+      const lock = acquireWriteTransactionLock(journalPath);
+      try {
+        expect(() =>
+          writeJsonTransaction(
+            [{ path: indexPath, value: { generation: "new" } }],
+            { journalPath, registerSignalHandlers: false },
+          )
+        ).toThrow(/Another data artifact writer owns/);
+        expect(readFileSync(indexPath, "utf8")).toBe('{"generation":"old"}\n');
+      } finally {
+        lock.release();
+      }
+      expect(readdirSync(dir).sort()).toEqual(["index.json"]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("reclaims a well-formed lock only when its owner is confirmed dead", () => {
+    const dir = scratchDir("stale-lock");
+    try {
+      const journalPath = join(dir, ".txn.json");
+      const lockPath = `${journalPath}.lock`;
+      writeFileSync(
+        lockPath,
+        JSON.stringify({
+          version: 1,
+          ownerToken: "dead-owner",
+          pid: 424242,
+          createdAt: "2026-07-01T00:00:00.000Z",
+        }, null, 2) + "\n",
+        "utf8",
+      );
+
+      const lock = acquireWriteTransactionLock(journalPath, {
+        processIsAlive: () => false,
+      });
+      expect(JSON.parse(readFileSync(lockPath, "utf8")).ownerToken).toBe(lock.ownerToken);
+      expect(readdirSync(dir).filter((name) => name.endsWith(".stale"))).toEqual([]);
+      lock.release();
+      expect(readdirSync(dir)).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("fails closed when an existing lock owner cannot be confirmed dead", () => {
+    const dir = scratchDir("unknown-lock-owner");
+    try {
+      const journalPath = join(dir, ".txn.json");
+      const lockPath = `${journalPath}.lock`;
+      const original = JSON.stringify({
+        version: 1,
+        ownerToken: "unknown-owner",
+        pid: 525252,
+        createdAt: "2026-07-01T00:00:00.000Z",
+      }, null, 2) + "\n";
+      writeFileSync(lockPath, original, "utf8");
+
+      expect(() =>
+        acquireWriteTransactionLock(journalPath, {
+          processIsAlive: () => null,
+        })
+      ).toThrow(/could not be verified as stopped/);
+      expect(readFileSync(lockPath, "utf8")).toBe(original);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("fails closed and preserves a malformed lock", () => {
+    const dir = scratchDir("malformed-lock");
+    try {
+      const journalPath = join(dir, ".txn.json");
+      const lockPath = `${journalPath}.lock`;
+      writeFileSync(lockPath, '{"version":1', "utf8");
+
+      expect(() => acquireWriteTransactionLock(journalPath)).toThrow(
+        /Transaction lock cannot be verified/,
+      );
+      expect(readFileSync(lockPath, "utf8")).toBe('{"version":1');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

@@ -129,7 +129,7 @@ interface WorkerHealth {
 | ローカル品質ゲート + Worker コード deploy | `scripts/git-hooks/pre-push` | push 前に unit / web build / E2E を実行し、`RUN_WORKER_DEPLOY=1` の `main` push に worker/ 差分がある場合だけ deploy |
 | ヘルス監視 | `data/index.json#health` + `/status` ページ | 実行ごと記録、サイト訪問時に確認 |
 
-**残る手動運用**: 年 1 回の PAT 更新 (`wrangler secret put COPILOT_PAT` / `GH_TOKEN`)。失効時は `/status` の Worker Health が `summarize disabled` に変わるので即気付ける。Worker は commit 前に deterministic summary/body fallback を適用する。cache 済み本文が `data/index.json` に未反映の場合は `npm run summaries:apply-cache` で再反映し、本文そのものが不足する場合は `scripts/resummarize.mjs` を小 batch で実行する。LLM backfill が一部 URL で詰まる場合は `npm run summaries:apply-cache -- --fill-missing-body` を実行し、cache が無い entry も含めて deterministic summary/body fallback を index に反映する。
+**残る手動運用**: 年 1 回の PAT 更新 (`wrangler secret put COPILOT_PAT` / `GH_TOKEN`)。失効時は `/status` の Worker Health が `summarize disabled` に変わるので即気付ける。Worker は commit 前に bilingual summary fallback を適用し、`data/index.json` の本文は必ず空にする。cache 済みの有効な要約が index に未反映の場合だけ `npm run summaries:apply-cache` で再反映する。本文は `data/bodies.json` の専用経路で管理し、旧 index 本文の移行には `npm run body:migrate` を使う。本文未生成時は要約と原文リンクを表示し、deterministic filler body は生成しない。
 
 ---
 

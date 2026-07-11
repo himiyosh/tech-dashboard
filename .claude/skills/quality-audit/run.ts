@@ -132,6 +132,8 @@ function runHealthSnapshot(health?: Index["health"]): WorkerHealthSnapshot | nul
   return {
     lastRunAt: health.lastRunAt,
     copilotOk: health.copilotOk,
+    sourcesAttempted: health.sourcesAttempted,
+    sourcesOk: health.sourcesOk,
     sourcesFailed:
       Array.isArray(health.sourcesFailed) && health.sourcesFailed.length > 0
         ? health.sourcesFailed

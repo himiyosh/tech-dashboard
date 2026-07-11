@@ -18,6 +18,7 @@ import {
   unlinkSync,
   writeFileSync,
 } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { REGISTRY } from "../harness/registry.ts";
@@ -38,6 +39,7 @@ import { buildStatsPayload } from "../harness/publishers/stats-core.ts";
 import { isRealBody, mergeBodies } from "../worker/src/bodies-file.ts";
 
 const DATA_DIR = "./data";
+export const DATA_ARTIFACT_JOURNAL_PATH = join(DATA_DIR, ".clean-source-noise.transaction.json");
 const ISO_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 const SOURCE_TYPES = new Set(["blog", "release", "changelog", "paper", "community"]);
 const ARCHIVE_TIERS = new Set(["hot", "warm", "cold", "dropped"]);
@@ -209,7 +211,143 @@ function safeRemovePath(path) {
   rmSync(path, { force: true });
 }
 
-function cleanupTxnArtifacts(transaction) {
+function transactionLockPath(journalPath) {
+  return `${journalPath}.lock`;
+}
+
+function defaultProcessIsAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    if (error && typeof error === "object" && error.code === "ESRCH") return false;
+    return null;
+  }
+}
+
+function readTransactionLock(lockPath) {
+  let lock;
+  try {
+    lock = JSON.parse(readFileSync(lockPath, "utf8"));
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Transaction lock cannot be verified at ${lockPath}: ${detail}. Preserve it for manual inspection.`,
+    );
+  }
+  if (
+    !isPlainObject(lock)
+    || lock.version !== TXN_VERSION
+    || typeof lock.ownerToken !== "string"
+    || !lock.ownerToken
+    || !Number.isInteger(lock.pid)
+    || lock.pid <= 0
+    || typeof lock.createdAt !== "string"
+    || Number.isNaN(Date.parse(lock.createdAt))
+  ) {
+    throw new Error(
+      `Transaction lock is invalid at ${lockPath}. Preserve it for manual inspection.`,
+    );
+  }
+  return lock;
+}
+
+function assertTransactionLockOwner(journalPath, ownerToken) {
+  const lockPath = transactionLockPath(journalPath);
+  const lock = readTransactionLock(lockPath);
+  if (!isPlainObject(lock) || lock.version !== TXN_VERSION || lock.ownerToken !== ownerToken) {
+    throw new Error(
+      `Transaction lock ownership changed at ${lockPath}. Refusing to modify journal or backup artifacts.`,
+    );
+  }
+}
+
+function releaseWriteTransactionLock(journalPath, ownerToken) {
+  const lockPath = transactionLockPath(journalPath);
+  if (!existsSync(lockPath)) return;
+  assertTransactionLockOwner(journalPath, ownerToken);
+  unlinkSync(lockPath);
+}
+
+export function acquireWriteTransactionLock(journalPath, options = {}) {
+  if (!journalPath) throw new Error("journalPath is required");
+  const lockPath = transactionLockPath(journalPath);
+  const ownerToken = `${process.pid}.${Date.now()}.${randomUUID()}`;
+  const processIsAlive = options.processIsAlive ?? defaultProcessIsAlive;
+  let reclaimedLockPath = null;
+  while (true) {
+    try {
+      writeFileSync(
+        lockPath,
+        JSON.stringify({
+          version: TXN_VERSION,
+          ownerToken,
+          pid: process.pid,
+          createdAt: new Date().toISOString(),
+        }, null, 2) + "\n",
+        { encoding: "utf8", flag: "wx" },
+      );
+      if (reclaimedLockPath) safeRemovePath(reclaimedLockPath);
+      break;
+    } catch (error) {
+      if (!error || typeof error !== "object" || error.code !== "EEXIST") {
+        if (reclaimedLockPath) safeRemovePath(reclaimedLockPath);
+        throw error;
+      }
+
+      let existingLock;
+      try {
+        existingLock = readTransactionLock(lockPath);
+      } catch (lockError) {
+        if (!existsSync(lockPath)) continue;
+        if (reclaimedLockPath) safeRemovePath(reclaimedLockPath);
+        throw lockError;
+      }
+      const alive = processIsAlive(existingLock.pid);
+      if (alive !== false) {
+        if (reclaimedLockPath) safeRemovePath(reclaimedLockPath);
+        const status = alive === true ? "is still running" : "could not be verified as stopped";
+        throw new Error(
+          `Another data artifact writer owns ${lockPath}; PID ${existingLock.pid} ${status}. Do not remove the lock until ownership is verified.`,
+        );
+      }
+
+      const stalePath = `${lockPath}.${randomUUID()}.stale`;
+      try {
+        renameSync(lockPath, stalePath);
+      } catch (renameError) {
+        if (renameError && typeof renameError === "object" && renameError.code === "ENOENT") {
+          continue;
+        }
+        if (reclaimedLockPath) safeRemovePath(reclaimedLockPath);
+        throw renameError;
+      }
+      if (reclaimedLockPath) safeRemovePath(reclaimedLockPath);
+      reclaimedLockPath = stalePath;
+    }
+  }
+
+  if (!existsSync(lockPath)) {
+    if (reclaimedLockPath) safeRemovePath(reclaimedLockPath);
+    throw new Error(
+      `Transaction lock creation could not be verified at ${lockPath}.`,
+    );
+  }
+
+  let released = false;
+  return {
+    ownerToken,
+    lockPath,
+    release() {
+      if (released) return;
+      releaseWriteTransactionLock(journalPath, ownerToken);
+      released = true;
+    },
+  };
+}
+
+function cleanupTxnArtifacts(transaction, ownerToken) {
+  assertTransactionLockOwner(transaction.journalPath, ownerToken);
   for (const file of transaction.files) {
     safeRemovePath(file.tempPath);
     if (file.backupTempPath) safeRemovePath(file.backupTempPath);
@@ -233,46 +371,72 @@ function restoreTxnTargets(transaction, renameImpl = renameSync) {
 }
 
 export function recoverWriteTransaction(journalPath, options = {}) {
-  if (!existsSync(journalPath)) return false;
-  const renameImpl = options.renameImpl ?? renameSync;
-  let transaction;
+  const ownedLock = options.lockToken ? null : acquireWriteTransactionLock(journalPath);
+  const ownerToken = options.lockToken ?? ownedLock.ownerToken;
   try {
-    transaction = JSON.parse(readFileSync(journalPath, "utf8"));
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `Transaction journal is unreadable at ${journalPath}: ${detail}. Automatic recovery was not attempted. Preserve the journal and sibling transaction .bak/.tmp files, restore verified backups manually, then remove the journal before retrying.`,
-    );
+    assertTransactionLockOwner(journalPath, ownerToken);
+    if (!existsSync(journalPath)) return false;
+    const renameImpl = options.renameImpl ?? renameSync;
+    let transaction;
+    try {
+      transaction = JSON.parse(readFileSync(journalPath, "utf8"));
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `Transaction journal is unreadable at ${journalPath}: ${detail}. Automatic recovery was not attempted. Preserve the journal and sibling transaction .bak/.tmp files, restore verified backups manually, then remove the journal before retrying.`,
+      );
+    }
+    const validFiles = isPlainObject(transaction) && Array.isArray(transaction.files)
+      && transaction.files.every((file) =>
+        isPlainObject(file)
+        && typeof file.path === "string"
+        && typeof file.tempPath === "string"
+        && typeof file.backupPath === "string"
+        && typeof file.existed === "boolean"
+      );
+    if (
+      !validFiles
+      || transaction.version !== TXN_VERSION
+      || !["active", "committed"].includes(transaction.state)
+      || transaction.journalPath !== journalPath
+    ) {
+      throw new Error(
+        `Transaction journal is invalid at ${journalPath}. Automatic recovery was not attempted. Preserve the journal and sibling transaction .bak/.tmp files, restore verified backups manually, then remove the journal before retrying.`,
+      );
+    }
+    if (transaction.state !== "committed") {
+      try {
+        restoreTxnTargets(transaction, renameImpl);
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        throw new Error(
+          `Transaction rollback failed for ${journalPath}: ${detail}. Journal, backups, and temporary files were preserved for the next recovery attempt or manual inspection.`,
+          { cause: error },
+        );
+      }
+    }
+    cleanupTxnArtifacts(transaction, ownerToken);
+    return true;
+  } finally {
+    ownedLock?.release();
   }
-  const validFiles = isPlainObject(transaction) && Array.isArray(transaction.files)
-    && transaction.files.every((file) =>
-      isPlainObject(file)
-      && typeof file.path === "string"
-      && typeof file.tempPath === "string"
-      && typeof file.backupPath === "string"
-      && typeof file.existed === "boolean"
-    );
-  if (
-    !validFiles
-    || transaction.version !== TXN_VERSION
-    || !["active", "committed"].includes(transaction.state)
-    || transaction.journalPath !== journalPath
-  ) {
-    throw new Error(
-      `Transaction journal is invalid at ${journalPath}. Automatic recovery was not attempted. Preserve the journal and sibling transaction .bak/.tmp files, restore verified backups manually, then remove the journal before retrying.`,
-    );
-  }
-  if (transaction.state !== "committed") {
-    restoreTxnTargets(transaction, renameImpl);
-  }
-  cleanupTxnArtifacts(transaction);
-  return true;
 }
 
 export function writeJsonTransaction(files, options = {}) {
   const journalPath = options.journalPath;
   if (!journalPath) throw new Error("journalPath is required");
-  recoverWriteTransaction(journalPath, { renameImpl: options.renameImpl });
+  const ownedLock = options.lockToken ? null : acquireWriteTransactionLock(journalPath);
+  const ownerToken = options.lockToken ?? ownedLock.ownerToken;
+  assertTransactionLockOwner(journalPath, ownerToken);
+  try {
+    recoverWriteTransaction(journalPath, {
+      renameImpl: options.renameImpl,
+      lockToken: ownerToken,
+    });
+  } catch (error) {
+    ownedLock?.release();
+    throw error;
+  }
 
   const token = `${process.pid}.${Date.now()}`;
   const transaction = {
@@ -294,11 +458,8 @@ export function writeJsonTransaction(files, options = {}) {
   const renameImpl = options.renameImpl ?? renameSync;
   const signalHandlers = [];
   const recover = () => {
-    try {
-      if (transaction.state === "active") restoreTxnTargets(transaction, renameImpl);
-    } finally {
-      cleanupTxnArtifacts(transaction);
-    }
+    if (transaction.state === "active") restoreTxnTargets(transaction, renameImpl);
+    cleanupTxnArtifacts(transaction, ownerToken);
   };
   const detachSignals = () => {
     for (const [signal, handler] of signalHandlers) process.off(signal, handler);
@@ -336,7 +497,10 @@ export function writeJsonTransaction(files, options = {}) {
         const handler = () => {
           try {
             recover();
+          } catch (error) {
+            console.error(error instanceof Error ? error.message : String(error));
           } finally {
+            releaseWriteTransactionLock(journalPath, ownerToken);
             process.exit(code);
           }
         };
@@ -366,14 +530,22 @@ export function writeJsonTransaction(files, options = {}) {
     );
     renameImpl(transaction.stateTempPath, journalPath);
     transaction.state = "committed";
+    detachSignals();
+    cleanupTxnArtifacts(transaction, ownerToken);
   } catch (error) {
     detachSignals();
-    recover();
+    try {
+      recover();
+    } catch (recoveryError) {
+      throw new AggregateError(
+        [error, recoveryError],
+        `Transaction failed and rollback was incomplete for ${journalPath}. Recovery artifacts were preserved.`,
+      );
+    }
     throw error;
+  } finally {
+    ownedLock?.release();
   }
-
-  detachSignals();
-  cleanupTxnArtifacts(transaction);
 }
 
 function stripBodies(entry) {
@@ -667,7 +839,13 @@ export function buildOriginalLiveAliases(originalEntries, finalEntries) {
   return aliases;
 }
 
-export function reconcileBodiesPayload(existingBodies, liveIds, referenceAt, aliases = new Map()) {
+export function reconcileBodiesPayload(
+  existingBodies,
+  liveIds,
+  referenceAt,
+  aliases = new Map(),
+  sourceEntries = [],
+) {
   const transferredBodies = [];
   for (const [loserId, winnerId] of aliases) {
     const record = existingBodies.bodies[loserId];
@@ -678,6 +856,17 @@ export function reconcileBodiesPayload(existingBodies, liveIds, referenceAt, ali
       bodyEn: record.bodyEn,
       model: record.model,
       cachedAt: record.generatedAt,
+    });
+  }
+  for (const entry of sourceEntries) {
+    const targetId = liveIds.has(entry.id) ? entry.id : aliases.get(entry.id);
+    if (!targetId || !isRealBody(entry)) continue;
+    transferredBodies.push({
+      id: targetId,
+      bodyJa: entry.bodyJa,
+      bodyEn: entry.bodyEn,
+      model: "legacy-index-migration",
+      cachedAt: referenceAt,
     });
   }
   return mergeBodies(existingBodies, transferredBodies, liveIds, referenceAt);
@@ -732,14 +921,18 @@ export async function main(argv = process.argv.slice(2)) {
   const archiveIndexPath = join(archiveDir, "_index.json");
   const statsPath = join(DATA_DIR, "stats.json");
   const bodiesPath = join(DATA_DIR, "bodies.json");
-  const journalPath = join(DATA_DIR, ".clean-source-noise.transaction.json");
-  if (dryRun && existsSync(journalPath)) {
+  const journalPath = DATA_ARTIFACT_JOURNAL_PATH;
+  if (dryRun && (existsSync(journalPath) || existsSync(transactionLockPath(journalPath)))) {
     console.error(
-      `ERROR: Pending transaction journal detected at ${journalPath}; --dry-run is strictly read-only and will not recover or modify it. Run --apply to recover the pending transaction.`,
+      `ERROR: Pending or active transaction detected at ${journalPath}; --dry-run is strictly read-only and will not inspect files while another migration may be writing them. Run --apply after the owning process exits to recover any pending transaction.`,
     );
     return 1;
   }
-  if (!dryRun) recoverWriteTransaction(journalPath);
+  const writeLock = dryRun ? null : acquireWriteTransactionLock(journalPath);
+  try {
+  if (!dryRun) {
+    recoverWriteTransaction(journalPath, { lockToken: writeLock.ownerToken });
+  }
   const index = validateIndexPayload(readJson(indexPath), indexPath);
   const referenceAt = index.generatedAt;
   const report = {
@@ -785,17 +978,25 @@ export async function main(argv = process.argv.slice(2)) {
   );
 
   let bodiesWrite = null;
-  let reconciledBodyCount = null;
-  if (existsSync(bodiesPath)) {
-    const rawBodies = readJson(bodiesPath);
-    const bodies = validateBodiesPayload(rawBodies, bodiesPath);
-    const liveIds = new Set(dedupedLive.map((entry) => entry.id));
-    const originalAliases = buildOriginalLiveAliases(index.entries, dedupedLive);
-    const bodyAliases = new Map([...originalAliases, ...liveDedupe.aliases]);
-    const merge = reconcileBodiesPayload(bodies, liveIds, referenceAt, bodyAliases);
-    reconciledBodyCount = merge.payload.count;
-    const bodyCountDrift = rawBodies.count !== merge.payload.count;
-    if (!dryRun && (merge.changed || bodyCountDrift)) bodiesWrite = { path: bodiesPath, payload: merge.payload };
+  const bodiesExisted = existsSync(bodiesPath);
+  const rawBodies = bodiesExisted
+    ? readJson(bodiesPath)
+    : { generatedAt: referenceAt, count: 0, bodies: {} };
+  const bodies = validateBodiesPayload(rawBodies, bodiesPath);
+  const liveIds = new Set(dedupedLive.map((entry) => entry.id));
+  const originalAliases = buildOriginalLiveAliases(index.entries, dedupedLive);
+  const bodyAliases = new Map([...originalAliases, ...liveDedupe.aliases]);
+  const bodyMerge = reconcileBodiesPayload(
+    bodies,
+    liveIds,
+    referenceAt,
+    bodyAliases,
+    index.entries,
+  );
+  const reconciledBodyCount = bodyMerge.payload.count;
+  const bodyCountDrift = rawBodies.count !== bodyMerge.payload.count;
+  if (!dryRun && (!bodiesExisted || bodyMerge.changed || bodyCountDrift)) {
+    bodiesWrite = { path: bodiesPath, payload: bodyMerge.payload };
   }
 
   printSection("Removed by source", sortedCounts(report.removedBySource));
@@ -841,10 +1042,16 @@ export async function main(argv = process.argv.slice(2)) {
     { path: statsPath, value: statsPayload },
     ...(bodiesWrite ? [{ path: bodiesWrite.path, value: bodiesWrite.payload }] : []),
   ];
-  writeJsonTransaction(filesToWrite, { journalPath });
+  writeJsonTransaction(filesToWrite, {
+    journalPath,
+    lockToken: writeLock.ownerToken,
+  });
 
   console.log(`\nAPPLIED - removed=${report.removed}, reclassified=${report.reclassified}`);
   return 0;
+  } finally {
+    writeLock?.release();
+  }
 }
 
 const isDirectInvoke = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];

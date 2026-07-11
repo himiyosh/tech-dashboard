@@ -90,7 +90,8 @@ export function canonicalUrlKey(rawUrl: string): string | null {
 
     if (host === "youtube.com" && path === "/watch") {
       const videoId = url.searchParams.get("v");
-      return videoId ? `${host}${path}?v=${videoId}` : `${host}${path}`;
+      const authority = url.port ? `${host}:${url.port}` : host;
+      return videoId ? `${authority}${path}?v=${videoId}` : `${authority}${path}`;
     }
 
     const params = [...url.searchParams.entries()]
@@ -99,7 +100,8 @@ export function canonicalUrlKey(rawUrl: string): string | null {
         aName === bName ? aValue.localeCompare(bValue) : aName.localeCompare(bName),
       );
     const query = params.length === 0 ? "" : `?${new URLSearchParams(params).toString()}`;
-    return `${host}${path}${query}`;
+    const authority = url.port ? `${host}:${url.port}` : host;
+    return `${authority}${path}${query}`;
   } catch {
     return null;
   }

@@ -122,9 +122,9 @@ describe("clean-source-noise CLI safety", () => {
 
       expect(result.status).not.toBe(0);
       expect(result.stdout).not.toContain("DRY RUN ONLY");
-      expect(result.stderr).toContain("Pending transaction journal detected");
+      expect(result.stderr).toContain("Pending or active transaction detected");
       expect(result.stderr).toContain("--dry-run is strictly read-only");
-      expect(result.stderr).toContain("Run --apply to recover");
+      expect(result.stderr).toContain("Run --apply after the owning process exits");
       for (const [path, bytes] of before) {
         expect(readFileSync(path)).toEqual(bytes);
       }

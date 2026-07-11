@@ -116,6 +116,8 @@ const TECH_NEWS_RELEVANCE_KEYWORDS = [
   "credential stealer",
   "password vault",
   "vulnerability",
+  "0-day",
+  "zero-day",
   "jailbreak",
   "guardrails",
   "tech debt",

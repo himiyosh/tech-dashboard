@@ -12,9 +12,14 @@ export interface Props {
   active?: Category | "all" | "arxiv";
 }
 
-const { active = "all" } = Astro.props;
+const { active } = Astro.props;
 const counts = countByCategory();
 const total = MAIN_TIMELINE_ENTRIES.length;
+const currentPath = Astro.url.pathname.replace(/\/+$/, "") || "/";
+
+function isCurrentPage(href: string): boolean {
+  return currentPath === (href.replace(/\/+$/, "") || "/");
+}
 
 const groupLabels: Record<CategoryGroup, string> = {
   microsoft: "Microsoft",
@@ -52,7 +57,11 @@ function tileClass(slug: Category): string {
 <aside class="left">
   <div class="side-card">
     <div class="side-title">Categories <span class="sub">{total}</span></div>
-    <a class={`side-item ${active === "all" ? "active" : ""}`} href="/">
+    <a
+      class={`side-item ${active === "all" ? "active" : ""}`}
+      href="/"
+      aria-current={isCurrentPage("/") ? "page" : undefined}
+    >
       <span class="brand-tile bt-all">•</span>
       <span class="name" title="Timeline"><span class="name-marquee">Timeline</span></span>
       <span class="count">{total}</span>
@@ -69,6 +78,7 @@ function tileClass(slug: Category): string {
           class={`side-item ${isActive ? "active" : ""}`}
           href={href}
           aria-label={`${label}, ${title}, ${counts[c.slug]} entries`}
+          aria-current={isCurrentPage(href) ? "page" : undefined}
         >
           <span class={`brand-tile ${tileClass(c.slug)}`} aria-hidden="true">{c.initial}</span>
           <span class="name" title={title}><span class="name-marquee">{label}</span></span>

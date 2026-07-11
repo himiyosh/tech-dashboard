@@ -182,6 +182,7 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
       ["microsoft-source", "Microsoft Research’s Vega lets you prove who you are while protecting your privacy"],
       ["microsoft-source", "Microsoft targets service hiding malware in plain sight"],
       ["ars-technica", "Zero-day exploit completely defeats default Windows 11 BitLocker protections"],
+      ["ars-technica", "Patch for Windows Defender 0-day could allow attackers to fill hard disk"],
       ["ars-technica", "For the 2nd time in weeks, Microsoft packages laced with credential stealer"],
       ["ars-technica", "Dashlane explains how attackers managed to download encrypted password vaults"],
       ["aws-news", "Proactively reduce tech debt autonomously with AWS Transform – continuous modernization (preview)"],

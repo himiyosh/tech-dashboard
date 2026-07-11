@@ -42,6 +42,23 @@ describe("media URL normalization", () => {
   });
 });
 
+describe("canonical URL authorities", () => {
+  it("preserves non-default ports so different origins do not deduplicate", () => {
+    expect(canonicalUrlKey("https://example.com:8443/article")).toBe(
+      "example.com:8443/article",
+    );
+    expect(canonicalUrlKey("https://example.com:8443/article")).not.toBe(
+      canonicalUrlKey("https://example.com:9443/article"),
+    );
+  });
+
+  it("continues to omit default ports normalized by URL parsing", () => {
+    expect(canonicalUrlKey("https://example.com:443/article")).toBe(
+      "example.com/article",
+    );
+  });
+});
+
 describe("Netflix TechBlog canonical URLs", () => {
   const medium =
     "https://medium.com/netflix-techblog/data-projects-managing-data-assets-at-netflix-scale-7ca25888591e?source=rss----2615bd06b42e---4";

@@ -9,6 +9,7 @@ import {
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
+import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { sourceLabel } from "../lib/source-meta.ts";
 
 export interface Props {
@@ -104,6 +105,15 @@ const publishedEn = new Intl.DateTimeFormat("en-US", {
 
 const summaryJaMark = summaryJaResult.isFallback ? "原文EN" : "AI要約";
 const summaryEnMark = summaryEnResult.isFallback ? "原文JA" : "EN";
+const queueDrainHours = DASHBOARD_METRICS.summaryQueueDrainEstimateHours > 0
+  ? Math.max(1, Math.ceil(DASHBOARD_METRICS.summaryQueueDrainEstimateHours))
+  : null;
+const queueDrainJa = queueDrainHours
+  ? `全体キュー解消目安 約${queueDrainHours}時間`
+  : "要約キュー反映待ち";
+const queueDrainEn = queueDrainHours
+  ? `Queue drain estimate: about ${queueDrainHours}h`
+  : "Waiting for the summary queue";
 
 // Generate a deterministic pattern seed from the entry id
 const patternSeed = entry.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
@@ -222,11 +232,11 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
     ) : (
       <p class="summary-state">
         <span class="summary-pending-badge">
-          <span class="i18n-ja">AI要約 生成中</span>
-          <span class="i18n-en" lang="en">AI summary generating</span>
+          <span class="i18n-ja">AI要約 処理中</span>
+          <span class="i18n-en" lang="en">AI summary pending</span>
         </span>
-        <span class="i18n-ja">タイトル・ソース・カテゴリ・重要度で判断できます。要約は生成され次第このカードに反映されます。</span>
-        <span class="i18n-en" lang="en">Decide from the title, source, category, and priority. The summary appears here once generated.</span>
+        <span class="summary-pending-meta i18n-ja">{queueDrainJa} · <a href="/status#worker-health-heading">進行状況</a></span>
+        <span class="summary-pending-meta i18n-en" lang="en">{queueDrainEn} · <a href="/status#worker-health-heading">Status</a></span>
       </p>
     )}
     <div class="card-footer">

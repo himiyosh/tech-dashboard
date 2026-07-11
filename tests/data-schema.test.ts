@@ -19,6 +19,10 @@ import { normalizeTag } from "../harness/pipeline/tag.ts";
 import { canonicalUrlKey } from "../harness/pipeline/url.ts";
 import { REGISTRY } from "../harness/registry.ts";
 import type { NormalizedEntry } from "../harness/types.ts";
+import {
+  DEFAULT_BODY_RETENTION_DAYS,
+  isBodyRetentionEligible,
+} from "../worker/src/body-queue.ts";
 
 interface RawEntry {
   id?: unknown;
@@ -374,6 +378,24 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
   it("bodies.json は運用上限を超えない (10MB)", () => {
     if (!existsSync(bodiesPath)) return;
     expect(statSync(bodiesPath).size).toBeLessThanOrEqual(10_000_000);
+  });
+
+  it("bodies.json は evergreen・重要記事・直近30日の本文だけを保持する", () => {
+    const entriesById = new Map(data.entries.map((entry) => [String(entry.id), entry]));
+    const referenceMs = Date.parse(data.generatedAt);
+    const invalid = Object.keys(bodies?.bodies ?? {}).filter((id) => {
+      const entry = entriesById.get(id);
+      if (!entry) return true;
+      return !isBodyRetentionEligible(
+        entry as Pick<
+          NormalizedEntry,
+          "evergreen" | "importance" | "publishedAt" | "collectedAt"
+        >,
+        referenceMs,
+        DEFAULT_BODY_RETENTION_DAYS,
+      );
+    });
+    expect(invalid).toEqual([]);
   });
 });
 

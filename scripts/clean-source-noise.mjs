@@ -37,6 +37,10 @@ import {
 } from "../harness/publishers/archive-core.ts";
 import { buildStatsPayload } from "../harness/publishers/stats-core.ts";
 import { isRealBody, mergeBodies } from "../worker/src/bodies-file.ts";
+import {
+  DEFAULT_BODY_RETENTION_DAYS,
+  isBodyRetentionEligible,
+} from "../worker/src/body-queue.ts";
 
 const DATA_DIR = "./data";
 export const DATA_ARTIFACT_JOURNAL_PATH = join(DATA_DIR, ".clean-source-noise.transaction.json");
@@ -983,7 +987,15 @@ export async function main(argv = process.argv.slice(2)) {
     ? readJson(bodiesPath)
     : { generatedAt: referenceAt, count: 0, bodies: {} };
   const bodies = validateBodiesPayload(rawBodies, bodiesPath);
-  const liveIds = new Set(dedupedLive.map((entry) => entry.id));
+  const referenceMs = Date.parse(referenceAt);
+  const bodyRetentionEntries = dedupedLive.filter((entry) =>
+    isBodyRetentionEligible(
+      entry,
+      Number.isFinite(referenceMs) ? referenceMs : Date.now(),
+      DEFAULT_BODY_RETENTION_DAYS,
+    ),
+  );
+  const liveIds = new Set(bodyRetentionEntries.map((entry) => entry.id));
   const originalAliases = buildOriginalLiveAliases(index.entries, dedupedLive);
   const bodyAliases = new Map([...originalAliases, ...liveDedupe.aliases]);
   const bodyMerge = reconcileBodiesPayload(

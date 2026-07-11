@@ -42,7 +42,7 @@ argument-hint: "scope or suspected regression"
 | R-001b: main への直接 push / merge をしていないか | `git log origin/main..HEAD` で未マージ commit を確認 |
 | R-003: web build が web で自己完結しているか | `web/src/**` から `../../../harness/` への runtime import がないことを grep で確認 |
 | R-009: secret が staged / tracked に混入していないか | `npm run secrets:scan` と `npm run secrets:scan:worktree` を実行 |
-| R-012: live index が body-free architecture を守っているか | `data/index.json` で非空 `bodyJa` / `bodyEn` 件数が 0、本文は `data/bodies.json` にあることを確認 |
+| R-012: live index が body-free architecture と retention を守っているか | `data/index.json` で非空 `bodyJa` / `bodyEn` 件数が 0、本文は `data/bodies.json` にあり、retention 対象外 record が 0 であることを `tests/data-schema.test.ts` で確認 |
 | R-013: summary fallback が全 live entry に適用済みか | `summaryJa` / `summaryEn` の両方が非空であることを確認し、body は `data/bodies.json` 側で管理する |
 
 ### C-02: ナビゲーション状態 (NAVIGATION)
@@ -58,6 +58,7 @@ argument-hint: "scope or suspected regression"
 - [ ] Mobile: `#site-menu` は下部 tabbar の Menu から開き、tabbar 上に収まる bottom-sheet として表示される
 - [ ] Mobile: hero 直下に重複 stats / 長い説明文の余白がなく、最初の Featured/article が `390x844` で十分上に見える (目安: `y <= 340`)
 - [ ] Mobile: tabbar の item 数と CSS grid 列数が一致している (item 数と `grid-auto-columns` か `repeat(N,...)` を比較)
+- [ ] Mobile: fixed tabbar が DOM 上でも main content より前にあり、keyboard navigation の primary route が footer 後へ回らない
 - [ ] Mobile: 横スクロールが発生しない (`scrollWidth <= innerWidth`)
 - [ ] Mobile: tabbar の `safe-area-inset-bottom` が考慮されている
 
@@ -127,6 +128,7 @@ npx playwright test tests/e2e/smoke.spec.ts --reporter=line
 - [ ] `data/index.json` のサイズが極端に大きくないか (目安: 15 MB 未満)
 - [ ] `data/index.json` に非空 `bodyJa` / `bodyEn` が残っていないか (expected: 0)
 - [ ] `data/bodies.json` が存在し、record count / coverage が確認できるか
+- [ ] `data/bodies.json` に body retention 対象外 (non-evergreen、importance 1、既定 30 日より古い) の record が残っていないか (`npx vitest run tests/data-schema.test.ts`)
 - [ ] archive 月別ファイルが 8 MB 未満か
 - [ ] `data/index.json` の `generatedAt` が古すぎず、`data/stats.json` / `data/archive/_index.json` と大きく乖離していないか
 - [ ] `publishedAt === collectedAt` のミリ秒一致が全体の 5% 未満か
@@ -218,7 +220,7 @@ Agent selector で TechDBAgent を選び、対象 URL または local preview UR
 ## ✅ 問題なし
 
 - C-05 build & E2E: 全件 PASS
-- C-06 data quality: index body populated 0 件, bodies.json coverage X%, titleEn 欠落 X% (閾値内)
+- C-06 data quality: index body populated 0 件, bodies.json coverage X%, retention violations 0 件, titleEn 欠落 X% (閾値内)
 - C-08 persona journey: Critical / Warning なし
 
 ## 新規 LL

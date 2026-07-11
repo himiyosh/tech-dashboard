@@ -32,7 +32,11 @@ import {
   type SummaryJob,
 } from "./summary-queue.ts";
 import { type BodyJob } from "./body-generate.ts";
-import { selectBodyJobBatch } from "./body-queue.ts";
+import {
+  DEFAULT_BODY_RETENTION_DAYS,
+  isBodyRetentionEligible,
+  selectBodyJobBatch,
+} from "./body-queue.ts";
 import { getBodyCacheEntries } from "./body-cache.ts";
 import {
   bodiesPresentSet,
@@ -93,6 +97,7 @@ interface Env {
   // Max body jobs to enqueue per cron (consumer writes one `b:` KV per job,
   // bounded by the shared KV daily write budget, LL-043).
   BODY_ENQUEUE_MAX_NEW?: string;
+  BODY_RETENTION_DAYS?: string;
   // Max `b:` KV entries to read per cron when merging generated bodies into
   // data/bodies.json. Each is one subrequest (LL-088 subrequest budget).
   BODY_LOOKUP_CAP?: string;
@@ -106,11 +111,16 @@ const SUMMARIZER_ISSUE_KEY = "summarizer.issue.v1";
 const DEFAULT_SUMMARIZE_TIMEOUT_MS = 25_000;
 const DEFAULT_SUMMARIZE_CONCURRENCY = 4;
 const DEFAULT_SUMMARY_RETRY_COOLDOWN_MS = 2 * 60 * 60_000;
+export const SOURCE_BATCHES = 6;
 // Retry on Copilot timeout doubles subrequest cost without meaningfully
 // raising success rate (sonnet long-form responses just need wall-time,
 // not another attempt). Single attempt keeps us within the 1000-subrequest
 // per-invocation budget. See LL-034.
 const SUMMARIZE_ATTEMPTS = 1;
+
+export function sourceBatchIndexAt(nowMs: number): number {
+  return Math.floor(nowMs / 3600_000) % SOURCE_BATCHES;
+}
 
 interface SummarizerIssue {
   status?: unknown;
@@ -1008,12 +1018,10 @@ async function runHarness(
   // Exclude file-system-backed sources (e.g. user-opml reads data/user-opml.xml).
   const allSources = listSources().filter((s) => s.id !== "user-opml");
 
-  // Cloudflare Free Workers cap subrequests at 50 per invocation, so we cannot
-  // fetch all 50 sources in a single run. Rotate sources across SOURCE_BATCHES
-  // batches keyed by hour, so each source is refreshed every SOURCE_BATCHES hours.
-  // Subrequest budget per run: ~13 sources + 1 GH read + 5 Copilot + 4 OG + 1 GH put = ~24.
-  const SOURCE_BATCHES = 4;
-  const naturalBatch = Math.floor(Date.now() / 3600_000) % SOURCE_BATCHES;
+  // Rotate sources across six hourly batches. This lowers the peak collection
+  // and parsing load from roughly fourteen to nine sources per invocation while
+  // keeping each registry source on a predictable six-hour refresh cadence.
+  const naturalBatch = sourceBatchIndexAt(Date.now());
   const batchIndex =
     opts.batchOverride !== undefined
       ? ((opts.batchOverride % SOURCE_BATCHES) + SOURCE_BATCHES) % SOURCE_BATCHES
@@ -1827,6 +1835,8 @@ interface BodyPipelineResult {
     bodyMerged: number;
     bodyPruned: number;
     bodiesTotal: number;
+    bodyRetentionDays: number;
+    bodyRetentionEligible: number;
   };
 }
 
@@ -1846,6 +1856,18 @@ async function runBodyPipeline(
   existingBodiesContent: string | null,
   generatedAt: string,
 ): Promise<BodyPipelineResult> {
+  const retentionDays = Math.max(
+    1,
+    Number(env.BODY_RETENTION_DAYS ?? DEFAULT_BODY_RETENTION_DAYS),
+  );
+  const referenceMs = Date.parse(generatedAt);
+  const retainedEntries = liveEntries.filter((entry) =>
+    isBodyRetentionEligible(
+      entry,
+      Number.isFinite(referenceMs) ? referenceMs : Date.now(),
+      retentionDays,
+    ),
+  );
   const disabled = (mode: string): BodyPipelineResult => ({
     bodiesFileContent: null,
     enqueued: 0,
@@ -1858,6 +1880,8 @@ async function runBodyPipeline(
       bodyMerged: 0,
       bodyPruned: 0,
       bodiesTotal: parseBodies(existingBodiesContent).count,
+      bodyRetentionDays: retentionDays,
+      bodyRetentionEligible: retainedEntries.length,
     },
   });
 
@@ -1870,7 +1894,7 @@ async function runBodyPipeline(
   try {
     const existingBodies = parseBodies(existingBodiesContent);
     const present = bodiesPresentSet(existingBodies);
-    const liveIds = new Set(liveEntries.map((e) => e.id));
+    const retainedIds = new Set(retainedEntries.map((e) => e.id));
 
     // SHARED selection for BOTH merge-lookup and enqueue (LL-116 / LL-102
     // symmetry). The merge MUST look up `b:` keys for the SAME entries the
@@ -1887,7 +1911,7 @@ async function runBodyPipeline(
       );
     }
     const enqueueCap = Math.min(configuredEnqueueCap, lookupCap);
-    const selection = selectBodyJobBatch(liveEntries, present, lookupCap);
+    const selection = selectBodyJobBatch(retainedEntries, present, lookupCap);
 
     // 1) Merge: read `b:` KV for the selected entries and fold any freshly
     //    generated bodies into bodies.json (prune happens in mergeBodies).
@@ -1901,7 +1925,7 @@ async function runBodyPipeline(
         newBodies.push({ id: job.entry.id, bodyJa: hit.bodyJa, bodyEn: hit.bodyEn, model: hit.model, cachedAt: hit.cachedAt });
       }
     }
-    const merge = mergeBodies(existingBodies, newBodies, liveIds, generatedAt);
+    const merge = mergeBodies(existingBodies, newBodies, retainedIds, generatedAt);
 
     // 2) Enqueue the selected entries that do NOT yet have a generated body (KV
     //    miss), so worker-body generates them for a future run's merge.
@@ -1938,6 +1962,8 @@ async function runBodyPipeline(
         bodyMerged: merge.added,
         bodyPruned: merge.pruned,
         bodiesTotal: merge.payload.count,
+        bodyRetentionDays: retentionDays,
+        bodyRetentionEligible: retainedEntries.length,
       },
     };
   } catch (err) {
@@ -2071,12 +2097,12 @@ export default {
       const all = url.searchParams.get("all") === "1";
       const onlyId = url.searchParams.get("only");
       const allSources = listSources().filter((s) => s.id !== "user-opml");
-      const batchIndex = Math.floor(Date.now() / 3600_000) % 4;
+      const batchIndex = sourceBatchIndexAt(Date.now());
       const sources = onlyId
         ? allSources.filter((s) => s.id === onlyId)
         : all
         ? allSources
-        : allSources.filter((_, i) => i % 4 === batchIndex);
+        : allSources.filter((_, i) => i % SOURCE_BATCHES === batchIndex);
       const collectedAt = new Date().toISOString();
       const tStart = Date.now();
       const settled = await Promise.all(

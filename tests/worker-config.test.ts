@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { SOURCE_BATCHES, sourceBatchIndexAt } from "../worker/src/index.ts";
 
 function readConfig(path: string): string {
   return readFileSync(join(process.cwd(), path), "utf8");
@@ -24,11 +25,11 @@ describe("Cloudflare Worker deploy config", () => {
     expect(summarizerConfig).not.toMatch(/\[limits\][\s\S]*cpu_ms\s*=/);
   });
 
-  it("uses the long-form budget for queue summarization", () => {
+  it("uses the compact summary-only budget for queue summarization", () => {
     const summarizerConfig = readConfig("worker-summarizer/wrangler.toml");
 
-    expect(summarizerConfig).toContain('SUMMARIZE_TIMEOUT_MS = "180000"');
-    expect(summarizerConfig).toContain('SUMMARIZE_MAX_TOKENS = "6000"');
+    expect(summarizerConfig).toContain('SUMMARIZE_TIMEOUT_MS = "60000"');
+    expect(summarizerConfig).toContain('SUMMARIZE_MAX_TOKENS = "1600"');
   });
 
   it("keeps the summary queue producer and consumer wired", () => {
@@ -62,6 +63,7 @@ describe("Cloudflare Worker deploy config", () => {
     expect(bodyLookupCap).toBeGreaterThanOrEqual(bodyEnqueueCap);
     expect(summaryLookupCap + bodyLookupCap).toBeLessThanOrEqual(45);
     expect(summaryLookupCap + bodyLookupCap + FIXED_KV_OPERATIONS_PER_RUN).toBeLessThanOrEqual(50);
+    expect(harnessConfig).toContain('BODY_RETENTION_DAYS = "30"');
   });
 
   it("keeps Worker observability and hourly production monitoring enabled", () => {
@@ -78,5 +80,16 @@ describe("Cloudflare Worker deploy config", () => {
     expect(healthWorkflow).toContain('cron: "15 * * * *"');
     expect(healthWorkflow).toContain("npm run health:prod");
     expect(packageJson).toContain('"health:prod": "node scripts/check-production-health.mjs"');
+  });
+
+  it("spreads source collection across six hourly batches", () => {
+    expect(SOURCE_BATCHES).toBe(6);
+    const start = Date.parse("2026-07-12T00:00:00.000Z");
+    expect(
+      Array.from({ length: SOURCE_BATCHES }, (_, hour) =>
+        sourceBatchIndexAt(start + hour * 3600_000),
+      ),
+    ).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(sourceBatchIndexAt(start + SOURCE_BATCHES * 3600_000)).toBe(0);
   });
 });

@@ -26,11 +26,12 @@ id = "6d67debb991742efadfec473a121f5fc"
 
 [vars]
 SUMMARIZE_MODEL = "claude-sonnet-4.6"
-# Quality-first Queue summarization. The consumer uses the same long-form
-# prompt as local backfill, so give Copilot enough room to finish bilingual
-# article bodies and still leave time for JSON parse + KV write.
-SUMMARIZE_TIMEOUT_MS = "180000"
-SUMMARIZE_MAX_TOKENS = "6000"
+# Summary-only generation normally completes well below one minute. Bound each
+# attempt so a malformed or stalled response releases the queue slot quickly.
+SUMMARIZE_TIMEOUT_MS = "60000"
+# The response contract is titleJa + summaryJa + summaryEn only. Keeping the
+# budget compact avoids reasoning-token exhaustion and increases queue turnover.
+SUMMARIZE_MAX_TOKENS = "1600"
 
 # Secrets (set via `wrangler secret put --name tech-dashboard-summarizer`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access

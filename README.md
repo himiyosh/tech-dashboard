@@ -2,7 +2,7 @@
 
 AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline / Aider / VSCode / OpenCode / Local LLM / Agent FW / MCP / Tech News / Research の **14 カテゴリ**) を **一括で追跡** できるポータルサイト。Harness Engineering のプラクティスに沿って、AI エージェントが自律的に情報収集・正規化・公開を行う。
 
-**現状**: Cloudflare Worker が registry の有効 source を **毎時自動収集** (4 バッチローテーション) し、Astro 静的サイト生成、RSS/JSON Feed 配信、Cloudflare Queue 分離の GitHub Copilot Enterprise (Claude Sonnet 4.6) 要約パイプライン、Pagefind 全文検索、品質監査 Skill、AI Scrum 開発運用 Skill、UI 表示ガード Skill、Modern Web Guidance Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。現在の source 件数・coverage は `/status` を単一情報源として確認してください。
+**現状**: Cloudflare Worker が registry の有効 source を **毎時自動収集** (6 バッチローテーション) し、Astro 静的サイト生成、RSS/JSON Feed 配信、Cloudflare Queue 分離の GitHub Copilot Enterprise (Claude Sonnet 4.6) 要約パイプライン、Pagefind 全文検索、品質監査 Skill、AI Scrum 開発運用 Skill、UI 表示ガード Skill、Modern Web Guidance Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。現在の source 件数・coverage は `/status` を単一情報源として確認してください。
 
 ## 🔭 運用ステータス早見表 (Single Source of Truth)
 
@@ -12,9 +12,9 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 
 | 処理 | 実行主体 | トリガ | 失効時の影響 | 監視 |
 |---|---|---|---|---|
-| ソース収集 (registry sources) | Cloudflare Worker `tech-dashboard-harness` | Cron `0 * * * *` (毎時) を 4 batch ローテーション | データ更新が止まる | `/status` の Worker Health |
+| ソース収集 (registry sources) | Cloudflare Worker `tech-dashboard-harness` | Cron `0 * * * *` (毎時) を 6 batch ローテーション | データ更新が止まる | `/status` の Worker Health |
 | 日本語/英語要約 (`summary*`) | Worker → Queue `tech-dashboard-summarizer` → Copilot Enterprise (claude-sonnet-4.6) | cron 後に最大 `ENQUEUE_MAX_NEW` 件/run を投入、consumer は 1 message/invocation | 既存表示は維持。LLM 失敗時は deterministic fallback で空欄を防止 | `health.fallbackTotal` / `health.summaryQueueBacklog` / `health.summaryQueueDrainEstimateHours` |
-| 記事本文 (`data/bodies.json`) | Worker → Queue `tech-dashboard-body` → Copilot (claude-opus-4.8, reasoning=max) | 本文は index と分離 (LL-115)。要約済みで本文無しの entry を `BODY_ENQUEUE_MAX_NEW` 件/run 投入、consumer が JA/EN を 2 call で生成し `b:` KV へ。collector が `b:` を `data/bodies.json` に merge | 本文が無い記事は要約主役の表示にフォールバック | `health.bodyBacklog` / `health.bodyDrainEstimateHours` / `health.bodiesTotal` |
+| 記事本文 (`data/bodies.json`) | Worker → Queue `tech-dashboard-body` → Copilot (claude-opus-4.8, reasoning=max) | 本文は index と分離 (LL-115)。evergreen、importance 2/3、直近 `BODY_RETENTION_DAYS` 日を保持対象にし、consumer が JA/EN を 2 call で生成して collector が sidecar へ merge | 対象外または本文無しの記事は要約主役の表示にフォールバック | `health.bodyBacklog` / `health.bodyDrainEstimateHours` / `health.bodiesTotal` |
 | summary deterministic fallback | 同 Worker / `scripts/apply-summary-cache.mjs` | Worker commit 前、または緊急修復時 | LLM timeout / 旧 cache 欠落時でも live index の summary 欠落を防止 | `health.summaryFallbacks` / `tests/data-schema.test.ts` |
 | og:image 取得 | 同 Worker | 上記 cron 内で最大 1 件/h、KV にキャッシュ | サムネが no-image fallback になる | `health.ogCached` |
 | `data/index.json` / `data/archive/*` / `data/stats.json` 更新 commit | Worker → GitHub Git Data API (`tech-dashboard-worker` 名義) | 差分があるときのみ 1 commit にまとめる | サイトに反映されない、記事数推移が古いまま | `git log --author=tech-dashboard-worker` |
@@ -49,10 +49,10 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 
 ```
                 ┌───────────────────────────────────────────────┐
-                │ Cloudflare Worker (cron: hourly, 4 batch)    │
-                │  ├ collect (RSS/Atom/HTML, ~13 sources/run)  │
+                │ Cloudflare Worker (cron: hourly, 6 batch)    │
+                │  ├ collect (RSS/Atom/HTML, ~9 sources/run)   │
                 │  ├ normalize + dedupe + tag                  │
-                │  ├ enqueue summaries (Queue, ≤10/run)        │
+                │  ├ enqueue summaries (Queue, ≤35/run)        │
                 │  └ og:image fetch (≤1/run, KV cache)         │
                 └───────────────┬───────────────────────────────┘
                                 │ diff があれば
@@ -174,9 +174,9 @@ COPILOT_TOKEN=tid=...              # 既に交換済みの一時トークンを�
 SUMMARIZE_MODEL=claude-sonnet-4.6   # 既定 (速度優先、Worker wall-time に収まる)
 # SUMMARIZE_MODEL=claude-opus-4.7   # 品質優先。長文生成は wall-time に収まらない場合あり (LL-031)
 # SUMMARIZE_MODEL=gpt-5.5            # Copilot では /responses 専用のため現 Worker (/chat/completions) からは利用不可 (LL-010)
-ENQUEUE_MAX_NEW=10                 # Worker 1 run 当たりの Queue 投入上限
-SUMMARIZE_TIMEOUT_MS=180000         # summarizer Worker の Copilot timeout
-SUMMARIZE_MAX_TOKENS=6000           # summarizer Worker 用の長文 JSON 生成予算
+ENQUEUE_MAX_NEW=35                 # Worker 1 run 当たりの Queue 投入上限
+SUMMARIZE_TIMEOUT_MS=60000          # summary-only Copilot timeout
+SUMMARIZE_MAX_TOKENS=1600           # titleJa + summaryJa + summaryEn の出力予算
 ```
 
 > どのトークンも無ければ要約フェーズは自動でスキップされます (ローカル dev を妨げない設計)。
@@ -186,7 +186,7 @@ SUMMARIZE_MAX_TOKENS=6000           # summarizer Worker 用の長文 JSON 生成
 通常運用は Cloudflare 内で完結します。Cloudflare Worker が `data/index.json`、`data/archive/*`、`data/stats.json` を GitHub に commit し、Cloudflare Pages の Git Integration が `main` の更新を検知してサイトを build / deploy します。
 
 ```
-[Cloudflare Worker Cron] ──毎時 (4 batch ローテーション)──→ [GitHub Git Data API]
+[Cloudflare Worker Cron] ──毎時 (6 batch ローテーション)──→ [GitHub Git Data API]
   │ (RSS 収集 + Copilot 要約 + og:image)                │ push to main
   │                                                     ↓
   │                                          [Cloudflare Pages Git Integration]
@@ -281,9 +281,9 @@ npx wrangler secret put GH_TOKEN                # Contents:Write 権限の Fine-
 npx wrangler deploy
 ```
 
-Cron は `0 * * * *` (毎時) で起動します。Cloudflare Workers の subrequest 上限に収めるため、registry の有効 source を 4 バッチでローテーション収集しており、**個別 source の再収集はおおむね 4 時間周期**です。Worker は収集・正規化・fallback・publish に専念し、要約不足 entry を `ENQUEUE_MAX_NEW` 件/run だけ Cloudflare Queue へ投入します（現在値は `worker/wrangler.toml` を参照）。Copilot 要約は `worker-summarizer/` が 1 message / invocation で生成し、per-URL KV cache に保存します。Queue consumer は quality-first の長文 bilingual contract (`SUMMARIZE_TIMEOUT_MS=180000`, `SUMMARIZE_MAX_TOKENS=6000`) を使い、時間より内容量と品質を優先します。Copilot 要約が timeout / error になった entry には commit 前に deterministic summary/body fallback を適用し、差分があれば `data/index.json`、`data/archive/*`、`data/stats.json` を Git Data API で 1 commit にまとめます。Cloudflare Pages Git Integration はその commit を検知して Pages を自動的に再デプロイします。トップページの記事数推移は `data/stats.json` を優先して参照するため、`data/index.json` の上限や dropped tier による削除後も archive 由来の集計を保持できます。
+Cron は `0 * * * *` (毎時) で起動します。Cloudflare Workers の subrequest と CPU 上限に収めるため、registry の有効 source を 6 バッチでローテーション収集しており、**個別 source の再収集はおおむね 6 時間周期**です。Worker は収集・正規化・fallback・publish に専念し、要約不足 entry を `ENQUEUE_MAX_NEW` 件/run だけ Cloudflare Queue へ投入します（現在値は `worker/wrangler.toml` を参照）。Copilot 要約は `worker-summarizer/` が 1 message / invocation で生成し、per-URL KV cache に保存します。Queue consumer は summary-only contract (`titleJa + summaryJa + summaryEn`) に合わせて `SUMMARIZE_TIMEOUT_MS=60000`、`SUMMARIZE_MAX_TOKENS=1600` とし、失敗した slot を早く解放します。Copilot 要約が timeout / error になった entry には commit 前に deterministic summary fallback を適用し、差分があれば `data/index.json`、`data/archive/*`、`data/stats.json` を Git Data API で 1 commit にまとめます。本文は `data/bodies.json` に分離し、evergreen、importance 2/3、直近 30 日だけを保持してサイズを制御します。Cloudflare Pages Git Integration はその commit を検知して Pages を自動的に再デプロイします。トップページの記事数推移は `data/stats.json` を優先して参照するため、`data/index.json` の上限や dropped tier による削除後も archive 由来の集計を保持できます。
 
-Copilot 要約は summarizer Worker 側の `SUMMARIZE_TIMEOUT_MS` (既定 180000 ms) で timeout します。Queue retry と次回 cron の cache 再読みにより、一時的な API timeout / 5xx による欠落を次 run へ持ち越しにくくしています。
+Copilot 要約は summarizer Worker 側の `SUMMARIZE_TIMEOUT_MS` (既定 60000 ms) で timeout します。Queue retry と次回 cron の cache 再読みにより、一時的な API timeout / 5xx による欠落を次 run へ持ち越しにくくしています。
 
 **手動トリガ** (緊急で回したい時):
 
@@ -311,7 +311,7 @@ Worker は実行ごとに `data/index.json` の `health` フィールドにメ�
 - `run ok` — 直近 run が正常（source freshness は別指標）
 - `run warn` — summarize disabled / source error / backlog 増加など要確認
 - `run err` — `no run in 6h+` など実行停止に近い状態
-- `source coverage X/Y` — fresh/stale/error を含む source 健全性の別指標
+- `Fresh sources X/Y` — retained entry の鮮度を示す source activity 指標
 
 公開 health endpoint はより厳しめに fail-close します。`https://tech-dashboard-harness.himiyosh.workers.dev/health` は、cron heartbeat が 150 分以上古い、publish 前 heartbeat のまま 30 分以上止まる、Queue binding が無効、直近 cron が abort/error、全 source collection が失敗、などを `HTTP 503` として返します。これにより、GitHub Actions などの外部監視から「静かに止まる」状態を検知できます。
 
@@ -327,7 +327,7 @@ npm run health:prod
 
 | 領域 | 仕組み | 頻度 / トリガ |
 |---|---|---|
-| データ収集 + Queue 要約 + og:image | Cloudflare Worker cron + `worker-summarizer` Queue consumer | 毎時 (registry source を 4 batch ローテーション、要約は `ENQUEUE_MAX_NEW` 件/run まで Queue 投入) |
+| データ収集 + Queue 要約 + og:image | Cloudflare Worker cron + `worker-summarizer` Queue consumer | 毎時 (registry source を 6 batch ローテーション、要約は `ENQUEUE_MAX_NEW` 件/run まで Queue 投入) |
 | GitHub commit | Worker → GitHub Git Data API | `data/index.json` / `data/archive/*` / `data/stats.json` を 1 commit にまとめる |
 | サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
 | Worker コード deploy | `scripts/git-hooks/pre-push` | `RUN_WORKER_DEPLOY=1 git push` かつ `main` push に worker/ 差分あり |
@@ -403,7 +403,7 @@ tech-dashboard/
 │  ├─ ui-display-guard/      # モバイル/レスポンシブ UI 表示ガードスキル (SKILL.md)
 │  └─ modern-web-guidance/   # Chrome Modern Web Guidance 検索スキル (SKILL.md + guides)
 ├─ worker/                   # Cloudflare Worker (定期ハーネス実行)
-│  ├─ src/index.ts           # Cron 起動 → 収集 (4 batch ローテーション) → Copilot 要約 → og:image → GitHub atomic commit
+│  ├─ src/index.ts           # Cron 起動 → 収集 (6 batch ローテーション) → Queue 投入 → og:image → GitHub atomic commit
 │  ├─ wrangler.toml          # Workers 設定 (Cron / KV / Vars)
 │  └─ package.json
 ├─ scripts/

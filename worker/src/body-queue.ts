@@ -30,6 +30,8 @@ export interface BodyJobSelectionOpts {
   nowMs?: number;
 }
 
+export const DEFAULT_BODY_RETENTION_DAYS = 30;
+
 function dateMs(value: string | null | undefined): number {
   if (!value) return 0;
   const ms = Date.parse(value);
@@ -54,6 +56,23 @@ function toBodyJob(entry: NormalizedEntry): BodyJob {
       publishedAt: entry.publishedAt,
     },
   };
+}
+
+/**
+ * Long-form bodies are retained for durable knowledge, important items, and
+ * recent articles. Older low-importance news remains fully usable through its
+ * bilingual summary and original-source link without growing bodies.json
+ * without bound.
+ */
+export function isBodyRetentionEligible(
+  entry: Pick<NormalizedEntry, "evergreen" | "importance" | "publishedAt" | "collectedAt">,
+  nowMs = Date.now(),
+  retentionDays = DEFAULT_BODY_RETENTION_DAYS,
+): boolean {
+  if (entry.evergreen === true || (entry.importance ?? 1) >= 2) return true;
+  const entryMs = dateMs(entry.publishedAt) || dateMs(entry.collectedAt);
+  if (entryMs <= 0) return false;
+  return entryMs >= nowMs - Math.max(1, retentionDays) * 86_400_000;
 }
 
 /**

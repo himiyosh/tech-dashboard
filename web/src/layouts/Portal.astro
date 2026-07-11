@@ -202,25 +202,6 @@ const footerRunDetail = !WORKER_HEALTH
       </div>
     </nav>
 
-    <div id="content-start" class="content-start-anchor" tabindex="-1"></div>
-    <slot />
-
-    <div class="footer-bar">
-      <div class="footer-inner">
-        <a
-          class="item footer-run-link"
-          href="/status"
-          aria-label={`Collection health: ${footerRunStatus}. ${footerRunDetail}`}
-          title={`Collection health: ${footerRunStatus}. ${footerRunDetail}`}
-        ><span class={`dot ${footerRunTone}`} data-run-tone={footerRunTone} aria-hidden="true"></span> <strong>{footerRunStatus}</strong></a>
-        <span class="item mono">{footerRunDetail}</span>
-        <span class="item">harness <strong>v0.1</strong></span>
-        <span class="item">powered by <strong>Astro</strong> + <strong>Claude Opus</strong></span>
-        <span class="spacer"></span>
-        <span class="item">Cloudflare Pages</span>
-      </div>
-    </div>
-
     <nav class="mobile-tabbar" aria-label="Primary">
       <a href="/" class={pageKey === "timeline" ? "active" : ""} aria-current={isCurrentHref("/") ? "page" : undefined}><span aria-hidden="true">⌂</span><span>Home</span></a>
       <a href="/categories" class={pageKey === "categories" ? "active" : ""} aria-current={isCurrentHref("/categories") ? "page" : undefined}><span aria-hidden="true">▦</span><span>Categories</span></a>
@@ -235,6 +216,28 @@ const footerRunDetail = !WORKER_HEALTH
         class={menuOwnsCurrentPage ? "active" : ""}
       ><span aria-hidden="true">☰</span><span>Menu</span></button>
     </nav>
+
+    <div id="content-start" class="content-start-anchor" tabindex="-1" aria-label="Main content"></div>
+    <slot />
+
+    <div class="footer-bar">
+      <div class="footer-inner">
+        <a
+          class="item footer-run-link"
+          href="/status"
+          aria-label={`Collection health: ${footerRunStatus}. ${footerRunDetail}`}
+          title={`Collection health: ${footerRunStatus}. ${footerRunDetail}`}
+        >
+          <span class={`dot ${footerRunTone}`} data-run-tone={footerRunTone} aria-hidden="true"></span>
+          <strong>{footerRunStatus}</strong>
+          <span class="mono">{footerRunDetail}</span>
+        </a>
+        <span class="item">harness <strong>v0.1</strong></span>
+        <span class="item">powered by <strong>Astro</strong> + <strong>Claude Opus</strong></span>
+        <span class="spacer"></span>
+        <span class="item">Cloudflare Pages</span>
+      </div>
+    </div>
 
     <script>
       import { normalizeSearchText } from "../lib/search-normalize.ts";
@@ -368,7 +371,6 @@ const footerRunDetail = !WORKER_HEALTH
         const isVisible = (el: HTMLElement | null): el is HTMLElement =>
           !!el && el.isConnected && el.getClientRects().length > 0 && !(el as HTMLButtonElement).disabled;
         const restoreSearchFocus = () => {
-          if (!lastSearchTrigger) return;
           if (isVisible(lastSearchTrigger)) {
             lastSearchTrigger.focus();
             return;

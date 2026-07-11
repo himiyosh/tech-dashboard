@@ -4,7 +4,7 @@
 
 旧 `tech-dashboard-harness` Worker は 1 invocation で以下を全て行っていた。
 
-1. 全 50 sources を 4 batch に分割し、batch 内 collector を並列実行
+1. registry sources を 6 batch に分割し、batch 内 collector を並列実行
 2. RSS / HTML を normalize + tag
 3. **Copilot で要約生成 (停止中: `SUMMARIZE_MAX_NEW=0`)**
 4. `data/index.json` を既存とマージ
@@ -27,13 +27,13 @@ Cloudflare Workers Standard プランの **CPU 時間 30s/invocation** が 3. + 
 | Worker | 責務 | CPU 予算 | 起動 |
 |---|---|---|---|
 | **harness-collector** (現 `tech-dashboard-harness`) | collect → normalize → merge → publish | 30s (現状 25-28s) | `cron 0 * * * *` |
-| **harness-summarizer** (`tech-dashboard-summarizer`) | Queue から URL を pop して Copilot 要約 → KV `SUMMARY_CACHE` に保存 | quality-first: timeout 180s / 6000 tokens | `[[queues.consumers]]` |
+| **harness-summarizer** (`tech-dashboard-summarizer`) | Queue から URL を pop して Copilot 要約 → KV `SUMMARY_CACHE` に保存 | summary-only: timeout 60s / 1600 tokens | `[[queues.consumers]]` |
 
 ### B. データフロー
 
 ```
 cron tick (collector)
-  ├─ collect 12-13 sources
+  ├─ collect about 9 sources
   ├─ merge with prior data/index.json
   ├─ for each entry without cached summary:
   │    SUMMARY_QUEUE.send({ url, title, source, summary snippet, lang, tags })
@@ -41,9 +41,9 @@ cron tick (collector)
 
 Queue consumer (summarizer)
   ├─ ack 1 メッセージ
-  ├─ Copilot /chat/completions 呼び出し (long-form prompt)
+  ├─ Copilot /chat/completions 呼び出し (summary-only prompt)
   ├─ JSON parse
-  └─ SUMMARY_CACHE.put(url, { summaryJa, summaryEn, bodyJa, bodyEn, generatedAt })
+  └─ SUMMARY_CACHE.put(url, { titleJa, summaryJa, summaryEn, generatedAt })
 
 cron tick (next hour, collector)
   ├─ collect ...
@@ -73,7 +73,7 @@ cron tick (next hour, collector)
 3. **summarizer Worker 新規作成**
    - `worker-summarizer/src/index.ts`
    - `queue(batch, env)` handler: 1 メッセージごとに Copilot → KV write
-   - `buildPrompt()` の長文 JSON contract を使い、`SUMMARIZE_MAX_TOKENS=6000` / `SUMMARIZE_TIMEOUT_MS=180000` で品質を優先する
+   - `buildSummaryPrompt()` の短い JSON contract を使い、`SUMMARIZE_MAX_TOKENS=1600` / `SUMMARIZE_TIMEOUT_MS=60000` で reasoning 枯渇と queue slot 長時間占有を防ぐ
    - 失敗時は throw → Queue が自動 retry (最大 2 回, exponential backoff)
 4. **KV `SUMMARY_CACHE` を両 Worker に bind**
 5. **collector 側で `SUMMARY_CACHE` 参照を強化**
@@ -87,8 +87,8 @@ cron tick (next hour, collector)
    - `wrangler tail tech-dashboard-summarizer` で consumer が処理しているか確認
 7. **段階解放**
    - 初期 enqueue cap: 5 件/cron tick
-   - 現行 enqueue cap: 10 件/cron tick (Worker Free plan の subrequest / KV write 余白を優先)
-   - producer は eligible fallback jobs の中で `cap` 件ずつ hour-based round-robin するため、同じ先頭 10 件に固定されない
+   - 現行 enqueue cap: 35 件/cron tick (KV write 日次上限内で backlog を drain)
+   - producer は eligible fallback jobs の中で `cap` 件ずつ hour-based round-robin するため、同じ先頭 35 件に固定されない
    - backlog 解消後は新着記事数に応じて自然に低下する
 
 ### E. 失敗モード/対策
@@ -106,7 +106,7 @@ cron tick (next hour, collector)
 - 現在: collector cron 24 invocations/day = 720/月。requests 込みで $5 範囲内
 - 追加: summarizer は Queue で起動。1 件 1 invocation。20 件/h × 24h × 30d = **14,400 invocations/月**
 - Queue 単体料金: 100 万 operation まで含む。14,400 は誤差
-- Copilot API 課金: Copilot Enterprise 権限で実行。現在は quality-first の `max_tokens=6000` を前提に、Queue の `max_concurrency=2` で上流 rate を抑える
+- Copilot API 課金: Copilot Enterprise 権限で実行。現在は summary-only の `max_tokens=1600` を前提に、Queue の `max_concurrency=2` で上流 rate を抑える
   - 14,400 件 × $0.01 = **$144/月** (見積もり最大値)
   - キャッシュヒット率が高ければ大幅に下がる
 
@@ -118,4 +118,4 @@ cron tick (next hour, collector)
 
 ### H. 採用判断
 
-要約品質が UX に直結 (LL-028, LL-029) するため、**B-2 (Queue 分離) を中期で採用推奨**。短期は `npm run resummarize` ローカル運用で穴を埋める。
+要約品質が UX に直結 (LL-028, LL-029) するため、**B-2 (Queue 分離) を採用済み**。通常運用は Queue を使い、ローカル backfill は緊急時の補助に限定する。

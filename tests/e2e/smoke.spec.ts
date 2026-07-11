@@ -721,11 +721,21 @@ test.describe("TECH Dashboard smoke", () => {
 
     await expect(page.locator(".page-hero #status-heading")).toBeVisible();
     await expect(page.getByRole("heading", { name: /Worker Health/i })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Source Health/i })).toBeVisible();
-    await expect(page.getByText("Summary backlog").first()).toBeVisible();
-    const collectionMetric = page.locator(".status-metric-card").filter({ hasText: "収集成功" });
+    await expect(page.getByRole("heading", { name: /Source Freshness/i })).toBeVisible();
+    await expect(page.getByText("Summary entries pending").first()).toBeVisible();
+    const collectionMetric = page.locator('[data-health-scope="latest-batch"]');
     await expect(collectionMetric).toContainText(/\d+\/\d+/);
+    await expect(page.locator('[data-health-scope="collection-run"]')).toHaveCount(1);
+    await expect(page.locator('[data-health-domain="summary-queue"]')).toHaveCount(3);
+    await expect(page.locator('[data-health-scope="summary-throughput"]')).toHaveCount(1);
+    await expect(page.locator('[data-health-scope="summary-backlog"]')).toHaveCount(1);
+    await expect(page.locator('[data-health-scope="summary-eta"]')).toHaveCount(1);
+    await expect(page.locator('[data-health-scope="published-artifact"]')).toHaveCount(1);
     await expect(collectionMetric.locator("small")).toHaveText(/batch \d+\/\d+ · \d+ registry sources/);
+    await expect(page.locator('[data-health-scope="summary-throughput"] strong')).toHaveAttribute(
+      "title",
+      /new ai summaries added in this collection run.*backlog is tracked separately/i,
+    );
     await expect(page.locator(".source-reason-line").first()).toBeVisible();
     await expect(page.locator('[data-source-filter="all"]')).toBeVisible();
     await expect(page.locator('[data-category-filter="all"]')).toBeVisible();
@@ -747,7 +757,12 @@ test.describe("TECH Dashboard smoke", () => {
     const footerDot = footerRunLink.locator(".dot");
     await expect(footerDot).toHaveAttribute("data-run-tone", expectedTone);
     await expect(footerDot).toHaveClass(new RegExp(`\\bdot\\b.*\\b${expectedTone}\\b`));
-    await expect(page.locator(".footer-bar .item.mono")).toContainText(/last batch \d+\/\d+ src · \d+ pending/);
+    await expect(footerRunLink.locator(".mono")).toContainText(/last batch \d+\/\d+ src · \d+ pending/);
+    await expect(page.locator(".footer-bar .item.mono")).toHaveCount(0);
+    await expect(page.locator(".page-hero-copy .i18n-ja")).toContainText("Latest source batch");
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(page.locator(".page-hero-copy .i18n-en")).toBeVisible();
+    await expect(page.locator(".page-hero-copy .i18n-en")).toContainText("Summary queue ETA");
     await expect(page.locator(".summary-ready-copy .i18n-ja")).toContainText("要約準備済み");
     await expect(page.locator(".summary-ready-copy .i18n-en")).toContainText("summary-ready");
   });
@@ -926,7 +941,7 @@ test.describe("TECH Dashboard smoke", () => {
     await page.goto("/sources/");
 
     await expect(page).toHaveURL(/\/status\/?$/);
-    await expect(page.getByRole("heading", { name: /Source Health/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Source Freshness/i })).toBeVisible();
     await expect(page.locator(".source-item").first()).toBeVisible();
     await expect(page.getByText(/tier \d ·/).first()).toBeVisible();
   });
@@ -1157,6 +1172,24 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("header .menu-trigger")).toBeHidden();
     await expect(tabbar.getByRole("link", { name: "Home" })).toHaveClass(/active/);
     await expect(tabbar.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
+    const tabbarOrder = await page.evaluate(() => {
+      const tabbarNode = document.querySelector(".mobile-tabbar");
+      const contentStart = document.querySelector("#content-start");
+      const footer = document.querySelector(".footer-bar");
+      return {
+        beforeContent: Boolean(
+          tabbarNode &&
+            contentStart &&
+            tabbarNode.compareDocumentPosition(contentStart) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ),
+        beforeFooter: Boolean(
+          tabbarNode &&
+            footer &&
+            tabbarNode.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ),
+      };
+    });
+    expect(tabbarOrder).toEqual({ beforeContent: true, beforeFooter: true });
 
     const tabbarBox = await tabbar.boundingBox();
     expect(tabbarBox, "mobile tabbar has a rendered box").not.toBeNull();
@@ -1215,7 +1248,7 @@ test.describe("TECH Dashboard smoke", () => {
     await openMobileMenu();
     await menu.getByRole("link", { name: /Status/ }).click();
     await expect(page).toHaveURL(/\/status\/?$/);
-    await expect(page.getByRole("heading", { name: /Source Health/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Source Freshness/i })).toBeVisible();
     const mobileMenuTrigger = tabbar.getByRole("button", { name: /Menu/ });
     await expect(mobileMenuTrigger).toHaveClass(/active/);
     await expect(mobileMenuTrigger).not.toHaveAttribute("aria-current");
@@ -1253,12 +1286,18 @@ test.describe("TECH Dashboard smoke", () => {
     const featured = page.locator("article.featured").first();
     await expect(featured).toBeVisible();
     const featuredThumb = featured.locator(".featured-thumb").first();
-    const featuredBody = featured.locator(".featured-body").first();
-    const [featuredBox, thumbBox, bodyBox] = await Promise.all([
-      featured.boundingBox(),
-      featuredThumb.boundingBox(),
-      featuredBody.boundingBox(),
-    ]);
+    const { featuredBox, thumbBox, bodyBox } = await featured.evaluate((node) => {
+      const rect = (element: Element | null) => {
+        if (!element || element.getClientRects().length === 0) return null;
+        const box = element.getBoundingClientRect();
+        return { x: box.x, y: box.y, width: box.width, height: box.height };
+      };
+      return {
+        featuredBox: rect(node),
+        thumbBox: rect(node.querySelector(".featured-thumb")),
+        bodyBox: rect(node.querySelector(".featured-body")),
+      };
+    });
     expect(featuredBox, "featured panel has a box").not.toBeNull();
     expect(thumbBox, "featured thumb has a box").not.toBeNull();
     expect(bodyBox, "featured body has a box").not.toBeNull();
@@ -1277,12 +1316,24 @@ test.describe("TECH Dashboard smoke", () => {
 
     const cards = page.locator("article.card.has-thumb");
     await expect(cards.first()).toBeVisible();
-    const [firstCardBox, secondCardBox, firstThumbBox, firstBodyBox] = await Promise.all([
-      cards.nth(0).boundingBox(),
-      cards.nth(1).boundingBox(),
-      cards.nth(0).locator(".card-thumb").boundingBox(),
-      cards.nth(0).locator(".card-body").boundingBox(),
-    ]);
+    expect(await cards.count(), "mobile timeline provides cards for spacing checks").toBeGreaterThanOrEqual(2);
+    const cardMetrics = await cards.evaluateAll((nodes) => {
+      const rect = (element: Element | null) => {
+        if (!element || element.getClientRects().length === 0) return null;
+        const box = element.getBoundingClientRect();
+        return { x: box.x, y: box.y, width: box.width, height: box.height };
+      };
+      return nodes.slice(0, 2).map((node) => ({
+        panel: rect(node),
+        thumb: rect(node.querySelector(".card-thumb")),
+        body: rect(node.querySelector(".card-body")),
+      }));
+    });
+    expect(cardMetrics.length, "mobile timeline provides two cards for spacing checks").toBeGreaterThanOrEqual(2);
+    const firstCardBox = cardMetrics[0]!.panel;
+    const secondCardBox = cardMetrics[1]!.panel;
+    const firstThumbBox = cardMetrics[0]!.thumb;
+    const firstBodyBox = cardMetrics[0]!.body;
     expect(firstCardBox, "first mobile timeline card has a visible panel box").not.toBeNull();
     expect(secondCardBox, "second mobile timeline card has a visible panel box").not.toBeNull();
     expect(firstBodyBox, "mobile card body has a box").not.toBeNull();
@@ -1302,10 +1353,17 @@ test.describe("TECH Dashboard smoke", () => {
     expect(summaryCount + pendingCount, "mobile timeline should expose at least one honest card state").toBeGreaterThan(0);
     if (summaryCount > 0) {
       await expect(summaryCard, "summary layout checks target a card that actually has summary text").toBeVisible();
-      const [summaryBodyBox, summaryTextBox] = await Promise.all([
-        summaryCard.locator(".card-body").boundingBox(),
-        summaryCard.locator(".summary .s-text").first().boundingBox(),
-      ]);
+      const { summaryBodyBox, summaryTextBox } = await summaryCard.evaluate((node) => {
+        const rect = (element: Element | null) => {
+          if (!element || element.getClientRects().length === 0) return null;
+          const box = element.getBoundingClientRect();
+          return { x: box.x, y: box.y, width: box.width, height: box.height };
+        };
+        return {
+          summaryBodyBox: rect(node.querySelector(".card-body")),
+          summaryTextBox: rect(node.querySelector(".summary .s-text")),
+        };
+      });
       expect(summaryBodyBox, "summary card body has a box").not.toBeNull();
       expect(summaryTextBox, "summary text has a readable box").not.toBeNull();
       expect(summaryTextBox!.x, "mobile summary text starts at card body edge, not after the AI badge").toBeLessThanOrEqual(summaryBodyBox!.x + 2);
@@ -1550,6 +1608,22 @@ test.describe("TECH Dashboard smoke", () => {
     await input.press("Escape");
     await expect(search).not.toHaveClass(/is-open/);
     await expect(trigger).toBeFocused();
+
+    // Keyboard shortcuts can open search when no element owns focus. Closing
+    // must still return focus to an equivalent visible navigation control.
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    await expect.poll(() => page.evaluate(() => document.activeElement === document.body)).toBe(true);
+    await page.keyboard.press("/");
+    await expect(input).toBeFocused();
+    await page.getByRole("button", { name: "Close search" }).click();
+    const fallbackFocus = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return {
+        menuTrigger: Boolean(el?.hasAttribute("data-menu-trigger")),
+        visible: Boolean(el?.isConnected && el.getClientRects().length > 0),
+      };
+    });
+    expect(fallbackFocus).toEqual({ menuTrigger: true, visible: true });
   });
 
   test("mobile Menu -> Search close returns focus to a visible menu trigger", async ({ page }) => {

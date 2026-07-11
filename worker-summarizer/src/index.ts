@@ -75,10 +75,10 @@ const COPILOT_HEADERS: Record<string, string> = {
   "user-agent": "GitHubCopilotChat/0.22.0",
 };
 
-const DEFAULT_TIMEOUT_MS = 180_000;
-const DEFAULT_MAX_TOKENS = 6000;
+const DEFAULT_TIMEOUT_MS = 60_000;
+const DEFAULT_MAX_TOKENS = 1600;
 // Refresh the IDE token when fewer than this many ms remain. Must exceed the
-// longest single callCopilot timeout (DEFAULT_TIMEOUT_MS = 180s) so a token
+// longest single callCopilot timeout (DEFAULT_TIMEOUT_MS = 60s) so a token
 // that passes the freshness check cannot expire *during* a long LLM call
 // and return `401 IDE token expired` (LL-105).
 const TOKEN_REFRESH_SKEW_MS = 240_000;
@@ -87,7 +87,7 @@ const ISSUE_KEY = "summarizer.issue.v1";
 const ISSUE_TTL_SECONDS = 6 * 60 * 60;
 const RECENT_ISSUE_MS = 60 * 60_000;
 const ERROR_REPEAT_THRESHOLD = 3;
-const RECOVERY_TIMEOUT_MS = 90_000;
+const RECOVERY_TIMEOUT_MS = 45_000;
 
 let cachedCopilotToken: { pat: string; token: string; expiresAtMs: number } | null = null;
 

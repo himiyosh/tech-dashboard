@@ -1,6 +1,6 @@
 #:schema https://cloudflare.com/workers/wrangler-schema.json
-# Cloudflare Worker: daily harness (replaces GitHub Actions harness-daily.yml).
-# Runs 4 x per day on cron, re-publishes data/index.json back to GitHub,
+# Cloudflare Worker: hourly harness (replaces GitHub Actions harness-daily.yml).
+# Runs hourly with a six-batch source rotation and republishes data artifacts,
 # which triggers a Cloudflare Pages deploy via the Git integration.
 
 name = "tech-dashboard-harness"
@@ -98,6 +98,10 @@ BODY_ENQUEUE_MAX_NEW = "10"
 # is one subrequest; keep the combined summary/body lookup cap at 45 so
 # collection and the GitHub publish transaction retain bounded headroom.
 BODY_LOOKUP_CAP = "10"
+# Keep long-form bodies for evergreen knowledge, importance 2/3 entries, and
+# recent news. Older low-importance items continue to use their bilingual
+# summary and original-source link without growing bodies.json indefinitely.
+BODY_RETENTION_DAYS = "30"
 
 # Secrets (set via `wrangler secret put`):
 #   - COPILOT_PAT    Classic PAT with Copilot Enterprise access

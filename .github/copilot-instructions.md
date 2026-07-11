@@ -88,6 +88,7 @@
 - `data/index.json` の live entries は `summaryJa` / `summaryEn` の**両方を必ず非空**にする (両言語必須)。完了前に `tests/data-schema.test.ts` の summary 欠落ゲートを通す。
 - **本文 (`bodyJa` / `bodyEn`) は index に格納しない**。本文は `data/bodies.json` (`{ generatedAt, count, bodies: { [id]: {bodyJa, bodyEn, model, generatedAt} } }`) に entry id をキーに格納する。index は本文フリーで軽量維持し CI サイズ予算 (8MB, LL-112) を超えない。完了前に `tests/data-schema.test.ts` の「live index は本文を持たない」ゲートを通す。
 - 本文は専用クラウド worker (Phase B: opus-4.8 reasoning=max) が生成し `data/bodies.json` に蓄積する。生成は I/O 主体で Cloudflare の CPU 予算に当たらない (LL-115)。決定論的 filler body は**生成・格納しない** (LL-112)。
+- 本文の保持対象は **evergreen、importance 2/3、直近 `BODY_RETENTION_DAYS` 日**に限定する。対象外の古い低重要度本文は `scripts/clean-source-noise.mjs` が prune し、要約と原文リンクは維持する。Worker、migration、`tests/data-schema.test.ts` は `worker/src/body-queue.ts` の同じ retention helper を使う。
 - 記事詳細の本文表示は `web/src/lib/bodies.ts` の `bodyForEntry(id)` を使う。本文が無いエントリは要約を主役にし原文リンクを出す (偽の生成予告を出さない)。`isDeterministicFallbackEntry` (web 分類) は本文を見ない。
 - 既存本文の index→bodies.json 移行は `npm run body:migrate` (`scripts/migrate-bodies-to-file.mjs`)。
 
@@ -189,6 +190,11 @@
 - 削除前に対象 worktree の `status` が clean、必要な内容が main に反映済み、open PR が無い、固有 commit・patch・file が無いことを確認する。squash merge では `git branch --merged` だけに依存せず、PR 状態、patch 差分、`git cherry`、worktree の dirty 状態を合わせて判定する。
 - dirty、open PR、固有 commit、固有 file のいずれかがある branch / worktree は削除しない。保持理由と固有差分を具体的に報告し、force delete は使わない。
 - 整理後は `git fetch --prune`、`git branch -vv --all`、`git worktree list --porcelain`、`gh pr list --state open`、main の clean status を再確認する。
+
+### R-025: TechDBAgent は audit / delivery / release の権限境界を明示する
+- `.github/agents/TechDBAgent.agent.md` は `tools` allowlist を固定せず、runtime が公開する tool を利用できる Product Delivery Orchestrator とする。session lifecycle、編集、テスト、Issue / PR、release follow-through は runtime が対応する範囲で delivery / release mode に限り利用できる。
+- audit mode は read-only を維持する。delivery / release mode でも secret 表示、main 直接 push、force / reset / rebase / amend、未承認 deploy / `wrangler secret put`、本番データ変更、dirty または固有作業を持つ branch / worktree の削除は禁止する。
+- persona 子 agent は read-only reviewer のままにし、Git、credentials、deploy、破壊的 cleanup を委譲しない。session を作成する場合は独立した non-overlapping scope に限定し、親 orchestrator が結果を検証して統合する。
 
 ---
 
@@ -1169,8 +1175,8 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-161: focus 復帰は「opener が自分の副作用で消える」場合に可視 fallback を用意する
 - **事象**: search を閉じたとき opener (起動要素) に focus を戻す実装で、mobile の Menu→Search 経路だけ focus が `<body>` に落ちた。Menu 内の Search trigger で search を開くと、その副作用で Menu が閉じて **opener 自身が hidden になる**ため、閉じたとき復帰先が非表示要素になっていた。
 - **根本原因**: focus 復帰先を「opener の参照」1 点に固定していた。dismissible widget を開く動作が別の overlay (menu) を閉じる副作用を持つと、opener がその場で不可視になり、復帰先として無効になる。
-- **対策**: `restoreSearchFocus()` は保存した opener が可視 (`isConnected && getClientRects().length>0 && !disabled`) な場合のみそこへ戻し、不可視なら同種の可視コントロール (最初の可視 `[data-menu-trigger]`) へ fallback する。E2E は「復帰先が hidden な特定要素と等しい」ではなく「focus 先が可視かつ同種 role の要素」を assert する。
-- **教訓**: focus 復帰は「元の要素」ではなく「到達可能な等価コントロール」を最終目標にする。opener が自分を開いた副作用で hidden 化しうる UI では、可視性を検証して可視 fallback に切り替える。テストも要素同一性でなく可視性・role で検証する。
+- **対策**: `restoreSearchFocus()` は保存した opener が可視 (`isConnected && getClientRects().length>0 && !disabled`) な場合のみそこへ戻し、不可視または keyboard shortcut 起動で opener が `null` の場合は同種の可視コントロール (最初の可視 `[data-menu-trigger]`) へ fallback する。E2E は「復帰先が hidden な特定要素と等しい」ではなく「focus 先が可視かつ同種 role の要素」を assert する。
+- **教訓**: focus 復帰は「元の要素」ではなく「到達可能な等価コントロール」を最終目標にする。opener が hidden 化する場合だけでなく、`/` や `Cmd/Ctrl+K` を `<body>` focus から使って opener が無い場合も early return せず可視 fallback に切り替える。テストも要素同一性でなく可視性・role で検証する。
 
 ### LL-162: transaction journal と backup も target と同じ atomic contract で保護する
 - **事象**: `clean-source-noise` の multi-file transaction は target の atomic rename と committed marker を持っていたが、active journal と backup を直接書いていた。process crash で journal が途中 JSON になると、次の `--apply` が `JSON.parse` で停止し recovery に入れない状態だった。
@@ -1237,6 +1243,36 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: broad-feed の妥当な security 表現と aggregate health の全滅条件が、それぞれ単一ソースの filter/status contract に含まれていなかった。
 - **対策**: registry の Tech News relevance に `0-day` / `zero-day` を追加して実タイトルを regression test に固定する。共有 run-health に `sourcesAttempted` / `sourcesOk` を渡し、fresh run でも `attempted > 0 && ok === 0` は ERR とする。
 - **教訓**: filter false negative は実際に失われた title を fixture にし、severity は監査と UI が同じ aggregate telemetry から導出する。検出側だけ Critical にして表示側を Warning に残さない。
+
+### LL-173: custom agent の権限は mode と runtime tool の両方で設計する
+- **事象**: TechDBAgent が audit 専用の role と固定 tool 制限を持ち、session 作成、実装、テスト、PR follow-through など通常の delivery 操作を担当できなかった。
+- **根本原因**: persona audit の安全境界と親 orchestrator の実行権限を同じ agent 定義で一律に制限し、依頼内容に応じた mode 分離が無かった。
+- **対策**: `tools` allowlist を省略して runtime 公開 tool を利用可能にし、audit / delivery / release の 3 mode を定義した。audit と persona 子 agent は read-only、delivery / release は session・編集・検証・PR 操作を許可する一方、secret、main 直接 push、force 系、未承認 deploy / secret mutation、危険な cleanup は全 mode 共通で禁止した。
+- **教訓**: custom agent の権限拡張は「全操作を許す」ことではない。runtime が公開する capability と依頼 mode の二段階で許可し、承認境界と破壊的操作禁止は agent file 内に残す。
+
+### LL-174: CI の頻発失敗は artifact 上限、Worker fan-out、browser wait を別々に制御する
+- **事象**: 直近 workflow 履歴で CI と Worker Health の失敗が繰り返され、data artifact サイズ、Worker の invocation 負荷、Playwright の locator 待機がそれぞれ release を阻害していた。
+- **根本原因**: `data/bodies.json` が本文を無期限保持し、collector は 1 run の source fan-out が大きく、E2E は複数 locator の `boundingBox()` を並列に待っていた。異なる budget を 1 つの「CI flake」として扱うと、局所 retry だけで再発する。
+- **対策**: body retention を evergreen / importance 2-3 / 直近 30 日に限定して `bodies.json` を 1,432 件から 1,021 件、約 6.74 MB に縮小した。source rotation は 4 から 6 batch に分け、1 invocation の collection fan-out を抑えた。E2E の関連寸法計測は、表示待機後に 1 回の DOM evaluation で複数 `DOMRect` を取得する形へ変更した。
+- **教訓**: CI / health failure は disk size、subrequest / CPU、browser implicit wait の budget ごとに測る。artifact は retention policy、Worker は bounded batch、E2E は explicit state wait と synchronous DOM snapshot で予防し、retry 回数を増やして隠さない。
+
+### LL-175: summary-only consumer は timeout と token budget も短い contract に揃える
+- **事象**: summarizer は `titleJa + summaryJa + summaryEn` だけを生成する summary-only contract へ移行済みなのに、設定は旧 long-form body 時代の 180 秒 timeout と 6000 tokens を保持していた。
+- **根本原因**: prompt / completion contract の変更時に worker config と retry budget を対称更新せず、失敗 request が queue slot を長時間占有できる状態を残した。
+- **対策**: primary timeout を 60 秒、recovery timeout を 45 秒、max tokens を 1600 に縮小し、`worker-summarizer/wrangler.toml` と config test を同じ値へ同期した。既存の Queue retry と concurrency 2 は維持する。
+- **教訓**: 非同期 enrichment の contract を短くしたら、prompt だけでなく token、timeout、retry、health 表示を同時に揃える。長い旧 budget は品質余白ではなく backlog の slot 占有時間になる。
+
+### LL-176: fixed mobile navigation の視覚位置と DOM / keyboard 順序を分離しない
+- **事象**: mobile tabbar は CSS で画面下部に fixed 表示されていたが、DOM では footer 後に置かれ、主要 content より後の keyboard navigation 順序になっていた。寸法 E2E も複数 `boundingBox()` の暗黙待機に依存していた。
+- **根本原因**: CSS の視覚配置だけを primary navigation の順序とみなし、DOM 順序と一括レイアウト snapshot を acceptance criteria に含めていなかった。
+- **対策**: tabbar を header / site menu 直後、main content より前へ移し、DOM order を E2E で固定した。関連するカード寸法は visible state を先に確認し、1 回の `getBoundingClientRect()` snapshot で検証する。
+- **教訓**: fixed UI は見た目が下にあっても DOM / focus 順序は別である。primary navigation は content より前に置き、視覚位置、DOM 順序、focus、viewport 寸法を別々に検証する。
+
+### LL-177: operational status は表示文、programmatic scope、クリック領域を同じ意味単位にする
+- **事象**: Status hero の scope 説明が日本語だけで、説明語と実カード見出しも一致していなかった。3 枚の summary card は同じ `data-health-scope` を持ち、`+0` が run 差分か backlog 総数か判別しにくかった。footer は run label だけが link で、隣接する詳細文は同じ表示単位に見えてもクリックできなかった。
+- **根本原因**: 運用指標を追加する際、表示 copy、i18n、機械可読属性、pointer affordance を別々に実装し、同じ scope を一意に追跡できる end-to-end contract を持たせていなかった。
+- **対策**: `PageHero` に optional bilingual description を追加し、Status 説明を実カード名へ一致させた。summary throughput / backlog / ETA に固有 `data-health-scope` と共通 domain を与え、run 差分値には説明を付けた。footer は run label と batch / pending detail を 1 つの link に統合し、E2E で各 scope、言語切替、全クリック領域を検証した。
+- **教訓**: operational dashboard の metric は、見出し、説明、値の母集団、機械可読 scope、クリック領域を 1 つの意味単位として設計する。多言語画面では hero の補助文も toggle 対象にし、隣接して一体に見える status text は一部だけを link にしない。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

@@ -25,7 +25,7 @@
 
 | 項目                   | 目標                            |
 | ---------------------- | ------------------------------- |
-| 更新頻度               | Worker cron 毎時。個別ソースは 4 時間ごと |
+| 更新頻度               | Worker cron 毎時。個別ソースはおおむね 6 時間ごと |
 | ページロード (LCP)     | < 2.0s (static site)            |
 | Lighthouse Performance | >= 95                           |
 | コスト                 | LLM API 月額 < $20 (個人ユース) |
@@ -33,7 +33,7 @@
 
 ### 1.3 情報ソース (Production = 51 登録ソース)
 
-Production では **14 カテゴリ × 51 登録ソース** を対象とする。Worker 実行時はローカル FS 依存の `user-opml` を除外し、50 ソースを 4 batch に分割して毎時ローテーションする。完全な現行仕様は [SPEC.md](SPEC.md) と `harness/registry.ts` を正とする。
+Production では registry の有効ソースを対象とする。Worker 実行時はローカル FS 依存の `user-opml` を除外し、対象ソースを 6 batch に分割して毎時ローテーションする。完全な現行仕様は [SPEC.md](SPEC.md) と `harness/registry.ts` を正とする。
 
 **14 カテゴリ** (`slug` / 概要):
 1. `copilot` – GitHub Copilot (CLI/Chat/Enterprise)
@@ -66,7 +66,7 @@ Production では **14 カテゴリ × 51 登録ソース** を対象とする�
 │                   Cloudflare Worker Cron                     │
 │                   = Runtime Harness Loop                     │
 └──────────────────┬──────────────────────────────────────────┘
-                   │ cron: 0 * * * * (4 batch rotation)
+                   │ cron: 0 * * * * (6 batch rotation)
                    ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  Worker Harness (Node/TS, shared collectors/pipeline)        │

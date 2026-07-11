@@ -49,7 +49,7 @@
 
 | コンポーネント | ランタイム | 役割 |
 |---|---|---|
-| **Worker `tech-dashboard-harness`** | Cloudflare Workers | 毎時 cron (4 batch ローテーション) で RSS 収集 → fallback 適用 → Queue 投入 → og:image 取得 → GitHub へ data コミット |
+| **Worker `tech-dashboard-harness`** | Cloudflare Workers | 毎時 cron (6 batch ローテーション) で RSS 収集 → fallback 適用 → Queue 投入 → og:image 取得 → GitHub へ data コミット |
 | **Worker `tech-dashboard-summarizer`** | Cloudflare Workers Queue consumer | 1 message / invocation で Copilot 要約を生成し、KV に per-URL cache として保存 |
 | **KV `SUMMARY_CACHE`** | Cloudflare KV | `s:{sha256(url)}` の per-URL summary cache と `og.v1` 画像キャッシュを管理 |
 | **harness (ローカル実行版)** | Node.js 22 / TSX | `npm run collect` で同ロジックをローカル実行 (デバッグ用) |
@@ -63,8 +63,8 @@
 |---|---|
 | Cron 式 | `0 * * * *` (UTC) |
 | 実行頻度 | **毎時 / 24 run×日** |
-| ソースローテーション | 50 fetch 対象ソース ÷ 4 batch (`hour % 4`)、個別ソースは 4 時間ごと |
-| 1 実行あたり Queue 投入上限 | `ENQUEUE_MAX_NEW = 10` |
+| ソースローテーション | Worker 対象ソース ÷ 6 batch (`hour % 6`)、個別ソースはおおむね 6 時間ごと |
+| 1 実行あたり Queue 投入上限 | `ENQUEUE_MAX_NEW = 35` |
 | 1 実行あたり og:image fetch 上限 | `OG_BUDGET_PER_RUN = 1` |
 | ソースあたり取得上限 | `PER_SOURCE_CAP = 15` (arxiv の 400+/日 を抑制) |
 | index エントリ総数上限 | `INDEX_LIMIT = 2000` |
@@ -87,8 +87,8 @@ Worker は実行のたびに `data/index.json` に以下の `health` フィー�
 ```ts
 interface WorkerHealth {
   lastRunAt: string;        // ISO 8601
-  batchIndex: number;       // 1ー4
-  batchTotal: number;       // 4
+  batchIndex: number;       // 1-6
+  batchTotal: number;       // 6
   sourcesAttempted: number;
   sourcesOk: number;
   sourcesFailed: string[];
@@ -123,13 +123,13 @@ interface WorkerHealth {
 
 | 領域 | 仕組み | 頻度 / トリガー |
 |---|---|---|
-| データ収集 + Queue 要約 + og:image | Cloudflare Worker cron + Queue consumer | 毎時 (4 batch ローテーション、要約は最大 10 件/run を Queue 投入) |
+| データ収集 + Queue 要約 + og:image | Cloudflare Worker cron + Queue consumer | 毎時 (6 batch ローテーション、要約は最大 35 件/run を Queue 投入) |
 | GitHub commit | Worker → GitHub Git Data API | data 差分を 1 commit にまとめる |
 | サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
 | ローカル品質ゲート + Worker コード deploy | `scripts/git-hooks/pre-push` | push 前に unit / web build / E2E を実行し、`RUN_WORKER_DEPLOY=1` の `main` push に worker/ 差分がある場合だけ deploy |
 | ヘルス監視 | `data/index.json#health` + `/status` ページ | 実行ごと記録、サイト訪問時に確認 |
 
-**残る手動運用**: 年 1 回の PAT 更新 (`wrangler secret put COPILOT_PAT` / `GH_TOKEN`)。失効時は `/status` の Worker Health が `summarize disabled` に変わるので即気付ける。Worker は commit 前に bilingual summary fallback を適用し、`data/index.json` の本文は必ず空にする。cache 済みの有効な要約が index に未反映の場合だけ `npm run summaries:apply-cache` で再反映する。本文は `data/bodies.json` の専用経路で管理し、旧 index 本文の移行には `npm run body:migrate` を使う。本文未生成時は要約と原文リンクを表示し、deterministic filler body は生成しない。
+**残る手動運用**: 年 1 回の PAT 更新 (`wrangler secret put COPILOT_PAT` / `GH_TOKEN`)。失効時は `/status` の Worker Health が `summarize disabled` に変わるので即気付ける。Worker は commit 前に bilingual summary fallback を適用し、`data/index.json` の本文は必ず空にする。cache 済みの有効な要約が index に未反映の場合だけ `npm run summaries:apply-cache` で再反映する。本文は `data/bodies.json` の専用経路で管理し、evergreen、importance 2/3、直近 30 日を保持する。旧 index 本文の移行には `npm run body:migrate` を使う。本文未生成時は要約と原文リンクを表示し、deterministic filler body は生成しない。
 
 ---
 

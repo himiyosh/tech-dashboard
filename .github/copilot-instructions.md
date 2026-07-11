@@ -1280,6 +1280,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: detail page を開く smoke test は `main article.card h3.title` 内の静的 Timeline link を共通 selector にし、ticker の hidden state を click 対象から除外した。retry 回数は増やさず、テスト対象の surface と状態を selector 自体に含める。
 - **教訓**: carousel / ticker / tab panel の hidden node は DOM に残る。E2E の click selector は URL や tag 名だけでなく、所有 surface と actionable state を指定する。初回失敗後の retry PASS は成功ではなく flake として修正する。
 
+### LL-179: session 追跡型の PR tool は 2 本目の branch を自動で対象にしない
+- **事象**: 1 本目の PR を merge 後、新しい follow-up branch で PR 作成 tool を実行しても、セッションに保存された既存の merged PR が返り、新 branch の PR を作成できなかった。
+- **根本原因**: PR tool の対象が現在の Git branch ではなく session に追跡済みの PR へ固定されていた。branch を切り替えただけでは追跡先が更新されない。
+- **対策**: follow-up branch に open PR が無いことを `gh pr list --head <branch>` で確認し、2 本目以降は `gh pr create --base main --head <branch>` で対象を明示する。既存 PR を誤って更新・再利用しない。
+- **教訓**: session と PR が 1 対 1 の tool では、branch の現在値を target source と仮定しない。follow-up PR は head/base と既存 PR 不在を明示的に検証してから作る。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

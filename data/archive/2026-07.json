@@ -1,8 +1,37 @@
 {
-  "generatedAt": "2026-07-11T06:25:41.015Z",
+  "generatedAt": "2026-07-11T07:00:59.278Z",
   "month": "2026-07",
-  "count": 426,
+  "count": 456,
   "entries": [
+    {
+      "id": "804474d16833c669",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/OnuuuumaX/items/58ac2e5a65db73749ad3",
+      "title": "【Godot 4.x】2D脱出ゲームを作ってみる⑧〜戻るボタン・ギミック正解判定・ローカル保存を実装する〜",
+      "titleJa": "【Godot 4.x】2D脱出ゲームを作ってみる⑧〜戻るボタン・ギミック正解判定・ローカル保存を実装する〜",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T05:27:59.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに この記事は、Godot 4.xで脱出ゲームを作る連載の第8回です。 第1回：環境構築とプロジェクト作成 第2回：Claude Code + godot-mcpのセットアップ 第3回：Claude CodeとMCPでスプラッシュ画面を実装する 第4回：Claud...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkYxMjg5ZWY1NGEzZjZmZDQzZGU3NjA3MGIxZjNmMzJhNj9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MjZhYTU1OTQ3MzQ5OGVjY2FjNDFhMjYyYWZjMWU5YWM%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZlYmQ5Njg3Yjk0MzAwMWI5NzlkNmU0YWY1MGFiYWU4YTc5MWE4ZGE1JTJGb3JpZ2luYWwuanBnJTNGMTc1NjE4NjM1Mz9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1hOTMyMDU4NWNlNzJmY2QyNGJiNGQ0MDNkYTA2MGM1OA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D1be0236a1ee859e48bb82511798ad812?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwR29kb3QlMjA0LnglRTMlODAlOTEyRCVFOCU4NCVCMSVFNSU4NyVCQSVFMyU4MiVCMiVFMyU4MyVCQyVFMyU4MyVBMCVFMyU4MiU5MiVFNCVCRCU5QyVFMyU4MSVBMyVFMyU4MSVBNiVFMyU4MSVCRiVFMyU4MiU4QiVFMiU5MSVBNyVFMyU4MCU5QyVFNiU4OCVCQiVFMyU4MiU4QiVFMyU4MyU5QyVFMyU4MiVCRiVFMyU4MyVCMyVFMyU4MyVCQiVFMyU4MiVBRSVFMyU4MyU5RiVFMyU4MyU4MyVFMyU4MiVBRiVFNiVBRCVBMyVFOCVBNyVBMyVFNSU4OCVBNCVFNSVBRSU5QSVFMyU4MyVCQiVFMyU4MyVBRCVFMyU4MyVCQyVFMyU4MiVBQiVFMyU4MyVBQiVFNCVCRiU5RCVFNSVBRCU5OCVFMyU4MiU5MiVFNSVBRSU5RiVFOCVBMyU4NSVFMyU4MSU5OSVFMyU4MiU4QiVFMyU4MCU5QyZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTZmZDVjNTI3NTkwZjIzYTg1NmY1YzljYjMwMjNiNGM1&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBPbnV1dXVtYVgmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iMmQ3MzA2OGNkOTk3ODcyNjIxNWNmNDE5MjA0OTZhNg&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=R01P44Kz44ON44Kv44OI5qCq5byP5Lya56S-&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%231E2121&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=a4d97780c83337ac26c8967e9fa69094",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkYxMjg5ZWY1NGEzZjZmZDQzZGU3NjA3MGIxZjNmMzJhNj9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MjZhYTU1OTQ3MzQ5OGVjY2FjNDFhMjYyYWZjMWU5YWM%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZlYmQ5Njg3Yjk0MzAwMWI5NzlkNmU0YWY1MGFiYWU4YTc5MWE4ZGE1JTJGb3JpZ2luYWwuanBnJTNGMTc1NjE4NjM1Mz9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1hOTMyMDU4NWNlNzJmY2QyNGJiNGQ0MDNkYTA2MGM1OA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D1be0236a1ee859e48bb82511798ad812?ixlib=rb-4.1.1&amp;w=1200&amp;fm=jpg&amp;mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwR29kb3QlMjA0LnglRTMlODAlOTEyRCVFOCU4NCVCMSVFNSU4NyVCQSVFMyU4MiVCMiVFMyU4MyVCQyVFMyU4MyVBMCVFMyU4MiU5MiVFNCVCRCU5QyVFMyU4MSVBMyVFMyU4MSVBNiVFMyU4MSVCRiVFMyU4MiU4QiVFMiU5MSVBNyVFMyU4MCU5QyVFNiU4OCVCQiVFMyU4MiU4QiVFMyU4MyU5QyVFMyU4MiVCRiVFMyU4MyVCMyVFMyU4MyVCQiVFMyU4MiVBRSVFMyU4MyU5RiVFMyU4MyU4MyVFMyU4MiVBRiVFNiVBRCVBMyVFOCVBNyVBMyVFNSU4OCVBNCVFNSVBRSU5QSVFMyU4MyVCQiVFMyU4MyVBRCVFMyU4MyVCQyVFMyU4MiVBQiVFMyU4MyVBQiVFNCVCRiU5RCVFNSVBRCU5OCVFMyU4MiU5MiVFNSVBRSU5RiVFOCVBMyU4NSVFMyU4MSU5OSVFMyU4MiU4QiVFMyU4MCU5QyZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTZmZDVjNTI3NTkwZjIzYTg1NmY1YzljYjMwMjNiNGM1&amp;mark-x=120&amp;mark-y=112&amp;blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBPbnV1dXVtYVgmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iMmQ3MzA2OGNkOTk3ODcyNjIxNWNmNDE5MjA0OTZhNg&amp;blend-x=242&amp;blend-y=454&amp;blend-w=838&amp;blend-h=46&amp;blend-fit=crop&amp;blend-crop=left%2Cbottom&amp;blend-mode=normal&amp;txt64=R01P44Kz44ON44Kv44OI5qCq5byP5Lya56S-&amp;txt-x=242&amp;txt-y=539&amp;txt-width=838&amp;txt-clip=end%2Cellipsis&amp;txt-color=%231E2121&amp;txt-font=Hiragino%20Sans%20W6&amp;txt-size=28&amp;s=a4d97780c83337ac26c8967e9fa69094",
+        "alt": "【Godot 4.x】2D脱出ゲームを作ってみる⑧〜戻るボタン・ギミック正解判定・ローカル保存を実装する〜",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "64c377c694b35ae9",
       "source": "qiita-llm",
@@ -16,10 +45,11 @@
       "collectedAt": "2026-07-11T06:00:54.515Z",
       "tags": [
         "llm",
-        "qiita",
         "lm-studio",
         "local-llm",
-        "ollama"
+        "ollama",
+        "qiita",
+        "tutorial"
       ],
       "category": "local-llm",
       "importance": 1,
@@ -47,12 +77,12 @@
       "publishedAt": "2026-07-11T04:55:22.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
+        "ai-tools",
         "claude",
-        "qiita",
         "code-review",
-        "fable",
         "cost-performance",
-        "ai-tools"
+        "fable",
+        "qiita"
       ],
       "category": "claude",
       "importance": 2,
@@ -80,11 +110,13 @@
       "publishedAt": "2026-07-11T04:49:49.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
-        "claude",
-        "qiita",
+        "agent",
         "ai-agents",
-        "prompt-engineering",
+        "claude",
         "coding",
+        "prompt-engineering",
+        "qiita",
+        "tutorial",
         "workflow"
       ],
       "category": "claude",
@@ -114,11 +146,11 @@
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
         "cursor",
-        "qiita",
         "grok",
-        "xai",
         "llm-training",
-        "token-efficiency"
+        "qiita",
+        "token-efficiency",
+        "xai"
       ],
       "category": "cursor",
       "importance": 3,
@@ -135,6 +167,50 @@
       }
     },
     {
+      "id": "f02e43f1988731ab",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/shu15511551/items/7237a328e05efb301240",
+      "title": "自作MCPサーバーがAntigravityで動かない——AIの\"自白\"を物証で崩した話",
+      "titleJa": "自作MCPサーバーがAntigravityで動かない——AIの\"自白\"を物証で崩した話",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T04:32:27.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 自作の VBA 管理ツール（shu-vba-manager）を MCP サーバー化して、ふだんは Claude Code から使っています。開いたままの Excel ブックに相乗りして、マクロの一覧・取得・置換までを会話で済ませる道具です。 これを Google..."
+    },
+    {
+      "id": "3843054567223109",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/renatomarinho/items/38896b731022c3012c33",
+      "title": "AIエージェントを「統計解析ツール」として使う：Mood Tracker MCPによる感情データのパターン抽出",
+      "titleJa": "AIエージェントを「統計解析ツール」として使う：Mood Tracker MCPによる感情データのパターン抽出",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T04:22:49.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "AIを単なるチャットボットとして扱っているとしたら、それはMCP（Model Context Protocol）の価値を半分も理解できていない。 エージェントの本質的な強みは、対話能力ではなく、既存のデータセットに対して「文脈に基づいた推論」と「パターン抽出」を行える点にあ..."
+    },
+    {
       "id": "bc639ed77294630f",
       "source": "arxiv-cs-ai",
       "sourceType": "paper",
@@ -146,13 +222,13 @@
       "publishedAt": "2026-07-11T04:00:00.000Z",
       "collectedAt": "2026-07-11T06:00:54.515Z",
       "tags": [
-        "arxiv",
-        "enterprise",
-        "paper",
-        "context-graph",
-        "proactive-agents",
         "ai-agents",
-        "knowledge-graph"
+        "arxiv",
+        "context-graph",
+        "enterprise",
+        "knowledge-graph",
+        "paper",
+        "proactive-agents"
       ],
       "category": "research",
       "importance": 2,
@@ -180,12 +256,12 @@
       "publishedAt": "2026-07-11T04:00:00.000Z",
       "collectedAt": "2026-07-11T06:00:54.515Z",
       "tags": [
+        "ai-safety",
         "arxiv",
-        "paper",
         "llm",
-        "social-epistemology",
         "multi-agent",
-        "ai-safety"
+        "paper",
+        "social-epistemology"
       ],
       "category": "research",
       "importance": 2,
@@ -205,12 +281,12 @@
       "publishedAt": "2026-07-11T04:00:00.000Z",
       "collectedAt": "2026-07-11T06:00:54.515Z",
       "tags": [
-        "arxiv",
-        "paper",
         "ai-safety",
-        "healthcare-ai",
         "alignment",
-        "medical"
+        "arxiv",
+        "healthcare-ai",
+        "medical",
+        "paper"
       ],
       "category": "research",
       "importance": 2,
@@ -231,11 +307,11 @@
       "collectedAt": "2026-07-11T06:00:54.515Z",
       "tags": [
         "arxiv",
-        "paper",
         "llm",
-        "vectorization",
+        "nlp",
+        "paper",
         "rag",
-        "nlp"
+        "vectorization"
       ],
       "category": "research",
       "importance": 2,
@@ -257,12 +333,12 @@
       "tags": [
         "agent",
         "arxiv",
+        "insurance",
+        "llm",
         "paper",
         "rag",
-        "underwriting",
-        "insurance",
         "straight-through-processing",
-        "llm"
+        "underwriting"
       ],
       "category": "research",
       "importance": 2,
@@ -283,11 +359,11 @@
       "collectedAt": "2026-07-11T06:00:54.515Z",
       "tags": [
         "agent",
+        "alignment",
         "arxiv",
-        "paper",
         "imitation-learning",
         "offline-rl",
-        "alignment",
+        "paper",
         "regularization"
       ],
       "category": "research",
@@ -308,13 +384,13 @@
       "publishedAt": "2026-07-11T04:00:00.000Z",
       "collectedAt": "2026-07-11T06:00:54.515Z",
       "tags": [
+        "africa",
         "arxiv",
-        "paper",
-        "low-resource",
-        "nlp",
         "dataset",
         "industrial-ai",
-        "africa"
+        "low-resource",
+        "nlp",
+        "paper"
       ],
       "category": "research",
       "importance": 2,
@@ -451,6 +527,27 @@
       "contentSnippet": "TL;DR Opus × GPT のサブスク利用可能モデルを組み合わせて、従量課金となる Fable 級の判断正確性能を実現する ClaudeCode の スキル dual-engine を作成し、MIT ライセンスで公開しました。 Claude Code(CC) と ..."
     },
     {
+      "id": "209ebcd031886625",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/degudegu2510/items/8addd9c56828c78d2347",
+      "title": "【Personal OS #3】Claude Codeで、ミーティングを自動でドキュメント化する仕組み",
+      "titleJa": "【Personal OS #3】Claude Codeで、ミーティングを自動でドキュメント化する仕組み",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T01:19:36.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに Personal OS シリーズの #3 です。 今回はミーティング周りの自動化を紹介します。 Google Calendar からスケジュールを取得してタスクに追記するだけでなく、 ミーティング終了後に自動でノートを生成するところまでを扱います。 他のシリーズ..."
+    },
+    {
       "id": "ec265538bdc708b0",
       "source": "qiita-claude",
       "sourceType": "blog",
@@ -471,6 +568,35 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "ClaudeとSpotify MCPでフェスのフライヤー画像からプレイリストができた フェスに参加することになった。フェスでは知らなかったアーティストがたくさん参加しているものだが、それぞれについてちゃんと調べるのも面倒だし、一番人気の曲だけとりあえず入れた適当なプレイリ..."
+    },
+    {
+      "id": "8cee94c49673783c",
+      "source": "ollama-releases",
+      "sourceType": "release",
+      "url": "https://github.com/ollama/ollama/releases/tag/v0.32.0-rc0",
+      "title": "Ollama Releases v0.32.0",
+      "titleJa": "",
+      "titleEn": "Ollama Releases v0.32.0",
+      "lang": "en",
+      "publishedAt": "2026-07-11T01:03:46.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "ollama",
+        "release"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "What's Changed create: select the qwen3.5 parser and renderer for Qwen3.5/Next by @jessegross in #17078 launch: warn before old agent models by @ParthSareen in #17063 cmd: agent UI by @ParthSareen in #17017 Full Changelog : v0.31.2...v0.32.0-rc0",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&amp;v=4",
+        "alt": "Ollama Releases v0.32.0",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
     },
     {
       "id": "50428e95dcccbe84",
@@ -563,6 +689,27 @@
       "contentSnippet": "\"Our intent was to provide a useful creative tool and to give people control over whether their public content could be referenced in this way,\" the company said in a blog post. \"We've heard the feedback that this feature missed the mark, so it's no longer available.\""
     },
     {
+      "id": "136ed7897f9a7eb4",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/tech/964416/meta-instagram-ai-muse-image-deepfakes",
+      "title": "Meta turns off the Instagram feature that let users make AI deepfakes of public accounts",
+      "titleJa": "",
+      "titleEn": "Meta turns off the Instagram feature that let users make AI deepfakes of public accounts",
+      "lang": "en",
+      "publishedAt": "2026-07-10T23:49:50.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "news",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Following significant backlash, Meta is turning off the feature it announced this week that let users generate AI images based on content from public Instagram accounts just by tagging them. The feature, as originally set up, meant that content from any public Instagram account c"
+    },
+    {
       "id": "d3e0c87e13261466",
       "source": "langchain-releases",
       "sourceType": "release",
@@ -646,6 +793,27 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに Claude CodeのVSCode拡張を使っていて、Auto modeが選択肢にないことに気づきました。 Auto modeがないと承認作業が増えるため作業効率が落ちます。原因追究して解決できたので、その手順を記録しておきます。 対象者 Claude Co..."
+    },
+    {
+      "id": "ef9e09edeb6c2737",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/tech/964350/apple-openai-lawsuit-trade-secrets",
+      "title": "Apple sues OpenAI for allegedly stealing hardware secrets",
+      "titleJa": "",
+      "titleEn": "Apple sues OpenAI for allegedly stealing hardware secrets",
+      "lang": "en",
+      "publishedAt": "2026-07-10T21:36:51.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "news",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Apple has sued OpenAI, alleging that engineers stole Apple secrets to advance the AI startup's hardware plans. In its complaint, Apple says it uncovered \"a pattern of theft of Apple's trade secrets by OpenAI employees who were formerly at Apple.\" In addition to OpenAI, the lawsui"
     },
     {
       "id": "6bb26fd9607d06ef",
@@ -762,6 +930,35 @@
       }
     },
     {
+      "id": "be820e25ead24e80",
+      "source": "openhands-releases",
+      "sourceType": "release",
+      "url": "https://github.com/OpenHands/OpenHands/releases/tag/cloud-1.46.0",
+      "title": "OpenHands cloud 1.46.0",
+      "titleJa": "",
+      "titleEn": "OpenHands cloud 1.46.0",
+      "lang": "en",
+      "publishedAt": "2026-07-10T19:51:59.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "openhands",
+        "release"
+      ],
+      "category": "opencode",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "1.46.0 (2026-07-10) What's Changed Features feat(app-server): enrich final archive manifests and remove initial snapshots by @simonrosenberg in #15058 feat(enterprise): make BYOR key alias pattern configurable by @tofarr in #15232 Bug Fixes fix(frontend): mention SMTP env vars fo",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/225919603?s=60&amp;v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/225919603?s=60&amp;v=4",
+        "alt": "OpenHands cloud 1.46.0",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
       "id": "25273430064f1ed6",
       "source": "qiita-cursor",
       "sourceType": "blog",
@@ -861,19 +1058,40 @@
       "publishedAt": "2026-07-10T17:32:52.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
-        "claude",
-        "zenn",
         "ai",
+        "claude",
         "local-llm",
         "productivity",
         "transcription",
-        "whisper"
+        "whisper",
+        "zenn"
       ],
       "category": "claude",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに プログラミングを本格的に学んだことのない自分が、AI（Claude と Codex）と一緒に、動画や音声をローカルで文字起こしする Web アプリ「もじおこし」を作りました。この記事はその制作の記録です。完成品の紹介というより、「なぜ作ったか」「どこで詰まって、どう抜けたか」を残すことを目的にしています。同じように AI と何か作ってみたい人の道しるべになれば嬉しいです。 ポートフォリオ（作品ページ）: https://tenkaku-ux.github.io もじおこしは、動画や音声をブラウザから投入すると、自宅の PC 上で Whisper"
+    },
+    {
+      "id": "137a98f3277ca7a8",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/tech/964121/sk-hynix-nvidia-ram-stock-market-debut",
+      "title": "Nvidia’s biggest RAM supplier just had a trillion-dollar debut on Wall Street",
+      "titleJa": "",
+      "titleEn": "Nvidia’s biggest RAM supplier just had a trillion-dollar debut on Wall Street",
+      "lang": "en",
+      "publishedAt": "2026-07-10T17:31:35.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "news",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "As the AI boom boosts demand for RAM, SK Hynix - one of the world's biggest suppliers of memory chips - launched on Wall Street Friday. The South Korean chipmaker opened at $170 per share and raised $26.5 billion, surpassing Alibaba's record as the largest debut of a foreign comp"
     },
     {
       "id": "0d58dc4db1809894",
@@ -896,6 +1114,27 @@
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "The post New agentic capabilities in Microsoft 365 Copilot and Dynamics 365 boost customer service appeared first on Source ."
+    },
+    {
+      "id": "f1d9617d8679e127",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/satoh_y_0323/articles/4b95bd230b3250",
+      "title": "初めてのバグ報告は、0.069秒の音ズレだった — clipwright v0.31〜v0.37",
+      "titleJa": "初めてのバグ報告は、0.069秒の音ズレだった — clipwright v0.31〜v0.37",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-10T17:16:05.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "clipwright GitHub: https://github.com/satoh-y-0323/clipwright / PyPI: https://pypi.org/project/clipwright/ / v0.37.0 リリース: https://github.com/satoh-y-0323/clipwright/releases/tag/v0.37.0 前回記事: 「色を直す」機能を作ったのに、出力の色は1ピクセルも動かなかった 本記事のスコープ: CLI も GUI もなく AI エージェントだけが使う動画編集 MCP サーバー群 c"
     },
     {
       "id": "0f391c4586d0612f",
@@ -970,8 +1209,8 @@
       }
     },
     {
-      "id": "569fc3e078bdf317",
-      "source": "github-blog-ai",
+      "id": "7bed20f42f96d7b0",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/better-tools-made-copilot-code-review-worse-heres-how-we-actually-improved-it/",
       "title": "Better tools made Copilot code review worse. Here’s how we actually improved it.",
@@ -979,21 +1218,21 @@
       "titleEn": "Better tools made Copilot code review worse. Here’s how we actually improved it.",
       "lang": "en",
       "publishedAt": "2026-07-10T15:57:47.000Z",
-      "collectedAt": "2026-07-11T06:00:54.515Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "copilot",
+        "github",
         "ai-quality",
         "benchmark",
         "code-review",
-        "copilot",
-        "engineering",
-        "github"
+        "engineering"
       ],
       "category": "copilot",
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "How migrating Copilot code review to shared Unix-style code exploration tools reduced review cost by reshaping agent workflows around pull request evidence. The post Better tools made Copilot code review worse. Here’s how we actually improved it. appeared first on The GitHub Blog",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "How migrating Copilot code review to shared Unix-style code exploration tools reduced review cost by reshaping agent workflows around pull request evidence. The post Better tools made Copilot code review worse. Here’s how we actually improved it. appeared first on The GitHub Blog"
     },
     {
       "id": "49ac34379c35e80d",
@@ -1505,6 +1744,27 @@
       "contentSnippet": "Now it's an arms race between OEMs locking down chips and tuners trying to crack them."
     },
     {
+      "id": "d1a018506c272802",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/syarihu/articles/a811f2d2d9f149",
+      "title": "Claude Codeに「昨日の続き」を思い出させるローカル知識ベースCLI「lk」を作った",
+      "titleJa": "Claude Codeに「昨日の続き」を思い出させるローカル知識ベースCLI「lk」を作った",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-10T10:47:30.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに こんにちは。Androidエンジニアの@syarihuです。 普段からClaude Codeでコードを書いているのですが、使っているうちにずっと引っかかっていたことがありました。セッションが変わるたびに、前回さんざん読み解いたはずのモジュールを、また最初から読み直すことになる、という点です。同じファイルを開き、同じ関数を追いかけ、同じトークンを消費する。人間なら「あ、これ前に見たやつだ」で済むところを、毎回ゼロからやり直しているわけです。もったいないですよね。 そこで、Claude Codeのためのローカルな永続知識層があればいいのでは、と考え"
+    },
+    {
       "id": "ff6bc71e25a43c58",
       "source": "zenn-copilot",
       "sourceType": "blog",
@@ -1551,6 +1811,27 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに tech-lab（https://tech-lab.sorapenguin.dev）は、CCNP ENARSI・LPIC・Javaなどのスキルアップ向け問題演習を無料で使えるWebサービスです。 主な特徴： 無料・ゲスト利用可能 音声読み上げ・自動再生対応（ながら学習ができる） 前回から時間が経った問題だけ出す絞り込み機能 XP・レベル・スタミナのゲーミフィケーション 問題は継続的に追加中 この記事では「問題をどうやって量産したか」と「サービスの独自機能」について書きます。 なぜ作ったか CCNP ENARSIやLPICなど、Web上で無料演習"
+    },
+    {
+      "id": "c2811d6fd4170fff",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/gyu07/articles/d3cf37092f4597",
+      "title": "すべてのAPIはエージェント向けに再設計される",
+      "titleJa": "すべてのAPIはエージェント向けに再設計される",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-10T09:55:31.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "! 本記事は、dev.toで公開した \"Every API Will Be Rebuilt for Agents\" の日本語版です。 MCPは、エージェントと外部システムを接続する問題を解決しつつあります。しかし、接続しただけで、エージェントがAPIを正しく使えるようになるわけではありません。 丁寧に設計され、OpenAPIも整備されたREST APIをMCPで公開しても、エージェントは間違ったエンドポイントを選び、1回で済む処理に複数の呼び出しを使い、ときには確認なしで破壊的な操作を実行します。 APIの品質が低いのではありません。人間の開発者を前提に"
     },
     {
       "id": "6a65196c9c303739",
@@ -1694,8 +1975,8 @@
       "contentSnippet": "論文「Don't Retrieve, Navigate」（arXiv:2604.14572）と実装 Corpus2Skill を、アーキテクチャとコスト構造の観点から深掘りします。概要レベルの解説は先に公開したサイトにまとめてあります。 https://corpus2skill.businesshub.trueone.co.jp/ RAGの構造的問題は「精度」ではなく「視界」 RAG改善というと埋め込みモデルやリランカーの話になりがちですが、この論文の指摘はより根本的です。LLMがコーパスの全体構造を観測できないこと自体が問題だ、と。 検索ベースでは ("
     },
     {
-      "id": "51048f5bdd794dad",
-      "source": "openai-news",
+      "id": "de3535ae2f8767a5",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/deutsche-telekom",
       "title": "How Deutsche Telekom is rewiring telecommunications with AI",
@@ -1703,7 +1984,7 @@
       "titleEn": "How Deutsche Telekom is rewiring telecommunications with AI",
       "lang": "en",
       "publishedAt": "2026-07-10T07:00:00.000Z",
-      "collectedAt": "2026-07-11T06:00:54.515Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
         "openai"
       ],
@@ -1840,8 +2121,8 @@
       "contentSnippet": "はじめに AnthropicとOpenAIの双方でモデルラインナップが一新されました。 Claude側はOpusの上位にFable 5が加わり、日常の主力もSonnet 5へ世代交代。 OpenAI側はGPT-5.6が「Sol / Terra / Luna」という新しい3ティア構成で登場しました。 ラインナップが変わりましたので、改めて見直しました。 ! 提供条件やレート制限は変化が激しいため、最新情報は各社の公式ドキュメントを確認してください。 Claudeの新ラインナップ Claude Codeで選択できる主要モデルは4つのティアに整理できます。 モ"
     },
     {
-      "id": "7aafaafff0af7bae",
-      "source": "zenn-claude",
+      "id": "fa2bab2e8b5072ce",
+      "source": "zenn-mcp",
       "sourceType": "blog",
       "url": "https://zenn.dev/rererr_engineer/articles/e571e5b6eb1d53",
       "title": "エージェントのWeb取得、ツール次第でトークンが5000倍違った話",
@@ -1849,12 +2130,13 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-10T04:01:19.000Z",
-      "collectedAt": "2026-07-11T06:25:18.948Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
-        "claude",
-        "zenn"
+        "mcp",
+        "zenn",
+        "claude"
       ],
-      "category": "claude",
+      "category": "mcp",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -2313,6 +2595,28 @@
       "contentSnippet": "個人開発でAI議事録SaaSをやっています Kaigi AI という、会議の音声を文字起こし・要約する SaaS を一人で開発・運用しています。バックエンドは FastAPI、フロントは Next.js、文字起こしは自前ホストの Whisper、要約とその周辺処理は Claude、というよくある構成です。 今日は「話者識別」機能の実装について書きます。結論から言うと、音声から話者を識別する diarization は使っていません。文字起こし後のテキストを Claude に読ませて「誰が話しているか」を推測させています。これは妥協ではなく、コストと精度の"
     },
     {
+      "id": "f4a3bd2e2038fc55",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kensei0819/articles/mirukomi-make-dify-n8n",
+      "title": "同じMCPサーバーなのに、Make/Dify/n8nでつなぎ方が全然違った",
+      "titleJa": "同じMCPサーバーなのに、Make/Dify/n8nでつなぎ方が全然違った",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-10T03:34:30.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "「MCPを1本立てれば横断的に繋がる」は半分だけ本当 自作のShopifyレビューアプリにMCPサーバーを足した（経緯は前回の記事）。狙いは「1本作ればDify・n8n・Make・Claude Desktopから横断的に触れる」だったが、実際に3つのノーコード/ローコード基盤を触ってみると、同じMCPサーバーに対しての「繋がり方」がそれぞれ全く違った。 プロトコルが共通でも、プラットフォーム側の対応状況次第で体験は結構変わる、というメモ。 Dify（v1.6+）: MCPサーバーがそのままツールになる Difyは v1.6 から双方向MCP対応で、外部の"
+    },
+    {
       "id": "6c6ca35c1b67c41d",
       "source": "zenn-claude",
       "sourceType": "blog",
@@ -2324,11 +2628,11 @@
       "publishedAt": "2026-07-10T03:16:28.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
-        "claude",
-        "zenn",
         "ai-coding",
+        "claude",
         "cursor",
-        "tool-comparison"
+        "tool-comparison",
+        "zenn"
       ],
       "category": "claude",
       "importance": 1,
@@ -2404,8 +2708,31 @@
       "contentSnippet": "Claude Code×launchd×Obsidianで「自動でタスクが湧いてくる」仕組みを作った Claude Codeにクラウドの定期ジョブを任せていると、ある問題にぶつかります。AIは毎朝ちゃんと成果物をpushしてくれるのに、それを人間がレビューし忘れる。 この記事は、その取りこぼしを防ぐために作った「新規ファイル検知→タスク自動起票」の仕組みの記録です。 課題:レビュー待ちが物理的に見えない 私は content-factory というリポジトリで、AIに週次・日次で記事や小説の草稿を生成させています。生成ジョブ自体はクラウドのスケジュールル"
     },
     {
-      "id": "3698b552f450b37b",
-      "source": "qiita-cursor",
+      "id": "83a39628a0963f4b",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/headwaters/articles/65c05b3682db9d",
+      "title": "Microsoft Agent FrameworkのエージェントをMCPサーバー化する方法",
+      "titleJa": "Microsoft Agent FrameworkのエージェントをMCPサーバー化する方法",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-10T02:03:05.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "agent",
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "執筆日 2026/7/10 やること Microsoft Agent Frameworkで作成したエージェントをMCPサーバー化しようかなと。 はじめに Microsoft Agent Framework(以下 MAF)で作った Agent は、as_mcp_server() を呼ぶだけでそのまま MCPサーバーのツール として公開できます。 セットアップ requirements.txt pip install agent-framework --pre pip install python-dotenv エージェントを作る 高タンパクレシピを検索する"
+    },
+    {
+      "id": "c7d0360a5c6d234c",
+      "source": "qiita-copilot",
       "sourceType": "blog",
       "url": "https://qiita.com/ishizakahiroshi/items/6821655d5af59a32e50c",
       "title": "Claude Code / Codex / Cursor / Copilot / OpenCode で同じ Agent Skills を共有する。正本 1 箇所 + リンクの設計",
@@ -2413,13 +2740,13 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-10T02:01:40.000Z",
-      "collectedAt": "2026-07-11T06:25:18.948Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
         "agent",
-        "cursor",
-        "qiita"
+        "qiita",
+        "cursor"
       ],
-      "category": "cursor",
+      "category": "copilot",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -2565,6 +2892,27 @@
       }
     },
     {
+      "id": "5eedc3ae2529d6e2",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/marrontakumi/articles/claude-obsidian-external-memory",
+      "title": "Claude × Obsidianで「外部記憶」を持つAIアシスタントを構築する",
+      "titleJa": "Claude × Obsidianで「外部記憶」を持つAIアシスタントを構築する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-09T21:42:51.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "この記事でわかること Claude Codeは便利ですが、セッションが終わると会話の記憶は消えてしまいます。毎回同じ自己紹介をし、同じ好みや作業スタイルを説明し直すのはかなりめんどうです。この記事では、ObsidianのVaultをMCP(Model Context Protocol)経由でClaudeに読み書きさせ、「外部脳」としてセッションをまたいだ記憶を持たせる仕組みを構築した手順をまとめようと思います！（ユーザは会話するだけで、勝手にClaudeくんが自己改善してくれます笑） 前提 Claude Code(またはMCP対応のClaudeクライアン"
+    },
+    {
       "id": "ab8f795c49a910f5",
       "source": "ars-technica",
       "sourceType": "blog",
@@ -2637,12 +2985,12 @@
       "titleEn": "OpenHands cloud 1.45.1",
       "lang": "en",
       "publishedAt": "2026-07-09T20:07:45.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
-        "cloud",
         "openhands",
-        "patch",
-        "release"
+        "release",
+        "cloud",
+        "patch"
       ],
       "category": "opencode",
       "importance": 2,
@@ -2668,14 +3016,14 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-09T19:39:22.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "qiita",
         "azure-openai",
         "copilot",
         "gpt-5",
         "llm",
-        "model-selection",
-        "qiita"
+        "model-selection"
       ],
       "category": "copilot",
       "importance": 2,
@@ -2701,13 +3049,13 @@
       "titleEn": "OpenHands Releases 1.11.0",
       "lang": "en",
       "publishedAt": "2026-07-09T19:37:16.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "openhands",
+        "release",
         "agent",
         "ai-agent",
-        "open-source",
-        "openhands",
-        "release"
+        "open-source"
       ],
       "category": "opencode",
       "importance": 3,
@@ -2765,12 +3113,12 @@
       "titleEn": "OpenHands cloud 1.45.0",
       "lang": "en",
       "publishedAt": "2026-07-09T19:28:57.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
-        "cloud",
         "openhands",
-        "patch",
-        "release"
+        "release",
+        "cloud",
+        "patch"
       ],
       "category": "opencode",
       "importance": 2,
@@ -2959,7 +3307,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Here’s a question we hear often at Google Cloud: How do you safely run AI-generated code or untrusted binaries without putting your host application, data, and cloud credentials at risk? In other words, how do you give AI-written programs a safe space to run — one that keeps them",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/original_images/sandbox_1000_-_100_ok.gif",
@@ -2968,7 +3315,8 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "99be24064fa9351a",
@@ -3143,13 +3491,13 @@
       "titleEn": "OpenHands cloud 1.44.0",
       "lang": "en",
       "publishedAt": "2026-07-09T14:16:09.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "openhands",
+        "release",
         "agent",
         "ai-agent",
-        "cloud",
-        "openhands",
-        "release"
+        "cloud"
       ],
       "category": "opencode",
       "importance": 3,
@@ -3166,8 +3514,8 @@
       }
     },
     {
-      "id": "994629e453e69916",
-      "source": "openai-news",
+      "id": "054a7a7121d7d525",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/gpt-5-6-preferred-model-microsoft-365-copilot",
       "title": "GPT-5.6 is now the preferred model in Microsoft 365 Copilot",
@@ -3175,7 +3523,7 @@
       "titleEn": "GPT-5.6 is now the preferred model in Microsoft 365 Copilot",
       "lang": "en",
       "publishedAt": "2026-07-09T13:00:00.000Z",
-      "collectedAt": "2026-07-11T06:00:54.515Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
         "openai"
       ],
@@ -3186,8 +3534,52 @@
       "contentSnippet": "Learn how GPT-5.6 powers Microsoft 365 Copilot with stronger AI capabilities across Word, Excel, PowerPoint, Chat, and Cowork for faster, higher-quality work."
     },
     {
-      "id": "be0a087202162317",
-      "source": "openai-news",
+      "id": "4847b020cfd8f6fb",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/aws_japan/articles/claude-desktop-bedrock-redshift-mcp",
+      "title": "Claude Desktop on Amazon Bedrock から Amazon Redshift に MCP 接続してみた",
+      "titleJa": "Claude Desktop on Amazon Bedrock から Amazon Redshift に MCP 接続してみた",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-09T12:15:49.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに こんにちは！AWS でソリューションアーキテクトをしている町田です。 今回は、Claude Desktop (Cowork) から Amazon Redshift のデータにアクセスするために、Amazon Redshift MCP Server をローカル MCP サーバーとして Windows 環境でセットアップしてみました。 Redshift へアクセスするにあたって、IAMユーザーの認証情報を使っています。IAM Identity Center のユーザーではありません。 セットアップすることで、Claude Desktop の会話内か"
+    },
+    {
+      "id": "1f4fd5c2b51d65f3",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kitsune_ceo/articles/7cbb4f4293d58a",
+      "title": "重いMCPを使い倒すエンジニアは、Claude for Desktopを使わないほうがいいかもしれないという話",
+      "titleJa": "重いMCPを使い倒すエンジニアは、Claude for Desktopを使わないほうがいいかもしれないという話",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-09T11:13:12.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "最近、Claude Desktopを称賛する記事をよく見かけます。 たしかにClaude Desktopは便利です。 MCPサーバーを接続すれば、ローカルファイル、Notion、GitHub、Google Analytics、WordPressなど、さまざまな外部サービスとClaudeをつなげることができます。 「これからはClaude Desktopに全部寄せればいいのでは？」 そう思う人も多いのではないでしょうか。 私もそう思い、実際にCLI版のClaude Code中心の運用から、Claude Desktop中心の運用に一度切り替えてみました。 し"
+    },
+    {
+      "id": "0d3409e022389698",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/gpt-5-6",
       "title": "GPT-5.6: Frontier intelligence that scales with your ambition",
@@ -3195,7 +3587,7 @@
       "titleEn": "GPT-5.6: Frontier intelligence that scales with your ambition",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-07-11T06:00:54.515Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
         "openai"
       ],
@@ -3206,8 +3598,8 @@
       "contentSnippet": "More intelligence from every token, stronger performance per dollar, and more capability on demand for your hardest work."
     },
     {
-      "id": "5d64d830c63fbcd8",
-      "source": "openai-news",
+      "id": "9fcf2d5751e209ad",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/chatgpt-for-your-most-ambitious-work",
       "title": "ChatGPT is now a partner for your most ambitious work",
@@ -3215,7 +3607,7 @@
       "titleEn": "ChatGPT is now a partner for your most ambitious work",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-07-11T06:00:54.515Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
         "openai"
       ],
@@ -3226,8 +3618,8 @@
       "contentSnippet": "ChatGPT Work is an agent that can take action across your apps and files, stay with a project for hours if needed, and turn a goal into finished work."
     },
     {
-      "id": "35ce925e6cd7cce8",
-      "source": "openai-news",
+      "id": "4cdf6d63ae342a93",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/bio-bug-bounty",
       "title": "GPT-5.5 Bio Bug Bounty",
@@ -3235,7 +3627,7 @@
       "titleEn": "GPT-5.5 Bio Bug Bounty",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-07-11T06:00:54.515Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
         "openai"
       ],
@@ -3246,19 +3638,43 @@
       "contentSnippet": "Details about the OpenAI Bio Bounty program"
     },
     {
+      "id": "3f6a4f1f05236857",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/k2ok/articles/59803b64c361ad",
+      "title": "Web検索MCPサーバの実装でRustに挑戦したら意外と大変だった話",
+      "titleJa": "Web検索MCPサーバの実装でRustに挑戦したら意外と大変だった話",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-09T07:02:06.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Zennでは初投稿になります。宜しくお願いします。 概要 OpenCodeの使いはじめの頃、webfetchでGoogle検索をする頻度が高く(※1)、エラーで検索結果を取得できない事象が発生し困っていました。 そこで「MCPサーバなんか無いかな」と探すと、DuckDuckGoを使ったウェブ検索MCPサーバーを公開されている方がおられたので、自環境に設定しました。検索エラーも解消し快適に利用できるようになり喜んでいました。 便利になると欲が出てくるもので、常駐時の消費メモリが処理内容と比較して大きいのが気になりはじめました。そんな折、某事件で「他言語で書"
+    },
+    {
       "id": "b70ff3973308fa03",
       "source": "cline-releases",
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/cli-v3.0.39",
       "title": "Cline CLI v3.0.39",
-      "titleJa": "",
+      "titleJa": "Cline CLI v3.0.39",
       "titleEn": "Cline CLI v3.0.39",
       "lang": "en",
       "publishedAt": "2026-07-09T04:42:44.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
         "cline",
-        "release"
+        "release",
+        "cli",
+        "patch-release"
       ],
       "category": "cline",
       "importance": 3,
@@ -3391,14 +3807,16 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/sdk%2Fsdk%2Fv0.0.59",
       "title": "Cline sdk/sdk v0.0.59",
-      "titleJa": "",
+      "titleJa": "Cline sdk/sdk v0.0.59",
       "titleEn": "Cline sdk/sdk v0.0.59",
       "lang": "en",
       "publishedAt": "2026-07-09T03:24:28.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
         "cline",
-        "release"
+        "release",
+        "sdk",
+        "patch-release"
       ],
       "category": "cline",
       "importance": 2,
@@ -3420,14 +3838,17 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/sdk%2Fcore%2Fv0.0.59",
       "title": "Cline sdk/core v0.0.59",
-      "titleJa": "",
+      "titleJa": "Cline sdk/core v0.0.59",
       "titleEn": "Cline sdk/core v0.0.59",
       "lang": "en",
       "publishedAt": "2026-07-09T03:24:26.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
         "cline",
-        "release"
+        "release",
+        "sdk",
+        "sdk-release",
+        "core"
       ],
       "category": "cline",
       "importance": 2,
@@ -3449,14 +3870,17 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/sdk%2Fagents%2Fv0.0.59",
       "title": "Cline sdk/agents v0.0.59",
-      "titleJa": "",
+      "titleJa": "Cline sdk/agents v0.0.59",
       "titleEn": "Cline sdk/agents v0.0.59",
       "lang": "en",
       "publishedAt": "2026-07-09T03:24:25.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
         "cline",
-        "release"
+        "release",
+        "sdk",
+        "agents",
+        "patch-release"
       ],
       "category": "cline",
       "importance": 2,
@@ -3478,14 +3902,17 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/sdk%2Fllms%2Fv0.0.59",
       "title": "Cline sdk/llms v0.0.59",
-      "titleJa": "",
+      "titleJa": "Cline sdk/llms v0.0.59",
       "titleEn": "Cline sdk/llms v0.0.59",
       "lang": "en",
       "publishedAt": "2026-07-09T03:24:23.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
         "cline",
-        "release"
+        "release",
+        "sdk",
+        "llm",
+        "package-release"
       ],
       "category": "cline",
       "importance": 2,
@@ -3507,14 +3934,17 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/sdk%2Fshared%2Fv0.0.59",
       "title": "Cline sdk/shared v0.0.59",
-      "titleJa": "",
+      "titleJa": "Cline sdk/shared v0.0.59",
       "titleEn": "Cline sdk/shared v0.0.59",
       "lang": "en",
       "publishedAt": "2026-07-09T03:24:22.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
         "cline",
-        "release"
+        "release",
+        "sdk",
+        "package-release",
+        "shared-library"
       ],
       "category": "cline",
       "importance": 2,
@@ -3536,14 +3966,17 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/v4.0.7",
       "title": "Cline Releases v4.0.7",
-      "titleJa": "",
+      "titleJa": "Cline v4.0.7 リリース",
       "titleEn": "Cline Releases v4.0.7",
       "lang": "en",
       "publishedAt": "2026-07-09T03:22:58.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
         "cline",
-        "release"
+        "release",
+        "patch-release",
+        "bug-fix",
+        "ai-coding-assistant"
       ],
       "category": "cline",
       "importance": 2,
@@ -3565,18 +3998,18 @@
       "sourceType": "blog",
       "url": "https://qiita.com/heftykoo/items/aedd5bcee0cd06b70612",
       "title": "CLI coding agent は、導入資料より「隣の人の使い方」で広がる",
-      "titleJa": "CLI coding agentは導入資料より「隣の人の使い方」で広がる",
+      "titleJa": "CLI coding agent は、導入資料より「隣の人の使い方」で広がる",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-09T02:30:16.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
-        "adoption",
         "agent",
+        "qiita",
+        "adoption",
         "cli",
         "coding-agent",
-        "developer-tools",
-        "qiita"
+        "developer-tools"
       ],
       "category": "copilot",
       "importance": 1,
@@ -3594,12 +4027,12 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-09T01:30:25.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "qiita",
         "git-worktrees",
         "github-copilot",
         "go-1.26",
-        "qiita",
         "token-optimization"
       ],
       "category": "copilot",
@@ -3607,6 +4040,27 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに 今週流れてきたトレンドの中から、実際に手を動かして確かめたものをまとめる。Git worktreesはずっと存在は知りつつ本腰入れて使ったことがなかった。Go 1.26のスタックアロケーション改善も気になっていたし、Copilotのトークン効率話は業務への影響が..."
+    },
+    {
+      "id": "4296d4d78810a17c",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/finatext/articles/7cdf789e37cb38",
+      "title": "SaaSの業務オペレーションを、AIオペレーターに",
+      "titleJa": "SaaSの業務オペレーションを、AIオペレーターに",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-09T01:20:24.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "! この記事は、デブサミ夏カウントダウンブログリレー2026に参加しています。当社ブースで 「テックブログを見て来ました！」 とお伝えいただいた方には、もれなくFinatextグループのテックブック（物理本）を差し上げます！ 👇️Developers Summit 2026 Summer 事前登録はこちらから（7/13 13:00締切） https://event.shoeisha.jp/devsumi/20260716 はじめに こんにちは。Finatextでクレジットビジネスプラットフォーム「Crest」の開発に携わっている@chinakaです。 "
     },
     {
       "id": "4dec3fa8c27348de",
@@ -3688,16 +4142,21 @@
       "sourceType": "blog",
       "url": "https://developers.googleblog.com/litertjs-googles-high-performance-web-ai-inference/",
       "title": "LiteRT.js, Google's high performance Web AI Inference",
-      "titleJa": "",
+      "titleJa": "LiteRT.js：GoogleのハイパフォーマンスWeb AI推論ライブラリ",
       "titleEn": "LiteRT.js, Google's high performance Web AI Inference",
       "lang": "en",
       "publishedAt": "2026-07-09T00:00:00.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
-        "google"
+        "google",
+        "litert",
+        "web-ai",
+        "inference",
+        "webgpu",
+        "on-device-ai"
       ],
       "category": "gemini",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "We're excited to introduce LiteRT.js, the newest member of the LiteRT family! LiteRT.js is our powerful solution for running machine learning models directly in the browser, extending Google's cross-platform edge AI runtime to the web. Built for JavaScript developers, LiteRT.js d"
@@ -3801,19 +4260,46 @@
       }
     },
     {
+      "id": "c659a30dc2ed4c2e",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/liatris/articles/20260709-nextjs-psi-with-claude",
+      "title": "PSI MCP × Claude Code で Core Web Vitals を改善する",
+      "titleJa": "PSI MCP × Claude Code で Core Web Vitals を改善する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-08T22:00:07.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "! この記事は、Claude Codeを執筆支援に使った \"毎朝1本書く\" 取り組みの一環で書いています。 目的: 自分のAI活用キャッチアップ。仕組み自体も毎月アップデートしていきます 体制: 題材選定・実装・下書きをClaude Codeで補助、平野が動作確認と編集を経て公開判断 方針: Zennのガイドラインに真摯に向き合い、運営から指摘や警告があれば即座に取り組みを停止します 仕組みの全貌はこちらの設計記事にまとめています。 Claude Code で作ってると、こういうのに出会う Claude Code で何かを作っていると、本業でも副業でも、"
+    },
+    {
       "id": "58a7790525dc251c",
       "source": "github-changelog",
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-07-08-innersource-security-advisories-are-generally-available",
       "title": "Innersource security advisories are generally available",
-      "titleJa": "",
+      "titleJa": "インナーソースセキュリティアドバイザリが一般提供開始",
       "titleEn": "Innersource security advisories are generally available",
       "lang": "en",
       "publishedAt": "2026-07-08T21:30:35.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
         "changelog",
-        "github"
+        "github",
+        "security",
+        "innersource",
+        "security-advisories",
+        "general-availability",
+        "vulnerability-management"
       ],
       "category": "copilot",
       "importance": 2,
@@ -3822,8 +4308,8 @@
       "contentSnippet": "GitHub Advanced Security enterprise customers can now publish internal security advisories. Innersource advisories work similarly to GitHub’s open source advisories, but their visibility is restricted to repositories owned by the… The post Innersource security advisories are gene"
     },
     {
-      "id": "413130c4bc9704a2",
-      "source": "github-blog-ai",
+      "id": "d015d2e8e0f35f72",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/automating-cross-repo-documentation-with-github-agentic-workflows/",
       "title": "Automating cross-repo documentation with GitHub Agentic Workflows",
@@ -3831,20 +4317,21 @@
       "titleEn": "Automating cross-repo documentation with GitHub Agentic Workflows",
       "lang": "en",
       "publishedAt": "2026-07-08T21:11:56.000Z",
-      "collectedAt": "2026-07-11T06:00:54.515Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
         "agent",
+        "copilot",
+        "github",
         "agentic-workflows",
         "automation",
-        "copilot",
         "cross-repo",
-        "documentation",
-        "github"
+        "documentation"
       ],
       "category": "copilot",
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Explore how the Aspire team turns merged product changes into SME-reviewed docs pull requests, closing the gap between release and documentation. The post Automating cross-repo documentation with GitHub Agentic Workflows appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/01/generic-mona-copilot-logo.png",
@@ -3853,8 +4340,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "e498a5108f393999",
@@ -3862,7 +4348,7 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-07-08-enterprise-managed-opentelemetry-export-for-vs-code-and-cli",
       "title": "Enterprise-managed OpenTelemetry export for VS Code and CLI",
-      "titleJa": "",
+      "titleJa": "VS CodeおよびCLI向けエンタープライズ管理型OpenTelemetryエクスポート",
       "titleEn": "Enterprise-managed OpenTelemetry export for VS Code and CLI",
       "lang": "en",
       "publishedAt": "2026-07-08T20:50:07.000Z",
@@ -3870,7 +4356,13 @@
       "tags": [
         "changelog",
         "enterprise",
-        "github"
+        "github",
+        "opentelemetry",
+        "vs-code",
+        "cli",
+        "telemetry",
+        "observability",
+        "copilot"
       ],
       "category": "copilot",
       "importance": 2,
@@ -3888,12 +4380,12 @@
       "titleEn": "Ollama Releases v0.31.2",
       "lang": "en",
       "publishedAt": "2026-07-08T20:44:32.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
-        "local-inference",
         "ollama",
-        "patch-release",
-        "release"
+        "release",
+        "local-inference",
+        "patch-release"
       ],
       "category": "local-llm",
       "importance": 2,
@@ -3952,12 +4444,12 @@
       "titleEn": "OpenHands cloud 1.43.0",
       "lang": "en",
       "publishedAt": "2026-07-08T20:04:42.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
-        "agent",
-        "cloud",
         "openhands",
-        "release"
+        "release",
+        "agent",
+        "cloud"
       ],
       "category": "opencode",
       "importance": 3,
@@ -4012,13 +4504,13 @@
       "titleEn": "OpenHands Releases 1.10.0",
       "lang": "en",
       "publishedAt": "2026-07-08T19:44:54.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "openhands",
+        "release",
         "agent",
         "ai-coding",
-        "open-source",
-        "openhands",
-        "release"
+        "open-source"
       ],
       "category": "opencode",
       "importance": 2,
@@ -4118,13 +4610,13 @@
       "titleEn": "OpenHands Releases 1.9.3",
       "lang": "en",
       "publishedAt": "2026-07-08T16:44:40.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "openhands",
+        "release",
         "agent",
         "ai-agent",
-        "coding-assistant",
-        "openhands",
-        "release"
+        "coding-assistant"
       ],
       "category": "opencode",
       "importance": 3,
@@ -4173,8 +4665,8 @@
       }
     },
     {
-      "id": "76241322f07c86bf",
-      "source": "github-blog-ai",
+      "id": "9abd388c3dbd0d69",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/how-github-copilot-enables-zero-dns-configuration-for-github-pages/",
       "title": "How GitHub Copilot enables zero DNS configuration for GitHub Pages",
@@ -4182,21 +4674,21 @@
       "titleEn": "How GitHub Copilot enables zero DNS configuration for GitHub Pages",
       "lang": "en",
       "publishedAt": "2026-07-08T16:00:00.000Z",
-      "collectedAt": "2026-07-11T06:00:54.515Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
-        "automation",
         "copilot",
+        "github",
+        "automation",
         "custom-domain",
         "dns",
-        "github",
         "github-pages"
       ],
       "category": "copilot",
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "Go from an empty repository to a live custom domain with HTTPS in about 14 minutes, without manually editing a single DNS record. The post How GitHub Copilot enables zero DNS configuration for GitHub Pages appeared first on The GitHub Blog .",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "Go from an empty repository to a live custom domain with HTTPS in about 14 minutes, without manually editing a single DNS record. The post How GitHub Copilot enables zero DNS configuration for GitHub Pages appeared first on The GitHub Blog ."
     },
     {
       "id": "e5b9ef062bf713c3",
@@ -4233,20 +4725,23 @@
       "sourceType": "blog",
       "url": "https://cloud.google.com/blog/topics/ai-infrastructure/google-is-a-leader-in-gartner-magic-quadrant-for-ai-infra/",
       "title": "Google Cloud named Leader in the 2026 Gartner® Magic Quadrant™ for AI Infrastructure",
-      "titleJa": "",
+      "titleJa": "Google CloudがGartner® Magic Quadrant™ 2026 AIインフラ部門でリーダーに選出",
       "titleEn": "Google Cloud named Leader in the 2026 Gartner® Magic Quadrant™ for AI Infrastructure",
       "lang": "en",
       "publishedAt": "2026-07-08T16:00:00.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
         "cloud",
-        "google"
+        "google",
+        "ai-infrastructure",
+        "gartner",
+        "vertex-ai",
+        "tpu"
       ],
       "category": "gemini",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "In the agentic era, AI is evolving from answering questions to reasoning and taking action. Companies who want to lead in this next phase of AI need computing infrastructure that’s designed and optimized for these new requirements, helping them innovate faster, deliver compelling",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/image1_05vW3xz.max-1000x1000.png",
@@ -4255,7 +4750,8 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "1fff1c334543b195",
@@ -4263,7 +4759,7 @@
       "sourceType": "blog",
       "url": "https://cloud.google.com/blog/topics/public-sector/gemini-enterprise-for-education-named-a-commander-in-tambellini-starchart-2026-ai-agents-for-administrative-efficiencyagent-platforms/",
       "title": "Gemini Enterprise for Education named a Commander in Tambellini StarChart™: 2026 AI Agents for Administrative Efficiency—Agent Platforms",
-      "titleJa": "",
+      "titleJa": "Gemini Enterprise for EducationがTambellini StarChart™ 2026 AI Agentsでコマンダーに選出",
       "titleEn": "Gemini Enterprise for Education named a Commander in Tambellini StarChart™: 2026 AI Agents for Administrative Efficiency—Agent Platforms",
       "lang": "en",
       "publishedAt": "2026-07-08T15:14:00.000Z",
@@ -4272,13 +4768,16 @@
         "agent",
         "cloud",
         "enterprise",
-        "google"
+        "google",
+        "education",
+        "ai-agents",
+        "tambellini",
+        "higher-education"
       ],
       "category": "gemini",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "The agentic AI era is here, transforming how higher education institutions innovate, operate, and fundamentally empower learners, faculty, and researchers. AI agents can deliver unprecedented efficiency, academic innovation, and mission effectiveness as institutions seek to diver",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/Tambellini_StarChart_2026_Agent_Platforms_.max-1000x1000.png",
@@ -4287,7 +4786,8 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "ac253edb6de4cbfb",
@@ -4367,8 +4867,8 @@
       }
     },
     {
-      "id": "b83d8cfd49f6af0e",
-      "source": "openai-news",
+      "id": "a0d799ed54bfe841",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/government-national-security-partnerships",
       "title": "Our approach to government and national security partnerships",
@@ -4376,7 +4876,7 @@
       "titleEn": "Our approach to government and national security partnerships",
       "lang": "en",
       "publishedAt": "2026-07-08T13:30:00.000Z",
-      "collectedAt": "2026-07-11T06:00:54.515Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
         "openai"
       ],
@@ -4392,21 +4892,25 @@
       "sourceType": "blog",
       "url": "https://cloud.google.com/blog/products/identity-security/meet-the-33-cybersecurity-startups-joining-the-gemini-startup-forum/",
       "title": "Meet the 33 cybersecurity startups joining the Gemini Startup Forum",
-      "titleJa": "",
+      "titleJa": "Gemini Startup Forumに参加する33のサイバーセキュリティスタートアップを紹介",
       "titleEn": "Meet the 33 cybersecurity startups joining the Gemini Startup Forum",
       "lang": "en",
       "publishedAt": "2026-07-08T13:30:00.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
         "cloud",
-        "google"
+        "google",
+        "cybersecurity",
+        "startup",
+        "gemini",
+        "ai-security"
       ],
       "category": "gemini",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "Startups are at the forefront of tackling some of the world’s most complex challenges, especially in cybersecurity, where new ideas and adaptability are always needed. These companies are embracing AI as a powerful tool, enabling them to scale their impact. Google believes that e"
+      "contentSnippet": "Startups are at the forefront of tackling some of the world’s most complex challenges, especially in cybersecurity, where new ideas and adaptability are always needed. These companies are embracing AI as a powerful tool, enabling them to scale their impact. Google believes that e",
+      "evergreen": true
     },
     {
       "id": "607abce4a8507e9a",
@@ -4443,8 +4947,8 @@
       }
     },
     {
-      "id": "cf524e517730b598",
-      "source": "openai-news",
+      "id": "ec2223306dda9a05",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/separating-signal-from-noise-coding-evaluations",
       "title": "Separating signal from noise in coding evaluations",
@@ -4452,7 +4956,7 @@
       "titleEn": "Separating signal from noise in coding evaluations",
       "lang": "en",
       "publishedAt": "2026-07-08T13:00:00.000Z",
-      "collectedAt": "2026-07-11T06:00:54.515Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
         "openai"
       ],
@@ -4461,6 +4965,27 @@
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "A new analysis from OpenAI reveals issues in SWE-Bench Pro, a popular coding benchmark, raising concerns about reliability and accuracy in evaluating AI models."
+    },
+    {
+      "id": "f8985c9d7f04bd01",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/eurekalabo/articles/euthopia-games-preview-release",
+      "title": "Euthopia Games のプレビュー版を公開しました",
+      "titleJa": "Euthopia Games のプレビュー版を公開しました",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-08T12:56:26.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Euthopia Games のプレビュー版を公開しました。 https://games.euthopia.io Euthopia Games は、AIやローカル環境で作ったブラウザゲームを公開・共有するための場所です。 もともとは、Eureka Agora という週1のAI開発イベントでゲームを作っている中から生まれました。 AIを使うと、小さなゲームの原型はかなり速く作れます。 ただ、作ったあとに毎回つまずくことがありました。 どこに置くのか どうURLで共有するのか あとから更新するにはどうするのか セーブやランキングを付けたくなったらどうするのか"
     },
     {
       "id": "d9a0f2300c62f6d3",
@@ -4528,45 +5053,118 @@
       }
     },
     {
+      "id": "6c833d26831afdf6",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/nenene01/articles/claude-ontology-verification",
+      "title": "Claudeに「オントロジー」を持たせると本当に安く・速くなるのか、実際のコードベースで検証した",
+      "titleJa": "Claudeに「オントロジー」を持たせると本当に安く・速くなるのか、実際のコードベースで検証した",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-08T11:50:04.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "プロダクトのコード量が増えてくると、AIエージェントに調査を頼んでも「関係しそうなファイルを片っ端から読み漁った結果、時間もトークンも溶ける」という場面が増えてました。 たとえば実際の現場ではこういう調査依頼が日常的に発生します。 クーポンの登録API・更新APIで、ある項目が 必須か任意か を調べてほしい。もし必須なら、DBのカラムを NOT NULL から NULL 許可に変えたい という要望があるので、その 影響範囲 も同時に報告してほしい。 この手の質問は「Zodスキーマ → DTO → ユースケース → Prismaモデル → 物理カラム → "
+    },
+    {
+      "id": "40632ebdf5ff80f0",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/collabostyle/articles/0ea214cf0a4859",
+      "title": "Claude Code で Atlassian MCP サーバーを登録して Jira との接続確認を行う",
+      "titleJa": "Claude Code で Atlassian MCP サーバーを登録して Jira との接続確認を行う",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-08T11:18:45.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Claude Code から Jira の課題を検索・参照できるようにするための設定手順です。 意図しないプロジェクトへの干渉を防ぐための安全対策（対象プロジェクトの限定）の CLAUDE.md への記載例と確認手順を簡単にまとめています。 1. Atlassian MCPサーバーの設定 (atlassian-http) Atlassian公式のリモートMCP（Model Context Protocol）サーバーである Streamable HTTP をユーザースコープで登録します。 ターミナルで以下のコマンドを実行します。 claude mcp ad"
+    },
+    {
       "id": "c96eaf30fad9ca28",
       "source": "apple-newsroom",
       "sourceType": "blog",
       "url": "https://www.apple.com/newsroom/2026/07/apple-to-increase-spend-with-broadcom-to-produce-billions-more-us-chips/",
       "title": "Apple to increase spend with Broadcom to produce billions more U.S. chips",
-      "titleJa": "",
+      "titleJa": "AppleがBroadcomとの取引を拡大し、米国製チップを数十億個追加生産へ",
       "titleEn": "Apple to increase spend with Broadcom to produce billions more U.S. chips",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:13.748Z",
       "collectedAt": "2026-07-11T00:00:22.105Z",
       "tags": [
         "apple",
-        "news"
+        "news",
+        "broadcom",
+        "chips",
+        "manufacturing",
+        "semiconductors",
+        "us-manufacturing"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "Apple announced a new six-year commitment with Broadcom to design and produce custom silicon components and cutting-edge wireless connectivity technologies."
     },
     {
-      "id": "071616418be82625",
-      "source": "openai-news",
+      "id": "3b5f099ed4c45dd8",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/k-12-educators-practical-skills",
       "title": "Helping K–12 educators build practical AI skills",
-      "titleJa": "",
+      "titleJa": "K-12教育者が実践的なAIスキルを身につけるための支援",
       "titleEn": "Helping K–12 educators build practical AI skills",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:00.000Z",
-      "collectedAt": "2026-07-11T06:00:54.515Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
-        "openai"
+        "openai",
+        "education",
+        "k-12",
+        "ai-literacy",
+        "teachers"
       ],
       "category": "codex",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "OpenAI Academy and the Walton Family Foundation are bringing hands-on AI Skills Jams to help K–12 educators build practical AI skills for the classroom."
+    },
+    {
+      "id": "5c5e2d58015ec43e",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/fukyou/articles/451f13dd2041f7",
+      "title": "Rashinban for AI — AIエージェントのための操作に必要な情報だけを渡す軽量ブリッジ",
+      "titleJa": "Rashinban for AI — AIエージェントのための操作に必要な情報だけを渡す軽量ブリッジ",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-08T08:51:03.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "きっかけ AIエージェントにブラウザ操作をさせようとすると、必ずどこかで重さに当たります。 スクリーンショットを撮らせて画像として読ませるか、DOM構造を丸ごとパースさせて要素を探させるか。どちらの方法も、結局のところ「人間が目で見て、コピペしながら使う」ことを前提に作られたUIを、無理やりAIに読ませているだけなんですよね。 Rashinban for AI 🧭 — AIエージェントのための「操作に必要な情報だけ」を渡す軽量ブリッジ 考えてみれば、AIが本当に必要としているのは画面の見た目でも文章でもなく、「どこを」「どう操作すればいいか」という座標"
     },
     {
       "id": "f3cc90f2f22f21e9",
@@ -4605,6 +5203,28 @@
       }
     },
     {
+      "id": "d4e762619ca926a3",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/jinjer_techblog/articles/42f369ee592058",
+      "title": "AIは「読める」だけでは調査できない ―― New Relic / AWS MCP でつくる「測るAI」",
+      "titleJa": "AIは「読める」だけでは調査できない ―― New Relic / AWS MCP でつくる「測るAI」",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-08T07:05:05.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "AIが自分で「測れる」足場を MCP でつくり、その上に鑑別診断の規律をのせて、経費精算プロダクトの性能を一つずつ改善した記録です。 きっかけ：性能テストで課題が山積みに あるスプリントで経費精算プロダクトに性能テストを一斉にかけると、「一覧が数十秒」「詳細がときどき失敗」「一括出力がタイムアウト」と、課題が一気に積み上がりました。 一つひとつは「重いクエリを直す」で済みそうに見えます。でも着手すると、症状と原因が素直に対応していませんでした。「DBが遅いんだろう」と思って開けたら、犯人はDBではなかった —— ということが何度も起きました。 そこで、調"
+    },
+    {
       "id": "c63d995c87567745",
       "source": "qiita-copilot",
       "sourceType": "blog",
@@ -4637,6 +5257,27 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "4ebef57735cc2e97",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/easakura/articles/selling-japan-data-to-ai-agents-day1",
+      "title": "AIエージェントに日本の公的データを売り始めた話（初日で4商品を世界公開するまで）",
+      "titleJa": "AIエージェントに日本の公的データを売り始めた話（初日で4商品を世界公開するまで）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-08T06:26:06.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "「AIが客」という市場が、静かに開いていた 2026年、AIエージェント界隈で面白いことが起きています。Claude や ChatGPT などのエージェントが、自分でツールを探して、自分で課金して使う流れが本格化してきました。MCP（Model Context Protocol）という「AIが道具を使うための共通規格」が普及し、CloudflareとAWSがエージェント向けマイクロペイメント（x402）を標準搭載し、ツールを出品できるマーケットプレイスまで揃った——つまり、人間ではなくAIを顧客とする市場のインフラが、この1年で一気に整いました。 私はこ"
     },
     {
       "id": "82ad8bc7ed8552c2",
@@ -4730,6 +5371,27 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "CI に AI エージェントを入れる話は、だいたい prompt から始まる。 どう指示すれば賢く直してくれるか。どういう role を与えるか。失敗したらどう言い換えるか。 prompt は大事だ。けれど CI の中で agent を走らせるなら、最初に見るべき場所はそこではない。 どの token で動くのか。どの permission を持つのか。誰に課金されるのか。何 credit で止まるのか。あとから誰が session log を読めるのか。 ここを曖昧にしたまま prompt だけ磨くと、賢い bot を作ったつもりで、止まり方の分からな"
+    },
+    {
+      "id": "3dd4ffaaddcffcfc",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/yamitake/articles/claude-tag-slack-guide",
+      "title": "Claude Tagとは？Slackで @Claude と打つだけで動くAI同僚を徹底解説",
+      "titleJa": "Claude Tagとは？Slackで @Claude と打つだけで動くAI同僚を徹底解説",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-08T05:01:34.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 「この不具合、@Claude 調べておいて」——Slackでメンションを飛ばすだけで、Claudeがチームの一員のように動いてくれる。そんな未来がすでに始まっています。 2026年6月にAnthropicが発表したと報じられている Claude Tag は、Slackのチャンネルに常駐し、@Claude とタグ付けするだけで仕事を任せられる「共有型のAI同僚」です。個人用のチャットボットではなく、チーム全員で同じ1人のClaudeを共有するというのが最大の特徴です。 この記事では、Claude Tagとは何か、Slackのコンテキストを読んで何"
     },
     {
       "id": "36412a373b1868a0",
@@ -4882,8 +5544,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "46df7ecd1742f56a",
-      "source": "openai-news",
+      "id": "d4fcae9550ab0099",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/introducing-gpt-live",
       "title": "Introducing GPT-Live",
@@ -4891,7 +5553,7 @@
       "titleEn": "Introducing GPT-Live",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
-      "collectedAt": "2026-07-11T06:00:54.515Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
         "openai"
       ],
@@ -4958,11 +5620,11 @@
       "titleEn": "Meta’s AI Glasses: Your Questions Answered",
       "lang": "en",
       "publishedAt": "2026-07-07T23:35:43.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
-        "ai-glasses",
         "meta",
         "news",
+        "ai-glasses",
         "privacy",
         "ray-ban-meta",
         "smart-glasses",
@@ -5018,13 +5680,13 @@
       "titleEn": "v0.31.2-rc2: llm: allow iGPU mmproj offload with fit padding (#16996)",
       "lang": "en",
       "publishedAt": "2026-07-07T22:28:42.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "ollama",
+        "release",
         "igpu",
         "mmproj",
         "multimodal",
-        "ollama",
-        "release",
         "release-candidate",
         "vision-model"
       ],
@@ -5085,14 +5747,14 @@
       "titleEn": "OpenHands Releases 1.9.2",
       "lang": "en",
       "publishedAt": "2026-07-07T22:10:22.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "openhands",
+        "release",
         "agent",
         "ai-coding",
         "open-source",
-        "openhands",
-        "patch-release",
-        "release"
+        "patch-release"
       ],
       "category": "opencode",
       "importance": 2,
@@ -5107,6 +5769,28 @@
         "height": 0,
         "source": "media"
       }
+    },
+    {
+      "id": "49363838bcd1ebed",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/tatetate55/articles/xcode-mcp-swiftui-preview",
+      "title": "Xcode MCPでUIプレビューを自動化したら、AIとのSwiftUI開発が一気に速くなった",
+      "titleJa": "Xcode MCPでUIプレビューを自動化したら、AIとのSwiftUI開発が一気に速くなった",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-07T22:05:08.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "この記事の結論 SwiftUIの #Preview（Canvas）は人間には最高。でもAIエージェントは画面を「見られない」。 Xcode MCP を挟むと、エージェント自身が「ビルド → シミュレータ起動 → スクショ取得」まで回せる。 これで 「直す → 見た目を確認する」ループから人間が外れる。ここが生産性のキモ。 ただし万能ではない。構造的なUI調整はAI、最終の詰めは人間の目が現実的な線引き。 以下、個人開発（App Store向けiOSアプリ）で試した実感ベースでまとめる。 何が困っていたか SwiftUI開発では #Preview マクロと"
     },
     {
       "id": "a5a737ac4c6abcaf",
@@ -5150,15 +5834,15 @@
       "titleEn": "OpenHands Releases 1.9.1",
       "lang": "en",
       "publishedAt": "2026-07-07T21:38:24.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "openhands",
+        "release",
         "agent",
         "ai-agent",
         "bug-fix",
         "developer-tools",
-        "openhands",
-        "patch-release",
-        "release"
+        "patch-release"
       ],
       "category": "opencode",
       "importance": 3,
@@ -5204,13 +5888,13 @@
       "titleEn": "Introducing Muse Image: Image Generation Built for Your World",
       "lang": "en",
       "publishedAt": "2026-07-07T18:05:34.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "meta",
+        "news",
         "generative-ai",
         "image-generation",
-        "meta",
         "meta-ai",
-        "news",
         "release"
       ],
       "category": "tech-news",
@@ -5337,13 +6021,13 @@
       "titleEn": "Semantic Kernel dotnet-1.78.0",
       "lang": "en",
       "publishedAt": "2026-07-07T16:33:18.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
         "agent",
-        "dotnet",
         "release",
-        "sdk-update",
-        "semantic-kernel"
+        "semantic-kernel",
+        "dotnet",
+        "sdk-update"
       ],
       "category": "agent-fw",
       "importance": 2,
@@ -5369,15 +6053,15 @@
       "titleEn": "Semantic Kernel python-1.44.0",
       "lang": "en",
       "publishedAt": "2026-07-07T16:18:18.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
         "agent",
+        "release",
+        "semantic-kernel",
         "llm-orchestration",
         "microsoft",
         "python",
-        "release",
-        "sdk",
-        "semantic-kernel"
+        "sdk"
       ],
       "category": "agent-fw",
       "importance": 2,
@@ -5406,20 +6090,20 @@
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
         "agent",
-        "cloud",
-        "enterprise",
-        "google",
         "agent-platform",
         "agentic-ai",
+        "cloud",
+        "enterprise",
         "enterprise-ai",
+        "google",
         "multi-agent"
       ],
       "category": "gemini",
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "If you’re an IT leader, you might be getting a lot of questions about how to build and deploy agents. The pressure to move fast is intense, but the engineering reality is incredibly complex. Where do your teams even begin? How do you untangle a fragmented mess of disconnected too"
+      "contentSnippet": "If you’re an IT leader, you might be getting a lot of questions about how to build and deploy agents. The pressure to move fast is intense, but the engineering reality is incredibly complex. Where do your teams even begin? How do you untangle a fragmented mess of disconnected too",
+      "evergreen": true
     },
     {
       "id": "76cdb43a2bf7e8e6",
@@ -5433,21 +6117,20 @@
       "publishedAt": "2026-07-07T16:00:00.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
-        "cloud",
-        "enterprise",
-        "google",
-        "tutorial",
         "agent-publishing",
         "ai-agents",
+        "cloud",
         "developer-guide",
+        "enterprise",
         "gemini-enterprise",
-        "marketplace"
+        "google",
+        "marketplace",
+        "tutorial"
       ],
       "category": "gemini",
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Software-as-a-service (SaaS) is evolving into Agents-as-a-service (AaaS). Instead of isolated applications, developers are creating AI agents that interoperate using standardized open protocols such as the Agent2Agent (A2A) protocol and can be orchestrated through centralized age",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/1_-_ref_architecture.max-1000x1000.png",
@@ -5456,7 +6139,8 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "6cb59b529e42af1b",
@@ -5471,10 +6155,10 @@
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
         "agent",
-        "cloud",
-        "google",
         "agentic-ai",
         "ai-agents",
+        "cloud",
+        "google",
         "infrastructure",
         "report"
       ],
@@ -5482,7 +6166,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "For years, enterprise AI has been synonymous with conversational AI — the customer service bots and digital assistants we interact with every day. But today, the market has shifted. We’ve officially moved from moving from AI that answers through simple chats, to AI that takes act",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/1_10qYABK.max-1000x1000.png",
@@ -5491,7 +6174,8 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "05aa1b7e8866b2e0",
@@ -5669,11 +6353,11 @@
       "publishedAt": "2026-07-07T14:00:00.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
-        "cloud",
-        "google",
         "ai-development",
+        "cloud",
         "cloud-run",
         "gemini",
+        "google",
         "labs",
         "serverless"
       ],
@@ -5681,7 +6365,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Moving Beyond the Prototype The AI landscape has shifted. While \"vibe coding\" with tools like Antigravity and AI Studio lets you build and deploy complex agents in minutes, the real work begins on \"Day 2\". Moving from a magical prototype to a hardened, production-grade applicatio",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/image1_9rcEfTb.max-1000x1000.png",
@@ -5690,7 +6373,8 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "0350166fffb2806b",
@@ -6499,8 +7183,8 @@
       "archiveTier": "hot"
     },
     {
-      "id": "e58509442c873b0d",
-      "source": "openai-news",
+      "id": "dc34ba0c581f0720",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/mufg",
       "title": "MUFG aims to become AI-native with OpenAI",
@@ -6508,7 +7192,7 @@
       "titleEn": "MUFG aims to become AI-native with OpenAI",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-07-11T06:00:54.515Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
         "openai"
       ],
@@ -6519,8 +7203,8 @@
       "contentSnippet": "MUFG uses ChatGPT Enterprise to build an AI-native organization, improve workflows, and deliver new AI-powered financial services at scale."
     },
     {
-      "id": "6acb5e76885ca2ed",
-      "source": "openai-news",
+      "id": "6f439ef95a874d8d",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/australian-payments-plus",
       "title": "Australian Payments Plus moves faster with ChatGPT and Codex",
@@ -6528,7 +7212,7 @@
       "titleEn": "Australian Payments Plus moves faster with ChatGPT and Codex",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-07-11T06:00:54.515Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
         "openai"
       ],
@@ -6537,6 +7221,35 @@
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "See how Australian Payments Plus uses ChatGPT Enterprise and Codex to move faster through payments complexity. AP+ saves time, improves quality, and keeps human judgment central."
+    },
+    {
+      "id": "97d4f20abf776cc0",
+      "source": "simonw-blog",
+      "sourceType": "blog",
+      "url": "https://simonwillison.net/2026/Jul/6/hy3/#atom-everything",
+      "title": "tencent/Hy3",
+      "titleJa": "",
+      "titleEn": "tencent/Hy3",
+      "lang": "en",
+      "publishedAt": "2026-07-06T23:57:35.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "llm",
+        "newsletter"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "tencent/Hy3 New Apache 2.0 licensed model from Tencent in China: Hy3 is a 295B-parameter Mixture-of-Experts (MoE) model with 21B active parameters and 3.8B MTP layer parameters, developed by the Tencent Hy Team. Following the Hy3 Preview launch in late April, we gathered feedback",
+      "image": {
+        "src": "https://static.simonwillison.net/static/2026/hy3-pelican.png",
+        "origSrc": "https://static.simonwillison.net/static/2026/hy3-pelican.png",
+        "alt": "tencent/Hy3",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
     },
     {
       "id": "50ca20f68c915b0c",
@@ -6584,13 +7297,13 @@
       "titleEn": "v0.31.2-rc1: create: harden GGUF create flows (#17062)",
       "lang": "en",
       "publishedAt": "2026-07-06T23:20:20.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "ollama",
+        "release",
         "bug-fix",
         "local-inference",
-        "ollama",
-        "patch-release",
-        "release"
+        "patch-release"
       ],
       "category": "local-llm",
       "importance": 2,
@@ -6690,12 +7403,12 @@
       "titleEn": "Ollama Releases v0.31.2-rc0",
       "lang": "en",
       "publishedAt": "2026-07-06T20:31:22.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
-        "bug-fix",
         "ollama",
-        "patch-release",
-        "release"
+        "release",
+        "bug-fix",
+        "patch-release"
       ],
       "category": "local-llm",
       "importance": 2,
@@ -6721,14 +7434,14 @@
       "titleEn": "The different levels of how Claude thinks",
       "lang": "en",
       "publishedAt": "2026-07-06T16:59:51.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "anthropic",
+        "youtube",
         "ai-identity",
         "ai-philosophy",
         "ai-values",
-        "anthropic",
-        "claude-character",
-        "youtube"
+        "claude-character"
       ],
       "category": "claude",
       "importance": 2,
@@ -7488,9 +8201,9 @@
       "publishedAt": "2026-07-06T00:00:00.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
-        "google",
         "elastic-training",
         "fault-tolerance",
+        "google",
         "llm-training",
         "maxtext",
         "tpu"
@@ -8806,6 +9519,27 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "addf710b9caf42c6",
+      "source": "simonw-blog",
+      "sourceType": "blog",
+      "url": "https://simonwillison.net/2026/Jul/3/june-newsletter/#atom-everything",
+      "title": "June 2026 newsletter",
+      "titleJa": "",
+      "titleEn": "June 2026 newsletter",
+      "lang": "en",
+      "publishedAt": "2026-07-03T14:50:50.000Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "tags": [
+        "llm",
+        "newsletter"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "The June edition of my sponsors-only monthly newsletter is out. If you are a sponsor (or if you start a sponsorship now) you can access it here . This month: Claude Fable 5, GPT-5.6, and US export restrictions GLM-5.2 is the new best open weights model Tokenmaxxing is so over Dat"
     },
     {
       "id": "b8e279433af937a2",
@@ -10925,20 +11659,21 @@
       "titleEn": "Meta’s AI Storage Blueprint at Scale",
       "lang": "en",
       "publishedAt": "2026-07-01T16:00:36.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "engineering",
+        "meta",
         "ai-infrastructure",
         "data-infrastructure",
-        "engineering",
         "infrastructure",
         "machine-learning",
-        "meta",
         "storage"
       ],
       "category": "tech-news",
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Over the past several years, model capabilities and training dataset sizes have experienced exponential growth. During the past year or so, the time between new-frontier-model releases has gone down from months to weeks. Reliable and fast access to storage is important to both th",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/06/Metas-AI-Storage-Blueprint-at-Scale-Hero-1.png",
@@ -10947,8 +11682,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "a6d7a65d12189805",
@@ -11659,15 +12393,15 @@
       "titleEn": "Ollama Releases v0.31.1",
       "lang": "en",
       "publishedAt": "2026-07-01T00:25:40.000Z",
-      "collectedAt": "2026-07-09T23:00:22.111Z",
+      "collectedAt": "2026-07-11T07:00:54.481Z",
       "tags": [
+        "ollama",
+        "release",
         "apple-silicon",
         "gemma4",
         "mlx",
         "moe",
-        "ollama",
-        "patch",
-        "release"
+        "patch"
       ],
       "category": "local-llm",
       "importance": 2,
@@ -11757,12 +12491,12 @@
       "publishedAt": "2026-07-01T00:00:00.000Z",
       "collectedAt": "2026-07-11T06:25:18.948Z",
       "tags": [
-        "google",
         "adk",
         "agent",
         "agent-development-kit",
         "ai-agents",
         "framework",
+        "google",
         "multi-agent",
         "release"
       ],

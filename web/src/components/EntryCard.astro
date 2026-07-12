@@ -10,7 +10,8 @@ import {
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
-import { sourceLabel } from "../lib/source-meta.ts";
+import { sourceFaviconUrl, sourceHost } from "../lib/favicon.ts";
+import { sourceAuthority, sourceLabel } from "../lib/source-meta.ts";
 
 export interface Props {
   entry: NormalizedEntry;
@@ -19,31 +20,6 @@ export interface Props {
 const { entry } = Astro.props;
 const rel = relativeTime(entry.publishedAt);
 const fresh = isNew(entry);
-
-function badgeClass(t: NormalizedEntry["sourceType"]): string {
-  if (t === "release" || t === "changelog") return "badge release";
-  if (t === "paper") return "badge paper";
-  return "badge";
-}
-
-function host(url: string): string {
-  try {
-    return new URL(url).host.replace(/^www\./, "");
-  } catch {
-    return "";
-  }
-}
-
-/**
- * Build a favicon URL via Google's S2 service. Works for any host without
- * bundling per-source assets, returns the default globe icon when the
- * site has no favicon.
- */
-function faviconUrl(url: string, size = 32): string {
-  const h = host(url);
-  if (!h) return "";
-  return `https://www.google.com/s2/favicons?sz=${size}&domain=${h}`;
-}
 
 const summaryJaResult = summaryForLangWithFallback(entry, "ja");
 const summaryEnResult = summaryForLangWithFallback(entry, "en");
@@ -64,6 +40,8 @@ const catColor = catMeta?.color ?? "#8a847e";
 const catName = catMeta?.name ?? entry.category;
 const catShortLabel = catMeta?.shortLabel ?? catName;
 const catEmoji = catMeta?.emoji ?? "\u{1F4C4}";
+const authority = sourceAuthority(entry.source, entry.sourceType);
+const authorityBadgeClass = ["badge", "authority", authority.kind].join(" ");
 
 const sourceTypeJa: Record<NormalizedEntry["sourceType"], string> = {
   blog: "技術記事",
@@ -132,7 +110,7 @@ const img = entry.image;
 const hasUsableImage =
   !!img && typeof img.src === "string" && img.src.length > 0;
 const thumbMark = hasUsableImage ? img!.source : "";
-const entryHost = host(entry.url);
+const entryHost = sourceHost(entry.url);
 const visibleTags = entry.tags.slice(0, 3);
 const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
 ---
@@ -147,7 +125,15 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
     <div class="meta">
       {entry.importance === 3 && <span class="badge hot" title="重要リリース">🔥 HOT</span>}
       {fresh && <span class="badge new">NEW</span>}
-      <span class={badgeClass(entry.sourceType)}>{entry.sourceType}</span>
+      <span
+        class={authorityBadgeClass}
+        data-source-authority={authority.kind}
+        data-source-type={entry.sourceType}
+        title={`${authority.en} source · ${entry.sourceType}`}
+      >
+        <span class="i18n-ja">{authority.ja}</span>
+        <span class="i18n-en" lang="en">{authority.en}</span>
+      </span>
       <span
         class="badge cat"
         data-category={entry.category}
@@ -160,7 +146,7 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
       <span class="src-tag">
         <img
           class="src-favicon"
-          src={faviconUrl(entry.url)}
+          src={sourceFaviconUrl(entry.url)}
           alt=""
           width="14"
           height="14"
@@ -251,7 +237,7 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
       <a class="url" href={entryHref(entry)}>
         <img
           class="url-favicon"
-          src={faviconUrl(entry.url)}
+          src={sourceFaviconUrl(entry.url)}
           alt=""
           width="16"
           height="16"

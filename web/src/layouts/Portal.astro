@@ -1,7 +1,7 @@
 ---
 import "../styles/portal.css";
 import { SITE_URL } from "../lib/site.ts";
-import { WORKER_HEALTH } from "../lib/data.ts";
+import { CATEGORY_META, WORKER_HEALTH } from "../lib/data.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { deriveWorkerRunStatus } from "../lib/run-health.ts";
 import ArxivIcon from "../components/icons/ArxivIcon.astro";
@@ -9,7 +9,7 @@ import ArxivIcon from "../components/icons/ArxivIcon.astro";
 export interface Props {
   title?: string;
   description?: string;
-  pageKey?: "timeline" | "categories" | "arxiv" | "knowledge" | "glossary" | "sources" | "archive" | "status" | "about";
+  pageKey?: "timeline" | "categories" | "arxiv" | "knowledge" | "glossary" | "sources" | "archive" | "status" | "about" | "search";
   breadcrumb?: Array<{ label: string; href?: string }>;
 }
 
@@ -33,7 +33,13 @@ const navItems = [
 // Primary explore shortcuts live in the header switcher / mobile tabbar
 // (Categories, arXiv, Knowledge), so they are intentionally excluded from
 // navItems (the hamburger menu) to avoid duplicate controls (LL-054).
-const menuOwnsCurrentPage = navItems.some((item) => item.key === pageKey && item.key !== "timeline");
+const menuOwnsCurrentPage = pageKey === "search"
+  || navItems.some((item) => item.key === pageKey && item.key !== "timeline");
+const categorySearchMeta = CATEGORY_META.map((meta) => ({
+  slug: meta.slug,
+  label: meta.shortLabel,
+  aliases: [meta.name, meta.shortLabel, meta.slug.replaceAll("-", " "), ...(meta.searchAliases ?? [])],
+}));
 const productionHost = new URL(SITE_URL).hostname;
 const footerRun = deriveWorkerRunStatus({
   workerHealth: WORKER_HEALTH,
@@ -126,7 +132,7 @@ const footerRunDetail = !WORKER_HEALTH
             <span>Knowledge</span>
           </a>
         </nav>
-        <div class="search">
+        <form class="search" action="/search/" method="get" role="search">
           <span aria-hidden="true">🔍</span>
           <span id="search-help" class="visually-hidden">
             Search by keyword, source, category, tag, or language.
@@ -134,10 +140,12 @@ const footerRunDetail = !WORKER_HEALTH
           <input
             type="search"
             id="pagefind-search-input"
+            name="q"
             aria-label="Search updates"
             aria-describedby="search-help"
             aria-controls="pagefind-results"
             aria-expanded="false"
+            aria-autocomplete="list"
             role="combobox"
             placeholder="Search updates, source, category..."
             title="Press / or Command-K to search"
@@ -147,8 +155,15 @@ const footerRunDetail = !WORKER_HEALTH
           <button type="button" class="search-close" data-search-close aria-label="Close search" hidden>
             <span aria-hidden="true">×</span>
           </button>
-          <div id="pagefind-results" class="search-results" role="listbox" aria-live="polite" hidden></div>
-        </div>
+          <div
+            id="pagefind-results"
+            class="search-results"
+            role="listbox"
+            aria-live="polite"
+            data-category-search-meta={JSON.stringify(categorySearchMeta)}
+            hidden
+          ></div>
+        </form>
         <div class="lang-toggle" role="group" aria-label="Language">
           <button type="button" class="lang-btn" data-lang="ja" aria-pressed="true">JA</button>
           <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
@@ -179,12 +194,12 @@ const footerRunDetail = !WORKER_HEALTH
       )}
     </header>
 
-    <nav id="site-menu" class="site-menu" aria-label="Site menu" hidden>
+    <dialog id="site-menu" class="site-menu" aria-labelledby="site-menu-title" closedby="any" hidden>
       <div class="site-menu-head">
-        <span>Navigation</span>
+        <span id="site-menu-title">Navigation</span>
         <button type="button" class="site-menu-close" data-menu-close aria-label="Close navigation menu">×</button>
       </div>
-      <div class="site-menu-list">
+      <nav class="site-menu-list" aria-label="Site destinations">
         {navItems.map((item) => (
           <a
             href={item.href}
@@ -199,8 +214,8 @@ const footerRunDetail = !WORKER_HEALTH
           <span>Search</span>
           <small>キーワード・source・tag で検索</small>
         </button>
-      </div>
-    </nav>
+      </nav>
+    </dialog>
 
     <nav class="mobile-tabbar" aria-label="Primary">
       <a href="/" class={pageKey === "timeline" ? "active" : ""} aria-current={isCurrentHref("/") ? "page" : undefined}><span aria-hidden="true">⌂</span><span>Home</span></a>
@@ -217,7 +232,7 @@ const footerRunDetail = !WORKER_HEALTH
       ><span aria-hidden="true">☰</span><span>Menu</span></button>
     </nav>
 
-    <div id="content-start" class="content-start-anchor" tabindex="-1" aria-label="Main content"></div>
+    <div id="content-start" class="content-start-anchor" tabindex="-1"></div>
     <slot />
 
     <div class="footer-bar">
@@ -267,37 +282,47 @@ const footerRunDetail = !WORKER_HEALTH
 
       // Shared hamburger menu — used by desktop header and mobile tabbar.
       (() => {
-        const menu = document.getElementById("site-menu") as HTMLElement | null;
+        const menu = document.getElementById("site-menu") as HTMLDialogElement | null;
         const triggers = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-menu-trigger]"));
         const closeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-menu-close]"));
         if (!menu || triggers.length === 0) return;
 
         let lastTrigger: HTMLButtonElement | null = null;
-        const setMenuOpen = (open: boolean, restoreFocus = false) => {
-          menu.hidden = !open;
+        let restoreFocusOnClose = false;
+        const isVisible = (el: HTMLElement | null): el is HTMLElement =>
+          !!el && el.isConnected && el.getClientRects().length > 0 && !(el as HTMLButtonElement).disabled;
+        const syncMenuTriggers = (open: boolean) => {
           triggers.forEach((trigger) => {
             trigger.setAttribute("aria-expanded", open ? "true" : "false");
             trigger.setAttribute("aria-label", open ? "Close Menu" : "Open Menu");
             trigger.classList.toggle("is-open", open);
           });
-          if (open) {
-            const active = menu.querySelector<HTMLElement>("a.active");
-            window.requestAnimationFrame(() => (active ?? menu.querySelector<HTMLElement>("a, button"))?.focus());
-          } else if (restoreFocus) {
-            lastTrigger?.focus();
-          }
+        };
+        const finalizeMenuClose = () => {
+          menu.hidden = true;
+          syncMenuTriggers(false);
+          if (restoreFocusOnClose && isVisible(lastTrigger)) lastTrigger.focus();
+          restoreFocusOnClose = false;
         };
         const openMenu = (trigger: HTMLButtonElement) => {
           lastTrigger = trigger;
           (window as any).__tdCloseSearch?.();
-          setMenuOpen(true);
+          menu.hidden = false;
+          syncMenuTriggers(true);
+          if (!menu.open) menu.showModal();
+          const active = menu.querySelector<HTMLElement>("a.active");
+          window.requestAnimationFrame(() => (active ?? menu.querySelector<HTMLElement>("a, button"))?.focus());
         };
-        const closeMenu = (restoreFocus = false) => setMenuOpen(false, restoreFocus);
+        const closeMenu = (restoreFocus = false) => {
+          restoreFocusOnClose = restoreFocus;
+          if (menu.open) menu.close();
+          else finalizeMenuClose();
+        };
         (window as any).__tdCloseMenu = closeMenu;
 
         triggers.forEach((trigger) => {
           trigger.addEventListener("click", () => {
-            if (menu.hidden) openMenu(trigger);
+            if (!menu.open) openMenu(trigger);
             else closeMenu(true);
           });
         });
@@ -305,14 +330,42 @@ const footerRunDetail = !WORKER_HEALTH
         menu.querySelectorAll<HTMLAnchorElement>("a").forEach((link) => {
           link.addEventListener("click", () => closeMenu(false));
         });
-        document.addEventListener("keydown", (e) => {
-          if (e.key === "Escape" && !menu.hidden) closeMenu(true);
+        menu.addEventListener("cancel", (event) => {
+          event.preventDefault();
+          closeMenu(true);
         });
-        document.addEventListener("click", (e) => {
-          const target = e.target as Node;
-          if (!menu.hidden && !menu.contains(target) && !triggers.some((trigger) => trigger.contains(target))) {
-            closeMenu(false);
+        menu.addEventListener("keydown", (event) => {
+          if (event.key !== "Tab") return;
+          const focusable = Array.from(
+            menu.querySelectorAll<HTMLElement>(
+              'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ),
+          ).filter(isVisible);
+          if (focusable.length === 0) {
+            event.preventDefault();
+            menu.focus();
+            return;
           }
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (event.shiftKey && (document.activeElement === first || !menu.contains(document.activeElement))) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        });
+        menu.addEventListener("close", finalizeMenuClose);
+        menu.addEventListener("click", (event) => {
+          if (event.target !== menu) return;
+          const rect = menu.getBoundingClientRect();
+          const outside =
+            event.clientX < rect.left ||
+            event.clientX > rect.right ||
+            event.clientY < rect.top ||
+            event.clientY > rect.bottom;
+          if (outside) closeMenu(true);
         });
       })();
 
@@ -325,17 +378,39 @@ const footerRunDetail = !WORKER_HEALTH
         const closeButton = searchRoot?.querySelector<HTMLButtonElement>("[data-search-close]");
         if (!input || !panel || !searchRoot) return;
 
+        type CategorySearchMeta = { slug: string; label: string; aliases: string[] };
+        const categoryMeta = JSON.parse(panel.dataset.categorySearchMeta ?? "[]") as CategorySearchMeta[];
+        const categoryLabels = new Map(categoryMeta.map((entry) => [entry.slug, entry.label]));
         let pf: any = null;
         let activeIndex = -1;
         let requestGeneration = 0;
-        try {
-          const pfUrl = "/pagefind/pagefind.js";
-          pf = { ...await import(/* @vite-ignore */ pfUrl) };
-          await pf.init();
-          (window as any).__pagefind = pf;
-        } catch {
-          // Dev/preview — Pagefind index not built yet.
-        }
+        const isSearchRoute = /^\/search\/?$/.test(window.location.pathname);
+        const initialSearchQuery = new URLSearchParams(window.location.search).get("q")?.trim() ?? "";
+        if (isSearchRoute && !input.value) input.value = initialSearchQuery;
+        const syncSearchRoute = (query: string) => {
+          if (!isSearchRoute) return;
+          const next = new URL(window.location.href);
+          if (query) next.searchParams.set("q", query);
+          else next.searchParams.delete("q");
+          window.history.replaceState(
+            window.history.state,
+            "",
+            `${next.pathname}${next.search}${next.hash}`,
+          );
+        };
+        let pagefindLoadSettled = false;
+        const pagefindReady = (async () => {
+          try {
+            const pfUrl = "/pagefind/pagefind.js";
+            pf = { ...await import(/* @vite-ignore */ pfUrl) };
+            await pf.init();
+            (window as any).__pagefind = pf;
+          } catch {
+            // Dev/preview: Pagefind index not built yet.
+          } finally {
+            pagefindLoadSettled = true;
+          }
+        })();
 
         const escapeHtml = (value: string) =>
           value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char] ?? char));
@@ -408,6 +483,7 @@ const footerRunDetail = !WORKER_HEALTH
           nextRequestGeneration();
           window.clearTimeout(t);
           input.value = "";
+          syncSearchRoute("");
           activeIndex = -1;
           input.removeAttribute("aria-activedescendant");
           panel.removeAttribute("aria-busy");
@@ -422,11 +498,18 @@ const footerRunDetail = !WORKER_HEALTH
         (window as any).__tdCloseSearch = closeSearch;
         closeButton?.addEventListener("click", () => closeSearch(true));
         const hitItems = () => Array.from(panel.querySelectorAll<HTMLAnchorElement>(".search-hit"));
+        const clearActive = () => {
+          activeIndex = -1;
+          input.removeAttribute("aria-activedescendant");
+          hitItems().forEach((hit) => {
+            hit.classList.remove("is-active");
+            hit.setAttribute("aria-selected", "false");
+          });
+        };
         const setActive = (nextIndex: number) => {
           const hits = hitItems();
           if (hits.length === 0) {
-            activeIndex = -1;
-            input.removeAttribute("aria-activedescendant");
+            clearActive();
             return;
           }
           activeIndex = (nextIndex + hits.length) % hits.length;
@@ -439,6 +522,14 @@ const footerRunDetail = !WORKER_HEALTH
               hit.scrollIntoView({ block: "nearest" });
             }
           });
+        };
+        const moveActive = (direction: 1 | -1) => {
+          const hits = hitItems();
+          if (hits.length === 0) {
+            clearActive();
+            return;
+          }
+          setActive(activeIndex < 0 ? (direction > 0 ? 0 : hits.length - 1) : activeIndex + direction);
         };
 
         const classifyResult = (url: string): { label: string; className: string } => {
@@ -453,7 +544,7 @@ const footerRunDetail = !WORKER_HEALTH
         };
         const stripTags = (value: string) => value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
         const resultText = (d: any) =>
-          normalizeSearchText(stripTags(`${d.meta?.title || ""} ${d.excerpt || ""} ${d.url || ""}`));
+          normalizeSearchText(stripTags(`${d.meta?.title || ""} ${d.excerpt || ""} ${d.searchTerms || ""} ${d.url || ""}`));
         const queryTerms = (q: string) =>
           normalizeSearchText(q).split(/\s+/).filter((term) => term.length >= 2);
         const isExactResult = (item: any, q: string) => {
@@ -463,6 +554,18 @@ const footerRunDetail = !WORKER_HEALTH
           return text.includes(normalizeSearchText(q)) || terms.every((term) => text.includes(term));
         };
         const hasExactResult = (items: any[], q: string) => items.some((item) => isExactResult(item, q));
+        const filterValue = (item: any, name: string): string => {
+          const value = item.filters?.[name];
+          return String(Array.isArray(value) ? value[0] ?? "" : value ?? "");
+        };
+        const authorityOrder: Record<string, number> = {
+          official: 0,
+          paper: 1,
+          community: 2,
+          news: 3,
+          aggregator: 4,
+          source: 5,
+        };
 
         const relativeAge = (day: string): string => {
           const parsed = Date.parse(day);
@@ -480,9 +583,13 @@ const footerRunDetail = !WORKER_HEALTH
             const parts: string[] = [];
             const source = d.filters.source?.[0];
             const category = d.filters.category?.[0];
+            const importance = Number(d.filters.importance?.[0] ?? 0);
             const day = d.filters.publishedDay?.[0];
             if (source) parts.push(source);
-            if (category) parts.push(category);
+            if (category) parts.push(categoryLabels.get(category) ?? category);
+            if (importance >= 1 && importance <= 3) {
+              parts.push(`${importance === 3 ? "High" : importance === 2 ? "Medium" : "Info"} importance`);
+            }
             const age = day ? relativeAge(day) : "";
             if (age) parts.push(age);
             if (parts.length) return parts.join(" · ");
@@ -492,7 +599,7 @@ const footerRunDetail = !WORKER_HEALTH
 
         const renderResults = async (q: string, generation = nextRequestGeneration()) => {
           if (!isCurrentRequest(generation)) return;
-          activeIndex = -1;
+          clearActive();
           if (!q) {
             renderSearchHelp();
             return;
@@ -501,8 +608,10 @@ const footerRunDetail = !WORKER_HEALTH
             setExpanded(true);
             panel.innerHTML = `
               <div class="search-empty">
-                <strong>Search index is not ready.</strong>
-                <p>The static Pagefind index is created during <code>npm run build</code>. Use categories or status until the index is available.</p>
+                <strong>${pagefindLoadSettled ? "Search index is not ready." : "Loading search index..."}</strong>
+                <p>${pagefindLoadSettled
+                  ? "The static Pagefind index is created during <code>npm run build</code>. Use categories or status until the index is available."
+                  : "Your query is preserved while the local search index loads."}</p>
                 <div class="search-empty-actions">
                   <a href="/categories">Browse categories</a>
                   <a href="/status">Check sources</a>
@@ -516,7 +625,21 @@ const footerRunDetail = !WORKER_HEALTH
           let items: any[] = [];
           try {
             const search = await pf.search(q);
-            items = await Promise.all(search.results.slice(0, 30).map((r: any) => r.data()));
+            const batchSize = 30;
+            const maxCandidates = Math.min(search.results.length, 300);
+            for (let offset = 0; offset < maxCandidates; offset += batchSize) {
+              const batch = await Promise.all(
+                search.results.slice(offset, offset + batchSize).map((r: any) => r.data()),
+              );
+              if (!isCurrentRequest(generation)) return;
+              items.push(...batch);
+              const exactArticleCount = items.filter(
+                (item) =>
+                  classifyResult(item.url || "").className === "article"
+                  && isExactResult(item, q),
+              ).length;
+              if (exactArticleCount >= 12) break;
+            }
           } catch (error) {
             if (!isCurrentRequest(generation)) return;
             panel.removeAttribute("aria-busy");
@@ -534,12 +657,49 @@ const footerRunDetail = !WORKER_HEALTH
           if (!isCurrentRequest(generation)) return;
           panel.removeAttribute("aria-busy");
           setExpanded(true);
+          const normalizedQuery = normalizeSearchText(q);
+          const categoryIntent = categoryMeta.find((entry) =>
+            entry.aliases.some((alias) => normalizeSearchText(alias) === normalizedQuery),
+          );
+          const intentSlug = categoryIntent?.slug;
+          const categorySlugForItem = (item: any) => {
+            const path = String(item.url ?? "").replace(/^https?:\/\/[^/]+/, "");
+            return path.match(/^\/c\/([^/]+)(?:\/page\/\d+)?\/?$/)?.[1] ?? "";
+          };
+          if (categoryIntent && !items.some((item) => categorySlugForItem(item) === intentSlug)) {
+            items.unshift({
+              url: `/c/${categoryIntent.slug}/`,
+              meta: { title: categoryIntent.label },
+              excerpt: `Browse ${categoryIntent.label} updates.`,
+              searchTerms: categoryIntent.aliases.join(" "),
+              filters: { category: [categoryIntent.slug] },
+            });
+          }
           const exactItems = items
             .map((item, index) => ({ item, index, type: classifyResult(item.url || "") }))
             .filter(({ item }) => Boolean(item.url) && isExactResult(item, q))
             .sort((a, b) => {
+              const intentOrder =
+                Number(categorySlugForItem(b.item) === intentSlug)
+                - Number(categorySlugForItem(a.item) === intentSlug);
+              if (intentOrder) return intentOrder;
               const typeOrder = Number(b.type.className === "article") - Number(a.type.className === "article");
-              return typeOrder || a.index - b.index;
+              if (typeOrder) return typeOrder;
+              if (a.type.className === "article" && b.type.className === "article") {
+                const authority =
+                  (authorityOrder[filterValue(a.item, "authority")] ?? 9) -
+                  (authorityOrder[filterValue(b.item, "authority")] ?? 9);
+                if (authority) return authority;
+                const importance =
+                  Number(filterValue(b.item, "importance") || 0)
+                  - Number(filterValue(a.item, "importance") || 0);
+                if (importance) return importance;
+                const published =
+                  (Date.parse(filterValue(b.item, "publishedDay")) || 0) -
+                  (Date.parse(filterValue(a.item, "publishedDay")) || 0);
+                if (published) return published;
+              }
+              return a.index - b.index;
             })
             .slice(0, 10);
           if (!hasExactResult(items, q) || exactItems.length === 0) {
@@ -569,12 +729,13 @@ const footerRunDetail = !WORKER_HEALTH
               </a>`;
             })
             .join("");
-          setActive(0);
+          clearActive();
         };
 
         let t: number | undefined;
         input.addEventListener("input", () => {
           const q = input.value.trim();
+          syncSearchRoute(q);
           const generation = nextRequestGeneration();
           window.clearTimeout(t);
           t = window.setTimeout(() => renderResults(q, generation), 120);
@@ -588,7 +749,6 @@ const footerRunDetail = !WORKER_HEALTH
         searchTriggers.forEach((trigger) => {
           trigger.addEventListener("click", () => openSearch(trigger));
         });
-        input.form?.addEventListener("submit", (e) => e.preventDefault());
         document.addEventListener("keydown", (e) => {
           const isTextInput = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
           const wantsSearch = e.key === "/" || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k");
@@ -611,10 +771,10 @@ const footerRunDetail = !WORKER_HEALTH
             closeSearch(true);
           } else if (e.key === "ArrowDown") {
             e.preventDefault();
-            setActive(activeIndex + 1);
+            moveActive(1);
           } else if (e.key === "ArrowUp") {
             e.preventDefault();
-            setActive(activeIndex - 1);
+            moveActive(-1);
           } else if (e.key === "Enter" && activeIndex >= 0) {
             const hit = hitItems()[activeIndex];
             if (hit) {
@@ -622,6 +782,14 @@ const footerRunDetail = !WORKER_HEALTH
               hit.click();
             }
           }
+        });
+        if (isSearchRoute) openSearch(null);
+        void pagefindReady.then(() => {
+          if (!searchRoot.classList.contains("is-open")) return;
+          const query = input.value.trim();
+          const generation = nextRequestGeneration();
+          if (query) void renderResults(query, generation);
+          else renderSearchHelp();
         });
       })();
 

@@ -1304,6 +1304,102 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: KV binding を先に boolean 化し、存在するときだけ issue marker を読む。欠落時は `ok:false`、`cacheBinding:false` の JSON 503 を返す regression test を追加した。
 - **教訓**: health check は壊れた dependency を使わずに dependency の故障を報告できなければならない。binding、secret、client の存在確認は最初に行い、診断用 read は guard 後に限定する。
 
+### LL-183: source format と source authority を同じ badge で表現しない
+- **事象**: 記事カードは `blog` / `release` / `paper` を信頼性の badge のように表示し、記事詳細は registry tier を `一次情報` と読み替えていた。community blog と公式 blog の違いが短時間では判断できなかった。
+- **根本原因**: 配信形式と情報源の権威性を 1 つの field / UI 表現へ押し込み、公式、論文、community、報道、aggregator の provenance を共通 contract にしていなかった。
+- **対策**: `sourceAuthority()` を単一 helper にし、記事カード、Spotlight、詳細、Pagefind metadata を `official|paper|community|news|aggregator|source` で統一した。`sourceType` は tooltip と内部 metadata に残し、authority と分離した。
+- **教訓**: source の形式は「どう配信されたか」、authority は「誰が述べたか」である。判断面では authority を先に示し、形式と registry tier を信頼ラベルへ流用しない。
+
+### LL-184: native dialog でも focus containment と復帰を操作経路ごとに検証する
+- **事象**: hamburger menu を native `<dialog>` へ変更しても、Tab の連続操作と Menu から Search を開く経路では focus の containment / 復帰先を実ブラウザで保証する必要があった。
+- **根本原因**: modal primitive の採用だけで keyboard contract が完成すると仮定し、複数 trigger、別 overlay への遷移、hidden opener を含む focus state transition を分けていなかった。
+- **対策**: showModal/close、Tab/Shift+Tab trap、Escape/backdrop、visible opener への focus 復帰を共通 close contract に統合し、desktop/mobile の複数経路を E2E で検証した。
+- **教訓**: native primitive は semantic と top layer を提供するが、アプリ固有の opener と overlay 連携までは設計しない。modal は open/close、containment、dismiss、focus restoration を経路別に実測する。
+
+### LL-185: first-view の判断密度は先頭位置ではなく判断面の末端まで測る
+- **事象**: Spotlight と Top-3 の開始位置は viewport 内でも、desktop/tablet の 3 件目は 900px より下にあり、優先記事を一度に比較できなかった。
+- **根本原因**: section の `y` だけを density gate にし、panel 全体の bottom と rail による component inline-size を測っていなかった。
+- **対策**: 重複 hero links を除去し、761px 以上かつ十分な container 幅では Top-3 を 3 列へ再配置した。tablet の Spotlight を compact 化し、1440x900 / 768x900 で Top-3 panel bottom が viewport 内に入る E2E を追加した。
+- **教訓**: 「見え始める」と「比較に必要な全件が見える」は別である。decision-critical group は先頭座標だけでなく最後の item / panel bottom を viewport 境界で検証し、component 幅の変化は container query で扱う。
+
+### LL-186: 検索の自然言語 intent と表示 label は taxonomy metadata を単一情報源にする
+- **事象**: `local model` や `benchmark` の検索で記事がカテゴリ入口より先に並び、検索 meta には `local-llm` / `research` など内部 slug が露出した。
+- **根本原因**: Pagefind の article-first ranking に category intent がなく、検索表示も filter の raw category value を直接描画していた。
+- **対策**: `CATEGORY_META.searchAliases` を追加し、query が alias と一致する場合だけ該当 category landing page を先頭へ boost した。検索 meta は同じ metadata の `shortLabel` を使い、slug を表示しない regression test を追加した。
+- **教訓**: taxonomy の slug は URL / filter key、label は読者向け表示、alias は検索 intent である。3 者を metadata に集約し、UI が raw slug を直接表示したり個別 synonym table を持ったりしない。
+
+### LL-187: static preview の E2E は変更後の build artifact を先に更新する
+- **事象**: CSS / client script を変更しても、既存 preview server が古い `web/dist` を配信し、ブラウザ計測が修正前の挙動を示し得た。
+- **根本原因**: Playwright の preview は source を直接変換せず static build artifact を読む。さらに `reuseExistingServer: true` は同じ port の既存 preview を再利用するため、source 更新と dist 更新を同一視すると古い server / artifact を検証し得る。
+- **対策**: UI 変更後は対象 port の既存 preview を停止し、`npm run build:web` を単独で完了させ、その後に Playwright / browser 寸法検証を行う。build と Playwright は `web/dist` 競合を避けて逐次実行する。
+- **教訓**: static preview の証拠は source ではなく現在の dist と server process に対する証拠である。browser 回帰を判断する前に既存 server、artifact の更新時刻、build 成功を確定する。
+
+### LL-188: Chrome DevTools MCP の profile lock は既存 browser process を特定して解消する
+- **事象**: `list_pages` が「browser is already running for chrome-profile」で起動失敗した。profile path を使う Chrome root process が残り、新しい MCP server が同じ user-data-dir を取得できなかった。
+- **根本原因**: 以前の DevTools browser process が profile lock を保持したまま残っていた。接続設定や target page の問題ではなかった。
+- **対策**: `ps` で該当 `--user-data-dir` を持つ root PID を特定し、その PID だけを停止してから `list_pages` を再実行した。name-based kill は使わない。
+- **教訓**: MCP の profile lock error は設定変更や別 profile への即時 fallback より先に、同じ user-data-dir を保持する process を確認する。停止する場合も特定 PID に限定し、共有 Chrome を巻き込まない。
+
+### LL-189: worktree secret scan と unit test は一時 directory を共有し得るため逐次実行する
+- **事象**: unit test と `npm run secrets:scan:worktree` を並列実行すると、test が生成・削除する一時 directory を scanner が走査するタイミングと競合し得た。
+- **根本原因**: 2 コマンドを read-only な独立検証とみなしたが、unit test は worktree 内に一時 file / directory を作る場合があり、worktree scan は同じ path 集合を読み取る。
+- **対策**: unit test の完了後に worktree secret scan を単独で再実行する。build と Playwright の `web/dist` 競合と同様、同じ file tree を mutation / scan する gate は並列化しない。
+- **教訓**: command 自体が read-only に見えても、test fixture や生成物の lifecycle を確認してから並列化する。最終 secret scan は一時成果物が片付いた安定状態で行う。
+
+### LL-190: accessible name は visible label を置換せず補助説明を分離する
+- **事象**: Sidebar link の長い `aria-label` が画面上のカテゴリ名・件数と一致せず、装飾用2文字タイルも visible label 判定へ混ざった。generic focus anchor の `aria-label` は role 上禁止され、低コントラストの小文字も Lighthouse で検出された。
+- **根本原因**: visible label、accessible name、補助説明、装飾文字を 1 つの `aria-label` へ押し込み、共通の muted token も AA contrast を満たす値として設計していなかった。
+- **対策**: link は visible text から自然な accessible name を作り、分類の補助情報は `aria-describedby` へ分離した。装飾タイルは `aria-hidden` + CSS generated content にし、focus anchor から禁止 ARIA を除去した。E2E は件数 node の visible / visually-hidden text を正規化してそのまま accessible name と比較し、単位をテスト側で重複付与しない。`--muted-2` と該当タイル色を normal text で 4.5:1 以上になる値へ変更し、desktop / mobile Lighthouse で Accessibility 100、failed audit 0 を確認した。
+- **教訓**: accessible name は visible label を含む短い名前に保ち、詳細は description に分ける。装飾文字は DOM text として操作名へ混ぜず、色 token は実際の背景との contrast ratio を共通設計時に検証する。
+
+### LL-191: 外部 favicon endpoint も Cookie と browser issue の発生源として監査する
+- **事象**: Google S2 favicon endpoint が `NID` Cookie を返し、Lighthouse の third-party cookie / inspector issue を発生させて Best Practices を 77 に落としていた。
+- **根本原因**: 小さな装飾画像を無害な外部 asset とみなし、response header と browser issue を確認していなかった。favicon URL の構築も複数 component に重複していた。
+- **対策**: `web/src/lib/favicon.ts` に host 正規化と favicon URL を集約し、Cookie を返さない icon endpoint へ全 render spot を移行した。unit test と全量検索で旧 endpoint 0 件を固定し、Lighthouse Best Practices 100、failed audit 0 を確認した。
+- **教訓**: third-party image でも Cookie、ORB、Content-Type、redirect の問題を起こす。外部 asset endpoint は response header と DevTools issue を確認し、URL 生成を単一 helper に集約する。
+
+### LL-192: Astro template の helper 移行は全 callsite 検索と production build で検証する
+- **事象**: favicon helper を共通化した際、article detail 下部に残った旧 `host()` 呼び出しを見落とし、root `npm run typecheck` は通ったが Astro build が `host is not defined` で停止した。
+- **根本原因**: helper の主要な利用箇所だけを置換して local function を削除し、同じ `.astro` template 全体の callsite を再検索しなかった。root TypeScript check は Astro template の runtime identifier を完全には検出しない。
+- **対策**: 対象 file と web tree を旧 symbol / endpoint で全量検索し、残る callsite を共有 `sourceHost()` へ移行した。その後 production Astro build を再実行した。
+- **教訓**: helper 抽出では定義と目立つ callsite だけで完了にしない。旧 symbol を全量検索し、Astro / template code は typecheck に加えて production build で runtime binding を検証する。
+
+### LL-193: Pagefind の exact search は上位 N 件の近似候補だけを hydrate しない
+- **事象**: Pagefind の上位30候補だけを hydrate して exact 判定していたため、31件目以降にある完全一致の記事が検索結果から消えた。exact article が先に12件集まると101件目の category candidate へ到達せず、`open source model` の Local Models 入口も消えた。また Pagefind 初期化完了まで input listener が付かず、読み込み中の入力を URL 初期値で上書きし得た。
+- **根本原因**: ranking candidate の取得件数と最終表示件数を同じ上限で扱い、Pagefind の近似順位に taxonomy intent の到達性を依存させた。非同期 index load と検索 UI の state ownershipも分離していなかった。
+- **対策**: Pagefind candidate は30件単位で段階 hydrate し、exact article が十分集まるか安全上限へ達するまで走査してから上位10件へ ranking する。taxonomy alias が完全一致する場合は `CATEGORY_META` から canonical category result を合成し、Pagefind 順位に依存せず入口を先頭へ出す。検索 input、listener、URL 初期値は index load より先に確立し、load 完了後は初期値ではなくその時点の input value を再検索する。
+- **教訓**: approximate search engine の上位 N 候補は exact hit の全量ではない。candidate hydration と final display cap を分離し、known taxonomy intent は検索 index の偶然の順位ではなく metadata から決定論的に提示する。非同期 index の readiness が input state を所有しない設計にする。
+
+### LL-194: mutable release alias は観測済み slug だけでなく alias family 全体を除外する
+- **事象**: `nightly` / `canary` 等は除外したが、同じ GitHub release URL 契約を持つ `extension-workflows` / `extension-cli` を見落とし、内容が更新される alias が live/archive に残った。
+- **根本原因**: mutable URL policy を少数の実例リストとして扱い、release tag の alias family として collector、prior merge、migration、Web表示の全層へ対称適用していなかった。
+- **対策**: shared root filter と R-005 準拠の Web guard の両方へ extension alias family を追加し、actual URL corpus を unit test に固定した。transaction migration で既存 live/archive/body sidecar を最新 main artifact 上から再構築した。
+- **教訓**: URL の内容が時点で変わる alias は記事 identity として使わない。除外は観測した1件だけでなく provider の alias family を構造化して定義し、生成、merge、保存、表示、migration の全層を同じ test corpus で守る。
+
+### LL-195: ranking の表示根拠は実スコアと同じ helper から導出する
+- **事象**: Top-3 UI は source authority を選定根拠として表示したが、実際の score は importance、recency、release penalty だけで authority を使っていなかった。
+- **根本原因**: ranking logic と説明文を別々に実装し、UI が実際には使っていない signal を根拠として表示できた。authority を score へ加えた後も、加算式を `×` と表示し、release/changelog adjustment を説明から落とす drift が残った。
+- **対策**: `decisionRankScore()` を共通 helper にし、importance、source authority、recency、source type を同じ加算式へ統合した。説明文も `+` と release/changelog adjustment を明示し、authority だけが異なる同条件 entry の順位が変わる unit test を追加した。
+- **教訓**: decision-critical ranking の説明可能性は copy ではなく実装 contract で保証する。表示する signal は必ず score に入り、score の変更は helper と regression test を通す。
+
+### LL-196: taxonomy classifier は汎用 framework 名だけで業界分類へ昇格させない
+- **事象**: Hugging Face の PyTorch profiling tutorial が `PyTorch` だけで Tech News / platform 分類になり、Apache-2.0 の open model 記事も `Enterprise Documents` だけで同じ分類へ入った。
+- **根本原因**: framework 名と汎用的な business adjective を enterprise/cloud platform signal と同列に扱い、記事の主目的である tutorial / open model より先に強い分類を確定していた。
+- **対策**: platform classifier から `pytorch` と bare `enterprise` を除去し、`enterprise deployment/platform/inference` の compound intent だけを残した。実 tutorial と open model title corpus を Local Models の regression test に固定し、最新 artifact へ再分類 migration を適用した。
+- **教訓**: 汎用 framework、language、library 名、business adjective は industry/platform taxonomy を単独で確定する根拠にしない。分類は compound intent や provider context を優先し、実タイトル corpus で false positive を守る。
+
+### LL-197: read-only QA agent に repository artifact を生成する gate を要求しない
+- **事象**: QA agent に build 実行を必須化しながら、同じ定義で build output や cache を含む repository file の作成を全面禁止していた。
+- **根本原因**: QA の独立性と filesystem の read-only 境界を混同し、Astro build や一部 unit test が generated artifact を書く実行契約を考慮していなかった。
+- **対策**: read-only QA は親が準備した build / unit evidence をレビューし、既存 preview に対する browser、a11y、responsive、navigation、read-only data check を独立実行する。artifact を書く gate は親の delivery owner に依頼する契約へ変更した。
+- **教訓**: agent の責務と権限は実行可能な組み合わせにする。read-only reviewer に mutation を伴う command を要求せず、生成責務と独立検証責務を親子で分離する。
+
+### LL-198: touch target の製品基準は mobile 実寸テストまで配線する
+- **事象**: PRODUCT.md で mobile touch target 44px 以上を定義したが、言語切替 button は 44x38px のまま残った。
+- **根本原因**: 文書化した acceptance criterion を既存の小型 control へ横展開せず、navigation tab だけの寸法検証で合格としていた。
+- **対策**: mobile `.lang-btn` の min-height を44pxへ揃え、390x844 viewport で JA/EN button の bounding box が幅・高さとも44px以上であることを E2E に追加した。
+- **教訓**: 製品基準を追加したら、主導線だけでなく同じ viewport にある全 interactive control を inventory し、文書、CSS token、DOM寸法テストを同じ変更で揃える。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -19,6 +19,8 @@ const ASCII_WORD_RE = /^[\x00-\x7F]+$/;
 const ASCII_ALNUM_RE = /[A-Za-z0-9]/;
 const ASCII_BOUNDARY_CLASS = "A-Za-z0-9";
 const ASCII_SEPARATOR_RE = "[\\s/._:+-]+";
+const MUTABLE_GITHUB_RELEASE_ALIAS_RE =
+  /\/releases\/tag\/(?:nightly|canary|snapshot|rolling|extension-(?:workflows|cli)|collab-(?:staging|production|prod))\/?$/i;
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -82,6 +84,16 @@ export function keywordHaystack(entry: KeywordFilterEntry, source: SourceDefinit
     : `${entry.title} ${entry.contentSnippet ?? ""} ${entry.url}`;
 }
 
+export function isMutableReleaseAliasUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.toLowerCase() === "github.com"
+      && MUTABLE_GITHUB_RELEASE_ALIAS_RE.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
 export function matchingKeyword(
   haystack: string,
   keywords: readonly string[] | undefined,
@@ -108,6 +120,17 @@ export function evaluateKeywordFilter(
   source: SourceDefinition,
   options: { allowLossyMissingInclude?: boolean } = {},
 ): KeywordFilterDecision {
+  if (
+    (source.sourceType === "release" || source.sourceType === "changelog")
+    && isMutableReleaseAliasUrl(entry.url)
+  ) {
+    return {
+      keep: false,
+      reason: "exclude",
+      keyword: "mutable-release-alias",
+      trusted: true,
+    };
+  }
   const haystack = keywordHaystack(entry, source);
   const excludeHit = matchingKeyword(haystack, source.excludeKeywords);
   if (excludeHit) {

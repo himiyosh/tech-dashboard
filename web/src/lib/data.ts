@@ -181,9 +181,27 @@ function hasGeneratedSummary(e: NormalizedEntry): boolean {
   );
 }
 
+const MUTABLE_GITHUB_RELEASE_ALIAS_RE =
+  /\/releases\/tag\/(?:nightly|canary|snapshot|rolling|extension-(?:workflows|cli)|collab-(?:staging|production|prod))\/?$/i;
+
+export function isMutableReleaseAliasEntry(
+  entry: Pick<NormalizedEntry, "sourceType" | "url">,
+): boolean {
+  if (entry.sourceType !== "release" && entry.sourceType !== "changelog") return false;
+  try {
+    const parsed = new URL(entry.url);
+    return parsed.hostname.toLowerCase() === "github.com"
+      && MUTABLE_GITHUB_RELEASE_ALIAS_RE.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
 /** Decision-critical slots (Featured / Top-3) and feeds require a real summary. */
 export function isPublishableEntry(e: NormalizedEntry): boolean {
-  return hasGeneratedSummary(e) && !isDeterministicFallbackEntry(e);
+  return !isMutableReleaseAliasEntry(e)
+    && hasGeneratedSummary(e)
+    && !isDeterministicFallbackEntry(e);
 }
 
 /**
@@ -203,6 +221,7 @@ export function isPublishableEntry(e: NormalizedEntry): boolean {
  * update") are still excluded — there is nothing meaningful to list.
  */
 export function isListableEntry(e: NormalizedEntry): boolean {
+  if (isMutableReleaseAliasEntry(e)) return false;
   if (isPublishableEntry(e)) return true;
   return (
     (!!(e.titleEn ?? "").trim() && !isSyntheticFallbackTitle(e, e.titleEn)) ||
@@ -234,7 +253,7 @@ export const RAW_ENTRIES: readonly NormalizedEntry[] = data.entries;
 export const PUBLISHABLE_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.filter(isPublishableEntry);
 /** Entries still waiting for an AI summary (rendered with a pending state). */
 export const PENDING_SUMMARY_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.filter(
-  (entry) => !isPublishableEntry(entry),
+  (entry) => !isMutableReleaseAliasEntry(entry) && !isPublishableEntry(entry),
 );
 /**
  * Everything shown in listings (Timeline / category / tag / archive). Includes
@@ -360,6 +379,8 @@ export interface CategoryMeta {
   name: string;
   /** Compact label for narrow surfaces (sidebar). */
   shortLabel: string;
+  /** Natural-language queries that should prioritize the category landing page. */
+  searchAliases?: readonly string[];
   color: string;
   initial: string;
   emoji: string;
@@ -376,10 +397,10 @@ export const CATEGORY_META: ReadonlyArray<CategoryMeta> = [
     { slug: "cline", name: "Cline / Roo", shortLabel: "Cline/Roo", color: "#c4b5fd", initial: "Cn", emoji: "\u{1F9F5}", group: "coding-tools" },
     { slug: "aider", name: "Aider", shortLabel: "Aider", color: "#d6d3a1", initial: "Ai", emoji: "\u{1F91D}", group: "coding-tools" },
     { slug: "opencode", name: "OpenHands / OpenCode", shortLabel: "OpenHands/OpenCode", color: "#a5b4fc", initial: "Oh", emoji: "\u{1F310}", group: "coding-tools" },
-    { slug: "local-llm", name: "Local LLM / Open Models", shortLabel: "Local Models", color: "#f87171", initial: "Lm", emoji: "\u{1F3E0}", group: "open-models" },
+    { slug: "local-llm", name: "Local LLM / Open Models", shortLabel: "Local Models", searchAliases: ["local model", "local models", "local ai", "on-device ai", "open source model", "open source models"], color: "#f87171", initial: "Lm", emoji: "\u{1F3E0}", group: "open-models" },
     { slug: "agent-fw", name: "Agent Frameworks", shortLabel: "Agent Frameworks", color: "#34d399", initial: "Af", emoji: "\u{1F916}", group: "agent-tools" },
     { slug: "mcp", name: "MCP / Tooling", shortLabel: "MCP", color: "#f472b6", initial: "Mc", emoji: "\u{1F517}", group: "agent-tools" },
-    { slug: "research", name: "Papers / Benchmarks", shortLabel: "Papers/Benchmarks", color: "#fda4af", initial: "Pb", emoji: "\u{1F52C}", group: "research" },
+    { slug: "research", name: "Papers / Benchmarks", shortLabel: "Papers/Benchmarks", searchAliases: ["benchmark", "benchmarks", "paper", "papers", "research"], color: "#fda4af", initial: "Pb", emoji: "\u{1F52C}", group: "research" },
     { slug: "tech-news", name: "Industry & Policy", shortLabel: "News/Policy", color: "#fb923c", initial: "Ip", emoji: "\u{1F4F0}", group: "industry" },
   ];
 
@@ -814,12 +835,14 @@ export function adjacentInCategory(
   return { prev: cat[i - 1], next: cat[i + 1] };
 }
 
-/** Category-relative importance percentile (0-100, higher = more important). */
-export function importancePercentile(e: NormalizedEntry): number {
-  const cat = ALL_ENTRIES.filter((x) => x.category === e.category);
-  if (cat.length === 0) return 50;
-  const lower = cat.filter((x) => x.importance < e.importance).length;
-  return Math.round((lower / cat.length) * 100);
+export function categoryImportanceStanding(
+  e: NormalizedEntry,
+): { total: number; sameOrHigher: number } {
+  const categoryEntries = ALL_ENTRIES.filter((entry) => entry.category === e.category);
+  return {
+    total: categoryEntries.length,
+    sameOrHigher: categoryEntries.filter((entry) => entry.importance >= e.importance).length,
+  };
 }
 
 /** Average importance over the last N entries from this source. */

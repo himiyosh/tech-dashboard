@@ -12,6 +12,11 @@
 tech-dashboard/
 ├─ .github/
 │  ├─ copilot-instructions.md       ← Memory 層 (Copilot)
+│  ├─ agents/
+│  │  ├─ TechDBAgent.agent.md       ← 監査 / delivery / release の統括
+│  │  ├─ techdb-delivery-engineer.agent.md ← 実装担当
+│  │  ├─ techdb-qa-engineer.agent.md       ← read-only QA
+│  │  └─ persona-*.agent.md         ← read-only 利用者回遊
 │  ├─ prompts/                     ← 任意: Copilot CLI prompt 化する場合
 │  └─ workflows/
 │     └─ ci.yml                     ← 検証のみ。deploy / harness 実行はしない
@@ -51,6 +56,7 @@ tech-dashboard/
 | 種別 | 実装 | 備考 |
 |---|---|---|
 | 常時 instruction | `.github/copilot-instructions.md` | tech-dashboard 固有の絶対ルール / LL |
+| Custom agents | `.github/agents/TechDBAgent.agent.md`, `techdb-delivery-engineer.agent.md`, `techdb-qa-engineer.agent.md`, `persona-*.agent.md` | 統括、書き込み実装、read-only QA、利用者回遊を分離 |
 | User-level instruction | VS Code User `Main.instructions.md` | 全プロジェクト共通の応答スタイル |
 | Prompts | `.github/prompts/quality-audit.prompt.md`, `worker-health.prompt.md` | 単発の監査 / Worker health 確認を slash prompt 化 |
 | Skills | `.claude/skills/ai-scrum`, `quality-audit`, `ui-display-guard`, `modern-web-guidance` | `modern-web-guidance` は `skills-lock.json` で外部 skill として追跡。local skills はリポジトリ内ファイルを source of truth とする |

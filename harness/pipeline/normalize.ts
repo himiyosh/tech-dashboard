@@ -186,10 +186,24 @@ export function decorateReleaseTitle(rawTitle: string, source: SourceDefinition)
 
 type CategorySignal = Pick<RawEntry, "title" | "contentSnippet" | "publishedAt">;
 
+const HUGGINGFACE_MCP_RE = /\bmcp\b|model context protocol/i;
+const HUGGINGFACE_RESEARCH_RE =
+  /\b(?:benchmark(?:s|ing)?|leaderboard|evaluat(?:e|ion|ing)|research|papers?|competitions?|datasets?|train(?:ing|ed)?|fine[- ]?tun(?:e|ing)|reinforcement learning|diffusion|computer vision|object detection|lerobot|robots?|robotics)\b/i;
+const HUGGINGFACE_AGENT_RE = /\b(?:agents?|agentic|multi-agent)\b/i;
+const HUGGINGFACE_PLATFORM_RE =
+  /\b(?:enterprise (?:deployment|hub|platform|inference)|cloud|deployment|inference endpoint|managed compute|sagemaker|foundry|azure|aws|google cloud)\b/i;
+
 function resolveCategory(raw: CategorySignal, source: SourceDefinition): Category {
+  const signal = `${raw.title} ${raw.contentSnippet ?? ""}`.toLowerCase();
+  if (source.id === "huggingface-blog") {
+    if (HUGGINGFACE_MCP_RE.test(signal)) return "mcp";
+    if (HUGGINGFACE_RESEARCH_RE.test(signal)) return "research";
+    if (HUGGINGFACE_AGENT_RE.test(signal)) return "agent-fw";
+    if (HUGGINGFACE_PLATFORM_RE.test(signal)) return "tech-news";
+    return source.category;
+  }
   if (source.id !== "qiita-vscode") return source.category;
 
-  const signal = `${raw.title} ${raw.contentSnippet ?? ""}`.toLowerCase();
   if (/\b(cursor|zed)\b/.test(signal)) return "cursor";
   if (/(claude|anthropic)/.test(signal)) return "claude";
   if (/(gemini|antigravity)/.test(signal)) return "gemini";

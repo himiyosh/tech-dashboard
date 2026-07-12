@@ -62,7 +62,7 @@ function tileClass(slug: Category): string {
       href="/"
       aria-current={isCurrentPage("/") ? "page" : undefined}
     >
-      <span class="brand-tile bt-all">•</span>
+      <span class="brand-tile bt-all" data-initial="•" aria-hidden="true"></span>
       <span class="name" title="Timeline"><span class="name-marquee">Timeline</span></span>
       <span class="count">{total}</span>
     </a>
@@ -73,22 +73,26 @@ function tileClass(slug: Category): string {
       const title = `${groupLabels[c.group]}: ${c.name}`;
       const href = `/c/${c.slug}`;
       const isActive = active === c.slug;
+      const descriptionId = `category-description-${c.slug}`;
       return (
-        <a
-          class={`side-item ${isActive ? "active" : ""}`}
-          href={href}
-          aria-label={`${label}, ${title}, ${counts[c.slug]} entries`}
-          aria-current={isCurrentPage(href) ? "page" : undefined}
-        >
-          <span class={`brand-tile ${tileClass(c.slug)}`} aria-hidden="true">{c.initial}</span>
-          <span class="name" title={title}><span class="name-marquee">{label}</span></span>
-          <span class="spark" title="Last 30 days" aria-label={`${label} article trend for the last 30 days`}>
-            {trend.map((bucket) => (
-              <i title={`${bucket.key}: ${bucket.count}`} style={`height:${bucket.height}%`}></i>
-            ))}
-          </span>
-          <span class="count">{counts[c.slug]}</span>
-        </a>
+        <>
+          <a
+            class={`side-item ${isActive ? "active" : ""}`}
+            href={href}
+            aria-describedby={descriptionId}
+            aria-current={isCurrentPage(href) ? "page" : undefined}
+          >
+            <span class={`brand-tile ${tileClass(c.slug)}`} data-initial={c.initial} aria-hidden="true"></span>
+            <span class="name" title={title}><span class="name-marquee">{label}</span></span>
+            <span class="spark" title="Last 30 days" aria-hidden="true">
+              {trend.map((bucket) => (
+                <i title={`${bucket.key}: ${bucket.count}`} style={`height:${bucket.height}%`}></i>
+              ))}
+            </span>
+            <span class="count">{counts[c.slug]}<span class="visually-hidden"> entries</span></span>
+          </a>
+          <span id={descriptionId} class="visually-hidden">{title}</span>
+        </>
       );
     })}
   </div>

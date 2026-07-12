@@ -75,6 +75,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 
 | #   | ドキュメント                                                            | 概要                                         |
 | --- | ----------------------------------------------------------------------- | -------------------------------------------- |
+| PRODUCT | [プロダクト基準](PRODUCT.md)                                        | 5 分以内の読む・共有判断と WCAG 2.2 AA の成功基準 |
 | 00  | [Harness Engineering リサーチ](docs/00-research-harness-engineering.md) | Anthropic / OpenAI の原典を元にした原則整理  |
 | 01  | [システム設計書](docs/01-architecture.md)                               | アーキテクチャ・データモデル・データフロー   |
 | 02  | [Agent / Skill / Hook / Prompt 構成](docs/02-agents-skills-hooks.md)    | ハーネスの内部構成と責務分割                 |
@@ -353,7 +354,9 @@ VS Code で MCP 拡張 or Copilot Chat を開き、初回は OAuth 認可画面�
 
 ```
 tech-dashboard/
+├─ PRODUCT.md                # プロダクト目的・成功指標・アクセシビリティ基準
 ├─ skills-lock.json          # skills CLI が管理する Modern Web Guidance の導入 lock
+├─ .github/agents/           # TechDB の監査・実装・QA・ペルソナ custom agents
 ├─ docs/                     # 設計ドキュメント
 │  └─ mockups/               # HTML モック (mockup-D が確定)
 ├─ harness/                  # ハーネス本体 (TypeScript)

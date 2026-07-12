@@ -9,7 +9,7 @@ import {
   adjacentInCategory,
   entriesBySource,
   entriesByTag,
-  importancePercentile,
+  categoryImportanceStanding,
   importanceLabel,
   relatedEntries,
   relativeTime,
@@ -22,7 +22,8 @@ import {
   type NormalizedEntry,
 } from "../../lib/data.ts";
 import { bodyForEntry } from "../../lib/bodies.ts";
-import { SOURCE_META, sourceAnchorId, sourceLabel } from "../../lib/source-meta.ts";
+import { sourceFaviconUrl, sourceHost } from "../../lib/favicon.ts";
+import { SOURCE_META, sourceAnchorId, sourceAuthority, sourceLabel } from "../../lib/source-meta.ts";
 import { sourceFreshnessStatus } from "../../lib/freshness.ts";
 
 export function getStaticPaths() {
@@ -61,28 +62,14 @@ const catEmoji = catMeta?.emoji ?? "\u{1F4C4}";
 const srcMeta = SOURCE_META.find((s) => s.id === entry.source);
 const srcDisplay = sourceLabel(entry.source);
 const srcTier = srcMeta?.tier;
-const tierMeta: Record<number, { ja: string; en: string }> = {
-  1: { ja: "一次情報", en: "Official" },
-  2: { ja: "コミュニティ", en: "Community" },
-  3: { ja: "集約", en: "Aggregator" },
-};
-const srcTierMeta = srcTier ? tierMeta[srcTier] : undefined;
-const srcTierTitle = srcTierMeta
-  ? `Tier ${srcTier} source: ${srcTierMeta.en} (${srcTierMeta.ja})`
-  : undefined;
+const srcAuthority = sourceAuthority(entry.source, entry.sourceType);
+const srcAuthorityTitle = `${srcAuthority.en} source (${srcAuthority.ja})${srcTier ? ` · registry tier ${srcTier}` : ""}`;
 const sourceStatusAnchor = srcMeta ? sourceAnchorId(entry.source) : null;
 const sourceStatusHref = sourceStatusAnchor ? `/status#${sourceStatusAnchor}` : "/status";
 const srcAvgImp = sourceAvgImportance(entry, 30);
-const srcAvgTitle = `Average importance of this source's recent entries: ${srcAvgImp.toFixed(1)} out of 3`;
+const srcAvgTitle = `Average importance of this source's last 30 listed entries: ${srcAvgImp.toFixed(1)} out of 3 (1=Info, 2=Medium, 3=High)`;
 
-function host(url: string): string {
-  try { return new URL(url).host.replace(/^www\./, ""); } catch { return ""; }
-}
-function faviconUrl(url: string, size = 32): string {
-  const h = host(url);
-  return h ? `https://www.google.com/s2/favicons?sz=${size}&domain=${h}` : "";
-}
-const entryFavicon = faviconUrl(entry.url);
+const entryFavicon = sourceFaviconUrl(entry.url);
 
 function splitJaPoints(s: string): string[] {
   if (!s) return [];
@@ -114,7 +101,7 @@ const sameTag = entriesByTag(entry, 5);
 const sameCategory = relatedEntries(entry, 6);
 const tags = trendingTags(12);
 const { prev, next } = adjacentInCategory(entry);
-const impPct = importancePercentile(entry);
+const categoryStanding = categoryImportanceStanding(entry);
 
 const latestSourceCollectedAt = latestListedCollectedAtForEntry(entry);
 const freshness = sourceFreshnessStatus(entry, latestSourceCollectedAt, now.getTime());
@@ -204,9 +191,10 @@ const pageDesc = (summaryAbsent ? titleDisplay : summaryJa || summaryEn.text || 
 const ogImage = entry.image?.src ?? "";
 const canonicalUrl = `${SITE_URL}/e/${entry.id}/`;
 const shareUrl = summaryAbsent ? entry.url : canonicalUrl;
-const importanceStanding = entry.importance === 1
-  ? `lower priority in ${catName}`
-  : `top ${Math.max(1, 100 - impPct)}% in ${catName}`;
+const importanceStandingJa =
+  `${catName} ${categoryStanding.total}件中、同等以上 ${categoryStanding.sameOrHigher}件`;
+const importanceStandingEn =
+  `${categoryStanding.sameOrHigher} of ${categoryStanding.total} ${catName} entries are equal or higher`;
 const tldrTitleJa = summaryJaResult.isFallback
   ? "English summary"
   : pointsJa.length > 1
@@ -267,6 +255,7 @@ const jsonLd = {
     <meta data-pagefind-filter="category[content]" content={entry.category} />
     <meta data-pagefind-filter="source[content]" content={sourceLabel(entry.source)} />
     <meta data-pagefind-filter="sourceType[content]" content={entry.sourceType} />
+    <meta data-pagefind-filter="authority[content]" content={srcAuthority.kind} />
     <meta data-pagefind-filter="importance[content]" content={String(entry.importance)} />
     <meta data-pagefind-filter="publishedDay[content]" content={entry.publishedAt.slice(0, 10)} />
     <meta data-pagefind-sort="published[content]" content={String(Date.parse(entry.publishedAt) || 0)} />
@@ -349,7 +338,7 @@ const jsonLd = {
             )}
             <span class="ed-src-name">{srcDisplay}</span>
             <span class="sep">·</span>
-            <span class="ed-host">{host(entry.url)}</span>
+            <span class="ed-host">{sourceHost(entry.url)}</span>
             <span class="sep">·</span>
             <time class="ed-published" datetime={entry.publishedAt}>
               <span class="mono">{fmtDate(entry.publishedAt)}</span>
@@ -426,6 +415,11 @@ const jsonLd = {
               <span class="ai-badge">AI</span>
               <span class="ed-tldr-title i18n-ja">{tldrTitleJa}</span>
               <span class="ed-tldr-title i18n-en" lang="en">{tldrTitleEn}</span>
+              <a class="ed-tldr-source" href={entry.url} target="_blank" rel="noopener nofollow">
+                <span class="i18n-ja">原文で検証</span>
+                <span class="i18n-en" lang="en">Verify source</span>
+                <span aria-hidden="true">↗</span>
+              </a>
             </div>
             <div class="ed-tldr-body i18n-ja">
               {pointsJa.length > 1 ? (
@@ -540,13 +534,30 @@ const jsonLd = {
 
         {/* META STRIP */}
         <ul class="ed-meta-strip">
-          <li><span class="k">Source</span><span class="v">{srcDisplay}{srcTier && srcTierMeta && (
-            <span class="pill" title={srcTierTitle} aria-label={srcTierTitle}>
-              <span aria-hidden="true">T{srcTier}</span>
-              <span class="pill-tier-label"><span class="i18n-ja">{srcTierMeta.ja}</span><span class="i18n-en" lang="en">{srcTierMeta.en}</span></span>
+          <li><span class="k">Source</span><span class="v">{srcDisplay}
+            <span
+              class="pill"
+              data-source-authority={srcAuthority.kind}
+              title={srcAuthorityTitle}
+              aria-label={srcAuthorityTitle}
+            >
+              <span class="pill-authority-label">
+                <span class="i18n-ja">{srcAuthority.ja}</span>
+                <span class="i18n-en" lang="en">{srcAuthority.en}</span>
+              </span>
             </span>
-          )}</span></li>
-          <li><span class="k">Source Avg ★</span><span class="v" title={srcAvgTitle} aria-label={srcAvgTitle}><span class="mini-bar" style={`--w:${(srcAvgImp / 3) * 100}%`}></span> <span aria-hidden="true">{srcAvgImp.toFixed(1)} / 3</span></span></li>
+          </span></li>
+          <li>
+            <span class="k">
+              <span class="i18n-ja">直近30件の平均重要度</span>
+              <span class="i18n-en" lang="en">Avg importance, last 30</span>
+            </span>
+            <span class="v" title={srcAvgTitle} aria-label={srcAvgTitle}>
+              <span class="mini-bar" style={`--w:${(srcAvgImp / 3) * 100}%`}></span>
+              <span aria-hidden="true">{srcAvgImp.toFixed(1)} / 3</span>
+              <span class="muted-sm">1=Info · 2=Medium · 3=High</span>
+            </span>
+          </li>
           <li><span class="k">Type</span><span class="v">{sourceTypeLabel[entry.sourceType] ?? entry.sourceType}</span></li>
           <li>
             <span class="k">Importance</span>
@@ -555,7 +566,10 @@ const jsonLd = {
                 <span class="i18n-ja">{importanceMeta.ja}</span>
                 <span class="i18n-en" lang="en">{importanceMeta.en}</span>
               </span>
-              <span class="muted-sm">({importanceStanding})</span>
+              <span class="muted-sm">
+                <span class="i18n-ja">({importanceStandingJa})</span>
+                <span class="i18n-en" lang="en">({importanceStandingEn})</span>
+              </span>
             </span>
           </li>
           {halfLifeMeta && (
@@ -579,7 +593,7 @@ const jsonLd = {
             </a>
             <span class="ed-cta-host">
                {entryFavicon && <img src={entryFavicon} alt="" width="14" height="14" loading="lazy" onerror="this.style.display='none'" />}
-              {host(entry.url)}
+              {sourceHost(entry.url)}
             </span>
           </div>
         )}
@@ -587,10 +601,10 @@ const jsonLd = {
         {!summaryAbsent && (
           <p class="ed-disclaim">
             <span class="i18n-ja">
-              {hasRealBody ? "本ページの本文・要約" : "本ページの要約"}は AI による自動生成です。正確性は元記事 ({host(entry.url)}) をご確認ください。
+              {hasRealBody ? "本ページの本文・要約" : "本ページの要約"}は AI による自動生成です。正確性は元記事 ({sourceHost(entry.url)}) をご確認ください。
             </span>
             <span class="i18n-en" lang="en">
-              {hasRealBody ? "The body and summary are" : "The summary is"} AI-generated. Verify accuracy at the original source ({host(entry.url)}).
+              {hasRealBody ? "The body and summary are" : "The summary is"} AI-generated. Verify accuracy at the original source ({sourceHost(entry.url)}).
             </span>
           </p>
         )}
@@ -1024,6 +1038,14 @@ const jsonLd = {
     border: 1px solid color-mix(in srgb, var(--cat-color) 28%, var(--border));
   }
   .ed-tldr-label { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .ed-tldr-source {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 650;
+    text-decoration: none;
+  }
+  .ed-tldr-source:hover { color: var(--accent); }
   .ai-badge {
     display: inline-block; padding: 3px 8px; border-radius: 5px;
     background: var(--cat-color); color: #0c0c0a;
@@ -1199,7 +1221,7 @@ const jsonLd = {
     font-size: 10.5px; color: var(--muted);
   }
   .pill.imp-3 { background: rgba(245,158,11,0.16); border-color: rgba(245,158,11,0.45); color: #fbbf24; }
-  .pill-tier-label { margin-left: 4px; color: var(--muted-2); font-weight: 500; }
+  .pill-authority-label { margin-left: 4px; color: var(--muted-2); font-weight: 500; }
   .mini-bar {
     display: inline-block; width: 36px; height: 4px;
     background: var(--border); border-radius: 2px; position: relative;

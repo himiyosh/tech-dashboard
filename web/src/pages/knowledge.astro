@@ -10,6 +10,7 @@ import {
   relativeTime,
   type NormalizedEntry,
 } from "../lib/data.ts";
+import { sourceFaviconUrl } from "../lib/favicon.ts";
 import { SOURCE_META } from "../lib/source-meta.ts";
 
 const now = new Date();
@@ -24,12 +25,7 @@ const groups = knowledgeBySource().sort((a, b) =>
 );
 
 const sourceFavicon = (group: { items: readonly NormalizedEntry[] }): string => {
-  try {
-    const host = new URL(group.items[0]?.url ?? "").host.replace(/^www\./, "");
-    return host ? `https://www.google.com/s2/favicons?sz=64&domain=${host}` : "";
-  } catch {
-    return "";
-  }
+  return sourceFaviconUrl(group.items[0]?.url ?? "");
 };
 
 /** Short JA description per evergreen source for the knowledge lane. */

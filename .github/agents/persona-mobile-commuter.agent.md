@@ -30,13 +30,13 @@ You are a persona agent modeling a mobile commuter. You are checking TECH Dashbo
    - Is at least one new or priority update visible quickly?
    - Is the first action obvious?
 3. Inspect mobile tabbar:
-   - exactly `Home`, `Categories`, `Menu`,
+   - exactly `Home`, `Categories`, `arXiv`, `Knowledge`, `Menu`,
    - current page is visually active,
    - no horizontal overflow,
    - no safe-area or bottom overlap,
    - no duplicate header hamburger/menu trigger is visible.
-4. Tap Categories and confirm Menu is not also active.
-5. Open Menu from the bottom tabbar and confirm Search, Archive, Status, and About are reachable; verify the menu appears from the navigation area rather than as a second page-top hamburger pattern.
+4. Tap Categories, arXiv, and Knowledge; confirm each destination is reachable and Menu is not also active.
+5. Open Menu from the bottom tabbar and confirm Search, Timeline, Glossary, Archive, Status, and About are reachable; verify the menu appears from the navigation area rather than as a second page-top hamburger pattern.
 6. Trigger Search from Menu.
 7. Search for a term that should work, such as `Copilot`.
 8. Search for a term that should not work, such as `zzzz-no-result-persona`.

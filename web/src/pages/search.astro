@@ -1,0 +1,37 @@
+---
+import PageHero from "../components/PageHero.astro";
+import Portal from "../layouts/Portal.astro";
+import { ALL_ENTRIES, CATEGORY_META } from "../lib/data.ts";
+---
+
+<Portal
+  pageKey="search"
+  title="Search - TECH Dashboard"
+  description="TECH Dashboard の記事、カテゴリ、用語を検索します。検索語は URL に保存され、再読み込みや共有後も復元されます。"
+>
+  <PageHero
+    kicker="Search TECH Dashboard"
+    title="Search"
+    count={`${ALL_ENTRIES.length} entries`}
+    headingId="search-page-heading"
+    description="記事、カテゴリ、用語を横断検索します。検索語は URL に保存されるため、そのまま共有できます。"
+    descriptionEn="Search articles, categories, and glossary terms. The query stays in the URL so you can refresh or share it."
+    actions={[
+      { href: "/categories", label: `${CATEGORY_META.length} Categories` },
+      { href: "/glossary", label: "Glossary" },
+      { href: "/archive", label: "Archive" },
+    ]}
+  />
+
+  <main class="search-page" data-pagefind-ignore aria-labelledby="search-page-heading">
+    <section class="search-page-guide">
+      <p class="search-page-kicker">SEARCH WORKFLOW</p>
+      <h2>検索語を入力してください</h2>
+      <p>
+        上部の検索欄で、記事タイトル、要約、source、カテゴリを検索できます。
+        候補を選ばず Enter を押すと、このページの共有可能な URL が開きます。
+      </p>
+      <button type="button" class="search-page-open" data-search-trigger>検索を開く</button>
+    </section>
+  </main>
+</Portal>

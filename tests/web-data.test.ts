@@ -87,7 +87,9 @@ const {
   entriesBySource,
   entriesByTag,
   adjacentInCategory,
+  categoryImportanceStanding,
   isLowSignalRelease,
+  isMutableReleaseAliasEntry,
   isOffTopicForHero,
   isListableEntry,
   isSummaryNoise,
@@ -95,6 +97,7 @@ const {
   isDeterministicFallbackEntry,
   ALL_ENTRIES,
 } = await import("../web/src/lib/data.ts");
+const { decisionRankScore } = await import("../web/src/lib/ranking.ts");
 
 // ---- フィクスチャ参照ヘルパー ----
 const e1 = ALL_ENTRIES[0]!; // entry-001 (claude)
@@ -493,6 +496,53 @@ describe("jstDateKey", () => {
 describe("entryHref", () => {
   it("/e/{id}/ 形式の href を返す", () => {
     expect(entryHref({ id: "entry-001" })).toBe("/e/entry-001/");
+  });
+
+  describe("mutable release aliases", () => {
+    it("excludes moving GitHub release aliases from listable and publishable surfaces", () => {
+      for (const alias of ["nightly", "extension-workflows", "extension-cli"]) {
+        const mutable = {
+          ...e1,
+          sourceType: "release" as const,
+          url: `https://github.com/zed-industries/zed/releases/tag/${alias}`,
+        };
+        expect(isMutableReleaseAliasEntry(mutable)).toBe(true);
+        expect(isListableEntry(mutable)).toBe(false);
+        expect(isPublishableEntry(mutable)).toBe(false);
+      }
+    });
+
+    it("keeps immutable release versions and non-release articles", () => {
+      expect(isMutableReleaseAliasEntry({
+        ...e1,
+        sourceType: "release",
+        url: "https://github.com/zed-industries/zed/releases/tag/v0.201.4",
+      })).toBe(false);
+      expect(isMutableReleaseAliasEntry({
+        ...e1,
+        sourceType: "blog",
+        url: "https://github.com/example/project/releases/tag/nightly",
+      })).toBe(false);
+    });
+  });
+
+  describe("categoryImportanceStanding", () => {
+    it("reports equal-or-higher counts instead of a misleading percentile", () => {
+      expect(categoryImportanceStanding(e1)).toEqual({ total: 2, sameOrHigher: 1 });
+      expect(categoryImportanceStanding(e3)).toEqual({ total: 2, sameOrHigher: 2 });
+      expect(categoryImportanceStanding(e2)).toEqual({ total: 1, sameOrHigher: 1 });
+    });
+  });
+
+  describe("decisionRankScore", () => {
+    it("uses source authority as a real ranking input", () => {
+      const nowMs = Date.parse("2026-05-02T00:00:00.000Z");
+      const official = { ...e1, source: "anthropic-news" };
+      const aggregator = { ...e1, source: "hn-ai" };
+      expect(decisionRankScore(official, nowMs)).toBeGreaterThan(
+        decisionRankScore(aggregator, nowMs),
+      );
+    });
   });
 });
 

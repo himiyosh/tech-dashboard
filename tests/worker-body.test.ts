@@ -6,16 +6,19 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  bodyCacheEntryMatchesPublisherContract,
   bodyCacheKeyForUrl,
   isBodyComplete,
   type BodyCacheEntry,
 } from "../worker/src/body-cache.ts";
+import { UNVERSIONED_JOB_FINGERPRINT } from "../worker/src/kv-cache.ts";
 import {
   buildBodyPromptJa,
   buildBodyPromptEn,
   cleanBodyText,
   type BodyPromptEntry,
 } from "../worker/src/body-generate.ts";
+import { buildBodyCacheEntry } from "../worker-body/src/index.ts";
 
 const entry: BodyPromptEntry = {
   title: "GLM-5.2 on Cloudflare Workers AI",
@@ -56,6 +59,69 @@ describe("isBodyComplete (LL-115)", () => {
   const base: BodyCacheEntry = { bodyJa: "あ".repeat(200), bodyEn: "a".repeat(200), model: "claude-opus-4.8", cachedAt: "" };
   it("両言語に本文があれば true", () => {
     expect(isBodyComplete(base)).toBe(true);
+  });
+
+  describe("body consumer cache provenance", () => {
+    it("copies the publisher contract fingerprint from the job", () => {
+      const fingerprint = `sha256:${"f".repeat(64)}`;
+      const cacheEntry = buildBodyCacheEntry(
+        {
+          url: entry.url,
+          publisherContractFingerprint: fingerprint,
+          entry: { ...entry, id: "entry-1" },
+        },
+        "あ".repeat(200),
+        "a".repeat(200),
+        "claude-opus-4.8",
+        "2026-07-13T00:00:00.000Z",
+      );
+
+      expect(cacheEntry.publisherContractFingerprint).toBe(fingerprint);
+    });
+
+    it("marks jobs from an unversioned producer as explicitly incompatible", () => {
+      const cacheEntry = buildBodyCacheEntry(
+        {
+          url: entry.url,
+          entry: { ...entry, id: "entry-1" },
+        },
+        "あ".repeat(200),
+        "a".repeat(200),
+        "claude-opus-4.8",
+        "2026-07-13T00:00:00.000Z",
+      );
+
+      expect(cacheEntry.publisherContractFingerprint).toBe(
+        UNVERSIONED_JOB_FINGERPRINT,
+      );
+    });
+  });
+
+  describe("body publisher contract compatibility", () => {
+    const current = `sha256:${"d".repeat(64)}`;
+    const previous = `sha256:${"e".repeat(64)}`;
+    const base: BodyCacheEntry = {
+      bodyJa: "あ".repeat(200),
+      bodyEn: "a".repeat(200),
+      model: "claude-opus-4.8",
+      cachedAt: "",
+    };
+
+    it("accepts legacy and current entries but rejects explicit mismatches", () => {
+      expect(bodyCacheEntryMatchesPublisherContract(base, current)).toBe(true);
+      expect(
+        bodyCacheEntryMatchesPublisherContract(
+          { ...base, publisherContractFingerprint: current },
+          current,
+        ),
+      ).toBe(true);
+      expect(
+        bodyCacheEntryMatchesPublisherContract(
+          { ...base, publisherContractFingerprint: previous },
+          current,
+        ),
+      ).toBe(false);
+    });
   });
   it("片方が空なら false", () => {
     expect(isBodyComplete({ ...base, bodyEn: "" })).toBe(false);

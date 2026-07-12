@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import type { NormalizedEntry } from "../harness/types.ts";
-import type { CacheEntry } from "../worker/src/kv-cache.ts";
+import {
+  cacheEntryMatchesPublisherContract,
+  cacheMetadataMatchesPublisherContract,
+  type CacheEntry,
+  UNVERSIONED_JOB_FINGERPRINT,
+} from "../worker/src/kv-cache.ts";
 import { evaluateHarnessHealth } from "../worker/src/index.ts";
 import {
   needsGeneratedContent,
@@ -58,6 +63,34 @@ const summaryOnlyCache: CacheEntry = {
   model: "claude-sonnet-4.6",
   cachedAt: "2026-06-21T00:08:00.000Z",
 };
+
+describe("summary publisher contract compatibility", () => {
+  const current = `sha256:${"a".repeat(64)}`;
+  const previous = `sha256:${"b".repeat(64)}`;
+
+  it("keeps legacy summary text compatibility but requires exact metadata provenance", () => {
+    expect(cacheEntryMatchesPublisherContract(summaryOnlyCache, current)).toBe(true);
+    expect(cacheMetadataMatchesPublisherContract(summaryOnlyCache, current)).toBe(false);
+    expect(
+      cacheEntryMatchesPublisherContract(
+        { ...summaryOnlyCache, publisherContractFingerprint: current },
+        current,
+      ),
+    ).toBe(true);
+    expect(
+      cacheMetadataMatchesPublisherContract(
+        { ...summaryOnlyCache, publisherContractFingerprint: current },
+        current,
+      ),
+    ).toBe(true);
+    expect(
+      cacheEntryMatchesPublisherContract(
+        { ...summaryOnlyCache, publisherContractFingerprint: previous },
+        current,
+      ),
+    ).toBe(false);
+  });
+});
 
 const contaminatedCache: CacheEntry = {
   ...summaryOnlyCache,
@@ -121,6 +154,25 @@ describe("worker summary queue selection", () => {
       30,
     );
     expect(jobs).toEqual([]);
+  });
+
+  it("re-enqueues an explicitly stale cache and versions the replacement job", () => {
+    const currentFingerprint = `sha256:${"a".repeat(64)}`;
+    const staleCache = {
+      ...summaryOnlyCache,
+      publisherContractFingerprint: `sha256:${"b".repeat(64)}`,
+    };
+    const jobs = selectSummaryJobs(
+      [baseEntry],
+      new Map([[baseEntry.url, staleCache]]),
+      new Set([baseEntry.url]),
+      30,
+      new Set(),
+      { publisherContractFingerprint: currentFingerprint },
+    );
+
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]?.publisherContractFingerprint).toBe(currentFingerprint);
   });
 
   it("enqueues a contaminated entry and does not accept a contaminated KV cache hit", () => {
@@ -409,6 +461,36 @@ describe("worker harness health evaluation", () => {
     expect(health.errors.join("\n")).toContain("stuck after pre-publish");
   });
 
+  it("reports a fresh start heartbeat as an in-progress warning", () => {
+    const health = evaluateHarnessHealth(
+      {
+        ok: true,
+        status: "started",
+        lastCronAt: "2026-05-28T23:55:00.000Z",
+      },
+      nowMs,
+    );
+
+    expect(health.ok).toBe(true);
+    expect(health.status).toBe("warn");
+    expect(health.warnings).toContain("cron run is still in progress");
+  });
+
+  it("marks a start heartbeat as failed when collection never progresses", () => {
+    const health = evaluateHarnessHealth(
+      {
+        ok: true,
+        status: "started",
+        lastCronAt: "2026-05-28T23:49:00.000Z",
+      },
+      nowMs,
+    );
+
+    expect(health.ok).toBe(false);
+    expect(health.status).toBe("error");
+    expect(health.errors).toContain("cron appears stuck after start heartbeat (11m old)");
+  });
+
   it("fails closed when cron is stale or the summary queue is not enabled", () => {
     const health = evaluateHarnessHealth(
       {
@@ -664,6 +746,7 @@ describe("worker summarizer queue consumer", () => {
     const ack = vi.fn();
     const retry = vi.fn();
     let requestedBody = false;
+    const fingerprint = `sha256:${"c".repeat(64)}`;
     const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       const url = input instanceof Request ? input.url : String(input);
       if (url.includes("api.github.com/copilot_internal/v2/token")) {
@@ -704,6 +787,7 @@ describe("worker summarizer queue consumer", () => {
           {
             body: {
               url: baseEntry.url,
+              publisherContractFingerprint: fingerprint,
               entry: {
                 id: baseEntry.id,
                 url: baseEntry.url,
@@ -735,8 +819,86 @@ describe("worker summarizer queue consumer", () => {
     expect(ack).toHaveBeenCalledTimes(1);
     expect(retry).not.toHaveBeenCalled();
     expect(put).toHaveBeenCalledTimes(1);
+    const written = JSON.parse(String(put.mock.calls[0]?.[1])) as CacheEntry;
+    expect(written.publisherContractFingerprint).toBe(fingerprint);
     expect(del).toHaveBeenCalledWith("summarizer.issue.v1");
 
+    vi.unstubAllGlobals();
+  });
+
+  it("marks jobs from an unversioned producer as explicitly incompatible", async () => {
+    const put = vi.fn(async () => undefined);
+    const kv = {
+      get: vi.fn(async () => null),
+      put,
+      delete: vi.fn(async () => undefined),
+    } as unknown as KVNamespace;
+    const ack = vi.fn();
+    const retry = vi.fn();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const url = input instanceof Request ? input.url : String(input);
+        if (url.includes("api.github.com/copilot_internal/v2/token")) {
+          return Response.json({
+            token: "copilot-token",
+            expires_at: Math.floor(Date.now() / 1000) + 1200,
+          });
+        }
+        return Response.json({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  titleJa: "Example Paper",
+                  summaryJa: "短い日本語要約です。",
+                  summaryEn: "A concise English summary.",
+                  bodyJa: "",
+                  bodyEn: "",
+                  importance: 2,
+                  extraTags: [],
+                }),
+              },
+            },
+          ],
+        });
+      }),
+    );
+
+    await summarizerWorker.queue!(
+      {
+        messages: [
+          {
+            body: {
+              url: baseEntry.url,
+              entry: {
+                id: baseEntry.id,
+                url: baseEntry.url,
+                title: baseEntry.title,
+                category: baseEntry.category,
+                source: baseEntry.source,
+                sourceType: baseEntry.sourceType,
+              },
+            },
+            ack,
+            retry,
+          },
+        ],
+      } as unknown as MessageBatch,
+      {
+        SUMMARY_CACHE: kv,
+        COPILOT_PAT: "test-pat-unversioned-job",
+        SUMMARIZE_MODEL: "claude-sonnet-4.6",
+      },
+      {} as ExecutionContext,
+    );
+
+    const written = JSON.parse(String(put.mock.calls[0]?.[1])) as CacheEntry;
+    expect(written.publisherContractFingerprint).toBe(
+      UNVERSIONED_JOB_FINGERPRINT,
+    );
+    expect(ack).toHaveBeenCalledTimes(1);
+    expect(retry).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
 

@@ -27,7 +27,10 @@ export interface CacheEntry {
   extraTags: string[];
   model: string;
   cachedAt: string;
+  publisherContractFingerprint?: string;
 }
+
+export const UNVERSIONED_JOB_FINGERPRINT = "legacy-unversioned-job";
 
 const KEY_PREFIX = "s:";
 
@@ -84,6 +87,25 @@ export async function putCacheEntry(
 ): Promise<void> {
   const key = await cacheKeyForUrl(url);
   await kv.put(key, JSON.stringify(entry));
+}
+
+export function cacheEntryMatchesPublisherContract(
+  entry: CacheEntry | null | undefined,
+  expectedFingerprint?: string,
+): boolean {
+  if (!entry || !expectedFingerprint || !entry.publisherContractFingerprint) {
+    return Boolean(entry);
+  }
+  return entry.publisherContractFingerprint === expectedFingerprint;
+}
+
+export function cacheMetadataMatchesPublisherContract(
+  entry: CacheEntry | null | undefined,
+  expectedFingerprint?: string,
+): boolean {
+  if (!entry) return false;
+  if (!expectedFingerprint) return true;
+  return entry.publisherContractFingerprint === expectedFingerprint;
 }
 
 /**

@@ -196,6 +196,19 @@
 - audit mode は read-only を維持する。delivery / release mode でも secret 表示、main 直接 push、force / reset / rebase / amend、未承認 deploy / `wrangler secret put`、本番データ変更、dirty または固有作業を持つ branch / worktree の削除は禁止する。
 - persona 子 agent は read-only reviewer のままにし、Git、credentials、deploy、破壊的 cleanup を委譲しない。session を作成する場合は独立した non-overlapping scope に限定し、親 orchestrator が結果を検証して統合する。
 
+### R-026: harness Worker は Paid CPU budget を明示し、10ms 環境へ deploy しない
+- `tech-dashboard-harness` は multi-megabyte の index / bodies / archive / stats を parse、merge、serialize するため、Workers Paid plan と `[limits] cpu_ms = 30000` を必須とする。`cpu_ms` を外して Free plan の 10ms 上限へ戻してはならない。
+- deploy 前に Cloudflare dashboard で Workers Paid plan が有効であることを確認する。契約変更は課金操作なのでユーザー承認なしに実行しない。
+- `npx wrangler deploy --dry-run` と `tests/worker-config.test.ts` で設定を検証する。実 deploy が plan incompatibility で失敗した場合は既存 production Worker を置換せず、plan を確認してから再実行する。
+
+### R-027: publisher contract mismatch 時は data publish を fail-closed にする
+- `worker/publisher-contract.json` は harness の data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
+- deploy 済み Worker は収集開始時に main HEAD SHA を取得し、その SHA の contract marker と bundle fingerprint を照合する。`data/index.json`、`data/bodies.json`、archive index / month、stats の baseline はすべて同じ immutable SHA から読む。data commit 前に main ref が開始時 SHA と完全一致することを再確認し、進んでいれば tree 作成前に中止して error heartbeat を残す。commit parent も同じ SHA に固定し、ref 更新は `force:false` とする。contract が同じ data-only commit の並行更新でも stale snapshot を新しい親へ載せない。
+- summary/body Queue job と生成 cache には publisher fingerprint を伝播する。現在の fingerprint と明示的に異なる cache は採用せず再生成対象にする。fingerprint 導入前の既存 cache は本文・要約テキストだけ互換読み込みし、summary の importance / extraTags は exact fingerprint 一致時だけ採用する。fingerprint 無し job を受けた更新済み consumer は `legacy-unversioned-job` を保存し、既存 legacy cache と区別する。
+- 通常リリースは「marker を含む PR merge -> 旧 Worker が mismatch で停止 -> 明示承認後に新 Worker deploy -> health / data commit 確認」の順にする。ガード初回導入時だけは旧 Worker が mismatch を検知できないため、CI 合格済み PR head を明示承認のうえ先に deploy して publish を停止する。Cloudflare Cron Trigger の duration 上限 15 分を超える 16 分を待ち、deploy 前に開始済みの旧 invocation が残っていないことと新 data commit が無いことを確認してから PR を mergeし、marker を有効化する。
+- job/cache fingerprint の初回導入は Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を PR head から先に deployし、旧 consumer の in-flight 処理が残らないことを確認してから harness の初回ガード手順へ進む。consumer deploy 前に新 harness を起動しない。
+- `data/index.json` の entry が変わる publish では、`data/archive/_index.json` と `data/stats.json` の `generatedAt` も同一 commit の reference clock へ揃える。月次 archive は timestamp-only churn を避ける。
+
 ---
 
 ## 🧪 完了ゲート (LL Hook)
@@ -1405,6 +1418,78 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: exact intent の synthetic category result は同じ slug の Pagefind candidate が無い場合だけ追加していた。paginated category page も同じ slug と判定されたため canonical result の追加を止め、検索 index が拾った任意の page URL を navigation destination として残していた。
 - **対策**: Pagefind の全 category result を `/c/{slug}/` へ正規化して slug 単位で重複排除し、exact taxonomy intent は metadata 由来の canonical result で置き換える。E2E は category result に `/page/{n}/` が残らないことを検証する。
 - **教訓**: 検索 index が返す文書 URL と、ユーザーを案内する semantic destination は分ける。section intent は indexed pagination の順位や URL に依存させず、taxonomy metadata から canonical landing page を決定する。
+
+### LL-200: harness の実測 CPU は Free plan 10ms 上限を超え、成功 run は 0.6-1.6 秒を使う
+- **事象**: 2026-07-12 03:00-07:00 UTC の scheduled run が `exceededResources` で連続失敗し、04:00-07:00 は CPU 10,000us で終了した。同じ Worker version の 08:00 run は CPU 1,535,030us で成功した。
+- **根本原因**: harness は multi-megabyte JSON と 1,700 件超の entry を parse、merge、serializeするため、10ms CPU では完走できない。`worker/wrangler.toml` は Paid 前提をコメントにだけ書き、deploy 時に必要な CPU contract を宣言していなかった。
+- **対策**: harness に `[limits] cpu_ms = 30000` を設定し、config test で固定した。Workers Paid plan を deploy 前提とし、課金有効化はユーザー承認を必須にした。
+- **教訓**: 外部 fetch 待ちと CPU 使用量を混同せず Analytics の `cpuTimeUs` / `outcome` を実測する。重い Worker は plan 前提を文書だけでなく deploy config に宣言し、非互換 plan への誤 deploy を fail-fast にする。
+
+### LL-201: repository 修正と Worker deploy の間に stale publisher が data を再汚染する
+- **事象**: PR で Hugging Face taxonomy を修正して最新 data を migration した後も、未 deploy の旧 harness が次の cron で 46 件を旧 `local-llm` 分類へ戻した。
+- **根本原因**: Pages は main merge で自動更新される一方、harness Worker は手動 deploy のまま残る。CI は生成後の汚染を検知できても、旧 runtime が commit する前には停止できなかった。
+- **対策**: critical runtime files の SHA-256 を `worker/publisher-contract.json` に保存し、deploy bundle と main marker が不一致なら collection 前に fail-closed する guard を追加した。marker 更新漏れは unit test と updater dry-run で検知する。
+- **教訓**: automated publisher を持つ repository では「コード修正を mergeした」と「生成 runtime が更新された」は別状態である。publisher 自身に repository contract を照合させ、stale runtime は publish 権限を自動停止する。
+
+### LL-202: generatedAt を全 JSON で無視すると metadata artifact だけ時刻が止まる
+- **事象**: 08:00 UTC の index/stats publish 後も `data/archive/_index.json` が 02:00 UTC のまま残り、artifact skew が 6.000391 時間となって CI の 6 時間上限を僅かに超えた。
+- **根本原因**: `ghJsonChangeIfChanged()` がすべての JSON で `generatedAt` を比較対象から除外していた。月次 archive の timestamp-only churn 防止を metadata index と stats にも一律適用したため、同一 run の artifact clock が分離した。
+- **対策**: 月次 archive は従来どおり `generatedAt` を無視し、`data/archive/_index.json` と `data/stats.json` は timestamp を比較して index entry 変更時に同一 commit で前進させる path-aware contract にした。
+- **教訓**: timestamp-only churn の抑制と artifact coherence は path ごとに目的が違う。比較 helper は artifact role を明示し、metadata index / stats の reference clock を content artifact と揃える。
+
+### LL-203: 複数 file の apply_patch は後段 hunk 失敗前の変更を保持する
+- **事象**: 3 file を含む patch で最初の test file は追加されたが、2 file 目の context mismatch で停止し、3 file 目は未適用になった。
+- **根本原因**: 複数 hunk の patch 適用を transaction とみなし、途中失敗時に先行 hunk も rollback されると誤認した。
+- **対策**: tool の partial-apply 通知後に対象 file を再読し、成功済み hunk を重ねず、失敗・未実行 hunk だけを再適用した。
+- **教訓**: multi-file patch は atomic と仮定しない。失敗後は全対象の実状態を確認してから再試行し、先行変更の重複や欠落を防ぐ。
+
+### LL-204: `npm exec --prefix` は Wrangler の config 探索 cwd を切り替えない
+- **事象**: `npm --prefix worker exec wrangler deploy -- --dry-run` を実行すると、Worker config ではなく repository root で auto-config が動き、`Could not detect a directory containing static files` で失敗した。
+- **根本原因**: `npm exec --prefix` は binary の解決先を Worker package に寄せても、Wrangler process の current working directory を `worker/` へ変更しなかった。debug log の `configFileType:none` と `Running autoconfig detection in .../tech-dashboard` で確認した。
+- **対策**: `npm --prefix worker run deploy -- --dry-run` とし、package script を Worker package cwd で実行した。`worker/wrangler.toml` が読み込まれ、300.81 KiB bundle と全 binding を検証して exit 0 になった。
+- **教訓**: config discovery が cwd 依存の CLI は `npm exec --prefix` を chdir の代用にしない。package script (`npm --prefix <dir> run ...`) または明示的な cwd で起動し、失敗時は tool log の config path / cwd を確認する。
+
+### LL-205: publisher contract は start 時だけでなく commit の親 SHA でも再検証する
+- **事象**: 独立 code review で、収集開始時の marker 検証後に main の runtime contract が更新されると、旧 runtime が新しい HEAD を親に stale data commit を作れる race が見つかった。publisher guard 初回導入でも、deploy 前に開始済みの guard 無し invocation が merge 後まで残る余地があった。
+- **根本原因**: contract check が長い collection の開始時に 1 回だけで、`ghCommitFiles()` が実際に親として採用する `headSha` を検証していなかった。また Worker deploy が旧 invocation を即時停止すると仮定し、Cron Trigger の最大 duration 15 分を release choreography に含めていなかった。
+- **対策**: `ghCommitFiles()` は ref 取得直後、tree 作成前に `worker/publisher-contract.json` を厳密な `headSha` で再読して fingerprint を検証する。初回導入は PR-head deploy 後に fail-closed を確認し、16 分待って旧 invocation を drain してから mergeする。covered directory に未知拡張子が入った場合も fingerprint updater は無言で除外せず fail-closed にした。
+- **教訓**: 長時間 publisher の互換性 gate は start-of-run だけでは race を閉じない。生成物が commit / write する直前に、実際の compare-and-swap 対象 revision で契約を再検証する。新 guard の bootstrap では、guard を持たない旧 invocation の最大寿命も release 手順に含める。
+
+### LL-206: worktree 全量 scanner と一時 file を作る test を並列実行しない
+- **事象**: `secrets:scan:worktree` と全 unit test を並列実行すると、test が作成直後に削除した `.apply-summary-cache-test-*` directory を scanner が列挙し、`could not open directory` warning が出た。test 完了後に scanner を単独再実行すると warning は消えた。
+- **根本原因**: scanner と test は build artifact を共有しないため独立とみなしたが、scanner は worktree 全体、test は worktree 配下の一時 path を同時に操作しており、列挙と削除の race があった。
+- **対策**: worktree secret scan は一時 file を作る test と逐次実行し、warning が出た場合は test 終了後に単独再実行して clean な PASS を確認する。
+- **教訓**: command の依存性は主要 output directory だけで判断しない。worktree 全量 scanner、watcher、backup は、worktree 内に一時 path を作る test/migration と同じ filesystem scope を共有する。
+
+### LL-207: taxonomy migration が live tags を変えたら archive の同一記事へ同期する
+- **事象**: `clean-source-noise` が live entry の summary を含む deterministic tag enrichment で 7 件へ `agent` / `tutorial` を追加した一方、hot archive は summary を省略しているため同じ rule を再実行しても tag を追加できず、同一 ID の live/archive で tags が不一致になった。
+- **根本原因**: live と compact archive を同じ `applyTags()` へ通せば同じ結果になると仮定したが、入力 field が非対称だった。archive page は archive record を直接読むため、migration が作った表示 taxonomy の drift になった。
+- **対策**: migration 後の live tags を同一 ID、次に canonical URL で対応する archive entry へ同期する。既存 mismatch も修復し、unit test と実 data schema gate で live/archive tag parity を固定する。
+- **教訓**: compact artifact に元の enrichment context が無い場合、同じ生成関数の再実行では parity を保証できない。canonical/full artifact を source of truth とし、migration が変更した taxonomy field を派生 artifact へ明示的に伝播する。
+
+### LL-208: stale publisher の commit 拒否だけでは Queue / KV の副作用を防げない
+- **事象**: parent SHA の contract 再検証で stale data commit は拒否できたが、その検証より前に summary/body job を enqueue していた。失敗した invocation の job を consumer が処理すると、古い taxonomy 由来の importance / tags / body が KV に残り、後続の新 publisher が cache hit として採用できた。
+- **根本原因**: publisher contract を Git commit の境界だけに適用し、非同期 Queue と KV cache を同じ互換性境界に含めていなかった。さらに既存 legacy cache を互換読み込みするため、旧 consumer が job fingerprint を落とすと新しい stale output まで legacy に見える移行穴があった。
+- **対策**: summary/body job と cache record に publisher fingerprint を伝播し、明示 mismatch は mergeせず再 enqueue する。既存 fingerprint 無し cache はテキスト互換を維持するが metadata は採用しない。更新済み consumer は fingerprint 無し job を `legacy-unversioned-job` として明示的な不一致にし、初回 rollout は consumers を先に更新してから harness guard を有効化する。
+- **教訓**: automated publisher の互換性 gate は最終 commit だけでなく、commit 前に発生する Queue、KV、object storage など全副作用へ伝播する。既存 legacy data と新しい unversioned write を区別できる migration marker を持たせ、consumer-first の rollout 順序まで contract に含める。
+
+### LL-209: Playwright webServer timeout は Pagefind の実測時間に余裕を持たせる
+- **事象**: `npm run build:web` は成功したが、続く `npm run test:e2e` が test 実行前の webServer 起動待ちで 180 秒 timeout した。build log では Astro が 5,284 page を約 30 秒、Pagefind が 6,446 page の index 作成に約 125 秒を要していた。
+- **根本原因**: `playwright.config.ts` の webServer timeout が、data 増加に伴う Pagefind の実測 build 時間約 155 秒に対して余裕 25 秒しかなく、同じ build の速度変動で起動上限を超えた。
+- **対策**: webServer timeout を 300 秒へ広げ、build と E2E は LL-047 のとおり逐次実行する。E2E failure は test assertion と preview 起動 timeout を分け、build log の phase 別所要時間で切り分ける。
+- **教訓**: static page と検索 index が data 件数に比例して増えるサイトでは、E2E webServer timeout を固定の小さい値にしない。通常 build の実測値に十分な余裕を持たせ、timeout 延長で assertion failure を隠さない。
+
+### LL-210: data migration 後も全 artifact の U+FFFD を schema gate で検出する
+- **事象**: self-critique の全量 Unicode scan で、`data/archive/2026-06.json` の Qiita title / titleJa に U+FFFD が 1 文字ずつ残っていた。`origin/main` にも同じ 2 field が存在し、taxonomy migration は文字化けを新規生成していないが、そのまま保持していた。
+- **根本原因**: data schema は field 型、要約、URL、tag parity を検証していたが、live/archive の文字列に Unicode replacement character が含まれないことを gate にしていなかった。migration の idempotence と schema PASS だけでは既存の文字破損を検出できなかった。
+- **対策**: canonical Qiita page の HTML title と照合して `で[U+FFFD]AI` を `で AI` へ修復し、live/archive 全 entry の serialized value に U+FFFD が無いことを `tests/data-schema.test.ts` で検証する。
+- **教訓**: migration は既存 artifact の構造を安全に保っても、既存文字破損まで自動的には直さない。data artifact を変更した完了ゲートでは Markdown だけでなく live/archive の U+FFFD を全量検査し、修復は一次情報で正しい文字列を確認してから行う。
+
+### LL-211: contract 一致だけでは publisher の data snapshot race を閉じない
+- **事象**: 独立 code review で、`runHarness()` が branch 名の raw URL から古い index / bodies / archive / stats を読んだ後、`ghCommitFiles()` が同じ contract を持つ新しい main HEAD を親に採用し、古い data snapshot を巻き戻せる race が見つかった。
+- **根本原因**: publisher contract は runtime 互換性を保証するが、同じ runtime が作る連続 data commit の revision identity は保証しない。branch CDN read と commit parent 取得が別時点だったため、contract 再検証が通っても baseline と parent が同じ repository snapshot とは限らなかった。
+- **対策**: run 開始時に main HEAD SHA を取得し、contract と全 baseline artifact をその immutable SHA から読む。`ghCommitFiles()` は current ref が captured SHA と完全一致しない場合、tree 作成前に fail-closed にし、commit parent も captured SHA へ固定する。raw SHA read と parent drift 拒否を regression test に追加した。
+- **教訓**: 長時間 publisher は schema/runtime compatibility と data revision concurrency を別の gate で守る。contract fingerprint だけで満足せず、read snapshot と write parent を同じ revision に固定し、compare-and-swap で ref drift を拒否する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

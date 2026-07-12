@@ -17,7 +17,7 @@ export default defineConfig({
     command: "npm --prefix web run build && npm --prefix web run preview -- --host 127.0.0.1 --port 4322",
     url: "http://127.0.0.1:4322",
     reuseExistingServer: true,
-    timeout: 180_000,
+    timeout: 300_000,
   },
   projects: [
     {

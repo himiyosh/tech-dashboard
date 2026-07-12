@@ -12,7 +12,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 
 | 処理 | 実行主体 | トリガ | 失効時の影響 | 監視 |
 |---|---|---|---|---|
-| ソース収集 (registry sources) | Cloudflare Worker `tech-dashboard-harness` | Cron `0 * * * *` (毎時) を 6 batch ローテーション | データ更新が止まる | `/status` の Worker Health |
+| ソース収集 (registry sources) | Cloudflare Worker `tech-dashboard-harness` (Workers Paid、CPU 30s contract) | Cron `0 * * * *` (毎時) を 6 batch ローテーション | データ更新が止まる。runtime fingerprint 不一致時は publish を自動停止 | `/status` の Worker Health / publisher contract |
 | 日本語/英語要約 (`summary*`) | Worker → Queue `tech-dashboard-summarizer` → Copilot Enterprise (claude-sonnet-4.6) | cron 後に最大 `ENQUEUE_MAX_NEW` 件/run を投入、consumer は 1 message/invocation | 既存表示は維持。LLM 失敗時は deterministic fallback で空欄を防止 | `health.fallbackTotal` / `health.summaryQueueBacklog` / `health.summaryQueueDrainEstimateHours` |
 | 記事本文 (`data/bodies.json`) | Worker → Queue `tech-dashboard-body` → Copilot (claude-opus-4.8, reasoning=max) | 本文は index と分離 (LL-115)。evergreen、importance 2/3、直近 `BODY_RETENTION_DAYS` 日を保持対象にし、consumer が JA/EN を 2 call で生成して collector が sidecar へ merge | 対象外または本文無しの記事は要約主役の表示にフォールバック | `health.bodyBacklog` / `health.bodyDrainEstimateHours` / `health.bodiesTotal` |
 | summary deterministic fallback | 同 Worker / `scripts/apply-summary-cache.mjs` | Worker commit 前、または緊急修復時 | LLM timeout / 旧 cache 欠落時でも live index の summary 欠落を防止 | `health.summaryFallbacks` / `tests/data-schema.test.ts` |
@@ -83,6 +83,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | SPEC | [本番サイト仕様 (現状)](docs/SPEC.md)                                | カテゴリ/ソース/表示仕様の現行定義 (`/status` と registry を併読) |
 | 04  | [サイト仕様書 v1.0 (草案)](docs/04-site-spec.md)                        | 計画段階の草案 (現状は SPEC.md が正)         |
 | 05  | [AI Scrum Harness 適用設計](docs/05-ai-scrum-harness.md)                | Orchestrator / サブエージェント運用方針      |
+| 06  | [Worker 分割設計](docs/06-worker-split-design.md)                       | Paid CPU budget、Queue 分離、publisher contract |
 | 02c | [ユーザカスタマイズ](docs/02-customization.md)                          | OPML / YouTube / HN クエリの追加方法         |
 
 モック: [`docs/mockups/`](docs/mockups/) (mockup-D が確定デザイン)
@@ -98,6 +99,7 @@ bash scripts/install-hooks.sh # pre-commit / pre-push hook (secret scan / typech
 npm run typecheck            # 型チェック
 npm run collect              # registry の有効 source を収集 → data/index.json 生成
 npm run collect:dry          # ドライラン (ファイル書き込みなし)
+npm run publisher:contract -- --dry-run # harness runtime fingerprint の同期確認
 
 # ============ Web サイト ============
 cd web
@@ -263,7 +265,7 @@ cd web && npm run deploy:legacy
 
 ### 2. Cloudflare Worker (定期ハーネス実行)
 
-`worker/` に実装済み。ローカルから以下で一度だけセットアップ:
+`worker/` に実装済み。multi-megabyte の data artifact を処理するため **Cloudflare Workers Paid plan が必須**です。2026-07-12 の production 計測では成功 run が約 0.6-1.6 秒 CPU を使用し、Free plan の 10ms 上限では完走しません。課金有効化は Cloudflare dashboard で確認し、ユーザー承認なしに変更しないでください。ローカルから以下で一度だけセットアップ:
 
 ```bash
 cd worker
@@ -278,11 +280,11 @@ npx wrangler login                              # 初回認証
 npx wrangler secret put COPILOT_PAT             # Copilot Enterprise 権限付き Classic PAT
 npx wrangler secret put GH_TOKEN                # Contents:Write 権限の Fine-grained PAT
 
-# デプロイ (Cron トリガを含む)
+# デプロイ (Cron トリガを含む。Paid plan 非対応なら既存 Worker を置換せず失敗)
 npx wrangler deploy
 ```
 
-Cron は `0 * * * *` (毎時) で起動します。Cloudflare Workers の subrequest と CPU 上限に収めるため、registry の有効 source を 6 バッチでローテーション収集しており、**個別 source の再収集はおおむね 6 時間周期**です。Worker は収集・正規化・fallback・publish に専念し、要約不足 entry を `ENQUEUE_MAX_NEW` 件/run だけ Cloudflare Queue へ投入します（現在値は `worker/wrangler.toml` を参照）。Copilot 要約は `worker-summarizer/` が 1 message / invocation で生成し、per-URL KV cache に保存します。Queue consumer は summary-only contract (`titleJa + summaryJa + summaryEn`) に合わせて `SUMMARIZE_TIMEOUT_MS=60000`、`SUMMARIZE_MAX_TOKENS=1600` とし、失敗した slot を早く解放します。Copilot 要約が timeout / error になった entry には commit 前に deterministic summary fallback を適用し、差分があれば `data/index.json`、`data/archive/*`、`data/stats.json` を Git Data API で 1 commit にまとめます。本文は `data/bodies.json` に分離し、evergreen、importance 2/3、直近 30 日だけを保持してサイズを制御します。Cloudflare Pages Git Integration はその commit を検知して Pages を自動的に再デプロイします。トップページの記事数推移は `data/stats.json` を優先して参照するため、`data/index.json` の上限や dropped tier による削除後も archive 由来の集計を保持できます。
+Cron は `0 * * * *` (毎時) で起動します。Cloudflare Workers の subrequest と CPU 上限に収めるため、registry の有効 source を 6 バッチでローテーション収集しており、**個別 source の再収集はおおむね 6 時間周期**です。Worker は収集開始前に main の HEAD SHA を取得し、その SHA の `worker/publisher-contract.json` を deploy bundle に埋め込まれた SHA-256 fingerprint と照合します。一致しない場合は data publish を fail-closed で停止します。`data/index.json`、`data/bodies.json`、archive、stats の baseline も同じ HEAD SHA から読み、commit 前に main がその SHA のままかを再確認します。main が進んでいれば stale snapshot を publishせず、次 run へ持ち越します。これにより、main の taxonomy / schema 修正後に未 deploy の旧 Worker が data を再汚染せず、同じ contract の data commit が並行しても古い artifact を新しい親へ載せません。Worker は収集・正規化・fallback・publish に専念し、要約不足 entry を `ENQUEUE_MAX_NEW` 件/run だけ Cloudflare Queue へ投入します（現在値は `worker/wrangler.toml` を参照）。Summary/body job と生成 cache にも同じ publisher fingerprint を保存し、明示的に古い cache は新 Worker が採用しません。Copilot 要約は `worker-summarizer/` が 1 message / invocation で生成し、per-URL KV cache に保存します。Queue consumer は summary-only contract (`titleJa + summaryJa + summaryEn`) に合わせて `SUMMARIZE_TIMEOUT_MS=60000`、`SUMMARIZE_MAX_TOKENS=1600` とし、失敗した slot を早く解放します。Copilot 要約が timeout / error になった entry には commit 前に deterministic summary fallback を適用し、差分があれば `data/index.json`、`data/archive/*`、`data/stats.json` を Git Data API で 1 commit にまとめます。本文は `data/bodies.json` に分離し、evergreen、importance 2/3、直近 30 日だけを保持してサイズを制御します。Cloudflare Pages Git Integration はその commit を検知して Pages を自動的に再デプロイします。トップページの記事数推移は `data/stats.json` を優先して参照するため、`data/index.json` の上限や dropped tier による削除後も archive 由来の集計を保持できます。
 
 Copilot 要約は summarizer Worker 側の `SUMMARIZE_TIMEOUT_MS` (既定 60000 ms) で timeout します。Queue retry と次回 cron の cache 再読みにより、一時的な API timeout / 5xx による欠落を次 run へ持ち越しにくくしています。
 
@@ -305,6 +307,24 @@ bash scripts/install-hooks.sh
 
 Worker を反映する push では、`RUN_WORKER_DEPLOY=1 git push` を使います。`main` への push に `worker/` 差分がある場合だけ `npx wrangler@4.85.0 deploy` が走ります。通常の push では worker deploy は実行されません。
 
+`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更した PR では、commit 前に fingerprint を更新します。
+
+```bash
+npm run publisher:contract -- --apply
+npm run publisher:contract -- --dry-run  # CURRENT を確認
+```
+
+通常は marker を含む PR を merge すると旧 Worker が contract mismatch で publish を停止します。その後、明示承認を得て新 Worker を deploy し、`/health` と次の data commit を確認します。Worker は開始時の main HEAD SHA に baseline read と commit parent を固定し、commit 前に ref が進んでいれば publish を中止します。
+
+publisher guard の初回導入時だけは旧 Worker に停止機能がないため、次の順序を固定します。
+
+1. CI 合格済み PR head の `tech-dashboard-summarizer` と `tech-dashboard-body` を明示承認のうえ先に deployする。更新済み consumer は旧 producer の fingerprint 無し job を `legacy-unversioned-job` として保存する。
+2. 旧 consumer の in-flight 処理が残っていないことを確認する。
+3. PR head の `tech-dashboard-harness` を deployする。
+4. main に marker が無いことによる fail-closed を `/health` で確認する。
+5. harness deploy 前に開始済みの旧 invocation が残らないよう **16 分待つ**。Cloudflare の [Cron Trigger duration 上限は 15 分](https://developers.cloudflare.com/workers/platform/limits/#duration)。
+6. 待機後も新しい data commit が無いことを確認してから PR を mergeし、marker を有効化する。
+
 #### 監視 / ヘルスチェック
 
 Worker は実行ごとに `data/index.json` の `health` フィールドにメタデータ (`lastRunAt` / `batchIndex` / `sourcesOk` / `sourcesFailed[]` / `copilotOk` / `fallbackTotal` / `queueMode` / `enqueueCandidates` / `summaryQueueBacklog` / `summaryQueueDrainEstimateHours` / `summaryFallbacks` / `bodyFallbacks` / `ogCached` 等) を埋め込みます。サイトの [https://techdb.studio344.net/status/](https://techdb.studio344.net/status/) 上部の **Worker Health** セクションで一目で確認できます。Status 画面では、Worker run と source freshness を分離して次のラベルで表示します。
@@ -314,7 +334,7 @@ Worker は実行ごとに `data/index.json` の `health` フィールドにメ�
 - `run err` — `no run in 6h+` など実行停止に近い状態
 - `Fresh sources X/Y` — retained entry の鮮度を示す source activity 指標
 
-公開 health endpoint はより厳しめに fail-close します。`https://tech-dashboard-harness.himiyosh.workers.dev/health` は、cron heartbeat が 150 分以上古い、publish 前 heartbeat のまま 30 分以上止まる、Queue binding が無効、直近 cron が abort/error、全 source collection が失敗、などを `HTTP 503` として返します。これにより、GitHub Actions などの外部監視から「静かに止まる」状態を検知できます。
+公開 health endpoint はより厳しめに fail-close します。`https://tech-dashboard-harness.himiyosh.workers.dev/health` は、cron heartbeat が 150 分以上古い、開始 heartbeat のまま 10 分以上止まる、publish 前 heartbeat のまま 30 分以上止まる、publisher contract が不一致、Queue binding が無効、直近 cron が abort/error、全 source collection が失敗、などを `HTTP 503` として返します。これにより、GitHub Actions などの外部監視から「静かに止まる」状態を検知できます。
 
 Queue consumer 単体の疎通は `https://tech-dashboard-summarizer.himiyosh.workers.dev/health` で確認できます。ここでは秘密値は返さず、binding / model / timeout 設定が有効かだけを公開します。Queue consumer の直近 retry / KV write cap defer は短期 TTL 付きで KV に記録され、recent retry は `HTTP 503` になります。
 

@@ -31,6 +31,7 @@ import {
   cleanBodyText,
 } from "../../worker/src/body-generate.ts";
 import { type BodyCacheEntry, putBodyCacheEntry } from "../../worker/src/body-cache.ts";
+import { UNVERSIONED_JOB_FINGERPRINT } from "../../worker/src/kv-cache.ts";
 
 interface Env {
   SUMMARY_CACHE: KVNamespace;
@@ -167,6 +168,23 @@ export function isBodyEntryComplete(entry: { bodyJa: string; bodyEn: string }): 
   return Boolean(entry.bodyJa.trim().length >= MIN_BODY_CHARS && entry.bodyEn.trim().length >= MIN_BODY_CHARS);
 }
 
+export function buildBodyCacheEntry(
+  job: BodyJob,
+  bodyJa: string,
+  bodyEn: string,
+  model: string,
+  cachedAt = new Date().toISOString(),
+): BodyCacheEntry {
+  return {
+    bodyJa,
+    bodyEn,
+    model,
+    cachedAt,
+    publisherContractFingerprint:
+      job.publisherContractFingerprint ?? UNVERSIONED_JOB_FINGERPRINT,
+  };
+}
+
 async function processJob(env: Env, job: BodyJob): Promise<void> {
   const pat = env.COPILOT_PAT;
   const model = env.BODY_MODEL || DEFAULT_MODEL;
@@ -180,12 +198,7 @@ async function processJob(env: Env, job: BodyJob): Promise<void> {
   const bodyJa = await callCopilotText(pat, model, reasoning, buildBodyPromptJa(job.entry), timeoutMs, maxTokens);
   const bodyEn = await callCopilotText(pat, model, reasoning, buildBodyPromptEn(job.entry), timeoutMs, maxTokens);
 
-  const entry: BodyCacheEntry = {
-    bodyJa,
-    bodyEn,
-    model,
-    cachedAt: new Date().toISOString(),
-  };
+  const entry = buildBodyCacheEntry(job, bodyJa, bodyEn, model);
   if (!isBodyEntryComplete(entry)) {
     throw new Error(`incomplete body for ${job.url}`);
   }

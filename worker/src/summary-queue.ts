@@ -4,10 +4,14 @@ import {
   needsSummaryGeneration,
   type SummaryQualityInput,
 } from "../../harness/pipeline/summary-quality.ts";
-import type { CacheEntry } from "./kv-cache.ts";
+import {
+  cacheEntryMatchesPublisherContract,
+  type CacheEntry,
+} from "./kv-cache.ts";
 
 export interface SummaryJob {
   url: string;
+  publisherContractFingerprint?: string;
   entry: Pick<
     NormalizedEntry,
     "id" | "url" | "title" | "category" | "source" | "sourceType"
@@ -38,6 +42,7 @@ export interface SummaryJobBatch {
 export interface SummaryJobSelectionOpts {
   nowMs?: number;
   skipUrls?: ReadonlySet<string>;
+  publisherContractFingerprint?: string;
 }
 
 export interface SummaryEntrySelection {
@@ -172,9 +177,14 @@ export function needsGeneratedContent(
  * purpose, and requiring a body here re-enqueued every already-summarized
  * entry forever (LL-107).
  */
-function hasRealCacheEntry(hit: CacheEntry | undefined, entry: NormalizedEntry): boolean {
+function hasRealCacheEntry(
+  hit: CacheEntry | undefined,
+  entry: NormalizedEntry,
+  publisherContractFingerprint?: string,
+): boolean {
   return Boolean(
     hit &&
+      cacheEntryMatchesPublisherContract(hit, publisherContractFingerprint) &&
       hit.titleJa &&
       hasUsableBilingualSummary({
         ...hit,
@@ -186,9 +196,13 @@ function hasRealCacheEntry(hit: CacheEntry | undefined, entry: NormalizedEntry):
   );
 }
 
-function toSummaryJob(entry: NormalizedEntry): SummaryJob {
+function toSummaryJob(
+  entry: NormalizedEntry,
+  publisherContractFingerprint?: string,
+): SummaryJob {
   return {
     url: entry.url,
+    publisherContractFingerprint,
     entry: {
       id: entry.id,
       url: entry.url,
@@ -213,13 +227,21 @@ function isEligibleSummaryJob(
   hitsByUrl: Map<string, CacheEntry>,
   lookedUpUrls: ReadonlySet<string>,
   uncheckedFallbackUrls: ReadonlySet<string>,
+  publisherContractFingerprint?: string,
 ): boolean {
   const isLookedUp = lookedUpUrls.has(entry.url);
   const isUncheckedFallback = uncheckedFallbackUrls.has(entry.url);
   if (!isLookedUp && !isUncheckedFallback) {
     return false;
   }
-  if (isLookedUp && hasRealCacheEntry(hitsByUrl.get(entry.url), entry)) {
+  if (
+    isLookedUp &&
+    hasRealCacheEntry(
+      hitsByUrl.get(entry.url),
+      entry,
+      publisherContractFingerprint,
+    )
+  ) {
     return false;
   }
   return true;
@@ -234,12 +256,20 @@ export function selectSummaryJobBatch(
   opts: SummaryJobSelectionOpts = {},
 ): SummaryJobBatch {
   const maybeEligible = entries.filter((entry) =>
-    isEligibleSummaryJob(entry, hitsByUrl, lookedUpUrls, uncheckedFallbackUrls),
+    isEligibleSummaryJob(
+      entry,
+      hitsByUrl,
+      lookedUpUrls,
+      uncheckedFallbackUrls,
+      opts.publisherContractFingerprint,
+    ),
   );
   const selection = orderSummaryCandidates(maybeEligible, cap, opts);
 
   return {
-    jobs: selection.entries.map(toSummaryJob),
+    jobs: selection.entries.map((entry) =>
+      toSummaryJob(entry, opts.publisherContractFingerprint),
+    ),
     eligibleCount: selection.eligibleCount,
     startIndex: selection.startIndex,
     drainEstimateHours: selection.drainEstimateHours,

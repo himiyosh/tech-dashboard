@@ -18,6 +18,7 @@ export interface BodyCacheEntry {
   bodyEn: string;
   model: string;
   cachedAt: string;
+  publisherContractFingerprint?: string;
 }
 
 const KEY_PREFIX = "b:";
@@ -80,4 +81,14 @@ export async function putBodyCacheEntry(
 /** True when a body cache entry has real, renderable bilingual prose. */
 export function isBodyComplete(entry: BodyCacheEntry | null | undefined): boolean {
   return Boolean(entry && entry.bodyJa.trim() && entry.bodyEn.trim());
+}
+
+export function bodyCacheEntryMatchesPublisherContract(
+  entry: BodyCacheEntry | null | undefined,
+  expectedFingerprint?: string,
+): boolean {
+  if (!entry || !expectedFingerprint || !entry.publisherContractFingerprint) {
+    return Boolean(entry);
+  }
+  return entry.publisherContractFingerprint === expectedFingerprint;
 }

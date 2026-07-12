@@ -12,7 +12,7 @@
 6. `data/stats.json` を incremental 更新
 7. GitHub Git Data API で 1 commit にまとめて push
 
-Cloudflare Workers Standard プランの **CPU 時間 30s/invocation** が 3. + 4-7 の合算で枯渇するため、3 を有効化すると HTTP 503 (`Worker exceeded CPU time limit`) になる (LL-037)。
+この構成は **Workers Paid plan の CPU 時間 30s/invocation** を前提とする。2026-07-12 の production Analytics では、Free plan 相当の 10ms で終了した run が連続して `exceededResources` となり、成功 run は 0.6-1.6 秒 CPU を使用した。`worker/wrangler.toml` の `[limits] cpu_ms = 30000` は、この plan contract を deploy 時に明示する。
 
 ## 目的 / 現状
 
@@ -26,28 +26,30 @@ Cloudflare Workers Standard プランの **CPU 時間 30s/invocation** が 3. + 
 
 | Worker | 責務 | CPU 予算 | 起動 |
 |---|---|---|---|
-| **harness-collector** (現 `tech-dashboard-harness`) | collect → normalize → merge → publish | 30s (現状 25-28s) | `cron 0 * * * *` |
+| **harness-collector** (現 `tech-dashboard-harness`) | collect → normalize → merge → publish | Paid 30s (実測約 0.6-1.6s) | `cron 0 * * * *` |
 | **harness-summarizer** (`tech-dashboard-summarizer`) | Queue から URL を pop して Copilot 要約 → KV `SUMMARY_CACHE` に保存 | summary-only: timeout 60s / 1600 tokens | `[[queues.consumers]]` |
 
 ### B. データフロー
 
 ```
 cron tick (collector)
+  ├─ main HEAD SHA を取得し、その SHA の publisher contract と deploy bundle fingerprint を照合
+  ├─ index / bodies / archive / stats を同じ HEAD SHA から読む
   ├─ collect about 9 sources
   ├─ merge with prior data/index.json
   ├─ for each entry without cached summary:
-  │    SUMMARY_QUEUE.send({ url, title, source, summary snippet, lang, tags })
-  └─ commit data/index.json + archive + stats (deterministic fallback 適用済み)
+  │    SUMMARY_QUEUE.send({ url, publisherFingerprint, title, source, summary snippet, lang, tags })
+  └─ main ref が開始時 SHA のままなら同 SHA を親に commit。進んでいれば中止
 
 Queue consumer (summarizer)
   ├─ ack 1 メッセージ
   ├─ Copilot /chat/completions 呼び出し (summary-only prompt)
   ├─ JSON parse
-  └─ SUMMARY_CACHE.put(url, { titleJa, summaryJa, summaryEn, generatedAt })
+  └─ SUMMARY_CACHE.put(url, { titleJa, summaryJa, summaryEn, publisherFingerprint, generatedAt })
 
 cron tick (next hour, collector)
   ├─ collect ...
-  ├─ for each entry: SUMMARY_CACHE.get(url) → enrichment 反映
+  ├─ for each entry: SUMMARY_CACHE.get(url) → publisher fingerprint 一致時だけ enrichment 反映
   └─ commit
 ```
 
@@ -100,6 +102,9 @@ cron tick (next hour, collector)
 | Queue 滞留 (生成 < 投入) | `wrangler queues info` の Pending 数監視 | producer 側 cap を下げる |
 | Worker CPU 超過 (consumer 側) | `wrangler tail` | timeout / concurrency を確認。Free plan では `cpu_ms` を設定できないため、必要なら Paid plan 化か専用Nodeジョブ化を検討する |
 | 重複 enqueue | KV key 重複だけだが double-spend で課金増 | producer で `SUMMARY_CACHE.get` を必ず先行 |
+| stale collector が旧分類を publish | publisher contract mismatch / `/health` 503 | 開始時 main HEAD SHA に contract と全 baseline read を固定し、commit 前に ref の exact match を再確認する。初回 guard 導入は PR-head deploy 後に旧 cron の最大 duration を超える 16 分を待ってから merge |
+| branch CDN の古い data snapshot を新しい main の子へ commit | `publisher snapshot changed` / error heartbeat | raw baseline は branch 名でなく開始時 SHAから読み、final ref が同じ SHA でなければ tree 作成前に中止。ref PATCH も `force:false` を維持 |
+| stale collector が commit 前に Queue/KV 副作用を残す | cache fingerprint mismatch / backlog 再 enqueue | job と cache に publisher fingerprint を伝播し、明示 mismatch を採用しない。初回は consumers を先に deployして fingerprint 無し job を sentinel 化してから collector を切り替える |
 
 ### F. コスト試算 (Workers Paid Standard, $5/月 基本料金)
 

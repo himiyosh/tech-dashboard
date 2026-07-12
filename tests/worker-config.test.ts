@@ -17,11 +17,11 @@ function numericVar(config: string, key: string): number {
 const FIXED_KV_OPERATIONS_PER_RUN = 5;
 
 describe("Cloudflare Worker deploy config", () => {
-  it("omits per-Worker CPU limits for the current Cloudflare plan", () => {
+  it("declares the Paid-plan harness CPU budget without changing the queue consumer limit", () => {
     const harnessConfig = readConfig("worker/wrangler.toml");
     const summarizerConfig = readConfig("worker-summarizer/wrangler.toml");
 
-    expect(harnessConfig).not.toMatch(/\[limits\][\s\S]*cpu_ms\s*=/);
+    expect(harnessConfig).toMatch(/\[limits\][\s\S]*?cpu_ms\s*=\s*30000/);
     expect(summarizerConfig).not.toMatch(/\[limits\][\s\S]*cpu_ms\s*=/);
   });
 

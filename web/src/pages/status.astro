@@ -211,7 +211,11 @@ const workerSummary = wh
     <Sidebar />
 
     <main class="status-main">
-      <section class={`status-hero status-hero-${workerStatus}`} aria-labelledby="worker-health-heading">
+      <section
+        class={`status-hero status-hero-${workerStatus}`}
+        aria-labelledby="worker-health-heading"
+        aria-describedby="worker-health-summary"
+      >
         <div class="status-hero-copy">
           <div class="status-kicker">
             <span class="status-dot" style={`background:${workerColor}`}></span>
@@ -225,7 +229,7 @@ const workerSummary = wh
               <span class="count">batch ローテーション · 毎時実行</span>
             </h2>
           </div>
-          <p>{workerSummary}</p>
+          <p id="worker-health-summary">{workerSummary}</p>
         </div>
 
         <div class="status-hero-grid" aria-label="Operational status scopes">

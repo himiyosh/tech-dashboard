@@ -9,9 +9,10 @@
 
 ## 🚨 絶対ルール (ABSOLUTE)
 
-### R-001: デプロイは Cloudflare 完結。GitHub Actions を deploy 経路に使わない
+### R-001: デプロイは Cloudflare 経路に限定し、GitHub Actions は data publisher にだけ使う
 - 本番反映フロー: **`main` push → Cloudflare Pages Git Integration が build & deploy**。
 - `.github/workflows/*.yml` に `wrangler pages deploy` 等の deploy job を **追加してはならない**。
+- `.github/workflows/publisher.yml` は Node publisher の収集、検証、data-only commit、OIDC bridge 経由の Queue / KV 副作用に限定する。Pages / Worker の deploy を行わせない。
 - ユーザーが明示的に依頼しない限り、`.github/workflows/` を新設しない。
 - 緊急時のみ `npm --prefix web run deploy:legacy` (Direct Upload) を手動実行可。
 
@@ -19,7 +20,8 @@
 - `main` への **直接 commit / push** は禁止 (たとえデータファイルや scripts でも)。必ず作業ブランチ + PR 経由とする。
 - `gh pr merge` / GitHub API merge / `git push origin main` を実行する前に **必ずユーザーに「main へ merge / push してよいですか」と確認** すること。
 - 「即時反映したい」「データだけ」という理由で省略しない。Cloudflare Pages の本番 build がトリガーされ、サイトに即影響するため。
-- 例外: ユーザーが当該セッションで明示的に「main に直接 push して」と指示した場合のみ。
+- 手動操作の例外: ユーザーが当該セッションで明示的に「main に直接 push して」と指示した場合のみ。
+- 自動化の限定例外: `publisher.yml` は main SHA を固定し、data-only allowlist、全品質ゲート、non-force push を通した生成 commit だけを built-in `GITHUB_TOKEN` で main へ push してよい。人間または agent の通常変更にはこの例外を適用しない。
 
 ### R-002: Cloudflare Pages project 設定の固定値
 | 項目 | 値 |
@@ -74,7 +76,7 @@
 - secret scanner の出力に秘密値そのものを表示しない。検出種別、ファイル位置、hash、長さだけを出す。
 
 ### R-010: AI Scrum は Dev-time Harness として運用する
-- AI Scrum は要件整理、分担、検証、振り返りの品質を上げるための開発時運用であり、Cloudflare Worker の収集 Runtime や Pages deploy 経路へ組み込まない。
+- AI Scrum は要件整理、分担、検証、振り返りの品質を上げるための開発時運用であり、GitHub Actions Publisher、Cloudflare Free bridge / Queue consumer、Pages deploy などの Runtime 経路へ組み込まない。
 - 複数領域の変更や仕様変更では `.claude/skills/ai-scrum/SKILL.md` を参照し、親エージェントが Orchestrator として PO / SM / Developer / QA / Security 観点を分離する。
 - サブエージェントの結果は助言として扱い、最終判断、差分統合、DoD 判定は親エージェントが行う。
 - AI Scrum を使っても main merge / push、Cloudflare deploy、Worker deploy の事前承認ルールは緩和しない。
@@ -92,12 +94,12 @@
 - 記事詳細の本文表示は `web/src/lib/bodies.ts` の `bodyForEntry(id)` を使う。本文が無いエントリは要約を主役にし原文リンクを出す (偽の生成予告を出さない)。`isDeterministicFallbackEntry` (web 分類) は本文を見ない。
 - 既存本文の index→bodies.json 移行は `npm run body:migrate` (`scripts/migrate-bodies-to-file.mjs`)。
 
-### R-013: Worker publish 前に summary fallback を適用し、index を本文フリーに保つ
-- production Worker は `data/index.json` を commit する前に deterministic **summary** fallback を全 live entry に適用し、`summaryJa` / `summaryEn` のいずれかが空の payload を publish しない (両言語必須)。本文は fallback 対象にしない。
-- Worker は publish 時に index entry の `bodyJa` / `bodyEn` を**必ず空にする** (LL-115)。`s:` cache hit が旧 body を持っていても index には載せない (LL-073 family: stale cache 由来の本文混入で index を再肥大化させない)。本文は `data/bodies.json` 経路でのみ更新する。
+### R-013: publisher は publish 前に summary fallback を適用し、index を本文フリーに保つ
+- production Node publisher は `data/index.json` を commit する前に deterministic **summary** fallback を全 live entry に適用し、`summaryJa` / `summaryEn` のいずれかが空の payload を publish しない (両言語必須)。本文は fallback 対象にしない。
+- publisher は publish 時に index entry の `bodyJa` / `bodyEn` を**必ず空にする** (LL-115)。`s:` cache hit が旧 body を持っていても index には載せない (LL-073 family: stale cache 由来の本文混入で index を再肥大化させない)。本文は `data/bodies.json` 経路でのみ更新する。
 - 英語タイトルのみの entry でも `summaryJa` は決定的な日本語テンプレートで埋める。逆も同様。JA / EN UI で cross-language fallback バッジを出さないこと (LL-028)。
 - `isDeterministicFallbackEntry` (web) / `needsGeneratedContent` (worker) はいずれも**要約のみ**で fallback 判定する。本文の有無で publishable を切り替えない (LL-107/LL-112)。
-- Worker runtime は Cloudflare Pages Git Integration では自動更新されない。`worker/src/**` の品質修正後は、明示承認を得て Worker deploy を実施し、古い Worker が index に本文を再投入しないことを確認する。
+- publisher runtime contract は `scripts/run-publisher.ts` と `worker/src/**` で共有する。bridge / Queue consumer の品質修正後は、明示承認を得て対象 Worker を deploy し、`publisher.yml` の次 run と data schema gate で本文が index に戻らないことを確認する。
 
 ### R-014: Web UI 変更は Chrome Modern Web Guidance を先に検索する
 - `developer.chrome.com/docs/modern-web-guidance` の方針に合わせ、`web/src/**/*.astro`、`web/src/**/*.ts`、`web/src/styles/**/*.css` で HTML / CSS / client-side JS、アクセシビリティ、パフォーマンス、セキュリティ、フォーム、モダン Web API に関わる変更を行う前に `.claude/skills/modern-web-guidance/SKILL.md` を参照する。
@@ -196,17 +198,18 @@
 - audit mode は read-only を維持する。delivery / release mode でも secret 表示、main 直接 push、force / reset / rebase / amend、未承認 deploy / `wrangler secret put`、本番データ変更、dirty または固有作業を持つ branch / worktree の削除は禁止する。
 - persona 子 agent は read-only reviewer のままにし、Git、credentials、deploy、破壊的 cleanup を委譲しない。session を作成する場合は独立した non-overlapping scope に限定し、親 orchestrator が結果を検証して統合する。
 
-### R-026: harness Worker は Paid CPU budget を明示し、10ms 環境へ deploy しない
-- `tech-dashboard-harness` は multi-megabyte の index / bodies / archive / stats を parse、merge、serialize するため、Workers Paid plan と `[limits] cpu_ms = 30000` を必須とする。`cpu_ms` を外して Free plan の 10ms 上限へ戻してはならない。
-- deploy 前に Cloudflare dashboard で Workers Paid plan が有効であることを確認する。契約変更は課金操作なのでユーザー承認なしに実行しない。
-- `npx wrangler deploy --dry-run` と `tests/worker-config.test.ts` で設定を検証する。実 deploy が plan incompatibility で失敗した場合は既存 production Worker を置換せず、plan を確認してから再実行する。
+### R-026: 重い publisher は GitHub Actions Node job、harness Worker は Free bridge に限定する
+- collection、multi-megabyte JSON の parse / merge / serialize、schema / E2E 検証、Git commit は `.github/workflows/publisher.yml` の Node 22 job で行う。`tech-dashboard-harness` に scheduled handler、`[limits] cpu_ms`、GitHub publish tokenを戻してはならない。
+- `tech-dashboard-harness` は GitHub Actions OIDC を厳密検証する KV / Queue bridge と public `/health` だけを持つ。OIDC は専用 audience、repository、owner、main ref、workflow ref、event、subject、SHA、時刻を fail-closed で検証する。
+- Node publisher は開始時の main SHA に baseline を固定し、生成副作用を `$RUNNER_TEMP` に遅延する。data 変更時は全品質ゲートと push が成功した後だけ Queue / KV effects を flush する。data 変更がない場合も final snapshot CAS を通し、collapse guard、main drift、検証失敗、push 失敗時は effects bundle を永続化または flush しない。
+- bridge の KV write は publisher が必要とする `og.v1` だけを許可する。summary/body cache と heartbeat は Node publisher から書き込まない。新しい repository secret は追加せず、GitHub 操作は built-in `GITHUB_TOKEN`、bridge 認証は Actions OIDC を使う。
+- `tests/worker-config.test.ts`、`tests/free-plan-bridge.test.ts`、`tests/publisher-runner.test.ts`、`npm --prefix worker run deploy -- --dry-run` で Free plan contract を検証する。
 
 ### R-027: publisher contract mismatch 時は data publish を fail-closed にする
-- `worker/publisher-contract.json` は harness の data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
-- deploy 済み Worker は収集開始時に main HEAD SHA を取得し、その SHA の contract marker と bundle fingerprint を照合する。`data/index.json`、`data/bodies.json`、archive index / month、stats の baseline はすべて同じ immutable SHA から読む。data commit 前に main ref が開始時 SHA と完全一致することを再確認し、進んでいれば tree 作成前に中止して error heartbeat を残す。commit parent も同じ SHA に固定し、ref 更新は `force:false` とする。contract が同じ data-only commit の並行更新でも stale snapshot を新しい親へ載せない。
+- `worker/publisher-contract.json` は data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
+- Node publisher は収集開始時に checkout と remote main が同じ HEAD SHA であることを確認し、その SHA の contract marker と runner fingerprint を照合する。`data/index.json`、`data/bodies.json`、archive index / month、stats の baseline はすべて同じ immutable SHA から読む。data commit または effect-only flush 前にも main ref が開始時 SHA と完全一致することを再確認し、進んでいれば commit と遅延 effects を中止する。commit parent も同じ SHA に固定し、push は non-force とする。
 - summary/body Queue job と生成 cache には publisher fingerprint を伝播する。現在の fingerprint と明示的に異なる cache は採用せず再生成対象にする。fingerprint 導入前の既存 cache は本文・要約テキストだけ互換読み込みし、summary の importance / extraTags は exact fingerprint 一致時だけ採用する。fingerprint 無し job を受けた更新済み consumer は `legacy-unversioned-job` を保存し、既存 legacy cache と区別する。
-- 通常リリースは「marker を含む PR merge -> 旧 Worker が mismatch で停止 -> 明示承認後に新 Worker deploy -> health / data commit 確認」の順にする。ガード初回導入時だけは旧 Worker が mismatch を検知できないため、CI 合格済み PR head を明示承認のうえ先に deploy して publish を停止する。Cloudflare Cron Trigger の duration 上限 15 分を超える 16 分を待ち、deploy 前に開始済みの旧 invocation が残っていないことと新 data commit が無いことを確認してから PR を mergeし、marker を有効化する。
-- job/cache fingerprint の初回導入は Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を PR head から先に deployし、旧 consumer の in-flight 処理が残らないことを確認してから harness の初回ガード手順へ進む。consumer deploy 前に新 harness を起動しない。
+- fingerprint を変える release は Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を PR head から先に deployし、旧 consumer の in-flight 処理が残らないことを確認してから PR を mergeする。merge 後は旧 harness が marker mismatch で停止したことを確認し、明示承認のうえ Free bridge を deployする。bridge health、Publisher workflow、data commit、Queue drain、Pages production を順に確認する。
 - `data/index.json` の entry が変わる publish では、`data/archive/_index.json` と `data/stats.json` の `generatedAt` も同一 commit の reference clock へ揃える。月次 archive は timestamp-only churn を避ける。
 
 ---
@@ -1422,8 +1425,8 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-200: harness の実測 CPU は Free plan 10ms 上限を超え、成功 run は 0.6-1.6 秒を使う
 - **事象**: 2026-07-12 03:00-07:00 UTC の scheduled run が `exceededResources` で連続失敗し、04:00-07:00 は CPU 10,000us で終了した。同じ Worker version の 08:00 run は CPU 1,535,030us で成功した。
 - **根本原因**: harness は multi-megabyte JSON と 1,700 件超の entry を parse、merge、serializeするため、10ms CPU では完走できない。`worker/wrangler.toml` は Paid 前提をコメントにだけ書き、deploy 時に必要な CPU contract を宣言していなかった。
-- **対策**: harness に `[limits] cpu_ms = 30000` を設定し、config test で固定した。Workers Paid plan を deploy 前提とし、課金有効化はユーザー承認を必須にした。
-- **教訓**: 外部 fetch 待ちと CPU 使用量を混同せず Analytics の `cpuTimeUs` / `outcome` を実測する。重い Worker は plan 前提を文書だけでなく deploy config に宣言し、非互換 plan への誤 deploy を fail-fast にする。
+- **対策**: `[limits] cpu_ms = 30000` を宣言した deploy は Workers Free で Cloudflare code `100328` により拒否され、既存 production Worker は置換されなかった。課金変更は行わず、重い publisher を GitHub Actions Node jobへ移し、WorkerはOIDC認証済みの軽量KV/Queue bridgeへ置き換える設計に変更した。
+- **教訓**: 外部fetch待ちとCPU使用量を混同せずAnalyticsの`cpuTimeUs` / `outcome`を実測する。Free planで重い処理のCPU limit宣言を外すだけでは実行不能を隠すため、boundedなbridgeとCPUを使うNode jobへ責務を分離する。
 
 ### LL-201: repository 修正と Worker deploy の間に stale publisher が data を再汚染する
 - **事象**: PR で Hugging Face taxonomy を修正して最新 data を migration した後も、未 deploy の旧 harness が次の cron で 46 件を旧 `local-llm` 分類へ戻した。
@@ -1490,6 +1493,54 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: publisher contract は runtime 互換性を保証するが、同じ runtime が作る連続 data commit の revision identity は保証しない。branch CDN read と commit parent 取得が別時点だったため、contract 再検証が通っても baseline と parent が同じ repository snapshot とは限らなかった。
 - **対策**: run 開始時に main HEAD SHA を取得し、contract と全 baseline artifact をその immutable SHA から読む。`ghCommitFiles()` は current ref が captured SHA と完全一致しない場合、tree 作成前に fail-closed にし、commit parent も captured SHA へ固定する。raw SHA read と parent drift 拒否を regression test に追加した。
 - **教訓**: 長時間 publisher は schema/runtime compatibility と data revision concurrency を別の gate で守る。contract fingerprint だけで満足せず、read snapshot と write parent を同じ revision に固定し、compare-and-swap で ref drift を拒否する。
+
+### LL-212: Workers Free では Paid CPU limitを宣言できず、heavy publisherをNode jobへ移す必要がある
+- **事象**: `tech-dashboard-harness`へ`[limits] cpu_ms = 30000`を設定してdeployしたところ、Workers Free accountはCloudflare code`100328`でversion作成前に拒否した。
+- **根本原因**: multi-megabyte dataのparse / merge / serializeと品質検証を行うpublisherはFree WorkerのCPU budgetと非互換で、Paid用limitもFree planでは設定できない。limitを削るだけではdeploy後の`exceededResources`を再発させる。
+- **対策**: heavy publisherをserialized GitHub Actions Node 22 jobへ移し、Cloudflare WorkerはGitHub Actions OIDC検証とboundedなKV/Queue転送だけを行うFree bridgeに限定した。Pages deployはCloudflare Pages Git Integrationのまま維持した。
+- **教訓**: runtime planの非互換は設定値の調整だけで回避しない。workloadをCPU処理とI/O bridgeに分け、各platformのbudgetに収まる責務だけを配置する。
+
+### LL-213: publish前のQueue/KV副作用はdata commitと分離し、push成功後だけflushする
+- **事象**: Node publisherの初期実装は、data schema、build、E2E、main drift、push結果が確定する前にQueue jobとOG cache writeをbridgeへ送信できた。
+- **根本原因**: Git commitだけをtransaction境界とみなし、Queue/KVを同じrunの不可逆な副作用として扱っていなかった。検証失敗やstale snapshotでもconsumerが古いmetadataを処理できた。
+- **対策**: Queue/KV effectsを`$RUNNER_TEMP`のvalidated bundleへatomic保存し、data変更時は全品質ゲートとnon-force pushが成功した後だけ`--flush`する二段階構成にした。main drift、検証失敗、push失敗ではflushせず、bridgeもrequest size、key、Queue、fingerprintをfail-closedで検証する。
+- **教訓**: automated publisherのtransaction境界にはGitだけでなくQueue、KV、webhook等の全外部副作用を含める。prepareとcommit/flushを分け、永続dataが確定する前に非同期処理を開始しない。
+
+### LL-214: effect-only runもimmutable snapshot CASを通す
+- **事象**: data差分がなくQueue/KV effectsだけがあるrunで、commit sinkが変更file 0件をerrorにした。単純にcommitをskipすると、main driftを検証せずeffectsだけを送る非対称が生じる。
+- **根本原因**: snapshot guardをdata commitの前処理としてだけ設計し、effect-only runも同じrepository revisionに由来するというcontractを表現していなかった。
+- **対策**: data変更が0件でも開始時SHAとcurrent mainの一致を確認して`changed:false`を返し、その確認後だけeffectsをflushできるようにした。effect bundleのflush pathも`RUNNER_TEMP`内へ限定した。
+- **教訓**: side effectの有無とfile diffの有無は別軸である。write対象が0件でも、外部副作用がsnapshotから派生するなら同じCASとprovenance検証を省略しない。
+
+### LL-215: contract の許可拡張子を増やしたら negative fixture も未対応拡張子へ更新する
+- **事象**: publisher contract の fingerprint 対象へ `.mjs` を追加した後も、fail-closed test は `.mjs` を「未対応拡張子」の fixture として使い続け、全体テストで失敗した。
+- **根本原因**: production allowlist と negative fixture が同じ拡張子集合に依存しているのに、allowlist 変更時の更新対象として test fixture を確認していなかった。
+- **対策**: negative fixture を実際に未対応の `.txt` へ変更し、`.mjs` / `.yml` は fingerprint 対象として保持した。
+- **教訓**: allowlist を拡張するときは positive coverage だけでなく、fail-closed test が依然として allowlist 外の値を使っているか確認する。許可対象そのものを negative fixture に残さない。
+
+### LL-216: 一時生成する test 鍵は secret assignment に見えない変数名で保持する
+- **事象**: OIDC 署名テストが実行時に生成する非永続 RSA 鍵を `privateKey` 変数へ代入したところ、worktree secret scan が generic secret assignment として検出した。
+- **根本原因**: scanner は値の由来を実行時生成まで解析せず、credential を示す変数名への代入を fail-closed で検出する。test fixture も同じ scan 対象である。
+- **対策**: test 内の変数名を `signingKey` に変更し、Web Crypto の `pair.privateKey` から生成時だけ受け取る構造は維持した。
+- **教訓**: test 用の一時鍵や署名 material でも、secret scanner が credential assignment と解釈する一般名を不用意に使わない。実 secret の例外登録で scanner を弱めず、非永続 fixture の命名を明確にする。
+
+### LL-217: publisher の早期終了は final CAS と副作用破棄を迂回させない
+- **事象**: 独立 code review で、collapse guard と data 変更なしの早期 return が commit sink より前にあり、runner が `changed=false` のまま遅延 Queue / KV effects を保存して flush できる経路が見つかった。
+- **根本原因**: effect-only run の CAS を commit sink 単体では実装していたが、`runHarness()` の全終了経路が sink を通ることを確認していなかった。異常終了と正常な差分なしを同じ `changed=false` で表現したことも、副作用の可否を曖昧にした。
+- **対策**: collapse guard は heartbeat 記録後に例外として run を失敗させ、runner が effects bundle を永続化しないようにした。data 変更なしは 0 file の commit sink を必ず呼び、`ghCommitFiles()` も 0 file return より先に current ref と exact parent contract を検証する。CAS、collapse、副作用破棄の回帰テストを追加した。
+- **教訓**: automated publisher の早期 return を追加または変更するときは、正常、差分なし、guard abort の各経路で final CAS、品質ゲート、副作用 flush の可否を個別に検証する。`changed=false` は成功を意味しないため、異常 guard は success-shaped return にしない。
+
+### LL-218: production health は dry-run を成功実行に数えず aggregate source telemetry を検証する
+- **事象**: 独立 code review で、成功した `workflow_dispatch` dry-run が失敗した定期 Publisher run を隠せることと、全 source が失敗しても新しい `generatedAt` と旧 entries により production health が green になれることが見つかった。
+- **根本原因**: Actions API の completed run を event 種別だけで選び、write を行う publish run と診断 dry-run を区別していなかった。index check も freshness と count だけを見て、`health.sourcesAttempted` / `sourcesOk` / `sourcesFailed` の完全性と全滅条件を検証していなかった。
+- **対策**: Publisher workflow の `run-name` を `Publisher / publish` と `Publisher / dry-run` に分け、health check は scheduled run または明示された publish run だけを対象にした。index health の必須 field、型、件数関係を fail-closed で検証し、attempted が 0 または attempted > 0 かつ sourcesOk = 0 を error にした。
+- **教訓**: health check は「最近成功した workflow」と「本番データを更新できる workflow」を同一視しない。fresh timestamp だけで healthy とせず、run の mode と aggregate collection outcome を end-to-end で検証する。
+
+### LL-219: trust / status 表示は visual class だけでなく metadata と accessible relationship を揃える
+- **事象**: release regression の persona audit で、記事カードの authority badge には `data-source-type` があるのに詳細ページでは欠け、Status の要確認 source は色と class と近接テキストだけで状態を表していた。
+- **根本原因**: 同じ trust / health 情報を複数 surface へ展開した際、見た目と visible text だけを横展開し、machine-readable metadata と accessible name / description の関係を共通 contract として検証していなかった。
+- **対策**: 詳細ページの authority badge に `data-source-type` を追加した。Status の要確認 list は各 link を状態説明の `small` と `aria-describedby` で関連付け、list item に `data-source-status` を付与した。Worker Health section も status summary を `aria-describedby` で明示し、E2E で属性と参照先を検証する。
+- **教訓**: trust、freshness、error state を複数画面へ出すときは、visible label、`data-*` metadata、accessible relationship の3層を同じ意味に揃える。動的でない status を安易に live region にせず、既存の見出しと説明を `aria-labelledby` / `aria-describedby` で関連付ける。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

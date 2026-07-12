@@ -15,7 +15,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CONTRACT_PATH = join(ROOT, "worker", "publisher-contract.json");
-const HASHED_EXTENSIONS = new Set([".ts", ".json", ".toml"]);
+const HASHED_EXTENSIONS = new Set([".ts", ".mjs", ".json", ".toml", ".yml"]);
 
 function normalizedRelativePath(root, path) {
   return relative(root, path).split(sep).join("/");

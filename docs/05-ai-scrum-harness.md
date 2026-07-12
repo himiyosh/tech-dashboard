@@ -6,7 +6,7 @@
 
 ## 1. 結論
 
-本プロジェクトには AI Scrum を適用する。ただし、Cloudflare Worker による収集や Pages deploy などの Runtime Harness には組み込まない。AI Scrum は、開発時に Copilot / Claude Code の親エージェントがオーケストレーターとなり、サブエージェント相当の専門ロールへ調査、設計、実装、検証を分担するための運用レイヤとして扱う。
+本プロジェクトには AI Scrum を適用する。ただし、GitHub Actions Publisher、Cloudflare Free bridge / Queue consumer、Pages deploy などの Runtime Harness には組み込まない。AI Scrum は、開発時に Copilot / Claude Code の親エージェントがオーケストレーターとなり、サブエージェント相当の専門ロールへ調査、設計、実装、検証を分担するための運用レイヤとして扱う。
 
 採用する理由は 3 つある。
 

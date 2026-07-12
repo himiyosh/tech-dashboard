@@ -1,6 +1,6 @@
 # 02. Agent / Skill / Hook / Prompt 構成
 
-> **現状**: Runtime は Cloudflare Worker + Queue + Cloudflare Pages Git Integration で完結する。GitHub Actions は CI のみで、harness 実行や deploy 経路には使わない。Dev-time は `.github/copilot-instructions.md`、`.claude/skills/*`、`scripts/git-hooks/*` を中心に運用する。
+> **現状**: Runtime は GitHub Actions の Node publisher、Cloudflare Workers Free の OIDC bridge、Queue consumer、Cloudflare Pages Git Integration で構成する。GitHub Actions は収集と品質検証を担うが、Pages / Worker の deploy は行わない。Dev-time は `.github/copilot-instructions.md`、`.claude/skills/*`、`scripts/git-hooks/*` を中心に運用する。
 >
 > **注意**: `.github/prompts/`、`.claude/agents/`、`.claude/hooks/` は導入候補 / 設計パターンとして扱う。実装済みの source of truth は以下の現状マップを優先する。
 
@@ -19,7 +19,9 @@ tech-dashboard/
 │  │  └─ persona-*.agent.md         ← read-only 利用者回遊
 │  ├─ prompts/                     ← 任意: Copilot CLI prompt 化する場合
 │  └─ workflows/
-│     └─ ci.yml                     ← 検証のみ。deploy / harness 実行はしない
+│     ├─ ci.yml                     ← 通常 PR / push の検証
+│     ├─ publisher.yml              ← 毎時 Node publisher。data push 後だけ effect を flush
+│     └─ worker-health.yml          ← Publisher / bridge / consumer / data freshness の外形監視
 │
 ├─ .claude/
 │  ├─ CLAUDE.md                     ← 任意: Claude Code Memory
@@ -35,20 +37,11 @@ tech-dashboard/
 │  │  └─ quality-audit/
 │  └─ hooks/                        ← 任意: Claude hooks。現状は scripts/git-hooks/ を使用
 │
-└─ harness/                         ← Runtime Harness 本体
-   ├─ orchestrator.ts               ← Outer loop
-   ├─ collectors/
-   │  ├─ anthropic-blog.ts
-   │  ├─ github-changelog.ts
-   │  └─ ...
-   ├─ pipeline/
-   │  ├─ normalize.ts
-   │  ├─ dedupe.ts
-   │  ├─ summarize.ts               ← ローカル backfill 用 Copilot 呼出
-   │  └─ tag.ts
-   └─ publishers/
-      ├─ index-builder.ts
-      └─ rss-builder.ts
+├─ scripts/run-publisher.ts         ← Node publisher CLI / snapshot CAS / deferred effects
+├─ harness/                         ← collector / normalize / dedupe / archive / stats core
+└─ worker/
+   ├─ src/free-plan-bridge.ts       ← OIDC 検証済み KV / Queue bridge
+   └─ publisher-contract.json       ← publisher / consumer 互換 fingerprint
 ```
 
 ### 1.1 現状インベントリ
@@ -62,86 +55,42 @@ tech-dashboard/
 | Skills | `.claude/skills/ai-scrum`, `quality-audit`, `ui-display-guard`, `modern-web-guidance` | `modern-web-guidance` は `skills-lock.json` で外部 skill として追跡。local skills はリポジトリ内ファイルを source of truth とする |
 | Git hooks | `scripts/git-hooks/pre-commit`, `pre-push` | secret scan / typecheck / unit / web build / E2E / Worker deploy opt-in |
 | CI | `.github/workflows/ci.yml` | dependency audit は soft gate。deploy は行わない |
-| Runtime | `worker/`, `worker-summarizer/` | Cloudflare cron + Queue consumer |
+| Runtime publisher | `.github/workflows/publisher.yml`, `scripts/run-publisher.ts`, `harness/` | Node 22 で収集、検証、data-only push を行う |
+| Runtime bridge / consumer | `worker/`, `worker-summarizer/`, `worker-body/` | Workers Free bridge と Queue consumer。bridge は heavy processing を行わない |
 
 ---
 
-## 2. Runtime Harness (Cloudflare Worker + Queue)
+## 2. Runtime Harness (GitHub Actions Publisher + Free bridge + Queue)
 
 ### 2.1 Orchestrator (ハーネス中枢)
 
-**責務**: Initializer + Worker パターンを踏襲。ローカルでは `npm run collect` / `npm run collect:dry`、本番では Cloudflare Worker cron が同系統の collector / pipeline を実行する。要約生成は Queue consumer に分離する。
+**責務**: 毎時の `publisher.yml` が immutable な `main` snapshot を取得し、Node 22 で collector / pipeline を実行する。開始時 SHA と push 直前の remote SHA が一致する場合だけ data artifact を更新する。Queue / KV effect は runner temp の bundle に遅延し、data push 成功後だけ OIDC bridge 経由で flush する。要約と本文の生成は Queue consumer に分離する。
 
 ```ts
-// harness/orchestrator.ts (擬似コード)
-async function run() {
-  const runId = new Date().toISOString();
-  const stateFile = "data/_state.json";
-
-  // Initializer: 初回のみ
-  if (!exists(stateFile)) {
-    await initialize();           // schema 作成、feeds 雛形、progress.md
-  }
-
-  // Worker: 各サイクル
-  const sources = loadSourceRegistry();
-  const results = await Promise.allSettled(       // ← 原則 1: Isolate
-    sources.map(s => collectWithTimeout(s, 60_000))
-  );
-  const raw = results.filter(ok).flatMap(r => r.value);
-
-  const normalized = raw.map(normalize);          // 決定論的
-  const deduped = dedupe(normalized);
-  const contentReady = applyDeterministicFallback(deduped);
-  const queued = await enqueueMissingSummaries(contentReady); // Queue
-
-  await publish(contentReady);
-  await writeRunLog(runId, { queued });     // 可観測性
+// scripts/run-publisher.ts (概念コード)
+async function runPublisher() {
+  const snapshotSha = await readMainHead();
+  await verifyContract(snapshotSha);
+  const baseline = await readDataAt(snapshotSha);
+  const result = await runSharedHarness(baseline, deferredEffectBindings);
+  await writeDataAtomically(result.data);
+  await runQualityGates();
+  await assertMainHead(snapshotSha);
+  await pushDataOnlyCommit();
+  await flushDeferredEffectsWithOidc();
 }
 ```
 
 **Hook ポイント (Node 内)**:
 - 各 collector の前後で URL / schema バリデーション
-- Queue 投入前に deterministic fallback / cache / subrequest budget を確認
-- Publish 前に `index.json` の形式検証 (Zod)
+- artifact 書き込み前後で snapshot SHA、許可 path、JSON schema を確認
+- push 前に secret scan、typecheck、unit、web build、E2E を実行
+- push 成功前は Queue / KV effect を実行しない
+- OIDC bridge は repository、owner、main ref、workflow ref、event、subject、SHA、時刻と payload allowlist を fail-closed で確認
 
 ### 2.2 CI と Runtime の分離
 
-GitHub Actions は `.github/workflows/ci.yml` の検証用途だけに限定する。`harness-daily.yml` や deploy job は作らない (R-001)。
-
-以下は旧設計案であり、現在は採用しない。
-
-```yaml
-# .github/workflows/harness-daily.yml
-name: Harness - Daily
-on:
-  schedule: [{ cron: "0 */6 * * *" }]
-  workflow_dispatch:
-concurrency: { group: harness, cancel-in-progress: false }
-
-jobs:
-  run:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20 }
-      - run: npm ci
-      - run: npm run collect
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Validate output          # ← 決定論的 Hook 相当
-        run: npm test
-      - name: Commit & push
-        run: |
-          git config user.name "harness-bot"
-          git config user.email "harness-bot@users.noreply.github.com"
-          git add data/
-          git diff --staged --quiet || git commit -m "chore(data): $(date -u +%FT%TZ) update"
-          git push
-```
+`.github/workflows/ci.yml` は通常の PR / push 検証、`.github/workflows/publisher.yml` は毎時の data publisher として分離する。Publisher が使う `GITHUB_TOKEN` は data-only commit に限定し、Cloudflare bridge は GitHub Actions OIDC で認証する。GitHub Actions から Pages や Worker を deploy してはならない (R-001)。Pages は `main` push を受ける Cloudflare Pages Git Integration、Worker deploy は明示承認を得た手動 Wrangler 操作を使う。
 
 ---
 
@@ -369,7 +318,7 @@ Hook は **速く、依存を持たず、冪等** であること。LLM を呼�
    → YES: Subagents (.claude/agents/*.md)
 
 5. 本番で決定論的に走らせたいか?
-   → YES: Runtime Harness (Cloudflare Worker + Queue + orchestrator.ts)
+   → YES: Runtime Harness (GitHub Actions Publisher + Free bridge + Queue)
 
 それ以外 → ユーザとの対話で都度対応 (プロンプトのみ)
 ```
@@ -383,7 +332,7 @@ Hook は **速く、依存を持たず、冪等** であること。LLM を呼�
 | **Reduce**               | Orchestrator は件数を絞って LLM に渡す。Summarize は 1 件 ≤ 4000 字            |
 | **Offload**              | 生データ / 過去ログは `data/raw/` にファイルとして。プロンプトに入れない       |
 | **Isolate**              | Subagents / Collector プロセス分離 / Summarize は 1 件ずつ                     |
-| **Initializer+Worker**   | `orchestrator.ts` が state 無しを検知して init、以後 worker                    |
+| **Initializer+Worker**   | Node publisher が immutable snapshot から開始し、各 run を独立に再現           |
 | **Verifier's Law**       | Zod schema + Hook + LLM 出力の JSON 検証                                       |
 | **Simple & Replaceable** | LLM は抽象インタフェース (Claude → OpenAI 差替可)、DB なし、フレームワーク最小 |
 

@@ -807,6 +807,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".page-hero #status-heading")).toBeVisible();
     await expect(page.getByRole("heading", { name: /Worker Health/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: /Source Freshness/i })).toBeVisible();
+    const workerHealthSection = page.locator(".status-hero");
+    await expect(workerHealthSection).toHaveAttribute("aria-labelledby", "worker-health-heading");
+    await expect(workerHealthSection).toHaveAttribute("aria-describedby", "worker-health-summary");
+    await expect(page.locator("#worker-health-summary")).not.toBeEmpty();
     await expect(page.getByText("Summary entries pending").first()).toBeVisible();
     const collectionMetric = page.locator('[data-health-scope="latest-batch"]');
     await expect(collectionMetric).toContainText(/\d+\/\d+/);
@@ -871,6 +875,18 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("status error rows with collected entries remain truthful", async ({ page }) => {
     await page.goto("/status/");
+    const attentionRows = page.locator("#attention-list .status-attention-list li");
+    const attentionCount = await attentionRows.count();
+    for (let index = 0; index < attentionCount; index++) {
+      const row = attentionRows.nth(index);
+      const status = await row.getAttribute("data-source-status");
+      expect(status).toMatch(/^(error|stale)$/);
+      const link = row.locator("a");
+      const describedBy = await link.getAttribute("aria-describedby");
+      expect(describedBy).toBeTruthy();
+      await expect(page.locator(`[id="${describedBy}"]`)).toContainText(status!);
+    }
+
     const offenders = await page.locator(".source-item.source-row-error").evaluateAll((rows) =>
       rows
         .map((row) => {
@@ -2036,6 +2052,10 @@ test.describe("TECH Dashboard smoke", () => {
 
     const authorityPill = strip.locator("[data-source-authority]");
     await expect(authorityPill).toHaveCount(1);
+    await expect(authorityPill).toHaveAttribute(
+      "data-source-type",
+      /^(blog|release|changelog|paper|community)$/,
+    );
     await expect(authorityPill).toHaveAttribute(
       "aria-label",
       /^(Official|Paper|Community|News|Aggregator|Source) source \(.+\)( · registry tier \d+)?$/,

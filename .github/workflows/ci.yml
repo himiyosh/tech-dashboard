@@ -28,6 +28,9 @@ jobs:
       - name: Install root deps
         run: npm ci
 
+      - name: Install Worker deps
+        run: npm --prefix worker ci
+
       - name: Dependency audit (root)
         continue-on-error: true
         run: npm run audit:root
@@ -44,6 +47,9 @@ jobs:
 
       - name: Typecheck (root)
         run: npm run typecheck
+
+      - name: Typecheck (Worker and publisher runner)
+        run: npm run typecheck:worker
 
       - name: Unit tests (Vitest)
         run: npm test

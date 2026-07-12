@@ -1,126 +1,146 @@
-# Worker 分割設計 (LL-037 採用済み)
+# Free Publisher / Worker 分割設計
 
 ## 背景
 
-旧 `tech-dashboard-harness` Worker は 1 invocation で以下を全て行っていた。
+旧 `tech-dashboard-harness` は Cloudflare Worker の 1 invocation で収集、multi-megabyte JSON の merge、archive / stats 更新、GitHub commit、Queue enqueue を行っていた。この処理は production で約 0.6-1.6 秒の CPU を使い、Workers Free の CPU 上限では完走しない。また Free plan では `[limits] cpu_ms = 30000` を宣言できない。
 
-1. registry sources を 6 batch に分割し、batch 内 collector を並列実行
-2. RSS / HTML を normalize + tag
-3. **Copilot で要約生成 (停止中: `SUMMARIZE_MAX_NEW=0`)**
-4. `data/index.json` を既存とマージ
-5. `data/archive/*.json` を touched-month のみ更新
-6. `data/stats.json` を incremental 更新
-7. GitHub Git Data API で 1 commit にまとめて push
+重い publisher を GitHub Actions の Node 22 job へ移し、Cloudflare Worker は GitHub Actions OIDC を検証する軽量 KV / Queue bridge に限定する。
 
-この構成は **Workers Paid plan の CPU 時間 30s/invocation** を前提とする。2026-07-12 の production Analytics では、Free plan 相当の 10ms で終了した run が連続して `exceededResources` となり、成功 run は 0.6-1.6 秒 CPU を使用した。`worker/wrangler.toml` の `[limits] cpu_ms = 30000` は、この plan contract を deploy 時に明示する。
+## 目的
 
-## 目的 / 現状
+- Workers Free のまま毎時収集を継続する。
+- data の生成、品質検証、Git commitを同じNode jobで完結する。
+- Queue / KV副作用をdata検証とmain pushの成功後だけ実行する。
+- repositoryに新しい長命secretを追加しない。
+- 既存のsummary/body Queue consumerとper-URL cacheを維持する。
 
-- Worker 経路で要約生成を復活させ、新着記事に AI 要約を付ける (Cloudflare Queue consumer `tech-dashboard-summarizer` で採用済み)
-- cron 健全性 (batch 0/1/3 の HTTP 200) を維持
-- ローカル `npm run resummarize` への手動依存を解消
+## 役割分担
 
-## 設計方針: Cloudflare Queues による分離
+| Runtime | 責務 | 起動 |
+|---|---|---|
+| GitHub Actions Publisher | immutable snapshot、collect、normalize、merge、fallback、archive/stats、品質ゲート、data-only commit | `0 * * * *` / `workflow_dispatch` |
+| `tech-dashboard-harness` Free bridge | GitHub Actions OIDC検証、allowlist済みKV read/writeとQueue送信、public health | HTTPS fetch |
+| `tech-dashboard-summarizer` | QueueからCopilot要約を生成し`SUMMARY_CACHE`へ保存 | Queue consumer |
+| `tech-dashboard-body` | QueueからCopilot本文を生成し`BODY_CACHE`へ保存 | Queue consumer |
 
-### A. 役割分担
+Pages deployは従来どおりCloudflare Pages Git Integrationが担当する。GitHub ActionsからPagesまたはWorkerをdeployしない。
 
-| Worker | 責務 | CPU 予算 | 起動 |
-|---|---|---|---|
-| **harness-collector** (現 `tech-dashboard-harness`) | collect → normalize → merge → publish | Paid 30s (実測約 0.6-1.6s) | `cron 0 * * * *` |
-| **harness-summarizer** (`tech-dashboard-summarizer`) | Queue から URL を pop して Copilot 要約 → KV `SUMMARY_CACHE` に保存 | summary-only: timeout 60s / 1600 tokens | `[[queues.consumers]]` |
+## データフロー
 
-### B. データフロー
-
-```
-cron tick (collector)
-  ├─ main HEAD SHA を取得し、その SHA の publisher contract と deploy bundle fingerprint を照合
-  ├─ index / bodies / archive / stats を同じ HEAD SHA から読む
-  ├─ collect about 9 sources
-  ├─ merge with prior data/index.json
-  ├─ for each entry without cached summary:
-  │    SUMMARY_QUEUE.send({ url, publisherFingerprint, title, source, summary snippet, lang, tags })
-  └─ main ref が開始時 SHA のままなら同 SHA を親に commit。進んでいれば中止
-
-Queue consumer (summarizer)
-  ├─ ack 1 メッセージ
-  ├─ Copilot /chat/completions 呼び出し (summary-only prompt)
-  ├─ JSON parse
-  └─ SUMMARY_CACHE.put(url, { titleJa, summaryJa, summaryEn, publisherFingerprint, generatedAt })
-
-cron tick (next hour, collector)
-  ├─ collect ...
-  ├─ for each entry: SUMMARY_CACHE.get(url) → publisher fingerprint 一致時だけ enrichment 反映
-  └─ commit
+```text
+GitHub Actions schedule / workflow_dispatch
+  -> Node Publisher
+       -> checkout と remote main の SHA 一致確認
+       -> contract と全 baseline artifact を immutable SHA から読む
+       -> collect + normalize + merge + fallback
+       -> OIDC bridge 経由で summary/body cache を読む
+       -> Queue/KV effects を RUNNER_TEMP に atomic 保存
+       -> typecheck + unit + schema + web build + E2E + secret scan
+       -> main drift を再確認
+       -> allowlist 済み data file だけを non-force push
+       -> push 成功後だけ effects を flush
+  -> Cloudflare Free bridge
+       -> Queue.sendBatch(summary/body)
+       -> KV.get(allowlisted cache)
+       -> KV.put(og.v1 only)
+  -> Queue consumers
+       -> Copilot API
+       -> per-URL KV cache
+  -> 次回 Publisher run
+       -> cache を index / bodies sidecar へ merge
 ```
 
-要約はキャッシュ経由で次回 cron 時に index へ反映される (タイムラグ ≤ 1h)。
+## Publisher contract
 
-### C. なぜ Queue か
+`worker/publisher-contract.json` のfingerprintをproducer、bridge、consumerの共通契約にする。次をcritical pathとしてhashする。
 
-| 案 | 採否 | 理由 |
-|---|---|---|
-| Queues | ✅ 採用 | retry 内蔵、ack/nack、batch size 制御、CPU は per-message |
-| Cron 専用 Worker | ❌ | cron は最低 1 分間隔。50 件 × 20s = 16 分かかり non-trivial |
-| Durable Object | ❌ | overkill。状態を持つ必要なし |
-| ローカル resummarize (現状) | ⚠️ 暫定 | 手動依存。サーバ運用とずれる |
+- `.github/workflows/publisher.yml`
+- `scripts/run-publisher.ts`
+- `harness/**`
+- `worker/src/**`
+- `worker/wrangler.toml`
+- root / Worker package files
+- Worker TypeScript config
 
-### D. 実装ステップ
+critical pathを変更したら同じPRで次を実行する。
 
-1. **wrangler.toml に Queue producer + consumer 追加**
-   - producer binding: `SUMMARY_QUEUE` (in collector)
-   - consumer: 新 Worker `harness-summarizer` (`max_batch_size = 1`, `max_batch_timeout = 5s`)
-2. **collector 側に enqueue ロジック追加**
-   - `runHarness` の publish 直前で、要約未生成 entry を最大 N 件キューに投入
-   - dedupe: 既にキャッシュにあれば skip
-3. **summarizer Worker 新規作成**
-   - `worker-summarizer/src/index.ts`
-   - `queue(batch, env)` handler: 1 メッセージごとに Copilot → KV write
-   - `buildSummaryPrompt()` の短い JSON contract を使い、`SUMMARIZE_MAX_TOKENS=1600` / `SUMMARIZE_TIMEOUT_MS=60000` で reasoning 枯渇と queue slot 長時間占有を防ぐ
-   - 失敗時は throw → Queue が自動 retry (最大 2 回, exponential backoff)
-4. **KV `SUMMARY_CACHE` を両 Worker に bind**
-5. **collector 側で `SUMMARY_CACHE` 参照を強化**
-   - 既に部分的に実装済み (`worker/src/index.ts` で cache hit を merge)
-   - キャッシュキーを `canonical url` に揃える
-6. **デプロイ + smoke test**
-   - `wrangler queues create summary-queue`
-   - `wrangler deploy` (collector)
-   - `cd worker-summarizer && wrangler deploy`
-   - `/diag/run-batch?batch=0` で enqueue 件数を観測
-   - `wrangler tail tech-dashboard-summarizer` で consumer が処理しているか確認
-7. **段階解放**
-   - 初期 enqueue cap: 5 件/cron tick
-   - 現行 enqueue cap: 35 件/cron tick (KV write 日次上限内で backlog を drain)
-   - producer は eligible fallback jobs の中で `cap` 件ずつ hour-based round-robin するため、同じ先頭 35 件に固定されない
-   - backlog 解消後は新着記事数に応じて自然に低下する
+```bash
+npm run publisher:contract -- --apply
+npm run publisher:contract -- --dry-run
+```
 
-### E. 失敗モード/対策
+dry-runが`CURRENT`でなければreleaseしない。
 
-| 失敗 | 検知 | 対策 |
-|---|---|---|
-| Copilot timeout | Queue retry | max 2 回で Dead Letter Queue へ。手動 backfill |
-| KV write 失敗 | throw → retry | Queues が自動再送 |
-| Queue 滞留 (生成 < 投入) | `wrangler queues info` の Pending 数監視 | producer 側 cap を下げる |
-| Worker CPU 超過 (consumer 側) | `wrangler tail` | timeout / concurrency を確認。Free plan では `cpu_ms` を設定できないため、必要なら Paid plan 化か専用Nodeジョブ化を検討する |
-| 重複 enqueue | KV key 重複だけだが double-spend で課金増 | producer で `SUMMARY_CACHE.get` を必ず先行 |
-| stale collector が旧分類を publish | publisher contract mismatch / `/health` 503 | 開始時 main HEAD SHA に contract と全 baseline read を固定し、commit 前に ref の exact match を再確認する。初回 guard 導入は PR-head deploy 後に旧 cron の最大 duration を超える 16 分を待ってから merge |
-| branch CDN の古い data snapshot を新しい main の子へ commit | `publisher snapshot changed` / error heartbeat | raw baseline は branch 名でなく開始時 SHAから読み、final ref が同じ SHA でなければ tree 作成前に中止。ref PATCH も `force:false` を維持 |
-| stale collector が commit 前に Queue/KV 副作用を残す | cache fingerprint mismatch / backlog 再 enqueue | job と cache に publisher fingerprint を伝播し、明示 mismatch を採用しない。初回は consumers を先に deployして fingerprint 無し job を sentinel 化してから collector を切り替える |
+## Snapshot と commit safety
 
-### F. コスト試算 (Workers Paid Standard, $5/月 基本料金)
+1. Publisher開始時にcheckout HEADとremote main SHAを比較する。
+2. contract、index、bodies、archive、statsを同じSHAから読む。
+3. 生成結果をrepository fileへ書く前にpayloadを検証する。
+4. data差分があるrunは全品質ゲートを通す。
+5. push直前にremote mainが開始時SHAのままか再確認する。
+6. exact data path allowlistだけをstageする。
+7. commit parentを開始時SHAに固定し、non-force pushする。
+8. SHAが進んでいればcommitとeffects flushを中止し、次runへ持ち越す。
 
-- 現在: collector cron 24 invocations/day = 720/月。requests 込みで $5 範囲内
-- 追加: summarizer は Queue で起動。1 件 1 invocation。20 件/h × 24h × 30d = **14,400 invocations/月**
-- Queue 単体料金: 100 万 operation まで含む。14,400 は誤差
-- Copilot API 課金: Copilot Enterprise 権限で実行。現在は summary-only の `max_tokens=1600` を前提に、Queue の `max_concurrency=2` で上流 rate を抑える
-  - 14,400 件 × $0.01 = **$144/月** (見積もり最大値)
-  - キャッシュヒット率が高ければ大幅に下がる
+data差分がないeffect-only runも0 fileのcommit sinkで同じsnapshot CASとcontract確認を通す。collapse guardは失敗として終了し、effects bundleを保存しない。これにより古いsnapshotを新しいmainへ載せず、stale runや異常runのQueue/KV副作用も残さない。
 
-### G. 切り戻し計画
+## Deferred effects
 
-- summarizer Worker を `wrangler delete tech-dashboard-summarizer` で即停止
-- collector の enqueue ロジックは feature flag `ENABLE_QUEUE = "0"` で無効化
-- 既存キャッシュは保持されるので UI への影響なし
+Queue enqueueと`og.v1` KV writeはpublisher生成中に送信しない。validated effect bundleを`$RUNNER_TEMP/tech-dashboard-publisher-effects.json`へatomic保存し、次の条件をすべて満たした後だけ`publisher:run -- --flush`で送る。
 
-### H. 採用判断
+- data生成が成功した
+- data差分がある場合は全品質ゲートが成功した
+- main driftがない
+- data commitのpushが成功した
 
-要約品質が UX に直結 (LL-028, LL-029) するため、**B-2 (Queue 分離) を採用済み**。通常運用は Queue を使い、ローカル backfill は緊急時の補助に限定する。
+検証失敗、main drift、push失敗ではbundleをflushしない。bundleは`RUNNER_TEMP`外からflushできない。
+
+## OIDC bridge security
+
+bridgeはGitHub JWKSを使ってRS256署名を検証し、次のclaimをfail-closedで確認する。
+
+- issuer
+- 専用audience
+- repository / repository owner
+- `refs/heads/main`
+- workflow ref
+- event name
+- subject
+- workflow SHA
+- issued-at / not-before / expiry
+
+request body size、job件数、Queue名、KV key、publisher fingerprintもallowlistで制限する。KV writeはpublisherが必要とする`og.v1`だけを許可し、summary/body cacheとheartbeatはpublisherから書かない。bindingまたはOIDC設定が不足する`/health`は`503 bridge-misconfigured`を返す。
+
+## Queue / cache contract
+
+- summary cache keyは`s:<sha256(url)>`。
+- body cache keyは`b:<sha256(url)>`。
+- jobとcacheに`publisherFingerprint`を保存する。
+- explicit mismatchは採用せず、再生成対象へ戻す。
+- summary完了条件は`titleJa + summaryJa + summaryEn`で、bodyを要求しない。
+- bodyは`data/bodies.json`へmergeし、indexへ戻さない。
+- Queue producer/consumerは少なくとも1回配送を前提にcache keyで冪等化する。
+
+## Release sequence
+
+fingerprintを変えるreleaseは次の順序を固定する。
+
+1. CI合格済みPR headのsummarizer/body consumerを明示承認のうえ先にdeployする。
+2. 旧consumerのin-flight処理が残っていないことを確認する。
+3. PRをmergeする。
+4. 旧harnessが新markerとのmismatchでdata publishを停止したことを確認する。
+5. 明示承認のうえ`tech-dashboard-harness`をFree bridgeへdeployする。
+6. bridge `/health`、Publisher workflow、data commit、Queue drain、Pages production、公開URLを順に確認する。
+
+## Observability
+
+| Signal | Source |
+|---|---|
+| Publisher conclusion / age | GitHub Actions `Publisher / publish`。診断用`Publisher / dry-run`は除外 |
+| data freshness / collection outcome | `data/index.json.generatedAt`と完全な`health.sourcesAttempted / sourcesOk / sourcesFailed` |
+| bridge readiness | `tech-dashboard-harness/health` |
+| summary issue | `tech-dashboard-summarizer/health` |
+| backlog / fallback / bodies | `data/index.json.health` と `/status` |
+| production aggregate | `npm run health:prod` / `worker-health.yml` |
+
+Publisherが落ちても既存dataは維持される。consumerが落ちてもdeterministic summary fallbackを公開し続ける。bridgeがmisconfiguredなら副作用をfail-closedで拒否し、data push済みrunのeffectsは次回runで再選択される。

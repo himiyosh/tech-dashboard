@@ -44,8 +44,8 @@ argument-hint: "scope or suspected regression"
 | R-009: secret が staged / tracked に混入していないか | `npm run secrets:scan` と `npm run secrets:scan:worktree` を実行 |
 | R-012: live index が body-free architecture と retention を守っているか | `data/index.json` で非空 `bodyJa` / `bodyEn` 件数が 0、本文は `data/bodies.json` にあり、retention 対象外 record が 0 であることを `tests/data-schema.test.ts` で確認 |
 | R-013: summary fallback が全 live entry に適用済みか | `summaryJa` / `summaryEn` の両方が非空であることを確認し、body は `data/bodies.json` 側で管理する |
-| R-026: harness の Paid CPU contract が維持されているか | `worker/wrangler.toml` に `[limits] cpu_ms = 30000` があり、`tests/worker-config.test.ts` が PASS することを確認 |
-| R-027: publisher runtime / Queue cache fingerprint と snapshot CAS が同期しているか | `npm run publisher:contract -- --dry-run` が `CURRENT` を返し、`tests/worker-publisher-contract.test.ts` で immutable SHA read、parent drift 拒否、exact parent contract を確認し、summary/body cache mismatch の回帰テストも PASS することを確認 |
+| R-026: Free publisher / bridge contract が維持されているか | `worker/wrangler.toml` に cron / `[limits]` / GitHub token がなく Free bridge entrypoint を使い、Publisher workflow が Node jobで品質ゲート後に data-only pushと遅延 effects flushを行うことを確認 |
+| R-027: publisher runtime / Queue cache fingerprint と snapshot CAS が同期しているか | `npm run publisher:contract -- --dry-run` が `CURRENT` を返し、`tests/worker-publisher-contract.test.ts` で immutable SHA read、parent drift 拒否、exact parent contractを、`tests/publisher-runner.test.ts` で副作用遅延と flush 境界を確認する |
 
 ### C-02: ナビゲーション状態 (NAVIGATION)
 

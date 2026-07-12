@@ -21,11 +21,14 @@ const { sources, id, extraClass = "" } = Astro.props;
 <div class:list={["side-card", "status-insight-card", extraClass]} id={id}>
   <div class="rail-title">要確認</div>
   {sources.length > 0 ? (
-    <ul class="status-attention-list">
+    <ul class="status-attention-list" aria-label="Sources requiring attention">
       {sources.map((s) => (
-        <li class={`attention-${s.status}`}>
-          <a href={`#${s.anchorId}`}>{s.displayName}</a>
-          <small>
+        <li class={`attention-${s.status}`} data-source-status={s.status}>
+          <a
+            href={`#${s.anchorId}`}
+            aria-describedby={`${id}-${s.anchorId}-status`}
+          >{s.displayName}</a>
+          <small id={`${id}-${s.anchorId}-status`}>
             {s.status} · {s.category} · tier {s.tier}
             {s.count > 0 ? ` · ${s.latestRelative}` : " · no data"}
           </small>

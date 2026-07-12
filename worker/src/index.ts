@@ -60,6 +60,10 @@ import {
   DEPLOYED_PUBLISHER_FINGERPRINT,
   PUBLISHER_CONTRACT_PATH,
 } from "./publisher-contract.ts";
+import type {
+  KeyValueBinding,
+  QueueBatchBinding,
+} from "./runtime-bindings.ts";
 import {
   buildArchiveIndexFile,
   buildArchiveMonthFile,
@@ -83,15 +87,15 @@ export interface GithubRepositoryEnv {
   GITHUB_BRANCH: string;
 }
 
-interface Env extends GithubRepositoryEnv {
-  SUMMARY_CACHE: KVNamespace;
+export interface PublisherEnv extends GithubRepositoryEnv {
+  SUMMARY_CACHE: KeyValueBinding;
   COPILOT_PAT: string;
   SUMMARIZE_MODEL: string;
   SUMMARIZE_MAX_NEW: string;
   SUMMARIZE_TIMEOUT_MS?: string;
   SUMMARIZE_CONCURRENCY?: string;
   // Optional Queue producer for the split summarizer Worker (LL-037).
-  SUMMARY_QUEUE?: Queue<SummaryJob>;
+  SUMMARY_QUEUE?: QueueBatchBinding<SummaryJob>;
   ENABLE_SUMMARY_QUEUE?: string;
   ENQUEUE_MAX_NEW?: string;
   // Recent summarizer retry URLs can be skipped briefly to avoid repeatedly
@@ -106,7 +110,7 @@ interface Env extends GithubRepositoryEnv {
   // Optional Queue producer for the body Worker (body-file Phase B, LL-115).
   // When ENABLE_BODY_QUEUE !== "1" the whole body pipeline is a no-op, so the
   // collector can deploy this code safely before the body queue + worker exist.
-  BODY_QUEUE?: Queue<BodyJob>;
+  BODY_QUEUE?: QueueBatchBinding<BodyJob>;
   ENABLE_BODY_QUEUE?: string;
   // Max body jobs to enqueue per cron (consumer writes one `b:` KV per job,
   // bounded by the shared KV daily write budget, LL-043).
@@ -115,6 +119,23 @@ interface Env extends GithubRepositoryEnv {
   // Max `b:` KV entries to read per cron when merging generated bodies into
   // data/bodies.json. Each is one subrequest (LL-088 subrequest budget).
   BODY_LOOKUP_CAP?: string;
+}
+
+export interface PublisherCommitFile {
+  path: string;
+  content: string;
+}
+
+export type PublisherCommitSink = (
+  env: GithubRepositoryEnv,
+  message: string,
+  files: PublisherCommitFile[],
+  expectedParentSha: string,
+) => Promise<string | null>;
+
+export interface RunHarnessOptions {
+  batchOverride?: number;
+  commitFiles?: PublisherCommitSink;
 }
 
 const INDEX_LIMIT = 2000;
@@ -134,6 +155,17 @@ const SUMMARIZE_ATTEMPTS = 1;
 
 export function sourceBatchIndexAt(nowMs: number): number {
   return Math.floor(nowMs / 3600_000) % SOURCE_BATCHES;
+}
+
+export function assertSafePublisherEntryCount(
+  existingCount: number,
+  finalCount: number,
+): void {
+  if (existingCount > 20 && finalCount < existingCount / 2) {
+    throw new Error(
+      `aborting publish: finalEntries (${finalCount}) collapsed from prior ${existingCount}; refusing to wipe data/index.json`,
+    );
+  }
 }
 
 interface SummarizerIssue {
@@ -197,7 +229,7 @@ function recentRetryCooldownUrls(
   return new Set([issue.url]);
 }
 
-async function readSummaryRetryCooldownUrls(env: Env): Promise<Set<string>> {
+async function readSummaryRetryCooldownUrls(env: PublisherEnv): Promise<Set<string>> {
   const cooldownMs = Number(env.SUMMARY_RETRY_COOLDOWN_MS ?? DEFAULT_SUMMARY_RETRY_COOLDOWN_MS);
   try {
     const issue = await env.SUMMARY_CACHE.get<SummarizerIssue>(SUMMARIZER_ISSUE_KEY, "json");
@@ -444,8 +476,6 @@ export async function ghCommitFiles(
   changes: readonly FileChange[],
   expectedParentSha: string,
 ): Promise<string | null> {
-  if (changes.length === 0) return null;
-
   const headSha = await getRepositoryBranchHeadSha(env);
   if (headSha !== expectedParentSha) {
     throw new Error(
@@ -456,6 +486,8 @@ export async function ghCommitFiles(
   // commit this data commit will parent so an obsolete runtime cannot publish
   // on top of a newer contract after passing only the start-of-run guard.
   await verifyRepositoryPublisherContract(env, headSha);
+  if (changes.length === 0) return null;
+
   const headCommit = await ghJson<{ tree: { sha: string } }>(env, `/git/commits/${headSha}`);
   const tree = await ghJson<{ sha: string }>(env, "/git/trees", {
     method: "POST",
@@ -557,7 +589,7 @@ export function assertArchiveMonthBaseline(
 }
 
 async function ghJsonChangeIfChanged(
-  env: Env,
+  env: PublisherEnv,
   path: string,
   payload: unknown,
   existing: { content: string; sha?: string } | null,
@@ -758,7 +790,7 @@ export function buildIncrementalStats(opts: {
 }
 
 async function publishHistoryFiles(
-  env: Env,
+  env: PublisherEnv,
   archiveInputEntries: readonly NormalizedEntry[],
   liveEntries: readonly NormalizedEntry[],
   generatedAt: string,
@@ -1076,9 +1108,9 @@ async function runSource(
   }
 }
 
-async function runHarness(
-  env: Env,
-  opts: { batchOverride?: number } = {},
+export async function runHarness(
+  env: PublisherEnv,
+  opts: RunHarnessOptions = {},
 ): Promise<{ changed: boolean; stats: Record<string, number> }> {
   const collectedAt = new Date().toISOString();
   // Exclude file-system-backed sources (e.g. user-opml reads data/user-opml.xml).
@@ -1619,34 +1651,28 @@ async function runHarness(
   // legitimate edit — and silently overwriting main with an empty index has
   // catastrophic blast radius (loss of all live entries + archive integrity).
   // Abort the run and let the next cron retry instead.
-  if (existingCount > 20 && finalEntries.length < existingCount / 2) {
-    const err = new Error(
-      `aborting publish: finalEntries (${finalEntries.length}) collapsed from prior ${existingCount}; refusing to wipe data/index.json`,
-    );
+  try {
+    assertSafePublisherEntryCount(existingCount, finalEntries.length);
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
     console.error(`[worker] ${err.message}`);
     await writeFailureHeartbeat(env, err, "collapse-guard");
-    return {
-      changed: false,
-      stats: { finalEntries: finalEntries.length, summarized, errors, abortedCollapse: 1 },
-    };
+    throw err;
   }
   const hasEntryChanges = !entriesEqual(existingPayload, indexEntries);
   const archiveUpdateEntries = selectArchiveUpdateEntries(existingPayload, indexEntries);
   const indexUnchanged = !jsonContentDiffers(existingJson, json);
   const bodiesChanged = bodyPipeline.bodiesFileContent !== null;
-  // Compare ignoring `generatedAt` timestamp so unchanged runs don't churn commits.
-  // Queue enqueue already happened in the pre-publish path above, because
-  // cache state (some entries are still fallbacks) is independent of whether
-  // the index payload changed. Body-file (LL-115): also commit when only
-  // data/bodies.json changed (new bodies merged / stale ones pruned).
-  if (indexUnchanged && !bodiesChanged) {
-    console.log("[worker] no data changes");
-    await writeHeartbeat(env, health, false, earlyEnqueued, allFallback.length);
-    return { changed: false, stats: { finalEntries: finalEntries.length, summarized, errors, enqueued: earlyEnqueued } };
-  }
-
+  const noDataChanges = indexUnchanged && !bodiesChanged;
   const message = `chore(data): update tech dashboard ${payload.generatedAt}`;
-  const historyStats = hasEntryChanges
+  // Compare ignoring `generatedAt` timestamp so unchanged runs don't churn commits.
+  // Queue enqueue already happened in the pre-publish path above because
+  // cache state (some entries are still fallbacks) is independent of whether
+  // the index payload changed. The commit sink still runs with zero files so
+  // effect-only runs must pass the same final snapshot CAS before effects can
+  // be persisted. Body-file (LL-115): also commit when only
+  // data/bodies.json changed (new bodies merged / stale ones pruned).
+  const historyStats = !noDataChanges && hasEntryChanges
     ? await publishHistoryFiles(
         env,
         archiveUpdateEntries,
@@ -1663,7 +1689,7 @@ async function runHarness(
         entriesDropped: 0,
         changes: [],
       };
-  if (!hasEntryChanges) {
+  if (!noDataChanges && !hasEntryChanges) {
     console.log("[worker] entries unchanged; skip archive/stats refresh");
   }
 
@@ -1671,19 +1697,32 @@ async function runHarness(
   // bodies stay in sync. Only include index.json when its content actually
   // changed (avoid churning generatedAt on a bodies-only update); always
   // include bodies.json when the body pipeline produced a new version.
-  const commitFiles = [...historyStats.changes];
-  if (!indexUnchanged) {
+  const commitFiles = noDataChanges ? [] : [...historyStats.changes];
+  if (!noDataChanges && !indexUnchanged) {
     commitFiles.push({ path: "data/index.json", content: json });
   }
-  if (bodyPipeline.bodiesFileContent) {
+  if (!noDataChanges && bodyPipeline.bodiesFileContent) {
     commitFiles.push({ path: "data/bodies.json", content: bodyPipeline.bodiesFileContent });
   }
-  const commitSha = await ghCommitFiles(
+  const commitSha = await (opts.commitFiles ?? ghCommitFiles)(
     env,
     message,
     commitFiles,
     publisherSnapshotSha,
   );
+  if (noDataChanges) {
+    console.log("[worker] no data changes; snapshot verified");
+    await writeHeartbeat(env, health, false, earlyEnqueued, allFallback.length);
+    return {
+      changed: false,
+      stats: {
+        finalEntries: finalEntries.length,
+        summarized,
+        errors,
+        enqueued: earlyEnqueued,
+      },
+    };
+  }
   console.log(`[worker] committed ${commitFiles.map((f) => f.path).join(", ")} (${finalEntries.length} entries)`);
   console.log(
     `[worker] history archiveChanged=${historyStats.archiveFilesChanged}, statsChanged=${historyStats.statsChanged}, bodiesMerged=${bodyPipeline.health.bodyMerged}, bodyEnqueued=${bodyPipeline.enqueued}, commit=${commitSha}`,
@@ -1731,7 +1770,7 @@ function errorSummary(err: unknown): string {
  * no data changed and data/index.json wasn't committed (LL: worker reliability).
  */
 async function writeHeartbeat(
-  env: Env,
+  env: PublisherEnv,
   health: {
     batchIndex: number;
     batchTotal: number;
@@ -1794,7 +1833,7 @@ async function writeHeartbeat(
 }
 
 async function writeStartHeartbeat(
-  env: Env,
+  env: PublisherEnv,
   run: {
     batchIndex: number;
     batchTotal: number;
@@ -1821,7 +1860,7 @@ async function writeStartHeartbeat(
 }
 
 async function writeFailureHeartbeat(
-  env: Env,
+  env: PublisherEnv,
   err: unknown,
   trigger: "scheduled" | "manual-run" | "collapse-guard",
 ): Promise<void> {
@@ -1944,7 +1983,7 @@ export function evaluateHarnessHealth(
  * or when the queue binding is missing.
  */
 async function maybeEnqueueSummaryJobs(
-  env: Env,
+  env: PublisherEnv,
   entries: readonly NormalizedEntry[],
   hitsByUrl: Map<string, CacheEntry>,
   lookedUpUrls: Set<string>,
@@ -2025,7 +2064,7 @@ interface BodyPipelineResult {
  * never throws into the publish path.
  */
 async function runBodyPipeline(
-  env: Env,
+  env: PublisherEnv,
   liveEntries: readonly NormalizedEntry[],
   existingBodiesContent: string | null,
   generatedAt: string,
@@ -2169,7 +2208,11 @@ export default {
   // Await runHarness directly: the scheduled handler itself can use the full
   // cron wall-time budget. ctx.waitUntil is bounded to a short window after
   // invocation end, which previously cancelled mid-collection (LL-033).
-  async scheduled(_event: ScheduledController, env: Env, _ctx: ExecutionContext): Promise<void> {
+  async scheduled(
+    _event: ScheduledController,
+    env: PublisherEnv,
+    _ctx: ExecutionContext,
+  ): Promise<void> {
     try {
       await runHarness(env);
     } catch (err) {
@@ -2182,7 +2225,7 @@ export default {
 
   // Manual trigger: `curl -X POST https://<worker>.workers.dev/run -H "x-trigger-token: ..."`
   // Returns 202 immediately; the harness runs in background via ctx.waitUntil.
-  async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(req: Request, env: PublisherEnv, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
     if (url.pathname === "/run" && req.method === "POST") {
       const authHeader = req.headers.get("x-trigger-token");
@@ -2463,4 +2506,4 @@ export default {
       { status: 200 },
     );
   },
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<PublisherEnv>;

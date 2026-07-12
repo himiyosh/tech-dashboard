@@ -12,28 +12,33 @@
 **プロダクト名**: TECH Dashboard — Pulse of the AI Ecosystem
 **目的**: AI 開発ツール / 基盤モデル / 研究の最新動向を **毎時自動収集・要約・公開** するワンストップ ポータル。
 **想定ユーザ**: Copilot / Claude / Codex / Cursor / Local LLM などを業務で使う開発者・リサーチャ。
-**スケール**: 51 データソース (Worker 実行時は `user-opml` 除外で 50、各 run で 50/4=約 13 ソースをローテーション) / 14 カテゴリ / index 最大 2000 件 / **毎時実行**。
+**スケール**: `harness/registry.ts` の有効データソース (`user-opml` はproduction対象外) / 14カテゴリ / index最大2000件 / **毎時実行**。
 **URL**:
 - 本番: https://techdb.studio344.net/ (Cloudflare Pages の pages.dev サブドメイン: https://tech-dashboard-6a7.pages.dev/)
 - リポジトリ: https://github.com/himiyosh/tech-dashboard
-- データ収集バッチ: https://tech-dashboard-harness.himiyosh.workers.dev (Cloudflare Worker)
+- data publisher: GitHub Actions `Publisher`
+- Queue/KV bridge: https://tech-dashboard-harness.himiyosh.workers.dev
 
 ---
 
 ## 2. システム構成
 
 ```
-[RSS / Anthropic / HN Algolia / VS Code / YouTube / OPML]
-            ↓ hourly cron  (Cloudflare Worker)
+[RSS / Anthropic / HN Algolia / VS Code / YouTube]
+            ↓ hourly schedule (GitHub Actions)
        ┌────────────────────────┐
-       │ tech-dashboard-harness │  = Collect → Normalize → Dedupe
-       │   (Worker + KV cache)  │  → Fallback + Queue enqueue
-       └─────────┬──────────────┘  → Commit data/index.json / archive / stats
+       │ Publisher (Node 22)    │  = Collect → Normalize → Dedupe
+       │ immutable main SHA     │  → Full gates → data-only commit
+       └─────────┬──────────────┘
+                 ↓ push成功後だけGitHub OIDC
+       ┌────────────────────────┐
+       │ tech-dashboard-harness │  = Free KV/Queue bridge
+       └─────────┬──────────────┘
                  ↓ Cloudflare Queue
        ┌───────────────────────────┐
        │ tech-dashboard-summarizer │  → Copilot Enterprise (Claude Sonnet 4.6)
        └───────────────────────────┘
-                 ↓ GitHub Git Data API (1 commit)
+                 ↓ per-URL KV cache
        ┌────────────────────────┐
        │  github.com/himiyosh/  │  main ブランチ
        │    tech-dashboard      │
@@ -49,7 +54,8 @@
 
 | コンポーネント | ランタイム | 役割 |
 |---|---|---|
-| **Worker `tech-dashboard-harness`** | Cloudflare Workers | 毎時 cron (6 batch ローテーション) で RSS 収集 → fallback 適用 → Queue 投入 → og:image 取得 → GitHub へ data コミット |
+| **GitHub Actions `Publisher`** | Node.js 22 | 毎時6 batchローテーションでRSS収集、fallback、archive/stats、全品質ゲート、data-only commit、push後のeffects flush |
+| **Worker `tech-dashboard-harness`** | Cloudflare Workers Free | GitHub Actions OIDCを検証し、allowlist済みKV read/writeとQueue送信を中継 |
 | **Worker `tech-dashboard-summarizer`** | Cloudflare Workers Queue consumer | 1 message / invocation で Copilot 要約を生成し、KV に per-URL cache として保存 |
 | **KV `SUMMARY_CACHE`** | Cloudflare KV | `s:{sha256(url)}` の per-URL summary cache と `og.v1` 画像キャッシュを管理 |
 | **harness (ローカル実行版)** | Node.js 22 / TSX | `npm run collect` で同ロジックをローカル実行 (デバッグ用) |
@@ -61,28 +67,28 @@
 
 | 項目 | 値 |
 |---|---|
-| Cron 式 | `0 * * * *` (UTC) |
+| Schedule | `0 * * * *` (UTC) |
 | 実行頻度 | **毎時 / 24 run×日** |
-| ソースローテーション | Worker 対象ソース ÷ 6 batch (`hour % 6`)、個別ソースはおおむね 6 時間ごと |
+| ソースローテーション | Publisher対象ソース ÷ 6 batch (`hour % 6`)、個別ソースはおおむね6時間ごと |
 | 1 実行あたり Queue 投入上限 | `ENQUEUE_MAX_NEW = 35` |
 | 1 実行あたり og:image fetch 上限 | `OG_BUDGET_PER_RUN = 1` |
 | ソースあたり取得上限 | `PER_SOURCE_CAP = 15` (arxiv の 400+/日 を抑制) |
 | index エントリ総数上限 | `INDEX_LIMIT = 2000` |
-| Cloudflare Workers subrequest 上限 | Free plan の外部 50/request を前提に `KV_LOOKUP_CAP = 20` と source-side fetch cap で制御 |
+| Cloudflare bridge request | body size、job count、KV/Queue allowlistで制御 |
 
 ### 2.3 手動トリガ
 
 ```bash
-# Worker 即時実行
-curl -X POST https://tech-dashboard-harness.himiyosh.workers.dev/run \
-  -H "x-trigger-token: $(gh auth token)"
-# → {"ok":true,"status":"accepted"} HTTP 202
-# (ctx.waitUntil でバックグラウンド実行)
+# production publisher
+gh workflow run publisher.yml -f dry_run=false
+
+# data、Queue、KV、GitHub refを変更しない確認
+gh workflow run publisher.yml -f dry_run=true
 ```
 
 ### 2.4 ヘルスメタ (`data/index.json#health`)
 
-Worker は実行のたびに `data/index.json` に以下の `health` フィールドを嵌め込み、 [`/status`](https://techdb.studio344.net/status/) ページ上部の Worker Health セクションで表示される。
+Publisherは実行のたびに`data/index.json`へ以下の`health`フィールドを埋め込み、[`/status`](https://techdb.studio344.net/status/)ページ上部のWorker Healthセクションで表示する。
 
 ```ts
 interface WorkerHealth {
@@ -116,20 +122,21 @@ interface WorkerHealth {
 ステータスラベル (表示ロジックは `web/src/pages/status.astro`):
 - `healthy` — 直近 6h 以内に成功 / Copilot OK / 失敗 source なし
 - `summarize disabled` — Copilot PAT 失効等 (収集は継続)
-- `no run in 6h+` — Worker が連続で停止
+- `no run in 6h+` — Publisher が連続で停止
+- `all sources failed` — attempted source が 1 件以上で `sourcesOk = 0`
 - `(N) source error` — 個別ソース fetch 失敗
 
 ### 2.5 自動化サマリ
 
 | 領域 | 仕組み | 頻度 / トリガー |
 |---|---|---|
-| データ収集 + Queue 要約 + og:image | Cloudflare Worker cron + Queue consumer | 毎時 (6 batch ローテーション、要約は最大 35 件/run を Queue 投入) |
-| GitHub commit | Worker → GitHub Git Data API | data 差分を 1 commit にまとめる |
+| データ収集 + Queue 要約 + og:image | GitHub Actions Publisher + OIDC Free bridge + Queue consumer | 毎時 (6 batchローテーション、検証済みrunだけeffectsをflush) |
+| GitHub commit | Publisher → built-in `GITHUB_TOKEN` | allowlist済みdata差分を全品質ゲート後に1 commitへまとめる |
 | サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
 | ローカル品質ゲート + Worker コード deploy | `scripts/git-hooks/pre-push` | push 前に unit / web build / E2E を実行し、`RUN_WORKER_DEPLOY=1` の `main` push に worker/ 差分がある場合だけ deploy |
-| ヘルス監視 | `data/index.json#health` + `/status` ページ | 実行ごと記録、サイト訪問時に確認 |
+| ヘルス監視 | bridge `/health` + publish run + data freshness / aggregate source outcome + summarizer + `/status` | 毎時外形監視。diagnostic dry-runは成功runから除外 |
 
-**残る手動運用**: 年 1 回の PAT 更新 (`wrangler secret put COPILOT_PAT` / `GH_TOKEN`)。失効時は `/status` の Worker Health が `summarize disabled` に変わるので即気付ける。Worker は commit 前に bilingual summary fallback を適用し、`data/index.json` の本文は必ず空にする。cache 済みの有効な要約が index に未反映の場合だけ `npm run summaries:apply-cache` で再反映する。本文は `data/bodies.json` の専用経路で管理し、evergreen、importance 2/3、直近 30 日を保持する。旧 index 本文の移行には `npm run body:migrate` を使う。本文未生成時は要約と原文リンクを表示し、deterministic filler body は生成しない。
+**残る手動運用**: Queue consumerの`COPILOT_PAT`更新と、コード変更時の明示承認付きWorker deploy。Publisher commitはbuilt-in `GITHUB_TOKEN`、bridge認証はGitHub Actions OIDCを使うため、新しい長命repository secretは追加しない。Publisherはcommit前にbilingual summary fallbackを適用し、`data/index.json`の本文を必ず空にする。cache済みの有効な要約がindexに未反映の場合だけ`npm run summaries:apply-cache`で再反映する。本文は`data/bodies.json`の専用経路で管理し、evergreen、importance 2/3、直近30日を保持する。
 
 ---
 
@@ -162,10 +169,11 @@ interface NormalizedEntry {
 
 | パス | 内容 | 更新タイミング |
 |---|---|---|
-| `data/index.json` | 公開用 (最大 2000 件、`generatedAt` 付き) | Worker cron 実行ごと |
-| `data/archive/*.json` | warm/cold tier の月別永続 archive。一覧表示用に本文 `bodyJa` / `bodyEn` は保持しない | Worker cron / `npm run collect` 実行時 |
-| `data/archive/_index.json` | archive 月一覧と件数 | Worker cron / `npm run collect` 実行時 |
-| `data/stats.json` | archive 込みの記事数推移 / source 集計 | Worker cron / `npm run collect` 実行時 |
+| `data/index.json` | 公開用 (最大 2000 件、`generatedAt` 付き) | Publisher実行ごと |
+| `data/bodies.json` | 記事本文sidecar。indexから本文を分離 | Publisher実行ごと |
+| `data/archive/*.json` | warm/cold tierの月別永続archive。一覧表示用に本文`bodyJa` / `bodyEn`は保持しない | Publisher / `npm run collect`実行時 |
+| `data/archive/_index.json` | archive月一覧と件数 | Publisher / `npm run collect`実行時 |
+| `data/stats.json` | archive込みの記事数推移 / source集計 | Publisher / `npm run collect`実行時 |
 | `data/raw/<source>.json` | 収集素材 (デバッグ用、ローカルのみ) | `npm run collect` 時 |
 | `data/_summary-cache.json` | ローカル要約キャッシュ | ローカル実行時 |
 | KV `s:{sha256(url)}` | Worker / Queue 要約キャッシュ (per-URL key) | summarizer Worker 実行時 |
@@ -178,7 +186,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 
 ---
 
-## 4. データソース (51 件)
+## 4. データソース
 
 ### 4.1 コレクタ種別
 
@@ -191,7 +199,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | `youtube` | `harness/collectors/youtube.ts` | 1 | YouTube Channel Atom |
 | `opml` | `harness/collectors/opml.ts` | 1 | ユーザ OPML (ローカルのみ) |
 
-ソース定義は `harness/registry.ts` の `REGISTRY` オブジェクトに集約。登録は 51 ソースで、Worker 実行時は `user-opml` を除外 (FS 依存) し 50 ソースをフェッチ。
+ソース定義は`harness/registry.ts`の`REGISTRY`オブジェクトに集約する。Publisher実行時はFS依存の`user-opml`を除外する。現行件数とcoverageは`/status`を単一情報源とする。
 
 ### 4.2 カテゴリ定義 (14 分類)
 
@@ -307,12 +315,14 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 3. dedupe        tracking query を除いた canonical URL key で重複排除
 4. per-source    重要度と鮮度で最大 50 件/ソースにキャップ
 5. sort          publishedAt 降順で INDEX_LIMIT まで
-6. cache-lookup  KV から既存要約を per-URL key で取得
-7. fallback      summary/body 空欄を deterministic fallback で埋める
-8. enqueue       `ENQUEUE_MAX_NEW` 件まで Queue に投入し、summarizer Worker が Copilot Enterprise (Claude Sonnet 4.6) で要約
+6. cache-lookup  OIDC bridge 経由で KV の既存要約/本文を per-URL key で取得
+7. fallback      summary 空欄を deterministic fallback で埋める。body filler は作らない
+8. stage-effects Queue job と og.v1 KV write を RUNNER_TEMP に保存
 9. categorize    URL / tag でカテゴリ判定
-10. build        `data/index.json` / `data/archive/*` / `data/stats.json` 生成
-11. commit       GitHub Git Data API で `data/index.json` / archive / stats を 1 commit にまとめる (既存と同一なら skip)
+10. build        `data/index.json` / `data/bodies.json` / `data/archive/*` / `data/stats.json` 生成
+11. verify       typecheck / unit / schema / web build / E2E / secret scan
+12. commit       main drift がなければ allowlist 済み data artifact を 1 commit にまとめて non-force push
+13. flush        push 成功後だけ OIDC bridge 経由で Queue / KV effects を実行
 ```
 
 ### 5.1 要約 API
@@ -320,7 +330,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 - エンドポイント: GitHub Copilot Enterprise Chat Completions (`https://api.githubcopilot.com/chat/completions`)
 - モデル: `claude-sonnet-4.6` (`SUMMARIZE_MODEL` で変更可)
 - 認証: `COPILOT_PAT` → 一時トークン交換を自動実行 (`x-github-token` ヘッダ経由)
-- 出力: JSON `{ titleJa, summaryJa, summaryEn, bodyJa, bodyEn, importance, extraTags }` を期待
+- 出力: JSON `{ titleJa, summaryJa, summaryEn }` を期待。本文は専用 body consumer が別生成する
 
 ---
 
@@ -436,7 +446,8 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 
 | 項目 | 手段 |
 |---|---|
-| Worker 実行ログ | `npx wrangler tail tech-dashboard-harness` or CF ダッシュボード Observability |
+| Publisher 実行ログ | GitHub Actions `Publisher` |
+| Bridge 実行ログ | `npx wrangler tail tech-dashboard-harness` or CF ダッシュボード Observability |
 | 収集品質 | `quality-audit` Skill → `data/_runs/audit-*.md` |
 | サイト稼働 | CF Pages ダッシュボード |
 | RSS / JSON Feed | `/rss.xml`, `/feed.json` で公開 |
@@ -445,8 +456,9 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 
 | キー | 用途 | 管理場所 |
 |---|---|---|
-| `COPILOT_PAT` | Copilot Enterprise 一時トークン交換 | Wrangler Secrets (Worker) / `.env` (ローカル) |
-| `GH_TOKEN` | GitHub Git Data API + `x-trigger-token` 認証 | Wrangler Secrets |
+| `COPILOT_PAT` | Copilot Enterprise 一時トークン交換 | Queue consumerのWrangler Secrets / `.env.local` (ローカル) |
+| GitHub Actions OIDC | bridge認証 | GitHub発行の短命token。repository secret不要 |
+| `GITHUB_TOKEN` | data-only commit | GitHub Actions built-in token |
 
 ---
 
@@ -467,9 +479,13 @@ npm run deploy:legacy        # 旧 Direct Upload project への緊急手動反�
 
 # ===== Worker =====
 cd worker && npm install
-npx wrangler dev             # http://localhost:8787/run
+npx wrangler dev             # http://localhost:8787/health
+npm run deploy -- --dry-run  # Free bridge bundle確認
 npx wrangler deploy          # 本番 Worker 更新
 npx wrangler tail            # 実ログ tail
+
+# ===== Production Publisher =====
+gh workflow run publisher.yml -f dry_run=true
 ```
 
 ---
@@ -480,7 +496,7 @@ npx wrangler tail            # 実ログ tail
 |---|---|---|
 | Pages Git 連携 | 新規 Git Integration project へ移行 | 初回 deploy 成功後に `techdb.studio344.net` を移行 |
 | 検索の日本語 stem | Pagefind 未対応 | 必要なら kuromoji プラガブル化 |
-| Copilot 要約のレート | 1 実行 5 件まで | フル同期は時間分散で段階的補充 |
+| Copilot 要約のレート | Publisher 1 runあたり最大35件をQueue投入 | KV日次上限とbacklogを監視 |
 | ライト/ダーク切替 | 固定ダーク | 設定保持付きトグル予定 |
 | 記事詳細ページ | なし (外部リンク直結) | OG 画像 / クリッピング保存機能 |
 | 通知 (Slack / メール) | なし | 重要度 3 エントリを webhook 配信予定 |
@@ -491,11 +507,12 @@ npx wrangler tail            # 実ログ tail
 
 | エンドポイント | メソッド | 認証 | 説明 |
 |---|---|---|---|
-| `/run` | POST | `x-trigger-token: $GH_TOKEN` | Worker 即時実行 (202 Accepted) |
-| (cron) | — | — | `0 * * * *` で scheduled handler |
+| `/health` | GET | public | Free bridgeのmode、binding、OIDC設定を確認 |
+| bridge operations | POST | GitHub Actions OIDC | allowlist済みKV read/write、Queue送信 |
+| Publisher | GitHub Actions | repository permissions | `0 * * * *` / `workflow_dispatch` |
 
 ## 付録 B. コミット規約
 
-- Worker 生成: `chore(data): update tech dashboard <ISO>`
+- Publisher 生成: `chore(data): update tech dashboard <ISO>`
 - 機能追加: `feat(<scope>): ...` / 修正: `fix(<scope>): ...`
 - `[skip ci]` は使用しない (Cloudflare Pages Git Integration の build skip と混同しないため)

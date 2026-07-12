@@ -3,11 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev --test-scheduled",
+    "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "tail": "wrangler tail",
-    "trigger": "curl -X POST 'http://127.0.0.1:8787/__scheduled?cron=0+15+*+*+*'"
+    "health": "curl -fsS 'http://127.0.0.1:8787/health'"
   },
   "dependencies": {
     "fast-xml-parser": "^4.5.0"

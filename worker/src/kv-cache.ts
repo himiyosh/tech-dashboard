@@ -1,3 +1,5 @@
+import type { KeyValueBinding } from "./runtime-bindings.ts";
+
 /**
  * Per-URL summary cache (KV) helpers.
  *
@@ -52,7 +54,7 @@ export async function cacheKeyForUrl(url: string): Promise<string> {
 
 /** Read a single cache entry by URL. Returns null on miss or parse error. */
 export async function getCacheEntry(
-  kv: KVNamespace,
+  kv: KeyValueBinding,
   url: string,
 ): Promise<CacheEntry | null> {
   const key = await cacheKeyForUrl(url);
@@ -61,11 +63,11 @@ export async function getCacheEntry(
 
 /**
  * Read N cache entries in parallel. Returns a Map<url, CacheEntry>; missing
- * URLs are simply absent from the map. Use for the harness Worker's per-batch
- * lookup (~50-150 URLs at a time).
+ * URLs are simply absent from the map. Use for the publisher's bounded
+ * per-run lookup.
  */
 export async function getCacheEntries(
-  kv: KVNamespace,
+  kv: KeyValueBinding,
   urls: readonly string[],
 ): Promise<Map<string, CacheEntry>> {
   const out = new Map<string, CacheEntry>();
@@ -81,7 +83,7 @@ export async function getCacheEntries(
 
 /** Write a single cache entry by URL. */
 export async function putCacheEntry(
-  kv: KVNamespace,
+  kv: KeyValueBinding,
   url: string,
   entry: CacheEntry,
 ): Promise<void> {
@@ -115,7 +117,7 @@ export function cacheMetadataMatchesPublisherContract(
  * keys, fallback hits should approach zero and the blob can be retired.
  */
 export async function getCacheEntriesWithLegacyFallback(
-  kv: KVNamespace,
+  kv: KeyValueBinding,
   urls: readonly string[],
   legacyBlobKey = "cache.v1",
 ): Promise<Map<string, CacheEntry>> {

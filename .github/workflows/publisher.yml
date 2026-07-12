@@ -1,0 +1,126 @@
+name: Publisher
+run-name: Publisher / ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'dry-run' || 'publish' }}
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Prepare and compare data without writes, queue sends, or push
+        type: boolean
+        default: false
+
+concurrency:
+  group: tech-dashboard-publisher
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    name: collect, verify, and publish data
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PUBLISHER_BRIDGE_URL: https://tech-dashboard-harness.himiyosh.workers.dev
+      PUBLISHER_OIDC_AUDIENCE: tech-dashboard-publisher
+      PUBLISHER_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Confirm clean checkout
+        run: |
+          test -z "$(git status --porcelain --untracked-files=no)"
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          git fetch --quiet origin main
+          test "$(git rev-parse origin/main)" = "${GITHUB_SHA}"
+
+      - name: Prepare publisher output
+        id: publisher
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          mode="--apply"
+          if [ "${PUBLISHER_DRY_RUN}" = "true" ]; then
+            mode="--dry-run"
+          fi
+          npm run publisher:run -- "${mode}"
+
+      - name: Install verification dependencies
+        if: steps.publisher.outputs.changed == 'true' && env.PUBLISHER_DRY_RUN != 'true'
+        run: |
+          npm --prefix worker ci
+          npm --prefix web ci
+          npx playwright install --with-deps chromium
+
+      - name: Verify generated data
+        if: steps.publisher.outputs.changed == 'true' && env.PUBLISHER_DRY_RUN != 'true'
+        run: |
+          npm run secrets:scan
+          npm run typecheck
+          npm run typecheck:worker
+          npm test
+          npm run build:web
+          npm run test:e2e
+          git diff --check -- data
+
+      - name: Commit and push verified data
+        id: publish
+        if: steps.publisher.outputs.changed == 'true' && env.PUBLISHER_DRY_RUN != 'true'
+        env:
+          EXPECTED_PARENT: ${{ steps.publisher.outputs.expected_parent }}
+          FILES_JSON: ${{ steps.publisher.outputs.files_json }}
+          MESSAGE_BASE64: ${{ steps.publisher.outputs.message_base64 }}
+        run: |
+          echo "published=false" >> "${GITHUB_OUTPUT}"
+          test "$(git rev-parse HEAD)" = "${EXPECTED_PARENT}"
+          git fetch --quiet origin main
+          if [ "$(git rev-parse origin/main)" != "${EXPECTED_PARENT}" ]; then
+            echo "::warning::main advanced during publisher verification; the next scheduled run will retry"
+            exit 0
+          fi
+
+          node -e 'for (const file of JSON.parse(process.env.FILES_JSON)) process.stdout.write(file + "\0")' | xargs -0 git add --
+          test -z "$(git diff --name-only -- data)"
+          test -z "$(git diff --cached --name-only | grep -Ev '^data/(index|bodies|stats)\.json$|^data/archive/(_index|[0-9]{4}-[0-9]{2})\.json$' || true)"
+          test -n "$(git diff --cached --name-only)"
+
+          message="$(node -e 'process.stdout.write(Buffer.from(process.env.MESSAGE_BASE64, "base64").toString("utf8"))')"
+          git config user.name "tech-dashboard-publisher[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "${message}"
+
+          if ! git push origin HEAD:main; then
+            git fetch --quiet origin main
+            if [ "$(git rev-parse origin/main)" != "${EXPECTED_PARENT}" ]; then
+              echo "::warning::main advanced before push; the next scheduled run will retry"
+              exit 0
+            fi
+            exit 1
+          fi
+          echo "published=true" >> "${GITHUB_OUTPUT}"
+
+      - name: Flush verified Queue and KV effects
+        if: >-
+          steps.publisher.outputs.effects_count != '0' &&
+          env.PUBLISHER_DRY_RUN != 'true' &&
+          (steps.publisher.outputs.changed != 'true' || steps.publish.outputs.published == 'true')
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EFFECTS_PATH: ${{ steps.publisher.outputs.effects_path }}
+        run: npm run publisher:run -- --flush "${EFFECTS_PATH}"

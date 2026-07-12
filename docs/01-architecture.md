@@ -10,7 +10,7 @@
 
 | ID   | 要件                                                                                                                                                                                | 優先度 |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| F-01 | 14 カテゴリ × 51 登録ソース (Worker 実行時は `user-opml` を除く 50 ソース) の更新情報を自動収集 | MUST   |
+| F-01 | `harness/registry.ts` の有効ソース (`user-opml` を除く) の更新情報を自動収集 | MUST   |
 | F-02 | 収集したエントリを共通スキーマに正規化                                                                                                                                              | MUST   |
 | F-03 | 重複排除・クラスタリング (同一ニュースの統合)                                                                                                                                       | MUST   |
 | F-04 | 日本語要約 (1-2 文)                                                                                                                                                                 | MUST   |
@@ -19,21 +19,21 @@
 | F-07 | タグ・ソース・期間でフィルタ                                                                                                                                                        | MUST   |
 | F-08 | 全文検索                                                                                                                                                                            | SHOULD |
 | F-09 | RSS / JSON Feed 出力                                                                                                                                                                | SHOULD |
-| F-10 | 毎時自動更新 (Cloudflare Worker + Pages Git Integration)                                                                                                                           | MUST   |
+| F-10 | 毎時自動更新 (GitHub Actions Publisher + Cloudflare OIDC bridge + Pages Git Integration)                                                                                          | MUST   |
 
 ### 1.2 非機能要件
 
 | 項目                   | 目標                            |
 | ---------------------- | ------------------------------- |
-| 更新頻度               | Worker cron 毎時。個別ソースはおおむね 6 時間ごと |
+| 更新頻度               | Publisher workflow 毎時。個別ソースはおおむね 6 時間ごと |
 | ページロード (LCP)     | < 2.0s (static site)            |
 | Lighthouse Performance | >= 95                           |
 | コスト                 | LLM API 月額 < $20 (個人ユース) |
 | 運用工数               | < 30 分/月                      |
 
-### 1.3 情報ソース (Production = 51 登録ソース)
+### 1.3 情報ソース
 
-Production では registry の有効ソースを対象とする。Worker 実行時はローカル FS 依存の `user-opml` を除外し、対象ソースを 6 batch に分割して毎時ローテーションする。完全な現行仕様は [SPEC.md](SPEC.md) と `harness/registry.ts` を正とする。
+Production では registry の有効ソースを対象とする。Publisher 実行時はローカル FS 依存の `user-opml` を除外し、対象ソースを 6 batch に分割して毎時ローテーションする。完全な現行仕様は [SPEC.md](SPEC.md) と `harness/registry.ts` を正とする。
 
 **14 カテゴリ** (`slug` / 概要):
 1. `copilot` – GitHub Copilot (CLI/Chat/Enterprise)
@@ -63,21 +63,27 @@ Production では registry の有効ソースを対象とする。Worker 実行�
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                   Cloudflare Worker Cron                     │
+│              GitHub Actions Publisher (Node 22)              │
 │                   = Runtime Harness Loop                     │
 └──────────────────┬──────────────────────────────────────────┘
                    │ cron: 0 * * * * (6 batch rotation)
                    ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Worker Harness (Node/TS, shared collectors/pipeline)        │
+│  Node Harness (shared collectors/pipeline)                   │
 │  ├─ Collectors (1 per source, parallel)                     │
 │  ├─ Pipeline (normalize → dedupe → fallback → queue enqueue)│
-│  └─ Publisher (commit data/index.json + archive + stats)     │
+│  └─ Quality gates + data-only commit + deferred effects      │
 └──────────────────┬──────────────────────────────────────────┘
-                   │ git commit + push
+                   │ non-force data push
                    ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  Static Site Build (Astro) → Deploy (Cloudflare Pages)      │
+└─────────────────────────────────────────────────────────────┘
+
+                   │ push success 後だけ GitHub Actions OIDC
+                   ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Cloudflare Free bridge → Summary / Body Queue + og.v1 KV    │
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
@@ -92,7 +98,7 @@ Production では registry の有効ソースを対象とする。Worker 実行�
 
 本プロジェクトは **2 つのハーネス** を持つ (Anthropic Initializer+Worker パターンの応用):
 
-- **Runtime Harness** (Cloudflare Worker cron + shared pipeline): 本番で毎時実行される決定論的 Workflow。再現性・検証性を最優先
+- **Runtime Harness** (GitHub Actions Publisher + shared pipeline + Free bridge): 本番で毎時実行される決定論的 Workflow。再現性・検証性を最優先
 - **Dev-time Harness** (Claude Code / Copilot): 開発者が新ソース追加、UI 改善、品質監査を行うためのエージェント環境
 
 Runtime は **Workflow**、Dev-time は **Agent** (原則 3)。
@@ -103,7 +109,7 @@ Runtime は **Workflow**、Dev-time は **Agent** (原則 3)。
 | -------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | Site generator | **Astro**                                                                          | Island architecture で JS 最小、静的配信で高速・低コスト |
 | UI             | Astro components + vanilla client scripts                                           | JS 最小の静的 UI、Pagefind 検索                          |
-| Harness        | Node.js 22 + TypeScript                                                            | Cloudflare Pages / Worker とローカル検証の parity を優先 |
+| Harness        | Node.js 22 + TypeScript + GitHub Actions + Cloudflare Workers Free bridge         | 重い処理を Node job、認証済み Queue/KV 転送を軽量 bridge に分離 |
 | LLM            | **Claude Sonnet 4.6** (Queue consumer) / ローカル backfill は Sonnet 4.6 または Opus 4.7 | Worker CPU 制約を避けつつ品質を維持                      |
 | Data store     | **Git** (JSON + Markdown)                                                          | DB 不要、差分可視、バージョン管理、$0                    |
 | 検索           | Pagefind (静的)                                                                    | ビルド時インデックス、クライアント検索、サーバ不要       |
@@ -178,6 +184,7 @@ data/
 │     └─ <id>.json              # 1 エントリ 1 ファイル (diff 可視)
 ├─ clusters.json                # 重複クラスタマップ
 ├─ index.json                   # サイト配信用 (最新 2000 件)
+├─ bodies.json                  # 記事本文 sidecar (index は本文フリー)
 ├─ stats.json                   # archive 込みの記事数推移 / source 集計
 ├─ archive/
 │  ├─ _index.json               # 月別 archive index
@@ -194,7 +201,7 @@ data/
 ## 4. データフロー (1 サイクル)
 
 ```
-[trigger] Cloudflare Worker cron
+[trigger] GitHub Actions Publisher schedule / workflow_dispatch
    │
    ▼
 [1] Collect (parallel, per source)
@@ -216,7 +223,7 @@ data/
    │
    ▼
 [4] Fallback + Queue summarize (Claude Sonnet 4.6)
-   - Worker は deterministic fallback で空欄を防ぎ、Queue に最大 ENQUEUE_MAX_NEW 件/run を投入
+   - Publisher は deterministic fallback で空欄を防ぎ、Queue job を遅延 effects bundle に保存
    - worker-summarizer が 1 message/invocation で Copilot 要約を生成
    - Hook: JSON schema, summary/body 欠落検出、per-URL KV cache 再利用
    - Verifier: generated body と summary の欠落、model error、cache 不整合を run metadata に記録
@@ -225,10 +232,16 @@ data/
 [5] Publish
    - data/index.json / data/archive/*.json / data/stats.json を生成
    - ローカル harness は data/_runs/<timestamp>.json も生成
-   - GitHub Git Data API で data 差分を 1 commit にまとめて main に反映
+   - typecheck / unit / schema / web build / E2E / secret scan を実行
+   - 開始時 main SHA が不変なら allowlist 済み data 差分を 1 commit にまとめて main へ non-force push
    │
    ▼
-[6] Site Rebuild
+[6] Flush Effects
+   - push 成功後だけ GitHub Actions OIDC で Free bridge を呼ぶ
+   - Queue job と og.v1 KV write だけを allowlist 内で実行
+   │
+   ▼
+[7] Site Rebuild
    - Cloudflare Pages Git Integration が main push を検知してビルド
    - Pagefind 検索インデックス生成
    - `npm run build` (root directory `web`, output `dist`)
@@ -244,17 +257,17 @@ Arize 提言: **agent needs telemetry comparable to human developers**。
 
 | 項目                         | 実装                                                   |
 | ---------------------------- | ------------------------------------------------------ |
-| 各ステップの成否             | Worker health metadata + `data/_runs/<timestamp>.json` |
+| 各ステップの成否             | Publisher workflow + health metadata + `data/_runs/<timestamp>.json` |
 | LLM 呼出数・トークン・コスト | `data/_runs/*.json` に記録                             |
 | Collector 別の収集件数       | 同上、ダッシュボードに `/status` ページで可視化        |
-| 失敗率 / リトライ            | Worker run metadata と collector 側 retry で把握       |
+| 失敗率 / リトライ            | Publisher run metadata と collector 側 retry で把握    |
 | 異常検知                     | 前日比 ±50% 以上の変動で Slack/Discord 通知 (将来)     |
 
 ---
 
 ## 6. セキュリティ / プライバシー
 
-- API キーと token は Wrangler Secrets / `.env.local` のみ。ログ出力禁止
+- Copilot token は Queue consumer の Wrangler Secrets / `.env.local` のみ。bridge は GitHub Actions OIDC、Publisher commit は built-in `GITHUB_TOKEN` を使い、ログ出力しない
 - 外部ソース取得は `User-Agent: tech-dashboard-bot/1.0` を明示、`robots.txt` を尊重
 - Reddit / HN 等はレート制限を遵守 (指数バックオフ)
 - サイトにはユーザ追跡 Cookie を設置しない (アクセス解析は Cloudflare Web Analytics のみ)
@@ -268,7 +281,7 @@ Arize 提言: **agent needs telemetry comparable to human developers**。
 | P0 (設計) | 本ドキュメント群 + サイト仕様 v1.0 の初期化                               | 完了                                                        |
 | P1 (MVP)  | Tier 1 コアソース + 基本 UI (サイドバー / トレンド / タイムライン)        | 完了                                                        |
 | P2        | 50 ソース収集、全文検索、タグフィルタ、RSS / JSON Feed                    | 完了                                                        |
-| P3        | 品質監査 Skill、`/status` ページ、Worker Health、secret gate              | 完了                                                        |
+| P3        | 品質監査 Skill、`/status` ページ、Publisher / Worker Health、secret gate  | 完了                                                        |
 | P4        | OPML / YouTube / HN などの任意ソースと運用品質の継続改善                  | 継続                                                        |
 
 ---

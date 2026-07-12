@@ -11,6 +11,7 @@ import {
   parsePublisherContractContent,
 } from "../worker/src/publisher-contract.ts";
 import {
+  assertSafePublisherEntryCount,
   ghCommitFiles,
   ghGetFileRaw,
   jsonContentDiffers,
@@ -123,6 +124,51 @@ describe("publisher contract runtime guard", () => {
       "POST",
       "PATCH",
     ]);
+  });
+
+  it("revalidates the exact parent even when there are no data files to commit", async () => {
+    const contractContent = readFileSync(CONTRACT_PATH, "utf8");
+    const requests: Array<{ url: string; method: string }> = [];
+    const responses = [
+      { object: { sha: "head-sha" } },
+      {
+        content: Buffer.from(contractContent, "utf8").toString("base64"),
+        sha: "contract-blob",
+        encoding: "base64",
+      },
+    ];
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+      requests.push({
+        url: String(input),
+        method: init?.method ?? "GET",
+      });
+      return new Response(JSON.stringify(responses.shift()), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+
+    await expect(
+      ghCommitFiles(
+        {
+          GH_TOKEN: "test-token",
+          GITHUB_OWNER: "owner",
+          GITHUB_REPO: "repo",
+          GITHUB_BRANCH: "main",
+        },
+        "no data changes",
+        [],
+        "head-sha",
+      ),
+    ).resolves.toBeNull();
+    expect(requests.map((request) => request.method)).toEqual(["GET", "GET"]);
+  });
+
+  it("treats a collapse guard violation as an aborted publisher run", () => {
+    expect(() => assertSafePublisherEntryCount(100, 49)).toThrow(
+      /aborting publish/,
+    );
+    expect(() => assertSafePublisherEntryCount(100, 50)).not.toThrow();
   });
 
   it("does not create a data tree when the exact parent contract mismatches", async () => {
@@ -254,10 +300,10 @@ describe("publisher contract updater", () => {
       const covered = join(root, "covered");
       mkdirSync(covered);
       writeFileSync(join(covered, "runtime.ts"), "export const value = 1;\n", "utf8");
-      writeFileSync(join(covered, "runtime.mjs"), "export const value = 2;\n", "utf8");
+      writeFileSync(join(covered, "runtime.txt"), "unsupported\n", "utf8");
 
       expect(() => calculatePublisherFingerprint(root, ["covered"])).toThrow(
-        /does not support covered\/runtime\.mjs/,
+        /does not support covered\/runtime\.txt/,
       );
     } finally {
       rmSync(root, { recursive: true, force: true });

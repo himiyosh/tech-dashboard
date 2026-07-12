@@ -2,7 +2,7 @@ name: Worker Health
 
 on:
   schedule:
-    - cron: "15 * * * *"
+    - cron: "40 * * * *"
   workflow_dispatch:
 
 concurrency:
@@ -25,5 +25,7 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Check Cloudflare Workers health
+      - name: Check publisher and Cloudflare enrichment health
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: npm run health:prod

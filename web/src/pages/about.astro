@@ -25,6 +25,8 @@ const runStatus = deriveWorkerRunStatus({
   pendingSummaryEntries: DASHBOARD_METRICS.fallbackEntries,
 });
 const sourceTypes = [...new Set(ALL_ENTRIES.map((entry) => entry.sourceType))].sort();
+const workerBatchCount = DASHBOARD_METRICS.workerBatchTotal;
+const workerBatchCopy = workerBatchCount ? `${workerBatchCount} batch` : "multi-batch";
 const groupSummary = CATEGORY_META.reduce<Record<CategoryGroup, number>>((acc, category) => {
   acc[category.group] = (acc[category.group] ?? 0) + 1;
   return acc;
@@ -53,7 +55,7 @@ const pipelineSteps = [
   {
     label: "Collect",
     title: "公式 feed と community feed を収集",
-    body: "RSS、Atom、GitHub Releases、arXiv、HTML index から記事候補を取り込みます。Worker は source を 4 batch に分けて毎時 rotation します。",
+    body: `RSS、Atom、GitHub Releases、arXiv、HTML index から記事候補を取り込みます。Worker は source を ${workerBatchCopy} に分けて毎時 rotation します。`,
   },
   {
     label: "Normalize",
@@ -112,7 +114,7 @@ const pipelineSteps = [
 
         <article class="about-panel">
           <span class="panel-kicker">Freshness</span>
-          <h3>毎時 run、source は 4 batch rotation</h3>
+          <h3 data-worker-batch-total={workerBatchCount ?? "unknown"}>毎時 run、source は {workerBatchCopy} rotation</h3>
           <p>
             Worker は毎時起動し、{DASHBOARD_METRICS.totalSourceCount} sources を batch 分割して収集します。
             Status では batch、source registry、freshness、summarize 状態を確認できます。

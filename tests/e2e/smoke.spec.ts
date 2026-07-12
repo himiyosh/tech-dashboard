@@ -26,6 +26,34 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".signal-node.node-source")).toContainText(/active sources/i);
     await expect(page.locator(".banner-fact").filter({ hasText: "収録中ソース" })).toContainText(/registry sources with live entries/i);
     await expect(page.locator(".banner-fact").filter({ hasText: "Active registry sources" })).toContainText(/active registry sources/i);
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    });
+    const desktopDensity = await page.evaluate(() => {
+      const box = (selector: string) => {
+        const element = document.querySelector(selector);
+        if (!element) return null;
+        const rect = element.getBoundingClientRect();
+        return { y: rect.y, height: rect.height };
+      };
+      return {
+        banner: box(".banner-inner"),
+        main: box(".layout main"),
+        topRank: box(".top-rank"),
+        visibleBottom: Math.min(
+          window.innerHeight,
+          document.querySelector(".footer-bar")?.getBoundingClientRect().top ?? window.innerHeight,
+        ),
+      };
+    });
+    expect(desktopDensity.banner?.height, "desktop hero stays decision-dense").toBeLessThanOrEqual(370);
+    expect(desktopDensity.main?.y, "desktop decision area starts near the first viewport").toBeLessThanOrEqual(520);
+    expect(desktopDensity.topRank?.y, "desktop ranked Top-3 begins within the first viewport").toBeLessThanOrEqual(900);
+    expect(
+      (desktopDensity.topRank?.y ?? Number.POSITIVE_INFINITY) + (desktopDensity.topRank?.height ?? 0),
+      "desktop ranked Top-3 stays above the fixed footer in the first viewport",
+    ).toBeLessThanOrEqual(desktopDensity.visibleBottom);
     await expect(page.getByRole("link", { name: /今日の重要記事/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /検索/ })).toBeVisible();
     await expect(page.locator(".banner-quick-links").getByRole("link", { name: /カテゴリ/ })).toBeVisible();
@@ -74,7 +102,7 @@ test.describe("TECH Dashboard smoke", () => {
         .filter(Boolean);
       const duplicateFreshnessText = Array.from(document.querySelectorAll<HTMLElement>(".top-rank-list .top-rank-item .rank-reason.i18n-ja"))
         .some((el) => /収集元 更新(?:OK|遅延)/.test(el.innerText));
-      const sourceTypeBadge = document.querySelector("article.featured .featured-meta .badge[data-source-type]") as HTMLElement | null;
+      const authorityBadge = document.querySelector("article.featured .featured-meta .badge[data-source-authority]") as HTMLElement | null;
       const importanceBadge = document.querySelector("article.featured .featured-meta [data-featured-importance]") as HTMLElement | null;
       return {
         featuredHref,
@@ -82,8 +110,10 @@ test.describe("TECH Dashboard smoke", () => {
         featuredSource,
         topSources,
         duplicateFreshnessText,
-        sourceType: sourceTypeBadge?.dataset.sourceType ?? "",
-        sourceTypeClass: sourceTypeBadge?.className ?? "",
+        sourceType: authorityBadge?.dataset.sourceType ?? "",
+        sourceAuthority: authorityBadge?.dataset.sourceAuthority ?? "",
+        authorityClass: authorityBadge?.className ?? "",
+        authorityText: authorityBadge?.innerText.trim() ?? "",
         importanceTone: importanceBadge?.dataset.importanceTone ?? "",
         importanceLevel: importanceBadge?.dataset.importanceLevel ?? "",
         importanceClass: importanceBadge?.className ?? "",
@@ -105,15 +135,12 @@ test.describe("TECH Dashboard smoke", () => {
     expect(decisionLinks.duplicateFreshnessText, "rank reasons should not duplicate freshness badge wording").toBe(
       false,
     );
-    if (decisionLinks.sourceType === "paper") {
-      expect(decisionLinks.sourceTypeClass).toContain("paper");
-    } else if (decisionLinks.sourceType === "release" || decisionLinks.sourceType === "changelog") {
-      expect(decisionLinks.sourceTypeClass).toContain("release");
-    } else {
-      expect(decisionLinks.sourceTypeClass.includes("release") || decisionLinks.sourceTypeClass.includes("paper")).toBe(
-        false,
-      );
-    }
+    expect(["official", "paper", "community", "news", "aggregator", "source"]).toContain(
+      decisionLinks.sourceAuthority,
+    );
+    expect(decisionLinks.authorityClass).toContain("authority");
+    expect(decisionLinks.authorityClass).toContain(decisionLinks.sourceAuthority);
+    expect(decisionLinks.authorityText).toMatch(/公式|論文|コミュニティ|報道|集約|出典/);
     expect(["high", "medium", "normal"]).toContain(decisionLinks.importanceTone);
     const expectedTone = ({
       "3": "high",
@@ -130,8 +157,14 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".featured-freshness .i18n-ja")).toHaveText(/収集元 更新(?:OK|遅延)/);
     const spotlightRationale = page.locator(".featured-rationale");
     await expect(spotlightRationale).toBeVisible();
-    await expect(spotlightRationale.locator(".i18n-ja")).toContainText(/注目する理由:\s*\S+/);
-    await expect(spotlightRationale.locator(".i18n-en")).toContainText(/Why it matters:\s*\S+/);
+    await expect(spotlightRationale.locator(".i18n-ja")).toContainText(/選定根拠:\s*\S+/);
+    await expect(spotlightRationale.locator(".i18n-en")).toContainText(/Selection basis:\s*\S+/);
+    const rankReasons = page.locator(".top-rank-item .rank-reason.i18n-ja");
+    await expect(rankReasons).toHaveCount(3);
+    for (const reason of await rankReasons.all()) {
+      await expect(reason).toBeVisible();
+      await expect(reason).not.toHaveText("");
+    }
 
     const featuredTrustOrder = await page.evaluate(() => {
       const title = document.querySelector<HTMLElement>("article.featured .featured-title");
@@ -601,11 +634,16 @@ test.describe("TECH Dashboard smoke", () => {
     const labels: string[] = [];
     for (let i = 0; i < count; i++) {
       const item = items.nth(i);
-      // Each category tile shows an emoji icon (non-ASCII glyph), not a 2-letter code.
-      const icon = (await item.locator(".brand-tile").innerText()).trim();
+      // Decorative tile text is generated by CSS so it does not pollute the
+      // link's accessible name.
+      const icon = ((await item.locator(".brand-tile").getAttribute("data-initial")) ?? "").trim();
       expect(icon.length, `category ${i} has a compact icon tile`).toBeGreaterThan(0);
       expect(icon.length, `category ${i} icon tile stays compact`).toBeLessThanOrEqual(3);
-      labels.push((await item.locator(".name-marquee").innerText()).trim());
+      const label = (await item.locator(".name-marquee").innerText()).trim();
+      const entryCount = (await item.locator(".count").innerText()).trim().replace(/\s+/g, " ");
+      await expect(item).not.toHaveAttribute("aria-label");
+      await expect(item).toHaveAccessibleName(`${label} ${entryCount}`);
+      labels.push(label);
     }
     // Labels are in case-insensitive A→Z order.
     const sorted = [...labels].sort((a, b) => a.localeCompare(b));
@@ -623,6 +661,7 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("language toggle changes html data-lang", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
 
     const jaBtn = page.locator('.lang-btn[data-lang="ja"]');
@@ -637,6 +676,12 @@ test.describe("TECH Dashboard smoke", () => {
     await jaBtn.click();
     await expect(page.locator("html")).toHaveAttribute("data-lang", "ja");
     await expect(jaBtn).toHaveAttribute("aria-pressed", "true");
+    for (const button of [jaBtn, enBtn]) {
+      const box = await button.boundingBox();
+      expect(box, "language toggle has a rendered box").not.toBeNull();
+      expect(box!.width, "language toggle meets the mobile target width").toBeGreaterThanOrEqual(44);
+      expect(box!.height, "language toggle meets the mobile target height").toBeGreaterThanOrEqual(44);
+    }
   });
 
   test("detail TLDR body follows the active language, not just the heading", async ({ page }) => {
@@ -703,6 +748,42 @@ test.describe("TECH Dashboard smoke", () => {
     const visibleJaTitle = ((await page.locator(".ed-title .i18n-ja").textContent()) ?? "").trim();
     expect(indexedTitle).toBeTruthy();
     expect(indexedTitle).toBe(visibleJaTitle);
+    const authorityMeta = page.locator('meta[data-pagefind-filter="authority[content]"]');
+    await expect(authorityMeta).toHaveCount(1);
+    await expect(authorityMeta).toHaveAttribute(
+      "content",
+      /^(official|paper|community|news|aggregator|source)$/,
+    );
+    const authorityPill = page.locator("[data-source-authority]").first();
+    await expect(authorityPill).toBeVisible();
+    await expect(authorityPill).toContainText(/公式|論文|コミュニティ|報道|集約|出典/);
+  });
+
+  test("home keeps the decision path compact at tablet width", async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 900 });
+    await page.goto("/");
+    await expect(page.locator(".banner-right")).toBeHidden();
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    });
+    const metrics = await page.evaluate(() => {
+      const banner = document.querySelector(".banner-inner")?.getBoundingClientRect();
+      const main = document.querySelector(".layout main")?.getBoundingClientRect();
+      const topRank = document.querySelector(".top-rank")?.getBoundingClientRect();
+      const footer = document.querySelector(".footer-bar")?.getBoundingClientRect();
+      return {
+        bannerHeight: banner?.height ?? Number.POSITIVE_INFINITY,
+        mainY: main?.y ?? Number.POSITIVE_INFINITY,
+        topRankBottom: topRank?.bottom ?? Number.POSITIVE_INFINITY,
+        visibleBottom: Math.min(window.innerHeight, footer?.top ?? window.innerHeight),
+        overflow: document.documentElement.scrollWidth - window.innerWidth,
+      };
+    });
+    expect(metrics.bannerHeight).toBeLessThanOrEqual(320);
+    expect(metrics.mainY).toBeLessThanOrEqual(500);
+    expect(metrics.topRankBottom, "tablet ranked Top-3 stays above the fixed footer").toBeLessThanOrEqual(metrics.visibleBottom);
+    expect(metrics.overflow).toBeLessThanOrEqual(0);
   });
 
   test("skip link is keyboard visible and focuses content start", async ({ page }) => {
@@ -715,7 +796,9 @@ test.describe("TECH Dashboard smoke", () => {
     const top = await skip.evaluate((el) => Number.parseFloat(getComputedStyle(el).top));
     expect(top, "skip link should be fully visible immediately on focus").toBeGreaterThanOrEqual(0);
     await page.keyboard.press("Enter");
-    await expect(page.locator("#content-start")).toBeFocused();
+    const contentStart = page.locator("#content-start");
+    await expect(contentStart).toBeFocused();
+    await expect(contentStart).not.toHaveAttribute("aria-label");
   });
 
   test("status page renders worker and source health", async ({ page }) => {
@@ -1044,6 +1127,16 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(sharingEn).toContainText("Summaries support triage");
     await expect(sharingJa).toContainText("共有前に原文を確認");
     await expect(sharingEn).toContainText("confirm the original source before sharing");
+    const batchHeading = page.locator("[data-worker-batch-total]");
+    const batchTotal = await batchHeading.getAttribute("data-worker-batch-total");
+    expect(batchTotal).toBeTruthy();
+    if (batchTotal !== "unknown") {
+      await expect(batchHeading).toContainText(`${batchTotal} batch`);
+      await page.goto("/status/");
+      await expect(page.locator('[data-health-scope="latest-batch"] small')).toContainText(`/${batchTotal}`);
+    } else {
+      await expect(batchHeading).toContainText("multi-batch");
+    }
   });
 
   test("Research copy distinguishes selected research from paper-only arXiv browsing", async ({ page }) => {
@@ -1148,9 +1241,18 @@ test.describe("TECH Dashboard smoke", () => {
     const desktopMenuButton = page.locator("header .menu-trigger");
     await expect(desktopMenuButton).toBeVisible();
     await expect(desktopMenuButton).toHaveAttribute("aria-expanded", "false");
+    await desktopMenuButton.focus();
+    const focusRing = await desktopMenuButton.evaluate((button) => {
+      const style = getComputedStyle(button);
+      return { style: style.outlineStyle, width: Number.parseFloat(style.outlineWidth) };
+    });
+    expect(focusRing.style).not.toBe("none");
+    expect(focusRing.width).toBeGreaterThanOrEqual(3);
     await desktopMenuButton.click();
     const menu = page.locator("#site-menu");
     await expect(menu).toBeVisible();
+    await expect(menu).toHaveAttribute("open", "");
+    expect(await menu.evaluate((dialog) => dialog.matches(":modal"))).toBe(true);
     await expect(desktopMenuButton).toHaveAttribute("aria-expanded", "true");
     // Primary explore shortcuts (Categories, arXiv, Knowledge) live in the
     // header switcher, never in the hamburger menu (LL-054 avoids duplicates).
@@ -1159,8 +1261,19 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(menu.getByRole("link", { name: /Archive/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /About/ })).toBeVisible();
     await expect(menu.getByRole("button", { name: /Search/ })).toBeVisible();
+    for (let index = 0; index < 12; index += 1) {
+      await page.keyboard.press("Tab");
+      expect(
+        await page.evaluate(() => {
+          const dialog = document.querySelector("#site-menu");
+          return Boolean(dialog?.contains(document.activeElement));
+        }),
+        `modal menu keeps focus on Tab step ${index + 1}`,
+      ).toBe(true);
+    }
     await page.keyboard.press("Escape");
     await expect(menu).toBeHidden();
+    await expect(desktopMenuButton).toBeFocused();
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
@@ -1437,7 +1550,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(detailTime.locator(".ed-rel")).not.toHaveText("");
   });
 
-  test("pagefind search returns dashboard entries", async ({ page }) => {
+  test("pagefind search returns category intent entries without implicit selection", async ({ page }) => {
     await page.goto("/");
 
     await page.locator("button[data-search-trigger]:visible").first().click();
@@ -1447,8 +1560,206 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".search-hit").first()).toBeVisible({ timeout: 10_000 });
     await expect(page.locator(".search-hit-type").first()).toBeVisible({ timeout: 10_000 });
     await expect(page.locator(".search-results-heading")).toContainText("Results");
-    await expect(page.locator(".search-hit-type").first()).toHaveText("ARTICLE");
-    await expect(page.locator(".search-hit.is-active").first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator(".search-hit-type").first()).toHaveText("CATEGORY");
+    await expect(page.locator(".search-hit").first()).toHaveAttribute("href", "/c/copilot/");
+    await expect(page.locator(".search-hit.is-active")).toHaveCount(0);
+    await expect(page.locator("#pagefind-search-input")).not.toHaveAttribute("aria-activedescendant");
+    await page.locator("#pagefind-search-input").press("ArrowDown");
+    const firstHit = page.locator(".search-hit").first();
+    await expect(firstHit).toHaveClass(/is-active/);
+    await expect(page.locator("#pagefind-search-input")).toHaveAttribute(
+      "aria-activedescendant",
+      (await firstHit.getAttribute("id"))!,
+    );
+
+    await page.locator("#pagefind-search-input").fill("open source model");
+    await expect(page.locator(".search-hit").first()).toHaveAttribute("href", "/c/local-llm/");
+    await expect(page.locator(".search-hit-type").first()).toHaveText("CATEGORY");
+    const categoryHrefs = await page.locator(".search-hit-category").evaluateAll((nodes) =>
+      nodes.map((node) => (node as HTMLAnchorElement).getAttribute("href") ?? ""),
+    );
+    expect(categoryHrefs.some((href) => /\/page\/\d+\//.test(href))).toBe(false);
+  });
+
+  test("pagefind ranks article results by authority, importance, then recency", async ({ page }) => {
+    await page.goto("/");
+    await expect
+      .poll(() => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"))
+      .toBe(true);
+    await page.evaluate(() => {
+      const pagefind = (window as any).__pagefind;
+      const result = (
+        url: string,
+        title: string,
+        authority: string,
+        importance: string,
+        publishedDay: string,
+      ) => ({
+        data: async () => ({
+          url,
+          meta: { title },
+          excerpt: `${title} explains agent operations.`,
+          filters: { authority: [authority], importance: [importance], publishedDay: [publishedDay] },
+        }),
+      });
+      pagefind.search = async () => ({
+        results: [
+          result("/categories/", "Agent categories", "source", "3", "2026-07-20"),
+          result("/e/community-agent/", "Community agent guide", "community", "3", "2026-07-20"),
+          result("/e/official-agent-old/", "Official high-importance reference", "official", "3", "2026-07-18"),
+          result("/e/official-agent-new/", "Official low-importance update", "official", "1", "2026-07-20"),
+        ],
+      });
+    });
+
+    const opener = page.locator("button[data-search-trigger]:visible").first();
+    await opener.click();
+    const input = page.locator("#pagefind-search-input");
+    await input.fill("agent");
+    const hits = page.locator(".search-hit");
+    await expect(hits).toHaveCount(4);
+    expect(await hits.evaluateAll((items) => items.map((item) => item.getAttribute("aria-selected")))).toEqual([
+      "false",
+      "false",
+      "false",
+      "false",
+    ]);
+    expect(await hits.locator(".search-hit-title").allTextContents()).toEqual([
+      "Official high-importance reference",
+      "Official low-importance update",
+      "Community agent guide",
+      "Agent categories",
+    ]);
+    await expect(hits.first().locator(".search-hit-meta")).toContainText("High importance");
+    await input.press("Enter");
+    await expect(page).toHaveURL(/\/search\/\?q=agent$/);
+  });
+
+  test("pagefind progressively resolves exact articles beyond the first result batch", async ({ page }) => {
+    await page.goto("/");
+    await expect
+      .poll(() => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"))
+      .toBe(true);
+    await page.evaluate(() => {
+      const pagefind = (window as any).__pagefind;
+      const approximate = Array.from({ length: 35 }, (_, index) => ({
+        data: async () => ({
+          url: `/t/unrelated-${index}/`,
+          meta: { title: `Developer tools ${index}` },
+          excerpt: "A nearby Pagefind match without the exact query.",
+          filters: {},
+        }),
+      }));
+      pagefind.search = async () => ({
+        results: [
+          ...approximate,
+          {
+            data: async () => ({
+              url: "/e/exact-release/",
+              meta: { title: "Exact release reference" },
+              excerpt: "Exact release reference with stable provenance.",
+              filters: {
+                authority: ["official"],
+                importance: ["3"],
+                publishedDay: ["2026-07-20"],
+              },
+            }),
+          },
+        ],
+      });
+    });
+
+    await page.locator("button[data-search-trigger]:visible").first().click();
+    await page.locator("#pagefind-search-input").fill("release");
+    await expect(page.locator(".search-hit-title")).toHaveText(["Exact release reference"]);
+  });
+
+  test("search route restores and synchronizes its shareable query", async ({ page }) => {
+    await page.goto("/search/?q=Copilot");
+    await expect(page.locator("#search-page-heading")).toHaveText(/Search/);
+    const form = page.locator('header form.search[role="search"]');
+    const input = form.locator('input[type="search"][name="q"]');
+    await expect(form).toHaveAttribute("action", "/search/");
+    await expect(form).toHaveAttribute("method", "get");
+    await expect(input).toHaveValue("Copilot", { timeout: 10_000 });
+    await expect(form).toHaveClass(/is-open/);
+    await expect(page.locator("#pagefind-results")).toBeVisible({ timeout: 10_000 });
+
+    await input.fill("Claude");
+    await expect(page).toHaveURL(/\/search\/\?q=Claude$/);
+    await page.reload();
+    await expect(input).toHaveValue("Claude", { timeout: 10_000 });
+    await expect(form).toHaveClass(/is-open/);
+  });
+
+  test("search preserves typing that happens while Pagefind is loading", async ({ page }) => {
+    await page.route("**/pagefind/pagefind.js", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      await route.continue();
+    });
+    await page.goto("/search/?q=MCP");
+    const input = page.locator("#pagefind-search-input");
+    await expect(input).toHaveValue("MCP");
+    await input.fill("Copilot");
+    await expect(page).toHaveURL(/\/search\/\?q=Copilot$/);
+    await expect
+      .poll(async () => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"))
+      .toBe(true);
+    await expect(input).toHaveValue("Copilot");
+  });
+
+  test("pagefind prioritizes category intent and hides internal category slugs", async ({ page }) => {
+    await page.goto("/");
+    await expect
+      .poll(() => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"))
+      .toBe(true);
+    await page.evaluate(() => {
+      const pagefind = (window as any).__pagefind;
+      const result = (
+        url: string,
+        title: string,
+        source: string,
+        category: string,
+      ) => ({
+        data: async () => ({
+          url,
+          meta: { title },
+          excerpt: `${title} gives a practical category overview.`,
+          filters: {
+            source: [source],
+            category: [category],
+            authority: ["official"],
+            publishedDay: ["2026-07-20"],
+          },
+        }),
+      });
+      pagefind.search = async (query: string) => ({
+        results: query === "benchmark"
+          ? [
+              result("/e/benchmark-article/", "Benchmark evaluation guide", "Lab", "research"),
+              result("/c/research/", "Papers and Benchmarks", "", "research"),
+            ]
+          : [
+              result("/e/local-model-article/", "Run a local model", "Ollama", "local-llm"),
+              result("/c/local-llm/", "Local Models", "", "local-llm"),
+            ],
+      });
+    });
+
+    await page.locator("button[data-search-trigger]:visible").first().click();
+    const input = page.locator("#pagefind-search-input");
+    await input.fill("local model");
+    const hits = page.locator(".search-hit");
+    await expect(hits).toHaveCount(2);
+    await expect(hits.first()).toHaveAttribute("href", "/c/local-llm/");
+    await expect(hits.nth(1).locator(".search-hit-meta")).toContainText("Local Models");
+    await expect(hits.nth(1).locator(".search-hit-meta")).not.toContainText("local-llm");
+
+    await input.fill("benchmark");
+    await expect(hits).toHaveCount(2);
+    await expect(hits.first()).toHaveAttribute("href", "/c/research/");
+    await expect(hits.nth(1).locator(".search-hit-meta")).toContainText("Papers/Benchmarks");
+    await expect(hits.nth(1).locator(".search-hit-meta")).not.toContainText("research");
   });
 
   test("pagefind exact-result filtering ignores Unicode diacritics", async ({ page }) => {
@@ -1713,7 +2024,7 @@ test.describe("TECH Dashboard smoke", () => {
     expect(aboutTone, "About run tone must equal the shared footer tone").toBe(aboutFooterTone);
   });
 
-  test("article detail explains source tier and source-average denominator", async ({ page }) => {
+  test("article detail explains source authority, importance denominator, and category standing", async ({ page }) => {
     await page.goto("/");
     const firstEntryLink = page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first();
     await expect(firstEntryLink).toBeVisible();
@@ -1723,20 +2034,27 @@ test.describe("TECH Dashboard smoke", () => {
     const strip = page.locator(".ed-meta-strip");
     await expect(strip).toBeVisible();
 
-    // Tier pill renders only for sources with a known tier; when present it must
-    // carry an explanatory accessible label plus a localized visible label.
-    const tierPill = strip.locator(".pill[aria-label]");
-    if ((await tierPill.count()) > 0) {
-      await expect(tierPill.first()).toHaveAttribute("aria-label", /Tier \d source: /);
-      await expect(tierPill.first()).toHaveAttribute("title", /Tier \d source: /);
-      await expect(tierPill.first().locator(".pill-tier-label")).toHaveCount(1);
-    }
+    const authorityPill = strip.locator("[data-source-authority]");
+    await expect(authorityPill).toHaveCount(1);
+    await expect(authorityPill).toHaveAttribute(
+      "aria-label",
+      /^(Official|Paper|Community|News|Aggregator|Source) source \(.+\)( · registry tier \d+)?$/,
+    );
+    await expect(authorityPill).toHaveAttribute(
+      "title",
+      /^(Official|Paper|Community|News|Aggregator|Source) source \(.+\)( · registry tier \d+)?$/,
+    );
+    await expect(authorityPill.locator(".pill-authority-label")).toHaveCount(1);
 
-    // Source average shows its denominator (/ 3) visibly and describes it in a11y text.
-    const srcAvg = strip.locator('li .v[aria-label*="out of 3"]');
+    // Source average shows the last-30 denominator and explicit 1-3 scale.
+    const srcAvg = strip.locator('li .v[aria-label*="last 30 listed entries"]');
     await expect(srcAvg).toHaveCount(1);
-    await expect(srcAvg).toHaveAttribute("aria-label", /out of 3/);
+    await expect(srcAvg).toHaveAttribute("aria-label", /1=Info, 2=Medium, 3=High/);
     await expect(srcAvg).toContainText("/ 3");
+    await expect(srcAvg).toContainText("1=Info · 2=Medium · 3=High");
+    await expect(strip).toContainText(/件中、同等以上 \d+件/);
+    await expect(page.locator(".ed-tldr-source")).toHaveAttribute("href", /^https?:\/\//);
+    await expect(page.locator(".ed-tldr-source .i18n-ja")).toHaveText("原文で検証");
   });
 
   test("entry titles never blank in either language mode (LL-029)", async ({ page }) => {

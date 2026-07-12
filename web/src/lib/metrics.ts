@@ -32,6 +32,7 @@ export interface DashboardMetrics {
   last30dEntries: number;
   workerLastRunAt: string | null;
   workerBatchLabel: string;
+  workerBatchTotal: number | null;
   workerSourceOkLabel: string;
   fallbackEntries: number;
   realSummaryEntries: number;
@@ -104,6 +105,7 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
     last30dEntries: countSince(30 * 86_400_000),
     workerLastRunAt: WORKER_HEALTH?.lastRunAt ?? null,
     workerBatchLabel: WORKER_HEALTH ? `${WORKER_HEALTH.batchIndex}/${WORKER_HEALTH.batchTotal}` : "no data",
+    workerBatchTotal: WORKER_HEALTH?.batchTotal ?? null,
     workerSourceOkLabel: WORKER_HEALTH ? `${WORKER_HEALTH.sourcesOk}/${WORKER_HEALTH.sourcesAttempted}` : "no data",
     fallbackEntries: WORKER_HEALTH?.fallbackTotal ?? fallback.fallbackEntries,
     realSummaryEntries: fallback.realSummaryEntries,

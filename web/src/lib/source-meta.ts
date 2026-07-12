@@ -60,6 +60,44 @@ export const SOURCE_META = [
 
 const SOURCE_META_BY_ID = new Map(SOURCE_META.map((s) => [s.id, s] as const));
 
+export type SourceAuthorityKind = "official" | "paper" | "community" | "news" | "aggregator" | "source";
+
+export interface SourceAuthority {
+  kind: SourceAuthorityKind;
+  ja: string;
+  en: string;
+}
+
+const COMMUNITY_SOURCES = new Set([
+  "simonw-blog",
+  "zenn-ai",
+  "zenn-llm",
+  "zenn-claude",
+  "zenn-copilot",
+  "zenn-mcp",
+  "zenn-cursor",
+  "qiita-copilot",
+  "qiita-claude",
+  "qiita-llm",
+  "qiita-mcp",
+  "qiita-vscode",
+  "qiita-cursor",
+]);
+
+const NEWS_SOURCES = new Set(["techcrunch", "the-verge", "ars-technica"]);
+const AGGREGATOR_SOURCES = new Set(["hn-ai", "user-opml"]);
+
+export function sourceAuthority(id: string, sourceType?: string): SourceAuthority {
+  if (sourceType === "paper") return { kind: "paper", ja: "論文", en: "Paper" };
+  if (AGGREGATOR_SOURCES.has(id)) return { kind: "aggregator", ja: "集約", en: "Aggregator" };
+  if (NEWS_SOURCES.has(id)) return { kind: "news", ja: "報道", en: "News" };
+  if (sourceType === "community" || COMMUNITY_SOURCES.has(id)) {
+    return { kind: "community", ja: "コミュニティ", en: "Community" };
+  }
+  if (SOURCE_META_BY_ID.has(id)) return { kind: "official", ja: "公式", en: "Official" };
+  return { kind: "source", ja: "出典", en: "Source" };
+}
+
 /**
  * Human-readable feed name for a source id, used wherever a source is shown to
  * readers. Strips the internal " tag"/" feed" suffix and never leaks a raw

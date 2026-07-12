@@ -15,6 +15,7 @@ import {
   summaryForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
+import { sourceFaviconUrl, sourceHost } from "../lib/favicon.ts";
 
 export interface Props {
   entry: NormalizedEntry;
@@ -26,25 +27,13 @@ const meta = CATEGORY_META.find((c) => c.slug === entry.category);
 const catColor = meta?.color ?? "#34d399";
 const catEmoji = meta?.emoji ?? "\u{1F4DA}";
 
-function host(url: string): string {
-  try {
-    return new URL(url).host.replace(/^www\./, "");
-  } catch {
-    return "";
-  }
-}
-function faviconUrl(url: string, size = 32): string {
-  const h = host(url);
-  return h ? `https://www.google.com/s2/favicons?sz=${size}&domain=${h}` : "";
-}
-
 const titleJa = titleForLangWithFallback(entry, "ja");
 const titleEn = titleForLangWithFallback(entry, "en");
 const sumJa = summaryForLangWithFallback(entry, "ja");
 const sumEn = summaryForLangWithFallback(entry, "en");
 const rel = relativeTime(entry.publishedAt ?? entry.collectedAt);
-const siteHost = host(entry.url);
-const favicon = faviconUrl(entry.url);
+const siteHost = sourceHost(entry.url);
+const favicon = sourceFaviconUrl(entry.url);
 const tags = (entry.tags ?? []).slice(0, 2);
 
 const imgSrc = typeof entry.image?.src === "string" && entry.image.src.length > 0 ? entry.image.src : "";

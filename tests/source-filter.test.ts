@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   evaluateKeywordFilter,
+  isMutableReleaseAliasUrl,
   keywordMatchesHaystack,
   matchesKeywordFilter,
 } from "../harness/pipeline/source-filter.ts";
@@ -23,6 +24,64 @@ const source: SourceDefinition = {
 };
 
 describe("matchesKeywordFilter", () => {
+  it("drops mutable GitHub release aliases but preserves immutable release tags", () => {
+    const releaseSource: SourceDefinition = {
+      ...source,
+      sourceType: "release",
+      includeKeywords: undefined,
+      excludeKeywords: undefined,
+      keywordFilterScope: undefined,
+    };
+    for (const alias of [
+      "nightly",
+      "canary",
+      "snapshot",
+      "rolling",
+      "extension-workflows",
+      "extension-cli",
+      "collab-staging",
+      "collab-production",
+    ]) {
+      const url = `https://github.com/zed-industries/zed/releases/tag/${alias}`;
+      expect(isMutableReleaseAliasUrl(url)).toBe(true);
+      expect(
+        evaluateKeywordFilter(
+          { title: `Zed ${alias}`, url, contentSnippet: "Mutable release content" },
+          releaseSource,
+        ),
+      ).toEqual({
+        keep: false,
+        reason: "exclude",
+        keyword: "mutable-release-alias",
+        trusted: true,
+      });
+    }
+    expect(isMutableReleaseAliasUrl("https://github.com/zed-industries/zed/releases/tag/v0.201.4")).toBe(false);
+    expect(
+      matchesKeywordFilter(
+        {
+          title: "Zed v0.201.4",
+          url: "https://github.com/zed-industries/zed/releases/tag/v0.201.4",
+          contentSnippet: "",
+        },
+        releaseSource,
+      ),
+    ).toBe(true);
+  });
+
+  it("does not apply the mutable release rule to a non-release source", () => {
+    expect(
+      matchesKeywordFilter(
+        {
+          title: "Nightly release practices",
+          url: "https://github.com/example/project/releases/tag/nightly",
+          contentSnippet: "",
+        },
+        { ...source, includeKeywords: undefined, excludeKeywords: undefined },
+      ),
+    ).toBe(true);
+  });
+
   it("applies title-only include filters to old merged entries", () => {
     expect(matchesKeywordFilter({
       title: "C言語のコンパイル時に文字化けが発生する",

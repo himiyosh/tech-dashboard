@@ -10,7 +10,9 @@ import TimelineRightRail from "../components/TimelineRightRail.astro";
 import Pager from "../components/Pager.astro";
 import ArxivIcon from "../components/icons/ArxivIcon.astro";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
-import { sourceLabel } from "../lib/source-meta.ts";
+import { sourceFaviconUrl } from "../lib/favicon.ts";
+import { decisionRankScore } from "../lib/ranking.ts";
+import { sourceAuthority, sourceLabel } from "../lib/source-meta.ts";
 import { STATS } from "../lib/stats.ts";
 import {
   ALL_ENTRIES,
@@ -60,7 +62,7 @@ const activeSourcesLabel = `${DASHBOARD_METRICS.sourceCoverageLabel} active sour
 const activeSourcesJa = `${DASHBOARD_METRICS.sourceCoverageLabel} registry sources with live entries`;
 const activeSourcesEn = `${DASHBOARD_METRICS.sourceCoverageLabel} registry sources with live entries`;
 
-// Top 3 = importance x recency, but only entries with real summaries.
+// Top 3 = importance x authority x recency, but only entries with real summaries.
 // Limit repeated source/category so the decision list is useful at a glance.
 const rankedPool = primaryEntries
   .filter(
@@ -74,15 +76,7 @@ const rankedPool = primaryEntries
   )
   .slice(0, 120);
 const scoredTopCandidates = rankedPool
-  .map((e) => {
-    const ageHours = Math.max(
-      0,
-      (now.getTime() - new Date(e.publishedAt || e.collectedAt).getTime()) / 3600_000,
-    );
-    const sourceTypeBoost = e.sourceType === "release" || e.sourceType === "changelog" ? -8 : 0;
-    const score = e.importance * 100 - ageHours * 0.6 + sourceTypeBoost;
-    return { entry: e, score };
-  })
+  .map((e) => ({ entry: e, score: decisionRankScore(e, now.getTime()) }))
   .sort((a, b) => b.score - a.score);
 const topThree = (() => {
   const picked: typeof ALL_ENTRIES[number][] = [];
@@ -107,25 +101,20 @@ const topThree = (() => {
 })();
 const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
 
-function sourceTypeBadgeModifier(type: (typeof ALL_ENTRIES)[number]["sourceType"]): "release" | "paper" | "" {
-  if (type === "paper") return "paper";
-  if (type === "release" || type === "changelog") return "release";
-  return "";
-}
-
 function topReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: string } {
   const category = CATEGORY_META.find((c) => c.slug === entry.category)?.name ?? entry.category;
-  const type =
+  const format =
     entry.sourceType === "release" || entry.sourceType === "changelog"
-      ? { ja: "公式リリース/変更履歴", en: "official release/changelog" }
+      ? { ja: "リリース/変更履歴", en: "release/changelog" }
       : entry.sourceType === "paper"
-        ? { ja: "論文/研究", en: "paper/research" }
-        : { ja: "公式/技術記事", en: "official/technical post" };
+        ? { ja: "研究", en: "research" }
+        : { ja: "技術記事", en: "technical post" };
+  const authority = sourceAuthority(entry.source, entry.sourceType);
   const importance = importanceLabel(entry.importance);
   const recency = relativeTime(entry.publishedAt || entry.collectedAt, now);
   return {
-    ja: `${importance.ja} · ${recency} · ${type.ja} · ${category}`,
-    en: `${importance.en} · ${recency} · ${type.en} · ${category}`,
+    ja: `${importance.ja} · ${recency} · ${authority.ja} · ${format.ja} · ${category}`,
+    en: `${importance.en} · ${recency} · ${authority.en} · ${format.en} · ${category}`,
   };
 }
 
@@ -238,20 +227,6 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
             <span class="i18n-ja">毎時更新 · 最新 index は {ago}</span>
             <span class="i18n-en" lang="en">Hourly collection · latest index {ago}</span>
           </div>
-          <div class="banner-filter-links" aria-label="Explore by filter">
-            <a href="/categories">
-              <span class="i18n-ja">カテゴリ</span><span class="i18n-en" lang="en">Categories</span>
-            </a>
-            <a href="/status">
-              <span class="i18n-ja">ソース状況</span><span class="i18n-en" lang="en">Source status</span>
-            </a>
-            <a href="/archive">
-              <span class="i18n-ja">期間別アーカイブ</span><span class="i18n-en" lang="en">Archive by month</span>
-            </a>
-            <a href="/arxiv">
-              <span class="i18n-ja">arXiv 論文</span><span class="i18n-en" lang="en">arXiv papers</span>
-            </a>
-          </div>
         </div>
       </div>
     </div>
@@ -289,12 +264,9 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
         );
         const featStale = featFreshness.status === "stale" || featFreshness.status === "error";
         const featImportance = importanceLabel(feat.importance);
-        const featTypeBadgeClass = ["badge", sourceTypeBadgeModifier(feat.sourceType)].filter(Boolean).join(" ");
-        let featHost = "";
-        try { featHost = new URL(feat.url).host.replace(/^www\./, ""); } catch {}
-        const featFavicon = featHost
-          ? `https://www.google.com/s2/favicons?sz=64&domain=${featHost}`
-          : "";
+        const featAuthority = sourceAuthority(feat.source, feat.sourceType);
+        const featAuthorityBadgeClass = ["badge", "authority", featAuthority.kind].join(" ");
+        const featFavicon = sourceFaviconUrl(feat.url);
         const featImg = feat.image?.src ?? "";
         const featReason = spotlightReason(feat);
         return (
@@ -322,10 +294,10 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
           <div class="featured-body">
             <div class="featured-label featured-rationale">
               <span class="i18n-ja">
-                Spotlight · 自動選定 · <strong>注目する理由:</strong> {featReason.ja}
+                Spotlight · 自動選定 · <strong>選定根拠:</strong> {featReason.ja}
               </span>
               <span class="i18n-en" lang="en">
-                Spotlight · system-ranked · <strong>Why it matters:</strong> {featReason.en}
+                Spotlight · system-ranked · <strong>Selection basis:</strong> {featReason.en}
               </span>
             </div>
             <h2 class="featured-title">
@@ -349,7 +321,15 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
               </a>
             </h2>
             <div class="featured-meta">
-              <span class={featTypeBadgeClass} data-source-type={feat.sourceType}>{feat.sourceType}</span>
+              <span
+                class={featAuthorityBadgeClass}
+                data-source-authority={featAuthority.kind}
+                data-source-type={feat.sourceType}
+                title={`${featAuthority.en} source · ${feat.sourceType}`}
+              >
+                <span class="i18n-ja">{featAuthority.ja}</span>
+                <span class="i18n-en" lang="en">{featAuthority.en}</span>
+              </span>
               <span
                 class={`badge importance-badge ${featImportance.tone}`}
                 data-featured-importance
@@ -401,7 +381,7 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
               <span class="i18n-ja">Spotlightを除く優先度 Top {topThree.length}</span>
               <span class="i18n-en" lang="en">Ranked Top {topThree.length} excluding Spotlight</span>
             </span>
-            <span class="top-rank-sub">importance × recency</span>
+            <span class="top-rank-sub">importance + source authority + recency · release/changelog adjusted</span>
           </div>
           <ol class="top-rank-list">
             {topThree.map((e, i) => {

@@ -186,6 +186,17 @@ describe("normalize release title decoration", () => {
 });
 
 describe("normalize category override", () => {
+  const huggingFaceSource: SourceDefinition = {
+    id: "huggingface-blog",
+    displayName: "Hugging Face Blog",
+    category: "local-llm",
+    sourceType: "blog",
+    defaultLang: "en",
+    autoTags: ["huggingface"],
+    feedUrl: "https://huggingface.co/blog/feed.xml",
+    collect: async () => [],
+    tier: 2,
+  };
   const qiitaVscodeSource: SourceDefinition = {
     id: "qiita-vscode",
     displayName: "Qiita VSCode tag",
@@ -197,6 +208,33 @@ describe("normalize category override", () => {
     collect: async () => [],
     tier: 2,
   };
+
+  it.each([
+    ["Adding MCP Tools to Reachy Mini", "mcp"],
+    ["ScarfBench: Benchmarking AI Agents for Enterprise Java Framework Migration", "research"],
+    ["Accelerating Transformers Fine-Tuning with NVIDIA NeMo AutoModel", "research"],
+    ["Data for Agents", "agent-fw"],
+    ["Agentic Resource Discovery: Let agents search", "agent-fw"],
+    ["From Hugging Face to Amazon SageMaker Studio in one click", "tech-news"],
+    ["Hugging Face Models on Foundry Managed Compute", "tech-news"],
+    ["Dell Enterprise Hub is all you need to build AI on premises", "tech-news"],
+    ["IBM and Hugging Face Preview Granite 4 Vision: Tiny Multimodal Model for Enterprise Documents", "local-llm"],
+    ["Profiling in PyTorch (Part 3): Attention is all you profile", "local-llm"],
+    ["Native-speed vLLM transformers modeling backend", "local-llm"],
+  ] as const)("Hugging Face の %s を %s に分類する", (title, category) => {
+    const entry = normalize(
+      {
+        externalId: title,
+        url: `https://huggingface.co/blog/${encodeURIComponent(title)}`,
+        title,
+        contentSnippet: "",
+        publishedAt: "2026-05-10T00:00:00.000Z",
+      },
+      huggingFaceSource,
+      "2026-05-10T01:00:00.000Z",
+    );
+    expect(entry.category).toBe(category);
+  });
 
   it("Qiita vscode タグ由来でも Gemini / Antigravity 記事は gemini に再分類する", () => {
     const entry = normalize(

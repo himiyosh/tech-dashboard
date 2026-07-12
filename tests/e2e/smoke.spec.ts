@@ -1561,6 +1561,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".search-hit-type").first()).toBeVisible({ timeout: 10_000 });
     await expect(page.locator(".search-results-heading")).toContainText("Results");
     await expect(page.locator(".search-hit-type").first()).toHaveText("CATEGORY");
+    await expect(page.locator(".search-hit").first()).toHaveAttribute("href", "/c/copilot/");
     await expect(page.locator(".search-hit.is-active")).toHaveCount(0);
     await expect(page.locator("#pagefind-search-input")).not.toHaveAttribute("aria-activedescendant");
     await page.locator("#pagefind-search-input").press("ArrowDown");
@@ -1574,6 +1575,10 @@ test.describe("TECH Dashboard smoke", () => {
     await page.locator("#pagefind-search-input").fill("open source model");
     await expect(page.locator(".search-hit").first()).toHaveAttribute("href", "/c/local-llm/");
     await expect(page.locator(".search-hit-type").first()).toHaveText("CATEGORY");
+    const categoryHrefs = await page.locator(".search-hit-category").evaluateAll((nodes) =>
+      nodes.map((node) => (node as HTMLAnchorElement).getAttribute("href") ?? ""),
+    );
+    expect(categoryHrefs.some((href) => /\/page\/\d+\//.test(href))).toBe(false);
   });
 
   test("pagefind ranks article results by authority, importance, then recency", async ({ page }) => {

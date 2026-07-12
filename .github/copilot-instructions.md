@@ -1400,6 +1400,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: mobile `.lang-btn` の min-height を44pxへ揃え、390x844 viewport で JA/EN button の bounding box が幅・高さとも44px以上であることを E2E に追加した。
 - **教訓**: 製品基準を追加したら、主導線だけでなく同じ viewport にある全 interactive control を inventory し、文書、CSS token、DOM寸法テストを同じ変更で揃える。
 
+### LL-199: Pagefind の category result は indexed page ではなく canonical destination へ正規化する
+- **事象**: CI の検索 E2E で `open source model` の category intent が `/c/local-llm/` ではなく `/c/local-llm/page/7/` を返した。
+- **根本原因**: exact intent の synthetic category result は同じ slug の Pagefind candidate が無い場合だけ追加していた。paginated category page も同じ slug と判定されたため canonical result の追加を止め、検索 index が拾った任意の page URL を navigation destination として残していた。
+- **対策**: Pagefind の全 category result を `/c/{slug}/` へ正規化して slug 単位で重複排除し、exact taxonomy intent は metadata 由来の canonical result で置き換える。E2E は category result に `/page/{n}/` が残らないことを検証する。
+- **教訓**: 検索 index が返す文書 URL と、ユーザーを案内する semantic destination は分ける。section intent は indexed pagination の順位や URL に依存させず、taxonomy metadata から canonical landing page を決定する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

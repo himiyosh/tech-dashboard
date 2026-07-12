@@ -666,7 +666,21 @@ const footerRunDetail = !WORKER_HEALTH
             const path = String(item.url ?? "").replace(/^https?:\/\/[^/]+/, "");
             return path.match(/^\/c\/([^/]+)(?:\/page\/\d+)?\/?$/)?.[1] ?? "";
           };
-          if (categoryIntent && !items.some((item) => categorySlugForItem(item) === intentSlug)) {
+          const seenCategorySlugs = new Set<string>();
+          items = items
+            .map((item) => {
+              const slug = categorySlugForItem(item);
+              return slug ? { ...item, url: `/c/${slug}/` } : item;
+            })
+            .filter((item) => {
+              const slug = categorySlugForItem(item);
+              if (!slug) return true;
+              if (seenCategorySlugs.has(slug)) return false;
+              seenCategorySlugs.add(slug);
+              return true;
+            });
+          if (categoryIntent) {
+            items = items.filter((item) => categorySlugForItem(item) !== intentSlug);
             items.unshift({
               url: `/c/${categoryIntent.slug}/`,
               meta: { title: categoryIntent.label },

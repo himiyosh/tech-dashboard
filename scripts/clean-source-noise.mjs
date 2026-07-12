@@ -831,6 +831,27 @@ export function migrateArchiveEntries(label, entries, referenceAt, report) {
   };
 }
 
+export function synchronizeArchiveTagsFromLive(entries, liveEntries) {
+  const liveById = new Map(liveEntries.map((entry) => [entry.id, entry]));
+  const liveByCanonical = new Map(
+    liveEntries
+      .map((entry) => [canonicalUrlKey(entry.url), entry])
+      .filter(([key]) => Boolean(key)),
+  );
+  let changed = 0;
+  const synchronized = entries.map((entry) => {
+    const live =
+      liveById.get(entry.id) ??
+      liveByCanonical.get(canonicalUrlKey(entry.url));
+    if (!live || JSON.stringify(entry.tags) === JSON.stringify(live.tags)) {
+      return entry;
+    }
+    changed++;
+    return { ...entry, tags: [...live.tags] };
+  });
+  return { entries: synchronized, changed };
+}
+
 export function buildOriginalLiveAliases(originalEntries, finalEntries) {
   const winnersByCanonical = new Map(
     finalEntries.map((entry) => [statsEntryKey(entry), entry.id]),
@@ -950,6 +971,7 @@ export async function main(argv = process.argv.slice(2)) {
     dropSamples: new Map(),
     reclassSamples: new Map(),
     mediaUrlsNormalized: 0,
+    archiveTagsSynchronized: 0,
   };
 
   const liveEntries = summarizeChanges("live", index.entries, referenceAt, report);
@@ -964,7 +986,9 @@ export async function main(argv = process.argv.slice(2)) {
     const monthPath = join(archiveDir, fileName);
     const month = validateArchiveMonthInputPayload(readJson(monthPath), monthPath);
     const migration = migrateArchiveEntries(fileName, month.entries, referenceAt, report);
-    const deduped = migration.entries;
+    const tagSync = synchronizeArchiveTagsFromLive(migration.entries, dedupedLive);
+    const deduped = tagSync.entries;
+    report.archiveTagsSynchronized += tagSync.changed;
     archiveDeduped += migration.keptCount - deduped.length;
     archiveStatsEntries.push(...deduped);
     const monthPayload = buildArchiveMonthFile(fileName.slice(0, 7), deduped, referenceAt);
@@ -1017,6 +1041,7 @@ export async function main(argv = process.argv.slice(2)) {
   printSection("Reclassified pairs", sortedCounts(report.reclassifiedPairs));
   console.log(`\nCanonical dedupe:\n  live: ${liveDeduped}\n  archive: ${archiveDeduped}`);
   console.log(`\nMedia URLs normalized: ${report.mediaUrlsNormalized}`);
+  console.log(`\nArchive tags synchronized: ${report.archiveTagsSynchronized}`);
   if (reconciledBodyCount !== null) console.log(`\nBodies retained: ${reconciledBodyCount}`);
   printSamples("Representative keep samples", report.keepSamples);
   printSamples("Representative drop samples", report.dropSamples);

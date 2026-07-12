@@ -37,7 +37,10 @@ import {
   isBodyRetentionEligible,
   selectBodyJobBatch,
 } from "./body-queue.ts";
-import { getBodyCacheEntries } from "./body-cache.ts";
+import {
+  bodyCacheEntryMatchesPublisherContract,
+  getBodyCacheEntries,
+} from "./body-cache.ts";
 import {
   bodiesPresentSet,
   mergeBodies,
@@ -46,9 +49,17 @@ import {
   type NewBody,
 } from "./bodies-file.ts";
 import {
+  cacheEntryMatchesPublisherContract,
+  cacheMetadataMatchesPublisherContract,
   getCacheEntriesWithLegacyFallback,
   putCacheEntry,
+  type CacheEntry,
 } from "./kv-cache.ts";
+import {
+  assertPublisherContractContent,
+  DEPLOYED_PUBLISHER_FINGERPRINT,
+  PUBLISHER_CONTRACT_PATH,
+} from "./publisher-contract.ts";
 import {
   buildArchiveIndexFile,
   buildArchiveMonthFile,
@@ -65,13 +76,16 @@ import type {
   SourceDefinition,
 } from "../../harness/types.ts";
 
-interface Env {
-  SUMMARY_CACHE: KVNamespace;
-  COPILOT_PAT: string;
+export interface GithubRepositoryEnv {
   GH_TOKEN: string;
   GITHUB_OWNER: string;
   GITHUB_REPO: string;
   GITHUB_BRANCH: string;
+}
+
+interface Env extends GithubRepositoryEnv {
+  SUMMARY_CACHE: KVNamespace;
+  COPILOT_PAT: string;
   SUMMARIZE_MODEL: string;
   SUMMARIZE_MAX_NEW: string;
   SUMMARIZE_TIMEOUT_MS?: string;
@@ -240,19 +254,7 @@ const COPILOT_HEADERS = {
   "user-agent": "GitHubCopilotChat/0.22.0",
 } as const;
 
-interface CacheEntry {
-  titleJa: string;
-  summaryJa: string;
-  summaryEn: string;
-  bodyJa: string;
-  bodyEn: string;
-  importance: 1 | 2 | 3;
-  extraTags: string[];
-  model: string;
-  cachedAt: string;
-}
-
-interface FileChange {
+export interface FileChange {
   path: string;
   content: string;
 }
@@ -333,8 +335,12 @@ export async function ghFetch(
   throw lastErr ?? new Error(`${label} failed after ${retries} retries`);
 }
 
-async function ghGetFile(env: Env, path: string): Promise<{ content: string; sha: string } | null> {
-  const url = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${path}?ref=${env.GITHUB_BRANCH}`;
+async function ghGetFile(
+  env: GithubRepositoryEnv,
+  path: string,
+  ref = env.GITHUB_BRANCH,
+): Promise<{ content: string; sha: string } | null> {
+  const url = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${path}?ref=${encodeURIComponent(ref)}`;
   const res = await ghFetch(
     url,
     {
@@ -358,14 +364,27 @@ async function ghGetFile(env: Env, path: string): Promise<{ content: string; sha
   return { content, sha: body.sha };
 }
 
+async function verifyRepositoryPublisherContract(
+  env: GithubRepositoryEnv,
+  ref = env.GITHUB_BRANCH,
+): Promise<string> {
+  const contractFile = await ghGetFile(env, PUBLISHER_CONTRACT_PATH, ref);
+  if (!contractFile) {
+    throw new Error(`repository publisher contract is missing at ${ref}: ${PUBLISHER_CONTRACT_PATH}`);
+  }
+  return assertPublisherContractContent(contractFile.content);
+}
+
 // Read a file from raw.githubusercontent.com (public repo, no auth, no
-// redirect). Cheaper in subrequest cost than ghGetFile because Contents API
-// calls go through api.github.com with auth + occasional redirects. Use this
-// for files whose few-minute Fastly cache staleness is acceptable (archives,
-// stats) but NOT for read-after-write-critical files like data/index.json.
-// LL-036.
-async function ghGetFileRaw(env: Env, path: string): Promise<{ content: string } | null> {
-  const url = `https://raw.githubusercontent.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/${env.GITHUB_BRANCH}/${path}`;
+// redirect). Baseline reads pass an immutable commit SHA so the CDN cannot
+// return an older branch snapshot while the final commit adopts a newer parent.
+// This is cheaper in subrequest cost than the Contents API for large data files.
+export async function ghGetFileRaw(
+  env: GithubRepositoryEnv,
+  path: string,
+  ref: string,
+): Promise<{ content: string } | null> {
+  const url = `https://raw.githubusercontent.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/${ref}/${path}`;
   const res = await ghFetch(
     url,
     {
@@ -382,7 +401,7 @@ async function ghGetFileRaw(env: Env, path: string): Promise<{ content: string }
 }
 
 async function ghJson<T>(
-  env: Env,
+  env: GithubRepositoryEnv,
   path: string,
   init?: RequestInit,
 ): Promise<T> {
@@ -405,12 +424,38 @@ async function ghJson<T>(
   return (await res.json()) as T;
 }
 
-async function ghCommitFiles(env: Env, message: string, changes: readonly FileChange[]): Promise<string | null> {
+export async function getRepositoryBranchHeadSha(
+  env: GithubRepositoryEnv,
+): Promise<string> {
+  const ref = await ghJson<{ object?: { sha?: unknown } }>(
+    env,
+    `/git/ref/heads/${env.GITHUB_BRANCH}`,
+  );
+  const sha = ref.object?.sha;
+  if (typeof sha !== "string" || sha.length === 0) {
+    throw new Error(`repository branch ${env.GITHUB_BRANCH} returned an invalid head SHA`);
+  }
+  return sha;
+}
+
+export async function ghCommitFiles(
+  env: GithubRepositoryEnv,
+  message: string,
+  changes: readonly FileChange[],
+  expectedParentSha: string,
+): Promise<string | null> {
   if (changes.length === 0) return null;
 
-  const refPath = `/git/ref/heads/${env.GITHUB_BRANCH}`;
-  const ref = await ghJson<{ object: { sha: string } }>(env, refPath);
-  const headSha = ref.object.sha;
+  const headSha = await getRepositoryBranchHeadSha(env);
+  if (headSha !== expectedParentSha) {
+    throw new Error(
+      `publisher snapshot changed: expected parent ${expectedParentSha}, found ${headSha}; refusing to publish stale data`,
+    );
+  }
+  // Collection can span a main-branch merge. Re-check the marker at the exact
+  // commit this data commit will parent so an obsolete runtime cannot publish
+  // on top of a newer contract after passing only the start-of-run guard.
+  await verifyRepositoryPublisherContract(env, headSha);
   const headCommit = await ghJson<{ tree: { sha: string } }>(env, `/git/commits/${headSha}`);
   const tree = await ghJson<{ sha: string }>(env, "/git/trees", {
     method: "POST",
@@ -445,6 +490,21 @@ async function ghCommitFiles(env: Env, message: string, changes: readonly FileCh
 
 function stripGeneratedAt(json: string): string {
   return json.replace(/"generatedAt":\s*"[^"]+",?\n?/, "");
+}
+
+export function jsonContentDiffers(
+  existingContent: string,
+  nextContent: string,
+  options: { ignoreGeneratedAt?: boolean } = {},
+): boolean {
+  const ignoreGeneratedAt = options.ignoreGeneratedAt ?? true;
+  const existingComparable = ignoreGeneratedAt ? stripGeneratedAt(existingContent) : existingContent;
+  const nextComparable = ignoreGeneratedAt ? stripGeneratedAt(nextContent) : nextContent;
+  return existingComparable !== nextComparable;
+}
+
+export function shouldIgnoreGeneratedAtForPath(path: string): boolean {
+  return path !== "data/archive/_index.json" && path !== "data/stats.json";
 }
 
 function stringifyJson(value: unknown): string {
@@ -500,11 +560,15 @@ async function ghJsonChangeIfChanged(
   env: Env,
   path: string,
   payload: unknown,
-  existing?: { content: string; sha?: string } | null,
+  existing: { content: string; sha?: string } | null,
 ): Promise<FileChange | null> {
   const content = stringifyJson(payload);
-  const current = existing === undefined ? await ghGetFile(env, path) : existing;
-  if (current && stripGeneratedAt(current.content) === stripGeneratedAt(content)) {
+  if (
+    existing &&
+    !jsonContentDiffers(existing.content, content, {
+      ignoreGeneratedAt: shouldIgnoreGeneratedAtForPath(path),
+    })
+  ) {
     return null;
   }
   return { path, content };
@@ -698,6 +762,7 @@ async function publishHistoryFiles(
   archiveInputEntries: readonly NormalizedEntry[],
   liveEntries: readonly NormalizedEntry[],
   generatedAt: string,
+  baselineRef: string,
 ): Promise<{
   archiveMonthsTouched: number;
   archiveFilesChanged: number;
@@ -713,12 +778,11 @@ async function publishHistoryFiles(
   const archiveIndexPath = "data/archive/_index.json";
   const statsPath = "data/stats.json";
 
-  // Read archive _index + existing stats in parallel (2 subrequests).
-  // These are read-after-write critical so use the Contents API for _index;
-  // stats is fine via raw CDN because we only use it as a baseline to merge.
+  // Read archive _index + existing stats in parallel from the captured
+  // baseline. The immutable SHA keeps Contents API and raw CDN reads coherent.
   const [archiveIndexFile, existingStatsRaw] = await Promise.all([
-    ghGetFile(env, archiveIndexPath),
-    ghGetFileRaw(env, statsPath),
+    ghGetFile(env, archiveIndexPath, baselineRef),
+    ghGetFileRaw(env, statsPath, baselineRef),
   ]);
   assertHistoryBaselinePair(archiveIndexFile, existingStatsRaw);
   const archiveIndex = parseBaselineJson<ArchiveIndexFile>(archiveIndexPath, archiveIndexFile);
@@ -737,7 +801,9 @@ async function publishHistoryFiles(
   // forward from existing data/stats.json. LL-036.
   const touchedMonths = [...byMonth.keys()].sort();
   const existingTouchedFiles = await Promise.all(
-    touchedMonths.map((month) => ghGetFileRaw(env, `data/archive/${month}.json`)),
+    touchedMonths.map((month) =>
+      ghGetFileRaw(env, `data/archive/${month}.json`, baselineRef),
+    ),
   );
 
   const monthFiles = new Map<string, ArchiveMonthFile>();
@@ -1028,21 +1094,32 @@ async function runHarness(
       : naturalBatch;
   const sources = allSources.filter((_, i) => i % SOURCE_BATCHES === batchIndex);
   console.log(`[worker] run ${collectedAt}, batch ${batchIndex + 1}/${SOURCE_BATCHES} (${sources.length} of ${allSources.length} sources)${opts.batchOverride !== undefined ? " [forced]" : ""}`);
+  const publisherSnapshotSha = await getRepositoryBranchHeadSha(env);
+  const publisherContractFingerprint = await verifyRepositoryPublisherContract(
+    env,
+    publisherSnapshotSha,
+  );
+  await writeStartHeartbeat(env, {
+    batchIndex: batchIndex + 1,
+    batchTotal: SOURCE_BATCHES,
+    sourcesAttempted: sources.length,
+    publisherContractFingerprint,
+  });
 
   // 0) Read existing index FIRST so we can merge fresh entries from this batch
   //    with prior entries from the other batches (avoids losing data).
   //
-  // CRITICAL (LL-040): Use raw.githubusercontent.com here. GitHub Contents
-  // API silently returns content="" for files >1MB; data/index.json grew
-  // past 1MB which made every cron run drop ALL prior entries (collapsing
-  // ~947 → ~227 each cron). raw.* has up to ~5min Fastly cache but cron
-  // runs are 60min apart so staleness is acceptable.
-  const existing = await ghGetFileRaw(env, "data/index.json");
+  // CRITICAL (LL-040/LL-211): Use raw.githubusercontent.com because the
+  // Contents API omits content for files >1MB, but pin every baseline read to
+  // the captured commit SHA so branch CDN staleness cannot roll data backward.
+  const existing = await ghGetFileRaw(env, "data/index.json", publisherSnapshotSha);
   // Body-file architecture (LL-115): read the committed bodies.json so the body
   // pipeline can merge newly generated bodies and prune stale ones. Only read
   // when the body pipeline is active to save a subrequest otherwise.
   const existingBodies =
-    env.ENABLE_BODY_QUEUE === "1" ? await ghGetFileRaw(env, "data/bodies.json") : null;
+    env.ENABLE_BODY_QUEUE === "1"
+      ? await ghGetFileRaw(env, "data/bodies.json", publisherSnapshotSha)
+      : null;
   let priorEntries: NormalizedEntry[] = [];
   if (existing?.content) {
     try {
@@ -1215,7 +1292,13 @@ async function runHarness(
   const needsSummary: NormalizedEntry[] = [];
   const afterCache: NormalizedEntry[] = [];
   for (const e of sorted) {
-    const hit = hitsByUrl.get(e.url);
+    const rawHit = hitsByUrl.get(e.url);
+    const hit = cacheEntryMatchesPublisherContract(
+      rawHit,
+      publisherContractFingerprint,
+    )
+      ? rawHit
+      : undefined;
     const cachedTitleJa = hit?.titleJa || e.titleJa;
     if (hit && cachedTitleJa && hit.summaryJa && hit.summaryEn) {
       afterCache.push({
@@ -1225,8 +1308,18 @@ async function runHarness(
         summaryEn: hit.summaryEn,
         bodyJa: hit.bodyJa || e.bodyJa || "",
         bodyEn: hit.bodyEn || e.bodyEn || "",
-        importance: hit.importance,
-        tags: dedupeTags([...e.tags, ...hit.extraTags]),
+        importance: cacheMetadataMatchesPublisherContract(
+          hit,
+          publisherContractFingerprint,
+        )
+          ? hit.importance
+          : e.importance,
+        tags: cacheMetadataMatchesPublisherContract(
+          hit,
+          publisherContractFingerprint,
+        )
+          ? dedupeTags([...e.tags, ...hit.extraTags])
+          : e.tags,
       });
       // Re-summarize entries cached before bodyJa/bodyEn was introduced.
       if (!hit.bodyJa || !hit.bodyEn) {
@@ -1254,8 +1347,12 @@ async function runHarness(
             const r = await callCopilot(token!, model, e, summarizeTimeoutMs);
             // Per-URL KV write (LL-038). Independent per entry so parallel
             // workers never clobber each other.
-            await putCacheEntry(env.SUMMARY_CACHE, e.url, r);
-            return { url: e.url, entry: r, ok: true as const };
+            const versioned = {
+              ...r,
+              publisherContractFingerprint,
+            };
+            await putCacheEntry(env.SUMMARY_CACHE, e.url, versioned);
+            return { url: e.url, entry: versioned, ok: true as const };
           } catch (err) {
             if (attempt < SUMMARIZE_ATTEMPTS) {
               console.warn(`[worker] summarize retry ${e.url}: ${err}`);
@@ -1272,7 +1369,9 @@ async function runHarness(
       summarizeConcurrency,
     );
     const byUrl = new Map(
-      results.filter((r): r is { url: string; entry: CacheEntry; ok: true } => r.ok).map((r) => [r.url, r.entry]),
+      results.flatMap((result) =>
+        result.ok ? [[result.url, result.entry] as const] : [],
+      ),
     );
     summarized = byUrl.size;
     for (let i = 0; i < afterCache.length; i++) {
@@ -1376,12 +1475,16 @@ async function runHarness(
     lookedUpUrls,
     queueCap,
     uncheckedFallbackUrls,
-    { nowMs: summarySelectionNowMs, skipUrls: summaryRetryCooldownUrls },
+    {
+      nowMs: summarySelectionNowMs,
+      skipUrls: summaryRetryCooldownUrls,
+      publisherContractFingerprint,
+    },
   );
 
-  // Enqueue before the CPU-heavy data/index.json stringify + GitHub publish
-  // phase. This keeps the AI backfill moving even if a later publish step hits
-  // Cloudflare CPU limits or a transient GitHub failure.
+  // Enqueue before the CPU-heavy publish phase. Jobs carry the publisher
+  // fingerprint, so a later parent-SHA rejection cannot make a newer publisher
+  // consume stale enrichment output.
   const earlyEnqueued = await maybeEnqueueSummaryJobs(
     env,
     afterCache,
@@ -1390,6 +1493,7 @@ async function runHarness(
     uncheckedFallbackUrls,
     summaryRetryCooldownUrls,
     summarySelectionNowMs,
+    publisherContractFingerprint,
   );
   if (earlyEnqueued > 0) {
     console.log(`[worker] enqueued ${earlyEnqueued} summary jobs (pre-publish path)`);
@@ -1413,6 +1517,7 @@ async function runHarness(
       summaryQueueCooldownCount: prePublishQueueBatch.cooldownCount,
       kvLookupCount: needsKvLookup.length,
       kvLookupCap: KV_LOOKUP_CAP,
+      publisherContractFingerprint,
     },
     false,
     earlyEnqueued,
@@ -1439,7 +1544,11 @@ async function runHarness(
     lookedUpUrls,
     queueCap,
     uncheckedFallbackUrls,
-    { nowMs: summarySelectionNowMs, skipUrls: summaryRetryCooldownUrls },
+    {
+      nowMs: summarySelectionNowMs,
+      skipUrls: summaryRetryCooldownUrls,
+      publisherContractFingerprint,
+    },
   );
   const enqueueCandidates = queueEnabled && env.SUMMARY_QUEUE ? summaryQueueBatch.jobs.length : 0;
   // Body-file pipeline (LL-115): merge generated bodies into data/bodies.json
@@ -1450,6 +1559,7 @@ async function runHarness(
     finalEntries,
     existingBodies?.content ?? null,
     bodyGeneratedAt,
+    publisherContractFingerprint,
   );
   const health = {
     lastRunAt: new Date().toISOString(),
@@ -1477,6 +1587,7 @@ async function runHarness(
     copilotError,
     ogCached: Object.keys(ogBlob).length,
     ogNewHits: ogFound,
+    publisherContractFingerprint,
     ...bodyPipeline.health,
   };
   // Body-file architecture (LL-115): the long-form body is NOT stored in
@@ -1521,7 +1632,7 @@ async function runHarness(
   }
   const hasEntryChanges = !entriesEqual(existingPayload, indexEntries);
   const archiveUpdateEntries = selectArchiveUpdateEntries(existingPayload, indexEntries);
-  const indexUnchanged = stripGeneratedAt(existingJson) === stripGeneratedAt(json);
+  const indexUnchanged = !jsonContentDiffers(existingJson, json);
   const bodiesChanged = bodyPipeline.bodiesFileContent !== null;
   // Compare ignoring `generatedAt` timestamp so unchanged runs don't churn commits.
   // Queue enqueue already happened in the pre-publish path above, because
@@ -1536,7 +1647,13 @@ async function runHarness(
 
   const message = `chore(data): update tech dashboard ${payload.generatedAt}`;
   const historyStats = hasEntryChanges
-    ? await publishHistoryFiles(env, archiveUpdateEntries, finalEntries, payload.generatedAt)
+    ? await publishHistoryFiles(
+        env,
+        archiveUpdateEntries,
+        finalEntries,
+        payload.generatedAt,
+        publisherSnapshotSha,
+      )
     : {
         archiveMonthsTouched: 0,
         archiveFilesChanged: 0,
@@ -1561,7 +1678,12 @@ async function runHarness(
   if (bodyPipeline.bodiesFileContent) {
     commitFiles.push({ path: "data/bodies.json", content: bodyPipeline.bodiesFileContent });
   }
-  const commitSha = await ghCommitFiles(env, message, commitFiles);
+  const commitSha = await ghCommitFiles(
+    env,
+    message,
+    commitFiles,
+    publisherSnapshotSha,
+  );
   console.log(`[worker] committed ${commitFiles.map((f) => f.path).join(", ")} (${finalEntries.length} entries)`);
   console.log(
     `[worker] history archiveChanged=${historyStats.archiveFilesChanged}, statsChanged=${historyStats.statsChanged}, bodiesMerged=${bodyPipeline.health.bodyMerged}, bodyEnqueued=${bodyPipeline.enqueued}, commit=${commitSha}`,
@@ -1592,10 +1714,11 @@ async function runHarness(
 
 const HEARTBEAT_KEY = "heartbeat.v1";
 const HEALTH_STALE_MS = 150 * 60_000;
+const HEALTH_STARTED_STUCK_MS = 10 * 60_000;
 const HEALTH_PREPUBLISH_STUCK_MS = 30 * 60_000;
 const HEALTH_ERROR_FRESH_MS = 6 * 60 * 60_000;
 
-type HarnessHeartbeatStatus = "pre-publish" | "published" | "checked" | "aborted" | "error";
+type HarnessHeartbeatStatus = "started" | "pre-publish" | "published" | "checked" | "aborted" | "error";
 
 function errorSummary(err: unknown): string {
   const text = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
@@ -1626,6 +1749,7 @@ async function writeHeartbeat(
     summaryQueueCooldownCount?: number;
     kvLookupCount?: number;
     kvLookupCap?: number;
+    publisherContractFingerprint?: string;
   },
   changed: boolean,
   enqueued: number,
@@ -1656,6 +1780,8 @@ async function writeHeartbeat(
       summaryQueueCooldownCount: health.summaryQueueCooldownCount,
       kvLookupCount: health.kvLookupCount,
       kvLookupCap: health.kvLookupCap,
+      publisherContractFingerprint:
+        health.publisherContractFingerprint ?? DEPLOYED_PUBLISHER_FINGERPRINT,
     };
     // 7-day TTL: if Worker stops running, the heartbeat expires naturally.
     await env.SUMMARY_CACHE.put(HEARTBEAT_KEY, JSON.stringify(hb), {
@@ -1664,6 +1790,33 @@ async function writeHeartbeat(
   } catch (err) {
     // Best-effort; never fail the cron over a heartbeat write error.
     console.warn("[worker] heartbeat write failed:", err);
+  }
+}
+
+async function writeStartHeartbeat(
+  env: Env,
+  run: {
+    batchIndex: number;
+    batchTotal: number;
+    sourcesAttempted: number;
+    publisherContractFingerprint: string;
+  },
+): Promise<void> {
+  try {
+    const hb = {
+      ok: true,
+      status: "started",
+      lastCronAt: new Date().toISOString(),
+      batchIndex: run.batchIndex,
+      batchTotal: run.batchTotal,
+      sourcesAttempted: run.sourcesAttempted,
+      publisherContractFingerprint: run.publisherContractFingerprint,
+    };
+    await env.SUMMARY_CACHE.put(HEARTBEAT_KEY, JSON.stringify(hb), {
+      expirationTtl: 7 * 24 * 3600,
+    });
+  } catch (err) {
+    console.warn("[worker] start heartbeat write failed:", err);
   }
 }
 
@@ -1688,6 +1841,7 @@ async function writeFailureHeartbeat(
       lastError: errorSummary(err),
       lastErrorTrigger: trigger,
       failureCount: previousFailureCount + 1,
+      publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT,
     };
     await env.SUMMARY_CACHE.put(HEARTBEAT_KEY, JSON.stringify(hb), {
       expirationTtl: 7 * 24 * 3600,
@@ -1722,6 +1876,21 @@ export function evaluateHarnessHealth(
     errors.push("heartbeat is missing a valid lastCronAt");
   } else if (ageMs > HEALTH_STALE_MS) {
     errors.push(`cron heartbeat is stale (${Math.round(ageMs / 60_000)}m old)`);
+  }
+
+  if (status === "started") {
+    if (Number.isFinite(ageMs) && ageMs > HEALTH_STARTED_STUCK_MS) {
+      errors.push(`cron appears stuck after start heartbeat (${Math.round(ageMs / 60_000)}m old)`);
+    } else if (errors.length === 0) {
+      warnings.push("cron run is still in progress");
+    }
+    return {
+      ok: errors.length === 0,
+      status: errors.length > 0 ? "error" : "warn",
+      errors,
+      warnings,
+      ageSeconds,
+    };
   }
 
   if (status === "error" || status === "aborted") {
@@ -1782,6 +1951,7 @@ async function maybeEnqueueSummaryJobs(
   uncheckedFallbackUrls: Set<string>,
   summaryRetryCooldownUrls: ReadonlySet<string>,
   nowMs: number,
+  publisherContractFingerprint: string,
 ): Promise<number> {
   if (env.ENABLE_SUMMARY_QUEUE !== "1") return 0;
   if (!env.SUMMARY_QUEUE) {
@@ -1795,7 +1965,11 @@ async function maybeEnqueueSummaryJobs(
     lookedUpUrls,
     cap,
     uncheckedFallbackUrls,
-    { nowMs, skipUrls: summaryRetryCooldownUrls },
+    {
+      nowMs,
+      skipUrls: summaryRetryCooldownUrls,
+      publisherContractFingerprint,
+    },
   );
   if (eligibleCount > 0) {
     console.log(
@@ -1855,6 +2029,7 @@ async function runBodyPipeline(
   liveEntries: readonly NormalizedEntry[],
   existingBodiesContent: string | null,
   generatedAt: string,
+  publisherContractFingerprint: string,
 ): Promise<BodyPipelineResult> {
   const retentionDays = Math.max(
     1,
@@ -1911,7 +2086,9 @@ async function runBodyPipeline(
       );
     }
     const enqueueCap = Math.min(configuredEnqueueCap, lookupCap);
-    const selection = selectBodyJobBatch(retainedEntries, present, lookupCap);
+    const selection = selectBodyJobBatch(retainedEntries, present, lookupCap, {
+      publisherContractFingerprint,
+    });
 
     // 1) Merge: read `b:` KV for the selected entries and fold any freshly
     //    generated bodies into bodies.json (prune happens in mergeBodies).
@@ -1920,7 +2097,13 @@ async function runBodyPipeline(
       : new Map();
     const newBodies: NewBody[] = [];
     for (const job of selection.jobs) {
-      const hit = hits.get(job.url);
+      const candidate = hits.get(job.url);
+      const hit = bodyCacheEntryMatchesPublisherContract(
+        candidate,
+        publisherContractFingerprint,
+      )
+        ? candidate
+        : undefined;
       if (hit) {
         newBodies.push({ id: job.entry.id, bodyJa: hit.bodyJa, bodyEn: hit.bodyEn, model: hit.model, cachedAt: hit.cachedAt });
       }
@@ -1929,7 +2112,15 @@ async function runBodyPipeline(
 
     // 2) Enqueue the selected entries that do NOT yet have a generated body (KV
     //    miss), so worker-body generates them for a future run's merge.
-    const toEnqueue = selection.jobs.filter((j) => !hits.has(j.url)).slice(0, enqueueCap);
+    const toEnqueue = selection.jobs
+      .filter((job) => {
+        const hit = hits.get(job.url);
+        return !bodyCacheEntryMatchesPublisherContract(
+          hit,
+          publisherContractFingerprint,
+        );
+      })
+      .slice(0, enqueueCap);
     let enqueued = 0;
     if (toEnqueue.length > 0) {
       const CHUNK = 100;

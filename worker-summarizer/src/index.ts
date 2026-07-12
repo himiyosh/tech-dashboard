@@ -24,7 +24,11 @@
 import type { NormalizedEntry } from "../../harness/types.ts";
 import { hasUsableBilingualSummary } from "../../harness/pipeline/summary-quality.ts";
 import { buildSummaryPrompt, parseResponse } from "../../worker/src/prompt.ts";
-import { type CacheEntry, putCacheEntry } from "../../worker/src/kv-cache.ts";
+import {
+  type CacheEntry,
+  putCacheEntry,
+  UNVERSIONED_JOB_FINGERPRINT,
+} from "../../worker/src/kv-cache.ts";
 
 interface Env {
   SUMMARY_CACHE: KVNamespace;
@@ -41,6 +45,7 @@ interface Env {
  */
 export interface SummaryJob {
   url: string;
+  publisherContractFingerprint?: string;
   // The full NormalizedEntry would be more than we need. Avoids bloating the
   // queue payload while still carrying the RSS/Atom snippet that normalization
   // placed in summaryEn/summaryJa.
@@ -265,7 +270,11 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
     throw new Error(`incomplete summary for ${job.url}`);
   }
 
-  await putCacheEntry(env.SUMMARY_CACHE, job.url, entry);
+  await putCacheEntry(env.SUMMARY_CACHE, job.url, {
+    ...entry,
+    publisherContractFingerprint:
+      job.publisherContractFingerprint ?? UNVERSIONED_JOB_FINGERPRINT,
+  });
   await clearIssue(env, job.url);
 }
 

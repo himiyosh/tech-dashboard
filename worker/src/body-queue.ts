@@ -28,6 +28,7 @@ export interface BodyJobBatch {
 
 export interface BodyJobSelectionOpts {
   nowMs?: number;
+  publisherContractFingerprint?: string;
 }
 
 export const DEFAULT_BODY_RETENTION_DAYS = 30;
@@ -38,9 +39,13 @@ function dateMs(value: string | null | undefined): number {
   return Number.isFinite(ms) ? ms : 0;
 }
 
-function toBodyJob(entry: NormalizedEntry): BodyJob {
+function toBodyJob(
+  entry: NormalizedEntry,
+  publisherContractFingerprint?: string,
+): BodyJob {
   return {
     url: entry.url,
+    publisherContractFingerprint,
     entry: {
       id: entry.id,
       url: entry.url,
@@ -107,7 +112,7 @@ export function selectBodyJobBatch(
   const pushJob = (entry: NormalizedEntry) => {
     if (seen.has(entry.url) || jobs.length >= safeCap) return;
     seen.add(entry.url);
-    jobs.push(toBodyJob(entry));
+    jobs.push(toBodyJob(entry, opts.publisherContractFingerprint));
   };
 
   // Reserve half the cap for the newest eligible entries so fresh articles get a

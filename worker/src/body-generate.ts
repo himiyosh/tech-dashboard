@@ -30,6 +30,7 @@ export type BodyPromptEntry = Pick<
 /** Queue message produced by the collector for the body consumer. Kept small. */
 export interface BodyJob {
   url: string;
+  publisherContractFingerprint?: string;
   entry: BodyPromptEntry & Pick<NormalizedEntry, "id">;
 }
 

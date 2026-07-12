@@ -131,8 +131,16 @@ queue = "tech-dashboard-body"
 [observability]
 enabled = true
 
-# Cron runs are billed against the Workers Paid plan limits.
+# The collector parses and rewrites multi-megabyte JSON artifacts. Production
+# measurements on 2026-07-12 used 0.6-1.6s CPU on successful runs, so the Free
+# plan's 10ms CPU ceiling cannot run this workload reliably. Declaring the
+# 30-second Paid-plan budget makes deployment fail before replacing production
+# when the account is not on a compatible plan.
+[limits]
+cpu_ms = 30000
+
+# Cron runs require Workers Paid plan limits.
 # Expected monthly usage: 24 runs/day * 30 days = ~720 runs/month.
-# CPU budget per run: ~5-30s (mostly fetch waits, not CPU).
+# Observed CPU per successful run: about 0.6-1.6s as of 2026-07-12.
 [placement]
 mode = "smart"

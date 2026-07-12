@@ -133,6 +133,21 @@ describe("selectBodyJobBatch (LL-115)", () => {
     const b = selectBodyJobBatch(entries, new Set(["hasbody"]), 3, { nowMs: 123456 });
     expect(a.jobs.map((j) => j.url)).toEqual(b.jobs.map((j) => j.url));
   });
+
+  it("publisher contract fingerprint を body job に伝播する", () => {
+    const fingerprint = `sha256:${"c".repeat(64)}`;
+    const batch = selectBodyJobBatch(entries, new Set(["hasbody"]), 2, {
+      nowMs: 0,
+      publisherContractFingerprint: fingerprint,
+    });
+
+    expect(batch.jobs).not.toHaveLength(0);
+    expect(
+      batch.jobs.every(
+        (job) => job.publisherContractFingerprint === fingerprint,
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("isRealBody / parseBodies / bodiesPresentSet (LL-115)", () => {

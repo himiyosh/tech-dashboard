@@ -12,6 +12,7 @@ import {
   reconcileBodiesPayload,
   recoverWriteTransaction,
   summarizeChanges,
+  synchronizeArchiveTagsFromLive,
   validateArchiveMonthInputPayload,
   validateArchiveMonthPayload,
   validateBodiesPayload,
@@ -252,6 +253,33 @@ describe("clean-source-noise validation", () => {
 });
 
 describe("clean-source-noise archive migration", () => {
+  it("synchronizes tags for matching live and archive entries", () => {
+    const live = entry({
+      id: "shared",
+      url: "https://example.com/shared",
+      tags: ["agent", "tutorial"],
+    });
+    const archive = entry({
+      id: "archive-alias",
+      url: "https://example.com/shared?utm_source=archive",
+      tags: ["agent"],
+    });
+    const unrelated = entry({
+      id: "archive-only",
+      url: "https://example.com/archive-only",
+      tags: ["archive"],
+    });
+
+    const result = synchronizeArchiveTagsFromLive(
+      [archive, unrelated],
+      [live],
+    );
+
+    expect(result.changed).toBe(1);
+    expect(result.entries[0].tags).toEqual(["agent", "tutorial"]);
+    expect(result.entries[1].tags).toEqual(["archive"]);
+  });
+
   it("preserves hot archive tier on compact no-summary entries", () => {
     const report = emptyReport();
     const kept = summarizeChanges(

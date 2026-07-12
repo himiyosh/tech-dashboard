@@ -248,6 +248,52 @@ describe("data/index.json 各エントリ", () => {
     expect(invalid).toEqual([]);
   });
 
+  it("live/archive entries do not contain Unicode replacement characters", () => {
+    const invalid = allDataEntries
+      .filter((entry) => JSON.stringify(entry).includes("\uFFFD"))
+      .map((entry) => `${String(entry.id)}:${String(entry.archiveFile ?? "live")}`);
+
+    expect(invalid).toEqual([]);
+  });
+
+  it("matching live/archive entries have the same tags", () => {
+    const liveTagsById = new Map(
+      data.entries.map((entry) => [
+        String(entry.id),
+        JSON.stringify(entry.tags ?? []),
+      ]),
+    );
+    const liveTagsByCanonical = new Map(
+      data.entries.map((entry) => [
+        canonicalUrlKey(String(entry.url)),
+        JSON.stringify(entry.tags ?? []),
+      ]),
+    );
+    const mismatches = archiveEntries
+      .map((entry) => ({
+        entry,
+        liveTags:
+          liveTagsById.get(String(entry.id)) ??
+          liveTagsByCanonical.get(canonicalUrlKey(String(entry.url))),
+      }))
+      .filter(
+        (
+          value,
+        ): value is { entry: RawEntry & { archiveFile: string }; liveTags: string } =>
+          typeof value.liveTags === "string",
+      )
+      .filter(
+        ({ entry, liveTags }) =>
+          liveTags !== JSON.stringify(entry.tags ?? []),
+      )
+      .map(
+        ({ entry }) =>
+          `${String(entry.id)}:${String(entry.archiveFile)}`,
+      );
+
+    expect(mismatches).toEqual([]);
+  });
+
   it("publishedAt と collectedAt が ISO 8601 として解釈可能", () => {
     const bad = data.entries
       .filter(

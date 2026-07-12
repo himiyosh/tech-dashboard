@@ -7,21 +7,15 @@ function readConfig(path: string): string {
   return readFileSync(join(process.cwd(), path), "utf8");
 }
 
-function numericVar(config: string, key: string): number {
-  const match = config.match(new RegExp("^" + key + " = \"(\\d+)\"$", "m"));
-  if (!match) throw new Error("missing numeric Worker variable: " + key);
-  return Number(match[1]);
-}
-
-// Retry issue, OG blob, legacy summary blob, and two heartbeat operations.
-const FIXED_KV_OPERATIONS_PER_RUN = 5;
-
 describe("Cloudflare Worker deploy config", () => {
-  it("declares the Paid-plan harness CPU budget without changing the queue consumer limit", () => {
+  it("deploys only the OIDC bridge on Workers Free without a cron or paid CPU limit", () => {
     const harnessConfig = readConfig("worker/wrangler.toml");
     const summarizerConfig = readConfig("worker-summarizer/wrangler.toml");
 
-    expect(harnessConfig).toMatch(/\[limits\][\s\S]*?cpu_ms\s*=\s*30000/);
+    expect(harnessConfig).toContain('main = "src/free-plan-bridge.ts"');
+    expect(harnessConfig).not.toContain("[triggers]");
+    expect(harnessConfig).not.toContain("[limits]");
+    expect(harnessConfig).not.toContain("cpu_ms");
     expect(summarizerConfig).not.toMatch(/\[limits\][\s\S]*cpu_ms\s*=/);
   });
 
@@ -35,12 +29,13 @@ describe("Cloudflare Worker deploy config", () => {
   it("keeps the summary queue producer and consumer wired", () => {
     const harnessConfig = readConfig("worker/wrangler.toml");
     const summarizerConfig = readConfig("worker-summarizer/wrangler.toml");
+    const runner = readConfig("scripts/run-publisher.ts");
     const registry = readConfig("harness/registry.ts");
 
-    expect(harnessConfig).toContain('ENABLE_SUMMARY_QUEUE = "1"');
-    expect(harnessConfig).toContain('ENQUEUE_MAX_NEW = "35"');
-    expect(harnessConfig).toContain('KV_LOOKUP_CAP = "35"');
-    expect(harnessConfig).toContain('OG_BUDGET_PER_RUN = "1"');
+    expect(runner).toContain('ENABLE_SUMMARY_QUEUE: "1"');
+    expect(runner).toContain('ENQUEUE_MAX_NEW: "35"');
+    expect(runner).toContain('KV_LOOKUP_CAP: "35"');
+    expect(runner).toContain('OG_BUDGET_PER_RUN: "1"');
     expect(registry).toContain("maxArticleDateFetches: 4");
     expect(registry).toContain("maxEntriesPerRun: 4");
     expect(harnessConfig).toContain('binding = "SUMMARY_QUEUE"');
@@ -53,31 +48,43 @@ describe("Cloudflare Worker deploy config", () => {
   });
 
   it("reserves subrequest headroom around the enrichment queues", () => {
-    const harnessConfig = readConfig("worker/wrangler.toml");
-    const summaryLookupCap = numericVar(harnessConfig, "KV_LOOKUP_CAP");
-    const summaryEnqueueCap = numericVar(harnessConfig, "ENQUEUE_MAX_NEW");
-    const bodyLookupCap = numericVar(harnessConfig, "BODY_LOOKUP_CAP");
-    const bodyEnqueueCap = numericVar(harnessConfig, "BODY_ENQUEUE_MAX_NEW");
+    const runner = readConfig("scripts/run-publisher.ts");
+    const runnerValue = (key: string) => {
+      const match = runner.match(new RegExp(`${key}: "(\\d+)"`));
+      if (!match) throw new Error(`missing publisher runner value: ${key}`);
+      return Number(match[1]);
+    };
+    const summaryLookupCap = runnerValue("KV_LOOKUP_CAP");
+    const summaryEnqueueCap = runnerValue("ENQUEUE_MAX_NEW");
+    const bodyLookupCap = runnerValue("BODY_LOOKUP_CAP");
+    const bodyEnqueueCap = runnerValue("BODY_ENQUEUE_MAX_NEW");
 
     expect(summaryLookupCap).toBeGreaterThanOrEqual(summaryEnqueueCap);
     expect(bodyLookupCap).toBeGreaterThanOrEqual(bodyEnqueueCap);
     expect(summaryLookupCap + bodyLookupCap).toBeLessThanOrEqual(45);
-    expect(summaryLookupCap + bodyLookupCap + FIXED_KV_OPERATIONS_PER_RUN).toBeLessThanOrEqual(50);
-    expect(harnessConfig).toContain('BODY_RETENTION_DAYS = "30"');
+    expect(runner).toContain('BODY_RETENTION_DAYS: "30"');
   });
 
-  it("keeps Worker observability and hourly production monitoring enabled", () => {
+  it("keeps bridge observability and serialized hourly publisher monitoring enabled", () => {
     const harnessConfig = readConfig("worker/wrangler.toml");
     const summarizerConfig = readConfig("worker-summarizer/wrangler.toml");
+    const publisherWorkflow = readConfig(".github/workflows/publisher.yml");
     const healthWorkflow = readConfig(".github/workflows/worker-health.yml");
     const packageJson = readConfig("package.json");
 
     expect(harnessConfig).toContain("[observability]");
     expect(harnessConfig).toContain("enabled = true");
-    expect(harnessConfig).toContain('crons = ["0 * * * *"]');
     expect(summarizerConfig).toContain("[observability]");
     expect(summarizerConfig).toContain("enabled = true");
-    expect(healthWorkflow).toContain('cron: "15 * * * *"');
+    expect(publisherWorkflow).toContain('cron: "0 * * * *"');
+    expect(publisherWorkflow).toContain("run-name: Publisher /");
+    expect(publisherWorkflow).toContain("'dry-run' || 'publish'");
+    expect(publisherWorkflow).toContain("group: tech-dashboard-publisher");
+    expect(publisherWorkflow).toContain("cancel-in-progress: false");
+    expect(publisherWorkflow).toContain("contents: write");
+    expect(publisherWorkflow).toContain("id-token: write");
+    expect(publisherWorkflow).not.toMatch(/wrangler\s+(?:pages\s+)?deploy/);
+    expect(healthWorkflow).toContain('cron: "40 * * * *"');
     expect(healthWorkflow).toContain("npm run health:prod");
     expect(packageJson).toContain('"health:prod": "node scripts/check-production-health.mjs"');
   });

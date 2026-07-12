@@ -19,10 +19,12 @@
     "body:migrate": "node scripts/migrate-bodies-to-file.mjs",
     "titleen:fill": "node scripts/fill-title-en.mjs",
     "publisher:contract": "node scripts/update-publisher-contract.mjs",
+    "publisher:run": "tsx scripts/run-publisher.ts",
     "auth:setup": "bash scripts/setup-copilot-auth.sh",
     "auth:rotate": "bash scripts/setup-copilot-auth.sh --rotate",
     "auth:device": "tsx scripts/copilot-device-login.mjs",
     "typecheck": "tsc --noEmit",
+    "typecheck:worker": "npm --prefix worker run typecheck",
     "lint": "tsc --noEmit",
     "pretest": "node scripts/ensure-web-deps.mjs",
     "secrets:scan": "node scripts/scan-secrets.mjs --current",
@@ -36,7 +38,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "test:all": "npm run typecheck && npm test && npm run build:web && npm run test:e2e",
+    "test:all": "npm run typecheck && npm run typecheck:worker && npm test && npm run build:web && npm run test:e2e",
     "health:prod": "node scripts/check-production-health.mjs"
   },
   "engines": {

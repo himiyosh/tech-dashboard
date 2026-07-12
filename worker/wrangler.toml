@@ -1,146 +1,28 @@
 #:schema https://cloudflare.com/workers/wrangler-schema.json
-# Cloudflare Worker: hourly harness (replaces GitHub Actions harness-daily.yml).
-# Runs hourly with a six-batch source rotation and republishes data artifacts,
-# which triggers a Cloudflare Pages deploy via the Git integration.
+# Free-plan bridge for the GitHub Actions publisher. Heavy collection, JSON
+# processing, validation, and Git publication run in .github/workflows/publisher.yml.
+# This Worker only verifies GitHub OIDC and forwards bounded KV/Queue operations.
 
 name = "tech-dashboard-harness"
-main = "src/index.ts"
+main = "src/free-plan-bridge.ts"
 compatibility_date = "2025-09-01"
-compatibility_flags = ["nodejs_compat"]
 
-# Cron: every hour (24 runs/day = ~720/month).
-# Pages builds only fire when data/index.json actually changes (worker no-ops otherwise),
-# so realistic Pages build count stays well under the Free 500 builds/month cap.
-[triggers]
-crons = ["0 * * * *"]
-
-# Summary cache (replaces data/_summary-cache.json).
-# Create with: wrangler kv namespace create SUMMARY_CACHE
 [[kv_namespaces]]
 binding = "SUMMARY_CACHE"
 id = "6d67debb991742efadfec473a121f5fc"
 
-[vars]
-GITHUB_OWNER = "himiyosh"
-GITHUB_REPO = "tech-dashboard"
-GITHUB_BRANCH = "main"
-# LL-031: opus-4.7 long-form generation does not fit in Cloudflare Worker
-# wall-time (~30s). Sonnet 4.6 is 3-5x faster with comparable summary quality
-# and stays well within budget. Switch to opus only when premium quality is
-# required (see R-007).
-SUMMARIZE_MODEL = "claude-sonnet-4.6"
-# 2026-05-15: subrequest 問題は PR #38/#40/#41/#45 で解消したが、Worker
-# CPU 時間 30s 上限を summarize=1 でも超過する (tail: "Worker exceeded
-# CPU time limit"). 長文 bilingual JSON のパースと publishHistoryFiles の
-# 重い stats/archive 処理が合算するため。Worker は collection + publish に
-# 専念させ、要約は `npm run resummarize` (ローカル, CPU 制約なし) で行う
-# 方針。LL-031/LL-037 参照。
-SUMMARIZE_MAX_NEW = "0"
-SUMMARIZE_CONCURRENCY = "2"
-# 25s: sonnet long-form bilingual JSON output (max_tokens=2400) needs
-# 12-20s typically; 15s killed legitimate responses. See LL-034.
-SUMMARIZE_TIMEOUT_MS = "25000"
-# Queue split feature flag.
-# "0" = legacy behaviour (no enqueue).
-# "1" = after each cron, enqueue up to ENQUEUE_MAX_NEW entries that lack a
-#       real cache hit. Requires the SUMMARY_QUEUE producer binding to exist
-#       (see [[queues.producers]] block below) and the
-#       tech-dashboard-summarizer Worker to be deployed.
-# 2026-05-15: Queue paused (KV cache.v1 blob bloat made the consumer hit
-# the 30 s CPU cap on every job — LL-038).
-# 2026-05-16: Re-enabled after Phase A+B (PR #62) split cache.v1 into
-# per-URL KV keys. The consumer now does one KV.put per job, no blob R/M/W.
-# 2026-05-31: Lowered cap to 10 after the 21:00Z cron hit the subrequest
-# ceiling. 2026-06-15 (LL-088): the subrequest ceiling was driven by
-# KV_LOOKUP_CAP (one KV GET each), NOT by ENQUEUE_MAX_NEW. Enqueue uses
-# Queue.sendBatch (one subrequest for up to 100 messages), so raising
-# ENQUEUE_MAX_NEW costs ~0 extra collector subrequests. The only cost of a
-# higher ENQUEUE_MAX_NEW is consumer-side KV writes (one KV.put per job),
-# bounded by the Free-tier 1000 writes/day cap (LL-043).
-# 2026-06-20: raised 30 -> 35 to drain the ~628 backlog (38%) a bit faster.
-# Daily write budget:
-#   24 cron * 35 enqueue = 840 summarizer KV.put/day (worst case)
-#   + ~24 OG cache puts  = 24 KV.put/day
-#   + ~24 heartbeat      = 24 KV.put/day
-#   + occasional manual /run = a handful
-#   => ~890/day, still under the 1000/day Free-tier KV write cap (LL-043).
-ENABLE_SUMMARY_QUEUE = "1"
-ENQUEUE_MAX_NEW = "35"
-# KV_LOOKUP_CAP: max fallback entries to KV-read per cron invocation. Each is
-# one subrequest, so this is the real subrequest lever (not ENQUEUE_MAX_NEW).
-# 2026-05-31: Lowered from 500 after the 21:00Z cron hit the subrequest limit.
-# 2026-06-15 (LL-088): raised 20 -> 40 so the producer verifies enough
-# missing entries to feed ENQUEUE_MAX_NEW (keeping KV_LOOKUP_CAP >=
-# ENQUEUE_MAX_NEW minimizes speculative enqueues of already-cached URLs, since
-# the consumer does not pre-check KV before generating).
-# 2026-07-11 (LL-152): 80 -> 40 still exhausted the budget in the same natural
-# batch. Keep summary lookup equal to ENQUEUE_MAX_NEW=35 and reserve the rest
-# for collection, body lookup, redirects, heartbeat writes, and GitHub publish.
-KV_LOOKUP_CAP = "35"
-# Missing thumbnail backfill is useful but non-critical. Keep it tiny so data
-# collection + GitHub publish stay under the Free-plan external subrequest cap.
-OG_BUDGET_PER_RUN = "1"
-# Body-file architecture Phase B (LL-115). Body generation is OFF until the
-# body queue + worker-body are provisioned. Activation steps:
-#   1. `wrangler queues create tech-dashboard-body`
-#   2. `wrangler queues create tech-dashboard-body-dlq`
-#   3. Deploy worker-body (cd ../worker-body && wrangler deploy) + set its
-#      COPILOT_PAT secret.
-#   4. Set ENABLE_BODY_QUEUE = "1" here + redeploy this collector.
-# Until ENABLE_BODY_QUEUE = "1" the whole body pipeline is a no-op (no extra
-# subrequests, bodies.json untouched).
-ENABLE_BODY_QUEUE = "1"
-# Body jobs enqueued per cron. Each consumed job writes one `b:` KV entry, so
-# this shares the KV daily write budget with summaries (LL-043). Backlog ~760
-# entries drains in roughly one day at 10/hr. Raise only after measured headroom.
-BODY_ENQUEUE_MAX_NEW = "10"
-# `b:` KV reads per cron to merge generated bodies into data/bodies.json. Each
-# is one subrequest; keep the combined summary/body lookup cap at 45 so
-# collection and the GitHub publish transaction retain bounded headroom.
-BODY_LOOKUP_CAP = "10"
-# Keep long-form bodies for evergreen knowledge, importance 2/3 entries, and
-# recent news. Older low-importance items continue to use their bilingual
-# summary and original-source link without growing bodies.json indefinitely.
-BODY_RETENTION_DAYS = "30"
-
-# Secrets (set via `wrangler secret put`):
-#   - COPILOT_PAT    Classic PAT with Copilot Enterprise access
-#   - GH_TOKEN       Fine-grained PAT with "Contents: Write" on this repo
-
-# Optional: Queue producer for the split summarizer Worker (LL-037 mid-term).
-# Activate by:
-#   1. `wrangler queues create tech-dashboard-summary`
-#   2. `wrangler queues create tech-dashboard-summary-dlq`
-#   3. Uncomment the binding below + redeploy
-#   4. Deploy worker-summarizer (cd ../worker-summarizer && wrangler deploy)
-#   5. Set `ENABLE_SUMMARY_QUEUE = "1"` in [vars] above to start enqueueing
-# Until activated, the producer Worker logs "queue disabled" and skips the
-# enqueue step. See docs/06-worker-split-design.md.
 [[queues.producers]]
 binding = "SUMMARY_QUEUE"
 queue = "tech-dashboard-summary"
 
-# Body queue producer (body-file Phase B, LL-115). The queue must exist before
-# this Worker can deploy with this binding (`wrangler queues create
-# tech-dashboard-body`). The body pipeline is still gated behind
-# ENABLE_BODY_QUEUE so binding presence alone does not start generation.
 [[queues.producers]]
 binding = "BODY_QUEUE"
 queue = "tech-dashboard-body"
 
+[vars]
+PUBLISHER_OIDC_AUDIENCE = "tech-dashboard-publisher"
+PUBLISHER_REPOSITORY = "himiyosh/tech-dashboard"
+PUBLISHER_WORKFLOW_REF = "himiyosh/tech-dashboard/.github/workflows/publisher.yml@refs/heads/main"
+
 [observability]
 enabled = true
-
-# The collector parses and rewrites multi-megabyte JSON artifacts. Production
-# measurements on 2026-07-12 used 0.6-1.6s CPU on successful runs, so the Free
-# plan's 10ms CPU ceiling cannot run this workload reliably. Declaring the
-# 30-second Paid-plan budget makes deployment fail before replacing production
-# when the account is not on a compatible plan.
-[limits]
-cpu_ms = 30000
-
-# Cron runs require Workers Paid plan limits.
-# Expected monthly usage: 24 runs/day * 30 days = ~720 runs/month.
-# Observed CPU per successful run: about 0.6-1.6s as of 2026-07-12.
-[placement]
-mode = "smart"

@@ -2042,9 +2042,13 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("article detail explains source authority, importance denominator, and category standing", async ({ page }) => {
     await page.goto("/");
-    const firstEntryLink = page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first();
-    await expect(firstEntryLink).toBeVisible();
-    await firstEntryLink.click();
+    const summarizedCard = page
+      .locator("main article.card")
+      .filter({ has: page.locator(".summary .s-text") })
+      .first();
+    const summarizedEntryLink = summarizedCard.locator('h3.title > a[href^="/e/"]');
+    await expect(summarizedEntryLink).toBeVisible();
+    await summarizedEntryLink.click();
     await expect(page).toHaveURL(/\/e\/.+\/$/);
 
     const strip = page.locator(".ed-meta-strip");

@@ -1548,6 +1548,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: token値を表示せずverify endpointでstored tokenの失効を確認し、Cloudflare Status APIで未解決incidentとaffected API componentを確認した。障害中に新規API token発行やmanual secret差し替えへ切り替えず、公式復旧後に既存refresh tokenでWrangler認証を再試行する。deploy後はversion作成結果と各`/health`を確認してからrolloutを続ける。
 - **教訓**: deploy auth errorがHTML、bot challenge、5xxを返した場合は、credential不備とprovider outageを分離して確認する。外部API障害中にblind retryや新規credential発行へ進まず、公式status、secretを出さないtoken verify、version未作成の3点を証拠に安全停止する。
 
+### LL-221: 複数状態を検証するE2Eは先頭記事でなく必要状態のカードを選ぶ
+- **事象**: 最新data migration後、記事詳細のauthorityとTL;DR source linkを同時に検証するE2Eが、先頭Timeline cardのpending-summary記事を開いて`.ed-tldr-source`不在で失敗した。pending detail自体は正常だった。
+- **根本原因**: trust metadataの検証対象を`first()`で選び、TL;DR source linkが存在するsummarized状態をlocatorで限定していなかった。feed順が変わると、テストが必要とする状態と選択記事の状態がずれた。
+- **対策**: HomeのTimeline cardを`.summary .s-text`の有無で絞り、そのcard内のdetail linkだけを開く。pending状態のテストは既存のstate-specific testへ分離したまま維持する。
+- **教訓**: feed駆動UIでstate-specific要素を検証する場合、必要状態を持つcontainerをlocatorで選んでから遷移する。先頭記事や固定順位を、summary、body、fallbackなどの状態保証として使わない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -1286,6 +1286,24 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: follow-up branch に open PR が無いことを `gh pr list --head <branch>` で確認し、2 本目以降は `gh pr create --base main --head <branch>` で対象を明示する。既存 PR を誤って更新・再利用しない。
 - **教訓**: session と PR が 1 対 1 の tool では、branch の現在値を target source と仮定しない。follow-up PR は head/base と既存 PR 不在を明示的に検証してから作る。
 
+### LL-180: 完成した model response でも未エスケープ引用符 1 組で全要約を破棄し得る
+- **事象**: summarizer が単一 Qiita URL を 3 回連続で `incomplete summary` とし、global health を 503 にした。実 API は HTTP 200、`finish_reason=stop`、3 つの要約 field を含む 625 文字を返していたが、parser は全 field を空として扱った。
+- **根本原因**: model が日本語 title 内の ASCII 引用符 (`"自白"`) を JSON string 内でエスケープせず返し、`JSON.parse` が失敗した。timeout、token 枯渇、認証障害ではなく、完成内容と JSON serialization の境界不一致だった。
+- **対策**: summary prompt に string 内の ASCII 引用符を `\"` へ escape し、日本語 title では `「」` を優先する契約を追加した。parser は通常 parse、control character、trailing comma の復旧後に限り、次の構造 delimiter が続かない未エスケープ引用符だけを string 内 quote として限定復旧する。実際に失敗した形を regression test に固定した。
+- **教訓**: `incomplete summary` は生成 field の欠落だけでなく serialization failure でも起こる。HTTP status、finish reason、content length、raw structure、parse result を分けて測り、完成内容を単一の JSON typo で全破棄しない。一方で tolerant parser は通常 parse を先に試し、構造 delimiter を根拠にした限定的な復旧に留める。
+
+### LL-181: 単一 entry の content failure と consumer runtime failure を同じ 503 にしない
+- **事象**: 1 件の Qiita 記事が JSON serialization failure で 3 回 retry されただけで summarizer `/health` が 503 になり、他の queue job は処理可能でも毎時 Worker Health workflow が失敗する状態になった。
+- **根本原因**: issue severity が失敗種別を見ず、同じ URL の `repeatCount >= 3` を consumer 全体の outage と同一視していた。実装上、この条件はむしろ単一の病的 URL で最も発火しやすかった。
+- **対策**: issue marker に `entry` / `runtime` scope を追加した。`incomplete summary` は URL、回数、error を warning として可視化し続けるが global health は 200 に保つ。timeout、認証、binding など runtime failure の反復は従来どおり error / 503 にする。既存 marker は error text から scope を復元して deploy 直後から正しく判定する。
+- **教訓**: health endpoint は「個別 item が処理できたか」ではなく「service が処理可能か」を表す。per-item content failure は observability と retry/cooldown で扱い、global availability を落とさない。runtime failure との scope を telemetry に明示し、CI は service outage だけを release blocker にする。
+
+### LL-182: health endpoint は binding を参照する前に存在確認する
+- **事象**: summarizer `/health` は `cacheBinding:false` の JSON 503 を返す設計だったが、KV binding が欠落すると判定前の `SUMMARY_CACHE.get()` で例外になり、構造化された health response 自体を返せなかった。
+- **根本原因**: 必須 dependency の存在を health payload に含めていても、その dependency を先に dereference すれば fail-closed 判定へ到達できない。
+- **対策**: KV binding を先に boolean 化し、存在するときだけ issue marker を読む。欠落時は `ok:false`、`cacheBinding:false` の JSON 503 を返す regression test を追加した。
+- **教訓**: health check は壊れた dependency を使わずに dependency の故障を報告できなければならない。binding、secret、client の存在確認は最初に行い、診断用 read は guard 後に限定する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

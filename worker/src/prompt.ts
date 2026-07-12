@@ -166,6 +166,7 @@ export function buildSummaryPrompt(e: PromptEntry): string {
     ...(context.length ? [``, `# Collected context`, ...context] : []),
     ``,
     `Return exactly one valid JSON object with ONLY these fields. All strings must be non-empty.`,
+    `Escape ASCII double quotes inside string values as \\". In titleJa, prefer Japanese corner brackets 「」 instead of ASCII double quotes.`,
     `Do NOT write a body or any long-form text. Keep the whole response short.`,
     `Write a genuine summary of what the article is about and why it matters -- do NOT copy or truncate the opening sentence of the excerpt.`,
     `Every summary must be grammatically complete: never cut off mid-sentence or mid-word, and always end with proper punctuation.`,
@@ -282,12 +283,121 @@ function stripTrailingCommas(candidate: string): string {
   return candidate.replace(/,\s*([}\]])/g, "$1");
 }
 
+type JsonContainer =
+  | { kind: "object"; expectingKey: boolean }
+  | { kind: "array" };
+
+function nextNonWhitespaceIndex(text: string, start: number): number {
+  let index = start;
+  while (index < text.length && /\s/.test(text[index]!)) index++;
+  return index;
+}
+
+function looksLikeObjectKey(text: string, start: number): boolean {
+  let index = nextNonWhitespaceIndex(text, start);
+  if (text[index] !== "\"") return false;
+  index++;
+  let escaped = false;
+  for (; index < text.length; index++) {
+    const ch = text[index]!;
+    if (escaped) {
+      escaped = false;
+    } else if (ch === "\\") {
+      escaped = true;
+    } else if (ch === "\"") {
+      return text[nextNonWhitespaceIndex(text, index + 1)] === ":";
+    }
+  }
+  return false;
+}
+
+function escapeUnescapedInnerQuotes(candidate: string): string {
+  let out = "";
+  let inString = false;
+  let escaped = false;
+  let stringRole: "key" | "value" = "value";
+  const containers: JsonContainer[] = [];
+
+  for (let i = 0; i < candidate.length; i++) {
+    const ch = candidate[i]!;
+    if (!inString) {
+      out += ch;
+      const container = containers.at(-1);
+      if (ch === "\"") {
+        inString = true;
+        stringRole =
+          container?.kind === "object" && container.expectingKey ? "key" : "value";
+      } else if (ch === "{") {
+        containers.push({ kind: "object", expectingKey: true });
+      } else if (ch === "[") {
+        containers.push({ kind: "array" });
+      } else if (ch === "}" || ch === "]") {
+        containers.pop();
+      } else if (ch === ":" && container?.kind === "object") {
+        container.expectingKey = false;
+      } else if (ch === "," && container?.kind === "object") {
+        container.expectingKey = true;
+      }
+      continue;
+    }
+
+    if (escaped) {
+      out += ch;
+      escaped = false;
+      continue;
+    }
+    if (ch === "\\") {
+      out += ch;
+      escaped = true;
+      continue;
+    }
+    if (ch !== "\"") {
+      out += ch;
+      continue;
+    }
+
+    let next = i + 1;
+    next = nextNonWhitespaceIndex(candidate, next);
+    const nextSignificant = candidate[next];
+    const container = containers.at(-1);
+    let closesString = false;
+    if (stringRole === "key") {
+      closesString = nextSignificant === ":";
+    } else if (
+      nextSignificant === undefined ||
+      nextSignificant === "}" ||
+      nextSignificant === "]"
+    ) {
+      closesString = true;
+    } else if (nextSignificant === ",") {
+      const afterComma = nextNonWhitespaceIndex(candidate, next + 1);
+      closesString =
+        container?.kind === "object"
+          ? looksLikeObjectKey(candidate, afterComma) || candidate[afterComma] === "}"
+          : candidate[afterComma] === "\"" || candidate[afterComma] === "]";
+    }
+
+    if (closesString) {
+      out += ch;
+      inString = false;
+    } else {
+      out += "\\\"";
+    }
+  }
+
+  return out;
+}
+
 function parseJsonObjectCandidate(candidate: string): Record<string, unknown> | null {
   const escapedControls = escapeRawControlCharsInJsonStrings(candidate);
+  const escapedInnerQuotes = escapeUnescapedInnerQuotes(candidate);
+  const repaired = escapeRawControlCharsInJsonStrings(escapedInnerQuotes);
   const variants = [
     candidate,
     escapedControls,
     stripTrailingCommas(escapedControls),
+    repaired,
+    stripTrailingCommas(repaired),
   ];
   for (const variant of variants) {
     try {

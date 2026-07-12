@@ -141,6 +141,38 @@ Second paragraph.",
     expect(result.extraTags).toEqual(["copilot"]);
   });
 
+  it("文字列内の未エスケープ ASCII 引用符を限定的に復旧する", () => {
+    const text = `{
+      "titleJa": "自作MCPサーバーが動かない: AIの"自白"を物証で崩した話",
+      "summaryJa": "ログと実験で原因を究明した。",
+      "summaryEn": "The developer identified the cause using logs and experiments.",
+      "importance": 2,
+      "extraTags": ["debugging"]
+    }`;
+
+    const result = parseResponse(text);
+    expect(result.titleJa).toBe("自作MCPサーバーが動かない: AIの\"自白\"を物証で崩した話");
+    expect(result.summaryJa).toBe("ログと実験で原因を究明した。");
+    expect(result.summaryEn).toContain("identified the cause");
+    expect(result.importance).toBe(2);
+  });
+
+  it("カンマが続く英語の未エスケープ引用句も field 境界と区別して復旧する", () => {
+    const text = `{
+      "titleJa": "キャッシュ障害の原因",
+      "summaryJa": "遅延の原因を切り分けた。",
+      "summaryEn": "The post explains why "prompt caching", not rate limits, caused the slowdown.",
+      "importance": 2,
+      "extraTags": ["prompt-caching", "debugging"]
+    }`;
+
+    const result = parseResponse(text);
+    expect(result.summaryEn).toBe(
+      "The post explains why \"prompt caching\", not rate limits, caused the slowdown.",
+    );
+    expect(result.extraTags).toEqual(["prompt-caching", "debugging"]);
+  });
+
   it("複数の波括弧ブロックがある場合は最初の妥当な JSON オブジェクトを読む", () => {
     const json = JSON.stringify({ titleJa: "T", summaryJa: "S", summaryEn: "S", bodyJa: "B", bodyEn: "E", importance: 2, extraTags: [] });
     const text = `${json}\n補足: {これは JSON ではありません}`;

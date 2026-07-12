@@ -1,11 +1,104 @@
 {
-  "generatedAt": "2026-07-12T18:01:13.685Z",
+  "generatedAt": "2026-07-12T23:06:28.705Z",
   "month": "2026-07",
-  "count": 487,
+  "count": 504,
   "entries": [
     {
-      "id": "b5a1f103ab67624d",
-      "source": "zenn-ai",
+      "id": "27d68f1c21751558",
+      "source": "qiita-cursor",
+      "sourceType": "blog",
+      "url": "https://qiita.com/Kazeneko/items/8f8d04de2a4267811511",
+      "title": ".envを保存し忘れてDBに繋がらなかった話 — Cursor初心者の「keep」恐怖と数週間の空白",
+      "titleJa": ".envを保存し忘れてDBに繋がらなかった話 — Cursor初心者の「keep」恐怖と数週間の空白",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-12T22:05:08.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "cursor",
+        "qiita"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 2025年の冬、初めてエディターを入れて Cursor を使い始めたときの話です（笑） ポートフォリオ用のアプリを Cursor の AI エージェントと一緒に作っていたのですが、DB の認証がいつまでも通らない。 使っていたのは Supabase（DB・Aut...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Ftech-festa-ogp-background-4b5015b2c518c7e6b9062a7c9f5f5e90.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jTDFJc3Vqb3JvaDc4UnBGUHFXYUFLdnRMa1hBOXZ2QXQ0aUVpQjRWMlJLYTVqc0N3JTNEczk2LWM_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTc4OGY5ZjVjYWNhMWY0OTkzNjFkNDk5ZGZhOTFhZjRm%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D1de3ba9a4b11273b416d7f1560016741?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9LmVudiVFMyU4MiU5MiVFNCVCRiU5RCVFNSVBRCU5OCVFMyU4MSU5NyVFNSVCRiU5OCVFMyU4MiU4QyVFMyU4MSVBNkRCJUUzJTgxJUFCJUU3JUI5JThCJUUzJTgxJThDJUUzJTgyJTg5JUUzJTgxJUFBJUUzJTgxJThCJUUzJTgxJUEzJUUzJTgxJTlGJUU4JUE5JUIxJTIwJUUyJTgwJTk0JTIwQ3Vyc29yJUU1JTg4JTlEJUU1JUJGJTgzJUU4JTgwJTg1JUUzJTgxJUFFJUUzJTgwJThDa2VlcCVFMyU4MCU4RCVFNiU4MSU5MCVFNiU4MCU5NiVFMyU4MSVBOCVFNiU5NSVCMCVFOSU4MCVCMSVFOSU5NiU5MyVFMyU4MSVBRSVFNyVBOSVCQSVFNyU5OSVCRCZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzRkZGRkZGJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTYwNDQyZWFhZmJhYWIxOTMwNjU5MmQ1YTJhNjg0ZDli&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBLYXplbmVrbyZ0eHQtY29sb3I9JTIzRkZGRkZGJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTE0YTA0YTgzNzk3NzZiZjIwYzcwN2ZmMThiNzk5ZDQ4&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=f6be70b15e7dcefba8ed7f951933a7a6",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Ftech-festa-ogp-background-4b5015b2c518c7e6b9062a7c9f5f5e90.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jTDFJc3Vqb3JvaDc4UnBGUHFXYUFLdnRMa1hBOXZ2QXQ0aUVpQjRWMlJLYTVqc0N3JTNEczk2LWM_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTc4OGY5ZjVjYWNhMWY0OTkzNjFkNDk5ZGZhOTFhZjRm%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D1de3ba9a4b11273b416d7f1560016741?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9LmVudiVFMyU4MiU5MiVFNCVCRiU5RCVFNSVBRCU5OCVFMyU4MSU5NyVFNSVCRiU5OCVFMyU4MiU4QyVFMyU4MSVBNkRCJUUzJTgxJUFCJUU3JUI5JThCJUUzJTgxJThDJUUzJTgyJTg5JUUzJTgxJUFBJUUzJTgxJThCJUUzJTgxJUEzJUUzJTgxJTlGJUU4JUE5JUIxJTIwJUUyJTgwJTk0JTIwQ3Vyc29yJUU1JTg4JTlEJUU1JUJGJTgzJUU4JTgwJTg1JUUzJTgxJUFFJUUzJTgwJThDa2VlcCVFMyU4MCU4RCVFNiU4MSU5MCVFNiU4MCU5NiVFMyU4MSVBOCVFNiU5NSVCMCVFOSU4MCVCMSVFOSU5NiU5MyVFMyU4MSVBRSVFNyVBOSVCQSVFNyU5OSVCRCZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzRkZGRkZGJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTYwNDQyZWFhZmJhYWIxOTMwNjU5MmQ1YTJhNjg0ZDli&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBLYXplbmVrbyZ0eHQtY29sb3I9JTIzRkZGRkZGJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTE0YTA0YTgzNzk3NzZiZjIwYzcwN2ZmMThiNzk5ZDQ4&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=f6be70b15e7dcefba8ed7f951933a7a6",
+        "alt": ".envを保存し忘れてDBに繋がらなかった話 — Cursor初心者の「keep」恐怖と数週間の空白",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "10af899566f745cb",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/yu_tkr/articles/agentcore-databricks-genie-mcp",
+      "title": "Amazon Bedrock AgentCoreからDatabricks Genie MCPを呼び出す",
+      "titleJa": "Amazon Bedrock AgentCoreからDatabricks Genie MCPを呼び出す",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-12T17:51:48.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに Amazon Bedrock AgentCore の Harness から、AgentCore Gateway を経由して Databricks の Managed MCP サーバー（Genie）を呼び出す構成を検証しました。本記事では、その構築手順を解説します。 ! Databricks Managed MCP サーバーは執筆時点（2026年7月）で Public Preview です。また AgentCore コンソールのUIや設定項目は今後変わる可能性があります。 登場人物の整理 コンポーネント 役割 AgentCore Harness "
+    },
+    {
+      "id": "a0e8736986a6b4aa",
+      "source": "qiita-cursor",
+      "sourceType": "blog",
+      "url": "https://qiita.com/kyosuke_hayashi/items/842bcae9be4cefd9bce8",
+      "title": "Claude Codeで「自己進化するデザインナレッジベース」を .claude ディレクトリに構築する",
+      "titleJa": "Claude Codeで「自己進化するデザインナレッジベース」を .claude ディレクトリに構築する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-12T15:00:49.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "cursor",
+        "qiita"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Claude Codeで「自己進化するデザインナレッジベース」を .claude ディレクトリに構築する Claude Codeを「デザインレビュアー」ではなく「Design Systems Architect」として運用するプロンプトを作った チャットに投げると ~..."
+    },
+    {
+      "id": "8348089011514f66",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/masuda_masuo/articles/2026-07-11-sunaba-evolution",
+      "title": "Claude Code時代のAIエージェント専用「サンドボックス」設計論：ローカル破壊防止・Egress Proxy・LLM向けAXのすべて",
+      "titleJa": "Claude Code時代のAIエージェント専用「サンドボックス」設計論：ローカル破壊防止・Egress Proxy・LLM向けAXのすべて",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-12T14:33:47.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに：なぜローカルでAIに開発させてはいけないのか？ 自分自身では一切プログラムを書かず、設計・実装・テスト・レビューのすべてをLLM（AIエージェント）に実行させるスタイルで開発を行っている。 近年、Claude Codeを筆頭に、ローカル環境で直接コマンドを実行してコードを書き換える強力なAIエージェントツールが登場している。しかし、AIにローカルマシン（ホストOS）上で直接作業をさせることには、実務運用上、極めて深刻な課題が存在する。 ローカル環境の破壊リスク いくら実行前に人間の承認（HITL: Human-in-the-Loop）を挟むとは"
+    },
+    {
+      "id": "978e1fdfe2bbe606",
+      "source": "zenn-mcp",
       "sourceType": "blog",
       "url": "https://zenn.dev/nenene01/articles/ai-security-2026",
       "title": "開発現場のAIセキュリティを見直す",
@@ -13,12 +106,13 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-12T14:13:10.000Z",
-      "collectedAt": "2026-07-12T18:00:38.142Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "ai",
+        "mcp",
         "zenn"
       ],
-      "category": "local-llm",
+      "category": "mcp",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -33,12 +127,97 @@
       }
     },
     {
+      "id": "65fa385480afc1b7",
+      "source": "qiita-cursor",
+      "sourceType": "blog",
+      "url": "https://qiita.com/Kazeneko/items/375624d4d25b746fc0d1",
+      "title": "Qiita Tech Festa 20記事を目指して整えた Cursor 執筆環境 — preview・textlint・Skill の線引き",
+      "titleJa": "Qiita Tech Festa 20記事を目指して整えた Cursor 執筆環境 — preview・textlint・Skill の線引き",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-12T13:14:20.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "cursor",
+        "qiita"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに Qiita Tech Festa 2026 の 記事数部門・20記事達成 でもらえる Qiitan ぬいぐるみ が欲しくて、執筆環境を整え始めました（笑） 打算の塊ですが、せっかくなのでその過程を記事に残します。 このリポジトリでは drafts/ で下書き →..."
+    },
+    {
+      "id": "4e7f7c0cae59b80a",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/ue5pluginjp/articles/72340394a731d0",
+      "title": "UE5.8で増えたAIエージェント向けToolsetを使ってみた",
+      "titleJa": "UE5.8で増えたAIエージェント向けToolsetを使ってみた",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-12T13:03:19.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "UE5.8でToolsetが一気に増えた UE5.8からMCP（Model Context Protocol）対応が入り、Claude CodeやCursorなどのAIをエディタに接続できるようになりました。 最初のリリース時点でToolsetは14種ほどでしたが、UE5.8の正式版ではPCG・Niagara・UMGなどが追加されて26種＋AllToolsetsメタプラグインという構成になっています。 何ができるようになったのか、実際の指示例を交えて整理します。 まずAllToolsetsを有効にする 個別のToolsetを一つひとつ有効にする必要はあり"
+    },
+    {
+      "id": "49abf2accc5c1b20",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/saikoukiroku/articles/8234ed8d63457a",
+      "title": "Codex CLIでUnity MCPを使う方法とConnection revokedの原因",
+      "titleJa": "Codex CLIでUnity MCPを使う方法とConnection revokedの原因",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-12T12:28:55.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに Unity を AI エージェントから直接操作したくなったので、公式の Unity MCP を CodexCLI から使ってみました。 導入自体はそこまで難しくなかったのですが、接続後に「さっき承認したはずなのになぜか弾かれる」という謎の挙動にハマったので、導入手順と合わせて原因の調査結果も残しておきます。 導入方法 今回は CodexCLI から Unity MCP を叩く構成です。 Unity 側の準備 Unity Editor の Package Manager から、テクニカルネームを指定してパッケージをインストールします。 Insta"
+    },
+    {
+      "id": "36d0b0127456d57d",
+      "source": "qiita-cursor",
+      "sourceType": "blog",
+      "url": "https://qiita.com/toyama0919/items/b3b1feee2137d8ca3573",
+      "title": "Cursor と Claude Code のルールを symlink で共有してはいけない — 生成して同期する",
+      "titleJa": "Cursor と Claude Code のルールを symlink で共有してはいけない — 生成して同期する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-12T11:52:22.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "cursor",
+        "qiita"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Cursor と Claude Code のルールを symlink で共有してはいけない — 生成して同期する Cursor と Claude Code を同じ repo で併用していると、両方とも「プロジェクトルール」ファイルの仕組みを持っていることに気づく。永続的な..."
+    },
+    {
       "id": "c7bf028a0aa519a4",
       "source": "zenn-cursor",
       "sourceType": "blog",
       "url": "https://zenn.dev/o2wsu9/articles/aba0c9445f750d",
       "title": "Claude Codeのrulesが全部常時ロードされてコンテキストを圧迫していた話",
-      "titleJa": "Claude Codeのrulesが全部常時ロードされてコンテキストを圧迫していた話",
+      "titleJa": "Claude Code の rules ファイルが全件常時ロードされてコンテキストを圧迫していた話",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-12T11:45:22.000Z",
@@ -54,12 +233,77 @@
       "contentSnippet": "Claude Code の ~/.claude/rules/ に言語別のコーディング規約を置いていたら、Go も React も触っていないセッションでそれらが全文ロードされ、ベースラインのコンテキストを浪費していました。原因は frontmatter のフィールド名。Cursor の流儀で書いていました。発見から修正、実機での検証までの記録です。 事象 Claude Code はセッション開始時に ~/.claude/rules/ 配下の Markdown ファイルを読み込みます（サブディレクトリも再帰的に検出されます）。ここに go-style.md"
     },
     {
+      "id": "bda79656119b3b90",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/ksk1993/articles/be17321f0a5e63",
+      "title": "MCPでAIエージェントに参照系の権限だけを渡し、更新は人間に残す方法",
+      "titleJa": "MCPでAIエージェントに参照系の権限だけを渡し、更新は人間に残す方法",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-12T10:43:52.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "この記事で作るもの AIエージェントにクラウドを操作させるとき、参照等のリスクの低い操作を任せ、リスクの高い操作は引き続きシステムや人間の手により行う、という場面は多いと想像される。 この記事では、その分担をAWSで実際に組んで検証する。 題材はS3のオブジェクトの読み書きにする。 AIエージェント：バケットの中身を読ませる操作を実施。更新作業は拒否 システム または 人 ：バケットの読み書きを実施 この要件を満たすだけなら、S3の読み取り権限を持つIAMユーザーを1つ作って終わりにもできる。今回はそれをせず、AWS Identity Center（旧A"
+    },
+    {
+      "id": "6b80fc88b1aec8c5",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/numarn/articles/mcp-memory-server-graph-handson",
+      "title": "Claude用『記憶』MCPサーバーを試したら、npm installし直すだけで記憶が消えていた",
+      "titleJa": "Claude用『記憶』MCPサーバーを試したら、npm installし直すだけで記憶が消えていた",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-12T09:42:49.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Claude Code のようなAIは、会話が終わるとそれまでのやり取りを覚えていません。そこで「MCP(Model Context Protocol、AIに外部機能を追加できる仕組み)」の公式サンプルとして配布されている、AIに会話をまたいだ\"記憶\"を持たせるサーバーを見つけたので、AI本体を経由せず直接叩いて挙動を確かめました。 結論から言うと、**「同じ名前でもう一度記憶を登録すると、上書きでもマージでもなく新しい内容がまるごと無視される」「初期設定のままだと、記憶の保存先はプロジェクトのフォルダではなくnpm installで作られるnode_m"
+    },
+    {
+      "id": "9c10535df74860e7",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/mashharuki/articles/web3_sera_protocol-8",
+      "title": "【会話するオンチェーンFX】Sera Protocol API × Privyで安全なTelegram Botを作ってみた",
+      "titleJa": "【会話するオンチェーンFX】Sera Protocol API × Privyで安全なTelegram Botを作ってみた",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-12T06:59:04.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "こんにちは！ これまで、Sera Protocolの概要、GraphQL API、コントラクト操作、Reactフロントエンド、MCPサーバー、Agent Skillと、連載形式でSeraの技術を追いかけてきました。 今回はその第8弾として、TelegramだけでステーブルコインFXを操作できるBotを開発しました！ この記事は、TypeScriptとWeb3の基礎を知っている開発者を対象にしています。Sera Protocolを初めて知る方でも、Botの全体像からREST API v2、Privyによるウォレット作成、EIP-712署名、安全な確認フロー"
+    },
+    {
       "id": "099e1d5f310fa067",
       "source": "zenn-cursor",
       "sourceType": "blog",
       "url": "https://zenn.dev/nozele/articles/87269c2eedbdeb",
       "title": "網羅的1行レビューをCursorのComposer2.5で動くAgentsで構成した話",
-      "titleJa": "網羅的1行レビューをCursorのComposer2.5で動くAgentsで構成した話",
+      "titleJa": "Cursor Composer 2.5のAgentsで網羅的1行コードレビューを構成した話",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-12T06:49:44.000Z",
@@ -73,6 +317,27 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "前回の記事の続き AIエージェントが変更した文書やコードのレビューとして、「網羅的に1行ずつレビューしたら意外と効果があった件」 という記事を前回書きました。 https://zenn.dev/nozele/articles/8065775787fad7 この記事はその続きで、そのままやるとトークン効率が悪すぎるので効果を保ちつつ改善したという話になります。 網羅的1行レビューは使えているか？ 前回の記事から、網羅的1行レビューを継続して使用しています。 理由は効果をかなり感じられるからですね。 AIエージェントによるレビュープロセス自体はありますが、そ"
+    },
+    {
+      "id": "b6fdda0932f5e27a",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/tech_nnyannya/articles/14b8f5156f0a20",
+      "title": "Claude Codeに長期記憶を与えるOSSを作った",
+      "titleJa": "Claude Codeに長期記憶を与えるOSSを作った",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-12T06:16:05.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Claude Codeは毎回ゼロから始まる Claude Codeを毎日使っていると、「同じ説明を何度も繰り返している」と感じることがあります。 なぜこのアーキテクチャを選んだのか なぜ別の実装案を却下したのか 将来的にどこを改善する予定なのか Claude Codeは同じプロジェクトでも、セッションが終われば会話の記憶は消えます。ログ自体は ~/.claude/projects/ にJSONLで残っているのに、次のセッションでは参照されません。つまり、記憶は存在しているのに、Claude自身はそれを使えない状態です。 コードはGitを見れば分かりますが"
     },
     {
       "id": "7fe148879167e5e1",
@@ -236,6 +501,49 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "acedbdfc3836b9c7",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kakikou/articles/73588b878b190f",
+      "title": "Blenderの公式MCPを追加しようとして、SSL errorと言われた時の対処法",
+      "titleJa": "Blenderの公式MCPを追加しようとして、SSL errorと言われた時の対処法",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T16:22:04.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "TL;DR https://lab.blender.org/aa ↑404ページに行くが、Chromeでここにアクセスして 下の画像の場所を押す その後、\"証明書は有効です\"をクリックし... エクスポートを押し、どこかに証明書ファイルを保存する ファイルを開いてOSに証明書をインストールする ↑Windowsの例 MacOSもなんか.pemをひらけばインストールできるはず。 どうなるか インストール出来るようになる やったあ！！！ 注意点だが、普通こういう処置は取らないほうがいい。信頼できない証明書を信頼することほど怖いことはないが、現状こちら側が対処"
+    },
+    {
+      "id": "a70112b201dbc124",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/chaos_gyoza/articles/8e4289300faa48",
+      "title": "blenderでクロノトリガーのあのシーンを再現してみたかった",
+      "titleJa": "blenderでクロノトリガーのあのシーンを再現してみたかった",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T15:41:21.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "blenderでクロノトリガーのあのシーンを再現してみたかった お疲れ様です。村松です。 最近AI技術の進歩すさまじくちょっと動向を追っていないとすぐに情報が追いきれなくなってしまうのですが、それでもなんとか小耳にはさんだ情報にどうやらblenderをclaude codeで触れるらしいぞ？と聞きましたので実際にどこまでいけるのか？fableさよなら記念もかねていじってみました。 自分のステータス blender：触ったことない。なんかいろいろ3Dモデリング？できるんだな～くらいの印象 claude code：エンジニアなのでさすがに業務利用。loopと"
     },
     {
       "id": "7c9fd64de6edc82c",
@@ -851,8 +1159,8 @@
       "contentSnippet": "前回は膨大な数のネット記事のPDFファイルを整理する前準備を行いました。今回は、前回作成したjsonファイルを用いた「分類」のお話をします。 https://zenn.dev/drbobt1122/articles/blog26070501 jsonファイル 前回、yomitokuで文字起こししたネット記事は、以下のtitle、author、summary、keywords 5件が記載されたjsonファイルに保存しました。今回はこのjsonファイルからスタートです。 分類方法の検討 まず、Claude Coworkを使って、Opusに分類方法を提案しても"
     },
     {
-      "id": "1bc7015a2db65558",
-      "source": "zenn-claude",
+      "id": "9d96409a1eac6e40",
+      "source": "zenn-mcp",
       "sourceType": "blog",
       "url": "https://zenn.dev/aws_japan/articles/claude-desktop-bedrock-salesforce-mcp",
       "title": "Claude Desktop on Amazon Bedrock から Salesforce に MCP 接続してみた",
@@ -860,7 +1168,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-11T06:48:29.000Z",
-      "collectedAt": "2026-07-11T13:00:29.750Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "agent",
         "amazon-bedrock",
@@ -871,11 +1179,32 @@
         "tutorial",
         "zenn"
       ],
-      "category": "claude",
+      "category": "mcp",
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに こんにちは！AWS でソリューションアーキテクトをしている町田です。 今回は、Claude Desktop (Cowork) から Salesforce にアクセスするための Salesforce Hosted MCP Server を Windows 環境でセットアップしてみました。 これを利用することで、自然言語だけでSalesforceのデータ操作が完結します。 なお、Salesforce Hosted MCP Server は複数個あり、今回は、sobject-read(読み取り操作) と sobject-all(読み書き操作) の2つ"
+    },
+    {
+      "id": "d200650b6ac990f6",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/ryota_09/articles/plaud-note-customer-meeting",
+      "title": "Plaud Note Proでシステム開発の顧客ミーティングを効率化してみた",
+      "titleJa": "Plaud Note Proでシステム開発の顧客ミーティングを効率化してみた",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T06:13:43.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "! この記事はAIとの共著です。 こんにちは！@Ryo54388667です！☺️ 普段は都内でエンジニアとして業務をしてます！最近はプロジェクトをインフラからバックエンド、フロントエンドまで一通り任せてもらっています。 今回は AIボイスレコーダー「Plaud Note Pro」でシステム開発の顧客ミーティングを効率化した話 を紹介していきます！ 📌 はじめに 受託のシステム開発では、顧客との要件定義ミーティングが頻繁にあります。ここで地味に辛いのが議事録です。私の場合、導入前は次のような課題を抱えていました。 「話を聞く」「要件の詳細を質問する」「議"
     },
     {
       "id": "ef49b89586fe0463",
@@ -948,8 +1277,8 @@
       }
     },
     {
-      "id": "06b68d1347540ba0",
-      "source": "zenn-claude",
+      "id": "800395950db5f367",
+      "source": "zenn-mcp",
       "sourceType": "blog",
       "url": "https://zenn.dev/yun_bow/articles/8b2b25b7e5a9be",
       "title": "CLIツールをMCPサーバーに作り替える──単純なツール移植では済まなかった設計転換",
@@ -957,7 +1286,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-11T05:11:59.000Z",
-      "collectedAt": "2026-07-11T13:00:29.750Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "claude",
         "cli",
@@ -967,7 +1296,7 @@
         "tool-design",
         "zenn"
       ],
-      "category": "claude",
+      "category": "mcp",
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -1258,25 +1587,26 @@
       "contentSnippet": "AIを単なるチャットボットとして扱っているとしたら、それはMCP（Model Context Protocol）の価値を半分も理解できていない。 エージェントの本質的な強みは、対話能力ではなく、既存のデータセットに対して「文脈に基づいた推論」と「パターン抽出」を行える点にあ..."
     },
     {
-      "id": "70723429ae2e9371",
-      "source": "zenn-claude",
+      "id": "070ae28b4906c56f",
+      "source": "zenn-mcp",
       "sourceType": "blog",
       "url": "https://zenn.dev/mxhlix/articles/claude-chrome-click-miss-causes",
       "title": "Claude in Chromeで「クリックが当たらない」の正体は2つある — 実測で切り分けた座標ズレとダブルクリック不発",
-      "titleJa": "Claude in Chromeで「クリックが当たらない」原因は2種類 — 座標ズレとダブルクリック不発を実測で切り分け",
+      "titleJa": "Claude in Chromeで「クリックが当たらない」の正体は2つある — 実測で切り分けた座標ズレとダブルクリック不発",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-11T04:05:32.000Z",
-      "collectedAt": "2026-07-11T13:00:29.750Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "browser-automation",
         "chrome",
         "claude",
         "computer-use",
         "debugging",
+        "mcp",
         "zenn"
       ],
-      "category": "claude",
+      "category": "mcp",
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -1788,6 +2118,28 @@
       }
     },
     {
+      "id": "0e6583e8c61c9e32",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/agentmemories/articles/mcp-agent-memory-design-patterns",
+      "title": "MCPで作るAIエージェント記憶サーバー 実運用で固まった設計パターン3選（TypeScript実装付き）",
+      "titleJa": "MCPで作るAIエージェント記憶サーバー 実運用で固まった設計パターン3選（TypeScript実装付き）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T00:51:55.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 前回の記事で、AIエージェントの長期記憶を「Markdownファイル＋git」で実装する方法を書きました。今回はその続きで、記憶ストアをMCP（Model Context Protocol）サーバーとして切り出す設計を扱います。 MCP化する動機は1つです。私たちは複数のAIエージェント（ブログ担当・QC担当・デプロイ担当）を運用していて、記憶を特定のクライアント実装に閉じ込めたくなかった。MCPサーバーにしておけば、Claude Code、Claude Desktop、自作のAPIクライアント、どこからでも同じ記憶を読み書きできます。モデルや"
+    },
+    {
       "id": "1a9100dfc86a8644",
       "source": "zenn-claude",
       "sourceType": "blog",
@@ -1990,6 +2342,27 @@
       }
     },
     {
+      "id": "f9ead64a1e6f7196",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/joinclass/books/claude-skills-complete-guide",
+      "title": "Claude Skills 完全ガイド: 業務知識をAIに埋め込む新パラダイム",
+      "titleJa": "Claude Skills 完全ガイド: 業務知識をAIに埋め込む新パラダイム",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-10T23:00:17.000Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
+      "tags": [
+        "mcp",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Claude の新機能『Skills』を専門に深掘りする世界初レベルの日本語書籍。SKILL.md の書き方、progressive disclosure、bundled resources、Hooks/MCP/Subagents との使い分け、企業導入パターン、業務別 Skills 設計まで一気通貫で解説。自社(AIエージェント11部門) の実運用 Skills をサンプルとして多数収録した全10章。"
+    },
+    {
       "id": "6ae959acac4667f8",
       "source": "qiita-vscode",
       "sourceType": "blog",
@@ -2133,7 +2506,7 @@
       "titleEn": "OpenHands cloud 1.46.0",
       "lang": "en",
       "publishedAt": "2026-07-10T19:51:59.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "cloud",
         "openhands",
@@ -2334,7 +2707,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-10T17:16:05.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "audio-sync",
         "bug-fix",
@@ -2901,7 +3274,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-10T10:47:30.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "claude-code",
         "cli",
@@ -2981,7 +3354,7 @@
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-10T09:55:31.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -4148,7 +4521,7 @@
       "titleEn": "Side Chats and Conversation Search",
       "lang": "en",
       "publishedAt": "2026-07-10T00:00:00.000Z",
-      "collectedAt": "2026-07-11T13:00:29.750Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "changelog",
         "cursor",
@@ -4326,7 +4699,7 @@
       "titleEn": "OpenHands cloud 1.45.1",
       "lang": "en",
       "publishedAt": "2026-07-09T20:07:45.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "cloud",
         "openhands",
@@ -4390,7 +4763,7 @@
       "titleEn": "OpenHands Releases 1.11.0",
       "lang": "en",
       "publishedAt": "2026-07-09T19:37:16.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -4454,7 +4827,7 @@
       "titleEn": "OpenHands cloud 1.45.0",
       "lang": "en",
       "publishedAt": "2026-07-09T19:28:57.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "cloud",
         "openhands",
@@ -4872,7 +5245,7 @@
       "titleEn": "OpenHands cloud 1.44.0",
       "lang": "en",
       "publishedAt": "2026-07-09T14:16:09.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -5575,7 +5948,7 @@
       "titleEn": "LiteRT.js, Google's high performance Web AI Inference",
       "lang": "en",
       "publishedAt": "2026-07-09T00:00:00.000Z",
-      "collectedAt": "2026-07-11T13:00:29.750Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "google",
         "inference",
@@ -5879,7 +6252,7 @@
       "titleEn": "OpenHands cloud 1.43.0",
       "lang": "en",
       "publishedAt": "2026-07-08T20:04:42.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "agent",
         "cloud",
@@ -5939,7 +6312,7 @@
       "titleEn": "OpenHands Releases 1.10.0",
       "lang": "en",
       "publishedAt": "2026-07-08T19:44:54.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "agent",
         "ai-coding",
@@ -6029,7 +6402,7 @@
       "titleEn": "OpenHands Releases 1.9.3",
       "lang": "en",
       "publishedAt": "2026-07-08T16:44:40.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -6245,7 +6618,7 @@
       "sourceType": "blog",
       "url": "https://openai.com/index/government-national-security-partnerships",
       "title": "Our approach to government and national security partnerships",
-      "titleJa": "",
+      "titleJa": "政府および国家安全保障パートナーシップに対するOpenAIのアプローチ",
       "titleEn": "Our approach to government and national security partnerships",
       "lang": "en",
       "publishedAt": "2026-07-08T13:30:00.000Z",
@@ -6291,7 +6664,7 @@
       "sourceType": "blog",
       "url": "https://openai.com/index/separating-signal-from-noise-coding-evaluations",
       "title": "Separating signal from noise in coding evaluations",
-      "titleJa": "",
+      "titleJa": "コーディング評価におけるシグナルとノイズの分離",
       "titleEn": "Separating signal from noise in coding evaluations",
       "lang": "en",
       "publishedAt": "2026-07-08T13:00:00.000Z",
@@ -6420,7 +6793,7 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/collabostyle/articles/0ea214cf0a4859",
       "title": "Claude Code で Atlassian MCP サーバーを登録して Jira との接続確認を行う",
-      "titleJa": "Claude Code で Atlassian MCP サーバーを登録して Jira との接続確認を行う",
+      "titleJa": "Claude Code に Atlassian MCP サーバーを登録して Jira との接続を確認する",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-08T11:18:45.000Z",
@@ -6493,7 +6866,7 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/fukyou/articles/451f13dd2041f7",
       "title": "Rashinban for AI — AIエージェントのための操作に必要な情報だけを渡す軽量ブリッジ",
-      "titleJa": "Rashinban for AI — AIエージェントのための操作に必要な情報だけを渡す軽量ブリッジ",
+      "titleJa": "Rashinban for AI — AIエージェントに必要な情報だけを渡す軽量ブリッジ",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-08T08:51:03.000Z",
@@ -6607,7 +6980,7 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/easakura/articles/selling-japan-data-to-ai-agents-day1",
       "title": "AIエージェントに日本の公的データを売り始めた話（初日で4商品を世界公開するまで）",
-      "titleJa": "AIエージェントに日本の公的データを売り始めた話（初日で4商品を世界公開するまで）",
+      "titleJa": "AIエージェントに日本の公的データを販売し始めた話（初日で4商品を世界公開するまで）",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-08T06:26:06.000Z",
@@ -6722,7 +7095,7 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/yamitake/articles/claude-tag-slack-guide",
       "title": "Claude Tagとは？Slackで @Claude と打つだけで動くAI同僚を徹底解説",
-      "titleJa": "Claude Tagとは？Slackで @Claude と打つだけで動くAI同僚を徹底解説",
+      "titleJa": "Claude Tagとは？Slackで「@Claude」と打つだけで動くAI同僚を徹底解説",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-08T05:01:34.000Z",
@@ -6923,7 +7296,7 @@
       "titleEn": "Bridging the Domain Gap: AI Race Coach built with Antigravity and Gemini",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
-      "collectedAt": "2026-07-11T13:00:29.750Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "ai",
         "case-study",
@@ -6975,7 +7348,7 @@
       "titleEn": "Meta’s AI Glasses: Your Questions Answered",
       "lang": "en",
       "publishedAt": "2026-07-07T23:35:43.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "ai-glasses",
         "meta",
@@ -7102,7 +7475,7 @@
       "titleEn": "OpenHands Releases 1.9.2",
       "lang": "en",
       "publishedAt": "2026-07-07T22:10:22.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "agent",
         "ai-coding",
@@ -7131,7 +7504,7 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/tatetate55/articles/xcode-mcp-swiftui-preview",
       "title": "Xcode MCPでUIプレビューを自動化したら、AIとのSwiftUI開発が一気に速くなった",
-      "titleJa": "Xcode MCPでUIプレビューを自動化したら、AIとのSwiftUI開発が一気に速くなった",
+      "titleJa": "Xcode MCPでUIプレビューを自動化し、AIとのSwiftUI開発を大幅に高速化する",
       "titleEn": "",
       "lang": "ja",
       "publishedAt": "2026-07-07T22:05:08.000Z",
@@ -7189,7 +7562,7 @@
       "titleEn": "OpenHands Releases 1.9.1",
       "lang": "en",
       "publishedAt": "2026-07-07T21:38:24.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -7247,7 +7620,7 @@
       "titleEn": "Introducing Muse Image: Image Generation Built for Your World",
       "lang": "en",
       "publishedAt": "2026-07-07T18:05:34.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "generative-ai",
         "image-generation",
@@ -9603,7 +9976,7 @@
       "titleEn": "We terminated a TPU mid-training and it recovered in seconds:  Introduction to elastic training with MaxText",
       "lang": "en",
       "publishedAt": "2026-07-06T00:00:00.000Z",
-      "collectedAt": "2026-07-11T13:00:29.750Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "elastic-training",
         "fault-tolerance",
@@ -13046,7 +13419,7 @@
       "titleEn": "Meta’s AI Storage Blueprint at Scale",
       "lang": "en",
       "publishedAt": "2026-07-01T16:00:36.000Z",
-      "collectedAt": "2026-07-11T07:00:54.481Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "ai-infrastructure",
         "data-infrastructure",
@@ -13060,6 +13433,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Over the past several years, model capabilities and training dataset sizes have experienced exponential growth. During the past year or so, the time between new-frontier-model releases has gone down from months to weeks. Reliable and fast access to storage is important to both th",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/06/Metas-AI-Storage-Blueprint-at-Scale-Hero-1.png",
@@ -13068,8 +13442,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "a6d7a65d12189805",
@@ -13847,7 +14220,7 @@
       "titleEn": "Why we built ADK 2.0",
       "lang": "en",
       "publishedAt": "2026-07-01T00:00:00.000Z",
-      "collectedAt": "2026-07-11T13:00:29.750Z",
+      "collectedAt": "2026-07-12T23:06:21.063Z",
       "tags": [
         "adk",
         "agent",

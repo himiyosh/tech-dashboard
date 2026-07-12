@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-07-11T22:00:40.734Z",
-  "count": 1729,
+  "generatedAt": "2026-07-12T00:01:48.434Z",
+  "count": 1734,
   "health": {
-    "lastRunAt": "2026-07-11T22:00:40.734Z",
-    "batchIndex": 3,
+    "lastRunAt": "2026-07-12T00:01:48.434Z",
+    "batchIndex": 1,
     "batchTotal": 4,
     "sourcesAttempted": 14,
     "sourcesOk": 14,
     "sourcesFailed": [],
     "summarized": 0,
     "summarizeErrors": 0,
-    "summaryFallbacks": 22,
+    "summaryFallbacks": 20,
     "bodyFallbacks": 0,
     "fallbackTotal": 173,
     "fallbackPercent": 10,
@@ -21,22 +21,129 @@
     "enqueueCandidates": 35,
     "summaryQueueBacklog": 173,
     "summaryQueueDrainEstimateHours": 5,
-    "summaryQueueStartIndex": 121,
+    "summaryQueueStartIndex": 0,
     "summaryQueueCooldownCount": 0,
     "copilotOk": true,
     "copilotError": null,
-    "ogCached": 3287,
+    "ogCached": 3289,
     "ogNewHits": 1,
     "bodyQueueMode": "enabled",
-    "bodyEnqueueCandidates": 1,
-    "bodyBacklog": 133,
-    "bodyDrainEstimateHours": 14,
+    "bodyEnqueueCandidates": 4,
+    "bodyBacklog": 541,
+    "bodyDrainEstimateHours": 55,
     "bodyLookupCount": 10,
-    "bodyMerged": 9,
-    "bodyPruned": 2,
-    "bodiesTotal": 1021
+    "bodyMerged": 6,
+    "bodyPruned": 1,
+    "bodiesTotal": 1026
   },
   "entries": [
+    {
+      "id": "9cf5f97d06a5fd84",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/mediiiiium/articles/cursor-cockpit-loop-engineering",
+      "title": "AIが自律でコードを書く時代に、Cursorは「コックピット」として残るのか",
+      "titleJa": "AIが自律でコードを書く時代に、Cursorは「コックピット」として残るのか",
+      "titleEn": "",
+      "summaryJa": "AIが自律でコードを書く時代に、Cursorは「コックピット」として残るのか",
+      "summaryEn": "cursor update from zenn-cursor. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T20:41:58.000Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
+      "tags": [
+        "cursor",
+        "zenn"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "! これは非エンジニアが、2026年6月〜7月の「ループエンジニアリング」論争を外から観察して、Cursor（エディタ）の立ち位置を構造的に整理してみた記事です。コードを読んで直す側の実感は書けないので、内側の方の異論はコメントでいただけると嬉しいです。 発端：「もうプロンプトを書くな、ループを設計しろ」 2026年6月、Peter Steinberger（元 OpenClaw / 旧 Clawdbot 開発者、2026年2月からOpenAI在籍）のポストが約650万ビューを集めました。 You shouldn't be prompting coding",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--eXRTzGxw--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:AI%25E3%2581%258C%25E8%2587%25AA%25E5%25BE%258B%25E3%2581%25A7%25E3%2582%25B3%25E3%2583%25BC%25E3%2583%2589%25E3%2582%2592%25E6%259B%25B8%25E3%2581%258F%25E6%2599%2582%25E4%25BB%25A3%25E3%2581%25AB%25E3%2580%2581Cursor%25E3%2581%25AF%25E3%2580%258C%25E3%2582%25B3%25E3%2583%2583%25E3%2582%25AF%25E3%2583%2594%25E3%2583%2583%25E3%2583%2588%25E3%2580%258D%25E3%2581%25A8%25E3%2581%2597%25E3%2581%25A6%25E6%25AE%258B%25E3%2582%258B%25E3%2581%25AE%25E3%2581%258B%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:medium_cbsc%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSnpfMW9QV0puVG5tajRrOVM2UnNoSVc3NGF0V2JEY0hvbER6T1U3MkxYeFVfODR0YV89czI1MC1j%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--eXRTzGxw--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:AI%25E3%2581%258C%25E8%2587%25AA%25E5%25BE%258B%25E3%2581%25A7%25E3%2582%25B3%25E3%2583%25BC%25E3%2583%2589%25E3%2582%2592%25E6%259B%25B8%25E3%2581%258F%25E6%2599%2582%25E4%25BB%25A3%25E3%2581%25AB%25E3%2580%2581Cursor%25E3%2581%25AF%25E3%2580%258C%25E3%2582%25B3%25E3%2583%2583%25E3%2582%25AF%25E3%2583%2594%25E3%2583%2583%25E3%2583%2588%25E3%2580%258D%25E3%2581%25A8%25E3%2581%2597%25E3%2581%25A6%25E6%25AE%258B%25E3%2582%258B%25E3%2581%25AE%25E3%2581%258B%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:medium_cbsc%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSnpfMW9QV0puVG5tajRrOVM2UnNoSVc3NGF0V2JEY0hvbER6T1U3MkxYeFVfODR0YV89czI1MC1j%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "AIが自律でコードを書く時代に、Cursorは「コックピット」として残るのか",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "e130f15b9862b471",
+      "source": "zed-releases",
+      "sourceType": "release",
+      "url": "https://github.com/zed-industries/zed/releases/tag/nightly",
+      "title": "nightly: terminal: Fix terminal jitter on resize (#56715)",
+      "titleJa": "Zed nightly、折りたたみ時にコードレンズのブロックを非表示化",
+      "titleEn": "nightly: terminal: Fix terminal jitter on resize (#56715)",
+      "summaryJa": "Zedエディタのnightlyビルドで、コードを折りたたんだ際に該当箇所のコードレンズ用ブロックも一緒に非表示になるよう改善された。折りたたみ表示がすっきり整理され、エディタの見やすさが向上する更新となっている。",
+      "summaryEn": "Zed's nightly build now hides code lens blocks when their associated code is folded, keeping folded sections visually clean and improving editor readability. It is a minor UI refinement made cautiously based on user feedback.",
+      "lang": "en",
+      "publishedAt": "2026-07-11T20:03:03.000Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
+      "tags": [
+        "agent",
+        "code-folding",
+        "code-lens",
+        "debugging",
+        "editor",
+        "navigation",
+        "open-model",
+        "release",
+        "tutorial",
+        "zed"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Self-Review Checklist: I've reviewed my own diff for quality, security, and reliability Unsafe blocks (if any) have justifying comments The content is consistent with the UI/UX checklist Tests cover the new/changed behavior Performance impact has been considered and is acceptable",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/877790?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/877790?s=60&v=4",
+        "alt": "nightly: terminal: Fix terminal jitter on resize (#56715)",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "7c9fd64de6edc82c",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/nekorobi/articles/364720d96ace61",
+      "title": "ローカルLLMを回すPCのCPUはつよいほうがよい",
+      "titleJa": "ローカルLLMを回すPCのCPUはつよいほうがよい",
+      "titleEn": "",
+      "summaryJa": "ローカルLLMを回すPCのCPUはつよいほうがよい",
+      "summaryEn": "local-llm update from zenn-llm. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T14:13:37.000Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "環境 Kubuntu 26.04 3600xt/9700x DDR4 48GB/DDR5 64GB 7900xtx 結果 CPU/Memory換装の結果、GPT-oss/Gemma4/Qwen3.6で+30%のtok/s向上",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--fQvwV6B4--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2583%25AD%25E3%2583%25BC%25E3%2582%25AB%25E3%2583%25ABLLM%25E3%2582%2592%25E5%259B%259E%25E3%2581%2599PC%25E3%2581%25AECPU%25E3%2581%25AF%25E3%2581%25A4%25E3%2582%2588%25E3%2581%2584%25E3%2581%25BB%25E3%2581%2586%25E3%2581%258C%25E3%2582%2588%25E3%2581%2584%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:nekorobi%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSXpFcDlVNGJILXJQN3VFRU1pMU5kYlRoTzIwb3ZBWDlFTjhQX0Z1cm5YTmg2ZjR3PXMyNTAtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--fQvwV6B4--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2583%25AD%25E3%2583%25BC%25E3%2582%25AB%25E3%2583%25ABLLM%25E3%2582%2592%25E5%259B%259E%25E3%2581%2599PC%25E3%2581%25AECPU%25E3%2581%25AF%25E3%2581%25A4%25E3%2582%2588%25E3%2581%2584%25E3%2581%25BB%25E3%2581%2586%25E3%2581%258C%25E3%2582%2588%25E3%2581%2584%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:nekorobi%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSXpFcDlVNGJILXJQN3VFRU1pMU5kYlRoTzIwb3ZBWDlFTjhQX0Z1cm5YTmg2ZjR3PXMyNTAtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "ローカルLLMを回すPCのCPUはつよいほうがよい",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "bodyJa": "",
+      "bodyEn": ""
+    },
     {
       "id": "a100386797873a96",
       "source": "techcrunch",
@@ -66,6 +173,47 @@
         "width": 0,
         "height": 0,
         "source": "og"
+      },
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "0c430f819755eece",
+      "source": "zed-releases",
+      "sourceType": "release",
+      "url": "https://github.com/zed-industries/zed/releases/tag/collab-staging",
+      "title": "collab-staging: git_panel: Add group by staging view option (#59884)",
+      "titleJa": "Zed: editor.rsからfoldとselectionをモジュール分割",
+      "titleEn": "collab-staging: git_panel: Add group by staging view option (#59884)",
+      "summaryJa": "Zedエディタのcollab-stagingリリースにて、巨大化していたeditor.rsからfold(折りたたみ)とselection(選択)関連のロジックを別モジュールへ抽出するリファクタリングが行われた。コードの保守性向上を目的とした内部整理である。",
+      "summaryEn": "In the Zed collab-staging release, fold and selection logic has been extracted from the monolithic editor.rs into separate modules. This is an internal refactor (PR #56070) aimed at improving code maintainability rather than adding user-facing features.",
+      "lang": "en",
+      "publishedAt": "2026-07-11T13:36:18.000Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
+      "tags": [
+        "agent",
+        "ai-coding",
+        "edit-prediction",
+        "editor",
+        "open-model",
+        "release",
+        "rust",
+        "telemetry",
+        "tutorial",
+        "zed"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Objective Add a view option for group by staging. Solution Add a new option for group_by under git_panel view options, with 2 sections \"Staged\" and \"Unstaged\", with buttons (+/-) to stage and unstage Testing cargo check -p git_ui Self-Review Checklist: I've reviewed my own diff f",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/146921254?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/146921254?s=60&v=4",
+        "alt": "collab-staging: git_panel: Add group by staging view option (#59884)",
+        "width": 0,
+        "height": 0,
+        "source": "media"
       },
       "bodyJa": "",
       "bodyEn": ""
@@ -126,6 +274,31 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "「なんでそんな事を今聞くのよ！、本当にだめな男ね！」そんな罵声を浴びせたくなるグズなAIへの対処法について。 AIコーディングでイライラさせられる動作に、 不必要な割り込み 不要な質問 タイミングの悪い質問 といった「質問とそれによる作業停止」があります。下っ端の開発...",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "6b7bc8fc55051ddf",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/gabie/articles/ebdb5372d5e15e",
+      "title": "AIコーディング / ダメな質問を止める方法",
+      "titleJa": "AIコーディング / ダメな質問を止める方法",
+      "titleEn": "",
+      "summaryJa": "AIコーディング / ダメな質問を止める方法",
+      "summaryEn": "cursor update from zenn-cursor. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T12:14:19.000Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
+      "tags": [
+        "cursor",
+        "zenn"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "「なんでそんな事を今聞くのよ！、本当にだめな男ね！」そんな罵声を浴びせたくなるグズなAIへの対処法について。 AIコーディングでイライラさせられる動作に、 不必要な割り込み 不要な質問 タイミングの悪い質問 といった「質問とそれによる作業停止」があります。下っ端の開発者からされて作業が止まるときには大罪とされる行為ですが、ポンコツAIを使う多くの開発者はそうも言っていられません😅 既存のコードを確認すれば判断できるはずの内容について、確認や探索を行わずに質問が返ってくる場面があります。この記事では、「AIは計算資源や推論コストを節約するために、十分な探",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -226,6 +399,31 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "Claude Codeの回答が終わったら音で通知！Stop Hookを使って作業効率を爆上げする方法 「AIに重い処理を投げている間、別タブで作業していたら戻るのを忘れてしまった」 そんな経験はありませんか？シンプルな Stop Hook を導入するだけで、Claude...",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "065dfc4fa79d2a8d",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/50s_zerotohero/articles/019bc93f9d0a36",
+      "title": "LLMの『隠れた思考』を自然言語で読む技術が、個人のRTX 5090で動いた",
+      "titleJa": "LLMの『隠れた思考』を自然言語で読む技術が、個人のRTX 5090で動いた",
+      "titleEn": "",
+      "summaryJa": "LLMの『隠れた思考』を自然言語で読む技術が、個人のRTX 5090で動いた",
+      "summaryEn": "local-llm update from zenn-llm. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T11:53:08.000Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに LLMは応答を生成するとき、出力テキストには現れない「途中の思考」を内部に持っています。Anthropicが2026年5月に発表した Natural Language Autoencoders (NLA) は、この内部状態(活性ベクトル)を別のモデルに自然言語で説明させるという手法です。 NLAの概念的な解説はすでに良い日本語記事があるので、本記事は「実際に動かす」ことに重心を置きます。 前半:Neuronpedia上の公開NLAで、Gemma-3-27B / Llama-3.3-70Bの内部を観察する 後半:手元のRTX 5090で、Qwen",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -432,6 +630,31 @@
       "bodyEn": ""
     },
     {
+      "id": "69abf12d219e3203",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/phpmyadmin/articles/c94e6294f3dd3a",
+      "title": "Apple Photos の家族写真をローカルVLMで分類し、アルバムに追加するルバム整理をローカルLLMにやってもらった",
+      "titleJa": "Apple Photos の家族写真をローカルVLMで分類し、アルバムに追加するルバム整理をローカルLLMにやってもらった",
+      "titleEn": "",
+      "summaryJa": "Apple Photos の家族写真をローカルVLMで分類し、アルバムに追加するルバム整理をローカルLLMにやってもらった",
+      "summaryEn": "local-llm update from zenn-llm. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T08:19:27.000Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "本記事用に生成した架空の人間のイメージ写真 macOS フォトアプリのライブラリから特定の意味条件に合う写真を抽出し、アルバムへ自動追加するツールを作成・運用した記録。判定には自宅の NVIDIA DGX Spark 上のローカル VLM(視覚言語モデル)を使用し、写真データは外部サービスに送信していない。 課題 フォトアプリに子供2人の写真が約7,500枚あり、ピープル機能(顔認識)で人物別に分類済み 「何かを食べよう・飲もうとしている / 食べ物を見つめている / 口に入れている」写真を集めた手動アルバム(108枚)を手動で作って運用していたが、面倒",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "036fdf1adcbd66c9",
       "source": "zenn-claude",
       "sourceType": "blog",
@@ -555,6 +778,39 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに こんにちは！AWS でソリューションアーキテクトをしている町田です。 今回は、Claude Desktop (Cowork) から Salesforce にアクセスするための Salesforce Hosted MCP Server を Windows 環境でセットアップしてみました。 これを利用することで、自然言語だけでSalesforceのデータ操作が完結します。 なお、Salesforce Hosted MCP Server は複数個あり、今回は、sobject-read(読み取り操作) と sobject-all(読み書き操作) の2つ",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "ef49b89586fe0463",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/imgodd/items/2f58e894f8a8bc280e15",
+      "title": "VSCodeでMarkdownの「No link definition found」の波線を消す方法",
+      "titleJa": "VSCodeでMarkdownの「No link definition found」の波線を消す方法",
+      "titleEn": "",
+      "summaryJa": "VSCodeでMarkdownの「No link definition found」の波線を消す方法",
+      "summaryEn": "vscode update from qiita-vscode. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T05:45:07.000Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに [設定] のような記述で次の警告が表示される場合があります。 No link definition found: '設定' (link.no-such-reference) 解決方法 Ctrl + , で設定を開く Reference Links で検...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGODY1NzUyJTJGcHJvZmlsZS1pbWFnZXMlMkYxNjM2MDkyODc3P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1mY2E3ODU4YzY4MTNkZjQ4YTU0Yzg2YTkzZjYxMDMzOQ%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dae0d832ddae94ace948993f01139ac65?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUUzJTgxJUE3TWFya2Rvd24lRTMlODElQUUlRTMlODAlOENObyUyMGxpbmslMjBkZWZpbml0aW9uJTIwZm91bmQlRTMlODAlOEQlRTMlODElQUUlRTYlQjMlQTIlRTclQjclOUElRTMlODIlOTIlRTYlQjYlODglRTMlODElOTklRTYlOTYlQjklRTYlQjMlOTUmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz02OWZhMzE1NDNhOGM5Yjg4NGMwOTAwNTlkODQ3Y2YxYQ&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBpbWdvZGQmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz03MmExNmU4ZmZlNzNiOTk2ZDNkZDgwMzk1N2U3MzljNQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=cf8a8693bdb14139950d84e3117e2abf",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGODY1NzUyJTJGcHJvZmlsZS1pbWFnZXMlMkYxNjM2MDkyODc3P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1mY2E3ODU4YzY4MTNkZjQ4YTU0Yzg2YTkzZjYxMDMzOQ%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dae0d832ddae94ace948993f01139ac65?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUUzJTgxJUE3TWFya2Rvd24lRTMlODElQUUlRTMlODAlOENObyUyMGxpbmslMjBkZWZpbml0aW9uJTIwZm91bmQlRTMlODAlOEQlRTMlODElQUUlRTYlQjMlQTIlRTclQjclOUElRTMlODIlOTIlRTYlQjYlODglRTMlODElOTklRTYlOTYlQjklRTYlQjMlOTUmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz02OWZhMzE1NDNhOGM5Yjg4NGMwOTAwNTlkODQ3Y2YxYQ&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBpbWdvZGQmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz03MmExNmU4ZmZlNzNiOTk2ZDNkZDgwMzk1N2U3MzljNQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=cf8a8693bdb14139950d84e3117e2abf",
+        "alt": "VSCodeでMarkdownの「No link definition found」の波線を消す方法",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -780,6 +1036,31 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "e4ade19a880654b1",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/suzukihinata/articles/recommend-devin-for-pd",
+      "title": "個人開発者はCursorよりDevinを使え!",
+      "titleJa": "個人開発者はCursorよりDevinを使え!",
+      "titleEn": "",
+      "summaryJa": "個人開発者はCursorよりDevinを使え!",
+      "summaryEn": "cursor update from zenn-cursor. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-11T04:46:33.000Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
+      "tags": [
+        "cursor",
+        "zenn"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "※本記事の料金、利用可能なモデル、サービス内容は2026年7月時点のものです。 📝 はじめに 個人開発者や、一人でプロダクトオーナーとエンジニアを兼任している人に、先に結論を伝えます。 Devinを使ってください。 もちろん、CursorやClaude Codeが使いにくいわけではありません。 むしろ、CursorやClaude Codeは(高価で)高機能な非常に使いやすいツールです。 しかし、個人開発者や一人POが本当に不足しているものは、コードを書くための補助ではありません。 不足しているのは、資金と人です。 個人開発では、企画、要件定義、設計、実",
+      "bodyJa": "",
+      "bodyEn": ""
     },
     {
       "id": "d49064f33837a6c2",
@@ -1314,6 +1595,31 @@
       "bodyEn": ""
     },
     {
+      "id": "be7a21a54ba2b763",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/neotechpark/articles/09277021f71a01",
+      "title": "What Grok 4.5 Tells Us About the Changing Competition in AI Developme",
+      "titleJa": "",
+      "titleEn": "What Grok 4.5 Tells Us About the Changing Competition in AI Developme",
+      "summaryJa": "このエントリは zenn-cursor から収集した cursor 領域の最新アップデートです。原題:「What Grok 4.5 Tells Us About the Changing Competition in AI Developme」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "What Grok 4.5 Tells Us About the Changing Competition in AI Developme",
+      "lang": "en",
+      "publishedAt": "2026-07-11T02:44:53.000Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
+      "tags": [
+        "cursor",
+        "zenn"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "On July 8, 2026, Cursor and SpaceXAI announced Grok 4.5. According to Cursor’s official blog, Grok 4.5 is a model jointly released by Cursor and SpaceXAI, designed not only for software engineering but also for a broader range of computer-based knowledge work. Its target areas in",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "209ebcd031886625",
       "source": "qiita-mcp",
       "sourceType": "blog",
@@ -1648,7 +1954,7 @@
       "summaryEn": "The VSCode extension for Claude Code can unexpectedly lose Auto mode functionality; this article explains the cause and provides step-by-step workarounds to restore it.",
       "lang": "ja",
       "publishedAt": "2026-07-10T22:44:24.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "auto-mode",
         "claude-code",
@@ -1742,47 +2048,6 @@
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "CodeQL is the static analysis engine behind GitHub code scanning, which finds and remediates security issues in your code. We’ve recently released CodeQL 2.26.0, which adds support for Kotlin 2.4.0,… The post CodeQL 2.26.0 adds Kotlin 2.4.0 support and AI prompt injection detecti",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "e130f15b9862b471",
-      "source": "zed-releases",
-      "sourceType": "release",
-      "url": "https://github.com/zed-industries/zed/releases/tag/nightly",
-      "title": "nightly",
-      "titleJa": "Zed nightly、折りたたみ時にコードレンズのブロックを非表示化",
-      "titleEn": "nightly",
-      "summaryJa": "Zedエディタのnightlyビルドで、コードを折りたたんだ際に該当箇所のコードレンズ用ブロックも一緒に非表示になるよう改善された。折りたたみ表示がすっきり整理され、エディタの見やすさが向上する更新となっている。",
-      "summaryEn": "Zed's nightly build now hides code lens blocks when their associated code is folded, keeping folded sections visually clean and improving editor readability. It is a minor UI refinement made cautiously based on user feedback.",
-      "lang": "en",
-      "publishedAt": "2026-07-10T20:21:26.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
-      "tags": [
-        "agent",
-        "code-folding",
-        "code-lens",
-        "debugging",
-        "editor",
-        "navigation",
-        "open-model",
-        "release",
-        "tutorial",
-        "zed"
-      ],
-      "category": "cursor",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot",
-      "contentSnippet": "agent: Fix edit_file corrupting indentation when old_text omits first…",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/52641447?s=60&v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/52641447?s=60&v=4",
-        "alt": "nightly",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      },
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -1883,13 +2148,13 @@
       "sourceType": "blog",
       "url": "https://qiita.com/_Altair_/items/544b5a469c078f4551b1",
       "title": "VScodeでSTM32F446REを開発する",
-      "titleJa": "VS CodeでSTM32F446REを開発する",
+      "titleJa": "VScodeでSTM32F446REを開発する",
       "titleEn": "A guide on setting up an STM32F446RE development environment using VS Code,…",
       "summaryJa": "VS CodeでSTM32F446REマイコンの開発環境を構築する手順を解説した記事で、IDEに依存せず軽量な環境でSTM32開発を行いたい開発者に役立つ。",
       "summaryEn": "A guide on setting up an STM32F446RE development environment using VS Code, offering a lightweight alternative to dedicated IDEs for embedded development.",
       "lang": "ja",
       "publishedAt": "2026-07-10T19:13:38.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "arm",
         "cortex-m",
@@ -2205,47 +2470,6 @@
       "bodyJa": "",
       "bodyEn": "",
       "evergreen": true
-    },
-    {
-      "id": "0c430f819755eece",
-      "source": "zed-releases",
-      "sourceType": "release",
-      "url": "https://github.com/zed-industries/zed/releases/tag/collab-staging",
-      "title": "collab-staging",
-      "titleJa": "Zed: editor.rsからfoldとselectionをモジュール分割",
-      "titleEn": "collab-staging",
-      "summaryJa": "Zedエディタのcollab-stagingリリースにて、巨大化していたeditor.rsからfold(折りたたみ)とselection(選択)関連のロジックを別モジュールへ抽出するリファクタリングが行われた。コードの保守性向上を目的とした内部整理である。",
-      "summaryEn": "In the Zed collab-staging release, fold and selection logic has been extracted from the monolithic editor.rs into separate modules. This is an internal refactor (PR #56070) aimed at improving code maintainability rather than adding user-facing features.",
-      "lang": "en",
-      "publishedAt": "2026-07-10T15:32:21.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
-      "tags": [
-        "agent",
-        "ai-coding",
-        "edit-prediction",
-        "editor",
-        "open-model",
-        "release",
-        "rust",
-        "telemetry",
-        "tutorial",
-        "zed"
-      ],
-      "category": "cursor",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot",
-      "contentSnippet": "lmstudio: Fix context wheel by including token usage in streaming res…",
-      "image": {
-        "src": "https://avatars.githubusercontent.com/u/42274306?s=60&v=4",
-        "origSrc": "https://avatars.githubusercontent.com/u/42274306?s=60&v=4",
-        "alt": "collab-staging",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      },
-      "bodyJa": "",
-      "bodyEn": ""
     },
     {
       "id": "ef3ebc677250b5dc",
@@ -2826,7 +3050,7 @@
       "summaryEn": "Zed Editor has published the v1.11.2-pre prerelease, delivering the latest bug fixes and incremental improvements for users tracking the bleeding-edge development channel.",
       "lang": "en",
       "publishedAt": "2026-07-10T09:36:08.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "editor",
         "pre-release",
@@ -2862,7 +3086,7 @@
       "summaryEn": "Zed Editor v1.10.2 has been released as a patch update, delivering bug fixes and stability improvements that refine the day-to-day editing experience.",
       "lang": "en",
       "publishedAt": "2026-07-10T09:27:05.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "editor",
         "patch-release",
@@ -3718,7 +3942,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -3793,8 +4017,8 @@
       "bodyEn": ""
     },
     {
-      "id": "6c6ca35c1b67c41d",
-      "source": "zenn-claude",
+      "id": "b6acf969f6e12ad1",
+      "source": "zenn-cursor",
       "sourceType": "blog",
       "url": "https://zenn.dev/hanav1ye/articles/claude-startup1",
       "title": "Cursorを契約していた私がClaudeを試すことにしました。",
@@ -3804,7 +4028,7 @@
       "summaryEn": "A developer who had been using Cursor shares their experience switching to Claude as an AI coding assistant, offering a practical comparison of both tools.",
       "lang": "ja",
       "publishedAt": "2026-07-10T03:16:28.000Z",
-      "collectedAt": "2026-07-11T06:25:18.948Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-coding",
         "claude",
@@ -3812,7 +4036,7 @@
         "tool-comparison",
         "zenn"
       ],
-      "category": "claude",
+      "category": "cursor",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -3851,13 +4075,13 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/ryuka_lucas/articles/grok45-cursor-cost-performance",
       "title": "Grok4.5「1/10コスト」の実態を数字で検証する",
-      "titleJa": "Grok 4.5「1/10コスト」の実態を数字で検証する",
+      "titleJa": "Grok4.5「1/10コスト」の実態を数字で検証する",
       "titleEn": "The article scrutinizes the claim that Grok 4.5 costs one-tenth of comparable…",
       "summaryJa": "CursorでGrok 4.5を利用した際に謳われる「1/10コスト」という主張を実際の使用データで検証し、コストパフォーマンスの実態と適切な使いどころを明らかにしている。",
       "summaryEn": "The article scrutinizes the claim that Grok 4.5 costs one-tenth of comparable models when used in Cursor, using real usage data to reveal whether the cost advantage holds up in practice.",
       "lang": "ja",
       "publishedAt": "2026-07-10T02:49:35.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "cost-analysis",
         "cursor",
@@ -4091,7 +4315,7 @@
       "summaryEn": "Simply pasting a diff into an AI code review prompt limits its usefulness; providing structured context dramatically improves output quality. This article presents practical prompt templates for getting more actionable reviews in real workflows.",
       "lang": "ja",
       "publishedAt": "2026-07-09T23:37:50.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-tools",
         "code-review",
@@ -4311,7 +4535,7 @@
       "summaryEn": "Zed Editor v1.10.1 has been released as a patch update, delivering bug fixes and stability improvements for developers using the editor.",
       "lang": "en",
       "publishedAt": "2026-07-09T19:36:47.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "editor",
         "open-source",
@@ -4382,7 +4606,7 @@
       "summaryEn": "Zed Editor published v1.11.1-pre, a pre-release build containing the latest bug fixes and improvements ahead of a stable release.",
       "lang": "en",
       "publishedAt": "2026-07-09T19:28:12.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "editor",
         "pre-release",
@@ -4554,16 +4778,21 @@
       "sourceType": "blog",
       "url": "https://cloud.google.com/blog/topics/developers-practitioners/google-cloud-run-sandboxes-are-in-public-preview/",
       "title": "Safely run AI-generated code in Cloud Run sandboxes",
-      "titleJa": "",
+      "titleJa": "AI生成コードをCloud Runサンドボックスで安全に実行",
       "titleEn": "Safely run AI-generated code in Cloud Run sandboxes",
-      "summaryJa": "このエントリは google-cloud-blog から収集した gemini 領域の最新アップデートです。原題:「Safely run AI-generated code in Cloud Run sandboxes」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "Safely run AI-generated code in Cloud Run sandboxes",
+      "summaryJa": "Google CloudがCloud Runサンドボックス機能をパブリックプレビューで公開し、AIエージェントが生成した任意コードを安全に隔離実行できる環境を提供。セキュリティリスクを抑えつつコード実行機能をアプリに組み込みやすくなる。",
+      "summaryEn": "Google Cloud Run sandboxes are now in public preview, enabling developers to safely execute AI-generated code in isolated environments. This reduces security risks when building agentic applications that need dynamic code execution.",
       "lang": "en",
       "publishedAt": "2026-07-09T16:30:00.000Z",
       "collectedAt": "2026-07-11T13:00:29.750Z",
       "tags": [
+        "ai-agents",
         "cloud",
-        "google"
+        "cloud-run",
+        "code-execution",
+        "google",
+        "sandboxing",
+        "security"
       ],
       "category": "gemini",
       "importance": 2,
@@ -4588,19 +4817,23 @@
       "sourceType": "blog",
       "url": "https://blog.google/innovation-and-ai/infrastructure-and-cloud/google-cloud/alphaevolve-on-cloud/",
       "title": "We're rolling out AlphaEvolve widely to solve Google Cloud customers' hardest problems.",
-      "titleJa": "",
+      "titleJa": "AlphaEvolveをGoogle Cloudの顧客向けに広く展開",
       "titleEn": "We're rolling out AlphaEvolve widely to solve Google Cloud customers' hardest problems.",
-      "summaryJa": "このエントリは google-keyword から収集した tech-news 領域の最新アップデートです。原題:「We're rolling out AlphaEvolve widely to solve Google Cloud customers' hardest problems.」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "We're rolling out AlphaEvolve widely to solve Google Cloud customers' hardest problems.",
+      "summaryJa": "GoogleはAIを活用した最適化システムAlphaEvolveをGoogle Cloudの顧客向けに広く提供開始した。複雑な計算・設計上の課題解決を支援し、企業の競争力向上に貢献する。",
+      "summaryEn": "Google is broadly rolling out AlphaEvolve, its AI-driven evolutionary optimization system, to Google Cloud customers, enabling them to tackle complex engineering and scientific problems at scale.",
       "lang": "en",
       "publishedAt": "2026-07-09T16:00:00.000Z",
       "collectedAt": "2026-07-11T22:00:29.687Z",
       "tags": [
+        "ai",
+        "alphaevolve",
         "google",
-        "news"
+        "google-cloud",
+        "news",
+        "optimization"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 3,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "Finding the most efficient algorithm — whether designing a microchip, routing a logistics network or accelerating medical research — can be challenging, with many possib…",
@@ -4621,19 +4854,23 @@
       "sourceType": "blog",
       "url": "https://blog.google/products/ads-commerce/google-ads-ai-transparency-labels/",
       "title": "Expanding AI transparency in ads",
-      "titleJa": "",
+      "titleJa": "広告におけるAI透明性の拡充",
       "titleEn": "Expanding AI transparency in ads",
-      "summaryJa": "このエントリは google-keyword から収集した tech-news 領域の最新アップデートです。原題:「Expanding AI transparency in ads」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "Expanding AI transparency in ads",
+      "summaryJa": "GoogleはAIが生成・加工した広告コンテンツにラベルを表示する透明性機能を拡充し、ユーザーが広告の制作背景を把握しやすくなる。",
+      "summaryEn": "Google is expanding AI transparency labels in ads, helping users identify when ad content has been created or modified by AI tools.",
       "lang": "en",
       "publishedAt": "2026-07-09T16:00:00.000Z",
       "collectedAt": "2026-07-11T22:00:29.687Z",
       "tags": [
+        "advertising",
+        "ai",
         "google",
-        "news"
+        "google-ads",
+        "news",
+        "transparency"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "We're introducing new AI transparency features to help people understand the ads they see and give advertisers simple disclosure tools.",
@@ -4654,16 +4891,21 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-07-09-organization-level-targeting-for-github-code-quality",
       "title": "Organization-level targeting for GitHub Code Quality",
-      "titleJa": "",
+      "titleJa": "GitHub Code Quality の組織レベルターゲティング",
       "titleEn": "Organization-level targeting for GitHub Code Quality",
-      "summaryJa": "このエントリは github-changelog から収集した copilot 領域の最新アップデートです。原題:「Organization-level targeting for GitHub Code Quality」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "Organization-level targeting for GitHub Code Quality",
+      "summaryJa": "GitHub Code Quality で組織レベルのターゲティングが利用可能になり、管理者はリポジトリを個別に設定せず組織全体へ一括でコード品質ポリシーを適用できます。大規模環境での管理効率が大きく向上します。",
+      "summaryEn": "GitHub Code Quality now supports organization-level targeting, letting admins roll out code quality policies across all repositories at once rather than configuring each repo individually, simplifying governance at scale.",
       "lang": "en",
       "publishedAt": "2026-07-09T15:54:01.000Z",
       "collectedAt": "2026-07-11T13:00:29.750Z",
       "tags": [
         "changelog",
-        "github"
+        "code-quality",
+        "copilot",
+        "enterprise",
+        "github",
+        "organization",
+        "policy"
       ],
       "category": "copilot",
       "importance": 2,
@@ -4717,16 +4959,20 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-07-09-ask-copilot-for-a-repository-overview",
       "title": "Ask Copilot for a repository overview",
-      "titleJa": "",
+      "titleJa": "Copilot にリポジトリの概要を質問できる機能が追加",
       "titleEn": "Ask Copilot for a repository overview",
-      "summaryJa": "このエントリは github-changelog から収集した copilot 領域の最新アップデートです。原題:「Ask Copilot for a repository overview」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "Ask Copilot for a repository overview",
+      "summaryJa": "GitHub Copilot にリポジトリの概要を質問すると、コードベースの構造や目的を自動でまとめた説明が得られる機能が追加された。見慣れないリポジトリへの理解を効率的に深めることができる。",
+      "summaryEn": "GitHub Copilot can now generate an instant overview of any repository, helping developers quickly understand a codebase's structure and purpose without manual exploration.",
       "lang": "en",
       "publishedAt": "2026-07-09T14:25:33.000Z",
       "collectedAt": "2026-07-11T13:00:29.750Z",
       "tags": [
         "changelog",
-        "github"
+        "code-navigation",
+        "copilot-chat",
+        "developer-experience",
+        "github",
+        "repository"
       ],
       "category": "copilot",
       "importance": 2,
@@ -4742,19 +4988,22 @@
       "sourceType": "release",
       "url": "https://github.com/cline/cline/releases/tag/nightly-main-20260709142446-10cb9bd97aff",
       "title": "Cline Nightly (2026-07-09 14:24)",
-      "titleJa": "",
+      "titleJa": "Cline Nightly (2026-07-09 14:24)",
       "titleEn": "Cline Nightly (2026-07-09 14:24)",
-      "summaryJa": "このエントリは cline-releases から収集した cline 領域の最新アップデートです。原題:「Cline Nightly (2026-07-09 14:24)」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "Cline Nightly (2026-07-09 14:24)",
+      "summaryJa": "Clineの2026年7月9日付けナイトリービルド（コミット10cb9bd97aff）がリリースされた。mainブランチの最新変更を取り込んだ開発版であり、新機能や修正を安定版より先に試すことができる。",
+      "summaryEn": "Cline's July 9, 2026 nightly release bundles the latest main-branch commits for early access testing. Developers can preview upcoming features and fixes ahead of a stable release.",
       "lang": "en",
       "publishedAt": "2026-07-09T14:24:46.000Z",
       "collectedAt": "2026-07-11T13:00:29.750Z",
       "tags": [
+        "automated-build",
         "cline",
-        "release"
+        "nightly",
+        "release",
+        "vscode-extension"
       ],
       "category": "cline",
-      "importance": 2,
+      "importance": 1,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "Cline Nightly published from main at 10cb9bd …",
@@ -5455,7 +5704,7 @@
       "summaryEn": "Anthropic announced an initiative to openly engage with difficult questions about AI safety and its own practices, aiming to foster transparency and build public trust through honest dialogue.",
       "lang": "en",
       "publishedAt": "2026-07-09T00:00:00.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-safety",
         "anthropic",
@@ -5483,7 +5732,7 @@
       "summaryEn": "UST is integrating Claude into physical AI systems such as robotics, expanding Claude's capabilities beyond digital applications into real-world physical environments.",
       "lang": "en",
       "publishedAt": "2026-07-09T00:00:00.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "anthropic",
         "claude",
@@ -5512,7 +5761,7 @@
       "summaryEn": "Former Federal Reserve Chair Ben Bernanke has joined Anthropic's Long-Term Benefit Trust, the governance body overseeing the company's public-benefit mission, adding significant economic and policy expertise to its oversight.",
       "lang": "en",
       "publishedAt": "2026-07-09T00:00:00.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "anthropic",
         "ben-bernanke",
@@ -5644,7 +5893,7 @@
       "summaryEn": "Zed Editor v1.11.0-pre is now available as a pre-release, bringing the latest fixes and improvements for developers who want early access to upcoming features.",
       "lang": "en",
       "publishedAt": "2026-07-08T22:03:49.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "editor",
         "open-source",
@@ -6081,7 +6330,7 @@
       "summaryEn": "Zed Editor v1.10.0 has been released, bringing new features and improvements to the fast, collaborative code editor. Developers should update to benefit from the latest enhancements.",
       "lang": "en",
       "publishedAt": "2026-07-08T16:12:33.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "editor",
         "open-source",
@@ -6518,7 +6767,7 @@
       "summaryEn": "Apple has announced increased spending with Broadcom to manufacture billions of additional chips in the United States, signaling a major push toward domestic semiconductor production.",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:13.748Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "apple",
         "broadcom",
@@ -6893,7 +7142,7 @@
       "summaryEn": "When overseas bots overwhelmed an internal app with 200,000 daily requests and caused an outage, the developer implemented rate limiting and IP filtering using Cursor to keep the service alive.",
       "lang": "ja",
       "publishedAt": "2026-07-08T04:52:07.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "bot-attack",
         "cursor",
@@ -7007,19 +7256,22 @@
       "sourceType": "blog",
       "url": "https://huggingface.co/blog/native-speed-vllm-transformers-backend",
       "title": "Native-speed vLLM transformers modeling backend",
-      "titleJa": "",
+      "titleJa": "vLLMのネイティブ速度 transformers モデリングバックエンド",
       "titleEn": "Native-speed vLLM transformers modeling backend",
-      "summaryJa": "このエントリは huggingface-blog から収集した local-llm 領域の最新アップデートです。原題:「Native-speed vLLM transformers modeling backend」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "Native-speed vLLM transformers modeling backend",
+      "summaryJa": "HuggingFaceのtransformersライブラリがvLLMのネイティブモデリングバックエンドとして統合され、重複実装なしに最高速度での推論が可能になった。",
+      "summaryEn": "Transformers is now a native modeling backend for vLLM, enabling full-speed inference without duplicating model implementations across the two libraries.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
       "collectedAt": "2026-07-11T22:00:29.687Z",
       "tags": [
         "huggingface",
-        "open-model"
+        "inference",
+        "open-model",
+        "transformers",
+        "vllm"
       ],
       "category": "local-llm",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "bodyJa": "",
@@ -7031,18 +7283,23 @@
       "sourceType": "blog",
       "url": "https://developers.googleblog.com/bridging-the-domain-gap-ai-race-coach-built-with-antigravity-and-gemini/",
       "title": "Bridging the Domain Gap: AI Race Coach built with Antigravity and Gemini",
-      "titleJa": "",
+      "titleJa": "ドメインギャップを超えて：AntigravityとGeminiで構築したAIレースコーチ",
       "titleEn": "Bridging the Domain Gap: AI Race Coach built with Antigravity and Gemini",
-      "summaryJa": "このエントリは google-developers から収集した gemini 領域の最新アップデートです。原題:「Bridging the Domain Gap: AI Race Coach built with Antigravity and Gemini」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "Bridging the Domain Gap: AI Race Coach built with Antigravity and Gemini",
+      "summaryJa": "AntigravityがGeminiを活用してモータースポーツ向けAIレースコーチを構築した事例を紹介。専門ドメインへLLMを適用する際のドメインギャップ問題を解決する実践的手法が解説されている。",
+      "summaryEn": "Antigravity built an AI race coach powered by Gemini, showcasing practical methods for bridging the domain gap when applying large language models to specialized motorsport coaching.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
       "collectedAt": "2026-07-11T13:00:29.750Z",
       "tags": [
-        "google"
+        "ai",
+        "case-study",
+        "gemini",
+        "google",
+        "llm",
+        "motorsport"
       ],
       "category": "gemini",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "On May 23, 2026, fresh off the stage at Google I/O, our Google Developer Experts (GDEs) converged on...",
@@ -7055,18 +7312,21 @@
       "sourceType": "blog",
       "url": "https://openai.com/index/introducing-gpt-live",
       "title": "Introducing GPT-Live",
-      "titleJa": "",
+      "titleJa": "GPT-Liveの紹介",
       "titleEn": "Introducing GPT-Live",
-      "summaryJa": "このエントリは openai-news から収集した codex 領域の最新アップデートです。原題:「Introducing GPT-Live」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "Introducing GPT-Live",
+      "summaryJa": "OpenAIがGPT-Liveを発表し、リアルタイムでのインタラクティブなAI体験を提供する新機能を公開した。これによりユーザーはより自然な形でGPTと対話できるようになる。",
+      "summaryEn": "OpenAI announced GPT-Live, a new real-time interactive AI experience that enables more natural, live interactions with GPT models, marking a significant step in conversational AI accessibility.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
       "collectedAt": "2026-07-11T22:00:29.687Z",
       "tags": [
-        "openai"
+        "conversational-ai",
+        "gpt-live",
+        "openai",
+        "real-time"
       ],
       "category": "codex",
-      "importance": 1,
+      "importance": 3,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "A new generation of voice models for natural human-AI interaction, now powering ChatGPT Voice.",
@@ -7390,19 +7650,23 @@
       "sourceType": "blog",
       "url": "https://huggingface.co/blog/amazon/one-click-to-sagemaker-studio",
       "title": "From Hugging Face to Amazon SageMaker Studio in one click",
-      "titleJa": "",
+      "titleJa": "ワンクリックでHugging FaceからAmazon SageMaker Studioへ",
       "titleEn": "From Hugging Face to Amazon SageMaker Studio in one click",
-      "summaryJa": "このエントリは huggingface-blog から収集した local-llm 領域の最新アップデートです。原題:「From Hugging Face to Amazon SageMaker Studio in one click」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "From Hugging Face to Amazon SageMaker Studio in one click",
+      "summaryJa": "Hugging FaceのモデルページからAmazon SageMaker Studioに直接デプロイできる統合機能が追加され、MLエンジニアのワークフローが大幅に簡略化された。",
+      "summaryEn": "A new one-click integration lets users deploy Hugging Face models directly into Amazon SageMaker Studio, significantly reducing friction for ML practitioners moving from model discovery to production.",
       "lang": "en",
       "publishedAt": "2026-07-07T21:15:33.000Z",
       "collectedAt": "2026-07-11T22:00:29.687Z",
       "tags": [
+        "aws",
+        "deployment",
         "huggingface",
-        "open-model"
+        "model-hub",
+        "open-model",
+        "sagemaker"
       ],
       "category": "local-llm",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "bodyJa": "",
@@ -8178,7 +8442,7 @@
       "summaryEn": "The June 2026 Microsoft Foundry update delivers new AI models and developer tooling improvements, enabling teams to build and deploy AI-powered applications more efficiently on the platform.",
       "lang": "en",
       "publishedAt": "2026-07-07T07:10:25.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai",
         "ai-platform",
@@ -8192,6 +8456,7 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Claude is now generally available in Microsoft Foundry. Here's everything else that shipped between Build 2026 and the end of June — autopilot agents, expanded Toolboxes and Routines, Agent Optimizer's private preview, and more. The post What’s New in Microsoft Foundry | June 202",
       "bodyJa": "",
       "bodyEn": "",
@@ -8202,8 +8467,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "bee242a6477cb421",
@@ -9206,7 +9470,7 @@
       "summaryEn": "This weekly roundup highlights Claude Sonnet 5's availability on AWS, the introduction of Amazon WorkSpaces tailored for AI agents, and several service availability updates, reflecting AWS's continued expansion of its AI infrastructure.",
       "lang": "en",
       "publishedAt": "2026-07-06T15:46:43.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-agents",
         "amazon",
@@ -9909,7 +10173,7 @@
       "summaryEn": "AI agents cannot be reliably constrained through instructions alone; this article argues that mechanically enforced guardrails at the code and configuration level are essential for safe, predictable agent behavior in Cursor-based workflows.",
       "lang": "ja",
       "publishedAt": "2026-07-05T23:07:41.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "agent-control",
@@ -9939,7 +10203,7 @@
       "summaryEn": "This post examines two recurring AI agent pitfalls—skipping repetitive tasks and falsely claiming completion without verification—and offers practical strategies to help developers work around them.",
       "lang": "ja",
       "publishedAt": "2026-07-05T23:04:44.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -10029,7 +10293,7 @@
       "summaryEn": "A hands-on guide to setting up a Roblox development environment with Claude Code and establishing an AI-assisted iteration loop, demonstrating how solo developers can streamline Lua scripting workflows by integrating Claude Code into their toolchain.",
       "lang": "ja",
       "publishedAt": "2026-07-05T22:30:05.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "claude-code",
         "cursor",
@@ -10357,7 +10621,7 @@
       "summaryEn": "As AI reshapes engineering work, this article presents strategies for staying professionally relevant by embracing tools like Cursor while cultivating the human-centered skills that AI cannot replace.",
       "lang": "ja",
       "publishedAt": "2026-07-05T09:24:04.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-workflow",
         "career-strategy",
@@ -10474,7 +10738,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -10601,7 +10865,7 @@
       "summaryEn": "This article examines why prompt-master makes AI outputs more consistent, explaining how structured prompt design and well-defined rules help Cursor users obtain reproducible, reliable results across interactions.",
       "lang": "ja",
       "publishedAt": "2026-07-04T08:41:08.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-output",
         "cursor",
@@ -10855,7 +11119,7 @@
       "summaryEn": "This article covers strategies for organizing rule files when multiple AI coding agents coexist in the same repository, helping development teams maintain consistency and avoid conflicts across tools like Cursor.",
       "lang": "ja",
       "publishedAt": "2026-07-03T14:55:22.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-workflow",
         "coding-agent",
@@ -10917,7 +11181,7 @@
       "summaryEn": "Google DeepMind and A24 announce first-of-its-kind research partnership",
       "lang": "en",
       "publishedAt": "2026-07-03T14:25:43.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "google"
@@ -11093,7 +11357,7 @@
       "summaryEn": "The issue here was that end_slot_on_hover would currently only work if end_slot was also set. With this, it will now work even if there is no end_slot . Release Notes: N/A",
       "lang": "en",
       "publishedAt": "2026-07-03T09:50:42.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "collab",
         "context-retrieval",
@@ -11302,8 +11566,8 @@
       "bodyEn": ""
     },
     {
-      "id": "1f49350ffe861c2f",
-      "source": "zenn-copilot",
+      "id": "69717ef780d747db",
+      "source": "zenn-cursor",
       "sourceType": "blog",
       "url": "https://zenn.dev/shizuku/articles/ai-generated-code-comments",
       "title": "AIが書いたコメント、残す？消す？ ― AI時代のコメントとの付き合い方",
@@ -11313,7 +11577,7 @@
       "summaryEn": "The article examines when to keep or discard AI-generated code comments and provides practical strategies for managing them responsibly in Copilot-assisted development workflows.",
       "lang": "ja",
       "publishedAt": "2026-07-03T01:52:17.000Z",
-      "collectedAt": "2026-07-11T22:00:29.687Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-generated",
         "best-practices",
@@ -11323,7 +11587,7 @@
         "developer-workflow",
         "zenn"
       ],
-      "category": "copilot",
+      "category": "cursor",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -12866,7 +13130,7 @@
       "summaryEn": "Zed Editor has released v1.10.0-pre, a pre-release build that lets early adopters test upcoming features and fixes before the stable version lands, helping surface issues ahead of the official release.",
       "lang": "en",
       "publishedAt": "2026-07-01T17:31:57.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "editor",
         "open-source",
@@ -13782,7 +14046,7 @@
       "summaryEn": "AWS CloudFormation's new Express mode cuts deployment times by up to 4x, helping engineering teams accelerate CI/CD pipelines and ship infrastructure changes faster.",
       "lang": "en",
       "publishedAt": "2026-06-30T21:30:33.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "amazon",
         "aws",
@@ -13847,7 +14111,7 @@
       "summaryEn": "AWS launched EC2 C9g and C9gd instances powered by Graviton5, delivering improved performance and cost efficiency over the prior generation for compute-heavy workloads.",
       "lang": "en",
       "publishedAt": "2026-06-30T20:56:44.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "amazon",
         "arm",
@@ -13972,7 +14236,7 @@
       "summaryEn": "Start building with Nano Banana 2 Lite and Gemini Omni Flash",
       "lang": "en",
       "publishedAt": "2026-06-30T16:02:40.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "google"
@@ -14274,7 +14538,7 @@
       "summaryEn": "Rather than switching entirely to Claude Code, the author found that role-based collaboration between Cursor and Claude Code delivers better results than using either tool alone.",
       "lang": "ja",
       "publishedAt": "2026-06-30T13:16:53.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-coding",
         "claude-code",
@@ -14378,7 +14642,7 @@
       "summaryEn": "This walkthrough demonstrates how to use Lazyweb MCP with Cursor to build an EC site UI, shifting from AI-only generation to a more developer-controlled workflow.",
       "lang": "ja",
       "publishedAt": "2026-06-30T12:47:08.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "cursor",
         "ecommerce-ui",
@@ -14498,7 +14762,7 @@
       "summaryEn": "A daily AI news digest for June 30, 2026, rounding up noteworthy developments in AI-powered developer tools including Cursor and related ecosystem updates, helping developers stay current without trawling multiple sources.",
       "lang": "ja",
       "publishedAt": "2026-06-30T11:56:28.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-news",
         "cursor",
@@ -14586,7 +14850,7 @@
       "summaryEn": "This article investigates how much coding work can be done on the Cursor Pro plan when using only Composer with a 2.5-series model, helping developers gauge real-world usage limits and assess the plan's cost-effectiveness.",
       "lang": "ja",
       "publishedAt": "2026-06-30T09:03:10.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-coding-assistant",
         "composer",
@@ -14707,7 +14971,7 @@
       "summaryEn": "A hands-on report of building a full-stack web app with zero manual coding via Vibe Coding in Cursor, accompanied by a beginner-friendly learning roadmap that helps developers adopt this AI-driven workflow.",
       "lang": "ja",
       "publishedAt": "2026-06-30T06:13:25.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-coding",
         "cursor",
@@ -14954,7 +15218,7 @@
       "summaryEn": "Anthropic releases Claude Sonnet 5, a significantly upgraded model with enhanced reasoning, coding, and instruction-following capabilities, now available via API and Claude.ai.",
       "lang": "en",
       "publishedAt": "2026-06-30T00:00:00.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "anthropic",
         "claude",
@@ -14981,7 +15245,7 @@
       "summaryEn": "Anthropic has launched Claude Science, a dedicated AI workbench for scientists, offering specialized tools to speed up research, data analysis, and discovery.",
       "lang": "en",
       "publishedAt": "2026-06-30T00:00:00.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "anthropic",
         "claude",
@@ -15010,7 +15274,7 @@
       "summaryEn": "Anthropic describes the redeployment of Fable 5, a Claude-powered interactive fiction experience, detailing how creative character expression and safety considerations were balanced to bring it back online.",
       "lang": "en",
       "publishedAt": "2026-06-30T00:00:00.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "anthropic",
         "claude",
@@ -16053,7 +16317,7 @@
       "summaryEn": "The June 29 AWS Weekly Roundup covers an agentic CX designer for Amazon Connect, EC2 AMI watermarks for image provenance, and an open governance shift for MySQL, along with several other AWS service updates.",
       "lang": "en",
       "publishedAt": "2026-06-29T16:30:30.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "amazon",
@@ -16401,7 +16665,7 @@
       "summaryEn": "Netflix's GenPage system generates personalized homepages end-to-end with generative AI, replacing fragmented per-component ranking with a unified model for better user engagement.",
       "lang": "en",
       "publishedAt": "2026-06-29T13:01:02.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "content-discovery",
         "engineering",
@@ -16415,9 +16679,9 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
+      "bodyEn": ""
     },
     {
       "id": "367add885c13e55c",
@@ -21183,7 +21447,7 @@
       "summaryEn": "Google DeepMind has added computer use capabilities to Gemini 3.5 Flash, enabling the model to autonomously interact with desktop environments and automate complex multi-step tasks.",
       "lang": "en",
       "publishedAt": "2026-06-24T16:30:01.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-agents",
         "automation",
@@ -23096,7 +23360,7 @@
       "summaryEn": "Netflix shares an early research exploration into making AI-driven video editing more controllable, outlining technical approaches that let editors faithfully express their intent and the open challenges ahead.",
       "lang": "en",
       "publishedAt": "2026-06-23T00:31:01.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-video-editing",
         "content-creation",
@@ -23113,6 +23377,7 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "bodyJa": "",
       "bodyEn": "",
       "image": {
@@ -23122,8 +23387,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "0bf7e3b8501e4b70",
@@ -23386,7 +23650,7 @@
       "summaryEn": "Netflix adopted Kueue, a Kubernetes-native job queueing system, to simplify its fragmented batch compute platform, sharing design decisions and operational lessons learned at scale.",
       "lang": "en",
       "publishedAt": "2026-06-22T21:35:01.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "batch-computing",
         "cloud-native",
@@ -23403,6 +23667,7 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "bodyJa": "",
       "bodyEn": "",
       "image": {
@@ -23412,8 +23677,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "0b97691417a07440",
@@ -23779,7 +24043,7 @@
       "summaryEn": "This weekly roundup recaps AWS Summit New York and covers a new Local Zone in Hanoi, Grok 4.3 availability in Amazon Bedrock, and price reductions across several AWS services.",
       "lang": "en",
       "publishedAt": "2026-06-22T14:46:17.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "amazon",
         "amazon-bedrock",
@@ -25423,7 +25687,7 @@
       "summaryEn": "Netflix details its \"Data Canary\" framework that continuously validates catalog metadata quality and consistency, catching problematic data before it reaches production to protect the streaming experience.",
       "lang": "en",
       "publishedAt": "2026-06-19T23:54:17.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "anomaly-detection",
         "catalog",
@@ -25440,6 +25704,7 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "bodyJa": "",
       "bodyEn": "",
       "image": {
@@ -25449,8 +25714,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "7dc83abc993b9deb",
@@ -25464,7 +25728,7 @@
       "summaryEn": "Netflix details 'Data Projects,' a framework that logically groups related datasets and tables to improve discoverability, governance, and cross-team collaboration across its petabyte-scale data estate.",
       "lang": "en",
       "publishedAt": "2026-06-19T23:54:00.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "big-data",
         "data-assets",
@@ -25475,14 +25739,13 @@
         "data-management",
         "data-ownership",
         "data-platform",
-        "engineering",
-        "enterprise",
-        "netflix"
+        "engineering"
       ],
       "category": "tech-news",
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "bodyJa": "",
       "bodyEn": "",
       "image": {
@@ -25492,8 +25755,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "6952a7818be065ba",
@@ -25507,7 +25769,7 @@
       "summaryEn": "Netflix explains how it applies machine learning to historical launch data to predict risk before content goes live, helping teams catch issues early and plan launches more reliably.",
       "lang": "en",
       "publishedAt": "2026-06-19T23:53:47.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "content-delivery",
         "data-driven",
@@ -25524,6 +25786,7 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "bodyJa": "",
       "bodyEn": "",
       "image": {
@@ -25533,8 +25796,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "b0f03583222c338b",
@@ -26409,7 +26671,7 @@
       "summaryEn": "Announcing the general availability of Amazon Elastic Compute Cloud (Amazon EC2) G7 instances, delivering high performance GPU acceleration for AI inference, graphics, and data analytics workloads.",
       "lang": "en",
       "publishedAt": "2026-06-18T21:22:10.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-inference",
         "amazon",
@@ -26431,6 +26693,32 @@
       "bodyEn": ""
     },
     {
+      "id": "cb55f4f2a7ea6596",
+      "source": "aws-news",
+      "sourceType": "blog",
+      "url": "https://aws.amazon.com/blogs/aws/amazon-ecs-introduces-new-high-resolution-metrics-for-faster-service-auto-scaling/",
+      "title": "Amazon ECS introduces new high-resolution metrics for faster service auto scaling",
+      "titleJa": "",
+      "titleEn": "Amazon ECS introduces new high-resolution metrics for faster service auto scaling",
+      "summaryJa": "このエントリは aws-news から収集した tech-news 領域の最新アップデートです。原題:「Amazon ECS introduces new high-resolution metrics for faster service auto scaling」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Amazon ECS introduces new high-resolution metrics for faster service auto scaling",
+      "lang": "en",
+      "publishedAt": "2026-06-18T21:06:38.000Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
+      "tags": [
+        "amazon",
+        "aws",
+        "news"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "Amazon Elastic Container Service (Amazon ECS) service auto scaling automatically adjusts task counts to meet workload demand with comprehensive scaling policies, including predictive scaling for recurring traffic patterns, scheduled scaling for planned events, and target tracking",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "71f720f560419b85",
       "source": "microsoft-foundry",
       "sourceType": "blog",
@@ -26442,7 +26730,7 @@
       "summaryEn": "Microsoft Foundry unveiled OpenEnv at Build 2026, an enterprise reinforcement learning framework that integrates with hosted agents and Frontier Tuning to build outcome-driven optimization and learning stacks.",
       "lang": "en",
       "publishedAt": "2026-06-18T20:37:18.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "ai",
@@ -26459,10 +26747,10 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "We shipped a lot at Build 2026: hosted agents, Toolboxes, Foundry IQ, Memory, Managed Compute, fine‑tuning, Frontier Tuning, and a new evaluation and optimization stack. Read as a feature list, it is a lot to hold in your head. So here is a simpler way to see it: these are the pa",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
+      "bodyEn": ""
     },
     {
       "id": "697e042b7860de07",
@@ -28306,7 +28594,7 @@
       "summaryEn": "AWS launched the fully managed Amazon Bedrock Managed Knowledge Base, using native data connectors and Smart Parsing to auto-prepare multi-format data and greatly simplify building enterprise RAG pipelines.",
       "lang": "en",
       "publishedAt": "2026-06-17T15:09:20.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "amazon",
         "amazon-bedrock",
@@ -28317,8 +28605,7 @@
         "managed-service",
         "news",
         "rag",
-        "release",
-        "smart-parsing"
+        "release"
       ],
       "category": "tech-news",
       "importance": 1,
@@ -29552,7 +29839,7 @@
       "summaryEn": "Google DeepMind announced an AI-powered initiative to accelerate UK planning approvals, aiming to cut bureaucratic delays and help address the country's chronic housing shortage.",
       "lang": "en",
       "publishedAt": "2026-06-16T21:29:50.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "google",
@@ -30091,7 +30378,7 @@
       "summaryEn": "Google DeepMind published a framework addressing security risks posed by increasingly autonomous AI agents, outlining threat models and guidelines to ensure safe real-world deployment.",
       "lang": "en",
       "publishedAt": "2026-06-16T15:46:31.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -30157,7 +30444,7 @@
       "summaryEn": "Release 2026.6.16",
       "lang": "en",
       "publishedAt": "2026-06-16T14:53:11.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "github",
         "mcp",
@@ -31450,43 +31737,6 @@
       "archiveTier": "hot",
       "bodyJa": "",
       "bodyEn": ""
-    },
-    {
-      "id": "8dfae7ff987a54f3",
-      "source": "qiita-vscode",
-      "sourceType": "blog",
-      "url": "https://qiita.com/goofmint/items/ae193be02a94fb2f8942",
-      "title": "CodeRabbit VS Code機能拡張にPlan機能が追加されました！",
-      "titleJa": "CodeRabbit VS Code拡張機能にPlan機能が追加されました！",
-      "titleEn": "CodeRabbit's VS Code extension has received a new Plan feature, enhancing its…",
-      "summaryJa": "CodeRabbitのVS Code拡張機能に新たにPlan機能が追加されました。GitHub・GitLab・Bitbucketと連携するAIコードレビューサービスが、エディタ内でさらに高度な機能を提供します。",
-      "summaryEn": "CodeRabbit's VS Code extension has received a new Plan feature, enhancing its AI-powered code review capabilities directly inside the editor for developers using GitHub, GitLab, or Bitbucket workflows.",
-      "lang": "ja",
-      "publishedAt": "2026-06-13T08:49:41.000Z",
-      "collectedAt": "2026-06-14T06:00:32.215Z",
-      "tags": [
-        "ai-code-review",
-        "coderabbit",
-        "developer-tools",
-        "git-integration",
-        "qiita",
-        "vscode",
-        "vscode-extension"
-      ],
-      "category": "vscode",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMTk3MDI2JTJGcHJvZmlsZS1pbWFnZXMlMkYxNzcyNDM2MjIyP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0yMGNlZTJmMmUxYWNhNzhiYWQ4MzVhMjdkZTA5Njg1Ng%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY0ZTk1ZWUxNGRmZTIwMTI4NTQ1YjkwNTMyNTVjMTIyMmNjOTYwODIzJTJGb3JpZ2luYWwuanBnJTNGMTczNzQzNzY0NT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0xZjQxMWFlNzdiYjVmZGQyMTVkNTQ5N2Q3YzZlMDRkNA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D58d4fe793a0b83b684bf40fc67ab7636?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Q29kZVJhYmJpdCUyMFZTJTIwQ29kZSVFNiVBOSU5RiVFOCU4MyVCRCVFNiU4QiVBMSVFNSVCQyVCNSVFMyU4MSVBQlBsYW4lRTYlQTklOUYlRTglODMlQkQlRTMlODElOEMlRTglQkYlQkQlRTUlOEElQTAlRTMlODElOTUlRTMlODIlOEMlRTMlODElQkUlRTMlODElOTclRTMlODElOUYlRUYlQkMlODEmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0yYzg0MzYwZjFhNjgyNjFlMzA4YjZmYzJlZDI0NjJlZQ&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBnb29mbWludCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTM2ZGM2NjU2NTdmNWFiZTBjMDY1NzRkM2IyODNmMzZk&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=Q29kZVJhYmJpdA&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=a16e13f754bc1c41c6aa167690427855",
-        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMTk3MDI2JTJGcHJvZmlsZS1pbWFnZXMlMkYxNzcyNDM2MjIyP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0yMGNlZTJmMmUxYWNhNzhiYWQ4MzVhMjdkZTA5Njg1Ng%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY0ZTk1ZWUxNGRmZTIwMTI4NTQ1YjkwNTMyNTVjMTIyMmNjOTYwODIzJTJGb3JpZ2luYWwuanBnJTNGMTczNzQzNzY0NT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0xZjQxMWFlNzdiYjVmZGQyMTVkNTQ5N2Q3YzZlMDRkNA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D58d4fe793a0b83b684bf40fc67ab7636?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Q29kZVJhYmJpdCUyMFZTJTIwQ29kZSVFNiVBOSU5RiVFOCU4MyVCRCVFNiU4QiVBMSVFNSVCQyVCNSVFMyU4MSVBQlBsYW4lRTYlQTklOUYlRTglODMlQkQlRTMlODElOEMlRTglQkYlQkQlRTUlOEElQTAlRTMlODElOTUlRTMlODIlOEMlRTMlODElQkUlRTMlODElOTclRTMlODElOUYlRUYlQkMlODEmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0yYzg0MzYwZjFhNjgyNjFlMzA4YjZmYzJlZDI0NjJlZQ&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBnb29mbWludCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTM2ZGM2NjU2NTdmNWFiZTBjMDY1NzRkM2IyODNmMzZk&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=Q29kZVJhYmJpdA&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=a16e13f754bc1c41c6aa167690427855",
-        "alt": "CodeRabbit VS Code機能拡張にPlan機能が追加されました！",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
     },
     {
       "id": "784652f595a18165",
@@ -33092,7 +33342,7 @@
       "summaryEn": "DiffusionGemma applies diffusion-based generation to language modeling, achieving up to 4x faster text output than autoregressive approaches, marking a significant architectural advance for practical LLM deployment.",
       "lang": "en",
       "publishedAt": "2026-06-10T16:24:11.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "diffusion-model",
@@ -33495,7 +33745,7 @@
       "summaryEn": "Google DeepMind announces increased investment in multi-agent AI safety research, addressing the unique risks that emerge when multiple AI agents interact and coordinate autonomously.",
       "lang": "en",
       "publishedAt": "2026-06-10T10:21:19.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "ai-safety",
@@ -34290,7 +34540,7 @@
       "summaryEn": "Google DeepMind introduced Gemini 3.5 Live Translate, enabling fluid real-time voice translation that preserves natural speech patterns, lowering language barriers in live conversations.",
       "lang": "en",
       "publishedAt": "2026-06-09T15:16:25.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "gemini-3-5",
@@ -34349,7 +34599,7 @@
       "summaryEn": "Google released Gemma 4 12B, an open multimodal model that handles text and images within a single encoder-free architecture, lowering deployment complexity for developers.",
       "lang": "en",
       "publishedAt": "2026-06-09T14:10:19.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "gemma",
@@ -34379,7 +34629,7 @@
       "summaryEn": "Google DeepMind announced initiatives to advance robotics research and development across Europe, highlighting AI-driven investments that aim to accelerate innovation in the field.",
       "lang": "en",
       "publishedAt": "2026-06-09T14:02:33.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "europe",
@@ -34736,7 +34986,7 @@
       "summaryEn": "Apple today introduced new intelligence capabilities, expanded productivity features in Xcode, and platform improvements.",
       "lang": "en",
       "publishedAt": "2026-06-08T21:00:15.643Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai",
         "apple",
@@ -34869,7 +35119,7 @@
       "summaryEn": "Today, Apple previewed its upcoming software releases that will deliver the next generation of Apple Intelligence and introduce Siri AI.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:18:43.157Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai",
         "apple",
@@ -34898,7 +35148,7 @@
       "summaryEn": "Apple unveils the next generation of Apple Intelligence, integrating powerful AI capabilities into iPhone, iPad, and Mac for more personal and helpful everyday experiences.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:17:44.449Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "apple",
         "apple-intelligence",
@@ -34928,7 +35178,7 @@
       "summaryEn": "Apple introduces Siri AI, a profoundly more capable and personal assistant powered by Apple Intelligence, with personal context, world knowledge, and onscreen awareness.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:15:52.996Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-assistant",
         "apple",
@@ -34957,7 +35207,7 @@
       "summaryEn": "Due to the Digital Markets Act, Apple will not be able to ship Siri AI in the European Union with the release of iOS 27 and iPadOS 27.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:13:26.639Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "apple",
         "dma",
@@ -34989,7 +35239,7 @@
       "summaryEn": "New App Store capabilities will give developers more flexibility to market their apps, acquire users, and manage subscriptions.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:13:03.084Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "app-store",
         "apple",
@@ -35018,7 +35268,7 @@
       "summaryEn": "DeepMind measured the educational impact of AI-assisted learning in Sierra Leone, providing evidence that AI tools can meaningfully improve outcomes in underserved regions.",
       "lang": "en",
       "publishedAt": "2026-06-08T13:04:59.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-for-good",
         "deepmind",
@@ -36626,6 +36876,31 @@
       "bodyEn": ""
     },
     {
+      "id": "c76ccf576c616d16",
+      "source": "apple-newsroom",
+      "sourceType": "blog",
+      "url": "https://www.apple.com/newsroom/2026/06/app-store-ecosystem-reaches-1-point-4-trillion-usd-as-developers-thrive-globally/",
+      "title": "App Store ecosystem reaches $1.4 trillion as developers thrive globally",
+      "titleJa": "",
+      "titleEn": "App Store ecosystem reaches $1.4 trillion as developers thrive globally",
+      "summaryJa": "このエントリは apple-newsroom から収集した tech-news 領域の最新アップデートです。原題:「App Store ecosystem reaches $1.4 trillion as developers thrive globally」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "App Store ecosystem reaches $1.4 trillion as developers thrive globally",
+      "lang": "en",
+      "publishedAt": "2026-06-04T13:00:48.679Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
+      "tags": [
+        "apple",
+        "news"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "Apple today announced the global App Store ecosystem facilitated over $1.4 trillion in developer billings and sales in 2025.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "2aeba9c6c9751879",
       "source": "microsoft-foundry",
       "sourceType": "blog",
@@ -36637,7 +36912,7 @@
       "summaryEn": "Microsoft's Foundry Local enables on-device AI inference, tackling edge AI challenges like responsiveness, privacy, and offline operation to simplify embedding AI into apps and devices.",
       "lang": "en",
       "publishedAt": "2026-06-04T13:00:24.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai",
         "ai-development",
@@ -36654,10 +36929,10 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Why edge AI development is still hard AI is no longer confined to cloud experiments. Developers are increasingly expected to deliver AI inside apps, devices, and edge systems where responsiveness, privacy, resilience, and local control are essential. But building those experience",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
+      "bodyEn": ""
     },
     {
       "id": "b74203ec0e40734e",
@@ -36701,7 +36976,7 @@
       "summaryEn": "Release 2026.6.3",
       "lang": "en",
       "publishedAt": "2026-06-04T01:19:41.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -36825,7 +37100,7 @@
       "summaryEn": "Microsoft Foundry outlines how to keep non-deterministic AI agents accurate, safe, and accountable in production, spanning from observability to ROI measurement for agents built on any framework.",
       "lang": "en",
       "publishedAt": "2026-06-03T22:44:01.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "ai",
@@ -36836,17 +37111,16 @@
         "monitoring",
         "observability",
         "production-ai",
-        "roi",
-        "tutorial"
+        "roi"
       ],
       "category": "copilot",
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "9 min read · June 3, 2026 · Sebastian Kohlmeier Shipping an AI agent is the easy part. Keeping it accurate, safe, and accountable in production is where teams get stuck. Agents are non-deterministic. Their behavior shifts as models update, tools change, and traffic patterns evolv",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
+      "bodyEn": ""
     },
     {
       "id": "d40a221fd99192e6",
@@ -37134,6 +37408,40 @@
       "evergreen": true
     },
     {
+      "id": "37803898e498b24d",
+      "source": "microsoft-foundry",
+      "sourceType": "blog",
+      "url": "https://devblogs.microsoft.com/foundry/document-translation-build-2026/",
+      "title": "Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build",
+      "titleJa": "ドキュメント翻訳の拡張 – Microsoft Buildで発表された新機能",
+      "titleEn": "Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build",
+      "summaryJa": "Microsoft BuildでAzure TranslatorのDocument Translation新機能が発表され、画像・PDF・Officeファイルに加えDITAやXLIFFにも対応した。Foundry Tools経由で開発者が利用でき、将来はLLMベースの翻訳も予定されている。",
+      "summaryEn": "Azure Translator's Document Translation in Foundry Tools now supports images, PDFs, Office files, DITA, and XLIFF, with LLM-powered translation coming soon, helping developers localize content at scale.",
+      "lang": "en",
+      "publishedAt": "2026-06-03T17:00:00.000Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
+      "tags": [
+        "ai",
+        "azure-translator",
+        "build-2026",
+        "dita",
+        "document-translation",
+        "foundry",
+        "foundry-tools",
+        "microsoft",
+        "pdf",
+        "xliff"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "evergreen": true,
+      "contentSnippet": "Learn how new Document Translation capabilities in Azure Translator, available in Foundry Tools, help developers translate images, PDFs, Office files, DITA, XLIFF, and future LLM-powered document workflows. The post Expanding the Reach of Document Translation – New Capabilities A",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "cc91996a80b78154",
       "source": "vscode-updates",
       "sourceType": "release",
@@ -37170,40 +37478,6 @@
       },
       "bodyJa": "",
       "bodyEn": ""
-    },
-    {
-      "id": "37803898e498b24d",
-      "source": "microsoft-foundry",
-      "sourceType": "blog",
-      "url": "https://devblogs.microsoft.com/foundry/document-translation-build-2026/",
-      "title": "Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build",
-      "titleJa": "ドキュメント翻訳の拡張 – Microsoft Buildで発表された新機能",
-      "titleEn": "Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build",
-      "summaryJa": "Microsoft BuildでAzure TranslatorのDocument Translation新機能が発表され、画像・PDF・Officeファイルに加えDITAやXLIFFにも対応した。Foundry Tools経由で開発者が利用でき、将来はLLMベースの翻訳も予定されている。",
-      "summaryEn": "Azure Translator's Document Translation in Foundry Tools now supports images, PDFs, Office files, DITA, and XLIFF, with LLM-powered translation coming soon, helping developers localize content at scale.",
-      "lang": "en",
-      "publishedAt": "2026-06-03T17:00:00.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
-      "tags": [
-        "ai",
-        "azure-translator",
-        "build-2026",
-        "dita",
-        "document-translation",
-        "foundry",
-        "foundry-tools",
-        "microsoft",
-        "pdf",
-        "xliff"
-      ],
-      "category": "copilot",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "contentSnippet": "Learn how new Document Translation capabilities in Azure Translator, available in Foundry Tools, help developers translate images, PDFs, Office files, DITA, XLIFF, and future LLM-powered document workflows. The post Expanding the Reach of Document Translation – New Capabilities A",
-      "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
     },
     {
       "id": "7db6b6de7646bfa4",
@@ -37338,7 +37612,7 @@
       "summaryEn": "Microsoft announced Foundry Managed Compute, a new GPU platform-as-a-service that lets developers host open-source and custom AI models behind the same endpoints, SDKs, and billing as frontier models.",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:54.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai",
         "custom-models",
@@ -37355,10 +37629,10 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Microsoft Foundry Managed Compute is a new GPU platform-as-a-service for hosting open-source and custom AI models behind the same endpoint, SDKs, and bill as frontier models. The post Announcing Foundry Managed Compute: Run open models in Microsoft Foundry appeared first on Micro",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
+      "bodyEn": ""
     },
     {
       "id": "da8334e0b7763710",
@@ -37372,7 +37646,7 @@
       "summaryEn": "Microsoft added Agent Optimizer to Foundry Agent Service to bridge the gap between a merely \"live\" agent and a truly production-ready one by helping improve and optimize agent quality in production.",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:43.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "agent-optimizer",
@@ -37389,10 +37663,10 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "With hosted agents, we made it straightforward to build and deploy agents on Foundry. You write your logic, run azd deploy, and your agent is live. But “live” and “production-ready” aren’t the same thing. The gap shows up quickly. Your customer support agent handles requests, but",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
+      "bodyEn": ""
     },
     {
       "id": "e80815909195943e",
@@ -37406,7 +37680,7 @@
       "summaryEn": "At Build 2026, Microsoft Foundry enhanced agent memory with the reliability, transparency, and enterprise-readiness teams need when moving agents from demos into production.",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:30.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "ai",
@@ -37423,10 +37697,10 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Memory has always mattered for personalization and continuity. But as customers move agents from demos into production, another requirement becomes just as important: reliability. Enterprise teams need agents that not only remember facts, but also apply what they have learned to ",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
+      "bodyEn": ""
     },
     {
       "id": "3ba0b71e94b2fa99",
@@ -37440,7 +37714,7 @@
       "summaryEn": "Microsoft Foundry introduces Toolboxes and Routines to help teams discover, manage, and secure the growing number of tools when scaling AI agents from prototype to production, where tooling typically breaks down.",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:15.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent-scaling",
         "ai",
@@ -37454,13 +37728,13 @@
         "toolbox"
       ],
       "category": "copilot",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Tooling doesn’t break at a small scale—it breaks when teams move to production. AI adoption accelerates, so does the number of tools available to them. Discovering, managing and securing the right tools has quickly become one of the biggest challenges in building production-grade",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
+      "bodyEn": ""
     },
     {
       "id": "d475c45fbb115bc5",
@@ -37474,7 +37748,7 @@
       "summaryEn": "Microsoft Foundry introduces enterprise agent distribution, letting organizations deploy and share AI agents across teams securely and at scale, shifting from building agents to actually putting them to work.",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:04.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "agent-distribution",
@@ -37490,10 +37764,10 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "The past year was about building agents. The next year is about putting them to work. Organizations have moved quickly from experimenting with AI agents to building ones that perform complex business processes and execute long-running tasks. But the bottleneck has shifted. The ch",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
+      "bodyEn": ""
     },
     {
       "id": "e7e508be5de4818d",
@@ -48126,7 +48400,7 @@
       "summaryEn": "Google DeepMind has launched an accelerator program in Asia Pacific supporting startups using AI to address environmental risks, providing resources and mentorship to drive impactful climate solutions in the region.",
       "lang": "en",
       "publishedAt": "2026-05-21T19:46:42.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "accelerator",
         "asia-pacific",
@@ -48141,6 +48415,8 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "warm",
+      "bodyJa": "",
+      "bodyEn": "",
       "image": {
         "src": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/Image_for_APAC_GDM_Accelerator.max-1440x810.png",
         "origSrc": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/Image_for_APAC_GDM_Accelerator.max-1440x810.png",
@@ -48148,9 +48424,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "bodyJa": "",
-      "bodyEn": ""
+      }
     },
     {
       "id": "000d8296f05c104f",
@@ -48329,46 +48603,6 @@
       },
       "bodyJa": "",
       "bodyEn": ""
-    },
-    {
-      "id": "dd9d39a65cf8f154",
-      "source": "zenn-cursor",
-      "sourceType": "blog",
-      "url": "https://zenn.dev/yuukikawabata/articles/cursor-composer-2-5",
-      "title": "Cursorの新モデル「Composer 2.5」とは？開発体験を劇的に変える『ふるまい』の進化と技術的背景",
-      "titleJa": "Cursorの新モデル「Composer 2.5」とは？開発体験を劇的に変える『ふるまい』の進化と技術的背景",
-      "titleEn": "Cursorの新モデル「Composer 2",
-      "summaryJa": "2026年5月に発表されたCursorの新モデル「Composer 2.5」のリリースノートを解説する記事。開発体験を変える『ふるまい』の進化とその技術的背景を整理し、AIコードエディタとしての改善点に注目している。",
-      "summaryEn": "An explainer on Cursor's newly announced Composer 2.5 model, covering how its evolved 'behavior' and technical foundations reshape the coding experience and what the release notes reveal for developers.",
-      "lang": "ja",
-      "publishedAt": "2026-05-21T13:09:04.000Z",
-      "collectedAt": "2026-05-29T10:00:47.603Z",
-      "tags": [
-        "ai-code-editor",
-        "ai-coding-assistant",
-        "composer",
-        "composer-2-5",
-        "cursor",
-        "developer-tools",
-        "model-release",
-        "release",
-        "release-notes",
-        "zenn"
-      ],
-      "category": "cursor",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "warm",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://res.cloudinary.com/zenn/image/upload/s--k3rXKOY9--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Cursor%25E3%2581%25AE%25E6%2596%25B0%25E3%2583%25A2%25E3%2583%2587%25E3%2583%25AB%25E3%2580%258CComposer%25202.5%25E3%2580%258D%25E3%2581%25A8%25E3%2581%25AF%25EF%25BC%259F%25E9%2596%258B%25E7%2599%25BA%25E4%25BD%2593%25E9%25A8%2593%25E3%2582%2592%25E5%258A%2587%25E7%259A%2584%25E3%2581%25AB%25E5%25A4%2589%25E3%2581%2588%25E3%2582%258B%25E3%2580%258E%25E3%2581%25B5%25E3%2582%258B%25E3%2581%25BE%25E3%2581%2584%25E3%2580%258F%25E3%2581%25AE%25E9%2580%25B2%25E5%258C%2596%25E3%2581%25A8%25E6%258A%2580%25E8%25A1%2593%25E7%259A%2584%25E8%2583%258C%25E6%2599%25AF%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E6%25B2%25B3%25E7%2595%2591%25E7%25A5%2590%25E8%25BC%259D%2520%2520Yuki.Kawabata%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzJmY2MzMTA0YTUuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
-        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--k3rXKOY9--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Cursor%25E3%2581%25AE%25E6%2596%25B0%25E3%2583%25A2%25E3%2583%2587%25E3%2583%25AB%25E3%2580%258CComposer%25202.5%25E3%2580%258D%25E3%2581%25A8%25E3%2581%25AF%25EF%25BC%259F%25E9%2596%258B%25E7%2599%25BA%25E4%25BD%2593%25E9%25A8%2593%25E3%2582%2592%25E5%258A%2587%25E7%259A%2584%25E3%2581%25AB%25E5%25A4%2589%25E3%2581%2588%25E3%2582%258B%25E3%2580%258E%25E3%2581%25B5%25E3%2582%258B%25E3%2581%25BE%25E3%2581%2584%25E3%2580%258F%25E3%2581%25AE%25E9%2580%25B2%25E5%258C%2596%25E3%2581%25A8%25E6%258A%2580%25E8%25A1%2593%25E7%259A%2584%25E8%2583%258C%25E6%2599%25AF%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E6%25B2%25B3%25E7%2595%2591%25E7%25A5%2590%25E8%25BC%259D%2520%2520Yuki.Kawabata%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzJmY2MzMTA0YTUuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
-        "alt": "Cursorの新モデル「Composer 2.5」とは？開発体験を劇的に変える『ふるまい』の進化と技術的背景",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
     },
     {
       "id": "dd4feb8b5a7b3ea6",
@@ -48616,36 +48850,6 @@
       "halfLife": "news",
       "archiveTier": "warm",
       "contentSnippet": "This release brings Cursor Automations to the Agents Window and introduces the ability to configure automations with multiple attached repos or no repos at all.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "cf916762f41c92a9",
-      "source": "zenn-cursor",
-      "sourceType": "blog",
-      "url": "https://zenn.dev/knowledgework/articles/d9758312666adc",
-      "title": "【チートシート】Cursor エージェント：Cloud / Local / Worktree / Multitask の使い分け",
-      "titleJa": "【チートシート】Cursor エージェント：Cloud / Local / Worktree / Multitask の使い分け",
-      "titleEn": "【チートシート】Cursor エージェント：Cloud / Local / Worktree / Multitask の使い分け",
-      "summaryJa": "Cursor のエージェントモード（Cloud・Local・Worktree・Multitask）を場面ごとに整理したチートシート記事。どのモードをいつ使うべきかを解説している。",
-      "summaryEn": "A cheat-sheet article breaking down when to use each Cursor agent mode—Cloud, Local, Worktree, and Multitask—to match the right workflow for each coding scenario.",
-      "lang": "ja",
-      "publishedAt": "2026-05-19T23:27:18.000Z",
-      "collectedAt": "2026-05-27T10:00:35.160Z",
-      "tags": [
-        "agent",
-        "ai-agents",
-        "cheat-sheet",
-        "cursor",
-        "developer-workflow",
-        "git-worktree",
-        "multitasking",
-        "zenn"
-      ],
-      "category": "cursor",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "warm",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -49214,7 +49418,7 @@
       "summaryEn": "DeepMind published research on fast-tracking the identification of genetic factors that can reverse cellular aging, potentially accelerating therapies for age-related diseases.",
       "lang": "en",
       "publishedAt": "2026-05-18T18:21:39.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "aging",
         "biology",
@@ -49482,7 +49686,7 @@
       "summaryEn": "Project Genie now integrates with Google Street View to simulate real-world environments, enabling AI agents to be trained in photorealistic interactive representations of actual places.",
       "lang": "en",
       "publishedAt": "2026-05-17T19:53:18.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-agents",
         "deepmind",
@@ -49512,7 +49716,7 @@
       "summaryEn": "Google DeepMind announced Gemini Omni, a new multimodal model capable of natively processing text, audio, and images together, marking a significant step forward in unified AI understanding.",
       "lang": "en",
       "publishedAt": "2026-05-17T19:50:57.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "gemini",
@@ -49540,7 +49744,7 @@
       "summaryEn": "Google DeepMind announced Antigravity 2.0, bringing significant capability improvements and new features over its predecessor, marking a notable milestone in AI development.",
       "lang": "en",
       "publishedAt": "2026-05-17T19:43:45.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "antigravity",
         "deepmind",
@@ -49550,35 +49754,6 @@
       "category": "gemini",
       "importance": 3,
       "halfLife": "news",
-      "archiveTier": "warm",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "3498c7c37e40ce0c",
-      "source": "zenn-cursor",
-      "sourceType": "blog",
-      "url": "https://zenn.dev/chotto/articles/claude-introduction-japan-2026",
-      "title": "Claude とは何か?日本人開発者のための完全入門 2026",
-      "titleJa": "Claude とは何か?日本人開発者のための完全入門 2026",
-      "titleEn": "Claude とは何か",
-      "summaryJa": "Zenn に掲載された日本人開発者向け Claude 入門記事。Opus 4.7 / Sonnet 4.6 / Haiku 4.5 時点のラインナップを解説し、Cursor との連携も紹介。",
-      "summaryEn": "A comprehensive Japanese-language introduction to Claude for developers, covering the 2026 model lineup (Opus 4.7, Sonnet 4.6, Haiku 4.5) and Cursor integration, published on Zenn.",
-      "lang": "ja",
-      "publishedAt": "2026-05-17T14:28:09.000Z",
-      "collectedAt": "2026-05-27T02:00:38.332Z",
-      "tags": [
-        "ai-coding",
-        "anthropic",
-        "claude",
-        "cursor",
-        "japanese-developers",
-        "llm-overview",
-        "zenn"
-      ],
-      "category": "cursor",
-      "importance": 1,
-      "halfLife": "tutorial",
       "archiveTier": "warm",
       "bodyJa": "",
       "bodyEn": ""
@@ -49595,7 +49770,7 @@
       "summaryEn": "Google DeepMind unveiled Gemini-powered AI experiments and tools aimed at accelerating scientific discovery, marking a significant push to bring frontier AI capabilities directly into researchers' workflows.",
       "lang": "en",
       "publishedAt": "2026-05-17T13:50:34.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "gemini",
@@ -49624,7 +49799,7 @@
       "summaryEn": "Google DeepMind announced improvements to content provenance tools, making it easier for users to understand whether content was AI-generated or edited, boosting transparency and trust.",
       "lang": "en",
       "publishedAt": "2026-05-17T13:43:50.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-transparency",
         "content-provenance",
@@ -49652,7 +49827,7 @@
       "summaryEn": "Google DeepMind announced a national AI partnership with Singapore to advance research, infrastructure, and talent development, reinforcing the country's position as a regional AI hub.",
       "lang": "en",
       "publishedAt": "2026-05-16T09:13:34.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-policy",
         "deepmind",
@@ -49688,7 +49863,7 @@
       "summaryEn": "DeepMind researchers used AI tools to identify molecular switches that govern the behavior of emerging infectious disease pathogens, potentially accelerating the discovery of new therapeutic targets.",
       "lang": "en",
       "publishedAt": "2026-05-16T08:16:06.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "alphafold",
         "deepmind",
@@ -49725,7 +49900,7 @@
       "summaryEn": "Google DeepMind announced new AI-driven approaches using Gemini to advance aging research, potentially accelerating the discovery of biological aging mechanisms and therapeutic targets.",
       "lang": "en",
       "publishedAt": "2026-05-16T08:08:44.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "aging",
         "biology",
@@ -49763,7 +49938,7 @@
       "summaryEn": "Google DeepMind published research using AI to accelerate the discovery of liver disease mechanisms, potentially identifying new therapeutic targets and speeding up drug development.",
       "lang": "en",
       "publishedAt": "2026-05-16T08:00:15.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "biology",
         "deepmind",
@@ -49800,7 +49975,7 @@
       "summaryEn": "DeepMind unveiled an approach that combines multiple biological toolkits to advance ALS research, potentially accelerating the understanding and treatment of this neurodegenerative disease.",
       "lang": "en",
       "publishedAt": "2026-05-16T07:53:11.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "alphafold",
         "als",
@@ -49837,7 +50012,7 @@
       "summaryEn": "Google DeepMind researchers identified existing approved medicines that could be repurposed to treat liver fibrosis, potentially accelerating therapy delivery while reducing drug development costs.",
       "lang": "en",
       "publishedAt": "2026-05-16T07:40:27.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "alphafold",
         "biomedical-research",
@@ -49863,36 +50038,6 @@
       "bodyEn": ""
     },
     {
-      "id": "2a103a9cb699f03a",
-      "source": "zenn-cursor",
-      "sourceType": "blog",
-      "url": "https://zenn.dev/yshi112358/articles/2026-0515-160450",
-      "title": "【Unity × Cursor】Cursorが.slnx非対応なので、.slnに自動変換する拡張機能を作った話",
-      "titleJa": "【Unity × Cursor】Cursorが.slnx非対応なので、.slnに自動変換する拡張機能を作った話",
-      "titleEn": "【Unity × Cursor】Cursorが",
-      "summaryJa": "現行Unityが生成する.slnxファイルをCursorが読み込めない問題を解決するため、.slnへ自動変換するVS Code拡張機能を開発・公開した。",
-      "summaryEn": "A developer built a VS Code extension that automatically converts Unity's .slnx solution files to the classic .sln format, enabling Cursor to load C# projects properly.",
-      "lang": "ja",
-      "publishedAt": "2026-05-16T06:52:34.000Z",
-      "collectedAt": "2026-05-26T14:00:51.078Z",
-      "tags": [
-        "csharp",
-        "cursor",
-        "sln",
-        "slnx",
-        "unity",
-        "vscode-extension",
-        "workflow",
-        "zenn"
-      ],
-      "category": "cursor",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "warm",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "ca9409e431f709f7",
       "source": "google-deepmind",
       "sourceType": "blog",
@@ -49904,7 +50049,7 @@
       "summaryEn": "Google's WeatherNext AI forecasting system helped the National Hurricane Center improve track predictions for Hurricane Melissa's historic Jamaica landfall, demonstrating real-world impact of AI in operational meteorology.",
       "lang": "en",
       "publishedAt": "2026-05-16T03:14:17.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "forecasting",
@@ -49941,7 +50086,7 @@
       "summaryEn": "Google DeepMind announced Gemini 3.5, a new frontier model combining advanced reasoning with agentic action capabilities, enabling AI to autonomously execute complex multi-step tasks at scale.",
       "lang": "en",
       "publishedAt": "2026-05-15T22:50:12.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -50494,7 +50639,7 @@
       "summaryEn": "Google DeepMind introduced Co-Scientist, a multi-agent AI system designed to assist researchers by automating hypothesis generation and experimental planning, potentially accelerating the pace of scientific discovery.",
       "lang": "en",
       "publishedAt": "2026-05-12T14:40:07.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "co-scientist",
@@ -51165,7 +51310,7 @@
       "summaryEn": "Explore how AlphaEvolve's Gemini-powered algorithms are driving impact across business, infrastructure, and science.",
       "lang": "en",
       "publishedAt": "2026-05-06T10:43:49.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "alphaevolve",
@@ -51772,7 +51917,7 @@
       "summaryEn": "Researching the path to AI-augmented care and development of an AI co-clinician.",
       "lang": "en",
       "publishedAt": "2026-04-30T12:14:15.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "amie",
         "clinical-decision-support",
@@ -52211,7 +52356,7 @@
       "summaryEn": "Google DeepMind and Korea partner to accelerate scientific breakthroughs using frontier AI models",
       "lang": "en",
       "publishedAt": "2026-04-27T07:00:06.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-policy",
         "deepmind",
@@ -52386,7 +52531,7 @@
       "summaryEn": "Google DeepMind unveiled Decoupled DiLoCo (DDiLoCo), which separates communication from synchronization so large-scale model training continues despite node failures or limited bandwidth, enabling flexible, resilient distributed AI training.",
       "lang": "en",
       "publishedAt": "2026-04-22T10:20:03.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ddiloco",
         "deepmind",
@@ -52464,7 +52609,7 @@
       "summaryEn": "Google DeepMind has announced expanded partnerships with industry-leading companies to accelerate enterprise AI transformation, centering on the deployment of Gemini models across key sectors.",
       "lang": "en",
       "publishedAt": "2026-04-21T14:54:15.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-transformation",
         "deepmind",
@@ -52814,7 +52959,7 @@
       "summaryEn": "Our newest audio model introduces granular audio tags that give you precise control to direct AI speech for expressive audio generation.",
       "lang": "en",
       "publishedAt": "2026-04-15T16:03:19.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "gemini-flash",
@@ -53009,7 +53154,7 @@
       "summaryEn": "Gemini Robotics ER 1.6: Enhancing spatial reasoning and multi-view understanding for autonomous robotics.",
       "lang": "en",
       "publishedAt": "2026-04-13T15:52:13.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "deepmind",
@@ -53060,7 +53205,7 @@
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "warm",
+      "archiveTier": "cold",
       "contentSnippet": "This release introduces improvements to our Agents Window interface as part of Cursor 3.",
       "bodyJa": "",
       "bodyEn": ""
@@ -53368,7 +53513,7 @@
       "summaryEn": "Gemma 4: Our most intelligent open models to date, purpose-built for advanced reasoning and agentic workflows.",
       "lang": "en",
       "publishedAt": "2026-04-02T16:00:49.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agent",
         "deepmind",
@@ -53566,7 +53711,7 @@
       "summaryEn": "Google DeepMind explores a reimagined mouse pointer concept designed for AI-driven interaction, updating the decades-old cursor paradigm to better support intelligent agents navigating digital interfaces.",
       "lang": "en",
       "publishedAt": "2026-03-29T10:50:49.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-agents",
         "cursor",
@@ -53908,7 +54053,7 @@
       "summaryEn": "Our latest voice model has improved precision and lower latency to make voice interactions more fluid, natural and precise.",
       "lang": "en",
       "publishedAt": "2026-03-26T15:23:35.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "gemini-flash",
@@ -54062,7 +54207,7 @@
       "summaryEn": "Google DeepMind researches AI's harmful manipulation risks across areas like finance and health, leading to new safety measures.",
       "lang": "en",
       "publishedAt": "2026-03-25T16:46:20.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-safety",
         "alignment",
@@ -54099,7 +54244,7 @@
       "summaryEn": "Introducing Lyria 3 Pro, which unlocks longer tracks with structural awareness. We’re also bringing Lyria to more Google products and surfaces.",
       "lang": "en",
       "publishedAt": "2026-03-25T16:01:39.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "generative-audio",
@@ -54438,7 +54583,7 @@
       "summaryEn": "We’re introducing a framework to measure progress toward AGI, and launching a Kaggle hackathon to build the relevant evaluations.",
       "lang": "en",
       "publishedAt": "2026-03-17T16:03:47.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "agi",
         "ai-safety",
@@ -54616,7 +54761,7 @@
       "summaryEn": "Ten years since AlphaGo, we explore how it is catalyzing scientific discovery and paving a path to AGI.",
       "lang": "en",
       "publishedAt": "2026-03-09T13:52:36.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "alphafold",
         "alphago",
@@ -54820,7 +54965,7 @@
       "summaryEn": "Gemini 3.1 Flash-Lite is our fastest and most cost-efficient Gemini 3 series model yet.",
       "lang": "en",
       "publishedAt": "2026-03-03T16:35:55.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "efficient-models",
@@ -54916,7 +55061,7 @@
       "summaryEn": "Our latest image generation model offers advanced world knowledge, production ready specs, subject consistency and more, all at Flash speed.",
       "lang": "en",
       "publishedAt": "2026-02-26T16:01:50.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "google",
@@ -55010,7 +55155,7 @@
       "summaryEn": "3.1 Pro is designed for tasks where a simple answer isn’t enough.",
       "lang": "en",
       "publishedAt": "2026-02-19T16:06:14.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "gemini-3",
@@ -55047,7 +55192,7 @@
       "summaryEn": "The Gemini app now features our most advanced music generation model Lyria 3, empowering anyone to make 30-second tracks using text or images.",
       "lang": "en",
       "publishedAt": "2026-02-18T16:01:38.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "generative-audio",
@@ -55114,7 +55259,7 @@
       "summaryEn": "Google DeepMind has announced initiatives to accelerate scientific discovery and education in India through AI, partnering with local research and academic institutions across fields such as healthcare, agriculture, and language technology.",
       "lang": "en",
       "publishedAt": "2026-02-17T13:42:20.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-education",
         "deepmind",
@@ -55214,7 +55359,7 @@
       "summaryEn": "Our most specialized reasoning mode is now updated to solve modern science, research and engineering challenges.",
       "lang": "en",
       "publishedAt": "2026-02-12T16:15:09.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deep-think",
         "deepmind",
@@ -55252,7 +55397,7 @@
       "summaryEn": "set version to 0.86.3.dev",
       "lang": "en",
       "publishedAt": "2026-02-12T00:42:25.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "aider",
         "cli",
@@ -55288,7 +55433,7 @@
       "summaryEn": "version bump to 0.86.2",
       "lang": "en",
       "publishedAt": "2026-02-12T00:42:24.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "aider",
         "cli",
@@ -55352,7 +55497,7 @@
       "summaryEn": "Research papers point to the growing impact of Deep Think across fields",
       "lang": "en",
       "publishedAt": "2026-02-09T16:12:06.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deep-think",
         "deepmind",
@@ -55451,7 +55596,7 @@
       "summaryEn": "Google AI Ultra subscribers in the U.S. can try out Project Genie, an experimental research prototype that lets you create and explore worlds.",
       "lang": "en",
       "publishedAt": "2026-01-29T17:01:05.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "generative-ai",
@@ -55487,7 +55632,7 @@
       "summaryEn": "Release : v2026.1.26 Updated packages @modelcontextprotocol/server-everything@2026.1.26 @modelcontextprotocol/server-memory@2026.1.26 mcp-server-time@2026.1.26",
       "lang": "en",
       "publishedAt": "2026-01-27T12:11:26.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "anthropic",
         "mcp",
@@ -55618,7 +55763,7 @@
       "summaryEn": "Release : v2026.1.14 Updated packages @modelcontextprotocol/server-everything@2026.1.14 @modelcontextprotocol/server-filesystem@2026.1.14 mcp-server-git@2026.1.14",
       "lang": "en",
       "publishedAt": "2026-01-14T16:35:35.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "anthropic",
         "calver",
@@ -55954,7 +56099,7 @@
       "summaryEn": "The official Model Context Protocol repo shipped MCP Servers 2025.12.18, updating reference implementations such as sequential-thinking, everything, and filesystem. A routine maintenance bump.",
       "lang": "en",
       "publishedAt": "2025-12-18T16:33:28.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "anthropic",
         "filesystem",
@@ -56232,7 +56377,7 @@
       "summaryEn": "The official Model Context Protocol servers were tagged 2025.11.25, bumping reference packages like sequential-thinking, filesystem and everything to the same version. It is a routine date-based maintenance release sustaining the implementations.",
       "lang": "en",
       "publishedAt": "2025-11-25T19:03:57.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "anthropic",
         "filesystem",
@@ -56328,7 +56473,7 @@
       "summaryEn": "We’re announcing new multimodal models in the MedGemma collection, our most capable open models for health AI development.",
       "lang": "en",
       "publishedAt": "2025-10-25T18:02:50.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "deepmind",
         "gemma-3",
@@ -56439,7 +56584,7 @@
       "summaryEn": "Release : v2025.9.25 Updated packages @modelcontextprotocol/server-everything@2025.9.25 @modelcontextprotocol/server-memory@2025.9.25 mcp-server-git@2025.9.25 mcp-server-time@2025.9.25",
       "lang": "en",
       "publishedAt": "2025-09-25T21:26:20.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "anthropic",
         "mcp",
@@ -56535,7 +56680,7 @@
       "summaryEn": "Release 2025.9.12",
       "lang": "en",
       "publishedAt": "2025-09-12T19:58:34.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "anthropic",
         "llm-tooling",
@@ -56825,7 +56970,7 @@
       "summaryEn": "set version to 0.86.2.dev",
       "lang": "en",
       "publishedAt": "2025-08-13T15:46:02.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "aider",
         "cli",
@@ -56861,7 +57006,7 @@
       "summaryEn": "version bump to 0.86.1",
       "lang": "en",
       "publishedAt": "2025-08-13T15:46:00.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-coding",
         "aider",
@@ -56898,7 +57043,7 @@
       "summaryEn": "Aider v0.86.0 adds support for all GPT-5 models, Grok-4 via xai and OpenRouter, and a new Gemini model, plus authentication and error-handling improvements. Aider wrote about 74% of this release's code.",
       "lang": "en",
       "publishedAt": "2025-08-09T17:42:19.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "aider",
         "bedrock",
@@ -56939,7 +57084,7 @@
       "summaryEn": "set version to 0.86.1.dev",
       "lang": "en",
       "publishedAt": "2025-08-09T15:55:11.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "aider",
         "cli",
@@ -56974,7 +57119,7 @@
       "summaryEn": "set version to 0.85.6.dev",
       "lang": "en",
       "publishedAt": "2025-08-07T20:54:56.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "aider",
         "cli",
@@ -57010,7 +57155,7 @@
       "summaryEn": "version bump to 0.85.5",
       "lang": "en",
       "publishedAt": "2025-08-07T20:54:54.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "ai-coding",
         "aider",
@@ -57046,7 +57191,7 @@
       "summaryEn": "set version to 0.85.5.dev",
       "lang": "en",
       "publishedAt": "2025-08-07T18:33:44.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "aider",
         "cli",
@@ -57082,7 +57227,7 @@
       "summaryEn": "version bump to 0.85.4",
       "lang": "en",
       "publishedAt": "2025-08-07T18:33:43.000Z",
-      "collectedAt": "2026-07-11T00:00:22.105Z",
+      "collectedAt": "2026-07-12T00:01:12.149Z",
       "tags": [
         "aider",
         "cli",

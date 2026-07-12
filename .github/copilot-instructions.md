@@ -1542,6 +1542,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: 詳細ページの authority badge に `data-source-type` を追加した。Status の要確認 list は各 link を状態説明の `small` と `aria-describedby` で関連付け、list item に `data-source-status` を付与した。Worker Health section も status summary を `aria-describedby` で明示し、E2E で属性と参照先を検証する。
 - **教訓**: trust、freshness、error state を複数画面へ出すときは、visible label、`data-*` metadata、accessible relationship の3層を同じ意味に揃える。動的でない status を安易に live region にせず、既存の見出しと説明を `aria-labelledby` / `aria-describedby` で関連付ける。
 
+### LL-220: deploy認証のHTML 521はcredential再発行前にprovider API障害を確認する
+- **事象**: fingerprint-safe rolloutでsummary/body consumerをdeployしたところ、2本ともWranglerのOAuth refreshがHTMLのbot challenge pageを受け取り、HTTP 521でversion作成前に停止した。同時刻のCloudflare StatusはDashboardとAPIのdegraded performanceを公表していた。
+- **根本原因**: local Wranglerのstored OAuth access tokenは期限切れだったが、更新に使うCloudflare API側も進行中の障害でrefresh requestを処理できなかった。project設定やWorker bundleの失敗ではなく、期限切れtokenとprovider API outageが同時に発生していた。
+- **対策**: token値を表示せずverify endpointでstored tokenの失効を確認し、Cloudflare Status APIで未解決incidentとaffected API componentを確認した。障害中に新規API token発行やmanual secret差し替えへ切り替えず、公式復旧後に既存refresh tokenでWrangler認証を再試行する。deploy後はversion作成結果と各`/health`を確認してからrolloutを続ける。
+- **教訓**: deploy auth errorがHTML、bot challenge、5xxを返した場合は、credential不備とprovider outageを分離して確認する。外部API障害中にblind retryや新規credential発行へ進まず、公式status、secretを出さないtoken verify、version未作成の3点を証拠に安全停止する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

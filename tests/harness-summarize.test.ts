@@ -270,6 +270,8 @@ describe("buildSummaryPrompt", () => {
     expect(prompt).not.toContain('"bodyEn"');
     expect(prompt).not.toContain("700〜1100");
     expect(prompt).not.toContain("500-800 words");
+    expect(prompt).toContain("Escape ASCII double quotes");
+    expect(prompt).toContain("Japanese corner brackets");
   });
 });
 

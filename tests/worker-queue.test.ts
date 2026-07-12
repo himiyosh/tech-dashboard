@@ -531,9 +531,124 @@ describe("worker summarizer health endpoint", () => {
       },
     });
   });
+
+  it("keeps repeated entry-specific parse failures visible without failing global health", async () => {
+    const response = await summarizerWorker.fetch!(
+      new Request("https://tech-dashboard-summarizer.example/health"),
+      {
+        SUMMARY_CACHE: mockKv({
+          status: "retry",
+          at: new Date().toISOString(),
+          url: "https://example.com/malformed-entry",
+          repeatCount: 3,
+          error: "Error: incomplete summary for https://example.com/malformed-entry",
+        }),
+        COPILOT_PAT: "configured",
+        SUMMARIZE_MODEL: "claude-sonnet-4.6",
+      },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      recentIssue: true,
+      issueSeverity: "warn",
+      issueScope: "entry",
+      issue: {
+        status: "retry",
+        repeatCount: 3,
+      },
+    });
+  });
+
+  it("fails closed with JSON health when the cache binding is missing", async () => {
+    const response = await summarizerWorker.fetch!(
+      new Request("https://tech-dashboard-summarizer.example/health"),
+      {
+        SUMMARY_CACHE: undefined as unknown as KVNamespace,
+        COPILOT_PAT: "configured",
+        SUMMARIZE_MODEL: "claude-sonnet-4.6",
+      },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      cacheBinding: false,
+      copilotSecretConfigured: true,
+    });
+  });
 });
 
 describe("worker summarizer queue consumer", () => {
+  it("resets the retry count when the same URL changes from entry to runtime failure", async () => {
+    let issue: Record<string, unknown> = {
+      status: "retry",
+      scope: "entry",
+      at: new Date().toISOString(),
+      url: baseEntry.url,
+      repeatCount: 3,
+      error: `Error: incomplete summary for ${baseEntry.url}`,
+    };
+    const put = vi.fn(async (key: string, value: string) => {
+      if (key === "summarizer.issue.v1") {
+        issue = JSON.parse(value) as Record<string, unknown>;
+      }
+    });
+    const kv = {
+      get: vi.fn(async () => issue),
+      put,
+      delete: vi.fn(async () => undefined),
+    } as unknown as KVNamespace;
+    const ack = vi.fn();
+    const retry = vi.fn();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("unavailable", { status: 500 })),
+    );
+
+    await summarizerWorker.queue!(
+      {
+        messages: [
+          {
+            body: {
+              url: baseEntry.url,
+              entry: {
+                id: baseEntry.id,
+                url: baseEntry.url,
+                title: baseEntry.title,
+                category: baseEntry.category,
+                source: baseEntry.source,
+                sourceType: baseEntry.sourceType,
+              },
+            },
+            ack,
+            retry,
+          },
+        ],
+      } as unknown as MessageBatch,
+      {
+        SUMMARY_CACHE: kv,
+        COPILOT_PAT: "test-pat-scope-reset",
+        SUMMARIZE_MODEL: "claude-sonnet-4.6",
+      },
+      {} as ExecutionContext,
+    );
+
+    expect(ack).not.toHaveBeenCalled();
+    expect(retry).toHaveBeenCalledTimes(1);
+    expect(issue).toMatchObject({
+      ok: true,
+      status: "retry",
+      scope: "runtime",
+      repeatCount: 1,
+    });
+
+    vi.unstubAllGlobals();
+  });
+
   it("generates a summary from the summary-only prompt without requesting a body (LL-106)", async () => {
     const put = vi.fn(async () => undefined);
     const del = vi.fn(async () => undefined);

@@ -168,10 +168,10 @@
 ### R-021: Visual review は DOM 寸法と画像 fallback まで見る
 - mobile navigation を変更したら、`390x844` で `header .menu-trigger` が非表示、bottom tabbar が `Home / Categories / Menu` の 3 action、`#site-menu` が tabbar 由来の bottom-sheet として viewport 内に収まることを Playwright で検証する。
 - Featured / article card の layout を変更したら、空リンクや fallback 要素が grid/flex の通常 flow に参加していないこと、thumb/body の bounding box が期待位置にあること、panel height が異常に伸びないこと、mobile 通常カードの thumbnail が本文幅を削らず article panel の境界 gap が見えることを検証する。通常カードの OGP thumbnail は mobile では非表示にしてよい。
-- Knowledge card の mobile layout を変更したら、`390x844` で実画像と placeholder が同じ正方形の固定枠に収まり、thumb が card 内で中央配置され、本文と重ならず、全 card の高さと横 overflow が変わらないことを DOM 寸法で検証する。
+- Knowledge card の mobile layout を変更したら、`390x844` で実画像がある entry だけ compact な正方形 thumb を出し、画像なし・画像失敗 entry は slot 自体を持たず本文が card 幅へ広がることを確認する。thumb の中央配置・本文非重複・全 card の高さ・横 overflow も DOM 寸法で検証する。
 - category directory / category detail の補助 panel は本文と一緒にスクロールさせる。primary navigation の左 Sidebar だけ sticky を維持し、scroll 前後の bounding box で両者の挙動を分けて検証する。
 - mobile home density を変更したら、`390x844` で hero 直下に重複 stats / 長い説明文の余白がないこと、最初の Featured/article が `y <= 340` 目安で見えることを Playwright 寸法で検証する。
-- 外部 OGP / media image は失敗前提で扱う。`img.onerror` で deterministic fallback artwork を表示し、broken image icon を残さない。E2E は synthetic `error` event で fallback 表示を検証する。
+- 外部 OGP / media image は失敗前提で扱う。`img.onerror` で broken image icon を残さない。通常 article card は deterministic fallback artwork を表示し、Knowledge card は optional thumbnail slot を除去して text-first layout へ戻す。E2E は synthetic `error` event で各 contract を検証する。
 - Persona audit はスクリーンショット印象だけで合格にしない。DOM metrics、console/network、画像 naturalWidth/error、focus state のいずれかを evidence として要求する。
 
 ### R-022: ベストプラクティス/知見ソースは evergreen で蓄積する (アーカイブしない)
@@ -187,7 +187,7 @@
 - **lane ページ (`/arxiv`, `/knowledge`) は Timeline とは別レーン**なので、`Sidebar` (Timeline カテゴリ) を import / 配置しない。これらは `.layout.lane-layout` を使う。
 - **ナビは左 rail に置く (LL-095)**。Timeline / Categories が左ナビなので、lane も `aside.lane-rail` を **main より前 (左)** に置き、`grid-template-columns: 264px minmax(0,1fr)` で左ナビに統一する。右 `aside.right` は使わない。`max-width: 980px` で rail を畳んで 1 カラムにする。
 - lane rail は簡素にしない。`.lane-rail-id` (カテゴリ色アイコン + レーン名 + 説明 + 大きな件数 stat) を先頭に置き、その下に lane 固有の補助 (arXiv の code meaning / paper tags、Knowledge の sources ナビ + Tip) を `side-card` で並べる。`--cat-color` を lane の色 (arXiv=`#93c5fd`, Knowledge=`#34d399`) に設定する。
-- Knowledge の知見一覧は Timeline 用の重い `EntryCard` を使わず、`KnowledgeCard.astro` の横型カードを 2 列グリッドにする。実画像と placeholder は同じ固定 thumbnail slot に収めて card 高を揃え、mobile では compact な正方形 slot を card 中央へ配置する (LL-091/093/094/096/225)。
+- Knowledge の知見一覧は Timeline 用の重い `EntryCard` を使わず、`KnowledgeCard.astro` の横型カードを 2 列グリッドにする。card 高は揃えつつ、実画像がある entry だけ thumbnail slot を出す。画像なし・画像失敗 entry は placeholder を出さず、本文を全幅へ広げる (LL-091/093/094/096/225/226)。
 - lane ページのレイアウトを変えたら E2E で「`.layout aside.left` が 0 件」「`.layout aside.right` が 0 件」「`aside.lane-rail` が main より左」「`.layout.lane-layout` 表示」「全幅 (1280〜390) で 3 カラムにならない・横スクロールなし」を検証する。
 
 ### R-024: PR merge 後は同一セッションで branch / worktree を安全に整理する
@@ -1585,6 +1585,24 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: mobile breakpoint は grid column 幅だけを変更し、`.kg-thumb` の幅・高さ・self alignment を定義していなかったため、CSS Grid の既定 stretch が card 高まで thumbnail を引き伸ばした。sticky も `aside.right` 全体へ適用され、navigation ではない `.category-side-panel` を巻き込んでいた。sticky selector から除外しただけでは `align-self:start` も失われ、panel が grid row 全高へ stretch する副作用が出た。
 - **対策**: mobile thumbnail を `84x84px` の固定正方形として `96px` column 内の中央へ配置し、card 高 `148px` を維持した。category directory と category side panel は `position:static` に戻し、side panel には `align-self:start` を明示した。Playwright で mobile thumbnail の寸法・中央位置・本文非重複・横 overflow と、`1440px` / `1000px` の scroll 前後で category panel が流れ、左 Sidebar だけ sticky offset を保つことを固定した。
 - **教訓**: breakpoint で grid track を変えるときは grid item の幅・高さ・`align-self` も一緒に定義する。sticky は broad な `aside` selector ではなく、追従すべき navigation surface だけへ適用する。追従解除の検証は computed style だけで終えず、scroll 前後の座標と意図して残す sticky surface を同時に測る。
+
+### LL-226: uniform card height は画像なし entry の placeholder slot を要求しない
+- **事象**: Knowledge 165 件中 104 件 (63%) が実画像を持たず、先頭 12 件でも 11 件が絵文字 placeholder だったため、固定 thumbnail slot が知見の scan を助けず本文幅を削る装飾になっていた。
+- **根本原因**: LL-096 の「画像有無で card 寸法を変えない」を「全 card に同じ thumbnail slot を必ず描画する」と解釈し、card 高の一貫性と optional media の有無を分離していなかった。少数の実画像より placeholder が支配的な Knowledge lane では、uniform slot が情報密度を下げた。また fixed height だけを指定して Grid row を auto のままにすると、本文の min-content 高が `160.36px` まで row を押し広げ、`148px` card 内の thumb 中心が `7.18px` ずれた。
+- **対策**: card 高は desktop/mobile とも固定したまま、実画像がある entry だけ `.kg-thumb` を描画する。`.kg-card-link:has(.kg-thumb)` で画像ありの 2 column layout を適用し、非対応 browser は server-rendered `.has-image` class で補完する。画像なし・画像失敗時は thumbnail slot を除去して本文を全幅へ広げる。Grid row は `minmax(0, 1fr)` へ拘束し、Playwright で全 card の構造、寸法、synthetic error 後の column 解放を検証する。
+- **教訓**: 一覧の rhythm は card 外形の統一で守り、情報がない装飾枠まで統一しない。optional media は実 content があるときだけ表示し、失敗時は空枠や generic artwork ではなく text-first layout へ戻す。fixed-height Grid は column だけでなく row の min-content expansion も拘束し、全 item の中心と overflow を実測する。
+
+### LL-227: state transition の E2E locator は変化前 class ではなく安定 identity へ固定する
+- **事象**: `.kg-card.has-image`.first() へ synthetic `error` を送った後、handler は元 card を `.no-image` へ正しく変更したのに、`toHaveClass(/no-image/)` は次の `.has-image` card を再選択して失敗した。
+- **根本原因**: Playwright Locator は操作ごとに selector を再解決する。遷移で消える state class (`.has-image`) を locator identity に含めたため、状態変更後の assertion が同じ DOM node ではなく次の一致 node を対象にした。
+- **対策**: 遷移前に detail link の固有 `href` を取得し、その href を持つ `.kg-card` を安定 locator として error dispatch、class 変更、thumbnail 除去、本文幅拡張を検証する。
+- **教訓**: state transition test では outgoing state (`.open`, `.active`, `.has-image`) を対象 identity に使わない。固有 ID、href、data key など遷移前後で変わらない属性へ locator を固定してから状態を assert する。
+
+### LL-228: 条件付き UI の E2E は対象状態の存在と breakpoint 行列を fail-closed で検証する
+- **事象**: Knowledge の画像失敗テストは `.has-image` card が 0 件なら処理全体を skip し、card 高の検証も desktop 1 幅と mobile だけだった。全 card が誤って画像なしになる回帰や tablet 幅だけの高さ崩れを検出できない状態だった。
+- **根本原因**: data 駆動 UI の状態を任意とみなし、テスト対象の fixture が実 corpus に存在することを事前条件として固定していなかった。また responsive contract の代表幅を実装要件と同じ行列で列挙していなかった。
+- **対策**: 画像あり・画像なし card が両方 1 件以上あることを先に assert し、画像失敗経路を常に実行する。uniform height は `1440px`、`768px`、`390px` で明示検証し、各幅の期待値を固定する。
+- **教訓**: 条件付き UI の回帰テストは対象状態が無ければ黙って通さず fail-closed にする。responsive 要件は「desktop / mobile」の抽象名でなく、境界を含む具体的 viewport 行列へ落として検証する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

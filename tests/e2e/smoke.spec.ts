@@ -2228,7 +2228,7 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("knowledge lane is a primary explore shortcut and groups by source", async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.setViewportSize({ width: 1440, height: 900 });
 
     // Knowledge is a primary explore destination: it lives in the header
     // switcher (alongside Categories and arXiv), not in the hamburger menu
@@ -2253,21 +2253,36 @@ test.describe("TECH Dashboard smoke", () => {
     const groupCount = await groups.count();
     expect(groupCount, "knowledge page shows source groups").toBeGreaterThan(0);
 
-    // Every group exposes a source heading + at least one card. All cards use
-    // the SAME uniform layout & height whether or not they have an image
-    // (LL-096): every card has a .kg-thumb slot, and all cards share one height.
+    // Every group exposes a source heading + at least one card. Cards keep one
+    // uniform height, but only entries with a real image reserve a thumb slot.
     const allHeights: number[] = [];
+    let imageCardCount = 0;
+    let textOnlyCardCount = 0;
     for (let i = 0; i < groupCount; i++) {
       const group = groups.nth(i);
       await expect(group.locator("h2")).toBeVisible();
       const cards = group.locator(".kg-card");
       const cardCount = await cards.count();
       expect(cardCount, "each knowledge source group has at least one card").toBeGreaterThan(0);
-      // Every card has exactly one thumbnail slot (image or subtle placeholder).
-      expect(
-        await group.locator(".kg-card .kg-thumb").count(),
-        `group ${i} every card has a thumb slot`,
-      ).toBe(cardCount);
+      const structures = await cards.evaluateAll((nodes) =>
+        nodes.map((card) => ({
+          hasImageClass: card.classList.contains("has-image"),
+          noImageClass: card.classList.contains("no-image"),
+          hasThumb: card.querySelector(".kg-thumb") !== null,
+        })),
+      );
+      for (const structure of structures) {
+        if (structure.hasImageClass) imageCardCount++;
+        if (structure.noImageClass) textOnlyCardCount++;
+        expect(
+          structure.hasImageClass || structure.noImageClass,
+          `group ${i} card declares its media state`,
+        ).toBe(true);
+        expect(
+          structure.hasThumb,
+          `group ${i} thumbnail slot matches real image state`,
+        ).toBe(structure.hasImageClass);
+      }
       for (let c = 0; c < cardCount; c++) {
         const box = await cards.nth(c).boundingBox();
         if (box) allHeights.push(Math.round(box.height));
@@ -2276,9 +2291,11 @@ test.describe("TECH Dashboard smoke", () => {
     // All knowledge cards must be the same height (uniform grid, image-agnostic).
     const uniqueHeights = [...new Set(allHeights)];
     expect(
-      uniqueHeights.length,
+      uniqueHeights,
       `all knowledge cards share one height, got ${JSON.stringify(uniqueHeights)}`,
-    ).toBe(1);
+    ).toEqual([152]);
+    expect(imageCardCount, "Knowledge corpus includes real-image cards").toBeGreaterThan(0);
+    expect(textOnlyCardCount, "Knowledge corpus includes text-only cards").toBeGreaterThan(0);
 
     // Lane rail "Sources" nav is alphabetical (A->Z by label) with favicon icons,
     // matching the rest of the site's category/source lists (LL-103).
@@ -2295,46 +2312,100 @@ test.describe("TECH Dashboard smoke", () => {
       "each knowledge source has a favicon icon",
     ).toBe(sourceLabels.length);
 
+    await page.setViewportSize({ width: 768, height: 900 });
+    const tabletCardHeights = await page.locator(".kg-card").evaluateAll((cards) => [
+      ...new Set(cards.map((card) => Math.round(card.getBoundingClientRect().height))),
+    ]);
+    expect(
+      tabletCardHeights,
+      `tablet Knowledge cards share one height, got ${JSON.stringify(tabletCardHeights)}`,
+    ).toEqual([152]);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
     // On mobile, Knowledge is a direct tab in the bottom tabbar (not in the
     // menu). Selecting it marks the Knowledge tab active, not the Menu trigger.
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/knowledge/");
     const mobileCardGeometry = await page.locator(".kg-card").evaluateAll((cards) =>
-      cards.slice(0, 8).map((card) => {
+      cards.map((card) => {
         const cardRect = card.getBoundingClientRect();
-        const thumbRect = (card.querySelector(".kg-thumb") as HTMLElement).getBoundingClientRect();
+        const linkRect = (card.querySelector(".kg-card-link") as HTMLElement).getBoundingClientRect();
+        const thumb = card.querySelector(".kg-thumb") as HTMLElement | null;
+        const thumbRect = thumb?.getBoundingClientRect();
         const bodyRect = (card.querySelector(".kg-body") as HTMLElement).getBoundingClientRect();
         return {
           cardHeight: cardRect.height,
-          thumbWidth: thumbRect.width,
-          thumbHeight: thumbRect.height,
-          centerDelta:
-            (thumbRect.top + thumbRect.bottom) / 2 - (cardRect.top + cardRect.bottom) / 2,
-          bodyOverlap: thumbRect.right - bodyRect.left,
+          hasThumb: thumbRect !== undefined,
+          hasImageClass: card.classList.contains("has-image"),
+          noImageClass: card.classList.contains("no-image"),
+          thumbWidth: thumbRect?.width ?? 0,
+          thumbHeight: thumbRect?.height ?? 0,
+          centerDelta: thumbRect
+            ? (thumbRect.top + thumbRect.bottom) / 2 - (cardRect.top + cardRect.bottom) / 2
+            : 0,
+          bodyOverlap: thumbRect ? thumbRect.right - bodyRect.left : 0,
+          textWidthDelta: linkRect.width - bodyRect.width,
+          textStartDelta: bodyRect.left - linkRect.left,
         };
       }),
     );
     expect(mobileCardGeometry.length, "mobile Knowledge cards are present").toBeGreaterThan(0);
     for (const geometry of mobileCardGeometry) {
-      expect(
-        Math.abs(geometry.thumbWidth - geometry.thumbHeight),
-        "mobile thumbnail stays square",
-      ).toBeLessThanOrEqual(1);
-      expect(geometry.thumbWidth, "mobile thumbnail remains compact").toBeGreaterThanOrEqual(80);
-      expect(
-        geometry.thumbWidth,
-        "mobile thumbnail does not become a full-height strip",
-      ).toBeLessThanOrEqual(88);
-      expect(
-        Math.abs(geometry.centerDelta),
-        "mobile thumbnail is vertically centered",
-      ).toBeLessThanOrEqual(1);
-      expect(
-        geometry.bodyOverlap,
-        "mobile thumbnail does not overlap card content",
-      ).toBeLessThanOrEqual(0);
       expect(geometry.cardHeight, "mobile Knowledge card keeps its uniform height").toBe(148);
+      expect(geometry.hasThumb, "thumbnail slot matches real image state").toBe(
+        geometry.hasImageClass,
+      );
+      if (geometry.hasThumb) {
+        expect(
+          Math.abs(geometry.thumbWidth - geometry.thumbHeight),
+          "mobile thumbnail stays square",
+        ).toBeLessThanOrEqual(1);
+        expect(geometry.thumbWidth, "mobile thumbnail remains compact").toBeGreaterThanOrEqual(80);
+        expect(
+          geometry.thumbWidth,
+          "mobile thumbnail does not become a full-height strip",
+        ).toBeLessThanOrEqual(88);
+        expect(
+          Math.abs(geometry.centerDelta),
+          "mobile thumbnail is vertically centered",
+        ).toBeLessThanOrEqual(1);
+        expect(
+          geometry.bodyOverlap,
+          "mobile thumbnail does not overlap card content",
+        ).toBeLessThanOrEqual(0);
+      } else {
+        expect(geometry.noImageClass, "text-only card declares no-image state").toBe(true);
+        expect(
+          geometry.textWidthDelta,
+          "text-only card body expands across the card",
+        ).toBeLessThanOrEqual(2);
+        expect(
+          geometry.textStartDelta,
+          "text-only card body starts at the card edge",
+        ).toBeLessThanOrEqual(1);
+      }
     }
+    const imageCard = page.locator(".kg-card.has-image").first();
+    await expect(imageCard, "image failure fixture remains available").toBeAttached();
+    const imageHref = await imageCard.locator(".kg-card-link").getAttribute("href");
+    expect(imageHref, "image card has a stable detail href").toBeTruthy();
+    const stableImageCard = page.locator(".kg-card").filter({
+      has: page.locator(`.kg-card-link[href="${imageHref}"]`),
+    });
+    const bodyWidthBefore = await stableImageCard.locator(".kg-body").evaluate((body) =>
+      body.getBoundingClientRect().width,
+    );
+    await stableImageCard.locator(".kg-thumb img").dispatchEvent("error");
+    await expect(stableImageCard).toHaveClass(/no-image/);
+    await expect(stableImageCard.locator(".kg-thumb")).toHaveCount(0);
+    const bodyWidthAfter = await stableImageCard.locator(".kg-body").evaluate((body) =>
+      body.getBoundingClientRect().width,
+    );
+    expect(bodyWidthAfter, "failed image releases the thumbnail column").toBeGreaterThan(
+      bodyWidthBefore,
+    );
     const tabbar = page.getByRole("navigation", { name: "Primary" });
     await expect(tabbar.getByRole("link", { name: /Knowledge/ })).toHaveClass(/active/);
     await expect(tabbar.getByRole("button", { name: /Menu/ })).not.toHaveClass(/active/);

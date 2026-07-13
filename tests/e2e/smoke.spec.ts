@@ -990,6 +990,24 @@ test.describe("TECH Dashboard smoke", () => {
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
 
+    const directoryFlow = await directory.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return { position: getComputedStyle(element).position, top: rect.top };
+    });
+    expect(directoryFlow.position, "category directory remains in document flow").toBe("static");
+    await page.evaluate(() => {
+      document.documentElement.style.scrollBehavior = "auto";
+      window.scrollTo(0, 900);
+    });
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(500);
+    const directoryScrolledTop = await directory.evaluate((element) => element.getBoundingClientRect().top);
+    expect(
+      directoryScrolledTop,
+      "category directory scrolls away instead of following the viewport",
+    ).toBeLessThan(directoryFlow.top - 500);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();
     await expect(directory).toBeVisible();
@@ -1008,6 +1026,62 @@ test.describe("TECH Dashboard smoke", () => {
 
     await directory.getByRole("link", { name: /Copilot/ }).click();
     await expect(page).toHaveURL(/\/c\/copilot\/?$/);
+  });
+
+  test("category-owned panels scroll normally while primary sidebar stays sticky", async ({ page }) => {
+    for (const width of [1440, 1000]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/c/copilot/");
+
+      const panel = page.locator(".category-side-panel");
+      const sidebar = page.locator("aside.left");
+      await expect(panel, `category panel visible at ${width}px`).toBeVisible();
+      await expect(sidebar, `primary sidebar visible at ${width}px`).toBeVisible();
+
+      const before = await page.evaluate(() => {
+        const panel = document.querySelector(".category-side-panel") as HTMLElement;
+        const sidebar = document.querySelector("aside.left") as HTMLElement;
+        const panelStyle = getComputedStyle(panel);
+        const sidebarStyle = getComputedStyle(sidebar);
+        return {
+          panelPosition: panelStyle.position,
+          panelTop: panel.getBoundingClientRect().top,
+          panelHeight: panel.getBoundingClientRect().height,
+          sidebarPosition: sidebarStyle.position,
+          sidebarStickyTop: Number.parseFloat(sidebarStyle.top),
+        };
+      });
+      expect(before.panelPosition, `category panel is not sticky at ${width}px`).toBe("static");
+      expect(before.panelHeight, `category panel keeps its intrinsic height at ${width}px`).toBeLessThan(
+        1200,
+      );
+      expect(before.sidebarPosition, `primary sidebar remains sticky at ${width}px`).toBe("sticky");
+
+      await page.evaluate(() => {
+        document.documentElement.style.scrollBehavior = "auto";
+        window.scrollTo(0, 900);
+      });
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(500);
+
+      const after = await page.evaluate(() => {
+        const panel = document.querySelector(".category-side-panel") as HTMLElement;
+        const sidebar = document.querySelector("aside.left") as HTMLElement;
+        return {
+          panelTop: panel.getBoundingClientRect().top,
+          sidebarTop: sidebar.getBoundingClientRect().top,
+          hscroll: document.documentElement.scrollWidth > window.innerWidth,
+        };
+      });
+      expect(
+        after.panelTop,
+        `category panel leaves the viewport with its content at ${width}px`,
+      ).toBeLessThan(before.panelTop - 500);
+      expect(
+        Math.abs(after.sidebarTop - before.sidebarStickyTop),
+        `primary sidebar holds its sticky offset at ${width}px`,
+      ).toBeLessThanOrEqual(2);
+      expect(after.hscroll, `category detail has no horizontal overflow at ${width}px`).toBe(false);
+    }
   });
 
   test("status source filters only show matching rows", async ({ page }) => {
@@ -2225,6 +2299,42 @@ test.describe("TECH Dashboard smoke", () => {
     // menu). Selecting it marks the Knowledge tab active, not the Menu trigger.
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/knowledge/");
+    const mobileCardGeometry = await page.locator(".kg-card").evaluateAll((cards) =>
+      cards.slice(0, 8).map((card) => {
+        const cardRect = card.getBoundingClientRect();
+        const thumbRect = (card.querySelector(".kg-thumb") as HTMLElement).getBoundingClientRect();
+        const bodyRect = (card.querySelector(".kg-body") as HTMLElement).getBoundingClientRect();
+        return {
+          cardHeight: cardRect.height,
+          thumbWidth: thumbRect.width,
+          thumbHeight: thumbRect.height,
+          centerDelta:
+            (thumbRect.top + thumbRect.bottom) / 2 - (cardRect.top + cardRect.bottom) / 2,
+          bodyOverlap: thumbRect.right - bodyRect.left,
+        };
+      }),
+    );
+    expect(mobileCardGeometry.length, "mobile Knowledge cards are present").toBeGreaterThan(0);
+    for (const geometry of mobileCardGeometry) {
+      expect(
+        Math.abs(geometry.thumbWidth - geometry.thumbHeight),
+        "mobile thumbnail stays square",
+      ).toBeLessThanOrEqual(1);
+      expect(geometry.thumbWidth, "mobile thumbnail remains compact").toBeGreaterThanOrEqual(80);
+      expect(
+        geometry.thumbWidth,
+        "mobile thumbnail does not become a full-height strip",
+      ).toBeLessThanOrEqual(88);
+      expect(
+        Math.abs(geometry.centerDelta),
+        "mobile thumbnail is vertically centered",
+      ).toBeLessThanOrEqual(1);
+      expect(
+        geometry.bodyOverlap,
+        "mobile thumbnail does not overlap card content",
+      ).toBeLessThanOrEqual(0);
+      expect(geometry.cardHeight, "mobile Knowledge card keeps its uniform height").toBe(148);
+    }
     const tabbar = page.getByRole("navigation", { name: "Primary" });
     await expect(tabbar.getByRole("link", { name: /Knowledge/ })).toHaveClass(/active/);
     await expect(tabbar.getByRole("button", { name: /Menu/ })).not.toHaveClass(/active/);

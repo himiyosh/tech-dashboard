@@ -1747,7 +1747,7 @@ aside.right {
 }
 
 aside.left,
-aside.right {
+aside.right:not(.category-side-panel) {
   position: sticky;
   top: 80px;
   align-self: start;
@@ -3315,6 +3315,9 @@ a.home-source-row:focus-visible .home-source-cat {
 
 .category-side-panel {
   display: block;
+  position: static;
+  top: auto;
+  align-self: start;
 }
 
 .category-side-note {
@@ -3977,7 +3980,7 @@ body {
   }
 
   .layout:has(> aside.right:not(:empty)) aside.left,
-  .layout:has(> aside.right:not(:empty)) aside.right {
+  .layout:has(> aside.right:not(:empty)) aside.right:not(.category-side-panel) {
     top: 72px;
     font-size: 12px;
   }

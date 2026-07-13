@@ -168,6 +168,8 @@
 ### R-021: Visual review は DOM 寸法と画像 fallback まで見る
 - mobile navigation を変更したら、`390x844` で `header .menu-trigger` が非表示、bottom tabbar が `Home / Categories / Menu` の 3 action、`#site-menu` が tabbar 由来の bottom-sheet として viewport 内に収まることを Playwright で検証する。
 - Featured / article card の layout を変更したら、空リンクや fallback 要素が grid/flex の通常 flow に参加していないこと、thumb/body の bounding box が期待位置にあること、panel height が異常に伸びないこと、mobile 通常カードの thumbnail が本文幅を削らず article panel の境界 gap が見えることを検証する。通常カードの OGP thumbnail は mobile では非表示にしてよい。
+- Knowledge card の mobile layout を変更したら、`390x844` で実画像と placeholder が同じ正方形の固定枠に収まり、thumb が card 内で中央配置され、本文と重ならず、全 card の高さと横 overflow が変わらないことを DOM 寸法で検証する。
+- category directory / category detail の補助 panel は本文と一緒にスクロールさせる。primary navigation の左 Sidebar だけ sticky を維持し、scroll 前後の bounding box で両者の挙動を分けて検証する。
 - mobile home density を変更したら、`390x844` で hero 直下に重複 stats / 長い説明文の余白がないこと、最初の Featured/article が `y <= 340` 目安で見えることを Playwright 寸法で検証する。
 - 外部 OGP / media image は失敗前提で扱う。`img.onerror` で deterministic fallback artwork を表示し、broken image icon を残さない。E2E は synthetic `error` event で fallback 表示を検証する。
 - Persona audit はスクリーンショット印象だけで合格にしない。DOM metrics、console/network、画像 naturalWidth/error、focus state のいずれかを evidence として要求する。
@@ -185,7 +187,7 @@
 - **lane ページ (`/arxiv`, `/knowledge`) は Timeline とは別レーン**なので、`Sidebar` (Timeline カテゴリ) を import / 配置しない。これらは `.layout.lane-layout` を使う。
 - **ナビは左 rail に置く (LL-095)**。Timeline / Categories が左ナビなので、lane も `aside.lane-rail` を **main より前 (左)** に置き、`grid-template-columns: 264px minmax(0,1fr)` で左ナビに統一する。右 `aside.right` は使わない。`max-width: 980px` で rail を畳んで 1 カラムにする。
 - lane rail は簡素にしない。`.lane-rail-id` (カテゴリ色アイコン + レーン名 + 説明 + 大きな件数 stat) を先頭に置き、その下に lane 固有の補助 (arXiv の code meaning / paper tags、Knowledge の sources ナビ + Tip) を `side-card` で並べる。`--cat-color` を lane の色 (arXiv=`#93c5fd`, Knowledge=`#34d399`) に設定する。
-- Knowledge の知見一覧は Timeline 用の重い `EntryCard` を使わず、`KnowledgeCard.astro` (画像ありは 16:9 サムネ、無ければサムネ無し + 左アクセント) の 2 列グリッドにする (LL-091/093/094)。
+- Knowledge の知見一覧は Timeline 用の重い `EntryCard` を使わず、`KnowledgeCard.astro` の横型カードを 2 列グリッドにする。実画像と placeholder は同じ固定 thumbnail slot に収めて card 高を揃え、mobile では compact な正方形 slot を card 中央へ配置する (LL-091/093/094/096/225)。
 - lane ページのレイアウトを変えたら E2E で「`.layout aside.left` が 0 件」「`.layout aside.right` が 0 件」「`aside.lane-rail` が main より左」「`.layout.lane-layout` 表示」「全幅 (1280〜390) で 3 カラムにならない・横スクロールなし」を検証する。
 
 ### R-024: PR merge 後は同一セッションで branch / worktree を安全に整理する
@@ -1577,6 +1579,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: installer は hook file を `.git/hooks` へコピーする方式ではなく、`git config core.hooksPath scripts/git-hooks` で Git の参照先を repository 管理 directory へ切り替える方式だった。誤った配置前提で検証していた。
 - **対策**: `git config --get core.hooksPath` が `scripts/git-hooks` であることと、その配下の `pre-commit` / `pre-push` が executable であることを確認した。
 - **教訓**: Git hook の有効化確認は installer の方式に合わせる。`core.hooksPath` を使う repository では `.git/hooks` の存在や内容を有効性の証拠にせず、設定値と設定先 executable を検証する。
+
+### LL-225: mobile grid の stretch と広すぎる sticky selector はカードと補助 panel を同時に壊す
+- **事象**: `390x844` の Knowledge card で thumbnail が `92x146px` の縦長 strip になり、`/categories/` の directory と category detail の右 panel がスクロール後も viewport に追従した。
+- **根本原因**: mobile breakpoint は grid column 幅だけを変更し、`.kg-thumb` の幅・高さ・self alignment を定義していなかったため、CSS Grid の既定 stretch が card 高まで thumbnail を引き伸ばした。sticky も `aside.right` 全体へ適用され、navigation ではない `.category-side-panel` を巻き込んでいた。sticky selector から除外しただけでは `align-self:start` も失われ、panel が grid row 全高へ stretch する副作用が出た。
+- **対策**: mobile thumbnail を `84x84px` の固定正方形として `96px` column 内の中央へ配置し、card 高 `148px` を維持した。category directory と category side panel は `position:static` に戻し、side panel には `align-self:start` を明示した。Playwright で mobile thumbnail の寸法・中央位置・本文非重複・横 overflow と、`1440px` / `1000px` の scroll 前後で category panel が流れ、左 Sidebar だけ sticky offset を保つことを固定した。
+- **教訓**: breakpoint で grid track を変えるときは grid item の幅・高さ・`align-self` も一緒に定義する。sticky は broad な `aside` selector ではなく、追従すべき navigation surface だけへ適用する。追従解除の検証は computed style だけで終えず、scroll 前後の座標と意図して残す sticky surface を同時に測る。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

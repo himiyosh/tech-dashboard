@@ -1558,7 +1558,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **事象**: PR #135 merge後の旧harness cronでpublisher contract mismatchを確認する計画だったが、`wrangler tail`はrun開始直後に`outcome=exceededCpu`を返し、mismatchログを出さなかった。mainには新しいdata commitが作られず、旧health heartbeatも更新されなかった。
 - **根本原因**: release gateを特定のmismatchログへ固定し、実際のdeployment versionがそのguardへ到達できることを事前確認していなかった。旧runtimeはmismatchを記録する前にCloudflare FreeのCPU上限で終了したため、期待したログと安全上の実態がずれた。
 - **対策**: mismatchを確認済みとは報告せず、tailのterminal outcome、merge後data commit 0件、stale heartbeatの3点で旧writerがpublishしていないことを確認した。その後Free bridgeへ即時置換し、fetch-only deployment、`status=bridge`のhealth 4回連続200、Publisherのdata commitとdeferred effects flush成功まで検証した。
-- **教訓**: staged rolloutの本質的な安全条件は「旧writerが新しいmainへpublishできないこと」であり、特定のログ文言ではない。marker mismatchへ依存する場合はdeployment provenanceまたはruntime証拠でguardの存在と到達性を確認する。期待ログが得られない場合は理由を明記し、terminal failure、commit不在、旧runtime置換を組み合わせてfail-closedを実証する。
+- **教訓**: staged rolloutの本質的な安全条件は「旧writerが新しいmainへpublishできないこと」であり、特定のログ文言ではない。marker mismatchへ依存する場合はdeployment provenanceまたはruntime証拠でguardの存在と到達性を確認する。期待ログが得られない場合は理由を明記し、terminal failure、commit不在、旧heartbeat非更新を組み合わせてfail-closedを実証する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

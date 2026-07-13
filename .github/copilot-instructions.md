@@ -22,6 +22,7 @@
 - 「即時反映したい」「データだけ」という理由で省略しない。Cloudflare Pages の本番 build がトリガーされ、サイトに即影響するため。
 - 手動操作の例外: ユーザーが当該セッションで明示的に「main に直接 push して」と指示した場合のみ。
 - 自動化の限定例外: `publisher.yml` は main SHA を固定し、data-only allowlist、全品質ゲート、non-force push を通した生成 commit だけを built-in `GITHUB_TOKEN` で main へ push してよい。人間または agent の通常変更にはこの例外を適用しない。
+- `scripts/git-hooks/pre-commit` / `pre-push` は `main` / `master` / `develop` への直接書き込みを fail-closed で拒否する。`ALLOW_PROTECTED_BRANCH_WRITE=1` は、当該セッションでユーザーが直接書き込みを明示承認した場合だけ使用でき、通常の PR 作業や PR merge 後の継続作業では指定しない。
 
 ### R-002: Cloudflare Pages project 設定の固定値
 | 項目 | 値 |
@@ -211,6 +212,11 @@
 - summary/body Queue job と生成 cache には publisher fingerprint を伝播する。現在の fingerprint と明示的に異なる cache は採用せず再生成対象にする。fingerprint 導入前の既存 cache は本文・要約テキストだけ互換読み込みし、summary の importance / extraTags は exact fingerprint 一致時だけ採用する。fingerprint 無し job を受けた更新済み consumer は `legacy-unversioned-job` を保存し、既存 legacy cache と区別する。
 - fingerprint を変える release は Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を PR head から先に deployし、旧 consumer の in-flight 処理が残らないことを確認してから PR を mergeする。merge 後は原則として旧 harness が marker mismatch で停止したことを確認し、明示承認のうえ Free bridge を deployする。deployment provenanceやguard到達性を確認できずmismatchを観測できない場合は、その事実を明記し、旧runのterminal failure、merge後のdata commit不在、旧heartbeat非更新をすべて実測できた場合に限り「旧writerがpublish不能」という安全条件でbridge置換へ進む。いずれかを確認できなければ停止してユーザー判断を求める。bridge health、Publisher workflow、data commit、Queue drain、Pages productionを順に確認する。
 - `data/index.json` の entry が変わる publish では、`data/archive/_index.json` と `data/stats.json` の `generatedAt` も同一 commit の reference clock へ揃える。月次 archive は timestamp-only churn を避ける。
+
+### R-028: in-place checkout の Git mutation と session automation を直列化する
+- in-place session の branch、index、worktree は全 turn で共有される。`git switch` / commit / merge / push / branch cleanup を行う turn と、同じ checkout を操作し得る session automation または別 turn を並行実行しない。
+- Git mutation の直前に session automation が停止済みであることと、先行 turn の Git 操作が完了していることを確認する。そのうえで `git branch --show-current`、`git status --short`、push 先 ref を再取得し、開始時の確認結果を使い回さない。
+- PR merge 後に追加修正する場合は、checkout の更新完了を確認してから新しい作業 branch へ切り替える。merge 後の follow-up を protected branch 上の未コミット差分へ継ぎ足さない。
 
 ---
 
@@ -1559,6 +1565,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: release gateを特定のmismatchログへ固定し、実際のdeployment versionがそのguardへ到達できることを事前確認していなかった。旧runtimeはmismatchを記録する前にCloudflare FreeのCPU上限で終了したため、期待したログと安全上の実態がずれた。
 - **対策**: mismatchを確認済みとは報告せず、tailのterminal outcome、merge後data commit 0件、stale heartbeatの3点で旧writerがpublishしていないことを確認した。その後Free bridgeへ即時置換し、fetch-only deployment、`status=bridge`のhealth 4回連続200、Publisherのdata commitとdeferred effects flush成功まで検証した。
 - **教訓**: staged rolloutの本質的な安全条件は「旧writerが新しいmainへpublishできないこと」であり、特定のログ文言ではない。原則として旧harnessのmarker mismatchを観測する。deployment provenanceやguard到達性を確認できずmismatchを観測できない場合に限り、その事実を明記し、bridge deploy前にterminal failure、merge後data commit不在、旧heartbeat非更新をすべて実測してfail-closedを実証する。いずれかを確認できなければ停止してユーザー判断を求める。
+
+### LL-223: in-place checkout の並行 Git 操作は別 turn の変更を main へ持ち込む
+- **事象**: 5分間隔の session automation と対話 turn が同じ in-place checkout で重なった。一方が PR merge 後に checkout を `main` へ切り替え、その10秒後にもう一方が作業 branch 向けの変更を複合 commit / push command で `main` へ直接書き込んだ。
+- **根本原因**: in-place checkout の branch state は全 turn で共有されるのに、tool call 間でも branch は不変と仮定し、commit / push 直前に current branch と remote target を再確認しなかった。rollout 完了後も session automation を残して follow-up Git 操作と重ねたうえ、既存 pre-commit / pre-push hook も protected branch を拒否していなかった。
+- **対策**: rollout 完了時に session automation を停止し、follow-up の Git mutation と直列化する。`check-protected-branch-write.mjs` を追加し、pre-commit と pre-push の最初に `main` / `master` / `develop` への書き込みを拒否する。明示承認済みの例外だけ `ALLOW_PROTECTED_BRANCH_WRITE=1` を要求し、commit と push の両経路を unit test で固定する。
+- **教訓**: in-place session の Git state は turn ごとの隔離境界ではない。commit 前の branch 名と push 先 ref を hook で検証し、Git mutation 中は session automation と別 turn を停止する。PR merge 後に追加修正する場合は checkout 更新の完了を待ち、新しい作業 branch と PR に分ける。
+
+### LL-224: hook installer は `.git/hooks` へコピーせず `core.hooksPath` を切り替える
+- **事象**: `scripts/install-hooks.sh` の適用確認で repository source と `.git/hooks/pre-commit` / `pre-push` を比較したところ、対象 file が存在せず `cmp` が exit 2 になった。
+- **根本原因**: installer は hook file を `.git/hooks` へコピーする方式ではなく、`git config core.hooksPath scripts/git-hooks` で Git の参照先を repository 管理 directory へ切り替える方式だった。誤った配置前提で検証していた。
+- **対策**: `git config --get core.hooksPath` が `scripts/git-hooks` であることと、その配下の `pre-commit` / `pre-push` が executable であることを確認した。
+- **教訓**: Git hook の有効化確認は installer の方式に合わせる。`core.hooksPath` を使う repository では `.git/hooks` の存在や内容を有効性の証拠にせず、設定値と設定先 executable を検証する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# pre-push: secret scan と unit/web build/e2e テストを実行する。
+# pre-push: protected branch guard と secret scan、unit/web build/e2e テストを実行する。
 # worker/ の deploy は RUN_WORKER_DEPLOY=1 が明示された main push のみ実行する。
 # 失敗時は push を中断する (exit 1)。
 #
@@ -16,6 +16,11 @@ remote="${1:-}"
 url="${2:-}"
 input=$(cat || true)
 zero_sha="0000000000000000000000000000000000000000"
+
+if ! printf '%s\n' "$input" | node "$ROOT/scripts/check-protected-branch-write.mjs" push; then
+  echo "[pre-push] ERR: protected branch への直接 push を中断します"
+  exit 1
+fi
 
 # ---------- Secret scan ----------
 secret_scan_ran=0

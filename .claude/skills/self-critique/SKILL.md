@@ -39,13 +39,14 @@ argument-hint: "scope or suspected regression"
 | チェック | 方法 |
 |---|---|
 | R-001: GitHub Actions に deploy job を追加していないか | `.github/workflows/*.yml` に `wrangler pages deploy` が含まれていないことを確認 |
-| R-001b: main への直接 push / merge をしていないか | `git log origin/main..HEAD` で未マージ commit を確認 |
+| R-001b: protected branch へ直接 commit / push していないか | commit / push 直前に `git branch --show-current` と対象 ref を確認し、`main` / `master` / `develop` なら中断する。`tests/protected-branch-guard.test.ts` で pre-commit / pre-push の fail-closed contract を確認する |
 | R-003: web build が web で自己完結しているか | `web/src/**` から `../../../harness/` への runtime import がないことを grep で確認 |
 | R-009: secret が staged / tracked に混入していないか | `npm run secrets:scan` と `npm run secrets:scan:worktree` を実行 |
 | R-012: live index が body-free architecture と retention を守っているか | `data/index.json` で非空 `bodyJa` / `bodyEn` 件数が 0、本文は `data/bodies.json` にあり、retention 対象外 record が 0 であることを `tests/data-schema.test.ts` で確認 |
 | R-013: summary fallback が全 live entry に適用済みか | `summaryJa` / `summaryEn` の両方が非空であることを確認し、body は `data/bodies.json` 側で管理する |
 | R-026: Free publisher / bridge contract が維持されているか | `worker/wrangler.toml` に cron / `[limits]` / GitHub token がなく Free bridge entrypoint を使い、Publisher workflow が Node jobで品質ゲート後に data-only pushと遅延 effects flushを行うことを確認 |
 | R-027: publisher runtime / Queue cache fingerprint と snapshot CAS が同期しているか | `npm run publisher:contract -- --dry-run` が `CURRENT` を返し、`tests/worker-publisher-contract.test.ts` で immutable SHA read、parent drift 拒否、exact parent contractを、`tests/publisher-runner.test.ts` で副作用遅延と flush 境界を確認する。staged rolloutでは原則として旧harnessのmarker mismatchを観測する。deployment provenanceやguard到達性を確認できずmismatchを観測できなかった場合に限り、bridge deploy前に旧runのterminal failure、merge後data commit不在、旧heartbeat非更新の3点をすべて実測し、理由をLLへ記録したか確認する。いずれか未確認なら停止してユーザー判断を求める |
+| R-028: in-place checkout の Git mutation が直列化されているか | Git mutation 前に session automation が停止済みで先行 turn が完了していることを確認し、`git branch --show-current`、`git status --short`、push 先 ref を直前に再取得する |
 
 ### C-02: ナビゲーション状態 (NAVIGATION)
 

@@ -209,7 +209,7 @@
 - `worker/publisher-contract.json` は data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
 - Node publisher は収集開始時に checkout と remote main が同じ HEAD SHA であることを確認し、その SHA の contract marker と runner fingerprint を照合する。`data/index.json`、`data/bodies.json`、archive index / month、stats の baseline はすべて同じ immutable SHA から読む。data commit または effect-only flush 前にも main ref が開始時 SHA と完全一致することを再確認し、進んでいれば commit と遅延 effects を中止する。commit parent も同じ SHA に固定し、push は non-force とする。
 - summary/body Queue job と生成 cache には publisher fingerprint を伝播する。現在の fingerprint と明示的に異なる cache は採用せず再生成対象にする。fingerprint 導入前の既存 cache は本文・要約テキストだけ互換読み込みし、summary の importance / extraTags は exact fingerprint 一致時だけ採用する。fingerprint 無し job を受けた更新済み consumer は `legacy-unversioned-job` を保存し、既存 legacy cache と区別する。
-- fingerprint を変える release は Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を PR head から先に deployし、旧 consumer の in-flight 処理が残らないことを確認してから PR を mergeする。merge 後は旧 harness が marker mismatch で停止したことを確認し、明示承認のうえ Free bridge を deployする。bridge health、Publisher workflow、data commit、Queue drain、Pages production を順に確認する。
+- fingerprint を変える release は Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を PR head から先に deployし、旧 consumer の in-flight 処理が残らないことを確認してから PR を mergeする。merge 後は原則として旧 harness が marker mismatch で停止したことを確認し、明示承認のうえ Free bridge を deployする。deployment provenanceやguard到達性を確認できずmismatchを観測できない場合は、その事実を明記し、旧runのterminal failure、merge後のdata commit不在、旧heartbeat非更新をすべて実測できた場合に限り「旧writerがpublish不能」という安全条件でbridge置換へ進む。いずれかを確認できなければ停止してユーザー判断を求める。bridge health、Publisher workflow、data commit、Queue drain、Pages productionを順に確認する。
 - `data/index.json` の entry が変わる publish では、`data/archive/_index.json` と `data/stats.json` の `generatedAt` も同一 commit の reference clock へ揃える。月次 archive は timestamp-only churn を避ける。
 
 ---
@@ -1553,6 +1553,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: trust metadataの検証対象を`first()`で選び、TL;DR source linkが存在するsummarized状態をlocatorで限定していなかった。feed順が変わると、テストが必要とする状態と選択記事の状態がずれた。
 - **対策**: HomeのTimeline cardを`.summary .s-text`の有無で絞り、そのcard内のdetail linkだけを開く。pending状態のテストは既存のstate-specific testへ分離したまま維持する。
 - **教訓**: feed駆動UIでstate-specific要素を検証する場合、必要状態を持つcontainerをlocatorで選んでから遷移する。先頭記事や固定順位を、summary、body、fallbackなどの状態保証として使わない。
+
+### LL-222: staged rolloutは特定ログでなく旧writerのpublish不能を実測する
+- **事象**: PR #135 merge後の旧harness cronでpublisher contract mismatchを確認する計画だったが、`wrangler tail`はrun開始直後に`outcome=exceededCpu`を返し、mismatchログを出さなかった。mainには新しいdata commitが作られず、旧health heartbeatも更新されなかった。
+- **根本原因**: release gateを特定のmismatchログへ固定し、実際のdeployment versionがそのguardへ到達できることを事前確認していなかった。旧runtimeはmismatchを記録する前にCloudflare FreeのCPU上限で終了したため、期待したログと安全上の実態がずれた。
+- **対策**: mismatchを確認済みとは報告せず、tailのterminal outcome、merge後data commit 0件、stale heartbeatの3点で旧writerがpublishしていないことを確認した。その後Free bridgeへ即時置換し、fetch-only deployment、`status=bridge`のhealth 4回連続200、Publisherのdata commitとdeferred effects flush成功まで検証した。
+- **教訓**: staged rolloutの本質的な安全条件は「旧writerが新しいmainへpublishできないこと」であり、特定のログ文言ではない。marker mismatchへ依存する場合はdeployment provenanceまたはruntime証拠でguardの存在と到達性を確認する。期待ログが得られない場合は理由を明記し、terminal failure、commit不在、旧heartbeat非更新を組み合わせてfail-closedを実証する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

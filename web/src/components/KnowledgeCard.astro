@@ -1,11 +1,8 @@
 ---
 /**
  * Card for the Knowledge lane (evergreen best-practice / engineering guides).
- * Uniform horizontal layout: every card has the SAME structure and height
- * whether or not it has an image (LL-096). A fixed-width thumbnail slot on the
- * left shows the OGP image when present, otherwise a small, subtle
- * category-tinted placeholder (not the wasteful full-width 16:9 artwork of
- * LL-094). Body on the right: source, title, summary.
+ * Uniform card height with an optional thumbnail column. Image-less entries use
+ * the full card width instead of spending space on decorative placeholders.
  */
 import {
   CATEGORY_META,
@@ -25,7 +22,6 @@ const { entry } = Astro.props;
 
 const meta = CATEGORY_META.find((c) => c.slug === entry.category);
 const catColor = meta?.color ?? "#34d399";
-const catEmoji = meta?.emoji ?? "\u{1F4DA}";
 
 const titleJa = titleForLangWithFallback(entry, "ja");
 const titleEn = titleForLangWithFallback(entry, "en");
@@ -40,20 +36,19 @@ const imgSrc = typeof entry.image?.src === "string" && entry.image.src.length > 
 const hasImage = imgSrc.length > 0;
 ---
 
-<article class={`kg-card${hasImage ? "" : " no-image"}`} style={`--cat-color:${catColor}`}>
+<article class={`kg-card ${hasImage ? "has-image" : "no-image"}`} style={`--cat-color:${catColor}`}>
   <a class="kg-card-link" href={entryHref(entry)}>
-    <div class="kg-thumb">
-      {hasImage && (
+    {hasImage && (
+      <div class="kg-thumb" aria-hidden="true">
         <img
           src={imgSrc}
           alt=""
           loading="lazy"
           decoding="async"
-          onerror="this.closest('.kg-card')?.classList.add('no-image'); this.remove()"
+          onerror="const card=this.closest('.kg-card'); card?.classList.remove('has-image'); card?.classList.add('no-image'); this.closest('.kg-thumb')?.remove()"
         />
-      )}
-      <span class="kg-thumb-mark" aria-hidden="true">{catEmoji}</span>
-    </div>
+      </div>
+    )}
 
     <div class="kg-body">
       <div class="kg-src">
@@ -95,15 +90,11 @@ const hasImage = imgSrc.length > 0;
     --cat-color: #34d399;
     display: flex;
   }
-  /* Uniform horizontal card: SAME structure & height for every entry, with or
-     without an image (LL-096). Fixed-width thumbnail slot on the left. */
   .kg-card-link {
     display: grid;
-    grid-template-columns: 116px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     width: 100%;
-    /* Fixed height so every card is identical regardless of content (LL-096).
-       min-height let cards vary when an entry lacked tags or had a 1-line title
-       (exposed once summary-first made more evergreen entries publishable). */
     height: 152px;
     border: 1px solid var(--border, rgba(148, 163, 184, 0.16));
     border-radius: 12px;
@@ -113,6 +104,9 @@ const hasImage = imgSrc.length > 0;
     color: inherit;
     transition: border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
   }
+  .kg-card-link:has(.kg-thumb) {
+    grid-template-columns: 116px minmax(0, 1fr);
+  }
   .kg-card-link:hover,
   .kg-card-link:focus-visible {
     border-color: color-mix(in srgb, var(--cat-color) 50%, var(--border));
@@ -120,11 +114,8 @@ const hasImage = imgSrc.length > 0;
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
     outline: 0;
   }
-  /* Thumbnail slot — always present so layout is identical regardless of image. */
   .kg-thumb {
     position: relative;
-    display: grid;
-    place-items: center;
     background:
       linear-gradient(135deg, color-mix(in srgb, var(--cat-color) 24%, transparent), rgba(20, 19, 15, 0.85)),
       #14130f;
@@ -137,20 +128,14 @@ const hasImage = imgSrc.length > 0;
     height: 100%;
     object-fit: cover;
   }
-  /* Small subtle emoji placeholder — only visible when there is no image (it
-     sits behind the img). Far smaller than the old wasteful 16:9 block (LL-094). */
-  .kg-thumb-mark {
-    font-size: 1.7rem;
-    line-height: 1;
-    opacity: 0.85;
-    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.4));
-  }
   .kg-body {
     display: flex;
     flex-direction: column;
     gap: 0.32rem;
     padding: 0.6rem 0.75rem 0.65rem;
     min-width: 0;
+    min-height: 0;
+    overflow: hidden;
   }
   .kg-src {
     display: flex;
@@ -227,10 +212,18 @@ const hasImage = imgSrc.length > 0;
     color: var(--text-muted, #94a3b8);
     vertical-align: middle;
   }
+  @supports not selector(:has(*)) {
+    .kg-card.has-image .kg-card-link {
+      grid-template-columns: 116px minmax(0, 1fr);
+    }
+  }
   @media (max-width: 460px) {
     .kg-card-link {
-      grid-template-columns: 96px minmax(0, 1fr);
       height: 148px;
+    }
+
+    .kg-card-link:has(.kg-thumb) {
+      grid-template-columns: 96px minmax(0, 1fr);
     }
 
     .kg-thumb {
@@ -240,6 +233,12 @@ const hasImage = imgSrc.length > 0;
       justify-self: center;
       border: 1px solid color-mix(in srgb, var(--cat-color) 24%, var(--border));
       border-radius: 10px;
+    }
+
+    @supports not selector(:has(*)) {
+      .kg-card.has-image .kg-card-link {
+        grid-template-columns: 96px minmax(0, 1fr);
+      }
     }
   }
 </style>

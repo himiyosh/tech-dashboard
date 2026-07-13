@@ -45,7 +45,7 @@ argument-hint: "scope or suspected regression"
 | R-012: live index が body-free architecture と retention を守っているか | `data/index.json` で非空 `bodyJa` / `bodyEn` 件数が 0、本文は `data/bodies.json` にあり、retention 対象外 record が 0 であることを `tests/data-schema.test.ts` で確認 |
 | R-013: summary fallback が全 live entry に適用済みか | `summaryJa` / `summaryEn` の両方が非空であることを確認し、body は `data/bodies.json` 側で管理する |
 | R-026: Free publisher / bridge contract が維持されているか | `worker/wrangler.toml` に cron / `[limits]` / GitHub token がなく Free bridge entrypoint を使い、Publisher workflow が Node jobで品質ゲート後に data-only pushと遅延 effects flushを行うことを確認 |
-| R-027: publisher runtime / Queue cache fingerprint と snapshot CAS が同期しているか | `npm run publisher:contract -- --dry-run` が `CURRENT` を返し、`tests/worker-publisher-contract.test.ts` で immutable SHA read、parent drift 拒否、exact parent contractを、`tests/publisher-runner.test.ts` で副作用遅延と flush 境界を確認する。staged rolloutでdeployment provenanceやguard到達性を確認できずmarker mismatchを観測できなかった場合に限り、旧runのterminal failure、merge後data commit不在、旧heartbeat非更新の3点を実測し、理由をLLへ記録したか確認する |
+| R-027: publisher runtime / Queue cache fingerprint と snapshot CAS が同期しているか | `npm run publisher:contract -- --dry-run` が `CURRENT` を返し、`tests/worker-publisher-contract.test.ts` で immutable SHA read、parent drift 拒否、exact parent contractを、`tests/publisher-runner.test.ts` で副作用遅延と flush 境界を確認する。staged rolloutでは原則として旧harnessのmarker mismatchを観測する。deployment provenanceやguard到達性を確認できずmismatchを観測できなかった場合に限り、bridge deploy前に旧runのterminal failure、merge後data commit不在、旧heartbeat非更新の3点をすべて実測し、理由をLLへ記録したか確認する。いずれか未確認なら停止してユーザー判断を求める |
 
 ### C-02: ナビゲーション状態 (NAVIGATION)
 

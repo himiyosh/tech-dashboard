@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-13T08:45:39.142Z",
-  "count": 1727,
+  "generatedAt": "2026-07-14T02:26:16.348Z",
+  "count": 1737,
   "health": {
-    "lastRunAt": "2026-07-13T08:45:39.139Z",
+    "lastRunAt": "2026-07-14T02:26:16.347Z",
     "batchIndex": 3,
     "batchTotal": 6,
     "sourcesAttempted": 9,
@@ -10,36 +10,346 @@
     "sourcesFailed": [],
     "summarized": 0,
     "summarizeErrors": 0,
-    "summaryFallbacks": 4,
+    "summaryFallbacks": 26,
     "bodyFallbacks": 0,
-    "fallbackTotal": 2,
-    "fallbackPercent": 0,
+    "fallbackTotal": 15,
+    "fallbackPercent": 1,
     "kvLookupCap": 35,
-    "kvLookupCount": 25,
+    "kvLookupCount": 22,
     "queueMode": "enabled",
     "queueCap": 35,
-    "enqueueCandidates": 2,
-    "summaryQueueBacklog": 2,
+    "enqueueCandidates": 15,
+    "summaryQueueBacklog": 15,
     "summaryQueueDrainEstimateHours": 1,
     "summaryQueueStartIndex": 0,
     "summaryQueueCooldownCount": 0,
     "copilotOk": true,
     "copilotError": null,
-    "ogCached": 3300,
+    "ogCached": 3301,
     "ogNewHits": 1,
-    "publisherContractFingerprint": "sha256:534105780bf324bee6cec06dfaaa16a924c2248475e7e8def6921ccc56e6bdd6",
+    "publisherContractFingerprint": "sha256:6a4f7f0657975dd1f8d7d83f506cdde21a7df836d4f07492dc1f16f25911e754",
     "bodyQueueMode": "enabled",
     "bodyEnqueueCandidates": 10,
     "bodyBacklog": 311,
     "bodyDrainEstimateHours": 32,
     "bodyLookupCount": 10,
     "bodyMerged": 0,
-    "bodyPruned": 0,
-    "bodiesTotal": 1038,
+    "bodyPruned": 4,
+    "bodiesTotal": 1034,
     "bodyRetentionDays": 30,
-    "bodyRetentionEligible": 1351
+    "bodyRetentionEligible": 1360
   },
   "entries": [
+    {
+      "id": "a237b2dca29c1096",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/kooohei/items/d381b14e2930040e2ff2",
+      "title": "【AWS】Gemma 4をセルフホスティングしてみた〜クラッシュを回避するインスタンス選定とメモリのリアル〜",
+      "titleJa": "【AWS】Gemma 4をセルフホスティングしてみた〜クラッシュを回避するインスタンス選定とメモリのリアル〜",
+      "titleEn": "",
+      "summaryJa": "【AWS】Gemma 4をセルフホスティングしてみた〜クラッシュを回避するインスタンス選定とメモリのリアル〜",
+      "summaryEn": "local-llm update from qiita-llm. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-14T02:00:14.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "llm",
+        "open-model",
+        "qiita"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに オープンソースLLM（オープンウェイトモデル）の進化が止まりませんね。最近発表されたGoogleの 「Gemma 4」 は、Apache 2.0ライセンスで商用利用もしやすく、マルチモーダル対応やMoE（Mixture-of-Experts）アーキテクチャの採用...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGODIwOTAlMkZwcm9maWxlLWltYWdlcyUyRjE3MDAxODQwODM_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWQ1YWVlNWVkODdiZDBjNmJlZGUxYjhlM2E5NjY3NTYz%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY5NDQ5Y2MxZGYzZDNiNGNjZWRkOTA1MDQzZGNiMDAyZTVjOGMxZmVjJTJGb3JpZ2luYWwuanBnJTNGMTYxMzM2NzQ1NT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0wZDIyYjhhMjYyZWY2YzAxMWI0M2MyNzVmNmQ5NTM1NQ%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D907ce2b76905b12c00bc494ba192cd7e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwQVdTJUUzJTgwJTkxR2VtbWElMjA0JUUzJTgyJTkyJUUzJTgyJUJCJUUzJTgzJUFCJUUzJTgzJTk1JUUzJTgzJTlCJUUzJTgyJUI5JUUzJTgzJTg2JUUzJTgyJUEzJUUzJTgzJUIzJUUzJTgyJUIwJUUzJTgxJTk3JUUzJTgxJUE2JUUzJTgxJUJGJUUzJTgxJTlGJUUzJTgwJTlDJUUzJTgyJUFGJUUzJTgzJUE5JUUzJTgzJTgzJUUzJTgyJUI3JUUzJTgzJUE1JUUzJTgyJTkyJUU1JTlCJTlFJUU5JTgxJUJGJUUzJTgxJTk5JUUzJTgyJThCJUUzJTgyJUE0JUUzJTgzJUIzJUUzJTgyJUI5JUUzJTgyJUJGJUUzJTgzJUIzJUUzJTgyJUI5JUU5JTgxJUI4JUU1JUFFJTlBJUUzJTgxJUE4JUUzJTgzJUExJUUzJTgzJUEyJUUzJTgzJUFBJUUzJTgxJUFFJUUzJTgzJUFBJUUzJTgyJUEyJUUyJTgwJUE2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MWY3ZDNkYzRmMmM1M2FkYWUxMGMwMzdhMjA3ZTQ1YmM&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBrb29vaGVpJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9OTM5ODgxODJjMWIzNjE2MzNjMDc5ZTNiNzQ1ZGZlODY&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=44OP44Oz44K444Ol5qCq5byP5Lya56S-&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=144820360467f100d3499f8f9b1dd8fd",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGODIwOTAlMkZwcm9maWxlLWltYWdlcyUyRjE3MDAxODQwODM_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWQ1YWVlNWVkODdiZDBjNmJlZGUxYjhlM2E5NjY3NTYz%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY5NDQ5Y2MxZGYzZDNiNGNjZWRkOTA1MDQzZGNiMDAyZTVjOGMxZmVjJTJGb3JpZ2luYWwuanBnJTNGMTYxMzM2NzQ1NT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0wZDIyYjhhMjYyZWY2YzAxMWI0M2MyNzVmNmQ5NTM1NQ%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D907ce2b76905b12c00bc494ba192cd7e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwQVdTJUUzJTgwJTkxR2VtbWElMjA0JUUzJTgyJTkyJUUzJTgyJUJCJUUzJTgzJUFCJUUzJTgzJTk1JUUzJTgzJTlCJUUzJTgyJUI5JUUzJTgzJTg2JUUzJTgyJUEzJUUzJTgzJUIzJUUzJTgyJUIwJUUzJTgxJTk3JUUzJTgxJUE2JUUzJTgxJUJGJUUzJTgxJTlGJUUzJTgwJTlDJUUzJTgyJUFGJUUzJTgzJUE5JUUzJTgzJTgzJUUzJTgyJUI3JUUzJTgzJUE1JUUzJTgyJTkyJUU1JTlCJTlFJUU5JTgxJUJGJUUzJTgxJTk5JUUzJTgyJThCJUUzJTgyJUE0JUUzJTgzJUIzJUUzJTgyJUI5JUUzJTgyJUJGJUUzJTgzJUIzJUUzJTgyJUI5JUU5JTgxJUI4JUU1JUFFJTlBJUUzJTgxJUE4JUUzJTgzJUExJUUzJTgzJUEyJUUzJTgzJUFBJUUzJTgxJUFFJUUzJTgzJUFBJUUzJTgyJUEyJUUyJTgwJUE2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MWY3ZDNkYzRmMmM1M2FkYWUxMGMwMzdhMjA3ZTQ1YmM&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBrb29vaGVpJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9OTM5ODgxODJjMWIzNjE2MzNjMDc5ZTNiNzQ1ZGZlODY&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=44OP44Oz44K444Ol5qCq5byP5Lya56S-&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=144820360467f100d3499f8f9b1dd8fd",
+        "alt": "【AWS】Gemma 4をセルフホスティングしてみた〜クラッシュを回避するインスタンス選定とメモリのリアル〜",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "d58173a88a7c2dce",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/hermes-agent-maker-nous-research-in-talks-for-new-funding-at-1-5b-valuation/",
+      "title": "Hermes agent maker Nous Research in talks for new funding at $1.5B valuation",
+      "titleJa": "",
+      "titleEn": "Hermes agent maker Nous Research in talks for new funding at $1.5B valuation",
+      "summaryJa": "このエントリは techcrunch から収集した tech-news 領域の最新アップデートです。原題:「Hermes agent maker Nous Research in talks for new funding at $1.5B valuation」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Hermes agent maker Nous Research in talks for new funding at $1.5B valuation",
+      "lang": "en",
+      "publishedAt": "2026-07-13T23:31:18.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "agent",
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The company is raising at least $75 million, led by Robot Ventures, with significant participation from USV and other prominent investors.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "3179bd82363ff441",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/satya-nadella-has-issued-a-shocking-warning-to-companies-using-ai/",
+      "title": "Satya Nadella has issued a shocking warning to companies using AI",
+      "titleJa": "",
+      "titleEn": "Satya Nadella has issued a shocking warning to companies using AI",
+      "summaryJa": "このエントリは techcrunch から収集した tech-news 領域の最新アップデートです。原題:「Satya Nadella has issued a shocking warning to companies using AI」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Satya Nadella has issued a shocking warning to companies using AI",
+      "lang": "en",
+      "publishedAt": "2026-07-13T20:59:00.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Of all the debates raging about the potential downsides of AI, there is one worry causing the most hand-wringing among AI enthusiasts in Silicon Valley — that the giant AI labs that sell proprietary models are somehow acting like Trojan horses.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "f0b3c4575103eafe",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/apple-says-former-employee-exploited-rare-bug-to-download-confidential-files-after-leaving-for-openai/",
+      "title": "Apple says former employee exploited ‘rare’ bug to download confidential files after leaving for OpenAI",
+      "titleJa": "",
+      "titleEn": "Apple says former employee exploited ‘rare’ bug to download confidential files after leaving for OpenAI",
+      "summaryJa": "このエントリは techcrunch から収集した tech-news 領域の最新アップデートです。原題:「Apple says former employee exploited ‘rare’ bug to download confidential files after leaving for OpenAI」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Apple says former employee exploited ‘rare’ bug to download confidential files after leaving for OpenAI",
+      "lang": "en",
+      "publishedAt": "2026-07-13T20:00:17.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Apple would not comment on the \"security breach,\" which allegedly allowed a former employee to download sensitive files from Apple's network long after he departed the company for rival OpenAI.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "38e0e99b93bb5b72",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/the-wildest-allegations-in-apples-trade-secrets-lawsuit-against-openai/",
+      "title": "The wildest allegations in Apple’s trade secrets lawsuit against OpenAI",
+      "titleJa": "",
+      "titleEn": "The wildest allegations in Apple’s trade secrets lawsuit against OpenAI",
+      "summaryJa": "このエントリは techcrunch から収集した tech-news 領域の最新アップデートです。原題:「The wildest allegations in Apple’s trade secrets lawsuit against OpenAI」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "The wildest allegations in Apple’s trade secrets lawsuit against OpenAI",
+      "lang": "en",
+      "publishedAt": "2026-07-13T18:22:10.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Apple’s trade secrets lawsuit against OpenAI contains allegations that range from employees joking about unauthorized access to Apple’s systems to claims that job candidates were asked to bring Apple hardware to interviews. Here are the complaint’s most eye-catching claims.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "8b8d145d6565a1a4",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/should-ai-help-you-get-away-with-killing-your-spouse/",
+      "title": "Should AI help you get away with killing your spouse?",
+      "titleJa": "",
+      "titleEn": "Should AI help you get away with killing your spouse?",
+      "summaryJa": "このエントリは techcrunch から収集した tech-news 領域の最新アップデートです。原題:「Should AI help you get away with killing your spouse?」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Should AI help you get away with killing your spouse?",
+      "lang": "en",
+      "publishedAt": "2026-07-13T16:31:23.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "What does a world of total user-aligned AI actually look like?",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "9a190d9170906986",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/anthropic-starts-localizing-claude-pricing-for-india-its-biggest-market-after-the-us/",
+      "title": "Anthropic starts localizing Claude pricing for India, its biggest market after the US",
+      "titleJa": "",
+      "titleEn": "Anthropic starts localizing Claude pricing for India, its biggest market after the US",
+      "summaryJa": "このエントリは techcrunch から収集した tech-news 領域の最新アップデートです。原題:「Anthropic starts localizing Claude pricing for India, its biggest market after the US」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Anthropic starts localizing Claude pricing for India, its biggest market after the US",
+      "lang": "en",
+      "publishedAt": "2026-07-13T15:34:59.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Claude users in India are starting to see Indian rupee-denominated subscription plans.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "92f16f4ebfcac8d7",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kaizenn722/articles/automation-principles-in-ai-era",
+      "title": "AI導入で逆に非効率化した人へ:時代を超えて効く自動化5原則と実践コード",
+      "titleJa": "AI導入で逆に非効率化した人へ:時代を超えて効く自動化5原則と実践コード",
+      "titleEn": "",
+      "summaryJa": "AI導入で逆に非効率化した人へ:時代を超えて効く自動化5原則と実践コード",
+      "summaryEn": "local-llm update from zenn-llm. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-13T15:16:43.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 「AIツールを導入したら、かえって作業時間が増えた」——2025年以降、こうした声をよく聞くようになりました。 ChatGPTやCopilotに指示を出すたびにプロンプトを調整し、出力をいちいち目視チェックし、期待と違えば再実行する。気づけば**「AIに仕事を頼む」こと自体が新しい作業**になっている——これは自動化ではなく、単なる作業の付け替えです。 筆者はPythonでの金融データ収集(J-Quants / FRED)、Discord bot運用、ローカルLLMを組み込んだパイプラインなど、日常的に「自動化」を作っています。 その経験から言",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "bd08087cbd5c4e64",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/waze-adds-new-ai-powered-features-and-customization-updates/",
+      "title": "Waze adds new AI-powered features and customization updates",
+      "titleJa": "",
+      "titleEn": "Waze adds new AI-powered features and customization updates",
+      "summaryJa": "このエントリは techcrunch から収集した tech-news 領域の最新アップデートです。原題:「Waze adds new AI-powered features and customization updates」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Waze adds new AI-powered features and customization updates",
+      "lang": "en",
+      "publishedAt": "2026-07-13T14:18:16.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Some of the new features are powered by Google's Gemini AI assistant, which reflects the tech giant's broader push to integrate Gemini across its products while also better positioning Waze to compete with rival services such as Apple Maps.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "33407ef52779ea89",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/lapd-lets-contract-with-surveillance-giant-flock-expire-citing-serious-concerns-over-civil-liberties-and-privacy/",
+      "title": "LAPD lets contract with surveillance giant Flock expire, citing ‘serious concerns’ over civil liberties and privacy",
+      "titleJa": "",
+      "titleEn": "LAPD lets contract with surveillance giant Flock expire, citing ‘serious concerns’ over civil liberties and privacy",
+      "summaryJa": "このエントリは techcrunch から収集した tech-news 領域の最新アップデートです。原題:「LAPD lets contract with surveillance giant Flock expire, citing ‘serious concerns’ over civil liberties and privacy」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "LAPD lets contract with surveillance giant Flock expire, citing ‘serious concerns’ over civil liberties and privacy",
+      "lang": "en",
+      "publishedAt": "2026-07-13T14:13:38.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The LAPD, one of Flock's biggest government customers, is ending its contract with the company citing civil liberties concerns.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "f150dc52052a0a18",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/fandhe/articles/2bbd96138b8d3b",
+      "title": "9 意図に絞ったら 38MB で足りた — 30M のモデルをゼロから学習した実測",
+      "titleJa": "9 意図に絞ったら 38MB で足りた — 30M のモデルをゼロから学習した実測",
+      "titleEn": "",
+      "summaryJa": "9 意図に絞ったら 38MB で足りた — 30M のモデルをゼロから学習した実測",
+      "summaryEn": "local-llm update from zenn-llm. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-13T11:36:15.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "アプリに LLM を組み込むときの既定路線は、汎用の巨大モデルを API 越しに呼ぶことです。ですが、タスクを「9 意図の意図分類 + 関数呼び出し」に絞ったところ、38MB・30M パラメータのモデルをゼロから学習して、意図分類正解率 91.11%（ホールドアウト 90 件）に届きました。学習は Mac 1 台・43.75 分です。 ただし、これは「小さいほうが常に勝つ」という話ではありません。同じ評価セットで、この 30M モデルの完全一致率は 74.44% です。Qwen2.5-0.5B-Instruct を Low-Rank Adaptation",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "4393dca00b5de0ae",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/mu_ta/articles/123d46bfc843b2",
+      "title": "Apple IntelligenceのローカルLLMをPythonから呼び出したい",
+      "titleJa": "Apple IntelligenceのローカルLLMをPythonから呼び出したい",
+      "titleEn": "",
+      "summaryJa": "Apple IntelligenceのローカルLLMをPythonから呼び出したい",
+      "summaryEn": "local-llm update from zenn-llm. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-07-13T08:00:17.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 今回はApple Intelligenceのオンデバイスモデルを Foundation Models API経由で、使い慣れてるPythonからさくっとローカル呼び出ししてみたいと思います。 後半ではベンチっぽいものも測定してみたいと思います。 まず仕様と要件をおさらいします。 1. Apple SystemLanguageModelの仕様 基本特性 項目 内容 モデル Apple Intelligenceで使用されるオンデバイス言語モデル 規模 約30億パラメータ 実行場所 デバイス上 外部通信 通常のSystemLanguageMode..",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
     {
       "id": "e0c8199b532e6c49",
       "source": "qiita-llm",
@@ -125,6 +435,7 @@
       "publishedAt": "2026-07-13T04:00:00.000Z",
       "collectedAt": "2026-07-13T05:24:26.169Z",
       "tags": [
+        "agent",
         "arxiv",
         "code-generation",
         "cost-reduction",
@@ -184,13 +495,15 @@
       "publishedAt": "2026-07-13T04:00:00.000Z",
       "collectedAt": "2026-07-13T05:24:26.169Z",
       "tags": [
+        "agent",
         "arxiv",
         "coding-agents",
         "llm",
         "paper",
         "reinforcement-learning",
         "software-testing",
-        "test-generation"
+        "test-generation",
+        "tutorial"
       ],
       "category": "research",
       "importance": 2,
@@ -245,6 +558,7 @@
       "tags": [
         "arxiv",
         "automated-debugging",
+        "benchmark",
         "bugs4q",
         "llm",
         "paper",
@@ -3434,7 +3748,7 @@
       "summaryEn": "LangChain 1.3.13 is a routine maintenance release delivering incremental fixes and improvements to the agent framework.",
       "lang": "en",
       "publishedAt": "2026-07-10T23:06:21.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "langchain",
@@ -3758,7 +4072,7 @@
       "summaryEn": "langchain-openai v1.3.5 has been released, delivering incremental fixes and improvements to the OpenAI integration layer within the LangChain ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T18:58:48.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "langchain",
@@ -4823,7 +5137,7 @@
       "summaryEn": "Deutsche Telekom is partnering with OpenAI to transform customer service and network operations with AI, marking a significant enterprise deployment of AI in the telecom sector.",
       "lang": "en",
       "publishedAt": "2026-07-10T07:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "deutsche-telekom",
         "enterprise",
@@ -5930,6 +6244,35 @@
       "bodyEn": ""
     },
     {
+      "id": "a311ac6ab310d5d5",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/torch-attention-profile",
+      "title": "Profiling in PyTorch (Part 3): Attention is all you profile",
+      "titleJa": "PyTorchでのプロファイリング（第3回）：アテンション機構を徹底解析",
+      "titleEn": "Profiling in PyTorch (Part 3): Attention is all you profile",
+      "summaryJa": "PyTorchのプロファイリングシリーズ第3弾として、LLMの中核であるアテンション機構の計算ボトルネックを特定・最適化する手法を解説。実際のパフォーマンス改善に直結する実践的な内容となっている。",
+      "summaryEn": "The third installment of a PyTorch profiling series focuses on diagnosing and optimizing attention mechanism bottlenecks in large language models, offering practical techniques for real-world performance gains.",
+      "lang": "en",
+      "publishedAt": "2026-07-10T00:00:00.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "attention",
+        "huggingface",
+        "llm",
+        "open-model",
+        "performance-optimization",
+        "profiling",
+        "pytorch"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "e8e2c91188516b96",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -5958,31 +6301,26 @@
       "bodyEn": ""
     },
     {
-      "id": "a311ac6ab310d5d5",
-      "source": "huggingface-blog",
+      "id": "cc75fbadac4916ea",
+      "source": "openai-news",
       "sourceType": "blog",
-      "url": "https://huggingface.co/blog/torch-attention-profile",
-      "title": "Profiling in PyTorch (Part 3): Attention is all you profile",
-      "titleJa": "PyTorchでのプロファイリング（第3回）：アテンション機構を徹底解析",
-      "titleEn": "Profiling in PyTorch (Part 3): Attention is all you profile",
-      "summaryJa": "PyTorchのプロファイリングシリーズ第3弾として、LLMの中核であるアテンション機構の計算ボトルネックを特定・最適化する手法を解説。実際のパフォーマンス改善に直結する実践的な内容となっている。",
-      "summaryEn": "The third installment of a PyTorch profiling series focuses on diagnosing and optimizing attention mechanism bottlenecks in large language models, offering practical techniques for real-world performance gains.",
+      "url": "https://openai.com/academy/getting-started",
+      "title": "Getting started with ChatGPT",
+      "titleJa": "",
+      "titleEn": "Getting started with ChatGPT",
+      "summaryJa": "このエントリは openai-news から収集した codex 領域の最新アップデートです。原題:「Getting started with ChatGPT」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Getting started with ChatGPT",
       "lang": "en",
       "publishedAt": "2026-07-10T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
-        "attention",
-        "huggingface",
-        "llm",
-        "open-model",
-        "performance-optimization",
-        "profiling",
-        "pytorch"
+        "openai"
       ],
-      "category": "local-llm",
-      "importance": 2,
+      "category": "codex",
+      "importance": 1,
       "halfLife": "news",
       "archiveTier": "hot",
+      "contentSnippet": "Learn how to use ChatGPT, start your first conversation, and discover simple ways to write, brainstorm, and solve problems with AI.",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -6366,7 +6704,7 @@
       "summaryEn": "The langchain-fireworks package has been updated to version 1.4.4, delivering incremental bug fixes and stability improvements to the LangChain integration for Fireworks AI hosted models.",
       "lang": "en",
       "publishedAt": "2026-07-09T17:56:51.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "fireworks-ai",
@@ -6805,7 +7143,7 @@
       "summaryEn": "OpenAI's GPT-5.6 has been designated the default model powering Microsoft 365 Copilot, bringing the latest capabilities to enterprise productivity tools used by millions.",
       "lang": "en",
       "publishedAt": "2026-07-09T13:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "copilot",
         "enterprise",
@@ -6892,7 +7230,7 @@
       "summaryEn": "OpenAI launched GPT-5.6, a new frontier model designed to scale intelligence across diverse use cases, offering developers and enterprises enhanced reasoning and task-handling capabilities.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "gpt-5",
         "llm",
@@ -6920,7 +7258,7 @@
       "summaryEn": "OpenAI has repositioned ChatGPT as a capable collaborator for complex, high-stakes work, expanding its role beyond simple Q&A into a true professional partner for ambitious projects.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai-assistant",
         "chatgpt",
@@ -6947,7 +7285,7 @@
       "summaryEn": "OpenAI launched a bio-focused bug bounty program for GPT-5.5, inviting external researchers to probe the model for biosafety vulnerabilities and help strengthen its defenses against biological misuse.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "biosafety",
         "bug-bounty",
@@ -7605,7 +7943,7 @@
       "summaryEn": "langchain-openai v1.3.4 ships bug fixes and minor improvements to LangChain's OpenAI integration, ensuring stability for developers building OpenAI-powered applications.",
       "lang": "en",
       "publishedAt": "2026-07-08T23:00:10.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "langchain",
@@ -7642,7 +7980,7 @@
       "summaryEn": "LangChain 1.3.12 is a routine patch update in the 1.3.x series, bringing bug fixes and minor improvements to the popular AI agent framework used in LLM application development.",
       "lang": "en",
       "publishedAt": "2026-07-08T22:38:29.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "langchain",
@@ -7883,7 +8221,7 @@
       "summaryEn": "langchain-core 1.4.9 is a patch release delivering bug fixes and stability improvements to the core abstractions layer that underpins the broader LangChain ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-08T20:07:11.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "langchain",
@@ -8024,7 +8362,7 @@
       "summaryEn": "NVIDIA released open datasets on Hugging Face specifically designed for training and evaluating AI agents, addressing the scarcity of high-quality agentic data to accelerate research.",
       "lang": "en",
       "publishedAt": "2026-07-08T17:16:05.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "dataset",
@@ -8368,7 +8706,7 @@
       "summaryEn": "OpenAI formally outlined its policy for partnering with governments and national security agencies, emphasizing responsible AI deployment aligned with democratic values. The announcement signals a deliberate expansion into defense and public-sector use cases.",
       "lang": "en",
       "publishedAt": "2026-07-08T13:30:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "openai"
       ],
@@ -8392,7 +8730,7 @@
       "summaryEn": "OpenAI outlines methodology for building more reliable coding benchmarks, explaining how to filter noise and extract genuine signal when evaluating model performance.",
       "lang": "en",
       "publishedAt": "2026-07-08T13:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "openai",
         "tutorial"
@@ -8570,7 +8908,7 @@
       "summaryEn": "Apple has announced increased spending with Broadcom to manufacture billions of additional chips in the United States, signaling a major push toward domestic semiconductor production.",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:13.748Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "apple",
         "broadcom",
@@ -8600,7 +8938,7 @@
       "summaryEn": "OpenAI launched an initiative to help K–12 educators develop hands-on AI skills, equipping teachers with practical tools and knowledge to integrate AI effectively into their classrooms.",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai-literacy",
         "education",
@@ -9067,7 +9405,7 @@
       "summaryEn": "Transformers is now a native modeling backend for vLLM, enabling full-speed inference without duplicating model implementations across the two libraries.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "huggingface",
         "inference",
@@ -9123,7 +9461,7 @@
       "summaryEn": "OpenAI announced GPT-Live, a new real-time interactive AI experience that enables more natural, live interactions with GPT models, marking a significant step in conversational AI accessibility.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "conversational-ai",
         "gpt-live",
@@ -9461,7 +9799,7 @@
       "summaryEn": "A new one-click integration lets users deploy Hugging Face models directly into Amazon SageMaker Studio, significantly reducing friction for ML practitioners moving from model discovery to production.",
       "lang": "en",
       "publishedAt": "2026-07-07T21:15:33.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "aws",
         "deployment",
@@ -9872,7 +10210,7 @@
       "summaryEn": "Hugging Face open models can now be deployed on Microsoft Foundry Managed Compute, making it easier for enterprises to run open-source LLMs in a managed cloud environment.",
       "lang": "en",
       "publishedAt": "2026-07-07T15:20:06.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "azure",
         "deployment",
@@ -10263,7 +10601,7 @@
       "summaryEn": "The June 2026 Microsoft Foundry update delivers new AI models and developer tooling improvements, enabling teams to build and deploy AI-powered applications more efficiently on the platform.",
       "lang": "en",
       "publishedAt": "2026-07-07T07:10:25.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai",
         "ai-platform",
@@ -10844,7 +11182,7 @@
       "summaryEn": "LeRobot v0.6.0 introduces capabilities for imagination-based planning, improved evaluation pipelines, and iterative policy improvement, making robot learning more accessible without physical hardware.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "benchmark",
         "huggingface",
@@ -10873,7 +11211,7 @@
       "summaryEn": "SkyPilot now integrates with Hugging Face as a zero-egress storage backend, letting teams run AI workloads on any cloud while keeping datasets and model artifacts on Hugging Face without incurring data transfer fees.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "cloud-storage",
         "huggingface",
@@ -10900,7 +11238,7 @@
       "summaryEn": "MUFG has partnered with OpenAI to embed AI across its entire organization, pursuing a transformation into a fully AI-native bank. The move signals a major commitment by a global financial institution to AI-driven operations.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "enterprise-ai",
         "finance",
@@ -10928,7 +11266,7 @@
       "summaryEn": "Australian Payments Plus adopted ChatGPT and Codex to accelerate software development and streamline operations, demonstrating practical AI gains in critical financial infrastructure.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "case-study",
         "codex",
@@ -11351,7 +11689,7 @@
       "summaryEn": "Photoroom details the data strategy behind their PRX model series, covering how they curated and managed training data for local LLMs. This matters because robust data pipelines are central to achieving strong model performance.",
       "lang": "en",
       "publishedAt": "2026-07-06T15:30:55.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "data-strategy",
         "huggingface",
@@ -11925,6 +12263,35 @@
       "bodyEn": ""
     },
     {
+      "id": "cba740f1d7ffc5ee",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/revamped-kernels",
+      "title": "🤗 Kernels: Major Updates",
+      "titleJa": "🤗 Kernels: 主要アップデート",
+      "titleEn": "🤗 Kernels: Major Updates",
+      "summaryJa": "Hugging FaceがKernelsプラットフォームを大幅に刷新した。最適化されたGPUカーネルの統合・共有の仕組みが改善され、ローカル環境でのLLM推論の高速化と開発体験の向上が期待できる。",
+      "summaryEn": "Hugging Face has revamped its Kernels platform, making it significantly easier to integrate and share optimized GPU kernels within inference pipelines, delivering better performance for local LLM deployments.",
+      "lang": "en",
+      "publishedAt": "2026-07-06T00:00:00.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "cuda",
+        "gpu",
+        "huggingface",
+        "inference",
+        "kernels",
+        "open-model",
+        "performance"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "accc5aab195019c1",
       "source": "anthropic-news",
       "sourceType": "blog",
@@ -11961,35 +12328,6 @@
         "height": 0,
         "source": "og"
       }
-    },
-    {
-      "id": "cba740f1d7ffc5ee",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/revamped-kernels",
-      "title": "🤗 Kernels: Major Updates",
-      "titleJa": "🤗 Kernels: 主要アップデート",
-      "titleEn": "🤗 Kernels: Major Updates",
-      "summaryJa": "Hugging FaceがKernelsプラットフォームを大幅に刷新した。最適化されたGPUカーネルの統合・共有の仕組みが改善され、ローカル環境でのLLM推論の高速化と開発体験の向上が期待できる。",
-      "summaryEn": "Hugging Face has revamped its Kernels platform, making it significantly easier to integrate and share optimized GPU kernels within inference pipelines, delivering better performance for local LLM deployments.",
-      "lang": "en",
-      "publishedAt": "2026-07-06T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
-      "tags": [
-        "cuda",
-        "gpu",
-        "huggingface",
-        "inference",
-        "kernels",
-        "open-model",
-        "performance"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": ""
     },
     {
       "id": "216b12961fef903c",
@@ -12215,7 +12553,7 @@
       "summaryEn": "The langchain-mistralai package has been updated to version 1.1.6, delivering maintenance fixes and stability improvements to LangChain's Mistral AI integration for developers building AI-powered applications.",
       "lang": "en",
       "publishedAt": "2026-07-05T21:30:36.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "integration",
@@ -12292,7 +12630,7 @@
       "summaryEn": "langchain-openrouter 0.2.6 delivers incremental improvements to the LangChain integration package that enables developers to access multiple LLM providers through OpenRouter's unified API.",
       "lang": "en",
       "publishedAt": "2026-07-05T20:53:14.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "integration",
@@ -15781,7 +16119,7 @@
       "summaryEn": "Hugging Face and Cerebras have partnered to integrate Google's Gemma 4 model into a real-time voice AI pipeline, enabling low-latency conversational experiences by combining fast inference hardware with state-of-the-art open models.",
       "lang": "en",
       "publishedAt": "2026-07-01T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "cerebras",
         "gemma",
@@ -16000,7 +16338,7 @@
       "summaryEn": "IBM Research introduced ScarfBench, a benchmark designed to evaluate AI agents on real-world enterprise Java framework migration tasks, providing a standardized way to measure how effectively models handle complex legacy modernization work.",
       "lang": "en",
       "publishedAt": "2026-06-30T18:32:50.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai-agents",
         "benchmark",
@@ -16286,7 +16624,7 @@
       "summaryEn": "General-purpose LLMs face inherent trade-offs that make task-specific specialization increasingly attractive, with implications for how local models are developed and deployed.",
       "lang": "en",
       "publishedAt": "2026-06-30T14:39:11.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "huggingface",
         "local-llm",
@@ -16751,7 +17089,7 @@
       "summaryEn": "OpenAI reviewed how ChatGPT adoption has grown across individuals, businesses, and institutions, highlighting the expanding range of use cases and the scale of its global reach.",
       "lang": "en",
       "publishedAt": "2026-06-30T09:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "adoption",
         "chatgpt",
@@ -17082,6 +17420,34 @@
       "bodyEn": ""
     },
     {
+      "id": "95f13a7124617b6a",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/eee-community-evals",
+      "title": "Featuring Every Eval Ever Results on Hugging Face Model Pages",
+      "titleJa": "Hugging Faceモデルページに「Every Eval Ever」の評価結果を掲載",
+      "titleEn": "Featuring Every Eval Ever Results on Hugging Face Model Pages",
+      "summaryJa": "Hugging Faceはコミュニティ主導の評価プロジェクト「Every Eval Ever」の結果をモデルページ上で直接閲覧できるようにした。これにより、多様なベンチマーク結果を一か所で比較できる透明性の高い評価環境が整う。",
+      "summaryEn": "Hugging Face now surfaces Every Eval Ever community benchmark results directly on model pages, giving users a unified view of diverse evaluation scores and making open-model comparison more transparent.",
+      "lang": "en",
+      "publishedAt": "2026-06-30T00:00:00.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "benchmark",
+        "community",
+        "evaluation",
+        "huggingface",
+        "leaderboard",
+        "open-model"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "328be2537973b2c6",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -17105,7 +17471,7 @@
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "We've expanded team marketplaces to support Team MCPs and organization groups.",
       "bodyJa": "",
       "bodyEn": ""
@@ -17132,7 +17498,7 @@
       "category": "claude",
       "importance": 1,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Claude Sonnet 5 is built to be the most agentic Sonnet model yet. It can make plans, use tools like browsers and terminals, and run autonomously at a level that, just a few months ago, required larger and more expensive models. For many developers, the agentic AI era began with S",
       "bodyJa": "",
       "bodyEn": ""
@@ -17161,7 +17527,7 @@
       "category": "claude",
       "importance": 1,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "AI has the potential to dramatically accelerate the pace of scientific discovery and the development of healthcare interventions. Since launching our efforts in the life sciences last fall, we’ve worked to improve our model capabilities, make connections to the scientific ecosyst",
       "bodyJa": "",
       "bodyEn": ""
@@ -17190,36 +17556,8 @@
       "category": "claude",
       "importance": 1,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Access to Claude Fable 5 and Mythos 5 is now restored.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "95f13a7124617b6a",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/eee-community-evals",
-      "title": "Featuring Every Eval Ever Results on Hugging Face Model Pages",
-      "titleJa": "Hugging Faceモデルページに「Every Eval Ever」の評価結果を掲載",
-      "titleEn": "Featuring Every Eval Ever Results on Hugging Face Model Pages",
-      "summaryJa": "Hugging Faceはコミュニティ主導の評価プロジェクト「Every Eval Ever」の結果をモデルページ上で直接閲覧できるようにした。これにより、多様なベンチマーク結果を一か所で比較できる透明性の高い評価環境が整う。",
-      "summaryEn": "Hugging Face now surfaces Every Eval Ever community benchmark results directly on model pages, giving users a unified view of diverse evaluation scores and making open-model comparison more transparent.",
-      "lang": "en",
-      "publishedAt": "2026-06-30T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
-      "tags": [
-        "benchmark",
-        "community",
-        "evaluation",
-        "huggingface",
-        "leaderboard",
-        "open-model"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -17248,7 +17586,7 @@
       "category": "gemini",
       "importance": 1,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Building AI agents often leaves developers uncertain if prompt tweaks to fix single errors will accidentally cause widespread regressions in production. To bridge this gap, Google has introduced a new developer skill for coding agents that automates a five-stage evaluation flywhe",
       "bodyJa": "",
       "bodyEn": ""
@@ -17265,7 +17603,7 @@
       "summaryEn": "OpenAI engineers traced and fixed an 18-year-old bug lurking in their data infrastructure by applying core dump epidemiology techniques, eliminating a long-standing source of system instability.",
       "lang": "en",
       "publishedAt": "2026-06-30T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "codex",
         "core-dump",
@@ -17276,7 +17614,7 @@
       "category": "codex",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "OpenAI engineers used large-scale core dump analysis to debug rare infrastructure crashes, uncovering both a hardware fault and a long-standing software bug.",
       "bodyJa": "",
       "bodyEn": ""
@@ -17293,7 +17631,7 @@
       "summaryEn": "OpenAI launched GeneBench-Pro, a benchmark suite designed to evaluate AI models on genomics and biological reasoning tasks, giving researchers a standardized way to measure progress in AI-driven gene analysis.",
       "lang": "en",
       "publishedAt": "2026-06-30T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "benchmark",
         "biology",
@@ -17306,7 +17644,7 @@
       "category": "codex",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Introducing GeneBench-Pro, a new benchmark testing AI performance in genomics, biology, and scientific research using complex, real-world datasets.",
       "bodyJa": "",
       "bodyEn": ""
@@ -17323,7 +17661,7 @@
       "summaryEn": "OpenAI unveiled Genebench-Pro, a genomics-focused AI benchmark, sharing case studies that highlight its role in advancing biological research and model evaluation.",
       "lang": "en",
       "publishedAt": "2026-06-30T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "benchmark",
         "genomics",
@@ -17334,7 +17672,7 @@
       "category": "codex",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -17666,7 +18004,7 @@
       "category": "cline",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Changed Fully remove the ClinePass feature flag so ClinePass is available everywhere in the UI — onboarding, settings, the welcome promo banner, and the credit-limit \"Switch to ClinePass\" action. Full Changelog : v4.0.3...v4.0.4",
       "image": {
         "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
@@ -17722,7 +18060,7 @@
       "summaryEn": "The langchain-openrouter package has been updated to version 0.2.5, delivering incremental fixes and compatibility improvements to the LangChain and OpenRouter integration. This patch helps developers more reliably access multiple LLM providers via OpenRouter within LangChain pipelines.",
       "lang": "en",
       "publishedAt": "2026-06-29T19:47:29.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "integration",
@@ -17735,7 +18073,7 @@
       "category": "agent-fw",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Changes since langchain-openrouter==0.2.4 release(openrouter): 0.2.5 ( #38553 ) fix(openrouter): deduplicate repeated finish metadata ( #38552 ) fix(openrouter): strip Responses reasoning IDs ( #38383 )",
       "image": {
         "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
@@ -17771,7 +18109,7 @@
       "category": "local-llm",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "launch: check for min version for hermes desktop ( #16912 )",
       "image": {
         "src": "https://avatars.githubusercontent.com/u/5853428?s=60&v=4",
@@ -17852,7 +18190,7 @@
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "This week's release adds Telescope-style resizable pickers with file and text finder previews (resolving a request with 860 👍s), including a new search modal that previews results live as you type, opened via the text finder: toggle action in the command palette, plus search in ",
       "image": {
         "src": "https://avatars.githubusercontent.com/u/79345384?s=60&v=4",
@@ -17877,7 +18215,7 @@
       "summaryEn": "DiScoFormer is a unified transformer that jointly estimates probability density and score functions across multiple distributions, offering a more general and efficient approach to density estimation in machine learning.",
       "lang": "en",
       "publishedAt": "2026-06-29T18:02:48.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "density-estimation",
         "huggingface",
@@ -17889,7 +18227,7 @@
       "category": "local-llm",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -17956,7 +18294,7 @@
       "category": "local-llm",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "What's Changed tools: ignore braces inside JSON strings when detecting tool call end by @aditya-786 in #16937 mlx: bump dependency by @dhiltgen in #16935 llama.cpp update by @dhiltgen in #16960 New Contributors @aditya-786 made their first contribution in #16937 Full Changelog : ",
       "image": {
         "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
@@ -17993,7 +18331,7 @@
       "category": "cline",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Changed Enable the ClinePass provider for all users by removing the feature-flag gate that previously fell back to the standard Cline provider. Full Changelog : v4.0.2...v4.0.3",
       "image": {
         "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
@@ -18127,7 +18465,7 @@
       "category": "cline",
       "importance": 3,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Fixed the ClinePass upgrade notice appearing immediately after completing onboarding. Improved the wording of the ClinePass onboarding step. Streamlined the Cline provider picker by merging the subscription and usage/billing options into one and removing the credits link. Full Ch",
       "image": {
         "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
@@ -18166,7 +18504,7 @@
       "category": "tech-news",
       "importance": 1,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Anthropic’s Claude models in Microsoft Foundry — hosted on Microsoft Azure and running on NVIDIA GB300 Blackwell Ultra GPUs — are now generally available, giving Azure-native enterprises a powerful new way to build autonomous and domain-specific AI agents. As agentic AI continues",
       "bodyJa": "",
       "bodyEn": ""
@@ -18196,7 +18534,7 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Claude Opus 4.8 (fast mode) is now rolling out in preview on GitHub Copilot. Fast mode delivers significantly faster output token speeds while maintaining the same intelligence as Claude Opus… The post Claude Opus 4.8 (fast mode) is now in preview for GitHub Copilot appeared firs",
       "bodyJa": "",
       "bodyEn": ""
@@ -18229,7 +18567,7 @@
       "category": "tech-news",
       "importance": 1,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "It has been a busy stretch on the AWS Summit circuit. At the New York City Summit, I delivered a workshop called Building AI architectures with AWS Serverless, and it was a lot of fun watching builders wire up agents and serverless services to solve real problems in a single afte",
       "bodyJa": "",
       "bodyEn": ""
@@ -18257,7 +18595,7 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Repository admins can now restrict issue creation to collaborators with write access. This gives you more control over who can open issues and helps reduce unwanted issue creation, while keeping… The post Restrict issue creation to collaborators only appeared first on The GitHub ",
       "bodyJa": "",
       "bodyEn": ""
@@ -18485,7 +18823,7 @@
       "category": "tech-news",
       "importance": 1,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -18706,7 +19044,7 @@
       "category": "tech-news",
       "importance": 1,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Showcasing the importance of open source innovation in American AI, Palantir’s new intelligent engine — introduced today — uses NVIDIA Nemotron open models to serve the needs of U.S. government agencies. Open source software has long been a pillar of U.S. technology leadership. I",
       "bodyJa": "",
       "bodyEn": ""
@@ -18976,7 +19314,7 @@
       "summaryEn": "OpenAI released a report mapping AI workforce opportunities across Europe, analyzing job transition potential and the labor market impact of AI adoption.",
       "lang": "en",
       "publishedAt": "2026-06-29T07:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai-jobs",
         "europe",
@@ -19658,7 +19996,7 @@
       "summaryEn": "HP Inc. has formed the Frontier strategic partnership with OpenAI, integrating advanced AI capabilities into HP's hardware and services to boost enterprise productivity.",
       "lang": "en",
       "publishedAt": "2026-06-28T17:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "enterprise",
         "enterprise-ai",
@@ -21595,7 +21933,7 @@
       "summaryEn": "OpenAI previewed GPT-5.6 Sol, a next-generation model offering significant capability improvements in reasoning and performance, marking a notable step forward in their model lineup.",
       "lang": "en",
       "publishedAt": "2026-06-26T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "gpt-5",
         "language-model",
@@ -21785,7 +22123,7 @@
       "summaryEn": "A patch release of the langchain-fireworks integration package that bumps the vcrpy dependency from 8.1.1 to 8.2.1 and langsmith from 0.8.16 to 0.8.18, a routine maintenance update with no functional changes.",
       "lang": "en",
       "publishedAt": "2026-06-26T06:52:07.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "dependency-update",
@@ -22009,7 +22347,7 @@
       "summaryEn": "Hugging Face Jobs now lets developers launch a vLLM inference server in the cloud with a single command, dramatically reducing setup overhead and making it easier to serve open models in production.",
       "lang": "en",
       "publishedAt": "2026-06-26T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "huggingface",
         "open-model",
@@ -22715,7 +23053,7 @@
       "summaryEn": "OpenAI outlines how AI agents are moving beyond simple assistance to autonomously handling complex workflows, marking a significant shift in how knowledge work gets done.",
       "lang": "en",
       "publishedAt": "2026-06-25T02:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "openai"
       ],
@@ -23274,7 +23612,7 @@
       "summaryEn": "NVIDIA NeMo AutoModel enables faster fine-tuning of Hugging Face Transformers models by applying NeMo's distributed training optimizations with minimal code changes, making high-performance multi-GPU training more accessible.",
       "lang": "en",
       "publishedAt": "2026-06-24T16:00:13.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "huggingface",
         "open-model"
@@ -23567,7 +23905,7 @@
       "summaryEn": "OpenAI and Broadcom have revealed a custom inference chip called Jalapeño, purpose-built to accelerate LLM workloads and reduce the cost of serving large AI models at scale.",
       "lang": "en",
       "publishedAt": "2026-06-24T06:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "openai"
       ],
@@ -23692,7 +24030,7 @@
       "summaryEn": "Hugging Face launched the FFASR Leaderboard, providing a standardized benchmark for comparing ASR models on real-world audio data. This gives researchers and developers a reliable, practical reference for selecting speech recognition models.",
       "lang": "en",
       "publishedAt": "2026-06-24T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "benchmark",
         "huggingface",
@@ -23950,7 +24288,7 @@
       "summaryEn": "Immunologist Derya Unutmaz used GPT-5 to crack a three-year-old research mystery in immunology, showcasing how AI can meaningfully accelerate real-world scientific discovery.",
       "lang": "en",
       "publishedAt": "2026-06-23T17:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "gpt-5",
         "immunology",
@@ -24390,7 +24728,7 @@
       "summaryEn": "OpenAI announced efforts to help establish shared industry standards for advanced AI safety and interoperability, aiming to align practices across organizations and foster more trustworthy AI development.",
       "lang": "en",
       "publishedAt": "2026-06-23T13:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai-safety",
         "openai",
@@ -24866,6 +25204,34 @@
       "bodyEn": ""
     },
     {
+      "id": "d7457767bc1e3393",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/DevMasatoman/items/4db8953fec77e2f68555",
+      "title": "Continue.dev + Ollama で「No models configured」が出たときの原因 4 パターンと解決手順",
+      "titleJa": "Continue.dev + Ollama で「No models configured」が出たときの原因 4 パターンと解決手順",
+      "titleEn": "Explains four common causes of the 'No models configured' error when pairing…",
+      "summaryJa": "Continue.dev と Ollama 連携で出る「No models configured」エラーの原因を 4 パターンに整理し診断手順を解説。最多原因は config.yaml 保存後の Reload Window 未実施で、構文・パス・バージョンの順に確認する。",
+      "summaryEn": "Explains four common causes of the 'No models configured' error when pairing Continue.dev with Ollama, the most frequent being a missing Reload Window after saving config.yaml, along with a step-by-step diagnostic order.",
+      "lang": "ja",
+      "publishedAt": "2026-06-23T04:09:25.000Z",
+      "collectedAt": "2026-06-24T04:00:50.263Z",
+      "tags": [
+        "config-yaml",
+        "continue-dev",
+        "ollama",
+        "qiita",
+        "troubleshooting",
+        "vscode"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "9ff7cfad7410f3b6",
       "source": "qiita-cursor",
       "sourceType": "blog",
@@ -24964,34 +25330,6 @@
         "vscode"
       ],
       "category": "cursor",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "hot",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "d7457767bc1e3393",
-      "source": "qiita-vscode",
-      "sourceType": "blog",
-      "url": "https://qiita.com/DevMasatoman/items/4db8953fec77e2f68555",
-      "title": "Continue.dev + Ollama で「No models configured」が出たときの原因 4 パターンと解決手順",
-      "titleJa": "Continue.dev + Ollama で「No models configured」が出たときの原因 4 パターンと解決手順",
-      "titleEn": "Explains four common causes of the 'No models configured' error when pairing…",
-      "summaryJa": "Continue.dev と Ollama 連携で出る「No models configured」エラーの原因を 4 パターンに整理し診断手順を解説。最多原因は config.yaml 保存後の Reload Window 未実施で、構文・パス・バージョンの順に確認する。",
-      "summaryEn": "Explains four common causes of the 'No models configured' error when pairing Continue.dev with Ollama, the most frequent being a missing Reload Window after saving config.yaml, along with a step-by-step diagnostic order.",
-      "lang": "ja",
-      "publishedAt": "2026-06-23T04:09:25.000Z",
-      "collectedAt": "2026-06-24T04:00:50.263Z",
-      "tags": [
-        "config-yaml",
-        "continue-dev",
-        "ollama",
-        "qiita",
-        "troubleshooting",
-        "vscode"
-      ],
-      "category": "local-llm",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -25165,6 +25503,62 @@
       "bodyEn": ""
     },
     {
+      "id": "fed82c8c6bccdada",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/huggingface-hub-release-ci",
+      "title": "Shipping huggingface_hub every week with AI, open tools, and a human in the loop",
+      "titleJa": "AIとオープンツールで huggingface_hub を毎週リリースする仕組み",
+      "titleEn": "Shipping huggingface_hub every week with AI, open tools, and a human in the loop",
+      "summaryJa": "HuggingFaceがAIと自動化ツールを活用しつつ人間のレビューを組み合わせ、huggingface_hubライブラリを毎週継続的にリリースするCI/CDワークフローを紹介。開発速度と品質の両立を実現した事例として注目される。",
+      "summaryEn": "Hugging Face details how they ship huggingface_hub weekly by combining AI assistance, open-source tooling, and human oversight in a streamlined CI/CD pipeline, offering a practical model for high-cadence library releases.",
+      "lang": "en",
+      "publishedAt": "2026-06-23T00:00:00.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "automation",
+        "ci-cd",
+        "developer-tools",
+        "huggingface",
+        "open-model",
+        "release-engineering"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "8174c1b8eba5b30f",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/cross-origin-storage",
+      "title": "Experimenting with the proposed Cross-Origin Storage API in Transformers.js",
+      "titleJa": "Transformers.jsでクロスオリジンストレージAPIを試す",
+      "titleEn": "Experimenting with the proposed Cross-Origin Storage API in Transformers.js",
+      "summaryJa": "提案中のCross-Origin Storage APIをTransformers.jsで実験的に活用し、異なるオリジン間でモデルファイルをキャッシュ共有できる可能性を示した。重複ダウンロードを削減しブラウザ上のローカルAI体験を改善できる。",
+      "summaryEn": "This post explores using the proposed Cross-Origin Storage API with Transformers.js to share cached model files across different web origins, potentially eliminating redundant downloads and improving in-browser local AI performance.",
+      "lang": "en",
+      "publishedAt": "2026-06-23T00:00:00.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "browser-ai",
+        "caching",
+        "huggingface",
+        "open-model",
+        "transformers-js",
+        "web-api"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "d33cb088918ef6f1",
       "source": "anthropic-news",
       "sourceType": "blog",
@@ -25197,62 +25591,6 @@
       "bodyEn": ""
     },
     {
-      "id": "fed82c8c6bccdada",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/huggingface-hub-release-ci",
-      "title": "Shipping huggingface_hub every week with AI, open tools, and a human in the loop",
-      "titleJa": "AIとオープンツールで huggingface_hub を毎週リリースする仕組み",
-      "titleEn": "Shipping huggingface_hub every week with AI, open tools, and a human in the loop",
-      "summaryJa": "HuggingFaceがAIと自動化ツールを活用しつつ人間のレビューを組み合わせ、huggingface_hubライブラリを毎週継続的にリリースするCI/CDワークフローを紹介。開発速度と品質の両立を実現した事例として注目される。",
-      "summaryEn": "Hugging Face details how they ship huggingface_hub weekly by combining AI assistance, open-source tooling, and human oversight in a streamlined CI/CD pipeline, offering a practical model for high-cadence library releases.",
-      "lang": "en",
-      "publishedAt": "2026-06-23T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
-      "tags": [
-        "automation",
-        "ci-cd",
-        "developer-tools",
-        "huggingface",
-        "open-model",
-        "release-engineering"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "8174c1b8eba5b30f",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/cross-origin-storage",
-      "title": "Experimenting with the proposed Cross-Origin Storage API in Transformers.js",
-      "titleJa": "Transformers.jsでクロスオリジンストレージAPIを試す",
-      "titleEn": "Experimenting with the proposed Cross-Origin Storage API in Transformers.js",
-      "summaryJa": "提案中のCross-Origin Storage APIをTransformers.jsで実験的に活用し、異なるオリジン間でモデルファイルをキャッシュ共有できる可能性を示した。重複ダウンロードを削減しブラウザ上のローカルAI体験を改善できる。",
-      "summaryEn": "This post explores using the proposed Cross-Origin Storage API with Transformers.js to share cached model files across different web origins, potentially eliminating redundant downloads and improving in-browser local AI performance.",
-      "lang": "en",
-      "publishedAt": "2026-06-23T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
-      "tags": [
-        "browser-ai",
-        "caching",
-        "huggingface",
-        "open-model",
-        "transformers-js",
-        "web-api"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "ba546af75496952b",
       "source": "openai-news",
       "sourceType": "blog",
@@ -25264,7 +25602,7 @@
       "summaryEn": "Omio is integrating OpenAI's models to enable conversational travel search and booking, allowing users to find trains, buses, and flights through natural dialogue rather than traditional form-based search.",
       "lang": "en",
       "publishedAt": "2026-06-23T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "conversational-ai",
         "omio",
@@ -25916,7 +26254,7 @@
       "summaryEn": "PaddlePaddle's PP-OCRv6 is now available on Hugging Face, offering 50-language OCR models ranging from 1.5M to 34.5M parameters, enabling flexible deployment from edge devices to high-accuracy server environments.",
       "lang": "en",
       "publishedAt": "2026-06-22T13:18:56.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "huggingface",
         "multilingual",
@@ -26140,7 +26478,7 @@
       "summaryEn": "OpenAI launched Daybreak, a cybersecurity initiative offering AI-powered tools designed to help organizations of all sizes detect and defend against sophisticated threats.",
       "lang": "en",
       "publishedAt": "2026-06-22T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "codex",
         "cybersecurity",
@@ -26169,7 +26507,7 @@
       "summaryEn": "OpenAI's Daybreak initiative launches Patch the Planet to provide financial and resource support to open source maintainers, aiming to strengthen the sustainability of critical software infrastructure.",
       "lang": "en",
       "publishedAt": "2026-06-22T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "daybreak",
         "funding",
@@ -26423,6 +26761,34 @@
       }
     },
     {
+      "id": "c64f69921adf199e",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/local-models-pr-triage",
+      "title": "We got local models to triage the OpenClaw repo for FREE!*",
+      "titleJa": "ローカルモデルで OpenClaw リポジトリのトリアージを無料で実現！",
+      "titleEn": "We got local models to triage the OpenClaw repo for FREE!*",
+      "summaryJa": "HuggingFace がローカル LLM を活用して OpenClaw リポジトリの Issue・PR トリアージを自動化する手法を紹介。クラウド API 不要でコスト削減と開発効率向上を両立できる点が注目される。",
+      "summaryEn": "HuggingFace demonstrates how locally-run open models can automatically triage issues and pull requests in the OpenClaw repo without relying on paid cloud APIs, offering a cost-free workflow for maintainers.",
+      "lang": "en",
+      "publishedAt": "2026-06-22T00:00:00.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "automation",
+        "huggingface",
+        "llm-tooling",
+        "open-model",
+        "open-source",
+        "pr-triage"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "0f31b1d3f4455ef9",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -26450,34 +26816,6 @@
       "halfLife": "news",
       "archiveTier": "warm",
       "contentSnippet": "Plugins, skills, and MCPs let you customize Cursor for your workflows. The new Customize page brings them into one place.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "c64f69921adf199e",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/local-models-pr-triage",
-      "title": "We got local models to triage the OpenClaw repo for FREE!*",
-      "titleJa": "ローカルモデルで OpenClaw リポジトリのトリアージを無料で実現！",
-      "titleEn": "We got local models to triage the OpenClaw repo for FREE!*",
-      "summaryJa": "HuggingFace がローカル LLM を活用して OpenClaw リポジトリの Issue・PR トリアージを自動化する手法を紹介。クラウド API 不要でコスト削減と開発効率向上を両立できる点が注目される。",
-      "summaryEn": "HuggingFace demonstrates how locally-run open models can automatically triage issues and pull requests in the OpenClaw repo without relying on paid cloud APIs, offering a cost-free workflow for maintainers.",
-      "lang": "en",
-      "publishedAt": "2026-06-22T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
-      "tags": [
-        "automation",
-        "huggingface",
-        "llm-tooling",
-        "open-model",
-        "open-source",
-        "pr-triage"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -26554,7 +26892,7 @@
       "summaryEn": "OpenAI shares best practices for leveraging Codex on long-running, complex tasks, offering practical guidance on automating large-scale work and boosting developer productivity.",
       "lang": "en",
       "publishedAt": "2026-06-22T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "automation",
         "best-practices",
@@ -26619,7 +26957,7 @@
       "summaryEn": "Samsung Electronics has deployed ChatGPT and Codex across its workforce, enabling employees to leverage AI for productivity and software development tasks at enterprise scale.",
       "lang": "en",
       "publishedAt": "2026-06-21T23:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "chatgpt",
         "deployment",
@@ -28495,7 +28833,7 @@
       "summaryEn": "Microsoft Foundry unveiled OpenEnv at Build 2026, an enterprise reinforcement learning framework that integrates with hosted agents and Frontier Tuning to build outcome-driven optimization and learning stacks.",
       "lang": "en",
       "publishedAt": "2026-06-18T20:37:18.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "ai",
@@ -28667,7 +29005,7 @@
       "summaryEn": "This research introduces MosaicLeaks, a study examining how AI research agents can inadvertently leak sensitive information through aggregated outputs, highlighting critical security considerations for agent design using open models.",
       "lang": "en",
       "publishedAt": "2026-06-18T18:13:13.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "huggingface",
@@ -28799,7 +29137,7 @@
       "summaryEn": "OpenAI has introduced enhanced usage analytics and updated spend controls for ChatGPT Enterprise, giving organizations better visibility and tighter management over AI-related costs.",
       "lang": "en",
       "publishedAt": "2026-06-18T17:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "analytics",
         "chatgpt-enterprise",
@@ -29232,7 +29570,7 @@
       "summaryEn": "OpenAI announced improvements to ChatGPT's health intelligence capabilities, enhancing the accuracy and safety of medical information responses. This matters as reliable health guidance in AI assistants directly impacts everyday user well-being.",
       "lang": "en",
       "publishedAt": "2026-06-18T11:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "chatgpt",
         "health",
@@ -29287,7 +29625,7 @@
       "summaryEn": "OpenAI announced an initiative using AI to assist physicians in diagnosing rare genetic diseases in children, potentially enabling earlier detection and better outcomes for patients with hard-to-identify conditions.",
       "lang": "en",
       "publishedAt": "2026-06-18T08:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "diagnosis",
         "genetics",
@@ -29624,7 +29962,7 @@
       "summaryEn": "Hugging Face explores PEFT methods that rival or surpass LoRA, benchmarking alternatives across tasks to help practitioners choose the best fine-tuning approach for their specific constraints.",
       "lang": "en",
       "publishedAt": "2026-06-18T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "fine-tuning",
         "huggingface",
@@ -29652,7 +29990,7 @@
       "summaryEn": "This article presents a practical framework for benchmarking open LLMs on agentic tasks using custom tooling, helping developers choose the right model for real-world agent workflows.",
       "lang": "en",
       "publishedAt": "2026-06-18T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -30723,7 +31061,7 @@
       "summaryEn": "This post demonstrates how Strands Agents and LeRobot can bridge the gap between pretrained robot models on Hugging Face Hub and physical robot hardware, making real-world deployment significantly more accessible.",
       "lang": "en",
       "publishedAt": "2026-06-17T10:18:05.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "aws",
         "huggingface",
@@ -30751,7 +31089,7 @@
       "summaryEn": "OpenAI's near-autonomous AI chemist agent independently designed and executed experiments to improve a difficult reaction in medicinal chemistry, demonstrating AI's potential to accelerate real-world scientific discovery.",
       "lang": "en",
       "publishedAt": "2026-06-17T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "autonomous-agent",
@@ -30810,7 +31148,7 @@
       "summaryEn": "ZAI released GLM-5.2, an open model optimized for long-horizon tasks requiring sustained reasoning and multi-step execution, making it a practical choice for local deployment.",
       "lang": "en",
       "publishedAt": "2026-06-17T09:01:25.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "glm",
         "huggingface",
@@ -31306,7 +31644,7 @@
       "summaryEn": "Hugging Face launched Agentic Resource Discovery, enabling AI agents to autonomously search and retrieve models and datasets, streamlining workflows that rely on dynamic resource selection.",
       "lang": "en",
       "publishedAt": "2026-06-17T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "automation",
@@ -31335,7 +31673,7 @@
       "summaryEn": "OpenAI introduced LifeSciBench, a benchmark designed to evaluate AI models across life science domains including biology, chemistry, and medicine, providing a standardized way to measure scientific reasoning capabilities.",
       "lang": "en",
       "publishedAt": "2026-06-17T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "benchmark",
         "evaluation",
@@ -32478,7 +32816,7 @@
       "summaryEn": "OpenAI introduced a deployment simulation framework that predicts how models will behave in real-world settings before release, enabling earlier detection of safety issues and reducing post-launch surprises.",
       "lang": "en",
       "publishedAt": "2026-06-16T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "alignment",
         "evaluation",
@@ -33184,7 +33522,7 @@
       "summaryEn": "OpenAI launched a formal Partner Network to help businesses build and deploy AI solutions using its technology, establishing a structured ecosystem of certified partners to accelerate enterprise adoption.",
       "lang": "en",
       "publishedAt": "2026-06-14T17:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ecosystem",
         "enterprise",
@@ -33284,7 +33622,7 @@
       "category": "copilot",
       "importance": 1,
       "halfLife": "tutorial",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -33316,7 +33654,7 @@
       "category": "mcp",
       "importance": 1,
       "halfLife": "tutorial",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -33344,7 +33682,7 @@
       "category": "local-llm",
       "importance": 1,
       "halfLife": "tutorial",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Ftech-festa-ogp-background-4b5015b2c518c7e6b9062a7c9f5f5e90.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzNjU0NTk0JTJGYTY3NDE3MjRlMjNhZTUzZjJmMjgzNTkwYzBlODJlMGJhYmU3OGIxNCUyRmxhcmdlLnBuZyUzRjE3NjQ2MzQzNTk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWNmMTczNGZmMjBmMjdmNjFiMDIyZTgyNzc4ZWJhMzk4%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dcbe021c58dc4f753f41eb429c5642aed?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgzJUFEJUUzJTgzJUJDJUUzJTgyJUFCJUUzJTgzJUFCTExNJTI4T2xsYW1hJTI5JUUzJTgyJTkyTUFVSSVFMyU4MiVBMiVFMyU4MyU5NyVFMyU4MyVBQSVFMyU4MSU4QiVFMyU4MiU4OSVFNSU5MSVCQyVFMyU4MSVCMyVFNSU4NyVCQSVFMyU4MSU5NyVFMyU4MSVBNiVFMyU4MSVCRiVFMyU4MSU5RiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzRkZGRkZGJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTYxY2VhM2M4NjhmN2EzOTA2MmQxM2Q5NTg5M2YwMGEw&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBweW8yMTAyJnR4dC1jb2xvcj0lMjNGRkZGRkYmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NWJmNWE4MmNiNmU5MDdjZWFkNWZjZThhZjVhZjQ3YjE&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=160db3bdfb4b422e279cd66169c24288",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Ftech-festa-ogp-background-4b5015b2c518c7e6b9062a7c9f5f5e90.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzNjU0NTk0JTJGYTY3NDE3MjRlMjNhZTUzZjJmMjgzNTkwYzBlODJlMGJhYmU3OGIxNCUyRmxhcmdlLnBuZyUzRjE3NjQ2MzQzNTk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWNmMTczNGZmMjBmMjdmNjFiMDIyZTgyNzc4ZWJhMzk4%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dcbe021c58dc4f753f41eb429c5642aed?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgzJUFEJUUzJTgzJUJDJUUzJTgyJUFCJUUzJTgzJUFCTExNJTI4T2xsYW1hJTI5JUUzJTgyJTkyTUFVSSVFMyU4MiVBMiVFMyU4MyU5NyVFMyU4MyVBQSVFMyU4MSU4QiVFMyU4MiU4OSVFNSU5MSVCQyVFMyU4MSVCMyVFNSU4NyVCQSVFMyU4MSU5NyVFMyU4MSVBNiVFMyU4MSVCRiVFMyU4MSU5RiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzRkZGRkZGJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTYxY2VhM2M4NjhmN2EzOTA2MmQxM2Q5NTg5M2YwMGEw&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBweW8yMTAyJnR4dC1jb2xvcj0lMjNGRkZGRkYmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NWJmNWE4MmNiNmU5MDdjZWFkNWZjZThhZjVhZjQ3YjE&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=160db3bdfb4b422e279cd66169c24288",
@@ -33381,7 +33719,7 @@
       "category": "copilot",
       "importance": 1,
       "halfLife": "tutorial",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -34301,6 +34639,36 @@
       "bodyEn": ""
     },
     {
+      "id": "c601c107d674575b",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/torch-mlp-fusion",
+      "title": "Profiling in PyTorch (Part 2): From nn.Linear to a Fused MLP",
+      "titleJa": "PyTorchでのプロファイリング（第2部）：nn.LinearからFused MLPへ",
+      "titleEn": "Profiling in PyTorch (Part 2): From nn.Linear to a Fused MLP",
+      "summaryJa": "PyTorchのプロファイリングツールを使いnn.LinearベースのMLPを分析し、カーネル融合による最適化で推論速度を大幅に改善する手法を解説する記事。実践的なパフォーマンスチューニングの知見を提供する。",
+      "summaryEn": "This article walks through profiling a standard nn.Linear-based MLP in PyTorch and optimizing it via kernel fusion, demonstrating measurable inference speedups and practical techniques for production model efficiency.",
+      "lang": "en",
+      "publishedAt": "2026-06-11T00:00:00.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "huggingface",
+        "inference",
+        "kernel-fusion",
+        "mlp",
+        "open-model",
+        "performance-optimization",
+        "profiling",
+        "pytorch"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "c34f42993d6d07b2",
       "source": "anthropic-news",
       "sourceType": "blog",
@@ -34340,36 +34708,6 @@
         "height": 0,
         "source": "og"
       }
-    },
-    {
-      "id": "c601c107d674575b",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/torch-mlp-fusion",
-      "title": "Profiling in PyTorch (Part 2): From nn.Linear to a Fused MLP",
-      "titleJa": "PyTorchでのプロファイリング（第2部）：nn.LinearからFused MLPへ",
-      "titleEn": "Profiling in PyTorch (Part 2): From nn.Linear to a Fused MLP",
-      "summaryJa": "PyTorchのプロファイリングツールを使いnn.LinearベースのMLPを分析し、カーネル融合による最適化で推論速度を大幅に改善する手法を解説する記事。実践的なパフォーマンスチューニングの知見を提供する。",
-      "summaryEn": "This article walks through profiling a standard nn.Linear-based MLP in PyTorch and optimizing it via kernel fusion, demonstrating measurable inference speedups and practical techniques for production model efficiency.",
-      "lang": "en",
-      "publishedAt": "2026-06-11T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
-      "tags": [
-        "huggingface",
-        "inference",
-        "kernel-fusion",
-        "mlp",
-        "open-model",
-        "performance-optimization",
-        "profiling",
-        "pytorch"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "bodyJa": "",
-      "bodyEn": ""
     },
     {
       "id": "960b68f25a92ef45",
@@ -36422,7 +36760,7 @@
       "summaryEn": "A demonstration of an AI agent autonomously chaining two Hugging Face Spaces—one for image generation and one for 3D scene creation—to produce an interactive Paris-themed gallery, showcasing practical multi-Space orchestration.",
       "lang": "en",
       "publishedAt": "2026-06-09T10:46:19.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "3d",
         "agent",
@@ -36500,6 +36838,36 @@
       "bodyEn": ""
     },
     {
+      "id": "d28250894609a149",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/github-ci-hf-jobs",
+      "title": "Migrating Your GitHub CI to Hugging Face Jobs",
+      "titleJa": "GitHub CI を Hugging Face Jobs へ移行する",
+      "titleEn": "Migrating Your GitHub CI to Hugging Face Jobs",
+      "summaryJa": "GitHub ActionsのCIワークフローをHugging Face Jobsに移行する方法を解説し、MLワークロードに特化したインフラで効率的なモデル評価や訓練パイプラインを実現できる点が注目される。",
+      "summaryEn": "This article explains how to migrate GitHub Actions CI workflows to Hugging Face Jobs, enabling ML teams to run model training and evaluation pipelines on purpose-built infrastructure with tighter ecosystem integration.",
+      "lang": "en",
+      "publishedAt": "2026-06-09T00:00:00.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "benchmark",
+        "ci-cd",
+        "github-actions",
+        "huggingface",
+        "huggingface-jobs",
+        "mlops",
+        "open-model",
+        "tutorial"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "99b31b2366a5e0d8",
       "source": "anthropic-news",
       "sourceType": "blog",
@@ -36529,36 +36897,6 @@
       "bodyEn": ""
     },
     {
-      "id": "d28250894609a149",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/github-ci-hf-jobs",
-      "title": "Migrating Your GitHub CI to Hugging Face Jobs",
-      "titleJa": "GitHub CI を Hugging Face Jobs へ移行する",
-      "titleEn": "Migrating Your GitHub CI to Hugging Face Jobs",
-      "summaryJa": "GitHub ActionsのCIワークフローをHugging Face Jobsに移行する方法を解説し、MLワークロードに特化したインフラで効率的なモデル評価や訓練パイプラインを実現できる点が注目される。",
-      "summaryEn": "This article explains how to migrate GitHub Actions CI workflows to Hugging Face Jobs, enabling ML teams to run model training and evaluation pipelines on purpose-built infrastructure with tighter ecosystem integration.",
-      "lang": "en",
-      "publishedAt": "2026-06-09T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
-      "tags": [
-        "benchmark",
-        "ci-cd",
-        "github-actions",
-        "huggingface",
-        "huggingface-jobs",
-        "mlops",
-        "open-model",
-        "tutorial"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "8557cf6d42575084",
       "source": "apple-newsroom",
       "sourceType": "blog",
@@ -36570,7 +36908,7 @@
       "summaryEn": "Apple today introduced new intelligence capabilities, expanded productivity features in Xcode, and platform improvements.",
       "lang": "en",
       "publishedAt": "2026-06-08T21:00:15.643Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai",
         "apple",
@@ -36703,7 +37041,7 @@
       "summaryEn": "Today, Apple previewed its upcoming software releases that will deliver the next generation of Apple Intelligence and introduce Siri AI.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:18:43.157Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai",
         "apple",
@@ -36732,7 +37070,7 @@
       "summaryEn": "Apple unveils the next generation of Apple Intelligence, integrating powerful AI capabilities into iPhone, iPad, and Mac for more personal and helpful everyday experiences.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:17:44.449Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "apple",
         "apple-intelligence",
@@ -36762,7 +37100,7 @@
       "summaryEn": "Apple introduces Siri AI, a profoundly more capable and personal assistant powered by Apple Intelligence, with personal context, world knowledge, and onscreen awareness.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:15:52.996Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai-assistant",
         "apple",
@@ -36791,7 +37129,7 @@
       "summaryEn": "Due to the Digital Markets Act, Apple will not be able to ship Siri AI in the European Union with the release of iOS 27 and iPadOS 27.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:13:26.639Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "apple",
         "dma",
@@ -36823,7 +37161,7 @@
       "summaryEn": "New App Store capabilities will give developers more flexibility to market their apps, acquire users, and manage subscriptions.",
       "lang": "en",
       "publishedAt": "2026-06-08T18:13:03.084Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "app-store",
         "apple",
@@ -37037,7 +37375,7 @@
       "summaryEn": "The open source community is rallying behind OpenEnv, a unified environment framework for agentic reinforcement learning that enables training and evaluating AI agents across diverse tasks.",
       "lang": "en",
       "publishedAt": "2026-06-08T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -38175,7 +38513,7 @@
       "summaryEn": "NVIDIA released Nemotron 3.5 Content Safety, a customizable multimodal safety model supporting text and images, enabling enterprises to enforce tailored content policies across global AI deployments.",
       "lang": "en",
       "publishedAt": "2026-06-04T18:57:45.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "content-safety",
         "enterprise",
@@ -38335,7 +38673,7 @@
       "summaryEn": "Apple announced the App Store ecosystem generated $1.4 trillion in 2025, highlighting sustained global developer growth and the platform's expanding economic impact.",
       "lang": "en",
       "publishedAt": "2026-06-04T13:00:48.679Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "app-store",
         "apple",
@@ -38363,7 +38701,7 @@
       "summaryEn": "Microsoft's Foundry Local enables on-device AI inference, tackling edge AI challenges like responsiveness, privacy, and offline operation to simplify embedding AI into apps and devices.",
       "lang": "en",
       "publishedAt": "2026-06-04T13:00:24.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai",
         "ai-development",
@@ -38523,7 +38861,7 @@
       "summaryEn": "Hugging Face introduced a redesigned hf CLI built with AI agents in mind, making it easier to automate Hub operations like model and dataset management within agentic workflows.",
       "lang": "en",
       "publishedAt": "2026-06-04T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "automation",
@@ -38551,7 +38889,7 @@
       "summaryEn": "Microsoft Foundry outlines how to keep non-deterministic AI agents accurate, safe, and accountable in production, spanning from observability to ROI measurement for agents built on any framework.",
       "lang": "en",
       "publishedAt": "2026-06-03T22:44:01.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "ai",
@@ -38908,7 +39246,7 @@
       "summaryEn": "Azure Translator's Document Translation in Foundry Tools now supports images, PDFs, Office files, DITA, and XLIFF, with LLM-powered translation coming soon, helping developers localize content at scale.",
       "lang": "en",
       "publishedAt": "2026-06-03T17:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai",
         "azure-translator",
@@ -39063,7 +39401,7 @@
       "summaryEn": "Microsoft announced Foundry Managed Compute, a new GPU platform-as-a-service that lets developers host open-source and custom AI models behind the same endpoints, SDKs, and billing as frontier models.",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:54.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai",
         "custom-models",
@@ -39097,7 +39435,7 @@
       "summaryEn": "Microsoft added Agent Optimizer to Foundry Agent Service to bridge the gap between a merely \"live\" agent and a truly production-ready one by helping improve and optimize agent quality in production.",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:43.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "agent-optimizer",
@@ -39131,7 +39469,7 @@
       "summaryEn": "At Build 2026, Microsoft Foundry enhanced agent memory with the reliability, transparency, and enterprise-readiness teams need when moving agents from demos into production.",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:30.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "ai",
@@ -39165,7 +39503,7 @@
       "summaryEn": "Microsoft Foundry introduces Toolboxes and Routines to help teams discover, manage, and secure the growing number of tools when scaling AI agents from prototype to production, where tooling typically breaks down.",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:15.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent-scaling",
         "ai",
@@ -39199,7 +39537,7 @@
       "summaryEn": "Microsoft Foundry introduces enterprise agent distribution, letting organizations deploy and share AI agents across teams securely and at scale, shifting from building agents to actually putting them to work.",
       "lang": "en",
       "publishedAt": "2026-06-03T16:00:04.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "agent-distribution",
@@ -39531,7 +39869,7 @@
       "summaryEn": "This article explores applying Direct Preference Optimization beyond conversational AI, showing how preference learning can improve models across diverse non-chat tasks.",
       "lang": "en",
       "publishedAt": "2026-06-03T12:55:11.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "dpo",
         "fine-tuning",
@@ -39819,7 +40157,7 @@
       "summaryEn": "This article explains how to integrate MCP tools with the Reachy Mini robot using a local LLM backend, demonstrating a practical architecture for connecting language models to physical robotic systems.",
       "lang": "en",
       "publishedAt": "2026-06-03T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "huggingface",
         "local-llm",
@@ -40538,7 +40876,7 @@
       "summaryEn": "Hcompany released Holo3.1, a locally-run computer use agent that automates desktop tasks without cloud dependency, offering faster and more private AI-driven computer control.",
       "lang": "en",
       "publishedAt": "2026-06-02T14:13:23.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "computer-use",
@@ -41541,7 +41879,7 @@
       "summaryEn": "JetBrains released Mellum2, a 12B Mixture-of-Experts language model optimized for code completion, marking a significant architectural upgrade over its predecessor and offering developers a capable open model for IDE integration.",
       "lang": "en",
       "publishedAt": "2026-06-01T15:45:17.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "code-llm",
         "huggingface",
@@ -41634,7 +41972,7 @@
       "summaryEn": "IBM Research argues that deploying LLMs alone is insufficient for enterprise scale, and that well-designed agent logic—covering tool use, orchestration, and decision-making—is the critical factor for sustainable AI adoption.",
       "lang": "en",
       "publishedAt": "2026-06-01T13:51:18.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -44072,6 +44410,35 @@
       "bodyEn": ""
     },
     {
+      "id": "2c6e0e551d4ebc3f",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/torch-profiler",
+      "title": "Profiling in PyTorch (Part 1): A Beginner's Guide to torch.profiler",
+      "titleJa": "PyTorchでのプロファイリング（第1部）：torch.profilerの初心者向けガイド",
+      "titleEn": "Profiling in PyTorch (Part 1): A Beginner's Guide to torch.profiler",
+      "summaryJa": "torch.profilerを使ってPyTorchモデルのボトルネックを特定・分析する方法を解説したチュートリアル。パフォーマンス最適化の第一歩として実用的な手順を紹介している。",
+      "summaryEn": "A beginner-friendly guide to using torch.profiler for identifying performance bottlenecks in PyTorch models, covering practical profiling workflows that help developers optimize training and inference efficiently.",
+      "lang": "en",
+      "publishedAt": "2026-05-29T00:00:00.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "huggingface",
+        "open-model",
+        "optimization",
+        "performance",
+        "profiling",
+        "pytorch",
+        "tutorial"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "385a02589ce084f5",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -44098,35 +44465,6 @@
       "halfLife": "news",
       "archiveTier": "warm",
       "contentSnippet": "Auto-review is a new run mode that allows Cursor to work for longer with fewer approval prompts and safer execution.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "2c6e0e551d4ebc3f",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/torch-profiler",
-      "title": "Profiling in PyTorch (Part 1): A Beginner's Guide to torch.profiler",
-      "titleJa": "PyTorchでのプロファイリング（第1部）：torch.profilerの初心者向けガイド",
-      "titleEn": "Profiling in PyTorch (Part 1): A Beginner's Guide to torch.profiler",
-      "summaryJa": "torch.profilerを使ってPyTorchモデルのボトルネックを特定・分析する方法を解説したチュートリアル。パフォーマンス最適化の第一歩として実用的な手順を紹介している。",
-      "summaryEn": "A beginner-friendly guide to using torch.profiler for identifying performance bottlenecks in PyTorch models, covering practical profiling workflows that help developers optimize training and inference efficiently.",
-      "lang": "en",
-      "publishedAt": "2026-05-29T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
-      "tags": [
-        "huggingface",
-        "open-model",
-        "optimization",
-        "performance",
-        "profiling",
-        "pytorch",
-        "tutorial"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -46916,7 +47254,7 @@
       "summaryEn": "Reachy Mini robot now runs entirely on local LLMs without cloud dependency, enabling private, offline conversational interactions and broader deployment flexibility.",
       "lang": "en",
       "publishedAt": "2026-05-27T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "huggingface",
         "on-device-ai",
@@ -46944,7 +47282,7 @@
       "summaryEn": "TRL introduces delta weight sync, enabling efficient transfer of only changed parameters to the Hugging Face Hub during large-model training, significantly reducing bandwidth and synchronization overhead.",
       "lang": "en",
       "publishedAt": "2026-05-27T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "fine-tuning",
         "huggingface",
@@ -47329,46 +47667,6 @@
       }
     },
     {
-      "id": "b376e7ea9aef0e83",
-      "source": "zenn-llm",
-      "sourceType": "blog",
-      "url": "https://zenn.dev/kamo78/articles/ds4-m5max-benchmark",
-      "title": "M5 Max のローカル LLM ベンチ — MoE は GPU 性能、Dense はメモリ帯域幅がボトルネック、発熱の影響も調査",
-      "titleJa": "M5 Max のローカル LLM ベンチ — MoE は GPU 性能、Dense はメモリ帯域幅がボトルネック、発熱の影響も調査",
-      "titleEn": "A benchmark report on running local LLMs on Apple M5 Max, finding that MoE…",
-      "summaryJa": "M5 Max 上でローカル LLM を実行し、MoE モデルは GPU 演算、Dense モデルはメモリ帯域幅がそれぞれボトルネックになることを検証。発熱による性能低下も測定した後編レポート。",
-      "summaryEn": "A benchmark report on running local LLMs on Apple M5 Max, finding that MoE models are GPU-bound while Dense models are memory-bandwidth-bound, with thermal throttling effects also measured.",
-      "lang": "ja",
-      "publishedAt": "2026-05-26T14:43:11.000Z",
-      "collectedAt": "2026-05-27T10:00:35.160Z",
-      "tags": [
-        "apple-silicon",
-        "benchmark",
-        "benchmarking",
-        "deepseek",
-        "llm",
-        "m5-max",
-        "moe",
-        "open-model",
-        "thermal-throttling",
-        "zenn"
-      ],
-      "category": "local-llm",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "warm",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://res.cloudinary.com/zenn/image/upload/s--DLlnj5xI--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:M5%2520Max%2520%25E3%2581%25AE%25E3%2583%25AD%25E3%2583%25BC%25E3%2582%25AB%25E3%2583%25AB%2520LLM%2520%25E3%2583%2599%25E3%2583%25B3%25E3%2583%2581%2520%25E2%2580%2594%2520MoE%2520%25E3%2581%25AF%2520GPU%2520%25E6%2580%25A7%25E8%2583%25BD%25E3%2580%2581Dense%2520%25E3%2581%25AF%25E3%2583%25A1%25E3%2583%25A2%25E3%2583%25AA%25E5%25B8%25AF%25E5%259F%259F%25E5%25B9%2585%25E3%2581%258C%25E3%2583%259C%25E3%2583%2588%25E3%2583%25AB%25E3%2583%258D%25E3%2583%2583%25E3%2582%25AF%25E3%2580%2581...%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:kamo%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS0VJZjZzamhKRGJ4c2F1andwMVBQaldsd2ItbDgwQ3M1ai1GZXYwV250azNNaz1zOTYtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
-        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--DLlnj5xI--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:M5%2520Max%2520%25E3%2581%25AE%25E3%2583%25AD%25E3%2583%25BC%25E3%2582%25AB%25E3%2583%25AB%2520LLM%2520%25E3%2583%2599%25E3%2583%25B3%25E3%2583%2581%2520%25E2%2580%2594%2520MoE%2520%25E3%2581%25AF%2520GPU%2520%25E6%2580%25A7%25E8%2583%25BD%25E3%2580%2581Dense%2520%25E3%2581%25AF%25E3%2583%25A1%25E3%2583%25A2%25E3%2583%25AA%25E5%25B8%25AF%25E5%259F%259F%25E5%25B9%2585%25E3%2581%258C%25E3%2583%259C%25E3%2583%2588%25E3%2583%25AB%25E3%2583%258D%25E3%2583%2583%25E3%2582%25AF%25E3%2580%2581...%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:kamo%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS0VJZjZzamhKRGJ4c2F1andwMVBQaldsd2ItbDgwQ3M1ai1GZXYwV250azNNaz1zOTYtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
-        "alt": "M5 Max のローカル LLM ベンチ — MoE は GPU 性能、Dense はメモリ帯域幅がボトルネック、発熱の影響も調査",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
       "id": "6f757b856f9d0074",
       "source": "qiita-llm",
       "sourceType": "blog",
@@ -47507,70 +47805,6 @@
         "height": 0,
         "source": "og"
       }
-    },
-    {
-      "id": "c1f5225cb1a8a3a8",
-      "source": "zenn-llm",
-      "sourceType": "blog",
-      "url": "https://zenn.dev/highreso/articles/4b7e51a726f90a",
-      "title": "Gemma 4 の MMLU-Pro スコアを NVIDIA B200 で再現する：ステップ・バイ・ステップガイド",
-      "titleJa": "Gemma 4 の MMLU-Pro スコアを NVIDIA B200 で再現する：ステップ・バイ・ステップガイド",
-      "titleEn": "A step-by-step guide on reproducing Google Gemma 4 31B-IT's claimed ~85.2%…",
-      "summaryJa": "Google の Gemma 4 31B-IT が主張する MMLU-Pro 約 85.2% を NVIDIA B200 上で lm_eval を使って手元再現する手順を詳解した実践ガイド。",
-      "summaryEn": "A step-by-step guide on reproducing Google Gemma 4 31B-IT's claimed ~85.2% MMLU-Pro score on NVIDIA B200 hardware using lm_eval, covering practical pitfalls beyond a single command.",
-      "lang": "ja",
-      "publishedAt": "2026-05-26T07:54:16.000Z",
-      "collectedAt": "2026-05-27T02:00:38.332Z",
-      "tags": [
-        "benchmarking",
-        "gemma",
-        "llm",
-        "lm-eval",
-        "mmlu-pro",
-        "nvidia-b200",
-        "open-model",
-        "reproducibility",
-        "tutorial",
-        "zenn"
-      ],
-      "category": "local-llm",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "warm",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "33dc2d5f6a7e529b",
-      "source": "zenn-llm",
-      "sourceType": "blog",
-      "url": "https://zenn.dev/akiya_souken/articles/build-ik-llama-cpp",
-      "title": "ik_llama.cpp を Windows でビルドして動かしてみる",
-      "titleJa": "ik_llama.cpp を Windows でビルドして動かしてみる",
-      "titleEn": "A practical guide to building ik_llama.cpp on Windows from source, covering a…",
-      "summaryJa": "ローカルLLM実行エンジン ik_llama.cpp を Windows 向けに自力ビルドする手順を解説。通常の llama.cpp より約3割高速とされる。",
-      "summaryEn": "A practical guide to building ik_llama.cpp on Windows from source, covering a fork of llama.cpp reported to run local LLMs roughly 30% faster than the upstream project.",
-      "lang": "ja",
-      "publishedAt": "2026-05-26T06:35:12.000Z",
-      "collectedAt": "2026-05-27T02:00:38.332Z",
-      "tags": [
-        "build",
-        "inference",
-        "llama-cpp",
-        "llm",
-        "local-llm",
-        "open-model",
-        "performance",
-        "tutorial",
-        "windows",
-        "zenn"
-      ],
-      "category": "local-llm",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "warm",
-      "bodyJa": "",
-      "bodyEn": ""
     },
     {
       "id": "1a4cbdafd69e09bc",
@@ -48201,7 +48435,7 @@
       "summaryEn": "HuggingFace clarifies commonly confused AI agent terminology such as 'harness' and 'scaffold', providing a shared vocabulary that helps developers communicate more precisely when building agent systems.",
       "lang": "en",
       "publishedAt": "2026-05-25T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "best-practices",
@@ -49264,7 +49498,7 @@
       "summaryEn": "Allen AI released OlmoEarth v1.1, an open family of Earth observation models with greatly improved inference efficiency, enabling lower-cost satellite imagery analysis and environmental monitoring tasks.",
       "lang": "en",
       "publishedAt": "2026-05-19T18:38:09.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "allenai",
         "earth-observation",
@@ -49322,6 +49556,35 @@
       "bodyEn": ""
     },
     {
+      "id": "4bd10cf53d72879d",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/ettin-reranker",
+      "title": "Introducing the Ettin Reranker Family",
+      "titleJa": "Ettin Rerankerファミリーの紹介",
+      "titleEn": "Introducing the Ettin Reranker Family",
+      "summaryJa": "Hugging FaceがローカルLLM向けの新しいリランカーモデル群「Ettin Reranker」を公開し、検索精度の向上と効率的な再順位付けを実現する。オープンモデルとして提供され、RAGパイプラインの品質改善に活用できる。",
+      "summaryEn": "Hugging Face released the Ettin Reranker model family, a suite of open reranking models designed to improve retrieval quality in RAG pipelines by reordering candidate documents more accurately and efficiently.",
+      "lang": "en",
+      "publishedAt": "2026-05-19T00:00:00.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "huggingface",
+        "open-model",
+        "open-source",
+        "rag",
+        "release",
+        "reranker",
+        "retrieval"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "16643d0d9d98ffdb",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -49347,35 +49610,6 @@
       "halfLife": "news",
       "archiveTier": "warm",
       "contentSnippet": "Cursor is now available in Jira.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "4bd10cf53d72879d",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/ettin-reranker",
-      "title": "Introducing the Ettin Reranker Family",
-      "titleJa": "Ettin Rerankerファミリーの紹介",
-      "titleEn": "Introducing the Ettin Reranker Family",
-      "summaryJa": "Hugging FaceがローカルLLM向けの新しいリランカーモデル群「Ettin Reranker」を公開し、検索精度の向上と効率的な再順位付けを実現する。オープンモデルとして提供され、RAGパイプラインの品質改善に活用できる。",
-      "summaryEn": "Hugging Face released the Ettin Reranker model family, a suite of open reranking models designed to improve retrieval quality in RAG pipelines by reordering candidate documents more accurately and efficiently.",
-      "lang": "en",
-      "publishedAt": "2026-05-19T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
-      "tags": [
-        "huggingface",
-        "open-model",
-        "open-source",
-        "rag",
-        "release",
-        "reranker",
-        "retrieval"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -51742,7 +51976,7 @@
       "summaryEn": "OpenAI introduces MRC (Multipath Reliable Connection), a new supercomputer networking protocol released via OCP to improve resilience and performance in large-scale AI training clusters.",
       "lang": "en",
       "publishedAt": "2026-05-05T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "distributed-training",
         "gpu-cluster",
@@ -53260,7 +53494,7 @@
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "warm",
+      "archiveTier": "cold",
       "contentSnippet": "Cursor can now respond by creating interactive canvases .",
       "bodyJa": "",
       "bodyEn": ""
@@ -53289,7 +53523,7 @@
       "category": "gemini",
       "importance": 1,
       "halfLife": "news",
-      "archiveTier": "warm",
+      "archiveTier": "cold",
       "bodyJa": "",
       "bodyEn": "",
       "image": {
@@ -53329,7 +53563,7 @@
       "category": "tech-news",
       "importance": 1,
       "halfLife": "news",
-      "archiveTier": "warm",
+      "archiveTier": "cold",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -53675,7 +53909,7 @@
       "summaryEn": "A pilot program to support independent safety and alignment research and develop the next generation of talent",
       "lang": "en",
       "publishedAt": "2026-04-06T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai-safety",
         "alignment",
@@ -53900,7 +54134,7 @@
       "summaryEn": "Hugging Face released TRL v1.0, its post-training library unifying SFT, DPO, and GRPO. The release stabilizes the API and adds vLLM integration, multi-node distributed training, and stronger VLM support for production use.",
       "lang": "en",
       "publishedAt": "2026-03-31T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "dpo",
         "grpo",
@@ -55287,7 +55521,7 @@
       "summaryEn": "OpenAI announced efforts to scale access to Codex and its AI tools for a broader audience, lowering barriers so more developers and everyday users can benefit from advanced AI capabilities.",
       "lang": "en",
       "publishedAt": "2026-02-27T05:30:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "accessibility",
         "codex",
@@ -55650,7 +55884,7 @@
       "summaryEn": "set version to 0.86.3.dev",
       "lang": "en",
       "publishedAt": "2026-02-12T00:42:25.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "aider",
         "cli",
@@ -55686,7 +55920,7 @@
       "summaryEn": "version bump to 0.86.2",
       "lang": "en",
       "publishedAt": "2026-02-12T00:42:24.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "aider",
         "cli",
@@ -56206,7 +56440,7 @@
       "summaryEn": "OpenAI announced the second cohort of its Grove startup program, expanding support for emerging AI companies and strengthening its broader developer ecosystem.",
       "lang": "en",
       "publishedAt": "2026-01-02T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "cohort",
         "grove",
@@ -56602,7 +56836,7 @@
       "summaryEn": "OpenAI announced the first cohort of grantees for its People-First AI Fund, marking the program's official launch to direct AI benefits toward underserved communities.",
       "lang": "en",
       "publishedAt": "2025-12-03T08:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "grants",
         "openai",
@@ -56699,7 +56933,7 @@
       "summaryEn": "huggingface_hub reaches v1.0 after five years of development, signaling a stable, production-ready API for interacting with the Hugging Face Hub. This milestone solidifies its role as the foundational toolkit for the open ML ecosystem.",
       "lang": "en",
       "publishedAt": "2025-10-27T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "huggingface",
         "huggingface-hub",
@@ -56906,7 +57140,7 @@
       "summaryEn": "LeRobotDataset v3.0 introduces large-scale dataset support for the lerobot framework, making it significantly easier to manage and train on high-volume robot learning data.",
       "lang": "en",
       "publishedAt": "2025-09-16T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "dataset",
         "huggingface",
@@ -57047,7 +57281,7 @@
       "summaryEn": "OpenAI announced the Learning Accelerator, a program aimed at expanding AI-powered education and supporting learners and institutions, signaling a broader push into the education sector.",
       "lang": "en",
       "publishedAt": "2025-08-25T06:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "education",
         "global-affairs",
@@ -57226,7 +57460,7 @@
       "summaryEn": "set version to 0.86.2.dev",
       "lang": "en",
       "publishedAt": "2025-08-13T15:46:02.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "aider",
         "cli",
@@ -57262,7 +57496,7 @@
       "summaryEn": "version bump to 0.86.1",
       "lang": "en",
       "publishedAt": "2025-08-13T15:46:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai-coding",
         "aider",
@@ -57299,7 +57533,7 @@
       "summaryEn": "Aider v0.86.0 adds support for all GPT-5 models, Grok-4 via xai and OpenRouter, and a new Gemini model, plus authentication and error-handling improvements. Aider wrote about 74% of this release's code.",
       "lang": "en",
       "publishedAt": "2025-08-09T17:42:19.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "aider",
         "bedrock",
@@ -57340,7 +57574,7 @@
       "summaryEn": "set version to 0.86.1.dev",
       "lang": "en",
       "publishedAt": "2025-08-09T15:55:11.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "aider",
         "cli",
@@ -57375,7 +57609,7 @@
       "summaryEn": "set version to 0.85.6.dev",
       "lang": "en",
       "publishedAt": "2025-08-07T20:54:56.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "aider",
         "cli",
@@ -57411,7 +57645,7 @@
       "summaryEn": "version bump to 0.85.5",
       "lang": "en",
       "publishedAt": "2025-08-07T20:54:54.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai-coding",
         "aider",
@@ -57447,7 +57681,7 @@
       "summaryEn": "set version to 0.85.5.dev",
       "lang": "en",
       "publishedAt": "2025-08-07T18:33:44.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "aider",
         "cli",
@@ -57483,7 +57717,7 @@
       "summaryEn": "version bump to 0.85.4",
       "lang": "en",
       "publishedAt": "2025-08-07T18:33:43.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "aider",
         "cli",
@@ -57593,7 +57827,7 @@
       "summaryEn": "OpenAI announced a deal to provide ChatGPT access to the entire U.S. federal workforce, marking a significant expansion of AI adoption across government agencies.",
       "lang": "en",
       "publishedAt": "2025-08-06T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "chatgpt",
         "enterprise",
@@ -57734,7 +57968,7 @@
       "summaryEn": "OpenAI has announced DevDay 2025, its developer-focused conference where new tools, APIs, and platform updates are expected to be showcased to the broader developer community.",
       "lang": "en",
       "publishedAt": "2025-07-23T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "devday",
         "developer-events",
@@ -57838,7 +58072,7 @@
       "summaryEn": "TII UAE has announced the NeurIPS 2025 E2LM Competition, challenging participants to predict a language model's final performance from early training checkpoints, aiming to reduce the massive compute costs of full LLM training runs.",
       "lang": "en",
       "publishedAt": "2025-07-04T12:25:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "benchmark",
         "competition",
@@ -57906,7 +58140,7 @@
       "summaryEn": "OpenAI announced a major new funding round aimed at accelerating its path to AGI, providing resources to scale research and infrastructure efforts.",
       "lang": "en",
       "publishedAt": "2025-03-31T15:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agi",
         "funding",
@@ -57933,7 +58167,7 @@
       "summaryEn": "OpenAI, with Oracle, SoftBank, and MGX, unveiled Stargate, a venture investing $500B over four years in US AI infrastructure, deploying $100B now starting in Texas to secure compute for AGI and create jobs.",
       "lang": "en",
       "publishedAt": "2025-01-21T13:30:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agi",
         "ai-infrastructure",

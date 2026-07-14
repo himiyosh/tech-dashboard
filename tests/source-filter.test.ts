@@ -201,6 +201,38 @@ describe("matchesKeywordFilter", () => {
   });
 });
 
+describe("arXiv Research filter (R-017, LL-260)", () => {
+  const arxivCl = REGISTRY["arxiv-cs-cl"];
+
+  it("keeps an LLM evaluation paper without reclassifying generated summary wording as source noise", () => {
+    expect(
+      matchesKeywordFilter(
+        {
+          title:
+            "Faithful by Design: Evaluating and Improving LLM-Generated Clinical Trial Summaries for Multi-Stakeholder Audiences",
+          url: "https://arxiv.org/abs/2607.00001",
+          contentSnippet:
+            "This work evaluates large language model summaries for multiple stakeholders.",
+        },
+        arxivCl,
+      ),
+    ).toBe(true);
+  });
+
+  it("still drops an explicitly excluded medical paper from the raw source fields", () => {
+    expect(
+      matchesKeywordFilter(
+        {
+          title: "Medical diagnosis with large language models",
+          url: "https://arxiv.org/abs/2607.00002",
+          contentSnippet: "",
+        },
+        arxivCl,
+      ),
+    ).toBe(false);
+  });
+});
+
 describe("Google Cloud Blog knowledge filter (R-017)", () => {
   const gcloud = REGISTRY["google-cloud-blog"];
   const check = (title: string) =>

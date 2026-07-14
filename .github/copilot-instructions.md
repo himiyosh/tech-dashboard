@@ -1789,6 +1789,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: `ArticleLike` の loading wrapper に SSR 時点から `inert` を付け、client が ready / busy へ遷移した時だけ解除する。component source test で loading、`aria-hidden`、`inert` の組み合わせを固定する。
 - **教訓**: progressive enhancement の optional control は hydration 後だけ安全にするのではなく、初期 HTML から同じ focus / accessibility contract を満たす。client initializer は SSR の安全状態を解除する役割に限定する。
 
+### LL-260: broad feed の品質 gate は生成要約を source filter の入力にしない
+- **事象**: scheduled Publisher が `Faithful by Design: Evaluating and Improving LLM-Generated Clinical Trial Summaries for Multi-Stakeholder Audiences` を収集した際、Research 品質テストが AI 生成要約内の `medical` を独自正規表現で検出し、registry filter を通過した LLM 評価論文を off-topic として拒否した。同じ snapshot で 2 回連続 Publisher が停止した。
+- **根本原因**: source filter の単一情報源は registry と raw source fields なのに、data schema test が別の noise 語彙を持ち、収集後に生成された要約まで再判定していた。生成要約はモデルの言い換えで語彙が変わるため、source の採否契約として安定しない。
+- **対策**: Research 固有 gate は live count cap だけを担当し、記事ごとの採否は直後の shared registry evaluator gate へ一本化した。実際に失敗した LLM 評価論文を keep fixture、明示的な medical title を drop fixture として source-filter test に固定した。
+- **教訓**: broad feed の検出と予防は registry、shared filter、raw title/snippet/url の同じ契約を使う。AI 生成要約の語彙を独立した source noise 判定へ流用せず、件数 cap と記事採否を別の gate に分ける。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

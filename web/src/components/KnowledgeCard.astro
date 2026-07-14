@@ -128,7 +128,8 @@ const hasImage = imgSrc.length > 0;
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
   }
   .kg-card-link:focus-visible {
-    outline: 0;
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
   }
   .kg-thumb {
     position: relative;
@@ -160,7 +161,7 @@ const hasImage = imgSrc.length > 0;
     font-size: 0.72rem;
     color: var(--text-muted, #94a3b8);
     min-width: 0;
-    padding-right: 70px;
+    padding-right: 0;
   }
   .kg-favicon {
     border-radius: 3px;
@@ -192,6 +193,9 @@ const hasImage = imgSrc.length > 0;
     /* Reserve exactly 2 lines so 1-line and 2-line titles take equal space
        (keeps card height uniform under fixed-height layout, LL-096). */
     min-height: 2.52rem;
+    padding-right: 0;
+  }
+  .kg-card:has(> [data-reaction-control]:not([data-state="unavailable"])) :is(.kg-src, .kg-title) {
     padding-right: 70px;
   }
   .kg-sum {
@@ -233,6 +237,10 @@ const hasImage = imgSrc.length > 0;
   @supports not selector(:has(*)) {
     .kg-card.has-image .kg-card-link {
       grid-template-columns: 116px minmax(0, 1fr);
+    }
+    .kg-src,
+    .kg-title {
+      padding-right: 70px;
     }
   }
   @media (prefers-reduced-motion: reduce) {

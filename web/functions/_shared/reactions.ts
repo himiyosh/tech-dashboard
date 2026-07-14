@@ -335,28 +335,42 @@ export async function verifyTurnstileChallenge({
   const remoteIp = request.headers.get("CF-Connecting-IP");
   if (remoteIp) body.set("remoteip", remoteIp);
 
-  let response: Response;
+  let result: TurnstileResult;
   try {
-    response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
       method: "POST",
       body,
       signal: AbortSignal.timeout(8_000),
     });
-  } catch {
+    if (!response.ok) {
+      throw new ReactionApiError(
+        503,
+        "challenge_unavailable",
+        "Human verification is temporarily unavailable.",
+      );
+    }
+    const payload: unknown = await response.json();
+    if (
+      !payload ||
+      typeof payload !== "object" ||
+      Array.isArray(payload) ||
+      typeof (payload as Partial<TurnstileResult>).success !== "boolean"
+    ) {
+      throw new ReactionApiError(
+        503,
+        "challenge_unavailable",
+        "Human verification is temporarily unavailable.",
+      );
+    }
+    result = payload as TurnstileResult;
+  } catch (error) {
+    if (error instanceof ReactionApiError) throw error;
     throw new ReactionApiError(
       503,
       "challenge_unavailable",
       "Human verification is temporarily unavailable.",
     );
   }
-  if (!response.ok) {
-    throw new ReactionApiError(
-      503,
-      "challenge_unavailable",
-      "Human verification is temporarily unavailable.",
-    );
-  }
-  const result = (await response.json()) as TurnstileResult;
   const expectedHostname = new URL(request.url).hostname;
   return (
     result.success === true &&

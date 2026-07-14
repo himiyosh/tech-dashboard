@@ -2646,7 +2646,7 @@ test.describe("TECH Dashboard smoke", () => {
     const knowledgeExplainer = page.locator(".knowledge-reaction-note");
     await expect(knowledgeExplainer).toBeVisible();
     await expect(knowledgeExplainer.locator(".i18n-ja")).toContainText(
-      "保存・お気に入りではなく、掲載順位にも影響しません",
+      "記事の保存・お気に入りではなく、Featured、Top 3、重要度、掲載順位には影響しません",
     );
     await expect(
       knowledgeExplainer.getByRole("link", { name: "仕組みとプライバシー" }),
@@ -2705,13 +2705,46 @@ test.describe("TECH Dashboard smoke", () => {
     const contextId = describedBy.find((id) => id.endsWith("-context"));
     expect(contextId, "like button references its anonymous public reaction context").toBeTruthy();
     await expect(page.locator(`#${contextId}`)).toContainText(
-      "匿名の公開いいねです。記事は保存されず、掲載順位にも影響しません。",
+      "匿名の公開いいねです。記事の保存・お気に入りではなく、Featured、Top 3、重要度、掲載順位には影響しません。",
     );
+    await expect(control.locator("[data-reaction-visible-label] .i18n-ja")).toHaveText("いいね");
+    await expect(control.locator("[data-reaction-visible-label] .i18n-en")).toBeHidden();
     await expect(button).toHaveAttribute("aria-pressed", "false");
     await expect(count).toHaveText("7");
     const buttonBox = await button.boundingBox();
     expect(buttonBox?.width, "card like target is at least 44px wide").toBeGreaterThanOrEqual(44);
     expect(buttonBox?.height, "card like target is at least 44px high").toBeGreaterThanOrEqual(44);
+    const readyCardInsets = await card.evaluate((node) => {
+      const title = node.querySelector<HTMLElement>(".kg-title");
+      const source = node.querySelector<HTMLElement>(".kg-src");
+      return {
+        title: title ? Number.parseFloat(getComputedStyle(title).paddingRight) : -1,
+        source: source ? Number.parseFloat(getComputedStyle(source).paddingRight) : -1,
+      };
+    });
+    expect(readyCardInsets, "a ready like control reserves its overlay width").toEqual({
+      title: 70,
+      source: 70,
+    });
+    await cardLink.focus();
+    await expect(cardLink).toBeFocused();
+    const cardLinkFocus = await cardLink.evaluate((node) => {
+      const style = getComputedStyle(node);
+      return {
+        style: style.outlineStyle,
+        width: Number.parseFloat(style.outlineWidth),
+        offset: Number.parseFloat(style.outlineOffset),
+      };
+    });
+    expect(cardLinkFocus.style, "Knowledge card links retain a solid keyboard focus indicator").toBe(
+      "solid",
+    );
+    expect(cardLinkFocus.width, "Knowledge card focus ring is at least 2px wide").toBeGreaterThanOrEqual(
+      2,
+    );
+    expect(cardLinkFocus.offset, "Knowledge card focus ring clears the card edge").toBeGreaterThanOrEqual(
+      2,
+    );
     await cardLink.hover();
     await expect
       .poll(() =>
@@ -2809,6 +2842,11 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.locator('.lang-btn[data-lang="en"]').click();
     await expect(button).toHaveAccessibleName(`Like Article: ${cardTitleEn} 7 likes`);
+    await expect(control.locator("[data-reaction-visible-label] .i18n-ja")).toBeHidden();
+    await expect(control.locator("[data-reaction-visible-label] .i18n-en")).toHaveText("Like");
+    await expect(control.locator("[data-reaction-status]")).toContainText(
+      "The verification service is temporarily unavailable.",
+    );
     await expect(reactionToast.locator("[data-reaction-toast-copy]")).toContainText(
       "The verification service is temporarily unavailable.",
     );
@@ -2910,7 +2948,7 @@ test.describe("TECH Dashboard smoke", () => {
     const reactionExplainer = page.locator("[data-reaction-explainer]");
     await expect(reactionExplainer).toBeVisible();
     await expect(reactionExplainer.locator("p > .i18n-en")).toContainText(
-      "does not save the article or affect ranking",
+      "not saved articles or bookmarks",
     );
     const privacyLink = reactionExplainer.getByRole("link", {
       name: "How it works and privacy",
@@ -2930,7 +2968,16 @@ test.describe("TECH Dashboard smoke", () => {
 
     await privacyLink.click();
     await expect(page).toHaveURL(/\/about\/?#reactions-privacy$/);
-    await expect(page.locator("#reactions-privacy")).toBeVisible();
+    const privacyTarget = page.locator("#reactions-privacy");
+    await expect(privacyTarget).toBeVisible();
+    await expect
+      .poll(async () => {
+        const targetBox = await privacyTarget.boundingBox();
+        const headerBox = await page.locator("header").boundingBox();
+        return targetBox && headerBox ? targetBox.y - (headerBox.y + headerBox.height) : -1;
+      })
+      .toBeGreaterThanOrEqual(8);
+    await expect(privacyTarget).toHaveCSS("border-color", /rgb/);
     await expect(page.locator('.page-hero-actions a[href="#reactions-privacy"]')).toHaveText(
       "Likes & privacy",
     );
@@ -2985,13 +3032,20 @@ test.describe("TECH Dashboard smoke", () => {
       if (mutationApplied && ids.length === 1 && ids[0] === targetId) {
         reconciliationRequests += 1;
       }
+      const targetStillPending =
+        mutationApplied &&
+        ids.length === 1 &&
+        ids[0] === targetId &&
+        reconciliationRequests === 1;
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
           reactions: ids.map((id) => ({
             id,
-            ...(stateById.get(id) ?? { count: 7, liked: false }),
+            ...(targetStillPending
+              ? { count: 7, liked: false }
+              : (stateById.get(id) ?? { count: 7, liked: false })),
           })),
         }),
       });
@@ -3022,10 +3076,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("#reaction-status-live")).toHaveText("いいねしました。");
     await expect(page.locator("#reaction-error-toast")).toBeHidden();
     expect(mutationRequests).toBe(1);
-    expect(reconciliationRequests).toBe(1);
+    expect(reconciliationRequests).toBe(2);
   });
 
-  test("a stale failure reconciliation cannot overwrite a newer like retry", async ({ page }) => {
+  test("a stale successful reconciliation cannot overwrite a newer like retry", async ({ page }) => {
     const stateById = new Map<string, { count: number; liked: boolean }>();
     let targetId = "";
     let mutationCount = 0;
@@ -3085,10 +3139,10 @@ test.describe("TECH Dashboard smoke", () => {
         markStaleReadStarted();
         await staleReadGate;
         await route.fulfill({
-          status: 503,
+          status: 200,
           contentType: "application/json",
           body: JSON.stringify({
-            error: { code: "service_unavailable", message: "Unavailable" },
+            reactions: [{ id: targetId, count: 7, liked: false }],
           }),
         });
         return;
@@ -3158,6 +3212,245 @@ test.describe("TECH Dashboard smoke", () => {
     expect(mutationCount).toBe(2);
   });
 
+  test("a stale successful reconciliation cannot revive controls after service shutdown", async ({
+    page,
+  }) => {
+    let firstId = "";
+    let secondId = "";
+    let firstMutationFailed = false;
+    let releaseStaleRead!: () => void;
+    let markStaleReadStarted!: () => void;
+    const staleReadGate = new Promise<void>((resolve) => {
+      releaseStaleRead = resolve;
+    });
+    const staleReadStarted = new Promise<void>((resolve) => {
+      markStaleReadStarted = resolve;
+    });
+
+    await page.addInitScript(() => {
+      type ReactionShutdownWindow = Window & {
+        __TECHDB_REACTION_SITE_KEY__?: string;
+        turnstile?: {
+          ready(callback: () => void): void;
+          render(
+            container: HTMLElement,
+            options: { callback: (token: string) => void },
+          ): string;
+          execute(widgetId: string): void;
+          remove(widgetId: string): void;
+        };
+      };
+      const target = window as ReactionShutdownWindow;
+      let callback: ((token: string) => void) | undefined;
+      target.__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+      target.turnstile = {
+        ready(readyCallback) {
+          readyCallback();
+        },
+        render(_container, options) {
+          callback = options.callback;
+          return "reaction-shutdown-widget";
+        },
+        execute() {
+          queueMicrotask(() => callback?.("reaction-shutdown-token"));
+        },
+        remove() {
+          callback = undefined;
+        },
+      };
+    });
+
+    await page.route("**/api/reactions?*", async (route) => {
+      const ids = new URL(route.request().url()).searchParams
+        .get("ids")
+        ?.split(",")
+        .filter(Boolean) ?? [];
+      if (
+        firstMutationFailed &&
+        firstId &&
+        ids.length === 1 &&
+        ids[0] === firstId
+      ) {
+        markStaleReadStarted();
+        await staleReadGate;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            reactions: [{ id: firstId, count: 8, liked: true }],
+          }),
+        });
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          reactions: ids.map((id) => ({ id, count: 7, liked: false })),
+        }),
+      });
+    });
+    await mockReactionIdentity(page);
+    await page.route(REACTION_MUTATION_URL_RE, async (route) => {
+      if (await rejectMutationWithoutIdentity(route)) return;
+      const id = decodeURIComponent(new URL(route.request().url()).pathname.split("/").pop() ?? "");
+      if (id === firstId) {
+        firstMutationFailed = true;
+        await route.fulfill({
+          status: 500,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: { code: "mutation_failed", message: "Mutation failed" },
+          }),
+        });
+        return;
+      }
+
+      expect(id).toBe(secondId);
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "service_unavailable", message: "Unavailable" },
+        }),
+      });
+    });
+
+    await page.goto("/knowledge/");
+    const controls = page.locator("[data-reaction-control]");
+    expect(await controls.count()).toBeGreaterThanOrEqual(2);
+    const firstControl = controls.nth(0);
+    const secondControl = controls.nth(1);
+    const firstButton = firstControl.locator("[data-reaction-button]");
+    const secondButton = secondControl.locator("[data-reaction-button]");
+    await expect(firstControl).toHaveAttribute("data-state", "ready");
+    await expect(secondControl).toHaveAttribute("data-state", "ready");
+    firstId = (await firstControl.getAttribute("data-entry-id")) ?? "";
+    secondId = (await secondControl.getAttribute("data-entry-id")) ?? "";
+    expect(firstId).toMatch(/^[a-f0-9]{16}$/);
+    expect(secondId).toMatch(/^[a-f0-9]{16}$/);
+    expect(secondId).not.toBe(firstId);
+
+    await firstButton.click();
+    await staleReadStarted;
+    await expect(firstButton).toHaveAttribute("aria-busy", "false");
+
+    await secondButton.click();
+    await expect(page.locator("[data-reaction-control]:visible")).toHaveCount(0);
+    await expect(page.locator(".knowledge-reaction-note")).toBeHidden();
+
+    releaseStaleRead();
+    await page.waitForTimeout(100);
+    await expect(firstControl).toHaveAttribute("data-state", "unavailable");
+    await expect(firstControl).toHaveAttribute("aria-hidden", "true");
+    await expect(page.locator("[data-reaction-control]:visible")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /いいね/ })).toHaveCount(0);
+  });
+
+  test("failed mutation reconciliation reports within one bounded deadline", async ({ page }) => {
+    await page.addInitScript(() => {
+      type ReactionDeadlineWindow = Window & {
+        __TECHDB_REACTION_SITE_KEY__?: string;
+        __TECHDB_REACTION_RECONCILIATION_READS__?: number;
+        turnstile?: {
+          ready(callback: () => void): void;
+          render(
+            container: HTMLElement,
+            options: { callback: (token: string) => void },
+          ): string;
+          execute(widgetId: string): void;
+          remove(widgetId: string): void;
+        };
+      };
+      const target = window as ReactionDeadlineWindow;
+      const nativeFetch = window.fetch.bind(window);
+      let mutationAttempted = false;
+      let turnstileCallback: ((token: string) => void) | undefined;
+      target.__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+      target.__TECHDB_REACTION_RECONCILIATION_READS__ = 0;
+      target.turnstile = {
+        ready(callback) {
+          callback();
+        },
+        render(_container, options) {
+          turnstileCallback = options.callback;
+          return "reaction-deadline-widget";
+        },
+        execute() {
+          queueMicrotask(() => turnstileCallback?.("reaction-deadline-token"));
+        },
+        remove() {
+          turnstileCallback = undefined;
+        },
+      };
+      window.fetch = async (input, init = {}) => {
+        const requestUrl = input instanceof Request ? input.url : String(input);
+        const url = new URL(requestUrl, window.location.origin);
+        if (!url.pathname.startsWith("/api/reactions")) {
+          return nativeFetch(input, init);
+        }
+        if (url.pathname === "/api/reactions/identity") {
+          return new Response(JSON.stringify({ identity: { ready: true } }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        if (init.method === "PUT") {
+          mutationAttempted = true;
+          throw new TypeError("mutation response lost");
+        }
+
+        const ids = url.searchParams.get("ids")?.split(",").filter(Boolean) ?? [];
+        if (mutationAttempted && ids.length === 1) {
+          target.__TECHDB_REACTION_RECONCILIATION_READS__ =
+            (target.__TECHDB_REACTION_RECONCILIATION_READS__ ?? 0) + 1;
+          return new Promise<Response>((_resolve, reject) => {
+            const rejectAborted = () => reject(new DOMException("Aborted", "AbortError"));
+            if (init.signal?.aborted) rejectAborted();
+            else init.signal?.addEventListener("abort", rejectAborted, { once: true });
+          });
+        }
+        return new Response(
+          JSON.stringify({
+            reactions: ids.map((id) => ({ id, count: 7, liked: false })),
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      };
+    });
+
+    await page.goto("/knowledge/");
+    const control = page.locator("[data-reaction-control]").first();
+    const button = control.locator("[data-reaction-button]");
+    const toast = page.locator("#reaction-error-toast");
+    await expect(control).toHaveAttribute("data-state", "ready");
+
+    const startedAt = Date.now();
+    await button.click();
+    await expect(toast).toBeVisible({ timeout: 7_000 });
+    expect(
+      Date.now() - startedAt,
+      "reconciliation uses one deadline instead of stacking request timeouts",
+    ).toBeLessThan(6_500);
+    await expect(control.locator("[data-reaction-status]")).toContainText(
+      "いいねを更新できませんでした。",
+    );
+    const reads = await page.evaluate(
+      () =>
+        (
+          window as Window & {
+            __TECHDB_REACTION_RECONCILIATION_READS__?: number;
+          }
+        ).__TECHDB_REACTION_RECONCILIATION_READS__ ?? 0,
+    );
+    expect(reads).toBeGreaterThanOrEqual(2);
+    expect(reads).toBeLessThanOrEqual(4);
+  });
+
   test("large like counts stay compact without losing the exact accessible value", async ({ page }) => {
     await page.addInitScript(() => {
       (window as Window & { __TECHDB_REACTION_SITE_KEY__?: string })
@@ -3219,6 +3512,18 @@ test.describe("TECH Dashboard smoke", () => {
     expect(apiRequests, "missing public site key prevents API traffic").toBe(0);
 
     const unavailableCard = unavailableControl.locator("xpath=ancestor::article[1]");
+    const unavailableCardInsets = await unavailableCard.evaluate((node) => {
+      const title = node.querySelector<HTMLElement>(".kg-title");
+      const source = node.querySelector<HTMLElement>(".kg-src");
+      return {
+        title: title ? Number.parseFloat(getComputedStyle(title).paddingRight) : -1,
+        source: source ? Number.parseFloat(getComputedStyle(source).paddingRight) : -1,
+      };
+    });
+    expect(
+      unavailableCardInsets,
+      "an unavailable optional control releases the card title and source width",
+    ).toEqual({ title: 0, source: 0 });
     const unavailableHref = await unavailableCard.locator(".kg-card-link").getAttribute("href");
     expect(unavailableHref, "unavailable card still has its article destination").toBeTruthy();
     await unavailableCard.locator(".kg-card-link").click();

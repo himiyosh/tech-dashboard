@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   formatExactReactionCount,
@@ -82,5 +83,29 @@ describe("reaction request deadlines", () => {
     await vi.advanceTimersByTimeAsync(25);
     await assertion;
     expect(callback).not.toHaveBeenCalled();
+  });
+});
+
+describe("reaction toast fallback styling", () => {
+  it("keeps the fallback selector independent from the native popover pseudo-class", () => {
+    const source = readFileSync(
+      new URL("../web/src/components/ArticleLike.astro", import.meta.url),
+      "utf8",
+    );
+    expect(source).toMatch(/:global\(\.reaction-toast:popover-open\)\s*\{/);
+    expect(source).toMatch(
+      /:global\(\.reaction-toast\[data-fallback-open="true"\]\)\s*\{/,
+    );
+    expect(source).not.toMatch(
+      /:popover-open\)\s*,\s*:global\(\.reaction-toast\[data-fallback-open=/,
+    );
+  });
+
+  it("keeps loading controls inert before client initialization", () => {
+    const source = readFileSync(
+      new URL("../web/src/components/ArticleLike.astro", import.meta.url),
+      "utf8",
+    );
+    expect(source).toMatch(/data-state="loading"\s+aria-hidden="true"\s+inert/);
   });
 });

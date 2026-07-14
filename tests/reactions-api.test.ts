@@ -188,6 +188,73 @@ describe("anonymous public reactions API", () => {
     }
   });
 
+  it.each([
+    ["malformed JSON", new Response("{", { status: 200 })],
+    ["a non-object payload", Response.json(["invalid"], { status: 200 })],
+    ["an upstream HTTP failure", Response.json({}, { status: 502 })],
+  ])("classifies Turnstile %s as temporarily unavailable", async (_label, response) => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    try {
+      await expect(
+        verifyTurnstileChallenge({
+          token: "one-time-token",
+          request: new Request(`${origin}/api/reactions/${articleId}`),
+          siteverifyCredential: "turnstile-test-secret",
+        }),
+      ).rejects.toMatchObject({
+        status: 503,
+        code: "challenge_unavailable",
+      });
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("classifies a Turnstile response body read failure as temporarily unavailable", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: () => Promise.reject(new Error("body read failed")),
+    } as Response);
+    try {
+      await expect(
+        verifyTurnstileChallenge({
+          token: "one-time-token",
+          request: new Request(`${origin}/api/reactions/${articleId}`),
+          siteverifyCredential: "turnstile-test-secret",
+        }),
+      ).rejects.toMatchObject({
+        status: 503,
+        code: "challenge_unavailable",
+      });
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it("keeps a structured Turnstile rejection as a normal failed challenge", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      Response.json(
+        {
+          success: false,
+          action: "article-like",
+          hostname: "techdb.example",
+        },
+        { status: 200 },
+      ),
+    );
+    try {
+      await expect(
+        verifyTurnstileChallenge({
+          token: "rejected-token",
+          request: new Request(`${origin}/api/reactions/${articleId}`),
+          siteverifyCredential: "turnstile-test-secret",
+        }),
+      ).resolves.toBe(false);
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
   it("keeps repeated desired-state writes idempotent and hashes the voter cookie", async () => {
     const store = new MemoryReactionStore();
     const deps = dependencies(store);

@@ -12,6 +12,7 @@ import {
   type CategoryGroup,
 } from "../lib/data.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
+import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../lib/reaction-copy.ts";
 import { WORKER_HEALTH } from "../lib/data.ts";
 import { deriveWorkerRunStatus } from "../lib/run-health.ts";
 
@@ -204,6 +205,10 @@ const pipelineSteps = [
           <span class="i18n-en" lang="en">Anonymous likes and privacy</span>
         </h3>
         <p>
+          <span class="i18n-ja">{REACTION_CONTRACT_JA}</span>
+          <span class="i18n-en" lang="en">{REACTION_CONTRACT_EN}</span>
+        </p>
+        <p>
           <span class="i18n-ja">
             Knowledge と記事詳細の「いいね」は匿名の公開件数です。ブラウザごとの不透明な識別子を HttpOnly Cookie に保持し、
             server では HMAC-SHA256 化した値だけを D1 に保存します。IP address は Turnstile 検証にだけ使用し、D1 には保存しません。
@@ -322,6 +327,17 @@ const pipelineSteps = [
 
   .about-panel {
     padding: 18px;
+  }
+
+  #reactions-privacy {
+    scroll-margin-top: 120px;
+  }
+
+  #reactions-privacy:target {
+    border-color: color-mix(in srgb, var(--know) 72%, var(--border));
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--know) 16%, transparent),
+      0 14px 36px rgba(0, 0, 0, 0.16);
   }
 
   .about-panel.large {

@@ -54,6 +54,9 @@ const TOAST_ID = "reaction-error-toast";
 const LIVE_REGION_ID = "reaction-status-live";
 const TOAST_DURATION_MS = 7_000;
 const REACTION_REQUEST_TIMEOUT_MS = 15_000;
+const REACTION_RECONCILIATION_DEADLINE_MS = 5_000;
+const REACTION_RECONCILIATION_READ_TIMEOUT_MS = 1_250;
+const REACTION_RECONCILIATION_DELAYS_MS = [0, 160, 360, 700] as const;
 
 let initialized = false;
 let turnstileLoadPromise: Promise<TurnstileApi> | undefined;
@@ -67,6 +70,7 @@ const reactionOperationVersions = new Map<string, number>();
 let reactionServiceUnavailable = false;
 let reactionServiceGeneration = 0;
 let liveAnnouncementVersion = 0;
+const reactionStatusMessages = new WeakMap<HTMLElement, LocalizedReactionMessage>();
 
 class ReactionRequestError extends Error {
   constructor(
@@ -229,10 +233,18 @@ function syncControlCountLanguage(control: HTMLElement): void {
   if (exactCount) exactCount.textContent = exactCopy;
 }
 
+function syncControlStatusLanguage(control: HTMLElement): void {
+  const status = control.querySelector<HTMLElement>("[data-reaction-status]");
+  const message = reactionStatusMessages.get(control);
+  if (!status || !message) return;
+  status.textContent = currentLanguage() === "en" ? message.en : message.ja;
+}
+
 function syncReactionLanguage(): void {
   document.querySelectorAll<HTMLElement>(CONTROL_SELECTOR).forEach((control) => {
     if (control.dataset.state === "ready" || control.dataset.state === "busy") {
       syncControlCountLanguage(control);
+      syncControlStatusLanguage(control);
     }
   });
 
@@ -340,7 +352,9 @@ function setControlUnavailable(control: HTMLElement): void {
   const button = getButton(control);
   const count = control.querySelector<HTMLElement>("[data-reaction-count]");
   const exactCount = control.querySelector<HTMLElement>("[data-reaction-count-exact]");
+  const status = control.querySelector<HTMLElement>("[data-reaction-status]");
   if (!button) return;
+  reactionStatusMessages.delete(control);
   setControlState(control, "unavailable");
   button.setAttribute("aria-busy", "false");
   button.setAttribute("aria-disabled", "true");
@@ -355,6 +369,7 @@ function setControlUnavailable(control: HTMLElement): void {
       ? "Count unavailable"
       : "件数を利用できません";
   }
+  if (status) status.textContent = "";
 }
 
 function markReactionServiceUnavailable(): void {
@@ -385,7 +400,10 @@ function markReactionServiceUnavailable(): void {
 function announce(control: HTMLElement, message: LocalizedReactionMessage): void {
   const status = control.querySelector<HTMLElement>("[data-reaction-status]");
   const copy = currentLanguage() === "en" ? message.en : message.ja;
-  if (status) status.textContent = copy;
+  if (status) {
+    reactionStatusMessages.set(control, message);
+    status.textContent = copy;
+  }
 
   const liveRegion = ensureReactionLiveRegion();
   const announcementVersion = ++liveAnnouncementVersion;
@@ -401,6 +419,7 @@ function clearAnnouncements(entryId: string): void {
   document.querySelectorAll<HTMLElement>(CONTROL_SELECTOR).forEach((control) => {
     if (control.dataset.entryId !== entryId) return;
     const status = control.querySelector<HTMLElement>("[data-reaction-status]");
+    reactionStatusMessages.delete(control);
     if (status) status.textContent = "";
   });
 }
@@ -537,7 +556,10 @@ function chunkIds(ids: string[]): string[][] {
   return chunks;
 }
 
-async function fetchReactions(ids: string[]): Promise<ReactionSnapshot[]> {
+async function fetchReactions(
+  ids: string[],
+  timeoutMs = REACTION_REQUEST_TIMEOUT_MS,
+): Promise<ReactionSnapshot[]> {
   if (ids.length === 0) return [];
   const query = new URLSearchParams({ ids: ids.join(",") });
   const { response, payload } = await requestReactionJson(
@@ -546,6 +568,7 @@ async function fetchReactions(ids: string[]): Promise<ReactionSnapshot[]> {
       credentials: "same-origin",
       headers: { Accept: "application/json" },
     },
+    timeoutMs,
   );
   if (!response.ok) {
     throw new ReactionRequestError(parseErrorCode(payload) ?? "request_failed", response.status);
@@ -857,22 +880,61 @@ async function reconcileReaction(
   fallback: ReactionSnapshot,
   operationVersion: number,
   serviceGeneration: number,
+  desiredLiked: boolean,
+  pollForCommit: boolean,
 ): Promise<ReactionReconciliationResult> {
   let nextSnapshot = fallback;
-  try {
-    const [snapshot] = await fetchReactions([id]);
-    if (!snapshot) throw new Error("reaction is missing");
-    nextSnapshot = snapshot;
-  } catch (error) {
+  const delays = pollForCommit ? REACTION_RECONCILIATION_DELAYS_MS : [0];
+  const deadlineAt = Date.now() + REACTION_RECONCILIATION_DEADLINE_MS;
+
+  for (const delayMs of delays) {
     if (
       !isCurrentReactionOperation(id, operationVersion) ||
       !isCurrentReactionServiceGeneration(serviceGeneration)
     ) {
       return { status: "stale" };
     }
-    if (isPermanentServiceFailure(error)) {
-      markReactionServiceUnavailable();
-      return { status: "permanent-failure", error };
+    const remainingBeforeDelay = deadlineAt - Date.now();
+    if (remainingBeforeDelay <= 0 || delayMs >= remainingBeforeDelay) break;
+    if (delayMs > 0) {
+      await new Promise<void>((resolve) => window.setTimeout(resolve, delayMs));
+    }
+    if (
+      !isCurrentReactionOperation(id, operationVersion) ||
+      !isCurrentReactionServiceGeneration(serviceGeneration)
+    ) {
+      return { status: "stale" };
+    }
+    const remainingBeforeRead = deadlineAt - Date.now();
+    if (remainingBeforeRead <= 0) break;
+    try {
+      const [snapshot] = await fetchReactions(
+        [id],
+        Math.max(
+          1,
+          Math.min(REACTION_RECONCILIATION_READ_TIMEOUT_MS, remainingBeforeRead),
+        ),
+      );
+      if (
+        !isCurrentReactionOperation(id, operationVersion) ||
+        !isCurrentReactionServiceGeneration(serviceGeneration)
+      ) {
+        return { status: "stale" };
+      }
+      if (!snapshot) throw new Error("reaction is missing");
+      nextSnapshot = snapshot;
+      if (snapshot.liked === desiredLiked) break;
+    } catch (error) {
+      if (
+        !isCurrentReactionOperation(id, operationVersion) ||
+        !isCurrentReactionServiceGeneration(serviceGeneration)
+      ) {
+        return { status: "stale" };
+      }
+      if (isPermanentServiceFailure(error)) {
+        markReactionServiceUnavailable();
+        return { status: "permanent-failure", error };
+      }
     }
   }
 
@@ -884,6 +946,14 @@ async function reconcileReaction(
   }
   for (const control of controls) setControlSnapshot(control, nextSnapshot);
   return { status: "reconciled", snapshot: nextSnapshot };
+}
+
+function couldMutationHaveCommitted(error: unknown): boolean {
+  return (
+    !(error instanceof ReactionRequestError) ||
+    error.code === "request_timeout" ||
+    error.code === "invalid_response"
+  );
 }
 
 async function toggleReaction(
@@ -972,6 +1042,8 @@ async function toggleReaction(
       previous,
       operationVersion,
       serviceGeneration,
+      optimistic.liked,
+      couldMutationHaveCommitted(error),
     );
     if (reconciliation.status === "permanent-failure") {
       const permanentFailure = mutationFailureMessage(reconciliation.error);

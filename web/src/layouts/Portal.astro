@@ -44,13 +44,13 @@ const productionHost = new URL(SITE_URL).hostname;
 const footerRun = deriveWorkerRunStatus({
   workerHealth: WORKER_HEALTH,
   fallbackPercent: DASHBOARD_METRICS.fallbackPercent,
-  pendingSummaryEntries: DASHBOARD_METRICS.fallbackEntries,
+  pendingSummaryEntries: DASHBOARD_METRICS.summaryQueueBacklog,
 });
 const footerRunTone = footerRun.tone;
 const footerRunStatus = footerRun.runLabel;
 const footerRunDetail = !WORKER_HEALTH
   ? "open /status"
-  : `last batch ${WORKER_HEALTH.sourcesOk}/${WORKER_HEALTH.sourcesAttempted} src · ${DASHBOARD_METRICS.fallbackEntries} pending`;
+  : `last batch ${WORKER_HEALTH.sourcesOk}/${WORKER_HEALTH.sourcesAttempted} src · summary queue ${DASHBOARD_METRICS.summaryQueueBacklog}`;
 ---
 
 <!doctype html>
@@ -242,6 +242,7 @@ const footerRunDetail = !WORKER_HEALTH
           href="/status"
           aria-label={`Collection health: ${footerRunStatus}. ${footerRunDetail}`}
           title={`Collection health: ${footerRunStatus}. ${footerRunDetail}`}
+          data-summary-queue-backlog={DASHBOARD_METRICS.summaryQueueBacklog}
         >
           <span class={`dot ${footerRunTone}`} data-run-tone={footerRunTone} aria-hidden="true"></span>
           <strong>{footerRunStatus}</strong>

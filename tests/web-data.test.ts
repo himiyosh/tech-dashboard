@@ -78,6 +78,7 @@ const {
   summaryForLangWithFallback,
   titleForLang,
   titleForLangWithFallback,
+  categoryLabel,
   restoreDotsFromUrl,
   jstDateKey,
   entryHref,
@@ -293,8 +294,22 @@ describe("isSummaryNoise", () => {
     expect(isSummaryNoise(e1, "Claude Opus 4.7 released")).toBe(true);
     expect(isSummaryNoise(e1, "  claude opus 4.7 released  ")).toBe(true);
   });
+  it("package または version だけの文字列は noise", () => {
+    expect(isSummaryNoise(e1, "@cline/sdk@0.0.53")).toBe(true);
+    expect(isSummaryNoise(e1, "Cline CLI v3.0.31")).toBe(true);
+    expect(isSummaryNoise(e1, "v2.1.205")).toBe(true);
+  });
   it("本物の要約は noise ではない", () => {
     expect(isSummaryNoise(e1, "Anthropic announced Claude Opus 4.7.")).toBe(false);
+    expect(isSummaryNoise(e1, "Fixes CVE in OpenSSL 3.0.14")).toBe(false);
+  });
+  it("version で終わる説明文を持つ entry は publishable", () => {
+    const entry = {
+      ...e1,
+      summaryJa: "OpenSSL 3.0.14 の CVE を修正した。",
+      summaryEn: "Fixes CVE in OpenSSL 3.0.14",
+    };
+    expect(isPublishableEntry(entry)).toBe(true);
   });
   it("生成途中の junk marker は noise", () => {
     expect(isSummaryNoise(
@@ -304,10 +319,27 @@ describe("isSummaryNoise", () => {
   });
 });
 
+describe("categoryLabel", () => {
+  it("internal category slug を表示名へ変換する", () => {
+    expect(categoryLabel("tech-news")).toBe("News/Policy");
+    expect(categoryLabel("agent-fw")).toBe("Agent Frameworks");
+    expect(categoryLabel("local-llm", "full")).toBe("Local LLM / Open Models");
+  });
+});
+
 describe("isListableEntry", () => {
   it("publishable なエントリは listable", () => {
     expect(isListableEntry(e1)).toBe(true);
     expect(isPublishableEntry(e1)).toBe(true);
+  });
+  it("両言語が表示不能な要約なら publishable ではない", () => {
+    const unusable = {
+      ...e1,
+      summaryJa: e1.title,
+      summaryEn: "Cline CLI v3.0.31",
+    };
+    expect(isPublishableEntry(unusable)).toBe(false);
+    expect(isListableEntry(unusable)).toBe(true);
   });
   it("要約待ちでも実タイトルがあれば listable (LL-074)", () => {
     const pending = {

@@ -1813,6 +1813,72 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: disclosureを開く前の期待値は常時DOMにある省略labelの`textContent()`から取得し、open後はpanelの可視性とfull-labelの`toHaveText()`を別々に検証する。
 - **教訓**: hidden、closed、inactiveなUI stateの内容を期待値として読む場合はDOM contentとrendered textを区別する。非表示状態の値は`textContent()`、表示後の利用者向け検証は`toBeVisible()`と`innerText`/`toHaveText()`を使い分ける。
 
+### LL-264: 3列cardの1件だけが折り返すとGridの行高が全cardへ増幅する
+- **事象**: 最新Publisher dataへ更新すると、`1440x900`のTop-3下端が固定footerへ約13px入り込んだ。3件のcardは同じ`141.48px`高だったが、1件目の`AWS Machine Learning Blog`だけmetadataが`45.40px`へ2行化し、残る2件は`24px`だった。
+- **根本原因**: 3列Gridの各cardは同じrow内でstretchされるため、1件の長いsource名によるmetadata折り返しがrow高を決め、残るcardの可変rowまで引き伸ばした。source disclosureは`min-width:0`を持っていても、metadata flex内で縮む比率とtime/freshnessの固定幅を明示しておらず、source、time、freshnessの合計幅がcard本文幅を超えていた。
+- **対策**: 3列Top-3ではmetadataをnowrapの1行へ固定し、source disclosureだけを`flex:1 1 0`で縮め、timeとfreshnessは`flex:0 0 auto`で保持した。省略されたsource全文は既存のkeyboard/touch対応disclosureで回復する。E2Eは長いsourceをFeaturedとTop-3の双方へ注入し、metadata高、ellipsis、固定footerとの8px安全距離を境界幅行列と`1440x900`で検証する。
+- **教訓**: 同じGrid rowのcardが揃って高くなった場合、全card共通のpaddingだけでなく、最大contentを持つ1件の内部rowを測る。optional labelを省略できる設計では、recoverable labelだけへ縮小余地を与え、時刻や状態badgeのようなatomic metadataは固定幅にする。Gridのuniform heightは最長contentの折り返しを全cardへ増幅するため、実dataに加えて長いstress labelで検証する。
+
+### LL-265: 親flex itemの配分幅より子の最小幅が大きいと内部重なりをpage overflowが検出しない
+- **事象**: `761px`でTop-3のsource flex itemは`13.4px`まで縮んだが、子のdisclosure triggerは`44px`を維持し、時刻と`20.6px`重なった。右railが再表示される`981px`でも同じ衝突を確認した。一方、page横overflow、metadata高さ、ellipsisの既存E2Eはすべて合格していた。
+- **根本原因**: `flex:1 1 0`は親itemを残余幅まで縮めるが、その子の`min-width:44px`までは配分計算へ反映しない。子は親のcontent boxからはみ出してもdocument全体の`scrollWidth`を増やさないため、page-level overflowだけでは兄弟要素との重なりを検出できなかった。viewport幅が1px変わる箇所でもSidebarやright railの表示切替によりcomponent幅が不連続に狭まっていた。
+- **対策**: 3列Top-3で実際に狭くなる`761-836px`と`981-1028px`では、理由行にも含まれる重複時刻をmetadata rowから省き、sourceへ`44px`以上の操作幅を保証して鮮度badgeとのgapを縮めた。Source disclosureはviewport固定panelを子に持つため、祖先へ`container-type`を追加せず、既存layoutのbreakpoint境界をviewport media queryで明示した。E2Eは`761px`と`981px`を含む境界行列でsource trigger、時刻、鮮度badgeの実`DOMRect`を取得し、可視要素間の非交差とsource triggerの操作寸法を直接検証する。
+- **教訓**: responsive cardの安全性は親の幅、高さ、page overflowだけで判定しない。interactive childに最小targetがあるflex rowでは、親への配分幅と子の実幅を別々に測り、兄弟の矩形交差を検査する。component queryが自然に見えても、子にviewport固定UIがある場合はcontainment contractと両立するかを先に確認し、両立しないときは実layoutの不連続点をviewport境界として固定する。
+
+### LL-266: 記事詳細の操作は主目的ごとに1つへ集約する
+- **事象**: 記事詳細に`Copy link`と`Copy title + URL`、複数の元記事link、収集鮮度badgeが並び、ユーザーからbuttonとtagが邪魔で、mobileの`元記事を読む`も判別しにくいと指摘された。
+- **根本原因**: share、source health、本文遷移を追加するたびに既存controlとの目的重複を見直さず、運用情報まで読者の主要action列へ積み上げていた。mobileでは短いCTAだけが残り、遷移先hostを操作前に判断できなかった。
+- **対策**: 外部遷移はhost名付きの`元記事を読む`1件、copyはtitleとURLをまとめる1件へ統合した。記事詳細からcollection freshnessと重複外部linkを除き、source healthはStatusなど本来の運用面に残した。pill型tag群は補助的な`関連トピック`link列へ弱め、mobile CTAは本文幅の44px以上の操作面として検証する。
+- **教訓**: 記事詳細のaction stripは機能数でなく読者の目的で整理する。同じURLを扱うcontrolを複数置かず、読む、共有する、反応するを各1つの明確なgroupへ分ける。tagは主要actionと同じ視覚強度にせず、運用telemetryは読者の判断に直接必要な場合だけ表示する。mobile CTAは動詞だけでなく遷移先を操作前に示す。
+
+### LL-267: generated corpus依存のUI状態は存在を前提にしない
+- **事象**: E2Eがpending summaryや日本語title fallbackを現在の生成dataに必ず含むと仮定し、Publisherが全件を正常補完すると対象0件で失敗した。
+- **根本原因**: deterministicな表示contractと、時刻ごとに変わるgenerated corpusの状態分布を同じbrowser testで必須化していた。品質改善によってoptional stateが消える正常系を考慮していなかった。
+- **対策**: browser testは対象状態を持つcardをselectorで選び、0件ならfully enriched corpusをvalidとするcount guardを置く。fallback helper自体の挙動は生成dataに依存しないunit testで固定する。
+- **教訓**: data-driven UIのoptional stateは「存在する場合の表示」と「存在しない正常状態」を分けて検証する。実corpusに特定fallbackがあることを回帰条件にせず、deterministic logicはfixture/unit、現在のstate distributionはschema/quality telemetryで検証する。
+
+### LL-268: viewport固定panelの祖先にtransformやcontainmentを置かない
+- **事象**: Source disclosure panelを`position:fixed`で画面中央と下端54pxへ配置したが、Top-3 cardのhover transformとcontainer query用containmentの内側ではviewportではなく祖先を基準に移動した。
+- **根本原因**: card単体のmotionとresponsive制御だけを見て、子孫のfixed UIが祖先のcontaining block規則に依存することを設計条件へ含めていなかった。
+- **対策**: disclosureを含むFeaturedとTop-3からtransformとcontainer containmentを外し、responsive切替はviewport media queryへ戻した。E2Eでdesktop/tabletのpanel水平中央とviewport下端offsetを実座標で検証する。
+- **教訓**: `position:fixed`の子を持つcomponentでは、祖先の`transform`、`filter`、`perspective`、`contain`、`container-type`を変更前に検索する。hover motionやcontainer queryを導入する場合も、fixed descendantの座標系を変えないことを実ブラウザで確認する。
+
+### LL-269: DOMRectの検証用projectionはassertする全fieldを保持する
+- **事象**: Top-3 disclosureの実targetは`44px`だったが、E2Eの`visibleRect()`が`DOMRect.height`を返却objectへ含めず、`sourceHeight`を常に`0`として失敗した。
+- **根本原因**: visibility判定ではheightを読んでいたため測定済みだと誤認し、返却projectionからheightだけが欠落していることを見落とした。
+- **対策**: geometry projectionへwidthとheightの両方を保持し、同じobjectから操作target寸法と兄弟要素の交差を検証する。
+- **教訓**: browser測定helperで`DOMRect`をplain objectへ変換するときは、後段assertが参照するfieldを明示的に列挙する。`undefined ?? 0`は測定漏れを実寸0と偽装するため、必要fieldのprojectionと型を同じ変更で確認する。
+
+### LL-270: responsive境界行列は標準desktopのfirst-view安全域を代替しない
+- **事象**: Top-3のresponsive境界行列は再試行なしで通過したが、全smokeの`1440x900`だけが固定footerとの8px安全距離を約2.5px下回った。
+- **根本原因**: 境界行列はsource metadataの折り返しと要素交差を中心に検証し、標準desktopのfirst-view末端を同じtestへ含めていなかった。focused testの成功を全体の垂直密度が安全である証拠として扱っていた。
+- **対策**: Top-3のbase上paddingを3px縮め、`1440x900`の一般home smokeとresponsive境界行列を同じproduction buildで逐次実行した。全72件のE2Eが再試行なしで通ることを完了条件にした。
+- **教訓**: component固有のresponsive testと標準viewportのpage-level density testは役割が異なる。breakpoint修正後はfocused行列だけで完了せず、固定header/footerを含む代表desktopのpanel bottomと全smokeを必ず再確認する。
+
+### LL-271: publishabilityは表示用summary品質contractと同じ判定を使う
+- **事象**: raw summaryが非空でpending markerを含まないentryをpublishableと判定しても、表示helperはtitle echo、汚染文、version名だけの文字列をnoiseとして除外するため、publishableなのに表示可能な要約が無いentryが生まれた。
+- **根本原因**: `hasGeneratedSummary()`と`isSummaryNoise()`が別々の完成条件を持ち、生成完了の判定と読者へ表示できる品質条件が非対称だった。
+- **対策**: publishabilityのsummary判定を`isSummaryNoise()`へ統一し、両言語とも表示不能なentryはlistableなpendingとして扱う。正常な説明文がversion番号で終わる場合を誤除外しないfixtureも追加した。
+- **教訓**: 非同期生成contentの完成条件は「非空」ではなく、実際の表示helperが利用可能と判断する品質contractへ揃える。生成、publish、ranking、表示の各層で完成条件を分岐させない。
+
+### LL-272: reader-facing category表示はslugを直接描画しない
+- **事象**: Ticker、Daily Summary、compact rowが`local-llm`、`agent-fw`、`tech-news`などの内部slugをそのまま表示し、同じカテゴリでも他の画面の表示名と一致しなかった。
+- **根本原因**: category metadataは存在していたが、各componentが`entry.category`を直接描画し、表示名解決を単一helperへ集約していなかった。
+- **対策**: `categoryLabel()`を追加してshort/full labelをmetadataから解決し、該当するrender spotとaccessible nameを同じhelperへ統一した。未知slugだけは読みやすいtitle caseへfallbackする。
+- **教訓**: taxonomy slugはURLと内部key専用にし、読者向け表示とaccessible nameはmetadata由来の共通helperを通す。source labelと同様、横断的な表示変換をcomponentごとに実装しない。
+
+### LL-273: operational labelは同じ意味のmetricを表示する
+- **事象**: footerの`summary queue`表示が実queue backlogではなくdeterministic fallback件数を使い、Statusのqueue backlogと異なる数値を同じ意味のように表示していた。
+- **根本原因**: fallback coverageとqueue backlogをどちらもpending summaryの近似値として扱い、labelとdata sourceの意味を一対一に固定していなかった。
+- **対策**: footerのrun判定と表示を`summaryQueueBacklog`へ統一し、machine-readable属性とvisible textが同じ値であることをE2Eで検証する。
+- **教訓**: operational metricは似た相関指標で代用しない。表示label、判定input、`data-*`属性、Statusのsource of truthを同じfieldへ揃える。
+
+### LL-274: mobile actionのbreakpointはprimary navigation contractへ揃える
+- **事象**: 記事詳細CTAは`620px`以下だけ縦積みだったため、primary navigationがmobile扱いになる`621-720px`で操作が横並びのままになり、狭い本文幅でCTAとcopyが圧縮された。
+- **根本原因**: component固有の旧breakpointを残し、R-015のmobile navigation境界`720px`と同じviewport contractへ更新していなかった。
+- **対策**: 記事詳細action stripを`720px`以下で1列化し、外部CTAを全幅52px、copyを内側余白付き48pxにした。`390px`だけでなく`621px`と`720px`でも寸法とoverflowを検証する。
+- **教訓**: 同じviewportでmobile navigationが有効になるなら、主要actionのlayoutも原則として同じbreakpointへ揃える。代表mobile幅だけでなく旧境界の直後と新境界そのものを回帰行列へ含める。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

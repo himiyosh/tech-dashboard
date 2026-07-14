@@ -1,6 +1,7 @@
 ---
 import {
   CATEGORY_META,
+  categoryLabel,
   entryHref,
   jstDateKey,
   summaryForLang,
@@ -249,7 +250,7 @@ const todayDelta =
               <li style={`--cat-color:${catColorOf(e.category)}`}>
                 <a href={entryHref(e)} class="b-row">
                   <span class="b-num">{num}</span>
-                  <span class="b-cat">{e.category}</span>
+                  <span class="b-cat" title={categoryLabel(e.category)}>{categoryLabel(e.category)}</span>
                   <span class="b-tags">
                     {isImp && <span class="t-tag imp">★</span>}
                     {isRel && <span class="t-tag rel">REL</span>}
@@ -469,7 +470,7 @@ const todayDelta =
   .board > li:last-child { border-bottom: none; }
   .board .b-row {
     display: grid;
-    grid-template-columns: 22px 84px 68px minmax(0, 1fr) auto;
+    grid-template-columns: 22px 118px 68px minmax(0, 1fr) auto;
     grid-template-areas:
       "num cat tags title src"
       "num cat tags summary summary";
@@ -507,7 +508,12 @@ const todayDelta =
     border: 1px solid color-mix(in srgb, var(--cat-color, #7cff9a) 50%, transparent);
     border-radius: 3px;
     background: color-mix(in srgb, var(--cat-color, #7cff9a) 8%, transparent);
-    min-width: 78px; text-align: center;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .board .b-tags {
     grid-area: tags;
@@ -594,6 +600,9 @@ const todayDelta =
       padding: 1px 5px;
       font-size: 9.5px;
       letter-spacing: 0.08em;
+      max-width: min(42vw, 128px);
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
     .board .b-tags { grid-area: tags; justify-self: end; align-self: center; }

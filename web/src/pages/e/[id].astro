@@ -15,7 +15,6 @@ import {
   relatedEntries,
   relativeTime,
   sourceAvgImportance,
-  latestListedCollectedAtForEntry,
   summaryForLang,
   summaryForLangWithFallback,
   titleForLang,
@@ -26,8 +25,7 @@ import {
 import { bodyForEntry } from "../../lib/bodies.ts";
 import { sourceFaviconUrl, sourceHost } from "../../lib/favicon.ts";
 import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../../lib/reaction-copy.ts";
-import { SOURCE_META, sourceAnchorId, sourceAuthority, sourceLabel } from "../../lib/source-meta.ts";
-import { sourceFreshnessStatus } from "../../lib/freshness.ts";
+import { SOURCE_META, sourceAuthority, sourceLabel } from "../../lib/source-meta.ts";
 
 export function getStaticPaths() {
   return ALL_ENTRIES.map((e) => ({
@@ -70,8 +68,6 @@ const srcTier = srcMeta?.tier;
 const srcAuthority = sourceAuthority(entry.source, entry.sourceType);
 const srcAuthorityBadgeClass = ["badge", "authority", srcAuthority.kind].join(" ");
 const srcAuthorityTitle = `${srcAuthority.en} source (${srcAuthority.ja})${srcTier ? ` · registry tier ${srcTier}` : ""}`;
-const sourceStatusAnchor = srcMeta ? sourceAnchorId(entry.source) : null;
-const sourceStatusHref = sourceStatusAnchor ? `/status#${sourceStatusAnchor}` : "/status";
 const srcAvgImp = sourceAvgImportance(entry, 30);
 const srcAvgTitle = `Average importance of this source's last 30 listed entries: ${srcAvgImp.toFixed(1)} out of 3 (1=Info, 2=Medium, 3=High)`;
 
@@ -108,24 +104,6 @@ const sameCategory = relatedEntries(entry, 6);
 const tags = trendingTags(12);
 const { prev, next } = adjacentInCategory(entry);
 const categoryStanding = categoryImportanceStanding(entry);
-
-const latestSourceCollectedAt = latestListedCollectedAtForEntry(entry);
-const freshness = sourceFreshnessStatus(entry, latestSourceCollectedAt, now.getTime());
-const stale = freshness.status === "stale" || freshness.status === "error";
-const latestSourceRelative = relativeTime(latestSourceCollectedAt, now);
-const staleDetail = `latest listed entry collected ${latestSourceRelative} · stale > ${freshness.threshold.staleHrs}h`;
-const freshnessDetail = stale
-  ? `source collection freshness · ${staleDetail}`
-  : `source collection freshness · latest listed entry collected ${latestSourceRelative} · within ${freshness.threshold.staleHrs}h freshness threshold`;
-const collectionFreshnessLabelJa = stale ? "収集元 更新遅延" : "収集元 更新OK";
-const collectionFreshnessLabelEn = stale ? "Source feed stale" : "Source feed fresh";
-const collectionFreshnessDescriptionId = `collection-freshness-description-${entry.id}`;
-const collectionFreshnessDescriptionJa = sourceStatusAnchor
-  ? `ソース収集の状態です。${freshnessDetail}。Status の ${srcDisplay} 行で詳細を確認できます。`
-  : `ソース収集の状態です。${freshnessDetail}。要約の生成状態とは別です。`;
-const collectionFreshnessDescriptionEn = sourceStatusAnchor
-  ? `${freshnessDetail}. Opens the ${srcDisplay} row in Status for details.`
-  : `${freshnessDetail}. This is separate from summary generation.`;
 
 const bodyChars = (body?.bodyJa ?? "").length;
 const readMinutes = bodyChars > 0 ? Math.max(1, Math.round(bodyChars / 500)) : 0;
@@ -308,28 +286,6 @@ const jsonLd = {
               <span>{catName}</span>
             </a>
             {entry.importance === 3 && <span class="ed-hot-pill">🔥 HOT</span>}
-            {stale && (
-              sourceStatusAnchor ? (
-                <a
-                  class="ed-stale-pill"
-                  href={sourceStatusHref}
-                  title={freshnessDetail}
-                  aria-describedby={collectionFreshnessDescriptionId}
-                >
-                  <span class="i18n-ja">⚠ 収集元 更新遅延</span>
-                  <span class="i18n-en" lang="en">⚠ Source feed stale</span>
-                </a>
-              ) : (
-                <span
-                  class="ed-stale-pill"
-                  title={freshnessDetail}
-                  aria-describedby={collectionFreshnessDescriptionId}
-                >
-                  <span class="i18n-ja">⚠ 収集元 更新遅延</span>
-                  <span class="i18n-en" lang="en">⚠ Source feed stale</span>
-                </span>
-              )
-            )}
           </div>
         </div>
 
@@ -367,44 +323,19 @@ const jsonLd = {
             </>)}
           </div>
           <div class="ed-action-strip">
-            {!summaryAbsent && (
-              <a class="ed-header-cta" href={entry.url} target="_blank" rel="noopener nofollow">
-                <span>元記事を読む</span>
-                <span aria-hidden="true">↗</span>
-              </a>
-            )}
-            <button class="ed-share-btn" type="button" data-share-mode="url" data-title={titleDisplay} data-url={shareUrl}>
-              <span aria-hidden="true">#</span> Copy link
-            </button>
-            <button class="ed-share-btn secondary" type="button" data-share-mode="title-url" data-title={titleDisplay} data-url={shareUrl}>
-              <span aria-hidden="true">+</span> Copy title + URL
-            </button>
-            {sourceStatusAnchor ? (
-              <a
-                class={`ed-freshness ${stale ? "warn" : "ok"}`}
-                data-freshness-scope="collection"
-                href={sourceStatusHref}
-                title={freshnessDetail}
-                aria-describedby={collectionFreshnessDescriptionId}
-              >
-                <span class="i18n-ja">{collectionFreshnessLabelJa}</span>
-                <span class="i18n-en" lang="en">{collectionFreshnessLabelEn}</span>
-              </a>
-            ) : (
-              <span
-                class={`ed-freshness ${stale ? "warn" : "ok"}`}
-                data-freshness-scope="collection"
-                title={freshnessDetail}
-                aria-describedby={collectionFreshnessDescriptionId}
-              >
-                <span class="i18n-ja">{collectionFreshnessLabelJa}</span>
-                <span class="i18n-en" lang="en">{collectionFreshnessLabelEn}</span>
+            <a class="ed-header-cta" href={entry.url} target="_blank" rel="noopener nofollow">
+              <span class="ed-header-cta-copy">
+                <span class="i18n-ja">元記事を読む</span>
+                <span class="i18n-en" lang="en">Read original article</span>
+                <small>{sourceHost(entry.url)}</small>
               </span>
-            )}
-            <span id={collectionFreshnessDescriptionId} class="visually-hidden">
-              <span class="i18n-ja">{collectionFreshnessDescriptionJa}</span>
-              <span class="i18n-en" lang="en">{collectionFreshnessDescriptionEn}</span>
-            </span>
+              <span aria-hidden="true">↗</span>
+            </a>
+            <button class="ed-share-btn" type="button" data-share-copy data-title={titleDisplay} data-url={shareUrl}>
+              <span aria-hidden="true">⧉</span>
+              <span class="i18n-ja">タイトルと URL をコピー</span>
+              <span class="i18n-en" lang="en">Copy title + URL</span>
+            </button>
           </div>
           <section
             class="ed-reaction-panel"
@@ -449,10 +380,6 @@ const jsonLd = {
               <span class="i18n-ja">このエントリには AI 要約がまだありません。共有前にタイトル、カテゴリ、原文を確認してください。</span>
               <span class="i18n-en" lang="en">This entry does not have an AI summary yet. Check the title, category, and original source before sharing.</span>
             </p>
-            <a href={entry.url} target="_blank" rel="noopener nofollow">
-              <span class="i18n-ja">原文を確認する</span>
-              <span class="i18n-en" lang="en">Open original source</span>
-            </a>
           </section>
         )}
 
@@ -466,11 +393,6 @@ const jsonLd = {
               <span class="ai-badge">AI</span>
               <span class="ed-tldr-title i18n-ja">{tldrTitleJa}</span>
               <span class="ed-tldr-title i18n-en" lang="en">{tldrTitleEn}</span>
-              <a class="ed-tldr-source" href={entry.url} target="_blank" rel="noopener nofollow">
-                <span class="i18n-ja">原文で検証</span>
-                <span class="i18n-en" lang="en">Verify source</span>
-                <span aria-hidden="true">↗</span>
-              </a>
             </div>
             <div class="ed-tldr-body i18n-ja">
               {pointsJa.length > 1 ? (
@@ -563,24 +485,25 @@ const jsonLd = {
               <span class="i18n-en" lang="en">AI summary digest</span>
             </div>
             <p class="ed-summary-only-note">
-              <span class="i18n-ja">この記事は上記の AI 要約で要点を把握できます。技術的な詳細・コード・図表は元記事に掲載されています。</span>
-              <span class="i18n-en" lang="en">The AI summary above captures the key points. Full detail, code, and figures live in the original article.</span>
+              <span class="i18n-ja">この記事は上記の AI 要約で要点を把握できます。技術的な詳細・コード・図表は、ページ上部の「元記事を読む」から確認できます。</span>
+              <span class="i18n-en" lang="en">The AI summary above captures the key points. Open the original article from the action above for full detail, code, and figures.</span>
             </p>
-            <a class="ed-summary-only-link" href={entry.url} target="_blank" rel="noopener nofollow">
-              <span class="i18n-ja">元記事で全文を読む</span>
-              <span class="i18n-en" lang="en">Read the full article</span>
-              <span aria-hidden="true">↗</span>
-            </a>
           </aside>
         ) : null}
 
         {/* TAGS */}
         {entry.tags.length > 0 && (
-          <div class="ed-tag-bar">
-            {entry.tags.map((t) => (
-              <a class="ed-tag" href={`/t/${t}`}>#{t}</a>
-            ))}
-          </div>
+          <nav class="ed-topics" aria-label="Related topics">
+            <span class="ed-topics-label">
+              <span class="i18n-ja">関連トピック</span>
+              <span class="i18n-en" lang="en">Related topics</span>
+            </span>
+            <span class="ed-topic-links">
+              {entry.tags.map((t) => (
+                <a href={`/t/${encodeURIComponent(t)}`}>{t}</a>
+              ))}
+            </span>
+          </nav>
         )}
 
         {/* META STRIP */}
@@ -635,20 +558,6 @@ const jsonLd = {
           <li><span class="k">Lang</span><span class="v">{entry.lang === "ja" ? "JA" : "EN"}</span></li>
           <li><span class="k">Collected</span><span class="v mono">{fmtDate(entry.collectedAt)}</span></li>
         </ul>
-
-        {/* CTA */}
-        {!summaryAbsent && (
-          <div class="ed-cta-row">
-            <a class="ed-cta" href={entry.url} target="_blank" rel="noopener nofollow">
-              <span>元記事を読む</span>
-              <span aria-hidden="true">↗</span>
-            </a>
-            <span class="ed-cta-host">
-               {entryFavicon && <img src={entryFavicon} alt="" width="14" height="14" loading="lazy" onerror="this.style.display='none'" />}
-              {sourceHost(entry.url)}
-            </span>
-          </div>
-        )}
 
         {!summaryAbsent && (
           <p class="ed-disclaim">
@@ -737,18 +646,10 @@ const jsonLd = {
           <span><strong>{entry.importance}</strong><small>重要度</small></span>
           <span><strong>{entry.lang.toUpperCase()}</strong><small>言語</small></span>
         </div>
-        <div
-          class={`rail-freshness ${stale ? "warn" : "ok"}`}
-          data-freshness-scope="collection"
-          title={freshnessDetail}
-          aria-describedby={collectionFreshnessDescriptionId}
-        >
-          <span class="i18n-ja">{collectionFreshnessLabelJa}</span>
-          <span class="i18n-en" lang="en">{collectionFreshnessLabelEn}</span>
-        </div>
-        {!summaryAbsent && (
-          <a class="rail-cta" href={entry.url} target="_blank" rel="noopener nofollow">元記事を読む <span aria-hidden="true">↗</span></a>
-        )}
+        <p class="rail-published">
+          <span class="i18n-ja">公開 {relativeTime(entry.publishedAt, now)}</span>
+          <span class="i18n-en" lang="en">Published {relativeTime(entry.publishedAt, now)}</span>
+        </p>
       </div>
 
       {/* TOC */}
@@ -834,7 +735,7 @@ const jsonLd = {
   </button>
 
   {/* Share toast */}
-  <div class="ed-toast" id="ed-toast" role="status">URL をコピーしました</div>
+  <div class="ed-toast" id="ed-toast" role="status" aria-live="polite" aria-atomic="true"></div>
 </Portal>
 
 <script is:inline>
@@ -861,8 +762,8 @@ const jsonLd = {
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
-    // Share buttons: copy either URL or title + URL. Pending summaries prefer the upstream URL.
-    var shareButtons = document.querySelectorAll(".ed-share-btn[data-share-mode]");
+    // Pending summaries use the upstream URL; summarized entries use the canonical detail URL.
+    var shareButtons = document.querySelectorAll(".ed-share-btn[data-share-copy]");
     var toast = document.getElementById("ed-toast");
     function showToast(message) {
       if (!toast) return;
@@ -874,18 +775,13 @@ const jsonLd = {
       button.addEventListener("click", async function () {
         var t = button.dataset.title || document.title;
         var u = button.dataset.url || location.href;
-        var text = button.dataset.shareMode === "title-url" ? t + "\n" + u : u;
-        try {
-          if (navigator.share && button.dataset.shareMode === "url") {
-            await navigator.share({ title: t, url: u });
-            return;
-          }
-        } catch (_) {}
+        var text = t + "\n" + u;
+        var isEnglish = document.documentElement.dataset.lang === "en";
         try {
           await navigator.clipboard.writeText(text);
-          showToast(button.dataset.shareMode === "title-url" ? "Title and URL copied" : "URL copied");
+          showToast(isEnglish ? "Title and URL copied" : "タイトルと URL をコピーしました");
         } catch (_) {
-          prompt("Copy", text);
+          prompt(isEnglish ? "Copy title and URL" : "タイトルと URL をコピー", text);
         }
       });
     });
@@ -1005,11 +901,6 @@ const jsonLd = {
     background: rgba(245,158,11,0.18); border: 1px solid rgba(245,158,11,0.55);
     color: #fbbf24; font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
   }
-  .ed-stale-pill {
-    padding: 4px 10px; border-radius: 999px;
-    background: rgba(248,113,113,0.18); border: 1px solid rgba(248,113,113,0.45);
-    color: #f87171; font-size: 11px; font-weight: 600;
-  }
 
   /* TITLE */
   .ed-head { padding: 24px 32px 18px; border-bottom: 1px dashed var(--border); }
@@ -1066,16 +957,33 @@ const jsonLd = {
   }
   .ed-reaction-copy a:hover { text-decoration: underline; }
   .ed-header-cta {
-    display: inline-flex; align-items: center; gap: 7px;
+    display: inline-flex; align-items: center; justify-content: space-between; gap: 18px;
     min-height: 44px;
     box-sizing: border-box;
-    padding: 8px 12px;
+    padding: 7px 14px;
     border-radius: 8px;
     background: var(--cat-color);
     color: #0c0c0a;
     text-decoration: none;
     font-size: 12.5px;
     font-weight: 800;
+  }
+  .ed-header-cta-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    min-width: 0;
+  }
+  .ed-header-cta-copy small {
+    max-width: 34ch;
+    overflow: hidden;
+    color: color-mix(in srgb, #0c0c0a 70%, transparent);
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .ed-action-strip .ed-share-btn {
     min-height: 44px;
@@ -1084,18 +992,6 @@ const jsonLd = {
     padding: 8px 12px;
     border-radius: 8px;
   }
-  .ed-freshness {
-    display: inline-flex; align-items: center;
-    min-height: 44px;
-    box-sizing: border-box;
-    padding: 0 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-size: 11.5px;
-  }
-  .ed-freshness.ok { color: var(--success); border-color: color-mix(in srgb, var(--success) 36%, var(--border)); }
-  .ed-freshness.warn { color: #f87171; border-color: rgba(248,113,113,0.4); }
 
   .ed-pending-summary {
     margin: 24px 32px 0;
@@ -1111,15 +1007,10 @@ const jsonLd = {
     font-size: 13px;
   }
   .ed-pending-summary p {
-    margin: 0 0 10px;
+    margin: 0;
     color: var(--text-2);
     font-size: 13px;
     line-height: 1.65;
-  }
-  .ed-pending-summary a {
-    color: var(--important);
-    font-size: 12px;
-    font-weight: 800;
   }
 
   /* TL;DR */
@@ -1132,14 +1023,6 @@ const jsonLd = {
     border: 1px solid color-mix(in srgb, var(--cat-color) 28%, var(--border));
   }
   .ed-tldr-label { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .ed-tldr-source {
-    margin-left: auto;
-    color: var(--muted);
-    font-size: 11px;
-    font-weight: 650;
-    text-decoration: none;
-  }
-  .ed-tldr-source:hover { color: var(--accent); }
   .ai-badge {
     display: inline-block; padding: 3px 8px; border-radius: 5px;
     background: var(--cat-color); color: #0c0c0a;
@@ -1147,23 +1030,23 @@ const jsonLd = {
   }
   .ed-tldr-title { font-size: 13px; color: var(--text); font-weight: 700; }
   .ed-share-btn {
-    margin-left: auto;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: var(--surface);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--bg-2);
     border: 1px solid var(--border);
     color: var(--text-2);
     font-size: 11.5px;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.12s;
   }
   .ed-share-btn:hover {
     border-color: color-mix(in srgb, var(--cat-color) 50%, var(--border));
     color: var(--cat-color);
-  }
-  .ed-share-btn.secondary {
-    margin-left: 0;
-    background: color-mix(in srgb, var(--bg-2) 72%, transparent);
   }
   .ed-tldr-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
   .ed-tldr-list li {
@@ -1254,8 +1137,8 @@ const jsonLd = {
     color: var(--muted); font-size: 13px;
   }
 
-  /* Summary-first (LL-112): entries with no long-form body show an honest AI
-     digest note + read-original link, not a false "body coming soon" promise. */
+  /* Entries without a long-form body keep the summary honest and refer back to
+     the single source action above instead of duplicating the CTA. */
   .ed-summary-only {
     margin: 4px 32px 4px; padding: 18px 20px;
     border: 1px solid var(--border); border-radius: 12px;
@@ -1269,30 +1152,40 @@ const jsonLd = {
   .ed-summary-only-note {
     margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.7;
   }
-  .ed-summary-only-link {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 8px 14px; border-radius: 8px;
-    background: var(--cat-color); color: #0c0c0a;
-    text-decoration: none; font-size: 12.5px; font-weight: 800;
-  }
-  .ed-summary-only-link:hover { filter: brightness(1.06); }
 
-  /* TAGS */
-  .ed-tag-bar {
+  /* RELATED TOPICS */
+  .ed-topics {
     margin: 12px 32px 0; padding: 14px 0 0;
     border-top: 1px dashed var(--border);
-    display: flex; flex-wrap: wrap; gap: 6px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    color: var(--muted-2);
+    font-size: 11.5px;
   }
-  .ed-tag {
-    display: inline-block; padding: 4px 10px; border-radius: 999px;
-    background: var(--bg-2); border: 1px solid var(--border);
-    color: var(--muted); font-size: 12px; text-decoration: none;
-    transition: all 0.12s;
+  .ed-topics-label {
+    flex: 0 0 auto;
+    font-weight: 700;
+    letter-spacing: 0.02em;
   }
-  .ed-tag:hover {
-    color: var(--cat-color);
-    border-color: color-mix(in srgb, var(--cat-color) 50%, var(--border));
-    background: color-mix(in srgb, var(--cat-color) 8%, var(--bg-2));
+  .ed-topic-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 0;
+    min-width: 0;
+  }
+  .ed-topic-links a {
+    color: var(--muted);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--muted) 45%, transparent);
+    text-underline-offset: 3px;
+  }
+  .ed-topic-links a:hover { color: var(--cat-color); }
+  .ed-topic-links a:not(:last-child)::after {
+    content: "·";
+    margin: 0 7px;
+    color: var(--muted-2);
+    text-decoration: none;
   }
 
   /* META STRIP */
@@ -1325,21 +1218,6 @@ const jsonLd = {
     width: var(--w, 0%); background: var(--cat-color); border-radius: 2px;
   }
 
-  /* CTA */
-  .ed-cta-row {
-    margin: 22px 32px 0; padding-top: 18px;
-    border-top: 1px solid var(--border);
-    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  }
-  .ed-cta {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 12px 22px; background: var(--cat-color); color: #0c0c0a;
-    border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none;
-    box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--cat-color) 60%, transparent);
-    transition: transform 0.12s, box-shadow 0.12s;
-  }
-  .ed-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 18px -6px color-mix(in srgb, var(--cat-color) 70%, transparent); }
-  .ed-cta-host { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 12px; }
   .ed-disclaim { margin: 14px 32px 24px; color: var(--muted-2); font-size: 11px; line-height: 1.6; }
 
   /* PREV/NEXT */
@@ -1514,22 +1392,10 @@ const jsonLd = {
   }
   .rail-metrics strong { color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; }
   .rail-metrics small { color: var(--muted-2); font-size: 10px; }
-  .rail-freshness {
-    margin-bottom: 10px;
-    font-size: 11.5px;
+  .rail-published {
+    margin: 0;
     color: var(--muted);
-  }
-  .rail-freshness.ok { color: var(--success); }
-  .rail-freshness.warn { color: #f87171; }
-  .rail-cta {
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    padding: 9px 10px;
-    border-radius: 8px;
-    background: var(--cat-color);
-    color: #0c0c0a;
-    text-decoration: none;
-    font-size: 12.5px;
-    font-weight: 800;
+    font-size: 11.5px;
   }
   .rail-fav { border-radius: 3px; }
   .rail-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -1604,7 +1470,7 @@ const jsonLd = {
   }
   @media (max-width: 820px) {
     .ed-hero { height: 190px; }
-    .ed-head, .ed-pending-summary, .ed-tldr, .ed-body, .ed-tag-bar, .ed-meta-strip, .ed-cta-row, .ed-disclaim {
+    .ed-head, .ed-pending-summary, .ed-tldr, .ed-body, .ed-topics, .ed-meta-strip, .ed-disclaim {
       margin-left: 18px; margin-right: 18px;
     }
     .ed-head { padding: 18px 0 14px; }
@@ -1620,7 +1486,27 @@ const jsonLd = {
     .ed-pn { grid-template-columns: 1fr; }
     .ed-fab { right: 14px; bottom: 14px; }
   }
-  @media (max-width: 620px) {
+  @media (max-width: 720px) {
+    .ed-action-strip {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
+      margin-inline: -18px;
+    }
+    .ed-header-cta {
+      width: 100%;
+      min-height: 52px;
+      padding-inline: 18px;
+      border-radius: 0;
+    }
+    .ed-action-strip .ed-share-btn {
+      width: calc(100% - 36px);
+      min-height: 48px;
+      margin-inline: 18px;
+    }
+    .ed-header-cta-copy small {
+      max-width: min(56ch, calc(100vw - 100px));
+    }
     .ed-reaction-panel {
       flex-direction: column;
       align-items: flex-start;

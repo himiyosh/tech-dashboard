@@ -1,5 +1,12 @@
 ---
-import { CATEGORY_META, entryHref, jstDateKey, titleForLangWithFallback, type NormalizedEntry } from "../lib/data.ts";
+import {
+  CATEGORY_META,
+  categoryLabel,
+  entryHref,
+  jstDateKey,
+  titleForLangWithFallback,
+  type NormalizedEntry,
+} from "../lib/data.ts";
 import { sourceLabel } from "../lib/source-meta.ts";
 
 export interface Props {
@@ -56,7 +63,7 @@ const catColorOf = (slug: string): string =>
               aria-hidden={i === 0 ? "false" : "true"}
               tabindex={i === 0 ? undefined : "-1"}
             >
-              <span class="tb-cat">{e.category}</span>
+              <span class="tb-cat">{categoryLabel(e.category)}</span>
               {isImp && <span class="tb-tag imp">★</span>}
               {isRel && <span class="tb-tag rel">REL</span>}
               <span

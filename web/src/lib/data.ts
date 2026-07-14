@@ -173,12 +173,7 @@ export function isDeterministicFallbackEntry(e: NormalizedEntry): boolean {
 }
 
 function hasGeneratedSummary(e: NormalizedEntry): boolean {
-  const summaryJa = (e.summaryJa ?? "").trim();
-  const summaryEn = (e.summaryEn ?? "").trim();
-  return (
-    (!!summaryJa && !isPendingSummaryText(summaryJa)) ||
-    (!!summaryEn && !isPendingSummaryText(summaryEn))
-  );
+  return [e.summaryJa, e.summaryEn].some((value) => !isSummaryNoise(e, value));
 }
 
 const MUTABLE_GITHUB_RELEASE_ALIAS_RE =
@@ -243,9 +238,14 @@ export function isSummaryNoise(e: NormalizedEntry, text: string | undefined | nu
   if (isPendingSummaryText(value)) return true;
   const lower = value.toLowerCase();
   if (isContaminatedSummaryText(value)) return true;
-  return [e.title, e.titleEn, e.titleJa].some(
+  if ([e.title, e.titleEn, e.titleJa].some(
     (t) => !!t && t.trim().toLowerCase() === lower,
-  );
+  )) return true;
+  if (/^v?\d+(?:\.\d+){1,3}(?:[-+][a-z0-9.-]+)?$/i.test(value)) return true;
+  if (/^@?[a-z0-9][a-z0-9._/-]*@v?\d+(?:\.\d+){1,3}(?:[-+][a-z0-9.-]+)?$/i.test(value)) {
+    return true;
+  }
+  return /^[a-z][a-z0-9._/-]*(?:\s+[a-z][a-z0-9._/-]*){0,3}\s+v\d+(?:\.\d+){1,3}(?:[-+][a-z0-9.-]+)?$/i.test(value);
 }
 
 export const RAW_ENTRIES: readonly NormalizedEntry[] = data.entries;
@@ -403,6 +403,19 @@ export const CATEGORY_META: ReadonlyArray<CategoryMeta> = [
     { slug: "research", name: "Papers / Benchmarks", shortLabel: "Papers/Benchmarks", searchAliases: ["benchmark", "benchmarks", "paper", "papers", "research"], color: "#fda4af", initial: "Pb", emoji: "\u{1F52C}", group: "research" },
     { slug: "tech-news", name: "Industry & Policy", shortLabel: "News/Policy", color: "#fb923c", initial: "Ip", emoji: "\u{1F4F0}", group: "industry" },
   ];
+
+export function categoryLabel(
+  category: Category,
+  variant: "short" | "full" = "short",
+): string {
+  const meta = CATEGORY_META.find((item) => item.slug === category);
+  if (meta) return variant === "full" ? meta.name : meta.shortLabel;
+  return category
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 /**
  * Categories sorted alphabetically for navigation/directory lists (sidebar,

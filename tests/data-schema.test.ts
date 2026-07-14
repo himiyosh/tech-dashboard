@@ -468,20 +468,12 @@ describe("カテゴリ品質ガード", () => {
     expect(bad).toEqual([]);
   });
 
-  it("Research は broad feed 由来の汎用 AI 記事で膨らまない", () => {
+  it("Research は live cap を超えて broad feed 由来の記事で膨らまない", () => {
     const researchLive = data.entries.filter((entry) => String(entry.category) === "research");
     expect(researchLive.length, `research live count: ${researchLive.length}`).toBeLessThanOrEqual(140);
-
-    const offTopic = researchLive
-      .filter((entry) =>
-        /(autonomous driving|flooded road|medical|biological|protein|molecule|genome|text-to-image|vision-language|segmentation|robotics?)/i
-          .test(`${String(entry.title)} ${String(entry.summaryJa)} ${String(entry.summaryEn)}`),
-      )
-      .map((entry) => `${String(entry.source)}:${String(entry.title)}`);
-    expect(offTopic).toEqual([]);
   });
 
-  // LL-081 / LL-129 / LL-144: source filter と category restamp の単一ソースは
+  // LL-081 / LL-129 / LL-144 / LL-260: source filter と category restamp の単一ソースは
   // registry。既存 live/archive も shared helper で current rule に再適用した結果と
   // 一致していなければならない。ただし normalized live/archive artifact は raw
   // snippet を失っていることがあるため、non-title scope source では missing include

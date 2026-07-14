@@ -5,7 +5,9 @@ import {
   assertArchiveMonthBaseline,
   assertHistoryBaselinePair,
   buildIncrementalStats,
+  hasArchiveTagChanges,
   parseBaselineJson,
+  selectArchiveInspectionMonths,
   selectArchiveUpdateEntries,
 } from "../worker/src/index.ts";
 
@@ -50,6 +52,29 @@ describe("archive incremental scope (LL-152)", () => {
       "new",
     ]);
     expect(selectArchiveUpdateEntries(null, [unchanged]).map((item) => item.id)).toEqual(["unchanged"]);
+  });
+
+  it("inspects every indexed month only when final live tags changed", () => {
+    const unchanged = entry("shared", "2026-06-20T00:00:00.000Z");
+    const summaryOnly = { ...unchanged, summaryEn: "Updated English summary" };
+    const tagChange = { ...unchanged, tags: ["test", "agent"] };
+    const archiveIndex = {
+      months: ["2026-03", "2026-06"],
+      perMonth: { "2026-03": 10, "2026-06": 20 },
+    };
+
+    expect(hasArchiveTagChanges({ entries: [unchanged] }, [summaryOnly])).toBe(false);
+    expect(hasArchiveTagChanges({ entries: [unchanged] }, [tagChange])).toBe(true);
+    expect(hasArchiveTagChanges({ entries: [unchanged] }, [
+      unchanged,
+      entry("new", "2026-07-01T00:00:00.000Z"),
+    ])).toBe(false);
+    expect(selectArchiveInspectionMonths(archiveIndex, ["2026-07"], false)).toEqual(["2026-07"]);
+    expect(selectArchiveInspectionMonths(archiveIndex, ["2026-07"], true)).toEqual([
+      "2026-03",
+      "2026-06",
+      "2026-07",
+    ]);
   });
 
   describe("archive baseline publish guards", () => {
@@ -152,6 +177,30 @@ describe("archive incremental scope (LL-152)", () => {
     expect(out.byMonth.find((month) => month.month === "2026-05")?.count).toBe(1);
     expect(out.byMonth.find((month) => month.month === "2026-06")?.count).toBe(3);
     expect(out.byMonth.find((month) => month.month === "2026-06")?.byCategory.research).toBe(1);
+  });
+
+  it("dedupes both sides of a cross-month stats delta by canonical URL", () => {
+    const march = entry("shared-march", "2026-03-01T00:00:00.000Z");
+    const june = {
+      ...entry("shared-june", "2026-06-01T00:00:00.000Z"),
+      url: march.url,
+    };
+    const existing = buildStatsPayload([june], GEN);
+    const newMarch = { ...march, category: "research" as const };
+    const newJune = { ...june, category: "research" as const };
+
+    const out = buildIncrementalStats({
+      existing,
+      removed: [march, june],
+      added: [newMarch, newJune],
+      liveCount: 1,
+      generatedAt: GEN,
+    });
+
+    expect(out.totals.allTime).toBe(1);
+    expect(out.byMonth.find((month) => month.month === "2026-06")?.count).toBe(1);
+    expect(out.byMonth.find((month) => month.month === "2026-06")?.byCategory.research).toBe(1);
+    expect(out.byMonth.find((month) => month.month === "2026-06")?.byCategory["tech-news"]).toBeUndefined();
   });
 });
 

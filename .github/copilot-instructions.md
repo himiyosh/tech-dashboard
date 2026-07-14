@@ -1687,7 +1687,17 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: entry ごとの非同期 mutation に所有世代がなく、await 後の snapshot、busy state、toast を「現在も最新の操作か」確認せず適用していた。rollback で再操作を許すことと、先行 Promise の失効を分離していなかった。
 - **対策**: entry ID ごとに単調増加する operation version を持ち、mutation response と失敗後 reconciliation の await 後に version を検証する。新しい操作が開始済みなら古い snapshot、busy 解除、announcement、toast をすべて破棄する。Playwright で先行失敗の GET を保留し、後続 retry 成功後に古い GET を返しても成功状態が維持される競合を固定した。
 - **教訓**: 楽観更新を rollback 後すぐ再試行可能にする UI は、再同期を待つだけでなく過去世代の非同期結果を失効させる必要がある。async state machine は operation ID / generation を持ち、data、busy、notification の全副作用を同じ所有権 gate へ通す。
+### LL-243: archive enrichment の union merge 後は final live taxonomy へ完全同期する
+- **事象**: scheduled Publisher の generated snapshot で、同一記事の live entry と archive entry の tags が一致せず、`matching live/archive entries have the same tags` data schema gate が失敗した。checkout 済み artifact は一致しており、失敗は Publisher run 内の archive merge 後に発生していた。
+- **根本原因**: `mergeEntryEnrichment()` は historical enrichment を失わないため tags を union する。live taxonomy から tag が削除、縮小、並び替えされても、archive 側には古い tag が残るため、union merge だけでは exact parity を保証できなかった。さらに runtime Publisher は incoming entry の月だけを読み、同じ canonical URL が別の archive 月にもある場合、そのコピーへ同期処理が届かなかった。
+- **対策**: `synchronizeArchiveTagsFromLive()` を archive core の共有 helper に移し、ID、次に canonical URL で対応する final live entry を解決して tags 配列を完全置換する。final live tags が baseline から変わった run は全 indexed archive 月を検査し、実際に incoming entry または tag replacement がある月だけを commit と stats delta に含める。stats の removed / added は両方を canonical URL で対称 dedupeする。migration も同じ同期 helper を使い、archive-only entry の historical tags は維持する。
+- **教訓**: union merge は enrichment 保全には適するが、live artifact と完全一致すべき taxonomy field の最終契約には使えない。exact parity が必要な field は canonical live artifact を source of truth とし、runtime と migration の final artifact 境界で共有 helperにより同期する。月別保存では incoming 月だけを同期対象とみなさず、canonical duplicate が存在し得る全月を検査対象、実変更月だけを write / stats 対象として分離する。
 
+### LL-244: push の HTTP/2 framing failure は remote ref を照合してから HTTP/1.1 で再試行する
+- **事象**: 品質 hook がすべて成功した `git push` が `curl 16 Error in the HTTP2 framing layer` と `unexpected disconnect` で exit 1 になり、末尾に `Everything up-to-date` も表示された。remote branch は実際には作成されていなかった。
+- **根本原因**: hook 完了後の GitHub への pack 送信が HTTP/2 transport で切断された。末尾の文言だけでは remote ref の更新結果を判定できず、成功扱いすると未 push を見逃す。
+- **対策**: `git ls-remote --heads origin <ref>` で remote ref と local commit SHA を直接照合する。未反映で、エラーが HTTP/2 framing layer に限定される場合は、安全 hook を維持したまま `git -c http.version=HTTP/1.1 push` で再試行する。再試行後も remote ref を確認する。
+- **教訓**: push の成否は標準出力の補助文言で推測せず、exit code と remote ref の SHA で確定する。通信方式の切替は `--no-verify` や force の代替ではなく、同じ non-force push と品質 hook を保った transport 修復として限定する。
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -32,6 +32,11 @@ export interface ArchiveBuildStats {
   entriesSkippedHot: number;
 }
 
+export interface ArchiveTagSyncResult {
+  entries: NormalizedEntry[];
+  changed: number;
+}
+
 export function archiveBucketOf(entry: NormalizedEntry): string {
   const iso = entry.publishedAt ?? entry.collectedAt;
   return iso.slice(0, 7);
@@ -135,6 +140,43 @@ export function mergeArchiveEntries(
     const bTime = b.publishedAt ? Date.parse(b.publishedAt) : 0;
     return bTime - aTime;
   });
+}
+
+/**
+ * Keep overlapping archive records aligned with the final live taxonomy.
+ *
+ * Archive merging intentionally unions historical enrichment. Tags are
+ * different: the live artifact is the current taxonomy source of truth, so an
+ * obsolete archive tag must not survive that union.
+ */
+export function synchronizeArchiveTagsFromLive(
+  archiveEntries: readonly NormalizedEntry[],
+  liveEntries: readonly NormalizedEntry[],
+): ArchiveTagSyncResult {
+  const liveById = new Map<string, NormalizedEntry>();
+  const liveByCanonical = new Map<string, NormalizedEntry>();
+
+  for (const entry of liveEntries) {
+    liveById.set(entry.id, entry);
+    const key = canonicalUrlKey(entry.url);
+    if (key) liveByCanonical.set(key, entry);
+  }
+
+  let changed = 0;
+  const entries = archiveEntries.map((entry) => {
+    const key = canonicalUrlKey(entry.url);
+    const live =
+      liveById.get(entry.id) ??
+      (key ? liveByCanonical.get(key) : undefined);
+    if (!live || JSON.stringify(entry.tags) === JSON.stringify(live.tags)) {
+      return entry;
+    }
+
+    changed += 1;
+    return { ...entry, tags: [...live.tags] };
+  });
+
+  return { entries, changed };
 }
 
 export function buildArchiveMonthFile(

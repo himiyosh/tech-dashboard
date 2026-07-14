@@ -1,8 +1,270 @@
 {
-  "generatedAt": "2026-07-13T08:45:39.142Z",
+  "generatedAt": "2026-07-14T02:26:16.348Z",
   "month": "2026-07",
-  "count": 525,
+  "count": 538,
   "entries": [
+    {
+      "id": "a237b2dca29c1096",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/kooohei/items/d381b14e2930040e2ff2",
+      "title": "【AWS】Gemma 4をセルフホスティングしてみた〜クラッシュを回避するインスタンス選定とメモリのリアル〜",
+      "titleJa": "【AWS】Gemma 4をセルフホスティングしてみた〜クラッシュを回避するインスタンス選定とメモリのリアル〜",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-14T02:00:14.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "llm",
+        "open-model",
+        "qiita"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに オープンソースLLM（オープンウェイトモデル）の進化が止まりませんね。最近発表されたGoogleの 「Gemma 4」 は、Apache 2.0ライセンスで商用利用もしやすく、マルチモーダル対応やMoE（Mixture-of-Experts）アーキテクチャの採用...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGODIwOTAlMkZwcm9maWxlLWltYWdlcyUyRjE3MDAxODQwODM_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWQ1YWVlNWVkODdiZDBjNmJlZGUxYjhlM2E5NjY3NTYz%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY5NDQ5Y2MxZGYzZDNiNGNjZWRkOTA1MDQzZGNiMDAyZTVjOGMxZmVjJTJGb3JpZ2luYWwuanBnJTNGMTYxMzM2NzQ1NT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0wZDIyYjhhMjYyZWY2YzAxMWI0M2MyNzVmNmQ5NTM1NQ%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D907ce2b76905b12c00bc494ba192cd7e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwQVdTJUUzJTgwJTkxR2VtbWElMjA0JUUzJTgyJTkyJUUzJTgyJUJCJUUzJTgzJUFCJUUzJTgzJTk1JUUzJTgzJTlCJUUzJTgyJUI5JUUzJTgzJTg2JUUzJTgyJUEzJUUzJTgzJUIzJUUzJTgyJUIwJUUzJTgxJTk3JUUzJTgxJUE2JUUzJTgxJUJGJUUzJTgxJTlGJUUzJTgwJTlDJUUzJTgyJUFGJUUzJTgzJUE5JUUzJTgzJTgzJUUzJTgyJUI3JUUzJTgzJUE1JUUzJTgyJTkyJUU1JTlCJTlFJUU5JTgxJUJGJUUzJTgxJTk5JUUzJTgyJThCJUUzJTgyJUE0JUUzJTgzJUIzJUUzJTgyJUI5JUUzJTgyJUJGJUUzJTgzJUIzJUUzJTgyJUI5JUU5JTgxJUI4JUU1JUFFJTlBJUUzJTgxJUE4JUUzJTgzJUExJUUzJTgzJUEyJUUzJTgzJUFBJUUzJTgxJUFFJUUzJTgzJUFBJUUzJTgyJUEyJUUyJTgwJUE2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MWY3ZDNkYzRmMmM1M2FkYWUxMGMwMzdhMjA3ZTQ1YmM&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBrb29vaGVpJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9OTM5ODgxODJjMWIzNjE2MzNjMDc5ZTNiNzQ1ZGZlODY&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=44OP44Oz44K444Ol5qCq5byP5Lya56S-&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=144820360467f100d3499f8f9b1dd8fd",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGODIwOTAlMkZwcm9maWxlLWltYWdlcyUyRjE3MDAxODQwODM_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWQ1YWVlNWVkODdiZDBjNmJlZGUxYjhlM2E5NjY3NTYz%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY5NDQ5Y2MxZGYzZDNiNGNjZWRkOTA1MDQzZGNiMDAyZTVjOGMxZmVjJTJGb3JpZ2luYWwuanBnJTNGMTYxMzM2NzQ1NT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0wZDIyYjhhMjYyZWY2YzAxMWI0M2MyNzVmNmQ5NTM1NQ%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D907ce2b76905b12c00bc494ba192cd7e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwQVdTJUUzJTgwJTkxR2VtbWElMjA0JUUzJTgyJTkyJUUzJTgyJUJCJUUzJTgzJUFCJUUzJTgzJTk1JUUzJTgzJTlCJUUzJTgyJUI5JUUzJTgzJTg2JUUzJTgyJUEzJUUzJTgzJUIzJUUzJTgyJUIwJUUzJTgxJTk3JUUzJTgxJUE2JUUzJTgxJUJGJUUzJTgxJTlGJUUzJTgwJTlDJUUzJTgyJUFGJUUzJTgzJUE5JUUzJTgzJTgzJUUzJTgyJUI3JUUzJTgzJUE1JUUzJTgyJTkyJUU1JTlCJTlFJUU5JTgxJUJGJUUzJTgxJTk5JUUzJTgyJThCJUUzJTgyJUE0JUUzJTgzJUIzJUUzJTgyJUI5JUUzJTgyJUJGJUUzJTgzJUIzJUUzJTgyJUI5JUU5JTgxJUI4JUU1JUFFJTlBJUUzJTgxJUE4JUUzJTgzJUExJUUzJTgzJUEyJUUzJTgzJUFBJUUzJTgxJUFFJUUzJTgzJUFBJUUzJTgyJUEyJUUyJTgwJUE2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MWY3ZDNkYzRmMmM1M2FkYWUxMGMwMzdhMjA3ZTQ1YmM&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBrb29vaGVpJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9OTM5ODgxODJjMWIzNjE2MzNjMDc5ZTNiNzQ1ZGZlODY&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=44OP44Oz44K444Ol5qCq5byP5Lya56S-&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=144820360467f100d3499f8f9b1dd8fd",
+        "alt": "【AWS】Gemma 4をセルフホスティングしてみた〜クラッシュを回避するインスタンス選定とメモリのリアル〜",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "d58173a88a7c2dce",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/hermes-agent-maker-nous-research-in-talks-for-new-funding-at-1-5b-valuation/",
+      "title": "Hermes agent maker Nous Research in talks for new funding at $1.5B valuation",
+      "titleJa": "",
+      "titleEn": "Hermes agent maker Nous Research in talks for new funding at $1.5B valuation",
+      "lang": "en",
+      "publishedAt": "2026-07-13T23:31:18.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "agent",
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The company is raising at least $75 million, led by Robot Ventures, with significant participation from USV and other prominent investors."
+    },
+    {
+      "id": "3179bd82363ff441",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/satya-nadella-has-issued-a-shocking-warning-to-companies-using-ai/",
+      "title": "Satya Nadella has issued a shocking warning to companies using AI",
+      "titleJa": "",
+      "titleEn": "Satya Nadella has issued a shocking warning to companies using AI",
+      "lang": "en",
+      "publishedAt": "2026-07-13T20:59:00.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Of all the debates raging about the potential downsides of AI, there is one worry causing the most hand-wringing among AI enthusiasts in Silicon Valley — that the giant AI labs that sell proprietary models are somehow acting like Trojan horses."
+    },
+    {
+      "id": "f0b3c4575103eafe",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/apple-says-former-employee-exploited-rare-bug-to-download-confidential-files-after-leaving-for-openai/",
+      "title": "Apple says former employee exploited ‘rare’ bug to download confidential files after leaving for OpenAI",
+      "titleJa": "",
+      "titleEn": "Apple says former employee exploited ‘rare’ bug to download confidential files after leaving for OpenAI",
+      "lang": "en",
+      "publishedAt": "2026-07-13T20:00:17.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Apple would not comment on the \"security breach,\" which allegedly allowed a former employee to download sensitive files from Apple's network long after he departed the company for rival OpenAI."
+    },
+    {
+      "id": "38e0e99b93bb5b72",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/the-wildest-allegations-in-apples-trade-secrets-lawsuit-against-openai/",
+      "title": "The wildest allegations in Apple’s trade secrets lawsuit against OpenAI",
+      "titleJa": "",
+      "titleEn": "The wildest allegations in Apple’s trade secrets lawsuit against OpenAI",
+      "lang": "en",
+      "publishedAt": "2026-07-13T18:22:10.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Apple’s trade secrets lawsuit against OpenAI contains allegations that range from employees joking about unauthorized access to Apple’s systems to claims that job candidates were asked to bring Apple hardware to interviews. Here are the complaint’s most eye-catching claims."
+    },
+    {
+      "id": "8b8d145d6565a1a4",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/should-ai-help-you-get-away-with-killing-your-spouse/",
+      "title": "Should AI help you get away with killing your spouse?",
+      "titleJa": "",
+      "titleEn": "Should AI help you get away with killing your spouse?",
+      "lang": "en",
+      "publishedAt": "2026-07-13T16:31:23.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "What does a world of total user-aligned AI actually look like?"
+    },
+    {
+      "id": "9a190d9170906986",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/anthropic-starts-localizing-claude-pricing-for-india-its-biggest-market-after-the-us/",
+      "title": "Anthropic starts localizing Claude pricing for India, its biggest market after the US",
+      "titleJa": "",
+      "titleEn": "Anthropic starts localizing Claude pricing for India, its biggest market after the US",
+      "lang": "en",
+      "publishedAt": "2026-07-13T15:34:59.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Claude users in India are starting to see Indian rupee-denominated subscription plans."
+    },
+    {
+      "id": "92f16f4ebfcac8d7",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kaizenn722/articles/automation-principles-in-ai-era",
+      "title": "AI導入で逆に非効率化した人へ:時代を超えて効く自動化5原則と実践コード",
+      "titleJa": "AI導入で逆に非効率化した人へ:時代を超えて効く自動化5原則と実践コード",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-13T15:16:43.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 「AIツールを導入したら、かえって作業時間が増えた」——2025年以降、こうした声をよく聞くようになりました。 ChatGPTやCopilotに指示を出すたびにプロンプトを調整し、出力をいちいち目視チェックし、期待と違えば再実行する。気づけば**「AIに仕事を頼む」こと自体が新しい作業**になっている——これは自動化ではなく、単なる作業の付け替えです。 筆者はPythonでの金融データ収集(J-Quants / FRED)、Discord bot運用、ローカルLLMを組み込んだパイプラインなど、日常的に「自動化」を作っています。 その経験から言"
+    },
+    {
+      "id": "bd08087cbd5c4e64",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/waze-adds-new-ai-powered-features-and-customization-updates/",
+      "title": "Waze adds new AI-powered features and customization updates",
+      "titleJa": "",
+      "titleEn": "Waze adds new AI-powered features and customization updates",
+      "lang": "en",
+      "publishedAt": "2026-07-13T14:18:16.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Some of the new features are powered by Google's Gemini AI assistant, which reflects the tech giant's broader push to integrate Gemini across its products while also better positioning Waze to compete with rival services such as Apple Maps."
+    },
+    {
+      "id": "33407ef52779ea89",
+      "source": "techcrunch",
+      "sourceType": "blog",
+      "url": "https://techcrunch.com/2026/07/13/lapd-lets-contract-with-surveillance-giant-flock-expire-citing-serious-concerns-over-civil-liberties-and-privacy/",
+      "title": "LAPD lets contract with surveillance giant Flock expire, citing ‘serious concerns’ over civil liberties and privacy",
+      "titleJa": "",
+      "titleEn": "LAPD lets contract with surveillance giant Flock expire, citing ‘serious concerns’ over civil liberties and privacy",
+      "lang": "en",
+      "publishedAt": "2026-07-13T14:13:38.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "news",
+        "techcrunch"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The LAPD, one of Flock's biggest government customers, is ending its contract with the company citing civil liberties concerns."
+    },
+    {
+      "id": "f150dc52052a0a18",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/fandhe/articles/2bbd96138b8d3b",
+      "title": "9 意図に絞ったら 38MB で足りた — 30M のモデルをゼロから学習した実測",
+      "titleJa": "9 意図に絞ったら 38MB で足りた — 30M のモデルをゼロから学習した実測",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-13T11:36:15.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "アプリに LLM を組み込むときの既定路線は、汎用の巨大モデルを API 越しに呼ぶことです。ですが、タスクを「9 意図の意図分類 + 関数呼び出し」に絞ったところ、38MB・30M パラメータのモデルをゼロから学習して、意図分類正解率 91.11%（ホールドアウト 90 件）に届きました。学習は Mac 1 台・43.75 分です。 ただし、これは「小さいほうが常に勝つ」という話ではありません。同じ評価セットで、この 30M モデルの完全一致率は 74.44% です。Qwen2.5-0.5B-Instruct を Low-Rank Adaptation"
+    },
+    {
+      "id": "4393dca00b5de0ae",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/mu_ta/articles/123d46bfc843b2",
+      "title": "Apple IntelligenceのローカルLLMをPythonから呼び出したい",
+      "titleJa": "Apple IntelligenceのローカルLLMをPythonから呼び出したい",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-13T08:00:17.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 今回はApple Intelligenceのオンデバイスモデルを Foundation Models API経由で、使い慣れてるPythonからさくっとローカル呼び出ししてみたいと思います。 後半ではベンチっぽいものも測定してみたいと思います。 まず仕様と要件をおさらいします。 1. Apple SystemLanguageModelの仕様 基本特性 項目 内容 モデル Apple Intelligenceで使用されるオンデバイス言語モデル 規模 約30億パラメータ 実行場所 デバイス上 外部通信 通常のSystemLanguageMode.."
+    },
     {
       "id": "e0c8199b532e6c49",
       "source": "qiita-llm",
@@ -78,6 +340,7 @@
       "publishedAt": "2026-07-13T04:00:00.000Z",
       "collectedAt": "2026-07-13T05:24:26.169Z",
       "tags": [
+        "agent",
         "arxiv",
         "code-generation",
         "cost-reduction",
@@ -129,13 +392,15 @@
       "publishedAt": "2026-07-13T04:00:00.000Z",
       "collectedAt": "2026-07-13T05:24:26.169Z",
       "tags": [
+        "agent",
         "arxiv",
         "coding-agents",
         "llm",
         "paper",
         "reinforcement-learning",
         "software-testing",
-        "test-generation"
+        "test-generation",
+        "tutorial"
       ],
       "category": "research",
       "importance": 2,
@@ -182,6 +447,7 @@
       "tags": [
         "arxiv",
         "automated-debugging",
+        "benchmark",
         "bugs4q",
         "llm",
         "paper",
@@ -2963,7 +3229,7 @@
       "titleEn": "langchain==1.3.13",
       "lang": "en",
       "publishedAt": "2026-07-10T23:06:21.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "langchain",
@@ -3247,7 +3513,7 @@
       "titleEn": "langchain-openai==1.3.5",
       "lang": "en",
       "publishedAt": "2026-07-10T18:58:48.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "langchain",
@@ -4176,7 +4442,7 @@
       "titleEn": "How Deutsche Telekom is rewiring telecommunications with AI",
       "lang": "en",
       "publishedAt": "2026-07-10T07:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "deutsche-telekom",
         "enterprise",
@@ -5146,7 +5412,7 @@
       "titleEn": "Profiling in PyTorch (Part 3): Attention is all you profile",
       "lang": "en",
       "publishedAt": "2026-07-10T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "attention",
         "huggingface",
@@ -5184,6 +5450,26 @@
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "This release makes it easier to stay in flow with side chats that run alongside your main chat, the ability to search agent transcripts, and simplified project and repo pickers."
+    },
+    {
+      "id": "cc75fbadac4916ea",
+      "source": "openai-news",
+      "sourceType": "blog",
+      "url": "https://openai.com/academy/getting-started",
+      "title": "Getting started with ChatGPT",
+      "titleJa": "",
+      "titleEn": "Getting started with ChatGPT",
+      "lang": "en",
+      "publishedAt": "2026-07-10T00:00:00.000Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
+      "tags": [
+        "openai"
+      ],
+      "category": "codex",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Learn how to use ChatGPT, start your first conversation, and discover simple ways to write, brainstorm, and solve problems with AI."
     },
     {
       "id": "1ffdc6fff5d0c200",
@@ -5540,7 +5826,7 @@
       "titleEn": "langchain-fireworks==1.4.4",
       "lang": "en",
       "publishedAt": "2026-07-09T17:56:51.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "fireworks-ai",
@@ -5927,7 +6213,7 @@
       "titleEn": "GPT-5.6 is now the preferred model in Microsoft 365 Copilot",
       "lang": "en",
       "publishedAt": "2026-07-09T13:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "copilot",
         "enterprise",
@@ -6002,7 +6288,7 @@
       "titleEn": "GPT-5.6: Frontier intelligence that scales with your ambition",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "gpt-5",
         "llm",
@@ -6026,7 +6312,7 @@
       "titleEn": "ChatGPT is now a partner for your most ambitious work",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai-assistant",
         "chatgpt",
@@ -6049,7 +6335,7 @@
       "titleEn": "GPT-5.5 Bio Bug Bounty",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "biosafety",
         "bug-bounty",
@@ -6623,7 +6909,7 @@
       "titleEn": "langchain-openai==1.3.4",
       "lang": "en",
       "publishedAt": "2026-07-08T23:00:10.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "langchain",
@@ -6656,7 +6942,7 @@
       "titleEn": "langchain==1.3.12",
       "lang": "en",
       "publishedAt": "2026-07-08T22:38:29.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "langchain",
@@ -6869,7 +7155,7 @@
       "titleEn": "langchain-core==1.4.9",
       "lang": "en",
       "publishedAt": "2026-07-08T20:07:11.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "langchain",
@@ -6994,7 +7280,7 @@
       "titleEn": "Data for Agents",
       "lang": "en",
       "publishedAt": "2026-07-08T17:16:05.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "dataset",
@@ -7272,7 +7558,7 @@
       "titleEn": "Our approach to government and national security partnerships",
       "lang": "en",
       "publishedAt": "2026-07-08T13:30:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "openai"
       ],
@@ -7318,7 +7604,7 @@
       "titleEn": "Separating signal from noise in coding evaluations",
       "lang": "en",
       "publishedAt": "2026-07-08T13:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "openai",
         "tutorial"
@@ -7472,7 +7758,7 @@
       "titleEn": "Apple to increase spend with Broadcom to produce billions more U.S. chips",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:13.748Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "apple",
         "broadcom",
@@ -7498,7 +7784,7 @@
       "titleEn": "Helping K–12 educators build practical AI skills",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai-literacy",
         "education",
@@ -7905,7 +8191,7 @@
       "titleEn": "Native-speed vLLM transformers modeling backend",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "huggingface",
         "inference",
@@ -7928,7 +8214,7 @@
       "titleEn": "Introducing GPT-Live",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "conversational-ai",
         "gpt-live",
@@ -8251,7 +8537,7 @@
       "titleEn": "From Hugging Face to Amazon SageMaker Studio in one click",
       "lang": "en",
       "publishedAt": "2026-07-07T21:15:33.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "aws",
         "deployment",
@@ -8614,7 +8900,7 @@
       "titleEn": "Hugging Face Models on Foundry Managed Compute",
       "lang": "en",
       "publishedAt": "2026-07-07T15:20:06.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "azure",
         "deployment",
@@ -9015,7 +9301,7 @@
       "titleEn": "What’s New in Microsoft Foundry | June 2026",
       "lang": "en",
       "publishedAt": "2026-07-07T07:10:25.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "ai",
         "ai-platform",
@@ -9558,7 +9844,7 @@
       "titleEn": "Run AI workloads on any cloud, store on Hugging Face: zero-egress storage with SkyPilot",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "cloud-storage",
         "huggingface",
@@ -9581,7 +9867,7 @@
       "titleEn": "LeRobot v0.6.0: Imagine, Evaluate, Improve",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "benchmark",
         "huggingface",
@@ -9606,7 +9892,7 @@
       "titleEn": "MUFG aims to become AI-native with OpenAI",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "enterprise-ai",
         "finance",
@@ -9630,7 +9916,7 @@
       "titleEn": "Australian Payments Plus moves faster with ChatGPT and Codex",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "case-study",
         "codex",
@@ -10005,7 +10291,7 @@
       "titleEn": "PRX Part 4: Our Data Strategy",
       "lang": "en",
       "publishedAt": "2026-07-06T15:30:55.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "data-strategy",
         "huggingface",
@@ -10613,7 +10899,7 @@
       "titleEn": "🤗 Kernels: Major Updates",
       "lang": "en",
       "publishedAt": "2026-07-06T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "cuda",
         "gpu",
@@ -10822,7 +11108,7 @@
       "titleEn": "langchain-mistralai==1.1.6",
       "lang": "en",
       "publishedAt": "2026-07-05T21:30:36.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "integration",
@@ -10891,7 +11177,7 @@
       "titleEn": "langchain-openrouter==0.2.6",
       "lang": "en",
       "publishedAt": "2026-07-05T20:53:14.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "agent",
         "integration",
@@ -14944,7 +15230,7 @@
       "titleEn": "Hugging Face and Cerebras bring Gemma 4 to real-time voice AI",
       "lang": "en",
       "publishedAt": "2026-07-01T00:00:00.000Z",
-      "collectedAt": "2026-07-13T08:45:33.908Z",
+      "collectedAt": "2026-07-14T02:26:11.599Z",
       "tags": [
         "cerebras",
         "gemma",

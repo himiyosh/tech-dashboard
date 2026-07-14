@@ -1795,6 +1795,24 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: Research 固有 gate は live count cap だけを担当し、記事ごとの採否は直後の shared registry evaluator gate へ一本化した。実際に失敗した LLM 評価論文を keep fixture、明示的な medical title を drop fixture として source-filter test に固定した。
 - **教訓**: broad feed の検出と予防は registry、shared filter、raw title/snippet/url の同じ契約を使う。AI 生成要約の語彙を独立した source noise 判定へ流用せず、件数 cap と記事採否を別の gate に分ける。
 
+### LL-261: decision density は下段panelだけでなく上段の可変metadataをstress testする
+- **事象**: Publisher生成後の`768x900` E2EでTop-3下端が固定footerの安全領域を約25px越えた。現行dataでは余白が約17.5pxしかなく、Featuredのsource名を長い実在相当ラベルへ置換するとmetadataが2行から4行へ増え、Top-3下端が`894.63px`まで押し下がることを再現した。Featuredを固定後もEN表示ではTop-3 geometryがJAと同一なのに、footerが`32.05px`から`49.09px`へ2行化し、安全距離が`18.52px`から`1.47px`へ減った。
+- **根本原因**: Top-3自身のcard高さだけを主に検証し、同じdecision pathの上段Featuredと下段footerがdata内容やlocaleで伸びる経路を固定していなかった。Featured metadataは`flex-wrap`へ任せ、source labelに`min-width:0`、nowrap、ellipsisが無かったため、長いsource名がsource内とrow間の両方で折り返した。最初に`721-900px`だけを対象にしたが、実測すると左Sidebarや右railが再表示される`901px`以上でもmain幅が狭まり、同じwrapが再発した。footerはgeneric monospace fallbackの実メトリクスが`html[lang]`で変わり、同じASCII copyでもEN時だけ複数itemが折り返した。
+- **対策**: mobile固有layoutを維持する`720px`以下を除き、Featured metadataを固定2行gridにした。authority、importance、source、timeを1行目、freshnessを2行目へ明示配置し、sourceだけを`min-width:0`とellipsisで縮める。ellipsisを使うFeatured/Top-3のsource labelはnative disclosureにし、keyboardとtouchのどちらでもfull labelを確認できるようにした。`721-900px`のfooterは各itemをnowrapにし、補助的なbuild stackだけを隠して1行へ保つ。E2Eは長いsource名を注入し、`721-1181px`を含む境界行列でmetadata高さとellipsisを、`768x900`のJA/EN双方でfooter高さ、Top-3との8px安全距離、full-label recovery、横overflowを検証する。
+- **教訓**: first-viewの末端座標が変わる回帰は、失敗した下段componentだけを疑わない。上流にある可変title、metadata、badge、source labelと下流の固定UIをstress入力と全localeで測り、各panelの開始位置と高さを分離する。generic font familyは同じASCII文字列でもdocument languageにより実幅が変わり得るため、fixed footerの安全域は各localeのDOM寸法で固定する。ellipsis導入時は見た目の密度だけでなく、sighted userがfull labelを確認できる回復手段を同時に設計する。
+
+### LL-262: fixed UIとの安全距離はviewport幅だけでなく高さとcontaining blockも検証する
+- **事象**: `768x900`ではTop-3が固定footerの上に収まっても、同じtablet幅の`900x844`ではTop-3下端がfooterの安全境界を約55.5px越えた。tablet修正後の全E2Eでは、`1440x900`でもTop-3下端が安全境界を約9.4px越え、低高さの問題がtabletだけに限定されないことが分かった。またsource全文panelを`position:fixed`で追加した際、Top-3 cardのhover transformがfixed要素のcontaining blockになり、panelをviewport基準で配置できない経路があった。
+- **根本原因**: responsive acceptanceを幅のbreakpointだけで定義し、固定header/footerが利用可能高さを減らす低いviewportを検証していなかった。低高さ用のpriority header余白もtabletだけを意識した値で、right rail付きdesktopの狭いmain columnではFeaturedとTop-3の合計高に対する余裕が不足した。加えてfixed overlayの祖先にtransformを残すと、見た目のhover効果がoverlayの座標系まで変更するCSS仕様を考慮していなかった。
+- **対策**: `721-900px`かつ高さ`900px`以下ではbanner actionsとquick linksを同一行へまとめ、tickerのpaddingを縮めた。priority headerの上余白は高さ`900px`以下の全非mobile幅で縮め、desktopのdecision pathも固定footerから8px以上離した。Top-3 cardのtransformを撤去し、source disclosure panelをviewport基準のfixed UIとして保った。E2Eは`721/760/761/768/900px`を高さ`844px`で、`768x900`をJA/ENで測る境界行列に加え、全smokeの`1440x900`でもTop-3とfooterの安全距離を固定した。
+- **教訓**: fixed UIを含むfirst-viewはwidthだけでなく実際に狭いheightもacceptance matrixへ入れ、tablet向けcompact ruleでも同じ高さのdesktopを再検証する。`position:fixed`のoverlayをcard内に置く場合は祖先の`transform`、`filter`、`perspective`を検索し、viewport基準の配置を壊さないことを実ブラウザで確認する。省略labelの回復手段はmouse hover用の`title`だけにせず、keyboardとtouchで操作できる明示controlにする。
+
+### LL-263: 閉じたdisclosureの検証値を`innerText`で先取りしない
+- **事象**: Top-3 source disclosureの回帰テストが、閉じた`<details>`内のfull-labelを`innerText()`で先に取得して空文字になり、開いた後の実全文との比較に失敗した。
+- **根本原因**: `innerText()`は描画状態に依存し、閉じたdisclosureの非表示contentからrendered textを返さない。DOMに文字列が存在することと、現在renderされている文字列を同じAPIで検証していた。
+- **対策**: disclosureを開く前の期待値は常時DOMにある省略labelの`textContent()`から取得し、open後はpanelの可視性とfull-labelの`toHaveText()`を別々に検証する。
+- **教訓**: hidden、closed、inactiveなUI stateの内容を期待値として読む場合はDOM contentとrendered textを区別する。非表示状態の値は`textContent()`、表示後の利用者向け検証は`toBeVisible()`と`innerText`/`toHaveText()`を使い分ける。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

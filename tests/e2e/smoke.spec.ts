@@ -272,11 +272,23 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("top-rank panel remains stable across rail breakpoint widths", async ({ page }) => {
-    const widths = [1181, 1180, 1100, 1050, 1000, 981, 980, 960, 901, 900, 768, 390];
+    const widths = [1181, 1180, 1100, 1050, 1000, 981, 980, 960, 901, 900, 768, 761, 760, 721, 720, 390];
     for (const width of widths) {
       await page.setViewportSize({ width, height: 844 });
       await page.goto("/");
       await expect(page.locator(".top-rank")).toBeVisible();
+      if (width >= 721) {
+        await page.locator(".featured-src").evaluate((source) => {
+          const fullLabel = "Microsoft Foundry Engineering and AI Platform Updates";
+          const label = source.querySelector("[data-source-disclosure-label]");
+          if (label) label.textContent = fullLabel;
+          const full = source.querySelector("[data-source-disclosure-full]");
+          if (full) full.textContent = fullLabel;
+        });
+        await page.evaluate(
+          () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+        );
+      }
 
       const metrics = await page.evaluate(() => {
         const layout = document.querySelector(".layout");
@@ -290,6 +302,9 @@ test.describe("TECH Dashboard smoke", () => {
         const rightRailCards = rightRail?.querySelectorAll(".side-card").length ?? 0;
 
         const items = Array.from(document.querySelectorAll<HTMLElement>(".top-rank-item"));
+        const rankList = document.querySelector<HTMLElement>(".top-rank-list");
+        const topRank = document.querySelector<HTMLElement>(".top-rank");
+        const footer = document.querySelector<HTMLElement>(".footer-bar");
         const itemHeights = items.map((item) => item.getBoundingClientRect().height);
         const maxRankHeight = itemHeights.length > 0 ? Math.max(...itemHeights) : 0;
         const metaInMedalTrack = items.some((item) => {
@@ -308,6 +323,7 @@ test.describe("TECH Dashboard smoke", () => {
             const rect = el.getBoundingClientRect();
             const styles = getComputedStyle(el);
             return {
+              kind: el.matches("article.featured .featured-freshness") ? "featured" : "rank",
               width: rect.width,
               height: rect.height,
               whiteSpace: styles.whiteSpace,
@@ -320,13 +336,21 @@ test.describe("TECH Dashboard smoke", () => {
         const featuredBody = document.querySelector<HTMLElement>("article.featured .featured-body");
         const main = document.querySelector<HTMLElement>(".layout main");
         const featuredFreshness = document.querySelector<HTMLElement>("article.featured .featured-freshness");
+        const featuredMeta = document.querySelector<HTMLElement>("article.featured .featured-meta");
+        const featuredSource = document.querySelector<HTMLElement>(
+          "article.featured .featured-src .source-disclosure-label",
+        );
         const featuredThumbRect = featuredThumb?.getBoundingClientRect();
         const featuredBodyRect = featuredBody?.getBoundingClientRect();
         const featuredFreshnessRect = featuredFreshness?.getBoundingClientRect();
+        const featuredMetaRect = featuredMeta?.getBoundingClientRect();
+        const topRankRect = topRank?.getBoundingClientRect();
+        const footerRect = footer?.getBoundingClientRect();
 
         return {
           noOverflow: document.documentElement.scrollWidth <= window.innerWidth,
           gridCols: layout ? getComputedStyle(layout).gridTemplateColumns.split(" ").filter(Boolean).length : 0,
+          rankGridCols: rankList ? getComputedStyle(rankList).gridTemplateColumns.split(" ").filter(Boolean).length : 0,
           rightRailVisible,
           rightRailCards,
           rankCount: items.length,
@@ -339,6 +363,12 @@ test.describe("TECH Dashboard smoke", () => {
           mainWidth: main?.getBoundingClientRect().width ?? 0,
           featuredFreshnessWidth: featuredFreshnessRect?.width ?? 0,
           featuredFreshnessHeight: featuredFreshnessRect?.height ?? 0,
+          featuredMetaHeight: featuredMetaRect?.height ?? 0,
+          topRankBottom: topRankRect?.bottom ?? Number.POSITIVE_INFINITY,
+          visibleBottom: Math.min(window.innerHeight, footerRect?.top ?? window.innerHeight),
+          featuredSourceClipped: !!featuredSource
+            && featuredSource.scrollWidth > featuredSource.clientWidth
+            && getComputedStyle(featuredSource).textOverflow === "ellipsis",
         };
       });
 
@@ -348,7 +378,9 @@ test.describe("TECH Dashboard smoke", () => {
       expect(metrics.freshness.length, `width ${width}: freshness badges should be visible`).toBeGreaterThan(0);
       for (const badge of metrics.freshness) {
         expect(badge.whiteSpace, `width ${width}: freshness should stay atomic`).toBe("nowrap");
-        expect(badge.width, `width ${width}: freshness badge should keep readable width`).toBeGreaterThanOrEqual(70);
+        expect(badge.width, `width ${width}: freshness badge should keep readable width`).toBeGreaterThanOrEqual(
+          badge.kind === "featured" || width <= 720 ? 70 : 28,
+        );
         expect(badge.height, `width ${width}: freshness badge should stay one-line height`).toBeLessThanOrEqual(48);
       }
 
@@ -370,6 +402,18 @@ test.describe("TECH Dashboard smoke", () => {
 
       if (width === 900 || width === 768) {
         expect(metrics.maxRankHeight, `width ${width}: top-rank should not grow excessively`).toBeLessThanOrEqual(300);
+      }
+      if (width >= 721) {
+        expect(metrics.rankGridCols, `width ${width}: Top-3 should use three compact columns`).toBe(3);
+        expect(metrics.featuredMetaHeight, `width ${width}: Featured metadata should stay within two rows`).toBeLessThanOrEqual(50);
+        expect(metrics.featuredSourceClipped, `width ${width}: long Featured source should use ellipsis`).toBe(true);
+        if (width <= 900) {
+          expect(metrics.topRankBottom, `width ${width}: tablet Top-3 should stay above the fixed footer`).toBeLessThanOrEqual(
+            metrics.visibleBottom - 8,
+          );
+        }
+      } else {
+        expect(metrics.rankGridCols, `width ${width}: mobile Top-3 should remain a single column`).toBe(1);
       }
       if (width === 980) {
         expect(metrics.gridCols, "width 980: layout should use the existing two-column grid").toBe(2);
@@ -802,6 +846,7 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("home keeps the decision path compact at tablet width", async ({ page }) => {
+    const fullLabel = "Microsoft Foundry Engineering and AI Platform Updates";
     await page.setViewportSize({ width: 768, height: 900 });
     await page.goto("/");
     await expect(page.locator(".banner-right")).toBeHidden();
@@ -809,23 +854,106 @@ test.describe("TECH Dashboard smoke", () => {
       await document.fonts.ready;
       await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     });
-    const metrics = await page.evaluate(() => {
-      const banner = document.querySelector(".banner-inner")?.getBoundingClientRect();
-      const main = document.querySelector(".layout main")?.getBoundingClientRect();
-      const topRank = document.querySelector(".top-rank")?.getBoundingClientRect();
-      const footer = document.querySelector(".footer-bar")?.getBoundingClientRect();
-      return {
-        bannerHeight: banner?.height ?? Number.POSITIVE_INFINITY,
-        mainY: main?.y ?? Number.POSITIVE_INFINITY,
-        topRankBottom: topRank?.bottom ?? Number.POSITIVE_INFINITY,
-        visibleBottom: Math.min(window.innerHeight, footer?.top ?? window.innerHeight),
-        overflow: document.documentElement.scrollWidth - window.innerWidth,
-      };
+    await page.locator(".featured-src").evaluate((source) => {
+      const fullLabel = "Microsoft Foundry Engineering and AI Platform Updates";
+      const label = source.querySelector("[data-source-disclosure-label]");
+      if (label) label.textContent = fullLabel;
+      const full = source.querySelector("[data-source-disclosure-full]");
+      if (full) full.textContent = fullLabel;
     });
-    expect(metrics.bannerHeight).toBeLessThanOrEqual(320);
-    expect(metrics.mainY).toBeLessThanOrEqual(500);
-    expect(metrics.topRankBottom, "tablet ranked Top-3 stays above the fixed footer").toBeLessThanOrEqual(metrics.visibleBottom);
-    expect(metrics.overflow).toBeLessThanOrEqual(0);
+
+    const featuredDisclosure = page.locator(".featured-src.source-disclosure");
+    const featuredTrigger = featuredDisclosure.locator("[data-source-disclosure-trigger]");
+    await expect(featuredDisclosure).not.toHaveAttribute("open", "");
+    await featuredTrigger.focus();
+    await expect(featuredTrigger).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(featuredDisclosure).toHaveAttribute("open", "");
+    await expect(featuredDisclosure.locator(".source-disclosure-panel")).toBeVisible();
+    await expect(featuredDisclosure.locator("[data-source-disclosure-full]")).toHaveText(fullLabel);
+    await page.keyboard.press("Enter");
+    await expect(featuredDisclosure).not.toHaveAttribute("open", "");
+    await page.keyboard.press("Space");
+    await expect(featuredDisclosure).toHaveAttribute("open", "");
+    await page.keyboard.press("Space");
+    await expect(featuredDisclosure).not.toHaveAttribute("open", "");
+
+    const rankedDisclosure = page.locator(".rank-source.source-disclosure").first();
+    const rankedTrigger = rankedDisclosure.locator("[data-source-disclosure-trigger]");
+    const rankedFullLabel = (
+      await rankedDisclosure.locator("[data-source-disclosure-label]").textContent()
+    )?.trim();
+    expect(rankedFullLabel).toBeTruthy();
+    await rankedTrigger.click();
+    await expect(rankedDisclosure).toHaveAttribute("open", "");
+    await expect(rankedDisclosure.locator(".source-disclosure-panel")).toBeVisible();
+    await expect(rankedDisclosure.locator("[data-source-disclosure-full]")).toHaveText(
+      rankedFullLabel ?? "",
+    );
+    await rankedTrigger.click();
+    await expect(rankedDisclosure).not.toHaveAttribute("open", "");
+
+    for (const lang of ["ja", "en"] as const) {
+      await page.locator(`.lang-btn[data-lang="${lang}"]`).click();
+      await page.evaluate(
+        () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+      );
+      const metrics = await page.evaluate(() => {
+        const banner = document.querySelector(".banner-inner")?.getBoundingClientRect();
+        const main = document.querySelector(".layout main")?.getBoundingClientRect();
+        const topRank = document.querySelector(".top-rank")?.getBoundingClientRect();
+        const footer = document.querySelector(".footer-bar")?.getBoundingClientRect();
+        const featuredMeta = document.querySelector(".featured-meta")?.getBoundingClientRect();
+        const featuredSource = document.querySelector<HTMLElement>(
+          ".featured-src .source-disclosure-label",
+        );
+        const sourceLabels = Array.from(
+          document.querySelectorAll<HTMLDetailsElement>(".featured-src.source-disclosure, .rank-source.source-disclosure"),
+        );
+        return {
+          bannerHeight: banner?.height ?? Number.POSITIVE_INFINITY,
+          mainY: main?.y ?? Number.POSITIVE_INFINITY,
+          topRankBottom: topRank?.bottom ?? Number.POSITIVE_INFINITY,
+          visibleBottom: Math.min(window.innerHeight, footer?.top ?? window.innerHeight),
+          footerHeight: footer?.height ?? Number.POSITIVE_INFINITY,
+          featuredMetaHeight: featuredMeta?.height ?? Number.POSITIVE_INFINITY,
+          featuredSourceClipped: !!featuredSource
+            && featuredSource.scrollWidth > featuredSource.clientWidth
+            && getComputedStyle(featuredSource).textOverflow === "ellipsis",
+          sourceLabelsRecoverable: sourceLabels.length > 0
+            && sourceLabels.every((root) => {
+              const visible = root.querySelector("[data-source-disclosure-label]")?.textContent?.trim();
+              const full = root.querySelector("[data-source-disclosure-full]")?.textContent?.trim();
+              return root.getAttribute("title") === null && !!visible && visible === full;
+            }),
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      });
+      expect(metrics.bannerHeight).toBeLessThanOrEqual(320);
+      expect(metrics.mainY).toBeLessThanOrEqual(500);
+      expect(metrics.footerHeight, `${lang}: tablet footer stays on one line`).toBeLessThanOrEqual(36);
+      expect(metrics.featuredMetaHeight, `${lang}: tablet Featured metadata stays within two rows`).toBeLessThanOrEqual(50);
+      expect(metrics.featuredSourceClipped, `${lang}: long Featured source labels use ellipsis instead of adding rows`).toBe(true);
+      expect(metrics.sourceLabelsRecoverable, `${lang}: truncated source labels expose their full value`).toBe(true);
+      expect(metrics.topRankBottom, `${lang}: tablet ranked Top-3 keeps a safe gap above the fixed footer`).toBeLessThanOrEqual(
+        metrics.visibleBottom - 8,
+      );
+      expect(metrics.overflow, `${lang}: page should not overflow horizontally`).toBeLessThanOrEqual(0);
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobileTarget = await featuredTrigger.boundingBox();
+    expect(mobileTarget, "mobile source disclosure target should exist").not.toBeNull();
+    expect(mobileTarget!.width, "mobile source disclosure target should be at least 44px wide").toBeGreaterThanOrEqual(44);
+    expect(mobileTarget!.height, "mobile source disclosure target should be at least 44px high").toBeGreaterThanOrEqual(44);
+    await featuredTrigger.click();
+    await expect(featuredDisclosure).toHaveAttribute("open", "");
+    await expect(featuredDisclosure.locator(".source-disclosure-panel")).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+    await featuredTrigger.click();
+    await expect(featuredDisclosure).not.toHaveAttribute("open", "");
   });
 
   test("skip link is keyboard visible and focuses content start", async ({ page }) => {

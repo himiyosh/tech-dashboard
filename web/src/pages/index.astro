@@ -8,6 +8,7 @@ import LiveMetrics from "../components/LiveMetrics.astro";
 import TickerBar from "../components/TickerBar.astro";
 import TimelineRightRail from "../components/TimelineRightRail.astro";
 import Pager from "../components/Pager.astro";
+import SourceDisclosure from "../components/SourceDisclosure.astro";
 import ArxivIcon from "../components/icons/ArxivIcon.astro";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { sourceFaviconUrl } from "../lib/favicon.ts";
@@ -339,22 +340,12 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
                 <span class="i18n-ja">{featImportance.ja}</span>
                 <span class="i18n-en" lang="en">{featImportance.en}</span>
               </span>
-              <span class="featured-src">
-                {featFavicon && (
-                  <img
-                    class="featured-favicon"
-                    src={featFavicon}
-                    alt=""
-                    width="16"
-                    height="16"
-                    loading="lazy"
-                    decoding="async"
-                    referrerpolicy="no-referrer"
-                    onerror="this.style.display='none'"
-                  />
-                )}
-                <span>{sourceLabel(feat.source)}</span>
-              </span>
+              <SourceDisclosure
+                class="featured-src"
+                label={sourceLabel(feat.source)}
+                favicon={featFavicon}
+                faviconClass="featured-favicon"
+              />
               <span>·</span>
               <time datetime={feat.publishedAt}>{relativeTime(feat.publishedAt, now)}</time>
               <span class:list={["featured-freshness", { stale: featStale, ok: !featStale }]}>
@@ -420,11 +411,15 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
                     })()}
                   </a>
                   <span class="rank-meta">
-                    <span class="rank-source">{sourceLabel(e.source)}</span>
+                    <SourceDisclosure class="rank-source" label={sourceLabel(e.source)} />
                     <time class="rank-time mono" datetime={e.publishedAt}>{relativeTime(e.publishedAt, now)}</time>
                     <span class:list={["rank-freshness", { stale, ok: !stale }]}>
-                      <span class="i18n-ja">{stale ? "収集元 更新遅延" : "収集元 更新OK"}</span>
-                      <span class="i18n-en" lang="en">{stale ? "Source feed stale" : "Source feed fresh"}</span>
+                      <span class="visually-hidden">
+                        <span class="i18n-ja">{stale ? "収集元 更新遅延" : "収集元 更新OK"}</span>
+                        <span class="i18n-en" lang="en">{stale ? "Source feed stale" : "Source feed fresh"}</span>
+                      </span>
+                      <span class="rank-freshness-short i18n-ja" aria-hidden="true">{stale ? "遅延" : "正常"}</span>
+                      <span class="rank-freshness-short i18n-en" lang="en" aria-hidden="true">{stale ? "LATE" : "OK"}</span>
                     </span>
                   </span>
                   <span class="rank-reason i18n-ja">{reason.ja}</span>

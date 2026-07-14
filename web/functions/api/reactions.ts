@@ -11,4 +11,3 @@ interface PagesContext {
 export function onRequestGet(context: PagesContext): Promise<Response> {
   return handleGetReactions(context.request, context.env);
 }
-

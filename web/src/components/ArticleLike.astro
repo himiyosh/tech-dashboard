@@ -2,11 +2,23 @@
 interface Props {
   entryId: string;
   variant?: "card" | "detail";
+  articleTitleJa: string;
+  articleTitleEn: string;
+  articleTitleJaLang?: "ja" | "en";
+  articleTitleEnLang?: "ja" | "en";
 }
 
-const { entryId, variant = "detail" } = Astro.props as Props;
+const {
+  entryId,
+  variant = "detail",
+  articleTitleJa,
+  articleTitleEn,
+  articleTitleJaLang = "ja",
+  articleTitleEnLang = "en",
+} = Astro.props as Props;
 const controlId = `reaction-${variant}-${entryId}`;
 const labelId = `${controlId}-label`;
+const articleTitleId = `${controlId}-article-title`;
 const countId = `${controlId}-count`;
 const statusId = `${controlId}-status`;
 const contextId = `${controlId}-context`;
@@ -26,7 +38,7 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
     class="reaction-button"
     data-reaction-button
     data-reaction-count-id={countId}
-    aria-labelledby={`${labelId} ${countId}`}
+    aria-labelledby={`${labelId} ${articleTitleId} ${countId}`}
     aria-describedby={`${contextId} ${statusId}`}
     aria-pressed="false"
     aria-busy="true"
@@ -39,6 +51,16 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
     <span id={labelId} class="reaction-label">
       <span class="i18n-ja">いいね</span>
       <span class="i18n-en" lang="en">Like</span>
+    </span>
+    <span id={articleTitleId} class="visually-hidden">
+      <span class="i18n-ja">
+        <span data-reaction-article-prefix lang="ja">記事:</span>{" "}
+        <span data-reaction-article-title lang={articleTitleJaLang}>{articleTitleJa}</span>
+      </span>
+      <span class="i18n-en">
+        <span data-reaction-article-prefix lang="en">Article:</span>{" "}
+        <span data-reaction-article-title lang={articleTitleEnLang}>{articleTitleEn}</span>
+      </span>
     </span>
     <span class="reaction-count mono" data-reaction-count aria-hidden="true">—</span>
     <span id={countId} class="visually-hidden" data-reaction-count-exact>件数を読み込み中</span>

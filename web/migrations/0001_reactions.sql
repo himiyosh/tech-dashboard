@@ -13,4 +13,3 @@ CREATE TABLE IF NOT EXISTS reaction_rate_limits (
   window_started_at INTEGER NOT NULL,
   request_count INTEGER NOT NULL CHECK (request_count >= 0)
 ) WITHOUT ROWID;
-

@@ -1,8 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   formatExactReactionCount,
   formatReactionCount,
+  requestReactionJson,
+  requestReactionLock,
 } from "../web/src/lib/reactions-client.ts";
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 describe("reaction count formatting", () => {
   it("keeps small values exact and compacts large visible counts", () => {
@@ -24,5 +31,56 @@ describe("reaction count formatting", () => {
     expect(formatReactionCount(-1)).toBe("0");
     expect(formatReactionCount(Number.NaN)).toBe("0");
     expect(formatExactReactionCount(Number.POSITIVE_INFINITY, "en")).toBe("0 likes");
+  });
+});
+
+describe("reaction request deadlines", () => {
+  it("bounds both the fetch and response body read", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: () => new Promise<unknown>(() => {}),
+      }) as unknown as Response),
+    );
+
+    const result = requestReactionJson("/api/reactions?ids=0123456789abcdef", {}, 25);
+    const assertion = expect(result).rejects.toMatchObject({
+      code: "request_timeout",
+      status: 0,
+    });
+    await vi.advanceTimersByTimeAsync(25);
+    await assertion;
+  });
+
+  it("bounds Web Lock acquisition without running the protected callback", async () => {
+    vi.useFakeTimers();
+    const callback = vi.fn(async () => {});
+    const lockManager = {
+      request: vi.fn(
+        (
+          _name: string,
+          options: LockOptions,
+          _lockCallback: (lock: Lock | null) => Promise<void>,
+        ) =>
+          new Promise<void>((_resolve, reject) => {
+            options.signal?.addEventListener(
+              "abort",
+              () => reject(options.signal?.reason),
+              { once: true },
+            );
+          }),
+      ),
+    } as unknown as LockManager;
+
+    const result = requestReactionLock(lockManager, callback, 25);
+    const assertion = expect(result).rejects.toMatchObject({
+      code: "request_timeout",
+      status: 0,
+    });
+    await vi.advanceTimersByTimeAsync(25);
+    await assertion;
+    expect(callback).not.toHaveBeenCalled();
   });
 });

@@ -19,6 +19,7 @@ import {
   summaryForLang,
   summaryForLangWithFallback,
   titleForLang,
+  titleForLangWithFallback,
   trendingTags,
   type NormalizedEntry,
 } from "../../lib/data.ts";
@@ -40,6 +41,8 @@ const { entry } = Astro.props as Props;
 const titleJa = titleForLang(entry, "ja");
 const titleEn = titleForLang(entry, "en");
 const titleDisplay = titleJa || titleEn || entry.title;
+const likeTitleJa = titleForLangWithFallback(entry, "ja");
+const likeTitleEn = titleForLangWithFallback(entry, "en");
 const summaryJaResult = summaryForLangWithFallback(entry, "ja");
 const summaryJa = summaryJaResult.text;
 const summaryEn = summaryForLangWithFallback(entry, "en");
@@ -424,7 +427,14 @@ const jsonLd = {
                 </span>
               </p>
             </div>
-            <ArticleLike entryId={entry.id} variant="detail" />
+            <ArticleLike
+              entryId={entry.id}
+              variant="detail"
+              articleTitleJa={likeTitleJa.text}
+              articleTitleEn={likeTitleEn.text}
+              articleTitleJaLang={likeTitleJa.isFallback ? likeTitleJa.fallbackLang : "ja"}
+              articleTitleEnLang={likeTitleEn.isFallback ? likeTitleEn.fallbackLang : "en"}
+            />
           </section>
         </header>
 

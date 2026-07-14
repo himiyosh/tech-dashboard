@@ -47,17 +47,95 @@ const CONTROL_SELECTOR = "[data-reaction-control]";
 const OVERVIEW_SELECTOR = "[data-reaction-overview]";
 const ENTRY_ID_RE = /^[a-f0-9]{16}$/;
 const BATCH_SIZE = 50;
+const IDENTITY_LOCK_NAME = "techdb-reaction-voter-identity";
 const TURNSTILE_SCRIPT_URL =
   "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 const TOAST_ID = "reaction-error-toast";
+const LIVE_REGION_ID = "reaction-status-live";
 const TOAST_DURATION_MS = 7_000;
+const REACTION_REQUEST_TIMEOUT_MS = 15_000;
 
 let initialized = false;
 let turnstileLoadPromise: Promise<TurnstileApi> | undefined;
 let languageObserver: MutationObserver | undefined;
 let activeToastMessage: LocalizedReactionMessage | null = null;
 let toastTimer: number | undefined;
+let toastReturnFocus: HTMLElement | null = null;
+let identityBootstrapPromise: Promise<void> | undefined;
+let identityReady = false;
 const reactionOperationVersions = new Map<string, number>();
+let reactionServiceUnavailable = false;
+let reactionServiceGeneration = 0;
+let liveAnnouncementVersion = 0;
+
+class ReactionRequestError extends Error {
+  constructor(
+    readonly code: string,
+    readonly status: number,
+  ) {
+    super(`${code}:${status}`);
+    this.name = "ReactionRequestError";
+  }
+}
+
+export async function requestReactionJson(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs = REACTION_REQUEST_TIMEOUT_MS,
+): Promise<{ response: Response; payload: unknown }> {
+  const controller = new AbortController();
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timeoutId = globalThis.setTimeout(() => {
+      reject(new ReactionRequestError("request_timeout", 0));
+      controller.abort();
+    }, timeoutMs);
+  });
+  const request = (async () => {
+    const response = await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+    const payload = await response.json().catch(() => undefined);
+    return { response, payload };
+  })();
+
+  try {
+    return await Promise.race([request, timeout]);
+  } finally {
+    if (timeoutId !== undefined) globalThis.clearTimeout(timeoutId);
+  }
+}
+
+export async function requestReactionLock(
+  lockManager: LockManager,
+  callback: () => Promise<void>,
+  timeoutMs = REACTION_REQUEST_TIMEOUT_MS,
+): Promise<void> {
+  const controller = new AbortController();
+  let lockGranted = false;
+  const timeoutId = globalThis.setTimeout(() => {
+    if (!lockGranted) controller.abort();
+  }, timeoutMs);
+  try {
+    await lockManager.request(
+      IDENTITY_LOCK_NAME,
+      { signal: controller.signal },
+      async () => {
+        lockGranted = true;
+        globalThis.clearTimeout(timeoutId);
+        await callback();
+      },
+    );
+  } catch (error) {
+    if (controller.signal.aborted && !lockGranted) {
+      throw new ReactionRequestError("request_timeout", 0);
+    }
+    throw error;
+  } finally {
+    globalThis.clearTimeout(timeoutId);
+  }
+}
 
 function beginReactionOperation(id: string): number {
   const version = (reactionOperationVersions.get(id) ?? 0) + 1;
@@ -67,6 +145,14 @@ function beginReactionOperation(id: string): number {
 
 function isCurrentReactionOperation(id: string, version: number): boolean {
   return reactionOperationVersions.get(id) === version;
+}
+
+function currentReactionServiceGeneration(): number {
+  return reactionServiceGeneration;
+}
+
+function isCurrentReactionServiceGeneration(generation: number): boolean {
+  return !reactionServiceUnavailable && generation === reactionServiceGeneration;
 }
 
 function currentLanguage(): SupportedLanguage {
@@ -216,6 +302,17 @@ function parseErrorCode(value: unknown): string | undefined {
   return typeof code === "string" ? code : undefined;
 }
 
+function parseIdentityReady(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const identity = (value as Record<string, unknown>).identity;
+  return Boolean(
+    identity &&
+      typeof identity === "object" &&
+      !Array.isArray(identity) &&
+      (identity as Record<string, unknown>).ready === true,
+  );
+}
+
 function setControlSnapshot(
   control: HTMLElement,
   snapshot: ReactionSnapshot,
@@ -260,11 +357,44 @@ function setControlUnavailable(control: HTMLElement): void {
   }
 }
 
+function markReactionServiceUnavailable(): void {
+  const activeElement = document.activeElement;
+  const focusedControl =
+    activeElement instanceof HTMLElement
+      ? activeElement.closest<HTMLElement>(CONTROL_SELECTOR)
+      : null;
+  const focusFallback = focusedControl
+    ? reactionFocusFallback(focusedControl)
+    : null;
+
+  if (!reactionServiceUnavailable) {
+    reactionServiceUnavailable = true;
+    reactionServiceGeneration += 1;
+  }
+  identityReady = false;
+  document.querySelectorAll<HTMLElement>(CONTROL_SELECTOR).forEach(setControlUnavailable);
+  syncReactionOverviewVisibility();
+  if (
+    focusFallback?.isConnected &&
+    focusFallback.getClientRects().length > 0
+  ) {
+    focusFallback.focus({ preventScroll: true });
+  }
+}
+
 function announce(control: HTMLElement, message: LocalizedReactionMessage): void {
   const status = control.querySelector<HTMLElement>("[data-reaction-status]");
-  if (status) {
-    status.textContent = currentLanguage() === "en" ? message.en : message.ja;
-  }
+  const copy = currentLanguage() === "en" ? message.en : message.ja;
+  if (status) status.textContent = copy;
+
+  const liveRegion = ensureReactionLiveRegion();
+  const announcementVersion = ++liveAnnouncementVersion;
+  liveRegion.textContent = "";
+  window.requestAnimationFrame(() => {
+    if (announcementVersion === liveAnnouncementVersion) {
+      liveRegion.textContent = copy;
+    }
+  });
 }
 
 function clearAnnouncements(entryId: string): void {
@@ -275,7 +405,16 @@ function clearAnnouncements(entryId: string): void {
   });
 }
 
-function dismissReactionToast(): void {
+function isVisibleFocusTarget(target: HTMLElement | null): target is HTMLElement {
+  return Boolean(
+    target?.isConnected &&
+    target.getClientRects().length > 0 &&
+    !target.closest("[inert]") &&
+    !target.matches(":disabled"),
+  );
+}
+
+function dismissReactionToast(restoreFocus = true): void {
   if (toastTimer !== undefined) {
     window.clearTimeout(toastTimer);
     toastTimer = undefined;
@@ -284,14 +423,56 @@ function dismissReactionToast(): void {
   const toast = document.getElementById(TOAST_ID) as HTMLElement & {
     hidePopover?: () => void;
   } | null;
-  if (!toast) return;
+  if (!toast) {
+    toastReturnFocus = null;
+    return;
+  }
 
+  const activeElement = document.activeElement;
+  const focusIsInsideToast =
+    activeElement instanceof HTMLElement && toast.contains(activeElement);
+  const fallback = toastReturnFocus
+    ? reactionFocusFallback(toastReturnFocus)
+    : null;
+  const focusTarget = isVisibleFocusTarget(toastReturnFocus)
+    ? toastReturnFocus
+    : isVisibleFocusTarget(fallback)
+      ? fallback
+      : null;
   if (typeof toast.hidePopover === "function" && toast.matches(":popover-open")) {
     toast.hidePopover();
   }
   toast.hidden = true;
   delete toast.dataset.fallbackOpen;
   activeToastMessage = null;
+  toastReturnFocus = null;
+  if (restoreFocus && focusIsInsideToast && focusTarget) {
+    window.requestAnimationFrame(() => {
+      const current = document.activeElement;
+      const focusCanReturn =
+        current === activeElement ||
+        current === document.body ||
+        !(current instanceof HTMLElement) ||
+        !isVisibleFocusTarget(current);
+      if (focusCanReturn && isVisibleFocusTarget(focusTarget)) {
+        focusTarget.focus({ preventScroll: true });
+      }
+    });
+  }
+}
+
+function ensureReactionLiveRegion(): HTMLElement {
+  const existing = document.getElementById(LIVE_REGION_ID);
+  if (existing) return existing;
+
+  const liveRegion = document.createElement("span");
+  liveRegion.id = LIVE_REGION_ID;
+  liveRegion.className = "visually-hidden";
+  liveRegion.setAttribute("role", "status");
+  liveRegion.setAttribute("aria-live", "polite");
+  liveRegion.setAttribute("aria-atomic", "true");
+  document.body.append(liveRegion);
+  return liveRegion;
 }
 
 function ensureReactionToast(): HTMLElement {
@@ -314,24 +495,25 @@ function ensureReactionToast(): HTMLElement {
   const copy = document.createElement("span");
   copy.className = "reaction-toast-copy";
   copy.dataset.reactionToastCopy = "";
-  copy.setAttribute("role", "status");
-  copy.setAttribute("aria-live", "polite");
-  copy.setAttribute("aria-atomic", "true");
 
   const close = document.createElement("button");
   close.className = "reaction-toast-close";
   close.type = "button";
   close.textContent = "×";
-  close.addEventListener("click", dismissReactionToast);
+  close.addEventListener("click", () => dismissReactionToast());
 
   toast.append(icon, copy, close);
   document.body.append(toast);
   return toast;
 }
 
-function showReactionToast(message: LocalizedReactionMessage): void {
-  dismissReactionToast();
+function showReactionToast(
+  message: LocalizedReactionMessage,
+  focusReturn: HTMLElement | null,
+): void {
+  dismissReactionToast(false);
   activeToastMessage = message;
+  toastReturnFocus = focusReturn;
   const toast = ensureReactionToast() as HTMLElement & {
     showPopover?: () => void;
   };
@@ -344,7 +526,7 @@ function showReactionToast(message: LocalizedReactionMessage): void {
     toast.dataset.fallbackOpen = "true";
   }
 
-  toastTimer = window.setTimeout(dismissReactionToast, TOAST_DURATION_MS);
+  toastTimer = window.setTimeout(() => dismissReactionToast(), TOAST_DURATION_MS);
 }
 
 function chunkIds(ids: string[]): string[][] {
@@ -358,17 +540,24 @@ function chunkIds(ids: string[]): string[][] {
 async function fetchReactions(ids: string[]): Promise<ReactionSnapshot[]> {
   if (ids.length === 0) return [];
   const query = new URLSearchParams({ ids: ids.join(",") });
-  const response = await fetch(`/api/reactions?${query.toString()}`, {
-    credentials: "same-origin",
-    headers: { Accept: "application/json" },
-  });
-  if (!response.ok) throw new Error(`reaction read failed (${response.status})`);
-
-  const payload = (await response.json()) as ReactionListPayload;
-  if (!Array.isArray(payload.reactions)) {
+  const { response, payload } = await requestReactionJson(
+    `/api/reactions?${query.toString()}`,
+    {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    },
+  );
+  if (!response.ok) {
+    throw new ReactionRequestError(parseErrorCode(payload) ?? "request_failed", response.status);
+  }
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw new Error("reaction read returned an invalid payload");
   }
-  const snapshots = payload.reactions.map(parseReaction);
+  const reactions = (payload as Partial<ReactionListPayload>).reactions;
+  if (!Array.isArray(reactions)) {
+    throw new Error("reaction read returned an invalid payload");
+  }
+  const snapshots = reactions.map(parseReaction);
   if (snapshots.some((snapshot) => !snapshot)) {
     throw new Error("reaction read returned an invalid item");
   }
@@ -496,61 +685,127 @@ async function putReaction(
   liked: boolean,
   turnstileToken: string,
 ): Promise<ReactionSnapshot> {
-  const response = await fetch(`/api/reactions/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    credentials: "same-origin",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
+  const { response, payload } = await requestReactionJson(
+    `/api/reactions/${encodeURIComponent(id)}`,
+    {
+      method: "PUT",
+      credentials: "same-origin",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        liked,
+        turnstileToken,
+      }),
     },
-    body: JSON.stringify({
-      liked,
-      turnstileToken,
-    }),
-  });
-
-  let payload: unknown;
-  try {
-    payload = await response.json();
-  } catch {
-    payload = undefined;
-  }
+  );
   if (!response.ok) {
     const code = parseErrorCode(payload) ?? "mutation_failed";
-    throw new Error(`${code}:${response.status}`);
+    throw new ReactionRequestError(code, response.status);
   }
   const snapshot = parseReactionPayload(payload);
   if (!snapshot || snapshot.id !== id) {
-    throw new Error("mutation_failed:invalid_response");
+    throw new ReactionRequestError("invalid_response", response.status);
   }
   return snapshot;
 }
 
+async function postReactionIdentity(serviceGeneration: number): Promise<void> {
+  if (!isCurrentReactionServiceGeneration(serviceGeneration)) {
+    throw new ReactionRequestError("service_unavailable", 503);
+  }
+  const { response, payload } = await requestReactionJson(
+    "/api/reactions/identity",
+    {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    },
+  );
+  if (!response.ok) {
+    throw new ReactionRequestError(
+      parseErrorCode(payload) ?? "identity_unavailable",
+      response.status,
+    );
+  }
+  if (!parseIdentityReady(payload)) {
+    throw new ReactionRequestError("invalid_identity_response", response.status);
+  }
+  if (!isCurrentReactionServiceGeneration(serviceGeneration)) {
+    throw new ReactionRequestError("service_unavailable", 503);
+  }
+}
+
+async function ensureReactionIdentity(): Promise<void> {
+  if (reactionServiceUnavailable) {
+    throw new ReactionRequestError("service_unavailable", 503);
+  }
+  if (identityReady) return;
+  if (identityBootstrapPromise) return identityBootstrapPromise;
+
+  const serviceGeneration = currentReactionServiceGeneration();
+  const lockManager = "locks" in navigator ? navigator.locks : undefined;
+  const pending = lockManager
+    ? requestReactionLock(lockManager, () => postReactionIdentity(serviceGeneration))
+    : postReactionIdentity(serviceGeneration);
+  identityBootstrapPromise = pending;
+  pending.then(
+    () => {
+      if (isCurrentReactionServiceGeneration(serviceGeneration)) identityReady = true;
+      if (identityBootstrapPromise === pending) identityBootstrapPromise = undefined;
+    },
+    () => {
+      if (identityBootstrapPromise === pending) identityBootstrapPromise = undefined;
+    },
+  );
+  return pending;
+}
+
+function isPermanentServiceFailure(error: unknown): boolean {
+  return (
+    error instanceof ReactionRequestError &&
+    (error.code === "service_not_configured" || error.code === "service_unavailable")
+  );
+}
+
+function reactionFocusFallback(control: HTMLElement): HTMLElement | null {
+  return (
+    control
+      .closest<HTMLElement>(".kg-card")
+      ?.querySelector<HTMLElement>(".kg-card-link") ??
+    document.querySelector<HTMLElement>(".ed-action-strip a, .ed-action-strip button")
+  );
+}
+
 function mutationFailureMessage(error: unknown): LocalizedReactionMessage {
-  const value = error instanceof Error ? error.message : "";
-  if (value.startsWith("rate_limited:")) {
+  const code = error instanceof ReactionRequestError ? error.code : "";
+  if (code === "rate_limited") {
     return {
       ja: "操作が多すぎます。しばらく待ってから再試行してください。",
       en: "Too many requests. Please wait and try again.",
     };
   }
-  if (value.startsWith("challenge_failed:")) {
+  if (code === "challenge_failed" || code.startsWith("turnstile_")) {
     return {
       ja: "本人確認を完了できませんでした。もう一度お試しください。",
       en: "Verification could not be completed. Please try again.",
     };
   }
-  if (
-    value.startsWith("service_not_configured:") ||
-    value.startsWith("service_unavailable:")
-  ) {
+  if (code === "challenge_unavailable") {
+    return {
+      ja: "本人確認サービスを一時利用できません。しばらくしてから再度お試しください。",
+      en: "The verification service is temporarily unavailable. Please try again later.",
+    };
+  }
+  if (code.startsWith("service_")) {
     return {
       ja: "いいね機能を一時的に利用できません。しばらくしてから再度お試しください。",
       en: "Likes are temporarily unavailable. Please try again shortly.",
     };
   }
   return {
-    ja: "いいねを更新できませんでした。通信を確認して再度お試しください。",
+    ja: "いいねを更新できませんでした。通信環境を確認して、もう一度お試しください。",
     en: "The like could not be updated. Check your connection and try again.",
   };
 }
@@ -560,8 +815,11 @@ async function hydrateControls(
 ): Promise<void> {
   const ids = Array.from(controlsById.keys());
   for (const chunk of chunkIds(ids)) {
+    if (reactionServiceUnavailable) break;
+    const serviceGeneration = currentReactionServiceGeneration();
     try {
       const snapshots = await fetchReactions(chunk);
+      if (!isCurrentReactionServiceGeneration(serviceGeneration)) continue;
       const byId = new Map(snapshots.map((snapshot) => [snapshot.id, snapshot]));
       for (const id of chunk) {
         const snapshot = byId.get(id);
@@ -571,7 +829,12 @@ async function hydrateControls(
           else setControlUnavailable(control);
         }
       }
-    } catch {
+    } catch (error) {
+      if (isPermanentServiceFailure(error)) {
+        markReactionServiceUnavailable();
+        break;
+      }
+      if (!isCurrentReactionServiceGeneration(serviceGeneration)) continue;
       for (const id of chunk) {
         for (const control of controlsById.get(id) ?? []) {
           setControlUnavailable(control);
@@ -582,32 +845,57 @@ async function hydrateControls(
   }
 }
 
+interface ReactionReconciliationResult {
+  status: "reconciled" | "stale" | "permanent-failure";
+  error?: unknown;
+  snapshot?: ReactionSnapshot;
+}
+
 async function reconcileReaction(
   id: string,
   controls: HTMLElement[],
   fallback: ReactionSnapshot,
   operationVersion: number,
-): Promise<boolean> {
+  serviceGeneration: number,
+): Promise<ReactionReconciliationResult> {
   let nextSnapshot = fallback;
   try {
     const [snapshot] = await fetchReactions([id]);
     if (!snapshot) throw new Error("reaction is missing");
     nextSnapshot = snapshot;
-  } catch {}
+  } catch (error) {
+    if (
+      !isCurrentReactionOperation(id, operationVersion) ||
+      !isCurrentReactionServiceGeneration(serviceGeneration)
+    ) {
+      return { status: "stale" };
+    }
+    if (isPermanentServiceFailure(error)) {
+      markReactionServiceUnavailable();
+      return { status: "permanent-failure", error };
+    }
+  }
 
-  if (!isCurrentReactionOperation(id, operationVersion)) return false;
+  if (
+    !isCurrentReactionOperation(id, operationVersion) ||
+    !isCurrentReactionServiceGeneration(serviceGeneration)
+  ) {
+    return { status: "stale" };
+  }
   for (const control of controls) setControlSnapshot(control, nextSnapshot);
-  return true;
+  return { status: "reconciled", snapshot: nextSnapshot };
 }
 
 async function toggleReaction(
   activeControl: HTMLElement,
   controlsById: Map<string, HTMLElement[]>,
 ): Promise<void> {
+  if (reactionServiceUnavailable) return;
   const id = activeControl.dataset.entryId ?? "";
   const count = Number(activeControl.dataset.reactionCount);
   const liked = activeControl.dataset.reactionLiked === "true";
   const siteKey = getSiteKey(activeControl);
+  const activeButton = getButton(activeControl);
   const controls = controlsById.get(id) ?? [];
   if (
     activeControl.dataset.state === "busy" ||
@@ -621,6 +909,7 @@ async function toggleReaction(
 
   const previous: ReactionSnapshot = { id, count, liked };
   const operationVersion = beginReactionOperation(id);
+  const serviceGeneration = currentReactionServiceGeneration();
   const optimistic: ReactionSnapshot = {
     id,
     liked: !liked,
@@ -633,32 +922,82 @@ async function toggleReaction(
   }
 
   try {
+    await ensureReactionIdentity();
+    if (
+      !isCurrentReactionOperation(id, operationVersion) ||
+      !isCurrentReactionServiceGeneration(serviceGeneration)
+    ) {
+      return;
+    }
     let token = "";
     try {
       token = await requestTurnstileToken(siteKey);
     } catch {
-      throw new Error("challenge_failed:client");
+      throw new ReactionRequestError("challenge_failed", 0);
     }
+    if (!isCurrentReactionServiceGeneration(serviceGeneration)) return;
     const snapshot = await putReaction(id, optimistic.liked, token);
-    if (!isCurrentReactionOperation(id, operationVersion)) return;
+    if (
+      !isCurrentReactionOperation(id, operationVersion) ||
+      !isCurrentReactionServiceGeneration(serviceGeneration)
+    ) {
+      return;
+    }
     for (const control of controls) setControlSnapshot(control, snapshot);
     announce(activeControl, {
       ja: snapshot.liked ? "いいねしました。" : "いいねを取り消しました。",
       en: snapshot.liked ? "Liked." : "Like removed.",
     });
   } catch (error) {
-    if (!isCurrentReactionOperation(id, operationVersion)) return;
+    if (
+      !isCurrentReactionOperation(id, operationVersion) ||
+      !isCurrentReactionServiceGeneration(serviceGeneration)
+    ) {
+      return;
+    }
+    if (error instanceof ReactionRequestError && error.code === "identity_required") {
+      identityReady = false;
+    }
     for (const control of controls) setControlSnapshot(control, previous);
-    const reconciled = await reconcileReaction(
+    const failure = mutationFailureMessage(error);
+    if (isPermanentServiceFailure(error)) {
+      markReactionServiceUnavailable();
+      announce(activeControl, failure);
+      showReactionToast(failure, activeButton);
+      return;
+    }
+    const reconciliation = await reconcileReaction(
       id,
       controls,
       previous,
       operationVersion,
+      serviceGeneration,
     );
-    if (!reconciled || !isCurrentReactionOperation(id, operationVersion)) return;
-    const failure = mutationFailureMessage(error);
+    if (reconciliation.status === "permanent-failure") {
+      const permanentFailure = mutationFailureMessage(reconciliation.error);
+      announce(activeControl, permanentFailure);
+      showReactionToast(
+        permanentFailure,
+        activeButton,
+      );
+      return;
+    }
+    if (
+      reconciliation.status !== "reconciled" ||
+      !isCurrentReactionOperation(id, operationVersion) ||
+      !isCurrentReactionServiceGeneration(serviceGeneration)
+    ) {
+      return;
+    }
+    if (reconciliation.snapshot?.liked === optimistic.liked) {
+      announce(activeControl, {
+        ja: optimistic.liked ? "いいねしました。" : "いいねを取り消しました。",
+        en: optimistic.liked ? "Liked." : "Like removed.",
+      });
+      return;
+    }
     announce(activeControl, failure);
-    showReactionToast(failure);
+    showReactionToast(failure, activeButton);
   }
 }
 
@@ -669,7 +1008,13 @@ export function initReactionControls(): void {
   const controls = Array.from(
     document.querySelectorAll<HTMLElement>(CONTROL_SELECTOR),
   );
+  ensureReactionLiveRegion();
   observeLanguageChanges();
+  if (reactionServiceUnavailable) {
+    for (const control of controls) setControlUnavailable(control);
+    syncReactionOverviewVisibility();
+    return;
+  }
   const controlsById = new Map<string, HTMLElement[]>();
   for (const control of controls) {
     const id = control.dataset.entryId ?? "";

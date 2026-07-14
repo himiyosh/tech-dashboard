@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import {
+  handleEnsureReactionIdentity,
   handleGetReactions,
   handlePutReaction,
   verifyTurnstileChallenge,
@@ -90,6 +91,16 @@ function cookieFrom(response: Response): string {
   return setCookie.split(";", 1)[0] ?? "";
 }
 
+function identityRequest(cookie?: string): Request {
+  return new Request(`${origin}/api/reactions/identity`, {
+    method: "POST",
+    headers: {
+      Origin: origin,
+      ...(cookie ? { Cookie: cookie } : {}),
+    },
+  });
+}
+
 function dependencies(store: ReactionStore) {
   return {
     store,
@@ -99,18 +110,33 @@ function dependencies(store: ReactionStore) {
   };
 }
 
+async function establishIdentity(
+  store: ReactionStore,
+  deps = dependencies(store),
+): Promise<string> {
+  const response = await handleEnsureReactionIdentity(
+    identityRequest(),
+    env,
+    deps,
+  );
+  expect(response.status).toBe(200);
+  const cookie = cookieFrom(response);
+  expect(cookie).toMatch(/^__Host-techdb_reaction_voter=/);
+  return cookie;
+}
+
 describe("anonymous public reactions API", () => {
   it("returns bounded batch counts and the current browser state", async () => {
     const store = new MemoryReactionStore();
     const deps = dependencies(store);
+    const cookie = await establishIdentity(store, deps);
     const first = await handlePutReaction(
-      mutationRequest(articleId, true),
+      mutationRequest(articleId, true, cookie),
       env,
       articleId,
       deps,
     );
     expect(first.status).toBe(200);
-    const cookie = cookieFrom(first);
     expect(deps.verifyChallenge).toHaveBeenCalledWith(
       expect.objectContaining({ siteverifyCredential: "turnstile-test-secret" }),
     );
@@ -165,13 +191,13 @@ describe("anonymous public reactions API", () => {
   it("keeps repeated desired-state writes idempotent and hashes the voter cookie", async () => {
     const store = new MemoryReactionStore();
     const deps = dependencies(store);
+    const cookie = await establishIdentity(store, deps);
     const first = await handlePutReaction(
-      mutationRequest(articleId, true),
+      mutationRequest(articleId, true, cookie),
       env,
       articleId,
       deps,
     );
-    const cookie = cookieFrom(first);
     const second = await handlePutReaction(
       mutationRequest(articleId, true, cookie),
       env,
@@ -187,21 +213,62 @@ describe("anonymous public reactions API", () => {
     const [storedHash] = store.seenVoterHashes;
     expect(storedHash).toMatch(/^[a-f0-9]{64}$/);
     expect(storedHash).not.toContain("22222222");
+    expect(first.headers.get("Set-Cookie")).toBeNull();
+  });
+
+  it("establishes identity without mutating votes and reuses the persisted cookie", async () => {
+    const store = new MemoryReactionStore();
+    const deps = dependencies(store);
+    const first = await handleEnsureReactionIdentity(identityRequest(), env, deps);
+    expect(first.status).toBe(200);
+    await expect(first.json()).resolves.toEqual({ identity: { ready: true } });
+    const cookie = cookieFrom(first);
     expect(first.headers.get("Set-Cookie")).toContain("HttpOnly");
     expect(first.headers.get("Set-Cookie")).toContain("SameSite=Lax");
     expect(first.headers.get("Set-Cookie")).toContain("Secure");
+
+    const second = await handleEnsureReactionIdentity(
+      identityRequest(cookie),
+      env,
+      {
+        ...deps,
+        randomUUID: () => "33333333-3333-4333-8333-333333333333",
+      },
+    );
+    expect(second.status).toBe(200);
+    expect(second.headers.get("Set-Cookie")).toBeNull();
+    expect(store.votes.size).toBe(0);
+    expect(store.rateLimits.size).toBe(0);
   });
 
-  it("removes the same browser vote without allowing negative counts", async () => {
+  it("rejects mutations before identity establishment without changing state", async () => {
     const store = new MemoryReactionStore();
     const deps = dependencies(store);
-    const liked = await handlePutReaction(
+    const response = await handlePutReaction(
       mutationRequest(articleId, true),
       env,
       articleId,
       deps,
     );
-    const cookie = cookieFrom(liked);
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: "identity_required" },
+    });
+    expect(deps.verifyChallenge).not.toHaveBeenCalled();
+    expect(store.votes.size).toBe(0);
+    expect(store.rateLimits.size).toBe(0);
+  });
+
+  it("removes the same browser vote without allowing negative counts", async () => {
+    const store = new MemoryReactionStore();
+    const deps = dependencies(store);
+    const cookie = await establishIdentity(store, deps);
+    const liked = await handlePutReaction(
+      mutationRequest(articleId, true, cookie),
+      env,
+      articleId,
+      deps,
+    );
     const unliked = await handlePutReaction(
       mutationRequest(articleId, false, cookie),
       env,
@@ -264,7 +331,7 @@ describe("anonymous public reactions API", () => {
     expect(oversized.status).toBe(413);
 
     const challengeFailure = await handlePutReaction(
-      mutationRequest(articleId, true),
+      mutationRequest(articleId, true, await establishIdentity(store, deps)),
       env,
       articleId,
       {
@@ -298,15 +365,16 @@ describe("anonymous public reactions API", () => {
   it("rate limits mutation bursts before changing another vote", async () => {
     const store = new MemoryReactionStore();
     const deps = dependencies(store);
+    const cookie = await establishIdentity(store, deps);
     const limitedEnv = { ...env, REACTION_RATE_LIMIT_MAX: "1" };
     const first = await handlePutReaction(
-      mutationRequest(articleId, true),
+      mutationRequest(articleId, true, cookie),
       limitedEnv,
       articleId,
       deps,
     );
     const second = await handlePutReaction(
-      mutationRequest("fedcba9876543210", true, cookieFrom(first)),
+      mutationRequest("fedcba9876543210", true, cookie),
       limitedEnv,
       "fedcba9876543210",
       deps,
@@ -319,9 +387,22 @@ describe("anonymous public reactions API", () => {
   it("fails closed when required bindings or secrets are absent", async () => {
     const missingDb = await handleGetReactions(
       new Request(`${origin}/api/reactions?ids=${articleId}`),
-      { REACTION_HMAC_SECRET: hmacSecret },
+      env,
     );
     expect(missingDb.status).toBe(503);
+    expect(await missingDb.json()).toEqual({
+      error: {
+        code: "service_not_configured",
+        message: "REACTIONS_DB is not configured.",
+      },
+    });
+
+    const missingTurnstileHydration = await handleGetReactions(
+      new Request(`${origin}/api/reactions?ids=${articleId}`),
+      { REACTION_HMAC_SECRET: hmacSecret },
+      dependencies(new MemoryReactionStore()),
+    );
+    expect(missingTurnstileHydration.status).toBe(503);
 
     const missingTurnstile = await handlePutReaction(
       mutationRequest(articleId, true),

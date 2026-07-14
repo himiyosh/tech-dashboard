@@ -243,25 +243,42 @@ Knowledge カードと記事詳細のいいねは、同一 origin の Pages Func
 # 1. 専用 D1 を作成し、表示された database ID を安全に控える
 npx wrangler d1 create tech-dashboard-reactions
 
-# 2. production D1 へ schema を適用する
-npx wrangler d1 execute tech-dashboard-reactions \
+# 2. Wrangler が表示した d1_databases block を untracked の設定へ保存し、
+#    production D1 へ schema を適用する
+npx wrangler d1 execute REACTIONS_DB \
+  --config web/.wrangler/reactions-production.jsonc \
   --remote \
   --file=web/migrations/0001_reactions.sql
 ```
 
-Cloudflare dashboard の Pages project settings で `REACTIONS_DB` を作成済み D1 へ bind し、production の secret と build variable を登録します。Turnstile widget の許可 hostname には、実際に機能を有効にする custom domain と pages.dev domain だけを登録します。設定後は新しい Pages deployment が必要です。
+`web/wrangler.reactions.local.jsonc` を `web/.wrangler/reactions-production.jsonc` へコピーし、all-zero の `database_id` を `d1 create` が表示した ID へ、`database_name` を作成時の名前へ置き換えます。binding は `REACTIONS_DB` のまま使います。このファイルは `.wrangler/` 配下のため Git には追加しません。Cloudflare dashboard の Pages project settings で `REACTIONS_DB` を作成済み D1 へ bind し、production の secret と build variable を登録します。Turnstile widget の許可 hostname には、実際に機能を有効にする custom domain と pages.dev domain だけを登録します。設定後は新しい Pages deployment が必要です。
 
-ローカルでは公開 site key を `web/.env.local`、2 つの secret を gitignored の `web/.dev.vars` に置きます。D1 binding を指定した Pages preview は次の形で起動します。
+ローカルでは公開 site key を `web/.env.local`、2 つの secret を gitignored の `web/.dev.vars` に置きます。最初に migration と Pages preview で同じ `--persist-to` directory を指定し、同じローカル D1 を共有します。`pages dev` だけを起動しても schema は自動適用されません。
 
 ```bash
 cd web
-npx wrangler pages dev dist --d1 REACTIONS_DB=<database-id>
+
+# 1. local-only config で D1 binding を解決し、schema を適用する
+npx --yes wrangler@4.85.0 d1 execute REACTIONS_DB \
+  --config wrangler.reactions.local.jsonc \
+  --local \
+  --persist-to .wrangler/state/reactions \
+  --file=migrations/0001_reactions.sql
+
+# 2. 同じ永続化 directory と D1 を Pages Functions へ bind する
+npx --yes wrangler@4.85.0 pages dev dist \
+  --compatibility-date 2026-05-01 \
+  --d1 REACTIONS_DB=00000000-0000-0000-0000-000000000000 \
+  --persist-to .wrangler/state/reactions
 ```
+
+`wrangler.reactions.local.jsonc` の all-zero ID はローカル専用です。`--remote` では使いません。上記手順は schema 適用後の `GET /api/reactions`、identity bootstrap、D1 の vote/rate-limit 行が 0 件の状態までローカルで確認済みです。
 
 API contract:
 
 - `GET /api/reactions?ids=<comma-separated ids>` は最大 50 記事の count と current browser の状態を返す。
-- `PUT /api/reactions/:id` は `{ liked, turnstileToken }` の desired state を受け取る。toggle command ではないため再送しても冪等。
+- `POST /api/reactions/identity` は匿名 cookie だけを確立する。票、count、rate-limit state は変更しない。
+- `PUT /api/reactions/:id` は確立済み cookie と `{ liked, turnstileToken }` の desired state を受け取る。cookie が無い場合は `409 identity_required` を返し、toggle command ではないため再送しても冪等。
 - browser UUID は `__Host-techdb_reaction_voter` HttpOnly cookie に保持し、生値と IP address は D1 に保存しない。
 - cookie 削除や別 browser は別票として扱う best-effort contract。公開 count を identity や人気ランキングへ流用しない。
 

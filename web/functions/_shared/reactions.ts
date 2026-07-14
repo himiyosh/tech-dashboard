@@ -159,6 +159,24 @@ function requireStore(env: ReactionEnv, dependencies: ReactionDependencies): Rea
   return new D1ReactionStore(env.REACTIONS_DB);
 }
 
+function requireReactionService(
+  env: ReactionEnv,
+  dependencies: ReactionDependencies,
+): {
+  hmacCredential: string;
+  siteverifyCredential: string;
+  store: ReactionStore;
+} {
+  return {
+    hmacCredential: requireSecret(env.REACTION_HMAC_SECRET, "REACTION_HMAC_SECRET", 32),
+    siteverifyCredential: requireSecret(
+      env.TURNSTILE_SECRET_KEY,
+      "TURNSTILE_SECRET_KEY",
+    ),
+    store: requireStore(env, dependencies),
+  };
+}
+
 function parseCookie(request: Request, name: string): string | null {
   const header = request.headers.get("Cookie");
   if (!header) return null;
@@ -440,8 +458,7 @@ export async function handleGetReactions(
       throw new ReactionApiError(405, "method_not_allowed", "Only GET is allowed.");
     }
     const ids = parseBatchIds(request);
-    const hmacCredential = requireSecret(env.REACTION_HMAC_SECRET, "REACTION_HMAC_SECRET", 32);
-    const store = requireStore(env, dependencies);
+    const { hmacCredential, store } = requireReactionService(env, dependencies);
     const voter = await resolveVoter(
       request,
       hmacCredential,
@@ -450,6 +467,31 @@ export async function handleGetReactions(
     );
     const reactions = await store.list(ids, voter.hash);
     return jsonResponse({ reactions });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+export async function handleEnsureReactionIdentity(
+  request: Request,
+  env: ReactionEnv,
+  dependencies: ReactionDependencies = {},
+): Promise<Response> {
+  try {
+    if (request.method !== "POST") {
+      throw new ReactionApiError(405, "method_not_allowed", "Only POST is allowed.");
+    }
+    assertSameOrigin(request);
+    const { hmacCredential } = requireReactionService(env, dependencies);
+    const voter = await resolveVoter(
+      request,
+      hmacCredential,
+      true,
+      dependencies.randomUUID ?? crypto.randomUUID.bind(crypto),
+    );
+    const headers = new Headers();
+    if (voter.newCookie) headers.set("Set-Cookie", voter.newCookie);
+    return jsonResponse({ identity: { ready: true } }, 200, headers);
   } catch (error) {
     return errorResponse(error);
   }
@@ -474,14 +516,21 @@ export async function handlePutReaction(
     }
     assertSameOrigin(request);
     const body = await parseMutationBody(request);
-    const hmacCredential = requireSecret(env.REACTION_HMAC_SECRET, "REACTION_HMAC_SECRET", 32);
-    const siteverifyCredential = requireSecret(
-      env.TURNSTILE_SECRET_KEY,
-      "TURNSTILE_SECRET_KEY",
+    const { hmacCredential, siteverifyCredential, store } =
+      requireReactionService(env, dependencies);
+    const voter = await resolveVoter(
+      request,
+      hmacCredential,
+      false,
+      dependencies.randomUUID ?? crypto.randomUUID.bind(crypto),
     );
-    const store = requireStore(env, dependencies);
-    const randomUUID = dependencies.randomUUID ?? crypto.randomUUID.bind(crypto);
-    const voter = await resolveVoter(request, hmacCredential, true, randomUUID);
+    if (!voter.hash) {
+      throw new ReactionApiError(
+        409,
+        "identity_required",
+        "Establish an anonymous reaction identity before changing a reaction.",
+      );
+    }
     const challengeVerified = await (dependencies.verifyChallenge ?? verifyTurnstileChallenge)({
       token: body.turnstileToken,
       request,
@@ -509,13 +558,7 @@ export async function handlePutReaction(
     }
 
     const count = await store.setLiked(articleId, voter.hash, body.liked, nowMs);
-    const headers = new Headers();
-    if (voter.newCookie) headers.set("Set-Cookie", voter.newCookie);
-    return jsonResponse(
-      { reaction: { id: articleId, liked: body.liked, count } },
-      200,
-      headers,
-    );
+    return jsonResponse({ reaction: { id: articleId, liked: body.liked, count } });
   } catch (error) {
     return errorResponse(error);
   }

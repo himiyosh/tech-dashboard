@@ -1610,6 +1610,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: `synchronizeArchiveTagsFromLive()` を archive core の共有 helper に移し、ID、次に canonical URL で対応する final live entry を解決して tags 配列を完全置換する。final live tags が baseline から変わった run は全 indexed archive 月を検査し、実際に incoming entry または tag replacement がある月だけを commit と stats delta に含める。stats の removed / added は両方を canonical URL で対称 dedupeする。migration も同じ同期 helper を使い、archive-only entry の historical tags は維持する。
 - **教訓**: union merge は enrichment 保全には適するが、live artifact と完全一致すべき taxonomy field の最終契約には使えない。exact parity が必要な field は canonical live artifact を source of truth とし、runtime と migration の final artifact 境界で共有 helperにより同期する。月別保存では incoming 月だけを同期対象とみなさず、canonical duplicate が存在し得る全月を検査対象、実変更月だけを write / stats 対象として分離する。
 
+### LL-244: push の HTTP/2 framing failure は remote ref を照合してから HTTP/1.1 で再試行する
+- **事象**: 品質 hook がすべて成功した `git push` が `curl 16 Error in the HTTP2 framing layer` と `unexpected disconnect` で exit 1 になり、末尾に `Everything up-to-date` も表示された。remote branch は実際には作成されていなかった。
+- **根本原因**: hook 完了後の GitHub への pack 送信が HTTP/2 transport で切断された。末尾の文言だけでは remote ref の更新結果を判定できず、成功扱いすると未 push を見逃す。
+- **対策**: `git ls-remote --heads origin <ref>` で remote ref と local commit SHA を直接照合する。未反映で、エラーが HTTP/2 framing layer に限定される場合は、安全 hook を維持したまま `git -c http.version=HTTP/1.1 push` で再試行する。再試行後も remote ref を確認する。
+- **教訓**: push の成否は標準出力の補助文言で推測せず、exit code と remote ref の SHA で確定する。通信方式の切替は `--no-verify` や force の代替ではなく、同じ non-force push と品質 hook を保った transport 修復として限定する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -13,6 +13,7 @@ import {
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { sourceFaviconUrl, sourceHost } from "../lib/favicon.ts";
+import ArticleLike from "./ArticleLike.astro";
 
 export interface Props {
   entry: NormalizedEntry;
@@ -83,12 +84,15 @@ const hasImage = imgSrc.length > 0;
       )}
     </div>
   </a>
+  <ArticleLike entryId={entry.id} variant="card" />
 </article>
 
 <style>
   .kg-card {
     --cat-color: #34d399;
     display: flex;
+    position: relative;
+    transition: transform 0.16s ease;
   }
   .kg-card-link {
     display: grid;
@@ -102,16 +106,21 @@ const hasImage = imgSrc.length > 0;
     background: var(--bg-2, rgba(148, 163, 184, 0.04));
     text-decoration: none;
     color: inherit;
-    transition: border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
   }
   .kg-card-link:has(.kg-thumb) {
     grid-template-columns: 116px minmax(0, 1fr);
   }
-  .kg-card-link:hover,
-  .kg-card-link:focus-visible {
-    border-color: color-mix(in srgb, var(--cat-color) 50%, var(--border));
+  .kg-card:hover,
+  .kg-card:focus-within {
     transform: translateY(-2px);
+  }
+  .kg-card:hover .kg-card-link,
+  .kg-card:focus-within .kg-card-link {
+    border-color: color-mix(in srgb, var(--cat-color) 50%, var(--border));
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+  }
+  .kg-card-link:focus-visible {
     outline: 0;
   }
   .kg-thumb {
@@ -144,6 +153,7 @@ const hasImage = imgSrc.length > 0;
     font-size: 0.72rem;
     color: var(--text-muted, #94a3b8);
     min-width: 0;
+    padding-right: 70px;
   }
   .kg-favicon {
     border-radius: 3px;
@@ -175,6 +185,7 @@ const hasImage = imgSrc.length > 0;
     /* Reserve exactly 2 lines so 1-line and 2-line titles take equal space
        (keeps card height uniform under fixed-height layout, LL-096). */
     min-height: 2.52rem;
+    padding-right: 70px;
   }
   .kg-sum {
     margin: 0;
@@ -215,6 +226,16 @@ const hasImage = imgSrc.length > 0;
   @supports not selector(:has(*)) {
     .kg-card.has-image .kg-card-link {
       grid-template-columns: 116px minmax(0, 1fr);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .kg-card,
+    .kg-card-link {
+      transition: none;
+    }
+    .kg-card:hover,
+    .kg-card:focus-within {
+      transform: none;
     }
   }
   @media (max-width: 460px) {

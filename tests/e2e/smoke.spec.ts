@@ -524,13 +524,12 @@ test.describe("TECH Dashboard smoke", () => {
       if ((await okLink.count()) === 0) continue;
       await expect(okLink).toBeVisible();
       const title = (await okLink.getAttribute("title")) ?? "";
-      const aria = (await okLink.getAttribute("aria-label")) ?? "";
       expect(title).toContain("within");
       expect(title).toContain("freshness threshold");
       expect(title).not.toContain("stale >");
-      expect(aria).toContain("within");
-      expect(aria).toContain("freshness threshold");
-      expect(aria).not.toContain("stale >");
+      await expect(okLink).not.toHaveAttribute("aria-label", /.+/);
+      await expect(okLink).toHaveAccessibleName("収集元 更新OK");
+      await expect(okLink).toHaveAccessibleDescription(/within .* freshness threshold/);
       checked = true;
       break;
     }
@@ -568,10 +567,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(freshness).toBeVisible();
     await expect(freshness).toHaveAttribute("data-freshness-scope", "collection");
     const title = (await freshness.getAttribute("title")) ?? "";
-    const aria = (await freshness.getAttribute("aria-label")) ?? "";
     expect(title).toContain("source collection freshness");
-    expect(aria).toContain("収集鮮度");
-    expect(aria).not.toContain("summary");
+    await expect(freshness).not.toHaveAttribute("aria-label", /.+/);
+    await expect(freshness).toHaveAccessibleName(/収集元 更新(?:OK|遅延)/);
+    await expect(freshness).toHaveAccessibleDescription(/ソース収集の状態/);
     await expect(freshness.locator(".i18n-ja")).toHaveText(/収集元 更新(?:OK|遅延)/);
   });
 
@@ -2128,6 +2127,29 @@ test.describe("TECH Dashboard smoke", () => {
     const strip = page.locator(".ed-meta-strip");
     await expect(strip).toBeVisible();
 
+    const bylineAuthority = page.locator(".ed-byline [data-source-authority]");
+    await expect(bylineAuthority).toHaveCount(1);
+    await expect(bylineAuthority).toBeVisible();
+    await expect(bylineAuthority).toHaveAttribute(
+      "data-source-type",
+      /^(blog|release|changelog|paper|community)$/,
+    );
+    await expect(bylineAuthority).toContainText(
+      /公式|論文|コミュニティ|報道|集約|出典/,
+    );
+    const bylineAuthorityBox = await bylineAuthority.boundingBox();
+    expect(bylineAuthorityBox, "authority badge has visible geometry").not.toBeNull();
+    expect(
+      bylineAuthorityBox!.y,
+      "authority is visible in the first viewport beside the source byline",
+    ).toBeLessThan(720);
+    const bylineFaviconBox = await page.locator(".ed-byline .ed-favicon").boundingBox();
+    expect(bylineFaviconBox, "source favicon has visible geometry").not.toBeNull();
+    expect(
+      Math.max(bylineFaviconBox!.width, bylineFaviconBox!.height),
+      "the 32px favicon endpoint is not upscaled beyond 16 CSS pixels",
+    ).toBeLessThanOrEqual(16);
+
     const authorityPill = strip.locator("[data-source-authority]");
     await expect(authorityPill).toHaveCount(1);
     await expect(authorityPill).toHaveAttribute(
@@ -2312,6 +2334,31 @@ test.describe("TECH Dashboard smoke", () => {
       "each knowledge source has a favicon icon",
     ).toBe(sourceLabels.length);
 
+    const sourceLink = page.locator(".knowledge-source-list .knowledge-source-link").nth(1);
+    const sourceHref = await sourceLink.getAttribute("href");
+    expect(sourceHref, "Knowledge source link has a hash destination").toMatch(/^#kg-/);
+    await sourceLink.click();
+    await expect(page).toHaveURL(new RegExp(`${sourceHref}$`));
+    const sourceTargetId = sourceHref!.slice(1);
+    await expect
+      .poll(() =>
+        page.evaluate((targetId) => {
+          const target = document.getElementById(targetId);
+          const header = document.querySelector("header");
+          if (!target || !header) return false;
+          return target.getBoundingClientRect().top >= header.getBoundingClientRect().bottom + 8;
+        }, sourceTargetId),
+      )
+      .toBe(true);
+    const targetedGroup = page.locator(".knowledge-source-group").filter({
+      has: page.locator(`[id="${sourceTargetId}"]`),
+    });
+    await expect(targetedGroup).toHaveCount(1);
+    expect(
+      await targetedGroup.evaluate((group) => getComputedStyle(group).boxShadow),
+      "the selected Knowledge source group has a visible target state",
+    ).not.toBe("none");
+
     await page.setViewportSize({ width: 768, height: 900 });
     const tabletCardHeights = await page.locator(".kg-card").evaluateAll((cards) => [
       ...new Set(cards.map((card) => Math.round(card.getBoundingClientRect().height))),
@@ -2416,6 +2463,644 @@ test.describe("TECH Dashboard smoke", () => {
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
+  });
+
+  test("Knowledge and detail likes hydrate, toggle idempotently, and roll back safely", async ({ page }) => {
+    const stateById = new Map<string, { count: number; liked: boolean }>();
+    const readBatches: string[][] = [];
+    const mutations: Array<Record<string, unknown>> = [];
+    let failNextMutationStatus: 429 | 503 | "network" | undefined;
+
+    await page.addInitScript(() => {
+      type ReactionTestWindow = Window & {
+        __TECHDB_REACTION_SITE_KEY__?: string;
+        __TECHDB_REACTION_TURNSTILE_LABEL__?: string | null;
+        turnstile?: {
+          ready(callback: () => void): void;
+          render(
+            container: HTMLElement,
+            options: { callback: (token: string) => void },
+          ): string;
+          execute(widgetId: string): void;
+          remove(widgetId: string): void;
+        };
+      };
+      const target = window as ReactionTestWindow;
+      const callbacks = new Map<string, (token: string) => void>();
+      target.__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+      target.turnstile = {
+        ready(callback) {
+          callback();
+        },
+        render(container, options) {
+          target.__TECHDB_REACTION_TURNSTILE_LABEL__ = container.getAttribute("aria-label");
+          callbacks.set("reaction-test-widget", options.callback);
+          return "reaction-test-widget";
+        },
+        execute(widgetId) {
+          queueMicrotask(() => callbacks.get(widgetId)?.("test-turnstile-token"));
+        },
+        remove(widgetId) {
+          callbacks.delete(widgetId);
+        },
+      };
+    });
+
+    await page.route("**/api/reactions?*", async (route) => {
+      const ids = new URL(route.request().url()).searchParams
+        .get("ids")
+        ?.split(",")
+        .filter(Boolean) ?? [];
+      readBatches.push(ids);
+      const reactions = ids.map((id) => {
+        const snapshot = stateById.get(id) ?? { count: 7, liked: false };
+        stateById.set(id, snapshot);
+        return { id, ...snapshot };
+      });
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ reactions }),
+      });
+    });
+    await page.route("**/api/reactions/*", async (route) => {
+      const id = decodeURIComponent(new URL(route.request().url()).pathname.split("/").pop() ?? "");
+      const payload = route.request().postDataJSON() as Record<string, unknown>;
+      mutations.push(payload);
+      await new Promise((resolve) => setTimeout(resolve, 120));
+      if (failNextMutationStatus) {
+        const status = failNextMutationStatus;
+        failNextMutationStatus = undefined;
+        if (status === "network") {
+          await route.abort("failed");
+          return;
+        }
+        await route.fulfill({
+          status,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: {
+              code: status === 429 ? "rate_limited" : "service_unavailable",
+              message: status === 429 ? "Too many requests" : "Unavailable",
+            },
+          }),
+        });
+        return;
+      }
+
+      const current = stateById.get(id) ?? { count: 0, liked: false };
+      const liked = payload.liked === true;
+      const next = {
+        liked,
+        count: Math.max(0, current.count + (current.liked === liked ? 0 : liked ? 1 : -1)),
+      };
+      stateById.set(id, next);
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ reaction: { id, ...next } }),
+      });
+    });
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    await expect(page.locator("[data-reaction-control]")).toHaveCount(0);
+    await page.goto("/knowledge/");
+    const cards = page.locator(".kg-card");
+    const cardCount = await cards.count();
+    expect(cardCount, "Knowledge exposes likeable cards").toBeGreaterThan(0);
+    const knowledgeExplainer = page.locator(".knowledge-reaction-note");
+    await expect(knowledgeExplainer).toBeVisible();
+    await expect(knowledgeExplainer.locator(".i18n-ja")).toContainText(
+      "保存・お気に入りではなく、掲載順位にも影響しません",
+    );
+    await expect(
+      knowledgeExplainer.getByRole("link", { name: "仕組みとプライバシー" }),
+    ).toBeVisible();
+    await expect(page.locator("[data-reaction-button]:not(:disabled)")).toHaveCount(cardCount);
+    expect(readBatches.length, "count hydration uses bounded batches").toBe(
+      Math.ceil(cardCount / 50),
+    );
+    expect(
+      readBatches.every((batch) => batch.length > 0 && batch.length <= 50),
+      "every count request stays within the API batch limit",
+    ).toBe(true);
+
+    const card = cards.first();
+    const cardLink = card.locator(".kg-card-link");
+    const detailHref = await cardLink.getAttribute("href");
+    expect(detailHref, "Knowledge card links to an article detail").toBeTruthy();
+    await expect(card.locator("a button")).toHaveCount(0);
+    const control = card.locator("[data-reaction-control]");
+    const button = control.locator("[data-reaction-button]");
+    const count = control.locator("[data-reaction-count]");
+    await expect(button).toHaveAccessibleName(/いいね 7/);
+    const describedBy = (await button.getAttribute("aria-describedby"))?.split(/\s+/) ?? [];
+    const contextId = describedBy.find((id) => id.endsWith("-context"));
+    expect(contextId, "like button references its anonymous public reaction context").toBeTruthy();
+    await expect(page.locator(`#${contextId}`)).toContainText(
+      "匿名の公開いいねです。記事は保存されず、掲載順位にも影響しません。",
+    );
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(count).toHaveText("7");
+    const buttonBox = await button.boundingBox();
+    expect(buttonBox?.width, "card like target is at least 44px wide").toBeGreaterThanOrEqual(44);
+    expect(buttonBox?.height, "card like target is at least 44px high").toBeGreaterThanOrEqual(44);
+    await cardLink.hover();
+    await expect
+      .poll(() =>
+        card.evaluate((node) => Math.round(new DOMMatrix(getComputedStyle(node).transform).m42)),
+      )
+      .toBe(-2);
+    expect(
+      await cardLink.evaluate((node) => getComputedStyle(node).transform),
+      "the whole card moves as one interaction group",
+    ).toBe("none");
+
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "true");
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+    await expect(count).toHaveText("8");
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(control.locator("[data-reaction-status]")).toContainText("いいねしました。");
+    expect(
+      await page.evaluate(
+        () =>
+          (
+            window as Window & {
+              __TECHDB_REACTION_TURNSTILE_LABEL__?: string | null;
+            }
+          ).__TECHDB_REACTION_TURNSTILE_LABEL__,
+      ),
+      "Turnstile uses the active Japanese label",
+    ).toBe("本人確認");
+
+    await button.focus();
+    await page.keyboard.press("Space");
+    await expect(button).toHaveAttribute("aria-busy", "true");
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(count).toHaveText("7");
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toBeFocused();
+
+    failNextMutationStatus = 503;
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "true");
+    await expect(count).toHaveText("8");
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(count).toHaveText("7");
+    await expect(control.locator("[data-reaction-status]")).toContainText(
+      "いいね機能を一時的に利用できません。",
+    );
+    const reactionToast = page.locator("#reaction-error-toast");
+    await expect(reactionToast).toBeVisible();
+    await expect(reactionToast.locator("[data-reaction-toast-copy]")).toContainText(
+      "いいね機能を一時的に利用できません。",
+    );
+    await expect(button).toBeFocused();
+    await reactionToast.getByRole("button", { name: "通知を閉じる" }).click();
+    await expect(reactionToast).toBeHidden();
+
+    failNextMutationStatus = 429;
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(count).toHaveText("7");
+    await expect(control.locator("[data-reaction-status]")).toContainText(
+      "操作が多すぎます。",
+    );
+    await expect(reactionToast).toBeVisible();
+    await expect(reactionToast.locator("[data-reaction-toast-copy]")).toContainText(
+      "操作が多すぎます。",
+    );
+
+    expect(mutations.map((payload) => payload.liked)).toEqual([true, false, true, true]);
+    expect(
+      mutations.every(
+        (payload) =>
+          payload.turnstileToken === "test-turnstile-token" &&
+          Object.keys(payload).sort().join(",") === "liked,turnstileToken",
+      ),
+      "each mutation carries only the desired state and one-time challenge token",
+    ).toBe(true);
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(button).toHaveAccessibleName(/Like 7/);
+    await expect(reactionToast.locator("[data-reaction-toast-copy]")).toContainText(
+      "Too many requests.",
+    );
+    await reactionToast.getByRole("button", { name: "Dismiss notification" }).click();
+
+    await page.setViewportSize({ width: 768, height: 900 });
+    await expect(knowledgeExplainer).toBeVisible();
+    const tabletCardBox = await card.boundingBox();
+    const tabletButtonBox = await button.boundingBox();
+    expect(tabletCardBox?.height, "Knowledge card keeps its tablet height").toBeCloseTo(152, 1);
+    expect(tabletButtonBox?.width, "tablet like target is at least 44px wide").toBeGreaterThanOrEqual(
+      44,
+    );
+    expect(tabletButtonBox?.height, "tablet like target is at least 44px high").toBeGreaterThanOrEqual(
+      44,
+    );
+    expect(
+      tabletButtonBox && tabletCardBox
+        ? tabletButtonBox.x >= tabletCardBox.x &&
+            tabletButtonBox.x + tabletButtonBox.width <= tabletCardBox.x + tabletCardBox.width
+        : false,
+      "tablet like target stays within the Knowledge card",
+    ).toBe(true);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(knowledgeExplainer).toBeVisible();
+    const cardBox = await card.boundingBox();
+    const mobileButtonBox = await button.boundingBox();
+    expect(cardBox?.height, "Knowledge card keeps its mobile height").toBeCloseTo(148, 1);
+    expect(mobileButtonBox?.width, "mobile like target is at least 44px wide").toBeGreaterThanOrEqual(
+      44,
+    );
+    expect(mobileButtonBox?.height, "mobile like target is at least 44px high").toBeGreaterThanOrEqual(
+      44,
+    );
+    expect(
+      mobileButtonBox && cardBox
+        ? mobileButtonBox.x >= cardBox.x &&
+            mobileButtonBox.x + mobileButtonBox.width <= cardBox.x + cardBox.width
+        : false,
+      "mobile like target stays within the Knowledge card",
+    ).toBe(true);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
+    await page.setViewportSize({ width: 375, height: 667 });
+    await expect(knowledgeExplainer).toBeVisible();
+    failNextMutationStatus = "network";
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(button).toBeFocused();
+    await expect(reactionToast).toBeVisible();
+    await expect(reactionToast.locator("[data-reaction-toast-copy]")).toContainText(
+      "Check your connection",
+    );
+    expect(
+      await page.evaluate(
+        () =>
+          (
+            window as Window & {
+              __TECHDB_REACTION_TURNSTILE_LABEL__?: string | null;
+            }
+          ).__TECHDB_REACTION_TURNSTILE_LABEL__,
+      ),
+      "Turnstile uses the active English label",
+    ).toBe("Human verification");
+    const [toastBox, tabbarBox] = await Promise.all([
+      reactionToast.boundingBox(),
+      page.locator(".mobile-tabbar").boundingBox(),
+    ]);
+    expect(toastBox, "reaction error toast has visible geometry").not.toBeNull();
+    expect(tabbarBox, "mobile tabbar has visible geometry").not.toBeNull();
+    expect(
+      toastBox!.y + toastBox!.height,
+      "reaction toast stays above the fixed mobile tabbar",
+    ).toBeLessThanOrEqual(tabbarBox!.y + 1);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+    await reactionToast.getByRole("button", { name: "Dismiss notification" }).click();
+
+    await page.goto(detailHref!);
+    const detailControl = page.locator(".ed-reaction-panel [data-reaction-control]");
+    await expect(detailControl).toHaveCount(1);
+    await expect(page.locator(".ed-action-strip [data-reaction-control]")).toHaveCount(0);
+    await expect(page.locator(".ed-reaction-panel")).toBeVisible();
+    const detailButton = detailControl.getByRole("button", { name: /Like/ });
+    await expect(detailButton).toBeEnabled();
+    await expect(detailButton).toHaveAttribute("aria-pressed", "false");
+    await expect(detailControl.locator("[data-reaction-count]")).toHaveText("7");
+    const detailButtonBox = await detailButton.boundingBox();
+    expect(detailButtonBox?.width, "detail like target is at least 44px wide").toBeGreaterThanOrEqual(44);
+    expect(detailButtonBox?.height, "detail like target is at least 44px high").toBeGreaterThanOrEqual(44);
+    const reactionExplainer = page.locator("[data-reaction-explainer]");
+    await expect(reactionExplainer).toBeVisible();
+    await expect(reactionExplainer.locator("p > .i18n-en")).toContainText(
+      "does not save the article or affect ranking",
+    );
+    const privacyLink = reactionExplainer.getByRole("link", {
+      name: "How it works and privacy",
+    });
+    await expect(privacyLink).toHaveAttribute("href", "/about#reactions-privacy");
+    const actionTargetHeights = await page.locator(".ed-action-strip a, .ed-action-strip button").evaluateAll(
+      (nodes) =>
+        nodes
+          .filter((node) => node instanceof HTMLElement && node.getClientRects().length > 0)
+          .map((node) => node.getBoundingClientRect().height),
+    );
+    expect(actionTargetHeights.length, "detail action strip exposes interactive targets").toBeGreaterThan(0);
+    expect(
+      actionTargetHeights.every((height) => height >= 44),
+      `detail action targets stay at least 44px high: ${JSON.stringify(actionTargetHeights)}`,
+    ).toBe(true);
+
+    await privacyLink.click();
+    await expect(page).toHaveURL(/\/about\/?#reactions-privacy$/);
+    await expect(page.locator("#reactions-privacy")).toBeVisible();
+    await expect(page.locator('.page-hero-actions a[href="#reactions-privacy"]')).toHaveText(
+      "Likes & privacy",
+    );
+  });
+
+  test("a stale failure reconciliation cannot overwrite a newer like retry", async ({ page }) => {
+    const stateById = new Map<string, { count: number; liked: boolean }>();
+    let targetId = "";
+    let mutationCount = 0;
+    let releaseStaleRead!: () => void;
+    let markStaleReadStarted!: () => void;
+    const staleReadGate = new Promise<void>((resolve) => {
+      releaseStaleRead = resolve;
+    });
+    const staleReadStarted = new Promise<void>((resolve) => {
+      markStaleReadStarted = resolve;
+    });
+
+    await page.addInitScript(() => {
+      type ReactionRaceWindow = Window & {
+        __TECHDB_REACTION_SITE_KEY__?: string;
+        turnstile?: {
+          ready(callback: () => void): void;
+          render(
+            container: HTMLElement,
+            options: { callback: (token: string) => void },
+          ): string;
+          execute(widgetId: string): void;
+          remove(widgetId: string): void;
+        };
+      };
+      const target = window as ReactionRaceWindow;
+      let callback: ((token: string) => void) | undefined;
+      target.__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+      target.turnstile = {
+        ready(readyCallback) {
+          readyCallback();
+        },
+        render(_container, options) {
+          callback = options.callback;
+          return "reaction-race-widget";
+        },
+        execute() {
+          queueMicrotask(() => callback?.("reaction-race-token"));
+        },
+        remove() {
+          callback = undefined;
+        },
+      };
+    });
+
+    await page.route("**/api/reactions?*", async (route) => {
+      const ids = new URL(route.request().url()).searchParams
+        .get("ids")
+        ?.split(",")
+        .filter(Boolean) ?? [];
+      if (
+        targetId &&
+        mutationCount === 1 &&
+        ids.length === 1 &&
+        ids[0] === targetId
+      ) {
+        const staleSnapshot = { id: targetId, count: 7, liked: false };
+        markStaleReadStarted();
+        await staleReadGate;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ reactions: [staleSnapshot] }),
+        });
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          reactions: ids.map((id) => ({
+            id,
+            ...(stateById.get(id) ?? { count: 7, liked: false }),
+          })),
+        }),
+      });
+    });
+    await page.route("**/api/reactions/*", async (route) => {
+      const id = decodeURIComponent(new URL(route.request().url()).pathname.split("/").pop() ?? "");
+      mutationCount += 1;
+      if (mutationCount === 1) {
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: { code: "service_unavailable", message: "Unavailable" },
+          }),
+        });
+        return;
+      }
+
+      const next = { count: 8, liked: true };
+      stateById.set(id, next);
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ reaction: { id, ...next } }),
+      });
+    });
+
+    await page.goto("/knowledge/");
+    const control = page.locator("[data-reaction-control]").first();
+    const button = control.locator("[data-reaction-button]");
+    const count = control.locator("[data-reaction-count]");
+    await expect(control).toHaveAttribute("data-state", "ready");
+    targetId = (await control.getAttribute("data-entry-id")) ?? "";
+    expect(targetId).toMatch(/^[a-f0-9]{16}$/);
+
+    await button.click();
+    await staleReadStarted;
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(count).toHaveText("7");
+
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+    await expect(count).toHaveText("8");
+
+    releaseStaleRead();
+    await page.waitForTimeout(100);
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+    await expect(count).toHaveText("8");
+    await expect(page.locator("#reaction-error-toast")).toBeHidden();
+    expect(mutationCount).toBe(2);
+  });
+
+  test("large like counts stay compact without losing the exact accessible value", async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as Window & { __TECHDB_REACTION_SITE_KEY__?: string })
+        .__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+    });
+    await page.route("**/api/reactions?*", async (route) => {
+      const ids = new URL(route.request().url()).searchParams.get("ids")?.split(",") ?? [];
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          reactions: ids.filter(Boolean).map((id) => ({
+            id,
+            liked: false,
+            count: 999_999,
+          })),
+        }),
+      });
+    });
+
+    await page.goto("/knowledge/");
+    const control = page.locator("[data-reaction-control]").first();
+    await expect(control).toHaveAttribute("data-state", "ready");
+    await expect(control.locator("[data-reaction-count]")).toHaveText("1M");
+    await expect(control.locator("[data-reaction-count-exact]")).toHaveText("999,999件");
+    await expect(control.getByRole("button")).toHaveAccessibleName(/999,999件/);
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(control.locator("[data-reaction-count]")).toHaveText("1M");
+    await expect(control.locator("[data-reaction-count-exact]")).toHaveText("999,999 likes");
+    await expect(control.getByRole("button")).toHaveAccessibleName(/999,999 likes/);
+  });
+
+  test("like controls fail closed without public configuration or API availability", async ({ page }) => {
+    let apiRequests = 0;
+    await page.route("**/api/reactions?*", async (route) => {
+      apiRequests += 1;
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "service_not_configured", message: "Unavailable" },
+        }),
+      });
+    });
+
+    await page.goto("/knowledge/");
+    const controls = page.locator("[data-reaction-control]");
+    const controlCount = await controls.count();
+    expect(controlCount, "Knowledge exposes reaction controls").toBeGreaterThan(0);
+    const unavailableControl = controls.first();
+    const unavailableButton = unavailableControl.locator("[data-reaction-button]");
+    await expect(unavailableControl).toHaveAttribute("data-state", "unavailable");
+    await expect(unavailableControl).toHaveAttribute("aria-hidden", "true");
+    await expect(unavailableControl).toBeHidden();
+    await expect(unavailableButton).toBeDisabled();
+    await expect(page.getByRole("button", { name: /いいね/ })).toHaveCount(0);
+    await expect(page.locator(".knowledge-reaction-note")).toBeHidden();
+    expect(apiRequests, "missing public site key prevents API traffic").toBe(0);
+
+    const unavailableCard = unavailableControl.locator("xpath=ancestor::article[1]");
+    const unavailableHref = await unavailableCard.locator(".kg-card-link").getAttribute("href");
+    expect(unavailableHref, "unavailable card still has its article destination").toBeTruthy();
+    await unavailableCard.locator(".kg-card-link").click();
+    await page.waitForURL((url) => url.pathname === unavailableHref);
+
+    await page.addInitScript(() => {
+      (window as Window & { __TECHDB_REACTION_SITE_KEY__?: string })
+        .__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+    });
+    await page.goto("/knowledge/");
+    await expect
+      .poll(() => apiRequests, { message: "configured controls attempt count hydration" })
+      .toBeGreaterThan(0);
+    await expect(page.locator("[data-reaction-button]:disabled")).toHaveCount(controlCount);
+    await expect(page.locator("[data-reaction-control]:visible")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /いいね/ })).toHaveCount(0);
+    await expect(page.locator(".knowledge-reaction-note")).toBeHidden();
+  });
+
+  test("Turnstile script loading recovers on the next like attempt", async ({ page }) => {
+    let scriptRequests = 0;
+    let mutationRequests = 0;
+    await page.addInitScript(() => {
+      (window as Window & { __TECHDB_REACTION_SITE_KEY__?: string })
+        .__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+    });
+    await page.route("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit", async (route) => {
+      scriptRequests += 1;
+      if (scriptRequests === 1) {
+        await route.abort("failed");
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/javascript",
+        body: `
+          (() => {
+            let callback;
+            window.turnstile = {
+              ready(readyCallback) { readyCallback(); },
+              render(_container, options) {
+                callback = options.callback;
+                return "retry-widget";
+              },
+              execute() { queueMicrotask(() => callback?.("retry-token")); },
+              remove() {}
+            };
+          })();
+        `,
+      });
+    });
+    await page.route("**/api/reactions?*", async (route) => {
+      const ids = new URL(route.request().url()).searchParams.get("ids")?.split(",") ?? [];
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          reactions: ids.filter(Boolean).map((id) => ({ id, liked: false, count: 7 })),
+        }),
+      });
+    });
+    await page.route("**/api/reactions/*", async (route) => {
+      mutationRequests += 1;
+      const id = decodeURIComponent(new URL(route.request().url()).pathname.split("/").pop() ?? "");
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ reaction: { id, liked: true, count: 8 } }),
+      });
+    });
+
+    await page.goto("/knowledge/");
+    const control = page.locator("[data-reaction-control]").first();
+    const button = control.locator("[data-reaction-button]");
+    await expect(button).toBeEnabled();
+
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(control.locator("[data-reaction-status]")).toContainText(
+      "本人確認を完了できませんでした。",
+    );
+    await expect(page.locator("#reaction-error-toast")).toBeVisible();
+    await expect(
+      page.locator("#reaction-error-toast [data-reaction-toast-copy]"),
+    ).toContainText("本人確認を完了できませんでした。");
+    expect(scriptRequests).toBe(1);
+    expect(mutationRequests).toBe(0);
+    await expect(page.locator('script[data-techdb-turnstile-loader="true"]')).toHaveCount(0);
+
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+    await expect(control.locator("[data-reaction-count]")).toHaveText("8");
+    expect(scriptRequests).toBe(2);
+    expect(mutationRequests).toBe(1);
   });
 
   test("glossary is a menu destination with working search filter", async ({ page }) => {

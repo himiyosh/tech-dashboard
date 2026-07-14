@@ -2,6 +2,7 @@
 import Portal from "../../layouts/Portal.astro";
 import Sidebar from "../../components/Sidebar.astro";
 import CategoryThumb from "../../components/CategoryThumb.astro";
+import ArticleLike from "../../components/ArticleLike.astro";
 import { SITE_URL } from "../../lib/site.ts";
 import {
   ALL_ENTRIES,
@@ -63,6 +64,7 @@ const srcMeta = SOURCE_META.find((s) => s.id === entry.source);
 const srcDisplay = sourceLabel(entry.source);
 const srcTier = srcMeta?.tier;
 const srcAuthority = sourceAuthority(entry.source, entry.sourceType);
+const srcAuthorityBadgeClass = ["badge", "authority", srcAuthority.kind].join(" ");
 const srcAuthorityTitle = `${srcAuthority.en} source (${srcAuthority.ja})${srcTier ? ` · registry tier ${srcTier}` : ""}`;
 const sourceStatusAnchor = srcMeta ? sourceAnchorId(entry.source) : null;
 const sourceStatusHref = sourceStatusAnchor ? `/status#${sourceStatusAnchor}` : "/status";
@@ -113,12 +115,13 @@ const freshnessDetail = stale
   : `source collection freshness · latest listed entry collected ${latestSourceRelative} · within ${freshness.threshold.staleHrs}h freshness threshold`;
 const collectionFreshnessLabelJa = stale ? "収集元 更新遅延" : "収集元 更新OK";
 const collectionFreshnessLabelEn = stale ? "Source feed stale" : "Source feed fresh";
-const collectionFreshnessAria = stale
-  ? `収集鮮度警告: ${freshnessDetail}。Status の ${srcDisplay} 行へ移動`
-  : `収集鮮度情報: ${freshnessDetail}。Status の ${srcDisplay} 行へ移動`;
-const collectionFreshnessAriaStatic = stale
-  ? `収集鮮度警告: ${freshnessDetail}`
-  : `収集鮮度情報: ${freshnessDetail}`;
+const collectionFreshnessDescriptionId = `collection-freshness-description-${entry.id}`;
+const collectionFreshnessDescriptionJa = sourceStatusAnchor
+  ? `ソース収集の状態です。${freshnessDetail}。Status の ${srcDisplay} 行で詳細を確認できます。`
+  : `ソース収集の状態です。${freshnessDetail}。要約の生成状態とは別です。`;
+const collectionFreshnessDescriptionEn = sourceStatusAnchor
+  ? `${freshnessDetail}. Opens the ${srcDisplay} row in Status for details.`
+  : `${freshnessDetail}. This is separate from summary generation.`;
 
 const bodyChars = (body?.bodyJa ?? "").length;
 const readMinutes = bodyChars > 0 ? Math.max(1, Math.round(bodyChars / 500)) : 0;
@@ -307,7 +310,7 @@ const jsonLd = {
                   class="ed-stale-pill"
                   href={sourceStatusHref}
                   title={freshnessDetail}
-                  aria-label={collectionFreshnessAria}
+                  aria-describedby={collectionFreshnessDescriptionId}
                 >
                   <span class="i18n-ja">⚠ 収集元 更新遅延</span>
                   <span class="i18n-en" lang="en">⚠ Source feed stale</span>
@@ -316,7 +319,7 @@ const jsonLd = {
                 <span
                   class="ed-stale-pill"
                   title={freshnessDetail}
-                  aria-label={collectionFreshnessAriaStatic}
+                  aria-describedby={collectionFreshnessDescriptionId}
                 >
                   <span class="i18n-ja">⚠ 収集元 更新遅延</span>
                   <span class="i18n-en" lang="en">⚠ Source feed stale</span>
@@ -334,9 +337,18 @@ const jsonLd = {
           </h1>
           <div class="ed-byline">
             {entryFavicon && (
-              <img class="ed-favicon" src={entryFavicon} alt="" width="18" height="18" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'" />
+              <img class="ed-favicon" src={entryFavicon} alt="" width="16" height="16" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'" />
             )}
             <span class="ed-src-name">{srcDisplay}</span>
+            <span
+              class={srcAuthorityBadgeClass}
+              data-source-authority={srcAuthority.kind}
+              data-source-type={entry.sourceType}
+              title={srcAuthorityTitle}
+            >
+              <span class="i18n-ja">{srcAuthority.ja}</span>
+              <span class="i18n-en" lang="en">{srcAuthority.en}</span>
+            </span>
             <span class="sep">·</span>
             <span class="ed-host">{sourceHost(entry.url)}</span>
             <span class="sep">·</span>
@@ -369,7 +381,7 @@ const jsonLd = {
                 data-freshness-scope="collection"
                 href={sourceStatusHref}
                 title={freshnessDetail}
-                aria-label={collectionFreshnessAria}
+                aria-describedby={collectionFreshnessDescriptionId}
               >
                 <span class="i18n-ja">{collectionFreshnessLabelJa}</span>
                 <span class="i18n-en" lang="en">{collectionFreshnessLabelEn}</span>
@@ -379,13 +391,41 @@ const jsonLd = {
                 class={`ed-freshness ${stale ? "warn" : "ok"}`}
                 data-freshness-scope="collection"
                 title={freshnessDetail}
-                aria-label={collectionFreshnessAriaStatic}
+                aria-describedby={collectionFreshnessDescriptionId}
               >
                 <span class="i18n-ja">{collectionFreshnessLabelJa}</span>
                 <span class="i18n-en" lang="en">{collectionFreshnessLabelEn}</span>
               </span>
             )}
+            <span id={collectionFreshnessDescriptionId} class="visually-hidden">
+              <span class="i18n-ja">{collectionFreshnessDescriptionJa}</span>
+              <span class="i18n-en" lang="en">{collectionFreshnessDescriptionEn}</span>
+            </span>
           </div>
+          <section
+            class="ed-reaction-panel"
+            data-reaction-surface
+            aria-labelledby="ed-reaction-heading"
+            hidden
+          >
+            <div class="ed-reaction-copy" data-reaction-explainer>
+              <strong id="ed-reaction-heading">
+                <span class="i18n-ja">この記事は参考になりましたか？</span>
+                <span class="i18n-en" lang="en">Was this article useful?</span>
+              </strong>
+              <p>
+                <span class="i18n-ja">
+                  匿名の公開いいねです。記事は保存されず、掲載順位にも影響しません。
+                  <a href="/about#reactions-privacy">仕組みとプライバシー</a>
+                </span>
+                <span class="i18n-en" lang="en">
+                  This anonymous public like does not save the article or affect ranking.
+                  <a href="/about#reactions-privacy">How it works and privacy</a>
+                </span>
+              </p>
+            </div>
+            <ArticleLike entryId={entry.id} variant="detail" />
+          </section>
         </header>
 
         {summaryAbsent && (
@@ -690,7 +730,7 @@ const jsonLd = {
           class={`rail-freshness ${stale ? "warn" : "ok"}`}
           data-freshness-scope="collection"
           title={freshnessDetail}
-          aria-label={collectionFreshnessAriaStatic}
+          aria-describedby={collectionFreshnessDescriptionId}
         >
           <span class="i18n-ja">{collectionFreshnessLabelJa}</span>
           <span class="i18n-en" lang="en">{collectionFreshnessLabelEn}</span>
@@ -981,8 +1021,43 @@ const jsonLd = {
     display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
     margin-top: 16px;
   }
+  .ed-reaction-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .ed-reaction-panel[hidden] { display: none; }
+  .ed-reaction-copy {
+    min-width: 0;
+    max-width: 66ch;
+  }
+  .ed-reaction-copy strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .ed-reaction-copy p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 11.5px;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+  .ed-reaction-copy a {
+    color: var(--accent);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .ed-reaction-copy a:hover { text-decoration: underline; }
   .ed-header-cta {
     display: inline-flex; align-items: center; gap: 7px;
+    min-height: 44px;
+    box-sizing: border-box;
     padding: 8px 12px;
     border-radius: 8px;
     background: var(--cat-color);
@@ -991,10 +1066,17 @@ const jsonLd = {
     font-size: 12.5px;
     font-weight: 800;
   }
-  .ed-action-strip .ed-share-btn { margin-left: 0; padding: 8px 12px; border-radius: 8px; }
+  .ed-action-strip .ed-share-btn {
+    min-height: 44px;
+    box-sizing: border-box;
+    margin-left: 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+  }
   .ed-freshness {
     display: inline-flex; align-items: center;
-    min-height: 32px;
+    min-height: 44px;
+    box-sizing: border-box;
     padding: 0 10px;
     border-radius: 8px;
     border: 1px solid var(--border);
@@ -1526,5 +1608,17 @@ const jsonLd = {
     .ed-rel-grid { grid-template-columns: 1fr; }
     .ed-pn { grid-template-columns: 1fr; }
     .ed-fab { right: 14px; bottom: 14px; }
+  }
+  @media (max-width: 620px) {
+    .ed-reaction-panel {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .ed-toast {
+      bottom: calc(82px + env(safe-area-inset-bottom));
+      width: min(320px, calc(100vw - 24px));
+      text-align: center;
+    }
   }
 </style>

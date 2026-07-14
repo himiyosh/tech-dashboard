@@ -1,0 +1,306 @@
+---
+interface Props {
+  entryId: string;
+  variant?: "card" | "detail";
+}
+
+const { entryId, variant = "detail" } = Astro.props as Props;
+const controlId = `reaction-${variant}-${entryId}`;
+const labelId = `${controlId}-label`;
+const countId = `${controlId}-count`;
+const statusId = `${controlId}-status`;
+const contextId = `${controlId}-context`;
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
+---
+
+<div
+  class:list={["reaction-control", `variant-${variant}`]}
+  data-reaction-control
+  data-entry-id={entryId}
+  data-turnstile-site-key={siteKey}
+  data-state="loading"
+  aria-hidden="true"
+>
+  <button
+    type="button"
+    class="reaction-button"
+    data-reaction-button
+    data-reaction-count-id={countId}
+    aria-labelledby={`${labelId} ${countId}`}
+    aria-describedby={`${contextId} ${statusId}`}
+    aria-pressed="false"
+    aria-busy="true"
+    disabled
+  >
+    <svg class="reaction-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="M8.7 10.1 12 3.8c.4-.8 1.4-1.2 2.2-.8.7.3 1.1 1 .9 1.8l-1 4h4.6c1.4 0 2.5 1.3 2.2 2.7l-1.2 6.7c-.2 1.1-1.2 1.9-2.3 1.9H8.7v-10Z"></path>
+      <path d="M3.2 10.1h5.5v10H3.2v-10Z"></path>
+    </svg>
+    <span id={labelId} class="reaction-label">
+      <span class="i18n-ja">いいね</span>
+      <span class="i18n-en" lang="en">Like</span>
+    </span>
+    <span class="reaction-count mono" data-reaction-count aria-hidden="true">—</span>
+    <span id={countId} class="visually-hidden" data-reaction-count-exact>件数を読み込み中</span>
+  </button>
+  <span id={contextId} class="visually-hidden">
+    <span class="i18n-ja">匿名の公開いいねです。記事は保存されず、掲載順位にも影響しません。</span>
+    <span class="i18n-en" lang="en">This is an anonymous public like. It does not save the article or affect ranking.</span>
+  </span>
+  <span id={statusId} class="visually-hidden" data-reaction-status></span>
+</div>
+
+<script>
+  import { initReactionControls } from "../lib/reactions-client.ts";
+
+  initReactionControls();
+</script>
+
+<style>
+  .reaction-control {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity 160ms ease-out,
+      visibility 160ms step-start;
+  }
+
+  .reaction-control[data-state="loading"],
+  .reaction-control[data-state="unavailable"] {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 120ms ease-out,
+      visibility 120ms step-end;
+  }
+
+  .reaction-control.variant-card {
+    position: absolute;
+    z-index: 3;
+    top: 6px;
+    right: 7px;
+  }
+
+  .reaction-button {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 10px;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface-2, #171614) 92%, transparent);
+    color: var(--muted);
+    font: inherit;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+      color 0.16s ease,
+      border-color 0.16s ease,
+      background 0.16s ease,
+      transform 0.16s ease;
+  }
+
+  .reaction-button:hover:not(:disabled) {
+    color: var(--reaction, #fb7185);
+    border-color: color-mix(in srgb, var(--reaction, #fb7185) 55%, var(--border));
+    background: color-mix(in srgb, var(--reaction, #fb7185) 12%, var(--surface-2, #171614));
+    transform: translateY(-1px);
+  }
+
+  .reaction-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .reaction-button:disabled {
+    cursor: default;
+  }
+
+  .reaction-button[aria-disabled="true"] {
+    cursor: wait;
+    opacity: 0.72;
+  }
+
+  .reaction-button[aria-pressed="true"] {
+    color: var(--reaction, #fb7185);
+    border-color: color-mix(in srgb, var(--reaction, #fb7185) 58%, var(--border));
+    background: color-mix(in srgb, var(--reaction, #fb7185) 14%, var(--surface-2, #171614));
+  }
+
+  .reaction-icon {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .reaction-icon path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.16s ease;
+  }
+
+  .reaction-button[aria-pressed="true"] .reaction-icon {
+    transform: translateY(-1px) scale(1.04);
+  }
+
+  .reaction-label {
+    font-weight: 700;
+  }
+
+  .reaction-count {
+    min-width: 2ch;
+    color: currentColor;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .variant-card .reaction-button {
+    min-width: 52px;
+    max-width: 66px;
+    padding: 0 8px;
+    gap: 5px;
+    background: color-mix(in srgb, var(--surface, #11100f) 94%, transparent);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  }
+
+  .variant-card .reaction-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reaction-button,
+    .reaction-control,
+    .reaction-icon {
+      transition: none;
+    }
+  }
+
+  :global(.reaction-turnstile-widget) {
+    position: fixed;
+    z-index: var(--layer-verification, 140);
+    right: 16px;
+    bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  :global(.reaction-toast) {
+    position: fixed;
+    z-index: var(--layer-toast, 150);
+    inset: auto 18px max(18px, env(safe-area-inset-bottom)) auto;
+    width: min(430px, calc(100vw - 36px));
+    margin: 0;
+    padding: 12px 12px 12px 14px;
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid color-mix(in srgb, var(--danger) 64%, var(--border));
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface-2) 94%, #000);
+    color: var(--text);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
+    opacity: 0;
+    transform: translateY(10px);
+    transition:
+      opacity 180ms ease-out,
+      transform 180ms ease-out,
+      display 180ms allow-discrete,
+      overlay 180ms allow-discrete;
+  }
+
+  :global(.reaction-toast[hidden]) {
+    display: none;
+  }
+
+  :global(.reaction-toast:popover-open),
+  :global(.reaction-toast[data-fallback-open="true"]) {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @starting-style {
+    :global(.reaction-toast:popover-open) {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+
+  :global(.reaction-toast-icon) {
+    width: 24px;
+    height: 24px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--danger) 18%, transparent);
+    color: var(--danger);
+    font-weight: 900;
+  }
+
+  :global(.reaction-toast-copy) {
+    min-width: 0;
+    color: var(--text-2);
+    font-size: 0.84rem;
+    line-height: 1.45;
+    text-wrap: pretty;
+  }
+
+  :global(.reaction-toast-close) {
+    width: 44px;
+    height: 44px;
+    display: inline-grid;
+    place-items: center;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 1.25rem;
+    cursor: pointer;
+  }
+
+  :global(.reaction-toast-close:hover) {
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+    color: var(--text);
+  }
+
+  :global(.reaction-toast-close:focus-visible) {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+
+  @media (max-width: 720px) {
+    :global(.reaction-turnstile-widget) {
+      bottom: calc(72px + env(safe-area-inset-bottom));
+    }
+
+    :global(.reaction-toast) {
+      inset: auto 10px calc(78px + env(safe-area-inset-bottom)) 10px;
+      width: auto;
+      max-height: min(30vh, 180px);
+      overflow-y: auto;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.reaction-toast) {
+      transition: none;
+    }
+  }
+</style>

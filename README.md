@@ -226,6 +226,52 @@ Pages プロジェクトは Cloudflare dashboard で **Create application** → 
 
 custom domain `techdb.studio344.net` は新プロジェクトに移行済みです。再構築が必要な場合のみ、API token (`Pages Write`) で同じ設定を再現できます。
 
+#### 匿名公開いいね (Pages Functions + D1)
+
+Knowledge カードと記事詳細のいいねは、同一 origin の Pages Functions と専用 D1 を使います。お気に入り、アカウント、マイページ、記事保存は含みません。いいねは記事 route の保持期間を延長せず、live index から外れた記事を再公開しません。
+
+本番で有効にする前に、Cloudflare Pages project へ次を設定します。コードを merge しただけでは、binding と key が無いためコントロールは利用不可のままです。
+
+| 種別 | 名前 | 用途 |
+|---|---|---|
+| D1 binding | `REACTIONS_DB` | 記事ごとの匿名票と rate-limit state |
+| Encrypted secret | `REACTION_HMAC_SECRET` | browser cookie の UUID を保存前に HMAC-SHA256 化 |
+| Encrypted secret | `TURNSTILE_SECRET_KEY` | mutation ごとの Turnstile Siteverify |
+| Build variable | `PUBLIC_TURNSTILE_SITE_KEY` | Astro がいいねコントロールへ埋め込む公開 site key |
+
+```bash
+# 1. 専用 D1 を作成し、表示された database ID を安全に控える
+npx wrangler d1 create tech-dashboard-reactions
+
+# 2. production D1 へ schema を適用する
+npx wrangler d1 execute tech-dashboard-reactions \
+  --remote \
+  --file=web/migrations/0001_reactions.sql
+```
+
+Cloudflare dashboard の Pages project settings で `REACTIONS_DB` を作成済み D1 へ bind し、production の secret と build variable を登録します。Turnstile widget の許可 hostname には、実際に機能を有効にする custom domain と pages.dev domain だけを登録します。設定後は新しい Pages deployment が必要です。
+
+ローカルでは公開 site key を `web/.env.local`、2 つの secret を gitignored の `web/.dev.vars` に置きます。D1 binding を指定した Pages preview は次の形で起動します。
+
+```bash
+cd web
+npx wrangler pages dev dist --d1 REACTIONS_DB=<database-id>
+```
+
+API contract:
+
+- `GET /api/reactions?ids=<comma-separated ids>` は最大 50 記事の count と current browser の状態を返す。
+- `PUT /api/reactions/:id` は `{ liked, turnstileToken }` の desired state を受け取る。toggle command ではないため再送しても冪等。
+- browser UUID は `__Host-techdb_reaction_voter` HttpOnly cookie に保持し、生値と IP address は D1 に保存しない。
+- cookie 削除や別 browser は別票として扱う best-effort contract。公開 count を identity や人気ランキングへ流用しない。
+
+UI contract:
+
+- いいねは progressive enhancement として扱い、batch count を正常取得できた control だけを表示する。設定不足や API 障害時は、無効な button や記事 link を遮る hit area を残さない。
+- Knowledge では常時表示の説明、記事詳細では source/share utility と分離した専用 reaction panel を使い、匿名・非保存・非ランキングを操作地点で明示する。
+- 大きな visible count は `1.2K` / `1M` のように短縮するが、accessible name と tooltip には locale に沿った正確な件数を保持する。
+- mutation 失敗時は optimistic state を戻して server truth を再取得し、rate limit、Turnstile、service、network の原因に応じた JA/EN toast を表示する。keyboard focus は操作した button に維持する。
+
 ```bash
 export CLOUDFLARE_ACCOUNT_ID=0438e47e5e23f7acd006da2e594f3559
 
@@ -408,10 +454,13 @@ tech-dashboard/
 │     ├─ stats-builder.ts    # data/stats.json
 │     └─ stats-core.ts       # Worker / Node 共有の stats 純粋ロジック
 ├─ web/                      # Astro 静的サイト
+│  ├─ functions/             # Pages Functions (匿名公開いいね API)
+│  ├─ migrations/            # Pages D1 schema
 │  ├─ src/
 │  │  ├─ layouts/Portal.astro
-│  │  ├─ components/{Sidebar,EntryCard,DailySummary,DayDigest,TickerBar,TrendChart,Pager,CompactRow,CategoryHero,LiveMetrics}.astro
+│  │  ├─ components/{Sidebar,EntryCard,ArticleLike,DailySummary,DayDigest,TickerBar,TrendChart,Pager,CompactRow,CategoryHero,LiveMetrics}.astro
 │  │  ├─ lib/data.ts         # data/index.json を型付きで読み込む
+│  │  ├─ lib/reactions-client.ts # いいね count hydration / optimistic update / rollback
 │  │  ├─ lib/stats.ts        # data/stats.json を型付きで読み込む
 │  │  ├─ lib/metrics.ts      # Timeline / About 用の自動更新 metrics SoT
 │  │  ├─ lib/freshness.ts    # source type 別 freshness 判定 (UI / quality-audit 共有)

@@ -4,6 +4,7 @@ import {
   buildArchiveMonthFile,
   groupArchiveEntries,
   mergeArchiveEntries,
+  synchronizeArchiveTagsFromLive,
 } from "../harness/publishers/archive-core.ts";
 import { buildStatsPayload } from "../harness/publishers/stats-core.ts";
 import type { NormalizedEntry } from "../harness/types.ts";
@@ -104,6 +105,53 @@ describe("archive-core", () => {
       summaryEn: "Existing English summary",
     });
     expect(merged[0].tags.sort()).toEqual(["ai", "lg"]);
+  });
+
+  it("archive merge の stale tag を final live taxonomy へ完全同期する", () => {
+    const existing = fixtureEntry({
+      id: "archive-id",
+      url: "https://example.com/article?utm_source=archive",
+      tags: ["agent", "obsolete"],
+    });
+    const incoming = fixtureEntry({
+      id: "live-id",
+      url: "https://example.com/article",
+      tags: ["agent", "tutorial"],
+    });
+
+    const merged = mergeArchiveEntries([existing], [incoming]);
+    expect(merged[0].tags).toEqual(["agent", "obsolete", "tutorial"]);
+
+    const synchronized = synchronizeArchiveTagsFromLive(merged, [incoming]);
+
+    expect(synchronized.changed).toBe(1);
+    expect(synchronized.entries[0].tags).toEqual(["agent", "tutorial"]);
+  });
+
+  it("same canonical URL の全 archive copy を final live tags へ同期する", () => {
+    const march = fixtureEntry({
+      id: "shared-march",
+      publishedAt: "2026-03-01T00:00:00.000Z",
+      tags: ["agent", "obsolete"],
+    });
+    const june = fixtureEntry({
+      id: "shared-june",
+      publishedAt: "2026-06-01T00:00:00.000Z",
+      tags: ["agent", "legacy"],
+    });
+    const live = fixtureEntry({
+      id: "shared-live",
+      publishedAt: "2026-06-01T00:00:00.000Z",
+      tags: ["agent", "tutorial"],
+    });
+
+    const synchronized = synchronizeArchiveTagsFromLive([march, june], [live]);
+
+    expect(synchronized.changed).toBe(2);
+    expect(synchronized.entries.map((item) => item.tags)).toEqual([
+      ["agent", "tutorial"],
+      ["agent", "tutorial"],
+    ]);
   });
 
   it("archive index は月降順と件数を保持する", () => {

@@ -1,19 +1,10 @@
 /**
- * Cloudflare Worker — scheduled harness runner.
+ * Shared publisher runtime executed by the GitHub Actions Node job.
  *
- * Replaces `.github/workflows/harness-daily.yml`. Cron trigger fires every
- * hour; the Worker fetches RSS sources, normalizes, dedupes, applies
- * deterministic fallback content, enqueues missing summaries for the
- * summarizer Worker, and commits `data/index.json`, `data/archive/*`, and
- * `data/stats.json` back to GitHub via the Git Data API. Cloudflare Pages
- * (Git-integrated) then picks up the push and auto-deploys.
- *
- * Bindings (see wrangler.toml):
- *   - SUMMARY_CACHE (KV)   replaces data/_summary-cache.json
- *   - COPILOT_PAT (secret) classic GH PAT with Copilot Enterprise
- *   - GH_TOKEN    (secret) fine-grained PAT, Contents: Write on this repo
- *   - GITHUB_OWNER, GITHUB_REPO, GITHUB_BRANCH (vars)
- *   - SUMMARIZE_MODEL, ENQUEUE_MAX_NEW, KV_LOOKUP_CAP (vars)
+ * The runtime collects sources, normalizes and dedupes entries, prepares
+ * deferred Queue/KV effects, and commits the related data artifacts through
+ * an immutable-snapshot CAS. The deployed Cloudflare harness is only the
+ * OIDC-authenticated Free-plan bridge and does not execute this module.
  */
 import { listSources } from "../../harness/registry.ts";
 import { mergeEntryEnrichment } from "../../harness/pipeline/entry-merge.ts";
@@ -69,6 +60,7 @@ import {
   buildArchiveMonthFile,
   groupArchiveEntries,
   mergeArchiveEntries,
+  synchronizeArchiveTagsFromLive,
   type ArchiveIndexFile,
   type ArchiveMonthFile,
 } from "../../harness/publishers/archive-core.ts";
@@ -633,6 +625,37 @@ export function selectArchiveUpdateEntries(
   });
 }
 
+export function hasArchiveTagChanges(
+  existingPayload: { entries?: NormalizedEntry[] } | null,
+  nextEntries: readonly NormalizedEntry[],
+): boolean {
+  if (!existingPayload?.entries) return true;
+
+  const existingById = new Map(existingPayload.entries.map((entry) => [entry.id, entry]));
+  const existingByUrl = new Map(
+    existingPayload.entries.map((entry) => [canonicalUrlKey(entry.url) ?? entry.url ?? entry.id, entry]),
+  );
+
+  return nextEntries.some((entry) => {
+    const key = canonicalUrlKey(entry.url) ?? entry.url ?? entry.id;
+    const existing = existingById.get(entry.id) ?? existingByUrl.get(key);
+    return existing !== undefined && JSON.stringify(existing.tags ?? []) !== JSON.stringify(entry.tags ?? []);
+  });
+}
+
+export function selectArchiveInspectionMonths(
+  archiveIndex: Pick<ArchiveIndexFile, "months" | "perMonth"> | null,
+  incomingMonths: Iterable<string>,
+  inspectAllArchiveMonths: boolean,
+): string[] {
+  const months = new Set(incomingMonths);
+  if (inspectAllArchiveMonths && archiveIndex) {
+    for (const month of archiveIndex.months ?? []) months.add(month);
+    for (const month of Object.keys(archiveIndex.perMonth ?? {})) months.add(month);
+  }
+  return [...months].filter((month) => /^\d{4}-\d{2}$/.test(month)).sort();
+}
+
 function delayMs(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -640,16 +663,15 @@ function delayMs(ms: number): Promise<void> {
 /**
  * Build a stats payload incrementally from an existing baseline.
  *
- * We can no longer afford to re-read every archive month every cron run
- * (LL-036: ~25 subrequests for untouched months exhausted the 1000/inv
- * budget through redirect amplification). Instead, treat the existing
- * data/stats.json as the source of truth for untouched-month contributions,
- * then subtract the OLD entries of months touched this run and add the fully
- * merged replacement content for those same months.
+ * Treat the existing data/stats.json as the source of truth for unchanged
+ * month contributions. Subtract the previous content of months changed this
+ * run and add the fully merged replacement for the same months. A cross-month
+ * tag sweep can inspect every archive month without making every inspected
+ * month part of this delta.
  *
  * Invariant: removed is the previous content of touched months and added is
- * the replacement content of those same months. Untouched-month entries never
- * enter either set because their archive files are unchanged.
+ * the replacement content of those same months. Both sides are canonical-URL
+ * deduped so copies of one article in multiple changed months count once.
  *
  * Bootstrap: if existing is null (first run after deploy of this code), we
  * fall back to buildStatsPayload(added) — accurate for everything except
@@ -667,11 +689,13 @@ export function buildIncrementalStats(opts: {
   generatedAt: string;
 }): StatsPayload {
   const { existing, removed, added, liveCount, generatedAt } = opts;
-  if (!existing) return buildStatsPayload(added, generatedAt);
+  const canonicalRemoved = uniqueEntriesByUrl(removed);
+  const canonicalAdded = uniqueEntriesByUrl(added);
+  if (!existing) return buildStatsPayload(canonicalAdded, generatedAt);
 
   // Recompute deltas from the entry sets we have.
-  const removedStats = buildStatsPayload(removed, generatedAt);
-  const addedStats = buildStatsPayload(added, generatedAt);
+  const removedStats = buildStatsPayload(canonicalRemoved, generatedAt);
+  const addedStats = buildStatsPayload(canonicalAdded, generatedAt);
 
   type CategoryMap = Partial<Record<string, number>>;
   const mergeCategory = (a: CategoryMap, b: CategoryMap, sign: 1 | -1): CategoryMap => {
@@ -793,6 +817,7 @@ async function publishHistoryFiles(
   env: PublisherEnv,
   archiveInputEntries: readonly NormalizedEntry[],
   liveEntries: readonly NormalizedEntry[],
+  inspectAllArchiveMonths: boolean,
   generatedAt: string,
   baselineRef: string,
 ): Promise<{
@@ -826,14 +851,18 @@ async function publishHistoryFiles(
   const entriesToMerge = archiveIndex && existingStats ? archiveInputEntries : liveEntries;
   const { byMonth, stats } = groupArchiveEntries(entriesToMerge, { includeHot: true });
 
-  // ONLY read months that received new or changed entries this run. Previously we read
-  // every month in archive_index (~25 months → ~25 subrequests + redirect
-  // amplification on the Standard plan's 1000/inv budget). Untouched months
-  // keep their archive file content as-is; we carry their stats contribution
-  // forward from existing data/stats.json. LL-036.
-  const touchedMonths = [...byMonth.keys()].sort();
-  const existingTouchedFiles = await Promise.all(
-    touchedMonths.map((month) =>
+  // Normal runs inspect only months with incoming entries. When final live
+  // tags changed, inspect every indexed month so canonical duplicates stored
+  // under an older published month receive the same exact tag array. Only
+  // months with incoming content or an actual tag replacement enter the
+  // commit and stats delta.
+  const inspectionMonths = selectArchiveInspectionMonths(
+    archiveIndex,
+    byMonth.keys(),
+    inspectAllArchiveMonths,
+  );
+  const existingInspectionFiles = await Promise.all(
+    inspectionMonths.map((month) =>
       ghGetFileRaw(env, `data/archive/${month}.json`, baselineRef),
     ),
   );
@@ -844,14 +873,19 @@ async function publishHistoryFiles(
   const changes: FileChange[] = [];
   let archiveFilesChanged = 0;
 
-  for (let i = 0; i < touchedMonths.length; i++) {
-    const month = touchedMonths[i];
+  for (let i = 0; i < inspectionMonths.length; i++) {
+    const month = inspectionMonths[i];
     const path = `data/archive/${month}.json`;
-    const existingFile = existingTouchedFiles[i];
+    const existingFile = existingInspectionFiles[i];
     assertArchiveMonthBaseline(month, archiveIndex, existingFile);
     const existingMonth = parseBaselineJson<ArchiveMonthFile>(path, existingFile);
     const incomingEntries = byMonth.get(month) ?? [];
-    const mergedEntries = mergeArchiveEntries(existingMonth?.entries ?? [], incomingEntries);
+    const tagSync = synchronizeArchiveTagsFromLive(
+      mergeArchiveEntries(existingMonth?.entries ?? [], incomingEntries),
+      liveEntries,
+    );
+    if (incomingEntries.length === 0 && tagSync.changed === 0) continue;
+    const mergedEntries = tagSync.entries;
     if (mergedEntries.length === 0) continue;
 
     const monthPayload = buildArchiveMonthFile(month, mergedEntries, generatedAt);
@@ -890,7 +924,7 @@ async function publishHistoryFiles(
   const statsPayload = buildIncrementalStats({
     existing: existingStats,
     removed: oldTouchedEntries,
-    added: uniqueEntriesByUrl(newTouchedEntries),
+    added: newTouchedEntries,
     liveCount: liveEntries.length,
     generatedAt,
   });
@@ -898,7 +932,7 @@ async function publishHistoryFiles(
   if (statsChange) changes.push(statsChange);
 
   return {
-    archiveMonthsTouched: stats.monthsTouched,
+    archiveMonthsTouched: monthFiles.size,
     archiveFilesChanged,
     archiveIndexChanged: archiveIndexChange !== null,
     statsChanged: statsChange !== null,
@@ -1661,6 +1695,7 @@ export async function runHarness(
   }
   const hasEntryChanges = !entriesEqual(existingPayload, indexEntries);
   const archiveUpdateEntries = selectArchiveUpdateEntries(existingPayload, indexEntries);
+  const archiveTagsChanged = hasArchiveTagChanges(existingPayload, indexEntries);
   const indexUnchanged = !jsonContentDiffers(existingJson, json);
   const bodiesChanged = bodyPipeline.bodiesFileContent !== null;
   const noDataChanges = indexUnchanged && !bodiesChanged;
@@ -1677,6 +1712,7 @@ export async function runHarness(
         env,
         archiveUpdateEntries,
         finalEntries,
+        archiveTagsChanged,
         payload.generatedAt,
         publisherSnapshotSha,
       )

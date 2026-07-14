@@ -34,6 +34,7 @@ import {
   buildArchiveIndexFile,
   buildArchiveMonthFile,
   mergeArchiveEntries,
+  synchronizeArchiveTagsFromLive,
 } from "../harness/publishers/archive-core.ts";
 import { buildStatsPayload } from "../harness/publishers/stats-core.ts";
 import { isRealBody, mergeBodies } from "../worker/src/bodies-file.ts";
@@ -41,6 +42,8 @@ import {
   DEFAULT_BODY_RETENTION_DAYS,
   isBodyRetentionEligible,
 } from "../worker/src/body-queue.ts";
+
+export { synchronizeArchiveTagsFromLive };
 
 const DATA_DIR = "./data";
 export const DATA_ARTIFACT_JOURNAL_PATH = join(DATA_DIR, ".clean-source-noise.transaction.json");
@@ -829,27 +832,6 @@ export function migrateArchiveEntries(label, entries, referenceAt, report) {
     aliases: dedupe.aliases,
     keptCount: kept.length,
   };
-}
-
-export function synchronizeArchiveTagsFromLive(entries, liveEntries) {
-  const liveById = new Map(liveEntries.map((entry) => [entry.id, entry]));
-  const liveByCanonical = new Map(
-    liveEntries
-      .map((entry) => [canonicalUrlKey(entry.url), entry])
-      .filter(([key]) => Boolean(key)),
-  );
-  let changed = 0;
-  const synchronized = entries.map((entry) => {
-    const live =
-      liveById.get(entry.id) ??
-      liveByCanonical.get(canonicalUrlKey(entry.url));
-    if (!live || JSON.stringify(entry.tags) === JSON.stringify(live.tags)) {
-      return entry;
-    }
-    changed++;
-    return { ...entry, tags: [...live.tags] };
-  });
-  return { entries: synchronized, changed };
 }
 
 export function buildOriginalLiveAliases(originalEntries, finalEntries) {

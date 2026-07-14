@@ -343,6 +343,8 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | `/` | Timeline (トップ) | `DailySummary`, `TimelineList`, `Sidebar` |
 | `/c/[slug]` | カテゴリ別 (14 種) | `CategoryHero`, `TimelineList` |
 | `/categories` | カテゴリ一覧 | カテゴリグリッド + 7 日スパークライン |
+| `/knowledge` | Knowledge | evergreen source 別の知見カード + 匿名公開いいね |
+| `/e/[id]` | 記事詳細 | bilingual summary / optional body / 原文・共有・匿名公開いいね |
 | `/status` | ステータス + ソース一覧 | `generatedAt` / 件数 / Worker health / source registry / ソース健全性 |
 | `/sources` | 互換リダイレクト | `/status` へ誘導 |
 | `/about` | About | サイト説明 / ライセンス |
@@ -379,7 +381,19 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
   - 外側クリック / フォーカス外: 閉じる
 - **Dev 制約**: `npm run dev` ではインデックスが生成されないため、検証は `npm run preview` または本番環境を使用
 
-### 6.5 多言語表示
+### 6.5 匿名公開いいね
+
+- **表示面**: Knowledge カードと記事詳細。
+- **永続化**: Cloudflare Pages Functions から専用 D1 binding `REACTIONS_DB` を使用する。publisher data、Featured、Top 3、importance、taxonomy には影響しない。
+- **匿名 voter**: `__Host-techdb_reaction_voter` HttpOnly cookie の UUID を server-side HMAC-SHA256 化し、生 UUID と IP address は D1 に保存しない。
+- **mutation**: Turnstile 検証済みの desired-state `PUT` を使う。D1 の `(article_id, voter_hash)` primary key により再送を冪等にする。
+- **制限**: いいねは記事を保存せず、archive 後の route 維持、account、my page、cross-device sync を提供しない。cookie 削除や別 browser は別票になる。
+- **Progressive enhancement**: batch count の取得に成功した control だけを表示する。site key 未設定、API 障害、invalid entry では control、Knowledge の説明、記事詳細の reaction panel を非表示かつ inert にし、主記事 link を遮らない。
+- **UI**: heart ではなく thumbs-up icon と `aria-pressed` を持つ 44px 以上の button を使う。利用可能時の Knowledge 説明は mobile でも表示し、記事詳細では source/share utility と分離した専用 reaction panel を使う。
+- **Count**: visible count は compact notation で card geometry を守り、accessible name と tooltip には locale に沿った exact count を保持する。
+- **Failure recovery**: busy 中も focus を維持する。失敗時は optimistic state を rollback し、server truth を再取得後、rate limit、Turnstile、service、network の原因別 JA/EN toast を表示する。toast は fixed mobile tabbar と Turnstile challenge より上の semantic layer に置く。
+
+### 6.6 多言語表示
 
 - JA/EN 要約はビルド時に両方埋め込み、DOM の `.i18n-ja` / `.i18n-en` を CSS `display` で切替
 - `<html data-lang="ja">` / `<html data-lang="en">` に連動

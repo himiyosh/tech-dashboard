@@ -1,7 +1,50 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page, type Route } from "@playwright/test";
 
 const TIMELINE_ENTRY_LINK_SELECTOR = 'main article.card h3.title > a[href^="/e/"]';
+const REACTION_MUTATION_URL_RE = /\/api\/reactions\/[a-f0-9]{16}$/;
+const REACTION_VOTER_COOKIE_NAME = "__Host-techdb_reaction_voter";
+
+function hasReactionIdentityCookie(headers: Record<string, string>): boolean {
+  return (headers.cookie ?? "")
+    .split(";")
+    .some((cookie) => cookie.trim().startsWith(`${REACTION_VOTER_COOKIE_NAME}=`));
+}
+
+async function rejectMutationWithoutIdentity(route: Route): Promise<boolean> {
+  expect(route.request().method(), "reaction mutation uses desired-state PUT").toBe("PUT");
+  if (hasReactionIdentityCookie(route.request().headers())) return false;
+  await route.fulfill({
+    status: 409,
+    contentType: "application/json",
+    body: JSON.stringify({
+      error: {
+        code: "identity_required",
+        message: "Anonymous voter identity is required",
+      },
+    }),
+  });
+  return true;
+}
+
+async function mockReactionIdentity(
+  page: Page,
+  onRequest: () => void = () => {},
+): Promise<void> {
+  await page.route("**/api/reactions/identity", async (route) => {
+    expect(route.request().method(), "reaction identity bootstrap uses POST").toBe("POST");
+    onRequest();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: {
+        "Set-Cookie":
+          `${REACTION_VOTER_COOKIE_NAME}=11111111-1111-4111-8111-111111111111; Path=/; HttpOnly; Secure; SameSite=Lax`,
+      },
+      body: JSON.stringify({ identity: { ready: true } }),
+    });
+  });
+}
 
 test.describe("TECH Dashboard smoke", () => {
   test("home renders primary sections", async ({ page }) => {
@@ -524,13 +567,12 @@ test.describe("TECH Dashboard smoke", () => {
       if ((await okLink.count()) === 0) continue;
       await expect(okLink).toBeVisible();
       const title = (await okLink.getAttribute("title")) ?? "";
-      const aria = (await okLink.getAttribute("aria-label")) ?? "";
       expect(title).toContain("within");
       expect(title).toContain("freshness threshold");
       expect(title).not.toContain("stale >");
-      expect(aria).toContain("within");
-      expect(aria).toContain("freshness threshold");
-      expect(aria).not.toContain("stale >");
+      await expect(okLink).not.toHaveAttribute("aria-label", /.+/);
+      await expect(okLink).toHaveAccessibleName("収集元 更新OK");
+      await expect(okLink).toHaveAccessibleDescription(/within .* freshness threshold/);
       checked = true;
       break;
     }
@@ -568,10 +610,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(freshness).toBeVisible();
     await expect(freshness).toHaveAttribute("data-freshness-scope", "collection");
     const title = (await freshness.getAttribute("title")) ?? "";
-    const aria = (await freshness.getAttribute("aria-label")) ?? "";
     expect(title).toContain("source collection freshness");
-    expect(aria).toContain("収集鮮度");
-    expect(aria).not.toContain("summary");
+    await expect(freshness).not.toHaveAttribute("aria-label", /.+/);
+    await expect(freshness).toHaveAccessibleName(/収集元 更新(?:OK|遅延)/);
+    await expect(freshness).toHaveAccessibleDescription(/ソース収集の状態/);
     await expect(freshness.locator(".i18n-ja")).toHaveText(/収集元 更新(?:OK|遅延)/);
   });
 
@@ -2115,6 +2157,13 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("article detail explains source authority, importance denominator, and category standing", async ({ page }) => {
+    await page.route("https://icons.duckduckgo.com/ip3/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "image/svg+xml",
+        body: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="#0f766e"/></svg>',
+      });
+    });
     await page.goto("/");
     const summarizedCard = page
       .locator("main article.card")
@@ -2127,6 +2176,29 @@ test.describe("TECH Dashboard smoke", () => {
 
     const strip = page.locator(".ed-meta-strip");
     await expect(strip).toBeVisible();
+
+    const bylineAuthority = page.locator(".ed-byline [data-source-authority]");
+    await expect(bylineAuthority).toHaveCount(1);
+    await expect(bylineAuthority).toBeVisible();
+    await expect(bylineAuthority).toHaveAttribute(
+      "data-source-type",
+      /^(blog|release|changelog|paper|community)$/,
+    );
+    await expect(bylineAuthority).toContainText(
+      /公式|論文|コミュニティ|報道|集約|出典/,
+    );
+    const bylineAuthorityBox = await bylineAuthority.boundingBox();
+    expect(bylineAuthorityBox, "authority badge has visible geometry").not.toBeNull();
+    expect(
+      bylineAuthorityBox!.y,
+      "authority is visible in the first viewport beside the source byline",
+    ).toBeLessThan(720);
+    const bylineFaviconBox = await page.locator(".ed-byline .ed-favicon").boundingBox();
+    expect(bylineFaviconBox, "source favicon has visible geometry").not.toBeNull();
+    expect(
+      Math.max(bylineFaviconBox!.width, bylineFaviconBox!.height),
+      "the 32px favicon endpoint is not upscaled beyond 16 CSS pixels",
+    ).toBeLessThanOrEqual(16);
 
     const authorityPill = strip.locator("[data-source-authority]");
     await expect(authorityPill).toHaveCount(1);
@@ -2312,6 +2384,31 @@ test.describe("TECH Dashboard smoke", () => {
       "each knowledge source has a favicon icon",
     ).toBe(sourceLabels.length);
 
+    const sourceLink = page.locator(".knowledge-source-list .knowledge-source-link").nth(1);
+    const sourceHref = await sourceLink.getAttribute("href");
+    expect(sourceHref, "Knowledge source link has a hash destination").toMatch(/^#kg-/);
+    await sourceLink.click();
+    await expect(page).toHaveURL(new RegExp(`${sourceHref}$`));
+    const sourceTargetId = sourceHref!.slice(1);
+    await expect
+      .poll(() =>
+        page.evaluate((targetId) => {
+          const target = document.getElementById(targetId);
+          const header = document.querySelector("header");
+          if (!target || !header) return false;
+          return target.getBoundingClientRect().top >= header.getBoundingClientRect().bottom + 8;
+        }, sourceTargetId),
+      )
+      .toBe(true);
+    const targetedGroup = page.locator(".knowledge-source-group").filter({
+      has: page.locator(`[id="${sourceTargetId}"]`),
+    });
+    await expect(targetedGroup).toHaveCount(1);
+    expect(
+      await targetedGroup.evaluate((group) => getComputedStyle(group).boxShadow),
+      "the selected Knowledge source group has a visible target state",
+    ).not.toBe("none");
+
     await page.setViewportSize({ width: 768, height: 900 });
     const tabletCardHeights = await page.locator(".kg-card").evaluateAll((cards) => [
       ...new Set(cards.map((card) => Math.round(card.getBoundingClientRect().height))),
@@ -2416,6 +2513,1501 @@ test.describe("TECH Dashboard smoke", () => {
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
+  });
+
+  test("Knowledge and detail likes hydrate, toggle idempotently, and roll back safely", async ({ page }) => {
+    const stateById = new Map<string, { count: number; liked: boolean }>();
+    const readBatches: string[][] = [];
+    const mutations: Array<Record<string, unknown>> = [];
+    const requestOrder: string[] = [];
+    let identityRequests = 0;
+    let failNextMutationStatus: 429 | 500 | "network" | undefined;
+    let failNextMutationCode: "challenge_unavailable" | undefined;
+
+    await page.addInitScript(() => {
+      type ReactionTestWindow = Window & {
+        __TECHDB_REACTION_SITE_KEY__?: string;
+        __TECHDB_REACTION_TURNSTILE_LABEL__?: string | null;
+        turnstile?: {
+          ready(callback: () => void): void;
+          render(
+            container: HTMLElement,
+            options: { callback: (token: string) => void },
+          ): string;
+          execute(widgetId: string): void;
+          remove(widgetId: string): void;
+        };
+      };
+      const target = window as ReactionTestWindow;
+      const callbacks = new Map<string, (token: string) => void>();
+      target.__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+      target.turnstile = {
+        ready(callback) {
+          callback();
+        },
+        render(container, options) {
+          target.__TECHDB_REACTION_TURNSTILE_LABEL__ = container.getAttribute("aria-label");
+          callbacks.set("reaction-test-widget", options.callback);
+          return "reaction-test-widget";
+        },
+        execute(widgetId) {
+          queueMicrotask(() => callbacks.get(widgetId)?.("test-turnstile-token"));
+        },
+        remove(widgetId) {
+          callbacks.delete(widgetId);
+        },
+      };
+    });
+
+    await page.route("**/api/reactions?*", async (route) => {
+      const ids = new URL(route.request().url()).searchParams
+        .get("ids")
+        ?.split(",")
+        .filter(Boolean) ?? [];
+      readBatches.push(ids);
+      const reactions = ids.map((id) => {
+        const snapshot = stateById.get(id) ?? { count: 7, liked: false };
+        stateById.set(id, snapshot);
+        return { id, ...snapshot };
+      });
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ reactions }),
+      });
+    });
+    await mockReactionIdentity(page, () => {
+      identityRequests += 1;
+      requestOrder.push("identity");
+    });
+    await page.route(REACTION_MUTATION_URL_RE, async (route) => {
+      if (await rejectMutationWithoutIdentity(route)) return;
+      const id = decodeURIComponent(new URL(route.request().url()).pathname.split("/").pop() ?? "");
+      const payload = route.request().postDataJSON() as Record<string, unknown>;
+      requestOrder.push("mutation");
+      mutations.push(payload);
+      await new Promise((resolve) => setTimeout(resolve, 120));
+      if (failNextMutationCode) {
+        const code = failNextMutationCode;
+        failNextMutationCode = undefined;
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: {
+              code,
+              message: "Verification service unavailable",
+            },
+          }),
+        });
+        return;
+      }
+      if (failNextMutationStatus) {
+        const status = failNextMutationStatus;
+        failNextMutationStatus = undefined;
+        if (status === "network") {
+          await route.abort("failed");
+          return;
+        }
+        await route.fulfill({
+          status,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: {
+              code: status === 429 ? "rate_limited" : "mutation_failed",
+              message: status === 429 ? "Too many requests" : "Mutation failed",
+            },
+          }),
+        });
+        return;
+      }
+
+      const current = stateById.get(id) ?? { count: 0, liked: false };
+      const liked = payload.liked === true;
+      const next = {
+        liked,
+        count: Math.max(0, current.count + (current.liked === liked ? 0 : liked ? 1 : -1)),
+      };
+      stateById.set(id, next);
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ reaction: { id, ...next } }),
+      });
+    });
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    await expect(page.locator("[data-reaction-control]")).toHaveCount(0);
+    await page.goto("/knowledge/");
+    const cards = page.locator(".kg-card");
+    const cardCount = await cards.count();
+    expect(cardCount, "Knowledge exposes multiple likeable cards").toBeGreaterThan(1);
+    const knowledgeExplainer = page.locator(".knowledge-reaction-note");
+    await expect(knowledgeExplainer).toBeVisible();
+    await expect(knowledgeExplainer.locator(".i18n-ja")).toContainText(
+      "記事の保存・お気に入りではなく、Featured、Top 3、重要度、掲載順位には影響しません",
+    );
+    await expect(
+      knowledgeExplainer.getByRole("link", { name: "仕組みとプライバシー" }),
+    ).toBeVisible();
+    await expect(page.locator("[data-reaction-button]:not(:disabled)")).toHaveCount(cardCount);
+    const reactionLiveRegion = page.locator("#reaction-status-live");
+    await expect(reactionLiveRegion).toHaveCount(1);
+    await expect(reactionLiveRegion).toHaveAttribute("role", "status");
+    await expect(reactionLiveRegion).toHaveAttribute("aria-live", "polite");
+    await expect(reactionLiveRegion).toHaveAttribute("aria-atomic", "true");
+    expect(readBatches.length, "count hydration uses bounded batches").toBe(
+      Math.ceil(cardCount / 50),
+    );
+    expect(
+      readBatches.every((batch) => batch.length > 0 && batch.length <= 50),
+      "every count request stays within the API batch limit",
+    ).toBe(true);
+
+    const card = cards.first();
+    const cardLink = card.locator(".kg-card-link");
+    const detailHref = await cardLink.getAttribute("href");
+    expect(detailHref, "Knowledge card links to an article detail").toBeTruthy();
+    await expect(card.locator("a button")).toHaveCount(0);
+    const control = card.locator("[data-reaction-control]");
+    const button = control.locator("[data-reaction-button]");
+    const count = control.locator("[data-reaction-count]");
+    const cardTitleJa = (await card.locator(".kg-title .i18n-ja").innerText()).trim();
+    const cardTitleEn = (await card.locator(".kg-title .i18n-en").innerText()).trim();
+    const secondCard = cards.nth(1);
+    const secondButton = secondCard.locator("[data-reaction-button]");
+    const secondCardTitleJa = (
+      await secondCard.locator(".kg-title .i18n-ja").innerText()
+    ).trim();
+    expect(secondCardTitleJa).not.toBe(cardTitleJa);
+    await expect(button).toHaveAccessibleName(`いいね 記事: ${cardTitleJa} 7件`);
+    await expect(secondButton).toHaveAccessibleName(`いいね 記事: ${secondCardTitleJa} 7件`);
+    await expect(
+      control.locator('.i18n-ja [data-reaction-article-prefix]'),
+    ).toHaveAttribute("lang", "ja");
+    await expect(
+      control.locator('.i18n-en [data-reaction-article-prefix]'),
+    ).toHaveAttribute("lang", "en");
+    await expect(
+      control.locator('.i18n-ja [data-reaction-article-title]'),
+    ).toHaveAttribute(
+      "lang",
+      (await card.locator(".kg-title .i18n-ja").getAttribute("lang")) ?? "ja",
+    );
+    await expect(
+      control.locator('.i18n-en [data-reaction-article-title]'),
+    ).toHaveAttribute(
+      "lang",
+      (await card.locator(".kg-title .i18n-en").getAttribute("lang")) ?? "en",
+    );
+    const describedBy = (await button.getAttribute("aria-describedby"))?.split(/\s+/) ?? [];
+    const contextId = describedBy.find((id) => id.endsWith("-context"));
+    expect(contextId, "like button references its anonymous public reaction context").toBeTruthy();
+    await expect(page.locator(`#${contextId}`)).toContainText(
+      "匿名の公開いいねです。記事の保存・お気に入りではなく、Featured、Top 3、重要度、掲載順位には影響しません。",
+    );
+    await expect(control.locator("[data-reaction-visible-label] .i18n-ja")).toHaveText("いいね");
+    await expect(control.locator("[data-reaction-visible-label] .i18n-en")).toBeHidden();
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(count).toHaveText("7");
+    const buttonBox = await button.boundingBox();
+    expect(buttonBox?.width, "card like target is at least 44px wide").toBeGreaterThanOrEqual(44);
+    expect(buttonBox?.height, "card like target is at least 44px high").toBeGreaterThanOrEqual(44);
+    const readyCardInsets = await card.evaluate((node) => {
+      const title = node.querySelector<HTMLElement>(".kg-title");
+      const source = node.querySelector<HTMLElement>(".kg-src");
+      return {
+        title: title ? Number.parseFloat(getComputedStyle(title).paddingRight) : -1,
+        source: source ? Number.parseFloat(getComputedStyle(source).paddingRight) : -1,
+      };
+    });
+    expect(readyCardInsets, "a ready like control reserves its overlay width").toEqual({
+      title: 70,
+      source: 70,
+    });
+    await cardLink.focus();
+    await expect(cardLink).toBeFocused();
+    const cardLinkFocus = await cardLink.evaluate((node) => {
+      const style = getComputedStyle(node);
+      return {
+        style: style.outlineStyle,
+        width: Number.parseFloat(style.outlineWidth),
+        offset: Number.parseFloat(style.outlineOffset),
+      };
+    });
+    expect(cardLinkFocus.style, "Knowledge card links retain a solid keyboard focus indicator").toBe(
+      "solid",
+    );
+    expect(cardLinkFocus.width, "Knowledge card focus ring is at least 2px wide").toBeGreaterThanOrEqual(
+      2,
+    );
+    expect(cardLinkFocus.offset, "Knowledge card focus ring clears the card edge").toBeGreaterThanOrEqual(
+      2,
+    );
+    await cardLink.hover();
+    await expect
+      .poll(() =>
+        card.evaluate((node) => Math.round(new DOMMatrix(getComputedStyle(node).transform).m42)),
+      )
+      .toBe(-2);
+    expect(
+      await cardLink.evaluate((node) => getComputedStyle(node).transform),
+      "the whole card moves as one interaction group",
+    ).toBe("none");
+
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "true");
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+    await expect(count).toHaveText("8");
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(control.locator("[data-reaction-status]")).toContainText("いいねしました。");
+    expect(identityRequests, "identity is established once before the first mutation").toBe(1);
+    expect(requestOrder.slice(0, 2)).toEqual(["identity", "mutation"]);
+    expect(
+      await page.evaluate(
+        () =>
+          (
+            window as Window & {
+              __TECHDB_REACTION_TURNSTILE_LABEL__?: string | null;
+            }
+          ).__TECHDB_REACTION_TURNSTILE_LABEL__,
+      ),
+      "Turnstile uses the active Japanese label",
+    ).toBe("本人確認");
+
+    await button.focus();
+    await page.keyboard.press("Space");
+    await expect(button).toHaveAttribute("aria-busy", "true");
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(count).toHaveText("7");
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toBeFocused();
+
+    failNextMutationStatus = 500;
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "true");
+    await expect(count).toHaveText("8");
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(count).toHaveText("7");
+    await expect(control.locator("[data-reaction-status]")).toContainText(
+      "いいねを更新できませんでした。",
+    );
+    const reactionToast = page.locator("#reaction-error-toast");
+    await expect(reactionToast).toBeVisible();
+    await expect(reactionToast.locator("[data-reaction-toast-copy]")).toContainText(
+      "いいねを更新できませんでした。",
+    );
+    await expect(reactionToast).not.toHaveAttribute("role", "status");
+    await expect(reactionToast).not.toHaveAttribute("aria-live");
+    await expect(reactionLiveRegion).toHaveText(
+      "いいねを更新できませんでした。通信環境を確認して、もう一度お試しください。",
+    );
+    await expect(button).toBeFocused();
+    await reactionToast.getByRole("button", { name: "通知を閉じる" }).click();
+    await expect(reactionToast).toBeHidden();
+    await expect(button).toBeFocused();
+
+    failNextMutationStatus = 429;
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(count).toHaveText("7");
+    await expect(control.locator("[data-reaction-status]")).toContainText(
+      "操作が多すぎます。",
+    );
+    await expect(reactionToast).toBeVisible();
+    await expect(reactionToast.locator("[data-reaction-toast-copy]")).toContainText(
+      "操作が多すぎます。",
+    );
+
+    failNextMutationCode = "challenge_unavailable";
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(reactionToast.locator("[data-reaction-toast-copy]")).toContainText(
+      "本人確認サービスを一時利用できません。",
+    );
+
+    expect(mutations.map((payload) => payload.liked)).toEqual([true, false, true, true, true]);
+    expect(
+      mutations.every(
+        (payload) =>
+          payload.turnstileToken === "test-turnstile-token" &&
+          Object.keys(payload).sort().join(",") === "liked,turnstileToken",
+      ),
+      "each mutation carries only the desired state and one-time challenge token",
+    ).toBe(true);
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(button).toHaveAccessibleName(`Like Article: ${cardTitleEn} 7 likes`);
+    await expect(control.locator("[data-reaction-visible-label] .i18n-ja")).toBeHidden();
+    await expect(control.locator("[data-reaction-visible-label] .i18n-en")).toHaveText("Like");
+    await expect(control.locator("[data-reaction-status]")).toContainText(
+      "The verification service is temporarily unavailable.",
+    );
+    await expect(reactionToast.locator("[data-reaction-toast-copy]")).toContainText(
+      "The verification service is temporarily unavailable.",
+    );
+    await reactionToast.getByRole("button", { name: "Dismiss notification" }).click();
+
+    await page.setViewportSize({ width: 768, height: 900 });
+    await expect(knowledgeExplainer).toBeVisible();
+    const tabletCardBox = await card.boundingBox();
+    const tabletButtonBox = await button.boundingBox();
+    expect(tabletCardBox?.height, "Knowledge card keeps its tablet height").toBeCloseTo(152, 1);
+    expect(tabletButtonBox?.width, "tablet like target is at least 44px wide").toBeGreaterThanOrEqual(
+      44,
+    );
+    expect(tabletButtonBox?.height, "tablet like target is at least 44px high").toBeGreaterThanOrEqual(
+      44,
+    );
+    expect(
+      tabletButtonBox && tabletCardBox
+        ? tabletButtonBox.x >= tabletCardBox.x &&
+            tabletButtonBox.x + tabletButtonBox.width <= tabletCardBox.x + tabletCardBox.width
+        : false,
+      "tablet like target stays within the Knowledge card",
+    ).toBe(true);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(knowledgeExplainer).toBeVisible();
+    const cardBox = await card.boundingBox();
+    const mobileButtonBox = await button.boundingBox();
+    expect(cardBox?.height, "Knowledge card keeps its mobile height").toBeCloseTo(148, 1);
+    expect(mobileButtonBox?.width, "mobile like target is at least 44px wide").toBeGreaterThanOrEqual(
+      44,
+    );
+    expect(mobileButtonBox?.height, "mobile like target is at least 44px high").toBeGreaterThanOrEqual(
+      44,
+    );
+    expect(
+      mobileButtonBox && cardBox
+        ? mobileButtonBox.x >= cardBox.x &&
+            mobileButtonBox.x + mobileButtonBox.width <= cardBox.x + cardBox.width
+        : false,
+      "mobile like target stays within the Knowledge card",
+    ).toBe(true);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
+    await page.setViewportSize({ width: 375, height: 667 });
+    await expect(knowledgeExplainer).toBeVisible();
+    failNextMutationStatus = "network";
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(button).toBeFocused();
+    await expect(reactionToast).toBeVisible();
+    await expect(reactionToast.locator("[data-reaction-toast-copy]")).toContainText(
+      "Check your connection",
+    );
+    expect(
+      await page.evaluate(
+        () =>
+          (
+            window as Window & {
+              __TECHDB_REACTION_TURNSTILE_LABEL__?: string | null;
+            }
+          ).__TECHDB_REACTION_TURNSTILE_LABEL__,
+      ),
+      "Turnstile uses the active English label",
+    ).toBe("Human verification");
+    const [toastBox, tabbarBox] = await Promise.all([
+      reactionToast.boundingBox(),
+      page.locator(".mobile-tabbar").boundingBox(),
+    ]);
+    expect(toastBox, "reaction error toast has visible geometry").not.toBeNull();
+    expect(tabbarBox, "mobile tabbar has visible geometry").not.toBeNull();
+    expect(
+      toastBox!.y + toastBox!.height,
+      "reaction toast stays above the fixed mobile tabbar",
+    ).toBeLessThanOrEqual(tabbarBox!.y + 1);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+    await reactionToast.getByRole("button", { name: "Dismiss notification" }).click();
+
+    await page.goto(detailHref!);
+    const detailControl = page.locator(".ed-reaction-panel [data-reaction-control]");
+    await expect(detailControl).toHaveCount(1);
+    await expect(page.locator(".ed-action-strip [data-reaction-control]")).toHaveCount(0);
+    await expect(page.locator(".ed-reaction-panel")).toBeVisible();
+    const detailButton = detailControl.getByRole("button", { name: /Like/ });
+    await expect(detailButton).toBeEnabled();
+    await expect(detailButton).toHaveAttribute("aria-pressed", "false");
+    await expect(detailControl.locator("[data-reaction-count]")).toHaveText("7");
+    const detailButtonBox = await detailButton.boundingBox();
+    expect(detailButtonBox?.width, "detail like target is at least 44px wide").toBeGreaterThanOrEqual(44);
+    expect(detailButtonBox?.height, "detail like target is at least 44px high").toBeGreaterThanOrEqual(44);
+    const reactionExplainer = page.locator("[data-reaction-explainer]");
+    await expect(reactionExplainer).toBeVisible();
+    await expect(reactionExplainer.locator("p > .i18n-en")).toContainText(
+      "not saved articles or bookmarks",
+    );
+    const privacyLink = reactionExplainer.getByRole("link", {
+      name: "How it works and privacy",
+    });
+    await expect(privacyLink).toHaveAttribute("href", "/about#reactions-privacy");
+    const actionTargetHeights = await page.locator(".ed-action-strip a, .ed-action-strip button").evaluateAll(
+      (nodes) =>
+        nodes
+          .filter((node) => node instanceof HTMLElement && node.getClientRects().length > 0)
+          .map((node) => node.getBoundingClientRect().height),
+    );
+    expect(actionTargetHeights.length, "detail action strip exposes interactive targets").toBeGreaterThan(0);
+    expect(
+      actionTargetHeights.every((height) => height >= 44),
+      `detail action targets stay at least 44px high: ${JSON.stringify(actionTargetHeights)}`,
+    ).toBe(true);
+
+    await privacyLink.click();
+    await expect(page).toHaveURL(/\/about\/?#reactions-privacy$/);
+    const privacyTarget = page.locator("#reactions-privacy");
+    await expect(privacyTarget).toBeVisible();
+    await expect
+      .poll(async () => {
+        const targetBox = await privacyTarget.boundingBox();
+        const headerBox = await page.locator("header").boundingBox();
+        return targetBox && headerBox ? targetBox.y - (headerBox.y + headerBox.height) : -1;
+      })
+      .toBeGreaterThanOrEqual(8);
+    await expect(privacyTarget).toHaveCSS("border-color", /rgb/);
+    await expect(page.locator('.page-hero-actions a[href="#reactions-privacy"]')).toHaveText(
+      "Likes & privacy",
+    );
+  });
+
+  test("a lost mutation response is reconciled as success from authoritative state", async ({
+    page,
+  }) => {
+    const stateById = new Map<string, { count: number; liked: boolean }>();
+    let targetId = "";
+    let mutationApplied = false;
+    let mutationRequests = 0;
+    let reconciliationRequests = 0;
+
+    await page.addInitScript(() => {
+      type ReactionResponseLossWindow = Window & {
+        __TECHDB_REACTION_SITE_KEY__?: string;
+        turnstile?: {
+          ready(callback: () => void): void;
+          render(
+            container: HTMLElement,
+            options: { callback: (token: string) => void },
+          ): string;
+          execute(widgetId: string): void;
+          remove(widgetId: string): void;
+        };
+      };
+      const target = window as ReactionResponseLossWindow;
+      let callback: ((token: string) => void) | undefined;
+      target.__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+      target.turnstile = {
+        ready(readyCallback) {
+          readyCallback();
+        },
+        render(_container, options) {
+          callback = options.callback;
+          return "reaction-response-loss-widget";
+        },
+        execute() {
+          queueMicrotask(() => callback?.("reaction-response-loss-token"));
+        },
+        remove() {
+          callback = undefined;
+        },
+      };
+    });
+    await page.route("**/api/reactions?*", async (route) => {
+      const ids = new URL(route.request().url()).searchParams
+        .get("ids")
+        ?.split(",")
+        .filter(Boolean) ?? [];
+      if (mutationApplied && ids.length === 1 && ids[0] === targetId) {
+        reconciliationRequests += 1;
+      }
+      const targetStillPending =
+        mutationApplied &&
+        ids.length === 1 &&
+        ids[0] === targetId &&
+        reconciliationRequests === 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          reactions: ids.map((id) => ({
+            id,
+            ...(targetStillPending
+              ? { count: 7, liked: false }
+              : (stateById.get(id) ?? { count: 7, liked: false })),
+          })),
+        }),
+      });
+    });
+    await mockReactionIdentity(page);
+    await page.route(REACTION_MUTATION_URL_RE, async (route) => {
+      if (await rejectMutationWithoutIdentity(route)) return;
+      const id = decodeURIComponent(new URL(route.request().url()).pathname.split("/").pop() ?? "");
+      mutationRequests += 1;
+      stateById.set(id, { count: 8, liked: true });
+      mutationApplied = true;
+      await route.abort("failed");
+    });
+
+    await page.goto("/knowledge/");
+    const control = page.locator("[data-reaction-control]").first();
+    const button = control.locator("[data-reaction-button]");
+    const count = control.locator("[data-reaction-count]");
+    await expect(control).toHaveAttribute("data-state", "ready");
+    targetId = (await control.getAttribute("data-entry-id")) ?? "";
+    expect(targetId).toMatch(/^[a-f0-9]{16}$/);
+
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+    await expect(count).toHaveText("8");
+    await expect(control.locator("[data-reaction-status]")).toHaveText("いいねしました。");
+    await expect(page.locator("#reaction-status-live")).toHaveText("いいねしました。");
+    await expect(page.locator("#reaction-error-toast")).toBeHidden();
+    expect(mutationRequests).toBe(1);
+    expect(reconciliationRequests).toBe(2);
+  });
+
+  test("a stale successful reconciliation cannot overwrite a newer like retry", async ({ page }) => {
+    const stateById = new Map<string, { count: number; liked: boolean }>();
+    let targetId = "";
+    let mutationCount = 0;
+    let releaseStaleRead!: () => void;
+    let markStaleReadStarted!: () => void;
+    const staleReadGate = new Promise<void>((resolve) => {
+      releaseStaleRead = resolve;
+    });
+    const staleReadStarted = new Promise<void>((resolve) => {
+      markStaleReadStarted = resolve;
+    });
+
+    await page.addInitScript(() => {
+      type ReactionRaceWindow = Window & {
+        __TECHDB_REACTION_SITE_KEY__?: string;
+        turnstile?: {
+          ready(callback: () => void): void;
+          render(
+            container: HTMLElement,
+            options: { callback: (token: string) => void },
+          ): string;
+          execute(widgetId: string): void;
+          remove(widgetId: string): void;
+        };
+      };
+      const target = window as ReactionRaceWindow;
+      let callback: ((token: string) => void) | undefined;
+      target.__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+      target.turnstile = {
+        ready(readyCallback) {
+          readyCallback();
+        },
+        render(_container, options) {
+          callback = options.callback;
+          return "reaction-race-widget";
+        },
+        execute() {
+          queueMicrotask(() => callback?.("reaction-race-token"));
+        },
+        remove() {
+          callback = undefined;
+        },
+      };
+    });
+
+    await page.route("**/api/reactions?*", async (route) => {
+      const ids = new URL(route.request().url()).searchParams
+        .get("ids")
+        ?.split(",")
+        .filter(Boolean) ?? [];
+      if (
+        targetId &&
+        mutationCount === 1 &&
+        ids.length === 1 &&
+        ids[0] === targetId
+      ) {
+        markStaleReadStarted();
+        await staleReadGate;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            reactions: [{ id: targetId, count: 7, liked: false }],
+          }),
+        });
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          reactions: ids.map((id) => ({
+            id,
+            ...(stateById.get(id) ?? { count: 7, liked: false }),
+          })),
+        }),
+      });
+    });
+    await mockReactionIdentity(page);
+    await page.route(REACTION_MUTATION_URL_RE, async (route) => {
+      if (await rejectMutationWithoutIdentity(route)) return;
+      const id = decodeURIComponent(new URL(route.request().url()).pathname.split("/").pop() ?? "");
+      mutationCount += 1;
+      if (mutationCount === 1) {
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: { code: "mutation_failed", message: "Mutation failed" },
+          }),
+        });
+        return;
+      }
+
+      const next = { count: 8, liked: true };
+      stateById.set(id, next);
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ reaction: { id, ...next } }),
+      });
+    });
+
+    await page.goto("/knowledge/");
+    const control = page.locator("[data-reaction-control]").first();
+    const button = control.locator("[data-reaction-button]");
+    const count = control.locator("[data-reaction-count]");
+    await expect(control).toHaveAttribute("data-state", "ready");
+    targetId = (await control.getAttribute("data-entry-id")) ?? "";
+    expect(targetId).toMatch(/^[a-f0-9]{16}$/);
+
+    await button.click();
+    await staleReadStarted;
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(count).toHaveText("7");
+
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+    await expect(count).toHaveText("8");
+
+    releaseStaleRead();
+    await page.waitForTimeout(100);
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+    await expect(count).toHaveText("8");
+    await expect(page.locator("#reaction-error-toast")).toBeHidden();
+    expect(mutationCount).toBe(2);
+  });
+
+  test("a stale successful reconciliation cannot revive controls after service shutdown", async ({
+    page,
+  }) => {
+    let firstId = "";
+    let secondId = "";
+    let firstMutationFailed = false;
+    let releaseStaleRead!: () => void;
+    let markStaleReadStarted!: () => void;
+    const staleReadGate = new Promise<void>((resolve) => {
+      releaseStaleRead = resolve;
+    });
+    const staleReadStarted = new Promise<void>((resolve) => {
+      markStaleReadStarted = resolve;
+    });
+
+    await page.addInitScript(() => {
+      type ReactionShutdownWindow = Window & {
+        __TECHDB_REACTION_SITE_KEY__?: string;
+        turnstile?: {
+          ready(callback: () => void): void;
+          render(
+            container: HTMLElement,
+            options: { callback: (token: string) => void },
+          ): string;
+          execute(widgetId: string): void;
+          remove(widgetId: string): void;
+        };
+      };
+      const target = window as ReactionShutdownWindow;
+      let callback: ((token: string) => void) | undefined;
+      target.__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+      target.turnstile = {
+        ready(readyCallback) {
+          readyCallback();
+        },
+        render(_container, options) {
+          callback = options.callback;
+          return "reaction-shutdown-widget";
+        },
+        execute() {
+          queueMicrotask(() => callback?.("reaction-shutdown-token"));
+        },
+        remove() {
+          callback = undefined;
+        },
+      };
+    });
+
+    await page.route("**/api/reactions?*", async (route) => {
+      const ids = new URL(route.request().url()).searchParams
+        .get("ids")
+        ?.split(",")
+        .filter(Boolean) ?? [];
+      if (
+        firstMutationFailed &&
+        firstId &&
+        ids.length === 1 &&
+        ids[0] === firstId
+      ) {
+        markStaleReadStarted();
+        await staleReadGate;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            reactions: [{ id: firstId, count: 8, liked: true }],
+          }),
+        });
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          reactions: ids.map((id) => ({ id, count: 7, liked: false })),
+        }),
+      });
+    });
+    await mockReactionIdentity(page);
+    await page.route(REACTION_MUTATION_URL_RE, async (route) => {
+      if (await rejectMutationWithoutIdentity(route)) return;
+      const id = decodeURIComponent(new URL(route.request().url()).pathname.split("/").pop() ?? "");
+      if (id === firstId) {
+        firstMutationFailed = true;
+        await route.fulfill({
+          status: 500,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: { code: "mutation_failed", message: "Mutation failed" },
+          }),
+        });
+        return;
+      }
+
+      expect(id).toBe(secondId);
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "service_unavailable", message: "Unavailable" },
+        }),
+      });
+    });
+
+    await page.goto("/knowledge/");
+    const controls = page.locator("[data-reaction-control]");
+    expect(await controls.count()).toBeGreaterThanOrEqual(2);
+    const firstControl = controls.nth(0);
+    const secondControl = controls.nth(1);
+    const firstButton = firstControl.locator("[data-reaction-button]");
+    const secondButton = secondControl.locator("[data-reaction-button]");
+    await expect(firstControl).toHaveAttribute("data-state", "ready");
+    await expect(secondControl).toHaveAttribute("data-state", "ready");
+    firstId = (await firstControl.getAttribute("data-entry-id")) ?? "";
+    secondId = (await secondControl.getAttribute("data-entry-id")) ?? "";
+    expect(firstId).toMatch(/^[a-f0-9]{16}$/);
+    expect(secondId).toMatch(/^[a-f0-9]{16}$/);
+    expect(secondId).not.toBe(firstId);
+
+    await firstButton.click();
+    await staleReadStarted;
+    await expect(firstButton).toHaveAttribute("aria-busy", "false");
+
+    await secondButton.click();
+    await expect(page.locator("[data-reaction-control]:visible")).toHaveCount(0);
+    await expect(page.locator(".knowledge-reaction-note")).toBeHidden();
+
+    releaseStaleRead();
+    await page.waitForTimeout(100);
+    await expect(firstControl).toHaveAttribute("data-state", "unavailable");
+    await expect(firstControl).toHaveAttribute("aria-hidden", "true");
+    await expect(page.locator("[data-reaction-control]:visible")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /いいね/ })).toHaveCount(0);
+  });
+
+  test("failed mutation reconciliation reports within one bounded deadline", async ({ page }) => {
+    await page.addInitScript(() => {
+      type ReactionDeadlineWindow = Window & {
+        __TECHDB_REACTION_SITE_KEY__?: string;
+        __TECHDB_REACTION_RECONCILIATION_READS__?: number;
+        turnstile?: {
+          ready(callback: () => void): void;
+          render(
+            container: HTMLElement,
+            options: { callback: (token: string) => void },
+          ): string;
+          execute(widgetId: string): void;
+          remove(widgetId: string): void;
+        };
+      };
+      const target = window as ReactionDeadlineWindow;
+      const nativeFetch = window.fetch.bind(window);
+      let mutationAttempted = false;
+      let turnstileCallback: ((token: string) => void) | undefined;
+      target.__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+      target.__TECHDB_REACTION_RECONCILIATION_READS__ = 0;
+      target.turnstile = {
+        ready(callback) {
+          callback();
+        },
+        render(_container, options) {
+          turnstileCallback = options.callback;
+          return "reaction-deadline-widget";
+        },
+        execute() {
+          queueMicrotask(() => turnstileCallback?.("reaction-deadline-token"));
+        },
+        remove() {
+          turnstileCallback = undefined;
+        },
+      };
+      window.fetch = async (input, init = {}) => {
+        const requestUrl = input instanceof Request ? input.url : String(input);
+        const url = new URL(requestUrl, window.location.origin);
+        if (!url.pathname.startsWith("/api/reactions")) {
+          return nativeFetch(input, init);
+        }
+        if (url.pathname === "/api/reactions/identity") {
+          return new Response(JSON.stringify({ identity: { ready: true } }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        if (init.method === "PUT") {
+          mutationAttempted = true;
+          throw new TypeError("mutation response lost");
+        }
+
+        const ids = url.searchParams.get("ids")?.split(",").filter(Boolean) ?? [];
+        if (mutationAttempted && ids.length === 1) {
+          target.__TECHDB_REACTION_RECONCILIATION_READS__ =
+            (target.__TECHDB_REACTION_RECONCILIATION_READS__ ?? 0) + 1;
+          return new Promise<Response>((_resolve, reject) => {
+            const rejectAborted = () => reject(new DOMException("Aborted", "AbortError"));
+            if (init.signal?.aborted) rejectAborted();
+            else init.signal?.addEventListener("abort", rejectAborted, { once: true });
+          });
+        }
+        return new Response(
+          JSON.stringify({
+            reactions: ids.map((id) => ({ id, count: 7, liked: false })),
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      };
+    });
+
+    await page.goto("/knowledge/");
+    const control = page.locator("[data-reaction-control]").first();
+    const button = control.locator("[data-reaction-button]");
+    const toast = page.locator("#reaction-error-toast");
+    await expect(control).toHaveAttribute("data-state", "ready");
+
+    const startedAt = Date.now();
+    await button.click();
+    await expect(toast).toBeVisible({ timeout: 7_000 });
+    expect(
+      Date.now() - startedAt,
+      "reconciliation uses one deadline instead of stacking request timeouts",
+    ).toBeLessThan(6_500);
+    await expect(control.locator("[data-reaction-status]")).toContainText(
+      "いいねを更新できませんでした。",
+    );
+    const reads = await page.evaluate(
+      () =>
+        (
+          window as Window & {
+            __TECHDB_REACTION_RECONCILIATION_READS__?: number;
+          }
+        ).__TECHDB_REACTION_RECONCILIATION_READS__ ?? 0,
+    );
+    expect(reads).toBeGreaterThanOrEqual(2);
+    expect(reads).toBeLessThanOrEqual(4);
+  });
+
+  test("large like counts stay compact without losing the exact accessible value", async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as Window & { __TECHDB_REACTION_SITE_KEY__?: string })
+        .__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+    });
+    await page.route("**/api/reactions?*", async (route) => {
+      const ids = new URL(route.request().url()).searchParams.get("ids")?.split(",") ?? [];
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          reactions: ids.filter(Boolean).map((id) => ({
+            id,
+            liked: false,
+            count: 999_999,
+          })),
+        }),
+      });
+    });
+
+    await page.goto("/knowledge/");
+    const control = page.locator("[data-reaction-control]").first();
+    await expect(control).toHaveAttribute("data-state", "ready");
+    await expect(control.locator("[data-reaction-count]")).toHaveText("1M");
+    await expect(control.locator("[data-reaction-count-exact]")).toHaveText("999,999件");
+    await expect(control.getByRole("button")).toHaveAccessibleName(/999,999件/);
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(control.locator("[data-reaction-count]")).toHaveText("1M");
+    await expect(control.locator("[data-reaction-count-exact]")).toHaveText("999,999 likes");
+    await expect(control.getByRole("button")).toHaveAccessibleName(/999,999 likes/);
+  });
+
+  test("like controls fail closed without public configuration or API availability", async ({ page }) => {
+    let apiRequests = 0;
+    await page.route("**/api/reactions?*", async (route) => {
+      apiRequests += 1;
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "service_not_configured", message: "Unavailable" },
+        }),
+      });
+    });
+
+    await page.goto("/knowledge/");
+    const controls = page.locator("[data-reaction-control]");
+    const controlCount = await controls.count();
+    expect(controlCount, "Knowledge exposes reaction controls").toBeGreaterThan(0);
+    const unavailableControl = controls.first();
+    const unavailableButton = unavailableControl.locator("[data-reaction-button]");
+    await expect(unavailableControl).toHaveAttribute("data-state", "unavailable");
+    await expect(unavailableControl).toHaveAttribute("aria-hidden", "true");
+    await expect(unavailableControl).toBeHidden();
+    await expect(unavailableButton).toBeDisabled();
+    await expect(page.getByRole("button", { name: /いいね/ })).toHaveCount(0);
+    await expect(page.locator(".knowledge-reaction-note")).toBeHidden();
+    expect(apiRequests, "missing public site key prevents API traffic").toBe(0);
+
+    const unavailableCard = unavailableControl.locator("xpath=ancestor::article[1]");
+    const unavailableCardInsets = await unavailableCard.evaluate((node) => {
+      const title = node.querySelector<HTMLElement>(".kg-title");
+      const source = node.querySelector<HTMLElement>(".kg-src");
+      return {
+        title: title ? Number.parseFloat(getComputedStyle(title).paddingRight) : -1,
+        source: source ? Number.parseFloat(getComputedStyle(source).paddingRight) : -1,
+      };
+    });
+    expect(
+      unavailableCardInsets,
+      "an unavailable optional control releases the card title and source width",
+    ).toEqual({ title: 0, source: 0 });
+    const unavailableHref = await unavailableCard.locator(".kg-card-link").getAttribute("href");
+    expect(unavailableHref, "unavailable card still has its article destination").toBeTruthy();
+    await unavailableCard.locator(".kg-card-link").click();
+    await page.waitForURL((url) => url.pathname === unavailableHref);
+
+    await page.addInitScript(() => {
+      (window as Window & { __TECHDB_REACTION_SITE_KEY__?: string })
+        .__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+    });
+    await page.goto("/knowledge/");
+    await expect
+      .poll(() => apiRequests, { message: "configured controls attempt count hydration" })
+      .toBeGreaterThan(0);
+    await expect(page.locator("[data-reaction-button]:disabled")).toHaveCount(controlCount);
+    await expect(page.locator("[data-reaction-control]:visible")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /いいね/ })).toHaveCount(0);
+    await expect(page.locator(".knowledge-reaction-note")).toBeHidden();
+    expect(apiRequests, "a permanent count failure stops later hydration batches").toBe(1);
+  });
+
+  test("permanent reaction service failures remove controls without blocking article navigation", async ({ page }) => {
+    let identityRequests = 0;
+    let mutationRequests = 0;
+    await page.addInitScript(() => {
+      type ReactionFailureWindow = Window & {
+        __TECHDB_REACTION_SITE_KEY__?: string;
+        turnstile?: {
+          ready(callback: () => void): void;
+          render(
+            container: HTMLElement,
+            options: { callback: (token: string) => void },
+          ): string;
+          execute(widgetId: string): void;
+          remove(widgetId: string): void;
+        };
+      };
+      const target = window as ReactionFailureWindow;
+      let callback: ((token: string) => void) | undefined;
+      target.__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+      target.turnstile = {
+        ready(readyCallback) {
+          readyCallback();
+        },
+        render(_container, options) {
+          callback = options.callback;
+          return "reaction-permanent-failure-widget";
+        },
+        execute() {
+          queueMicrotask(() => callback?.("reaction-permanent-failure-token"));
+        },
+        remove() {
+          callback = undefined;
+        },
+      };
+    });
+    await page.route("**/api/reactions?*", async (route) => {
+      const ids = new URL(route.request().url()).searchParams.get("ids")?.split(",") ?? [];
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          reactions: ids.filter(Boolean).map((id) => ({ id, liked: false, count: 7 })),
+        }),
+      });
+    });
+    await mockReactionIdentity(page, () => {
+      identityRequests += 1;
+    });
+    await page.route(REACTION_MUTATION_URL_RE, async (route) => {
+      if (await rejectMutationWithoutIdentity(route)) return;
+      mutationRequests += 1;
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "service_unavailable", message: "Unavailable" },
+        }),
+      });
+    });
+
+    await page.goto("/knowledge/");
+    const control = page.locator("[data-reaction-control]").first();
+    const button = control.locator("[data-reaction-button]");
+    const card = control.locator("xpath=ancestor::article[1]");
+    const cardLink = card.locator(".kg-card-link");
+    await expect(control).toHaveAttribute("data-state", "ready");
+    await button.focus();
+    await button.click();
+
+    await expect(page.locator("[data-reaction-control]:visible")).toHaveCount(0);
+    await expect(page.locator(".knowledge-reaction-note")).toBeHidden();
+    await expect(page.getByRole("button", { name: /いいね/ })).toHaveCount(0);
+    await expect(cardLink).toBeFocused();
+    expect(identityRequests).toBe(1);
+    expect(mutationRequests).toBe(1);
+
+    const detailHref = await cardLink.getAttribute("href");
+    expect(detailHref, "the unavailable control releases the article link").toBeTruthy();
+    await cardLink.click();
+    await page.waitForURL((url) => url.pathname === detailHref);
+  });
+
+  test("reconciliation service failure restores focus to the affected article link", async ({
+    page,
+  }) => {
+    let mutationFailed = false;
+    let reconciliationRequests = 0;
+    await page.addInitScript(() => {
+      type ReactionFailureWindow = Window & {
+        __TECHDB_REACTION_SITE_KEY__?: string;
+        turnstile?: {
+          ready(callback: () => void): void;
+          render(
+            container: HTMLElement,
+            options: { callback: (token: string) => void },
+          ): string;
+          execute(widgetId: string): void;
+          remove(widgetId: string): void;
+        };
+      };
+      const target = window as ReactionFailureWindow;
+      let callback: ((token: string) => void) | undefined;
+      target.__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+      target.turnstile = {
+        ready(readyCallback) {
+          readyCallback();
+        },
+        render(_container, options) {
+          callback = options.callback;
+          return "reaction-reconciliation-failure-widget";
+        },
+        execute() {
+          queueMicrotask(() => callback?.("reaction-reconciliation-failure-token"));
+        },
+        remove() {
+          callback = undefined;
+        },
+      };
+    });
+    await page.route("**/api/reactions?*", async (route) => {
+      const ids = new URL(route.request().url()).searchParams.get("ids")?.split(",") ?? [];
+      if (mutationFailed && ids.length === 1) {
+        reconciliationRequests += 1;
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: { code: "service_unavailable", message: "Unavailable" },
+          }),
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          reactions: ids.filter(Boolean).map((id) => ({ id, liked: false, count: 7 })),
+        }),
+      });
+    });
+    await mockReactionIdentity(page);
+    await page.route(REACTION_MUTATION_URL_RE, async (route) => {
+      if (await rejectMutationWithoutIdentity(route)) return;
+      mutationFailed = true;
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "mutation_failed", message: "Mutation failed" },
+        }),
+      });
+    });
+
+    await page.goto("/knowledge/");
+    const control = page.locator("[data-reaction-control]").first();
+    const button = control.locator("[data-reaction-button]");
+    const card = control.locator("xpath=ancestor::article[1]");
+    const cardLink = card.locator(".kg-card-link");
+    await expect(control).toHaveAttribute("data-state", "ready");
+    await button.focus();
+    await button.click();
+
+    await expect(page.locator("[data-reaction-control]:visible")).toHaveCount(0);
+    await expect(cardLink).toBeFocused();
+    const reactionToast = page.locator("#reaction-error-toast");
+    await expect(reactionToast).toBeVisible();
+    await expect(reactionToast.locator("[data-reaction-toast-copy]")).toContainText(
+      "いいね機能を一時的に利用できません。",
+    );
+    expect(reconciliationRequests).toBe(1);
+  });
+
+  test("stale batched hydration cannot restore controls after a permanent service failure", async ({
+    page,
+  }) => {
+    let batchRequests = 0;
+    let delayedBatchCompleted = false;
+    let releaseDelayedBatch!: () => void;
+    let markDelayedBatchStarted!: () => void;
+    const delayedBatchGate = new Promise<void>((resolve) => {
+      releaseDelayedBatch = resolve;
+    });
+    const delayedBatchStarted = new Promise<void>((resolve) => {
+      markDelayedBatchStarted = resolve;
+    });
+
+    await page.addInitScript(() => {
+      type ReactionGenerationWindow = Window & {
+        __TECHDB_REACTION_SITE_KEY__?: string;
+        turnstile?: {
+          ready(callback: () => void): void;
+          render(
+            container: HTMLElement,
+            options: { callback: (token: string) => void },
+          ): string;
+          execute(widgetId: string): void;
+          remove(widgetId: string): void;
+        };
+      };
+      const target = window as ReactionGenerationWindow;
+      let callback: ((token: string) => void) | undefined;
+      target.__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+      target.turnstile = {
+        ready(readyCallback) {
+          readyCallback();
+        },
+        render(_container, options) {
+          callback = options.callback;
+          return "reaction-generation-widget";
+        },
+        execute() {
+          queueMicrotask(() => callback?.("reaction-generation-token"));
+        },
+        remove() {
+          callback = undefined;
+        },
+      };
+    });
+    await page.route("**/api/reactions?*", async (route) => {
+      const requestNumber = ++batchRequests;
+      const ids = new URL(route.request().url()).searchParams
+        .get("ids")
+        ?.split(",")
+        .filter(Boolean) ?? [];
+      if (requestNumber === 2) {
+        markDelayedBatchStarted();
+        await delayedBatchGate;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          reactions: ids.map((id) => ({ id, liked: false, count: 7 })),
+        }),
+      });
+      if (requestNumber === 2) delayedBatchCompleted = true;
+    });
+    await mockReactionIdentity(page);
+    await page.route(REACTION_MUTATION_URL_RE, async (route) => {
+      if (await rejectMutationWithoutIdentity(route)) return;
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "service_unavailable", message: "Unavailable" },
+        }),
+      });
+    });
+
+    await page.goto("/knowledge/");
+    const controls = page.locator("[data-reaction-control]");
+    const controlCount = await controls.count();
+    expect(controlCount, "the corpus exercises more than one hydration batch").toBeGreaterThan(50);
+    const firstControl = controls.first();
+    const firstButton = firstControl.locator("[data-reaction-button]");
+    await expect(firstControl).toHaveAttribute("data-state", "ready");
+    await delayedBatchStarted;
+
+    await firstButton.click();
+    await expect(page.locator("[data-reaction-control]:visible")).toHaveCount(0);
+    await expect(page.locator(".knowledge-reaction-note")).toBeHidden();
+
+    releaseDelayedBatch();
+    await expect
+      .poll(() => delayedBatchCompleted, { message: "the stale hydration request completed" })
+      .toBe(true);
+    await page.waitForTimeout(100);
+    await expect(
+      page.locator('[data-reaction-control][data-state="unavailable"]'),
+    ).toHaveCount(controlCount);
+    await expect(page.locator('[data-reaction-control][data-state="ready"]')).toHaveCount(0);
+    await expect(page.locator("[data-reaction-control]:visible")).toHaveCount(0);
+    await expect(page.locator(".knowledge-reaction-note")).toBeHidden();
+  });
+
+  test("anonymous identity bootstrap is serialized across same-origin tabs", async ({ page, context }) => {
+    let activeIdentityRequests = 0;
+    let maxActiveIdentityRequests = 0;
+    let identityRequests = 0;
+    let mutationRequests = 0;
+    const stateById = new Map<string, { count: number; liked: boolean }>();
+
+    await context.addInitScript(() => {
+      type ReactionLockWindow = Window & {
+        __TECHDB_REACTION_SITE_KEY__?: string;
+        turnstile?: {
+          ready(callback: () => void): void;
+          render(
+            container: HTMLElement,
+            options: { callback: (token: string) => void },
+          ): string;
+          execute(widgetId: string): void;
+          remove(widgetId: string): void;
+        };
+      };
+      const target = window as ReactionLockWindow;
+      let callback: ((token: string) => void) | undefined;
+      target.__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+      target.turnstile = {
+        ready(readyCallback) {
+          readyCallback();
+        },
+        render(_container, options) {
+          callback = options.callback;
+          return "reaction-lock-widget";
+        },
+        execute() {
+          queueMicrotask(() => callback?.("reaction-lock-token"));
+        },
+        remove() {
+          callback = undefined;
+        },
+      };
+    });
+    await context.route("**/api/reactions?*", async (route) => {
+      const ids = new URL(route.request().url()).searchParams.get("ids")?.split(",") ?? [];
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          reactions: ids.filter(Boolean).map((id) => ({
+            id,
+            ...(stateById.get(id) ?? { count: 7, liked: false }),
+          })),
+        }),
+      });
+    });
+    await context.route("**/api/reactions/identity", async (route) => {
+      identityRequests += 1;
+      activeIdentityRequests += 1;
+      maxActiveIdentityRequests = Math.max(
+        maxActiveIdentityRequests,
+        activeIdentityRequests,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 120));
+      activeIdentityRequests -= 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: {
+          "Set-Cookie":
+            `${REACTION_VOTER_COOKIE_NAME}=22222222-2222-4222-8222-222222222222; Path=/; HttpOnly; Secure; SameSite=Lax`,
+        },
+        body: JSON.stringify({ identity: { ready: true } }),
+      });
+    });
+    await context.route(REACTION_MUTATION_URL_RE, async (route) => {
+      if (await rejectMutationWithoutIdentity(route)) return;
+      mutationRequests += 1;
+      const id = decodeURIComponent(new URL(route.request().url()).pathname.split("/").pop() ?? "");
+      const current = stateById.get(id) ?? { count: 7, liked: false };
+      const next = current.liked ? current : { count: current.count + 1, liked: true };
+      stateById.set(id, next);
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ reaction: { id, ...next } }),
+      });
+    });
+
+    const secondPage = await context.newPage();
+    await Promise.all([page.goto("/knowledge/"), secondPage.goto("/knowledge/")]);
+    expect(
+      await page.evaluate(() => "locks" in navigator),
+      "Chromium exposes the Web Locks API used for same-origin identity serialization",
+    ).toBe(true);
+    const firstButton = page.locator("[data-reaction-button]").first();
+    const secondButton = secondPage.locator("[data-reaction-button]").first();
+    await expect(firstButton).toBeEnabled();
+    await expect(secondButton).toBeEnabled();
+
+    await Promise.all([firstButton.click(), secondButton.click()]);
+    await expect(firstButton).toHaveAttribute("aria-busy", "false");
+    await expect(secondButton).toHaveAttribute("aria-busy", "false");
+    await expect(firstButton).toHaveAttribute("aria-pressed", "true");
+    await expect(secondButton).toHaveAttribute("aria-pressed", "true");
+    expect(identityRequests, "each tab confirms the shared cookie exactly once").toBe(2);
+    expect(
+      maxActiveIdentityRequests,
+      "the Web Lock prevents concurrent identity bootstrap requests",
+    ).toBe(1);
+    expect(mutationRequests).toBe(2);
+    await secondPage.close();
+  });
+
+  test("Turnstile script loading recovers on the next like attempt", async ({ page }) => {
+    let scriptRequests = 0;
+    let mutationRequests = 0;
+    await page.addInitScript(() => {
+      (window as Window & { __TECHDB_REACTION_SITE_KEY__?: string })
+        .__TECHDB_REACTION_SITE_KEY__ = "1x00000000000000000000AA";
+    });
+    await page.route("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit", async (route) => {
+      scriptRequests += 1;
+      if (scriptRequests === 1) {
+        await route.abort("failed");
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/javascript",
+        body: `
+          (() => {
+            let callback;
+            window.turnstile = {
+              ready(readyCallback) { readyCallback(); },
+              render(_container, options) {
+                callback = options.callback;
+                return "retry-widget";
+              },
+              execute() { queueMicrotask(() => callback?.("retry-token")); },
+              remove() {}
+            };
+          })();
+        `,
+      });
+    });
+    await page.route("**/api/reactions?*", async (route) => {
+      const ids = new URL(route.request().url()).searchParams.get("ids")?.split(",") ?? [];
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          reactions: ids.filter(Boolean).map((id) => ({ id, liked: false, count: 7 })),
+        }),
+      });
+    });
+    await mockReactionIdentity(page);
+    await page.route(REACTION_MUTATION_URL_RE, async (route) => {
+      if (await rejectMutationWithoutIdentity(route)) return;
+      mutationRequests += 1;
+      const id = decodeURIComponent(new URL(route.request().url()).pathname.split("/").pop() ?? "");
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ reaction: { id, liked: true, count: 8 } }),
+      });
+    });
+
+    await page.goto("/knowledge/");
+    const control = page.locator("[data-reaction-control]").first();
+    const button = control.locator("[data-reaction-button]");
+    await expect(button).toBeEnabled();
+
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "false");
+    await expect(control.locator("[data-reaction-status]")).toContainText(
+      "本人確認を完了できませんでした。",
+    );
+    await expect(page.locator("#reaction-error-toast")).toBeVisible();
+    await expect(
+      page.locator("#reaction-error-toast [data-reaction-toast-copy]"),
+    ).toContainText("本人確認を完了できませんでした。");
+    expect(scriptRequests).toBe(1);
+    expect(mutationRequests).toBe(0);
+    await expect(page.locator('script[data-techdb-turnstile-loader="true"]')).toHaveCount(0);
+
+    await button.click();
+    await expect(button).toHaveAttribute("aria-busy", "false");
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+    await expect(control.locator("[data-reaction-count]")).toHaveText("8");
+    expect(scriptRequests).toBe(2);
+    expect(mutationRequests).toBe(1);
   });
 
   test("glossary is a menu destination with working search filter", async ({ page }) => {

@@ -12,6 +12,7 @@ import {
   type CategoryGroup,
 } from "../lib/data.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
+import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../lib/reaction-copy.ts";
 import { WORKER_HEALTH } from "../lib/data.ts";
 import { deriveWorkerRunStatus } from "../lib/run-health.ts";
 
@@ -87,6 +88,7 @@ const pipelineSteps = [
       { href: "/rss.xml", label: "RSS" },
       { href: "/feed.json", label: "JSON Feed" },
       { href: "/status", label: "Status" },
+      { href: "#reactions-privacy", label: "Likes & privacy" },
     ]}
     metrics={[
       { label: "Live entries", value: DASHBOARD_METRICS.timelineEntries },
@@ -197,6 +199,37 @@ const pipelineSteps = [
           <span class="i18n-en" lang="en">The ad script loads only on the production custom domain. Local preview and pages.dev stay quiet for UX and trust audits.</span>
         </p>
       </section>
+      <section id="reactions-privacy" class="about-note-panel reactions-privacy">
+        <h3>
+          <span class="i18n-ja">匿名いいねとプライバシー</span>
+          <span class="i18n-en" lang="en">Anonymous likes and privacy</span>
+        </h3>
+        <p>
+          <span class="i18n-ja">{REACTION_CONTRACT_JA}</span>
+          <span class="i18n-en" lang="en">{REACTION_CONTRACT_EN}</span>
+        </p>
+        <p>
+          <span class="i18n-ja">
+            Knowledge と記事詳細の「いいね」は匿名の公開件数です。ブラウザごとの不透明な識別子を HttpOnly Cookie に保持し、
+            server では HMAC-SHA256 化した値だけを D1 に保存します。IP address は Turnstile 検証にだけ使用し、D1 には保存しません。
+          </span>
+          <span class="i18n-en" lang="en">
+            Likes on Knowledge cards and article detail pages are anonymous public counts. An opaque browser identifier is kept in an HttpOnly cookie,
+            and only its HMAC-SHA256 digest is stored in D1. The IP address is used only for Turnstile verification and is not stored in D1.
+          </span>
+        </p>
+        <p>
+          <span class="i18n-ja">
+            Cookie を削除した場合や別ブラウザでは別票として扱われます。いいねはお気に入りや記事保存ではなく、
+            live index から外れた記事の URL 保持を保証しません。Featured、Top 3、importance、掲載順位にも影響しません。
+          </span>
+          <span class="i18n-en" lang="en">
+            Clearing the cookie or using another browser creates a separate vote. A like is not a bookmark or saved article,
+            and it does not guarantee that an article URL remains available after the entry leaves the live index.
+            It does not affect Featured, Top 3, importance, or listing order.
+          </span>
+        </p>
+      </section>
     </main>
 
     <aside class="right about-insights">
@@ -294,6 +327,17 @@ const pipelineSteps = [
 
   .about-panel {
     padding: 18px;
+  }
+
+  #reactions-privacy {
+    scroll-margin-top: 120px;
+  }
+
+  #reactions-privacy:target {
+    border-color: color-mix(in srgb, var(--know) 72%, var(--border));
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--know) 16%, transparent),
+      0 14px 36px rgba(0, 0, 0, 0.16);
   }
 
   .about-panel.large {

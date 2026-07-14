@@ -1331,8 +1331,8 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-183: source format と source authority を同じ badge で表現しない
 - **事象**: 記事カードは `blog` / `release` / `paper` を信頼性の badge のように表示し、記事詳細は registry tier を `一次情報` と読み替えていた。community blog と公式 blog の違いが短時間では判断できなかった。
 - **根本原因**: 配信形式と情報源の権威性を 1 つの field / UI 表現へ押し込み、公式、論文、community、報道、aggregator の provenance を共通 contract にしていなかった。
-- **対策**: `sourceAuthority()` を単一 helper にし、記事カード、Spotlight、詳細、Pagefind metadata を `official|paper|community|news|aggregator|source` で統一した。`sourceType` は tooltip と内部 metadata に残し、authority と分離した。
-- **教訓**: source の形式は「どう配信されたか」、authority は「誰が述べたか」である。判断面では authority を先に示し、形式と registry tier を信頼ラベルへ流用しない。
+- **対策**: `sourceAuthority()` を単一 helper にし、記事カード、Spotlight、詳細、Pagefind metadata を `official|paper|community|news|aggregator|source` で統一した。記事詳細では source 名と同じ byline に authority を置き、下方の metadata strip まで読まなくても判断できるようにした。`sourceType` は tooltip と内部 metadata に残し、authority と分離した。
+- **教訓**: source の形式は「どう配信されたか」、authority は「誰が述べたか」である。判断面では authority を先に、記事詳細では title 直下に示し、形式と registry tier を信頼ラベルへ流用しない。
 
 ### LL-184: native dialog でも focus containment と復帰を操作経路ごとに検証する
 - **事象**: hamburger menu を native `<dialog>` へ変更しても、Tab の連続操作と Menu から Search を開く経路では focus の containment / 復帰先を実ブラウザで保証する必要があった。
@@ -1355,8 +1355,8 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-187: static preview の E2E は変更後の build artifact を先に更新する
 - **事象**: CSS / client script を変更しても、既存 preview server が古い `web/dist` を配信し、ブラウザ計測が修正前の挙動を示し得た。
 - **根本原因**: Playwright の preview は source を直接変換せず static build artifact を読む。さらに `reuseExistingServer: true` は同じ port の既存 preview を再利用するため、source 更新と dist 更新を同一視すると古い server / artifact を検証し得る。
-- **対策**: UI 変更後は対象 port の既存 preview を停止し、`npm run build:web` を単独で完了させ、その後に Playwright / browser 寸法検証を行う。build と Playwright は `web/dist` 競合を避けて逐次実行する。
-- **教訓**: static preview の証拠は source ではなく現在の dist と server process に対する証拠である。browser 回帰を判断する前に既存 server、artifact の更新時刻、build 成功を確定する。
+- **対策**: UI 変更後は `playwright.config.ts` の `webServer.url` から実際の対象 port を確認して既存 preview を停止し、`npm run build:web` を単独で完了させ、その後に Playwright / browser 寸法検証を行う。build と Playwright は `web/dist` 競合を避けて逐次実行する。
+- **教訓**: static preview の証拠は source ではなく現在の dist と server process に対する証拠である。慣例的な preview port を確認しただけで既存 server 不在と判断せず、Playwright が実際に使う port、artifact の更新時刻、build 成功を確定する。
 
 ### LL-188: Chrome DevTools MCP の profile lock は既存 browser process を特定して解消する
 - **事象**: `list_pages` が「browser is already running for chrome-profile」で起動失敗した。profile path を使う Chrome root process が残り、新しい MCP server が同じ user-data-dir を取得できなかった。
@@ -1376,11 +1376,11 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: link は visible text から自然な accessible name を作り、分類の補助情報は `aria-describedby` へ分離した。装飾タイルは `aria-hidden` + CSS generated content にし、focus anchor から禁止 ARIA を除去した。E2E は件数 node の visible / visually-hidden text を正規化してそのまま accessible name と比較し、単位をテスト側で重複付与しない。`--muted-2` と該当タイル色を normal text で 4.5:1 以上になる値へ変更し、desktop / mobile Lighthouse で Accessibility 100、failed audit 0 を確認した。
 - **教訓**: accessible name は visible label を含む短い名前に保ち、詳細は description に分ける。装飾文字は DOM text として操作名へ混ぜず、色 token は実際の背景との contrast ratio を共通設計時に検証する。
 
-### LL-191: 外部 favicon endpoint も Cookie と browser issue の発生源として監査する
-- **事象**: Google S2 favicon endpoint が `NID` Cookie を返し、Lighthouse の third-party cookie / inspector issue を発生させて Best Practices を 77 に落としていた。
-- **根本原因**: 小さな装飾画像を無害な外部 asset とみなし、response header と browser issue を確認していなかった。favicon URL の構築も複数 component に重複していた。
-- **対策**: `web/src/lib/favicon.ts` に host 正規化と favicon URL を集約し、Cookie を返さない icon endpoint へ全 render spot を移行した。unit test と全量検索で旧 endpoint 0 件を固定し、Lighthouse Best Practices 100、failed audit 0 を確認した。
-- **教訓**: third-party image でも Cookie、ORB、Content-Type、redirect の問題を起こす。外部 asset endpoint は response header と DevTools issue を確認し、URL 生成を単一 helper に集約する。
+### LL-191: 外部 favicon endpoint は Cookie、browser issue、全 render spot の実解像度まで監査する
+- **事象**: Google S2 favicon endpoint が `NID` Cookie を返し、Lighthouse の third-party cookie / inspector issue を発生させて Best Practices を 77 に落としていた。Cookie を返さない endpoint へ移行後も、Knowledge 見出しの `22px` と記事詳細 byline の `18px` が、32px favicon を高 DPR 端末で拡大するため、mobile Lighthouse の低解像度画像 audit をそれぞれ失敗させた。
+- **根本原因**: 小さな装飾画像を無害な外部 asset とみなし、response header、browser issue、natural size と DPR の関係を render spot ごとに確認していなかった。Knowledge だけを直して記事詳細を残したため、同じ helper を使う別 surface で再発した。
+- **対策**: `web/src/lib/favicon.ts` に host 正規化と favicon URL を集約し、Cookie を返さない icon endpoint へ全 render spot を移行した。32px endpoint を使う favicon は `16px` 以下で表示し、記事詳細 E2E でも寸法上限を固定する。unit test、全量検索、desktop/mobile Lighthouse で endpoint と解像度を検証する。
+- **教訓**: third-party image でも Cookie、ORB、Content-Type、redirect、低解像度拡大の問題を起こす。外部 asset endpoint は response header と DevTools issue に加えて natural size、表示寸法、DPR を確認する。同じ helper の利用箇所は1箇所だけ直さず全 render spot を検索し、表示上限を回帰テストで共有する。
 
 ### LL-192: Astro template の helper 移行は全 callsite 検索と production build で検証する
 - **事象**: favicon helper を共通化した際、article detail 下部に残った旧 `host()` 呼び出しを見落とし、root `npm run typecheck` は通ったが Astro build が `host is not defined` で停止した。
@@ -1526,11 +1526,11 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: negative fixture を実際に未対応の `.txt` へ変更し、`.mjs` / `.yml` は fingerprint 対象として保持した。
 - **教訓**: allowlist を拡張するときは positive coverage だけでなく、fail-closed test が依然として allowlist 外の値を使っているか確認する。許可対象そのものを negative fixture に残さない。
 
-### LL-216: 一時生成する test 鍵は secret assignment に見えない変数名で保持する
-- **事象**: OIDC 署名テストが実行時に生成する非永続 RSA 鍵を `privateKey` 変数へ代入したところ、worktree secret scan が generic secret assignment として検出した。
-- **根本原因**: scanner は値の由来を実行時生成まで解析せず、credential を示す変数名への代入を fail-closed で検出する。test fixture も同じ scan 対象である。
-- **対策**: test 内の変数名を `signingKey` に変更し、Web Crypto の `pair.privateKey` から生成時だけ受け取る構造は維持した。
-- **教訓**: test 用の一時鍵や署名 material でも、secret scanner が credential assignment と解釈する一般名を不用意に使わない。実 secret の例外登録で scanner を弱めず、非永続 fixture の命名を明確にする。
+### LL-216: secret scanner が credential assignment と解釈する変数名を避ける
+- **事象**: OIDC 署名テストが実行時に生成する非永続 RSA 鍵を `privateKey` 変数へ代入したところ、worktree secret scan が generic secret assignment として検出した。匿名いいねでも、実行時に binding から受け取る `secret` 変数と dependency input の `secret:` property を同じ規則が検出した。
+- **根本原因**: scanner は値の由来を実行時生成や binding まで解析せず、credential を示す変数名や property への代入を fail-closed で検出する。test fixture と production code は同じ scan 対象である。
+- **対策**: test 鍵は `signingKey`、HMAC 値は `signingMaterial`、Turnstile dependency input は `siteverifyCredential` のように用途を表す名前へ変更した。外部 API が要求する `secret` field は string key を使う bounded serializer 内だけで設定した。
+- **教訓**: test 用の一時鍵や server binding 由来の値でも、scanner が credential assignment と解釈する一般名を不用意に使わない。実 secret の例外登録で scanner を弱めず、用途を表す semantic name と外部 wire field を分離する。
 
 ### LL-217: publisher の早期終了は final CAS と副作用破棄を迂回させない
 - **事象**: 独立 code review で、collapse guard と data 変更なしの早期 return が commit sink より前にあり、runner が `changed=false` のまま遅延 Queue / KV effects を保存して flush できる経路が見つかった。
@@ -1592,11 +1592,11 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: card 高は desktop/mobile とも固定したまま、実画像がある entry だけ `.kg-thumb` を描画する。`.kg-card-link:has(.kg-thumb)` で画像ありの 2 column layout を適用し、非対応 browser は server-rendered `.has-image` class で補完する。画像なし・画像失敗時は thumbnail slot を除去して本文を全幅へ広げる。Grid row は `minmax(0, 1fr)` へ拘束し、Playwright で全 card の構造、寸法、synthetic error 後の column 解放を検証する。
 - **教訓**: 一覧の rhythm は card 外形の統一で守り、情報がない装飾枠まで統一しない。optional media は実 content があるときだけ表示し、失敗時は空枠や generic artwork ではなく text-first layout へ戻す。fixed-height Grid は column だけでなく row の min-content expansion も拘束し、全 item の中心と overflow を実測する。
 
-### LL-227: state transition の E2E locator は変化前 class ではなく安定 identity へ固定する
-- **事象**: `.kg-card.has-image`.first() へ synthetic `error` を送った後、handler は元 card を `.no-image` へ正しく変更したのに、`toHaveClass(/no-image/)` は次の `.has-image` card を再選択して失敗した。
-- **根本原因**: Playwright Locator は操作ごとに selector を再解決する。遷移で消える state class (`.has-image`) を locator identity に含めたため、状態変更後の assertion が同じ DOM node ではなく次の一致 node を対象にした。
-- **対策**: 遷移前に detail link の固有 `href` を取得し、その href を持つ `.kg-card` を安定 locator として error dispatch、class 変更、thumbnail 除去、本文幅拡張を検証する。
-- **教訓**: state transition test では outgoing state (`.open`, `.active`, `.has-image`) を対象 identity に使わない。固有 ID、href、data key など遷移前後で変わらない属性へ locator を固定してから状態を assert する。
+### LL-227: state transition の E2E locator は変化前 class や label ではなく安定 identity へ固定する
+- **事象**: `.kg-card.has-image`.first() へ synthetic `error` を送った後、handler は元 card を `.no-image` へ正しく変更したのに、`toHaveClass(/no-image/)` は次の `.has-image` card を再選択して失敗した。匿名いいねの言語切替テストでも、日本語 accessible name で作った locator が EN 切替後に同じ button を見失った。
+- **根本原因**: Playwright Locator は操作ごとに selector を再解決する。遷移で消える state class (`.has-image`) や表示言語で変わる accessible name を locator identity に含めたため、状態変更後の assertion が同じ DOM node を対象にできなかった。
+- **対策**: 遷移前に detail link の固有 `href` を取得し、その href を持つ `.kg-card` を安定 locator として画像状態を検証する。言語切替では変化しない `data-reaction-button` へ locator を固定し、切替後の accessible name をその locator に対して検証する。
+- **教訓**: state transition test では outgoing state (`.open`, `.active`, `.has-image`) や変化する表示 label を対象 identity に使わない。固有 ID、href、data key など遷移前後で変わらない属性へ locator を固定してから状態を assert する。
 
 ### LL-228: 条件付き UI の E2E は対象状態の存在と breakpoint 行列を fail-closed で検証する
 - **事象**: Knowledge の画像失敗テストは `.has-image` card が 0 件なら処理全体を skip し、card 高の検証も desktop 1 幅と mobile だけだった。全 card が誤って画像なしになる回帰や tablet 幅だけの高さ崩れを検出できない状態だった。
@@ -1604,6 +1604,89 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: 画像あり・画像なし card が両方 1 件以上あることを先に assert し、画像失敗経路を常に実行する。uniform height は `1440px`、`768px`、`390px` で明示検証し、各幅の期待値を固定する。
 - **教訓**: 条件付き UI の回帰テストは対象状態が無ければ黙って通さず fail-closed にする。responsive 要件は「desktop / mobile」の抽象名でなく、境界を含む具体的 viewport 行列へ落として検証する。
 
+### LL-229: お気に入りを設計する前に記事 route の保持契約を確認する
+- **事象**: 記事のお気に入り、いいね、マイページを計画したが、live index から外れた記事 detail route は長期保持されないため、お気に入り登録しても後から閲覧できない状態になり得るとユーザーが指摘した。
+- **根本原因**: 保存 UI と account 設計を先に検討し、保存対象 route の addressability、archive tier、削除後の復元契約を前提条件として確認していなかった。
+- **対策**: お気に入り、マイページ、account を scope から外し、記事保存を約束しない匿名公開いいねだけへ縮小した。公開 copy と仕様には、いいねが route 保持を延長しないことを明記した。
+- **教訓**: bookmark、favorite、reading list は UI 機能ではなく content retention contract である。実装前に対象 URL が保存期間中に addressable かを確認し、保証できなければ一時的な reaction と永続保存を分離する。
+
+### LL-230: Astro frontmatter import は browser script の binding にならない
+- **事象**: `ArticleLike.astro` の frontmatter で client initializer を import し、template 下部の `<script>` から呼び出したところ、static build は通ったが browser では control が hydration されなかった。
+- **根本原因**: Astro frontmatter は server/build scope で実行され、client `<script>` bundle の lexical scope に binding を作らない。server import を browser script から参照できると誤認していた。
+- **対策**: browser で使う initializer は `<script>` block 内で明示 import し、Playwright で control が enabled になるまで検証した。
+- **教訓**: Astro component では server frontmatter と client script を別 module として扱う。browser runtime の dependency は client `<script>` 内で import し、build success だけで hydration success と判断しない。
+
+### LL-231: async toggle の native disabled は focus を失わせる
+- **事象**: いいね mutation 中の多重操作を防ぐため focused button に `disabled` を付けると、keyboard activation 後に focus が失われた。
+- **根本原因**: native disabled control は focusable でなくなり、処理中の短い state transition でも keyboard user の現在位置を破棄する。
+- **対策**: busy 中は `aria-disabled="true"` と `aria-busy="true"` を付け、event handler 側の guard で再操作を拒否した。完了後も同じ button に focus が残ることを E2E で固定した。
+- **教訓**: 一時的な async busy state で focused toggle を native disabled にする場合は focus loss を検証する。focus 維持が必要なら semantic state と activation guard を併用し、`aria-disabled` だけで操作抑止したつもりにならない。
+
+### LL-232: public API の設定名と response envelope は exact contract test で固定する
+- **事象**: 匿名いいねの実装は `TURNSTILE_SECRET` を参照していたが設定手順は `TURNSTILE_SECRET_KEY` を指定し、PUT API は flat object を返す一方 browser client は `{ reaction: ... }` を期待していた。
+- **根本原因**: server、browser mock、README を別々に実装し、設定 key と response shape を同じ contract として検証していなかった。E2E mock が client の期待値だけを再現したため、実 handler との不一致を隠した。
+- **対策**: secret 名を `TURNSTILE_SECRET_KEY` へ統一し、API unit test で Turnstile verifier へ渡る値と PUT response の完全一致を検証した。browser mock も同じ wrapper shape を使う。
+- **教訓**: same-origin API でも server と client の契約は独立して drift する。設定名、request、response envelope は handler の exact test で固定し、client-only mock の成功を end-to-end contract の証拠にしない。
+
+### LL-233: third-party script loader は失敗した element と cached Promise を両方破棄する
+- **事象**: Turnstile script の初回 load が失敗すると failed script が DOM に残り、次回操作は既に `error` event を終えた同じ element を再利用して timeout した。
+- **根本原因**: Promise cache だけを reset し、script element 自体を retry state の一部として扱っていなかった。
+- **対策**: loader 所有の script に data marker を付け、error、timeout、API欠落時に listener、timer、element、Promise cache をすべて破棄する。初回 script failure 後の次操作で再取得・mutation 成功する E2E を追加した。
+- **教訓**: retry 可能な external script loader は Promise だけでなく DOM element の lifecycle も reset する。failure-then-success を実ブラウザで検証し、常時 preloaded mock だけで合格にしない。
+
+### LL-234: request body の上限は全文 buffer 後でなく stream read 中に適用する
+- **事象**: いいね mutation は 4 KB 上限を持っていたが、`Content-Length` が無い request では `request.text()` で全文を memory に読み込んだ後にしか超過を拒否できなかった。
+- **根本原因**: payload validation と resource bound を同じ post-buffer check で扱い、chunked request の read budget を制限していなかった。
+- **対策**: `request.body` を chunk 単位で読み、累積 byte が上限を超えた時点で stream を cancel して 413 を返す。`Content-Length` 無しの 4,097 byte body を regression test に固定した。
+- **教訓**: public write API の body limit は header を fast path に使えても、信頼できない・欠落した header を前提にしない。streaming read 自体を bounded にし、上限 test は実 body も超過させる。
+
+### LL-235: sibling action を持つ card は親を interaction group にし、reaction と保存を操作地点で区別する
+- **事象**: Knowledge card の hover で article link だけが 2px 移動し、兄弟要素の like button が元位置に残った。また複数 persona が like を記事保存や reading list と誤認し得ると報告し、設定なしの unavailable 状態は count が `—` のままで理由を判別しにくかった。
+- **根本原因**: nested interactive content を避けるため link と button を兄弟に分けた後も、motion を link 単体へ残して card 全体の interaction group として扱っていなかった。機能の非目標も privacy page だけに記載し、操作地点の visible copy と accessible description へ配線していなかった。
+- **対策**: hover / focus-within の transform を親 card へ移し、reduced-motion では停止する。Knowledge lane と各 like control で「匿名の公開リアクションであり記事保存ではない」ことを明示する。count hydration が完了した ready control だけを表示し、unavailable control は visual / accessibility / pointer path から除外する。desktop / tablet / mobile の target 寸法、Home 非表示、card 内配置を E2E で固定する。
+- **教訓**: sibling action を持つ clickable card は、視覚 motion と focus state を親 interaction group に適用する。reaction / save / bookmark のように見た目が近い機能は、詳細文書だけでなく操作地点の visible copy と accessible name / description で違いを明示する。optional action が利用不能なら記号だけの壊れた affordance を残さず、主 link を完全に解放する。
+
+### LL-236: Turnstile の idempotency key を client input にしない
+- **事象**: 匿名いいね API が client 生成の `requestId` を Turnstile Siteverify の `idempotency_key` へそのまま渡していた。独立 review で、同じ token と key の再送が別 mutation の検証結果を再利用できる境界として指摘された。
+- **根本原因**: desired-state PUT の冪等性と Siteverify request の retry 冪等性を混同し、client が制御できる値を server-side verification retry 用 parameter に使っていた。
+- **対策**: reaction mutation payload を `{ liked, turnstileToken }` に限定し、Siteverify の `idempotency_key` を送らない。票の冪等性は D1 の複合 primary key と desired state だけで保証し、unknown field は fail-closed で拒否する。
+- **教訓**: third-party verification の idempotency key は server 内の同一 request retry にだけ使う。client input を渡さず、business mutation の冪等性は application storage contract で独立して保証する。
+
+### LL-237: direct-entry control は visible context、動的言語、unavailable hit area を一体で検証する
+- **事象**: persona audit で、記事詳細のいいね control は非保存であることを視覚的に説明せず、利用不能 tooltip は初期言語のまま固定され、Knowledge card の disabled control は記事リンク上に 52x44px のクリック不能領域を作っていた。
+- **根本原因**: accessible description と別ページの説明だけで利用目的が伝わるとみなし、直接流入する詳細ページの visible context を省略した。さらに language toggle 後の派生属性更新と、absolute-positioned disabled sibling の pointer hit-testing を state transition の契約に含めていなかった。
+- **対策**: 記事詳細に匿名公開リアクションかつ非保存・非ランキングである専用 panel と privacy link を追加し、About hero から同 section へ直接到達できるようにした。unavailable 時は panel/control 全体を hidden + inert にして card link の hit area を解放する。Turnstile の一時 widget も操作時点の JA/EN に合わせ、言語切替、direct-entry copy、privacy anchor、ready-only visibility を E2E で固定した。
+- **教訓**: 機能の正体を誤認すると判断が変わる説明は hidden text や別ページだけに置かず、各 direct-entry surface で可視化する。optional feature の unavailable state は、説明付き disabled overlay よりも progressive enhancement として面ごと隠す方が主タスクを妨げない場合がある。visual、accessibility、pointer の3経路を一体で検証する。
+
+### LL-238: 検証コマンドは repository の runner と専用検索 tool を使う
+- **事象**: `tests/data-schema.test.ts` を `node --test` で起動して Vitest runner の初期化エラーを起こし、複数の正規表現を埋め込んだ shell command も quote mismatch で構文エラーになった。どちらも製品コードの失敗ではなかった。
+- **根本原因**: test file が使う runner と repository の既存実行経路を確認せず、専用の code search tool で分けて実行できる検索まで quote の多い shell command にまとめた。
+- **対策**: data schema は `npx vitest run tests/data-schema.test.ts` で再実行し、code search は `rg` tool、publisher fingerprint は独立した npm script として実行する。
+- **教訓**: 検証失敗は最初に実装失敗と launcher/shell 失敗を分ける。test framework は repository の script または対応 runnerを使い、検索は専用 tool へ分離して shell quoting を検証リスクにしない。
+
+### LL-239: optional reaction は状態、意味、回復、件数境界を1つの製品契約として磨く
+- **事象**: 匿名公開いいねの基本動作は完成していたが、heart icon が保存に見え、loading/unavailable control が壊れた affordance として残り、Knowledge の説明は mobile で消え、記事詳細の reaction は source/share utility と混在していた。mutation failure は視覚通知が弱く、大きな count は card title と競合し得た。
+- **根本原因**: API 成功系と control 単体の操作を中心に実装し、optional feature の availability、保存との意味差、direct-entry hierarchy、視覚的な失敗回復、桁増加を同じ acceptance criteria で検証していなかった。
+- **対策**: thumbs-up icon と可視の `いいね / Like` label、ready-only reveal、control と同じ availability に同期する非保存・非ランキング説明、記事詳細の専用 reaction panel、compact visible count + localized exact accessible count、原因別 toast を導入した。意味説明は shared copy から Knowledge、記事詳細、About、control description へ配線する。失敗時は optimistic state を戻して server truth を再取得し、focus を維持する。`1440x900`、`768x900`、`390x844`、`375x667` で target、overflow、toast/tabbar、JA/EN、reduced motion を E2E で固定する。
+- **教訓**: optional reaction は「押せる」だけで完成ではない。icon 単体で保存やランキングに誤認させず、機能が使える時だけ control と説明が一緒に自然に現れ、何ではないかが操作地点で分かる必要がある。複数 surface の製品契約は shared copy を単一情報源にし、失敗しても状態と focus を回復し、件数や viewport が変わっても主 content を圧迫しないことまでを acceptance criteria にする。visible count と accessible exact value、visual toast と button description の役割を分離し、同じ失敗を重複読み上げしない。
+
+### LL-240: popover の author display は閉状態を上書きするため明示 hidden contract を持たせる
+- **事象**: reaction error toast の close button は `hidePopover()` を正常に実行したが、toast は画面上に残り続けた。さらに native `:popover-open` と fallback data attribute を同じ selector list にすると、popover pseudo-class 非対応 browser では fallback rule 全体が無効になり得た。
+- **根本原因**: `.reaction-toast { display:grid }` という author style が、閉じた popover を非表示にする browser の既定 style を上書きしていた。加えて selector list は 1 selector でも無効だと rule 全体が破棄されるため、native state と互換 fallback の対応範囲が逆転していた。
+- **対策**: toast に `hidden` を初期設定し、show 前に解除、全 dismiss 経路で再設定する。`.reaction-toast[hidden] { display:none }` を `display:grid` より強い明示規則として追加し、native `:popover-open` と fallback data attribute は別 rule にする。static contract test と実 browser test で native / fallback の両経路を固定する。
+- **教訓**: native popover や `hidden` を使う要素へ author `display` を指定する場合、閉状態が本当に描画されないことを実ブラウザで検証する。互換 fallback を experimental pseudo-class と同じ selector list にまとめず、未対応 selector が fallback まで無効化しない構造にする。open API の成功と visual close は別であり、native/fallback 共通の明示状態を持たせる。
+
+### LL-241: sticky header がある hash navigation は実測済み target offset と選択状態を持たせる
+- **事象**: Knowledge の Sources rail から source anchor へ移動すると URL hash は変わるが、見出しが sticky header の直下へ入り、どの source を選んだかも視覚的に判別しにくかった。初期値 `92px` も desktop header の実測高 `108.59px` より小さく、見出し上端が header 内へ約 16px 入った。
+- **根本原因**: hash link の到達だけを navigation 完了とし、target の viewport 座標と `:target` の視覚状態を acceptance criteria にしていなかった。offset を見た目だけで選ぶと、responsive content を含む header の実高に足りない。
+- **対策**: source heading に `scroll-margin-top: 120px` を設定し、target を含む group の border と focus ring を強調した。Playwright で link click 後の target top が header bottom より 8px 以上下にあり、対象 group の target styling が適用されることを固定した。
+- **教訓**: sticky header を持つページ内 navigation は hash 変更だけで合格にしない。offset は header の DOM 寸法より大きいことを実測し、target offset、見出しの可視性、選択 group の視覚的な手掛かりを座標と computed style で検証する。
+
+### LL-242: async mutation の失敗再同期は後続操作の世代を上書きしない
+- **事象**: いいね更新に失敗すると control を即座に再操作可能へ戻してから server truth を GET していたため、再同期中にユーザーが再試行すると、先行 GET の古い結果と失敗通知が後続 mutation の成功状態を上書きできた。
+- **根本原因**: entry ごとの非同期 mutation に所有世代がなく、await 後の snapshot、busy state、toast を「現在も最新の操作か」確認せず適用していた。rollback で再操作を許すことと、先行 Promise の失効を分離していなかった。
+- **対策**: entry ID ごとに単調増加する operation version を持ち、mutation response と失敗後 reconciliation の await 後に version を検証する。新しい操作が開始済みなら古い snapshot、busy 解除、announcement、toast をすべて破棄する。Playwright で先行失敗の GET を保留し、後続 retry 成功後に古い GET を返しても成功状態が維持される競合を固定した。
+- **教訓**: 楽観更新を rollback 後すぐ再試行可能にする UI は、再同期を待つだけでなく過去世代の非同期結果を失効させる必要がある。async state machine は operation ID / generation を持ち、data、busy、notification の全副作用を同じ所有権 gate へ通す。
 ### LL-243: archive enrichment の union merge 後は final live taxonomy へ完全同期する
 - **事象**: scheduled Publisher の generated snapshot で、同一記事の live entry と archive entry の tags が一致せず、`matching live/archive entries have the same tags` data schema gate が失敗した。checkout 済み artifact は一致しており、失敗は Publisher run 内の archive merge 後に発生していた。
 - **根本原因**: `mergeEntryEnrichment()` は historical enrichment を失わないため tags を union する。live taxonomy から tag が削除、縮小、並び替えされても、archive 側には古い tag が残るため、union merge だけでは exact parity を保証できなかった。さらに runtime Publisher は incoming entry の月だけを読み、同じ canonical URL が別の archive 月にもある場合、そのコピーへ同期処理が届かなかった。
@@ -1615,6 +1698,96 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: hook 完了後の GitHub への pack 送信が HTTP/2 transport で切断された。末尾の文言だけでは remote ref の更新結果を判定できず、成功扱いすると未 push を見逃す。
 - **対策**: `git ls-remote --heads origin <ref>` で remote ref と local commit SHA を直接照合する。未反映で、エラーが HTTP/2 framing layer に限定される場合は、安全 hook を維持したまま `git -c http.version=HTTP/1.1 push` で再試行する。再試行後も remote ref を確認する。
 - **教訓**: push の成否は標準出力の補助文言で推測せず、exit code と remote ref の SHA で確定する。通信方式の切替は `--no-verify` や force の代替ではなく、同じ non-force push と品質 hook を保った transport 修復として限定する。
+
+### LL-245: 匿名 identity の初回確立を mutation と同じ request にしない
+- **事象**: 匿名いいねの初回 `PUT` が voter cookie の発行と投票を同時に行っていた。応答消失後の再送や cookie 未確立の複数 tab 操作では、同じ browser 操作が異なる voter として複数票を残し得た。
+- **根本原因**: desired-state `PUT` の冪等性は同じ voter hash に対してだけ成立するのに、mutation request 自身が voter identity を新規生成していた。HttpOnly cookie は browser script から確立済みか判定できず、同一 tab の Promise 共有だけでは複数 tab の初回競合も直列化できなかった。
+- **対策**: cookie だけを確立し票、count、rate-limit state を変更しない `POST /api/reactions/identity` を分離した。`PUT` は確立済み cookie を必須とし、無ければ `409 identity_required` を返す。client は同一 tab で Promise を共有し、Web Locks 対応 browser では同一 origin の複数 tab も直列化する。count hydration は D1、HMAC、Turnstile の mutation dependency がすべて設定済みの場合だけ control を ready にする。
+- **教訓**: 匿名 identity と business mutation を同じ初回 request で作らない。冪等性を identity に依存する public write API は、identity bootstrap を副作用なしで先に確立し、mutation は既存 identity だけを受理する。progressive enhancement の ready 判定は read path だけでなく、実際の mutation に必要な全 dependency を確認する。
+
+### LL-246: local D1 は config、database ID、persist path、compatibility date を揃える
+- **事象**: README の `wrangler d1 execute <database-name> --local` は D1 binding を持つ Wrangler config が無く実行不能だった。仮設定で migration を適用しても、Pages Dev が別 ID または別 persist path を使うと schema を見つけられなかった。Wrangler 4.85.0 は compatibility date 未指定時に実行日を採用し、内蔵 runtime 上限 `2026-05-01` を超えて起動に失敗した。
+- **根本原因**: `d1 execute` と `pages dev` を同じ local database へ接続する contract を文書化せず、database name だけで解決できると仮定していた。CLI の既定 compatibility date も、使用中 Wrangler が対応する runtime date と一致するとは限らなかった。
+- **対策**: tracked の `web/wrangler.reactions.local.jsonc` に local-only binding、all-zero database ID、`2026-05-01` の compatibility date を固定した。migration と Pages Dev は同じ ID と `.wrangler/state/reactions` を使う。実コマンドで migration 2 文、reaction GET、identity POST、identity 後も vote/rate-limit 0 件を確認した。production は local ID を使わず、`d1 create` が返した ID を untracked config へ設定する。
+- **教訓**: local D1 の再現性は SQL file だけでは成立しない。binding config、database ID、persistence directory、compatibility date を同じ手順で固定し、migration と runtime の両方から同じ database を実測する。CLI の既定値は version と実行日で変わるため、検証済み version/date を文書と command に明示する。
+
+### LL-247: service-wide invalidation は focus ownership と accessible identity を含む
+- **事象**: 匿名いいねの permanent failure で全 control を非表示にする処理は、mutation の直接失敗時だけ focus を記事 link へ戻していた。reconciliation や hydration 経由では focused control が消えて focus を失い得た。Knowledge の反復 button も同じ `いいね 7件` という accessible name になり、対象記事を区別できなかった。D1 欠落 test は Turnstile secret も欠いていたため、意図した D1 guard より前で停止していた。
+- **根本原因**: service generation、visibility、focus restoration を別々の failure path へ実装し、全体失効の単一 contract にしていなかった。反復 control の名前に対象 resource identity を含めず、見た目の card proximity だけに依存していた。binding failure test も先行 dependency を満たさず、対象 guard へ実際に到達したことを証明していなかった。
+- **対策**: `markReactionServiceUnavailable()` が失効前に focused control と同じ card の article link を取得し、全 control を unavailable にした後で可視 fallback へ focus を戻す。hydration、reconciliation、mutation の全 permanent failure をこの関数へ集約し、reconciliation failure の実 browser testを追加した。button の `aria-labelledby` へ JA / EN の記事 title を加え、複数 card と言語切替後の accessible name を検証した。D1 欠落 test は HMAC と Turnstile を設定し、D1 だけを欠落させて exact error を確認する。
+- **教訓**: service-wide invalidation は generation token、UI visibility、pointer path、focus ownership を 1 つの state transition として実装する。反復操作の accessible name には操作種別だけでなく対象 resource の identity を含める。特定 guard の test は先行 dependency を満たし、対象 branch に到達したことを exact response で証明する。
+
+### LL-248: focus 復帰先は可視 wrapper ではなく実際に focusable な trigger を保持する
+- **事象**: reaction error toast の close button で toast は閉じたが、元のいいね button へ focus が戻らなかった。popover の離脱 transition 中も close button が一時的に描画されるため timing を疑ったが、animation frame 後も復帰しなかった。
+- **根本原因**: `showReactionToast()` に元の button ではなく `[data-reaction-control]` wrapper を渡していた。wrapper は可視なので既存の `isVisibleFocusTarget()` を通過したが、programmatic focus を受け取れず `.focus()` が no-op になった。可視性は focusability の証拠ではなかった。
+- **対策**: mutation 開始時に `getButton(activeControl)` で実 button を取得し、通常失敗、permanent failure、reconciliation failure の全 toast 経路で同じ button を復帰先として保持する。button が失効した場合は既存の article link fallback を使う。実 browser test で明示 close 後に toast が hidden になり、元 button が focus を保持することを初回実行で確認した。
+- **教訓**: dismissible UI の focus return は container や見た目上の control group ではなく、実際に focusable な opener を保存する。判定は connected / visible だけで完了させず、focus 対象の element type と tab focus contract を確認する。transition timing と復帰先の妥当性を分けて診断し、`document.activeElement` と保存対象を実測する。
+
+### LL-249: mutation response 消失は authoritative read で成否を確定する
+- **事象**: 匿名いいねの `PUT` が server 側で確定した後に response だけ失われると、client は mutation failure として optimistic state を戻し、実際の D1 state と逆の表示や誤った failure toast を出し得た。直後の authoritative `GET` も一時的に旧 state を返す場合、1 回だけの再同期では同じ誤判定が残った。
+- **根本原因**: network failure を server mutation の不成立と同一視し、read-after-write consistency も 1 回の GET で確定すると仮定していた。write request の応答が無いことは commit の有無を証明せず、blind retry は toggle を二重反転させる危険がある。
+- **対策**: ambiguous failure 後は entry の authoritative `GET` を bounded schedule で再実行し、返った `liked` が requested desired state と一致した時点で mutation success として扱う。上限内に一致しない場合だけ rollback と failure notification を適用し、全 await 後に operation version と service generation を検証する。実 browser test で server state 更新後に `PUT` response を切断し、最初の GET が旧 state、次の GET が desired state を返しても成功状態、count、announcementを確定することを固定した。
+- **教訓**: response 消失があり得る public write API では「response が無い」と「write が失敗した」を分け、直後の read が最新という前提も置かない。desired-state mutation は bounded authoritative polling で確定し、blind retry や単純 rollback にしない。polling は timeout と世代 gate を持ち、後続操作を上書きさせない。
+
+### LL-250: async operation の deadline は fetch だけでなく body read と lock acquisition にも必要
+- **事象**: reaction API の fetch 自体に timeout を付けても、`response.json()` が完了しない response や、別 tab が保持した Web Lock の grant 待ちで client operation が無期限に busy のまま残り得た。
+- **根本原因**: network request 開始だけを非同期境界とみなし、response body stream と browser coordination primitive の待機時間を bounded にしていなかった。
+- **対策**: fetch と JSON body read を同じ absolute deadline で制限し、Web Lock は grant 前だけに acquisition timeout を適用する。grant 後は identity API request 自身の deadlineへ ownership を引き継ぐ。fake timer unit test で body read と lock grant の未完了をそれぞれ timeout error にする。
+- **教訓**: async state machine の budget は fetch、stream read、lock、script load、reconciliation など全 await boundary を列挙して設計する。前段だけを bounded にしても後段の Promise が未完了なら UI は永久に busy になり得る。
+
+### LL-251: visual toast と screen-reader announcement は独立した常設 surface に分ける
+- **事象**: reaction failure の読み上げを一時的な visual toast に依存すると、toast の hidden / popover lifecycle、focus移動、dismiss timing によって assistive technology への通知が失われ得た。
+- **根本原因**: 視覚的な recovery affordance と非同期状態の programmatic announcement を同じ動的 DOM node に持たせ、表示 lifecycle と live-region lifecycle を結合していた。
+- **対策**: toast は visual copy と close buttonだけを持ち、`role=status` / `aria-live` を付けない。document body に常設する `#reaction-status-live` が成功・失敗・service unavailable を `aria-live=polite` で通知する。E2E で常設 live region の一意性と属性、toast に live-region role が無いこと、失敗 copy が live regionへ反映されることを固定した。
+- **教訓**: transient visual notification と assistive announcement は目的と lifecycle が違う。toast を閉じても読み上げ contract が壊れないよう、常設 live region と visual surface を分離する。
+
+### LL-252: browser mock は route だけでなく HTTP method contract も固定する
+- **事象**: identity `POST` と desired-state `PUT` を別 endpoint contractとして設計していたが、Playwright route mock は URL だけに一致し、client が誤った method を送っても成功 response を返せた。
+- **根本原因**: mock response の形だけを server contract に合わせ、request method を end-to-end assertion に含めていなかった。API unit test が正しくても browser client の wiring drift は検出できなかった。
+- **対策**: shared identity mock は全 request が `POST`、mutation mock は全 request が `PUT` であることを route handler 冒頭で fail-closed に検証する。
+- **教訓**: browser E2E の API mock は URL、method、request envelope、response envelopeを実 handler と同じ contract で固定する。client-only mock の成功を end-to-end wiring の証拠にしない。
+
+### LL-253: recovery message は曖昧な状態名ではなく利用者が取れる行動を明示する
+- **事象**: いいね更新失敗時の live region が「通信を確認」とだけ案内し、商用品質の E2E が期待する「通信環境を確認して、もう一度試す」という具体的な回復手順と一致しなかった。
+- **根本原因**: エラー種別ごとの通知 surface は共有できていたが、generic network failure の copy 自体が利用者の次の行動を十分に表していなかった。
+- **対策**: visual toast と常設 live region が共有する localized message を、通信環境の確認と再試行を明示する文言へ統一した。実ブラウザでは live region の完全一致で固定する。
+- **教訓**: error message は失敗状態の説明だけで終えず、利用者が次に取れる回復行動を短く具体的に示す。visual と assistive surface は同じ message object を使い、copy drift を防ぐ。
+
+### LL-254: Turnstile の challenge rejection と provider failure を同じ 403 にしない
+- **事象**: Turnstile Siteverify の非 2xx response、malformed JSON、非 object payload、body read failure をすべて `success=false` と同じ challenge rejection にすると、利用者へ「認証をやり直す」案内を出しても再試行で回復しない provider 障害を誤分類していた。
+- **根本原因**: provider response の transport / serialization contract と、正常に解釈できた `{ success: false }` business result を同じ boolean へ潰していた。
+- **対策**: HTTP 非 2xx、JSON parse / read failure、非 object payload は `503 challenge_unavailable` とし、構造化された `{ success: false }` だけを通常の challenge rejection として扱う。API unit test で全 response class を固定する。
+- **教訓**: third-party verification は「検証に失敗した」と「検証 service の結果を取得できなかった」を分離する。transport、body、schema を通過して初めて business result を読む。利用者が取る recovery action と observability severity を response class に一致させる。
+
+### LL-255: 44px touch target は subpixel 丸めを含む実寸で保証する
+- **事象**: reaction button に `min-height: 44px` を指定していても、`390x844` の Playwright 実測が `43.999969px` となり、初回だけ 44px 下限を下回って retry に依存した。
+- **根本原因**: CSS の宣言値と browser が返す device scale 後の `DOMRect` は常に完全一致するとは限らず、境界値ぴったりの実装には subpixel 丸めの安全余白が無かった。
+- **対策**: reaction button の最小高を 45px にして、E2E は従来どおり実 `DOMRect` が 44px 以上であることを検証する。retry success を合格扱いせず、初回実行でも下限を満たすようにする。
+- **教訓**: touch target や overflow のような物理寸法要件は CSS 宣言値ではなく browser 実寸で判定する。厳密な下限には 1px 程度の安全余白を持たせ、境界値の浮動小数点誤差で flake を作らない。
+
+### LL-256: async 再照合は成功応答後にも世代を検証し、全体 deadline を共有する
+- **事象**: 匿名いいねの再照合は fetch 前と error 後に operation version / service generation を確認していたが、成功応答の直後には確認していなかった。古い GET が成功すると、後続のいいね成功や service-wide invalidation 後の state を上書きできた。また各 poll が 15 秒の通常 request timeout を持ち、4 回直列で失敗通知が約 76 秒遅れ得た。
+- **根本原因**: stale guard を失敗経路にだけ置き、成功した await も別 operation が進む非同期境界であることを見落としていた。個別 request の timeout を polling state machine 全体の deadline と誤認し、retry ごとに同じ budget を再付与していた。
+- **対策**: authoritative GET の成功直後と DOM 反映直前に operation version / service generation を再確認する。再照合全体は 5 秒の absolute deadline を共有し、各 read は残予算と 1.25 秒上限の小さい方だけを使う。実 browser test で stale な成功応答が新しい state を上書きしないことと、全 read が応答しなくても 6.5 秒以内に recovery を表示することを固定する。
+- **教訓**: async state machine の stale guard は error path だけでなく、状態を利用するすべての await 成功後に置く。retry budget は request ごとにリセットせず operation 全体の absolute deadline として共有し、利用者への失敗通知時間を上限付きにする。
+
+### LL-257: programmatic status は現在文だけでなく全言語 copy を保持する
+- **事象**: いいね失敗後に JA / EN を切り替えると、visual toast と count は新しい言語へ同期したが、button の `aria-describedby` が参照する `data-reaction-status` は通知時の日本語のまま残った。
+- **根本原因**: status node へ active language の文字列だけを書き、言語切替時に再生成できる bilingual source を保持していなかった。visual copy と accessible description が別の state ownership を持っていた。
+- **対策**: control ごとに localized message object を保持し、`html[data-lang]` の変更時に count、toast、control status を同じ言語へ同期する。announcement clear と service unavailable では保持 message も破棄する。E2E で失敗後の EN 切替時に status と toast が同じ English copy になることを固定する。
+- **教訓**: runtime language toggle を持つ非同期 UI は、表示時の単一文字列ではなく全言語の semantic message を state として保持する。visible notification、accessible description、live region のどれも言語切替後に古い copy を残さない。
+
+### LL-258: optional overlay を隠すときは予約領域も解放し、主 link の focus を明示する
+- **事象**: Knowledge card の匿名いいねを unavailable として非表示にしても、source と title は overlay 用の右 padding 70px を保持し、768px では本文幅の約 28% を使えなかった。同じ card link は `outline:0` で既定 focus ring も消していた。
+- **根本原因**: optional control の visual state と sibling content の layout state を別々に実装し、非表示を `opacity` / `visibility` だけで完了とみなした。card 全体の border 変化を link 自身の明瞭な focus indicator の代替にもしていた。
+- **対策**: default は予約領域なしとし、card が unavailable 以外の reaction control を持つ場合だけ scoped `:has()` で右 padding を付ける。非対応 browser は重なり回避を優先して従来 padding を fallback として保持する。card link は高コントラストの `:focus-visible` outline を持たせ、ready / unavailable の padding と focus の実 computed style を E2E で固定する。
+- **教訓**: progressive enhancement の optional overlay は使える時だけ主 content の領域を借り、使えない時は pointer path だけでなく layout space も完全に返す。親や兄弟の hover 表現で link 自身の keyboard focus を代用せず、focusable element に明示的な indicator を置く。
+
+### LL-259: hydration 前の hidden control も SSR から inert にする
+- **事象**: 匿名いいねは client 初期化後に loading / unavailable control を `aria-hidden` と `inert` の両方で操作経路から外していたが、server-rendered HTML は `aria-hidden="true"` と disabled button だけで、`inert` が hydration 後にしか付かなかった。
+- **根本原因**: 初期 HTML と client state transition のアクセシビリティ契約を別々に実装し、短い pre-hydration 状態を検証対象から外していた。
+- **対策**: `ArticleLike` の loading wrapper に SSR 時点から `inert` を付け、client が ready / busy へ遷移した時だけ解除する。component source test で loading、`aria-hidden`、`inert` の組み合わせを固定する。
+- **教訓**: progressive enhancement の optional control は hydration 後だけ安全にするのではなく、初期 HTML から同じ focus / accessibility contract を満たす。client initializer は SSR の安全状態を解除する役割に限定する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

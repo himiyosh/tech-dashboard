@@ -84,6 +84,8 @@ const {
   entryHref,
   isNew,
   hasCjk,
+  isCjkDominantText,
+  hasUsableSummaryForLanguage,
   relatedEntries,
   entriesBySource,
   entriesByTag,
@@ -172,6 +174,54 @@ describe("summaryForLang", () => {
     const entry = { ...e1, summaryEn: "これは日本語です" };
     expect(summaryForLang(entry, "en")).toBe("");
   });
+
+  it("英語主体の要約に日本語の固有名詞が含まれていても保持する", () => {
+    const summary = "The agent connects to 技術評論社 resources while keeping the workflow in English.";
+    const entry = { ...e1, summaryEn: summary };
+    expect(isCjkDominantText(summary)).toBe(false);
+    expect(summaryForLang(entry, "en")).toBe(summary);
+  });
+
+  it("日本語主体の mixed-script 要約は English slot で拒否する", () => {
+    const summary = "この agent は repository の変更内容を英語で説明します。";
+    const entry = { ...e1, summaryEn: summary };
+    expect(isCjkDominantText(summary)).toBe(true);
+    expect(summaryForLang(entry, "en")).toBe("");
+  });
+});
+
+describe("isCjkDominantText", () => {
+  it.each([
+    ["English text only", false],
+    ["English text with 技術評論社 as a source name", false],
+    ["日本語の説明に English terms を含める", true],
+    ["日本語だけの要約です。", true],
+  ])("%s", (text, expected) => {
+    expect(isCjkDominantText(text)).toBe(expected);
+  });
+});
+
+describe("hasUsableSummaryForLanguage", () => {
+  it("field 名ではなく実際の言語で usable summary を判定する", () => {
+    const misplaced = {
+      ...e1,
+      summaryJa: "This English summary was stored in the Japanese field.",
+      summaryEn: "このエントリは要約が未生成です。",
+    };
+    expect(hasUsableSummaryForLanguage(misplaced, misplaced.summaryJa, "ja")).toBe(false);
+    expect(hasUsableSummaryForLanguage(misplaced, misplaced.summaryJa, "en")).toBe(true);
+    expect(isPublishableEntry(misplaced)).toBe(true);
+  });
+
+  it("Hangul が混入した要約を完成扱いしない", () => {
+    const contaminated = {
+      ...e1,
+      summaryJa: "Anthropic が 새しいモデルを公開した。",
+      summaryEn: "",
+    };
+    expect(hasUsableSummaryForLanguage(contaminated, contaminated.summaryJa, "ja")).toBe(false);
+    expect(isPublishableEntry(contaminated)).toBe(false);
+  });
 });
 
 // ============================================================
@@ -205,7 +255,7 @@ describe("summaryForLangWithFallback", () => {
       isFallback: true,
       fallbackLang: "ja",
     });
-    expect(isPublishableEntry(entry)).toBe(false);
+    expect(isPublishableEntry(entry)).toBe(true);
     expect(isListableEntry(entry)).toBe(true);
   });
 });
@@ -317,6 +367,14 @@ describe("isSummaryNoise", () => {
       "Left some junk in the readme and forgot to remove oopsies Release Notes: N/A or Added/Fixed/Improved",
     )).toBe(true);
   });
+  it("RSS provenance boilerplate は生成済み要約として扱わない", () => {
+    expect(
+      isSummaryNoise(
+        e1,
+        "The post Claude Opus 4.7 released appeared first on Anthropic.",
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("categoryLabel", () => {
@@ -341,7 +399,7 @@ describe("isListableEntry", () => {
     expect(isPublishableEntry(unusable)).toBe(false);
     expect(isListableEntry(unusable)).toBe(true);
   });
-  it("要約待ちでも実タイトルがあれば listable (LL-074)", () => {
+  it("片言語の要約が完成していれば cross-language fallback で publishable", () => {
     const pending = {
       ...e1,
       titleJa: "",
@@ -350,7 +408,8 @@ describe("isListableEntry", () => {
       summaryJa: PENDING_JA,
       summaryEn: "What's Changed: support for new architecture.",
     };
-    expect(isPublishableEntry(pending)).toBe(false);
+    expect(isDeterministicFallbackEntry(pending)).toBe(false);
+    expect(isPublishableEntry(pending)).toBe(true);
     expect(isListableEntry(pending)).toBe(true);
   });
   it("synthetic タイトルしか無いエントリは listable ではない", () => {
@@ -445,11 +504,28 @@ describe("titleForLang", () => {
     expect(titleForLang(e1, "en")).toBe("Claude Opus 4.7 Released");
   });
 
-  it("titleJa が空の場合 summaryJa の先頭節を返す", () => {
-    const entry = { ...e1, titleJa: "", summaryJa: "Anthropic が発表した。背景は複雑だ。" };
-    const title = titleForLang(entry, "ja");
-    // 最初の句点で切れるはず
-    expect(title).toBe("Anthropic が発表した");
+  it("titleJa が空の場合も summary excerpt をタイトルへ流用しない", () => {
+    const entry = {
+      ...e1,
+      title: "日本語の原題",
+      titleJa: "",
+      summaryJa: "Anthropic が発表した。背景は複雑だ。",
+    };
+    expect(titleForLang(entry, "ja")).toBe("日本語の原題");
+  });
+
+  it("英語主体の titleEn に日本語の固有名詞があっても保持する", () => {
+    const titleEn = "Integrating 技術評論社 resources with agent workflows";
+    expect(titleForLang({ ...e1, titleEn }, "en")).toBe(titleEn);
+  });
+
+  it("日本語主体の titleEn は拒否し、English summary をタイトルへ流用しない", () => {
+    const entry = {
+      ...e1,
+      titleEn: "技術評論社の agent workflow 解説",
+      summaryEn: "This is an English fallback title generated from the summary.",
+    };
+    expect(titleForLang(entry, "en")).toBe("Claude Opus 4.7 released");
   });
 });
 
@@ -479,8 +555,22 @@ describe("titleForLangWithFallback", () => {
 
   it("JA を要求し titleJa が空でも fallback 経由で必ず非空を返す", () => {
     const entry = { ...e1, titleJa: "", titleEn: "Only English Title", title: "Only English Title", summaryJa: "" };
+    expect(titleForLang(entry, "ja")).toBe("");
     const result = titleForLangWithFallback(entry, "ja");
-    expect(result.text.length).toBeGreaterThan(0);
+    expect(result).toEqual({
+      text: "Only English Title",
+      isFallback: true,
+      fallbackLang: "en",
+    });
+  });
+
+  it("JA の raw title は JA 要求で fallback 扱いにしない", () => {
+    const entry = { ...e1, titleJa: "", titleEn: "", title: "日本語の原題", summaryJa: "", summaryEn: "" };
+    expect(titleForLang(entry, "ja")).toBe("日本語の原題");
+    expect(titleForLangWithFallback(entry, "ja")).toEqual({
+      text: "日本語の原題",
+      isFallback: false,
+    });
   });
 });
 

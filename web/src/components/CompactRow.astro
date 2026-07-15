@@ -2,6 +2,7 @@
 import {
   relativeTime,
   isNew,
+  isPublishableEntry,
   CATEGORY_META,
   categoryLabel,
   entryHref,
@@ -15,7 +16,8 @@ export interface Props {
 
 const { entry } = Astro.props;
 const rel = relativeTime(entry.publishedAt);
-const fresh = isNew(entry);
+const summaryReady = isPublishableEntry(entry);
+const fresh = summaryReady && isNew(entry);
 
 const title = entry.titleJa || entry.titleEn || entry.title;
 const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
@@ -40,7 +42,8 @@ function typeLabel(t: NormalizedEntry["sourceType"]): string {
 ---
 
 <a
-  class:list={["row", { important: entry.importance === 3 }]}
+  class:list={["row", { important: summaryReady && entry.importance === 3 }]}
+  data-summary-state={summaryReady ? "ready" : "pending"}
   href={entryHref(entry)}
   aria-label={`${title} from ${sourceLabel(entry.source)}, ${categoryName}, ${rel}`}
   style={`--cat-color:${catColor}`}

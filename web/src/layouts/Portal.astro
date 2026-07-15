@@ -4,6 +4,7 @@ import { SITE_URL } from "../lib/site.ts";
 import { CATEGORY_META, WORKER_HEALTH } from "../lib/data.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { deriveWorkerRunStatus } from "../lib/run-health.ts";
+import { SOURCE_META, sourceLabel } from "../lib/source-meta.ts";
 import ArxivIcon from "../components/icons/ArxivIcon.astro";
 
 export interface Props {
@@ -39,6 +40,10 @@ const categorySearchMeta = CATEGORY_META.map((meta) => ({
   slug: meta.slug,
   label: meta.shortLabel,
   aliases: [meta.name, meta.shortLabel, meta.slug.replaceAll("-", " "), ...(meta.searchAliases ?? [])],
+}));
+const sourceSearchMeta = SOURCE_META.map((meta) => ({
+  id: meta.id,
+  label: sourceLabel(meta.id),
 }));
 const productionHost = new URL(SITE_URL).hostname;
 const footerRun = deriveWorkerRunStatus({
@@ -161,6 +166,7 @@ const footerRunDetail = !WORKER_HEALTH
             role="listbox"
             aria-live="polite"
             data-category-search-meta={JSON.stringify(categorySearchMeta)}
+            data-source-search-meta={JSON.stringify(sourceSearchMeta)}
             hidden
           ></div>
         </form>
@@ -269,6 +275,7 @@ const footerRunDetail = !WORKER_HEALTH
             b.setAttribute("aria-pressed", on ? "true" : "false");
             b.classList.toggle("is-active", on);
           });
+          document.dispatchEvent(new CustomEvent("techdb:languagechange", { detail: { lang: l } }));
         };
         const current =
           (document.documentElement.getAttribute("data-lang") as "ja" | "en") || "ja";
@@ -381,7 +388,16 @@ const footerRunDetail = !WORKER_HEALTH
 
         type CategorySearchMeta = { slug: string; label: string; aliases: string[] };
         const categoryMeta = JSON.parse(panel.dataset.categorySearchMeta ?? "[]") as CategorySearchMeta[];
-        const categoryLabels = new Map(categoryMeta.map((entry) => [entry.slug, entry.label]));
+        const categoryLabels = new Map(
+          categoryMeta.flatMap((entry) =>
+            [entry.slug, entry.label, ...entry.aliases].map((value) => [value, entry.label] as const),
+          ),
+        );
+        type SourceSearchMeta = { id: string; label: string };
+        const sourceMeta = JSON.parse(panel.dataset.sourceSearchMeta ?? "[]") as SourceSearchMeta[];
+        const sourceLabels = new Map(
+          sourceMeta.flatMap((entry) => [[entry.id, entry.label], [entry.label, entry.label]] as const),
+        );
         let pf: any = null;
         let activeIndex = -1;
         let requestGeneration = 0;
@@ -415,6 +431,28 @@ const footerRunDetail = !WORKER_HEALTH
 
         const escapeHtml = (value: string) =>
           value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char] ?? char));
+        const withDeadline = <T>(promise: Promise<T>, timeoutMs: number, message: string) =>
+          new Promise<T>((resolve, reject) => {
+            let settled = false;
+            const timer = window.setTimeout(() => {
+              settled = true;
+              reject(new Error(message));
+            }, timeoutMs);
+            promise.then(
+              (value) => {
+                if (settled) return;
+                settled = true;
+                window.clearTimeout(timer);
+                resolve(value);
+              },
+              (error) => {
+                if (settled) return;
+                settled = true;
+                window.clearTimeout(timer);
+                reject(error);
+              },
+            );
+          });
         const setExpanded = (expanded: boolean) => {
           input.setAttribute("aria-expanded", expanded ? "true" : "false");
           panel.hidden = !expanded;
@@ -544,17 +582,30 @@ const footerRunDetail = !WORKER_HEALTH
           return { label: "PAGE", className: "page" };
         };
         const stripTags = (value: string) => value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-        const resultText = (d: any) =>
-          normalizeSearchText(stripTags(`${d.meta?.title || ""} ${d.excerpt || ""} ${d.searchTerms || ""} ${d.url || ""}`));
+        const resultText = (d: any) => {
+          const type = classifyResult(d.url || "");
+          if (type.className === "article") {
+            const source = displaySource(filterValue(d, "source"));
+            const category = displayCategory(filterValue(d, "category"));
+            return normalizeSearchText(stripTags(
+              `${d.meta?.titleJa || ""} ${d.meta?.titleEn || ""} ${d.meta?.summaryJa || ""} ${d.meta?.summaryEn || ""} ${source} ${category}`,
+            ));
+          }
+          const source = filterValue(d, "source");
+          const category = filterValue(d, "category");
+          return normalizeSearchText(stripTags(
+            `${d.meta?.title || ""} ${d.meta?.titleJa || ""} ${d.meta?.titleEn || ""} ${d.meta?.summaryJa || ""} ${d.meta?.summaryEn || ""} ${displaySource(source)} ${displayCategory(category)}`,
+          ));
+        };
         const queryTerms = (q: string) =>
           normalizeSearchText(q).split(/\s+/).filter((term) => term.length >= 2);
         const isExactResult = (item: any, q: string) => {
+          if (item.intentMatch === true) return true;
           const terms = queryTerms(q);
           if (terms.length === 0) return false;
           const text = resultText(item);
           return text.includes(normalizeSearchText(q)) || terms.every((term) => text.includes(term));
         };
-        const hasExactResult = (items: any[], q: string) => items.some((item) => isExactResult(item, q));
         const filterValue = (item: any, name: string): string => {
           const value = item.filters?.[name];
           return String(Array.isArray(value) ? value[0] ?? "" : value ?? "");
@@ -579,15 +630,62 @@ const footerRunDetail = !WORKER_HEALTH
           if (months < 12) return `${months}mo ago`;
           return `${Math.floor(days / 365)}y ago`;
         };
+        const displaySource = (value: string) => sourceLabels.get(value) ?? "";
+        const displayCategory = (value: string) => categoryLabels.get(value) ?? "";
+        const activeSearchLang = (): "ja" | "en" =>
+          document.documentElement.getAttribute("data-lang") === "en" ? "en" : "ja";
+        const localizedResult = (
+          jaValue: unknown,
+          enValue: unknown,
+          genericValue: unknown = "",
+        ): { text: string; fallbackLang: "" | "JA" | "EN"; lang: "" | "ja" | "en" } => {
+          const lang = activeSearchLang();
+          const ja = String(jaValue ?? "").trim();
+          const en = String(enValue ?? "").trim();
+          const generic = String(genericValue ?? "").trim();
+          if (lang === "en") {
+            if (en) return { text: en, fallbackLang: "", lang: "en" };
+            if (ja) return { text: ja, fallbackLang: "JA", lang: "ja" };
+          } else {
+            if (ja) return { text: ja, fallbackLang: "", lang: "ja" };
+            if (en) return { text: en, fallbackLang: "EN", lang: "en" };
+          }
+          return { text: generic, fallbackLang: "", lang: "" };
+        };
+        const fallbackBadge = (fallbackLang: "" | "JA" | "EN") =>
+          fallbackLang
+            ? `<span class="search-hit-fallback"><span class="i18n-ja">原文 ${fallbackLang}</span><span class="i18n-en" lang="en">Original ${fallbackLang}</span></span>`
+            : "";
+        const resultTitle = (d: any) => {
+          const type = classifyResult(d.url || "");
+          return type.className === "article"
+            ? localizedResult(d.meta?.titleJa, d.meta?.titleEn)
+            : localizedResult(d.meta?.titleJa, d.meta?.titleEn, d.meta?.title || type.label);
+        };
+        const resultTitleMarkup = (d: any) => {
+          const title = resultTitle(d);
+          const langAttribute = title.lang ? ` lang="${title.lang}"` : "";
+          return `${fallbackBadge(title.fallbackLang)}<span${langAttribute}>${escapeHtml(title.text)}</span>`;
+        };
+        const resultSummary = (d: any) => {
+          return localizedResult(d.meta?.summaryJa, d.meta?.summaryEn);
+        };
+        const resultExcerpt = (d: any) => {
+          if (classifyResult(d.url || "").className !== "article") return "";
+          const summary = resultSummary(d);
+          if (!summary.text) return "";
+          const langAttribute = summary.lang ? ` lang="${summary.lang}"` : "";
+          return `${fallbackBadge(summary.fallbackLang)}<span class="search-hit-summary"${langAttribute}>${escapeHtml(summary.text)}</span>`;
+        };
         const hitMeta = (d: any, type: { className: string }): string => {
           if (type.className === "article" && d.filters) {
             const parts: string[] = [];
-            const source = d.filters.source?.[0];
-            const category = d.filters.category?.[0];
-            const importance = Number(d.filters.importance?.[0] ?? 0);
-            const day = d.filters.publishedDay?.[0];
+            const source = displaySource(filterValue(d, "source"));
+            const category = displayCategory(filterValue(d, "category"));
+            const importance = Number(filterValue(d, "importance") || 0);
+            const day = filterValue(d, "publishedDay");
             if (source) parts.push(source);
-            if (category) parts.push(categoryLabels.get(category) ?? category);
+            if (category) parts.push(category);
             if (importance >= 1 && importance <= 3) {
               parts.push(`${importance === 3 ? "High" : importance === 2 ? "Medium" : "Info"} importance`);
             }
@@ -595,7 +693,21 @@ const footerRunDetail = !WORKER_HEALTH
             if (age) parts.push(age);
             if (parts.length) return parts.join(" · ");
           }
-          return (d.url || "").replace(/^https?:\/\/[^/]+/, "") || "/";
+          if (type.className === "article") return "Article";
+          if (type.className === "category") {
+            const slug = String(d.url ?? "").match(/^\/c\/([^/]+)/)?.[1] ?? "";
+            return (slug && displayCategory(slug)) || "Category";
+          }
+          const url = String(d.url || "").replace(/^https?:\/\/[^/]+/, "");
+          if (url.startsWith("/t/")) return "Topic page";
+          if (url.startsWith("/archive/")) return "Archive page";
+          if (url.startsWith("/status")) return "Status page";
+          if (url.startsWith("/about")) return "About page";
+          if (url.startsWith("/glossary")) return "Glossary";
+          if (url.startsWith("/knowledge")) return "Knowledge lane";
+          if (url.startsWith("/arxiv")) return "arXiv lane";
+          if (url.startsWith("/categories")) return "Category directory";
+          return "Site page";
         };
 
         const renderResults = async (q: string, generation = nextRequestGeneration()) => {
@@ -625,21 +737,37 @@ const footerRunDetail = !WORKER_HEALTH
           panel.innerHTML = `<div class="search-empty">Searching for <strong>${escapeHtml(q)}</strong>...</div>`;
           let items: any[] = [];
           try {
-            const search = await pf.search(q);
+            const searchDeadline = performance.now() + 6500;
+            const search = await withDeadline(
+              Promise.resolve(pf.search(q)),
+              3500,
+              "The search index took too long to respond.",
+            );
             const batchSize = 30;
             const maxCandidates = Math.min(search.results.length, 300);
             for (let offset = 0; offset < maxCandidates; offset += batchSize) {
-              const batch = await Promise.all(
-                search.results.slice(offset, offset + batchSize).map((r: any) => r.data()),
+              const remainingMs = searchDeadline - performance.now();
+              if (remainingMs <= 0) break;
+              const batch = await Promise.allSettled(
+                search.results.slice(offset, offset + batchSize).map((r: any) =>
+                  withDeadline(
+                    Promise.resolve(r.data()),
+                    Math.max(1, Math.min(1200, remainingMs)),
+                    "A search result took too long to load.",
+                  ),
+                ),
               );
               if (!isCurrentRequest(generation)) return;
-              items.push(...batch);
+              items.push(...batch.flatMap((result) => result.status === "fulfilled" ? [result.value] : []));
               const exactArticleCount = items.filter(
                 (item) =>
                   classifyResult(item.url || "").className === "article"
                   && isExactResult(item, q),
               ).length;
               if (exactArticleCount >= 12) break;
+            }
+            if (items.length === 0 && search.results.length > 0) {
+              throw new Error("Search results could not be loaded in time.");
             }
           } catch (error) {
             if (!isCurrentRequest(generation)) return;
@@ -685,9 +813,8 @@ const footerRunDetail = !WORKER_HEALTH
             items.unshift({
               url: `/c/${categoryIntent.slug}/`,
               meta: { title: categoryIntent.label },
-              excerpt: `Browse ${categoryIntent.label} updates.`,
-              searchTerms: categoryIntent.aliases.join(" "),
               filters: { category: [categoryIntent.slug] },
+              intentMatch: true,
             });
           }
           const exactItems = items
@@ -717,7 +844,7 @@ const footerRunDetail = !WORKER_HEALTH
               return a.index - b.index;
             })
             .slice(0, 10);
-          if (!hasExactResult(items, q) || exactItems.length === 0) {
+          if (exactItems.length === 0) {
             panel.innerHTML = `
               <div class="search-empty">
                 <strong>No results for ${escapeHtml(q)}</strong>
@@ -739,13 +866,19 @@ const footerRunDetail = !WORKER_HEALTH
                   <span class="search-hit-type ${type.className}">${type.label}</span>
                   <span class="search-hit-meta">${escapeHtml(hitMeta(d, type))}</span>
                 </div>
-                <div class="search-hit-title">${escapeHtml(d.meta?.title || d.url)}</div>
-                <div class="search-hit-excerpt">${d.excerpt || ""}</div>
+                <div class="search-hit-title">${resultTitleMarkup(d)}</div>
+                ${resultExcerpt(d) ? `<div class="search-hit-excerpt">${resultExcerpt(d)}</div>` : ""}
               </a>`;
             })
             .join("");
           clearActive();
         };
+
+        document.addEventListener("techdb:languagechange", () => {
+          const query = input.value.trim();
+          if (!searchRoot.classList.contains("is-open") || !query) return;
+          void renderResults(query, nextRequestGeneration());
+        });
 
         let t: number | undefined;
         input.addEventListener("input", () => {
@@ -777,7 +910,13 @@ const footerRunDetail = !WORKER_HEALTH
         });
         document.addEventListener("click", (e) => {
           const target = e.target as Node;
-          if (!searchRoot.contains(target) && !searchTriggers.some((trigger) => trigger.contains(target))) {
+          const changesSearchLanguage =
+            target instanceof Element && target.closest(".lang-toggle") !== null;
+          if (
+            !searchRoot.contains(target)
+            && !searchTriggers.some((trigger) => trigger.contains(target))
+            && !changesSearchLanguage
+          ) {
             closeSearch();
           }
         });

@@ -1,9 +1,25 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { expect, test, type Page, type Route } from "@playwright/test";
+import {
+  isBareTitleEcho,
+  isContaminatedSummaryText,
+  isDeterministicPendingSummaryText,
+} from "../../harness/pipeline/summary-quality.ts";
 
 const TIMELINE_ENTRY_LINK_SELECTOR = 'main article.card h3.title > a[href^="/e/"]';
 const REACTION_MUTATION_URL_RE = /\/api\/reactions\/[a-f0-9]{16}$/;
 const REACTION_VOTER_COOKIE_NAME = "__Host-techdb_reaction_voter";
+const MOBILE_FIRST_DECISION_MAX_Y = 340;
+
+async function expectMobileFirstDecisionNearViewport(page: Page): Promise<void> {
+  const featured = page.locator("article.featured").first();
+  await expect(featured).toHaveClass(/is-visible/, { timeout: 5000 });
+  await expect
+    .poll(async () => Math.round((await featured.boundingBox())?.y ?? Number.POSITIVE_INFINITY), {
+      message: "mobile first decision item remains near the first viewport",
+    })
+    .toBeLessThanOrEqual(MOBILE_FIRST_DECISION_MAX_Y);
+}
 
 function hasReactionIdentityCookie(headers: Record<string, string>): boolean {
   return (headers.cookie ?? "")
@@ -64,6 +80,10 @@ test.describe("TECH Dashboard smoke", () => {
     if ((await inactiveSlides.count()) > 0) {
       await expect(inactiveSlides.first()).toHaveAttribute("aria-hidden", "true");
       await expect(inactiveSlides.first()).toHaveAttribute("tabindex", "-1");
+    }
+    const pendingTickerSlides = page.locator(".tb-slide[data-summary-state='pending']");
+    for (let index = 0; index < await pendingTickerSlides.count(); index++) {
+      await expect(pendingTickerSlides.nth(index).locator(".tb-tag.imp, .tb-tag.rel")).toHaveCount(0);
     }
     await expect(page.locator(".banner-fact")).toHaveCount(3);
     await expect(page.locator(".signal-node.node-source")).toContainText(/active sources/i);
@@ -135,22 +155,23 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".top-rank")).not.toContainText(/AI \u8981\u7d04\u672a\u751f\u6210|Summary pending|\u5f8c\u7d9a\u306e Worker run/);
     await expect(page.locator("article.featured [data-featured-importance]")).toBeVisible();
     await expect(page.locator("article.featured [data-featured-importance]")).toContainText(/重要度 (High|Medium|Info)/);
-    const topFreshness = page.locator(".top-rank-item .rank-freshness").first();
-    await expect(topFreshness.locator(".rank-freshness-short.i18n-ja")).toBeVisible();
-    const freshnessA11yStyle = await topFreshness.locator(".visually-hidden").evaluate((el) => {
-      const style = getComputedStyle(el);
-      const box = el.getBoundingClientRect();
-      return {
-        clip: style.clip,
-        height: box.height,
-        position: style.position,
-        width: box.width,
-      };
-    });
-    expect(freshnessA11yStyle.position).toBe("absolute");
-    expect(freshnessA11yStyle.width).toBeLessThanOrEqual(1.5);
-    expect(freshnessA11yStyle.height).toBeLessThanOrEqual(1.5);
-    expect(freshnessA11yStyle.clip).not.toBe("auto");
+    const decisionFreshness = page.locator(
+      ".top-rank-item .rank-freshness, article.featured .featured-freshness",
+    );
+    await expect(page.locator(
+      ".top-rank-item .rank-freshness:not(.stale), article.featured .featured-freshness:not(.stale)",
+    )).toHaveCount(0);
+    await expect(page.locator("article.featured")).not.toContainText(
+      /収集元 更新OK|Source feed current/,
+    );
+    await expect(page.locator(".top-rank")).not.toContainText(
+      /収集元 更新OK|Source feed current/,
+    );
+    for (let index = 0; index < await decisionFreshness.count(); index++) {
+      const warning = decisionFreshness.nth(index);
+      await expect(warning).toHaveClass(/stale/);
+      await expect(warning).toContainText(/収集元 更新遅延|Source feed stale/);
+    }
     await expect(page.locator("#priority-heading")).toBeVisible();
     await expect(page.locator("#timeline-heading")).toBeVisible();
     const order = await page.evaluate(() => {
@@ -231,7 +252,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".featured-label .i18n-en")).toContainText("Spotlight · system-ranked");
     await expect(page.locator(".featured-label")).not.toContainText(/編集部選定|editor pick/i);
     await expect(page.locator(".top-rank-title .i18n-ja")).toContainText("Spotlightを除く優先度 Top 3");
-    await expect(page.locator(".featured-freshness .i18n-ja")).toHaveText(/収集元 更新(?:OK|遅延)/);
+    await expect(page.locator(".featured-freshness:not(.stale)")).toHaveCount(0);
     const spotlightRationale = page.locator(".featured-rationale");
     await expect(spotlightRationale).toBeVisible();
     await expect(spotlightRationale.locator(".i18n-ja")).toContainText(/選定根拠:\s*\S+/);
@@ -404,6 +425,7 @@ test.describe("TECH Dashboard smoke", () => {
             const styles = getComputedStyle(el);
             return {
               kind: el.matches("article.featured .featured-freshness") ? "featured" : "rank",
+              stale: el.classList.contains("stale"),
               width: rect.width,
               height: rect.height,
               whiteSpace: styles.whiteSpace,
@@ -519,8 +541,8 @@ test.describe("TECH Dashboard smoke", () => {
       expect(metrics.noOverflow, `width ${width}: page should not overflow horizontally`).toBe(true);
       expect(metrics.rankCount, `width ${width}: top-3 should keep three cards`).toBe(3);
       expect(metrics.metaInMedalTrack, `width ${width}: rank meta must not collapse into medal track`).toBe(false);
-      expect(metrics.freshness.length, `width ${width}: freshness badges should be visible`).toBeGreaterThan(0);
       for (const badge of metrics.freshness) {
+        expect(badge.stale, `width ${width}: only warning freshness badges should render`).toBe(true);
         expect(badge.whiteSpace, `width ${width}: freshness should stay atomic`).toBe("nowrap");
         expect(badge.width, `width ${width}: freshness badge should keep readable width`).toBeGreaterThanOrEqual(
           badge.kind === "featured" || width <= 720 ? 70 : 28,
@@ -540,8 +562,10 @@ test.describe("TECH Dashboard smoke", () => {
         expect(metrics.featuredThumbWidth, `width ${width}: featured thumb should keep width`).toBeGreaterThan(120);
         expect(metrics.featuredThumbHeight, `width ${width}: featured thumb should keep height`).toBeGreaterThan(95);
         expect(metrics.featuredBodyWidth, `width ${width}: featured body should keep readable width`).toBeGreaterThan(210);
-        expect(metrics.featuredFreshnessWidth, `width ${width}: featured freshness should keep readable width`).toBeGreaterThanOrEqual(70);
-        expect(metrics.featuredFreshnessHeight, `width ${width}: featured freshness should stay one-line height`).toBeLessThanOrEqual(48);
+        if (metrics.featuredFreshnessWidth > 0) {
+          expect(metrics.featuredFreshnessWidth, `width ${width}: featured freshness should keep readable width`).toBeGreaterThanOrEqual(70);
+          expect(metrics.featuredFreshnessHeight, `width ${width}: featured freshness should stay one-line height`).toBeLessThanOrEqual(48);
+        }
       }
 
       if (width === 900 || width === 768) {
@@ -604,6 +628,11 @@ test.describe("TECH Dashboard smoke", () => {
       const hasSummary = (await card.locator(".summary-stack .summary .s-text").count()) > 0;
       const hasPending = (await card.locator(".summary-state").count()) > 0;
       expect(hasSummary || hasPending, `card ${i} has summary or pending state`).toBe(true);
+      if (hasPending) {
+        await expect(card).toHaveAttribute("data-summary-state", "pending");
+        await expect(card).not.toHaveClass(/\bimportant\b/);
+        await expect(card.locator(".badge.hot, .badge.new, .card-insight")).toHaveCount(0);
+      }
     }
   });
 
@@ -612,13 +641,48 @@ test.describe("TECH Dashboard smoke", () => {
   // single-digit bars and looked like collection had stopped (see LL).
   test("home Last 7 days chart reflects stats.byDay activity", async ({ page }) => {
     await page.goto("/");
+    const digest = page.locator(".digest");
     const bars = page.locator(".digest .spark .bars .bar .n");
     await expect(bars).toHaveCount(7);
+    await expect(digest.locator(".kpi").first().locator(".k.i18n-ja")).toHaveText("本日ここまで");
+    await expect(digest.locator(".kpi").first().locator(".k.i18n-en")).toHaveText("Today so far");
+    await expect(digest.locator(".kpi .delta")).toHaveCount(0);
+    await expect(digest).not.toContainText(/[+-]\d+%/);
     const counts = (await bars.allInnerTexts()).map((t) => Number(t.trim()));
     // Past days routinely have 30-120 articles in stats.byDay; the broken
     // fallback maxed out at single digits. A max over 20 proves stats wins.
     const max = Math.max(...counts);
     expect(max, `7-day bar counts were ${counts.join(",")}`).toBeGreaterThan(20);
+    const dayScope = await digest.getAttribute("data-day-scope");
+    expect(dayScope).toMatch(/^(today|latest)$/);
+    await expect(digest.locator(".title h2.i18n-ja")).toHaveText(
+      dayScope === "today" ? "今日の更新" : "直近の更新",
+    );
+    await expect(digest.locator(".ticker-panel .panel-title > .i18n-en")).toHaveText(
+      dayScope === "today" ? "Today's top stories" : "Latest top stories",
+    );
+    const digestDate = digest.locator(".digest-date");
+    const currentDate = digest.locator(".kpi-date");
+    await expect(digestDate).toHaveAttribute("data-date-scope", "article");
+    await expect(digestDate).toHaveAttribute("datetime", /^\d{4}-\d{2}-\d{2}$/);
+    await expect(digestDate.locator(":scope > .i18n-ja")).toContainText(/\d{4}年\d+月\d+日/);
+    await expect(digestDate.locator(":scope > .i18n-en")).toContainText(/[A-Z][a-z]+ \d{1,2}, \d{4}/);
+    await expect(currentDate).toHaveAttribute("data-date-scope", "current");
+    await expect(currentDate).toHaveAttribute("datetime", /^\d{4}-\d{2}-\d{2}$/);
+    await expect(currentDate.locator(":scope > .i18n-ja")).toContainText(
+      /\d+(?:月|\/)\d+(?:日)?/,
+    );
+    await expect(currentDate.locator(":scope > .i18n-en")).toContainText(/[A-Z][a-z]+ \d{1,2}/);
+    const pendingBoardItems = digest.locator(".board > li[data-summary-state='pending']");
+    for (let index = 0; index < await pendingBoardItems.count(); index++) {
+      await expect(pendingBoardItems.nth(index).locator(".t-tag.imp, .t-tag.rel")).toHaveCount(0);
+    }
+    const ticker = page.locator(".ticker-bar");
+    if (await ticker.count()) {
+      await expect(ticker).toHaveAttribute("data-day-scope", dayScope!);
+      await expect(ticker.locator(".tb-label")).toContainText(dayScope === "today" ? "LIVE" : "LATEST");
+      await expect(ticker.locator(".tb-live-dot")).toHaveCount(dayScope === "today" ? 1 : 0);
+    }
   });
 
   test("featured hero and top-3 are not low-signal release builds", async ({ page }) => {
@@ -657,10 +721,23 @@ test.describe("TECH Dashboard smoke", () => {
     await page.reload();
     await expect(orbit, "dynamic orbit is hidden on mobile to keep first-view dense").toBeHidden();
     const firstArticle = page.locator("article.featured").first();
-    await expect(firstArticle).toHaveClass(/is-visible/, { timeout: 5000 });
+    await expectMobileFirstDecisionNearViewport(page);
     const firstArticleBox = await firstArticle.boundingBox();
     expect(firstArticleBox, "first article visible on mobile").not.toBeNull();
-    expect(firstArticleBox!.y, "mobile first article remains near the first viewport").toBeLessThanOrEqual(360);
+    expect(Math.round(firstArticleBox!.y), "mobile first article remains near the first viewport").toBeLessThanOrEqual(
+      MOBILE_FIRST_DECISION_MAX_Y,
+    );
+    const mobileTargets = await page.locator(".banner-cta, .tb-ctrl").evaluateAll((elements) =>
+      elements.map((element) => {
+        const rect = element.getBoundingClientRect();
+        return { width: rect.width, height: rect.height };
+      }),
+    );
+    expect(mobileTargets.length, "mobile hero and ticker expose actionable controls").toBeGreaterThan(0);
+    for (const target of mobileTargets) {
+      expect(target.width).toBeGreaterThanOrEqual(44);
+      expect(target.height).toBeGreaterThanOrEqual(44);
+    }
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
@@ -672,9 +749,11 @@ test.describe("TECH Dashboard smoke", () => {
     await expect
       .poll(() => page.locator(".scan-beam").evaluate((el) => getComputedStyle(el).animationName))
       .toBe("none");
-    await expect
-      .poll(() => page.locator(".tb-live-dot").evaluate((el) => getComputedStyle(el).animationName))
-      .toBe("none");
+    if ((await page.locator(".tb-live-dot").count()) > 0) {
+      await expect
+        .poll(() => page.locator(".tb-live-dot").evaluate((el) => getComputedStyle(el).animationName))
+        .toBe("none");
+    }
     if ((await page.locator(".ticker-track").count()) > 0) {
       await expect
         .poll(() => page.locator(".ticker-track").first().evaluate((el) => getComputedStyle(el).animationName))
@@ -756,16 +835,28 @@ test.describe("TECH Dashboard smoke", () => {
 
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     const copyAction = page.locator("button.ed-share-btn[data-share-copy]");
-    const title = (await copyAction.getAttribute("data-title"))?.trim() ?? "";
+    const titleJa = (await copyAction.getAttribute("data-title-ja"))?.trim() ?? "";
+    const titleEn = (await copyAction.getAttribute("data-title-en"))?.trim() ?? "";
     const url = (await copyAction.getAttribute("data-url"))?.trim() ?? "";
-    expect(title).toBeTruthy();
-    expect(url).toMatch(/^https?:\/\//);
+    expect(titleJa).toBeTruthy();
+    expect(titleEn).toBeTruthy();
+    expect(url).toBe(`https://techdb.studio344.net${new URL(page.url()).pathname}`);
+    await expect(page.locator('meta[property="article:modified_time"]')).toHaveCount(0);
+    const jsonLd = await page.locator('script[type="application/ld+json"]').allTextContents();
+    expect(jsonLd.join("\n")).not.toContain('"dateModified"');
     await expect(page.locator("#ed-toast")).toHaveAttribute("aria-live", "polite");
     await expect(page.locator("#ed-toast")).toHaveAttribute("aria-atomic", "true");
     await copyAction.click();
     await expect
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
-      .toBe(`${title}\n${url}`);
+      .toBe(`${titleJa}\n${url}`);
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
+    await copyAction.click();
+    await expect
+      .poll(() => page.evaluate(() => navigator.clipboard.readText()))
+      .toBe(`${titleEn}\n${url}`);
   });
 
   test("mobile detail gives the original article a clear full-width action", async ({ page }) => {
@@ -930,6 +1021,31 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("#category-directory .category-directory-icon").first()).toBeVisible();
   });
 
+  test("Spotlight summary language and fallback badge stay truthful", async ({ page }) => {
+    await page.goto("/");
+
+    const jaSummary = page.locator("article.featured .featured-summary.i18n-ja");
+    await expect(jaSummary).toBeVisible();
+    const jaLang = await jaSummary.getAttribute("lang");
+    expect(["ja", "en"]).toContain(jaLang);
+    if (jaLang === "en") {
+      await expect(jaSummary.locator(".lang-badge")).toHaveText("[en]");
+    } else {
+      await expect(jaSummary.locator(".lang-badge")).toHaveCount(0);
+    }
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    const enSummary = page.locator("article.featured .featured-summary.i18n-en");
+    await expect(enSummary).toBeVisible();
+    const enLang = await enSummary.getAttribute("lang");
+    expect(["en", "ja"]).toContain(enLang);
+    if (enLang === "ja") {
+      await expect(enSummary.locator(".lang-badge")).toHaveText("[ja]");
+    } else {
+      await expect(enSummary.locator(".lang-badge")).toHaveCount(0);
+    }
+  });
+
   test("language toggle changes html data-lang", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
@@ -990,11 +1106,28 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("detail English TLDR labels a Japanese-language fallback", async ({ page }) => {
-    const fallbackEntry = readdirSync("web/dist/e", { withFileTypes: true }).find((entry) =>
-      entry.isDirectory()
-      && readFileSync(`web/dist/e/${entry.name}/index.html`, "utf8")
-        .includes('data-en-summary-fallback="ja"'),
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{
+        id: string;
+        title?: string;
+        titleJa?: string;
+        titleEn?: string;
+        summaryJa?: string;
+        summaryEn?: string;
+      }>;
+    };
+    const isUsable = (
+      summary: string | undefined,
+      entry: (typeof index.entries)[number],
+    ) => Boolean(
+      summary?.trim()
+      && !isDeterministicPendingSummaryText(summary)
+      && !isContaminatedSummaryText(summary)
+      && !isBareTitleEcho(summary, [entry.title, entry.titleJa, entry.titleEn]),
     );
+    const fallbackEntry = index.entries.find((entry) => {
+      return isUsable(entry.summaryJa, entry) && !isUsable(entry.summaryEn, entry);
+    });
     if (!fallbackEntry) {
       // The generated corpus can validly be fully bilingual. The fallback
       // helper contract remains covered independently in web-data tests.
@@ -1002,7 +1135,7 @@ test.describe("TECH Dashboard smoke", () => {
       return;
     }
 
-    await page.goto(`/e/${fallbackEntry.name}/`);
+    await page.goto(`/e/${fallbackEntry.id}/`);
     await page.locator('.lang-btn[data-lang="en"]').click();
     await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
     await expect(page.locator(".ed-tldr-title.i18n-en")).toHaveText("Japanese-language summary");
@@ -1013,12 +1146,21 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("detail page exposes one explicit Pagefind title instead of concatenating language variants", async ({ page }) => {
     await page.goto("/");
-    const detailHref = await page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first().getAttribute("href");
+    const detailHref = await page
+      .locator('main article.card:has(.summary .s-text) h3.title a[href^="/e/"]')
+      .first()
+      .getAttribute("href");
     expect(detailHref, "home should link to at least one detail page").toBeTruthy();
     await page.goto(detailHref!);
 
     const pagefindTitle = page.locator('meta[data-pagefind-meta="title[content]"]');
     await expect(pagefindTitle).toHaveCount(1);
+    const pagefindTitleJa = page.locator('meta[data-pagefind-meta="titleJa[content]"]');
+    const pagefindTitleEn = page.locator('meta[data-pagefind-meta="titleEn[content]"]');
+    expect(
+      await pagefindTitleJa.count() + await pagefindTitleEn.count(),
+      "at least one validated language-specific title is indexed",
+    ).toBeGreaterThan(0);
     const indexedTitle = ((await pagefindTitle.getAttribute("content")) ?? "").trim();
     const visibleJaTitle = ((await page.locator(".ed-title .i18n-ja").textContent()) ?? "").trim();
     expect(indexedTitle).toBeTruthy();
@@ -1032,6 +1174,15 @@ test.describe("TECH Dashboard smoke", () => {
     const authorityPill = page.locator("[data-source-authority]").first();
     await expect(authorityPill).toBeVisible();
     await expect(authorityPill).toContainText(/公式|論文|コミュニティ|報道|集約|出典/);
+    const summaryMetadata = page.locator(
+      'meta[data-pagefind-meta="summaryJa[content]"], meta[data-pagefind-meta="summaryEn[content]"]',
+    );
+    expect(await summaryMetadata.count(), "at least one validated summary is indexed").toBeGreaterThan(0);
+    for (let index = 0; index < await summaryMetadata.count(); index++) {
+      const content = ((await summaryMetadata.nth(index).getAttribute("content")) ?? "").trim();
+      expect(content.length).toBeGreaterThan(0);
+      expect(content).not.toMatch(/AI 要約未生成|AI summary pending|後続の Worker run/);
+    }
   });
 
   test("home keeps the decision path compact at tablet width", async ({ page }) => {
@@ -1200,13 +1351,27 @@ test.describe("TECH Dashboard smoke", () => {
     await page.goto("/status/");
 
     await expect(page.locator(".page-hero #status-heading")).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Worker Health/i })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Source Freshness/i })).toBeVisible();
+    await expect(page.locator("#worker-health-heading")).toBeVisible();
+    await expect(page.locator("#source-health-heading")).toBeVisible();
     const workerHealthSection = page.locator(".status-hero");
     await expect(workerHealthSection).toHaveAttribute("aria-labelledby", "worker-health-heading");
     await expect(workerHealthSection).toHaveAttribute("aria-describedby", "worker-health-summary");
+    const runStatus = await workerHealthSection.getAttribute("data-run-status");
+    const sourceReviewStatus = await workerHealthSection.getAttribute("data-source-review-status");
+    expect(runStatus).toMatch(/^(ok|warn|err)$/);
+    expect(sourceReviewStatus).toMatch(/^(ok|warn|err)$/);
+    const statusWeight = { ok: 0, warn: 1, err: 2 } as const;
+    const overallStatus =
+      statusWeight[runStatus as keyof typeof statusWeight]
+        >= statusWeight[sourceReviewStatus as keyof typeof statusWeight]
+        ? runStatus
+        : sourceReviewStatus;
+    await expect(workerHealthSection).toHaveClass(new RegExp(`\\bstatus-hero-${overallStatus}\\b`));
+    await expect(page.locator(".page-hero")).toHaveClass(
+      new RegExp(`\\bpage-hero-status-${overallStatus}\\b`),
+    );
     await expect(page.locator("#worker-health-summary")).not.toBeEmpty();
-    await expect(page.getByText("Summary entries pending").first()).toBeVisible();
+    await expect(page.locator('[data-health-scope="summary-backlog"]')).toContainText("AI要約待ち");
     const collectionMetric = page.locator('[data-health-scope="latest-batch"]');
     await expect(collectionMetric).toContainText(/\d+\/\d+/);
     await expect(page.locator('[data-health-scope="collection-run"]')).toHaveCount(1);
@@ -1215,21 +1380,24 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator('[data-health-scope="summary-backlog"]')).toHaveCount(1);
     await expect(page.locator('[data-health-scope="summary-eta"]')).toHaveCount(1);
     await expect(page.locator('[data-health-scope="published-artifact"]')).toHaveCount(1);
-    await expect(collectionMetric.locator("small")).toHaveText(/batch \d+\/\d+ · \d+ registry sources/);
+    await expect(collectionMetric.locator("small > .i18n-en")).toHaveText(
+      /batch \d+\/\d+ · \d+ registered sources/,
+    );
     await expect(page.locator('[data-health-scope="summary-throughput"] strong')).toHaveAttribute(
       "title",
-      /new ai summaries added in this collection run.*backlog is tracked separately/i,
+      /new ai summaries added in this collection run.*pending summaries are tracked separately/i,
     );
     await expect(page.locator(".source-reason-line").first()).toBeVisible();
     await expect(page.locator('[data-source-filter="all"]')).toBeVisible();
     await expect(page.locator('[data-category-filter="all"]')).toBeVisible();
     await expect(page.locator(".source-item").first()).toBeVisible();
-    await expect(page.getByText(/stale > \d+h/).first()).toBeVisible();
+    await expect(page.locator(".source-status-badge").first()).toContainText(/正常|更新遅延|要確認/);
+    await expect(page.locator(".source-meta-line").first()).not.toContainText(/tier|stale\s*>/i);
     await expect(page.locator(".source-latest-line").first()).toBeVisible();
 
     // Hero and footer must share the same run-status semantics (LL-126):
     // stale last-run pages must never say "Run ERR" in hero and "run ok" in footer.
-    const heroCount = await page.locator(".page-hero .page-count").first().innerText();
+    const heroCount = await page.locator(".page-hero .page-count > .i18n-en").innerText();
     const runMatch = heroCount.match(/Run\s+(OK|WARN|ERR)/);
     expect(runMatch, `status hero count should include run status, got: ${heroCount}`).not.toBeNull();
     expect(heroCount, "status hero should label freshness semantics explicitly").toContain("Fresh sources");
@@ -1243,12 +1411,14 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(footerDot).toHaveClass(new RegExp(`\\bdot\\b.*\\b${expectedTone}\\b`));
     await expect(footerRunLink.locator(".mono")).toContainText(/last batch \d+\/\d+ src · summary queue \d+/);
     await expect(page.locator(".footer-bar .item.mono")).toHaveCount(0);
-    await expect(page.locator(".page-hero-copy .i18n-ja")).toContainText("Latest source batch");
+    await expect(page.locator(".page-hero-copy > p > .i18n-ja")).toContainText("収集の稼働状況");
     await page.locator('.lang-btn[data-lang="en"]').click();
-    await expect(page.locator(".page-hero-copy .i18n-en")).toBeVisible();
-    await expect(page.locator(".page-hero-copy .i18n-en")).toContainText("Summary queue ETA");
-    await expect(page.locator(".summary-ready-copy .i18n-ja")).toContainText("要約準備済み");
-    await expect(page.locator(".summary-ready-copy .i18n-en")).toContainText("summary-ready");
+    await expect(page.locator(".page-hero-copy > p > .i18n-en")).toBeVisible();
+    await expect(page.locator(".page-hero-copy > p > .i18n-en")).toContainText("Check collection activity");
+    await expect(page.locator("#worker-health-heading > .i18n-en")).toContainText("Collection and summary health");
+    await expect(page.locator(".source-status-badge").first()).toContainText(/Fresh|Delayed|Needs review/);
+    await expect(page.locator(".source-reason-line").first()).toContainText(/Last collected|No articles have been collected/);
+    await expect(page.locator(".source-latest-line").first()).toContainText(/Latest article/);
   });
 
   test("status attention action targets visible main content on mobile", async ({ page }) => {
@@ -1279,7 +1449,9 @@ test.describe("TECH Dashboard smoke", () => {
       const link = row.locator("a");
       const describedBy = await link.getAttribute("aria-describedby");
       expect(describedBy).toBeTruthy();
-      await expect(page.locator(`[id="${describedBy}"]`)).toContainText(status!);
+      await expect(page.locator(`[id="${describedBy}"]`)).toContainText(
+        status === "error" ? "収集状況の確認が必要" : "更新間隔が長くなっています",
+      );
     }
 
     const offenders = await page.locator(".source-item.source-row-error").evaluateAll((rows) =>
@@ -1293,12 +1465,20 @@ test.describe("TECH Dashboard smoke", () => {
         .filter(
           (row) =>
             row.count > 0 &&
-            (row.reason.includes("inside the freshness threshold") ||
-              row.reason.includes("no live entry yet") ||
-              row.latest === "no data"),
+            (row.reason.includes("収集済みの記事がまだありません") ||
+              row.reason.includes("通常の更新範囲内") ||
+              row.latest === "記事なし"),
         ),
     );
     expect(offenders, "data-bearing error rows should show threshold-exceeded context, not no-data/inside-threshold").toEqual([]);
+
+    const noDataRows = page.locator(".source-item.source-row-no-data");
+    for (let index = 0; index < await noDataRows.count(); index++) {
+      const row = noDataRows.nth(index);
+      await expect(row).toHaveAttribute("data-source-status", "no-data");
+      await expect(row.locator(".source-status-badge")).toContainText(/未収録|Not listed/);
+      await expect(row.locator(".status.error, .source-status-badge.error")).toHaveCount(0);
+    }
   });
 
   test("section page heroes give page context on desktop and mobile", async ({ page }) => {
@@ -1488,12 +1668,13 @@ test.describe("TECH Dashboard smoke", () => {
           const element = button as HTMLElement;
           return {
             value: element.dataset.sourceFilter ?? "all",
-            count: Number(element.querySelector("span")?.textContent ?? "0"),
+            count: Number(element.dataset.sourceCount ?? Number.NaN),
           };
         })
         .filter((candidate) => candidate.value !== "all" && candidate.count > 0);
-      return candidates[0]?.value ?? "ok";
+      return candidates[0]?.value ?? "";
     });
+    expect(targetFilter, "the current status corpus exposes a non-empty source status").not.toBe("");
 
     await page.locator(`[data-source-filter="${targetFilter}"]`).click();
     await expect(page.locator(`[data-source-filter="${targetFilter}"]`)).toHaveAttribute("aria-pressed", "true");
@@ -1511,9 +1692,10 @@ test.describe("TECH Dashboard smoke", () => {
     await page.goto("/sources/");
 
     await expect(page).toHaveURL(/\/status\/?$/);
-    await expect(page.getByRole("heading", { name: /Source Freshness/i })).toBeVisible();
+    await expect(page.locator("#source-health-heading")).toBeVisible();
     await expect(page.locator(".source-item").first()).toBeVisible();
-    await expect(page.getByText(/tier \d ·/).first()).toBeVisible();
+    await expect(page.locator(".source-status-badge").first()).toContainText(/正常|更新遅延|要確認/);
+    await expect(page.locator(".source-meta-line").first()).not.toContainText(/tier|stale\s*>/i);
   });
 
   test("status category filter only shows matching sources", async ({ page }) => {
@@ -1848,7 +2030,7 @@ test.describe("TECH Dashboard smoke", () => {
     await openMobileMenu();
     await menu.getByRole("link", { name: /Status/ }).click();
     await expect(page).toHaveURL(/\/status\/?$/);
-    await expect(page.getByRole("heading", { name: /Source Freshness/i })).toBeVisible();
+    await expect(page.locator("#source-health-heading")).toBeVisible();
     const mobileMenuTrigger = tabbar.getByRole("button", { name: /Menu/ });
     await expect(mobileMenuTrigger).toHaveClass(/active/);
     await expect(mobileMenuTrigger).not.toHaveAttribute("aria-current");
@@ -1885,6 +2067,7 @@ test.describe("TECH Dashboard smoke", () => {
 
     const featured = page.locator("article.featured").first();
     await expect(featured).toBeVisible();
+    await expectMobileFirstDecisionNearViewport(page);
     const featuredThumb = featured.locator(".featured-thumb").first();
     const { featuredBox, thumbBox, bodyBox } = await featured.evaluate((node) => {
       const rect = (element: Element | null) => {
@@ -1902,7 +2085,9 @@ test.describe("TECH Dashboard smoke", () => {
     expect(thumbBox, "featured thumb has a box").not.toBeNull();
     expect(bodyBox, "featured body has a box").not.toBeNull();
     expect(Math.round(featuredBox!.width), "featured stays inside mobile content width").toBeLessThanOrEqual(390);
-    expect(Math.round(featuredBox!.y), "first featured article appears without wasted top whitespace").toBeLessThanOrEqual(340);
+    expect(Math.round(featuredBox!.y), "first featured article appears without wasted top whitespace").toBeLessThanOrEqual(
+      MOBILE_FIRST_DECISION_MAX_Y,
+    );
     expect(Math.round(featuredBox!.height), "featured panel is not expanded by hidden fallback/image stacking").toBeLessThanOrEqual(260);
     expect(Math.round(thumbBox!.width), "featured thumb keeps compact mobile column").toBeLessThanOrEqual(110);
     expect(bodyBox!.x, "featured body sits to the right of the thumbnail").toBeGreaterThanOrEqual(thumbBox!.x + thumbBox!.width - 1);
@@ -2082,7 +2267,9 @@ test.describe("TECH Dashboard smoke", () => {
       ) => ({
         data: async () => ({
           url,
-          meta: { title },
+          meta: url.startsWith("/e/")
+            ? { title, titleEn: title, summaryEn: `${title} explains agent operations.` }
+            : { title },
           excerpt: `${title} explains agent operations.`,
           filters: { authority: [authority], importance: [importance], publishedDay: [publishedDay] },
         }),
@@ -2109,7 +2296,7 @@ test.describe("TECH Dashboard smoke", () => {
       "false",
       "false",
     ]);
-    expect(await hits.locator(".search-hit-title").allTextContents()).toEqual([
+    expect(await hits.locator(".search-hit-title > span:last-child").allTextContents()).toEqual([
       "Official high-importance reference",
       "Official low-importance update",
       "Community agent guide",
@@ -2141,7 +2328,11 @@ test.describe("TECH Dashboard smoke", () => {
           {
             data: async () => ({
               url: "/e/exact-release/",
-              meta: { title: "Exact release reference" },
+              meta: {
+                title: "Exact release reference",
+                titleEn: "Exact release reference",
+                summaryEn: "Exact release reference with stable provenance.",
+              },
               excerpt: "Exact release reference with stable provenance.",
               filters: {
                 authority: ["official"],
@@ -2156,7 +2347,9 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.locator("button[data-search-trigger]:visible").first().click();
     await page.locator("#pagefind-search-input").fill("release");
-    await expect(page.locator(".search-hit-title")).toHaveText(["Exact release reference"]);
+    await expect(page.locator(".search-hit-title > span[lang='en']")).toHaveText([
+      "Exact release reference",
+    ]);
   });
 
   test("search route restores and synchronizes its shareable query", async ({ page }) => {
@@ -2208,7 +2401,9 @@ test.describe("TECH Dashboard smoke", () => {
       ) => ({
         data: async () => ({
           url,
-          meta: { title },
+          meta: url.startsWith("/e/")
+            ? { title, titleEn: title, summaryEn: `${title} gives a practical category overview.` }
+            : { title },
           excerpt: `${title} gives a practical category overview.`,
           filters: {
             source: [source],
@@ -2247,6 +2442,198 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(hits.nth(1).locator(".search-hit-meta")).not.toContainText("research");
   });
 
+  test("pagefind renders validated active-language summaries and reader-facing metadata", async ({ page }) => {
+    await page.goto("/");
+    await expect
+      .poll(() => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"))
+      .toBe(true);
+    await page.evaluate(() => {
+      const pagefind = (window as any).__pagefind;
+      pagefind.search = async (query: string) => ({
+        results: query.toLowerCase().includes("status")
+          ? [{
+              data: async () => ({
+                url: "/status/",
+                meta: { title: "Status dashboard" },
+                excerpt: "Status dashboard for collection operations.",
+                filters: {},
+              }),
+            }]
+          : query.toLowerCase().includes("unknown metadata")
+            ? [{
+                data: async () => ({
+                  url: "/e/unknown-reader-labels/",
+                  meta: {
+                    titleEn: "Unknown metadata reference",
+                    summaryEn: "Unknown metadata remains readable without exposing internal identifiers.",
+                  },
+                  excerpt: "RAW_UNKNOWN_EXCERPT",
+                  filters: {
+                    source: ["internal-source-slug"],
+                    category: ["internal-category-slug"],
+                  },
+                }),
+              }]
+            : [
+                {
+                  data: async () => ({
+                    url: "/e/raw-excerpt-only/",
+                    meta: {
+                      titleEn: "Nearby operations reference",
+                      summaryEn: "Validated metadata does not contain the requested phrase.",
+                    },
+                    excerpt: "fallback agent appears only in this raw Pagefind excerpt",
+                    filters: {},
+                  }),
+                },
+                {
+                  data: async () => ({
+                    url: "/e/fallback-agent/",
+                    meta: {
+                      title: "Fallback agent reference",
+                      titleEn: "Fallback agent reference",
+                      summaryEn: "Fallback agent summary from validated English metadata.",
+                    },
+                    excerpt: "RAW_EXCERPT_SHOULD_NOT_RENDER",
+                    filters: {
+                      source: ["github-copilot"],
+                      category: ["local-llm"],
+                      authority: ["official"],
+                      importance: ["3"],
+                      publishedDay: ["2026-07-20"],
+                    },
+                  }),
+                },
+              ],
+      });
+    });
+
+    await page.locator("button[data-search-trigger]:visible").first().click();
+    const input = page.locator("#pagefind-search-input");
+    await input.fill("fallback agent");
+    const hit = page.locator(".search-hit").first();
+    await expect(page.locator(".search-hit")).toHaveCount(1);
+    await expect(hit.locator(".search-hit-title > span[lang='en']")).toHaveText("Fallback agent reference");
+    await expect(hit.locator(".search-hit-title .search-hit-fallback .i18n-ja")).toHaveText("原文 EN");
+    await expect(hit.locator(".search-hit-summary")).toHaveText(
+      "Fallback agent summary from validated English metadata.",
+    );
+    await expect(hit.locator(".search-hit-summary")).toHaveAttribute("lang", "en");
+    await expect(hit.locator(".search-hit-summary")).not.toContainText("RAW_EXCERPT");
+    await expect(hit.locator(".search-hit-excerpt .search-hit-fallback .i18n-ja")).toHaveText("原文 EN");
+    await expect(hit.locator(".search-hit-meta")).toContainText("GitHub Copilot Blog");
+    await expect(hit.locator(".search-hit-meta")).toContainText("Local Models");
+    await expect(hit.locator(".search-hit-meta")).not.toContainText(/github-copilot|local-llm/);
+    await expect(page.locator("#pagefind-results")).not.toContainText("Nearby operations reference");
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
+    await expect(hit.locator(".search-hit-summary")).toHaveText(
+      "Fallback agent summary from validated English metadata.",
+    );
+    await expect(hit.locator(".search-hit-fallback")).toHaveCount(0);
+    await expect(hit.locator(".search-hit-title [lang='en']")).toHaveText("Fallback agent reference");
+
+    await input.fill("status");
+    await expect(hit.locator(".search-hit-meta")).toContainText("Status page");
+    await expect(hit.locator(".search-hit-meta")).not.toContainText("/status/");
+
+    await input.fill("unknown metadata");
+    await expect(hit.locator(".search-hit-title")).toHaveText("Unknown metadata reference");
+    await expect(hit.locator(".search-hit-meta")).toHaveText("Article");
+    await expect(hit.locator(".search-hit-meta")).not.toContainText(
+      /internal-source-slug|internal-category-slug|unknown-reader-labels/,
+    );
+    await expect(hit.locator(".search-hit-summary")).not.toContainText("RAW_UNKNOWN_EXCERPT");
+  });
+
+  test("pagefind matches article source labels without exposing internal source ids", async ({ page }) => {
+    await page.goto("/");
+    await expect
+      .poll(() => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"))
+      .toBe(true);
+    await page.evaluate(() => {
+      const pagefind = (window as any).__pagefind;
+      pagefind.search = async () => ({
+        results: [
+          {
+            data: async () => ({
+              url: "/e/source-label-search/",
+              meta: {
+                titleEn: "Agent operations reference",
+                summaryEn: "A practical guide to production agent operations.",
+              },
+              filters: {
+                source: ["github-copilot"],
+                category: ["agent-fw"],
+                authority: ["official"],
+              },
+            }),
+          },
+          {
+            data: async () => ({
+              url: "/e/internal-source-search/",
+              meta: {
+                titleEn: "Unrelated operations reference",
+                summaryEn: "A separate guide without the requested source.",
+              },
+              filters: {
+                source: ["internal-source-slug"],
+                category: ["internal-category-slug"],
+              },
+            }),
+          },
+        ],
+      });
+    });
+
+    await page.locator("button[data-search-trigger]:visible").first().click();
+    await page.locator("#pagefind-search-input").fill("GitHub Copilot Blog");
+    const hit = page.locator(".search-hit");
+    await expect(hit).toHaveCount(1);
+    await expect(hit).toHaveAttribute("href", "/e/source-label-search/");
+    await expect(hit.locator(".search-hit-meta")).toContainText("GitHub Copilot Blog");
+    await expect(page.locator("#pagefind-results")).not.toContainText("github-copilot");
+    await expect(page.locator("#pagefind-results")).not.toContainText("internal-source-slug");
+  });
+
+  test("pagefind keeps hydrated results when another candidate times out", async ({ page }) => {
+    await page.goto("/");
+    await expect
+      .poll(() => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"))
+      .toBe(true);
+    await page.evaluate(() => {
+      const pagefind = (window as any).__pagefind;
+      pagefind.search = async () => ({
+        results: [
+          { data: () => new Promise(() => {}) },
+          {
+            data: async () => ({
+              url: "/e/resilient-search/",
+              meta: {
+                title: "Resilient search result",
+                titleEn: "Resilient search result",
+                summaryEn: "Resilient search keeps successfully hydrated candidates.",
+              },
+              excerpt: "RAW_TIMEOUT_EXCERPT",
+              filters: { authority: ["official"], importance: ["2"] },
+            }),
+          },
+        ],
+      });
+    });
+
+    await page.locator("button[data-search-trigger]:visible").first().click();
+    await page.locator("#pagefind-search-input").fill("resilient search");
+    const hit = page.locator(".search-hit");
+    await expect(hit).toHaveCount(1, { timeout: 4_000 });
+    await expect(hit.locator(".search-hit-title")).toContainText("Resilient search result");
+    await expect(hit.locator(".search-hit-summary")).toHaveText(
+      "Resilient search keeps successfully hydrated candidates.",
+    );
+    await expect(page.locator("#pagefind-results")).not.toHaveAttribute("aria-busy");
+  });
+
   test("pagefind exact-result filtering ignores Unicode diacritics", async ({ page }) => {
     await page.goto("/");
     await expect
@@ -2259,14 +2646,14 @@ test.describe("TECH Dashboard smoke", () => {
           {
             data: async () => ({
               url: "/e/cafe-result/",
-              meta: { title: "Café agent patterns" },
+              meta: { titleEn: "Café agent patterns" },
               excerpt: "A result whose exact text contains a Unicode diacritic.",
             }),
           },
           {
             data: async () => ({
               url: "/e/unrelated-result/",
-              meta: { title: "Coffee agent patterns" },
+              meta: { titleEn: "Coffee agent patterns" },
               excerpt: "A fuzzy Pagefind result that must not pass exact filtering.",
             }),
           },
@@ -2277,7 +2664,9 @@ test.describe("TECH Dashboard smoke", () => {
     await page.locator("button[data-search-trigger]:visible").first().click();
     await page.locator("#pagefind-search-input").fill("cafe");
     await expect(page.locator(".search-hit")).toHaveCount(1);
-    await expect(page.locator(".search-hit-title")).toHaveText("Café agent patterns");
+    await expect(page.locator(".search-hit-title > span[lang='en']")).toHaveText(
+      "Café agent patterns",
+    );
     await expect(page.getByText("Coffee agent patterns")).toHaveCount(0);
   });
 
@@ -2298,7 +2687,7 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("closing search invalidates a delayed Pagefind response", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect
       .poll(() => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"))
       .toBe(true);
@@ -2309,7 +2698,7 @@ test.describe("TECH Dashboard smoke", () => {
           results: [{
             data: async () => ({
               url: "/e/delayed-result/",
-              meta: { title: "Delayed result must stay closed" },
+              meta: { titleEn: "Delayed result must stay closed" },
               excerpt: "A deliberately delayed Pagefind result.",
             }),
           }],
@@ -2490,11 +2879,16 @@ test.describe("TECH Dashboard smoke", () => {
       .first()
       .getAttribute("data-run-tone");
     expect(footerTone).toMatch(/^(ok|warn|err)$/);
-    const heroTone = await page
-      .locator(".banner-run-state[data-run-tone]")
-      .first()
-      .getAttribute("data-run-tone");
-    expect(heroTone, "Home hero run tone must equal the shared footer tone").toBe(footerTone);
+    const heroRunState = page.locator(".banner-run-state[data-run-tone]");
+    if (footerTone === "ok") {
+      await expect(
+        heroRunState,
+        "Home hides normal collection health to preserve decision-space density",
+      ).toHaveCount(0);
+    } else {
+      const heroTone = await heroRunState.first().getAttribute("data-run-tone");
+      expect(heroTone, "Home warning tone must equal the shared footer tone").toBe(footerTone);
+    }
 
     await page.goto("/about/");
     const aboutFooterTone = await page
@@ -2627,6 +3021,43 @@ test.describe("TECH Dashboard smoke", () => {
         .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
         .toBe(true);
     }
+  });
+
+  test("arXiv opens on filters and papers without a duplicate source overview", async ({ page }) => {
+    await page.goto("/arxiv/#source=arxiv-cs-ai");
+    expect(
+      await page.locator(".arxiv-layout > main > section").evaluateAll((sections) =>
+        sections.map((section) => section.id || section.className),
+      ),
+      "the arXiv main column starts with controls and contains one paper timeline",
+    ).toEqual(["paper-controls", "arxiv-timeline"]);
+    await expect(page.locator(".paper-controls")).toBeVisible();
+    await expect(page.locator(".paper-filter-tabs .paper-filter-btn").first()).toBeVisible();
+    await expect(page.locator("#arxiv-timeline")).toBeVisible();
+    await expect(page.locator('button[data-paper-filter="arxiv-cs-ai"][aria-pressed="true"]')).toHaveCount(2);
+    const visiblePapers = page.locator('[data-paper-view-panel="cards"] [data-paper-entry]:visible');
+    expect(await visiblePapers.count()).toBeGreaterThan(0);
+    expect(await visiblePapers.evaluateAll((entries) =>
+      entries.every((entry) => (entry as HTMLElement).dataset.source === "arxiv-cs-ai"),
+    )).toBe(true);
+
+    await page.locator('.paper-filter-tabs [data-paper-filter="arxiv-cs-cl"]').click();
+    await expect(page).toHaveURL(/\/arxiv\/#source=arxiv-cs-cl$/);
+    await expect(page.locator('button[data-paper-filter="arxiv-cs-cl"][aria-pressed="true"]')).toHaveCount(2);
+
+    await page.evaluate(() => {
+      window.location.hash = "source=arxiv-cs-lg";
+    });
+    await expect(page.locator('button[data-paper-filter="arxiv-cs-lg"][aria-pressed="true"]')).toHaveCount(2);
+
+    await page.evaluate(() => {
+      window.location.hash = "arxiv-cs-se";
+    });
+    await expect(page.locator('button[data-paper-filter="arxiv-cs-se"][aria-pressed="true"]')).toHaveCount(2);
+
+    await page.locator('.paper-filter-tabs [data-paper-filter="all"]').click();
+    await expect(page).toHaveURL(/\/arxiv\/$/);
+    await expect(page.locator('.paper-filter-tabs [data-paper-filter="all"]')).toHaveAttribute("aria-pressed", "true");
   });
 
   test("lane pages never collapse into a 3-column timeline grid (LL-091)", async ({ page }) => {

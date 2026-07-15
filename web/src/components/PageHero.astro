@@ -1,18 +1,21 @@
 ---
 export interface PageHeroMetric {
   label: string;
+  labelEn?: string;
   value: string | number;
 }
 
 export interface PageHeroAction {
   href: string;
   label: string;
+  labelEn?: string;
 }
 
 export interface Props {
   kicker: string;
   title: string;
   count?: string;
+  countEn?: string;
   description: string;
   descriptionEn?: string;
   headingId: string;
@@ -26,6 +29,7 @@ const {
   kicker,
   title,
   count,
+  countEn,
   description,
   descriptionEn,
   headingId,
@@ -46,7 +50,16 @@ const {
       <p class="page-kicker">{kicker}</p>
       <h1 id={headingId}>
         {title}
-        {count && <span class="page-count">{count}</span>}
+        {count && (
+          <span class="page-count">
+            {countEn ? (
+              <>
+                <span class="i18n-ja">{count}</span>
+                <span class="i18n-en" lang="en">{countEn}</span>
+              </>
+            ) : count}
+          </span>
+        )}
       </h1>
       <p>
         {descriptionEn ? (
@@ -58,7 +71,16 @@ const {
       </p>
       {actions.length > 0 && (
         <div class="page-hero-actions" aria-label={`${title} shortcuts`}>
-          {actions.map((action) => <a href={action.href}>{action.label}</a>)}
+          {actions.map((action) => (
+            <a href={action.href}>
+              {action.labelEn ? (
+                <>
+                  <span class="i18n-ja">{action.label}</span>
+                  <span class="i18n-en" lang="en">{action.labelEn}</span>
+                </>
+              ) : action.label}
+            </a>
+          ))}
         </div>
       )}
     </div>
@@ -67,7 +89,14 @@ const {
       <div class="page-hero-metrics" aria-label={`${title} summary`}>
         {metrics.map((metric) => (
           <div class="page-hero-metric">
-            <span>{metric.label}</span>
+            <span>
+              {metric.labelEn ? (
+                <>
+                  <span class="i18n-ja">{metric.label}</span>
+                  <span class="i18n-en" lang="en">{metric.labelEn}</span>
+                </>
+              ) : metric.label}
+            </span>
             <strong>{metric.value}</strong>
           </div>
         ))}

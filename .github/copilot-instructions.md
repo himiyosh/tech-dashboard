@@ -1089,10 +1089,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: freshness は **article age / source activity / pipeline run health** の 3 scope を明示的に分ける。同じ `collectedAt` を使っていても、どの集合の最新値かで意味が全く違う。helper と UI ラベルは scope 単位で共有し、混同を防ぐ。
 
 ### LL-143: shell helper の可搬性を前提にしない。宣言済みツールと portable scan を使う
-- **事象**: このセッションの修正中、shell から `apply_patch` を使える前提で進めようとしたが runtime には無く、macOS/BSD の `grep` も `-P` を受け付けず U+FFFD scan コマンドがそのまま動かなかった。
-- **根本原因**: Linux 環境でよく使う shell helper (`apply_patch`, GNU grep PCRE) を、runtime が宣言していないのに portable だと仮定していた。実際の実行環境は「提供された編集ツール」と BSD userland であり、shell helper の可用性保証が無かった。
-- **対策**: file edit は runtime が提供する editor/file operation ツールを使い、shell helper を前提にしない。U+FFFD scan のような byte/codepoint 確認は `grep -P` ではなく Node/Python で file bytes を直接読む portable 実装に置き換える。
-- **教訓**: **宣言されているツールだけを使う**。`apply_patch` や GNU `grep -P` を shell の既定能力だと思わない。portable validation は Node など repo 依存で確実に使える runtime で書き、OS 差分のある one-liner に依存しない。
+- **事象**: このセッションの修正中、shell から `apply_patch` を使える前提で進めようとしたが runtime には無く、macOS/BSD の `grep` も `-P` を受け付けず U+FFFD scan コマンドがそのまま動かなかった。built-in `rg` tool でも look-around を含む正規表現を渡すと Rust regex の parse error になった。
+- **根本原因**: Linux 環境でよく使う shell helper (`apply_patch`, GNU grep PCRE) や PCRE look-around を、runtime が宣言していないのに portable だと仮定していた。実際の実行環境は「提供された編集ツール」と BSD userland であり、shell helper や PCRE2 flag の可用性保証が無かった。
+- **対策**: file edit は runtime が提供する editor/file operation ツールを使い、shell helper を前提にしない。U+FFFD scan のような byte/codepoint 確認は `grep -P` ではなく Node で file bytes を直接読む portable 実装に置き換える。built-in `rg` で section を読む場合は look-around を使わず、見出しの line number を検索して `view` の line range で取得する。
+- **教訓**: **宣言されているツールだけを使う**。`apply_patch`、GNU `grep -P`、PCRE look-around を既定能力だと思わない。portable validation は Node など repo 依存で確実に使える runtime で書き、section 読み取りは単純検索と range read に分け、OS/tool 差分のある one-liner に依存しない。
 
 ### LL-144: lossy normalized prior では missing include だけで destructive drop しない
 - **事象**: current-rule cleanup が normalized/compact prior entry に shared include filter を再適用すると、raw snippet にあった include hit が normalize 後の欠損/短縮 `contentSnippet` で消え、valid prior article が migration/Worker merge で drop され得た。
@@ -1161,10 +1161,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: domain alias の正規化は provider 固有範囲に限定し、生成、merge、保存、監査、migration の全層で同じ canonical key を使う。
 
 ### LL-155: dismiss 経路は 1 つの close contract に集約する
-- **事象**: search の Escape は値・結果・active state・focus を全て閉じたが、outside click は一部 state だけを閉じ、値と focus を残した。
-- **根本原因**: close state transition を経路ごとに重複実装していた。
-- **対策**: close button、Escape、outside click を shared `closeSearch()` に統一し、input focus も trigger と同じ open state を確立する。mobile の native close target は 44px 以上で検証する。
-- **教訓**: dismissible widget は開閉の副作用を単一 contract に集約し、全 close 経路で value、results、ARIA/state、focus の後始末を同じにする。
+- **事象**: search の Escape は値・結果・active state・focus を全て閉じたが、outside click は一部 state だけを閉じ、値と focus を残した。後に、検索結果を再描画する言語切替も search root の外側にあるため、language-change handler の直後に document outside-click handler が検索を閉じていた。
+- **根本原因**: close state transition を経路ごとに重複実装し、open widget の状態を意図的に変更する外部 control を interaction boundary に含めていなかった。
+- **対策**: close button、Escape、outside click を shared `closeSearch()` に統一し、input focus も trigger と同じ open state を確立する。outside-click 判定では search trigger に加えて language toggle を除外し、開いた検索結果を active language で再描画する。mobile の native close target は 44px 以上で検証する。
+- **教訓**: dismissible widget は開閉の副作用を単一 contract に集約し、全 close 経路で value、results、ARIA/state、focus の後始末を同じにする。widget 外の control が開いた状態を更新する場合、その control は outside-click の close 対象ではなく interaction boundary の一部として扱い、実操作順序で回帰検証する。
 
 ### LL-156: archive migration は tier と canonical loser の enrichment sidecar を先に保全する
 - **事象**: 過去の archive migration で共通 453 件が warm/cold から hot に変わり、hot compaction により EN のみの要約 452 件と bilingual 要約 1 件が失われた。synthetic fallback を canonical merge 前に足すと loser の実要約を妨げ、filter 後に body alias を作ると除外された canonical loser の sidecar も失われた。
@@ -1362,7 +1362,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **事象**: `list_pages` が「browser is already running for chrome-profile」で起動失敗した。profile path を使う Chrome root process が残り、新しい MCP server が同じ user-data-dir を取得できなかった。
 - **根本原因**: 以前の DevTools browser process が profile lock を保持したまま残っていた。接続設定や target page の問題ではなかった。
 - **対策**: `ps` で該当 `--user-data-dir` を持つ root PID を特定し、その PID だけを停止してから `list_pages` を再実行した。name-based kill は使わない。
-- **教訓**: MCP の profile lock error は設定変更や別 profile への即時 fallback より先に、同じ user-data-dir を保持する process を確認する。停止する場合も特定 PID に限定し、共有 Chrome を巻き込まない。
+- **教訓**: MCP の profile lock error は設定変更や別 profile への即時 fallback より先に、同じ user-data-dir を保持する process を確認する。停止する場合も特定 PID に限定し、共有 Chrome を巻き込まない。shell policy が `kill "$pid"` のような変数経由の対象指定を拒否する環境では、`ps` で確認した numeric PID を `kill 12345` のように literal で渡し、動的な process 指定へ迂回しない。
 
 ### LL-189: worktree secret scan と unit test は一時 directory を共有し得るため逐次実行する
 - **事象**: unit test と `npm run secrets:scan:worktree` を並列実行すると、test が生成・削除する一時 directory を scanner が走査するタイミングと競合し得た。
@@ -1661,7 +1661,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-238: 検証コマンドは repository の runner と専用検索 tool を使う
 - **事象**: `tests/data-schema.test.ts` を `node --test` で起動して Vitest runner の初期化エラーを起こし、複数の正規表現を埋め込んだ shell command も quote mismatch で構文エラーになった。どちらも製品コードの失敗ではなかった。
 - **根本原因**: test file が使う runner と repository の既存実行経路を確認せず、専用の code search tool で分けて実行できる検索まで quote の多い shell command にまとめた。
-- **対策**: data schema は `npx vitest run tests/data-schema.test.ts` で再実行し、code search は `rg` tool、publisher fingerprint は独立した npm script として実行する。
+- **対策**: data schema は `npx vitest run tests/data-schema.test.ts` で再実行し、code search は `rg` tool、publisher fingerprint は CLI が実装している `npm run publisher:contract -- --dry-run` で検証する。未実装の `--check` を推測で使わない。
 - **教訓**: 検証失敗は最初に実装失敗と launcher/shell 失敗を分ける。test framework は repository の script または対応 runnerを使い、検索は専用 tool へ分離して shell quoting を検証リスクにしない。
 
 ### LL-239: optional reaction は状態、意味、回復、件数境界を1つの製品契約として磨く
@@ -1760,10 +1760,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: third-party verification は「検証に失敗した」と「検証 service の結果を取得できなかった」を分離する。transport、body、schema を通過して初めて business result を読む。利用者が取る recovery action と observability severity を response class に一致させる。
 
 ### LL-255: 44px touch target は subpixel 丸めを含む実寸で保証する
-- **事象**: reaction button に `min-height: 44px` を指定していても、`390x844` の Playwright 実測が `43.999969px` となり、初回だけ 44px 下限を下回って retry に依存した。
-- **根本原因**: CSS の宣言値と browser が返す device scale 後の `DOMRect` は常に完全一致するとは限らず、境界値ぴったりの実装には subpixel 丸めの安全余白が無かった。
-- **対策**: reaction button の最小高を 45px にして、E2E は従来どおり実 `DOMRect` が 44px 以上であることを検証する。retry success を合格扱いせず、初回実行でも下限を満たすようにする。
-- **教訓**: touch target や overflow のような物理寸法要件は CSS 宣言値ではなく browser 実寸で判定する。厳密な下限には 1px 程度の安全余白を持たせ、境界値の浮動小数点誤差で flake を作らない。
+- **事象**: reaction button に `min-height: 44px` を指定していても、`390x844` の Playwright 実測が `43.999969px` となり、初回だけ 44px 下限を下回って retry に依存した。後続の Home 回帰では、44px の CTA が親の reveal animation 中に `scale(0.996)` を継承し、`43.824px` まで縮小した。
+- **根本原因**: CSS の宣言値と browser が返す device scale 後の `DOMRect` は常に完全一致するとは限らず、境界値ぴったりの実装には subpixel 丸めの安全余白が無かった。さらに interactive child を持つ祖先の transform は、子の指定寸法を満たしていても描画上の touch target 全体を縮小する。
+- **対策**: reaction button の最小高を 45px にし、shared reveal は scale を使わず translate だけにする。E2E は実 `DOMRect` が 44px 以上であることを検証し、retry success を合格扱いしない。
+- **教訓**: touch target や overflow のような物理寸法要件は CSS 宣言値ではなく browser 実寸で判定する。厳密な下限には 1px 程度の安全余白を持たせ、対象要素だけでなく祖先の transform も確認する。interactive control を含む reveal は target の描画寸法を縮めない。
 
 ### LL-256: async 再照合は成功応答後にも世代を検証し、全体 deadline を共有する
 - **事象**: 匿名いいねの再照合は fetch 前と error 後に operation version / service generation を確認していたが、成功応答の直後には確認していなかった。古い GET が成功すると、後続のいいね成功や service-wide invalidation 後の state を上書きできた。また各 poll が 15 秒の通常 request timeout を持ち、4 回直列で失敗通知が約 76 秒遅れ得た。
@@ -1878,6 +1878,60 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: component固有の旧breakpointを残し、R-015のmobile navigation境界`720px`と同じviewport contractへ更新していなかった。
 - **対策**: 記事詳細action stripを`720px`以下で1列化し、外部CTAを全幅52px、copyを内側余白付き48pxにした。`390px`だけでなく`621px`と`720px`でも寸法とoverflowを検証する。
 - **教訓**: 同じviewportでmobile navigationが有効になるなら、主要actionのlayoutも原則として同じbreakpointへ揃える。代表mobile幅だけでなく旧境界の直後と新境界そのものを回帰行列へ含める。
+
+### LL-275: 片言語の要約完成を表示待ちにせず、検索も同じ品質契約を使う
+- **事象**: 日本語または英語の一方に読める要約が完成していても、もう一方が pending または汚染判定だと entry 全体が publishable から外れ、Home の優先枠や検索で利用できなかった。Pagefind も raw excerpt と内部 source/category slug、route path を表示し得たため、完成済み要約がある記事でも読者が検索結果から内容を判断しにくかった。
+- **根本原因**: Web の publishability が bilingual all-or-nothing で、既存の truthful cross-language fallback と非対称だった。検索 index と結果描画も通常カードの summary quality / label helper を再利用せず、Pagefind の raw excerpt と filter key を読者向け情報として扱っていた。
+- **対策**: JA/EN のどちらか一方が `isSummaryNoise()` を通れば publishable とし、他言語では既存の `summaryForLangWithFallback()` と原文言語 badge を使う。Featured / Top-3 は同じ publishable pool から選ぶ。記事詳細は検証済み JA/EN summary を別々の Pagefind metadata に出し、検索結果は active language の検証済み summary、`sourceLabel()`、category metadata、semantic page label を表示する。raw excerpt、内部 slug、route path は reader-facing metadata に使わず、言語切替時は開いている検索結果を再描画する。
+- **教訓**: 非同期の多言語 enrichment は「全言語完成まで非表示」にすると、完成済み内容まで backlog に巻き込んで読者の待ち時間を増やす。公開可否、カード表示、ranking、検索 index、検索結果は同じ usable-summary contract を共有し、不足言語だけを provenance 付き cross-language fallback で補う。検索 engine の raw field と内部 taxonomy key をそのまま UI に出さず、通常画面と同じ reader-facing helper を通す。
+
+### LL-276: decision surface は正常な運用情報、途中値の比較、重複 overview を置かない
+- **事象**: Home の優先記事に正常時の収集鮮度 badge が常時並び、Daily Summary は集計途中の当日値を前日と percentage 比較し、arXiv は左 rail と main overview で同じ source 情報を重複表示していた。
+- **根本原因**: 運用状態、集計の完全性、ページ内 navigation の情報所有者を区別せず、truthful な情報なら decision surface に追加してよいと扱っていた。正常 badge は異常の識別力を下げ、途中値の percentage は比較母集団が非対称で、重複 overview は論文一覧までの距離を延ばした。
+- **対策**: Home の collection freshness は delayed/error の warning 時だけ表示する。当日は `本日ここまで` / `Today so far` と明示し、前日比 percentage を出さない。arXiv は source identity と補助説明を左 rail の単一所有にし、main は filter と論文一覧から開始する。E2E は正常 badge と重複 overview の不在、warning 時だけの意味と寸法、当日の partial label と percentage 不在を固定する。
+- **教訓**: decision surface では「正しい情報」だけでなく「今ここで判断に必要か」を問う。正常運用 telemetry は異常時だけ前面化し、未完の時間窓を完了済み期間と比較せず、同じ情報の page-level owner を1つにする。削除後は主要 content への距離と残る warning/partial state を実ブラウザで検証する。
+
+### LL-277: Playwright の text assertion は locator 件数と表示単位を実 DOM contract に合わせる
+- **事象**: Home の freshness 回帰が `article.featured, .top-rank` の2要素へ単一要素用 `toContainText()` を使って strict mode で失敗した。検索回帰は、実装が `.search-hit-excerpt` を描画しているのに未実装の `.search-hit-summary` を探し、外側要素へ切り替えると非表示の JA/EN badge text まで `textContent` に混ざった。
+- **根本原因**: collection locator と単一 element assertion の契約を区別せず、実 DOM の class と text node 境界を確認しないままテスト専用 selector を仮定していた。visual snapshot では要約が正しく表示されていても、outer container の `textContent` は hidden language variant を含む。
+- **対策**: Featured と Top-3 を別 locator で検証し、検索要約本文の span に安定した `.search-hit-summary` class を付けて fallback badge と本文を分離した。E2E はその本文 span を直接検証し、raw excerpt の不在と言語切替後の内容を固定する。PageHero、Status、検索 title のように同じ container 内へ本文、補助 label、fallback badge がある場合は、`.page-count > .i18n-en` や `.search-hit-title > span[lang="en"]` のように意味単位の direct child を選ぶ。
+- **教訓**: Playwright の locator は「何件に一致するか」と「どの text node を意味単位として読むか」を先に決める。複数 surface の同じ不在条件は個別 assertion または件数対応 API を使い、i18n badge を含む container 全体ではなく安定した semantic child を対象にする。bilingual DOM の descendant selector は非表示の別言語、legend、badge まで拾うため、意味単位を所有する親から direct child で限定する。失敗時は screenshot だけでなく accessibility snapshot と実 DOM class を確認し、製品回帰と test selector drift を分ける。
+
+### LL-278: mixed-script の言語判定は製品名と本文を同じ文字数で比較しない
+- **事象**: 日本語の説明文に英語の製品名や API 名が複数含まれると、Latin 文字数が CJK 文字数を上回り、日本語要約を英語として扱っていた。first-clause 抽出も日本語文末の直後に ASCII punctuation が続く場合を不完全な文として落としていた。
+- **根本原因**: language classifier が script の生文字数だけを比較し、短い日本語文が長い英語製品名を含む実用文を考慮していなかった。field 名も実言語の保証ではなく、実データには `summaryJa` / `summaryEn` の内容が入れ替わるケースと Hangul contamination があった。
+- **対策**: `cjk * 3 >= latin`、または kana を含み `cjk >= latinWords * 2` の場合を日本語優勢と判定する。JA/EN の candidate は field 名で固定せず、両 field を requested language として品質検査し、Hangul を含む summary は利用不能にする。日本語本文に複数の英語製品名を含むケース、英語本文に短い日本語語句を含むケース、field 入れ替わり、Hangul contamination を unit test で固定した。
+- **教訓**: mixed-script text の言語判定は単純な code point 数や field 名では決めない。本文の情報密度と製品名の長さが非対称であるため、script 文字数、Latin word run、kana の有無を組み合わせ、実際の内容で言語を確定する。判定変更は publishability、fallback、検索 index、feed の全 consumer で同じ helper を使って検証する。
+
+### LL-279: 検索の内部 key 非表示と source/category intent を同時に維持する
+- **事象**: Pagefind の article exact match から raw source/category filter を除外すると内部 slug の誤表示は防げたが、検索 help が案内する source/category 名での記事検索まで成立しなくなった。
+- **根本原因**: reader-facing metadata への変換と検索対象からの除外を同じ処理として扱い、認識済み内部 key を安全な表示 label へ変換して exact-match corpus に残す経路がなかった。
+- **対策**: article の exact-match text には、metadata map で認識できた source/category の表示 label だけを追加する。未知の raw key は空へ落として検索結果にも表示せず、表示 source 名から該当記事へ到達できる E2E を追加する。
+- **教訓**: 内部 taxonomy key を UI から隠すとき、検索 intent まで削除しない。raw key は直接使わず、単一 metadata で解決できた reader-facing label だけを検索、表示、accessible metadata の共通 contract にする。
+
+### LL-280: multi-file patch は各 file 境界を明示して直後に配置を検索する
+- **事象**: client script と E2E test を同じ patch で更新した際、2 file 目の `Update File` marker が抜け、test block が文法的に受理できる位置の Astro client script 内へ挿入された。
+- **根本原因**: patch の context 行だけで対象 file が切り替わると誤認し、適用結果を file ごとの固有 symbol で直後に確認していなかった。
+- **対策**: multi-file patch は各変更の前に file marker を必ず置き、適用直後に新規 symbol が期待 file に1件、他 fileに0件であることを検索する。今回の test block は client script から除去し、E2E fileへ移した。
+- **教訓**: patch tool は意図した責務境界を推測しない。複数 file の類似 context を扱うときは patch構造と post-apply symbol search の両方で配置を検証する。
+
+### LL-281: module 評価時に作る collection は依存 helper の初期化順まで固定する
+- **事象**: `PUBLISHABLE_ENTRIES = RAW_ENTRIES.filter(isPublishableEntry)` は module import 時に即時評価されるが、`isPublishableEntry()` から辿る言語判定 helper が後方定義の `const` 正規表現を参照していた。function declaration 自体は hoist されても、正規表現は temporal dead zone にあり runtime import が失敗し得た。
+- **根本原因**: function declaration の hoist と、その function が参照する lexical binding の初期化を同一視した。typecheck だけでは module 評価順の runtime failure を検出できない。
+- **対策**: summary quality の正規表現と依存 helper を `RAW_ENTRIES`、`PUBLISHABLE_ENTRIES`、`ALL_ENTRIES` の eager collection 定義より前へ移し、実際に module を import して collection を評価する unit test と production build を通す。
+- **教訓**: module top-level で `filter()` / `map()` して export collection を作る場合、callback の直接定義だけでなく依存する `const`、正規表現、lookup table の初期化順まで確認する。typecheck の成功を runtime module evaluation の証拠にせず、import 実行と build で検証する。
+
+### LL-282: Intl の表示区切りを固定文字列としてテストしない
+- **事象**: `Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric" })` の表示が `7/15` だった一方、E2E は `7月15日` だけを許可して失敗した。`datetime` と日付 scope は正しく、製品回帰ではなかった。
+- **根本原因**: locale と runtime が決める表示区切りを意味契約と同一視し、同じ月日を表す正当な locale 出力を test fixture で過剰に固定した。
+- **対策**: E2E は machine-readable な `datetime` の ISO 形式と `data-date-scope` を厳密に検証し、表示 text は月日と locale が許す区切り (`月...日` または `/`) を確認する。
+- **教訓**: `Intl` で生成する表示は punctuation や区切りを固定しない。時刻・日付の意味は `datetime` と scope で固定し、visible copy は必要な数値と順序を検証する。
+
+### LL-283: first-view の座標基準は安定状態と単一閾値で検証する
+- **事象**: mobile first-view の full E2E は 79 件中 1 件だけ失敗し、Featured の先頭座標が `348px` で上限 `340px` を 8px 超えた。同じ画面を扱う別 E2E は `360px` を上限にしており、密度契約も分裂していた。
+- **根本原因**: モバイルの主 section 見出しに `4px` の上 margin と `6px` の下 margin が残り、header、banner、ticker、layout の累積高さへ不要な外側余白を加えていた。さらに一方の test は reveal の安定状態を待たずに座標を読み、別々の数値を直接記述していた。
+- **対策**: Home の主 section 見出しは内部 padding、accent border、見出し本文を維持したままモバイルの外側 margin だけを除去した。E2E は `340px` の単一定数と共有 helper を使い、`.is-visible` と座標の安定を待ってから同じ契約を検証する。
+- **教訓**: first-view の密度回帰は閾値を緩める前に header から最初の判断要素までの各 bounding box と gap を分解して測る。複数 test は同じ閾値と安定した animation state を共有し、touch target や重要内容を削って座標を合わせない。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

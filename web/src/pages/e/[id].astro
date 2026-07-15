@@ -39,12 +39,16 @@ const { entry } = Astro.props as Props;
 
 const titleJa = titleForLang(entry, "ja");
 const titleEn = titleForLang(entry, "en");
-const titleDisplay = titleJa || titleEn || entry.title;
-const likeTitleJa = titleForLangWithFallback(entry, "ja");
-const likeTitleEn = titleForLangWithFallback(entry, "en");
+const titleJaResult = titleForLangWithFallback(entry, "ja");
+const titleEnResult = titleForLangWithFallback(entry, "en");
+const titleDisplay = titleJaResult.text;
+const likeTitleJa = titleJaResult;
+const likeTitleEn = titleEnResult;
 const summaryJaResult = summaryForLangWithFallback(entry, "ja");
 const summaryJa = summaryJaResult.text;
 const summaryEn = summaryForLangWithFallback(entry, "en");
+const indexedSummaryJa = summaryForLang(entry, "ja");
+const indexedSummaryEn = summaryForLang(entry, "en");
 // "Summary pending" only when there is no usable summary in ANY language.
 // summaryForLangWithFallback cross-falls-back and blanks boilerplate / title
 // echoes, so an English-source entry with a real EN summary is NOT treated as
@@ -175,7 +179,6 @@ const pageTitle = `${titleDisplay} — TECH Dashboard`;
 const pageDesc = (summaryAbsent ? titleDisplay : summaryJa || summaryEn.text || entry.title).slice(0, 160);
 const ogImage = entry.image?.src ?? "";
 const canonicalUrl = `${SITE_URL}/e/${entry.id}/`;
-const shareUrl = summaryAbsent ? entry.url : canonicalUrl;
 const importanceStandingJa =
   `${catName} ${categoryStanding.total}件中、同等以上 ${categoryStanding.sameOrHigher}件`;
 const importanceStandingEn =
@@ -209,7 +212,6 @@ const jsonLd = {
   description: pageDesc,
   url: canonicalUrl,
   datePublished: entry.publishedAt,
-  dateModified: entry.collectedAt,
   inLanguage: entry.lang === "ja" ? "ja-JP" : "en",
   image: ogImage || undefined,
   author: { "@type": "Organization", name: srcDisplay, url: entry.url },
@@ -234,10 +236,13 @@ const jsonLd = {
     {ogImage && <meta name="twitter:image" content={ogImage} />}
     <meta property="article:section" content={catName} />
     <meta property="article:published_time" content={entry.publishedAt} />
-    <meta property="article:modified_time" content={entry.collectedAt} />
     {entry.tags.map((t) => <meta property="article:tag" content={t} />)}
     <meta data-pagefind-meta="title[content]" content={titleDisplay} />
-    <meta data-pagefind-filter="category[content]" content={entry.category} />
+    {titleJa && <meta data-pagefind-meta="titleJa[content]" content={titleJa} />}
+    {titleEn && <meta data-pagefind-meta="titleEn[content]" content={titleEn} />}
+    {indexedSummaryJa && <meta data-pagefind-meta="summaryJa[content]" content={indexedSummaryJa} />}
+    {indexedSummaryEn && <meta data-pagefind-meta="summaryEn[content]" content={indexedSummaryEn} />}
+    <meta data-pagefind-filter="category[content]" content={catName} />
     <meta data-pagefind-filter="source[content]" content={sourceLabel(entry.source)} />
     <meta data-pagefind-filter="sourceType[content]" content={entry.sourceType} />
     <meta data-pagefind-filter="authority[content]" content={srcAuthority.kind} />
@@ -292,8 +297,16 @@ const jsonLd = {
         {/* TITLE */}
         <header class="ed-head">
           <h1 class="ed-title">
-            <span class="i18n-ja">{titleJa || titleEn || entry.title}</span>
-            <span class="i18n-en" lang="en">{titleEn || titleJa || entry.title}</span>
+            <span
+              class="i18n-ja"
+              lang={titleJaResult.isFallback ? titleJaResult.fallbackLang : "ja"}
+              data-title-fallback={titleJaResult.isFallback ? titleJaResult.fallbackLang : undefined}
+            >{titleJaResult.text}</span>
+            <span
+              class="i18n-en"
+              lang={titleEnResult.isFallback ? titleEnResult.fallbackLang : "en"}
+              data-title-fallback={titleEnResult.isFallback ? titleEnResult.fallbackLang : undefined}
+            >{titleEnResult.text}</span>
           </h1>
           <div class="ed-byline">
             {entryFavicon && (
@@ -331,7 +344,15 @@ const jsonLd = {
               </span>
               <span aria-hidden="true">↗</span>
             </a>
-            <button class="ed-share-btn" type="button" data-share-copy data-title={titleDisplay} data-url={shareUrl}>
+            <button
+              class="ed-share-btn"
+              type="button"
+              data-share-copy
+              data-title={titleDisplay}
+              data-title-ja={titleJaResult.text}
+              data-title-en={titleEnResult.text}
+              data-url={canonicalUrl}
+            >
               <span aria-hidden="true">⧉</span>
               <span class="i18n-ja">タイトルと URL をコピー</span>
               <span class="i18n-en" lang="en">Copy title + URL</span>
@@ -773,10 +794,11 @@ const jsonLd = {
     }
     shareButtons.forEach(function (button) {
       button.addEventListener("click", async function () {
-        var t = button.dataset.title || document.title;
+        var isEnglish = document.documentElement.dataset.lang === "en";
+        var localizedTitle = isEnglish ? button.dataset.titleEn : button.dataset.titleJa;
+        var t = localizedTitle || button.dataset.title || document.title;
         var u = button.dataset.url || location.href;
         var text = t + "\n" + u;
-        var isEnglish = document.documentElement.dataset.lang === "en";
         try {
           await navigator.clipboard.writeText(text);
           showToast(isEnglish ? "Title and URL copied" : "タイトルと URL をコピーしました");

@@ -1,5 +1,10 @@
 import type { APIRoute } from "astro";
-import { PUBLISHABLE_ENTRIES, GENERATED_AT } from "../lib/data.ts";
+import {
+  PUBLISHABLE_ENTRIES,
+  GENERATED_AT,
+  summaryForLangWithFallback,
+  titleForLangWithFallback,
+} from "../lib/data.ts";
 import { SITE_URL } from "../lib/site.ts";
 
 export const GET: APIRoute = () => {
@@ -11,16 +16,20 @@ export const GET: APIRoute = () => {
     description: "AI コーディング/エコシステムの公式情報を毎日自動収集・要約",
     language: "ja",
     _generated_at: GENERATED_AT,
-    items: PUBLISHABLE_ENTRIES.slice(0, 100).map((e) => ({
-      id: e.id,
-      url: e.url,
-      title: e.titleJa || e.titleEn || e.title,
-      content_text: e.summaryJa || e.summaryEn || "",
-      ...(e.publishedAt ? { date_published: e.publishedAt } : {}),
-      tags: [e.category, ...e.tags],
-      _source: e.source,
-      _importance: e.importance,
-    })),
+    items: PUBLISHABLE_ENTRIES.slice(0, 100).map((e) => {
+      const title = titleForLangWithFallback(e, "ja");
+      const summary = summaryForLangWithFallback(e, "ja");
+      return {
+        id: e.id,
+        url: e.url,
+        title: title.text,
+        content_text: summary.text,
+        ...(e.publishedAt ? { date_published: e.publishedAt } : {}),
+        tags: [e.category, ...e.tags],
+        _source: e.source,
+        _importance: e.importance,
+      };
+    }),
   };
   return new Response(JSON.stringify(feed, null, 2), {
     headers: { "content-type": "application/feed+json; charset=utf-8" },

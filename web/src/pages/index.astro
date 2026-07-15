@@ -28,10 +28,9 @@ import {
   relativeTime,
   groupByDay,
   jstDayLabel,
-  summaryForLang,
   summaryForLangWithFallback,
   titleForLangWithFallback,
-  isDeterministicFallbackEntry,
+  isPublishableEntry,
   isLowSignalRelease,
   isOffTopicForHero,
   WORKER_HEALTH,
@@ -45,6 +44,7 @@ const runStatus = deriveWorkerRunStatus({
   fallbackPercent: DASHBOARD_METRICS.fallbackPercent,
   pendingSummaryEntries: DASHBOARD_METRICS.fallbackEntries,
 });
+const showRunWarning = runStatus.tone !== "ok";
 
 const currentPage = 1;
 const primaryEntries = MAIN_TIMELINE_ENTRIES;
@@ -60,7 +60,7 @@ const featuredSource = feat?.source ?? null;
 const now = new Date();
 const ago = relativeTime(DASHBOARD_METRICS.generatedAt, now);
 const activeSourcesLabel = `${DASHBOARD_METRICS.sourceCoverageLabel} active sources`;
-const activeSourcesJa = `${DASHBOARD_METRICS.sourceCoverageLabel} registry sources with live entries`;
+const activeSourcesJa = `公開中の記事がある登録ソース ${DASHBOARD_METRICS.sourceCoverageLabel}`;
 const activeSourcesEn = `${DASHBOARD_METRICS.sourceCoverageLabel} registry sources with live entries`;
 
 // Top 3 = importance x authority x recency, but only entries with real summaries.
@@ -71,7 +71,7 @@ const rankedPool = primaryEntries
       e.importance >= 2 &&
       e.id !== featuredId &&
       e.source !== featuredSource &&
-      !isDeterministicFallbackEntry(e) &&
+      isPublishableEntry(e) &&
       !isLowSignalRelease(e) &&
       !isOffTopicForHero(e),
   )
@@ -213,17 +213,19 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
             <div class="banner-fact-head">
               <strong class="i18n-ja">更新頻度</strong>
               <strong class="i18n-en" lang="en">Cadence</strong>
-              <a
-                class="banner-run-state"
-                href="/status"
-                data-run-tone={runStatus.tone}
-                aria-label={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
-                title={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
-              >
-                <span class={`dot ${runStatus.tone}`} data-run-tone={runStatus.tone} aria-hidden="true"></span>
-                <span class="i18n-ja">{runStatus.statusText}</span>
-                <span class="i18n-en" lang="en">{runStatus.statusText}</span>
-              </a>
+              {showRunWarning && (
+                <a
+                  class="banner-run-state"
+                  href="/status"
+                  data-run-tone={runStatus.tone}
+                  aria-label={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
+                  title={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
+                >
+                  <span class={`dot ${runStatus.tone}`} data-run-tone={runStatus.tone} aria-hidden="true"></span>
+                  <span class="i18n-ja">{runStatus.statusText}</span>
+                  <span class="i18n-en" lang="en">{runStatus.statusText}</span>
+                </a>
+              )}
             </div>
             <span class="i18n-ja">毎時更新 · 最新 index は {ago}</span>
             <span class="i18n-en" lang="en">Hourly collection · latest index {ago}</span>
@@ -254,7 +256,7 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
         </div>
 
       {feat && (() => {
-        const featSumJa = summaryForLang(feat, "ja");
+        const featSumJa = summaryForLangWithFallback(feat, "ja");
         const featSumEn = summaryForLangWithFallback(feat, "en");
         const featCat = CATEGORY_META.find((c) => c.slug === feat.category);
         const featCatColor = featCat?.color ?? "#5eead4";
@@ -348,12 +350,22 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
               />
               <span>·</span>
               <time datetime={feat.publishedAt}>{relativeTime(feat.publishedAt, now)}</time>
-              <span class:list={["featured-freshness", { stale: featStale, ok: !featStale }]}>
-                <span class="i18n-ja">{featStale ? "収集元 更新遅延" : "収集元 更新OK"}</span>
-                <span class="i18n-en" lang="en">{featStale ? "Source feed stale" : "Source feed fresh"}</span>
-              </span>
+              {featStale && (
+                <span class="featured-freshness stale">
+                  <span class="i18n-ja">収集元 更新遅延</span>
+                  <span class="i18n-en" lang="en">Source feed stale</span>
+                </span>
+              )}
             </div>
-            {featSumJa && <p class="featured-sum featured-summary i18n-ja">{featSumJa}</p>}
+            {featSumJa.text && (
+              <p
+                class="featured-sum featured-summary i18n-ja"
+                lang={featSumJa.fallbackLang === "en" ? "en" : "ja"}
+              >
+                {featSumJa.isFallback && <span class="lang-badge">[en]</span>}
+                {featSumJa.text}
+              </p>
+            )}
             {featSumEn.text && (
               <p class="featured-sum featured-summary i18n-en" lang={featSumEn.isFallback ? "ja" : "en"}>
                 {featSumEn.isFallback && <span class="lang-badge">[ja]</span>}
@@ -413,14 +425,16 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
                   <span class="rank-meta">
                     <SourceDisclosure class="rank-source" label={sourceLabel(e.source)} />
                     <time class="rank-time mono" datetime={e.publishedAt}>{relativeTime(e.publishedAt, now)}</time>
-                    <span class:list={["rank-freshness", { stale, ok: !stale }]}>
-                      <span class="visually-hidden">
-                        <span class="i18n-ja">{stale ? "収集元 更新遅延" : "収集元 更新OK"}</span>
-                        <span class="i18n-en" lang="en">{stale ? "Source feed stale" : "Source feed fresh"}</span>
+                    {stale && (
+                      <span class="rank-freshness stale">
+                        <span class="visually-hidden">
+                          <span class="i18n-ja">収集元 更新遅延</span>
+                          <span class="i18n-en" lang="en">Source feed stale</span>
+                        </span>
+                        <span class="rank-freshness-short i18n-ja" aria-hidden="true">遅延</span>
+                        <span class="rank-freshness-short i18n-en" lang="en" aria-hidden="true">LATE</span>
                       </span>
-                      <span class="rank-freshness-short i18n-ja" aria-hidden="true">{stale ? "遅延" : "正常"}</span>
-                      <span class="rank-freshness-short i18n-en" lang="en" aria-hidden="true">{stale ? "LATE" : "OK"}</span>
-                    </span>
+                    )}
                   </span>
                   <span class="rank-reason i18n-ja">{reason.ja}</span>
                   <span class="rank-reason i18n-en" lang="en">{reason.en}</span>

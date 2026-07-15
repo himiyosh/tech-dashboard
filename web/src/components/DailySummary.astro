@@ -3,8 +3,9 @@ import {
   CATEGORY_META,
   categoryLabel,
   entryHref,
+  isPublishableEntry,
   jstDateKey,
-  summaryForLang,
+  summaryForLangWithFallback,
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
@@ -79,6 +80,33 @@ const catRows = CATEGORY_META
 const baseDayKey =
   today.length > 0 ? todayKey : yesterday.length > 0 ? yKey : todayKey;
 const baseDayEntries = entries.filter((e) => jstDateKey(e.publishedAt) === baseDayKey);
+const baseDayIsToday = baseDayKey === todayKey;
+const baseDayDate = new Date(`${baseDayKey}T00:00:00+09:00`);
+const baseDayLabelJa = new Intl.DateTimeFormat("ja-JP", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  weekday: "short",
+}).format(baseDayDate);
+const baseDayLabelEn = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  weekday: "long",
+}).format(baseDayDate);
+const currentDayDate = new Date(`${todayKey}T00:00:00+09:00`);
+const currentDayLabelJa = new Intl.DateTimeFormat("ja-JP", {
+  timeZone: "Asia/Tokyo",
+  month: "numeric",
+  day: "numeric",
+}).format(currentDayDate);
+const currentDayLabelEn = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Tokyo",
+  month: "short",
+  day: "numeric",
+}).format(currentDayDate);
 
 // 主要な更新内容: importance desc → release/changelog 優先 → publishedAt desc で上位 12 件
 const typeWeight = (t: string): number =>
@@ -100,6 +128,8 @@ function releaseStem(title: string): string {
 }
 
 const sortedToday = [...baseDayEntries].sort((a, b) => {
+  const summaryReady = Number(isPublishableEntry(b)) - Number(isPublishableEntry(a));
+  if (summaryReady !== 0) return summaryReady;
   const imp = (b.importance ?? 1) - (a.importance ?? 1);
   if (imp !== 0) return imp;
   const tw = typeWeight(b.sourceType) - typeWeight(a.sourceType);
@@ -135,26 +165,32 @@ const boardItems = topUpdates;
 const catColorOf = (slug: string): string =>
   CATEGORY_META.find((c) => c.slug === slug)?.color ?? "#8a847e";
 
-const todayDelta =
-  yesterdayCount === 0 ? 0 : Math.round(((todayCount - yesterdayCount) / yesterdayCount) * 100);
 ---
 
-<section class="digest">
+<section
+  class="digest"
+  data-base-day={baseDayKey}
+  data-day-scope={baseDayIsToday ? "today" : "latest"}
+>
   <div class="digest-head">
     <div class="title">
       <span class="eyebrow">Daily Summary</span>
-      <h2 class="i18n-ja">今日の更新</h2>
-      <h2 class="i18n-en" lang="en">Today's Updates</h2>
+      <h2 class="i18n-ja">{baseDayIsToday ? "今日の更新" : "直近の更新"}</h2>
+      <h2 class="i18n-en" lang="en">{baseDayIsToday ? "Today's Updates" : "Latest Updates"}</h2>
+      <time class="digest-date" datetime={baseDayKey} data-date-scope="article">
+        <span class="i18n-ja">対象記事日 · {baseDayLabelJa}</span>
+        <span class="i18n-en" lang="en">Article date · {baseDayLabelEn}</span>
+      </time>
     </div>
     <div class="kpis">
       <div class="kpi">
-        <span class="k">Today</span>
+        <span class="k i18n-ja">本日ここまで</span>
+        <span class="k i18n-en" lang="en">Today so far</span>
+        <time class="kpi-date" datetime={todayKey} data-date-scope="current">
+          <span class="i18n-ja">現在日 JST · {currentDayLabelJa}</span>
+          <span class="i18n-en" lang="en">Current day JST · {currentDayLabelEn}</span>
+        </time>
         <span class="v">{todayCount}</span>
-        {yesterdayCount > 0 && (
-          <span class="d" data-trend={todayDelta > 0 ? "up" : todayDelta < 0 ? "down" : "flat"}>
-            {todayDelta > 0 ? "▲" : todayDelta < 0 ? "▼" : "—"} {Math.abs(todayDelta)}%
-          </span>
-        )}
       </div>
       <div class="kpi">
         <span class="k">Yesterday</span>
@@ -225,9 +261,12 @@ const todayDelta =
 
     <div class="panel updates ticker-panel">
       <div class="panel-title">
-        <span class="i18n-ja">主要な更新</span>
-        <span class="i18n-en" lang="en">Top stories</span>
-        <span class="panel-sub">{baseDayKey.slice(5).replace("-", "/")} · {boardItems.length} 件</span>
+        <span class="i18n-ja">{baseDayIsToday ? "今日の主要な更新" : "直近の主要な更新"}</span>
+        <span class="i18n-en" lang="en">{baseDayIsToday ? "Today's top stories" : "Latest top stories"}</span>
+        <span class="panel-sub">
+          <span class="i18n-ja">{boardItems.length} 件</span>
+          <span class="i18n-en" lang="en">{boardItems.length} items</span>
+        </span>
         <span class="badge-legend">
           <span class="t-tag imp">★</span><span class="legend-label i18n-ja">重要</span><span class="legend-label i18n-en" lang="en">Important</span>
           <span class="t-tag rel">REL</span><span class="legend-label i18n-ja">リリース</span><span class="legend-label i18n-en" lang="en">Release</span>
@@ -239,15 +278,19 @@ const todayDelta =
         <ol class="board">
           {boardItems.map((item, i) => {
             const e = item.entry;
-            const isRel = e.sourceType === "release" || e.sourceType === "changelog";
-            const isImp = e.importance === 3;
+            const summaryReady = isPublishableEntry(e);
+            const isRel = summaryReady && (e.sourceType === "release" || e.sourceType === "changelog");
+            const isImp = summaryReady && e.importance === 3;
             const jaResult = titleForLangWithFallback(e, "ja");
             const enResult = titleForLangWithFallback(e, "en");
-            const summaryJa = summaryForLang(e, "ja");
-            const summaryEn = summaryForLang(e, "en");
+            const summaryJa = summaryForLangWithFallback(e, "ja");
+            const summaryEn = summaryForLangWithFallback(e, "en");
             const num = String(i + 1).padStart(2, "0");
             return (
-              <li style={`--cat-color:${catColorOf(e.category)}`}>
+              <li
+                style={`--cat-color:${catColorOf(e.category)}`}
+                data-summary-state={summaryReady ? "ready" : "pending"}
+              >
                 <a href={entryHref(e)} class="b-row">
                   <span class="b-num">{num}</span>
                   <span class="b-cat" title={categoryLabel(e.category)}>{categoryLabel(e.category)}</span>
@@ -272,8 +315,24 @@ const todayDelta =
                     {enResult.isFallback && <span class="b-fallback-mark">JA</span>}
                     {enResult.text}
                   </span>
-                  {summaryJa && <span class="b-summary i18n-ja">{summaryJa}</span>}
-                  {summaryEn && <span class="b-summary i18n-en" lang="en">{summaryEn}</span>}
+                  {summaryJa.text && (
+                    <span
+                      class="b-summary i18n-ja"
+                      lang={summaryJa.fallbackLang === "en" ? "en" : "ja"}
+                    >
+                      {summaryJa.isFallback && <span class="b-fallback-mark">EN</span>}
+                      {summaryJa.text}
+                    </span>
+                  )}
+                  {summaryEn.text && (
+                    <span
+                      class="b-summary i18n-en"
+                      lang={summaryEn.fallbackLang === "ja" ? "ja" : "en"}
+                    >
+                      {summaryEn.isFallback && <span class="b-fallback-mark">JA</span>}
+                      {summaryEn.text}
+                    </span>
+                  )}
                   <span class="b-src">[{sourceLabel(e.source)}]</span>
                 </a>
               </li>
@@ -315,9 +374,22 @@ const todayDelta =
     color: var(--accent); font-weight: 700; display: block; margin-bottom: 4px;
   }
   .title h2 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+  .digest-date {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
   .kpis { display: flex; gap: 22px; }
   .kpi { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
   .kpi .k { font-size: 10.5px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .kpi-date {
+    color: var(--muted-2);
+    font-size: 9px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
   .kpi .v { font-size: 22px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; line-height: 1; }
   .kpi .d { font-size: 11px; font-family: ui-monospace, monospace; }
   .kpi .d[data-trend="up"] { color: var(--success); }

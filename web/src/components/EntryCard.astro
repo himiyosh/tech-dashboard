@@ -19,7 +19,6 @@ export interface Props {
 
 const { entry } = Astro.props;
 const rel = relativeTime(entry.publishedAt);
-const fresh = isNew(entry);
 
 const summaryJaResult = summaryForLangWithFallback(entry, "ja");
 const summaryEnResult = summaryForLangWithFallback(entry, "en");
@@ -30,6 +29,8 @@ const summaryEnResult = summaryForLangWithFallback(entry, "en");
 const summaryJa = summaryJaResult.text;
 const summaryEn = summaryEnResult.text;
 const hasSummary = Boolean(summaryJa || summaryEn);
+const fresh = hasSummary && isNew(entry);
+const isImportant = hasSummary && entry.importance === 3;
 const titleJaResult = titleForLangWithFallback(entry, "ja");
 const titleEnResult = titleForLangWithFallback(entry, "en");
 const titleJa = titleJaResult.text;
@@ -116,14 +117,15 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
 ---
 
 <article
-  class:list={["card", "has-thumb", { important: entry.importance === 3 }]}
+  class:list={["card", "has-thumb", { important: isImportant }]}
+  data-summary-state={hasSummary ? "ready" : "pending"}
   data-pagefind-body
   data-reveal="card"
   style={`--cat-color:${catColor}`}
 >
   <div class="card-body">
     <div class="meta">
-      {entry.importance === 3 && <span class="badge hot" title="重要リリース">🔥 HOT</span>}
+      {isImportant && <span class="badge hot" title="重要リリース">🔥 HOT</span>}
       {fresh && <span class="badge new">NEW</span>}
       <span
         class={authorityBadgeClass}
@@ -180,18 +182,20 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
         </span>
       </a>
     </h3>
-    <div class="card-insight" aria-label="Reading priority">
-      <span class={`insight-priority ${priority.tone}`}>
-        <span class="i18n-ja">{priority.ja}</span>
-        <span class="i18n-en" lang="en">{priority.en}</span>
-      </span>
-      <span class="insight-reason i18n-ja">{rankReasonJa}</span>
-      <span class="insight-reason i18n-en" lang="en">{rankReasonEn}</span>
-      <time class="insight-date" datetime={entry.publishedAt}>
-        <span class="i18n-ja">公開 {publishedJa}</span>
-        <span class="i18n-en" lang="en">Published {publishedEn}</span>
-      </time>
-    </div>
+    {hasSummary && (
+      <div class="card-insight" aria-label="Reading priority">
+        <span class={`insight-priority ${priority.tone}`}>
+          <span class="i18n-ja">{priority.ja}</span>
+          <span class="i18n-en" lang="en">{priority.en}</span>
+        </span>
+        <span class="insight-reason i18n-ja">{rankReasonJa}</span>
+        <span class="insight-reason i18n-en" lang="en">{rankReasonEn}</span>
+        <time class="insight-date" datetime={entry.publishedAt}>
+          <span class="i18n-ja">公開 {publishedJa}</span>
+          <span class="i18n-en" lang="en">Published {publishedEn}</span>
+        </time>
+      </div>
+    )}
     {hasSummary ? (
       <div class="summary-stack">
         {summaryJa && (

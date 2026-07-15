@@ -155,25 +155,22 @@ export function isSyntheticFallbackTitle(e: NormalizedEntry, text: string | unde
 }
 
 /**
- * Returns true if this entry still lacks a real AI **summary** (pending
- * boilerplate or synthetic title). Summary-first design (LL-112): the long-form
- * body is no longer stored on the entry (LL-113: it lives in data/bodies.json),
- * so body presence must NOT affect "fallback" classification. Body rendering is
- * judged separately by `bodyForEntry` (web/src/lib/bodies.ts).
+ * Returns true only when this entry lacks a usable AI summary in both
+ * languages. A valid JA or EN summary is enough because the UI truthfully
+ * cross-falls back to the available language. Summary-first design (LL-112):
+ * long-form body presence must NOT affect fallback classification.
  */
 export function isDeterministicFallbackEntry(e: NormalizedEntry): boolean {
-  return (
-    isPendingSummaryText(e.summaryJa) ||
-    isPendingSummaryText(e.summaryEn) ||
-    isContaminatedSummaryText(e.summaryJa) ||
-    isContaminatedSummaryText(e.summaryEn) ||
-    isSyntheticFallbackTitle(e, e.titleJa) ||
-    isSyntheticFallbackTitle(e, e.titleEn)
-  );
+  return !hasGeneratedSummary(e);
 }
 
 function hasGeneratedSummary(e: NormalizedEntry): boolean {
-  return [e.summaryJa, e.summaryEn].some((value) => !isSummaryNoise(e, value));
+  return (
+    hasUsableSummaryForLanguage(e, e.summaryJa, "ja")
+    || hasUsableSummaryForLanguage(e, e.summaryEn, "en")
+    || hasUsableSummaryForLanguage(e, e.summaryJa, "en")
+    || hasUsableSummaryForLanguage(e, e.summaryEn, "ja")
+  );
 }
 
 const MUTABLE_GITHUB_RELEASE_ALIAS_RE =
@@ -195,7 +192,6 @@ export function isMutableReleaseAliasEntry(
 /** Decision-critical slots (Featured / Top-3) and feeds require a real summary. */
 export function isPublishableEntry(e: NormalizedEntry): boolean {
   return !isMutableReleaseAliasEntry(e)
-    && hasGeneratedSummary(e)
     && !isDeterministicFallbackEntry(e);
 }
 
@@ -237,6 +233,7 @@ export function isSummaryNoise(e: NormalizedEntry, text: string | undefined | nu
   if (!value) return true;
   if (isPendingSummaryText(value)) return true;
   const lower = value.toLowerCase();
+  if (/\bappeared first on\b/i.test(value)) return true;
   if (isContaminatedSummaryText(value)) return true;
   if ([e.title, e.titleEn, e.titleJa].some(
     (t) => !!t && t.trim().toLowerCase() === lower,
@@ -246,6 +243,53 @@ export function isSummaryNoise(e: NormalizedEntry, text: string | undefined | nu
     return true;
   }
   return /^[a-z][a-z0-9._/-]*(?:\s+[a-z][a-z0-9._/-]*){0,3}\s+v\d+(?:\.\d+){1,3}(?:[-+][a-z0-9.-]+)?$/i.test(value);
+}
+
+const CJK_RE = /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
+const LATIN_RE = /\p{Script=Latin}/u;
+const HANGUL_RE = /\p{Script=Hangul}/u;
+
+/** true when the string contains Japanese/CJK characters. */
+export function hasCjk(s: string | undefined | null): boolean {
+  return !!s && CJK_RE.test(s);
+}
+
+/**
+ * Classifies mixed-script text by its dominant readable script. A small number
+ * of CJK product names in otherwise English prose must not invalidate it.
+ */
+export function isCjkDominantText(s: string): boolean {
+  let cjk = 0;
+  let latin = 0;
+  for (const character of s) {
+    if (CJK_RE.test(character)) cjk += 1;
+    else if (LATIN_RE.test(character)) latin += 1;
+  }
+  if (cjk === 0) return false;
+  if (latin === 0) return true;
+  // CJK characters carry more lexical information per character than Latin
+  // words, so raw character counts misclassify Japanese prose with product
+  // names such as "agent workflow" as English.
+  const latinWords =
+    s.match(/\p{Script=Latin}[\p{Script=Latin}\p{Number}._/-]*/gu)?.length ?? 0;
+  const hasKana = /[\u3040-\u30ff\uff66-\uff9f]/.test(s);
+  return cjk * 3 >= latin || (hasKana && cjk >= latinWords * 2);
+}
+
+export function hasUsableSummaryForLanguage(
+  e: NormalizedEntry,
+  value: string | null | undefined,
+  lang: "ja" | "en",
+): boolean {
+  const text = value?.trim() ?? "";
+  if (
+    isSummaryNoise(e, text)
+    || isSyntheticFallbackTitle(e, text)
+    || HANGUL_RE.test(text)
+  ) {
+    return false;
+  }
+  return lang === "ja" ? isCjkDominantText(text) : !isCjkDominantText(text);
 }
 
 export const RAW_ENTRIES: readonly NormalizedEntry[] = data.entries;
@@ -489,25 +533,19 @@ export function latest(n: number): NormalizedEntry[] {
 export function featured(): NormalizedEntry | undefined {
   const isRoutineRelease = (e: NormalizedEntry) =>
     e.sourceType === "release" || e.sourceType === "changelog";
-  const eligible = (e: NormalizedEntry) => !isLowSignalRelease(e) && !isOffTopicForHero(e);
+  const eligible = (e: NormalizedEntry) =>
+    isPublishableEntry(e) && !isLowSignalRelease(e) && !isOffTopicForHero(e);
   return (
     // 1. High-importance real announcement/blog with a real summary.
     MAIN_TIMELINE_ENTRIES.find(
-      (e) => e.importance === 3 && !isRoutineRelease(e) && !isDeterministicFallbackEntry(e) && eligible(e),
+      (e) => e.importance === 3 && !isRoutineRelease(e) && eligible(e),
     ) ??
     // 2. High-importance stable release with a real summary.
-    MAIN_TIMELINE_ENTRIES.find(
-      (e) => e.importance === 3 && !isDeterministicFallbackEntry(e) && eligible(e),
-    ) ??
+    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 3 && eligible(e)) ??
     // 3. Medium-importance announcement/blog with a real summary.
     MAIN_TIMELINE_ENTRIES.find(
-      (e) => e.importance === 2 && !isRoutineRelease(e) && !isDeterministicFallbackEntry(e) && eligible(e),
+      (e) => e.importance === 2 && !isRoutineRelease(e) && eligible(e),
     ) ??
-    MAIN_TIMELINE_ENTRIES.find(
-      (e) => e.importance === 2 && !isDeterministicFallbackEntry(e) && eligible(e),
-    ) ??
-    // 4. Last resort: any high/medium entry that is not a low-signal build.
-    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 3 && eligible(e)) ??
     MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 2 && eligible(e))
   );
 }
@@ -553,13 +591,6 @@ export function isNew(e: NormalizedEntry, now = Date.now()): boolean {
   return now - new Date(e.collectedAt).getTime() < 6 * 60 * 60_000;
 }
 
-const CJK_RE = /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
-
-/** true when the string contains Japanese/CJK characters. */
-export function hasCjk(s: string | undefined | null): boolean {
-  return !!s && CJK_RE.test(s);
-}
-
 /**
  * Some source feeds derive the title from the URL slug, which strips
  * dots (e.g. "claude-opus-4-7" → "Claude Opus 4 7"). If the URL
@@ -599,21 +630,13 @@ export function summaryForLang(
   e: NormalizedEntry,
   lang: "ja" | "en",
 ): string {
-  const ja = (e.summaryJa ?? "").trim();
-  const en = (e.summaryEn ?? "").trim();
-  // A field is a usable summary only when it is not deterministic pending
-  // boilerplate, a synthetic "(source) related update" string, or a bare echo
-  // of the entry title (isSummaryNoise). Returning "" for noise lets
-  // summaryForLangWithFallback fall back across languages instead of surfacing
-  // placeholder text (LL-074). Classification (isPublishableEntry) is unaffected
-  // because it reads the raw fields, not this display helper.
-  const usable = (text: string) =>
-    !isSummaryNoise(e, text) && !isSyntheticFallbackTitle(e, text);
-  if (lang === "ja") {
-    if (usable(ja)) return ja;
-    return hasCjk(en) && usable(en) ? en : "";
+  const candidates = lang === "ja"
+    ? [e.summaryJa, e.summaryEn]
+    : [e.summaryEn, e.summaryJa];
+  for (const value of candidates) {
+    const text = value?.trim() ?? "";
+    if (hasUsableSummaryForLanguage(e, text, lang)) return text;
   }
-  if (usable(en) && !hasCjk(en)) return en;
   return "";
 }
 
@@ -645,38 +668,19 @@ export function titleForLang(
   const ja = (e.titleJa ?? "").trim();
   const enRaw = (e.titleEn ?? "").trim();
   const titleRaw = (e.title ?? "").trim();
-  const sumJa = (e.summaryJa ?? "").trim();
-  const sumEn = (e.summaryEn ?? "").trim();
   const url = (e.url ?? "").trim();
 
   // Recover version-number dots lost during slug→title conversion.
   const en = restoreDotsFromUrl(enRaw, url);
   const title = restoreDotsFromUrl(titleRaw, url);
 
-  const firstClause = (s: string, max: number): string => {
-    if (!s) return "";
-    // Break on Japanese terminators, newline, or Western sentence-end
-    // followed by whitespace. Bare "." / "!" / "?" inside a word (e.g.
-    // version numbers "Claude Opus 4.7", abbreviations "U.S.") is preserved.
-    const m = s.match(/[。！？\n]|[.!?](?=\s)/);
-    const idx = m && m.index !== undefined ? m.index : -1;
-    const head = idx > 0 ? s.slice(0, idx) : s;
-    return head.length > max ? head.slice(0, max) + "…" : head;
-  };
-
   if (lang === "ja") {
     if (ja && !isSyntheticFallbackTitle(e, ja)) return ja;
-    // AI summary (Japanese) is available for most entries — use its first clause as headline.
-    // Skip deterministic fallback summaries (LL-041 lead): they describe the
-    // entry generically and would make the card title read 「このエントリは…」.
-    // For those, fall through to the original (English) title.
-    if (sumJa && !isPendingSummaryText(sumJa)) return firstClause(sumJa, 70);
-    return title || en;
+    return title && isCjkDominantText(title) ? title : "";
   }
   if (lang === "en") {
-    if (en && !isSyntheticFallbackTitle(e, en)) return en;
-    if (sumEn && !hasCjk(sumEn) && !isPendingSummaryText(sumEn)) return firstClause(sumEn, 90);
-    if (title && !hasCjk(title)) return title;
+    if (en && !isCjkDominantText(en) && !isSyntheticFallbackTitle(e, en)) return en;
+    if (title && !isCjkDominantText(title)) return title;
     return "";
   }
   // Defensive fallback for any future lang values.
@@ -702,8 +706,10 @@ export function titleForLangWithFallback(
   const other: "ja" | "en" = lang === "en" ? "ja" : "en";
   const fallback = titleForLang(e, other);
   if (fallback) return { text: fallback, isFallback: true, fallbackLang: other };
-  // Absolute last resort: raw `title` (always present for normalized entries).
-  return { text: (e.title ?? "").trim(), isFallback: true, fallbackLang: other };
+  // Absolute last resort: preserve the raw title's actual language provenance.
+  const raw = (e.title ?? e.titleJa ?? e.titleEn ?? "").trim();
+  const rawLang: "ja" | "en" = isCjkDominantText(raw) ? "ja" : "en";
+  return { text: raw, isFallback: rawLang !== lang, fallbackLang: rawLang };
 }
 
 /** YYYY-MM-DD in JST for grouping timelines by day. */

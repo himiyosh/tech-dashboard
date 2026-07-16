@@ -1,0 +1,206 @@
+---
+import PageHero from "../components/PageHero.astro";
+import Portal from "../layouts/Portal.astro";
+---
+
+<Portal
+  pageKey="not-found"
+  title="Page not found - TECH Dashboard"
+  description="指定されたページは見つかりませんでした。検索、アーカイブ、ホームから情報を探し直せます。"
+>
+  <Fragment slot="head">
+    <meta name="robots" content="noindex, follow" />
+  </Fragment>
+
+  <div data-pagefind-ignore>
+    <PageHero
+      kicker="404 / RECOVERY"
+      title="ページが見つかりません"
+      titleEn="Page not found"
+      count="404"
+      headingId="not-found-heading"
+      description="URL が誤っているか、ページが移動したか、現在の公開範囲に含まれていない可能性があります。"
+      descriptionEn="The URL may be incorrect, the page may have moved, or it may no longer be in the current public collection."
+    />
+
+    <main class="not-found-page">
+      <section class="not-found-panel" aria-labelledby="not-found-recovery-heading">
+        <div class="not-found-code" aria-hidden="true">404</div>
+
+        <div class="not-found-copy">
+          <p class="not-found-kicker">RECOVERY OPTIONS</p>
+          <h2 id="not-found-recovery-heading">
+            <span class="i18n-ja">次に進む場所を選んでください</span>
+            <span class="i18n-en" lang="en">Choose where to continue</span>
+          </h2>
+          <p>
+            <span class="i18n-ja">
+              記事名や技術名が分かる場合は検索が最短です。過去の記事はアーカイブから月別に確認できます。
+            </span>
+            <span class="i18n-en" lang="en">
+              Search is the fastest route when you know the article or technology name. Older updates remain browsable by month in the archive.
+            </span>
+          </p>
+
+          <nav class="not-found-actions" aria-labelledby="not-found-recovery-heading">
+            <a class="not-found-action primary" href="/search" data-recovery-action="search">
+              <span class="i18n-ja">サイト内を検索</span>
+              <span class="i18n-en" lang="en">Search the site</span>
+            </a>
+            <a class="not-found-action" href="/archive" data-recovery-action="archive">
+              <span class="i18n-ja">アーカイブを見る</span>
+              <span class="i18n-en" lang="en">Browse the archive</span>
+            </a>
+            <a class="not-found-action" href="/" data-recovery-action="home">
+              <span class="i18n-ja">ホームへ戻る</span>
+              <span class="i18n-en" lang="en">Return home</span>
+            </a>
+          </nav>
+        </div>
+      </section>
+    </main>
+  </div>
+</Portal>
+
+<style>
+  .not-found-page {
+    max-width: 1120px;
+    min-height: 46vh;
+    margin: 0 auto;
+    padding: 30px 28px 104px;
+  }
+
+  .not-found-panel {
+    display: grid;
+    grid-template-columns: minmax(210px, 0.42fr) minmax(0, 1fr);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+  }
+
+  .not-found-code {
+    display: grid;
+    min-height: 294px;
+    place-items: center;
+    border-right: 1px solid var(--border);
+    color: var(--accent);
+    background:
+      radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 58%),
+      linear-gradient(145deg, color-mix(in srgb, var(--surface-2) 92%, transparent), var(--bg));
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: clamp(54px, 8vw, 92px);
+    font-weight: 800;
+    letter-spacing: -0.08em;
+    line-height: 1;
+  }
+
+  .not-found-copy {
+    align-self: center;
+    min-width: 0;
+    padding: 34px;
+  }
+
+  .not-found-kicker {
+    margin: 0 0 8px;
+    color: var(--accent);
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+  }
+
+  .not-found-copy h2 {
+    margin: 0 0 10px;
+    color: var(--text);
+    font-size: clamp(21px, 3vw, 28px);
+    line-height: 1.25;
+  }
+
+  .not-found-copy > p:not(.not-found-kicker) {
+    max-width: 650px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .not-found-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+    margin-top: 24px;
+  }
+
+  .not-found-action {
+    display: inline-flex;
+    min-width: 0;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    color: var(--text-2);
+    background: var(--surface-2);
+    font-size: 12px;
+    font-weight: 750;
+    line-height: 1.35;
+    text-align: center;
+  }
+
+  .not-found-action.primary {
+    border-color: color-mix(in srgb, var(--accent) 64%, var(--border));
+    color: #05110e;
+    background: var(--accent);
+  }
+
+  .not-found-action:hover,
+  .not-found-action:focus-visible {
+    border-color: var(--accent);
+    color: var(--accent);
+    outline: 2px solid color-mix(in srgb, var(--accent) 72%, white);
+    outline-offset: 2px;
+  }
+
+  .not-found-action.primary:hover,
+  .not-found-action.primary:focus-visible {
+    color: #05110e;
+  }
+
+  @media (max-width: 720px) {
+    .not-found-page {
+      min-height: 0;
+      padding: 18px 16px calc(104px + env(safe-area-inset-bottom));
+    }
+
+    .not-found-panel {
+      grid-template-columns: 1fr;
+    }
+
+    .not-found-code {
+      min-height: 112px;
+      border-right: 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 48px;
+    }
+
+    .not-found-copy {
+      padding: 24px 18px 20px;
+    }
+
+    .not-found-copy h2 {
+      font-size: 21px;
+    }
+
+    .not-found-actions {
+      grid-template-columns: 1fr;
+      margin-top: 20px;
+    }
+
+    .not-found-action {
+      min-height: 48px;
+    }
+  }
+</style>

@@ -2226,6 +2226,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: E2Eの`260px`/`36px`閾値は緩めず、orbitが戻る`1240px`以上でfact cardのblock paddingを縮めた。Footerは補助的なbuild stackとbody Queue詳細を隠すcompact範囲を`1180px`まで延長し、`1181px`でfull表示へ戻す。`1101/1180/1181/1240px`を含む既存の境界行列でHero高、Footer高、Top 3との安全距離を検証する。
 - **教訓**: text-drivenなpanelの寸法は開発OSで閾値内に入るだけでは不十分である。縦stackと横flexには別OSのfont metrics差を吸収する余白を設け、CI差を理由に受け入れ閾値を緩めない。compact切替はviewportの名前ではなく、実コンテンツが単一行へ収まる境界の直前と直後を測って決める。
 
+### LL-332: 静的siteの未知routeは404 fileとHTTP statusをbuilt previewで検証する
+- **事象**: 未生成のarticle、category、tag URLが本番でHTTP 200のHome HTMLを返し、共有linkの誤りや保持対象外の記事を利用者が判別できないsoft-404になっていた。
+- **根本原因**: 動的pageは`getStaticPaths()`の既知routeだけを生成していたが、Web buildには`404.html`が無かった。実際のCloudflare Pagesは未知routeにroot pageを返し、Homeの見た目と200 statusがroute不在を隠していた。
+- **対策**: Astroの`404.astro`からnoindexの静的404 pageを生成し、JA/ENの説明とSearch、Archive、Homeの回復導線を設けた。article、category、tagの未知routeについて、built previewのresponse statusが404、Home hero不在、404 headingと回復link表示、mobile target寸法とoverflowをE2Eで固定した。
+- **教訓**: 静的生成routeの一覧が正しくても、未生成routeを配信層がどう扱うかは別contractである。custom 404の存在だけで合格にせず、productionと同じbuilt artifactへのunknown URLでHTTP statusとresponse contentを同時に検証し、Homeへ成功形でfallbackさせない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

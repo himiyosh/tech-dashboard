@@ -2220,6 +2220,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: EntryCardのactive表示を`QueueDisplay.labelJa`/`labelEn`へ直接接続し、未宣言property参照を削除した。source contract testでEntryCardが宣言済みlabelだけを使うことを固定し、active QueueのETA整形は`deriveQueueDisplay()`のunit testで実snapshotと独立して検証する。
 - **教訓**: Astro componentがtyped view modelを消費する場合、build成功をproperty契約の証拠にしない。表示済み文字列を返す共通helperを単一情報源にし、実dataで現れないstateはunit fixtureとsource contractで固定する。独立reviewで見つかった未宣言fieldは、そのfieldを追加して局所実装を延命するより既存contractへconsumerを戻す。
 
+### LL-331: cross-platformのfont metrics差には寸法閾値でなくlayoutの安全余白を持たせる
+- **事象**: macOSでは全95件のE2Eが成功した一方、同じcommitとdataを使うLinux CIで`1240x900`のHeroが`265.48px`となり上限`260px`を超え、`1101x844`のFooterも`49.09px`へ2行化して上限`36px`を超えた。retryでも同じ値で、CIの2件だけが再現性を持って失敗した。
+- **根本原因**: Heroは3枚のfact cardを縦に積み、Footerは複数の可変長telemetryをflexで横並びにしていたため、OSと利用fontの文字メトリクス差が各行の高さと必要幅へ累積した。macOSの実寸が閾値に近いまま安全余白がなく、Footerのcompact ruleも`980px`で終了していたため、Linuxでは中間幅だけ折り返した。
+- **対策**: E2Eの`260px`/`36px`閾値は緩めず、orbitが戻る`1240px`以上でfact cardのblock paddingを縮めた。Footerは補助的なbuild stackとbody Queue詳細を隠すcompact範囲を`1180px`まで延長し、`1181px`でfull表示へ戻す。`1101/1180/1181/1240px`を含む既存の境界行列でHero高、Footer高、Top 3との安全距離を検証する。
+- **教訓**: text-drivenなpanelの寸法は開発OSで閾値内に入るだけでは不十分である。縦stackと横flexには別OSのfont metrics差を吸収する余白を設け、CI差を理由に受け入れ閾値を緩めない。compact切替はviewportの名前ではなく、実コンテンツが単一行へ収まる境界の直前と直後を測って決める。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -91,6 +91,17 @@ describe("Cloudflare Worker deploy config", () => {
     expect(packageJson).toContain('"health:prod": "node scripts/check-production-health.mjs"');
   });
 
+  it("gives the E2E job enough time for the Pagefind build and full Playwright suite", () => {
+    const ciWorkflow = readConfig(".github/workflows/ci.yml");
+    const e2eStart = ciWorkflow.indexOf("\n  e2e:\n");
+    expect(e2eStart).toBeGreaterThan(-1);
+
+    const timeout = ciWorkflow
+      .slice(e2eStart)
+      .match(/timeout-minutes:\s*(\d+)/);
+    expect(Number(timeout?.[1])).toBeGreaterThanOrEqual(25);
+  });
+
   it("spreads source collection across six hourly batches", () => {
     expect(SOURCE_BATCHES).toBe(6);
     const start = Date.parse("2026-07-12T00:00:00.000Z");

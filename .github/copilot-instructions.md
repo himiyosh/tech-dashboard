@@ -1490,9 +1490,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: automated publisher の互換性 gate は最終 commit だけでなく、commit 前に発生する Queue、KV、object storage など全副作用へ伝播する。既存 legacy data と新しい unversioned write を区別できる migration marker を持たせ、consumer-first の rollout 順序まで contract に含める。
 
 ### LL-209: Pagefind build の timeout は実測時間と job 全体の予算に余裕を持たせる
-- **事象**: `npm run build:web` は成功したが、続く `npm run test:e2e` が test 実行前の webServer 起動待ちで 180 秒 timeout した。後の PR CI では unit / typecheck が成功した後、Pagefind を含む Web build が job 開始から 5 分の上限で cancel され、E2E が skip された。build log では Astro が 5,284 page を約 30 秒、Pagefind が 6,446 page の index 作成に約 125 秒を要していた。
-- **根本原因**: data 増加に比例する Pagefind build に対し、`playwright.config.ts` の webServer timeout と CI unit job 全体の timeout が固定の小さい値だった。CI の 5 分には dependency install、typecheck、unit test も含まれるため、Web build 自体に使える時間は約 4 分半しか残らなかった。
-- **対策**: Playwright webServer timeout を 300 秒、CI の unit + typecheck + web build job を 10 分へ広げ、build と E2E は LL-047 のとおり逐次実行する。E2E failure は test assertion、preview 起動 timeout、job 全体の timeout を分け、build log の phase 別所要時間で切り分ける。
+- **事象**: `npm run build:web` は成功したが、続く `npm run test:e2e` が test 実行前の webServer 起動待ちで 180 秒 timeout した。後の PR CI では unit / typecheck が成功した後、Pagefind を含む Web build が job 開始から 5 分の上限で cancel され、E2E が skip された。さらに 2026-07-16 の PR #143 では local の全 95 E2E と CI の unit / build が成功した一方、E2E job が assertion を開始する前の静的 build 中に 15 分上限で cancel された。
+- **根本原因**: data 増加に比例する Pagefind build に対し、`playwright.config.ts` の webServer timeout と CI job 全体の timeout が固定の小さい値だった。CI job には dependency install、Playwright browser install、静的 build、全 E2E が含まれるため、local の test 実行時間だけを上限の根拠にできない。
+- **対策**: Playwright webServer timeout を 300 秒、CI の unit + typecheck + web build job を 10 分、E2E job を 25 分へ広げ、build と E2E は LL-047 のとおり逐次実行する。`tests/worker-config.test.ts` で E2E job の 25 分以上を固定する。E2E failure は test assertion、preview 起動 timeout、job 全体の timeout を分け、build log の phase 別所要時間で切り分ける。
 - **教訓**: static page と検索 index が data 件数に比例して増えるサイトでは、E2E webServer と CI job 全体の timeout を固定の小さい値にしない。通常 build と前処理の実測値に十分な余裕を持たせ、timeout 延長で assertion failure を隠さない。
 
 ### LL-210: data migration 後も全 artifact の U+FFFD を schema gate で検出する

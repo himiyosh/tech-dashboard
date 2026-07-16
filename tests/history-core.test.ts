@@ -6,7 +6,13 @@ import {
   mergeArchiveEntries,
   synchronizeArchiveTagsFromLive,
 } from "../harness/publishers/archive-core.ts";
-import { buildStatsPayload } from "../harness/publishers/stats-core.ts";
+import {
+  buildStatsPayload,
+  statsDayCutoffKey,
+  statsDayKey,
+  statsMonthKey,
+  STATS_BUCKET_TIME_ZONE,
+} from "../harness/publishers/stats-core.ts";
 import type { NormalizedEntry } from "../harness/types.ts";
 
 function fixtureEntry(overrides: Partial<NormalizedEntry>): NormalizedEntry {
@@ -197,6 +203,45 @@ describe("archive-core", () => {
 });
 
 describe("stats-core", () => {
+  it("JST midnight boundary keeps day and month buckets aligned", () => {
+    expect(statsDayKey("2026-07-14T14:59:59.999Z")).toBe("2026-07-14");
+    expect(statsDayKey("2026-07-14T15:00:00.000Z")).toBe("2026-07-15");
+    expect(statsMonthKey("2026-07-31T14:59:59.999Z")).toBe("2026-07");
+    expect(statsMonthKey("2026-07-31T15:00:00.000Z")).toBe("2026-08");
+
+    const payload = buildStatsPayload(
+      [
+        fixtureEntry({ id: "before", publishedAt: "2026-07-14T14:59:59.999Z" }),
+        fixtureEntry({ id: "after", publishedAt: "2026-07-14T15:00:00.000Z" }),
+      ],
+      "2026-07-15T00:00:00.000Z",
+    );
+
+    expect(payload.bucketTimeZone).toBe(STATS_BUCKET_TIME_ZONE);
+    expect(payload.byDay.map(({ date, count }) => ({ date, count }))).toEqual([
+      { date: "2026-07-14", count: 1 },
+      { date: "2026-07-15", count: 1 },
+    ]);
+  });
+
+  it("90-day retention keeps the complete JST cutoff day", () => {
+    const generatedAt = "2026-07-15T10:01:00.000Z";
+    expect(statsDayCutoffKey(generatedAt)).toBe("2026-04-16");
+
+    const payload = buildStatsPayload(
+      [
+        fixtureEntry({ id: "before-exact-cutoff", publishedAt: "2026-04-16T09:00:00.000Z" }),
+        fixtureEntry({ id: "after-exact-cutoff", publishedAt: "2026-04-16T11:00:00.000Z" }),
+        fixtureEntry({ id: "previous-jst-day", publishedAt: "2026-04-15T14:59:59.999Z" }),
+      ],
+      generatedAt,
+    );
+
+    expect(payload.byDay.map(({ date, count }) => ({ date, count }))).toEqual([
+      { date: "2026-04-16", count: 2 },
+    ]);
+  });
+
   it("archive を含む entry 配列から日次・月次・source 集計を作る", () => {
     const generatedAt = "2026-05-10T00:00:00.000Z";
     const entries = [

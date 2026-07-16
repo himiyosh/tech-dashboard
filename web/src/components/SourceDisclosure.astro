@@ -1,0 +1,172 @@
+---
+interface Props {
+  label: string;
+  class?: string;
+  favicon?: string;
+  faviconClass?: string;
+}
+
+const {
+  label,
+  class: className,
+  favicon = "",
+  faviconClass = "",
+} = Astro.props as Props;
+---
+
+<details class:list={["source-disclosure", className]} name="home-source-label">
+  <summary class="source-disclosure-trigger" data-source-disclosure-trigger>
+    {favicon && (
+      <img
+        class:list={["source-disclosure-icon", faviconClass]}
+        src={favicon}
+        alt=""
+        width="16"
+        height="16"
+        loading="lazy"
+        onerror="this.remove()"
+      />
+    )}
+    <span class="source-disclosure-label" data-source-disclosure-label>{label}</span>
+    <span class="source-disclosure-cue" aria-hidden="true">⌄</span>
+  </summary>
+  <span class="source-disclosure-panel">
+    <span class="source-disclosure-kicker">
+      <span class="i18n-ja">収集元</span>
+      <span class="i18n-en" lang="en">Source</span>
+    </span>
+    <strong data-source-disclosure-full>{label}</strong>
+    <span class="source-disclosure-hint">
+      <span class="i18n-ja">収集元をもう一度選択すると閉じます。</span>
+      <span class="i18n-en" lang="en">Select the source again to close.</span>
+    </span>
+  </span>
+</details>
+
+<style>
+  .source-disclosure {
+    display: block;
+    position: relative;
+    min-width: 0;
+    max-width: 100%;
+    color: inherit;
+  }
+
+  .source-disclosure-trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 45px;
+    min-height: 45px;
+    max-width: 100%;
+    margin: -9px -4px;
+    padding: 9px 4px;
+    border-radius: 6px;
+    color: inherit;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .source-disclosure-trigger::-webkit-details-marker {
+    display: none;
+  }
+
+  .source-disclosure-trigger::marker {
+    content: "";
+  }
+
+  .source-disclosure-trigger:hover {
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--text);
+  }
+
+  .source-disclosure-trigger:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .source-disclosure-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .source-disclosure-icon {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+  }
+
+  .source-disclosure-cue {
+    flex: 0 0 auto;
+    color: var(--muted-2);
+    font-size: 11px;
+    line-height: 1;
+    transition: transform 0.16s ease;
+  }
+
+  .source-disclosure[open] > .source-disclosure-trigger {
+    background: color-mix(in srgb, var(--accent) 14%, var(--bg-2));
+    color: var(--text);
+  }
+
+  .source-disclosure[open] .source-disclosure-cue {
+    transform: rotate(180deg);
+  }
+
+  .source-disclosure-panel {
+    position: fixed;
+    z-index: 230;
+    left: 50%;
+    bottom: calc(54px + env(safe-area-inset-bottom));
+    width: min(360px, calc(100vw - 32px));
+    box-sizing: border-box;
+    padding: 12px 14px;
+    transform: translateX(-50%);
+    border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--bg-2) 96%, transparent);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+    color: var(--text);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    text-align: left;
+  }
+
+  .source-disclosure-kicker {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--accent);
+    font-family: ui-monospace, monospace;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .source-disclosure-panel strong {
+    display: block;
+    font-size: 13px;
+  }
+
+  .source-disclosure-hint {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  @media (max-width: 720px) {
+    .source-disclosure-panel {
+      bottom: calc(82px + env(safe-area-inset-bottom));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .source-disclosure-cue {
+      transition: none;
+    }
+  }
+</style>

@@ -47,7 +47,7 @@ describe("Cloudflare Worker deploy config", () => {
     expect(summarizerConfig).toContain('dead_letter_queue = "tech-dashboard-summary-dlq"');
   });
 
-  it("reserves subrequest headroom around the enrichment queues", () => {
+  it("shares one bounded write allowance across summary and body queues", () => {
     const runner = readConfig("scripts/run-publisher.ts");
     const runnerValue = (key: string) => {
       const match = runner.match(new RegExp(`${key}: "(\\d+)"`));
@@ -58,10 +58,12 @@ describe("Cloudflare Worker deploy config", () => {
     const summaryEnqueueCap = runnerValue("ENQUEUE_MAX_NEW");
     const bodyLookupCap = runnerValue("BODY_LOOKUP_CAP");
     const bodyEnqueueCap = runnerValue("BODY_ENQUEUE_MAX_NEW");
+    const totalEnqueueCap = runnerValue("ENRICHMENT_ENQUEUE_MAX_TOTAL");
 
     expect(summaryLookupCap).toBeGreaterThanOrEqual(summaryEnqueueCap);
-    expect(bodyLookupCap).toBeGreaterThanOrEqual(bodyEnqueueCap);
-    expect(summaryLookupCap + bodyLookupCap).toBeLessThanOrEqual(45);
+    expect(bodyLookupCap).toBeGreaterThanOrEqual(totalEnqueueCap);
+    expect(bodyEnqueueCap).toBeGreaterThanOrEqual(totalEnqueueCap);
+    expect(totalEnqueueCap).toBeLessThanOrEqual(35);
     expect(runner).toContain('BODY_RETENTION_DAYS: "30"');
   });
 
@@ -87,6 +89,23 @@ describe("Cloudflare Worker deploy config", () => {
     expect(healthWorkflow).toContain('cron: "40 * * * *"');
     expect(healthWorkflow).toContain("npm run health:prod");
     expect(packageJson).toContain('"health:prod": "node scripts/check-production-health.mjs"');
+  });
+
+  it("gives CI jobs enough time for Pagefind builds and the full Playwright suite", () => {
+    const ciWorkflow = readConfig(".github/workflows/ci.yml");
+    const unitStart = ciWorkflow.indexOf("\n  unit:\n");
+    const e2eStart = ciWorkflow.indexOf("\n  e2e:\n");
+    expect(unitStart).toBeGreaterThan(-1);
+    expect(e2eStart).toBeGreaterThan(-1);
+
+    const unitTimeout = ciWorkflow
+      .slice(unitStart, e2eStart)
+      .match(/timeout-minutes:\s*(\d+)/);
+    const e2eTimeout = ciWorkflow
+      .slice(e2eStart)
+      .match(/timeout-minutes:\s*(\d+)/);
+    expect(Number(unitTimeout?.[1])).toBeGreaterThanOrEqual(25);
+    expect(Number(e2eTimeout?.[1])).toBeGreaterThanOrEqual(25);
   });
 
   it("spreads source collection across six hourly batches", () => {

@@ -29,6 +29,15 @@ export interface BodyJobBatch {
 export interface BodyJobSelectionOpts {
   nowMs?: number;
   publisherContractFingerprint?: string;
+  excludeEntryIds?: ReadonlySet<string>;
+}
+
+export interface BodyPipelineSelection {
+  pendingJobs: BodyJob[];
+  candidateJobs: BodyJob[];
+  lookupJobs: BodyJob[];
+  eligibleCount: number;
+  drainEstimateHours: number;
 }
 
 export const DEFAULT_BODY_RETENTION_DAYS = 30;
@@ -39,7 +48,7 @@ function dateMs(value: string | null | undefined): number {
   return Number.isFinite(ms) ? ms : 0;
 }
 
-function toBodyJob(
+export function bodyJobForEntry(
   entry: NormalizedEntry,
   publisherContractFingerprint?: string,
 ): BodyJob {
@@ -101,10 +110,18 @@ export function selectBodyJobBatch(
   cap: number,
   opts: BodyJobSelectionOpts = {},
 ): BodyJobBatch {
-  const safeCap = Math.max(1, Math.floor(cap));
-  const eligible = entries.filter((entry) => needsBody(entry, bodiesPresent));
-  if (eligible.length === 0) {
-    return { jobs: [], eligibleCount: 0, startIndex: 0, drainEstimateHours: 0 };
+  const safeCap = Math.max(0, Math.floor(cap));
+  const allEligible = entries.filter((entry) => needsBody(entry, bodiesPresent));
+  const eligible = opts.excludeEntryIds?.size
+    ? allEligible.filter((entry) => !opts.excludeEntryIds!.has(entry.id))
+    : allEligible;
+  if (eligible.length === 0 || safeCap === 0) {
+    return {
+      jobs: [],
+      eligibleCount: allEligible.length,
+      startIndex: 0,
+      drainEstimateHours: safeCap > 0 ? Math.ceil(allEligible.length / safeCap) : 0,
+    };
   }
 
   const jobs: BodyJob[] = [];
@@ -112,7 +129,7 @@ export function selectBodyJobBatch(
   const pushJob = (entry: NormalizedEntry) => {
     if (seen.has(entry.url) || jobs.length >= safeCap) return;
     seen.add(entry.url);
-    jobs.push(toBodyJob(entry, opts.publisherContractFingerprint));
+    jobs.push(bodyJobForEntry(entry, opts.publisherContractFingerprint));
   };
 
   // Reserve half the cap for the newest eligible entries so fresh articles get a
@@ -134,6 +151,69 @@ export function selectBodyJobBatch(
     pushJob(eligible[(startIndex + i) % eligible.length]!);
   }
 
-  const drainEstimateHours = Math.ceil(eligible.length / safeCap);
-  return { jobs, eligibleCount: eligible.length, startIndex, drainEstimateHours };
+  const drainEstimateHours = Math.ceil(allEligible.length / safeCap);
+  return { jobs, eligibleCount: allEligible.length, startIndex, drainEstimateHours };
+}
+
+/**
+ * Summary and body consumers share the same KV write quota. Summary jobs keep
+ * priority, while body jobs may use the unused part of the per-run allowance.
+ */
+export function bodyEnqueueAllowance(
+  totalCap: number,
+  summaryEnqueued: number,
+  configuredBodyCap: number,
+): number {
+  const safeTotal = Math.max(0, Math.floor(totalCap));
+  const safeSummary = Math.max(0, Math.floor(summaryEnqueued));
+  const safeBody = Math.max(0, Math.floor(configuredBodyCap));
+  return Math.min(safeBody, Math.max(0, safeTotal - safeSummary));
+}
+
+export function bodyBacklogAfterMerge(eligibleCount: number, mergedCount: number): number {
+  return Math.max(0, Math.floor(eligibleCount) - Math.max(0, Math.floor(mergedCount)));
+}
+
+/**
+ * Look up the jobs enqueued by the previous publisher run before selecting new
+ * candidates. A previous miss receives one priority lookup only; it is excluded
+ * from the current candidate window so it cannot consume both lookup slots.
+ */
+export function selectBodyPipelineJobs(
+  entries: readonly NormalizedEntry[],
+  bodiesPresent: ReadonlySet<string>,
+  previousPendingIds: readonly string[],
+  lookupCap: number,
+  opts: Omit<BodyJobSelectionOpts, "excludeEntryIds"> = {},
+): BodyPipelineSelection {
+  const byId = new Map(entries.map((entry) => [entry.id, entry]));
+  const pendingJobs: BodyJob[] = [];
+  const pendingIds = new Set<string>();
+  const safeLookupCap = Math.max(0, Math.floor(lookupCap));
+  for (const id of previousPendingIds) {
+    if (pendingJobs.length >= safeLookupCap || pendingIds.has(id)) continue;
+    const entry = byId.get(id);
+    if (!entry || !needsBody(entry, bodiesPresent)) continue;
+    pendingIds.add(id);
+    pendingJobs.push(bodyJobForEntry(entry, opts.publisherContractFingerprint));
+  }
+
+  const remainingCandidateCap = Math.max(0, safeLookupCap - pendingJobs.length);
+  const candidates = selectBodyJobBatch(
+    entries,
+    bodiesPresent,
+    remainingCandidateCap,
+    {
+      ...opts,
+      excludeEntryIds: pendingIds,
+    },
+  );
+
+  return {
+    pendingJobs,
+    candidateJobs: candidates.jobs,
+    lookupJobs: [...pendingJobs, ...candidates.jobs],
+    eligibleCount: candidates.eligibleCount,
+    drainEstimateHours: candidates.drainEstimateHours,
+  };
 }

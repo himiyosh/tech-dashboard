@@ -74,18 +74,24 @@ const {
   relativeTime,
   latestListedActivityForSource,
   latestListedCollectedAtForEntry,
+  effectiveTitleLanguage,
   summaryForLang,
   summaryForLangWithFallback,
   titleForLang,
   titleForLangWithFallback,
+  categoryLabel,
   restoreDotsFromUrl,
+  restorePrereleaseQualifierFromUrl,
   jstDateKey,
   entryHref,
   isNew,
   hasCjk,
+  isCjkDominantText,
+  hasUsableSummaryForLanguage,
   relatedEntries,
   entriesBySource,
   entriesByTag,
+  entriesForTagPage,
   adjacentInCategory,
   categoryImportanceStanding,
   isLowSignalRelease,
@@ -95,7 +101,14 @@ const {
   isSummaryNoise,
   isPublishableEntry,
   isDeterministicFallbackEntry,
+  isArxivEntry,
+  isResearchListingEntry,
   ALL_ENTRIES,
+  STATIC_TAG_PAGE_TAGS,
+  TAG_PAGE_MIN_ENTRIES,
+  tagEntryCount,
+  tagHref,
+  tagHrefForCount,
 } = await import("../web/src/lib/data.ts");
 const { decisionRankScore } = await import("../web/src/lib/ranking.ts");
 
@@ -171,6 +184,54 @@ describe("summaryForLang", () => {
     const entry = { ...e1, summaryEn: "これは日本語です" };
     expect(summaryForLang(entry, "en")).toBe("");
   });
+
+  it("英語主体の要約に日本語の固有名詞が含まれていても保持する", () => {
+    const summary = "The agent connects to 技術評論社 resources while keeping the workflow in English.";
+    const entry = { ...e1, summaryEn: summary };
+    expect(isCjkDominantText(summary)).toBe(false);
+    expect(summaryForLang(entry, "en")).toBe(summary);
+  });
+
+  it("日本語主体の mixed-script 要約は English slot で拒否する", () => {
+    const summary = "この agent は repository の変更内容を英語で説明します。";
+    const entry = { ...e1, summaryEn: summary };
+    expect(isCjkDominantText(summary)).toBe(true);
+    expect(summaryForLang(entry, "en")).toBe("");
+  });
+});
+
+describe("isCjkDominantText", () => {
+  it.each([
+    ["English text only", false],
+    ["English text with 技術評論社 as a source name", false],
+    ["日本語の説明に English terms を含める", true],
+    ["日本語だけの要約です。", true],
+  ])("%s", (text, expected) => {
+    expect(isCjkDominantText(text)).toBe(expected);
+  });
+});
+
+describe("hasUsableSummaryForLanguage", () => {
+  it("field 名ではなく実際の言語で usable summary を判定する", () => {
+    const misplaced = {
+      ...e1,
+      summaryJa: "This English summary was stored in the Japanese field.",
+      summaryEn: "このエントリは要約が未生成です。",
+    };
+    expect(hasUsableSummaryForLanguage(misplaced, misplaced.summaryJa, "ja")).toBe(false);
+    expect(hasUsableSummaryForLanguage(misplaced, misplaced.summaryJa, "en")).toBe(true);
+    expect(isPublishableEntry(misplaced)).toBe(true);
+  });
+
+  it("Hangul が混入した要約を完成扱いしない", () => {
+    const contaminated = {
+      ...e1,
+      summaryJa: "Anthropic が 새しいモデルを公開した。",
+      summaryEn: "",
+    };
+    expect(hasUsableSummaryForLanguage(contaminated, contaminated.summaryJa, "ja")).toBe(false);
+    expect(isPublishableEntry(contaminated)).toBe(false);
+  });
 });
 
 // ============================================================
@@ -204,7 +265,7 @@ describe("summaryForLangWithFallback", () => {
       isFallback: true,
       fallbackLang: "ja",
     });
-    expect(isPublishableEntry(entry)).toBe(false);
+    expect(isPublishableEntry(entry)).toBe(true);
     expect(isListableEntry(entry)).toBe(true);
   });
 });
@@ -293,14 +354,44 @@ describe("isSummaryNoise", () => {
     expect(isSummaryNoise(e1, "Claude Opus 4.7 released")).toBe(true);
     expect(isSummaryNoise(e1, "  claude opus 4.7 released  ")).toBe(true);
   });
+  it("package または version だけの文字列は noise", () => {
+    expect(isSummaryNoise(e1, "@cline/sdk@0.0.53")).toBe(true);
+    expect(isSummaryNoise(e1, "Cline CLI v3.0.31")).toBe(true);
+    expect(isSummaryNoise(e1, "v2.1.205")).toBe(true);
+  });
   it("本物の要約は noise ではない", () => {
     expect(isSummaryNoise(e1, "Anthropic announced Claude Opus 4.7.")).toBe(false);
+    expect(isSummaryNoise(e1, "Fixes CVE in OpenSSL 3.0.14")).toBe(false);
+  });
+  it("version で終わる説明文を持つ entry は publishable", () => {
+    const entry = {
+      ...e1,
+      summaryJa: "OpenSSL 3.0.14 の CVE を修正した。",
+      summaryEn: "Fixes CVE in OpenSSL 3.0.14",
+    };
+    expect(isPublishableEntry(entry)).toBe(true);
   });
   it("生成途中の junk marker は noise", () => {
     expect(isSummaryNoise(
       e1,
       "Left some junk in the readme and forgot to remove oopsies Release Notes: N/A or Added/Fixed/Improved",
     )).toBe(true);
+  });
+  it("RSS provenance boilerplate は生成済み要約として扱わない", () => {
+    expect(
+      isSummaryNoise(
+        e1,
+        "The post Claude Opus 4.7 released appeared first on Anthropic.",
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("categoryLabel", () => {
+  it("internal category slug を表示名へ変換する", () => {
+    expect(categoryLabel("tech-news")).toBe("News/Policy");
+    expect(categoryLabel("agent-fw")).toBe("Agent Frameworks");
+    expect(categoryLabel("local-llm", "full")).toBe("Local LLM / Open Models");
   });
 });
 
@@ -309,7 +400,16 @@ describe("isListableEntry", () => {
     expect(isListableEntry(e1)).toBe(true);
     expect(isPublishableEntry(e1)).toBe(true);
   });
-  it("要約待ちでも実タイトルがあれば listable (LL-074)", () => {
+  it("両言語が表示不能な要約なら publishable ではない", () => {
+    const unusable = {
+      ...e1,
+      summaryJa: e1.title,
+      summaryEn: "Cline CLI v3.0.31",
+    };
+    expect(isPublishableEntry(unusable)).toBe(false);
+    expect(isListableEntry(unusable)).toBe(true);
+  });
+  it("片言語の要約が完成していれば cross-language fallback で publishable", () => {
     const pending = {
       ...e1,
       titleJa: "",
@@ -318,7 +418,8 @@ describe("isListableEntry", () => {
       summaryJa: PENDING_JA,
       summaryEn: "What's Changed: support for new architecture.",
     };
-    expect(isPublishableEntry(pending)).toBe(false);
+    expect(isDeterministicFallbackEntry(pending)).toBe(false);
+    expect(isPublishableEntry(pending)).toBe(true);
     expect(isListableEntry(pending)).toBe(true);
   });
   it("synthetic タイトルしか無いエントリは listable ではない", () => {
@@ -413,11 +514,91 @@ describe("titleForLang", () => {
     expect(titleForLang(e1, "en")).toBe("Claude Opus 4.7 Released");
   });
 
-  it("titleJa が空の場合 summaryJa の先頭節を返す", () => {
-    const entry = { ...e1, titleJa: "", summaryJa: "Anthropic が発表した。背景は複雑だ。" };
-    const title = titleForLang(entry, "ja");
-    // 最初の句点で切れるはず
-    expect(title).toBe("Anthropic が発表した");
+  it("titleJa が空の場合も summary excerpt をタイトルへ流用しない", () => {
+    const entry = {
+      ...e1,
+      lang: "ja" as const,
+      title: "日本語の原題",
+      titleJa: "",
+      summaryJa: "Anthropic が発表した。背景は複雑だ。",
+    };
+    expect(titleForLang(entry, "ja")).toBe("日本語の原題");
+  });
+
+  it("英語主体の titleEn に日本語の固有名詞があっても保持する", () => {
+    const titleEn = "Integrating 技術評論社 resources with agent workflows";
+    expect(titleForLang({ ...e1, titleEn }, "en")).toBe(titleEn);
+  });
+
+  it("日本語主体の titleEn は拒否し、English summary をタイトルへ流用しない", () => {
+    const entry = {
+      ...e1,
+      titleEn: "技術評論社の agent workflow 解説",
+      summaryEn: "This is an English fallback title generated from the summary.",
+    };
+    expect(titleForLang(entry, "en")).toBe("Claude Opus 4.7 released");
+  });
+
+  it("英語製品名を含む日本語原題を source language に従って扱う", () => {
+    const title = "Claude Code 2.1.209でサブエージェントの進捗表示を改善";
+    const entry = { ...e1, lang: "ja" as const, title, titleJa: "", titleEn: "" };
+
+    expect(titleForLang(entry, "ja")).toBe(title);
+    expect(titleForLang(entry, "en")).toBe("");
+  });
+
+  it("明白な日本語原題は誤った feed language metadata を補正する", () => {
+    const title = "Claude Code 2.1.209でサブエージェントの進捗表示を改善";
+    const entry = { ...e1, lang: "en" as const, title, titleJa: title, titleEn: "" };
+
+    expect(effectiveTitleLanguage(entry)).toBe("ja");
+    expect(titleForLang(entry, "ja")).toBe(title);
+    expect(titleForLang(entry, "en")).toBe("");
+  });
+
+  it("日本語原題をコピーした titleEn は英語タイトルとして扱わない", () => {
+    const title = "Claude Code 2.1.209でサブエージェントの進捗表示を改善";
+    const entry = { ...e1, lang: "ja" as const, title, titleJa: title, titleEn: title };
+
+    expect(titleForLang(entry, "en")).toBe("");
+  });
+
+  it("日本語固有名詞を少量含む明示的な英語タイトルは維持する", () => {
+    const titleEn = "Claude Code 2.1.209 improves サブエージェント progress visibility";
+    const entry = {
+      ...e1,
+      lang: "ja" as const,
+      title: "Claude Code 2.1.209でサブエージェントの進捗表示を改善",
+      titleJa: "Claude Code 2.1.209でサブエージェントの進捗表示を改善",
+      titleEn,
+    };
+
+    expect(titleForLang(entry, "en")).toBe(titleEn);
+  });
+
+  it("英語 source の mixed raw title を source language に従って扱う", () => {
+    const title = "Claude Code adds 日本語 support for agent status";
+    const entry = { ...e1, lang: "en" as const, title, titleJa: "", titleEn: "" };
+
+    expect(titleForLang(entry, "en")).toBe(title);
+    expect(titleForLang(entry, "ja")).toBe("");
+  });
+
+  it("英語 source の ASCII-only titleJa は日本語 title として扱わない", () => {
+    const entry = {
+      ...e1,
+      lang: "en" as const,
+      title: "Cline CLI v3.0.33",
+      titleJa: "CLI v3.0.33",
+      titleEn: "Cline CLI v3.0.33",
+    };
+
+    expect(titleForLang(entry, "ja")).toBe("");
+    expect(titleForLangWithFallback(entry, "ja")).toEqual({
+      text: "Cline CLI v3.0.33",
+      isFallback: true,
+      fallbackLang: "en",
+    });
   });
 });
 
@@ -434,6 +615,7 @@ describe("titleForLangWithFallback", () => {
   it("EN を要求し titleEn / summaryEn / title が全て日本語のときは JA タイトルにフォールバックする", () => {
     const entry = {
       ...e1,
+      lang: "ja" as const,
       titleEn: "",
       title: "日本語のみのタイトル",
       summaryEn: "",
@@ -447,8 +629,52 @@ describe("titleForLangWithFallback", () => {
 
   it("JA を要求し titleJa が空でも fallback 経由で必ず非空を返す", () => {
     const entry = { ...e1, titleJa: "", titleEn: "Only English Title", title: "Only English Title", summaryJa: "" };
+    expect(titleForLang(entry, "ja")).toBe("");
     const result = titleForLangWithFallback(entry, "ja");
-    expect(result.text.length).toBeGreaterThan(0);
+    expect(result).toEqual({
+      text: "Only English Title",
+      isFallback: true,
+      fallbackLang: "en",
+    });
+  });
+
+  it("JA の raw title は JA 要求で fallback 扱いにしない", () => {
+    const entry = {
+      ...e1,
+      lang: "ja" as const,
+      titleJa: "",
+      titleEn: "",
+      title: "日本語の原題",
+      summaryJa: "",
+      summaryEn: "",
+    };
+    expect(titleForLang(entry, "ja")).toBe("日本語の原題");
+    expect(titleForLangWithFallback(entry, "ja")).toEqual({
+      text: "日本語の原題",
+      isFallback: false,
+    });
+  });
+
+  it("mixed Japanese raw title は EN 要求で provenance 付き JA fallback になる", () => {
+    const title = "Claude Code 2.1.209でサブエージェントの進捗表示を改善";
+    const entry = { ...e1, lang: "ja" as const, title, titleJa: "", titleEn: "" };
+
+    expect(titleForLangWithFallback(entry, "en")).toEqual({
+      text: title,
+      isFallback: true,
+      fallbackLang: "ja",
+    });
+  });
+
+  it("英語 source の raw title は JA 要求で provenance 付き EN fallback になる", () => {
+    const title = "Claude Code adds 日本語 support for agent status";
+    const entry = { ...e1, lang: "en" as const, title, titleJa: "", titleEn: "" };
+
+    expect(titleForLangWithFallback(entry, "ja")).toEqual({
+      text: title,
+      isFallback: true,
+      fallbackLang: "en",
+    });
   });
 });
 
@@ -462,6 +688,24 @@ describe("restoreDotsFromUrl", () => {
     expect(restoreDotsFromUrl(title, url)).toBe("Claude Opus 4.7 Released");
   });
 
+  it("v-prefix を保ったまま版番号を復元する", () => {
+    expect(
+      restoreDotsFromUrl(
+        "Some Tool v4 7 Released",
+        "https://example.com/releases/v4-7",
+      ),
+    ).toBe("Some Tool v4.7 Released");
+  });
+
+  it("モデルサイズの単位付き数字を版番号へ変換しない", () => {
+    expect(
+      restoreDotsFromUrl(
+        "Gemma 4 12B",
+        "https://example.com/models/gemma-4-12b",
+      ),
+    ).toBe("Gemma 4 12B");
+  });
+
   it("該当パターンがない場合はタイトルをそのまま返す", () => {
     const title = "Claude is great";
     const url = "https://anthropic.com/blog/claude-is-great";
@@ -470,6 +714,77 @@ describe("restoreDotsFromUrl", () => {
 
   it("空のタイトルはそのまま返す", () => {
     expect(restoreDotsFromUrl("", "https://example.com/v1-2")).toBe("");
+  });
+});
+
+describe("restorePrereleaseQualifierFromUrl", () => {
+  it("URL と title の base version が一致するときだけ RC qualifier を復元する", () => {
+    const url = "https://github.com/ollama/ollama/releases/tag/v0.32.0-rc0";
+    expect(
+      restorePrereleaseQualifierFromUrl("Ollama v0.32.0 リリース", url),
+    ).toBe("Ollama v0.32.0-rc0 リリース");
+  });
+
+  it("qualifier が既にある title は変更しない", () => {
+    const title = "Ollama v0.32.0-rc0 release";
+    const url = "https://github.com/ollama/ollama/releases/tag/v0.32.0-rc0";
+    expect(restorePrereleaseQualifierFromUrl(title, url)).toBe(title);
+  });
+
+  it("URL の prerelease separator と大文字小文字をそのまま保持する", () => {
+    expect(
+      restorePrereleaseQualifierFromUrl(
+        "Some Tool v1.2.3 release",
+        "https://example.com/releases/tag/v1.2.3-beta.1",
+      ),
+    ).toBe("Some Tool v1.2.3-beta.1 release");
+    expect(
+      restorePrereleaseQualifierFromUrl(
+        "Some Tool v1.2.3 release",
+        "https://example.com/releases/tag/v1.2.3-RC-2",
+      ),
+    ).toBe("Some Tool v1.2.3-RC-2 release");
+  });
+
+  it("title と URL の base version が一致しない場合は推測で書き換えない", () => {
+    const title = "Ollama v0.31.0 release";
+    const url = "https://github.com/ollama/ollama/releases/tag/v0.32.0-rc0";
+    expect(restorePrereleaseQualifierFromUrl(title, url)).toBe(title);
+  });
+
+  it("URL の短い base version を長い title version の prefix に適用しない", () => {
+    const title = "Some Tool v1.2.3 release";
+    const url = "https://example.com/releases/tag/v1.2-rc1";
+    expect(restorePrereleaseQualifierFromUrl(title, url)).toBe(title);
+  });
+});
+
+describe("Research と arXiv の表示レーン", () => {
+  const arxivEntry = {
+    ...e1,
+    id: "arxiv-entry",
+    source: "arxiv-cs-ai",
+    sourceType: "paper" as const,
+    category: "research",
+    url: "https://arxiv.org/abs/2607.01234",
+  };
+  const reportEntry = {
+    ...e1,
+    id: "research-report",
+    source: "anthropic-engineering",
+    sourceType: "blog" as const,
+    category: "research",
+    url: "https://www.anthropic.com/research/example",
+  };
+
+  it("arXiv paper を専用 lane として識別する", () => {
+    expect(isArxivEntry(arxivEntry)).toBe(true);
+    expect(isResearchListingEntry(arxivEntry)).toBe(false);
+  });
+
+  it("非 arXiv の research entry は Research listing に残す", () => {
+    expect(isArxivEntry(reportEntry)).toBe(false);
+    expect(isResearchListingEntry(reportEntry)).toBe(true);
   });
 });
 
@@ -610,6 +925,26 @@ describe("entriesByTag", () => {
   });
 });
 
+describe("tag page routing", () => {
+  it("2 件以上のタグだけを静的ページとして生成する", () => {
+    expect(TAG_PAGE_MIN_ENTRIES).toBe(2);
+    expect(tagEntryCount("claude")).toBe(2);
+    expect(tagEntryCount("CLAUDE")).toBe(2);
+    expect(entriesForTagPage("claude").map((entry) => entry.id)).toEqual(["entry-001", "entry-003"]);
+    expect(entriesForTagPage("Claude").map((entry) => entry.id)).toEqual(["entry-001", "entry-003"]);
+    expect(STATIC_TAG_PAGE_TAGS).toContain("claude");
+    expect(STATIC_TAG_PAGE_TAGS).not.toContain("release");
+  });
+
+  it("低頻度タグを検索へ送り URL を安全にエンコードする", () => {
+    expect(tagHref("claude")).toBe("/t/claude");
+    expect(tagHref("release")).toBe("/search?q=release&tag=release");
+    expect(tagHrefForCount("C++", 1)).toBe("/search?q=c%2B%2B&tag=c%2B%2B");
+    expect(tagHrefForCount("C++", 2)).toBe("/t/c%2B%2B");
+    expect(tagHrefForCount("Café", 1)).toBe("/search?q=cafe&tag=cafe");
+  });
+});
+
 // ============================================================
 // adjacentInCategory
 // ============================================================
@@ -651,6 +986,8 @@ describe("isLowSignalRelease", () => {
     expect(isLowSignalRelease(rel("Zed Editor Releases v1.7.2-pre"))).toBe(true);
     expect(isLowSignalRelease(rel("v0.30.0-rc32: llama-server (#16353)"))).toBe(true);
     expect(isLowSignalRelease(rel("Some Tool v2.0.0-beta1"))).toBe(true);
+    expect(isLowSignalRelease(rel("Some Tool v2.0.0-beta.1"))).toBe(true);
+    expect(isLowSignalRelease(rel("Some Tool v2.0.0-RC-2"))).toBe(true);
   });
 
   it("末尾が PR 番号 (#NNNN) の per-commit CI 項目を検出する", () => {

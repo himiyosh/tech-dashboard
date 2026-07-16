@@ -4,6 +4,7 @@ import EntryCard from "./EntryCard.astro";
 import {
   jstDayLabel,
   CATEGORY_META,
+  isPublishableEntry,
   type NormalizedEntry,
 } from "../lib/data.ts";
 
@@ -29,10 +30,10 @@ const catSummary = CATEGORY_META
   .sort((a, b) => b.n - a.n);
 
 const important = highlightImportant
-  ? items.filter((e) => e.importance === 3)
+  ? items.filter((e) => e.importance === 3 && isPublishableEntry(e))
   : [];
 const rest = highlightImportant
-  ? items.filter((e) => e.importance !== 3)
+  ? items.filter((e) => e.importance !== 3 || !isPublishableEntry(e))
   : items;
 
 const label = jstDayLabel(dayKey, now);

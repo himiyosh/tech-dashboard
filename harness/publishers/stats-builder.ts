@@ -27,17 +27,29 @@ interface ArchiveMonthShape {
   entries: NormalizedEntry[];
 }
 
+interface StatsInput {
+  entries: NormalizedEntry[];
+  generatedAt?: string;
+}
+
 function statsEntryKey(entry: NormalizedEntry): string {
   return canonicalUrlKey(entry.url) ?? entry.url ?? entry.id;
 }
 
-async function loadAllEntries(dataDir: string): Promise<NormalizedEntry[]> {
+async function loadAllEntries(dataDir: string): Promise<StatsInput> {
   const all = new Map<string, NormalizedEntry>();
+  let generatedAt: string | undefined;
 
   // Live index
   try {
     const raw = await readFile(join(dataDir, "index.json"), "utf8");
-    const parsed = JSON.parse(raw) as { entries: NormalizedEntry[] };
+    const parsed = JSON.parse(raw) as { generatedAt?: unknown; entries: NormalizedEntry[] };
+    if (
+      typeof parsed.generatedAt === "string" &&
+      Number.isFinite(Date.parse(parsed.generatedAt))
+    ) {
+      generatedAt = parsed.generatedAt;
+    }
     for (const e of parsed.entries) all.set(statsEntryKey(e), e);
   } catch {
     /* missing on first run */
@@ -66,12 +78,12 @@ async function loadAllEntries(dataDir: string): Promise<NormalizedEntry[]> {
     /* no archive dir yet */
   }
 
-  return [...all.values()];
+  return { entries: [...all.values()], generatedAt };
 }
 
 export async function writeStats(dataDir: string): Promise<string> {
-  const entries = await loadAllEntries(dataDir);
-  const payload: StatsPayload = buildStatsPayload(entries);
+  const { entries, generatedAt } = await loadAllEntries(dataDir);
+  const payload: StatsPayload = buildStatsPayload(entries, generatedAt);
 
   const outPath = join(dataDir, "stats.json");
   await mkdir(dataDir, { recursive: true });

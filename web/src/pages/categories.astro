@@ -2,6 +2,7 @@
 import Portal from "../layouts/Portal.astro";
 import PageHero from "../components/PageHero.astro";
 import Sidebar from "../components/Sidebar.astro";
+import LanguageFallbackBadge from "../components/LanguageFallbackBadge.astro";
 import {
   MAIN_TIMELINE_ENTRIES,
   CATEGORY_META,
@@ -108,7 +109,8 @@ const categoryPanels = CATEGORY_META.map((cat) => {
     sourceCount,
     delta: pctDelta(last7, prev7),
     latest,
-    latestTitle: latest ? titleForLangWithFallback(latest, "ja").text : "",
+    latestTitleJa: latest ? titleForLangWithFallback(latest, "ja") : null,
+    latestTitleEn: latest ? titleForLangWithFallback(latest, "en") : null,
     daily,
     topTypes,
   };
@@ -246,10 +248,21 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
                     <span>{cat.daily.at(-1)?.label}</span>
                   </div>
 
-                  {cat.latest && (
+                  {cat.latest && cat.latestTitleJa && cat.latestTitleEn && (
                     <div class="cat-latest">
                       <span>Latest</span>
-                      <strong>{cat.latestTitle}</strong>
+                      <strong class="i18n-ja" lang={cat.latestTitleJa.fallbackLang ?? "ja"}>
+                        {cat.latestTitleJa.isFallback && cat.latestTitleJa.fallbackLang && (
+                          <LanguageFallbackBadge fallbackLang={cat.latestTitleJa.fallbackLang} variant="title" />
+                        )}
+                        {cat.latestTitleJa.text}
+                      </strong>
+                      <strong class="i18n-en" lang={cat.latestTitleEn.fallbackLang ?? "en"}>
+                        {cat.latestTitleEn.isFallback && cat.latestTitleEn.fallbackLang && (
+                          <LanguageFallbackBadge fallbackLang={cat.latestTitleEn.fallbackLang} variant="title" />
+                        )}
+                        {cat.latestTitleEn.text}
+                      </strong>
                     </div>
                   )}
 

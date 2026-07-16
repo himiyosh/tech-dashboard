@@ -6,17 +6,17 @@ import EntryCard from "../../components/EntryCard.astro";
 import Pager from "../../components/Pager.astro";
 import TimelineRightRail from "../../components/TimelineRightRail.astro";
 import {
-  ALL_ENTRIES,
   PAGE_SIZE,
+  STATIC_TAG_PAGE_TAGS,
+  entriesForTagPage,
   groupByDay,
   jstDayLabel,
   relativeTime,
+  tagHref,
 } from "../../lib/data.ts";
 
 export function getStaticPaths() {
-  const tags = new Set<string>();
-  for (const e of ALL_ENTRIES) for (const t of e.tags) tags.add(t);
-  return [...tags].map((tag) => ({
+  return STATIC_TAG_PAGE_TAGS.map((tag) => ({
     params: { tag },
     props: { tag },
   }));
@@ -27,12 +27,13 @@ interface Props {
 }
 
 const { tag } = Astro.props as Props;
-const all = ALL_ENTRIES.filter((e) => e.tags.includes(tag));
+const all = entriesForTagPage(tag);
 const currentPage = 1;
 const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
 const entries = all.slice(0, PAGE_SIZE);
 const dayGroups = groupByDay(entries);
 const now = new Date();
+const tagBaseHref = tagHref(tag);
 
 const breadcrumb = [
   { label: "Home", href: "/" },
@@ -58,7 +59,7 @@ const breadcrumb = [
       { label: "Total", value: all.length },
       { label: "Showing", value: entries.length },
       { label: "Page", value: `${currentPage}/${totalPages}` },
-      { label: "Updated", value: relativeTime(ALL_ENTRIES[0]?.collectedAt ?? ALL_ENTRIES[0]?.publishedAt ?? null, now) },
+      { label: "Updated", value: relativeTime(all[0]?.collectedAt ?? all[0]?.publishedAt ?? null, now) },
     ]}
   />
 
@@ -90,7 +91,7 @@ const breadcrumb = [
       <Pager
         currentPage={currentPage}
         totalPages={totalPages}
-        baseHref={`/t/${tag}`}
+        baseHref={tagBaseHref}
       />
     </main>
 

@@ -1,22 +1,34 @@
 ---
 import {
   CATEGORY_META,
+  categoryLabel,
   entryHref,
+  isPublishableEntry,
   jstDateKey,
-  summaryForLang,
+  summaryForLangWithFallback,
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
+import {
+  dailyBoardBaseDayKey,
+  dailyBoardEmptyReason,
+  dailyDisplayCount,
+  dailyEntryCount,
+} from "../lib/daily-summary.ts";
 import { sourceLabel } from "../lib/source-meta.ts";
 import type { DayBucket, StatsPayload } from "../lib/stats.ts";
+import LanguageFallbackBadge from "./LanguageFallbackBadge.astro";
 
 export interface Props {
+  /** All listable lanes used for activity totals and category statistics. */
   entries: readonly NormalizedEntry[];
+  /** Main Timeline candidates used for the decision board. */
+  boardEntries?: readonly NormalizedEntry[];
   stats?: StatsPayload;
   now?: Date;
 }
 
-const { entries, stats, now = new Date() } = Astro.props;
+const { entries, boardEntries = entries, stats, now = new Date() } = Astro.props;
 
 // Last 7 days window (JST).
 const days: string[] = [];
@@ -27,30 +39,50 @@ for (let i = 6; i >= 0; i--) {
 const todayKey = days[days.length - 1];
 const yKey = days[days.length - 2];
 
+const liveEntriesByDay = new Map<string, NormalizedEntry[]>();
+for (const entry of entries) {
+  const key = jstDateKey(entry.publishedAt);
+  const bucket = liveEntriesByDay.get(key) ?? [];
+  bucket.push(entry);
+  liveEntriesByDay.set(key, bucket);
+}
 const liveCountByDay = (key: string): number =>
-  entries.filter((entry) => jstDateKey(entry.publishedAt) === key).length;
+  liveEntriesByDay.get(key)?.length ?? 0;
+const currentDayLiveCount = dailyEntryCount(
+  entries,
+  todayKey,
+  (entry) => jstDateKey(entry.publishedAt),
+);
+const liveCategoryCountsByDay = (key: string): Record<string, number> => {
+  const counts: Record<string, number> = {};
+  for (const entry of liveEntriesByDay.get(key) ?? []) {
+    counts[entry.category] = (counts[entry.category] ?? 0) + 1;
+  }
+  return counts;
+};
 const statsDayByDate = new Map<string, DayBucket>(
   (stats?.byDay ?? []).map((dayBucket) => [dayBucket.date, dayBucket]),
 );
 
 // Per-day totals for sparkline. stats.json includes archive-backed history;
-// live entries remain the fallback for local fixtures or old deployments.
+// the partial current JST day uses live entries because stats.byDay is
+// archive-backed and grouped before the current publisher run completes.
 const perDay = days.map((key) => {
   const statsDay = statsDayByDate.get(key);
+  const isCurrentDay = key === todayKey;
+  const liveCount = isCurrentDay ? currentDayLiveCount : liveCountByDay(key);
   return {
     key,
-    count: statsDay?.count ?? liveCountByDay(key),
-    byCategory: statsDay?.byCategory,
+    count: dailyDisplayCount(key, todayKey, liveCount, statsDay?.count),
+    byCategory: isCurrentDay
+      ? liveCategoryCountsByDay(key)
+      : statsDay?.byCategory,
   };
 });
 const maxDay = Math.max(1, ...perDay.map((d) => d.count));
 const todayCount = perDay[perDay.length - 1]?.count ?? 0;
 const yesterdayCount = perDay[perDay.length - 2]?.count ?? 0;
 const weekCount = perDay.reduce((total, day) => total + day.count, 0);
-
-// Today's / yesterday's entries.
-const today = entries.filter((e) => jstDateKey(e.publishedAt) === todayKey);
-const yesterday = entries.filter((e) => jstDateKey(e.publishedAt) === yKey);
 
 // Per-category totals across the 7 days.
 const weekKeys = new Set(days);
@@ -70,14 +102,53 @@ if (catCounts.size === 0) {
 }
 const catRows = CATEGORY_META
   .filter((c) => catCounts.has(c.slug))
-  .map((c) => ({ ...c, n: catCounts.get(c.slug) ?? 0 }))
+  .map((c) => ({
+    ...c,
+    n: catCounts.get(c.slug) ?? 0,
+    displayName: c.slug === "research" ? "Research + arXiv" : c.shortLabel,
+    href: c.slug === "research" ? "/categories/" : `/c/${c.slug}`,
+  }))
   .sort((a, b) => b.n - a.n)
   .slice(0, 8);
 
-// "Today" base = latest day that actually has entries (falls back 1 day if today is empty).
-const baseDayKey =
-  today.length > 0 ? todayKey : yesterday.length > 0 ? yKey : todayKey;
-const baseDayEntries = entries.filter((e) => jstDateKey(e.publishedAt) === baseDayKey);
+// Activity totals cover every lane, but the decision board must select its date
+// from Timeline candidates so arXiv-only activity cannot pin it to an empty day.
+const baseDayKey = dailyBoardBaseDayKey(
+  todayKey,
+  yKey,
+  dailyEntryCount(boardEntries, todayKey, (entry) => jstDateKey(entry.publishedAt)),
+  dailyEntryCount(boardEntries, yKey, (entry) => jstDateKey(entry.publishedAt)),
+);
+const baseDayBoardEntries = boardEntries.filter(
+  (entry) => jstDateKey(entry.publishedAt) === baseDayKey,
+);
+const baseDayIsToday = baseDayKey === todayKey;
+const baseDayDate = new Date(`${baseDayKey}T00:00:00+09:00`);
+const baseDayLabelJa = new Intl.DateTimeFormat("ja-JP", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  weekday: "short",
+}).format(baseDayDate);
+const baseDayLabelEn = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  weekday: "long",
+}).format(baseDayDate);
+const currentDayDate = new Date(`${todayKey}T00:00:00+09:00`);
+const currentDayLabelJa = new Intl.DateTimeFormat("ja-JP", {
+  timeZone: "Asia/Tokyo",
+  month: "numeric",
+  day: "numeric",
+}).format(currentDayDate);
+const currentDayLabelEn = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Tokyo",
+  month: "short",
+  day: "numeric",
+}).format(currentDayDate);
 
 // 主要な更新内容: importance desc → release/changelog 優先 → publishedAt desc で上位 12 件
 const typeWeight = (t: string): number =>
@@ -98,7 +169,8 @@ function releaseStem(title: string): string {
   return stem;
 }
 
-const sortedToday = [...baseDayEntries].sort((a, b) => {
+const publishableBaseDayEntries = baseDayBoardEntries.filter(isPublishableEntry);
+const sortedToday = [...publishableBaseDayEntries].sort((a, b) => {
   const imp = (b.importance ?? 1) - (a.importance ?? 1);
   if (imp !== 0) return imp;
   const tw = typeWeight(b.sourceType) - typeWeight(a.sourceType);
@@ -130,30 +202,41 @@ for (const e of sortedToday) {
 }
 
 const boardItems = topUpdates;
+const boardEmptyReason = dailyBoardEmptyReason(
+  baseDayBoardEntries.length,
+  boardItems.length,
+);
 
 const catColorOf = (slug: string): string =>
   CATEGORY_META.find((c) => c.slug === slug)?.color ?? "#8a847e";
 
-const todayDelta =
-  yesterdayCount === 0 ? 0 : Math.round(((todayCount - yesterdayCount) / yesterdayCount) * 100);
 ---
 
-<section class="digest">
+<section
+  class="digest"
+  data-daily-summary
+  data-base-day={baseDayKey}
+  data-day-scope={baseDayIsToday ? "today" : "latest"}
+>
   <div class="digest-head">
     <div class="title">
       <span class="eyebrow">Daily Summary</span>
-      <h2 class="i18n-ja">今日の更新</h2>
-      <h2 class="i18n-en" lang="en">Today's Updates</h2>
+      <h2 class="i18n-ja">{baseDayIsToday ? "今日の更新" : "直近の更新"}</h2>
+      <h2 class="i18n-en" lang="en">{baseDayIsToday ? "Today's Updates" : "Latest Updates"}</h2>
+      <time class="digest-date" datetime={baseDayKey} data-date-scope="article">
+        <span class="i18n-ja">対象記事日 · {baseDayLabelJa}</span>
+        <span class="i18n-en" lang="en">Article date · {baseDayLabelEn}</span>
+      </time>
     </div>
     <div class="kpis">
       <div class="kpi">
-        <span class="k">Today</span>
+        <span class="k i18n-ja">本日ここまで</span>
+        <span class="k i18n-en" lang="en">Today so far</span>
+        <time class="kpi-date" datetime={todayKey} data-date-scope="current">
+          <span class="i18n-ja">現在日 JST · {currentDayLabelJa}</span>
+          <span class="i18n-en" lang="en">Current day JST · {currentDayLabelEn}</span>
+        </time>
         <span class="v">{todayCount}</span>
-        {yesterdayCount > 0 && (
-          <span class="d" data-trend={todayDelta > 0 ? "up" : todayDelta < 0 ? "down" : "flat"}>
-            {todayDelta > 0 ? "▲" : todayDelta < 0 ? "▼" : "—"} {Math.abs(todayDelta)}%
-          </span>
-        )}
       </div>
       <div class="kpi">
         <span class="k">Yesterday</span>
@@ -168,10 +251,13 @@ const todayDelta =
 
   <div class="digest-body">
     <div class="panel spark">
-      <div class="panel-title">Last 7 days</div>
+      <div class="panel-title">
+        <span>Last 7 days</span>
+        <span class="panel-sub">{weekCount} total</span>
+      </div>
       <div class="bars" role="group" aria-label={`Last 7 days article counts, total ${weekCount}`}>
-        {perDay.map((d) => (
-          <div class="bar" title={`${d.key}: ${d.count}`}>
+        {perDay.map((d, i) => (
+          <div class="bar" title={`${d.key}: ${d.count}`} style={`--bar-index:${i}`}>
             <div class="fill" style={`height:${Math.round((d.count / maxDay) * 100)}%`}></div>
             <span class="n">{d.count}</span>
           </div>
@@ -185,8 +271,8 @@ const todayDelta =
         ))}
       </div>
       <p class="retention-note">
-        <span class="i18n-ja">過去日のカウントは保持ポリシー（per-source cap / half-life）により縮む場合があります。直近 1〜2 日の活動量の目安としてご覧ください。</span>
-        <span class="i18n-en" lang="en">Past-day counts may shrink over time due to retention (per-source cap / half-life). Use this chart as a rough gauge of the last 1-2 days.</span>
+        <span class="i18n-ja">本日は JST ライブ、過去日は archive。Research は arXiv 込み。過去値は保持ポリシーで縮む場合があります。</span>
+        <span class="i18n-en" lang="en">Today uses live JST; past days use archive totals. Research includes arXiv. Retention may shrink past counts.</span>
       </p>
       <table class="sr-only">
         <caption>Last 7 days article counts</caption>
@@ -202,13 +288,21 @@ const todayDelta =
     </div>
 
     <div class="panel cats">
-      <div class="panel-title">Top categories · 7d</div>
+      <div class="panel-title">
+        <span>Top categories + lanes</span>
+        <span class="panel-sub">7d</span>
+      </div>
       <ul class="cat-list">
         {catRows.map((c) => (
           <li>
-            <a class="cat-link" href={`/c/${c.slug}`} style={`--cat-color:${c.color}`}>
+            <a
+              class="cat-link"
+              href={c.href}
+              style={`--cat-color:${c.color}`}
+              title={c.slug === "research" ? "Combined Research and arXiv activity" : c.name}
+            >
               <span class="dot"></span>
-              <span class="name">{c.name}</span>
+              <span class="name">{c.displayName}</span>
               <span class="bar-wrap">
                 <span
                   class="bar-fill"
@@ -224,16 +318,34 @@ const todayDelta =
 
     <div class="panel updates ticker-panel">
       <div class="panel-title">
-        <span class="i18n-ja">主要な更新</span>
-        <span class="i18n-en" lang="en">Top stories</span>
-        <span class="panel-sub">{baseDayKey.slice(5).replace("-", "/")} · {boardItems.length} 件</span>
+        <span class="i18n-ja">{baseDayIsToday ? "今日の主要な更新" : "直近の主要な更新"}</span>
+        <span class="i18n-en" lang="en">{baseDayIsToday ? "Today's top stories" : "Latest top stories"}</span>
+        <span class="panel-sub">
+          <span class="i18n-ja">{boardItems.length} 件</span>
+          <span class="i18n-en" lang="en">{boardItems.length} items</span>
+        </span>
         <span class="badge-legend">
           <span class="t-tag imp">★</span><span class="legend-label i18n-ja">重要</span><span class="legend-label i18n-en" lang="en">Important</span>
           <span class="t-tag rel">REL</span><span class="legend-label i18n-ja">リリース</span><span class="legend-label i18n-en" lang="en">Release</span>
         </span>
       </div>
-      {boardItems.length === 0 ? (
-        <p class="empty"><span class="i18n-ja">まだ更新がありません。</span><span class="i18n-en" lang="en">No updates yet.</span></p>
+      {boardEmptyReason ? (
+        <p
+          class="empty"
+          data-empty-reason={boardEmptyReason}
+        >
+          {boardEmptyReason === "summary-pending" ? (
+            <>
+              <span class="i18n-ja">AI 要約済みの主要記事はまだありません。新着は下のタイムラインで確認できます。</span>
+              <span class="i18n-en" lang="en">No summarized top stories yet. New entries remain available in the timeline below.</span>
+            </>
+          ) : (
+            <>
+              <span class="i18n-ja">まだ更新がありません。</span>
+              <span class="i18n-en" lang="en">No updates yet.</span>
+            </>
+          )}
+        </p>
       ) : (
         <ol class="board">
           {boardItems.map((item, i) => {
@@ -242,14 +354,17 @@ const todayDelta =
             const isImp = e.importance === 3;
             const jaResult = titleForLangWithFallback(e, "ja");
             const enResult = titleForLangWithFallback(e, "en");
-            const summaryJa = summaryForLang(e, "ja");
-            const summaryEn = summaryForLang(e, "en");
+            const summaryJa = summaryForLangWithFallback(e, "ja");
+            const summaryEn = summaryForLangWithFallback(e, "en");
             const num = String(i + 1).padStart(2, "0");
             return (
-              <li style={`--cat-color:${catColorOf(e.category)}`}>
+              <li
+                style={`--cat-color:${catColorOf(e.category)}`}
+                data-summary-state="ready"
+              >
                 <a href={entryHref(e)} class="b-row">
                   <span class="b-num">{num}</span>
-                  <span class="b-cat">{e.category}</span>
+                  <span class="b-cat" title={categoryLabel(e.category)}>{categoryLabel(e.category)}</span>
                   <span class="b-tags">
                     {isImp && <span class="t-tag imp">★</span>}
                     {isRel && <span class="t-tag rel">REL</span>}
@@ -261,18 +376,42 @@ const todayDelta =
                     class="b-title i18n-ja"
                     lang={jaResult.fallbackLang === "en" ? "en" : "ja"}
                   >
-                    {jaResult.isFallback && <span class="b-fallback-mark">EN</span>}
+                    {jaResult.isFallback && jaResult.fallbackLang && (
+                      <LanguageFallbackBadge fallbackLang={jaResult.fallbackLang} variant="title" />
+                    )}
                     {jaResult.text}
                   </span>
                   <span
                     class="b-title i18n-en"
                     lang={enResult.fallbackLang === "ja" ? "ja" : "en"}
                   >
-                    {enResult.isFallback && <span class="b-fallback-mark">JA</span>}
+                    {enResult.isFallback && enResult.fallbackLang && (
+                      <LanguageFallbackBadge fallbackLang={enResult.fallbackLang} variant="title" />
+                    )}
                     {enResult.text}
                   </span>
-                  {summaryJa && <span class="b-summary i18n-ja">{summaryJa}</span>}
-                  {summaryEn && <span class="b-summary i18n-en" lang="en">{summaryEn}</span>}
+                  {summaryJa.text && (
+                    <span
+                      class="b-summary i18n-ja"
+                      lang={summaryJa.fallbackLang === "en" ? "en" : "ja"}
+                    >
+                      {summaryJa.isFallback && summaryJa.fallbackLang && (
+                        <LanguageFallbackBadge fallbackLang={summaryJa.fallbackLang} variant="summary" />
+                      )}
+                      {summaryJa.text}
+                    </span>
+                  )}
+                  {summaryEn.text && (
+                    <span
+                      class="b-summary i18n-en"
+                      lang={summaryEn.fallbackLang === "ja" ? "ja" : "en"}
+                    >
+                      {summaryEn.isFallback && summaryEn.fallbackLang && (
+                        <LanguageFallbackBadge fallbackLang={summaryEn.fallbackLang} variant="summary" />
+                      )}
+                      {summaryEn.text}
+                    </span>
+                  )}
                   <span class="b-src">[{sourceLabel(e.source)}]</span>
                 </a>
               </li>
@@ -289,7 +428,7 @@ const todayDelta =
     border: 1px solid var(--border);
     border-radius: 12px;
     background: linear-gradient(180deg, rgba(94,234,212,0.035), transparent 34%), var(--surface);
-    padding: 16px 18px 18px;
+    padding: 14px 16px 16px;
     margin-bottom: 18px;
     overflow: hidden;
     min-width: 0;
@@ -307,16 +446,29 @@ const todayDelta =
   }
   .digest-head {
     display: flex; justify-content: space-between; align-items: flex-end;
-    gap: 16px; flex-wrap: wrap; margin-bottom: 16px;
+    gap: 14px; flex-wrap: wrap; margin-bottom: 12px;
   }
   .title .eyebrow {
     font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
     color: var(--accent); font-weight: 700; display: block; margin-bottom: 4px;
   }
   .title h2 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
-  .kpis { display: flex; gap: 22px; }
+  .digest-date {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+  .kpis { display: flex; gap: 18px; }
   .kpi { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
   .kpi .k { font-size: 10.5px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .kpi-date {
+    color: var(--muted-2);
+    font-size: 9px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
   .kpi .v { font-size: 22px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; line-height: 1; }
   .kpi .d { font-size: 11px; font-family: ui-monospace, monospace; }
   .kpi .d[data-trend="up"] { color: var(--success); }
@@ -326,7 +478,7 @@ const todayDelta =
   .digest-body {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 10px;
     min-width: 0;
   }
   .digest-body .updates {
@@ -339,12 +491,12 @@ const todayDelta =
     background: color-mix(in srgb, var(--bg-2) 70%, transparent);
     border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
     border-radius: 8px;
-    padding: 11px 12px;
+    padding: 10px 11px;
     min-width: 0;
   }
   .panel-title {
     font-size: 10.5px; color: var(--muted); letter-spacing: 0.08em;
-    text-transform: uppercase; font-weight: 600; margin-bottom: 10px;
+    text-transform: uppercase; font-weight: 600; margin-bottom: 8px;
     display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
   }
   .panel-title .panel-sub {
@@ -367,9 +519,10 @@ const todayDelta =
   }
   .spark .bars {
     display: flex; align-items: flex-end; gap: 4px;
-    flex: 1;
-    min-height: 72px;
-    margin-top: 12px;
+    flex: none;
+    height: 64px;
+    min-height: 64px;
+    margin-top: 10px;
   }
   .spark .bar {
     flex: 1; align-self: stretch; position: relative;
@@ -381,50 +534,75 @@ const todayDelta =
     background: linear-gradient(180deg, var(--accent), var(--accent-2));
     border-radius: 3px 3px 0 0;
     min-height: 2px;
+    transform-origin: 50% 100%;
   }
   .spark .bar:last-child .fill {
     background: var(--accent);
     box-shadow: 0 0 0 1px var(--accent-bg);
   }
   .spark .n {
-    position: absolute; top: -14px;
+    position: absolute; top: -12px;
     font-size: 9.5px; color: var(--muted-2);
     font-family: ui-monospace, monospace;
   }
   .spark .axis {
     display: flex; justify-content: space-between;
-    margin-top: 6px; font-size: 9.5px; color: var(--muted-2);
+    margin-top: 4px; font-size: 9.5px; color: var(--muted-2);
     font-family: ui-monospace, monospace;
   }
   .spark .axis .today { color: var(--accent); font-weight: 700; }
 
   .retention-note {
-    margin-top: 8px;
-    font-size: 10.5px;
+    margin-top: 6px;
+    font-size: 10px;
     color: var(--muted-2);
-    line-height: 1.45;
+    line-height: 1.35;
   }
 
-  .cat-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .cat-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px 8px;
+  }
   .cat-link {
     display: grid;
-    grid-template-columns: 8px minmax(0, 1fr) minmax(32px, 56px) 28px;
+    grid-template-columns: 8px minmax(0, 1fr) 24px;
+    grid-template-areas: "dot name number";
     align-items: center;
-    gap: 8px;
-    padding: 4px 6px;
+    column-gap: 4px;
+    padding: 4px 4px 6px;
     border-radius: 5px;
     color: var(--text-2);
     text-decoration: none;
-    font-size: 12px;
+    font-size: 11.5px;
     transition: background 0.12s;
     min-width: 0;
+    position: relative;
   }
   .cat-link:hover { background: var(--surface); }
-  .cat-link .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cat-color, var(--muted)); }
-  .cat-link .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cat-link .dot {
+    grid-area: dot;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--cat-color, var(--muted));
+  }
+  .cat-link .name {
+    grid-area: name;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .cat-link .bar-wrap {
-    height: 4px; border-radius: 2px; background: var(--bg);
-    overflow: hidden; width: 100%;
+    position: absolute;
+    left: 17px;
+    right: 31px;
+    bottom: 3px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--bg);
+    overflow: hidden;
   }
   .cat-link .bar-fill {
     display: block; height: 100%;
@@ -433,9 +611,35 @@ const todayDelta =
     min-width: 2px;
   }
   .cat-link .n {
+    grid-area: number;
     text-align: right; font-variant-numeric: tabular-nums;
     color: var(--cat-color, var(--text));
     font-family: ui-monospace, monospace; font-size: 11px; font-weight: 700;
+  }
+
+  .digest[data-chart-state="idle"] .spark .fill {
+    opacity: 0.28;
+    transform: scaleY(0.04);
+  }
+  .digest[data-chart-state="idle"] .spark .n {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  .digest[data-chart-state="visible"] .spark .fill {
+    animation: digest-bar-rise 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--bar-index, 0) * 42ms);
+  }
+  .digest[data-chart-state="visible"] .spark .n {
+    animation: digest-count-in 240ms ease-out both;
+    animation-delay: calc(120ms + var(--bar-index, 0) * 42ms);
+  }
+  @keyframes digest-bar-rise {
+    from { opacity: 0.28; transform: scaleY(0.04); }
+    to { opacity: 1; transform: scaleY(1); }
+  }
+  @keyframes digest-count-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .updates .empty { color: var(--muted); font-size: 12px; }
@@ -469,7 +673,7 @@ const todayDelta =
   .board > li:last-child { border-bottom: none; }
   .board .b-row {
     display: grid;
-    grid-template-columns: 22px 84px 68px minmax(0, 1fr) auto;
+    grid-template-columns: 22px 118px 68px minmax(0, 1fr) auto;
     grid-template-areas:
       "num cat tags title src"
       "num cat tags summary summary";
@@ -507,7 +711,12 @@ const todayDelta =
     border: 1px solid color-mix(in srgb, var(--cat-color, #7cff9a) 50%, transparent);
     border-radius: 3px;
     background: color-mix(in srgb, var(--cat-color, #7cff9a) 8%, transparent);
-    min-width: 78px; text-align: center;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .board .b-tags {
     grid-area: tags;
@@ -529,19 +738,6 @@ const todayDelta =
     font-style: italic;
     text-shadow: none;
   }
-  .board .b-fallback-mark {
-    display: inline-block;
-    margin-right: 6px;
-    font-size: 9.5px; font-weight: 700;
-    letter-spacing: 0.06em;
-    padding: 1px 4px;
-    border-radius: 3px;
-    color: #5ab075;
-    background: rgba(124,255,154,0.08);
-    border: 1px solid rgba(124,255,154,0.25);
-    text-shadow: none;
-    vertical-align: 0.12em;
-  }
   .board .b-src {
     grid-area: src;
     font-size: 10.5px;
@@ -559,7 +755,16 @@ const todayDelta =
   }
   @media (max-width: 720px) {
     /* Let the LED panel use as much horizontal space as possible. */
-    .digest { padding: 12px 10px 12px; border-radius: 12px; }
+    .digest { padding: 12px 10px; border-radius: 12px; }
+    .digest-head { gap: 10px; margin-bottom: 10px; }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      width: 100%;
+    }
+    .kpi .v { font-size: 20px; }
+    .panel { padding: 9px 10px; }
     .digest-body { gap: 10px; }
     .updates.panel {
       padding: 10px 0;
@@ -594,6 +799,9 @@ const todayDelta =
       padding: 1px 5px;
       font-size: 9.5px;
       letter-spacing: 0.08em;
+      max-width: min(42vw, 128px);
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
     .board .b-tags { grid-area: tags; justify-self: end; align-self: center; }
@@ -615,9 +823,12 @@ const todayDelta =
   .ticker-panel .panel-title .panel-sub::before {
     content: "● ";
     color: #ff3b30;
-    animation: blink 1.2s steps(2, end) infinite;
+    animation: board-snapshot-pulse 900ms ease-out 1 both;
   }
-  @keyframes blink { 50% { opacity: 0.25; } }
+  @keyframes board-snapshot-pulse {
+    0% { opacity: 0.25; }
+    55% { opacity: 1; }
+  }
 
   .ticker {
     position: relative;
@@ -654,6 +865,12 @@ const todayDelta =
     to   { transform: translateX(-50%); }
   }
   @media (prefers-reduced-motion: reduce) {
+    .digest[data-chart-state] .spark .fill,
+    .digest[data-chart-state] .spark .n {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
     .ticker-panel .panel-title .panel-sub::before {
       animation: none;
     }
@@ -739,3 +956,26 @@ const todayDelta =
   }
   .hi-list a:hover { background: var(--surface); color: var(--text); }
 </style>
+
+<script>
+  const digest = document.querySelector<HTMLElement>("[data-daily-summary]");
+
+  if (digest) {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (prefersReducedMotion || !("IntersectionObserver" in window)) {
+      digest.dataset.chartState = "visible";
+    } else {
+      digest.dataset.chartState = "idle";
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry?.isIntersecting) return;
+          digest.dataset.chartState = "visible";
+          observer.disconnect();
+        },
+        { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
+      );
+      observer.observe(digest);
+    }
+  }
+</script>

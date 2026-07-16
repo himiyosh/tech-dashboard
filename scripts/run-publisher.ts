@@ -294,6 +294,9 @@ class DeferredKeyValueBinding implements KeyValueBinding {
       value: string,
       options?: { expirationTtl?: number },
     ): Promise<void> {
+      // Publisher telemetry is committed in data/index.json.health. The Free
+      // bridge intentionally permits only og.v1 writes (R-026), so heartbeat
+      // KV writes from the former Worker runtime are discarded here.
       if (key === "heartbeat.v1") return;
       if (key !== "og.v1") {
         throw new Error(`publisher refused deferred KV write for key ${key}`);
@@ -613,8 +616,9 @@ export async function runPublisherCli(
     OG_BUDGET_PER_RUN: "1",
     BODY_QUEUE: new DeferredQueueBatchBinding("body", effects),
     ENABLE_BODY_QUEUE: "1",
-    BODY_ENQUEUE_MAX_NEW: "10",
-    BODY_LOOKUP_CAP: "10",
+    ENRICHMENT_ENQUEUE_MAX_TOTAL: "35",
+    BODY_ENQUEUE_MAX_NEW: "35",
+    BODY_LOOKUP_CAP: "35",
     BODY_RETENTION_DAYS: "30",
   };
   const result = await (dependencies.runHarness ?? runHarness)(publisherEnv, {

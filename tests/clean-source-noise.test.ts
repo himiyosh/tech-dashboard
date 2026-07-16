@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { NormalizedEntry } from "../harness/types.ts";
 import {
   acquireWriteTransactionLock,
+  buildMigrationArchiveMonthPayload,
   buildOriginalLiveAliases,
   buildMigrationStatsPayload,
   dedupeByCanonical,
@@ -253,6 +254,56 @@ describe("clean-source-noise validation", () => {
 });
 
 describe("clean-source-noise archive migration", () => {
+  it("preserves the archive clock when migration content is unchanged", () => {
+    const archivedEntry = entry({
+      archiveTier: "warm",
+      summaryJa: "日本語要約",
+      summaryEn: "English summary",
+    });
+    const current = {
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      month: "2026-06",
+      count: 1,
+      entries: [archivedEntry],
+    };
+
+    const payload = buildMigrationArchiveMonthPayload(
+      current,
+      "2026-06",
+      current.entries,
+      "2026-07-15T00:00:00.000Z",
+    );
+
+    expect(payload.generatedAt).toBe(current.generatedAt);
+    expect(payload.entries).toEqual(current.entries);
+  });
+
+  it("advances the archive clock when migration content changes", () => {
+    const archivedEntry = entry({
+      archiveTier: "warm",
+      summaryJa: "日本語要約",
+      summaryEn: "English summary",
+      tags: ["community"],
+    });
+    const current = {
+      generatedAt: "2026-07-01T00:00:00.000Z",
+      month: "2026-06",
+      count: 1,
+      entries: [archivedEntry],
+    };
+    const changed = [{ ...archivedEntry, tags: ["agent", "community"] }];
+
+    const payload = buildMigrationArchiveMonthPayload(
+      current,
+      "2026-06",
+      changed,
+      "2026-07-15T00:00:00.000Z",
+    );
+
+    expect(payload.generatedAt).toBe("2026-07-15T00:00:00.000Z");
+    expect(payload.entries).toEqual(changed);
+  });
+
   it("synchronizes tags for matching live and archive entries", () => {
     const live = entry({
       id: "shared",

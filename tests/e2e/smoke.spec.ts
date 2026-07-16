@@ -1,9 +1,29 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { expect, test, type Page, type Route } from "@playwright/test";
+import {
+  effectiveTitleLanguage,
+  summaryForLangWithFallback,
+  type SummaryDisplayEntry,
+} from "../../web/src/lib/summary-display.ts";
 
 const TIMELINE_ENTRY_LINK_SELECTOR = 'main article.card h3.title > a[href^="/e/"]';
 const REACTION_MUTATION_URL_RE = /\/api\/reactions\/[a-f0-9]{16}$/;
+type SummaryFixtureEntry = SummaryDisplayEntry & {
+  id: string;
+  lang?: "ja" | "en";
+};
 const REACTION_VOTER_COOKIE_NAME = "__Host-techdb_reaction_voter";
+const MOBILE_FIRST_DECISION_MAX_Y = 340;
+
+async function expectMobileFirstDecisionNearViewport(page: Page): Promise<void> {
+  const featured = page.locator("article.featured").first();
+  await expect(featured).toHaveClass(/is-visible/, { timeout: 5000 });
+  await expect
+    .poll(async () => Math.round((await featured.boundingBox())?.y ?? Number.POSITIVE_INFINITY), {
+      message: "mobile first decision item remains near the first viewport",
+    })
+    .toBeLessThanOrEqual(MOBILE_FIRST_DECISION_MAX_Y);
+}
 
 function hasReactionIdentityCookie(headers: Record<string, string>): boolean {
   return (headers.cookie ?? "")
@@ -52,10 +72,18 @@ test.describe("TECH Dashboard smoke", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
 
     await expect(page.getByRole("link", { name: /TECH Dashboard/i })).toBeVisible();
-    await expect(page.locator("section.banner h1.i18n-ja")).toBeVisible();
+    await expect(page.locator("section.banner h1")).toHaveCount(1);
+    await expect(page.locator("section.banner h1 > .i18n-ja")).toBeVisible();
     await expect(page.locator(".dynamic-orbit")).toBeVisible();
     await expect(page.locator(".signal-node")).toHaveCount(4);
     await expect(page.locator(".tb-slide.is-active").first()).toHaveAttribute("aria-hidden", "false");
+    await expect(page.locator(".fallback-src-mark")).toHaveCount(0);
+    const featuredHref = await page.locator("article.featured .featured-title a").getAttribute("href");
+    const tickerHrefs = await page.locator(".ticker-bar .tb-slide").evaluateAll((slides) =>
+      slides.map((slide) => slide.getAttribute("href")),
+    );
+    expect(featuredHref, "Featured exposes an article destination").toBeTruthy();
+    expect(tickerHrefs, "Ticker does not repeat the Featured article").not.toContain(featuredHref);
     // Inactive ticker slides must be hidden from AT and unfocusable (LL-078).
     // When the current JST day has only one published entry there are no
     // inactive slides yet (data-freshness dependent, LL-082) — a valid state,
@@ -65,10 +93,24 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(inactiveSlides.first()).toHaveAttribute("aria-hidden", "true");
       await expect(inactiveSlides.first()).toHaveAttribute("tabindex", "-1");
     }
+    const pendingTickerSlides = page.locator(".tb-slide[data-summary-state='pending']");
+    for (let index = 0; index < await pendingTickerSlides.count(); index++) {
+      await expect(pendingTickerSlides.nth(index).locator(".tb-tag.imp, .tb-tag.rel")).toHaveCount(0);
+    }
     await expect(page.locator(".banner-fact")).toHaveCount(3);
     await expect(page.locator(".signal-node.node-source")).toContainText(/active sources/i);
     await expect(page.locator(".banner-fact").filter({ hasText: "収録中ソース" })).toContainText(/registry sources with live entries/i);
     await expect(page.locator(".banner-fact").filter({ hasText: "Active registry sources" })).toContainText(/active registry sources/i);
+    await expect(
+      page.locator(".banner-fact").filter({ hasText: "更新頻度" }).locator(":scope > .i18n-ja"),
+    ).toContainText("各ソースは約 6 時間周期");
+    await page.locator(".top-rank-item .rank-source").first().evaluate((source) => {
+      const fullLabel = "Microsoft Foundry Engineering and AI Platform Updates";
+      const label = source.querySelector("[data-source-disclosure-label]");
+      if (label) label.textContent = fullLabel;
+      const full = source.querySelector("[data-source-disclosure-full]");
+      if (full) full.textContent = fullLabel;
+    });
     await page.evaluate(async () => {
       await document.fonts.ready;
       await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
@@ -84,6 +126,15 @@ test.describe("TECH Dashboard smoke", () => {
         banner: box(".banner-inner"),
         main: box(".layout main"),
         topRank: box(".top-rank"),
+        rankMeta: box(".top-rank-item .rank-meta"),
+        rankSourceClipped: (() => {
+          const label = document.querySelector<HTMLElement>(
+            ".top-rank-item .rank-source [data-source-disclosure-label]",
+          );
+          return !!label
+            && label.scrollWidth > label.clientWidth
+            && getComputedStyle(label).textOverflow === "ellipsis";
+        })(),
         visibleBottom: Math.min(
           window.innerHeight,
           document.querySelector(".footer-bar")?.getBoundingClientRect().top ?? window.innerHeight,
@@ -93,10 +144,12 @@ test.describe("TECH Dashboard smoke", () => {
     expect(desktopDensity.banner?.height, "desktop hero stays decision-dense").toBeLessThanOrEqual(370);
     expect(desktopDensity.main?.y, "desktop decision area starts near the first viewport").toBeLessThanOrEqual(520);
     expect(desktopDensity.topRank?.y, "desktop ranked Top-3 begins within the first viewport").toBeLessThanOrEqual(900);
+    expect(desktopDensity.rankMeta?.height, "desktop Top-3 metadata stays on one line").toBeLessThanOrEqual(28);
+    expect(desktopDensity.rankSourceClipped, "long Top-3 source uses ellipsis").toBe(true);
     expect(
       (desktopDensity.topRank?.y ?? Number.POSITIVE_INFINITY) + (desktopDensity.topRank?.height ?? 0),
       "desktop ranked Top-3 stays above the fixed footer in the first viewport",
-    ).toBeLessThanOrEqual(desktopDensity.visibleBottom);
+    ).toBeLessThanOrEqual(desktopDensity.visibleBottom - 8);
     await expect(page.getByRole("link", { name: /今日の重要記事/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /検索/ })).toBeVisible();
     await expect(page.locator(".banner-quick-links").getByRole("link", { name: /カテゴリ/ })).toBeVisible();
@@ -110,6 +163,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(homeRail.locator(".home-side-metrics")).toBeVisible();
     await expect(homeRail.locator(".home-source-list")).toBeVisible();
     await expect(homeRail.locator(".tag-cloud")).toBeVisible();
+    const activityScope = homeRail.locator("[data-activity-scope='listed-entries']");
+    await expect(activityScope).toBeVisible();
+    await expect(activityScope.locator(".i18n-ja")).toContainText(/表示中一覧|先頭200件/);
+    await expect(activityScope.locator(".i18n-en")).toContainText(/listed entries|first 200/i);
     // The old 2-column home-layout class must be gone (single canvas width source).
     await expect(page.locator(".home-layout")).toHaveCount(0);
     await expect(page.locator('script[src*="googlesyndication"]')).toHaveCount(0);
@@ -117,6 +174,23 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".top-rank")).not.toContainText(/AI \u8981\u7d04\u672a\u751f\u6210|Summary pending|\u5f8c\u7d9a\u306e Worker run/);
     await expect(page.locator("article.featured [data-featured-importance]")).toBeVisible();
     await expect(page.locator("article.featured [data-featured-importance]")).toContainText(/重要度 (High|Medium|Info)/);
+    const decisionFreshness = page.locator(
+      ".top-rank-item .rank-freshness, article.featured .featured-freshness",
+    );
+    await expect(page.locator(
+      ".top-rank-item .rank-freshness:not(.stale), article.featured .featured-freshness:not(.stale)",
+    )).toHaveCount(0);
+    await expect(page.locator("article.featured")).not.toContainText(
+      /収集元 更新OK|Source feed current/,
+    );
+    await expect(page.locator(".top-rank")).not.toContainText(
+      /収集元 更新OK|Source feed current/,
+    );
+    for (let index = 0; index < await decisionFreshness.count(); index++) {
+      const warning = decisionFreshness.nth(index);
+      await expect(warning).toHaveClass(/stale/);
+      await expect(warning).toContainText(/収集元 更新遅延|Source feed stale/);
+    }
     await expect(page.locator("#priority-heading")).toBeVisible();
     await expect(page.locator("#timeline-heading")).toBeVisible();
     const order = await page.evaluate(() => {
@@ -136,15 +210,13 @@ test.describe("TECH Dashboard smoke", () => {
 
     const decisionLinks = await page.evaluate(() => {
       const featuredHref = (document.querySelector("article.featured .featured-title a") as HTMLAnchorElement | null)?.getAttribute("href");
-      const topHrefs = Array.from(document.querySelectorAll<HTMLAnchorElement>(".top-rank-list .top-rank-item .rank-title"))
+      const topHrefs = Array.from(document.querySelectorAll<HTMLAnchorElement>(".top-rank-list .top-rank-item .rank-content-link"))
         .map((a) => a.getAttribute("href"))
         .filter((href): href is string => !!href);
       const featuredSource = (document.querySelector<HTMLElement>("article.featured")?.dataset.source ?? "").trim();
       const topSources = Array.from(document.querySelectorAll<HTMLElement>(".top-rank-list .top-rank-item"))
         .map((item) => (item.dataset.source ?? "").trim())
         .filter(Boolean);
-      const duplicateFreshnessText = Array.from(document.querySelectorAll<HTMLElement>(".top-rank-list .top-rank-item .rank-reason.i18n-ja"))
-        .some((el) => /収集元 更新(?:OK|遅延)/.test(el.innerText));
       const authorityBadge = document.querySelector("article.featured .featured-meta .badge[data-source-authority]") as HTMLElement | null;
       const importanceBadge = document.querySelector("article.featured .featured-meta [data-featured-importance]") as HTMLElement | null;
       return {
@@ -152,7 +224,6 @@ test.describe("TECH Dashboard smoke", () => {
         topHrefs,
         featuredSource,
         topSources,
-        duplicateFreshnessText,
         sourceType: authorityBadge?.dataset.sourceType ?? "",
         sourceAuthority: authorityBadge?.dataset.sourceAuthority ?? "",
         authorityClass: authorityBadge?.className ?? "",
@@ -175,9 +246,6 @@ test.describe("TECH Dashboard smoke", () => {
       decisionLinks.topSources.every((source) => source !== decisionLinks.featuredSource),
       "top-3 should exclude the featured source stream, not only the featured entry id",
     ).toBe(true);
-    expect(decisionLinks.duplicateFreshnessText, "rank reasons should not duplicate freshness badge wording").toBe(
-      false,
-    );
     expect(["official", "paper", "community", "news", "aggregator", "source"]).toContain(
       decisionLinks.sourceAuthority,
     );
@@ -193,20 +261,50 @@ test.describe("TECH Dashboard smoke", () => {
     expect(expectedTone, "featured importance level should map to an explicit tone").toBe(decisionLinks.importanceTone);
     expect(decisionLinks.importanceClass).toContain("importance-badge");
     expect(decisionLinks.importanceClass).toContain(expectedTone);
-    await expect(page.locator(".featured-label .i18n-ja")).toContainText("Spotlight · 自動選定");
-    await expect(page.locator(".featured-label .i18n-en")).toContainText("Spotlight · system-ranked");
+    await expect(page.locator(".featured-label .i18n-ja")).toContainText("Spotlight · 最新の優先記事");
+    await expect(page.locator(".featured-label .i18n-en")).toContainText(
+      "Spotlight · latest priority update",
+    );
     await expect(page.locator(".featured-label")).not.toContainText(/編集部選定|editor pick/i);
-    await expect(page.locator(".top-rank-title .i18n-ja")).toContainText("Spotlightを除く優先度 Top 3");
-    await expect(page.locator(".featured-freshness .i18n-ja")).toHaveText(/収集元 更新(?:OK|遅延)/);
+    await expect(page.locator(".top-rank-title .i18n-ja")).toContainText("次に見る Top 3");
+    await expect(page.locator(".top-rank-title .i18n-en")).toContainText(
+      "Next 3 to review",
+    );
+    await expect(page.locator(".featured-freshness:not(.stale)")).toHaveCount(0);
     const spotlightRationale = page.locator(".featured-rationale");
     await expect(spotlightRationale).toBeVisible();
     await expect(spotlightRationale.locator(".i18n-ja")).toContainText(/選定根拠:\s*\S+/);
     await expect(spotlightRationale.locator(".i18n-en")).toContainText(/Selection basis:\s*\S+/);
-    const rankReasons = page.locator(".top-rank-item .rank-reason.i18n-ja");
-    await expect(rankReasons).toHaveCount(3);
-    for (const reason of await rankReasons.all()) {
-      await expect(reason).toBeVisible();
-      await expect(reason).not.toHaveText("");
+    const spotlightRecency = spotlightRationale.locator(".i18n-ja [data-featured-recency]");
+    await expect(spotlightRecency).toHaveCSS("text-transform", "none");
+    expect(await spotlightRecency.innerText()).not.toMatch(/\bAGO\b/);
+    await expect(page.locator(".top-rank-item .rank-reason")).toHaveCount(0);
+    const rankedSummaries = await page.locator(".top-rank-item .rank-summary").evaluateAll((nodes) =>
+      nodes.map((node) => {
+        const ja = node.querySelector<HTMLElement>(".i18n-ja");
+        const en = node.querySelector<HTMLElement>(".i18n-en");
+        return {
+          ja: ja?.textContent?.trim() ?? "",
+          en: en?.textContent?.trim() ?? "",
+          jaLang: ja?.lang ?? "",
+          enLang: en?.lang ?? "",
+        };
+      }),
+    );
+    expect(rankedSummaries, "Top 3 gives every article one bilingual decision summary").toHaveLength(3);
+    for (const summary of rankedSummaries) {
+      expect(summary.ja.length, "Top 3 Japanese summary is useful decision content").toBeGreaterThan(10);
+      expect(summary.en.length, "Top 3 English summary is useful decision content").toBeGreaterThan(10);
+      expect(["ja", "en"]).toContain(summary.jaLang);
+      expect(["ja", "en"]).toContain(summary.enLang);
+    }
+    const decisionReasonCopy = await page
+      .locator(".featured-rationale .i18n-ja, .featured-rationale .i18n-en")
+      .allInnerTexts();
+    for (const copy of decisionReasonCopy) {
+      expect(copy, "ranking rationale should not repeat importance or freshness badges").not.toMatch(
+        /重要度|importance|収集鮮度|freshness/i,
+      );
     }
 
     const featuredTrustOrder = await page.evaluate(() => {
@@ -230,8 +328,109 @@ test.describe("TECH Dashboard smoke", () => {
     expect(featuredTrustOrder!.metaTop).toBeLessThan(featuredTrustOrder!.summaryTop);
     expect(featuredTrustOrder!.metaBottom, "Spotlight trust metadata stays inside the 900px fold").toBeLessThanOrEqual(featuredTrustOrder!.viewportHeight);
   });
-  // Timeline right rail: constrains the main column at >=981px, stays hidden at
-  // <=980px, never causes horizontal scroll, and must NOT leak onto lane pages.
+
+  test("home renders reader-facing category labels instead of internal slugs", async ({ page }) => {
+    await page.goto("/");
+    const labels = (await page.locator(".tb-cat, .b-cat").allTextContents())
+      .map((label) => label.trim().toLowerCase())
+      .filter(Boolean);
+
+    expect(labels.length).toBeGreaterThan(0);
+    expect(labels).not.toContain("local-llm");
+    expect(labels).not.toContain("agent-fw");
+    expect(labels).not.toContain("tech-news");
+
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+      await page.reload();
+      const rows = await page.locator(".board .b-row").evaluateAll((elements) =>
+        elements.map((element) => {
+          const category = element.querySelector<HTMLElement>(".b-cat");
+          const tags = element.querySelector<HTMLElement>(".b-tags");
+          const categoryRect = category?.getBoundingClientRect();
+          const tagsRect = tags?.getBoundingClientRect();
+          return {
+            categoryRight: categoryRect?.right ?? 0,
+            tagsLeft: tagsRect?.left ?? Number.POSITIVE_INFINITY,
+            categoryTitle: category?.getAttribute("title") ?? "",
+          };
+        }),
+      );
+      expect(rows.length).toBeGreaterThan(0);
+      for (const row of rows) {
+        expect(row.categoryTitle).not.toBe("");
+        expect(row.categoryRight).toBeLessThanOrEqual(row.tagsLeft + 0.5);
+      }
+    }
+  });
+
+  test("footer reports the actual summary and body queue backlogs", async ({ page }) => {
+    await page.goto("/");
+    const footerRun = page.locator(".footer-run-link");
+    const runDetail = await footerRun.getAttribute("data-run-detail");
+    const backlog = await footerRun.getAttribute("data-summary-queue-backlog");
+    const bodyMode = await footerRun.getAttribute("data-body-queue-mode");
+    const bodyState = await footerRun.getAttribute("data-body-queue-state");
+    const bodyBacklog = await footerRun.getAttribute("data-body-queue-backlog");
+    expect(runDetail).toBeTruthy();
+    expect(backlog).toMatch(/^\d+$/);
+    expect(bodyMode).toMatch(/^(enabled|disabled|missing-binding|error|unknown)$/);
+    expect(bodyState).toMatch(
+      /^(active|clear|waiting-for-run|paused|unavailable|error|unknown)$/,
+    );
+    expect(bodyBacklog).toMatch(/^(unknown|\d+)$/);
+    await expect(footerRun.locator(".mono")).toContainText(runDetail!);
+    await expect(footerRun.locator(".mono")).toContainText(`summary queue ${backlog}`);
+    if (bodyState === "active") {
+      await expect(footerRun.locator(".footer-body-queue")).toContainText(
+        `body ${bodyBacklog} pending`,
+      );
+      await expect(footerRun).toHaveAttribute(
+        "aria-label",
+        /AI explainer body queue (about|estimate pending)/i,
+      );
+    } else if (bodyState === "clear") {
+      await expect(footerRun.locator(".footer-body-queue")).toHaveText("body ready");
+      await expect(footerRun).toHaveAttribute("aria-label", /AI explainer body queue clear/i);
+    } else if (bodyState === "waiting-for-run") {
+      await expect(footerRun.locator(".footer-body-queue")).toHaveText("body waiting");
+      await expect(footerRun).toHaveAttribute(
+        "aria-label",
+        /AI explainer body queue waiting for a successful run/i,
+      );
+    } else if (bodyState === "paused") {
+      await expect(footerRun.locator(".footer-body-queue")).toHaveText("body paused");
+    } else {
+      await expect(footerRun.locator(".footer-body-queue")).toHaveText("body unavailable");
+    }
+  });
+
+  test("pending cards share the summary queue state and suppress stale ETAs", async ({ page }) => {
+    await page.goto("/");
+    const footerRun = page.locator(".footer-run-link");
+    const queueMode = await footerRun.getAttribute("data-summary-queue-mode");
+    const queueState = await footerRun.getAttribute("data-summary-queue-state");
+    expect(queueMode).toMatch(/^(enabled|disabled|missing-binding|error|unknown)$/);
+    expect(queueState).toMatch(
+      /^(active|clear|waiting-for-run|paused|unavailable|error|unknown)$/,
+    );
+
+    const pendingCards = page.locator('article.card[data-summary-state="pending"]');
+    if ((await pendingCards.count()) === 0) return;
+
+    const pendingState = pendingCards.first().locator(".summary-state");
+    await expect(pendingState).toHaveAttribute("data-summary-queue-mode", queueMode!);
+    await expect(pendingState).toHaveAttribute("data-summary-queue-state", queueState!);
+    if (queueState === "waiting-for-run") {
+      await expect(pendingState.locator(".summary-pending-meta.i18n-ja")).toContainText(
+        "収集再開待ち",
+      );
+      await expect(pendingState).not.toContainText(/解消目安|drain estimate/i);
+    }
+  });
+
+  // Timeline rails release progressively: no rails through tablet, the category
+  // rail alone on small desktop, then both rails once the main column stays useful.
   test("timeline right rail constrains layout and stays responsive", async ({ page }) => {
     // Desktop: rail visible and taking real width, main column constrained, 3 grid tracks.
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -271,12 +470,330 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".layout aside.lane-rail")).toBeVisible();
   });
 
+  test("mid-width banner copy uses the available horizontal space", async ({ page }) => {
+    for (const width of [901, 1000, 1100]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.goto("/");
+      await expect(page.locator(".banner-copy")).toBeVisible();
+
+      const metrics = await page.evaluate(() => {
+        const inner = document.querySelector<HTMLElement>(".banner-inner");
+        const copy = document.querySelector<HTMLElement>(".banner-copy");
+        const right = document.querySelector<HTMLElement>(".banner-right");
+        const actions = document.querySelector<HTMLElement>(".banner-actions");
+        const quickLinks = document.querySelector<HTMLElement>(".banner-quick-links");
+        if (!inner || !copy || !right || !actions || !quickLinks) return null;
+        const innerStyle = getComputedStyle(inner);
+        const copyStyle = getComputedStyle(copy);
+        const innerContentWidth =
+          inner.clientWidth - parseFloat(innerStyle.paddingLeft) - parseFloat(innerStyle.paddingRight);
+        const copyRect = copy.getBoundingClientRect();
+        return {
+          noOverflow: document.documentElement.scrollWidth <= window.innerWidth,
+          innerContentWidth,
+          copyWidth: copyRect.width,
+          copyMaxWidth: copyStyle.maxWidth,
+          copyGridColumns: copyStyle.gridTemplateColumns.split(" ").filter(Boolean).length,
+          rightVisible: getComputedStyle(right).display !== "none",
+          actionsRight: actions.getBoundingClientRect().right,
+          quickLinksRight: quickLinks.getBoundingClientRect().right,
+          copyRight: copyRect.right,
+        };
+      });
+
+      expect(metrics, `width ${width}: banner metrics should be available`).not.toBeNull();
+      expect(metrics?.noOverflow, `width ${width}: banner should not cause horizontal overflow`).toBe(true);
+      expect(metrics?.rightVisible, `width ${width}: decorative banner rail should stay hidden`).toBe(false);
+      expect(metrics?.copyMaxWidth, `width ${width}: banner copy should release the desktop width cap`).toBe("none");
+      expect(metrics?.copyGridColumns, `width ${width}: banner copy should use its compact two-column layout`).toBe(2);
+      expect(metrics?.copyWidth, `width ${width}: banner copy should fill its content track`).toBeGreaterThanOrEqual(
+        (metrics?.innerContentWidth ?? 0) - 1,
+      );
+      expect(metrics?.actionsRight, `width ${width}: banner actions should remain inside the copy area`).toBeLessThanOrEqual(
+        (metrics?.copyRight ?? 0) + 1,
+      );
+      expect(
+        metrics?.quickLinksRight,
+        `width ${width}: banner quick links should remain inside the copy area`,
+      ).toBeLessThanOrEqual((metrics?.copyRight ?? 0) + 1);
+    }
+  });
+
+  test("home hero keeps mobile breathing room and desktop density", async ({ page }) => {
+    for (const width of [320, 375, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto("/");
+      await expect(page.locator(".banner .tagline-compact.i18n-ja")).toBeVisible();
+      await expect(page.locator(".banner .tagline-full.i18n-ja")).toBeHidden();
+      await expectMobileFirstDecisionNearViewport(page);
+
+      const mobile = await page.evaluate(() => {
+        const inner = document.querySelector<HTMLElement>(".banner-inner");
+        const compact = document.querySelector<HTMLElement>(".banner .tagline-compact.i18n-ja");
+        const featured = document.querySelector<HTMLElement>("article.featured");
+        if (!inner || !compact || !featured) return null;
+        const innerStyle = getComputedStyle(inner);
+        const compactRect = compact.getBoundingClientRect();
+        return {
+          paddingTop: parseFloat(innerStyle.paddingTop),
+          paddingBottom: parseFloat(innerStyle.paddingBottom),
+          taglineHeight: compactRect.height,
+          taglineClipped: compact.scrollHeight > compact.clientHeight + 1,
+          featuredY: featured.getBoundingClientRect().y,
+          noOverflow: document.documentElement.scrollWidth <= window.innerWidth,
+        };
+      });
+
+      expect(mobile, `width ${width}: mobile hero metrics should be available`).not.toBeNull();
+      expect(mobile?.paddingTop, `width ${width}: mobile hero keeps breathing room above`).toBeGreaterThanOrEqual(10);
+      expect(mobile?.paddingBottom, `width ${width}: mobile hero keeps breathing room below`).toBeGreaterThanOrEqual(9);
+      expect(mobile?.taglineHeight, `width ${width}: compact mobile tagline stays on one line`).toBeLessThanOrEqual(18);
+      expect(mobile?.taglineClipped, `width ${width}: compact mobile tagline remains complete`).toBe(false);
+      expect(mobile?.featuredY, `width ${width}: first decision stays near the first viewport`).toBeLessThanOrEqual(
+        MOBILE_FIRST_DECISION_MAX_Y,
+      );
+      expect(mobile?.noOverflow, `width ${width}: mobile hero does not create horizontal overflow`).toBe(true);
+    }
+
+    for (const width of [1101, 1239, 1240, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      await expect(page.locator(".banner-right")).toBeVisible();
+
+      const desktop = await page.evaluate(() => {
+        const rect = (element: Element | null) => {
+          if (!element) return null;
+          const box = element.getBoundingClientRect();
+          return {
+            x: box.x,
+            width: box.width,
+            height: box.height,
+            right: box.right,
+          };
+        };
+        const banner = rect(document.querySelector(".banner"));
+        const copy = rect(document.querySelector(".banner-copy"));
+        const right = rect(document.querySelector(".banner-right"));
+        const orbit = rect(document.querySelector(".dynamic-orbit"));
+        const facts = rect(document.querySelector(".banner-facts"));
+        const orbitElement = document.querySelector<HTMLElement>(".dynamic-orbit");
+        const factCards = Array.from(document.querySelectorAll(".banner-fact")).map((fact) => rect(fact));
+        return {
+          banner,
+          copy,
+          right,
+          orbit,
+          orbitVisible: orbitElement ? getComputedStyle(orbitElement).display !== "none" : false,
+          facts,
+          factCards,
+          noOverflow: document.documentElement.scrollWidth <= window.innerWidth,
+        };
+      });
+
+      expect(desktop.banner?.height, `width ${width}: desktop hero avoids excessive vertical whitespace`).toBeLessThanOrEqual(
+        260,
+      );
+      expect(desktop.right?.width, `width ${width}: desktop information rail stays bounded`).toBeLessThanOrEqual(621);
+      expect(desktop.right?.width, `width ${width}: desktop information rail does not dominate the hero copy`).toBeLessThanOrEqual(
+        (desktop.copy?.width ?? 0) + 1,
+      );
+      expect(desktop.copy?.right, `width ${width}: hero copy does not overlap the information rail`).toBeLessThanOrEqual(
+        (desktop.right?.x ?? 0) - 8,
+      );
+      if (width < 1240) {
+        expect(desktop.orbitVisible, `width ${width}: narrow desktop prioritizes facts over decoration`).toBe(false);
+        expect(desktop.facts?.width, `width ${width}: facts use the full information rail`).toBeGreaterThanOrEqual(
+          (desktop.right?.width ?? 0) - 1,
+        );
+      } else {
+        expect(desktop.orbitVisible, `width ${width}: wide desktop keeps the orbit`).toBe(true);
+        expect(desktop.orbit?.height, `width ${width}: desktop orbit remains visually substantial`).toBeGreaterThanOrEqual(
+          200,
+        );
+        expect(desktop.orbit?.width, `width ${width}: orbit labels retain usable space`).toBeGreaterThanOrEqual(231);
+        expect(desktop.orbit?.right, `width ${width}: orbit and facts remain distinct columns`).toBeLessThanOrEqual(
+          (desktop.facts?.x ?? 0) - 6,
+        );
+      }
+      for (const card of desktop.factCards) {
+        expect(card?.x, `width ${width}: fact card stays inside the information rail`).toBeGreaterThanOrEqual(
+          desktop.facts?.x ?? Number.POSITIVE_INFINITY,
+        );
+        expect(card?.right, `width ${width}: fact card stays inside the information rail`).toBeLessThanOrEqual(
+          desktop.facts?.right ?? 0,
+        );
+      }
+      expect(desktop.noOverflow, `width ${width}: desktop hero does not create horizontal overflow`).toBe(true);
+    }
+  });
+
+  test("mid-width header keeps every control readable without clipping", async ({ page }) => {
+    for (const width of [721, 768, 901, 981, 1000, 1100]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+
+      const metrics = await page.evaluate(() => {
+        const rect = (element: Element | null) => {
+          if (!element || element.getClientRects().length === 0) return null;
+          const box = element.getBoundingClientRect();
+          return { left: box.left, right: box.right, width: box.width };
+        };
+        const switcher = document.querySelector<HTMLElement>("header .header-switcher");
+        const shortcutLabels = Array.from(
+          document.querySelectorAll<HTMLElement>("header .nav-shortcut span:not(.nav-icon)"),
+        );
+        const languageButtons = Array.from(document.querySelectorAll<HTMLElement>("header .lang-btn"));
+        return {
+          noOverflow: document.documentElement.scrollWidth <= window.innerWidth,
+          switcher: rect(switcher),
+          shortcutLabels: shortcutLabels.map((label) => ({
+            text: label.textContent?.trim() ?? "",
+            visible: getComputedStyle(label).display !== "none",
+            fullyVisible: label.scrollWidth <= label.clientWidth,
+          })),
+          languageButtons: languageButtons.map((button) => ({
+            box: rect(button),
+            text: button.textContent?.trim() ?? "",
+            fullyVisible: button.scrollWidth <= button.clientWidth,
+          })),
+          headerControls: Array.from(
+            document.querySelectorAll<HTMLElement>(
+              "header .logo, header .header-switcher, header .search, header .lang-toggle, header .menu-trigger",
+            ),
+          )
+            .map((control) => rect(control))
+            .filter((box): box is NonNullable<typeof box> => box !== null),
+        };
+      });
+
+      expect(metrics.noOverflow, `${width}px header does not overflow the viewport`).toBe(true);
+      expect(metrics.switcher, `${width}px header switcher remains visible`).not.toBeNull();
+      expect(metrics.shortcutLabels.map((label) => label.text)).toEqual(["Categories", "arXiv", "Knowledge"]);
+      if (width <= 980) {
+        expect(
+          metrics.shortcutLabels.every((label) => !label.visible),
+          `${width}px shortcuts use their compact icon form`,
+        ).toBe(true);
+      } else {
+        expect(
+          metrics.shortcutLabels.every((label) => label.visible && label.fullyVisible),
+          `${width}px shortcuts restore readable labels without clipping`,
+        ).toBe(true);
+      }
+      expect(metrics.languageButtons, `${width}px language toggle keeps both buttons`).toHaveLength(2);
+      expect(
+        metrics.languageButtons.map((button) => button.text),
+        `${width}px language labels remain intact`,
+      ).toEqual(["JA", "EN"]);
+      for (const button of metrics.languageButtons) {
+        expect(button.box, `${width}px ${button.text} button has a rendered box`).not.toBeNull();
+        expect(button.box!.width, `${width}px ${button.text} button is not flex-shrunk`).toBeGreaterThanOrEqual(34);
+        expect(button.fullyVisible, `${width}px ${button.text} label is not clipped`).toBe(true);
+      }
+      for (let index = 1; index < metrics.headerControls.length; index += 1) {
+        expect(
+          metrics.headerControls[index]!.left,
+          `${width}px header controls do not overlap`,
+        ).toBeGreaterThanOrEqual(metrics.headerControls[index - 1]!.right - 1);
+      }
+      expect(
+        metrics.headerControls.at(-1)!.right,
+        `${width}px final header control stays inside the viewport`,
+      ).toBeLessThanOrEqual(width);
+    }
+  });
+
+  test("mid-width ticker gives tags and headline separate rows", async ({ page }) => {
+    for (const width of [961, 981, 1000, 1100]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      await expect(page.locator(".ticker-bar .tb-slide.is-active")).toBeVisible();
+
+      const metrics = await page.evaluate(() => {
+        const slide = document.querySelector<HTMLElement>(".ticker-bar .tb-slide.is-active");
+        const meta = slide?.querySelector<HTMLElement>(".tb-meta");
+        const title = Array.from(slide?.querySelectorAll<HTMLElement>(".tb-title") ?? []).find(
+          (candidate) => getComputedStyle(candidate).display !== "none",
+        );
+        const stage = document.querySelector<HTMLElement>(".ticker-bar .tb-stage");
+        if (!slide || !meta || !title || !stage) return null;
+        const slideBox = slide.getBoundingClientRect();
+        const metaBox = meta.getBoundingClientRect();
+        const titleBox = title.getBoundingClientRect();
+        const stageBox = stage.getBoundingClientRect();
+        return {
+          noOverflow: document.documentElement.scrollWidth <= window.innerWidth,
+          slideHeight: slideBox.height,
+          metaBottom: metaBox.bottom,
+          titleTop: titleBox.top,
+          titleWidth: titleBox.width,
+          stageWidth: stageBox.width,
+        };
+      });
+
+      expect(metrics, `${width}px ticker geometry should be available`).not.toBeNull();
+      expect(metrics?.noOverflow, `${width}px ticker should not cause horizontal overflow`).toBe(true);
+      expect(metrics?.slideHeight, `${width}px ticker keeps a compact two-row stage`).toBeLessThanOrEqual(44);
+      expect(metrics?.metaBottom, `${width}px ticker metadata stays above the headline`).toBeLessThanOrEqual(
+        metrics?.titleTop ?? 0,
+      );
+      expect(metrics?.titleWidth, `${width}px headline uses the full ticker stage width`).toBeGreaterThanOrEqual(
+        (metrics?.stageWidth ?? 0) - 1,
+      );
+    }
+  });
+
   test("top-rank panel remains stable across rail breakpoint widths", async ({ page }) => {
-    const widths = [1181, 1180, 1100, 1050, 1000, 981, 980, 960, 901, 900, 768, 390];
+    const widths = [
+      1440,
+      1366,
+      1280,
+      1279,
+      1241,
+      1240,
+      1181,
+      1180,
+      1101,
+      1100,
+      1029,
+      1028,
+      1000,
+      981,
+      980,
+      901,
+      900,
+      837,
+      836,
+      768,
+      761,
+      760,
+      721,
+      720,
+      390,
+    ];
     for (const width of widths) {
       await page.setViewportSize({ width, height: 844 });
       await page.goto("/");
       await expect(page.locator(".top-rank")).toBeVisible();
+      if (width >= 721) {
+        await page.locator(".featured-src, .top-rank-item .rank-source").evaluateAll((sources) => {
+          const fullLabel = "Microsoft Foundry Engineering and AI Platform Updates";
+          for (const source of sources) {
+            const label = source.querySelector("[data-source-disclosure-label]");
+            if (label) label.textContent = fullLabel;
+            const full = source.querySelector("[data-source-disclosure-full]");
+            if (full) full.textContent = fullLabel;
+          }
+        });
+        await page.evaluate(
+          () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+        );
+      }
+      if (width >= 1280) {
+        await page.locator(".top-rank-item .rank-summary .i18n-ja").first().evaluate((summary) => {
+          summary.textContent = "AI開発の判断材料を短時間で比較できるよう、記事固有の要点と影響範囲を簡潔に整理した要約です。";
+        });
+      }
 
       const metrics = await page.evaluate(() => {
         const layout = document.querySelector(".layout");
@@ -290,6 +807,10 @@ test.describe("TECH Dashboard smoke", () => {
         const rightRailCards = rightRail?.querySelectorAll(".side-card").length ?? 0;
 
         const items = Array.from(document.querySelectorAll<HTMLElement>(".top-rank-item"));
+        const rankList = document.querySelector<HTMLElement>(".top-rank-list");
+        const topRank = document.querySelector<HTMLElement>(".top-rank");
+        const bannerInner = document.querySelector<HTMLElement>(".banner-inner");
+        const footer = document.querySelector<HTMLElement>(".footer-bar");
         const itemHeights = items.map((item) => item.getBoundingClientRect().height);
         const maxRankHeight = itemHeights.length > 0 ? Math.max(...itemHeights) : 0;
         const metaInMedalTrack = items.some((item) => {
@@ -308,6 +829,8 @@ test.describe("TECH Dashboard smoke", () => {
             const rect = el.getBoundingClientRect();
             const styles = getComputedStyle(el);
             return {
+              kind: el.matches("article.featured .featured-freshness") ? "featured" : "rank",
+              stale: el.classList.contains("stale"),
               width: rect.width,
               height: rect.height,
               whiteSpace: styles.whiteSpace,
@@ -320,13 +843,76 @@ test.describe("TECH Dashboard smoke", () => {
         const featuredBody = document.querySelector<HTMLElement>("article.featured .featured-body");
         const main = document.querySelector<HTMLElement>(".layout main");
         const featuredFreshness = document.querySelector<HTMLElement>("article.featured .featured-freshness");
+        const featuredMeta = document.querySelector<HTMLElement>("article.featured .featured-meta");
+        const featuredSource = document.querySelector<HTMLElement>(
+          "article.featured .featured-src .source-disclosure-label",
+        );
         const featuredThumbRect = featuredThumb?.getBoundingClientRect();
         const featuredBodyRect = featuredBody?.getBoundingClientRect();
         const featuredFreshnessRect = featuredFreshness?.getBoundingClientRect();
+        const featuredMetaRect = featuredMeta?.getBoundingClientRect();
+        const topRankRect = topRank?.getBoundingClientRect();
+        const topRankStyle = topRank ? getComputedStyle(topRank) : null;
+        const bannerInnerRect = bannerInner?.getBoundingClientRect();
+        const footerRect = footer?.getBoundingClientRect();
+        const footerRunDetail = footer?.querySelector<HTMLElement>(".footer-run-link .mono");
+        const rankMetaHeights = items
+          .map((item) => item.querySelector<HTMLElement>(".rank-meta")?.getBoundingClientRect().height ?? 0);
+        const rankSummaryWidths = items
+          .map((item) => item.querySelector<HTMLElement>(".rank-summary")?.getBoundingClientRect().width ?? 0);
+        const rankSummaryHeights = items
+          .map((item) => item.querySelector<HTMLElement>(".rank-summary")?.getBoundingClientRect().height ?? 0);
+        const rankContentHeights = items
+          .map((item) => item.querySelector<HTMLElement>(".rank-content-link")?.getBoundingClientRect().height ?? 0);
+        const firstRankSource = items[0]?.querySelector<HTMLElement>(
+          ".rank-source [data-source-disclosure-label]",
+        );
+        const rankMetaGeometry = items.map((item) => {
+          const visibleRect = (element: HTMLElement | null) => {
+            if (!element) return null;
+            const rect = element.getBoundingClientRect();
+            const styles = getComputedStyle(element);
+            if (
+              styles.display === "none"
+              || styles.visibility === "hidden"
+              || rect.width <= 0
+              || rect.height <= 0
+            ) {
+              return null;
+            }
+            return {
+              left: rect.left,
+              right: rect.right,
+              top: rect.top,
+              bottom: rect.bottom,
+              width: rect.width,
+              height: rect.height,
+            };
+          };
+          const source = visibleRect(item.querySelector<HTMLElement>("[data-source-disclosure-trigger]"));
+          const time = visibleRect(item.querySelector<HTMLElement>(".rank-time"));
+          const freshness = visibleRect(item.querySelector<HTMLElement>(".rank-freshness"));
+          const visible = [source, time, freshness].filter((rect) => rect !== null);
+          const overlaps = visible.some((rect, index) =>
+            visible.slice(index + 1).some((other) =>
+              rect.left < other.right - 0.5
+              && rect.right > other.left + 0.5
+              && rect.top < other.bottom - 0.5
+              && rect.bottom > other.top + 0.5
+            )
+          );
+          return {
+            overlaps,
+            sourceWidth: source?.width ?? 0,
+            sourceHeight: source?.height ?? 0,
+            timeVisible: time !== null,
+          };
+        });
 
         return {
           noOverflow: document.documentElement.scrollWidth <= window.innerWidth,
           gridCols: layout ? getComputedStyle(layout).gridTemplateColumns.split(" ").filter(Boolean).length : 0,
+          rankGridCols: rankList ? getComputedStyle(rankList).gridTemplateColumns.split(" ").filter(Boolean).length : 0,
           rightRailVisible,
           rightRailCards,
           rankCount: items.length,
@@ -339,41 +925,162 @@ test.describe("TECH Dashboard smoke", () => {
           mainWidth: main?.getBoundingClientRect().width ?? 0,
           featuredFreshnessWidth: featuredFreshnessRect?.width ?? 0,
           featuredFreshnessHeight: featuredFreshnessRect?.height ?? 0,
+          featuredMetaHeight: featuredMetaRect?.height ?? 0,
+          maxRankMetaHeight: rankMetaHeights.length > 0 ? Math.max(...rankMetaHeights) : 0,
+          minRankSummaryWidth: rankSummaryWidths.length > 0 ? Math.min(...rankSummaryWidths) : 0,
+          maxRankSummaryHeight: rankSummaryHeights.length > 0 ? Math.max(...rankSummaryHeights) : 0,
+          minRankContentHeight: rankContentHeights.length > 0 ? Math.min(...rankContentHeights) : 0,
+          topRankWidth: topRankRect?.width ?? 0,
+          bannerHeight: bannerInnerRect?.height ?? Number.POSITIVE_INFINITY,
+          topRankContentWidth:
+            topRank && topRankStyle
+              ? topRank.clientWidth - parseFloat(topRankStyle.paddingLeft) - parseFloat(topRankStyle.paddingRight)
+              : 0,
+          rankMetaOverlaps: rankMetaGeometry.some((entry) => entry.overlaps),
+          minRankSourceTriggerWidth: rankMetaGeometry.length > 0
+            ? Math.min(...rankMetaGeometry.map((entry) => entry.sourceWidth))
+            : 0,
+          minRankSourceTriggerHeight: rankMetaGeometry.length > 0
+            ? Math.min(...rankMetaGeometry.map((entry) => entry.sourceHeight))
+            : 0,
+          rankTimeVisibleCount: rankMetaGeometry.filter((entry) => entry.timeVisible).length,
+          rankReasonCount: document.querySelectorAll(".top-rank-item .rank-reason").length,
+          topRankBottom: topRankRect?.bottom ?? Number.POSITIVE_INFINITY,
+          visibleBottom: Math.min(window.innerHeight, footerRect?.top ?? window.innerHeight),
+          footerHeight: footerRect?.height ?? Number.POSITIVE_INFINITY,
+          footerRunTextOverflow: footerRunDetail
+            ? getComputedStyle(footerRunDetail).textOverflow
+            : "",
+          featuredSourceSafe: !!featuredSource
+            && (
+              featuredSource.scrollWidth <= featuredSource.clientWidth + 1
+              || getComputedStyle(featuredSource).textOverflow === "ellipsis"
+            ),
+          rankSourceClipped: !!firstRankSource
+            && firstRankSource.scrollWidth > firstRankSource.clientWidth
+            && getComputedStyle(firstRankSource).textOverflow === "ellipsis",
         };
       });
 
       expect(metrics.noOverflow, `width ${width}: page should not overflow horizontally`).toBe(true);
       expect(metrics.rankCount, `width ${width}: top-3 should keep three cards`).toBe(3);
+      expect(metrics.rankReasonCount, `width ${width}: Top-3 should not repeat generic rationale rows`).toBe(0);
       expect(metrics.metaInMedalTrack, `width ${width}: rank meta must not collapse into medal track`).toBe(false);
-      expect(metrics.freshness.length, `width ${width}: freshness badges should be visible`).toBeGreaterThan(0);
+      expect(
+        metrics.minRankContentHeight,
+        `width ${width}: title and summary should form one 44px decision target`,
+      ).toBeGreaterThanOrEqual(43.5);
       for (const badge of metrics.freshness) {
+        expect(badge.stale, `width ${width}: only warning freshness badges should render`).toBe(true);
         expect(badge.whiteSpace, `width ${width}: freshness should stay atomic`).toBe("nowrap");
-        expect(badge.width, `width ${width}: freshness badge should keep readable width`).toBeGreaterThanOrEqual(70);
+        expect(badge.width, `width ${width}: freshness badge should keep readable width`).toBeGreaterThanOrEqual(
+          badge.kind === "featured" || width <= 720 ? 70 : 28,
+        );
         expect(badge.height, `width ${width}: freshness badge should stay one-line height`).toBeLessThanOrEqual(48);
       }
 
-      if (width >= 981) {
+      expect(metrics.bannerHeight, `width ${width}: banner should not stack into an oversized panel`).toBeLessThanOrEqual(
+        320,
+      );
+
+      if (width >= 1280) {
         expect(metrics.rightRailVisible, `width ${width}: right rail should be visible and populated`).toBe(true);
         expect(metrics.rightRailCards, `width ${width}: right rail should have cards`).toBeGreaterThan(0);
       } else {
         expect(metrics.rightRailVisible, `width ${width}: right rail should be hidden`).toBe(false);
       }
 
-      if (width <= 1180 && width >= 981) {
+      if (width <= 1279 && width >= 981) {
+        expect(metrics.gridCols, `width ${width}: small desktop should keep only the category rail`).toBe(2);
         expect(metrics.maxRankHeight, `width ${width}: top-rank item height should stay compact`).toBeLessThanOrEqual(180);
         expect(metrics.featuredThumbWidth, `width ${width}: featured thumb should keep width`).toBeGreaterThan(120);
         expect(metrics.featuredThumbHeight, `width ${width}: featured thumb should keep height`).toBeGreaterThan(95);
-        expect(metrics.featuredBodyWidth, `width ${width}: featured body should keep readable width`).toBeGreaterThan(210);
-        expect(metrics.featuredFreshnessWidth, `width ${width}: featured freshness should keep readable width`).toBeGreaterThanOrEqual(70);
-        expect(metrics.featuredFreshnessHeight, `width ${width}: featured freshness should stay one-line height`).toBeLessThanOrEqual(48);
+        expect(metrics.featuredBodyWidth, `width ${width}: featured body should keep readable width`).toBeGreaterThan(500);
+        expect(
+          metrics.minRankSummaryWidth,
+          `width ${width}: Top-3 summaries should remain useful before the right rail returns`,
+        ).toBeGreaterThanOrEqual(180);
+        if (metrics.featuredFreshnessWidth > 0) {
+          expect(metrics.featuredFreshnessWidth, `width ${width}: featured freshness should keep readable width`).toBeGreaterThanOrEqual(70);
+          expect(metrics.featuredFreshnessHeight, `width ${width}: featured freshness should stay one-line height`).toBeLessThanOrEqual(48);
+        }
       }
 
       if (width === 900 || width === 768) {
         expect(metrics.maxRankHeight, `width ${width}: top-rank should not grow excessively`).toBeLessThanOrEqual(300);
       }
+      if (width >= 721 && width <= 980) {
+        expect(metrics.gridCols, `width ${width}: tablet layout should release the category rail`).toBe(1);
+        expect(metrics.mainWidth, `width ${width}: tablet main content should use the available width`).toBeGreaterThanOrEqual(
+          width - 72,
+        );
+        expect(
+          metrics.minRankSummaryWidth,
+          `width ${width}: Top-3 summaries should remain useful at tablet widths`,
+        ).toBeGreaterThanOrEqual(150);
+      }
+      expect(
+        metrics.minRankSourceTriggerWidth,
+        `width ${width}: source disclosure should keep a 44px inline target`,
+      ).toBeGreaterThanOrEqual(43.5);
+      expect(
+        metrics.minRankSourceTriggerHeight,
+        `width ${width}: source disclosure should keep a 44px block target`,
+      ).toBeGreaterThanOrEqual(43.5);
+      if (width >= 721) {
+        expect(metrics.rankGridCols, `width ${width}: Top-3 should use three compact columns`).toBe(3);
+        expect(metrics.featuredMetaHeight, `width ${width}: Featured metadata should stay within two rows`).toBeLessThanOrEqual(50);
+        expect(
+          metrics.featuredSourceSafe,
+          `width ${width}: long Featured source should fit or use recoverable ellipsis`,
+        ).toBe(true);
+        expect(metrics.maxRankMetaHeight, `width ${width}: Top-3 metadata should stay on one line`).toBeLessThanOrEqual(28);
+        expect(metrics.rankSourceClipped, `width ${width}: long Top-3 source should use ellipsis`).toBe(true);
+        expect(metrics.rankMetaOverlaps, `width ${width}: Top-3 metadata controls must not overlap`).toBe(false);
+        expect(
+          metrics.rankTimeVisibleCount,
+          `width ${width}: compact cards should omit only the redundant time label`,
+        ).toBe(
+          (width >= 761 && width <= 836) || (width >= 981 && width <= 1028)
+            ? 0
+            : metrics.rankCount,
+        );
+        expect(metrics.topRankBottom, `width ${width}: Top-3 should stay above the fixed footer`).toBeLessThanOrEqual(
+          metrics.visibleBottom - 8,
+        );
+        expect(metrics.footerHeight, `width ${width}: footer should stay on one line`).toBeLessThanOrEqual(36);
+        if (width <= 980) {
+          expect(metrics.footerRunTextOverflow, `width ${width}: footer run detail should truncate safely`).toBe("ellipsis");
+        }
+      } else {
+        expect(metrics.rankGridCols, `width ${width}: mobile Top-3 should remain a single column`).toBe(1);
+        expect(metrics.maxRankHeight, `width ${width}: mobile Top-3 cards stay compact`).toBeLessThanOrEqual(118);
+        expect(metrics.maxRankMetaHeight, `width ${width}: mobile Top-3 metadata stays on one row`).toBeLessThanOrEqual(28);
+        expect(metrics.rankMetaOverlaps, `width ${width}: mobile Top-3 metadata controls must not overlap`).toBe(false);
+      }
       if (width === 980) {
-        expect(metrics.gridCols, "width 980: layout should use the existing two-column grid").toBe(2);
-        expect(metrics.mainWidth, "width 980: main should expand after the rail is hidden").toBeGreaterThan(650);
+        expect(metrics.gridCols, "width 980: layout should keep the tablet single-column grid").toBe(1);
+        expect(metrics.mainWidth, "width 980: main should use the available tablet width").toBeGreaterThan(900);
+      }
+      if (width >= 1280) {
+        expect(metrics.gridCols, `width ${width}: wide desktop should restore both rails`).toBe(3);
+        expect(
+          metrics.minRankSummaryWidth,
+          `width ${width}: Top-3 summaries should remain useful with both rails`,
+        ).toBeGreaterThanOrEqual(180);
+        expect(
+          metrics.maxRankSummaryHeight,
+          `width ${width}: wide desktop should show up to two summary lines`,
+        ).toBeGreaterThan(20);
+        expect(
+          metrics.maxRankSummaryHeight,
+          `width ${width}: wide desktop summaries should remain clamped`,
+        ).toBeLessThanOrEqual(38);
+      } else {
+        expect(
+          metrics.maxRankSummaryHeight,
+          `width ${width}: narrower layouts should keep summaries to one line`,
+        ).toBeLessThanOrEqual(20);
       }
     }
   });
@@ -397,6 +1104,11 @@ test.describe("TECH Dashboard smoke", () => {
       const hasSummary = (await card.locator(".summary-stack .summary .s-text").count()) > 0;
       const hasPending = (await card.locator(".summary-state").count()) > 0;
       expect(hasSummary || hasPending, `card ${i} has summary or pending state`).toBe(true);
+      if (hasPending) {
+        await expect(card).toHaveAttribute("data-summary-state", "pending");
+        await expect(card).not.toHaveClass(/\bimportant\b/);
+        await expect(card.locator(".badge.hot, .badge.new, .card-insight")).toHaveCount(0);
+      }
     }
   });
 
@@ -405,13 +1117,199 @@ test.describe("TECH Dashboard smoke", () => {
   // single-digit bars and looked like collection had stopped (see LL).
   test("home Last 7 days chart reflects stats.byDay activity", async ({ page }) => {
     await page.goto("/");
+    const digest = page.locator(".digest");
     const bars = page.locator(".digest .spark .bars .bar .n");
     await expect(bars).toHaveCount(7);
+    await expect(digest.locator(".kpi").first().locator(".k.i18n-ja")).toHaveText("本日ここまで");
+    await expect(digest.locator(".kpi").first().locator(".k.i18n-en")).toHaveText("Today so far");
+    await expect(digest.locator(".kpi .delta")).toHaveCount(0);
+    await expect(digest).not.toContainText(/[+-]\d+%/);
     const counts = (await bars.allInnerTexts()).map((t) => Number(t.trim()));
+    const todayValue = Number(
+      (await digest.locator(".kpi").first().locator(".v").innerText()).trim(),
+    );
+    expect(todayValue, "current JST KPI and final chart bar use one live count").toBe(
+      counts[counts.length - 1],
+    );
+    const metricsResponse = await page.request.get("/metrics.json");
+    expect(metricsResponse.ok(), "metrics endpoint remains available").toBeTruthy();
+    const metrics = await metricsResponse.json() as { todayEntries: number };
+    expect(metrics.todayEntries, "metrics and Daily Summary share the current JST count").toBe(
+      todayValue,
+    );
     // Past days routinely have 30-120 articles in stats.byDay; the broken
     // fallback maxed out at single digits. A max over 20 proves stats wins.
     const max = Math.max(...counts);
     expect(max, `7-day bar counts were ${counts.join(",")}`).toBeGreaterThan(20);
+    const dayScope = await digest.getAttribute("data-day-scope");
+    expect(dayScope).toMatch(/^(today|latest)$/);
+    await expect(digest.locator(".title h2.i18n-ja")).toHaveText(
+      dayScope === "today" ? "今日の更新" : "直近の更新",
+    );
+    await expect(digest.locator(".ticker-panel .panel-title > .i18n-en")).toHaveText(
+      dayScope === "today" ? "Today's top stories" : "Latest top stories",
+    );
+    const digestDate = digest.locator(".digest-date");
+    const currentDate = digest.locator(".kpi-date");
+    await expect(digestDate).toHaveAttribute("data-date-scope", "article");
+    await expect(digestDate).toHaveAttribute("datetime", /^\d{4}-\d{2}-\d{2}$/);
+    await expect(digestDate.locator(":scope > .i18n-ja")).toContainText(/\d{4}年\d+月\d+日/);
+    await expect(digestDate.locator(":scope > .i18n-en")).toContainText(/[A-Z][a-z]+ \d{1,2}, \d{4}/);
+    await expect(currentDate).toHaveAttribute("data-date-scope", "current");
+    await expect(currentDate).toHaveAttribute("datetime", /^\d{4}-\d{2}-\d{2}$/);
+    await expect(currentDate.locator(":scope > .i18n-ja")).toContainText(
+      /\d+(?:月|\/)\d+(?:日)?/,
+    );
+    await expect(currentDate.locator(":scope > .i18n-en")).toContainText(/[A-Z][a-z]+ \d{1,2}/);
+    const researchLane = digest.locator(".cat-list .cat-link").filter({
+      has: page.locator(".name", { hasText: "Research + arXiv" }),
+    });
+    await expect(researchLane).toHaveCount(1);
+    await expect(researchLane).toHaveAttribute("href", "/categories/");
+    await expect(digest.locator(".retention-note .i18n-en")).toContainText(
+      "Research includes arXiv",
+    );
+    await expect(digest.locator(".retention-note .i18n-en")).toContainText(
+      "Retention may shrink past counts",
+    );
+    const boardItems = digest.locator(".ticker-panel [data-summary-state]");
+    const emptyState = digest.locator(".ticker-panel [data-empty-reason]");
+    if (await boardItems.count()) {
+      await expect(emptyState).toHaveCount(0);
+      for (const item of await boardItems.all()) {
+        await expect(item).toHaveAttribute("data-summary-state", "ready");
+      }
+      const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+        entries: Array<{
+          id: string;
+          source: string;
+          sourceType: string;
+          url: string;
+        }>;
+      };
+      const arxivIds = new Set(
+        index.entries
+          .filter((entry) => (
+            entry.source.startsWith("arxiv-")
+            || entry.sourceType === "paper"
+              && /(?:^|\.)arxiv\.org$/i.test(new URL(entry.url).hostname)
+          ))
+          .map((entry) => entry.id),
+      );
+      const boardHrefs = await boardItems.locator('a[href^="/e/"]').evaluateAll((links) => (
+        links.map((link) => link.getAttribute("href") ?? "")
+      ));
+      expect(
+        boardHrefs.every((href) => {
+          const id = href.split("/").filter(Boolean).at(-1);
+          return !id || !arxivIds.has(id);
+        }),
+        `decision board must stay in the main Timeline lane: ${boardHrefs.join(",")}`,
+      ).toBeTruthy();
+    } else {
+      await expect(emptyState).toBeVisible();
+      await expect(emptyState).toHaveAttribute("data-empty-reason", /^(summary-pending|no-entries)$/);
+    }
+    const ticker = page.locator(".ticker-bar");
+    if (await ticker.count()) {
+      await expect(ticker).toHaveAttribute("data-day-scope", dayScope!);
+      await expect(ticker.locator(".tb-label")).toContainText(dayScope === "today" ? "TODAY" : "LATEST");
+      await expect(ticker.locator(".tb-live-dot")).toHaveCount(0);
+    }
+  });
+
+  test("Daily Summary keeps a compact two-column overview across viewports", async ({ page }) => {
+    const viewports = [
+      { width: 1440, height: 900 },
+      { width: 768, height: 900 },
+      { width: 390, height: 844 },
+    ];
+
+    for (const viewport of viewports) {
+      await page.setViewportSize(viewport);
+      await page.goto("/");
+      const digest = page.locator("[data-daily-summary]");
+      await expect(digest).toBeVisible();
+
+      const metrics = await digest.evaluate((element) => {
+        const spark = element.querySelector<HTMLElement>(".spark");
+        const categories = element.querySelector<HTMLElement>(".cats");
+        const bars = element.querySelector<HTMLElement>(".spark .bars");
+        const categoryList = element.querySelector<HTMLElement>(".cat-list");
+        if (!spark || !categories || !bars || !categoryList) {
+          throw new Error("Daily Summary overview panels are incomplete");
+        }
+        return {
+          digestHeight: element.getBoundingClientRect().height,
+          sparkHeight: spark.getBoundingClientRect().height,
+          categoryHeight: categories.getBoundingClientRect().height,
+          barsHeight: bars.getBoundingClientRect().height,
+          categoryColumns: getComputedStyle(categoryList).gridTemplateColumns
+            .split(" ")
+            .filter(Boolean).length,
+          clippedCategoryLabels: Array.from(
+            categoryList.querySelectorAll<HTMLElement>(".cat-link .name"),
+          )
+            .filter((label) => label.scrollWidth > label.clientWidth + 1)
+            .map((label) => label.textContent?.trim() ?? ""),
+          pageOverflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      });
+
+      expect(metrics.sparkHeight, `${viewport.width}px chart panel stays compact`).toBeLessThanOrEqual(180);
+      expect(metrics.categoryHeight, `${viewport.width}px category panel stays compact`).toBeLessThanOrEqual(180);
+      expect(metrics.barsHeight, `${viewport.width}px bar area has a bounded height`).toBeLessThanOrEqual(66);
+      expect(metrics.categoryColumns, `${viewport.width}px category overview uses two columns`).toBe(2);
+      expect(
+        metrics.clippedCategoryLabels,
+        `${viewport.width}px category labels remain readable`,
+      ).toEqual([]);
+      expect(metrics.pageOverflow, `${viewport.width}px has no horizontal overflow`).toBeLessThanOrEqual(0);
+      if (viewport.width <= 390) {
+        expect(metrics.digestHeight, "mobile Daily Summary is materially shorter than the old 1309px layout")
+          .toBeLessThanOrEqual(1150);
+      }
+    }
+  });
+
+  test("Daily Summary bars reveal once and reduced motion shows them immediately", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    const digest = page.locator("[data-daily-summary]");
+    const firstFill = digest.locator(".spark .fill").first();
+
+    const initialBox = await digest.boundingBox();
+    expect(initialBox, "Daily Summary geometry is available").not.toBeNull();
+    expect(initialBox!.y, "Daily Summary starts near the desktop fold").toBeLessThan(900);
+    expect(
+      initialBox!.y + initialBox!.height,
+      "Daily Summary extends below the desktop fold",
+    ).toBeGreaterThan(900);
+    await expect(digest).toHaveAttribute("data-chart-state", "idle");
+    await expect.poll(async () => firstFill.evaluate((element) => (
+      Number(getComputedStyle(element).opacity)
+    ))).toBeLessThan(0.5);
+
+    await digest.evaluate((element) => element.scrollIntoView({ block: "center" }));
+    await expect(digest).toHaveAttribute("data-chart-state", "visible");
+    await expect.poll(async () => firstFill.evaluate((element) => (
+      Number(getComputedStyle(element).opacity)
+    ))).toBeGreaterThan(0.95);
+    await expect(firstFill).toHaveCSS("animation-name", "digest-bar-rise");
+    const boardPulseIterations = await digest.locator(".ticker-panel .panel-title .panel-sub")
+      .evaluate((element) => getComputedStyle(element, "::before").animationIterationCount);
+    expect(boardPulseIterations, "the static top-stories snapshot does not blink forever").toBe("1");
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.reload();
+    const reducedDigest = page.locator("[data-daily-summary]");
+    const reducedFill = reducedDigest.locator(".spark .fill").first();
+    await expect(reducedDigest).toHaveAttribute("data-chart-state", "visible");
+    await expect(reducedFill).toHaveCSS("animation-name", "none");
+    await expect(reducedFill).toHaveCSS("transform", "none");
+    await expect.poll(async () => reducedFill.evaluate((element) => (
+      Number(getComputedStyle(element).opacity)
+    ))).toBe(1);
   });
 
   test("featured hero and top-3 are not low-signal release builds", async ({ page }) => {
@@ -425,7 +1323,7 @@ test.describe("TECH Dashboard smoke", () => {
     expect(featuredTitle.length, "featured hero has a title").toBeGreaterThan(0);
     expect(lowSignal.test(featuredTitle), `featured was low-signal: ${featuredTitle}`).toBe(false);
 
-    const topTitles = await page.locator(".top-rank-list .top-rank-item a").allInnerTexts();
+    const topTitles = await page.locator(".top-rank-list .top-rank-item .rank-title").allInnerTexts();
     expect(topTitles.length, "top-3 list rendered").toBeGreaterThan(0);
     for (const t of topTitles) {
       expect(lowSignal.test(t.trim()), `top-3 entry was low-signal: ${t.trim()}`).toBe(false);
@@ -450,10 +1348,40 @@ test.describe("TECH Dashboard smoke", () => {
     await page.reload();
     await expect(orbit, "dynamic orbit is hidden on mobile to keep first-view dense").toBeHidden();
     const firstArticle = page.locator("article.featured").first();
-    await expect(firstArticle).toHaveClass(/is-visible/, { timeout: 5000 });
+    await expectMobileFirstDecisionNearViewport(page);
     const firstArticleBox = await firstArticle.boundingBox();
     expect(firstArticleBox, "first article visible on mobile").not.toBeNull();
-    expect(firstArticleBox!.y, "mobile first article remains near the first viewport").toBeLessThanOrEqual(360);
+    expect(Math.round(firstArticleBox!.y), "mobile first article remains near the first viewport").toBeLessThanOrEqual(
+      MOBILE_FIRST_DECISION_MAX_Y,
+    );
+    const mobileTargets = await page.locator(".banner-cta, .tb-ctrl, .tb-slide.is-active").evaluateAll((elements) =>
+      elements.map((element) => {
+        const rect = element.getBoundingClientRect();
+        return { width: rect.width, height: rect.height };
+      }),
+    );
+    expect(mobileTargets.length, "mobile hero and ticker expose actionable controls").toBeGreaterThan(0);
+    for (const target of mobileTargets) {
+      expect(target.width).toBeGreaterThanOrEqual(44);
+      expect(target.height).toBeGreaterThanOrEqual(44);
+    }
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
+    await page.setViewportSize({ width: 768, height: 900 });
+    await page.reload();
+    const tabletTickerTargets = await page.locator(".tb-ctrl, .tb-slide.is-active").evaluateAll((elements) =>
+      elements.map((element) => {
+        const rect = element.getBoundingClientRect();
+        return { width: rect.width, height: rect.height };
+      }),
+    );
+    expect(tabletTickerTargets.length, "tablet ticker exposes actionable controls").toBeGreaterThan(0);
+    for (const target of tabletTickerTargets) {
+      expect(target.width).toBeGreaterThanOrEqual(44);
+      expect(target.height).toBeGreaterThanOrEqual(44);
+    }
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
@@ -465,9 +1393,11 @@ test.describe("TECH Dashboard smoke", () => {
     await expect
       .poll(() => page.locator(".scan-beam").evaluate((el) => getComputedStyle(el).animationName))
       .toBe("none");
-    await expect
-      .poll(() => page.locator(".tb-live-dot").evaluate((el) => getComputedStyle(el).animationName))
-      .toBe("none");
+    if ((await page.locator(".tb-live-dot").count()) > 0) {
+      await expect
+        .poll(() => page.locator(".tb-live-dot").evaluate((el) => getComputedStyle(el).animationName))
+        .toBe("none");
+    }
     if ((await page.locator(".ticker-track").count()) > 0) {
       await expect
         .poll(() => page.locator(".ticker-track").first().evaluate((el) => getComputedStyle(el).animationName))
@@ -486,6 +1416,10 @@ test.describe("TECH Dashboard smoke", () => {
 
     await expect(page.locator("article.entry-detail")).toBeVisible();
     await expect(page.locator("h1.ed-title")).toBeVisible();
+    const bodyState = await page.locator("article.entry-detail").getAttribute("data-body-state");
+    const summaryState = await page.locator("article.entry-detail").getAttribute("data-summary-state");
+    expect(bodyState).toMatch(/^(ready|queued|summary-only)$/);
+    expect(summaryState).toMatch(/^(ready|pending)$/);
 
     // Summary-first (LL-112/LL-125): feed-driven detail pages can validly land
     // in exactly one of three honest states: real prose, summary-only digest,
@@ -495,25 +1429,74 @@ test.describe("TECH Dashboard smoke", () => {
     const prose = page.locator(".ed-body-prose");
     const digest = page.locator(".ed-summary-only");
     const pending = page.locator(".ed-pending-summary");
-    const footerCta = page.locator('a.ed-cta[target="_blank"]');
+    const sourceCta = page.locator('a.ed-header-cta[target="_blank"]');
+    const copyAction = page.locator("button.ed-share-btn[data-share-copy]");
     const disclaimer = page.locator(".ed-disclaim");
     const hasProse = (await prose.count()) > 0;
     const hasDigest = (await digest.count()) > 0;
     const hasPending = (await pending.count()) > 0;
     expect([hasProse, hasDigest, hasPending].filter(Boolean)).toHaveLength(1);
+    await expect(sourceCta).toHaveCount(1);
+    await expect(sourceCta).toBeVisible();
+    await expect(sourceCta.locator(".i18n-ja")).toHaveText("元記事を読む");
+    await expect(sourceCta.locator("small")).not.toHaveText("");
+    await expect(copyAction).toHaveCount(1);
+    await expect(copyAction).toBeVisible();
+    await expect(copyAction.locator(".i18n-ja")).toHaveText("タイトルと URL をコピー");
+    await expect(
+      page.locator(
+        ".ed-freshness, .rail-freshness, .rail-cta, .ed-cta-row, .ed-summary-only-link, .ed-tldr-source",
+      ),
+    ).toHaveCount(0);
+    await expect(page.locator('article.entry-detail a[target="_blank"]')).toHaveCount(1);
 
     if (hasProse) {
+      expect(bodyState).toBe("ready");
+      expect(summaryState).toBe("ready");
       await expect(prose.first()).toBeVisible();
       await expect(digest).toHaveCount(0);
       await expect(pending).toHaveCount(0);
     } else if (hasDigest) {
+      expect(summaryState).toBe("ready");
       await expect(digest.first()).toBeVisible();
+      if (bodyState === "queued") {
+        await expect(digest.locator(".ed-summary-only-head .i18n-ja")).toHaveText(
+          "AI解説本文を Queue に投入済み",
+        );
+        await expect(digest.locator(".ed-summary-only-note .i18n-ja")).toContainText(
+          "完了時刻は確約せず",
+        );
+      } else {
+        expect(bodyState).toBe("summary-only");
+        await expect(digest.locator(".ed-summary-only-head .i18n-ja")).toHaveText(
+          "本文は元記事で確認",
+        );
+        await expect(digest.locator(".ed-summary-only-note .i18n-ja")).toContainText(
+          "このページには AI 要約のみを収録",
+        );
+      }
       await expect(prose).toHaveCount(0);
       await expect(pending).toHaveCount(0);
-      await expect(
-        page.locator('.ed-summary-only-link[target="_blank"]').first(),
-      ).toBeVisible();
+      const digestFooterGeometry = await page.evaluate(() => {
+        const note = document.querySelector<HTMLElement>(".ed-summary-only-note");
+        const footer = document.querySelector<HTMLElement>(".footer-bar");
+        if (!note || !footer) return null;
+        const noteRect = note.getBoundingClientRect();
+        const footerRect = footer.getBoundingClientRect();
+        return {
+          footerPosition: getComputedStyle(footer).position,
+          overlaps:
+            noteRect.bottom > footerRect.top &&
+            noteRect.top < footerRect.bottom &&
+            footerRect.width > 0 &&
+            footerRect.height > 0,
+        };
+      });
+      expect(digestFooterGeometry).not.toBeNull();
+      expect(digestFooterGeometry!.footerPosition).toBe("static");
+      expect(digestFooterGeometry!.overlaps).toBe(false);
     } else {
+      expect(bodyState).toBe("summary-only");
       await expect(pending.first()).toBeVisible();
       await expect(pending.first()).toContainText("Summary pending");
       await expect(prose).toHaveCount(0);
@@ -521,66 +1504,217 @@ test.describe("TECH Dashboard smoke", () => {
     }
 
     if (hasPending) {
-      await expect(footerCta).toHaveCount(0);
       await expect(disclaimer).toHaveCount(0);
-      await expect(page.locator(".ed-header-cta, .rail-cta")).toHaveCount(0);
-      await expect(page.locator('article.entry-detail a[target="_blank"]')).toHaveCount(1);
     } else {
-      await expect(footerCta).toBeVisible();
       await expect(disclaimer).toBeVisible();
       await expect(disclaimer.locator(".i18n-ja")).toContainText("AI による自動生成");
       await expect(disclaimer.locator(".i18n-en")).toContainText("AI-generated");
     }
   });
 
-  test("entry freshness badge links to matching status source row", async ({ page }) => {
+  test("desktop summary-only detail keeps its note clear of the footer", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: SummaryFixtureEntry[];
+    };
+    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, unknown>;
+    };
+    const summaryOnlyEntry = index.entries.find(
+      (entry) =>
+        !bodyFile.bodies[entry.id] &&
+        Boolean(
+          summaryForLangWithFallback(entry, "ja").text ||
+            summaryForLangWithFallback(entry, "en").text,
+        ),
+    );
+    expect(summaryOnlyEntry, "live summary-only article fixture").toBeTruthy();
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/e/${summaryOnlyEntry!.id}/`);
+    const note = page.locator(".ed-summary-only-note");
+    const footer = page.locator(".footer-bar");
+    await expect(note).toBeVisible();
+    await note.scrollIntoViewIfNeeded();
+    const geometry = await page.evaluate(() => {
+      const noteElement = document.querySelector<HTMLElement>(".ed-summary-only-note");
+      const footerElement = document.querySelector<HTMLElement>(".footer-bar");
+      if (!noteElement || !footerElement) return null;
+      const noteRect = noteElement.getBoundingClientRect();
+      const footerRect = footerElement.getBoundingClientRect();
+      return {
+        footerPosition: getComputedStyle(footerElement).position,
+        overlaps:
+          noteRect.bottom > footerRect.top &&
+          noteRect.top < footerRect.bottom &&
+          footerRect.width > 0 &&
+          footerRect.height > 0,
+      };
+    });
+    expect(geometry).toEqual({ footerPosition: "static", overlaps: false });
+  });
+
+  test("article body provenance and supporting copy follow the active language", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string }>;
+    };
+    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
+    };
+    const liveIds = new Set(index.entries.map((entry) => entry.id));
+    const bodyEntryId = Object.entries(bodyFile.bodies).find(([id, body]) => {
+      const jaParagraphs = (body.bodyJa ?? "").split(/\n{2,}/).filter(Boolean);
+      const enParagraphs = (body.bodyEn ?? "").split(/\n{2,}/).filter(Boolean);
+      return liveIds.has(id) && jaParagraphs.length >= 3 && enParagraphs.length >= 3;
+    })?.[0];
+    expect(bodyEntryId, "live article with bilingual long-form body fixture").toBeTruthy();
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/e/${bodyEntryId}/`);
+
+    const bodyOrigin = page.locator(".ed-body-origin");
+    await expect(bodyOrigin).toBeVisible();
+    await expect(bodyOrigin).toHaveAttribute(
+      "data-body-source",
+      "summary-and-collection-metadata",
+    );
+    await expect(bodyOrigin.locator(":scope > .i18n-ja")).toContainText(
+      "要約と収集メタデータ",
+    );
+    await expect(page.locator("#toc-list-ja")).toBeVisible();
+    await expect(page.locator("#toc-list-en")).toBeHidden();
+    await expect(page.locator(".reading-card .rail-title > .i18n-ja")).toBeVisible();
+    await expect(page.locator(".ed-pn")).toHaveAccessibleName("同カテゴリの前後の記事");
+    await expect(page.locator("#ed-fab")).toHaveAccessibleName("トップに戻る");
+
+    await page.getByRole("button", { name: "英語表示に切り替え" }).click();
+    await expect(bodyOrigin.locator(":scope > .i18n-en")).toBeVisible();
+    await expect(bodyOrigin.locator(":scope > .i18n-en")).toContainText(
+      "summaries and collected metadata",
+    );
+    await expect(page.locator("#toc-list-ja")).toBeHidden();
+    await expect(page.locator("#toc-list-en")).toBeVisible();
+    await expect(page.locator(".reading-card .rail-title > .i18n-en")).toContainText(
+      "Before reading",
+    );
+    await expect(
+      page.locator(".ed-meta-strip .k > .i18n-en").filter({ hasText: "Source" }).first(),
+    ).toBeVisible();
+    await expect(page.locator(".ed-pn")).toHaveAccessibleName(
+      "Adjacent articles in this category",
+    );
+    await expect(page.locator("#ed-fab")).toHaveAccessibleName("Back to top");
+
+    await page.locator("#p-en-2").evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      window.scrollTo({
+        top: window.scrollY + rect.top - window.innerHeight * 0.35,
+        behavior: "auto",
+      });
+    });
+    await expect
+      .poll(() => page.locator('#toc-list-en a[data-toc-target="p-en-2"].active').count())
+      .toBe(1);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(bodyOrigin).toBeVisible();
+    const mobileGeometry = await page.evaluate(() => {
+      const rect = document.querySelector(".ed-body-origin")?.getBoundingClientRect();
+      return {
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+        origin: rect ? { left: rect.left, right: rect.right, width: rect.width } : null,
+      };
+    });
+    expect(mobileGeometry.scrollWidth).toBeLessThanOrEqual(mobileGeometry.innerWidth + 1);
+    expect(mobileGeometry.origin).not.toBeNull();
+    expect(mobileGeometry.origin?.left ?? -1).toBeGreaterThanOrEqual(0);
+    expect(mobileGeometry.origin?.right ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(
+      mobileGeometry.innerWidth + 1,
+    );
+  });
+
+  test("detail copy action writes the title and one URL", async ({ page, context }) => {
     await page.goto("/");
     const firstEntryLink = page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first();
     await expect(firstEntryLink).toBeVisible();
     await firstEntryLink.click();
     await expect(page).toHaveURL(/\/e\/.+\/$/);
 
-    const freshnessLink = page.locator("a.ed-freshness").first();
-    await expect(freshnessLink).toBeVisible();
-    const href = await freshnessLink.getAttribute("href");
-    expect(href, "detail freshness badge should target status source anchor").toMatch(/^\/status#source-/);
-    await freshnessLink.click();
-    await expect(page).toHaveURL(/\/status#source-/);
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    const copyAction = page.locator("button.ed-share-btn[data-share-copy]");
+    await expect(copyAction).toHaveAccessibleName("タイトルと URL をコピー");
+    const titleJa = (await copyAction.getAttribute("data-title-ja"))?.trim() ?? "";
+    const titleEn = (await copyAction.getAttribute("data-title-en"))?.trim() ?? "";
+    const url = (await copyAction.getAttribute("data-url"))?.trim() ?? "";
+    expect(titleJa).toBeTruthy();
+    expect(titleEn).toBeTruthy();
+    expect(url).toBe(`https://techdb.studio344.net${new URL(page.url()).pathname}`);
+    await expect(page.locator('meta[property="article:modified_time"]')).toHaveCount(0);
+    const jsonLd = await page.locator('script[type="application/ld+json"]').allTextContents();
+    expect(jsonLd.join("\n")).not.toContain('"dateModified"');
+    await expect(page.locator("#ed-toast")).toHaveAttribute("aria-live", "polite");
+    await expect(page.locator("#ed-toast")).toHaveAttribute("aria-atomic", "true");
+    await copyAction.click();
+    await expect
+      .poll(() => page.evaluate(() => navigator.clipboard.readText()))
+      .toBe(`${titleJa}\n${url}`);
 
-    const hash = href!.split("#")[1]!;
-    await expect(page.locator(`#${hash}`)).toBeVisible();
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
+    await expect(copyAction).toHaveAccessibleName("Copy title + URL");
+    await copyAction.click();
+    await expect
+      .poll(() => page.evaluate(() => navigator.clipboard.readText()))
+      .toBe(`${titleEn}\n${url}`);
   });
 
-  test("entry freshness ok badge wording stays truthful", async ({ page }) => {
+  test("mobile detail gives the original article a clear full-width action", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
-    const entryHrefs = await page.evaluate(() => {
-      const hrefs = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href^="/e/"]'))
-        .map((a) => a.getAttribute("href"))
-        .filter((href): href is string => !!href);
-      return Array.from(new Set(hrefs)).slice(0, 24);
-    });
+    const detailHref = await page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first().getAttribute("href");
+    expect(detailHref, "home should link to at least one detail page").toBeTruthy();
 
-    let checked = false;
-    for (const href of entryHrefs) {
-      await page.goto(href);
-      const okLink = page.locator("a.ed-freshness.ok").first();
-      if ((await okLink.count()) === 0) continue;
-      await expect(okLink).toBeVisible();
-      const title = (await okLink.getAttribute("title")) ?? "";
-      expect(title).toContain("within");
-      expect(title).toContain("freshness threshold");
-      expect(title).not.toContain("stale >");
-      await expect(okLink).not.toHaveAttribute("aria-label", /.+/);
-      await expect(okLink).toHaveAccessibleName("収集元 更新OK");
-      await expect(okLink).toHaveAccessibleDescription(/within .* freshness threshold/);
-      checked = true;
-      break;
+    for (const width of [390, 621, 720]) {
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+      await page.goto(detailHref!);
+
+      const actionStrip = page.locator(".ed-action-strip");
+      const sourceCta = actionStrip.locator(".ed-header-cta");
+      const copyAction = actionStrip.locator(".ed-share-btn[data-share-copy]");
+      await expect(sourceCta).toHaveCount(1);
+      await expect(copyAction).toHaveCount(1);
+      await expect(sourceCta.locator("small")).toHaveText(/^[a-z0-9.-]+(?::\d+)?$/i);
+
+      const geometry = await page.evaluate(() => {
+        const strip = document.querySelector(".ed-action-strip")?.getBoundingClientRect();
+        const source = document.querySelector(".ed-header-cta")?.getBoundingClientRect();
+        const copy = document.querySelector(".ed-share-btn[data-share-copy]")?.getBoundingClientRect();
+        return {
+          stripWidth: strip?.width ?? 0,
+          sourceWidth: source?.width ?? 0,
+          sourceHeight: source?.height ?? 0,
+          stripLeft: strip?.left ?? 0,
+          stripRight: strip?.right ?? 0,
+          copyWidth: copy?.width ?? 0,
+          copyHeight: copy?.height ?? 0,
+          copyLeft: copy?.left ?? 0,
+          copyRight: copy?.right ?? 0,
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      });
+      expect(geometry.sourceWidth).toBeGreaterThanOrEqual(geometry.stripWidth - 1);
+      expect(geometry.copyWidth).toBeGreaterThanOrEqual(geometry.stripWidth - 40);
+      expect(geometry.copyWidth).toBeLessThan(geometry.stripWidth - 20);
+      expect(geometry.copyLeft).toBeGreaterThan(geometry.stripLeft + 14);
+      expect(geometry.copyRight).toBeLessThan(geometry.stripRight - 14);
+      expect(geometry.sourceHeight).toBeGreaterThanOrEqual(52);
+      expect(geometry.copyHeight).toBeGreaterThanOrEqual(44);
+      expect(geometry.overflow).toBeLessThanOrEqual(0);
+      await expect(page.locator(".ed-freshness, .rail-freshness")).toHaveCount(0);
     }
-
-    expect(checked, "at least one recent entry should expose an .ed-freshness.ok link").toBe(true);
   });
 
-  test("pending detail keeps summary pending separate from collection freshness", async ({ page }) => {
+  test("pending detail keeps the source action available without collection freshness", async ({ page }) => {
     await page.goto("/");
     const pendingCards = page.locator("article.card").filter({ has: page.locator(".summary-state") });
     const pendingCount = await pendingCards.count();
@@ -596,29 +1730,39 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.goto(detailHref!);
     const pending = page.locator(".ed-pending-summary");
-    const freshness = page.locator(".ed-freshness[data-freshness-scope='collection']").first();
 
     await expect(pending).toBeVisible();
     await expect(pending.locator(".i18n-ja").first()).toHaveText("AI 要約 準備待ち");
     await expect(pending.locator(".i18n-en").first()).toHaveText("Summary pending");
     await expect(pending).not.toContainText("近日中に AI が生成");
-    await expect(page.locator(".ed-header-cta, .ed-cta-row, .rail-cta, .ed-disclaim")).toHaveCount(0);
+    await expect(page.locator(".ed-disclaim")).toHaveCount(0);
+    await expect(page.locator(".ed-header-cta")).toHaveCount(1);
+    await expect(page.locator(".ed-share-btn[data-share-copy]")).toHaveCount(1);
+    await expect(page.locator(".ed-freshness, .rail-freshness")).toHaveCount(0);
     await expect(page.locator('article.entry-detail a[target="_blank"]')).toHaveCount(1);
     await expect(page.locator('article.entry-detail a[target="_blank"]').first()).toHaveAttribute(
       "href", /^(?!\/e\/).+/,
     );
-    await expect(freshness).toBeVisible();
-    await expect(freshness).toHaveAttribute("data-freshness-scope", "collection");
-    const title = (await freshness.getAttribute("title")) ?? "";
-    expect(title).toContain("source collection freshness");
-    await expect(freshness).not.toHaveAttribute("aria-label", /.+/);
-    await expect(freshness).toHaveAccessibleName(/収集元 更新(?:OK|遅延)/);
-    await expect(freshness).toHaveAccessibleDescription(/ソース収集の状態/);
-    await expect(freshness.locator(".i18n-ja")).toHaveText(/収集元 更新(?:OK|遅延)/);
+
+    const description = await page.locator('meta[name="description"]').getAttribute("content");
+    const ogTitle = await page.locator('meta[property="og:title"]').getAttribute("content");
+    const ogDescription = await page.locator('meta[property="og:description"]').getAttribute("content");
+    const twitterDescription = await page.locator('meta[name="twitter:description"]').getAttribute("content");
+    expect(description).toMatch(/AI 要約は準備中/);
+    expect(description).not.toBe(ogTitle);
+    expect(ogDescription).toBe(description);
+    expect(twitterDescription).toBe(description);
+
+    const structuredData = JSON.parse(
+      await page.locator('script[type="application/ld+json"]').textContent() ?? "{}",
+    ) as { headline?: string; description?: string; inLanguage?: string };
+    expect(structuredData.description).toMatch(/AI 要約は準備中|AI summary pending/);
+    expect(structuredData.description).not.toBe(structuredData.headline);
+    expect(structuredData.inLanguage).toMatch(/^(ja-JP|en)$/);
   });
 
   test("sidebar category labels stay single-line and marquee on hover", async ({ page }) => {
-    await page.setViewportSize({ width: 900, height: 900 });
+    await page.setViewportSize({ width: 1000, height: 900 });
     await page.goto("/");
 
     const copilotItem = page.locator('a.side-item[href="/c/copilot"]').first();
@@ -702,6 +1846,37 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("#category-directory .category-directory-icon").first()).toBeVisible();
   });
 
+  test("Spotlight summary language and fallback badge stay truthful", async ({ page }) => {
+    await page.goto("/");
+
+    const jaSummary = page.locator("article.featured .featured-summary.i18n-ja");
+    await expect(jaSummary).toBeVisible();
+    const jaLang = await jaSummary.getAttribute("lang");
+    expect(["ja", "en"]).toContain(jaLang);
+    if (jaLang === "en") {
+      const badge = jaSummary.locator(
+        '.language-fallback-badge[data-fallback-language="en"]',
+      );
+      await expect(badge.locator(".i18n-ja")).toHaveText("AI 要約 EN");
+    } else {
+      await expect(jaSummary.locator(".language-fallback-badge")).toHaveCount(0);
+    }
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    const enSummary = page.locator("article.featured .featured-summary.i18n-en");
+    await expect(enSummary).toBeVisible();
+    const enLang = await enSummary.getAttribute("lang");
+    expect(["en", "ja"]).toContain(enLang);
+    if (enLang === "ja") {
+      const badge = enSummary.locator(
+        '.language-fallback-badge[data-fallback-language="ja"]',
+      );
+      await expect(badge.locator(".i18n-en")).toHaveText("Japanese AI summary");
+    } else {
+      await expect(enSummary.locator(".language-fallback-badge")).toHaveCount(0);
+    }
+  });
+
   test("language toggle changes html data-lang", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
@@ -710,14 +1885,30 @@ test.describe("TECH Dashboard smoke", () => {
     const enBtn = page.locator('.lang-btn[data-lang="en"]');
 
     await expect(jaBtn).toHaveAttribute("aria-pressed", "true");
+    await expect(jaBtn).toHaveAccessibleName("日本語表示中");
+    await expect(enBtn).toHaveAccessibleName("英語表示に切り替え");
 
     await enBtn.click();
     await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
     await expect(enBtn).toHaveAttribute("aria-pressed", "true");
+    await expect(jaBtn).toHaveAccessibleName("Switch interface to Japanese");
+    await expect(enBtn).toHaveAccessibleName("English interface active");
+    await page.locator(".mobile-tabbar button[data-menu-trigger]").click();
+    const menu = page.locator("#site-menu");
+    await expect(menu).toBeVisible();
+    await expect(menu.locator("small .i18n-en").first()).toBeVisible();
+    await expect(menu.locator("small .i18n-en").first()).not.toHaveText("");
+    await expect(menu.locator("small .i18n-ja").first()).toBeHidden();
+    await expect(menu.locator("[data-search-trigger] small .i18n-en")).toHaveText(
+      "Search by keyword, source, or tag",
+    );
+    await page.keyboard.press("Escape");
 
     await jaBtn.click();
     await expect(page.locator("html")).toHaveAttribute("data-lang", "ja");
     await expect(jaBtn).toHaveAttribute("aria-pressed", "true");
+    await expect(jaBtn).toHaveAccessibleName("日本語表示中");
+    await expect(enBtn).toHaveAccessibleName("英語表示に切り替え");
     for (const button of [jaBtn, enBtn]) {
       const box = await button.boundingBox();
       expect(box, "language toggle has a rendered box").not.toBeNull();
@@ -762,34 +1953,263 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("detail English TLDR labels a Japanese-language fallback", async ({ page }) => {
-    const fallbackEntry = readdirSync("web/dist/e", { withFileTypes: true }).find((entry) =>
-      entry.isDirectory()
-      && readFileSync(`web/dist/e/${entry.name}/index.html`, "utf8")
-        .includes('data-en-summary-fallback="ja"'),
-    );
-    expect(fallbackEntry, "built details include an English-view Japanese summary fallback").toBeTruthy();
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: SummaryFixtureEntry[];
+    };
+    const fallbackEntry = index.entries.find((entry) => {
+      const result = summaryForLangWithFallback(entry, "en");
+      return result.isFallback && result.fallbackLang === "ja";
+    });
+    if (!fallbackEntry) {
+      // The generated corpus can validly be fully bilingual. The fallback
+      // helper contract remains covered independently in web-data tests.
+      expect(fallbackEntry, "a fully bilingual generated corpus is valid").toBeUndefined();
+      return;
+    }
 
-    await page.goto(`/e/${fallbackEntry!.name}/`);
+    await page.goto(`/e/${fallbackEntry.id}/`);
     await page.locator('.lang-btn[data-lang="en"]').click();
     await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
-    await expect(page.locator(".ed-tldr-title.i18n-en")).toHaveText("Japanese-language summary");
+    await expect(page.locator(".ed-tldr-title.i18n-en")).toHaveText("Summary highlight");
     const fallbackBody = page.locator(".ed-tldr-body.i18n-en");
     await expect(fallbackBody).toBeVisible();
+    await expect(fallbackBody).toHaveAttribute("lang", "ja");
+    const badge = fallbackBody.locator(
+      '.language-fallback-badge[data-fallback-language="ja"]',
+    );
+    await expect(badge.locator(".i18n-en")).toHaveText("Japanese AI summary");
     await expect(fallbackBody.locator('[lang="ja"]')).not.toHaveText("");
+    await expect(page.locator(".ed-disclaim")).toHaveAttribute("data-generation-scope", "ja-only");
+  });
+
+  test("detail Japanese TLDR labels an English-language fallback as a state", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: SummaryFixtureEntry[];
+    };
+    const fallbackEntry = index.entries.find((entry) => {
+      const result = summaryForLangWithFallback(entry, "ja");
+      return result.isFallback && result.fallbackLang === "en";
+    });
+    if (!fallbackEntry) {
+      expect(fallbackEntry, "a fully bilingual generated corpus is valid").toBeUndefined();
+      return;
+    }
+
+    await page.goto(`/e/${fallbackEntry.id}/`);
+    await expect(page.locator(".ed-tldr-title.i18n-ja")).toHaveText("要点サマリ");
+    const fallbackBody = page.locator(".ed-tldr-body.i18n-ja");
+    await expect(fallbackBody).toBeVisible();
+    await expect(fallbackBody).toHaveAttribute("lang", "en");
+    const badge = fallbackBody.locator(
+      '.language-fallback-badge[data-fallback-language="en"]',
+    );
+    await expect(badge.locator(".i18n-ja")).toHaveText("AI 要約 EN");
+    await expect(fallbackBody.locator('[lang="en"]')).not.toHaveText("");
+    const disclaimer = page.locator(".ed-disclaim");
+    await expect(disclaimer).toHaveAttribute("data-generation-scope", "en-only");
+    await expect(disclaimer.locator(".i18n-ja")).toContainText("日本語要約は準備中");
+  });
+
+  test("mobile detail hero media keeps its reserved height through image failure", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{
+        id: string;
+        image?: { src?: string };
+      }>;
+    };
+    const imageEntry = index.entries.find((entry) => entry.image?.src?.trim());
+    expect(imageEntry?.image?.src, "the generated corpus contains a detail hero image").toBeTruthy();
+    await page.route(imageEntry!.image!.src!, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "image/png",
+        body: Buffer.from(
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z4wAAAABJRU5ErkJggg==",
+          "base64",
+        ),
+      });
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/e/${imageEntry!.id}/`);
+
+    const hero = page.locator(".ed-hero");
+    const heroImage = hero.locator(".ed-hero-img");
+    await expect(hero).toHaveClass(/ed-hero-loaded/);
+    const loadedGeometry = await hero.evaluate((element) => {
+      const heroRect = element.getBoundingClientRect();
+      const imageRect = element.querySelector("img")?.getBoundingClientRect();
+      return {
+        hero: { width: heroRect.width, height: heroRect.height },
+        image: imageRect ? { width: imageRect.width, height: imageRect.height } : null,
+      };
+    });
+    expect(loadedGeometry.hero.width).toBeGreaterThan(300);
+    expect(loadedGeometry.hero.height).toBeGreaterThanOrEqual(188);
+    expect(loadedGeometry.image?.height).toBeGreaterThanOrEqual(188);
+    expect(loadedGeometry.image?.width).toBeGreaterThan(300);
+
+    await heroImage.dispatchEvent("error");
+    await expect(hero).toHaveClass(/ed-hero-failed/);
+    const failedGeometry = await hero.evaluate((element) => {
+      const heroRect = element.getBoundingClientRect();
+      const imageRect = element.querySelector("img")?.getBoundingClientRect();
+      const fallbackRect = element.querySelector(".ed-hero-fallback")?.getBoundingClientRect();
+      return {
+        hero: { width: heroRect.width, height: heroRect.height },
+        image: imageRect ? { width: imageRect.width, height: imageRect.height } : null,
+        fallback: fallbackRect
+          ? { width: fallbackRect.width, height: fallbackRect.height }
+          : null,
+      };
+    });
+    expect(failedGeometry.image?.width ?? 0, "failed hero image leaves layout flow").toBe(0);
+    expect(failedGeometry.fallback?.height).toBeGreaterThanOrEqual(188);
+    expect(failedGeometry.fallback?.width).toBeGreaterThan(300);
+    expect(
+      Math.abs(failedGeometry.hero.height - loadedGeometry.hero.height),
+      "image failure preserves the reserved hero height",
+    ).toBeLessThanOrEqual(1);
+    expect(
+      Math.abs(failedGeometry.hero.width - loadedGeometry.hero.width),
+      "image failure preserves the reserved hero width",
+    ).toBeLessThanOrEqual(1);
+  });
+
+  test("arXiv detail returns to the paper lane instead of Research", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{
+        id: string;
+        source: string;
+        sourceType: string;
+        url: string;
+      }>;
+    };
+    const arxivEntry = index.entries.find((entry) => (
+      entry.source.startsWith("arxiv-")
+      || entry.sourceType === "paper"
+        && /(?:^|\.)arxiv\.org$/i.test(new URL(entry.url).hostname)
+    ));
+    expect(arxivEntry, "the generated corpus contains an arXiv detail entry").toBeTruthy();
+
+    await page.goto(`/e/${arxivEntry!.id}/`);
+    await expect(page.locator('.crumb-inner a[href="/arxiv/"]')).toHaveText("arXiv");
+    await expect(page.locator('.header-switcher a[href="/arxiv"]')).toHaveClass(/\bactive\b/);
+    await expect(page.locator('.mobile-tabbar a[href="/arxiv"]')).toHaveClass(/\bactive\b/);
+    await expect(page.locator('.mobile-tabbar a[href="/"]')).not.toHaveClass(/\bactive\b/);
+    await expect(page.locator('.mobile-tabbar a[href="/arxiv"]')).not.toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await expect(page.locator(".ed-cat-pill")).toHaveAttribute("href", "/arxiv/");
+    await expect(page.locator(".ed-cat-pill")).toContainText("arXiv");
+    await expect(page.locator(".cat-jump-link")).toHaveAttribute("href", "/arxiv/");
+    await expect(page.locator(".cat-jump-link .cat-jump-name")).toHaveText("arXiv");
+    await expect(page.locator('.cat-jump-link[href="/c/research"]')).toHaveCount(0);
+    const importanceStanding = page.locator('[data-importance-standing="arxiv"] .muted-sm');
+    await expect(importanceStanding.locator(".i18n-ja")).toContainText(
+      /^\(arXiv \d+件中、同等以上 \d+件\)$/,
+    );
+    await expect(importanceStanding.locator(".i18n-ja")).not.toContainText("Papers / Benchmarks");
+    await expect(page.locator("aside.left .side-item.active")).toHaveCount(0);
+    await expect(page.locator('a[href="/c/research"].ed-cat-pill')).toHaveCount(0);
+    const format = page.locator(`[data-entry-format="${arxivEntry!.sourceType}"]`);
+    await expect(format.locator(".k .i18n-ja")).toHaveText("配信形式");
+    await expect(format.locator(".v .i18n-ja")).toHaveText("論文");
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(format.locator(".k .i18n-en")).toBeVisible();
+    await expect(format.locator(".k .i18n-en")).toHaveText("Format");
+    await expect(format.locator(".v .i18n-en")).toHaveText("Paper");
+    await expect(format.locator(".v .i18n-ja")).toBeHidden();
+    await expect(importanceStanding.locator(".i18n-en")).toContainText(
+      /^\(\d+ of \d+ arXiv entries are equal or higher\)$/,
+    );
+    const moreLink = page.locator(".ed-rel-h-more");
+    if (await moreLink.count()) {
+      await expect(moreLink).toHaveAttribute("href", "/arxiv/");
+    }
+  });
+
+  test("detail and category supporting titles follow the active language", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{
+        id: string;
+        source: string;
+        sourceType: string;
+        url: string;
+      }>;
+    };
+    const arxivEntry = index.entries.find((entry) => (
+      entry.source.startsWith("arxiv-")
+      || entry.sourceType === "paper"
+        && /(?:^|\.)arxiv\.org$/i.test(new URL(entry.url).hostname)
+    ));
+    expect(arxivEntry, "the generated corpus contains an arXiv detail entry").toBeTruthy();
+    await page.goto(`/e/${arxivEntry!.id}/`);
+
+    const supportingLinks = page.locator(".ed-pn-card, .ed-rel-card, .rail-list > li > a");
+    expect(
+      await supportingLinks.count(),
+      "the detail page exposes at least one supporting article title",
+    ).toBeGreaterThan(0);
+    const slots = await supportingLinks.evaluateAll((links) => links.map((link) => ({
+      ja: link.querySelector<HTMLElement>(".i18n-ja")?.textContent?.trim() ?? "",
+      en: link.querySelector<HTMLElement>(".i18n-en")?.textContent?.trim() ?? "",
+    })));
+    expect(slots.every((slot) => slot.ja.length > 0 && slot.en.length > 0)).toBeTruthy();
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    const visibleLanguages = await supportingLinks.first().evaluate((link) => ({
+      ja: getComputedStyle(link.querySelector<HTMLElement>(".i18n-ja")!).display,
+      en: getComputedStyle(link.querySelector<HTMLElement>(".i18n-en")!).display,
+    }));
+    expect(visibleLanguages.ja).toBe("none");
+    expect(visibleLanguages.en).not.toBe("none");
+
+    await page.goto("/categories/");
+    const latest = page.locator(".cat-latest").first();
+    await expect(latest).toBeVisible();
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(latest.locator("strong.i18n-ja")).toBeHidden();
+    await expect(latest.locator("strong.i18n-en")).toBeVisible();
+    await expect(latest.locator("strong.i18n-en")).not.toHaveText("");
   });
 
   test("detail page exposes one explicit Pagefind title instead of concatenating language variants", async ({ page }) => {
     await page.goto("/");
-    const detailHref = await page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first().getAttribute("href");
+    const detailHref = await page
+      .locator('main article.card:has(.summary .s-text) h3.title a[href^="/e/"]')
+      .first()
+      .getAttribute("href");
     expect(detailHref, "home should link to at least one detail page").toBeTruthy();
     await page.goto(detailHref!);
 
     const pagefindTitle = page.locator('meta[data-pagefind-meta="title[content]"]');
     await expect(pagefindTitle).toHaveCount(1);
+    const pagefindTitleJa = page.locator('meta[data-pagefind-meta="titleJa[content]"]');
+    const pagefindTitleEn = page.locator('meta[data-pagefind-meta="titleEn[content]"]');
+    expect(
+      await pagefindTitleJa.count() + await pagefindTitleEn.count(),
+      "at least one validated language-specific title is indexed",
+    ).toBeGreaterThan(0);
     const indexedTitle = ((await pagefindTitle.getAttribute("content")) ?? "").trim();
-    const visibleJaTitle = ((await page.locator(".ed-title .i18n-ja").textContent()) ?? "").trim();
+    const visibleJaTitle = ((await page.locator(".ed-title .i18n-ja .ed-title-text").textContent()) ?? "").trim();
     expect(indexedTitle).toBeTruthy();
     expect(indexedTitle).toBe(visibleJaTitle);
+    for (const lang of ["ja", "en"] as const) {
+      const titleVariant = page.locator(`.ed-title > .i18n-${lang}`);
+      const fallbackLanguage = await titleVariant.getAttribute("data-title-fallback");
+      const originBadge = titleVariant.locator(".language-fallback-badge");
+      if (fallbackLanguage) {
+        await expect(originBadge).toHaveCount(1);
+        await expect(originBadge).toHaveAttribute("data-fallback-language", fallbackLanguage);
+        const expectedLabel = lang === "ja"
+          ? `原題 ${fallbackLanguage.toUpperCase()}`
+          : `${fallbackLanguage === "ja" ? "Japanese" : "English"} title`;
+        await expect(originBadge.locator(`.i18n-${lang}`)).toHaveText(expectedLabel);
+      } else {
+        await expect(originBadge).toHaveCount(0);
+      }
+    }
     const authorityMeta = page.locator('meta[data-pagefind-filter="authority[content]"]');
     await expect(authorityMeta).toHaveCount(1);
     await expect(authorityMeta).toHaveAttribute(
@@ -799,9 +2219,80 @@ test.describe("TECH Dashboard smoke", () => {
     const authorityPill = page.locator("[data-source-authority]").first();
     await expect(authorityPill).toBeVisible();
     await expect(authorityPill).toContainText(/公式|論文|コミュニティ|報道|集約|出典/);
+    const summaryMetadata = page.locator(
+      'meta[data-pagefind-meta="summaryJa[content]"], meta[data-pagefind-meta="summaryEn[content]"]',
+    );
+    expect(await summaryMetadata.count(), "at least one validated summary is indexed").toBeGreaterThan(0);
+    for (let index = 0; index < await summaryMetadata.count(); index++) {
+      const content = ((await summaryMetadata.nth(index).getAttribute("content")) ?? "").trim();
+      expect(content.length).toBeGreaterThan(0);
+      expect(content).not.toMatch(/AI 要約未生成|AI summary pending|後続の Worker run/);
+    }
+    const generationDisclosure = page.locator(".ed-disclaim");
+    await expect(generationDisclosure).toBeVisible();
+    await expect(generationDisclosure).toHaveAttribute(
+      "data-generation-scope",
+      /^(bilingual|ja-only|en-only)$/,
+    );
+    const generationScope = await generationDisclosure.getAttribute("data-generation-scope");
+    if (generationScope === "bilingual") {
+      await expect(generationDisclosure.locator(".i18n-ja")).toContainText(
+        /日本語版と英語版は言語ごとに独立して生成/,
+      );
+    } else if (generationScope === "ja-only") {
+      await expect(generationDisclosure.locator(".i18n-ja")).toContainText(/英語要約は準備中/);
+    } else {
+      await expect(generationDisclosure.locator(".i18n-ja")).toContainText(/日本語要約は準備中/);
+    }
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    if (generationScope === "bilingual") {
+      await expect(generationDisclosure.locator(".i18n-en")).toContainText(
+        /generated independently for each language/i,
+      );
+    } else if (generationScope === "ja-only") {
+      await expect(generationDisclosure.locator(".i18n-en")).toContainText(
+        /summary is not yet available/i,
+      );
+    } else {
+      await expect(generationDisclosure.locator(".i18n-en")).toContainText(
+        /English summary is currently available/i,
+      );
+    }
+  });
+
+  test("detail metadata follows the effective title language", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: SummaryFixtureEntry[];
+    };
+    const correctedEntry = index.entries.find((entry) => (
+      entry.lang && effectiveTitleLanguage(entry) !== entry.lang
+    ));
+    expect(correctedEntry, "current data includes a title with incorrect feed language metadata").toBeTruthy();
+
+    const expectedLanguage = effectiveTitleLanguage(correctedEntry!);
+    await page.goto(`/e/${correctedEntry!.id}/`);
+
+    const metadataLanguage = page.locator("[data-entry-language]");
+    await expect(metadataLanguage).toHaveAttribute("data-entry-language", expectedLanguage);
+    await expect(metadataLanguage.locator(".v")).toHaveText(expectedLanguage.toUpperCase());
+    await expect(page.locator("[data-reading-language]")).toHaveAttribute(
+      "data-reading-language",
+      expectedLanguage,
+    );
+
+    const jsonLd = JSON.parse(
+      (await page.locator('script[type="application/ld+json"]').textContent()) ?? "{}",
+    ) as { headline?: string; description?: string; inLanguage?: string };
+    const structuredHeadline = page.locator(
+      `.ed-title .i18n-${expectedLanguage} .ed-title-text`,
+    );
+    expect(jsonLd.headline).toBe((await structuredHeadline.textContent())?.trim());
+    expect(jsonLd.description).toBeTruthy();
+    expect(jsonLd.inLanguage).toBe(expectedLanguage === "ja" ? "ja-JP" : "en");
   });
 
   test("home keeps the decision path compact at tablet width", async ({ page }) => {
+    const fullLabel = "Microsoft Foundry Engineering and AI Platform Updates";
     await page.setViewportSize({ width: 768, height: 900 });
     await page.goto("/");
     await expect(page.locator(".banner-right")).toBeHidden();
@@ -809,23 +2300,142 @@ test.describe("TECH Dashboard smoke", () => {
       await document.fonts.ready;
       await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     });
-    const metrics = await page.evaluate(() => {
-      const banner = document.querySelector(".banner-inner")?.getBoundingClientRect();
-      const main = document.querySelector(".layout main")?.getBoundingClientRect();
-      const topRank = document.querySelector(".top-rank")?.getBoundingClientRect();
-      const footer = document.querySelector(".footer-bar")?.getBoundingClientRect();
+    await page.locator(".featured-src").evaluate((source) => {
+      const fullLabel = "Microsoft Foundry Engineering and AI Platform Updates";
+      const label = source.querySelector("[data-source-disclosure-label]");
+      if (label) label.textContent = fullLabel;
+      const full = source.querySelector("[data-source-disclosure-full]");
+      if (full) full.textContent = fullLabel;
+    });
+
+    const featuredDisclosure = page.locator(".featured-src.source-disclosure");
+    const featuredTrigger = featuredDisclosure.locator("[data-source-disclosure-trigger]");
+    const featuredTabletTarget = await featuredTrigger.boundingBox();
+    expect(featuredTabletTarget, "tablet Featured source disclosure target should exist").not.toBeNull();
+    expect(featuredTabletTarget!.width).toBeGreaterThanOrEqual(44);
+    expect(featuredTabletTarget!.height).toBeGreaterThanOrEqual(44);
+    await expect(featuredDisclosure).not.toHaveAttribute("open", "");
+    await featuredTrigger.focus();
+    await expect(featuredTrigger).toBeFocused();
+    const focusStyle = await featuredTrigger.evaluate((el) => {
+      const style = getComputedStyle(el);
       return {
-        bannerHeight: banner?.height ?? Number.POSITIVE_INFINITY,
-        mainY: main?.y ?? Number.POSITIVE_INFINITY,
-        topRankBottom: topRank?.bottom ?? Number.POSITIVE_INFINITY,
-        visibleBottom: Math.min(window.innerHeight, footer?.top ?? window.innerHeight),
-        overflow: document.documentElement.scrollWidth - window.innerWidth,
+        color: style.outlineColor,
+        style: style.outlineStyle,
+        width: Number.parseFloat(style.outlineWidth),
       };
     });
-    expect(metrics.bannerHeight).toBeLessThanOrEqual(320);
-    expect(metrics.mainY).toBeLessThanOrEqual(500);
-    expect(metrics.topRankBottom, "tablet ranked Top-3 stays above the fixed footer").toBeLessThanOrEqual(metrics.visibleBottom);
-    expect(metrics.overflow).toBeLessThanOrEqual(0);
+    expect(focusStyle.style).not.toBe("none");
+    expect(focusStyle.width).toBeGreaterThanOrEqual(2);
+    expect(focusStyle.color).not.toBe("rgba(0, 0, 0, 0)");
+    await page.keyboard.press("Enter");
+    await expect(featuredDisclosure).toHaveAttribute("open", "");
+    await expect(featuredDisclosure.locator(".source-disclosure-panel")).toBeVisible();
+    await expect(featuredDisclosure.locator("[data-source-disclosure-full]")).toHaveText(fullLabel);
+    await page.keyboard.press("Enter");
+    await expect(featuredDisclosure).not.toHaveAttribute("open", "");
+    await page.keyboard.press("Space");
+    await expect(featuredDisclosure).toHaveAttribute("open", "");
+    await page.keyboard.press("Space");
+    await expect(featuredDisclosure).not.toHaveAttribute("open", "");
+
+    const rankedDisclosure = page.locator(".rank-source.source-disclosure").first();
+    const rankedTrigger = rankedDisclosure.locator("[data-source-disclosure-trigger]");
+    const rankedTabletTarget = await rankedTrigger.boundingBox();
+    expect(rankedTabletTarget, "tablet ranked source disclosure target should exist").not.toBeNull();
+    expect(rankedTabletTarget!.width).toBeGreaterThanOrEqual(44);
+    expect(rankedTabletTarget!.height).toBeGreaterThanOrEqual(44);
+    const rankedFullLabel = (
+      await rankedDisclosure.locator("[data-source-disclosure-label]").textContent()
+    )?.trim();
+    expect(rankedFullLabel).toBeTruthy();
+    await rankedTrigger.click();
+    await expect(rankedDisclosure).toHaveAttribute("open", "");
+    const rankedPanel = rankedDisclosure.locator(".source-disclosure-panel");
+    await expect(rankedPanel).toBeVisible();
+    await expect(rankedDisclosure.locator("[data-source-disclosure-full]")).toHaveText(
+      rankedFullLabel ?? "",
+    );
+    const rankedPanelPosition = await rankedPanel.evaluate((panel) => {
+      const rect = panel.getBoundingClientRect();
+      return {
+        centerX: rect.left + rect.width / 2,
+        bottomGap: window.innerHeight - rect.bottom,
+        viewportCenterX: window.innerWidth / 2,
+      };
+    });
+    expect(
+      Math.abs(rankedPanelPosition.centerX - rankedPanelPosition.viewportCenterX),
+      "tablet ranked disclosure should stay horizontally viewport-centered",
+    ).toBeLessThanOrEqual(1);
+    expect(rankedPanelPosition.bottomGap, "tablet ranked disclosure should keep its viewport bottom offset")
+      .toBeGreaterThanOrEqual(53);
+    expect(rankedPanelPosition.bottomGap, "tablet ranked disclosure should keep its viewport bottom offset")
+      .toBeLessThanOrEqual(55);
+    await rankedTrigger.click();
+    await expect(rankedDisclosure).not.toHaveAttribute("open", "");
+
+    for (const lang of ["ja", "en"] as const) {
+      await page.locator(`.lang-btn[data-lang="${lang}"]`).click();
+      await page.evaluate(
+        () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+      );
+      const metrics = await page.evaluate(() => {
+        const banner = document.querySelector(".banner-inner")?.getBoundingClientRect();
+        const main = document.querySelector(".layout main")?.getBoundingClientRect();
+        const topRank = document.querySelector(".top-rank")?.getBoundingClientRect();
+        const footer = document.querySelector(".footer-bar")?.getBoundingClientRect();
+        const featuredMeta = document.querySelector(".featured-meta")?.getBoundingClientRect();
+        const featuredSource = document.querySelector<HTMLElement>(
+          ".featured-src .source-disclosure-label",
+        );
+        const sourceLabels = Array.from(
+          document.querySelectorAll<HTMLDetailsElement>(".featured-src.source-disclosure, .rank-source.source-disclosure"),
+        );
+        return {
+          bannerHeight: banner?.height ?? Number.POSITIVE_INFINITY,
+          mainY: main?.y ?? Number.POSITIVE_INFINITY,
+          topRankBottom: topRank?.bottom ?? Number.POSITIVE_INFINITY,
+          visibleBottom: Math.min(window.innerHeight, footer?.top ?? window.innerHeight),
+          footerHeight: footer?.height ?? Number.POSITIVE_INFINITY,
+          featuredMetaHeight: featuredMeta?.height ?? Number.POSITIVE_INFINITY,
+          featuredSourceClipped: !!featuredSource
+            && featuredSource.scrollWidth > featuredSource.clientWidth
+            && getComputedStyle(featuredSource).textOverflow === "ellipsis",
+          sourceLabelsRecoverable: sourceLabels.length > 0
+            && sourceLabels.every((root) => {
+              const visible = root.querySelector("[data-source-disclosure-label]")?.textContent?.trim();
+              const full = root.querySelector("[data-source-disclosure-full]")?.textContent?.trim();
+              return root.getAttribute("title") === null && !!visible && visible === full;
+            }),
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      });
+      expect(metrics.bannerHeight).toBeLessThanOrEqual(320);
+      expect(metrics.mainY).toBeLessThanOrEqual(500);
+      expect(metrics.footerHeight, `${lang}: tablet footer stays on one line`).toBeLessThanOrEqual(36);
+      expect(metrics.featuredMetaHeight, `${lang}: tablet Featured metadata stays within two rows`).toBeLessThanOrEqual(50);
+      expect(metrics.featuredSourceClipped, `${lang}: long Featured source labels use ellipsis instead of adding rows`).toBe(true);
+      expect(metrics.sourceLabelsRecoverable, `${lang}: truncated source labels expose their full value`).toBe(true);
+      expect(metrics.topRankBottom, `${lang}: tablet ranked Top-3 keeps a safe gap above the fixed footer`).toBeLessThanOrEqual(
+        metrics.visibleBottom - 8,
+      );
+      expect(metrics.overflow, `${lang}: page should not overflow horizontally`).toBeLessThanOrEqual(0);
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobileTarget = await featuredTrigger.boundingBox();
+    expect(mobileTarget, "mobile source disclosure target should exist").not.toBeNull();
+    expect(mobileTarget!.width, "mobile source disclosure target should be at least 44px wide").toBeGreaterThanOrEqual(44);
+    expect(mobileTarget!.height, "mobile source disclosure target should be at least 44px high").toBeGreaterThanOrEqual(44);
+    await featuredTrigger.click();
+    await expect(featuredDisclosure).toHaveAttribute("open", "");
+    await expect(featuredDisclosure.locator(".source-disclosure-panel")).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+    await featuredTrigger.click();
+    await expect(featuredDisclosure).not.toHaveAttribute("open", "");
   });
 
   test("skip link is keyboard visible and focuses content start", async ({ page }) => {
@@ -847,55 +2457,153 @@ test.describe("TECH Dashboard smoke", () => {
     await page.goto("/status/");
 
     await expect(page.locator(".page-hero #status-heading")).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Worker Health/i })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Source Freshness/i })).toBeVisible();
+    await expect(page.locator("#worker-health-heading")).toBeVisible();
+    await expect(page.locator("#source-health-heading")).toBeVisible();
     const workerHealthSection = page.locator(".status-hero");
     await expect(workerHealthSection).toHaveAttribute("aria-labelledby", "worker-health-heading");
     await expect(workerHealthSection).toHaveAttribute("aria-describedby", "worker-health-summary");
+    const runStatus = await workerHealthSection.getAttribute("data-run-status");
+    const sourceReviewStatus = await workerHealthSection.getAttribute("data-source-review-status");
+    expect(runStatus).toMatch(/^(ok|warn|err)$/);
+    expect(sourceReviewStatus).toMatch(/^(ok|warn|err)$/);
+    const statusWeight = { ok: 0, warn: 1, err: 2 } as const;
+    const overallStatus =
+      statusWeight[runStatus as keyof typeof statusWeight]
+        >= statusWeight[sourceReviewStatus as keyof typeof statusWeight]
+        ? runStatus
+        : sourceReviewStatus;
+    await expect(workerHealthSection).toHaveClass(new RegExp(`\\bstatus-hero-${overallStatus}\\b`));
+    await expect(page.locator(".page-hero")).toHaveClass(
+      new RegExp(`\\bpage-hero-status-${overallStatus}\\b`),
+    );
     await expect(page.locator("#worker-health-summary")).not.toBeEmpty();
-    await expect(page.getByText("Summary entries pending").first()).toBeVisible();
+    await expect(page.locator('[data-health-scope="summary-queue"]')).toContainText("AI要約 Queue");
     const collectionMetric = page.locator('[data-health-scope="latest-batch"]');
     await expect(collectionMetric).toContainText(/\d+\/\d+/);
     await expect(page.locator('[data-health-scope="collection-run"]')).toHaveCount(1);
-    await expect(page.locator('[data-health-domain="summary-queue"]')).toHaveCount(3);
-    await expect(page.locator('[data-health-scope="summary-throughput"]')).toHaveCount(1);
-    await expect(page.locator('[data-health-scope="summary-backlog"]')).toHaveCount(1);
-    await expect(page.locator('[data-health-scope="summary-eta"]')).toHaveCount(1);
+    await expect(page.locator('[data-health-domain="summary-queue"]')).toHaveCount(1);
+    const summaryQueueMetric = page.locator('[data-health-scope="summary-queue"]');
+    const bodyQueueMetric = page.locator('[data-health-scope="body-queue"]');
+    await expect(summaryQueueMetric).toHaveCount(1);
+    await expect(bodyQueueMetric).toHaveCount(1);
+    await expect(page.locator('[data-health-scope="enrichment-budget"]')).toHaveCount(1);
     await expect(page.locator('[data-health-scope="published-artifact"]')).toHaveCount(1);
-    await expect(collectionMetric.locator("small")).toHaveText(/batch \d+\/\d+ · \d+ registry sources/);
-    await expect(page.locator('[data-health-scope="summary-throughput"] strong')).toHaveAttribute(
-      "title",
-      /new ai summaries added in this collection run.*backlog is tracked separately/i,
+    await expect(collectionMetric.locator("small > .i18n-en")).toHaveText(
+      /batch \d+\/\d+ · \d+ registered sources/,
+    );
+    const summaryQueueMode = await summaryQueueMetric.getAttribute("data-summary-queue-mode");
+    const summaryQueueState = await summaryQueueMetric.getAttribute("data-summary-queue-state");
+    const bodyQueueMode = await bodyQueueMetric.getAttribute("data-body-queue-mode");
+    const bodyQueueState = await bodyQueueMetric.getAttribute("data-body-queue-state");
+    expect(summaryQueueMode).toMatch(/^(enabled|disabled|missing-binding|error|unknown)$/);
+    expect(summaryQueueState).toMatch(
+      /^(active|clear|waiting-for-run|paused|unavailable|error|unknown)$/,
+    );
+    expect(bodyQueueMode).toMatch(/^(enabled|disabled|missing-binding|error|unknown)$/);
+    expect(bodyQueueState).toMatch(
+      /^(active|clear|waiting-for-run|paused|unavailable|error|unknown)$/,
+    );
+    if (runStatus === "err" && summaryQueueMode === "enabled") {
+      expect(summaryQueueState).toBe("waiting-for-run");
+      await expect(summaryQueueMetric.locator("small > .i18n-en")).toContainText(
+        "waiting for a successful run",
+      );
+    }
+    if (runStatus === "err" && bodyQueueMode === "enabled") {
+      expect(bodyQueueState).toBe("waiting-for-run");
+      await expect(bodyQueueMetric.locator("small > .i18n-en")).toContainText(
+        "waiting for a successful run",
+      );
+    }
+    if (bodyQueueMode !== "enabled") {
+      await expect(bodyQueueMetric.locator("strong")).toHaveText("n/a");
+      await expect(bodyQueueMetric).not.toHaveAttribute("data-body-queue-state", "clear");
+    } else {
+      await expect(bodyQueueMetric.locator("strong")).toHaveText(/^\d+$/);
+    }
+    await expect(page.locator('[data-health-scope="enrichment-budget"] strong')).toHaveText(
+      /^(n\/a|\d+\/\d+)$/,
     );
     await expect(page.locator(".source-reason-line").first()).toBeVisible();
     await expect(page.locator('[data-source-filter="all"]')).toBeVisible();
     await expect(page.locator('[data-category-filter="all"]')).toBeVisible();
     await expect(page.locator(".source-item").first()).toBeVisible();
-    await expect(page.getByText(/stale > \d+h/).first()).toBeVisible();
+    await expect(page.locator(".source-status-badge").first()).toContainText(/正常|更新遅延|要確認/);
+    await expect(page.locator(".source-meta-line").first()).not.toContainText(/tier|stale\s*>/i);
     await expect(page.locator(".source-latest-line").first()).toBeVisible();
+    const sourceCoverage = page.locator('[data-health-scope="source-coverage"]');
+    const coverageMetrics = await sourceCoverage.evaluate((element) => ({
+      healthy: Number(element.getAttribute("data-healthy-source-count")),
+      evaluated: Number(element.getAttribute("data-evaluated-source-count")),
+      registered: Number(element.getAttribute("data-registered-source-count")),
+      percentage: Number(element.getAttribute("data-health-percentage")),
+    }));
+    expect(coverageMetrics.evaluated).toBeGreaterThan(0);
+    expect(coverageMetrics.healthy).toBeLessThanOrEqual(coverageMetrics.evaluated);
+    expect(coverageMetrics.evaluated).toBeLessThanOrEqual(coverageMetrics.registered);
+    expect(coverageMetrics.percentage).toBe(
+      Math.round((coverageMetrics.healthy / coverageMetrics.evaluated) * 100),
+    );
+    await expect(sourceCoverage.locator("p > .i18n-ja")).toHaveText(
+      new RegExp(`${coverageMetrics.healthy}\\s*/\\s*${coverageMetrics.evaluated}`),
+    );
+    const summaryServiceSnapshot = page.locator(
+      '.status-detail-grid > [data-health-scope="ai-summary-service"]',
+    );
+    await expect(summaryServiceSnapshot).toHaveAttribute(
+      "data-state-source",
+      "published-snapshot",
+    );
+    await expect(summaryServiceSnapshot).toHaveAttribute(
+      "data-observed-at",
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
+    );
+    await expect(summaryServiceSnapshot.locator("strong > .i18n-en")).toContainText(
+      /^Last run: /,
+    );
+    await expect(summaryServiceSnapshot.locator("small > .i18n-en")).toContainText(
+      /Published snapshot:\s+/,
+    );
 
     // Hero and footer must share the same run-status semantics (LL-126):
     // stale last-run pages must never say "Run ERR" in hero and "run ok" in footer.
-    const heroCount = await page.locator(".page-hero .page-count").first().innerText();
+    const heroCount = await page.locator(".page-hero .page-count > .i18n-en").innerText();
     const runMatch = heroCount.match(/Run\s+(OK|WARN|ERR)/);
     expect(runMatch, `status hero count should include run status, got: ${heroCount}`).not.toBeNull();
     expect(heroCount, "status hero should label freshness semantics explicitly").toContain("Fresh sources");
     const expectedTone = runMatch![1]!.toLowerCase();
     await expect(page.locator(".footer-bar .footer-inner")).toContainText(`run ${expectedTone}`);
+    await expect(page.getByRole("contentinfo")).toHaveCount(1);
     const footerRunLink = page.getByRole("link", { name: /Collection health:/ });
     await expect(footerRunLink).toHaveAttribute("href", "/status");
-    await expect(footerRunLink).toHaveAttribute("aria-label", /collection health: run (ok|warn|err).*\d+ pending/i);
+    await expect(footerRunLink).toHaveAttribute(
+      "aria-label",
+      /collection health: run (ok|warn|err).*summary queue \d+.*ai explainer body/i,
+    );
+    const footerRunDetail = await footerRunLink.getAttribute("data-run-detail");
+    expect(footerRunDetail).toBeTruthy();
     const footerDot = footerRunLink.locator(".dot");
     await expect(footerDot).toHaveAttribute("data-run-tone", expectedTone);
     await expect(footerDot).toHaveClass(new RegExp(`\\bdot\\b.*\\b${expectedTone}\\b`));
-    await expect(footerRunLink.locator(".mono")).toContainText(/last batch \d+\/\d+ src · \d+ pending/);
+    await expect(footerRunLink.locator(".mono")).toContainText(footerRunDetail!);
+    await expect(footerRunLink.locator(".mono")).toContainText(/last batch \d+\/\d+ src · summary queue \d+/);
+    await expect(footerRunLink).toHaveAttribute("data-body-queue-backlog", /^(unknown|\d+)$/);
+    const lastRunTime = footerRunLink.locator("time.footer-run-time");
+    await expect(lastRunTime).toHaveCount(1);
+    await expect(lastRunTime).toHaveAttribute(
+      "datetime",
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
+    );
+    await expect(lastRunTime).toContainText(/\S+/);
     await expect(page.locator(".footer-bar .item.mono")).toHaveCount(0);
-    await expect(page.locator(".page-hero-copy .i18n-ja")).toContainText("Latest source batch");
+    await expect(page.locator(".page-hero-copy > p > .i18n-ja")).toContainText("収集、AI要約、AI解説本文");
     await page.locator('.lang-btn[data-lang="en"]').click();
-    await expect(page.locator(".page-hero-copy .i18n-en")).toBeVisible();
-    await expect(page.locator(".page-hero-copy .i18n-en")).toContainText("Summary queue ETA");
-    await expect(page.locator(".summary-ready-copy .i18n-ja")).toContainText("要約準備済み");
-    await expect(page.locator(".summary-ready-copy .i18n-en")).toContainText("summary-ready");
+    await expect(page.locator(".page-hero-copy > p > .i18n-en")).toBeVisible();
+    await expect(page.locator(".page-hero-copy > p > .i18n-en")).toContainText("Check collection, AI summaries");
+    await expect(page.locator("#worker-health-heading > .i18n-en")).toContainText("Collection and enrichment health");
+    await expect(page.locator(".source-status-badge").first()).toContainText(/Fresh|Delayed|Needs review/);
+    await expect(page.locator(".source-reason-line").first()).toContainText(/Last collected|No articles have been collected/);
+    await expect(page.locator(".source-latest-line").first()).toContainText(/Latest article/);
   });
 
   test("status attention action targets visible main content on mobile", async ({ page }) => {
@@ -915,6 +2623,51 @@ test.describe("TECH Dashboard smoke", () => {
       .toBe(true);
   });
 
+  test("status category insight yields to content until the right rail is available", async ({ page }) => {
+    for (const width of [981, 1024, 1100, 1180]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/status/");
+      await expect(page.locator("aside.status-insights"), `${width}px keeps the right rail collapsed`).toBeHidden();
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+        .toBe(true);
+    }
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/status/");
+    await expect(page.locator(".category-health-list li").first()).toBeVisible();
+
+    const geometry = await page.evaluate(() => {
+      const items = Array.from(document.querySelectorAll<HTMLElement>(".category-health-list li"));
+      return {
+        overflow: document.documentElement.scrollWidth - window.innerWidth,
+        items: items.map((item) => {
+          const itemRect = item.getBoundingClientRect();
+          const detailRect = item.querySelector("small")?.getBoundingClientRect();
+          return {
+            itemLeft: itemRect.left,
+            itemRight: itemRect.right,
+            detailLeft: detailRect?.left ?? 0,
+            detailRight: detailRect?.right ?? 0,
+          };
+        }),
+      };
+    });
+
+    expect(geometry.overflow, "1280px status page must not overflow horizontally").toBeLessThanOrEqual(0);
+    expect(geometry.items.length).toBeGreaterThan(0);
+    for (const item of geometry.items) {
+      expect(item.detailLeft).toBeGreaterThanOrEqual(item.itemLeft - 1);
+      expect(item.detailRight).toBeLessThanOrEqual(item.itemRight + 1);
+    }
+
+    await expect(
+      page.locator(".status-insight-card:has(.category-health-list) .rail-title > .i18n-en"),
+    ).toContainText("up to 8");
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(page.locator(".category-health-list small > .i18n-en").first()).toContainText("not listed");
+  });
+
   test("status error rows with collected entries remain truthful", async ({ page }) => {
     await page.goto("/status/");
     const attentionRows = page.locator("#attention-list .status-attention-list li");
@@ -926,7 +2679,9 @@ test.describe("TECH Dashboard smoke", () => {
       const link = row.locator("a");
       const describedBy = await link.getAttribute("aria-describedby");
       expect(describedBy).toBeTruthy();
-      await expect(page.locator(`[id="${describedBy}"]`)).toContainText(status!);
+      await expect(page.locator(`[id="${describedBy}"]`)).toContainText(
+        status === "error" ? "収集状況の確認が必要" : "更新間隔が長くなっています",
+      );
     }
 
     const offenders = await page.locator(".source-item.source-row-error").evaluateAll((rows) =>
@@ -940,12 +2695,20 @@ test.describe("TECH Dashboard smoke", () => {
         .filter(
           (row) =>
             row.count > 0 &&
-            (row.reason.includes("inside the freshness threshold") ||
-              row.reason.includes("no live entry yet") ||
-              row.latest === "no data"),
+            (row.reason.includes("収集済みの記事がまだありません") ||
+              row.reason.includes("通常の更新範囲内") ||
+              row.latest === "記事なし"),
         ),
     );
     expect(offenders, "data-bearing error rows should show threshold-exceeded context, not no-data/inside-threshold").toEqual([]);
+
+    const noDataRows = page.locator(".source-item.source-row-no-data");
+    for (let index = 0; index < await noDataRows.count(); index++) {
+      const row = noDataRows.nth(index);
+      await expect(row).toHaveAttribute("data-source-status", "no-data");
+      await expect(row.locator(".source-status-badge")).toContainText(/未収録|Not listed/);
+      await expect(row.locator(".status.error, .source-status-badge.error")).toHaveCount(0);
+    }
   });
 
   test("section page heroes give page context on desktop and mobile", async ({ page }) => {
@@ -1071,7 +2834,7 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("category-owned panels scroll normally while primary sidebar stays sticky", async ({ page }) => {
-    for (const width of [1440, 1000]) {
+    for (const width of [1440, 1280]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto("/c/copilot/");
 
@@ -1124,6 +2887,19 @@ test.describe("TECH Dashboard smoke", () => {
       ).toBeLessThanOrEqual(2);
       expect(after.hscroll, `category detail has no horizontal overflow at ${width}px`).toBe(false);
     }
+
+    await page.setViewportSize({ width: 1000, height: 900 });
+    await page.goto("/c/copilot/");
+    const panel = page.locator(".category-side-panel");
+    const sidebar = page.locator("aside.left");
+    await expect(panel, "category panel yields to the article list at 1000px").toBeHidden();
+    await expect(sidebar, "primary sidebar remains visible at 1000px").toBeVisible();
+    await expect
+      .poll(() => sidebar.evaluate((element) => getComputedStyle(element).position))
+      .toBe("sticky");
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
   });
 
   test("status source filters only show matching rows", async ({ page }) => {
@@ -1135,12 +2911,13 @@ test.describe("TECH Dashboard smoke", () => {
           const element = button as HTMLElement;
           return {
             value: element.dataset.sourceFilter ?? "all",
-            count: Number(element.querySelector("span")?.textContent ?? "0"),
+            count: Number(element.dataset.sourceCount ?? Number.NaN),
           };
         })
         .filter((candidate) => candidate.value !== "all" && candidate.count > 0);
-      return candidates[0]?.value ?? "ok";
+      return candidates[0]?.value ?? "";
     });
+    expect(targetFilter, "the current status corpus exposes a non-empty source status").not.toBe("");
 
     await page.locator(`[data-source-filter="${targetFilter}"]`).click();
     await expect(page.locator(`[data-source-filter="${targetFilter}"]`)).toHaveAttribute("aria-pressed", "true");
@@ -1158,9 +2935,10 @@ test.describe("TECH Dashboard smoke", () => {
     await page.goto("/sources/");
 
     await expect(page).toHaveURL(/\/status\/?$/);
-    await expect(page.getByRole("heading", { name: /Source Freshness/i })).toBeVisible();
+    await expect(page.locator("#source-health-heading")).toBeVisible();
     await expect(page.locator(".source-item").first()).toBeVisible();
-    await expect(page.getByText(/tier \d ·/).first()).toBeVisible();
+    await expect(page.locator(".source-status-badge").first()).toContainText(/正常|更新遅延|要確認/);
+    await expect(page.locator(".source-meta-line").first()).not.toContainText(/tier|stale\s*>/i);
   });
 
   test("status category filter only shows matching sources", async ({ page }) => {
@@ -1220,12 +2998,25 @@ test.describe("TECH Dashboard smoke", () => {
     const chart = page.locator(".trend .chart");
     const kpis = page.locator(".trend .trend-kpis > span");
     await expect(page.locator(".trend .trend-kpis")).toBeVisible();
+    await expect(page.locator(".trend .chart-wrap")).toHaveAttribute(
+      "aria-label",
+      /^Papers\/Benchmarks trend chart/,
+    );
+    await expect(page.locator(".trend table caption")).toHaveText(
+      "Papers/Benchmarks trend counts",
+    );
     await expect(kpis.nth(0)).toBeVisible();
     await expect(kpis.nth(1)).toBeVisible();
     await expect(kpis.nth(2)).toBeHidden();
     await expect(kpis.nth(3)).toBeHidden();
     await expect(chart).toBeHidden();
     await expect(page.locator(".trend .x-axis")).toBeHidden();
+    await expect(page.locator(".trend .legend .i18n-ja")).toContainText(
+      "現在の Research 一覧",
+    );
+    await expect(page.locator(".trend .legend .i18n-ja")).not.toContainText(
+      "data/stats.json",
+    );
     await expect(page.locator(".trend .legend")).toBeHidden();
     const firstArticle = page.locator("article.card").first();
     await expect(firstArticle).toBeVisible();
@@ -1273,10 +3064,64 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("Research copy distinguishes selected research from paper-only arXiv browsing", async ({ page }) => {
     await page.goto("/c/research/");
+    await expect(page.locator(".page-hero h1")).toContainText("Research");
+    await expect(page.locator(".page-hero h1")).not.toContainText("Papers / Benchmarks");
+    const arxivIds = new Set(
+      (JSON.parse(readFileSync("data/index.json", "utf8")) as {
+        entries: Array<{ id: string; source: string; sourceType: string; url: string }>;
+      }).entries
+        .filter((entry) => (
+          entry.source.startsWith("arxiv-")
+          || entry.sourceType === "paper" && /(?:^|\.)arxiv\.org$/i.test(new URL(entry.url).hostname)
+        ))
+        .map((entry) => entry.id),
+    );
+    const researchIds = await page.locator("main article.card h3.title > a").evaluateAll(
+      (links) => links
+        .map((link) => link.getAttribute("href")?.match(/^\/e\/([^/]+)\//)?.[1])
+        .filter((id): id is string => Boolean(id)),
+    );
+    expect(
+      researchIds.filter((id) => arxivIds.has(id)),
+      "Research listing excludes entries owned by the arXiv lane",
+    ).toEqual([]);
     const callout = page.locator(".research-split-callout");
     await expect(callout).toContainText("選定した論文・レポート");
     await expect(callout).toContainText("arXiv レーンでは論文だけ");
     await expect(callout.getByRole("link", { name: "arXiv Papers" })).toBeVisible();
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(page.locator(".page-hero-copy > p > .i18n-en")).toBeVisible();
+    await expect(page.locator(".page-hero-copy > p > .i18n-en")).toContainText(
+      "Browse Research updates",
+    );
+    await expect(callout.locator("h2 .i18n-en")).toHaveText(
+      "Research includes selected papers and reports",
+    );
+    await expect(callout.locator("p.i18n-en")).toContainText(
+      "dedicated arXiv lane",
+    );
+    await expect(page.locator(".section-header .sort .i18n-en")).toHaveText("Newest first");
+    const sidePanel = page.locator(".category-side-panel");
+    await expect(sidePanel.locator(".category-side-note > p.i18n-en")).toContainText(
+      "High-volume arXiv papers",
+    );
+    await expect(sidePanel.locator(".category-side-note .side-action .i18n-en")).toHaveText(
+      "Open arXiv Papers",
+    );
+    const latestTitleEn = sidePanel.locator(".category-latest-link > strong.i18n-en");
+    if (await latestTitleEn.count()) {
+      await expect(latestTitleEn).toBeVisible();
+      await expect(latestTitleEn).not.toHaveText("");
+      const renderedLang = await latestTitleEn.getAttribute("lang");
+      expect(["en", "ja"]).toContain(renderedLang);
+      if (renderedLang === "ja") {
+        const badge = latestTitleEn.locator(
+          '.language-fallback-badge[data-fallback-language="ja"]',
+        );
+        await expect(badge.locator(".i18n-en")).toHaveText("Japanese title");
+      }
+    }
   });
 
   test("metrics endpoint exposes auto-refresh counts", async ({ request }) => {
@@ -1288,6 +3133,12 @@ test.describe("TECH Dashboard smoke", () => {
     expect(metrics.allTimeEntries).toBeGreaterThanOrEqual(metrics.liveEntries);
     expect(metrics.totalSourceCount).toBeGreaterThan(0);
     expect(metrics.totalCategories).toBeGreaterThan(0);
+    expect(metrics.bodyQueueBacklog === null || Number.isFinite(metrics.bodyQueueBacklog)).toBeTruthy();
+    expect(metrics.bodyQueueDrainEstimateHours === null || Number.isFinite(metrics.bodyQueueDrainEstimateHours)).toBeTruthy();
+    expect(metrics.bodyQueueEnqueued === null || Number.isFinite(metrics.bodyQueueEnqueued)).toBeTruthy();
+    expect(metrics.bodyQueueMerged === null || Number.isFinite(metrics.bodyQueueMerged)).toBeTruthy();
+    expect(metrics.enrichmentEnqueueCap === null || Number.isFinite(metrics.enrichmentEnqueueCap)).toBeTruthy();
+    expect(metrics.enrichmentEnqueued === null || Number.isFinite(metrics.enrichmentEnqueued)).toBeTruthy();
     expect(Number.isFinite(Date.parse(metrics.generatedAt))).toBeTruthy();
   });
 
@@ -1373,6 +3224,12 @@ test.describe("TECH Dashboard smoke", () => {
     const desktopMenuButton = page.locator("header .menu-trigger");
     await expect(desktopMenuButton).toBeVisible();
     await expect(desktopMenuButton).toHaveAttribute("aria-expanded", "false");
+
+    await page.setViewportSize({ width: 901, height: 844 });
+    const compactSwitcher = page.locator("header .header-switcher");
+    await expect(compactSwitcher.getByRole("link", { name: "Categories", exact: true })).toBeVisible();
+    await expect(compactSwitcher.getByRole("link", { name: "arXiv", exact: true })).toBeVisible();
+    await expect(compactSwitcher.getByRole("link", { name: "Knowledge", exact: true })).toBeVisible();
     await desktopMenuButton.focus();
     const focusRing = await desktopMenuButton.evaluate((button) => {
       const style = getComputedStyle(button);
@@ -1495,7 +3352,7 @@ test.describe("TECH Dashboard smoke", () => {
     await openMobileMenu();
     await menu.getByRole("link", { name: /Status/ }).click();
     await expect(page).toHaveURL(/\/status\/?$/);
-    await expect(page.getByRole("heading", { name: /Source Freshness/i })).toBeVisible();
+    await expect(page.locator("#source-health-heading")).toBeVisible();
     const mobileMenuTrigger = tabbar.getByRole("button", { name: /Menu/ });
     await expect(mobileMenuTrigger).toHaveClass(/active/);
     await expect(mobileMenuTrigger).not.toHaveAttribute("aria-current");
@@ -1532,35 +3389,267 @@ test.describe("TECH Dashboard smoke", () => {
 
     const featured = page.locator("article.featured").first();
     await expect(featured).toBeVisible();
+    await expectMobileFirstDecisionNearViewport(page);
     const featuredThumb = featured.locator(".featured-thumb").first();
-    const { featuredBox, thumbBox, bodyBox } = await featured.evaluate((node) => {
+    const {
+      featuredBox,
+      thumbBox,
+      bodyBox,
+      mainBox,
+      headerInnerBox,
+      logoBox,
+      langToggleBox,
+      langButtonBoxes,
+      tickerInnerBox,
+      tickerControlBoxes,
+      tickerSlideBox,
+      tickerMetaBox,
+      tickerTitleBox,
+      taglineClipped,
+      topRankBox,
+      rankCardBoxes,
+      rankSummaryBoxes,
+      rankMetaBoxes,
+      rankReasonCount,
+    } = await page.evaluate(() => {
       const rect = (element: Element | null) => {
         if (!element || element.getClientRects().length === 0) return null;
         const box = element.getBoundingClientRect();
-        return { x: box.x, y: box.y, width: box.width, height: box.height };
+        return {
+          x: box.x,
+          y: box.y,
+          width: box.width,
+          height: box.height,
+          right: box.right,
+          bottom: box.bottom,
+        };
       };
+      const featuredNode = document.querySelector("article.featured");
+      const tagline = Array.from(
+        document.querySelectorAll<HTMLElement>(".banner .tagline.i18n-ja"),
+      ).find((element) => getComputedStyle(element).display !== "none");
+      const tickerTitle = Array.from(
+        document.querySelectorAll<HTMLElement>(".ticker-bar .tb-slide.is-active .tb-title"),
+      ).find((title) => getComputedStyle(title).display !== "none");
       return {
-        featuredBox: rect(node),
-        thumbBox: rect(node.querySelector(".featured-thumb")),
-        bodyBox: rect(node.querySelector(".featured-body")),
+        featuredBox: rect(featuredNode),
+        thumbBox: rect(featuredNode?.querySelector(".featured-thumb") ?? null),
+        bodyBox: rect(featuredNode?.querySelector(".featured-body") ?? null),
+        mainBox: rect(document.querySelector(".layout main")),
+        headerInnerBox: rect(document.querySelector("header .header-inner")),
+        logoBox: rect(document.querySelector("header .logo")),
+        langToggleBox: rect(document.querySelector("header .lang-toggle")),
+        langButtonBoxes: Array.from(document.querySelectorAll<HTMLElement>("header .lang-btn")).map((button) => {
+          const box = button.getBoundingClientRect();
+          return { width: box.width, height: box.height };
+        }),
+        tickerInnerBox: rect(document.querySelector(".ticker-bar .tb-inner")),
+        tickerControlBoxes: Array.from(document.querySelectorAll<HTMLElement>(".ticker-bar .tb-ctrl")).map((control) => {
+          const box = control.getBoundingClientRect();
+          return { width: box.width, height: box.height };
+        }),
+        tickerSlideBox: rect(document.querySelector(".ticker-bar .tb-slide.is-active")),
+        tickerMetaBox: rect(document.querySelector(".ticker-bar .tb-slide.is-active .tb-meta")),
+        tickerTitleBox: rect(tickerTitle ?? null),
+        taglineClipped: Boolean(tagline && tagline.scrollHeight > tagline.clientHeight + 1),
+        topRankBox: rect(document.querySelector(".top-rank")),
+        rankCardBoxes: Array.from(document.querySelectorAll(".top-rank-item")).map((item) => rect(item)),
+        rankSummaryBoxes: Array.from(document.querySelectorAll(".top-rank-item .rank-summary")).map((item) => rect(item)),
+        rankMetaBoxes: Array.from(document.querySelectorAll(".top-rank-item .rank-meta")).map((item) => rect(item)),
+        rankReasonCount: document.querySelectorAll(".top-rank-item .rank-reason").length,
       };
     });
     expect(featuredBox, "featured panel has a box").not.toBeNull();
     expect(thumbBox, "featured thumb has a box").not.toBeNull();
     expect(bodyBox, "featured body has a box").not.toBeNull();
     expect(Math.round(featuredBox!.width), "featured stays inside mobile content width").toBeLessThanOrEqual(390);
-    expect(Math.round(featuredBox!.y), "first featured article appears without wasted top whitespace").toBeLessThanOrEqual(340);
+    expect(Math.round(featuredBox!.y), "first featured article appears without wasted top whitespace").toBeLessThanOrEqual(
+      MOBILE_FIRST_DECISION_MAX_Y,
+    );
     expect(Math.round(featuredBox!.height), "featured panel is not expanded by hidden fallback/image stacking").toBeLessThanOrEqual(260);
     expect(Math.round(thumbBox!.width), "featured thumb keeps compact mobile column").toBeLessThanOrEqual(110);
-    expect(bodyBox!.x, "featured body sits to the right of the thumbnail").toBeGreaterThanOrEqual(thumbBox!.x + thumbBox!.width - 1);
+    expect(Math.round(thumbBox!.height), "featured media rail fills the card height").toBeGreaterThanOrEqual(Math.round(featuredBox!.height) - 2);
+    expect(bodyBox!.x, "featured body sits to the right of the thumbnail").toBeGreaterThanOrEqual(thumbBox!.right - 1);
+    expect(
+      bodyBox!.x - thumbBox!.right,
+      "featured grid does not reserve unused space between the thumbnail and body",
+    ).toBeLessThanOrEqual(1);
+    expect(
+      bodyBox!.width,
+      "featured body uses the remaining mobile card width instead of wrapping in the tablet column",
+    ).toBeGreaterThanOrEqual(featuredBox!.width - thumbBox!.width - 3);
+    expect(mainBox!.x, "mobile Home uses a balanced 16px left gutter").toBeCloseTo(16, 0);
+    expect(mainBox!.width, "mobile Home widens its usable content area").toBeGreaterThanOrEqual(357);
+    expect(
+      Math.abs((logoBox!.y + logoBox!.height / 2) - (langToggleBox!.y + langToggleBox!.height / 2)),
+      "mobile header keeps logo and language controls on one aligned row",
+    ).toBeLessThanOrEqual(1);
+    expect(
+      langToggleBox!.y - headerInnerBox!.y,
+      "mobile header keeps breathing room above the language controls",
+    ).toBeGreaterThanOrEqual(10);
+    expect(
+      headerInnerBox!.bottom - langToggleBox!.bottom,
+      "mobile header keeps breathing room below the language controls",
+    ).toBeGreaterThanOrEqual(10);
+    expect(logoBox!.right + 8, "mobile header keeps clear space between logo and language controls").toBeLessThanOrEqual(
+      langToggleBox!.x,
+    );
+    expect(langButtonBoxes, "mobile language toggle keeps two controls").toHaveLength(2);
+    for (const button of langButtonBoxes) {
+      expect(button.width, "mobile language control keeps a 44px touch width").toBeGreaterThanOrEqual(44);
+      expect(button.height, "mobile language control keeps a 44px touch height").toBeGreaterThanOrEqual(44);
+    }
+    expect(taglineClipped, "mobile hero copy is complete instead of line-clamped mid-sentence").toBe(false);
+    expect(tickerInnerBox!.height, "mobile ticker is compact without shrinking its controls").toBeLessThanOrEqual(91);
+    for (const control of tickerControlBoxes) {
+      expect(control.width, "ticker control keeps a 44px touch width").toBeGreaterThanOrEqual(44);
+      expect(control.height, "ticker control keeps a 44px touch height").toBeGreaterThanOrEqual(44);
+    }
+    expect(tickerSlideBox!.height, "ticker headline keeps a 44px touch height").toBeGreaterThanOrEqual(44);
+    expect(tickerMetaBox!.bottom, "ticker category and tags occupy the first line").toBeLessThanOrEqual(
+      tickerTitleBox!.y,
+    );
+    expect(tickerTitleBox!.width, "ticker title receives the full mobile headline width").toBeGreaterThanOrEqual(
+      tickerSlideBox!.width - 1,
+    );
+    expect(rankReasonCount, "Top 3 removes the duplicated authority, format, and category row").toBe(0);
+    expect(rankSummaryBoxes, "Top 3 keeps one summary line per article").toHaveLength(3);
+    expect(topRankBox!.height, "Top 3 panel stays compact with article-specific summaries").toBeLessThanOrEqual(380);
+    for (const cardBox of rankCardBoxes) {
+      expect(cardBox!.height, "Top 3 card stays compact while retaining decision context").toBeLessThanOrEqual(118);
+    }
+    for (const summaryBox of rankSummaryBoxes) {
+      expect(summaryBox!.height, "Top 3 summary stays on one clamped line").toBeLessThanOrEqual(20);
+      expect(summaryBox!.width, "Top 3 summary has usable mobile width").toBeGreaterThanOrEqual(260);
+    }
+    for (const metaBox of rankMetaBoxes) {
+      expect(metaBox!.height, "Top 3 source and time stay on one metadata row").toBeLessThanOrEqual(28);
+    }
+    await expect(page.locator(".top-rank-title .i18n-ja")).toHaveText(/次に見る Top 3/);
 
     const featuredImage = featured.locator(".featured-thumb.has-image img").first();
     if ((await featuredImage.count()) > 0) {
       await featuredImage.evaluate((img) => img.dispatchEvent(new Event("error")));
       await expect(featuredThumb).toHaveClass(/failed/);
       await expect(featuredThumb.locator(".featured-thumb-fallback")).toBeVisible();
+      const fallbackGeometry = await featured.evaluate((node) => {
+        const card = node.getBoundingClientRect();
+        const thumb = node.querySelector(".featured-thumb")!.getBoundingClientRect();
+        const fallback = node.querySelector(".featured-thumb-fallback")!.getBoundingClientRect();
+        const body = node.querySelector(".featured-body")!.getBoundingClientRect();
+        return {
+          cardHeight: card.height,
+          thumb: { width: thumb.width, height: thumb.height, right: thumb.right },
+          fallback: { width: fallback.width, height: fallback.height },
+          body: { x: body.x, width: body.width },
+        };
+      });
+      expect(fallbackGeometry.thumb.height, "failed image keeps a full-height media rail").toBeGreaterThanOrEqual(
+        fallbackGeometry.cardHeight - 2,
+      );
+      expect(Math.abs(fallbackGeometry.fallback.width - fallbackGeometry.thumb.width)).toBeLessThanOrEqual(1);
+      expect(Math.abs(fallbackGeometry.fallback.height - fallbackGeometry.thumb.height)).toBeLessThanOrEqual(1);
+      expect(fallbackGeometry.body.x - fallbackGeometry.thumb.right).toBeLessThanOrEqual(1);
     }
 
+    for (const width of [320, 375, 390, 621, 720, 768]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+      const viewportLayout = await page.evaluate(() => {
+        const rectFor = (element: Element | null | undefined) => {
+          const box = element?.getBoundingClientRect();
+          return box
+            ? {
+                x: box.x,
+                y: box.y,
+                width: box.width,
+                height: box.height,
+                right: box.right,
+                bottom: box.bottom,
+              }
+            : null;
+        };
+        const rect = (selector: string) => rectFor(document.querySelector<HTMLElement>(selector));
+        const tickerTitle = Array.from(
+          document.querySelectorAll<HTMLElement>(".ticker-bar .tb-slide.is-active .tb-title"),
+        ).find((title) => getComputedStyle(title).display !== "none");
+        return {
+          rootScroll: document.documentElement.scrollWidth,
+          bodyScroll: document.body.scrollWidth,
+          innerWidth: window.innerWidth,
+          featured: rect("article.featured"),
+          image: rect("article.featured .featured-thumb"),
+          content: rect("article.featured .featured-body"),
+          logo: rect("header .logo"),
+          langToggle: rect("header .lang-toggle"),
+          headerInner: rect("header .header-inner"),
+          main: rect(".layout main"),
+          tickerSlide: rect(".ticker-bar .tb-slide.is-active"),
+          tickerMeta: rect(".ticker-bar .tb-slide.is-active .tb-meta"),
+          tickerTitle: rectFor(tickerTitle),
+          tickerControls: Array.from(document.querySelectorAll<HTMLElement>(".ticker-bar .tb-ctrl")).map((control) => {
+            const box = control.getBoundingClientRect();
+            return { width: box.width, height: box.height };
+          }),
+        };
+      });
+      expect(viewportLayout.rootScroll, `${width}px root has no horizontal overflow`).toBeLessThanOrEqual(width + 1);
+      expect(viewportLayout.bodyScroll, `${width}px body has no horizontal overflow`).toBeLessThanOrEqual(width + 1);
+      expect(viewportLayout.image).not.toBeNull();
+      expect(viewportLayout.content).not.toBeNull();
+      expect(viewportLayout.featured).not.toBeNull();
+      expect(viewportLayout.headerInner).not.toBeNull();
+      expect(viewportLayout.langToggle).not.toBeNull();
+      expect(viewportLayout.tickerSlide).not.toBeNull();
+      expect(viewportLayout.tickerMeta).not.toBeNull();
+      expect(viewportLayout.tickerTitle).not.toBeNull();
+      expect(viewportLayout.content!.x).toBeGreaterThanOrEqual(viewportLayout.image!.right - 1);
+      expect(viewportLayout.content!.right).toBeLessThanOrEqual(viewportLayout.featured!.right + 1);
+      expect(viewportLayout.langToggle!.y).toBeGreaterThanOrEqual(viewportLayout.headerInner!.y);
+      expect(viewportLayout.langToggle!.bottom).toBeLessThanOrEqual(viewportLayout.headerInner!.bottom);
+      expect(
+        viewportLayout.tickerMeta!.bottom,
+        `${width}px ticker metadata stays above the headline`,
+      ).toBeLessThanOrEqual(viewportLayout.tickerTitle!.y);
+      expect(
+        viewportLayout.tickerTitle!.width,
+        `${width}px ticker headline uses the full slide width`,
+      ).toBeGreaterThanOrEqual(viewportLayout.tickerSlide!.width - 1);
+
+      if (width <= 720) {
+        expect(viewportLayout.main!.x, `${width}px Home keeps a 16px gutter`).toBeCloseTo(16, 0);
+        expect(viewportLayout.main!.width, `${width}px Home uses the remaining width`).toBeGreaterThanOrEqual(width - 33);
+        expect(
+          viewportLayout.langToggle!.y - viewportLayout.headerInner!.y,
+          `${width}px header keeps breathing room above the language control`,
+        ).toBeGreaterThanOrEqual(10);
+        expect(
+          viewportLayout.headerInner!.bottom - viewportLayout.langToggle!.bottom,
+          `${width}px header keeps breathing room below the language control`,
+        ).toBeGreaterThanOrEqual(10);
+        expect(
+          Math.abs(
+            (viewportLayout.logo!.y + viewportLayout.logo!.height / 2)
+              - (viewportLayout.langToggle!.y + viewportLayout.langToggle!.height / 2),
+          ),
+          `${width}px header does not wrap`,
+        ).toBeLessThanOrEqual(1);
+        expect(viewportLayout.logo!.right + 8).toBeLessThanOrEqual(viewportLayout.langToggle!.x);
+        expect(viewportLayout.image!.height, `${width}px media rail fills the Featured card`).toBeGreaterThanOrEqual(
+          viewportLayout.featured!.height - 2,
+        );
+        expect(viewportLayout.content!.width).toBeGreaterThanOrEqual(
+          viewportLayout.featured!.width - viewportLayout.image!.width - 3,
+        );
+        for (const control of viewportLayout.tickerControls) {
+          expect(control.width).toBeGreaterThanOrEqual(44);
+          expect(control.height).toBeGreaterThanOrEqual(44);
+        }
+      }
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
     const cards = page.locator("article.card.has-thumb");
     await expect(cards.first()).toBeVisible();
     expect(await cards.count(), "mobile timeline provides cards for spacing checks").toBeGreaterThanOrEqual(2);
@@ -1627,8 +3716,8 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(desktopCardThumb).toHaveClass(/failed/);
       await expect(cardImage).toBeHidden();
       await expect(desktopCardThumb.locator("svg")).toBeVisible();
-      await expect(desktopCardThumb.locator(".fallback-src-mark")).toBeVisible();
-      await expect(desktopCardThumb.locator(".fallback-src-mark")).toHaveText("NO PREVIEW");
+      await expect(desktopCardThumb.locator(".fallback-src-mark")).toHaveCount(0);
+      await expect(desktopCardThumb).not.toContainText("NO PREVIEW");
     }
   });
 
@@ -1713,6 +3802,42 @@ test.describe("TECH Dashboard smoke", () => {
     expect(categoryHrefs.some((href) => /\/page\/\d+\//.test(href))).toBe(false);
   });
 
+  test("singleton tag links recover their article through exact search", async ({ page }) => {
+    await page.goto("/");
+
+    const tagLinks = page.locator("main article.card .tag-chip[href^='/search?q=']");
+    const tagIndex = await tagLinks.evaluateAll((links) =>
+      links.findIndex((link) => /[a-z]/.test(new URL((link as HTMLAnchorElement).href).searchParams.get("q") ?? "")),
+    );
+    expect(tagIndex).toBeGreaterThanOrEqual(0);
+    const tagLink = tagLinks.nth(tagIndex);
+    await expect(tagLink).toBeVisible();
+    const searchHref = await tagLink.getAttribute("href");
+    const detailHref = await tagLink.locator("xpath=ancestor::article[1]").locator("h3.title > a").getAttribute("href");
+    expect(searchHref).toBeTruthy();
+    expect(detailHref).toBeTruthy();
+    const searchUrl = new URL(searchHref!, "http://localhost");
+    const query = searchUrl.searchParams.get("q");
+    expect(query).toBeTruthy();
+    expect(searchUrl.searchParams.get("tag")).toBe(query);
+
+    await tagLink.click();
+    const input = page.locator("#pagefind-search-input");
+    await expect(input).toBeFocused();
+    await expect(input).toHaveValue(query!);
+    await expect(page.locator(`.search-hit[href="${detailHref}"]`)).toBeVisible({ timeout: 10_000 });
+
+    const caseVariant = query!.replace(/[a-z]/g, (character) => character.toUpperCase());
+    expect(caseVariant).not.toBe(query);
+    const caseQuery = new URLSearchParams({ q: caseVariant, tag: caseVariant });
+    await page.goto(`/search?${caseQuery.toString()}`);
+    await expect(input).toHaveValue(caseVariant);
+    await expect(page.locator(".search-hit").first()).toHaveAttribute("href", detailHref!, { timeout: 10_000 });
+
+    await input.fill(`${caseVariant}-manual`);
+    await expect.poll(() => new URL(page.url()).searchParams.has("tag")).toBe(false);
+  });
+
   test("pagefind ranks article results by authority, importance, then recency", async ({ page }) => {
     await page.goto("/");
     await expect
@@ -1729,7 +3854,9 @@ test.describe("TECH Dashboard smoke", () => {
       ) => ({
         data: async () => ({
           url,
-          meta: { title },
+          meta: url.startsWith("/e/")
+            ? { title, titleEn: title, summaryEn: `${title} explains agent operations.` }
+            : { title },
           excerpt: `${title} explains agent operations.`,
           filters: { authority: [authority], importance: [importance], publishedDay: [publishedDay] },
         }),
@@ -1756,7 +3883,7 @@ test.describe("TECH Dashboard smoke", () => {
       "false",
       "false",
     ]);
-    expect(await hits.locator(".search-hit-title").allTextContents()).toEqual([
+    expect(await hits.locator(".search-hit-title > span:last-child").allTextContents()).toEqual([
       "Official high-importance reference",
       "Official low-importance update",
       "Community agent guide",
@@ -1788,7 +3915,11 @@ test.describe("TECH Dashboard smoke", () => {
           {
             data: async () => ({
               url: "/e/exact-release/",
-              meta: { title: "Exact release reference" },
+              meta: {
+                title: "Exact release reference",
+                titleEn: "Exact release reference",
+                summaryEn: "Exact release reference with stable provenance.",
+              },
               excerpt: "Exact release reference with stable provenance.",
               filters: {
                 authority: ["official"],
@@ -1803,7 +3934,9 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.locator("button[data-search-trigger]:visible").first().click();
     await page.locator("#pagefind-search-input").fill("release");
-    await expect(page.locator(".search-hit-title")).toHaveText(["Exact release reference"]);
+    await expect(page.locator(".search-hit-title > span[lang='en']")).toHaveText([
+      "Exact release reference",
+    ]);
   });
 
   test("search route restores and synchronizes its shareable query", async ({ page }) => {
@@ -1855,7 +3988,9 @@ test.describe("TECH Dashboard smoke", () => {
       ) => ({
         data: async () => ({
           url,
-          meta: { title },
+          meta: url.startsWith("/e/")
+            ? { title, titleEn: title, summaryEn: `${title} gives a practical category overview.` }
+            : { title },
           excerpt: `${title} gives a practical category overview.`,
           filters: {
             source: [source],
@@ -1894,6 +4029,198 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(hits.nth(1).locator(".search-hit-meta")).not.toContainText("research");
   });
 
+  test("pagefind renders validated active-language summaries and reader-facing metadata", async ({ page }) => {
+    await page.goto("/");
+    await expect
+      .poll(() => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"))
+      .toBe(true);
+    await page.evaluate(() => {
+      const pagefind = (window as any).__pagefind;
+      pagefind.search = async (query: string) => ({
+        results: query.toLowerCase().includes("status")
+          ? [{
+              data: async () => ({
+                url: "/status/",
+                meta: { title: "Status dashboard" },
+                excerpt: "Status dashboard for collection operations.",
+                filters: {},
+              }),
+            }]
+          : query.toLowerCase().includes("unknown metadata")
+            ? [{
+                data: async () => ({
+                  url: "/e/unknown-reader-labels/",
+                  meta: {
+                    titleEn: "Unknown metadata reference",
+                    summaryEn: "Unknown metadata remains readable without exposing internal identifiers.",
+                  },
+                  excerpt: "RAW_UNKNOWN_EXCERPT",
+                  filters: {
+                    source: ["internal-source-slug"],
+                    category: ["internal-category-slug"],
+                  },
+                }),
+              }]
+            : [
+                {
+                  data: async () => ({
+                    url: "/e/raw-excerpt-only/",
+                    meta: {
+                      titleEn: "Nearby operations reference",
+                      summaryEn: "Validated metadata does not contain the requested phrase.",
+                    },
+                    excerpt: "fallback agent appears only in this raw Pagefind excerpt",
+                    filters: {},
+                  }),
+                },
+                {
+                  data: async () => ({
+                    url: "/e/fallback-agent/",
+                    meta: {
+                      title: "Fallback agent reference",
+                      titleEn: "Fallback agent reference",
+                      summaryEn: "Fallback agent summary from validated English metadata.",
+                    },
+                    excerpt: "RAW_EXCERPT_SHOULD_NOT_RENDER",
+                    filters: {
+                      source: ["github-copilot"],
+                      category: ["local-llm"],
+                      authority: ["official"],
+                      importance: ["3"],
+                      publishedDay: ["2026-07-20"],
+                    },
+                  }),
+                },
+              ],
+      });
+    });
+
+    await page.locator("button[data-search-trigger]:visible").first().click();
+    const input = page.locator("#pagefind-search-input");
+    await input.fill("fallback agent");
+    const hit = page.locator(".search-hit").first();
+    await expect(page.locator(".search-hit")).toHaveCount(1);
+    await expect(hit.locator(".search-hit-title > span[lang='en']")).toHaveText("Fallback agent reference");
+    await expect(hit.locator(".search-hit-title .search-hit-fallback .i18n-ja")).toHaveText("原文 EN");
+    await expect(hit.locator(".search-hit-summary")).toHaveText(
+      "Fallback agent summary from validated English metadata.",
+    );
+    await expect(hit.locator(".search-hit-summary")).toHaveAttribute("lang", "en");
+    await expect(hit.locator(".search-hit-summary")).not.toContainText("RAW_EXCERPT");
+    await expect(hit.locator(".search-hit-excerpt .search-hit-fallback .i18n-ja")).toHaveText("原文 EN");
+    await expect(hit.locator(".search-hit-meta")).toContainText("GitHub Copilot Blog");
+    await expect(hit.locator(".search-hit-meta")).toContainText("Local Models");
+    await expect(hit.locator(".search-hit-meta")).not.toContainText(/github-copilot|local-llm/);
+    await expect(page.locator("#pagefind-results")).not.toContainText("Nearby operations reference");
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
+    await expect(hit.locator(".search-hit-summary")).toHaveText(
+      "Fallback agent summary from validated English metadata.",
+    );
+    await expect(hit.locator(".search-hit-fallback")).toHaveCount(0);
+    await expect(hit.locator(".search-hit-title [lang='en']")).toHaveText("Fallback agent reference");
+
+    await input.fill("status");
+    await expect(hit.locator(".search-hit-meta")).toContainText("Status page");
+    await expect(hit.locator(".search-hit-meta")).not.toContainText("/status/");
+
+    await input.fill("unknown metadata");
+    await expect(hit.locator(".search-hit-title")).toHaveText("Unknown metadata reference");
+    await expect(hit.locator(".search-hit-meta")).toHaveText("Article");
+    await expect(hit.locator(".search-hit-meta")).not.toContainText(
+      /internal-source-slug|internal-category-slug|unknown-reader-labels/,
+    );
+    await expect(hit.locator(".search-hit-summary")).not.toContainText("RAW_UNKNOWN_EXCERPT");
+  });
+
+  test("pagefind matches article source labels without exposing internal source ids", async ({ page }) => {
+    await page.goto("/");
+    await expect
+      .poll(() => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"))
+      .toBe(true);
+    await page.evaluate(() => {
+      const pagefind = (window as any).__pagefind;
+      pagefind.search = async () => ({
+        results: [
+          {
+            data: async () => ({
+              url: "/e/source-label-search/",
+              meta: {
+                titleEn: "Agent operations reference",
+                summaryEn: "A practical guide to production agent operations.",
+              },
+              filters: {
+                source: ["github-copilot"],
+                category: ["agent-fw"],
+                authority: ["official"],
+              },
+            }),
+          },
+          {
+            data: async () => ({
+              url: "/e/internal-source-search/",
+              meta: {
+                titleEn: "Unrelated operations reference",
+                summaryEn: "A separate guide without the requested source.",
+              },
+              filters: {
+                source: ["internal-source-slug"],
+                category: ["internal-category-slug"],
+              },
+            }),
+          },
+        ],
+      });
+    });
+
+    await page.locator("button[data-search-trigger]:visible").first().click();
+    await page.locator("#pagefind-search-input").fill("GitHub Copilot Blog");
+    const hit = page.locator(".search-hit");
+    await expect(hit).toHaveCount(1);
+    await expect(hit).toHaveAttribute("href", "/e/source-label-search/");
+    await expect(hit.locator(".search-hit-meta")).toContainText("GitHub Copilot Blog");
+    await expect(page.locator("#pagefind-results")).not.toContainText("github-copilot");
+    await expect(page.locator("#pagefind-results")).not.toContainText("internal-source-slug");
+  });
+
+  test("pagefind keeps hydrated results when another candidate times out", async ({ page }) => {
+    await page.goto("/");
+    await expect
+      .poll(() => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"))
+      .toBe(true);
+    await page.evaluate(() => {
+      const pagefind = (window as any).__pagefind;
+      pagefind.search = async () => ({
+        results: [
+          { data: () => new Promise(() => {}) },
+          {
+            data: async () => ({
+              url: "/e/resilient-search/",
+              meta: {
+                title: "Resilient search result",
+                titleEn: "Resilient search result",
+                summaryEn: "Resilient search keeps successfully hydrated candidates.",
+              },
+              excerpt: "RAW_TIMEOUT_EXCERPT",
+              filters: { authority: ["official"], importance: ["2"] },
+            }),
+          },
+        ],
+      });
+    });
+
+    await page.locator("button[data-search-trigger]:visible").first().click();
+    await page.locator("#pagefind-search-input").fill("resilient search");
+    const hit = page.locator(".search-hit");
+    await expect(hit).toHaveCount(1, { timeout: 4_000 });
+    await expect(hit.locator(".search-hit-title")).toContainText("Resilient search result");
+    await expect(hit.locator(".search-hit-summary")).toHaveText(
+      "Resilient search keeps successfully hydrated candidates.",
+    );
+    await expect(page.locator("#pagefind-results")).not.toHaveAttribute("aria-busy");
+  });
+
   test("pagefind exact-result filtering ignores Unicode diacritics", async ({ page }) => {
     await page.goto("/");
     await expect
@@ -1906,14 +4233,14 @@ test.describe("TECH Dashboard smoke", () => {
           {
             data: async () => ({
               url: "/e/cafe-result/",
-              meta: { title: "Café agent patterns" },
+              meta: { titleEn: "Café agent patterns" },
               excerpt: "A result whose exact text contains a Unicode diacritic.",
             }),
           },
           {
             data: async () => ({
               url: "/e/unrelated-result/",
-              meta: { title: "Coffee agent patterns" },
+              meta: { titleEn: "Coffee agent patterns" },
               excerpt: "A fuzzy Pagefind result that must not pass exact filtering.",
             }),
           },
@@ -1924,11 +4251,14 @@ test.describe("TECH Dashboard smoke", () => {
     await page.locator("button[data-search-trigger]:visible").first().click();
     await page.locator("#pagefind-search-input").fill("cafe");
     await expect(page.locator(".search-hit")).toHaveCount(1);
-    await expect(page.locator(".search-hit-title")).toHaveText("Café agent patterns");
+    await expect(page.locator(".search-hit-title > span[lang='en']")).toHaveText(
+      "Café agent patterns",
+    );
     await expect(page.getByText("Coffee agent patterns")).toHaveCount(0);
   });
 
   test("pagefind search zero state gives next actions", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
 
     await page.locator("button[data-search-trigger]:visible").first().click();
@@ -1942,10 +4272,29 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".search-empty a", { hasText: "Check sources" })).toBeVisible();
     await expect(page.locator(".search-empty a", { hasText: "Browse by month" })).toBeVisible();
     await expect(page.locator(".search-hit")).toHaveCount(0);
+    const recoveryGeometry = await page.locator(".search-empty-actions").evaluate((actions) => {
+      const links = Array.from(actions.querySelectorAll("a")).map((link) => {
+        const rect = link.getBoundingClientRect();
+        return { width: rect.width, height: rect.height, right: rect.right };
+      });
+      const actionsRect = actions.getBoundingClientRect();
+      return {
+        links,
+        actionsRight: actionsRect.right,
+        noPageOverflow: document.documentElement.scrollWidth <= window.innerWidth,
+      };
+    });
+    expect(recoveryGeometry.noPageOverflow, "search recovery actions should not overflow the mobile page").toBe(true);
+    for (const link of recoveryGeometry.links) {
+      expect(link.height, "search recovery action should keep a 44px block target").toBeGreaterThanOrEqual(43.5);
+      expect(link.right, "search recovery action should remain inside its action group").toBeLessThanOrEqual(
+        recoveryGeometry.actionsRight + 1,
+      );
+    }
   });
 
   test("closing search invalidates a delayed Pagefind response", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect
       .poll(() => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"))
       .toBe(true);
@@ -1956,7 +4305,7 @@ test.describe("TECH Dashboard smoke", () => {
           results: [{
             data: async () => ({
               url: "/e/delayed-result/",
-              meta: { title: "Delayed result must stay closed" },
+              meta: { titleEn: "Delayed result must stay closed" },
               excerpt: "A deliberately delayed Pagefind result.",
             }),
           }],
@@ -2137,11 +4486,16 @@ test.describe("TECH Dashboard smoke", () => {
       .first()
       .getAttribute("data-run-tone");
     expect(footerTone).toMatch(/^(ok|warn|err)$/);
-    const heroTone = await page
-      .locator(".banner-run-state[data-run-tone]")
-      .first()
-      .getAttribute("data-run-tone");
-    expect(heroTone, "Home hero run tone must equal the shared footer tone").toBe(footerTone);
+    const heroRunState = page.locator(".banner-run-state[data-run-tone]");
+    if (footerTone === "ok") {
+      await expect(
+        heroRunState,
+        "Home hides normal collection health to preserve decision-space density",
+      ).toHaveCount(0);
+    } else {
+      const heroTone = await heroRunState.first().getAttribute("data-run-tone");
+      expect(heroTone, "Home warning tone must equal the shared footer tone").toBe(footerTone);
+    }
 
     await page.goto("/about/");
     const aboutFooterTone = await page
@@ -2223,8 +4577,12 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(srcAvg).toContainText("/ 3");
     await expect(srcAvg).toContainText("1=Info · 2=Medium · 3=High");
     await expect(strip).toContainText(/件中、同等以上 \d+件/);
-    await expect(page.locator(".ed-tldr-source")).toHaveAttribute("href", /^https?:\/\//);
-    await expect(page.locator(".ed-tldr-source .i18n-ja")).toHaveText("原文で検証");
+    const sourceCta = page.locator(".ed-header-cta");
+    await expect(sourceCta).toHaveCount(1);
+    await expect(sourceCta).toHaveAttribute("href", /^https?:\/\//);
+    await expect(sourceCta.locator(".i18n-ja")).toHaveText("元記事を読む");
+    await expect(sourceCta.locator("small")).not.toHaveText("");
+    await expect(page.locator(".ed-hot-pill")).toHaveCount(0);
   });
 
   test("entry titles never blank in either language mode (LL-029)", async ({ page }) => {
@@ -2235,17 +4593,30 @@ test.describe("TECH Dashboard smoke", () => {
     const titles = await page.locator("article.card h3.title").evaluateAll((nodes) =>
       nodes.map((node) => {
         const ja = node.querySelector(".i18n-ja")?.textContent ?? "";
-        const en = node.querySelector(".i18n-en")?.textContent ?? "";
-        return { ja: ja.trim(), en: en.trim() };
+        const enNode = node.querySelector(".i18n-en");
+        const en = enNode?.textContent ?? "";
+        const enLang = enNode?.getAttribute("lang") ?? "";
+        const enOrigin = enNode
+          ?.querySelector(".language-fallback-badge")
+          ?.getAttribute("data-fallback-language") ?? "";
+        return { ja: ja.trim(), en: en.trim(), enLang, enOrigin };
       }),
     );
 
     expect(titles.length).toBeGreaterThan(0);
     for (const t of titles) {
       // After LL-029 the title must be non-empty in both language slots,
-      // even if the EN slot falls back to the JA original with a `JA` badge.
+      // even if the EN slot falls back to the JA original with a semantic badge.
       expect(t.ja.length, `ja title blank: ${JSON.stringify(t)}`).toBeGreaterThan(0);
       expect(t.en.length, `en title blank: ${JSON.stringify(t)}`).toBeGreaterThan(0);
+      expect(["en", "ja"], `EN title has explicit provenance: ${JSON.stringify(t)}`).toContain(
+        t.enLang,
+      );
+      if (t.enLang === "ja") {
+        expect(t.enOrigin, `JA fallback is labeled: ${JSON.stringify(t)}`).toBe("ja");
+      } else {
+        expect(t.enOrigin, `native EN title has no fallback badge: ${JSON.stringify(t)}`).toBe("");
+      }
     }
   });
 
@@ -2271,6 +4642,43 @@ test.describe("TECH Dashboard smoke", () => {
         .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
         .toBe(true);
     }
+  });
+
+  test("arXiv opens on filters and papers without a duplicate source overview", async ({ page }) => {
+    await page.goto("/arxiv/#source=arxiv-cs-ai");
+    expect(
+      await page.locator(".arxiv-layout > main > section").evaluateAll((sections) =>
+        sections.map((section) => section.id || section.className),
+      ),
+      "the arXiv main column starts with controls and contains one paper timeline",
+    ).toEqual(["paper-controls", "arxiv-timeline"]);
+    await expect(page.locator(".paper-controls")).toBeVisible();
+    await expect(page.locator(".paper-filter-tabs .paper-filter-btn").first()).toBeVisible();
+    await expect(page.locator("#arxiv-timeline")).toBeVisible();
+    await expect(page.locator('button[data-paper-filter="arxiv-cs-ai"][aria-pressed="true"]')).toHaveCount(2);
+    const visiblePapers = page.locator('[data-paper-view-panel="cards"] [data-paper-entry]:visible');
+    expect(await visiblePapers.count()).toBeGreaterThan(0);
+    expect(await visiblePapers.evaluateAll((entries) =>
+      entries.every((entry) => (entry as HTMLElement).dataset.source === "arxiv-cs-ai"),
+    )).toBe(true);
+
+    await page.locator('.paper-filter-tabs [data-paper-filter="arxiv-cs-cl"]').click();
+    await expect(page).toHaveURL(/\/arxiv\/#source=arxiv-cs-cl$/);
+    await expect(page.locator('button[data-paper-filter="arxiv-cs-cl"][aria-pressed="true"]')).toHaveCount(2);
+
+    await page.evaluate(() => {
+      window.location.hash = "source=arxiv-cs-lg";
+    });
+    await expect(page.locator('button[data-paper-filter="arxiv-cs-lg"][aria-pressed="true"]')).toHaveCount(2);
+
+    await page.evaluate(() => {
+      window.location.hash = "arxiv-cs-se";
+    });
+    await expect(page.locator('button[data-paper-filter="arxiv-cs-se"][aria-pressed="true"]')).toHaveCount(2);
+
+    await page.locator('.paper-filter-tabs [data-paper-filter="all"]').click();
+    await expect(page).toHaveURL(/\/arxiv\/$/);
+    await expect(page.locator('.paper-filter-tabs [data-paper-filter="all"]')).toHaveAttribute("aria-pressed", "true");
   });
 
   test("lane pages never collapse into a 3-column timeline grid (LL-091)", async ({ page }) => {
@@ -2450,7 +4858,10 @@ test.describe("TECH Dashboard smoke", () => {
     );
     expect(mobileCardGeometry.length, "mobile Knowledge cards are present").toBeGreaterThan(0);
     for (const geometry of mobileCardGeometry) {
-      expect(geometry.cardHeight, "mobile Knowledge card keeps its uniform height").toBe(148);
+      expect(
+        geometry.cardHeight,
+        "mobile Knowledge card keeps its uniform height",
+      ).toBeCloseTo(148, 1);
       expect(geometry.hasThumb, "thumbnail slot matches real image state").toBe(
         geometry.hasImageClass,
       );

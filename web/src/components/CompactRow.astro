@@ -2,7 +2,9 @@
 import {
   relativeTime,
   isNew,
+  isPublishableEntry,
   CATEGORY_META,
+  categoryLabel,
   entryHref,
   type NormalizedEntry,
 } from "../lib/data.ts";
@@ -14,10 +16,12 @@ export interface Props {
 
 const { entry } = Astro.props;
 const rel = relativeTime(entry.publishedAt);
-const fresh = isNew(entry);
+const summaryReady = isPublishableEntry(entry);
+const fresh = summaryReady && isNew(entry);
 
 const title = entry.titleJa || entry.titleEn || entry.title;
 const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
+const categoryName = categoryLabel(entry.category);
 const catColor = catMeta?.color ?? "#8a847e";
 
 function host(url: string): string {
@@ -38,12 +42,13 @@ function typeLabel(t: NormalizedEntry["sourceType"]): string {
 ---
 
 <a
-  class:list={["row", { important: entry.importance === 3 }]}
+  class:list={["row", { important: summaryReady && entry.importance === 3 }]}
+  data-summary-state={summaryReady ? "ready" : "pending"}
   href={entryHref(entry)}
-  aria-label={`${title} from ${sourceLabel(entry.source)}, ${entry.category}, ${rel}`}
+  aria-label={`${title} from ${sourceLabel(entry.source)}, ${categoryName}, ${rel}`}
   style={`--cat-color:${catColor}`}
 >
-  <span class="cat-dot" title={entry.category}></span>
+  <span class="cat-dot" title={categoryName}></span>
   <span class="type" data-t={entry.sourceType}>{typeLabel(entry.sourceType)}</span>
   {fresh && <span class="new">NEW</span>}
   <span class="title">{title}</span>

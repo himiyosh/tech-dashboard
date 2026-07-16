@@ -1,7 +1,7 @@
 /**
  * tests/web-bodies.test.ts
  *
- * web/src/lib/bodies.ts のユニットテスト (LL-113)。data/bodies.json を
+ * web/src/lib/bodies.ts のユニットテスト (LL-115)。data/bodies.json を
  * モックして bodyForEntry / hasRealBody を検証する。本文は index ではなく
  * bodies.json に格納され、id でルックアップする。
  */
@@ -28,9 +28,9 @@ vi.mock("../data/bodies.json", () => ({
   },
 }));
 
-const { bodyForEntry, hasRealBody, BODIES_COUNT } = await import("../web/src/lib/bodies.ts");
+const { articleBodyState, bodyForEntry, hasRealBody, BODIES_COUNT } = await import("../web/src/lib/bodies.ts");
 
-describe("bodyForEntry (LL-113)", () => {
+describe("bodyForEntry (LL-115)", () => {
   it("実 body のある id は BodyRecord を返す", () => {
     const b = bodyForEntry("real-1");
     expect(b).not.toBeNull();
@@ -52,7 +52,7 @@ describe("bodyForEntry (LL-113)", () => {
   });
 });
 
-describe("hasRealBody (LL-113)", () => {
+describe("hasRealBody (LL-115)", () => {
   it("実 body があれば true", () => {
     expect(hasRealBody("real-1")).toBe(true);
   });
@@ -60,6 +60,21 @@ describe("hasRealBody (LL-113)", () => {
     expect(hasRealBody("missing")).toBe(false);
     expect(hasRealBody("empty-1")).toBe(false);
     expect(hasRealBody("filler-1")).toBe(false);
+  });
+});
+
+describe("articleBodyState", () => {
+  it("本文があれば pending ID より ready を優先する", () => {
+    expect(articleBodyState("real-1", bodyForEntry("real-1"), ["real-1"])).toBe("ready");
+  });
+
+  it("本文なしで enqueue 成功 ID に含まれる場合だけ queued にする", () => {
+    expect(articleBodyState("missing", null, ["other", "missing"])).toBe("queued");
+  });
+
+  it("enqueue の証拠がない本文なし記事は summary-only にする", () => {
+    expect(articleBodyState("missing", null, ["other"])).toBe("summary-only");
+    expect(articleBodyState("missing", null, undefined)).toBe("summary-only");
   });
 });
 

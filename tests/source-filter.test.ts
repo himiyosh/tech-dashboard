@@ -283,6 +283,9 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
       ["aws-news", "Announcing Amazon Aurora PostgreSQL serverless database creation in seconds"],
       ["aws-news", "Launching S3 Files, making S3 buckets accessible as file systems"],
       ["aws-news", "Amazon ECS introduces new high-resolution metrics for faster service auto scaling"],
+      ["techcrunch", "Iran abused mobile networks’ vulnerabilities to locate US military in the Middle East, report says"],
+      ["techcrunch", "Anthropic’s newest ad is creeping people out"],
+      ["ars-technica", "Google revamps image search for its 25th anniversary with more images and more AI"],
     ] as const;
     const techNewsGenericKeepCases = [
       ["aws-news", "Amazon EC2 C9g and C9gd instances powered by AWS Graviton5 processors are now available"],
@@ -347,7 +350,7 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
       )).toBe(true);
     });
 
-    it("keeps the 19 high-confidence title-scope false negatives with the shared relevance vocabulary", () => {
+    it("keeps high-confidence title-scope stories with the shared relevance vocabulary", () => {
       for (const [sourceId, title] of techNewsKeepCases) {
         expect(check(REGISTRY[sourceId], title), `${sourceId}: ${title}`).toBe(true);
       }
@@ -364,6 +367,14 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
       expect(check(techNews, "Bungie hit with significant layoffs after ending Destiny 2")).toBe(false);
       expect(check(techNews, "GTA VI is a worrying sign for the future of physical games")).toBe(false);
       expect(check(techNews, "Electric air taxis are stuck in the courtroom")).toBe(false);
+      expect(check(
+        REGISTRY["ars-technica"],
+        'Hackers quickly prove that Neo Geo Doom ports are not "impossible"',
+      )).toBe(false);
+      expect(check(
+        REGISTRY["techcrunch"],
+        "The founder of Hinge raised $18M to build a new AI dating service, Overtone",
+      )).toBe(false);
     });
 
     it("drops generic code/tool/platform/processor titles even when snippets mention AI or developers", () => {

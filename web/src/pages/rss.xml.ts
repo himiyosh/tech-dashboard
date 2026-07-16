@@ -1,5 +1,10 @@
 import type { APIRoute } from "astro";
-import { PUBLISHABLE_ENTRIES, GENERATED_AT } from "../lib/data.ts";
+import {
+  PUBLISHABLE_ENTRIES,
+  GENERATED_AT,
+  summaryForLangWithFallback,
+  titleForLangWithFallback,
+} from "../lib/data.ts";
 import { SITE_URL } from "../lib/site.ts";
 
 function escape(s: string): string {
@@ -13,8 +18,8 @@ function escape(s: string): string {
 export const GET: APIRoute = () => {
   const items = PUBLISHABLE_ENTRIES.slice(0, 100)
     .map((e) => {
-      const title = escape(e.titleJa || e.titleEn || e.title);
-      const desc = escape(e.summaryJa || e.summaryEn || "");
+      const title = escape(titleForLangWithFallback(e, "ja").text);
+      const desc = escape(summaryForLangWithFallback(e, "ja").text);
       const cats = e.tags.map((t) => `<category>${escape(t)}</category>`).join("");
       const pubDate = e.publishedAt ? `<pubDate>${new Date(e.publishedAt).toUTCString()}</pubDate>` : "";
       return `

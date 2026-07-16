@@ -3,6 +3,7 @@ import {
   trendingTags,
   relativeTime,
   CATEGORY_META,
+  tagHref,
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { SOURCE_META } from "../lib/source-meta.ts";
@@ -100,7 +101,7 @@ const last7d = entries.filter((e) => {
       <div class="right-title">Trending topics</div>
       <div class="tag-cloud">
         {tags.map((t) => (
-          <a class="tag" href={`/t/${encodeURIComponent(t.tag)}`}>
+          <a class="tag" href={tagHref(t.tag)}>
             #{t.tag} <span class="c">{t.count}</span>
           </a>
         ))}
@@ -137,6 +138,10 @@ const last7d = entries.filter((e) => {
 
   <div class="side-card">
     <div class="right-title">Freshness</div>
+    <p class="rail-scope-note" data-activity-scope="listed-entries">
+      <span class="i18n-ja">過去7日は表示中一覧、ソース順位はその先頭200件を基準に集計。</span>
+      <span class="i18n-en" lang="en">The 7-day count uses this listed view; source ranking uses its first 200 entries.</span>
+    </p>
     <div class="home-side-metrics">
       <div class="home-side-metric">
         <span>最新記事</span>
@@ -149,3 +154,12 @@ const last7d = entries.filter((e) => {
     </div>
   </div>
 </aside>
+
+<style>
+  .rail-scope-note {
+    margin: -2px 0 10px;
+    color: var(--muted-2);
+    font-size: 10.5px;
+    line-height: 1.55;
+  }
+</style>

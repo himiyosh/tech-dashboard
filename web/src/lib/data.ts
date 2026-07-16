@@ -4,6 +4,30 @@
  */
 // Path: web/src/lib/data.ts → tech-dashboard/data/index.json (3 levels up)
 import indexJson from "../../../data/index.json";
+import {
+  effectiveTitleLanguage,
+  hasCjk,
+  hasUsableSummaryForLanguage,
+  isCjkDominantText,
+  isPendingSummaryText,
+  isSummaryNoise,
+  isSyntheticFallbackTitle,
+  summaryForLang,
+  summaryForLangWithFallback,
+} from "./summary-display.ts";
+import { normalizeTagKey } from "./tag-normalize.ts";
+
+export {
+  effectiveTitleLanguage,
+  hasCjk,
+  hasUsableSummaryForLanguage,
+  isCjkDominantText,
+  isPendingSummaryText,
+  isSummaryNoise,
+  isSyntheticFallbackTitle,
+  summaryForLang,
+  summaryForLangWithFallback,
+};
 
 export type Category =
   | "copilot"
@@ -95,11 +119,27 @@ export interface WorkerHealth {
   queueCap?: number;
   enqueueCandidates?: number;
   summaryQueueBacklog?: number;
+  summaryQueueEnqueued?: number;
   summaryQueueDrainEstimateHours?: number;
   summaryQueueStartIndex?: number;
   summaryQueueCooldownCount?: number;
   kvLookupCap?: number;
   kvLookupCount?: number;
+  bodyQueueMode?: string;
+  bodyBacklog?: number;
+  bodyEnqueueCandidates?: number;
+  bodyEnqueueCap?: number;
+  bodyEnqueued?: number;
+  bodyLookupCount?: number;
+  bodyMerged?: number;
+  bodyPruned?: number;
+  bodyQueueDrainEstimateHours?: number;
+  /** Legacy artifact key retained while older Publisher snapshots age out. */
+  bodyDrainEstimateHours?: number;
+  bodyMergePendingIds?: string[];
+  enrichmentEnqueueCap?: number;
+  enrichmentEnqueued?: number;
+  enrichmentRemaining?: number;
 }
 
 interface IndexPayload {
@@ -111,73 +151,22 @@ interface IndexPayload {
 
 const data = indexJson as IndexPayload;
 
-// Fallback detection constants (from main's data quality improvements).
-const FALLBACK_SUMMARY_JA_PREFIX = "\u3053\u306e\u30a8\u30f3\u30c8\u30ea\u306f ";
-const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
-const FALLBACK_SUMMARY_JA_NEEDLES = [
-  "AI \u8981\u7d04\u672a\u751f\u6210",
-  "\u5f8c\u7d9a\u306e Worker run",
-  "\u8981\u7d04\u304c\u672a\u751f\u6210",
-] as const;
-const FALLBACK_SUMMARY_EN_NEEDLES = [
-  FALLBACK_SUMMARY_EN_NEEDLE,
-  "AI summary pending",
-  "summary is pending",
-] as const;
-// Keep these pure patterns synchronized with
-// harness/pipeline/summary-quality.ts. The web package must remain build-time
-// self-contained and cannot import repo-root runtime code (R-005).
-const CONTAMINATED_SUMMARY_MARKERS = [
-  "left some junk in the readme",
-  "forgot to remove oopsies",
-  "release notes: n/a or added/fixed/improved",
-] as const;
-
-function isContaminatedSummaryText(text: string | undefined | null): boolean {
-  const value = (text ?? "").replace(/\s+/g, " ").trim().toLowerCase();
-  return Boolean(value && CONTAMINATED_SUMMARY_MARKERS.some((marker) => value.includes(marker)));
-}
-
-export function isPendingSummaryText(text: string | undefined | null): boolean {
-  const value = (text ?? "").trim();
-  if (!value) return false;
-  return (
-    value.startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
-    FALLBACK_SUMMARY_JA_NEEDLES.some((needle) => value.includes(needle)) ||
-    FALLBACK_SUMMARY_EN_NEEDLES.some((needle) => value.toLowerCase().includes(needle.toLowerCase()))
-  );
-}
-
-export function isSyntheticFallbackTitle(e: NormalizedEntry, text: string | undefined | null): boolean {
-  const value = (text ?? "").trim();
-  if (!value) return false;
-  return value.includes(`(${e.source})`) && /\u95a2\u9023\u30a2\u30c3\u30d7\u30c7\u30fc\u30c8|related update/i.test(value);
-}
-
 /**
- * Returns true if this entry still lacks a real AI **summary** (pending
- * boilerplate or synthetic title). Summary-first design (LL-112): the long-form
- * body is no longer stored on the entry (LL-113: it lives in data/bodies.json),
- * so body presence must NOT affect "fallback" classification. Body rendering is
- * judged separately by `bodyForEntry` (web/src/lib/bodies.ts).
+ * Returns true only when this entry lacks a usable AI summary in both
+ * languages. A valid JA or EN summary is enough because the UI truthfully
+ * cross-falls back to the available language. Summary-first design (LL-112):
+ * long-form body presence must NOT affect fallback classification.
  */
 export function isDeterministicFallbackEntry(e: NormalizedEntry): boolean {
-  return (
-    isPendingSummaryText(e.summaryJa) ||
-    isPendingSummaryText(e.summaryEn) ||
-    isContaminatedSummaryText(e.summaryJa) ||
-    isContaminatedSummaryText(e.summaryEn) ||
-    isSyntheticFallbackTitle(e, e.titleJa) ||
-    isSyntheticFallbackTitle(e, e.titleEn)
-  );
+  return !hasGeneratedSummary(e);
 }
 
 function hasGeneratedSummary(e: NormalizedEntry): boolean {
-  const summaryJa = (e.summaryJa ?? "").trim();
-  const summaryEn = (e.summaryEn ?? "").trim();
   return (
-    (!!summaryJa && !isPendingSummaryText(summaryJa)) ||
-    (!!summaryEn && !isPendingSummaryText(summaryEn))
+    hasUsableSummaryForLanguage(e, e.summaryJa, "ja")
+    || hasUsableSummaryForLanguage(e, e.summaryEn, "en")
+    || hasUsableSummaryForLanguage(e, e.summaryJa, "en")
+    || hasUsableSummaryForLanguage(e, e.summaryEn, "ja")
   );
 }
 
@@ -200,7 +189,6 @@ export function isMutableReleaseAliasEntry(
 /** Decision-critical slots (Featured / Top-3) and feeds require a real summary. */
 export function isPublishableEntry(e: NormalizedEntry): boolean {
   return !isMutableReleaseAliasEntry(e)
-    && hasGeneratedSummary(e)
     && !isDeterministicFallbackEntry(e);
 }
 
@@ -230,22 +218,9 @@ export function isListableEntry(e: NormalizedEntry): boolean {
   );
 }
 
-/**
- * True when `text` is not a genuine summary to display: empty, deterministic
- * pending boilerplate ("このエントリは ..."), or a bare echo of the entry title
- * (some feeds set summary = title for un-summarized items). Cards use this to
- * fall back to a clean "summary generating" state instead of showing
- * placeholder text (agentic §4.7 / LL-074).
- */
-export function isSummaryNoise(e: NormalizedEntry, text: string | undefined | null): boolean {
-  const value = (text ?? "").trim();
-  if (!value) return true;
-  if (isPendingSummaryText(value)) return true;
-  const lower = value.toLowerCase();
-  if (isContaminatedSummaryText(value)) return true;
-  return [e.title, e.titleEn, e.titleJa].some(
-    (t) => !!t && t.trim().toLowerCase() === lower,
-  );
+function sameTitleValue(left: string, right: string): boolean {
+  return left.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase() ===
+    right.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
 }
 
 export const RAW_ENTRIES: readonly NormalizedEntry[] = data.entries;
@@ -263,6 +238,41 @@ export const PENDING_SUMMARY_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.f
 export const ALL_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.filter(isListableEntry);
 export const GENERATED_AT = data.generatedAt;
 export const WORKER_HEALTH: WorkerHealth | null = data.health ?? null;
+
+export const TAG_PAGE_MIN_ENTRIES = 2;
+
+const TAG_ENTRIES_BY_NAME = new Map<string, NormalizedEntry[]>();
+for (const entry of ALL_ENTRIES) {
+  for (const tag of new Set(entry.tags.map(normalizeTagKey).filter(Boolean))) {
+    const matches = TAG_ENTRIES_BY_NAME.get(tag);
+    if (matches) matches.push(entry);
+    else TAG_ENTRIES_BY_NAME.set(tag, [entry]);
+  }
+}
+
+export const STATIC_TAG_PAGE_TAGS: readonly string[] = [...TAG_ENTRIES_BY_NAME.entries()]
+  .filter(([, entries]) => entries.length >= TAG_PAGE_MIN_ENTRIES)
+  .map(([tag]) => tag)
+  .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+
+export function tagEntryCount(tag: string): number {
+  return TAG_ENTRIES_BY_NAME.get(normalizeTagKey(tag))?.length ?? 0;
+}
+
+export function entriesForTagPage(tag: string): readonly NormalizedEntry[] {
+  return TAG_ENTRIES_BY_NAME.get(normalizeTagKey(tag)) ?? [];
+}
+
+export function tagHrefForCount(tag: string, count: number): string {
+  const encodedTag = encodeURIComponent(normalizeTagKey(tag));
+  return count >= TAG_PAGE_MIN_ENTRIES
+    ? `/t/${encodedTag}`
+    : `/search?q=${encodedTag}&tag=${encodedTag}`;
+}
+
+export function tagHref(tag: string): string {
+  return tagHrefForCount(tag, tagEntryCount(tag));
+}
 
 export function isArxivEntry(entry: Pick<NormalizedEntry, "source" | "sourceType" | "url">): boolean {
   return entry.source.startsWith("arxiv-") || (entry.sourceType === "paper" && entry.url.includes("arxiv.org"));
@@ -284,13 +294,19 @@ const LOW_SIGNAL_RELEASE_RE =
   /\b(?:nightly|canary|snapshot)\b|\bcollab-(?:staging|production|prod)\b|[-_.](?:pre|preview|rc|alpha|beta)\d*\b|\(#\d+\)\s*$/i;
 
 export function isLowSignalRelease(
-  entry: Pick<NormalizedEntry, "sourceType" | "title" | "titleEn" | "titleJa">,
+  entry: Pick<NormalizedEntry, "sourceType" | "title" | "titleEn" | "titleJa"> & {
+    url?: string;
+  },
 ): boolean {
   if (entry.sourceType !== "release" && entry.sourceType !== "changelog") return false;
   // Test each title independently so the trailing "(#1234)" PR-ref anchor works
   // (joining titles with spaces would break the end-of-string match).
   return [entry.title, entry.titleEn, entry.titleJa].some(
-    (t) => !!t && LOW_SIGNAL_RELEASE_RE.test(t),
+    (t) => {
+      if (!t) return false;
+      const restored = restorePrereleaseQualifierFromUrl(t, entry.url ?? "");
+      return LOW_SIGNAL_RELEASE_RE.test(restored);
+    },
   );
 }
 
@@ -321,6 +337,10 @@ export function isOffTopicForHero(
 }
 
 export const ARXIV_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter(isArxivEntry);
+export function isResearchListingEntry(entry: NormalizedEntry): boolean {
+  return entry.category === "research" && !isArxivEntry(entry);
+}
+export const RESEARCH_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter(isResearchListingEntry);
 export const MAIN_TIMELINE_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter((entry) => !isArxivEntry(entry));
 
 /**
@@ -404,6 +424,19 @@ export const CATEGORY_META: ReadonlyArray<CategoryMeta> = [
     { slug: "tech-news", name: "Industry & Policy", shortLabel: "News/Policy", color: "#fb923c", initial: "Ip", emoji: "\u{1F4F0}", group: "industry" },
   ];
 
+export function categoryLabel(
+  category: Category,
+  variant: "short" | "full" = "short",
+): string {
+  const meta = CATEGORY_META.find((item) => item.slug === category);
+  if (meta) return variant === "full" ? meta.name : meta.shortLabel;
+  return category
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 /**
  * Categories sorted alphabetically for navigation/directory lists (sidebar,
  * categories directory, about coverage). Predictable A→Z order instead of the
@@ -424,6 +457,7 @@ export function countByCategory(): Record<Category, number> {
     CATEGORY_META.map((c) => [c.slug, 0] as const),
   ) as Record<Category, number>;
   for (const e of ALL_ENTRIES) {
+    if (e.category === "research" && isArxivEntry(e)) continue;
     if (e.category in counts) counts[e.category]++;
   }
   return counts;
@@ -437,8 +471,7 @@ export function sparkline(category: Category): number[] {
   const buckets = new Array(7).fill(0) as number[];
   const now = Date.now();
   const DAY = 86_400_000;
-  for (const e of ALL_ENTRIES) {
-    if (e.category !== category) continue;
+  for (const e of entriesFor(category)) {
     const age = now - new Date(e.publishedAt).getTime();
     if (age < 0) continue;
     const idx = Math.floor(age / DAY);
@@ -459,6 +492,7 @@ export function sparklineHeights(category: Category): number[] {
 
 /** Entries filtered by category, newest first. */
 export function entriesFor(category: Category): NormalizedEntry[] {
+  if (category === "research") return [...RESEARCH_ENTRIES];
   return ALL_ENTRIES.filter((e) => e.category === category);
 }
 
@@ -476,25 +510,19 @@ export function latest(n: number): NormalizedEntry[] {
 export function featured(): NormalizedEntry | undefined {
   const isRoutineRelease = (e: NormalizedEntry) =>
     e.sourceType === "release" || e.sourceType === "changelog";
-  const eligible = (e: NormalizedEntry) => !isLowSignalRelease(e) && !isOffTopicForHero(e);
+  const eligible = (e: NormalizedEntry) =>
+    isPublishableEntry(e) && !isLowSignalRelease(e) && !isOffTopicForHero(e);
   return (
     // 1. High-importance real announcement/blog with a real summary.
     MAIN_TIMELINE_ENTRIES.find(
-      (e) => e.importance === 3 && !isRoutineRelease(e) && !isDeterministicFallbackEntry(e) && eligible(e),
+      (e) => e.importance === 3 && !isRoutineRelease(e) && eligible(e),
     ) ??
     // 2. High-importance stable release with a real summary.
-    MAIN_TIMELINE_ENTRIES.find(
-      (e) => e.importance === 3 && !isDeterministicFallbackEntry(e) && eligible(e),
-    ) ??
+    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 3 && eligible(e)) ??
     // 3. Medium-importance announcement/blog with a real summary.
     MAIN_TIMELINE_ENTRIES.find(
-      (e) => e.importance === 2 && !isRoutineRelease(e) && !isDeterministicFallbackEntry(e) && eligible(e),
+      (e) => e.importance === 2 && !isRoutineRelease(e) && eligible(e),
     ) ??
-    MAIN_TIMELINE_ENTRIES.find(
-      (e) => e.importance === 2 && !isDeterministicFallbackEntry(e) && eligible(e),
-    ) ??
-    // 4. Last resort: any high/medium entry that is not a low-signal build.
-    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 3 && eligible(e)) ??
     MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 2 && eligible(e))
   );
 }
@@ -540,13 +568,6 @@ export function isNew(e: NormalizedEntry, now = Date.now()): boolean {
   return now - new Date(e.collectedAt).getTime() < 6 * 60 * 60_000;
 }
 
-const CJK_RE = /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
-
-/** true when the string contains Japanese/CJK characters. */
-export function hasCjk(s: string | undefined | null): boolean {
-  return !!s && CJK_RE.test(s);
-}
-
 /**
  * Some source feeds derive the title from the URL slug, which strips
  * dots (e.g. "claude-opus-4-7" → "Claude Opus 4 7"). If the URL
@@ -558,17 +579,25 @@ export function restoreDotsFromUrl(title: string, url: string): string {
   try {
     const path = new URL(url).pathname;
     // Match sequences like "4-7" or "4-7-1" in the URL.
-    const matches = path.match(/\d+(?:-\d+){1,}/g);
-    if (!matches) return title;
+    const matches = [...path.matchAll(/\d+(?:-\d+){1,}/g)];
+    if (matches.length === 0) return title;
     let out = title;
-    for (const m of matches) {
+    for (const match of matches) {
+      const m = match[0];
+      const matchEnd = (match.index ?? 0) + m.length;
+      // A trailing letter denotes a size or unit token such as "4-12b",
+      // not a dotted version number.
+      if (/[A-Za-z]/.test(path[matchEnd] ?? "")) continue;
+
       const spaced = m.replace(/-/g, " ");
       const dotted = m.replace(/-/g, ".");
-      // Replace only as a whole token surrounded by non-digit boundaries.
+      // Keep an optional v-prefix, but do not rewrite alphanumeric suffixes
+      // such as the B in "Gemma 4 12B".
       const re = new RegExp(
-        `(^|[^\\d.])${spaced.replace(/\s/g, "\\s")}(?=$|[^\\d.])`,
+        `(^|[^A-Za-z0-9.])(v?)${spaced.replace(/\s/g, "\\s")}(?=$|[^A-Za-z0-9.])`,
+        "i",
       );
-      out = out.replace(re, (_, pre) => `${pre}${dotted}`);
+      out = out.replace(re, (_, pre, prefix) => `${pre}${prefix}${dotted}`);
     }
     return out;
   } catch {
@@ -577,93 +606,88 @@ export function restoreDotsFromUrl(title: string, url: string): string {
 }
 
 /**
- * Returns the summary to display for the given site language.
- * Guards against the normalize pipeline stuffing raw Japanese text into
- * `summaryEn` for JP-source feeds: in EN view, we hide it when it's
- * actually Japanese.
+ * Restore a prerelease qualifier that was dropped from a localized title.
+ * The title must already contain the same base version exposed by the URL.
  */
-export function summaryForLang(
-  e: NormalizedEntry,
-  lang: "ja" | "en",
-): string {
-  const ja = (e.summaryJa ?? "").trim();
-  const en = (e.summaryEn ?? "").trim();
-  // A field is a usable summary only when it is not deterministic pending
-  // boilerplate, a synthetic "(source) related update" string, or a bare echo
-  // of the entry title (isSummaryNoise). Returning "" for noise lets
-  // summaryForLangWithFallback fall back across languages instead of surfacing
-  // placeholder text (LL-074). Classification (isPublishableEntry) is unaffected
-  // because it reads the raw fields, not this display helper.
-  const usable = (text: string) =>
-    !isSummaryNoise(e, text) && !isSyntheticFallbackTitle(e, text);
-  if (lang === "ja") {
-    if (usable(ja)) return ja;
-    return hasCjk(en) && usable(en) ? en : "";
-  }
-  if (usable(en) && !hasCjk(en)) return en;
-  return "";
-}
+export function restorePrereleaseQualifierFromUrl(title: string, url: string): string {
+  if (!title || !url) return title;
 
-/**
- * Like summaryForLang but returns the original-language summary as a
- * last-resort fallback when the requested language is empty. Callers
- * should visually flag such fallbacks (e.g. `[ja]` badge).
- */
-export function summaryForLangWithFallback(
-  e: NormalizedEntry,
-  lang: "ja" | "en",
-): { text: string; isFallback: boolean; fallbackLang?: "ja" | "en" } {
-  const primary = summaryForLang(e, lang);
-  if (primary) return { text: primary, isFallback: false };
-  // Fall back to the other language's usable summary (e.g. an English-source
-  // entry whose Japanese summary has not been generated yet still shows its real
-  // English summary, flagged with a language badge). Uses summaryForLang so the
-  // fallback is noise-filtered too (no boilerplate / title-echo leaks).
-  const other: "ja" | "en" = lang === "ja" ? "en" : "ja";
-  const fallback = summaryForLang(e, other);
-  if (fallback) return { text: fallback, isFallback: true, fallbackLang: other };
-  return { text: "", isFallback: false };
+  let decodedUrl = url;
+  try {
+    decodedUrl = decodeURIComponent(url);
+  } catch {
+    // Keep the original URL when a malformed escape sequence is present.
+  }
+
+  const candidate = decodedUrl.match(
+    /\bv?(\d+(?:\.\d+){1,3})((?:[-._])(?:rc|alpha|beta|pre|preview)(?:[.-]?\d+)?)\b/i,
+  );
+  if (!candidate) return title;
+
+  const [, baseVersion, qualifierSuffix] = candidate;
+  const escapedBase = baseVersion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const qualifiedVersion = new RegExp(
+    `\\bv?${escapedBase}[-._](?:rc|alpha|beta|pre|preview)(?:[.-]?\\d+)?\\b`,
+    "i",
+  );
+  if (qualifiedVersion.test(title)) return title;
+
+  const baseInTitle = new RegExp(
+    `(^|[^A-Za-z0-9.])(v?${escapedBase})(?=$|[^A-Za-z0-9.])`,
+    "i",
+  );
+  if (!baseInTitle.test(title)) return title;
+
+  return title.replace(
+    baseInTitle,
+    (_, boundary, version) => `${boundary}${version}${qualifierSuffix}`,
+  );
 }
 
 export function titleForLang(
   e: NormalizedEntry,
   lang: "ja" | "en",
 ): string {
-  const ja = (e.titleJa ?? "").trim();
+  const jaRaw = (e.titleJa ?? "").trim();
   const enRaw = (e.titleEn ?? "").trim();
   const titleRaw = (e.title ?? "").trim();
-  const sumJa = (e.summaryJa ?? "").trim();
-  const sumEn = (e.summaryEn ?? "").trim();
   const url = (e.url ?? "").trim();
 
-  // Recover version-number dots lost during slug→title conversion.
-  const en = restoreDotsFromUrl(enRaw, url);
-  const title = restoreDotsFromUrl(titleRaw, url);
-
-  const firstClause = (s: string, max: number): string => {
-    if (!s) return "";
-    // Break on Japanese terminators, newline, or Western sentence-end
-    // followed by whitespace. Bare "." / "!" / "?" inside a word (e.g.
-    // version numbers "Claude Opus 4.7", abbreviations "U.S.") is preserved.
-    const m = s.match(/[。！？\n]|[.!?](?=\s)/);
-    const idx = m && m.index !== undefined ? m.index : -1;
-    const head = idx > 0 ? s.slice(0, idx) : s;
-    return head.length > max ? head.slice(0, max) + "…" : head;
-  };
+  // Recover version punctuation and prerelease qualifiers lost during title
+  // localization or slug-to-title conversion.
+  const restoreVersion = (value: string) =>
+    restorePrereleaseQualifierFromUrl(restoreDotsFromUrl(value, url), url);
+  const ja = restoreVersion(jaRaw);
+  const en = restoreVersion(enRaw);
+  const title = restoreVersion(titleRaw);
+  // Collection metadata remains authoritative for genuinely mixed titles, but
+  // an unmistakably Japanese raw title must not be mislabeled as English when
+  // a source feed reports the wrong language.
+  const sourceLang = effectiveTitleLanguage(e);
 
   if (lang === "ja") {
-    if (ja && !isSyntheticFallbackTitle(e, ja)) return ja;
-    // AI summary (Japanese) is available for most entries — use its first clause as headline.
-    // Skip deterministic fallback summaries (LL-041 lead): they describe the
-    // entry generically and would make the card title read 「このエントリは…」.
-    // For those, fall through to the original (English) title.
-    if (sumJa && !isPendingSummaryText(sumJa)) return firstClause(sumJa, 70);
-    return title || en;
+    const copiedEnglishSource =
+      sourceLang === "en" &&
+      ja &&
+      title &&
+      sameTitleValue(ja, title);
+    const lacksJapaneseEvidence = sourceLang === "en" && ja && !hasCjk(ja);
+    if (
+      ja &&
+      !copiedEnglishSource &&
+      !lacksJapaneseEvidence &&
+      !isSyntheticFallbackTitle(e, ja)
+    ) return ja;
+    if (title && sourceLang === "ja" && !isSyntheticFallbackTitle(e, title)) return title;
+    return "";
   }
   if (lang === "en") {
-    if (en && !isSyntheticFallbackTitle(e, en)) return en;
-    if (sumEn && !hasCjk(sumEn) && !isPendingSummaryText(sumEn)) return firstClause(sumEn, 90);
-    if (title && !hasCjk(title)) return title;
+    const copiedJapaneseSource =
+      sourceLang === "ja" &&
+      en &&
+      ((title && sameTitleValue(en, title)) || (ja && sameTitleValue(en, ja)));
+    if (en && !copiedJapaneseSource && !isCjkDominantText(en) && !isSyntheticFallbackTitle(e, en)) return en;
+    if (title && sourceLang === "en" && !isSyntheticFallbackTitle(e, title)) return title;
     return "";
   }
   // Defensive fallback for any future lang values.
@@ -689,8 +713,10 @@ export function titleForLangWithFallback(
   const other: "ja" | "en" = lang === "en" ? "ja" : "en";
   const fallback = titleForLang(e, other);
   if (fallback) return { text: fallback, isFallback: true, fallbackLang: other };
-  // Absolute last resort: raw `title` (always present for normalized entries).
-  return { text: (e.title ?? "").trim(), isFallback: true, fallbackLang: other };
+  // Absolute last resort: preserve the raw title's actual language provenance.
+  const raw = (e.title ?? e.titleJa ?? e.titleEn ?? "").trim();
+  const rawLang = effectiveTitleLanguage(e);
+  return { text: raw, isFallback: rawLang !== lang, fallbackLang: rawLang };
 }
 
 /** YYYY-MM-DD in JST for grouping timelines by day. */
@@ -801,7 +827,8 @@ export function relatedEntries(
   e: NormalizedEntry,
   n = 6,
 ): NormalizedEntry[] {
-  return ALL_ENTRIES.filter((x) => x.id !== e.id && x.category === e.category).slice(0, n);
+  const lane = isArxivEntry(e) ? ARXIV_ENTRIES : entriesFor(e.category);
+  return lane.filter((x) => x.id !== e.id).slice(0, n);
 }
 
 /** Newest entries from the same source, excluding self. */
@@ -829,7 +856,7 @@ export function entriesByTag(
 export function adjacentInCategory(
   e: NormalizedEntry,
 ): { prev?: NormalizedEntry; next?: NormalizedEntry } {
-  const cat = ALL_ENTRIES.filter((x) => x.category === e.category);
+  const cat = isArxivEntry(e) ? ARXIV_ENTRIES : entriesFor(e.category);
   const i = cat.findIndex((x) => x.id === e.id);
   if (i < 0) return {};
   return { prev: cat[i - 1], next: cat[i + 1] };
@@ -838,7 +865,7 @@ export function adjacentInCategory(
 export function categoryImportanceStanding(
   e: NormalizedEntry,
 ): { total: number; sameOrHigher: number } {
-  const categoryEntries = ALL_ENTRIES.filter((entry) => entry.category === e.category);
+  const categoryEntries = isArxivEntry(e) ? ARXIV_ENTRIES : entriesFor(e.category);
   return {
     total: categoryEntries.length,
     sameOrHigher: categoryEntries.filter((entry) => entry.importance >= e.importance).length,

@@ -86,6 +86,68 @@ describe("GitHub Actions publisher runner", () => {
     expect(existsSync(effectsPath)).toBe(false);
   });
 
+  it("passes one shared enrichment allowance to the Publisher runtime", async () => {
+    const runnerTemp = mkdtempSync(join(tmpdir(), "publisher-effects-"));
+    let capturedEnv: PublisherEnv | undefined;
+    const inspectingHarness = vi.fn(async (publisherEnv: PublisherEnv) => {
+      capturedEnv = publisherEnv;
+      return { changed: false, stats: {} };
+    });
+
+    await expect(
+      runPublisherCli(
+        ["--dry-run"],
+        {
+          GITHUB_ACTIONS: "true",
+          GITHUB_REF: "refs/heads/main",
+          GITHUB_REPOSITORY: "himiyosh/tech-dashboard",
+          GITHUB_TOKEN: "test-token",
+          RUNNER_TEMP: runnerTemp,
+        },
+        { runHarness: inspectingHarness },
+      ),
+    ).resolves.toBe(0);
+
+    expect(capturedEnv).toMatchObject({
+      ENQUEUE_MAX_NEW: "35",
+      ENRICHMENT_ENQUEUE_MAX_TOTAL: "35",
+      BODY_ENQUEUE_MAX_NEW: "35",
+      BODY_LOOKUP_CAP: "35",
+    });
+  });
+
+  it("keeps heartbeat telemetry out of deferred KV effects", async () => {
+    const runnerTemp = mkdtempSync(join(tmpdir(), "publisher-effects-"));
+    const effectsPath = join(
+      runnerTemp,
+      "tech-dashboard-publisher-effects.json",
+    );
+    const inspectingHarness = vi.fn(async (publisherEnv: PublisherEnv) => {
+      await publisherEnv.SUMMARY_CACHE.put("heartbeat.v1", '{"status":"published"}');
+      await publisherEnv.SUMMARY_CACHE.put("og.v1", '{"version":1}');
+      return { changed: false, stats: {} };
+    });
+
+    await expect(
+      runPublisherCli(
+        ["--apply"],
+        {
+          GITHUB_ACTIONS: "true",
+          GITHUB_REF: "refs/heads/main",
+          GITHUB_REPOSITORY: "himiyosh/tech-dashboard",
+          GITHUB_TOKEN: "test-token",
+          RUNNER_TEMP: runnerTemp,
+        },
+        { runHarness: inspectingHarness },
+      ),
+    ).resolves.toBe(0);
+
+    expect(existsSync(effectsPath)).toBe(true);
+    expect(JSON.parse(readFileSync(effectsPath, "utf8"))).toMatchObject({
+      kvPuts: [{ key: "og.v1", value: '{"version":1}' }],
+    });
+  });
+
   it("flushes an allowlisted deferred effect with a bounded request body", async () => {
     const runnerTemp = mkdtempSync(join(tmpdir(), "publisher-effects-"));
     const effectsPath = join(runnerTemp, "effects.json");

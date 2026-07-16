@@ -6,26 +6,22 @@ import EntryCard from "../../../../components/EntryCard.astro";
 import Pager from "../../../../components/Pager.astro";
 import TimelineRightRail from "../../../../components/TimelineRightRail.astro";
 import {
-  ALL_ENTRIES,
   PAGE_SIZE,
+  STATIC_TAG_PAGE_TAGS,
+  entriesForTagPage,
   groupByDay,
   jstDayLabel,
   relativeTime,
+  tagHref,
 } from "../../../../lib/data.ts";
 
 export function getStaticPaths() {
-  const tagToEntries = new Map<string, number>();
-  for (const e of ALL_ENTRIES) {
-    for (const t of e.tags) {
-      tagToEntries.set(t, (tagToEntries.get(t) ?? 0) + 1);
-    }
-  }
   const out: Array<{
     params: { tag: string; page: string };
     props: { tag: string; page: number; total: number };
   }> = [];
-  for (const [tag, count] of tagToEntries) {
-    const total = Math.max(1, Math.ceil(count / PAGE_SIZE));
+  for (const tag of STATIC_TAG_PAGE_TAGS) {
+    const total = Math.max(1, Math.ceil(entriesForTagPage(tag).length / PAGE_SIZE));
     for (let p = 2; p <= total; p++) {
       out.push({
         params: { tag, page: String(p) },
@@ -43,16 +39,17 @@ interface Props {
 }
 
 const { tag, page, total } = Astro.props as Props;
-const all = ALL_ENTRIES.filter((e) => e.tags.includes(tag));
+const all = entriesForTagPage(tag);
 const start = (page - 1) * PAGE_SIZE;
 const entries = all.slice(start, start + PAGE_SIZE);
 const dayGroups = groupByDay(entries);
 const now = new Date();
+const tagBaseHref = tagHref(tag);
 
 const breadcrumb = [
   { label: "Home", href: "/" },
   { label: "Tags" },
-  { label: `#${tag}`, href: `/t/${tag}` },
+  { label: `#${tag}`, href: tagBaseHref },
   { label: `Page ${page}` },
 ];
 ---
@@ -66,7 +63,7 @@ const breadcrumb = [
     headingId="tag-heading"
     description="同じキーワードで束ねられた更新の続きです。カテゴリをまたいだ関連ニュースや実装トピックの追跡に使えます。"
     actions={[
-      { href: `/t/${tag}`, label: "First page" },
+      { href: tagBaseHref, label: "First page" },
       { href: "/categories", label: "Browse categories" },
       { href: "/archive", label: "Open archive" },
     ]}
@@ -74,7 +71,7 @@ const breadcrumb = [
       { label: "Total", value: all.length },
       { label: "Showing", value: entries.length },
       { label: "Page", value: `${page}/${total}` },
-      { label: "Updated", value: relativeTime(ALL_ENTRIES[0]?.collectedAt ?? ALL_ENTRIES[0]?.publishedAt ?? null, now) },
+      { label: "Updated", value: relativeTime(all[0]?.collectedAt ?? all[0]?.publishedAt ?? null, now) },
     ]}
   />
 
@@ -99,7 +96,7 @@ const breadcrumb = [
         </>
       ))}
 
-      <Pager currentPage={page} totalPages={total} baseHref={`/t/${tag}`} />
+      <Pager currentPage={page} totalPages={total} baseHref={tagBaseHref} />
     </main>
 
     <TimelineRightRail entries={all} now={now} label={`#${tag} insights`} />

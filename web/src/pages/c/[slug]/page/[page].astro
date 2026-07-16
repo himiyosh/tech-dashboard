@@ -45,6 +45,7 @@ interface Props {
 
 const { category, page, total } = Astro.props as Props;
 const slug = category.slug as Category;
+const categoryContextLabel = slug === "research" ? "Research" : category.name;
 const all = entriesFor(slug);
 const start = (page - 1) * PAGE_SIZE;
 const entries = all.slice(start, start + PAGE_SIZE);
@@ -70,10 +71,11 @@ const breadcrumb = [
     className="page-hero-category-detail"
     accent={category.color}
     kicker="Category detail"
-    title={category.name}
+    title={categoryContextLabel}
     count={`page ${page}/${total}`}
     headingId="category-heading"
-    description={`${category.name} に分類された更新の続きです。ページを移動してもカテゴリ文脈と主要指標を維持します。`}
+    description={`${categoryContextLabel} カテゴリの更新の続きです。ページを移動してもカテゴリ文脈と主要指標を維持します。`}
+    descriptionEn={`Continue browsing ${categoryContextLabel} updates while keeping category context and key metrics in view.`}
     actions={[
       { href: `/c/${slug}`, label: "First page" },
       { href: "/categories", label: "All categories" },
@@ -95,10 +97,12 @@ const breadcrumb = [
         <section class="research-split-callout" aria-labelledby="research-split-heading">
           <div>
             <p class="section-kicker">Research navigation</p>
-            <h2 id="research-split-heading">arXiv 論文は専用ページで分離表示しています</h2>
-            <p>
-              件数の多い arXiv cs.AI / cs.CL / cs.SE / cs.LG は、通常のカテゴリ閲覧とは別に専用レーンで確認できます。
-            </p>
+            <h2 id="research-split-heading">
+              <span class="i18n-ja">arXiv 論文は専用ページで分離表示しています</span>
+              <span class="i18n-en">arXiv papers have a dedicated lane</span>
+            </h2>
+            <p class="i18n-ja">件数の多い arXiv cs.AI / cs.CL / cs.SE / cs.LG は、通常のカテゴリ閲覧とは別に専用レーンで確認できます。</p>
+            <p class="i18n-en">Browse high-volume arXiv cs.AI, cs.CL, cs.SE, and cs.LG feeds separately from the category timeline.</p>
           </div>
           <a href="/arxiv/">arXiv Papers</a>
         </section>
@@ -118,7 +122,10 @@ const breadcrumb = [
           </span>
         </h2>
         <div class="sort">
-          <span class="active">新着順</span>
+          <span class="active">
+            <span class="i18n-ja">新着順</span>
+            <span class="i18n-en">Newest first</span>
+          </span>
         </div>
       </div>
 

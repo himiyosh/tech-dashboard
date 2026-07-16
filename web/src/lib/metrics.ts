@@ -1,4 +1,5 @@
 import { ARCHIVE_MONTHS, ARCHIVE_TOTAL_ENTRIES } from "./archive.ts";
+import { dailyDisplayCount, dailyEntryCount } from "./daily-summary.ts";
 import {
   ALL_ENTRIES,
   MAIN_TIMELINE_ENTRIES,
@@ -40,7 +41,18 @@ export interface DashboardMetrics {
   summaryQueueMode: string;
   summaryQueueCandidates: number;
   summaryQueueBacklog: number;
+  summaryQueueEnqueued: number | null;
   summaryQueueDrainEstimateHours: number;
+  bodyQueueMode: string | null;
+  bodyQueueBacklog: number | null;
+  bodyQueueDrainEstimateHours: number | null;
+  bodyQueueEnqueued: number | null;
+  bodyQueueMerged: number | null;
+  bodyQueueCandidates: number | null;
+  bodyQueueLookupCount: number | null;
+  enrichmentEnqueueCap: number | null;
+  enrichmentEnqueued: number | null;
+  enrichmentRemaining: number | null;
 }
 
 function latestIso(values: Array<string | null | undefined>): string {
@@ -53,17 +65,15 @@ function latestIso(values: Array<string | null | undefined>): string {
 
 export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
   const todayKey = jstDateKey(now.toISOString());
-  // "Today" on the home hero must equal DailySummary's "Today N" headline so the
-  // two big numbers next to each other never contradict. DailySummary derives it
-  // from stats.byDay (archive-backed, retention-stable per LL-083) and falls back
-  // to the live news-Timeline count only when stats lacks today's bucket. Mirror
-  // that exact derivation here. arXiv / knowledge are separate lanes, so the live
-  // fallback is scoped to MAIN_TIMELINE_ENTRIES (the visible homepage feed).
+  // The partial current JST day uses the same all-lane live count as DailySummary.
+  // Archive-backed stats remain authoritative only for completed days.
   const statsToday = STATS.byDay.find((bucket) => bucket.date === todayKey);
-  const timelineToday = MAIN_TIMELINE_ENTRIES.filter(
-    (entry) => jstDateKey(entry.publishedAt) === todayKey,
-  ).length;
-  const todayCount = statsToday?.count ?? timelineToday;
+  const liveToday = dailyEntryCount(
+    ALL_ENTRIES,
+    todayKey,
+    (entry) => jstDateKey(entry.publishedAt),
+  );
+  const todayCount = dailyDisplayCount(todayKey, todayKey, liveToday, statsToday?.count);
   const countSince = (ms: number): number => {
     const cutoff = now.getTime() - ms;
     return ALL_ENTRIES.filter((entry) => Date.parse(entry.publishedAt) >= cutoff).length;
@@ -74,6 +84,12 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
     ? String(activeSourceCount)
     : `${activeSourceCount}/${totalSourceCount}`;
   const fallback = fallbackMetrics(ALL_ENTRIES);
+  const optionalMetric = (value: unknown): number | null => {
+    const numeric = Number(value);
+    return value === undefined || value === null || !Number.isFinite(numeric)
+      ? null
+      : Math.max(0, numeric);
+  };
 
   return {
     generatedAt: latestIso([GENERATED_AT, STATS.generatedAt, WORKER_HEALTH?.lastRunAt ?? null]),
@@ -113,7 +129,23 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
     summaryQueueMode: WORKER_HEALTH?.queueMode ?? "unknown",
     summaryQueueCandidates: WORKER_HEALTH?.enqueueCandidates ?? 0,
     summaryQueueBacklog: WORKER_HEALTH?.summaryQueueBacklog ?? WORKER_HEALTH?.fallbackTotal ?? fallback.fallbackEntries,
+    summaryQueueEnqueued: optionalMetric(WORKER_HEALTH?.summaryQueueEnqueued),
     summaryQueueDrainEstimateHours: WORKER_HEALTH?.summaryQueueDrainEstimateHours ?? 0,
+    bodyQueueMode: typeof WORKER_HEALTH?.bodyQueueMode === "string"
+      ? WORKER_HEALTH.bodyQueueMode
+      : null,
+    bodyQueueBacklog: optionalMetric(WORKER_HEALTH?.bodyBacklog),
+    bodyQueueDrainEstimateHours: optionalMetric(
+      WORKER_HEALTH?.bodyQueueDrainEstimateHours
+      ?? WORKER_HEALTH?.bodyDrainEstimateHours,
+    ),
+    bodyQueueEnqueued: optionalMetric(WORKER_HEALTH?.bodyEnqueued),
+    bodyQueueMerged: optionalMetric(WORKER_HEALTH?.bodyMerged),
+    bodyQueueCandidates: optionalMetric(WORKER_HEALTH?.bodyEnqueueCandidates),
+    bodyQueueLookupCount: optionalMetric(WORKER_HEALTH?.bodyLookupCount),
+    enrichmentEnqueueCap: optionalMetric(WORKER_HEALTH?.enrichmentEnqueueCap),
+    enrichmentEnqueued: optionalMetric(WORKER_HEALTH?.enrichmentEnqueued),
+    enrichmentRemaining: optionalMetric(WORKER_HEALTH?.enrichmentRemaining),
   };
 }
 

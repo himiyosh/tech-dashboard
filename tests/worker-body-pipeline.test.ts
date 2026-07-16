@@ -6,10 +6,14 @@
 import { describe, it, expect } from "vitest";
 import type { NormalizedEntry } from "../harness/types.ts";
 import {
+  bodyBacklogAfterMerge,
+  bodyEnqueueAllowance,
   isBodyRetentionEligible,
   needsBody,
   selectBodyJobBatch,
+  selectBodyPipelineJobs,
 } from "../worker/src/body-queue.ts";
+import { buildHeartbeatPayload } from "../worker/src/index.ts";
 import {
   bodiesPresentSet,
   isRealBody,
@@ -147,6 +151,135 @@ describe("selectBodyJobBatch (LL-115)", () => {
         (job) => job.publisherContractFingerprint === fingerprint,
       ),
     ).toBe(true);
+  });
+});
+
+describe("shared enrichment budget and pending body merge", () => {
+  const entries = [
+    entry({ id: "pending", publishedAt: "2026-06-30T00:00:00.000Z" }),
+    entry({ id: "new", publishedAt: "2026-06-29T00:00:00.000Z" }),
+    entry({ id: "old", publishedAt: "2026-06-01T00:00:00.000Z" }),
+  ];
+
+  it("summary enqueue の未使用枠だけを body へ渡す", () => {
+    expect(bodyEnqueueAllowance(35, 1, 35)).toBe(34);
+    expect(bodyEnqueueAllowance(35, 35, 35)).toBe(0);
+    expect(bodyEnqueueAllowance(35, 10, 8)).toBe(8);
+    expect(bodyEnqueueAllowance(0, 0, 35)).toBe(0);
+  });
+
+  it("同一 run で merge 済みの本文を backlog から差し引く", () => {
+    expect(bodyBacklogAfterMerge(435, 2)).toBe(433);
+    expect(bodyBacklogAfterMerge(1, 3)).toBe(0);
+  });
+
+  it("heartbeat に body queue と共有生成枠の snapshot を保持する", () => {
+    const payload = buildHeartbeatPayload(
+      {
+        batchIndex: 2,
+        batchTotal: 6,
+        sourcesOk: 14,
+        sourcesAttempted: 14,
+        sourcesFailed: [],
+        copilotOk: true,
+        summaryQueueBacklog: 1,
+        summaryQueueEnqueued: 1,
+        bodyQueueMode: "enabled",
+        bodyBacklog: 433,
+        bodyEnqueueCandidates: 8,
+        bodyEnqueueCap: 34,
+        bodyEnqueued: 8,
+        bodyLookupCount: 10,
+        bodyMerged: 2,
+        bodyQueueDrainEstimateHours: 44,
+        bodyMergePendingIds: ["body-a", "body-b"],
+        enrichmentEnqueueCap: 35,
+        enrichmentEnqueued: 9,
+        enrichmentRemaining: 26,
+      },
+      true,
+      1,
+      1,
+      "published",
+      new Date("2026-07-16T00:00:00.000Z"),
+    );
+
+    expect(payload).toMatchObject({
+      summaryQueueEnqueued: 1,
+      bodyQueueMode: "enabled",
+      bodyBacklog: 433,
+      bodyEnqueued: 8,
+      bodyMerged: 2,
+      bodyMergePendingIds: ["body-a", "body-b"],
+      enrichmentEnqueueCap: 35,
+      enrichmentEnqueued: 9,
+      enrichmentRemaining: 26,
+    });
+  });
+
+  it("前回 enqueue 済み ID を候補より先に lookup し、重複させない", () => {
+    const selection = selectBodyPipelineJobs(
+      entries,
+      new Set(),
+      ["pending"],
+      2,
+      { nowMs: 0 },
+    );
+
+    expect(selection.pendingJobs.map((job) => job.entry.id)).toEqual(["pending"]);
+    expect(selection.candidateJobs.map((job) => job.entry.id)).not.toContain("pending");
+    expect(selection.lookupJobs.map((job) => job.entry.id)).toEqual([
+      "pending",
+      ...selection.candidateJobs.map((job) => job.entry.id),
+    ]);
+    expect(new Set(selection.lookupJobs.map((job) => job.entry.id)).size).toBe(
+      selection.lookupJobs.length,
+    );
+    expect(selection.lookupJobs).toHaveLength(2);
+  });
+
+  it("pending miss は次回 pending 指定がなければ通常候補へ戻る", () => {
+    const nextRun = selectBodyPipelineJobs(
+      entries,
+      new Set(),
+      [],
+      3,
+      { nowMs: 0 },
+    );
+
+    expect(nextRun.pendingJobs).toHaveLength(0);
+    expect(nextRun.candidateJobs.map((job) => job.entry.id)).toContain("pending");
+  });
+
+  it("cap=0 では pending と candidate のどちらも lookup しない", () => {
+    const selection = selectBodyPipelineJobs(
+      entries,
+      new Set(),
+      ["pending"],
+      0,
+      { nowMs: 0 },
+    );
+
+    expect(selection.pendingJobs).toHaveLength(0);
+    expect(selection.candidateJobs).toHaveLength(0);
+    expect(selection.lookupJobs).toHaveLength(0);
+  });
+
+  it("pending と通常候補を合わせた lookup 件数を cap 以下に保つ", () => {
+    const selection = selectBodyPipelineJobs(
+      entries,
+      new Set(),
+      ["pending", "old"],
+      3,
+      { nowMs: 0 },
+    );
+
+    expect(selection.pendingJobs.map((job) => job.entry.id)).toEqual([
+      "pending",
+      "old",
+    ]);
+    expect(selection.candidateJobs).toHaveLength(1);
+    expect(selection.lookupJobs).toHaveLength(3);
   });
 });
 

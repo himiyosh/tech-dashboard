@@ -10,6 +10,7 @@ import {
   groupByDay,
   jstDayLabel,
   relativeTime,
+  tagHref,
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { ARXIV_SOURCE_INFO, arxivSourceInfo } from "../lib/arxiv-meta.ts";
@@ -34,21 +35,10 @@ const sourceRows = ARXIV_SOURCE_INFO
   .map((info) => {
     const source = info.id;
     const sourceEntries = ARXIV_ENTRIES.filter((entry) => entry.source === source);
-    const tags = new Map<string, number>();
-    for (const entry of sourceEntries.slice(0, 40)) {
-      for (const tag of entry.tags) tags.set(tag, (tags.get(tag) ?? 0) + 1);
-    }
-    const topTag = [...tags.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "paper";
     return {
       source,
-      label: sourceLabel(source),
       code: info.code,
-      title: info.title,
-      descriptionJa: info.descriptionJa,
       total: sourceEntries.length,
-      last7: countSince(sourceEntries, 7),
-      latest: sourceEntries[0] ?? null,
-      topTag,
     };
   });
 
@@ -130,7 +120,7 @@ const breadcrumb = [
         <div class="right-title">Paper Tags</div>
         <div class="tag-cloud">
           {topTags.map((tag) => (
-            <a class="tag" href={`/t/${encodeURIComponent(tag.tag)}`}>
+            <a class="tag" href={tagHref(tag.tag)}>
               #{tag.tag} <span class="c">{tag.count}</span>
             </a>
           ))}
@@ -139,46 +129,6 @@ const breadcrumb = [
     </aside>
 
     <main data-paper-browser>
-      <section class="paper-lane" aria-labelledby="paper-lane-heading">
-        <div class="paper-lane-head">
-          <div>
-            <p class="section-kicker">Source split</p>
-            <h2 id="paper-lane-heading">arXiv source overview</h2>
-          </div>
-          <p>
-            通常タイムラインは公式 blog / release / news を中心に保ち、論文はここでまとめて確認できるようにしました。
-          </p>
-        </div>
-
-        <div class="paper-source-grid">
-          {sourceRows.map((row) => (
-            <button
-              id={row.source}
-              type="button"
-              class="paper-source-card"
-              data-paper-filter={row.source}
-              aria-pressed="false"
-            >
-              <div class="paper-source-top">
-                <span class="paper-source-mark">{row.code}</span>
-                <span>{row.title}</span>
-              </div>
-              <p class="paper-source-desc">{row.descriptionJa}</p>
-              <div class="paper-source-count">{row.total}</div>
-              <div class="paper-source-meta">
-                <span>{row.last7} in 7d</span>
-                <span>top #{row.topTag}</span>
-              </div>
-              {row.latest && (
-                <span class="paper-source-latest">
-                  latest {relativeTime(row.latest.publishedAt, now)}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </section>
-
       <section class="paper-controls" aria-label="arXiv display controls">
         <div>
           <p class="section-kicker">Filter</p>
@@ -287,7 +237,21 @@ const breadcrumb = [
       "arxiv-cs-lg": "cs.LG",
     };
 
-    let selectedFilter = "all";
+    const filterFromHash = () => {
+      const rawHash = window.location.hash.replace(/^#/, "");
+      const params = new URLSearchParams(rawHash);
+      const legacySource = /^arxiv-[a-z0-9-]+$/i.test(rawHash) ? rawHash : "";
+      const requested = params.get("source") || legacySource || "all";
+      return Object.prototype.hasOwnProperty.call(sourceLabels, requested) ? requested : "all";
+    };
+    const updateFilterHash = (filter) => {
+      const nextUrl = filter === "all"
+        ? `${window.location.pathname}${window.location.search}`
+        : `${window.location.pathname}${window.location.search}#source=${encodeURIComponent(filter)}`;
+      window.history.replaceState(null, "", nextUrl);
+    };
+
+    let selectedFilter = filterFromHash();
     let selectedView = "cards";
 
     try {
@@ -341,6 +305,7 @@ const breadcrumb = [
     filterButtons.forEach((button) => {
       button.addEventListener("click", () => {
         selectedFilter = button.dataset.paperFilter || "all";
+        updateFilterHash(selectedFilter);
         applyPaperState();
         document.querySelector("#arxiv-timeline")?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
@@ -356,6 +321,11 @@ const breadcrumb = [
         }
         applyPaperState();
       });
+    });
+
+    window.addEventListener("hashchange", () => {
+      selectedFilter = filterFromHash();
+      applyPaperState();
     });
 
     applyPaperState();

@@ -1,7 +1,7 @@
 ---
 import "../styles/portal.css";
 import { SITE_URL } from "../lib/site.ts";
-import { CATEGORY_META, WORKER_HEALTH } from "../lib/data.ts";
+import { CATEGORY_META, WORKER_HEALTH, relativeTime } from "../lib/data.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { deriveWorkerRunStatus } from "../lib/run-health.ts";
 import { SOURCE_META, sourceLabel } from "../lib/source-meta.ts";
@@ -25,11 +25,11 @@ const isCurrentHref = (href: string) =>
   currentPath === (href.replace(/\/+$/, "") || "/");
 
 const navItems = [
-  { href: "/", key: "timeline", label: "Timeline", detail: "最新記事と今日見るべき更新" },
-  { href: "/glossary", key: "glossary", label: "Glossary", detail: "AI/LLM 用語とトレンドの用語集" },
-  { href: "/archive", key: "archive", label: "Archive", detail: "月別に過去記事を確認" },
-  { href: "/status", key: "status", label: "Status", detail: "収集 source と Worker 状態" },
-  { href: "/about", key: "about", label: "About", detail: "サイトの目的と収集方針" },
+  { href: "/", key: "timeline", label: "Timeline", detail: "最新記事と今日見るべき更新", detailEn: "Latest articles and today's priorities" },
+  { href: "/glossary", key: "glossary", label: "Glossary", detail: "AI/LLM 用語とトレンドの用語集", detailEn: "AI, LLM, and trend glossary" },
+  { href: "/archive", key: "archive", label: "Archive", detail: "月別に過去記事を確認", detailEn: "Browse articles by month" },
+  { href: "/status", key: "status", label: "Status", detail: "収集 source と Worker 状態", detailEn: "Collection sources and Worker health" },
+  { href: "/about", key: "about", label: "About", detail: "サイトの目的と収集方針", detailEn: "Purpose and collection policy" },
 ] as const;
 // Primary explore shortcuts live in the header switcher / mobile tabbar
 // (Categories, arXiv, Knowledge), so they are intentionally excluded from
@@ -49,13 +49,18 @@ const productionHost = new URL(SITE_URL).hostname;
 const footerRun = deriveWorkerRunStatus({
   workerHealth: WORKER_HEALTH,
   fallbackPercent: DASHBOARD_METRICS.fallbackPercent,
-  pendingSummaryEntries: DASHBOARD_METRICS.summaryQueueBacklog,
+  pendingSummaryEntries: DASHBOARD_METRICS.fallbackEntries,
 });
 const footerRunTone = footerRun.tone;
 const footerRunStatus = footerRun.runLabel;
-const footerRunDetail = !WORKER_HEALTH
+const footerBatchDetail = !WORKER_HEALTH
   ? "open /status"
   : `last batch ${WORKER_HEALTH.sourcesOk}/${WORKER_HEALTH.sourcesAttempted} src · summary queue ${DASHBOARD_METRICS.summaryQueueBacklog}`;
+const footerRunDetail = `${footerRun.detail} · ${footerBatchDetail}`;
+const footerLastRunAt = WORKER_HEALTH?.lastRunAt ?? null;
+const footerLastRunRelative = footerLastRunAt
+  ? relativeTime(footerLastRunAt, new Date())
+  : null;
 ---
 
 <!doctype html>
@@ -115,6 +120,7 @@ const footerRunDetail = !WORKER_HEALTH
           <a
             href="/categories"
             class={pageKey === "categories" ? "nav-shortcut active" : "nav-shortcut"}
+            aria-label="Categories"
             aria-current={isCurrentHref("/categories") ? "page" : undefined}
           >
             <span class="nav-icon" aria-hidden="true">▦</span>
@@ -123,6 +129,7 @@ const footerRunDetail = !WORKER_HEALTH
           <a
             href="/arxiv"
             class={pageKey === "arxiv" ? "nav-shortcut active paper" : "nav-shortcut paper"}
+            aria-label="arXiv"
             aria-current={isCurrentHref("/arxiv") ? "page" : undefined}
           >
             <span class="nav-icon" aria-hidden="true"><ArxivIcon /></span>
@@ -131,6 +138,7 @@ const footerRunDetail = !WORKER_HEALTH
           <a
             href="/knowledge"
             class={pageKey === "knowledge" ? "nav-shortcut active knowledge" : "nav-shortcut knowledge"}
+            aria-label="Knowledge"
             aria-current={isCurrentHref("/knowledge") ? "page" : undefined}
           >
             <span class="nav-icon" aria-hidden="true">✦</span>
@@ -170,9 +178,9 @@ const footerRunDetail = !WORKER_HEALTH
             hidden
           ></div>
         </form>
-        <div class="lang-toggle" role="group" aria-label="Language">
-          <button type="button" class="lang-btn" data-lang="ja" aria-pressed="true">JA</button>
-          <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+        <div class="lang-toggle" role="group" aria-label="表示言語 / Interface language">
+          <button type="button" class="lang-btn" data-lang="ja" aria-pressed="true" aria-label="日本語表示中">JA</button>
+          <button type="button" class="lang-btn" data-lang="en" aria-pressed="false" aria-label="英語表示に切り替え">EN</button>
         </div>
         <button
           type="button"
@@ -213,12 +221,18 @@ const footerRunDetail = !WORKER_HEALTH
             aria-current={isCurrentHref(item.href) ? "page" : undefined}
           >
             <span>{item.label}</span>
-            <small>{item.detail}</small>
+            <small>
+              <span class="i18n-ja">{item.detail}</span>
+              <span class="i18n-en">{item.detailEn}</span>
+            </small>
           </a>
         ))}
         <button type="button" class="site-menu-action" data-search-trigger>
           <span>Search</span>
-          <small>キーワード・source・tag で検索</small>
+          <small>
+            <span class="i18n-ja">キーワード・source・tag で検索</span>
+            <span class="i18n-en">Search by keyword, source, or tag</span>
+          </small>
         </button>
       </nav>
     </dialog>
@@ -241,25 +255,35 @@ const footerRunDetail = !WORKER_HEALTH
     <div id="content-start" class="content-start-anchor" tabindex="-1"></div>
     <slot />
 
-    <div class="footer-bar">
+    <footer class="footer-bar" aria-label="System status">
       <div class="footer-inner">
         <a
           class="item footer-run-link"
           href="/status"
           aria-label={`Collection health: ${footerRunStatus}. ${footerRunDetail}`}
           title={`Collection health: ${footerRunStatus}. ${footerRunDetail}`}
+          data-run-detail={footerRun.detail}
           data-summary-queue-backlog={DASHBOARD_METRICS.summaryQueueBacklog}
         >
           <span class={`dot ${footerRunTone}`} data-run-tone={footerRunTone} aria-hidden="true"></span>
           <strong>{footerRunStatus}</strong>
           <span class="mono">{footerRunDetail}</span>
+          {footerLastRunAt && footerLastRunRelative && (
+            <time
+              class="footer-run-time"
+              datetime={footerLastRunAt}
+              title={`Last collection run: ${footerLastRunAt}`}
+            >
+              run {footerLastRunRelative}
+            </time>
+          )}
         </a>
         <span class="item">harness <strong>v0.1</strong></span>
         <span class="item footer-stack">powered by <strong>Astro</strong> + <strong>Claude Opus</strong></span>
         <span class="spacer"></span>
         <span class="item">Cloudflare Pages</span>
       </div>
-    </div>
+    </footer>
 
     <script>
       import { normalizeSearchText } from "../lib/search-normalize.ts";
@@ -273,6 +297,11 @@ const footerRunDetail = !WORKER_HEALTH
           document.querySelectorAll<HTMLButtonElement>(".lang-btn").forEach((b) => {
             const on = b.dataset.lang === l;
             b.setAttribute("aria-pressed", on ? "true" : "false");
+            const targetLang = b.dataset.lang === "en" ? "en" : "ja";
+            const label = l === "ja"
+              ? targetLang === "ja" ? "日本語表示中" : "英語表示に切り替え"
+              : targetLang === "en" ? "English interface active" : "Switch interface to Japanese";
+            b.setAttribute("aria-label", label);
             b.classList.toggle("is-active", on);
           });
           document.dispatchEvent(new CustomEvent("techdb:languagechange", { detail: { lang: l } }));

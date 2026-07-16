@@ -187,6 +187,9 @@ export function decorateReleaseTitle(rawTitle: string, source: SourceDefinition)
 type CategorySignal = Pick<RawEntry, "title" | "contentSnippet" | "publishedAt">;
 
 const HUGGINGFACE_MCP_RE = /\bmcp\b|model context protocol/i;
+const HUGGINGFACE_LIBRARY_RELEASE_RE = /\b(?:lerobot|trl)\s+v\d+(?:\.\d+){1,3}\b/i;
+const HUGGINGFACE_AGENT_INTEGRATION_RE =
+  /\bstrands\s+agents?\b[\s\S]*\blerobot\b|\blerobot\b[\s\S]*\bstrands\s+agents?\b/i;
 const HUGGINGFACE_RESEARCH_RE =
   /\b(?:benchmark(?:s|ing)?|leaderboard|evaluat(?:e|ion|ing)|research|papers?|competitions?|datasets?|train(?:ing|ed)?|fine[- ]?tun(?:e|ing)|reinforcement learning|diffusion|computer vision|object detection|lerobot|robots?|robotics)\b/i;
 const HUGGINGFACE_AGENT_RE = /\b(?:agents?|agentic|multi-agent)\b/i;
@@ -197,6 +200,8 @@ function resolveCategory(raw: CategorySignal, source: SourceDefinition): Categor
   const signal = `${raw.title} ${raw.contentSnippet ?? ""}`.toLowerCase();
   if (source.id === "huggingface-blog") {
     if (HUGGINGFACE_MCP_RE.test(signal)) return "mcp";
+    if (HUGGINGFACE_LIBRARY_RELEASE_RE.test(raw.title)) return "local-llm";
+    if (HUGGINGFACE_AGENT_INTEGRATION_RE.test(raw.title)) return "agent-fw";
     if (HUGGINGFACE_RESEARCH_RE.test(signal)) return "research";
     if (HUGGINGFACE_AGENT_RE.test(signal)) return "agent-fw";
     if (HUGGINGFACE_PLATFORM_RE.test(signal)) return "tech-news";

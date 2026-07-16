@@ -9,21 +9,26 @@ import {
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { sourceLabel } from "../lib/source-meta.ts";
+import LanguageFallbackBadge from "./LanguageFallbackBadge.astro";
 
 export interface Props {
   entries: readonly NormalizedEntry[];
+  excludeEntryIds?: readonly string[];
   now?: Date;
   limit?: number;
   intervalMs?: number;
 }
 
-const { entries, now = new Date(), limit = 24, intervalMs = 7000 } = Astro.props;
+const { entries, excludeEntryIds = [], now = new Date(), limit = 24, intervalMs = 7000 } = Astro.props;
+const excludedEntryIds = new Set(excludeEntryIds);
 
 const todayKey = jstDateKey(now.toISOString());
 const yKey = jstDateKey(new Date(now.getTime() - 86_400_000).toISOString());
 const today = entries.filter((e) => jstDateKey(e.publishedAt) === todayKey);
 const baseDayKey = today.length > 0 ? todayKey : yKey;
-const baseEntries = entries.filter((e) => jstDateKey(e.publishedAt) === baseDayKey);
+const baseEntries = entries.filter(
+  (e) => jstDateKey(e.publishedAt) === baseDayKey && !excludedEntryIds.has(e.id),
+);
 const baseDayIsToday = baseDayKey === todayKey;
 
 const typeWeight = (t: string): number =>
@@ -54,8 +59,7 @@ const catColorOf = (slug: string): string =>
   >
     <div class="tb-inner">
       <span class="tb-label">
-        {baseDayIsToday && <span class="tb-live-dot" aria-hidden="true"></span>}
-        {baseDayIsToday ? "LIVE" : "LATEST"} · {baseDayKey.slice(5).replace("-", "/")}
+        {baseDayIsToday ? "TODAY" : "LATEST"} · {baseDayKey.slice(5).replace("-", "/")}
       </span>
       <div class="tb-stage" aria-live="off">
         {items.map((e, i) => {
@@ -74,21 +78,27 @@ const catColorOf = (slug: string): string =>
               aria-hidden={i === 0 ? "false" : "true"}
               tabindex={i === 0 ? undefined : "-1"}
             >
-              <span class="tb-cat">{categoryLabel(e.category)}</span>
-              {!isPending && isImp && <span class="tb-tag imp">★</span>}
-              {!isPending && isRel && <span class="tb-tag rel">REL</span>}
+              <span class="tb-meta">
+                <span class="tb-cat">{categoryLabel(e.category)}</span>
+                {!isPending && isImp && <span class="tb-tag imp">★</span>}
+                {!isPending && isRel && <span class="tb-tag rel">REL</span>}
+              </span>
               <span
                 class="tb-title i18n-ja"
                 lang={jaResult.fallbackLang === "en" ? "en" : "ja"}
               >
-                {jaResult.isFallback && <span class="tb-fallback-mark">EN</span>}
+                {jaResult.isFallback && jaResult.fallbackLang && (
+                  <LanguageFallbackBadge fallbackLang={jaResult.fallbackLang} variant="title" />
+                )}
                 {jaResult.text}
               </span>
               <span
                 class="tb-title i18n-en"
                 lang={enResult.fallbackLang === "ja" ? "ja" : "en"}
               >
-                {enResult.isFallback && <span class="tb-fallback-mark">JA</span>}
+                {enResult.isFallback && enResult.fallbackLang && (
+                  <LanguageFallbackBadge fallbackLang={enResult.fallbackLang} variant="title" />
+                )}
                 {enResult.text}
               </span>
               <span class="tb-src">[{sourceLabel(e.source)}]</span>
@@ -141,8 +151,8 @@ const catColorOf = (slug: string): string =>
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 10.5px; font-weight: 700;
     letter-spacing: 0.14em;
-    color: #ff3b30;
-    text-shadow: 0 0 4px rgba(255, 59, 48, 0.5);
+    color: #7cff9a;
+    text-shadow: 0 0 4px rgba(124, 255, 154, 0.4);
     flex-shrink: 0;
     padding-right: 12px;
     border-right: 1px solid rgba(124,255,154,0.15);
@@ -151,14 +161,6 @@ const catColorOf = (slug: string): string =>
     color: #b9c7bc;
     text-shadow: none;
   }
-  .tb-live-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #ff3b30;
-    box-shadow: 0 0 6px #ff3b30;
-    animation: tb-blink 1.2s steps(2, end) infinite;
-  }
-  @keyframes tb-blink { 50% { opacity: 0.25; } }
-
   .tb-stage {
     position: relative;
     flex: 1;
@@ -194,6 +196,13 @@ const catColorOf = (slug: string): string =>
   }
   .tb-slide:hover { color: #ffffff; }
 
+  .tb-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex-shrink: 0;
+  }
   .tb-cat {
     font-size: 9.5px; font-weight: 700;
     letter-spacing: 0.12em; text-transform: uppercase;
@@ -212,19 +221,6 @@ const catColorOf = (slug: string): string =>
   }
   .tb-tag.rel { color: #000; background: #ffcc00; text-shadow: none; }
   .tb-tag.imp { color: #000; background: #ff8a2a; text-shadow: none; }
-  .tb-fallback-mark {
-    display: inline-block;
-    margin-right: 6px;
-    font-size: 9.5px; font-weight: 700;
-    letter-spacing: 0.06em;
-    padding: 1px 4px;
-    border-radius: 3px;
-    color: #5ab075;
-    background: rgba(124,255,154,0.08);
-    border: 1px solid rgba(124,255,154,0.25);
-    text-shadow: none;
-    vertical-align: 0.12em;
-  }
   .tb-title {
     font-weight: 700;
     color: #e8ffe9;
@@ -295,13 +291,53 @@ const catColorOf = (slug: string): string =>
   :global(html[data-lang="en"]) .tb-title.i18n-ja { display: none !important; }
   :global(html:not([data-lang="en"])) .tb-title.i18n-en { display: none !important; }
 
-  /* Tablet + mobile: stack the ticker into two rows so the headline title is
-     never squeezed by the LIVE label / controls. Row 1: label + controls.
-     Row 2: full-width headline. Triggers across the whole tablet "squeeze
-     zone" (721-960px), not just phones, otherwise the title is cut to a few
-     characters and the article is unidentifiable. */
-  @media (max-width: 960px) {
+  /* Keep category tags above the headline throughout the compact header range.
+     The headline then owns the full stage width instead of competing with tags. */
+  @media (max-width: 1100px) {
     .tb-counter { display: none; }
+    .tb-stage {
+      height: 44px;
+    }
+    .tb-slide {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto auto;
+      align-content: center;
+      align-items: center;
+      column-gap: 8px;
+      row-gap: 2px;
+      padding: 2px 0;
+    }
+    .tb-meta {
+      grid-column: 1;
+      grid-row: 1;
+      gap: 5px;
+      overflow: hidden;
+    }
+    .tb-title {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      width: 100%;
+    }
+    .tb-src {
+      grid-column: 2;
+      grid-row: 1;
+    }
+  }
+
+  @media (min-width: 961px) and (max-width: 1100px) {
+    .tb-inner {
+      gap: 10px;
+      padding-block: 6px;
+    }
+    .tb-label {
+      padding-right: 8px;
+    }
+  }
+
+  /* On narrower tablets and phones, give the headline stage its own full row
+     beneath the ticker label and controls. */
+  @media (max-width: 960px) {
     .tb-inner {
       display: grid;
       grid-template-columns: auto 1fr auto;
@@ -320,6 +356,10 @@ const catColorOf = (slug: string): string =>
       width: 100%;
       min-width: 0;
     }
+    .tb-ctrl {
+      width: 44px;
+      height: 44px;
+    }
   }
 
   @media (min-width: 721px) and (max-width: 900px) and (max-height: 900px) {
@@ -333,21 +373,22 @@ const catColorOf = (slug: string): string =>
     .tb-src { display: none; }
     .tb-inner {
       row-gap: 0;
-      padding: 2px 12px 4px;
+      padding: 1px 12px;
     }
-    .tb-slide { gap: 6px; }
+    .tb-slide {
+      grid-template-columns: minmax(0, 1fr);
+      column-gap: 0;
+      row-gap: 1px;
+    }
+    .tb-meta {
+      grid-column: 1;
+      gap: 4px;
+    }
     .tb-cat { font-size: 9px; padding: 1px 4px; }
     .tb-title { font-size: 12.5px; line-height: 1.35; }
-    .tb-ctrl {
-      width: 44px;
-      height: 44px;
-    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .tb-live-dot {
-      animation: none;
-    }
     .tb-slide {
       filter: none;
       transform: none;

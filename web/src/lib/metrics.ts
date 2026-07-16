@@ -1,4 +1,5 @@
 import { ARCHIVE_MONTHS, ARCHIVE_TOTAL_ENTRIES } from "./archive.ts";
+import { dailyDisplayCount, dailyEntryCount } from "./daily-summary.ts";
 import {
   ALL_ENTRIES,
   MAIN_TIMELINE_ENTRIES,
@@ -53,17 +54,15 @@ function latestIso(values: Array<string | null | undefined>): string {
 
 export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
   const todayKey = jstDateKey(now.toISOString());
-  // "Today" on the home hero must equal DailySummary's "Today N" headline so the
-  // two big numbers next to each other never contradict. DailySummary derives it
-  // from stats.byDay (archive-backed, retention-stable per LL-083) and falls back
-  // to the live news-Timeline count only when stats lacks today's bucket. Mirror
-  // that exact derivation here. arXiv / knowledge are separate lanes, so the live
-  // fallback is scoped to MAIN_TIMELINE_ENTRIES (the visible homepage feed).
+  // The partial current JST day uses the same all-lane live count as DailySummary.
+  // Archive-backed stats remain authoritative only for completed days.
   const statsToday = STATS.byDay.find((bucket) => bucket.date === todayKey);
-  const timelineToday = MAIN_TIMELINE_ENTRIES.filter(
-    (entry) => jstDateKey(entry.publishedAt) === todayKey,
-  ).length;
-  const todayCount = statsToday?.count ?? timelineToday;
+  const liveToday = dailyEntryCount(
+    ALL_ENTRIES,
+    todayKey,
+    (entry) => jstDateKey(entry.publishedAt),
+  );
+  const todayCount = dailyDisplayCount(todayKey, todayKey, liveToday, statsToday?.count);
   const countSince = (ms: number): number => {
     const cutoff = now.getTime() - ms;
     return ALL_ENTRIES.filter((entry) => Date.parse(entry.publishedAt) >= cutoff).length;

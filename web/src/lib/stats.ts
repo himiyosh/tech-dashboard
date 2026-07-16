@@ -1,5 +1,5 @@
 import statsJson from "../../../data/stats.json";
-import { ALL_ENTRIES, type Category } from "./data.ts";
+import { entriesFor, jstDateKey, type Category } from "./data.ts";
 
 export interface DayBucket {
   date: string;
@@ -46,6 +46,7 @@ export interface CategoryWeekOverWeek {
 
 export interface StatsPayload {
   generatedAt: string;
+  bucketTimeZone: "Asia/Tokyo";
   totals: {
     allTime: number;
     last30d: number;
@@ -60,8 +61,7 @@ export interface StatsPayload {
 
 export const STATS = statsJson as StatsPayload;
 
-const publicEntriesForCategory = (category: Category) =>
-  ALL_ENTRIES.filter((entry) => entry.category === category);
+const publicEntriesForCategory = (category: Category) => entriesFor(category);
 
 export function categoryMonthlyTrend(category: Category, months = 12): CategoryMonthlyTrendBucket[] {
   const entries = publicEntriesForCategory(category);
@@ -69,7 +69,9 @@ export function categoryMonthlyTrend(category: Category, months = 12): CategoryM
     .sort((a, b) => a.month.localeCompare(b.month))
     .slice(-months)
     .map((bucket) => {
-      const count = entries.filter((entry) => entry.publishedAt.startsWith(bucket.month)).length;
+      const count = entries.filter(
+        (entry) => jstDateKey(entry.publishedAt).slice(0, 7) === bucket.month,
+      ).length;
       return { month: bucket.month, count };
     });
   const maxMonth = Math.max(1, ...buckets.map((bucket) => bucket.count));
@@ -79,16 +81,10 @@ export function categoryMonthlyTrend(category: Category, months = 12): CategoryM
   }));
 }
 
-function jstDateKey(time: number): string {
-  // 9 hour offset to JST, then take YYYY-MM-DD.
-  const jst = new Date(time + 9 * 3600_000);
-  return jst.toISOString().slice(0, 10);
-}
-
 /**
- * Trailing-`days` daily totals for a category, derived from `data/stats.json`.
- * This keeps the category detail Trend chart aligned with the sidebar /
- * categories-index sparkline (single source of truth: stats.json).
+ * Trailing-`days` daily totals for a category. Research follows its curated
+ * live listing; other categories use archive-backed `data/stats.json`.
+ * All category trend surfaces call this helper so their shape stays aligned.
  */
 export function categoryDailyTrend(
   category: Category,
@@ -97,19 +93,29 @@ export function categoryDailyTrend(
 ): CategoryDailyTrendBucket[] {
   const buckets: CategoryDailyTrendBucket[] = [];
   for (let i = days - 1; i >= 0; i--) {
-    buckets.push({ key: jstDateKey(now.getTime() - i * 86_400_000), count: 0 });
+    buckets.push({
+      key: jstDateKey(new Date(now.getTime() - i * 86_400_000).toISOString()),
+      count: 0,
+    });
   }
   const idxByKey = new Map(buckets.map((bucket, i) => [bucket.key, i] as const));
-  // Source of truth: stats.byDay (archive-backed daily counts). Counting live
-  // ALL_ENTRIES by publishedAt under-counts recent days because per-source caps
-  // and retention tiers evict entries from data/index.json, while stats.byDay
-  // keeps the full daily history (see LL-022 / LL-032 / LL-083). Using live
-  // entries made the sidebar / categories sparklines collapse toward 0 for the
-  // most recent days even though collection was healthy.
-  for (const day of STATS.byDay) {
-    const i = idxByKey.get(day.date);
-    if (i === undefined) continue;
-    buckets[i]!.count = day.byCategory?.[category] ?? 0;
+  if (category === "research") {
+    // The archive-backed research bucket also contains the dedicated arXiv
+    // lane. Research charts instead describe the same curated listing shown
+    // by /c/research so counts, cards, and trend semantics stay aligned.
+    for (const entry of publicEntriesForCategory(category)) {
+      const i = idxByKey.get(jstDateKey(entry.publishedAt));
+      if (i === undefined) continue;
+      buckets[i]!.count++;
+    }
+  } else {
+    // Source of truth: stats.byDay (archive-backed daily counts). Counting live
+    // entries under-counts recent days after per-source retention and capping.
+    for (const day of STATS.byDay) {
+      const i = idxByKey.get(day.date);
+      if (i === undefined) continue;
+      buckets[i]!.count = day.byCategory?.[category] ?? 0;
+    }
   }
   return buckets;
 }
@@ -132,7 +138,7 @@ export function categoryDailySpark(
   }));
 }
 
-/** Week-over-week KPIs derived from stats.byDay (matches the daily trend chart). */
+/** Week-over-week KPIs derived from the same source as the daily trend chart. */
 export function categoryWeekOverWeek(
   category: Category,
   now = new Date(),

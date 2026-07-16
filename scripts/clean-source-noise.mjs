@@ -21,6 +21,7 @@ import {
 import { randomUUID } from "node:crypto";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 import { REGISTRY } from "../harness/registry.ts";
 import { ALL_CATEGORIES } from "../harness/types.ts";
 import { restampEntryFromSource } from "../harness/pipeline/normalize.ts";
@@ -639,6 +640,20 @@ export function validateArchiveMonthPayload(value, label) {
   return validateArchiveMonthPayloadInternal(value, label, { requireOutputTier: true });
 }
 
+export function buildMigrationArchiveMonthPayload(
+  currentPayload,
+  month,
+  entries,
+  referenceAt,
+) {
+  const nextPayload = buildArchiveMonthFile(month, entries, referenceAt);
+  const { generatedAt: _currentGeneratedAt, ...currentContent } = currentPayload;
+  const { generatedAt: _nextGeneratedAt, ...nextContent } = nextPayload;
+  return isDeepStrictEqual(currentContent, nextContent)
+    ? { ...nextPayload, generatedAt: currentPayload.generatedAt }
+    : nextPayload;
+}
+
 export function validateBodiesPayload(value, label = "data/bodies.json") {
   if (!isPlainObject(value)) throw new Error(`${label} must be an object`);
   const generatedAt = assertIsoTimestamp(value.generatedAt, `${label}.generatedAt`);
@@ -973,7 +988,12 @@ export async function main(argv = process.argv.slice(2)) {
     report.archiveTagsSynchronized += tagSync.changed;
     archiveDeduped += migration.keptCount - deduped.length;
     archiveStatsEntries.push(...deduped);
-    const monthPayload = buildArchiveMonthFile(fileName.slice(0, 7), deduped, referenceAt);
+    const monthPayload = buildMigrationArchiveMonthPayload(
+      month,
+      fileName.slice(0, 7),
+      deduped,
+      referenceAt,
+    );
     validateArchiveMonthPayload(monthPayload, monthPath);
     archiveMonths.push({
       path: monthPath,

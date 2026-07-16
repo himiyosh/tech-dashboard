@@ -29,6 +29,7 @@ interface Props {
 
 const { category } = Astro.props as Props;
 const slug = category.slug as Category;
+const categoryContextLabel = slug === "research" ? "Research" : category.name;
 const all = entriesFor(slug);
 const currentPage = 1;
 const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
@@ -54,10 +55,11 @@ const breadcrumb = [
     className="page-hero-category-detail"
     accent={category.color}
     kicker="Category detail"
-    title={category.name}
+    title={categoryContextLabel}
     count={`${all.length} total`}
     headingId="category-heading"
-    description={`${category.name} に分類された更新を、新着順・30日トレンド・関連記事として確認できます。`}
+    description={`${categoryContextLabel} カテゴリの更新を、新着順・30日トレンド・関連記事として確認できます。`}
+    descriptionEn={`Browse ${categoryContextLabel} updates by recency, 30-day trend, and related topics.`}
     actions={[
       { href: "/categories", label: "All categories" },
       { href: `/rss.xml?category=${slug}`, label: "RSS" },
@@ -79,10 +81,12 @@ const breadcrumb = [
         <section class="research-split-callout" aria-labelledby="research-split-heading">
           <div>
             <p class="section-kicker">Research navigation</p>
-            <h2 id="research-split-heading">Research は選定した論文・レポートを含みます</h2>
-            <p>
-              このカテゴリでは選定した論文・レポートを扱い、専用の arXiv レーンでは論文だけをまとめて閲覧できます。
-            </p>
+            <h2 id="research-split-heading">
+              <span class="i18n-ja">Research は選定した論文・レポートを含みます</span>
+              <span class="i18n-en">Research includes selected papers and reports</span>
+            </h2>
+            <p class="i18n-ja">このカテゴリでは選定した論文・レポートを扱い、専用の arXiv レーンでは論文だけをまとめて閲覧できます。</p>
+            <p class="i18n-en">Browse selected papers and reports here, or use the dedicated arXiv lane for a papers-only view.</p>
           </div>
           <a href="/arxiv/">arXiv Papers</a>
         </section>
@@ -104,13 +108,17 @@ const breadcrumb = [
           </span>
         </h2>
         <div class="sort">
-          <span class="active">新着順</span>
+          <span class="active">
+            <span class="i18n-ja">新着順</span>
+            <span class="i18n-en">Newest first</span>
+          </span>
         </div>
       </div>
 
       {entries.length === 0 ? (
         <p style="color:var(--muted);padding:24px 0">
-          まだエントリがありません。
+          <span class="i18n-ja">まだエントリがありません。</span>
+          <span class="i18n-en">No entries are available yet.</span>
         </p>
       ) : (
         dayGroups.map(({ key, items }) => (

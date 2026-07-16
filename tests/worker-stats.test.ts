@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildStatsPayload } from "../harness/publishers/stats-core.ts";
+import {
+  buildStatsPayload,
+  STATS_BUCKET_TIME_ZONE,
+} from "../harness/publishers/stats-core.ts";
 import type { NormalizedEntry } from "../harness/types.ts";
 import {
   assertArchiveMonthBaseline,
@@ -205,6 +208,25 @@ describe("archive incremental scope (LL-152)", () => {
 });
 
 describe("buildIncrementalStats totals clamp (LL-110)", () => {
+  it("rejects a legacy UTC baseline before mixing day buckets", () => {
+    const legacy = {
+      ...buildStatsPayload([], GEN),
+      bucketTimeZone: "UTC",
+    };
+
+    expect(() =>
+      buildIncrementalStats({
+        existing: legacy as never,
+        removed: [],
+        added: [],
+        liveCount: 0,
+        generatedAt: GEN,
+      }),
+    ).toThrow(
+      `stats bucket time zone mismatch: expected ${STATS_BUCKET_TIME_ZONE}, got UTC`,
+    );
+  });
+
   it("clamps a drifted allTime up to >= liveCount and >= last30d", () => {
     // Simulate the production drift: incremental allTime fell BELOW the live
     // entry count (allTime=1312 < live=1662) while last30d drifted high (3047).
@@ -270,5 +292,25 @@ describe("buildIncrementalStats totals clamp (LL-110)", () => {
     expect(out.totals.last7d).toBeGreaterThanOrEqual(out.totals.last24h);
     expect(out.totals.last30d).toBeGreaterThanOrEqual(out.totals.last7d);
     expect(out.totals.allTime).toBeGreaterThanOrEqual(out.totals.last30d);
+  });
+
+  it("matches a full rebuild when the clock advances within the 90-day cutoff day", () => {
+    const entries = [
+      entry("before-exact-cutoff", "2026-04-16T09:00:00.000Z"),
+      entry("after-exact-cutoff", "2026-04-16T11:00:00.000Z"),
+    ];
+    const advancedGeneratedAt = "2026-07-15T10:01:00.000Z";
+    const existing = buildStatsPayload(entries, "2026-07-15T00:00:00.000Z");
+
+    const incremental = buildIncrementalStats({
+      existing,
+      removed: [],
+      added: [],
+      liveCount: entries.length,
+      generatedAt: advancedGeneratedAt,
+    });
+    const rebuilt = buildStatsPayload(entries, advancedGeneratedAt);
+
+    expect(incremental.byDay).toEqual(rebuilt.byDay);
   });
 });

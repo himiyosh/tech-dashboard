@@ -3,6 +3,7 @@ import Portal from "../../layouts/Portal.astro";
 import Sidebar from "../../components/Sidebar.astro";
 import CategoryThumb from "../../components/CategoryThumb.astro";
 import ArticleLike from "../../components/ArticleLike.astro";
+import LanguageFallbackBadge from "../../components/LanguageFallbackBadge.astro";
 import { SITE_URL } from "../../lib/site.ts";
 import {
   ALL_ENTRIES,
@@ -11,7 +12,9 @@ import {
   entriesBySource,
   entriesByTag,
   categoryImportanceStanding,
+  effectiveTitleLanguage,
   importanceLabel,
+  isArxivEntry,
   relatedEntries,
   relativeTime,
   sourceAvgImportance,
@@ -42,6 +45,7 @@ const titleEn = titleForLang(entry, "en");
 const titleJaResult = titleForLangWithFallback(entry, "ja");
 const titleEnResult = titleForLangWithFallback(entry, "en");
 const titleDisplay = titleJaResult.text;
+const effectiveTitleLang = effectiveTitleLanguage(entry);
 const likeTitleJa = titleJaResult;
 const likeTitleEn = titleEnResult;
 const summaryJaResult = summaryForLangWithFallback(entry, "ja");
@@ -65,6 +69,10 @@ const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
 const catColor = catMeta?.color ?? "#8a847e";
 const catName = catMeta?.name ?? entry.category;
 const catEmoji = catMeta?.emoji ?? "\u{1F4C4}";
+const entryIsArxiv = isArxivEntry(entry);
+const laneHref = entryIsArxiv ? "/arxiv/" : `/c/${entry.category}`;
+const laneName = entryIsArxiv ? "arXiv" : catName;
+const laneEmoji = entryIsArxiv ? "📄" : catEmoji;
 
 const srcMeta = SOURCE_META.find((s) => s.id === entry.source);
 const srcDisplay = sourceLabel(entry.source);
@@ -88,16 +96,19 @@ function splitEnPoints(s: string): string[] {
 const pointsJa = summaryAbsent || summaryJaResult.isFallback ? [] : splitJaPoints(summaryJa);
 const pointsEn = summaryAbsent ? [] : splitEnPoints(summaryEn.text);
 
-const sourceTypeLabel: Record<NormalizedEntry["sourceType"], string> = {
-  release: "リリース", changelog: "Changelog", paper: "論文",
-  blog: "ブログ", community: "コミュニティ",
+const sourceTypeLabel: Record<NormalizedEntry["sourceType"], { ja: string; en: string }> = {
+  release: { ja: "リリース", en: "Release" },
+  changelog: { ja: "変更履歴", en: "Changelog" },
+  paper: { ja: "論文", en: "Paper" },
+  blog: { ja: "ブログ", en: "Blog" },
+  community: { ja: "コミュニティ", en: "Community" },
 };
 const importanceMeta = importanceLabel(entry.importance);
-const halfLifeLabel: Record<string, { label: string; emoji: string; color: string }> = {
-  news: { label: "短命 (ニュース)", emoji: "⏱️", color: "#f87171" },
-  tutorial: { label: "中期 (チュートリアル)", emoji: "📘", color: "#fbbf24" },
-  architecture: { label: "長期 (アーキテクチャ)", emoji: "🏛️", color: "#60a5fa" },
-  fundamental: { label: "永続 (基礎知識)", emoji: "🌱", color: "#4ade80" },
+const halfLifeLabel: Record<string, { ja: string; en: string; emoji: string; color: string }> = {
+  news: { ja: "短命 (ニュース)", en: "Short-lived (news)", emoji: "⏱️", color: "#f87171" },
+  tutorial: { ja: "中期 (チュートリアル)", en: "Medium-term (tutorial)", emoji: "📘", color: "#fbbf24" },
+  architecture: { ja: "長期 (アーキテクチャ)", en: "Long-term (architecture)", emoji: "🏛️", color: "#60a5fa" },
+  fundamental: { ja: "永続 (基礎知識)", en: "Evergreen (fundamentals)", emoji: "🌱", color: "#4ade80" },
 };
 
 const now = new Date();
@@ -108,6 +119,12 @@ const sameCategory = relatedEntries(entry, 6);
 const tags = trendingTags(12);
 const { prev, next } = adjacentInCategory(entry);
 const categoryStanding = categoryImportanceStanding(entry);
+const localizedTitles = (item: NormalizedEntry) => ({
+  ja: titleForLangWithFallback(item, "ja"),
+  en: titleForLangWithFallback(item, "en"),
+});
+const prevTitles = prev ? localizedTitles(prev) : null;
+const nextTitles = next ? localizedTitles(next) : null;
 
 const bodyChars = (body?.bodyJa ?? "").length;
 const readMinutes = bodyChars > 0 ? Math.max(1, Math.round(bodyChars / 500)) : 0;
@@ -167,32 +184,50 @@ const renderedEn = paragraphsEn.map((p, i) => ({
   label: tocLabelEn(p),
   html: highlightTags(escapeHtml(p), entry.tags),
 }));
-// Backwards-compat alias: TOC defaults to JA when present, otherwise EN.
-const renderedParagraphs = renderedJa.length > 0 ? renderedJa : renderedEn;
-
 const breadcrumb = [
   { label: "Home", href: "/" },
-  { label: catName, href: `/c/${entry.category}` },
+  { label: laneName, href: laneHref },
   { label: titleDisplay },
 ];
 const pageTitle = `${titleDisplay} — TECH Dashboard`;
-const pageDesc = (summaryAbsent ? titleDisplay : summaryJa || summaryEn.text || entry.title).slice(0, 160);
+const pendingDescription = {
+  ja: "AI 要約は準備中です。共有前にタイトル、カテゴリ、元記事を確認してください。",
+  en: "AI summary pending. Check the title, category, and original article before sharing.",
+} as const;
+const pageDesc = (
+  summaryAbsent
+    ? pendingDescription.ja
+    : summaryJa || summaryEn.text || entry.title
+).slice(0, 160);
 const ogImage = entry.image?.src ?? "";
 const canonicalUrl = `${SITE_URL}/e/${entry.id}/`;
 const importanceStandingJa =
-  `${catName} ${categoryStanding.total}件中、同等以上 ${categoryStanding.sameOrHigher}件`;
+  `${laneName} ${categoryStanding.total}件中、同等以上 ${categoryStanding.sameOrHigher}件`;
 const importanceStandingEn =
-  `${categoryStanding.sameOrHigher} of ${categoryStanding.total} ${catName} entries are equal or higher`;
-const tldrTitleJa = summaryJaResult.isFallback
-  ? "English summary"
-  : pointsJa.length > 1
+  `${categoryStanding.sameOrHigher} of ${categoryStanding.total} ${laneName} entries are equal or higher`;
+const tldrTitleJa = pointsJa.length > 1
     ? `${Math.min(pointsJa.length, 4)} 点サマリ`
     : "要点サマリ";
-const tldrTitleEn = summaryEn.isFallback
-  ? "Japanese-language summary"
-  : pointsEn.length > 1
+const tldrTitleEn = pointsEn.length > 1
     ? `${Math.min(pointsEn.length, 4)} key points`
     : "Summary highlight";
+const hasGeneratedSummaryJa = Boolean(indexedSummaryJa);
+const hasGeneratedSummaryEn = Boolean(indexedSummaryEn);
+const summaryLanguageScope = hasGeneratedSummaryJa && hasGeneratedSummaryEn
+  ? "bilingual"
+  : hasGeneratedSummaryJa
+    ? "ja-only"
+    : "en-only";
+const generationDisclosureJa = hasGeneratedSummaryJa && hasGeneratedSummaryEn
+  ? `本ページの${hasRealBody ? "本文と要約" : "要約"}は AI による自動生成です。日本語版と英語版は言語ごとに独立して生成されるため、表現や詳しさが異なる場合があります。正確性は元記事 (${sourceHost(entry.url)}) をご確認ください。`
+  : hasGeneratedSummaryJa
+    ? `現在利用できる AI 要約は日本語版のみです。英語要約は準備中で、英語表示では日本語要約を翻訳せず表示します。${hasRealBody ? "本文も AI による自動生成です。" : ""} 正確性は元記事 (${sourceHost(entry.url)}) をご確認ください。`
+    : `日本語要約は準備中です。現在は AI 生成された英語要約を翻訳せず表示しています。${hasRealBody ? "本文も AI による自動生成です。" : ""} 正確性は元記事 (${sourceHost(entry.url)}) をご確認ください。`;
+const generationDisclosureEn = hasGeneratedSummaryJa && hasGeneratedSummaryEn
+  ? `The ${hasRealBody ? "body and summaries are" : "summaries are"} AI-generated independently for each language, so wording and detail may differ. Verify accuracy at the original source (${sourceHost(entry.url)}).`
+  : hasGeneratedSummaryJa
+    ? `The English summary is not yet available. The AI-generated Japanese summary is shown without translation.${hasRealBody ? " The body is also AI-generated." : ""} Verify accuracy at the original source (${sourceHost(entry.url)}).`
+    : `Only the AI-generated English summary is currently available.${hasRealBody ? " The body is also AI-generated." : ""} Verify accuracy at the original source (${sourceHost(entry.url)}).`;
 
 function fmtDate(iso: string): string {
   try {
@@ -204,15 +239,23 @@ function fmtDate(iso: string): string {
 }
 
 const halfLifeMeta = entry.halfLife ? halfLifeLabel[entry.halfLife] : null;
+const structuredHeadline = effectiveTitleLang === "ja"
+  ? titleJaResult.text
+  : titleEnResult.text;
+const structuredDescription = summaryAbsent
+  ? pendingDescription[effectiveTitleLang]
+  : effectiveTitleLang === "ja"
+    ? indexedSummaryJa || structuredHeadline
+    : indexedSummaryEn || structuredHeadline;
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "NewsArticle",
-  headline: titleDisplay,
-  description: pageDesc,
+  headline: structuredHeadline,
+  description: structuredDescription,
   url: canonicalUrl,
   datePublished: entry.publishedAt,
-  inLanguage: entry.lang === "ja" ? "ja-JP" : "en",
+  inLanguage: effectiveTitleLang === "ja" ? "ja-JP" : "en",
   image: ogImage || undefined,
   author: { "@type": "Organization", name: srcDisplay, url: entry.url },
   publisher: { "@type": "Organization", name: "TECH Dashboard", url: SITE_URL },
@@ -222,7 +265,12 @@ const jsonLd = {
 };
 ---
 
-<Portal title={pageTitle} description={pageDesc} pageKey="timeline" breadcrumb={breadcrumb}>
+<Portal
+  title={pageTitle}
+  description={pageDesc}
+  pageKey={entryIsArxiv ? "arxiv" : "timeline"}
+  breadcrumb={breadcrumb}
+>
   <Fragment slot="head">
     <link rel="canonical" href={canonicalUrl} />
     <meta property="og:type" content="article" />
@@ -258,7 +306,7 @@ const jsonLd = {
   </div>
 
   <div class="layout">
-    <Sidebar active={entry.category} />
+    <Sidebar active={entryIsArxiv ? undefined : entry.category} />
 
     <main class="entry-main" id="entry-main">
       <article class="entry-detail" data-pagefind-body style={`--cat-color:${catColor}`}>
@@ -286,11 +334,10 @@ const jsonLd = {
             <CategoryThumb category={entry.category} seed={entry.id} height="320px" />
           )}
           <div class="ed-hero-overlay">
-            <a class="ed-cat-pill" href={`/c/${entry.category}`}>
-              <span aria-hidden="true">{catEmoji}</span>
-              <span>{catName}</span>
+            <a class="ed-cat-pill" href={laneHref}>
+              <span aria-hidden="true">{laneEmoji}</span>
+              <span>{laneName}</span>
             </a>
-            {entry.importance === 3 && <span class="ed-hot-pill">🔥 HOT</span>}
           </div>
         </div>
 
@@ -301,12 +348,22 @@ const jsonLd = {
               class="i18n-ja"
               lang={titleJaResult.isFallback ? titleJaResult.fallbackLang : "ja"}
               data-title-fallback={titleJaResult.isFallback ? titleJaResult.fallbackLang : undefined}
-            >{titleJaResult.text}</span>
+            >
+              {titleJaResult.isFallback && titleJaResult.fallbackLang && (
+                <LanguageFallbackBadge fallbackLang={titleJaResult.fallbackLang} variant="title" />
+              )}
+              <span class="ed-title-text">{titleJaResult.text}</span>
+            </span>
             <span
               class="i18n-en"
               lang={titleEnResult.isFallback ? titleEnResult.fallbackLang : "en"}
               data-title-fallback={titleEnResult.isFallback ? titleEnResult.fallbackLang : undefined}
-            >{titleEnResult.text}</span>
+            >
+              {titleEnResult.isFallback && titleEnResult.fallbackLang && (
+                <LanguageFallbackBadge fallbackLang={titleEnResult.fallbackLang} variant="title" />
+              )}
+              <span class="ed-title-text">{titleEnResult.text}</span>
+            </span>
           </h1>
           <div class="ed-byline">
             {entryFavicon && (
@@ -398,8 +455,8 @@ const jsonLd = {
               <span class="i18n-en" lang="en">Summary pending</span>
             </strong>
             <p>
-              <span class="i18n-ja">このエントリには AI 要約がまだありません。共有前にタイトル、カテゴリ、原文を確認してください。</span>
-              <span class="i18n-en" lang="en">This entry does not have an AI summary yet. Check the title, category, and original source before sharing.</span>
+              <span class="i18n-ja">{pendingDescription.ja}</span>
+              <span class="i18n-en" lang="en">{pendingDescription.en}</span>
             </p>
           </section>
         )}
@@ -415,22 +472,34 @@ const jsonLd = {
               <span class="ed-tldr-title i18n-ja">{tldrTitleJa}</span>
               <span class="ed-tldr-title i18n-en" lang="en">{tldrTitleEn}</span>
             </div>
-            <div class="ed-tldr-body i18n-ja">
+            <div
+              class="ed-tldr-body i18n-ja"
+              lang={summaryJaResult.fallbackLang === "en" ? "en" : "ja"}
+            >
+              {summaryJaResult.isFallback && summaryJaResult.fallbackLang && (
+                <LanguageFallbackBadge fallbackLang={summaryJaResult.fallbackLang} variant="summary" />
+              )}
               {pointsJa.length > 1 ? (
                 <ul class="ed-tldr-list">
                   {pointsJa.slice(0, 4).map((p) => <li>{p}</li>)}
                 </ul>
               ) : (
-                <p class="ed-tldr-single" lang={summaryJaResult.fallbackLang === "en" ? "en" : "ja"}>{summaryJa}</p>
+                <p class="ed-tldr-single">{summaryJa}</p>
               )}
             </div>
-            <div class="ed-tldr-body i18n-en">
+            <div
+              class="ed-tldr-body i18n-en"
+              lang={summaryEn.fallbackLang === "ja" ? "ja" : "en"}
+            >
+              {summaryEn.isFallback && summaryEn.fallbackLang && (
+                <LanguageFallbackBadge fallbackLang={summaryEn.fallbackLang} variant="summary" />
+              )}
               {pointsEn.length > 1 ? (
-                <ul class="ed-tldr-list" lang="en">
+                <ul class="ed-tldr-list">
                   {pointsEn.slice(0, 4).map((p) => <li>{p}</li>)}
                 </ul>
               ) : (
-                <p class="ed-tldr-single" lang={summaryEn.fallbackLang === "ja" ? "ja" : "en"}>{summaryEn.text}</p>
+                <p class="ed-tldr-single">{summaryEn.text}</p>
               )}
             </div>
           </section>
@@ -439,6 +508,11 @@ const jsonLd = {
         {/* BODY */}
         {hasRealBody && (renderedJa.length > 0 || renderedEn.length > 0) ? (
           <section class="ed-body">
+            <p class="ed-body-origin" data-body-source="summary-and-collection-metadata">
+              <span class="ai-badge" aria-hidden="true">AI</span>
+              <span class="i18n-ja">要約と収集メタデータをもとに生成した AI 解説本文です。元記事全文の転載・翻訳ではありません。</span>
+              <span class="i18n-en" lang="en">This AI explainer is generated from the summaries and collected metadata, not from a reproduction or translation of the full source article.</span>
+            </p>
             {renderedJa.length > 0 && (
               <div class="ed-body-prose i18n-ja" lang="ja">
                 {renderedJa.map((p, i) => {
@@ -502,12 +576,12 @@ const jsonLd = {
           <aside class="ed-summary-only">
             <div class="ed-summary-only-head">
               <span class="ai-badge">AI</span>
-              <span class="i18n-ja">AI 要約ダイジェスト</span>
-              <span class="i18n-en" lang="en">AI summary digest</span>
+              <span class="i18n-ja">本文は元記事で確認</span>
+              <span class="i18n-en" lang="en">Full article at source</span>
             </div>
             <p class="ed-summary-only-note">
-              <span class="i18n-ja">この記事は上記の AI 要約で要点を把握できます。技術的な詳細・コード・図表は、ページ上部の「元記事を読む」から確認できます。</span>
-              <span class="i18n-en" lang="en">The AI summary above captures the key points. Open the original article from the action above for full detail, code, and figures.</span>
+              <span class="i18n-ja">このページには AI 要約のみを収録しています。技術的な詳細・コード・図表は、ページ上部の「元記事を読む」から確認できます。</span>
+              <span class="i18n-en" lang="en">This page contains an AI summary only. Open the original article from the action above for full detail, code, and figures.</span>
             </p>
           </aside>
         ) : null}
@@ -529,7 +603,7 @@ const jsonLd = {
 
         {/* META STRIP */}
         <ul class="ed-meta-strip">
-          <li><span class="k">Source</span><span class="v">{srcDisplay}
+          <li><span class="k"><span class="i18n-ja">出典</span><span class="i18n-en" lang="en">Source</span></span><span class="v">{srcDisplay}
             <span
               class="pill"
               data-source-authority={srcAuthority.kind}
@@ -554,9 +628,18 @@ const jsonLd = {
               <span class="muted-sm">1=Info · 2=Medium · 3=High</span>
             </span>
           </li>
-          <li><span class="k">Type</span><span class="v">{sourceTypeLabel[entry.sourceType] ?? entry.sourceType}</span></li>
-          <li>
-            <span class="k">Importance</span>
+          <li data-entry-format={entry.sourceType}>
+            <span class="k">
+              <span class="i18n-ja">配信形式</span>
+              <span class="i18n-en" lang="en">Format</span>
+            </span>
+            <span class="v">
+              <span class="i18n-ja">{sourceTypeLabel[entry.sourceType].ja}</span>
+              <span class="i18n-en" lang="en">{sourceTypeLabel[entry.sourceType].en}</span>
+            </span>
+          </li>
+          <li data-importance-standing={entryIsArxiv ? "arxiv" : entry.category}>
+            <span class="k"><span class="i18n-ja">重要度</span><span class="i18n-en" lang="en">Importance</span></span>
             <span class="v">
               <span class={`pill imp-${entry.importance}`}>
                 <span class="i18n-ja">{importanceMeta.ja}</span>
@@ -570,37 +653,59 @@ const jsonLd = {
           </li>
           {halfLifeMeta && (
             <li>
-              <span class="k">Half-life</span>
+              <span class="k"><span class="i18n-ja">情報の寿命</span><span class="i18n-en" lang="en">Half-life</span></span>
               <span class="v" style={`color:${halfLifeMeta.color}`}>
-                {halfLifeMeta.emoji} {halfLifeMeta.label}
+                {halfLifeMeta.emoji}{" "}
+                <span class="i18n-ja">{halfLifeMeta.ja}</span>
+                <span class="i18n-en" lang="en">{halfLifeMeta.en}</span>
               </span>
             </li>
           )}
-          <li><span class="k">Lang</span><span class="v">{entry.lang === "ja" ? "JA" : "EN"}</span></li>
-          <li><span class="k">Collected</span><span class="v mono">{fmtDate(entry.collectedAt)}</span></li>
+          <li data-entry-language={effectiveTitleLang}>
+            <span class="k"><span class="i18n-ja">原文言語</span><span class="i18n-en" lang="en">Source language</span></span>
+            <span class="v">{effectiveTitleLang.toUpperCase()}</span>
+          </li>
+          <li>
+            <span class="k"><span class="i18n-ja">収集日時</span><span class="i18n-en" lang="en">Collected</span></span>
+            <span class="v mono">{fmtDate(entry.collectedAt)}</span>
+          </li>
         </ul>
 
         {!summaryAbsent && (
-          <p class="ed-disclaim">
-            <span class="i18n-ja">
-              {hasRealBody ? "本ページの本文・要約" : "本ページの要約"}は AI による自動生成です。正確性は元記事 ({sourceHost(entry.url)}) をご確認ください。
-            </span>
-            <span class="i18n-en" lang="en">
-              {hasRealBody ? "The body and summary are" : "The summary is"} AI-generated. Verify accuracy at the original source ({sourceHost(entry.url)}).
-            </span>
+          <p class="ed-disclaim" data-generation-scope={summaryLanguageScope}>
+            <span class="i18n-ja">{generationDisclosureJa}</span>
+            <span class="i18n-en" lang="en">{generationDisclosureEn}</span>
           </p>
         )}
       </article>
 
       {/* PREV / NEXT */}
       {(prev || next) && (
-        <nav class="ed-pn" aria-label="同カテゴリの前後の記事">
+        <nav class="ed-pn" aria-labelledby="ed-pn-label">
+          <span id="ed-pn-label" class="visually-hidden">
+            <span class="i18n-ja">同カテゴリの前後の記事</span>
+            <span class="i18n-en" lang="en">Adjacent articles in this category</span>
+          </span>
           {prev ? (
             <a class="ed-pn-card prev" href={`/e/${prev.id}/`} accesskey="ArrowLeft">
               <span class="ed-pn-arrow" aria-hidden="true">←</span>
               <span class="ed-pn-body">
-                <span class="ed-pn-dir">新しい記事</span>
-                <span class="ed-pn-title">{titleForLang(prev, "ja") || titleForLang(prev, "en") || prev.title}</span>
+                <span class="ed-pn-dir">
+                  <span class="i18n-ja">新しい記事</span>
+                  <span class="i18n-en" lang="en">Newer article</span>
+                </span>
+                <span class="ed-pn-title i18n-ja" lang={prevTitles?.ja.fallbackLang ?? "ja"}>
+                  {prevTitles?.ja.isFallback && prevTitles.ja.fallbackLang && (
+                    <LanguageFallbackBadge fallbackLang={prevTitles.ja.fallbackLang} variant="title" />
+                  )}
+                  {prevTitles?.ja.text}
+                </span>
+                <span class="ed-pn-title i18n-en" lang={prevTitles?.en.fallbackLang ?? "en"}>
+                  {prevTitles?.en.isFallback && prevTitles.en.fallbackLang && (
+                    <LanguageFallbackBadge fallbackLang={prevTitles.en.fallbackLang} variant="title" />
+                  )}
+                  {prevTitles?.en.text}
+                </span>
                 <span class="ed-pn-time">{relativeTime(prev.publishedAt, now)}</span>
               </span>
             </a>
@@ -608,8 +713,22 @@ const jsonLd = {
           {next ? (
             <a class="ed-pn-card next" href={`/e/${next.id}/`} accesskey="ArrowRight">
               <span class="ed-pn-body">
-                <span class="ed-pn-dir">古い記事</span>
-                <span class="ed-pn-title">{titleForLang(next, "ja") || titleForLang(next, "en") || next.title}</span>
+                <span class="ed-pn-dir">
+                  <span class="i18n-ja">古い記事</span>
+                  <span class="i18n-en" lang="en">Older article</span>
+                </span>
+                <span class="ed-pn-title i18n-ja" lang={nextTitles?.ja.fallbackLang ?? "ja"}>
+                  {nextTitles?.ja.isFallback && nextTitles.ja.fallbackLang && (
+                    <LanguageFallbackBadge fallbackLang={nextTitles.ja.fallbackLang} variant="title" />
+                  )}
+                  {nextTitles?.ja.text}
+                </span>
+                <span class="ed-pn-title i18n-en" lang={nextTitles?.en.fallbackLang ?? "en"}>
+                  {nextTitles?.en.isFallback && nextTitles.en.fallbackLang && (
+                    <LanguageFallbackBadge fallbackLang={nextTitles.en.fallbackLang} variant="title" />
+                  )}
+                  {nextTitles?.en.text}
+                </span>
                 <span class="ed-pn-time">{relativeTime(next.publishedAt, now)}</span>
               </span>
               <span class="ed-pn-arrow" aria-hidden="true">→</span>
@@ -622,14 +741,21 @@ const jsonLd = {
       {sameCategory.length > 0 && (
         <section class="ed-rel-block">
           <h2 class="ed-rel-h">
-            <span class="ed-rel-h-emoji" style={`color:${catColor}`}>{catEmoji}</span>
-            <span>{catName} の他の記事</span>
-            <a class="ed-rel-h-more" href={`/c/${entry.category}`}>もっと見る →</a>
+            <span class="ed-rel-h-emoji" style={`color:${catColor}`}>{laneEmoji}</span>
+            <span>
+              <span class="i18n-ja">{laneName} の他の記事</span>
+              <span class="i18n-en" lang="en">More from {laneName}</span>
+            </span>
+            <a class="ed-rel-h-more" href={laneHref}>
+              <span class="i18n-ja">もっと見る →</span>
+              <span class="i18n-en" lang="en">View more →</span>
+            </a>
           </h2>
           <div class="ed-rel-grid">
             {sameCategory.map((r) => {
-              const rTitle = titleForLang(r, "ja") || titleForLang(r, "en") || r.title;
-              const rSum = summaryForLang(r, "ja") || summaryForLang(r, "en");
+              const rTitleJa = titleForLangWithFallback(r, "ja");
+              const rTitleEn = titleForLangWithFallback(r, "en");
+              const rTitle = rTitleJa.text || rTitleEn.text || r.title;
               const rMeta = CATEGORY_META.find((c) => c.slug === r.category);
               const rColor = rMeta?.color ?? catColor;
               return (
@@ -644,7 +770,20 @@ const jsonLd = {
                     {r.importance === 3 && <span class="ed-rel-thumb-hot">🔥 HOT</span>}
                   </div>
                   <div class="ed-rel-cardbody">
-                    <div class="ed-rel-title">{rTitle}</div>
+                    <div class="ed-rel-title">
+                      <span class="i18n-ja" lang={rTitleJa.fallbackLang ?? "ja"}>
+                        {rTitleJa.isFallback && rTitleJa.fallbackLang && (
+                          <LanguageFallbackBadge fallbackLang={rTitleJa.fallbackLang} variant="title" />
+                        )}
+                        {rTitleJa.text}
+                      </span>
+                      <span class="i18n-en" lang={rTitleEn.fallbackLang ?? "en"}>
+                        {rTitleEn.isFallback && rTitleEn.fallbackLang && (
+                          <LanguageFallbackBadge fallbackLang={rTitleEn.fallbackLang} variant="title" />
+                        )}
+                        {rTitleEn.text}
+                      </span>
+                    </div>
                     <div class="ed-rel-meta">
                       <span class="ed-rel-src">{sourceLabel(r.source)}</span>
                       <span class="ed-rel-time">{relativeTime(r.publishedAt, now)}</span>
@@ -661,11 +800,23 @@ const jsonLd = {
     {/* RIGHT RAIL */}
     <aside class="right">
       <div class="side-card reading-card" style={`--cat-color:${catColor}`}>
-        <div class="rail-title">読む前に</div>
+        <div class="rail-title">
+          <span class="i18n-ja">読む前に</span>
+          <span class="i18n-en" lang="en">Before reading</span>
+        </div>
         <div class="rail-metrics">
-          <span><strong>{Math.max(readMinutes, 1)}</strong><small>分</small></span>
-          <span><strong>{entry.importance}</strong><small>重要度</small></span>
-          <span><strong>{entry.lang.toUpperCase()}</strong><small>言語</small></span>
+          <span>
+            <strong>{Math.max(readMinutes, 1)}</strong>
+            <small><span class="i18n-ja">分</span><span class="i18n-en" lang="en">min</span></small>
+          </span>
+          <span>
+            <strong>{entry.importance}</strong>
+            <small><span class="i18n-ja">重要度</span><span class="i18n-en" lang="en">importance</span></small>
+          </span>
+          <span data-reading-language={effectiveTitleLang}>
+            <strong>{effectiveTitleLang.toUpperCase()}</strong>
+            <small><span class="i18n-ja">原文言語</span><span class="i18n-en" lang="en">source language</span></small>
+          </span>
         </div>
         <p class="rail-published">
           <span class="i18n-ja">公開 {relativeTime(entry.publishedAt, now)}</span>
@@ -674,19 +825,33 @@ const jsonLd = {
       </div>
 
       {/* TOC */}
-      {renderedParagraphs.length >= 3 && (
+      {(renderedJa.length >= 3 || renderedEn.length >= 3) && (
         <div class="side-card toc-card">
-          <div class="rail-title">目次</div>
-          <ol class="toc-list" id="toc-list">
-            {renderedParagraphs.map((p, i) => (
-              <li>
-                <a href={`#${p.id}`} data-toc-target={p.id}>
-                  <span class="toc-num">{String(i + 1).padStart(2, "0")}</span>
-                  <span class="toc-label">{p.label}</span>
-                </a>
-              </li>
-            ))}
-          </ol>
+          <div class="rail-title"><span class="i18n-ja">目次</span><span class="i18n-en" lang="en">Contents</span></div>
+          {renderedJa.length >= 3 && (
+            <ol class="toc-list i18n-ja" id="toc-list-ja">
+              {renderedJa.map((p, i) => (
+                <li>
+                  <a href={`#${p.id}`} data-toc-target={p.id}>
+                    <span class="toc-num">{String(i + 1).padStart(2, "0")}</span>
+                    <span class="toc-label">{p.label}</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          )}
+          {renderedEn.length >= 3 && (
+            <ol class="toc-list i18n-en" id="toc-list-en" lang="en">
+              {renderedEn.map((p, i) => (
+                <li>
+                  <a href={`#${p.id}`} data-toc-target={p.id}>
+                    <span class="toc-num">{String(i + 1).padStart(2, "0")}</span>
+                    <span class="toc-label">{p.label}</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
       )}
 
@@ -694,17 +859,33 @@ const jsonLd = {
         <div class="side-card">
           <div class="rail-title">
              {entryFavicon && <img class="rail-fav" src={entryFavicon} alt="" width="14" height="14" referrerpolicy="no-referrer" onerror="this.style.display='none'" />}
-            {srcDisplay} の最新
+            <span class="i18n-ja">{srcDisplay} の最新</span>
+            <span class="i18n-en" lang="en">Latest from {srcDisplay}</span>
           </div>
           <ul class="rail-list">
-            {sameSource.map((r) => (
-              <li>
-                <a href={`/e/${r.id}/`}>
-                  <span class="rail-item-title">{titleForLang(r, "ja") || titleForLang(r, "en") || r.title}</span>
-                  <span class="rail-item-time">{relativeTime(r.publishedAt, now)}</span>
-                </a>
-              </li>
-            ))}
+            {sameSource.map((r) => {
+              const rTitleJa = titleForLangWithFallback(r, "ja");
+              const rTitleEn = titleForLangWithFallback(r, "en");
+              return (
+                <li>
+                  <a href={`/e/${r.id}/`}>
+                    <span class="rail-item-title i18n-ja" lang={rTitleJa.fallbackLang ?? "ja"}>
+                      {rTitleJa.isFallback && rTitleJa.fallbackLang && (
+                        <LanguageFallbackBadge fallbackLang={rTitleJa.fallbackLang} variant="title" />
+                      )}
+                      {rTitleJa.text}
+                    </span>
+                    <span class="rail-item-title i18n-en" lang={rTitleEn.fallbackLang ?? "en"}>
+                      {rTitleEn.isFallback && rTitleEn.fallbackLang && (
+                        <LanguageFallbackBadge fallbackLang={rTitleEn.fallbackLang} variant="title" />
+                      )}
+                      {rTitleEn.text}
+                    </span>
+                    <span class="rail-item-time">{relativeTime(r.publishedAt, now)}</span>
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
@@ -713,17 +894,33 @@ const jsonLd = {
         <div class="side-card">
           <div class="rail-title">
             <span style={`color:${catColor}`}>#</span>
-            関連タグの記事
+            <span class="i18n-ja">関連タグの記事</span>
+            <span class="i18n-en" lang="en">Related tag articles</span>
           </div>
           <ul class="rail-list">
-            {sameTag.map((r) => (
-              <li>
-                <a href={`/e/${r.id}/`}>
-                  <span class="rail-item-title">{titleForLang(r, "ja") || titleForLang(r, "en") || r.title}</span>
-                  <span class="rail-item-time">{relativeTime(r.publishedAt, now)}</span>
-                </a>
-              </li>
-            ))}
+            {sameTag.map((r) => {
+              const rTitleJa = titleForLangWithFallback(r, "ja");
+              const rTitleEn = titleForLangWithFallback(r, "en");
+              return (
+                <li>
+                  <a href={`/e/${r.id}/`}>
+                    <span class="rail-item-title i18n-ja" lang={rTitleJa.fallbackLang ?? "ja"}>
+                      {rTitleJa.isFallback && rTitleJa.fallbackLang && (
+                        <LanguageFallbackBadge fallbackLang={rTitleJa.fallbackLang} variant="title" />
+                      )}
+                      {rTitleJa.text}
+                    </span>
+                    <span class="rail-item-title i18n-en" lang={rTitleEn.fallbackLang ?? "en"}>
+                      {rTitleEn.isFallback && rTitleEn.fallbackLang && (
+                        <LanguageFallbackBadge fallbackLang={rTitleEn.fallbackLang} variant="title" />
+                      )}
+                      {rTitleEn.text}
+                    </span>
+                    <span class="rail-item-time">{relativeTime(r.publishedAt, now)}</span>
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
@@ -740,10 +937,13 @@ const jsonLd = {
       </div>
 
       <div class="side-card cat-jump" style={`--cat-color:${catColor}`}>
-        <div class="rail-title">Category</div>
-        <a class="cat-jump-link" href={`/c/${entry.category}`}>
-          <span class="cat-jump-emoji">{catEmoji}</span>
-          <span class="cat-jump-name">{catName}</span>
+        <div class="rail-title">
+          <span class="i18n-ja">{entryIsArxiv ? "レーン" : "カテゴリ"}</span>
+          <span class="i18n-en" lang="en">{entryIsArxiv ? "Lane" : "Category"}</span>
+        </div>
+        <a class="cat-jump-link" href={laneHref}>
+          <span class="cat-jump-emoji">{laneEmoji}</span>
+          <span class="cat-jump-name">{laneName}</span>
           <span class="cat-jump-arrow">→</span>
         </a>
       </div>
@@ -751,8 +951,12 @@ const jsonLd = {
   </div>
 
   {/* Floating back-to-top */}
-  <button class="ed-fab" id="ed-fab" type="button" aria-label="トップに戻る" style={`--cat-color:${catColor}`}>
-    ↑
+  <button class="ed-fab" id="ed-fab" type="button" aria-labelledby="ed-fab-label" style={`--cat-color:${catColor}`}>
+    <span aria-hidden="true">↑</span>
+    <span id="ed-fab-label" class="visually-hidden">
+      <span class="i18n-ja">トップに戻る</span>
+      <span class="i18n-en" lang="en">Back to top</span>
+    </span>
   </button>
 
   {/* Share toast */}
@@ -821,7 +1025,7 @@ const jsonLd = {
     });
 
     // TOC active section highlight
-    var tocLinks = document.querySelectorAll("#toc-list a[data-toc-target]");
+    var tocLinks = document.querySelectorAll(".toc-list a[data-toc-target]");
     if (tocLinks.length) {
       var paras = Array.from(tocLinks).map(function (a) {
         return document.getElementById(a.getAttribute("data-toc-target"));
@@ -830,8 +1034,10 @@ const jsonLd = {
         entries.forEach(function (en) {
           if (en.isIntersecting) {
             tocLinks.forEach(function (a) { a.classList.remove("active"); });
-            var match = document.querySelector('#toc-list a[data-toc-target="' + en.target.id + '"]');
-            if (match) match.classList.add("active");
+            var matches = document.querySelectorAll(
+              '.toc-list a[data-toc-target="' + en.target.id + '"]',
+            );
+            matches.forEach(function (match) { match.classList.add("active"); });
           }
         });
       }, { rootMargin: "-30% 0px -55% 0px", threshold: 0 });
@@ -875,6 +1081,7 @@ const jsonLd = {
     background: #1a1917;
     border-bottom: 1px solid var(--border);
     height: 320px;
+    min-height: 320px;
     overflow: hidden;
   }
   .ed-hero-skeleton {
@@ -918,12 +1125,6 @@ const jsonLd = {
     font-weight: 700; font-size: 12px;
     text-decoration: none;
   }
-  .ed-hot-pill {
-    padding: 4px 10px; border-radius: 999px;
-    background: rgba(245,158,11,0.18); border: 1px solid rgba(245,158,11,0.55);
-    color: #fbbf24; font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
-  }
-
   /* TITLE */
   .ed-head { padding: 24px 32px 18px; border-bottom: 1px dashed var(--border); }
   .ed-title {
@@ -1090,6 +1291,18 @@ const jsonLd = {
 
   /* BODY */
   .ed-body { padding: 28px 32px 8px; }
+  .ed-body-origin {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin: 0 0 22px;
+    padding: 0 0 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--cat-color) 18%, var(--border));
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+  .ed-body-origin .ai-badge { flex: 0 0 auto; margin-top: 1px; }
   .ed-body-prose p {
     font-size: 15.5px; line-height: 2.05; color: var(--text);
     margin: 0 0 22px;
@@ -1491,7 +1704,7 @@ const jsonLd = {
     .ed-rel-grid { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 820px) {
-    .ed-hero { height: 190px; }
+    .ed-hero { height: 190px; min-height: 190px; }
     .ed-head, .ed-pending-summary, .ed-tldr, .ed-body, .ed-topics, .ed-meta-strip, .ed-disclaim {
       margin-left: 18px; margin-right: 18px;
     }

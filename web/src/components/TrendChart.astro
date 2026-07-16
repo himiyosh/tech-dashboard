@@ -1,5 +1,5 @@
 ---
-import type { Category } from "../lib/data.ts";
+import { categoryLabel, type Category } from "../lib/data.ts";
 import { categoryDailyTrend, categoryWeekOverWeek } from "../lib/stats.ts";
 
 export interface Props {
@@ -9,6 +9,7 @@ export interface Props {
 }
 
 const { category, color, days = 30 } = Astro.props;
+const categoryName = categoryLabel(category);
 
 const buckets = categoryDailyTrend(category, days);
 const maxTotal = Math.max(1, ...buckets.map((b) => b.count));
@@ -31,7 +32,13 @@ const formatTick = (key: string): string =>
 const deltaColor =
   wow.deltaPct > 0 ? "#4ade80" : wow.deltaPct < 0 ? "#f87171" : "var(--muted)";
 const deltaSign = wow.deltaPct > 0 ? "▲" : wow.deltaPct < 0 ? "▼" : "—";
-const chartLabel = `${category} trend chart for the last ${days} days. This week ${wow.thisWeek}, last week ${wow.prevWeek}, daily average ${wow.avgPerDay}.`;
+const chartLabel = `${categoryName} trend chart for the last ${days} days. This week ${wow.thisWeek}, last week ${wow.prevWeek}, daily average ${wow.avgPerDay}.`;
+const trendSourceJa = category === "research"
+  ? "現在の Research 一覧（arXiv 専用レーンを除く）を元に、直近 7 日間は vivid、それ以前は薄色で表示"
+  : "data/stats.json（archive + live）を元に、直近 7 日間は vivid、それ以前は薄色で表示";
+const trendSourceEn = category === "research"
+  ? "Based on the current Research listing (excluding the dedicated arXiv lane); the last 7 days are vivid and earlier days are muted."
+  : "Based on data/stats.json (archive + live); the last 7 days are vivid and earlier days are muted.";
 ---
 
 <section class="trend" style={`--cat-color:${color}`}>
@@ -79,7 +86,7 @@ const chartLabel = `${category} trend chart for the last ${days} days. This week
       ))}
     </div>
     <table class="sr-only">
-      <caption>{category} trend counts</caption>
+      <caption>{categoryName} trend counts</caption>
       <thead>
         <tr>
           <th scope="col">Date</th>
@@ -98,7 +105,8 @@ const chartLabel = `${category} trend chart for the last ${days} days. This week
   </div>
 
   <div class="legend">
-    <span class="dim">data/stats.json (archive + live) を元に、直近 7 日間は vivid、それ以前は薄色で表示</span>
+    <span class="dim i18n-ja">{trendSourceJa}</span>
+    <span class="dim i18n-en" lang="en">{trendSourceEn}</span>
   </div>
 </section>
 

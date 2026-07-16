@@ -3,13 +3,13 @@ import {
   ARXIV_ENTRIES,
   CATEGORY_META,
   entryHref,
-  isArxivEntry,
   relativeTime,
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
-import { SOURCE_META } from "../lib/source-meta.ts";
+import { sourceLabel } from "../lib/source-meta.ts";
 import { ARXIV_SOURCE_INFO } from "../lib/arxiv-meta.ts";
+import LanguageFallbackBadge from "./LanguageFallbackBadge.astro";
 
 interface Props {
   category: (typeof CATEGORY_META)[number];
@@ -18,9 +18,6 @@ interface Props {
 }
 
 const { category, entries, now = new Date() } = Astro.props as Props;
-
-const sourceLabel = (source: string): string =>
-  SOURCE_META.find((item) => item.id === source)?.displayName ?? source;
 
 const countMap = <T extends string>(items: readonly T[]): Array<{ key: T; count: number }> => {
   const counts = new Map<T, number>();
@@ -36,9 +33,8 @@ const relatedCategories = CATEGORY_META.filter(
   (item) => item.group === category.group && item.slug !== category.slug,
 ).slice(0, 5);
 const latest = entries[0] ?? null;
-const latestTitle = latest ? titleForLangWithFallback(latest, "ja").text : "";
-const arxivCount = entries.filter(isArxivEntry).length;
-const nonArxivResearchCount = Math.max(0, entries.length - arxivCount);
+const latestTitleJa = latest ? titleForLangWithFallback(latest, "ja") : null;
+const latestTitleEn = latest ? titleForLangWithFallback(latest, "en") : null;
 const categoryInitial = category.initial;
 ---
 
@@ -46,14 +42,16 @@ const categoryInitial = category.initial;
   {category.slug === "research" && (
     <div class="side-card category-side-note">
       <div class="right-title">Research split</div>
-      <p>
-        arXiv 論文は件数が多いため、通常の研究カテゴリとは別に専用ページで確認できます。
-      </p>
+      <p class="i18n-ja">arXiv 論文は件数が多いため、通常の研究カテゴリとは別に専用ページで確認できます。</p>
+      <p class="i18n-en">High-volume arXiv papers are available in a dedicated lane separate from the Research timeline.</p>
       <div class="category-side-note-stats">
         <span><strong>{ARXIV_ENTRIES.length}</strong> arXiv</span>
-        <span><strong>{nonArxivResearchCount}</strong> other</span>
+        <span><strong>{entries.length}</strong> Research</span>
       </div>
-      <a class="side-action" href="/arxiv/">arXiv Papers を開く</a>
+      <a class="side-action" href="/arxiv/">
+        <span class="i18n-ja">arXiv Papers を開く</span>
+        <span class="i18n-en">Open arXiv Papers</span>
+      </a>
     </div>
   )}
 
@@ -69,11 +67,25 @@ const categoryInitial = category.initial;
     {latest ? (
       <a class="category-latest-link" href={entryHref(latest)}>
         <span>Latest</span>
-        <strong>{latestTitle}</strong>
+        <strong class="i18n-ja" lang={latestTitleJa?.fallbackLang === "en" ? "en" : "ja"}>
+          {latestTitleJa?.isFallback && latestTitleJa.fallbackLang && (
+            <LanguageFallbackBadge fallbackLang={latestTitleJa.fallbackLang} variant="title" />
+          )}
+          {latestTitleJa?.text}
+        </strong>
+        <strong class="i18n-en" lang={latestTitleEn?.fallbackLang === "ja" ? "ja" : "en"}>
+          {latestTitleEn?.isFallback && latestTitleEn.fallbackLang && (
+            <LanguageFallbackBadge fallbackLang={latestTitleEn.fallbackLang} variant="title" />
+          )}
+          {latestTitleEn?.text}
+        </strong>
         <em>{relativeTime(latest.publishedAt, now)}</em>
       </a>
     ) : (
-      <p class="category-side-muted">まだエントリがありません。</p>
+      <p class="category-side-muted">
+        <span class="i18n-ja">まだエントリがありません。</span>
+        <span class="i18n-en">No entries are available yet.</span>
+      </p>
     )}
   </div>
 
@@ -111,7 +123,8 @@ const categoryInitial = category.initial;
         {ARXIV_SOURCE_INFO.map((info) => (
           <a class="arxiv-code-item" href={`/arxiv/#source=${info.id}`}>
             <strong>{info.code}</strong>
-            <span>{info.shortJa}</span>
+            <span class="i18n-ja">{info.shortJa}</span>
+            <span class="i18n-en">{info.title}</span>
           </a>
         ))}
       </div>

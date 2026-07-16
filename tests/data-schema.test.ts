@@ -17,6 +17,10 @@ import {
 import { isContaminatedSummaryText } from "../harness/pipeline/summary-quality.ts";
 import { normalizeTag } from "../harness/pipeline/tag.ts";
 import { canonicalUrlKey } from "../harness/pipeline/url.ts";
+import {
+  buildStatsPayload,
+  STATS_BUCKET_TIME_ZONE,
+} from "../harness/publishers/stats-core.ts";
 import { REGISTRY } from "../harness/registry.ts";
 import type { NormalizedEntry } from "../harness/types.ts";
 import {
@@ -62,6 +66,7 @@ interface StatsBucket {
 
 interface StatsShape {
   generatedAt: string;
+  bucketTimeZone: string;
   totals: {
     allTime: number;
     last30d: number;
@@ -552,6 +557,7 @@ describe("data/stats.json", () => {
   it("トップレベルの数値と生成時刻が有効である", () => {
     expect(typeof stats.generatedAt).toBe("string");
     expect(Number.isFinite(Date.parse(stats.generatedAt))).toBe(true);
+    expect(stats.bucketTimeZone).toBe(STATS_BUCKET_TIME_ZONE);
     expect(stats.totals.allTime).toBeGreaterThanOrEqual(data.entries.length);
     expect(stats.totals.last30d).toBeGreaterThanOrEqual(stats.totals.last7d);
     expect(stats.totals.last7d).toBeGreaterThanOrEqual(stats.totals.last24h);
@@ -573,6 +579,22 @@ describe("data/stats.json", () => {
       return categoryTotal > bucket.count;
     });
     expect(badBuckets).toEqual([]);
+  });
+
+  it("日次 bucket は live + archive の JST 再集計と一致する", () => {
+    const entries = new Map<string, NormalizedEntry>();
+    for (const rawEntry of data.entries) {
+      const entry = asNormalizedEntry(rawEntry);
+      entries.set(canonicalUrlKey(entry.url) ?? entry.url ?? entry.id, entry);
+    }
+    for (const rawEntry of archiveEntries) {
+      const entry = asNormalizedEntry(rawEntry);
+      const key = canonicalUrlKey(entry.url) ?? entry.url ?? entry.id;
+      if (!entries.has(key)) entries.set(key, entry);
+    }
+
+    const rebuilt = buildStatsPayload([...entries.values()], stats.generatedAt);
+    expect(stats.byDay).toEqual(rebuilt.byDay);
   });
 
   it("source 集計は降順で、値が非負である", () => {

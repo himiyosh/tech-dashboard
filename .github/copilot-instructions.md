@@ -220,6 +220,11 @@
 - Git mutation の直前に session automation が停止済みであることと、先行 turn の Git 操作が完了していることを確認する。そのうえで `git branch --show-current`、`git status --short`、push 先 ref を再取得し、開始時の確認結果を使い回さない。
 - PR merge 後に追加修正する場合は、checkout の更新完了を確認してから新しい作業 branch へ切り替える。merge 後の follow-up を protected branch 上の未コミット差分へ継ぎ足さない。
 
+### R-029: 主要な変更は CHANGELOG に記録する
+- 利用者向け UI・挙動、data schema・taxonomy、Publisher・Worker の運用契約を変更した場合は、同じ変更単位で root の `CHANGELOG.md` を更新する。
+- 未リリースの変更は `Unreleased` へ追記し、`main` へ反映する際に日付付きセクションへ移す。
+- 毎時生成される data-only commit、表記修正、内部整理だけの変更は原則として記録対象外とし、読者が判断できる主要変更に絞る。
+
 ---
 
 ## 🧪 完了ゲート (LL Hook)
@@ -503,8 +508,8 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-047: web build と Playwright webServer build を並列実行しない
 - **事象**: UX 変更の検証で `npm --prefix web run build` と `npx playwright test ...` を並列に実行したところ、両方が `web/dist` を同時に削除/生成し、`ENOENT ... _noop-middleware.mjs` や `manifest_*.mjs` で失敗した。
 - **根本原因**: `playwright.config.ts` の `webServer.command` は `npm --prefix web run build && npm --prefix web run preview ...` であり、単体 build と同じ `web/dist` を mutation する。並列検証すると Astro/Pagefind の生成物が競合する。
-- **対策**: UI 検証は `npm --prefix web run build` を単独実行し、その完了後に Playwright を実行する。競合後は `rm -rf web/dist web/.astro && npm --prefix web run build` で生成物を掃除してから再検証する。
-- **教訓**: tool 呼び出しは独立している場合だけ並列化する。`web/dist`、`.astro`、Pagefind index など同じ生成物を触る build/test は逐次実行する。
+- **対策**: UI 検証は `npm --prefix web run build` を単独実行し、その完了後に Playwright を実行する。競合後は同じ checkout の Astro / Playwright process が終了していることを確認してから `rm -rf web/dist web/.astro && npm --prefix web run build` で生成物を掃除する。process が再生成中に cleanup すると `Directory not empty` が発生するため、他 session の process は勝手に停止せず所有元と終了状態を確認する。
+- **教訓**: tool 呼び出しは独立している場合だけ並列化する。`web/dist`、`.astro`、Pagefind index など同じ生成物を触る build/test/cleanup は逐次実行し、manifest 消失や cleanup 失敗を source regression と誤認しない。
 
 ### LL-048: ページ上部バナーは個別カードではなく共通 PageHero にする
 - **事象**: Categories / Status のページ上部感が再び弱くなり、モバイル・PC ともページに入った直後に「どの画面か」が分かりにくくなった。
@@ -1359,10 +1364,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: static preview の証拠は source ではなく現在の dist と server process に対する証拠である。慣例的な preview port を確認しただけで既存 server 不在と判断せず、Playwright が実際に使う port、artifact の更新時刻、build 成功を確定する。
 
 ### LL-188: Chrome DevTools MCP の profile lock は既存 browser process を特定して解消する
-- **事象**: `list_pages` が「browser is already running for chrome-profile」で起動失敗した。profile path を使う Chrome root process が残り、新しい MCP server が同じ user-data-dir を取得できなかった。
-- **根本原因**: 以前の DevTools browser process が profile lock を保持したまま残っていた。接続設定や target page の問題ではなかった。
-- **対策**: `ps` で該当 `--user-data-dir` を持つ root PID を特定し、その PID だけを停止してから `list_pages` を再実行した。name-based kill は使わない。
-- **教訓**: MCP の profile lock error は設定変更や別 profile への即時 fallback より先に、同じ user-data-dir を保持する process を確認する。停止する場合も特定 PID に限定し、共有 Chrome を巻き込まない。shell policy が `kill "$pid"` のような変数経由の対象指定を拒否する環境では、`ps` で確認した numeric PID を `kill 12345` のように literal で渡し、動的な process 指定へ迂回しない。
+- **事象**: `list_pages` が「browser is already running for chrome-profile」で起動失敗した。profile path を使う Chrome root process が残り、新しい MCP server が同じ user-data-dir を取得できなかった。別の事例では browser root だけを停止すると親 MCP process が再生成し、親を停止すると現在の transport 自体が閉じた。
+- **根本原因**: 以前の DevTools browser process が profile lock を保持したまま残る場合と、複数の MCP process が同じ profile の browser lifecycle を所有する場合がある。後者は browser PID だけの停止では解消しない。
+- **対策**: `ps` で該当 `--user-data-dir` を持つ root PID と親 process を特定する。単独の orphan browser なら root PID だけを停止して `list_pages` を再実行する。親が browser を再生成する場合は現在の transport を壊してまで停止せず、独立した Playwright browser へ切り替え、DevTools の証拠としては扱わない。name-based kill は使わない。
+- **教訓**: MCP の profile lock error は設定変更や別 profile への即時 fallback より先に、同じ user-data-dir を保持する process と親子関係を確認する。停止する場合も特定 PID に限定し、共有 Chrome を巻き込まない。親を止めると現在の tool transport まで失われる構成では無理に復旧せず、検証経路と証拠の種類を明示して分離する。shell policy が `kill "$pid"` のような変数経由の対象指定を拒否する環境では、`ps` で確認した numeric PID を `kill 12345` のように literal で渡し、動的な process 指定へ迂回しない。
 
 ### LL-189: worktree secret scan と unit test は一時 directory を共有し得るため逐次実行する
 - **事象**: unit test と `npm run secrets:scan:worktree` を並列実行すると、test が生成・削除する一時 directory を scanner が走査するタイミングと競合し得た。
@@ -1932,6 +1937,246 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: モバイルの主 section 見出しに `4px` の上 margin と `6px` の下 margin が残り、header、banner、ticker、layout の累積高さへ不要な外側余白を加えていた。さらに一方の test は reveal の安定状態を待たずに座標を読み、別々の数値を直接記述していた。
 - **対策**: Home の主 section 見出しは内部 padding、accent border、見出し本文を維持したままモバイルの外側 margin だけを除去した。E2E は `340px` の単一定数と共有 helper を使い、`.is-visible` と座標の安定を待ってから同じ契約を検証する。
 - **教訓**: first-view の密度回帰は閾値を緩める前に header から最初の判断要素までの各 bounding box と gap を分解して測る。複数 test は同じ閾値と安定した animation state を共有し、touch target や重要内容を削って座標を合わせない。
+
+### LL-284: decision surface は要約待ちを並べ替えるだけでなく候補から除外する
+- **事象**: Daily Summary の主要記事は要約済みを先頭へ並べるだけで、候補が少ない日は要約待ち記事まで判断枠へ入った。右 rail の7日件数は表示中一覧基準だが母集団が見えず、Spotlightと通常cardはimportance badgeと理由文で同じ重要度を重複表示していた。記事詳細では別言語titleへのfallbackを属性だけで持ち、読者には見えなかった。
+- **根本原因**: enrichment状態をranking順だけで扱い、decision slotのeligibility、集計scope、表示済みsignalの重複、言語provenanceを別々のUI contractとして定義していなかった。
+- **対策**: Dailyの主要記事は`isPublishableEntry()`を通るentryだけに限定し、対象日に記事があっても要約済み候補が0件なら専用状態を表示する。右 railは表示中一覧と先頭200件という集計scopeを明記する。badgeで示すimportanceは理由文から除き、記事詳細のtitle fallbackは可視badge、AI説明は言語別の独立生成を明示する。
+- **教訓**: 読む判断に使う枠ではpendingを後方へ送るだけでなく候補から除外する。数値は母集団、ranking理由は未表示のsignal、言語fallbackはprovenanceを読者へ明示し、同じ情報をbadgeと文章で二重表示しない。
+
+### LL-285: 日次 metric の表示 timezone と当日 bucket は同じ境界にする
+- **事象**: Home は日付を JST で表示していたが、当日の件数は publisher が確定した archive-backed stats を優先し、JST の当日記事が増えても小さい過去値を表示し得た。
+- **根本原因**: 表示 label の timezone と集計 bucket の source of truth を別々に選び、進行中の日と確定済みの日を同じ stats 優先規則で処理していた。
+- **対策**: 進行中の JST 当日だけは listed live entries の JST bucket を使い、完了済みの日は archive-backed `stats.byDay` を維持する。純粋 helper と E2E で当日値、過去日、stats 不在を分けて固定した。
+- **教訓**: 日次 metric は label、bucket boundary、partial/completed state を同じ contract にする。進行中の日を確定済み統計で上書きせず、過去日の保持統計との切替点を明示して検証する。
+
+### LL-286: cross-language fallback の label は操作でなく現在の生成状態を示す
+- **事象**: 片言語だけ要約済みの記事で TL;DR 見出しが単に `English summary` / `Japanese-language summary` と表示され、どちらが準備中で、表示中の要約が翻訳か原文かを判断できなかった。
+- **根本原因**: fallback の provenance は `lang` と data attribute にだけ保持し、読者向け label と AI 生成説明を bilingual 前提の定型文にしていた。
+- **対策**: `bilingual` / `ja-only` / `en-only` を明示し、fallback 見出しと disclaimer を現在の生成状態へ同期した。別言語の AI 要約は翻訳せず表示していることを可視文言で示した。
+- **教訓**: fallback label は「何を押すか」ではなく「今何が利用でき、何が未生成か」を説明する。provenance、生成状態、翻訳有無を同じ state contract から導出する。
+
+### LL-287: media regression は natural size でなく描画後の親子 geometry を測る
+- **事象**: mobile 記事詳細の hero は画像の読み込み有無で高さが変わり、画像失敗時の fallback が本文を押し上げる可能性があった。
+- **根本原因**: asset の存在や `naturalWidth` だけを検証し、responsive CSS 適用後の container、image、fallback の実寸を状態遷移の前後で測っていなかった。
+- **対策**: hero に desktop/mobile の予約高さを持たせ、mock image の load 後と synthetic error 後に container、image、fallback の `DOMRect` を測る E2E を追加した。
+- **教訓**: responsive media の安定性は source image の寸法ではなく rendered parent/image/fallback geometry で判断する。loaded、failed、mobile breakpoint の各状態で幅、高さ、overflow を実測する。
+
+### LL-288: title の言語 provenance は script 比率より収集時の `lang` を優先する
+- **事象**: `Claude Code 2.1.209で...` のように英数字の製品名を含む日本語 title を文字種比率だけで判定すると、EN slot に日本語 title が無印表示された。さらに `titleEn` が raw title または `titleJa` のコピーでも、target-language field が非空という理由で genuine English title として採用されていた。
+- **根本原因**: 短い title に summary 用の mixed-script classifier を流用し、収集時に確定した一次言語 `entry.lang` と field provenance を title 選択へ使っていなかった。unit fixture の `lang` も実 data 契約と一致していないと、誤った期待値を正当化できた。
+- **対策**: raw title は `entry.lang` と要求言語が一致するときだけ直接採用する。source language が EN でない場合、`titleEn` が raw title または `titleJa` の NFKC 正規化コピーなら拒否し、反対言語 title と可視 `JA` / `EN` badge へ fallback する。fixture も title の一次言語を明示し、全 corpus と DOM の `lang` / badge 整合を検証する。
+- **教訓**: title の provenance は文字数推定だけで再構成しない。収集時の言語、target field の由来、正規化コピー判定を組み合わせ、UI では実際に表示する言語を `lang` と可視 badge の両方で示す。test data も production の provenance contract を満たす必要がある。
+
+### LL-289: 重要度 signal を hero 内で重複表示しない
+- **事象**: 記事詳細 hero が importance metadata と専用の `HOT` pill を同時に表示し、同じ重要度を隣接する badge で二重に伝えていた。Home の Spotlight でも role copy を `最新の高重要度記事` としたことで、隣接する importance badge と同じ signal を重複表示した。
+- **根本原因**: 一覧用の attention signal を詳細 hero にも追加し、既存 metadata strip が同じ情報を所有していることを確認しなかった。decision slot の役割説明にも、すでに badge と選定根拠が示す score signal を埋め込んでいた。
+- **対策**: 記事詳細の専用 `HOT` pill と dead CSS を削除し、importance は metadata の単一表示へ戻した。Spotlight の role copy は `最新の優先記事 / latest priority update` とし、具体的な選定 signal は既存 badge と rationale だけに残した。E2E で importance / freshness signal が role copy、badge、理由文へ重複しないことを固定する。
+- **教訓**: decision signal は surface ごとに所有者を1つにする。目立たせる目的でも、同じ意味の badge、metadata、role copy、理由文を隣接して重ねず、既存の表示契約を先に検索する。slot の役割説明は「どの種類の判断枠か」を示し、score の内訳は別の単一 surface に任せる。
+
+### LL-290: language toggle は主要見出しだけでなく補助説明と side panel まで同じ契約にする
+- **事象**: EN 表示へ切り替えても menu の補助説明、検索説明、category の Research callout、sort、empty state、side panel の案内が日本語のまま残った。
+- **根本原因**: 新しい language toggle の横展開を heading と本文中心に確認し、navigation detail、empty state、rail / side panel など補助 surface を i18n inventory に含めていなかった。
+- **対策**: menu data に `detailEn` を持たせ、category hero、Research callout、sort、empty state、side panel の説明と CTA を JA/EN container に分けた。E2E は EN mode で各補助 surface の英語表示と JA variant の非表示を直接検証する。
+- **教訓**: i18n toggle の対象はページ本文だけではない。navigation detail、検索 help、status、empty state、aside、tooltip を含む visible copy を全量検索し、代表ページの browser test で active language と可視性を固定する。
+
+### LL-291: taxonomy の navigation label と page context label を同一視しない
+- **事象**: Research category の navigation label を `Papers / Benchmarks` にした結果、page hero まで同じ名前になり、研究記事全体を扱うページの目的が論文と benchmark だけに見えた。
+- **根本原因**: navigation で短く識別する表示名と、ページの意味を示す context label を同じ `category.name` から生成していた。説明文だけを `Research` へ直しても、最初に読む hero title が狭いままなら文脈は回復しない。
+- **対策**: Research slug の page hero title と説明文は semantic label `Research` を使い、通常ページと pagination の両方で同じ helper 値を参照する。`Papers / Benchmarks` は category navigation や compact directory の識別用途に限定する。
+- **教訓**: taxonomy metadata の短い navigation label を page title や文章へ機械的に埋め込まない。navigation label、page context、検索 alias は用途を分け、主要カテゴリの hero title と説明文を JA/EN の browser test で固定する。
+
+### LL-292: URL slug の数字列を版番号と断定しない
+- **事象**: URL の `gemma-4-12b` と title の `Gemma 4 12B` を照合した punctuation 復元が、モデルサイズを `Gemma 4.12B` へ誤変換した。
+- **根本原因**: URL の digit-hyphen sequence を一律に版番号とみなし、title 側も非数字境界だけを確認していたため、単位 suffix の `B` を許容していた。
+- **対策**: URL 側で数字列の直後が英字なら復元対象から除外し、title 側も英数字を含まない token 境界へ狭めた。`v4 7` の版番号復元と `Gemma 4 12B` の保持を同じ unit test で固定した。
+- **教訓**: URL slug の punctuation 欠落を補う処理は、数字列の存在だけで version と断定しない。単位、モデルサイズ、容量 suffix を除外し、復元する token と保持する token の両側を実例で検証する。
+
+### LL-293: lane-aware detail は primary navigation の context まで伝播する
+- **事象**: arXiv 記事詳細の breadcrumb、category link、関連記事は `/arxiv/` を指していたが、Portal には `pageKey="timeline"` を渡していたため mobile Home が active のままだった。
+- **根本原因**: content 内の lane routing と app shell の navigation context を別々に実装し、detail page の lane 判定を Portal まで伝播していなかった。
+- **対策**: arXiv detail は Portal へ `pageKey="arxiv"`、通常記事は `timeline` を渡す。desktop shortcut と mobile tabbar は arXiv だけを visual active にし、detail URL と一致しない親 linkへ `aria-current` を付けないことを E2E で固定した。
+- **教訓**: lane-aware route は breadcrumb や戻り先だけで完了しない。primary navigation の visual context まで同じ lane 判定を共有し、ancestor highlight と exact `aria-current` を分離して検証する。
+
+### LL-294: fallback E2E は production helper と canonical label を使う
+- **事象**: summary fallback の E2E が raw field の非空判定を独自実装したため、production helper が認識する片言語 fallback を選べず早期終了した。badge も旧 `ORIGINAL` label を期待し、現行 component と不一致だった。
+- **根本原因**: fixture 選択の品質判定と表示 label を test 側へ複製し、`summaryForLangWithFallback()` と `LanguageFallbackBadge` の契約変更へ追従していなかった。
+- **対策**: E2E の対象 entry は production の `summaryForLangWithFallback()` で選び、summary badge は component の `AI 要約 EN` / `Japanese AI summary`、title badge は `原題 EN` / `Japanese title` 契約へ同期した。fallback がない fully bilingual corpus は引き続き valid state とする。
+- **教訓**: data-driven fallback test は raw field の近似判定を作らない。fixture selection、visible provenance、component label を production helper と同じ contract から検証し、実 corpus に対象があるのに test が skip する状態を防ぐ。
+
+### LL-295: activity totals と decision board は lane ごとに日付基準を分ける
+- **事象**: Daily Summary の当日 activity は全レーンを集計する一方、主要記事 board は Timeline だけを表示する。arXiv のみ当日記事があると、全レーンの当日判定が board を空の当日に固定し、前日の Timeline 主要記事へ fallback できなかった。
+- **根本原因**: activity totals と decision board が異なる母集団を持つのに、board の基準日を全レーン entry から決定していた。
+- **対策**: activity totals は全レーンのまま維持し、board の基準日は `boardEntries` の当日・前日件数から決定する純粋 helper へ分離した。arXiv-only の当日と Timeline 候補がある当日の両方を unit test に固定した。
+- **教訓**: 同じ dashboard 内でも集計と意思決定枠の母集団が異なる場合、日付 fallback まで同じ集合から導出しない。各 surface の候補集合を基準日に反映し、他レーンの活動で空の decision board を作らない。
+
+### LL-296: 進行中の当日 metric は stats でなく同じ live JST 集計を共有する
+- **事象**: Daily Summary は進行中の JST 当日を全レーン live entries で数える一方、`/metrics.json.todayEntries` は archive-backed stats を優先し、同じ画面の当日件数と不一致になり得た。
+- **根本原因**: LL-285 の当日/過去日切替を Daily Summary だけへ適用し、metrics API の同名指標へ横展開していなかった。
+- **対策**: current-day entry count と stats/live の選択 helper を Daily Summary と metrics で共有し、E2E で `/metrics.json.todayEntries` と Home KPI の完全一致を検証する。
+- **教訓**: 同じ名前と時間 scope の metric は UI と API で同じ集計 helper を使う。進行中の当日だけ live、完了日だけ archive-backed stats という境界を全 consumer へ対称適用する。
+
+### LL-297: standing label は実際の ranking 母集団の lane 名を表示する
+- **事象**: arXiv detail の importance standing は arXiv entry だけで順位を計算していたが、表示 label は Research category の `Papers / Benchmarks` を使っていた。
+- **根本原因**: ranking helper は lane-aware だった一方、説明文だけ category metadata から生成し、計算母集団と表示母集団が分岐していた。
+- **対策**: standing label を breadcrumb や関連記事と同じ `laneName` から生成し、arXiv detail の JA/EN 表示が arXiv 母集団を示すことを E2E に固定した。
+- **教訓**: ranking や比較の説明文は、計算に使った母集団と同じ helper から導出する。category と lane が異なる route では、数値だけ正しくても label が別集合を示せば誤解を生む。
+
+### LL-298: version qualifier の復元は token 全体の一致を要求する
+- **事象**: URL の `1.2-rc1` を根拠に qualifier を復元する処理が、title の長い版番号 `1.2.3` の prefix `1.2` に一致し、`1.2-rc1.3` へ破損させ得た。
+- **根本原因**: base version の末尾を `\b` だけで判定し、数字と dot の境界も一致として許可していた。
+- **対策**: base version の前後を英数字と dot を除く token 境界へ限定し、短い URL version が長い title version を書き換えない回帰テストを追加した。
+- **教訓**: URL 由来の version 補完は substring や単語境界でなく version token 全体を照合する。復元対象と、それより長い prefix-mismatch の両方を fixture にする。
+
+### LL-299: lane-aware detail は全ての補助導線を同じ destination へ揃える
+- **事象**: arXiv detail の breadcrumb、hero、関連記事は `/arxiv/` を指していたが、右 rail の Category link だけ `/c/research` を指し、現在の論文を含まない一覧へ遷移していた。
+- **根本原因**: 主要導線だけを `laneHref` / `laneName` へ移行し、同じ template 下部の補助 link を category metadata のまま残していた。
+- **対策**: 右 rail も `laneHref`、`laneName`、`laneEmoji` を使い、arXiv detail の全補助導線から Research category link が消えることを E2E に固定した。
+- **教訓**: route context を category から lane へ切り替えるときは breadcrumb、primary nav、hero、関連記事、rail、footer action を全量検索し、単一 destination helper へ揃える。
+
+### LL-300: trend の出典表示は実際の集計 branch と一致させる
+- **事象**: Research trend は現在の curated listing を live 集計していたが、legend は全 category 共通で `data/stats.json (archive + live)` 由来と表示していた。
+- **根本原因**: 集計 helper に Research 固有 branch を追加した際、同じ chart の provenance copy を条件分岐させなかった。
+- **対策**: Research は arXiv 専用レーンを除く現在一覧、その他は archive-backed stats と明示する JA/EN legend へ分け、Research で誤った stats 表示が無いことを E2E に固定した。
+- **教訓**: chart の数値だけでなく期間、母集団、出典も同じ branch から導出する。特殊集計を追加したら legend、tooltip、accessible label を横展開確認する。
+
+### LL-301: lane 分離の集計テストは実 corpus の当日分布に依存させない
+- **事象**: Home KPI と `/metrics.json` の一致 E2E は、当日の arXiv 件数が 0 だと all-lane 集計を Timeline-only に退行させても通過できた。
+- **根本原因**: 2 surface の結果一致だけを検証し、異なる lane を同じ日に持つ deterministic fixture で母集団そのものを固定していなかった。
+- **対策**: 同日に Timeline と arXiv、前日に Timeline を持つ fixture を追加し、活動件数は全レーン 2 件、decision board は Timeline 1 件になることを純粋 helper で検証した。
+- **教訓**: 複数 consumer の一致は同じ誤実装でも成立する。母集団の分離を守るテストは、各集合の件数が必ず異なる fixture を用いて期待値を独立に固定する。
+
+### LL-302: 日次表示と stats bucket は同じ timezone contract を共有する
+- **事象**: Web は JST の日付 key で Daily Summary と category trend を表示していたが、`data/stats.json` の生成器は UTC の `YYYY-MM-DD` / `YYYY-MM` を保存していた。実 artifact の直近日次件数は、JST 再集計と最大 27 件ずれていた。
+- **根本原因**: 表示側と生成側が独立した日付 helper を持ち、stats artifact に bucket timezone の provenance が無かった。生成器だけを JST 化して旧 UTC baseline を増分更新すると、同じ artifact に UTC/JST bucket が混在する経路もあった。
+- **対策**: stats core に `Asia/Tokyo` の日次・月次 key helperと `bucketTimeZone` marker を追加し、完全再構築と増分更新の両方で共有した。増分更新は marker 不一致を fail-closed で拒否し、90日 cutoff も同じ JST key を使う。既存 stats は live index と全 archive から完全再構築し、data schema で再集計結果との一致を固定した。archive 月別 file は保存構造として UTC 月を維持し、表示用 stats bucket と分離した。
+- **教訓**: 日付 label、集計 bucket、cutoff、増分 baseline は同じ timezone contract を使う。timezone を変える場合は producer の変更だけで終えず、artifact marker、旧 baseline の拒否、完全 migration、境界時刻 test を同じ変更に含める。
+
+### LL-303: Node の診断 script は CommonJS と top-level await を混在させない
+- **事象**: stats の UTC/JST 差分を調べる一時診断で `require()` と top-level `await` を同じ `node -e` に含め、Node 22 が `ERR_AMBIGUOUS_MODULE_SYNTAX` で停止した。
+- **根本原因**: 実行文字列が CommonJS と ES module の両方の構文を含み、Node が module format を一意に決められなかった。
+- **対策**: `node --input-type=module` と `import` に統一して再実行し、同じ診断を完了した。
+- **教訓**: top-level await を使う Node one-liner は ES module として明示し、`require()` を混在させない。診断コマンドの失敗を製品コードの問題と混同せず、launcher の module contract を先に揃える。
+
+### LL-304: 日単位 retention の境界を timestamp 差で切らない
+- **事象**: 完全 stats 再構築は `generatedAt - 90日` の正確な時刻で `byDay` を絞る一方、増分 stats は JST の日付 key で同じ期間を絞っていた。cutoff 日の午前に公開された entry が完全再構築だけから落ち、同じ入力でも結果が一致しなかった。
+- **根本原因**: `byDay` は日単位 artifact なのに、一方の producer だけ timestamp 精度の retention を使っていた。timezone を JST へ統一しても、cutoff の粒度が producer 間で非対称なままだった。
+- **対策**: `statsDayCutoffKey()` を stats core の共有 helper にし、完全再構築と増分 prune の両方を同じ JST 日付 key へ接続した。cutoff 日の午前と午後を保持し、前日だけを除外する回帰テストと、clock 進行後の完全・増分一致テストを追加した。
+- **教訓**: 日単位 bucket の retention は日付 key で切り、時刻精度の差分を持ち込まない。timezone、bucket、cutoff、producer 間 parity を同じ helper と境界 fixture で固定する。
+
+### LL-305: 複数状態の E2E は二値の else へ潰さない
+- **事象**: AI 要約の生成状態は `bilingual`、`ja-only`、`en-only` の3値を持つのに、記事詳細 E2E は `bilingual` 以外をすべて `ja-only` の文言で検証していた。正当な `en-only` entry では英語要約が利用可能なのに「英語要約は準備中」を期待していた。
+- **根本原因**: UI が3状態へ拡張された後も test の条件分岐を二値のまま残し、enum の全値を明示的に扱わなかった。
+- **対策**: E2E を3分岐にし、JA/EN の両表示で各 generation scope の固有文言を検証した。片言語 fallback 専用 test も production helper を使う既存契約として維持した。
+- **教訓**: state attribute が enum を持つ UI では、正規表現で全値を許可するだけでなく、その後の assertion も全値を明示分岐する。新しい state を追加したら表示 copy、fallback、E2E の exhaustive handling を同時に更新する。
+
+### LL-306: 補正した title 言語は表示と metadata で同じ helper を使う
+- **事象**: title 表示は明白な文字種証拠で誤った feed の `entry.lang` を補正していたが、記事詳細の JSON-LD `inLanguage`、可視 Lang metadata、右 rail は元の `entry.lang` を直接表示していた。同じ記事で title は日本語、metadata は EN という矛盾が発生した。
+- **根本原因**: title 選択内に言語補正を局所実装し、補正済み provenance を metadata consumer へ共有していなかった。
+- **対策**: JSON 非依存の `effectiveTitleLanguage()` を `summary-display.ts` に追加し、title 選択、JSON-LD、可視 metadata、right rail を同じ結果へ統一した。誤った feed metadata を持つ実 corpus entry で DOM と構造化データを検証する E2E を追加した。
+- **教訓**: source metadata を表示時に補正する場合、補正は局所的な copy 変換ではなく provenance contract である。reader-facing title、`lang`、JSON-LD、検索 metadata、補助 panel を単一 helperへ接続し、同一記事内の矛盾を防ぐ。
+
+### LL-307: 状態ラベルは観測している scope を超えて健全性を示唆しない
+- **事象**: footer の `run ERR` は共有 run-health helper 由来だったが、隣の説明は常に直近 batch と queue 件数だけを表示し、失敗理由を示さなかった。Ticker も JST 当日の記事集合を表すだけなのに `LIVE` と表示し、pipeline が stale な状態でも稼働中に見えた。
+- **根本原因**: run health、batch telemetry、日付 bucket を別々に計算しながら、隣接する label と説明を同じ状態契約へ接続していなかった。
+- **対策**: footer は共有 helper の run detail を先に表示し、batch と queue を補助情報として続ける。Ticker は運用状態を示す語を使わず、日付 bucket の `TODAY` / `LATEST` だけを表示する。E2E は run detail と queue 値、ticker の day scope と label を別々に固定する。
+- **教訓**: operational UI の label は何を測っているかを一意にする。日付 bucket を service liveness と呼ばず、status と detail は同じ derived state から生成し、別 scope の telemetry は明示的な補助情報として分離する。
+
+### LL-308: 構造化データの headline、description、inLanguage は同じ言語に揃える
+- **事象**: 記事詳細の JSON-LD は JA 表示用 title を `headline` に使いながら、`inLanguage` は元記事 title の補正済み言語を使っていた。英語記事では日本語 headline と `inLanguage: en` が同じ `NewsArticle` 内に混在した。
+- **根本原因**: visible page title と元記事 provenance の用途を分離せず、JSON-LD の各 field を異なる表示契約から組み立てていた。
+- **対策**: JSON-LD は補正済み元記事言語を基準に、その言語の title と usable summary を headline / description に使う。該当言語の summary がなければ同言語 headline へ fallback し、visible JA/EN UI と social metadata は従来の表示契約を維持する。
+- **教訓**: bilingual page の構造化データでは page default language、表示中の language、元記事 language を混同しない。1つの entity 内の自然言語 field は同じ provenance を共有し、headline text と `inLanguage` の組み合わせを実 DOM で検証する。
+
+### LL-309: broad feed は relevance hit があっても記事の主題が対象外なら除外する
+- **事象**: `Hackers` を含む Neo Geo の Doom 移植記事と、`AI` を含む dating service の資金調達記事が Tech News に残った。一方、mobile network vulnerability、Anthropic の広告反応、Google Image Search の AI 更新も同じ監査候補に挙がった。
+- **根本原因**: security や AI の relevance keyword が title にあれば、記事の主題が retro gaming や consumer dating でも通過した。監査候補を一括で noise と扱うと、現行契約が明示的に保持する security と AI industry / product update まで除外する危険があった。
+- **対策**: registry の title-scope exclude に `neo geo`、`dating service`、`dating app` を追加し、実際に混入した2タイトルを drop corpusへ固定する。mobile network vulnerability、AI company coverage、AI search product updateは既存のsecurity / AI契約に一致するため保持する。
+- **教訓**: broad feed の品質監査では relevance 語の存在と記事の主題を分けて確認する。明確な consumer domain は registry の具体的な title-scope exclude で防ぎ、securityや公式AI更新を外見上の話題だけでまとめて除外しない。
+
+### LL-310: archive migration は内容不変の月の generatedAt を更新しない
+- **事象**: Tech News noise cleanup の migration が全 archive 月を `index.generatedAt` で再構築し、記事、tag、件数が変わらない過去16か月にも timestamp-only diff を作った。
+- **根本原因**: migration が月次 payload の実内容差を確認せず、全月へ同じ reference clock を設定していた。月次 archive の timestamp-only churn を避ける publish contract が migration path に反映されていなかった。
+- **対策**: `generatedAt` を除いた既存 payload と再構築 payload を deep comparisonし、内容不変なら既存 clock、entry、count、month、追加 field のいずれかが変わる場合だけ reference clock を採用する。内容不変と内容変更の両方を unit test に固定し、不要な16か月の時計を元の値へ戻した。
+- **教訓**: data migration の reference clock は全出力へ一律適用しない。artifact roleごとの timestamp contractを共有し、実変更と timestamp-only churn を分けてから write対象を決める。
+
+### LL-311: 多言語で複製した navigation は全 instance と accessible name を同じ状態へ同期する
+- **事象**: 記事詳細の TOC は JA / EN の2リストを持つのに、scroll observer が `querySelector()` で最初の一致 link だけを active にしていた。前後記事 nav と back-to-top button の `aria-label` も日本語固定で、EN 表示へ切り替えても accessible name が変わらなかった。
+- **根本原因**: CSS で表示言語を切り替える複製 DOM を単一 instance とみなし、state 更新と accessible name を最初の要素または初期言語だけへ固定していた。
+- **対策**: TOC の active target は全言語リストを `querySelectorAll()` で同期する。accessible name は固定 `aria-label` ではなく、JA / EN の `.i18n-*` spanを含む visually-hidden labelを `aria-labelledby` で参照し、表示言語の切替契約へ接続する。
+- **教訓**: 同じ navigation や control を言語別 DOM として複製する場合、active、selected、expanded、accessible name の全状態を全 instance へ反映する。見た目の言語切替だけで合格にせず、active link と computed accessible name を両言語で実ブラウザ検証する。
+
+### LL-312: remote ref の更新と参照を並列実行しない
+- **事象**: 最終 data 鮮度確認で `git fetch origin main` と `git show origin/main:data/index.json` を並列実行したところ、`git show` は fetch 前の11:20 UTC snapshotを読み、fetch完了後の ref は13:09 UTCを指していた。
+- **根本原因**: refを更新する操作と、そのrefを読む操作を独立した確認として並列化した。`origin/main`の値はfetch完了に依存するため、参照側が先に実行されると古いsnapshotを正常な結果として返す。
+- **対策**: `git fetch`を単独で完了させ、その後に取得したexact SHAと`origin/main`のartifactを確認する。release準備では最新mainのdata artifactへ現行migrationを再適用し、quality auditとschema gateを再実行する。
+- **教訓**: remote ref mutationとref readは並列化しない。fetch、exact SHA確定、artifact参照を直列化し、長時間branchの生成dataをreleaseする前は最新mainへdeterministic migrationを再適用して巻き戻しを防ぐ。
+
+### LL-313: 狭い rail の状態内訳は `nowrap` の横並びへ固定しない
+- **事象**: Status のカテゴリ別内訳は1280px以上とmobileでは収まる一方、right railが約220pxになる1024px / 1100pxで`body.scrollWidth`がviewportを13px超えた。
+- **根本原因**: カテゴリ名と4種類の状態内訳を横並びflexにし、内訳へ`white-space: nowrap`を指定していた。共有viewport breakpointだけでは、side cardの実際のinline-sizeに応じた縮退ができなかった。
+- **対策**: insight cardをinline-size containerとし、狭いcontainerではカテゴリ名と内訳を縦積み・折り返し、十分な幅だけ横並びへ戻す。981pxから1280pxの境界行列でpage overflowと内訳のcard内収まりをDOM寸法で検証する。
+- **教訓**: side railの可読性はviewport幅だけでなくcomponentの利用可能幅で決まる。長い状態列を常時`nowrap`にせず、container queryとintrinsic sizingで狭幅時の積み方を変え、page overflowだけでなく子要素が親矩形内に収まることを測る。
+
+### LL-314: 要約待ちの正直な状態はsocial metadataと構造化データにも伝播する
+- **事象**: 記事本文は「AI 要約 準備待ち」と明示していたが、要約が無い記事のmeta description、OG、Twitter、JSON-LD descriptionはheadlineをそのまま複製していた。
+- **根本原因**: visible pending stateとmetadata fallbackを別々に組み立て、descriptionの非空化をtitle echoで済ませていた。共有時やcrawlerからは要約待ちが分からず、headlineとdescriptionの意味も重複した。
+- **対策**: JA / ENのpending descriptionを単一の状態copyとして定義し、本文、social metadata、JSON-LDへ共有する。JSON-LDは補正済み元記事言語を維持し、その言語のpending descriptionを使う。
+- **教訓**: enrichment待ちを正直に表示する契約は画面本文だけで完了しない。meta description、OG、Twitter、structured dataも同じ生成状態へ接続し、headline echoで完成済みのように見せない。
+
+### LL-315: migrationの中間同期件数と永続成果物の差分を同一視しない
+- **事象**: `noise:clean --dry-run`が削除・再分類0件でも`Archive tags synchronized: 1`を表示したため、未反映のdata変更が残っているように見えた。
+- **根本原因**: archive migrationの`applyTags()`が一時的に`release` tagを追加し、後段のlive同期がそのtagを除去していた。同期counterは中間状態からの変更を数えるため非0になるが、最終payloadは保存済みJSONと完全一致していた。
+- **対策**: apply要否は中間counterだけで判断せず、migrationと同期後に構築したindex、全月archive、statsの最終payloadを保存済みJSONと比較する。今回の最終payload差分は0件だったため、不要なapplyを行わなかった。
+- **教訓**: 複数段のmigration reportは処理量と永続差分を区別する。中間同期件数が非0でも、最終serialized payloadが同一ならartifactはidempotentであり、書き込み要否は最終payload比較で決める。
+
+### LL-316: 重複するmedia queryは宣言順だけでなくselector詳細度と有効範囲を揃える
+- **事象**: `390x844`のFeatured cardにはmobile用の`96px`列が宣言されていたが、computed gridは`152px 156px`となり、実画像`96px`の右に`56px`の未使用領域が残って本文が過剰に折り返していた。
+- **根本原因**: `max-width:900px`の`article.featured`が、後段の`max-width:720px`にある`.featured`よりselector詳細度が高かった。両media queryがmobileで同時に有効なため、後から書かれたmobile ruleでもtablet ruleを上書きできなかった。
+- **対策**: tablet固有のFeatured ruleを`min-width:721px and max-width:900px`へ限定し、mobileで必要なrationale非表示はmobile blockが所有するようにした。E2Eはpage overflowやthumbnail幅だけでなく、thumbnailと本文の実gap、本文が残余幅を使うことを`DOMRect`で検証する。
+- **教訓**: responsive CSSは「目的のruleがsourceに存在する」だけで合格にしない。重複するbreakpointの有効範囲とselector詳細度を確認し、computed styleと親子の実寸で未使用trackを検出する。tablet固有ruleはmobileまで流さず、境界を対称に分離する。
+
+### LL-317: 横overflowが0でもmobileの有効幅と縦密度は悪化し得る
+- **事象**: `390x844`でpage全体の横overflowは0だったが、22pxの本文gutter、固定正方形のFeatured thumbnail、line-clampで途中切れするhero copy、Top-3の重複相対時刻が重なり、headerと記事panelが詰まり、画像下に不要な余白があるように見えた。
+- **根本原因**: responsive検証を`scrollWidth <= innerWidth`と個別componentの最大幅へ寄せ、実際の本文幅、mediaとcardの下端、copyのclipping、同じmetadataの重複、44px操作面を保った状態でのfirst-view密度を同じ画面契約として測っていなかった。
+- **対策**: mobile Homeのgutterを16pxへ統一し、headerを1行固定、hero copyを短い完全文へ変更した。Featuredは画像とfallbackをcard高へstretchするmedia railにし、tickerは44px操作面を維持したまま余白を圧縮、Top-3は相対時刻をmetadataだけの所有にした。E2Eは320/375/390/621/720/768pxでoverflow、本文幅、header整列、media/card高、copy clipping、操作寸法、metadata重複を実寸検証する。
+- **教訓**: mobile品質は横overflowの有無だけで判断しない。viewportに収まっていてもgutter、固定media枠、clamp、重複metadataの累積で判断密度は落ちる。page-levelの有効幅、親子の下端、visible copyの完全性、情報所有者、touch targetを同じviewport行列で測る。
+
+### LL-318: mixed-content labelへ一括uppercaseを適用しない
+- **事象**: Spotlightの選定根拠labelへ`text-transform: uppercase`を一括適用した結果、視覚labelだけでなく相対時刻の`23h ago`まで`23H AGO`へ変形していた。
+- **根本原因**: 装飾用のuppercase領域と、表記を保持すべき動的metadataを同じtext nodeへ連結し、子要素単位のtransform契約を持たせていなかった。
+- **対策**: 相対時刻を専用の`.featured-rationale-time`へ分離し、`text-transform:none`と通常のletter spacingを明示した。E2Eは可視JA側のcomputed styleと大文字`AGO`不在を検証する。
+- **教訓**: uppercaseやletter spacingはcomponent全体へ無差別に適用せず、装飾labelだけを所有範囲にする。時刻、製品名、version、固有名詞など表記を保持すべき動的値は専用要素へ分離し、computed styleで検証する。
+
+### LL-319: decision cardは同じ判断signalをmetadataと理由文へ重複表示しない
+- **事象**: mobile HomeのTop-3 cardで、出典名と時刻のmetadataに加えて`公式・リリース/変更履歴・カテゴリ`の汎用理由行を全件表示し、同じ出典情報が二重に見えて縦幅とスクロール量を増やしていた。
+- **根本原因**: rankingの説明可能性をcardごとの定型文で補おうとし、すでに順位、タイトル、出典、Top-3という配置文脈が所有している判断signalとの重複を整理していなかった。理由行を支える専用grid rowと固定min-heightも残り、copyだけを短くしても密度を下げにくい構造だった。
+- **対策**: Top-3から汎用理由行と専用grid row、固定min-heightを削除し、順位、タイトル、出典disclosure、相対時刻、異常時だけの鮮度警告へ限定した。`390x844`でpanel高は約351pxから303pxへ縮まり、page横overflow 0、source trigger高45pxを維持した。E2Eは理由行0件、panel/card/metadataの高さ上限、source操作面、兄弟要素の非交差を検証する。
+- **教訓**: decision surfaceでは1つのsignalに1つの表示所有者を決める。説明可能性は情報の反復ではなく、読者の判断を変える固有情報だけで補う。行を削除したらDOMだけでなくgrid track、min-height、gapも同時に除去し、情報量と実geometryの両方で削減効果を確認する。
+
+### LL-320: page overflowがなくてもflex item内部のlabelはclipし得る
+- **事象**: `1000px`のHeaderはpage全体の横overflowが0でも、言語切替がflex圧縮されて`EN`の末尾が見切れていた。
+- **根本原因**: `.lang-toggle`が`overflow:hidden`を持ちながら既定の`flex-shrink:1`のままで、検索、shortcut、Menuと幅を競合した。pageの`scrollWidth`は増えないため、横overflow検査だけでは内部clipを検出できなかった。
+- **対策**: 言語切替を`flex:0 0 auto`として操作面を保持し、shortcut labelは`721-980px`だけicon-onlyにした。`981-1100px`では検索幅とshortcut paddingを縮めてlabelを復元する。E2EはHeader全体の非overflowに加え、各言語buttonの実幅、labelの`scrollWidth <= clientWidth`、兄弟controlとの非交差を境界幅行列で検証する。
+- **教訓**: flex Headerのresponsive品質はpage overflowだけで判定しない。言語切替、Menu、primary actionのようなatomic controlは縮ませず、省略可能なlabel側を先に縮退させる。一方、幅が回復した後もicon-onlyを引き延ばさず、識別に必要な文字labelを段階的に戻す。内部clipと認識性はcontrolと子labelの実寸、可視状態を別々に測る。
+
+### LL-321: compact HeaderとTickerのsqueeze zoneは同じ境界まで検証する
+- **事象**: Headerを`1100px`までcompact化しても、Tickerの2行表示は`960px`以下に限定されていたため、`1000px`ではcategory/tagと記事titleが横一列へ戻り、見出しが早く省略された。
+- **根本原因**: 同じ中間幅で競合するHeaderとTickerが別のbreakpoint契約を持ち、`961-1100px`の実表示を回帰行列に含めていなかった。mobile用の外枠stackと、見出し内部のtag/title分離も1つのmedia queryへ結合していた。
+- **対策**: tag/titleの2行stageをcompact Headerと同じ`1100px`まで適用し、外枠をlabel/controlsの下へstackする処理は`960px`以下だけに分離した。E2Eは`961/981/1000/1100px`でtag行がtitle行より上にあり、titleがstage全幅を使い、page overflowが無いことをDOM寸法で固定する。
+- **教訓**: 同じsqueeze zoneにある隣接componentはresponsive境界を揃え、内部再配置と外枠再配置を別のcontractとして段階適用する。代表mobile幅だけでなく、旧breakpoint直後から新境界までを実ブラウザで検証する。
+
+### LL-322: decision slotは同じ候補poolから選ぶだけでなく相互に重複排除する
+- **事象**: HomeのSpotlightとTickerが同じ最新記事を同時に表示し、first-viewの2つの判断面が同じ情報を反復していた。
+- **根本原因**: Top-3はSpotlightのentry IDとsourceを除外していたが、Tickerは同じ`primaryEntries`から独立選定し、Spotlightの選定結果を受け取っていなかった。
+- **対策**: `TickerBar`へ除外entry IDを渡し、基準日は全entryから従来どおり決定した後、その日の候補からSpotlight IDだけを除外する。E2EはSpotlight linkのhrefが全Ticker slideのhrefに含まれないことを固定する。
+- **教訓**: decision-criticalな複数slotが同じ候補poolを使う場合、各componentの内部rankingだけで多様性を期待しない。先に確定したslotのidentityを後続slotへ明示的に伝播し、日付fallbackなど別の選定契約を変えずに候補だけを除外する。
+
+### LL-323: Heroの密度はmobileの余白とdesktopの最大contentを別々に測る
+- **事象**: mobile Heroは上下paddingが合計11pxしかなく詰まって見える一方、desktop Heroは本文より高い右側facts/orbitに合わせて約294pxまで伸び、過剰な余白に見えた。
+- **根本原因**: Hero全体の高さだけを見てresponsive値を共有し、mobileでは2行説明と極小paddingの関係、desktopでは右側panelのmin-height、card padding、line-heightが全体高を支配する関係を分けて測っていなかった。さらに右railを最大620pxで固定したため、1280px前後では装飾とfacts側が主メッセージより広くなった。
+- **対策**: mobileは短い1行説明へ切り替えて上下paddingを増やし、狭幅だけtitleを再拡大するoverrideを除去した。desktopは情報を削らず右panel幅、column比率、card padding、gap、line-height、orbit高を調整し、右railをgap込みでcopy以下の幅へ制約した。狭いdesktopではfactsを全幅で維持し、幅を消費する装飾orbitだけを非表示にした。E2Eは320/375/390pxで余白、説明行数、最初の記事位置を、1101/1239/1240/1280/1440pxでHero高、左右比率、装飾切替、column非重複、横overflowを実寸検証する。
+- **教訓**: 同じHeroでもmobileの成功条件は操作面を保ったbreathing roomとfirst-decision位置、desktopの成功条件は主メッセージを圧迫しない情報railの密度である。viewportごとに高さと幅を支配する子要素を特定し、単一のpaddingやmax-heightで一括調整しない。判断情報と装飾を分離し、幅が不足する区間では判断情報を残して装飾だけを段階的に外す。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

@@ -78,6 +78,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | #   | ドキュメント                                                            | 概要                                         |
 | --- | ----------------------------------------------------------------------- | -------------------------------------------- |
 | PRODUCT | [プロダクト基準](PRODUCT.md)                                        | 5 分以内の読む・共有判断と WCAG 2.2 AA の成功基準 |
+| CHANGELOG | [変更履歴](CHANGELOG.md)                                           | 利用者向け・データ・運用基盤の主要な変更履歴 |
 | 00  | [Harness Engineering リサーチ](docs/00-research-harness-engineering.md) | Anthropic / OpenAI の原典を元にした原則整理  |
 | 01  | [システム設計書](docs/01-architecture.md)                               | アーキテクチャ・データモデル・データフロー   |
 | 02  | [Agent / Skill / Hook / Prompt 構成](docs/02-agents-skills-hooks.md)    | ハーネスの内部構成と責務分割                 |

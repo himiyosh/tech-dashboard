@@ -620,7 +620,14 @@ const workerToneCopy = {
     </main>
 
     <aside class="right status-insights">
-      <div class="side-card status-insight-card status-score-card">
+      <div
+        class="side-card status-insight-card status-score-card"
+        data-health-scope="source-coverage"
+        data-healthy-source-count={ok}
+        data-evaluated-source-count={evaluatedSourceCount}
+        data-registered-source-count={sources.length}
+        data-health-percentage={healthyPct}
+      >
         <div class="rail-title">
           <span class="i18n-ja">収集状況</span>
           <span class="i18n-en" lang="en">Collection coverage</span>
@@ -634,8 +641,8 @@ const workerToneCopy = {
         </div>
         <div class="status-score-bar"><span style={`width:${healthyPct}%`}></span></div>
         <p>
-          <span class="i18n-ja">{ok} / {sources.length} ソースが通常の更新範囲内です。</span>
-          <span class="i18n-en" lang="en">{ok} of {sources.length} sources are within their normal update window.</span>
+          <span class="i18n-ja">{ok} / {evaluatedSourceCount} ソースが評価対象の通常更新範囲内です。</span>
+          <span class="i18n-en" lang="en">{ok} of {evaluatedSourceCount} evaluated sources are within their normal update window.</span>
         </p>
       </div>
 
@@ -643,16 +650,16 @@ const workerToneCopy = {
 
       <div class="side-card status-insight-card">
         <div class="rail-title">
-          <span class="i18n-ja">カテゴリ別の状態</span>
-          <span class="i18n-en" lang="en">Status by category</span>
+          <span class="i18n-ja">主なカテゴリ別状況（最大8件）</span>
+          <span class="i18n-en" lang="en">Key category status (up to 8)</span>
         </div>
         <ul class="category-health-list">
           {categoryRows.map((row) => (
             <li>
               <span>{row.name}</span>
               <small>
-                <span class="i18n-ja">{row.ok} 順調 · {row.stale} 更新遅延 · {row.error} 要確認</span>
-                <span class="i18n-en" lang="en">{row.ok} fresh · {row.stale} delayed · {row.error} review</span>
+                <span class="i18n-ja">{row.ok} 順調 · {row.stale} 更新遅延 · {row.error} 要確認 · {row.noData} 未収録</span>
+                <span class="i18n-en" lang="en">{row.ok} fresh · {row.stale} delayed · {row.error} review · {row.noData} not listed</span>
               </small>
             </li>
           ))}
@@ -1059,11 +1066,15 @@ const workerToneCopy = {
     list-style: none;
   }
 
+  .status-insight-card {
+    container-type: inline-size;
+  }
+
   .category-health-list li {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+    align-items: start;
     padding-bottom: 8px;
     border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   }
@@ -1073,7 +1084,12 @@ const workerToneCopy = {
     padding-bottom: 0;
   }
 
-  .category-health-list span {
+  .category-health-list li > span,
+  .category-health-list small {
+    min-width: 0;
+  }
+
+  .category-health-list li > span {
     color: var(--text);
     font-size: 12px;
   }
@@ -1081,7 +1097,22 @@ const workerToneCopy = {
   .category-health-list small {
     color: var(--muted-2);
     font-size: 10.5px;
-    white-space: nowrap;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  @container (min-width: 224px) {
+    .category-health-list li {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .category-health-list small {
+      overflow-wrap: normal;
+      white-space: nowrap;
+    }
   }
 
   @media (max-width: 980px) {

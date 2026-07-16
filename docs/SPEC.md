@@ -180,7 +180,7 @@ interface NormalizedEntry {
 | KV `cache.v1` | 旧 Worker 要約キャッシュ (read-only fallback) | migration 期間のみ |
 | `data/_runs/audit-*.md` | 品質監査レポート | `quality-audit` Skill 実行時 |
 
-`web/src/lib/metrics.ts` は `data/index.json`、`data/stats.json`、archive index、Worker health から Timeline / About の表示 metrics を組み立てる。`/metrics.json` は同じ値を JSON で公開し、`LiveMetrics.astro` が開いているページの `data-metric` 表示を定期 fetch で更新する。
+`web/src/lib/metrics.ts` は `data/index.json`、`data/stats.json`、archive index、Worker health から Timeline / About の表示 metrics を組み立てる。`/metrics.json` は同じ値を JSON で公開し、`LiveMetrics.astro` が開いているページの `data-metric` 表示を定期 fetch で更新する。`data/stats.json` の `byDay` / `byMonth` は `bucketTimeZone: "Asia/Tokyo"` を持ち、JST の日付・月境界で集計する。`data/archive/*.json` の月別配置は保存構造として UTC 月を維持する。
 
 data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する。現行上限は `data/index.json` 8 MB、`data/stats.json` 500 KB、archive 月別 JSON 6 MB とする。archive 月別 JSON は canonical URL で重複排除し、一覧表示に使わない本文フィールドを省く。
 

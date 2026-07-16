@@ -64,7 +64,11 @@ import {
   type ArchiveIndexFile,
   type ArchiveMonthFile,
 } from "../../harness/publishers/archive-core.ts";
-import { buildStatsPayload } from "../../harness/publishers/stats-core.ts";
+import {
+  buildStatsPayload,
+  statsDayCutoffKey,
+  STATS_BUCKET_TIME_ZONE,
+} from "../../harness/publishers/stats-core.ts";
 import type { StatsPayload } from "../../harness/publishers/stats-core.ts";
 import type {
   NormalizedEntry,
@@ -692,6 +696,11 @@ export function buildIncrementalStats(opts: {
   const canonicalRemoved = uniqueEntriesByUrl(removed);
   const canonicalAdded = uniqueEntriesByUrl(added);
   if (!existing) return buildStatsPayload(canonicalAdded, generatedAt);
+  if (existing.bucketTimeZone !== STATS_BUCKET_TIME_ZONE) {
+    throw new Error(
+      `stats bucket time zone mismatch: expected ${STATS_BUCKET_TIME_ZONE}, got ${String(existing.bucketTimeZone)}`,
+    );
+  }
 
   // Recompute deltas from the entry sets we have.
   const removedStats = buildStatsPayload(canonicalRemoved, generatedAt);
@@ -744,9 +753,7 @@ export function buildIncrementalStats(opts: {
     dayMap.set(d.date, cur);
   }
   // Prune days older than 90 days relative to generatedAt.
-  const cutoffDay = new Date(new Date(generatedAt).getTime() - 90 * 86_400_000)
-    .toISOString()
-    .slice(0, 10);
+  const cutoffDay = statsDayCutoffKey(generatedAt);
   for (const date of [...dayMap.keys()]) {
     if (date < cutoffDay) dayMap.delete(date);
   }
@@ -795,6 +802,7 @@ export function buildIncrementalStats(opts: {
 
   return {
     generatedAt,
+    bucketTimeZone: STATS_BUCKET_TIME_ZONE,
     totals,
     byDay: [...dayMap.values()].sort((a, b) => a.date.localeCompare(b.date)),
     byMonth: [...monthMap.values()].sort((a, b) => a.month.localeCompare(b.month)),

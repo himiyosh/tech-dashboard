@@ -25,6 +25,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - 記事詳細の要約、言語 provenance、外部記事への導線を整理しました。
 - 当日の JST 集計と過去日の archive-backed 統計を分離し、日次・カテゴリ推移の表示契約を揃えました。
 - Research を含む taxonomy、source filter、live/archive の tag・stats 同期を更新しました。
+- 2 件以上の記事で使われるタグだけを静的ページ化し、低頻度タグは完全一致のタグ検索から対象記事へ戻れるようにしました。
 
 ### 修正
 
@@ -33,3 +34,5 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - 要約品質、タイトル言語、body retention、live/archive metadata の不整合を修正しました。
 - Publisher runtime fingerprint を現行の生成契約へ同期しました。
 - Pagefind を含む本番 Web build が CI job 全体の時間上限で中断されないよう、品質 gate の実行上限を調整しました。
+- Web build の開始時に古い `dist` を削除し、廃止した静的ルートが成果物へ残らないようにしました。
+- 共有されたタグ検索 URL の大文字小文字やアクセント表記が異なっても、完全一致の対象記事を回収できるようにしました。

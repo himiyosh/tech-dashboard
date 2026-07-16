@@ -20,6 +20,7 @@ import {
   sourceAvgImportance,
   summaryForLang,
   summaryForLangWithFallback,
+  tagHref,
   titleForLang,
   titleForLangWithFallback,
   trendingTags,
@@ -29,6 +30,7 @@ import { bodyForEntry } from "../../lib/bodies.ts";
 import { sourceFaviconUrl, sourceHost } from "../../lib/favicon.ts";
 import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../../lib/reaction-copy.ts";
 import { SOURCE_META, sourceAuthority, sourceLabel } from "../../lib/source-meta.ts";
+import { normalizeTagKey } from "../../lib/tag-normalize.ts";
 
 export function getStaticPaths() {
   return ALL_ENTRIES.map((e) => ({
@@ -53,6 +55,7 @@ const summaryJa = summaryJaResult.text;
 const summaryEn = summaryForLangWithFallback(entry, "en");
 const indexedSummaryJa = summaryForLang(entry, "ja");
 const indexedSummaryEn = summaryForLang(entry, "en");
+const indexedTagKeys = [...new Set(entry.tags.map(normalizeTagKey).filter(Boolean))];
 // "Summary pending" only when there is no usable summary in ANY language.
 // summaryForLangWithFallback cross-falls-back and blanks boilerplate / title
 // echoes, so an English-source entry with a real EN summary is NOT treated as
@@ -168,8 +171,8 @@ function highlightTags(html: string, tagList: string[]): string {
   for (const tag of sorted) {
     if (tag.length < 2) continue;
     const re = new RegExp(`\\b${escapeRegex(tag)}\\b`, "gi");
-    const href = `/t/${encodeURIComponent(tag.toLowerCase())}`;
-    out = out.replace(re, (match) => `<a class="kw" href="${href}">${escapeHtml(match)}</a>`);
+    const href = tagHref(tag);
+    out = out.replace(re, (match) => `<a class="kw" href="${escapeHtml(href)}">${escapeHtml(match)}</a>`);
   }
   return out;
 }
@@ -290,6 +293,8 @@ const jsonLd = {
     {titleEn && <meta data-pagefind-meta="titleEn[content]" content={titleEn} />}
     {indexedSummaryJa && <meta data-pagefind-meta="summaryJa[content]" content={indexedSummaryJa} />}
     {indexedSummaryEn && <meta data-pagefind-meta="summaryEn[content]" content={indexedSummaryEn} />}
+    {entry.tags.length > 0 && <meta data-pagefind-meta="tags[content]" content={entry.tags.join(" ")} />}
+    {indexedTagKeys.map((tag) => <meta data-pagefind-filter="tag[content]" content={tag} />)}
     <meta data-pagefind-filter="category[content]" content={catName} />
     <meta data-pagefind-filter="source[content]" content={sourceLabel(entry.source)} />
     <meta data-pagefind-filter="sourceType[content]" content={entry.sourceType} />
@@ -595,7 +600,7 @@ const jsonLd = {
             </span>
             <span class="ed-topic-links">
               {entry.tags.map((t) => (
-                <a href={`/t/${encodeURIComponent(t)}`}>{t}</a>
+                <a href={tagHref(t)}>{t}</a>
               ))}
             </span>
           </nav>
@@ -929,7 +934,7 @@ const jsonLd = {
         <div class="rail-title">Trending Tags</div>
         <div class="tag-cloud">
           {tags.map((t) => (
-            <a class="tag" href={`/t/${encodeURIComponent(t.tag)}`}>
+            <a class="tag" href={tagHref(t.tag)}>
               #{t.tag} <span class="c">{t.count}</span>
             </a>
           ))}

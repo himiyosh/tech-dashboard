@@ -91,6 +91,7 @@ const {
   relatedEntries,
   entriesBySource,
   entriesByTag,
+  entriesForTagPage,
   adjacentInCategory,
   categoryImportanceStanding,
   isLowSignalRelease,
@@ -103,6 +104,11 @@ const {
   isArxivEntry,
   isResearchListingEntry,
   ALL_ENTRIES,
+  STATIC_TAG_PAGE_TAGS,
+  TAG_PAGE_MIN_ENTRIES,
+  tagEntryCount,
+  tagHref,
+  tagHrefForCount,
 } = await import("../web/src/lib/data.ts");
 const { decisionRankScore } = await import("../web/src/lib/ranking.ts");
 
@@ -916,6 +922,26 @@ describe("entriesByTag", () => {
   it("タグが空のエントリは空配列を返す", () => {
     const entry = { ...e1, tags: [] };
     expect(entriesByTag(entry)).toEqual([]);
+  });
+});
+
+describe("tag page routing", () => {
+  it("2 件以上のタグだけを静的ページとして生成する", () => {
+    expect(TAG_PAGE_MIN_ENTRIES).toBe(2);
+    expect(tagEntryCount("claude")).toBe(2);
+    expect(tagEntryCount("CLAUDE")).toBe(2);
+    expect(entriesForTagPage("claude").map((entry) => entry.id)).toEqual(["entry-001", "entry-003"]);
+    expect(entriesForTagPage("Claude").map((entry) => entry.id)).toEqual(["entry-001", "entry-003"]);
+    expect(STATIC_TAG_PAGE_TAGS).toContain("claude");
+    expect(STATIC_TAG_PAGE_TAGS).not.toContain("release");
+  });
+
+  it("低頻度タグを検索へ送り URL を安全にエンコードする", () => {
+    expect(tagHref("claude")).toBe("/t/claude");
+    expect(tagHref("release")).toBe("/search?q=release&tag=release");
+    expect(tagHrefForCount("C++", 1)).toBe("/search?q=c%2B%2B&tag=c%2B%2B");
+    expect(tagHrefForCount("C++", 2)).toBe("/t/c%2B%2B");
+    expect(tagHrefForCount("Café", 1)).toBe("/search?q=cafe&tag=cafe");
   });
 });
 

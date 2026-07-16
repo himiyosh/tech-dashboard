@@ -2178,6 +2178,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: mobileは短い1行説明へ切り替えて上下paddingを増やし、狭幅だけtitleを再拡大するoverrideを除去した。desktopは情報を削らず右panel幅、column比率、card padding、gap、line-height、orbit高を調整し、右railをgap込みでcopy以下の幅へ制約した。狭いdesktopではfactsを全幅で維持し、幅を消費する装飾orbitだけを非表示にした。E2Eは320/375/390pxで余白、説明行数、最初の記事位置を、1101/1239/1240/1280/1440pxでHero高、左右比率、装飾切替、column非重複、横overflowを実寸検証する。
 - **教訓**: 同じHeroでもmobileの成功条件は操作面を保ったbreathing roomとfirst-decision位置、desktopの成功条件は主メッセージを圧迫しない情報railの密度である。viewportごとに高さと幅を支配する子要素を特定し、単一のpaddingやmax-heightで一括調整しない。判断情報と装飾を分離し、幅が不足する区間では判断情報を残して装飾だけを段階的に外す。
 
+### LL-324: 高cardinalityの静的route削減はclean buildと決定論的な回収導線をセットにする
+- **事象**: 3,099種類のtagを1件利用でも静的page化した結果、tag関連routeが約3,419件、`web/dist/t`が約236MBまで増えた。生成対象を減らした通常build後も、削除済みrouteのHTMLが既存`dist`へ残り、削減効果を正しく測れなかった。低頻度tagを一般検索へ送るだけでは、Pagefindの候補上限により対象記事を確実に回収できなかった。
+- **根本原因**: 高cardinalityのfacet値と専用静的routeを1対1で対応させ、専用pageを持たない値の決定論的な検索契約を用意していなかった。Astro buildが旧出力を自動削除すると仮定し、stale artifactを含む件数と容量を計測していた。一般検索の近似順位と候補上限もexact tag intentの代替にしていた。
+- **対策**: 2件以上の記事で使われる1,027 tagだけを静的page化し、低頻度tagは`q`と`tag`を持つ検索URLへ送る。記事detailへ反復可能なPagefind tag filter metadataを出し、明示tag intentではfilter-only検索を一般検索より優先してURL重複を除く。手入力開始時はtag intentを解除する。Web buildは最初に`dist`を削除し、clean buildで`web/dist/t`約115MB、全体約371MB、6,609 fileまで減ったことを確認した。
+- **教訓**: tagやfacetの種類数が記事数に近づく場合、全値を静的route化しない。専用pageの閾値と、専用pageを持たない値から対象contentへ必ず戻れるexact retrievalを同じ情報設計として用意する。静的route削減の計測は生成先をcleanにしてから行い、一般検索の上位候補だけを決定論的な回収導線にしない。
+
+### LL-325: exact facet検索はindex値とURL intentを同じkeyへ正規化する
+- **事象**: 低頻度tagの共有URLで`q=Video&tag=Video`のように大文字小文字が変わると、Pagefindのtag filterが小文字のindex値に一致せず、一般検索へ静かにfallbackして対象記事を回収できなかった。
+- **根本原因**: app内で生成するtag URLが小文字であることに依存し、Pagefind filter metadata、静的route key、URLの`tag` intentを共通のcanonical keyへ正規化していなかった。exact filterは文字列完全一致なので、一般検索のcase-insensitive挙動では代替できない。
+- **対策**: `normalizeTagKey()`を追加し、tag count・静的route・link・Pagefind filter metadata・client-side intent比較の全境界で同じNFKC相当の検索正規化と小文字化を適用した。大文字へ変更した共有URLでもsingleton記事が先頭に戻り、手入力でintentが解除されるE2Eを追加した。
+- **教訓**: facetのexact検索はin-app linkの表記だけを正規形と仮定しない。indexへ書く値、route key、共有URL、client filter値を同じhelperでcanonicalizeし、手編集・copy・Unicode表記差でも決定論的な回収契約を維持する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

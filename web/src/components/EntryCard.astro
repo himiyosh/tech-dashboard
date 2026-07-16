@@ -6,6 +6,7 @@ import {
   entryHref,
   importanceLabel,
   summaryForLangWithFallback,
+  tagHref,
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
@@ -235,7 +236,7 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
       {visibleTags.length > 0 && (
         <div class="tag-row">
           {visibleTags.map((t) => (
-            <a class="tag-chip" href={`/t/${t}`}>#{t}</a>
+            <a class="tag-chip" href={tagHref(t)}>#{t}</a>
           ))}
           {hiddenTagCount > 0 && <span class="tag-chip tag-more">+{hiddenTagCount}</span>}
         </div>

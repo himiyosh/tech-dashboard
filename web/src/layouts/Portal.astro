@@ -287,6 +287,7 @@ const footerLastRunRelative = footerLastRunAt
 
     <script>
       import { normalizeSearchText } from "../lib/search-normalize.ts";
+      import { normalizeTagKey } from "../lib/tag-normalize.ts";
 
       // Language toggle (Ja / En) — sync with <html data-lang="...">.
       (() => {
@@ -438,6 +439,7 @@ const footerLastRunRelative = footerLastRunAt
           const next = new URL(window.location.href);
           if (query) next.searchParams.set("q", query);
           else next.searchParams.delete("q");
+          next.searchParams.delete("tag");
           window.history.replaceState(
             window.history.state,
             "",
@@ -617,7 +619,7 @@ const footerLastRunRelative = footerLastRunAt
             const source = displaySource(filterValue(d, "source"));
             const category = displayCategory(filterValue(d, "category"));
             return normalizeSearchText(stripTags(
-              `${d.meta?.titleJa || ""} ${d.meta?.titleEn || ""} ${d.meta?.summaryJa || ""} ${d.meta?.summaryEn || ""} ${source} ${category}`,
+              `${d.meta?.titleJa || ""} ${d.meta?.titleEn || ""} ${d.meta?.summaryJa || ""} ${d.meta?.summaryEn || ""} ${d.meta?.tags || ""} ${source} ${category}`,
             ));
           }
           const source = filterValue(d, "source");
@@ -767,24 +769,39 @@ const footerLastRunRelative = footerLastRunAt
           let items: any[] = [];
           try {
             const searchDeadline = performance.now() + 6500;
-            const search = await withDeadline(
-              Promise.resolve(pf.search(q)),
+            const requestedTag = normalizeTagKey(
+              new URLSearchParams(window.location.search).get("tag") ?? "",
+            );
+            const tagIntent = requestedTag && requestedTag === normalizeTagKey(q)
+              ? requestedTag
+              : "";
+            const [search, tagSearch] = await withDeadline(
+              Promise.all([
+                Promise.resolve(pf.search(q)),
+                tagIntent
+                  ? Promise.resolve(pf.search(null, { filters: { tag: [tagIntent] } }))
+                  : Promise.resolve({ results: [] }),
+              ]),
               3500,
               "The search index took too long to respond.",
             );
             const batchSize = 30;
-            const maxCandidates = Math.min(search.results.length, 300);
-            for (let offset = 0; offset < maxCandidates; offset += batchSize) {
+            const candidates = [
+              ...tagSearch.results.slice(0, 12).map((result: any) => ({ result, intentMatch: true })),
+              ...search.results.slice(0, 300).map((result: any) => ({ result, intentMatch: false })),
+            ];
+            for (let offset = 0; offset < candidates.length; offset += batchSize) {
               const remainingMs = searchDeadline - performance.now();
               if (remainingMs <= 0) break;
               const batch = await Promise.allSettled(
-                search.results.slice(offset, offset + batchSize).map((r: any) =>
-                  withDeadline(
-                    Promise.resolve(r.data()),
+                candidates.slice(offset, offset + batchSize).map(async ({ result, intentMatch }) => {
+                  const item = await withDeadline(
+                    Promise.resolve(result.data()),
                     Math.max(1, Math.min(1200, remainingMs)),
                     "A search result took too long to load.",
-                  ),
-                ),
+                  );
+                  return intentMatch ? { ...item, intentMatch: true } : item;
+                }),
               );
               if (!isCurrentRequest(generation)) return;
               items.push(...batch.flatMap((result) => result.status === "fulfilled" ? [result.value] : []));
@@ -795,7 +812,7 @@ const footerLastRunRelative = footerLastRunAt
               ).length;
               if (exactArticleCount >= 12) break;
             }
-            if (items.length === 0 && search.results.length > 0) {
+            if (items.length === 0 && candidates.length > 0) {
               throw new Error("Search results could not be loaded in time.");
             }
           } catch (error) {
@@ -846,10 +863,21 @@ const footerLastRunRelative = footerLastRunAt
               intentMatch: true,
             });
           }
+          const seenUrls = new Set<string>();
+          items = items.filter((item) => {
+            const url = String(item.url ?? "").replace(/^https?:\/\/[^/]+/, "");
+            if (!url || seenUrls.has(url)) return false;
+            seenUrls.add(url);
+            return true;
+          });
           const exactItems = items
             .map((item, index) => ({ item, index, type: classifyResult(item.url || "") }))
             .filter(({ item }) => Boolean(item.url) && isExactResult(item, q))
             .sort((a, b) => {
+              const explicitIntentOrder =
+                Number(b.item.intentMatch === true)
+                - Number(a.item.intentMatch === true);
+              if (explicitIntentOrder) return explicitIntentOrder;
               const intentOrder =
                 Number(categorySlugForItem(b.item) === intentSlug)
                 - Number(categorySlugForItem(a.item) === intentSlug);

@@ -10,6 +10,7 @@ import {
   groupByDay,
   jstDayLabel,
   relativeTime,
+  tagHref,
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { ARXIV_SOURCE_INFO, arxivSourceInfo } from "../lib/arxiv-meta.ts";
@@ -119,7 +120,7 @@ const breadcrumb = [
         <div class="right-title">Paper Tags</div>
         <div class="tag-cloud">
           {topTags.map((tag) => (
-            <a class="tag" href={`/t/${encodeURIComponent(tag.tag)}`}>
+            <a class="tag" href={tagHref(tag.tag)}>
               #{tag.tag} <span class="c">{tag.count}</span>
             </a>
           ))}

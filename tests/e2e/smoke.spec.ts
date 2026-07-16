@@ -3516,6 +3516,42 @@ test.describe("TECH Dashboard smoke", () => {
     expect(categoryHrefs.some((href) => /\/page\/\d+\//.test(href))).toBe(false);
   });
 
+  test("singleton tag links recover their article through exact search", async ({ page }) => {
+    await page.goto("/");
+
+    const tagLinks = page.locator("main article.card .tag-chip[href^='/search?q=']");
+    const tagIndex = await tagLinks.evaluateAll((links) =>
+      links.findIndex((link) => /[a-z]/.test(new URL((link as HTMLAnchorElement).href).searchParams.get("q") ?? "")),
+    );
+    expect(tagIndex).toBeGreaterThanOrEqual(0);
+    const tagLink = tagLinks.nth(tagIndex);
+    await expect(tagLink).toBeVisible();
+    const searchHref = await tagLink.getAttribute("href");
+    const detailHref = await tagLink.locator("xpath=ancestor::article[1]").locator("h3.title > a").getAttribute("href");
+    expect(searchHref).toBeTruthy();
+    expect(detailHref).toBeTruthy();
+    const searchUrl = new URL(searchHref!, "http://localhost");
+    const query = searchUrl.searchParams.get("q");
+    expect(query).toBeTruthy();
+    expect(searchUrl.searchParams.get("tag")).toBe(query);
+
+    await tagLink.click();
+    const input = page.locator("#pagefind-search-input");
+    await expect(input).toBeFocused();
+    await expect(input).toHaveValue(query!);
+    await expect(page.locator(`.search-hit[href="${detailHref}"]`)).toBeVisible({ timeout: 10_000 });
+
+    const caseVariant = query!.replace(/[a-z]/g, (character) => character.toUpperCase());
+    expect(caseVariant).not.toBe(query);
+    const caseQuery = new URLSearchParams({ q: caseVariant, tag: caseVariant });
+    await page.goto(`/search?${caseQuery.toString()}`);
+    await expect(input).toHaveValue(caseVariant);
+    await expect(page.locator(".search-hit").first()).toHaveAttribute("href", detailHref!, { timeout: 10_000 });
+
+    await input.fill(`${caseVariant}-manual`);
+    await expect.poll(() => new URL(page.url()).searchParams.has("tag")).toBe(false);
+  });
+
   test("pagefind ranks article results by authority, importance, then recency", async ({ page }) => {
     await page.goto("/");
     await expect

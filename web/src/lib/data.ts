@@ -15,6 +15,7 @@ import {
   summaryForLang,
   summaryForLangWithFallback,
 } from "./summary-display.ts";
+import { normalizeTagKey } from "./tag-normalize.ts";
 
 export {
   effectiveTitleLanguage,
@@ -221,6 +222,41 @@ export const PENDING_SUMMARY_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.f
 export const ALL_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.filter(isListableEntry);
 export const GENERATED_AT = data.generatedAt;
 export const WORKER_HEALTH: WorkerHealth | null = data.health ?? null;
+
+export const TAG_PAGE_MIN_ENTRIES = 2;
+
+const TAG_ENTRIES_BY_NAME = new Map<string, NormalizedEntry[]>();
+for (const entry of ALL_ENTRIES) {
+  for (const tag of new Set(entry.tags.map(normalizeTagKey).filter(Boolean))) {
+    const matches = TAG_ENTRIES_BY_NAME.get(tag);
+    if (matches) matches.push(entry);
+    else TAG_ENTRIES_BY_NAME.set(tag, [entry]);
+  }
+}
+
+export const STATIC_TAG_PAGE_TAGS: readonly string[] = [...TAG_ENTRIES_BY_NAME.entries()]
+  .filter(([, entries]) => entries.length >= TAG_PAGE_MIN_ENTRIES)
+  .map(([tag]) => tag)
+  .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+
+export function tagEntryCount(tag: string): number {
+  return TAG_ENTRIES_BY_NAME.get(normalizeTagKey(tag))?.length ?? 0;
+}
+
+export function entriesForTagPage(tag: string): readonly NormalizedEntry[] {
+  return TAG_ENTRIES_BY_NAME.get(normalizeTagKey(tag)) ?? [];
+}
+
+export function tagHrefForCount(tag: string, count: number): string {
+  const encodedTag = encodeURIComponent(normalizeTagKey(tag));
+  return count >= TAG_PAGE_MIN_ENTRIES
+    ? `/t/${encodedTag}`
+    : `/search?q=${encodedTag}&tag=${encodedTag}`;
+}
+
+export function tagHref(tag: string): string {
+  return tagHrefForCount(tag, tagEntryCount(tag));
+}
 
 export function isArxivEntry(entry: Pick<NormalizedEntry, "source" | "sourceType" | "url">): boolean {
   return entry.source.startsWith("arxiv-") || (entry.sourceType === "paper" && entry.url.includes("arxiv.org"));

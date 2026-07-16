@@ -4,6 +4,7 @@ import {
   CATEGORY_META,
   entryHref,
   relativeTime,
+  tagHref,
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
@@ -108,7 +109,7 @@ const categoryInitial = category.initial;
       <div class="right-title">Trending tags</div>
       <div class="tag-cloud category-side-tags">
         {topTags.map((tag) => (
-          <a class="tag" href={`/t/${encodeURIComponent(tag.key)}`}>
+          <a class="tag" href={tagHref(tag.key)}>
             #{tag.key} <span class="c">{tag.count}</span>
           </a>
         ))}

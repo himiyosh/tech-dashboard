@@ -32,3 +32,4 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - Featured thumbnail とカード幅の不一致、画像周辺の不要な余白を修正しました。
 - 要約品質、タイトル言語、body retention、live/archive metadata の不整合を修正しました。
 - Publisher runtime fingerprint を現行の生成契約へ同期しました。
+- Pagefind を含む本番 Web build が CI job 全体の時間上限で中断されないよう、品質 gate の実行上限を調整しました。

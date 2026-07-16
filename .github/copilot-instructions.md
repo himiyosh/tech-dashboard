@@ -1489,11 +1489,11 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: summary/body job と cache record に publisher fingerprint を伝播し、明示 mismatch は mergeせず再 enqueue する。既存 fingerprint 無し cache はテキスト互換を維持するが metadata は採用しない。更新済み consumer は fingerprint 無し job を `legacy-unversioned-job` として明示的な不一致にし、初回 rollout は consumers を先に更新してから harness guard を有効化する。
 - **教訓**: automated publisher の互換性 gate は最終 commit だけでなく、commit 前に発生する Queue、KV、object storage など全副作用へ伝播する。既存 legacy data と新しい unversioned write を区別できる migration marker を持たせ、consumer-first の rollout 順序まで contract に含める。
 
-### LL-209: Playwright webServer timeout は Pagefind の実測時間に余裕を持たせる
-- **事象**: `npm run build:web` は成功したが、続く `npm run test:e2e` が test 実行前の webServer 起動待ちで 180 秒 timeout した。build log では Astro が 5,284 page を約 30 秒、Pagefind が 6,446 page の index 作成に約 125 秒を要していた。
-- **根本原因**: `playwright.config.ts` の webServer timeout が、data 増加に伴う Pagefind の実測 build 時間約 155 秒に対して余裕 25 秒しかなく、同じ build の速度変動で起動上限を超えた。
-- **対策**: webServer timeout を 300 秒へ広げ、build と E2E は LL-047 のとおり逐次実行する。E2E failure は test assertion と preview 起動 timeout を分け、build log の phase 別所要時間で切り分ける。
-- **教訓**: static page と検索 index が data 件数に比例して増えるサイトでは、E2E webServer timeout を固定の小さい値にしない。通常 build の実測値に十分な余裕を持たせ、timeout 延長で assertion failure を隠さない。
+### LL-209: Pagefind build の timeout は実測時間と job 全体の予算に余裕を持たせる
+- **事象**: `npm run build:web` は成功したが、続く `npm run test:e2e` が test 実行前の webServer 起動待ちで 180 秒 timeout した。後の PR CI では unit / typecheck が成功した後、Pagefind を含む Web build が job 開始から 5 分の上限で cancel され、E2E が skip された。build log では Astro が 5,284 page を約 30 秒、Pagefind が 6,446 page の index 作成に約 125 秒を要していた。
+- **根本原因**: data 増加に比例する Pagefind build に対し、`playwright.config.ts` の webServer timeout と CI unit job 全体の timeout が固定の小さい値だった。CI の 5 分には dependency install、typecheck、unit test も含まれるため、Web build 自体に使える時間は約 4 分半しか残らなかった。
+- **対策**: Playwright webServer timeout を 300 秒、CI の unit + typecheck + web build job を 10 分へ広げ、build と E2E は LL-047 のとおり逐次実行する。E2E failure は test assertion、preview 起動 timeout、job 全体の timeout を分け、build log の phase 別所要時間で切り分ける。
+- **教訓**: static page と検索 index が data 件数に比例して増えるサイトでは、E2E webServer と CI job 全体の timeout を固定の小さい値にしない。通常 build と前処理の実測値に十分な余裕を持たせ、timeout 延長で assertion failure を隠さない。
 
 ### LL-210: data migration 後も全 artifact の U+FFFD を schema gate で検出する
 - **事象**: self-critique の全量 Unicode scan で、`data/archive/2026-06.json` の Qiita title / titleJa に U+FFFD が 1 文字ずつ残っていた。`origin/main` にも同じ 2 field が存在し、taxonomy migration は文字化けを新規生成していないが、そのまま保持していた。

@@ -119,11 +119,27 @@ export interface WorkerHealth {
   queueCap?: number;
   enqueueCandidates?: number;
   summaryQueueBacklog?: number;
+  summaryQueueEnqueued?: number;
   summaryQueueDrainEstimateHours?: number;
   summaryQueueStartIndex?: number;
   summaryQueueCooldownCount?: number;
   kvLookupCap?: number;
   kvLookupCount?: number;
+  bodyQueueMode?: string;
+  bodyBacklog?: number;
+  bodyEnqueueCandidates?: number;
+  bodyEnqueueCap?: number;
+  bodyEnqueued?: number;
+  bodyLookupCount?: number;
+  bodyMerged?: number;
+  bodyPruned?: number;
+  bodyQueueDrainEstimateHours?: number;
+  /** Legacy artifact key retained while older Publisher snapshots age out. */
+  bodyDrainEstimateHours?: number;
+  bodyMergePendingIds?: string[];
+  enrichmentEnqueueCap?: number;
+  enrichmentEnqueued?: number;
+  enrichmentRemaining?: number;
 }
 
 interface IndexPayload {

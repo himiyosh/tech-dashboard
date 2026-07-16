@@ -53,7 +53,7 @@ export async function getBodyCacheEntry(
 /**
  * Read N body cache entries in parallel. Returns a Map<url, BodyCacheEntry>;
  * missing URLs are simply absent. Each bridge-backed KV.get is one request, so
- * callers must cap the number of URLs per run (BODY_LOOKUP_CAP).
+ * callers must bound the combined current-candidate and previous-pending set.
  */
 export async function getBodyCacheEntries(
   kv: KeyValueBinding,

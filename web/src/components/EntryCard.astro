@@ -8,10 +8,13 @@ import {
   summaryForLangWithFallback,
   tagHref,
   titleForLangWithFallback,
+  WORKER_HEALTH,
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { sourceFaviconUrl } from "../lib/favicon.ts";
+import { deriveQueueDisplay } from "../lib/queue-health.ts";
+import { deriveWorkerRunStatus } from "../lib/run-health.ts";
 import { sourceAuthority, sourceLabel } from "../lib/source-meta.ts";
 import LanguageFallbackBadge from "./LanguageFallbackBadge.astro";
 
@@ -80,15 +83,49 @@ const publishedEn = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
 }).format(new Date(entry.publishedAt));
 
-const queueDrainHours = DASHBOARD_METRICS.summaryQueueDrainEstimateHours > 0
-  ? Math.max(1, Math.ceil(DASHBOARD_METRICS.summaryQueueDrainEstimateHours))
-  : null;
-const queueDrainJa = queueDrainHours
-  ? `全体キュー解消目安 約${queueDrainHours}時間`
-  : "要約キュー反映待ち";
-const queueDrainEn = queueDrainHours
-  ? `Queue drain estimate: about ${queueDrainHours}h`
-  : "Waiting for the summary queue";
+const workerRun = deriveWorkerRunStatus({
+  workerHealth: WORKER_HEALTH,
+  fallbackPercent: DASHBOARD_METRICS.fallbackPercent,
+  pendingSummaryEntries: DASHBOARD_METRICS.fallbackEntries,
+});
+const summaryQueue = deriveQueueDisplay({
+  mode: DASHBOARD_METRICS.summaryQueueMode,
+  backlog: DASHBOARD_METRICS.summaryQueueBacklog,
+  drainEstimateHours: DASHBOARD_METRICS.summaryQueueDrainEstimateHours,
+  runTone: workerRun.tone,
+});
+const summaryQueueCopy = {
+  active: {
+    ja: summaryQueue.labelJa,
+    en: summaryQueue.labelEn,
+  },
+  clear: {
+    ja: "次回収集待ち",
+    en: "Waiting for the next collection run",
+  },
+  "waiting-for-run": {
+    ja: "収集再開待ち",
+    en: "Waiting for collection to resume",
+  },
+  paused: {
+    ja: "要約キュー停止中",
+    en: "Summary queue paused",
+  },
+  unavailable: {
+    ja: "要約キュー利用不可",
+    en: "Summary queue unavailable",
+  },
+  error: {
+    ja: "要約キュー要確認",
+    en: "Summary queue needs review",
+  },
+  unknown: {
+    ja: "要約キュー状態を確認中",
+    en: "Checking summary queue status",
+  },
+} as const;
+const queueDrainJa = summaryQueueCopy[summaryQueue.state].ja;
+const queueDrainEn = summaryQueueCopy[summaryQueue.state].en;
 
 // Generate a deterministic pattern seed from the entry id
 const patternSeed = entry.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
@@ -223,7 +260,11 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
         )}
       </div>
     ) : (
-      <p class="summary-state">
+      <p
+        class="summary-state"
+        data-summary-queue-mode={summaryQueue.mode}
+        data-summary-queue-state={summaryQueue.state}
+      >
         <span class="summary-pending-badge">
           <span class="i18n-ja">AI要約 処理中</span>
           <span class="i18n-en" lang="en">AI summary pending</span>

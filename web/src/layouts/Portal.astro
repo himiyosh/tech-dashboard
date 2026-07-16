@@ -3,6 +3,7 @@ import "../styles/portal.css";
 import { SITE_URL } from "../lib/site.ts";
 import { CATEGORY_META, WORKER_HEALTH, relativeTime } from "../lib/data.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
+import { deriveQueueDisplay } from "../lib/queue-health.ts";
 import { deriveWorkerRunStatus } from "../lib/run-health.ts";
 import { SOURCE_META, sourceLabel } from "../lib/source-meta.ts";
 import ArxivIcon from "../components/icons/ArxivIcon.astro";
@@ -57,6 +58,29 @@ const footerBatchDetail = !WORKER_HEALTH
   ? "open /status"
   : `last batch ${WORKER_HEALTH.sourcesOk}/${WORKER_HEALTH.sourcesAttempted} src · summary queue ${DASHBOARD_METRICS.summaryQueueBacklog}`;
 const footerRunDetail = `${footerRun.detail} · ${footerBatchDetail}`;
+const footerSummaryQueue = deriveQueueDisplay({
+  mode: DASHBOARD_METRICS.summaryQueueMode,
+  backlog: DASHBOARD_METRICS.summaryQueueBacklog,
+  drainEstimateHours: DASHBOARD_METRICS.summaryQueueDrainEstimateHours,
+  runTone: footerRun.tone,
+});
+const footerBodyQueue = deriveQueueDisplay({
+  mode: DASHBOARD_METRICS.bodyQueueMode,
+  backlog: DASHBOARD_METRICS.bodyQueueBacklog,
+  drainEstimateHours: DASHBOARD_METRICS.bodyQueueDrainEstimateHours,
+  runTone: footerRun.tone,
+});
+const footerBodyQueueText = footerBodyQueue.state === "active"
+  ? `body ${footerBodyQueue.backlog} pending`
+  : footerBodyQueue.state === "clear"
+    ? "body ready"
+    : footerBodyQueue.state === "waiting-for-run"
+      ? "body waiting"
+      : footerBodyQueue.state === "paused"
+        ? "body paused"
+        : "body unavailable";
+const footerBodyQueueDetail = `AI explainer body queue ${footerBodyQueue.labelEn}`;
+const footerHealthDetail = [footerRunDetail, footerBodyQueueDetail].filter(Boolean).join(". ");
 const footerLastRunAt = WORKER_HEALTH?.lastRunAt ?? null;
 const footerLastRunRelative = footerLastRunAt
   ? relativeTime(footerLastRunAt, new Date())
@@ -105,7 +129,7 @@ const footerLastRunRelative = footerLastRunAt
       })();
     </script>
   </head>
-  <body>
+  <body class:list={{ "entry-detail-page": currentPath.startsWith("/e/") }}>
     <a class="skip-link" href="#content-start">
       <span class="i18n-ja">本文へスキップ</span>
       <span class="i18n-en" lang="en">Skip to content</span>
@@ -260,14 +284,20 @@ const footerLastRunRelative = footerLastRunAt
         <a
           class="item footer-run-link"
           href="/status"
-          aria-label={`Collection health: ${footerRunStatus}. ${footerRunDetail}`}
-          title={`Collection health: ${footerRunStatus}. ${footerRunDetail}`}
+          aria-label={`Collection health: ${footerRunStatus}. ${footerHealthDetail}`}
+          title={`Collection health: ${footerRunStatus}. ${footerHealthDetail}`}
           data-run-detail={footerRun.detail}
           data-summary-queue-backlog={DASHBOARD_METRICS.summaryQueueBacklog}
+          data-summary-queue-mode={footerSummaryQueue.mode}
+          data-summary-queue-state={footerSummaryQueue.state}
+          data-body-queue-mode={footerBodyQueue.mode}
+          data-body-queue-state={footerBodyQueue.state}
+          data-body-queue-backlog={footerBodyQueue.showBacklog ? footerBodyQueue.backlog : "unknown"}
         >
           <span class={`dot ${footerRunTone}`} data-run-tone={footerRunTone} aria-hidden="true"></span>
           <strong>{footerRunStatus}</strong>
           <span class="mono">{footerRunDetail}</span>
+          <span class="footer-body-queue">{footerBodyQueueText}</span>
           {footerLastRunAt && footerLastRunRelative && (
             <time
               class="footer-run-time"

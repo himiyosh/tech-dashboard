@@ -1,10 +1,11 @@
 /**
  * web/src/lib/bodies.ts
  *
- * Body-file architecture (LL-113). Long-form article bodies live in
+ * Body-file architecture (LL-115). Long-form article bodies live in
  * data/bodies.json, NOT in data/index.json. This keeps the index small (under
- * the CI size budget, LL-112) while full bodies can grow without bound. The
- * article detail page reads bodies from here, keyed by entry id.
+ * the CI size budget, LL-112). Retention is bounded to evergreen, important,
+ * or recent entries so the sidecar remains within its own size budget. The
+ * article detail page reads retained bodies from here, keyed by entry id.
  *
  * Bodies are generated separately (Phase B: a dedicated cloud worker using
  * opus-4.8). Entries without a body simply have no key here and the detail page
@@ -18,6 +19,8 @@ export interface BodyRecord {
   model?: string;
   generatedAt?: string;
 }
+
+export type ArticleBodyState = "ready" | "queued" | "summary-only";
 
 interface BodiesPayload {
   generatedAt: string;
@@ -54,6 +57,15 @@ export function bodyForEntry(id: string): BodyRecord | null {
   if (!ja && !en) return null;
   if (isFillerBody(record)) return null;
   return record;
+}
+
+export function articleBodyState(
+  id: string,
+  body: BodyRecord | null,
+  pendingIds: readonly string[] = [],
+): ArticleBodyState {
+  if (body) return "ready";
+  return pendingIds.includes(id) ? "queued" : "summary-only";
 }
 
 /** True when the entry id has a real, renderable long-form body. */

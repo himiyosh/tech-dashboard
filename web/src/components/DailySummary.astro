@@ -105,7 +105,7 @@ const catRows = CATEGORY_META
   .map((c) => ({
     ...c,
     n: catCounts.get(c.slug) ?? 0,
-    displayName: c.slug === "research" ? "Research + arXiv" : c.name,
+    displayName: c.slug === "research" ? "Research + arXiv" : c.shortLabel,
     href: c.slug === "research" ? "/categories/" : `/c/${c.slug}`,
   }))
   .sort((a, b) => b.n - a.n)
@@ -214,6 +214,7 @@ const catColorOf = (slug: string): string =>
 
 <section
   class="digest"
+  data-daily-summary
   data-base-day={baseDayKey}
   data-day-scope={baseDayIsToday ? "today" : "latest"}
 >
@@ -250,10 +251,13 @@ const catColorOf = (slug: string): string =>
 
   <div class="digest-body">
     <div class="panel spark">
-      <div class="panel-title">Last 7 days</div>
+      <div class="panel-title">
+        <span>Last 7 days</span>
+        <span class="panel-sub">{weekCount} total</span>
+      </div>
       <div class="bars" role="group" aria-label={`Last 7 days article counts, total ${weekCount}`}>
-        {perDay.map((d) => (
-          <div class="bar" title={`${d.key}: ${d.count}`}>
+        {perDay.map((d, i) => (
+          <div class="bar" title={`${d.key}: ${d.count}`} style={`--bar-index:${i}`}>
             <div class="fill" style={`height:${Math.round((d.count / maxDay) * 100)}%`}></div>
             <span class="n">{d.count}</span>
           </div>
@@ -267,8 +271,8 @@ const catColorOf = (slug: string): string =>
         ))}
       </div>
       <p class="retention-note">
-        <span class="i18n-ja">本日は全レーンの JST 公開記事を随時集計し、過去日は archive 統計を表示します。Research は arXiv を含む統合件数です。過去日の値は保持ポリシー（per-source cap / half-life）により縮む場合があります。</span>
-        <span class="i18n-en" lang="en">Today counts live JST entries across all lanes; completed days use archive statistics. Research combines Research and arXiv activity. Past-day counts may shrink due to retention (per-source cap / half-life).</span>
+        <span class="i18n-ja">本日は JST ライブ、過去日は archive。Research は arXiv 込み。過去値は保持ポリシーで縮む場合があります。</span>
+        <span class="i18n-en" lang="en">Today uses live JST; past days use archive totals. Research includes arXiv. Retention may shrink past counts.</span>
       </p>
       <table class="sr-only">
         <caption>Last 7 days article counts</caption>
@@ -284,7 +288,10 @@ const catColorOf = (slug: string): string =>
     </div>
 
     <div class="panel cats">
-      <div class="panel-title">Top categories + lanes · 7d</div>
+      <div class="panel-title">
+        <span>Top categories + lanes</span>
+        <span class="panel-sub">7d</span>
+      </div>
       <ul class="cat-list">
         {catRows.map((c) => (
           <li>
@@ -292,7 +299,7 @@ const catColorOf = (slug: string): string =>
               class="cat-link"
               href={c.href}
               style={`--cat-color:${c.color}`}
-              title={c.slug === "research" ? "Combined Research and arXiv activity" : undefined}
+              title={c.slug === "research" ? "Combined Research and arXiv activity" : c.name}
             >
               <span class="dot"></span>
               <span class="name">{c.displayName}</span>
@@ -421,7 +428,7 @@ const catColorOf = (slug: string): string =>
     border: 1px solid var(--border);
     border-radius: 12px;
     background: linear-gradient(180deg, rgba(94,234,212,0.035), transparent 34%), var(--surface);
-    padding: 16px 18px 18px;
+    padding: 14px 16px 16px;
     margin-bottom: 18px;
     overflow: hidden;
     min-width: 0;
@@ -439,7 +446,7 @@ const catColorOf = (slug: string): string =>
   }
   .digest-head {
     display: flex; justify-content: space-between; align-items: flex-end;
-    gap: 16px; flex-wrap: wrap; margin-bottom: 16px;
+    gap: 14px; flex-wrap: wrap; margin-bottom: 12px;
   }
   .title .eyebrow {
     font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
@@ -453,7 +460,7 @@ const catColorOf = (slug: string): string =>
     font-size: 11px;
     font-variant-numeric: tabular-nums;
   }
-  .kpis { display: flex; gap: 22px; }
+  .kpis { display: flex; gap: 18px; }
   .kpi { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
   .kpi .k { font-size: 10.5px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
   .kpi-date {
@@ -471,7 +478,7 @@ const catColorOf = (slug: string): string =>
   .digest-body {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 10px;
     min-width: 0;
   }
   .digest-body .updates {
@@ -484,12 +491,12 @@ const catColorOf = (slug: string): string =>
     background: color-mix(in srgb, var(--bg-2) 70%, transparent);
     border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
     border-radius: 8px;
-    padding: 11px 12px;
+    padding: 10px 11px;
     min-width: 0;
   }
   .panel-title {
     font-size: 10.5px; color: var(--muted); letter-spacing: 0.08em;
-    text-transform: uppercase; font-weight: 600; margin-bottom: 10px;
+    text-transform: uppercase; font-weight: 600; margin-bottom: 8px;
     display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
   }
   .panel-title .panel-sub {
@@ -512,9 +519,10 @@ const catColorOf = (slug: string): string =>
   }
   .spark .bars {
     display: flex; align-items: flex-end; gap: 4px;
-    flex: 1;
-    min-height: 72px;
-    margin-top: 12px;
+    flex: none;
+    height: 64px;
+    min-height: 64px;
+    margin-top: 10px;
   }
   .spark .bar {
     flex: 1; align-self: stretch; position: relative;
@@ -526,50 +534,75 @@ const catColorOf = (slug: string): string =>
     background: linear-gradient(180deg, var(--accent), var(--accent-2));
     border-radius: 3px 3px 0 0;
     min-height: 2px;
+    transform-origin: 50% 100%;
   }
   .spark .bar:last-child .fill {
     background: var(--accent);
     box-shadow: 0 0 0 1px var(--accent-bg);
   }
   .spark .n {
-    position: absolute; top: -14px;
+    position: absolute; top: -12px;
     font-size: 9.5px; color: var(--muted-2);
     font-family: ui-monospace, monospace;
   }
   .spark .axis {
     display: flex; justify-content: space-between;
-    margin-top: 6px; font-size: 9.5px; color: var(--muted-2);
+    margin-top: 4px; font-size: 9.5px; color: var(--muted-2);
     font-family: ui-monospace, monospace;
   }
   .spark .axis .today { color: var(--accent); font-weight: 700; }
 
   .retention-note {
-    margin-top: 8px;
-    font-size: 10.5px;
+    margin-top: 6px;
+    font-size: 10px;
     color: var(--muted-2);
-    line-height: 1.45;
+    line-height: 1.35;
   }
 
-  .cat-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .cat-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px 8px;
+  }
   .cat-link {
     display: grid;
-    grid-template-columns: 8px minmax(0, 1fr) minmax(32px, 56px) 28px;
+    grid-template-columns: 8px minmax(0, 1fr) 24px;
+    grid-template-areas: "dot name number";
     align-items: center;
-    gap: 8px;
-    padding: 4px 6px;
+    column-gap: 4px;
+    padding: 4px 4px 6px;
     border-radius: 5px;
     color: var(--text-2);
     text-decoration: none;
-    font-size: 12px;
+    font-size: 11.5px;
     transition: background 0.12s;
     min-width: 0;
+    position: relative;
   }
   .cat-link:hover { background: var(--surface); }
-  .cat-link .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cat-color, var(--muted)); }
-  .cat-link .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cat-link .dot {
+    grid-area: dot;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--cat-color, var(--muted));
+  }
+  .cat-link .name {
+    grid-area: name;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .cat-link .bar-wrap {
-    height: 4px; border-radius: 2px; background: var(--bg);
-    overflow: hidden; width: 100%;
+    position: absolute;
+    left: 17px;
+    right: 31px;
+    bottom: 3px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--bg);
+    overflow: hidden;
   }
   .cat-link .bar-fill {
     display: block; height: 100%;
@@ -578,9 +611,35 @@ const catColorOf = (slug: string): string =>
     min-width: 2px;
   }
   .cat-link .n {
+    grid-area: number;
     text-align: right; font-variant-numeric: tabular-nums;
     color: var(--cat-color, var(--text));
     font-family: ui-monospace, monospace; font-size: 11px; font-weight: 700;
+  }
+
+  .digest[data-chart-state="idle"] .spark .fill {
+    opacity: 0.28;
+    transform: scaleY(0.04);
+  }
+  .digest[data-chart-state="idle"] .spark .n {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  .digest[data-chart-state="visible"] .spark .fill {
+    animation: digest-bar-rise 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--bar-index, 0) * 42ms);
+  }
+  .digest[data-chart-state="visible"] .spark .n {
+    animation: digest-count-in 240ms ease-out both;
+    animation-delay: calc(120ms + var(--bar-index, 0) * 42ms);
+  }
+  @keyframes digest-bar-rise {
+    from { opacity: 0.28; transform: scaleY(0.04); }
+    to { opacity: 1; transform: scaleY(1); }
+  }
+  @keyframes digest-count-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .updates .empty { color: var(--muted); font-size: 12px; }
@@ -696,7 +755,16 @@ const catColorOf = (slug: string): string =>
   }
   @media (max-width: 720px) {
     /* Let the LED panel use as much horizontal space as possible. */
-    .digest { padding: 12px 10px 12px; border-radius: 12px; }
+    .digest { padding: 12px 10px; border-radius: 12px; }
+    .digest-head { gap: 10px; margin-bottom: 10px; }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      width: 100%;
+    }
+    .kpi .v { font-size: 20px; }
+    .panel { padding: 9px 10px; }
     .digest-body { gap: 10px; }
     .updates.panel {
       padding: 10px 0;
@@ -755,9 +823,12 @@ const catColorOf = (slug: string): string =>
   .ticker-panel .panel-title .panel-sub::before {
     content: "● ";
     color: #ff3b30;
-    animation: blink 1.2s steps(2, end) infinite;
+    animation: board-snapshot-pulse 900ms ease-out 1 both;
   }
-  @keyframes blink { 50% { opacity: 0.25; } }
+  @keyframes board-snapshot-pulse {
+    0% { opacity: 0.25; }
+    55% { opacity: 1; }
+  }
 
   .ticker {
     position: relative;
@@ -794,6 +865,12 @@ const catColorOf = (slug: string): string =>
     to   { transform: translateX(-50%); }
   }
   @media (prefers-reduced-motion: reduce) {
+    .digest[data-chart-state] .spark .fill,
+    .digest[data-chart-state] .spark .n {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
     .ticker-panel .panel-title .panel-sub::before {
       animation: none;
     }
@@ -879,3 +956,26 @@ const catColorOf = (slug: string): string =>
   }
   .hi-list a:hover { background: var(--surface); color: var(--text); }
 </style>
+
+<script>
+  const digest = document.querySelector<HTMLElement>("[data-daily-summary]");
+
+  if (digest) {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (prefersReducedMotion || !("IntersectionObserver" in window)) {
+      digest.dataset.chartState = "visible";
+    } else {
+      digest.dataset.chartState = "idle";
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry?.isIntersecting) return;
+          digest.dataset.chartState = "visible";
+          observer.disconnect();
+        },
+        { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
+      );
+      observer.observe(digest);
+    }
+  }
+</script>

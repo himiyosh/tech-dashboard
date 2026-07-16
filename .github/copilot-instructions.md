@@ -2190,6 +2190,36 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: `normalizeTagKey()`を追加し、tag count・静的route・link・Pagefind filter metadata・client-side intent比較の全境界で同じNFKC相当の検索正規化と小文字化を適用した。大文字へ変更した共有URLでもsingleton記事が先頭に戻り、手入力でintentが解除されるE2Eを追加した。
 - **教訓**: facetのexact検索はin-app linkの表記だけを正規形と仮定しない。indexへ書く値、route key、共有URL、client filter値を同じhelperでcanonicalizeし、手編集・copy・Unicode表記差でも決定論的な回収契約を維持する。
 
+### LL-326: compactなGrid panelは兄弟要素のstretchと状態selectorの詳細度まで測る
+- **事象**: Daily Summaryの棒グラフを小型化しても、同じGrid rowにあるcategory panelが高いとchart panelまで約188pxへstretchした。reduced-motion指定も通常のchart state selectorより詳細度が低く、animationとtransformが残った。
+- **根本原因**: chart内部のbar高さだけを制限し、Grid rowの高さを決める兄弟panelと既定stretchを寸法契約に含めていなかった。motionの通常状態と抑制状態も異なるselector詳細度で定義し、後勝ちだけで上書きできると仮定していた。
+- **対策**: bar領域を64pxへ固定し、category概要を2列化してtrend barをrow高へ影響しないabsolute配置にした。reduced-motionは通常状態と同じ`data-chart-state`を含むselectorでanimation、opacity、transformを解除した。E2Eは1440x900、768x900、390x844で両panelの高さ、bar領域、列数、横overflowを測り、通常motionとreduced-motionのcomputed styleを別々に検証する。
+- **教訓**: Grid内のpanelを小型化するときは対象panelだけでなく同じrowの全兄弟要素とstretch後の実寸を測る。状態属性を使うanimationでは通常、idle、reduced-motionのselector詳細度を揃え、reduced-motionを見た目ではなくcomputed `animation-name`、`transform`、`opacity`で固定する。
+
+### LL-327: 非同期enrichmentの共有枠は実enqueue件数で再配分し、次回lookup対象を引き継ぐ
+- **事象**: 要約Queueのbacklogがほぼ空でも本文Queueは10件/runへ固定され、保持対象の本文なし記事が約435件残っていた。さらにrun Nで生成した本文をrun N+1の通常選択窓が直ちに読まないため、生成済み本文がKVにあっても`data/bodies.json`への反映が遅れた。pending lookupと通常candidateへ同じ35件capを個別適用すると、1 runで最大70件のKV GETも発生し得た。
+- **根本原因**: summaryとbodyが同じKV write予算を消費するのに固定capを別々に持ち、summaryの未使用枠をbodyへ渡していなかった。生成対象と反映対象もrunを跨ぐidentityを共有せず、round-robinの次の窓へ進んでいた。さらにpendingと通常candidateを別budgetとして扱い、結合後のlookup総数を制限していなかった。
+- **対策**: 合計35件/runの共有enqueue上限を設け、実際にenqueueできたsummary件数を差し引いた残りだけをbodyへ割り当てる。body enqueue成功IDをhealthへ保存し、次回runでは通常candidateより先に一度lookupする。lookupはpendingを先に総上限へ充当し、残枠だけを通常candidateへ渡す。missは継続保持せず通常候補へ戻し、成功分だけを次回pendingとして記録する。
+- **教訓**: 同じ外部quotaを使う複数enrichmentは固定capの合計でなく、優先pipelineの実消費量から残枠を動的に配分する。非同期生成と次回反映は同じidentityで接続し、成功、部分成功、missの各状態が枠を永久占有しない引き継ぎ契約を持たせる。優先集合と通常集合を結合するI/Oは各集合でなく結合後の総数を単一capで制限する。
+
+### LL-328: enrichment telemetryはproducerからUIまで同じoptional contractで配線する
+- **事象**: AI解説本文の生成枠を改善しても、旧heartbeatには本文Queueや共有枠のfieldが無く、Statusとfooterで0件と表示すると「backlogなし」と誤読される状態だった。producerは`bodyDrainEstimateHours`、Webは`bodyQueueDrainEstimateHours`を期待するfield driftもあり、Queueが`disabled`、`missing-binding`、`error`でもbacklog 0から処理待ちなしと表示できた。run停止中も保存済みETAを確定的に表示し、EntryCardだけが共通Queue helperを迂回して停止中にも解消目安を出していた。StatusのAI利用可否も最後にpublishされた観測値を現在状態のように表示していた。記事詳細もsidecar本文の有無だけでは、要約待ちとQueue投入済み本文を区別できなかった。
+- **根本原因**: producer、heartbeat、Web型、metrics、Status、footer、EntryCard、記事詳細を別々に追加し、古いsnapshotとの互換性、Queue mode、run状態、観測時刻と状態provenanceをend-to-endの単一契約として定義していなかった。Node Publisher移行後もWeb telemetryの正本が`data/index.json.health`であることと、Free bridgeのKV writeが`og.v1`だけである責務境界が明文化されていなかった。
+- **対策**: summary/bodyの実enqueue数、body backlog、merge数、pending ID、共有上限と残枠をartifact healthへ保存し、canonical fieldを`bodyQueueDrainEstimateHours`へ統一する。Webは旧`bodyDrainEstimateHours`を移行期間だけfallback読込する。Queue表示は全surfaceで共通helperを使い、modeをbacklogより優先し、`enabled`かつbacklog 0だけをclear、run `err`時のETAを収集再開待ちにする。StatusのAI可用性は`published-snapshot`と観測時刻を明示する。記事詳細は本文の`ready`/`queued`/`summary-only`と要約の`ready`/`pending`を別属性で示す。Node Publisherは`heartbeat.v1`をdeferred KV effectsから除外し、Free bridgeのwrite allowlistを広げない。
+- **教訓**: 非同期処理の運用改善は生成器だけで完了しない。producer、永続telemetry、型、API、全表示surface、読者向け状態、テストを同じfield名とoptional semanticsで配線し、未観測を0、待機中を完了、停止中のsnapshotを将来時刻の約束や現在状態として表示しない。telemetryの正本、観測時刻、transport allowlistも同じcontractに含める。
+
+### LL-329: fixed footerのcompact境界はcontent layoutの解放境界へ揃える
+- **事象**: `900px`ではFooterが1行に収まる一方、`901px`だけcompact ruleから外れて約49pxへ2行化し、Top 3と固定Footerの8px安全距離が3-6px不足した。`980px`では横幅が足りるため再び1行になり、狭い中間幅だけが失敗していた。記事詳細ではsummary-only noteがviewport下端へ来た時、desktopの固定Footerがnoteの大部分を覆った。
+- **根本原因**: 本文layoutは`980px`以下でcategory railを解放して1カラム化する契約なのに、Footerの補助情報を畳むbreakpointだけが`900px`で終了していた。同じsqueeze zoneを共有する固定UIと本文でresponsive境界が分岐していた。またbodyのbottom paddingは文書末尾だけを守り、長文途中の要素がviewport下端を通過する際の固定Footerとの重なりを防げなかった。
+- **対策**: Footerのcompact ruleを`721-980px`へ揃え、run状態と時刻を1行で維持しつつ、詳細なbody Queueとbuild stackはStatus画面へ委ねる。desktopの記事詳細だけFooterを通常flowへ戻し、mobileはFooter非表示と固定tabbarを維持する。境界行列の`900/901/980/981px`でFooter高、Top 3下端、安全距離、横overflowを、記事詳細ではnoteとFooterの非交差を実寸検証する。
+- **教訓**: fixed header/footerが本文の利用可能領域を決める場合、本文railの表示切替とfixed UIのcompact切替を別のbreakpointにしない。境界直後だけのsqueeze zoneはpage overflowが無くても縦方向の安全域を壊すため、前後幅で固定UI高と主要panel下端を同時に測る。長文detailでは末尾paddingだけで固定Footerとの非交差を保証せず、route単位で通常flowへ戻す選択肢を持つ。
+
+### LL-330: Astro frontmatterの未宣言propertyはbuild成功だけでは検出できない
+- **事象**: `EntryCard.astro`が`QueueDisplay`に存在しない`showEstimate`と`estimateHours`を参照し、active QueueでもETA分岐が常にfalseになる状態だった。root typecheck、Astro build、現在snapshotを使うE2Eは成功していた。
+- **根本原因**: rootの`tsc --noEmit`はAstro frontmatterを型検査せず、`astro build`もこのproperty不一致を停止条件にしなかった。E2Eの実snapshotは`waiting-for-run`状態で、active分岐へ到達しなかった。共通helperが完成済みの`labelJa`/`labelEn`を返すのに、component側で別のETA契約を再実装していた。
+- **対策**: EntryCardのactive表示を`QueueDisplay.labelJa`/`labelEn`へ直接接続し、未宣言property参照を削除した。source contract testでEntryCardが宣言済みlabelだけを使うことを固定し、active QueueのETA整形は`deriveQueueDisplay()`のunit testで実snapshotと独立して検証する。
+- **教訓**: Astro componentがtyped view modelを消費する場合、build成功をproperty契約の証拠にしない。表示済み文字列を返す共通helperを単一情報源にし、実dataで現れないstateはunit fixtureとsource contractで固定する。独立reviewで見つかった未宣言fieldは、そのfieldを追加して局所実装を延命するより既存contractへconsumerを戻す。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

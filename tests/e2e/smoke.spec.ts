@@ -364,15 +364,69 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
-  test("footer reports the actual summary queue backlog", async ({ page }) => {
+  test("footer reports the actual summary and body queue backlogs", async ({ page }) => {
     await page.goto("/");
     const footerRun = page.locator(".footer-run-link");
     const runDetail = await footerRun.getAttribute("data-run-detail");
     const backlog = await footerRun.getAttribute("data-summary-queue-backlog");
+    const bodyMode = await footerRun.getAttribute("data-body-queue-mode");
+    const bodyState = await footerRun.getAttribute("data-body-queue-state");
+    const bodyBacklog = await footerRun.getAttribute("data-body-queue-backlog");
     expect(runDetail).toBeTruthy();
     expect(backlog).toMatch(/^\d+$/);
+    expect(bodyMode).toMatch(/^(enabled|disabled|missing-binding|error|unknown)$/);
+    expect(bodyState).toMatch(
+      /^(active|clear|waiting-for-run|paused|unavailable|error|unknown)$/,
+    );
+    expect(bodyBacklog).toMatch(/^(unknown|\d+)$/);
     await expect(footerRun.locator(".mono")).toContainText(runDetail!);
     await expect(footerRun.locator(".mono")).toContainText(`summary queue ${backlog}`);
+    if (bodyState === "active") {
+      await expect(footerRun.locator(".footer-body-queue")).toContainText(
+        `body ${bodyBacklog} pending`,
+      );
+      await expect(footerRun).toHaveAttribute(
+        "aria-label",
+        /AI explainer body queue (about|estimate pending)/i,
+      );
+    } else if (bodyState === "clear") {
+      await expect(footerRun.locator(".footer-body-queue")).toHaveText("body ready");
+      await expect(footerRun).toHaveAttribute("aria-label", /AI explainer body queue clear/i);
+    } else if (bodyState === "waiting-for-run") {
+      await expect(footerRun.locator(".footer-body-queue")).toHaveText("body waiting");
+      await expect(footerRun).toHaveAttribute(
+        "aria-label",
+        /AI explainer body queue waiting for a successful run/i,
+      );
+    } else if (bodyState === "paused") {
+      await expect(footerRun.locator(".footer-body-queue")).toHaveText("body paused");
+    } else {
+      await expect(footerRun.locator(".footer-body-queue")).toHaveText("body unavailable");
+    }
+  });
+
+  test("pending cards share the summary queue state and suppress stale ETAs", async ({ page }) => {
+    await page.goto("/");
+    const footerRun = page.locator(".footer-run-link");
+    const queueMode = await footerRun.getAttribute("data-summary-queue-mode");
+    const queueState = await footerRun.getAttribute("data-summary-queue-state");
+    expect(queueMode).toMatch(/^(enabled|disabled|missing-binding|error|unknown)$/);
+    expect(queueState).toMatch(
+      /^(active|clear|waiting-for-run|paused|unavailable|error|unknown)$/,
+    );
+
+    const pendingCards = page.locator('article.card[data-summary-state="pending"]');
+    if ((await pendingCards.count()) === 0) return;
+
+    const pendingState = pendingCards.first().locator(".summary-state");
+    await expect(pendingState).toHaveAttribute("data-summary-queue-mode", queueMode!);
+    await expect(pendingState).toHaveAttribute("data-summary-queue-state", queueState!);
+    if (queueState === "waiting-for-run") {
+      await expect(pendingState.locator(".summary-pending-meta.i18n-ja")).toContainText(
+        "収集再開待ち",
+      );
+      await expect(pendingState).not.toContainText(/解消目安|drain estimate/i);
+    }
   });
 
   // Timeline rails release progressively: no rails through tablet, the category
@@ -1113,7 +1167,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(researchLane).toHaveCount(1);
     await expect(researchLane).toHaveAttribute("href", "/categories/");
     await expect(digest.locator(".retention-note .i18n-en")).toContainText(
-      "Research combines Research and arXiv activity",
+      "Research includes arXiv",
+    );
+    await expect(digest.locator(".retention-note .i18n-en")).toContainText(
+      "Retention may shrink past counts",
     );
     const boardItems = digest.locator(".ticker-panel [data-summary-state]");
     const emptyState = digest.locator(".ticker-panel [data-empty-reason]");
@@ -1159,6 +1216,100 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(ticker.locator(".tb-label")).toContainText(dayScope === "today" ? "TODAY" : "LATEST");
       await expect(ticker.locator(".tb-live-dot")).toHaveCount(0);
     }
+  });
+
+  test("Daily Summary keeps a compact two-column overview across viewports", async ({ page }) => {
+    const viewports = [
+      { width: 1440, height: 900 },
+      { width: 768, height: 900 },
+      { width: 390, height: 844 },
+    ];
+
+    for (const viewport of viewports) {
+      await page.setViewportSize(viewport);
+      await page.goto("/");
+      const digest = page.locator("[data-daily-summary]");
+      await expect(digest).toBeVisible();
+
+      const metrics = await digest.evaluate((element) => {
+        const spark = element.querySelector<HTMLElement>(".spark");
+        const categories = element.querySelector<HTMLElement>(".cats");
+        const bars = element.querySelector<HTMLElement>(".spark .bars");
+        const categoryList = element.querySelector<HTMLElement>(".cat-list");
+        if (!spark || !categories || !bars || !categoryList) {
+          throw new Error("Daily Summary overview panels are incomplete");
+        }
+        return {
+          digestHeight: element.getBoundingClientRect().height,
+          sparkHeight: spark.getBoundingClientRect().height,
+          categoryHeight: categories.getBoundingClientRect().height,
+          barsHeight: bars.getBoundingClientRect().height,
+          categoryColumns: getComputedStyle(categoryList).gridTemplateColumns
+            .split(" ")
+            .filter(Boolean).length,
+          clippedCategoryLabels: Array.from(
+            categoryList.querySelectorAll<HTMLElement>(".cat-link .name"),
+          )
+            .filter((label) => label.scrollWidth > label.clientWidth + 1)
+            .map((label) => label.textContent?.trim() ?? ""),
+          pageOverflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      });
+
+      expect(metrics.sparkHeight, `${viewport.width}px chart panel stays compact`).toBeLessThanOrEqual(180);
+      expect(metrics.categoryHeight, `${viewport.width}px category panel stays compact`).toBeLessThanOrEqual(180);
+      expect(metrics.barsHeight, `${viewport.width}px bar area has a bounded height`).toBeLessThanOrEqual(66);
+      expect(metrics.categoryColumns, `${viewport.width}px category overview uses two columns`).toBe(2);
+      expect(
+        metrics.clippedCategoryLabels,
+        `${viewport.width}px category labels remain readable`,
+      ).toEqual([]);
+      expect(metrics.pageOverflow, `${viewport.width}px has no horizontal overflow`).toBeLessThanOrEqual(0);
+      if (viewport.width <= 390) {
+        expect(metrics.digestHeight, "mobile Daily Summary is materially shorter than the old 1309px layout")
+          .toBeLessThanOrEqual(1150);
+      }
+    }
+  });
+
+  test("Daily Summary bars reveal once and reduced motion shows them immediately", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    const digest = page.locator("[data-daily-summary]");
+    const firstFill = digest.locator(".spark .fill").first();
+
+    const initialBox = await digest.boundingBox();
+    expect(initialBox, "Daily Summary geometry is available").not.toBeNull();
+    expect(initialBox!.y, "Daily Summary starts near the desktop fold").toBeLessThan(900);
+    expect(
+      initialBox!.y + initialBox!.height,
+      "Daily Summary extends below the desktop fold",
+    ).toBeGreaterThan(900);
+    await expect(digest).toHaveAttribute("data-chart-state", "idle");
+    await expect.poll(async () => firstFill.evaluate((element) => (
+      Number(getComputedStyle(element).opacity)
+    ))).toBeLessThan(0.5);
+
+    await digest.evaluate((element) => element.scrollIntoView({ block: "center" }));
+    await expect(digest).toHaveAttribute("data-chart-state", "visible");
+    await expect.poll(async () => firstFill.evaluate((element) => (
+      Number(getComputedStyle(element).opacity)
+    ))).toBeGreaterThan(0.95);
+    await expect(firstFill).toHaveCSS("animation-name", "digest-bar-rise");
+    const boardPulseIterations = await digest.locator(".ticker-panel .panel-title .panel-sub")
+      .evaluate((element) => getComputedStyle(element, "::before").animationIterationCount);
+    expect(boardPulseIterations, "the static top-stories snapshot does not blink forever").toBe("1");
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.reload();
+    const reducedDigest = page.locator("[data-daily-summary]");
+    const reducedFill = reducedDigest.locator(".spark .fill").first();
+    await expect(reducedDigest).toHaveAttribute("data-chart-state", "visible");
+    await expect(reducedFill).toHaveCSS("animation-name", "none");
+    await expect(reducedFill).toHaveCSS("transform", "none");
+    await expect.poll(async () => reducedFill.evaluate((element) => (
+      Number(getComputedStyle(element).opacity)
+    ))).toBe(1);
   });
 
   test("featured hero and top-3 are not low-signal release builds", async ({ page }) => {
@@ -1265,6 +1416,10 @@ test.describe("TECH Dashboard smoke", () => {
 
     await expect(page.locator("article.entry-detail")).toBeVisible();
     await expect(page.locator("h1.ed-title")).toBeVisible();
+    const bodyState = await page.locator("article.entry-detail").getAttribute("data-body-state");
+    const summaryState = await page.locator("article.entry-detail").getAttribute("data-summary-state");
+    expect(bodyState).toMatch(/^(ready|queued|summary-only)$/);
+    expect(summaryState).toMatch(/^(ready|pending)$/);
 
     // Summary-first (LL-112/LL-125): feed-driven detail pages can validly land
     // in exactly one of three honest states: real prose, summary-only digest,
@@ -1296,20 +1451,52 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator('article.entry-detail a[target="_blank"]')).toHaveCount(1);
 
     if (hasProse) {
+      expect(bodyState).toBe("ready");
+      expect(summaryState).toBe("ready");
       await expect(prose.first()).toBeVisible();
       await expect(digest).toHaveCount(0);
       await expect(pending).toHaveCount(0);
     } else if (hasDigest) {
+      expect(summaryState).toBe("ready");
       await expect(digest.first()).toBeVisible();
-      await expect(digest.locator(".ed-summary-only-head .i18n-ja")).toHaveText(
-        "本文は元記事で確認",
-      );
-      await expect(digest.locator(".ed-summary-only-note .i18n-ja")).toContainText(
-        "このページには AI 要約のみを収録",
-      );
+      if (bodyState === "queued") {
+        await expect(digest.locator(".ed-summary-only-head .i18n-ja")).toHaveText(
+          "AI解説本文を Queue に投入済み",
+        );
+        await expect(digest.locator(".ed-summary-only-note .i18n-ja")).toContainText(
+          "完了時刻は確約せず",
+        );
+      } else {
+        expect(bodyState).toBe("summary-only");
+        await expect(digest.locator(".ed-summary-only-head .i18n-ja")).toHaveText(
+          "本文は元記事で確認",
+        );
+        await expect(digest.locator(".ed-summary-only-note .i18n-ja")).toContainText(
+          "このページには AI 要約のみを収録",
+        );
+      }
       await expect(prose).toHaveCount(0);
       await expect(pending).toHaveCount(0);
+      const digestFooterGeometry = await page.evaluate(() => {
+        const note = document.querySelector<HTMLElement>(".ed-summary-only-note");
+        const footer = document.querySelector<HTMLElement>(".footer-bar");
+        if (!note || !footer) return null;
+        const noteRect = note.getBoundingClientRect();
+        const footerRect = footer.getBoundingClientRect();
+        return {
+          footerPosition: getComputedStyle(footer).position,
+          overlaps:
+            noteRect.bottom > footerRect.top &&
+            noteRect.top < footerRect.bottom &&
+            footerRect.width > 0 &&
+            footerRect.height > 0,
+        };
+      });
+      expect(digestFooterGeometry).not.toBeNull();
+      expect(digestFooterGeometry!.footerPosition).toBe("static");
+      expect(digestFooterGeometry!.overlaps).toBe(false);
     } else {
+      expect(bodyState).toBe("summary-only");
       await expect(pending.first()).toBeVisible();
       await expect(pending.first()).toContainText("Summary pending");
       await expect(prose).toHaveCount(0);
@@ -1323,6 +1510,47 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(disclaimer.locator(".i18n-ja")).toContainText("AI による自動生成");
       await expect(disclaimer.locator(".i18n-en")).toContainText("AI-generated");
     }
+  });
+
+  test("desktop summary-only detail keeps its note clear of the footer", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: SummaryFixtureEntry[];
+    };
+    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, unknown>;
+    };
+    const summaryOnlyEntry = index.entries.find(
+      (entry) =>
+        !bodyFile.bodies[entry.id] &&
+        Boolean(
+          summaryForLangWithFallback(entry, "ja").text ||
+            summaryForLangWithFallback(entry, "en").text,
+        ),
+    );
+    expect(summaryOnlyEntry, "live summary-only article fixture").toBeTruthy();
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/e/${summaryOnlyEntry!.id}/`);
+    const note = page.locator(".ed-summary-only-note");
+    const footer = page.locator(".footer-bar");
+    await expect(note).toBeVisible();
+    await note.scrollIntoViewIfNeeded();
+    const geometry = await page.evaluate(() => {
+      const noteElement = document.querySelector<HTMLElement>(".ed-summary-only-note");
+      const footerElement = document.querySelector<HTMLElement>(".footer-bar");
+      if (!noteElement || !footerElement) return null;
+      const noteRect = noteElement.getBoundingClientRect();
+      const footerRect = footerElement.getBoundingClientRect();
+      return {
+        footerPosition: getComputedStyle(footerElement).position,
+        overlaps:
+          noteRect.bottom > footerRect.top &&
+          noteRect.top < footerRect.bottom &&
+          footerRect.width > 0 &&
+          footerRect.height > 0,
+      };
+    });
+    expect(geometry).toEqual({ footerPosition: "static", overlaps: false });
   });
 
   test("article body provenance and supporting copy follow the active language", async ({ page }) => {
@@ -2249,21 +2477,52 @@ test.describe("TECH Dashboard smoke", () => {
       new RegExp(`\\bpage-hero-status-${overallStatus}\\b`),
     );
     await expect(page.locator("#worker-health-summary")).not.toBeEmpty();
-    await expect(page.locator('[data-health-scope="summary-backlog"]')).toContainText("AI要約待ち");
+    await expect(page.locator('[data-health-scope="summary-queue"]')).toContainText("AI要約 Queue");
     const collectionMetric = page.locator('[data-health-scope="latest-batch"]');
     await expect(collectionMetric).toContainText(/\d+\/\d+/);
     await expect(page.locator('[data-health-scope="collection-run"]')).toHaveCount(1);
-    await expect(page.locator('[data-health-domain="summary-queue"]')).toHaveCount(3);
-    await expect(page.locator('[data-health-scope="summary-throughput"]')).toHaveCount(1);
-    await expect(page.locator('[data-health-scope="summary-backlog"]')).toHaveCount(1);
-    await expect(page.locator('[data-health-scope="summary-eta"]')).toHaveCount(1);
+    await expect(page.locator('[data-health-domain="summary-queue"]')).toHaveCount(1);
+    const summaryQueueMetric = page.locator('[data-health-scope="summary-queue"]');
+    const bodyQueueMetric = page.locator('[data-health-scope="body-queue"]');
+    await expect(summaryQueueMetric).toHaveCount(1);
+    await expect(bodyQueueMetric).toHaveCount(1);
+    await expect(page.locator('[data-health-scope="enrichment-budget"]')).toHaveCount(1);
     await expect(page.locator('[data-health-scope="published-artifact"]')).toHaveCount(1);
     await expect(collectionMetric.locator("small > .i18n-en")).toHaveText(
       /batch \d+\/\d+ · \d+ registered sources/,
     );
-    await expect(page.locator('[data-health-scope="summary-throughput"] strong')).toHaveAttribute(
-      "title",
-      /new ai summaries added in this collection run.*pending summaries are tracked separately/i,
+    const summaryQueueMode = await summaryQueueMetric.getAttribute("data-summary-queue-mode");
+    const summaryQueueState = await summaryQueueMetric.getAttribute("data-summary-queue-state");
+    const bodyQueueMode = await bodyQueueMetric.getAttribute("data-body-queue-mode");
+    const bodyQueueState = await bodyQueueMetric.getAttribute("data-body-queue-state");
+    expect(summaryQueueMode).toMatch(/^(enabled|disabled|missing-binding|error|unknown)$/);
+    expect(summaryQueueState).toMatch(
+      /^(active|clear|waiting-for-run|paused|unavailable|error|unknown)$/,
+    );
+    expect(bodyQueueMode).toMatch(/^(enabled|disabled|missing-binding|error|unknown)$/);
+    expect(bodyQueueState).toMatch(
+      /^(active|clear|waiting-for-run|paused|unavailable|error|unknown)$/,
+    );
+    if (runStatus === "err" && summaryQueueMode === "enabled") {
+      expect(summaryQueueState).toBe("waiting-for-run");
+      await expect(summaryQueueMetric.locator("small > .i18n-en")).toContainText(
+        "waiting for a successful run",
+      );
+    }
+    if (runStatus === "err" && bodyQueueMode === "enabled") {
+      expect(bodyQueueState).toBe("waiting-for-run");
+      await expect(bodyQueueMetric.locator("small > .i18n-en")).toContainText(
+        "waiting for a successful run",
+      );
+    }
+    if (bodyQueueMode !== "enabled") {
+      await expect(bodyQueueMetric.locator("strong")).toHaveText("n/a");
+      await expect(bodyQueueMetric).not.toHaveAttribute("data-body-queue-state", "clear");
+    } else {
+      await expect(bodyQueueMetric.locator("strong")).toHaveText(/^\d+$/);
+    }
+    await expect(page.locator('[data-health-scope="enrichment-budget"] strong')).toHaveText(
+      /^(n\/a|\d+\/\d+)$/,
     );
     await expect(page.locator(".source-reason-line").first()).toBeVisible();
     await expect(page.locator('[data-source-filter="all"]')).toBeVisible();
@@ -2288,6 +2547,23 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(sourceCoverage.locator("p > .i18n-ja")).toHaveText(
       new RegExp(`${coverageMetrics.healthy}\\s*/\\s*${coverageMetrics.evaluated}`),
     );
+    const summaryServiceSnapshot = page.locator(
+      '.status-detail-grid > [data-health-scope="ai-summary-service"]',
+    );
+    await expect(summaryServiceSnapshot).toHaveAttribute(
+      "data-state-source",
+      "published-snapshot",
+    );
+    await expect(summaryServiceSnapshot).toHaveAttribute(
+      "data-observed-at",
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
+    );
+    await expect(summaryServiceSnapshot.locator("strong > .i18n-en")).toContainText(
+      /^Last run: /,
+    );
+    await expect(summaryServiceSnapshot.locator("small > .i18n-en")).toContainText(
+      /Published snapshot:\s+/,
+    );
 
     // Hero and footer must share the same run-status semantics (LL-126):
     // stale last-run pages must never say "Run ERR" in hero and "run ok" in footer.
@@ -2300,7 +2576,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.getByRole("contentinfo")).toHaveCount(1);
     const footerRunLink = page.getByRole("link", { name: /Collection health:/ });
     await expect(footerRunLink).toHaveAttribute("href", "/status");
-    await expect(footerRunLink).toHaveAttribute("aria-label", /collection health: run (ok|warn|err).*summary queue \d+/i);
+    await expect(footerRunLink).toHaveAttribute(
+      "aria-label",
+      /collection health: run (ok|warn|err).*summary queue \d+.*ai explainer body/i,
+    );
     const footerRunDetail = await footerRunLink.getAttribute("data-run-detail");
     expect(footerRunDetail).toBeTruthy();
     const footerDot = footerRunLink.locator(".dot");
@@ -2308,6 +2587,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(footerDot).toHaveClass(new RegExp(`\\bdot\\b.*\\b${expectedTone}\\b`));
     await expect(footerRunLink.locator(".mono")).toContainText(footerRunDetail!);
     await expect(footerRunLink.locator(".mono")).toContainText(/last batch \d+\/\d+ src · summary queue \d+/);
+    await expect(footerRunLink).toHaveAttribute("data-body-queue-backlog", /^(unknown|\d+)$/);
     const lastRunTime = footerRunLink.locator("time.footer-run-time");
     await expect(lastRunTime).toHaveCount(1);
     await expect(lastRunTime).toHaveAttribute(
@@ -2316,11 +2596,11 @@ test.describe("TECH Dashboard smoke", () => {
     );
     await expect(lastRunTime).toContainText(/\S+/);
     await expect(page.locator(".footer-bar .item.mono")).toHaveCount(0);
-    await expect(page.locator(".page-hero-copy > p > .i18n-ja")).toContainText("収集の稼働状況");
+    await expect(page.locator(".page-hero-copy > p > .i18n-ja")).toContainText("収集、AI要約、AI解説本文");
     await page.locator('.lang-btn[data-lang="en"]').click();
     await expect(page.locator(".page-hero-copy > p > .i18n-en")).toBeVisible();
-    await expect(page.locator(".page-hero-copy > p > .i18n-en")).toContainText("Check collection activity");
-    await expect(page.locator("#worker-health-heading > .i18n-en")).toContainText("Collection and summary health");
+    await expect(page.locator(".page-hero-copy > p > .i18n-en")).toContainText("Check collection, AI summaries");
+    await expect(page.locator("#worker-health-heading > .i18n-en")).toContainText("Collection and enrichment health");
     await expect(page.locator(".source-status-badge").first()).toContainText(/Fresh|Delayed|Needs review/);
     await expect(page.locator(".source-reason-line").first()).toContainText(/Last collected|No articles have been collected/);
     await expect(page.locator(".source-latest-line").first()).toContainText(/Latest article/);
@@ -2853,6 +3133,12 @@ test.describe("TECH Dashboard smoke", () => {
     expect(metrics.allTimeEntries).toBeGreaterThanOrEqual(metrics.liveEntries);
     expect(metrics.totalSourceCount).toBeGreaterThan(0);
     expect(metrics.totalCategories).toBeGreaterThan(0);
+    expect(metrics.bodyQueueBacklog === null || Number.isFinite(metrics.bodyQueueBacklog)).toBeTruthy();
+    expect(metrics.bodyQueueDrainEstimateHours === null || Number.isFinite(metrics.bodyQueueDrainEstimateHours)).toBeTruthy();
+    expect(metrics.bodyQueueEnqueued === null || Number.isFinite(metrics.bodyQueueEnqueued)).toBeTruthy();
+    expect(metrics.bodyQueueMerged === null || Number.isFinite(metrics.bodyQueueMerged)).toBeTruthy();
+    expect(metrics.enrichmentEnqueueCap === null || Number.isFinite(metrics.enrichmentEnqueueCap)).toBeTruthy();
+    expect(metrics.enrichmentEnqueued === null || Number.isFinite(metrics.enrichmentEnqueued)).toBeTruthy();
     expect(Number.isFinite(Date.parse(metrics.generatedAt))).toBeTruthy();
   });
 

@@ -15,6 +15,7 @@ import {
 import { sourceFreshnessStatus, type FreshnessSourceType, type FreshnessStatus } from "../lib/freshness.ts";
 import { SOURCE_META, sourceAnchorId, sourceLabel } from "../lib/source-meta.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
+import { deriveQueueDisplay } from "../lib/queue-health.ts";
 import { deriveWorkerRunStatus } from "../lib/run-health.ts";
 
 const now = new Date();
@@ -136,23 +137,35 @@ const healthyPct = evaluatedSourceCount > 0 ? Math.round((ok / evaluatedSourceCo
 const indexAgeLabel = relativeTime(GENERATED_AT, now);
 const pendingSummaryEntries = DASHBOARD_METRICS.fallbackEntries;
 const pendingSummaryPercent = DASHBOARD_METRICS.fallbackPercent;
+const wh = WORKER_HEALTH;
+const workerRun = deriveWorkerRunStatus({
+  workerHealth: wh,
+  nowMs: now.getTime(),
+  fallbackPercent: pendingSummaryPercent,
+  pendingSummaryEntries,
+});
 const summaryQueueBacklog = DASHBOARD_METRICS.summaryQueueBacklog;
-const summaryQueueDrainEstimateHours = DASHBOARD_METRICS.summaryQueueDrainEstimateHours;
-const summaryQueueDrainLabelJa = summaryQueueDrainEstimateHours > 0
-  ? summaryQueueDrainEstimateHours <= 24
-    ? `約 ${summaryQueueDrainEstimateHours}h`
-    : `約 ${Math.ceil(summaryQueueDrainEstimateHours / 24)}d`
-  : "n/a";
-const summaryQueueDrainLabelEn = summaryQueueDrainEstimateHours > 0
-  ? summaryQueueDrainEstimateHours <= 24
-    ? `about ${summaryQueueDrainEstimateHours}h`
-    : `about ${Math.ceil(summaryQueueDrainEstimateHours / 24)}d`
-  : "n/a";
-const summaryQueueModeCopy = DASHBOARD_METRICS.summaryQueueMode === "enabled"
-  ? { ja: "自動処理中", en: "active" }
-  : DASHBOARD_METRICS.summaryQueueMode === "disabled"
-    ? { ja: "停止中", en: "paused" }
-    : { ja: "状態不明", en: "status unknown" };
+const summaryQueue = deriveQueueDisplay({
+  mode: DASHBOARD_METRICS.summaryQueueMode,
+  backlog: summaryQueueBacklog,
+  drainEstimateHours: DASHBOARD_METRICS.summaryQueueDrainEstimateHours,
+  runTone: workerRun.tone,
+});
+const bodyQueueBacklog = DASHBOARD_METRICS.bodyQueueBacklog;
+const bodyQueue = deriveQueueDisplay({
+  mode: DASHBOARD_METRICS.bodyQueueMode,
+  backlog: bodyQueueBacklog,
+  drainEstimateHours: DASHBOARD_METRICS.bodyQueueDrainEstimateHours,
+  runTone: workerRun.tone,
+});
+const enrichmentEnqueueCap = DASHBOARD_METRICS.enrichmentEnqueueCap;
+const enrichmentEnqueued = DASHBOARD_METRICS.enrichmentEnqueued;
+const enrichmentBudgetLabel = enrichmentEnqueueCap === null || enrichmentEnqueued === null
+  ? "n/a"
+  : `${enrichmentEnqueued}/${enrichmentEnqueueCap}`;
+const summaryQueueEnqueued = DASHBOARD_METRICS.summaryQueueEnqueued;
+const bodyQueueEnqueued = DASHBOARD_METRICS.bodyQueueEnqueued;
+const bodyQueueMerged = DASHBOARD_METRICS.bodyQueueMerged;
 const categoryRows = CATEGORY_META.map((category) => {
     const rows = sources.filter((source) => source.category === category.slug);
     return {
@@ -172,13 +185,6 @@ const sourceCategoryRows = CATEGORY_META.map((category) => {
   return { ...category, total: rows.length };
 }).filter((row) => row.total > 0);
 
-const wh = WORKER_HEALTH;
-const workerRun = deriveWorkerRunStatus({
-  workerHealth: wh,
-  nowMs: now.getTime(),
-  fallbackPercent: pendingSummaryPercent,
-  pendingSummaryEntries,
-});
 const workerStatus = workerRun.tone;
 const workerColor =
   workerStatus === "ok" ? "var(--success)" : workerStatus === "warn" ? "var(--important)" : "var(--danger)";
@@ -218,8 +224,8 @@ const workerToneCopy = {
     count={`稼働 ${workerStatusText} · 正常な収集元 ${freshSourceLabel}`}
     countEn={`Run ${workerStatusText} · Fresh sources ${freshSourceLabel}`}
     headingId="status-heading"
-    description="収集の稼働状況、要約の進捗、サイトの最終更新を分けて確認できます。公開ページが新しくても、収集の遅れは隠しません。"
-    descriptionEn="Check collection activity, summary progress, and the latest site update separately. A recently published page does not hide delayed source collection."
+    description="収集、AI要約、AI解説本文、サイト更新の状態を分けて確認できます。公開ページが新しくても、収集や生成の遅れは隠しません。"
+    descriptionEn="Check collection, AI summaries, AI explainer bodies, and the latest site update separately. A recently published page does not hide delayed collection or enrichment."
     actions={[
       { href: "#worker-health-heading", label: "稼働状況", labelEn: "Collection health" },
       { href: "#source-health-heading", label: "収集元一覧", labelEn: "Source directory" },
@@ -258,8 +264,8 @@ const workerToneCopy = {
           </div>
           <div class="section-header primary status-title-row">
             <h2 id="worker-health-heading">
-              <span class="i18n-ja">収集と要約の稼働状況</span>
-              <span class="i18n-en" lang="en">Collection and summary health</span>
+              <span class="i18n-ja">収集と生成処理の稼働状況</span>
+              <span class="i18n-en" lang="en">Collection and enrichment health</span>
               <span class="count">
                 <span class="i18n-ja">分割収集 · 定期実行</span>
                 <span class="i18n-en" lang="en">rotating batches · scheduled runs</span>
@@ -304,50 +310,93 @@ const workerToneCopy = {
               )}
             </small>
           </div>
-          <div class="status-metric-card" data-health-scope="summary-throughput" data-health-domain="summary-queue">
+          <div
+            class:list={[
+              "status-metric-card",
+              {
+                warn: summaryQueue.tone === "warn",
+                ok: summaryQueue.tone === "ok",
+                err: summaryQueue.tone === "err",
+              },
+            ]}
+            data-health-scope="summary-queue"
+            data-health-domain="summary-queue"
+            data-summary-queue-mode={summaryQueue.mode}
+            data-summary-queue-state={summaryQueue.state}
+            data-summary-queue-backlog={summaryQueue.showBacklog ? summaryQueue.backlog : "unknown"}
+          >
             <span>
-              <span class="i18n-ja">新規AI要約</span>
-              <span class="i18n-en" lang="en">New AI summaries</span>
+              <span class="i18n-ja">AI要約 Queue</span>
+              <span class="i18n-en" lang="en">AI summary queue</span>
             </span>
-            <strong title="New AI summaries added in this collection run. Pending summaries are tracked separately.">{wh ? `+${wh.summarized}` : "n/a"}</strong>
+            <strong>{summaryQueue.showBacklog ? summaryQueue.backlog : "n/a"}</strong>
             <small>
-              <span class="i18n-ja">直近の収集で追加</span>
-              <span class="i18n-en" lang="en">added in the latest run</span>
+              <span class="i18n-ja">
+                {summaryQueue.mode !== "enabled" || summaryQueueEnqueued === null
+                  ? ""
+                  : `直近送信 +${summaryQueueEnqueued} · `}
+                {summaryQueue.labelJa}
+              </span>
+              <span class="i18n-en" lang="en">
+                {summaryQueue.mode !== "enabled" || summaryQueueEnqueued === null
+                  ? ""
+                  : `latest enqueue +${summaryQueueEnqueued} · `}
+                {summaryQueue.labelEn}
+              </span>
             </small>
           </div>
           <div
-            class:list={["status-metric-card", { warn: pendingSummaryEntries > 0, ok: pendingSummaryEntries === 0 }]}
-            data-health-scope="summary-backlog"
-            data-health-domain="summary-queue"
+            class:list={[
+              "status-metric-card",
+              {
+                warn: bodyQueue.tone === "warn",
+                ok: bodyQueue.tone === "ok",
+                err: bodyQueue.tone === "err",
+              },
+            ]}
+            data-health-scope="body-queue"
+            data-health-domain="body-queue"
+            data-body-queue-mode={bodyQueue.mode}
+            data-body-queue-state={bodyQueue.state}
+            data-body-queue-backlog={bodyQueue.showBacklog ? bodyQueue.backlog : "unknown"}
           >
             <span>
-              <span class="i18n-ja">AI要約待ち</span>
-              <span class="i18n-en" lang="en">Summaries pending</span>
+              <span class="i18n-ja">AI解説本文 Queue</span>
+              <span class="i18n-en" lang="en">AI explainer queue</span>
             </span>
-            <strong>{pendingSummaryEntries}</strong>
-            <small
-              title="Share of live entries still showing a placeholder summary while awaiting AI generation. These entries are visible; only the AI summary is pending."
-            >
-              <span class="i18n-ja">全記事の {pendingSummaryPercent}%</span>
-              <span class="i18n-en" lang="en">{pendingSummaryPercent}% of listed articles</span>
+            <strong>{bodyQueue.showBacklog ? bodyQueue.backlog : "n/a"}</strong>
+            <small>
+              <span class="i18n-ja">
+                {bodyQueue.mode !== "enabled" || bodyQueueMerged === null ? "" : `回収 +${bodyQueueMerged} · `}
+                {bodyQueue.mode !== "enabled" || bodyQueueEnqueued === null ? "" : `送信 +${bodyQueueEnqueued} · `}
+                {bodyQueue.labelJa}
+              </span>
+              <span class="i18n-en" lang="en">
+                {bodyQueue.mode !== "enabled" || bodyQueueMerged === null ? "" : `merged +${bodyQueueMerged} · `}
+                {bodyQueue.mode !== "enabled" || bodyQueueEnqueued === null ? "" : `enqueued +${bodyQueueEnqueued} · `}
+                {bodyQueue.labelEn}
+              </span>
             </small>
           </div>
           <div
-            class:list={["status-metric-card", { warn: summaryQueueBacklog > 0, ok: summaryQueueBacklog === 0 }]}
-            data-health-scope="summary-eta"
-            data-health-domain="summary-queue"
+            class="status-metric-card"
+            data-health-scope="enrichment-budget"
+            data-health-domain="enrichment"
+            data-enrichment-enqueue-cap={enrichmentEnqueueCap ?? "unknown"}
+            data-enrichment-enqueued={enrichmentEnqueued ?? "unknown"}
           >
             <span>
-              <span class="i18n-ja">要約完了目安</span>
-              <span class="i18n-en" lang="en">Estimated summary wait</span>
+              <span class="i18n-ja">共有生成枠</span>
+              <span class="i18n-en" lang="en">Shared enrichment budget</span>
             </span>
-            <strong>
-              <span class="i18n-ja">{summaryQueueDrainLabelJa}</span>
-              <span class="i18n-en" lang="en">{summaryQueueDrainLabelEn}</span>
-            </strong>
+            <strong>{enrichmentBudgetLabel}</strong>
             <small>
-              <span class="i18n-ja">{summaryQueueBacklog}件を処理待ち</span>
-              <span class="i18n-en" lang="en">{summaryQueueBacklog} awaiting summary</span>
+              <span class="i18n-ja">
+                直近run: 要約 {summaryQueueEnqueued ?? "n/a"} · 本文 {bodyQueueEnqueued ?? "n/a"}
+              </span>
+              <span class="i18n-en" lang="en">
+                latest run: summaries {summaryQueueEnqueued ?? "n/a"} · bodies {bodyQueueEnqueued ?? "n/a"}
+              </span>
             </small>
           </div>
           <div class="status-metric-card" data-health-scope="published-artifact">
@@ -372,22 +421,34 @@ const workerToneCopy = {
 
       {wh ? (
         <section class="status-detail-grid" aria-label="Collection details">
-          <div>
+          <div
+            data-health-scope="ai-summary-service"
+            data-state-source="published-snapshot"
+            data-observed-at={wh.lastRunAt}
+          >
             <span class="detail-label">
               <span class="i18n-ja">AI要約サービス</span>
               <span class="i18n-en" lang="en">AI summary service</span>
             </span>
             {wh.copilotOk ? (
               <strong class="tone-ok">
-                <span class="i18n-ja">利用可能</span>
-                <span class="i18n-en" lang="en">Available</span>
+                <span class="i18n-ja">前回実行時: 利用可能</span>
+                <span class="i18n-en" lang="en">Last run: available</span>
               </strong>
             ) : (
               <strong class="tone-error" title={wh.copilotError ?? ""}>
-                <span class="i18n-ja">要確認</span>
-                <span class="i18n-en" lang="en">Needs review</span>
+                <span class="i18n-ja">前回実行時: 要確認</span>
+                <span class="i18n-en" lang="en">Last run: needs review</span>
               </strong>
             )}
+            <small>
+              <span class="i18n-ja">
+                公開スナップショット: <time datetime={wh.lastRunAt}>{relativeTime(wh.lastRunAt, now)}</time>
+              </span>
+              <span class="i18n-en" lang="en">
+                Published snapshot: <time datetime={wh.lastRunAt}>{relativeTime(wh.lastRunAt, now)}</time>
+              </span>
+            </small>
           </div>
           <div>
             <span class="detail-label">
@@ -403,8 +464,8 @@ const workerToneCopy = {
             </span>
             <strong class={pendingSummaryEntries > 0 ? "tone-warn" : "tone-ok"}>{pendingSummaryEntries}</strong>
             <small class="summary-ready-copy">
-              <span class="i18n-ja">要約済み {DASHBOARD_METRICS.realSummaryEntries} · {summaryQueueModeCopy.ja}</span>
-              <span class="i18n-en" lang="en">{DASHBOARD_METRICS.realSummaryEntries} ready · automation {summaryQueueModeCopy.en}</span>
+              <span class="i18n-ja">要約済み {DASHBOARD_METRICS.realSummaryEntries} · {summaryQueue.modeLabelJa}</span>
+              <span class="i18n-en" lang="en">{DASHBOARD_METRICS.realSummaryEntries} ready · automation {summaryQueue.modeLabelEn}</span>
             </small>
           </div>
           <div>
@@ -412,15 +473,23 @@ const workerToneCopy = {
               <span class="i18n-ja">完了までの目安</span>
               <span class="i18n-en" lang="en">Estimated wait</span>
             </span>
-            <strong class={summaryQueueBacklog > 0 ? "tone-warn" : "tone-ok"}>
-              <span class="i18n-ja">{summaryQueueDrainLabelJa}</span>
-              <span class="i18n-en" lang="en">{summaryQueueDrainLabelEn}</span>
+            <strong class={summaryQueue.tone === "ok" ? "tone-ok" : "tone-warn"}>
+              <span class="i18n-ja">{summaryQueue.labelJa}</span>
+              <span class="i18n-en" lang="en">{summaryQueue.labelEn}</span>
             </strong>
             <small
               title="Entries queued for AI summary generation each hourly run, and the total still awaiting a summary."
             >
-              <span class="i18n-ja">1回 {DASHBOARD_METRICS.summaryQueueCandidates}件 · 残り {summaryQueueBacklog}件</span>
-              <span class="i18n-en" lang="en">{DASHBOARD_METRICS.summaryQueueCandidates} per run · {summaryQueueBacklog} remaining</span>
+              <span class="i18n-ja">
+                {summaryQueue.showBacklog
+                  ? `1回 ${DASHBOARD_METRICS.summaryQueueCandidates}件 · 残り ${summaryQueue.backlog}件`
+                  : "Queueスナップショットを確認できません"}
+              </span>
+              <span class="i18n-en" lang="en">
+                {summaryQueue.showBacklog
+                  ? `${DASHBOARD_METRICS.summaryQueueCandidates} per run · ${summaryQueue.backlog} remaining`
+                  : "Queue snapshot unavailable"}
+              </span>
             </small>
           </div>
           <div>
@@ -792,6 +861,11 @@ const workerToneCopy = {
   .status-metric-card.warn {
     border-color: color-mix(in srgb, var(--important) 42%, var(--border));
     background: color-mix(in srgb, var(--tutorial-bg) 30%, transparent);
+  }
+
+  .status-metric-card.err {
+    border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+    background: color-mix(in srgb, var(--danger) 8%, transparent);
   }
 
   .status-metric-card.ok {

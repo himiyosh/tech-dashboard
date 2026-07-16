@@ -24,9 +24,11 @@ import {
 } from "./summary-queue.ts";
 import { type BodyJob } from "./body-generate.ts";
 import {
+  bodyBacklogAfterMerge,
+  bodyEnqueueAllowance,
   DEFAULT_BODY_RETENTION_DAYS,
   isBodyRetentionEligible,
-  selectBodyJobBatch,
+  selectBodyPipelineJobs,
 } from "./body-queue.ts";
 import {
   bodyCacheEntryMatchesPublisherContract,
@@ -94,6 +96,9 @@ export interface PublisherEnv extends GithubRepositoryEnv {
   SUMMARY_QUEUE?: QueueBatchBinding<SummaryJob>;
   ENABLE_SUMMARY_QUEUE?: string;
   ENQUEUE_MAX_NEW?: string;
+  // Shared per-run Queue write allowance. Summary jobs have priority and body
+  // jobs use the remaining capacity so combined KV writes stay bounded.
+  ENRICHMENT_ENQUEUE_MAX_TOTAL?: string;
   // Recent summarizer retry URLs can be skipped briefly to avoid repeatedly
   // enqueueing the same incomplete-output failure every cron.
   SUMMARY_RETRY_COOLDOWN_MS?: string;
@@ -112,8 +117,8 @@ export interface PublisherEnv extends GithubRepositoryEnv {
   // bounded by the shared KV daily write budget, LL-043).
   BODY_ENQUEUE_MAX_NEW?: string;
   BODY_RETENTION_DAYS?: string;
-  // Max `b:` KV entries to read per cron when merging generated bodies into
-  // data/bodies.json. Each is one subrequest (LL-088 subrequest budget).
+  // Max current body candidates to inspect per run. Previous-run jobs receive
+  // a separate bounded lookup so generated bodies are merged promptly.
   BODY_LOOKUP_CAP?: string;
 }
 
@@ -1195,10 +1200,20 @@ export async function runHarness(
       ? await ghGetFileRaw(env, "data/bodies.json", publisherSnapshotSha)
       : null;
   let priorEntries: NormalizedEntry[] = [];
+  let previousBodyPendingIds: string[] = [];
   if (existing?.content) {
     try {
-      const parsed = JSON.parse(existing.content) as { entries?: NormalizedEntry[] };
+      const parsed = JSON.parse(existing.content) as {
+        entries?: NormalizedEntry[];
+        health?: { bodyMergePendingIds?: unknown };
+      };
       priorEntries = parsed.entries ?? [];
+      const pendingIds = parsed.health?.bodyMergePendingIds;
+      if (Array.isArray(pendingIds)) {
+        previousBodyPendingIds = [...new Set(
+          pendingIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0),
+        )].slice(0, 100);
+      }
     } catch (err) {
       console.warn(`[worker] failed to parse existing index: ${err}`);
     }
@@ -1626,14 +1641,33 @@ export async function runHarness(
   );
   const enqueueCandidates = queueEnabled && env.SUMMARY_QUEUE ? summaryQueueBatch.jobs.length : 0;
   // Body-file pipeline (LL-115): merge generated bodies into data/bodies.json
-  // and enqueue body-less entries. No-op unless ENABLE_BODY_QUEUE=1.
+  // and enqueue body-less entries. Summary jobs keep priority within the
+  // shared Queue write allowance; body jobs consume only the unused capacity.
+  // No-op unless ENABLE_BODY_QUEUE=1.
   const bodyGeneratedAt = new Date().toISOString();
+  const configuredBodyEnqueueCap = Math.max(
+    0,
+    Number(env.BODY_ENQUEUE_MAX_NEW ?? 10),
+  );
+  const totalEnrichmentEnqueueCap = Math.max(
+    0,
+    Number(env.ENRICHMENT_ENQUEUE_MAX_TOTAL ?? queueCap),
+  );
+  const effectiveBodyEnqueueCap = bodyEnqueueAllowance(
+    totalEnrichmentEnqueueCap,
+    earlyEnqueued,
+    configuredBodyEnqueueCap,
+  );
   const bodyPipeline = await runBodyPipeline(
     env,
     finalEntries,
     existingBodies?.content ?? null,
     bodyGeneratedAt,
     publisherContractFingerprint,
+    {
+      previousPendingIds: previousBodyPendingIds,
+      enqueueCap: effectiveBodyEnqueueCap,
+    },
   );
   const health = {
     lastRunAt: new Date().toISOString(),
@@ -1653,6 +1687,7 @@ export async function runHarness(
     queueMode,
     queueCap,
     enqueueCandidates,
+    summaryQueueEnqueued: earlyEnqueued,
     summaryQueueBacklog: summaryQueueBatch.eligibleCount,
     summaryQueueDrainEstimateHours: summaryQueueBatch.drainEstimateHours,
     summaryQueueStartIndex: summaryQueueBatch.startIndex,
@@ -1663,6 +1698,12 @@ export async function runHarness(
     ogNewHits: ogFound,
     publisherContractFingerprint,
     ...bodyPipeline.health,
+    enrichmentEnqueueCap: totalEnrichmentEnqueueCap,
+    enrichmentEnqueued: earlyEnqueued + bodyPipeline.enqueued,
+    enrichmentRemaining: Math.max(
+      0,
+      totalEnrichmentEnqueueCap - earlyEnqueued - bodyPipeline.enqueued,
+    ),
   };
   // Body-file architecture (LL-115): the long-form body is NOT stored in
   // data/index.json. It lives in data/bodies.json (managed by the body pipeline
@@ -1803,6 +1844,90 @@ const HEALTH_ERROR_FRESH_MS = 6 * 60 * 60_000;
 
 type HarnessHeartbeatStatus = "started" | "pre-publish" | "published" | "checked" | "aborted" | "error";
 
+export interface HeartbeatHealthSnapshot {
+  batchIndex: number;
+  batchTotal: number;
+  sourcesOk: number;
+  sourcesAttempted: number;
+  sourcesFailed: string[];
+  copilotOk: boolean;
+  fallbackPercent?: number;
+  queueMode?: string;
+  queueCap?: number;
+  enqueueCandidates?: number;
+  summaryQueueBacklog?: number;
+  summaryQueueEnqueued?: number;
+  summaryQueueDrainEstimateHours?: number;
+  summaryQueueStartIndex?: number;
+  summaryQueueCooldownCount?: number;
+  kvLookupCount?: number;
+  kvLookupCap?: number;
+  bodyQueueMode?: string;
+  bodyBacklog?: number;
+  bodyEnqueueCandidates?: number;
+  bodyEnqueueCap?: number;
+  bodyEnqueued?: number;
+  bodyLookupCount?: number;
+  bodyMerged?: number;
+  bodyPruned?: number;
+  bodyQueueDrainEstimateHours?: number;
+  bodyMergePendingIds?: string[];
+  enrichmentEnqueueCap?: number;
+  enrichmentEnqueued?: number;
+  enrichmentRemaining?: number;
+  publisherContractFingerprint?: string;
+}
+
+export function buildHeartbeatPayload(
+  health: HeartbeatHealthSnapshot,
+  changed: boolean,
+  summaryEnqueued: number,
+  fallbackTotal: number,
+  status: HarnessHeartbeatStatus,
+  now = new Date(),
+): Record<string, unknown> {
+  return {
+    ok: status !== "aborted" && status !== "error",
+    status,
+    lastCronAt: now.toISOString(),
+    changed,
+    enqueued: summaryEnqueued,
+    fallbackTotal,
+    batchIndex: health.batchIndex,
+    batchTotal: health.batchTotal,
+    sourcesOk: health.sourcesOk,
+    sourcesAttempted: health.sourcesAttempted,
+    sourcesFailed: health.sourcesFailed,
+    copilotOk: health.copilotOk,
+    fallbackPercent: health.fallbackPercent,
+    queueMode: health.queueMode,
+    queueCap: health.queueCap,
+    enqueueCandidates: health.enqueueCandidates,
+    summaryQueueBacklog: health.summaryQueueBacklog,
+    summaryQueueEnqueued: health.summaryQueueEnqueued,
+    summaryQueueDrainEstimateHours: health.summaryQueueDrainEstimateHours,
+    summaryQueueStartIndex: health.summaryQueueStartIndex,
+    summaryQueueCooldownCount: health.summaryQueueCooldownCount,
+    kvLookupCount: health.kvLookupCount,
+    kvLookupCap: health.kvLookupCap,
+    bodyQueueMode: health.bodyQueueMode,
+    bodyBacklog: health.bodyBacklog,
+    bodyEnqueueCandidates: health.bodyEnqueueCandidates,
+    bodyEnqueueCap: health.bodyEnqueueCap,
+    bodyEnqueued: health.bodyEnqueued,
+    bodyLookupCount: health.bodyLookupCount,
+    bodyMerged: health.bodyMerged,
+    bodyPruned: health.bodyPruned,
+    bodyQueueDrainEstimateHours: health.bodyQueueDrainEstimateHours,
+    bodyMergePendingIds: health.bodyMergePendingIds ?? [],
+    enrichmentEnqueueCap: health.enrichmentEnqueueCap,
+    enrichmentEnqueued: health.enrichmentEnqueued,
+    enrichmentRemaining: health.enrichmentRemaining,
+    publisherContractFingerprint:
+      health.publisherContractFingerprint ?? DEPLOYED_PUBLISHER_FINGERPRINT,
+  };
+}
+
 function errorSummary(err: unknown): string {
   const text = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
   return text.slice(0, 500);
@@ -1815,57 +1940,20 @@ function errorSummary(err: unknown): string {
  */
 async function writeHeartbeat(
   env: PublisherEnv,
-  health: {
-    batchIndex: number;
-    batchTotal: number;
-    sourcesOk: number;
-    sourcesAttempted: number;
-    sourcesFailed: string[];
-    copilotOk: boolean;
-    fallbackPercent?: number;
-    queueMode?: string;
-    queueCap?: number;
-    enqueueCandidates?: number;
-    summaryQueueBacklog?: number;
-    summaryQueueDrainEstimateHours?: number;
-    summaryQueueStartIndex?: number;
-    summaryQueueCooldownCount?: number;
-    kvLookupCount?: number;
-    kvLookupCap?: number;
-    publisherContractFingerprint?: string;
-  },
+  health: HeartbeatHealthSnapshot,
   changed: boolean,
-  enqueued: number,
+  summaryEnqueued: number,
   fallbackTotal: number,
   status: HarnessHeartbeatStatus = changed ? "published" : "checked",
 ): Promise<void> {
   try {
-    const hb = {
-      ok: status !== "aborted" && status !== "error",
-      status,
-      lastCronAt: new Date().toISOString(),
+    const hb = buildHeartbeatPayload(
+      health,
       changed,
-      enqueued,
+      summaryEnqueued,
       fallbackTotal,
-      batchIndex: health.batchIndex,
-      batchTotal: health.batchTotal,
-      sourcesOk: health.sourcesOk,
-      sourcesAttempted: health.sourcesAttempted,
-      sourcesFailed: health.sourcesFailed,
-      copilotOk: health.copilotOk,
-      fallbackPercent: health.fallbackPercent,
-      queueMode: health.queueMode,
-      queueCap: health.queueCap,
-      enqueueCandidates: health.enqueueCandidates,
-      summaryQueueBacklog: health.summaryQueueBacklog,
-      summaryQueueDrainEstimateHours: health.summaryQueueDrainEstimateHours,
-      summaryQueueStartIndex: health.summaryQueueStartIndex,
-      summaryQueueCooldownCount: health.summaryQueueCooldownCount,
-      kvLookupCount: health.kvLookupCount,
-      kvLookupCap: health.kvLookupCap,
-      publisherContractFingerprint:
-        health.publisherContractFingerprint ?? DEPLOYED_PUBLISHER_FINGERPRINT,
-    };
+      status,
+    );
     // 7-day TTL: if Worker stops running, the heartbeat expires naturally.
     await env.SUMMARY_CACHE.put(HEARTBEAT_KEY, JSON.stringify(hb), {
       expirationTtl: 7 * 24 * 3600,
@@ -2085,10 +2173,13 @@ interface BodyPipelineResult {
   enqueued: number;
   health: {
     bodyQueueMode: string;
+    bodyEnqueueCap: number;
     bodyEnqueueCandidates: number;
     bodyBacklog: number;
-    bodyDrainEstimateHours: number;
+    bodyQueueDrainEstimateHours: number;
     bodyLookupCount: number;
+    bodyPendingLookupCount: number;
+    bodyMergePendingIds: string[];
     bodyMerged: number;
     bodyPruned: number;
     bodiesTotal: number;
@@ -2113,6 +2204,10 @@ async function runBodyPipeline(
   existingBodiesContent: string | null,
   generatedAt: string,
   publisherContractFingerprint: string,
+  options: {
+    previousPendingIds?: readonly string[];
+    enqueueCap?: number;
+  } = {},
 ): Promise<BodyPipelineResult> {
   const retentionDays = Math.max(
     1,
@@ -2131,10 +2226,13 @@ async function runBodyPipeline(
     enqueued: 0,
     health: {
       bodyQueueMode: mode,
+      bodyEnqueueCap: 0,
       bodyEnqueueCandidates: 0,
       bodyBacklog: 0,
-      bodyDrainEstimateHours: 0,
+      bodyQueueDrainEstimateHours: 0,
       bodyLookupCount: 0,
+      bodyPendingLookupCount: 0,
+      bodyMergePendingIds: [],
       bodyMerged: 0,
       bodyPruned: 0,
       bodiesTotal: parseBodies(existingBodiesContent).count,
@@ -2154,32 +2252,31 @@ async function runBodyPipeline(
     const present = bodiesPresentSet(existingBodies);
     const retainedIds = new Set(retainedEntries.map((e) => e.id));
 
-    // SHARED selection for BOTH merge-lookup and enqueue (LL-116 / LL-102
-    // symmetry). The merge MUST look up `b:` keys for the SAME entries the
-    // enqueue targets — otherwise generated bodies pile up in KV unmerged
-    // because the two windows never coincide (observed: 40 bodies generated, 0
-    // merged). selectBodyJobBatch gives recent-priority + round-robin over the
-    // entries still needing a body, so the newest enqueued entries are also the
-    // ones checked for a ready body each run.
-    const lookupCap = Math.max(1, Number(env.BODY_LOOKUP_CAP ?? 10));
-    const configuredEnqueueCap = Math.max(1, Number(env.BODY_ENQUEUE_MAX_NEW ?? 10));
-    if (configuredEnqueueCap > lookupCap) {
-      console.warn(
-        "[worker] BODY_ENQUEUE_MAX_NEW exceeds BODY_LOOKUP_CAP; clamping enqueue to the lookup budget",
-      );
-    }
-    const enqueueCap = Math.min(configuredEnqueueCap, lookupCap);
-    const selection = selectBodyJobBatch(retainedEntries, present, lookupCap, {
-      publisherContractFingerprint,
-    });
+    // Current candidates still use one selection for lookup and enqueue
+    // (LL-116). Jobs emitted by the previous Publisher run get one priority
+    // lookup first, so completed Queue work is folded into bodies.json before
+    // the round-robin window advances. A pending miss is not carried again.
+    const lookupCap = Math.max(0, Number(env.BODY_LOOKUP_CAP ?? 10));
+    const configuredEnqueueCap = Math.max(0, Number(env.BODY_ENQUEUE_MAX_NEW ?? 10));
+    const enqueueCap = Math.min(
+      configuredEnqueueCap,
+      Math.max(0, Math.floor(options.enqueueCap ?? configuredEnqueueCap)),
+    );
+    const selection = selectBodyPipelineJobs(
+      retainedEntries,
+      present,
+      options.previousPendingIds ?? [],
+      lookupCap,
+      { publisherContractFingerprint },
+    );
 
     // 1) Merge: read `b:` KV for the selected entries and fold any freshly
     //    generated bodies into bodies.json (prune happens in mergeBodies).
-    const hits = selection.jobs.length
-      ? await getBodyCacheEntries(env.SUMMARY_CACHE, selection.jobs.map((j) => j.url))
+    const hits = selection.lookupJobs.length
+      ? await getBodyCacheEntries(env.SUMMARY_CACHE, selection.lookupJobs.map((j) => j.url))
       : new Map();
     const newBodies: NewBody[] = [];
-    for (const job of selection.jobs) {
+    for (const job of selection.lookupJobs) {
       const candidate = hits.get(job.url);
       const hit = bodyCacheEntryMatchesPublisherContract(
         candidate,
@@ -2195,7 +2292,7 @@ async function runBodyPipeline(
 
     // 2) Enqueue the selected entries that do NOT yet have a generated body (KV
     //    miss), so worker-body generates them for a future run's merge.
-    const toEnqueue = selection.jobs
+    const toEnqueue = selection.candidateJobs
       .filter((job) => {
         const hit = hits.get(job.url);
         return !bodyCacheEntryMatchesPublisherContract(
@@ -2220,19 +2317,25 @@ async function runBodyPipeline(
     }
     if (selection.eligibleCount > 0 || merge.changed) {
       console.log(
-        `[worker] body pipeline: backlog=${selection.eligibleCount}, lookup=${selection.jobs.length}, merged=${merge.added}, pruned=${merge.pruned}, enqueue=${enqueued}, drainHours=${selection.drainEstimateHours}`,
+        `[worker] body pipeline: backlog=${selection.eligibleCount}, pendingLookup=${selection.pendingJobs.length}, candidateLookup=${selection.candidateJobs.length}, merged=${merge.added}, pruned=${merge.pruned}, enqueue=${enqueued}, enqueueCap=${enqueueCap}`,
       );
     }
 
+    const remainingBacklog = bodyBacklogAfterMerge(selection.eligibleCount, merge.added);
     return {
       bodiesFileContent: merge.changed ? serializeBodies(merge.payload) : null,
       enqueued,
       health: {
         bodyQueueMode: "enabled",
+        bodyEnqueueCap: enqueueCap,
         bodyEnqueueCandidates: toEnqueue.length,
-        bodyBacklog: selection.eligibleCount,
-        bodyDrainEstimateHours: selection.drainEstimateHours,
-        bodyLookupCount: selection.jobs.length,
+        bodyBacklog: remainingBacklog,
+        bodyQueueDrainEstimateHours: enqueueCap > 0
+          ? Math.ceil(remainingBacklog / enqueueCap)
+          : 0,
+        bodyLookupCount: selection.lookupJobs.length,
+        bodyPendingLookupCount: selection.pendingJobs.length,
+        bodyMergePendingIds: toEnqueue.slice(0, enqueued).map((job) => job.entry.id),
         bodyMerged: merge.added,
         bodyPruned: merge.pruned,
         bodiesTotal: merge.payload.count,

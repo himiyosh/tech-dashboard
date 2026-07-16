@@ -14,7 +14,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 |---|---|---|---|---|
 | ソース収集 (registry sources) | GitHub Actions `Publisher` (Node 22) | Cron `0 * * * *` (毎時) を 6 batch ローテーション | データ更新が止まる。runtime fingerprint または snapshot 不一致時は publish を自動停止 | Publisher workflow / `/status` |
 | 日本語/英語要約 (`summary*`) | Publisher → OIDC bridge → Queue `tech-dashboard-summarizer` → Copilot Enterprise (claude-sonnet-4.6) | 検証済み publish 後に最大 `ENQUEUE_MAX_NEW` 件/run を投入、consumer は 1 message/invocation | 既存表示は維持。LLM 失敗時は deterministic fallback で空欄を防止 | `health.fallbackTotal` / `health.summaryQueueBacklog` / `health.summaryQueueDrainEstimateHours` |
-| 記事本文 (`data/bodies.json`) | Publisher → OIDC bridge → Queue `tech-dashboard-body` → Copilot (claude-opus-4.8, reasoning=max) | 本文は index と分離 (LL-115)。evergreen、importance 2/3、直近 `BODY_RETENTION_DAYS` 日を保持対象にし、consumer が JA/EN を 2 call で生成して publisher が sidecar へ merge | 対象外または本文無しの記事は要約主役の表示にフォールバック | `health.bodyBacklog` / `health.bodyDrainEstimateHours` / `health.bodiesTotal` |
+| 記事本文 (`data/bodies.json`) | Publisher → OIDC bridge → Queue `tech-dashboard-body` → Copilot (claude-opus-4.8, reasoning=max) | 本文は index と分離 (LL-115)。evergreen、importance 2/3、直近 `BODY_RETENTION_DAYS` 日を保持対象にし、consumer が JA/EN を 2 call で生成して publisher が sidecar へ merge | 対象外または本文無しの記事は要約主役の表示にフォールバック | `health.bodyBacklog` / `health.bodyQueueDrainEstimateHours` / `health.bodiesTotal` |
 | summary deterministic fallback | Publisher / `scripts/apply-summary-cache.mjs` | data commit 前、または緊急修復時 | LLM timeout / 旧 cache 欠落時でも live index の summary 欠落を防止 | `health.summaryFallbacks` / `tests/data-schema.test.ts` |
 | og:image 取得 | Publisher → OIDC bridge → KV | 毎時最大 1 件。data 検証と push 成功後だけ `og.v1` を更新 | サムネが no-image fallback になる | `health.ogCached` |
 | `data/index.json` / `data/archive/*` / `data/stats.json` 更新 commit | Publisher workflow → built-in `GITHUB_TOKEN` | 全品質ゲート後、差分があるときのみ data allowlist を 1 commit にまとめる | サイトに反映されない、記事数推移が古いまま | GitHub Actions `Publisher` |
@@ -397,7 +397,7 @@ fingerprint を変える通常 release は次の順序を固定します。
 
 #### 監視 / ヘルスチェック
 
-Publisher は実行ごとに `data/index.json` の `health` フィールドにメタデータ (`lastRunAt` / `batchIndex` / `sourcesOk` / `sourcesFailed[]` / `copilotOk` / `fallbackTotal` / `queueMode` / `enqueueCandidates` / `summaryQueueBacklog` / `summaryQueueDrainEstimateHours` / `summaryFallbacks` / `bodyFallbacks` / `ogCached` 等) を埋め込みます。サイトの [https://techdb.studio344.net/status/](https://techdb.studio344.net/status/) 上部の **Worker Health** セクションで一目で確認できます。
+Publisher は実行ごとに `data/index.json` の `health` フィールドにメタデータ (`lastRunAt` / `batchIndex` / `sourcesOk` / `sourcesFailed[]` / `copilotOk` / `fallbackTotal` / `queueMode` / `enqueueCandidates` / `summaryQueueBacklog` / `summaryQueueDrainEstimateHours` / `bodyQueueMode` / `bodyBacklog` / `bodyQueueDrainEstimateHours` / `bodyMergePendingIds` / `enrichmentEnqueueCap` / `summaryFallbacks` / `bodyFallbacks` / `ogCached` 等) を埋め込みます。Web の Queue 表示はこの artifact health を正本とし、`enabled` かつ backlog 0 の場合だけ処理待ちなしと表示します。run 停止中は保存済み ETA を確定値として表示しません。Node Publisher は `heartbeat.v1` を bridge の KV write へ送らず、Free bridge の write allowlist は `og.v1` のみに保ちます。サイトの [https://techdb.studio344.net/status/](https://techdb.studio344.net/status/) 上部の **Worker Health** セクションで一目で確認できます。
 
 - `run ok` — 直近 run が正常（source freshness は別指標）
 - `run warn` — summarize disabled / source error / backlog 増加など要確認

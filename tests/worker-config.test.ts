@@ -47,7 +47,7 @@ describe("Cloudflare Worker deploy config", () => {
     expect(summarizerConfig).toContain('dead_letter_queue = "tech-dashboard-summary-dlq"');
   });
 
-  it("reserves subrequest headroom around the enrichment queues", () => {
+  it("shares one bounded write allowance across summary and body queues", () => {
     const runner = readConfig("scripts/run-publisher.ts");
     const runnerValue = (key: string) => {
       const match = runner.match(new RegExp(`${key}: "(\\d+)"`));
@@ -58,10 +58,12 @@ describe("Cloudflare Worker deploy config", () => {
     const summaryEnqueueCap = runnerValue("ENQUEUE_MAX_NEW");
     const bodyLookupCap = runnerValue("BODY_LOOKUP_CAP");
     const bodyEnqueueCap = runnerValue("BODY_ENQUEUE_MAX_NEW");
+    const totalEnqueueCap = runnerValue("ENRICHMENT_ENQUEUE_MAX_TOTAL");
 
     expect(summaryLookupCap).toBeGreaterThanOrEqual(summaryEnqueueCap);
-    expect(bodyLookupCap).toBeGreaterThanOrEqual(bodyEnqueueCap);
-    expect(summaryLookupCap + bodyLookupCap).toBeLessThanOrEqual(45);
+    expect(bodyLookupCap).toBeGreaterThanOrEqual(totalEnqueueCap);
+    expect(bodyEnqueueCap).toBeGreaterThanOrEqual(totalEnqueueCap);
+    expect(totalEnqueueCap).toBeLessThanOrEqual(35);
     expect(runner).toContain('BODY_RETENTION_DAYS: "30"');
   });
 

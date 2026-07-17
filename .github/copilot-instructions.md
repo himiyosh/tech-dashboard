@@ -2232,6 +2232,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: Astroの`404.astro`からnoindexの静的404 pageを生成し、JA/ENの説明とSearch、Archive、Homeの回復導線を設けた。article、category、tagの未知routeについて、built previewのresponse statusが404、Home hero不在、404 headingと回復link表示、mobile target寸法とoverflowをE2Eで固定した。
 - **教訓**: 静的生成routeの一覧が正しくても、未生成routeを配信層がどう扱うかは別contractである。custom 404の存在だけで合格にせず、productionと同じbuilt artifactへのunknown URLでHTTP statusとresponse contentを同時に検証し、Homeへ成功形でfallbackさせない。
 
+### LL-333: Pages buildがclone後に無出力で停止してもbuild cacheを単独原因と断定しない
+- **事象**: soft-404のpreviewとproduction deploymentが、repository clone成功後にcache復元、Node install、build commandのログを一切出さず、約35分で`build exceeded the time limit and was terminated`になった。cache purge後のproduction retryは約6分で成功したが、次のpreviewと`build_caching=false`での同一commit retryもclone直後から停止した。同じcommitのGitHub Actions Web buildとE2Eは成功していた。
+- **根本原因**: Pages APIのstageと`/deployments/{id}/history/logs`から、停止位置はclone完了後から最初のbuild container logまでと確認できた。cache無効化でも再現したためcache単独原因ではない。Cloudflare内部の停止理由はAPI logに明記されず、追加確認が必要である。先行production retryの成功はcache purgeとの相関であり、因果の証拠ではなかった。
+- **対策**: deployment stageとbuild logを確認し、clone、cache、tool検出、install、build、deployのどこまで進んだかを比較する。code gateが成功しbuild command前の停止が複数deploymentで再現する場合、cache purgeと同一commit retryは切り分けに使えるが、cache無効化でも再現するかを確認してから原因を記録する。token値は表示せず、commit SHA、build config snapshot、全stage、公開URLを確認し、検証用に変えたproject設定は効果が無ければ元へ戻す。
+- **教訓**: 1回の復旧操作と成功だけで根本原因を断定しない。Pages timeoutは製品codeとprovider build stageを分け、同一commit、異なるcache設定、GitHub CI、API logの反証を揃える。内部原因を観測できない場合は未確認と明記し、成功済みproductionをrollbackやDirect Uploadで上書きしない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

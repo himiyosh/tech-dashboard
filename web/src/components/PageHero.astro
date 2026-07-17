@@ -14,6 +14,7 @@ export interface PageHeroAction {
 export interface Props {
   kicker: string;
   title: string;
+  titleEn?: string;
   count?: string;
   countEn?: string;
   description: string;
@@ -28,6 +29,7 @@ export interface Props {
 const {
   kicker,
   title,
+  titleEn,
   count,
   countEn,
   description,
@@ -49,7 +51,12 @@ const {
     <div class="page-hero-copy">
       <p class="page-kicker">{kicker}</p>
       <h1 id={headingId}>
-        {title}
+        {titleEn ? (
+          <>
+            <span class="i18n-ja">{title}</span>
+            <span class="i18n-en" lang="en">{titleEn}</span>
+          </>
+        ) : title}
         {count && (
           <span class="page-count">
             {countEn ? (

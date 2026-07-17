@@ -33,6 +33,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 修正
 
+- 存在しない記事・カテゴリ・タグ URL が Home を HTTP 200 で返す soft-404 を廃止し、検索・アーカイブ・Home の回復導線を持つ専用 404 ページを追加しました。
 - 狭い viewport で Header control や記事パネルが見切れ、不要な横スクロールや過度な折り返しが発生する問題を修正しました。
 - Featured thumbnail とカード幅の不一致、画像周辺の不要な余白を修正しました。
 - 要約品質、タイトル言語、body retention、live/archive metadata の不整合を修正しました。

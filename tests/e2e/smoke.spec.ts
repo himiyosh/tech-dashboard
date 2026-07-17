@@ -67,6 +67,58 @@ async function mockReactionIdentity(
 }
 
 test.describe("TECH Dashboard smoke", () => {
+  test("unknown routes return a branded 404 with recovery paths", async ({ page }) => {
+    const unknownRoutes = [
+      "/e/0000000000000000/",
+      "/c/does-not-exist/",
+      "/t/nonexistenttagzz/",
+    ];
+
+    for (const route of unknownRoutes) {
+      const response = await page.goto(route);
+      expect(response?.status(), `${route} returns HTTP 404`).toBe(404);
+      await expect(page.locator("#not-found-heading")).toContainText("ページが見つかりません");
+      await expect(page.locator("section.banner h1")).toHaveCount(0);
+      await expect(page.locator("main.not-found-page")).toBeVisible();
+      expect(await page.locator("main.not-found-page").getAttribute("aria-labelledby")).toBeNull();
+      await expect(page.locator(".not-found-actions")).toHaveAttribute(
+        "aria-labelledby",
+        "not-found-recovery-heading",
+      );
+      await expect(page.locator("[data-recovery-action]")).toHaveCount(3);
+      await expect(page.locator("[data-recovery-action='search']")).toHaveAttribute("href", "/search");
+      await expect(page.locator("[data-recovery-action='archive']")).toHaveAttribute("href", "/archive");
+      await expect(page.locator("[data-recovery-action='home']")).toHaveAttribute("href", "/");
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+        .toBe(true);
+    }
+
+    await page.locator(".lang-btn[data-lang='en']").click();
+    await expect(page.locator("#not-found-heading .i18n-en")).toBeVisible();
+    await expect(page.locator("#not-found-heading .i18n-en")).toHaveText("Page not found");
+    await expect(page.locator("#not-found-recovery-heading .i18n-en")).toHaveText("Choose where to continue");
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.reload();
+    await expect(page.locator("header .menu-trigger")).toBeHidden();
+    await expect(page.locator(".mobile-tabbar")).toBeVisible();
+    const mobileMetrics = await page.evaluate(() => {
+      const actions = [...document.querySelectorAll<HTMLElement>("[data-recovery-action]")];
+      const panel = document.querySelector<HTMLElement>(".not-found-panel");
+      return {
+        actionHeights: actions.map((action) => action.getBoundingClientRect().height),
+        panelWidth: panel?.getBoundingClientRect().width ?? 0,
+        viewportWidth: window.innerWidth,
+        overflow: document.documentElement.scrollWidth - window.innerWidth,
+      };
+    });
+    expect(mobileMetrics.actionHeights).toHaveLength(3);
+    expect(mobileMetrics.actionHeights.every((height) => height >= 44)).toBe(true);
+    expect(mobileMetrics.panelWidth).toBeLessThanOrEqual(mobileMetrics.viewportWidth - 32);
+    expect(mobileMetrics.overflow).toBeLessThanOrEqual(0);
+  });
+
   test("home renders primary sections", async ({ page }) => {
     await page.goto("/");
     await page.setViewportSize({ width: 1440, height: 900 });

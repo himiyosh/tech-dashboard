@@ -14,6 +14,7 @@ type SummaryFixtureEntry = SummaryDisplayEntry & {
 };
 const REACTION_VOTER_COOKIE_NAME = "__Host-techdb_reaction_voter";
 const MOBILE_FIRST_DECISION_MAX_Y = 340;
+const LAYOUT_SUBPIXEL_EPSILON_PX = 0.01;
 
 async function expectMobileFirstDecisionNearViewport(page: Page): Promise<void> {
   const featured = page.locator("article.featured").first();
@@ -3597,8 +3598,11 @@ test.describe("TECH Dashboard smoke", () => {
           body: { x: body.x, width: body.width },
         };
       });
-      expect(fallbackGeometry.thumb.height, "failed image keeps a full-height media rail").toBeGreaterThanOrEqual(
-        fallbackGeometry.cardHeight - 2,
+      expect(
+        fallbackGeometry.cardHeight - fallbackGeometry.thumb.height,
+        "failed image keeps a full-height media rail",
+      ).toBeLessThanOrEqual(
+        2 + LAYOUT_SUBPIXEL_EPSILON_PX,
       );
       expect(Math.abs(fallbackGeometry.fallback.width - fallbackGeometry.thumb.width)).toBeLessThanOrEqual(1);
       expect(Math.abs(fallbackGeometry.fallback.height - fallbackGeometry.thumb.height)).toBeLessThanOrEqual(1);
@@ -3688,8 +3692,11 @@ test.describe("TECH Dashboard smoke", () => {
           `${width}px header does not wrap`,
         ).toBeLessThanOrEqual(1);
         expect(viewportLayout.logo!.right + 8).toBeLessThanOrEqual(viewportLayout.langToggle!.x);
-        expect(viewportLayout.image!.height, `${width}px media rail fills the Featured card`).toBeGreaterThanOrEqual(
-          viewportLayout.featured!.height - 2,
+        expect(
+          viewportLayout.featured!.height - viewportLayout.image!.height,
+          `${width}px media rail fills the Featured card`,
+        ).toBeLessThanOrEqual(
+          2 + LAYOUT_SUBPIXEL_EPSILON_PX,
         );
         expect(viewportLayout.content!.width).toBeGreaterThanOrEqual(
           viewportLayout.featured!.width - viewportLayout.image!.width - 3,

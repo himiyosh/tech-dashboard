@@ -2238,6 +2238,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: deployment stageとbuild logを確認し、clone、cache、tool検出、install、build、deployのどこまで進んだかを比較する。code gateが成功しbuild command前の停止が複数deploymentで再現する場合、cache purgeと同一commit retryは切り分けに使えるが、cache無効化でも再現するかを確認してから原因を記録する。token値は表示せず、commit SHA、build config snapshot、全stage、公開URLを確認し、検証用に変えたproject設定は効果が無ければ元へ戻す。
 - **教訓**: 1回の復旧操作と成功だけで根本原因を断定しない。Pages timeoutは製品codeとprovider build stageを分け、同一commit、異なるcache設定、GitHub CI、API logの反証を揃える。内部原因を観測できない場合は未確認と明記し、成功済みproductionをrollbackやDirect Uploadで上書きしない。
 
+### LL-334: DOMRect同士の相対寸法は微小なsubpixel誤差を許容する
+- **事象**: mobile Featuredのmedia railがcard高との差2px以内であることを検証するE2Eが、`card=180.2031555px`、`rail=178.203125px`となり、差が`2.0000305px`だったため初回とretryなし再実行で失敗した。画面上の差は設計許容値と同じ2pxで、横overflowや本文幅の回帰は無かった。
+- **根本原因**: browserの`DOMRect`はlayout unitから浮動小数点へ変換され、親子要素でも末尾の丸めが一致しない。raw値を`rail >= card - 2`で比較すると、物理的には2px差でも数万分の1pxだけ境界を超えてfalse negativeになる。
+- **対策**: 親子の高さ差を直接計算し、設計許容値2pxに`0.01px`のsubpixel epsilonだけを加えて検証する。touch targetなど物理的な下限はLL-255の安全余白を維持し、製品寸法の閾値自体は緩めない。
+- **教訓**: 関連要素の相対geometryはraw `DOMRect`の完全な境界一致を要求せず、描画丸めより十分小さい明示epsilonを使う。一方、操作寸法やoverflowの実要件はepsilonで救済せず、CSS側に安全余白を持たせる。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

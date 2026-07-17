@@ -93,6 +93,9 @@ describe("Cloudflare Worker deploy config", () => {
 
   it("gives CI jobs enough time for Pagefind builds and the full Playwright suite", () => {
     const ciWorkflow = readConfig(".github/workflows/ci.yml");
+    const webPackage = JSON.parse(readConfig("web/package.json")) as {
+      scripts?: Record<string, string>;
+    };
     const unitStart = ciWorkflow.indexOf("\n  unit:\n");
     const e2eStart = ciWorkflow.indexOf("\n  e2e:\n");
     expect(unitStart).toBeGreaterThan(-1);
@@ -106,6 +109,8 @@ describe("Cloudflare Worker deploy config", () => {
       .match(/timeout-minutes:\s*(\d+)/);
     expect(Number(unitTimeout?.[1])).toBeGreaterThanOrEqual(25);
     expect(Number(e2eTimeout?.[1])).toBeGreaterThanOrEqual(25);
+    expect(webPackage.scripts?.build).toContain("astro build --silent");
+    expect(webPackage.scripts?.build).toContain("pagefind --site dist");
   });
 
   it("spreads source collection across six hourly batches", () => {

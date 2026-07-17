@@ -49,7 +49,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - Featured thumbnail とカード幅の不一致、画像周辺の不要な余白を修正しました。
 - 要約品質、タイトル言語、body retention、live/archive metadata の不整合を修正しました。
 - Publisher runtime fingerprint を現行の生成契約へ同期しました。
-- Pagefind を含む本番 Web build が CI job 全体の時間上限で中断されないよう、品質 gate の実行上限を調整しました。
+- Pagefind を含む本番 Web build が CI job 全体の時間上限や大量の静的 route log で中断されないよう、品質 gate の実行上限と Astro build のログ量を調整しました。
 - Web build の開始時に古い `dist` を削除し、廃止した静的ルートが成果物へ残らないようにしました。
 - 共有されたタグ検索 URL の大文字小文字やアクセント表記が異なっても、完全一致の対象記事を回収できるようにしました。
 - Linux のフォントメトリクスでも中間幅の Hero と固定 Footer が過度に伸びず、優先記事と重ならないようにしました。

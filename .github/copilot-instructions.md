@@ -2328,6 +2328,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: Astro本体は`--silent`でroute logを抑制し、Node wrapperが30秒ごとに1行だけASCII heartbeatを出す。終了code/signalをfail-closedで伝播し、Pagefindは従来どおりindex結果を出力する。production build、CI、pre-push、Playwright webServerは同じwrapperを共有し、config testでsilent spawn、heartbeat、timer cleanup、Pagefind継続を固定する。
 - **教訓**: 高cardinalityな静的siteではbuildの成功判定に必要なsummaryと低頻度heartbeatだけをCIへ出し、routeごとの生成logも完全な無出力も避ける。timeoutを延長する前に、CPU、file数、log量、最終出力時刻を分けて測り、生成物と検索indexのcontractを維持したままI/Oをboundedにする。
 
+### LL-349: E2Eの数値contractはtemplate由来の前後空白を意味差として扱わない
+- **事象**: Publisherが新しい共有生成枠telemetryを記録したsnapshotで、Statusの値は`35/35`と正しく表示されたが、E2Eは`strong`のtextを前後空白なしの`^\d+/\d+$`へ固定していたため`" 35/35 "`を拒否した。通常のlocal snapshotはtelemetry未記録branchだったため、この分岐を通らなかった。
+- **根本原因**: HTML templateの改行・indent由来空白と、利用者が読む数値ratioの意味を同一視した。生成dataにより初めて現れるoptional branchをcurrent corpusだけのlocal E2Eで完全に覆えると仮定していた。
+- **対策**: ratioの形式と全体一致は維持しつつ、前後のHTML空白だけを`\s*`で許容する。Publisher生成snapshotのrecorded branchで同じE2Eを通し、未記録branchの`Not recorded`契約も維持する。
+- **教訓**: E2Eでtextの意味を検証するときは、内部空白や数値形式は厳密に守り、template formattingだけが作る前後空白を製品回帰にしない。optional telemetryは未記録と記録済みの両状態を別contractとして扱い、Publisher生成後の実snapshotでも検証する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

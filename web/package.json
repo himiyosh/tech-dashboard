@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "astro dev --host",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
-    "build": "npm run clean && astro build --silent && pagefind --site dist",
+    "build": "npm run clean && node scripts/build-astro.mjs && pagefind --site dist",
     "preview": "astro preview",
     "deploy:legacy": "npm run build && npx --yes wrangler@4.85.0 pages deploy dist --project-name tech-dashboard --branch main --commit-dirty=true",
     "astro": "astro"

@@ -96,6 +96,7 @@ describe("Cloudflare Worker deploy config", () => {
     const webPackage = JSON.parse(readConfig("web/package.json")) as {
       scripts?: Record<string, string>;
     };
+    const astroBuildRunner = readConfig("web/scripts/build-astro.mjs");
     const unitStart = ciWorkflow.indexOf("\n  unit:\n");
     const e2eStart = ciWorkflow.indexOf("\n  e2e:\n");
     expect(unitStart).toBeGreaterThan(-1);
@@ -109,8 +110,11 @@ describe("Cloudflare Worker deploy config", () => {
       .match(/timeout-minutes:\s*(\d+)/);
     expect(Number(unitTimeout?.[1])).toBeGreaterThanOrEqual(25);
     expect(Number(e2eTimeout?.[1])).toBeGreaterThanOrEqual(25);
-    expect(webPackage.scripts?.build).toContain("astro build --silent");
+    expect(webPackage.scripts?.build).toContain("node scripts/build-astro.mjs");
     expect(webPackage.scripts?.build).toContain("pagefind --site dist");
+    expect(astroBuildRunner).toContain('spawn(command, ["build", "--silent"]');
+    expect(astroBuildRunner).toContain("const HEARTBEAT_MS = 30_000");
+    expect(astroBuildRunner).toContain("clearInterval(heartbeat)");
   });
 
   it("spreads source collection across six hourly batches", () => {

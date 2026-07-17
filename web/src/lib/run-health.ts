@@ -1,4 +1,5 @@
 export type WorkerRunTone = "ok" | "warn" | "err";
+export type WorkerRunState = "healthy" | "missing" | "late" | "failed" | "degraded";
 
 export interface WorkerHealthSnapshot {
   lastRunAt: string;
@@ -17,9 +18,11 @@ export interface WorkerRunStatusOptions {
 }
 
 export interface WorkerRunStatus {
+  state: WorkerRunState;
   tone: WorkerRunTone;
   statusText: "OK" | "WARN" | "ERR";
-  runLabel: `run ${WorkerRunTone}`;
+  stateText: "OK" | "NO DATA" | "DELAYED" | "FAILED" | "DEGRADED";
+  runLabel: string;
   detail: string;
 }
 
@@ -29,12 +32,65 @@ function statusTextFor(tone: WorkerRunTone): WorkerRunStatus["statusText"] {
   return "ERR";
 }
 
-function buildStatus(tone: WorkerRunTone, detail: string): WorkerRunStatus {
+function stateTextFor(state: WorkerRunState): WorkerRunStatus["stateText"] {
+  if (state === "healthy") return "OK";
+  if (state === "missing") return "NO DATA";
+  if (state === "late") return "DELAYED";
+  if (state === "failed") return "FAILED";
+  return "DEGRADED";
+}
+
+function buildStatus(
+  state: WorkerRunState,
+  tone: WorkerRunTone,
+  detail: string,
+): WorkerRunStatus {
+  const stateText = stateTextFor(state);
   return {
+    state,
     tone,
     statusText: statusTextFor(tone),
-    runLabel: `run ${tone}`,
+    stateText,
+    runLabel: `run ${stateText.toLowerCase()}`,
     detail,
+  };
+}
+
+export function runCadenceCopy(
+  status: Pick<WorkerRunStatus, "state">,
+  latestIndexAge: string,
+): { ja: string; en: string } {
+  const suffix = {
+    ja: `最新 index は ${latestIndexAge}`,
+    en: `latest index ${latestIndexAge}`,
+  };
+  if (status.state === "healthy") {
+    return {
+      ja: `毎時 1 バッチ収集 · 各ソースは約 6 時間周期 · ${suffix.ja}`,
+      en: `One batch hourly · each source about every 6 hours · ${suffix.en}`,
+    };
+  }
+  if (status.state === "late") {
+    return {
+      ja: `通常は毎時 1 バッチ収集 · 現在は収集遅延を検出 · ${suffix.ja}`,
+      en: `Normally one batch hourly · collection is currently delayed · ${suffix.en}`,
+    };
+  }
+  if (status.state === "failed") {
+    return {
+      ja: `通常は毎時 1 バッチ収集 · 直近バッチは全ソース失敗 · ${suffix.ja}`,
+      en: `Normally one batch hourly · every source failed in the latest batch · ${suffix.en}`,
+    };
+  }
+  if (status.state === "missing") {
+    return {
+      ja: `通常は毎時 1 バッチ収集 · 稼働記録を確認できません · ${suffix.ja}`,
+      en: `Normally one batch hourly · run telemetry is unavailable · ${suffix.en}`,
+    };
+  }
+  return {
+    ja: `通常は毎時 1 バッチ収集 · 一部処理を要確認 · ${suffix.ja}`,
+    en: `Normally one batch hourly · some processing needs review · ${suffix.en}`,
   };
 }
 
@@ -46,30 +102,30 @@ export function deriveWorkerRunStatus({
   staleRunHours = 6,
 }: WorkerRunStatusOptions): WorkerRunStatus {
   if (!workerHealth) {
-    return buildStatus("warn", "no data (legacy index)");
+    return buildStatus("missing", "warn", "no data (legacy index)");
   }
 
   const lastRunMs = Date.parse(workerHealth.lastRunAt);
   const lastRunHours = Number.isFinite(lastRunMs) ? (nowMs - lastRunMs) / 3600_000 : Number.POSITIVE_INFINITY;
   if (lastRunHours > staleRunHours) {
-    return buildStatus("err", `no run in ${staleRunHours}h+`);
+    return buildStatus("late", "err", `no run in ${staleRunHours}h+`);
   }
   if (
     typeof workerHealth.sourcesAttempted === "number"
     && workerHealth.sourcesAttempted > 0
     && workerHealth.sourcesOk === 0
   ) {
-    return buildStatus("err", `all ${workerHealth.sourcesAttempted} sources failed`);
+    return buildStatus("failed", "err", `all ${workerHealth.sourcesAttempted} sources failed`);
   }
   if (!workerHealth.copilotOk) {
-    return buildStatus("warn", "summarize disabled");
+    return buildStatus("degraded", "warn", "summarize disabled");
   }
   if (workerHealth.sourcesFailed.length > 0) {
-    return buildStatus("warn", `${workerHealth.sourcesFailed.length} source error`);
+    return buildStatus("degraded", "warn", `${workerHealth.sourcesFailed.length} source error`);
   }
   if (fallbackPercent >= 10) {
-    return buildStatus("warn", `${pendingSummaryEntries} summaries pending`);
+    return buildStatus("degraded", "warn", `${pendingSummaryEntries} summaries pending`);
   }
 
-  return buildStatus("ok", "run healthy");
+  return buildStatus("healthy", "ok", "run healthy");
 }

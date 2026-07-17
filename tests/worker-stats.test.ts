@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildStatsPayload,
+  buildStatsPayloadFromArtifacts,
   STATS_BUCKET_TIME_ZONE,
 } from "../harness/publishers/stats-core.ts";
 import type { NormalizedEntry } from "../harness/types.ts";
 import {
+  assertArchiveIndexBaseline,
   assertArchiveMonthBaseline,
   assertHistoryBaselinePair,
-  buildIncrementalStats,
-  hasArchiveTagChanges,
+  parseArchiveIndexBaseline,
   parseBaselineJson,
   selectArchiveInspectionMonths,
   selectArchiveUpdateEntries,
@@ -40,8 +40,8 @@ function entry(id: string, publishedAt: string, category = "tech-news"): Normali
   } as NormalizedEntry;
 }
 
-describe("archive incremental scope (LL-152)", () => {
-  it("selects only new or changed index entries for archive reads", () => {
+describe("archive and stats rebuild scope", () => {
+  it("selects only new or changed index entries for archive writes", () => {
     const unchanged = entry("unchanged", "2026-06-20T00:00:00.000Z");
     const changed = entry("changed", "2026-06-21T00:00:00.000Z");
     const next = [
@@ -57,23 +57,13 @@ describe("archive incremental scope (LL-152)", () => {
     expect(selectArchiveUpdateEntries(null, [unchanged]).map((item) => item.id)).toEqual(["unchanged"]);
   });
 
-  it("inspects every indexed month only when final live tags changed", () => {
-    const unchanged = entry("shared", "2026-06-20T00:00:00.000Z");
-    const summaryOnly = { ...unchanged, summaryEn: "Updated English summary" };
-    const tagChange = { ...unchanged, tags: ["test", "agent"] };
+  it("inspects every indexed month plus incoming months on every rebuild", () => {
     const archiveIndex = {
       months: ["2026-03", "2026-06"],
       perMonth: { "2026-03": 10, "2026-06": 20 },
     };
 
-    expect(hasArchiveTagChanges({ entries: [unchanged] }, [summaryOnly])).toBe(false);
-    expect(hasArchiveTagChanges({ entries: [unchanged] }, [tagChange])).toBe(true);
-    expect(hasArchiveTagChanges({ entries: [unchanged] }, [
-      unchanged,
-      entry("new", "2026-07-01T00:00:00.000Z"),
-    ])).toBe(false);
-    expect(selectArchiveInspectionMonths(archiveIndex, ["2026-07"], false)).toEqual(["2026-07"]);
-    expect(selectArchiveInspectionMonths(archiveIndex, ["2026-07"], true)).toEqual([
+    expect(selectArchiveInspectionMonths(archiveIndex, ["2026-07"])).toEqual([
       "2026-03",
       "2026-06",
       "2026-07",
@@ -95,6 +85,15 @@ describe("archive incremental scope (LL-152)", () => {
 
     it("allows an absent baseline artifact to bootstrap", () => {
       expect(parseBaselineJson("data/stats.json", null)).toBeNull();
+      expect(parseArchiveIndexBaseline(null)).toBeNull();
+    });
+
+    it("rejects a present archive index with a falsy non-object payload", () => {
+      for (const content of ["null", "false", "0"]) {
+        expect(() => parseArchiveIndexBaseline({ content })).toThrow(
+          "data/archive/_index.json: expected an object",
+        );
+      }
     });
 
     it("throws when the archive index exists without stats", () => {
@@ -133,184 +132,129 @@ describe("archive incremental scope (LL-152)", () => {
         ),
       ).not.toThrow();
     });
-  });
 
-  it("removes exhausted touched days and prunes stale baseline days", () => {
-    const removed = [
-      entry("day-a", "2026-06-01T00:00:00.000Z"),
-      entry("day-b", "2026-06-01T00:00:00.000Z"),
-    ];
-    const existing = buildStatsPayload(removed, GEN);
-    existing.byDay.push({ date: "2026-01-01", count: 1, byCategory: { "tech-news": 1 } });
+    it("rejects an archive index with inconsistent structural counts", () => {
+      expect(() =>
+        assertArchiveIndexBaseline({
+          generatedAt: GEN,
+          months: ["2026-06"],
+          totalEntries: 41,
+          perMonth: { "2026-06": 42 },
+        }),
+      ).toThrow("totalEntries 41 does not match perMonth total 42");
 
-    const out = buildIncrementalStats({
-      existing,
-      removed,
-      added: [],
-      liveCount: 0,
-      generatedAt: GEN,
+      expect(() =>
+        assertArchiveIndexBaseline({
+          generatedAt: GEN,
+          months: ["2026-05"],
+          totalEntries: 42,
+          perMonth: { "2026-06": 42 },
+        }),
+      ).toThrow("months and perMonth keys must match");
     });
 
-    expect(out.byDay.some((day) => day.date === "2026-06-01")).toBe(false);
-    expect(out.byDay.some((day) => day.date === "2026-01-01")).toBe(false);
-  });
-
-  it("replaces touched-month stats without re-adding untouched live entries", () => {
-    const oldJune = [
-      entry("june-a", "2026-06-01T00:00:00.000Z"),
-      entry("june-b", "2026-06-02T00:00:00.000Z"),
-    ];
-    const untouchedMay = entry("may", "2026-05-20T00:00:00.000Z");
-    const existing = buildStatsPayload([...oldJune, untouchedMay], GEN);
-    const newJune = [
-      { ...oldJune[0]!, category: "research" as const },
-      oldJune[1]!,
-      entry("june-new", "2026-06-03T00:00:00.000Z"),
-    ];
-
-    const out = buildIncrementalStats({
-      existing,
-      removed: oldJune,
-      added: newJune,
-      liveCount: 4,
-      generatedAt: GEN,
+    it.each([
+      [
+        "month mismatch",
+        { generatedAt: GEN, month: "2026-05", count: 1, entries: [entry("one", GEN)] },
+        "month must equal 2026-06",
+      ],
+      [
+        "negative count",
+        { generatedAt: GEN, month: "2026-06", count: -1, entries: [] },
+        "count must be a non-negative integer",
+      ],
+      [
+        "count mismatch",
+        { generatedAt: GEN, month: "2026-06", count: 500, entries: [] },
+        "count 500 does not match entries length 0",
+      ],
+      [
+        "index mismatch",
+        { generatedAt: GEN, month: "2026-06", count: 1, entries: [entry("one", GEN)] },
+        "archive index count 42 does not match month count 1",
+      ],
+    ])("rejects a malformed archive month baseline: %s", (_label, payload, message) => {
+      expect(() =>
+        assertArchiveMonthBaseline(
+          "2026-06",
+          { perMonth: { "2026-06": 42 } },
+          { content: JSON.stringify(payload) },
+        ),
+      ).toThrow(message);
     });
 
-    expect(out.totals.allTime).toBe(4);
-    expect(out.byMonth.find((month) => month.month === "2026-05")?.count).toBe(1);
-    expect(out.byMonth.find((month) => month.month === "2026-06")?.count).toBe(3);
-    expect(out.byMonth.find((month) => month.month === "2026-06")?.byCategory.research).toBe(1);
+    it("returns a validated archive month payload", () => {
+      const payload = {
+        generatedAt: GEN,
+        month: "2026-06",
+        count: 1,
+        entries: [entry("one", GEN)],
+      };
+
+      expect(
+        assertArchiveMonthBaseline(
+          "2026-06",
+          { perMonth: { "2026-06": 1 } },
+          { content: JSON.stringify(payload) },
+        ),
+      ).toEqual(payload);
+    });
   });
 
-  it("dedupes both sides of a cross-month stats delta by canonical URL", () => {
+  it("rebuilds stats without carrying phantom baseline counts", () => {
+    const live = entry("live", "2026-06-22T00:00:00.000Z");
+    const archived = {
+      ...entry("archive-only", "2026-05-20T00:00:00.000Z"),
+      source: "archive-source",
+    };
+
+    const out = buildStatsPayloadFromArtifacts([live], [archived], GEN);
+
+    expect(out.bucketTimeZone).toBe(STATS_BUCKET_TIME_ZONE);
+    expect(out.totals.allTime).toBe(2);
+    expect(out.bySource).toEqual([
+      { source: "test-source", total: 1, last30d: 1 },
+      { source: "archive-source", total: 1, last30d: 0 },
+    ]);
+    expect(out.bySource.some((bucket) => bucket.source === "phantom-source")).toBe(false);
+  });
+
+  it("uses the live entry when archive contains the same canonical URL", () => {
+    const live = {
+      ...entry("live", "2026-06-22T00:00:00.000Z", "research"),
+      source: "live-source",
+      url: "https://example.com/shared?utm_source=test",
+    };
+    const archived = {
+      ...entry("archived", "2026-05-20T00:00:00.000Z"),
+      source: "archive-source",
+      url: "https://example.com/shared",
+    };
+
+    const out = buildStatsPayloadFromArtifacts([live], [archived], GEN);
+
+    expect(out.totals.allTime).toBe(1);
+    expect(out.bySource).toEqual([{ source: "live-source", total: 1, last30d: 1 }]);
+    expect(out.byMonth).toEqual([
+      { month: "2026-06", count: 1, byCategory: { research: 1 } },
+    ]);
+  });
+
+  it("includes archive-only entries and dedupes copies across archive months", () => {
     const march = entry("shared-march", "2026-03-01T00:00:00.000Z");
     const june = {
       ...entry("shared-june", "2026-06-01T00:00:00.000Z"),
       url: march.url,
     };
-    const existing = buildStatsPayload([june], GEN);
-    const newMarch = { ...march, category: "research" as const };
-    const newJune = { ...june, category: "research" as const };
+    const archiveOnly = entry("archive-only", "2026-05-20T00:00:00.000Z");
 
-    const out = buildIncrementalStats({
-      existing,
-      removed: [march, june],
-      added: [newMarch, newJune],
-      liveCount: 1,
-      generatedAt: GEN,
-    });
+    const out = buildStatsPayloadFromArtifacts([], [march, june, archiveOnly], GEN);
 
-    expect(out.totals.allTime).toBe(1);
-    expect(out.byMonth.find((month) => month.month === "2026-06")?.count).toBe(1);
-    expect(out.byMonth.find((month) => month.month === "2026-06")?.byCategory.research).toBe(1);
-    expect(out.byMonth.find((month) => month.month === "2026-06")?.byCategory["tech-news"]).toBeUndefined();
-  });
-});
-
-describe("buildIncrementalStats totals clamp (LL-110)", () => {
-  it("rejects a legacy UTC baseline before mixing day buckets", () => {
-    const legacy = {
-      ...buildStatsPayload([], GEN),
-      bucketTimeZone: "UTC",
-    };
-
-    expect(() =>
-      buildIncrementalStats({
-        existing: legacy as never,
-        removed: [],
-        added: [],
-        liveCount: 0,
-        generatedAt: GEN,
-      }),
-    ).toThrow(
-      `stats bucket time zone mismatch: expected ${STATS_BUCKET_TIME_ZONE}, got UTC`,
-    );
-  });
-
-  it("clamps a drifted allTime up to >= liveCount and >= last30d", () => {
-    // Simulate the production drift: incremental allTime fell BELOW the live
-    // entry count (allTime=1312 < live=1662) while last30d drifted high (3047).
-    // This is exactly what turned CI red on data/stats.json.
-    const empty = buildStatsPayload([], GEN);
-    const drifted = {
-      ...empty,
-      totals: { allTime: 1312, last30d: 3047, last7d: 957, last24h: 829 },
-    };
-
-    const out = buildIncrementalStats({
-      existing: drifted,
-      removed: [],
-      added: [],
-      liveCount: 1662,
-      generatedAt: GEN,
-    });
-
-    // The data-schema invariants must hold after clamping.
-    expect(out.totals.allTime).toBeGreaterThanOrEqual(1662); // >= liveCount
-    expect(out.totals.allTime).toBeGreaterThanOrEqual(out.totals.last30d);
-    expect(out.totals.last30d).toBeGreaterThanOrEqual(out.totals.last7d);
-    expect(out.totals.last7d).toBeGreaterThanOrEqual(out.totals.last24h);
-    expect(out.totals.last24h).toBeGreaterThanOrEqual(0);
-    // allTime should become max(1312, last30d=3047, liveCount=1662) = 3047.
-    expect(out.totals.allTime).toBe(3047);
-  });
-
-  it("enforces allTime >= liveCount even when all rolling counters are tiny", () => {
-    const empty = buildStatsPayload([], GEN);
-    const drifted = {
-      ...empty,
-      totals: { allTime: 5, last30d: 4, last7d: 3, last24h: 2 },
-    };
-
-    const out = buildIncrementalStats({
-      existing: drifted,
-      removed: [],
-      added: [],
-      liveCount: 1700,
-      generatedAt: GEN,
-    });
-
-    expect(out.totals.allTime).toBe(1700); // clamped up to liveCount
-    expect(out.totals.allTime).toBeGreaterThanOrEqual(out.totals.last30d);
-  });
-
-  it("repairs a non-monotonic rolling chain (last7d < last24h)", () => {
-    const empty = buildStatsPayload([], GEN);
-    const drifted = {
-      ...empty,
-      totals: { allTime: 9000, last30d: 50, last7d: 10, last24h: 40 },
-    };
-
-    const out = buildIncrementalStats({
-      existing: drifted,
-      removed: [],
-      added: [],
-      liveCount: 100,
-      generatedAt: GEN,
-    });
-
-    expect(out.totals.last7d).toBeGreaterThanOrEqual(out.totals.last24h);
-    expect(out.totals.last30d).toBeGreaterThanOrEqual(out.totals.last7d);
-    expect(out.totals.allTime).toBeGreaterThanOrEqual(out.totals.last30d);
-  });
-
-  it("matches a full rebuild when the clock advances within the 90-day cutoff day", () => {
-    const entries = [
-      entry("before-exact-cutoff", "2026-04-16T09:00:00.000Z"),
-      entry("after-exact-cutoff", "2026-04-16T11:00:00.000Z"),
-    ];
-    const advancedGeneratedAt = "2026-07-15T10:01:00.000Z";
-    const existing = buildStatsPayload(entries, "2026-07-15T00:00:00.000Z");
-
-    const incremental = buildIncrementalStats({
-      existing,
-      removed: [],
-      added: [],
-      liveCount: entries.length,
-      generatedAt: advancedGeneratedAt,
-    });
-    const rebuilt = buildStatsPayload(entries, advancedGeneratedAt);
-
-    expect(incremental.byDay).toEqual(rebuilt.byDay);
+    expect(out.totals.allTime).toBe(2);
+    expect(out.byMonth).toEqual([
+      { month: "2026-03", count: 1, byCategory: { "tech-news": 1 } },
+      { month: "2026-05", count: 1, byCategory: { "tech-news": 1 } },
+    ]);
   });
 });

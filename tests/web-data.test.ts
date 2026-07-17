@@ -83,6 +83,7 @@ const {
   restoreDotsFromUrl,
   restorePrereleaseQualifierFromUrl,
   jstDateKey,
+  selectTickerDayEntries,
   entryHref,
   isNew,
   hasCjk,
@@ -802,6 +803,58 @@ describe("jstDateKey", () => {
     // 2026-05-01T00:00:00Z = 2026-05-01T09:00:00+09:00
     const key = jstDateKey("2026-05-01T00:00:00.000Z");
     expect(key).toBe("2026-05-01");
+  });
+});
+
+describe("selectTickerDayEntries", () => {
+  const now = new Date("2026-05-04T03:00:00.000Z");
+  const entryForDay = (id: string, publishedAt: string) => ({
+    ...e1,
+    id,
+    url: `https://example.com/${id}`,
+    publishedAt,
+  });
+
+  it("当日の候補から除外記事を取り除く", () => {
+    const selected = selectTickerDayEntries([
+      entryForDay("today-featured", "2026-05-04T01:00:00.000Z"),
+      entryForDay("today-ticker", "2026-05-04T00:00:00.000Z"),
+      entryForDay("yesterday", "2026-05-03T01:00:00.000Z"),
+    ], now, ["today-featured"]);
+
+    expect(selected.dayKey).toBe("2026-05-04");
+    expect(selected.dayScope).toBe("today");
+    expect(selected.entries.map((entry) => entry.id)).toEqual(["today-ticker"]);
+  });
+
+  it("当日が除外記事だけなら残る最新掲載日へ戻る", () => {
+    const selected = selectTickerDayEntries([
+      entryForDay("today-featured", "2026-05-04T01:00:00.000Z"),
+      entryForDay("yesterday", "2026-05-03T01:00:00.000Z"),
+    ], now, ["today-featured"]);
+
+    expect(selected.dayKey).toBe("2026-05-03");
+    expect(selected.dayScope).toBe("latest");
+    expect(selected.entries.map((entry) => entry.id)).toEqual(["yesterday"]);
+  });
+
+  it("当日と前日が空でも過去の最新掲載日を選ぶ", () => {
+    const selected = selectTickerDayEntries([
+      entryForDay("older", "2026-04-30T01:00:00.000Z"),
+      entryForDay("latest", "2026-05-01T01:00:00.000Z"),
+    ], now);
+
+    expect(selected.dayKey).toBe("2026-05-01");
+    expect(selected.dayScope).toBe("latest");
+    expect(selected.entries.map((entry) => entry.id)).toEqual(["latest"]);
+  });
+
+  it("候補がなければ空状態を返す", () => {
+    expect(selectTickerDayEntries([], now)).toEqual({
+      dayKey: null,
+      dayScope: "latest",
+      entries: [],
+    });
   });
 });
 

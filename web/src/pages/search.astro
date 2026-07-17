@@ -24,7 +24,7 @@ import { ALL_ENTRIES, CATEGORY_META } from "../lib/data.ts";
   />
 
   <main class="search-page" data-pagefind-ignore aria-labelledby="search-page-heading">
-    <section class="search-page-guide">
+    <section class="search-page-guide" data-search-page-guide>
       <p class="search-page-kicker">SEARCH WORKFLOW</p>
       <h2>検索語を入力してください</h2>
       <p>
@@ -35,3 +35,23 @@ import { ALL_ENTRIES, CATEGORY_META } from "../lib/data.ts";
     </section>
   </main>
 </Portal>
+
+<script>
+  const guide = document.querySelector<HTMLElement>("[data-search-page-guide]");
+  const input = document.querySelector<HTMLInputElement>("#pagefind-search-input");
+
+  if (guide && input) {
+    const syncGuide = (query = input.value.trim()) => {
+      guide.hidden = Boolean(query);
+    };
+
+    syncGuide(new URLSearchParams(window.location.search).get("q")?.trim() ?? "");
+    input.addEventListener("input", () => syncGuide());
+    window.addEventListener("techdb:search-query-change", ((event: CustomEvent<{ query?: string }>) => {
+      syncGuide(event.detail?.query?.trim() ?? "");
+    }) as EventListener);
+    window.addEventListener("popstate", () => {
+      syncGuide(new URLSearchParams(window.location.search).get("q")?.trim() ?? "");
+    });
+  }
+</script>

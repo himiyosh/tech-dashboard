@@ -761,6 +761,37 @@ export function groupByDay(
     .map(([key, items]) => ({ key, items }));
 }
 
+export interface TickerDaySelection {
+  dayKey: string | null;
+  dayScope: "today" | "latest";
+  entries: NormalizedEntry[];
+}
+
+/**
+ * Select the newest JST publication day that still has ticker candidates.
+ * Exclusions are applied first so a Spotlight-only day cannot leave the ticker empty.
+ */
+export function selectTickerDayEntries(
+  entries: readonly NormalizedEntry[],
+  now = new Date(),
+  excludedEntryIds: readonly string[] = [],
+): TickerDaySelection {
+  const excluded = new Set(excludedEntryIds);
+  const todayKey = jstDateKey(now.toISOString());
+  const selected = groupByDay(entries.filter((entry) => !excluded.has(entry.id)))
+    .find((group) => group.key <= todayKey);
+
+  if (!selected) {
+    return { dayKey: null, dayScope: "latest", entries: [] };
+  }
+
+  return {
+    dayKey: selected.key,
+    dayScope: selected.key === todayKey ? "today" : "latest",
+    entries: selected.items,
+  };
+}
+
 /**
  * Internal href to the in-site article summary page for an entry.
  * All article links across the site should route through this helper

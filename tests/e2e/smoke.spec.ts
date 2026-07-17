@@ -14,6 +14,7 @@ type SummaryFixtureEntry = SummaryDisplayEntry & {
 };
 const REACTION_VOTER_COOKIE_NAME = "__Host-techdb_reaction_voter";
 const MOBILE_FIRST_DECISION_MAX_Y = 340;
+const LAYOUT_SUBPIXEL_EPSILON_PX = 0.01;
 
 async function expectMobileFirstDecisionNearViewport(page: Page): Promise<void> {
   const featured = page.locator("article.featured").first();
@@ -150,12 +151,12 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(pendingTickerSlides.nth(index).locator(".tb-tag.imp, .tb-tag.rel")).toHaveCount(0);
     }
     await expect(page.locator(".banner-fact")).toHaveCount(3);
-    await expect(page.locator(".signal-node.node-source")).toContainText(/active sources/i);
+    await expect(page.locator(".signal-node.node-source")).toContainText(/sources with live entries/i);
     await expect(page.locator(".banner-fact").filter({ hasText: "収録中ソース" })).toContainText(/registry sources with live entries/i);
     await expect(page.locator(".banner-fact").filter({ hasText: "Active registry sources" })).toContainText(/active registry sources/i);
     await expect(
       page.locator(".banner-fact").filter({ hasText: "更新頻度" }).locator(":scope > .i18n-ja"),
-    ).toContainText("各ソースは約 6 時間周期");
+    ).toContainText(/毎時 1 バッチ収集.*最新 index/);
     await page.locator(".top-rank-item .rank-source").first().evaluate((source) => {
       const fullLabel = "Microsoft Foundry Engineering and AI Platform Updates";
       const label = source.querySelector("[data-source-disclosure-label]");
@@ -207,18 +208,23 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".banner-quick-links").getByRole("link", { name: /カテゴリ/ })).toBeVisible();
     await expect(page.locator(".banner-quick-links").getByRole("link", { name: /arXiv/ })).toBeVisible();
     await expect(page.locator("section.stats")).toHaveCount(0);
-    // Timeline right rail: the home page is now a 3-column .layout with a right
-    // insight rail so article cards don't sprawl full-width (間延び fix, LL-122).
-    // The rail is visible at the desktop test viewport with its three cards.
+    // Timeline right rail uses ranked lists so dense data remains scannable.
     const homeRail = page.locator(".layout aside.right.home-right");
     await expect(homeRail).toBeVisible();
     await expect(homeRail.locator(".home-side-metrics")).toBeVisible();
-    await expect(homeRail.locator(".home-source-list")).toBeVisible();
-    await expect(homeRail.locator(".tag-cloud")).toBeVisible();
+    await expect(homeRail.locator('[data-rail-ranking="sources"]')).toBeVisible();
+    await expect(homeRail.locator('[data-rail-ranking="topics"]')).toBeVisible();
+    await expect(homeRail.locator(".home-ranked-list")).toHaveCount(2);
+    await expect(homeRail.locator(".home-ranked-row").first()).toBeVisible();
+    await expect(homeRail.locator(".home-ranked-meter").first()).toBeVisible();
     const activityScope = homeRail.locator("[data-activity-scope='listed-entries']");
     await expect(activityScope).toBeVisible();
-    await expect(activityScope.locator(".i18n-ja")).toContainText(/表示中一覧|先頭200件/);
-    await expect(activityScope.locator(".i18n-en")).toContainText(/listed entries|first 200/i);
+    await expect(activityScope.locator(".i18n-ja")).toContainText("表示中一覧");
+    await expect(activityScope.locator(".i18n-en")).toContainText(/listed view/i);
+    const rankingScope = homeRail.locator("[data-ranking-scope='first-200-listed-entries']");
+    await expect(rankingScope).toBeVisible();
+    await expect(rankingScope.locator(".i18n-ja")).toHaveText("表示中一覧の先頭200件");
+    await expect(rankingScope.locator(".i18n-en")).toHaveText("First 200 listed entries");
     // The old 2-column home-layout class must be gone (single canvas width source).
     await expect(page.locator(".home-layout")).toHaveCount(0);
     await expect(page.locator('script[src*="googlesyndication"]')).toHaveCount(0);
@@ -245,6 +251,11 @@ test.describe("TECH Dashboard smoke", () => {
     }
     await expect(page.locator("#priority-heading")).toBeVisible();
     await expect(page.locator("#timeline-heading")).toBeVisible();
+    const timelineArxivJa = page.locator('#timeline-heading .count .i18n-ja a[href="/arxiv"]');
+    const timelineArxivEn = page.locator('#timeline-heading .count .i18n-en a[href="/arxiv"]');
+    await expect(timelineArxivJa).toHaveText(/\d+ arXiv 論文は専用ページ/);
+    await expect(timelineArxivEn).toHaveText(/\d+ arXiv papers on a separate page/);
+    await expect(page.locator("#timeline-heading")).not.toContainText(/arXiv moved/);
     const order = await page.evaluate(() => {
       const featured = document.querySelector("article.featured") as HTMLElement | null;
       const topRank = document.querySelector(".top-rank") as HTMLElement | null;
@@ -395,7 +406,13 @@ test.describe("TECH Dashboard smoke", () => {
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
       await page.reload();
-      const rows = await page.locator(".board .b-row").evaluateAll((elements) =>
+      const board = page.locator(".ticker-panel");
+      const boardRows = board.locator(".board .b-row");
+      if (await boardRows.count() === 0) {
+        await expect(board.locator(".empty[data-empty-reason]")).toBeVisible();
+        continue;
+      }
+      const rows = await boardRows.evaluateAll((elements) =>
         elements.map((element) => {
           const category = element.querySelector<HTMLElement>(".b-cat");
           const tags = element.querySelector<HTMLElement>(".b-tags");
@@ -408,7 +425,6 @@ test.describe("TECH Dashboard smoke", () => {
           };
         }),
       );
-      expect(rows.length).toBeGreaterThan(0);
       for (const row of rows) {
         expect(row.categoryTitle).not.toBe("");
         expect(row.categoryRight).toBeLessThanOrEqual(row.tagsLeft + 0.5);
@@ -445,7 +461,10 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(footerRun.locator(".footer-body-queue")).toHaveText("body ready");
       await expect(footerRun).toHaveAttribute("aria-label", /AI explainer body queue clear/i);
     } else if (bodyState === "waiting-for-run") {
-      await expect(footerRun.locator(".footer-body-queue")).toHaveText("body waiting");
+      const displayedBacklog = bodyBacklog === "unknown" ? "?" : bodyBacklog;
+      await expect(footerRun.locator(".footer-body-queue")).toHaveText(
+        `body ${displayedBacklog} waiting`,
+      );
       await expect(footerRun).toHaveAttribute(
         "aria-label",
         /AI explainer body queue waiting for a successful run/i,
@@ -473,7 +492,24 @@ test.describe("TECH Dashboard smoke", () => {
     const pendingState = pendingCards.first().locator(".summary-state");
     await expect(pendingState).toHaveAttribute("data-summary-queue-mode", queueMode!);
     await expect(pendingState).toHaveAttribute("data-summary-queue-state", queueState!);
-    if (queueState === "waiting-for-run") {
+    const expectedBadge = {
+      active: "AI要約 準備待ち",
+      clear: "AI要約 次回待ち",
+      "waiting-for-run": "AI要約 再開待ち",
+      paused: "AI要約 停止中",
+      unavailable: "AI要約 利用不可",
+      error: "AI要約 要確認",
+      unknown: "AI要約 確認中",
+    } as const;
+    await expect(pendingState.locator(".summary-pending-badge .i18n-ja")).toHaveText(
+      expectedBadge[queueState as keyof typeof expectedBadge],
+    );
+    if (queueState === "active") {
+      await expect(pendingState.locator(".summary-pending-meta.i18n-ja")).toContainText(
+        "全体の要約処理は稼働中",
+      );
+      await expect(pendingState).not.toContainText(/現在値で約|AI summary queued/i);
+    } else if (queueState === "waiting-for-run") {
       await expect(pendingState.locator(".summary-pending-meta.i18n-ja")).toContainText(
         "収集再開待ち",
       );
@@ -484,28 +520,117 @@ test.describe("TECH Dashboard smoke", () => {
   // Timeline rails release progressively: no rails through tablet, the category
   // rail alone on small desktop, then both rails once the main column stays useful.
   test("timeline right rail constrains layout and stays responsive", async ({ page }) => {
-    // Desktop: rail visible and taking real width, main column constrained, 3 grid tracks.
-    await page.setViewportSize({ width: 1280, height: 900 });
+    // Wide desktop: use the expanded canvas while keeping both rails useful.
+    await page.setViewportSize({ width: 1920, height: 900 });
     await page.goto("/");
     const rail = page.locator(".layout aside.right.home-right");
     await expect(rail).toBeVisible();
+    await expect(rail.locator(":scope > .side-card > h3.right-title")).toHaveCount(3);
+    await expect(rail.locator(":scope > .side-card > div.right-title")).toHaveCount(0);
     const desktop = await page.evaluate(() => {
       const layout = document.querySelector(".layout");
       const right = document.querySelector(".layout aside.right");
       const main = document.querySelector(".layout main");
+      const alignedSurfaces = [
+        ".header-inner",
+        ".banner-inner",
+        ".layout",
+        ".footer-inner",
+      ].map((selector) => {
+        const element = document.querySelector<HTMLElement>(selector);
+        const rect = element?.getBoundingClientRect();
+        return rect ? { selector, left: rect.left, right: rect.right, width: rect.width } : null;
+      });
       const cols = layout ? getComputedStyle(layout).gridTemplateColumns.split(" ").filter(Boolean).length : 0;
       return {
         cols,
+        layoutW: layout ? Math.round(layout.getBoundingClientRect().width) : 0,
         railW: right ? Math.round(right.getBoundingClientRect().width) : 0,
         mainW: main ? Math.round(main.getBoundingClientRect().width) : 0,
         noScroll: document.documentElement.scrollWidth <= window.innerWidth,
+        alignedSurfaces,
       };
     });
     expect(desktop.cols).toBe(3);
+    expect(desktop.layoutW, "wide canvas should use the expanded 1680px limit").toBeGreaterThanOrEqual(1670);
     expect(desktop.railW).toBeGreaterThanOrEqual(200);
-    // 2-col home would give main ~990px; the rail must constrain it well below that.
-    expect(desktop.mainW).toBeLessThan(850);
+    expect(desktop.mainW, "expanded canvas should keep the article column useful").toBeGreaterThan(1000);
     expect(desktop.noScroll).toBe(true);
+    expect(desktop.alignedSurfaces.every(Boolean), "all wide-canvas surfaces should exist").toBe(true);
+    const [headerSurface, ...alignedSurfaces] = desktop.alignedSurfaces;
+    expect(headerSurface?.width, "wide header should use the shared content width").toBeGreaterThanOrEqual(1670);
+    for (const surface of alignedSurfaces) {
+      expect(
+        Math.abs((surface?.left ?? 0) - (headerSurface?.left ?? 0)),
+        `${surface?.selector} aligns with the header`,
+      ).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs((surface?.right ?? 0) - (headerSurface?.right ?? 0)),
+        `${surface?.selector} aligns with the header`,
+      ).toBeLessThanOrEqual(1);
+    }
+    const sourceLabelMetrics = await rail.locator(".home-source-row .home-ranked-label").evaluateAll(
+      (labels) =>
+        labels.map((label) => ({
+          whiteSpace: getComputedStyle(label).whiteSpace,
+          clientWidth: label.clientWidth,
+          scrollWidth: label.scrollWidth,
+        })),
+    );
+    expect(sourceLabelMetrics.length).toBeGreaterThan(0);
+    expect(sourceLabelMetrics.every((metric) => metric.whiteSpace === "normal")).toBe(true);
+    expect(
+      sourceLabelMetrics.every((metric) => metric.scrollWidth <= metric.clientWidth + 1),
+      "source names should wrap without hidden clipping",
+    ).toBe(true);
+
+    const rankedGeometry = await page.locator(".home-ranked-row").evaluateAll((rows) =>
+      rows.map((row) => {
+        const rect = (selector: string) => {
+          const box = row.querySelector(selector)?.getBoundingClientRect();
+          return box ? { left: box.left, right: box.right } : null;
+        };
+        const rowBox = row.getBoundingClientRect();
+        return {
+          rowLeft: rowBox.left,
+          rowRight: rowBox.right,
+          rank: rect(".home-rank-number"),
+          copy: rect(".home-ranked-copy"),
+          count: rect(".home-ranked-count"),
+          meter: rect(".home-ranked-meter"),
+        };
+      }),
+    );
+    expect(rankedGeometry.length).toBeGreaterThan(0);
+    for (const row of rankedGeometry) {
+      expect(row.rank?.left).toBeGreaterThanOrEqual(row.rowLeft - 1);
+      expect(row.copy?.left).toBeGreaterThanOrEqual((row.rank?.right ?? 0) - 1);
+      expect(row.count?.left).toBeGreaterThanOrEqual((row.copy?.right ?? 0) - 1);
+      expect(row.count?.right).toBeLessThanOrEqual(row.rowRight + 1);
+      expect(row.meter?.left).toBeGreaterThanOrEqual((row.copy?.left ?? 0) - 1);
+      expect(row.meter?.right).toBeLessThanOrEqual((row.count?.right ?? 0) + 1);
+    }
+
+    // The compact right rail returns once all three columns retain useful width.
+    for (const width of [1181, 1280, 1359]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      await expect(rail, `${width}px shows the compact right rail`).toBeVisible();
+      const compact = await page.locator(".layout").evaluate((layout) => ({
+        cols: getComputedStyle(layout).gridTemplateColumns.split(" ").filter(Boolean).length,
+        noScroll: document.documentElement.scrollWidth <= window.innerWidth,
+      }));
+      expect(compact.cols, `${width}px keeps the three-column hierarchy`).toBe(3);
+      expect(compact.noScroll, `${width}px keeps the page within the viewport`).toBe(true);
+    }
+
+    await page.setViewportSize({ width: 1180, height: 900 });
+    await page.goto("/");
+    await expect(rail).toBeHidden();
+    const collapsedCols = await page.locator(".layout").evaluate((layout) =>
+      getComputedStyle(layout).gridTemplateColumns.split(" ").filter(Boolean).length,
+    );
+    expect(collapsedCols).toBe(2);
 
     // Mobile: rail hidden, no horizontal scroll.
     await page.setViewportSize({ width: 390, height: 844 });
@@ -520,6 +645,41 @@ test.describe("TECH Dashboard smoke", () => {
     await page.goto("/arxiv");
     await expect(page.locator(".layout aside.right")).toHaveCount(0);
     await expect(page.locator(".layout aside.lane-rail")).toBeVisible();
+  });
+
+  test("low desktop height keeps timeline and status rails in normal flow", async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+
+    for (const path of ["/", "/status/"]) {
+      await page.goto(path);
+      const left = page.locator(".layout > aside.left");
+      const right = page.locator(
+        path === "/" ? ".layout > aside.right.home-right" : ".layout > aside.right.status-insights",
+      );
+      await expect(left, `${path} left rail is visible`).toBeVisible();
+      await expect(right, `${path} right rail is visible`).toBeVisible();
+      await expect
+        .poll(() => left.evaluate((element) => getComputedStyle(element).position))
+        .toBe("static");
+      await expect
+        .poll(() => right.evaluate((element) => getComputedStyle(element).position))
+        .toBe("static");
+
+      const before = await page.evaluate(() => ({
+        leftTop: document.querySelector(".layout > aside.left")?.getBoundingClientRect().top ?? 0,
+        rightTop: document.querySelector(".layout > aside.right")?.getBoundingClientRect().top ?? 0,
+      }));
+      await page.evaluate(() => window.scrollTo(0, 320));
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(200);
+      const after = await page.evaluate(() => ({
+        leftTop: document.querySelector(".layout > aside.left")?.getBoundingClientRect().top ?? 0,
+        rightTop: document.querySelector(".layout > aside.right")?.getBoundingClientRect().top ?? 0,
+        noOverflow: document.documentElement.scrollWidth <= window.innerWidth,
+      }));
+      expect(after.leftTop, `${path} left rail scrolls with content`).toBeLessThan(before.leftTop - 150);
+      expect(after.rightTop, `${path} right rail scrolls with content`).toBeLessThan(before.rightTop - 150);
+      expect(after.noOverflow, `${path} has no horizontal overflow`).toBe(true);
+    }
   });
 
   test("mid-width banner copy uses the available horizontal space", async ({ page }) => {
@@ -688,9 +848,10 @@ test.describe("TECH Dashboard smoke", () => {
         const rect = (element: Element | null) => {
           if (!element || element.getClientRects().length === 0) return null;
           const box = element.getBoundingClientRect();
-          return { left: box.left, right: box.right, width: box.width };
+          return { left: box.left, right: box.right, width: box.width, height: box.height };
         };
         const switcher = document.querySelector<HTMLElement>("header .header-switcher");
+        const menuTrigger = document.querySelector<HTMLElement>("header .menu-trigger");
         const shortcutLabels = Array.from(
           document.querySelectorAll<HTMLElement>("header .nav-shortcut span:not(.nav-icon)"),
         );
@@ -698,6 +859,7 @@ test.describe("TECH Dashboard smoke", () => {
         return {
           noOverflow: document.documentElement.scrollWidth <= window.innerWidth,
           switcher: rect(switcher),
+          menuTrigger: rect(menuTrigger),
           shortcutLabels: shortcutLabels.map((label) => ({
             text: label.textContent?.trim() ?? "",
             visible: getComputedStyle(label).display !== "none",
@@ -733,6 +895,9 @@ test.describe("TECH Dashboard smoke", () => {
         ).toBe(true);
       }
       expect(metrics.languageButtons, `${width}px language toggle keeps both buttons`).toHaveLength(2);
+      expect(metrics.menuTrigger, `${width}px menu trigger remains visible`).not.toBeNull();
+      expect(metrics.menuTrigger!.width, `${width}px menu trigger keeps a 44px touch width`).toBeGreaterThanOrEqual(44);
+      expect(metrics.menuTrigger!.height, `${width}px menu trigger keeps a 44px touch height`).toBeGreaterThanOrEqual(44);
       expect(
         metrics.languageButtons.map((button) => button.text),
         `${width}px language labels remain intact`,
@@ -799,10 +964,13 @@ test.describe("TECH Dashboard smoke", () => {
     const widths = [
       1440,
       1366,
+      1360,
+      1359,
       1280,
       1279,
       1241,
       1240,
+      1239,
       1181,
       1180,
       1101,
@@ -908,6 +1076,8 @@ test.describe("TECH Dashboard smoke", () => {
         const bannerInnerRect = bannerInner?.getBoundingClientRect();
         const footerRect = footer?.getBoundingClientRect();
         const footerRunDetail = footer?.querySelector<HTMLElement>(".footer-run-link .mono");
+        const footerStack = footer?.querySelector<HTMLElement>(".footer-stack");
+        const footerBodyQueue = footer?.querySelector<HTMLElement>(".footer-body-queue");
         const rankMetaHeights = items
           .map((item) => item.querySelector<HTMLElement>(".rank-meta")?.getBoundingClientRect().height ?? 0);
         const rankSummaryWidths = items
@@ -1003,6 +1173,9 @@ test.describe("TECH Dashboard smoke", () => {
           footerRunTextOverflow: footerRunDetail
             ? getComputedStyle(footerRunDetail).textOverflow
             : "",
+          footerStackVisible: !!footerStack && getComputedStyle(footerStack).display !== "none",
+          footerBodyQueueVisible:
+            !!footerBodyQueue && getComputedStyle(footerBodyQueue).display !== "none",
           featuredSourceSafe: !!featuredSource
             && (
               featuredSource.scrollWidth <= featuredSource.clientWidth + 1
@@ -1035,19 +1208,25 @@ test.describe("TECH Dashboard smoke", () => {
         320,
       );
 
-      if (width >= 1280) {
+      if (width >= 1181) {
         expect(metrics.rightRailVisible, `width ${width}: right rail should be visible and populated`).toBe(true);
         expect(metrics.rightRailCards, `width ${width}: right rail should have cards`).toBeGreaterThan(0);
       } else {
         expect(metrics.rightRailVisible, `width ${width}: right rail should be hidden`).toBe(false);
       }
 
-      if (width <= 1279 && width >= 981) {
+      if (width <= 1359 && width >= 1181) {
+        expect(metrics.gridCols, `width ${width}: compact desktop should keep both supporting rails`).toBe(3);
+        expect(metrics.maxRankHeight, `width ${width}: top-rank item height should stay compact`).toBeLessThanOrEqual(180);
+        expect(metrics.featuredBodyWidth, `width ${width}: featured body should remain readable`).toBeGreaterThan(300);
+      }
+
+      if (width <= 1180 && width >= 901) {
         expect(metrics.gridCols, `width ${width}: small desktop should keep only the category rail`).toBe(2);
         expect(metrics.maxRankHeight, `width ${width}: top-rank item height should stay compact`).toBeLessThanOrEqual(180);
         expect(metrics.featuredThumbWidth, `width ${width}: featured thumb should keep width`).toBeGreaterThan(120);
         expect(metrics.featuredThumbHeight, `width ${width}: featured thumb should keep height`).toBeGreaterThan(95);
-        expect(metrics.featuredBodyWidth, `width ${width}: featured body should keep readable width`).toBeGreaterThan(500);
+        expect(metrics.featuredBodyWidth, `width ${width}: featured body should keep readable width`).toBeGreaterThan(350);
         expect(
           metrics.minRankSummaryWidth,
           `width ${width}: Top-3 summaries should remain useful before the right rail returns`,
@@ -1061,7 +1240,7 @@ test.describe("TECH Dashboard smoke", () => {
       if (width === 900 || width === 768) {
         expect(metrics.maxRankHeight, `width ${width}: top-rank should not grow excessively`).toBeLessThanOrEqual(300);
       }
-      if (width >= 721 && width <= 980) {
+      if (width >= 721 && width <= 900) {
         expect(metrics.gridCols, `width ${width}: tablet layout should release the category rail`).toBe(1);
         expect(metrics.mainWidth, `width ${width}: tablet main content should use the available width`).toBeGreaterThanOrEqual(
           width - 72,
@@ -1093,7 +1272,7 @@ test.describe("TECH Dashboard smoke", () => {
           metrics.rankTimeVisibleCount,
           `width ${width}: compact cards should omit only the redundant time label`,
         ).toBe(
-          (width >= 761 && width <= 836) || (width >= 981 && width <= 1028)
+          width >= 761 && width <= 836
             ? 0
             : metrics.rankCount,
         );
@@ -1101,6 +1280,13 @@ test.describe("TECH Dashboard smoke", () => {
           metrics.visibleBottom - 8,
         );
         expect(metrics.footerHeight, `width ${width}: footer should stay on one line`).toBeLessThanOrEqual(36);
+        if (width <= 1239) {
+          expect(metrics.footerStackVisible, `width ${width}: compact footer should hide the build stack`).toBe(false);
+          expect(metrics.footerBodyQueueVisible, `width ${width}: compact footer should defer body queue detail`).toBe(false);
+        } else {
+          expect(metrics.footerStackVisible, `width ${width}: wide footer should restore the build stack`).toBe(true);
+          expect(metrics.footerBodyQueueVisible, `width ${width}: wide footer should restore body queue detail`).toBe(true);
+        }
         if (width <= 980) {
           expect(metrics.footerRunTextOverflow, `width ${width}: footer run detail should truncate safely`).toBe("ellipsis");
         }
@@ -1111,14 +1297,16 @@ test.describe("TECH Dashboard smoke", () => {
         expect(metrics.rankMetaOverlaps, `width ${width}: mobile Top-3 metadata controls must not overlap`).toBe(false);
       }
       if (width === 980) {
-        expect(metrics.gridCols, "width 980: layout should keep the tablet single-column grid").toBe(1);
-        expect(metrics.mainWidth, "width 980: main should use the available tablet width").toBeGreaterThan(900);
+        expect(metrics.gridCols, "width 980: layout should keep the readable category rail").toBe(2);
+        expect(metrics.mainWidth, "width 980: main should retain useful reading width").toBeGreaterThan(650);
+      }
+      if (width >= 1181) {
+        expect(metrics.gridCols, `width ${width}: wide desktop should restore both rails`).toBe(3);
       }
       if (width >= 1280) {
-        expect(metrics.gridCols, `width ${width}: wide desktop should restore both rails`).toBe(3);
         expect(
           metrics.minRankSummaryWidth,
-          `width ${width}: Top-3 summaries should remain useful with both rails`,
+          `width ${width}: Top-3 summaries should remain useful on wide layouts`,
         ).toBeGreaterThanOrEqual(180);
         expect(
           metrics.maxRankSummaryHeight,
@@ -1264,8 +1452,11 @@ test.describe("TECH Dashboard smoke", () => {
     }
     const ticker = page.locator(".ticker-bar");
     if (await ticker.count()) {
-      await expect(ticker).toHaveAttribute("data-day-scope", dayScope!);
-      await expect(ticker.locator(".tb-label")).toContainText(dayScope === "today" ? "TODAY" : "LATEST");
+      const tickerDayScope = await ticker.getAttribute("data-day-scope");
+      expect(tickerDayScope).toMatch(/^(today|latest)$/);
+      await expect(ticker.locator(".tb-label")).toContainText(
+        tickerDayScope === "today" ? "TODAY" : "LATEST",
+      );
       await expect(ticker.locator(".tb-live-dot")).toHaveCount(0);
     }
   });
@@ -1282,6 +1473,15 @@ test.describe("TECH Dashboard smoke", () => {
       await page.goto("/");
       const digest = page.locator("[data-daily-summary]");
       await expect(digest).toBeVisible();
+      const timelineCardsBeforeDigest = await digest.evaluate((element) => (
+        Array.from(document.querySelectorAll("main article.card"))
+          .filter((card) => Boolean(card.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING))
+          .length
+      ));
+      expect(
+        timelineCardsBeforeDigest,
+        `${viewport.width}px shows three Timeline decisions before the digest`,
+      ).toBe(3);
 
       const metrics = await digest.evaluate((element) => {
         const spark = element.querySelector<HTMLElement>(".spark");
@@ -1330,13 +1530,6 @@ test.describe("TECH Dashboard smoke", () => {
     const digest = page.locator("[data-daily-summary]");
     const firstFill = digest.locator(".spark .fill").first();
 
-    const initialBox = await digest.boundingBox();
-    expect(initialBox, "Daily Summary geometry is available").not.toBeNull();
-    expect(initialBox!.y, "Daily Summary starts near the desktop fold").toBeLessThan(900);
-    expect(
-      initialBox!.y + initialBox!.height,
-      "Daily Summary extends below the desktop fold",
-    ).toBeGreaterThan(900);
     await expect(digest).toHaveAttribute("data-chart-state", "idle");
     await expect.poll(async () => firstFill.evaluate((element) => (
       Number(getComputedStyle(element).opacity)
@@ -1813,8 +2006,8 @@ test.describe("TECH Dashboard smoke", () => {
     expect(structuredData.inLanguage).toMatch(/^(ja-JP|en)$/);
   });
 
-  test("sidebar category labels stay single-line and marquee on hover", async ({ page }) => {
-    await page.setViewportSize({ width: 1000, height: 900 });
+  test("sidebar category labels stay readable and only marquee when needed", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/");
 
     const copilotItem = page.locator('a.side-item[href="/c/copilot"]').first();
@@ -1827,10 +2020,6 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(copilotItem.locator(".name")).toHaveAttribute("title", "Microsoft: GitHub Copilot");
     await expect(opencodeItem).toBeVisible();
     await expect(label).toHaveAttribute("title", "AI Coding Tools: OpenHands / OpenCode");
-    await expect
-      .poll(() => opencodeItem.evaluate((item) => item.hasAttribute("data-marquee")))
-      .toBe(true);
-
     const labelMetrics = await label.evaluate((node) => {
       const rect = node.getBoundingClientRect();
       const style = window.getComputedStyle(node);
@@ -1846,20 +2035,71 @@ test.describe("TECH Dashboard smoke", () => {
     });
     const marqueeScrollWidth = await marquee.evaluate((node) => node.scrollWidth);
     expect(labelMetrics.whiteSpace).toBe("nowrap");
-    expect(marqueeScrollWidth, "label text should overflow within the narrow sidebar").toBeGreaterThan(
-      labelMetrics.clientWidth,
-    );
     expect(labelMetrics.height, "label should not wrap onto multiple lines").toBeLessThanOrEqual(
       labelMetrics.lineHeight + 2,
     );
+    const needsMarquee = marqueeScrollWidth - labelMetrics.clientWidth > 1;
+    expect(needsMarquee, "the standard desktop sidebar shows the longest label at rest").toBe(false);
+    expect(await opencodeItem.getAttribute("data-marquee")).toBeNull();
+    const sidebarGeometry = await opencodeItem.evaluate((item) => {
+      const box = (selector: string) => {
+        const rect = item.querySelector(selector)?.getBoundingClientRect();
+        return rect
+          ? { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, width: rect.width }
+          : null;
+      };
+      const itemRect = item.getBoundingClientRect();
+      return {
+        item: { left: itemRect.left, right: itemRect.right },
+        brand: box(".brand-tile"),
+        name: box(".name"),
+        spark: box(".spark"),
+        count: box(".count"),
+      };
+    });
+    expect(sidebarGeometry.name?.width, "category label keeps a useful reading width").toBeGreaterThan(80);
+    expect(sidebarGeometry.brand?.right).toBeLessThanOrEqual((sidebarGeometry.name?.left ?? 0) + 1);
+    expect(sidebarGeometry.name?.right).toBeLessThanOrEqual((sidebarGeometry.count?.left ?? 0) + 1);
+    expect(sidebarGeometry.spark?.right).toBeLessThanOrEqual((sidebarGeometry.count?.left ?? 0) + 1);
+    expect(sidebarGeometry.count?.right).toBeLessThanOrEqual(sidebarGeometry.item.right + 1);
 
-    await opencodeItem.hover();
-    await expect
-      .poll(() => marquee.evaluate((node) => window.getComputedStyle(node).animationName))
-      .toBe("side-label-marquee");
+    expect(
+      marqueeScrollWidth,
+      "the expanded sidebar should show the longest category label without clipping",
+    ).toBeLessThanOrEqual(labelMetrics.clientWidth + 1);
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
+
+    for (const route of ["/categories/", "/c/copilot/"]) {
+      for (const width of [1000, 981]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(route);
+        await page.evaluate(async () => {
+          await document.fonts.ready;
+          await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+        });
+        const layoutMetrics = await page.evaluate(() => {
+          const layout = document.querySelector<HTMLElement>(".layout:not(.lane-layout)");
+          const sidebar = layout?.querySelector<HTMLElement>("aside.left");
+          const main = layout?.querySelector<HTMLElement>("main");
+          const items = Array.from(document.querySelectorAll<HTMLElement>("aside.left .side-item"));
+          return {
+            sidebarWidth: sidebar?.getBoundingClientRect().width ?? 0,
+            mainWidth: main?.getBoundingClientRect().width ?? 0,
+            labelsFit: items.length > 0 && items.every((item) => {
+              const label = item.querySelector<HTMLElement>(".name");
+              return !!label && label.scrollWidth <= label.clientWidth + 1 && !item.hasAttribute("data-marquee");
+            }),
+            overflow: document.documentElement.scrollWidth - window.innerWidth,
+          };
+        });
+        expect(layoutMetrics.sidebarWidth, `${route} at ${width}px keeps a readable sidebar`).toBeGreaterThanOrEqual(228);
+        expect(layoutMetrics.mainWidth, `${route} at ${width}px preserves the main content width`).toBeGreaterThanOrEqual(600);
+        expect(layoutMetrics.labelsFit, `${route} at ${width}px keeps every category label visible`).toBe(true);
+        expect(layoutMetrics.overflow, `${route} at ${width}px should not overflow horizontally`).toBeLessThanOrEqual(0);
+      }
+    }
   });
 
   test("sidebar categories are alphabetical with compact icon tiles (no scattered group order)", async ({ page }) => {
@@ -2344,7 +2584,7 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("home keeps the decision path compact at tablet width", async ({ page }) => {
-    const fullLabel = "Microsoft Foundry Engineering and AI Platform Updates";
+    const fullLabel = "Microsoft Foundry Engineering, AI Platform, Agent Operations, and Cloud Infrastructure Updates";
     await page.setViewportSize({ width: 768, height: 900 });
     await page.goto("/");
     await expect(page.locator(".banner-right")).toBeHidden();
@@ -2353,7 +2593,7 @@ test.describe("TECH Dashboard smoke", () => {
       await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     });
     await page.locator(".featured-src").evaluate((source) => {
-      const fullLabel = "Microsoft Foundry Engineering and AI Platform Updates";
+      const fullLabel = "Microsoft Foundry Engineering, AI Platform, Agent Operations, and Cloud Infrastructure Updates";
       const label = source.querySelector("[data-source-disclosure-label]");
       if (label) label.textContent = fullLabel;
       const full = source.querySelector("[data-source-disclosure-full]");
@@ -2362,11 +2602,13 @@ test.describe("TECH Dashboard smoke", () => {
 
     const featuredDisclosure = page.locator(".featured-src.source-disclosure");
     const featuredTrigger = featuredDisclosure.locator("[data-source-disclosure-trigger]");
+    const featuredPanel = featuredDisclosure.locator(".source-disclosure-panel");
     const featuredTabletTarget = await featuredTrigger.boundingBox();
     expect(featuredTabletTarget, "tablet Featured source disclosure target should exist").not.toBeNull();
     expect(featuredTabletTarget!.width).toBeGreaterThanOrEqual(44);
     expect(featuredTabletTarget!.height).toBeGreaterThanOrEqual(44);
     await expect(featuredDisclosure).not.toHaveAttribute("open", "");
+    await expect(featuredPanel).toBeHidden();
     await featuredTrigger.focus();
     await expect(featuredTrigger).toBeFocused();
     const focusStyle = await featuredTrigger.evaluate((el) => {
@@ -2382,14 +2624,17 @@ test.describe("TECH Dashboard smoke", () => {
     expect(focusStyle.color).not.toBe("rgba(0, 0, 0, 0)");
     await page.keyboard.press("Enter");
     await expect(featuredDisclosure).toHaveAttribute("open", "");
-    await expect(featuredDisclosure.locator(".source-disclosure-panel")).toBeVisible();
+    await expect(featuredPanel).toBeVisible();
     await expect(featuredDisclosure.locator("[data-source-disclosure-full]")).toHaveText(fullLabel);
     await page.keyboard.press("Enter");
     await expect(featuredDisclosure).not.toHaveAttribute("open", "");
+    await expect(featuredPanel).toBeHidden();
     await page.keyboard.press("Space");
     await expect(featuredDisclosure).toHaveAttribute("open", "");
+    await expect(featuredPanel).toBeVisible();
     await page.keyboard.press("Space");
     await expect(featuredDisclosure).not.toHaveAttribute("open", "");
+    await expect(featuredPanel).toBeHidden();
 
     const rankedDisclosure = page.locator(".rank-source.source-disclosure").first();
     const rankedTrigger = rankedDisclosure.locator("[data-source-disclosure-trigger]");
@@ -2401,9 +2646,10 @@ test.describe("TECH Dashboard smoke", () => {
       await rankedDisclosure.locator("[data-source-disclosure-label]").textContent()
     )?.trim();
     expect(rankedFullLabel).toBeTruthy();
+    const rankedPanel = rankedDisclosure.locator(".source-disclosure-panel");
+    await expect(rankedPanel).toBeHidden();
     await rankedTrigger.click();
     await expect(rankedDisclosure).toHaveAttribute("open", "");
-    const rankedPanel = rankedDisclosure.locator(".source-disclosure-panel");
     await expect(rankedPanel).toBeVisible();
     await expect(rankedDisclosure.locator("[data-source-disclosure-full]")).toHaveText(
       rankedFullLabel ?? "",
@@ -2426,6 +2672,7 @@ test.describe("TECH Dashboard smoke", () => {
       .toBeLessThanOrEqual(55);
     await rankedTrigger.click();
     await expect(rankedDisclosure).not.toHaveAttribute("open", "");
+    await expect(rankedPanel).toBeHidden();
 
     for (const lang of ["ja", "en"] as const) {
       await page.locator(`.lang-btn[data-lang="${lang}"]`).click();
@@ -2476,18 +2723,20 @@ test.describe("TECH Dashboard smoke", () => {
     }
 
     await page.setViewportSize({ width: 390, height: 844 });
+    await expect(featuredPanel).toBeHidden();
     const mobileTarget = await featuredTrigger.boundingBox();
     expect(mobileTarget, "mobile source disclosure target should exist").not.toBeNull();
     expect(mobileTarget!.width, "mobile source disclosure target should be at least 44px wide").toBeGreaterThanOrEqual(44);
     expect(mobileTarget!.height, "mobile source disclosure target should be at least 44px high").toBeGreaterThanOrEqual(44);
     await featuredTrigger.click();
     await expect(featuredDisclosure).toHaveAttribute("open", "");
-    await expect(featuredDisclosure.locator(".source-disclosure-panel")).toBeVisible();
+    await expect(featuredPanel).toBeVisible();
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
     await featuredTrigger.click();
     await expect(featuredDisclosure).not.toHaveAttribute("open", "");
+    await expect(featuredPanel).toBeHidden();
   });
 
   test("skip link is keyboard visible and focuses content start", async ({ page }) => {
@@ -2512,23 +2761,45 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("#worker-health-heading")).toBeVisible();
     await expect(page.locator("#source-health-heading")).toBeVisible();
     const workerHealthSection = page.locator(".status-hero");
+    await expect(workerHealthSection).toBeVisible();
+    await expect(workerHealthSection).not.toHaveAttribute("hidden", "");
     await expect(workerHealthSection).toHaveAttribute("aria-labelledby", "worker-health-heading");
     await expect(workerHealthSection).toHaveAttribute("aria-describedby", "worker-health-summary");
     const runStatus = await workerHealthSection.getAttribute("data-run-status");
-    const sourceReviewStatus = await workerHealthSection.getAttribute("data-source-review-status");
+    const runState = await workerHealthSection.getAttribute("data-run-state");
     expect(runStatus).toMatch(/^(ok|warn|err)$/);
-    expect(sourceReviewStatus).toMatch(/^(ok|warn|err)$/);
-    const statusWeight = { ok: 0, warn: 1, err: 2 } as const;
-    const overallStatus =
-      statusWeight[runStatus as keyof typeof statusWeight]
-        >= statusWeight[sourceReviewStatus as keyof typeof statusWeight]
-        ? runStatus
-        : sourceReviewStatus;
-    await expect(workerHealthSection).toHaveClass(new RegExp(`\\bstatus-hero-${overallStatus}\\b`));
+    expect(runState).toMatch(/^(healthy|missing|late|failed|degraded)$/);
+    await expect(workerHealthSection).not.toHaveAttribute("data-source-activity-status");
+    const expectedRunTone = {
+      healthy: "ok",
+      missing: "warn",
+      late: "err",
+      failed: "err",
+      degraded: "warn",
+    } as const;
+    expect(runStatus).toBe(expectedRunTone[runState as keyof typeof expectedRunTone]);
+    await expect(workerHealthSection).toHaveClass(new RegExp(`\\bstatus-hero-${runStatus}\\b`));
     await expect(page.locator(".page-hero")).toHaveClass(
-      new RegExp(`\\bpage-hero-status-${overallStatus}\\b`),
+      new RegExp(`\\bpage-hero-status-${runStatus}\\b`),
     );
     await expect(page.locator("#worker-health-summary")).not.toBeEmpty();
+    const statusHeroMetrics = page.locator(".page-hero-metric");
+    await expect(statusHeroMetrics).toHaveCount(6);
+    const statusHeroLabels = await statusHeroMetrics
+      .locator(":scope > span > .i18n-ja")
+      .allTextContents();
+    expect(statusHeroLabels.map((label) => label.trim())).toEqual([
+      "稼働状態",
+      "収集エラー",
+      "要約待ち",
+      "本文待ち",
+      "直近収集",
+      "サイト更新",
+    ]);
+    const statusHeroValues = await statusHeroMetrics
+      .locator(":scope > strong")
+      .allTextContents();
+    expect(statusHeroValues.every((value) => value.trim().length > 0 && !/NaN|undefined/.test(value))).toBe(true);
     await expect(page.locator('[data-health-scope="summary-queue"]')).toContainText("AI要約 Queue");
     const collectionMetric = page.locator('[data-health-scope="latest-batch"]');
     await expect(collectionMetric).toContainText(/\d+\/\d+/);
@@ -2547,6 +2818,7 @@ test.describe("TECH Dashboard smoke", () => {
     const summaryQueueState = await summaryQueueMetric.getAttribute("data-summary-queue-state");
     const bodyQueueMode = await bodyQueueMetric.getAttribute("data-body-queue-mode");
     const bodyQueueState = await bodyQueueMetric.getAttribute("data-body-queue-state");
+    const bodyQueueMerged = await bodyQueueMetric.getAttribute("data-body-queue-merged");
     expect(summaryQueueMode).toMatch(/^(enabled|disabled|missing-binding|error|unknown)$/);
     expect(summaryQueueState).toMatch(
       /^(active|clear|waiting-for-run|paused|unavailable|error|unknown)$/,
@@ -2555,14 +2827,18 @@ test.describe("TECH Dashboard smoke", () => {
     expect(bodyQueueState).toMatch(
       /^(active|clear|waiting-for-run|paused|unavailable|error|unknown)$/,
     );
-    if (runStatus === "err" && summaryQueueMode === "enabled") {
+    if (["missing", "late", "failed"].includes(runState ?? "") && summaryQueueMode === "enabled") {
       expect(summaryQueueState).toBe("waiting-for-run");
+      await expect(summaryQueueMetric).toHaveAttribute("data-health-tone", "neutral");
+      await expect(summaryQueueMetric).not.toHaveClass(/\b(?:warn|err)\b/);
       await expect(summaryQueueMetric.locator("small > .i18n-en")).toContainText(
         "waiting for a successful run",
       );
     }
-    if (runStatus === "err" && bodyQueueMode === "enabled") {
+    if (["missing", "late", "failed"].includes(runState ?? "") && bodyQueueMode === "enabled") {
       expect(bodyQueueState).toBe("waiting-for-run");
+      await expect(bodyQueueMetric).toHaveAttribute("data-health-tone", "neutral");
+      await expect(bodyQueueMetric).not.toHaveClass(/\b(?:warn|err)\b/);
       await expect(bodyQueueMetric.locator("small > .i18n-en")).toContainText(
         "waiting for a successful run",
       );
@@ -2572,33 +2848,103 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(bodyQueueMetric).not.toHaveAttribute("data-body-queue-state", "clear");
     } else {
       await expect(bodyQueueMetric.locator("strong")).toHaveText(/^\d+$/);
+      if (bodyQueueMerged !== "unknown") {
+        await expect(bodyQueueMetric.locator("small > .i18n-ja")).toContainText(
+          `本文ファイル反映 +${bodyQueueMerged}`,
+        );
+        await expect(bodyQueueMetric.locator("small > .i18n-en")).toContainText(
+          `applied to body file +${bodyQueueMerged}`,
+        );
+      }
     }
-    await expect(page.locator('[data-health-scope="enrichment-budget"] strong')).toHaveText(
-      /^(n\/a|\d+\/\d+)$/,
-    );
-    await expect(page.locator(".source-reason-line").first()).toBeVisible();
-    await expect(page.locator('[data-source-filter="all"]')).toBeVisible();
+    await expect(bodyQueueMetric.locator("small > .i18n-ja")).not.toContainText("回収 +");
+    await expect(bodyQueueMetric.locator("small > .i18n-en")).not.toContainText("merged +");
+    const enrichmentBudgetMetric = page.locator('[data-health-scope="enrichment-budget"]');
+    const enrichmentBudgetState = await enrichmentBudgetMetric.getAttribute("data-telemetry-state");
+    expect(enrichmentBudgetState).toMatch(/^(recorded|not-recorded)$/);
+    if (enrichmentBudgetState === "recorded") {
+      await expect(enrichmentBudgetMetric.locator("strong")).toHaveText(/^\d+\/\d+$/);
+    } else {
+      await expect(enrichmentBudgetMetric.locator("strong > .i18n-en")).toHaveText("Not recorded");
+      await expect(enrichmentBudgetMetric.locator("small > .i18n-en")).toContainText(
+        "This published snapshot does not include",
+      );
+    }
+    const limitedFilter = page.locator('[data-source-filter="limited"]');
+    const allFilter = page.locator('[data-source-filter="all"]');
+    const sourceRows = page.locator("#source-health-list .source-item");
+    const visibleSourceRows = page.locator("#source-health-list .source-item:not([hidden])");
+    const limitedCount = Number(await limitedFilter.getAttribute("data-source-count"));
+    const expectedInitialCount = limitedCount > 0 ? limitedCount : await sourceRows.count();
+    await expect(limitedFilter).toBeVisible();
+    await expect(limitedFilter).toHaveAttribute("aria-pressed", limitedCount > 0 ? "true" : "false");
+    await expect(allFilter).toBeVisible();
+    await expect(allFilter).toHaveAttribute("aria-pressed", limitedCount > 0 ? "false" : "true");
     await expect(page.locator('[data-category-filter="all"]')).toBeVisible();
-    await expect(page.locator(".source-item").first()).toBeVisible();
-    await expect(page.locator(".source-status-badge").first()).toContainText(/正常|更新遅延|要確認/);
-    await expect(page.locator(".source-meta-line").first()).not.toContainText(/tier|stale\s*>/i);
-    await expect(page.locator(".source-latest-line").first()).toBeVisible();
-    const sourceCoverage = page.locator('[data-health-scope="source-coverage"]');
+    await expect(visibleSourceRows).toHaveCount(expectedInitialCount);
+    await expect(page.locator("#source-health-list .source-item:visible")).toHaveCount(expectedInitialCount);
+    await expect(page.locator("[data-visible-source-count]").first()).toHaveText(
+      String(expectedInitialCount),
+    );
+    await expect(visibleSourceRows.first().locator(".source-reason-line")).toBeVisible();
+    await expect(visibleSourceRows.first().locator(".source-status-badge")).toContainText(
+      /最近掲載あり|低活動|長期非掲載|未収録/,
+    );
+    await expect(visibleSourceRows.first().locator(".source-meta-line")).not.toContainText(/tier|stale\s*>/i);
+    await expect(visibleSourceRows.first().locator(".source-latest-line")).toBeVisible();
+    const sourceActivityStates = await sourceRows.evaluateAll((rows) =>
+      rows.map((row) => row.getAttribute("data-source-activity-status")),
+    );
+    expect(sourceActivityStates.every((state) =>
+      ["recent", "low-activity", "long-inactive", "not-listed"].includes(state ?? ""))).toBe(true);
+    await expect(page.locator("#source-health-list")).not.toContainText(
+      /正常|更新遅延|要確認|障害検出|failed source/i,
+    );
+    const sourceCoverage = page.locator('[data-health-scope="publication-activity"]');
     const coverageMetrics = await sourceCoverage.evaluate((element) => ({
       healthy: Number(element.getAttribute("data-healthy-source-count")),
       evaluated: Number(element.getAttribute("data-evaluated-source-count")),
       registered: Number(element.getAttribute("data-registered-source-count")),
+      notListed: Number(element.getAttribute("data-not-listed-source-count")),
       percentage: Number(element.getAttribute("data-health-percentage")),
     }));
     expect(coverageMetrics.evaluated).toBeGreaterThan(0);
     expect(coverageMetrics.healthy).toBeLessThanOrEqual(coverageMetrics.evaluated);
     expect(coverageMetrics.evaluated).toBeLessThanOrEqual(coverageMetrics.registered);
+    expect(coverageMetrics.evaluated + coverageMetrics.notListed).toBe(coverageMetrics.registered);
     expect(coverageMetrics.percentage).toBe(
       Math.round((coverageMetrics.healthy / coverageMetrics.evaluated) * 100),
     );
     await expect(sourceCoverage.locator("p > .i18n-ja")).toHaveText(
-      new RegExp(`${coverageMetrics.healthy}\\s*/\\s*${coverageMetrics.evaluated}`),
+      new RegExp(
+        `登録\\s*${coverageMetrics.registered}\\s*ソース.*`
+        + `評価できる\\s*${coverageMetrics.evaluated}\\s*ソース中\\s*`
+        + `${coverageMetrics.healthy}\\s*ソース.*未収録\\s*${coverageMetrics.notListed}\\s*ソース`,
+      ),
     );
+    const collectionFailures = page.locator('[data-health-scope="collection-failures"]');
+    const collectionFailureCountValue = await collectionFailures.getAttribute(
+      "data-collection-failure-count",
+    );
+    const collectionTelemetryState = await collectionFailures.getAttribute(
+      "data-collection-telemetry-state",
+    );
+    if (collectionTelemetryState === "unavailable") {
+      expect(collectionFailureCountValue).toBe("unknown");
+      await expect(collectionFailures.locator("strong")).toContainText(/記録なし|Not recorded/);
+      await expect(collectionFailures).not.toContainText(/すべて成功|completed successfully/);
+    } else {
+      expect(collectionTelemetryState).toBe("available");
+      const collectionFailureCount = Number(collectionFailureCountValue);
+      expect(collectionFailureCount).toBeGreaterThanOrEqual(0);
+      if (collectionFailureCount === 0) {
+        await expect(collectionFailures.locator("strong")).toContainText(/なし|None/);
+      } else {
+        await expect(collectionFailures.locator(".collection-failure-list li")).toHaveCount(
+          collectionFailureCount,
+        );
+      }
+    }
     const summaryServiceSnapshot = page.locator(
       '.status-detail-grid > [data-health-scope="ai-summary-service"]',
     );
@@ -2617,20 +2963,26 @@ test.describe("TECH Dashboard smoke", () => {
       /Published snapshot:\s+/,
     );
 
-    // Hero and footer must share the same run-status semantics (LL-126):
-    // stale last-run pages must never say "Run ERR" in hero and "run ok" in footer.
-    const heroCount = await page.locator(".page-hero .page-count > .i18n-en").innerText();
-    const runMatch = heroCount.match(/Run\s+(OK|WARN|ERR)/);
-    expect(runMatch, `status hero count should include run status, got: ${heroCount}`).not.toBeNull();
-    expect(heroCount, "status hero should label freshness semantics explicitly").toContain("Fresh sources");
-    const expectedTone = runMatch![1]!.toLowerCase();
-    await expect(page.locator(".footer-bar .footer-inner")).toContainText(`run ${expectedTone}`);
+    // The page identity stays concise; operational state belongs to the metric cards and footer.
+    await expect(page.locator(".page-hero #status-heading")).toHaveText("Status");
+    await expect(page.locator(".page-hero .page-count")).toHaveCount(0);
+    const stateLabels = {
+      healthy: "OK",
+      missing: "NO DATA",
+      late: "DELAYED",
+      failed: "FAILED",
+      degraded: "DEGRADED",
+    } as const;
+    const expectedStateLabel = stateLabels[runState as keyof typeof stateLabels];
+    const expectedTone = expectedRunTone[runState as keyof typeof expectedRunTone];
     await expect(page.getByRole("contentinfo")).toHaveCount(1);
     const footerRunLink = page.getByRole("link", { name: /Collection health:/ });
     await expect(footerRunLink).toHaveAttribute("href", "/status");
+    await expect(footerRunLink).toHaveAttribute("data-run-state", runState!);
+    await expect(footerRunLink.locator("strong")).toHaveText(`run ${expectedStateLabel.toLowerCase()}`);
     await expect(footerRunLink).toHaveAttribute(
       "aria-label",
-      /collection health: run (ok|warn|err).*summary queue \d+.*ai explainer body/i,
+      /collection health: run (ok|no data|delayed|failed|degraded).*summary queue \d+.*ai explainer body/i,
     );
     const footerRunDetail = await footerRunLink.getAttribute("data-run-detail");
     expect(footerRunDetail).toBeTruthy();
@@ -2653,30 +3005,38 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".page-hero-copy > p > .i18n-en")).toBeVisible();
     await expect(page.locator(".page-hero-copy > p > .i18n-en")).toContainText("Check collection, AI summaries");
     await expect(page.locator("#worker-health-heading > .i18n-en")).toContainText("Collection and enrichment health");
-    await expect(page.locator(".source-status-badge").first()).toContainText(/Fresh|Delayed|Needs review/);
-    await expect(page.locator(".source-reason-line").first()).toContainText(/Last collected|No articles have been collected/);
-    await expect(page.locator(".source-latest-line").first()).toContainText(/Latest article/);
+    await expect(visibleSourceRows.first().locator(".source-status-badge > .i18n-en")).toContainText(
+      /Recently listed|Low activity|Long inactive|Not listed/,
+    );
+    await expect(visibleSourceRows.first().locator(".source-reason-line > .i18n-en")).toContainText(
+      /latest article listed on this site|No listed entry is available|Last listed/i,
+    );
+    await expect(visibleSourceRows.first().locator(".source-latest-line > .i18n-en")).toContainText(
+      /Latest article/,
+    );
   });
 
-  test("status attention action targets visible main content on mobile", async ({ page }) => {
+  test("status publication activity action targets visible main content on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/status/");
 
-    const action = page.locator('.page-hero-actions a[href="#source-health-list"]');
+    const action = page.locator('.page-hero-actions a[href="#source-health-heading"]');
     await expect(action).toHaveCount(1);
     await action.evaluate((link: HTMLAnchorElement) => link.click());
-    await expect(page).toHaveURL(/\/status\/?#source-health-list$/);
+    await expect(page).toHaveURL(/\/status\/?#source-health-heading$/);
 
-    const target = page.locator("#source-health-list");
+    const target = page.locator("#source-health-heading");
     await expect(target).toBeVisible();
     expect(await target.evaluate((element) => element.closest("aside") === null)).toBe(true);
+    await expect(page.locator("#source-health-list [data-source-activity-status]")).not.toHaveCount(0);
+    await expect(page.locator("#attention-list, #attention-list-mobile")).toHaveCount(0);
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
   });
 
   test("status category insight yields to content until the right rail is available", async ({ page }) => {
-    for (const width of [981, 1024, 1100, 1180]) {
+    for (const width of [901, 1024, 1100, 1180]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto("/status/");
       await expect(page.locator("aside.status-insights"), `${width}px keeps the right rail collapsed`).toBeHidden();
@@ -2685,9 +3045,27 @@ test.describe("TECH Dashboard smoke", () => {
         .toBe(true);
     }
 
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto("/status/");
+    for (const width of [1181, 1280, 1359, 1360]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/status/");
+      await expect(page.locator("aside.status-insights"), `${width}px shows the status insight rail`).toBeVisible();
+      const layoutColumns = await page.locator(".layout").evaluate((layout) =>
+        getComputedStyle(layout).gridTemplateColumns.split(" ").filter(Boolean).length,
+      );
+      expect(layoutColumns, `${width}px keeps the three-column status hierarchy`).toBe(3);
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+        .toBe(true);
+    }
+
     await expect(page.locator(".category-health-list li").first()).toBeVisible();
+    await expect(page.locator("aside.status-insights h3.rail-title")).toHaveCount(4);
+    await expect(page.locator("aside.status-insights div.rail-title")).toHaveCount(0);
+    await expect
+      .poll(() =>
+        page.locator("aside.status-insights").evaluate((element) => getComputedStyle(element).position),
+      )
+      .toBe("static");
 
     const geometry = await page.evaluate(() => {
       const items = Array.from(document.querySelectorAll<HTMLElement>(".category-health-list li"));
@@ -2706,7 +3084,7 @@ test.describe("TECH Dashboard smoke", () => {
       };
     });
 
-    expect(geometry.overflow, "1280px status page must not overflow horizontally").toBeLessThanOrEqual(0);
+    expect(geometry.overflow, "status page must not overflow horizontally").toBeLessThanOrEqual(0);
     expect(geometry.items.length).toBeGreaterThan(0);
     for (const item of geometry.items) {
       expect(item.detailLeft).toBeGreaterThanOrEqual(item.itemLeft - 1);
@@ -2720,23 +3098,24 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".category-health-list small > .i18n-en").first()).toContainText("not listed");
   });
 
-  test("status error rows with collected entries remain truthful", async ({ page }) => {
+  test("status separates publication inactivity from collection failures", async ({ page }) => {
     await page.goto("/status/");
-    const attentionRows = page.locator("#attention-list .status-attention-list li");
-    const attentionCount = await attentionRows.count();
-    for (let index = 0; index < attentionCount; index++) {
-      const row = attentionRows.nth(index);
-      const status = await row.getAttribute("data-source-status");
-      expect(status).toMatch(/^(error|stale)$/);
-      const link = row.locator("a");
-      const describedBy = await link.getAttribute("aria-describedby");
-      expect(describedBy).toBeTruthy();
-      await expect(page.locator(`[id="${describedBy}"]`)).toContainText(
-        status === "error" ? "収集状況の確認が必要" : "更新間隔が長くなっています",
+    await expect(page.locator("#attention-list, #attention-list-mobile")).toHaveCount(0);
+
+    const longInactiveRows = page.locator(
+      '.source-item[data-source-activity-status="long-inactive"]',
+    );
+    for (let index = 0; index < await longInactiveRows.count(); index++) {
+      const row = longInactiveRows.nth(index);
+      await expect(row).not.toHaveAttribute("data-source-status");
+      await expect(row.locator(".source-status-badge")).toContainText(/長期非掲載|Long inactive/);
+      await expect(row.locator(".status.error, .source-status-badge.error")).toHaveCount(0);
+      await expect(row.locator(".source-reason-line")).toContainText(
+        /長期間掲載がありません|No recent article is listed/,
       );
     }
 
-    const offenders = await page.locator(".source-item.source-row-error").evaluateAll((rows) =>
+    const offenders = await longInactiveRows.evaluateAll((rows) =>
       rows
         .map((row) => {
           const count = Number((row.querySelector(".source-time-block strong") as HTMLElement | null)?.innerText ?? "0");
@@ -2747,19 +3126,35 @@ test.describe("TECH Dashboard smoke", () => {
         .filter(
           (row) =>
             row.count > 0 &&
-            (row.reason.includes("収集済みの記事がまだありません") ||
-              row.reason.includes("通常の更新範囲内") ||
+            (row.reason.includes("収集済み記事なし") ||
+              row.reason.includes("通常の掲載間隔内") ||
               row.latest === "記事なし"),
         ),
     );
-    expect(offenders, "data-bearing error rows should show threshold-exceeded context, not no-data/inside-threshold").toEqual([]);
+    expect(
+      offenders,
+      "data-bearing long-inactive rows should not use no-data or recent-activity copy",
+    ).toEqual([]);
 
-    const noDataRows = page.locator(".source-item.source-row-no-data");
+    const noDataRows = page.locator(
+      '.source-item[data-source-activity-status="not-listed"]',
+    );
     for (let index = 0; index < await noDataRows.count(); index++) {
       const row = noDataRows.nth(index);
-      await expect(row).toHaveAttribute("data-source-status", "no-data");
+      await expect(row).not.toHaveAttribute("data-source-status");
+      await expect(row).toHaveAttribute("data-source-activity-status", "not-listed");
       await expect(row.locator(".source-status-badge")).toContainText(/未収録|Not listed/);
       await expect(row.locator(".status.error, .source-status-badge.error")).toHaveCount(0);
+    }
+
+    const collectionFailures = page.locator('[data-health-scope="collection-failures"]');
+    const failureCountValue = await collectionFailures.getAttribute("data-collection-failure-count");
+    if (failureCountValue === "unknown") {
+      await expect(collectionFailures).toHaveAttribute("data-collection-telemetry-state", "unavailable");
+      await expect(collectionFailures.locator(".collection-failure-list li")).toHaveCount(0);
+    } else {
+      const failureCount = Number(failureCountValue);
+      await expect(collectionFailures.locator(".collection-failure-list li")).toHaveCount(failureCount);
     }
   });
 
@@ -2886,7 +3281,7 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("category-owned panels scroll normally while primary sidebar stays sticky", async ({ page }) => {
-    for (const width of [1440, 1280]) {
+    for (const width of [1440, 1360]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto("/c/copilot/");
 
@@ -2940,22 +3335,59 @@ test.describe("TECH Dashboard smoke", () => {
       expect(after.hscroll, `category detail has no horizontal overflow at ${width}px`).toBe(false);
     }
 
-    await page.setViewportSize({ width: 1000, height: 900 });
-    await page.goto("/c/copilot/");
-    const panel = page.locator(".category-side-panel");
-    const sidebar = page.locator("aside.left");
-    await expect(panel, "category panel yields to the article list at 1000px").toBeHidden();
-    await expect(sidebar, "primary sidebar remains visible at 1000px").toBeVisible();
-    await expect
-      .poll(() => sidebar.evaluate((element) => getComputedStyle(element).position))
-      .toBe("sticky");
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-      .toBe(true);
+    for (const { width, sidebarVisible } of [
+      { width: 1359, sidebarVisible: true },
+      { width: 1000, sidebarVisible: true },
+      { width: 900, sidebarVisible: false },
+    ]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/c/copilot/");
+      const panel = page.locator(".category-side-panel");
+      const sidebar = page.locator("aside.left");
+      await expect(panel, `category panel yields to the article list at ${width}px`).toBeHidden();
+      if (sidebarVisible) {
+        await expect(sidebar, `primary sidebar remains visible at ${width}px`).toBeVisible();
+        await expect
+          .poll(() => sidebar.evaluate((element) => getComputedStyle(element).position))
+          .toBe("sticky");
+      } else {
+        await expect(sidebar, `primary sidebar yields to the article list at ${width}px`).toBeHidden();
+      }
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+        .toBe(true);
+    }
   });
 
   test("status source filters only show matching rows", async ({ page }) => {
     await page.goto("/status/");
+
+    const workerHealthSection = page.locator(".status-hero");
+    const allRows = page.locator("#source-health-list [data-source-activity-status]");
+    const limitedFilter = page.locator('[data-source-filter="limited"]');
+    const allFilter = page.locator('[data-source-filter="all"]');
+    const limitedCount = Number(await limitedFilter.getAttribute("data-source-count"));
+    if (limitedCount > 0) {
+      await expect(limitedFilter).toHaveAttribute("aria-pressed", "true");
+      const initialStatuses = await allRows.evaluateAll((items) =>
+        items
+          .filter((item) => !(item as HTMLElement).hidden)
+          .map((item) => (item as HTMLElement).dataset.sourceActivityStatus),
+      );
+      expect(initialStatuses).toHaveLength(limitedCount);
+      expect(initialStatuses.every((status) => status !== "recent")).toBe(true);
+    }
+
+    await allFilter.click();
+    await expect(allFilter).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#source-health-list [data-source-activity-status]:visible")).toHaveCount(
+      await allRows.count(),
+    );
+    await expect(page.locator("[data-visible-source-count]").first()).toHaveText(
+      String(await allRows.count()),
+    );
+    await expect(workerHealthSection).toBeVisible();
+    await expect(workerHealthSection).not.toHaveAttribute("hidden", "");
 
     const targetFilter = await page.locator("[data-source-filter]").evaluateAll((buttons) => {
       const candidates = buttons
@@ -2966,21 +3398,27 @@ test.describe("TECH Dashboard smoke", () => {
             count: Number(element.dataset.sourceCount ?? Number.NaN),
           };
         })
-        .filter((candidate) => candidate.value !== "all" && candidate.count > 0);
+        .filter((candidate) => !["all", "limited"].includes(candidate.value) && candidate.count > 0);
       return candidates[0]?.value ?? "";
     });
     expect(targetFilter, "the current status corpus exposes a non-empty source status").not.toBe("");
 
-    await page.locator(`[data-source-filter="${targetFilter}"]`).click();
-    await expect(page.locator(`[data-source-filter="${targetFilter}"]`)).toHaveAttribute("aria-pressed", "true");
+    const filterButton = page.locator(`[data-source-filter="${targetFilter}"]`);
+    const expectedCount = Number(await filterButton.getAttribute("data-source-count"));
+    await filterButton.click();
+    await expect(filterButton).toHaveAttribute("aria-pressed", "true");
 
-    const visibleStatuses = await page.locator("[data-source-status]").evaluateAll((items) =>
-      items
-        .filter((item) => !(item as HTMLElement).hidden)
-        .map((item) => (item as HTMLElement).dataset.sourceStatus),
-    );
-    expect(visibleStatuses.length).toBeGreaterThan(0);
+    const visibleStatuses = await page
+      .locator("#source-health-list [data-source-activity-status]")
+      .evaluateAll((items) =>
+        items
+          .filter((item) => !(item as HTMLElement).hidden)
+          .map((item) => (item as HTMLElement).dataset.sourceActivityStatus),
+      );
+    expect(visibleStatuses).toHaveLength(expectedCount);
     expect(visibleStatuses.every((status) => status === targetFilter)).toBeTruthy();
+    await expect(workerHealthSection).toBeVisible();
+    await expect(workerHealthSection).not.toHaveAttribute("hidden", "");
   });
 
   test("sources route redirects to unified status page", async ({ page }) => {
@@ -2988,13 +3426,17 @@ test.describe("TECH Dashboard smoke", () => {
 
     await expect(page).toHaveURL(/\/status\/?$/);
     await expect(page.locator("#source-health-heading")).toBeVisible();
-    await expect(page.locator(".source-item").first()).toBeVisible();
-    await expect(page.locator(".source-status-badge").first()).toContainText(/正常|更新遅延|要確認/);
-    await expect(page.locator(".source-meta-line").first()).not.toContainText(/tier|stale\s*>/i);
+    const firstVisibleSource = page.locator("#source-health-list .source-item:not([hidden])").first();
+    await expect(firstVisibleSource).toBeVisible();
+    await expect(firstVisibleSource.locator(".source-status-badge")).toContainText(
+      /最近掲載あり|低活動|長期非掲載|未収録/,
+    );
+    await expect(firstVisibleSource.locator(".source-meta-line")).not.toContainText(/tier|stale\s*>/i);
   });
 
   test("status category filter only shows matching sources", async ({ page }) => {
     await page.goto("/status/");
+    await page.locator('[data-source-filter="all"]').click();
 
     const targetCategory = await page.locator("[data-category-filter]").evaluateAll((buttons) => {
       const candidates = buttons
@@ -3009,15 +3451,17 @@ test.describe("TECH Dashboard smoke", () => {
       return candidates[0]?.value ?? "copilot";
     });
 
-    await page.locator(`[data-category-filter="${targetCategory}"]`).click();
-    await expect(page.locator(`[data-category-filter="${targetCategory}"]`)).toHaveAttribute("aria-pressed", "true");
+    const categoryButton = page.locator(`[data-category-filter="${targetCategory}"]`);
+    const expectedCount = Number(await categoryButton.locator("span").innerText());
+    await categoryButton.click();
+    await expect(categoryButton).toHaveAttribute("aria-pressed", "true");
 
-    const visibleCategories = await page.locator("[data-source-category]").evaluateAll((items) =>
+    const visibleCategories = await page.locator("#source-health-list [data-source-category]").evaluateAll((items) =>
       items
         .filter((item) => !(item as HTMLElement).hidden)
         .map((item) => (item as HTMLElement).dataset.sourceCategory),
     );
-    expect(visibleCategories.length).toBeGreaterThan(0);
+    expect(visibleCategories).toHaveLength(expectedCount);
     expect(visibleCategories.every((category) => category === targetCategory)).toBeTruthy();
   });
 
@@ -3115,6 +3559,7 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("Research copy distinguishes selected research from paper-only arXiv browsing", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/c/research/");
     await expect(page.locator(".page-hero h1")).toContainText("Research");
     await expect(page.locator(".page-hero h1")).not.toContainText("Papers / Benchmarks");
@@ -3597,8 +4042,11 @@ test.describe("TECH Dashboard smoke", () => {
           body: { x: body.x, width: body.width },
         };
       });
-      expect(fallbackGeometry.thumb.height, "failed image keeps a full-height media rail").toBeGreaterThanOrEqual(
-        fallbackGeometry.cardHeight - 2,
+      expect(
+        fallbackGeometry.cardHeight - fallbackGeometry.thumb.height,
+        "failed image keeps a full-height media rail",
+      ).toBeLessThanOrEqual(
+        2 + LAYOUT_SUBPIXEL_EPSILON_PX,
       );
       expect(Math.abs(fallbackGeometry.fallback.width - fallbackGeometry.thumb.width)).toBeLessThanOrEqual(1);
       expect(Math.abs(fallbackGeometry.fallback.height - fallbackGeometry.thumb.height)).toBeLessThanOrEqual(1);
@@ -3688,8 +4136,11 @@ test.describe("TECH Dashboard smoke", () => {
           `${width}px header does not wrap`,
         ).toBeLessThanOrEqual(1);
         expect(viewportLayout.logo!.right + 8).toBeLessThanOrEqual(viewportLayout.langToggle!.x);
-        expect(viewportLayout.image!.height, `${width}px media rail fills the Featured card`).toBeGreaterThanOrEqual(
-          viewportLayout.featured!.height - 2,
+        expect(
+          viewportLayout.featured!.height - viewportLayout.image!.height,
+          `${width}px media rail fills the Featured card`,
+        ).toBeLessThanOrEqual(
+          2 + LAYOUT_SUBPIXEL_EPSILON_PX,
         );
         expect(viewportLayout.content!.width).toBeGreaterThanOrEqual(
           viewportLayout.featured!.width - viewportLayout.image!.width - 3,
@@ -3754,8 +4205,13 @@ test.describe("TECH Dashboard smoke", () => {
       });
       expect(summaryBodyBox, "summary card body has a box").not.toBeNull();
       expect(summaryTextBox, "summary text has a readable box").not.toBeNull();
-      expect(summaryTextBox!.x, "mobile summary text starts at card body edge, not after the AI badge").toBeLessThanOrEqual(summaryBodyBox!.x + 2);
-      expect(summaryTextBox!.width, "mobile summary text keeps full readable width").toBeGreaterThanOrEqual(summaryBodyBox!.width - 2);
+      expect(summaryTextBox!.x, "mobile summary text starts at card body edge, not after the AI badge").toBeLessThanOrEqual(
+        summaryBodyBox!.x + 2 + LAYOUT_SUBPIXEL_EPSILON_PX,
+      );
+      expect(
+        summaryBodyBox!.width - summaryTextBox!.width,
+        "mobile summary text keeps full readable width",
+      ).toBeLessThanOrEqual(2 + LAYOUT_SUBPIXEL_EPSILON_PX);
     }
 
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -3992,8 +4448,11 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("search route restores and synchronizes its shareable query", async ({ page }) => {
-    await page.goto("/search/?q=Copilot");
+    const noSlashResponse = await page.goto("/search?q=Copilot");
+    expect(noSlashResponse?.status()).toBe(200);
     await expect(page.locator("#search-page-heading")).toHaveText(/Search/);
+    const guide = page.locator("[data-search-page-guide]");
+    await expect(guide).toBeHidden();
     const form = page.locator('header form.search[role="search"]');
     const input = form.locator('input[type="search"][name="q"]');
     await expect(form).toHaveAttribute("action", "/search/");
@@ -4001,9 +4460,34 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(input).toHaveValue("Copilot", { timeout: 10_000 });
     await expect(form).toHaveClass(/is-open/);
     await expect(page.locator("#pagefind-results")).toBeVisible({ timeout: 10_000 });
+    await expect
+      .poll(() => page.locator("#pagefind-results .search-hit").count(), { timeout: 10_000 })
+      .toBeGreaterThan(0);
+    const noSlashResults = await page.locator("#pagefind-results .search-hit").evaluateAll((hits) =>
+      hits.map((hit) => hit.getAttribute("href")).filter((href): href is string => Boolean(href)),
+    );
+    expect(noSlashResults.length).toBeGreaterThan(0);
+
+    const slashResponse = await page.goto("/search/?q=Copilot");
+    expect(slashResponse?.status()).toBe(200);
+    await expect(input).toHaveValue("Copilot", { timeout: 10_000 });
+    await expect(guide).toBeHidden();
+    await expect(page.locator("#pagefind-results")).toBeVisible({ timeout: 10_000 });
+    await expect
+      .poll(() => page.locator("#pagefind-results .search-hit").count(), { timeout: 10_000 })
+      .toBeGreaterThan(0);
+    const slashResults = await page.locator("#pagefind-results .search-hit").evaluateAll((hits) =>
+      hits.map((hit) => hit.getAttribute("href")).filter((href): href is string => Boolean(href)),
+    );
+    expect(slashResults).toEqual(noSlashResults);
 
     await input.fill("Claude");
     await expect(page).toHaveURL(/\/search\/\?q=Claude$/);
+    await expect(guide).toBeHidden();
+    await input.fill("");
+    await expect(page).toHaveURL(/\/search\/?$/);
+    await expect(guide).toBeVisible();
+    await input.fill("Claude");
     await page.reload();
     await expect(input).toHaveValue("Claude", { timeout: 10_000 });
     await expect(form).toHaveClass(/is-open/);
@@ -4502,30 +4986,23 @@ test.describe("TECH Dashboard smoke", () => {
     expect(active!.visible, "the restored focus target must be visible").toBe(true);
   });
 
-  test("status attention list is reachable on mobile without a huge scroll", async ({ page }) => {
+  test("status publication activity is reachable on mobile without a huge scroll", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/status/");
 
-    const mobileList = page.locator("#attention-list-mobile");
-    await expect(mobileList).toBeVisible();
-    const box = await mobileList.boundingBox();
+    const sourceHeading = page.locator("#source-health-heading");
+    await expect(sourceHeading).toBeVisible();
+    const box = await sourceHeading.boundingBox();
     expect(box).not.toBeNull();
-    expect(box!.y, "attention list must not be buried thousands of px down").toBeLessThan(2600);
+    expect(box!.y, "publication activity must not be buried thousands of px down").toBeLessThan(2600);
 
-    // Either actionable rows OR an explicit empty state — both are valid.
-    const rows = mobileList.locator(".status-attention-list li a[href^='#']");
-    const rowCount = await rows.count();
-    if (rowCount > 0) {
-      await expect(rows.first()).toBeVisible();
-      const rowBox = await rows.first().boundingBox();
-      expect(rowBox).not.toBeNull();
-      expect(rowBox!.y, "first attention row should be quickly reachable").toBeLessThan(2800);
-    } else {
-      await expect(mobileList.locator("p")).toBeVisible();
-    }
-
-    // Desktop right-rail copy is hidden at mobile width (no duplicated visible list).
-    await expect(page.locator("#attention-list")).toBeHidden();
+    const firstSource = page.locator("#source-health-list .source-item:not([hidden])").first();
+    await expect(firstSource).toBeVisible();
+    const rowBox = await firstSource.boundingBox();
+    expect(rowBox).not.toBeNull();
+    expect(rowBox!.y, "first publication activity row should be quickly reachable").toBeLessThan(3000);
+    await expect(page.locator("#attention-list, #attention-list-mobile")).toHaveCount(0);
+    await expect(page.locator("aside.status-insights")).toBeHidden();
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);

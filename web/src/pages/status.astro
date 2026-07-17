@@ -2,7 +2,6 @@
 import Portal from "../layouts/Portal.astro";
 import PageHero from "../components/PageHero.astro";
 import Sidebar from "../components/Sidebar.astro";
-import StatusAttentionList from "../components/StatusAttentionList.astro";
 import {
   ALL_ENTRIES,
   CATEGORY_META,
@@ -12,14 +11,14 @@ import {
   type Category,
   type NormalizedEntry,
 } from "../lib/data.ts";
-import { sourceFreshnessStatus, type FreshnessSourceType, type FreshnessStatus } from "../lib/freshness.ts";
+import { sourceFreshnessStatus, type FreshnessSourceType } from "../lib/freshness.ts";
 import { SOURCE_META, sourceAnchorId, sourceLabel } from "../lib/source-meta.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { deriveQueueDisplay } from "../lib/queue-health.ts";
 import { deriveWorkerRunStatus } from "../lib/run-health.ts";
 
 const now = new Date();
-type SourceStatus = FreshnessStatus;
+type SourceActivityStatus = "recent" | "low-activity" | "long-inactive" | "not-listed";
 type SourceRow = {
   id: string;
   anchorId: string;
@@ -34,7 +33,7 @@ type SourceRow = {
   latestUrl: string | null;
   sourceType: NormalizedEntry["sourceType"];
   sourceTypeLabel: string;
-  status: SourceStatus;
+  status: SourceActivityStatus;
   statusJa: string;
   statusEn: string;
   reasonJa: string;
@@ -49,11 +48,11 @@ const TYPE_LABEL: Record<NormalizedEntry["sourceType"], string> = {
   community: "Community",
 };
 
-const SOURCE_STATUS_COPY: Record<SourceStatus, { ja: string; en: string }> = {
-  ok: { ja: "正常", en: "Fresh" },
-  stale: { ja: "更新遅延", en: "Delayed" },
-  error: { ja: "要確認", en: "Needs review" },
-  "no-data": { ja: "未収録", en: "Not listed" },
+const SOURCE_STATUS_COPY: Record<SourceActivityStatus, { ja: string; en: string }> = {
+  recent: { ja: "最近掲載あり", en: "Recently listed" },
+  "low-activity": { ja: "低活動", en: "Low activity" },
+  "long-inactive": { ja: "長期非掲載", en: "Long inactive" },
+  "not-listed": { ja: "未収録", en: "Not listed" },
 };
 
 const categoryBySlug = new Map(CATEGORY_META.map((category) => [category.slug, category]));
@@ -78,22 +77,28 @@ const sources: SourceRow[] = SOURCE_META.map((def) => {
     fromSource.length === 0 ? undefined : latestCollected,
     now.getTime(),
   );
-  const status = freshness.status;
+  const status: SourceActivityStatus = fromSource.length === 0
+    ? "not-listed"
+    : freshness.status === "ok"
+      ? "recent"
+      : freshness.status === "stale"
+        ? "low-activity"
+        : "long-inactive";
   const latestRelative = fromSource.length === 0 ? "n/a" : relativeTime(latestCollected, now);
   const reasonJa = fromSource.length === 0
-    ? "収集済みの記事がまだありません。"
-    : status === "ok"
-      ? `直近の収集は ${latestRelative} です。通常の更新範囲内です。`
-      : status === "stale"
-        ? `直近の収集は ${latestRelative} です。更新間隔が長くなっています。`
-        : `直近の収集は ${latestRelative} です。収集状況の確認が必要です。`;
+    ? "現在の掲載記事がないため、掲載アクティビティを判定できません。"
+    : status === "recent"
+      ? `このサイトで最後に掲載した記事は ${latestRelative} です。`
+      : status === "low-activity"
+        ? `最後の掲載は ${latestRelative}。掲載間隔が長めですが、直近 batch の収集エラーとは別の指標です。`
+        : `最後の掲載は ${latestRelative}。長期間掲載がありませんが、収集障害を意味するものではありません。`;
   const reasonEn = fromSource.length === 0
-    ? "No articles have been collected from this source yet."
-    : status === "ok"
-      ? `Last collected ${latestRelative}. This is within the expected update window.`
-      : status === "stale"
-        ? `Last collected ${latestRelative}. The update interval is longer than expected.`
-        : `Last collected ${latestRelative}. The collection status needs review.`;
+    ? "No listed entry is available, so publication activity cannot be evaluated."
+    : status === "recent"
+      ? `The latest article listed on this site was ${latestRelative}.`
+      : status === "low-activity"
+        ? `Last listed ${latestRelative}. Activity is low, but this is separate from latest-batch collection errors.`
+        : `Last listed ${latestRelative}. No recent article is listed, but this does not by itself indicate a collection failure.`;
   const category = def.category as Category;
   const categoryMeta = categoryBySlug.get(category);
   return {
@@ -118,26 +123,34 @@ const sources: SourceRow[] = SOURCE_META.map((def) => {
   };
 });
 
-const ok = sources.filter((s) => s.status === "ok").length;
-const stale = sources.filter((s) => s.status === "stale").length;
-const error = sources.filter((s) => s.status === "error").length;
-const noData = sources.filter((s) => s.status === "no-data").length;
-const evaluatedSourceCount = ok + stale + error;
-const statusOrder = { error: 0, stale: 1, "no-data": 2, ok: 3 } as const;
+const recent = sources.filter((s) => s.status === "recent").length;
+const lowActivity = sources.filter((s) => s.status === "low-activity").length;
+const longInactive = sources.filter((s) => s.status === "long-inactive").length;
+const notListed = sources.filter((s) => s.status === "not-listed").length;
+const limitedListingSourceCount = lowActivity + longInactive + notListed;
+const defaultSourceFilter = limitedListingSourceCount > 0 ? "limited" : "all";
+const initialVisibleSourceCount =
+  defaultSourceFilter === "limited" ? limitedListingSourceCount : sources.length;
+const evaluatedSourceCount = recent + lowActivity + longInactive;
+const statusOrder = { recent: 0, "low-activity": 1, "long-inactive": 2, "not-listed": 3 } as const;
 const sortedSources = [...sources].sort(
   (a, b) =>
     statusOrder[a.status] - statusOrder[b.status] ||
     a.tier - b.tier ||
     a.displayName.localeCompare(b.displayName),
 );
-const errorSources = sortedSources.filter((s) => s.status === "error");
-const staleSources = sortedSources.filter((s) => s.status === "stale");
-const attentionSources = [...errorSources, ...staleSources].slice(0, 8);
-const healthyPct = evaluatedSourceCount > 0 ? Math.round((ok / evaluatedSourceCount) * 100) : 0;
+const recentActivityPct = evaluatedSourceCount > 0 ? Math.round((recent / evaluatedSourceCount) * 100) : 0;
 const indexAgeLabel = relativeTime(GENERATED_AT, now);
 const pendingSummaryEntries = DASHBOARD_METRICS.fallbackEntries;
 const pendingSummaryPercent = DASHBOARD_METRICS.fallbackPercent;
 const wh = WORKER_HEALTH;
+const collectionFailureIds = new Set(wh?.sourcesFailed ?? []);
+const sourceById = new Map(sources.map((source) => [source.id, source]));
+const collectionFailureSources = [...collectionFailureIds].map((id) => ({
+  id,
+  displayName: sourceById.get(id)?.displayName ?? sourceLabel(id),
+}));
+const collectionFailureCount = wh === null ? null : wh.sourcesFailed.length;
 const workerRun = deriveWorkerRunStatus({
   workerHealth: wh,
   nowMs: now.getTime(),
@@ -150,6 +163,7 @@ const summaryQueue = deriveQueueDisplay({
   backlog: summaryQueueBacklog,
   drainEstimateHours: DASHBOARD_METRICS.summaryQueueDrainEstimateHours,
   runTone: workerRun.tone,
+  runState: workerRun.state,
 });
 const bodyQueueBacklog = DASHBOARD_METRICS.bodyQueueBacklog;
 const bodyQueue = deriveQueueDisplay({
@@ -157,12 +171,14 @@ const bodyQueue = deriveQueueDisplay({
   backlog: bodyQueueBacklog,
   drainEstimateHours: DASHBOARD_METRICS.bodyQueueDrainEstimateHours,
   runTone: workerRun.tone,
+  runState: workerRun.state,
 });
 const enrichmentEnqueueCap = DASHBOARD_METRICS.enrichmentEnqueueCap;
 const enrichmentEnqueued = DASHBOARD_METRICS.enrichmentEnqueued;
-const enrichmentBudgetLabel = enrichmentEnqueueCap === null || enrichmentEnqueued === null
-  ? "n/a"
-  : `${enrichmentEnqueued}/${enrichmentEnqueueCap}`;
+const hasEnrichmentBudgetTelemetry = enrichmentEnqueueCap !== null && enrichmentEnqueued !== null;
+const enrichmentBudgetLabel = hasEnrichmentBudgetTelemetry
+  ? `${enrichmentEnqueued}/${enrichmentEnqueueCap}`
+  : null;
 const summaryQueueEnqueued = DASHBOARD_METRICS.summaryQueueEnqueued;
 const bodyQueueEnqueued = DASHBOARD_METRICS.bodyQueueEnqueued;
 const bodyQueueMerged = DASHBOARD_METRICS.bodyQueueMerged;
@@ -171,14 +187,14 @@ const categoryRows = CATEGORY_META.map((category) => {
     return {
       ...category,
       total: rows.length,
-      ok: rows.filter((source) => source.status === "ok").length,
-      stale: rows.filter((source) => source.status === "stale").length,
-      error: rows.filter((source) => source.status === "error").length,
-      noData: rows.filter((source) => source.status === "no-data").length,
+      recent: rows.filter((source) => source.status === "recent").length,
+      lowActivity: rows.filter((source) => source.status === "low-activity").length,
+      longInactive: rows.filter((source) => source.status === "long-inactive").length,
+      notListed: rows.filter((source) => source.status === "not-listed").length,
     };
   })
   .filter((row) => row.total > 0)
-  .sort((a, b) => b.error - a.error || b.stale - a.stale || b.total - a.total)
+  .sort((a, b) => b.longInactive - a.longInactive || b.lowActivity - a.lowActivity || b.total - a.total)
   .slice(0, 8);
 const sourceCategoryRows = CATEGORY_META.map((category) => {
   const rows = sources.filter((source) => source.category === category.slug);
@@ -188,17 +204,10 @@ const sourceCategoryRows = CATEGORY_META.map((category) => {
 const workerStatus = workerRun.tone;
 const workerColor =
   workerStatus === "ok" ? "var(--success)" : workerStatus === "warn" ? "var(--important)" : "var(--danger)";
-const workerStatusText = workerRun.statusText;
-const sourceReviewStatus = error > 0 ? "err" : stale > 0 ? "warn" : "ok";
-const overallStatus =
-  workerStatus === "err" || sourceReviewStatus === "err"
-    ? "err"
-    : workerStatus === "warn" || sourceReviewStatus === "warn"
-      ? "warn"
-      : "ok";
+const workerStatusText = workerRun.stateText;
+const overallStatus = workerStatus;
 const overallColor =
   overallStatus === "ok" ? "var(--success)" : overallStatus === "warn" ? "var(--important)" : "var(--danger)";
-const freshSourceLabel = `${ok}/${evaluatedSourceCount}`;
 const workerSummary = wh
   ? {
       ja: `直近バッチ ${wh.batchIndex}/${wh.batchTotal} · 収集成功 ${wh.sourcesOk}/${wh.sourcesAttempted} · 新規要約 ${wh.summarized}件 · 要約待ち ${pendingSummaryEntries}件`,
@@ -208,10 +217,12 @@ const workerSummary = wh
       ja: "このデータには収集状況の記録がありません。",
       en: "Collection health metadata is not available in this data snapshot.",
     };
-const workerToneCopy = {
-  ok: { ja: "正常稼働", en: "Running normally" },
-  warn: { ja: "一部確認が必要", en: "Review recommended" },
-  err: { ja: "収集状況を確認", en: "Collection needs review" },
+const workerStateCopy = {
+  healthy: { ja: "正常稼働", en: "Running normally" },
+  missing: { ja: "稼働記録なし", en: "Run telemetry unavailable" },
+  late: { ja: "定期収集が遅延", en: "Scheduled collection delayed" },
+  failed: { ja: "直近バッチが失敗", en: "Latest batch failed" },
+  degraded: { ja: "一部確認が必要", en: "Review recommended" },
 } as const;
 ---
 
@@ -221,23 +232,20 @@ const workerToneCopy = {
     accent={overallColor}
     kicker="Status & Sources"
     title="Status"
-    count={`稼働 ${workerStatusText} · 正常な収集元 ${freshSourceLabel}`}
-    countEn={`Run ${workerStatusText} · Fresh sources ${freshSourceLabel}`}
     headingId="status-heading"
     description="収集、AI要約、AI解説本文、サイト更新の状態を分けて確認できます。公開ページが新しくても、収集や生成の遅れは隠しません。"
     descriptionEn="Check collection, AI summaries, AI explainer bodies, and the latest site update separately. A recently published page does not hide delayed collection or enrichment."
     actions={[
       { href: "#worker-health-heading", label: "稼働状況", labelEn: "Collection health" },
-      { href: "#source-health-heading", label: "収集元一覧", labelEn: "Source directory" },
-      { href: "#source-health-list", label: "要確認の収集元", labelEn: "Sources to review" },
+      { href: "#source-health-heading", label: "掲載アクティビティ", labelEn: "Publication activity" },
       { href: "/archive", label: "アーカイブ", labelEn: "Open archive" },
     ]}
     metrics={[
       { label: "稼働状態", labelEn: "Run status", value: workerStatusText },
-      { label: "正常な収集元", labelEn: "Fresh sources", value: freshSourceLabel },
-      { label: "遅延・要確認", labelEn: "Sources to review", value: stale + error },
+      { label: "収集エラー", labelEn: "Collection errors", value: collectionFailureCount ?? "n/a" },
       { label: "要約待ち", labelEn: "Summaries pending", value: pendingSummaryEntries },
-      { label: "最終収集", labelEn: "Last collection", value: wh ? relativeTime(wh.lastRunAt, now) : "不明" },
+      { label: "本文待ち", labelEn: "Bodies pending", value: bodyQueue.showBacklog ? bodyQueue.backlog : "n/a" },
+      { label: "直近収集", labelEn: "Latest collection", value: wh ? `${wh.sourcesOk}/${wh.sourcesAttempted}` : "n/a" },
       { label: "サイト更新", labelEn: "Site updated", value: indexAgeLabel },
     ]}
   />
@@ -249,7 +257,7 @@ const workerToneCopy = {
       <section
         class={`status-hero status-hero-${overallStatus}`}
         data-run-status={workerStatus}
-        data-source-review-status={sourceReviewStatus}
+        data-run-state={workerRun.state}
         aria-labelledby="worker-health-heading"
         aria-describedby="worker-health-summary"
       >
@@ -257,10 +265,8 @@ const workerToneCopy = {
           <div class="status-kicker">
             <span class="status-dot" style={`background:${workerColor}`}></span>
             <span>RUN {workerStatusText}</span>
-            <span class="i18n-ja">{workerToneCopy[overallStatus].ja}</span>
-            <span class="i18n-en" lang="en">{workerToneCopy[overallStatus].en}</span>
-            <span class="i18n-ja">正常 {freshSourceLabel}</span>
-            <span class="i18n-en" lang="en">fresh {freshSourceLabel}</span>
+            <span class="i18n-ja">{workerStateCopy[workerRun.state].ja}</span>
+            <span class="i18n-en" lang="en">{workerStateCopy[workerRun.state].en}</span>
           </div>
           <div class="section-header primary status-title-row">
             <h2 id="worker-health-heading">
@@ -321,6 +327,7 @@ const workerToneCopy = {
             ]}
             data-health-scope="summary-queue"
             data-health-domain="summary-queue"
+            data-health-tone={summaryQueue.tone}
             data-summary-queue-mode={summaryQueue.mode}
             data-summary-queue-state={summaryQueue.state}
             data-summary-queue-backlog={summaryQueue.showBacklog ? summaryQueue.backlog : "unknown"}
@@ -356,9 +363,12 @@ const workerToneCopy = {
             ]}
             data-health-scope="body-queue"
             data-health-domain="body-queue"
+            data-health-tone={bodyQueue.tone}
             data-body-queue-mode={bodyQueue.mode}
             data-body-queue-state={bodyQueue.state}
             data-body-queue-backlog={bodyQueue.showBacklog ? bodyQueue.backlog : "unknown"}
+            data-body-queue-merged={bodyQueueMerged ?? "unknown"}
+            data-body-queue-enqueued={bodyQueueEnqueued ?? "unknown"}
           >
             <span>
               <span class="i18n-ja">AI解説本文 Queue</span>
@@ -367,12 +377,12 @@ const workerToneCopy = {
             <strong>{bodyQueue.showBacklog ? bodyQueue.backlog : "n/a"}</strong>
             <small>
               <span class="i18n-ja">
-                {bodyQueue.mode !== "enabled" || bodyQueueMerged === null ? "" : `回収 +${bodyQueueMerged} · `}
+                {bodyQueue.mode !== "enabled" || bodyQueueMerged === null ? "" : `本文ファイル反映 +${bodyQueueMerged} · `}
                 {bodyQueue.mode !== "enabled" || bodyQueueEnqueued === null ? "" : `送信 +${bodyQueueEnqueued} · `}
                 {bodyQueue.labelJa}
               </span>
               <span class="i18n-en" lang="en">
-                {bodyQueue.mode !== "enabled" || bodyQueueMerged === null ? "" : `merged +${bodyQueueMerged} · `}
+                {bodyQueue.mode !== "enabled" || bodyQueueMerged === null ? "" : `applied to body file +${bodyQueueMerged} · `}
                 {bodyQueue.mode !== "enabled" || bodyQueueEnqueued === null ? "" : `enqueued +${bodyQueueEnqueued} · `}
                 {bodyQueue.labelEn}
               </span>
@@ -382,6 +392,7 @@ const workerToneCopy = {
             class="status-metric-card"
             data-health-scope="enrichment-budget"
             data-health-domain="enrichment"
+            data-telemetry-state={hasEnrichmentBudgetTelemetry ? "recorded" : "not-recorded"}
             data-enrichment-enqueue-cap={enrichmentEnqueueCap ?? "unknown"}
             data-enrichment-enqueued={enrichmentEnqueued ?? "unknown"}
           >
@@ -389,14 +400,30 @@ const workerToneCopy = {
               <span class="i18n-ja">共有生成枠</span>
               <span class="i18n-en" lang="en">Shared enrichment budget</span>
             </span>
-            <strong>{enrichmentBudgetLabel}</strong>
+            <strong>
+              {enrichmentBudgetLabel ?? (
+                <>
+                  <span class="i18n-ja">記録なし</span>
+                  <span class="i18n-en" lang="en">Not recorded</span>
+                </>
+              )}
+            </strong>
             <small>
-              <span class="i18n-ja">
-                直近run: 要約 {summaryQueueEnqueued ?? "n/a"} · 本文 {bodyQueueEnqueued ?? "n/a"}
-              </span>
-              <span class="i18n-en" lang="en">
-                latest run: summaries {summaryQueueEnqueued ?? "n/a"} · bodies {bodyQueueEnqueued ?? "n/a"}
-              </span>
+              {hasEnrichmentBudgetTelemetry ? (
+                <>
+                  <span class="i18n-ja">
+                    直近run: 要約 {summaryQueueEnqueued ?? "n/a"} · 本文 {bodyQueueEnqueued ?? "n/a"}
+                  </span>
+                  <span class="i18n-en" lang="en">
+                    latest run: summaries {summaryQueueEnqueued ?? "n/a"} · bodies {bodyQueueEnqueued ?? "n/a"}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span class="i18n-ja">この公開スナップショットには直近runの共有生成枠が記録されていません。</span>
+                  <span class="i18n-en" lang="en">This published snapshot does not include the latest run's shared enrichment budget.</span>
+                </>
+              )}
             </small>
           </div>
           <div class="status-metric-card" data-health-scope="published-artifact">
@@ -412,12 +439,6 @@ const workerToneCopy = {
           </div>
         </div>
       </section>
-
-      <StatusAttentionList
-        sources={attentionSources}
-        id="attention-list-mobile"
-        extraClass="status-attention-mobile"
-      />
 
       {wh ? (
         <section class="status-detail-grid" aria-label="Collection details">
@@ -468,41 +489,6 @@ const workerToneCopy = {
               <span class="i18n-en" lang="en">{DASHBOARD_METRICS.realSummaryEntries} ready · automation {summaryQueue.modeLabelEn}</span>
             </small>
           </div>
-          <div>
-            <span class="detail-label">
-              <span class="i18n-ja">完了までの目安</span>
-              <span class="i18n-en" lang="en">Estimated wait</span>
-            </span>
-            <strong class={summaryQueue.tone === "ok" ? "tone-ok" : "tone-warn"}>
-              <span class="i18n-ja">{summaryQueue.labelJa}</span>
-              <span class="i18n-en" lang="en">{summaryQueue.labelEn}</span>
-            </strong>
-            <small
-              title="Entries queued for AI summary generation each hourly run, and the total still awaiting a summary."
-            >
-              <span class="i18n-ja">
-                {summaryQueue.showBacklog
-                  ? `1回 ${DASHBOARD_METRICS.summaryQueueCandidates}件 · 残り ${summaryQueue.backlog}件`
-                  : "Queueスナップショットを確認できません"}
-              </span>
-              <span class="i18n-en" lang="en">
-                {summaryQueue.showBacklog
-                  ? `${DASHBOARD_METRICS.summaryQueueCandidates} per run · ${summaryQueue.backlog} remaining`
-                  : "Queue snapshot unavailable"}
-              </span>
-            </small>
-          </div>
-          <div>
-            <span class="detail-label">
-              <span class="i18n-ja">画像情報</span>
-              <span class="i18n-en" lang="en">Image metadata</span>
-            </span>
-            <strong>{wh.ogCached}</strong>
-            <small>
-              <span class="i18n-ja">保存済み · 今回 +{wh.ogNewHits}</span>
-              <span class="i18n-en" lang="en">cached · +{wh.ogNewHits} this run</span>
-            </small>
-          </div>
           <div class="failed-sources">
             <span class="detail-label">
               <span class="i18n-ja">収集エラー</span>
@@ -514,7 +500,7 @@ const workerToneCopy = {
                 <span class="i18n-en" lang="en">None</span>
               </strong>
             ) : (
-              <strong class="tone-warn">{wh.sourcesFailed.map(sourceLabel).join(", ")}</strong>
+              <strong class="tone-error">{wh.sourcesFailed.map(sourceLabel).join(", ")}</strong>
             )}
           </div>
         </section>
@@ -528,8 +514,8 @@ const workerToneCopy = {
       <section class="source-health-panel" aria-labelledby="source-health-heading">
         <div class="section-header primary source-heading-row">
           <h2 id="source-health-heading">
-            <span class="i18n-ja">収集ソース一覧</span>
-            <span class="i18n-en" lang="en">Collection sources</span>
+            <span class="i18n-ja">掲載アクティビティ</span>
+            <span class="i18n-en" lang="en">Publication activity</span>
             <span class="count">
               <span class="i18n-ja">{sources.length}件</span>
               <span class="i18n-en" lang="en">{sources.length} sources</span>
@@ -538,60 +524,83 @@ const workerToneCopy = {
         </div>
 
         <div class="source-summary-grid" aria-label="Source summary">
-          <div class="source-summary-card ok">
+          <div class="source-summary-card recent">
             <span>
-              <span class="i18n-ja">順調</span>
-              <span class="i18n-en" lang="en">On schedule</span>
+              <span class="i18n-ja">最近掲載あり</span>
+              <span class="i18n-en" lang="en">Recently listed</span>
             </span>
-            <strong>{ok}</strong>
+            <strong>{recent}</strong>
           </div>
-          <div class="source-summary-card stale">
+          <div class="source-summary-card low-activity">
             <span>
-              <span class="i18n-ja">更新遅延</span>
-              <span class="i18n-en" lang="en">Delayed</span>
+              <span class="i18n-ja">低活動</span>
+              <span class="i18n-en" lang="en">Low activity</span>
             </span>
-            <strong>{stale}</strong>
+            <strong>{lowActivity}</strong>
           </div>
-          <div class="source-summary-card error">
+          <div class="source-summary-card long-inactive">
             <span>
-              <span class="i18n-ja">要確認</span>
-              <span class="i18n-en" lang="en">Needs review</span>
+              <span class="i18n-ja">長期非掲載</span>
+              <span class="i18n-en" lang="en">Long inactive</span>
             </span>
-            <strong>{error}</strong>
+            <strong>{longInactive}</strong>
           </div>
-          <div class="source-summary-card no-data">
+          <div class="source-summary-card not-listed">
             <span>
               <span class="i18n-ja">未収録</span>
               <span class="i18n-en" lang="en">Not listed</span>
             </span>
-            <strong>{noData}</strong>
+            <strong>{notListed}</strong>
           </div>
           <div class="source-summary-card">
             <span>
-              <span class="i18n-ja">順調な割合</span>
-              <span class="i18n-en" lang="en">On-schedule rate</span>
+              <span class="i18n-ja">最近掲載あり</span>
+              <span class="i18n-en" lang="en">Recent activity</span>
             </span>
-            <strong>{healthyPct}%</strong>
+            <strong>{recentActivityPct}%</strong>
           </div>
         </div>
 
         <div class="status-toolbar" role="group" aria-label="Filter collection sources by status">
-          <button type="button" class="status-filter is-active" data-source-filter="all" data-source-count={sources.length} aria-pressed="true">
+          <button
+            type="button"
+            class:list={["status-filter", { "is-active": defaultSourceFilter === "limited" }]}
+            data-source-filter="limited"
+            data-source-count={limitedListingSourceCount}
+            aria-pressed={defaultSourceFilter === "limited" ? "true" : "false"}
+          >
+            <span class="i18n-ja">掲載少なめ</span><span class="i18n-en" lang="en">Limited listing</span> <span>{limitedListingSourceCount}</span>
+          </button>
+          <button
+            type="button"
+            class:list={["status-filter", { "is-active": defaultSourceFilter === "all" }]}
+            data-source-filter="all"
+            data-source-count={sources.length}
+            aria-pressed={defaultSourceFilter === "all" ? "true" : "false"}
+          >
             <span class="i18n-ja">すべて</span><span class="i18n-en" lang="en">All</span> <span>{sources.length}</span>
           </button>
-          <button type="button" class="status-filter" data-source-filter="error" data-source-count={error} aria-pressed="false">
-            <span class="i18n-ja">要確認</span><span class="i18n-en" lang="en">Needs review</span> <span>{error}</span>
+          <button type="button" class="status-filter" data-source-filter="long-inactive" data-source-count={longInactive} aria-pressed="false">
+            <span class="i18n-ja">長期非掲載</span><span class="i18n-en" lang="en">Long inactive</span> <span>{longInactive}</span>
           </button>
-          <button type="button" class="status-filter" data-source-filter="stale" data-source-count={stale} aria-pressed="false">
-            <span class="i18n-ja">更新遅延</span><span class="i18n-en" lang="en">Delayed</span> <span>{stale}</span>
+          <button type="button" class="status-filter" data-source-filter="low-activity" data-source-count={lowActivity} aria-pressed="false">
+            <span class="i18n-ja">低活動</span><span class="i18n-en" lang="en">Low activity</span> <span>{lowActivity}</span>
           </button>
-          <button type="button" class="status-filter" data-source-filter="no-data" data-source-count={noData} aria-pressed="false">
-            <span class="i18n-ja">未収録</span><span class="i18n-en" lang="en">Not listed</span> <span>{noData}</span>
+          <button type="button" class="status-filter" data-source-filter="not-listed" data-source-count={notListed} aria-pressed="false">
+            <span class="i18n-ja">未収録</span><span class="i18n-en" lang="en">Not listed</span> <span>{notListed}</span>
           </button>
-          <button type="button" class="status-filter" data-source-filter="ok" data-source-count={ok} aria-pressed="false">
-            <span class="i18n-ja">順調</span><span class="i18n-en" lang="en">On schedule</span> <span>{ok}</span>
+          <button type="button" class="status-filter" data-source-filter="recent" data-source-count={recent} aria-pressed="false">
+            <span class="i18n-ja">最近掲載あり</span><span class="i18n-en" lang="en">Recently listed</span> <span>{recent}</span>
           </button>
         </div>
+        <p class="source-filter-summary" id="source-filter-summary">
+          <span class="i18n-ja">
+            <strong data-visible-source-count>{initialVisibleSourceCount}</strong> / {sources.length} ソースを表示
+          </span>
+          <span class="i18n-en" lang="en">
+            Showing <strong data-visible-source-count>{initialVisibleSourceCount}</strong> of {sources.length} sources
+          </span>
+        </p>
 
         <div class="category-filter-row" role="group" aria-label="Filter collection sources by category">
           <button type="button" class="category-filter is-active" data-category-filter="all" aria-pressed="true">
@@ -605,14 +614,19 @@ const workerToneCopy = {
           ))}
         </div>
 
-        <div class="side-card source-health-list status-source-table" id="source-health-list">
+        <div
+          class="side-card source-health-list status-source-table"
+          id="source-health-list"
+          aria-describedby="source-filter-summary"
+        >
           {sortedSources.map((s) => (
             <div
               id={s.anchorId}
               class={`source-item source-row-${s.status}`}
               style={`--category-color:${s.categoryColor}`}
-              data-source-status={s.status}
+              data-source-activity-status={s.status}
               data-source-category={s.category}
+              hidden={defaultSourceFilter === "limited" && s.status === "recent"}
             >
               <span class={`status ${s.status}`} aria-hidden="true"></span>
               <span class="name source-name-block">
@@ -679,10 +693,10 @@ const workerToneCopy = {
 
         <p class="status-note compact">
           <span class="i18n-ja">
-            状態はソースごとの更新間隔を基準に判定します。「更新遅延」は上流の更新が少ない場合にも表示されるため、収集サービスの状態と個別の理由を合わせて確認してください。
+            ここは収集障害ではなく、このサイトへ最後に記事を掲載した時期を示します。実際の収集エラーは上部の「収集エラー」で確認してください。
           </span>
           <span class="i18n-en" lang="en">
-            Status is based on each source's normal publishing cadence. A delayed source may simply publish infrequently, so check the collection service and the source-specific reason together.
+            This section shows when each source last contributed an article to this site, not collection failures. Check “Collection errors” above for actual latest-batch failures.
           </span>
         </p>
       </section>
@@ -691,44 +705,97 @@ const workerToneCopy = {
     <aside class="right status-insights">
       <div
         class="side-card status-insight-card status-score-card"
-        data-health-scope="source-coverage"
-        data-healthy-source-count={ok}
+        data-health-scope="publication-activity"
+        data-healthy-source-count={recent}
         data-evaluated-source-count={evaluatedSourceCount}
         data-registered-source-count={sources.length}
-        data-health-percentage={healthyPct}
+        data-not-listed-source-count={notListed}
+        data-health-percentage={recentActivityPct}
       >
-        <div class="rail-title">
-          <span class="i18n-ja">収集状況</span>
-          <span class="i18n-en" lang="en">Collection coverage</span>
-        </div>
+        <h3 class="rail-title">
+          <span class="i18n-ja">掲載アクティビティ</span>
+          <span class="i18n-en" lang="en">Publication activity</span>
+        </h3>
         <div class="status-score">
-          <strong>{healthyPct}</strong>
+          <strong>{recentActivityPct}</strong>
           <span>
-            <span class="i18n-ja">% 順調</span>
-            <span class="i18n-en" lang="en">% fresh</span>
+            <span class="i18n-ja">% 最近掲載</span>
+            <span class="i18n-en" lang="en">% recently listed</span>
           </span>
         </div>
-        <div class="status-score-bar"><span style={`width:${healthyPct}%`}></span></div>
+        <div class="status-score-bar"><span style={`width:${recentActivityPct}%`}></span></div>
         <p>
-          <span class="i18n-ja">{ok} / {evaluatedSourceCount} ソースが評価対象の通常更新範囲内です。</span>
-          <span class="i18n-en" lang="en">{ok} of {evaluatedSourceCount} evaluated sources are within their normal update window.</span>
+          <span class="i18n-ja">登録 {sources.length} ソース。掲載実績を評価できる {evaluatedSourceCount} ソース中 {recent} ソースが通常の掲載間隔内、未収録 {notListed} ソースです。運用障害の割合ではありません。</span>
+          <span class="i18n-en" lang="en">{sources.length} registered sources. {recent} of {evaluatedSourceCount} evaluated sources are within their normal listing cadence; {notListed} are not yet listed. This is not an outage rate.</span>
         </p>
       </div>
 
-      <StatusAttentionList sources={attentionSources} id="attention-list" />
+      <div
+        class:list={[
+          "side-card",
+          "status-insight-card",
+          "collection-failure-card",
+          {
+            unknown: collectionFailureCount === null,
+            clear: collectionFailureCount === 0,
+            alert: collectionFailureCount !== null && collectionFailureCount > 0,
+          },
+        ]}
+        data-health-scope="collection-failures"
+        data-collection-failure-count={collectionFailureCount ?? "unknown"}
+        data-collection-telemetry-state={wh ? "available" : "unavailable"}
+      >
+        <h3 class="rail-title">
+          <span class="i18n-ja">直近 batch の収集エラー</span>
+          <span class="i18n-en" lang="en">Latest-batch collection errors</span>
+        </h3>
+        <strong class:list={{
+          "tone-ok": collectionFailureCount === 0,
+          "tone-error": collectionFailureCount !== null && collectionFailureCount > 0,
+        }}>
+          {collectionFailureCount === null ? (
+            <>
+              <span class="i18n-ja">記録なし</span>
+              <span class="i18n-en" lang="en">Not recorded</span>
+            </>
+          ) : collectionFailureCount === 0 ? (
+            <>
+              <span class="i18n-ja">なし</span>
+              <span class="i18n-en" lang="en">None</span>
+            </>
+          ) : (
+            collectionFailureCount
+          )}
+        </strong>
+        {collectionFailureCount === null ? (
+          <p>
+            <span class="i18n-ja">実行記録がないため、直近 batch の収集結果を確認できません。</span>
+            <span class="i18n-en" lang="en">Run telemetry is unavailable, so the latest batch result cannot be confirmed.</span>
+          </p>
+        ) : collectionFailureSources.length > 0 ? (
+          <ul class="collection-failure-list">
+            {collectionFailureSources.map((source) => <li>{source.displayName}</li>)}
+          </ul>
+        ) : (
+          <p>
+            <span class="i18n-ja">直近の実行では、確認対象の収集元がすべて成功しました。</span>
+            <span class="i18n-en" lang="en">Every source checked in the latest run completed successfully.</span>
+          </p>
+        )}
+      </div>
 
       <div class="side-card status-insight-card">
-        <div class="rail-title">
+        <h3 class="rail-title">
           <span class="i18n-ja">主なカテゴリ別状況（最大8件）</span>
           <span class="i18n-en" lang="en">Key category status (up to 8)</span>
-        </div>
+        </h3>
         <ul class="category-health-list">
           {categoryRows.map((row) => (
             <li>
               <span>{row.name}</span>
               <small>
-                <span class="i18n-ja">{row.ok} 順調 · {row.stale} 更新遅延 · {row.error} 要確認 · {row.noData} 未収録</span>
-                <span class="i18n-en" lang="en">{row.ok} fresh · {row.stale} delayed · {row.error} review · {row.noData} not listed</span>
+                <span class="i18n-ja">{row.recent} 最近掲載 · {row.lowActivity} 低活動 · {row.longInactive} 長期非掲載 · {row.notListed} 未収録</span>
+                <span class="i18n-en" lang="en">{row.recent} recent · {row.lowActivity} low activity · {row.longInactive} long inactive · {row.notListed} not listed</span>
               </small>
             </li>
           ))}
@@ -736,13 +803,13 @@ const workerToneCopy = {
       </div>
 
       <div class="side-card status-insight-card">
-        <div class="rail-title">
+        <h3 class="rail-title">
           <span class="i18n-ja">表示の見方</span>
           <span class="i18n-en" lang="en">How to read this page</span>
-        </div>
+        </h3>
         <p>
-          <span class="i18n-ja">記事の収集、AI要約、サイト反映は別々に表示しています。更新遅延は必ずしも収集サービスの停止を意味しません。</span>
-          <span class="i18n-en" lang="en">Collection, AI summaries, and site publication are reported separately. A delayed source does not always mean the collection service is down.</span>
+          <span class="i18n-ja">上部は実行結果とQueue、下部は掲載アクティビティです。「低活動」「長期非掲載」は収集エラーではありません。</span>
+          <span class="i18n-en" lang="en">The top reports runs and queues; the directory reports listing activity. “Low activity” and “Long inactive” are not collection errors.</span>
         </p>
       </div>
     </aside>
@@ -917,19 +984,19 @@ const workerToneCopy = {
     background: color-mix(in srgb, var(--accent) 58%, transparent);
   }
 
-  .source-summary-card.ok::before {
+  .source-summary-card.recent::before {
     background: var(--success);
   }
 
-  .source-summary-card.stale::before {
-    background: var(--important);
+  .source-summary-card.low-activity::before {
+    background: var(--muted);
   }
 
-  .source-summary-card.error::before {
-    background: var(--danger);
+  .source-summary-card.long-inactive::before {
+    background: var(--paper);
   }
 
-  .source-summary-card.no-data::before {
+  .source-summary-card.not-listed::before {
     background: var(--muted-2);
   }
 
@@ -1073,24 +1140,29 @@ const workerToneCopy = {
     font-size: 10.5px;
   }
 
-  .source-item .status.ok {
+  .source-item .status.recent {
     background: var(--success);
   }
 
-  .source-item .status.stale {
-    background: var(--important);
+  .source-item .status.low-activity {
+    background: var(--muted);
   }
 
-  .source-item .status.error {
-    background: var(--danger);
+  .source-item .status.long-inactive {
+    background: var(--paper);
   }
 
-  .source-row-error {
-    background: linear-gradient(90deg, rgba(248, 113, 113, 0.08), transparent 48%);
+  .source-status-badge.long-inactive {
+    border-color: color-mix(in srgb, var(--paper) 42%, var(--border));
+    color: var(--paper);
   }
 
-  .source-row-stale {
-    background: linear-gradient(90deg, rgba(251, 191, 36, 0.08), transparent 48%);
+  .source-row-long-inactive {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--paper) 9%, transparent), transparent 48%);
+  }
+
+  .source-row-low-activity {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--muted) 5%, transparent), transparent 48%);
   }
 
   .source-item:target {
@@ -1114,6 +1186,18 @@ const workerToneCopy = {
     color: var(--text-2);
   }
 
+  .source-filter-summary {
+    margin: -2px 0 10px;
+    color: var(--muted-2);
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .source-filter-summary strong {
+    color: var(--text-2);
+    font-family: ui-monospace, monospace;
+  }
+
   .tone-ok {
     color: var(--success);
   }
@@ -1126,9 +1210,39 @@ const workerToneCopy = {
     color: var(--danger);
   }
 
-  .attention-stale {
-    background: rgba(251, 191, 36, 0.08) !important;
-    border-color: rgba(251, 191, 36, 0.28) !important;
+  .collection-failure-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .collection-failure-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--danger);
+  }
+
+  .collection-failure-card.clear::before {
+    background: var(--success);
+  }
+
+  .collection-failure-card.unknown::before {
+    background: var(--muted-2);
+  }
+
+  .collection-failure-card > strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 20px;
+  }
+
+  .collection-failure-list {
+    margin: 6px 0 0;
+    padding-left: 18px;
+    color: var(--text-2);
+    font-size: 11px;
+    line-height: 1.5;
   }
 
   .category-health-list {
@@ -1221,6 +1335,11 @@ const workerToneCopy = {
     .source-status-badge {
       display: none;
     }
+
+    .status-filter,
+    .category-filter {
+      min-height: 44px;
+    }
   }
 </style>
 
@@ -1228,9 +1347,16 @@ const workerToneCopy = {
   (() => {
     const statusButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-source-filter]"));
     const categoryButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-category-filter]"));
-    const items = Array.from(document.querySelectorAll<HTMLElement>("[data-source-status]"));
+    const sourceList = document.getElementById("source-health-list");
+    const items = Array.from(
+      sourceList?.querySelectorAll<HTMLElement>("[data-source-activity-status]") ?? [],
+    );
     const empty = document.getElementById("source-empty") as HTMLElement | null;
-    let statusFilter = "all";
+    const visibleCountNodes = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-visible-source-count]"),
+    );
+    let statusFilter =
+      statusButtons.find((button) => button.classList.contains("is-active"))?.dataset.sourceFilter ?? "all";
     let categoryFilter = "all";
 
     const apply = () => {
@@ -1246,13 +1372,18 @@ const workerToneCopy = {
         button.setAttribute("aria-pressed", active ? "true" : "false");
       }
       for (const item of items) {
-        const matchesStatus = statusFilter === "all" || item.dataset.sourceStatus === statusFilter;
+        const itemStatus = item.dataset.sourceActivityStatus ?? "";
+        const matchesStatus =
+          statusFilter === "all" ||
+          itemStatus === statusFilter ||
+          (statusFilter === "limited" && itemStatus !== "recent");
         const matchesCategory = categoryFilter === "all" || item.dataset.sourceCategory === categoryFilter;
         const visible = matchesStatus && matchesCategory;
         item.hidden = !visible;
         if (visible) visibleCount += 1;
       }
       if (empty) empty.hidden = visibleCount > 0;
+      for (const node of visibleCountNodes) node.textContent = String(visibleCount);
     };
     for (const button of statusButtons) {
       button.addEventListener("click", () => {

@@ -37,7 +37,7 @@ import {
   WORKER_HEALTH,
 } from "../lib/data.ts";
 import { sourceFreshnessStatus } from "../lib/freshness.ts";
-import { deriveWorkerRunStatus } from "../lib/run-health.ts";
+import { deriveWorkerRunStatus, runCadenceCopy } from "../lib/run-health.ts";
 
 // Shared aggregate run state (same derivation as the footer + /status, LL-126).
 const runStatus = deriveWorkerRunStatus({
@@ -53,6 +53,13 @@ const arxivEntries = ARXIV_ENTRIES;
 const totalPages = Math.max(1, Math.ceil(primaryEntries.length / PAGE_SIZE));
 const pageEntries = primaryEntries.slice(0, PAGE_SIZE);
 const dayGroups = groupByDay(pageEntries);
+const dayGroupsWithOffsets = dayGroups.map((group, index) => ({
+  ...group,
+  startIndex: dayGroups
+    .slice(0, index)
+    .reduce((count, previousGroup) => count + previousGroup.items.length, 0),
+}));
+const dailySummaryAfterEntryIndex = Math.min(2, pageEntries.length - 1);
 
 const feat = featured();
 const featuredId = feat?.id ?? null;
@@ -60,7 +67,8 @@ const featuredSource = feat?.source ?? null;
 
 const now = new Date();
 const ago = relativeTime(DASHBOARD_METRICS.generatedAt, now);
-const activeSourcesLabel = `${DASHBOARD_METRICS.sourceCoverageLabel} active sources`;
+const cadenceCopy = runCadenceCopy(runStatus, ago);
+const activeSourcesLabel = `${DASHBOARD_METRICS.sourceCoverageLabel} sources with live entries`;
 const activeSourcesJa = `公開中の記事がある登録ソース ${DASHBOARD_METRICS.sourceCoverageLabel}`;
 const activeSourcesEn = `${DASHBOARD_METRICS.sourceCoverageLabel} registry sources with live entries`;
 
@@ -188,7 +196,7 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
           <span class="signal-node node-publish">publish</span>
         </div>
         <div class="banner-facts" aria-label="Dashboard overview">
-          <div class="banner-fact">
+          <div class="banner-fact" data-cadence-state={runStatus.state}>
             <strong class="i18n-ja">できること</strong>
             <strong class="i18n-en" lang="en">What it does</strong>
             <span class="i18n-ja">要約・重要度・出典から、読む/共有する判断を短時間で行えます。</span>
@@ -213,13 +221,13 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
                   title={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
                 >
                   <span class={`dot ${runStatus.tone}`} data-run-tone={runStatus.tone} aria-hidden="true"></span>
-                  <span class="i18n-ja">{runStatus.statusText}</span>
-                  <span class="i18n-en" lang="en">{runStatus.statusText}</span>
+                  <span class="i18n-ja">{runStatus.stateText}</span>
+                  <span class="i18n-en" lang="en">{runStatus.stateText}</span>
                 </a>
               )}
             </div>
-            <span class="i18n-ja">毎時 1 バッチ収集 · 各ソースは約 6 時間周期 · 最新 index は {ago}</span>
-            <span class="i18n-en" lang="en">One batch hourly · each source about every 6 hours · latest index {ago}</span>
+            <span class="i18n-ja">{cadenceCopy.ja}</span>
+            <span class="i18n-en" lang="en">{cadenceCopy.en}</span>
           </div>
         </div>
       </div>
@@ -466,12 +474,6 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
           </ol>
         </section>
       )}
-      <DailySummary
-        entries={ALL_ENTRIES}
-        boardEntries={primaryEntries}
-        stats={STATS}
-        now={now}
-      />
       </section>
 
       <section class="timeline-section" id="timeline" aria-labelledby="timeline-heading">
@@ -479,7 +481,14 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
           <h2 id="timeline-heading">
             <span class="i18n-ja">深掘り一覧</span>
             <span class="i18n-en" lang="en">Deep-dive timeline</span>
-            <span class="count">{primaryEntries.length} timeline · {arxivEntries.length} arXiv moved · page {currentPage}/{totalPages}</span>
+            <span class="count">
+              <span class="i18n-ja">
+                {primaryEntries.length} timeline · <a href="/arxiv">{arxivEntries.length} arXiv 論文は専用ページ</a> · page {currentPage}/{totalPages}
+              </span>
+              <span class="i18n-en" lang="en">
+                {primaryEntries.length} timeline · <a href="/arxiv">{arxivEntries.length} arXiv papers on a separate page</a> · page {currentPage}/{totalPages}
+              </span>
+            </span>
           </h2>
           <p class="section-note i18n-ja">
             arXiv 論文を分離した通常更新の一覧です。カテゴリ・タグ・検索で絞り込んで詳細へ進めます。
@@ -498,13 +507,25 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
             <a href="/status">Status</a>
           </div>
         ) : (
-          dayGroups.map(({ key, items }) => (
+          dayGroupsWithOffsets.map(({ key, items, startIndex }) => (
             <>
               <div class="day-header">
                 <span>{jstDayLabel(key, now)}</span>
                 <span class="day-count">{items.length} entries</span>
               </div>
-              {items.map((entry) => <EntryCard entry={entry} />)}
+              {items.map((entry, entryIndex) => (
+                <>
+                  <EntryCard entry={entry} />
+                  {startIndex + entryIndex === dailySummaryAfterEntryIndex && (
+                    <DailySummary
+                      entries={ALL_ENTRIES}
+                      boardEntries={primaryEntries}
+                      stats={STATS}
+                      now={now}
+                    />
+                  )}
+                </>
+              ))}
             </>
           ))
         )}

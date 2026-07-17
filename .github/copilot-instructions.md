@@ -2169,8 +2169,8 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-322: decision slotは同じ候補poolから選ぶだけでなく相互に重複排除する
 - **事象**: HomeのSpotlightとTickerが同じ最新記事を同時に表示し、first-viewの2つの判断面が同じ情報を反復していた。
 - **根本原因**: Top-3はSpotlightのentry IDとsourceを除外していたが、Tickerは同じ`primaryEntries`から独立選定し、Spotlightの選定結果を受け取っていなかった。
-- **対策**: `TickerBar`へ除外entry IDを渡し、基準日は全entryから従来どおり決定した後、その日の候補からSpotlight IDだけを除外する。E2EはSpotlight linkのhrefが全Ticker slideのhrefに含まれないことを固定する。
-- **教訓**: decision-criticalな複数slotが同じ候補poolを使う場合、各componentの内部rankingだけで多様性を期待しない。先に確定したslotのidentityを後続slotへ明示的に伝播し、日付fallbackなど別の選定契約を変えずに候補だけを除外する。
+- **対策**: `TickerBar`へ除外entry IDを渡し、除外後に候補が残る最新のJST掲載日を基準日にする。E2EはSpotlight linkのhrefが全Ticker slideのhrefに含まれず、低活動時もTickerが最新掲載日へ戻ることを固定する。
+- **教訓**: decision-criticalな複数slotが同じ候補poolを使う場合、各componentの内部rankingだけで多様性を期待しない。先に確定したslotのidentityを後続slotへ明示的に伝播し、除外によって当日が空になる場合も残る候補から基準日を再決定する。
 
 ### LL-323: Heroの密度はmobileの余白とdesktopの最大contentを別々に測る
 - **事象**: mobile Heroは上下paddingが合計11pxしかなく詰まって見える一方、desktop Heroは本文より高い右側facts/orbitに合わせて約294pxまで伸び、過剰な余白に見えた。
@@ -2208,11 +2208,11 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: summary/bodyの実enqueue数、body backlog、merge数、pending ID、共有上限と残枠をartifact healthへ保存し、canonical fieldを`bodyQueueDrainEstimateHours`へ統一する。Webは旧`bodyDrainEstimateHours`を移行期間だけfallback読込する。Queue表示は全surfaceで共通helperを使い、modeをbacklogより優先し、`enabled`かつbacklog 0だけをclear、run `err`時のETAを収集再開待ちにする。StatusのAI可用性は`published-snapshot`と観測時刻を明示する。記事詳細は本文の`ready`/`queued`/`summary-only`と要約の`ready`/`pending`を別属性で示す。Node Publisherは`heartbeat.v1`をdeferred KV effectsから除外し、Free bridgeのwrite allowlistを広げない。
 - **教訓**: 非同期処理の運用改善は生成器だけで完了しない。producer、永続telemetry、型、API、全表示surface、読者向け状態、テストを同じfield名とoptional semanticsで配線し、未観測を0、待機中を完了、停止中のsnapshotを将来時刻の約束や現在状態として表示しない。telemetryの正本、観測時刻、transport allowlistも同じcontractに含める。
 
-### LL-329: fixed footerのcompact境界はcontent layoutの解放境界へ揃える
-- **事象**: `900px`ではFooterが1行に収まる一方、`901px`だけcompact ruleから外れて約49pxへ2行化し、Top 3と固定Footerの8px安全距離が3-6px不足した。`980px`では横幅が足りるため再び1行になり、狭い中間幅だけが失敗していた。記事詳細ではsummary-only noteがviewport下端へ来た時、desktopの固定Footerがnoteの大部分を覆った。
-- **根本原因**: 本文layoutは`980px`以下でcategory railを解放して1カラム化する契約なのに、Footerの補助情報を畳むbreakpointだけが`900px`で終了していた。同じsqueeze zoneを共有する固定UIと本文でresponsive境界が分岐していた。またbodyのbottom paddingは文書末尾だけを守り、長文途中の要素がviewport下端を通過する際の固定Footerとの重なりを防げなかった。
-- **対策**: Footerのcompact ruleを`721-980px`へ揃え、run状態と時刻を1行で維持しつつ、詳細なbody Queueとbuild stackはStatus画面へ委ねる。desktopの記事詳細だけFooterを通常flowへ戻し、mobileはFooter非表示と固定tabbarを維持する。境界行列の`900/901/980/981px`でFooter高、Top 3下端、安全距離、横overflowを、記事詳細ではnoteとFooterの非交差を実寸検証する。
-- **教訓**: fixed header/footerが本文の利用可能領域を決める場合、本文railの表示切替とfixed UIのcompact切替を別のbreakpointにしない。境界直後だけのsqueeze zoneはpage overflowが無くても縦方向の安全域を壊すため、前後幅で固定UI高と主要panel下端を同時に測る。長文detailでは末尾paddingだけで固定Footerとの非交差を保証せず、route単位で通常flowへ戻す選択肢を持つ。
+### LL-329: fixed footerのcompact境界は実contentの収まりで決める
+- **事象**: `900px`ではFooterが1行に収まる一方、`901px`だけcompact ruleから外れて約49pxへ2行化し、Top 3と固定Footerの8px安全距離が3-6px不足した。後にLinux CIではright railが戻る`1181px`でも同じ2行化が再発し、`1240px`では1行に収まった。記事詳細ではsummary-only noteがviewport下端へ来た時、desktopの固定Footerがnoteの大部分を覆った。
+- **根本原因**: Footerのcompact境界を本文railの表示切替へ機械的に揃え、run detail、時刻、body Queue、build stackが実font metricsで1行へ収まる幅を独立に測っていなかった。またbodyのbottom paddingは文書末尾だけを守り、長文途中の要素がviewport下端を通過する際の固定Footerとの重なりを防げなかった。
+- **対策**: Footerのcompact ruleを`721-1239px`へ広げ、run状態と時刻を1行で維持しつつ、詳細なbody Queueとbuild stackはStatus画面へ委ねる。`1240px`以上だけfull表示を戻す。desktopの記事詳細はFooterを通常flowへ戻し、mobileはFooter非表示と固定tabbarを維持する。境界行列の`900/901/980/981/1180/1181/1239/1240px`でFooter高、Top 3下端、安全距離、補助情報の表示、横overflowを実寸検証する。
+- **教訓**: fixed header/footerが本文の利用可能領域を決める場合、compact境界は近接するlayout breakpointではなく、最も長い実contentがcross-platformで1行へ収まる最初の幅から決める。境界直後だけのsqueeze zoneはpage overflowが無くても縦方向の安全域を壊すため、前後幅で固定UI高と主要panel下端を同時に測る。長文detailでは末尾paddingだけで固定Footerとの非交差を保証せず、route単位で通常flowへ戻す選択肢を持つ。
 
 ### LL-330: Astro frontmatterの未宣言propertyはbuild成功だけでは検出できない
 - **事象**: `EntryCard.astro`が`QueueDisplay`に存在しない`showEstimate`と`estimateHours`を参照し、active QueueでもETA分岐が常にfalseになる状態だった。root typecheck、Astro build、現在snapshotを使うE2Eは成功していた。
@@ -2221,9 +2221,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: Astro componentがtyped view modelを消費する場合、build成功をproperty契約の証拠にしない。表示済み文字列を返す共通helperを単一情報源にし、実dataで現れないstateはunit fixtureとsource contractで固定する。独立reviewで見つかった未宣言fieldは、そのfieldを追加して局所実装を延命するより既存contractへconsumerを戻す。
 
 ### LL-331: cross-platformのfont metrics差には寸法閾値でなくlayoutの安全余白を持たせる
-- **事象**: macOSでは全95件のE2Eが成功した一方、同じcommitとdataを使うLinux CIで`1240x900`のHeroが`265.48px`となり上限`260px`を超え、`1101x844`のFooterも`49.09px`へ2行化して上限`36px`を超えた。retryでも同じ値で、CIの2件だけが再現性を持って失敗した。
-- **根本原因**: Heroは3枚のfact cardを縦に積み、Footerは複数の可変長telemetryをflexで横並びにしていたため、OSと利用fontの文字メトリクス差が各行の高さと必要幅へ累積した。macOSの実寸が閾値に近いまま安全余白がなく、Footerのcompact ruleも`980px`で終了していたため、Linuxでは中間幅だけ折り返した。
-- **対策**: E2Eの`260px`/`36px`閾値は緩めず、orbitが戻る`1240px`以上でfact cardのblock paddingを縮めた。Footerは補助的なbuild stackとbody Queue詳細を隠すcompact範囲を`1180px`まで延長し、`1181px`でfull表示へ戻す。`1101/1180/1181/1240px`を含む既存の境界行列でHero高、Footer高、Top 3との安全距離を検証する。
+- **事象**: macOSでは全95件のE2Eが成功した一方、同じcommitとdataを使うLinux CIで`1240x900`のHeroが`265.48px`となり上限`260px`を超え、`1101x844`のFooterも`49.09px`へ2行化して上限`36px`を超えた。後続releaseでもmacOSの97件は成功したが、Linux CIだけ`1181x844`のFooterが再び`49.09px`となりretryでも失敗した。
+- **根本原因**: Heroは3枚のfact cardを縦に積み、Footerは複数の可変長telemetryをflexで横並びにしていたため、OSと利用fontの文字メトリクス差が各行の高さと必要幅へ累積した。macOSの実寸が閾値に近いまま安全余白がなく、Footerのfull表示をright rail境界の`1181px`へ戻したことで、Linuxでは補助telemetryが再び折り返した。
+- **対策**: E2Eの`260px`/`36px`閾値は緩めず、orbitが戻る`1240px`以上でfact cardのblock paddingを縮めた。Footerは補助的なbuild stackとbody Queue詳細を隠すcompact範囲を`1239px`まで延長し、Linuxで1行表示を確認済みの`1240px`からfull表示へ戻す。`1101/1180/1181/1239/1240px`を含む境界行列でHero高、Footer高、補助情報の表示、Top 3との安全距離を検証する。
 - **教訓**: text-drivenなpanelの寸法は開発OSで閾値内に入るだけでは不十分である。縦stackと横flexには別OSのfont metrics差を吸収する余白を設け、CI差を理由に受け入れ閾値を緩めない。compact切替はviewportの名前ではなく、実コンテンツが単一行へ収まる境界の直前と直後を測って決める。
 
 ### LL-332: 静的siteの未知routeは404 fileとHTTP statusをbuilt previewで検証する
@@ -2237,6 +2237,90 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: Pages APIのstageと`/deployments/{id}/history/logs`から、停止位置はclone完了後から最初のbuild container logまでと確認できた。cache無効化でも再現したためcache単独原因ではない。Cloudflare内部の停止理由はAPI logに明記されず、追加確認が必要である。先行production retryの成功はcache purgeとの相関であり、因果の証拠ではなかった。
 - **対策**: deployment stageとbuild logを確認し、clone、cache、tool検出、install、build、deployのどこまで進んだかを比較する。code gateが成功しbuild command前の停止が複数deploymentで再現する場合、cache purgeと同一commit retryは切り分けに使えるが、cache無効化でも再現するかを確認してから原因を記録する。token値は表示せず、commit SHA、build config snapshot、全stage、公開URLを確認し、検証用に変えたproject設定は効果が無ければ元へ戻す。
 - **教訓**: 1回の復旧操作と成功だけで根本原因を断定しない。Pages timeoutは製品codeとprovider build stageを分け、同一commit、異なるcache設定、GitHub CI、API logの反証を揃える。内部原因を観測できない場合は未確認と明記し、成功済みproductionをrollbackやDirect Uploadで上書きしない。
+
+### LL-334: DOMRect同士の相対寸法は微小なsubpixel誤差を許容する
+- **事象**: mobile Featuredのmedia railがcard高との差2px以内であることを検証するE2Eが、`card=180.2031555px`、`rail=178.203125px`となり、差が`2.0000305px`だったため初回とretryなし再実行で失敗した。画面上の差は設計許容値と同じ2pxで、横overflowや本文幅の回帰は無かった。
+- **根本原因**: browserの`DOMRect`はlayout unitから浮動小数点へ変換され、親子要素でも末尾の丸めが一致しない。raw値を`rail >= card - 2`で比較すると、物理的には2px差でも数万分の1pxだけ境界を超えてfalse negativeになる。
+- **対策**: 親子の高さ差を直接計算し、設計許容値2pxに`0.01px`のsubpixel epsilonだけを加えて検証する。touch targetなど物理的な下限はLL-255の安全余白を維持し、製品寸法の閾値自体は緩めない。
+- **教訓**: 関連要素の相対geometryはraw `DOMRect`の完全な境界一致を要求せず、描画丸めより十分小さい明示epsilonを使う。一方、操作寸法やoverflowの実要件はepsilonで救済せず、CSS側に安全余白を持たせる。
+
+### LL-335: abbreviated commit SHAを復元ポイントへ手動展開しない
+- **事象**: `git commit`の成功出力に表示された8文字のSHAからfull SHAを推測して復元ポイントへ記録したところ、直後の`git rev-parse HEAD`で実際のfull SHAと不一致が判明した。
+- **根本原因**: abbreviated SHAは先頭文字だけを保証し、残りのhash値は出力から復元できない。commit成功後の実refを取得せず、未観測のfull SHAを記録した。
+- **対策**: commit直後に`git rev-parse HEAD`を実行し、その出力だけをplan、handoff、checkpoint、PR説明へ記録する。不一致を検出した場合はGit refを変更せず、session artifact側を実測値へ修正する。
+- **教訓**: 復元ポイントのcommit identityは短縮表示や推測から作らない。Gitが保持するexact SHAを取得してから永続記録へ反映する。
+
+### LL-336: GitHub-hosted runnerのshutdown signalをE2E assertion失敗と同一視しない
+- **事象**: PR CIのE2E jobがPlaywrightのtest名やassertion failureを1件も出さず、開始約3分24秒後にexit code 143で終了した。job終端には`The runner has received a shutdown signal`が記録され、同じcommitのlocal pre-pushでは96件すべてがretryなしで成功していた。
+- **根本原因**: GitHub-hosted runner serviceがshutdown signalを受け、Playwrightのstatic build中にprocessをSIGTERMで停止した。check summaryの`E2E tests failure`とexit codeだけでは、製品testの失敗とrunner infrastructureの終了を区別できなかった。
+- **対策**: `gh run view <run> --job <job> --log-failed`だけで原因が不足する場合は、Actions logs archiveの該当job終端を確認し、assertion、webServer timeout、job timeout、runner shutdownを分ける。runner shutdownが明記され、同一SHAの製品gateが成功している場合だけfailed jobを再実行し、test assertion failureでは先に実装修正を行う。
+- **教訓**: CIの赤状態を製品回帰と推測しない。process exit code、test runner出力、job終端messageを合わせて発生layerを確定し、原因を特定した再実行と根拠のないblind retryを区別する。
+
+### LL-337: baseline JSONの存在確認とpayload検証をtruthinessで兼用しない
+- **事象**: archive index baselineを`unknown`としてparseした後、truthyな場合だけassertionを通す実装がWorker typecheckで`unknown`を残した。加えて、fileが存在してもpayloadが`null`、`false`、`0`ならvalidationを通らず欠落扱いになるruntime経路があった。
+- **根本原因**: fileの不在とJSON payloadのtruthinessを同じ`if (value)`で判定した。conditional block内のassertionは外側の変数を安全な型へ確定せず、falsyな不正JSONもfail-closedにならなかった。
+- **対策**: file不在だけを先に判定し、fileが存在する場合はparse結果がfalsyでも必ず`assertArchiveIndexBaseline()`へ渡してからtyped valueを返す専用helperへ集約した。`null`、`false`、`0`を拒否する回帰testを追加した。
+- **教訓**: repository baselineのvalidatorは「fileが無い」と「file内の値がfalsy」を分離する。存在するartifactは値のtruthinessに関係なくschema検証し、validationと型確定を同じhelperのreturn境界へ集約する。
+
+### LL-338: operational stateの名称とseverityを別の軸として扱う
+- **事象**: run状態を`late`と`failed`へ分けた際、`late`をWarningへ下げたため、6時間超のaggregate run停止をCriticalとするquality-audit契約が失敗した。
+- **根本原因**: 状態を「明示的なsource failureではない」と分類することと、利用者・運用上のseverityを下げることを同一視した。shared run-health helperを使うStatusとauditのseverityが同時に変わった。
+- **対策**: stateは`late`のまま保持し、toneは`err`へ戻した。これにより明示的な全source failureの`failed`とは区別しつつ、6時間超のrun停止はStatusとquality auditの双方でERR/Criticalを維持する。
+- **教訓**: operational stateは原因・状態の分類、toneは対応優先度であり別の軸である。状態名を細分化してもseverity policyを暗黙に変更せず、共有helperを利用するUIと監査testを同時に確認する。
+
+### LL-339: 親run依存の待機をQueue自身の障害として着色しない
+- **事象**: Statusでpipeline runが停止すると、要約Queueと本文Queueも`waiting-for-run`へ変わり、runのERR表示に加えてQueue cardまでwarning色になった。共有生成枠の未観測値は`n/a`だけ、掲載アクティビティは評価可能sourceだけを分母にしていたため、同じ画面で警告の原因と数値の母集団を判別しにくかった。
+- **根本原因**: Queue自身のmode/errorと、親runが再開するまで処理できない依存待機を同じtoneで表現した。未観測telemetryと0件、登録sourceと評価可能sourceも表示文言上で区別していなかった。
+- **対策**: `waiting-for-run`は文言とmachine-readable stateを維持したままneutral toneへ分離し、runのseverityはrun cardだけが所有するようにした。未観測budgetは`記録なし`と公開snapshot由来の理由を表示し、掲載アクティビティは登録、評価可能、未収録の件数を同時に明示した。
+- **教訓**: 運用画面では原因を所有するsurfaceだけを警告色にする。依存待機は障害と同じ状態名や色へ潰さず、未観測を0件として見せない。割合を表示する場合は登録全体、評価可能集合、除外集合を可視文言とdata属性の両方で同じcontractへ揃える。
+
+### LL-340: fixedなdisclosure contentはclosed状態をauthor CSSで明示する
+- **事象**: Source disclosureのpanelは`<details>`を閉じても、fixed配置とauthorのdisplay指定により画面上へ残る経路があった。
+- **根本原因**: native disclosureの閉状態だけへ非表示を委ね、子panelのauthor CSSがbrowser既定の非表示contractを上書きし得ることを検証していなかった。
+- **対策**: `.source-disclosure:not([open]) > .source-disclosure-panel`を明示的に`display:none`へし、closed、open、close、reopen、Enter、Space、click、mobileの全状態を実ブラウザで検証した。
+- **教訓**: native disclosureやpopoverの子をfixed配置する場合、APIや属性の状態だけでなく実描画を確認する。author displayを持つcontentは閉状態の非表示規則も同じcomponentで所有する。
+
+### LL-341: async検索のcontainer表示を結果準備完了とみなさない
+- **事象**: `/search?q=Copilot`のE2Eで結果containerがvisibleになった直後にhitを取得すると、内部は`Searching for Copilot...`のままで0件となり、slash有無の結果比較が失敗した。
+- **根本原因**: overlayと結果containerの表示をPagefindの非同期検索完了と同一視し、結果itemの出現を待っていなかった。
+- **対策**: query復元、guide非表示、container表示を確認した後、`.search-hit`が1件以上になるまで待ってから両routeのhrefを比較するようにした。
+- **教訓**: async UIのE2Eは外枠の可視性ではなく、利用者が判断するready stateを待つ。loading copy、result item、empty stateのいずれで完了を表すかをcomponent contractに合わせる。
+
+### LL-342: shared Sidebarの幅変更はright rail有無の両variantへ対称適用する
+- **事象**: 901〜1100pxで通常layoutとright rail付きlayoutが別々のSidebar幅を持ち、同じカテゴリ名でもpageによって詰まり方が変わり得た。
+- **根本原因**: responsive gridのmedia queryがlayout variantごとに分かれているのに、一方の列幅だけを調整すればshared Sidebar全体へ効くとみなしていた。
+- **対策**: 両variantを`clamp(228px, 24vw, 236px)`へ統一し、`/categories/`と`/c/copilot/`を1000px、981pxで測定した。全カテゴリ名の非clip、main幅、横overflowを同時に固定した。
+- **教訓**: shared componentのgeometryを直すときはcomponent sourceだけでなく、全layout ownerとmedia queryを検索する。right rail有無など同じcomponentを載せるvariantを境界幅で対称検証する。
+
+### LL-343: current-day UIは低活動時の最新候補fallbackを持つ
+- **事象**: local dataのJST当日と前日にTimeline候補が0件だったため、より古い記事が存在してもTicker全体が描画されず、Tickerの操作・寸法を検証する5件のE2Eが連鎖して失敗した。Ticker復帰後も、別の母集団を持つDaily Summaryと同じday scopeを要求するE2Eが失敗した。
+- **根本原因**: Tickerの基準日を当日、なければ前日の2日間だけに固定し、Featured除外後に候補が残るかや、低活動・古いsnapshotでの最新掲載日を考慮していなかった。テストも現在corpusにTicker候補があることへ依存し、Daily Summaryのdecision boardとTickerの基準日を同一視していた。
+- **対策**: 除外後の候補をJST日付でまとめ、未来日を除く最新掲載日を選ぶ`selectTickerDayEntries()`へ日付契約を集約した。当日、当日がFeaturedだけ、当日・前日なし、完全空のfixtureをunit testで固定した。E2EはDaily SummaryとTickerそれぞれのday scopeとlabelの整合を独立に検証する。
+- **教訓**: current-dayを優先するUIでも、低活動時にsurface全体を消すか最新候補へ戻るかを明示する。実corpusの時刻分布に依存するE2Eだけで選定契約を守らず、純粋helperとdeterministic fixtureで日付fallbackと除外順序を検証する。隣接surfaceでも候補母集団や除外条件が異なる場合はscopeを無理に一致させず、各surface内の状態と表示labelを同じcontractから検証する。
+
+### LL-344: 全体Queueの稼働を個別記事の投入済み状態として表示しない
+- **事象**: 要約Queue全体のbacklogが1件以上あると、実際にそのrunでenqueueされたかに関係なく、全ての要約待ちカードが`AI summary queued`と表示されていた。
+- **根本原因**: artifactが持つaggregateなQueue mode、backlog、ETAを個別記事の状態へ流用した。実enqueueはrunごとの上限とcooldownを持つが、Web artifactには個別entryのenqueue IDが無いため、特定記事の投入済み状態を証明できなかった。
+- **対策**: 個別カードは`AI要約 準備待ち`とし、補助文は`全体の要約処理は稼働中`へ分離した。個別ETAと投入済みの断定を除き、全体の進行状況はStatusへのlinkで確認する契約をsource testとE2Eへ固定した。
+- **教訓**: aggregate telemetryは個別resourceの状態を証明しない。個別に`queued`や完了時刻を表示するにはentry IDを持つprovenanceが必要であり、無い場合は個別のpending状態と全体pipeline状態を別の文言とsurfaceで示す。
+
+### LL-345: telemetry未記録をエラー0件として正常化しない
+- **事象**: `data/index.json`にWorker healthが無い場合、Statusの直近batch収集エラーが0件となり、確認対象の全sourceが成功したと表示されていた。
+- **根本原因**: nullableな`WORKER_HEALTH`から`wh?.sourcesFailed.length ?? 0`で件数を導出し、観測不能と観測済み0件を同じ値へ潰した。ページ内のrun状態は未記録を識別していたが、収集エラーcardだけが別契約だった。
+- **対策**: 収集エラー件数を`number | null`で保持し、未記録では`n/a`、`記録なし`、`data-collection-telemetry-state="unavailable"`を表示する。観測済み0件だけを成功として扱い、source contractとE2Eで両状態を分けた。
+- **教訓**: operational telemetryでは未観測、0件、1件以上を別状態として扱う。nullish defaultで未観測を0へ変換せず、同じページのrun、Queue、個別metricが同じavailability contractを共有する。
+
+### LL-346: lane分離の件数は移動結果でなく到達先を示す
+- **事象**: Timeline見出しの`80 arXiv moved`は、arXivが別レーンへ分離されていることを意図していたが、移動先へのlinkがなく、削除や掲載解除の件数にも読めた。
+- **根本原因**: 内部のデータ分離操作を`moved`という処理語で表し、読者が次に進める専用ページの名称とURLを同じ表示単位へ接続していなかった。
+- **対策**: Homeとページ送り画面の表記を、arXiv専用ページで読めることを示すlinkへ置き換えた。JA/ENの説明、リンク先、旧表記の不在をE2Eで固定した。
+- **教訓**: laneやカテゴリの分離を示す件数は、内部処理の動詞でなく読者向けの到達先を表示する。別ページがsource of truthなら、件数、説明、navigationを同じ意味単位へまとめる。
+
+### LL-347: SSRのfilter初期件数は実際のdefault branchから導出する
+- **事象**: Statusの掲載activity filterは、掲載少なめsourceが1件以上なら`limited`、0件なら`all`を初期選択するが、表示件数だけを常にlimited件数から描画していた。全sourceが最近掲載済みの正常状態では、全行が見える一方で`0 / N ソースを表示`と表示し得た。
+- **根本原因**: rowの`hidden`、filterの`aria-pressed`、表示件数が同じ`defaultSourceFilter`から導出されず、client側の`apply()`も初回描画では実行されなかった。現行dataはlimited sourceを含むためE2Eで分岐が覆われていた。
+- **対策**: `initialVisibleSourceCount`をdefault filterと同じ分岐から算出し、JA/ENのSSR表示へ共有した。実corpusに依存しないsource contract testで、all branchと2つの表示箇所が同じ値を使うことを固定した。
+- **教訓**: SSRとclient filterが共存する一覧では、初期選択、row visibility、件数、ARIAを同じdefault stateから導出する。現在corpusが片方の分岐しか持たない場合は、source contractまたはpure fixtureで未出現分岐を別途固定する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

@@ -66,11 +66,7 @@ import {
   type ArchiveIndexFile,
   type ArchiveMonthFile,
 } from "../../harness/publishers/archive-core.ts";
-import {
-  buildStatsPayload,
-  statsDayCutoffKey,
-  STATS_BUCKET_TIME_ZONE,
-} from "../../harness/publishers/stats-core.ts";
+import { buildStatsPayloadFromArtifacts } from "../../harness/publishers/stats-core.ts";
 import type { StatsPayload } from "../../harness/publishers/stats-core.ts";
 import type {
   NormalizedEntry,
@@ -576,17 +572,115 @@ export function assertHistoryBaselinePair(
   throw new Error(`refusing to publish: history baseline pair is incomplete; ${missingPath} is missing`);
 }
 
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function assertArchiveIndexBaseline(
+  value: unknown,
+): asserts value is ArchiveIndexFile {
+  const path = "data/archive/_index.json";
+  if (!isJsonObject(value)) {
+    throw new Error(`refusing to publish with invalid baseline ${path}: expected an object`);
+  }
+  if (typeof value.generatedAt !== "string" || value.generatedAt.length === 0) {
+    throw new Error(`refusing to publish with invalid baseline ${path}: generatedAt must be a string`);
+  }
+  if (!Array.isArray(value.months) || !value.months.every((month) => typeof month === "string")) {
+    throw new Error(`refusing to publish with invalid baseline ${path}: months must be a string array`);
+  }
+  if (!isJsonObject(value.perMonth)) {
+    throw new Error(`refusing to publish with invalid baseline ${path}: perMonth must be an object`);
+  }
+  if (!Number.isInteger(value.totalEntries) || (value.totalEntries as number) < 0) {
+    throw new Error(`refusing to publish with invalid baseline ${path}: totalEntries must be a non-negative integer`);
+  }
+
+  const monthPattern = /^\d{4}-\d{2}$/;
+  const months = value.months as string[];
+  const perMonth = value.perMonth as Record<string, unknown>;
+  const indexedMonths = Object.keys(perMonth);
+  if (
+    months.some((month) => !monthPattern.test(month))
+    || indexedMonths.some((month) => !monthPattern.test(month))
+    || new Set(months).size !== months.length
+  ) {
+    throw new Error(`refusing to publish with invalid baseline ${path}: month keys must be unique YYYY-MM values`);
+  }
+
+  let totalEntries = 0;
+  for (const month of indexedMonths) {
+    const count = perMonth[month];
+    if (!Number.isInteger(count) || (count as number) < 0) {
+      throw new Error(`refusing to publish with invalid baseline ${path}: perMonth.${month} must be a non-negative integer`);
+    }
+    totalEntries += count as number;
+  }
+
+  const listed = [...months].sort();
+  const counted = [...indexedMonths].sort();
+  if (JSON.stringify(listed) !== JSON.stringify(counted)) {
+    throw new Error(`refusing to publish with invalid baseline ${path}: months and perMonth keys must match`);
+  }
+  if (value.totalEntries !== totalEntries) {
+    throw new Error(
+      `refusing to publish with invalid baseline ${path}: totalEntries ${value.totalEntries} does not match perMonth total ${totalEntries}`,
+    );
+  }
+}
+
+export function parseArchiveIndexBaseline(
+  file: { content: string } | null,
+): ArchiveIndexFile | null {
+  if (!file) return null;
+  const value = parseBaselineJson<unknown>("data/archive/_index.json", file);
+  assertArchiveIndexBaseline(value);
+  return value;
+}
+
 export function assertArchiveMonthBaseline(
   month: string,
   archiveIndex: Pick<ArchiveIndexFile, "perMonth"> | null,
   existingFile: { content: string } | null,
-): void {
+): ArchiveMonthFile | null {
+  const path = `data/archive/${month}.json`;
+  const isIndexed = Object.hasOwn(archiveIndex?.perMonth ?? {}, month);
   const indexedCount = archiveIndex?.perMonth?.[month] ?? 0;
-  if (indexedCount > 0 && !existingFile) {
+  if (isIndexed && !existingFile) {
     throw new Error(
-      `refusing to publish: archive index records ${indexedCount} entries for ${month}, but data/archive/${month}.json is missing`,
+      `refusing to publish: archive index records ${indexedCount} entries for ${month}, but ${path} is missing`,
     );
   }
+  if (!existingFile) return null;
+
+  const value = parseBaselineJson<unknown>(path, existingFile);
+  if (!isJsonObject(value)) {
+    throw new Error(`refusing to publish with invalid baseline ${path}: expected an object`);
+  }
+  if (typeof value.generatedAt !== "string" || value.generatedAt.length === 0) {
+    throw new Error(`refusing to publish with invalid baseline ${path}: generatedAt must be a string`);
+  }
+  if (value.month !== month) {
+    throw new Error(`refusing to publish with invalid baseline ${path}: month must equal ${month}`);
+  }
+  if (!Number.isInteger(value.count) || (value.count as number) < 0) {
+    throw new Error(`refusing to publish with invalid baseline ${path}: count must be a non-negative integer`);
+  }
+  if (!Array.isArray(value.entries)) {
+    throw new Error(`refusing to publish with invalid baseline ${path}: entries must be an array`);
+  }
+  if (value.count !== value.entries.length) {
+    throw new Error(
+      `refusing to publish with invalid baseline ${path}: count ${value.count} does not match entries length ${value.entries.length}`,
+    );
+  }
+  if (isIndexed && indexedCount !== value.count) {
+    throw new Error(
+      `refusing to publish with invalid baseline ${path}: archive index count ${indexedCount} does not match month count ${value.count}`,
+    );
+  }
+
+  return value as unknown as ArchiveMonthFile;
 }
 
 async function ghJsonChangeIfChanged(
@@ -605,12 +699,6 @@ async function ghJsonChangeIfChanged(
     return null;
   }
   return { path, content };
-}
-
-function uniqueEntriesByUrl(entries: readonly NormalizedEntry[]): NormalizedEntry[] {
-  const byUrl = new Map<string, NormalizedEntry>();
-  for (const entry of entries) setPreferredEntry(byUrl, entry);
-  return [...byUrl.values()];
 }
 
 function entriesEqual(
@@ -634,31 +722,12 @@ export function selectArchiveUpdateEntries(
   });
 }
 
-export function hasArchiveTagChanges(
-  existingPayload: { entries?: NormalizedEntry[] } | null,
-  nextEntries: readonly NormalizedEntry[],
-): boolean {
-  if (!existingPayload?.entries) return true;
-
-  const existingById = new Map(existingPayload.entries.map((entry) => [entry.id, entry]));
-  const existingByUrl = new Map(
-    existingPayload.entries.map((entry) => [canonicalUrlKey(entry.url) ?? entry.url ?? entry.id, entry]),
-  );
-
-  return nextEntries.some((entry) => {
-    const key = canonicalUrlKey(entry.url) ?? entry.url ?? entry.id;
-    const existing = existingById.get(entry.id) ?? existingByUrl.get(key);
-    return existing !== undefined && JSON.stringify(existing.tags ?? []) !== JSON.stringify(entry.tags ?? []);
-  });
-}
-
 export function selectArchiveInspectionMonths(
   archiveIndex: Pick<ArchiveIndexFile, "months" | "perMonth"> | null,
   incomingMonths: Iterable<string>,
-  inspectAllArchiveMonths: boolean,
 ): string[] {
   const months = new Set(incomingMonths);
-  if (inspectAllArchiveMonths && archiveIndex) {
+  if (archiveIndex) {
     for (const month of archiveIndex.months ?? []) months.add(month);
     for (const month of Object.keys(archiveIndex.perMonth ?? {})) months.add(month);
   }
@@ -669,168 +738,10 @@ function delayMs(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Build a stats payload incrementally from an existing baseline.
- *
- * Treat the existing data/stats.json as the source of truth for unchanged
- * month contributions. Subtract the previous content of months changed this
- * run and add the fully merged replacement for the same months. A cross-month
- * tag sweep can inspect every archive month without making every inspected
- * month part of this delta.
- *
- * Invariant: removed is the previous content of touched months and added is
- * the replacement content of those same months. Both sides are canonical-URL
- * deduped so copies of one article in multiple changed months count once.
- *
- * Bootstrap: if existing is null (first run after deploy of this code), we
- * fall back to buildStatsPayload(added) — accurate for everything except
- * untouched-month buckets which will appear empty until the next run that
- * touches them. The next run that touches each month restores accuracy
- * incrementally; in practice the local harness or a manual run can rebuild
- * the full stats once.
- */
-export function buildIncrementalStats(opts: {
-  existing: StatsPayload | null;
-  removed: readonly NormalizedEntry[];
-  added: readonly NormalizedEntry[];
-  /** Published live entry count (finalEntries.length); hard lower bound for allTime. */
-  liveCount: number;
-  generatedAt: string;
-}): StatsPayload {
-  const { existing, removed, added, liveCount, generatedAt } = opts;
-  const canonicalRemoved = uniqueEntriesByUrl(removed);
-  const canonicalAdded = uniqueEntriesByUrl(added);
-  if (!existing) return buildStatsPayload(canonicalAdded, generatedAt);
-  if (existing.bucketTimeZone !== STATS_BUCKET_TIME_ZONE) {
-    throw new Error(
-      `stats bucket time zone mismatch: expected ${STATS_BUCKET_TIME_ZONE}, got ${String(existing.bucketTimeZone)}`,
-    );
-  }
-
-  // Recompute deltas from the entry sets we have.
-  const removedStats = buildStatsPayload(canonicalRemoved, generatedAt);
-  const addedStats = buildStatsPayload(canonicalAdded, generatedAt);
-
-  type CategoryMap = Partial<Record<string, number>>;
-  const mergeCategory = (a: CategoryMap, b: CategoryMap, sign: 1 | -1): CategoryMap => {
-    const out: CategoryMap = { ...a };
-    for (const [k, v] of Object.entries(b)) {
-      const next = (out[k] ?? 0) + sign * (v ?? 0);
-      if (next <= 0) delete out[k];
-      else out[k] = next;
-    }
-    return out;
-  };
-
-  // byMonth: untouched months unchanged; touched months replaced.
-  const monthMap = new Map(existing.byMonth.map((m) => [m.month, { ...m, byCategory: { ...m.byCategory } }]));
-  for (const m of removedStats.byMonth) {
-    const cur = monthMap.get(m.month);
-    if (!cur) continue;
-    cur.count -= m.count;
-    cur.byCategory = mergeCategory(cur.byCategory, m.byCategory, -1);
-    if (cur.count <= 0) monthMap.delete(m.month);
-    else monthMap.set(m.month, cur);
-  }
-  for (const m of addedStats.byMonth) {
-    const cur = monthMap.get(m.month) ?? { month: m.month, count: 0, byCategory: {} as CategoryMap };
-    cur.count += m.count;
-    cur.byCategory = mergeCategory(cur.byCategory, m.byCategory, 1);
-    monthMap.set(m.month, cur);
-  }
-
-  // byDay: same logic, but only last 90d is retained by buildStatsPayload, so
-  // we use addedStats.byDay as the new source of truth for any day it
-  // touches, and remove any baseline day that fell out of the 90d window.
-  const dayMap = new Map(existing.byDay.map((d) => [d.date, { ...d, byCategory: { ...d.byCategory } }]));
-  for (const d of removedStats.byDay) {
-    const cur = dayMap.get(d.date);
-    if (!cur) continue;
-    cur.count -= d.count;
-    cur.byCategory = mergeCategory(cur.byCategory, d.byCategory, -1);
-    if (cur.count <= 0) dayMap.delete(d.date);
-    else dayMap.set(d.date, cur);
-  }
-  for (const d of addedStats.byDay) {
-    const cur = dayMap.get(d.date) ?? { date: d.date, count: 0, byCategory: {} as CategoryMap };
-    cur.count += d.count;
-    cur.byCategory = mergeCategory(cur.byCategory, d.byCategory, 1);
-    dayMap.set(d.date, cur);
-  }
-  // Prune days older than 90 days relative to generatedAt.
-  const cutoffDay = statsDayCutoffKey(generatedAt);
-  for (const date of [...dayMap.keys()]) {
-    if (date < cutoffDay) dayMap.delete(date);
-  }
-
-  // bySource: subtract removed contributions, add added.
-  const sourceMap = new Map(existing.bySource.map((s) => [s.source, { ...s }]));
-  for (const s of removedStats.bySource) {
-    const cur = sourceMap.get(s.source);
-    if (!cur) continue;
-    cur.total -= s.total;
-    cur.last30d -= s.last30d;
-    if (cur.total <= 0) sourceMap.delete(s.source);
-    else sourceMap.set(s.source, cur);
-  }
-  for (const s of addedStats.bySource) {
-    const cur = sourceMap.get(s.source) ?? { source: s.source, total: 0, last30d: 0 };
-    cur.total += s.total;
-    cur.last30d += s.last30d;
-    sourceMap.set(s.source, cur);
-  }
-
-  const byImportance: Record<"1" | "2" | "3", number> = {
-    "1": Math.max(0, existing.byImportance["1"] - removedStats.byImportance["1"] + addedStats.byImportance["1"]),
-    "2": Math.max(0, existing.byImportance["2"] - removedStats.byImportance["2"] + addedStats.byImportance["2"]),
-    "3": Math.max(0, existing.byImportance["3"] - removedStats.byImportance["3"] + addedStats.byImportance["3"]),
-  };
-
-  // Clamp totals to their logical invariants. The incremental rolling counters
-  // drift over many runs (entries crossing a window boundary inside an
-  // *untouched* archive month never enter `removed`), so the raw deltas can
-  // violate allTime >= last30d >= last7d >= last24h and, worse, allTime can
-  // fall BELOW the live entry count — breaking the data-schema invariant
-  // `allTime >= entries.length` and turning CI red every hour. Same drift class
-  // as bySource.last30d (LL-085); see LL-110. liveCount (finalEntries.length) is
-  // a hard lower bound for allTime.
-  const last24h = Math.max(0, existing.totals.last24h - removedStats.totals.last24h + addedStats.totals.last24h);
-  const last7d = Math.max(0, existing.totals.last7d - removedStats.totals.last7d + addedStats.totals.last7d, last24h);
-  const last30d = Math.max(0, existing.totals.last30d - removedStats.totals.last30d + addedStats.totals.last30d, last7d);
-  const allTime = Math.max(
-    0,
-    existing.totals.allTime - removedStats.totals.allTime + addedStats.totals.allTime,
-    last30d,
-    liveCount,
-  );
-  const totals = { allTime, last30d, last7d, last24h };
-
-  return {
-    generatedAt,
-    bucketTimeZone: STATS_BUCKET_TIME_ZONE,
-    totals,
-    byDay: [...dayMap.values()].sort((a, b) => a.date.localeCompare(b.date)),
-    byMonth: [...monthMap.values()].sort((a, b) => a.month.localeCompare(b.month)),
-    // Clamp each source to the logical invariant 0 <= last30d <= total. The
-    // incremental rolling 30d window drifts over time: entries that cross the
-    // 30-day boundary inside an *untouched* archive month never enter `removed`,
-    // so their last30d contribution is not decremented and last30d can exceed
-    // total (data-schema invariant violation, CI red hourly). See LL-085.
-    bySource: [...sourceMap.values()]
-      .map((s) => {
-        const total = Math.max(0, s.total);
-        return { ...s, total, last30d: Math.min(Math.max(0, s.last30d), total) };
-      })
-      .sort((a, b) => b.total - a.total),
-    byImportance,
-  };
-}
-
 async function publishHistoryFiles(
   env: PublisherEnv,
   archiveInputEntries: readonly NormalizedEntry[],
   liveEntries: readonly NormalizedEntry[],
-  inspectAllArchiveMonths: boolean,
   generatedAt: string,
   baselineRef: string,
 ): Promise<{
@@ -855,25 +766,18 @@ async function publishHistoryFiles(
     ghGetFileRaw(env, statsPath, baselineRef),
   ]);
   assertHistoryBaselinePair(archiveIndexFile, existingStatsRaw);
-  const archiveIndex = parseBaselineJson<ArchiveIndexFile>(archiveIndexPath, archiveIndexFile);
+  const archiveIndex = parseArchiveIndexBaseline(archiveIndexFile);
   const existingStats = parseBaselineJson<StatsPayload>(statsPath, existingStatsRaw);
 
   // A missing baseline requires one full bootstrap. Normal runs merge only
-  // entries whose published index representation changed, so untouched archive
-  // months remain in the existing archive/stats baseline without being fetched.
+  // entries whose published index representation changed.
   const entriesToMerge = archiveIndex && existingStats ? archiveInputEntries : liveEntries;
   const { byMonth, stats } = groupArchiveEntries(entriesToMerge, { includeHot: true });
 
-  // Normal runs inspect only months with incoming entries. When final live
-  // tags changed, inspect every indexed month so canonical duplicates stored
-  // under an older published month receive the same exact tag array. Only
-  // months with incoming content or an actual tag replacement enter the
-  // commit and stats delta.
-  const inspectionMonths = selectArchiveInspectionMonths(
-    archiveIndex,
-    byMonth.keys(),
-    inspectAllArchiveMonths,
-  );
+  // The Node publisher reads every archive month from the immutable baseline.
+  // This keeps tag synchronization exact and lets stats rebuild from the final
+  // live + archive corpus instead of inheriting drift from an old stats file.
+  const inspectionMonths = selectArchiveInspectionMonths(archiveIndex, byMonth.keys());
   const existingInspectionFiles = await Promise.all(
     inspectionMonths.map((month) =>
       ghGetFileRaw(env, `data/archive/${month}.json`, baselineRef),
@@ -881,8 +785,8 @@ async function publishHistoryFiles(
   );
 
   const monthFiles = new Map<string, ArchiveMonthFile>();
-  const oldTouchedEntries: NormalizedEntry[] = [];
-  const newTouchedEntries: NormalizedEntry[] = [];
+  const finalMonthFiles = new Map<string, ArchiveMonthFile>();
+  const archiveEntriesForStats: NormalizedEntry[] = [];
   const changes: FileChange[] = [];
   let archiveFilesChanged = 0;
 
@@ -890,21 +794,26 @@ async function publishHistoryFiles(
     const month = inspectionMonths[i];
     const path = `data/archive/${month}.json`;
     const existingFile = existingInspectionFiles[i];
-    assertArchiveMonthBaseline(month, archiveIndex, existingFile);
-    const existingMonth = parseBaselineJson<ArchiveMonthFile>(path, existingFile);
+    const existingMonth = assertArchiveMonthBaseline(month, archiveIndex, existingFile);
     const incomingEntries = byMonth.get(month) ?? [];
     const tagSync = synchronizeArchiveTagsFromLive(
       mergeArchiveEntries(existingMonth?.entries ?? [], incomingEntries),
       liveEntries,
     );
-    if (incomingEntries.length === 0 && tagSync.changed === 0) continue;
+    archiveEntriesForStats.push(...tagSync.entries);
     const mergedEntries = tagSync.entries;
     if (mergedEntries.length === 0) continue;
 
-    const monthPayload = buildArchiveMonthFile(month, mergedEntries, generatedAt);
+    const shouldWriteMonth = incomingEntries.length > 0 || tagSync.changed > 0;
+    const monthPayload = shouldWriteMonth
+      ? buildArchiveMonthFile(month, mergedEntries, generatedAt)
+      : existingMonth;
+    if (!monthPayload) {
+      throw new Error(`refusing to publish without a validated archive payload for ${month}`);
+    }
+    finalMonthFiles.set(month, monthPayload);
+    if (!shouldWriteMonth) continue;
     monthFiles.set(month, monthPayload);
-    oldTouchedEntries.push(...(existingMonth?.entries ?? []));
-    newTouchedEntries.push(...mergedEntries);
 
     const change = await ghJsonChangeIfChanged(env, path, monthPayload, existingFile ?? null);
     if (change) {
@@ -913,34 +822,18 @@ async function publishHistoryFiles(
     }
   }
 
-  // Build archive _index by overlaying touched-month counts onto the existing
-  // perMonth map (untouched months keep their prior count).
-  const newPerMonth: Record<string, number> = { ...(archiveIndex?.perMonth ?? {}) };
-  for (const [month, file] of monthFiles) newPerMonth[month] = file.count;
-  const allKnownMonths = Object.keys(newPerMonth)
-    .filter((m) => /^\d{4}-\d{2}$/.test(m))
-    .sort();
-  const indexInputs: ArchiveMonthFile[] = allKnownMonths.map((month) => ({
-    generatedAt,
-    month,
-    count: newPerMonth[month],
-    entries: [],
-  }));
+  // Rebuild archive _index only from month files validated against the same
+  // immutable baseline. Never carry forward unverified counts.
+  const indexInputs = [...finalMonthFiles.values()];
   const archiveIndexPayload = buildArchiveIndexFile(indexInputs, generatedAt);
   const archiveIndexChange = await ghJsonChangeIfChanged(env, archiveIndexPath, archiveIndexPayload, archiveIndexFile);
   if (archiveIndexChange) changes.push(archiveIndexChange);
 
-  // Incremental stats: start from the existing baseline, subtract the old
-  // touched-month files, and add the fully merged replacement for those same
-  // months. Untouched-month contributions remain in the baseline and must not
-  // be added again.
-  const statsPayload = buildIncrementalStats({
-    existing: existingStats,
-    removed: oldTouchedEntries,
-    added: newTouchedEntries,
-    liveCount: liveEntries.length,
+  const statsPayload = buildStatsPayloadFromArtifacts(
+    liveEntries,
+    archiveEntriesForStats,
     generatedAt,
-  });
+  );
   const statsChange = await ghJsonChangeIfChanged(env, statsPath, statsPayload, existingStatsRaw ?? null);
   if (statsChange) changes.push(statsChange);
 
@@ -1744,7 +1637,6 @@ export async function runHarness(
   }
   const hasEntryChanges = !entriesEqual(existingPayload, indexEntries);
   const archiveUpdateEntries = selectArchiveUpdateEntries(existingPayload, indexEntries);
-  const archiveTagsChanged = hasArchiveTagChanges(existingPayload, indexEntries);
   const indexUnchanged = !jsonContentDiffers(existingJson, json);
   const bodiesChanged = bodyPipeline.bodiesFileContent !== null;
   const noDataChanges = indexUnchanged && !bodiesChanged;
@@ -1761,7 +1653,6 @@ export async function runHarness(
         env,
         archiveUpdateEntries,
         finalEntries,
-        archiveTagsChanged,
         payload.generatedAt,
         publisherSnapshotSha,
       )

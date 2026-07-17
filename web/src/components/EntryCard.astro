@@ -93,11 +93,12 @@ const summaryQueue = deriveQueueDisplay({
   backlog: DASHBOARD_METRICS.summaryQueueBacklog,
   drainEstimateHours: DASHBOARD_METRICS.summaryQueueDrainEstimateHours,
   runTone: workerRun.tone,
+  runState: workerRun.state,
 });
 const summaryQueueCopy = {
   active: {
-    ja: summaryQueue.labelJa,
-    en: summaryQueue.labelEn,
+    ja: "全体の要約処理は稼働中",
+    en: "Overall summary processing is active",
   },
   clear: {
     ja: "次回収集待ち",
@@ -124,8 +125,19 @@ const summaryQueueCopy = {
     en: "Checking summary queue status",
   },
 } as const;
+const summaryQueueBadgeCopy = {
+  active: { ja: "AI要約 準備待ち", en: "AI summary pending" },
+  clear: { ja: "AI要約 次回待ち", en: "AI summary waiting" },
+  "waiting-for-run": { ja: "AI要約 再開待ち", en: "AI summary waiting for collection" },
+  paused: { ja: "AI要約 停止中", en: "AI summary paused" },
+  unavailable: { ja: "AI要約 利用不可", en: "AI summary unavailable" },
+  error: { ja: "AI要約 要確認", en: "AI summary needs review" },
+  unknown: { ja: "AI要約 確認中", en: "Checking AI summary" },
+} as const;
 const queueDrainJa = summaryQueueCopy[summaryQueue.state].ja;
 const queueDrainEn = summaryQueueCopy[summaryQueue.state].en;
+const queueBadgeJa = summaryQueueBadgeCopy[summaryQueue.state].ja;
+const queueBadgeEn = summaryQueueBadgeCopy[summaryQueue.state].en;
 
 // Generate a deterministic pattern seed from the entry id
 const patternSeed = entry.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
@@ -266,8 +278,8 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
         data-summary-queue-state={summaryQueue.state}
       >
         <span class="summary-pending-badge">
-          <span class="i18n-ja">AI要約 処理中</span>
-          <span class="i18n-en" lang="en">AI summary pending</span>
+          <span class="i18n-ja">{queueBadgeJa}</span>
+          <span class="i18n-en" lang="en">{queueBadgeEn}</span>
         </span>
         <span class="summary-pending-meta i18n-ja">{queueDrainJa} · <a href="/status#worker-health-heading">進行状況</a></span>
         <span class="summary-pending-meta i18n-en" lang="en">{queueDrainEn} · <a href="/status#worker-health-heading">Status</a></span>

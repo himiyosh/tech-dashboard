@@ -1,3 +1,4 @@
+import { canonicalUrlKey } from "../pipeline/url.ts";
 import type { Category, NormalizedEntry } from "../types.ts";
 
 export interface DayBucket {
@@ -121,4 +122,22 @@ export function buildStatsPayload(
     bySource: [...bySource.values()].sort((a, b) => b.total - a.total),
     byImportance,
   };
+}
+
+export function buildStatsPayloadFromArtifacts(
+  liveEntries: readonly NormalizedEntry[],
+  archiveEntries: readonly NormalizedEntry[],
+  generatedAt = new Date().toISOString(),
+): StatsPayload {
+  const entries = new Map<string, NormalizedEntry>();
+
+  for (const entry of liveEntries) {
+    entries.set(canonicalUrlKey(entry.url) ?? entry.url ?? entry.id, entry);
+  }
+  for (const entry of archiveEntries) {
+    const key = canonicalUrlKey(entry.url) ?? entry.url ?? entry.id;
+    if (!entries.has(key)) entries.set(key, entry);
+  }
+
+  return buildStatsPayload([...entries.values()], generatedAt);
 }

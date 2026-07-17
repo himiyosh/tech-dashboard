@@ -2250,6 +2250,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: commit直後に`git rev-parse HEAD`を実行し、その出力だけをplan、handoff、checkpoint、PR説明へ記録する。不一致を検出した場合はGit refを変更せず、session artifact側を実測値へ修正する。
 - **教訓**: 復元ポイントのcommit identityは短縮表示や推測から作らない。Gitが保持するexact SHAを取得してから永続記録へ反映する。
 
+### LL-336: GitHub-hosted runnerのshutdown signalをE2E assertion失敗と同一視しない
+- **事象**: PR CIのE2E jobがPlaywrightのtest名やassertion failureを1件も出さず、開始約3分24秒後にexit code 143で終了した。job終端には`The runner has received a shutdown signal`が記録され、同じcommitのlocal pre-pushでは96件すべてがretryなしで成功していた。
+- **根本原因**: GitHub-hosted runner serviceがshutdown signalを受け、Playwrightのstatic build中にprocessをSIGTERMで停止した。check summaryの`E2E tests failure`とexit codeだけでは、製品testの失敗とrunner infrastructureの終了を区別できなかった。
+- **対策**: `gh run view <run> --job <job> --log-failed`だけで原因が不足する場合は、Actions logs archiveの該当job終端を確認し、assertion、webServer timeout、job timeout、runner shutdownを分ける。runner shutdownが明記され、同一SHAの製品gateが成功している場合だけfailed jobを再実行し、test assertion failureでは先に実装修正を行う。
+- **教訓**: CIの赤状態を製品回帰と推測しない。process exit code、test runner出力、job終端messageを合わせて発生layerを確定し、原因を特定した再実行と根拠のないblind retryを区別する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

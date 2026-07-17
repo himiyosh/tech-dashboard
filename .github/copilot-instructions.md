@@ -2232,6 +2232,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: Astroの`404.astro`からnoindexの静的404 pageを生成し、JA/ENの説明とSearch、Archive、Homeの回復導線を設けた。article、category、tagの未知routeについて、built previewのresponse statusが404、Home hero不在、404 headingと回復link表示、mobile target寸法とoverflowをE2Eで固定した。
 - **教訓**: 静的生成routeの一覧が正しくても、未生成routeを配信層がどう扱うかは別contractである。custom 404の存在だけで合格にせず、productionと同じbuilt artifactへのunknown URLでHTTP statusとresponse contentを同時に検証し、Homeへ成功形でfallbackさせない。
 
+### LL-333: Pages buildがclone後に無出力で停止したらbuild cacheを切り分ける
+- **事象**: soft-404のpreviewとproduction deploymentが、repository clone成功後にdependency cache復元、Node install、build commandのログを一切出さず、約35分で`build exceeded the time limit and was terminated`になった。同じcommitのGitHub Actions Web buildとE2Eは成功していた。
+- **根本原因**: Cloudflare Pagesのbuild cacheをpurgeして同じproduction deploymentをretryすると、cache復元、依存install、Astro build、deployが約6分で完了した。製品codeではなく、Pages側のbuild cache状態が停止条件だった。
+- **対策**: まずdeployment stageとbuild logを確認し、clone後からbuild command開始前まで無出力かを切り分ける。code gateが成功し同じ停止位置が複数deploymentで再現する場合は、Cloudflare公式APIの`POST /pages/projects/{project}/purge_build_cache`でcacheを削除し、`POST /deployments/{id}/retry`で同じcommitを再実行する。token値は表示せず、retry後のcommit SHA、全stage success、公開URLを確認する。
+- **教訓**: Pagesのbuild timeoutを直ちにcode regressionと断定しない。clone、cache、install、build、deployのstage境界と最終logを比較し、cacheを原因候補として独立に検証する。cache purge後も失敗する場合だけbuild設定やcodeの調査へ進み、成功した旧productionをrollbackやDirect Uploadで上書きしない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

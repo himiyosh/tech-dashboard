@@ -447,6 +447,7 @@ tech-dashboard/
 ├─ PRODUCT.md                # プロダクト目的・成功指標・アクセシビリティ基準
 ├─ skills-lock.json          # skills CLI が管理する Modern Web Guidance の導入 lock
 ├─ .github/agents/           # TechDB の監査・実装・QA・ペルソナ custom agents
+├─ .github/skills/hallmark/  # pinned Hallmark UI design skill + attribution
 ├─ docs/                     # 設計ドキュメント
 │  └─ mockups/               # HTML モック (mockup-D が確定)
 ├─ harness/                  # ハーネス本体 (TypeScript)

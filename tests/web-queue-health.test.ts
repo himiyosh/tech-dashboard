@@ -50,13 +50,32 @@ describe("deriveQueueDisplay", () => {
         backlog: 433,
         drainEstimateHours: 13,
         runTone: "err",
+        runState: "failed",
       }),
     ).toMatchObject({
       state: "waiting-for-run",
-      tone: "err",
+      tone: "neutral",
       backlog: 433,
       showBacklog: true,
       labelJa: "収集再開待ち",
+      labelEn: "waiting for a successful run",
+    });
+  });
+
+  it("late runではneutral toneで待機し、保持済みETAを隠す", () => {
+    expect(
+      deriveQueueDisplay({
+        mode: "enabled",
+        backlog: 12,
+        drainEstimateHours: 4,
+        runTone: "warn",
+        runState: "late",
+      }),
+    ).toMatchObject({
+      state: "waiting-for-run",
+      tone: "neutral",
+      backlog: 12,
+      showBacklog: true,
       labelEn: "waiting for a successful run",
     });
   });
@@ -76,15 +95,19 @@ describe("deriveQueueDisplay", () => {
     });
   });
 
-  it("EntryCardはQueueDisplayで宣言されたlabelだけを表示契約に使う", () => {
+  it("EntryCardは個別記事の待機と全体Queueの稼働を区別する", () => {
     const source = readFileSync(
       join(process.cwd(), "web/src/components/EntryCard.astro"),
       "utf8",
     );
 
     expect(source).toMatch(
-      /active:\s*\{\s*ja:\s*summaryQueue\.labelJa,\s*en:\s*summaryQueue\.labelEn,/,
+      /active:\s*\{\s*ja:\s*"全体の要約処理は稼働中",\s*en:\s*"Overall summary processing is active",/,
     );
+    expect(source).toContain(
+      'active: { ja: "AI要約 準備待ち", en: "AI summary pending" }',
+    );
+    expect(source).not.toContain("AI summary queued");
     expect(source).not.toContain("summaryQueue.showEstimate");
     expect(source).not.toContain("summaryQueue.estimateHours");
   });

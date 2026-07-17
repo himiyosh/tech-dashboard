@@ -4,7 +4,7 @@ import {
   categoryLabel,
   entryHref,
   isPublishableEntry,
-  jstDateKey,
+  selectTickerDayEntries,
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
@@ -20,21 +20,14 @@ export interface Props {
 }
 
 const { entries, excludeEntryIds = [], now = new Date(), limit = 24, intervalMs = 7000 } = Astro.props;
-const excludedEntryIds = new Set(excludeEntryIds);
-
-const todayKey = jstDateKey(now.toISOString());
-const yKey = jstDateKey(new Date(now.getTime() - 86_400_000).toISOString());
-const today = entries.filter((e) => jstDateKey(e.publishedAt) === todayKey);
-const baseDayKey = today.length > 0 ? todayKey : yKey;
-const baseEntries = entries.filter(
-  (e) => jstDateKey(e.publishedAt) === baseDayKey && !excludedEntryIds.has(e.id),
-);
-const baseDayIsToday = baseDayKey === todayKey;
+const tickerDay = selectTickerDayEntries(entries, now, excludeEntryIds);
+const baseDayKey = tickerDay.dayKey ?? "";
+const baseDayIsToday = tickerDay.dayScope === "today";
 
 const typeWeight = (t: string): number =>
   t === "release" || t === "changelog" ? 2 : t === "paper" ? 1 : 0;
 
-const items = [...baseEntries]
+const items = [...tickerDay.entries]
   .sort((a, b) => {
     const publishable = Number(isPublishableEntry(b)) - Number(isPublishableEntry(a));
     if (publishable !== 0) return publishable;

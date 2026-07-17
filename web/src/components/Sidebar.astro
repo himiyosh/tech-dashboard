@@ -58,7 +58,7 @@ function tileClass(slug: Category): string {
   <div class="side-card">
     <div class="side-title">Categories <span class="sub">{total}</span></div>
     <a
-      class={`side-item ${active === "all" ? "active" : ""}`}
+      class={`side-item side-item-timeline ${active === "all" ? "active" : ""}`}
       href="/"
       aria-current={isCurrentPage("/") ? "page" : undefined}
     >
@@ -84,7 +84,7 @@ function tileClass(slug: Category): string {
           >
             <span class={`brand-tile ${tileClass(c.slug)}`} data-initial={c.initial} aria-hidden="true"></span>
             <span class="name" title={title}><span class="name-marquee">{label}</span></span>
-            <span class="spark" title="Last 30 days" aria-hidden="true">
+            <span class="spark" title="Last 30 days" aria-hidden="true" data-category-spark>
               {trend.map((bucket) => (
                 <i title={`${bucket.key}: ${bucket.count}`} style={`height:${bucket.height}%`}></i>
               ))}
@@ -127,6 +127,7 @@ function tileClass(slug: Category): string {
     };
 
     window.requestAnimationFrame(setupSidebarMarquees);
+    void document.fonts?.ready.then(scheduleSetup);
     window.addEventListener("resize", scheduleSetup, { passive: true });
   })();
 </script>

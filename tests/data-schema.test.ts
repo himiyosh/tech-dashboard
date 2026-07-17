@@ -18,7 +18,7 @@ import { isContaminatedSummaryText } from "../harness/pipeline/summary-quality.t
 import { normalizeTag } from "../harness/pipeline/tag.ts";
 import { canonicalUrlKey } from "../harness/pipeline/url.ts";
 import {
-  buildStatsPayload,
+  buildStatsPayloadFromArtifacts,
   STATS_BUCKET_TIME_ZONE,
 } from "../harness/publishers/stats-core.ts";
 import { REGISTRY } from "../harness/registry.ts";
@@ -581,20 +581,15 @@ describe("data/stats.json", () => {
     expect(badBuckets).toEqual([]);
   });
 
-  it("日次 bucket は live + archive の JST 再集計と一致する", () => {
-    const entries = new Map<string, NormalizedEntry>();
-    for (const rawEntry of data.entries) {
-      const entry = asNormalizedEntry(rawEntry);
-      entries.set(canonicalUrlKey(entry.url) ?? entry.url ?? entry.id, entry);
-    }
-    for (const rawEntry of archiveEntries) {
-      const entry = asNormalizedEntry(rawEntry);
-      const key = canonicalUrlKey(entry.url) ?? entry.url ?? entry.id;
-      if (!entries.has(key)) entries.set(key, entry);
-    }
-
-    const rebuilt = buildStatsPayload([...entries.values()], stats.generatedAt);
-    expect(stats.byDay).toEqual(rebuilt.byDay);
+  it("全統計は live + archive の JST 再集計と一致する", () => {
+    const rebuilt = buildStatsPayloadFromArtifacts(
+      data.entries.map(asNormalizedEntry),
+      archiveEntries.map(asNormalizedEntry),
+      stats.generatedAt,
+    );
+    const { generatedAt: _storedGeneratedAt, ...storedContent } = stats;
+    const { generatedAt: _rebuiltGeneratedAt, ...rebuiltContent } = rebuilt;
+    expect(storedContent).toEqual(rebuiltContent);
   });
 
   it("source 集計は降順で、値が非負である", () => {

@@ -58,7 +58,7 @@ const breadcrumb = [
     metrics={[
       { label: "Showing", value: pageEntries.length },
       { label: "Timeline", value: MAIN_TIMELINE_ENTRIES.length },
-      { label: "arXiv moved", value: ARXIV_ENTRIES.length },
+      { label: "arXiv lane", value: ARXIV_ENTRIES.length },
       { label: "Page", value: `${page}/${total}` },
       { label: "Updated", value: relativeTime(GENERATED_AT, now) },
     ]}
@@ -69,7 +69,13 @@ const breadcrumb = [
 
     <main>
       <div class="section-header primary">
-        <h2>Entries <span class="count">{pageEntries.length} on this page · {MAIN_TIMELINE_ENTRIES.length} timeline · {ARXIV_ENTRIES.length} arXiv moved</span></h2>
+        <h2>
+          Entries
+          <span class="count">
+            {pageEntries.length} on this page · {MAIN_TIMELINE_ENTRIES.length} timeline ·
+            <a href="/arxiv">{ARXIV_ENTRIES.length} arXiv papers on a separate page</a>
+          </span>
+        </h2>
       </div>
 
       {dayGroups.map(({ key, items }) => (

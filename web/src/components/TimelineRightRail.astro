@@ -21,7 +21,7 @@ interface Props {
 const {
   entries,
   now = new Date(),
-  tagCount = 10,
+  tagCount = 7,
   label = "Timeline insights",
 } = Astro.props as Props;
 
@@ -74,10 +74,13 @@ const topSources = [...sourceCounts.entries()]
       count,
       catSlug: cat,
       catLabel: catMeta?.shortLabel ?? catMeta?.name,
+      catColor: catMeta?.color ?? "var(--paper)",
     };
   });
 
 const tags = trendingTags(tagCount, { exclude: PLATFORM_TAGS });
+const maxTagCount = Math.max(1, ...tags.map((tag) => tag.count));
+const maxSourceCount = Math.max(1, ...topSources.map((source) => source.count));
 
 // Freshness for THIS surface, derived from the same entries that drive the
 // adjacent timeline/DailySummary. This avoids the global-vs-timeline "today"
@@ -98,11 +101,20 @@ const last7d = entries.filter((e) => {
 <aside class="right home-right" aria-label={label}>
   {tags.length > 0 && (
     <div class="side-card">
-      <div class="right-title">Trending topics</div>
-      <div class="tag-cloud">
-        {tags.map((t) => (
-          <a class="tag" href={tagHref(t.tag)}>
-            #{t.tag} <span class="c">{t.count}</span>
+      <h3 class="right-title">Trending topics</h3>
+      <div class="home-ranked-list" data-rail-ranking="topics">
+        {tags.map((t, index) => (
+          <a
+            class="home-ranked-row"
+            href={tagHref(t.tag)}
+            style={`--rail-color:var(--accent);--rail-level:${Math.max(10, Math.round((t.count / maxTagCount) * 100))}%`}
+          >
+            <span class="home-rank-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+            <span class="home-ranked-copy">
+              <span class="home-ranked-label">#{t.tag}</span>
+            </span>
+            <strong class="home-ranked-count">{t.count}</strong>
+            <span class="home-ranked-meter" aria-hidden="true"><i></i></span>
           </a>
         ))}
       </div>
@@ -111,23 +123,38 @@ const last7d = entries.filter((e) => {
 
   {topSources.length > 0 && (
     <div class="side-card">
-      <div class="right-title">Most active sources</div>
-      <div class="home-source-list">
-        {topSources.map((s) =>
+      <h3 class="right-title">Most active sources</h3>
+      <p class="rail-ranking-scope" data-ranking-scope="first-200-listed-entries">
+        <span class="i18n-ja">表示中一覧の先頭200件</span>
+        <span class="i18n-en" lang="en">First 200 listed entries</span>
+      </p>
+      <div class="home-ranked-list home-source-list" data-rail-ranking="sources">
+        {topSources.map((s, index) =>
           s.catSlug ? (
-            <a class="home-source-row" href={`/c/${s.catSlug}`}>
-              <span class="home-source-main">
-                <span class="home-source-name">{s.label}</span>
-                {s.catLabel && <span class="home-source-cat">{s.catLabel}</span>}
+            <a
+              class="home-ranked-row home-source-row"
+              href={`/c/${s.catSlug}`}
+              style={`--rail-color:${s.catColor};--rail-level:${Math.max(10, Math.round((s.count / maxSourceCount) * 100))}%`}
+            >
+              <span class="home-rank-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+              <span class="home-ranked-copy">
+                <span class="home-ranked-label">{s.label}</span>
+                {s.catLabel && <span class="home-ranked-meta">{s.catLabel}</span>}
               </span>
-              <strong>{s.count}</strong>
+              <strong class="home-ranked-count">{s.count}</strong>
+              <span class="home-ranked-meter" aria-hidden="true"><i></i></span>
             </a>
           ) : (
-            <div class="home-source-row is-static">
-              <span class="home-source-main">
-                <span class="home-source-name">{s.label}</span>
+            <div
+              class="home-ranked-row home-source-row is-static"
+              style={`--rail-color:${s.catColor};--rail-level:${Math.max(10, Math.round((s.count / maxSourceCount) * 100))}%`}
+            >
+              <span class="home-rank-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+              <span class="home-ranked-copy">
+                <span class="home-ranked-label">{s.label}</span>
               </span>
-              <strong>{s.count}</strong>
+              <strong class="home-ranked-count">{s.count}</strong>
+              <span class="home-ranked-meter" aria-hidden="true"><i></i></span>
             </div>
           ),
         )}
@@ -137,10 +164,10 @@ const last7d = entries.filter((e) => {
   )}
 
   <div class="side-card">
-    <div class="right-title">Freshness</div>
+    <h3 class="right-title">Freshness</h3>
     <p class="rail-scope-note" data-activity-scope="listed-entries">
-      <span class="i18n-ja">過去7日は表示中一覧、ソース順位はその先頭200件を基準に集計。</span>
-      <span class="i18n-en" lang="en">The 7-day count uses this listed view; source ranking uses its first 200 entries.</span>
+      <span class="i18n-ja">過去7日は表示中一覧を基準に集計。</span>
+      <span class="i18n-en" lang="en">The 7-day count uses this listed view.</span>
     </p>
     <div class="home-side-metrics">
       <div class="home-side-metric">
@@ -156,6 +183,7 @@ const last7d = entries.filter((e) => {
 </aside>
 
 <style>
+  .rail-ranking-scope,
   .rail-scope-note {
     margin: -2px 0 10px;
     color: var(--muted-2);

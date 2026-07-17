@@ -63,19 +63,21 @@ const footerSummaryQueue = deriveQueueDisplay({
   backlog: DASHBOARD_METRICS.summaryQueueBacklog,
   drainEstimateHours: DASHBOARD_METRICS.summaryQueueDrainEstimateHours,
   runTone: footerRun.tone,
+  runState: footerRun.state,
 });
 const footerBodyQueue = deriveQueueDisplay({
   mode: DASHBOARD_METRICS.bodyQueueMode,
   backlog: DASHBOARD_METRICS.bodyQueueBacklog,
   drainEstimateHours: DASHBOARD_METRICS.bodyQueueDrainEstimateHours,
   runTone: footerRun.tone,
+  runState: footerRun.state,
 });
 const footerBodyQueueText = footerBodyQueue.state === "active"
   ? `body ${footerBodyQueue.backlog} pending`
   : footerBodyQueue.state === "clear"
     ? "body ready"
     : footerBodyQueue.state === "waiting-for-run"
-      ? "body waiting"
+      ? `body ${footerBodyQueue.backlog ?? "?"} waiting`
       : footerBodyQueue.state === "paused"
         ? "body paused"
         : "body unavailable";
@@ -287,6 +289,7 @@ const footerLastRunRelative = footerLastRunAt
           aria-label={`Collection health: ${footerRunStatus}. ${footerHealthDetail}`}
           title={`Collection health: ${footerRunStatus}. ${footerHealthDetail}`}
           data-run-detail={footerRun.detail}
+          data-run-state={footerRun.state}
           data-summary-queue-backlog={DASHBOARD_METRICS.summaryQueueBacklog}
           data-summary-queue-mode={footerSummaryQueue.mode}
           data-summary-queue-state={footerSummaryQueue.state}
@@ -474,6 +477,9 @@ const footerLastRunRelative = footerLastRunAt
             window.history.state,
             "",
             `${next.pathname}${next.search}${next.hash}`,
+          );
+          window.dispatchEvent(
+            new CustomEvent("techdb:search-query-change", { detail: { query } }),
           );
         };
         let pagefindLoadSettled = false;

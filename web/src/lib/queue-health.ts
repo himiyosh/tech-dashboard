@@ -1,4 +1,4 @@
-import type { WorkerRunTone } from "./run-health.ts";
+import type { WorkerRunState, WorkerRunTone } from "./run-health.ts";
 
 export type QueueMode =
   | "enabled"
@@ -16,10 +16,12 @@ export type QueueDisplayState =
   | "error"
   | "unknown";
 
+export type QueueDisplayTone = WorkerRunTone | "neutral";
+
 export interface QueueDisplay {
   mode: QueueMode;
   state: QueueDisplayState;
-  tone: WorkerRunTone;
+  tone: QueueDisplayTone;
   backlog: number | null;
   showBacklog: boolean;
   labelJa: string;
@@ -33,6 +35,7 @@ export interface QueueDisplayOptions {
   backlog: number | null | undefined;
   drainEstimateHours: number | null | undefined;
   runTone: WorkerRunTone;
+  runState?: WorkerRunState;
 }
 
 function normalizeMode(value: QueueDisplayOptions["mode"]): QueueMode {
@@ -74,6 +77,7 @@ export function deriveQueueDisplay({
   backlog: rawBacklog,
   drainEstimateHours,
   runTone,
+  runState,
 }: QueueDisplayOptions): QueueDisplay {
   const mode = normalizeMode(rawMode);
   const backlog = normalizedCount(rawBacklog);
@@ -127,11 +131,16 @@ export function deriveQueueDisplay({
       modeLabelEn: "status unknown",
     };
   }
-  if (runTone === "err") {
+  if (
+    runState === "missing"
+    || runState === "late"
+    || runState === "failed"
+    || (!runState && runTone === "err")
+  ) {
     return {
       ...common,
       state: "waiting-for-run",
-      tone: "err",
+      tone: "neutral",
       labelJa: "収集再開待ち",
       labelEn: "waiting for a successful run",
       modeLabelJa: "収集再開待ち",

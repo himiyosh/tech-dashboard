@@ -970,6 +970,7 @@ test.describe("TECH Dashboard smoke", () => {
       1279,
       1241,
       1240,
+      1239,
       1181,
       1180,
       1101,
@@ -1075,6 +1076,8 @@ test.describe("TECH Dashboard smoke", () => {
         const bannerInnerRect = bannerInner?.getBoundingClientRect();
         const footerRect = footer?.getBoundingClientRect();
         const footerRunDetail = footer?.querySelector<HTMLElement>(".footer-run-link .mono");
+        const footerStack = footer?.querySelector<HTMLElement>(".footer-stack");
+        const footerBodyQueue = footer?.querySelector<HTMLElement>(".footer-body-queue");
         const rankMetaHeights = items
           .map((item) => item.querySelector<HTMLElement>(".rank-meta")?.getBoundingClientRect().height ?? 0);
         const rankSummaryWidths = items
@@ -1170,6 +1173,9 @@ test.describe("TECH Dashboard smoke", () => {
           footerRunTextOverflow: footerRunDetail
             ? getComputedStyle(footerRunDetail).textOverflow
             : "",
+          footerStackVisible: !!footerStack && getComputedStyle(footerStack).display !== "none",
+          footerBodyQueueVisible:
+            !!footerBodyQueue && getComputedStyle(footerBodyQueue).display !== "none",
           featuredSourceSafe: !!featuredSource
             && (
               featuredSource.scrollWidth <= featuredSource.clientWidth + 1
@@ -1274,6 +1280,13 @@ test.describe("TECH Dashboard smoke", () => {
           metrics.visibleBottom - 8,
         );
         expect(metrics.footerHeight, `width ${width}: footer should stay on one line`).toBeLessThanOrEqual(36);
+        if (width <= 1239) {
+          expect(metrics.footerStackVisible, `width ${width}: compact footer should hide the build stack`).toBe(false);
+          expect(metrics.footerBodyQueueVisible, `width ${width}: compact footer should defer body queue detail`).toBe(false);
+        } else {
+          expect(metrics.footerStackVisible, `width ${width}: wide footer should restore the build stack`).toBe(true);
+          expect(metrics.footerBodyQueueVisible, `width ${width}: wide footer should restore body queue detail`).toBe(true);
+        }
         if (width <= 980) {
           expect(metrics.footerRunTextOverflow, `width ${width}: footer run detail should truncate safely`).toBe("ellipsis");
         }

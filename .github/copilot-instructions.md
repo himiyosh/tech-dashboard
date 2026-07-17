@@ -2208,11 +2208,11 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: summary/bodyの実enqueue数、body backlog、merge数、pending ID、共有上限と残枠をartifact healthへ保存し、canonical fieldを`bodyQueueDrainEstimateHours`へ統一する。Webは旧`bodyDrainEstimateHours`を移行期間だけfallback読込する。Queue表示は全surfaceで共通helperを使い、modeをbacklogより優先し、`enabled`かつbacklog 0だけをclear、run `err`時のETAを収集再開待ちにする。StatusのAI可用性は`published-snapshot`と観測時刻を明示する。記事詳細は本文の`ready`/`queued`/`summary-only`と要約の`ready`/`pending`を別属性で示す。Node Publisherは`heartbeat.v1`をdeferred KV effectsから除外し、Free bridgeのwrite allowlistを広げない。
 - **教訓**: 非同期処理の運用改善は生成器だけで完了しない。producer、永続telemetry、型、API、全表示surface、読者向け状態、テストを同じfield名とoptional semanticsで配線し、未観測を0、待機中を完了、停止中のsnapshotを将来時刻の約束や現在状態として表示しない。telemetryの正本、観測時刻、transport allowlistも同じcontractに含める。
 
-### LL-329: fixed footerのcompact境界はcontent layoutの解放境界へ揃える
-- **事象**: `900px`ではFooterが1行に収まる一方、`901px`だけcompact ruleから外れて約49pxへ2行化し、Top 3と固定Footerの8px安全距離が3-6px不足した。`980px`では横幅が足りるため再び1行になり、狭い中間幅だけが失敗していた。記事詳細ではsummary-only noteがviewport下端へ来た時、desktopの固定Footerがnoteの大部分を覆った。
-- **根本原因**: 本文layoutは`980px`以下でcategory railを解放して1カラム化する契約なのに、Footerの補助情報を畳むbreakpointだけが`900px`で終了していた。同じsqueeze zoneを共有する固定UIと本文でresponsive境界が分岐していた。またbodyのbottom paddingは文書末尾だけを守り、長文途中の要素がviewport下端を通過する際の固定Footerとの重なりを防げなかった。
-- **対策**: Footerのcompact ruleを`721-980px`へ揃え、run状態と時刻を1行で維持しつつ、詳細なbody Queueとbuild stackはStatus画面へ委ねる。desktopの記事詳細だけFooterを通常flowへ戻し、mobileはFooter非表示と固定tabbarを維持する。境界行列の`900/901/980/981px`でFooter高、Top 3下端、安全距離、横overflowを、記事詳細ではnoteとFooterの非交差を実寸検証する。
-- **教訓**: fixed header/footerが本文の利用可能領域を決める場合、本文railの表示切替とfixed UIのcompact切替を別のbreakpointにしない。境界直後だけのsqueeze zoneはpage overflowが無くても縦方向の安全域を壊すため、前後幅で固定UI高と主要panel下端を同時に測る。長文detailでは末尾paddingだけで固定Footerとの非交差を保証せず、route単位で通常flowへ戻す選択肢を持つ。
+### LL-329: fixed footerのcompact境界は実contentの収まりで決める
+- **事象**: `900px`ではFooterが1行に収まる一方、`901px`だけcompact ruleから外れて約49pxへ2行化し、Top 3と固定Footerの8px安全距離が3-6px不足した。後にLinux CIではright railが戻る`1181px`でも同じ2行化が再発し、`1240px`では1行に収まった。記事詳細ではsummary-only noteがviewport下端へ来た時、desktopの固定Footerがnoteの大部分を覆った。
+- **根本原因**: Footerのcompact境界を本文railの表示切替へ機械的に揃え、run detail、時刻、body Queue、build stackが実font metricsで1行へ収まる幅を独立に測っていなかった。またbodyのbottom paddingは文書末尾だけを守り、長文途中の要素がviewport下端を通過する際の固定Footerとの重なりを防げなかった。
+- **対策**: Footerのcompact ruleを`721-1239px`へ広げ、run状態と時刻を1行で維持しつつ、詳細なbody Queueとbuild stackはStatus画面へ委ねる。`1240px`以上だけfull表示を戻す。desktopの記事詳細はFooterを通常flowへ戻し、mobileはFooter非表示と固定tabbarを維持する。境界行列の`900/901/980/981/1180/1181/1239/1240px`でFooter高、Top 3下端、安全距離、補助情報の表示、横overflowを実寸検証する。
+- **教訓**: fixed header/footerが本文の利用可能領域を決める場合、compact境界は近接するlayout breakpointではなく、最も長い実contentがcross-platformで1行へ収まる最初の幅から決める。境界直後だけのsqueeze zoneはpage overflowが無くても縦方向の安全域を壊すため、前後幅で固定UI高と主要panel下端を同時に測る。長文detailでは末尾paddingだけで固定Footerとの非交差を保証せず、route単位で通常flowへ戻す選択肢を持つ。
 
 ### LL-330: Astro frontmatterの未宣言propertyはbuild成功だけでは検出できない
 - **事象**: `EntryCard.astro`が`QueueDisplay`に存在しない`showEstimate`と`estimateHours`を参照し、active QueueでもETA分岐が常にfalseになる状態だった。root typecheck、Astro build、現在snapshotを使うE2Eは成功していた。
@@ -2221,9 +2221,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: Astro componentがtyped view modelを消費する場合、build成功をproperty契約の証拠にしない。表示済み文字列を返す共通helperを単一情報源にし、実dataで現れないstateはunit fixtureとsource contractで固定する。独立reviewで見つかった未宣言fieldは、そのfieldを追加して局所実装を延命するより既存contractへconsumerを戻す。
 
 ### LL-331: cross-platformのfont metrics差には寸法閾値でなくlayoutの安全余白を持たせる
-- **事象**: macOSでは全95件のE2Eが成功した一方、同じcommitとdataを使うLinux CIで`1240x900`のHeroが`265.48px`となり上限`260px`を超え、`1101x844`のFooterも`49.09px`へ2行化して上限`36px`を超えた。retryでも同じ値で、CIの2件だけが再現性を持って失敗した。
-- **根本原因**: Heroは3枚のfact cardを縦に積み、Footerは複数の可変長telemetryをflexで横並びにしていたため、OSと利用fontの文字メトリクス差が各行の高さと必要幅へ累積した。macOSの実寸が閾値に近いまま安全余白がなく、Footerのcompact ruleも`980px`で終了していたため、Linuxでは中間幅だけ折り返した。
-- **対策**: E2Eの`260px`/`36px`閾値は緩めず、orbitが戻る`1240px`以上でfact cardのblock paddingを縮めた。Footerは補助的なbuild stackとbody Queue詳細を隠すcompact範囲を`1180px`まで延長し、`1181px`でfull表示へ戻す。`1101/1180/1181/1240px`を含む既存の境界行列でHero高、Footer高、Top 3との安全距離を検証する。
+- **事象**: macOSでは全95件のE2Eが成功した一方、同じcommitとdataを使うLinux CIで`1240x900`のHeroが`265.48px`となり上限`260px`を超え、`1101x844`のFooterも`49.09px`へ2行化して上限`36px`を超えた。後続releaseでもmacOSの97件は成功したが、Linux CIだけ`1181x844`のFooterが再び`49.09px`となりretryでも失敗した。
+- **根本原因**: Heroは3枚のfact cardを縦に積み、Footerは複数の可変長telemetryをflexで横並びにしていたため、OSと利用fontの文字メトリクス差が各行の高さと必要幅へ累積した。macOSの実寸が閾値に近いまま安全余白がなく、Footerのfull表示をright rail境界の`1181px`へ戻したことで、Linuxでは補助telemetryが再び折り返した。
+- **対策**: E2Eの`260px`/`36px`閾値は緩めず、orbitが戻る`1240px`以上でfact cardのblock paddingを縮めた。Footerは補助的なbuild stackとbody Queue詳細を隠すcompact範囲を`1239px`まで延長し、Linuxで1行表示を確認済みの`1240px`からfull表示へ戻す。`1101/1180/1181/1239/1240px`を含む境界行列でHero高、Footer高、補助情報の表示、Top 3との安全距離を検証する。
 - **教訓**: text-drivenなpanelの寸法は開発OSで閾値内に入るだけでは不十分である。縦stackと横flexには別OSのfont metrics差を吸収する余白を設け、CI差を理由に受け入れ閾値を緩めない。compact切替はviewportの名前ではなく、実コンテンツが単一行へ収まる境界の直前と直後を測って決める。
 
 ### LL-332: 静的siteの未知routeは404 fileとHTTP statusをbuilt previewで検証する

@@ -2244,6 +2244,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: 親子の高さ差を直接計算し、設計許容値2pxに`0.01px`のsubpixel epsilonだけを加えて検証する。touch targetなど物理的な下限はLL-255の安全余白を維持し、製品寸法の閾値自体は緩めない。
 - **教訓**: 関連要素の相対geometryはraw `DOMRect`の完全な境界一致を要求せず、描画丸めより十分小さい明示epsilonを使う。一方、操作寸法やoverflowの実要件はepsilonで救済せず、CSS側に安全余白を持たせる。
 
+### LL-335: abbreviated commit SHAを復元ポイントへ手動展開しない
+- **事象**: `git commit`の成功出力に表示された8文字のSHAからfull SHAを推測して復元ポイントへ記録したところ、直後の`git rev-parse HEAD`で実際のfull SHAと不一致が判明した。
+- **根本原因**: abbreviated SHAは先頭文字だけを保証し、残りのhash値は出力から復元できない。commit成功後の実refを取得せず、未観測のfull SHAを記録した。
+- **対策**: commit直後に`git rev-parse HEAD`を実行し、その出力だけをplan、handoff、checkpoint、PR説明へ記録する。不一致を検出した場合はGit refを変更せず、session artifact側を実測値へ修正する。
+- **教訓**: 復元ポイントのcommit identityは短縮表示や推測から作らない。Gitが保持するexact SHAを取得してから永続記録へ反映する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -17,6 +17,8 @@ tech-dashboard/
 │  │  ├─ techdb-delivery-engineer.agent.md ← 実装担当
 │  │  ├─ techdb-qa-engineer.agent.md       ← read-only QA
 │  │  └─ persona-*.agent.md         ← read-only 利用者回遊
+│  ├─ skills/
+│  │  └─ hallmark/                  ← pinned Hallmark UI design skill
 │  ├─ prompts/                     ← 任意: Copilot CLI prompt 化する場合
 │  └─ workflows/
 │     ├─ ci.yml                     ← 通常 PR / push の検証
@@ -52,7 +54,7 @@ tech-dashboard/
 | Custom agents | `.github/agents/TechDBAgent.agent.md`, `techdb-delivery-engineer.agent.md`, `techdb-qa-engineer.agent.md`, `persona-*.agent.md` | 統括、書き込み実装、read-only QA、利用者回遊を分離 |
 | User-level instruction | VS Code User `Main.instructions.md` | 全プロジェクト共通の応答スタイル |
 | Prompts | `.github/prompts/quality-audit.prompt.md`, `worker-health.prompt.md` | 単発の監査 / Worker health 確認を slash prompt 化 |
-| Skills | `.claude/skills/ai-scrum`, `quality-audit`, `ui-display-guard`, `modern-web-guidance` | `modern-web-guidance` は `skills-lock.json` で外部 skill として追跡。local skills はリポジトリ内ファイルを source of truth とする |
+| Skills | `.github/skills/hallmark`, `.claude/skills/ai-scrum`, `quality-audit`, `self-critique`, `ui-display-guard`, `modern-web-guidance` | Hallmark は pinned upstream canonical folder と attribution を保持。`modern-web-guidance` は `skills-lock.json` で外部 skill として追跡。local skills はリポジトリ内ファイルを source of truth とする |
 | Git hooks | `scripts/git-hooks/pre-commit`, `pre-push` | secret scan / typecheck / unit / web build / E2E / Worker deploy opt-in |
 | CI | `.github/workflows/ci.yml` | dependency audit は soft gate。deploy は行わない |
 | Runtime publisher | `.github/workflows/publisher.yml`, `scripts/run-publisher.ts`, `harness/` | Node 22 で収集、検証、data-only push を行う |
@@ -170,7 +172,7 @@ AI エコシステムアップデートの集約ポータル。ハーネスエ�
 
 ## 5. Dev-time Harness: Skills
 
-> **Skill の原則**: YAML frontmatter に `use when` を明記し、auto-invocation を効かせる。Skill は 1 目的 1 ファイル、500 行以内。
+> **Skill の原則**: YAML frontmatter に `use when` を明記し、auto-invocation を効かせる。ローカル作成 skill は 1 目的 1 ファイル、500 行以内を目安にする。pinned upstream skill はライセンスと provenance を記録し、canonical content を行数調整のために改変しない。
 
 ### 5.1 `add-source` — 新ソース追加
 
@@ -196,6 +198,7 @@ description: Use when user asks to add a new AI update source (RSS, GitHub repo,
 | Skill             | use when                            | 効果                                             |
 | ----------------- | ----------------------------------- | ------------------------------------------------ |
 | `ai-scrum`        | 複数領域の開発 / 要件整理から検証まで必要 | PO / SM / Developer / QA 観点を分けて成果物を検証 |
+| `hallmark`        | 新規 UI、UI redesign、design audit、URL / screenshot の design study | default / audit / redesign / study を使い分け、anti-slop の視覚設計と design DNA 抽出を行う |
 | `ui-display-guard` | モバイル / レスポンシブ UI の表示崩れ修正 | viewport 寸法、固定 UI、overflow、導線操作を Playwright で検証 |
 | `modern-web-guidance` | HTML / CSS / client-side JS / アクセシビリティ / パフォーマンス / セキュリティの実装 | Chrome Modern Web Guidance の use case を search / retrieve し、Baseline、fallback、基礎 guide を確認 |
 | `re-summarize`    | 要約の品質が悪い / プロンプト変更時 | 指定期間のエントリを再要約                       |
@@ -211,6 +214,24 @@ description: Use when user asks to add a new AI update source (RSS, GitHub repo,
 - 検索結果の該当 guide は `npx -y modern-web-guidance@latest retrieve "<id>"` で読み、Astro / CSS の既存構成に最小差分で適用する。
 - 広めの UI / CSS / パフォーマンス / セキュリティ変更では `accessibility`、`css`、`performance`、`security` を基礎 guide として確認する。
 - Baseline Widely available ではない機能は guide の fallback 方針に従う。mobile / fixed / sticky / overflow / z-index / safe-area の表示崩れを伴う場合は `ui-display-guard` も併用する。
+
+---
+
+### 5.4 Hallmark の適用ルール
+
+- `.github/skills/hallmark/` は `nutlope/hallmark` 1.1.0 の
+  `skills/hallmark/` を commit
+  `aeb42fb354ff4efa36ab475773a082315a3af2ce` で固定する。
+- 新規 UI は default、design critique は audit、明示的な redesign は
+  redesign、URL / screenshot からの design DNA 抽出は study を使う。
+- audit は read-only のままにし、redesign は既存 route、component ownership、
+  information architecture、working logic をユーザー承認なく破棄しない。
+- study は design DNA を抽出し、pixel clone を行わない。
+- Hallmark は視覚設計を補助する。TECH Dashboard の brand / token、persona、
+  accessibility、performance、Modern Web Guidance、browser evidence、
+  self-critique、safety / release rules が競合時の優先事項となる。
+- upstream canonical files は改変せず、license と更新手順は
+  `LICENSE` / `UPSTREAM.md` に分離する。
 
 ---
 

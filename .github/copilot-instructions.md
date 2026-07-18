@@ -2334,6 +2334,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: ratioの形式と全体一致は維持しつつ、前後のHTML空白だけを`\s*`で許容する。Publisher生成snapshotのrecorded branchで同じE2Eを通し、未記録branchの`Not recorded`契約も維持する。
 - **教訓**: E2Eでtextの意味を検証するときは、内部空白や数値形式は厳密に守り、template formattingだけが作る前後空白を製品回帰にしない。optional telemetryは未記録と記録済みの両状態を別contractとして扱い、Publisher生成後の実snapshotでも検証する。
 
+### LL-350: vendored skillはcanonical parityとrepository外参照を分けて検証する
+- **事象**: Hallmarkのcanonical skill 106 filesをproject-scoped skillへvendoringすると、Markdown local links 274件のうち261件はcanonical folder内で解決したが、13件はupstream repositoryの`site/`または`docs/`を参照していた。demo siteを追加すると依頼scopeを超え、linkを書き換えるとcanonical parityを失う状態だった。さらにupstreamの`component-cookbook.md`は末尾空行を持ち、新規追加時の`git diff --check`が1件を警告した。
+- **根本原因**: upstream skillはmonorepo内で利用される前提の例示linkを含み、配布対象のcanonical folderとupstream repository全体のreference scopeが一致していなかった。
+- **対策**: `SKILL.md`と`references/**`はSHA-256でbyte parityを検証し、folder内参照の欠落だけをfail-closedにした。repository外の例示linkと既存末尾空行はcanonical textのまま保持し、件数、非vendoring方針、diff-check除外範囲を`UPSTREAM.md`へ記録した。licenseと更新手順もcanonical filesから分離した。
+- **教訓**: 外部skillのvendoringでは「配布対象の完全性」と「upstream monorepo全体のlink解決」を同一視しない。canonical filesは改変せずhash parityを守り、内部参照欠落は失敗、意図的なrepository外参照はprovenance文書で可視化する。demoや依存をlink解決だけのために追加しない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -324,9 +324,9 @@ test.describe("TECH Dashboard smoke", () => {
     expect(expectedTone, "featured importance level should map to an explicit tone").toBe(decisionLinks.importanceTone);
     expect(decisionLinks.importanceClass).toContain("importance-badge");
     expect(decisionLinks.importanceClass).toContain(expectedTone);
-    await expect(page.locator(".featured-label .i18n-ja")).toContainText("Spotlight · 最新の優先記事");
+    await expect(page.locator(".featured-label .i18n-ja")).toContainText("Spotlight · 優先度トップ");
     await expect(page.locator(".featured-label .i18n-en")).toContainText(
-      "Spotlight · latest priority update",
+      "Spotlight · top priority update",
     );
     await expect(page.locator(".featured-label")).not.toContainText(/編集部選定|editor pick/i);
     await expect(page.locator(".top-rank-title .i18n-ja")).toContainText("次に見る Top 3");
@@ -2169,6 +2169,16 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
+  test("Spotlight copy describes priority without claiming newest", async ({ page }) => {
+    await page.goto("/");
+
+    const rationale = page.locator("article.featured .featured-rationale");
+    await expect(rationale.locator(".i18n-ja")).toContainText("優先度トップ");
+    await expect(rationale.locator(".i18n-ja")).not.toContainText("最新");
+    await expect(rationale.locator(".i18n-en")).toContainText("top priority update");
+    await expect(rationale.locator(".i18n-en")).not.toContainText("latest");
+  });
+
   test("language toggle changes html data-lang", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
@@ -2490,18 +2500,33 @@ test.describe("TECH Dashboard smoke", () => {
     for (const lang of ["ja", "en"] as const) {
       const titleVariant = page.locator(`.ed-title > .i18n-${lang}`);
       const fallbackLanguage = await titleVariant.getAttribute("data-title-fallback");
-      const originBadge = titleVariant.locator(".language-fallback-badge");
+      const originBadge = page.locator(
+        `.ed-title-provenance > .i18n-${lang} .language-fallback-badge`,
+      );
+      await expect(titleVariant.locator(".language-fallback-badge")).toHaveCount(0);
       if (fallbackLanguage) {
         await expect(originBadge).toHaveCount(1);
         await expect(originBadge).toHaveAttribute("data-fallback-language", fallbackLanguage);
+        await expect(originBadge).not.toHaveAttribute("aria-hidden", "true");
         const expectedLabel = lang === "ja"
           ? `原題 ${fallbackLanguage.toUpperCase()}`
           : `${fallbackLanguage === "ja" ? "Japanese" : "English"} title`;
         await expect(originBadge.locator(`.i18n-${lang}`)).toHaveText(expectedLabel);
+        await expect(page.getByRole("heading", { level: 1 })).toHaveAttribute(
+          "aria-describedby",
+          "article-title-provenance",
+        );
       } else {
         await expect(originBadge).toHaveCount(0);
       }
     }
+    const activeTitle = page.locator(".ed-title > .i18n-ja .ed-title-text");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveAccessibleName(
+      ((await activeTitle.textContent()) ?? "").trim(),
+    );
+    await expect(page.getByRole("heading", { level: 1 })).not.toHaveAccessibleName(
+      /原題|English title/,
+    );
     const authorityMeta = page.locator('meta[data-pagefind-filter="authority[content]"]');
     await expect(authorityMeta).toHaveCount(1);
     await expect(authorityMeta).toHaveAttribute(
@@ -2549,6 +2574,45 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(generationDisclosure.locator(".i18n-en")).toContainText(
         /English summary is currently available/i,
       );
+    }
+  });
+
+  test("detail title keeps visible provenance outside the semantic heading", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string; titleJa?: string; titleEn?: string }>;
+    };
+    const fallbackEntry = index.entries.find(
+      (entry) => String(entry.titleJa ?? "").trim() && !String(entry.titleEn ?? "").trim(),
+    );
+    if (!fallbackEntry) {
+      test.skip(true, "Current generated corpus has no English-title fallback entry.");
+      return;
+    }
+
+    for (const viewport of [
+      { width: 1280, height: 900 },
+      { width: 390, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto(`/e/${fallbackEntry.id}/`);
+      await page.locator('.lang-btn[data-lang="en"]').click();
+
+      const heading = page.getByRole("heading", { level: 1 });
+      await expect(heading).toHaveAccessibleName(fallbackEntry.titleJa!.trim());
+      await expect(heading).toHaveAccessibleDescription("Japanese title");
+      await expect(heading).toHaveAttribute("aria-describedby", "article-title-provenance");
+      await expect(heading).not.toContainText(/Japanese title|原題 JA/);
+      await expect(heading.locator(".language-fallback-badge")).toHaveCount(0);
+
+      const provenance = page.locator(
+        '.ed-title-provenance > .i18n-en .language-fallback-badge[data-fallback-language="ja"]',
+      );
+      await expect(provenance).toBeVisible();
+      await expect(provenance).not.toHaveAttribute("aria-hidden", "true");
+      await expect(provenance.locator(".i18n-en")).toHaveText("Japanese title");
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+        .toBe(true);
     }
   });
 
@@ -4370,6 +4434,7 @@ test.describe("TECH Dashboard smoke", () => {
           filters: { authority: [authority], importance: [importance], publishedDay: [publishedDay] },
         }),
       });
+
       pagefind.search = async () => ({
         results: [
           result("/categories/", "Agent categories", "source", "3", "2026-07-20"),
@@ -4401,6 +4466,85 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(hits.first().locator(".search-hit-meta")).toContainText("High importance");
     await input.press("Enter");
     await expect(page).toHaveURL(/\/search\/\?q=agent$/);
+  });
+
+  test("pagefind scans a bounded candidate window before applying recency ranking", async ({ page }) => {
+    await page.goto("/");
+    await expect
+      .poll(() => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"))
+      .toBe(true);
+    await page.evaluate(() => {
+      const pagefind = (window as any).__pagefind;
+      (window as any).__tailCandidateHydrations = 0;
+      const result = (
+        url: string,
+        title: string,
+        publishedDay: string,
+        exact = true,
+      ) => ({
+        data: async () => ({
+          url,
+          meta: {
+            title,
+            titleEn: title,
+            summaryEn: exact
+              ? `${title} explains usage metrics for engineering teams.`
+              : "A nearby Pagefind candidate without the requested phrase.",
+          },
+          excerpt: exact
+            ? `${title} explains usage metrics for engineering teams.`
+            : "A nearby Pagefind candidate without the requested phrase.",
+          filters: {
+            authority: ["official"],
+            importance: ["2"],
+            publishedDay: [publishedDay],
+          },
+        }),
+      });
+      pagefind.search = async () => ({
+        results: [
+          ...Array.from({ length: 12 }, (_, index) =>
+            result(
+              `/e/usage-metrics-archive-${index}/`,
+              `Usage metrics archive ${index}`,
+              `2026-06-${String(index + 1).padStart(2, "0")}`,
+            )),
+          ...Array.from({ length: 77 }, (_, index) =>
+            result(
+              `/t/nearby-${index}/`,
+              `Nearby developer tooling ${index}`,
+              "2026-07-01",
+              false,
+            )),
+          result(
+            "/e/usage-metrics-current/",
+            "Usage metrics current release",
+            "2026-07-20",
+          ),
+          ...Array.from({ length: 2 }, (_, index) => ({
+            data: async () => {
+              (window as any).__tailCandidateHydrations += 1;
+              return {
+                url: `/t/tail-${index}/`,
+                meta: { title: `Tail candidate ${index}` },
+                excerpt: "A candidate after the bounded search window.",
+                filters: {},
+              };
+            },
+          })),
+        ],
+      });
+    });
+
+    await page.locator("button[data-search-trigger]:visible").first().click();
+    await page.locator("#pagefind-search-input").fill("usage metrics");
+    await expect(page.locator(".search-hit").first()).toHaveAttribute(
+      "href",
+      "/e/usage-metrics-current/",
+    );
+    await expect
+      .poll(() => page.evaluate(() => (window as any).__tailCandidateHydrations))
+      .toBe(0);
   });
 
   test("pagefind progressively resolves exact articles beyond the first result batch", async ({ page }) => {

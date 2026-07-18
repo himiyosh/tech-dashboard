@@ -2341,7 +2341,13 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: `SKILL.md`と`references/**`はSHA-256でbyte parityを検証し、folder内参照の欠落だけをfail-closedにした。repository外の例示linkと既存末尾空行はcanonical textのまま保持し、件数、非vendoring方針、diff-check除外範囲を`UPSTREAM.md`へ記録した。licenseと更新手順もcanonical filesから分離した。
 - **教訓**: 外部skillのvendoringでは「配布対象の完全性」と「upstream monorepo全体のlink解決」を同一視しない。canonical filesは改変せずhash parityを守り、内部参照欠落は失敗、意図的なrepository外参照はprovenance文書で可視化する。demoや依存をlink解決だけのために追加しない。
 
-### LL-351: 手動enrichment修復はPublisher最終化へ共有しないと再び蓄積する
+### LL-351: 後段rankingは必要な候補母集団を確保してから早期終了する
+- **事象**: HomeのTickerには当日公開のCopilot記事が4件あったが、`Copilot`検索の上位は3日以上前の記事だった。Pagefindのraw候補を実測すると当日記事はindex 56-59に存在したが、検索clientは先頭batchでexact articleが12件集まると候補hydrationを終了していた。
+- **根本原因**: authority、importance、鮮度の後段sortはhydration済み候補にしか適用できないのに、終了条件をexact件数だけで決めてPagefindの近似順位を候補母集団として固定していた。後段rankingが正しくても、新しいexact hitを読む前に終了すると鮮度signalを比較できない。
+- **対策**: 30件batchと既存deadlineを維持しつつ、実測位置に1 batchの余裕を加えた90候補を確認してからexact件数による早期終了を許可した。E2Eは先頭12件の古いexact hit、途中77件の近似候補、index 89の新しいexact hit、window外2件を用意し、新しい候補が後段sortで先頭になりwindow外をhydrateしないことを固定した。
+- **教訓**: approximate search engineの結果へ独自rankingを重ねる場合、表示件数と候補走査件数を分離する。早期終了は「十分な表示件数」だけでなく、ranking signalを比較できる最小候補windowを満たしてから行い、実corpusのraw候補位置とdeterministic fixtureの両方で検証する。
+
+### LL-352: 手動enrichment修復はPublisher最終化へ共有しないと再び蓄積する
 - **事象**: 日次監査で`titleEn`欠落が180/1,772件を超え、最新snapshotでは184件中180件を既存`titleen:fill`で安全に補完できた。CLIは以前から存在したが、毎回のNode Publisherは同じ補完を実行していなかった。
 - **根本原因**: `summaryEn`生成後の手動migrationと、継続してartifactを作るPublisherの最終化契約が分離していた。手動apply後も新しい日本語community entryが増えるたびに`titleEn`欠落が再蓄積した。
 - **対策**: `harness/pipeline/title-en.ts`へsentence-awareな導出とlegacy補正を集約し、手動CLIとPublisherが同じhelperを使うようにした。pending、contaminated、source title echo、導出後にsummaryをbare title echo化する1文要約は補完対象から除外する。

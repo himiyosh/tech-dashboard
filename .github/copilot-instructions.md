@@ -2322,7 +2322,13 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: `initialVisibleSourceCount`をdefault filterと同じ分岐から算出し、JA/ENのSSR表示へ共有した。実corpusに依存しないsource contract testで、all branchと2つの表示箇所が同じ値を使うことを固定した。
 - **教訓**: SSRとclient filterが共存する一覧では、初期選択、row visibility、件数、ARIAを同じdefault stateから導出する。現在corpusが片方の分岐しか持たない場合は、source contractまたはpure fixtureで未出現分岐を別途固定する。
 
-### LL-348: vendored skillはcanonical parityとrepository外参照を分けて検証する
+### LL-348: 高cardinalityなAstro buildではroute単位logをCIへ流し続けない
+- **事象**: 6,609 fileを生成するmain CIのWeb buildが、Astroの静的route logを約245KB出力した途中で停止した。再実行ではActionsの受信時刻が`22:26`なのにAstro内部時刻が`22:12`のroute行が現れ、14分以上log transportが進まないままstepがcancelされた。route logを完全silent化した次のrunも、今度はbuild開始から約10分間出力がなくcancelされた。typecheck、unit、同commitのlocal buildは成功していた。
+- **根本原因**: build成果物の検証に不要なroute単位の詳細logを数千行流す経路と、長時間buildで全く出力しない経路の両極端を作っていた。前者はlog I/O、後者はrunner/providerの無出力監視に弱い。GitHub側の最終cancel理由は明記されていないため、provider停止との比率は断定しない。
+- **対策**: Astro本体は`--silent`でroute logを抑制し、Node wrapperが30秒ごとに1行だけASCII heartbeatを出す。終了code/signalをfail-closedで伝播し、Pagefindは従来どおりindex結果を出力する。production build、CI、pre-push、Playwright webServerは同じwrapperを共有し、config testでsilent spawn、heartbeat、timer cleanup、Pagefind継続を固定する。
+- **教訓**: 高cardinalityな静的siteではbuildの成功判定に必要なsummaryと低頻度heartbeatだけをCIへ出し、routeごとの生成logも完全な無出力も避ける。timeoutを延長する前に、CPU、file数、log量、最終出力時刻を分けて測り、生成物と検索indexのcontractを維持したままI/Oをboundedにする。
+
+### LL-349: vendored skillはcanonical parityとrepository外参照を分けて検証する
 - **事象**: Hallmarkのcanonical skill 106 filesをproject-scoped skillへvendoringすると、Markdown local links 274件のうち261件はcanonical folder内で解決したが、13件はupstream repositoryの`site/`または`docs/`を参照していた。demo siteを追加すると依頼scopeを超え、linkを書き換えるとcanonical parityを失う状態だった。さらにupstreamの`component-cookbook.md`は末尾空行を持ち、新規追加時の`git diff --check`が1件を警告した。
 - **根本原因**: upstream skillはmonorepo内で利用される前提の例示linkを含み、配布対象のcanonical folderとupstream repository全体のreference scopeが一致していなかった。
 - **対策**: `SKILL.md`と`references/**`はSHA-256でbyte parityを検証し、folder内参照の欠落だけをfail-closedにした。repository外の例示linkと既存末尾空行はcanonical textのまま保持し、件数、非vendoring方針、diff-check除外範囲を`UPSTREAM.md`へ記録した。licenseと更新手順もcanonical filesから分離した。

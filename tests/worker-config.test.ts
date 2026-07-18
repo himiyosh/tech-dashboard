@@ -108,8 +108,8 @@ describe("Cloudflare Worker deploy config", () => {
     const e2eTimeout = ciWorkflow
       .slice(e2eStart)
       .match(/timeout-minutes:\s*(\d+)/);
-    expect(Number(unitTimeout?.[1])).toBeGreaterThanOrEqual(25);
-    expect(Number(e2eTimeout?.[1])).toBeGreaterThanOrEqual(25);
+    expect(Number(unitTimeout?.[1])).toBeGreaterThanOrEqual(45);
+    expect(Number(e2eTimeout?.[1])).toBeGreaterThanOrEqual(45);
     expect(webPackage.scripts?.build).toContain("node scripts/build-astro.mjs");
     expect(webPackage.scripts?.build).toContain("pagefind --site dist");
     expect(astroBuildRunner).toContain('spawn(command, ["build", "--silent"]');

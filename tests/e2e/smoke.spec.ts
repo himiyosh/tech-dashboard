@@ -2863,7 +2863,7 @@ test.describe("TECH Dashboard smoke", () => {
     const enrichmentBudgetState = await enrichmentBudgetMetric.getAttribute("data-telemetry-state");
     expect(enrichmentBudgetState).toMatch(/^(recorded|not-recorded)$/);
     if (enrichmentBudgetState === "recorded") {
-      await expect(enrichmentBudgetMetric.locator("strong")).toHaveText(/^\d+\/\d+$/);
+      await expect(enrichmentBudgetMetric.locator("strong")).toHaveText(/^\s*\d+\/\d+\s*$/);
     } else {
       await expect(enrichmentBudgetMetric.locator("strong > .i18n-en")).toHaveText("Not recorded");
       await expect(enrichmentBudgetMetric.locator("small > .i18n-en")).toContainText(

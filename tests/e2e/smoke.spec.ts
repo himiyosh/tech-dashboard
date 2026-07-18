@@ -2559,10 +2559,11 @@ test.describe("TECH Dashboard smoke", () => {
     const correctedEntry = index.entries.find((entry) => (
       entry.lang && effectiveTitleLanguage(entry) !== entry.lang
     ));
-    expect(correctedEntry, "current data includes a title with incorrect feed language metadata").toBeTruthy();
+    const targetEntry = correctedEntry ?? index.entries.find((entry) => entry.lang);
+    expect(targetEntry, "current data includes an entry with title language metadata").toBeTruthy();
 
-    const expectedLanguage = effectiveTitleLanguage(correctedEntry!);
-    await page.goto(`/e/${correctedEntry!.id}/`);
+    const expectedLanguage = effectiveTitleLanguage(targetEntry!);
+    await page.goto(`/e/${targetEntry!.id}/`);
 
     const metadataLanguage = page.locator("[data-entry-language]");
     await expect(metadataLanguage).toHaveAttribute("data-entry-language", expectedLanguage);

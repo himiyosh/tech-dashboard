@@ -97,6 +97,7 @@
 
 ### R-013: publisher は publish 前に summary fallback を適用し、index を本文フリーに保つ
 - production Node publisher は `data/index.json` を commit する前に deterministic **summary** fallback を全 live entry に適用し、`summaryJa` / `summaryEn` のいずれかが空の payload を publish しない (両言語必須)。本文は fallback 対象にしない。
+- `titleEn` が空で、実 `summaryEn` の先頭文から安全に導出できる場合は publish 前に自動補完する。pending / contaminated / bare title echo の要約や source-language title のコピーを `titleEn` へ書かず、手動 `titleen:fill` と Publisher は `harness/pipeline/title-en.ts` の同じ品質契約を使う。
 - publisher は publish 時に index entry の `bodyJa` / `bodyEn` を**必ず空にする** (LL-115)。`s:` cache hit が旧 body を持っていても index には載せない (LL-073 family: stale cache 由来の本文混入で index を再肥大化させない)。本文は `data/bodies.json` 経路でのみ更新する。
 - 英語タイトルのみの entry でも `summaryJa` は決定的な日本語テンプレートで埋める。逆も同様。JA / EN UI で cross-language fallback バッジを出さないこと (LL-028)。
 - `isDeterministicFallbackEntry` (web) / `needsGeneratedContent` (worker) はいずれも**要約のみ**で fallback 判定する。本文の有無で publishable を切り替えない (LL-107/LL-112)。
@@ -2339,6 +2340,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: upstream skillはmonorepo内で利用される前提の例示linkを含み、配布対象のcanonical folderとupstream repository全体のreference scopeが一致していなかった。
 - **対策**: `SKILL.md`と`references/**`はSHA-256でbyte parityを検証し、folder内参照の欠落だけをfail-closedにした。repository外の例示linkと既存末尾空行はcanonical textのまま保持し、件数、非vendoring方針、diff-check除外範囲を`UPSTREAM.md`へ記録した。licenseと更新手順もcanonical filesから分離した。
 - **教訓**: 外部skillのvendoringでは「配布対象の完全性」と「upstream monorepo全体のlink解決」を同一視しない。canonical filesは改変せずhash parityを守り、内部参照欠落は失敗、意図的なrepository外参照はprovenance文書で可視化する。demoや依存をlink解決だけのために追加しない。
+
+### LL-351: 手動enrichment修復はPublisher最終化へ共有しないと再び蓄積する
+- **事象**: 日次監査で`titleEn`欠落が180/1,772件を超え、最新snapshotでは184件中180件を既存`titleen:fill`で安全に補完できた。CLIは以前から存在したが、毎回のNode Publisherは同じ補完を実行していなかった。
+- **根本原因**: `summaryEn`生成後の手動migrationと、継続してartifactを作るPublisherの最終化契約が分離していた。手動apply後も新しい日本語community entryが増えるたびに`titleEn`欠落が再蓄積した。
+- **対策**: `harness/pipeline/title-en.ts`へsentence-awareな導出とlegacy補正を集約し、手動CLIとPublisherが同じhelperを使うようにした。pending、contaminated、source title echo、導出後にsummaryをbare title echo化する1文要約は補完対象から除外する。
+- **教訓**: 繰り返し生成されるartifactの品質修復を手動CLIだけへ置かない。安全なpure変換は生成器の最終artifact境界へ組み込み、CLI、Publisher、品質判定、回帰testを同じcontractへ揃える。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

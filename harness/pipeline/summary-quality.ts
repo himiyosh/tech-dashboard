@@ -61,20 +61,27 @@ export function isBareTitleEcho(
   );
 }
 
+export function isUsableSummaryText(
+  value: string | null | undefined,
+  titles: ReadonlyArray<string | null | undefined> = [],
+): boolean {
+  const text = (value ?? "").trim();
+  return Boolean(
+    text &&
+      !isDeterministicPendingSummaryText(text) &&
+      !isContaminatedSummaryText(text) &&
+      !isBareTitleEcho(text, titles),
+  );
+}
+
 export function hasUsableBilingualSummary(
   input: SummaryQualityInput,
   additionalTitleCandidates: ReadonlyArray<string | null | undefined> = [],
 ): boolean {
   const titles = [input.title, input.titleJa, input.titleEn, ...additionalTitleCandidates];
-  return [input.summaryJa, input.summaryEn].every((summary) => {
-    const value = (summary ?? "").trim();
-    return Boolean(
-      value &&
-        !isDeterministicPendingSummaryText(value) &&
-        !isContaminatedSummaryText(value) &&
-        !isBareTitleEcho(value, titles),
-    );
-  });
+  return [input.summaryJa, input.summaryEn].every((summary) =>
+    isUsableSummaryText(summary, titles)
+  );
 }
 
 export function needsSummaryGeneration(input: SummaryQualityInput): boolean {

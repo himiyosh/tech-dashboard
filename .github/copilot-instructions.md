@@ -97,6 +97,7 @@
 
 ### R-013: publisher は publish 前に summary fallback を適用し、index を本文フリーに保つ
 - production Node publisher は `data/index.json` を commit する前に deterministic **summary** fallback を全 live entry に適用し、`summaryJa` / `summaryEn` のいずれかが空の payload を publish しない (両言語必須)。本文は fallback 対象にしない。
+- `titleEn` が空で、実 `summaryEn` の先頭文から安全に導出できる場合は publish 前に自動補完する。pending / contaminated / bare title echo の要約や source-language title のコピーを `titleEn` へ書かず、手動 `titleen:fill` と Publisher は `harness/pipeline/title-en.ts` の同じ品質契約を使う。
 - publisher は publish 時に index entry の `bodyJa` / `bodyEn` を**必ず空にする** (LL-115)。`s:` cache hit が旧 body を持っていても index には載せない (LL-073 family: stale cache 由来の本文混入で index を再肥大化させない)。本文は `data/bodies.json` 経路でのみ更新する。
 - 英語タイトルのみの entry でも `summaryJa` は決定的な日本語テンプレートで埋める。逆も同様。JA / EN UI で cross-language fallback バッジを出さないこと (LL-028)。
 - `isDeterministicFallbackEntry` (web) / `needsGeneratedContent` (worker) はいずれも**要約のみ**で fallback 判定する。本文の有無で publishable を切り替えない (LL-107/LL-112)。
@@ -2345,6 +2346,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: authority、importance、鮮度の後段sortはhydration済み候補にしか適用できないのに、終了条件をexact件数だけで決めてPagefindの近似順位を候補母集団として固定していた。後段rankingが正しくても、新しいexact hitを読む前に終了すると鮮度signalを比較できない。
 - **対策**: 30件batchと既存deadlineを維持しつつ、実測位置に1 batchの余裕を加えた90候補を確認してからexact件数による早期終了を許可した。E2Eは先頭12件の古いexact hit、途中77件の近似候補、index 89の新しいexact hit、window外2件を用意し、新しい候補が後段sortで先頭になりwindow外をhydrateしないことを固定した。
 - **教訓**: approximate search engineの結果へ独自rankingを重ねる場合、表示件数と候補走査件数を分離する。早期終了は「十分な表示件数」だけでなく、ranking signalを比較できる最小候補windowを満たしてから行い、実corpusのraw候補位置とdeterministic fixtureの両方で検証する。
+
+### LL-352: 手動enrichment修復はPublisher最終化へ共有しないと再び蓄積する
+- **事象**: 日次監査で`titleEn`欠落が180/1,772件を超え、最新snapshotでは184件中180件を既存`titleen:fill`で安全に補完できた。CLIは以前から存在したが、毎回のNode Publisherは同じ補完を実行していなかった。
+- **根本原因**: `summaryEn`生成後の手動migrationと、継続してartifactを作るPublisherの最終化契約が分離していた。手動apply後も新しい日本語community entryが増えるたびに`titleEn`欠落が再蓄積した。
+- **対策**: `harness/pipeline/title-en.ts`へsentence-awareな導出とlegacy補正を集約し、手動CLIとPublisherが同じhelperを使うようにした。pending、contaminated、source title echo、導出後にsummaryをbare title echo化する1文要約は補完対象から除外する。
+- **教訓**: 繰り返し生成されるartifactの品質修復を手動CLIだけへ置かない。安全なpure変換は生成器の最終artifact境界へ組み込み、CLI、Publisher、品質判定、回帰testを同じcontractへ揃える。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

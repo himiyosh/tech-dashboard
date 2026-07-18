@@ -14,6 +14,7 @@ import {
   keywordFilterEntryFromNormalized,
 } from "../../harness/pipeline/source-filter.ts";
 import { applyTags, normalizeTags } from "../../harness/pipeline/tag.ts";
+import { fillMissingTitleEnEntries } from "../../harness/pipeline/title-en.ts";
 import { canonicalUrlKey, normalizeMediaUrl } from "../../harness/pipeline/url.ts";
 import { applyDeterministicContentFallback } from "./content-fallback.ts";
 import {
@@ -1517,7 +1518,14 @@ export async function runHarness(
     return result.entry;
   });
   const retainedEntries = contentReady.filter((entry) => entry.archiveTier !== "dropped");
-  const finalEntries = retainedEntries.slice(0, INDEX_LIMIT);
+  const cappedEntries = retainedEntries.slice(0, INDEX_LIMIT);
+  const titleEnCompletion = fillMissingTitleEnEntries(cappedEntries);
+  const finalEntries = titleEnCompletion.entries;
+  if (titleEnCompletion.counts.totalUpdated > 0) {
+    console.log(
+      `[worker] completed titleEn derived=${titleEnCompletion.counts.fromSummaryEn}, corrected=${titleEnCompletion.counts.correctedDerivedTitles}`,
+    );
+  }
   const fallbackTotal = finalEntries.filter(needsGeneratedContent).length;
   const fallbackPercent = finalEntries.length === 0 ? 0 : Math.round((fallbackTotal / finalEntries.length) * 100);
   const summaryQueueBatch = selectSummaryJobBatch(

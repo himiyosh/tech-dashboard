@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import { spawnSync } from "child_process";
 import { readFileSync } from "fs";
+import { createRequire } from "module";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { describe, expect, it } from "vitest";
@@ -15,13 +16,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const INDEX_PATH = join(ROOT, "data", "index.json");
 const SCRIPT_PATH = join(ROOT, "scripts", "fill-title-en.mjs");
+const require = createRequire(import.meta.url);
+const TSX_CLI_PATH = require.resolve("tsx/cli");
 
 function sha256(path: string) {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
 
 function runCli(args: string[]) {
-  return spawnSync(process.execPath, [SCRIPT_PATH, ...args], {
+  return spawnSync(process.execPath, [TSX_CLI_PATH, SCRIPT_PATH, ...args], {
     cwd: ROOT,
     encoding: "utf8",
   });
@@ -77,7 +80,7 @@ describe("fill-title-en pure helpers", () => {
         {
           title: "日本語タイトル",
           titleEn: "",
-          summaryEn: "The article explains how the release improves model evaluation quality.",
+          summaryEn: "The article explains how the release improves model evaluation quality. It also covers rollout tradeoffs.",
         },
         {
           title: "別の日本語タイトル",
@@ -97,6 +100,28 @@ describe("fill-title-en pure helpers", () => {
     });
     expect(nextData.entries[0].titleEn).toBe("The article explains how the release improves model evaluation quality");
     expect(nextData.entries[1].titleEn ?? "").toBe("");
+  });
+
+  it("does not create a title that turns a one-sentence summary into a title echo", () => {
+    const summaryEn = "The article explains how the release improves model evaluation quality.";
+    expect(
+      deriveTitleEnFromEntry({
+        title: "日本語タイトル",
+        titleEn: "",
+        summaryEn,
+      }),
+    ).toBe("");
+  });
+
+  it("does not copy a source-language title from the start of a multi-sentence summary", () => {
+    expect(
+      deriveTitleEnFromEntry({
+        title: "日本語タイトル",
+        titleJa: "日本語タイトル",
+        titleEn: "",
+        summaryEn: "日本語タイトル. The article explains the release.",
+      }),
+    ).toBe("");
   });
 
   it("repairs only exact legacy-derived existing titleEn values", () => {

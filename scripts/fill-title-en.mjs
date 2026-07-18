@@ -3,155 +3,33 @@
 import { readFileSync, writeFileSync, renameSync, unlinkSync } from "fs";
 import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
+import {
+  deriveTitleEnFromEntry,
+  extractLegacyTitleFromSummary,
+  extractTitleFromSummary,
+  fillMissingTitleEnEntries,
+  shouldCorrectLegacyDerivedTitle,
+} from "../harness/pipeline/title-en.ts";
+
+export {
+  deriveTitleEnFromEntry,
+  extractLegacyTitleFromSummary,
+  extractTitleFromSummary,
+  shouldCorrectLegacyDerivedTitle,
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const ROOT = join(__dirname, "..");
 const INDEX_PATH = join(ROOT, "data", "index.json");
 
-export const FALLBACK_MARKERS = [
-  "AI summary",
-  "このエントリは",
-  "このエントリ",
-  "の関連アップデート",
-  "関連アップデート。AI 要約未生成",
-  "Update related to",
-  "AI-generated summary",
-];
-
-export function isFallbackSummary(text) {
-  const value = typeof text === "string" ? text.trim() : "";
-  if (!value) return true;
-  return FALLBACK_MARKERS.some((marker) => value.includes(marker));
-}
-
-function clampTitle(title) {
-  const line = String(title ?? "").trim().replace(/[.!?]+$/, "").trim();
-  if (!line) return "";
-  if (line.length <= 80) return line;
-  const trimmed = line.slice(0, 80);
-  const lastSpace = trimmed.lastIndexOf(" ");
-  return lastSpace > 40 ? `${trimmed.slice(0, lastSpace)}…` : `${trimmed}…`;
-}
-
-export function extractLegacyTitleFromSummary(summary) {
-  const line = String(summary ?? "").split("\n")[0].trim();
-  if (!line) return "";
-  const sentenceEnd = line.search(/[.!?]/);
-  if (sentenceEnd > 10 && sentenceEnd <= 120) {
-    return line.slice(0, sentenceEnd).trim();
-  }
-  return clampTitle(line);
-}
-
-function normalizeSummary(summary) {
-  return String(summary ?? "").replace(/\s+/g, " ").trim();
-}
-
-function fallbackSentenceMatch(text) {
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    if (!/[.!?]/.test(char)) continue;
-    if (char === "!") {
-      if (i < text.length - 1 && !/\s/.test(text[i + 1])) continue;
-      return text.slice(0, i + 1);
-    }
-    if (char === "?") {
-      if (i < text.length - 1 && !/\s/.test(text[i + 1])) continue;
-      return text.slice(0, i + 1);
-    }
-    const next = text[i + 1] ?? "";
-    if (next && !/\s/.test(next)) continue;
-    const nextNonSpace = text.slice(i + 1).trimStart()[0] ?? "";
-    if (nextNonSpace && !/["'([{A-Z0-9]/.test(nextNonSpace)) continue;
-    return text.slice(0, i + 1);
-  }
-  return text;
-}
-
-export function extractTitleFromSummary(summary) {
-  const text = normalizeSummary(summary);
-  if (!text) return "";
-  if (typeof Intl?.Segmenter === "function") {
-    const segments = new Intl.Segmenter("en", { granularity: "sentence" }).segment(text);
-    for (const segment of segments) {
-      const rawSegment = segment.segment;
-      if (!rawSegment?.trim()) continue;
-      const segmentText = rawSegment.replace(/\s+$/, "");
-      const terminalMatch = segmentText.match(/[.!?]+$/);
-      if (terminalMatch) {
-        const punctuationIndex = segment.index + segmentText.length - terminalMatch[0].length;
-        const nextChar = text[punctuationIndex + terminalMatch[0].length] ?? "";
-        if (nextChar && !/\s/.test(nextChar)) {
-          return clampTitle(fallbackSentenceMatch(text));
-        }
-      }
-      const candidate = clampTitle(segment.segment);
-      if (candidate) return candidate;
-    }
-  }
-  return clampTitle(fallbackSentenceMatch(text));
-}
-
-export function deriveTitleEnFromEntry(entry) {
-  const summaryEn = (entry?.summaryEn ?? "").trim();
-  if (!summaryEn || isFallbackSummary(summaryEn)) return "";
-
-  return extractTitleFromSummary(summaryEn);
-}
-
-export function shouldCorrectLegacyDerivedTitle(entry) {
-  const existing = (entry?.titleEn ?? "").trim();
-  if (!existing) return false;
-  const originalTitle = (entry?.title ?? "").trim();
-  if (originalTitle && existing === originalTitle) return false;
-  const summaryEn = (entry?.summaryEn ?? "").trim();
-  if (!summaryEn || isFallbackSummary(summaryEn)) return false;
-  const legacy = extractLegacyTitleFromSummary(summaryEn);
-  const derived = extractTitleFromSummary(summaryEn);
-  return existing === legacy && derived !== legacy;
-}
-
 export function fillMissingTitleEn(data) {
   const entries = Array.isArray(data?.entries) ? data.entries : [];
-  let alreadySet = 0;
-  let missing = 0;
-  let fromSummaryEn = 0;
-  let correctedDerivedTitles = 0;
-  let pendingOrFallback = 0;
-
-  const nextEntries = entries.map((entry) => {
-    const existing = (entry?.titleEn ?? "").trim();
-    const derived = deriveTitleEnFromEntry(entry);
-    if (existing) {
-      if (derived && shouldCorrectLegacyDerivedTitle(entry)) {
-        correctedDerivedTitles++;
-        return { ...entry, titleEn: derived };
-      }
-      alreadySet++;
-      return entry;
-    }
-
-    missing++;
-    if (!derived) {
-      pendingOrFallback++;
-      return entry;
-    }
-
-    fromSummaryEn++;
-    return { ...entry, titleEn: derived };
-  });
+  const { entries: nextEntries, counts } = fillMissingTitleEnEntries(entries);
 
   return {
     nextData: { ...data, entries: nextEntries },
-    counts: {
-      alreadySet,
-      missing,
-      fromSummaryEn,
-      correctedDerivedTitles,
-      pendingOrFallback,
-      totalUpdated: fromSummaryEn + correctedDerivedTitles,
-    },
+    counts,
   };
 }
 

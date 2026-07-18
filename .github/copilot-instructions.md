@@ -1490,9 +1490,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: automated publisher の互換性 gate は最終 commit だけでなく、commit 前に発生する Queue、KV、object storage など全副作用へ伝播する。既存 legacy data と新しい unversioned write を区別できる migration marker を持たせ、consumer-first の rollout 順序まで contract に含める。
 
 ### LL-209: Pagefind build の timeout は実測時間と job 全体の予算に余裕を持たせる
-- **事象**: `npm run build:web` は成功したが、続く `npm run test:e2e` が test 実行前の webServer 起動待ちで 180 秒 timeout した。後の PR CI では unit / typecheck が成功した後、Pagefind を含む Web build が job 開始から 5 分の上限で cancel され、E2E が skip された。さらに 2026-07-16 の PR #143 では local の全 95 E2E と CI の unit / build が成功した一方、E2E job が assertion を開始する前の静的 build 中に 15 分上限で cancel された。E2E 上限を 25 分へ広げた次の run でも、unit job の Web build が 10 分上限を超え、GitHub 上では cancel 処理を含む 15 分後に終了して E2E が skip された。
-- **根本原因**: data 増加に比例する Pagefind build に対し、`playwright.config.ts` と CI job 全体の timeout が固定の小さい値だった。CI job には dependency install、Playwright browser install、静的 build、全 E2E が含まれ、cloud runner 上の build 時間も変動するため、local の test 実行時間や過去の最速 run だけを上限の根拠にできない。
-- **対策**: Playwright webServer timeout を 300 秒、CI の unit + typecheck + web build job と E2E job をともに 25 分へ広げ、build と E2E は LL-047 のとおり逐次実行する。`tests/worker-config.test.ts` で両 job の 25 分以上を固定する。E2E failure は test assertion、preview 起動 timeout、job 全体の timeout を分け、build log の phase 別所要時間で切り分ける。
+- **事象**: `npm run build:web` は成功したが、続く `npm run test:e2e` が test 実行前のwebServer起動待ちで180秒timeoutした。後のPR CIではunit/typecheck成功後、Pagefindを含むWeb buildがjob上限でcancelされE2Eがskipされた。2026-07-18にはbounded heartbeat導入後も、E2E jobが25分上限、別runnerではunit/Web build jobが25分上限へ到達した。どちらもlocalの全97 E2Eと別CI runの同一buildは成功し、assertion failureは出ていなかった。
+- **根本原因**: data増加に比例するstatic buildと全E2Eに対し、Playwright webServerとCI job全体のtimeoutがcloud runnerの停止・速度変動へ十分な余裕を持っていなかった。heartbeatは無出力cancelを防ぐが、job全体のhard limitは延長しない。dependency install、browser install、static build、全E2Eの合計予算と、個々のbuild時間を分けて設計する必要がある。
+- **対策**: Playwright webServer timeoutを300秒、CIのunit + typecheck + web build jobとE2E jobをともに45分へ広げ、buildとE2EはLL-047のとおり逐次実行する。`tests/worker-config.test.ts`で両jobの45分以上を固定する。E2E failureはtest assertion、preview起動timeout、job全体のtimeout、runner cancelを分け、build logのphase別所要時間で切り分ける。
 - **教訓**: static page と検索 index が data 件数に比例して増えるサイトでは、E2E webServer と CI job 全体の timeout を固定の小さい値にしない。通常 build と前処理の実測値に十分な余裕を持たせ、timeout 延長で assertion failure を隠さない。
 
 ### LL-210: data migration 後も全 artifact の U+FFFD を schema gate で検出する
@@ -2328,7 +2328,13 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: Astro本体は`--silent`でroute logを抑制し、Node wrapperが30秒ごとに1行だけASCII heartbeatを出す。終了code/signalをfail-closedで伝播し、Pagefindは従来どおりindex結果を出力する。production build、CI、pre-push、Playwright webServerは同じwrapperを共有し、config testでsilent spawn、heartbeat、timer cleanup、Pagefind継続を固定する。
 - **教訓**: 高cardinalityな静的siteではbuildの成功判定に必要なsummaryと低頻度heartbeatだけをCIへ出し、routeごとの生成logも完全な無出力も避ける。timeoutを延長する前に、CPU、file数、log量、最終出力時刻を分けて測り、生成物と検索indexのcontractを維持したままI/Oをboundedにする。
 
-### LL-349: vendored skillはcanonical parityとrepository外参照を分けて検証する
+### LL-349: E2Eの数値contractはtemplate由来の前後空白を意味差として扱わない
+- **事象**: Publisherが新しい共有生成枠telemetryを記録したsnapshotで、Statusの値は`35/35`と正しく表示されたが、E2Eは`strong`のtextを前後空白なしの`^\d+/\d+$`へ固定していたため`" 35/35 "`を拒否した。通常のlocal snapshotはtelemetry未記録branchだったため、この分岐を通らなかった。
+- **根本原因**: HTML templateの改行・indent由来空白と、利用者が読む数値ratioの意味を同一視した。生成dataにより初めて現れるoptional branchをcurrent corpusだけのlocal E2Eで完全に覆えると仮定していた。
+- **対策**: ratioの形式と全体一致は維持しつつ、前後のHTML空白だけを`\s*`で許容する。Publisher生成snapshotのrecorded branchで同じE2Eを通し、未記録branchの`Not recorded`契約も維持する。
+- **教訓**: E2Eでtextの意味を検証するときは、内部空白や数値形式は厳密に守り、template formattingだけが作る前後空白を製品回帰にしない。optional telemetryは未記録と記録済みの両状態を別contractとして扱い、Publisher生成後の実snapshotでも検証する。
+
+### LL-350: vendored skillはcanonical parityとrepository外参照を分けて検証する
 - **事象**: Hallmarkのcanonical skill 106 filesをproject-scoped skillへvendoringすると、Markdown local links 274件のうち261件はcanonical folder内で解決したが、13件はupstream repositoryの`site/`または`docs/`を参照していた。demo siteを追加すると依頼scopeを超え、linkを書き換えるとcanonical parityを失う状態だった。さらにupstreamの`component-cookbook.md`は末尾空行を持ち、新規追加時の`git diff --check`が1件を警告した。
 - **根本原因**: upstream skillはmonorepo内で利用される前提の例示linkを含み、配布対象のcanonical folderとupstream repository全体のreference scopeが一致していなかった。
 - **対策**: `SKILL.md`と`references/**`はSHA-256でbyte parityを検証し、folder内参照の欠落だけをfail-closedにした。repository外の例示linkと既存末尾空行はcanonical textのまま保持し、件数、非vendoring方針、diff-check除外範囲を`UPSTREAM.md`へ記録した。licenseと更新手順もcanonical filesから分離した。

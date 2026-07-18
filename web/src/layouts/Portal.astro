@@ -822,6 +822,7 @@ const footerLastRunRelative = footerLastRunAt
               "The search index took too long to respond.",
             );
             const batchSize = 30;
+            const minimumCandidateScan = 90;
             const candidates = [
               ...tagSearch.results.slice(0, 12).map((result: any) => ({ result, intentMatch: true })),
               ...search.results.slice(0, 300).map((result: any) => ({ result, intentMatch: false })),
@@ -846,7 +847,8 @@ const footerLastRunRelative = footerLastRunAt
                   classifyResult(item.url || "").className === "article"
                   && isExactResult(item, q),
               ).length;
-              if (exactArticleCount >= 12) break;
+              const scannedCandidateCount = Math.min(offset + batchSize, candidates.length);
+              if (scannedCandidateCount >= minimumCandidateScan && exactArticleCount >= 12) break;
             }
             if (items.length === 0 && candidates.length > 0) {
               throw new Error("Search results could not be loaded in time.");

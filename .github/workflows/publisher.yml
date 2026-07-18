@@ -70,6 +70,11 @@ jobs:
 
       - name: Verify generated data
         if: steps.publisher.outputs.changed == 'true' && env.PUBLISHER_DRY_RUN != 'true'
+        env:
+          # The preceding build is the exact artifact under verification.
+          # Rebuilding in Playwright doubles the static-generation cost and can
+          # exhaust the Publisher runner before tests begin.
+          PLAYWRIGHT_REUSE_BUILD: "1"
         run: |
           npm run secrets:scan
           npm run typecheck

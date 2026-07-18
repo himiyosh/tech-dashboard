@@ -1,5 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const PREVIEW_COMMAND =
+  "npm --prefix web run preview -- --host 127.0.0.1 --port 4322";
+
+export function playwrightWebServerCommand(reuseBuild: boolean): string {
+  return reuseBuild
+    ? PREVIEW_COMMAND
+    : `npm --prefix web run build && ${PREVIEW_COMMAND}`;
+}
+
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 30_000,
@@ -14,7 +23,9 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "npm --prefix web run build && npm --prefix web run preview -- --host 127.0.0.1 --port 4322",
+    command: playwrightWebServerCommand(
+      process.env.PLAYWRIGHT_REUSE_BUILD === "1",
+    ),
     url: "http://127.0.0.1:4322",
     reuseExistingServer: true,
     timeout: 300_000,

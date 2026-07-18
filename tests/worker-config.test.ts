@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { playwrightWebServerCommand } from "../playwright.config.ts";
 import { SOURCE_BATCHES, sourceBatchIndexAt } from "../worker/src/index.ts";
 
 function readConfig(path: string): string {
@@ -115,6 +116,22 @@ describe("Cloudflare Worker deploy config", () => {
     expect(astroBuildRunner).toContain('spawn(command, ["build", "--silent"]');
     expect(astroBuildRunner).toContain("const HEARTBEAT_MS = 30_000");
     expect(astroBuildRunner).toContain("clearInterval(heartbeat)");
+  });
+
+  it("reuses the verified Web build during Publisher E2E without changing default E2E", () => {
+    const publisherWorkflow = readConfig(".github/workflows/publisher.yml");
+    const defaultCommand = playwrightWebServerCommand(false);
+    const reuseCommand = playwrightWebServerCommand(true);
+
+    expect(defaultCommand).toContain("npm --prefix web run build");
+    expect(defaultCommand).toContain("npm --prefix web run preview");
+    expect(reuseCommand).toBe(
+      "npm --prefix web run preview -- --host 127.0.0.1 --port 4322",
+    );
+    expect(publisherWorkflow).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
+    expect(publisherWorkflow).toMatch(
+      /npm run build:web[\s\S]*npm run test:e2e/,
+    );
   });
 
   it("spreads source collection across six hourly batches", () => {

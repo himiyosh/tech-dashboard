@@ -2353,6 +2353,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: `harness/pipeline/title-en.ts`へsentence-awareな導出とlegacy補正を集約し、手動CLIとPublisherが同じhelperを使うようにした。pending、contaminated、source title echo、導出後にsummaryをbare title echo化する1文要約は補完対象から除外する。
 - **教訓**: 繰り返し生成されるartifactの品質修復を手動CLIだけへ置かない。安全なpure変換は生成器の最終artifact境界へ組み込み、CLI、Publisher、品質判定、回帰testを同じcontractへ揃える。
 
+### LL-353: Publisher E2Eは直前の検証済みstatic buildを再利用する
+- **事象**: scheduled Publisher は`npm run build:web`を完了した後、`npm run test:e2e`のPlaywright webServerでも同じbuildを再実行していた。生成snapshotでは2回目のbuildが300秒を超えてtest開始前にtimeoutし、別runではrunner shutdownを受け、PublisherとWorker Healthが連続failureになった。
+- **根本原因**: 通常E2Eの自己完結用`build && preview`契約を、すでに同じworkspaceでproduction buildを検証済みのPublisherにも一律適用した。Publisherはstatic generationとPagefindを2回支払い、job時間とrunner中断リスクを増幅していた。
+- **対策**: Playwright webServer commandをpure helperへ分け、通常は従来どおりbuild後にpreviewする。PublisherのVerify stepだけ`PLAYWRIGHT_REUSE_BUILD=1`を設定し、直前の`npm run build:web`が生成した`web/dist`をpreviewしてE2Eを実行する。unit testでdefault/reuse両経路とworkflow配線を固定する。
+- **教訓**: 同じjobでproduction artifactを明示的にbuild済みなら、そのartifactを検証するE2Eで再buildしない。通常の自己完結testとartifact検証testを環境契約で分離し、再利用する場合はbuildとpreviewが同一workspace・同一snapshotであることを保証する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

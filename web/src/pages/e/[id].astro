@@ -47,6 +47,9 @@ const titleJa = titleForLang(entry, "ja");
 const titleEn = titleForLang(entry, "en");
 const titleJaResult = titleForLangWithFallback(entry, "ja");
 const titleEnResult = titleForLangWithFallback(entry, "en");
+const titleProvenanceId = titleJaResult.isFallback || titleEnResult.isFallback
+  ? "article-title-provenance"
+  : undefined;
 const titleDisplay = titleJaResult.text;
 const effectiveTitleLang = effectiveTitleLanguage(entry);
 const likeTitleJa = titleJaResult;
@@ -356,15 +359,26 @@ const jsonLd = {
 
         {/* TITLE */}
         <header class="ed-head">
-          <h1 class="ed-title">
+          {(titleJaResult.isFallback || titleEnResult.isFallback) && (
+            <div class="ed-title-provenance" id={titleProvenanceId}>
+              {titleJaResult.isFallback && titleJaResult.fallbackLang && (
+                <span class="i18n-ja">
+                  <LanguageFallbackBadge fallbackLang={titleJaResult.fallbackLang} variant="title" />
+                </span>
+              )}
+              {titleEnResult.isFallback && titleEnResult.fallbackLang && (
+                <span class="i18n-en" lang="en">
+                  <LanguageFallbackBadge fallbackLang={titleEnResult.fallbackLang} variant="title" />
+                </span>
+              )}
+            </div>
+          )}
+          <h1 class="ed-title" aria-describedby={titleProvenanceId}>
             <span
               class="i18n-ja"
               lang={titleJaResult.isFallback ? titleJaResult.fallbackLang : "ja"}
               data-title-fallback={titleJaResult.isFallback ? titleJaResult.fallbackLang : undefined}
             >
-              {titleJaResult.isFallback && titleJaResult.fallbackLang && (
-                <LanguageFallbackBadge fallbackLang={titleJaResult.fallbackLang} variant="title" />
-              )}
               <span class="ed-title-text">{titleJaResult.text}</span>
             </span>
             <span
@@ -372,9 +386,6 @@ const jsonLd = {
               lang={titleEnResult.isFallback ? titleEnResult.fallbackLang : "en"}
               data-title-fallback={titleEnResult.isFallback ? titleEnResult.fallbackLang : undefined}
             >
-              {titleEnResult.isFallback && titleEnResult.fallbackLang && (
-                <LanguageFallbackBadge fallbackLang={titleEnResult.fallbackLang} variant="title" />
-              )}
               <span class="ed-title-text">{titleEnResult.text}</span>
             </span>
           </h1>
@@ -1152,6 +1163,12 @@ const jsonLd = {
   }
   /* TITLE */
   .ed-head { padding: 24px 32px 18px; border-bottom: 1px dashed var(--border); }
+  .ed-title-provenance {
+    display: flex;
+    align-items: center;
+    min-height: 20px;
+    margin-bottom: 6px;
+  }
   .ed-title {
     font-size: 28px; line-height: 1.45;
     color: var(--text); font-weight: 800;

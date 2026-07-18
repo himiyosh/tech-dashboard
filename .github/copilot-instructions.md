@@ -2340,6 +2340,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: `SKILL.md`と`references/**`はSHA-256でbyte parityを検証し、folder内参照の欠落だけをfail-closedにした。repository外の例示linkと既存末尾空行はcanonical textのまま保持し、件数、非vendoring方針、diff-check除外範囲を`UPSTREAM.md`へ記録した。licenseと更新手順もcanonical filesから分離した。
 - **教訓**: 外部skillのvendoringでは「配布対象の完全性」と「upstream monorepo全体のlink解決」を同一視しない。canonical filesは改変せずhash parityを守り、内部参照欠落は失敗、意図的なrepository外参照はprovenance文書で可視化する。demoや依存をlink解決だけのために追加しない。
 
+### LL-351: 後段rankingは必要な候補母集団を確保してから早期終了する
+- **事象**: HomeのTickerには当日公開のCopilot記事が4件あったが、`Copilot`検索の上位は3日以上前の記事だった。Pagefindのraw候補を実測すると当日記事はindex 56-59に存在したが、検索clientは先頭batchでexact articleが12件集まると候補hydrationを終了していた。
+- **根本原因**: authority、importance、鮮度の後段sortはhydration済み候補にしか適用できないのに、終了条件をexact件数だけで決めてPagefindの近似順位を候補母集団として固定していた。後段rankingが正しくても、新しいexact hitを読む前に終了すると鮮度signalを比較できない。
+- **対策**: 30件batchと既存deadlineを維持しつつ、実測位置に1 batchの余裕を加えた90候補を確認してからexact件数による早期終了を許可した。E2Eは先頭12件の古いexact hit、途中77件の近似候補、index 89の新しいexact hit、window外2件を用意し、新しい候補が後段sortで先頭になりwindow外をhydrateしないことを固定した。
+- **教訓**: approximate search engineの結果へ独自rankingを重ねる場合、表示件数と候補走査件数を分離する。早期終了は「十分な表示件数」だけでなく、ranking signalを比較できる最小候補windowを満たしてから行い、実corpusのraw候補位置とdeterministic fixtureの両方で検証する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

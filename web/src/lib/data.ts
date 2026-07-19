@@ -15,6 +15,7 @@ import {
   summaryForLang,
   summaryForLangWithFallback,
 } from "./summary-display.ts";
+import { sourceAuthority } from "./source-meta.ts";
 import { normalizeTagKey } from "./tag-normalize.ts";
 
 export {
@@ -765,6 +766,85 @@ export interface TickerDaySelection {
   dayKey: string | null;
   dayScope: "today" | "latest";
   entries: NormalizedEntry[];
+}
+
+function tickerTypeWeight(sourceType: NormalizedEntry["sourceType"]): number {
+  if (sourceType === "release" || sourceType === "changelog") return 2;
+  if (sourceType === "paper") return 1;
+  return 0;
+}
+
+function tickerAuthorityWeight(entry: Pick<NormalizedEntry, "source" | "sourceType">): number {
+  switch (sourceAuthority(entry.source, entry.sourceType).kind) {
+    case "official":
+      return 4;
+    case "paper":
+      return 3;
+    case "news":
+      return 2;
+    case "source":
+      return 1;
+    case "community":
+      return 0;
+    case "aggregator":
+      return -1;
+  }
+}
+
+export function tickerSourcePlatformKey(
+  entry: Pick<NormalizedEntry, "source" | "url">,
+): string {
+  try {
+    return new URL(entry.url).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return entry.source;
+  }
+}
+
+/**
+ * Rank a ticker day, then cap repeated source streams and host platforms.
+ * The ticker is a highlight surface; the full Timeline remains the complete list.
+ */
+export function selectTickerItems(
+  entries: readonly NormalizedEntry[],
+  limit = 24,
+  maxPerSource = 2,
+  maxPerPlatform = 2,
+): NormalizedEntry[] {
+  const safeLimit = Math.max(0, Math.floor(limit));
+  if (safeLimit === 0) return [];
+
+  const sourceCap = Math.max(1, Math.floor(maxPerSource));
+  const platformCap = Math.max(1, Math.floor(maxPerPlatform));
+  const sourceCounts = new Map<string, number>();
+  const platformCounts = new Map<string, number>();
+  const selected: NormalizedEntry[] = [];
+  const ranked = [...entries].sort((a, b) => {
+    const publishable = Number(isPublishableEntry(b)) - Number(isPublishableEntry(a));
+    if (publishable !== 0) return publishable;
+    const importance = (b.importance ?? 1) - (a.importance ?? 1);
+    if (importance !== 0) return importance;
+    const authority = tickerAuthorityWeight(b) - tickerAuthorityWeight(a);
+    if (authority !== 0) return authority;
+    const sourceType = tickerTypeWeight(b.sourceType) - tickerTypeWeight(a.sourceType);
+    if (sourceType !== 0) return sourceType;
+    const published = (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
+    if (published !== 0) return published;
+    return a.id.localeCompare(b.id);
+  });
+
+  for (const entry of ranked) {
+    const platform = tickerSourcePlatformKey(entry);
+    if ((sourceCounts.get(entry.source) ?? 0) >= sourceCap) continue;
+    if ((platformCounts.get(platform) ?? 0) >= platformCap) continue;
+
+    selected.push(entry);
+    sourceCounts.set(entry.source, (sourceCounts.get(entry.source) ?? 0) + 1);
+    platformCounts.set(platform, (platformCounts.get(platform) ?? 0) + 1);
+    if (selected.length >= safeLimit) break;
+  }
+
+  return selected;
 }
 
 /**

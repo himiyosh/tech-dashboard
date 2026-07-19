@@ -5,6 +5,8 @@ import {
   entryHref,
   isPublishableEntry,
   selectTickerDayEntries,
+  selectTickerItems,
+  tickerSourcePlatformKey,
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
@@ -23,21 +25,7 @@ const { entries, excludeEntryIds = [], now = new Date(), limit = 24, intervalMs 
 const tickerDay = selectTickerDayEntries(entries, now, excludeEntryIds);
 const baseDayKey = tickerDay.dayKey ?? "";
 const baseDayIsToday = tickerDay.dayScope === "today";
-
-const typeWeight = (t: string): number =>
-  t === "release" || t === "changelog" ? 2 : t === "paper" ? 1 : 0;
-
-const items = [...tickerDay.entries]
-  .sort((a, b) => {
-    const publishable = Number(isPublishableEntry(b)) - Number(isPublishableEntry(a));
-    if (publishable !== 0) return publishable;
-    const imp = (b.importance ?? 1) - (a.importance ?? 1);
-    if (imp !== 0) return imp;
-    const tw = typeWeight(b.sourceType) - typeWeight(a.sourceType);
-    if (tw !== 0) return tw;
-    return (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
-  })
-  .slice(0, limit);
+const items = selectTickerItems(tickerDay.entries, limit);
 
 const catColorOf = (slug: string): string =>
   CATEGORY_META.find((c) => c.slug === slug)?.color ?? "#7cff9a";
@@ -67,12 +55,20 @@ const catColorOf = (slug: string): string =>
               class={`tb-slide${i === 0 ? " is-active" : ""}`}
               style={`--cat-color:${catColorOf(e.category)}`}
               data-index={i}
+              data-source-id={e.source}
+              data-source-platform={tickerSourcePlatformKey(e)}
               data-summary-state={isPending ? "pending" : "ready"}
               aria-hidden={i === 0 ? "false" : "true"}
               tabindex={i === 0 ? undefined : "-1"}
             >
               <span class="tb-meta">
                 <span class="tb-cat">{categoryLabel(e.category)}</span>
+                {isPending && (
+                  <span class="tb-tag pending">
+                    <span class="i18n-ja">要約待ち</span>
+                    <span class="i18n-en" lang="en">PENDING</span>
+                  </span>
+                )}
                 {!isPending && isImp && <span class="tb-tag imp">★</span>}
                 {!isPending && isRel && <span class="tb-tag rel">REL</span>}
               </span>
@@ -214,6 +210,12 @@ const catColorOf = (slug: string): string =>
   }
   .tb-tag.rel { color: #000; background: #ffcc00; text-shadow: none; }
   .tb-tag.imp { color: #000; background: #ff8a2a; text-shadow: none; }
+  .tb-tag.pending {
+    color: #b9c7bc;
+    border: 1px solid rgba(185, 199, 188, 0.38);
+    background: rgba(185, 199, 188, 0.08);
+    text-shadow: none;
+  }
   .tb-title {
     font-weight: 700;
     color: #e8ffe9;

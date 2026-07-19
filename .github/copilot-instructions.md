@@ -2365,6 +2365,42 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: unit jobで検証済み`web/dist`をrun ID固有名のartifactとして7日間保存し、E2E jobで同じpathへ復元して`PLAYWRIGHT_REUSE_BUILD=1`でpreviewする。full rerunでは`overwrite: true`で更新し、failed E2E jobだけのrerunでは前attemptのartifactを再利用する。通常のローカルE2Eは従来どおり自己buildする。
 - **教訓**: CI jobを分けたまま同じ生成物を検証する場合、依存関係だけでなくartifact transferを明示する。failed jobだけのrerunでは`run_attempt`が増えても成功済みproducer jobは再実行されないため、artifact名をattempt単位にしない。run IDで安定させ、full rerunのimmutable artifact衝突は明示overwriteで処理する。
 
+### LL-355: highlight surface は item ranking だけでなく source と platform の集中上限を持つ
+- **事象**: 4 persona監査でDev LeadとTech PMがTickerの同一stream集中を独立に報告した。最新dataを実測すると旧選定20件中、Qiitaが10件、GitHub上のCline releaseが7件を占め、同じ配信platformの連続表示で公式・報道・別community sourceの比較が難しかった。
+- **根本原因**: Tickerは要約状態、重要度、配信形式、公開時刻で全候補をsortして先頭を切り出すだけで、同一sourceや同一hostnameの占有上限を持っていなかった。高頻度feedは正しいscoreでもhighlight枠を量で独占できた。
+- **対策**: `selectTickerItems()`へ要約済み、重要度、source authority、配信形式、公開時刻のrankと、source・hostnameごとの最大2件を集約した。完全一覧はTimelineに維持し、Tickerだけを比較用highlightに限定する。実dataで旧20件から7件へ整理し、各platform最大2件であることをunit testとE2EのDOM属性で固定した。
+- **教訓**: Featured、Ticker、Top listのようなdecision surfaceは、個別itemのscoreが正しくても高頻度streamに独占される。rankとdiversity quotaを別の契約として持ち、source IDだけでなく配信platformも実分布で測る。全件一覧とhighlight枠の責務を分け、枠を埋めるために低品質な重複候補を戻さない。
+
+### LL-356: 複数processを起動するCLI安全testはfull suite基準の個別timeoutを持つ
+- **事象**: `fill-title-en`のCLI安全testは単独実行では2.85秒で成功したが、全622件のVitest suiteでは5.39秒と6.14秒になり、既定5秒timeoutで2回連続失敗した。製品処理やassertionの失敗はなく、同testが5種類のCLI modeを別processで順次起動していた。
+- **根本原因**: child processを複数起動するtestへ通常のpure unit testと同じ5秒予算を適用し、full suiteの並列transform/import負荷を考慮していなかった。単独実行の成功だけでは全suite時のprocess起動遅延を再現できなかった。
+- **対策**: global test timeoutは変更せず、5 processの終了とdata hash不変を検証する当該testだけ15秒へ広げた。fail-closedのexit codeとmutation不在のassertionは維持する。
+- **教訓**: subprocessを起動するintegration寄りtestは、単独時間でなくfull suite中の実測時間に余裕を持つ個別budgetを設定する。global timeoutを緩めてpure unitのhang検知を弱めず、Two-strikeで再現したtestだけを明示的に調整する。
+
+### LL-357: 静的pageのviewport行列は幅ごとに再navigationしない
+- **事象**: 全100件E2EでTop 3の29幅行列とlane pageの2 route×9幅行列が、assertionへ到達する前に30秒timeoutした。どちらも幅ごとに同じ静的URLへ`page.goto()`し直し、retryでも同じ箇所で停止した。
+- **根本原因**: CSS responsive geometryの検証にdocument再取得は不要なのに、各viewportでHTML、script、画像を再loadしていた。単独実行では収まっても、全suite後半のbrowser負荷でnavigation累積時間がtest budgetを消費した。
+- **対策**: routeごとに1回だけpageを開き、境界行列は`setViewportSize()`と2 frameのreflow待機で測るようにした。Top 3はdesktop stress textを幅ごとに設定・復元し、mobileへ入る時だけdocumentを再取得して従来の非stress状態を維持する。timeoutやretry回数は増やさない。
+- **教訓**: 静的SSR/SSG pageのresponsive E2Eは、DOMやserver outputがviewportで変わらない限り、1 navigationと複数reflowで検証する。状態を初期化する必要がある境界だけ再loadし、page fetch回数をviewport数へ比例させない。full suiteのtimeoutを受入値の緩和で隠さず、検証対象とbrowser I/Oを分離する。
+
+### LL-358: E2Eの状態contractは関連styleとdeadline開始点を製品処理へ限定する
+- **事象**: full E2Eでreduced-motionの3つのCSS assertionが個別waitを重ね、最後の`transform`取得がtest timeoutへ達した。別のreaction deadline testは、ready済みbuttonのPlaywright actionability待ちをserver reconciliation時間へ含め、toast待機前にtest budgetを消費した。両testは単独では10.1秒で成功した。
+- **根本原因**: 同一frameで決まるcomputed styleを複数のlocator waitとして読み、操作前のbrowser automation待機と操作後の製品deadlineを同じ時計で測っていた。full suite負荷ではtest harnessの待機が製品状態の失敗に見えた。
+- **対策**: reduced-motionはanimation、transform、opacityを1回の`getComputedStyle()` snapshotでpollする。reaction deadlineはcontrol readyと実際のPlaywright clickを先に完了し、event dispatch後からtoastと5秒reconciliation contractだけを測る。programmatic `.click()`はinertやtrusted interactionを迂回し得るため代替にしない。
+- **教訓**: 1つのstate transitionから決まる複数styleは別々のlocator waitへ分解せず、同一DOM snapshotで検証する。async operationのdeadlineはuser event dispatch後を起点とし、Playwright自身のactionability待ちを製品処理時間へ混ぜない。interaction可否とstate-machine期限は責務の異なるtestへ分ける。
+
+### LL-359: 無関係なE2E timeoutが移動するときはhost負荷と対象testを分離する
+- **事象**: local全100件E2Eで、1回目はviewport行列2件、次はDaily Summaryとreaction deadline、再実行ではSidebar、Spotlight、Archive、reaction hydrationという無関係なtestが30秒timeoutした。最後のrunは96件PASSで17.1分かかった一方、失敗した4件だけの再実行は7秒で全PASSした。発生時のmacOSはload average 28.74で、Storage Management、Microsoft Defender scan、ゲームprocessがCPUを継続使用していた。
+- **根本原因**: 製品assertionの共通失敗ではなく、外部processによるhost resource saturationでpage load、locator read、browser script hydrationがランダムにtest timeoutへ達していた。失敗箇所がrunごとに移動し、同じartifactの対象testが即時成功することが反証になった。
+- **対策**: 固有の累積I/Oを持つtestはLL-357/358で最適化したが、無関係なtestのdefault timeoutや受入閾値は緩めない。失敗対象をretryなしで単独実行し、host loadと高CPU processを実測して製品回帰と分離する。最終release判定は同一SHAのclean GitHub runnerでdefault timeoutの全suiteを通す。
+- **教訓**: browser suiteのtimeoutを見たら、test名が同じか、assertionまで到達したか、失敗箇所が移動するか、対象testが単独再現するか、host負荷が高いかを順に確認する。外部負荷を理由にproduct testの閾値を広げず、局所test成功とclean CIの両方で完了を判定する。
+
+### LL-360: pre-pushも直前の検証済みWeb buildをE2Eへ再利用する
+- **事象**: PublisherとPR CIの二重buildを解消した後も、pre-push hookは`npm run build:web`を成功させた直後に通常の`npm run test:e2e`を実行し、Playwright webServerが同じstatic siteを再buildしていた。
+- **根本原因**: LL-353/354のartifact再利用をcloud workflowだけへ適用し、同じprocess filesystemを共有するlocal hookへ横展開していなかった。高cardinality buildをpushごとに2回行い、時間とhost負荷を増幅していた。
+- **対策**: pre-pushでWeb buildが実行・成功した場合だけ`PLAYWRIGHT_REUSE_BUILD=1`をE2Eへ渡す。`SKIP_WEB_BUILD=1`の場合は既存distを信頼せず、従来どおりPlaywrightが自己buildする。source contract testで両分岐を固定する。
+- **教訓**: 同じcheckoutでproduction buildとE2Eを逐次実行する全経路を検索し、Publisher、CI、local hookのartifact ownershipを対称にする。build skipとbuild successを同じreuse branchへ入れず、検証済みartifactが存在する場合だけ再利用する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -84,6 +84,8 @@ const {
   restorePrereleaseQualifierFromUrl,
   jstDateKey,
   selectTickerDayEntries,
+  selectTickerItems,
+  tickerSourcePlatformKey,
   entryHref,
   isNew,
   hasCjk,
@@ -854,6 +856,53 @@ describe("selectTickerDayEntries", () => {
       dayKey: null,
       dayScope: "latest",
       entries: [],
+    });
+  });
+
+  describe("selectTickerItems", () => {
+    const tickerEntry = (
+      id: string,
+      source: string,
+      sourceType: typeof e1.sourceType,
+      url: string,
+      importance: typeof e1.importance,
+      publishedAt: string,
+    ) => ({
+      ...e1,
+      id,
+      source,
+      sourceType,
+      url,
+      importance,
+      publishedAt,
+    });
+
+    it("同一 source と platform を 2 件までに抑える", () => {
+      const selected = selectTickerItems([
+        tickerEntry("qiita-1", "qiita-copilot", "community", "https://qiita.com/a/items/1", 3, "2026-05-04T08:00:00.000Z"),
+        tickerEntry("qiita-2", "qiita-claude", "community", "https://qiita.com/b/items/2", 3, "2026-05-04T07:00:00.000Z"),
+        tickerEntry("qiita-3", "qiita-mcp", "community", "https://qiita.com/c/items/3", 3, "2026-05-04T06:00:00.000Z"),
+        tickerEntry("qiita-4", "qiita-copilot", "community", "https://qiita.com/d/items/4", 2, "2026-05-04T05:00:00.000Z"),
+        tickerEntry("zenn-1", "zenn-copilot", "community", "https://zenn.dev/a/articles/1", 2, "2026-05-04T04:00:00.000Z"),
+      ], 24);
+
+      expect(selected.map((entry) => entry.id)).toEqual(["qiita-1", "qiita-2", "zenn-1"]);
+      expect(selected.filter((entry) => tickerSourcePlatformKey(entry) === "qiita.com")).toHaveLength(2);
+      expect(selected.filter((entry) => entry.source === "qiita-copilot")).toHaveLength(1);
+    });
+
+    it("同じ重要度では公式 source と release を community より優先する", () => {
+      const selected = selectTickerItems([
+        tickerEntry("community", "qiita-copilot", "community", "https://qiita.com/a/items/1", 2, "2026-05-04T08:00:00.000Z"),
+        tickerEntry("official-blog", "anthropic-news", "blog", "https://anthropic.com/news/1", 2, "2026-05-04T06:00:00.000Z"),
+        tickerEntry("official-release", "zed-releases", "release", "https://github.com/zed-industries/zed/releases/tag/v1", 2, "2026-05-04T07:00:00.000Z"),
+      ], 3);
+
+      expect(selected.map((entry) => entry.id)).toEqual([
+        "official-release",
+        "official-blog",
+        "community",
+      ]);
     });
   });
 });

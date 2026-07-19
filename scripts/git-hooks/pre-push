@@ -74,6 +74,7 @@ else
   echo "[pre-push] OK: テスト PASS"
 fi
 
+web_build_ready=0
 if [ "${SKIP_WEB_BUILD:-}" = "1" ]; then
   echo "[pre-push] SKIP_WEB_BUILD=1 → npm run build:web をスキップします"
 else
@@ -91,6 +92,7 @@ else
   grep -E "\[build\]|Pagefind|Indexed" "$build_log" | tail -3 || true
   rm -f "$build_log"
   echo "[pre-push] OK: web build PASS"
+  web_build_ready=1
 fi
 
 if [ "${SKIP_E2E:-}" = "1" ]; then
@@ -102,7 +104,12 @@ else
     echo "[pre-push] web/ への影響なし → E2E をスキップ"
   else
     echo "[pre-push] npm run test:e2e を実行しています..."
-    if ! npm --prefix "$ROOT" run test:e2e; then
+    if [ "$web_build_ready" = "1" ]; then
+      e2e_command=(env PLAYWRIGHT_REUSE_BUILD=1 npm --prefix "$ROOT" run test:e2e)
+    else
+      e2e_command=(npm --prefix "$ROOT" run test:e2e)
+    fi
+    if ! "${e2e_command[@]}"; then
       echo "[pre-push] ERR: E2E テスト失敗。push を中断します"
       echo "[pre-push] E2E をスキップして push したい場合: SKIP_E2E=1 git push"
       exit 1

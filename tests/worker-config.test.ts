@@ -118,8 +118,9 @@ describe("Cloudflare Worker deploy config", () => {
     expect(astroBuildRunner).toContain("clearInterval(heartbeat)");
   });
 
-  it("reuses the verified Web build during Publisher E2E without changing default E2E", () => {
+  it("reuses the verified Web build during Publisher and pre-push E2E without changing default E2E", () => {
     const publisherWorkflow = readConfig(".github/workflows/publisher.yml");
+    const prePush = readConfig("scripts/git-hooks/pre-push");
     const defaultCommand = playwrightWebServerCommand(false);
     const reuseCommand = playwrightWebServerCommand(true);
 
@@ -131,6 +132,12 @@ describe("Cloudflare Worker deploy config", () => {
     expect(publisherWorkflow).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
     expect(publisherWorkflow).toMatch(
       /npm run build:web[\s\S]*npm run test:e2e/,
+    );
+    expect(prePush).toContain("web_build_ready=0");
+    expect(prePush).toMatch(/npm --prefix "\$ROOT" run build:web[\s\S]*web_build_ready=1/);
+    expect(prePush).toContain("env PLAYWRIGHT_REUSE_BUILD=1 npm --prefix");
+    expect(prePush).toMatch(
+      /if \[ "\$web_build_ready" = "1" \][\s\S]*PLAYWRIGHT_REUSE_BUILD=1[\s\S]*else[\s\S]*npm --prefix "\$ROOT" run test:e2e/,
     );
   });
 

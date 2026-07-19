@@ -148,8 +148,13 @@ describe("Cloudflare Worker deploy config", () => {
     expect(ciWorkflow).toContain("uses: actions/upload-artifact@v4");
     expect(ciWorkflow).toContain("uses: actions/download-artifact@v4");
     expect(ciWorkflow).toContain(
+      "name: web-dist-${{ github.run_id }}",
+    );
+    expect(ciWorkflow).not.toContain(
       "name: web-dist-${{ github.run_id }}-${{ github.run_attempt }}",
     );
+    expect(ciWorkflow).toContain("overwrite: true");
+    expect(ciWorkflow).toContain("retention-days: 7");
     expect(
       ciWorkflow.slice(e2eIndex, ciWorkflow.indexOf("name: Upload Playwright report")),
     ).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');

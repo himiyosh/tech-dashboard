@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T22:40:33.550Z",
+  "generatedAt": "2026-07-19T23:46:07.368Z",
   "month": "2026-07",
   "count": 885,
   "entries": [
@@ -72,20 +72,32 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/kmdkmd/articles/copilot-usage-viewer-design",
       "title": "GitHub Copilot の利用量を可視化し、たまり続けるチャット履歴を安全に掃除する VS Code 拡張を作った",
-      "titleJa": "GitHub Copilot の利用量を可視化し、たまり続けるチャット履歴を安全に掃除する VS Code 拡張を作った",
-      "titleEn": "",
+      "titleJa": "GitHub Copilot の利用量を可視化し、チャット履歴を安全に掃除する VS Code 拡張を作った",
+      "titleEn": "A developer built a VS Code extension that visualizes GitHub Copilot usage…",
       "lang": "ja",
       "publishedAt": "2026-07-19T16:57:13.000Z",
       "collectedAt": "2026-07-19T22:40:26.564Z",
       "tags": [
+        "chat-history",
         "copilot",
+        "developer-tools",
+        "github-copilot",
+        "vs-code-extension",
         "zenn"
       ],
       "category": "copilot",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
-      "contentSnippet": "GitHub Copilot を日々使用する中で、「どのモデルをどれくらい使っているか振り返りたい」「たまり続けるチャット履歴を整理したい」と思うようになり、VS Code 拡張機能「Copilot Usage Viewer」を作りました。 インストール: VS Code Marketplace ソースコード: GitHub この記事では、開発の過程で調べた Copilot Chat 履歴の保存のしくみと、公開されていない仕様とどう向き合ったかを紹介します。 ! この記事で扱うチャットセッションの保存形式は、VS Code の公開 API ではありません"
+      "contentSnippet": "GitHub Copilot を日々使用する中で、「どのモデルをどれくらい使っているか振り返りたい」「たまり続けるチャット履歴を整理したい」と思うようになり、VS Code 拡張機能「Copilot Usage Viewer」を作りました。 インストール: VS Code Marketplace ソースコード: GitHub この記事では、開発の過程で調べた Copilot Chat 履歴の保存のしくみと、公開されていない仕様とどう向き合ったかを紹介します。 ! この記事で扱うチャットセッションの保存形式は、VS Code の公開 API ではありません",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--eOHQ_1Kk--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:GitHub%2520Copilot%2520%25E3%2581%25AE%25E5%2588%25A9%25E7%2594%25A8%25E9%2587%258F%25E3%2582%2592%25E5%258F%25AF%25E8%25A6%2596%25E5%258C%2596%25E3%2581%2597%25E3%2580%2581%25E3%2581%259F%25E3%2581%25BE%25E3%2582%258A%25E7%25B6%259A%25E3%2581%2591%25E3%2582%258B%25E3%2583%2581%25E3%2583%25A3%25E3%2583%2583%25E3%2583%2588%25E5%25B1%25A5%25E6%25AD%25B4%25E3%2582%2592%25E5%25AE%2589%25E5%2585%25A8%25E3%2581%25AB%25E6%258E%2583%25E9%2599%25A4%25E3%2581%2599%25E3%2582%258B%2520VS%2520Code%2520%25E6%258B%25A1%25E5%25BC%25B5%25E3%2582%2592%25E4%25BD%259C%25E3%2581%25A3%25E3%2581%259F%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:masachika%2520kamada%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2I1YTAzYmVjZjYuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--eOHQ_1Kk--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:GitHub%2520Copilot%2520%25E3%2581%25AE%25E5%2588%25A9%25E7%2594%25A8%25E9%2587%258F%25E3%2582%2592%25E5%258F%25AF%25E8%25A6%2596%25E5%258C%2596%25E3%2581%2597%25E3%2580%2581%25E3%2581%259F%25E3%2581%25BE%25E3%2582%258A%25E7%25B6%259A%25E3%2581%2591%25E3%2582%258B%25E3%2583%2581%25E3%2583%25A3%25E3%2583%2583%25E3%2583%2588%25E5%25B1%25A5%25E6%25AD%25B4%25E3%2582%2592%25E5%25AE%2589%25E5%2585%25A8%25E3%2581%25AB%25E6%258E%2583%25E9%2599%25A4%25E3%2581%2599%25E3%2582%258B%2520VS%2520Code%2520%25E6%258B%25A1%25E5%25BC%25B5%25E3%2582%2592%25E4%25BD%259C%25E3%2581%25A3%25E3%2581%259F%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:masachika%2520kamada%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2I1YTAzYmVjZjYuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "GitHub Copilot の利用量を可視化し、たまり続けるチャット履歴を安全に掃除する VS Code 拡張を作った",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "9d0678db1a3331e9",
@@ -176,11 +188,11 @@
       "sourceType": "blog",
       "url": "https://qiita.com/akira_papa_AI/items/352abc9e678f13fa83e0",
       "title": "AIエージェントが毎回同じミスをするのは、AGENTS.md / CLAUDE.md の書き方が9割かもしれません — 手戻りを減らす指示ファイル設計の実践ガイド（30行ルール・import・monorepo）",
-      "titleJa": "AIエージェントが繰り返すミスは「AGENTS.md / CLAUDE.md」の書き方で9割改善できる — 手戻りを減らす指示ファイル設計の実践ガイド",
+      "titleJa": "AIエージェントが毎回同じミスをするのは、AGENTS.md / CLAUDE.md の書き方が9割かもしれません — 手戻りを減らす指示ファイル設計の実践ガイド（30行ルール・import・monorepo）",
       "titleEn": "This practical guide argues that repetitive AI agent mistakes stem largely from…",
       "lang": "ja",
       "publishedAt": "2026-07-19T13:28:12.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "agent",
         "agents-md",
@@ -897,7 +909,7 @@
       "titleEn": "A practical examination of the trade-offs between full codebase indexing and…",
       "lang": "ja",
       "publishedAt": "2026-07-19T02:16:38.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "ai-workflow",
         "context-management",
@@ -1362,8 +1374,8 @@
       }
     },
     {
-      "id": "8276e37864b33413",
-      "source": "zenn-claude",
+      "id": "411907ab01fd02fe",
+      "source": "zenn-mcp",
       "sourceType": "blog",
       "url": "https://zenn.dev/cloto/articles/claude-code-compact-external-memory",
       "title": "外部記憶があると Claude Code の /compact はほぼ要らない",
@@ -1371,7 +1383,7 @@
       "titleEn": "This article explains how integrating external memory via MCP allows Claude…",
       "lang": "ja",
       "publishedAt": "2026-07-18T13:46:01.000Z",
-      "collectedAt": "2026-07-19T21:41:36.927Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "claude",
         "claude-code",
@@ -1381,7 +1393,7 @@
         "mcp-server",
         "zenn"
       ],
-      "category": "claude",
+      "category": "mcp",
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -1405,7 +1417,7 @@
       "titleEn": "This article demonstrates that delegating tasks to an AI assistant yields only…",
       "lang": "ja",
       "publishedAt": "2026-07-18T13:25:27.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "ai-agents",
         "cursor",
@@ -1430,7 +1442,7 @@
       "titleEn": "This article argues that having AI agents operate human-oriented GUIs is an…",
       "lang": "ja",
       "publishedAt": "2026-07-18T13:21:33.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "ai-agents",
         "best-practices",
@@ -1455,7 +1467,7 @@
       "titleEn": "Cursor's Slack integration has been updated to support multiple repositories…",
       "lang": "ja",
       "publishedAt": "2026-07-18T12:12:19.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "cursor",
         "integration",
@@ -1506,7 +1518,7 @@
       "titleEn": "A hands-on investigation revealed that the official MCP Git server silently…",
       "lang": "ja",
       "publishedAt": "2026-07-18T11:31:36.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "ai-agents",
         "bug",
@@ -1557,7 +1569,7 @@
       "titleEn": "A developer built and deployed a party-coordination web app in roughly one day…",
       "lang": "ja",
       "publishedAt": "2026-07-18T11:17:25.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "agent",
         "ai-coding",
@@ -1609,7 +1621,7 @@
       "titleEn": "The author integrated an MCP server into their own Steam-published game,…",
       "lang": "ja",
       "publishedAt": "2026-07-18T10:28:21.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -1636,7 +1648,7 @@
       "titleEn": "The author tested all 24 tools in X's official MCP server via Claude Code to…",
       "lang": "ja",
       "publishedAt": "2026-07-18T10:00:07.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "automation",
         "claude-code",
@@ -2498,8 +2510,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "In this post, we walk through a few ways that Quick delivers on this promise. We cover the entire sales cycle, from identifying your highest-priority prospect, contacting them, working the deal to close, and keeping the CRM up to date as the account matures, while protecting your"
+      "contentSnippet": "In this post, we walk through a few ways that Quick delivers on this promise. We cover the entire sales cycle, from identifying your highest-priority prospect, contacting them, working the deal to close, and keeping the CRM up to date as the account matures, while protecting your",
+      "evergreen": true
     },
     {
       "id": "96aaad105213505a",
@@ -2603,8 +2615,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "Teams that rely on dashboards for daily decisions often must pinch and zoom to interact with controls originally designed for larger displays. Checking revenue during a morning standup, reviewing pipeline metrics between meetings, or monitoring operations while traveling all requ"
+      "contentSnippet": "Teams that rely on dashboards for daily decisions often must pinch and zoom to interact with controls originally designed for larger displays. Checking revenue during a morning standup, reviewing pipeline metrics between meetings, or monitoring operations while traveling all requ",
+      "evergreen": true
     },
     {
       "id": "72780eb250ba9c5b",
@@ -2658,8 +2670,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "In this post, we cover a high-level view of the Smartsheet remote MCP architecture, with a focus on the AWS infrastructure behind it. This includes security, governance, scaling and deployment, and the AI-specific optimizations Smartsheet built on AWS."
+      "contentSnippet": "In this post, we cover a high-level view of the Smartsheet remote MCP architecture, with a focus on the AWS infrastructure behind it. This includes security, governance, scaling and deployment, and the AI-specific optimizations Smartsheet built on AWS.",
+      "evergreen": true
     },
     {
       "id": "252b013dd561ae24",
@@ -3109,7 +3121,7 @@
       "titleEn": "Improvements to Cursor in Slack",
       "lang": "en",
       "publishedAt": "2026-07-17T00:00:00.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "changelog",
         "cursor",
@@ -3199,8 +3211,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "In this post, we walk through the three pillars that make this possible: simplified setup, smarter retrieval, and production readiness. We also show you code examples for setting up a knowledge base and retrieving from it."
+      "contentSnippet": "In this post, we walk through the three pillars that make this possible: simplified setup, smarter retrieval, and production readiness. We also show you code examples for setting up a knowledge base and retrieving from it.",
+      "evergreen": true
     },
     {
       "id": "b66b04da4c28ff4f",
@@ -3288,8 +3300,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "This post covers what makes Grok 4.3 a great fit for agentic and enterprise workloads, how you access it through Amazon Bedrock, and how to use the capabilities most teams reach for first: a basic chat request, configurable reasoning effort, tool calling, structured output, image"
+      "contentSnippet": "This post covers what makes Grok 4.3 a great fit for agentic and enterprise workloads, how you access it through Amazon Bedrock, and how to use the capabilities most teams reach for first: a basic chat request, configurable reasoning effort, tool calling, structured output, image",
+      "evergreen": true
     },
     {
       "id": "ecea7414e4fe04e2",
@@ -3858,7 +3870,7 @@
       "titleEn": "Alerting Parents if Teens Show Signs of Distress in Conversations With Meta AI",
       "lang": "en",
       "publishedAt": "2026-07-16T11:00:45.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "ai-safety",
         "meta",
@@ -4210,7 +4222,7 @@
       "titleEn": "Expanding Choice in Gemini Enterprise Agent Platform: Introducing Grounding with Parallel Web Search",
       "lang": "en",
       "publishedAt": "2026-07-16T00:00:00.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "agent",
         "enterprise",
@@ -4235,7 +4247,7 @@
       "titleEn": "Evolving Spec-Driven Development: Conductor Now Supports Antigravity",
       "lang": "en",
       "publishedAt": "2026-07-16T00:00:00.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "ai-agents",
         "antigravity",
@@ -4259,7 +4271,7 @@
       "titleEn": "Building scalable AI agents with modular prompt transpilation",
       "lang": "en",
       "publishedAt": "2026-07-16T00:00:00.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -4621,7 +4633,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Built partnered with the AWS Generative AI Innovation Center (GenAIIC), AWS Partner AND Digital, and AWS account teams to create a scalable, AI-powered document processing engine that can classify, split, extract, evaluate, and reason over complex real estate finance documents. I",
       "image": {
         "src": "https://d2908q01vomqb2.cloudfront.net/f1f836cb4ea6efb2a0b1b99f41ad8b103eff4b59/2026/07/15/ml-21017.png",
@@ -4630,7 +4641,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "b0816f096c05131c",
@@ -4658,8 +4670,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "In this post, we walk you through the Computer Vision MCP Server, which illustrates this approach, representing how AI systems can process visual information and make intelligent decisions through a single, standardized interface. This convergence transforms what was once a compl"
+      "contentSnippet": "In this post, we walk you through the Computer Vision MCP Server, which illustrates this approach, representing how AI systems can process visual information and make intelligent decisions through a single, standardized interface. This convergence transforms what was once a compl",
+      "evergreen": true
     },
     {
       "id": "b0de3e94aac8db8f",
@@ -4682,14 +4694,15 @@
         "mlops",
         "monitoring",
         "pipelines",
-        "sagemaker"
+        "sagemaker",
+        "tutorial"
       ],
       "category": "agent-fw",
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "In this post, we present a solution designed to centralize the monitoring of SageMaker Pipelines across AWS accounts and Regions using Amazon CloudWatch custom dashboards. The accompanying GitHub repository provides a customizable AWS Cloud Development Kit (AWS CDK) example of th"
+      "contentSnippet": "In this post, we present a solution designed to centralize the monitoring of SageMaker Pipelines across AWS accounts and Regions using Amazon CloudWatch custom dashboards. The accompanying GitHub repository provides a customizable AWS Cloud Development Kit (AWS CDK) example of th",
+      "evergreen": true
     },
     {
       "id": "e06c7bd7cc878c39",
@@ -4802,7 +4815,7 @@
       "titleEn": "Exploring Hierarchical Interest Representation For Meta Ads Deep Funnel Optimization",
       "lang": "en",
       "publishedAt": "2026-07-15T17:00:52.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "ads",
         "deep-learning",
@@ -4815,6 +4828,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Hierarchical Interest Representation is a research area for Meta Ads. We’re exploring an upstream representation layer over the universe of Ads entities – users, advertisers, products, services – learning unified embeddings that connect users’ inferred interests with the breadth ",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/07/image2_6a0f44.jpg",
@@ -4823,8 +4837,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "cad49597519e5a0e",
@@ -4922,7 +4935,7 @@
       "titleEn": "OpenHands cloud 1.46.2",
       "lang": "en",
       "publishedAt": "2026-07-15T16:05:32.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "cloud",
         "openhands",
@@ -7084,7 +7097,7 @@
       "titleEn": "OpenHands cloud 1.46.1",
       "lang": "en",
       "publishedAt": "2026-07-14T12:30:57.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "cloud",
         "openhands",
@@ -8489,7 +8502,7 @@
       "titleEn": "Systems Engineering Playbook: Optimizing Qwen 3.5-397B MoE on Ironwood (TPU7x)",
       "lang": "en",
       "publishedAt": "2026-07-14T00:00:00.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "google",
         "inference-optimization",
@@ -9041,7 +9054,7 @@
       "titleEn": "Modernizing the Meta Ads Service With an Open-Source Kernel Scheduler",
       "lang": "en",
       "publishedAt": "2026-07-13T16:00:50.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "ads",
         "engineering",
@@ -9056,8 +9069,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "TL; DR At Meta’s scale, a few milliseconds of latency degradation can have a significant negative impact on ads performance. When a Linux kernel upgrade risked regressing latency across Meta’s ad serving fleet, we turned to sched_ext — the upstream, BPF-based extensible schedulin",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "TL; DR At Meta’s scale, a few milliseconds of latency degradation can have a significant negative impact on ads performance. When a Linux kernel upgrade risked regressing latency across Meta’s ad serving fleet, we turned to sched_ext — the upstream, BPF-based extensible schedulin"
     },
     {
       "id": "eec53a552c746d07",
@@ -12916,7 +12929,7 @@
       "titleEn": "OpenHands cloud 1.46.0",
       "lang": "en",
       "publishedAt": "2026-07-10T19:51:59.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "cloud",
         "openhands",
@@ -15042,7 +15055,7 @@
       "titleEn": "Side Chats and Conversation Search",
       "lang": "en",
       "publishedAt": "2026-07-10T00:00:00.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "changelog",
         "cursor",
@@ -15243,7 +15256,7 @@
       "titleEn": "OpenHands cloud 1.45.1",
       "lang": "en",
       "publishedAt": "2026-07-09T20:07:45.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "cloud",
         "openhands",
@@ -15307,7 +15320,7 @@
       "titleEn": "OpenHands Releases 1.11.0",
       "lang": "en",
       "publishedAt": "2026-07-09T19:37:16.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -15371,7 +15384,7 @@
       "titleEn": "OpenHands cloud 1.45.0",
       "lang": "en",
       "publishedAt": "2026-07-09T19:28:57.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "cloud",
         "openhands",
@@ -15789,7 +15802,7 @@
       "titleEn": "OpenHands cloud 1.44.0",
       "lang": "en",
       "publishedAt": "2026-07-09T14:16:09.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -16796,7 +16809,7 @@
       "titleEn": "OpenHands cloud 1.43.0",
       "lang": "en",
       "publishedAt": "2026-07-08T20:04:42.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "agent",
         "cloud",
@@ -16856,7 +16869,7 @@
       "titleEn": "OpenHands Releases 1.10.0",
       "lang": "en",
       "publishedAt": "2026-07-08T19:44:54.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "agent",
         "ai-coding",
@@ -16946,7 +16959,7 @@
       "titleEn": "OpenHands Releases 1.9.3",
       "lang": "en",
       "publishedAt": "2026-07-08T16:44:40.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -17897,7 +17910,7 @@
       "titleEn": "Meta’s AI Glasses: Your Questions Answered",
       "lang": "en",
       "publishedAt": "2026-07-07T23:35:43.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "ai-glasses",
         "meta",
@@ -18169,7 +18182,7 @@
       "titleEn": "Introducing Muse Image: Image Generation Built for Your World",
       "lang": "en",
       "publishedAt": "2026-07-07T18:05:34.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "generative-ai",
         "image-generation",
@@ -24031,7 +24044,7 @@
       "titleEn": "Meta’s AI Storage Blueprint at Scale",
       "lang": "en",
       "publishedAt": "2026-07-01T16:00:36.000Z",
-      "collectedAt": "2026-07-19T17:47:23.777Z",
+      "collectedAt": "2026-07-19T23:45:59.513Z",
       "tags": [
         "ai-infrastructure",
         "data-infrastructure",
@@ -24045,6 +24058,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Over the past several years, model capabilities and training dataset sizes have experienced exponential growth. During the past year or so, the time between new-frontier-model releases has gone down from months to weeks. Reliable and fast access to storage is important to both th",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/06/Metas-AI-Storage-Blueprint-at-Scale-Hero-1.png",
@@ -24053,8 +24067,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "a6d7a65d12189805",

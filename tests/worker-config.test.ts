@@ -134,6 +134,27 @@ describe("Cloudflare Worker deploy config", () => {
     );
   });
 
+  it("passes the verified Web build from the CI unit job to Playwright", () => {
+    const ciWorkflow = readConfig(".github/workflows/ci.yml");
+    const buildIndex = ciWorkflow.indexOf("npm run build:web");
+    const uploadIndex = ciWorkflow.indexOf("name: Upload verified Web build");
+    const downloadIndex = ciWorkflow.indexOf("name: Download verified Web build");
+    const e2eIndex = ciWorkflow.indexOf("name: E2E tests");
+
+    expect(buildIndex).toBeGreaterThan(-1);
+    expect(uploadIndex).toBeGreaterThan(buildIndex);
+    expect(downloadIndex).toBeGreaterThan(uploadIndex);
+    expect(e2eIndex).toBeGreaterThan(downloadIndex);
+    expect(ciWorkflow).toContain("uses: actions/upload-artifact@v4");
+    expect(ciWorkflow).toContain("uses: actions/download-artifact@v4");
+    expect(ciWorkflow).toContain(
+      "name: web-dist-${{ github.run_id }}-${{ github.run_attempt }}",
+    );
+    expect(
+      ciWorkflow.slice(e2eIndex, ciWorkflow.indexOf("name: Upload Playwright report")),
+    ).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
+  });
+
   it("spreads source collection across six hourly batches", () => {
     expect(SOURCE_BATCHES).toBe(6);
     const start = Date.parse("2026-07-12T00:00:00.000Z");

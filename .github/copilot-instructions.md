@@ -2359,6 +2359,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: Playwright webServer commandをpure helperへ分け、通常は従来どおりbuild後にpreviewする。PublisherのVerify stepだけ`PLAYWRIGHT_REUSE_BUILD=1`を設定し、直前の`npm run build:web`が生成した`web/dist`をpreviewしてE2Eを実行する。unit testでdefault/reuse両経路とworkflow配線を固定する。
 - **教訓**: 同じjobでproduction artifactを明示的にbuild済みなら、そのartifactを検証するE2Eで再buildしない。通常の自己完結testとartifact検証testを環境契約で分離し、再利用する場合はbuildとpreviewが同一workspace・同一snapshotであることを保証する。
 
+### LL-354: 分離CI job間は検証済みWeb build artifactを明示的に引き渡す
+- **事象**: Publisherの二重buildを解消した後も、PR CIのunit jobがWeb buildを成功させた直後、別E2E jobのPlaywright webServerが同じstatic buildを再実行し、300秒timeoutでtest開始前に失敗した。
+- **根本原因**: `needs: unit`はjob順序だけを保証し、filesystem artifactは共有しない。unit jobの`web/dist`を引き渡さないまま、E2E jobを自己完結させるため同じbuildを再実行していた。
+- **対策**: unit jobで検証済み`web/dist`をrun attempt固有名のartifactとして1日だけ保存し、E2E jobで同じpathへ復元して`PLAYWRIGHT_REUSE_BUILD=1`でpreviewする。通常のローカルE2Eは従来どおり自己buildする。
+- **教訓**: CI jobを分けたまま同じ生成物を検証する場合、依存関係だけでなくartifact transferを明示する。再実行時のimmutable artifact衝突を避けるため、artifact名に`run_id`と`run_attempt`を含める。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

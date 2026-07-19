@@ -137,6 +137,24 @@ test.describe("TECH Dashboard smoke", () => {
     );
     expect(featuredHref, "Featured exposes an article destination").toBeTruthy();
     expect(tickerHrefs, "Ticker does not repeat the Featured article").not.toContain(featuredHref);
+    const tickerSourceCounts = await page.locator(".ticker-bar .tb-slide").evaluateAll((slides) => {
+      const countBy = (attribute: string) => slides.reduce<Record<string, number>>((counts, slide) => {
+        const key = slide.getAttribute(attribute) ?? "";
+        counts[key] = (counts[key] ?? 0) + 1;
+        return counts;
+      }, {});
+      return {
+        sources: countBy("data-source-id"),
+        platforms: countBy("data-source-platform"),
+      };
+    });
+    expect(Math.max(0, ...Object.values(tickerSourceCounts.sources))).toBeLessThanOrEqual(2);
+    expect(Math.max(0, ...Object.values(tickerSourceCounts.platforms))).toBeLessThanOrEqual(2);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      "content",
+      /公式発表.*コミュニティ記事.*毎時 1 バッチ.*約 6 時間周期/,
+    );
+    await expect(page.locator(".banner .tagline.tagline-full.i18n-ja")).toContainText(/毎時 1 バッチ.*約 6 時間周期/);
     // Inactive ticker slides must be hidden from AT and unfocusable (LL-078).
     // When the current JST day has only one published entry there are no
     // inactive slides yet (data-freshness dependent, LL-082) — a valid state,
@@ -149,6 +167,7 @@ test.describe("TECH Dashboard smoke", () => {
     const pendingTickerSlides = page.locator(".tb-slide[data-summary-state='pending']");
     for (let index = 0; index < await pendingTickerSlides.count(); index++) {
       await expect(pendingTickerSlides.nth(index).locator(".tb-tag.imp, .tb-tag.rel")).toHaveCount(0);
+      await expect(pendingTickerSlides.nth(index).locator(".tb-tag.pending")).toBeVisible();
     }
     await expect(page.locator(".banner-fact")).toHaveCount(3);
     await expect(page.locator(".signal-node.node-source")).toContainText(/sources with live entries/i);
@@ -991,9 +1010,16 @@ test.describe("TECH Dashboard smoke", () => {
       720,
       390,
     ];
-    for (const width of widths) {
+    let originalRankSummary = "";
+    for (const [index, width] of widths.entries()) {
       await page.setViewportSize({ width, height: 844 });
-      await page.goto("/");
+      const crossedIntoMobile = width <= 720 && (widths[index - 1] ?? width) > 720;
+      if (index === 0 || crossedIntoMobile) {
+        await page.goto("/");
+        if (width >= 721) {
+          originalRankSummary = await page.locator(".top-rank-item .rank-summary .i18n-ja").first().textContent() ?? "";
+        }
+      }
       await expect(page.locator(".top-rank")).toBeVisible();
       if (width >= 721) {
         await page.locator(".featured-src, .top-rank-item .rank-source").evaluateAll((sources) => {
@@ -1005,15 +1031,18 @@ test.describe("TECH Dashboard smoke", () => {
             if (full) full.textContent = fullLabel;
           }
         });
-        await page.evaluate(
-          () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+        await page.locator(".top-rank-item .rank-summary .i18n-ja").first().evaluate(
+          (summary, text) => {
+            summary.textContent = text;
+          },
+          width >= 1280
+            ? "AI開発の判断材料を短時間で比較できるよう、記事固有の要点と影響範囲を簡潔に整理した要約です。"
+            : originalRankSummary,
         );
       }
-      if (width >= 1280) {
-        await page.locator(".top-rank-item .rank-summary .i18n-ja").first().evaluate((summary) => {
-          summary.textContent = "AI開発の判断材料を短時間で比較できるよう、記事固有の要点と影響範囲を簡潔に整理した要約です。";
-        });
-      }
+      await page.evaluate(
+        () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+      );
 
       const metrics = await page.evaluate(() => {
         const layout = document.querySelector(".layout");
@@ -1550,11 +1579,18 @@ test.describe("TECH Dashboard smoke", () => {
     const reducedDigest = page.locator("[data-daily-summary]");
     const reducedFill = reducedDigest.locator(".spark .fill").first();
     await expect(reducedDigest).toHaveAttribute("data-chart-state", "visible");
-    await expect(reducedFill).toHaveCSS("animation-name", "none");
-    await expect(reducedFill).toHaveCSS("transform", "none");
-    await expect.poll(async () => reducedFill.evaluate((element) => (
-      Number(getComputedStyle(element).opacity)
-    ))).toBe(1);
+    await expect.poll(async () => reducedFill.evaluate((element) => {
+      const styles = getComputedStyle(element);
+      return {
+        animationName: styles.animationName,
+        transform: styles.transform,
+        opacity: Number(styles.opacity),
+      };
+    })).toEqual({
+      animationName: "none",
+      transform: "none",
+      opacity: 1,
+    });
   });
 
   test("featured hero and top-3 are not low-signal release builds", async ({ page }) => {
@@ -2195,6 +2231,9 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(enBtn).toHaveAttribute("aria-pressed", "true");
     await expect(jaBtn).toHaveAccessibleName("Switch interface to Japanese");
     await expect(enBtn).toHaveAccessibleName("English interface active");
+    await expect(page.locator(".banner .tagline.tagline-compact.i18n-en")).toContainText(
+      /One batch hourly.*about every 6 hours/,
+    );
     await page.locator(".mobile-tabbar button[data-menu-trigger]").click();
     const menu = page.locator("#site-menu");
     await expect(menu).toBeVisible();
@@ -5361,10 +5400,15 @@ test.describe("TECH Dashboard smoke", () => {
     // .lane-layout, adding a phantom empty left column at mid widths. Lane
     // pages must stay 2-col (>=981px) or 1-col (<=980px), never 3-col, and
     // never show aside.left, at any width.
+    const widths = [1280, 1180, 1100, 1000, 981, 980, 901, 768, 390];
     for (const path of ["/knowledge/", "/arxiv/"]) {
-      for (const width of [1280, 1180, 1100, 1000, 981, 980, 901, 768, 390]) {
+      await page.setViewportSize({ width: widths[0], height: 1000 });
+      await page.goto(path);
+      for (const width of widths) {
         await page.setViewportSize({ width, height: 1000 });
-        await page.goto(path);
+        await page.evaluate(
+          () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+        );
         const info = await page.evaluate(() => {
           const layout = document.querySelector(".layout") as HTMLElement | null;
           const cols = layout ? getComputedStyle(layout).gridTemplateColumns : "";
@@ -6514,8 +6558,8 @@ test.describe("TECH Dashboard smoke", () => {
     const toast = page.locator("#reaction-error-toast");
     await expect(control).toHaveAttribute("data-state", "ready");
 
-    const startedAt = Date.now();
     await button.click();
+    const startedAt = Date.now();
     await expect(toast).toBeVisible({ timeout: 7_000 });
     expect(
       Date.now() - startedAt,

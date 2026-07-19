@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { playwrightWebServerCommand } from "../playwright.config.ts";
 import { SOURCE_BATCHES, sourceBatchIndexAt } from "../worker/src/index.ts";
 
 function readConfig(path: string): string {
@@ -115,6 +116,48 @@ describe("Cloudflare Worker deploy config", () => {
     expect(astroBuildRunner).toContain('spawn(command, ["build", "--silent"]');
     expect(astroBuildRunner).toContain("const HEARTBEAT_MS = 30_000");
     expect(astroBuildRunner).toContain("clearInterval(heartbeat)");
+  });
+
+  it("reuses the verified Web build during Publisher E2E without changing default E2E", () => {
+    const publisherWorkflow = readConfig(".github/workflows/publisher.yml");
+    const defaultCommand = playwrightWebServerCommand(false);
+    const reuseCommand = playwrightWebServerCommand(true);
+
+    expect(defaultCommand).toContain("npm --prefix web run build");
+    expect(defaultCommand).toContain("npm --prefix web run preview");
+    expect(reuseCommand).toBe(
+      "npm --prefix web run preview -- --host 127.0.0.1 --port 4322",
+    );
+    expect(publisherWorkflow).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
+    expect(publisherWorkflow).toMatch(
+      /npm run build:web[\s\S]*npm run test:e2e/,
+    );
+  });
+
+  it("passes the verified Web build from the CI unit job to Playwright", () => {
+    const ciWorkflow = readConfig(".github/workflows/ci.yml");
+    const buildIndex = ciWorkflow.indexOf("npm run build:web");
+    const uploadIndex = ciWorkflow.indexOf("name: Upload verified Web build");
+    const downloadIndex = ciWorkflow.indexOf("name: Download verified Web build");
+    const e2eIndex = ciWorkflow.indexOf("name: E2E tests");
+
+    expect(buildIndex).toBeGreaterThan(-1);
+    expect(uploadIndex).toBeGreaterThan(buildIndex);
+    expect(downloadIndex).toBeGreaterThan(uploadIndex);
+    expect(e2eIndex).toBeGreaterThan(downloadIndex);
+    expect(ciWorkflow).toContain("uses: actions/upload-artifact@v4");
+    expect(ciWorkflow).toContain("uses: actions/download-artifact@v4");
+    expect(ciWorkflow).toContain(
+      "name: web-dist-${{ github.run_id }}",
+    );
+    expect(ciWorkflow).not.toContain(
+      "name: web-dist-${{ github.run_id }}-${{ github.run_attempt }}",
+    );
+    expect(ciWorkflow).toContain("overwrite: true");
+    expect(ciWorkflow).toContain("retention-days: 7");
+    expect(
+      ciWorkflow.slice(e2eIndex, ciWorkflow.indexOf("name: Upload Playwright report")),
+    ).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
   });
 
   it("spreads source collection across six hourly batches", () => {

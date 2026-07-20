@@ -1838,10 +1838,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: 記事詳細のaction stripは機能数でなく読者の目的で整理する。同じURLを扱うcontrolを複数置かず、読む、共有する、反応するを各1つの明確なgroupへ分ける。tagは主要actionと同じ視覚強度にせず、運用telemetryは読者の判断に直接必要な場合だけ表示する。mobile CTAは動詞だけでなく遷移先を操作前に示す。
 
 ### LL-267: generated corpus依存のUI状態は存在を前提にしない
-- **事象**: E2Eがpending summaryや日本語title fallbackを現在の生成dataに必ず含むと仮定し、Publisherが全件を正常補完すると対象0件で失敗した。
-- **根本原因**: deterministicな表示contractと、時刻ごとに変わるgenerated corpusの状態分布を同じbrowser testで必須化していた。品質改善によってoptional stateが消える正常系を考慮していなかった。
-- **対策**: browser testは対象状態を持つcardをselectorで選び、0件ならfully enriched corpusをvalidとするcount guardを置く。fallback helper自体の挙動は生成dataに依存しないunit testで固定する。
-- **教訓**: data-driven UIのoptional stateは「存在する場合の表示」と「存在しない正常状態」を分けて検証する。実corpusに特定fallbackがあることを回帰条件にせず、deterministic logicはfixture/unit、現在のstate distributionはschema/quality telemetryで検証する。
+- **事象**: E2Eがpending summary、日本語title fallback、Top Nカテゴリ内の`Research + arXiv`を現在の生成dataに必ず含むと仮定した。Publisherが全件を正常補完した場合やカテゴリ分布が変わった場合、正当な対象0件で失敗した。
+- **根本原因**: deterministicな表示contractと、時刻ごとに変わるgenerated corpusの状態分布・ranking sliceを同じbrowser testで必須化していた。品質改善や新着分布によってoptional stateが消える正常系を考慮していなかった。
+- **対策**: browser testは対象状態を持つcardやranking rowをselectorで選び、0件ならfully enriched corpusまたはTop N圏外をvalidとするcount guardを置く。存在する場合だけhrefやcopyを検証し、fallback/ranking helper自体の挙動は生成dataに依存しないfixture/unit testで固定する。
+- **教訓**: data-driven UIのoptional stateは「存在する場合の表示」と「存在しない正常状態」を分けて検証する。実corpusに特定fallbackや特定カテゴリがTop Nにあることを回帰条件にせず、deterministic logicはfixture/unit、現在のstate distributionはschema/quality telemetryで検証する。
 
 ### LL-268: viewport固定panelの祖先にtransformやcontainmentを置かない
 - **事象**: Source disclosure panelを`position:fixed`で画面中央と下端54pxへ配置したが、Top-3 cardのhover transformとcontainer query用containmentの内側ではviewportではなく祖先を基準に移動した。

@@ -61,6 +61,14 @@ export interface StatsPayload {
 
 export const STATS = statsJson as StatsPayload;
 
+export function sourceLast30dTotal(sourceIds: readonly string[]): number {
+  const selected = new Set(sourceIds);
+  return STATS.bySource.reduce(
+    (total, bucket) => total + (selected.has(bucket.source) ? bucket.last30d : 0),
+    0,
+  );
+}
+
 const publicEntriesForCategory = (category: Category) => entriesFor(category);
 
 export function categoryMonthlyTrend(category: Category, months = 12): CategoryMonthlyTrendBucket[] {

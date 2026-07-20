@@ -1,7 +1,9 @@
 ---
 import {
   relativeTime,
-  isNew,
+  isRecentlyCollected,
+  RECENT_COLLECTION_BADGE,
+  RECENT_COLLECTION_WINDOW_HOURS,
   isPublishableEntry,
   CATEGORY_META,
   categoryLabel,
@@ -17,7 +19,7 @@ export interface Props {
 const { entry } = Astro.props;
 const rel = relativeTime(entry.publishedAt);
 const summaryReady = isPublishableEntry(entry);
-const fresh = summaryReady && isNew(entry);
+const recentlyCollected = summaryReady && isRecentlyCollected(entry);
 
 const title = entry.titleJa || entry.titleEn || entry.title;
 const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
@@ -50,7 +52,16 @@ function typeLabel(t: NormalizedEntry["sourceType"]): string {
 >
   <span class="cat-dot" title={categoryName}></span>
   <span class="type" data-t={entry.sourceType}>{typeLabel(entry.sourceType)}</span>
-  {fresh && <span class="new">NEW</span>}
+  {recentlyCollected && (
+    <span
+      class="new"
+      data-recency-scope="collection"
+      data-recency-window-hours={RECENT_COLLECTION_WINDOW_HOURS}
+    >
+      <span class="i18n-ja">{RECENT_COLLECTION_BADGE.ja}</span>
+      <span class="i18n-en" lang="en">{RECENT_COLLECTION_BADGE.en}</span>
+    </span>
+  )}
   <span class="title">{title}</span>
   <span class="spacer"></span>
   <span class="src">{sourceLabel(entry.source)}</span>

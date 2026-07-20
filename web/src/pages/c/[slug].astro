@@ -66,10 +66,34 @@ const breadcrumb = [
       { href: "/status", label: "Source health" },
     ]}
     metrics={[
-      { label: "Total", value: all.length },
-      { label: "Last 7d", value: wow.thisWeek },
-      { label: "Vs prev 7d", value: `${deltaSign}${Math.abs(wow.deltaPct)}%` },
-      { label: "Avg/day", value: wow.avgPerDay },
+      {
+        label: "Total",
+        value: all.length,
+        detail: "現在のlive index",
+        detailEn: "Current live index",
+        scope: "category-live-total",
+      },
+      {
+        label: "Last 7d",
+        value: wow.thisWeek,
+        detail: "直近7日の掲載数",
+        detailEn: "Entries in the latest 7 days",
+        scope: "category-last-7d",
+      },
+      {
+        label: "Vs prev 7d",
+        value: `${deltaSign}${Math.abs(wow.deltaPct)}%`,
+        detail: "その前の7日間と比較",
+        detailEn: "Compared with the prior 7 days",
+        scope: "category-week-over-week",
+      },
+      {
+        label: "Avg/day",
+        value: wow.avgPerDay,
+        detail: "直近7日 ÷ 7",
+        detailEn: "Latest 7 days divided by 7",
+        scope: "category-avg-day",
+      },
     ]}
   />
 

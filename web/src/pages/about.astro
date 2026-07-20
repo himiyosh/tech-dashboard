@@ -56,7 +56,7 @@ const pipelineSteps = [
   {
     label: "Collect",
     title: "公式 feed と community feed を収集",
-    body: `RSS、Atom、GitHub Releases、arXiv、HTML index から記事候補を取り込みます。Worker は source を ${workerBatchCopy} に分けて毎時 rotation します。`,
+    body: `RSS、Atom、GitHub Releases、arXiv、HTML index から記事候補を取り込みます。${DASHBOARD_METRICS.totalSourceCount} source を ${workerBatchCopy} に分け、毎時 1 batch、各 source を約 6 時間周期で巡回します。`,
   },
   {
     label: "Normalize",
@@ -76,7 +76,7 @@ const pipelineSteps = [
 ];
 ---
 
-<Portal pageKey="about" title="About - TECH Dashboard">
+<Portal pageKey="about" title="About — TECH Dashboard">
   <PageHero
     className="page-hero-top-level page-hero-about"
     kicker="About TECH Dashboard"
@@ -91,12 +91,48 @@ const pipelineSteps = [
       { href: "#reactions-privacy", label: "Likes & privacy" },
     ]}
     metrics={[
-      { label: "Live entries", value: DASHBOARD_METRICS.timelineEntries },
-      { label: "All time", value: DASHBOARD_METRICS.allTimeEntries },
-      { label: "Sources", value: DASHBOARD_METRICS.totalSourceCount },
-      { label: "Categories", value: DASHBOARD_METRICS.totalCategories },
-      { label: "Archive", value: DASHBOARD_METRICS.archiveEntries },
-      { label: "Last updated", value: lastUpdated },
+      {
+        label: "Live entries",
+        value: DASHBOARD_METRICS.timelineEntries,
+        detail: "現在のTimeline",
+        detailEn: "Current Timeline",
+        scope: "timeline-live",
+      },
+      {
+        label: "All time",
+        value: DASHBOARD_METRICS.allTimeEntries,
+        detail: "live + archive履歴",
+        detailEn: "Live plus archive history",
+        scope: "all-time",
+      },
+      {
+        label: "Sources",
+        value: DASHBOARD_METRICS.totalSourceCount,
+        detail: "登録source",
+        detailEn: "Registered sources",
+        scope: "registered-sources",
+      },
+      {
+        label: "Categories",
+        value: DASHBOARD_METRICS.totalCategories,
+        detail: "現在のtaxonomy",
+        detailEn: "Current taxonomy",
+        scope: "category-count",
+      },
+      {
+        label: "Archive months",
+        value: DASHBOARD_METRICS.archiveMonths,
+        detail: "月次artifact",
+        detailEn: "Monthly artifacts",
+        scope: "archive-months",
+      },
+      {
+        label: "Last updated",
+        value: lastUpdated,
+        detail: "公開index snapshot",
+        detailEn: "Published index snapshot",
+        scope: "published-snapshot",
+      },
     ]}
   />
 
@@ -116,9 +152,9 @@ const pipelineSteps = [
 
         <article class="about-panel">
           <span class="panel-kicker">Freshness</span>
-          <h3 data-worker-batch-total={workerBatchCount ?? "unknown"}>毎時 run、source は {workerBatchCopy} rotation</h3>
+          <h3 data-worker-batch-total={workerBatchCount ?? "unknown"}>毎時 1 batch、各 source は約 6 時間周期</h3>
           <p>
-            Worker は毎時起動し、{DASHBOARD_METRICS.totalSourceCount} sources を batch 分割して収集します。
+            {DASHBOARD_METRICS.totalSourceCount} sources を {workerBatchCopy} に分け、1 run で約 {Math.ceil(DASHBOARD_METRICS.totalSourceCount / Math.max(workerBatchCount ?? 1, 1))} sources を確認します。
             Status では batch、source registry、freshness、summarize 状態を確認できます。
           </p>
         </article>

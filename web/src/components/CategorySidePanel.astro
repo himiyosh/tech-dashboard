@@ -30,6 +30,7 @@ const countMap = <T extends string>(items: readonly T[]): Array<{ key: T; count:
 
 const topSources = countMap(entries.slice(0, 160).map((entry) => entry.source)).slice(0, 5);
 const topTags = countMap(entries.slice(0, 160).flatMap((entry) => entry.tags)).slice(0, 12);
+const rankingSampleCount = Math.min(entries.length, 160);
 const relatedCategories = CATEGORY_META.filter(
   (item) => item.group === category.group && item.slug !== category.slug,
 ).slice(0, 5);
@@ -93,11 +94,15 @@ const categoryInitial = category.initial;
   {topSources.length > 0 && (
     <div class="side-card">
       <div class="right-title">Top sources</div>
+      <p class="category-side-scope">
+        <span class="i18n-ja">新着順の先頭 {rankingSampleCount} 件</span>
+        <span class="i18n-en" lang="en">First {rankingSampleCount} entries by recency</span>
+      </p>
       <div class="category-side-list">
         {topSources.map((source) => (
           <div class="category-source-row">
             <span>{sourceLabel(source.key)}</span>
-            <strong>{source.count}</strong>
+            <strong title={`${source.count} entries`}>{source.count}<small> entries</small></strong>
           </div>
         ))}
       </div>
@@ -107,9 +112,13 @@ const categoryInitial = category.initial;
   {topTags.length > 0 && (
     <div class="side-card">
       <div class="right-title">Trending tags</div>
+      <p class="category-side-scope">
+        <span class="i18n-ja">同じ先頭 {rankingSampleCount} 件</span>
+        <span class="i18n-en" lang="en">The same first {rankingSampleCount} entries</span>
+      </p>
       <div class="tag-cloud category-side-tags">
         {topTags.map((tag) => (
-          <a class="tag" href={tagHref(tag.key)}>
+          <a class="tag" href={tagHref(tag.key)} aria-label={`${tag.key}, ${tag.count} entries`}>
             #{tag.key} <span class="c">{tag.count}</span>
           </a>
         ))}
@@ -138,7 +147,7 @@ const categoryInitial = category.initial;
       <div class="category-related-grid">
         {relatedCategories.map((item) => (
           <a href={`/c/${item.slug}`} style={`--cat-color:${item.color}`}>
-            <span>{item.initial}</span>
+            <span aria-hidden="true">{item.emoji}</span>
             <strong>{item.name}</strong>
           </a>
         ))}
@@ -146,3 +155,18 @@ const categoryInitial = category.initial;
     </div>
   )}
 </aside>
+
+<style>
+  .category-side-scope {
+    margin: -2px 0 9px;
+    color: var(--muted-2);
+    font-size: 10px;
+    line-height: 1.45;
+  }
+
+  .category-source-row strong small {
+    color: var(--muted-2);
+    font-size: 9px;
+    font-weight: 500;
+  }
+</style>

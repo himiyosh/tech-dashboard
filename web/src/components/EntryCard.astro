@@ -1,7 +1,9 @@
 ---
 import {
   relativeTime,
-  isNew,
+  isRecentlyCollected,
+  RECENT_COLLECTION_BADGE,
+  RECENT_COLLECTION_WINDOW_HOURS,
   CATEGORY_META,
   entryHref,
   importanceLabel,
@@ -34,7 +36,7 @@ const summaryEnResult = summaryForLangWithFallback(entry, "en");
 const summaryJa = summaryJaResult.text;
 const summaryEn = summaryEnResult.text;
 const hasSummary = Boolean(summaryJa || summaryEn);
-const fresh = hasSummary && isNew(entry);
+const recentlyCollected = hasSummary && isRecentlyCollected(entry);
 const isImportant = hasSummary && entry.importance === 3;
 const titleJaResult = titleForLangWithFallback(entry, "ja");
 const titleEnResult = titleForLangWithFallback(entry, "en");
@@ -65,11 +67,11 @@ const sourceTypeEn: Record<NormalizedEntry["sourceType"], string> = {
 };
 const priority = importanceLabel(entry.importance);
 const rankReasonJa =
-  entry.importance >= 2 || fresh
+  entry.importance >= 2 || recentlyCollected
     ? `${sourceTypeJa[entry.sourceType]} · ${catName}`
     : `深掘り候補 · ${sourceTypeJa[entry.sourceType]} · ${catName}`;
 const rankReasonEn =
-  entry.importance >= 2 || fresh
+  entry.importance >= 2 || recentlyCollected
     ? `${sourceTypeEn[entry.sourceType]} · ${catName}`
     : `Deep-dive candidate · ${sourceTypeEn[entry.sourceType]} · ${catName}`;
 const publishedJa = new Intl.DateTimeFormat("ja-JP", {
@@ -170,7 +172,16 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
   <div class="card-body">
     <div class="meta">
       {isImportant && <span class="badge hot" title="重要リリース">🔥 HOT</span>}
-      {fresh && <span class="badge new">NEW</span>}
+      {recentlyCollected && (
+        <span
+          class="badge new"
+          data-recency-scope="collection"
+          data-recency-window-hours={RECENT_COLLECTION_WINDOW_HOURS}
+        >
+          <span class="i18n-ja">{RECENT_COLLECTION_BADGE.ja}</span>
+          <span class="i18n-en" lang="en">{RECENT_COLLECTION_BADGE.en}</span>
+        </span>
+      )}
       <span
         class={authorityBadgeClass}
         data-source-authority={authority.kind}

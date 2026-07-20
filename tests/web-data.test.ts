@@ -87,7 +87,9 @@ const {
   selectTickerItems,
   tickerSourcePlatformKey,
   entryHref,
-  isNew,
+  isRecentlyCollected,
+  RECENT_COLLECTION_BADGE,
+  RECENT_COLLECTION_WINDOW_HOURS,
   hasCjk,
   isCjkDominantText,
   hasUsableSummaryForLanguage,
@@ -964,19 +966,27 @@ describe("entryHref", () => {
 });
 
 // ============================================================
-// isNew
+// recently collected badge
 // ============================================================
-describe("isNew", () => {
+describe("isRecentlyCollected", () => {
   it("collectedAt が 1 時間前のエントリは true", () => {
     const now = Date.now();
     const entry = { ...e1, collectedAt: new Date(now - 3_600_000).toISOString() };
-    expect(isNew(entry, now)).toBe(true);
+    expect(isRecentlyCollected(entry, now)).toBe(true);
   });
 
   it("collectedAt が 7 時間前のエントリは false", () => {
     const now = Date.now();
     const entry = { ...e1, collectedAt: new Date(now - 7 * 3_600_000).toISOString() };
-    expect(isNew(entry, now)).toBe(false);
+    expect(isRecentlyCollected(entry, now)).toBe(false);
+  });
+
+  it("publication recency と誤認しない collection-scoped copy を共有する", () => {
+    expect(RECENT_COLLECTION_WINDOW_HOURS).toBe(6);
+    expect(RECENT_COLLECTION_BADGE).toEqual({
+      ja: "新規収集",
+      en: "INDEXED",
+    });
   });
 });
 

@@ -8,6 +8,7 @@ import {
   getMonth,
   getMonthLabel,
   getMonthSummaries,
+  ARCHIVE_TIER_DETAIL,
 } from "../../lib/archive.ts";
 import { CATEGORY_META, groupByDay, jstDayLabel, relativeTime, type Category } from "../../lib/data.ts";
 import { sourceLabel } from "../../lib/source-meta.ts";
@@ -84,11 +85,41 @@ const monthHeroActions = [
     description="月内の記事を日付順に並べています。カテゴリと source の偏りを見てから、下のタイムラインで詳細を確認できます。"
     actions={monthHeroActions}
     metrics={[
-      { label: "Entries", value: file.count },
-      { label: "Active days", value: dayCount },
-      { label: "Warm", value: warm },
-      { label: "Cold", value: cold },
-      { label: "Updated", value: updatedLabel },
+      {
+        label: "Entries",
+        value: file.count,
+        detail: "この月の記事数",
+        detailEn: "Entries in this month",
+        scope: "month-entry-count",
+      },
+      {
+        label: "Active days",
+        value: dayCount,
+        detail: "記事掲載日の数",
+        detailEn: "Days with listed entries",
+        scope: "month-active-days",
+      },
+      {
+        label: "Top category",
+        value: categoryRows[0]?.label ?? "none",
+        detail: "月内の記事数1位",
+        detailEn: "Most entries this month",
+        scope: "month-top-category",
+      },
+      {
+        label: "Top source",
+        value: sourceRows[0] ? sourceLabel(sourceRows[0].source) : "none",
+        detail: "月内の記事数1位",
+        detailEn: "Most entries this month",
+        scope: "month-top-source",
+      },
+      {
+        label: "Updated",
+        value: updatedLabel,
+        detail: "月次artifact snapshot",
+        detailEn: "Monthly artifact snapshot",
+        scope: "month-snapshot",
+      },
     ]}
   />
 
@@ -117,7 +148,11 @@ const monthHeroActions = [
           <strong>{cold}</strong>
           <small>{coldPct}%</small>
         </div>
-        <div class="category-strip">
+        <div class="category-strip" aria-label="Top categories by entries in this month">
+          <span class="category-strip-label">
+            <span class="i18n-ja">月内カテゴリ内訳</span>
+            <span class="i18n-en" lang="en">Category mix this month</span>
+          </span>
           {categoryRows.map((row) => (
             <span class="category-pill" style={`--pill-color:${row.color}`}>
               {row.label} <strong>{row.count}</strong>
@@ -140,11 +175,15 @@ const monthHeroActions = [
     <aside class="right archive-month-insights">
       <div class="side-card month-insight-card archive-tier-help">
         <div class="rail-title">Archive tiers</div>
-        <p><strong>warm</strong> は直近寄りのアーカイブ、<strong>cold</strong> は長期保管用の古いアーカイブです。</p>
+        <p>
+          <span class="i18n-ja">{ARCHIVE_TIER_DETAIL.ja}</span>
+          <span class="i18n-en" lang="en">{ARCHIVE_TIER_DETAIL.en}</span>
+        </p>
       </div>
 
       <div class="side-card month-insight-card">
         <div class="rail-title">Top categories</div>
+        <p class="month-rank-scope">Entries in this month</p>
         <ul class="month-rank-list">
           {categoryRows.map((row) => (
             <li>
@@ -157,6 +196,7 @@ const monthHeroActions = [
 
       <div class="side-card month-insight-card">
         <div class="rail-title">Top sources</div>
+        <p class="month-rank-scope">Entries in this month</p>
         <ul class="month-rank-list">
           {sourceRows.map((row) => (
             <li>
@@ -255,6 +295,15 @@ const monthHeroActions = [
     font-size: 11.5px;
   }
 
+  .category-strip-label {
+    flex: 0 0 100%;
+    color: var(--muted-2);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
   .category-pill::before {
     content: "";
     width: 7px;
@@ -329,6 +378,13 @@ const monthHeroActions = [
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+
+  .month-rank-scope {
+    margin: -2px 0 9px;
+    color: var(--muted-2);
+    font-size: 10px;
+    line-height: 1.4;
   }
 
   .month-rank-list li {

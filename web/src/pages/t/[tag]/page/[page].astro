@@ -8,6 +8,7 @@ import TimelineRightRail from "../../../../components/TimelineRightRail.astro";
 import {
   PAGE_SIZE,
   STATIC_TAG_PAGE_TAGS,
+  GENERATED_AT,
   entriesForTagPage,
   groupByDay,
   jstDayLabel,
@@ -68,10 +69,34 @@ const breadcrumb = [
       { href: "/archive", label: "Open archive" },
     ]}
     metrics={[
-      { label: "Total", value: all.length },
-      { label: "Showing", value: entries.length },
-      { label: "Page", value: `${page}/${total}` },
-      { label: "Updated", value: relativeTime(all[0]?.collectedAt ?? all[0]?.publishedAt ?? null, now) },
+      {
+        label: "Total",
+        value: all.length,
+        detail: `#${tag} の全掲載記事`,
+        detailEn: `All listed entries tagged #${tag}`,
+        scope: "tag-live-total",
+      },
+      {
+        label: "Showing",
+        value: entries.length,
+        detail: "このページの表示件数",
+        detailEn: "Entries on this page",
+        scope: "tag-page-count",
+      },
+      {
+        label: "Page",
+        value: `${page}/${total}`,
+        detail: "静的ページ位置",
+        detailEn: "Static page position",
+        scope: "tag-page-position",
+      },
+      {
+        label: "Updated",
+        value: relativeTime(GENERATED_AT, now),
+        detail: "公開index snapshot",
+        detailEn: "Published index snapshot",
+        scope: "tag-snapshot",
+      },
     ]}
   />
 

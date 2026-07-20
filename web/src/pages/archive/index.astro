@@ -5,10 +5,13 @@ import Sidebar from "../../components/Sidebar.astro";
 import {
   ARCHIVE_TOTAL_ENTRIES,
   ARCHIVE_GENERATED_AT,
+  ARCHIVE_TIER_DETAIL,
+  ARCHIVE_TIER_SUMMARY,
   getMonth,
   getMonthSummaries,
 } from "../../lib/archive.ts";
 import { CATEGORY_META, relativeTime, type Category } from "../../lib/data.ts";
+import { DASHBOARD_METRICS } from "../../lib/metrics.ts";
 
 const baseMonths = getMonthSummaries();
 const categoryBySlug = new Map(CATEGORY_META.map((category) => [category.slug, category]));
@@ -23,9 +26,15 @@ const months = baseMonths.map((month) => {
   const topCategory = [...categoryCounts.entries()]
     .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))[0] as [Category, number] | undefined;
   const categoryMeta = topCategory ? categoryBySlug.get(topCategory[0]) : null;
+  const exactPeakPercent = (month.count / maxMonthCount) * 100;
+  const peakPercent = Math.round(exactPeakPercent * 10) / 10;
   return {
     ...month,
-    barWidth: Math.max(6, Math.round((month.count / maxMonthCount) * 100)),
+    barWidth: Math.max(6, Math.round(exactPeakPercent)),
+    peakPercent,
+    peakShareLabel: month.count > 0 && peakPercent < 1
+      ? "<1"
+      : String(peakPercent),
     topCategoryCount: topCategory?.[1] ?? 0,
     topCategoryLabel: categoryMeta?.name ?? "No category",
     topCategoryColor: categoryMeta?.color ?? "var(--accent)",
@@ -71,12 +80,48 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
       { href: "#archive-months", label: "Browse months" },
     ]}
     metrics={[
-      { label: "Archived", value: ARCHIVE_TOTAL_ENTRIES },
-      { label: "Months", value: months.length },
-      { label: "All time", value: ARCHIVE_TOTAL_ENTRIES },
-      { label: "Latest month", value: latestMonth ? latestMonth.label : "none" },
-      { label: "Peak month", value: peakMonth ? peakMonth.label : "none" },
-      { label: "Updated", value: updatedLabel },
+      {
+        label: "Archived",
+        value: ARCHIVE_TOTAL_ENTRIES,
+        detail: "全月のarchive記事",
+        detailEn: "Entries across all archive months",
+        scope: "archive-total",
+      },
+      {
+        label: "Months",
+        value: months.length,
+        detail: "月次artifact数",
+        detailEn: "Monthly artifacts",
+        scope: "archive-month-count",
+      },
+      {
+        label: "Live index",
+        value: DASHBOARD_METRICS.timelineEntries,
+        detail: "現在のTimeline",
+        detailEn: "Current Timeline",
+        scope: "timeline-live",
+      },
+      {
+        label: "Latest month",
+        value: latestMonth ? latestMonth.label : "none",
+        detail: "最新archive月",
+        detailEn: "Newest archive month",
+        scope: "latest-month",
+      },
+      {
+        label: "Peak month",
+        value: peakMonth ? peakMonth.label : "none",
+        detail: "記事数が最多の月",
+        detailEn: "Month with the most entries",
+        scope: "peak-month",
+      },
+      {
+        label: "Updated",
+        value: updatedLabel,
+        detail: "archive index snapshot",
+        detailEn: "Archive index snapshot",
+        scope: "archive-snapshot",
+      },
     ]}
   />
 
@@ -100,6 +145,10 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
             <span>Storage mix</span>
             <strong>{months.reduce((sum, month) => sum + month.warm, 0)} warm</strong>
             <small>{months.reduce((sum, month) => sum + month.cold, 0)} cold</small>
+            <small>
+              <span class="i18n-ja">{ARCHIVE_TIER_SUMMARY.ja}</span>
+              <span class="i18n-en" lang="en">{ARCHIVE_TIER_SUMMARY.en}</span>
+            </small>
           </div>
         </section>
       )}
@@ -129,20 +178,27 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
           </div>
           <div class="month-grid">
             {byYear.get(year)!.map((m) => (
-              <a href={`/archive/${m.month}`} class="month-card">
+              <a
+                href={`/archive/${m.month}`}
+                class="month-card"
+                data-peak-percent={m.peakPercent}
+                data-visual-bar-width={m.barWidth}
+              >
                 <div class="month-card-top">
                   <div>
                     <div class="month-label">{m.label}</div>
                     <div class="month-count">{m.count}</div>
                   </div>
-                  <span class="month-share">peak {m.barWidth}%</span>
+                  <span class="month-share" title={`${m.peakPercent}% of peak month ${peakMonth?.label ?? ""}`}>
+                    {m.peakShareLabel}% of peak
+                  </span>
                 </div>
                 <div class="month-bar" aria-hidden="true">
                   <span style={`width:${m.barWidth}%;background:${m.topCategoryColor}`}></span>
                 </div>
                 <div class="month-category">
                   <span style={`background:${m.topCategoryColor}`}></span>
-                  {m.topCategoryLabel} {m.topCategoryCount > 0 ? `· ${m.topCategoryCount}` : ""}
+                  Top category · {m.topCategoryLabel} {m.topCategoryCount > 0 ? `· ${m.topCategoryCount} entries` : ""}
                 </div>
                 <div class="month-meta">
                   <span class="tier warm">warm {m.warm}</span>
@@ -158,7 +214,10 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
     <aside class="right archive-insights">
       <div class="side-card archive-tier-help">
         <div class="rail-title">Archive tiers</div>
-        <p><strong>warm</strong> は直近寄りのアーカイブ、<strong>cold</strong> は長期保管用の古いアーカイブです。</p>
+        <p>
+          <span class="i18n-ja">{ARCHIVE_TIER_DETAIL.ja}</span>
+          <span class="i18n-en" lang="en">{ARCHIVE_TIER_DETAIL.en}</span>
+        </p>
       </div>
     </aside>
   </div>

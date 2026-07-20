@@ -15,6 +15,7 @@ import {
 } from "../lib/data.ts";
 import { ARXIV_SOURCE_INFO, arxivSourceInfo } from "../lib/arxiv-meta.ts";
 import { SOURCE_META } from "../lib/source-meta.ts";
+import { sourceLast30dTotal } from "../lib/stats.ts";
 
 const entries = ARXIV_ENTRIES;
 const dayGroups = groupByDay(entries);
@@ -41,6 +42,7 @@ const sourceRows = ARXIV_SOURCE_INFO
       total: sourceEntries.length,
     };
   });
+const arxivLast30d = sourceLast30dTotal(ARXIV_SOURCE_INFO.map((info) => info.id));
 
 const sourceButtonLabel = (source: string): string =>
   arxivSourceInfo(source)?.code ?? sourceLabel(source);
@@ -83,12 +85,48 @@ const breadcrumb = [
       { href: "/status", label: "Source health" },
     ]}
     metrics={[
-      { label: "Papers", value: ARXIV_ENTRIES.length },
-      { label: "Showing", value: entries.length },
-      { label: "Last 7d", value: countSince(ARXIV_ENTRIES, 7) },
-      { label: "Sources", value: sourceRows.length },
-      { label: "Main timeline", value: MAIN_TIMELINE_ENTRIES.length },
-      { label: "Updated", value: relativeTime(GENERATED_AT, now) },
+      {
+        label: "Papers",
+        value: ARXIV_ENTRIES.length,
+        detail: "現在のarXivレーン",
+        detailEn: "Current arXiv lane",
+        scope: "arxiv-live-papers",
+      },
+      {
+        label: "Last 7d",
+        value: countSince(ARXIV_ENTRIES, 7),
+        detail: "公開日基準の直近7日",
+        detailEn: "Published in the rolling last 7 days",
+        scope: "arxiv-published-last-7d",
+      },
+      {
+        label: "Last 30d",
+        value: arxivLast30d,
+        detail: "source統計の直近30日",
+        detailEn: "Archive-backed source totals, last 30 days",
+        scope: "arxiv-published-last-30d",
+      },
+      {
+        label: "Updated",
+        value: relativeTime(GENERATED_AT, now),
+        detail: "公開index snapshot",
+        detailEn: "Published index snapshot",
+        scope: "arxiv-snapshot",
+      },
+      {
+        label: "Sources",
+        value: sourceRows.length,
+        detail: "登録済みarXiv feed",
+        detailEn: "Registered arXiv feeds",
+        scope: "arxiv-source-count",
+      },
+      {
+        label: "Main timeline",
+        value: MAIN_TIMELINE_ENTRIES.length,
+        detail: "arXivを除く現在一覧",
+        detailEn: "Current main Timeline, excluding arXiv",
+        scope: "timeline-live",
+      },
     ]}
   />
 

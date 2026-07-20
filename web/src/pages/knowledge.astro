@@ -29,14 +29,44 @@ const sourceFavicon = (group: { items: readonly NormalizedEntry[] }): string => 
   return sourceFaviconUrl(group.items[0]?.url ?? "");
 };
 
-/** Short JA description per evergreen source for the knowledge lane. */
-const SOURCE_COPY: Record<string, string> = {
-  "anthropic-engineering":
-    "Anthropic Engineering の設計・運用ディープダイブ。Claude Code やエージェント開発の実践知見。",
-  "github-blog-ai":
-    "GitHub Blog (AI & ML) の技術解説。Copilot や AI 開発ワークフローの長文ガイド。",
-  "github-copilot":
-    "GitHub Copilot 公式ブログ。CLI・カスタムエージェントなど Copilot 活用の how-to。",
+/** Source-specific scope descriptions for the evergreen knowledge lane. */
+const SOURCE_COPY: Record<string, { ja: string; en: string }> = {
+  "anthropic-engineering": {
+    ja: "Anthropicの設計・運用ディープダイブ。Claude Codeやエージェント開発の実践知見。",
+    en: "Anthropic engineering deep dives on Claude Code, agent design, and production operations.",
+  },
+  "aws-ml-blog": {
+    ja: "AWSの機械学習・生成AI実装。Bedrock、エージェント、運用アーキテクチャの実践例。",
+    en: "AWS implementation guides for machine learning, Bedrock, agents, and production architecture.",
+  },
+  "github-blog-ai": {
+    ja: "GitHub BlogのAI技術解説。開発ワークフロー、モデル活用、AI時代のソフトウェア開発。",
+    en: "GitHub technical essays on AI development workflows, models, and software engineering.",
+  },
+  "github-copilot": {
+    ja: "GitHub Copilot公式ブログ。CLI、カスタムエージェント、Copilot活用のhow-to。",
+    en: "Official GitHub Copilot guides for CLI workflows, custom agents, and practical adoption.",
+  },
+  "google-cloud-blog": {
+    ja: "Google CloudのAI・データ基盤。Gemini、BigQuery、エージェント実装の設計ガイド。",
+    en: "Google Cloud guidance for Gemini, BigQuery, data platforms, and agent implementation.",
+  },
+  "meta-engineering": {
+    ja: "Metaの大規模システムとML基盤。インフラ、モデル運用、性能改善の技術解説。",
+    en: "Meta engineering deep dives on large-scale systems, ML infrastructure, and performance.",
+  },
+  "microsoft-foundry": {
+    ja: "Microsoft Foundryのエージェント開発。設計、評価、メモリ、コスト管理の実践ガイド。",
+    en: "Microsoft Foundry guidance for agent design, evaluation, memory, and cost management.",
+  },
+  "netflix-techblog": {
+    ja: "Netflixの配信・データ・ML基盤。大規模サービス運用と信頼性設計の知見。",
+    en: "Netflix engineering lessons on delivery, data, ML platforms, and service reliability.",
+  },
+};
+const FALLBACK_SOURCE_COPY = {
+  ja: "長期参照向けのエンジニアリング知見ソース。",
+  en: "An engineering source selected for durable, long-term reference.",
 };
 
 const entryTime = (entry: NormalizedEntry): number =>
@@ -73,11 +103,41 @@ const breadcrumb = [
       { href: "/about", label: "収集方針" },
     ]}
     metrics={[
-      { label: "Guides", value: KNOWLEDGE_ENTRIES.length },
-      { label: "Sources", value: groups.length },
-      { label: "Last 30d", value: countSince(KNOWLEDGE_ENTRIES, 30) },
-      { label: "News timeline", value: MAIN_TIMELINE_ENTRIES.length },
-      { label: "Updated", value: relativeTime(GENERATED_AT, now) },
+      {
+        label: "Guides",
+        value: KNOWLEDGE_ENTRIES.length,
+        detail: "現在のKnowledgeレーン",
+        detailEn: "Current Knowledge lane",
+        scope: "knowledge-live-guides",
+      },
+      {
+        label: "Sources",
+        value: groups.length,
+        detail: "知見を掲載中のsource",
+        detailEn: "Sources represented here",
+        scope: "knowledge-source-groups",
+      },
+      {
+        label: "Last 30d",
+        value: countSince(KNOWLEDGE_ENTRIES, 30),
+        detail: "直近30日のKnowledge記事",
+        detailEn: "Knowledge entries in the last 30 days",
+        scope: "knowledge-last-30d",
+      },
+      {
+        label: "News timeline",
+        value: MAIN_TIMELINE_ENTRIES.length,
+        detail: "現在の主Timeline",
+        detailEn: "Current main Timeline",
+        scope: "timeline-live",
+      },
+      {
+        label: "Updated",
+        value: relativeTime(GENERATED_AT, now),
+        detail: "公開index snapshot",
+        detailEn: "Published index snapshot",
+        scope: "knowledge-snapshot",
+      },
     ]}
   />
 
@@ -170,7 +230,10 @@ const breadcrumb = [
                     )}
                     {sourceLabel(group.source)}
                   </h2>
-                  <p class="knowledge-source-desc">{SOURCE_COPY[group.source] ?? "ベストプラクティス / 技術知見ソース。"}</p>
+                  <p class="knowledge-source-desc">
+                    <span class="i18n-ja">{(SOURCE_COPY[group.source] ?? FALLBACK_SOURCE_COPY).ja}</span>
+                    <span class="i18n-en" lang="en">{(SOURCE_COPY[group.source] ?? FALLBACK_SOURCE_COPY).en}</span>
+                  </p>
                 </div>
                 <div class="knowledge-source-meta">
                   <span class="knowledge-source-count">{group.items.length}</span>

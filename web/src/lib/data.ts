@@ -564,9 +564,16 @@ export function relativeTime(iso: string | null, now = new Date()): string {
   return `${Math.floor(days / 365)}y ago`;
 }
 
-/** Whether the entry was collected within the last 6 hours (NEW badge). */
-export function isNew(e: NormalizedEntry, now = Date.now()): boolean {
-  return now - new Date(e.collectedAt).getTime() < 6 * 60 * 60_000;
+export const RECENT_COLLECTION_WINDOW_HOURS = 6;
+export const RECENT_COLLECTION_BADGE = {
+  ja: "新規収集",
+  en: "INDEXED",
+} as const;
+
+/** Whether the entry was added to this dashboard within the recent collection window. */
+export function isRecentlyCollected(e: NormalizedEntry, now = Date.now()): boolean {
+  return now - new Date(e.collectedAt).getTime()
+    < RECENT_COLLECTION_WINDOW_HOURS * 60 * 60_000;
 }
 
 /**

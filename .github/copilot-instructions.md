@@ -2410,7 +2410,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-362: dashboard metric は値と同時に母集団・期間・分母を表示する
 - **事象**: 4 persona監査で、`Active cats 13`、`Avg/day 5.7`、`収集エラー 0`、`共有生成枠 22/35`、Archiveの`peak 6%`などが、何の集合・期間・分母を示すか分からないと重複報告された。Archive/Aboutでは同じ値を`Archived`/`All time`や`All time`/`Archive`として隣接表示していた。
 - **根本原因**: compactなKPI cardへ短いlabelと値だけを置き、計算helperが知るscopeをUI contractへ伝播していなかった。右railのTop source/tagも先頭160/200件のsample rankingであることをcomponentごとに表示していなかった。
-- **対策**: `PageHeroMetric`へ`scope`とJA/EN detailを追加し、Categories、カテゴリ詳細、Status、About、Archive、Knowledgeで可視説明とmachine-readable scopeを共有する。重複KPIはlive index、archive months、top category/sourceなど別指標へ置換し、Archiveの比率を`% of peak`、補助rankingを`entries in this month/first N entries`と明示する。Archive tierはretention contractに合わせ、warmを個別記事URL保持、coldを月次Archive内のみと説明する。
+- **対策**: `PageHeroMetric`へ`scope`とJA/EN detailを追加し、全metric consumerで可視説明とmachine-readable scopeを共有する。重複KPIはlive index、archive months、top category/sourceなど別指標へ置換し、Archiveの比率を`% of peak`、補助rankingを`entries in this month/first N entries`と明示する。Archive tierはretention contractに合わせ、warmを個別記事URL保持、coldを月次Archive内のみと説明する。
 - **教訓**: dashboardの数値は非空・正しいだけでは不十分である。label、value、population、time window、denominator、snapshot provenanceを1つの意味単位として設計し、同じ値を別名で複数surfaceへ出さない。compactさを守る場合も短いdetailと`data-metric-scope`を共通componentで提供する。
 
 ### LL-363: PlaywrightのboundingBoxはDOMRectと同じpropertyを持たない
@@ -2430,6 +2430,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 読者向けの多言語copyと、テストが必要とする数値・状態を同じDOM textから復元しようとした。
 - **対策**: rowへ`data-live-entry-count`、時刻へ`.source-latest-age`を付け、E2Eはmachine-readable値と専用semantic nodeを参照する。
 - **教訓**: localization、単位、badgeを含む表示文字列は機械判定の入力にしない。数値、enum、timestampは`data-*`、`datetime`、専用classなど安定したcontractで公開し、E2Eのfilter条件が`NaN`や空文字で静かに無効化されないことを確認する。
+
+### LL-366: shared componentの品質fieldをoptionalにすると未適用routeが残る
+- **事象**: Categories、Status、Archive、KnowledgeのPageHero指標へ母集団・期間を追加しても、arXiv、Glossary、Timeline・カテゴリ・タグのページ送りでは`detail` / `scope`が空のまま残った。arXivの`Showing`は初期値がtotalと重複し、filter後もSSR値80のまま変わらなかった。
+- **根本原因**: `PageHeroMetric`の品質fieldをoptionalにしたため、更新したpageだけが新contractを採用し、同じcomponentの全consumerへ型エラーを出せなかった。
+- **対策**: `detail`、`detailEn`、`scope`をrequiredにし、全metric-bearing routeをinventoryして更新した。E2Eは代表13 routeで全metricの`data-metric-scope`、`aria-describedby`、detail nodeを検証する。arXivの動的filterと同期しない`Showing`は削除し、Last 30dはsource別archive-backed統計へ置換した。mobileは最初の4 metricに週次比較やsnapshotなど固有情報を残し、H1と重複するPage位置を5番目へ送る。
+- **教訓**: 全consumerで必須の品質contractはoptional propにしない。shared componentの新しい意味契約を導入したら、型、全callsite検索、代表route行列の3層で未適用箇所をfail-closedにする。動的filter値をHeroへ出す場合は同じstateへ接続できない限り表示しない。retention capのあるlive集合を期間統計に流用せず、mobileで表示数を減らす場合は重複値より固有の判断signalを優先する。
+
+### LL-367: collection recencyをpublication recencyの言葉で表示しない
+- **事象**: EntryCardとCompactRowの`NEW` badgeは`collectedAt < 6h`で判定していたため、過去公開の記事を新しく収集した場合も公開直後の記事に見えた。隣接時刻は`publishedAt`を表示しており、同じcard内で時間scopeが混在した。
+- **根本原因**: 「Dashboardへ入った時刻」と「元記事が公開された時刻」をどちらもnew/freshとして扱い、visible copyとmachine-readable scopeを分けていなかった。
+- **対策**: helperを`isRecentlyCollected`へ改名し、共有copyを`新規収集 / INDEXED`、属性を`data-recency-scope="collection"`と6時間windowへ統一した。
+- **教訓**: recency labelはpublished、collected、updated、generatedのどのclockを見ているかを明示する。異なるclockを同じ`NEW`や`Updated`で表示せず、copy、helper名、`data-*`、テストfixtureを同じscopeへ揃える。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

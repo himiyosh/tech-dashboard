@@ -82,10 +82,41 @@ const breadcrumb = [
       { href: `/rss.xml?category=${slug}`, label: "RSS" },
     ]}
     metrics={[
-      { label: "Total", value: all.length },
-      { label: "Showing", value: entries.length },
-      { label: "Last 7d", value: wow.thisWeek },
-      { label: "Vs prev 7d", value: `${deltaSign}${Math.abs(wow.deltaPct)}%` },
+      {
+        label: "Total",
+        value: all.length,
+        detail: "現在のカテゴリ一覧",
+        detailEn: "Current category listing",
+        scope: "category-live-total",
+      },
+      {
+        label: "Showing",
+        value: entries.length,
+        detail: "このページの表示件数",
+        detailEn: "Entries on this page",
+        scope: "category-page-count",
+      },
+      {
+        label: "Last 7d",
+        value: wow.thisWeek,
+        detail: "直近7日の掲載数",
+        detailEn: "Entries in the latest 7 days",
+        scope: "category-last-7d",
+      },
+      {
+        label: "Vs prev 7d",
+        value: `${deltaSign}${Math.abs(wow.deltaPct)}%`,
+        detail: "その前の7日間と比較",
+        detailEn: "Compared with the previous 7 days",
+        scope: "category-week-over-week",
+      },
+      {
+        label: "Page",
+        value: `${page}/${total}`,
+        detail: "静的ページ位置",
+        detailEn: "Static page position",
+        scope: "category-page-position",
+      },
     ]}
   />
 

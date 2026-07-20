@@ -3414,6 +3414,85 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
+  test("every metric-bearing PageHero explains its population and window", async ({ page }) => {
+    const paths = [
+      "/categories/",
+      "/status/",
+      "/about/",
+      "/archive/",
+      "/archive/2026-07/",
+      "/knowledge/",
+      "/arxiv/",
+      "/glossary/",
+      "/page/2/",
+      "/c/copilot/",
+      "/c/copilot/page/2/",
+      "/t/claude/",
+      "/t/claude/page/2/",
+    ];
+
+    for (const path of paths) {
+      await page.setViewportSize({ width: 1280, height: 900 });
+      const response = await page.goto(path);
+      expect(response?.status(), `${path} is generated`).toBeLessThan(400);
+      const metrics = page.locator(".page-hero-metric");
+      expect(await metrics.count(), `${path} exposes summary metrics`).toBeGreaterThan(0);
+      const contracts = await metrics.evaluateAll((items) =>
+        items.map((item) => {
+          const describedBy = item.getAttribute("aria-describedby") ?? "";
+          const detail = describedBy ? document.getElementById(describedBy) : null;
+          return {
+            scope: item.getAttribute("data-metric-scope") ?? "",
+            describedBy,
+            detail: detail?.textContent?.trim() ?? "",
+          };
+        }),
+      );
+      expect(
+        contracts.every((metric) =>
+          metric.scope.length > 0
+          && metric.describedBy.length > 0
+          && metric.detail.length > 0),
+        `${path} metric contracts are self-explanatory`,
+      ).toBe(true);
+    }
+
+    const responsivePaths = [
+      "/page/2/",
+      "/c/copilot/page/2/",
+      "/t/claude/page/2/",
+      "/arxiv/",
+      "/glossary/",
+    ];
+    for (const [width, height, maxHeroHeight] of [
+      [320, 844, 335],
+      [375, 844, 335],
+      [390, 844, 335],
+      [414, 844, 335],
+      [768, 900, 430],
+    ] as const) {
+      for (const path of responsivePaths) {
+        await page.setViewportSize({ width, height });
+        await page.goto(path);
+        const hero = page.locator(".page-hero");
+        await expect(hero).toBeVisible();
+        const box = await hero.boundingBox();
+        expect(box, `${path} hero renders at ${width}px`).not.toBeNull();
+        expect(box!.height, `${path} metric detail remains compact at ${width}px`).toBeLessThan(maxHeroHeight);
+        await expect
+          .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+          .toBe(true);
+      }
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/page/2/");
+    await expect(page.locator('[data-metric-scope="timeline-snapshot"]')).toBeVisible();
+    await page.goto("/c/copilot/page/2/");
+    await expect(page.locator('[data-metric-scope="category-week-over-week"]')).toBeVisible();
+    await expect(page.locator('[data-metric-scope="category-page-position"]')).toBeHidden();
+  });
+
   test("page families keep stable content widths across routes", async ({ page }) => {
     const measure = async (path: string, width: number) => {
       await page.setViewportSize({ width, height: 900 });
@@ -5566,6 +5645,13 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("arXiv opens on filters and papers without a duplicate source overview", async ({ page }) => {
     await page.goto("/arxiv/#source=arxiv-cs-ai");
+    await expect(page.locator(".page-hero-metric").filter({ hasText: /^Showing/ })).toHaveCount(0);
+    const arxivLast30d = page.locator('[data-metric-scope="arxiv-published-last-30d"]');
+    await expect(arxivLast30d).toBeVisible();
+    await expect(arxivLast30d.locator(".page-hero-metric-detail .i18n-en")).toContainText(
+      "Archive-backed source totals",
+    );
+    await expect(page.locator(".page-hero-metric-detail")).toHaveCount(6);
     expect(
       await page.locator(".arxiv-layout > main > section").evaluateAll((sections) =>
         sections.map((section) => section.id || section.className),
@@ -5585,6 +5671,7 @@ test.describe("TECH Dashboard smoke", () => {
     await page.locator('.paper-filter-tabs [data-paper-filter="arxiv-cs-cl"]').click();
     await expect(page).toHaveURL(/\/arxiv\/#source=arxiv-cs-cl$/);
     await expect(page.locator('button[data-paper-filter="arxiv-cs-cl"][aria-pressed="true"]')).toHaveCount(2);
+    await expect(page.locator(".page-hero-metric").filter({ hasText: /^Showing/ })).toHaveCount(0);
 
     await page.evaluate(() => {
       window.location.hash = "source=arxiv-cs-lg";
@@ -7389,6 +7476,11 @@ test.describe("TECH Dashboard smoke", () => {
 
     // Hero + term cards + category groups render.
     await expect(page.locator("#glossary-heading")).toBeVisible();
+    await expect(page.locator(".page-hero-metric-detail")).toHaveCount(3);
+    await expect(page.locator('[data-metric-scope="glossary-topic-groups"]')).toContainText("用語分類");
+    await expect(page.locator('[data-metric-scope="glossary-editorial-picks"]')).toContainText(
+      "編集マーク付き・期間集計なし",
+    );
     const cards = page.locator("[data-gl-term]");
     const totalCards = await cards.count();
     expect(totalCards, "glossary renders term cards").toBeGreaterThan(20);

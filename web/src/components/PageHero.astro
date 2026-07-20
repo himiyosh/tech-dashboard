@@ -3,9 +3,9 @@ export interface PageHeroMetric {
   label: string;
   labelEn?: string;
   value: string | number;
-  detail?: string;
-  detailEn?: string;
-  scope?: string;
+  detail: string;
+  detailEn: string;
+  scope: string;
 }
 
 export interface PageHeroAction {
@@ -98,7 +98,7 @@ const {
     {metrics.length > 0 && (
       <div class="page-hero-metrics" aria-label={`${title} summary`}>
         {metrics.map((metric, index) => {
-          const detailId = metric.detail ? `${headingId}-metric-${index + 1}-detail` : undefined;
+          const detailId = `${headingId}-metric-${index + 1}-detail`;
           return (
             <div
               class="page-hero-metric"
@@ -115,16 +115,10 @@ const {
                 ) : metric.label}
               </span>
               <strong>{metric.value}</strong>
-              {metric.detail && (
-                <small id={detailId} class="page-hero-metric-detail">
-                  {metric.detailEn ? (
-                    <>
-                      <span class="i18n-ja">{metric.detail}</span>
-                      <span class="i18n-en" lang="en">{metric.detailEn}</span>
-                    </>
-                  ) : metric.detail}
-                </small>
-              )}
+              <small id={detailId} class="page-hero-metric-detail">
+                <span class="i18n-ja">{metric.detail}</span>
+                <span class="i18n-en" lang="en">{metric.detailEn}</span>
+              </small>
             </div>
           );
         })}

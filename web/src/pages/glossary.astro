@@ -52,9 +52,30 @@ const breadcrumb = [
       { href: "#glossary-terms", label: "Browse terms" },
     ]}
     metrics={[
-      { label: "Terms", value: GLOSSARY.length },
-      { label: "Categories", value: groups.length },
-      { label: "Trending", value: GLOSSARY_TRENDING.length },
+      {
+        label: "用語",
+        labelEn: "Terms",
+        value: GLOSSARY.length,
+        detail: "静的キュレーション用語",
+        detailEn: "Curated glossary entries",
+        scope: "glossary-term-count",
+      },
+      {
+        label: "用語分類",
+        labelEn: "Topic groups",
+        value: groups.length,
+        detail: "用語集内の分類",
+        detailEn: "Groups within this glossary",
+        scope: "glossary-topic-groups",
+      },
+      {
+        label: "注目用語",
+        labelEn: "Editorial picks",
+        value: GLOSSARY_TRENDING.length,
+        detail: "編集マーク付き・期間集計なし",
+        detailEn: "Manually marked, not time-windowed",
+        scope: "glossary-editorial-picks",
+      },
     ]}
   />
 

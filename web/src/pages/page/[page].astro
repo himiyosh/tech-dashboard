@@ -56,11 +56,41 @@ const breadcrumb = [
       { href: "/archive", label: "Open archive" },
     ]}
     metrics={[
-      { label: "Showing", value: pageEntries.length },
-      { label: "Timeline", value: MAIN_TIMELINE_ENTRIES.length },
-      { label: "arXiv lane", value: ARXIV_ENTRIES.length },
-      { label: "Page", value: `${page}/${total}` },
-      { label: "Updated", value: relativeTime(GENERATED_AT, now) },
+      {
+        label: "Showing",
+        value: pageEntries.length,
+        detail: "このページの表示件数",
+        detailEn: "Entries on this page",
+        scope: "timeline-page-count",
+      },
+      {
+        label: "Timeline",
+        value: MAIN_TIMELINE_ENTRIES.length,
+        detail: "arXivを除く現在一覧",
+        detailEn: "Current main Timeline, excluding arXiv",
+        scope: "timeline-live",
+      },
+      {
+        label: "Page",
+        value: `${page}/${total}`,
+        detail: "静的ページ位置",
+        detailEn: "Static page position",
+        scope: "timeline-page-position",
+      },
+      {
+        label: "Updated",
+        value: relativeTime(GENERATED_AT, now),
+        detail: "公開index snapshot",
+        detailEn: "Published index snapshot",
+        scope: "timeline-snapshot",
+      },
+      {
+        label: "arXiv lane",
+        value: ARXIV_ENTRIES.length,
+        detail: "専用レーンの現在件数",
+        detailEn: "Current entries in the separate lane",
+        scope: "arxiv-live-papers",
+      },
     ]}
   />
 

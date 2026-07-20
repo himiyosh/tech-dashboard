@@ -103,7 +103,7 @@ const catColorOf = (slug: string): string =>
         </button>
         <button type="button" class="tb-ctrl tb-next" aria-label="Next headline">›</button>
       </div>
-      <div class="tb-counter" aria-hidden="true">
+      <div class="tb-counter" aria-hidden="true" title={`Headline 1 of ${items.length}`}>
         <span class="tb-cur">1</span>/<span class="tb-tot">{items.length}</span>
       </div>
     </div>
@@ -128,9 +128,9 @@ const catColorOf = (slug: string): string =>
     mix-blend-mode: overlay;
   }
   .tb-inner {
-    max-width: 1280px;
+    max-width: var(--content-max);
     margin: 0 auto;
-    padding: 10px 20px;
+    padding: 10px var(--page-gutter);
     display: flex;
     align-items: center;
     gap: 14px;
@@ -427,6 +427,8 @@ const catColorOf = (slug: string): string =>
       slides[target].removeAttribute("tabindex");
       idx = target;
       if (counterEl) counterEl.textContent = String(target + 1);
+      counterEl?.closest<HTMLElement>(".tb-counter")
+        ?.setAttribute("title", `Headline ${target + 1} of ${slides.length}`);
     };
 
     const tick = () => {

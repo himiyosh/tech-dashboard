@@ -56,8 +56,8 @@ const footerRunTone = footerRun.tone;
 const footerRunStatus = footerRun.runLabel;
 const footerBatchDetail = !WORKER_HEALTH
   ? "open /status"
-  : `last batch ${WORKER_HEALTH.sourcesOk}/${WORKER_HEALTH.sourcesAttempted} src · summary queue ${DASHBOARD_METRICS.summaryQueueBacklog}`;
-const footerRunDetail = `${footerRun.detail} · ${footerBatchDetail}`;
+  : `batch ${WORKER_HEALTH.batchIndex}/${WORKER_HEALTH.batchTotal} · sources ${WORKER_HEALTH.sourcesOk}/${WORKER_HEALTH.sourcesAttempted} · summary ${DASHBOARD_METRICS.summaryQueueBacklog}`;
+const footerRunDetail = footerBatchDetail;
 const footerSummaryQueue = deriveQueueDisplay({
   mode: DASHBOARD_METRICS.summaryQueueMode,
   backlog: DASHBOARD_METRICS.summaryQueueBacklog,
@@ -205,8 +205,8 @@ const footerLastRunRelative = footerLastRunAt
           ></div>
         </form>
         <div class="lang-toggle" role="group" aria-label="表示言語 / Interface language">
-          <button type="button" class="lang-btn" data-lang="ja" aria-pressed="true" aria-label="日本語表示中">JA</button>
-          <button type="button" class="lang-btn" data-lang="en" aria-pressed="false" aria-label="英語表示に切り替え">EN</button>
+          <button type="button" class="lang-btn" data-lang="ja" aria-pressed="true" aria-label="JA 日本語表示中">JA</button>
+          <button type="button" class="lang-btn" data-lang="en" aria-pressed="false" aria-label="EN 英語表示に切り替え">EN</button>
         </div>
         <button
           type="button"
@@ -286,7 +286,6 @@ const footerLastRunRelative = footerLastRunAt
         <a
           class="item footer-run-link"
           href="/status"
-          aria-label={`Collection health: ${footerRunStatus}. ${footerHealthDetail}`}
           title={`Collection health: ${footerRunStatus}. ${footerHealthDetail}`}
           data-run-detail={footerRun.detail}
           data-run-state={footerRun.state}
@@ -332,10 +331,10 @@ const footerLastRunRelative = footerLastRunAt
             const on = b.dataset.lang === l;
             b.setAttribute("aria-pressed", on ? "true" : "false");
             const targetLang = b.dataset.lang === "en" ? "en" : "ja";
-            const label = l === "ja"
+            const stateLabel = l === "ja"
               ? targetLang === "ja" ? "日本語表示中" : "英語表示に切り替え"
               : targetLang === "en" ? "English interface active" : "Switch interface to Japanese";
-            b.setAttribute("aria-label", label);
+            b.setAttribute("aria-label", `${targetLang.toUpperCase()} ${stateLabel}`);
             b.classList.toggle("is-active", on);
           });
           document.dispatchEvent(new CustomEvent("techdb:languagechange", { detail: { lang: l } }));

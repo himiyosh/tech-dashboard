@@ -94,7 +94,7 @@ const categoryPanels = CATEGORY_META.map((cat) => {
   const last30 = countLiveDays(entries, 30);
   const sourceCount = new Set(entries.map((entry) => entry.source)).size;
   const types = new Map<NormalizedEntry["sourceType"], number>();
-  for (const entry of entries.slice(0, 80)) {
+  for (const entry of entries) {
     types.set(entry.sourceType, (types.get(entry.sourceType) ?? 0) + 1);
   }
   const topTypes = [...types.entries()]
@@ -143,7 +143,7 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
 );
 ---
 
-<Portal pageKey="categories" title="Categories - TECH Dashboard">
+<Portal pageKey="categories" title="Categories — TECH Dashboard">
   <PageHero
     className="page-hero-top-level page-hero-categories"
     kicker="Explore by category"
@@ -157,12 +157,48 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
       { href: "/status", label: "Check source health" },
     ]}
     metrics={[
-      { label: "Live entries", value: totalLiveEntries },
-      { label: "Active cats", value: activeCategories },
-      { label: "Top live cat", value: topCategory?.name ?? "none" },
-      { label: "Research live", value: researchPanel?.liveCount ?? 0 },
-      { label: "Tech News live", value: techNewsPanel?.liveCount ?? 0 },
-      { label: "Updated", value: relativeTime(STATS.generatedAt, now) },
+      {
+        label: "Live entries",
+        value: totalLiveEntries,
+        detail: "現在の Timeline",
+        detailEn: "Current Timeline",
+        scope: "timeline-live",
+      },
+      {
+        label: "Active cats",
+        value: activeCategories,
+        detail: "過去30日に掲載あり",
+        detailEn: "Listed in the last 30 days",
+        scope: "active-last-30d",
+      },
+      {
+        label: "Top live cat",
+        value: topCategory?.name ?? "none",
+        detail: "現在掲載数が最多",
+        detailEn: "Most current entries",
+        scope: "top-live-category",
+      },
+      {
+        label: "Research live",
+        value: researchPanel?.liveCount ?? 0,
+        detail: "arXiv専用レーンを除く",
+        detailEn: "Excludes the arXiv lane",
+        scope: "research-live",
+      },
+      {
+        label: "Tech News live",
+        value: techNewsPanel?.liveCount ?? 0,
+        detail: "現在のIndustry / Policy",
+        detailEn: "Current Industry / Policy",
+        scope: "tech-news-live",
+      },
+      {
+        label: "Updated",
+        value: relativeTime(STATS.generatedAt, now),
+        detail: "統計snapshot",
+        detailEn: "Stats snapshot",
+        scope: "stats-snapshot",
+      },
     ]}
   />
 
@@ -282,9 +318,17 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
                     <div class="cat-meta">
                       {cat.latest ? `最終更新 ${relativeTime(cat.latest.publishedAt, now)}` : "エントリなし"}
                     </div>
-                    <div class="cat-types">
+                    <div
+                      class="cat-types"
+                      data-type-scope="category-live-entries"
+                      aria-label={`${cat.name} current live entries by source type`}
+                    >
+                      <small class="cat-types-scope">
+                        <span class="i18n-ja">Live内訳</span>
+                        <span class="i18n-en" lang="en">Live mix</span>
+                      </small>
                       {cat.topTypes.map((type) => (
-                        <span>{type.label} {type.count}</span>
+                        <span class="cat-type">{type.label} {type.count}</span>
                       ))}
                     </div>
                   </div>
@@ -679,7 +723,16 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
     overflow: hidden;
   }
 
-  .cat-types span {
+  .cat-types-scope {
+    flex: 0 0 auto;
+    color: var(--text-subtle);
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  .cat-types .cat-type {
     flex: 0 0 auto;
     padding: 2px 5px;
     border: 1px solid color-mix(in srgb, var(--cat-color) 36%, var(--border));
@@ -689,7 +742,7 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
     line-height: 1.2;
   }
 
-  .cat-types span:nth-child(n+3) {
+  .cat-types .cat-type:nth-of-type(n+3) {
     display: none;
   }
 

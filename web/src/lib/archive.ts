@@ -8,6 +8,16 @@
  */
 import { isPublishableEntry, type NormalizedEntry } from "./data.ts";
 
+export const ARCHIVE_TIER_SUMMARY = {
+  ja: "warm = 個別記事URLを保持 · cold = 月次Archive内のみ",
+  en: "warm = individual URL retained · cold = monthly archive only",
+} as const;
+
+export const ARCHIVE_TIER_DETAIL = {
+  ja: "warm は個別記事URLを保持します。cold は月次Archive内だけで保持します。evergreen知見はwarmを維持します。",
+  en: "Warm entries retain an individual article URL. Cold entries remain only in their monthly archive. Evergreen knowledge stays warm.",
+} as const;
+
 interface ArchiveMonthFile {
   generatedAt: string;
   month: string;

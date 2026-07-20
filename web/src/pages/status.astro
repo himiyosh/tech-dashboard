@@ -241,12 +241,54 @@ const workerStateCopy = {
       { href: "/archive", label: "アーカイブ", labelEn: "Open archive" },
     ]}
     metrics={[
-      { label: "稼働状態", labelEn: "Run status", value: workerStatusText },
-      { label: "収集エラー", labelEn: "Collection errors", value: collectionFailureCount ?? "n/a" },
-      { label: "要約待ち", labelEn: "Summaries pending", value: pendingSummaryEntries },
-      { label: "本文待ち", labelEn: "Bodies pending", value: bodyQueue.showBacklog ? bodyQueue.backlog : "n/a" },
-      { label: "直近収集", labelEn: "Latest collection", value: wh ? `${wh.sourcesOk}/${wh.sourcesAttempted}` : "n/a" },
-      { label: "サイト更新", labelEn: "Site updated", value: indexAgeLabel },
+      {
+        label: "稼働状態",
+        labelEn: "Run status",
+        value: workerStatusText,
+        detail: "公開snapshotの直近run",
+        detailEn: "Latest run in this snapshot",
+        scope: "run-status",
+      },
+      {
+        label: "収集エラー",
+        labelEn: "Collection errors",
+        value: collectionFailureCount ?? "n/a",
+        detail: "直近1バッチ",
+        detailEn: "Latest batch",
+        scope: "latest-batch-errors",
+      },
+      {
+        label: "要約待ち",
+        labelEn: "Summaries pending",
+        value: pendingSummaryEntries,
+        detail: "現在のlive index",
+        detailEn: "Current live index",
+        scope: "summary-backlog",
+      },
+      {
+        label: "本文待ち",
+        labelEn: "Bodies pending",
+        value: bodyQueue.showBacklog ? bodyQueue.backlog : "n/a",
+        detail: "本文保持対象Queue",
+        detailEn: "Retention-eligible body queue",
+        scope: "body-backlog",
+      },
+      {
+        label: "直近収集",
+        labelEn: "Latest collection",
+        value: wh ? `${wh.sourcesOk}/${wh.sourcesAttempted}` : "n/a",
+        detail: "今回バッチのsource",
+        detailEn: "Sources in the latest batch",
+        scope: "latest-batch-sources",
+      },
+      {
+        label: "サイト更新",
+        labelEn: "Site updated",
+        value: indexAgeLabel,
+        detail: "公開index snapshot",
+        detailEn: "Published index snapshot",
+        scope: "published-snapshot",
+      },
     ]}
   />
 
@@ -397,8 +439,8 @@ const workerStateCopy = {
             data-enrichment-enqueued={enrichmentEnqueued ?? "unknown"}
           >
             <span>
-              <span class="i18n-ja">共有生成枠</span>
-              <span class="i18n-en" lang="en">Shared enrichment budget</span>
+              <span class="i18n-ja">直近runの生成枠</span>
+              <span class="i18n-en" lang="en">Latest-run enrichment slots</span>
             </span>
             <strong>
               {enrichmentBudgetLabel ?? (
@@ -412,10 +454,10 @@ const workerStateCopy = {
               {hasEnrichmentBudgetTelemetry ? (
                 <>
                   <span class="i18n-ja">
-                    直近run: 要約 {summaryQueueEnqueued ?? "n/a"} · 本文 {bodyQueueEnqueued ?? "n/a"}
+                    1 run 上限 {enrichmentEnqueueCap} 件 · 要約 {summaryQueueEnqueued ?? "n/a"} · 本文 {bodyQueueEnqueued ?? "n/a"}
                   </span>
                   <span class="i18n-en" lang="en">
-                    latest run: summaries {summaryQueueEnqueued ?? "n/a"} · bodies {bodyQueueEnqueued ?? "n/a"}
+                    max {enrichmentEnqueueCap} per run · summaries {summaryQueueEnqueued ?? "n/a"} · bodies {bodyQueueEnqueued ?? "n/a"}
                   </span>
                 </>
               ) : (
@@ -554,12 +596,21 @@ const workerStateCopy = {
           </div>
           <div class="source-summary-card">
             <span>
-              <span class="i18n-ja">最近掲載あり</span>
-              <span class="i18n-en" lang="en">Recent activity</span>
+              <span class="i18n-ja">最近掲載あり率</span>
+              <span class="i18n-en" lang="en">Recently listed rate</span>
             </span>
             <strong>{recentActivityPct}%</strong>
           </div>
         </div>
+
+        <p class="source-threshold-note">
+          <span class="i18n-ja">
+            各組の1値目までが「最近掲載あり」、2値目までが「低活動」、超過後が「長期非掲載」です。Blog 42h / 7d、Community 7d / 30d、Release 30d / 120d、Research 14d / 60d。「要確認」は低活動・長期非掲載・未収録をまとめます。
+          </span>
+          <span class="i18n-en" lang="en">
+            The first limit is recently listed, the second is low activity, and older sources are long inactive: Blog 42h / 7d, Community 7d / 30d, Release 30d / 120d, Research 14d / 60d. Needs attention combines low activity, long inactive, and not listed.
+          </span>
+        </p>
 
         <div class="status-toolbar" role="group" aria-label="Filter collection sources by status">
           <button
@@ -569,7 +620,7 @@ const workerStateCopy = {
             data-source-count={limitedListingSourceCount}
             aria-pressed={defaultSourceFilter === "limited" ? "true" : "false"}
           >
-            <span class="i18n-ja">掲載少なめ</span><span class="i18n-en" lang="en">Limited listing</span> <span>{limitedListingSourceCount}</span>
+            <span class="i18n-ja">要確認</span><span class="i18n-en" lang="en">Needs attention</span> <span>{limitedListingSourceCount}</span>
           </button>
           <button
             type="button"
@@ -593,7 +644,7 @@ const workerStateCopy = {
             <span class="i18n-ja">最近掲載あり</span><span class="i18n-en" lang="en">Recently listed</span> <span>{recent}</span>
           </button>
         </div>
-        <p class="source-filter-summary" id="source-filter-summary">
+        <p class="source-filter-summary" id="source-filter-summary" aria-live="polite">
           <span class="i18n-ja">
             <strong data-visible-source-count>{initialVisibleSourceCount}</strong> / {sources.length} ソースを表示
           </span>
@@ -666,9 +717,12 @@ const workerStateCopy = {
                 <span class="i18n-ja">{s.statusJa}</span>
                 <span class="i18n-en" lang="en">{s.statusEn}</span>
               </span>
-              <span class="time source-time-block">
-                <strong>{s.count}</strong>
-                <span>
+              <span class="time source-time-block" data-live-entry-count={s.count}>
+                <strong>
+                  <span class="i18n-ja">掲載 {s.count}件</span>
+                  <span class="i18n-en" lang="en">{s.count} live entries</span>
+                </strong>
+                <span class="source-latest-age">
                   {s.count === 0 ? (
                     <>
                       <span class="i18n-ja">記事なし</span>
@@ -971,6 +1025,13 @@ const workerStateCopy = {
     margin-bottom: 12px;
   }
 
+  .source-threshold-note {
+    margin: -2px 0 12px;
+    color: var(--muted-2);
+    font-size: 10.5px;
+    line-height: 1.5;
+  }
+
   .source-summary-card {
     position: relative;
     overflow: hidden;
@@ -1133,6 +1194,12 @@ const workerStateCopy = {
   .source-time-block strong {
     color: var(--text-2);
     font-size: 12px;
+  }
+
+  .source-time-block strong small {
+    color: var(--muted-2);
+    font-size: 9px;
+    font-weight: 500;
   }
 
   .source-time-block span {
@@ -1397,5 +1464,6 @@ const workerStateCopy = {
         apply();
       });
     }
+    apply();
   })();
 </script>

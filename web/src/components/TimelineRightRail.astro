@@ -101,12 +101,13 @@ const last7d = entries.filter((e) => {
 <aside class="right home-right" aria-label={label}>
   {tags.length > 0 && (
     <div class="side-card">
-      <h3 class="right-title">Trending topics</h3>
+      <h3 class="right-title">Trending topics <small>entries</small></h3>
       <div class="home-ranked-list" data-rail-ranking="topics">
         {tags.map((t, index) => (
           <a
             class="home-ranked-row"
             href={tagHref(t.tag)}
+            aria-label={`${t.tag}, ${t.count} entries`}
             style={`--rail-color:var(--accent);--rail-level:${Math.max(10, Math.round((t.count / maxTagCount) * 100))}%`}
           >
             <span class="home-rank-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
@@ -123,7 +124,7 @@ const last7d = entries.filter((e) => {
 
   {topSources.length > 0 && (
     <div class="side-card">
-      <h3 class="right-title">Most active sources</h3>
+      <h3 class="right-title">Most active sources <small>entries</small></h3>
       <p class="rail-ranking-scope" data-ranking-scope="first-200-listed-entries">
         <span class="i18n-ja">表示中一覧の先頭200件</span>
         <span class="i18n-en" lang="en">First 200 listed entries</span>
@@ -134,6 +135,7 @@ const last7d = entries.filter((e) => {
             <a
               class="home-ranked-row home-source-row"
               href={`/c/${s.catSlug}`}
+              aria-label={`${s.label}, ${s.count} entries${s.catLabel ? `, ${s.catLabel}` : ""}`}
               style={`--rail-color:${s.catColor};--rail-level:${Math.max(10, Math.round((s.count / maxSourceCount) * 100))}%`}
             >
               <span class="home-rank-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
@@ -189,5 +191,14 @@ const last7d = entries.filter((e) => {
     color: var(--muted-2);
     font-size: 10.5px;
     line-height: 1.55;
+  }
+
+  .right-title small {
+    margin-left: 5px;
+    color: var(--muted-2);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
   }
 </style>

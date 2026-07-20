@@ -466,26 +466,28 @@ test.describe("TECH Dashboard smoke", () => {
       /^(active|clear|waiting-for-run|paused|unavailable|error|unknown)$/,
     );
     expect(bodyBacklog).toMatch(/^(unknown|\d+)$/);
-    await expect(footerRun.locator(".mono")).toContainText(runDetail!);
-    await expect(footerRun.locator(".mono")).toContainText(`summary queue ${backlog}`);
+    await expect(footerRun.locator(".mono")).not.toContainText(runDetail!);
+    await expect(footerRun.locator(".mono")).toContainText(
+      new RegExp(`batch \\d+/\\d+ · sources \\d+/\\d+ · summary ${backlog}`),
+    );
     if (bodyState === "active") {
       await expect(footerRun.locator(".footer-body-queue")).toContainText(
         `body ${bodyBacklog} pending`,
       );
       await expect(footerRun).toHaveAttribute(
-        "aria-label",
+        "title",
         /AI explainer body queue (about|estimate pending)/i,
       );
     } else if (bodyState === "clear") {
       await expect(footerRun.locator(".footer-body-queue")).toHaveText("body ready");
-      await expect(footerRun).toHaveAttribute("aria-label", /AI explainer body queue clear/i);
+      await expect(footerRun).toHaveAttribute("title", /AI explainer body queue clear/i);
     } else if (bodyState === "waiting-for-run") {
       const displayedBacklog = bodyBacklog === "unknown" ? "?" : bodyBacklog;
       await expect(footerRun.locator(".footer-body-queue")).toHaveText(
         `body ${displayedBacklog} waiting`,
       );
       await expect(footerRun).toHaveAttribute(
-        "aria-label",
+        "title",
         /AI explainer body queue waiting for a successful run/i,
       );
     } else if (bodyState === "paused") {
@@ -493,6 +495,8 @@ test.describe("TECH Dashboard smoke", () => {
     } else {
       await expect(footerRun.locator(".footer-body-queue")).toHaveText("body unavailable");
     }
+    await expect(footerRun).not.toHaveAttribute("aria-label");
+    await expect(footerRun).toHaveAccessibleName(/run .*batch .*sources .*summary .*body/i);
   });
 
   test("pending cards share the summary queue state and suppress stale ETAs", async ({ page }) => {
@@ -546,6 +550,12 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(rail).toBeVisible();
     await expect(rail.locator(":scope > .side-card > h3.right-title")).toHaveCount(3);
     await expect(rail.locator(":scope > .side-card > div.right-title")).toHaveCount(0);
+    await expect(rail.locator("h3.right-title small")).toHaveCount(2);
+    await expect(rail.locator("h3.right-title small").first()).toHaveText("entries");
+    const rankedLinks = rail.locator("a.home-ranked-row");
+    for (let index = 0; index < await rankedLinks.count(); index += 1) {
+      await expect(rankedLinks.nth(index)).toHaveAttribute("aria-label", /entries/);
+    }
     const desktop = await page.evaluate(() => {
       const layout = document.querySelector(".layout");
       const right = document.querySelector(".layout aside.right");
@@ -871,6 +881,8 @@ test.describe("TECH Dashboard smoke", () => {
         };
         const switcher = document.querySelector<HTMLElement>("header .header-switcher");
         const menuTrigger = document.querySelector<HTMLElement>("header .menu-trigger");
+        const search = document.querySelector<HTMLElement>("header .search");
+        const shortcuts = Array.from(document.querySelectorAll<HTMLElement>("header .nav-shortcut"));
         const shortcutLabels = Array.from(
           document.querySelectorAll<HTMLElement>("header .nav-shortcut span:not(.nav-icon)"),
         );
@@ -879,6 +891,8 @@ test.describe("TECH Dashboard smoke", () => {
           noOverflow: document.documentElement.scrollWidth <= window.innerWidth,
           switcher: rect(switcher),
           menuTrigger: rect(menuTrigger),
+          search: rect(search),
+          shortcutBoxes: shortcuts.map((shortcut) => rect(shortcut)),
           shortcutLabels: shortcutLabels.map((label) => ({
             text: label.textContent?.trim() ?? "",
             visible: getComputedStyle(label).display !== "none",
@@ -904,14 +918,21 @@ test.describe("TECH Dashboard smoke", () => {
       expect(metrics.shortcutLabels.map((label) => label.text)).toEqual(["Categories", "arXiv", "Knowledge"]);
       if (width <= 980) {
         expect(
-          metrics.shortcutLabels.every((label) => !label.visible),
-          `${width}px shortcuts use their compact icon form`,
+          metrics.shortcutLabels.every((label) => label.visible && label.fullyVisible),
+          `${width}px shortcuts keep readable destination names`,
         ).toBe(true);
+        expect(metrics.search, `${width}px search yields to labeled navigation`).toBeNull();
       } else {
         expect(
           metrics.shortcutLabels.every((label) => label.visible && label.fullyVisible),
           `${width}px shortcuts restore readable labels without clipping`,
         ).toBe(true);
+        expect(metrics.search, `${width}px header search remains visible`).not.toBeNull();
+      }
+      for (const box of metrics.shortcutBoxes) {
+        expect(box, `${width}px shortcut has a rendered box`).not.toBeNull();
+        expect(box!.width, `${width}px shortcut keeps a 44px target width`).toBeGreaterThanOrEqual(44);
+        expect(box!.height, `${width}px shortcut keeps a 44px target height`).toBeGreaterThanOrEqual(44);
       }
       expect(metrics.languageButtons, `${width}px language toggle keeps both buttons`).toHaveLength(2);
       expect(metrics.menuTrigger, `${width}px menu trigger remains visible`).not.toBeNull();
@@ -924,6 +945,10 @@ test.describe("TECH Dashboard smoke", () => {
       for (const button of metrics.languageButtons) {
         expect(button.box, `${width}px ${button.text} button has a rendered box`).not.toBeNull();
         expect(button.box!.width, `${width}px ${button.text} button is not flex-shrunk`).toBeGreaterThanOrEqual(34);
+        if (width <= 980) {
+          expect(button.box!.width, `${width}px ${button.text} keeps a 44px touch width`).toBeGreaterThanOrEqual(44);
+          expect(button.box!.height, `${width}px ${button.text} keeps a 44px touch height`).toBeGreaterThanOrEqual(44);
+        }
         expect(button.fullyVisible, `${width}px ${button.text} label is not clipped`).toBe(true);
       }
       for (let index = 1; index < metrics.headerControls.length; index += 1) {
@@ -936,6 +961,31 @@ test.describe("TECH Dashboard smoke", () => {
         metrics.headerControls.at(-1)!.right,
         `${width}px final header control stays inside the viewport`,
       ).toBeLessThanOrEqual(width);
+
+      if (width === 768) {
+        await page.locator("header .menu-trigger").click();
+        await page.locator("#site-menu [data-search-trigger]").click();
+        const tabletSearch = page.locator("header .search.is-open");
+        await expect(tabletSearch).toBeVisible();
+        await expect(page.locator("#pagefind-search-input")).toBeFocused();
+        const searchBox = await tabletSearch.boundingBox();
+        expect(searchBox, "tablet search opens as a viewport overlay").not.toBeNull();
+        expect(searchBox!.x).toBeGreaterThanOrEqual(12);
+        expect(searchBox!.x + searchBox!.width).toBeLessThanOrEqual(width - 12);
+        const searchInput = page.locator("#pagefind-search-input");
+        const inputBox = await searchInput.boundingBox();
+        expect(inputBox, "tablet search input has a rendered box").not.toBeNull();
+        expect(inputBox!.height, "tablet search input keeps a 44px touch height").toBeGreaterThanOrEqual(44);
+        await searchInput.fill("Copilot");
+        const searchClose = tabletSearch.locator(".search-close");
+        await expect(searchClose).toBeVisible();
+        const closeBox = await searchClose.boundingBox();
+        expect(closeBox, "tablet search close has a rendered box").not.toBeNull();
+        expect(closeBox!.width, "tablet search close keeps a 44px touch width").toBeGreaterThanOrEqual(44);
+        expect(closeBox!.height, "tablet search close keeps a 44px touch height").toBeGreaterThanOrEqual(44);
+        await page.keyboard.press("Escape");
+        await expect(tabletSearch).toBeHidden();
+      }
     }
   });
 
@@ -2223,14 +2273,14 @@ test.describe("TECH Dashboard smoke", () => {
     const enBtn = page.locator('.lang-btn[data-lang="en"]');
 
     await expect(jaBtn).toHaveAttribute("aria-pressed", "true");
-    await expect(jaBtn).toHaveAccessibleName("日本語表示中");
-    await expect(enBtn).toHaveAccessibleName("英語表示に切り替え");
+    await expect(jaBtn).toHaveAccessibleName("JA 日本語表示中");
+    await expect(enBtn).toHaveAccessibleName("EN 英語表示に切り替え");
 
     await enBtn.click();
     await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
     await expect(enBtn).toHaveAttribute("aria-pressed", "true");
-    await expect(jaBtn).toHaveAccessibleName("Switch interface to Japanese");
-    await expect(enBtn).toHaveAccessibleName("English interface active");
+    await expect(jaBtn).toHaveAccessibleName("JA Switch interface to Japanese");
+    await expect(enBtn).toHaveAccessibleName("EN English interface active");
     await expect(page.locator(".banner .tagline.tagline-compact.i18n-en")).toContainText(
       /One batch hourly.*about every 6 hours/,
     );
@@ -2248,8 +2298,8 @@ test.describe("TECH Dashboard smoke", () => {
     await jaBtn.click();
     await expect(page.locator("html")).toHaveAttribute("data-lang", "ja");
     await expect(jaBtn).toHaveAttribute("aria-pressed", "true");
-    await expect(jaBtn).toHaveAccessibleName("日本語表示中");
-    await expect(enBtn).toHaveAccessibleName("英語表示に切り替え");
+    await expect(jaBtn).toHaveAccessibleName("JA 日本語表示中");
+    await expect(enBtn).toHaveAccessibleName("EN 英語表示に切り替え");
     for (const button of [jaBtn, enBtn]) {
       const box = await button.boundingBox();
       expect(box, "language toggle has a rendered box").not.toBeNull();
@@ -2904,6 +2954,13 @@ test.describe("TECH Dashboard smoke", () => {
       .locator(":scope > strong")
       .allTextContents();
     expect(statusHeroValues.every((value) => value.trim().length > 0 && !/NaN|undefined/.test(value))).toBe(true);
+    const statusMetricScopes = await statusHeroMetrics.evaluateAll((metrics) =>
+      metrics.map((metric) => ({
+        scope: metric.getAttribute("data-metric-scope"),
+        detail: metric.querySelector(".page-hero-metric-detail")?.textContent?.trim(),
+      })),
+    );
+    expect(statusMetricScopes.every((metric) => Boolean(metric.scope && metric.detail))).toBe(true);
     await expect(page.locator('[data-health-scope="summary-queue"]')).toContainText("AI要約 Queue");
     const collectionMetric = page.locator('[data-health-scope="latest-batch"]');
     await expect(collectionMetric).toContainText(/\d+\/\d+/);
@@ -2967,7 +3024,9 @@ test.describe("TECH Dashboard smoke", () => {
     const enrichmentBudgetState = await enrichmentBudgetMetric.getAttribute("data-telemetry-state");
     expect(enrichmentBudgetState).toMatch(/^(recorded|not-recorded)$/);
     if (enrichmentBudgetState === "recorded") {
+      await expect(enrichmentBudgetMetric).toContainText("直近runの生成枠");
       await expect(enrichmentBudgetMetric.locator("strong")).toHaveText(/^\s*\d+\/\d+\s*$/);
+      await expect(enrichmentBudgetMetric.locator("small > .i18n-ja")).toContainText(/1 run 上限 \d+ 件/);
     } else {
       await expect(enrichmentBudgetMetric.locator("strong > .i18n-en")).toHaveText("Not recorded");
       await expect(enrichmentBudgetMetric.locator("small > .i18n-en")).toContainText(
@@ -2996,6 +3055,21 @@ test.describe("TECH Dashboard smoke", () => {
     );
     await expect(visibleSourceRows.first().locator(".source-meta-line")).not.toContainText(/tier|stale\s*>/i);
     await expect(visibleSourceRows.first().locator(".source-latest-line")).toBeVisible();
+    await expect(visibleSourceRows.first().locator(".source-time-block")).toHaveAttribute(
+      "data-live-entry-count",
+      /^\d+$/,
+    );
+    await expect(page.locator(".source-threshold-note .i18n-ja")).toContainText(
+      /Blog 42h \/ 7d.*Community 7d \/ 30d.*Release 30d \/ 120d.*Research 14d \/ 60d/,
+    );
+    await expect(page.locator(".source-threshold-note .i18n-ja")).toContainText(
+      "1値目までが「最近掲載あり」、2値目までが「低活動」",
+    );
+    await expect(limitedFilter.locator(".i18n-ja")).toHaveText("要確認");
+    await expect(visibleSourceRows.first().locator(".source-time-block strong .i18n-ja")).toContainText(
+      /^掲載 \d+件$/,
+    );
+    await expect(page.locator(".source-summary-card").filter({ hasText: "最近掲載あり率" })).toHaveCount(1);
     const sourceActivityStates = await sourceRows.evaluateAll((rows) =>
       rows.map((row) => row.getAttribute("data-source-activity-status")),
     );
@@ -3080,21 +3154,27 @@ test.describe("TECH Dashboard smoke", () => {
     const expectedStateLabel = stateLabels[runState as keyof typeof stateLabels];
     const expectedTone = expectedRunTone[runState as keyof typeof expectedRunTone];
     await expect(page.getByRole("contentinfo")).toHaveCount(1);
-    const footerRunLink = page.getByRole("link", { name: /Collection health:/ });
+    const footerRunLink = page.locator("footer .footer-run-link");
     await expect(footerRunLink).toHaveAttribute("href", "/status");
     await expect(footerRunLink).toHaveAttribute("data-run-state", runState!);
     await expect(footerRunLink.locator("strong")).toHaveText(`run ${expectedStateLabel.toLowerCase()}`);
+    await expect(footerRunLink).not.toHaveAttribute("aria-label");
     await expect(footerRunLink).toHaveAttribute(
-      "aria-label",
-      /collection health: run (ok|no data|delayed|failed|degraded).*summary queue \d+.*ai explainer body/i,
+      "title",
+      /collection health: run (ok|no data|delayed|failed|degraded).*batch \d+\/\d+.*sources \d+\/\d+.*summary \d+.*ai explainer body/i,
+    );
+    await expect(footerRunLink).toHaveAccessibleName(
+      /run (ok|no data|delayed|failed|degraded).*batch \d+\/\d+.*sources \d+\/\d+.*summary \d+.*body/i,
     );
     const footerRunDetail = await footerRunLink.getAttribute("data-run-detail");
     expect(footerRunDetail).toBeTruthy();
     const footerDot = footerRunLink.locator(".dot");
     await expect(footerDot).toHaveAttribute("data-run-tone", expectedTone);
     await expect(footerDot).toHaveClass(new RegExp(`\\bdot\\b.*\\b${expectedTone}\\b`));
-    await expect(footerRunLink.locator(".mono")).toContainText(footerRunDetail!);
-    await expect(footerRunLink.locator(".mono")).toContainText(/last batch \d+\/\d+ src · summary queue \d+/);
+    await expect(footerRunLink.locator(".mono")).not.toContainText(footerRunDetail!);
+    await expect(footerRunLink.locator(".mono")).toContainText(
+      /batch \d+\/\d+ · sources \d+\/\d+ · summary \d+/,
+    );
     await expect(footerRunLink).toHaveAttribute("data-body-queue-backlog", /^(unknown|\d+)$/);
     const lastRunTime = footerRunLink.locator("time.footer-run-time");
     await expect(lastRunTime).toHaveCount(1);
@@ -3222,9 +3302,11 @@ test.describe("TECH Dashboard smoke", () => {
     const offenders = await longInactiveRows.evaluateAll((rows) =>
       rows
         .map((row) => {
-          const count = Number((row.querySelector(".source-time-block strong") as HTMLElement | null)?.innerText ?? "0");
+          const count = Number(
+            (row.querySelector(".source-time-block") as HTMLElement | null)?.dataset.liveEntryCount ?? "0",
+          );
           const reason = ((row.querySelector(".source-reason-line") as HTMLElement | null)?.innerText ?? "").toLowerCase();
-          const latest = ((row.querySelector(".source-time-block span") as HTMLElement | null)?.innerText ?? "").toLowerCase();
+          const latest = ((row.querySelector(".source-latest-age") as HTMLElement | null)?.innerText ?? "").toLowerCase();
           return { count, reason, latest };
         })
         .filter(
@@ -3304,6 +3386,17 @@ test.describe("TECH Dashboard smoke", () => {
         );
         expect(metricBoxes, `${path} top-level hero metric count`).toHaveLength(6);
         expect(Math.max(...metricBoxes) - Math.min(...metricBoxes), `${path} top-level metric widths match`).toBeLessThanOrEqual(1);
+        const metricScopes = await hero.locator(".page-hero-metric").evaluateAll((items) =>
+          items.map((item) => ({
+            scope: item.getAttribute("data-metric-scope") ?? "",
+            describedBy: item.getAttribute("aria-describedby") ?? "",
+            detail: item.querySelector(".page-hero-metric-detail")?.textContent?.trim() ?? "",
+          })),
+        );
+        expect(
+          metricScopes.every((metric) => metric.scope.length > 0 && metric.describedBy.length > 0 && metric.detail.length > 0),
+          `${path} metrics expose a population or time-window definition`,
+        ).toBe(true);
       }
       await expect
         .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
@@ -3321,6 +3414,77 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
+  test("page families keep stable content widths across routes", async ({ page }) => {
+    const measure = async (path: string, width: number) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(path);
+      return page.evaluate(() => {
+        const main = document.querySelector<HTMLElement>(".layout > main");
+        const left = document.querySelector<HTMLElement>(".layout > aside.left");
+        const tickerInner = document.querySelector<HTMLElement>(".ticker-bar .tb-inner");
+        const crumbInner = document.querySelector<HTMLElement>(".crumb-inner");
+        const box = (element: HTMLElement | null) => {
+          if (!element || element.getClientRects().length === 0) return null;
+          const rect = element.getBoundingClientRect();
+          return { x: rect.x, width: rect.width, right: rect.right };
+        };
+        return {
+          main: box(main),
+          left: box(left),
+          tickerInner: box(tickerInner),
+          crumbInner: box(crumbInner),
+          tickerContentX: tickerInner
+            ? tickerInner.getBoundingClientRect().x + parseFloat(getComputedStyle(tickerInner).paddingLeft)
+            : null,
+          crumbContentX: crumbInner
+            ? crumbInner.getBoundingClientRect().x + parseFloat(getComputedStyle(crumbInner).paddingLeft)
+            : null,
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      });
+    };
+
+    const at1280 = {
+      home: await measure("/", 1280),
+      status: await measure("/status/", 1280),
+      categories: await measure("/categories/", 1280),
+      category: await measure("/c/copilot/", 1280),
+      about: await measure("/about/", 1280),
+      archive: await measure("/archive/", 1280),
+    };
+    expect(Math.abs(at1280.home.main!.width - at1280.status.main!.width)).toBeLessThanOrEqual(1);
+    for (const key of ["categories", "category", "about", "archive"] as const) {
+      expect(
+        Math.abs(at1280[key].main!.width - at1280.categories.main!.width),
+        `${key} shares the exploration/content main width at 1280px`,
+      ).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs(at1280[key].left!.x - at1280.categories.left!.x),
+        `${key} shares the left-rail gutter at 1280px`,
+      ).toBeLessThanOrEqual(1);
+      expect(at1280[key].overflow, `${key} does not overflow at 1280px`).toBeLessThanOrEqual(0);
+    }
+    expect(at1280.home.tickerContentX, "ticker uses the shared page gutter").toBeCloseTo(
+      at1280.home.left!.x,
+      0,
+    );
+
+    const desktopPaths = ["/", "/status/", "/categories/", "/c/copilot/", "/about/", "/archive/"];
+    const desktopWidths: number[] = [];
+    for (const path of desktopPaths) {
+      const metrics = await measure(path, 1440);
+      desktopWidths.push(metrics.main!.width);
+      expect(metrics.overflow, `${path} does not overflow at 1440px`).toBeLessThanOrEqual(0);
+    }
+    expect(Math.max(...desktopWidths) - Math.min(...desktopWidths)).toBeLessThanOrEqual(1);
+
+    const categoryDetail = await measure("/c/copilot/", 1440);
+    expect(categoryDetail.crumbContentX, "breadcrumb uses the shared desktop gutter").toBeCloseTo(
+      categoryDetail.left!.x,
+      0,
+    );
+  });
+
   test("categories page exposes compact category directory", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/categories/");
@@ -3334,6 +3498,8 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".category-card")).toHaveCount(14);
     await expect(page.locator(".category-card").first()).toContainText("live");
     await expect(page.locator(".category-card").first()).not.toContainText("all time");
+    await expect(page.locator('.cat-types[data-type-scope="category-live-entries"]')).toHaveCount(14);
+    await expect(page.locator(".cat-types-scope .i18n-ja").first()).toHaveText("Live内訳");
 
     const desktopBox = await directory.boundingBox();
     expect(desktopBox, "category directory desktop box").not.toBeNull();
@@ -3393,6 +3559,12 @@ test.describe("TECH Dashboard smoke", () => {
       const sidebar = page.locator("aside.left");
       await expect(panel, `category panel visible at ${width}px`).toBeVisible();
       await expect(sidebar, `primary sidebar visible at ${width}px`).toBeVisible();
+      await expect(panel.locator(".category-side-scope")).toHaveCount(2);
+      await expect(panel.locator(".category-side-scope").first()).toContainText(/先頭|First/);
+      const relatedMarker = panel.locator(".category-related-grid a > span").first();
+      if (await relatedMarker.count()) {
+        await expect(relatedMarker).not.toHaveText("Vs");
+      }
 
       const before = await page.evaluate(() => {
         const panel = document.querySelector(".category-side-panel") as HTMLElement;
@@ -3654,7 +3826,10 @@ test.describe("TECH Dashboard smoke", () => {
     const batchTotal = await batchHeading.getAttribute("data-worker-batch-total");
     expect(batchTotal).toBeTruthy();
     if (batchTotal !== "unknown") {
-      await expect(batchHeading).toContainText(`${batchTotal} batch`);
+      await expect(batchHeading).toContainText("約 6 時間周期");
+      await expect(batchHeading.locator("xpath=following-sibling::p[1]")).toContainText(
+        new RegExp(`${batchTotal} batch`),
+      );
       await page.goto("/status/");
       await expect(page.locator('[data-health-scope="latest-batch"] small')).toContainText(`/${batchTotal}`);
     } else {
@@ -3748,11 +3923,43 @@ test.describe("TECH Dashboard smoke", () => {
 
     await expect(page.locator(".crumb-bar")).toHaveCount(0);
     await expect(page.locator("#archive-heading")).toBeVisible();
+    await expect(page.locator(".page-hero-metric").filter({ hasText: "All time" })).toHaveCount(0);
+    await expect(page.locator('[data-metric-scope="timeline-live"]')).toContainText("Live index");
+    await expect(page.locator(".archive-spotlight").filter({ hasText: "Storage mix" })).toContainText(
+      "warm = 個別記事URLを保持 · cold = 月次Archive内のみ",
+    );
+    const peakLabels = await page.locator("a.month-card").evaluateAll((cards) =>
+      cards.map((card) => ({
+        peakPercent: Number(card.getAttribute("data-peak-percent")),
+        visualBarWidth: Number(card.getAttribute("data-visual-bar-width")),
+        label: card.querySelector(".month-share")?.textContent?.trim() ?? "",
+      })),
+    );
+    expect(peakLabels.length).toBeGreaterThan(0);
+    for (const metric of peakLabels) {
+      const expectedLabel = metric.peakPercent > 0 && metric.peakPercent < 1
+        ? "<1% of peak"
+        : `${metric.peakPercent}% of peak`;
+      expect(metric.label).toBe(expectedLabel);
+      expect(metric.visualBarWidth).toBeGreaterThanOrEqual(6);
+      expect(metric.visualBarWidth).toBeLessThanOrEqual(100);
+    }
+    expect(
+      peakLabels.some((metric) => metric.peakPercent < 6 && metric.visualBarWidth === 6),
+      "a sub-6% month keeps a visible bar without changing its factual label",
+    ).toBe(true);
     const firstMonth = page.locator("a.month-card").first();
     await expect(firstMonth).toBeVisible();
+    await expect(firstMonth.locator(".month-share")).toContainText(/% of peak/);
+    await expect(firstMonth.locator(".month-category")).toContainText(/Top category.*\d+ entries/);
     await firstMonth.click();
     await expect(page).toHaveURL(/\/archive\/\d{4}-\d{2}\/?$/);
     await expect(page.locator("#archive-month-heading")).toBeVisible();
+    await expect(page.locator('[data-metric-scope="month-top-category"]')).toContainText("Top category");
+    await expect(page.locator('[data-metric-scope="month-top-source"]')).toContainText("Top source");
+    await expect(page.locator(".page-hero-metric").filter({ hasText: /^Warm/ })).toHaveCount(0);
+    await expect(page.locator(".month-rank-scope")).toHaveCount(2);
+    await expect(page.locator(".category-strip-label .i18n-ja")).toHaveText("月内カテゴリ内訳");
   });
 
   test("navigation highlights sections without marking ancestor links as the current page", async ({ page }) => {
@@ -5450,6 +5657,30 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(groups.first()).toBeVisible();
     const groupCount = await groups.count();
     expect(groupCount, "knowledge page shows source groups").toBeGreaterThan(0);
+    await expect(page.locator(".page-hero-metric")).toHaveCount(5);
+    await expect(page.locator(".page-hero-metric-detail")).toHaveCount(5);
+    const knowledgeMetricScopes = await page.locator(".page-hero-metric").evaluateAll((metrics) =>
+      metrics.map((metric) => ({
+        scope: metric.getAttribute("data-metric-scope") ?? "",
+        detail: metric.querySelector(".page-hero-metric-detail")?.textContent?.trim() ?? "",
+      })),
+    );
+    expect(
+      knowledgeMetricScopes.every((metric) => metric.scope.length > 0 && metric.detail.length > 0),
+      "Knowledge hero metrics explain their population or time window",
+    ).toBe(true);
+    const sourceDescriptions = await groups
+      .locator(".knowledge-source-desc .i18n-ja")
+      .allInnerTexts();
+    expect(sourceDescriptions).toHaveLength(groupCount);
+    expect(
+      new Set(sourceDescriptions).size,
+      "each Knowledge source explains its specific scope",
+    ).toBe(groupCount);
+    expect(sourceDescriptions).not.toContain("ベストプラクティス / 技術知見ソース。");
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(groups.first().locator(".knowledge-source-desc .i18n-en")).toBeVisible();
+    await page.locator('.lang-btn[data-lang="ja"]').click();
 
     // Every group exposes a source heading + at least one card. Cards keep one
     // uniform height, but only entries with a real image reserve a thumb slot.

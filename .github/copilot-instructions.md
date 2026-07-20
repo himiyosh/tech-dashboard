@@ -2401,6 +2401,36 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: pre-pushでWeb buildが実行・成功した場合だけ`PLAYWRIGHT_REUSE_BUILD=1`をE2Eへ渡す。`SKIP_WEB_BUILD=1`の場合は既存distを信頼せず、従来どおりPlaywrightが自己buildする。source contract testで両分岐を固定する。
 - **教訓**: 同じcheckoutでproduction buildとE2Eを逐次実行する全経路を検索し、Publisher、CI、local hookのartifact ownershipを対称にする。build skipとbuild successを同じreuse branchへ入れず、検証済みartifactが存在する場合だけ再利用する。
 
+### LL-361: optional rail の有無で同じpage familyの主カラム幅を変えない
+- **事象**: `1280x900`でCategoriesのmainは724px、カテゴリ詳細・About・Archiveは996pxだった。Categoriesはright railを持たずbaseの3列gridに空trackを残し、カテゴリ詳細はright railがDOMにあるため中間幅ruleが2列化していた。左railもCategoriesだけx=24、他ページはx=16へずれた。
+- **根本原因**: responsive layoutをpage familyではなく`:has(aside.right)`のDOM構造だけで分岐し、right rail不在とright rail非表示が別のgrid/padding契約になっていた。Header、breadcrumb、Hero、Ticker、layout、Footerも24px/28px/1280px/1680pxの個別上限を持っていた。
+- **対策**: `--page-gutter`を共有し、Header、breadcrumb、banner、PageHero、Ticker、stats、layout、Footerを同じcanvasへ接続した。Categoriesは901-1359pxでカテゴリ詳細と同じ2列exploration familyへ固定し、390/768/1180/1181/1280/1440のmain/rail/content座標をE2Eで比較する。
+- **教訓**: 同一製品のpage幅は「railがDOMにあるか」ではなく、timeline/operational、exploration/content、laneなど明示的なpage familyで決める。optional railが消えるbreakpointでは、兄弟ページのmain幅とgutterをDOMRectで比較し、空grid trackや8pxの横ずれをpage overflowだけで見逃さない。
+
+### LL-362: dashboard metric は値と同時に母集団・期間・分母を表示する
+- **事象**: 4 persona監査で、`Active cats 13`、`Avg/day 5.7`、`収集エラー 0`、`共有生成枠 22/35`、Archiveの`peak 6%`などが、何の集合・期間・分母を示すか分からないと重複報告された。Archive/Aboutでは同じ値を`Archived`/`All time`や`All time`/`Archive`として隣接表示していた。
+- **根本原因**: compactなKPI cardへ短いlabelと値だけを置き、計算helperが知るscopeをUI contractへ伝播していなかった。右railのTop source/tagも先頭160/200件のsample rankingであることをcomponentごとに表示していなかった。
+- **対策**: `PageHeroMetric`へ`scope`とJA/EN detailを追加し、Categories、カテゴリ詳細、Status、About、Archive、Knowledgeで可視説明とmachine-readable scopeを共有する。重複KPIはlive index、archive months、top category/sourceなど別指標へ置換し、Archiveの比率を`% of peak`、補助rankingを`entries in this month/first N entries`と明示する。Archive tierはretention contractに合わせ、warmを個別記事URL保持、coldを月次Archive内のみと説明する。
+- **教訓**: dashboardの数値は非空・正しいだけでは不十分である。label、value、population、time window、denominator、snapshot provenanceを1つの意味単位として設計し、同じ値を別名で複数surfaceへ出さない。compactさを守る場合も短いdetailと`data-metric-scope`を共通componentで提供する。
+
+### LL-363: PlaywrightのboundingBoxはDOMRectと同じpropertyを持たない
+- **事象**: tablet Search overlayのE2Eで`locator.boundingBox()`の返値へ`left` / `right`を参照し、実UIは表示・focus済みなのに`undefined`を数値比較してtestが停止した。
+- **根本原因**: browser内の`getBoundingClientRect()`が返す`left` / `right`と、Playwrightの`boundingBox()`が返す`x` / `y` / `width` / `height`を同じshapeとして扱った。
+- **対策**: 左端は`box.x`、右端は`box.x + box.width`で検証し、tablet Search overlayのviewport内配置、inputとclose buttonの44px操作寸法を同じE2Eへ固定した。
+- **教訓**: browser evaluation内のDOMRectとPlaywright APIのBoundingBoxを混同しない。geometry helperは返却shapeを明示し、存在しないpropertyをoptional defaultや型assertionで0へ偽装せず、x/y/width/heightから必要な端点を導出する。
+
+### LL-364: visualization用の最小値を事実値のlabelへ流用しない
+- **事象**: Archive月カードの棒を見える幅に保つ`barWidth >= 6`を、そのまま`6% of peak`という事実値として表示し、実際はpeakの1%未満の月を6%と誤表示していた。
+- **根本原因**: 視認性を守る描画値と、利用者が比較・共有する集計値を同じpropertyで表現していた。
+- **対策**: 正確な`peakPercent`と`peakShareLabel`を描画用`barWidth`から分離し、1%未満は`<1% of peak`、棒だけは6%の最小幅を維持する。E2Eは`data-peak-percent`と`data-visual-bar-width`を別々に検証する。
+- **教訓**: chartのmin-width、clamp、対数scale、視認性floorはpresentation contractでありdata contractではない。表示label、tooltip、accessible nameは元の集計値から導出し、描画補正値を事実として出さない。
+
+### LL-365: localized表示文字列をE2Eの数値source of truthにしない
+- **事象**: Statusの掲載数を`掲載 6件 / 6 live entries`へ明確化した後、E2Eが`innerText`を`Number()`へ渡して`NaN`になった。後段の`count > 0`が常にfalseとなり、長期非掲載rowの意味検証が実質的に無効化された。時刻selectorも最初の入れ子spanを拾っていた。
+- **根本原因**: 読者向けの多言語copyと、テストが必要とする数値・状態を同じDOM textから復元しようとした。
+- **対策**: rowへ`data-live-entry-count`、時刻へ`.source-latest-age`を付け、E2Eはmachine-readable値と専用semantic nodeを参照する。
+- **教訓**: localization、単位、badgeを含む表示文字列は機械判定の入力にしない。数値、enum、timestampは`data-*`、`datetime`、専用classなど安定したcontractで公開し、E2Eのfilter条件が`NaN`や空文字で静かに無効化されないことを確認する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

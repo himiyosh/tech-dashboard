@@ -8,6 +8,12 @@
  *
  * Cloudflare-type-free so it can be unit-tested directly.
  */
+import {
+  hasKnownProductBodyRecordConflict,
+  type ProductNameEntry,
+} from "../../harness/pipeline/product-name.ts";
+import type { NormalizedEntry } from "../../harness/types.ts";
+
 export interface BodyRecord {
   bodyJa: string;
   bodyEn: string;
@@ -61,6 +67,88 @@ export function bodiesPresentSet(payload: BodiesPayload): Set<string> {
     if (isRealBody(record)) out.add(id);
   }
   return out;
+}
+
+export interface PruneBodiesResult {
+  payload: BodiesPayload;
+  pruned: number;
+  changed: boolean;
+}
+
+export function pruneKnownProductBodyConflicts(
+  payload: BodiesPayload,
+  entries: readonly (
+    Pick<NormalizedEntry, "id"> & ProductNameEntry
+  )[],
+  generatedAt: string,
+): PruneBodiesResult {
+  const entriesById = new Map(entries.map((entry) => [entry.id, entry]));
+  const bodies = { ...payload.bodies };
+  let pruned = 0;
+
+  for (const [id, record] of Object.entries(bodies)) {
+    const entry = entriesById.get(id);
+    if (entry && hasKnownProductBodyRecordConflict(entry, record)) {
+      delete bodies[id];
+      pruned += 1;
+    }
+  }
+
+  return {
+    payload: pruned > 0
+      ? {
+          generatedAt,
+          count: Object.keys(bodies).length,
+          bodies,
+        }
+      : payload,
+    pruned,
+    changed: pruned > 0,
+  };
+}
+
+export function mergeBodiesWithProductGuard(
+  existing: BodiesPayload,
+  newBodies: readonly NewBody[],
+  liveIds: ReadonlySet<string>,
+  generatedAt: string,
+  entries: readonly (
+    Pick<NormalizedEntry, "id"> & ProductNameEntry
+  )[],
+): MergeBodiesResult {
+  const entriesById = new Map(entries.map((entry) => [entry.id, entry]));
+  const sanitizedExisting = pruneKnownProductBodyConflicts(
+    existing,
+    entries,
+    generatedAt,
+  );
+  const compatibleBodies = newBodies.filter((body) => {
+    const entry = entriesById.get(body.id);
+    return !entry || !hasKnownProductBodyRecordConflict(entry, body);
+  });
+  const merged = mergeBodies(
+    sanitizedExisting.payload,
+    compatibleBodies,
+    liveIds,
+    generatedAt,
+  );
+  const sanitizedMerged = pruneKnownProductBodyConflicts(
+    merged.payload,
+    entries,
+    generatedAt,
+  );
+  return {
+    payload: sanitizedMerged.payload,
+    added: Math.max(0, merged.added - sanitizedMerged.pruned),
+    pruned:
+      sanitizedExisting.pruned +
+      merged.pruned +
+      sanitizedMerged.pruned,
+    changed:
+      sanitizedExisting.changed ||
+      merged.changed ||
+      sanitizedMerged.changed,
+  };
 }
 
 export interface NewBody {

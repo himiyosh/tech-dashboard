@@ -13,6 +13,7 @@ import {
   reconcileBodiesPayload,
   recoverWriteTransaction,
   summarizeChanges,
+  synchronizeBodyHealth,
   synchronizeArchiveTagsFromLive,
   validateArchiveMonthInputPayload,
   validateArchiveMonthPayload,
@@ -58,6 +59,27 @@ function emptyReport() {
 }
 
 describe("clean-source-noise validation", () => {
+  it("recomputes body retention telemetry from the final index and sidecar", () => {
+    expect(synchronizeBodyHealth(
+      {
+        bodyEnqueueCap: 24,
+        bodyBacklog: 208,
+        bodyQueueDrainEstimateHours: 9,
+        bodyRetentionEligible: 1479,
+        bodiesTotal: 1257,
+      },
+      1476,
+      1257,
+      208,
+    )).toEqual({
+      bodyEnqueueCap: 24,
+      bodyBacklog: 208,
+      bodyQueueDrainEstimateHours: 9,
+      bodyRetentionEligible: 1476,
+      bodiesTotal: 1257,
+    });
+  });
+
   it("normalizes persisted media URL fields without dropping image metadata", () => {
     const normalized = normalizeEntryMediaUrls(
       entry({

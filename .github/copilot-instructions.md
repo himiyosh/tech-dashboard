@@ -127,6 +127,7 @@
 
 ### R-017: broad feed はカテゴリ品質フィルタと上限を必ず持つ
 - `arxiv-*`、`techcrunch`、`the-verge`、`ars-technica`、vendor newsroom など broad feed は `includeKeywords` / `excludeKeywords` / `maxEntriesPerRun` を `harness/registry.ts` に設定し、汎用ニュースや無関係論文を大量流入させない。
+- AI/ML専門feedでも周辺productの一般機能や運用記事が混ざる場合はbroad feedと同様に扱い、実タイトルで確認した高信頼excludeをtitle scopeで設定する。「専門feedだからfilter不要」と仮定しない。
 - **ノイズキーワードは registry の `*_EXCLUDE_KEYWORDS` を単一ソースにする (LL-081)**。テスト (`tests/data-schema.test.ts` の「registry の excludeKeywords が適用漏れしていない」) はこの registry を `import` して参照するので、テスト側の正規表現に独自のノイズ語を足さない (足すと検出と予防が乖離し、収集素通り → 毎時 CI fail になる)。新種ノイズを見つけたら registry に追加し、`npm run noise:clean` で既存 live/archive を migration し、Worker を再デプロイする。
 - ノイズ判定は **title スコープ**に限定する。url を含めると `arstechnica.com/gadgets/` のようなサイトセクション名に `gadget` 等が部分一致し、有効な開発記事を巻き込む。
 - Zed は VSCode ではなく `cursor` 系カテゴリとして扱う。`zed-releases` を `vscode` に戻さない。
@@ -1879,10 +1880,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: taxonomy slugはURLと内部key専用にし、読者向け表示とaccessible nameはmetadata由来の共通helperを通す。source labelと同様、横断的な表示変換をcomponentごとに実装しない。
 
 ### LL-273: operational labelは同じ意味のmetricを表示する
-- **事象**: footerの`summary queue`表示が実queue backlogではなくdeterministic fallback件数を使い、Statusのqueue backlogと異なる数値を同じ意味のように表示していた。
-- **根本原因**: fallback coverageとqueue backlogをどちらもpending summaryの近似値として扱い、labelとdata sourceの意味を一対一に固定していなかった。
-- **対策**: footerのrun判定と表示を`summaryQueueBacklog`へ統一し、machine-readable属性とvisible textが同じ値であることをE2Eで検証する。
-- **教訓**: operational metricは似た相関指標で代用しない。表示label、判定input、`data-*`属性、Statusのsource of truthを同じfieldへ揃える。
+- **事象**: footerの`summary queue`表示が実queue backlogではなくdeterministic fallback件数を使い、Statusのqueue backlogと異なる数値を同じ意味のように表示していた。後にbody QueueのETAは`bodyEnqueueCap`で計算しているのに、説明文が`bodyEnqueueCandidates`を計算根拠として表示した。
+- **根本原因**: fallback coverageとqueue backlog、candidate数とenqueue上限を近似値として扱い、labelと実計算fieldの意味を一対一に固定していなかった。
+- **対策**: footerのrun判定と表示を`summaryQueueBacklog`へ統一する。body Queue ETAはmetricsへ`bodyEnqueueCap`を配線し、visible copyとmachine-readable属性も同じcapを根拠として表示する。E2Eで各値の一致を検証する。
+- **教訓**: operational metricは似た相関指標で代用しない。表示label、計算input、`data-*`属性、Statusのsource of truthを同じfieldへ揃え、候補件数、上限、実送信数、実反映数を別の意味単位として扱う。
 
 ### LL-274: mobile actionのbreakpointはprimary navigation contractへ揃える
 - **事象**: 記事詳細CTAは`620px`以下だけ縦積みだったため、primary navigationがmobile扱いになる`621-720px`で操作が横並びのままになり、狭い本文幅でCTAとcopyが圧縮された。
@@ -2095,9 +2096,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: bilingual page の構造化データでは page default language、表示中の language、元記事 language を混同しない。1つの entity 内の自然言語 field は同じ provenance を共有し、headline text と `inLanguage` の組み合わせを実 DOM で検証する。
 
 ### LL-309: broad feed は relevance hit があっても記事の主題が対象外なら除外する
-- **事象**: `Hackers` を含む Neo Geo の Doom 移植記事と、`AI` を含む dating service の資金調達記事が Tech News に残った。一方、mobile network vulnerability、Anthropic の広告反応、Google Image Search の AI 更新も同じ監査候補に挙がった。
-- **根本原因**: security や AI の relevance keyword が title にあれば、記事の主題が retro gaming や consumer dating でも通過した。監査候補を一括で noise と扱うと、現行契約が明示的に保持する security と AI industry / product update まで除外する危険があった。
-- **対策**: registry の title-scope exclude に `neo geo`、`dating service`、`dating app` を追加し、実際に混入した2タイトルを drop corpusへ固定する。mobile network vulnerability、AI company coverage、AI search product updateは既存のsecurity / AI契約に一致するため保持する。
+- **事象**: `Hackers` を含む Neo Geo の Doom 移植記事、`AI` を含むdating service、Geminiの副業案内、AI写真講評、indie game developerへの投資記事がTech Newsに残った。一方、mobile network vulnerability、Anthropic の広告反応、Google Image Search の AI 更新も同じ監査候補に挙がった。
+- **根本原因**: security、AI、Geminiなどのrelevance keywordがtitleにあれば、記事の主題がretro gaming、consumer dating、個人向け活用、ゲーム産業でも通過した。監査候補を一括でnoiseと扱うと、現行契約が明示的に保持するsecurityとAI industry / product updateまで除外する危険があった。
+- **対策**: registry の title-scope exclude に `neo geo`、`dating service`、`dating app`、`side hustle`、`critique your photos`、`indie game developer`を追加し、実際に混入したタイトルをdrop corpusへ固定する。mobile network vulnerability、AI company coverage、AI search product updateは既存のsecurity / AI契約に一致するため保持する。
 - **教訓**: broad feed の品質監査では relevance 語の存在と記事の主題を分けて確認する。明確な consumer domain は registry の具体的な title-scope exclude で防ぎ、securityや公式AI更新を外見上の話題だけでまとめて除外しない。
 
 ### LL-310: archive migration は内容不変の月の generatedAt を更新しない
@@ -2465,6 +2466,24 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 表示文字列のhydrationを独立したformatting処理とみなし、そのtimestampを入力にする`deriveWorkerRunStatus()`と`deriveQueueDisplay()`の再計算をconsumer全体へ伝播していなかった。run stateはfooter、Status、Home、About、EntryCardに分散し、Aboutのpollingも同じhealth入力を原子的に更新していなかった。
 - **対策**: 共通clock tickでrun状態とsummary/body Queueを再導出し、footer、Status hero/PageHero、Home cadence/warning、About、全pending cardへ同じ結果を配信する。正常時に隠すHome warningはDOMを保持して状態変化時に表示し、authorの`display`が`hidden`を打ち消さない明示CSSも追加した。Aboutの独立pollingを外して同一snapshotへ統一し、source掲載状態のように全派生値をlive再計算しない面は相対時刻を使わず、絶対日時と`published-snapshot` provenanceを表示する。
 - **教訓**: derived stateを持つUIで基準時刻だけを更新しない。timestamp、severity、copy、tone、Queue mode、accessible nameを1つのstate transitionとして扱い、threshold crossingをE2Eで再現する。全入力を原子的に更新できない場合は一部だけpollingせず、snapshotとして固定して絶対時刻とprovenanceを示す。optional warningを後から表示する場合は、SSR時にDOMが無い構造ではなく安全なhidden初期状態とclient更新契約を用意する。
+
+### LL-371: 専門feedでも周辺productの一般機能をカテゴリ適合とみなさない
+- **事象**: AWS Machine Learning Blogの一般QuickSight機能、BI asset backup、DeepRacer端末のOS告知が、source既定の`agent-fw`と一律`bedrock` tagによりAgent Frameworksへ入った。Ars Technicaの`The Pentagon's Space Development Agency...`も、既存の`satellite` excludeにはtitleが一致せずTech Newsへ残った。
+- **根本原因**: AWS ML feedを「AI/ML専門なのでfilter不要」とみなし、同じfeedに含まれる一般BI product機能、運用記事、隣接device告知を考慮していなかった。個別excludeだけでは新しい周辺product語彙を都度追加する状態になる。Tech News側はURL/summaryではなくtitle scopeを正しく使っていたが、実titleのagency固有語彙がregistry excludeに無かった。
+- **対策**: AWS ML sourceへAI/ML、agent、model、Bedrock、SageMakerなどの肯定語をtitle scopeで要求し、一般QuickSight操作とDeepRacer OS告知を除外する。正当なQuick agentic workflow、AgentCore、Claude記事はkeep corpusで固定する。Tech News共通excludeへ`space development agency`を追加し、`noise:clean -- --apply`でlive/archive/bodies/statsを同一transactionで修復した。
+- **教訓**: source名やfeed分類を記事単位の適合証拠にしない。専門feedでも周辺product記事を実corpusで監査し、肯定語と明示exclude、dropとkeepの両fixtureをregistry実定義へ固定する。title-only filterではsummary/tagに対象語があっても採否に使わない。
+
+### LL-372: artifact migrationは最終sidecarから派生health telemetryも再計算する
+- **事象**: taxonomy migrationでlive entryと本文sidecarを安全に削除した後、`health.bodyRetentionEligible`は1479のまま、最終indexからの再計算は1475だった。初期修正で保持対象数からbodies件数を引いてbacklogを219としたが、Queue契約の`needsBody()`で再計算すると保存値208が正しかった。
+- **根本原因**: `clean-source-noise`は`data/bodies.json`をfinal live IDへreconcileし、`bodiesTotal`だけをhealthへ同期していた。さらにbody retention対象とbody Queue対象を同一視したが、要約fallback中のentryは保持対象でも本文生成には未適格である。
+- **対策**: final indexから`bodyRetentionEligible`を再計算し、backlogとETAはPublisherと同じ`needsBody()`とreconcile済みbody ID集合から導出する。data schema gateも同じQueue contractで保存telemetryとの一致を検証する。
+- **教訓**: multi-artifact migrationは主artifactとsidecarだけを整合させて完了にしない。派生telemetryもfinal集合から再計算する一方、coverage集合とQueue eligibility集合を単純な差分で同一視せず、生成器の実選択helperを再利用する。
+
+### LL-373: 生成titleは原題の製品名を別製品へ置き換えない
+- **事象**: AWS公式原題が`Amazon Quick`を示す2記事で、生成された日本語titleとJA/EN summaryが`Amazon QuickSight`へ置き換わり、同一card内の言語間で製品名が食い違った。公式記事はAmazon Quickをagentic AI workspace、Amazon Quick SightをそのBI dashboard機能として区別していた。
+- **根本原因**: promptは製品名保持を要求していたが、生成結果のtitleとsummaryを原題の固有名詞へ照合するdeterministic guardがなかった。非空・要約品質gateは別製品名への置換を検出しない。初回helperはfull live entryを前提にし、summaryを省略するcompact hot archiveで`replace`を呼んでmigrationを停止した。さらに既存bodyだけをmerge前に除去しても、同じrunのKV cacheやlegacy transferから矛盾本文を再投入できた。前回送信済みpending jobの不適合cacheは通常candidate集合に入らず、拒否後に再enqueueされない経路も残った。
+- **対策**: AWS MLの原題がAmazon Quickを指しQuick Sightを指さない場合、存在する生成titleとsummary内の`Amazon QuickSight` / `Amazon Quick Sight`だけを原題どおり`Amazon Quick`へ正規化する共通helperをPublisher最終化とmigrationで共有する。本文の先頭段落がAmazon QuickをQuickSightとして導入する場合、既存sidecar、KV cache hit、legacy transferの全入力で拒否し、merge後payloadも再検証する。拒否cacheはmissとしてbody Queueの再生成対象へ戻し、pending lookupで実体のある不適合cacheを確認した場合も即時再enqueueする。単純なpending missは従来どおり通常round-robinへ戻す。full live、compact archive、既存body、incoming body、pending cacheのfixtureと実data gateで再発を止める。
+- **教訓**: LLMへ固有名詞保持を指示するだけでは製品名provenanceを保証できない。原題が明示するknown product familyは生成後にdeterministicに照合し、似た旧製品名や関連機能名への置換をpublish前に修復する。title/summaryだけを直して既存bodyを完成扱いに残さず、既存値、cache、migration transfer、最終payloadの全read/write境界へ同じvalidationを対称適用する。priority lookupと通常candidateが別集合の場合、拒否結果がどちらの再enqueue経路へ入るかも明示する。artifact横断helperは型上のfull recordだけを信じず、保存tierが省略できるfieldを実行時に確認してから変換する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

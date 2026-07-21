@@ -1,25 +1,108 @@
 {
-  "generatedAt": "2026-07-21T14:54:50.842Z",
+  "generatedAt": "2026-07-21T16:14:35.753Z",
   "month": "2026-07",
   "count": 931,
   "entries": [
+    {
+      "id": "b80049619b1c510b",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/zelda_navy/items/49ef70904abfb1a401c4",
+      "title": "VSCode + WSL上のUbuntuを使ってgdbでデバックする",
+      "titleJa": "VSCode + WSL上のUbuntuを使ってgdbでデバックする",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-21T15:20:40.000Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに VSCode + WSL上のUbuntuを使ってgdbでデバック環境を構築したときにはまったためメモする。 C/C++開発環境のインストール g++コンパイラをインストール VSCodeを起動して、WSLに接続する bashターミナルを開く 以下のコマンド...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNjgzMTYxJTJGcHJvZmlsZS1pbWFnZXMlMkYxNzUwMjUzMDc4P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0wYTc1MTU3MGJjNTU0OWM0NGY3YTFjYWJkODU1OWYwMA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D80f38c984894c896eaf64d2d62441869?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJTIwJTJCJTIwV1NMJUU0JUI4JThBJUUzJTgxJUFFVWJ1bnR1JUUzJTgyJTkyJUU0JUJEJUJGJUUzJTgxJUEzJUUzJTgxJUE2Z2RiJUUzJTgxJUE3JUUzJTgzJTg3JUUzJTgzJTkwJUUzJTgzJTgzJUUzJTgyJUFGJUUzJTgxJTk5JUUzJTgyJThCJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9YmJmZjI1YTFiOTM0MTFlODFlYWI2NTU0NmYxMTVjMzE&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB6ZWxkYV9uYXZ5JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9ZjNlODU3NjYyYjZmZWRiNTcxYTg1ZTkyNTBkZDQzZGY&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=8f9ec837eaea31933b70968ea05ff2f9",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNjgzMTYxJTJGcHJvZmlsZS1pbWFnZXMlMkYxNzUwMjUzMDc4P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0wYTc1MTU3MGJjNTU0OWM0NGY3YTFjYWJkODU1OWYwMA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D80f38c984894c896eaf64d2d62441869?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJTIwJTJCJTIwV1NMJUU0JUI4JThBJUUzJTgxJUFFVWJ1bnR1JUUzJTgyJTkyJUU0JUJEJUJGJUUzJTgxJUEzJUUzJTgxJUE2Z2RiJUUzJTgxJUE3JUUzJTgzJTg3JUUzJTgzJTkwJUUzJTgzJTgzJUUzJTgyJUFGJUUzJTgxJTk5JUUzJTgyJThCJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9YmJmZjI1YTFiOTM0MTFlODFlYWI2NTU0NmYxMTVjMzE&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB6ZWxkYV9uYXZ5JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9ZjNlODU3NjYyYjZmZWRiNTcxYTg1ZTkyNTBkZDQzZGY&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=8f9ec837eaea31933b70968ea05ff2f9",
+        "alt": "VSCode + WSL上のUbuntuを使ってgdbでデバックする",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "42230b0b340ad2a5",
+      "source": "google-deepmind",
+      "sourceType": "blog",
+      "url": "https://deepmind.google/blog/introducing-gemini-36-flash-35-flash-lite-and-35-flash-cyber/",
+      "title": "Introducing Gemini 3.6 Flash, 3.5 Flash-Lite, and 3.5 Flash Cyber",
+      "titleJa": "",
+      "titleEn": "Introducing Gemini 3.6 Flash, 3.5 Flash-Lite, and 3.5 Flash Cyber",
+      "lang": "en",
+      "publishedAt": "2026-07-21T15:16:30.000Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
+      "tags": [
+        "deepmind",
+        "google"
+      ],
+      "category": "gemini",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "We’re introducing new Gemini models, including Gemini 3.6 Flash, 3.5 Flash-Lite and 3.5 Flash Cyber."
+    },
+    {
+      "id": "a4048e2bbbb01443",
+      "source": "google-keyword",
+      "sourceType": "blog",
+      "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-6-flash-3-5-flash-lite-3-5-flash-cyber/",
+      "title": "Introducing Gemini 3.6 Flash, 3.5 Flash-Lite, and 3.5 Flash Cyber",
+      "titleJa": "",
+      "titleEn": "Introducing Gemini 3.6 Flash, 3.5 Flash-Lite, and 3.5 Flash Cyber",
+      "lang": "en",
+      "publishedAt": "2026-07-21T15:00:00.000Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
+      "tags": [
+        "google",
+        "news"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "We’re introducing new Gemini models, including Gemini 3.6 Flash, 3.5 Flash-Lite and 3.5 Flash Cyber.",
+      "image": {
+        "src": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/gemini-3-5_3-6_3-5-Cyber__key-a.max-600x600.format-webp_dgy5uuM.webp",
+        "origSrc": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/gemini-3-5_3-6_3-5-Cyber__key-a.max-600x600.format-webp_dgy5uuM.webp",
+        "alt": "Introducing Gemini 3.6 Flash, 3.5 Flash-Lite, and 3.5 Flash Cyber",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
     {
       "id": "78ff9bdbff8ebd46",
       "source": "techcrunch",
       "sourceType": "blog",
       "url": "https://techcrunch.com/2026/07/21/ai-music-generator-suno-breach-affects-55m-users-per-have-i-been-pwned/",
       "title": "AI music generator Suno breach affects 55M users, per Have I Been Pwned",
-      "titleJa": "",
+      "titleJa": "AI音楽生成サービス Suno で5500万人規模のデータ侵害が発生",
       "titleEn": "AI music generator Suno breach affects 55M users, per Have I Been Pwned",
       "lang": "en",
       "publishedAt": "2026-07-21T14:48:18.000Z",
       "collectedAt": "2026-07-21T14:54:44.356Z",
       "tags": [
+        "ai-music",
+        "data-breach",
         "news",
+        "security",
+        "suno",
         "techcrunch"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 3,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "A hacker took names, phone numbers, and physical addresses of millions of customers who used AI music generator Suno.",
@@ -33,22 +116,47 @@
       }
     },
     {
+      "id": "13604f28b613b6b9",
+      "source": "ars-technica",
+      "sourceType": "blog",
+      "url": "https://arstechnica.com/cars/2026/07/when-your-vehicle-outlives-its-cloud-what-happens-next/",
+      "title": "When your vehicle outlives its cloud: What happens next?",
+      "titleJa": "",
+      "titleEn": "When your vehicle outlives its cloud: What happens next?",
+      "lang": "en",
+      "publishedAt": "2026-07-21T13:36:17.000Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
+      "tags": [
+        "ars-technica",
+        "news"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Automakers love connected vehicles, but support isn't open-ended."
+    },
+    {
       "id": "8d5834900403888e",
       "source": "techcrunch",
       "sourceType": "blog",
       "url": "https://techcrunch.com/2026/07/21/music-streamer-deezer-says-more-than-50-of-daily-uploads-are-ai-generated/",
       "title": "Music streamer Deezer says more than 50% of daily uploads are AI-generated",
-      "titleJa": "",
+      "titleJa": "音楽ストリーミングのDeezer、1日のアップロードの50%超がAI生成と発表",
       "titleEn": "Music streamer Deezer says more than 50% of daily uploads are AI-generated",
       "lang": "en",
       "publishedAt": "2026-07-21T13:27:42.000Z",
       "collectedAt": "2026-07-21T14:54:44.356Z",
       "tags": [
+        "ai-generated-content",
+        "deezer",
+        "music",
         "news",
+        "streaming",
         "techcrunch"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "Deezer said more than 90,000 AI-generated tracks were uploaded daily on the platform in June."
@@ -60,16 +168,22 @@
       "url": "https://qiita.com/lumichy/items/7c5a7a86112801429cca",
       "title": "Claude Fable 5 を9Bモデルに蒸留？ 100万トークンの超長文推理モデル「Qwythos-9B」を4GBのVRAMで動かす",
       "titleJa": "Claude Fable 5 を9Bモデルに蒸留？ 100万トークンの超長文推理モデル「Qwythos-9B」を4GBのVRAMで動かす",
-      "titleEn": "",
+      "titleEn": "Qwythos-9B is a purported Claude Fable 5 distillation that supports 1M-token…",
       "lang": "ja",
       "publishedAt": "2026-07-21T12:07:07.000Z",
       "collectedAt": "2026-07-21T14:54:44.356Z",
       "tags": [
         "llm",
-        "qiita"
+        "local-llm",
+        "long-context",
+        "model-distillation",
+        "qiita",
+        "qwythos",
+        "reasoning",
+        "vram-optimization"
       ],
       "category": "local-llm",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "Claude Fable 5 を9Bモデルに蒸留？ 100万トークンの超長文推理モデル「Qwythos-9B」を4GBのVRAMで動かす オープンソースAI（ローカルLLM）の進化スピードには目を見張るものがあります。2026年6月、Empero AIから「Qwythos..."
@@ -81,20 +195,46 @@
       "url": "https://qiita.com/Thanush/items/44724e8672f06332ff2e",
       "title": "小さなLLM（Llama-3.2-1B）をQLoRAでファインチューニングしてFunction Callingを覚えさせてみた",
       "titleJa": "小さなLLM（Llama-3.2-1B）をQLoRAでファインチューニングしてFunction Callingを覚えさせてみた",
-      "titleEn": "",
+      "titleEn": "This article demonstrates fine-tuning the compact Llama-3.2-1B model with QLoRA…",
       "lang": "ja",
       "publishedAt": "2026-07-21T12:06:13.000Z",
       "collectedAt": "2026-07-21T14:54:44.356Z",
       "tags": [
+        "fine-tuning",
+        "function-calling",
+        "llama",
         "llm",
         "open-model",
-        "qiita"
+        "qiita",
+        "qlora",
+        "small-llm"
       ],
       "category": "local-llm",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "小さなLLMをQLoRAでファインチューニングして、Function Callingを覚えさせてみた 小さなオープンモデルは、ツール呼び出し（function calling）が苦手なことが多いです。「何をすべきか」は理解して正しい関数も選ぶのに、出力するJSONの構造が..."
+    },
+    {
+      "id": "b2f65f6155af61b3",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/io_nagao/items/764fd44b56f5f1f58976",
+      "title": "IBM i 開発者向け！ VSCode拡張機能",
+      "titleJa": "IBM i 開発者向け！ VSCode拡張機能",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-21T10:45:56.000Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "IBM i(旧AS/400)のDSPFを、VSCodeで視覚的に編集する拡張機能を作成(β版） 【前提条件】本機能は全てのキーワードに対応など、完全な動作を保証するものではありません。作成・変更した内容や 出力される DDS ソース・Excel などの成果物は、必ず内容..."
     },
     {
       "id": "d3baae9b633e4024",
@@ -102,11 +242,11 @@
       "sourceType": "blog",
       "url": "https://qiita.com/NovanMondon/items/bb39e1306eb5ded63535",
       "title": "VSCodeの言語別設定は、複数設定すると優先度が落ちる仕様",
-      "titleJa": "VSCodeの言語別設定は複数指定すると優先度が下がる仕様",
+      "titleJa": "VSCodeの言語別設定は、複数設定すると優先度が落ちる仕様",
       "titleEn": "A quirk in VSCode's language-specific settings causes priority to drop…",
       "lang": "ja",
       "publishedAt": "2026-07-21T04:04:43.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "configuration",
         "language-specific",
@@ -134,7 +274,7 @@
       "sourceType": "release",
       "url": "https://github.com/langchain-ai/langchain/releases/tag/langchain-core%3D%3D1.5.0",
       "title": "langchain-core==1.5.0",
-      "titleJa": "",
+      "titleJa": "langchain-core 1.5.0 リリース",
       "titleEn": "langchain-core==1.5.0",
       "lang": "en",
       "publishedAt": "2026-07-21T03:37:40.000Z",
@@ -142,6 +282,9 @@
       "tags": [
         "agent",
         "langchain",
+        "langchain-core",
+        "library-update",
+        "python",
         "release"
       ],
       "category": "agent-fw",
@@ -164,17 +307,22 @@
       "sourceType": "blog",
       "url": "https://techcrunch.com/2026/07/20/anthropics-landmark-1-5b-copyright-settlement-is-approved/",
       "title": "Anthropic’s landmark $1.5B copyright settlement is approved",
-      "titleJa": "",
+      "titleJa": "Anthropicの15億ドル著作権訴訟和解が承認される",
       "titleEn": "Anthropic’s landmark $1.5B copyright settlement is approved",
       "lang": "en",
       "publishedAt": "2026-07-21T00:12:24.000Z",
       "collectedAt": "2026-07-21T14:54:44.356Z",
       "tags": [
+        "ai-training",
+        "anthropic",
+        "copyright",
+        "legal",
         "news",
+        "settlement",
         "techcrunch"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 3,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "The final approval settles one case, but it doesn't resolve the broader issue of using copyrighted works to train AI models."
@@ -185,17 +333,21 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/itdevnote/articles/ollama-num-ctx-silent-truncation",
       "title": "ollama は長い入力の真ん中を捨てる — 実測すると半分しか残らない",
-      "titleJa": "ollama は長い入力の真ん中を捨てる — 実測すると半分しか残らない",
-      "titleEn": "",
+      "titleJa": "ollama は長い入力の中間部分を無音で切り捨てる — 実測で半分しか処理されない問題",
+      "titleEn": "Benchmarking reveals that ollama silently drops the middle portion of inputs…",
       "lang": "ja",
       "publishedAt": "2026-07-20T23:00:06.000Z",
       "collectedAt": "2026-07-21T14:54:44.356Z",
       "tags": [
+        "context-window",
         "llm",
+        "num-ctx",
+        "ollama",
+        "truncation",
         "zenn"
       ],
       "category": "local-llm",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "ollama に num_ctx を超える入力を渡すと、超えた分が削られる——のではない。先頭のわずかなトークンと末尾を残して、真ん中がまとめて捨てられる。 残る量はコンテキストのおよそ半分までで、元の入力が長いほど失う量は大きくなる。 そして捨てられても HTTP 200 が返り、done_reason は stop、出力の体裁も整っている。 この記事では、切り捨てが起きる条件・捨てられる場所と量・レスポンスに何が残るかを、実測とollama本体の実装で確かめる。最後に、入力側で打てる手も見る。読者として想定しているのは、ollama に文字起こしやロ"
@@ -206,11 +358,11 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/hirayuki/articles/6bafab06767cab",
       "title": "一体いつから-Github Copilot  Appの能力がコーディングだけだと錯覚していた？",
-      "titleJa": "GitHub Copilot Appはコーディング以外にも使える——その多彩な活用法",
+      "titleJa": "一体いつから-Github Copilot  Appの能力がコーディングだけだと錯覚していた？",
       "titleEn": "This article challenges the common assumption that GitHub Copilot App is only…",
       "lang": "ja",
       "publishedAt": "2026-07-20T22:49:04.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-tools",
         "copilot",
@@ -238,17 +390,20 @@
       "sourceType": "blog",
       "url": "https://techcrunch.com/2026/07/20/trumps-latest-ai-czar-has-already-resigned/",
       "title": "Trump’s latest AI czar has already resigned",
-      "titleJa": "",
+      "titleJa": "トランプ政権の新AI政策責任者がすでに辞任",
       "titleEn": "Trump’s latest AI czar has already resigned",
       "lang": "en",
       "publishedAt": "2026-07-20T22:21:04.000Z",
       "collectedAt": "2026-07-21T14:54:44.356Z",
       "tags": [
+        "ai-policy",
+        "government",
         "news",
-        "techcrunch"
+        "techcrunch",
+        "trump"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "The director role for the Center for AI Standards and Innovation (CAISI) has become a revolving door since David Sacks left his position as czar."
@@ -260,16 +415,20 @@
       "url": "https://zenn.dev/takkuhiro/articles/eval-as-reward-rl-mechanics",
       "title": "AIの評価を報酬にする強化学習は何をしているのか — GRPOの1ステップを数字で追う",
       "titleJa": "AIの評価を報酬にする強化学習は何をしているのか — GRPOの1ステップを数字で追う",
-      "titleEn": "",
+      "titleEn": "This article walks through a single GRPO optimization step with concrete…",
       "lang": "ja",
       "publishedAt": "2026-07-20T22:00:08.000Z",
       "collectedAt": "2026-07-21T14:54:44.356Z",
       "tags": [
+        "fine-tuning",
+        "grpo",
         "llm",
+        "reinforcement-learning",
+        "rlhf",
         "zenn"
       ],
       "category": "local-llm",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "LLMの学習で「AIの評価を報酬にする」手法が主流になりつつあります。人間の代わりにLLMが応答を採点し（RLAIF: Reinforcement Learning from AI Feedback）、そのスコアでモデルを強化学習する。DeepSeek-R1以降は正誤の機械検証（RLVR: Reinforcement Learning with Verifiable Rewards）やrubric採点を報酬にする研究も急増しています。 ただ、強化学習に馴染みがないと、「評価のスコアが報酬になる」と言われても、モデルの中で何が起きるのかをイメージしにくいと"
@@ -281,12 +440,15 @@
       "url": "https://zenn.dev/mizutamari/articles/local-llm-vol014",
       "title": "AI体験記 vol.14 — 書いたルールは、また破られた",
       "titleJa": "AI体験記 vol.14 — 書いたルールは、また破られた",
-      "titleEn": "",
+      "titleEn": "The author recounts another instance of a local LLM ignoring carefully written…",
       "lang": "ja",
       "publishedAt": "2026-07-20T21:55:52.000Z",
       "collectedAt": "2026-07-21T14:54:44.356Z",
       "tags": [
+        "ai-diary",
         "llm",
+        "local-llm",
+        "prompt-engineering",
         "zenn"
       ],
       "category": "local-llm",
@@ -301,17 +463,21 @@
       "sourceType": "blog",
       "url": "https://techcrunch.com/2026/07/20/google-is-working-on-a-new-ai-chip-designed-to-make-gemini-more-efficient/",
       "title": "Google is working on a new AI chip designed to make Gemini more efficient",
-      "titleJa": "",
+      "titleJa": "GoogleがGeminiの効率化を目的とした新しいAIチップを開発中",
       "titleEn": "Google is working on a new AI chip designed to make Gemini more efficient",
       "lang": "en",
       "publishedAt": "2026-07-20T21:21:15.000Z",
       "collectedAt": "2026-07-21T14:54:44.356Z",
       "tags": [
+        "ai-chip",
+        "gemini",
+        "google",
+        "hardware",
         "news",
         "techcrunch"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "Alphabet, Google's parent company, is reportedly working on a new chip designed to make its Gemini models run much more efficiently."
@@ -473,40 +639,6 @@
       }
     },
     {
-      "id": "6814974b67f3ccc1",
-      "source": "google-keyword",
-      "sourceType": "blog",
-      "url": "https://blog.google/products-and-platforms/products/gemini/launch-business-with-gemini/",
-      "title": "5 ways to build a side hustle with Gemini",
-      "titleJa": "Geminiで副業を始める5つの方法",
-      "titleEn": "5 ways to build a side hustle with Gemini",
-      "lang": "en",
-      "publishedAt": "2026-07-20T19:00:00.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
-      "tags": [
-        "ai-tools",
-        "gemini",
-        "google",
-        "news",
-        "productivity",
-        "release",
-        "side-hustle"
-      ],
-      "category": "tech-news",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "hot",
-      "contentSnippet": "Launching a side business? Use Gemini to design your side hustle, conduct market research and automate logistics.",
-      "image": {
-        "src": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/Scale_Side_Hustles_w_Gemini_her.max-600x600.format-webp.webp",
-        "origSrc": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/Scale_Side_Hustles_w_Gemini_her.max-600x600.format-webp.webp",
-        "alt": "5 ways to build a side hustle with Gemini",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
       "id": "b7b2185ba142d77b",
       "source": "github-changelog",
       "sourceType": "changelog",
@@ -540,34 +672,6 @@
       }
     },
     {
-      "id": "651c65b35ee2c84e",
-      "source": "aws-ml-blog",
-      "sourceType": "blog",
-      "url": "https://aws.amazon.com/blogs/machine-learning/custom-os-installation-now-available-on-aws-deepracer-devices/",
-      "title": "Custom OS installation now available on AWS DeepRacer devices",
-      "titleJa": "AWS DeepRacer デバイスにカスタムOSインストール機能が追加",
-      "titleEn": "Custom OS installation now available on AWS DeepRacer devices",
-      "lang": "en",
-      "publishedAt": "2026-07-20T17:25:24.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
-      "tags": [
-        "agent",
-        "aws",
-        "bedrock",
-        "custom-os",
-        "deepracer",
-        "edge-device",
-        "ml",
-        "robotics"
-      ],
-      "category": "agent-fw",
-      "importance": 2,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "contentSnippet": "With the stock firmware and software, developers couldn't modify their AWS DeepRacer devices to use the latest operating systems. Now, developers can upgrade or install a custom operating system (OS) by using a newly released bootloader, which extends the life of these hardware d",
-      "evergreen": true
-    },
-    {
       "id": "201033bb05fb060c",
       "source": "zenn-cursor",
       "sourceType": "blog",
@@ -579,12 +683,14 @@
       "publishedAt": "2026-07-20T17:14:15.000Z",
       "collectedAt": "2026-07-21T12:18:33.803Z",
       "tags": [
+        "agent",
         "ai-agents",
         "cloud-agents",
         "cursor",
         "github",
         "issue",
         "pull-request",
+        "tutorial",
         "zenn"
       ],
       "category": "cursor",
@@ -623,11 +729,11 @@
       "sourceType": "blog",
       "url": "https://aws.amazon.com/blogs/machine-learning/build-specialized-agent-workflows-for-your-business-with-amazon-quick-and-nvidia-nemo-agent-toolkit/",
       "title": "Build specialized agent workflows for your business with Amazon Quick and NVIDIA NeMo Agent Toolkit",
-      "titleJa": "Amazon QuickSightとNVIDIA NeMo Agent Toolkitで業務特化型エージェントワークフローを構築する",
+      "titleJa": "Amazon QuickとNVIDIA NeMo Agent Toolkitで業務特化型エージェントワークフローを構築する",
       "titleEn": "Build specialized agent workflows for your business with Amazon Quick and NVIDIA NeMo Agent Toolkit",
       "lang": "en",
       "publishedAt": "2026-07-20T17:01:32.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "agent",
         "aws",
@@ -657,7 +763,7 @@
       "titleEn": "How Couchbase built a multi-model AI architecture for Capella iQ with Amazon Bedrock",
       "lang": "en",
       "publishedAt": "2026-07-20T16:58:52.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "agent",
         "amazon-bedrock",
@@ -682,11 +788,11 @@
       "sourceType": "blog",
       "url": "https://aws.amazon.com/blogs/machine-learning/evolving-from-legacy-bi-to-agentic-ai-at-tradeshift-with-amazon-quick/",
       "title": "Evolving from legacy BI to agentic AI at Tradeshift with Amazon Quick",
-      "titleJa": "TradeshiftがAmazon QuickSightでレガシーBIからエージェンティックAIへ移行",
+      "titleJa": "TradeshiftがAmazon QuickでレガシーBIからエージェンティックAIへ移行",
       "titleEn": "Evolving from legacy BI to agentic AI at Tradeshift with Amazon Quick",
       "lang": "en",
       "publishedAt": "2026-07-20T16:56:48.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "agent",
         "aws",
@@ -755,31 +861,6 @@
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "Copilot Business and Copilot Enterprise users can now see how many AI credits they’ve used this billing cycle, even without an individual budget. Find this on your GitHub Copilot usage… The post Copilot users can now see AI credits used per billing cycle appeared first on The Git"
-    },
-    {
-      "id": "add293bd1d958f29",
-      "source": "techcrunch",
-      "sourceType": "blog",
-      "url": "https://techcrunch.com/2026/07/20/adobe-camera-apps-new-feature-will-critique-your-photos-using-ai/",
-      "title": "Adobe camera app’s new feature will critique your photos using AI",
-      "titleJa": "AdobeのカメラアプリがAIを使って写真を批評する新機能を追加",
-      "titleEn": "Adobe camera app’s new feature will critique your photos using AI",
-      "lang": "en",
-      "publishedAt": "2026-07-20T15:45:00.000Z",
-      "collectedAt": "2026-07-20T20:59:46.907Z",
-      "tags": [
-        "adobe",
-        "ai",
-        "mobile-app",
-        "news",
-        "photography",
-        "techcrunch"
-      ],
-      "category": "tech-news",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot",
-      "contentSnippet": "Adobe's Project Indigo can now remove all kinds of backgrounds from photos you snap using the app."
     },
     {
       "id": "ff170a6132d95e35",
@@ -1001,7 +1082,7 @@
       "titleEn": "Beyond grep: The case for a context-rich AI coding harness",
       "lang": "en",
       "publishedAt": "2026-07-20T11:20:10.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-coding",
         "ars-technica",
@@ -1291,7 +1372,7 @@
       "titleEn": "This article explains how to display AI-generated images inline within GitHub…",
       "lang": "ja",
       "publishedAt": "2026-07-19T18:21:20.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "copilot",
         "github-copilot-chat",
@@ -1325,7 +1406,7 @@
       "titleEn": "A developer built a VS Code extension that visualizes GitHub Copilot usage…",
       "lang": "ja",
       "publishedAt": "2026-07-19T16:57:13.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "chat-history",
         "copilot",
@@ -2614,7 +2695,7 @@
       "titleEn": "The author examines whether graph-based control flow is truly the natural…",
       "lang": "ja",
       "publishedAt": "2026-07-18T13:56:58.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -2809,7 +2890,7 @@
       "titleEn": "Will AI fix prior authorization—or make it worse?",
       "lang": "en",
       "publishedAt": "2026-07-18T11:18:25.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-policy",
         "ars-technica",
@@ -3725,32 +3806,6 @@
       "contentSnippet": "You can now select Fix with Copilot directly from Copilot code review pull request comments in GitHub Mobile. The button is available both on the pull request’s main view and… The post GitHub Mobile: Fix pull request comments with Copilot cloud agent appeared first on The GitHub "
     },
     {
-      "id": "3d223a1a83415af6",
-      "source": "ars-technica",
-      "sourceType": "blog",
-      "url": "https://arstechnica.com/space/2026/07/the-pentagons-space-development-agency-hasnt-moved-as-fast-as-anyone-would-like/",
-      "title": "The Pentagon's Space Development Agency hasn't moved as fast as anyone would like",
-      "titleJa": "ペンタゴンの宇宙開発局、期待されたほど迅速に進展せず",
-      "titleEn": "The Pentagon's Space Development Agency hasn't moved as fast as anyone would like",
-      "lang": "en",
-      "publishedAt": "2026-07-17T19:19:42.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
-      "tags": [
-        "ars-technica",
-        "military",
-        "news",
-        "satellite",
-        "sda",
-        "space",
-        "us-defense"
-      ],
-      "category": "tech-news",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot",
-      "contentSnippet": "\"Missiles are being launched at the joint force every single day in [Operation] Epic Fury.\""
-    },
-    {
       "id": "af990b64577f5e47",
       "source": "aws-ml-blog",
       "sourceType": "blog",
@@ -3760,7 +3815,7 @@
       "titleEn": "Transform your sales organization with Amazon Quick: your new agentic AI teammate",
       "lang": "en",
       "publishedAt": "2026-07-17T18:42:36.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -3856,34 +3911,6 @@
       "contentSnippet": "今年4月、AI支援開発中にDドライブの170GBデータが一瞬で消えました。作業ファイルはもちろん、家族の写真や長年蓄積した資料まで、すべて失ったんです。 事故後の振り返りと調査 その後、2025～2026年に報告されたAI関連インシデントを片っ端から調べ、自身の事故の全経緯も1つずつ再構築しました。 そこで痛感したのは、こうしたトラブルの大半が「作業状態の管理不全」に起因しているという点です。 AIは指示に対して返答するだけで、「現在の進捗」「課せられた制約」「次にやるべきこと」といった情報は、すべてチャット履歴に散在したまま。 結果として人間もAIも共"
     },
     {
-      "id": "c9a5c14aec03b542",
-      "source": "aws-ml-blog",
-      "sourceType": "blog",
-      "url": "https://aws.amazon.com/blogs/machine-learning/introducing-mobile-layout-for-amazon-quick-dashboards/",
-      "title": "Introducing Mobile Layout for Amazon Quick dashboards",
-      "titleJa": "Amazon QuickSight ダッシュボードにモバイルレイアウト機能が登場",
-      "titleEn": "Introducing Mobile Layout for Amazon Quick dashboards",
-      "lang": "en",
-      "publishedAt": "2026-07-17T17:13:15.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
-      "tags": [
-        "agent",
-        "aws",
-        "bedrock",
-        "dashboard",
-        "data-visualization",
-        "ml",
-        "mobile",
-        "quicksight"
-      ],
-      "category": "agent-fw",
-      "importance": 2,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "contentSnippet": "Teams that rely on dashboards for daily decisions often must pinch and zoom to interact with controls originally designed for larger displays. Checking revenue during a morning standup, reviewing pipeline metrics between meetings, or monitoring operations while traveling all requ",
-      "evergreen": true
-    },
-    {
       "id": "72780eb250ba9c5b",
       "source": "qiita-claude",
       "sourceType": "blog",
@@ -3919,7 +3946,7 @@
       "titleEn": "How Smartsheet built a remote MCP server on AWS",
       "lang": "en",
       "publishedAt": "2026-07-17T16:32:06.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "agent",
         "architecture",
@@ -4023,6 +4050,35 @@
       "contentSnippet": "Lowest cost per token from extreme codesign maximizes intelligence per dollar for post-training in the agentic era."
     },
     {
+      "id": "fb66bb3d3f6b3ea4",
+      "source": "google-deepmind",
+      "sourceType": "blog",
+      "url": "https://deepmind.google/blog/introducing-gemini-3-5-flash-cyber/",
+      "title": "Introducing Gemini 3.5 Flash Cyber",
+      "titleJa": "",
+      "titleEn": "Introducing Gemini 3.5 Flash Cyber",
+      "lang": "en",
+      "publishedAt": "2026-07-17T15:00:11.000Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
+      "tags": [
+        "deepmind",
+        "google"
+      ],
+      "category": "gemini",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Google introduces Gemini 3.5 Flash Cyber, a lightweight cybersecurity model to find and patch vulnerabilities.",
+      "image": {
+        "src": "https://lh3.googleusercontent.com/esSD0-kSrZ8K07XxNkSKL3OGlcx1Cf3M-qiQut0q_vArHMiK2L1CpUIGVkjuQrhu_m0g8UMVflVQpDp7VFAJSubDdCjSXsPJPDeK-PUtaPbqA8W1=w528-h297-n-nu-rw-lo",
+        "origSrc": "https://lh3.googleusercontent.com/esSD0-kSrZ8K07XxNkSKL3OGlcx1Cf3M-qiQut0q_vArHMiK2L1CpUIGVkjuQrhu_m0g8UMVflVQpDp7VFAJSubDdCjSXsPJPDeK-PUtaPbqA8W1=w528-h297-n-nu-rw-lo",
+        "alt": "Introducing Gemini 3.5 Flash Cyber",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
       "id": "7fd88aafef0c1bf5",
       "source": "zenn-copilot",
       "sourceType": "blog",
@@ -4032,7 +4088,7 @@
       "titleEn": "As AI coding agents like Claude Code, Codex, and Copilot increasingly operate…",
       "lang": "ja",
       "publishedAt": "2026-07-17T13:31:25.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-agents",
         "branch-protection",
@@ -4112,7 +4168,7 @@
       "titleEn": "This article reviews Simon Willison's practical patterns for combining coding…",
       "lang": "ja",
       "publishedAt": "2026-07-17T10:28:09.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "best-practices",
         "coding-agent",
@@ -4205,8 +4261,8 @@
       "contentSnippet": "GitHub・Cursor・Zennで技術ブログ環境を構築する この記事で実現できること GitHub・Cursor・Zennを利用した技術ブログ環境を構築できる Gitで記事を管理しながら執筆・公開できる 継続しやすい技術ブログ運営の土台を作れる 完成イメージ この構成を選んだ理由 Gitで記事の変更履歴を管理でき、安心して改善を続けられる GitHubをポートフォリオとして活用できる CursorのAI機能やMarkdown編集機能により、効率良く執筆・推敲できる GitHubとZennを連携することで公開作業をシンプルにできる 将来的に個人ブログや"
     },
     {
-      "id": "69f02e2c92611c94",
-      "source": "zenn-cursor",
+      "id": "fd77f4b301df5a17",
+      "source": "zenn-copilot",
       "sourceType": "blog",
       "url": "https://zenn.dev/a1221/articles/ai-rules-generator-introduction",
       "title": "AIエージェントのルールファイル乱立問題—AGENTS.mdを単一ソースにして全部生成する",
@@ -4214,7 +4270,7 @@
       "titleEn": "To address the fragmentation of rule files across multiple AI agent tools, the…",
       "lang": "ja",
       "publishedAt": "2026-07-17T05:17:28.000Z",
-      "collectedAt": "2026-07-21T12:18:33.803Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "agent",
         "agents-md",
@@ -4225,7 +4281,7 @@
         "developer-workflow",
         "zenn"
       ],
-      "category": "cursor",
+      "category": "copilot",
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -4360,7 +4416,7 @@
       "titleEn": "This article explains how to combine Microsoft Sentinel and GitHub Copilot to…",
       "lang": "ja",
       "publishedAt": "2026-07-17T00:25:20.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "azure",
         "copilot",
@@ -4459,7 +4515,7 @@
       "titleEn": "Build enterprise search for agents with Amazon Bedrock Managed Knowledge Base",
       "lang": "en",
       "publishedAt": "2026-07-16T21:29:14.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "agent",
         "aws",
@@ -4796,7 +4852,7 @@
       "titleEn": "NotebookLM is now Gemini Notebook",
       "lang": "en",
       "publishedAt": "2026-07-16T16:00:00.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-tools",
         "gemini",
@@ -4829,7 +4885,7 @@
       "titleEn": "We’re partnering with the Georgia Public Library Service for no-cost career and AI training.",
       "lang": "en",
       "publishedAt": "2026-07-16T16:00:00.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-training",
         "digital-skills",
@@ -5108,7 +5164,7 @@
       "titleEn": "The DMA should not undercut security & privacy for Europeans",
       "lang": "en",
       "publishedAt": "2026-07-16T12:05:00.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "dma",
         "enterprise",
@@ -5218,7 +5274,7 @@
       "titleEn": "Our approach to bioresilience",
       "lang": "en",
       "publishedAt": "2026-07-16T09:30:42.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-safety",
         "bioresilience",
@@ -5251,7 +5307,7 @@
       "titleEn": "We’re partnering with Screwfix to help the nation's tradespeople nail admin and grow their businesses using AI.",
       "lang": "en",
       "publishedAt": "2026-07-16T07:00:00.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "gemini",
         "google",
@@ -6738,7 +6794,7 @@
       "titleEn": "A solo developer built a VTuber discovery website in just 58 days by treating…",
       "lang": "ja",
       "publishedAt": "2026-07-15T10:18:26.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-agents",
         "copilot",
@@ -6904,7 +6960,7 @@
       "titleEn": "The article explains Agentic Resource Discovery (ARD), a mechanism that lets AI…",
       "lang": "ja",
       "publishedAt": "2026-07-15T05:59:08.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "agent",
         "agentic-resource-discovery",
@@ -7342,7 +7398,7 @@
       "titleEn": "The Dandori task orchestration library was redesigned using a Bounded Adaptive…",
       "lang": "ja",
       "publishedAt": "2026-07-14T23:56:25.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-agents",
         "architecture",
@@ -7536,7 +7592,7 @@
       "titleEn": "Explore The Met in new ways with generative AI",
       "lang": "en",
       "publishedAt": "2026-07-14T20:00:00.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "arts-culture",
         "generative-ai",
@@ -8420,7 +8476,7 @@
       "titleEn": "This article examines the design of cost allocation using GitHub Cost Centers…",
       "lang": "ja",
       "publishedAt": "2026-07-14T10:12:16.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-credits",
         "copilot",
@@ -8632,7 +8688,7 @@
       "titleEn": "We’re expanding Gemini in Chrome to users in the U.K.",
       "lang": "en",
       "publishedAt": "2026-07-14T07:00:00.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-assistant",
         "chrome",
@@ -10526,7 +10582,7 @@
       "titleEn": "Empowering India’s next generation of innovators with ATL Saathi",
       "lang": "en",
       "publishedAt": "2026-07-13T12:37:28.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "atl-saathi",
         "deepmind",
@@ -10747,7 +10803,7 @@
       "titleEn": "This article explains common pitfalls when generating long-form output with…",
       "lang": "ja",
       "publishedAt": "2026-07-13T05:03:07.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "claude-code",
         "copilot",
@@ -11603,7 +11659,7 @@
       "titleEn": "The author documents their experience re-subscribing to GitHub Copilot Pro…",
       "lang": "ja",
       "publishedAt": "2026-07-12T15:08:02.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "copilot",
         "copilot-pro",
@@ -11888,7 +11944,7 @@
       "titleEn": "The author reflects on canceling their Claude Max subscription and shares a…",
       "lang": "ja",
       "publishedAt": "2026-07-12T08:56:39.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-tools",
         "claude",
@@ -11988,7 +12044,7 @@
       "titleEn": "This article clarifies the distinction between harness engineering and loop…",
       "lang": "ja",
       "publishedAt": "2026-07-12T05:19:16.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -12016,7 +12072,7 @@
       "titleEn": "After exhausting GitHub Copilot Pro's monthly quota in just two days, the…",
       "lang": "ja",
       "publishedAt": "2026-07-12T01:21:56.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "agent",
         "ai-coding",
@@ -13020,7 +13076,7 @@
       "titleEn": "This article explores whether GitHub Copilot can be used to implement loop…",
       "lang": "ja",
       "publishedAt": "2026-07-11T05:08:43.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-assisted-coding",
         "copilot",
@@ -14857,7 +14913,7 @@
       "titleEn": "The article argues that overly verbose .cursorrules and CLAUDE.md files degrade…",
       "lang": "ja",
       "publishedAt": "2026-07-10T13:06:55.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-coding",
         "claude-md",
@@ -15068,7 +15124,7 @@
       "titleEn": "As AI agents like Copilot, Claude, and Codex increasingly open pull requests…",
       "lang": "ja",
       "publishedAt": "2026-07-10T10:23:37.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "ai-agents",
         "ci-cd",
@@ -15976,7 +16032,7 @@
       "titleEn": "MCP Servers Releases Release 2026.7.10",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -19784,6 +19840,8 @@
       "title": "Hugging Face Models on Foundry Managed Compute",
       "titleJa": "Foundry Managed ComputeでHugging Faceモデルを利用する",
       "titleEn": "Hugging Face Models on Foundry Managed Compute",
+      "summaryJa": "Microsoft FoundryのManaged ComputeでHugging Faceのオープンモデルをデプロイできるようになり、エンタープライズ環境での運用が容易になった。",
+      "summaryEn": "Hugging Face open models can now be deployed on Microsoft Foundry Managed Compute, making it easier for enterprises to run open-source LLMs in a managed cloud environment.",
       "lang": "en",
       "publishedAt": "2026-07-07T15:20:06.000Z",
       "collectedAt": "2026-07-21T14:54:44.356Z",
@@ -19798,7 +19856,7 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "warm"
     },
     {
       "id": "56cfd05f1f8455e7",
@@ -19808,6 +19866,8 @@
       "title": "Restrict who can dismiss reviews in rulesets",
       "titleJa": "ルールセットでレビューを却下できるユーザーを制限する機能",
       "titleEn": "Restrict who can dismiss reviews in rulesets",
+      "summaryJa": "GitHubのルールセットにプルリクエストのレビューを却下できるユーザーやチームを限定する機能が追加された。これにより組織はコードレビューの統制を強化し、承認済みレビューが不適切に却下されるリスクを軽減できる。",
+      "summaryEn": "GitHub rulesets now support restricting which users or teams can dismiss pull request reviews, giving organizations stronger and more explicit governance over their code review process.",
       "lang": "en",
       "publishedAt": "2026-07-07T15:15:54.000Z",
       "collectedAt": "2026-07-08T13:00:09.416Z",
@@ -19824,7 +19884,7 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "You can now restrict who can dismiss pull request reviews directly in GitHub repository rulesets. This capability is generally available and gives you precise control over who can clear an… The post Restrict who can dismiss reviews in rulesets appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/07/617841724-9eae700f-cfac-4f17-bf09-a17e08785782.jpg",
@@ -19843,6 +19903,8 @@
       "title": "GitHub Copilot app available to all",
       "titleJa": "GitHub Copilot アプリが全ユーザーに提供開始",
       "titleEn": "GitHub Copilot app available to all",
+      "summaryJa": "GitHub Copilot の専用アプリが招待や特定プランを問わずすべてのユーザーに正式公開された。IDE 外からも AI によるコーディング支援を受けられる環境が整い、開発者の利便性が大きく向上する。",
+      "summaryEn": "The GitHub Copilot app is now generally available to all users, ending the limited-access phase and letting any developer leverage AI coding assistance through a dedicated standalone application.",
       "lang": "en",
       "publishedAt": "2026-07-07T15:10:14.000Z",
       "collectedAt": "2026-07-08T13:00:09.416Z",
@@ -19856,7 +19918,7 @@
       "category": "copilot",
       "importance": 3,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "The GitHub Copilot app is now available on every Copilot plan. Sign in with your GitHub account to start agent-driven development from your desktop. Available on macOS, Windows, and Linux… The post GitHub Copilot app available to all appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/07/617827267-8547e7fe-db96-473a-b9ac-691c9f11f783.jpg",
@@ -19875,6 +19937,8 @@
       "title": "AI Innovators Adopt NVIDIA Vera — Why Max Single-Threaded CPU at Scale Matters",
       "titleJa": "AIイノベーターがNVIDIA Veraを採用——スケール時の最大シングルスレッドCPU性能が重要な理由",
       "titleEn": "AI Innovators Adopt NVIDIA Vera — Why Max Single-Threaded CPU at Scale Matters",
+      "summaryJa": "複数のAI企業がNVIDIAのVera CPUを採用し、大規模推論・学習においてシングルスレッド性能がボトルネック解消の鍵となることが注目されている。",
+      "summaryEn": "Leading AI companies are adopting NVIDIA's Vera CPU, highlighting how maximizing single-threaded performance at scale is critical for eliminating bottlenecks in large AI workloads.",
       "lang": "en",
       "publishedAt": "2026-07-07T15:00:52.000Z",
       "collectedAt": "2026-07-20T13:45:48.676Z",
@@ -19889,7 +19953,7 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Max single-threaded CPUs at scale are a new category of CPUs built for the agentic AI era. Across the creation and deployment of an agentic system, the CPU is on the critical path for reasoning, response time and learning. CPUs are the processor which executes the work the AI mod"
     },
     {
@@ -20205,7 +20269,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Claude is now generally available in Microsoft Foundry. Here's everything else that shipped between Build 2026 and the end of June — autopilot agents, expanded Toolboxes and Routines, Agent Optimizer's private preview, and more. The post What’s New in Microsoft Foundry | June 202",
       "image": {
         "src": "https://devblogs.microsoft.com/foundry/wp-content/uploads/sites/89/2026/07/Whats-New-June-2026.webp",
@@ -20214,7 +20277,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "bee242a6477cb421",
@@ -22489,7 +22553,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -23072,42 +23136,6 @@
       }
     },
     {
-      "id": "184729f3a9aa2e2a",
-      "source": "google-keyword",
-      "sourceType": "blog",
-      "url": "https://blog.google/products-and-platforms/platforms/google-play/indie-games-fund-africa/",
-      "title": "We're investing $1 million in Africa's indie game developers.",
-      "titleJa": "Googleがアフリカのインディーゲーム開発者に100万ドルを投資",
-      "titleEn": "We're investing $1 million in Africa's indie game developers.",
-      "summaryJa": "GoogleはアフリカのインディーゲームデベロッパーをGoogle Playを通じて支援するため、100万ドルの投資ファンドを設立した。これにより地域のゲーム産業の成長と開発者の国際展開が促進される。",
-      "summaryEn": "Google has launched a $1 million fund to support indie game developers across Africa via Google Play, aiming to accelerate the continent's gaming industry and help local studios reach global audiences.",
-      "lang": "en",
-      "publishedAt": "2026-07-03T16:00:00.000Z",
-      "collectedAt": "2026-07-14T04:39:34.428Z",
-      "tags": [
-        "africa",
-        "funding",
-        "google",
-        "google-play",
-        "indie-games",
-        "news",
-        "release"
-      ],
-      "category": "tech-news",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "Sub-Saharan Africa is home to incredible storytelling, which fuels the game development scene in what is one of the world's fastest-growing gaming markets. But while the…",
-      "image": {
-        "src": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/indiegamesfund_socialshare.max-600x600.format-webp.webp",
-        "origSrc": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/indiegamesfund_socialshare.max-600x600.format-webp.webp",
-        "alt": "We're investing $1 million in Africa's indie game developers.",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      }
-    },
-    {
       "id": "ce56bb89fb164140",
       "source": "qiita-vscode",
       "sourceType": "blog",
@@ -23211,7 +23239,7 @@
       "summaryEn": "Google DeepMind and acclaimed film studio A24 have formed a first-of-its-kind research partnership, exploring how AI can intersect with cinematic storytelling and creative production in a meaningful way.",
       "lang": "en",
       "publishedAt": "2026-07-03T14:25:43.000Z",
-      "collectedAt": "2026-07-21T10:13:41.885Z",
+      "collectedAt": "2026-07-21T16:14:30.720Z",
       "tags": [
         "a24",
         "creative-ai",

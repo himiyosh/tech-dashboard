@@ -196,6 +196,8 @@ const enrichmentBudgetLabel = hasEnrichmentBudgetTelemetry
 const summaryQueueEnqueued = DASHBOARD_METRICS.summaryQueueEnqueued;
 const bodyQueueEnqueued = DASHBOARD_METRICS.bodyQueueEnqueued;
 const bodyQueueMerged = DASHBOARD_METRICS.bodyQueueMerged;
+const bodyQueueCandidates = DASHBOARD_METRICS.bodyQueueCandidates;
+const bodyQueueEnqueueCap = DASHBOARD_METRICS.bodyQueueEnqueueCap;
 const categoryRows = CATEGORY_META.map((category) => {
     const rows = sources.filter((source) => source.category === category.slug);
     return {
@@ -432,6 +434,8 @@ const workerSummary = wh
             data-body-queue-drain-hours={DASHBOARD_METRICS.bodyQueueDrainEstimateHours ?? "unknown"}
             data-body-queue-merged={bodyQueueMerged ?? "unknown"}
             data-body-queue-enqueued={bodyQueueEnqueued ?? "unknown"}
+            data-body-queue-candidates={bodyQueueCandidates ?? "unknown"}
+            data-body-queue-enqueue-cap={bodyQueueEnqueueCap ?? "unknown"}
           >
             <span>
               <span class="i18n-ja">AI解説本文 Queue</span>
@@ -441,12 +445,22 @@ const workerSummary = wh
             <small>
               <span class="i18n-ja">
                 {bodyQueue.mode !== "enabled" || bodyQueueMerged === null ? "" : `本文ファイル反映 +${bodyQueueMerged} · `}
-                {bodyQueue.mode !== "enabled" || bodyQueueEnqueued === null ? "" : `送信 +${bodyQueueEnqueued} · `}
+                {bodyQueue.mode !== "enabled"
+                  ? ""
+                  : bodyQueueEnqueued === null
+                    ? "送信件数 未計測 · "
+                    : `送信 +${bodyQueueEnqueued} · `}
+                {bodyQueue.mode !== "enabled" || bodyQueueEnqueueCap === null ? "" : `上限 ${bodyQueueEnqueueCap}件/run基準 · `}
                 <span data-queue-label-ja>{bodyQueue.labelJa}</span>
               </span>
               <span class="i18n-en" lang="en">
                 {bodyQueue.mode !== "enabled" || bodyQueueMerged === null ? "" : `applied to body file +${bodyQueueMerged} · `}
-                {bodyQueue.mode !== "enabled" || bodyQueueEnqueued === null ? "" : `enqueued +${bodyQueueEnqueued} · `}
+                {bodyQueue.mode !== "enabled"
+                  ? ""
+                  : bodyQueueEnqueued === null
+                    ? "enqueue count not measured · "
+                    : `enqueued +${bodyQueueEnqueued} · `}
+                {bodyQueue.mode !== "enabled" || bodyQueueEnqueueCap === null ? "" : `based on a ${bodyQueueEnqueueCap}/run cap · `}
                 <span data-queue-label-en>{bodyQueue.labelEn}</span>
               </span>
             </small>
@@ -475,10 +489,10 @@ const workerSummary = wh
               {hasEnrichmentBudgetTelemetry ? (
                 <>
                   <span class="i18n-ja">
-                    1 run 上限 {enrichmentEnqueueCap} 件 · 要約 {summaryQueueEnqueued ?? "n/a"} · 本文 {bodyQueueEnqueued ?? "n/a"}
+                    1 run 上限 {enrichmentEnqueueCap} 件 · 要約 {summaryQueueEnqueued ?? "未計測"} · 本文 {bodyQueueEnqueued ?? "未計測"}
                   </span>
                   <span class="i18n-en" lang="en">
-                    max {enrichmentEnqueueCap} per run · summaries {summaryQueueEnqueued ?? "n/a"} · bodies {bodyQueueEnqueued ?? "n/a"}
+                    max {enrichmentEnqueueCap} per run · summaries {summaryQueueEnqueued ?? "not measured"} · bodies {bodyQueueEnqueued ?? "not measured"}
                   </span>
                 </>
               ) : (

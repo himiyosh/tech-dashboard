@@ -61,6 +61,43 @@ const DORA_EXCLUDE_KEYWORDS = [
   "quick check updates",
 ] as const;
 
+const AWS_ML_RELEVANCE_KEYWORDS = [
+  "artificial intelligence",
+  "ai",
+  "machine learning",
+  "ml",
+  "agent",
+  "agentic",
+  "agentcore",
+  "mcp",
+  "model",
+  "bedrock",
+  "sagemaker",
+  "nova",
+  "claude",
+  "rag",
+  "llm",
+  "inference",
+  "reinforcement learning",
+  "computer vision",
+  "vision",
+  "language model",
+  "deep learning",
+  "neural",
+  "foundation model",
+  "text extraction",
+  "redacting",
+  "pipeline",
+  "frontier",
+] as const;
+
+const AWS_ML_EXCLUDE_KEYWORDS = [
+  // Amazon Quick / QuickSight is included in the ML feed even when the article
+  // is a generic BI feature or backup operation with no agent/ML engineering.
+  "mobile layout for amazon quick",
+  "backup strategy for amazon quick sight",
+] as const;
+
 const TECH_NEWS_RELEVANCE_KEYWORDS = [
   "artificial intelligence",
   "ai",
@@ -150,6 +187,9 @@ const TECH_NEWS_EXCLUDE_KEYWORDS = [
   "neo geo",
   "dating service",
   "dating app",
+  "side hustle",
+  "critique your photos",
+  "indie game developer",
   "fortnite",
   "destiny",
   "gta",
@@ -173,6 +213,7 @@ const TECH_NEWS_EXCLUDE_KEYWORDS = [
   "vpn where criminals",
   "satellite",
   "space station",
+  "space development agency",
   "the view",
   "shark finning",
   "study notebooks",
@@ -482,11 +523,16 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     autoTags: ["aws", "ml", "bedrock"],
     // AWS ML/AI engineering knowledge: agent design, Bedrock, evaluation,
     // RAG/document pipelines. Practical best-practice content (R-022). Feed is
-    // already AI/ML focused, so no broad-noise filter needed.
+    // mostly AI/ML focused, but generic Amazon Quick / QuickSight BI product
+    // operations and adjacent device announcements also appear. Require an
+    // explicit AI/ML engineering signal before the Agent Frameworks lane.
     feedUrl: "https://aws.amazon.com/blogs/machine-learning/feed/",
     tier: 1,
     halfLifeOverride: "architecture",
     evergreen: true,
+    keywordFilterScope: "title",
+    includeKeywords: AWS_ML_RELEVANCE_KEYWORDS,
+    excludeKeywords: AWS_ML_EXCLUDE_KEYWORDS,
     maxEntriesPerRun: 8,
     collect: collectRss,
   },

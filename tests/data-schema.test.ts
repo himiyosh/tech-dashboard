@@ -16,6 +16,7 @@ import {
 } from "../harness/pipeline/source-filter.ts";
 import { isContaminatedSummaryText } from "../harness/pipeline/summary-quality.ts";
 import { normalizeTag } from "../harness/pipeline/tag.ts";
+import { hasKnownProductBodyConflict } from "../harness/pipeline/product-name.ts";
 import { canonicalUrlKey } from "../harness/pipeline/url.ts";
 import {
   buildStatsPayloadFromArtifacts,
@@ -26,6 +27,7 @@ import type { NormalizedEntry } from "../harness/types.ts";
 import {
   DEFAULT_BODY_RETENTION_DAYS,
   isBodyRetentionEligible,
+  needsBody,
 } from "../worker/src/body-queue.ts";
 
 interface RawEntry {
@@ -55,6 +57,13 @@ interface IndexShape {
   generatedAt: string;
   count: number;
   entries: RawEntry[];
+  health?: {
+    bodiesTotal?: number;
+    bodyEnqueueCap?: number;
+    bodyBacklog?: number;
+    bodyQueueDrainEstimateHours?: number;
+    bodyRetentionEligible?: number;
+  };
 }
 
 interface StatsBucket {
@@ -448,9 +457,83 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     });
     expect(invalid).toEqual([]);
   });
+
+  it("body retention telemetry は最終 index / bodies artifact と一致する", () => {
+    const referenceMs = Date.parse(data.generatedAt);
+    const retentionEligible = data.entries.filter((entry) =>
+      isBodyRetentionEligible(
+        entry as Pick<
+          NormalizedEntry,
+          "evergreen" | "importance" | "publishedAt" | "collectedAt"
+        >,
+        referenceMs,
+        DEFAULT_BODY_RETENTION_DAYS,
+      )
+    ).length;
+    const bodiesTotal = Object.keys(bodies?.bodies ?? {}).length;
+    const bodyPresentIds = new Set(Object.keys(bodies?.bodies ?? {}));
+    const backlog = data.entries
+      .filter((entry) =>
+        isBodyRetentionEligible(
+          entry as Pick<
+            NormalizedEntry,
+            "evergreen" | "importance" | "publishedAt" | "collectedAt"
+          >,
+          referenceMs,
+          DEFAULT_BODY_RETENTION_DAYS,
+        )
+      )
+      .filter((entry) =>
+        needsBody(
+          entry as Pick<NormalizedEntry, "id" | "summaryJa" | "summaryEn">,
+          bodyPresentIds,
+        )
+      ).length;
+    const enqueueCap = Math.max(0, Number(data.health?.bodyEnqueueCap ?? 0));
+
+    expect(data.health?.bodiesTotal).toBe(bodiesTotal);
+    expect(data.health?.bodyRetentionEligible).toBe(retentionEligible);
+    expect(data.health?.bodyBacklog).toBe(backlog);
+    expect(data.health?.bodyQueueDrainEstimateHours).toBe(
+      enqueueCap > 0 ? Math.ceil(backlog / enqueueCap) : 0,
+    );
+  });
+
+  it("known product name と矛盾する AI 解説本文を保持しない", () => {
+    const entriesById = new Map(
+      data.entries.map((entry) => [String(entry.id), entry]),
+    );
+    const conflicting = Object.entries(bodies?.bodies ?? {}).flatMap(
+      ([id, body]) => {
+        const entry = entriesById.get(id);
+        if (!entry) return [];
+        const normalizedEntry = asNormalizedEntry(entry);
+        return hasKnownProductBodyConflict(
+          normalizedEntry,
+          String(body.bodyJa ?? ""),
+        ) || hasKnownProductBodyConflict(
+          normalizedEntry,
+          String(body.bodyEn ?? ""),
+        )
+          ? [id]
+          : [];
+      },
+    );
+    expect(conflicting).toEqual([]);
+  });
 });
 
 describe("カテゴリ品質ガード", () => {
+  it("Amazon Quick の原題を Amazon QuickSight へ置き換えない", () => {
+    const bad = data.entries
+      .filter((entry) => String(entry.source) === "aws-ml-blog")
+      .filter((entry) => /\bAmazon Quick\b/i.test(String(entry.title)))
+      .filter((entry) => !/\bAmazon Quick\s*Sight\b/i.test(String(entry.title)))
+      .filter((entry) => /\bAmazon Quick\s*Sight\b/i.test(String(entry.titleJa)))
+      .map((entry) => `${String(entry.id)}:${String(entry.titleJa)}`);
+    expect(bad).toEqual([]);
+  });
+
   it("Zed は VSCode ではなく Cursor 系カテゴリとして扱う", () => {
     const bad = allDataEntries
       .filter((entry) => String(entry.source) === "zed-releases" && String(entry.category) !== "cursor")

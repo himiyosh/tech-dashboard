@@ -13,12 +13,17 @@ import {
   selectBodyJobBatch,
   selectBodyPipelineJobs,
 } from "../worker/src/body-queue.ts";
-import { buildHeartbeatPayload } from "../worker/src/index.ts";
+import {
+  buildHeartbeatPayload,
+  selectBodyJobsToEnqueue,
+} from "../worker/src/index.ts";
 import {
   bodiesPresentSet,
   isRealBody,
   mergeBodies,
+  mergeBodiesWithProductGuard,
   parseBodies,
+  pruneKnownProductBodyConflicts,
   type BodiesPayload,
 } from "../worker/src/bodies-file.ts";
 
@@ -75,6 +80,90 @@ describe("body retention policy", () => {
         nowMs,
       ),
     ).toBe(true);
+  });
+
+  describe("known product body invalidation", () => {
+    it("prunes a body that introduces Amazon Quick as Amazon QuickSight", () => {
+      const result = pruneKnownProductBodyConflicts(
+        {
+          generatedAt: "2026-07-20T00:00:00.000Z",
+          count: 1,
+          bodies: {
+            quick: {
+              bodyJa: "Amazon QuickSightを使ったエージェント基盤を紹介する。",
+              bodyEn: "Amazon QuickSight is the featured agent workspace.",
+            },
+          },
+        },
+        [
+          entry({
+            id: "quick",
+            source: "aws-ml-blog",
+            title: "Build agent workflows with Amazon Quick",
+          }),
+        ],
+        "2026-07-21T00:00:00.000Z",
+      );
+
+      expect(result.pruned).toBe(1);
+      expect(result.payload.bodies).toEqual({});
+    });
+
+    it("keeps a body that distinguishes Amazon Quick from Quick Sight", () => {
+      const payload: BodiesPayload = {
+        generatedAt: "2026-07-20T00:00:00.000Z",
+        count: 1,
+        bodies: {
+          quick: {
+            bodyJa: "Amazon Quickは、Amazon Quick Sightのダッシュボード文脈を利用する。",
+            bodyEn: "Amazon Quick uses dashboard context from Amazon Quick Sight.",
+          },
+        },
+      };
+      const result = pruneKnownProductBodyConflicts(
+        payload,
+        [
+          entry({
+            id: "quick",
+            source: "aws-ml-blog",
+            title: "Build agent workflows with Amazon Quick",
+          }),
+        ],
+        "2026-07-21T00:00:00.000Z",
+      );
+
+      expect(result.changed).toBe(false);
+      expect(result.payload).toBe(payload);
+    });
+
+    it("rejects a conflicting incoming cache or legacy body after merge", () => {
+      const quickEntry = entry({
+        id: "quick",
+        source: "aws-ml-blog",
+        title: "Build agent workflows with Amazon Quick",
+      });
+      const result = mergeBodiesWithProductGuard(
+        {
+          generatedAt: "2026-07-20T00:00:00.000Z",
+          count: 0,
+          bodies: {},
+        },
+        [
+          {
+            id: "quick",
+            bodyJa: "Amazon QuickSightを使ったエージェント基盤を紹介する。",
+            bodyEn: "Amazon QuickSight is the featured agent workspace.",
+            model: "claude-opus-4.8",
+          },
+        ],
+        new Set(["quick"]),
+        "2026-07-21T00:00:00.000Z",
+        [quickEntry],
+      );
+
+      expect(result.added).toBe(0);
+      expect(result.payload.bodies).toEqual({});
+    });
   });
 
   it("keeps recent low-importance entries and prunes old ones", () => {
@@ -236,6 +325,55 @@ describe("shared enrichment budget and pending body merge", () => {
       selection.lookupJobs.length,
     );
     expect(selection.lookupJobs).toHaveLength(2);
+  });
+
+  it("pending job の不適合 cache は即時再 enqueue し、単純 miss は持ち越さない", () => {
+    const fingerprint = `sha256:${"d".repeat(64)}`;
+    const quick = entry({
+      id: "quick",
+      source: "aws-ml-blog",
+      title: "Build agent workflows with Amazon Quick",
+    });
+    const selection = selectBodyPipelineJobs(
+      [quick],
+      new Set(),
+      ["quick"],
+      1,
+      { nowMs: 0, publisherContractFingerprint: fingerprint },
+    );
+    expect(selection.pendingJobs.map((job) => job.entry.id)).toEqual([
+      "quick",
+    ]);
+    expect(selection.candidateJobs).toEqual([]);
+
+    const conflictingHits = new Map([
+      [
+        selection.pendingJobs[0]!.url,
+        {
+          bodyJa: "Amazon QuickSightを使ったエージェント基盤を紹介する。",
+          bodyEn: "Amazon QuickSight is the featured agent workspace.",
+          model: "claude-opus-4.8",
+          cachedAt: "2026-07-21T00:00:00.000Z",
+          publisherContractFingerprint: fingerprint,
+        },
+      ],
+    ]);
+    expect(
+      selectBodyJobsToEnqueue(
+        selection,
+        conflictingHits,
+        fingerprint,
+        1,
+      ).map((job) => job.entry.id),
+    ).toEqual(["quick"]);
+    expect(
+      selectBodyJobsToEnqueue(
+        selection,
+        new Map(),
+        fingerprint,
+        1,
+      ),
+    ).toEqual([]);
   });
 
   it("pending miss は次回 pending 指定がなければ通常候補へ戻る", () => {

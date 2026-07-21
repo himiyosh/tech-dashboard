@@ -15,6 +15,10 @@ import {
 } from "../../harness/pipeline/source-filter.ts";
 import { applyTags, normalizeTags } from "../../harness/pipeline/tag.ts";
 import { fillMissingTitleEnEntries } from "../../harness/pipeline/title-en.ts";
+import {
+  hasKnownProductBodyRecordConflict,
+  normalizeKnownProductNames,
+} from "../../harness/pipeline/product-name.ts";
 import { canonicalUrlKey, normalizeMediaUrl } from "../../harness/pipeline/url.ts";
 import { applyDeterministicContentFallback } from "./content-fallback.ts";
 import {
@@ -25,20 +29,23 @@ import {
 } from "./summary-queue.ts";
 import { type BodyJob } from "./body-generate.ts";
 import {
-  bodyBacklogAfterMerge,
   bodyEnqueueAllowance,
   DEFAULT_BODY_RETENTION_DAYS,
   isBodyRetentionEligible,
+  needsBody,
   selectBodyPipelineJobs,
+  type BodyPipelineSelection,
 } from "./body-queue.ts";
 import {
   bodyCacheEntryMatchesPublisherContract,
   getBodyCacheEntries,
+  type BodyCacheEntry,
 } from "./body-cache.ts";
 import {
   bodiesPresentSet,
-  mergeBodies,
+  mergeBodiesWithProductGuard,
   parseBodies,
+  pruneKnownProductBodyConflicts,
   serializeBodies,
   type NewBody,
 } from "./bodies-file.ts";
@@ -1520,7 +1527,9 @@ export async function runHarness(
   const retainedEntries = contentReady.filter((entry) => entry.archiveTier !== "dropped");
   const cappedEntries = retainedEntries.slice(0, INDEX_LIMIT);
   const titleEnCompletion = fillMissingTitleEnEntries(cappedEntries);
-  const finalEntries = titleEnCompletion.entries;
+  const finalEntries = titleEnCompletion.entries.map((entry) =>
+    normalizeKnownProductNames(entry)
+  );
   if (titleEnCompletion.counts.totalUpdated > 0) {
     console.log(
       `[worker] completed titleEn derived=${titleEnCompletion.counts.fromSummaryEn}, corrected=${titleEnCompletion.counts.correctedDerivedTitles}`,
@@ -2087,6 +2096,57 @@ interface BodyPipelineResult {
   };
 }
 
+function isUsableBodyCacheEntry(
+  job: BodyJob,
+  candidate: BodyCacheEntry | undefined,
+  publisherContractFingerprint: string,
+): boolean {
+  return (
+    bodyCacheEntryMatchesPublisherContract(
+      candidate,
+      publisherContractFingerprint,
+    ) &&
+    !hasKnownProductBodyRecordConflict(job.entry, candidate)
+  );
+}
+
+export function selectBodyJobsToEnqueue(
+  selection: Pick<
+    BodyPipelineSelection,
+    "pendingJobs" | "candidateJobs"
+  >,
+  hits: ReadonlyMap<string, BodyCacheEntry>,
+  publisherContractFingerprint: string,
+  enqueueCap: number,
+): BodyJob[] {
+  const rejectedPending = selection.pendingJobs.filter((job) => {
+    const hit = hits.get(job.url);
+    return Boolean(
+      hit &&
+      !isUsableBodyCacheEntry(
+        job,
+        hit,
+        publisherContractFingerprint,
+      )
+    );
+  });
+  const missingCandidates = selection.candidateJobs.filter((job) =>
+    !isUsableBodyCacheEntry(
+      job,
+      hits.get(job.url),
+      publisherContractFingerprint,
+    )
+  );
+  const unique = new Map<string, BodyJob>();
+  for (const job of [...rejectedPending, ...missingCandidates]) {
+    if (!unique.has(job.entry.id)) unique.set(job.entry.id, job);
+  }
+  return [...unique.values()].slice(
+    0,
+    Math.max(0, Math.floor(enqueueCap)),
+  );
+}
+
 /**
  * Body-file pipeline (LL-115). Runs after the index payload is built:
  *   1. Merge newly generated bodies (`b:` KV) into data/bodies.json and prune
@@ -2147,7 +2207,13 @@ async function runBodyPipeline(
   }
 
   try {
-    const existingBodies = parseBodies(existingBodiesContent);
+    const parsedBodies = parseBodies(existingBodiesContent);
+    const sanitizedBodies = pruneKnownProductBodyConflicts(
+      parsedBodies,
+      retainedEntries,
+      generatedAt,
+    );
+    const existingBodies = sanitizedBodies.payload;
     const present = bodiesPresentSet(existingBodies);
     const retainedIds = new Set(retainedEntries.map((e) => e.id));
 
@@ -2177,7 +2243,8 @@ async function runBodyPipeline(
     const newBodies: NewBody[] = [];
     for (const job of selection.lookupJobs) {
       const candidate = hits.get(job.url);
-      const hit = bodyCacheEntryMatchesPublisherContract(
+      const hit = isUsableBodyCacheEntry(
+        job,
         candidate,
         publisherContractFingerprint,
       )
@@ -2187,19 +2254,22 @@ async function runBodyPipeline(
         newBodies.push({ id: job.entry.id, bodyJa: hit.bodyJa, bodyEn: hit.bodyEn, model: hit.model, cachedAt: hit.cachedAt });
       }
     }
-    const merge = mergeBodies(existingBodies, newBodies, retainedIds, generatedAt);
+    const merge = mergeBodiesWithProductGuard(
+      existingBodies,
+      newBodies,
+      retainedIds,
+      generatedAt,
+      retainedEntries,
+    );
 
     // 2) Enqueue the selected entries that do NOT yet have a generated body (KV
     //    miss), so worker-body generates them for a future run's merge.
-    const toEnqueue = selection.candidateJobs
-      .filter((job) => {
-        const hit = hits.get(job.url);
-        return !bodyCacheEntryMatchesPublisherContract(
-          hit,
-          publisherContractFingerprint,
-        );
-      })
-      .slice(0, enqueueCap);
+    const toEnqueue = selectBodyJobsToEnqueue(
+      selection,
+      hits,
+      publisherContractFingerprint,
+      enqueueCap,
+    );
     let enqueued = 0;
     if (toEnqueue.length > 0) {
       const CHUNK = 100;
@@ -2214,15 +2284,21 @@ async function runBodyPipeline(
         }
       }
     }
-    if (selection.eligibleCount > 0 || merge.changed) {
+    const totalPruned = sanitizedBodies.pruned + merge.pruned;
+    if (selection.eligibleCount > 0 || sanitizedBodies.changed || merge.changed) {
       console.log(
-        `[worker] body pipeline: backlog=${selection.eligibleCount}, pendingLookup=${selection.pendingJobs.length}, candidateLookup=${selection.candidateJobs.length}, merged=${merge.added}, pruned=${merge.pruned}, enqueue=${enqueued}, enqueueCap=${enqueueCap}`,
+        `[worker] body pipeline: backlog=${selection.eligibleCount}, pendingLookup=${selection.pendingJobs.length}, candidateLookup=${selection.candidateJobs.length}, merged=${merge.added}, pruned=${totalPruned}, enqueue=${enqueued}, enqueueCap=${enqueueCap}`,
       );
     }
 
-    const remainingBacklog = bodyBacklogAfterMerge(selection.eligibleCount, merge.added);
+    const finalBodiesPresent = bodiesPresentSet(merge.payload);
+    const remainingBacklog = retainedEntries.filter((entry) =>
+      needsBody(entry, finalBodiesPresent)
+    ).length;
     return {
-      bodiesFileContent: merge.changed ? serializeBodies(merge.payload) : null,
+      bodiesFileContent: sanitizedBodies.changed || merge.changed
+        ? serializeBodies(merge.payload)
+        : null,
       enqueued,
       health: {
         bodyQueueMode: "enabled",
@@ -2236,7 +2312,7 @@ async function runBodyPipeline(
         bodyPendingLookupCount: selection.pendingJobs.length,
         bodyMergePendingIds: toEnqueue.slice(0, enqueued).map((job) => job.entry.id),
         bodyMerged: merge.added,
-        bodyPruned: merge.pruned,
+        bodyPruned: totalPruned,
         bodiesTotal: merge.payload.count,
         bodyRetentionDays: retentionDays,
         bodyRetentionEligible: retainedEntries.length,

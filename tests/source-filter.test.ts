@@ -246,6 +246,37 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
     expect(check("BigQuery ML: training models at scale")).toBe(true);
   });
 
+  describe("AWS Machine Learning Blog relevance filter", () => {
+    const awsMl = REGISTRY["aws-ml-blog"];
+    const check = (title: string) =>
+      matchesKeywordFilter({ title, url: "", contentSnippet: "" }, awsMl);
+
+    it("drops adjacent product updates without an explicit AI/ML engineering signal", () => {
+      expect(check("Introducing Mobile Layout for Amazon Quick dashboards")).toBe(false);
+      expect(check("Implement a backup strategy for Amazon Quick Sight BI assets")).toBe(false);
+      expect(check("Custom OS installation now available on AWS DeepRacer devices")).toBe(false);
+    });
+
+    it("keeps explicit agentic, model, AgentCore, and Claude engineering topics", () => {
+      expect(check(
+        "Build specialized agent workflows for your business with Amazon Quick and NVIDIA NeMo Agent Toolkit",
+      )).toBe(true);
+      expect(check(
+        "Evolving from legacy BI to agentic AI at Tradeshift with Amazon Quick",
+      )).toBe(true);
+      expect(check("Structured memory filtering with metadata in AgentCore Memory")).toBe(true);
+      expect(check("Introducing Claude apps gateway for AWS")).toBe(true);
+      expect(check("Build interactive PDF text extraction from Amazon S3")).toBe(true);
+      expect(check("Huntington Bank: Redacting sensitive data from 400M+ documents with AWS")).toBe(true);
+      expect(check("Built from the inside out: How AWS Professional Services became a frontier team first")).toBe(true);
+      expect(check("Extract Data with On-demand and Batch Pipelines Dynamically")).toBe(true);
+    });
+
+    it("uses title scope so generated snippets cannot rescue generic BI entries", () => {
+      expect(awsMl.keywordFilterScope).toBe("title");
+    });
+  });
+
   describe("shared tech news relevance filters (LL-129)", () => {
     const techNews = REGISTRY["the-verge"];
     const hnAi = REGISTRY["hn-ai"];
@@ -374,6 +405,22 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
       expect(check(
         REGISTRY["techcrunch"],
         "The founder of Hinge raised $18M to build a new AI dating service, Overtone",
+      )).toBe(false);
+      expect(check(
+        REGISTRY["ars-technica"],
+        "The Pentagon's Space Development Agency hasn't moved as fast as anyone would like",
+      )).toBe(false);
+      expect(check(
+        REGISTRY["google-keyword"],
+        "5 ways to build a side hustle with Gemini",
+      )).toBe(false);
+      expect(check(
+        REGISTRY["techcrunch"],
+        "Adobe camera app’s new feature will critique your photos using AI",
+      )).toBe(false);
+      expect(check(
+        REGISTRY["google-keyword"],
+        "We're investing $1 million in Africa's indie game developers.",
       )).toBe(false);
     });
 

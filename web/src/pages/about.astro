@@ -2,7 +2,6 @@
 import Portal from "../layouts/Portal.astro";
 import PageHero from "../components/PageHero.astro";
 import Sidebar from "../components/Sidebar.astro";
-import LiveMetrics from "../components/LiveMetrics.astro";
 import {
   ALL_ENTRIES,
   CATEGORIES_BY_NAME,
@@ -14,11 +13,13 @@ import {
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../lib/reaction-copy.ts";
 import { WORKER_HEALTH } from "../lib/data.ts";
-import { deriveWorkerRunStatus } from "../lib/run-health.ts";
+import { deriveWorkerRunStatus, WORKER_RUN_STATE_COPY } from "../lib/run-health.ts";
 
 const now = new Date();
 const lastUpdated = relativeTime(DASHBOARD_METRICS.generatedAt, now);
-const workerLastRun = relativeTime(DASHBOARD_METRICS.workerLastRunAt, now);
+const workerLastRun = DASHBOARD_METRICS.workerLastRunAt
+  ? relativeTime(DASHBOARD_METRICS.workerLastRunAt, now)
+  : null;
 // Shared aggregate run state (same derivation as the footer + Home + /status, LL-126).
 const runStatus = deriveWorkerRunStatus({
   workerHealth: WORKER_HEALTH,
@@ -56,22 +57,30 @@ const pipelineSteps = [
   {
     label: "Collect",
     title: "公式 feed と community feed を収集",
+    titleEn: "Collect official and community feeds",
     body: `RSS、Atom、GitHub Releases、arXiv、HTML index から記事候補を取り込みます。${DASHBOARD_METRICS.totalSourceCount} source を ${workerBatchCopy} に分け、毎時 1 batch、各 source を約 6 時間周期で巡回します。`,
+    bodyEn: `Candidates come from RSS, Atom, GitHub Releases, arXiv, and HTML indexes. ${DASHBOARD_METRICS.totalSourceCount} sources are split across ${workerBatchCopy}; one batch runs hourly, revisiting each source about every 6 hours.`,
   },
   {
     label: "Normalize",
     title: "重複除去とカテゴリ正規化",
+    titleEn: "Deduplicate and normalize categories",
     body: "source、URL、publishedAt、category、importance、archiveTier を揃え、同一記事の重複を canonical URL ベースで抑えます。",
+    bodyEn: "Source, URL, publishedAt, category, importance, and archiveTier fields are normalized. Canonical URLs suppress duplicate copies of the same article.",
   },
   {
     label: "Summarize",
     title: "日本語で読み始められる形に変換",
+    titleEn: "Prepare summaries for fast review",
     body: "タイトル、要約、タグ、重要度を生成し、KV cache を使って再生成を抑えます。原文への導線は記事詳細に残します。",
+    bodyEn: "Titles, summaries, tags, and importance are generated, with KV caching to avoid unnecessary regeneration. Article details retain a direct link to the original source.",
   },
   {
     label: "Publish",
     title: "静的サイトとして高速に配信",
+    titleEn: "Publish as a fast static site",
     body: "差分がある場合だけ data artifact を commit し、Cloudflare Pages Git Integration が Astro build と Pagefind index を作成します。",
+    bodyEn: "Data artifacts are committed only when they change. Cloudflare Pages Git Integration then builds the Astro site and Pagefind index.",
   },
 ];
 ---
@@ -84,6 +93,7 @@ const pipelineSteps = [
     count={`${DASHBOARD_METRICS.totalSourceCount} sources`}
     headingId="about-heading"
     description="TECH Dashboard は、AI coding と agent ecosystem の変化を毎日追うための日本語 dashboard です。公式発表、release note、研究、community feed を同じ情報設計に揃え、短時間で確認できます。"
+    descriptionEn="TECH Dashboard tracks daily changes across AI coding and the agent ecosystem. Official announcements, release notes, research, and community feeds share one information model for fast review."
     actions={[
       { href: "/rss.xml", label: "RSS" },
       { href: "/feed.json", label: "JSON Feed" },
@@ -129,6 +139,7 @@ const pipelineSteps = [
       {
         label: "Last updated",
         value: lastUpdated,
+        datetime: DASHBOARD_METRICS.generatedAt,
         detail: "公開index snapshot",
         detailEn: "Published index snapshot",
         scope: "published-snapshot",
@@ -143,27 +154,53 @@ const pipelineSteps = [
       <section class="about-section-grid" aria-label="What this site covers">
         <article class="about-panel large">
           <span class="panel-kicker">Purpose</span>
-          <h3>速く読むためではなく、見落とさないための dashboard</h3>
+          <h3>
+            <span class="i18n-ja">速く読むためではなく、見落とさないための dashboard</span>
+            <span class="i18n-en" lang="en">A dashboard for not missing important changes</span>
+          </h3>
           <p>
-            AI coding のニュースは、product blog、changelog、release、論文、community 記事に分散しています。
-            このサイトではそれらをカテゴリ、重要度、source type、時系列で揃え、日次確認と後追い調査の両方で使えるようにしています。
+            <span class="i18n-ja">
+              AI coding のニュースは、product blog、changelog、release、論文、community 記事に分散しています。
+              このサイトではそれらをカテゴリ、重要度、source type、時系列で揃え、日次確認と後追い調査の両方で使えるようにしています。
+            </span>
+            <span class="i18n-en" lang="en">
+              AI coding updates are scattered across product blogs, changelogs, releases, papers, and community posts.
+              This site aligns them by category, importance, source type, and time for both daily review and later research.
+            </span>
           </p>
         </article>
 
         <article class="about-panel">
           <span class="panel-kicker">Freshness</span>
-          <h3 data-worker-batch-total={workerBatchCount ?? "unknown"}>毎時 1 batch、各 source は約 6 時間周期</h3>
+          <h3 data-worker-batch-total={workerBatchCount ?? "unknown"}>
+            <span class="i18n-ja">毎時 1 batch、各 source は約 6 時間周期</span>
+            <span class="i18n-en" lang="en">One batch hourly; each source about every 6 hours</span>
+          </h3>
           <p>
-            {DASHBOARD_METRICS.totalSourceCount} sources を {workerBatchCopy} に分け、1 run で約 {Math.ceil(DASHBOARD_METRICS.totalSourceCount / Math.max(workerBatchCount ?? 1, 1))} sources を確認します。
-            Status では batch、source registry、freshness、summarize 状態を確認できます。
+            <span class="i18n-ja">
+              {DASHBOARD_METRICS.totalSourceCount} sources を {workerBatchCopy} に分け、1 run で約 {Math.ceil(DASHBOARD_METRICS.totalSourceCount / Math.max(workerBatchCount ?? 1, 1))} sources を確認します。
+              Status では batch、source registry、freshness、summarize 状態を確認できます。
+            </span>
+            <span class="i18n-en" lang="en">
+              {DASHBOARD_METRICS.totalSourceCount} sources are split across {workerBatchCopy}, with about {Math.ceil(DASHBOARD_METRICS.totalSourceCount / Math.max(workerBatchCount ?? 1, 1))} checked per run.
+              Status shows the batch, source registry, freshness, and summarization state.
+            </span>
           </p>
         </article>
 
         <article class="about-panel">
           <span class="panel-kicker">History</span>
-          <h3>Archive と stats で長期推移を保持</h3>
+          <h3>
+            <span class="i18n-ja">Archive と stats で長期推移を保持</span>
+            <span class="i18n-en" lang="en">Archive and stats preserve long-term trends</span>
+          </h3>
           <p>
-            live index から外れた記事も archive と stats に集約し、カテゴリ別の月次推移や記事数推移を後から確認できるようにしています。
+            <span class="i18n-ja">
+              live index から外れた記事も archive と stats に集約し、カテゴリ別の月次推移や記事数推移を後から確認できるようにしています。
+            </span>
+            <span class="i18n-en" lang="en">
+              Entries that leave the live index remain aggregated in archive and stats data, preserving monthly category and volume trends for later review.
+            </span>
           </p>
         </article>
       </section>
@@ -177,8 +214,14 @@ const pipelineSteps = [
             <article class="pipeline-card">
               <span class="step-index">{String(index + 1).padStart(2, "0")}</span>
               <span class="panel-kicker">{step.label}</span>
-              <h3>{step.title}</h3>
-              <p>{step.body}</p>
+              <h3>
+                <span class="i18n-ja">{step.title}</span>
+                <span class="i18n-en" lang="en">{step.titleEn}</span>
+              </h3>
+              <p>
+                <span class="i18n-ja">{step.body}</span>
+                <span class="i18n-en" lang="en">{step.bodyEn}</span>
+              </p>
             </article>
           ))}
         </div>
@@ -275,15 +318,51 @@ const pipelineSteps = [
           <div>
             <dt>Run state</dt>
             <dd
+              data-about-run-state
               data-run-tone={runStatus.tone}
-              data-metric="workerRunState"
               title={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
               aria-label={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
-            ><span class={`dot ${runStatus.tone}`} aria-hidden="true"></span> {runStatus.stateText} · {runStatus.detail}</dd>
+            >
+              <span class={`dot ${runStatus.tone}`} data-run-tone={runStatus.tone} aria-hidden="true"></span>
+              <span class="i18n-ja" data-about-run-label-ja>{WORKER_RUN_STATE_COPY[runStatus.state].ja}</span>
+              <span class="i18n-en" lang="en" data-about-run-label-en>{runStatus.stateText} · {runStatus.detail}</span>
+            </dd>
           </div>
-          <div><dt>Worker</dt><dd data-metric="workerLastRunLabel">{workerLastRun}</dd></div>
-          <div><dt>Batch</dt><dd data-metric="workerBatchLabel">{DASHBOARD_METRICS.workerBatchLabel}</dd></div>
-          <div><dt>Source OK</dt><dd data-metric="workerSourceOkLabel">{DASHBOARD_METRICS.workerSourceOkLabel}</dd></div>
+          <div>
+            <dt>Worker</dt>
+            <dd>
+              {workerLastRun && DASHBOARD_METRICS.workerLastRunAt ? (
+                <time datetime={DASHBOARD_METRICS.workerLastRunAt} data-relative-time>{workerLastRun}</time>
+              ) : (
+                <>
+                  <span class="i18n-ja">記録なし</span>
+                  <span class="i18n-en" lang="en">No data</span>
+                </>
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>Batch</dt>
+            <dd>
+              {WORKER_HEALTH ? DASHBOARD_METRICS.workerBatchLabel : (
+                <>
+                  <span class="i18n-ja">記録なし</span>
+                  <span class="i18n-en" lang="en">No data</span>
+                </>
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>Source OK</dt>
+            <dd>
+              {WORKER_HEALTH ? DASHBOARD_METRICS.workerSourceOkLabel : (
+                <>
+                  <span class="i18n-ja">記録なし</span>
+                  <span class="i18n-en" lang="en">No data</span>
+                </>
+              )}
+            </dd>
+          </div>
         </dl>
       </div>
 
@@ -326,7 +405,6 @@ const pipelineSteps = [
       </div>
     </aside>
   </div>
-  <LiveMetrics />
 </Portal>
 
 <style>

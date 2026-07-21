@@ -57,7 +57,7 @@ const hasImage = imgSrc.length > 0;
         {favicon && <img class="kg-favicon" src={favicon} alt="" width="16" height="16" loading="lazy" />}
         <span class="kg-host">{siteHost}</span>
         <span class="kg-dot" aria-hidden="true">·</span>
-        <time class="kg-time" datetime={entry.publishedAt}>{rel}</time>
+        <time class="kg-time" datetime={entry.publishedAt ?? entry.collectedAt} data-relative-time>{rel}</time>
       </div>
 
       <h3 class="kg-title">

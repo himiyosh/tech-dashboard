@@ -25,4 +25,24 @@ describe("web clarity contracts", () => {
       expect(source).not.toMatch(/>\s*NEW\s*</);
     }
   });
+
+  it("hydrates relative labels from machine-readable timestamps", () => {
+    const pageHero = read("web/src/components/PageHero.astro");
+    const portal = read("web/src/layouts/Portal.astro");
+    const relativeTime = read("web/src/lib/relative-time.ts");
+
+    expect(pageHero).toMatch(/\bdatetime\?:\s*string;/);
+    expect(pageHero).toContain("data-relative-time");
+    expect(portal).toContain("initializeRelativeTimes()");
+    expect(relativeTime).toContain('querySelectorAll<HTMLElement>("[data-relative-time]")');
+    expect(relativeTime).toContain('document.addEventListener("visibilitychange"');
+  });
+
+  it("keeps About run telemetry snapshot-consistent and bilingual", () => {
+    const about = read("web/src/pages/about.astro");
+    expect(about).not.toContain("data-metric=\"workerLastRunLabel\"");
+    expect(about).toContain("data-about-run-label-ja");
+    expect(about).toContain("data-about-run-label-en");
+    expect(about).toContain('<span class="i18n-en" lang="en">No data</span>');
+  });
 });

@@ -289,21 +289,33 @@ const footerLastRunRelative = footerLastRunAt
           title={`Collection health: ${footerRunStatus}. ${footerHealthDetail}`}
           data-run-detail={footerRun.detail}
           data-run-state={footerRun.state}
+          data-live-run-health
+          data-run-last-at={footerLastRunAt ?? ""}
+          data-run-copilot-ok={WORKER_HEALTH ? WORKER_HEALTH.copilotOk : "unknown"}
+          data-run-sources-failed={WORKER_HEALTH ? WORKER_HEALTH.sourcesFailed.length : "unknown"}
+          data-run-sources-attempted={WORKER_HEALTH ? WORKER_HEALTH.sourcesAttempted : "unknown"}
+          data-run-sources-ok={WORKER_HEALTH ? WORKER_HEALTH.sourcesOk : "unknown"}
+          data-run-fallback-percent={DASHBOARD_METRICS.fallbackPercent}
+          data-run-pending-summaries={DASHBOARD_METRICS.fallbackEntries}
           data-summary-queue-backlog={DASHBOARD_METRICS.summaryQueueBacklog}
           data-summary-queue-mode={footerSummaryQueue.mode}
           data-summary-queue-state={footerSummaryQueue.state}
+          data-summary-queue-drain-hours={DASHBOARD_METRICS.summaryQueueDrainEstimateHours ?? "unknown"}
           data-body-queue-mode={footerBodyQueue.mode}
           data-body-queue-state={footerBodyQueue.state}
           data-body-queue-backlog={footerBodyQueue.showBacklog ? footerBodyQueue.backlog : "unknown"}
+          data-body-queue-drain-hours={DASHBOARD_METRICS.bodyQueueDrainEstimateHours ?? "unknown"}
         >
           <span class={`dot ${footerRunTone}`} data-run-tone={footerRunTone} aria-hidden="true"></span>
-          <strong>{footerRunStatus}</strong>
+          <strong data-footer-run-label>{footerRunStatus}</strong>
           <span class="mono">{footerRunDetail}</span>
-          <span class="footer-body-queue">{footerBodyQueueText}</span>
+          <span class="footer-body-queue" data-footer-body-queue>{footerBodyQueueText}</span>
           {footerLastRunAt && footerLastRunRelative && (
             <time
               class="footer-run-time"
               datetime={footerLastRunAt}
+              data-relative-time
+              data-relative-prefix="run "
               title={`Last collection run: ${footerLastRunAt}`}
             >
               run {footerLastRunRelative}
@@ -320,6 +332,145 @@ const footerLastRunRelative = footerLastRunAt
     <script>
       import { normalizeSearchText } from "../lib/search-normalize.ts";
       import { normalizeTagKey } from "../lib/tag-normalize.ts";
+      import { deriveQueueDisplay, summaryQueueCardCopy } from "../lib/queue-health.ts";
+      import { initializeRelativeTimes } from "../lib/relative-time.ts";
+      import {
+        deriveWorkerRunStatus,
+        runCadenceLead,
+        WORKER_RUN_STATE_COPY,
+      } from "../lib/run-health.ts";
+
+      initializeRelativeTimes();
+
+      (() => {
+        const link = document.querySelector<HTMLElement>("a.footer-run-link[data-live-run-health]");
+        if (!link) return;
+
+        const numberValue = (value: string | undefined): number | null => {
+          if (!value || value === "unknown") return null;
+          const parsed = Number(value);
+          return Number.isFinite(parsed) ? parsed : null;
+        };
+        const bodyQueueText = (state: string, backlog: number | null): string => {
+          if (state === "active") return `body ${backlog ?? "?"} pending`;
+          if (state === "clear") return "body ready";
+          if (state === "waiting-for-run") return `body ${backlog ?? "?"} waiting`;
+          if (state === "paused") return "body paused";
+          return "body unavailable";
+        };
+        const update = (nowMs = Date.now()) => {
+          const lastRunAt = link.dataset.runLastAt || null;
+          const failedCount = numberValue(link.dataset.runSourcesFailed) ?? 0;
+          const run = deriveWorkerRunStatus({
+            workerHealth: lastRunAt ? {
+              lastRunAt,
+              copilotOk: link.dataset.runCopilotOk === "true",
+              sourcesFailed: Array.from({ length: failedCount }, () => "failed"),
+              sourcesAttempted: numberValue(link.dataset.runSourcesAttempted) ?? 0,
+              sourcesOk: numberValue(link.dataset.runSourcesOk) ?? 0,
+            } : null,
+            nowMs,
+            fallbackPercent: numberValue(link.dataset.runFallbackPercent) ?? 0,
+            pendingSummaryEntries: numberValue(link.dataset.runPendingSummaries) ?? 0,
+          });
+          const summaryQueue = deriveQueueDisplay({
+            mode: link.dataset.summaryQueueMode,
+            backlog: numberValue(link.dataset.summaryQueueBacklog),
+            drainEstimateHours: numberValue(link.dataset.summaryQueueDrainHours),
+            runTone: run.tone,
+            runState: run.state,
+          });
+          const bodyQueue = deriveQueueDisplay({
+            mode: link.dataset.bodyQueueMode,
+            backlog: numberValue(link.dataset.bodyQueueBacklog),
+            drainEstimateHours: numberValue(link.dataset.bodyQueueDrainHours),
+            runTone: run.tone,
+            runState: run.state,
+          });
+
+          link.dataset.runState = run.state;
+          link.dataset.runDetail = run.detail;
+          link.dataset.summaryQueueState = summaryQueue.state;
+          link.dataset.bodyQueueState = bodyQueue.state;
+          link.title = `Collection health: ${run.runLabel}. ${link.querySelector(".mono")?.textContent ?? ""}. AI explainer body queue ${bodyQueue.labelEn}`;
+          const dot = link.querySelector<HTMLElement>("[data-run-tone]");
+          dot?.classList.remove("ok", "warn", "err");
+          dot?.classList.add(run.tone);
+          if (dot) dot.dataset.runTone = run.tone;
+          const label = link.querySelector<HTMLElement>("[data-footer-run-label]");
+          if (label) label.textContent = run.runLabel;
+          const body = link.querySelector<HTMLElement>("[data-footer-body-queue]");
+          if (body) body.textContent = bodyQueueText(bodyQueue.state, bodyQueue.backlog);
+
+          const cadence = document.querySelector<HTMLElement>("[data-cadence-state]");
+          if (cadence) cadence.dataset.cadenceState = run.state;
+          const cadenceLead = runCadenceLead(run);
+          const cadenceJa = document.querySelector<HTMLElement>("[data-cadence-lead-ja]");
+          const cadenceEn = document.querySelector<HTMLElement>("[data-cadence-lead-en]");
+          if (cadenceJa) cadenceJa.textContent = cadenceLead.ja;
+          if (cadenceEn) cadenceEn.textContent = cadenceLead.en;
+
+          const bannerRun = document.querySelector<HTMLElement>("[data-banner-run-state]");
+          if (bannerRun) {
+            bannerRun.hidden = run.tone === "ok";
+            bannerRun.dataset.runTone = run.tone;
+            bannerRun.setAttribute("aria-label", `Collection health: ${run.runLabel}. ${run.detail}`);
+            bannerRun.title = `Collection health: ${run.runLabel}. ${run.detail}`;
+            const bannerDot = bannerRun.querySelector<HTMLElement>("[data-run-tone]");
+            bannerDot?.classList.remove("ok", "warn", "err");
+            bannerDot?.classList.add(run.tone);
+            if (bannerDot) bannerDot.dataset.runTone = run.tone;
+            const bannerJa = bannerRun.querySelector<HTMLElement>("[data-banner-run-label-ja]");
+            const bannerEn = bannerRun.querySelector<HTMLElement>("[data-banner-run-label-en]");
+            if (bannerJa) bannerJa.textContent = run.stateText;
+            if (bannerEn) bannerEn.textContent = run.stateText;
+          }
+
+          const pendingCopy = summaryQueueCardCopy(summaryQueue.state);
+          document.querySelectorAll<HTMLElement>(".summary-state[data-summary-queue-state]").forEach((state) => {
+            state.dataset.summaryQueueMode = summaryQueue.mode;
+            state.dataset.summaryQueueState = summaryQueue.state;
+            const badgeJa = state.querySelector<HTMLElement>("[data-summary-queue-badge-ja]");
+            const badgeEn = state.querySelector<HTMLElement>("[data-summary-queue-badge-en]");
+            const detailJa = state.querySelector<HTMLElement>("[data-summary-queue-detail-ja]");
+            const detailEn = state.querySelector<HTMLElement>("[data-summary-queue-detail-en]");
+            if (badgeJa) badgeJa.textContent = pendingCopy.badgeJa;
+            if (badgeEn) badgeEn.textContent = pendingCopy.badgeEn;
+            if (detailJa) detailJa.textContent = pendingCopy.detailJa;
+            if (detailEn) detailEn.textContent = pendingCopy.detailEn;
+          });
+
+          const aboutRun = document.querySelector<HTMLElement>("[data-about-run-state]");
+          if (aboutRun) {
+            aboutRun.dataset.runTone = run.tone;
+            const lang = document.documentElement.dataset.lang === "en" ? "en" : "ja";
+            const accessible = lang === "en"
+              ? `Collection health: ${run.runLabel}. ${run.detail}`
+              : `収集状況: ${WORKER_RUN_STATE_COPY[run.state].ja}`;
+            aboutRun.setAttribute("aria-label", accessible);
+            aboutRun.title = accessible;
+            const aboutDot = aboutRun.querySelector<HTMLElement>("[data-run-tone]");
+            aboutDot?.classList.remove("ok", "warn", "err");
+            aboutDot?.classList.add(run.tone);
+            if (aboutDot) aboutDot.dataset.runTone = run.tone;
+            const aboutLabelJa = aboutRun.querySelector<HTMLElement>("[data-about-run-label-ja]");
+            const aboutLabelEn = aboutRun.querySelector<HTMLElement>("[data-about-run-label-en]");
+            if (aboutLabelJa) aboutLabelJa.textContent = WORKER_RUN_STATE_COPY[run.state].ja;
+            if (aboutLabelEn) aboutLabelEn.textContent = `${run.stateText} · ${run.detail}`;
+          }
+
+          document.dispatchEvent(new CustomEvent("techdb:runhealthchange", {
+            detail: { run, summaryQueue, bodyQueue },
+          }));
+        };
+
+        update();
+        document.addEventListener("techdb:clocktick", (event) => {
+          const nowMs = (event as CustomEvent<{ nowMs?: number }>).detail?.nowMs;
+          update(typeof nowMs === "number" ? nowMs : Date.now());
+        });
+        document.addEventListener("techdb:languagechange", () => update());
+      })();
 
       // Language toggle (Ja / En) — sync with <html data-lang="...">.
       (() => {

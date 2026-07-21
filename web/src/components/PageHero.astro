@@ -3,6 +3,7 @@ export interface PageHeroMetric {
   label: string;
   labelEn?: string;
   value: string | number;
+  datetime?: string;
   detail: string;
   detailEn: string;
   scope: string;
@@ -114,7 +115,11 @@ const {
                   </>
                 ) : metric.label}
               </span>
-              <strong>{metric.value}</strong>
+              <strong>
+                {metric.datetime ? (
+                  <time datetime={metric.datetime} data-relative-time>{metric.value}</time>
+                ) : metric.value}
+              </strong>
               <small id={detailId} class="page-hero-metric-detail">
                 <span class="i18n-ja">{metric.detail}</span>
                 <span class="i18n-en" lang="en">{metric.detailEn}</span>

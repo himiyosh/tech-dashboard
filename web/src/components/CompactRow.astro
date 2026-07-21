@@ -47,7 +47,7 @@ function typeLabel(t: NormalizedEntry["sourceType"]): string {
   class:list={["row", { important: summaryReady && entry.importance === 3 }]}
   data-summary-state={summaryReady ? "ready" : "pending"}
   href={entryHref(entry)}
-  aria-label={`${title} from ${sourceLabel(entry.source)}, ${categoryName}, ${rel}`}
+  aria-label={`${title} from ${sourceLabel(entry.source)}, ${categoryName}`}
   style={`--cat-color:${catColor}`}
 >
   <span class="cat-dot" title={categoryName}></span>
@@ -66,7 +66,7 @@ function typeLabel(t: NormalizedEntry["sourceType"]): string {
   <span class="spacer"></span>
   <span class="src">{sourceLabel(entry.source)}</span>
   <span class="host">{host(entry.url)}</span>
-  <span class="time">{rel}</span>
+  <time class="time" datetime={entry.publishedAt} data-relative-time>{rel}</time>
 </a>
 
 <style>

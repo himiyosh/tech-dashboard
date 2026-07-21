@@ -226,6 +226,11 @@
 - 未リリースの変更は `Unreleased` へ追記し、`main` へ反映する際に日付付きセクションへ移す。
 - 毎時生成される data-only commit、表記修正、内部整理だけの変更は原則として記録対象外とし、読者が判断できる主要変更に絞る。
 
+### R-030: runtime言語切替は全visible copyとaccessible nameへ適用する
+- `Portal`のJA/EN切替対象は主要見出しだけではない。hero description、navigation detail、card本文、empty/error state、side rail、Aboutの方針説明・Pipeline、tooltip、buttonのaccessible nameを含むvisible copy全体を対象にする。
+- 日本語だけの固有名詞・原題を別言語へfallbackする場合は既存の言語provenance badgeを使う。UI説明文を無印の日本語でEN modeへ残さない。
+- visible copyを追加・変更したら、同じ変更でEN modeの表示、JA variantの非表示、accessible nameをE2Eへ追加または既存testで固定する。
+
 ---
 
 ## 🧪 完了ゲート (LL Hook)
@@ -1976,10 +1981,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: decision signal は surface ごとに所有者を1つにする。目立たせる目的でも、同じ意味の badge、metadata、role copy、理由文を隣接して重ねず、既存の表示契約を先に検索する。slot の役割説明は「どの種類の判断枠か」を示し、score の内訳は別の単一 surface に任せる。
 
 ### LL-290: language toggle は主要見出しだけでなく補助説明と side panel まで同じ契約にする
-- **事象**: EN 表示へ切り替えても menu の補助説明、検索説明、category の Research callout、sort、empty state、side panel の案内が日本語のまま残った。
-- **根本原因**: 新しい language toggle の横展開を heading と本文中心に確認し、navigation detail、empty state、rail / side panel など補助 surface を i18n inventory に含めていなかった。
-- **対策**: menu data に `detailEn` を持たせ、category hero、Research callout、sort、empty state、side panel の説明と CTA を JA/EN container に分けた。E2E は EN mode で各補助 surface の英語表示と JA variant の非表示を直接検証する。
-- **教訓**: i18n toggle の対象はページ本文だけではない。navigation detail、検索 help、status、empty state、aside、tooltip を含む visible copy を全量検索し、代表ページの browser test で active language と可視性を固定する。
+- **事象**: EN 表示へ切り替えても menu の補助説明、検索説明、category の Research callout、sort、empty state、side panel に加え、About上段のPurpose/Freshness/Historyと4段階Pipeline説明が日本語のまま残った。
+- **根本原因**: language toggle の横展開を heading と本文中心に確認し、navigation detail、empty state、rail / side panel、trust policy、process説明など補助 surface を i18n inventory に含めていなかった。
+- **対策**: menu data に `detailEn` を持たせ、category hero、Research callout、sort、empty state、side panel、About trust panelとPipelineの説明をJA/EN containerに分けた。E2EはEN modeで英語表示とJA variantの非表示を直接検証する。2回目の再発としてR-030へ昇格した。
+- **教訓**: i18n toggle の対象はページ本文だけではない。navigation detail、検索 help、status、empty state、aside、tooltip、About、Pipelineを含むvisible copyを全量検索し、代表ページのbrowser testでactive language、非表示variant、accessible nameを固定する。
 
 ### LL-291: taxonomy の navigation label と page context label を同一視しない
 - **事象**: Research category の navigation label を `Papers / Benchmarks` にした結果、page hero まで同じ名前になり、研究記事全体を扱うページの目的が論文と benchmark だけに見えた。
@@ -2442,6 +2447,24 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 「Dashboardへ入った時刻」と「元記事が公開された時刻」をどちらもnew/freshとして扱い、visible copyとmachine-readable scopeを分けていなかった。
 - **対策**: helperを`isRecentlyCollected`へ改名し、共有copyを`新規収集 / INDEXED`、属性を`data-recency-scope="collection"`と6時間windowへ統一した。
 - **教訓**: recency labelはpublished、collected、updated、generatedのどのclockを見ているかを明示する。異なるclockを同じ`NEW`や`Updated`で表示せず、copy、helper名、`data-*`、テストfixtureを同じscopeへ揃える。
+
+### LL-368: 静的buildの相対時刻は閲覧時に再計算する
+- **事象**: Status、Home、記事card、footerの`1h ago`などがstatic build時点で固定され、`datetime`は約6時間前を示しているのに表示だけが1時間前のままだった。公開ページは「収集や生成の遅れを隠さない」と説明しており、古い相対時刻が運用判断を誤らせた。
+- **根本原因**: server/build側の`relativeTime()`だけで文字列を生成し、`data-featured-recency`を含む表示要素へclient hydratorを配線していなかった。machine-readable timestampは正しくても、SSGされたhuman-readable labelは時間経過で必ず古くなる。
+- **対策**: JSON非依存の共通`relative-time.ts`へ計算を分離し、`data-relative-time`と`datetime`または`data-datetime`を持つ要素をpage load、1分周期、visibility復帰時に再計算する。頻繁な読み上げを避けるためlive regionにはせず、prefix/suffixが必要な文だけ同じ要素のdata属性へ保持する。PageHero metricも任意の`datetime`を受け取れるようにした。
+- **教訓**: SSGで相対時刻を表示する場合、build時文字列は初期fallbackに過ぎない。表示、`datetime`、更新処理を同じtimestamp contractへ接続し、テストでは任意の過去時刻へ差し替えてview-time再計算を実証する。machine-readable値が正しいだけでhuman-visibleな鮮度表示を合格にしない。
+
+### LL-369: 判断用Tickerは要約待ちを並べ替えるだけでなく候補から除外する
+- **事象**: Home Tickerが要約済み記事を先に並べても、枠に余裕があると`要約待ち / PENDING`の記事を後段へ入れ、最も目立つquick-scan面へ未完成状態を露出していた。
+- **根本原因**: `selectTickerItems()`がpublishableをsort優先度として扱い、eligibility条件にしていなかった。順序を下げることと判断枠から除外することを同一視していた。
+- **対策**: day選択前とTicker rankingの両方で`isPublishableEntry()`を必須条件にし、要約待ちはTimelineだけへ残した。カテゴリとrelease/importance badgeの境界には可視separatorを置き、compact metadataを連結語に見せない。
+- **教訓**: Spotlight、Ticker、Daily boardなどのdecision surfaceでは、未完成contentを下位へ送るだけでは不十分である。eligibilityを明示して候補母集団から除外し、低活動時は未完成項目で枠を埋めず、要約済み候補がある最新日へ戻る。
+
+### LL-370: view-timeの時刻更新は依存するrun/Queue状態まで同じtickで再評価する
+- **事象**: 相対時刻を閲覧時に更新した最初の実装では、footerの`run 11h ago`だけが新しくなる一方、Homeのcadence、Aboutのrun、要約待ちcard、StatusのQueueがbuild時の`healthy / active`を保持し、同じ画面内で時間と状態が矛盾した。さらにAboutだけが`metrics.json`を独立pollingすると、Worker時刻は新しいのにrun stateは古いsnapshotのままになった。
+- **根本原因**: 表示文字列のhydrationを独立したformatting処理とみなし、そのtimestampを入力にする`deriveWorkerRunStatus()`と`deriveQueueDisplay()`の再計算をconsumer全体へ伝播していなかった。run stateはfooter、Status、Home、About、EntryCardに分散し、Aboutのpollingも同じhealth入力を原子的に更新していなかった。
+- **対策**: 共通clock tickでrun状態とsummary/body Queueを再導出し、footer、Status hero/PageHero、Home cadence/warning、About、全pending cardへ同じ結果を配信する。正常時に隠すHome warningはDOMを保持して状態変化時に表示し、authorの`display`が`hidden`を打ち消さない明示CSSも追加した。Aboutの独立pollingを外して同一snapshotへ統一し、source掲載状態のように全派生値をlive再計算しない面は相対時刻を使わず、絶対日時と`published-snapshot` provenanceを表示する。
+- **教訓**: derived stateを持つUIで基準時刻だけを更新しない。timestamp、severity、copy、tone、Queue mode、accessible nameを1つのstate transitionとして扱い、threshold crossingをE2Eで再現する。全入力を原子的に更新できない場合は一部だけpollingせず、snapshotとして固定して絶対時刻とprovenanceを示す。optional warningを後から表示する場合は、SSR時にDOMが無い構造ではなく安全なhidden初期状態とclient更新契約を用意する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

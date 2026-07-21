@@ -174,7 +174,10 @@ const last7d = entries.filter((e) => {
     <div class="home-side-metrics">
       <div class="home-side-metric">
         <span>最新記事</span>
-        <strong>{updatedLabel}</strong>
+        <strong
+          data-relative-time
+          data-datetime={newestMs > 0 ? new Date(newestMs).toISOString() : undefined}
+        >{updatedLabel}</strong>
       </div>
       <div class="home-side-metric">
         <span>過去7日</span>

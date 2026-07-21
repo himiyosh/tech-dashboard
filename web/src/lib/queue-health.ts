@@ -30,6 +30,58 @@ export interface QueueDisplay {
   modeLabelEn: string;
 }
 
+const SUMMARY_QUEUE_CARD_COPY: Record<
+  QueueDisplayState,
+  { badgeJa: string; badgeEn: string; detailJa: string; detailEn: string }
+> = {
+  active: {
+    badgeJa: "AI要約 準備待ち",
+    badgeEn: "AI summary pending",
+    detailJa: "全体の要約処理は稼働中",
+    detailEn: "Overall summary processing is active",
+  },
+  clear: {
+    badgeJa: "AI要約 次回待ち",
+    badgeEn: "AI summary waiting",
+    detailJa: "次回収集待ち",
+    detailEn: "Waiting for the next collection run",
+  },
+  "waiting-for-run": {
+    badgeJa: "AI要約 再開待ち",
+    badgeEn: "AI summary waiting for collection",
+    detailJa: "収集再開待ち",
+    detailEn: "Waiting for collection to resume",
+  },
+  paused: {
+    badgeJa: "AI要約 停止中",
+    badgeEn: "AI summary paused",
+    detailJa: "要約キュー停止中",
+    detailEn: "Summary queue paused",
+  },
+  unavailable: {
+    badgeJa: "AI要約 利用不可",
+    badgeEn: "AI summary unavailable",
+    detailJa: "要約キュー利用不可",
+    detailEn: "Summary queue unavailable",
+  },
+  error: {
+    badgeJa: "AI要約 要確認",
+    badgeEn: "AI summary needs review",
+    detailJa: "要約キュー要確認",
+    detailEn: "Summary queue needs review",
+  },
+  unknown: {
+    badgeJa: "AI要約 確認中",
+    badgeEn: "Checking AI summary",
+    detailJa: "要約キュー状態を確認中",
+    detailEn: "Checking summary queue status",
+  },
+};
+
+export function summaryQueueCardCopy(state: QueueDisplayState) {
+  return SUMMARY_QUEUE_CARD_COPY[state];
+}
+
 export interface QueueDisplayOptions {
   mode: string | null | undefined;
   backlog: number | null | undefined;

@@ -15,7 +15,7 @@ import { sourceFreshnessStatus, type FreshnessSourceType } from "../lib/freshnes
 import { SOURCE_META, sourceAnchorId, sourceLabel } from "../lib/source-meta.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { deriveQueueDisplay } from "../lib/queue-health.ts";
-import { deriveWorkerRunStatus } from "../lib/run-health.ts";
+import { deriveWorkerRunStatus, WORKER_RUN_STATE_COPY } from "../lib/run-health.ts";
 
 const now = new Date();
 type SourceActivityStatus = "recent" | "low-activity" | "long-inactive" | "not-listed";
@@ -28,7 +28,8 @@ type SourceRow = {
   categoryColor: string;
   tier: number;
   count: number;
-  latestRelative: string;
+  latestLabelJa: string;
+  latestLabelEn: string;
   latestTitle: string | null;
   latestUrl: string | null;
   sourceType: NormalizedEntry["sourceType"];
@@ -54,6 +55,17 @@ const SOURCE_STATUS_COPY: Record<SourceActivityStatus, { ja: string; en: string 
   "long-inactive": { ja: "長期非掲載", en: "Long inactive" },
   "not-listed": { ja: "未収録", en: "Not listed" },
 };
+
+const sourceActivityTime = (iso: string, lang: "ja" | "en") =>
+  new Intl.DateTimeFormat(lang === "ja" ? "ja-JP" : "en-US", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(new Date(iso));
 
 const categoryBySlug = new Map(CATEGORY_META.map((category) => [category.slug, category]));
 
@@ -84,21 +96,22 @@ const sources: SourceRow[] = SOURCE_META.map((def) => {
       : freshness.status === "stale"
         ? "low-activity"
         : "long-inactive";
-  const latestRelative = fromSource.length === 0 ? "n/a" : relativeTime(latestCollected, now);
+  const latestLabelJa = fromSource.length === 0 ? "n/a" : sourceActivityTime(latestCollected, "ja");
+  const latestLabelEn = fromSource.length === 0 ? "n/a" : sourceActivityTime(latestCollected, "en");
   const reasonJa = fromSource.length === 0
     ? "現在の掲載記事がないため、掲載アクティビティを判定できません。"
     : status === "recent"
-      ? `このサイトで最後に掲載した記事は ${latestRelative} です。`
+      ? `公開スナップショット上の最終掲載は ${latestLabelJa} です。`
       : status === "low-activity"
-        ? `最後の掲載は ${latestRelative}。掲載間隔が長めですが、直近 batch の収集エラーとは別の指標です。`
-        : `最後の掲載は ${latestRelative}。長期間掲載がありませんが、収集障害を意味するものではありません。`;
+        ? `公開スナップショット上の最終掲載は ${latestLabelJa}。掲載間隔が長めですが、直近 batch の収集エラーとは別の指標です。`
+        : `公開スナップショット上の最終掲載は ${latestLabelJa}。長期間掲載がありませんが、収集障害を意味するものではありません。`;
   const reasonEn = fromSource.length === 0
     ? "No listed entry is available, so publication activity cannot be evaluated."
     : status === "recent"
-      ? `The latest article listed on this site was ${latestRelative}.`
+      ? `The latest listing in this published snapshot is ${latestLabelEn}.`
       : status === "low-activity"
-        ? `Last listed ${latestRelative}. Activity is low, but this is separate from latest-batch collection errors.`
-        : `Last listed ${latestRelative}. No recent article is listed, but this does not by itself indicate a collection failure.`;
+        ? `The latest listing in this published snapshot is ${latestLabelEn}. Activity is low, but this is separate from latest-batch collection errors.`
+        : `The latest listing in this published snapshot is ${latestLabelEn}. No recent article is listed, but this does not by itself indicate a collection failure.`;
   const category = def.category as Category;
   const categoryMeta = categoryBySlug.get(category);
   return {
@@ -110,7 +123,8 @@ const sources: SourceRow[] = SOURCE_META.map((def) => {
     categoryColor: categoryMeta?.color ?? "var(--accent)",
     tier: def.tier,
     count: fromSource.length,
-    latestRelative,
+    latestLabelJa,
+    latestLabelEn,
     latestTitle: latestEntry?.titleJa || latestEntry?.title || null,
     latestUrl: latestEntry?.url ?? null,
     sourceType,
@@ -217,13 +231,6 @@ const workerSummary = wh
       ja: "このデータには収集状況の記録がありません。",
       en: "Collection health metadata is not available in this data snapshot.",
     };
-const workerStateCopy = {
-  healthy: { ja: "正常稼働", en: "Running normally" },
-  missing: { ja: "稼働記録なし", en: "Run telemetry unavailable" },
-  late: { ja: "定期収集が遅延", en: "Scheduled collection delayed" },
-  failed: { ja: "直近バッチが失敗", en: "Latest batch failed" },
-  degraded: { ja: "一部確認が必要", en: "Review recommended" },
-} as const;
 ---
 
 <Portal pageKey="status" title="Status — TECH Dashboard">
@@ -285,6 +292,7 @@ const workerStateCopy = {
         label: "サイト更新",
         labelEn: "Site updated",
         value: indexAgeLabel,
+        datetime: GENERATED_AT,
         detail: "公開index snapshot",
         detailEn: "Published index snapshot",
         scope: "published-snapshot",
@@ -300,15 +308,23 @@ const workerStateCopy = {
         class={`status-hero status-hero-${overallStatus}`}
         data-run-status={workerStatus}
         data-run-state={workerRun.state}
+        data-live-run-health
+        data-run-last-at={wh?.lastRunAt ?? ""}
+        data-run-copilot-ok={wh ? wh.copilotOk : "unknown"}
+        data-run-sources-failed={wh ? wh.sourcesFailed.length : "unknown"}
+        data-run-sources-attempted={wh ? wh.sourcesAttempted : "unknown"}
+        data-run-sources-ok={wh ? wh.sourcesOk : "unknown"}
+        data-run-fallback-percent={pendingSummaryPercent}
+        data-run-pending-summaries={pendingSummaryEntries}
         aria-labelledby="worker-health-heading"
         aria-describedby="worker-health-summary"
       >
         <div class="status-hero-copy">
           <div class="status-kicker">
             <span class="status-dot" style={`background:${workerColor}`}></span>
-            <span>RUN {workerStatusText}</span>
-            <span class="i18n-ja">{workerStateCopy[workerRun.state].ja}</span>
-            <span class="i18n-en" lang="en">{workerStateCopy[workerRun.state].en}</span>
+            <span data-run-state-label>RUN {workerStatusText}</span>
+            <span class="i18n-ja" data-run-state-copy-ja>{WORKER_RUN_STATE_COPY[workerRun.state].ja}</span>
+            <span class="i18n-en" lang="en" data-run-state-copy-en>{WORKER_RUN_STATE_COPY[workerRun.state].en}</span>
           </div>
           <div class="section-header primary status-title-row">
             <h2 id="worker-health-heading">
@@ -332,7 +348,10 @@ const workerStateCopy = {
               <span class="i18n-ja">最終収集</span>
               <span class="i18n-en" lang="en">Last collection</span>
             </span>
-            <strong>{wh ? relativeTime(wh.lastRunAt, now) : "n/a"}</strong>
+            <strong
+              data-relative-time={wh ? true : undefined}
+              data-datetime={wh?.lastRunAt}
+            >{wh ? relativeTime(wh.lastRunAt, now) : "n/a"}</strong>
             <small>
               <span class="i18n-ja">収集処理が最後に動いた時刻</span>
               <span class="i18n-en" lang="en">last completed collection run</span>
@@ -373,6 +392,7 @@ const workerStateCopy = {
             data-summary-queue-mode={summaryQueue.mode}
             data-summary-queue-state={summaryQueue.state}
             data-summary-queue-backlog={summaryQueue.showBacklog ? summaryQueue.backlog : "unknown"}
+            data-summary-queue-drain-hours={DASHBOARD_METRICS.summaryQueueDrainEstimateHours ?? "unknown"}
           >
             <span>
               <span class="i18n-ja">AI要約 Queue</span>
@@ -384,13 +404,13 @@ const workerStateCopy = {
                 {summaryQueue.mode !== "enabled" || summaryQueueEnqueued === null
                   ? ""
                   : `直近送信 +${summaryQueueEnqueued} · `}
-                {summaryQueue.labelJa}
+                <span data-queue-label-ja>{summaryQueue.labelJa}</span>
               </span>
               <span class="i18n-en" lang="en">
                 {summaryQueue.mode !== "enabled" || summaryQueueEnqueued === null
                   ? ""
                   : `latest enqueue +${summaryQueueEnqueued} · `}
-                {summaryQueue.labelEn}
+                <span data-queue-label-en>{summaryQueue.labelEn}</span>
               </span>
             </small>
           </div>
@@ -409,6 +429,7 @@ const workerStateCopy = {
             data-body-queue-mode={bodyQueue.mode}
             data-body-queue-state={bodyQueue.state}
             data-body-queue-backlog={bodyQueue.showBacklog ? bodyQueue.backlog : "unknown"}
+            data-body-queue-drain-hours={DASHBOARD_METRICS.bodyQueueDrainEstimateHours ?? "unknown"}
             data-body-queue-merged={bodyQueueMerged ?? "unknown"}
             data-body-queue-enqueued={bodyQueueEnqueued ?? "unknown"}
           >
@@ -421,12 +442,12 @@ const workerStateCopy = {
               <span class="i18n-ja">
                 {bodyQueue.mode !== "enabled" || bodyQueueMerged === null ? "" : `本文ファイル反映 +${bodyQueueMerged} · `}
                 {bodyQueue.mode !== "enabled" || bodyQueueEnqueued === null ? "" : `送信 +${bodyQueueEnqueued} · `}
-                {bodyQueue.labelJa}
+                <span data-queue-label-ja>{bodyQueue.labelJa}</span>
               </span>
               <span class="i18n-en" lang="en">
                 {bodyQueue.mode !== "enabled" || bodyQueueMerged === null ? "" : `applied to body file +${bodyQueueMerged} · `}
                 {bodyQueue.mode !== "enabled" || bodyQueueEnqueued === null ? "" : `enqueued +${bodyQueueEnqueued} · `}
-                {bodyQueue.labelEn}
+                <span data-queue-label-en>{bodyQueue.labelEn}</span>
               </span>
             </small>
           </div>
@@ -473,7 +494,7 @@ const workerStateCopy = {
               <span class="i18n-ja">サイト更新</span>
               <span class="i18n-en" lang="en">Site updated</span>
             </span>
-            <strong>{indexAgeLabel}</strong>
+            <strong data-relative-time data-datetime={GENERATED_AT}>{indexAgeLabel}</strong>
             <small>
               <span class="i18n-ja">公開データの最終更新</span>
               <span class="i18n-en" lang="en">latest published data snapshot</span>
@@ -506,10 +527,10 @@ const workerStateCopy = {
             )}
             <small>
               <span class="i18n-ja">
-                公開スナップショット: <time datetime={wh.lastRunAt}>{relativeTime(wh.lastRunAt, now)}</time>
+                公開スナップショット: <time datetime={wh.lastRunAt} data-relative-time>{relativeTime(wh.lastRunAt, now)}</time>
               </span>
               <span class="i18n-en" lang="en">
-                Published snapshot: <time datetime={wh.lastRunAt}>{relativeTime(wh.lastRunAt, now)}</time>
+                Published snapshot: <time datetime={wh.lastRunAt} data-relative-time>{relativeTime(wh.lastRunAt, now)}</time>
               </span>
             </small>
           </div>
@@ -527,8 +548,12 @@ const workerStateCopy = {
             </span>
             <strong class={pendingSummaryEntries > 0 ? "tone-warn" : "tone-ok"}>{pendingSummaryEntries}</strong>
             <small class="summary-ready-copy">
-              <span class="i18n-ja">要約済み {DASHBOARD_METRICS.realSummaryEntries} · {summaryQueue.modeLabelJa}</span>
-              <span class="i18n-en" lang="en">{DASHBOARD_METRICS.realSummaryEntries} ready · automation {summaryQueue.modeLabelEn}</span>
+              <span class="i18n-ja">
+                要約済み {DASHBOARD_METRICS.realSummaryEntries} · <span data-summary-mode-label-ja>{summaryQueue.modeLabelJa}</span>
+              </span>
+              <span class="i18n-en" lang="en">
+                {DASHBOARD_METRICS.realSummaryEntries} ready · automation <span data-summary-mode-label-en>{summaryQueue.modeLabelEn}</span>
+              </span>
             </small>
           </div>
           <div class="failed-sources">
@@ -676,6 +701,7 @@ const workerStateCopy = {
               class={`source-item source-row-${s.status}`}
               style={`--category-color:${s.categoryColor}`}
               data-source-activity-status={s.status}
+              data-state-source="published-snapshot"
               data-source-category={s.category}
               hidden={defaultSourceFilter === "limited" && s.status === "recent"}
             >
@@ -728,7 +754,12 @@ const workerStateCopy = {
                       <span class="i18n-ja">記事なし</span>
                       <span class="i18n-en" lang="en">No entries</span>
                     </>
-                  ) : s.latestRelative}
+                  ) : (
+                    <>
+                      <span class="i18n-ja">{s.latestLabelJa}</span>
+                      <span class="i18n-en" lang="en">{s.latestLabelEn}</span>
+                    </>
+                  )}
                 </span>
               </span>
             </div>
@@ -745,12 +776,12 @@ const workerStateCopy = {
           </div>
         </div>
 
-        <p class="status-note compact">
+        <p class="status-note compact" data-state-source="published-snapshot">
           <span class="i18n-ja">
-            ここは収集障害ではなく、このサイトへ最後に記事を掲載した時期を示します。実際の収集エラーは上部の「収集エラー」で確認してください。
+            ここは公開スナップショット時点の掲載状態です。収集障害ではなく、このサイトへ最後に記事を掲載した日時を示します。実際の収集エラーは上部の「収集エラー」で確認してください。
           </span>
           <span class="i18n-en" lang="en">
-            This section shows when each source last contributed an article to this site, not collection failures. Check “Collection errors” above for actual latest-batch failures.
+            These are publication states as of the published snapshot, not live collection failures. Check “Collection errors” above for actual latest-batch failures.
           </span>
         </p>
       </section>
@@ -1411,6 +1442,115 @@ const workerStateCopy = {
 </style>
 
 <script>
+  import { deriveQueueDisplay } from "../lib/queue-health.ts";
+  import { deriveWorkerRunStatus, WORKER_RUN_STATE_COPY } from "../lib/run-health.ts";
+
+  (() => {
+    const hero = document.querySelector<HTMLElement>("section.status-hero[data-live-run-health]");
+    if (!hero) return;
+
+    const numberValue = (value: string | undefined): number | null => {
+      if (!value || value === "unknown") return null;
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+    const updateQueue = (
+      selector: string,
+      modeAttribute: string,
+      backlogAttribute: string,
+      drainAttribute: string,
+      run: ReturnType<typeof deriveWorkerRunStatus>,
+    ) => {
+      const card = document.querySelector<HTMLElement>(selector);
+      if (!card) return;
+      const queue = deriveQueueDisplay({
+        mode: card.getAttribute(modeAttribute),
+        backlog: numberValue(card.getAttribute(backlogAttribute) ?? undefined),
+        drainEstimateHours: numberValue(card.getAttribute(drainAttribute) ?? undefined),
+        runTone: run.tone,
+        runState: run.state,
+      });
+      card.classList.remove("ok", "warn", "err", "neutral");
+      card.classList.add(queue.tone);
+      card.dataset.healthTone = queue.tone;
+      if (modeAttribute === "data-summary-queue-mode") {
+        card.dataset.summaryQueueState = queue.state;
+        const modeLabelJa = document.querySelector<HTMLElement>("[data-summary-mode-label-ja]");
+        const modeLabelEn = document.querySelector<HTMLElement>("[data-summary-mode-label-en]");
+        if (modeLabelJa) modeLabelJa.textContent = queue.modeLabelJa;
+        if (modeLabelEn) modeLabelEn.textContent = queue.modeLabelEn;
+      } else {
+        card.dataset.bodyQueueState = queue.state;
+      }
+      const labelJa = card.querySelector<HTMLElement>("[data-queue-label-ja]");
+      const labelEn = card.querySelector<HTMLElement>("[data-queue-label-en]");
+      if (labelJa) labelJa.textContent = queue.labelJa;
+      if (labelEn) labelEn.textContent = queue.labelEn;
+    };
+    const update = (nowMs = Date.now()) => {
+      const lastRunAt = hero.dataset.runLastAt || null;
+      const failedCount = numberValue(hero.dataset.runSourcesFailed) ?? 0;
+      const run = deriveWorkerRunStatus({
+        workerHealth: lastRunAt ? {
+          lastRunAt,
+          copilotOk: hero.dataset.runCopilotOk === "true",
+          sourcesFailed: Array.from({ length: failedCount }, () => "failed"),
+          sourcesAttempted: numberValue(hero.dataset.runSourcesAttempted) ?? 0,
+          sourcesOk: numberValue(hero.dataset.runSourcesOk) ?? 0,
+        } : null,
+        nowMs,
+        fallbackPercent: numberValue(hero.dataset.runFallbackPercent) ?? 0,
+        pendingSummaryEntries: numberValue(hero.dataset.runPendingSummaries) ?? 0,
+      });
+      const color = run.tone === "ok"
+        ? "var(--success)"
+        : run.tone === "warn"
+          ? "var(--important)"
+          : "var(--danger)";
+
+      hero.dataset.runStatus = run.tone;
+      hero.dataset.runState = run.state;
+      hero.classList.remove("status-hero-ok", "status-hero-warn", "status-hero-err");
+      hero.classList.add(`status-hero-${run.tone}`);
+      const dot = hero.querySelector<HTMLElement>(".status-dot");
+      if (dot) dot.style.background = color;
+      const stateLabel = hero.querySelector<HTMLElement>("[data-run-state-label]");
+      if (stateLabel) stateLabel.textContent = `RUN ${run.stateText}`;
+      const stateCopyJa = hero.querySelector<HTMLElement>("[data-run-state-copy-ja]");
+      const stateCopyEn = hero.querySelector<HTMLElement>("[data-run-state-copy-en]");
+      if (stateCopyJa) stateCopyJa.textContent = WORKER_RUN_STATE_COPY[run.state].ja;
+      if (stateCopyEn) stateCopyEn.textContent = WORKER_RUN_STATE_COPY[run.state].en;
+
+      const pageHero = document.querySelector<HTMLElement>(".page-hero-status");
+      pageHero?.classList.remove("page-hero-status-ok", "page-hero-status-warn", "page-hero-status-err");
+      pageHero?.classList.add(`page-hero-status-${run.tone}`);
+      pageHero?.style.setProperty("--page-hero-accent", color);
+      const runMetric = document.querySelector<HTMLElement>("[data-metric-scope='run-status'] strong");
+      if (runMetric) runMetric.textContent = run.stateText;
+
+      updateQueue(
+        "[data-health-scope='summary-queue']",
+        "data-summary-queue-mode",
+        "data-summary-queue-backlog",
+        "data-summary-queue-drain-hours",
+        run,
+      );
+      updateQueue(
+        "[data-health-scope='body-queue']",
+        "data-body-queue-mode",
+        "data-body-queue-backlog",
+        "data-body-queue-drain-hours",
+        run,
+      );
+    };
+
+    update();
+    document.addEventListener("techdb:clocktick", (event) => {
+      const nowMs = (event as CustomEvent<{ nowMs?: number }>).detail?.nowMs;
+      update(typeof nowMs === "number" ? nowMs : Date.now());
+    });
+  })();
+
   (() => {
     const statusButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-source-filter]"));
     const categoryButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-category-filter]"));

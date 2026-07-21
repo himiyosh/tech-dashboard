@@ -164,10 +164,13 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(inactiveSlides.first()).toHaveAttribute("aria-hidden", "true");
       await expect(inactiveSlides.first()).toHaveAttribute("tabindex", "-1");
     }
-    const pendingTickerSlides = page.locator(".tb-slide[data-summary-state='pending']");
-    for (let index = 0; index < await pendingTickerSlides.count(); index++) {
-      await expect(pendingTickerSlides.nth(index).locator(".tb-tag.imp, .tb-tag.rel")).toHaveCount(0);
-      await expect(pendingTickerSlides.nth(index).locator(".tb-tag.pending")).toBeVisible();
+    await expect(page.locator(".tb-slide[data-summary-state='pending']")).toHaveCount(0);
+    const tickerMetaWithTags = page.locator(".tb-meta").filter({ has: page.locator(".tb-tag") });
+    if ((await tickerMetaWithTags.count()) > 0) {
+      expect(
+        await tickerMetaWithTags.first().locator(".tb-sep").count(),
+        "ticker metadata separates category and compact type badges",
+      ).toBeGreaterThan(0);
     }
     await expect(page.locator(".banner-fact")).toHaveCount(3);
     await expect(page.locator(".signal-node.node-source")).toContainText(/sources with live entries/i);
@@ -409,6 +412,76 @@ test.describe("TECH Dashboard smoke", () => {
     expect(featuredTrustOrder!.titleTop).toBeLessThan(featuredTrustOrder!.metaTop);
     expect(featuredTrustOrder!.metaTop).toBeLessThan(featuredTrustOrder!.summaryTop);
     expect(featuredTrustOrder!.metaBottom, "Spotlight trust metadata stays inside the 900px fold").toBeLessThanOrEqual(featuredTrustOrder!.viewportHeight);
+  });
+
+  test("relative timestamps refresh from machine-readable datetimes at view time", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const sixHoursAgo = new Date(Date.now() - 365 * 60_000).toISOString();
+    const refreshNode = async (selector: string) => {
+      const node = page.locator(selector).first();
+      await expect(node).toHaveAttribute("data-relative-time");
+      await node.evaluate((element, datetime) => {
+        (element as HTMLElement).dataset.datetime = datetime;
+        document.dispatchEvent(new Event("techdb:refresh-relative-time"));
+      }, sixHoursAgo);
+      return node;
+    };
+
+    await page.goto("/status/");
+    await page.locator("section.status-hero[data-live-run-health]").evaluate((hero, datetime) => {
+      (hero as HTMLElement).dataset.runLastAt = datetime;
+      const footer = document.querySelector<HTMLElement>("a.footer-run-link[data-live-run-health]");
+      if (footer) footer.dataset.runLastAt = datetime;
+      document.dispatchEvent(new Event("techdb:refresh-relative-time"));
+    }, sixHoursAgo);
+    await expect(
+      await refreshNode("[data-health-scope='collection-run'] strong[data-relative-time]"),
+    ).toHaveText("6h ago");
+    const statusHero = page.locator("section.status-hero[data-live-run-health]");
+    await expect(statusHero).toHaveAttribute("data-run-state", "late");
+    await expect(page.locator("[data-metric-scope='run-status'] strong")).toHaveText("DELAYED");
+    await expect(page.locator("[data-health-scope='summary-queue']")).toHaveAttribute(
+      "data-summary-queue-state",
+      "waiting-for-run",
+    );
+    await expect(page.locator("[data-summary-mode-label-ja]")).toHaveText("収集再開待ち");
+    await expect(await refreshNode("time.footer-run-time[data-relative-time]")).toHaveText("run 6h ago");
+    await expect(page.locator("[data-footer-run-label]")).toHaveText("run delayed");
+
+    await page.goto("/");
+    await page.locator("a.footer-run-link[data-live-run-health]").evaluate((footer, datetime) => {
+      (footer as HTMLElement).dataset.runLastAt = datetime;
+      document.dispatchEvent(new Event("techdb:refresh-relative-time"));
+    }, sixHoursAgo);
+    await expect(
+      await refreshNode(".featured-rationale .i18n-ja [data-featured-recency]"),
+    ).toHaveText("6h ago");
+    await expect(page.locator("[data-cadence-state]")).toHaveAttribute("data-cadence-state", "late");
+    await expect(page.locator("[data-banner-run-state]")).toBeVisible();
+    await expect(page.locator("[data-banner-run-label-ja]")).toHaveText("DELAYED");
+    const pendingCards = page.locator(".summary-state[data-summary-queue-state]");
+    if ((await pendingCards.count()) > 0) {
+      await expect(pendingCards.first()).toHaveAttribute("data-summary-queue-state", "waiting-for-run");
+      await expect(pendingCards.first().locator("[data-summary-queue-detail-ja]")).toHaveText("収集再開待ち");
+    }
+
+    await page.goto("/arxiv/");
+    await expect(
+      await refreshNode("[data-metric-scope='arxiv-snapshot'] [data-relative-time]"),
+    ).toHaveText("6h ago");
+    const compactRowLabels = await page.locator("a.row[aria-label]").evaluateAll((rows) =>
+      rows.map((row) => row.getAttribute("aria-label") ?? ""),
+    );
+    expect(compactRowLabels.every((label) => !/\d+(?:m|h|d|w|mo|y) ago/.test(label))).toBe(true);
+
+    await page.goto("/about/");
+    await page.locator("a.footer-run-link[data-live-run-health]").evaluate((footer, datetime) => {
+      (footer as HTMLElement).dataset.runLastAt = datetime;
+      document.dispatchEvent(new Event("techdb:refresh-relative-time"));
+    }, sixHoursAgo);
+    await expect(page.locator("[data-about-run-state]")).toHaveAttribute("data-run-tone", "err");
+    await expect(page.locator("[data-about-run-label-ja]")).toHaveText("定期収集が遅延");
+    await expect(page.locator("[data-about-run-state]")).toHaveAttribute("aria-label", "収集状況: 定期収集が遅延");
   });
 
   test("home renders reader-facing category labels instead of internal slugs", async ({ page }) => {
@@ -3053,6 +3126,15 @@ test.describe("TECH Dashboard smoke", () => {
       String(expectedInitialCount),
     );
     await expect(visibleSourceRows.first().locator(".source-reason-line")).toBeVisible();
+    await expect(visibleSourceRows.first()).toHaveAttribute(
+      "data-state-source",
+      "published-snapshot",
+    );
+    await expect(page.locator(".status-note[data-state-source='published-snapshot']")).toBeVisible();
+    const sourceActivityCopy = await visibleSourceRows.first().locator(
+      ".source-reason-line, .source-latest-age",
+    ).allInnerTexts();
+    expect(sourceActivityCopy.join(" ")).not.toMatch(/\d+(?:m|h|d|w|mo|y) ago/);
     await expect(visibleSourceRows.first().locator(".source-status-badge")).toContainText(
       /最近掲載あり|低活動|長期非掲載|未収録/,
     );
@@ -3196,7 +3278,7 @@ test.describe("TECH Dashboard smoke", () => {
       /Recently listed|Low activity|Long inactive|Not listed/,
     );
     await expect(visibleSourceRows.first().locator(".source-reason-line > .i18n-en")).toContainText(
-      /latest article listed on this site|No listed entry is available|Last listed/i,
+      /latest listing in this published snapshot|No listed entry is available/i,
     );
     await expect(visibleSourceRows.first().locator(".source-latest-line > .i18n-en")).toContainText(
       /Latest article/,
@@ -3881,6 +3963,43 @@ test.describe("TECH Dashboard smoke", () => {
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
+  });
+
+  test("About trust story and pipeline follow the active language", async ({ page }) => {
+    await page.goto("/about/");
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(page.locator("[data-about-run-state]")).toHaveAttribute(
+      "aria-label",
+      /^Collection health:/,
+    );
+    await expect(page.locator(".page-hero-copy > p .i18n-en")).toContainText(
+      "tracks daily changes across AI coding",
+    );
+
+    const panels = page.locator(".about-section-grid .about-panel");
+    await expect(panels).toHaveCount(3);
+    await expect(panels.nth(0).locator("h3 .i18n-en")).toHaveText(
+      "A dashboard for not missing important changes",
+    );
+    await expect(panels.nth(1).locator("h3 .i18n-en")).toContainText(
+      "One batch hourly",
+    );
+    await expect(panels.nth(2).locator("h3 .i18n-en")).toContainText(
+      "preserve long-term trends",
+    );
+    for (let index = 0; index < await panels.count(); index += 1) {
+      await expect(panels.nth(index).locator("h3 .i18n-ja")).toBeHidden();
+      await expect(panels.nth(index).locator("p .i18n-ja")).toBeHidden();
+    }
+
+    const pipelineCards = page.locator(".pipeline-card");
+    await expect(pipelineCards).toHaveCount(4);
+    for (let index = 0; index < await pipelineCards.count(); index += 1) {
+      await expect(pipelineCards.nth(index).locator("h3 .i18n-en")).toBeVisible();
+      await expect(pipelineCards.nth(index).locator("p .i18n-en")).toBeVisible();
+      await expect(pipelineCards.nth(index).locator("h3 .i18n-ja")).toBeHidden();
+      await expect(pipelineCards.nth(index).locator("p .i18n-ja")).toBeHidden();
+    }
   });
 
   test("About states the pending-summary publishing contract honestly", async ({ page }) => {
@@ -5493,7 +5612,7 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(
         heroRunState,
         "Home hides normal collection health to preserve decision-space density",
-      ).toHaveCount(0);
+      ).toBeHidden();
     } else {
       const heroTone = await heroRunState.first().getAttribute("data-run-tone");
       expect(heroTone, "Home warning tone must equal the shared footer tone").toBe(footerTone);

@@ -409,7 +409,7 @@ const jsonLd = {
             <time class="ed-published" datetime={entry.publishedAt}>
               <span class="mono">{fmtDate(entry.publishedAt)}</span>
               <span class="sep">·</span>
-              <span class="ed-rel">{rel}</span>
+              <span class="ed-rel" data-relative-time data-datetime={entry.publishedAt}>{rel}</span>
             </time>
             {readMinutes > 0 && (<>
               <span class="sep">·</span>
@@ -742,7 +742,9 @@ const jsonLd = {
                   )}
                   {prevTitles?.en.text}
                 </span>
-                <span class="ed-pn-time">{relativeTime(prev.publishedAt, now)}</span>
+                <span class="ed-pn-time" data-relative-time data-datetime={prev.publishedAt}>
+                  {relativeTime(prev.publishedAt, now)}
+                </span>
               </span>
             </a>
           ) : <span class="ed-pn-empty" aria-hidden="true"></span>}
@@ -765,7 +767,9 @@ const jsonLd = {
                   )}
                   {nextTitles?.en.text}
                 </span>
-                <span class="ed-pn-time">{relativeTime(next.publishedAt, now)}</span>
+                <span class="ed-pn-time" data-relative-time data-datetime={next.publishedAt}>
+                  {relativeTime(next.publishedAt, now)}
+                </span>
               </span>
               <span class="ed-pn-arrow" aria-hidden="true">→</span>
             </a>
@@ -822,7 +826,9 @@ const jsonLd = {
                     </div>
                     <div class="ed-rel-meta">
                       <span class="ed-rel-src">{sourceLabel(r.source)}</span>
-                      <span class="ed-rel-time">{relativeTime(r.publishedAt, now)}</span>
+                      <span class="ed-rel-time" data-relative-time data-datetime={r.publishedAt}>
+                        {relativeTime(r.publishedAt, now)}
+                      </span>
                     </div>
                   </div>
                 </a>
@@ -855,8 +861,12 @@ const jsonLd = {
           </span>
         </div>
         <p class="rail-published">
-          <span class="i18n-ja">公開 {relativeTime(entry.publishedAt, now)}</span>
-          <span class="i18n-en" lang="en">Published {relativeTime(entry.publishedAt, now)}</span>
+          <span class="i18n-ja">
+            公開 <time datetime={entry.publishedAt} data-relative-time>{relativeTime(entry.publishedAt, now)}</time>
+          </span>
+          <span class="i18n-en" lang="en">
+            Published <time datetime={entry.publishedAt} data-relative-time>{relativeTime(entry.publishedAt, now)}</time>
+          </span>
         </p>
       </div>
 
@@ -917,7 +927,9 @@ const jsonLd = {
                       )}
                       {rTitleEn.text}
                     </span>
-                    <span class="rail-item-time">{relativeTime(r.publishedAt, now)}</span>
+                    <span class="rail-item-time" data-relative-time data-datetime={r.publishedAt}>
+                      {relativeTime(r.publishedAt, now)}
+                    </span>
                   </a>
                 </li>
               );
@@ -952,7 +964,9 @@ const jsonLd = {
                       )}
                       {rTitleEn.text}
                     </span>
-                    <span class="rail-item-time">{relativeTime(r.publishedAt, now)}</span>
+                    <span class="rail-item-time" data-relative-time data-datetime={r.publishedAt}>
+                      {relativeTime(r.publishedAt, now)}
+                    </span>
                   </a>
                 </li>
               );

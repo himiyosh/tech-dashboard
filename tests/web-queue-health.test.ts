@@ -1,7 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { deriveQueueDisplay } from "../web/src/lib/queue-health.ts";
+import {
+  deriveQueueDisplay,
+  summaryQueueCardCopy,
+} from "../web/src/lib/queue-health.ts";
 
 describe("deriveQueueDisplay", () => {
   it("enabled queueだけ backlog 0をclearとして扱う", () => {
@@ -101,12 +104,18 @@ describe("deriveQueueDisplay", () => {
       "utf8",
     );
 
-    expect(source).toMatch(
-      /active:\s*\{\s*ja:\s*"全体の要約処理は稼働中",\s*en:\s*"Overall summary processing is active",/,
-    );
-    expect(source).toContain(
-      'active: { ja: "AI要約 準備待ち", en: "AI summary pending" }',
-    );
+    expect(summaryQueueCardCopy("active")).toEqual({
+      badgeJa: "AI要約 準備待ち",
+      badgeEn: "AI summary pending",
+      detailJa: "全体の要約処理は稼働中",
+      detailEn: "Overall summary processing is active",
+    });
+    expect(summaryQueueCardCopy("waiting-for-run")).toMatchObject({
+      badgeJa: "AI要約 再開待ち",
+      detailJa: "収集再開待ち",
+    });
+    expect(source).toContain("summaryQueueCardCopy(summaryQueue.state)");
+    expect(source).toContain("data-summary-queue-detail-ja");
     expect(source).not.toContain("AI summary queued");
     expect(source).not.toContain("summaryQueue.showEstimate");
     expect(source).not.toContain("summaryQueue.estimateHours");

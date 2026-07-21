@@ -26,6 +26,14 @@ export interface WorkerRunStatus {
   detail: string;
 }
 
+export const WORKER_RUN_STATE_COPY: Record<WorkerRunState, { ja: string; en: string }> = {
+  healthy: { ja: "正常稼働", en: "Running normally" },
+  missing: { ja: "稼働記録なし", en: "Run telemetry unavailable" },
+  late: { ja: "定期収集が遅延", en: "Scheduled collection delayed" },
+  failed: { ja: "直近バッチが失敗", en: "Latest batch failed" },
+  degraded: { ja: "一部確認が必要", en: "Review recommended" },
+};
+
 function statusTextFor(tone: WorkerRunTone): WorkerRunStatus["statusText"] {
   if (tone === "ok") return "OK";
   if (tone === "warn") return "WARN";
@@ -56,41 +64,47 @@ function buildStatus(
   };
 }
 
-export function runCadenceCopy(
+export function runCadenceLead(
   status: Pick<WorkerRunStatus, "state">,
-  latestIndexAge: string,
 ): { ja: string; en: string } {
-  const suffix = {
-    ja: `最新 index は ${latestIndexAge}`,
-    en: `latest index ${latestIndexAge}`,
-  };
   if (status.state === "healthy") {
     return {
-      ja: `毎時 1 バッチ収集 · 各ソースは約 6 時間周期 · ${suffix.ja}`,
-      en: `One batch hourly · each source about every 6 hours · ${suffix.en}`,
+      ja: "毎時 1 バッチ収集 · 各ソースは約 6 時間周期 · 最新 index は ",
+      en: "One batch hourly · each source about every 6 hours · latest index ",
     };
   }
   if (status.state === "late") {
     return {
-      ja: `通常は毎時 1 バッチ収集 · 現在は収集遅延を検出 · ${suffix.ja}`,
-      en: `Normally one batch hourly · collection is currently delayed · ${suffix.en}`,
+      ja: "通常は毎時 1 バッチ収集 · 現在は収集遅延を検出 · 最新 index は ",
+      en: "Normally one batch hourly · collection is currently delayed · latest index ",
     };
   }
   if (status.state === "failed") {
     return {
-      ja: `通常は毎時 1 バッチ収集 · 直近バッチは全ソース失敗 · ${suffix.ja}`,
-      en: `Normally one batch hourly · every source failed in the latest batch · ${suffix.en}`,
+      ja: "通常は毎時 1 バッチ収集 · 直近バッチは全ソース失敗 · 最新 index は ",
+      en: "Normally one batch hourly · every source failed in the latest batch · latest index ",
     };
   }
   if (status.state === "missing") {
     return {
-      ja: `通常は毎時 1 バッチ収集 · 稼働記録を確認できません · ${suffix.ja}`,
-      en: `Normally one batch hourly · run telemetry is unavailable · ${suffix.en}`,
+      ja: "通常は毎時 1 バッチ収集 · 稼働記録を確認できません · 最新 index は ",
+      en: "Normally one batch hourly · run telemetry is unavailable · latest index ",
     };
   }
   return {
-    ja: `通常は毎時 1 バッチ収集 · 一部処理を要確認 · ${suffix.ja}`,
-    en: `Normally one batch hourly · some processing needs review · ${suffix.en}`,
+    ja: "通常は毎時 1 バッチ収集 · 一部処理を要確認 · 最新 index は ",
+    en: "Normally one batch hourly · some processing needs review · latest index ",
+  };
+}
+
+export function runCadenceCopy(
+  status: Pick<WorkerRunStatus, "state">,
+  latestIndexAge: string,
+): { ja: string; en: string } {
+  const lead = runCadenceLead(status);
+  return {
+    ja: `${lead.ja}${latestIndexAge}`,
+    en: `${lead.en}${latestIndexAge}`,
   };
 }
 

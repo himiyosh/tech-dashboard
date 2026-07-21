@@ -4,7 +4,6 @@ import Sidebar from "../components/Sidebar.astro";
 import EntryCard from "../components/EntryCard.astro";
 import CategoryThumb from "../components/CategoryThumb.astro";
 import DailySummary from "../components/DailySummary.astro";
-import LiveMetrics from "../components/LiveMetrics.astro";
 import TickerBar from "../components/TickerBar.astro";
 import TimelineRightRail from "../components/TimelineRightRail.astro";
 import Pager from "../components/Pager.astro";
@@ -37,7 +36,7 @@ import {
   WORKER_HEALTH,
 } from "../lib/data.ts";
 import { sourceFreshnessStatus } from "../lib/freshness.ts";
-import { deriveWorkerRunStatus, runCadenceCopy } from "../lib/run-health.ts";
+import { deriveWorkerRunStatus, runCadenceLead } from "../lib/run-health.ts";
 
 // Shared aggregate run state (same derivation as the footer + /status, LL-126).
 const runStatus = deriveWorkerRunStatus({
@@ -67,7 +66,7 @@ const featuredSource = feat?.source ?? null;
 
 const now = new Date();
 const ago = relativeTime(DASHBOARD_METRICS.generatedAt, now);
-const cadenceCopy = runCadenceCopy(runStatus, ago);
+const cadenceLead = runCadenceLead(runStatus);
 const activeSourcesLabel = `${DASHBOARD_METRICS.sourceCoverageLabel} sources with live entries`;
 const activeSourcesJa = `公開中の記事がある登録ソース ${DASHBOARD_METRICS.sourceCoverageLabel}`;
 const activeSourcesEn = `${DASHBOARD_METRICS.sourceCoverageLabel} registry sources with live entries`;
@@ -212,22 +211,26 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
             <div class="banner-fact-head">
               <strong class="i18n-ja">更新頻度</strong>
               <strong class="i18n-en" lang="en">Cadence</strong>
-              {showRunWarning && (
-                <a
-                  class="banner-run-state"
-                  href="/status"
-                  data-run-tone={runStatus.tone}
-                  aria-label={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
-                  title={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
-                >
-                  <span class={`dot ${runStatus.tone}`} data-run-tone={runStatus.tone} aria-hidden="true"></span>
-                  <span class="i18n-ja">{runStatus.stateText}</span>
-                  <span class="i18n-en" lang="en">{runStatus.stateText}</span>
-                </a>
-              )}
+              <a
+                class="banner-run-state"
+                href="/status"
+                data-banner-run-state
+                data-run-tone={runStatus.tone}
+                aria-label={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
+                title={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
+                hidden={!showRunWarning}
+              >
+                <span class={`dot ${runStatus.tone}`} data-run-tone={runStatus.tone} aria-hidden="true"></span>
+                <span class="i18n-ja" data-banner-run-label-ja>{runStatus.stateText}</span>
+                <span class="i18n-en" lang="en" data-banner-run-label-en>{runStatus.stateText}</span>
+              </a>
             </div>
-            <span class="i18n-ja">{cadenceCopy.ja}</span>
-            <span class="i18n-en" lang="en">{cadenceCopy.en}</span>
+            <span class="i18n-ja">
+              <span data-cadence-lead-ja>{cadenceLead.ja}</span><time datetime={DASHBOARD_METRICS.generatedAt} data-relative-time>{ago}</time>
+            </span>
+            <span class="i18n-en" lang="en">
+              <span data-cadence-lead-en>{cadenceLead.en}</span><time datetime={DASHBOARD_METRICS.generatedAt} data-relative-time>{ago}</time>
+            </span>
           </div>
         </div>
       </div>
@@ -297,11 +300,21 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
             <div class="featured-label featured-rationale">
               <span class="i18n-ja">
                 Spotlight · 優先度トップ · <strong>選定根拠:</strong> {featReason.ja} ·{" "}
-                <span class="featured-rationale-time" data-featured-recency>{featReason.recency}</span>
+                <span
+                  class="featured-rationale-time"
+                  data-featured-recency
+                  data-relative-time
+                  data-datetime={feat.publishedAt || feat.collectedAt}
+                >{featReason.recency}</span>
               </span>
               <span class="i18n-en" lang="en">
                 Spotlight · top priority update · <strong>Selection basis:</strong> {featReason.en} ·{" "}
-                <span class="featured-rationale-time" data-featured-recency>{featReason.recency}</span>
+                <span
+                  class="featured-rationale-time"
+                  data-featured-recency
+                  data-relative-time
+                  data-datetime={feat.publishedAt || feat.collectedAt}
+                >{featReason.recency}</span>
               </span>
             </div>
             <h2 class="featured-title">
@@ -354,7 +367,7 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
                 faviconClass="featured-favicon"
               />
               <span>·</span>
-              <time datetime={feat.publishedAt}>{relativeTime(feat.publishedAt, now)}</time>
+              <time datetime={feat.publishedAt} data-relative-time>{relativeTime(feat.publishedAt, now)}</time>
               {featStale && (
                 <span class="featured-freshness stale">
                   <span class="i18n-ja">収集元 更新遅延</span>
@@ -456,7 +469,7 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
                   </a>
                   <span class="rank-meta">
                     <SourceDisclosure class="rank-source" label={sourceLabel(e.source)} />
-                    <time class="rank-time mono" datetime={e.publishedAt}>{relativeTime(e.publishedAt, now)}</time>
+                    <time class="rank-time mono" datetime={e.publishedAt} data-relative-time>{relativeTime(e.publishedAt, now)}</time>
                     {stale && (
                       <span class="rank-freshness stale">
                         <span class="visually-hidden">
@@ -536,5 +549,4 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
 
     <TimelineRightRail entries={primaryEntries} now={now} label="Timeline insights" />
   </div>
-  <LiveMetrics />
 </Portal>

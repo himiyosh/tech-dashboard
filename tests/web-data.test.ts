@@ -130,6 +130,10 @@ describe("relativeTime", () => {
     expect(relativeTime(null)).toBe("日付不明");
   });
 
+  it("不正な timestamp を '日付不明' として扱う", () => {
+    expect(relativeTime("not-a-date")).toBe("日付不明");
+  });
+
   it("1 分未満は 'just now'", () => {
     const now = new Date();
     const iso = new Date(now.getTime() - 30_000).toISOString();
@@ -905,6 +909,31 @@ describe("selectTickerDayEntries", () => {
         "official-blog",
         "community",
       ]);
+    });
+
+    it("要約待ち entry を判断用 ticker の候補から除外する", () => {
+      const ready = tickerEntry(
+        "ready",
+        "anthropic-news",
+        "blog",
+        "https://anthropic.com/news/ready",
+        2,
+        "2026-05-04T08:00:00.000Z",
+      );
+      const pending = {
+        ...tickerEntry(
+          "pending",
+          "qiita-copilot",
+          "community",
+          "https://qiita.com/a/items/pending",
+          3,
+          "2026-05-04T09:00:00.000Z",
+        ),
+        summaryJa: "",
+        summaryEn: "",
+      };
+
+      expect(selectTickerItems([pending, ready], 3).map((entry) => entry.id)).toEqual(["ready"]);
     });
   });
 });

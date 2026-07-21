@@ -195,6 +195,7 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
       {
         label: "Updated",
         value: relativeTime(STATS.generatedAt, now),
+        datetime: STATS.generatedAt,
         detail: "統計snapshot",
         detailEn: "Stats snapshot",
         scope: "stats-snapshot",
@@ -316,7 +317,14 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
 
                   <div class="cat-footer">
                     <div class="cat-meta">
-                      {cat.latest ? `最終更新 ${relativeTime(cat.latest.publishedAt, now)}` : "エントリなし"}
+                      {cat.latest ? (
+                        <>
+                          最終更新{" "}
+                          <time datetime={cat.latest.publishedAt} data-relative-time>
+                            {relativeTime(cat.latest.publishedAt, now)}
+                          </time>
+                        </>
+                      ) : "エントリなし"}
                     </div>
                     <div
                       class="cat-types"

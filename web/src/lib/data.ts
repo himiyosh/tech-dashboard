@@ -29,6 +29,7 @@ export {
   summaryForLang,
   summaryForLangWithFallback,
 };
+export { relativeTime } from "./relative-time.ts";
 
 export type Category =
   | "copilot"
@@ -546,24 +547,6 @@ export function trendingTags(
     .map(([tag, count]) => ({ tag, count }));
 }
 
-export function relativeTime(iso: string | null, now = new Date()): string {
-  if (!iso) return "日付不明";
-  const diff = now.getTime() - new Date(iso).getTime();
-  if (diff < 0) return "just now";
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  const weeks = Math.floor(days / 7);
-  if (weeks < 5) return `${weeks}w ago`;
-  const months = Math.floor(days / 30);
-  if (months < 12) return `${months}mo ago`;
-  return `${Math.floor(days / 365)}y ago`;
-}
-
 export const RECENT_COLLECTION_WINDOW_HOURS = 6;
 export const RECENT_COLLECTION_BADGE = {
   ja: "新規収集",
@@ -826,9 +809,7 @@ export function selectTickerItems(
   const sourceCounts = new Map<string, number>();
   const platformCounts = new Map<string, number>();
   const selected: NormalizedEntry[] = [];
-  const ranked = [...entries].sort((a, b) => {
-    const publishable = Number(isPublishableEntry(b)) - Number(isPublishableEntry(a));
-    if (publishable !== 0) return publishable;
+  const ranked = entries.filter(isPublishableEntry).sort((a, b) => {
     const importance = (b.importance ?? 1) - (a.importance ?? 1);
     if (importance !== 0) return importance;
     const authority = tickerAuthorityWeight(b) - tickerAuthorityWeight(a);

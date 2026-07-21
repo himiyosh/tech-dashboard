@@ -49,6 +49,7 @@ export interface DashboardMetrics {
   bodyQueueEnqueued: number | null;
   bodyQueueMerged: number | null;
   bodyQueueCandidates: number | null;
+  bodyQueueEnqueueCap: number | null;
   bodyQueueLookupCount: number | null;
   enrichmentEnqueueCap: number | null;
   enrichmentEnqueued: number | null;
@@ -142,6 +143,7 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
     bodyQueueEnqueued: optionalMetric(WORKER_HEALTH?.bodyEnqueued),
     bodyQueueMerged: optionalMetric(WORKER_HEALTH?.bodyMerged),
     bodyQueueCandidates: optionalMetric(WORKER_HEALTH?.bodyEnqueueCandidates),
+    bodyQueueEnqueueCap: optionalMetric(WORKER_HEALTH?.bodyEnqueueCap),
     bodyQueueLookupCount: optionalMetric(WORKER_HEALTH?.bodyLookupCount),
     enrichmentEnqueueCap: optionalMetric(WORKER_HEALTH?.enrichmentEnqueueCap),
     enrichmentEnqueued: optionalMetric(WORKER_HEALTH?.enrichmentEnqueued),

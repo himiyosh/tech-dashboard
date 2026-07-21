@@ -29,6 +29,7 @@ import {
   evaluateKeywordFilter,
   keywordFilterEntryFromNormalized,
 } from "../harness/pipeline/source-filter.ts";
+import { normalizeKnownProductNames } from "../harness/pipeline/product-name.ts";
 import { applyTags } from "../harness/pipeline/tag.ts";
 import { canonicalUrlKey, normalizeMediaUrl } from "../harness/pipeline/url.ts";
 import {
@@ -38,10 +39,15 @@ import {
   synchronizeArchiveTagsFromLive,
 } from "../harness/publishers/archive-core.ts";
 import { buildStatsPayload } from "../harness/publishers/stats-core.ts";
-import { isRealBody, mergeBodies } from "../worker/src/bodies-file.ts";
+import {
+  isRealBody,
+  mergeBodiesWithProductGuard,
+  pruneKnownProductBodyConflicts,
+} from "../worker/src/bodies-file.ts";
 import {
   DEFAULT_BODY_RETENTION_DAYS,
   isBodyRetentionEligible,
+  needsBody,
 } from "../worker/src/body-queue.ts";
 
 export { synchronizeArchiveTagsFromLive };
@@ -829,7 +835,7 @@ export function summarizeChanges(label, entries, referenceAt, report, options = 
       );
     }
 
-    kept.push(decision.entry);
+    kept.push(normalizeKnownProductNames(decision.entry));
   }
   return kept;
 }
@@ -868,9 +874,14 @@ export function reconcileBodiesPayload(
   aliases = new Map(),
   sourceEntries = [],
 ) {
+  const sanitizedBodies = pruneKnownProductBodyConflicts(
+    existingBodies,
+    sourceEntries,
+    referenceAt,
+  );
   const transferredBodies = [];
   for (const [loserId, winnerId] of aliases) {
-    const record = existingBodies.bodies[loserId];
+    const record = sanitizedBodies.payload.bodies[loserId];
     if (!isRealBody(record)) continue;
     transferredBodies.push({
       id: winnerId,
@@ -891,7 +902,50 @@ export function reconcileBodiesPayload(
       cachedAt: referenceAt,
     });
   }
-  return mergeBodies(existingBodies, transferredBodies, liveIds, referenceAt);
+  const merged = mergeBodiesWithProductGuard(
+    sanitizedBodies.payload,
+    transferredBodies,
+    liveIds,
+    referenceAt,
+    sourceEntries,
+  );
+  return {
+    ...merged,
+    pruned: sanitizedBodies.pruned + merged.pruned,
+    changed: sanitizedBodies.changed || merged.changed,
+  };
+}
+
+export function synchronizeBodyHealth(
+  health,
+  bodyRetentionEligible,
+  bodiesTotal,
+  bodyBacklog,
+) {
+  if (!isPlainObject(health)) return health;
+  const next = { ...health };
+  const enqueueCap = Number.isFinite(Number(next.bodyEnqueueCap))
+    ? Math.max(0, Number(next.bodyEnqueueCap))
+    : 0;
+
+  if (Object.prototype.hasOwnProperty.call(next, "bodiesTotal")) {
+    next.bodiesTotal = bodiesTotal;
+  }
+  if (Object.prototype.hasOwnProperty.call(next, "bodyCount")) {
+    next.bodyCount = bodiesTotal;
+  }
+  if (Object.prototype.hasOwnProperty.call(next, "bodyRetentionEligible")) {
+    next.bodyRetentionEligible = bodyRetentionEligible;
+  }
+  if (Object.prototype.hasOwnProperty.call(next, "bodyBacklog")) {
+    next.bodyBacklog = bodyBacklog;
+  }
+  if (Object.prototype.hasOwnProperty.call(next, "bodyQueueDrainEstimateHours")) {
+    next.bodyQueueDrainEstimateHours = enqueueCap > 0
+      ? Math.ceil(bodyBacklog / enqueueCap)
+      : 0;
+  }
+  return next;
 }
 
 export function buildMigrationStatsPayload(liveEntries, archiveEntries, referenceAt) {
@@ -1032,6 +1086,10 @@ export async function main(argv = process.argv.slice(2)) {
     index.entries,
   );
   const reconciledBodyCount = bodyMerge.payload.count;
+  const bodyPresentIds = new Set(Object.keys(bodyMerge.payload.bodies));
+  const bodyBacklog = bodyRetentionEntries.filter((entry) =>
+    needsBody(entry, bodyPresentIds)
+  ).length;
   const bodyCountDrift = rawBodies.count !== bodyMerge.payload.count;
   if (!dryRun && (!bodiesExisted || bodyMerge.changed || bodyCountDrift)) {
     bodiesWrite = { path: bodiesPath, payload: bodyMerge.payload };
@@ -1060,12 +1118,12 @@ export async function main(argv = process.argv.slice(2)) {
     entries: dedupedLive,
   };
   if (isPlainObject(nextIndex.health)) {
-    if (Object.prototype.hasOwnProperty.call(nextIndex.health, "bodiesTotal") && reconciledBodyCount !== null) {
-      nextIndex.health.bodiesTotal = reconciledBodyCount;
-    }
-    if (Object.prototype.hasOwnProperty.call(nextIndex.health, "bodyCount") && reconciledBodyCount !== null) {
-      nextIndex.health.bodyCount = reconciledBodyCount;
-    }
+    nextIndex.health = synchronizeBodyHealth(
+      nextIndex.health,
+      bodyRetentionEntries.length,
+      reconciledBodyCount,
+      bodyBacklog,
+    );
   }
 
   const filesToWrite = [

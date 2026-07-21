@@ -3056,6 +3056,8 @@ test.describe("TECH Dashboard smoke", () => {
     const bodyQueueMode = await bodyQueueMetric.getAttribute("data-body-queue-mode");
     const bodyQueueState = await bodyQueueMetric.getAttribute("data-body-queue-state");
     const bodyQueueMerged = await bodyQueueMetric.getAttribute("data-body-queue-merged");
+    const bodyQueueEnqueued = await bodyQueueMetric.getAttribute("data-body-queue-enqueued");
+    const bodyQueueEnqueueCap = await bodyQueueMetric.getAttribute("data-body-queue-enqueue-cap");
     expect(summaryQueueMode).toMatch(/^(enabled|disabled|missing-binding|error|unknown)$/);
     expect(summaryQueueState).toMatch(
       /^(active|clear|waiting-for-run|paused|unavailable|error|unknown)$/,
@@ -3093,6 +3095,22 @@ test.describe("TECH Dashboard smoke", () => {
           `applied to body file +${bodyQueueMerged}`,
         );
       }
+      if (bodyQueueEnqueueCap !== "unknown") {
+        await expect(bodyQueueMetric.locator("small > .i18n-ja")).toContainText(
+          `上限 ${bodyQueueEnqueueCap}件/run基準`,
+        );
+        await expect(bodyQueueMetric.locator("small > .i18n-en")).toContainText(
+          `based on a ${bodyQueueEnqueueCap}/run cap`,
+        );
+      }
+      if (bodyQueueEnqueued === "unknown") {
+        await expect(bodyQueueMetric.locator("small > .i18n-ja")).toContainText(
+          "送信件数 未計測",
+        );
+        await expect(bodyQueueMetric.locator("small > .i18n-en")).toContainText(
+          "enqueue count not measured",
+        );
+      }
     }
     await expect(bodyQueueMetric.locator("small > .i18n-ja")).not.toContainText("回収 +");
     await expect(bodyQueueMetric.locator("small > .i18n-en")).not.toContainText("merged +");
@@ -3103,6 +3121,10 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(enrichmentBudgetMetric).toContainText("直近runの生成枠");
       await expect(enrichmentBudgetMetric.locator("strong")).toHaveText(/^\s*\d+\/\d+\s*$/);
       await expect(enrichmentBudgetMetric.locator("small > .i18n-ja")).toContainText(/1 run 上限 \d+ 件/);
+      if (bodyQueueEnqueued === "unknown") {
+        await expect(enrichmentBudgetMetric.locator("small > .i18n-ja")).toContainText("本文 未計測");
+        await expect(enrichmentBudgetMetric.locator("small > .i18n-en")).toContainText("bodies not measured");
+      }
     } else {
       await expect(enrichmentBudgetMetric.locator("strong > .i18n-en")).toHaveText("Not recorded");
       await expect(enrichmentBudgetMetric.locator("small > .i18n-en")).toContainText(
@@ -4114,6 +4136,7 @@ test.describe("TECH Dashboard smoke", () => {
     expect(metrics.bodyQueueDrainEstimateHours === null || Number.isFinite(metrics.bodyQueueDrainEstimateHours)).toBeTruthy();
     expect(metrics.bodyQueueEnqueued === null || Number.isFinite(metrics.bodyQueueEnqueued)).toBeTruthy();
     expect(metrics.bodyQueueMerged === null || Number.isFinite(metrics.bodyQueueMerged)).toBeTruthy();
+    expect(metrics.bodyQueueEnqueueCap === null || Number.isFinite(metrics.bodyQueueEnqueueCap)).toBeTruthy();
     expect(metrics.enrichmentEnqueueCap === null || Number.isFinite(metrics.enrichmentEnqueueCap)).toBeTruthy();
     expect(metrics.enrichmentEnqueued === null || Number.isFinite(metrics.enrichmentEnqueued)).toBeTruthy();
     expect(Number.isFinite(Date.parse(metrics.generatedAt))).toBeTruthy();

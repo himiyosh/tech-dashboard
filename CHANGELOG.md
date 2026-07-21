@@ -35,11 +35,13 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - 全 PageHero 指標へ母集団・期間・snapshot provenance を必須化し、arXiv、Glossary、Timeline・カテゴリ・タグのページ送りまで同じ説明契約へ統一しました。Archive の重複 KPI、無分母の peak 比率、カテゴリ/source 件数、Status の掲載閾値と生成枠、Knowledge の各source説明、Home右railの件数単位も具体化しました。
 - `collectedAt` 基準の `NEW` を `新規収集 / INDEXED` へ変更し、記事の公開日時ではなくDashboardへの収録時刻を示す状態だと明確化しました。
 - Research を含む taxonomy、source filter、live/archive の tag・stats 同期を更新しました。
+- AWS ML Blogの一般QuickSight機能・BI運用記事・DeepRacer端末告知と、一般宇宙・防衛・副業案内・AI写真講評・indie game投資記事をAgent Frameworks / Tech Newsから除外し、正当なAI/ML・agentic engineering記事は維持するtitle-scope filterへ更新しました。
 - 2 件以上の記事で使われるタグだけを静的ページ化し、低頻度タグは完全一致のタグ検索から対象記事へ戻れるようにしました。
 - 共通 canvas と左 Sidebar の有効幅を広げ、Home と Status の右 rail を中間幅まで段階的に維持する responsive layout へ変更しました。
 - Trending Topics と Most Active Sources に順位、件数、カテゴリ、相対量を加え、狭い rail でも比較しやすい視覚階層へ変更しました。
 - Status を pipeline run、収集失敗、掲載量、Queue の状態別に再構成し、低活動を障害 alert と区別できる source directory と filter に変更しました。run telemetry が未記録の場合は、エラー 0 件ではなく記録なしと表示します。
 - Status の見出しから重複する運用値を除き、run 依存の Queue 待機を中立表示にしました。共有生成枠の未観測理由と、登録・評価可能・未収録 source の母集団も明示しました。
+- Status のAI解説本文Queueで、今回反映数、送信件数の未計測状態、ETAが基準にする1 runのenqueue上限を分けて表示しました。
 - Publisher の統計を差分更新から、immutable baseline の live index と全 archive を使う完全再構築へ変更しました。
 
 ### 修正
@@ -58,6 +60,8 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - 狭い viewport で Header control や記事パネルが見切れ、不要な横スクロールや過度な折り返しが発生する問題を修正しました。
 - Featured thumbnail とカード幅の不一致、画像周辺の不要な余白を修正しました。
 - 要約品質、タイトル言語、body retention、live/archive metadata の不整合を修正しました。
+- Taxonomy migration後の本文保持対象数を最終indexから、backlogと解消目安をPublisherと同じ`needsBody`契約から再計算し、Status向けtelemetryが古いsnapshotを残す問題を修正しました。
+- Amazon Quickの公式原題が生成titleとsummaryでAmazon QuickSightへ置き換わる問題を修正し、Publisher最終化とmigrationで製品名を保持しました。矛盾する既存AI解説本文はsidecarから失効させ、正しい情報からの再生成対象へ戻しました。
 - Publisher runtime fingerprint を現行の生成契約へ同期しました。
 - Pagefind を含む本番 Web build が CI job 全体の時間上限や大量の静的 route log、長時間の無出力で中断されないよう、品質 gate の実行上限と Astro build のheartbeatを調整しました。
 - Web build の開始時に古い `dist` を削除し、廃止した静的ルートが成果物へ残らないようにしました。

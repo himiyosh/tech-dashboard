@@ -14,7 +14,7 @@
 - `.github/workflows/*.yml` に `wrangler pages deploy` 等の deploy job を **追加してはならない**。
 - `.github/workflows/publisher.yml` は Node publisher の収集、検証、data-only commit、OIDC bridge 経由の Queue / KV 副作用に限定する。Pages / Worker の deploy を行わせない。
 - ユーザーが明示的に依頼しない限り、`.github/workflows/` を新設しない。
-- 緊急時のみ `npm --prefix web run deploy:legacy` (Direct Upload) を手動実行可。
+- 緊急時のみ `npm --prefix web run deploy:legacy` (Direct Upload) を手動実行可。実行時はscript内でcleanな`main`、`HEAD === origin/main`をbuild前後とupload後に確認し、検証済みcommit SHAをdeploymentへ明示する。
 
 ### R-001b: main への直接 push / PR merge は必ず事前承認 (ABSOLUTE)
 - `main` への **直接 commit / push** は禁止 (たとえデータファイルや scripts でも)。必ず作業ブランチ + PR 経由とする。
@@ -2484,6 +2484,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: promptは製品名保持を要求していたが、生成結果のtitleとsummaryを原題の固有名詞へ照合するdeterministic guardがなかった。非空・要約品質gateは別製品名への置換を検出しない。初回helperはfull live entryを前提にし、summaryを省略するcompact hot archiveで`replace`を呼んでmigrationを停止した。さらに既存bodyだけをmerge前に除去しても、同じrunのKV cacheやlegacy transferから矛盾本文を再投入できた。前回送信済みpending jobの不適合cacheは通常candidate集合に入らず、拒否後に再enqueueされない経路も残った。
 - **対策**: AWS MLの原題がAmazon Quickを指しQuick Sightを指さない場合、存在する生成titleとsummary内の`Amazon QuickSight` / `Amazon Quick Sight`だけを原題どおり`Amazon Quick`へ正規化する共通helperをPublisher最終化とmigrationで共有する。本文の先頭段落がAmazon QuickをQuickSightとして導入する場合、既存sidecar、KV cache hit、legacy transferの全入力で拒否し、merge後payloadも再検証する。拒否cacheはmissとしてbody Queueの再生成対象へ戻し、pending lookupで実体のある不適合cacheを確認した場合も即時再enqueueする。単純なpending missは従来どおり通常round-robinへ戻す。full live、compact archive、既存body、incoming body、pending cacheのfixtureと実data gateで再発を止める。
 - **教訓**: LLMへ固有名詞保持を指示するだけでは製品名provenanceを保証できない。原題が明示するknown product familyは生成後にdeterministicに照合し、似た旧製品名や関連機能名への置換をpublish前に修復する。title/summaryだけを直して既存bodyを完成扱いに残さず、既存値、cache、migration transfer、最終payloadの全read/write境界へ同じvalidationを対称適用する。priority lookupと通常candidateが別集合の場合、拒否結果がどちらの再enqueue経路へ入るかも明示する。artifact横断helperは型上のfull recordだけを信じず、保存tierが省略できるfieldを実行時に確認してから変換する。
+
+### LL-374: 緊急Direct Uploadはbuild前後のorigin/main CASを必須にする
+- **事象**: Pages Git Integrationがclone後にbuild log 0件のまま35分timeoutを繰り返したため、最新mainと思っていた`d02d72fb`を緊急Direct Uploadした。しかし待機中にPublisherが`0a1ca655`を生成し、Git Integration productionも成功していたため、手動uploadが新しいdata snapshotを約50分分巻き戻した。
+- **根本原因**: 旧`deploy:legacy`は`npm run build`と`wrangler pages deploy`を直列実行するだけで、local branch、worktree、`origin/main`との一致を確認しなかった。build/upload中にautomated Publisherがmainを進めても、古いartifactをproductionへ置けた。
+- **対策**: `deploy-pages-legacy.mjs`でcleanな`main`と`HEAD === origin/main`をbuild前、build後、upload後に確認する。build後にmainが進んだ場合はupload前に停止し、Wranglerへ検証済みcommit hashと`commit-dirty=false`を明示する。Unix系ではcommit messageもargvで渡す。WindowsはNode 22で`.cmd`の直接spawnが失敗するため、固定・検証済みtokenだけを`cmd.exe`へ渡し、自由文messageはshell境界へ渡さない。upload中のdriftも成功扱いせず即時に可視化する。
+- **教訓**: emergency deployもrepository snapshotのCAS外に置かない。自動Publisherが動くrepositoryでは「数分前に最新だったlocal main」をdeploy根拠にせず、build直前とupload直前にremote refを再取得する。upload API自体にCASが無い場合はupload後もrefを確認し、driftを成功として報告しない。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

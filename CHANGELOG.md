@@ -43,6 +43,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - Status の見出しから重複する運用値を除き、run 依存の Queue 待機を中立表示にしました。共有生成枠の未観測理由と、登録・評価可能・未収録 source の母集団も明示しました。
 - Status のAI解説本文Queueで、今回反映数、送信件数の未計測状態、ETAが基準にする1 runのenqueue上限を分けて表示しました。
 - Publisher の統計を差分更新から、immutable baseline の live index と全 archive を使う完全再構築へ変更しました。
+- 緊急Direct Uploadはcleanなmainと`origin/main`の一致をbuild前後・upload後に検証し、検証済みcommit SHAをdeploymentへ明示するようにしました。
 
 ### 修正
 

@@ -118,6 +118,28 @@ describe("Cloudflare Worker deploy config", () => {
     expect(astroBuildRunner).toContain("clearInterval(heartbeat)");
   });
 
+  it("guards emergency Direct Upload with an exact origin/main snapshot", () => {
+    const webPackage = JSON.parse(readConfig("web/package.json")) as {
+      scripts?: Record<string, string>;
+    };
+    const legacyDeploy = readConfig("web/scripts/deploy-pages-legacy.mjs");
+
+    expect(webPackage.scripts?.["deploy:legacy"]).toBe(
+      "node scripts/deploy-pages-legacy.mjs",
+    );
+    expect(legacyDeploy).toContain(
+      'runGit(["fetch", "--quiet", "origin", "main"])',
+    );
+    expect(legacyDeploy).toContain(
+      'assertDeploySnapshot(afterBuild, "after build", expectedHead)',
+    );
+    expect(legacyDeploy).toContain(
+      'assertDeploySnapshot(afterDeploy, "after deploy", expectedHead)',
+    );
+    expect(legacyDeploy).toContain("`--commit-hash=${expectedHead}`");
+    expect(legacyDeploy).not.toContain("--commit-dirty=true");
+  });
+
   it("reuses the verified Web build during Publisher and pre-push E2E without changing default E2E", () => {
     const publisherWorkflow = readConfig(".github/workflows/publisher.yml");
     const prePush = readConfig("scripts/git-hooks/pre-push");

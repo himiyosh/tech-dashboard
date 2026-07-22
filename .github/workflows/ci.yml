@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   unit:
-    name: unit + typecheck + web build
+    name: unit + typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -54,6 +54,23 @@ jobs:
       - name: Unit tests (Vitest)
         run: npm test
 
+  web-build:
+    name: web build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install web deps
+        run: npm --prefix web ci
+
       - name: Web build (Cloudflare Pages parity)
         run: npm run build:web
 
@@ -70,7 +87,7 @@ jobs:
     name: e2e (Playwright)
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    needs: unit
+    needs: [unit, web-build]
     steps:
       - uses: actions/checkout@v6
 

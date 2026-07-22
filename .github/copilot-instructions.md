@@ -2498,6 +2498,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: Publisherはsecret scan、両typecheck、全unit、Pages parity buildを維持し、E2Eだけを生成Home、記事detail、metrics、archive、404の専用suiteへ限定する。PR CIは従来どおり全Playwright suiteを実行する。Worker Healthは毎時scheduleに加えて成功したPublisher完了後にも実行し、Publisher失敗時の重複したHealth failureは作らない。アプリ側Automationはread-only監視に限定する。
 - **教訓**: 自動生成dataの品質gateとcode変更の全面回帰は別の責務である。data-only publisherでは生成artifactが壊し得るsurfaceをbrowserで必ず確認しつつ、無関係なUI interaction全件を毎時重複実行しない。provider側のrunner終了は再実行で切り分け、成功後のHealth確認をworkflow lifecycleへ接続して回復状態を手動確認に依存させない。
 
+### LL-376: runner中断の再開単位はActions job境界で決まる
+- **事象**: Publisher軽量化PRのCIでtypecheckと652件のunit testは成功したが、同じjob内のWeb buildが約2分25秒後に`The operation was canceled`で停止し、E2Eがskipされた。ローカルでは同じbuildが48秒、全108 E2Eが2.9分で成功していた。
+- **根本原因**: unit、typecheck、Web buildを1つのActions jobにまとめていたため、build runnerの中断時に`rerun failed jobs`を使っても成功済みunitまで同じjob単位で再実行する構造だった。Actionsの再開pointはstepではなくjobである。
+- **対策**: PR CIを`unit`と`web-build`の独立jobへ分け、両方の成功後にE2Eを実行する。Web build artifactは従来どおりrun ID固定名でE2Eへ渡し、failed jobだけのrerunでも再利用する。full suiteと受入閾値は変更しない。
+- **教訓**: provider側のrunner終了はrepository codeで防げないため、長いgateは責務ごとのjob checkpointへ分けて再開costを下げる。timeoutやretry回数を広げる前に、成功済み処理を再実行させているjob境界を確認する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

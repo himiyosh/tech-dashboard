@@ -105,18 +105,30 @@ describe("Cloudflare Worker deploy config", () => {
     };
     const astroBuildRunner = readConfig("web/scripts/build-astro.mjs");
     const unitStart = ciWorkflow.indexOf("\n  unit:\n");
+    const webBuildStart = ciWorkflow.indexOf("\n  web-build:\n");
     const e2eStart = ciWorkflow.indexOf("\n  e2e:\n");
     expect(unitStart).toBeGreaterThan(-1);
+    expect(webBuildStart).toBeGreaterThan(unitStart);
     expect(e2eStart).toBeGreaterThan(-1);
 
     const unitTimeout = ciWorkflow
-      .slice(unitStart, e2eStart)
+      .slice(unitStart, webBuildStart)
+      .match(/timeout-minutes:\s*(\d+)/);
+    const webBuildTimeout = ciWorkflow
+      .slice(webBuildStart, e2eStart)
       .match(/timeout-minutes:\s*(\d+)/);
     const e2eTimeout = ciWorkflow
       .slice(e2eStart)
       .match(/timeout-minutes:\s*(\d+)/);
     expect(Number(unitTimeout?.[1])).toBeGreaterThanOrEqual(45);
+    expect(Number(webBuildTimeout?.[1])).toBeGreaterThanOrEqual(45);
     expect(Number(e2eTimeout?.[1])).toBeGreaterThanOrEqual(45);
+    expect(ciWorkflow.slice(unitStart, webBuildStart)).not.toContain(
+      "npm run build:web",
+    );
+    expect(ciWorkflow.slice(webBuildStart, e2eStart)).toContain(
+      "npm run build:web",
+    );
     expect(webPackage.scripts?.build).toContain("node scripts/build-astro.mjs");
     expect(webPackage.scripts?.build).toContain("pagefind --site dist");
     expect(astroBuildRunner).toContain('spawn(command, ["build", "--silent"]');
@@ -192,6 +204,7 @@ describe("Cloudflare Worker deploy config", () => {
     expect(e2eIndex).toBeGreaterThan(downloadIndex);
     expect(ciWorkflow).toContain("uses: actions/upload-artifact@v4");
     expect(ciWorkflow).toContain("uses: actions/download-artifact@v4");
+    expect(ciWorkflow).toContain("needs: [unit, web-build]");
     expect(ciWorkflow).toContain(
       "name: web-dist-${{ github.run_id }}",
     );

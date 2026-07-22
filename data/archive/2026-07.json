@@ -1,8 +1,121 @@
 {
-  "generatedAt": "2026-07-21T22:43:41.120Z",
+  "generatedAt": "2026-07-22T01:27:16.751Z",
   "month": "2026-07",
-  "count": 962,
+  "count": 973,
   "entries": [
+    {
+      "id": "81a62d14d696a075",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/sorabcjanne1/items/2190fd01793e0df7e143",
+      "title": "3Dキャラ素体をアプリに統合するまでの泥臭い話：GLB検証・テクスチャ合成・モーフクランプ全部入り",
+      "titleJa": "3Dキャラ素体をアプリに統合するまでの泥臭い話：GLB検証・テクスチャ合成・モーフクランプ全部入り",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-22T00:35:41.000Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
+      "tags": [
+        "claude",
+        "qiita"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "3Dキャラ素体をアプリに統合するまでの泥臭い話 はじめに 「頂点数・モーフ・リグが完全に一致しているドロップイン置換だから、設定ファイルの1行を書き換えるだけで終わるはず」——そう思っていた時期が私にもありました。 本記事は、カスタム3Dキャラクター素体（GLBファイル...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDIwMzUwOCUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc4MjM2OTMzOT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MWM2OTZiY2Y5YzliMjM5ZTdmYmViMDE4NDQwY2QyMDM%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D986667b59aeaf69dda7d3a94e9ffed2d?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9M0QlRTMlODIlQUQlRTMlODMlQTMlRTMlODMlQTklRTclQjQlQTAlRTQlQkQlOTMlRTMlODIlOTIlRTMlODIlQTIlRTMlODMlOTclRTMlODMlQUElRTMlODElQUIlRTclQjUlQjElRTUlOTAlODglRTMlODElOTklRTMlODIlOEIlRTMlODElQkUlRTMlODElQTclRTMlODElQUUlRTYlQjMlQTUlRTglODclQUQlRTMlODElODQlRTglQTklQjElRUYlQkMlOUFHTEIlRTYlQTQlOUMlRTglQTglQkMlRTMlODMlQkIlRTMlODMlODYlRTMlODIlQUYlRTMlODIlQjklRTMlODMlODElRTMlODMlQTMlRTUlOTAlODglRTYlODglOTAlRTMlODMlQkIlRTMlODMlQTIlRTMlODMlQkMlRTMlODMlOTUlRTMlODIlQUYlRTMlODMlQTklRTMlODMlQjMlRTMlODMlOTclRTUlODUlQTglRTklODMlQTglRTUlODUlQTUlRTMlODIlOEEmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz02YmFkNTU1MGIwNDEyN2Y0NTZjNGM0ZjlmOWM2ZTgxZQ&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzb3JhYmNqYW5uZTEmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz03OTYwYzYxZTZlYjBhYmY2OWVhZGUzYzg2ZDU5ZjEyZQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=22cf48199304584de3f44f1397ec0aad",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDIwMzUwOCUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc4MjM2OTMzOT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MWM2OTZiY2Y5YzliMjM5ZTdmYmViMDE4NDQwY2QyMDM%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D986667b59aeaf69dda7d3a94e9ffed2d?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9M0QlRTMlODIlQUQlRTMlODMlQTMlRTMlODMlQTklRTclQjQlQTAlRTQlQkQlOTMlRTMlODIlOTIlRTMlODIlQTIlRTMlODMlOTclRTMlODMlQUElRTMlODElQUIlRTclQjUlQjElRTUlOTAlODglRTMlODElOTklRTMlODIlOEIlRTMlODElQkUlRTMlODElQTclRTMlODElQUUlRTYlQjMlQTUlRTglODclQUQlRTMlODElODQlRTglQTklQjElRUYlQkMlOUFHTEIlRTYlQTQlOUMlRTglQTglQkMlRTMlODMlQkIlRTMlODMlODYlRTMlODIlQUYlRTMlODIlQjklRTMlODMlODElRTMlODMlQTMlRTUlOTAlODglRTYlODglOTAlRTMlODMlQkIlRTMlODMlQTIlRTMlODMlQkMlRTMlODMlOTUlRTMlODIlQUYlRTMlODMlQTklRTMlODMlQjMlRTMlODMlOTclRTUlODUlQTglRTklODMlQTglRTUlODUlQTUlRTMlODIlOEEmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz02YmFkNTU1MGIwNDEyN2Y0NTZjNGM0ZjlmOWM2ZTgxZQ&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzb3JhYmNqYW5uZTEmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz03OTYwYzYxZTZlYjBhYmY2OWVhZGUzYzg2ZDU5ZjEyZQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=22cf48199304584de3f44f1397ec0aad",
+        "alt": "3Dキャラ素体をアプリに統合するまでの泥臭い話：GLB検証・テクスチャ合成・モーフクランプ全部入り",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "f801ce3585b8725c",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/fuji1009_REBELL/items/d82814e03f090ed047ba",
+      "title": "Claude Code秘書に生活と事業を丸ごと管理させて分かった、一番効いたのは自動化じゃなかった話",
+      "titleJa": "Claude Code秘書に生活と事業を丸ごと管理させて分かった、一番効いたのは自動化じゃなかった話",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-22T00:19:00.000Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
+      "tags": [
+        "claude",
+        "qiita"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "会社の庶務も、個人のタスクも、健康診断の再検査も、全部Claude Codeに管理させて数ヶ月。 自動化された作業量は確かに増えました。でも、実際に生活が変わった一番の理由は「自動で処理してくれること」ではありませんでした。効いたのは、朝いちばんに「今日これを決めてください..."
+    },
+    {
+      "id": "f48848affe194934",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/sescore/items/cd0c35a1b8e79a87babf",
+      "title": "OpenClaw×Claude Code連携で年収が変わる：SESエンジニアの実践ワークフロー全公開",
+      "titleJa": "OpenClaw×Claude Code連携で年収が変わる：SESエンジニアの実践ワークフロー全公開",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-21T23:03:34.000Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
+      "tags": [
+        "claude",
+        "qiita"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "OpenClaw×Claude Code連携で年収が変わる：SESエンジニアの実践ワークフロー全公開 「AIを使って効率化しました」という記事は腐るほどある。 でもOpenClawとClaude Codeを組み合わせた具体的なワークフローを公開している記事は、2026年7..."
+    },
+    {
+      "id": "3731ff20c85f6986",
+      "source": "nvidia-blog",
+      "sourceType": "blog",
+      "url": "https://blogs.nvidia.com/blog/wistron-manufacturing-texas/",
+      "title": "Built in Fort Worth: Wistron Opens Advanced Manufacturing Plant to Produce NVIDIA AI Systems",
+      "titleJa": "",
+      "titleEn": "Built in Fort Worth: Wistron Opens Advanced Manufacturing Plant to Produce NVIDIA AI Systems",
+      "lang": "en",
+      "publishedAt": "2026-07-21T22:35:45.000Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
+      "tags": [
+        "news",
+        "nvidia"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The AI era runs on AI infrastructure. Many of these advanced systems are built and tested in Texas. Wistron opened its first U.S. manufacturing facility today in Fort Worth — a 324,000-square-foot greenfield plant producing superchips at the heart of some of the world’s most capa"
+    },
+    {
+      "id": "583d515bfa1cfd59",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/moha0918_/items/2ad6f36fd302017b9267",
+      "title": "Claude Code v2.1.216〜v2.1.217｜サブエージェントの無制限増殖に上限｜毎日Changelog解説",
+      "titleJa": "Claude Code v2.1.216〜v2.1.217｜サブエージェントの無制限増殖に上限｜毎日Changelog解説",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-21T22:06:46.000Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
+      "tags": [
+        "claude",
+        "qiita"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Claude Codeの公式Changelogをリリースから最速で翻訳・解説しています。 v2.1.217 でサブエージェントの同時実行がデフォルト 20 並列に制限されました。ネストした生成もデフォルト無効に。1 メッセージから際限なくエージェントが増える構成は、..."
+    },
     {
       "id": "3be1f91226e0badb",
       "source": "the-verge",
@@ -161,13 +274,17 @@
       "sourceType": "blog",
       "url": "https://qiita.com/yutat23/items/0d9eb6f82c45ef7136bf",
       "title": "VS CodeでCodex Petを眺められる拡張を作った - Pet Viewer for Codex",
-      "titleJa": "VS CodeでCodex Petを眺められる拡張を作った - Pet Viewer for Codex",
-      "titleEn": "",
+      "titleJa": "VS Code で Codex Pet を眺められる拡張機能「Pet Viewer for Codex」を作った",
+      "titleEn": "A developer built a VS Code extension called Pet Viewer for Codex that displays…",
       "lang": "ja",
       "publishedAt": "2026-07-21T18:15:17.000Z",
       "collectedAt": "2026-07-21T22:43:36.344Z",
       "tags": [
+        "codex-pet",
+        "developer-tool",
+        "extension",
         "qiita",
+        "sidebar",
         "vscode"
       ],
       "category": "codex",
@@ -190,6 +307,7 @@
       "tags": [
         "ai-strategy",
         "digital-transformation",
+        "enterprise",
         "enterprise-ai",
         "microsoft",
         "news"
@@ -206,17 +324,22 @@
       "sourceType": "blog",
       "url": "https://arstechnica.com/tech-policy/2026/07/judge-approves-anthropics-1-5-billion-copyright-settlement-with-authors/",
       "title": "Anthropic’s $1.5B copyright settlement approved; only 350 authors opted out",
-      "titleJa": "",
+      "titleJa": "Anthropicの15億ドル著作権訴訟和解が承認、離脱した著者はわずか350人",
       "titleEn": "Anthropic’s $1.5B copyright settlement approved; only 350 authors opted out",
       "lang": "en",
       "publishedAt": "2026-07-21T17:33:14.000Z",
       "collectedAt": "2026-07-21T22:43:36.344Z",
       "tags": [
+        "ai-training",
+        "anthropic",
         "ars-technica",
-        "news"
+        "copyright",
+        "legal",
+        "news",
+        "settlement"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 3,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "Anthropic blocks authors from opting out of $1.5B settlement at last minute."
@@ -236,6 +359,7 @@
         "chatgpt",
         "openai",
         "program",
+        "release",
         "small-business"
       ],
       "category": "codex",
@@ -250,17 +374,22 @@
       "sourceType": "blog",
       "url": "https://arstechnica.com/google/2026/07/google-reveals-faster-and-cheaper-gemini-3-6-flash-says-3-5-pro-is-still-in-testing/",
       "title": "Google announces Gemini 3.6 Flash and cybersecurity AI, teases 3.5 Pro and Gemini 4",
-      "titleJa": "",
+      "titleJa": "Google、Gemini 3.6 Flashとサイバーセキュリティ AIを発表——3.5 ProおよびGemini 4も予告",
       "titleEn": "Google announces Gemini 3.6 Flash and cybersecurity AI, teases 3.5 Pro and Gemini 4",
       "lang": "en",
       "publishedAt": "2026-07-21T16:58:25.000Z",
       "collectedAt": "2026-07-21T22:43:36.344Z",
       "tags": [
+        "ai",
         "ars-technica",
+        "cybersecurity",
+        "gemini",
+        "google",
+        "llm",
         "news"
       ],
       "category": "tech-news",
-      "importance": 1,
+      "importance": 3,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "There are new 3.6 and 3.5 models today, but Google is already training Gemini 4."
@@ -297,26 +426,32 @@
       "sourceType": "blog",
       "url": "https://aws.amazon.com/blogs/machine-learning/exploring-self-distilled-reasoning-for-supervised-fine-tuning-with-amazon-nova/",
       "title": "Exploring self-distilled reasoning for supervised fine-tuning with Amazon Nova",
-      "titleJa": "",
+      "titleJa": "Amazon Novaによる教師あり微調整のための自己蒸留推論の探求",
       "titleEn": "Exploring self-distilled reasoning for supervised fine-tuning with Amazon Nova",
       "lang": "en",
       "publishedAt": "2026-07-21T16:23:12.000Z",
       "collectedAt": "2026-07-21T22:43:36.344Z",
       "tags": [
+        "agent",
+        "amazon-nova",
         "aws",
         "bedrock",
-        "ml"
+        "fine-tuning",
+        "llm",
+        "ml",
+        "reasoning",
+        "self-distillation"
       ],
       "category": "agent-fw",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "In this post, we explore an idea for generating thinking tokens for datasets that lack reasoning traces in SFT customization. We first examine the reasoning suppression problem, then introduce Self-Distilled Reasoning (SDR), validate it across three benchmarks, and provide practi"
+      "contentSnippet": "In this post, we explore an idea for generating thinking tokens for datasets that lack reasoning traces in SFT customization. We first examine the reasoning suppression problem, then introduce Self-Distilled Reasoning (SDR), validate it across three benchmarks, and provide practi",
+      "evergreen": true
     },
     {
-      "id": "12b30620a61a6003",
-      "source": "github-blog-ai",
+      "id": "15824f57a24427a6",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/how-to-build-interactive-experiences-with-canvases/",
       "title": "How to build interactive experiences with canvases",
@@ -324,9 +459,10 @@
       "titleEn": "How to build interactive experiences with canvases",
       "lang": "en",
       "publishedAt": "2026-07-21T16:00:00.000Z",
-      "collectedAt": "2026-07-21T18:08:31.806Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "canvas",
+        "copilot",
         "copilot-extensions",
         "github",
         "interactive",
@@ -336,6 +472,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Canvases turn AI into interactive workspaces where you can visualize information, explore workflows, and take action across complex tasks. The post How to build interactive experiences with canvases appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/06/MSFTBuild_Blog_Header_01.jpg?fit=2400%2C1260",
@@ -344,8 +481,28 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
+    },
+    {
+      "id": "527c90fe001be1f4",
+      "source": "nvidia-blog",
+      "sourceType": "blog",
+      "url": "https://blogs.nvidia.com/blog/vera-rubin/",
+      "title": "NVIDIA Vera Rubin Driving Performance Per Watt, Lowest Token Cost for Partners Worldwide",
+      "titleJa": "",
+      "titleEn": "NVIDIA Vera Rubin Driving Performance Per Watt, Lowest Token Cost for Partners Worldwide",
+      "lang": "en",
+      "publishedAt": "2026-07-21T15:36:43.000Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
+      "tags": [
+        "news",
+        "nvidia"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "NVIDIA Vera Rubin is here, and it’s going gigascale. Vera Rubin NVL72 production is ramping up with racks running at partners CoreWeave, Google Cloud, Microsoft Azure and Oracle Cloud Infrastructure. Spanning 350+ factory sites in 30 countries, Vera Rubin has the largest, most ma"
     },
     {
       "id": "b80049619b1c510b",
@@ -426,6 +583,7 @@
         "mcp-server",
         "natural-language",
         "qiita",
+        "release",
         "salesforce",
         "slackbot"
       ],
@@ -434,6 +592,48 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに 2026年7月、SalesforceとSlackから、Slackbot MCP ClientとSalesforceが提供するMCP Serverの連携に関する発表がありました。 Slackの公式ヘルプでは、Slack上でSalesforce MCP Serve..."
+    },
+    {
+      "id": "c9a04a9966fb461c",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-07-21-gemini-3-6-flash-is-now-available-in-github-copilot",
+      "title": "Gemini 3.6 Flash is now available in GitHub Copilot",
+      "titleJa": "",
+      "titleEn": "Gemini 3.6 Flash is now available in GitHub Copilot",
+      "lang": "en",
+      "publishedAt": "2026-07-21T15:04:31.000Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
+      "tags": [
+        "changelog",
+        "github"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Gemini 3.6 Flash, Google’s latest Flash model, is now rolling out in GitHub Copilot. It is designed for web and app development, coding, and longer-horizon agentic tasks. It has configurable… The post Gemini 3.6 Flash is now available in GitHub Copilot appeared first on The GitHu"
+    },
+    {
+      "id": "178f3013fb8e7d13",
+      "source": "nvidia-blog",
+      "sourceType": "blog",
+      "url": "https://blogs.nvidia.com/blog/nvidia-spectrum-six-arrives-in-gigascale-ai-factories/",
+      "title": "Built for Vera Rubin, NVIDIA Spectrum-6 Arrives in Gigascale AI Factories",
+      "titleJa": "",
+      "titleEn": "Built for Vera Rubin, NVIDIA Spectrum-6 Arrives in Gigascale AI Factories",
+      "lang": "en",
+      "publishedAt": "2026-07-21T15:00:20.000Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
+      "tags": [
+        "news",
+        "nvidia"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "AI has entered the gigascale era. The world’s most advanced AI factories are bringing together hundreds of thousands of GPUs and CPUs to train frontier models, power agentic AI and generate intelligence at unprecedented scale. At this level, networking becomes a critical computin"
     },
     {
       "id": "a4048e2bbbb01443",
@@ -485,6 +685,7 @@
         "devsecops",
         "gemini",
         "google",
+        "release",
         "security",
         "vulnerability"
       ],
@@ -521,6 +722,7 @@
         "prompt-engineering",
         "research",
         "technical-reading",
+        "tutorial",
         "zenn"
       ],
       "category": "claude",
@@ -547,6 +749,7 @@
         "gemini",
         "llm",
         "productivity",
+        "tutorial",
         "zenn"
       ],
       "category": "claude",
@@ -600,6 +803,7 @@
       "publishedAt": "2026-07-21T14:27:03.000Z",
       "collectedAt": "2026-07-21T21:53:58.562Z",
       "tags": [
+        "agent",
         "ai-agents",
         "claude",
         "code-generation",
@@ -612,6 +816,27 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "! 本記事のコード片は実プロダクト（Postgres + TypeScript + Claude Agent SDK）の本番実装から引用しています。紙面の都合で省略した箇所は都度注記しています。 少し前に、Palantir Foundry を「リバースドメインモデリング」という見立てで分解した投稿（@gura105 さんの X 投稿）を読みました。ドメインモデリングという馴染みの工程を、既存システムの物理データから逆回しにやる——オントロジーの実体は全社横断のドメイン層だ、という整理です。その投稿は最後を「今後は AI エージェントとの相性を掘っていく」"
+    },
+    {
+      "id": "9afe9e3e694485b0",
+      "source": "simonw-blog",
+      "sourceType": "blog",
+      "url": "https://simonwillison.net/2026/Jul/21/nativ/#atom-everything",
+      "title": "Nativ: Run AI models locally on your Mac",
+      "titleJa": "",
+      "titleEn": "Nativ: Run AI models locally on your Mac",
+      "lang": "en",
+      "publishedAt": "2026-07-21T14:22:27.000Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
+      "tags": [
+        "llm",
+        "newsletter"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "Nativ: Run AI models locally on your Mac Prince Canuma is the developer behind the excellent MLX-VLM Python library for running vision-LLMs using MLX on a Mac. I'm really excited about his new project, which wraps MLX in a full macOS desktop application. It's similar in shape to "
     },
     {
       "id": "5fba150982a59006",
@@ -628,6 +853,7 @@
         "ai-generated-code",
         "claude",
         "code-review",
+        "release",
         "security",
         "zenn"
       ],
@@ -644,16 +870,19 @@
       "url": "https://zenn.dev/jodycraft/articles/3190d7d582bf4b",
       "title": "AIエージェントの「判定」問題、検査工程はとっくに解いていた",
       "titleJa": "AIエージェントの「判定」問題、検査工程はとっくに解いていた",
-      "titleEn": "",
+      "titleEn": "This article argues that the challenge of having AI agents reliably evaluate…",
       "lang": "ja",
       "publishedAt": "2026-07-21T13:52:23.000Z",
       "collectedAt": "2026-07-21T22:43:36.344Z",
       "tags": [
+        "ai-agents",
         "copilot",
+        "evaluation",
+        "quality-assurance",
         "zenn"
       ],
       "category": "copilot",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "! 📋 この記事の前提 前回の記事「ループエンジニアリングの次は本当に『グラフ』なのか考えてみた」を読んでいると話が早い(「Judgment Engineering」という仮の呼び方をした概念の話) 「ループエンジニアリング」「グラフエンジニアリング」という言葉を見聞きしたことがある 製造業の検査工程の知識は前提にしていない。専門用語は出てくるたびに説明する 結論: 「判定」の設計は、検査工程が何十年も前から解いていた問題 前回の記事で、グラフの次に来るのは「判定そのもの」の工学ではないかと書いた。判定基準をどう作るか、判定を誤ったときにどう記録するか"
@@ -766,6 +995,26 @@
       }
     },
     {
+      "id": "793e05047a57e68b",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/kobori_slj/items/041fe5bf77cc7a7442c2",
+      "title": "非デザイナーが公式サイトのデザインから公開までを実施した話",
+      "titleJa": "非デザイナーが公式サイトのデザインから公開までを実施した話",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-21T12:47:36.000Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
+      "tags": [
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに AIによってデザインの仕事が奪われるという話はずっと議論されていますが、 具体的に非デザイナーがAIを使ってどこまでの作業をできるかを試してみました。 前提をお話しすると、私はデザインはからっきしです。とはいえWebアプリ開発をやっていると 「今回、デザインはあ..."
+    },
+    {
       "id": "2cbe34ebdb7395fe",
       "source": "microsoft-source",
       "sourceType": "blog",
@@ -777,6 +1026,7 @@
       "publishedAt": "2026-07-21T12:30:12.000Z",
       "collectedAt": "2026-07-21T21:53:58.562Z",
       "tags": [
+        "enterprise",
         "enterprise-ai",
         "microsoft",
         "mistral",
@@ -941,7 +1191,8 @@
         "ksql",
         "mcp",
         "mcp-server",
-        "qiita"
+        "qiita",
+        "tutorial"
       ],
       "category": "mcp",
       "importance": 2,
@@ -1038,6 +1289,26 @@
         "height": 0,
         "source": "media"
       }
+    },
+    {
+      "id": "2674a7e6256fbb98",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/ManabuYamamoto/items/ce9e16873a23701bd526",
+      "title": "OWASP Juice Shop で学ぶ Web 脆弱性 ― WSL 新CLI「wslc」で建てて、Defender / GitHub で裏取りする",
+      "titleJa": "OWASP Juice Shop で学ぶ Web 脆弱性 ― WSL 新CLI「wslc」で建てて、Defender / GitHub で裏取りする",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-21T01:17:36.000Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
+      "tags": [
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "パスワードを一切知らないまま、' OR 1=1-- の一文で管理者としてログイン――「動いてしまうけど危ない」を自分の手で体験しました。そのうえで、見つけた脆弱性を Microsoft Defender for Cloud と GitHub のセキュリティ機能でも検出でき..."
     },
     {
       "id": "1776214a4306e3d3",
@@ -1419,7 +1690,7 @@
       "titleEn": "AI credit pools for cost centers in the billing UI",
       "lang": "en",
       "publishedAt": "2026-07-20T18:24:14.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "ai-credits",
         "billing",
@@ -1506,7 +1777,7 @@
       "titleEn": "Who’s Afraid of Chinese Models?",
       "lang": "en",
       "publishedAt": "2026-07-20T17:09:19.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "ai-safety",
         "chinese-models",
@@ -1518,7 +1789,15 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "Who’s Afraid of Chinese Models? Interesting proposal from Ben Thompson that both addresses the hypocrisy of labs outlawing distillation against their models despite training on unlicensed data, and could help US open models compete more effectively with their Chinese counterparts"
+      "contentSnippet": "Who’s Afraid of Chinese Models? Interesting proposal from Ben Thompson that both addresses the hypocrisy of labs outlawing distillation against their models despite training on unlicensed data, and could help US open models compete more effectively with their Chinese counterparts",
+      "image": {
+        "src": "https://static.simonwillison.net/static/2026/qwen-3.8-max-pelican.png",
+        "origSrc": "https://static.simonwillison.net/static/2026/qwen-3.8-max-pelican.png",
+        "alt": "Who’s Afraid of Chinese Models?",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
     },
     {
       "id": "03256bea54fdc6ca",
@@ -1547,8 +1826,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "In this post, we show how Amazon Quick can serve as the business-user front door for specialized agent workflows. We use the NVIDIA NeMo Agent Toolkit to build a supply-chain risk example that helps a planner move from an Amazon Quick dashboard and knowledge context to a guided m"
+      "contentSnippet": "In this post, we show how Amazon Quick can serve as the business-user front door for specialized agent workflows. We use the NVIDIA NeMo Agent Toolkit to build a supply-chain risk example that helps a planner move from an Amazon Quick dashboard and knowledge context to a guided m",
+      "evergreen": true
     },
     {
       "id": "bfd49416d3de0aaf",
@@ -1576,8 +1855,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "This post describes how Couchbase adopted Amazon Bedrock to power Capella iQ with Anthropic’s Claude family of models, the architectural decisions behind their multi-model approach, and the operational benefits realized in production."
+      "contentSnippet": "This post describes how Couchbase adopted Amazon Bedrock to power Capella iQ with Anthropic’s Claude family of models, the architectural decisions behind their multi-model approach, and the operational benefits realized in production.",
+      "evergreen": true
     },
     {
       "id": "85dc98db0992d24b",
@@ -1604,8 +1883,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "In this post, we describe how Tradeshift deployed Amazon Quick with agentic AI capabilities to replace our legacy BI tool, resulting in query response times up to 30 times faster, a 40 percent reduction in total cost of ownership, and turned embedded analytics into a product that"
+      "contentSnippet": "In this post, we describe how Tradeshift deployed Amazon Quick with agentic AI capabilities to replace our legacy BI tool, resulting in query response times up to 30 times faster, a 40 percent reduction in total cost of ownership, and turned embedded analytics into a product that",
+      "evergreen": true
     },
     {
       "id": "890e2c78a188dcc8",
@@ -1644,7 +1923,7 @@
       "titleEn": "Copilot users can now see AI credits used per billing cycle",
       "lang": "en",
       "publishedAt": "2026-07-20T16:00:14.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "ai-credits",
         "billing",
@@ -1769,7 +2048,7 @@
       "titleEn": "At SIGGRAPH, NVIDIA Advances Graphics and Simulation With Agentic and Physical AI",
       "lang": "en",
       "publishedAt": "2026-07-20T15:00:53.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "agent",
         "news",
@@ -1820,7 +2099,7 @@
       "titleEn": "GitHub Code Quality is now generally available",
       "lang": "en",
       "publishedAt": "2026-07-20T13:01:24.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "changelog",
         "code-quality",
@@ -1934,7 +2213,7 @@
       "titleEn": "Bristol Myers Squibb Building Life Science Industry’s Most Advanced AI Factory on NVIDIA Vera Rubin",
       "lang": "en",
       "publishedAt": "2026-07-20T10:59:23.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "ai",
         "bms",
@@ -1957,11 +2236,11 @@
       "sourceType": "blog",
       "url": "https://qiita.com/heftykoo/items/74b4353d386ea24b7ce1",
       "title": "AI agent に UI を作らせるなら、browser を開けたことを完了条件にしない",
-      "titleJa": "AI agent に UI を作らせるなら、browser が開けたことを完了条件にしない",
+      "titleJa": "AI agent に UI を作らせるなら、browser を開けたことを完了条件にしない",
       "titleEn": "When delegating UI development to an AI agent, treating a browser launch as the…",
       "lang": "ja",
       "publishedAt": "2026-07-20T09:08:12.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -2845,7 +3124,7 @@
       "titleEn": "Companies that grow stronger with AI treat token usage as capital investment…",
       "lang": "ja",
       "publishedAt": "2026-07-19T04:09:20.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "ai-strategy",
         "learning-loop",
@@ -4472,7 +4751,7 @@
       "titleEn": "Repository-level GitHub Copilot usage metrics generally available",
       "lang": "en",
       "publishedAt": "2026-07-17T22:05:18.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "analytics",
         "changelog",
@@ -4498,7 +4777,7 @@
       "titleEn": "GitHub Copilot app now available in the usage metrics API",
       "lang": "en",
       "publishedAt": "2026-07-17T22:05:11.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "api",
         "changelog",
@@ -4598,7 +4877,7 @@
       "titleEn": "Copilot code review: Customization and configurability improvements",
       "lang": "en",
       "publishedAt": "2026-07-17T21:08:30.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "changelog",
         "code-review",
@@ -4649,7 +4928,7 @@
       "titleEn": "GitHub Mobile: Fix pull request comments with Copilot cloud agent",
       "lang": "en",
       "publishedAt": "2026-07-17T19:47:45.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "agent",
         "changelog",
@@ -4689,8 +4968,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "In this post, we walk through a few ways that Quick delivers on this promise. We cover the entire sales cycle, from identifying your highest-priority prospect, contacting them, working the deal to close, and keeping the CRM up to date as the account matures, while protecting your"
+      "contentSnippet": "In this post, we walk through a few ways that Quick delivers on this promise. We cover the entire sales cycle, from identifying your highest-priority prospect, contacting them, working the deal to close, and keeping the CRM up to date as the account matures, while protecting your",
+      "evergreen": true
     },
     {
       "id": "96aaad105213505a",
@@ -4821,8 +5100,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "In this post, we cover a high-level view of the Smartsheet remote MCP architecture, with a focus on the AWS infrastructure behind it. This includes security, governance, scaling and deployment, and the AI-specific optimizations Smartsheet built on AWS."
+      "contentSnippet": "In this post, we cover a high-level view of the Smartsheet remote MCP architecture, with a focus on the AWS infrastructure behind it. This includes security, governance, scaling and deployment, and the AI-specific optimizations Smartsheet built on AWS.",
+      "evergreen": true
     },
     {
       "id": "252b013dd561ae24",
@@ -4892,7 +5171,7 @@
       "titleEn": "NVIDIA Vera Rubin Maximizes Intelligence per Dollar for Post-Training Workloads — a Key Metric for Agentic AI",
       "lang": "en",
       "publishedAt": "2026-07-17T15:00:14.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "agent",
         "cost-efficiency",
@@ -5395,8 +5674,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "In this post, we walk through the three pillars that make this possible: simplified setup, smarter retrieval, and production readiness. We also show you code examples for setting up a knowledge base and retrieving from it."
+      "contentSnippet": "In this post, we walk through the three pillars that make this possible: simplified setup, smarter retrieval, and production readiness. We also show you code examples for setting up a knowledge base and retrieving from it.",
+      "evergreen": true
     },
     {
       "id": "b66b04da4c28ff4f",
@@ -5435,7 +5714,7 @@
       "titleEn": "Kimi K3, and what we can still learn from the pelican benchmark",
       "lang": "en",
       "publishedAt": "2026-07-16T20:19:30.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "benchmark",
         "kimi-k3",
@@ -5484,8 +5763,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "This post covers what makes Grok 4.3 a great fit for agentic and enterprise workloads, how you access it through Amazon Bedrock, and how to use the capabilities most teams reach for first: a basic chat request, configurable reasoning effort, tool calling, structured output, image"
+      "contentSnippet": "This post covers what makes Grok 4.3 a great fit for agentic and enterprise workloads, how you access it through Amazon Bedrock, and how to use the capabilities most teams reach for first: a basic chat request, configurable reasoning effort, tool calling, structured output, image",
+      "evergreen": true
     },
     {
       "id": "ecea7414e4fe04e2",
@@ -5497,7 +5776,7 @@
       "titleEn": "Advanced search for Projects is generally available",
       "lang": "en",
       "publishedAt": "2026-07-16T19:07:14.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "changelog",
         "ga",
@@ -5521,7 +5800,7 @@
       "titleEn": "Repository admins can archive pull requests",
       "lang": "en",
       "publishedAt": "2026-07-16T19:01:09.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "admin",
         "changelog",
@@ -5904,7 +6183,7 @@
       "titleEn": "Inkling: Our open-weights model",
       "lang": "en",
       "publishedAt": "2026-07-16T15:35:25.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "llm",
         "local-llm",
@@ -6563,7 +6842,7 @@
       "titleEn": "NVIDIA Introduces New Jetson Thor Computers to Advance Mainstream Robotics and Edge AI",
       "lang": "en",
       "publishedAt": "2026-07-15T23:00:54.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "agent",
         "edge-ai",
@@ -7631,7 +7910,7 @@
       "titleEn": "NVIDIA and Japan Bring Full-Stack AI and Robotics to Every Industry",
       "lang": "en",
       "publishedAt": "2026-07-15T10:51:37.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "ai",
         "industrial-ai",
@@ -15407,8 +15686,8 @@
       "contentSnippet": "3行まとめ Grok 4.5 は Grok 4 の改良版ではなく、SpaceX の計算資源と Cursor の訓練基盤・データ資産が合流した初のモデル CursorBench は、Cursor コードベースの過去スナップショットが訓練データに混入して有利になっていたこ..."
     },
     {
-      "id": "569fc3e078bdf317",
-      "source": "github-blog-ai",
+      "id": "7bed20f42f96d7b0",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/better-tools-made-copilot-code-review-worse-heres-how-we-actually-improved-it/",
       "title": "Better tools made Copilot code review worse. Here’s how we actually improved it.",
@@ -15416,7 +15695,7 @@
       "titleEn": "Better tools made Copilot code review worse. Here’s how we actually improved it.",
       "lang": "en",
       "publishedAt": "2026-07-10T15:57:47.000Z",
-      "collectedAt": "2026-07-21T18:08:31.806Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "ai-quality",
         "benchmark",
@@ -15429,8 +15708,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "How migrating Copilot code review to shared Unix-style code exploration tools reduced review cost by reshaping agent workflows around pull request evidence. The post Better tools made Copilot code review worse. Here’s how we actually improved it. appeared first on The GitHub Blog",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "How migrating Copilot code review to shared Unix-style code exploration tools reduced review cost by reshaping agent workflows around pull request evidence. The post Better tools made Copilot code review worse. Here’s how we actually improved it. appeared first on The GitHub Blog"
     },
     {
       "id": "60fd74dad92cbcc4",
@@ -18857,8 +19136,8 @@
       "contentSnippet": "GitHub Advanced Security enterprise customers can now publish internal security advisories. Innersource advisories work similarly to GitHub’s open source advisories, but their visibility is restricted to repositories owned by the… The post Innersource security advisories are gene"
     },
     {
-      "id": "413130c4bc9704a2",
-      "source": "github-blog-ai",
+      "id": "d015d2e8e0f35f72",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/automating-cross-repo-documentation-with-github-agentic-workflows/",
       "title": "Automating cross-repo documentation with GitHub Agentic Workflows",
@@ -18866,7 +19145,7 @@
       "titleEn": "Automating cross-repo documentation with GitHub Agentic Workflows",
       "lang": "en",
       "publishedAt": "2026-07-08T21:11:56.000Z",
-      "collectedAt": "2026-07-21T18:08:31.806Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "agent",
         "agentic-workflows",
@@ -18880,6 +19159,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Explore how the Aspire team turns merged product changes into SME-reviewed docs pull requests, closing the gap between release and documentation. The post Automating cross-repo documentation with GitHub Agentic Workflows appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/01/generic-mona-copilot-logo.png",
@@ -18888,8 +19168,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "e498a5108f393999",
@@ -19198,8 +19477,8 @@
       }
     },
     {
-      "id": "76241322f07c86bf",
-      "source": "github-blog-ai",
+      "id": "9abd388c3dbd0d69",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/how-github-copilot-enables-zero-dns-configuration-for-github-pages/",
       "title": "How GitHub Copilot enables zero DNS configuration for GitHub Pages",
@@ -19207,7 +19486,7 @@
       "titleEn": "How GitHub Copilot enables zero DNS configuration for GitHub Pages",
       "lang": "en",
       "publishedAt": "2026-07-08T16:00:00.000Z",
-      "collectedAt": "2026-07-21T18:08:31.806Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "automation",
         "copilot",
@@ -19220,8 +19499,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "Go from an empty repository to a live custom domain with HTTPS in about 14 minutes, without manually editing a single DNS record. The post How GitHub Copilot enables zero DNS configuration for GitHub Pages appeared first on The GitHub Blog .",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "Go from an empty repository to a live custom domain with HTTPS in about 14 minutes, without manually editing a single DNS record. The post How GitHub Copilot enables zero DNS configuration for GitHub Pages appeared first on The GitHub Blog ."
     },
     {
       "id": "29e7163d7a001a6e",
@@ -19967,6 +20246,8 @@
       "title": "Kimi K2.7 now available for Copilot Business and Enterprise",
       "titleJa": "Kimi K2.7 が Copilot Business および Enterprise で利用可能に",
       "titleEn": "Kimi K2.7 now available for Copilot Business and Enterprise",
+      "summaryJa": "GitHub CopilotのBusinessおよびEnterpriseプランでKimi K2.7が利用可能になった。これにより、企業ユーザーはコーディング支援に使用できるAIモデルの選択肢がさらに拡充された。",
+      "summaryEn": "Kimi K2.7 is now available in GitHub Copilot for Business and Enterprise plans, giving organizations an additional AI model option to enhance their coding assistance workflows.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:05:35.000Z",
       "collectedAt": "2026-07-08T13:00:09.416Z",
@@ -19983,7 +20264,7 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "On July 1, 2026, we announced Kimi K2.7 would be available to Copilot Pro, Pro+, and Max plans. The model is now additionally available on Copilot Business and Copilot Enterprise… The post Kimi K2.7 now available for Copilot Business and Enterprise appeared first on The GitHub Bl"
     },
     {
@@ -19994,6 +20275,8 @@
       "title": "Native-speed vLLM transformers modeling backend",
       "titleJa": "vLLMのネイティブ速度 transformers モデリングバックエンド",
       "titleEn": "Native-speed vLLM transformers modeling backend",
+      "summaryJa": "HuggingFaceのtransformersライブラリがvLLMのネイティブモデリングバックエンドとして統合され、重複実装なしに最高速度での推論が可能になった。",
+      "summaryEn": "Transformers is now a native modeling backend for vLLM, enabling full-speed inference without duplicating model implementations across the two libraries.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
       "collectedAt": "2026-07-21T14:54:44.356Z",
@@ -20007,7 +20290,7 @@
       "category": "local-llm",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "warm"
     },
     {
       "id": "d4fcae9550ab0099",
@@ -20017,6 +20300,8 @@
       "title": "Introducing GPT-Live",
       "titleJa": "GPT-Liveの紹介",
       "titleEn": "Introducing GPT-Live",
+      "summaryJa": "OpenAIがGPT-Liveを発表し、リアルタイムでのインタラクティブなAI体験を提供する新機能を公開した。これによりユーザーはより自然な形でGPTと対話できるようになる。",
+      "summaryEn": "OpenAI announced GPT-Live, a new real-time interactive AI experience that enables more natural, live interactions with GPT models, marking a significant step in conversational AI accessibility.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
       "collectedAt": "2026-07-21T21:53:58.562Z",
@@ -20029,7 +20314,7 @@
       "category": "codex",
       "importance": 3,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "A new generation of voice models for natural human-AI interaction, now powering ChatGPT Voice."
     },
     {
@@ -20040,6 +20325,8 @@
       "title": "Bridging the Domain Gap: AI Race Coach built with Antigravity and Gemini",
       "titleJa": "ドメインギャップを超えて：AntigravityとGeminiで構築したAIレースコーチ",
       "titleEn": "Bridging the Domain Gap: AI Race Coach built with Antigravity and Gemini",
+      "summaryJa": "AntigravityがGeminiを活用してモータースポーツ向けAIレースコーチを構築した事例を紹介。専門ドメインへLLMを適用する際のドメインギャップ問題を解決する実践的手法が解説されている。",
+      "summaryEn": "Antigravity built an AI race coach powered by Gemini, showcasing practical methods for bridging the domain gap when applying large language models to specialized motorsport coaching.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
       "collectedAt": "2026-07-15T23:48:45.903Z",
@@ -20054,7 +20341,7 @@
       "category": "gemini",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "On May 23, 2026, fresh off the stage at Google I/O, our Google Developer Experts (GDEs) converged on..."
     },
     {
@@ -20092,6 +20379,8 @@
       "title": "Meta’s AI Glasses: Your Questions Answered",
       "titleJa": "MetaのAIグラス：ユーザーの疑問に公式回答",
       "titleEn": "Meta’s AI Glasses: Your Questions Answered",
+      "summaryJa": "MetaはAI搭載スマートグラスについてユーザーから寄せられた疑問に公式回答し、プライバシー保護・主要機能・活用シーンを詳しく説明した。同社がAIウェアラブル市場での存在感を高めるなか、製品への透明性確保が鍵となっている。",
+      "summaryEn": "Meta officially answered common user questions about its AI-powered smart glasses, detailing privacy safeguards, core capabilities, and everyday use cases as the product expands its presence in the wearable market.",
       "lang": "en",
       "publishedAt": "2026-07-07T23:35:43.000Z",
       "collectedAt": "2026-07-20T23:45:40.621Z",
@@ -20107,7 +20396,7 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "We’re answering frequently asked questions about our AI glasses and sharing the features we’ve built to help both the wearers of our glasses and the people around them feel comfortable. The post Meta’s AI Glasses: Your Questions Answered appeared first on Meta Newsroom .",
       "image": {
         "src": "https://about.fb.com/wp-content/uploads/2026/07/Metas-AI-Glasses_Your-Questions-Answered_Header.jpg?fit=1920%2C1080",
@@ -22023,7 +22312,7 @@
       "summaryEn": "Anthropic examines the core values and character at the heart of Claude, revealing the fundamental principles and motivations that shape how the AI thinks and behaves. Understanding Claude's inner life matters for transparency in AI development.",
       "lang": "en",
       "publishedAt": "2026-07-06T16:59:51.000Z",
-      "collectedAt": "2026-07-20T19:23:10.508Z",
+      "collectedAt": "2026-07-22T01:26:50.814Z",
       "tags": [
         "ai-identity",
         "ai-philosophy",

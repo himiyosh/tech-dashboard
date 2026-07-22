@@ -207,6 +207,7 @@
 - collection、multi-megabyte JSON の parse / merge / serialize、schema / E2E 検証、Git commit は `.github/workflows/publisher.yml` の Node 22 job で行う。`tech-dashboard-harness` に scheduled handler、`[limits] cpu_ms`、GitHub publish tokenを戻してはならない。
 - `tech-dashboard-harness` は GitHub Actions OIDC を厳密検証する KV / Queue bridge と public `/health` だけを持つ。OIDC は専用 audience、repository、owner、main ref、workflow ref、event、subject、SHA、時刻を fail-closed で検証する。
 - Node publisher は開始時の main SHA に baseline を固定し、生成副作用を `$RUNNER_TEMP` に遅延する。data 変更時は全品質ゲートと push が成功した後だけ Queue / KV effects を flush する。data 変更がない場合も final snapshot CAS を通し、collapse guard、main drift、検証失敗、push 失敗時は effects bundle を永続化または flush しない。
+- Node publisher の data-only 品質ゲートは secret scan、root / Worker typecheck、全 unit test、Pages parity build、生成 Home / detail / metrics / archive / 404 を確認する専用 E2E とする。全 UI・interaction E2E は PR CI で維持し、毎時 Publisher へ重複実行しない。
 - bridge の KV write は publisher が必要とする `og.v1` だけを許可する。summary/body cache と heartbeat は Node publisher から書き込まない。新しい repository secret は追加せず、GitHub 操作は built-in `GITHUB_TOKEN`、bridge 認証は Actions OIDC を使う。
 - `tests/worker-config.test.ts`、`tests/free-plan-bridge.test.ts`、`tests/publisher-runner.test.ts`、`npm --prefix worker run deploy -- --dry-run` で Free plan contract を検証する。
 
@@ -2490,6 +2491,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 旧`deploy:legacy`は`npm run build`と`wrangler pages deploy`を直列実行するだけで、local branch、worktree、`origin/main`との一致を確認しなかった。build/upload中にautomated Publisherがmainを進めても、古いartifactをproductionへ置けた。
 - **対策**: `deploy-pages-legacy.mjs`でcleanな`main`と`HEAD === origin/main`をbuild前、build後、upload後に確認する。build後にmainが進んだ場合はupload前に停止し、Wranglerへ検証済みcommit hashと`commit-dirty=false`を明示する。Unix系ではcommit messageもargvで渡す。WindowsはNode 22で`.cmd`の直接spawnが失敗するため、固定・検証済みtokenだけを`cmd.exe`へ渡し、自由文messageはshell境界へ渡さない。upload中のdriftも成功扱いせず即時に可視化する。
 - **教訓**: emergency deployもrepository snapshotのCAS外に置かない。自動Publisherが動くrepositoryでは「数分前に最新だったlocal main」をdeploy根拠にせず、build直前とupload直前にremote refを再取得する。upload API自体にCASが無い場合はupload後もrefを確認し、driftを成功として報告しない。
+
+### LL-375: data-only Publisher と code CI の E2E 責務を分ける
+- **事象**: 直近30件のActions監査で8件が失敗し、うち5件はrunner終了、3件はPublisher停止に連鎖したHealth失敗だった。毎時Publisherはdata-only生成後にPR CIと同じ全Playwright suiteを実行し、`Verify generated data`中の`exit code 143`が繰り返された。失敗jobの再実行では同一snapshotが全工程成功した。
+- **根本原因**: data artifactの公開可否に必要なbrowser gateと、code変更を検証する全UI・interaction回帰を同じ毎時jobへ載せていた。runner終了自体はrepository codeで防げないが、毎時の長い検証時間が中断の影響範囲を広げた。HealthもPublisher成功後の即時確認がなく、scheduled runを待つ間は古い赤状態が残った。
+- **対策**: Publisherはsecret scan、両typecheck、全unit、Pages parity buildを維持し、E2Eだけを生成Home、記事detail、metrics、archive、404の専用suiteへ限定する。PR CIは従来どおり全Playwright suiteを実行する。Worker Healthは毎時scheduleに加えて成功したPublisher完了後にも実行し、Publisher失敗時の重複したHealth failureは作らない。アプリ側Automationはread-only監視に限定する。
+- **教訓**: 自動生成dataの品質gateとcode変更の全面回帰は別の責務である。data-only publisherでは生成artifactが壊し得るsurfaceをbrowserで必ず確認しつつ、無関係なUI interaction全件を毎時重複実行しない。provider側のrunner終了は再実行で切り分け、成功後のHealth確認をworkflow lifecycleへ接続して回復状態を手動確認に依存させない。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

@@ -88,6 +88,12 @@ describe("Cloudflare Worker deploy config", () => {
     expect(publisherWorkflow).toContain("id-token: write");
     expect(publisherWorkflow).not.toMatch(/wrangler\s+(?:pages\s+)?deploy/);
     expect(healthWorkflow).toContain('cron: "40 * * * *"');
+    expect(healthWorkflow).toContain("workflow_run:");
+    expect(healthWorkflow).toContain('workflows: ["Publisher"]');
+    expect(healthWorkflow).toContain("types: [completed]");
+    expect(healthWorkflow).toContain(
+      "github.event.workflow_run.conclusion == 'success'",
+    );
     expect(healthWorkflow).toContain("npm run health:prod");
     expect(packageJson).toContain('"health:prod": "node scripts/check-production-health.mjs"');
   });
@@ -99,18 +105,30 @@ describe("Cloudflare Worker deploy config", () => {
     };
     const astroBuildRunner = readConfig("web/scripts/build-astro.mjs");
     const unitStart = ciWorkflow.indexOf("\n  unit:\n");
+    const webBuildStart = ciWorkflow.indexOf("\n  web-build:\n");
     const e2eStart = ciWorkflow.indexOf("\n  e2e:\n");
     expect(unitStart).toBeGreaterThan(-1);
+    expect(webBuildStart).toBeGreaterThan(unitStart);
     expect(e2eStart).toBeGreaterThan(-1);
 
     const unitTimeout = ciWorkflow
-      .slice(unitStart, e2eStart)
+      .slice(unitStart, webBuildStart)
+      .match(/timeout-minutes:\s*(\d+)/);
+    const webBuildTimeout = ciWorkflow
+      .slice(webBuildStart, e2eStart)
       .match(/timeout-minutes:\s*(\d+)/);
     const e2eTimeout = ciWorkflow
       .slice(e2eStart)
       .match(/timeout-minutes:\s*(\d+)/);
     expect(Number(unitTimeout?.[1])).toBeGreaterThanOrEqual(45);
+    expect(Number(webBuildTimeout?.[1])).toBeGreaterThanOrEqual(45);
     expect(Number(e2eTimeout?.[1])).toBeGreaterThanOrEqual(45);
+    expect(ciWorkflow.slice(unitStart, webBuildStart)).not.toContain(
+      "npm run build:web",
+    );
+    expect(ciWorkflow.slice(webBuildStart, e2eStart)).toContain(
+      "npm run build:web",
+    );
     expect(webPackage.scripts?.build).toContain("node scripts/build-astro.mjs");
     expect(webPackage.scripts?.build).toContain("pagefind --site dist");
     expect(astroBuildRunner).toContain('spawn(command, ["build", "--silent"]');
@@ -142,6 +160,10 @@ describe("Cloudflare Worker deploy config", () => {
 
   it("reuses the verified Web build during Publisher and pre-push E2E without changing default E2E", () => {
     const publisherWorkflow = readConfig(".github/workflows/publisher.yml");
+    const ciWorkflow = readConfig(".github/workflows/ci.yml");
+    const packageJson = JSON.parse(readConfig("package.json")) as {
+      scripts?: Record<string, string>;
+    };
     const prePush = readConfig("scripts/git-hooks/pre-push");
     const defaultCommand = playwrightWebServerCommand(false);
     const reuseCommand = playwrightWebServerCommand(true);
@@ -153,8 +175,14 @@ describe("Cloudflare Worker deploy config", () => {
     );
     expect(publisherWorkflow).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
     expect(publisherWorkflow).toMatch(
-      /npm run build:web[\s\S]*npm run test:e2e/,
+      /npm run build:web[\s\S]*npm run test:e2e:publisher/,
     );
+    expect(publisherWorkflow).not.toMatch(/\bnpm run test:e2e\s*$/m);
+    expect(packageJson.scripts?.["test:e2e:publisher"]).toBe(
+      "playwright test tests/e2e/publisher.spec.ts",
+    );
+    expect(ciWorkflow).toMatch(/\brun: npm run test:e2e\s*$/m);
+    expect(ciWorkflow).not.toContain("test:e2e:publisher");
     expect(prePush).toContain("web_build_ready=0");
     expect(prePush).toMatch(/npm --prefix "\$ROOT" run build:web[\s\S]*web_build_ready=1/);
     expect(prePush).toContain("env PLAYWRIGHT_REUSE_BUILD=1 npm --prefix");
@@ -176,6 +204,7 @@ describe("Cloudflare Worker deploy config", () => {
     expect(e2eIndex).toBeGreaterThan(downloadIndex);
     expect(ciWorkflow).toContain("uses: actions/upload-artifact@v4");
     expect(ciWorkflow).toContain("uses: actions/download-artifact@v4");
+    expect(ciWorkflow).toContain("needs: [unit, web-build]");
     expect(ciWorkflow).toContain(
       "name: web-dist-${{ github.run_id }}",
     );

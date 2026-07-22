@@ -3,6 +3,9 @@ name: Worker Health
 on:
   schedule:
     - cron: "40 * * * *"
+  workflow_run:
+    workflows: ["Publisher"]
+    types: [completed]
   workflow_dispatch:
 
 concurrency:
@@ -15,6 +18,7 @@ permissions:
 jobs:
   production-health:
     name: production health check
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

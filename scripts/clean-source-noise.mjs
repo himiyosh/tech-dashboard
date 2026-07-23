@@ -36,6 +36,7 @@ import {
   buildArchiveIndexFile,
   buildArchiveMonthFile,
   mergeArchiveEntries,
+  reconcileArchiveMonths,
   synchronizeArchiveTagsFromLive,
 } from "../harness/publishers/archive-core.ts";
 import { buildStatsPayload } from "../harness/publishers/stats-core.ts";
@@ -1030,22 +1031,63 @@ export async function main(argv = process.argv.slice(2)) {
   const dedupedLive = liveDedupe.entries.map(stripBodies);
   const liveDeduped = liveEntries.length - dedupedLive.length;
 
-  const archiveMonths = [];
-  const archiveStatsEntries = [];
+  const archiveInputs = [];
   let archiveDeduped = 0;
   for (const fileName of readdirSync(archiveDir).filter((name) => /^\d{4}-\d{2}\.json$/.test(name)).sort()) {
     const monthPath = join(archiveDir, fileName);
     const month = validateArchiveMonthInputPayload(readJson(monthPath), monthPath);
     const migration = migrateArchiveEntries(fileName, month.entries, referenceAt, report);
-    const tagSync = synchronizeArchiveTagsFromLive(migration.entries, dedupedLive);
-    const deduped = tagSync.entries;
+    archiveDeduped += migration.keptCount - migration.entries.length;
+    archiveInputs.push({
+      month: fileName.slice(0, 7),
+      path: monthPath,
+      currentPayload: month,
+      entries: migration.entries,
+    });
+  }
+
+  const reconciledArchive = reconcileArchiveMonths(
+    archiveInputs.map(({ month, entries }) => ({ month, entries })),
+  );
+  const preparedArchiveCount = archiveInputs.reduce(
+    (sum, month) => sum + month.entries.length,
+    0,
+  );
+  const reconciledArchiveCount = [...reconciledArchive.values()].reduce(
+    (sum, entries) => sum + entries.length,
+    0,
+  );
+  archiveDeduped += preparedArchiveCount - reconciledArchiveCount;
+
+  const archiveMonths = [];
+  const archiveStatsEntries = [];
+  const archiveInputsByMonth = new Map(
+    archiveInputs.map((month) => [month.month, month]),
+  );
+  const archiveMonthNames = new Set([
+    ...archiveInputsByMonth.keys(),
+    ...reconciledArchive.keys(),
+  ]);
+  for (const monthName of [...archiveMonthNames].sort()) {
+    const current = archiveInputsByMonth.get(monthName);
+    const monthPath = current?.path ?? join(archiveDir, `${monthName}.json`);
+    const tagSync = synchronizeArchiveTagsFromLive(
+      reconciledArchive.get(monthName) ?? [],
+      dedupedLive,
+    );
     report.archiveTagsSynchronized += tagSync.changed;
-    archiveDeduped += migration.keptCount - deduped.length;
-    archiveStatsEntries.push(...deduped);
+    const entries = tagSync.entries;
+    archiveStatsEntries.push(...entries);
+    const currentPayload = current?.currentPayload ?? {
+      generatedAt: referenceAt,
+      month: monthName,
+      count: 0,
+      entries: [],
+    };
     const monthPayload = buildMigrationArchiveMonthPayload(
-      month,
-      fileName.slice(0, 7),
-      deduped,
+      currentPayload,
+      monthName,
+      entries,
       referenceAt,
     );
     validateArchiveMonthPayload(monthPayload, monthPath);

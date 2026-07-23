@@ -719,6 +719,28 @@ describe("data artifact サイズ予算", () => {
       expect(duplicates).toEqual([]);
     });
 
+    it("archive 全月で canonical URL は 1 つの月にだけ属する", () => {
+      const seen = new Map<string, string>();
+      const duplicates: string[] = [];
+      for (const entry of archiveEntries) {
+        const url = String(entry.url ?? "");
+        const key = canonicalUrlKey(url) ?? url;
+        const fileName = String(
+          (entry as { archiveFile?: unknown }).archiveFile ?? "?",
+        );
+        const prior = seen.get(key);
+        if (prior && prior !== fileName) {
+          duplicates.push(`${prior}<->${fileName}:${key}`);
+        } else {
+          seen.set(key, fileName);
+        }
+      }
+      expect(
+        duplicates,
+        "same canonical archive entry found in multiple months; run `npm run noise:clean -- --apply`",
+      ).toEqual([]);
+    });
+
   it("archive warm/cold entries are bilingual; compact summary-free rows must remain hot", () => {
     const invalid = archiveEntries
       .filter((entry) => {

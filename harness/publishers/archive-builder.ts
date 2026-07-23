@@ -29,7 +29,8 @@ import {
   buildArchiveIndexFile,
   buildArchiveMonthFile,
   groupArchiveEntries,
-  mergeArchiveEntries,
+  reconcileArchiveMonths,
+  synchronizeArchiveTagsFromLive,
   type ArchiveBuildStats,
   type ArchiveIndexFile,
   type ArchiveMonthFile,
@@ -52,15 +53,45 @@ export async function writeArchive(
   const archiveDir = join(dataDir, "archive");
   await mkdir(archiveDir, { recursive: true });
 
-  const { byMonth, stats } = groupArchiveEntries(entries);
+  const { byMonth, stats } = groupArchiveEntries(entries, { includeHot: true });
 
   const generatedAt = new Date().toISOString();
+  const existingFileNames = (await readdir(archiveDir)).filter(
+    (fileName) => /^\d{4}-\d{2}\.json$/.test(fileName),
+  );
+  const existingMonths = await Promise.all(
+    existingFileNames.map(async (fileName) => {
+      const month = fileName.slice(0, 7);
+      const payload = await readMonthFile(join(archiveDir, fileName));
+      return payload ? { month, entries: payload.entries } : null;
+    }),
+  );
+  const reconciledByMonth = reconcileArchiveMonths([
+    ...existingMonths.filter(
+      (month): month is { month: string; entries: NormalizedEntry[] } =>
+        month !== null,
+    ),
+    ...[...byMonth.entries()].map(([month, incoming]) => ({
+      month,
+      entries: incoming,
+    })),
+  ]);
+  const months = new Set([
+    ...existingFileNames.map((fileName) => fileName.slice(0, 7)),
+    ...reconciledByMonth.keys(),
+  ]);
 
-  for (const [month, incoming] of byMonth) {
+  for (const month of months) {
     const path = join(archiveDir, `${month}.json`);
-    const existing = await readMonthFile(path);
-    const merged = mergeArchiveEntries(existing?.entries ?? [], incoming);
-    const payload = buildArchiveMonthFile(month, merged, generatedAt);
+    const synchronized = synchronizeArchiveTagsFromLive(
+      reconciledByMonth.get(month) ?? [],
+      entries,
+    );
+    const payload = buildArchiveMonthFile(
+      month,
+      synchronized.entries,
+      generatedAt,
+    );
     await writeFile(path, JSON.stringify(payload, null, 2) + "\n", "utf8");
   }
 

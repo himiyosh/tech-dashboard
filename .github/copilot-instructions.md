@@ -2534,6 +2534,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: live entryに加えてarchive warm entryもdetail static pathへ含める。cold cardはcanonical元記事URLへ直接遷移し、`元記事 / Original article`とexternal属性を表示する。E2Eはlive外warm routeのHTTP成功とcold cardのsource destinationを実artifactから選んで検証する。
 - **教訓**: 「閲覧可能」はDOMにcardを描画できることではなく、操作後の遷移先まで到達できることを意味する。retention tierごとのaddressabilityをroute生成、link label、target/rel、404回帰へ一貫して反映する。
 
+### LL-382: Archive dedupeは月内だけでなく全月をflattenしてから再bucketする
+- **事象**: 6,777 archive行に6,742 unique IDしかなく、同一canonical記事がpublishedAt補正前後の2〜3月へ残っていた。月別mergeは各file内でしか重複排除せず、旧月copyを削除できなかった。
+- **根本原因**: archive writerがincoming entryの最終月だけを更新し、同じcanonical URLが以前属していた月をglobalにreconcileしていなかった。月ごとのdedupe gateは全て通るため、All-time・月別・statsが37行分重複加算された。
+- **対策**: shared archive coreで全月entryをflattenし、canonical winnerを1件選び、その最終publishedAt月へ再bucketする。winner選定では明示された公開日を`publishedAt === collectedAt`のcollection fallbackより優先する。Node Publisher、hotを含むlocal builder、transaction migrationが同じhelperを使い、global merge後にlive tagsを再同期する。data schemaはcross-month canonical uniquenessをfail-closedに検証し、既存artifactを6,740 unique行へ修復する。
+- **教訓**: bucket keyが後から補正され得るartifactでは、bucket内mergeだけではstale copyを除去できない。全bucketを同じimmutable snapshotから読み、timestampのprovenanceを比較してglobal winnerを決めてからbucketを再構築し、tag同期・index・statsもその最終集合から生成する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

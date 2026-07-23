@@ -1856,6 +1856,18 @@ test.describe("TECH Dashboard smoke", () => {
       ),
     ).toHaveCount(0);
     await expect(page.locator('article.entry-detail a[target="_blank"]')).toHaveCount(1);
+    const adjacentHrefs = await page.locator(".ed-pn-card").evaluateAll((links) =>
+      links.map((link) => link.getAttribute("href")).filter(Boolean),
+    );
+    const relatedHrefs = await page.locator(".ed-rel-card").evaluateAll((links) =>
+      links.map((link) => link.getAttribute("href")).filter(Boolean),
+    );
+    for (const adjacentHref of adjacentHrefs) {
+      expect(
+        relatedHrefs,
+        "previous/next articles are not repeated in related cards",
+      ).not.toContain(adjacentHref);
+    }
 
     if (hasProse) {
       expect(bodyState).toBe("ready");
@@ -2118,6 +2130,52 @@ test.describe("TECH Dashboard smoke", () => {
       expect(geometry.copyHeight).toBeGreaterThanOrEqual(44);
       expect(geometry.overflow).toBeLessThanOrEqual(0);
       await expect(page.locator(".ed-freshness, .rail-freshness")).toHaveCount(0);
+
+      if (width === 390) {
+        await page.evaluate(() => window.scrollTo({ top: 900, behavior: "auto" }));
+        const fab = page.locator("#ed-fab");
+        await expect(fab).toHaveClass(/show/);
+        await expect
+          .poll(() =>
+            page.evaluate(() => {
+              const fab = document.querySelector<HTMLElement>("#ed-fab");
+              const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
+              if (!fab || !tabbar) return Number.NEGATIVE_INFINITY;
+              return tabbar.getBoundingClientRect().top - fab.getBoundingClientRect().bottom;
+            }),
+          )
+          .toBeGreaterThanOrEqual(8);
+        const fixedGeometry = await page.evaluate(() => {
+          const fab = document.querySelector<HTMLElement>("#ed-fab");
+          const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
+          if (!fab || !tabbar) return null;
+          const fabRect = fab.getBoundingClientRect();
+          const tabbarRect = tabbar.getBoundingClientRect();
+          const hit = document.elementFromPoint(
+            fabRect.left + fabRect.width / 2,
+            fabRect.top + fabRect.height / 2,
+          );
+          return {
+            fab: {
+              top: fabRect.top,
+              right: fabRect.right,
+              bottom: fabRect.bottom,
+              left: fabRect.left,
+              width: fabRect.width,
+              height: fabRect.height,
+            },
+            tabbarTop: tabbarRect.top,
+            hitIsFab: hit === fab || fab.contains(hit),
+          };
+        });
+        expect(fixedGeometry).not.toBeNull();
+        expect(fixedGeometry!.fab.width).toBeGreaterThanOrEqual(44);
+        expect(fixedGeometry!.fab.height).toBeGreaterThanOrEqual(44);
+        expect(fixedGeometry!.fab.bottom).toBeLessThanOrEqual(
+          fixedGeometry!.tabbarTop - 8,
+        );
+        expect(fixedGeometry!.hitIsFab).toBe(true);
+      }
     }
   });
 
@@ -4149,13 +4207,25 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("#archive-heading")).toBeVisible();
     await expect(page.locator(".page-hero-metric").filter({ hasText: "All time" })).toHaveCount(0);
     await expect(page.locator('[data-metric-scope="timeline-live"]')).toContainText("Live index");
+    const archivePopulations = await page.evaluate(() => {
+      const metricValue = (scope: string) =>
+        Number(document.querySelector(`[data-metric-scope="${scope}"] strong`)?.textContent?.trim());
+      return {
+        browsable: metricValue("archive-browsable"),
+        stored: metricValue("archive-stored"),
+      };
+    });
+    expect(archivePopulations.browsable).toBeGreaterThan(0);
+    expect(archivePopulations.stored).toBeGreaterThan(archivePopulations.browsable);
     await expect(page.locator(".archive-spotlight").filter({ hasText: "Storage mix" })).toContainText(
-      "warm = 個別記事URLを保持 · cold = 月次Archive内のみ",
+      "hot = live収録時点の統計用snapshot",
     );
     const peakLabels = await page.locator("a.month-card").evaluateAll((cards) =>
       cards.map((card) => ({
         peakPercent: Number(card.getAttribute("data-peak-percent")),
         visualBarWidth: Number(card.getAttribute("data-visual-bar-width")),
+        browsable: Number(card.getAttribute("data-browsable-count")),
+        stored: Number(card.getAttribute("data-stored-count")),
         label: card.querySelector(".month-share")?.textContent?.trim() ?? "",
       })),
     );
@@ -4167,6 +4237,8 @@ test.describe("TECH Dashboard smoke", () => {
       expect(metric.label).toBe(expectedLabel);
       expect(metric.visualBarWidth).toBeGreaterThanOrEqual(6);
       expect(metric.visualBarWidth).toBeLessThanOrEqual(100);
+      expect(metric.browsable).toBeGreaterThan(0);
+      expect(metric.stored).toBeGreaterThanOrEqual(metric.browsable);
     }
     expect(
       peakLabels.some((metric) => metric.peakPercent < 6 && metric.visualBarWidth === 6),
@@ -4175,15 +4247,94 @@ test.describe("TECH Dashboard smoke", () => {
     const firstMonth = page.locator("a.month-card").first();
     await expect(firstMonth).toBeVisible();
     await expect(firstMonth.locator(".month-share")).toContainText(/% of peak/);
-    await expect(firstMonth.locator(".month-category")).toContainText(/Top category.*\d+ entries/);
+    await expect(firstMonth.locator(".month-category")).toContainText(
+      /Top category.*\d+ browsable/,
+    );
     await firstMonth.click();
     await expect(page).toHaveURL(/\/archive\/\d{4}-\d{2}\/?$/);
     await expect(page.locator("#archive-month-heading")).toBeVisible();
+    const monthPopulations = await page.evaluate(() => {
+      const metricValue = (scope: string) =>
+        Number(document.querySelector(`[data-metric-scope="${scope}"] strong`)?.textContent?.trim());
+      return {
+        browsable: metricValue("month-browsable-count"),
+        stored: metricValue("month-stored-count"),
+      };
+    });
+    expect(monthPopulations.browsable).toBeGreaterThan(0);
+    expect(monthPopulations.stored).toBeGreaterThanOrEqual(monthPopulations.browsable);
     await expect(page.locator('[data-metric-scope="month-top-category"]')).toContainText("Top category");
     await expect(page.locator('[data-metric-scope="month-top-source"]')).toContainText("Top source");
     await expect(page.locator(".page-hero-metric").filter({ hasText: /^Warm/ })).toHaveCount(0);
     await expect(page.locator(".month-rank-scope")).toHaveCount(2);
-    await expect(page.locator(".category-strip-label .i18n-ja")).toHaveText("月内カテゴリ内訳");
+    await expect(page.locator(".month-rank-scope").first()).toHaveText(
+      "Browsable entries in this month",
+    );
+    await expect(page.locator(".category-strip-label .i18n-ja")).toHaveText(
+      "閲覧可能記事のカテゴリ内訳",
+    );
+  });
+
+  test("archive warm rows keep detail routes while cold rows link to the source", async ({
+    page,
+  }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string }>;
+    };
+    const liveIds = new Set(index.entries.map((entry) => entry.id));
+    const archiveIndex = JSON.parse(
+      readFileSync("data/archive/_index.json", "utf8"),
+    ) as { months: string[] };
+    let warmOnly: { id: string; month: string } | null = null;
+    let cold: { id: string; month: string; url: string } | null = null;
+
+    for (const month of archiveIndex.months) {
+      const archive = JSON.parse(
+        readFileSync(`data/archive/${month}.json`, "utf8"),
+      ) as {
+        entries: Array<{
+          id: string;
+          url: string;
+          archiveTier?: string;
+        }>;
+      };
+      if (!warmOnly) {
+        const entry = archive.entries.find(
+          (candidate) =>
+            candidate.archiveTier === "warm" && !liveIds.has(candidate.id),
+        );
+        if (entry) warmOnly = { id: entry.id, month };
+      }
+      if (!cold) {
+        const entry = archive.entries.find(
+          (candidate) => candidate.archiveTier === "cold",
+        );
+        if (entry) cold = { id: entry.id, month, url: entry.url };
+      }
+      if (warmOnly && cold) break;
+    }
+
+    expect(warmOnly, "fixture includes a warm entry outside the live index").not.toBeNull();
+    expect(cold, "fixture includes a cold archive entry").not.toBeNull();
+
+    const warmResponse = await page.goto(`/e/${warmOnly!.id}/`);
+    expect(warmResponse?.status()).toBeLessThan(400);
+    await expect(page.locator("article.entry-detail")).toBeVisible();
+
+    await page.goto(`/archive/${cold!.month}/`);
+    const coldCard = page.locator(
+      `article.card[data-entry-id="${cold!.id}"]`,
+    );
+    await expect(coldCard).toHaveAttribute("data-detail-destination", "source");
+    await expect(coldCard.locator("h3.title > a")).toHaveAttribute(
+      "href",
+      cold!.url,
+    );
+    await expect(coldCard.locator("h3.title > a")).toHaveAttribute(
+      "target",
+      "_blank",
+    );
+    await expect(coldCard.locator("a.url .i18n-ja")).toHaveText("元記事");
   });
 
   test("navigation highlights sections without marking ancestor links as the current page", async ({ page }) => {

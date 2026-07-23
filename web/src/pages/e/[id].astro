@@ -28,13 +28,23 @@ import {
   type NormalizedEntry,
 } from "../../lib/data.ts";
 import { articleBodyState, bodyForEntry } from "../../lib/bodies.ts";
+import { ARCHIVE_WARM_ENTRIES } from "../../lib/archive.ts";
 import { sourceFaviconUrl, sourceHost } from "../../lib/favicon.ts";
 import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../../lib/reaction-copy.ts";
-import { SOURCE_META, sourceAuthority, sourceLabel } from "../../lib/source-meta.ts";
+import {
+  SOURCE_META,
+  canonicalSourceUrl,
+  sourceAuthority,
+  sourceLabel,
+} from "../../lib/source-meta.ts";
 import { normalizeTagKey } from "../../lib/tag-normalize.ts";
 
 export function getStaticPaths() {
-  return ALL_ENTRIES.map((e) => ({
+  const entriesById = new Map(ALL_ENTRIES.map((entry) => [entry.id, entry]));
+  for (const entry of ARCHIVE_WARM_ENTRIES) {
+    if (!entriesById.has(entry.id)) entriesById.set(entry.id, entry);
+  }
+  return [...entriesById.values()].map((e) => ({
     params: { id: e.id },
     props: { entry: e },
   }));
@@ -83,7 +93,10 @@ const laneName = entryIsArxiv ? "arXiv" : catName;
 const laneEmoji = entryIsArxiv ? "📄" : catEmoji;
 
 const srcMeta = SOURCE_META.find((s) => s.id === entry.source);
-const srcDisplay = sourceLabel(entry.source);
+const sourceUrl = canonicalSourceUrl(entry.url);
+const collectionSourceDisplay = sourceLabel(entry.source);
+const srcDisplay = sourceLabel(entry.source, entry.url);
+const sourceRedirected = sourceUrl !== entry.url;
 const srcTier = srcMeta?.tier;
 const srcAuthority = sourceAuthority(entry.source, entry.sourceType);
 const srcAuthorityBadgeClass = ["badge", "authority", srcAuthority.kind].join(" ");
@@ -91,7 +104,8 @@ const srcAuthorityTitle = `${srcAuthority.en} source (${srcAuthority.ja})${srcTi
 const srcAvgImp = sourceAvgImportance(entry, 30);
 const srcAvgTitle = `Average importance of this source's last 30 listed entries: ${srcAvgImp.toFixed(1)} out of 3 (1=Info, 2=Medium, 3=High)`;
 
-const entryFavicon = sourceFaviconUrl(entry.url);
+const entryFavicon = sourceFaviconUrl(sourceUrl);
+const collectionFavicon = sourceFaviconUrl(entry.url);
 
 function splitJaPoints(s: string): string[] {
   if (!s) return [];
@@ -123,9 +137,14 @@ const now = new Date();
 const rel = relativeTime(entry.publishedAt, now);
 const sameSource = entriesBySource(entry, 5);
 const sameTag = entriesByTag(entry, 5);
-const sameCategory = relatedEntries(entry, 6);
 const tags = trendingTags(12);
 const { prev, next } = adjacentInCategory(entry);
+const adjacentIds = new Set(
+  [prev?.id, next?.id].filter((id): id is string => Boolean(id)),
+);
+const sameCategory = relatedEntries(entry, 8)
+  .filter((candidate) => !adjacentIds.has(candidate.id))
+  .slice(0, 6);
 const categoryStanding = categoryImportanceStanding(entry);
 const localizedTitles = (item: NormalizedEntry) => ({
   ja: titleForLangWithFallback(item, "ja"),
@@ -227,15 +246,15 @@ const summaryLanguageScope = hasGeneratedSummaryJa && hasGeneratedSummaryEn
     ? "ja-only"
     : "en-only";
 const generationDisclosureJa = hasGeneratedSummaryJa && hasGeneratedSummaryEn
-  ? `本ページの${hasRealBody ? "本文と要約" : "要約"}は AI による自動生成です。日本語版と英語版は言語ごとに独立して生成されるため、表現や詳しさが異なる場合があります。正確性は元記事 (${sourceHost(entry.url)}) をご確認ください。`
+  ? `本ページの${hasRealBody ? "本文と要約" : "要約"}は AI による自動生成です。日本語版と英語版は言語ごとに独立して生成されるため、表現や詳しさが異なる場合があります。正確性は元記事 (${sourceHost(sourceUrl)}) をご確認ください。`
   : hasGeneratedSummaryJa
-    ? `現在利用できる AI 要約は日本語版のみです。英語要約は準備中で、英語表示では日本語要約を翻訳せず表示します。${hasRealBody ? "本文も AI による自動生成です。" : ""} 正確性は元記事 (${sourceHost(entry.url)}) をご確認ください。`
-    : `日本語要約は準備中です。現在は AI 生成された英語要約を翻訳せず表示しています。${hasRealBody ? "本文も AI による自動生成です。" : ""} 正確性は元記事 (${sourceHost(entry.url)}) をご確認ください。`;
+    ? `現在利用できる AI 要約は日本語版のみです。英語要約は準備中で、英語表示では日本語要約を翻訳せず表示します。${hasRealBody ? "本文も AI による自動生成です。" : ""} 正確性は元記事 (${sourceHost(sourceUrl)}) をご確認ください。`
+    : `日本語要約は準備中です。現在は AI 生成された英語要約を翻訳せず表示しています。${hasRealBody ? "本文も AI による自動生成です。" : ""} 正確性は元記事 (${sourceHost(sourceUrl)}) をご確認ください。`;
 const generationDisclosureEn = hasGeneratedSummaryJa && hasGeneratedSummaryEn
-  ? `The ${hasRealBody ? "body and summaries are" : "summaries are"} AI-generated independently for each language, so wording and detail may differ. Verify accuracy at the original source (${sourceHost(entry.url)}).`
+  ? `The ${hasRealBody ? "body and summaries are" : "summaries are"} AI-generated independently for each language, so wording and detail may differ. Verify accuracy at the original source (${sourceHost(sourceUrl)}).`
   : hasGeneratedSummaryJa
-    ? `The English summary is not yet available. The AI-generated Japanese summary is shown without translation.${hasRealBody ? " The body is also AI-generated." : ""} Verify accuracy at the original source (${sourceHost(entry.url)}).`
-    : `Only the AI-generated English summary is currently available.${hasRealBody ? " The body is also AI-generated." : ""} Verify accuracy at the original source (${sourceHost(entry.url)}).`;
+    ? `The English summary is not yet available. The AI-generated Japanese summary is shown without translation.${hasRealBody ? " The body is also AI-generated." : ""} Verify accuracy at the original source (${sourceHost(sourceUrl)}).`
+    : `Only the AI-generated English summary is currently available.${hasRealBody ? " The body is also AI-generated." : ""} Verify accuracy at the original source (${sourceHost(sourceUrl)}).`;
 
 function fmtDate(iso: string): string {
   try {
@@ -265,7 +284,7 @@ const jsonLd = {
   datePublished: entry.publishedAt,
   inLanguage: effectiveTitleLang === "ja" ? "ja-JP" : "en",
   image: ogImage || undefined,
-  author: { "@type": "Organization", name: srcDisplay, url: entry.url },
+  author: { "@type": "Organization", name: srcDisplay, url: sourceUrl },
   publisher: { "@type": "Organization", name: "TECH Dashboard", url: SITE_URL },
   mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
   articleSection: catName,
@@ -301,7 +320,7 @@ const jsonLd = {
     {entry.tags.length > 0 && <meta data-pagefind-meta="tags[content]" content={entry.tags.join(" ")} />}
     {indexedTagKeys.map((tag) => <meta data-pagefind-filter="tag[content]" content={tag} />)}
     <meta data-pagefind-filter="category[content]" content={catName} />
-    <meta data-pagefind-filter="source[content]" content={sourceLabel(entry.source)} />
+    <meta data-pagefind-filter="source[content]" content={srcDisplay} />
     <meta data-pagefind-filter="sourceType[content]" content={entry.sourceType} />
     <meta data-pagefind-filter="authority[content]" content={srcAuthority.kind} />
     <meta data-pagefind-filter="importance[content]" content={String(entry.importance)} />
@@ -404,7 +423,7 @@ const jsonLd = {
               <span class="i18n-en" lang="en">{srcAuthority.en}</span>
             </span>
             <span class="sep">·</span>
-            <span class="ed-host">{sourceHost(entry.url)}</span>
+            <span class="ed-host">{sourceHost(sourceUrl)}</span>
             <span class="sep">·</span>
             <time class="ed-published" datetime={entry.publishedAt}>
               <span class="mono">{fmtDate(entry.publishedAt)}</span>
@@ -417,11 +436,11 @@ const jsonLd = {
             </>)}
           </div>
           <div class="ed-action-strip">
-            <a class="ed-header-cta" href={entry.url} target="_blank" rel="noopener nofollow">
+            <a class="ed-header-cta" href={sourceUrl} target="_blank" rel="noopener nofollow">
               <span class="ed-header-cta-copy">
                 <span class="i18n-ja">元記事を読む</span>
                 <span class="i18n-en" lang="en">Read original article</span>
-                <small>{sourceHost(entry.url)}</small>
+                <small>{sourceHost(sourceUrl)}</small>
               </span>
               <span aria-hidden="true">↗</span>
             </a>
@@ -653,6 +672,15 @@ const jsonLd = {
               </span>
             </span>
           </span></li>
+          {sourceRedirected && (
+            <li data-collection-source>
+              <span class="k">
+                <span class="i18n-ja">収集元feed</span>
+                <span class="i18n-en" lang="en">Collected via</span>
+              </span>
+              <span class="v">{collectionSourceDisplay}</span>
+            </li>
+          )}
           <li>
             <span class="k">
               <span class="i18n-ja">直近30件の平均重要度</span>
@@ -825,7 +853,7 @@ const jsonLd = {
                       </span>
                     </div>
                     <div class="ed-rel-meta">
-                      <span class="ed-rel-src">{sourceLabel(r.source)}</span>
+                      <span class="ed-rel-src">{sourceLabel(r.source, r.url)}</span>
                       <span class="ed-rel-time" data-relative-time data-datetime={r.publishedAt}>
                         {relativeTime(r.publishedAt, now)}
                       </span>
@@ -904,9 +932,9 @@ const jsonLd = {
       {sameSource.length > 0 && (
         <div class="side-card">
           <div class="rail-title">
-             {entryFavicon && <img class="rail-fav" src={entryFavicon} alt="" width="14" height="14" referrerpolicy="no-referrer" onerror="this.style.display='none'" />}
-            <span class="i18n-ja">{srcDisplay} の最新</span>
-            <span class="i18n-en" lang="en">Latest from {srcDisplay}</span>
+             {collectionFavicon && <img class="rail-fav" src={collectionFavicon} alt="" width="14" height="14" referrerpolicy="no-referrer" onerror="this.style.display='none'" />}
+            <span class="i18n-ja">{collectionSourceDisplay} の最新</span>
+            <span class="i18n-en" lang="en">Latest from {collectionSourceDisplay}</span>
           </div>
           <ul class="rail-list">
             {sameSource.map((r) => {
@@ -1736,7 +1764,7 @@ const jsonLd = {
     box-shadow: 0 8px 20px -6px rgba(0,0,0,0.5), 0 0 0 1px color-mix(in srgb, var(--cat-color) 60%, transparent);
     opacity: 0; pointer-events: none;
     transform: translateY(8px);
-    transition: all 0.2s ease;
+    transition: opacity 0.2s ease, transform 0.2s ease;
     z-index: 50;
   }
   .ed-fab.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
@@ -1778,6 +1806,10 @@ const jsonLd = {
     .ed-fab { right: 14px; bottom: 14px; }
   }
   @media (max-width: 720px) {
+    .ed-fab {
+      bottom: calc(68px + env(safe-area-inset-bottom));
+    }
+
     .ed-action-strip {
       display: grid;
       grid-template-columns: minmax(0, 1fr);

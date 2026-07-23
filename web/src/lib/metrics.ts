@@ -1,4 +1,8 @@
-import { ARCHIVE_MONTHS, ARCHIVE_TOTAL_ENTRIES } from "./archive.ts";
+import {
+  ARCHIVE_BROWSABLE_ENTRIES,
+  ARCHIVE_MONTHS,
+  ARCHIVE_STORED_ENTRIES,
+} from "./archive.ts";
 import { dailyDisplayCount, dailyEntryCount } from "./daily-summary.ts";
 import {
   ALL_ENTRIES,
@@ -27,6 +31,7 @@ export interface DashboardMetrics {
   sourceCoverageLabel: string;
   totalCategories: number;
   archiveEntries: number;
+  archiveBrowsableEntries: number;
   archiveMonths: number;
   last24hEntries: number;
   last7dEntries: number;
@@ -104,18 +109,17 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
     // sum of per-category counts. Use this for any bare "Live entries" headline
     // so taxonomy surfaces never contradict the categories they list.
     timelineEntries: MAIN_TIMELINE_ENTRIES.length,
-    // All-time must be >= the live index size (LL-110 invariant). Summary-first
-    // (LL-112) made nearly every entry publishable, so the live index can now
-    // exceed the archive-derived total (the archive undercounts un-aged recent
-    // entries). Clamp to max so the invariant holds.
-    allTimeEntries: Math.max(ARCHIVE_TOTAL_ENTRIES, ALL_ENTRIES.length),
+    // Raw archive rows include the hot live-index mirror and therefore preserve
+    // the full history. Keep the max guard for bootstrap states with no archive.
+    allTimeEntries: Math.max(ARCHIVE_STORED_ENTRIES, ALL_ENTRIES.length),
     todayEntries: todayCount,
     majorEntries: PUBLISHABLE_ENTRIES.filter((entry) => entry.importance === 3).length,
     activeSourceCount,
     totalSourceCount,
     sourceCoverageLabel,
     totalCategories: CATEGORY_META.length,
-    archiveEntries: ARCHIVE_TOTAL_ENTRIES,
+    archiveEntries: ARCHIVE_STORED_ENTRIES,
+    archiveBrowsableEntries: ARCHIVE_BROWSABLE_ENTRIES,
     archiveMonths: ARCHIVE_MONTHS.length,
     last24hEntries: countSince(24 * 3600_000),
     last7dEntries: countSince(7 * 86_400_000),

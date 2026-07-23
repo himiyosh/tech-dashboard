@@ -60,6 +60,34 @@ export const SOURCE_META = [
 
 const SOURCE_META_BY_ID = new Map(SOURCE_META.map((s) => [s.id, s] as const));
 
+interface SourcePresentationOverride {
+  label: string;
+  url: string;
+}
+
+const SOURCE_PRESENTATION_OVERRIDES = new Map<string, SourcePresentationOverride>([
+  [
+    "https://deepmind.google/blog/accelerating-the-frontiers-of-scientific-discovery-googles-40m-commitment-to-the-genesis-mission",
+    {
+      label: "Google Cloud Blog",
+      url: "https://cloud.google.com/blog/topics/public-sector/accelerating-frontiers-of-scientific-discovery-40-million-dollar-commitment-genesis-mission",
+    },
+  ],
+]);
+
+function sourceUrlKey(rawUrl: string): string {
+  try {
+    const url = new URL(rawUrl);
+    return `${url.origin}${url.pathname}`.replace(/\/+$/, "");
+  } catch {
+    return rawUrl.replace(/\/+$/, "");
+  }
+}
+
+function sourcePresentationOverride(url?: string): SourcePresentationOverride | null {
+  return url ? SOURCE_PRESENTATION_OVERRIDES.get(sourceUrlKey(url)) ?? null : null;
+}
+
 export type SourceAuthorityKind = "official" | "paper" | "community" | "news" | "aggregator" | "source";
 
 export interface SourceAuthority {
@@ -104,7 +132,9 @@ export function sourceAuthority(id: string, sourceType?: string): SourceAuthorit
  * slug: an unregistered id is title-cased (e.g. "qiita-mcp" -> "Qiita Mcp").
  * Single source of truth so cards, ticker, daily summary and the rail agree.
  */
-export function sourceLabel(id: string): string {
+export function sourceLabel(id: string, url?: string): string {
+  const override = sourcePresentationOverride(url);
+  if (override) return override.label;
   const name = SOURCE_META_BY_ID.get(id)?.displayName;
   if (name) return name.replace(/\s+(?:tag|feed)$/i, "");
   return id
@@ -112,6 +142,10 @@ export function sourceLabel(id: string): string {
     .filter(Boolean)
     .map((w) => w[0].toUpperCase() + w.slice(1))
     .join(" ");
+}
+
+export function canonicalSourceUrl(url: string): string {
+  return sourcePresentationOverride(url)?.url ?? url;
 }
 
 export function sourceAnchorId(id: string): string {

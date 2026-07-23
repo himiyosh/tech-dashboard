@@ -86,6 +86,10 @@ describe("Cloudflare Worker deploy config", () => {
     expect(publisherWorkflow).toContain("cancel-in-progress: false");
     expect(publisherWorkflow).toContain("contents: write");
     expect(publisherWorkflow).toContain("id-token: write");
+    expect(publisherWorkflow).toContain("runs-on: ubuntu-24.04-arm");
+    expect(publisherWorkflow).toMatch(
+      /test -n "\$\(git diff --cached --name-only\)"[\s\S]*npm run publisher:run -- --preflight[\s\S]*git commit -m/,
+    );
     expect(publisherWorkflow).not.toMatch(/wrangler\s+(?:pages\s+)?deploy/);
     expect(healthWorkflow).toContain('cron: "40 * * * *"');
     expect(healthWorkflow).toContain("workflow_run:");
@@ -123,6 +127,12 @@ describe("Cloudflare Worker deploy config", () => {
     expect(Number(unitTimeout?.[1])).toBeGreaterThanOrEqual(45);
     expect(Number(webBuildTimeout?.[1])).toBeGreaterThanOrEqual(45);
     expect(Number(e2eTimeout?.[1])).toBeGreaterThanOrEqual(45);
+    expect(ciWorkflow.slice(webBuildStart, e2eStart)).toContain(
+      "runs-on: ubuntu-24.04-arm",
+    );
+    expect(ciWorkflow.slice(e2eStart)).toContain(
+      "runs-on: ubuntu-24.04-arm",
+    );
     expect(ciWorkflow.slice(unitStart, webBuildStart)).not.toContain(
       "npm run build:web",
     );

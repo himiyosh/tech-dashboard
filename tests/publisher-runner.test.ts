@@ -13,6 +13,7 @@ import {
   GithubActionsOidcProvider,
   parsePublisherArgs,
   runPublisherCli,
+  verifyBridgePublisherContract,
 } from "../scripts/run-publisher.ts";
 import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../worker/src/publisher-contract.ts";
 import type { PublisherEnv } from "../worker/src/index.ts";
@@ -22,7 +23,7 @@ describe("GitHub Actions publisher runner", () => {
     expect(parsePublisherArgs([])).toEqual({
       ok: false,
       message:
-        "use exactly one of --apply, --dry-run, --check, or --flush <effects-file>",
+        "use exactly one of --apply, --dry-run, --check, --preflight, or --flush <effects-file>",
     });
     expect(parsePublisherArgs(["--apply", "--dry-run"]).ok).toBe(false);
     expect(parsePublisherArgs(["--unknown"]).ok).toBe(false);
@@ -31,11 +32,83 @@ describe("GitHub Actions publisher runner", () => {
       ok: true,
       mode: "apply",
     });
+    expect(parsePublisherArgs(["--preflight"])).toEqual({
+      ok: true,
+      mode: "preflight",
+    });
     expect(parsePublisherArgs(["--flush", "/tmp/effects.json"])).toEqual({
       ok: true,
       mode: "flush",
       effectsPath: "/tmp/effects.json",
     });
+  });
+
+  it("fails bridge preflight on a stale deployed fingerprint", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        ok: true,
+        status: "bridge",
+        publisherContractFingerprint: "sha256:stale",
+      }),
+    );
+    await expect(
+      verifyBridgePublisherContract(
+        "https://bridge.example/",
+        DEPLOYED_PUBLISHER_FINGERPRINT,
+        fetchMock,
+      ),
+    ).rejects.toThrow(/bridge fingerprint mismatch/);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://bridge.example/health",
+      expect.objectContaining({
+        headers: { accept: "application/json" },
+      }),
+    );
+  });
+
+  it("runs standalone bridge preflight without invoking the harness", async () => {
+    const verifyBridgeContract = vi.fn(async () => undefined);
+    const harness = vi.fn(async () => ({ changed: false, stats: {} }));
+
+    await expect(
+      runPublisherCli(
+        ["--preflight"],
+        {
+          GITHUB_ACTIONS: "true",
+          GITHUB_REF: "refs/heads/main",
+          GITHUB_REPOSITORY: "himiyosh/tech-dashboard",
+          PUBLISHER_BRIDGE_URL: "https://bridge.example",
+        },
+        { runHarness: harness, verifyBridgeContract },
+      ),
+    ).resolves.toBe(0);
+    expect(verifyBridgeContract).toHaveBeenCalledWith(
+      "https://bridge.example",
+    );
+    expect(harness).not.toHaveBeenCalled();
+  });
+
+  it("does not run the harness when bridge preflight fails", async () => {
+    const runnerTemp = mkdtempSync(join(tmpdir(), "publisher-effects-"));
+    const harness = vi.fn(async () => ({ changed: false, stats: {} }));
+    const verifyBridgeContract = vi.fn(async () => {
+      throw new Error("publisher bridge fingerprint mismatch");
+    });
+
+    await expect(
+      runPublisherCli(
+        ["--apply"],
+        {
+          GITHUB_ACTIONS: "true",
+          GITHUB_REF: "refs/heads/main",
+          GITHUB_REPOSITORY: "himiyosh/tech-dashboard",
+          GITHUB_TOKEN: "test-token",
+          RUNNER_TEMP: runnerTemp,
+        },
+        { runHarness: harness, verifyBridgeContract },
+      ),
+    ).rejects.toThrow(/bridge fingerprint mismatch/);
+    expect(harness).not.toHaveBeenCalled();
   });
 
   it("refuses an effects bundle outside the Actions runner temp directory", async () => {
@@ -80,7 +153,10 @@ describe("GitHub Actions publisher runner", () => {
           GITHUB_TOKEN: "test-token",
           RUNNER_TEMP: runnerTemp,
         },
-        { runHarness: abortingHarness },
+        {
+          runHarness: abortingHarness,
+          verifyBridgeContract: async () => undefined,
+        },
       ),
     ).rejects.toThrow(/collapse guard/);
     expect(existsSync(effectsPath)).toBe(false);
@@ -104,7 +180,10 @@ describe("GitHub Actions publisher runner", () => {
           GITHUB_TOKEN: "test-token",
           RUNNER_TEMP: runnerTemp,
         },
-        { runHarness: inspectingHarness },
+        {
+          runHarness: inspectingHarness,
+          verifyBridgeContract: async () => undefined,
+        },
       ),
     ).resolves.toBe(0);
 
@@ -138,7 +217,10 @@ describe("GitHub Actions publisher runner", () => {
           GITHUB_TOKEN: "test-token",
           RUNNER_TEMP: runnerTemp,
         },
-        { runHarness: inspectingHarness },
+        {
+          runHarness: inspectingHarness,
+          verifyBridgeContract: async () => undefined,
+        },
       ),
     ).resolves.toBe(0);
 
@@ -175,15 +257,19 @@ describe("GitHub Actions publisher runner", () => {
     vi.stubGlobal("fetch", fetchMock);
     try {
       await expect(
-        runPublisherCli(["--flush", effectsPath], {
-          GITHUB_ACTIONS: "true",
-          GITHUB_REF: "refs/heads/main",
-          GITHUB_REPOSITORY: "himiyosh/tech-dashboard",
-          RUNNER_TEMP: runnerTemp,
-          ACTIONS_ID_TOKEN_REQUEST_URL: "https://actions.example/token",
-          ACTIONS_ID_TOKEN_REQUEST_TOKEN: "request-token",
-          PUBLISHER_BRIDGE_URL: "https://bridge.example",
-        }),
+        runPublisherCli(
+          ["--flush", effectsPath],
+          {
+            GITHUB_ACTIONS: "true",
+            GITHUB_REF: "refs/heads/main",
+            GITHUB_REPOSITORY: "himiyosh/tech-dashboard",
+            RUNNER_TEMP: runnerTemp,
+            ACTIONS_ID_TOKEN_REQUEST_URL: "https://actions.example/token",
+            ACTIONS_ID_TOKEN_REQUEST_TOKEN: "request-token",
+            PUBLISHER_BRIDGE_URL: "https://bridge.example",
+          },
+          { verifyBridgeContract: async () => undefined },
+        ),
       ).resolves.toBe(0);
     } finally {
       vi.unstubAllGlobals();
@@ -196,6 +282,39 @@ describe("GitHub Actions publisher runner", () => {
     expect(bridgeCall).toBeDefined();
     const headers = new Headers(bridgeCall?.[1]?.headers);
     expect(headers.get("content-length")).toBe("2");
+  });
+
+  it("preserves deferred effects when flush preflight rejects the bridge", async () => {
+    const runnerTemp = mkdtempSync(join(tmpdir(), "publisher-effects-"));
+    const effectsPath = join(runnerTemp, "effects.json");
+    writeFileSync(
+      effectsPath,
+      JSON.stringify({
+        version: 1,
+        publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT,
+        kvPuts: [{ key: "og.v1", value: "{}" }],
+        queueSends: [],
+      }),
+      "utf8",
+    );
+
+    await expect(
+      runPublisherCli(
+        ["--flush", effectsPath],
+        {
+          GITHUB_ACTIONS: "true",
+          GITHUB_REF: "refs/heads/main",
+          GITHUB_REPOSITORY: "himiyosh/tech-dashboard",
+          RUNNER_TEMP: runnerTemp,
+        },
+        {
+          verifyBridgeContract: async () => {
+            throw new Error("publisher bridge fingerprint mismatch");
+          },
+        },
+      ),
+    ).rejects.toThrow(/bridge fingerprint mismatch/);
+    expect(existsSync(effectsPath)).toBe(true);
   });
 
   it("writes only the exact allowlisted files from the captured snapshot", async () => {

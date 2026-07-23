@@ -1,11 +1,22 @@
 import { describe, expect, it } from "vitest";
 import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import {
   buildArchiveIndexFile,
   buildArchiveMonthFile,
   groupArchiveEntries,
   mergeArchiveEntries,
+  reconcileArchiveMonths,
   synchronizeArchiveTagsFromLive,
 } from "../harness/publishers/archive-core.ts";
+import { writeArchive } from "../harness/publishers/archive-builder.ts";
 import {
   buildStatsPayload,
   statsDayCutoffKey,
@@ -90,6 +101,7 @@ describe("archive-core", () => {
       collectedAt: "2026-05-18T21:00:00.000Z",
       publishedAt: "2026-05-18T04:00:00.000Z",
     });
+
     const incoming = fixtureEntry({
       id: "arxiv-ai",
       source: "arxiv-cs-ai",
@@ -111,6 +123,116 @@ describe("archive-core", () => {
       summaryEn: "Existing English summary",
     });
     expect(merged[0].tags.sort()).toEqual(["ai", "lg"]);
+  });
+
+  it("publishedAt 補正で月が変わった canonical entry は最終月だけに残す", () => {
+    const oldMonth = fixtureEntry({
+      id: "same-entry",
+      title: "Original title",
+      publishedAt: "2026-03-24T00:00:00.000Z",
+      collectedAt: "2026-03-25T00:00:00.000Z",
+      tags: ["original"],
+    });
+
+    const corrected = fixtureEntry({
+      id: "same-entry",
+      title: "Corrected title",
+      publishedAt: "2026-07-20T19:23:10.000Z",
+      collectedAt: "2026-07-21T00:00:00.000Z",
+      tags: ["corrected"],
+    });
+
+    const reconciled = reconcileArchiveMonths([
+      { month: "2026-03", entries: [oldMonth] },
+      { month: "2026-07", entries: [corrected] },
+    ]);
+
+    expect(reconciled.has("2026-03")).toBe(false);
+    expect(reconciled.get("2026-07")).toHaveLength(1);
+    expect(reconciled.get("2026-07")?.[0]).toMatchObject({
+      id: "same-entry",
+      title: "Corrected title",
+      tags: ["corrected", "original"],
+    });
+  });
+
+  it("collection-time fallback より明示された公開日を優先する", () => {
+    const explicit = fixtureEntry({
+      id: "same-entry",
+      title: "Authoritative date",
+      publishedAt: "2026-04-02T00:00:00.000Z",
+      collectedAt: "2026-04-03T00:00:00.000Z",
+      tags: ["authoritative"],
+    });
+    const fallback = fixtureEntry({
+      id: "same-entry",
+      title: "Collection fallback",
+      publishedAt: "2026-07-20T19:23:10.508Z",
+      collectedAt: "2026-07-20T19:23:10.508Z",
+      tags: ["fallback"],
+    });
+
+    const merged = mergeArchiveEntries([explicit], [fallback]);
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0]).toMatchObject({
+      title: "Authoritative date",
+      publishedAt: "2026-04-02T00:00:00.000Z",
+    });
+    expect(merged[0].tags.sort()).toEqual(["authoritative", "fallback"]);
+  });
+
+  it("local archive writer moves corrected hot entries out of the stale month", async () => {
+    const dataDir = mkdtempSync(join(tmpdir(), "techdb-archive-"));
+    const archiveDir = join(dataDir, "archive");
+    try {
+      mkdirSync(archiveDir, { recursive: true });
+      const existing = fixtureEntry({
+        id: "moved-hot",
+        url: "https://example.com/moved-hot",
+        archiveTier: "hot",
+        publishedAt: "2026-03-10T00:00:00.000Z",
+        collectedAt: "2026-03-11T00:00:00.000Z",
+      });
+      const corrected = fixtureEntry({
+        id: "moved-hot",
+        url: "https://example.com/moved-hot",
+        archiveTier: "hot",
+        publishedAt: "2026-07-10T00:00:00.000Z",
+        collectedAt: "2026-07-11T00:00:00.000Z",
+      });
+      writeFileSync(
+        join(archiveDir, "2026-03.json"),
+        JSON.stringify(
+          buildArchiveMonthFile(
+            "2026-03",
+            [existing],
+            "2026-03-11T00:00:00.000Z",
+          ),
+        ),
+        { encoding: "utf8", flag: "wx" },
+      );
+
+      await writeArchive([corrected], dataDir);
+
+      const march = JSON.parse(
+        readFileSync(join(archiveDir, "2026-03.json"), "utf8"),
+      ) as { entries: NormalizedEntry[] };
+      const july = JSON.parse(
+        readFileSync(join(archiveDir, "2026-07.json"), "utf8"),
+      ) as { entries: NormalizedEntry[] };
+      const index = JSON.parse(
+        readFileSync(join(archiveDir, "_index.json"), "utf8"),
+      ) as { months: string[]; totalEntries: number };
+      expect(march.entries).toEqual([]);
+      expect(july.entries.map((entry) => entry.id)).toEqual(["moved-hot"]);
+      expect(index).toMatchObject({
+        months: ["2026-07"],
+        totalEntries: 1,
+      });
+    } finally {
+      rmSync(dataDir, { recursive: true, force: true });
+    }
   });
 
   it("archive merge の stale tag を final live taxonomy へ完全同期する", () => {
@@ -174,6 +296,22 @@ describe("archive-core", () => {
     expect(archiveIndex.months).toEqual(["2026-04", "2026-03"]);
     expect(archiveIndex.totalEntries).toBe(3);
     expect(archiveIndex.perMonth).toEqual({ "2026-04": 1, "2026-03": 2 });
+  });
+
+  it("archive index は空になった旧月を公開しない", () => {
+    const generatedAt = "2026-05-10T00:00:00.000Z";
+    const empty = buildArchiveMonthFile("2026-03", [], generatedAt);
+    const april = buildArchiveMonthFile(
+      "2026-04",
+      [fixtureEntry({ id: "april" })],
+      generatedAt,
+    );
+
+    expect(buildArchiveIndexFile([empty, april], generatedAt)).toMatchObject({
+      months: ["2026-04"],
+      totalEntries: 1,
+      perMonth: { "2026-04": 1 },
+    });
   });
 
   it("archive month payload は一覧表示に不要な本文を保持しない", () => {

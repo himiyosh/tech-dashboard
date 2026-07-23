@@ -22,7 +22,7 @@ permissions:
 jobs:
   publish:
     name: collect, verify, and publish data
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
     env:
       PUBLISHER_BRIDGE_URL: https://tech-dashboard-harness.himiyosh.workers.dev
@@ -104,6 +104,7 @@ jobs:
           test -z "$(git diff --name-only -- data)"
           test -z "$(git diff --cached --name-only | grep -Ev '^data/(index|bodies|stats)\.json$|^data/archive/(_index|[0-9]{4}-[0-9]{2})\.json$' || true)"
           test -n "$(git diff --cached --name-only)"
+          npm run publisher:run -- --preflight
 
           message="$(node -e 'process.stdout.write(Buffer.from(process.env.MESSAGE_BASE64, "base64").toString("utf8"))')"
           git config user.name "tech-dashboard-publisher[bot]"

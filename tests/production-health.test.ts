@@ -4,6 +4,7 @@ import {
   validateIndexFreshness,
   validatePublisherRuns,
 } from "../scripts/check-production-health.mjs";
+import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../worker/src/publisher-contract.ts";
 
 describe("production health topology", () => {
   const healthyIndexHealth = {
@@ -21,6 +22,7 @@ describe("production health topology", () => {
         status: "bridge",
         mode: "github-actions-publisher",
         scheduled: false,
+        publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT,
       }).errors,
     ).toEqual([]);
     expect(
@@ -29,8 +31,20 @@ describe("production health topology", () => {
         status: "ok",
         mode: "worker-cron",
         scheduled: true,
+        publisherContractFingerprint: "sha256:wrong",
       }).errors,
     ).not.toEqual([]);
+    expect(
+      validateBridge({
+        ok: true,
+        status: "bridge",
+        mode: "github-actions-publisher",
+        scheduled: false,
+        publisherContractFingerprint: "sha256:wrong",
+      }).errors,
+    ).toContain(
+      `bridge publisher fingerprint is sha256:wrong; expected ${DEPLOYED_PUBLISHER_FINGERPRINT}`,
+    );
   });
 
   it("uses the latest completed successful publisher run and tolerates a concurrent run", () => {

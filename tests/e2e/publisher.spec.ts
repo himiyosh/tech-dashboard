@@ -64,6 +64,9 @@ test.describe("Publisher generated artifact", () => {
     );
     expect(Number(metrics.totalSourceCount)).toBeGreaterThan(0);
     expect(Number(metrics.totalCategories)).toBeGreaterThan(0);
+    expect(Number(metrics.archiveEntries)).toBeGreaterThan(
+      Number(metrics.archiveBrowsableEntries),
+    );
     expect(Number.isFinite(Date.parse(String(metrics.generatedAt)))).toBe(true);
   });
 
@@ -75,6 +78,15 @@ test.describe("Publisher generated artifact", () => {
 
     expect(archiveResponse?.status()).toBeLessThan(400);
     await expect(page.locator("#archive-heading")).toBeVisible();
+    const populations = await page.evaluate(() => {
+      const metricValue = (scope: string) =>
+        Number(document.querySelector(`[data-metric-scope="${scope}"] strong`)?.textContent?.trim());
+      return {
+        browsable: metricValue("archive-browsable"),
+        stored: metricValue("archive-stored"),
+      };
+    });
+    expect(populations.stored).toBeGreaterThan(populations.browsable);
     const firstMonth = page.locator("a.month-card").first();
     await expect(firstMonth).toBeVisible();
     const href = await firstMonth.getAttribute("href");

@@ -110,6 +110,7 @@ describe("Free-plan publisher bridge", () => {
       status: "bridge",
       mode: "github-actions-publisher",
       scheduled: false,
+      publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT,
     });
   });
 
@@ -136,6 +137,7 @@ describe("Free-plan publisher bridge", () => {
       ok: false,
       status: "bridge-misconfigured",
       mode: "github-actions-publisher",
+      publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT,
     });
   });
 

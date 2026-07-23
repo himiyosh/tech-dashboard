@@ -12,6 +12,8 @@ import {
 } from "../../lib/archive.ts";
 import { CATEGORY_META, groupByDay, jstDayLabel, relativeTime, type Category } from "../../lib/data.ts";
 import { sourceLabel } from "../../lib/source-meta.ts";
+import { canonicalSourceUrl } from "../../lib/source-meta.ts";
+import { entryHref } from "../../lib/data.ts";
 
 export function getStaticPaths() {
   return ARCHIVE_MONTHS.map((month) => ({ params: { month } }));
@@ -33,13 +35,9 @@ const idx = all.findIndex((m) => m.month === month);
 const newer = idx > 0 ? all[idx - 1] : null;
 const older = idx >= 0 && idx < all.length - 1 ? all[idx + 1] : null;
 
-let warm = 0;
-let cold = 0;
 const categoryCounts = new Map<Category, number>();
 const sourceCounts = new Map<string, number>();
 for (const e of file.entries) {
-  if (e.archiveTier === "warm") warm++;
-  else if (e.archiveTier === "cold") cold++;
   categoryCounts.set(e.category, (categoryCounts.get(e.category) ?? 0) + 1);
   sourceCounts.set(e.source, (sourceCounts.get(e.source) ?? 0) + 1);
 }
@@ -58,8 +56,9 @@ const sourceRows = [...sourceCounts.entries()]
   .sort(([, a], [, b]) => b - a)
   .slice(0, 8)
   .map(([source, count]) => ({ source, count }));
-const warmPct = Math.round((warm / Math.max(file.count, 1)) * 100);
-const coldPct = Math.round((cold / Math.max(file.count, 1)) * 100);
+const hotPct = Math.round((file.hot / Math.max(file.storedCount, 1)) * 100);
+const warmPct = Math.round((file.warm / Math.max(file.storedCount, 1)) * 100);
+const coldPct = Math.round((file.cold / Math.max(file.storedCount, 1)) * 100);
 const dayCount = dayGroups.length;
 const updatedLabel = relativeTime(file.generatedAt, now);
 
@@ -80,17 +79,26 @@ const monthHeroActions = [
     className="page-hero-archive-month"
     kicker="Archive month"
     title={label}
-    count={`${file.count} entries`}
+    count={`${file.count} 閲覧可能 · ${file.storedCount} 保存行`}
+    countEn={`${file.count} browsable · ${file.storedCount} stored`}
     headingId="archive-month-heading"
-    description="月内の記事を日付順に並べています。カテゴリと source の偏りを見てから、下のタイムラインで詳細を確認できます。"
+    description="要約付きのwarm/cold記事を日付順に表示します。hotはlive収録時点の統計用snapshotで、この月別一覧には表示しません。"
+    descriptionEn="Summary-ready warm and cold articles are listed by date. Hot rows are statistical snapshots from their live period and are not shown in this monthly list."
     actions={monthHeroActions}
     metrics={[
       {
-        label: "Entries",
+        label: "Browsable",
         value: file.count,
-        detail: "この月の記事数",
-        detailEn: "Entries in this month",
-        scope: "month-entry-count",
+        detail: "月別一覧に表示する要約付き記事",
+        detailEn: "Summary-ready entries shown for this month",
+        scope: "month-browsable-count",
+      },
+      {
+        label: "Stored rows",
+        value: file.storedCount,
+        detail: "live収録時点のhot snapshotを含む保存数",
+        detailEn: "Stored rows including hot snapshots from their live period",
+        scope: "month-stored-count",
       },
       {
         label: "Active days",
@@ -102,15 +110,15 @@ const monthHeroActions = [
       {
         label: "Top category",
         value: categoryRows[0]?.label ?? "none",
-        detail: "月内の記事数1位",
-        detailEn: "Most entries this month",
+        detail: "月内の閲覧可能記事数1位",
+        detailEn: "Most browsable entries this month",
         scope: "month-top-category",
       },
       {
         label: "Top source",
         value: sourceRows[0] ? sourceLabel(sourceRows[0].source) : "none",
-        detail: "月内の記事数1位",
-        detailEn: "Most entries this month",
+        detail: "月内の閲覧可能記事数1位",
+        detailEn: "Most browsable entries this month",
         scope: "month-top-source",
       },
       {
@@ -139,20 +147,25 @@ const monthHeroActions = [
       </nav>
 
       <section class="archive-meta-panel" aria-label="Archive composition">
+        <div class="tier-card hot">
+          <span>hot</span>
+          <strong>{file.hot}</strong>
+          <small>{hotPct}%</small>
+        </div>
         <div class="tier-card warm">
           <span>warm</span>
-          <strong>{warm}</strong>
+          <strong>{file.warm}</strong>
           <small>{warmPct}%</small>
         </div>
         <div class="tier-card cold">
           <span>cold</span>
-          <strong>{cold}</strong>
+          <strong>{file.cold}</strong>
           <small>{coldPct}%</small>
         </div>
-        <div class="category-strip" aria-label="Top categories by entries in this month">
+        <div class="category-strip" aria-label="Top categories by browsable entries in this month">
           <span class="category-strip-label">
-            <span class="i18n-ja">月内カテゴリ内訳</span>
-            <span class="i18n-en" lang="en">Category mix this month</span>
+            <span class="i18n-ja">閲覧可能記事のカテゴリ内訳</span>
+            <span class="i18n-en" lang="en">Browsable category mix</span>
           </span>
           {categoryRows.map((row) => (
             <span class="category-pill" style={`--pill-color:${row.color}`}>
@@ -168,7 +181,16 @@ const monthHeroActions = [
             <span>{jstDayLabel(key, now)}</span>
             <span class="day-count">{items.length} entries</span>
           </div>
-          {items.map((entry) => <EntryCard entry={entry} />)}
+          {items.map((entry) => {
+            const external = entry.archiveTier === "cold";
+            return (
+              <EntryCard
+                entry={entry}
+                href={external ? canonicalSourceUrl(entry.url) : entryHref(entry)}
+                external={external}
+              />
+            );
+          })}
         </section>
       ))}
     </main>
@@ -184,7 +206,7 @@ const monthHeroActions = [
 
       <div class="side-card month-insight-card">
         <div class="rail-title">Top categories</div>
-        <p class="month-rank-scope">Entries in this month</p>
+        <p class="month-rank-scope">Browsable entries in this month</p>
         <ul class="month-rank-list">
           {categoryRows.map((row) => (
             <li>
@@ -197,7 +219,7 @@ const monthHeroActions = [
 
       <div class="side-card month-insight-card">
         <div class="rail-title">Top sources</div>
-        <p class="month-rank-scope">Entries in this month</p>
+        <p class="month-rank-scope">Browsable entries in this month</p>
         <ul class="month-rank-list">
           {sourceRows.map((row) => (
             <li>
@@ -260,9 +282,13 @@ const monthHeroActions = [
 
   .archive-meta-panel {
     display: grid;
-    grid-template-columns: 110px 110px minmax(0, 1fr);
+    grid-template-columns: 96px 96px 96px minmax(0, 1fr);
     gap: 10px;
     margin-bottom: 18px;
+  }
+
+  .tier-card.hot {
+    border-color: rgba(52, 211, 153, 0.35);
   }
 
   .tier-card.warm {
@@ -445,7 +471,11 @@ const monthHeroActions = [
 
   @media (max-width: 980px) {
     .archive-meta-panel {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .category-strip {
+      grid-column: 1 / -1;
     }
   }
 

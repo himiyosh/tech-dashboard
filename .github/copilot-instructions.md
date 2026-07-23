@@ -214,6 +214,7 @@
 ### R-027: publisher contract mismatch 時は data publish を fail-closed にする
 - `worker/publisher-contract.json` は data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
 - Node publisher は収集開始時に checkout と remote main が同じ HEAD SHA であることを確認し、その SHA の contract marker と runner fingerprint を照合する。`data/index.json`、`data/bodies.json`、archive index / month、stats の baseline はすべて同じ immutable SHA から読む。data commit または effect-only flush 前にも main ref が開始時 SHA と完全一致することを再確認し、進んでいれば commit と遅延 effects を中止する。commit parent も同じ SHA に固定し、push は non-force とする。
+- Node publisher は収集開始前、data commit 直前、遅延 effects flush 直前に Free bridge の public health が同じ publisher fingerprint を公開していることを確認する。bridge の fingerprint が未公開・不一致・unhealthy の場合は harness、data commit、effects flush を fail-closed で中止する。
 - summary/body Queue job と生成 cache には publisher fingerprint を伝播する。現在の fingerprint と明示的に異なる cache は採用せず再生成対象にする。fingerprint 導入前の既存 cache は本文・要約テキストだけ互換読み込みし、summary の importance / extraTags は exact fingerprint 一致時だけ採用する。fingerprint 無し job を受けた更新済み consumer は `legacy-unversioned-job` を保存し、既存 legacy cache と区別する。
 - fingerprint を変える release は Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を PR head から先に deployし、旧 consumer の in-flight 処理が残らないことを確認してから PR を mergeする。merge 後は原則として旧 harness が marker mismatch で停止したことを確認し、明示承認のうえ Free bridge を deployする。deployment provenanceやguard到達性を確認できずmismatchを観測できない場合は、その事実を明記し、旧runのterminal failure、merge後のdata commit不在、旧heartbeat非更新をすべて実測できた場合に限り「旧writerがpublish不能」という安全条件でbridge置換へ進む。いずれかを確認できなければ停止してユーザー判断を求める。bridge health、Publisher workflow、data commit、Queue drain、Pages productionを順に確認する。
 - `data/index.json` の entry が変わる publish では、`data/archive/_index.json` と `data/stats.json` の `generatedAt` も同一 commit の reference clock へ揃える。月次 archive は timestamp-only churn を避ける。
@@ -2503,6 +2504,54 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: unit、typecheck、Web buildを1つのActions jobにまとめていたため、build runnerの中断時に`rerun failed jobs`を使っても成功済みunitまで同じjob単位で再実行する構造だった。Actionsの再開pointはstepではなくjobである。
 - **対策**: PR CIを`unit`と`web-build`の独立jobへ分け、両方の成功後にE2Eを実行する。Web build artifactは従来どおりrun ID固定名でE2Eへ渡し、failed jobだけのrerunでも再利用する。full suiteと受入閾値は変更しない。
 - **教訓**: provider側のrunner終了はrepository codeで防げないため、長いgateは責務ごとのjob checkpointへ分けて再開costを下げる。timeoutやretry回数を広げる前に、成功済み処理を再実行させているjob境界を確認する。
+
+### LL-377: Archiveのraw保存行と閲覧可能記事を同じ件数labelで表さない
+- **事象**: `data/archive/_index.json`は6,777行を保持していたが、Web Archiveは`isPublishableEntry`を通る2,277件だけを表示し、Heroと月カードを単に`entries`と表記していた。差分4,500件はlive収録時点を残すsummary-free hot行で、監査時点では996件だけがlive indexにも残っていた。
+- **根本原因**: archive artifactの保持・統計母集団と、読者が月別ページで閲覧できるsummary-ready warm/cold母集団を同じ`ARCHIVE_TOTAL_ENTRIES`へ潰していた。数値自体は各用途で正しくても、labelとmetrics APIが母集団を示さないため履歴欠落に見えた。
+- **対策**: `ARCHIVE_STORED_ENTRIES`と`ARCHIVE_BROWSABLE_ENTRIES`を分離し、Archive Hero、月カード、月詳細、All-time、metrics APIへ同じ意味を伝播する。hotは現在もliveにあるとは断定せず、live収録時点の統計用snapshotで月別記事一覧には出ないことをJA/ENで明示する。カテゴリ/source rankingもbrowsable母集団と明記する。
+- **教訓**: retention artifactでは「保存されている行」「現在の画面で閲覧できる記事」「現在もliveにある記事」を同一視しない。dashboard metricは値だけでなく母集団、保持時点、addressability、表示場所を同じhelperから導出し、raw/stored/browsableを別のmachine-readable scopeで検証する。
+
+### LL-378: mobile fixed controlはtabbarとの実hit-testingで検証する
+- **事象**: `390x844`の記事詳細で`#ed-fab`は44x44pxを満たしていたが、下端がmobile tabbar開始位置と約1px重なり、中心点のhit targetがMenu tabになっていた。
+- **根本原因**: touch targetの自身寸法だけを検証し、同じviewportにある高z-index fixed navigationとの矩形交差と`elementFromPoint()`を acceptance criteriaへ含めていなかった。
+- **対策**: FABを既存mobile menu sheetと同じsafe-area対応offsetでtabbar上へ移し、z-indexを上げずnavigationを優先する。E2EでFAB寸法、tabbarとの8px以上の距離、中心点のhit targetを直接検証する。
+- **教訓**: fixed controlは44px寸法とpage overflowだけでは操作可能性を証明できない。fixed header/footer/tabbarが同居する場合は、各矩形の非交差と実hit-testingを同じviewportで確認し、navigationより上へ重ねるのではなく安全距離を確保する。
+
+### LL-379: feed provenanceとcanonical publisherを同じsource labelへ潰さない
+- **事象**: Google DeepMind RSSから収集したGenesis Mission記事は、元URLがGoogle Cloud Blogへ302移転し、canonical、`og:site_name`、titleもGoogle Cloud Blogを示していたが、全UIは収集feed由来のGoogle DeepMind Blogをpublisherとして表示していた。
+- **根本原因**: `entry.source`をcollector provenanceとpublisher identityの両方へ流用し、redirect後のcanonical publicationをreader-facing source、CTA、検索metadata、JSON-LDへ反映する契約がなかった。
+- **対策**: 検証済みのknown redirectを`source-meta.ts`の単一presentation helperへ集約し、カード、Ticker、Digest、Spotlight、詳細、Pagefind、JSON-LD、favicon、元記事CTAをcanonical publisherへ揃える。収集feedは記事詳細の`Collected via`として別表示し、同source railはfeed単位のまま維持する。
+- **教訓**: feed sourceは「どこから収集したか」、canonical publisherは「誰が現在公開しているか」である。redirectを確認した記事では両者を分離し、reader-facing trust surfaceとmachine-readable metadataはcanonical側へ、collector healthと同feed関連記事はprovenance側へ接続する。
+
+### LL-380: 同一detail内のnavigation集合は相互に重複排除する
+- **事象**: 記事詳細の前後記事navigationに出た2件が、直下の同カテゴリ関連記事gridでも先頭に再表示されていた。
+- **根本原因**: `adjacentInCategory()`と`relatedEntries()`が同じカテゴリ母集団から独立選定され、先に確定したnavigation IDを後続集合へ伝播していなかった。
+- **対策**: 前後記事IDを関連記事候補から除外してから表示上限を適用し、E2Eで`.ed-pn-card`と`.ed-rel-card`のhref集合が交差しないことを固定する。
+- **教訓**: 同一画面で同じ候補poolを使うnavigation、recommendation、rankingは各component内のself-exclusionだけで多様性を期待しない。先に確定したidentityを後続surfaceへ渡し、上限sliceより前に集合間の重複を除く。
+
+### LL-381: Archiveのbrowsable判定は遷移先のaddressabilityまで保証する
+- **事象**: Archiveはsummary-readyなwarm/cold 2,277件をbrowsableと表示したが、detail routeはlive indexだけから生成していた。1,421件はlive外で、warm 518件とcold 903件のカードが存在しない`/e/{id}/`へ遷移した。
+- **根本原因**: 表示可能なsummaryを持つことと、個別detail routeを持つことを同一視した。R-022のwarm addressabilityと、coldは月次Archive内のみという保持契約がroute生成とEntryCard linkへ配線されていなかった。
+- **対策**: live entryに加えてarchive warm entryもdetail static pathへ含める。cold cardはcanonical元記事URLへ直接遷移し、`元記事 / Original article`とexternal属性を表示する。E2Eはlive外warm routeのHTTP成功とcold cardのsource destinationを実artifactから選んで検証する。
+- **教訓**: 「閲覧可能」はDOMにcardを描画できることではなく、操作後の遷移先まで到達できることを意味する。retention tierごとのaddressabilityをroute生成、link label、target/rel、404回帰へ一貫して反映する。
+
+### LL-382: Archive dedupeは月内だけでなく全月をflattenしてから再bucketする
+- **事象**: 6,777 archive行に6,742 unique IDしかなく、同一canonical記事がpublishedAt補正前後の2〜3月へ残っていた。月別mergeは各file内でしか重複排除せず、旧月copyを削除できなかった。
+- **根本原因**: archive writerがincoming entryの最終月だけを更新し、同じcanonical URLが以前属していた月をglobalにreconcileしていなかった。月ごとのdedupe gateは全て通るため、All-time・月別・statsが37行分重複加算された。
+- **対策**: shared archive coreで全月entryをflattenし、canonical winnerを1件選び、その最終publishedAt月へ再bucketする。winner選定では明示された公開日を`publishedAt === collectedAt`のcollection fallbackより優先する。Node Publisher、hotを含むlocal builder、transaction migrationが同じhelperを使い、global merge後にlive tagsを再同期する。data schemaはcross-month canonical uniquenessをfail-closedに検証し、既存artifactを6,740 unique行へ修復する。
+- **教訓**: bucket keyが後から補正され得るartifactでは、bucket内mergeだけではstale copyを除去できない。全bucketを同じimmutable snapshotから読み、timestampのprovenanceを比較してglobal winnerを決めてからbucketを再構築し、tag同期・index・statsもその最終集合から生成する。
+
+### LL-383: downstream bridgeのfingerprintはdata commit前にpreflightする
+- **事象**: PublisherはQueue jobとKV effectsへfingerprintを付けていたが、Free bridgeとのfingerprint一致を確認するのはdata commit後のeffects flush時だけだった。新fingerprintのPublisherがdataをmainへpushした後に旧bridgeからQueueを拒否され、永続dataと非同期enrichmentを分離できる経路があった。
+- **根本原因**: publisher contractをjob/cache payloadのvalidationとして扱い、Publisherが依存するdeployed bridge自体のversionをprepareとcommitの事前条件に含めていなかった。bridge healthにもdeployed fingerprintがなく、公開状態をsecretなしで比較できなかった。
+- **対策**: Free bridge healthへdeployed publisher fingerprintを公開し、Publisherはharness開始前、staging後のdata commit直前、effects flush直前にchecked-in fingerprintとの一致を検証する。未公開、不一致、unhealthyではfail-closedにし、flush前の拒否ではeffects fileを保持する。production healthも同じ一致を検証する。
+- **教訓**: 非同期consumerのpayload validationだけではproducerとtransportのrollout互換性を保証できない。永続dataと遅延副作用を同じrelease contractで扱う場合、downstream transportのversionを公開healthで観測し、生成前、commit前、flush前の全不可逆境界でpreflightする。
+
+### LL-384: 高負荷static buildは同じrunnerへのblind retryで解消しない
+- **事象**: PR CIのWeb buildがAstro static generation中に126秒、212秒、346秒で3回連続`The operation was canceled`となった。いずれも30秒heartbeatは継続し、assertion、Astro error、job timeoutは無かった。同じhead commitのCloudflare previewはActive、local buildと109件E2Eは成功した。
+- **根本原因**: GitHubの終了logにはcancelの内部理由が明記されず、GitHub StatusもActionsをoperationalとしていたため、provider側の正確な原因は未確認である。一方、local Astro buildは最大RSS約6.69GBを使用し、数千routeのstatic generationが高負荷であることは実測できた。同じx64 runner poolへの追加retryでは再現だけが続いた。
+- **対策**: retryを2回で停止し、公開repositoryで公式に提供される4 vCPU・16GBの`ubuntu-24.04-arm`へWeb build、Playwright、Publisherを移した。Web build artifactはarchitecture非依存のままjob間で引き渡し、CIでARM上のPlaywright browser installと全E2Eを実行して互換性を検証する。
+- **教訓**: heartbeat中の外部cancelを製品failureや単純timeoutとして扱わない。終了log、公式status、同一artifactのlocal/preview結果、資源量を分けて確認し、bounded retryが同じ層で再発したら別の公式runner poolへ移して実行基盤を変更する。未観測のOOMやprovider障害を根本原因として断定しない。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

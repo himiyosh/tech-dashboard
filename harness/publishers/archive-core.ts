@@ -37,6 +37,11 @@ export interface ArchiveTagSyncResult {
   changed: number;
 }
 
+export interface ArchiveMonthEntries {
+  month: string;
+  entries: readonly NormalizedEntry[];
+}
+
 export function archiveBucketOf(entry: NormalizedEntry): string {
   const iso = entry.publishedAt ?? entry.collectedAt;
   return iso.slice(0, 7);
@@ -46,11 +51,27 @@ function dateMs(iso: string | null): number {
   return iso ? Date.parse(iso) : 0;
 }
 
+function hasAuthoritativePublishedAt(entry: NormalizedEntry): boolean {
+  const published = dateMs(entry.publishedAt);
+  if (!published) return false;
+  const collected = dateMs(entry.collectedAt);
+  if (!collected) return true;
+  return Math.abs(published - collected) >= 100;
+}
+
 function archiveMergeKey(entry: NormalizedEntry): string {
   return canonicalUrlKey(entry.url) ?? entry.url ?? entry.id;
 }
 
 function preferArchiveEntry(current: NormalizedEntry, candidate: NormalizedEntry): NormalizedEntry {
+  const candidateHasPublishedAt = hasAuthoritativePublishedAt(candidate);
+  const currentHasPublishedAt = hasAuthoritativePublishedAt(current);
+  if (candidateHasPublishedAt !== currentHasPublishedAt) {
+    return candidateHasPublishedAt
+      ? mergeEntryEnrichment(candidate, current)
+      : mergeEntryEnrichment(current, candidate);
+  }
+
   const candidateCollected = dateMs(candidate.collectedAt);
   const currentCollected = dateMs(current.collectedAt);
   if (candidateCollected !== currentCollected) {
@@ -143,6 +164,34 @@ export function mergeArchiveEntries(
 }
 
 /**
+ * Reconcile the complete archive corpus across month files.
+ *
+ * An upstream publish-date correction can move an existing canonical URL to a
+ * different month. Per-month merging cannot remove the stale copy from its old
+ * month, so flatten first, select one canonical winner, then bucket the winner
+ * by its final publishedAt.
+ */
+export function reconcileArchiveMonths(
+  months: readonly ArchiveMonthEntries[],
+): Map<string, NormalizedEntry[]> {
+  const winners = mergeArchiveEntries(
+    [],
+    months.flatMap((month) => month.entries),
+  );
+  const byMonth = new Map<string, NormalizedEntry[]>();
+  for (const entry of winners) {
+    const month = archiveBucketOf(entry);
+    const bucket = byMonth.get(month) ?? [];
+    bucket.push(entry);
+    byMonth.set(month, bucket);
+  }
+  for (const [month, entries] of byMonth) {
+    byMonth.set(month, mergeArchiveEntries([], entries));
+  }
+  return byMonth;
+}
+
+/**
  * Keep overlapping archive records aligned with the final live taxonomy.
  *
  * Archive merging intentionally unions historical enrichment. Tags are
@@ -197,7 +246,7 @@ export function buildArchiveIndexFile(
   generatedAt: string,
 ): ArchiveIndexFile {
   const sortedMonths = [...months]
-    .filter((month) => /^\d{4}-\d{2}$/.test(month.month))
+    .filter((month) => /^\d{4}-\d{2}$/.test(month.month) && month.count > 0)
     .sort((a, b) => b.month.localeCompare(a.month));
   const perMonth: Record<string, number> = {};
   let totalEntries = 0;

@@ -3,8 +3,9 @@ import Portal from "../../layouts/Portal.astro";
 import PageHero from "../../components/PageHero.astro";
 import Sidebar from "../../components/Sidebar.astro";
 import {
-  ARCHIVE_TOTAL_ENTRIES,
+  ARCHIVE_BROWSABLE_ENTRIES,
   ARCHIVE_GENERATED_AT,
+  ARCHIVE_STORED_ENTRIES,
   ARCHIVE_TIER_DETAIL,
   ARCHIVE_TIER_SUMMARY,
   getMonth,
@@ -62,6 +63,15 @@ const yearTotals = new Map(
     byYear.get(year)!.reduce((sum, month) => sum + month.count, 0),
   ]),
 );
+const yearStoredTotals = new Map(
+  years.map((year) => [
+    year,
+    byYear.get(year)!.reduce((sum, month) => sum + month.storedCount, 0),
+  ]),
+);
+const storedHot = months.reduce((sum, month) => sum + month.hot, 0);
+const storedWarm = months.reduce((sum, month) => sum + month.warm, 0);
+const storedCold = months.reduce((sum, month) => sum + month.cold, 0);
 const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
 
 ---
@@ -71,9 +81,11 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
     className="page-hero-top-level page-hero-archive"
     kicker="Browse history"
     title="Archive"
-    count={`${ARCHIVE_TOTAL_ENTRIES} entries · ${months.length} months`}
+    count={`${ARCHIVE_BROWSABLE_ENTRIES} 閲覧可能 · ${ARCHIVE_STORED_ENTRIES} 保存行`}
+    countEn={`${ARCHIVE_BROWSABLE_ENTRIES} browsable · ${ARCHIVE_STORED_ENTRIES} stored`}
     headingId="archive-heading"
-    description="過去の記事を月単位で確認できます。最新記事はタイムライン、長期推移やカテゴリの盛り上がりはこのページから辿れます。"
+    description="要約付きのwarm/cold記事を月単位で閲覧できます。保存行には、live収録時点を統計用に残すhot snapshotも含まれます。"
+    descriptionEn="Browse summary-ready warm and cold articles by month. Stored rows also include hot statistical snapshots from their live period."
     actions={[
       { href: "/", label: "Latest timeline" },
       { href: latestMonth ? `/archive/${latestMonth.month}` : "#archive-months", label: "Latest month" },
@@ -81,11 +93,18 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
     ]}
     metrics={[
       {
-        label: "Archived",
-        value: ARCHIVE_TOTAL_ENTRIES,
-        detail: "全月のarchive記事",
-        detailEn: "Entries across all archive months",
-        scope: "archive-total",
+        label: "Browsable",
+        value: ARCHIVE_BROWSABLE_ENTRIES,
+        detail: "月別一覧で閲覧できる要約付き記事",
+        detailEn: "Summary-ready entries shown in monthly lists",
+        scope: "archive-browsable",
+      },
+      {
+        label: "Stored rows",
+        value: ARCHIVE_STORED_ENTRIES,
+        detail: "live収録時点のhot snapshotを含む全履歴",
+        detailEn: "Full history including hot snapshots from their live period",
+        scope: "archive-stored",
       },
       {
         label: "Months",
@@ -109,13 +128,6 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
         scope: "latest-month",
       },
       {
-        label: "Peak month",
-        value: peakMonth ? peakMonth.label : "none",
-        detail: "記事数が最多の月",
-        detailEn: "Month with the most entries",
-        scope: "peak-month",
-      },
-      {
         label: "Updated",
         value: updatedLabel,
         datetime: ARCHIVE_GENERATED_AT,
@@ -135,17 +147,17 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
           <div>
             <span>Peak month</span>
             <strong>{peakMonth.label}</strong>
-            <small>{peakMonth.count} entries</small>
+            <small>{peakMonth.count} browsable · {peakMonth.storedCount} stored</small>
           </div>
           <div>
             <span>Most recent archive</span>
             <strong>{latestMonth!.label}</strong>
-            <small>{latestMonth!.warm} warm · {latestMonth!.cold} cold</small>
+            <small>{latestMonth!.hot} hot · {latestMonth!.warm} warm · {latestMonth!.cold} cold</small>
           </div>
           <div>
             <span>Storage mix</span>
-            <strong>{months.reduce((sum, month) => sum + month.warm, 0)} warm</strong>
-            <small>{months.reduce((sum, month) => sum + month.cold, 0)} cold</small>
+            <strong>{storedHot} hot · {storedWarm} warm</strong>
+            <small>{storedCold} cold · {ARCHIVE_STORED_ENTRIES} total</small>
             <small>
               <span class="i18n-ja">{ARCHIVE_TIER_SUMMARY.ja}</span>
               <span class="i18n-en" lang="en">{ARCHIVE_TIER_SUMMARY.en}</span>
@@ -159,7 +171,7 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
           {years.map((year) => (
             <a href={`#year-${year}`}>
               {year}
-              <span>{yearTotals.get(year)} entries</span>
+              <span>{yearTotals.get(year)} browsable</span>
             </a>
           ))}
         </nav>
@@ -175,7 +187,9 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
         <section class="year-section" id={`year-${year}`}>
           <div class="year-header">
             <h3 class="year-head">{year}</h3>
-            <span>{byYear.get(year)!.length} months · {yearTotals.get(year)} entries</span>
+            <span>
+              {byYear.get(year)!.length} months · {yearTotals.get(year)} browsable · {yearStoredTotals.get(year)} stored
+            </span>
           </div>
           <div class="month-grid">
             {byYear.get(year)!.map((m) => (
@@ -184,11 +198,16 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
                 class="month-card"
                 data-peak-percent={m.peakPercent}
                 data-visual-bar-width={m.barWidth}
+                data-browsable-count={m.count}
+                data-stored-count={m.storedCount}
               >
                 <div class="month-card-top">
                   <div>
                     <div class="month-label">{m.label}</div>
-                    <div class="month-count">{m.count}</div>
+                    <div class="month-count">
+                      {m.count}
+                      <small>{m.storedCount} stored</small>
+                    </div>
                   </div>
                   <span class="month-share" title={`${m.peakPercent}% of peak month ${peakMonth?.label ?? ""}`}>
                     {m.peakShareLabel}% of peak
@@ -199,9 +218,10 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
                 </div>
                 <div class="month-category">
                   <span style={`background:${m.topCategoryColor}`}></span>
-                  Top category · {m.topCategoryLabel} {m.topCategoryCount > 0 ? `· ${m.topCategoryCount} entries` : ""}
+                  Top category · {m.topCategoryLabel} {m.topCategoryCount > 0 ? `· ${m.topCategoryCount} browsable` : ""}
                 </div>
                 <div class="month-meta">
+                  <span class="tier hot">hot {m.hot}</span>
                   <span class="tier warm">warm {m.warm}</span>
                   <span class="tier cold">cold {m.cold}</span>
                 </div>
@@ -401,6 +421,15 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
     font-variant-numeric: tabular-nums;
   }
 
+  .month-count small {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted-2);
+    font-size: 10.5px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
   .month-share {
     padding-top: 2px;
     color: var(--muted-2);
@@ -449,6 +478,7 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
     padding: 2px 6px;
     border-radius: 4px;
   }
+  .tier.hot { background: rgba(52, 211, 153, 0.14); color: #34d399; }
   .tier.warm { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
   .tier.cold { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
 

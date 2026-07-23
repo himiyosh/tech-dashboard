@@ -388,6 +388,7 @@ export async function handleFreePlanBridgeRequest(
       mode: "github-actions-publisher",
       scheduled: false,
       publisherWorkflow: ".github/workflows/publisher.yml",
+      publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT,
     }, configured ? 200 : 503);
   }
   if (!url.pathname.startsWith("/v1/")) {

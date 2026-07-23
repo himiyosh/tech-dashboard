@@ -9,19 +9,23 @@
 import { isPublishableEntry, type NormalizedEntry } from "./data.ts";
 
 export const ARCHIVE_TIER_SUMMARY = {
-  ja: "warm = 個別記事URLを保持 · cold = 月次Archive内のみ",
-  en: "warm = individual URL retained · cold = monthly archive only",
+  ja: "hot = live収録時点の統計用snapshot · warm = 個別記事URLを保持 · cold = 月次Archive内のみ",
+  en: "hot = statistical snapshot from its live period · warm = individual URL retained · cold = monthly archive only",
 } as const;
 
 export const ARCHIVE_TIER_DETAIL = {
-  ja: "warm は個別記事URLを保持します。cold は月次Archive内だけで保持します。evergreen知見はwarmを維持します。",
-  en: "Warm entries retain an individual article URL. Cold entries remain only in their monthly archive. Evergreen knowledge stays warm.",
+  ja: "hot はlive収録時点の統計用snapshotで、月別記事一覧には表示しません。保持期間後はlive indexから外れる場合があります。warm は個別記事URLを保持し、cold は月次Archive内だけで保持します。evergreen知見はwarmを維持します。",
+  en: "Hot rows are statistical snapshots from their live period and are not shown in monthly article lists. They may leave the live index after retention expires. Warm entries retain an individual URL. Cold entries remain only in their monthly archive. Evergreen knowledge stays warm.",
 } as const;
 
 interface ArchiveMonthFile {
   generatedAt: string;
   month: string;
   count: number;
+  storedCount: number;
+  hot: number;
+  warm: number;
+  cold: number;
   entries: NormalizedEntry[];
 }
 
@@ -53,10 +57,23 @@ export const ARCHIVE_BY_MONTH: Readonly<Record<string, ArchiveMonthFile>> = (() 
   for (const [path, payload] of Object.entries(monthModules)) {
     const m = path.match(/(\d{4}-\d{2})\.json$/)?.[1];
     if (!m || !payload) continue;
+    const storedCount = payload.entries.length;
+    let hot = 0;
+    let warm = 0;
+    let cold = 0;
+    for (const entry of payload.entries) {
+      if (entry.archiveTier === "hot") hot++;
+      else if (entry.archiveTier === "warm") warm++;
+      else if (entry.archiveTier === "cold") cold++;
+    }
     const entries = payload.entries.filter(isPublishableEntry);
     out[m] = {
       ...payload,
       count: entries.length,
+      storedCount,
+      hot,
+      warm,
+      cold,
       entries,
     };
   }
@@ -69,7 +86,26 @@ export const ARCHIVE_MONTHS: ReadonlyArray<string> = Object.keys(ARCHIVE_BY_MONT
   .sort()
   .reverse();
 
-export const ARCHIVE_TOTAL_ENTRIES = Object.values(ARCHIVE_BY_MONTH).reduce((sum, m) => sum + m.count, 0);
+/** Summary-ready archive entries that are rendered on monthly pages. */
+export const ARCHIVE_BROWSABLE_ENTRIES = Object.values(ARCHIVE_BY_MONTH)
+  .reduce((sum, month) => sum + month.count, 0);
+
+/** All stored archive rows, including hot rows mirrored from the live index. */
+export const ARCHIVE_STORED_ENTRIES = Object.values(ARCHIVE_BY_MONTH)
+  .reduce((sum, month) => sum + month.storedCount, 0);
+
+/** Warm archive entries retain individual in-site detail routes (R-022). */
+export const ARCHIVE_WARM_ENTRIES: ReadonlyArray<NormalizedEntry> = (() => {
+  const byId = new Map<string, NormalizedEntry>();
+  for (const month of Object.values(ARCHIVE_BY_MONTH)) {
+    for (const entry of month.entries) {
+      if (entry.archiveTier === "warm" && !byId.has(entry.id)) {
+        byId.set(entry.id, entry);
+      }
+    }
+  }
+  return [...byId.values()];
+})();
 
 export const ARCHIVE_GENERATED_AT = indexFile?.generatedAt
   ?? Object.values(ARCHIVE_BY_MONTH)[0]?.generatedAt
@@ -79,6 +115,8 @@ export interface MonthSummary {
   month: string;       // "YYYY-MM"
   label: string;       // "2026 April"
   count: number;
+  storedCount: number;
+  hot: number;
   warm: number;
   cold: number;
 }
@@ -97,13 +135,15 @@ function labelFor(month: string): string {
 export function getMonthSummaries(): MonthSummary[] {
   return ARCHIVE_MONTHS.map((month) => {
     const f = ARCHIVE_BY_MONTH[month]!;
-    let warm = 0;
-    let cold = 0;
-    for (const e of f.entries) {
-      if (e.archiveTier === "warm") warm++;
-      else if (e.archiveTier === "cold") cold++;
-    }
-    return { month, label: labelFor(month), count: f.count, warm, cold };
+    return {
+      month,
+      label: labelFor(month),
+      count: f.count,
+      storedCount: f.storedCount,
+      hot: f.hot,
+      warm: f.warm,
+      cold: f.cold,
+    };
   });
 }
 

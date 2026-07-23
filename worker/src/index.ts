@@ -69,7 +69,7 @@ import {
   buildArchiveIndexFile,
   buildArchiveMonthFile,
   groupArchiveEntries,
-  mergeArchiveEntries,
+  reconcileArchiveMonths,
   synchronizeArchiveTagsFromLive,
   type ArchiveIndexFile,
   type ArchiveMonthFile,
@@ -798,34 +798,38 @@ async function publishHistoryFiles(
   const changes: FileChange[] = [];
   let archiveFilesChanged = 0;
 
+  const existingMonthByName = new Map<string, ArchiveMonthFile | null>();
+  for (let i = 0; i < inspectionMonths.length; i++) {
+    const month = inspectionMonths[i];
+    const existingFile = existingInspectionFiles[i];
+    const existingMonth = assertArchiveMonthBaseline(month, archiveIndex, existingFile);
+    existingMonthByName.set(month, existingMonth);
+  }
+  const reconciledByMonth = reconcileArchiveMonths([
+    ...inspectionMonths.flatMap((month) => {
+      const existing = existingMonthByName.get(month);
+      return existing ? [{ month, entries: existing.entries }] : [];
+    }),
+    ...[...byMonth.entries()].map(([month, entries]) => ({ month, entries })),
+  ]);
+
   for (let i = 0; i < inspectionMonths.length; i++) {
     const month = inspectionMonths[i];
     const path = `data/archive/${month}.json`;
     const existingFile = existingInspectionFiles[i];
-    const existingMonth = assertArchiveMonthBaseline(month, archiveIndex, existingFile);
-    const incomingEntries = byMonth.get(month) ?? [];
     const tagSync = synchronizeArchiveTagsFromLive(
-      mergeArchiveEntries(existingMonth?.entries ?? [], incomingEntries),
+      reconciledByMonth.get(month) ?? [],
       liveEntries,
     );
     archiveEntriesForStats.push(...tagSync.entries);
     const mergedEntries = tagSync.entries;
-    if (mergedEntries.length === 0) continue;
-
-    const shouldWriteMonth = incomingEntries.length > 0 || tagSync.changed > 0;
-    const monthPayload = shouldWriteMonth
-      ? buildArchiveMonthFile(month, mergedEntries, generatedAt)
-      : existingMonth;
-    if (!monthPayload) {
-      throw new Error(`refusing to publish without a validated archive payload for ${month}`);
-    }
+    const monthPayload = buildArchiveMonthFile(month, mergedEntries, generatedAt);
     finalMonthFiles.set(month, monthPayload);
-    if (!shouldWriteMonth) continue;
-    monthFiles.set(month, monthPayload);
 
     const change = await ghJsonChangeIfChanged(env, path, monthPayload, existingFile ?? null);
     if (change) {
       changes.push(change);
+      monthFiles.set(month, monthPayload);
       archiveFilesChanged++;
     }
   }

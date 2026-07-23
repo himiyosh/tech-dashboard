@@ -21,7 +21,15 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 - Publisher が実英語要約から安全に導出できる `titleEn` を publish 前に自動補完し、日本語コミュニティ記事の英語表示で原題 fallback が連続する状態を減らすようにしました。
 - 毎時 Publisher は生成データに関係する Home・記事詳細・metrics・Archive・404 の専用 E2E を実行し、全 UI 回帰は PR CI で維持するようにしました。成功した Publisher の完了後は Worker Health を自動確認します。
+- Publisher は収集開始前、data commit直前、Queue/KV effects送信直前にFree bridgeのpublisher fingerprintを確認し、rollout不一致時にdataだけを先行公開しないようにしました。
 - PR CI は unit・typecheck と Web build を独立jobに分け、runner中断後に失敗したbuildだけを再実行できるようにしました。
+- 大規模な静的Web buildとPlaywright、毎時Publisherは、公開repository向けのUbuntu 24.04 ARM runnerで実行するようにしました。
+- Archive は閲覧可能な要約付き履歴と、live収録時点のhot統計snapshotを含む保存行を分けて表示し、All-time・月別・metrics APIの母集団を明示するようにしました。
+- モバイル記事詳細の「トップに戻る」ボタンを下部tabbarの上へ配置し、スクロール後も操作できるようにしました。
+- 収集後に別公式ブログへ移転した既知記事は、canonical publisher・元記事URL・検索metadataを移転先へ揃え、収集元feedを記事詳細へ別表示するようにしました。
+- 記事詳細の前後記事を関連記事カードから除外し、同じリンクが連続して重複表示されないようにしました。
+- Archiveのwarm記事は保持契約どおり内部detail routeを生成し、cold記事は存在しないdetail pageではなく元記事へ直接遷移するようにしました。
+- 公開日補正で月が変わった同一記事をArchive全月で1件へreconcileし、月別件数・All-time・statsの重複加算を防ぐようにしました。
 - 検索は authority・importance・鮮度の後段ランキングを適用する前に十分な候補を確認し、同日の完全一致記事が古い候補の後ろに隠れにくくなりました。Spotlight は「最新」ではなく実際の優先度を示す表現へ統一し、記事詳細の原題言語ラベルを H1 本文から分離しました。
 - 要約待ちカードを Status / Footer と同じ Queue・収集状態契約へ統一し、個別記事の準備待ちと全体 Queue の稼働を分け、停止中は解消目安を表示しないようにしました。Status の AI 要約可用性には公開スナップショットの観測時刻を明示し、記事詳細では固定 Footer が要約のみの案内を覆わないようにしました。
 - Home の Header、Hero、Ticker、Featured、Top 3 を再構成し、モバイル・タブレットでは本文幅を広げ、デスクトップでは Hero の左右比率と余白を調整しました。

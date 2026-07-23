@@ -56,7 +56,7 @@ jobs:
 
   web-build:
     name: web build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
@@ -85,7 +85,7 @@ jobs:
 
   e2e:
     name: e2e (Playwright)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 45
     needs: [unit, web-build]
     steps:

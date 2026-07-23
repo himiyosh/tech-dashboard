@@ -84,8 +84,8 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
     count={`${ARCHIVE_BROWSABLE_ENTRIES} 閲覧可能 · ${ARCHIVE_STORED_ENTRIES} 保存行`}
     countEn={`${ARCHIVE_BROWSABLE_ENTRIES} browsable · ${ARCHIVE_STORED_ENTRIES} stored`}
     headingId="archive-heading"
-    description="要約付きのwarm/cold記事を月単位で閲覧できます。保存行には、統計用にlive indexと重複保持するhot行も含まれます。"
-    descriptionEn="Browse summary-ready warm and cold articles by month. Stored rows also include hot rows mirrored from the live index for statistics."
+    description="要約付きのwarm/cold記事を月単位で閲覧できます。保存行には、live収録時点を統計用に残すhot snapshotも含まれます。"
+    descriptionEn="Browse summary-ready warm and cold articles by month. Stored rows also include hot statistical snapshots from their live period."
     actions={[
       { href: "/", label: "Latest timeline" },
       { href: latestMonth ? `/archive/${latestMonth.month}` : "#archive-months", label: "Latest month" },
@@ -102,8 +102,8 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
       {
         label: "Stored rows",
         value: ARCHIVE_STORED_ENTRIES,
-        detail: "hotのlive重複行を含む全履歴",
-        detailEn: "Full history including hot live-index mirrors",
+        detail: "live収録時点のhot snapshotを含む全履歴",
+        detailEn: "Full history including hot snapshots from their live period",
         scope: "archive-stored",
       },
       {
@@ -218,7 +218,7 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
                 </div>
                 <div class="month-category">
                   <span style={`background:${m.topCategoryColor}`}></span>
-                  Top category · {m.topCategoryLabel} {m.topCategoryCount > 0 ? `· ${m.topCategoryCount} entries` : ""}
+                  Top category · {m.topCategoryLabel} {m.topCategoryCount > 0 ? `· ${m.topCategoryCount} browsable` : ""}
                 </div>
                 <div class="month-meta">
                   <span class="tier hot">hot {m.hot}</span>

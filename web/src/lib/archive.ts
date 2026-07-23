@@ -9,13 +9,13 @@
 import { isPublishableEntry, type NormalizedEntry } from "./data.ts";
 
 export const ARCHIVE_TIER_SUMMARY = {
-  ja: "hot = live index と重複保持 · warm = 個別記事URLを保持 · cold = 月次Archive内のみ",
-  en: "hot = mirrored in the live index · warm = individual URL retained · cold = monthly archive only",
+  ja: "hot = live収録時点の統計用snapshot · warm = 個別記事URLを保持 · cold = 月次Archive内のみ",
+  en: "hot = statistical snapshot from its live period · warm = individual URL retained · cold = monthly archive only",
 } as const;
 
 export const ARCHIVE_TIER_DETAIL = {
-  ja: "hot は統計用に月次artifactへ複製され、記事本体はlive indexで表示します。warm は個別記事URLを保持し、cold は月次Archive内だけで保持します。evergreen知見はwarmを維持します。",
-  en: "Hot rows are mirrored into monthly artifacts for statistics while their articles remain in the live index. Warm entries retain an individual URL. Cold entries remain only in their monthly archive. Evergreen knowledge stays warm.",
+  ja: "hot はlive収録時点の統計用snapshotで、月別記事一覧には表示しません。保持期間後はlive indexから外れる場合があります。warm は個別記事URLを保持し、cold は月次Archive内だけで保持します。evergreen知見はwarmを維持します。",
+  en: "Hot rows are statistical snapshots from their live period and are not shown in monthly article lists. They may leave the live index after retention expires. Warm entries retain an individual URL. Cold entries remain only in their monthly archive. Evergreen knowledge stays warm.",
 } as const;
 
 interface ArchiveMonthFile {

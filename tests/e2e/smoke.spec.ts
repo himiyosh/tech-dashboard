@@ -4218,7 +4218,7 @@ test.describe("TECH Dashboard smoke", () => {
     expect(archivePopulations.browsable).toBeGreaterThan(0);
     expect(archivePopulations.stored).toBeGreaterThan(archivePopulations.browsable);
     await expect(page.locator(".archive-spotlight").filter({ hasText: "Storage mix" })).toContainText(
-      "hot = live index と重複保持",
+      "hot = live収録時点の統計用snapshot",
     );
     const peakLabels = await page.locator("a.month-card").evaluateAll((cards) =>
       cards.map((card) => ({
@@ -4247,7 +4247,9 @@ test.describe("TECH Dashboard smoke", () => {
     const firstMonth = page.locator("a.month-card").first();
     await expect(firstMonth).toBeVisible();
     await expect(firstMonth.locator(".month-share")).toContainText(/% of peak/);
-    await expect(firstMonth.locator(".month-category")).toContainText(/Top category.*\d+ entries/);
+    await expect(firstMonth.locator(".month-category")).toContainText(
+      /Top category.*\d+ browsable/,
+    );
     await firstMonth.click();
     await expect(page).toHaveURL(/\/archive\/\d{4}-\d{2}\/?$/);
     await expect(page.locator("#archive-month-heading")).toBeVisible();
@@ -4265,6 +4267,9 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator('[data-metric-scope="month-top-source"]')).toContainText("Top source");
     await expect(page.locator(".page-hero-metric").filter({ hasText: /^Warm/ })).toHaveCount(0);
     await expect(page.locator(".month-rank-scope")).toHaveCount(2);
+    await expect(page.locator(".month-rank-scope").first()).toHaveText(
+      "Browsable entries in this month",
+    );
     await expect(page.locator(".category-strip-label .i18n-ja")).toHaveText(
       "閲覧可能記事のカテゴリ内訳",
     );

@@ -80,8 +80,8 @@ const monthHeroActions = [
     count={`${file.count} 閲覧可能 · ${file.storedCount} 保存行`}
     countEn={`${file.count} browsable · ${file.storedCount} stored`}
     headingId="archive-month-heading"
-    description="要約付きのwarm/cold記事を日付順に表示します。hot行は統計用に保存され、記事本体はlive indexで閲覧できます。"
-    descriptionEn="Summary-ready warm and cold articles are listed by date. Hot rows are stored for statistics while their articles remain in the live index."
+    description="要約付きのwarm/cold記事を日付順に表示します。hotはlive収録時点の統計用snapshotで、この月別一覧には表示しません。"
+    descriptionEn="Summary-ready warm and cold articles are listed by date. Hot rows are statistical snapshots from their live period and are not shown in this monthly list."
     actions={monthHeroActions}
     metrics={[
       {
@@ -94,8 +94,8 @@ const monthHeroActions = [
       {
         label: "Stored rows",
         value: file.storedCount,
-        detail: "hotのlive重複行を含む保存数",
-        detailEn: "Stored rows including hot live-index mirrors",
+        detail: "live収録時点のhot snapshotを含む保存数",
+        detailEn: "Stored rows including hot snapshots from their live period",
         scope: "month-stored-count",
       },
       {
@@ -108,15 +108,15 @@ const monthHeroActions = [
       {
         label: "Top category",
         value: categoryRows[0]?.label ?? "none",
-        detail: "月内の記事数1位",
-        detailEn: "Most entries this month",
+        detail: "月内の閲覧可能記事数1位",
+        detailEn: "Most browsable entries this month",
         scope: "month-top-category",
       },
       {
         label: "Top source",
         value: sourceRows[0] ? sourceLabel(sourceRows[0].source) : "none",
-        detail: "月内の記事数1位",
-        detailEn: "Most entries this month",
+        detail: "月内の閲覧可能記事数1位",
+        detailEn: "Most browsable entries this month",
         scope: "month-top-source",
       },
       {
@@ -160,7 +160,7 @@ const monthHeroActions = [
           <strong>{file.cold}</strong>
           <small>{coldPct}%</small>
         </div>
-        <div class="category-strip" aria-label="Top categories by entries in this month">
+        <div class="category-strip" aria-label="Top categories by browsable entries in this month">
           <span class="category-strip-label">
             <span class="i18n-ja">閲覧可能記事のカテゴリ内訳</span>
             <span class="i18n-en" lang="en">Browsable category mix</span>
@@ -195,7 +195,7 @@ const monthHeroActions = [
 
       <div class="side-card month-insight-card">
         <div class="rail-title">Top categories</div>
-        <p class="month-rank-scope">Entries in this month</p>
+        <p class="month-rank-scope">Browsable entries in this month</p>
         <ul class="month-rank-list">
           {categoryRows.map((row) => (
             <li>
@@ -208,7 +208,7 @@ const monthHeroActions = [
 
       <div class="side-card month-insight-card">
         <div class="rail-title">Top sources</div>
-        <p class="month-rank-scope">Entries in this month</p>
+        <p class="month-rank-scope">Browsable entries in this month</p>
         <ul class="month-rank-list">
           {sourceRows.map((row) => (
             <li>

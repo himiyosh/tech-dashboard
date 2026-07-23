@@ -34,7 +34,7 @@ const DEFAULT_OIDC_AUDIENCE = "tech-dashboard-publisher";
 const ALLOWED_DATA_PATH =
   /^data\/(?:index\.json|bodies\.json|stats\.json|archive\/(?:_index|\d{4}-\d{2})\.json)$/;
 
-type PublisherMode = "apply" | "dry-run" | "check" | "flush";
+type PublisherMode = "apply" | "dry-run" | "check" | "preflight" | "flush";
 
 interface PreparedPublisherOutput {
   changed: boolean;
@@ -55,6 +55,7 @@ interface OidcTokenState {
 
 interface PublisherRunnerDependencies {
   runHarness?: typeof runHarness;
+  verifyBridgeContract?: typeof verifyBridgePublisherContract;
 }
 
 interface DeferredKvPut {
@@ -94,6 +95,7 @@ export function parsePublisherArgs(
     if (args[0] === "--apply") return { ok: true, mode: "apply" };
     if (args[0] === "--dry-run") return { ok: true, mode: "dry-run" };
     if (args[0] === "--check") return { ok: true, mode: "check" };
+    if (args[0] === "--preflight") return { ok: true, mode: "preflight" };
   }
   if (args.length === 2 && args[0] === "--flush" && args[1]) {
     return { ok: true, mode: "flush", effectsPath: args[1] };
@@ -101,7 +103,7 @@ export function parsePublisherArgs(
   return {
     ok: false,
     message:
-      "use exactly one of --apply, --dry-run, --check, or --flush <effects-file>",
+      "use exactly one of --apply, --dry-run, --check, --preflight, or --flush <effects-file>",
   };
 }
 
@@ -193,6 +195,37 @@ export class PublisherBridgeClient {
       if (response.status !== 401 || attempt === 1) return response;
     }
     throw new Error("unreachable bridge retry state");
+  }
+}
+
+export async function verifyBridgePublisherContract(
+  bridgeUrl: string,
+  expectedFingerprint = DEPLOYED_PUBLISHER_FINGERPRINT,
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const response = await fetchImpl(`${bridgeUrl.replace(/\/+$/, "")}/health`, {
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) {
+    throw new Error(
+      `publisher bridge preflight failed with HTTP ${response.status}`,
+    );
+  }
+  const body = (await response.json()) as {
+    ok?: unknown;
+    status?: unknown;
+    publisherContractFingerprint?: unknown;
+  };
+  if (body.ok !== true || body.status !== "bridge") {
+    throw new Error(
+      `publisher bridge preflight is not healthy: ${String(body.status ?? "unknown")}`,
+    );
+  }
+  if (body.publisherContractFingerprint !== expectedFingerprint) {
+    throw new Error(
+      `publisher bridge fingerprint mismatch: deployed ${String(body.publisherContractFingerprint ?? "missing")}, expected ${expectedFingerprint}`,
+    );
   }
 }
 
@@ -541,14 +574,26 @@ export async function runPublisherCli(
   }
 
   assertActionsContext(env);
+  const bridgeUrl = env.PUBLISHER_BRIDGE_URL ?? DEFAULT_BRIDGE_URL;
+  const verifyBridge =
+    dependencies.verifyBridgeContract ??
+    verifyBridgePublisherContract;
+  if (parsed.mode === "preflight") {
+    await verifyBridge(bridgeUrl);
+    console.log(
+      `OK: publisher bridge fingerprint ${DEPLOYED_PUBLISHER_FINGERPRINT}`,
+    );
+    return 0;
+  }
   if (parsed.mode === "flush") {
     const bundle = readEffectsBundle(parsed.effectsPath, env);
+    await verifyBridge(bridgeUrl);
     const oidc = new GithubActionsOidcProvider(
       env,
       env.PUBLISHER_OIDC_AUDIENCE ?? DEFAULT_OIDC_AUDIENCE,
     );
     const bridge = new PublisherBridgeClient(
-      env.PUBLISHER_BRIDGE_URL ?? DEFAULT_BRIDGE_URL,
+      bridgeUrl,
       oidc,
     );
     const remoteKv = new RemoteKeyValueBinding(bridge);
@@ -574,12 +619,13 @@ export async function runPublisherCli(
   }
 
   const dryRun = parsed.mode === "dry-run";
+  await verifyBridge(bridgeUrl);
   const oidc = new GithubActionsOidcProvider(
     env,
     env.PUBLISHER_OIDC_AUDIENCE ?? DEFAULT_OIDC_AUDIENCE,
   );
   const bridge = new PublisherBridgeClient(
-    env.PUBLISHER_BRIDGE_URL ?? DEFAULT_BRIDGE_URL,
+    bridgeUrl,
     oidc,
   );
   const remoteCache = new RemoteKeyValueBinding(bridge, true);

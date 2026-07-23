@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -7,6 +8,12 @@ const DEFAULT_PUBLISHER_MAX_AGE_MINUTES = 180;
 const DEFAULT_DATA_WARN_AGE_MINUTES = 360;
 const DEFAULT_DATA_MAX_AGE_MINUTES = 24 * 60;
 const PUBLISHER_APPLY_RUN_TITLE = "Publisher / publish";
+const EXPECTED_PUBLISHER_FINGERPRINT = JSON.parse(
+  readFileSync(
+    new URL("../worker/publisher-contract.json", import.meta.url),
+    "utf8",
+  ),
+).fingerprint;
 
 const endpoints = {
   bridge:
@@ -86,6 +93,11 @@ export function validateBridge(body) {
     `bridge mode is ${body.mode ?? "unknown"}`,
   );
   requireCondition(errors, body.scheduled === false, "bridge still exposes scheduled execution");
+  requireCondition(
+    errors,
+    body.publisherContractFingerprint === EXPECTED_PUBLISHER_FINGERPRINT,
+    `bridge publisher fingerprint is ${body.publisherContractFingerprint ?? "missing"}; expected ${EXPECTED_PUBLISHER_FINGERPRINT}`,
+  );
   return { errors, warnings: [] };
 }
 

@@ -86,6 +86,9 @@ describe("Cloudflare Worker deploy config", () => {
     expect(publisherWorkflow).toContain("cancel-in-progress: false");
     expect(publisherWorkflow).toContain("contents: write");
     expect(publisherWorkflow).toContain("id-token: write");
+    expect(publisherWorkflow).toMatch(
+      /test -n "\$\(git diff --cached --name-only\)"[\s\S]*npm run publisher:run -- --preflight[\s\S]*git commit -m/,
+    );
     expect(publisherWorkflow).not.toMatch(/wrangler\s+(?:pages\s+)?deploy/);
     expect(healthWorkflow).toContain('cron: "40 * * * *"');
     expect(healthWorkflow).toContain("workflow_run:");

@@ -214,6 +214,7 @@
 ### R-027: publisher contract mismatch 時は data publish を fail-closed にする
 - `worker/publisher-contract.json` は data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
 - Node publisher は収集開始時に checkout と remote main が同じ HEAD SHA であることを確認し、その SHA の contract marker と runner fingerprint を照合する。`data/index.json`、`data/bodies.json`、archive index / month、stats の baseline はすべて同じ immutable SHA から読む。data commit または effect-only flush 前にも main ref が開始時 SHA と完全一致することを再確認し、進んでいれば commit と遅延 effects を中止する。commit parent も同じ SHA に固定し、push は non-force とする。
+- Node publisher は収集開始前、data commit 直前、遅延 effects flush 直前に Free bridge の public health が同じ publisher fingerprint を公開していることを確認する。bridge の fingerprint が未公開・不一致・unhealthy の場合は harness、data commit、effects flush を fail-closed で中止する。
 - summary/body Queue job と生成 cache には publisher fingerprint を伝播する。現在の fingerprint と明示的に異なる cache は採用せず再生成対象にする。fingerprint 導入前の既存 cache は本文・要約テキストだけ互換読み込みし、summary の importance / extraTags は exact fingerprint 一致時だけ採用する。fingerprint 無し job を受けた更新済み consumer は `legacy-unversioned-job` を保存し、既存 legacy cache と区別する。
 - fingerprint を変える release は Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を PR head から先に deployし、旧 consumer の in-flight 処理が残らないことを確認してから PR を mergeする。merge 後は原則として旧 harness が marker mismatch で停止したことを確認し、明示承認のうえ Free bridge を deployする。deployment provenanceやguard到達性を確認できずmismatchを観測できない場合は、その事実を明記し、旧runのterminal failure、merge後のdata commit不在、旧heartbeat非更新をすべて実測できた場合に限り「旧writerがpublish不能」という安全条件でbridge置換へ進む。いずれかを確認できなければ停止してユーザー判断を求める。bridge health、Publisher workflow、data commit、Queue drain、Pages productionを順に確認する。
 - `data/index.json` の entry が変わる publish では、`data/archive/_index.json` と `data/stats.json` の `generatedAt` も同一 commit の reference clock へ揃える。月次 archive は timestamp-only churn を避ける。
@@ -2539,6 +2540,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: archive writerがincoming entryの最終月だけを更新し、同じcanonical URLが以前属していた月をglobalにreconcileしていなかった。月ごとのdedupe gateは全て通るため、All-time・月別・statsが37行分重複加算された。
 - **対策**: shared archive coreで全月entryをflattenし、canonical winnerを1件選び、その最終publishedAt月へ再bucketする。winner選定では明示された公開日を`publishedAt === collectedAt`のcollection fallbackより優先する。Node Publisher、hotを含むlocal builder、transaction migrationが同じhelperを使い、global merge後にlive tagsを再同期する。data schemaはcross-month canonical uniquenessをfail-closedに検証し、既存artifactを6,740 unique行へ修復する。
 - **教訓**: bucket keyが後から補正され得るartifactでは、bucket内mergeだけではstale copyを除去できない。全bucketを同じimmutable snapshotから読み、timestampのprovenanceを比較してglobal winnerを決めてからbucketを再構築し、tag同期・index・statsもその最終集合から生成する。
+
+### LL-383: downstream bridgeのfingerprintはdata commit前にpreflightする
+- **事象**: PublisherはQueue jobとKV effectsへfingerprintを付けていたが、Free bridgeとのfingerprint一致を確認するのはdata commit後のeffects flush時だけだった。新fingerprintのPublisherがdataをmainへpushした後に旧bridgeからQueueを拒否され、永続dataと非同期enrichmentを分離できる経路があった。
+- **根本原因**: publisher contractをjob/cache payloadのvalidationとして扱い、Publisherが依存するdeployed bridge自体のversionをprepareとcommitの事前条件に含めていなかった。bridge healthにもdeployed fingerprintがなく、公開状態をsecretなしで比較できなかった。
+- **対策**: Free bridge healthへdeployed publisher fingerprintを公開し、Publisherはharness開始前、staging後のdata commit直前、effects flush直前にchecked-in fingerprintとの一致を検証する。未公開、不一致、unhealthyではfail-closedにし、flush前の拒否ではeffects fileを保持する。production healthも同じ一致を検証する。
+- **教訓**: 非同期consumerのpayload validationだけではproducerとtransportのrollout互換性を保証できない。永続dataと遅延副作用を同じrelease contractで扱う場合、downstream transportのversionを公開healthで観測し、生成前、commit前、flush前の全不可逆境界でpreflightする。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

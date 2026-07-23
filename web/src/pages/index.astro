@@ -13,7 +13,11 @@ import ArxivIcon from "../components/icons/ArxivIcon.astro";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { sourceFaviconUrl } from "../lib/favicon.ts";
 import { decisionRankScore } from "../lib/ranking.ts";
-import { sourceAuthority, sourceLabel } from "../lib/source-meta.ts";
+import {
+  canonicalSourceUrl,
+  sourceAuthority,
+  sourceLabel,
+} from "../lib/source-meta.ts";
 import { STATS } from "../lib/stats.ts";
 import {
   ALL_ENTRIES,
@@ -271,7 +275,7 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
         const featImportance = importanceLabel(feat.importance);
         const featAuthority = sourceAuthority(feat.source, feat.sourceType);
         const featAuthorityBadgeClass = ["badge", "authority", featAuthority.kind].join(" ");
-        const featFavicon = sourceFaviconUrl(feat.url);
+        const featFavicon = sourceFaviconUrl(canonicalSourceUrl(feat.url));
         const featImg = feat.image?.src ?? "";
         const featReason = spotlightReason(feat);
         return (
@@ -362,7 +366,7 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
               </span>
               <SourceDisclosure
                 class="featured-src"
-                label={sourceLabel(feat.source)}
+                label={sourceLabel(feat.source, feat.url)}
                 favicon={featFavicon}
                 faviconClass="featured-favicon"
               />
@@ -468,7 +472,7 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
                     </span>
                   </a>
                   <span class="rank-meta">
-                    <SourceDisclosure class="rank-source" label={sourceLabel(e.source)} />
+                    <SourceDisclosure class="rank-source" label={sourceLabel(e.source, e.url)} />
                     <time class="rank-time mono" datetime={e.publishedAt} data-relative-time>{relativeTime(e.publishedAt, now)}</time>
                     {stale && (
                       <span class="rank-freshness stale">

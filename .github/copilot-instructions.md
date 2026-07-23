@@ -2516,6 +2516,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: FABを既存mobile menu sheetと同じsafe-area対応offsetでtabbar上へ移し、z-indexを上げずnavigationを優先する。E2EでFAB寸法、tabbarとの8px以上の距離、中心点のhit targetを直接検証する。
 - **教訓**: fixed controlは44px寸法とpage overflowだけでは操作可能性を証明できない。fixed header/footer/tabbarが同居する場合は、各矩形の非交差と実hit-testingを同じviewportで確認し、navigationより上へ重ねるのではなく安全距離を確保する。
 
+### LL-379: feed provenanceとcanonical publisherを同じsource labelへ潰さない
+- **事象**: Google DeepMind RSSから収集したGenesis Mission記事は、元URLがGoogle Cloud Blogへ302移転し、canonical、`og:site_name`、titleもGoogle Cloud Blogを示していたが、全UIは収集feed由来のGoogle DeepMind Blogをpublisherとして表示していた。
+- **根本原因**: `entry.source`をcollector provenanceとpublisher identityの両方へ流用し、redirect後のcanonical publicationをreader-facing source、CTA、検索metadata、JSON-LDへ反映する契約がなかった。
+- **対策**: 検証済みのknown redirectを`source-meta.ts`の単一presentation helperへ集約し、カード、Ticker、Digest、Spotlight、詳細、Pagefind、JSON-LD、favicon、元記事CTAをcanonical publisherへ揃える。収集feedは記事詳細の`Collected via`として別表示し、同source railはfeed単位のまま維持する。
+- **教訓**: feed sourceは「どこから収集したか」、canonical publisherは「誰が現在公開しているか」である。redirectを確認した記事では両者を分離し、reader-facing trust surfaceとmachine-readable metadataはcanonical側へ、collector healthと同feed関連記事はprovenance側へ接続する。
+
+### LL-380: 同一detail内のnavigation集合は相互に重複排除する
+- **事象**: 記事詳細の前後記事navigationに出た2件が、直下の同カテゴリ関連記事gridでも先頭に再表示されていた。
+- **根本原因**: `adjacentInCategory()`と`relatedEntries()`が同じカテゴリ母集団から独立選定され、先に確定したnavigation IDを後続集合へ伝播していなかった。
+- **対策**: 前後記事IDを関連記事候補から除外してから表示上限を適用し、E2Eで`.ed-pn-card`と`.ed-rel-card`のhref集合が交差しないことを固定する。
+- **教訓**: 同一画面で同じ候補poolを使うnavigation、recommendation、rankingは各component内のself-exclusionだけで多様性を期待しない。先に確定したidentityを後続surfaceへ渡し、上限sliceより前に集合間の重複を除く。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

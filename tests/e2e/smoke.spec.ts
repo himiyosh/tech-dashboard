@@ -1856,6 +1856,18 @@ test.describe("TECH Dashboard smoke", () => {
       ),
     ).toHaveCount(0);
     await expect(page.locator('article.entry-detail a[target="_blank"]')).toHaveCount(1);
+    const adjacentHrefs = await page.locator(".ed-pn-card").evaluateAll((links) =>
+      links.map((link) => link.getAttribute("href")).filter(Boolean),
+    );
+    const relatedHrefs = await page.locator(".ed-rel-card").evaluateAll((links) =>
+      links.map((link) => link.getAttribute("href")).filter(Boolean),
+    );
+    for (const adjacentHref of adjacentHrefs) {
+      expect(
+        relatedHrefs,
+        "previous/next articles are not repeated in related cards",
+      ).not.toContain(adjacentHref);
+    }
 
     if (hasProse) {
       expect(bodyState).toBe("ready");

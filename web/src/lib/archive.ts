@@ -94,6 +94,19 @@ export const ARCHIVE_BROWSABLE_ENTRIES = Object.values(ARCHIVE_BY_MONTH)
 export const ARCHIVE_STORED_ENTRIES = Object.values(ARCHIVE_BY_MONTH)
   .reduce((sum, month) => sum + month.storedCount, 0);
 
+/** Warm archive entries retain individual in-site detail routes (R-022). */
+export const ARCHIVE_WARM_ENTRIES: ReadonlyArray<NormalizedEntry> = (() => {
+  const byId = new Map<string, NormalizedEntry>();
+  for (const month of Object.values(ARCHIVE_BY_MONTH)) {
+    for (const entry of month.entries) {
+      if (entry.archiveTier === "warm" && !byId.has(entry.id)) {
+        byId.set(entry.id, entry);
+      }
+    }
+  }
+  return [...byId.values()];
+})();
+
 export const ARCHIVE_GENERATED_AT = indexFile?.generatedAt
   ?? Object.values(ARCHIVE_BY_MONTH)[0]?.generatedAt
   ?? new Date(0).toISOString();

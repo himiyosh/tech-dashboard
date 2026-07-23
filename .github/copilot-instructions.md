@@ -2528,6 +2528,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: 前後記事IDを関連記事候補から除外してから表示上限を適用し、E2Eで`.ed-pn-card`と`.ed-rel-card`のhref集合が交差しないことを固定する。
 - **教訓**: 同一画面で同じ候補poolを使うnavigation、recommendation、rankingは各component内のself-exclusionだけで多様性を期待しない。先に確定したidentityを後続surfaceへ渡し、上限sliceより前に集合間の重複を除く。
 
+### LL-381: Archiveのbrowsable判定は遷移先のaddressabilityまで保証する
+- **事象**: Archiveはsummary-readyなwarm/cold 2,277件をbrowsableと表示したが、detail routeはlive indexだけから生成していた。1,421件はlive外で、warm 518件とcold 903件のカードが存在しない`/e/{id}/`へ遷移した。
+- **根本原因**: 表示可能なsummaryを持つことと、個別detail routeを持つことを同一視した。R-022のwarm addressabilityと、coldは月次Archive内のみという保持契約がroute生成とEntryCard linkへ配線されていなかった。
+- **対策**: live entryに加えてarchive warm entryもdetail static pathへ含める。cold cardはcanonical元記事URLへ直接遷移し、`元記事 / Original article`とexternal属性を表示する。E2Eはlive外warm routeのHTTP成功とcold cardのsource destinationを実artifactから選んで検証する。
+- **教訓**: 「閲覧可能」はDOMにcardを描画できることではなく、操作後の遷移先まで到達できることを意味する。retention tierごとのaddressabilityをroute生成、link label、target/rel、404回帰へ一貫して反映する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

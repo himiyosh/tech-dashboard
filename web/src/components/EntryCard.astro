@@ -26,9 +26,15 @@ import LanguageFallbackBadge from "./LanguageFallbackBadge.astro";
 
 export interface Props {
   entry: NormalizedEntry;
+  href?: string;
+  external?: boolean;
 }
 
-const { entry } = Astro.props;
+const {
+  entry,
+  href = entryHref(entry),
+  external = false,
+} = Astro.props;
 const rel = relativeTime(entry.publishedAt);
 
 const summaryJaResult = summaryForLangWithFallback(entry, "ja");
@@ -128,6 +134,9 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
 <article
   class:list={["card", "has-thumb", { important: isImportant }]}
   data-summary-state={hasSummary ? "ready" : "pending"}
+  data-entry-id={entry.id}
+  data-archive-tier={entry.archiveTier}
+  data-detail-destination={external ? "source" : "internal"}
   data-pagefind-body
   data-reveal="card"
   style={`--cat-color:${catColor}`}
@@ -179,7 +188,11 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
       </span>
     </div>
     <h3 class="title">
-      <a href={entryHref(entry)}>
+      <a
+        href={href}
+        target={external ? "_blank" : undefined}
+        rel={external ? "noopener nofollow" : undefined}
+      >
         <span
           class="i18n-ja"
           lang={titleJaResult.fallbackLang === "en" ? "en" : "ja"}
@@ -272,10 +285,15 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
           {hiddenTagCount > 0 && <span class="tag-chip tag-more">+{hiddenTagCount}</span>}
         </div>
       )}
-      <a class="url" href={entryHref(entry)}>
+      <a
+        class="url"
+        href={href}
+        target={external ? "_blank" : undefined}
+        rel={external ? "noopener nofollow" : undefined}
+      >
         <img
           class="url-favicon"
-          src={sourceFaviconUrl(entry.url)}
+          src={sourceFaviconUrl(sourceUrl)}
           alt=""
           width="16"
           height="16"
@@ -284,8 +302,8 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
           referrerpolicy="no-referrer"
           onerror="this.style.display='none'"
         />
-        <span class="i18n-ja">記事詳細</span>
-        <span class="i18n-en" lang="en">Article details</span>
+        <span class="i18n-ja">{external ? "元記事" : "記事詳細"}</span>
+        <span class="i18n-en" lang="en">{external ? "Original article" : "Article details"}</span>
         <span class="arrow">→</span>
       </a>
     </div>

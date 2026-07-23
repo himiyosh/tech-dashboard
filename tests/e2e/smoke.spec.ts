@@ -4275,6 +4275,68 @@ test.describe("TECH Dashboard smoke", () => {
     );
   });
 
+  test("archive warm rows keep detail routes while cold rows link to the source", async ({
+    page,
+  }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string }>;
+    };
+    const liveIds = new Set(index.entries.map((entry) => entry.id));
+    const archiveIndex = JSON.parse(
+      readFileSync("data/archive/_index.json", "utf8"),
+    ) as { months: string[] };
+    let warmOnly: { id: string; month: string } | null = null;
+    let cold: { id: string; month: string; url: string } | null = null;
+
+    for (const month of archiveIndex.months) {
+      const archive = JSON.parse(
+        readFileSync(`data/archive/${month}.json`, "utf8"),
+      ) as {
+        entries: Array<{
+          id: string;
+          url: string;
+          archiveTier?: string;
+        }>;
+      };
+      if (!warmOnly) {
+        const entry = archive.entries.find(
+          (candidate) =>
+            candidate.archiveTier === "warm" && !liveIds.has(candidate.id),
+        );
+        if (entry) warmOnly = { id: entry.id, month };
+      }
+      if (!cold) {
+        const entry = archive.entries.find(
+          (candidate) => candidate.archiveTier === "cold",
+        );
+        if (entry) cold = { id: entry.id, month, url: entry.url };
+      }
+      if (warmOnly && cold) break;
+    }
+
+    expect(warmOnly, "fixture includes a warm entry outside the live index").not.toBeNull();
+    expect(cold, "fixture includes a cold archive entry").not.toBeNull();
+
+    const warmResponse = await page.goto(`/e/${warmOnly!.id}/`);
+    expect(warmResponse?.status()).toBeLessThan(400);
+    await expect(page.locator("article.entry-detail")).toBeVisible();
+
+    await page.goto(`/archive/${cold!.month}/`);
+    const coldCard = page.locator(
+      `article.card[data-entry-id="${cold!.id}"]`,
+    );
+    await expect(coldCard).toHaveAttribute("data-detail-destination", "source");
+    await expect(coldCard.locator("h3.title > a")).toHaveAttribute(
+      "href",
+      cold!.url,
+    );
+    await expect(coldCard.locator("h3.title > a")).toHaveAttribute(
+      "target",
+      "_blank",
+    );
+    await expect(coldCard.locator("a.url .i18n-ja")).toHaveText("元記事");
+  });
+
   test("navigation highlights sections without marking ancestor links as the current page", async ({ page }) => {
     await page.goto("/categories/");
     const categoriesShortcut = page.locator('header .nav-shortcut[href="/categories"]');

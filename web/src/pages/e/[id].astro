@@ -28,6 +28,7 @@ import {
   type NormalizedEntry,
 } from "../../lib/data.ts";
 import { articleBodyState, bodyForEntry } from "../../lib/bodies.ts";
+import { ARCHIVE_WARM_ENTRIES } from "../../lib/archive.ts";
 import { sourceFaviconUrl, sourceHost } from "../../lib/favicon.ts";
 import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../../lib/reaction-copy.ts";
 import {
@@ -39,7 +40,11 @@ import {
 import { normalizeTagKey } from "../../lib/tag-normalize.ts";
 
 export function getStaticPaths() {
-  return ALL_ENTRIES.map((e) => ({
+  const entriesById = new Map(ALL_ENTRIES.map((entry) => [entry.id, entry]));
+  for (const entry of ARCHIVE_WARM_ENTRIES) {
+    if (!entriesById.has(entry.id)) entriesById.set(entry.id, entry);
+  }
+  return [...entriesById.values()].map((e) => ({
     params: { id: e.id },
     props: { entry: e },
   }));
@@ -100,6 +105,7 @@ const srcAvgImp = sourceAvgImportance(entry, 30);
 const srcAvgTitle = `Average importance of this source's last 30 listed entries: ${srcAvgImp.toFixed(1)} out of 3 (1=Info, 2=Medium, 3=High)`;
 
 const entryFavicon = sourceFaviconUrl(sourceUrl);
+const collectionFavicon = sourceFaviconUrl(entry.url);
 
 function splitJaPoints(s: string): string[] {
   if (!s) return [];
@@ -926,7 +932,7 @@ const jsonLd = {
       {sameSource.length > 0 && (
         <div class="side-card">
           <div class="rail-title">
-             {entryFavicon && <img class="rail-fav" src={entryFavicon} alt="" width="14" height="14" referrerpolicy="no-referrer" onerror="this.style.display='none'" />}
+             {collectionFavicon && <img class="rail-fav" src={collectionFavicon} alt="" width="14" height="14" referrerpolicy="no-referrer" onerror="this.style.display='none'" />}
             <span class="i18n-ja">{collectionSourceDisplay} の最新</span>
             <span class="i18n-en" lang="en">Latest from {collectionSourceDisplay}</span>
           </div>

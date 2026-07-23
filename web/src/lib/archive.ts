@@ -9,19 +9,23 @@
 import { isPublishableEntry, type NormalizedEntry } from "./data.ts";
 
 export const ARCHIVE_TIER_SUMMARY = {
-  ja: "warm = 個別記事URLを保持 · cold = 月次Archive内のみ",
-  en: "warm = individual URL retained · cold = monthly archive only",
+  ja: "hot = live index と重複保持 · warm = 個別記事URLを保持 · cold = 月次Archive内のみ",
+  en: "hot = mirrored in the live index · warm = individual URL retained · cold = monthly archive only",
 } as const;
 
 export const ARCHIVE_TIER_DETAIL = {
-  ja: "warm は個別記事URLを保持します。cold は月次Archive内だけで保持します。evergreen知見はwarmを維持します。",
-  en: "Warm entries retain an individual article URL. Cold entries remain only in their monthly archive. Evergreen knowledge stays warm.",
+  ja: "hot は統計用に月次artifactへ複製され、記事本体はlive indexで表示します。warm は個別記事URLを保持し、cold は月次Archive内だけで保持します。evergreen知見はwarmを維持します。",
+  en: "Hot rows are mirrored into monthly artifacts for statistics while their articles remain in the live index. Warm entries retain an individual URL. Cold entries remain only in their monthly archive. Evergreen knowledge stays warm.",
 } as const;
 
 interface ArchiveMonthFile {
   generatedAt: string;
   month: string;
   count: number;
+  storedCount: number;
+  hot: number;
+  warm: number;
+  cold: number;
   entries: NormalizedEntry[];
 }
 
@@ -53,10 +57,23 @@ export const ARCHIVE_BY_MONTH: Readonly<Record<string, ArchiveMonthFile>> = (() 
   for (const [path, payload] of Object.entries(monthModules)) {
     const m = path.match(/(\d{4}-\d{2})\.json$/)?.[1];
     if (!m || !payload) continue;
+    const storedCount = payload.entries.length;
+    let hot = 0;
+    let warm = 0;
+    let cold = 0;
+    for (const entry of payload.entries) {
+      if (entry.archiveTier === "hot") hot++;
+      else if (entry.archiveTier === "warm") warm++;
+      else if (entry.archiveTier === "cold") cold++;
+    }
     const entries = payload.entries.filter(isPublishableEntry);
     out[m] = {
       ...payload,
       count: entries.length,
+      storedCount,
+      hot,
+      warm,
+      cold,
       entries,
     };
   }
@@ -69,7 +86,13 @@ export const ARCHIVE_MONTHS: ReadonlyArray<string> = Object.keys(ARCHIVE_BY_MONT
   .sort()
   .reverse();
 
-export const ARCHIVE_TOTAL_ENTRIES = Object.values(ARCHIVE_BY_MONTH).reduce((sum, m) => sum + m.count, 0);
+/** Summary-ready archive entries that are rendered on monthly pages. */
+export const ARCHIVE_BROWSABLE_ENTRIES = Object.values(ARCHIVE_BY_MONTH)
+  .reduce((sum, month) => sum + month.count, 0);
+
+/** All stored archive rows, including hot rows mirrored from the live index. */
+export const ARCHIVE_STORED_ENTRIES = Object.values(ARCHIVE_BY_MONTH)
+  .reduce((sum, month) => sum + month.storedCount, 0);
 
 export const ARCHIVE_GENERATED_AT = indexFile?.generatedAt
   ?? Object.values(ARCHIVE_BY_MONTH)[0]?.generatedAt
@@ -79,6 +102,8 @@ export interface MonthSummary {
   month: string;       // "YYYY-MM"
   label: string;       // "2026 April"
   count: number;
+  storedCount: number;
+  hot: number;
   warm: number;
   cold: number;
 }
@@ -97,13 +122,15 @@ function labelFor(month: string): string {
 export function getMonthSummaries(): MonthSummary[] {
   return ARCHIVE_MONTHS.map((month) => {
     const f = ARCHIVE_BY_MONTH[month]!;
-    let warm = 0;
-    let cold = 0;
-    for (const e of f.entries) {
-      if (e.archiveTier === "warm") warm++;
-      else if (e.archiveTier === "cold") cold++;
-    }
-    return { month, label: labelFor(month), count: f.count, warm, cold };
+    return {
+      month,
+      label: labelFor(month),
+      count: f.count,
+      storedCount: f.storedCount,
+      hot: f.hot,
+      warm: f.warm,
+      cold: f.cold,
+    };
   });
 }
 

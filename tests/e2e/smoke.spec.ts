@@ -2118,6 +2118,52 @@ test.describe("TECH Dashboard smoke", () => {
       expect(geometry.copyHeight).toBeGreaterThanOrEqual(44);
       expect(geometry.overflow).toBeLessThanOrEqual(0);
       await expect(page.locator(".ed-freshness, .rail-freshness")).toHaveCount(0);
+
+      if (width === 390) {
+        await page.evaluate(() => window.scrollTo({ top: 900, behavior: "auto" }));
+        const fab = page.locator("#ed-fab");
+        await expect(fab).toHaveClass(/show/);
+        await expect
+          .poll(() =>
+            page.evaluate(() => {
+              const fab = document.querySelector<HTMLElement>("#ed-fab");
+              const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
+              if (!fab || !tabbar) return Number.NEGATIVE_INFINITY;
+              return tabbar.getBoundingClientRect().top - fab.getBoundingClientRect().bottom;
+            }),
+          )
+          .toBeGreaterThanOrEqual(8);
+        const fixedGeometry = await page.evaluate(() => {
+          const fab = document.querySelector<HTMLElement>("#ed-fab");
+          const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
+          if (!fab || !tabbar) return null;
+          const fabRect = fab.getBoundingClientRect();
+          const tabbarRect = tabbar.getBoundingClientRect();
+          const hit = document.elementFromPoint(
+            fabRect.left + fabRect.width / 2,
+            fabRect.top + fabRect.height / 2,
+          );
+          return {
+            fab: {
+              top: fabRect.top,
+              right: fabRect.right,
+              bottom: fabRect.bottom,
+              left: fabRect.left,
+              width: fabRect.width,
+              height: fabRect.height,
+            },
+            tabbarTop: tabbarRect.top,
+            hitIsFab: hit === fab || fab.contains(hit),
+          };
+        });
+        expect(fixedGeometry).not.toBeNull();
+        expect(fixedGeometry!.fab.width).toBeGreaterThanOrEqual(44);
+        expect(fixedGeometry!.fab.height).toBeGreaterThanOrEqual(44);
+        expect(fixedGeometry!.fab.bottom).toBeLessThanOrEqual(
+          fixedGeometry!.tabbarTop - 8,
+        );
+        expect(fixedGeometry!.hitIsFab).toBe(true);
+      }
     }
   });
 
@@ -4149,13 +4195,25 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("#archive-heading")).toBeVisible();
     await expect(page.locator(".page-hero-metric").filter({ hasText: "All time" })).toHaveCount(0);
     await expect(page.locator('[data-metric-scope="timeline-live"]')).toContainText("Live index");
+    const archivePopulations = await page.evaluate(() => {
+      const metricValue = (scope: string) =>
+        Number(document.querySelector(`[data-metric-scope="${scope}"] strong`)?.textContent?.trim());
+      return {
+        browsable: metricValue("archive-browsable"),
+        stored: metricValue("archive-stored"),
+      };
+    });
+    expect(archivePopulations.browsable).toBeGreaterThan(0);
+    expect(archivePopulations.stored).toBeGreaterThan(archivePopulations.browsable);
     await expect(page.locator(".archive-spotlight").filter({ hasText: "Storage mix" })).toContainText(
-      "warm = 個別記事URLを保持 · cold = 月次Archive内のみ",
+      "hot = live index と重複保持",
     );
     const peakLabels = await page.locator("a.month-card").evaluateAll((cards) =>
       cards.map((card) => ({
         peakPercent: Number(card.getAttribute("data-peak-percent")),
         visualBarWidth: Number(card.getAttribute("data-visual-bar-width")),
+        browsable: Number(card.getAttribute("data-browsable-count")),
+        stored: Number(card.getAttribute("data-stored-count")),
         label: card.querySelector(".month-share")?.textContent?.trim() ?? "",
       })),
     );
@@ -4167,6 +4225,8 @@ test.describe("TECH Dashboard smoke", () => {
       expect(metric.label).toBe(expectedLabel);
       expect(metric.visualBarWidth).toBeGreaterThanOrEqual(6);
       expect(metric.visualBarWidth).toBeLessThanOrEqual(100);
+      expect(metric.browsable).toBeGreaterThan(0);
+      expect(metric.stored).toBeGreaterThanOrEqual(metric.browsable);
     }
     expect(
       peakLabels.some((metric) => metric.peakPercent < 6 && metric.visualBarWidth === 6),
@@ -4179,11 +4239,23 @@ test.describe("TECH Dashboard smoke", () => {
     await firstMonth.click();
     await expect(page).toHaveURL(/\/archive\/\d{4}-\d{2}\/?$/);
     await expect(page.locator("#archive-month-heading")).toBeVisible();
+    const monthPopulations = await page.evaluate(() => {
+      const metricValue = (scope: string) =>
+        Number(document.querySelector(`[data-metric-scope="${scope}"] strong`)?.textContent?.trim());
+      return {
+        browsable: metricValue("month-browsable-count"),
+        stored: metricValue("month-stored-count"),
+      };
+    });
+    expect(monthPopulations.browsable).toBeGreaterThan(0);
+    expect(monthPopulations.stored).toBeGreaterThanOrEqual(monthPopulations.browsable);
     await expect(page.locator('[data-metric-scope="month-top-category"]')).toContainText("Top category");
     await expect(page.locator('[data-metric-scope="month-top-source"]')).toContainText("Top source");
     await expect(page.locator(".page-hero-metric").filter({ hasText: /^Warm/ })).toHaveCount(0);
     await expect(page.locator(".month-rank-scope")).toHaveCount(2);
-    await expect(page.locator(".category-strip-label .i18n-ja")).toHaveText("月内カテゴリ内訳");
+    await expect(page.locator(".category-strip-label .i18n-ja")).toHaveText(
+      "閲覧可能記事のカテゴリ内訳",
+    );
   });
 
   test("navigation highlights sections without marking ancestor links as the current page", async ({ page }) => {

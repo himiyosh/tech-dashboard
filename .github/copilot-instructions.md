@@ -2504,6 +2504,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: PR CIを`unit`と`web-build`の独立jobへ分け、両方の成功後にE2Eを実行する。Web build artifactは従来どおりrun ID固定名でE2Eへ渡し、failed jobだけのrerunでも再利用する。full suiteと受入閾値は変更しない。
 - **教訓**: provider側のrunner終了はrepository codeで防げないため、長いgateは責務ごとのjob checkpointへ分けて再開costを下げる。timeoutやretry回数を広げる前に、成功済み処理を再実行させているjob境界を確認する。
 
+### LL-377: Archiveのraw保存行と閲覧可能記事を同じ件数labelで表さない
+- **事象**: `data/archive/_index.json`は6,777行を保持していたが、Web Archiveは`isPublishableEntry`を通る2,277件だけを表示し、Heroと月カードを単に`entries`と表記していた。差分4,500件は統計用にlive indexと重複保持するsummary-free hot行だった。
+- **根本原因**: archive artifactの保持・統計母集団と、読者が月別ページで閲覧できるsummary-ready warm/cold母集団を同じ`ARCHIVE_TOTAL_ENTRIES`へ潰していた。数値自体は各用途で正しくても、labelとmetrics APIが母集団を示さないため履歴欠落に見えた。
+- **対策**: `ARCHIVE_STORED_ENTRIES`と`ARCHIVE_BROWSABLE_ENTRIES`を分離し、Archive Hero、月カード、月詳細、All-time、metrics APIへ同じ意味を伝播する。hot/warm/coldの保存内訳と、hotがlive index側で表示されることをJA/ENで明示する。
+- **教訓**: retention artifactでは「保存されている行」と「現在の画面で閲覧できる記事」を同一視しない。dashboard metricは値だけでなく母集団、重複契約、表示場所を同じhelperから導出し、raw/stored/browsableを別のmachine-readable scopeで検証する。
+
+### LL-378: mobile fixed controlはtabbarとの実hit-testingで検証する
+- **事象**: `390x844`の記事詳細で`#ed-fab`は44x44pxを満たしていたが、下端がmobile tabbar開始位置と約1px重なり、中心点のhit targetがMenu tabになっていた。
+- **根本原因**: touch targetの自身寸法だけを検証し、同じviewportにある高z-index fixed navigationとの矩形交差と`elementFromPoint()`を acceptance criteriaへ含めていなかった。
+- **対策**: FABを既存mobile menu sheetと同じsafe-area対応offsetでtabbar上へ移し、z-indexを上げずnavigationを優先する。E2EでFAB寸法、tabbarとの8px以上の距離、中心点のhit targetを直接検証する。
+- **教訓**: fixed controlは44px寸法とpage overflowだけでは操作可能性を証明できない。fixed header/footer/tabbarが同居する場合は、各矩形の非交差と実hit-testingを同じviewportで確認し、navigationより上へ重ねるのではなく安全距離を確保する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

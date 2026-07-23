@@ -2547,6 +2547,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: Free bridge healthへdeployed publisher fingerprintを公開し、Publisherはharness開始前、staging後のdata commit直前、effects flush直前にchecked-in fingerprintとの一致を検証する。未公開、不一致、unhealthyではfail-closedにし、flush前の拒否ではeffects fileを保持する。production healthも同じ一致を検証する。
 - **教訓**: 非同期consumerのpayload validationだけではproducerとtransportのrollout互換性を保証できない。永続dataと遅延副作用を同じrelease contractで扱う場合、downstream transportのversionを公開healthで観測し、生成前、commit前、flush前の全不可逆境界でpreflightする。
 
+### LL-384: 高負荷static buildは同じrunnerへのblind retryで解消しない
+- **事象**: PR CIのWeb buildがAstro static generation中に126秒、212秒、346秒で3回連続`The operation was canceled`となった。いずれも30秒heartbeatは継続し、assertion、Astro error、job timeoutは無かった。同じhead commitのCloudflare previewはActive、local buildと109件E2Eは成功した。
+- **根本原因**: GitHubの終了logにはcancelの内部理由が明記されず、GitHub StatusもActionsをoperationalとしていたため、provider側の正確な原因は未確認である。一方、local Astro buildは最大RSS約6.69GBを使用し、数千routeのstatic generationが高負荷であることは実測できた。同じx64 runner poolへの追加retryでは再現だけが続いた。
+- **対策**: retryを2回で停止し、公開repositoryで公式に提供される4 vCPU・16GBの`ubuntu-24.04-arm`へWeb build、Playwright、Publisherを移した。Web build artifactはarchitecture非依存のままjob間で引き渡し、CIでARM上のPlaywright browser installと全E2Eを実行して互換性を検証する。
+- **教訓**: heartbeat中の外部cancelを製品failureや単純timeoutとして扱わない。終了log、公式status、同一artifactのlocal/preview結果、資源量を分けて確認し、bounded retryが同じ層で再発したら別の公式runner poolへ移して実行基盤を変更する。未観測のOOMやprovider障害を根本原因として断定しない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -223,7 +223,7 @@ describe("Cloudflare Worker deploy config", () => {
     expect(prePush).toMatch(
       /if \[ "\$web_build_ready" = "1" \][\s\S]*PLAYWRIGHT_REUSE_BUILD=1[\s\S]*else[\s\S]*"\$playwright_bin" test/,
     );
-    expect(readConfig("vitest.config.ts")).toContain("maxWorkers: 2");
+    expect(readConfig("vitest.config.ts")).toContain("maxWorkers: 1");
   });
 
   it("loads search metadata from the shared client bundle instead of repeating JSON in every page", () => {

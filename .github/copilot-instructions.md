@@ -2386,10 +2386,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: subprocessを起動するintegration寄りtestは、単独時間でなくfull suite中の実測時間に余裕を持つ個別budgetを設定する。global timeoutを緩めてpure unitのhang検知を弱めず、Two-strikeで再現したtestだけを明示的に調整する。
 
 ### LL-357: 静的pageのviewport行列は幅ごとに再navigationしない
-- **事象**: 全100件E2EでTop 3の29幅行列とlane pageの2 route×9幅行列が、assertionへ到達する前に30秒timeoutした。どちらも幅ごとに同じ静的URLへ`page.goto()`し直し、retryでも同じ箇所で停止した。
-- **根本原因**: CSS responsive geometryの検証にdocument再取得は不要なのに、各viewportでHTML、script、画像を再loadしていた。単独実行では収まっても、全suite後半のbrowser負荷でnavigation累積時間がtest budgetを消費した。
-- **対策**: routeごとに1回だけpageを開き、境界行列は`setViewportSize()`と2 frameのreflow待機で測るようにした。Top 3はdesktop stress textを幅ごとに設定・復元し、mobileへ入る時だけdocumentを再取得して従来の非stress状態を維持する。timeoutやretry回数は増やさない。
-- **教訓**: 静的SSR/SSG pageのresponsive E2Eは、DOMやserver outputがviewportで変わらない限り、1 navigationと複数reflowで検証する。状態を初期化する必要がある境界だけ再loadし、page fetch回数をviewport数へ比例させない。full suiteのtimeoutを受入値の緩和で隠さず、検証対象とbrowser I/Oを分離する。
+- **事象**: 全100件E2EでTop 3の29幅行列とlane pageの2 route×9幅行列が、assertionへ到達する前に30秒timeoutした。どちらも幅ごとに同じ静的URLへ`page.goto()`し直し、retryでも同じ箇所で停止した。後の110件E2Eでは、8 routeのPageHeroをdesktop/mobileごとに再navigationする1 testも30秒へ達した。
+- **根本原因**: CSS responsive geometryの検証にdocument再取得は不要なのに、各viewportでHTML、script、画像を再loadしていた。単独実行では収まっても、全suite後半のbrowser負荷でnavigation累積時間がtest budgetを消費した。複数routeを1 testへ詰めると、routeごとに必要なnavigationも同じ30秒budgetへ累積した。
+- **対策**: routeごとに1回だけpageを開き、境界行列は`setViewportSize()`と2 frameのreflow待機で測るようにした。Top 3はdesktop stress textを幅ごとに設定・復元し、mobileへ入る時だけdocumentを再取得して従来の非stress状態を維持する。PageHeroはtop-levelとdeep routeを別testへ分け、各routeのmobile確認は同一documentのreflowで行う。timeoutやretry回数は増やさない。
+- **教訓**: 静的SSR/SSG pageのresponsive E2Eは、DOMやserver outputがviewportで変わらない限り、1 navigationと複数reflowで検証する。状態を初期化する必要がある境界だけ再loadし、page fetch回数をviewport数へ比例させない。複数routeの検証は意味のあるpage family単位へ分け、1 testのnavigation数もboundedにする。full suiteのtimeoutを受入値の緩和で隠さず、検証対象とbrowser I/Oを分離する。
 
 ### LL-358: E2Eの状態contractは関連styleとdeadline開始点を製品処理へ限定する
 - **事象**: full E2Eでreduced-motionの3つのCSS assertionが個別waitを重ね、最後の`transform`取得がtest timeoutへ達した。別のreaction deadline testは、ready済みbuttonのPlaywright actionability待ちをserver reconciliation時間へ含め、toast待機前にtest budgetを消費した。両testは単独では10.1秒で成功した。
@@ -2580,8 +2580,20 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-389: Astro concurrency 2は16GB ARM runnerでRSS 15GBへ達する
 - **事象**: PR CIのUbuntu 24.04 ARM Web buildは、Astro開始30秒でprocess-tree RSS 8.7GB、60秒で14.9GBへ増え、91秒で`astro terminated by SIGKILL`となった。同じcommitのCloudflare previewはActive、macOS localはconcurrency 2でpeak RSS 2.0-2.7GBだった。
 - **根本原因**: 数千の大きなHTML pageを2並列renderするV8 memory特性が実行基盤で大きく異なり、16GB ARM runnerではmemory上限へ到達した。従来のheartbeatだけでは外部cancelに見えたが、process-tree RSSとsignalを出したことでOOM境界を実測できた。
-- **対策**: `GITHUB_ACTIONS=true`ではAstro concurrencyを1、Cloudflare Pagesとlocalでは2にする。生成HTMLとroute契約は同一のまま、GitHub runnerだけpeak memoryを優先する。serial ARMでもRSSが15.3GBへ達したため、Astro childのV8 old-spaceを4GBへ制限し、runner上限前にGCを促す。telemetryへ実際のconcurrencyとheap limitを出し、PR CIでserial ARM buildの完走を確認する。
-- **教訓**: concurrencyの安全値を開発端末のRSSだけで決めない。同じarchitecture名でもOS、V8 allocator、memory limitでpeak RSSは変わる。CIはprocess-tree RSSとtermination signalを確認し、OOMが実測できたplatformは並列度とV8 heap ceilingの両方を調整する。timeout延長やrunner retryではmemory exhaustionを直せない。
+- **対策**: `GITHUB_ACTIONS=true`ではAstro concurrencyを1、Cloudflare Pagesとlocalでは2にする。生成HTMLとroute契約は同一のまま、GitHub runnerだけpeak memoryを優先する。serial ARMでもRSSが15.3GBへ達したため、当初はV8 old-spaceを4GBへ制限した。ただしmain CIで14.9GB OOMが再発し、この上限はLL-390の512MiBとprocess RSS budgetへ置き換えた。
+- **教訓**: concurrencyの安全値を開発端末のRSSだけで決めない。同じarchitecture名でもOS、V8 allocator、memory limitでpeak RSSは変わる。CIはprocess-tree RSSとtermination signalを確認し、OOMが実測できたplatformは並列度とV8 heap ceilingの両方を調整する。old-spaceをrunner上限へ近づける対策はRSSを保証しないため、LL-390のとおりheap内訳とGC前後を計測する。timeout延長やrunner retryではmemory exhaustionを直せない。
+
+### LL-390: V8 old-spaceの大きい上限はstatic generationのRSS上限にならない
+- **事象**: PR #162でdetail routeを含むAstro full routeを3,734件から2,876件へ減らし、GitHub ARM buildを1並列、V8 old-spaceを4,096MiBにして一度は完走したが、merge後main CIはprocess-tree RSS 14,915MiBで`astro terminated by SIGKILL`となった。macOS baselineでもdetail route生成中のheapUsedが約0.4GiBから1.58GiBへ線形増加し、full GC付近でprocess-tree RSSが最大5.2GiBへ急増した。
+- **根本原因**: old-space 4,096MiBはprocess RSSの上限ではなく、V8がmajor GCを遅らせる余地になっていた。2,368件のdetail HTMLを直列renderする一時objectがGCまで蓄積し、heap回収時のnative allocatorとV8内部領域を含むRSS peakを増幅した。計測時のexternalは約50MiB、arrayBuffersは約3MiB、full static path propsのserialized sizeは約3.93MiB、indexとbody sidecarは合計約12.7MiBで、JSON import、props、画像変換は最大保持要因ではなかった。
+- **対策**: Astro childのold-space既定値を512MiBへ下げ、detail生成中のheapUsedを約0.42GiBで継続回収する。preload probeでheapUsed、heapTotal、external、arrayBuffers、old space、large object space、native malloc、近似non-heap RSS、route family進捗を15秒おきに記録し、親processは2秒おきにprocess tree RSSを測る。GitHub Actionsでは12,000MiBをRSS budgetにし、超過または30秒以上telemetry不能ならbuildを停止する。
+- **教訓**: `--max-old-space-size`をrunner memoryへ近づけることは安全余白ではない。高cardinalityなSSGではroute進捗とV8 heap、external、arrayBuffers、process tree RSSを同時に測り、major GC前後のpeakを確認する。route削減や並列度低下だけで完了とせず、GC trigger自体を実行基盤のRSS予算に合わせ、buildをprocess RSSでfail-closedにする。
+
+### LL-391: 複数worktreeのPlaywright previewは固定portを共有しない
+- **事象**: Publisher E2Eが300秒のwebServer timeoutで停止した。`4322`は別worktreeのAstro previewが約3時間保持し、HTTP 404を返していた。今回のPlaywrightが起動したpreviewは空いている`4323`へ自動退避したため、Playwrightは設定済み`4322`のready stateを待ち続けた。
+- **根本原因**: `reuseExistingServer: true`と固定portを複数worktreeで共有し、portを保持するprocessのrepository identityを確認していなかった。別worktreeのprocessを停止せず検証を続ける安全なport overrideも無かった。
+- **対策**: Playwright configは既定`4322`を維持しつつ、検証sessionごとに`PLAYWRIGHT_PORT`でpreview URLと起動commandを同時に変更できるようにした。不正portはconfig load時にfail-closedにする。別worktreeのprocessは停止せず、今回のE2Eを空きportで実行する。
+- **教訓**: worktreeを並行利用するrepositoryでは、固定preview portの占有をtest failureと同一視しない。owner worktreeとHTTP応答を確認し、他sessionのprocessを勝手に停止せず、server command、baseURL、readiness URLを同じvalidated portへ切り替える。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

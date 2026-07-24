@@ -25,7 +25,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - PR CI は unit・typecheck と Web build を独立jobに分け、runner中断後に失敗したbuildだけを再実行できるようにしました。
 - 大規模な静的Web buildとPlaywright、毎時Publisherは、公開repository向けのUbuntu 24.04 ARM runnerで実行するようにしました。
 - Astro の静的ページ生成をlocal/Cloudflareでは2並列、16GB GitHub runnerでは1並列へ変更し、phase別 CPU/RSS・route/file数をbounded telemetryとして記録するようにしました。HTML routeは3,200件を上限とし、低頻度tagはexact searchへ送って静的生成量を抑えます。
-- Astro childのV8 old-spaceを4GBへ制限し、Linux runnerでRSSが16GB上限まで膨張する前にGCが働くようにしました。
+- Astro childのV8 old-spaceを512MiBへ制限し、detail route生成中の一時objectを小さい世代で回収するようにしました。V8 heap・external・arrayBuffers・route進捗とprocess tree RSSを継続計測し、GitHub Actionsでは12,000MiBのRSS上限を超えるbuildをfail-closedにします。
 - Archive は閲覧可能な要約付き履歴と、live収録時点のhot統計snapshotを含む保存行を分けて表示し、All-time・月別・metrics APIの母集団を明示するようにしました。
 - モバイル記事詳細の「トップに戻る」ボタンを下部tabbarの上へ配置し、スクロール後も操作できるようにしました。
 - 収集後に別公式ブログへ移転した既知記事は、canonical publisher・元記事URL・検索metadataを移転先へ揃え、収集元feedを記事詳細へ別表示するようにしました。

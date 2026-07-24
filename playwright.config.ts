@@ -1,7 +1,16 @@
 import { defineConfig, devices } from "@playwright/test";
 
+export function resolvePlaywrightPort(value = process.env.PLAYWRIGHT_PORT): number {
+  const port = Number(value ?? "4322");
+  if (!Number.isInteger(port) || port < 1024 || port > 65_535) {
+    throw new Error(`Invalid PLAYWRIGHT_PORT: ${value}`);
+  }
+  return port;
+}
+const previewPort = resolvePlaywrightPort();
+const previewUrl = `http://127.0.0.1:${previewPort}`;
 const PREVIEW_COMMAND =
-  "npm --prefix web run preview -- --host 127.0.0.1 --port 4322";
+  `npm --prefix web run preview -- --host 127.0.0.1 --port ${previewPort}`;
 
 export function playwrightWebServerCommand(reuseBuild: boolean): string {
   return reuseBuild
@@ -20,14 +29,14 @@ export default defineConfig({
   retries: 1,
   reporter: "list",
   use: {
-    baseURL: "http://127.0.0.1:4322",
+    baseURL: previewUrl,
     trace: "on-first-retry",
   },
   webServer: {
     command: playwrightWebServerCommand(
       process.env.PLAYWRIGHT_REUSE_BUILD === "1",
     ),
-    url: "http://127.0.0.1:4322",
+    url: previewUrl,
     reuseExistingServer: true,
     timeout: 300_000,
   },

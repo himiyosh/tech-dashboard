@@ -27,6 +27,85 @@ async function expectMobileFirstDecisionNearViewport(page: Page): Promise<void> 
     .toBeLessThanOrEqual(MOBILE_FIRST_DECISION_MAX_Y);
 }
 
+async function expectResponsivePageHero(
+  page: Page,
+  path: string,
+  topLevel = false,
+): Promise<void> {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(path);
+  const hero = page.locator(".page-hero").first();
+  await expect(hero).toBeVisible();
+  if (topLevel) {
+    await expect(
+      page.locator(".crumb-bar"),
+      `${path} should not render breadcrumbs`,
+    ).toHaveCount(0);
+  }
+  const desktopBox = await hero.boundingBox();
+  expect(desktopBox, `${path} desktop hero box`).not.toBeNull();
+  expect(
+    desktopBox!.height,
+    `${path} desktop hero has page-banner presence`,
+  ).toBeGreaterThan(120);
+  const innerBox = await hero.locator(".page-hero-inner").boundingBox();
+  expect(innerBox, `${path} desktop hero inner box`).not.toBeNull();
+  expect(Math.round(innerBox!.width), `${path} desktop hero inner width`).toBe(1280);
+  if (topLevel) {
+    await expect(hero, `${path} top-level hero class`).toHaveClass(
+      /page-hero-top-level/,
+    );
+    const metricBoxes = await hero.locator(".page-hero-metric").evaluateAll((items) =>
+      items.map((item) => item.getBoundingClientRect().width)
+    );
+    expect(metricBoxes, `${path} top-level hero metric count`).toHaveLength(6);
+    expect(
+      Math.max(...metricBoxes) - Math.min(...metricBoxes),
+      `${path} top-level metric widths match`,
+    ).toBeLessThanOrEqual(1);
+    const metricScopes = await hero.locator(".page-hero-metric").evaluateAll((items) =>
+      items.map((item) => ({
+        scope: item.getAttribute("data-metric-scope") ?? "",
+        describedBy: item.getAttribute("aria-describedby") ?? "",
+        detail:
+          item.querySelector(".page-hero-metric-detail")?.textContent?.trim() ??
+          "",
+      }))
+    );
+    expect(
+      metricScopes.every(
+        (metric) =>
+          metric.scope.length > 0 &&
+          metric.describedBy.length > 0 &&
+          metric.detail.length > 0,
+      ),
+      `${path} metrics expose a population or time-window definition`,
+    ).toBe(true);
+  }
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+    )
+    .toBe(true);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      ),
+  );
+  await expect(hero).toBeVisible();
+  const mobileBox = await hero.boundingBox();
+  expect(mobileBox, `${path} mobile hero box`).not.toBeNull();
+  expect(mobileBox!.height, `${path} mobile hero stays compact`).toBeLessThan(310);
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+    )
+    .toBe(true);
+}
+
 function hasReactionIdentityCookie(headers: Record<string, string>): boolean {
   return (headers.cookie ?? "")
     .split(";")
@@ -3510,15 +3589,16 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
-  test("section page heroes give page context on desktop and mobile", async ({ page }) => {
+  test("top-level page heroes give page context on desktop and mobile", async ({ page }) => {
     const topLevelPaths = ["/categories/", "/status/", "/about/", "/archive/"];
-    const paths = [...topLevelPaths, "/page/2/"];
-
     for (const path of topLevelPaths) {
-      await page.goto(path);
-      await expect(page.locator(".crumb-bar"), `${path} should not render breadcrumbs`).toHaveCount(0);
+      await expectResponsivePageHero(page, path, true);
     }
+    await expectResponsivePageHero(page, "/page/2/");
+  });
 
+  test("deep page heroes give page context on desktop and mobile", async ({ page }) => {
+    const paths: string[] = [];
     await page.goto("/categories/");
     const firstCategoryHref = await page.locator(".category-card").first().getAttribute("href");
     if (firstCategoryHref) paths.push(firstCategoryHref);
@@ -3535,48 +3615,7 @@ test.describe("TECH Dashboard smoke", () => {
     }
 
     for (const path of paths) {
-      await page.setViewportSize({ width: 1280, height: 900 });
-      await page.goto(path);
-      const hero = page.locator(".page-hero").first();
-      await expect(hero).toBeVisible();
-      const desktopBox = await hero.boundingBox();
-      expect(desktopBox, `${path} desktop hero box`).not.toBeNull();
-      expect(desktopBox!.height, `${path} desktop hero has page-banner presence`).toBeGreaterThan(120);
-      const innerBox = await hero.locator(".page-hero-inner").boundingBox();
-      expect(innerBox, `${path} desktop hero inner box`).not.toBeNull();
-      expect(Math.round(innerBox!.width), `${path} desktop hero inner width`).toBe(1280);
-      if (topLevelPaths.includes(path)) {
-        await expect(hero, `${path} top-level hero class`).toHaveClass(/page-hero-top-level/);
-        const metricBoxes = await hero.locator(".page-hero-metric").evaluateAll((items) =>
-          items.map((item) => item.getBoundingClientRect().width),
-        );
-        expect(metricBoxes, `${path} top-level hero metric count`).toHaveLength(6);
-        expect(Math.max(...metricBoxes) - Math.min(...metricBoxes), `${path} top-level metric widths match`).toBeLessThanOrEqual(1);
-        const metricScopes = await hero.locator(".page-hero-metric").evaluateAll((items) =>
-          items.map((item) => ({
-            scope: item.getAttribute("data-metric-scope") ?? "",
-            describedBy: item.getAttribute("aria-describedby") ?? "",
-            detail: item.querySelector(".page-hero-metric-detail")?.textContent?.trim() ?? "",
-          })),
-        );
-        expect(
-          metricScopes.every((metric) => metric.scope.length > 0 && metric.describedBy.length > 0 && metric.detail.length > 0),
-          `${path} metrics expose a population or time-window definition`,
-        ).toBe(true);
-      }
-      await expect
-        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-        .toBe(true);
-
-      await page.setViewportSize({ width: 390, height: 844 });
-      await page.reload();
-      await expect(hero).toBeVisible();
-      const mobileBox = await hero.boundingBox();
-      expect(mobileBox, `${path} mobile hero box`).not.toBeNull();
-      expect(mobileBox!.height, `${path} mobile hero stays compact`).toBeLessThan(310);
-      await expect
-        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-        .toBe(true);
+      await expectResponsivePageHero(page, path);
     }
   });
 

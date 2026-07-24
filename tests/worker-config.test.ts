@@ -108,6 +108,7 @@ describe("Cloudflare Worker deploy config", () => {
       scripts?: Record<string, string>;
     };
     const astroBuildRunner = readConfig("web/scripts/build-astro.mjs");
+    const astroConfig = readConfig("web/astro.config.mjs");
     const unitStart = ciWorkflow.indexOf("\n  unit:\n");
     const webBuildStart = ciWorkflow.indexOf("\n  web-build:\n");
     const e2eStart = ciWorkflow.indexOf("\n  e2e:\n");
@@ -139,11 +140,27 @@ describe("Cloudflare Worker deploy config", () => {
     expect(ciWorkflow.slice(webBuildStart, e2eStart)).toContain(
       "npm run build:web",
     );
-    expect(webPackage.scripts?.build).toContain("node scripts/build-astro.mjs");
-    expect(webPackage.scripts?.build).toContain("pagefind --site dist");
-    expect(astroBuildRunner).toContain('spawn(command, ["build", "--silent"]');
+    expect(webPackage.scripts?.build).toBe("node scripts/build-astro.mjs");
+    expect(astroBuildRunner).toContain("spawn(command, args");
+    expect(astroBuildRunner).toContain('await runPhase("astro"');
+    expect(astroBuildRunner).toContain('await runPhase("pagefind"');
     expect(astroBuildRunner).toContain("const HEARTBEAT_MS = 30_000");
+    expect(astroBuildRunner).toContain("const MAX_ASTRO_RENDERED_HTML_FILES = 3_200");
+    expect(astroBuildRunner).toContain("const ASTRO_HEAP_LIMIT_MIB = 4_096");
+    expect(astroBuildRunner).toContain("`--max-old-space-size=${ASTRO_HEAP_LIMIT_MIB}`");
+    expect(astroBuildRunner).toContain("Astro-rendered HTML route budget exceeded");
+    expect(astroBuildRunner).toContain("writeLegacyTagRedirects");
+    expect(astroBuildRunner).toContain("peakRss=");
+    expect(astroBuildRunner).toContain("routeFamilies");
     expect(astroBuildRunner).toContain("clearInterval(heartbeat)");
+    expect(astroConfig).toContain(
+      'const BUILD_CONCURRENCY = process.env.GITHUB_ACTIONS === "true" ? 1 : 2',
+    );
+    expect(astroConfig).toContain("concurrency: BUILD_CONCURRENCY");
+    expect(astroConfig).toContain("concurrency=${BUILD_CONCURRENCY}");
+    expect(astroConfig).toContain("tech-dashboard-build-telemetry");
+    expect(astroConfig).toContain('"astro:build:generated"');
+    expect(astroConfig).toContain('"astro:build:done"');
   });
 
   it("guards emergency Direct Upload with an exact origin/main snapshot", () => {
@@ -183,6 +200,7 @@ describe("Cloudflare Worker deploy config", () => {
     expect(reuseCommand).toBe(
       "npm --prefix web run preview -- --host 127.0.0.1 --port 4322",
     );
+    expect(readConfig("playwright.config.ts")).toContain("workers: 1");
     expect(publisherWorkflow).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
     expect(publisherWorkflow).toMatch(
       /npm run build:web[\s\S]*npm run test:e2e:publisher/,
@@ -191,14 +209,34 @@ describe("Cloudflare Worker deploy config", () => {
     expect(packageJson.scripts?.["test:e2e:publisher"]).toBe(
       "playwright test tests/e2e/publisher.spec.ts",
     );
+    expect(packageJson.scripts?.["test:e2e:prepush"]).toBeUndefined();
     expect(ciWorkflow).toMatch(/\brun: npm run test:e2e\s*$/m);
     expect(ciWorkflow).not.toContain("test:e2e:publisher");
     expect(prePush).toContain("web_build_ready=0");
+    expect(prePush).toContain('range="$base_ref..$local_sha"');
+    expect(prePush).not.toContain('range="$local_sha"\n  else');
+    expect(prePush).toContain('pushed_files="${pushed_files}"');
+    expect(prePush).toContain('CHANGED="$pushed_files"');
+    expect(prePush).toContain('git log --format= --name-only "$local_sha"');
+    expect(prePush).not.toContain("git diff --name-only HEAD @{u}");
+    expect(prePush).toContain('grep -E "^(BUILD:|ASTRO:)|Pagefind|Indexed"');
     expect(prePush).toMatch(/npm --prefix "\$ROOT" run build:web[\s\S]*web_build_ready=1/);
-    expect(prePush).toContain("env PLAYWRIGHT_REUSE_BUILD=1 npm --prefix");
+    expect(prePush).toContain("env PLAYWRIGHT_REUSE_BUILD=1");
+    expect(prePush).toContain('"$playwright_bin" test tests/e2e/publisher.spec.ts');
+    expect(prePush).not.toContain("tests/e2e/smoke.spec.ts");
     expect(prePush).toMatch(
-      /if \[ "\$web_build_ready" = "1" \][\s\S]*PLAYWRIGHT_REUSE_BUILD=1[\s\S]*else[\s\S]*npm --prefix "\$ROOT" run test:e2e/,
+      /if \[ "\$web_build_ready" = "1" \][\s\S]*PLAYWRIGHT_REUSE_BUILD=1[\s\S]*else[\s\S]*"\$playwright_bin" test/,
     );
+    expect(readConfig("vitest.config.ts")).toContain("maxWorkers: 1");
+  });
+
+  it("loads search metadata from the shared client bundle instead of repeating JSON in every page", () => {
+    const portal = readConfig("web/src/layouts/Portal.astro");
+
+    expect(portal).toContain('import { CATEGORY_META } from "../lib/category-meta.ts"');
+    expect(portal).toContain('import { SOURCE_META, sourceLabel } from "../lib/source-meta.ts"');
+    expect(portal).not.toContain("data-category-search-meta");
+    expect(portal).not.toContain("data-source-search-meta");
   });
 
   it("passes the verified Web build from the CI unit job to Playwright", () => {

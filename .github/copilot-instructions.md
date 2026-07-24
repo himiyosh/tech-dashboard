@@ -2553,6 +2553,36 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: retryを2回で停止し、公開repositoryで公式に提供される4 vCPU・16GBの`ubuntu-24.04-arm`へWeb build、Playwright、Publisherを移した。Web build artifactはarchitecture非依存のままjob間で引き渡し、CIでARM上のPlaywright browser installと全E2Eを実行して互換性を検証する。
 - **教訓**: heartbeat中の外部cancelを製品failureや単純timeoutとして扱わない。終了log、公式status、同一artifactのlocal/preview結果、資源量を分けて確認し、bounded retryが同じ層で再発したら別の公式runner poolへ移して実行基盤を変更する。未観測のOOMやprovider障害を根本原因として断定しない。
 
+### LL-385: 数千routeのAstro buildはserial prerenderと重複HTMLを実測してから並列度を上げる
+- **事象**: 最新mainのproduction buildをAstroとPagefindへ分離して計測すると、Astroは3,734 HTML、416MBをserial生成して738.9秒、最大RSS 3.17GBを使用し、Pagefindは137.4秒、最大RSS 1.59GBだった。記事detailは2,361 route・244.2MB、tagは1,212 route・123.7MBで、両者がHTMLの大半を占めた。Cloudflare Pagesのclone後build log 0件timeoutはbuild command開始前のprovider stageであり、このlocal計測だけで同じ根本原因とは断定できない。
+- **根本原因**: Astroの`build.concurrency`既定値1で数千の独立pageを直列render/writeし、低頻度tag pageと全pageへ繰り返す検索metadataが生成量を増やしていた。記事detail helperもrouteごとにlive entriesを繰り返しscanしていた。route削減だけの比較ではAstro wall timeが横ばいだったため、I/O待ちを含むserial prerenderが主なlocal bottleneckと確認できた。
+- **対策**: tag full pageの閾値を2件から10件へ上げ、低頻度tagは既存のPagefind exact filterへ送る。従来公開済みの2-9件tag URLはAstro renderへ戻さず、build後に生成する小さなnoindex recovery HTMLで200と検索導線を維持する。検索metadataを共通client bundleへ移し、記事向けcategory/source/tag indexをmodule-level Mapへ集約した。Astroは公式の`build.concurrency: 2`でrender/writeを2並列化し、3回の比較buildでAstro生成を237秒、535秒、267秒で完了した。full HTMLは2,869件、324.6MBへ減り、Pagefindは94-150秒で完了した。build wrapperは30秒heartbeat、phase別process-tree CPU/RSS、route family、file数、出力容量と3,200 Astro-rendered HTML route上限を記録する。16GB GitHub runnerはLL-389の実測に基づきconcurrency 1へ制限する。
+- **教訓**: static buildの停止をtimeout延長やrunner retryで隠さず、Astroと検索indexを分け、route family、HTML総量、wall、CPU、RSSを測る。`build.concurrency`はroute削減、共有index、serialization削減を先に行った後、single-thread CPUではなく独立pageのI/O待ちが大きい場合に小さい値から採用する。並列度を上げるとRSSも増えるためwall timeとpeak RSSを実行基盤ごとに複数回確認し、route budgetを生成器側でfail-closedにする。build wrapperを変更したら長時間buildの前に`node --check`を実行し、構文失敗を即時に検出する。
+
+### LL-386: 新規remote branchのsecret scanへ単一commitを渡すと全到達履歴を再走査する
+- **事象**: 初回branch pushのpre-push hookが`scan-secrets.mjs --range <local_sha>`を実行し、30分近く経過してもsecret scanを継続した。processは停止しておらず、`git rev-list --objects <local_sha>`がcommitだけでなくそのcommitから到達可能な全履歴objectを列挙していた。
+- **根本原因**: remote branch未作成時の`remote_sha`はzero SHAで、hookがrangeを`local_sha`単体にしていた。既存remote branchの`remote_sha..local_sha`とは異なり、単一revisionは新規branch差分ではなくrepository全履歴を意味する。
+- **対策**: remote branch未作成時は`refs/remotes/<remote>/main..local_sha`をscanし、mainに含まれないbranch固有commitだけを検査する。main refが存在しない特殊環境だけ従来の全到達履歴scanへfail-closedで戻す。Web build summaryも新しい`BUILD:` / `ASTRO:` telemetryを表示するようhookを同期した。
+- **教訓**: Git revisionの単一SHAとrangeは意味が異なる。新規branchのpush gateはremote default branchとの差分を明示し、既にremoteへ存在するancestorを毎回再検査しない。安全gateを高速化するときはscan自体をskipせず、pushで新たに到達可能になるcommit集合だけへ入力を狭める。
+
+### LL-387: 同一previewへ複数Playwright workerを当てると高負荷環境で無関係testが同時timeoutする
+- **事象**: full Playwrightを2 workerで実行すると、Publisher E2Eと全UI smokeが同じpreviewへ並行アクセスし、Home、Status、検索、responsive geometryなど無関係なtestがrunごとに異なる位置でtimeoutした。対象testは1 workerのretryなし実行で成功し、製品assertionの共通failureは確認されなかった。
+- **根本原因**: `fullyParallel: false`でもspec fileはworker間で並列実行され、静的HTMLが大きいHomeやArchiveのload、Pagefind hydration、複数viewport計測が同一previewとhost resourceを同時に消費していた。host loadが高い環境では、test間の競合が製品状態の失敗に見えた。
+- **対策**: full Playwrightを`workers: 1`、Vitestを`maxWorkers: 1`へ固定し、browser suiteとsubprocess系unit testのpeak負荷を抑える。timeout、retry、geometry閾値は緩めず、responsive matrixは1 navigation後のviewport変更、複数routeの静的contractはbrowser内fetchへ集約してI/O自体も削減する。pre-pushは生成Home・記事詳細・metrics・Archive・404のPublisher E2Eを実行し、warm/cold・exact tag・navを含む全PlaywrightはPR CIのclean runnerで必須とする。
+- **教訓**: 1つのpreviewを共有するbrowser suiteでは、spec file並列が常に高速化になるとは限らない。大きな静的page、検索index、viewport行列を含む場合はpeak resourceと失敗位置を実測し、無関係testのtimeoutが移動するならworker数を下げて実行を決定論的にする。受入閾値やtimeoutを緩める前に、同一artifactへの同時負荷を除く。local pre-pushとPR CIの責務を分ける場合もE2E自体をskipせず、変更で壊し得るcritical surfaceをlocal gateへ残す。
+
+### LL-388: pre-pushの変更検出を`@{u}`へ依存すると初回`-u` pushで差分を失う
+- **事象**: 新規branchを`git push -u`したpre-pushでWeb buildは実行されたが、E2E判定は`web/への影響なし`としてfocused browser gateをskipした。同じpushはWeb、E2E、Playwright configを含んでいた。
+- **根本原因**: hookが`git diff HEAD @{u}`を優先し、push開始時に設定されたupstreamがHEADと同じ状態として解決されると空差分を正常結果として採用した。fallbackの`origin/main`比較へ進まないため、実際のpush対象と変更判定が分離した。
+- **対策**: pre-push標準入力のlocal SHAとremote SHAからsecret scanと同じpush rangeを作り、そのrangeのchanged filesをE2E影響判定へ共有する。新規branchは`origin/main..local_sha`、既存branchは`remote_sha..local_sha`を使い、upstream設定状態に依存しない。remote main自体が無いfail-closed fallbackではtip commitだけでなく`git log --name-only local_sha`の全到達履歴を変更分類へ使う。
+- **教訓**: pre-push hookが検査すべき集合はworking treeやupstreamとの差分ではなく、標準入力が示すremoteへ送信されるcommit集合である。secret scan、変更分類、E2E選択は同じpush rangeを共有し、`git push -u`やremote tracking refの有無でgateを変えない。
+
+### LL-389: Astro concurrency 2は16GB ARM runnerでRSS 15GBへ達する
+- **事象**: PR CIのUbuntu 24.04 ARM Web buildは、Astro開始30秒でprocess-tree RSS 8.7GB、60秒で14.9GBへ増え、91秒で`astro terminated by SIGKILL`となった。同じcommitのCloudflare previewはActive、macOS localはconcurrency 2でpeak RSS 2.0-2.7GBだった。
+- **根本原因**: 数千の大きなHTML pageを2並列renderするV8 memory特性が実行基盤で大きく異なり、16GB ARM runnerではmemory上限へ到達した。従来のheartbeatだけでは外部cancelに見えたが、process-tree RSSとsignalを出したことでOOM境界を実測できた。
+- **対策**: `GITHUB_ACTIONS=true`ではAstro concurrencyを1、Cloudflare Pagesとlocalでは2にする。生成HTMLとroute契約は同一のまま、GitHub runnerだけpeak memoryを優先する。serial ARMでもRSSが15.3GBへ達したため、Astro childのV8 old-spaceを4GBへ制限し、runner上限前にGCを促す。telemetryへ実際のconcurrencyとheap limitを出し、PR CIでserial ARM buildの完走を確認する。
+- **教訓**: concurrencyの安全値を開発端末のRSSだけで決めない。同じarchitecture名でもOS、V8 allocator、memory limitでpeak RSSは変わる。CIはprocess-tree RSSとtermination signalを確認し、OOMが実測できたplatformは並列度とV8 heap ceilingの両方を調整する。timeout延長やrunner retryではmemory exhaustionを直せない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

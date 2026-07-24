@@ -1,11 +1,10 @@
 ---
 import "../styles/portal.css";
 import { SITE_URL } from "../lib/site.ts";
-import { CATEGORY_META, WORKER_HEALTH, relativeTime } from "../lib/data.ts";
+import { WORKER_HEALTH, relativeTime } from "../lib/data.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { deriveQueueDisplay } from "../lib/queue-health.ts";
 import { deriveWorkerRunStatus } from "../lib/run-health.ts";
-import { SOURCE_META, sourceLabel } from "../lib/source-meta.ts";
 import ArxivIcon from "../components/icons/ArxivIcon.astro";
 
 export interface Props {
@@ -37,15 +36,6 @@ const navItems = [
 // navItems (the hamburger menu) to avoid duplicate controls (LL-054).
 const menuOwnsCurrentPage = pageKey === "search"
   || navItems.some((item) => item.key === pageKey && item.key !== "timeline");
-const categorySearchMeta = CATEGORY_META.map((meta) => ({
-  slug: meta.slug,
-  label: meta.shortLabel,
-  aliases: [meta.name, meta.shortLabel, meta.slug.replaceAll("-", " "), ...(meta.searchAliases ?? [])],
-}));
-const sourceSearchMeta = SOURCE_META.map((meta) => ({
-  id: meta.id,
-  label: sourceLabel(meta.id),
-}));
 const productionHost = new URL(SITE_URL).hostname;
 const footerRun = deriveWorkerRunStatus({
   workerHealth: WORKER_HEALTH,
@@ -199,8 +189,6 @@ const footerLastRunRelative = footerLastRunAt
             class="search-results"
             role="listbox"
             aria-live="polite"
-            data-category-search-meta={JSON.stringify(categorySearchMeta)}
-            data-source-search-meta={JSON.stringify(sourceSearchMeta)}
             hidden
           ></div>
         </form>
@@ -332,6 +320,8 @@ const footerLastRunRelative = footerLastRunAt
     <script>
       import { normalizeSearchText } from "../lib/search-normalize.ts";
       import { normalizeTagKey } from "../lib/tag-normalize.ts";
+      import { CATEGORY_META } from "../lib/category-meta.ts";
+      import { SOURCE_META, sourceLabel } from "../lib/source-meta.ts";
       import { deriveQueueDisplay, summaryQueueCardCopy } from "../lib/queue-health.ts";
       import { initializeRelativeTimes } from "../lib/relative-time.ts";
       import {
@@ -600,14 +590,26 @@ const footerLastRunRelative = footerLastRunAt
         if (!input || !panel || !searchRoot) return;
 
         type CategorySearchMeta = { slug: string; label: string; aliases: string[] };
-        const categoryMeta = JSON.parse(panel.dataset.categorySearchMeta ?? "[]") as CategorySearchMeta[];
+        const categoryMeta: CategorySearchMeta[] = CATEGORY_META.map((meta) => ({
+          slug: meta.slug,
+          label: meta.shortLabel,
+          aliases: [
+            meta.name,
+            meta.shortLabel,
+            meta.slug.replaceAll("-", " "),
+            ...(meta.searchAliases ?? []),
+          ],
+        }));
         const categoryLabels = new Map(
           categoryMeta.flatMap((entry) =>
             [entry.slug, entry.label, ...entry.aliases].map((value) => [value, entry.label] as const),
           ),
         );
         type SourceSearchMeta = { id: string; label: string };
-        const sourceMeta = JSON.parse(panel.dataset.sourceSearchMeta ?? "[]") as SourceSearchMeta[];
+        const sourceMeta: SourceSearchMeta[] = SOURCE_META.map((meta) => ({
+          id: meta.id,
+          label: sourceLabel(meta.id),
+        }));
         const sourceLabels = new Map(
           sourceMeta.flatMap((entry) => [[entry.id, entry.label], [entry.label, entry.label]] as const),
         );
@@ -961,14 +963,18 @@ const footerLastRunRelative = footerLastRunAt
             const tagIntent = requestedTag && requestedTag === normalizeTagKey(q)
               ? requestedTag
               : "";
+            const indexLookupTimeoutMs = tagIntent ? 6000 : 3500;
             const [search, tagSearch] = await withDeadline(
-              Promise.all([
-                Promise.resolve(pf.search(q)),
-                tagIntent
-                  ? Promise.resolve(pf.search(null, { filters: { tag: [tagIntent] } }))
-                  : Promise.resolve({ results: [] }),
-              ]),
-              3500,
+              tagIntent
+                ? Promise.all([
+                    Promise.resolve({ results: [] }),
+                    Promise.resolve(pf.search(null, { filters: { tag: [tagIntent] } })),
+                  ])
+                : Promise.all([
+                    Promise.resolve(pf.search(q)),
+                    Promise.resolve({ results: [] }),
+                  ]),
+              indexLookupTimeoutMs,
               "The search index took too long to respond.",
             );
             const batchSize = 30;
@@ -984,7 +990,7 @@ const footerLastRunRelative = footerLastRunAt
                 candidates.slice(offset, offset + batchSize).map(async ({ result, intentMatch }) => {
                   const item = await withDeadline(
                     Promise.resolve(result.data()),
-                    Math.max(1, Math.min(1200, remainingMs)),
+                    Math.max(1, Math.min(tagIntent ? 3500 : 1200, remainingMs)),
                     "A search result took too long to load.",
                   );
                   return intentMatch ? { ...item, intentMatch: true } : item;

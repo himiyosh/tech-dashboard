@@ -5,6 +5,7 @@ import {
   summaryForLangWithFallback,
   type SummaryDisplayEntry,
 } from "../../web/src/lib/summary-display.ts";
+import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
 
 const TIMELINE_ENTRY_LINK_SELECTOR = 'main article.card h3.title > a[href^="/e/"]';
 const REACTION_MUTATION_URL_RE = /\/api\/reactions\/[a-f0-9]{16}$/;
@@ -3596,23 +3597,33 @@ test.describe("TECH Dashboard smoke", () => {
       "/t/claude/page/2/",
     ];
 
-    for (const path of paths) {
-      await page.setViewportSize({ width: 1280, height: 900 });
-      const response = await page.goto(path);
-      expect(response?.status(), `${path} is generated`).toBeLessThan(400);
-      const metrics = page.locator(".page-hero-metric");
-      expect(await metrics.count(), `${path} exposes summary metrics`).toBeGreaterThan(0);
-      const contracts = await metrics.evaluateAll((items) =>
-        items.map((item) => {
-          const describedBy = item.getAttribute("aria-describedby") ?? "";
-          const detail = describedBy ? document.getElementById(describedBy) : null;
+    await page.goto("/");
+    const routeContracts = await page.evaluate(
+      async (routePaths) =>
+        Promise.all(routePaths.map(async (path) => {
+          const response = await fetch(path);
+          const html = await response.text();
+          const document = new DOMParser().parseFromString(html, "text/html");
+          const metrics = [...document.querySelectorAll(".page-hero-metric")];
           return {
-            scope: item.getAttribute("data-metric-scope") ?? "",
-            describedBy,
-            detail: detail?.textContent?.trim() ?? "",
+            path,
+            status: response.status,
+            contracts: metrics.map((item) => {
+              const describedBy = item.getAttribute("aria-describedby") ?? "";
+              const detail = describedBy ? document.getElementById(describedBy) : null;
+              return {
+                scope: item.getAttribute("data-metric-scope") ?? "",
+                describedBy,
+                detail: detail?.textContent?.trim() ?? "",
+              };
+            }),
           };
-        }),
-      );
+        })),
+      paths,
+    );
+    for (const { path, status, contracts } of routeContracts) {
+      expect(status, `${path} is generated`).toBeLessThan(400);
+      expect(contracts.length, `${path} exposes summary metrics`).toBeGreaterThan(0);
       expect(
         contracts.every((metric) =>
           metric.scope.length > 0
@@ -3629,16 +3640,21 @@ test.describe("TECH Dashboard smoke", () => {
       "/arxiv/",
       "/glossary/",
     ];
-    for (const [width, height, maxHeroHeight] of [
+    const responsiveViewports = [
       [320, 844, 335],
       [375, 844, 335],
       [390, 844, 335],
       [414, 844, 335],
       [768, 900, 430],
-    ] as const) {
-      for (const path of responsivePaths) {
+    ] as const;
+    for (const path of responsivePaths) {
+      await page.setViewportSize({ width: 320, height: 844 });
+      await page.goto(path);
+      for (const [width, height, maxHeroHeight] of responsiveViewports) {
         await page.setViewportSize({ width, height });
-        await page.goto(path);
+        await page.evaluate(() => new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ));
         const hero = page.locator(".page-hero");
         await expect(hero).toBeVisible();
         const box = await hero.boundingBox();
@@ -4999,9 +5015,26 @@ test.describe("TECH Dashboard smoke", () => {
   test("singleton tag links recover their article through exact search", async ({ page }) => {
     await page.goto("/");
 
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ tags?: string[] }>;
+    };
+    const tagCounts = new Map<string, number>();
+    for (const entry of index.entries) {
+      for (const tag of new Set((entry.tags ?? []).map(normalizeTagKey).filter(Boolean))) {
+        tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+      }
+    }
+    const singletonTags = [...tagCounts.entries()]
+      .filter(([, count]) => count === 1)
+      .map(([tag]) => tag);
     const tagLinks = page.locator("main article.card .tag-chip[href^='/search?q=']");
-    const tagIndex = await tagLinks.evaluateAll((links) =>
-      links.findIndex((link) => /[a-z]/.test(new URL((link as HTMLAnchorElement).href).searchParams.get("q") ?? "")),
+    const tagIndex = await tagLinks.evaluateAll(
+      (links, candidates) =>
+        links.findIndex((link) => {
+          const query = new URL((link as HTMLAnchorElement).href).searchParams.get("q") ?? "";
+          return /[a-z]/.test(query) && candidates.includes(query);
+        }),
+      singletonTags,
     );
     expect(tagIndex).toBeGreaterThanOrEqual(0);
     const tagLink = tagLinks.nth(tagIndex);

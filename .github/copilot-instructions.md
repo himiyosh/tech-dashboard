@@ -2571,6 +2571,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: registryの全`evergreen: true` sourceを先に0件で初期化し、収集済みentry、evergreen flagged、bilingual readyを別々に加算する。0 entryとstamp欠落sourceも常に表へ残すfixtureを追加した。
 - **教訓**: coverage auditの母集団は期待契約を定義するregistry/schemaから作り、artifact側の検査対象fieldで絞り込まない。存在、stamp、enrichment readyは別のcountとして表示し、異常時ほどrowが消えない設計にする。
 
+### LL-388: Playwright previewを固定portで再利用すると別worktreeのartifactを検証する
+- **事象**: pre-pushのfull E2Eが固定port 4322で別worktreeのdetached previewを`reuseExistingServer:true`により再利用した。検索testは現在sourceと異なる日本語metadataを受け、途中で所有元serverが停止すると18件が`ERR_CONNECTION_REFUSED`になった。現在worktreeの`web/dist`には期待する`aria-label`が存在し、worktree固有serverでのfocused実行では製品assertionが成立した。
+- **根本原因**: project内の全worktreeが同じpreview portを共有し、portのlistenerが現在workspaceの`web/dist`を配信しているか検証せず既存serverを信頼していた。加えてstatic Homeのviewport行列が幅ごとに`page.goto()`を繰り返し、server負荷時に30秒test budgetを消費した。
+- **対策**: absolute worktree pathのSHA-256から12000-31999のpreview portを決定し、`PLAYWRIGHT_PORT`の明示overrideも検証する。Playwrightは`reuseExistingServer:false`で自分が起動したserverだけを使う。同一static routeのright-rail境界行列は1回のnavigation後にviewport変更と2 frameのreflow待機で測る。
+- **教訓**: 複数worktreeでbrowser testを並行するrepositoryでは、固定portとexisting-server再利用をartifact ownershipの証拠にしない。port、server process、workspace、dist snapshotを同じtest contractへ接続し、別workspaceのDOMを製品回帰として修正しない。static responsive testはroute変更がない限り再navigationせず、focused retryなし実行でserver層とassertion層を分離する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

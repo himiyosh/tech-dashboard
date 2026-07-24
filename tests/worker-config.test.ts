@@ -1,7 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { playwrightWebServerCommand } from "../playwright.config.ts";
+import {
+  playwrightPreviewPort,
+  playwrightWebServerCommand,
+} from "../playwright.config.ts";
 import { SOURCE_BATCHES, sourceBatchIndexAt } from "../worker/src/index.ts";
 
 function readConfig(path: string): string {
@@ -175,13 +178,23 @@ describe("Cloudflare Worker deploy config", () => {
       scripts?: Record<string, string>;
     };
     const prePush = readConfig("scripts/git-hooks/pre-push");
-    const defaultCommand = playwrightWebServerCommand(false);
-    const reuseCommand = playwrightWebServerCommand(true);
+    const defaultCommand = playwrightWebServerCommand(false, 24_322);
+    const reuseCommand = playwrightWebServerCommand(true, 24_322);
 
     expect(defaultCommand).toContain("npm --prefix web run build");
     expect(defaultCommand).toContain("npm --prefix web run preview");
     expect(reuseCommand).toBe(
-      "npm --prefix web run preview -- --host 127.0.0.1 --port 4322",
+      "npm --prefix web run preview -- --host 127.0.0.1 --port 24322",
+    );
+    expect(playwrightPreviewPort("/tmp/worktree-a")).toBe(
+      playwrightPreviewPort("/tmp/worktree-a"),
+    );
+    expect(playwrightPreviewPort("/tmp/worktree-a")).not.toBe(
+      playwrightPreviewPort("/tmp/worktree-b"),
+    );
+    expect(playwrightPreviewPort("/tmp/worktree", "24567")).toBe(24_567);
+    expect(() => playwrightPreviewPort("/tmp/worktree", "invalid")).toThrow(
+      "Invalid PLAYWRIGHT_PORT",
     );
     expect(publisherWorkflow).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
     expect(publisherWorkflow).toMatch(

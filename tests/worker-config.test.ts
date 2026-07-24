@@ -177,12 +177,19 @@ describe("Cloudflare Worker deploy config", () => {
     const prePush = readConfig("scripts/git-hooks/pre-push");
     const defaultCommand = playwrightWebServerCommand(false);
     const reuseCommand = playwrightWebServerCommand(true);
+    const expectedPort = process.env.PLAYWRIGHT_PREVIEW_PORT ?? "4322";
 
     expect(defaultCommand).toContain("npm --prefix web run build");
     expect(defaultCommand).toContain("npm --prefix web run preview");
     expect(reuseCommand).toBe(
-      "npm --prefix web run preview -- --host 127.0.0.1 --port 4322",
+      `npm --prefix web run preview -- --host 127.0.0.1 --port ${expectedPort}`,
     );
+    expect(
+      playwrightWebServerCommand(
+        true,
+        "npm --prefix web run preview -- --host 127.0.0.1 --port 4399",
+      ),
+    ).toBe("npm --prefix web run preview -- --host 127.0.0.1 --port 4399");
     expect(publisherWorkflow).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
     expect(publisherWorkflow).toMatch(
       /npm run build:web[\s\S]*npm run test:e2e:publisher/,

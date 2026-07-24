@@ -45,4 +45,37 @@ describe("web clarity contracts", () => {
     expect(about).toContain("data-about-run-label-en");
     expect(about).toContain('<span class="i18n-en" lang="en">No data</span>');
   });
+
+  it("separates per-entry pending context from site-wide pipeline telemetry", () => {
+    const entryCard = read("web/src/components/EntryCard.astro");
+    const detail = read("web/src/pages/e/[id].astro");
+    const sourceExcerpt = read("web/src/components/SourceExcerpt.astro");
+    const portal = read("web/src/layouts/Portal.astro");
+
+    expect(entryCard).toContain("全体の進行状況");
+    expect(entryCard).toContain("Site-wide status");
+    expect(sourceExcerpt).toContain('data-excerpt-scope="source"');
+    expect(sourceExcerpt).toContain("AI 要約ではありません");
+    expect(sourceExcerpt).toContain("Not an AI summary");
+    expect(entryCard).toContain("sourceExcerptForEntry(entry)");
+    expect(entryCard).toContain("<SourceExcerpt");
+    expect(detail).toContain("sourceExcerptForEntry(entry, 320)");
+    expect(detail).toContain("<SourceExcerpt");
+    expect(portal).toContain('data-health-scope="site-wide-pipeline"');
+  });
+
+  it("validates direct singleton-tag recovery against the generated mapping", () => {
+    const portal = read("web/src/layouts/Portal.astro");
+    const endpoint = read("web/src/pages/tag-recovery.json.ts");
+    const headers = read("web/public/_headers");
+
+    expect(endpoint).toContain("SINGLETON_TAG_ENTRY_IDS");
+    expect(portal).toContain("data-tag-recovery-version");
+    expect(portal).toContain("tag-recovery.json?v=");
+    expect(portal).toContain('cache: "no-store"');
+    expect(portal).toContain("recoveryMap[tagIntent] !== directTagEntryId");
+    expect(portal).toContain("if (directTagEntryId)");
+    expect(headers).toContain("/tag-recovery.json");
+    expect(headers).toContain("Cache-Control: no-store");
+  });
 });

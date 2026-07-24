@@ -1,12 +1,20 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PREVIEW_COMMAND =
-  "npm --prefix web run preview -- --host 127.0.0.1 --port 4322";
+const configuredPort = Number.parseInt(process.env.PLAYWRIGHT_PREVIEW_PORT ?? "4322", 10);
+const previewPort = Number.isInteger(configuredPort) && configuredPort > 0 && configuredPort <= 65535
+  ? configuredPort
+  : 4322;
+const previewUrl = `http://127.0.0.1:${previewPort}`;
+const previewCommand =
+  `npm --prefix web run preview -- --host 127.0.0.1 --port ${previewPort}`;
 
-export function playwrightWebServerCommand(reuseBuild: boolean): string {
+export function playwrightWebServerCommand(
+  reuseBuild: boolean,
+  command = previewCommand,
+): string {
   return reuseBuild
-    ? PREVIEW_COMMAND
-    : `npm --prefix web run build && ${PREVIEW_COMMAND}`;
+    ? command
+    : `npm --prefix web run build && ${command}`;
 }
 
 export default defineConfig({
@@ -19,14 +27,14 @@ export default defineConfig({
   retries: 1,
   reporter: "list",
   use: {
-    baseURL: "http://127.0.0.1:4322",
+    baseURL: previewUrl,
     trace: "on-first-retry",
   },
   webServer: {
     command: playwrightWebServerCommand(
       process.env.PLAYWRIGHT_REUSE_BUILD === "1",
     ),
-    url: "http://127.0.0.1:4322",
+    url: previewUrl,
     reuseExistingServer: true,
     timeout: 300_000,
   },

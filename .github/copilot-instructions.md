@@ -2351,9 +2351,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 
 ### LL-351: 後段rankingは必要な候補母集団を確保してから早期終了する
 - **事象**: HomeのTickerには当日公開のCopilot記事が4件あったが、`Copilot`検索の上位は3日以上前の記事だった。Pagefindのraw候補を実測すると当日記事はindex 56-59に存在したが、検索clientは先頭batchでexact articleが12件集まると候補hydrationを終了していた。
-- **根本原因**: authority、importance、鮮度の後段sortはhydration済み候補にしか適用できないのに、終了条件をexact件数だけで決めてPagefindの近似順位を候補母集団として固定していた。後段rankingが正しくても、新しいexact hitを読む前に終了すると鮮度signalを比較できない。
-- **対策**: 30件batchと既存deadlineを維持しつつ、実測位置に1 batchの余裕を加えた90候補を確認してからexact件数による早期終了を許可した。E2Eは先頭12件の古いexact hit、途中77件の近似候補、index 89の新しいexact hit、window外2件を用意し、新しい候補が後段sortで先頭になりwindow外をhydrateしないことを固定した。
-- **教訓**: approximate search engineの結果へ独自rankingを重ねる場合、表示件数と候補走査件数を分離する。早期終了は「十分な表示件数」だけでなく、ranking signalを比較できる最小候補windowを満たしてから行い、実corpusのraw候補位置とdeterministic fixtureの両方で検証する。
+- **根本原因**: authority、importance、鮮度の後段sortはhydration済み候補にしか適用できないのに、終了条件をexact件数だけで決めてPagefindの近似順位を候補母集団として固定していた。後段rankingが正しくても、新しいexact hitを読む前に終了すると鮮度signalを比較できない。さらに各候補の1.2秒timeoutが高負荷時に異なるcandidateを落とし、`/search?q=`と`/search/?q=`で上位10件が揺れた。
+- **対策**: 30件batchと90候補のminimum windowを維持し、一般検索の全体deadlineを9秒、候補hydrationの個別上限を2.5秒へ広げた。E2Eは先頭12件の古いexact hit、途中77件の近似候補、index 89の新しいexact hit、window外2件を用意し、新しい候補が後段sortで先頭になりwindow外をhydrateしないことと、slash有無で結果集合が一致することを固定した。
+- **教訓**: approximate search engineの結果へ独自rankingを重ねる場合、表示件数と候補走査件数を分離する。早期終了は「十分な表示件数」だけでなく、ranking signalを比較できる最小候補windowと、通常負荷差で同じ候補をhydrateできる個別deadlineを満たしてから行う。実corpusのraw候補位置、deterministic fixture、同queryのroute表記差で結果集合を検証する。
 
 ### LL-352: 手動enrichment修復はPublisher最終化へ共有しないと再び蓄積する
 - **事象**: 日次監査で`titleEn`欠落が180/1,772件を超え、最新snapshotでは184件中180件を既存`titleen:fill`で安全に補完できた。CLIは以前から存在したが、毎回のNode Publisherは同じ補完を実行していなかった。
@@ -2552,6 +2552,36 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: GitHubの終了logにはcancelの内部理由が明記されず、GitHub StatusもActionsをoperationalとしていたため、provider側の正確な原因は未確認である。一方、local Astro buildは最大RSS約6.69GBを使用し、数千routeのstatic generationが高負荷であることは実測できた。同じx64 runner poolへの追加retryでは再現だけが続いた。
 - **対策**: retryを2回で停止し、公開repositoryで公式に提供される4 vCPU・16GBの`ubuntu-24.04-arm`へWeb build、Playwright、Publisherを移した。Web build artifactはarchitecture非依存のままjob間で引き渡し、CIでARM上のPlaywright browser installと全E2Eを実行して互換性を検証する。
 - **教訓**: heartbeat中の外部cancelを製品failureや単純timeoutとして扱わない。終了log、公式status、同一artifactのlocal/preview結果、資源量を分けて確認し、bounded retryが同じ層で再発したら別の公式runner poolへ移して実行基盤を変更する。未観測のOOMやprovider障害を根本原因として断定しない。
+
+### LL-385: 要約待ちはQueue状態だけでなく判断可能なsource contextを持たせる
+- **事象**: Homeの最新TimelineにAI要約待ちの記事が連続し、カードと詳細は「準備待ち」と元記事linkを正直に表示していたが、元記事を開くまで内容を判断できなかった。4 persona監査のDev LeadとAI Researcherが同じ根本原因を報告し、片手操作ではStatusへの回復linkも44x14pxだった。
+- **根本原因**: 非同期enrichmentのtruthful stateを表示することと、読者が今読むかを判断できることを同一視していた。`contentSnippet`はAI入力用としてartifactに保持されていたがreader-facing UIへ出さず、aggregate Queueの稼働説明だけを個別cardへ表示していた。
+- **対策**: markup除去、HTML entity decode、title echo拒否、長さ制限を行う共通helperでsource excerptを作り、pending card/detailへ「収集元の抜粋・AI要約ではない」とscope/lang属性付きで表示した。個別pendingと全体pipelineを文言で分離し、Status linkを44px以上へ拡張した。
+- **教訓**: pending stateは「未完成と明示する」だけでなく、利用可能な一次contextから判断を続けられる必要がある。source excerptはAI summaryへ見せずprovenanceを明示し、title echoやfeed suffixを除去する。aggregate Queue telemetryを個別記事のqueued証拠へ流用せず、個別状態、全体処理、回復導線を別の意味単位にする。
+
+### LL-386: 検索順位は結果だけでなくmatch provenanceと比較順を表示する
+- **事象**: `Copilot`検索で1か月前の公式記事が2日前の記事より上に3件連続し、`benchmark`ではカテゴリ入口の次にNews/Policy記事が出た。検索結果にはexact/approximate、title/tag/source/summaryのどこで一致したか、authority・importance・recencyのどの順で比較したかが表示されなかった。
+- **根本原因**: exact候補を後段sortしていても、authorityをrecencyより先に比較し、利用者へranking contractを説明していなかった。Pagefindの近似候補取得、category intent pin、reader-facing result metadataは整備済みだったが、match理由と時間tierが欠けていた。
+- **対策**: category/tag intentを先頭へ固定し、articleは7日以内、30日以内、それ以前のrecency tierを先に比較してからauthority、importance、公開日を適用した。各resultへcategory/tag/title/source/summaryのmatch scopeを表示し、JA/ENのranking noteとzero/recovery copyを同じsearch stateへ接続した。source一致はmatch provenanceとして表示するが、専用intentとして先頭固定するとは説明しない。
+- **教訓**: searchのtrustは正しいsortだけでは成立しない。候補取得、intent pin、match field、ranking signalの順序を可視化し、古い高authority記事がrecent resultを無条件に押し下げない時間tierを持たせる。内部slugやraw excerptではなくreader-facing metadataでprovenanceを説明する。
+
+### LL-387: 複合linkのaccessible nameを一部の子要素だけへ固定しない
+- **事象**: LighthouseでTop 3のlinkとright railのranking linkが`label-content-name-mismatch`になった。Top 3はtitleだけを`aria-labelledby`へ指定し、同じlink内の可視summaryをaccessible nameから除外していた。right railは可視`#tag`やcategoryを含むrowへ別の`aria-label`を上書きしていた。
+- **根本原因**: linkの名前を短く整えるため、可視contentの一部だけをaccessible nameとして指定した。視覚上は正しくても、visible labelがaccessible nameへ含まれず音声利用者の認識と一致しなかった。
+- **対策**: 複合linkは`aria-labelledby`/`aria-label`を外し、可視title、summary、source、category、countから自然なaccessible nameを生成するようにした。単位だけをvisually-hidden textで補足し、Lighthouseの該当nodeを再監査する。
+- **教訓**: cardやranking row全体が1つのlinkである場合、accessible nameを一部の見出しだけへ固定しない。可視contentを自然な名前へ含め、補足単位だけをhidden textで加える。label-in-nameはスクリーンショットや通常のrole確認では見逃すため、Lighthouse/axeのnode単位結果を完了gateに含める。
+
+### LL-388: exact facet検索を一般検索と同じPromiseの成否へ依存させない
+- **事象**: 低頻度tagから開く`q`+`tag`検索で、Pagefindのtag filterは対象記事を返せる一方、同時に実行した一般検索が3.5秒を超えると`Promise.all`全体がrejectし、完全一致記事を捨てて検索failureを表示した。実ブラウザでは`classifier`のsingleton tagから対象detailへ戻れなかった。
+- **根本原因**: exact facet retrievalと一般検索を1つのaggregate deadlineへまとめ、片方の遅延を両方の失敗として扱った。facet検索は決定論的な回収導線、一般検索は補助候補という優先度の違いを非同期contractへ反映していなかった。
+- **対策**: 明示tag intentがある共有URLでは一般検索を実行せず、canonical tag filterだけを8秒の専用deadlineで取得する。`tagHref()`は全surfaceでsingleton tagの16進entry IDを自動付与し、現行snapshotのgeneratedAtをquery versionに持つ`tag-recovery.json`のtag→entry正本と一致する場合だけPagefind読込前にexact resultを即時合成する。browser fetchとCloudflare Pagesの`_headers`は`no-store`を指定する。URL改変、stale ID、mapping取得失敗ではdirect resultを出さず通常tag filterへ戻す。
+- **教訓**: exact category/source/tag retrievalをapproximate/full-text検索の可用性へ従属させない。一方、URLのresource IDは形式検証だけで信頼せず、生成時のfacet→resource mappingへ照合してからdirect resultに使う。通常検索とfacet検索のmode、deadline、direct identity、mapping validation、intent解除を別のstate contractとして検証する。
+
+### LL-389: 並行worktreeのE2Eは固定preview portを共有しない
+- **事象**: このworktreeで起動したつもりの4322番previewが別worktreeのAstro processに占有され、`reuseExistingServer:true`のPlaywrightが別branchの古いUIや404を正常なtest serverとして利用した。sourceと`web/dist`には新しいcopyがあるのにbrowserは旧copyを返し、process owner確認で別worktree pathが判明した。
+- **根本原因**: 全worktreeが固定port 4322を使い、serverのHTTP応答だけで再利用可否を決めていた。worktree identityやartifact provenanceをURLから判別できず、並行sessionのpreviewを停止せず安全に分離する設定も無かった。
+- **対策**: Playwright configへ`PLAYWRIGHT_PREVIEW_PORT`を追加し、preview command、baseURL、webServer health URLを同じ検証済みportへ接続した。既定4322はCI互換として維持し、並行worktreeでは空いている固有portを指定する。port確認は`lsof`とprocess commandでworktree pathまで照合する。
+- **教訓**: `reuseExistingServer`の200応答は現在worktreeのartifactを配信している証拠ではない。並行worktree環境ではpreview portをsessionごとに分け、固定portを再利用する前にPID、command、cwd相当のworktree pathを確認する。他sessionのprocessを停止して解決せず、自分のtest serverを別portへ隔離する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

@@ -4,6 +4,9 @@ interface Props {
   class?: string;
   favicon?: string;
   faviconClass?: string;
+  href?: string;
+  authorityJa?: string;
+  authorityEn?: string;
 }
 
 const {
@@ -11,6 +14,9 @@ const {
   class: className,
   favicon = "",
   faviconClass = "",
+  href = "",
+  authorityJa = "",
+  authorityEn = "",
 } = Astro.props as Props;
 ---
 
@@ -36,6 +42,19 @@ const {
       <span class="i18n-en" lang="en">Source</span>
     </span>
     <strong data-source-disclosure-full>{label}</strong>
+    {(authorityJa || authorityEn) && (
+      <span class="source-disclosure-authority">
+        <span class="i18n-ja">{authorityJa || "出典"}</span>
+        <span class="i18n-en" lang="en">{authorityEn || "Source"}</span>
+      </span>
+    )}
+    {href && (
+      <a class="source-disclosure-link" href={href} target="_blank" rel="noopener nofollow">
+        <span class="i18n-ja">元記事で掲載元を確認</span>
+        <span class="i18n-en" lang="en">Verify at the original article</span>
+        <span aria-hidden="true">↗</span>
+      </a>
+    )}
     <span class="source-disclosure-hint">
       <span class="i18n-ja">収集元をもう一度選択すると閉じます。</span>
       <span class="i18n-en" lang="en">Select the source again to close.</span>
@@ -153,6 +172,29 @@ const {
   .source-disclosure-panel strong {
     display: block;
     font-size: 13px;
+  }
+
+  .source-disclosure-authority {
+    display: block;
+    margin-top: 2px;
+    color: var(--text-2);
+    font-size: 11px;
+  }
+
+  .source-disclosure-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-top: 4px;
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 700;
+    text-underline-offset: 3px;
+  }
+
+  .source-disclosure-link:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
   }
 
   .source-disclosure-hint {

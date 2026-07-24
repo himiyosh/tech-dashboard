@@ -110,6 +110,7 @@ const {
   isResearchListingEntry,
   ALL_ENTRIES,
   STATIC_TAG_PAGE_TAGS,
+  SINGLETON_TAG_ENTRY_IDS,
   TAG_PAGE_MIN_ENTRIES,
   tagEntryCount,
   tagHref,
@@ -911,6 +912,23 @@ describe("selectTickerDayEntries", () => {
       ]);
     });
 
+    it("代替候補がある場合は同一 source を連続表示しない", () => {
+      const selected = selectTickerItems([
+        tickerEntry("zed-stable", "zed-releases", "release", "https://github.com/zed-industries/zed/releases/tag/v2", 3, "2026-05-04T09:00:00.000Z"),
+        tickerEntry("zed-preview", "zed-releases", "release", "https://github.com/zed-industries/zed/releases/tag/v2-pre", 3, "2026-05-04T08:00:00.000Z"),
+        tickerEntry("anthropic", "anthropic-news", "blog", "https://anthropic.com/news/agent", 3, "2026-05-04T07:00:00.000Z"),
+      ], 3);
+
+      expect(selected.map((entry) => entry.id)).toEqual([
+        "zed-stable",
+        "anthropic",
+        "zed-preview",
+      ]);
+      for (let index = 1; index < selected.length; index += 1) {
+        expect(selected[index]!.source).not.toBe(selected[index - 1]!.source);
+      }
+    });
+
     it("要約待ち entry を判断用 ticker の候補から除外する", () => {
       const ready = tickerEntry(
         "ready",
@@ -1075,12 +1093,16 @@ describe("tag page routing", () => {
     expect(entriesForTagPage("Claude").map((entry) => entry.id)).toEqual(["entry-001", "entry-003"]);
     expect(STATIC_TAG_PAGE_TAGS).toContain("claude");
     expect(STATIC_TAG_PAGE_TAGS).not.toContain("release");
+    expect(SINGLETON_TAG_ENTRY_IDS.release).toBe("entry-001");
   });
 
   it("低頻度タグを検索へ送り URL を安全にエンコードする", () => {
     expect(tagHref("claude")).toBe("/t/claude");
     expect(tagHref("release")).toBe("/search?q=release&tag=release");
     expect(tagHrefForCount("C++", 1)).toBe("/search?q=c%2B%2B&tag=c%2B%2B");
+    expect(tagHrefForCount("C++", 1, "ABCDEF0123456789")).toBe(
+      "/search?q=c%2B%2B&tag=c%2B%2B&entry=abcdef0123456789",
+    );
     expect(tagHrefForCount("C++", 2)).toBe("/t/c%2B%2B");
     expect(tagHrefForCount("Café", 1)).toBe("/search?q=cafe&tag=cafe");
   });

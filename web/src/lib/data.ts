@@ -57,6 +57,8 @@ export interface NormalizedEntry {
   titleEn: string;
   summaryJa: string;
   summaryEn: string;
+  /** Raw feed/article excerpt retained as source context, not an AI summary. */
+  contentSnippet?: string;
   /** Long-form article body in Japanese (optional, populated by worker). */
   bodyJa?: string;
   /** Long-form article body in English (optional, populated by worker). */
@@ -257,6 +259,14 @@ export const STATIC_TAG_PAGE_TAGS: readonly string[] = [...TAG_ENTRIES_BY_NAME.e
   .map(([tag]) => tag)
   .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 
+export const SINGLETON_TAG_ENTRY_IDS: Readonly<Record<string, string>> = Object.freeze(
+  Object.fromEntries(
+    [...TAG_ENTRIES_BY_NAME.entries()]
+      .filter(([, entries]) => entries.length === 1)
+      .map(([tag, entries]) => [tag, entries[0]!.id]),
+  ),
+);
+
 export function tagEntryCount(tag: string): number {
   return TAG_ENTRIES_BY_NAME.get(normalizeTagKey(tag))?.length ?? 0;
 }
@@ -265,15 +275,22 @@ export function entriesForTagPage(tag: string): readonly NormalizedEntry[] {
   return TAG_ENTRIES_BY_NAME.get(normalizeTagKey(tag)) ?? [];
 }
 
-export function tagHrefForCount(tag: string, count: number): string {
-  const encodedTag = encodeURIComponent(normalizeTagKey(tag));
+export function tagHrefForCount(tag: string, count: number, entryId?: string): string {
+  const normalizedTag = normalizeTagKey(tag);
+  const encodedTag = encodeURIComponent(normalizedTag);
+  const recoveryEntryId = entryId ?? (
+    count === 1 ? SINGLETON_TAG_ENTRY_IDS[normalizedTag] : undefined
+  );
+  const directEntry = recoveryEntryId && /^[a-f0-9]{16}$/i.test(recoveryEntryId)
+    ? `&entry=${encodeURIComponent(recoveryEntryId.toLowerCase())}`
+    : "";
   return count >= TAG_PAGE_MIN_ENTRIES
     ? `/t/${encodedTag}`
-    : `/search?q=${encodedTag}&tag=${encodedTag}`;
+    : `/search?q=${encodedTag}&tag=${encodedTag}${directEntry}`;
 }
 
-export function tagHref(tag: string): string {
-  return tagHrefForCount(tag, tagEntryCount(tag));
+export function tagHref(tag: string, entryId?: string): string {
+  return tagHrefForCount(tag, tagEntryCount(tag), entryId);
 }
 
 export function isArxivEntry(entry: Pick<NormalizedEntry, "source" | "sourceType" | "url">): boolean {
@@ -821,15 +838,28 @@ export function selectTickerItems(
     return a.id.localeCompare(b.id);
   });
 
-  for (const entry of ranked) {
-    const platform = tickerSourcePlatformKey(entry);
-    if ((sourceCounts.get(entry.source) ?? 0) >= sourceCap) continue;
-    if ((platformCounts.get(platform) ?? 0) >= platformCap) continue;
+  const candidates = [...ranked];
+  while (candidates.length > 0 && selected.length < safeLimit) {
+    const lastSource = selected.at(-1)?.source;
+    const eligible = (entry: NormalizedEntry) => {
+      const platform = tickerSourcePlatformKey(entry);
+      return (sourceCounts.get(entry.source) ?? 0) < sourceCap
+        && (platformCounts.get(platform) ?? 0) < platformCap;
+    };
+    let candidateIndex = candidates.findIndex(
+      (entry) => eligible(entry) && entry.source !== lastSource,
+    );
+    if (candidateIndex < 0) {
+      candidateIndex = candidates.findIndex(eligible);
+    }
+    if (candidateIndex < 0) break;
 
+    const [entry] = candidates.splice(candidateIndex, 1);
+    if (!entry) break;
+    const platform = tickerSourcePlatformKey(entry);
     selected.push(entry);
     sourceCounts.set(entry.source, (sourceCounts.get(entry.source) ?? 0) + 1);
     platformCounts.set(platform, (platformCounts.get(platform) ?? 0) + 1);
-    if (selected.length >= safeLimit) break;
   }
 
   return selected;

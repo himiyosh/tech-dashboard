@@ -113,22 +113,6 @@ const topThree = (() => {
   return picked;
 })();
 const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
-
-function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en: string; recency: string } {
-  const format =
-    entry.sourceType === "release" || entry.sourceType === "changelog"
-      ? { ja: "リリース/変更履歴", en: "release/changelog" }
-      : entry.sourceType === "paper"
-        ? { ja: "研究", en: "research" }
-        : { ja: "技術記事", en: "technical post" };
-  const authority = sourceAuthority(entry.source, entry.sourceType);
-  const recency = relativeTime(entry.publishedAt || entry.collectedAt, now);
-  return {
-    ja: `${authority.ja} · ${format.ja}`,
-    en: `${authority.en} · ${format.en}`,
-    recency,
-  };
-}
 ---
 
 <Portal pageKey="timeline">
@@ -247,17 +231,24 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
     <Sidebar active="all" />
 
     <main>
-        <section class="priority-section" id="today-priority" aria-labelledby="priority-heading">
+        <section
+          class="priority-section"
+          id="today-priority"
+          aria-labelledby="priority-heading"
+          aria-describedby="priority-note-ja priority-note-en"
+          data-decision-eligibility="summary-ready"
+          data-ranking-scope="importance-authority-recency"
+        >
         <div class="section-header primary section-header-stacked">
           <h2 id="priority-heading">
             <span class="i18n-ja">今日見るべきもの</span>
             <span class="i18n-en" lang="en">Today's decision list</span>
           </h2>
-          <p class="section-note i18n-ja">
-            短時間で読む優先度を決める領域です。重要度、更新鮮度、source type を優先して表示します。
+          <p class="section-note i18n-ja" id="priority-note-ja">
+            AI 要約が利用できる記事だけを選び、同じ source の重複を抑えて比較します。
           </p>
-          <p class="section-note i18n-en" lang="en">
-            A quick decision area for busy readers, prioritizing importance, recency, and source type.
+          <p class="section-note i18n-en" id="priority-note-en" lang="en">
+            Only summary-ready articles appear here, with repeated sources limited for comparison.
           </p>
         </div>
 
@@ -277,7 +268,6 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
         const featAuthorityBadgeClass = ["badge", "authority", featAuthority.kind].join(" ");
         const featFavicon = sourceFaviconUrl(canonicalSourceUrl(feat.url));
         const featImg = feat.image?.src ?? "";
-        const featReason = spotlightReason(feat);
         return (
         <article
           class="featured"
@@ -301,25 +291,9 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
             </div>
           </div>
           <div class="featured-body">
-            <div class="featured-label featured-rationale">
-              <span class="i18n-ja">
-                Spotlight · 優先度トップ · <strong>選定根拠:</strong> {featReason.ja} ·{" "}
-                <span
-                  class="featured-rationale-time"
-                  data-featured-recency
-                  data-relative-time
-                  data-datetime={feat.publishedAt || feat.collectedAt}
-                >{featReason.recency}</span>
-              </span>
-              <span class="i18n-en" lang="en">
-                Spotlight · top priority update · <strong>Selection basis:</strong> {featReason.en} ·{" "}
-                <span
-                  class="featured-rationale-time"
-                  data-featured-recency
-                  data-relative-time
-                  data-datetime={feat.publishedAt || feat.collectedAt}
-                >{featReason.recency}</span>
-              </span>
+            <div class="featured-label">
+              <span class="i18n-ja">Spotlight · 要約済みの優先候補</span>
+              <span class="i18n-en" lang="en">Spotlight · summary-ready priority pick</span>
             </div>
             <h2 class="featured-title">
               <a href={entryHref(feat)}>
@@ -369,6 +343,9 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
                 label={sourceLabel(feat.source, feat.url)}
                 favicon={featFavicon}
                 faviconClass="featured-favicon"
+                href={canonicalSourceUrl(feat.url)}
+                authorityJa={featAuthority.ja}
+                authorityEn={featAuthority.en}
               />
               <span>·</span>
               <time datetime={feat.publishedAt} data-relative-time>{relativeTime(feat.publishedAt, now)}</time>
@@ -404,14 +381,16 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
       })()}
 
       {topThree.length > 0 && (
-        <section class="top-rank" data-reveal="top-rank">
+        <section class="top-rank" data-reveal="top-rank" data-ranking-diversity="source-limited">
           <div class="top-rank-head">
             <span class="top-rank-title">
               <span class="i18n-ja">次に見る Top {topThree.length}</span>
               <span class="i18n-en" lang="en">Next {topThree.length} to review</span>
             </span>
-            <span class="top-rank-sub">            <span class="i18n-ja">重要度 + 出典の信頼性 + 鮮度（release / changelog 補正）</span>
-            <span class="i18n-en" lang="en">importance + source authority + recency (release / changelog adjusted)</span></span>
+            <span class="top-rank-sub">
+              <span class="i18n-ja">要約済み · 同じ source の重複を抑制</span>
+              <span class="i18n-en" lang="en">Summary-ready · repeated sources limited</span>
+            </span>
           </div>
           <ol class="top-rank-list">
             {topThree.map((e, i) => {
@@ -421,10 +400,10 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
                 latestListedCollectedAtForEntry(e),
                 now.getTime(),
               );
-              const rankTitleId = `rank-title-${e.id}`;
               const stale = freshness.status === "stale" || freshness.status === "error";
               const summaryJa = summaryForLangWithFallback(e, "ja");
               const summaryEn = summaryForLangWithFallback(e, "en");
+              const rankAuthority = sourceAuthority(e.source, e.sourceType);
               return (
                 <li
                   class={`top-rank-item rank-${i + 1}`}
@@ -432,9 +411,9 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
                   style={`--cat-color:${meta?.color ?? "#8a847e"}`}
                 >
                   <span class="medal" aria-hidden="true">{medals[i]}</span>
-                  <a class="rank-content-link" href={entryHref(e)} aria-labelledby={rankTitleId}>
+                  <a class="rank-content-link" href={entryHref(e)}>
                     <span class="rank-cat" aria-hidden="true">{meta?.emoji ?? "\u{1F4C4}"}</span>
-                    <span class="rank-title" id={rankTitleId}>
+                    <span class="rank-title">
                       {(() => {
                         const ja = titleForLangWithFallback(e, "ja");
                         const en = titleForLangWithFallback(e, "en");
@@ -472,7 +451,13 @@ function spotlightReason(entry: (typeof ALL_ENTRIES)[number]): { ja: string; en:
                     </span>
                   </a>
                   <span class="rank-meta">
-                    <SourceDisclosure class="rank-source" label={sourceLabel(e.source, e.url)} />
+                    <SourceDisclosure
+                      class="rank-source"
+                      label={sourceLabel(e.source, e.url)}
+                      href={canonicalSourceUrl(e.url)}
+                      authorityJa={rankAuthority.ja}
+                      authorityEn={rankAuthority.en}
+                    />
                     <time class="rank-time mono" datetime={e.publishedAt} data-relative-time>{relativeTime(e.publishedAt, now)}</time>
                     {stale && (
                       <span class="rank-freshness stale">

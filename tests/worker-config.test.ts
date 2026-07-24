@@ -202,9 +202,7 @@ describe("Cloudflare Worker deploy config", () => {
     expect(packageJson.scripts?.["test:e2e:publisher"]).toBe(
       "playwright test tests/e2e/publisher.spec.ts",
     );
-    expect(packageJson.scripts?.["test:e2e:prepush"]).toContain(
-      "Publisher generated artifact|unknown routes|archive warm|singleton tag",
-    );
+    expect(packageJson.scripts?.["test:e2e:prepush"]).toBeUndefined();
     expect(ciWorkflow).toMatch(/\brun: npm run test:e2e\s*$/m);
     expect(ciWorkflow).not.toContain("test:e2e:publisher");
     expect(prePush).toContain("web_build_ready=0");
@@ -212,11 +210,13 @@ describe("Cloudflare Worker deploy config", () => {
     expect(prePush).not.toContain('range="$local_sha"\n  else');
     expect(prePush).toContain('grep -E "^(BUILD:|ASTRO:)|Pagefind|Indexed"');
     expect(prePush).toMatch(/npm --prefix "\$ROOT" run build:web[\s\S]*web_build_ready=1/);
-    expect(prePush).toContain("env PLAYWRIGHT_REUSE_BUILD=1 npm --prefix");
-    expect(prePush).toContain("run test:e2e:prepush");
+    expect(prePush).toContain("env PLAYWRIGHT_REUSE_BUILD=1");
+    expect(prePush).toContain('e2e_pattern="Publisher generated artifact|unknown routes|archive warm|singleton tag');
+    expect(prePush).toContain('"$playwright_bin" test tests/e2e/publisher.spec.ts tests/e2e/smoke.spec.ts');
     expect(prePush).toMatch(
-      /if \[ "\$web_build_ready" = "1" \][\s\S]*PLAYWRIGHT_REUSE_BUILD=1[\s\S]*else[\s\S]*npm --prefix "\$ROOT" run test:e2e:prepush/,
+      /if \[ "\$web_build_ready" = "1" \][\s\S]*PLAYWRIGHT_REUSE_BUILD=1[\s\S]*else[\s\S]*"\$playwright_bin" test/,
     );
+    expect(readConfig("vitest.config.ts")).toContain("maxWorkers: 2");
   });
 
   it("loads search metadata from the shared client bundle instead of repeating JSON in every page", () => {

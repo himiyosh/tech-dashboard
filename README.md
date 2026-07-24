@@ -140,7 +140,7 @@ npx -y modern-web-guidance@latest retrieve "accessibility,css,performance,securi
 | Typecheck | `npm run typecheck` | TypeScript 型チェック | 速い |
 | Worker Typecheck | `npm --prefix worker run typecheck && npm --prefix worker-summarizer run typecheck && npm --prefix worker-body run typecheck` | Cloudflare Worker / Queue consumer の型チェック | 速い |
 | Unit | `npm test` | Vitest による関数単位の検証 (要約 JSON パース、Web ロジック、`data/index.json` スキーマ) | 速い (~1s) |
-| Web build | `npm run build:web` | Cloudflare Pages と同じ `web` build (`astro build && pagefind --site dist`) を検証 | 中程度 |
+| Web build | `npm run build:web` | Cloudflare Pages と同じ Astro + Pagefind build を実行し、30秒 heartbeat、phase別 CPU/RSS、route/file数、3,200 HTML route上限を検証 | 中程度 |
 | E2E | `npm run test:e2e` | Playwright (Chromium) でトップ表示・記事詳細・言語切替を検証 | 中程度 (~30s + build) |
 | Secret scan | `npm run secrets:scan` | tracked file の secret / private key / 高リスクファイル名を検証 | 速い |
 | Worktree secret scan | `npm run secrets:scan:worktree` | tracked + untracked non-ignored file を検証し、ignored local secret store は値を読まず path だけ警告 | 速い |
@@ -154,7 +154,7 @@ Git hook は `bash scripts/install-hooks.sh` で 1 回有効化します。
 | Hook | 実行内容 | スキップ |
 |---|---|---|
 | `pre-commit` | `main` / `master` / `develop` への直接 commit 拒否 → staged file の secret scan → `.ts/.tsx` がステージされていれば `npm run typecheck` | Typecheck のみ `SKIP_TYPECHECK=1 git commit` |
-| `pre-push` | protected branch への直接 push 拒否 → push 対象 commit range の secret scan → `npm test` (unit) → `npm run build:web` → `npm run test:e2e` → `RUN_WORKER_DEPLOY=1` の場合のみ `wrangler deploy` | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1`。Worker deploy は `RUN_WORKER_DEPLOY=1 git push` |
+| `pre-push` | protected branch への直接 push 拒否 → push 対象 commit range の secret scan → `npm test` (unit) → `npm run build:web` → Publisher Playwright E2E (生成Home・記事詳細・metrics・Archive・404) → `RUN_WORKER_DEPLOY=1` の場合のみ `wrangler deploy`。warm/cold・exact tag・navを含む全PlaywrightはPR CIで必須 | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1`。Worker deploy は `RUN_WORKER_DEPLOY=1 git push` |
 
 Secret scan は値を表示せず、検出種別・ファイル位置・ハッシュだけを出します。ローカル作業ツリー全体を確認する場合は `npm run secrets:scan:worktree`、全履歴を手動確認する場合は `npm run secrets:scan:history` を使います。
 

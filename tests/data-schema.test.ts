@@ -433,6 +433,16 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     expect(bad).toEqual([]);
   });
 
+  it("bodies.json に Unicode replacement character が残っていない", () => {
+    const bad = Object.entries(bodies?.bodies ?? {})
+      .filter(([, record]) =>
+        String(record.bodyJa ?? "").includes("\uFFFD")
+        || String(record.bodyEn ?? "").includes("\uFFFD")
+      )
+      .map(([id]) => id);
+    expect(bad).toEqual([]);
+  });
+
   it("bodies.json に決定論的 filler body が残っていない", () => {
     const JA_FILLER = "元記事の要約と収集時のメタデータから";
     const EN_FILLER = "completed from the existing summary and collection metadata";

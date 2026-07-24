@@ -5,6 +5,7 @@ import {
   summaryForLangWithFallback,
   type SummaryDisplayEntry,
 } from "../../web/src/lib/summary-display.ts";
+import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
 
 const TIMELINE_ENTRY_LINK_SELECTOR = 'main article.card h3.title > a[href^="/e/"]';
 const REACTION_MUTATION_URL_RE = /\/api\/reactions\/[a-f0-9]{16}$/;
@@ -24,6 +25,85 @@ async function expectMobileFirstDecisionNearViewport(page: Page): Promise<void> 
       message: "mobile first decision item remains near the first viewport",
     })
     .toBeLessThanOrEqual(MOBILE_FIRST_DECISION_MAX_Y);
+}
+
+async function expectResponsivePageHero(
+  page: Page,
+  path: string,
+  topLevel = false,
+): Promise<void> {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(path);
+  const hero = page.locator(".page-hero").first();
+  await expect(hero).toBeVisible();
+  if (topLevel) {
+    await expect(
+      page.locator(".crumb-bar"),
+      `${path} should not render breadcrumbs`,
+    ).toHaveCount(0);
+  }
+  const desktopBox = await hero.boundingBox();
+  expect(desktopBox, `${path} desktop hero box`).not.toBeNull();
+  expect(
+    desktopBox!.height,
+    `${path} desktop hero has page-banner presence`,
+  ).toBeGreaterThan(120);
+  const innerBox = await hero.locator(".page-hero-inner").boundingBox();
+  expect(innerBox, `${path} desktop hero inner box`).not.toBeNull();
+  expect(Math.round(innerBox!.width), `${path} desktop hero inner width`).toBe(1280);
+  if (topLevel) {
+    await expect(hero, `${path} top-level hero class`).toHaveClass(
+      /page-hero-top-level/,
+    );
+    const metricBoxes = await hero.locator(".page-hero-metric").evaluateAll((items) =>
+      items.map((item) => item.getBoundingClientRect().width)
+    );
+    expect(metricBoxes, `${path} top-level hero metric count`).toHaveLength(6);
+    expect(
+      Math.max(...metricBoxes) - Math.min(...metricBoxes),
+      `${path} top-level metric widths match`,
+    ).toBeLessThanOrEqual(1);
+    const metricScopes = await hero.locator(".page-hero-metric").evaluateAll((items) =>
+      items.map((item) => ({
+        scope: item.getAttribute("data-metric-scope") ?? "",
+        describedBy: item.getAttribute("aria-describedby") ?? "",
+        detail:
+          item.querySelector(".page-hero-metric-detail")?.textContent?.trim() ??
+          "",
+      }))
+    );
+    expect(
+      metricScopes.every(
+        (metric) =>
+          metric.scope.length > 0 &&
+          metric.describedBy.length > 0 &&
+          metric.detail.length > 0,
+      ),
+      `${path} metrics expose a population or time-window definition`,
+    ).toBe(true);
+  }
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+    )
+    .toBe(true);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      ),
+  );
+  await expect(hero).toBeVisible();
+  const mobileBox = await hero.boundingBox();
+  expect(mobileBox, `${path} mobile hero box`).not.toBeNull();
+  expect(mobileBox!.height, `${path} mobile hero stays compact`).toBeLessThan(310);
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+    )
+    .toBe(true);
 }
 
 function hasReactionIdentityCookie(headers: Record<string, string>): boolean {
@@ -3522,15 +3602,16 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
-  test("section page heroes give page context on desktop and mobile", async ({ page }) => {
+  test("top-level page heroes give page context on desktop and mobile", async ({ page }) => {
     const topLevelPaths = ["/categories/", "/status/", "/about/", "/archive/"];
-    const paths = [...topLevelPaths, "/page/2/"];
-
     for (const path of topLevelPaths) {
-      await page.goto(path);
-      await expect(page.locator(".crumb-bar"), `${path} should not render breadcrumbs`).toHaveCount(0);
+      await expectResponsivePageHero(page, path, true);
     }
+    await expectResponsivePageHero(page, "/page/2/");
+  });
 
+  test("deep page heroes give page context on desktop and mobile", async ({ page }) => {
+    const paths: string[] = [];
     await page.goto("/categories/");
     const firstCategoryHref = await page.locator(".category-card").first().getAttribute("href");
     if (firstCategoryHref) paths.push(firstCategoryHref);
@@ -3547,48 +3628,7 @@ test.describe("TECH Dashboard smoke", () => {
     }
 
     for (const path of paths) {
-      await page.setViewportSize({ width: 1280, height: 900 });
-      await page.goto(path);
-      const hero = page.locator(".page-hero").first();
-      await expect(hero).toBeVisible();
-      const desktopBox = await hero.boundingBox();
-      expect(desktopBox, `${path} desktop hero box`).not.toBeNull();
-      expect(desktopBox!.height, `${path} desktop hero has page-banner presence`).toBeGreaterThan(120);
-      const innerBox = await hero.locator(".page-hero-inner").boundingBox();
-      expect(innerBox, `${path} desktop hero inner box`).not.toBeNull();
-      expect(Math.round(innerBox!.width), `${path} desktop hero inner width`).toBe(1280);
-      if (topLevelPaths.includes(path)) {
-        await expect(hero, `${path} top-level hero class`).toHaveClass(/page-hero-top-level/);
-        const metricBoxes = await hero.locator(".page-hero-metric").evaluateAll((items) =>
-          items.map((item) => item.getBoundingClientRect().width),
-        );
-        expect(metricBoxes, `${path} top-level hero metric count`).toHaveLength(6);
-        expect(Math.max(...metricBoxes) - Math.min(...metricBoxes), `${path} top-level metric widths match`).toBeLessThanOrEqual(1);
-        const metricScopes = await hero.locator(".page-hero-metric").evaluateAll((items) =>
-          items.map((item) => ({
-            scope: item.getAttribute("data-metric-scope") ?? "",
-            describedBy: item.getAttribute("aria-describedby") ?? "",
-            detail: item.querySelector(".page-hero-metric-detail")?.textContent?.trim() ?? "",
-          })),
-        );
-        expect(
-          metricScopes.every((metric) => metric.scope.length > 0 && metric.describedBy.length > 0 && metric.detail.length > 0),
-          `${path} metrics expose a population or time-window definition`,
-        ).toBe(true);
-      }
-      await expect
-        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-        .toBe(true);
-
-      await page.setViewportSize({ width: 390, height: 844 });
-      await page.reload();
-      await expect(hero).toBeVisible();
-      const mobileBox = await hero.boundingBox();
-      expect(mobileBox, `${path} mobile hero box`).not.toBeNull();
-      expect(mobileBox!.height, `${path} mobile hero stays compact`).toBeLessThan(310);
-      await expect
-        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-        .toBe(true);
+      await expectResponsivePageHero(page, path);
     }
   });
 
@@ -3616,23 +3656,33 @@ test.describe("TECH Dashboard smoke", () => {
         ),
       );
 
-    await page.setViewportSize({ width: 1280, height: 900 });
-    for (const path of paths) {
-      const response = await page.goto(path);
-      expect(response?.status(), `${path} is generated`).toBeLessThan(400);
-      const metrics = page.locator(".page-hero-metric");
-      expect(await metrics.count(), `${path} exposes summary metrics`).toBeGreaterThan(0);
-      const contracts = await metrics.evaluateAll((items) =>
-        items.map((item) => {
-          const describedBy = item.getAttribute("aria-describedby") ?? "";
-          const detail = describedBy ? document.getElementById(describedBy) : null;
+    await page.goto("/");
+    const routeContracts = await page.evaluate(
+      async (routePaths) =>
+        Promise.all(routePaths.map(async (path) => {
+          const response = await fetch(path);
+          const html = await response.text();
+          const document = new DOMParser().parseFromString(html, "text/html");
+          const metrics = [...document.querySelectorAll(".page-hero-metric")];
           return {
-            scope: item.getAttribute("data-metric-scope") ?? "",
-            describedBy,
-            detail: detail?.textContent?.trim() ?? "",
+            path,
+            status: response.status,
+            contracts: metrics.map((item) => {
+              const describedBy = item.getAttribute("aria-describedby") ?? "";
+              const detail = describedBy ? document.getElementById(describedBy) : null;
+              return {
+                scope: item.getAttribute("data-metric-scope") ?? "",
+                describedBy,
+                detail: detail?.textContent?.trim() ?? "",
+              };
+            }),
           };
-        }),
-      );
+        })),
+      paths,
+    );
+    for (const { path, status, contracts } of routeContracts) {
+      expect(status, `${path} is generated`).toBeLessThan(400);
+      expect(contracts.length, `${path} exposes summary metrics`).toBeGreaterThan(0);
       expect(
         contracts.every((metric) =>
           metric.scope.length > 0
@@ -3649,15 +3699,17 @@ test.describe("TECH Dashboard smoke", () => {
       "/arxiv/",
       "/glossary/",
     ];
+    const responsiveViewports = [
+      [320, 844, 335],
+      [375, 844, 335],
+      [390, 844, 335],
+      [414, 844, 335],
+      [768, 900, 430],
+    ] as const;
     for (const path of responsivePaths) {
+      await page.setViewportSize({ width: 320, height: 844 });
       await page.goto(path);
-      for (const [width, height, maxHeroHeight] of [
-        [320, 844, 335],
-        [375, 844, 335],
-        [390, 844, 335],
-        [414, 844, 335],
-        [768, 900, 430],
-      ] as const) {
+      for (const [width, height, maxHeroHeight] of responsiveViewports) {
         await page.setViewportSize({ width, height });
         await settleLayout();
         const hero = page.locator(".page-hero");
@@ -5045,9 +5097,39 @@ test.describe("TECH Dashboard smoke", () => {
     test.setTimeout(45_000);
     await page.goto("/");
 
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string; tags?: string[] }>;
+    };
+    const warmArchiveEntries = readdirSync("data/archive")
+      .filter((name) => /^\d{4}-\d{2}\.json$/.test(name))
+      .flatMap((name) => {
+        const month = JSON.parse(readFileSync(`data/archive/${name}`, "utf8")) as {
+          entries?: Array<{ id: string; tags?: string[]; archiveTier?: string }>;
+        };
+        return (month.entries ?? []).filter((entry) => entry.archiveTier === "warm");
+      });
+    const indexedEntries = [
+      ...new Map(
+        [...index.entries, ...warmArchiveEntries].map((entry) => [entry.id, entry]),
+      ).values(),
+    ];
+    const tagCounts = new Map<string, number>();
+    for (const entry of indexedEntries) {
+      for (const tag of new Set((entry.tags ?? []).map(normalizeTagKey).filter(Boolean))) {
+        tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+      }
+    }
+    const singletonTags = [...tagCounts.entries()]
+      .filter(([, count]) => count === 1)
+      .map(([tag]) => tag);
     const tagLinks = page.locator("main article.card .tag-chip[href^='/search?q=']");
-    const tagIndex = await tagLinks.evaluateAll((links) =>
-      links.findIndex((link) => /[a-z]/.test(new URL((link as HTMLAnchorElement).href).searchParams.get("q") ?? "")),
+    const tagIndex = await tagLinks.evaluateAll(
+      (links, candidates) =>
+        links.findIndex((link) => {
+          const query = new URL((link as HTMLAnchorElement).href).searchParams.get("q") ?? "";
+          return /[a-z]/.test(query) && candidates.includes(query);
+        }),
+      singletonTags,
     );
     expect(tagIndex).toBeGreaterThanOrEqual(0);
     const tagLink = tagLinks.nth(tagIndex);
@@ -6290,9 +6372,9 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(imageCard, "image failure fixture remains available").toBeAttached();
     const imageHref = await imageCard.locator(".kg-card-link").getAttribute("href");
     expect(imageHref, "image card has a stable detail href").toBeTruthy();
-    const stableImageCard = page.locator(".kg-card").filter({
-      has: page.locator(`.kg-card-link[href="${imageHref}"]`),
-    });
+    const stableImageCard = page.locator(
+      `.kg-card:has(.kg-card-link[href="${imageHref}"])`,
+    );
     const bodyWidthBefore = await stableImageCard.locator(".kg-body").evaluate((body) =>
       body.getBoundingClientRect().width,
     );

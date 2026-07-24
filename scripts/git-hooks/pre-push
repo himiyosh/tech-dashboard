@@ -24,6 +24,7 @@ fi
 
 # ---------- Secret scan ----------
 secret_scan_ran=0
+pushed_files=""
 while IFS= read -r line; do
   [ -z "$line" ] && continue
   local_sha=$(echo "$line" | awk '{print $2}')
@@ -33,12 +34,23 @@ while IFS= read -r line; do
   [ "$local_sha" = "$zero_sha" ] && continue
 
   if [ "$remote_sha" = "$zero_sha" ]; then
-    range="$local_sha"
+    base_ref="refs/remotes/${remote:-origin}/main"
+    if git rev-parse --verify --quiet "$base_ref" >/dev/null; then
+      range="$base_ref..$local_sha"
+    else
+      range="$local_sha"
+    fi
   else
     range="$remote_sha..$local_sha"
   fi
 
   secret_scan_ran=1
+  if [[ "$range" == *".."* ]]; then
+    changed_files=$(git diff --name-only "$range")
+  else
+    changed_files=$(git log --format= --name-only "$local_sha" | sed '/^$/d' | sort -u)
+  fi
+  pushed_files="${pushed_files}"$'\n'"${changed_files}"
   echo "[pre-push] secret scan を実行しています... ($range)"
   if ! node "$ROOT/scripts/scan-secrets.mjs" --range "$range"; then
     echo "[pre-push] ERR: secret scan 失敗。push を中断します"
@@ -89,7 +101,7 @@ else
     echo "[pre-push] web build をスキップして push したい場合: SKIP_WEB_BUILD=1 git push"
     exit 1
   fi
-  grep -E "\[build\]|Pagefind|Indexed" "$build_log" | tail -3 || true
+  grep -E "^(BUILD:|ASTRO:)|Pagefind|Indexed" "$build_log" | tail -8 || true
   rm -f "$build_log"
   echo "[pre-push] OK: web build PASS"
   web_build_ready=1
@@ -99,15 +111,16 @@ if [ "${SKIP_E2E:-}" = "1" ]; then
   echo "[pre-push] SKIP_E2E=1 → npm run test:e2e をスキップします"
 else
   # web/ または data/index.json に差分が無ければ E2E は省略する (ローカル DX)
-  CHANGED=$(git diff --name-only HEAD @{u} 2>/dev/null || git diff --name-only HEAD origin/main 2>/dev/null || echo "")
+  CHANGED="$pushed_files"
   if [ -n "$CHANGED" ] && ! echo "$CHANGED" | grep -qE '^(web/|data/index\.json|tests/e2e/|playwright\.config\.)'; then
     echo "[pre-push] web/ への影響なし → E2E をスキップ"
   else
-    echo "[pre-push] npm run test:e2e を実行しています..."
+    echo "[pre-push] Publisher Playwright E2E を実行しています..."
+    playwright_bin="$ROOT/node_modules/.bin/playwright"
     if [ "$web_build_ready" = "1" ]; then
-      e2e_command=(env PLAYWRIGHT_REUSE_BUILD=1 npm --prefix "$ROOT" run test:e2e)
+      e2e_command=(env PLAYWRIGHT_REUSE_BUILD=1 "$playwright_bin" test tests/e2e/publisher.spec.ts)
     else
-      e2e_command=(npm --prefix "$ROOT" run test:e2e)
+      e2e_command=("$playwright_bin" test tests/e2e/publisher.spec.ts)
     fi
     if ! "${e2e_command[@]}"; then
       echo "[pre-push] ERR: E2E テスト失敗。push を中断します"

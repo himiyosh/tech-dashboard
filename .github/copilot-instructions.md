@@ -1505,10 +1505,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: static page と検索 index が data 件数に比例して増えるサイトでは、E2E webServer と CI job 全体の timeout を固定の小さい値にしない。通常 build と前処理の実測値に十分な余裕を持たせ、timeout 延長で assertion failure を隠さない。
 
 ### LL-210: data migration 後も全 artifact の U+FFFD を schema gate で検出する
-- **事象**: self-critique の全量 Unicode scan で、`data/archive/2026-06.json` の Qiita title / titleJa に U+FFFD が 1 文字ずつ残っていた。`origin/main` にも同じ 2 field が存在し、taxonomy migration は文字化けを新規生成していないが、そのまま保持していた。
-- **根本原因**: data schema は field 型、要約、URL、tag parity を検証していたが、live/archive の文字列に Unicode replacement character が含まれないことを gate にしていなかった。migration の idempotence と schema PASS だけでは既存の文字破損を検出できなかった。
-- **対策**: canonical Qiita page の HTML title と照合して `で[U+FFFD]AI` を `で AI` へ修復し、live/archive 全 entry の serialized value に U+FFFD が無いことを `tests/data-schema.test.ts` で検証する。
-- **教訓**: migration は既存 artifact の構造を安全に保っても、既存文字破損まで自動的には直さない。data artifact を変更した完了ゲートでは Markdown だけでなく live/archive の U+FFFD を全量検査し、修復は一次情報で正しい文字列を確認してから行う。
+- **事象**: self-critique の全量 Unicode scan で、`data/archive/2026-06.json` の Qiita title / titleJa に U+FFFD が 1 文字ずつ残っていた。後のfinal migrationでは`data/bodies.json`の日本語本文にもU+FFFDが2文字残り、いずれも`origin/main` baselineから継承されていた。taxonomy migration は文字化けを新規生成していないが、そのまま保持していた。
+- **根本原因**: data schema は field 型、要約、URL、tag parity を検証していたが、当初はlive/archive、その後もbody sidecarの文字列にUnicode replacement characterが含まれないことをgateにしていなかった。migration の idempotence と schema PASS だけでは既存の文字破損を検出できなかった。
+- **対策**: canonical Qiita page の HTML title と照合して `で[U+FFFD]AI` を `で AI` へ修復した。bodyの壊れた例示文字列は正しい元bytesを推測せず`文字化けした記号列`という意味保持表現へ置換し、live/archive全entryとbodies全recordのU+FFFD不在を`tests/data-schema.test.ts`で検証する。
+- **教訓**: migration は既存 artifact の構造を安全に保っても、既存文字破損まで自動的には直さない。data artifact を変更した完了ゲートでは Markdown、live/archive、body sidecarのU+FFFDを全量検査し、修復は一次情報で正しい文字列を確認する。元文字を確定できない本文例示は破損文字を再現せず、意味を捏造しない説明表現へ置き換える。
 
 ### LL-211: contract 一致だけでは publisher の data snapshot race を閉じない
 - **事象**: 独立 code review で、`runHarness()` が branch 名の raw URL から古い index / bodies / archive / stats を読んだ後、`ghCommitFiles()` が同じ contract を持つ新しい main HEAD を親に採用し、古い data snapshot を巻き戻せる race が見つかった。
@@ -2386,10 +2386,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: subprocessや全artifact走査を行うintegration寄りtestは、単独時間でなくfull suite中の実測時間に余裕を持つ個別budgetを設定する。global timeoutを緩めてpure unitのhang検知を弱めず、再現したtestだけを明示的に調整する。JavaScriptが余分な引数を黙って無視するAPIではtest PASSだけで配線を証明できないため、定数のcallsiteを全量検索して実APIのparameter位置を確認する。
 
 ### LL-357: 静的pageのviewport行列は幅ごとに再navigationしない
-- **事象**: 全100件E2EでTop 3の29幅行列とlane pageの2 route×9幅行列が、assertionへ到達する前に30秒timeoutした。どちらも幅ごとに同じ静的URLへ`page.goto()`し直し、retryでも同じ箇所で停止した。
-- **根本原因**: CSS responsive geometryの検証にdocument再取得は不要なのに、各viewportでHTML、script、画像を再loadしていた。単独実行では収まっても、全suite後半のbrowser負荷でnavigation累積時間がtest budgetを消費した。
-- **対策**: routeごとに1回だけpageを開き、境界行列は`setViewportSize()`と2 frameのreflow待機で測るようにした。Top 3はdesktop stress textを幅ごとに設定・復元し、mobileへ入る時だけdocumentを再取得して従来の非stress状態を維持する。timeoutやretry回数は増やさない。
-- **教訓**: 静的SSR/SSG pageのresponsive E2Eは、DOMやserver outputがviewportで変わらない限り、1 navigationと複数reflowで検証する。状態を初期化する必要がある境界だけ再loadし、page fetch回数をviewport数へ比例させない。full suiteのtimeoutを受入値の緩和で隠さず、検証対象とbrowser I/Oを分離する。
+- **事象**: 全100件E2EでTop 3の29幅行列とlane pageの2 route×9幅行列が、assertionへ到達する前に30秒timeoutした。どちらも幅ごとに同じ静的URLへ`page.goto()`し直し、retryでも同じ箇所で停止した。後の110件E2Eでは、8 routeのPageHeroをdesktop/mobileごとに再navigationする1 testも30秒へ達した。
+- **根本原因**: CSS responsive geometryの検証にdocument再取得は不要なのに、各viewportでHTML、script、画像を再loadしていた。単独実行では収まっても、全suite後半のbrowser負荷でnavigation累積時間がtest budgetを消費した。複数routeを1 testへ詰めると、routeごとに必要なnavigationも同じ30秒budgetへ累積した。
+- **対策**: routeごとに1回だけpageを開き、境界行列は`setViewportSize()`と2 frameのreflow待機で測るようにした。Top 3はdesktop stress textを幅ごとに設定・復元し、mobileへ入る時だけdocumentを再取得して従来の非stress状態を維持する。PageHeroはtop-levelとdeep routeを別testへ分け、各routeのmobile確認は同一documentのreflowで行う。timeoutやretry回数は増やさない。
+- **教訓**: 静的SSR/SSG pageのresponsive E2Eは、DOMやserver outputがviewportで変わらない限り、1 navigationと複数reflowで検証する。状態を初期化する必要がある境界だけ再loadし、page fetch回数をviewport数へ比例させない。複数routeの検証は意味のあるpage family単位へ分け、1 testのnavigation数もboundedにする。full suiteのtimeoutを受入値の緩和で隠さず、検証対象とbrowser I/Oを分離する。
 
 ### LL-358: E2Eの状態contractは関連styleとdeadline開始点を製品処理へ限定する
 - **事象**: full E2Eでreduced-motionの3つのCSS assertionが個別waitを重ね、最後の`transform`取得がtest timeoutへ達した。別のreaction deadline testは、ready済みbuttonのPlaywright actionability待ちをserver reconciliation時間へ含め、toast待機前にtest budgetを消費した。両testは単独では10.1秒で成功した。
@@ -2553,29 +2553,71 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: retryを2回で停止し、公開repositoryで公式に提供される4 vCPU・16GBの`ubuntu-24.04-arm`へWeb build、Playwright、Publisherを移した。Web build artifactはarchitecture非依存のままjob間で引き渡し、CIでARM上のPlaywright browser installと全E2Eを実行して互換性を検証する。
 - **教訓**: heartbeat中の外部cancelを製品failureや単純timeoutとして扱わない。終了log、公式status、同一artifactのlocal/preview結果、資源量を分けて確認し、bounded retryが同じ層で再発したら別の公式runner poolへ移して実行基盤を変更する。未観測のOOMやprovider障害を根本原因として断定しない。
 
-### LL-385: Queueのcandidate、実enqueue、merge、未観測を同じ数値へ潰さない
+### LL-385: 数千routeのAstro buildはserial prerenderと重複HTMLを実測してから並列度を上げる
+- **事象**: 最新mainのproduction buildをAstroとPagefindへ分離して計測すると、Astroは3,734 HTML、416MBをserial生成して738.9秒、最大RSS 3.17GBを使用し、Pagefindは137.4秒、最大RSS 1.59GBだった。記事detailは2,361 route・244.2MB、tagは1,212 route・123.7MBで、両者がHTMLの大半を占めた。Cloudflare Pagesのclone後build log 0件timeoutはbuild command開始前のprovider stageであり、このlocal計測だけで同じ根本原因とは断定できない。
+- **根本原因**: Astroの`build.concurrency`既定値1で数千の独立pageを直列render/writeし、低頻度tag pageと全pageへ繰り返す検索metadataが生成量を増やしていた。記事detail helperもrouteごとにlive entriesを繰り返しscanしていた。route削減だけの比較ではAstro wall timeが横ばいだったため、I/O待ちを含むserial prerenderが主なlocal bottleneckと確認できた。
+- **対策**: tag full pageの閾値を2件から10件へ上げ、低頻度tagは既存のPagefind exact filterへ送る。従来公開済みの2-9件tag URLはAstro renderへ戻さず、build後に生成する小さなnoindex recovery HTMLで200と検索導線を維持する。検索metadataを共通client bundleへ移し、記事向けcategory/source/tag indexをmodule-level Mapへ集約した。Astroは公式の`build.concurrency: 2`でrender/writeを2並列化し、3回の比較buildでAstro生成を237秒、535秒、267秒で完了した。full HTMLは2,869件、324.6MBへ減り、Pagefindは94-150秒で完了した。build wrapperは30秒heartbeat、phase別process-tree CPU/RSS、route family、file数、出力容量と3,200 Astro-rendered HTML route上限を記録する。16GB GitHub runnerはLL-389の実測に基づきconcurrency 1へ制限する。
+- **教訓**: static buildの停止をtimeout延長やrunner retryで隠さず、Astroと検索indexを分け、route family、HTML総量、wall、CPU、RSSを測る。`build.concurrency`はroute削減、共有index、serialization削減を先に行った後、single-thread CPUではなく独立pageのI/O待ちが大きい場合に小さい値から採用する。並列度を上げるとRSSも増えるためwall timeとpeak RSSを実行基盤ごとに複数回確認し、route budgetを生成器側でfail-closedにする。build wrapperを変更したら長時間buildの前に`node --check`を実行し、構文失敗を即時に検出する。
+
+### LL-386: 新規remote branchのsecret scanへ単一commitを渡すと全到達履歴を再走査する
+- **事象**: 初回branch pushのpre-push hookが`scan-secrets.mjs --range <local_sha>`を実行し、30分近く経過してもsecret scanを継続した。processは停止しておらず、`git rev-list --objects <local_sha>`がcommitだけでなくそのcommitから到達可能な全履歴objectを列挙していた。
+- **根本原因**: remote branch未作成時の`remote_sha`はzero SHAで、hookがrangeを`local_sha`単体にしていた。既存remote branchの`remote_sha..local_sha`とは異なり、単一revisionは新規branch差分ではなくrepository全履歴を意味する。
+- **対策**: remote branch未作成時は`refs/remotes/<remote>/main..local_sha`をscanし、mainに含まれないbranch固有commitだけを検査する。main refが存在しない特殊環境だけ従来の全到達履歴scanへfail-closedで戻す。Web build summaryも新しい`BUILD:` / `ASTRO:` telemetryを表示するようhookを同期した。
+- **教訓**: Git revisionの単一SHAとrangeは意味が異なる。新規branchのpush gateはremote default branchとの差分を明示し、既にremoteへ存在するancestorを毎回再検査しない。安全gateを高速化するときはscan自体をskipせず、pushで新たに到達可能になるcommit集合だけへ入力を狭める。
+
+### LL-387: 同一previewへ複数Playwright workerを当てると高負荷環境で無関係testが同時timeoutする
+- **事象**: full Playwrightを2 workerで実行すると、Publisher E2Eと全UI smokeが同じpreviewへ並行アクセスし、Home、Status、検索、responsive geometryなど無関係なtestがrunごとに異なる位置でtimeoutした。対象testは1 workerのretryなし実行で成功し、製品assertionの共通failureは確認されなかった。
+- **根本原因**: `fullyParallel: false`でもspec fileはworker間で並列実行され、静的HTMLが大きいHomeやArchiveのload、Pagefind hydration、複数viewport計測が同一previewとhost resourceを同時に消費していた。host loadが高い環境では、test間の競合が製品状態の失敗に見えた。
+- **対策**: full Playwrightを`workers: 1`、Vitestを`maxWorkers: 1`へ固定し、browser suiteとsubprocess系unit testのpeak負荷を抑える。timeout、retry、geometry閾値は緩めず、responsive matrixは1 navigation後のviewport変更、複数routeの静的contractはbrowser内fetchへ集約してI/O自体も削減する。pre-pushは生成Home・記事詳細・metrics・Archive・404のPublisher E2Eを実行し、warm/cold・exact tag・navを含む全PlaywrightはPR CIのclean runnerで必須とする。
+- **教訓**: 1つのpreviewを共有するbrowser suiteでは、spec file並列が常に高速化になるとは限らない。大きな静的page、検索index、viewport行列を含む場合はpeak resourceと失敗位置を実測し、無関係testのtimeoutが移動するならworker数を下げて実行を決定論的にする。受入閾値やtimeoutを緩める前に、同一artifactへの同時負荷を除く。local pre-pushとPR CIの責務を分ける場合もE2E自体をskipせず、変更で壊し得るcritical surfaceをlocal gateへ残す。
+
+### LL-388: pre-pushの変更検出を`@{u}`へ依存すると初回`-u` pushで差分を失う
+- **事象**: 新規branchを`git push -u`したpre-pushでWeb buildは実行されたが、E2E判定は`web/への影響なし`としてfocused browser gateをskipした。同じpushはWeb、E2E、Playwright configを含んでいた。
+- **根本原因**: hookが`git diff HEAD @{u}`を優先し、push開始時に設定されたupstreamがHEADと同じ状態として解決されると空差分を正常結果として採用した。fallbackの`origin/main`比較へ進まないため、実際のpush対象と変更判定が分離した。
+- **対策**: pre-push標準入力のlocal SHAとremote SHAからsecret scanと同じpush rangeを作り、そのrangeのchanged filesをE2E影響判定へ共有する。新規branchは`origin/main..local_sha`、既存branchは`remote_sha..local_sha`を使い、upstream設定状態に依存しない。remote main自体が無いfail-closed fallbackではtip commitだけでなく`git log --name-only local_sha`の全到達履歴を変更分類へ使う。
+- **教訓**: pre-push hookが検査すべき集合はworking treeやupstreamとの差分ではなく、標準入力が示すremoteへ送信されるcommit集合である。secret scan、変更分類、E2E選択は同じpush rangeを共有し、`git push -u`やremote tracking refの有無でgateを変えない。
+
+### LL-389: Astro concurrency 2は16GB ARM runnerでRSS 15GBへ達する
+- **事象**: PR CIのUbuntu 24.04 ARM Web buildは、Astro開始30秒でprocess-tree RSS 8.7GB、60秒で14.9GBへ増え、91秒で`astro terminated by SIGKILL`となった。同じcommitのCloudflare previewはActive、macOS localはconcurrency 2でpeak RSS 2.0-2.7GBだった。
+- **根本原因**: 数千の大きなHTML pageを2並列renderするV8 memory特性が実行基盤で大きく異なり、16GB ARM runnerではmemory上限へ到達した。従来のheartbeatだけでは外部cancelに見えたが、process-tree RSSとsignalを出したことでOOM境界を実測できた。
+- **対策**: `GITHUB_ACTIONS=true`ではAstro concurrencyを1、Cloudflare Pagesとlocalでは2にする。生成HTMLとroute契約は同一のまま、GitHub runnerだけpeak memoryを優先する。serial ARMでもRSSが15.3GBへ達したため、当初はV8 old-spaceを4GBへ制限した。ただしmain CIで14.9GB OOMが再発し、この上限はLL-390の512MiBとprocess RSS budgetへ置き換えた。
+- **教訓**: concurrencyの安全値を開発端末のRSSだけで決めない。同じarchitecture名でもOS、V8 allocator、memory limitでpeak RSSは変わる。CIはprocess-tree RSSとtermination signalを確認し、OOMが実測できたplatformは並列度とV8 heap ceilingの両方を調整する。old-spaceをrunner上限へ近づける対策はRSSを保証しないため、LL-390のとおりheap内訳とGC前後を計測する。timeout延長やrunner retryではmemory exhaustionを直せない。
+
+### LL-390: V8 old-spaceの大きい上限はstatic generationのRSS上限にならない
+- **事象**: PR #162でdetail routeを含むAstro full routeを3,734件から2,876件へ減らし、GitHub ARM buildを1並列、V8 old-spaceを4,096MiBにして一度は完走したが、merge後main CIはprocess-tree RSS 14,915MiBで`astro terminated by SIGKILL`となった。macOS baselineでもdetail route生成中のheapUsedが約0.4GiBから1.58GiBへ線形増加し、full GC付近でprocess-tree RSSが最大5.2GiBへ急増した。
+- **根本原因**: old-space 4,096MiBはprocess RSSの上限ではなく、V8がmajor GCを遅らせる余地になっていた。2,368件のdetail HTMLを直列renderする一時objectがGCまで蓄積し、heap回収時のnative allocatorとV8内部領域を含むRSS peakを増幅した。計測時のexternalは約50MiB、arrayBuffersは約3MiB、full static path propsのserialized sizeは約3.93MiB、indexとbody sidecarは合計約12.7MiBで、JSON import、props、画像変換は最大保持要因ではなかった。
+- **対策**: Astro childのold-space既定値を512MiBへ下げ、detail生成中のheapUsedを約0.42GiBで継続回収する。preload probeでheapUsed、heapTotal、external、arrayBuffers、old space、large object space、native malloc、近似non-heap RSS、route family進捗を15秒おきに記録し、親processは2秒おきにprocess tree RSSを測る。GitHub Actionsでは12,000MiBをRSS budgetにし、超過または30秒以上telemetry不能ならbuildを停止する。
+- **教訓**: `--max-old-space-size`をrunner memoryへ近づけることは安全余白ではない。高cardinalityなSSGではroute進捗とV8 heap、external、arrayBuffers、process tree RSSを同時に測り、major GC前後のpeakを確認する。route削減や並列度低下だけで完了とせず、GC trigger自体を実行基盤のRSS予算に合わせ、buildをprocess RSSでfail-closedにする。
+
+### LL-391: 複数worktreeのPlaywright previewは固定portを共有しない
+- **事象**: Publisher E2Eとcommit後のpre-push E2Eが300秒のwebServer timeoutで停止した。`4322`は別worktreeのAstro previewが約3時間保持し、HTTP 404を返していた。今回のPlaywrightが起動したpreviewは空いている`4323`へ自動退避したため、Playwrightは設定済み`4322`のready stateを待ち続けた。
+- **根本原因**: `reuseExistingServer: true`と固定portを複数worktreeで共有し、portを保持するprocessのrepository identityを確認せず別artifactを信頼していた。明示port overrideは手動実行には使えても、portを指定しないpre-pushでは固定`4322`へ戻るため恒久対策にならなかった。さらにstatic Homeのviewport行列が幅ごとに`page.goto()`を繰り返し、server負荷時にtest budgetを消費していた。
+- **対策**: absolute worktree pathのSHA-256から12000-31999のpreview portを決定し、`PLAYWRIGHT_PORT`の明示overrideもfail-closedで検証する。Playwrightは`reuseExistingServer: false`として自分が起動したserverだけを使い、server command、baseURL、readiness URLを同じportへ接続する。別worktreeのprocessは停止しない。同一static routeのresponsive matrixは1回のnavigation後にviewport変更と2 frameのreflow待機で測る。
+- **教訓**: 複数worktreeでbrowser testを並行するrepositoryでは、固定portとexisting-server再利用をartifact ownershipの証拠にしない。手動overrideだけでなく通常E2Eとpre-pushの既定経路もworktree固有にし、port、server process、workspace、dist snapshotを同じtest contractへ接続する。static responsive testはroute変更がない限り再navigationせず、focused retryなし実行でserver層とassertion層を分離する。
+
+### LL-392: Queueのcandidate、実enqueue、merge、未観測を同じ数値へ潰さない
 - **事象**: body Queueは`bodyEnqueueCandidates`とshared enqueue合計を記録していたが、artifact healthに個別の`bodyEnqueued`が無く、Web metricsでは実enqueueが`null`になった。quality-auditも旧deterministic fallback markerだけを独自判定し、Queue fieldとKnowledgeの収集・要約非対称を表示していなかった。
 - **根本原因**: producer内部ではcandidate、実送信、lookup、mergeを別々に計測していたが、永続telemetryと監査consumerへ同じfieldをend-to-endで配線していなかった。field欠落を0件として補うと、未観測と観測済み0件も区別できない。
 - **対策**: body pipeline healthへ実送信件数`bodyEnqueued`を追加し、candidate、cap、lookup、pending lookup、merge、backlog、ETAと分離した。既存artifactは同一runの`enrichmentEnqueued - summaryQueueEnqueued`が非負で両fieldとも観測済みの場合だけ`bodyEnqueued`をmigrationで補完する。quality-auditはshared summary quality contractを再利用し、summary/body/shared Queue snapshotとKnowledge source別coverageを表示する。data schemaは候補、実送信、反映、共有budgetの不変条件を検証する。
 - **教訓**: 非同期enrichmentのtelemetryはeligible、backlog、candidate、cap、実enqueue、lookup、merge、ETAを別の意味単位として永続化する。consumerはfield欠落を0へnormalizationせず未観測として扱い、生成器、artifact、監査、Web metricsを同じfield名と不変条件へ揃える。
 
-### LL-386: 同じnoise語でもregistry familyが別なら全filter集合へ適用されない
+### LL-393: 同じnoise語でもregistry familyが別なら全filter集合へ適用されない
 - **事象**: Tech News共通excludeへ`startup forum`を追加してGoogle Keyword Blogの記事を除外しても、別の`GCLOUD_EXCLUDE_KEYWORDS`を使うGoogle Cloud Blogの同種startup cohort記事はKnowledgeへ残った。`geforce now`を除外しても、titleに製品名がない`16 Games Hit the Cloud`はarchiveへ残った。
 - **根本原因**: 1つの実例を1つのkeyword arrayへ追加すれば同じ概念の全sourceへ効くとみなし、sourceごとに異なるregistry filter familyとtitle表現をactual corpus全体で再検査していなかった。
 - **対策**: Google Cloud evergreen filterにも`startup forum`を明示し、Tech Newsには製品名を省いたcloud-gaming titleとconnected-car cloudの実title phraseを追加した。drop fixtureと隣接する正当なagent/AI engineeringのkeep fixtureをactual registry定義で固定し、transaction migrationを再適用した。
 - **教訓**: source採否の単一情報源はregistryだが、registry内に複数のfilter familyがある場合、同じ概念が自動共有されるとは限らない。新しいnoise patternは対象sourceが参照する実配列を確認し、全live/archive corpusで同概念の表記変種を再検索する。製品名だけに依存せず、title-scopeで高信頼な主題phraseをkeep/drop両fixtureへ固定する。
 
-### LL-387: coverage auditはartifact側のflagged entryだけを母集団にしない
+### LL-394: coverage auditはartifact側のflagged entryだけを母集団にしない
 - **事象**: quality-auditのKnowledge coverageが`entry.evergreen === true`の行だけからsource表を作っていたため、registryではevergreenなのにentry stampが欠けたsourceや0 entryのsourceが表から完全に消えた。
 - **根本原因**: 監査対象の異常を検出するためのflagを、監査母集団の選択条件にも使っていた。flag欠落が起きると検査対象自体が消え、正常に見える自己参照になった。
 - **対策**: registryの全`evergreen: true` sourceを先に0件で初期化し、収集済みentry、evergreen flagged、bilingual readyを別々に加算する。0 entryとstamp欠落sourceも常に表へ残すfixtureを追加した。
 - **教訓**: coverage auditの母集団は期待契約を定義するregistry/schemaから作り、artifact側の検査対象fieldで絞り込まない。存在、stamp、enrichment readyは別のcountとして表示し、異常時ほどrowが消えない設計にする。
 
-### LL-388: Playwright previewを固定portで再利用すると別worktreeのartifactを検証する
-- **事象**: pre-pushのfull E2Eが固定port 4322で別worktreeのdetached previewを`reuseExistingServer:true`により再利用した。検索testは現在sourceと異なる日本語metadataを受け、途中で所有元serverが停止すると18件が`ERR_CONNECTION_REFUSED`になった。現在worktreeの`web/dist`には期待する`aria-label`が存在し、worktree固有serverでのfocused実行では製品assertionが成立した。
-- **根本原因**: project内の全worktreeが同じpreview portを共有し、portのlistenerが現在workspaceの`web/dist`を配信しているか検証せず既存serverを信頼していた。加えてstatic Homeのviewport行列が幅ごとに`page.goto()`を繰り返し、server負荷時に30秒test budgetを消費した。
-- **対策**: absolute worktree pathのSHA-256から12000-31999のpreview portを決定し、`PLAYWRIGHT_PORT`の明示overrideも検証する。Playwrightは`reuseExistingServer:false`で自分が起動したserverだけを使う。同一static routeのright-rail境界行列は1回のnavigation後にviewport変更と2 frameのreflow待機で測る。
-- **教訓**: 複数worktreeでbrowser testを並行するrepositoryでは、固定portとexisting-server再利用をartifact ownershipの証拠にしない。port、server process、workspace、dist snapshotを同じtest contractへ接続し、別workspaceのDOMを製品回帰として修正しない。static responsive testはroute変更がない限り再navigationせず、focused retryなし実行でserver層とassertion層を分離する。
+### LL-395: Pagefindのfacet件数はlive indexだけでなくindexed detail corpus全体で数える
+- **事象**: singleton tag recovery E2Eがlive indexでは1件の`acquisition`を選んだが、Pagefindはwarm archive detailもindexするため、case variantのexact tag検索では複数の過去記事が返り別記事が先頭になった。
+- **根本原因**: testのsingleton母集団を`data/index.json`だけから作り、実検索indexの母集団であるlistable live entryとwarm archive detail routeを一致させていなかった。検索filter自体は正しくcase-normalizeされていた。
+- **対策**: E2Eのtag countをlive indexと全月warm archiveのID dedupe集合から算出し、実際にPagefind上でsingletonなtagだけをcase-variant回帰へ使う。
+- **教訓**: 検索やfacetのE2E fixtureは表示中のlive集合ではなく、検索engineが実際にindexするroute corpusから選ぶ。static route、archive retention、検索metadataの母集団が異なる場合は同じ正規化とdedupeをtest側にも共有する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

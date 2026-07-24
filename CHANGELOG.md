@@ -79,7 +79,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - Web build の開始時に古い `dist` を削除し、廃止した静的ルートが成果物へ残らないようにしました。
 - 新規作業branchのpre-push secret scanを`origin/main..HEAD`へ限定し、既にremoteへ存在する全履歴を毎回再走査しないようにしました。
 - pre-pushのWeb影響判定をupstream状態ではなく実際のpush rangeから導出し、初回branch pushでfocused E2Eを誤って省略しないようにしました。
-- Full PlaywrightとVitestを1 workerで実行し、同一hostのpeak負荷を抑えるようにしました。pre-pushは生成Home・記事詳細・404・warm/cold・exact tag・nav・PageHeroのE2Eを実行し、全PlaywrightはPR CIで必須とします。
+- Full PlaywrightとVitestを1 workerで実行し、同一hostのpeak負荷を抑えるようにしました。pre-pushは生成Home・記事詳細・metrics・Archive・404のPublisher E2Eを実行し、warm/cold・exact tag・navを含む全PlaywrightはPR CIで必須とします。
 - 共有されたタグ検索 URL の大文字小文字やアクセント表記が異なっても、完全一致の対象記事を回収できるようにしました。
 - Linux のフォントメトリクスでも中間幅の Hero と固定 Footer が過度に伸びず、優先記事と重ならないようにしました。
 - archive index baseline が `null`、`false`、`0` などの非 object JSON でも欠落扱いされる経路を廃止し、存在する baseline を必ず fail-closed で検証するようにしました。

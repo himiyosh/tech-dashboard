@@ -218,8 +218,8 @@ describe("Cloudflare Worker deploy config", () => {
     expect(prePush).toContain('grep -E "^(BUILD:|ASTRO:)|Pagefind|Indexed"');
     expect(prePush).toMatch(/npm --prefix "\$ROOT" run build:web[\s\S]*web_build_ready=1/);
     expect(prePush).toContain("env PLAYWRIGHT_REUSE_BUILD=1");
-    expect(prePush).toContain('e2e_pattern="Publisher generated artifact|unknown routes|archive warm|singleton tag');
-    expect(prePush).toContain('"$playwright_bin" test tests/e2e/publisher.spec.ts tests/e2e/smoke.spec.ts');
+    expect(prePush).toContain('"$playwright_bin" test tests/e2e/publisher.spec.ts');
+    expect(prePush).not.toContain("tests/e2e/smoke.spec.ts");
     expect(prePush).toMatch(
       /if \[ "\$web_build_ready" = "1" \][\s\S]*PLAYWRIGHT_REUSE_BUILD=1[\s\S]*else[\s\S]*"\$playwright_bin" test/,
     );

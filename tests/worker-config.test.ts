@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  playwrightPreviewPort,
   playwrightWebServerCommand,
-  resolvePlaywrightPort,
 } from "../playwright.config.ts";
 import { SOURCE_BATCHES, sourceBatchIndexAt } from "../worker/src/index.ts";
 
@@ -216,23 +216,31 @@ describe("Cloudflare Worker deploy config", () => {
     };
     const playwrightConfig = readConfig("playwright.config.ts");
     const prePush = readConfig("scripts/git-hooks/pre-push");
-    const defaultCommand = playwrightWebServerCommand(false);
-    const reuseCommand = playwrightWebServerCommand(true);
+    const defaultCommand = playwrightWebServerCommand(false, 24_322);
+    const reuseCommand = playwrightWebServerCommand(true, 24_322);
 
     expect(defaultCommand).toContain("npm --prefix web run build");
     expect(defaultCommand).toContain("npm --prefix web run preview");
     expect(reuseCommand).toBe(
-      "npm --prefix web run preview -- --host 127.0.0.1 --port 4322",
+      "npm --prefix web run preview -- --host 127.0.0.1 --port 24322",
     );
     expect(playwrightConfig).toContain(
-      "export function resolvePlaywrightPort",
+      "export function playwrightPreviewPort",
     );
     expect(playwrightConfig).toContain("Invalid PLAYWRIGHT_PORT");
     expect(playwrightConfig).toContain("baseURL: previewUrl");
     expect(playwrightConfig).toContain("url: previewUrl");
-    expect(resolvePlaywrightPort()).toBe(4322);
-    expect(resolvePlaywrightPort("4332")).toBe(4332);
-    expect(() => resolvePlaywrightPort("80")).toThrow("Invalid PLAYWRIGHT_PORT");
+    expect(playwrightConfig).toContain("reuseExistingServer: false");
+    expect(playwrightPreviewPort("/tmp/worktree-a")).toBe(
+      playwrightPreviewPort("/tmp/worktree-a"),
+    );
+    expect(playwrightPreviewPort("/tmp/worktree-a")).not.toBe(
+      playwrightPreviewPort("/tmp/worktree-b"),
+    );
+    expect(playwrightPreviewPort("/tmp/worktree", "24567")).toBe(24_567);
+    expect(() => playwrightPreviewPort("/tmp/worktree", "80")).toThrow(
+      "Invalid PLAYWRIGHT_PORT",
+    );
     expect(playwrightConfig).toContain("workers: 1");
     expect(publisherWorkflow).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
     expect(publisherWorkflow).toMatch(

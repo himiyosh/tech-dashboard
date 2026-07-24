@@ -2590,10 +2590,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: `--max-old-space-size`をrunner memoryへ近づけることは安全余白ではない。高cardinalityなSSGではroute進捗とV8 heap、external、arrayBuffers、process tree RSSを同時に測り、major GC前後のpeakを確認する。route削減や並列度低下だけで完了とせず、GC trigger自体を実行基盤のRSS予算に合わせ、buildをprocess RSSでfail-closedにする。
 
 ### LL-391: 複数worktreeのPlaywright previewは固定portを共有しない
-- **事象**: Publisher E2Eが300秒のwebServer timeoutで停止した。`4322`は別worktreeのAstro previewが約3時間保持し、HTTP 404を返していた。今回のPlaywrightが起動したpreviewは空いている`4323`へ自動退避したため、Playwrightは設定済み`4322`のready stateを待ち続けた。
-- **根本原因**: `reuseExistingServer: true`と固定portを複数worktreeで共有し、portを保持するprocessのrepository identityを確認していなかった。別worktreeのprocessを停止せず検証を続ける安全なport overrideも無かった。
-- **対策**: Playwright configは既定`4322`を維持しつつ、検証sessionごとに`PLAYWRIGHT_PORT`でpreview URLと起動commandを同時に変更できるようにした。不正portはconfig load時にfail-closedにする。別worktreeのprocessは停止せず、今回のE2Eを空きportで実行する。
-- **教訓**: worktreeを並行利用するrepositoryでは、固定preview portの占有をtest failureと同一視しない。owner worktreeとHTTP応答を確認し、他sessionのprocessを勝手に停止せず、server command、baseURL、readiness URLを同じvalidated portへ切り替える。
+- **事象**: Publisher E2Eとcommit後のpre-push E2Eが300秒のwebServer timeoutで停止した。`4322`は別worktreeのAstro previewが約3時間保持し、HTTP 404を返していた。今回のPlaywrightが起動したpreviewは空いている`4323`へ自動退避したため、Playwrightは設定済み`4322`のready stateを待ち続けた。
+- **根本原因**: `reuseExistingServer: true`と固定portを複数worktreeで共有し、portを保持するprocessのrepository identityを確認せず別artifactを信頼していた。明示port overrideは手動実行には使えても、portを指定しないpre-pushでは固定`4322`へ戻るため恒久対策にならなかった。
+- **対策**: absolute worktree pathのSHA-256から12000-31999のpreview portを決定し、`PLAYWRIGHT_PORT`の明示overrideもfail-closedで検証する。Playwrightは`reuseExistingServer: false`として自分が起動したserverだけを使い、server command、baseURL、readiness URLを同じportへ接続する。別worktreeのprocessは停止しない。
+- **教訓**: 複数worktreeでbrowser testを並行するrepositoryでは、固定portとexisting-server再利用をartifact ownershipの証拠にしない。手動overrideだけでなく通常E2Eとpre-pushの既定経路もworktree固有にし、port、server process、workspace、dist snapshotを同じtest contractへ接続する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

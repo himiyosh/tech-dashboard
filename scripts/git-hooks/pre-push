@@ -33,7 +33,12 @@ while IFS= read -r line; do
   [ "$local_sha" = "$zero_sha" ] && continue
 
   if [ "$remote_sha" = "$zero_sha" ]; then
-    range="$local_sha"
+    base_ref="refs/remotes/${remote:-origin}/main"
+    if git rev-parse --verify --quiet "$base_ref" >/dev/null; then
+      range="$base_ref..$local_sha"
+    else
+      range="$local_sha"
+    fi
   else
     range="$remote_sha..$local_sha"
   fi
@@ -89,7 +94,7 @@ else
     echo "[pre-push] web build をスキップして push したい場合: SKIP_WEB_BUILD=1 git push"
     exit 1
   fi
-  grep -E "\[build\]|Pagefind|Indexed" "$build_log" | tail -3 || true
+  grep -E "^(BUILD:|ASTRO:)|Pagefind|Indexed" "$build_log" | tail -8 || true
   rm -f "$build_log"
   echo "[pre-push] OK: web build PASS"
   web_build_ready=1

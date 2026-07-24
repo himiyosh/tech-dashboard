@@ -204,6 +204,9 @@ describe("Cloudflare Worker deploy config", () => {
     expect(ciWorkflow).toMatch(/\brun: npm run test:e2e\s*$/m);
     expect(ciWorkflow).not.toContain("test:e2e:publisher");
     expect(prePush).toContain("web_build_ready=0");
+    expect(prePush).toContain('range="$base_ref..$local_sha"');
+    expect(prePush).not.toContain('range="$local_sha"\n  else');
+    expect(prePush).toContain('grep -E "^(BUILD:|ASTRO:)|Pagefind|Indexed"');
     expect(prePush).toMatch(/npm --prefix "\$ROOT" run build:web[\s\S]*web_build_ready=1/);
     expect(prePush).toContain("env PLAYWRIGHT_REUSE_BUILD=1 npm --prefix");
     expect(prePush).toMatch(

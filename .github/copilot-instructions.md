@@ -2559,6 +2559,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: tag静的pageの閾値を2件から10件へ上げ、低頻度tagは既存のPagefind exact filterへ送る。検索metadataを共通client bundleへ移し、記事向けcategory/source/tag indexをmodule-level Mapへ集約した。Astroは公式の`build.concurrency: 2`でrender/writeを2並列化し、3回の比較buildでAstro生成を237秒、535秒、267秒で完了した。HTMLは2,869件、324.6MBへ減り、Pagefindは94-150秒で完了した。build wrapperは30秒heartbeat、phase別process-tree CPU/RSS、route family、file数、出力容量と3,200 HTML route上限を記録する。
 - **教訓**: static buildの停止をtimeout延長やrunner retryで隠さず、Astroと検索indexを分け、route family、HTML総量、wall、CPU、RSSを測る。`build.concurrency`はroute削減、共有index、serialization削減を先に行った後、single-thread CPUではなく独立pageのI/O待ちが大きい場合に小さい値から採用する。並列度を上げるとRSSも増えるためwall timeとpeak RSSを複数回確認し、route budgetを生成器側でfail-closedにする。build wrapperを変更したら長時間buildの前に`node --check`を実行し、構文失敗を即時に検出する。
 
+### LL-386: 新規remote branchのsecret scanへ単一commitを渡すと全到達履歴を再走査する
+- **事象**: 初回branch pushのpre-push hookが`scan-secrets.mjs --range <local_sha>`を実行し、30分近く経過してもsecret scanを継続した。processは停止しておらず、`git rev-list --objects <local_sha>`がcommitだけでなくそのcommitから到達可能な全履歴objectを列挙していた。
+- **根本原因**: remote branch未作成時の`remote_sha`はzero SHAで、hookがrangeを`local_sha`単体にしていた。既存remote branchの`remote_sha..local_sha`とは異なり、単一revisionは新規branch差分ではなくrepository全履歴を意味する。
+- **対策**: remote branch未作成時は`refs/remotes/<remote>/main..local_sha`をscanし、mainに含まれないbranch固有commitだけを検査する。main refが存在しない特殊環境だけ従来の全到達履歴scanへfail-closedで戻す。Web build summaryも新しい`BUILD:` / `ASTRO:` telemetryを表示するようhookを同期した。
+- **教訓**: Git revisionの単一SHAとrangeは意味が異なる。新規branchのpush gateはremote default branchとの差分を明示し、既にremoteへ存在するancestorを毎回再検査しない。安全gateを高速化するときはscan自体をskipせず、pushで新たに到達可能になるcommit集合だけへ入力を狭める。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -78,6 +78,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - Pagefind を含む本番 Web build が CI job 全体の時間上限や大量の静的 route log、長時間の無出力で中断されないよう、品質 gate の実行上限と Astro build のheartbeatを調整しました。
 - Web build の開始時に古い `dist` を削除し、廃止した静的ルートが成果物へ残らないようにしました。
 - 新規作業branchのpre-push secret scanを`origin/main..HEAD`へ限定し、既にremoteへ存在する全履歴を毎回再走査しないようにしました。
+- Full Playwrightは1 workerで直列実行し、同一previewへPublisher E2Eと全UI smokeが同時アクセスしてpeak負荷を増やさないようにしました。
 - 共有されたタグ検索 URL の大文字小文字やアクセント表記が異なっても、完全一致の対象記事を回収できるようにしました。
 - Linux のフォントメトリクスでも中間幅の Hero と固定 Footer が過度に伸びず、優先記事と重ならないようにしました。
 - archive index baseline が `null`、`false`、`0` などの非 object JSON でも欠落扱いされる経路を廃止し、存在する baseline を必ず fail-closed で検証するようにしました。

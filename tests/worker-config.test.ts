@@ -193,6 +193,7 @@ describe("Cloudflare Worker deploy config", () => {
     expect(reuseCommand).toBe(
       "npm --prefix web run preview -- --host 127.0.0.1 --port 4322",
     );
+    expect(readConfig("playwright.config.ts")).toContain("workers: 1");
     expect(publisherWorkflow).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
     expect(publisherWorkflow).toMatch(
       /npm run build:web[\s\S]*npm run test:e2e:publisher/,

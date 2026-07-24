@@ -2565,6 +2565,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: remote branch未作成時は`refs/remotes/<remote>/main..local_sha`をscanし、mainに含まれないbranch固有commitだけを検査する。main refが存在しない特殊環境だけ従来の全到達履歴scanへfail-closedで戻す。Web build summaryも新しい`BUILD:` / `ASTRO:` telemetryを表示するようhookを同期した。
 - **教訓**: Git revisionの単一SHAとrangeは意味が異なる。新規branchのpush gateはremote default branchとの差分を明示し、既にremoteへ存在するancestorを毎回再検査しない。安全gateを高速化するときはscan自体をskipせず、pushで新たに到達可能になるcommit集合だけへ入力を狭める。
 
+### LL-387: 同一previewへ複数Playwright workerを当てると高負荷環境で無関係testが同時timeoutする
+- **事象**: full Playwrightを2 workerで実行すると、Publisher E2Eと全UI smokeが同じpreviewへ並行アクセスし、Home、Status、検索、responsive geometryなど無関係なtestがrunごとに異なる位置でtimeoutした。対象testは1 workerのretryなし実行で成功し、製品assertionの共通failureは確認されなかった。
+- **根本原因**: `fullyParallel: false`でもspec fileはworker間で並列実行され、静的HTMLが大きいHomeやArchiveのload、Pagefind hydration、複数viewport計測が同一previewとhost resourceを同時に消費していた。host loadが高い環境では、test間の競合が製品状態の失敗に見えた。
+- **対策**: full Playwrightを`workers: 1`へ固定し、Publisher E2Eとsmokeを同じartifact上で直列実行する。timeout、retry、geometry閾値は緩めず、responsive matrixは1 navigation後のviewport変更、複数routeの静的contractはbrowser内fetchへ集約してI/O自体も削減する。
+- **教訓**: 1つのpreviewを共有するbrowser suiteでは、spec file並列が常に高速化になるとは限らない。大きな静的page、検索index、viewport行列を含む場合はpeak resourceと失敗位置を実測し、無関係testのtimeoutが移動するならworker数を下げて実行を決定論的にする。受入閾値やtimeoutを緩める前に、同一artifactへの同時負荷を除く。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

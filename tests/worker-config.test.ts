@@ -208,6 +208,9 @@ describe("Cloudflare Worker deploy config", () => {
     expect(prePush).toContain("web_build_ready=0");
     expect(prePush).toContain('range="$base_ref..$local_sha"');
     expect(prePush).not.toContain('range="$local_sha"\n  else');
+    expect(prePush).toContain('pushed_files="${pushed_files}"');
+    expect(prePush).toContain('CHANGED="$pushed_files"');
+    expect(prePush).not.toContain("git diff --name-only HEAD @{u}");
     expect(prePush).toContain('grep -E "^(BUILD:|ASTRO:)|Pagefind|Indexed"');
     expect(prePush).toMatch(/npm --prefix "\$ROOT" run build:web[\s\S]*web_build_ready=1/);
     expect(prePush).toContain("env PLAYWRIGHT_REUSE_BUILD=1");

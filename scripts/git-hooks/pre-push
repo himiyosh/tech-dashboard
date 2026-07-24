@@ -24,6 +24,7 @@ fi
 
 # ---------- Secret scan ----------
 secret_scan_ran=0
+pushed_files=""
 while IFS= read -r line; do
   [ -z "$line" ] && continue
   local_sha=$(echo "$line" | awk '{print $2}')
@@ -44,6 +45,12 @@ while IFS= read -r line; do
   fi
 
   secret_scan_ran=1
+  if [[ "$range" == *".."* ]]; then
+    changed_files=$(git diff --name-only "$range")
+  else
+    changed_files=$(git diff-tree --root --no-commit-id --name-only -r "$local_sha")
+  fi
+  pushed_files="${pushed_files}"$'\n'"${changed_files}"
   echo "[pre-push] secret scan を実行しています... ($range)"
   if ! node "$ROOT/scripts/scan-secrets.mjs" --range "$range"; then
     echo "[pre-push] ERR: secret scan 失敗。push を中断します"
@@ -104,7 +111,7 @@ if [ "${SKIP_E2E:-}" = "1" ]; then
   echo "[pre-push] SKIP_E2E=1 → npm run test:e2e をスキップします"
 else
   # web/ または data/index.json に差分が無ければ E2E は省略する (ローカル DX)
-  CHANGED=$(git diff --name-only HEAD @{u} 2>/dev/null || git diff --name-only HEAD origin/main 2>/dev/null || echo "")
+  CHANGED="$pushed_files"
   if [ -n "$CHANGED" ] && ! echo "$CHANGED" | grep -qE '^(web/|data/index\.json|tests/e2e/|playwright\.config\.)'; then
     echo "[pre-push] web/ への影響なし → E2E をスキップ"
   else

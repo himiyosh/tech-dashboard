@@ -2571,6 +2571,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: full Playwrightを`workers: 1`、Vitestを`maxWorkers: 2`へ固定し、browser suiteとsubprocess系unit testのpeak負荷を抑える。timeout、retry、geometry閾値は緩めず、responsive matrixは1 navigation後のviewport変更、複数routeの静的contractはbrowser内fetchへ集約してI/O自体も削減する。pre-pushは生成Home・記事詳細・404・warm/cold・exact tag・nav・PageHeroのE2Eを1 processで実行し、全PlaywrightはPR CIのclean runnerで必須とする。
 - **教訓**: 1つのpreviewを共有するbrowser suiteでは、spec file並列が常に高速化になるとは限らない。大きな静的page、検索index、viewport行列を含む場合はpeak resourceと失敗位置を実測し、無関係testのtimeoutが移動するならworker数を下げて実行を決定論的にする。受入閾値やtimeoutを緩める前に、同一artifactへの同時負荷を除く。local pre-pushとPR CIの責務を分ける場合もE2E自体をskipせず、変更で壊し得るcritical surfaceをlocal gateへ残す。
 
+### LL-388: pre-pushの変更検出を`@{u}`へ依存すると初回`-u` pushで差分を失う
+- **事象**: 新規branchを`git push -u`したpre-pushでWeb buildは実行されたが、E2E判定は`web/への影響なし`としてfocused browser gateをskipした。同じpushはWeb、E2E、Playwright configを含んでいた。
+- **根本原因**: hookが`git diff HEAD @{u}`を優先し、push開始時に設定されたupstreamがHEADと同じ状態として解決されると空差分を正常結果として採用した。fallbackの`origin/main`比較へ進まないため、実際のpush対象と変更判定が分離した。
+- **対策**: pre-push標準入力のlocal SHAとremote SHAからsecret scanと同じpush rangeを作り、そのrangeのchanged filesをE2E影響判定へ共有する。新規branchは`origin/main..local_sha`、既存branchは`remote_sha..local_sha`を使い、upstream設定状態に依存しない。
+- **教訓**: pre-push hookが検査すべき集合はworking treeやupstreamとの差分ではなく、標準入力が示すremoteへ送信されるcommit集合である。secret scan、変更分類、E2E選択は同じpush rangeを共有し、`git push -u`やremote tracking refの有無でgateを変えない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

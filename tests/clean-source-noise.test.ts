@@ -80,6 +80,37 @@ describe("clean-source-noise validation", () => {
     });
   });
 
+  it("backfills observed body enqueue count from the same-run shared total", () => {
+    expect(synchronizeBodyHealth(
+      {
+        summaryQueueEnqueued: 1,
+        enrichmentEnqueued: 20,
+        bodyEnqueueCandidates: 19,
+        bodyEnqueueCap: 34,
+      },
+      100,
+      80,
+      20,
+    )).toMatchObject({
+      summaryQueueEnqueued: 1,
+      enrichmentEnqueued: 20,
+      bodyEnqueued: 19,
+    });
+    expect(synchronizeBodyHealth(
+      {
+        summaryQueueEnqueued: 1,
+        enrichmentEnqueued: 20,
+        bodyEnqueued: 18,
+        bodyEnqueueCap: 34,
+      },
+      100,
+      80,
+      20,
+    )).toMatchObject({
+      bodyEnqueued: 18,
+    });
+  });
+
   it("normalizes persisted media URL fields without dropping image metadata", () => {
     const normalized = normalizeEntryMediaUrls(
       entry({

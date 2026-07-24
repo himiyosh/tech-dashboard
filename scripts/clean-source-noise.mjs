@@ -928,6 +928,8 @@ export function synchronizeBodyHealth(
   const enqueueCap = Number.isFinite(Number(next.bodyEnqueueCap))
     ? Math.max(0, Number(next.bodyEnqueueCap))
     : 0;
+  const summaryEnqueued = Number(next.summaryQueueEnqueued);
+  const enrichmentEnqueued = Number(next.enrichmentEnqueued);
 
   if (Object.prototype.hasOwnProperty.call(next, "bodiesTotal")) {
     next.bodiesTotal = bodiesTotal;
@@ -945,6 +947,15 @@ export function synchronizeBodyHealth(
     next.bodyQueueDrainEstimateHours = enqueueCap > 0
       ? Math.ceil(bodyBacklog / enqueueCap)
       : 0;
+  }
+  if (
+    !Object.prototype.hasOwnProperty.call(next, "bodyEnqueued")
+    && Number.isFinite(summaryEnqueued)
+    && summaryEnqueued >= 0
+    && Number.isFinite(enrichmentEnqueued)
+    && enrichmentEnqueued >= summaryEnqueued
+  ) {
+    next.bodyEnqueued = enrichmentEnqueued - summaryEnqueued;
   }
   return next;
 }

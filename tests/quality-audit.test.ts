@@ -3,6 +3,8 @@ import {
   canonicalUrlKey,
   freshnessForSource,
   isDeterministicFallbackEntry,
+  knowledgeCoverageForAudit,
+  queueTelemetryForAudit,
   summarizeAuditSeverity,
 } from "../.claude/skills/quality-audit/run.ts";
 import type { SourceDefinition } from "../harness/types.ts";
@@ -398,5 +400,144 @@ describe("quality-audit fallback detection", () => {
         bodyEn: "Body",
       }),
     ).toBe(false);
+  });
+
+  it("uses the shared summary quality contract for contamination and title echoes", () => {
+    expect(
+      isDeterministicFallbackEntry({
+        title: "Release v1.2.3",
+        summaryJa: "Release v1.2.3",
+        summaryEn: "The release improves model evaluation.",
+      }),
+    ).toBe(true);
+    expect(
+      isDeterministicFallbackEntry({
+        title: "Release v1.2.3",
+        summaryJa: "モデル評価の改善を含む更新です。",
+        summaryEn: "The release notes: n/a or added/fixed/improved template leaked.",
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("quality-audit queue telemetry", () => {
+  it("keeps unobserved metrics distinct from observed zero", () => {
+    expect(queueTelemetryForAudit()).toEqual({
+      summary: {
+        mode: null,
+        backlog: null,
+        candidates: null,
+        enqueueCap: null,
+        enqueued: null,
+        etaHours: null,
+      },
+      body: {
+        mode: null,
+        retentionEligible: null,
+        backlog: null,
+        candidates: null,
+        enqueueCap: null,
+        enqueued: null,
+        lookupCount: null,
+        pendingLookupCount: null,
+        merged: null,
+        etaHours: null,
+      },
+      shared: {
+        enqueueCap: null,
+        enqueued: null,
+        remaining: null,
+      },
+    });
+
+    expect(queueTelemetryForAudit({
+      queueMode: "enabled",
+      queueCap: 12,
+      enqueueCandidates: 0,
+      summaryQueueBacklog: 0,
+      summaryQueueEnqueued: 0,
+      summaryQueueDrainEstimateHours: 0,
+      bodyQueueMode: "enabled",
+      bodyRetentionEligible: 10,
+      bodyBacklog: 0,
+      bodyEnqueueCandidates: 0,
+      bodyEnqueueCap: 9,
+      bodyEnqueued: 0,
+      bodyLookupCount: 3,
+      bodyPendingLookupCount: 2,
+      bodyMerged: 1,
+      bodyQueueDrainEstimateHours: 0,
+      enrichmentEnqueueCap: 35,
+      enrichmentEnqueued: 0,
+      enrichmentRemaining: 35,
+    })).toMatchObject({
+      summary: { backlog: 0, candidates: 0, enqueueCap: 12, enqueued: 0 },
+      body: {
+        retentionEligible: 10,
+        backlog: 0,
+        candidates: 0,
+        enqueueCap: 9,
+        enqueued: 0,
+        lookupCount: 3,
+        pendingLookupCount: 2,
+        merged: 1,
+      },
+      shared: { enqueueCap: 35, enqueued: 0, remaining: 35 },
+    });
+  });
+
+  describe("quality-audit Knowledge coverage", () => {
+    it("keeps zero-entry and missing-evergreen-stamp sources visible", () => {
+      const registry = {
+        "evergreen-a": {
+          ...blogSource,
+          id: "evergreen-a",
+          evergreen: true,
+        },
+        "evergreen-b": {
+          ...blogSource,
+          id: "evergreen-b",
+          evergreen: true,
+        },
+        news: {
+          ...blogSource,
+          id: "news",
+        },
+      };
+      expect(knowledgeCoverageForAudit([
+        {
+          source: "evergreen-a",
+          evergreen: true,
+          title: "Ready",
+          summaryJa: "両言語の要約が利用できます。",
+          summaryEn: "A bilingual summary is available.",
+        },
+        {
+          source: "evergreen-a",
+          title: "Missing stamp",
+          summaryJa: "要約はありますがevergreen stampがありません。",
+          summaryEn: "The summary exists but the evergreen stamp is missing.",
+        },
+        {
+          source: "news",
+          title: "News",
+          summaryJa: "通常ニュースです。",
+          summaryEn: "This is a regular news entry.",
+        },
+      ], registry)).toEqual([
+        {
+          source: "evergreen-a",
+          collected: 2,
+          evergreenFlagged: 1,
+          bilingualReady: 1,
+        },
+        {
+          source: "evergreen-b",
+          collected: 0,
+          evergreenFlagged: 0,
+          bilingualReady: 0,
+        },
+      ]);
+    });
   });
 });

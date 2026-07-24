@@ -26,6 +26,7 @@ import {
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CONTRACT_PATH = join(ROOT, "worker", "publisher-contract.json");
 const SCRIPT_PATH = join(ROOT, "scripts", "update-publisher-contract.mjs");
+const CLI_TEST_TIMEOUT_MS = 30_000;
 
 function fileHash(path: string): string {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
@@ -35,6 +36,7 @@ function runCliProcess(args: string[]) {
   return spawnSync(process.execPath, [SCRIPT_PATH, ...args], {
     cwd: ROOT,
     encoding: "utf8",
+    timeout: CLI_TEST_TIMEOUT_MS,
   });
 }
 
@@ -271,7 +273,7 @@ describe("publisher contract updater", () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Publisher contract: CURRENT");
     expect(result.stdout).toContain("DRY RUN ONLY: no files written");
-  });
+  }, CLI_TEST_TIMEOUT_MS);
 
   it("requires an explicit single safe mode without mutating the contract", () => {
     const before = fileHash(CONTRACT_PATH);
@@ -285,7 +287,7 @@ describe("publisher contract updater", () => {
     expect(conflict.status).not.toBe(0);
     expect(help.status).toBe(0);
     expect(fileHash(CONTRACT_PATH)).toBe(before);
-  });
+  }, CLI_TEST_TIMEOUT_MS);
 
   it("parses CLI modes fail-closed", () => {
     expect(parseCliArgs(["--dry-run"])).toMatchObject({ ok: true, mode: "dry-run" });

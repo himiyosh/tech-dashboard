@@ -10,6 +10,11 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { REGISTRY } from "../../../harness/registry.ts";
+import {
+  hasUsableBilingualSummary,
+  needsSummaryGeneration,
+  type SummaryQualityInput,
+} from "../../../harness/pipeline/summary-quality.ts";
 import { canonicalUrlKey } from "../../../harness/pipeline/url.ts";
 import { ALL_CATEGORIES, type SourceDefinition } from "../../../harness/types.ts";
 import { sourceFreshnessStatus } from "../../../web/src/lib/freshness.ts";
@@ -22,6 +27,8 @@ interface Entry {
   source: string;
   url: string;
   title: string;
+  titleJa?: string;
+  titleEn?: string;
   summaryJa: string;
   summaryEn?: string;
   bodyJa?: string;
@@ -31,6 +38,7 @@ interface Entry {
   tags: string[];
   category: string;
   importance: number;
+  evergreen?: boolean;
 }
 
 interface Index {
@@ -42,24 +50,75 @@ interface Index {
     sourcesAttempted?: number;
     sourcesOk?: number;
     sourcesFailed?: string[];
+    queueMode?: string;
+    queueCap?: number;
+    enqueueCandidates?: number;
+    summaryQueueBacklog?: number;
+    summaryQueueEnqueued?: number;
+    summaryQueueDrainEstimateHours?: number;
+    bodyQueueMode?: string;
+    bodyRetentionEligible?: number;
+    bodyBacklog?: number;
+    bodyEnqueueCandidates?: number;
+    bodyEnqueueCap?: number;
+    bodyEnqueued?: number;
+    bodyLookupCount?: number;
+    bodyPendingLookupCount?: number;
+    bodyMerged?: number;
+    bodyQueueDrainEstimateHours?: number;
+    enrichmentEnqueueCap?: number;
+    enrichmentEnqueued?: number;
+    enrichmentRemaining?: number;
   };
   entries: Entry[];
 }
 
 const CATS = [...ALL_CATEGORIES];
-const FALLBACK_SUMMARY_JA_PREFIX = "このエントリは ";
-const FALLBACK_SUMMARY_EN_NEEDLE = "AI summary not yet available";
-const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collection metadata";
 
-export function isDeterministicFallbackEntry(entry: Pick<Entry, "summaryJa" | "summaryEn" | "bodyJa" | "bodyEn">): boolean {
-  const summaryJa = entry.summaryJa ?? "";
-  const summaryEn = entry.summaryEn ?? "";
-  const bodyEn = entry.bodyEn ?? "";
-  return (
-    summaryJa.startsWith(FALLBACK_SUMMARY_JA_PREFIX) ||
-    summaryEn.includes(FALLBACK_SUMMARY_EN_NEEDLE) ||
-    bodyEn.includes(FALLBACK_BODY_EN_NEEDLE)
-  );
+export function isDeterministicFallbackEntry(entry: SummaryQualityInput): boolean {
+  return needsSummaryGeneration(entry);
+}
+
+type AuditMetric = number | null;
+
+export interface AuditQueueTelemetry {
+  summary: {
+    mode: string | null;
+    backlog: AuditMetric;
+    candidates: AuditMetric;
+    enqueueCap: AuditMetric;
+    enqueued: AuditMetric;
+    etaHours: AuditMetric;
+  };
+  body: {
+    mode: string | null;
+    retentionEligible: AuditMetric;
+    backlog: AuditMetric;
+    candidates: AuditMetric;
+    enqueueCap: AuditMetric;
+    enqueued: AuditMetric;
+    lookupCount: AuditMetric;
+    pendingLookupCount: AuditMetric;
+    merged: AuditMetric;
+    etaHours: AuditMetric;
+  };
+  shared: {
+    enqueueCap: AuditMetric;
+    enqueued: AuditMetric;
+    remaining: AuditMetric;
+  };
+}
+
+export interface KnowledgeAuditEntry extends SummaryQualityInput {
+  source: string;
+  evergreen?: boolean;
+}
+
+export interface KnowledgeAuditCoverage {
+  source: string;
+  collected: number;
+  evergreenFlagged: number;
+  bilingualReady: number;
 }
 
 interface FreshnessRow {
@@ -120,6 +179,69 @@ function effectiveFailedCount(health?: Index["health"]): number | null {
 
 function isFiniteNonnegative(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0;
+}
+
+function optionalMetric(value: unknown): AuditMetric {
+  return isFiniteNonnegative(value) ? value : null;
+}
+
+export function queueTelemetryForAudit(health?: Index["health"]): AuditQueueTelemetry {
+  return {
+    summary: {
+      mode: typeof health?.queueMode === "string" ? health.queueMode : null,
+      backlog: optionalMetric(health?.summaryQueueBacklog),
+      candidates: optionalMetric(health?.enqueueCandidates),
+      enqueueCap: optionalMetric(health?.queueCap),
+      enqueued: optionalMetric(health?.summaryQueueEnqueued),
+      etaHours: optionalMetric(health?.summaryQueueDrainEstimateHours),
+    },
+    body: {
+      mode: typeof health?.bodyQueueMode === "string" ? health.bodyQueueMode : null,
+      retentionEligible: optionalMetric(health?.bodyRetentionEligible),
+      backlog: optionalMetric(health?.bodyBacklog),
+      candidates: optionalMetric(health?.bodyEnqueueCandidates),
+      enqueueCap: optionalMetric(health?.bodyEnqueueCap),
+      enqueued: optionalMetric(health?.bodyEnqueued),
+      lookupCount: optionalMetric(health?.bodyLookupCount),
+      pendingLookupCount: optionalMetric(health?.bodyPendingLookupCount),
+      merged: optionalMetric(health?.bodyMerged),
+      etaHours: optionalMetric(health?.bodyQueueDrainEstimateHours),
+    },
+    shared: {
+      enqueueCap: optionalMetric(health?.enrichmentEnqueueCap),
+      enqueued: optionalMetric(health?.enrichmentEnqueued),
+      remaining: optionalMetric(health?.enrichmentRemaining),
+    },
+  };
+}
+
+export function knowledgeCoverageForAudit(
+  entries: readonly KnowledgeAuditEntry[],
+  registry: Readonly<Record<string, SourceDefinition>> = REGISTRY,
+): KnowledgeAuditCoverage[] {
+  const bySource = new Map<string, KnowledgeAuditCoverage>();
+  for (const source of Object.values(registry)) {
+    if (source.evergreen !== true) continue;
+    bySource.set(source.id, {
+      source: source.id,
+      collected: 0,
+      evergreenFlagged: 0,
+      bilingualReady: 0,
+    });
+  }
+  for (const entry of entries) {
+    const coverage = bySource.get(entry.source);
+    if (!coverage) continue;
+    coverage.collected++;
+    if (entry.evergreen !== true) continue;
+    coverage.evergreenFlagged++;
+    if (hasUsableBilingualSummary(entry)) coverage.bilingualReady++;
+  }
+  return [...bySource.values()].sort((a, b) => a.source.localeCompare(b.source));
+}
+
+function metricLabel(value: AuditMetric): string {
+  return value === null ? "未観測" : String(value);
 }
 
 function runHealthSnapshot(health?: Index["health"]): WorkerHealthSnapshot | null {
@@ -240,6 +362,8 @@ async function main() {
         pendingSummaryEntries: 0,
       })
     : null;
+  const queueTelemetry = queueTelemetryForAudit(index.health);
+  const evergreenCoverage = knowledgeCoverageForAudit(index.entries);
 
   // 4. Tag variations (simple: lowercase → set of originals)
   const tagGroups = new Map<string, Map<string, number>>();
@@ -315,6 +439,42 @@ async function main() {
     );
   } else {
     lines.push("- health telemetry: なし");
+  }
+  lines.push("");
+
+  lines.push("## ⚙️ Enrichment Queue snapshot");
+  lines.push("");
+  lines.push("- `未観測` は 0 件ではありません。artifact health にその field が記録されていない状態です。");
+  lines.push("- `backlog` は生成対象の全件数、`candidates` は今回確認した候補、`enqueued` は今回実際に送信できた件数、`merged` は今回 sidecar へ反映した件数です。");
+  lines.push("");
+  lines.push("| Pipeline | Mode | Eligible / retention | Backlog | Candidates | Cap | Enqueued | Lookup | Pending lookup | Merged | ETA (h) |");
+  lines.push("|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|");
+  lines.push(
+    `| Summary | ${queueTelemetry.summary.mode ?? "未観測"} | ${metricLabel(queueTelemetry.summary.backlog)} | ${metricLabel(queueTelemetry.summary.backlog)} | ${metricLabel(queueTelemetry.summary.candidates)} | ${metricLabel(queueTelemetry.summary.enqueueCap)} | ${metricLabel(queueTelemetry.summary.enqueued)} | - | - | 未観測 | ${metricLabel(queueTelemetry.summary.etaHours)} |`,
+  );
+  lines.push(
+    `| Body | ${queueTelemetry.body.mode ?? "未観測"} | ${metricLabel(queueTelemetry.body.retentionEligible)} | ${metricLabel(queueTelemetry.body.backlog)} | ${metricLabel(queueTelemetry.body.candidates)} | ${metricLabel(queueTelemetry.body.enqueueCap)} | ${metricLabel(queueTelemetry.body.enqueued)} | ${metricLabel(queueTelemetry.body.lookupCount)} | ${metricLabel(queueTelemetry.body.pendingLookupCount)} | ${metricLabel(queueTelemetry.body.merged)} | ${metricLabel(queueTelemetry.body.etaHours)} |`,
+  );
+  lines.push(
+    `| Shared enqueue budget | - | - | - | - | ${metricLabel(queueTelemetry.shared.enqueueCap)} | ${metricLabel(queueTelemetry.shared.enqueued)} | - | - | - | - |`,
+  );
+  lines.push(`- shared remaining: ${metricLabel(queueTelemetry.shared.remaining)}`);
+  lines.push("");
+
+  lines.push("## 🌲 Knowledge evergreen coverage");
+  lines.push("");
+  lines.push(
+    `- registry evergreen source の収集済み entry: ${evergreenCoverage.reduce((sum, row) => sum + row.collected, 0)} 件`,
+  );
+  lines.push("- `bilingual ready` は shared summary quality contract を通る両言語要約です。本文の有無とは別指標です。");
+  lines.push("- `evergreen flagged` が collected より少ない場合、source metadata の stamp 漏れです。0 entry のsourceも表から省略しません。");
+  lines.push("");
+  lines.push("| Source | Collected | Evergreen flagged | Bilingual ready | Pending |");
+  lines.push("|---|---:|---:|---:|---:|");
+  for (const coverage of evergreenCoverage) {
+    lines.push(
+      `| ${coverage.source} | ${coverage.collected} | ${coverage.evergreenFlagged} | ${coverage.bilingualReady} | ${coverage.evergreenFlagged - coverage.bilingualReady} |`,
+    );
   }
   lines.push("");
 

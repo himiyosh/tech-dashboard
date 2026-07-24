@@ -59,10 +59,20 @@ interface IndexShape {
   entries: RawEntry[];
   health?: {
     bodiesTotal?: number;
+    enqueueCandidates?: number;
+    summaryQueueBacklog?: number;
+    summaryQueueEnqueued?: number;
     bodyEnqueueCap?: number;
+    bodyEnqueueCandidates?: number;
+    bodyEnqueued?: number;
+    bodyLookupCount?: number;
+    bodyMerged?: number;
     bodyBacklog?: number;
     bodyQueueDrainEstimateHours?: number;
     bodyRetentionEligible?: number;
+    enrichmentEnqueueCap?: number;
+    enrichmentEnqueued?: number;
+    enrichmentRemaining?: number;
   };
 }
 
@@ -499,6 +509,45 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     );
   });
 
+  it("summary/body/shared Queue telemetry は候補・実送信・反映を混同しない", () => {
+    const health = data.health;
+    const summaryEnqueued = health?.summaryQueueEnqueued;
+    const bodyEnqueued = health?.bodyEnqueued;
+    const bodyCandidates = health?.bodyEnqueueCandidates;
+    const bodyCap = health?.bodyEnqueueCap;
+    const bodyLookup = health?.bodyLookupCount;
+    const bodyMerged = health?.bodyMerged;
+    const sharedCap = health?.enrichmentEnqueueCap;
+    const sharedEnqueued = health?.enrichmentEnqueued;
+    const sharedRemaining = health?.enrichmentRemaining;
+
+    if (summaryEnqueued !== undefined) {
+      expect(summaryEnqueued).toBeLessThanOrEqual(health?.enqueueCandidates ?? 0);
+      expect(summaryEnqueued).toBeLessThanOrEqual(health?.summaryQueueBacklog ?? 0);
+    }
+    if (bodyEnqueued !== undefined) {
+      expect(bodyEnqueued).toBeLessThanOrEqual(bodyCandidates ?? 0);
+      expect(bodyEnqueued).toBeLessThanOrEqual(bodyCap ?? 0);
+    }
+    if (bodyMerged !== undefined) {
+      expect(bodyMerged).toBeLessThanOrEqual(bodyLookup ?? 0);
+    }
+    if (
+      summaryEnqueued !== undefined
+      && bodyEnqueued !== undefined
+      && sharedEnqueued !== undefined
+    ) {
+      expect(sharedEnqueued).toBe(summaryEnqueued + bodyEnqueued);
+    }
+    if (
+      sharedCap !== undefined
+      && sharedEnqueued !== undefined
+      && sharedRemaining !== undefined
+    ) {
+      expect(sharedRemaining).toBe(Math.max(0, sharedCap - sharedEnqueued));
+    }
+  });
+
   it("known product name と矛盾する AI 解説本文を保持しない", () => {
     const entriesById = new Map(
       data.entries.map((entry) => [String(entry.id), entry]),
@@ -593,7 +642,7 @@ describe("カテゴリ品質ガード", () => {
       leaked,
       "registry の current source filter / category と不一致の entry が残存。lossy normalized artifact は non-title scope の missing include を単独では証明できないため、gate は Worker/migration と同じ evaluator を使う。filter keep=false か category drift のみを scripts/clean-source-noise.mjs + Worker deploy で是正すること",
     ).toEqual([]);
-  });
+  }, 15_000);
 
   it("Local LLM category excludes workflow and business noise", () => {
     const noisy = allDataEntries

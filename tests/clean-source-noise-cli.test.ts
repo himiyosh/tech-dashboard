@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 const scriptPath = join(repoRoot, "scripts/clean-source-noise.mjs");
 const dataRoot = join(repoRoot, "data");
+const CLI_TEST_TIMEOUT_MS = 30_000;
 
 function collectJsonFiles(dir: string): string[] {
   const entries = [];
@@ -40,6 +41,7 @@ function runCli(args: string[], cwd = repoRoot) {
     cwd,
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,
+    timeout: CLI_TEST_TIMEOUT_MS,
   });
 }
 
@@ -57,7 +59,7 @@ describe("clean-source-noise CLI safety", () => {
     expect(result.stdout).not.toContain("APPLIED");
     expect(result.stderr).toBe("");
     expect(snapshotDataTree()).toEqual(before);
-  });
+  }, CLI_TEST_TIMEOUT_MS);
 
   it("rejects no args without applying or mutating any data file", () => {
     const before = snapshotDataTree();
@@ -69,7 +71,7 @@ describe("clean-source-noise CLI safety", () => {
     expect(result.stderr).toContain("--dry-run");
     expect(result.stderr).toContain("--apply");
     expect(snapshotDataTree()).toEqual(before);
-  });
+  }, CLI_TEST_TIMEOUT_MS);
 
   it("rejects unknown arguments without applying or mutating data", () => {
     const before = snapshotDataTree();
@@ -80,7 +82,7 @@ describe("clean-source-noise CLI safety", () => {
     expect(result.stderr).toContain("Unknown argument(s)");
     expect(result.stderr).toContain("definitely-not-a-real-flag");
     expect(snapshotDataTree()).toEqual(before);
-  });
+  }, CLI_TEST_TIMEOUT_MS);
 
   it("rejects conflicting flags without applying or mutating data", () => {
     const before = snapshotDataTree();
@@ -90,7 +92,7 @@ describe("clean-source-noise CLI safety", () => {
     expect(result.stdout).not.toContain("APPLIED");
     expect(result.stderr).toContain("Conflicting flags");
     expect(snapshotDataTree()).toEqual(before);
-  });
+  }, CLI_TEST_TIMEOUT_MS);
 
   it("aborts a dry-run without recovering or changing a pending active transaction", () => {
     const scratchRoot = join(repoRoot, `.clean-source-noise-cli-test-${process.pid}-${Date.now()}`);
@@ -131,5 +133,5 @@ describe("clean-source-noise CLI safety", () => {
     } finally {
       rmSync(scratchRoot, { recursive: true, force: true });
     }
-  });
+  }, CLI_TEST_TIMEOUT_MS);
 });

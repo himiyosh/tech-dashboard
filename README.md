@@ -154,7 +154,7 @@ Git hook は `bash scripts/install-hooks.sh` で 1 回有効化します。
 | Hook | 実行内容 | スキップ |
 |---|---|---|
 | `pre-commit` | `main` / `master` / `develop` への直接 commit 拒否 → staged file の secret scan → `.ts/.tsx` がステージされていれば `npm run typecheck` | Typecheck のみ `SKIP_TYPECHECK=1 git commit` |
-| `pre-push` | protected branch への直接 push 拒否 → push 対象 commit range の secret scan → `npm test` (unit) → `npm run build:web` → `npm run test:e2e` → `RUN_WORKER_DEPLOY=1` の場合のみ `wrangler deploy` | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1`。Worker deploy は `RUN_WORKER_DEPLOY=1 git push` |
+| `pre-push` | protected branch への直接 push 拒否 → push 対象 commit range の secret scan → `npm test` (unit) → `npm run build:web` → `npm run test:e2e:prepush` (生成Home・記事詳細・404・warm/cold・exact tag・nav・PageHero) → `RUN_WORKER_DEPLOY=1` の場合のみ `wrangler deploy`。全PlaywrightはPR CIで必須 | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1`。Worker deploy は `RUN_WORKER_DEPLOY=1 git push` |
 
 Secret scan は値を表示せず、検出種別・ファイル位置・ハッシュだけを出します。ローカル作業ツリー全体を確認する場合は `npm run secrets:scan:worktree`、全履歴を手動確認する場合は `npm run secrets:scan:history` を使います。
 

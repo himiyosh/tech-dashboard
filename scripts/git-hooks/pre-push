@@ -108,11 +108,11 @@ else
   if [ -n "$CHANGED" ] && ! echo "$CHANGED" | grep -qE '^(web/|data/index\.json|tests/e2e/|playwright\.config\.)'; then
     echo "[pre-push] web/ への影響なし → E2E をスキップ"
   else
-    echo "[pre-push] npm run test:e2e を実行しています..."
+    echo "[pre-push] npm run test:e2e:prepush を実行しています..."
     if [ "$web_build_ready" = "1" ]; then
-      e2e_command=(env PLAYWRIGHT_REUSE_BUILD=1 npm --prefix "$ROOT" run test:e2e)
+      e2e_command=(env PLAYWRIGHT_REUSE_BUILD=1 npm --prefix "$ROOT" run test:e2e:prepush)
     else
-      e2e_command=(npm --prefix "$ROOT" run test:e2e)
+      e2e_command=(npm --prefix "$ROOT" run test:e2e:prepush)
     fi
     if ! "${e2e_command[@]}"; then
       echo "[pre-push] ERR: E2E テスト失敗。push を中断します"

@@ -2556,8 +2556,8 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-385: 数千routeのAstro buildはserial prerenderと重複HTMLを実測してから並列度を上げる
 - **事象**: 最新mainのproduction buildをAstroとPagefindへ分離して計測すると、Astroは3,734 HTML、416MBをserial生成して738.9秒、最大RSS 3.17GBを使用し、Pagefindは137.4秒、最大RSS 1.59GBだった。記事detailは2,361 route・244.2MB、tagは1,212 route・123.7MBで、両者がHTMLの大半を占めた。Cloudflare Pagesのclone後build log 0件timeoutはbuild command開始前のprovider stageであり、このlocal計測だけで同じ根本原因とは断定できない。
 - **根本原因**: Astroの`build.concurrency`既定値1で数千の独立pageを直列render/writeし、低頻度tag pageと全pageへ繰り返す検索metadataが生成量を増やしていた。記事detail helperもrouteごとにlive entriesを繰り返しscanしていた。route削減だけの比較ではAstro wall timeが横ばいだったため、I/O待ちを含むserial prerenderが主なlocal bottleneckと確認できた。
-- **対策**: tag静的pageの閾値を2件から10件へ上げ、低頻度tagは既存のPagefind exact filterへ送る。検索metadataを共通client bundleへ移し、記事向けcategory/source/tag indexをmodule-level Mapへ集約した。Astroは公式の`build.concurrency: 2`でrender/writeを2並列化し、3回の比較buildでAstro生成を237秒、535秒、267秒で完了した。HTMLは2,869件、324.6MBへ減り、Pagefindは94-150秒で完了した。build wrapperは30秒heartbeat、phase別process-tree CPU/RSS、route family、file数、出力容量と3,200 HTML route上限を記録する。
-- **教訓**: static buildの停止をtimeout延長やrunner retryで隠さず、Astroと検索indexを分け、route family、HTML総量、wall、CPU、RSSを測る。`build.concurrency`はroute削減、共有index、serialization削減を先に行った後、single-thread CPUではなく独立pageのI/O待ちが大きい場合に小さい値から採用する。並列度を上げるとRSSも増えるためwall timeとpeak RSSを複数回確認し、route budgetを生成器側でfail-closedにする。build wrapperを変更したら長時間buildの前に`node --check`を実行し、構文失敗を即時に検出する。
+- **対策**: tag静的pageの閾値を2件から10件へ上げ、低頻度tagは既存のPagefind exact filterへ送る。検索metadataを共通client bundleへ移し、記事向けcategory/source/tag indexをmodule-level Mapへ集約した。Astroは公式の`build.concurrency: 2`でrender/writeを2並列化し、3回の比較buildでAstro生成を237秒、535秒、267秒で完了した。HTMLは2,869件、324.6MBへ減り、Pagefindは94-150秒で完了した。build wrapperは30秒heartbeat、phase別process-tree CPU/RSS、route family、file数、出力容量と3,200 HTML route上限を記録する。16GB GitHub runnerはLL-389の実測に基づきconcurrency 1へ制限する。
+- **教訓**: static buildの停止をtimeout延長やrunner retryで隠さず、Astroと検索indexを分け、route family、HTML総量、wall、CPU、RSSを測る。`build.concurrency`はroute削減、共有index、serialization削減を先に行った後、single-thread CPUではなく独立pageのI/O待ちが大きい場合に小さい値から採用する。並列度を上げるとRSSも増えるためwall timeとpeak RSSを実行基盤ごとに複数回確認し、route budgetを生成器側でfail-closedにする。build wrapperを変更したら長時間buildの前に`node --check`を実行し、構文失敗を即時に検出する。
 
 ### LL-386: 新規remote branchのsecret scanへ単一commitを渡すと全到達履歴を再走査する
 - **事象**: 初回branch pushのpre-push hookが`scan-secrets.mjs --range <local_sha>`を実行し、30分近く経過してもsecret scanを継続した。processは停止しておらず、`git rev-list --objects <local_sha>`がcommitだけでなくそのcommitから到達可能な全履歴objectを列挙していた。
@@ -2576,6 +2576,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: hookが`git diff HEAD @{u}`を優先し、push開始時に設定されたupstreamがHEADと同じ状態として解決されると空差分を正常結果として採用した。fallbackの`origin/main`比較へ進まないため、実際のpush対象と変更判定が分離した。
 - **対策**: pre-push標準入力のlocal SHAとremote SHAからsecret scanと同じpush rangeを作り、そのrangeのchanged filesをE2E影響判定へ共有する。新規branchは`origin/main..local_sha`、既存branchは`remote_sha..local_sha`を使い、upstream設定状態に依存しない。
 - **教訓**: pre-push hookが検査すべき集合はworking treeやupstreamとの差分ではなく、標準入力が示すremoteへ送信されるcommit集合である。secret scan、変更分類、E2E選択は同じpush rangeを共有し、`git push -u`やremote tracking refの有無でgateを変えない。
+
+### LL-389: Astro concurrency 2は16GB ARM runnerでRSS 15GBへ達する
+- **事象**: PR CIのUbuntu 24.04 ARM Web buildは、Astro開始30秒でprocess-tree RSS 8.7GB、60秒で14.9GBへ増え、91秒で`astro terminated by SIGKILL`となった。同じcommitのCloudflare previewはActive、macOS localはconcurrency 2でpeak RSS 2.0-2.7GBだった。
+- **根本原因**: 数千の大きなHTML pageを2並列renderするV8 memory特性が実行基盤で大きく異なり、16GB ARM runnerではmemory上限へ到達した。従来のheartbeatだけでは外部cancelに見えたが、process-tree RSSとsignalを出したことでOOM境界を実測できた。
+- **対策**: `GITHUB_ACTIONS=true`ではAstro concurrencyを1、Cloudflare Pagesとlocalでは2にする。生成HTMLとroute契約は同一のまま、GitHub runnerだけpeak memoryを優先する。telemetryへ実際のconcurrencyを出し、PR CIでserial ARM buildの完走を確認する。
+- **教訓**: concurrencyの安全値を開発端末のRSSだけで決めない。同じarchitecture名でもOS、V8 allocator、memory limitでpeak RSSは変わる。CIはprocess-tree RSSとtermination signalを確認し、OOMが実測できたplatformだけ並列度を下げる。timeout延長やrunner retryではmemory exhaustionを直せない。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

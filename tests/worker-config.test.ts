@@ -150,7 +150,11 @@ describe("Cloudflare Worker deploy config", () => {
     expect(astroBuildRunner).toContain("peakRss=");
     expect(astroBuildRunner).toContain("routeFamilies");
     expect(astroBuildRunner).toContain("clearInterval(heartbeat)");
-    expect(astroConfig).toContain("concurrency: 2");
+    expect(astroConfig).toContain(
+      'const BUILD_CONCURRENCY = process.env.GITHUB_ACTIONS === "true" ? 1 : 2',
+    );
+    expect(astroConfig).toContain("concurrency: BUILD_CONCURRENCY");
+    expect(astroConfig).toContain("concurrency=${BUILD_CONCURRENCY}");
     expect(astroConfig).toContain("tech-dashboard-build-telemetry");
     expect(astroConfig).toContain('"astro:build:generated"');
     expect(astroConfig).toContain('"astro:build:done"');

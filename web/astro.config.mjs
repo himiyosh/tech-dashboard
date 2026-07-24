@@ -1,5 +1,7 @@
 import { defineConfig } from "astro/config";
 
+const BUILD_CONCURRENCY = process.env.GITHUB_ACTIONS === "true" ? 1 : 2;
+
 function buildPhaseTelemetry() {
   let startedAt = 0;
   const report = (phase, details = "") => {
@@ -17,7 +19,7 @@ function buildPhaseTelemetry() {
     hooks: {
       "astro:build:start": () => {
         startedAt = Date.now();
-        report("start");
+        report("start", `concurrency=${BUILD_CONCURRENCY}`);
       },
       "astro:routes:resolved": ({ routes }) => {
         report("routes-resolved", `definitions=${routes.length}`);
@@ -46,7 +48,7 @@ export default defineConfig({
     // Rendering is dominated by thousands of independent static files. Two
     // concurrent pages overlap filesystem waits without approaching the
     // memory pressure observed at higher fan-out.
-    concurrency: 2,
+    concurrency: BUILD_CONCURRENCY,
   },
   integrations: [buildPhaseTelemetry()],
   vite: {

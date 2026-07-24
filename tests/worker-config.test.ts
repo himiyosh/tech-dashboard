@@ -1,7 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { playwrightWebServerCommand } from "../playwright.config.ts";
+import {
+  playwrightPreviewPort,
+  playwrightWebServerCommand,
+} from "../playwright.config.ts";
 import { SOURCE_BATCHES, sourceBatchIndexAt } from "../worker/src/index.ts";
 
 function readConfig(path: string): string {
@@ -108,6 +111,8 @@ describe("Cloudflare Worker deploy config", () => {
       scripts?: Record<string, string>;
     };
     const astroBuildRunner = readConfig("web/scripts/build-astro.mjs");
+    const astroResourcePolicy = readConfig("web/scripts/build-resource-policy.mjs");
+    const astroMemoryProbe = readConfig("web/scripts/build-memory-probe.mjs");
     const astroConfig = readConfig("web/astro.config.mjs");
     const unitStart = ciWorkflow.indexOf("\n  unit:\n");
     const webBuildStart = ciWorkflow.indexOf("\n  web-build:\n");
@@ -146,13 +151,31 @@ describe("Cloudflare Worker deploy config", () => {
     expect(astroBuildRunner).toContain('await runPhase("pagefind"');
     expect(astroBuildRunner).toContain("const HEARTBEAT_MS = 30_000");
     expect(astroBuildRunner).toContain("const MAX_ASTRO_RENDERED_HTML_FILES = 3_200");
-    expect(astroBuildRunner).toContain("const ASTRO_HEAP_LIMIT_MIB = 4_096");
+    expect(astroResourcePolicy).toContain(
+      'const heapLimitMiB = Number(env.ASTRO_HEAP_LIMIT_MIB ?? "512")',
+    );
+    expect(astroResourcePolicy).toContain(
+      'env.GITHUB_ACTIONS === "true" && platform !== "win32" ? 12_000 : 0',
+    );
+    expect(astroBuildRunner).toContain("resolveBuildMemoryConfig()");
     expect(astroBuildRunner).toContain("`--max-old-space-size=${ASTRO_HEAP_LIMIT_MIB}`");
+    expect(astroBuildRunner).toContain("build-memory-probe.mjs");
+    expect(astroResourcePolicy).toContain("exceeded RSS budget");
     expect(astroBuildRunner).toContain("Astro-rendered HTML route budget exceeded");
     expect(astroBuildRunner).toContain("writeLegacyTagRedirects");
     expect(astroBuildRunner).toContain("peakRss=");
+    expect(astroBuildRunner).toContain("processes=");
     expect(astroBuildRunner).toContain("routeFamilies");
+    expect(astroBuildRunner).toContain("clearInterval(sampler)");
     expect(astroBuildRunner).toContain("clearInterval(heartbeat)");
+    expect(astroMemoryProbe).toContain("process.memoryUsage()");
+    expect(astroMemoryProbe).toContain("getHeapSpaceStatistics()");
+    expect(astroMemoryProbe).toContain("external=");
+    expect(astroMemoryProbe).toContain("arrayBuffers=");
+    expect(astroMemoryProbe).toContain("nonHeapRssApprox=");
+    expect(astroMemoryProbe).toContain("oldSpace=");
+    expect(astroMemoryProbe).toContain("largeObjectSpace=");
+    expect(astroMemoryProbe).toContain("html-progress");
     expect(astroConfig).toContain(
       'const BUILD_CONCURRENCY = process.env.GITHUB_ACTIONS === "true" ? 1 : 2',
     );
@@ -191,16 +214,34 @@ describe("Cloudflare Worker deploy config", () => {
     const packageJson = JSON.parse(readConfig("package.json")) as {
       scripts?: Record<string, string>;
     };
+    const playwrightConfig = readConfig("playwright.config.ts");
     const prePush = readConfig("scripts/git-hooks/pre-push");
-    const defaultCommand = playwrightWebServerCommand(false);
-    const reuseCommand = playwrightWebServerCommand(true);
+    const defaultCommand = playwrightWebServerCommand(false, 24_322);
+    const reuseCommand = playwrightWebServerCommand(true, 24_322);
 
     expect(defaultCommand).toContain("npm --prefix web run build");
     expect(defaultCommand).toContain("npm --prefix web run preview");
     expect(reuseCommand).toBe(
-      "npm --prefix web run preview -- --host 127.0.0.1 --port 4322",
+      "npm --prefix web run preview -- --host 127.0.0.1 --port 24322",
     );
-    expect(readConfig("playwright.config.ts")).toContain("workers: 1");
+    expect(playwrightConfig).toContain(
+      "export function playwrightPreviewPort",
+    );
+    expect(playwrightConfig).toContain("Invalid PLAYWRIGHT_PORT");
+    expect(playwrightConfig).toContain("baseURL: previewUrl");
+    expect(playwrightConfig).toContain("url: previewUrl");
+    expect(playwrightConfig).toContain("reuseExistingServer: false");
+    expect(playwrightPreviewPort("/tmp/worktree-a")).toBe(
+      playwrightPreviewPort("/tmp/worktree-a"),
+    );
+    expect(playwrightPreviewPort("/tmp/worktree-a")).not.toBe(
+      playwrightPreviewPort("/tmp/worktree-b"),
+    );
+    expect(playwrightPreviewPort("/tmp/worktree", "24567")).toBe(24_567);
+    expect(() => playwrightPreviewPort("/tmp/worktree", "80")).toThrow(
+      "Invalid PLAYWRIGHT_PORT",
+    );
+    expect(playwrightConfig).toContain("workers: 1");
     expect(publisherWorkflow).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
     expect(publisherWorkflow).toMatch(
       /npm run build:web[\s\S]*npm run test:e2e:publisher/,

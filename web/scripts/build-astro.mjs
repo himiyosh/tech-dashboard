@@ -5,12 +5,25 @@ import {
   statSync,
 } from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { writeLegacyTagRedirects } from "./legacy-tag-redirects.mjs";
+import {
+  resolveBuildMemoryConfig,
+  rssBudgetFailure,
+} from "./build-resource-policy.mjs";
 
 const HEARTBEAT_MS = 30_000;
+const SAMPLE_MS = 2_000;
 const MAX_ASTRO_RENDERED_HTML_FILES = 3_200;
-const ASTRO_HEAP_LIMIT_MIB = 4_096;
+// A larger old-space delays major GC while thousands of detail pages allocate
+// temporary render objects. The lower ceiling keeps process RSS bounded.
 const IS_WINDOWS = process.platform === "win32";
+// GitHub's public ARM runner has 16 GiB. Stop before the host OOM killer so the
+// build reports the measured budget failure instead of an unexplained SIGKILL.
+const {
+  heapLimitMiB: ASTRO_HEAP_LIMIT_MIB,
+  rssBudgetMiB: ASTRO_RSS_BUDGET_MIB,
+} = resolveBuildMemoryConfig();
 
 function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)}MiB`;
@@ -41,16 +54,17 @@ function processTelemetry(pid) {
   try {
     const output = execFileSync(
       "ps",
-      ["-A", "-o", "pid=", "-o", "ppid=", "-o", "time=", "-o", "rss="],
+      ["-A", "-o", "pid=", "-o", "ppid=", "-o", "time=", "-o", "rss=", "-o", "comm="],
       { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
     ).trim();
     const processes = output.split("\n").map((line) => {
-      const [processId, parentId, cpuTime, rssKiB] = line.trim().split(/\s+/);
+      const [processId, parentId, cpuTime, rssKiB, ...commandParts] = line.trim().split(/\s+/);
       return {
         processId: Number(processId),
         parentId: Number(parentId),
         cpuTime,
         rssKiB: Number(rssKiB),
+        command: path.basename(commandParts.join(" ")),
       };
     }).filter(
       (process) =>
@@ -79,6 +93,13 @@ function processTelemetry(pid) {
       cpuTime: formatCpuTime(totalCpuSeconds),
       cpuSeconds: totalCpuSeconds,
       rssMiB: rssKiB / 1024,
+      processes: tree
+        .sort((left, right) => right.rssKiB - left.rssKiB)
+        .map((process) => ({
+          pid: process.processId,
+          command: process.command,
+          rssMiB: process.rssKiB / 1024,
+        })),
     };
   } catch {
     return null;
@@ -127,6 +148,9 @@ async function runPhase(label, command, args, options = {}) {
   const startedAt = Date.now();
   let peakRssMiB = 0;
   let peakCpuSeconds = 0;
+  let budgetError = "";
+  let latestTelemetry = null;
+  let lastTelemetryAt = startedAt;
   console.log(`BUILD: phase=${label} state=started`);
 
   const child = spawn(command, args, {
@@ -137,18 +161,34 @@ async function runPhase(label, command, args, options = {}) {
 
   const sample = () => {
     const telemetry = processTelemetry(child.pid);
-    if (!telemetry) return null;
-    peakRssMiB = Math.max(peakRssMiB, telemetry.rssMiB);
-    peakCpuSeconds = Math.max(peakCpuSeconds, telemetry.cpuSeconds);
-    return telemetry;
+    const now = Date.now();
+    if (telemetry) {
+      lastTelemetryAt = now;
+      latestTelemetry = telemetry;
+      peakRssMiB = Math.max(peakRssMiB, telemetry.rssMiB);
+      peakCpuSeconds = Math.max(peakCpuSeconds, telemetry.cpuSeconds);
+    }
+    const failure = rssBudgetFailure({
+      phase: label,
+      rssBudgetMiB: ASTRO_RSS_BUDGET_MIB,
+      telemetry,
+      lastTelemetryAt,
+      now,
+    });
+    if (failure && !budgetError) {
+      budgetError = failure;
+      child.kill("SIGTERM");
+    }
+    return telemetry ?? null;
   };
   sample();
+  const sampler = setInterval(sample, SAMPLE_MS);
 
   const heartbeat = setInterval(() => {
     const elapsedSeconds = Math.round((Date.now() - startedAt) / 1000);
-    const telemetry = sample();
+    const telemetry = latestTelemetry ?? sample();
     const resources = telemetry
-      ? ` cpu=${telemetry.cpuTime} rss=${telemetry.rssMiB.toFixed(0)}MiB peakRss=${peakRssMiB.toFixed(0)}MiB`
+      ? ` cpu=${telemetry.cpuTime} rss=${telemetry.rssMiB.toFixed(0)}MiB peakRss=${peakRssMiB.toFixed(0)}MiB processes=${telemetry.processes.map((process) => `${process.command}:${process.rssMiB.toFixed(0)}MiB`).join(",")}`
       : "";
     console.log(`BUILD: phase=${label} state=running elapsed=${elapsedSeconds}s${resources}`);
   }, HEARTBEAT_MS);
@@ -160,6 +200,10 @@ async function runPhase(label, command, args, options = {}) {
   const exitCode = await new Promise((resolve, reject) => {
     child.once("error", reject);
     child.once("exit", (code, signal) => {
+      if (budgetError) {
+        reject(new Error(budgetError));
+        return;
+      }
       if (signal) {
         reject(new Error(`${label} terminated by ${signal}`));
         return;
@@ -167,6 +211,7 @@ async function runPhase(label, command, args, options = {}) {
       resolve(code ?? 1);
     });
   }).finally(() => {
+    clearInterval(sampler);
     clearInterval(heartbeat);
     process.removeListener("SIGINT", forwardSignal);
     process.removeListener("SIGTERM", forwardSignal);
@@ -195,8 +240,11 @@ const existingNodeOptions = process.env.NODE_OPTIONS?.trim() ?? "";
 const astroNodeOptions = [
   existingNodeOptions,
   `--max-old-space-size=${ASTRO_HEAP_LIMIT_MIB}`,
+  `--import=${pathToFileURL(path.resolve("scripts/build-memory-probe.mjs")).href}`,
 ].filter(Boolean).join(" ");
-console.log(`BUILD: phase=astro heapLimit=${ASTRO_HEAP_LIMIT_MIB}MiB`);
+console.log(
+  `BUILD: phase=astro heapLimit=${ASTRO_HEAP_LIMIT_MIB}MiB rssBudget=${ASTRO_RSS_BUDGET_MIB > 0 ? `${ASTRO_RSS_BUDGET_MIB}MiB` : "disabled"}`,
+);
 await runPhase("astro", astroCommand, ["build", "--silent"], {
   env: {
     ...process.env,

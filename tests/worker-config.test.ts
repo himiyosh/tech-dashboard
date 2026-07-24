@@ -146,6 +146,8 @@ describe("Cloudflare Worker deploy config", () => {
     expect(astroBuildRunner).toContain('await runPhase("pagefind"');
     expect(astroBuildRunner).toContain("const HEARTBEAT_MS = 30_000");
     expect(astroBuildRunner).toContain("const MAX_HTML_FILES = 3_200");
+    expect(astroBuildRunner).toContain("const ASTRO_HEAP_LIMIT_MIB = 4_096");
+    expect(astroBuildRunner).toContain("`--max-old-space-size=${ASTRO_HEAP_LIMIT_MIB}`");
     expect(astroBuildRunner).toContain("Static HTML route budget exceeded");
     expect(astroBuildRunner).toContain("peakRss=");
     expect(astroBuildRunner).toContain("routeFamilies");

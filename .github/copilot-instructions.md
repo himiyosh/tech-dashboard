@@ -2580,8 +2580,8 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-389: Astro concurrency 2は16GB ARM runnerでRSS 15GBへ達する
 - **事象**: PR CIのUbuntu 24.04 ARM Web buildは、Astro開始30秒でprocess-tree RSS 8.7GB、60秒で14.9GBへ増え、91秒で`astro terminated by SIGKILL`となった。同じcommitのCloudflare previewはActive、macOS localはconcurrency 2でpeak RSS 2.0-2.7GBだった。
 - **根本原因**: 数千の大きなHTML pageを2並列renderするV8 memory特性が実行基盤で大きく異なり、16GB ARM runnerではmemory上限へ到達した。従来のheartbeatだけでは外部cancelに見えたが、process-tree RSSとsignalを出したことでOOM境界を実測できた。
-- **対策**: `GITHUB_ACTIONS=true`ではAstro concurrencyを1、Cloudflare Pagesとlocalでは2にする。生成HTMLとroute契約は同一のまま、GitHub runnerだけpeak memoryを優先する。telemetryへ実際のconcurrencyを出し、PR CIでserial ARM buildの完走を確認する。
-- **教訓**: concurrencyの安全値を開発端末のRSSだけで決めない。同じarchitecture名でもOS、V8 allocator、memory limitでpeak RSSは変わる。CIはprocess-tree RSSとtermination signalを確認し、OOMが実測できたplatformだけ並列度を下げる。timeout延長やrunner retryではmemory exhaustionを直せない。
+- **対策**: `GITHUB_ACTIONS=true`ではAstro concurrencyを1、Cloudflare Pagesとlocalでは2にする。生成HTMLとroute契約は同一のまま、GitHub runnerだけpeak memoryを優先する。serial ARMでもRSSが15.3GBへ達したため、Astro childのV8 old-spaceを4GBへ制限し、runner上限前にGCを促す。telemetryへ実際のconcurrencyとheap limitを出し、PR CIでserial ARM buildの完走を確認する。
+- **教訓**: concurrencyの安全値を開発端末のRSSだけで決めない。同じarchitecture名でもOS、V8 allocator、memory limitでpeak RSSは変わる。CIはprocess-tree RSSとtermination signalを確認し、OOMが実測できたplatformは並列度とV8 heap ceilingの両方を調整する。timeout延長やrunner retryではmemory exhaustionを直せない。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

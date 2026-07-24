@@ -8,6 +8,7 @@ import path from "node:path";
 
 const HEARTBEAT_MS = 30_000;
 const MAX_HTML_FILES = 3_200;
+const ASTRO_HEAP_LIMIT_MIB = 4_096;
 const IS_WINDOWS = process.platform === "win32";
 
 function formatBytes(bytes) {
@@ -121,7 +122,7 @@ function collectOutputStats(root) {
   };
 }
 
-async function runPhase(label, command, args) {
+async function runPhase(label, command, args, options = {}) {
   const startedAt = Date.now();
   let peakRssMiB = 0;
   let peakCpuSeconds = 0;
@@ -130,6 +131,7 @@ async function runPhase(label, command, args) {
   const child = spawn(command, args, {
     stdio: "inherit",
     shell: IS_WINDOWS,
+    env: options.env ?? process.env,
   });
 
   const sample = () => {
@@ -188,7 +190,18 @@ console.log(`BUILD: environment node=${process.version} platform=${process.platf
 rmSync(dist, { recursive: true, force: true });
 console.log("BUILD: phase=clean state=completed");
 
-await runPhase("astro", astroCommand, ["build", "--silent"]);
+const existingNodeOptions = process.env.NODE_OPTIONS?.trim() ?? "";
+const astroNodeOptions = [
+  existingNodeOptions,
+  `--max-old-space-size=${ASTRO_HEAP_LIMIT_MIB}`,
+].filter(Boolean).join(" ");
+console.log(`BUILD: phase=astro heapLimit=${ASTRO_HEAP_LIMIT_MIB}MiB`);
+await runPhase("astro", astroCommand, ["build", "--silent"], {
+  env: {
+    ...process.env,
+    NODE_OPTIONS: astroNodeOptions,
+  },
+});
 const astroOutput = collectOutputStats(dist);
 console.log(
   `BUILD: output=astro files=${astroOutput.files} html=${astroOutput.html} size=${formatBytes(astroOutput.bytes)} routes=${astroOutput.routeFamilies}`,

@@ -108,6 +108,7 @@ describe("Cloudflare Worker deploy config", () => {
       scripts?: Record<string, string>;
     };
     const astroBuildRunner = readConfig("web/scripts/build-astro.mjs");
+    const astroConfig = readConfig("web/astro.config.mjs");
     const unitStart = ciWorkflow.indexOf("\n  unit:\n");
     const webBuildStart = ciWorkflow.indexOf("\n  web-build:\n");
     const e2eStart = ciWorkflow.indexOf("\n  e2e:\n");
@@ -139,11 +140,20 @@ describe("Cloudflare Worker deploy config", () => {
     expect(ciWorkflow.slice(webBuildStart, e2eStart)).toContain(
       "npm run build:web",
     );
-    expect(webPackage.scripts?.build).toContain("node scripts/build-astro.mjs");
-    expect(webPackage.scripts?.build).toContain("pagefind --site dist");
-    expect(astroBuildRunner).toContain('spawn(command, ["build", "--silent"]');
+    expect(webPackage.scripts?.build).toBe("node scripts/build-astro.mjs");
+    expect(astroBuildRunner).toContain("spawn(command, args");
+    expect(astroBuildRunner).toContain('await runPhase("astro"');
+    expect(astroBuildRunner).toContain('await runPhase("pagefind"');
     expect(astroBuildRunner).toContain("const HEARTBEAT_MS = 30_000");
+    expect(astroBuildRunner).toContain("const MAX_HTML_FILES = 3_200");
+    expect(astroBuildRunner).toContain("Static HTML route budget exceeded");
+    expect(astroBuildRunner).toContain("peakRss=");
+    expect(astroBuildRunner).toContain("routeFamilies");
     expect(astroBuildRunner).toContain("clearInterval(heartbeat)");
+    expect(astroConfig).toContain("concurrency: 2");
+    expect(astroConfig).toContain("tech-dashboard-build-telemetry");
+    expect(astroConfig).toContain('"astro:build:generated"');
+    expect(astroConfig).toContain('"astro:build:done"');
   });
 
   it("guards emergency Direct Upload with an exact origin/main snapshot", () => {
@@ -199,6 +209,15 @@ describe("Cloudflare Worker deploy config", () => {
     expect(prePush).toMatch(
       /if \[ "\$web_build_ready" = "1" \][\s\S]*PLAYWRIGHT_REUSE_BUILD=1[\s\S]*else[\s\S]*npm --prefix "\$ROOT" run test:e2e/,
     );
+  });
+
+  it("loads search metadata from the shared client bundle instead of repeating JSON in every page", () => {
+    const portal = readConfig("web/src/layouts/Portal.astro");
+
+    expect(portal).toContain('import { CATEGORY_META } from "../lib/category-meta.ts"');
+    expect(portal).toContain('import { SOURCE_META, sourceLabel } from "../lib/source-meta.ts"');
+    expect(portal).not.toContain("data-category-search-meta");
+    expect(portal).not.toContain("data-source-search-meta");
   });
 
   it("passes the verified Web build from the CI unit job to Playwright", () => {

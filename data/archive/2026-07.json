@@ -1,8 +1,187 @@
 {
-  "generatedAt": "2026-07-23T08:09:48.791Z",
+  "generatedAt": "2026-07-24T01:31:23.906Z",
   "month": "2026-07",
-  "count": 1007,
+  "count": 1016,
   "entries": [
+    {
+      "id": "5bcf676b6878124e",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/ha-te/items/0b0bd40a8806572743c8",
+      "title": "なぜ「ステップバイステップで考えて」で賢くなるのか──Chain-of-Thoughtの機構と、その説明を信用してはいけない理由",
+      "titleJa": "なぜ「ステップバイステップで考えて」で賢くなるのか──Chain-of-Thoughtの機構と、その説明を信用してはいけない理由",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-24T00:02:41.000Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
+      "tags": [
+        "claude",
+        "qiita"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに：この連載について 前回まで全10回＋番外編で、「LLMの失敗モード」をひたすら扱ってきました。ポチョムキン理解、Lost in the Middle、Context Rot、迎合、Instruction Drift……要するに「AIはなぜ失敗するのか」の図鑑です...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzNzUzNDM5JTJGYjM3YTU1NzRkZTc3YWRkOTZiMWEzYzY2NzYyZTVkMjE5Njk5ODcxYSUyRnhfbGFyZ2UucG5nJTNGMTc4MzU2OTMyNT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MjdiMDEyOGM1NmI4ZTliOTAxMjExMzhkYzM0OGU2Zjc%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dc15aa450d45c6521fd86fa10cb62dc7a?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgxJUFBJUUzJTgxJTlDJUUzJTgwJThDJUUzJTgyJUI5JUUzJTgzJTg2JUUzJTgzJTgzJUUzJTgzJTk3JUUzJTgzJTkwJUUzJTgyJUE0JUUzJTgyJUI5JUUzJTgzJTg2JUUzJTgzJTgzJUUzJTgzJTk3JUUzJTgxJUE3JUU4JTgwJTgzJUUzJTgxJTg4JUUzJTgxJUE2JUUzJTgwJThEJUUzJTgxJUE3JUU4JUIzJUEyJUUzJTgxJThGJUUzJTgxJUFBJUUzJTgyJThCJUUzJTgxJUFFJUUzJTgxJThCJUUyJTk0JTgwJUUyJTk0JTgwQ2hhaW4tb2YtVGhvdWdodCVFMyU4MSVBRSVFNiVBOSU5RiVFNiVBNyU4QiVFMyU4MSVBOCVFMyU4MCU4MSVFMyU4MSU5RCVFMyU4MSVBRSVFOCVBQSVBQyVFNiU5OCU4RSVFMyU4MiU5MiVFNCVCRiVBMSVFNyU5NCVBOCVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTJkODIxN2Y3YjkwOWI0MWI4YmY3YmFiYWVkZmI3MzEy&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBoYS10ZSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTZhYzRkNDFmNzMwN2U4NzczYWUyNDg4MTBlY2RjZTNl&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=2a6a61d79d8dae6b079ac2837737cad1",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzNzUzNDM5JTJGYjM3YTU1NzRkZTc3YWRkOTZiMWEzYzY2NzYyZTVkMjE5Njk5ODcxYSUyRnhfbGFyZ2UucG5nJTNGMTc4MzU2OTMyNT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MjdiMDEyOGM1NmI4ZTliOTAxMjExMzhkYzM0OGU2Zjc%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dc15aa450d45c6521fd86fa10cb62dc7a?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgxJUFBJUUzJTgxJTlDJUUzJTgwJThDJUUzJTgyJUI5JUUzJTgzJTg2JUUzJTgzJTgzJUUzJTgzJTk3JUUzJTgzJTkwJUUzJTgyJUE0JUUzJTgyJUI5JUUzJTgzJTg2JUUzJTgzJTgzJUUzJTgzJTk3JUUzJTgxJUE3JUU4JTgwJTgzJUUzJTgxJTg4JUUzJTgxJUE2JUUzJTgwJThEJUUzJTgxJUE3JUU4JUIzJUEyJUUzJTgxJThGJUUzJTgxJUFBJUUzJTgyJThCJUUzJTgxJUFFJUUzJTgxJThCJUUyJTk0JTgwJUUyJTk0JTgwQ2hhaW4tb2YtVGhvdWdodCVFMyU4MSVBRSVFNiVBOSU5RiVFNiVBNyU4QiVFMyU4MSVBOCVFMyU4MCU4MSVFMyU4MSU5RCVFMyU4MSVBRSVFOCVBQSVBQyVFNiU5OCU4RSVFMyU4MiU5MiVFNCVCRiVBMSVFNyU5NCVBOCVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTJkODIxN2Y3YjkwOWI0MWI4YmY3YmFiYWVkZmI3MzEy&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBoYS10ZSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTZhYzRkNDFmNzMwN2U4NzczYWUyNDg4MTBlY2RjZTNl&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=2a6a61d79d8dae6b079ac2837737cad1",
+        "alt": "なぜ「ステップバイステップで考えて」で賢くなるのか──Chain-of-Thoughtの機構と、その説明を信用してはいけない理由",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "5a2b62073f07d7f8",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-07-23-copilot-cloud-agent-for-linear-is-now-generally-available",
+      "title": "Copilot cloud agent for Linear is now generally available",
+      "titleJa": "",
+      "titleEn": "Copilot cloud agent for Linear is now generally available",
+      "lang": "en",
+      "publishedAt": "2026-07-23T22:32:23.000Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
+      "tags": [
+        "agent",
+        "changelog",
+        "github"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "You can now assign issues in Linear to Copilot cloud agent, our asynchronous, autonomous background agent. When you assign a Linear issue to Copilot, it will: Analyze the issue contents… The post Copilot cloud agent for Linear is now generally available appeared first on The GitH"
+    },
+    {
+      "id": "de3bbc793dbd9999",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-07-23-github-mcp-server-supports-the-next-mcp-specification",
+      "title": "GitHub MCP Server supports the next MCP specification",
+      "titleJa": "",
+      "titleEn": "GitHub MCP Server supports the next MCP specification",
+      "lang": "en",
+      "publishedAt": "2026-07-23T20:38:22.000Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
+      "tags": [
+        "changelog",
+        "github",
+        "mcp-server"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The MCP protocol is going stateless on 28th July 2026, and the GitHub MCP Server supports the latest spec ahead of the official release. What’s changing The new stateless core… The post GitHub MCP Server supports the next MCP specification appeared first on The GitHub Blog ."
+    },
+    {
+      "id": "f21577a3ea7d9a13",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-07-23-github-mobile-fix-failing-actions-checks-with-copilot-cloud-agent",
+      "title": "GitHub Mobile: Fix failing Actions checks with Copilot cloud agent",
+      "titleJa": "",
+      "titleEn": "GitHub Mobile: Fix failing Actions checks with Copilot cloud agent",
+      "lang": "en",
+      "publishedAt": "2026-07-23T19:47:58.000Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
+      "tags": [
+        "agent",
+        "changelog",
+        "github"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Now when a GitHub Actions check fails on your pull request, you can ask Copilot coding agent to investigate and directly fix the problem from GitHub Mobile. From the failed… The post GitHub Mobile: Fix failing Actions checks with Copilot cloud agent appeared first on The GitHub B"
+    },
+    {
+      "id": "77ae58b403b70ea5",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-07-23-multi-select-fields-for-projects-and-issues-in-public-preview",
+      "title": "Multi-select fields for Projects and Issues in public preview",
+      "titleJa": "",
+      "titleEn": "Multi-select fields for Projects and Issues in public preview",
+      "lang": "en",
+      "publishedAt": "2026-07-23T18:19:14.000Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
+      "tags": [
+        "changelog",
+        "github"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "You can now create multi-select fields in Projects and Issue fields so a single field can hold more than one value. Tag an item with everything it relates to (e.g.,… The post Multi-select fields for Projects and Issues in public preview appeared first on The GitHub Blog ."
+    },
+    {
+      "id": "c3af2a595f5ea377",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-07-23-agent-automation-controls-in-github-issues-in-public-preview",
+      "title": "Agent automation controls in GitHub Issues in public preview",
+      "titleJa": "",
+      "titleEn": "Agent automation controls in GitHub Issues in public preview",
+      "lang": "en",
+      "publishedAt": "2026-07-23T15:30:29.000Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
+      "tags": [
+        "agent",
+        "changelog",
+        "github"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Agent automations increasingly label, type, assign, and close issues for you. GitHub Issues now shows the reason behind each change and lets you review them before they’re applied, so you… The post Agent automation controls in GitHub Issues in public preview appeared first on The"
+    },
+    {
+      "id": "2926413c9feb8ce3",
+      "source": "nvidia-blog",
+      "sourceType": "blog",
+      "url": "https://blogs.nvidia.com/blog/geforce-now-thursday-path-of-exile-allflame/",
+      "title": "GeForce NOW Sets Sail With ‘Path of Exile: Curse of the Allflame’ Joining the Cloud",
+      "titleJa": "",
+      "titleEn": "GeForce NOW Sets Sail With ‘Path of Exile: Curse of the Allflame’ Joining the Cloud",
+      "lang": "en",
+      "publishedAt": "2026-07-23T13:00:16.000Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
+      "tags": [
+        "news",
+        "nvidia"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Lock in and load up the cloud. GFN Thursday brings fresh updates and new adventures, all ready to play without waiting for downloads. Set sail in Path of Exile: Curse of the Allflame and charge in Battlefield 6 Season 4 both launching major content for members this week. Then rev"
+    },
+    {
+      "id": "c2ce77fbc0297c7d",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/akihidem/items/b39ca910dfbd90ad8f17",
+      "title": "AIの自己改善ループは「外部検証」で決まる：Copilot に事前指示で持たせる設計",
+      "titleJa": "AIの自己改善ループは「外部検証」で決まる：Copilot に事前指示で持たせる設計",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-23T12:00:01.000Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
+      "tags": [
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "AI コーディングアシスタントに「自分で見直して直して」と促すと、出力の質は上がります。ただし、それがどこまで本当に効くのかは研究上はっきり線が引かれています。結論を先に言うと、自己改善は外部の検証に接地して初めて効く。本稿はこの線を論文で確認し、そこから「Copilot ..."
+    },
     {
       "id": "55e8b238b483f10c",
       "source": "techcrunch",
@@ -53,6 +232,27 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "一次資料 zapabob/hypura — ストレージ階層対応GGUFランタイム zapabob/llama.cpp — SO(8) Triality / TurboQuant KVキャッシュ研究fork zapabob/Turboquant-CUDA — KVキャッシュ量子化研究・GGUF生成ツールチェーン なぜこの問題が起きるのか Qwen3-235B や DeepSeek V3 などのSparse MoEモデルは、全パラメータのうち実際に推論で使うのはトークンあたり数エキスパートだけです。しかし、モデル全体のGGUFファイルは20〜200GB以上に"
+    },
+    {
+      "id": "be31822561d6d555",
+      "source": "nvidia-blog",
+      "sourceType": "blog",
+      "url": "https://blogs.nvidia.com/blog/naval-postgraduate-school-dgx-ai-supercomputer/",
+      "title": "NVIDIA AI Supercomputer Comes Online at Naval Postgraduate School",
+      "titleJa": "",
+      "titleEn": "NVIDIA AI Supercomputer Comes Online at Naval Postgraduate School",
+      "lang": "en",
+      "publishedAt": "2026-07-23T02:00:46.000Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
+      "tags": [
+        "news",
+        "nvidia"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "NVIDIA founder and CEO Jensen Huang today visited the Naval Postgraduate School in Monterey, California, to commission an NVIDIA DGX GB300 system — bringing one of the world’s most powerful AI platforms fully online for the students, researchers and faculty at the U.S. military’s"
     },
     {
       "id": "ebe06e95c25aa8db",
@@ -138,7 +338,7 @@
       "titleEn": "Quoting Thomas Ptacek",
       "lang": "en",
       "publishedAt": "2026-07-22T23:59:01.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "llm",
         "local-llm",
@@ -247,7 +447,7 @@
       "titleEn": "Are AI labs pelicanmaxxing?",
       "lang": "en",
       "publishedAt": "2026-07-22T23:01:00.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "ai-labs",
         "benchmark",
@@ -400,7 +600,7 @@
       "titleEn": "Copilot vs. raw API access: What are you actually paying for?",
       "lang": "en",
       "publishedAt": "2026-07-22T19:00:00.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "api",
         "copilot",
@@ -413,8 +613,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "Copilot now bills usage at listed API rates. Compare direct model access with the coding workflow, policy, and harness work around it. The post Copilot vs. raw API access: What are you actually paying for? appeared first on The GitHub Blog .",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "Copilot now bills usage at listed API rates. Compare direct model access with the coding workflow, policy, and harness work around it. The post Copilot vs. raw API access: What are you actually paying for? appeared first on The GitHub Blog ."
     },
     {
       "id": "5c7a0e9ed0d3e365",
@@ -458,7 +658,7 @@
       "titleEn": "New Copilot usage metrics impact dashboard",
       "lang": "en",
       "publishedAt": "2026-07-22T16:21:47.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "analytics",
         "changelog",
@@ -519,7 +719,7 @@
       "titleEn": "Upcoming GHES change impacting uploading support bundles",
       "lang": "en",
       "publishedAt": "2026-07-22T15:05:19.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "breaking-change",
         "changelog",
@@ -617,7 +817,7 @@
       "titleEn": "NVIDIA Open Sources First GPU-Accelerated Medical Physics Simulation Framework",
       "lang": "en",
       "publishedAt": "2026-07-22T13:00:11.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "gpu",
         "healthcare",
@@ -668,7 +868,7 @@
       "titleEn": "The article walks through building a Claude-powered analysis agent directly…",
       "lang": "ja",
       "publishedAt": "2026-07-22T10:03:29.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -728,7 +928,7 @@
       "titleEn": "This article explains how to use Copilot Agent to automatically run code…",
       "lang": "ja",
       "publishedAt": "2026-07-22T06:18:25.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "agent",
         "automation",
@@ -957,7 +1157,7 @@
       "titleEn": "Built in Fort Worth: Wistron Opens Advanced Manufacturing Plant to Produce NVIDIA AI Systems",
       "lang": "en",
       "publishedAt": "2026-07-21T22:35:45.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "ai-hardware",
         "manufacturing",
@@ -1463,7 +1663,7 @@
       "titleEn": "How to build interactive experiences with canvases",
       "lang": "en",
       "publishedAt": "2026-07-21T16:00:00.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "canvas",
         "copilot",
@@ -1476,6 +1676,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Canvases turn AI into interactive workspaces where you can visualize information, explore workflows, and take action across complex tasks. The post How to build interactive experiences with canvases appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/06/MSFTBuild_Blog_Header_01.jpg?fit=2400%2C1260",
@@ -1484,8 +1685,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "527c90fe001be1f4",
@@ -1497,7 +1697,7 @@
       "titleEn": "NVIDIA Vera Rubin Driving Performance Per Watt, Lowest Token Cost for Partners Worldwide",
       "lang": "en",
       "publishedAt": "2026-07-21T15:36:43.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "ai-infrastructure",
         "data-center",
@@ -1613,7 +1813,7 @@
       "titleEn": "Gemini 3.6 Flash is now available in GitHub Copilot",
       "lang": "en",
       "publishedAt": "2026-07-21T15:04:31.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "ai-models",
         "changelog",
@@ -1638,7 +1838,7 @@
       "titleEn": "Built for Vera Rubin, NVIDIA Spectrum-6 Arrives in Gigascale AI Factories",
       "lang": "en",
       "publishedAt": "2026-07-21T15:00:20.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "ai-infrastructure",
         "data-center",
@@ -1847,7 +2047,7 @@
       "titleEn": "Nativ: Run AI models locally on your Mac",
       "lang": "en",
       "publishedAt": "2026-07-21T14:22:27.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "llm",
         "local-ai",
@@ -2028,7 +2228,7 @@
       "titleEn": "NVIDIA and Partners Build in America, for America",
       "lang": "en",
       "publishedAt": "2026-07-21T13:00:47.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "ai-infrastructure",
         "made-in-usa",
@@ -2084,7 +2284,7 @@
       "titleEn": "A non-designer developer shares how they used GitHub Copilot to handle the…",
       "lang": "ja",
       "publishedAt": "2026-07-21T12:47:36.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "github-copilot",
         "no-code",
@@ -2858,7 +3058,7 @@
       "titleEn": "AI credit pools for cost centers in the billing UI",
       "lang": "en",
       "publishedAt": "2026-07-20T18:24:14.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "ai-credits",
         "billing",
@@ -2945,7 +3145,7 @@
       "titleEn": "Who’s Afraid of Chinese Models?",
       "lang": "en",
       "publishedAt": "2026-07-20T17:09:19.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "ai-safety",
         "chinese-models",
@@ -3091,7 +3291,7 @@
       "titleEn": "Copilot users can now see AI credits used per billing cycle",
       "lang": "en",
       "publishedAt": "2026-07-20T16:00:14.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "ai-credits",
         "billing",
@@ -3216,7 +3416,7 @@
       "titleEn": "At SIGGRAPH, NVIDIA Advances Graphics and Simulation With Agentic and Physical AI",
       "lang": "en",
       "publishedAt": "2026-07-20T15:00:53.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "agent",
         "news",
@@ -6882,7 +7082,7 @@
       "titleEn": "Kimi K3, and what we can still learn from the pelican benchmark",
       "lang": "en",
       "publishedAt": "2026-07-16T20:19:30.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "benchmark",
         "kimi-k3",
@@ -7351,7 +7551,7 @@
       "titleEn": "Inkling: Our open-weights model",
       "lang": "en",
       "publishedAt": "2026-07-16T15:35:25.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "llm",
         "local-llm",
@@ -16804,7 +17004,7 @@
       "titleEn": "Better tools made Copilot code review worse. Here’s how we actually improved it.",
       "lang": "en",
       "publishedAt": "2026-07-10T15:57:47.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "ai-quality",
         "benchmark",
@@ -16817,8 +17017,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "How migrating Copilot code review to shared Unix-style code exploration tools reduced review cost by reshaping agent workflows around pull request evidence. The post Better tools made Copilot code review worse. Here’s how we actually improved it. appeared first on The GitHub Blog",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "How migrating Copilot code review to shared Unix-style code exploration tools reduced review cost by reshaping agent workflows around pull request evidence. The post Better tools made Copilot code review worse. Here’s how we actually improved it. appeared first on The GitHub Blog"
     },
     {
       "id": "60fd74dad92cbcc4",
@@ -18543,6 +18743,8 @@
       "title": "Ollama Releases v0.32.0-rc0",
       "titleJa": "Ollama v0.32.0 リリース",
       "titleEn": "Ollama Releases v0.32.0-rc0",
+      "summaryJa": "OllamaがローカルLLM実行ツールのv0.32.0をリリースした。新機能や改善が加わり、ローカル環境でのモデル運用がさらに向上する。",
+      "summaryEn": "Ollama has released v0.32.0 of its local LLM runtime, bringing new features and improvements that enhance model management and inference on local hardware.",
       "lang": "en",
       "publishedAt": "2026-07-10T00:27:31.000Z",
       "collectedAt": "2026-07-21T21:53:58.562Z",
@@ -18555,7 +18757,7 @@
       "category": "local-llm",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "cmd: agent UI ( #17017 )",
       "image": {
         "src": "https://avatars.githubusercontent.com/u/29360864?s=60&v=4",
@@ -18574,6 +18776,8 @@
       "title": "OpenAI says GPT 5.6 is the ‘preferred model’ for Microsoft Copilot 365 amid breakup chatter",
       "titleJa": "OpenAI、Microsoft Copilot 365向け「推奨モデル」にGPT-5.6を指定——提携解消の噂の中で",
       "titleEn": "OpenAI says GPT 5.6 is the ‘preferred model’ for Microsoft Copilot 365 amid breakup chatter",
+      "summaryJa": "OpenAIはGPT-5.6をMicrosoft Copilot 365の推奨モデルに位置付けた。両社の関係見直し報道が続く中、技術的な協力関係が継続していることを示す動きとして注目される。",
+      "summaryEn": "OpenAI has designated GPT-5.6 as the preferred model for Microsoft Copilot 365, signaling continued technical collaboration despite ongoing speculation about a potential breakup between the two companies.",
       "lang": "en",
       "publishedAt": "2026-07-10T00:16:54.000Z",
       "collectedAt": "2026-07-11T06:00:54.515Z",
@@ -18589,7 +18793,7 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "OpenAI's new family of models will continue to power Microsoft's suite of workplace and productivity apps."
     },
     {
@@ -18624,6 +18828,8 @@
       "title": "Profiling in PyTorch (Part 3): Attention is all you profile",
       "titleJa": "PyTorchでのプロファイリング（第3回）：アテンション機構を徹底解析",
       "titleEn": "Profiling in PyTorch (Part 3): Attention is all you profile",
+      "summaryJa": "PyTorchのプロファイリングシリーズ第3弾として、LLMの中核であるアテンション機構の計算ボトルネックを特定・最適化する手法を解説。実際のパフォーマンス改善に直結する実践的な内容となっている。",
+      "summaryEn": "The third installment of a PyTorch profiling series focuses on diagnosing and optimizing attention mechanism bottlenecks in large language models, offering practical techniques for real-world performance gains.",
       "lang": "en",
       "publishedAt": "2026-07-10T00:00:00.000Z",
       "collectedAt": "2026-07-23T08:09:43.073Z",
@@ -18639,7 +18845,7 @@
       "category": "local-llm",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot"
+      "archiveTier": "warm"
     },
     {
       "id": "e8e2c91188516b96",
@@ -18649,6 +18855,8 @@
       "title": "Side Chats and Conversation Search",
       "titleJa": "サイドチャットと会話検索機能の追加",
       "titleEn": "Side Chats and Conversation Search",
+      "summaryJa": "Cursorにサイドチャットと会話検索機能が追加され、複数の会話を並行管理しながら過去のやり取りを素早く検索できるようになった。作業効率と情報の再利用性が大幅に向上する。",
+      "summaryEn": "Cursor introduces Side Chats and Conversation Search, enabling users to run multiple chat threads simultaneously and quickly retrieve past conversations, significantly improving multitasking and workflow continuity.",
       "lang": "en",
       "publishedAt": "2026-07-10T00:00:00.000Z",
       "collectedAt": "2026-07-22T23:53:51.923Z",
@@ -18662,7 +18870,7 @@
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "This release makes it easier to stay in flow with side chats that run alongside your main chat, the ability to search agent transcripts, and simplified project and repo pickers."
     },
     {
@@ -18673,6 +18881,8 @@
       "title": "Fidji Simo steps down from OpenAI’s No. 2 role",
       "titleJa": "Fidji SimoがOpenAIのNo.2ポジションを退任",
       "titleEn": "Fidji Simo steps down from OpenAI’s No. 2 role",
+      "summaryJa": "OpenAIのCOOを務めていたFidji Simoが同社の最高執行責任者職を退くことが明らかになった。OpenAIの経営陣の変動はAI業界全体の注目を集める。",
+      "summaryEn": "Fidji Simo is stepping down from her role as OpenAI's second-in-command, marking another significant leadership change at the influential AI company.",
       "lang": "en",
       "publishedAt": "2026-07-09T23:38:00.000Z",
       "collectedAt": "2026-07-11T06:00:54.515Z",
@@ -18687,7 +18897,7 @@
       "category": "tech-news",
       "importance": 3,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "OpenAI's No. 2 executive, Fidji Simo, is stepping down from her full-time role after her medical leave proved longer than expected — a leadership vacuum that comes at a tricky time as the company eyes a possible IPO and races to catch Anthropic in the enterprise market."
     },
     {
@@ -18757,6 +18967,8 @@
       "title": "OpenAI wants its new tool to do your work for you and with you",
       "titleJa": "OpenAIが仕事を代行・協働する新ツールを発表",
       "titleEn": "OpenAI wants its new tool to do your work for you and with you",
+      "summaryJa": "OpenAIは、ユーザーの代わりに作業を自律実行するだけでなく、共同作業も可能な新ツールを発表した。AIエージェントの実用化が加速する中、働き方への影響が注目される。",
+      "summaryEn": "OpenAI unveiled a new agentic tool designed to both complete tasks autonomously on behalf of users and collaborate with them in real time, marking a significant step toward AI taking an active role in professional workflows.",
       "lang": "en",
       "publishedAt": "2026-07-09T21:25:55.000Z",
       "collectedAt": "2026-07-11T00:00:22.105Z",
@@ -18771,7 +18983,7 @@
       "category": "tech-news",
       "importance": 3,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Rebranded Codex promises independent workflows that can run \"for hours if needed.\""
     },
     {
@@ -18803,6 +19015,8 @@
       "title": "New pull requests dashboard is now generally available",
       "titleJa": "プルリクエストの新しいダッシュボードが一般提供開始",
       "titleEn": "New pull requests dashboard is now generally available",
+      "summaryJa": "GitHubのプルリクエスト新ダッシュボードが正式リリースされ、複数リポジトリにまたがるPRを一元管理できるようになった。開発者のレビュー効率向上に貢献する。",
+      "summaryEn": "GitHub's redesigned pull requests dashboard is now generally available, enabling developers to track and manage PRs across multiple repositories from a single unified view.",
       "lang": "en",
       "publishedAt": "2026-07-09T20:48:29.000Z",
       "collectedAt": "2026-07-14T19:00:20.276Z",
@@ -18816,7 +19030,7 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "The refreshed pull requests dashboard is now generally available at github.com/pulls. It gives you a single home to track, prioritize, and act on the pull requests that need your attention,… The post New pull requests dashboard is now generally available appeared first on The Git"
     },
     {
@@ -18827,6 +19041,8 @@
       "title": "OpenHands cloud 1.45.1",
       "titleJa": "OpenHands cloud 1.45.1",
       "titleEn": "OpenHands cloud 1.45.1",
+      "summaryJa": "OpenHands cloudバージョン1.45.1がリリースされ、クラウド環境における安定性と細かな改善が提供された。ユーザーはアップデートを適用することで最新の修正を受け取れる。",
+      "summaryEn": "OpenHands cloud 1.45.1 is a routine patch release delivering incremental fixes and stability improvements to the cloud-hosted environment.",
       "lang": "en",
       "publishedAt": "2026-07-09T20:07:45.000Z",
       "collectedAt": "2026-07-22T23:53:51.923Z",
@@ -18839,7 +19055,7 @@
       "category": "opencode",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "1.45.1 (2026-07-09) What's Changed Maintenance chore(main): release 1.11.0 by @openhands-release-bot[bot] in #15202 Full Changelog : cloud-1.45.0...cloud-1.45.1 This PR was generated with Release Please . See documentation .",
       "image": {
         "src": "https://avatars.githubusercontent.com/u/225919603?s=60&v=4",
@@ -18891,6 +19107,8 @@
       "title": "OpenHands Releases 1.11.0",
       "titleJa": "OpenHands 1.11.0 リリース",
       "titleEn": "OpenHands Releases 1.11.0",
+      "summaryJa": "OpenHands 1.11.0がリリースされ、AIコーディングエージェントの新機能や改善が加えられた。開発ワークフローの効率化に貢献するアップデートとなっている。",
+      "summaryEn": "OpenHands 1.11.0 has been released, bringing new features and improvements to the AI coding agent platform that enhance developer productivity.",
       "lang": "en",
       "publishedAt": "2026-07-09T19:37:16.000Z",
       "collectedAt": "2026-07-22T23:53:51.923Z",
@@ -18904,7 +19122,7 @@
       "category": "opencode",
       "importance": 3,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "1.11.0 (2026-07-09) What's Changed Features feat: pass repository metadata to observability traces by @neubig in #14431 feat(enterprise): Agent Profiles on the cloud/SaaS backend ( #15044 ) by @simonrosenberg in #15060 feat(backend): Add Budgets dashboard and expand Usage Dashboa",
       "image": {
         "src": "https://avatars.githubusercontent.com/u/225919603?s=60&v=4",
@@ -18923,6 +19141,8 @@
       "title": "Zed Editor Releases v1.10.1",
       "titleJa": "Zed Editor v1.10.1 リリース",
       "titleEn": "Zed Editor Releases v1.10.1",
+      "summaryJa": "Zed EditorのバージョンV1.10.1がリリースされ、バグ修正や安定性の改善が含まれている。開発者はより安定した編集環境を利用できる。",
+      "summaryEn": "Zed Editor v1.10.1 has been released as a patch update, delivering bug fixes and stability improvements for developers using the editor.",
       "lang": "en",
       "publishedAt": "2026-07-09T19:36:47.000Z",
       "collectedAt": "2026-07-12T18:00:38.142Z",
@@ -18936,7 +19156,7 @@
       "category": "cursor",
       "importance": 3,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "open_ai: Added support for GPT 5.6 Sol/Terra/Luna ( #60699 ) cli: Fixed an issue where the previous workspace would not be restored when using cli_default_open_behavior: new_window and no path was provided ( #60672 )",
       "image": {
         "src": "https://avatars.githubusercontent.com/u/79345384?s=60&v=4",
@@ -18955,6 +19175,8 @@
       "title": "OpenHands cloud 1.45.0",
       "titleJa": "OpenHands cloud 1.45.0",
       "titleEn": "OpenHands cloud 1.45.0",
+      "summaryJa": "OpenHands cloudのバージョン1.45.0がリリースされ、クラウド版における機能改善とバグ修正が提供された。",
+      "summaryEn": "OpenHands cloud 1.45.0 has been released, delivering incremental improvements and bug fixes to the cloud-hosted version of the platform.",
       "lang": "en",
       "publishedAt": "2026-07-09T19:28:57.000Z",
       "collectedAt": "2026-07-22T23:53:51.923Z",
@@ -18967,7 +19189,7 @@
       "category": "opencode",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "1.45.0 (2026-07-09) What's Changed Features feat(enterprise): Agent Profiles on the cloud/SaaS backend ( #15044 ) by @simonrosenberg in #15060 feat(backend): Add Budgets dashboard and expand Usage Dashboard by @saurya in #15149 feat: budgets and usage monitoring UI by @saurya in ",
       "image": {
         "src": "https://avatars.githubusercontent.com/u/225919603?s=60&v=4",
@@ -18986,6 +19208,8 @@
       "title": "Zed Editor Releases v1.11.1-pre",
       "titleJa": "Zed Editor v1.11.1-pre リリース",
       "titleEn": "Zed Editor Releases v1.11.1-pre",
+      "summaryJa": "Zed EditorのプレリリースバージョンV1.11.1-preが公開された。最新の修正や改善が含まれており、安定版リリース前の検証に役立つ。",
+      "summaryEn": "Zed Editor published v1.11.1-pre, a pre-release build containing the latest bug fixes and improvements ahead of a stable release.",
       "lang": "en",
       "publishedAt": "2026-07-09T19:28:12.000Z",
       "collectedAt": "2026-07-21T18:08:31.806Z",
@@ -18999,7 +19223,7 @@
       "category": "cursor",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "open_ai: Added support for GPT 5.6 Sol/Terra/Luna ( #60698 ) cli: Fixed an issue where the previous workspace would not be restored when using cli_default_open_behavior: new_window and no path was provided ( #60671 )",
       "image": {
         "src": "https://avatars.githubusercontent.com/in/2008959?s=60&v=4",
@@ -19018,6 +19242,8 @@
       "title": "langchain-fireworks==1.4.4",
       "titleJa": "langchain-fireworks==1.4.4 リリース",
       "titleEn": "langchain-fireworks==1.4.4",
+      "summaryJa": "LangChainのFireworks AI統合パッケージ `langchain-fireworks` がバージョン1.4.4にアップデートされた。このパッチリリースはFireworks AIモデルをLangChainで利用する際の安定性と互換性を改善する。",
+      "summaryEn": "The langchain-fireworks package has been updated to version 1.4.4, delivering incremental bug fixes and stability improvements to the LangChain integration for Fireworks AI hosted models.",
       "lang": "en",
       "publishedAt": "2026-07-09T17:56:51.000Z",
       "collectedAt": "2026-07-23T08:09:43.073Z",
@@ -19033,7 +19259,7 @@
       "category": "agent-fw",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Changes since langchain-fireworks==1.4.3 release(fireworks): 1.4.4 ( #38753 ) fix(fireworks): report cached prompt token usage ( #38751 ) chore(deps): refresh lockfiles ( #38746 ) chore(model-profiles): refresh model profile data ( #38663 ) chore: bump pytest from 9.1.0 to 9.1.1 ",
       "image": {
         "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
@@ -19052,6 +19278,8 @@
       "title": "Responsibly building the AI future",
       "titleJa": "AIの未来を責任ある形で構築する",
       "titleEn": "Responsibly building the AI future",
+      "summaryJa": "MicrosoftはAI開発における責任ある取り組みと安全性への取り組みを改めて強調し、社会的影響を考慮したAI構築の方針を示した。",
+      "summaryEn": "Microsoft outlines its principles and commitments for developing AI responsibly, emphasizing safety, accountability, and societal impact as core pillars of its AI strategy.",
       "lang": "en",
       "publishedAt": "2026-07-09T17:24:26.000Z",
       "collectedAt": "2026-07-11T13:00:29.750Z",
@@ -19066,7 +19294,7 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "The post Responsibly building the AI future appeared first on Source ."
     },
     {
@@ -19077,6 +19305,8 @@
       "title": "Bringing Ode Poetry to life with MAI’s audio models",
       "titleJa": "MAIの音声モデルでOdeポエトリーに命を吹き込む",
       "titleEn": "Bringing Ode Poetry to life with MAI’s audio models",
+      "summaryJa": "MicrosoftのMAI音声モデルを活用し、Odeの詩作品に音声表現を付与する取り組みが紹介された。AIによる音声合成が創作表現の新たな可能性を広げる点で注目される。",
+      "summaryEn": "Microsoft showcased how MAI's audio models can bring Ode poetry to life through AI-generated voice, highlighting a creative use case that expands the expressive potential of generative audio technology.",
       "lang": "en",
       "publishedAt": "2026-07-09T17:16:54.000Z",
       "collectedAt": "2026-07-11T13:00:29.750Z",
@@ -19092,7 +19322,7 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "The post Bringing Ode Poetry to life with MAI’s audio models appeared first on Source ."
     },
     {
@@ -19103,6 +19333,8 @@
       "title": "OpenAI’s GPT-5.6 Sol, Terra, and Luna are now available in GitHub Copilot",
       "titleJa": "OpenAIのGPT-5.6 Sol、Terra、LunaがGitHub Copilotで利用可能に",
       "titleEn": "OpenAI’s GPT-5.6 Sol, Terra, and Luna are now available in GitHub Copilot",
+      "summaryJa": "OpenAIの新モデルGPT-5.6の3バリアント（Sol・Terra・Luna）がGitHub Copilotに追加され、用途に応じたモデル選択が可能になった。",
+      "summaryEn": "Three variants of OpenAI's GPT-5.6—Sol, Terra, and Luna—are now available in GitHub Copilot, giving developers more model choices tuned for different use cases.",
       "lang": "en",
       "publishedAt": "2026-07-09T16:41:29.000Z",
       "collectedAt": "2026-07-14T13:04:32.379Z",
@@ -19116,7 +19348,7 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "OpenAI’s GPT-5.6 family is now rolling out in GitHub Copilot. GPT-5.6 comes in three variants, Sol, Terra, and Luna, so you can match the model to the job, whether that’s… The post OpenAI’s GPT-5.6 Sol, Terra, and Luna are now available in GitHub Copilot appeared first on The Git"
     },
     {
@@ -19190,6 +19422,8 @@
       "title": "We're rolling out AlphaEvolve widely to solve Google Cloud customers' hardest problems.",
       "titleJa": "AlphaEvolveをGoogle Cloudの顧客向けに広く展開",
       "titleEn": "We're rolling out AlphaEvolve widely to solve Google Cloud customers' hardest problems.",
+      "summaryJa": "GoogleはAIを活用した最適化システムAlphaEvolveをGoogle Cloudの顧客向けに広く提供開始した。複雑な計算・設計上の課題解決を支援し、企業の競争力向上に貢献する。",
+      "summaryEn": "Google is broadly rolling out AlphaEvolve, its AI-driven evolutionary optimization system, to Google Cloud customers, enabling them to tackle complex engineering and scientific problems at scale.",
       "lang": "en",
       "publishedAt": "2026-07-09T16:00:00.000Z",
       "collectedAt": "2026-07-16T04:49:47.618Z",
@@ -19204,7 +19438,7 @@
       "category": "tech-news",
       "importance": 3,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Finding the most efficient algorithm — whether designing a microchip, routing a logistics network or accelerating medical research — can be challenging, with many possib…",
       "image": {
         "src": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/1-Blog_hero_pic.max-600x600.format-webp.webp",
@@ -19223,6 +19457,8 @@
       "title": "Expanding AI transparency in ads",
       "titleJa": "広告におけるAI透明性の拡充",
       "titleEn": "Expanding AI transparency in ads",
+      "summaryJa": "GoogleはAIが生成・加工した広告コンテンツにラベルを表示する透明性機能を拡充し、ユーザーが広告の制作背景を把握しやすくなる。",
+      "summaryEn": "Google is expanding AI transparency labels in ads, helping users identify when ad content has been created or modified by AI tools.",
       "lang": "en",
       "publishedAt": "2026-07-09T16:00:00.000Z",
       "collectedAt": "2026-07-16T04:49:47.618Z",
@@ -19237,7 +19473,7 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "We're introducing new AI transparency features to help people understand the ads they see and give advertisers simple disclosure tools.",
       "image": {
         "src": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/Expanding_AI_transparency_hero.max-600x600.format-webp.webp",
@@ -19256,6 +19492,8 @@
       "title": "Organization-level targeting for GitHub Code Quality",
       "titleJa": "GitHub Code Quality の組織レベルターゲティング",
       "titleEn": "Organization-level targeting for GitHub Code Quality",
+      "summaryJa": "GitHub Code Quality で組織レベルのターゲティングが利用可能になり、管理者はリポジトリを個別に設定せず組織全体へ一括でコード品質ポリシーを適用できます。大規模環境での管理効率が大きく向上します。",
+      "summaryEn": "GitHub Code Quality now supports organization-level targeting, letting admins roll out code quality policies across all repositories at once rather than configuring each repo individually, simplifying governance at scale.",
       "lang": "en",
       "publishedAt": "2026-07-09T15:54:01.000Z",
       "collectedAt": "2026-07-14T13:04:32.379Z",
@@ -19271,7 +19509,7 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Organization owners can now target a subset of repositories when enabling or disabling GitHub Code Quality, rather than applying it to every repository at once. This gives you more granular… The post Organization-level targeting for GitHub Code Quality appeared first on The GitHu",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/07/618498057-eb52168e-d6b3-4c23-8f00-710e4e316e68.jpeg",
@@ -19316,6 +19554,8 @@
       "title": "Ask Copilot for a repository overview",
       "titleJa": "Copilot にリポジトリの概要を質問できる機能が追加",
       "titleEn": "Ask Copilot for a repository overview",
+      "summaryJa": "GitHub Copilot にリポジトリの概要を質問すると、コードベースの構造や目的を自動でまとめた説明が得られる機能が追加された。見慣れないリポジトリへの理解を効率的に深めることができる。",
+      "summaryEn": "GitHub Copilot can now generate an instant overview of any repository, helping developers quickly understand a codebase's structure and purpose without manual exploration.",
       "lang": "en",
       "publishedAt": "2026-07-09T14:25:33.000Z",
       "collectedAt": "2026-07-14T13:04:32.379Z",
@@ -19330,7 +19570,7 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "You can now ask GitHub Copilot for a high-level overview of any repository you’re exploring for the first time. When you visit the home page of a repository you haven’t… The post Ask Copilot for a repository overview appeared first on The GitHub Blog ."
     },
     {
@@ -19373,6 +19613,8 @@
       "title": "OpenHands cloud 1.44.0",
       "titleJa": "OpenHands cloud 1.44.0",
       "titleEn": "OpenHands cloud 1.44.0",
+      "summaryJa": "OpenHands のクラウド版バージョン 1.44.0 がリリースされた。継続的な改善と安定性向上を目的としたルーティンアップデートである。",
+      "summaryEn": "OpenHands cloud version 1.44.0 has been released, delivering routine improvements and stability updates to the cloud-hosted AI coding agent platform.",
       "lang": "en",
       "publishedAt": "2026-07-09T14:16:09.000Z",
       "collectedAt": "2026-07-22T23:53:51.923Z",
@@ -19386,7 +19628,7 @@
       "category": "opencode",
       "importance": 3,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "1.44.0 (2026-07-09) What's Changed Features feat: pass repository metadata to observability traces by @neubig in #14431 Maintenance chore: bump SDK packages to v1.34.0 by @all-hands-bot in #15200 Full Changelog : cloud-1.43.0...cloud-1.44.0 This PR was generated with Release Plea",
       "image": {
         "src": "https://avatars.githubusercontent.com/u/225919603?s=60&v=4",
@@ -19405,6 +19647,8 @@
       "title": "GPT-5.6 is now the preferred model in Microsoft 365 Copilot",
       "titleJa": "GPT-5.6 が Microsoft 365 Copilot の優先モデルに",
       "titleEn": "GPT-5.6 is now the preferred model in Microsoft 365 Copilot",
+      "summaryJa": "OpenAI の GPT-5.6 が Microsoft 365 Copilot における標準モデルとして採用され、ビジネスユーザーの生産性向上に向けた両社の連携が一層深まった。",
+      "summaryEn": "OpenAI's GPT-5.6 has been designated the default model powering Microsoft 365 Copilot, bringing the latest capabilities to enterprise productivity tools used by millions.",
       "lang": "en",
       "publishedAt": "2026-07-09T13:00:00.000Z",
       "collectedAt": "2026-07-23T08:09:43.073Z",
@@ -19418,7 +19662,7 @@
       "category": "codex",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Learn how GPT-5.6 powers Microsoft 365 Copilot with stronger AI capabilities across Word, Excel, PowerPoint, Chat, and Cowork for faster, higher-quality work."
     },
     {
@@ -19480,6 +19724,8 @@
       "title": "GPT-5.6: Frontier intelligence that scales with your ambition",
       "titleJa": "GPT-5.6: 野心に応えるフロンティア・インテリジェンス",
       "titleEn": "GPT-5.6: Frontier intelligence that scales with your ambition",
+      "summaryJa": "OpenAIがGPT-5.6を発表し、さまざまなユースケースに合わせてスケールする高度な推論能力を提供する。開発者・企業が複雑なタスクをより効率的に処理できる点が注目される。",
+      "summaryEn": "OpenAI launched GPT-5.6, a new frontier model designed to scale intelligence across diverse use cases, offering developers and enterprises enhanced reasoning and task-handling capabilities.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
       "collectedAt": "2026-07-23T08:09:43.073Z",
@@ -19493,7 +19739,7 @@
       "category": "codex",
       "importance": 3,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "More intelligence from every token, stronger performance per dollar, and more capability on demand for your hardest work."
     },
     {
@@ -19504,6 +19750,8 @@
       "title": "ChatGPT is now a partner for your most ambitious work",
       "titleJa": "ChatGPTが野心的な仕事のパートナーに進化",
       "titleEn": "ChatGPT is now a partner for your most ambitious work",
+      "summaryJa": "OpenAIはChatGPTを単なる質問応答ツールから、複雑・大規模な仕事を共同で推進できるパートナーへと強化した。これにより、プロフェッショナルな業務での活用範囲が大きく広がる。",
+      "summaryEn": "OpenAI has repositioned ChatGPT as a capable collaborator for complex, high-stakes work, expanding its role beyond simple Q&A into a true professional partner for ambitious projects.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
       "collectedAt": "2026-07-23T08:09:43.073Z",
@@ -19516,7 +19764,7 @@
       "category": "codex",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "ChatGPT Work is an agent that can take action across your apps and files, stay with a project for hours if needed, and turn a goal into finished work."
     },
     {
@@ -19527,6 +19775,8 @@
       "title": "GPT-5.5 Bio Bug Bounty",
       "titleJa": "GPT-5.5 バイオ・バグバウンティプログラム",
       "titleEn": "GPT-5.5 Bio Bug Bounty",
+      "summaryJa": "OpenAIはGPT-5.5の生物学的リスクに関する脆弱性を対象としたバグバウンティプログラムを開始し、外部研究者によるバイオセーフティ評価を強化する取り組みを始めた。",
+      "summaryEn": "OpenAI launched a bio-focused bug bounty program for GPT-5.5, inviting external researchers to probe the model for biosafety vulnerabilities and help strengthen its defenses against biological misuse.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
       "collectedAt": "2026-07-23T08:09:43.073Z",
@@ -19541,7 +19791,7 @@
       "category": "codex",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Details about the OpenAI Bio Bounty program"
     },
     {
@@ -20285,7 +20535,7 @@
       "titleEn": "Automating cross-repo documentation with GitHub Agentic Workflows",
       "lang": "en",
       "publishedAt": "2026-07-08T21:11:56.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "agent",
         "agentic-workflows",
@@ -20299,6 +20549,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Explore how the Aspire team turns merged product changes into SME-reviewed docs pull requests, closing the gap between release and documentation. The post Automating cross-repo documentation with GitHub Agentic Workflows appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/01/generic-mona-copilot-logo.png",
@@ -20307,8 +20558,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "e498a5108f393999",
@@ -20644,7 +20894,7 @@
       "titleEn": "How GitHub Copilot enables zero DNS configuration for GitHub Pages",
       "lang": "en",
       "publishedAt": "2026-07-08T16:00:00.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "automation",
         "copilot",
@@ -20657,8 +20907,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "Go from an empty repository to a live custom domain with HTTPS in about 14 minutes, without manually editing a single DNS record. The post How GitHub Copilot enables zero DNS configuration for GitHub Pages appeared first on The GitHub Blog .",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "Go from an empty repository to a live custom domain with HTTPS in about 14 minutes, without manually editing a single DNS record. The post How GitHub Copilot enables zero DNS configuration for GitHub Pages appeared first on The GitHub Blog ."
     },
     {
       "id": "29e7163d7a001a6e",
@@ -23426,7 +23676,7 @@
       "summaryEn": "Anthropic examines the core values and character at the heart of Claude, revealing the fundamental principles and motivations that shape how the AI thinks and behaves. Understanding Claude's inner life matters for transparency in AI development.",
       "lang": "en",
       "publishedAt": "2026-07-06T16:59:51.000Z",
-      "collectedAt": "2026-07-23T01:45:56.290Z",
+      "collectedAt": "2026-07-24T01:30:33.690Z",
       "tags": [
         "ai-identity",
         "ai-philosophy",

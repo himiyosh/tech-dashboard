@@ -119,9 +119,9 @@ else
     playwright_bin="$ROOT/node_modules/.bin/playwright"
     e2e_pattern="Publisher generated artifact|unknown routes|archive warm|singleton tag|navigation highlights|hamburger menu|every metric-bearing"
     if [ "$web_build_ready" = "1" ]; then
-      e2e_command=(env PLAYWRIGHT_REUSE_BUILD=1 "$playwright_bin" test tests/e2e/publisher.spec.ts tests/e2e/smoke.spec.ts -g "$e2e_pattern" --retries=0)
+      e2e_command=(env PLAYWRIGHT_REUSE_BUILD=1 "$playwright_bin" test tests/e2e/publisher.spec.ts tests/e2e/smoke.spec.ts -g "$e2e_pattern")
     else
-      e2e_command=("$playwright_bin" test tests/e2e/publisher.spec.ts tests/e2e/smoke.spec.ts -g "$e2e_pattern" --retries=0)
+      e2e_command=("$playwright_bin" test tests/e2e/publisher.spec.ts tests/e2e/smoke.spec.ts -g "$e2e_pattern")
     fi
     if ! "${e2e_command[@]}"; then
       echo "[pre-push] ERR: E2E テスト失敗。push を中断します"

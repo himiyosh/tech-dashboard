@@ -48,7 +48,7 @@ while IFS= read -r line; do
   if [[ "$range" == *".."* ]]; then
     changed_files=$(git diff --name-only "$range")
   else
-    changed_files=$(git diff-tree --root --no-commit-id --name-only -r "$local_sha")
+    changed_files=$(git log --format= --name-only "$local_sha" | sed '/^$/d' | sort -u)
   fi
   pushed_files="${pushed_files}"$'\n'"${changed_files}"
   echo "[pre-push] secret scan を実行しています... ($range)"

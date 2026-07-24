@@ -5,9 +5,10 @@ import {
   statSync,
 } from "node:fs";
 import path from "node:path";
+import { writeLegacyTagRedirects } from "./legacy-tag-redirects.mjs";
 
 const HEARTBEAT_MS = 30_000;
-const MAX_HTML_FILES = 3_200;
+const MAX_ASTRO_RENDERED_HTML_FILES = 3_200;
 const ASTRO_HEAP_LIMIT_MIB = 4_096;
 const IS_WINDOWS = process.platform === "win32";
 
@@ -206,11 +207,17 @@ const astroOutput = collectOutputStats(dist);
 console.log(
   `BUILD: output=astro files=${astroOutput.files} html=${astroOutput.html} size=${formatBytes(astroOutput.bytes)} routes=${astroOutput.routeFamilies}`,
 );
-if (astroOutput.html > MAX_HTML_FILES) {
+if (astroOutput.html > MAX_ASTRO_RENDERED_HTML_FILES) {
   throw new Error(
-    `Static HTML route budget exceeded: ${astroOutput.html} > ${MAX_HTML_FILES}`,
+    `Astro-rendered HTML route budget exceeded: ${astroOutput.html} > ${MAX_ASTRO_RENDERED_HTML_FILES}`,
   );
 }
+
+const legacyTagRedirectCount = writeLegacyTagRedirects({
+  distDirectory: dist,
+  indexPath: path.resolve("../data/index.json"),
+});
+console.log(`BUILD: phase=legacy-tag-redirects state=completed files=${legacyTagRedirectCount}`);
 
 await runPhase("pagefind", pagefindCommand, ["--site", "dist"]);
 const finalOutput = collectOutputStats(dist);

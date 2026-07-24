@@ -1,4 +1,6 @@
+import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
 
 const TIMELINE_ENTRY_LINK_SELECTOR =
   'main article.card h3.title > a[href^="/e/"]';
@@ -111,5 +113,26 @@ test.describe("Publisher generated artifact", () => {
     await expect(page.locator("#not-found-heading")).toBeVisible();
     await expect(page.locator("[data-recovery-action]")).toHaveCount(3);
     expect(pageErrors).toEqual([]);
+  });
+
+  test("keeps legacy low-frequency tag URLs recoverable", async ({ request }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ tags?: string[] }>;
+    };
+    const counts = new Map<string, number>();
+    for (const entry of index.entries) {
+      for (const tag of new Set((entry.tags ?? []).map(normalizeTagKey).filter(Boolean))) {
+        counts.set(tag, (counts.get(tag) ?? 0) + 1);
+      }
+    }
+    const tag = [...counts.entries()].find(([, count]) => count >= 2 && count < 10)?.[0];
+    expect(tag, "fixture includes a legacy low-frequency tag").toBeTruthy();
+    const encodedTag = encodeURIComponent(tag!);
+    const response = await request.get(`/t/${encodedTag}/`);
+    const html = await response.text();
+
+    expect(response.status()).toBe(200);
+    expect(html).toContain(`content="0;url=/search/?q=${encodedTag}&amp;tag=${encodedTag}"`);
+    expect(html).toContain(`href="/search/?q=${encodedTag}&amp;tag=${encodedTag}"`);
   });
 });

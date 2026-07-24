@@ -145,10 +145,11 @@ describe("Cloudflare Worker deploy config", () => {
     expect(astroBuildRunner).toContain('await runPhase("astro"');
     expect(astroBuildRunner).toContain('await runPhase("pagefind"');
     expect(astroBuildRunner).toContain("const HEARTBEAT_MS = 30_000");
-    expect(astroBuildRunner).toContain("const MAX_HTML_FILES = 3_200");
+    expect(astroBuildRunner).toContain("const MAX_ASTRO_RENDERED_HTML_FILES = 3_200");
     expect(astroBuildRunner).toContain("const ASTRO_HEAP_LIMIT_MIB = 4_096");
     expect(astroBuildRunner).toContain("`--max-old-space-size=${ASTRO_HEAP_LIMIT_MIB}`");
-    expect(astroBuildRunner).toContain("Static HTML route budget exceeded");
+    expect(astroBuildRunner).toContain("Astro-rendered HTML route budget exceeded");
+    expect(astroBuildRunner).toContain("writeLegacyTagRedirects");
     expect(astroBuildRunner).toContain("peakRss=");
     expect(astroBuildRunner).toContain("routeFamilies");
     expect(astroBuildRunner).toContain("clearInterval(heartbeat)");
@@ -216,6 +217,7 @@ describe("Cloudflare Worker deploy config", () => {
     expect(prePush).not.toContain('range="$local_sha"\n  else');
     expect(prePush).toContain('pushed_files="${pushed_files}"');
     expect(prePush).toContain('CHANGED="$pushed_files"');
+    expect(prePush).toContain('git log --format= --name-only "$local_sha"');
     expect(prePush).not.toContain("git diff --name-only HEAD @{u}");
     expect(prePush).toContain('grep -E "^(BUILD:|ASTRO:)|Pagefind|Indexed"');
     expect(prePush).toMatch(/npm --prefix "\$ROOT" run build:web[\s\S]*web_build_ready=1/);

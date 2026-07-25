@@ -196,6 +196,33 @@ const HUGGINGFACE_AGENT_RE = /\b(?:agents?|agentic|multi-agent)\b/i;
 const HUGGINGFACE_PLATFORM_RE =
   /\b(?:enterprise (?:deployment|hub|platform|inference)|cloud|deployment|inference endpoint|managed compute|sagemaker|foundry|azure|aws|google cloud)\b/i;
 
+// github.blog/changelog covers the entire GitHub platform, not just GitHub
+// Copilot: Projects, Actions, Dependabot, secret scanning, Code Quality, GHES,
+// npm, and Enterprise admin settings are all published to the same feed.
+// Blanket source.category="copilot" therefore misclassified a large share of
+// generic GitHub platform news as Copilot coverage. Require an explicit
+// Copilot/AI signal (product/model name, agent terminology, or a Copilot-only
+// billing term) to stay "copilot"; everything else is generic GitHub platform
+// news and belongs in "tech-news" (docs/04-site-spec.md §1.1: copilot covers
+// "GitHub Copilot / Workspace / Copilot CLI / Copilot Enterprise" only).
+// Verified against the full live+archive corpus (192 unique entries, 2026-07):
+// 107 stay "copilot", 85 move to "tech-news". See tests/normalize.test.ts
+// for actual-title keep/drop fixtures.
+const GITHUB_CHANGELOG_RELEVANT_RE =
+  /\b(?:copilot|gpt(?:-[\d.]+)?|gemini|gemma|claude|kimi|grok|openai|anthropic|mai-code|chatgpt|mcp|model context protocol|agents?|agentic|llm|large language model|opus|sonnet|haiku|ai credit|ai usage|ai adoption|model selection|models? in auto)\b/;
+
+// developers.googleblog.com is Google's general developer blog: overwhelmingly
+// Gemini/GenAI content, but it also covers a handful of unrelated Google
+// platform features (Google Pay checkout/payment, Sign in with Google session
+// metadata, Google Account changes, event logistics). Exclude those known
+// non-AI topics; everything else stays "gemini" (the source default).
+// Deliberately narrow/anchored phrases so an MCP-integration story that
+// happens to mention "Google Pay" (an AI/agent topic) is not excluded.
+// Verified against the full live+archive corpus (58 unique entries, 2026-07):
+// 6 move to "tech-news", 52 stay "gemini". See tests/normalize.test.ts.
+const GOOGLE_DEVELOPERS_GENERIC_RE =
+  /sign in with google|the latest updates to google pay|enhancing android checkout|merchant initiated transactions|supporting google account username change|get ready for google i\/o/;
+
 function resolveCategory(raw: CategorySignal, source: SourceDefinition): Category {
   const signal = `${raw.title} ${raw.contentSnippet ?? ""}`.toLowerCase();
   if (source.id === "huggingface-blog") {
@@ -206,6 +233,12 @@ function resolveCategory(raw: CategorySignal, source: SourceDefinition): Categor
     if (HUGGINGFACE_AGENT_RE.test(signal)) return "agent-fw";
     if (HUGGINGFACE_PLATFORM_RE.test(signal)) return "tech-news";
     return source.category;
+  }
+  if (source.id === "github-changelog") {
+    return GITHUB_CHANGELOG_RELEVANT_RE.test(signal) ? "copilot" : "tech-news";
+  }
+  if (source.id === "google-developers") {
+    return GOOGLE_DEVELOPERS_GENERIC_RE.test(signal) ? "tech-news" : "gemini";
   }
   if (source.id !== "qiita-vscode") return source.category;
 

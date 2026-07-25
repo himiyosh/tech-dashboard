@@ -189,6 +189,7 @@ const footerLastRunRelative = footerLastRunAt
             class="search-results"
             role="listbox"
             aria-live="polite"
+            data-tag-recovery-version={DASHBOARD_METRICS.generatedAt}
             hidden
           ></div>
         </form>
@@ -269,7 +270,7 @@ const footerLastRunRelative = footerLastRunAt
     <div id="content-start" class="content-start-anchor" tabindex="-1"></div>
     <slot />
 
-    <footer class="footer-bar" aria-label="System status">
+    <footer class="footer-bar" aria-label="サイト全体のシステム状態 / Site-wide system status">
       <div class="footer-inner">
         <a
           class="item footer-run-link"
@@ -293,7 +294,12 @@ const footerLastRunRelative = footerLastRunAt
           data-body-queue-state={footerBodyQueue.state}
           data-body-queue-backlog={footerBodyQueue.showBacklog ? footerBodyQueue.backlog : "unknown"}
           data-body-queue-drain-hours={DASHBOARD_METRICS.bodyQueueDrainEstimateHours ?? "unknown"}
+          data-health-scope="site-wide-pipeline"
         >
+          <span class="footer-scope-label">
+            <span class="i18n-ja">サイト全体</span>
+            <span class="i18n-en" lang="en">Site-wide</span>
+          </span>
           <span class={`dot ${footerRunTone}`} data-run-tone={footerRunTone} aria-hidden="true"></span>
           <strong data-footer-run-label>{footerRunStatus}</strong>
           <span class="mono">{footerRunDetail}</span>
@@ -613,7 +619,9 @@ const footerLastRunRelative = footerLastRunAt
         const sourceLabels = new Map(
           sourceMeta.flatMap((entry) => [[entry.id, entry.label], [entry.label, entry.label]] as const),
         );
+        const tagRecoveryVersion = panel.dataset.tagRecoveryVersion ?? "";
         let pf: any = null;
+        let tagRecoveryMapPromise: Promise<Record<string, string>> | null = null;
         let activeIndex = -1;
         let requestGeneration = 0;
         const isSearchRoute = /^\/search\/?$/.test(window.location.pathname);
@@ -625,6 +633,7 @@ const footerLastRunRelative = footerLastRunAt
           if (query) next.searchParams.set("q", query);
           else next.searchParams.delete("q");
           next.searchParams.delete("tag");
+          next.searchParams.delete("entry");
           window.history.replaceState(
             window.history.state,
             "",
@@ -676,6 +685,22 @@ const footerLastRunRelative = footerLastRunAt
           input.setAttribute("aria-expanded", expanded ? "true" : "false");
           panel.hidden = !expanded;
         };
+        const tagRecoveryMap = () => {
+          if (!tagRecoveryMapPromise) {
+            const recoveryUrl = `/tag-recovery.json?v=${encodeURIComponent(tagRecoveryVersion)}`;
+            tagRecoveryMapPromise = fetch(recoveryUrl, {
+              cache: "no-store",
+              headers: { accept: "application/json" },
+            }).then(async (response) => {
+              if (!response.ok) throw new Error("Tag recovery map is unavailable.");
+              const payload = await response.json();
+              return payload && typeof payload === "object"
+                ? payload as Record<string, string>
+                : {};
+            });
+          }
+          return tagRecoveryMapPromise;
+        };
         const setTriggerActive = (active: boolean) => {
           searchTriggers.forEach((trigger) => {
             trigger.classList.toggle("active", active);
@@ -689,12 +714,12 @@ const footerLastRunRelative = footerLastRunAt
           setExpanded(true);
           panel.innerHTML = `
             <div class="search-empty search-help-panel">
-              <strong>Search updates</strong>
-              <p>Try a product, source, category, tag, or short phrase. Examples: <code>Copilot</code>, <code>MCP</code>, <code>release</code>.</p>
+              <strong><span class="i18n-ja">更新を検索</span><span class="i18n-en" lang="en">Search updates</span></strong>
+              <p><span class="i18n-ja">製品、source、カテゴリ、タグ、短い語句で検索できます。例: <code>Copilot</code>、<code>MCP</code>、<code>release</code></span><span class="i18n-en" lang="en">Try a product, source, category, tag, or short phrase. Examples: <code>Copilot</code>, <code>MCP</code>, <code>release</code>.</span></p>
               <div class="search-empty-actions">
-                <a href="/categories">Browse categories</a>
-                <a href="/status">Check sources</a>
-                <a href="/archive">Browse archive</a>
+                <a href="/categories"><span class="i18n-ja">カテゴリを見る</span><span class="i18n-en" lang="en">Browse categories</span></a>
+                <a href="/status"><span class="i18n-ja">sourceを確認</span><span class="i18n-en" lang="en">Check sources</span></a>
+                <a href="/archive"><span class="i18n-ja">Archiveを見る</span><span class="i18n-en" lang="en">Browse archive</span></a>
               </div>
             </div>`;
         };
@@ -837,6 +862,14 @@ const footerLastRunRelative = footerLastRunAt
           aggregator: 4,
           source: 5,
         };
+        const authorityLabels: Record<string, { ja: string; en: string }> = {
+          official: { ja: "公式", en: "Official" },
+          paper: { ja: "論文", en: "Paper" },
+          community: { ja: "コミュニティ", en: "Community" },
+          news: { ja: "報道", en: "News" },
+          aggregator: { ja: "集約", en: "Aggregator" },
+          source: { ja: "出典", en: "Source" },
+        };
 
         const relativeAge = (day: string): string => {
           const parsed = Date.parse(day);
@@ -896,7 +929,47 @@ const footerLastRunRelative = footerLastRunAt
           const langAttribute = summary.lang ? ` lang="${summary.lang}"` : "";
           return `${fallbackBadge(summary.fallbackLang)}<span class="search-hit-summary"${langAttribute}>${escapeHtml(summary.text)}</span>`;
         };
+        type MatchScope = "category" | "tag" | "title" | "source" | "summary";
+        const matchesQuery = (value: unknown, q: string): boolean => {
+          const text = normalizeSearchText(String(value ?? ""));
+          const normalized = normalizeSearchText(q);
+          const terms = queryTerms(q);
+          return Boolean(text && (text.includes(normalized) || terms.every((term) => text.includes(term))));
+        };
+        const matchScope = (
+          d: any,
+          q: string,
+          type: { className: string },
+        ): MatchScope => {
+          if (d.intentKind === "tag" || type.className === "tag") return "tag";
+          if (d.intentKind === "category" || type.className === "category") return "category";
+          if (matchesQuery(`${d.meta?.title ?? ""} ${d.meta?.titleJa ?? ""} ${d.meta?.titleEn ?? ""}`, q)) {
+            return "title";
+          }
+          if (matchesQuery(d.meta?.tags, q)) return "tag";
+          if (matchesQuery(displaySource(filterValue(d, "source")), q)) return "source";
+          if (matchesQuery(displayCategory(filterValue(d, "category")), q)) return "category";
+          return "summary";
+        };
+        const matchMarkup = (scope: MatchScope): string => {
+          const labels: Record<MatchScope, { ja: string; en: string }> = {
+            category: { ja: "カテゴリ一致", en: "Category match" },
+            tag: { ja: "タグ一致", en: "Tag match" },
+            title: { ja: "タイトル一致", en: "Title match" },
+            source: { ja: "source一致", en: "Source match" },
+            summary: { ja: "要約一致", en: "Summary match" },
+          };
+          return `<span class="search-hit-match" data-match-scope="${scope}"><span class="i18n-ja">${labels[scope].ja}</span><span class="i18n-en" lang="en">${labels[scope].en}</span></span>`;
+        };
+        const authorityMarkup = (d: any, type: { className: string }): string => {
+          if (type.className !== "article") return "";
+          const kind = filterValue(d, "authority");
+          const labels = authorityLabels[kind];
+          if (!labels) return "";
+          return `<span class="search-hit-authority badge authority ${kind}" data-source-authority="${kind}"><span class="i18n-ja">${labels.ja}</span><span class="i18n-en" lang="en">${labels.en}</span></span>`;
+        };
         const hitMeta = (d: any, type: { className: string }): string => {
+          const lang = activeSearchLang();
           if (type.className === "article" && d.filters) {
             const parts: string[] = [];
             const source = displaySource(filterValue(d, "source"));
@@ -906,27 +979,31 @@ const footerLastRunRelative = footerLastRunAt
             if (source) parts.push(source);
             if (category) parts.push(category);
             if (importance >= 1 && importance <= 3) {
-              parts.push(`${importance === 3 ? "High" : importance === 2 ? "Medium" : "Info"} importance`);
+              parts.push(
+                lang === "ja"
+                  ? `重要度 ${importance === 3 ? "High" : importance === 2 ? "Medium" : "Info"}`
+                  : `${importance === 3 ? "High" : importance === 2 ? "Medium" : "Info"} importance`,
+              );
             }
             const age = day ? relativeAge(day) : "";
             if (age) parts.push(age);
             if (parts.length) return parts.join(" · ");
           }
-          if (type.className === "article") return "Article";
+          if (type.className === "article") return lang === "ja" ? "記事" : "Article";
           if (type.className === "category") {
             const slug = String(d.url ?? "").match(/^\/c\/([^/]+)/)?.[1] ?? "";
-            return (slug && displayCategory(slug)) || "Category";
+            return (slug && displayCategory(slug)) || (lang === "ja" ? "カテゴリ" : "Category");
           }
           const url = String(d.url || "").replace(/^https?:\/\/[^/]+/, "");
-          if (url.startsWith("/t/")) return "Topic page";
-          if (url.startsWith("/archive/")) return "Archive page";
-          if (url.startsWith("/status")) return "Status page";
-          if (url.startsWith("/about")) return "About page";
+          if (url.startsWith("/t/")) return lang === "ja" ? "トピックページ" : "Topic page";
+          if (url.startsWith("/archive/")) return lang === "ja" ? "Archiveページ" : "Archive page";
+          if (url.startsWith("/status")) return lang === "ja" ? "Statusページ" : "Status page";
+          if (url.startsWith("/about")) return lang === "ja" ? "Aboutページ" : "About page";
           if (url.startsWith("/glossary")) return "Glossary";
-          if (url.startsWith("/knowledge")) return "Knowledge lane";
+          if (url.startsWith("/knowledge")) return lang === "ja" ? "Knowledgeレーン" : "Knowledge lane";
           if (url.startsWith("/arxiv")) return "arXiv lane";
-          if (url.startsWith("/categories")) return "Category directory";
-          return "Site page";
+          if (url.startsWith("/categories")) return lang === "ja" ? "カテゴリ一覧" : "Category directory";
+          return lang === "ja" ? "サイトページ" : "Site page";
         };
 
         const renderResults = async (q: string, generation = nextRequestGeneration()) => {
@@ -936,64 +1013,129 @@ const footerLastRunRelative = footerLastRunAt
             renderSearchHelp();
             return;
           }
+          const searchParams = new URLSearchParams(window.location.search);
+          const requestedTag = normalizeTagKey(searchParams.get("tag") ?? "");
+          const tagIntent = requestedTag && requestedTag === normalizeTagKey(q)
+            ? requestedTag
+            : "";
+          const requestedEntryId = searchParams.get("entry")?.toLowerCase() ?? "";
+          let directTagEntryId = tagIntent && /^[a-f0-9]{16}$/.test(requestedEntryId)
+            ? requestedEntryId
+            : "";
+          if (directTagEntryId) {
+            try {
+              const recoveryMap = await withDeadline(
+                tagRecoveryMap(),
+                2500,
+                "Tag recovery validation took too long.",
+              );
+              if (!isCurrentRequest(generation)) return;
+              if (recoveryMap[tagIntent] !== directTagEntryId) directTagEntryId = "";
+            } catch {
+              directTagEntryId = "";
+            }
+          }
+          if (directTagEntryId) {
+            panel.removeAttribute("aria-busy");
+            setExpanded(true);
+            const direct = {
+              url: `/e/${directTagEntryId}/`,
+              meta: {
+                titleJa: `#${q} に一致する記事`,
+                titleEn: `Article matching #${q}`,
+              },
+              filters: { tag: [tagIntent] },
+              intentMatch: true,
+              intentKind: "tag",
+            };
+            const type = classifyResult(direct.url);
+            const heading = `<span class="i18n-ja"><strong>${escapeHtml(q)}</strong> の検索結果</span><span class="i18n-en" lang="en">Results for <strong>${escapeHtml(q)}</strong></span>`;
+            const rankingNote = `<small class="search-ranking-note"><span class="i18n-ja">このタグに一致する唯一の記事です。</span><span class="i18n-en" lang="en">This is the only article matching this tag.</span></small>`;
+            panel.innerHTML = `
+              <div class="search-results-heading">${heading}${rankingNote}</div>
+              <a class="search-hit search-hit-article" data-match-scope="tag" id="search-hit-${directTagEntryId}" role="option" aria-selected="false" href="${direct.url}">
+                <div class="search-hit-topline">
+                  <span class="search-hit-type article">${type.label}</span>
+                  ${matchMarkup("tag")}
+                  <span class="search-hit-meta">${escapeHtml(hitMeta(direct, type))}</span>
+                </div>
+                <div class="search-hit-title">${resultTitleMarkup(direct)}</div>
+              </a>`;
+            clearActive();
+            return;
+          }
           if (!pf) {
             setExpanded(true);
             panel.innerHTML = `
               <div class="search-empty">
-                <strong>${pagefindLoadSettled ? "Search index is not ready." : "Loading search index..."}</strong>
-                <p>${pagefindLoadSettled
-                  ? "The static Pagefind index is created during <code>npm run build</code>. Use categories or status until the index is available."
-                  : "Your query is preserved while the local search index loads."}</p>
+                <strong><span class="i18n-ja">${pagefindLoadSettled ? "検索indexを利用できません。" : "検索indexを読み込み中..."}</span><span class="i18n-en" lang="en">${pagefindLoadSettled ? "Search index is not ready." : "Loading search index..."}</span></strong>
+                <p><span class="i18n-ja">${pagefindLoadSettled
+                  ? "検索indexが利用できるまでカテゴリまたはStatusをご利用ください。"
+                  : "入力した検索語はindexの読み込み中も保持されます。"}</span><span class="i18n-en" lang="en">${pagefindLoadSettled
+                  ? "Use categories or status until the search index is available."
+                  : "Your query is preserved while the local search index loads."}</span></p>
                 <div class="search-empty-actions">
-                  <a href="/categories">Browse categories</a>
-                  <a href="/status">Check sources</a>
+                  <a href="/categories"><span class="i18n-ja">カテゴリを見る</span><span class="i18n-en" lang="en">Browse categories</span></a>
+                  <a href="/status"><span class="i18n-ja">sourceを確認</span><span class="i18n-en" lang="en">Check sources</span></a>
                 </div>
               </div>`;
             return;
           }
           setExpanded(true);
           panel.setAttribute("aria-busy", "true");
-          panel.innerHTML = `<div class="search-empty">Searching for <strong>${escapeHtml(q)}</strong>...</div>`;
+          panel.innerHTML = `<div class="search-empty"><span class="i18n-ja"><strong>${escapeHtml(q)}</strong> を検索中...</span><span class="i18n-en" lang="en">Searching for <strong>${escapeHtml(q)}</strong>...</span></div>`;
           let items: any[] = [];
           try {
-            const searchDeadline = performance.now() + 6500;
-            const requestedTag = normalizeTagKey(
-              new URLSearchParams(window.location.search).get("tag") ?? "",
-            );
-            const tagIntent = requestedTag && requestedTag === normalizeTagKey(q)
-              ? requestedTag
-              : "";
-            const indexLookupTimeoutMs = tagIntent ? 6000 : 3500;
-            const [search, tagSearch] = await withDeadline(
+            const searchDeadline = performance.now() + (tagIntent ? 12_000 : 9000);
+            const [searchResult, tagSearchResult] = await Promise.allSettled([
               tagIntent
-                ? Promise.all([
-                    Promise.resolve({ results: [] }),
-                    Promise.resolve(pf.search(null, { filters: { tag: [tagIntent] } })),
-                  ])
-                : Promise.all([
+                ? Promise.resolve({ results: [] })
+                : withDeadline(
                     Promise.resolve(pf.search(q)),
-                    Promise.resolve({ results: [] }),
-                  ]),
-              indexLookupTimeoutMs,
-              "The search index took too long to respond.",
-            );
+                    3500,
+                    "The search index took too long to respond.",
+                  ),
+              tagIntent && !directTagEntryId
+                ? withDeadline(
+                    Promise.resolve(pf.search(null, { filters: { tag: [tagIntent] } })),
+                    8000,
+                    "The tag index took too long to respond.",
+                  )
+                : Promise.resolve({ results: [] }),
+            ]);
+            if (tagIntent && !directTagEntryId && tagSearchResult.status === "rejected") {
+              throw tagSearchResult.reason;
+            }
+            if (!tagIntent && searchResult.status === "rejected") {
+              throw searchResult.reason;
+            }
+            const search = searchResult.status === "fulfilled"
+              ? searchResult.value
+              : { results: [] };
+            const tagSearch = tagSearchResult.status === "fulfilled"
+              ? tagSearchResult.value
+              : { results: [] };
             const batchSize = 30;
             const minimumCandidateScan = 90;
-            const candidates = [
-              ...tagSearch.results.slice(0, 12).map((result: any) => ({ result, intentMatch: true })),
+            const candidates: Array<{
+              result: any;
+              intentMatch: boolean;
+              intentKind?: "tag";
+            }> = [
+              ...tagSearch.results.slice(0, 12).map((result: any) => ({ result, intentMatch: true, intentKind: "tag" })),
               ...search.results.slice(0, 300).map((result: any) => ({ result, intentMatch: false })),
             ];
             for (let offset = 0; offset < candidates.length; offset += batchSize) {
               const remainingMs = searchDeadline - performance.now();
               if (remainingMs <= 0) break;
               const batch = await Promise.allSettled(
-                candidates.slice(offset, offset + batchSize).map(async ({ result, intentMatch }) => {
+                candidates.slice(offset, offset + batchSize).map(async ({ result, intentMatch, intentKind }) => {
                   const item = await withDeadline(
                     Promise.resolve(result.data()),
-                    Math.max(1, Math.min(tagIntent ? 3500 : 1200, remainingMs)),
+                    Math.max(1, Math.min(tagIntent ? 3500 : 2500, remainingMs)),
                     "A search result took too long to load.",
                   );
-                  return intentMatch ? { ...item, intentMatch: true } : item;
+                  return intentMatch ? { ...item, intentMatch: true, intentKind } : item;
                 }),
               );
               if (!isCurrentRequest(generation)) return;
@@ -1014,11 +1156,11 @@ const footerLastRunRelative = footerLastRunAt
             panel.removeAttribute("aria-busy");
             panel.innerHTML = `
               <div class="search-empty">
-                <strong>Search temporarily failed.</strong>
-                <p>${escapeHtml(error instanceof Error ? error.message : "Pagefind could not return results.")}</p>
+                <strong><span class="i18n-ja">検索を一時的に利用できません。</span><span class="i18n-en" lang="en">Search temporarily failed.</span></strong>
+                <p><span class="i18n-ja">通信状態を確認して、もう一度お試しください。</span><span class="i18n-en" lang="en">${escapeHtml(error instanceof Error ? error.message : "Pagefind could not return results.")}</span></p>
                 <div class="search-empty-actions">
-                  <a href="/categories">Browse categories instead</a>
-                  <a href="/status">Check sources</a>
+                  <a href="/categories"><span class="i18n-ja">カテゴリを見る</span><span class="i18n-en" lang="en">Browse categories instead</span></a>
+                  <a href="/status"><span class="i18n-ja">sourceを確認</span><span class="i18n-en" lang="en">Check sources</span></a>
                 </div>
               </div>`;
             return;
@@ -1055,6 +1197,7 @@ const footerLastRunRelative = footerLastRunAt
               meta: { title: categoryIntent.label },
               filters: { category: [categoryIntent.slug] },
               intentMatch: true,
+              intentKind: "category",
             });
           }
           const seenUrls = new Set<string>();
@@ -1079,6 +1222,14 @@ const footerLastRunRelative = footerLastRunAt
               const typeOrder = Number(b.type.className === "article") - Number(a.type.className === "article");
               if (typeOrder) return typeOrder;
               if (a.type.className === "article" && b.type.className === "article") {
+                const publishedAtA = Date.parse(filterValue(a.item, "publishedDay")) || 0;
+                const publishedAtB = Date.parse(filterValue(b.item, "publishedDay")) || 0;
+                const ageTier = (publishedAt: number): number => {
+                  const ageDays = Math.max(0, Math.floor((Date.now() - publishedAt) / 86400000));
+                  return ageDays <= 7 ? 0 : ageDays <= 30 ? 1 : 2;
+                };
+                const recencyTier = ageTier(publishedAtA) - ageTier(publishedAtB);
+                if (recencyTier) return recencyTier;
                 const authority =
                   (authorityOrder[filterValue(a.item, "authority")] ?? 9) -
                   (authorityOrder[filterValue(b.item, "authority")] ?? 9);
@@ -1088,8 +1239,7 @@ const footerLastRunRelative = footerLastRunAt
                   - Number(filterValue(a.item, "importance") || 0);
                 if (importance) return importance;
                 const published =
-                  (Date.parse(filterValue(b.item, "publishedDay")) || 0) -
-                  (Date.parse(filterValue(a.item, "publishedDay")) || 0);
+                  publishedAtB - publishedAtA;
                 if (published) return published;
               }
               return a.index - b.index;
@@ -1098,23 +1248,27 @@ const footerLastRunRelative = footerLastRunAt
           if (exactItems.length === 0) {
             panel.innerHTML = `
               <div class="search-empty">
-                <strong>No results for ${escapeHtml(q)}</strong>
-                <p>Try a shorter keyword, remove source/category words, or search in the other language (JA/EN).</p>
+                <strong><span class="i18n-ja">${escapeHtml(q)} に一致する結果はありません</span><span class="i18n-en" lang="en">No results for ${escapeHtml(q)}</span></strong>
+                <p><span class="i18n-ja">短い語句にする、sourceやカテゴリ名を外す、別の言語で検索する方法をお試しください。</span><span class="i18n-en" lang="en">Try a shorter keyword, remove source/category words, or search in the other language (JA/EN).</span></p>
                 <div class="search-empty-actions">
-                  <a href="/categories">Browse categories</a>
-                  <a href="/status">Check sources</a>
-                  <a href="/archive">Browse by month</a>
+                  <a href="/categories"><span class="i18n-ja">カテゴリを見る</span><span class="i18n-en" lang="en">Browse categories</span></a>
+                  <a href="/status"><span class="i18n-ja">sourceを確認</span><span class="i18n-en" lang="en">Check sources</span></a>
+                  <a href="/archive"><span class="i18n-ja">月別Archiveを見る</span><span class="i18n-en" lang="en">Browse by month</span></a>
                 </div>
               </div>`;
             return;
           }
-          const heading = `Results for <strong>${escapeHtml(q)}</strong>`;
-          panel.innerHTML = `<div class="search-results-heading">${heading}</div>` + exactItems
+          const heading = `<span class="i18n-ja"><strong>${escapeHtml(q)}</strong> の検索結果</span><span class="i18n-en" lang="en">Results for <strong>${escapeHtml(q)}</strong></span>`;
+          const rankingNote = `<small class="search-ranking-note"><span class="i18n-ja">カテゴリ・タグの完全一致を先頭に固定。記事は公開時期、出典、重要度の順で比較します。</span><span class="i18n-en" lang="en">Exact category and tag intents are pinned. Articles are grouped by recency, then source authority and importance.</span></small>`;
+          panel.innerHTML = `<div class="search-results-heading">${heading}${rankingNote}</div>` + exactItems
             .map(({ item: d, type }) => {
+              const scope = matchScope(d, q, type);
               return `
-              <a class="search-hit search-hit-${type.className}" id="search-hit-${Math.random().toString(36).slice(2)}" role="option" aria-selected="false" href="${escapeHtml(d.url)}">
+              <a class="search-hit search-hit-${type.className}" data-match-scope="${scope}" id="search-hit-${Math.random().toString(36).slice(2)}" role="option" aria-selected="false" href="${escapeHtml(d.url)}">
                 <div class="search-hit-topline">
                   <span class="search-hit-type ${type.className}">${type.label}</span>
+                  ${matchMarkup(scope)}
+                  ${authorityMarkup(d, type)}
                   <span class="search-hit-meta">${escapeHtml(hitMeta(d, type))}</span>
                 </div>
                 <div class="search-hit-title">${resultTitleMarkup(d)}</div>

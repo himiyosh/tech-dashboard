@@ -1,0 +1,85 @@
+---
+interface Props {
+  entryId: string;
+  excerpt: string;
+  lang: "ja" | "en";
+  variant?: "card" | "detail";
+}
+
+const { entryId, excerpt, lang, variant = "card" } = Astro.props;
+const labelId = `source-excerpt-label-${entryId}`;
+---
+
+<figure
+  class:list={["source-excerpt", `source-excerpt-${variant}`]}
+  data-source-excerpt
+  data-excerpt-scope="source"
+  data-excerpt-language={lang}
+  aria-labelledby={labelId}
+>
+  <figcaption id={labelId}>
+    <strong>
+      <span class="i18n-ja">収集元の抜粋</span>
+      <span class="i18n-en" lang="en">Source excerpt</span>
+    </strong>
+    <span class="source-excerpt-note">
+      <span class="i18n-ja">AI 要約ではありません</span>
+      <span class="i18n-en" lang="en">Not an AI summary</span>
+    </span>
+  </figcaption>
+  <blockquote lang={lang}>{excerpt}</blockquote>
+</figure>
+
+<style>
+  .source-excerpt {
+    margin: 8px 0 0;
+    padding: 9px 10px;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--surface) 64%, var(--bg-2));
+  }
+
+  .source-excerpt figcaption {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 3px 8px;
+    margin-bottom: 5px;
+    color: var(--text-2);
+    font-size: 10.5px;
+    line-height: 1.3;
+  }
+
+  .source-excerpt figcaption strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .source-excerpt-note {
+    color: var(--muted-2);
+  }
+
+  .source-excerpt blockquote {
+    margin: 0;
+    color: var(--text-2);
+    font-size: 11.5px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+
+  .source-excerpt-card blockquote {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .source-excerpt-detail {
+    margin-top: 10px;
+    padding: 11px 12px;
+  }
+
+  .source-excerpt-detail blockquote {
+    font-size: 13px;
+  }
+</style>

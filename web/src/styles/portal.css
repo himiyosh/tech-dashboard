@@ -576,6 +576,14 @@ header {
   color: var(--text);
 }
 
+.search-ranking-note {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted-2);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
 .search-results-heading.closest {
   border: 1px solid color-mix(in srgb, var(--important) 34%, var(--border));
   border-radius: 8px;
@@ -619,6 +627,24 @@ header {
 .search-hit-type.archive {
   border-color: color-mix(in srgb, var(--important) 38%, var(--border));
   color: var(--important);
+}
+
+.search-hit-match {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+  border-radius: 999px;
+  color: var(--text-2);
+  background: color-mix(in srgb, var(--bg-2) 76%, transparent);
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.search-hit-authority {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .search-hit-topline .search-hit-meta {
@@ -2175,16 +2201,11 @@ main {
 }
 
 @media (min-width: 901px) {
-  .priority-section .featured-rationale,
   .priority-section .featured-title,
   .priority-section .featured-sum {
     display: -webkit-box;
     overflow: hidden;
     -webkit-box-orient: vertical;
-  }
-
-  .priority-section .featured-rationale {
-    -webkit-line-clamp: 1;
   }
 
   .priority-section .featured-title,
@@ -2417,11 +2438,6 @@ main {
   letter-spacing: 0.1em;
   color: var(--accent);
   margin-bottom: 8px;
-}
-
-.featured-rationale-time {
-  text-transform: none;
-  letter-spacing: normal;
 }
 
 .featured-label::before {
@@ -2885,6 +2901,15 @@ main {
   line-height: 1.4;
 }
 
+.pending-summary-stack {
+  min-width: 0;
+  margin-bottom: 8px;
+}
+
+.pending-summary-stack .summary-state {
+  margin-bottom: 0;
+}
+
 .summary-pending-badge {
   display: inline-flex;
   align-items: center;
@@ -2899,7 +2924,19 @@ main {
   color: color-mix(in srgb, var(--accent) 78%, var(--text));
 }
 
+.summary-pending-meta {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
 .summary-pending-meta a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding-inline: 8px;
   color: var(--accent);
   font-weight: 650;
   text-underline-offset: 2px;
@@ -3762,6 +3799,18 @@ body {
   min-width: 0;
 }
 
+.footer-scope-label {
+  flex: 0 0 auto;
+  padding: 2px 5px;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+  border-radius: 4px;
+  color: var(--text-2);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
 .footer-run-link .mono {
   min-width: 0;
   overflow: hidden;
@@ -3936,7 +3985,7 @@ body {
     margin-bottom: 8px;
   }
 
-  article.featured .featured-rationale {
+  article.featured .featured-label {
     display: none;
   }
 
@@ -5073,7 +5122,6 @@ html, body {
   .featured-thumb-emoji { font-size: 38px; }
   .featured-body { padding: 12px 12px 10px; }
   .featured-label { margin-bottom: 5px; }
-  .featured-rationale { display: none; }
   .featured-title { font-size: 15.5px; margin-bottom: 6px; }
   .featured-title a {
     display: -webkit-box;

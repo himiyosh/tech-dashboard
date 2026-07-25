@@ -16,6 +16,8 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 - 日本語・英語の要約やタイトルが片言語だけ利用できる場合に、表示言語の出典を明示する共通 fallback 表示を追加しました。
 - 日次サマリーと要約表示の品質契約を固定する unit test、responsive geometry を固定する E2E を追加しました。
+- AI 要約待ちの記事へ、収集元の抜粋を「AI 要約ではない」と明示して表示し、元記事を開く前にも内容を判断できるようにしました。
+- 検索結果へカテゴリ・タグ・タイトル・source・要約の一致理由、source authority、検索順位の比較基準を追加しました。
 
 ### 変更
 
@@ -38,6 +40,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - Header、breadcrumb、Hero、Ticker、本文、Footer の共通 gutter を揃え、1280px 前後の Categories とカテゴリ詳細で主カラム幅・左 rail 位置が切り替わらないようにしました。タブレットでは主要 shortcut 名と 44px 操作面を維持します。
 - Ticker のカテゴリ・タグと記事タイトルを 2 行へ分離し、Spotlight と同じ記事の重複表示を除外しました。
 - Ticker は同一 source と配信 platform を各 2 件までに抑え、要約済み・重要度・source authority・配信形式を基準に構成するようにしました。要約待ちは判断枠へ出さずTimelineに残し、Home と meta description は community source を含む収集範囲と「毎時 1 バッチ、各 source 約 6 時間周期」という実運用へ統一しました。
+- Ticker は代替候補がある場合に同じ source を連続表示せず、Spotlight と Top 3 は重複する重要度・出典の説明を減らして要約済み候補とsource多様性を明示するようにしました。
 - Top 3 は重複した出典情報を整理し、記事固有の要約を残して判断材料と表示密度を両立させました。
 - 記事詳細の要約、言語 provenance、外部記事への導線を整理しました。
 - 当日の JST 集計と過去日の archive-backed 統計を分離し、日次・カテゴリ推移の表示契約を揃えました。
@@ -56,6 +59,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - Status を pipeline run、収集失敗、掲載量、Queue の状態別に再構成し、低活動を障害 alert と区別できる source directory と filter に変更しました。run telemetry が未記録の場合は、エラー 0 件ではなく記録なしと表示します。
 - Status の見出しから重複する運用値を除き、run 依存の Queue 待機を中立表示にしました。共有生成枠の未観測理由と、登録・評価可能・未収録 source の母集団も明示しました。
 - Status のAI解説本文Queueで、今回反映数、送信件数の未計測状態、ETAが基準にする1 runのenqueue上限を分けて表示しました。
+- Status の共有生成枠を合計値と内訳へ分け、Footer のQueue表示をサイト全体の状態として明示し、個別記事の準備状態と区別しました。
 - Publisher の統計を差分更新から、immutable baseline の live index と全 archive を使う完全再構築へ変更しました。
 - 緊急Direct Uploadはcleanなmainと`origin/main`の一致をbuild前後・upload後に検証し、検証済みcommit SHAをdeploymentへ明示するようにしました。
 
@@ -65,6 +69,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - AboutのPurpose、Freshness、History、Pipeline説明をJA/EN切替へ接続し、EN表示で収集方針だけが日本語のまま残る問題を修正しました。
 - Statusのsource掲載状態は公開スナップショット時点の絶対日時として表示し、相対時刻だけが古くなる状態を廃止しました。Aboutのrun指標も同じsnapshotから一体で更新し、欠落telemetryはJA/ENそれぞれで記録なしと表示します。
 - Publisher、PR CI、pre-push の検証で同じ静的サイトを二重 build せず、直前に検証済みの `web/dist` を Playwright preview へ再利用するようにし、E2E 開始前の build timeout を防ぎました。
+- 並行worktreeのpreview portが重ならないよう、absolute worktree pathのSHA-256から`PLAYWRIGHT_PORT`を決定し、既存serverを再利用しない検証contractへ統一しました。
 - Status の全 source が最近掲載済みの場合も、初期表示件数を 0 件ではなく実際の表示件数へ一致させました。
 - Source disclosure の固定パネルが閉じた状態でも残る問題を修正し、開閉・再表示・キーボード操作を回帰テストで固定しました。
 - Timeline の `arXiv moved` 表記を、arXiv 専用ページへのリンクと分離先が分かる説明へ置き換えました。
@@ -84,5 +89,6 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - pre-pushのWeb影響判定をupstream状態ではなく実際のpush rangeから導出し、初回branch pushでfocused E2Eを誤って省略しないようにしました。
 - Full PlaywrightとVitestを1 workerで実行し、同一hostのpeak負荷を抑えるようにしました。pre-pushは生成Home・記事詳細・metrics・Archive・404のPublisher E2Eを実行し、warm/cold・exact tag・navを含む全PlaywrightはPR CIで必須とします。
 - 共有されたタグ検索 URL の大文字小文字やアクセント表記が異なっても、完全一致の対象記事を回収できるようにしました。
+- 完全一致タグ検索と一般検索を独立した期限で実行し、一般検索が遅い場合もタグから対象記事へ戻れるようにしました。
 - Linux のフォントメトリクスでも中間幅の Hero と固定 Footer が過度に伸びず、優先記事と重ならないようにしました。
 - archive index baseline が `null`、`false`、`0` などの非 object JSON でも欠落扱いされる経路を廃止し、存在する baseline を必ず fail-closed で検証するようにしました。

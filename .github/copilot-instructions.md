@@ -988,11 +988,11 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: `scripts/copilot-device-login.mjs` (npm run auth:device) で editor Copilot client_id `Iv1.b507a08c87ecfe98` (public) に device flow → `ghu_` を `.env.local` (mode 600・gitignore) に保存。token は非表示、`/copilot_internal/v2/token` で検証。backfill は `tsx --env-file-if-exists=.env.local` で読込。opus-4.8 は `/chat/completions` で実利用可・要約品質良好 (888+20 ok / 0 fail)。要約のみ短契約なので推論枯渇 (LL-106) なし。
 - **教訓**: ローカル一括生成の認証は `ghu_` 必須。device flow が ghu_ 取得手段。secret は .env.local 600 + gitignore、画面非表示。一時的 502 は resume cache で再実行 retry。
 
-### LL-124: 本番デプロイ検証は取得手段のアーティファクトを疑う (per-deploy URL と compound curl の落とし穴)
-- **事象**: PR #121 (Timeline 右 rail) を main マージ後の本番検証で、右 rail が本番 HTML に無い (16KB・`<aside>` 0 件・"TODAY" のみ) ように見え、レンダリング不具合を疑って調査に時間を浪費した。実際にはレールは正しく本番稼働 (219KB フル HTML に `aside.right home-right`・カード3枚・`home-source-row` 5行) しており、不具合は存在しなかった。
-- **根本原因**: 2 つの検証アーティファクトの合わせ技。(a) Cloudflare Pages の per-deploy サブドメイン `https://<deploy-id>.<project>.pages.dev/` は仕様上 `<title>Deployment Not Found</title>` の ~16KB HTML を返す (実デプロイ内容ではない)。内容検証にこの URL を使ったため空に見えた。(b) 1 つの複合 bash コマンド内で同一 URL を `curl` で何度も連鎖 (for ループでマーカーごとに再 fetch 等) すると、大きなページで body が部分取得・切り詰めされ、存在する要素を「無い」と誤判定した。
-- **対策**: (1) デプロイ内容の検証は per-deploy サブドメインを使わず、カスタムドメイン (`techdb.studio344.net`, `cf-cache-status: DYNAMIC` で origin 直取得) かメイン pages.dev エイリアスを使う。(2) HTML マーカー確認は 1 回だけ fetch してファイル (`/tmp/live-home.html`) に保存し、そのファイルを繰り返し grep する。1 コマンド内で同一 URL を複数回 curl しない。(3) ビルド成否は CF API の deployment stages (queued/init/clone/build/deploy が全 success) で確認し、HTML の見た目だけで判断しない。完了ゲートは「URL 200」「CF stages success」「カスタムドメインのフル HTML に marker あり」の 3 点を分けて確認する。
-- **教訓**: 「本番に要素が無い」と結論する前に取得手段のアーティファクトを疑う (LL-108 の wrangler local vs remote、Hook 5 不在断定ゲートと同型)。大きなページの要素有無は 1-fetch-to-file + grep で確定し、compound curl のパイプ切り詰めや per-deploy URL の "Deployment Not Found" を実バグと誤認しない。
+### LL-124: Pages preview URLはbranch名やdeployment IDから推測しない
+- **事象**: PR #121の本番検証では誤ったper-deploy URLが`Deployment Not Found`を返し、PR #165ではfull branch名から組み立てたURLが404になった。一方、Cloudflare PagesのPRコメントが示すexact commit previewと、切り詰められたbranch previewはどちらもHTTP 200だった。
+- **根本原因**: commit previewのhost prefixとCloudflare内部deployment UUIDを同一視し、branch previewのslugも元branch名から完全に再構成できると仮定した。Cloudflareはbranch slugを正規化・切り詰めるため、推測URLは正しいdeploymentが存在しても404になり得る。
+- **対策**: Preview URLとBranch Preview URLはCloudflare PagesのPRコメントまたはdeployment APIが返した文字列を正本としてそのまま使う。productionはcustom domainとmain pages.dev aliasを確認する。HTMLマーカーを複数確認する場合はexact URLを1回だけ取得し、保存したresponseを繰り返し検査する。build成否はPages checkとdeployment stagesも別途確認する。
+- **教訓**: deploymentの存在やcontent不在を、推測したURLの404から断定しない。PagesのURL identityはproviderが返したexact valueで検証し、HTTP status、deployment stage、HTML内容を別の証拠として扱う。
 
 ### LL-125: E2E は「先頭カード」を前提にしない。要件状態を持つカードを選んで検証する
 - **事象**: `mobile featured panel and thumbnails keep fallback layout` が、先頭の `article.card.has-thumb` に `.summary .s-text` がある前提で落ちた。実データでは先頭 2 件が pending-summary カードでも正常で、テストだけが deterministic に失敗した。
@@ -2351,9 +2351,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 
 ### LL-351: 後段rankingは必要な候補母集団を確保してから早期終了する
 - **事象**: HomeのTickerには当日公開のCopilot記事が4件あったが、`Copilot`検索の上位は3日以上前の記事だった。Pagefindのraw候補を実測すると当日記事はindex 56-59に存在したが、検索clientは先頭batchでexact articleが12件集まると候補hydrationを終了していた。
-- **根本原因**: authority、importance、鮮度の後段sortはhydration済み候補にしか適用できないのに、終了条件をexact件数だけで決めてPagefindの近似順位を候補母集団として固定していた。後段rankingが正しくても、新しいexact hitを読む前に終了すると鮮度signalを比較できない。
-- **対策**: 30件batchと既存deadlineを維持しつつ、実測位置に1 batchの余裕を加えた90候補を確認してからexact件数による早期終了を許可した。E2Eは先頭12件の古いexact hit、途中77件の近似候補、index 89の新しいexact hit、window外2件を用意し、新しい候補が後段sortで先頭になりwindow外をhydrateしないことを固定した。
-- **教訓**: approximate search engineの結果へ独自rankingを重ねる場合、表示件数と候補走査件数を分離する。早期終了は「十分な表示件数」だけでなく、ranking signalを比較できる最小候補windowを満たしてから行い、実corpusのraw候補位置とdeterministic fixtureの両方で検証する。
+- **根本原因**: authority、importance、鮮度の後段sortはhydration済み候補にしか適用できないのに、終了条件をexact件数だけで決めてPagefindの近似順位を候補母集団として固定していた。後段rankingが正しくても、新しいexact hitを読む前に終了すると鮮度signalを比較できない。さらに各候補の1.2秒timeoutが高負荷時に異なるcandidateを落とし、`/search?q=`と`/search/?q=`で上位10件が揺れた。
+- **対策**: 30件batchと90候補のminimum windowを維持し、一般検索の全体deadlineを9秒、候補hydrationの個別上限を2.5秒へ広げた。E2Eは先頭12件の古いexact hit、途中77件の近似候補、index 89の新しいexact hit、window外2件を用意し、新しい候補が後段sortで先頭になりwindow外をhydrateしないことと、slash有無で結果集合が一致することを固定した。
+- **教訓**: approximate search engineの結果へ独自rankingを重ねる場合、表示件数と候補走査件数を分離する。早期終了は「十分な表示件数」だけでなく、ranking signalを比較できる最小候補windowと、通常負荷差で同じ候補をhydrateできる個別deadlineを満たしてから行う。実corpusのraw候補位置、deterministic fixture、同queryのroute表記差で結果集合を検証する。
 
 ### LL-352: 手動enrichment修復はPublisher最終化へ共有しないと再び蓄積する
 - **事象**: 日次監査で`titleEn`欠落が180/1,772件を超え、最新snapshotでは184件中180件を既存`titleen:fill`で安全に補完できた。CLIは以前から存在したが、毎回のNode Publisherは同じ補完を実行していなかった。
@@ -2618,6 +2618,54 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: testのsingleton母集団を`data/index.json`だけから作り、実検索indexの母集団であるlistable live entryとwarm archive detail routeを一致させていなかった。検索filter自体は正しくcase-normalizeされていた。
 - **対策**: E2Eのtag countをlive indexと全月warm archiveのID dedupe集合から算出し、実際にPagefind上でsingletonなtagだけをcase-variant回帰へ使う。
 - **教訓**: 検索やfacetのE2E fixtureは表示中のlive集合ではなく、検索engineが実際にindexするroute corpusから選ぶ。static route、archive retention、検索metadataの母集団が異なる場合は同じ正規化とdedupeをtest側にも共有する。
+
+### LL-396: 要約待ちはQueue状態だけでなく判断可能なsource contextを持たせる
+- **事象**: Homeの最新TimelineにAI要約待ちの記事が連続し、カードと詳細は「準備待ち」と元記事linkを正直に表示していたが、元記事を開くまで内容を判断できなかった。4 persona監査のDev LeadとAI Researcherが同じ根本原因を報告し、片手操作ではStatusへの回復linkも44x14pxだった。
+- **根本原因**: 非同期enrichmentのtruthful stateを表示することと、読者が今読むかを判断できることを同一視していた。`contentSnippet`はAI入力用としてartifactに保持されていたがreader-facing UIへ出さず、aggregate Queueの稼働説明だけを個別cardへ表示していた。
+- **対策**: markup除去、HTML entity decode、title echo拒否、長さ制限を行う共通helperでsource excerptを作り、pending card/detailへ「収集元の抜粋・AI要約ではない」とscope/lang属性付きで表示した。個別pendingと全体pipelineを文言で分離し、Status linkを44px以上へ拡張した。
+- **教訓**: pending stateは「未完成と明示する」だけでなく、利用可能な一次contextから判断を続けられる必要がある。source excerptはAI summaryへ見せずprovenanceを明示し、title echoやfeed suffixを除去する。aggregate Queue telemetryを個別記事のqueued証拠へ流用せず、個別状態、全体処理、回復導線を別の意味単位にする。
+
+### LL-397: 検索順位は結果だけでなくmatch provenanceと比較順を表示する
+- **事象**: `Copilot`検索で1か月前の公式記事が2日前の記事より上に3件連続し、`benchmark`ではカテゴリ入口の次にNews/Policy記事が出た。検索結果にはexact/approximate、title/tag/source/summaryのどこで一致したか、authority・importance・recencyのどの順で比較したかが表示されなかった。
+- **根本原因**: exact候補を後段sortしていても、authorityをrecencyより先に比較し、利用者へranking contractを説明していなかった。Pagefindの近似候補取得、category intent pin、reader-facing result metadataは整備済みだったが、match理由と時間tierが欠けていた。
+- **対策**: category/tag intentを先頭へ固定し、articleは7日以内、30日以内、それ以前のrecency tierを先に比較してからauthority、importance、公開日を適用した。各resultへcategory/tag/title/source/summaryのmatch scopeを表示し、JA/ENのranking noteとzero/recovery copyを同じsearch stateへ接続した。source一致はmatch provenanceとして表示するが、専用intentとして先頭固定するとは説明しない。
+- **教訓**: searchのtrustは正しいsortだけでは成立しない。候補取得、intent pin、match field、ranking signalの順序を可視化し、古い高authority記事がrecent resultを無条件に押し下げない時間tierを持たせる。内部slugやraw excerptではなくreader-facing metadataでprovenanceを説明する。
+
+### LL-398: 複合linkのaccessible nameを一部の子要素だけへ固定しない
+- **事象**: LighthouseでTop 3のlinkとright railのranking linkが`label-content-name-mismatch`になった。Top 3はtitleだけを`aria-labelledby`へ指定し、同じlink内の可視summaryをaccessible nameから除外していた。right railは可視`#tag`やcategoryを含むrowへ別の`aria-label`を上書きしていた。
+- **根本原因**: linkの名前を短く整えるため、可視contentの一部だけをaccessible nameとして指定した。視覚上は正しくても、visible labelがaccessible nameへ含まれず音声利用者の認識と一致しなかった。
+- **対策**: 複合linkは`aria-labelledby`/`aria-label`を外し、可視title、summary、source、category、countから自然なaccessible nameを生成するようにした。単位だけをvisually-hidden textで補足し、Lighthouseの該当nodeを再監査する。
+- **教訓**: cardやranking row全体が1つのlinkである場合、accessible nameを一部の見出しだけへ固定しない。可視contentを自然な名前へ含め、補足単位だけをhidden textで加える。label-in-nameはスクリーンショットや通常のrole確認では見逃すため、Lighthouse/axeのnode単位結果を完了gateに含める。
+
+### LL-399: exact facet検索を一般検索と同じPromiseの成否へ依存させない
+- **事象**: 低頻度tagから開く`q`+`tag`検索で、Pagefindのtag filterは対象記事を返せる一方、同時に実行した一般検索が3.5秒を超えると`Promise.all`全体がrejectし、完全一致記事を捨てて検索failureを表示した。実ブラウザでは`classifier`のsingleton tagから対象detailへ戻れなかった。
+- **根本原因**: exact facet retrievalと一般検索を1つのaggregate deadlineへまとめ、片方の遅延を両方の失敗として扱った。facet検索は決定論的な回収導線、一般検索は補助候補という優先度の違いを非同期contractへ反映していなかった。
+- **対策**: 明示tag intentがある共有URLでは一般検索を実行せず、canonical tag filterだけを8秒の専用deadlineで取得する。`tagHref()`は記事cardから低頻度tagの16進entry IDを付与し、liveとwarm archiveを合わせたindexed detail corpusでsingletonとなるtagだけを、現行snapshotのgeneratedAtをquery versionに持つ`tag-recovery.json`の正本と照合してPagefind読込前にexact resultへ合成する。browser fetchとCloudflare Pagesの`_headers`は`no-store`を指定する。URL改変、stale ID、mapping取得失敗ではdirect resultを出さず通常tag filterへ戻す。
+- **教訓**: exact category/source/tag retrievalをapproximate/full-text検索の可用性へ従属させない。一方、URLのresource IDは形式検証だけで信頼せず、実際に検索indexへ入るfacet→resource mappingへ照合してからdirect resultに使う。通常検索とfacet検索のmode、deadline、direct identity、mapping validation、intent解除を別のstate contractとして検証する。
+
+### LL-400: 別worktreeの検証は全commandでtarget pathを明示する
+- **事象**: Decision UX worktreeのsemantic mergeを検証する際、最初の`git diff`と`git rev-parse MERGE_HEAD`に`-C <child-worktree>`を付け忘れ、続くunit testとtypecheckでもchild pathへ移動しなかった。commandは親main checkoutで正常実行され、Decision差分なし、MERGE_HEAD欠落、対象test 5 files中3 filesだけPASSという誤った結果を返した。
+- **根本原因**: shell processのcwdは親checkoutのままなのに、直前の説明と一部commandだけでchild worktreeへ対象が切り替わったとみなした。exact SHAやtest pathを指定しても、対象repository pathを誤れば比較・検証結果は意味を持たない。
+- **対策**: child worktreeを扱う複合commandではpathを固定し、Gitは各呼び出しへ`git -C "$wt"`を付け、test/build/typecheckはcommand先頭で`cd "$wt" &&`を実行する。比較・検証前にbranch、top-level path、MERGE_HEAD、test runnerのrootを証拠へ含める。
+- **教訓**: worktree間のGit stateはrefを共有してもindex、worktree、MERGE_HEAD、生成物を共有しない。別worktreeの検証は自然言語の文脈や直前commandへ依存せず、全commandで対象pathを明示してから結果を解釈する。
+
+### LL-401: semantic conflict解決後はhelper定義と全consumerのscopeを実行時に検証する
+- **事象**: PageHero E2Eの競合解決で`settleLayout` helperの定義が前のtest内に残り、次のresponsive testだけが同名helperを呼んだ。TypeScript変換、unit、production buildは通ったが、full Playwrightで`ReferenceError: settleLayout is not defined`になった。
+- **根本原因**: 競合した2実装からhelper本体とconsumerをそれぞれ採用した際、構文上は有効でもtest callbackのlexical scopeが分離していることを確認しなかった。source内に同名定義が存在する検索結果を、対象consumerから到達可能である証拠として扱った。
+- **対策**: helperを実際に利用するresponsive testのscopeへ移し、失敗testを同じproduction artifactでretryなし再実行した。semantic conflict後は新旧両側のhelper名を検索し、定義、consumer、callback境界を確認してから関連runtime testを実行する。
+- **教訓**: conflict markerが0件でbuildが通っても、lexical scopeとruntime bindingの統合は保証されない。helperを含む競合では定義の存在だけでなく各consumerからの到達性を確認し、対象testを実行して初めて解決完了とする。
+
+### LL-402: rankingに使うtrust signalは検索結果にも可視化する
+- **事象**: Pagefind検索は記事を鮮度tier、source authority、重要度で比較していたが、結果行はsource、カテゴリ、重要度、日付だけを表示し、公式、論文、コミュニティ、報道のauthorityを省いていた。Homeと記事詳細には同じauthority badgeがあり、検索中だけtrust判断が1 click遅れた。
+- **根本原因**: ranking noteへ比較順を追加した際、ranking inputを各resultのreader-facing metadataへ対称適用しなかった。Pagefind filterにはauthorityが存在していたが、sort専用の内部値として扱っていた。
+- **対策**: 許可済みauthority kindを固定JA/EN labelへ解決し、記事resultのtoplineへ既存badge tokenで表示する。未知値は描画せず、language toggle、machine-readable authority、mobile幅をE2Eで検証する。
+- **教訓**: 検索やTop listで順位を説明する場合、比較に使うtrust signalを説明文だけへ置かず各候補で確認できるようにする。内部filter値を直接表示せず、通常cardと同じreader-facing vocabularyへ変換する。
+
+### LL-403: `pipefail`下で大きなfile listを`grep -q`へpipeしない
+- **事象**: 62 filesを含むmerge commitのpushで、pre-push hookは`git diff --name-only`から17件のWeb影響fileを得られる状態なのに`web/への影響なし`としてPublisher E2Eをskipした。同じSHA rangeをpush後に直接検査すると17件が一致した。
+- **根本原因**: `set -o pipefail`下で`echo "$CHANGED" | grep -qE ...`を使っていた。`grep -q`が先頭matchで終了した後、大きな`echo`がSIGPIPEになるとpipeline全体がnonzeroになり、先頭の`!`が「matchなし」へ反転した。短いfile listではproducerが先に完了して再現しない。
+- **対策**: producer pipeを廃止し、`grep -qE ... <<<"$CHANGED"`で同一process inputを渡す。source contract testでhere-string使用と旧`echo | grep -q`不在を固定し、次のWeb影響pushでPublisher E2Eが実行されることをhook出力で確認する。
+- **教訓**: `pipefail`と早期終了するconsumerを組み合わせると、match成功でもproducerのSIGPIPEがpipeline失敗へ見える。判定用の小さな文字列はpipeせずhere-stringまたはfile inputを使い、短いfixtureだけでなく多数fileのmerge rangeでも実行経路を検証する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

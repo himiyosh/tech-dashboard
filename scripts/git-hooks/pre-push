@@ -112,7 +112,7 @@ if [ "${SKIP_E2E:-}" = "1" ]; then
 else
   # web/ または data/index.json に差分が無ければ E2E は省略する (ローカル DX)
   CHANGED="$pushed_files"
-  if [ -n "$CHANGED" ] && ! echo "$CHANGED" | grep -qE '^(web/|data/index\.json|tests/e2e/|playwright\.config\.)'; then
+  if [ -n "$CHANGED" ] && ! grep -qE '^(web/|data/index\.json|tests/e2e/|playwright\.config\.)' <<<"$CHANGED"; then
     echo "[pre-push] web/ への影響なし → E2E をスキップ"
   else
     echo "[pre-push] Publisher Playwright E2E を実行しています..."

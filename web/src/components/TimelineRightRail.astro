@@ -107,14 +107,15 @@ const last7d = entries.filter((e) => {
           <a
             class="home-ranked-row"
             href={tagHref(t.tag)}
-            aria-label={`${t.tag}, ${t.count} entries`}
             style={`--rail-color:var(--accent);--rail-level:${Math.max(10, Math.round((t.count / maxTagCount) * 100))}%`}
           >
             <span class="home-rank-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
             <span class="home-ranked-copy">
               <span class="home-ranked-label">#{t.tag}</span>
             </span>
-            <strong class="home-ranked-count">{t.count}</strong>
+            <strong class="home-ranked-count">
+              {t.count}<span class="visually-hidden"> entries</span>
+            </strong>
             <span class="home-ranked-meter" aria-hidden="true"><i></i></span>
           </a>
         ))}
@@ -135,7 +136,6 @@ const last7d = entries.filter((e) => {
             <a
               class="home-ranked-row home-source-row"
               href={`/c/${s.catSlug}`}
-              aria-label={`${s.label}, ${s.count} entries${s.catLabel ? `, ${s.catLabel}` : ""}`}
               style={`--rail-color:${s.catColor};--rail-level:${Math.max(10, Math.round((s.count / maxSourceCount) * 100))}%`}
             >
               <span class="home-rank-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
@@ -143,7 +143,9 @@ const last7d = entries.filter((e) => {
                 <span class="home-ranked-label">{s.label}</span>
                 {s.catLabel && <span class="home-ranked-meta">{s.catLabel}</span>}
               </span>
-              <strong class="home-ranked-count">{s.count}</strong>
+              <strong class="home-ranked-count">
+                {s.count}<span class="visually-hidden"> entries</span>
+              </strong>
               <span class="home-ranked-meter" aria-hidden="true"><i></i></span>
             </a>
           ) : (

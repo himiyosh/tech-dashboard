@@ -17,12 +17,14 @@ import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { sourceFaviconUrl } from "../lib/favicon.ts";
 import { deriveQueueDisplay, summaryQueueCardCopy } from "../lib/queue-health.ts";
 import { deriveWorkerRunStatus } from "../lib/run-health.ts";
+import { sourceExcerptForEntry } from "../lib/source-excerpt.ts";
 import {
   canonicalSourceUrl,
   sourceAuthority,
   sourceLabel,
 } from "../lib/source-meta.ts";
 import LanguageFallbackBadge from "./LanguageFallbackBadge.astro";
+import SourceExcerpt from "./SourceExcerpt.astro";
 
 export interface Props {
   entry: NormalizedEntry;
@@ -109,6 +111,7 @@ const summaryQueue = deriveQueueDisplay({
   runState: workerRun.state,
 });
 const queueCopy = summaryQueueCardCopy(summaryQueue.state);
+const sourceExcerpt = hasSummary ? "" : sourceExcerptForEntry(entry);
 
 // Generate a deterministic pattern seed from the entry id
 const patternSeed = entry.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
@@ -259,28 +262,40 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
         )}
       </div>
     ) : (
-      <p
-        class="summary-state"
-        data-summary-queue-mode={summaryQueue.mode}
-        data-summary-queue-state={summaryQueue.state}
-      >
-        <span class="summary-pending-badge">
-          <span class="i18n-ja" data-summary-queue-badge-ja>{queueCopy.badgeJa}</span>
-          <span class="i18n-en" lang="en" data-summary-queue-badge-en>{queueCopy.badgeEn}</span>
-        </span>
-        <span class="summary-pending-meta i18n-ja">
-          <span data-summary-queue-detail-ja>{queueCopy.detailJa}</span> · <a href="/status#worker-health-heading">進行状況</a>
-        </span>
-        <span class="summary-pending-meta i18n-en" lang="en">
-          <span data-summary-queue-detail-en>{queueCopy.detailEn}</span> · <a href="/status#worker-health-heading">Status</a>
-        </span>
-      </p>
+      <div class="pending-summary-stack">
+        <p
+          class="summary-state"
+          data-summary-queue-mode={summaryQueue.mode}
+          data-summary-queue-state={summaryQueue.state}
+        >
+          <span class="summary-pending-badge">
+            <span class="i18n-ja" data-summary-queue-badge-ja>{queueCopy.badgeJa}</span>
+            <span class="i18n-en" lang="en" data-summary-queue-badge-en>{queueCopy.badgeEn}</span>
+          </span>
+          <span class="summary-pending-meta i18n-ja">
+            <span data-summary-queue-detail-ja>{queueCopy.detailJa}</span>
+            <a href="/status#worker-health-heading">全体の進行状況</a>
+          </span>
+          <span class="summary-pending-meta i18n-en" lang="en">
+            <span data-summary-queue-detail-en>{queueCopy.detailEn}</span>
+            <a href="/status#worker-health-heading">Site-wide status</a>
+          </span>
+        </p>
+        {sourceExcerpt && (
+          <SourceExcerpt
+            entryId={entry.id}
+            excerpt={sourceExcerpt}
+            lang={entry.lang}
+            variant="card"
+          />
+        )}
+      </div>
     )}
     <div class="card-footer">
       {visibleTags.length > 0 && (
         <div class="tag-row">
           {visibleTags.map((t) => (
-            <a class="tag-chip" href={tagHref(t)}>#{t}</a>
+            <a class="tag-chip" href={tagHref(t, entry.id)}>#{t}</a>
           ))}
           {hiddenTagCount > 0 && <span class="tag-chip tag-more">+{hiddenTagCount}</span>}
         </div>

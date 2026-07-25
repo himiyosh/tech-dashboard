@@ -262,6 +262,10 @@ describe("Cloudflare Worker deploy config", () => {
     expect(prePush).toContain('pushed_files="${pushed_files}"');
     expect(prePush).toContain('CHANGED="$pushed_files"');
     expect(prePush).toContain('git log --format= --name-only "$local_sha"');
+    expect(prePush).toContain(
+      `grep -qE '^(web/|data/index\\.json|tests/e2e/|playwright\\.config\\.)' <<<"$CHANGED"`,
+    );
+    expect(prePush).not.toContain('echo "$CHANGED" | grep -qE');
     expect(prePush).not.toContain("git diff --name-only HEAD @{u}");
     expect(prePush).toContain('grep -E "^(BUILD:|ASTRO:)|Pagefind|Indexed"');
     expect(prePush).toMatch(/npm --prefix "\$ROOT" run build:web[\s\S]*web_build_ready=1/);

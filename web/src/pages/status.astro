@@ -467,15 +467,15 @@ const workerSummary = wh
           </div>
           <div
             class="status-metric-card"
-            data-health-scope="enrichment-budget"
+            data-health-scope="latest-run-enrichment-budget"
             data-health-domain="enrichment"
             data-telemetry-state={hasEnrichmentBudgetTelemetry ? "recorded" : "not-recorded"}
             data-enrichment-enqueue-cap={enrichmentEnqueueCap ?? "unknown"}
             data-enrichment-enqueued={enrichmentEnqueued ?? "unknown"}
           >
             <span>
-              <span class="i18n-ja">直近runの生成枠</span>
-              <span class="i18n-en" lang="en">Latest-run enrichment slots</span>
+              <span class="i18n-ja">直近runの生成枠 (合計)</span>
+              <span class="i18n-en" lang="en">Latest-run enrichment slots (total)</span>
             </span>
             <strong>
               {enrichmentBudgetLabel ?? (
@@ -489,10 +489,10 @@ const workerSummary = wh
               {hasEnrichmentBudgetTelemetry ? (
                 <>
                   <span class="i18n-ja">
-                    1 run 上限 {enrichmentEnqueueCap} 件 · 要約 {summaryQueueEnqueued ?? "未計測"} · 本文 {bodyQueueEnqueued ?? "未計測"}
+                    合計 {enrichmentEnqueued} 件 / 上限 {enrichmentEnqueueCap} 件 · 内訳: 要約 {summaryQueueEnqueued ?? "未記録"} · 本文 {bodyQueueEnqueued ?? "未記録"}
                   </span>
                   <span class="i18n-en" lang="en">
-                    max {enrichmentEnqueueCap} per run · summaries {summaryQueueEnqueued ?? "not measured"} · bodies {bodyQueueEnqueued ?? "not measured"}
+                    {enrichmentEnqueued} total / {enrichmentEnqueueCap} max · breakdown: summaries {summaryQueueEnqueued ?? "not recorded"} · bodies {bodyQueueEnqueued ?? "not recorded"}
                   </span>
                 </>
               ) : (

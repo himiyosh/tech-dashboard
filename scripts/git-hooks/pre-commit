@@ -26,7 +26,12 @@ if [ "${SKIP_TYPECHECK:-}" = "1" ]; then
 fi
 
 # TypeScript ファイルがステージされているかチェック
-if ! git diff --cached --name-only | grep -qE '\.(ts|tsx)$'; then
+# (pipefail 下で `| grep -qE` を使うと、grep の早期終了後に git diff が
+# SIGPIPE で非 0 終了し、TS ファイルがあっても「変更なし」に誤判定し得る。
+# LL-403 と同じ SIGPIPE 誤判定を避けるため、変数へ一度キャプチャしてから
+# here-string で grep へ渡す)
+staged_files=$(git diff --cached --name-only)
+if ! grep -qE '\.(ts|tsx)$' <<<"$staged_files"; then
   # TS ファイルに変更なし → スキップ
   exit 0
 fi

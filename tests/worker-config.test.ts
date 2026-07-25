@@ -278,6 +278,34 @@ describe("Cloudflare Worker deploy config", () => {
     expect(readConfig("vitest.config.ts")).toContain("maxWorkers: 1");
   });
 
+  it("detects worker/ diffs and staged TypeScript files without a SIGPIPE-prone `| grep -q` under pipefail", () => {
+    const prePush = readConfig("scripts/git-hooks/pre-push");
+    const preCommit = readConfig("scripts/git-hooks/pre-commit");
+
+    // pre-push: worker/ diff detection must not pipe `git diff` into
+    // `grep -q`, or a large diff can trip the same SIGPIPE false-negative
+    // fixed for the web/-impact check in LL-403 (grep exits early once it
+    // finds a match, git diff's write to the closed pipe gets SIGPIPE, and
+    // under `set -o pipefail` the whole pipeline reports non-zero even
+    // though grep did find a match).
+    expect(prePush).toContain('git diff --quiet "$range" -- worker/');
+    expect(prePush).not.toContain(
+      'git diff --name-only "$range" -- worker/ 2>/dev/null | grep -q .',
+    );
+    expect(prePush).not.toMatch(/git diff[^\n]*worker\/[^\n]*\|\s*grep/);
+
+    // pre-commit: staged-TypeScript-file detection has the exact same
+    // pipe shape and must use the same capture-then-here-string fix.
+    expect(preCommit).toContain("staged_files=$(git diff --cached --name-only)");
+    expect(preCommit).toContain(
+      "grep -qE '\\.(ts|tsx)$' <<<\"$staged_files\"",
+    );
+    expect(preCommit).not.toContain(
+      'git diff --cached --name-only | grep -qE',
+    );
+    expect(preCommit).not.toMatch(/git diff[^\n]*\|\s*grep/);
+  });
+
   it("loads search metadata from the shared client bundle instead of repeating JSON in every page", () => {
     const portal = readConfig("web/src/layouts/Portal.astro");
 

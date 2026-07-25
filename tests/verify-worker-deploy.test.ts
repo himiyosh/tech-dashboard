@@ -30,6 +30,58 @@ function makeVirtualClock(startMs = 0) {
   };
 }
 
+// A manually-driven fake timer for the per-attempt deadline mechanism, kept
+// fully independent of the virtual clock above: it never fires on its own
+// (no real setTimeout, no auto-advance), only when the test explicitly asks
+// it to. This lets a test simulate "the deadline elapsed" for a fetch that
+// never resolves or rejects by itself, without any real wait.
+function makeManualTimerScheduler() {
+  const scheduled = [];
+  return {
+    setTimeoutImpl: (fn) => {
+      const handle = { fn, fired: false, cleared: false };
+      scheduled.push(handle);
+      return handle;
+    },
+    clearTimeoutImpl: (handle) => {
+      handle.cleared = true;
+    },
+    fireNext() {
+      const next = scheduled.find((entry) => !entry.fired && !entry.cleared);
+      if (!next) return false;
+      next.fired = true;
+      next.fn();
+      return true;
+    },
+  };
+}
+
+// Drives `resultPromise` to completion by repeatedly firing any pending fake
+// timers and yielding a microtask tick, until the promise settles. Bounded
+// so a real regression (e.g. a missed timer) fails this test fast instead of
+// hanging the suite.
+async function driveUntilSettled(resultPromise, scheduler) {
+  let settled = false;
+  resultPromise.then(
+    () => {
+      settled = true;
+    },
+    () => {
+      settled = true;
+    },
+  );
+  for (let i = 0; i < 200 && !settled; i++) {
+    scheduler.fireNext();
+    await Promise.resolve();
+  }
+  if (!settled) {
+    throw new Error(
+      "driveUntilSettled: promise never settled after 200 drive iterations",
+    );
+  }
+  return resultPromise;
+}
+
 describe("pollForFingerprint", () => {
   it("succeeds immediately when every poll already matches", async () => {
     const clock = makeVirtualClock();
@@ -151,6 +203,55 @@ describe("pollForFingerprint", () => {
     expect(result.lastFingerprint).toBeUndefined();
     expect(result.lastError).toBe("network unreachable");
     expect(result.reason).toContain("no valid fingerprint observed");
+  });
+
+  it("bounds a fetch that never resolves via AbortController and a per-attempt deadline, with no real wait", async () => {
+    const clock = makeVirtualClock();
+    const scheduler = makeManualTimerScheduler();
+    const capturedSignals = [];
+    const fetchImpl = vi.fn((_url, init) => {
+      capturedSignals.push(init.signal);
+      // Simulate a hung request: this promise never resolves or rejects on
+      // its own. Without a per-attempt deadline, awaiting it would block
+      // pollForFingerprint forever regardless of timeoutMs.
+      return new Promise(() => {});
+    });
+
+    const wallClockStartMs = Date.now();
+    const resultPromise = pollForFingerprint({
+      url: "https://bridge.example/health",
+      expectedFingerprint: EXPECTED,
+      requiredConsecutive: 1,
+      intervalMs: 5_000,
+      timeoutMs: 10_000,
+      fetchImpl,
+      setTimeoutImpl: scheduler.setTimeoutImpl,
+      clearTimeoutImpl: scheduler.clearTimeoutImpl,
+      ...clock,
+    });
+
+    const result = await driveUntilSettled(resultPromise, scheduler);
+
+    // Bounded: fails closed at exactly the configured timeout, never blocks
+    // past it waiting on the hung fetch.
+    expect(result.ok).toBe(false);
+    expect(result.attempts).toBe(2);
+    expect(result.elapsedMs).toBe(10_000);
+    expect(result.lastFingerprint).toBeUndefined();
+    expect(result.reason).toContain("no valid fingerprint observed");
+    expect(result.reason).toContain("poll attempt exceeded its remaining time budget");
+
+    // Every hung attempt was actually cancelled once its deadline fired, and
+    // the poll moved on to retry rather than getting stuck on one attempt.
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(capturedSignals).toHaveLength(2);
+    for (const signal of capturedSignals) {
+      expect(signal.aborted).toBe(true);
+    }
+
+    // This whole scenario models 10s of *virtual* elapsed time but must not
+    // consume any real wall-clock time: no real setTimeout/sleep was used.
+    expect(Date.now() - wallClockStartMs).toBeLessThan(500);
   });
 
   it("treats a non-2xx health response as a non-match without throwing", async () => {

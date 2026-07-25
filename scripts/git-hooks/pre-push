@@ -167,8 +167,11 @@ if [ "$push_to_main" = "0" ]; then
   exit 0
 fi
 
-# worker/ 配下の差分を確認
-if ! git diff --name-only "$range" -- worker/ 2>/dev/null | grep -q .; then
+# worker/ 配下の差分を確認 (pipefail 下で `| grep -q` を使うと、grep が早期
+# 終了した後の git diff の SIGPIPE がパイプライン全体を非 0 にし、差分あり
+# でも「差分なし」に誤判定し得る。LL-403 と同じ SIGPIPE 誤判定を避けるため
+# pipe を使わない `git diff --quiet` で判定する)
+if git diff --quiet "$range" -- worker/ 2>/dev/null; then
   echo "[pre-push] worker/ に差分なし → wrangler deploy はスキップ"
   exit 0
 fi

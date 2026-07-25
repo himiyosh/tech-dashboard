@@ -62,13 +62,66 @@ async function defaultSleep(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function performHealthCheck(url, fetchImpl, signal) {
+  const response = await fetchImpl(cacheBustUrl(url), {
+    headers: { accept: "application/json", "cache-control": "no-cache" },
+    cache: "no-store",
+    signal,
+  });
+  if (!response.ok) {
+    return { error: `HTTP ${response.status}` };
+  }
+  const body = await response.json();
+  if (typeof body?.publisherContractFingerprint === "string") {
+    return { fingerprint: body.publisherContractFingerprint };
+  }
+  return { error: "response is missing publisherContractFingerprint" };
+}
+
+// Bounds a single attempt (fetch + body read) to `budgetMs`, regardless of
+// whether `operation()` itself ever settles. A bare `await fetchImpl(...)`
+// has no timeout of its own, so a hung request (or a body read that never
+// completes) would otherwise block the whole poll past `timeoutMs` despite
+// every doc comment here claiming it never does (LL-407 follow-up: this was
+// exactly the gap an independent review caught before merge). `controller`
+// is aborted so a real `fetch()` actually cancels its in-flight request; the
+// deadline itself is enforced by racing against `setTimeoutImpl`, which
+// fires (and rejects) even if the injected `operation()` ignores the abort
+// signal entirely -- required for a deterministic "hanging fetch" test that
+// never resolves/rejects on its own.
+async function withDeadline(operation, budgetMs, controller, setTimeoutImpl, clearTimeoutImpl) {
+  let timer;
+  const deadline = new Promise((_resolve, reject) => {
+    timer = setTimeoutImpl(() => {
+      controller.abort();
+      reject(new Error(`poll attempt exceeded its remaining time budget (${budgetMs}ms)`));
+    }, budgetMs);
+  });
+  const operationPromise = operation();
+  // If `operation()` later rejects (e.g. a real fetch's abort) after the
+  // deadline already won the race, swallow it here so it never surfaces as
+  // an unhandled rejection.
+  operationPromise.catch(() => {});
+  try {
+    return await Promise.race([operationPromise, deadline]);
+  } finally {
+    clearTimeoutImpl(timer);
+  }
+}
+
 /**
  * Poll `url` until it reports `expectedFingerprint` for `requiredConsecutive`
- * consecutive attempts, or until `timeoutMs` elapses. Never blocks longer
- * than `timeoutMs` and never returns success on a single lucky match.
+ * consecutive attempts, or until `timeoutMs` elapses. Each individual attempt
+ * (fetch + body read) is itself bounded to whatever time budget remains, via
+ * `AbortController` plus a race against `setTimeoutImpl`, so a single hung
+ * request cannot block the poll past `timeoutMs` -- the deadline check before
+ * each attempt and the per-attempt deadline together guarantee the overall
+ * call never blocks longer than `timeoutMs` plus a small, bounded overhead.
  *
- * All time/IO is injectable (`fetchImpl`, `sleepImpl`, `nowImpl`) so tests can
- * run deterministically with a virtual clock instead of real timers.
+ * All time/IO is injectable (`fetchImpl`, `sleepImpl`, `nowImpl`,
+ * `setTimeoutImpl`, `clearTimeoutImpl`) so tests can run deterministically
+ * with a virtual clock and a manually-driven fake timer instead of real
+ * timers, including a fetch that never resolves or rejects on its own.
  */
 export async function pollForFingerprint({
   url,
@@ -79,6 +132,8 @@ export async function pollForFingerprint({
   fetchImpl = fetch,
   sleepImpl = defaultSleep,
   nowImpl = Date.now,
+  setTimeoutImpl = setTimeout,
+  clearTimeoutImpl = clearTimeout,
   onAttempt,
 }) {
   if (typeof url !== "string" || url.length === 0) {
@@ -114,23 +169,37 @@ export async function pollForFingerprint({
   let lastError;
 
   for (;;) {
+    // Check the deadline before starting another attempt: if a previous
+    // sleep already pushed us to (or past) timeoutMs, stop here instead of
+    // starting one more attempt with (or below) a zero time budget.
+    const elapsedBeforeAttempt = nowImpl() - startedAt;
+    if (elapsedBeforeAttempt >= timeoutMs) {
+      return buildFailureResult({
+        attempts,
+        elapsedMs: elapsedBeforeAttempt,
+        consecutiveMatches,
+        lastFingerprint,
+        lastError,
+        expectedFingerprint,
+        requiredConsecutive,
+        url,
+      });
+    }
+
     attempts += 1;
+    const remainingBudgetMs = timeoutMs - elapsedBeforeAttempt;
+    const controller = new AbortController();
     let fingerprint;
     try {
-      const response = await fetchImpl(cacheBustUrl(url), {
-        headers: { accept: "application/json", "cache-control": "no-cache" },
-        cache: "no-store",
-      });
-      if (response.ok) {
-        const body = await response.json();
-        if (typeof body?.publisherContractFingerprint === "string") {
-          fingerprint = body.publisherContractFingerprint;
-        } else {
-          lastError = "response is missing publisherContractFingerprint";
-        }
-      } else {
-        lastError = `HTTP ${response.status}`;
-      }
+      const outcome = await withDeadline(
+        () => performHealthCheck(url, fetchImpl, controller.signal),
+        remainingBudgetMs,
+        controller,
+        setTimeoutImpl,
+        clearTimeoutImpl,
+      );
+      fingerprint = outcome.fingerprint;
+      if (outcome.error) lastError = outcome.error;
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
     }
@@ -149,25 +218,50 @@ export async function pollForFingerprint({
     }
 
     if (elapsedMs >= timeoutMs) {
-      const reason =
-        lastFingerprint === undefined
-          ? `no valid fingerprint observed from ${url}${lastError ? ` (${lastError})` : ""}`
-          : lastFingerprint === expectedFingerprint
-            ? `fingerprint matched but never reached ${requiredConsecutive} consecutive successes before timeout`
-            : `fingerprint is still ${lastFingerprint}; expected ${expectedFingerprint}`;
-      return {
-        ok: false,
+      return buildFailureResult({
         attempts,
         elapsedMs,
         consecutiveMatches,
         lastFingerprint,
         lastError,
-        reason,
-      };
+        expectedFingerprint,
+        requiredConsecutive,
+        url,
+      });
     }
 
-    await sleepImpl(intervalMs);
+    // Never sleep past the deadline: cap the inter-attempt wait to whatever
+    // budget remains so the whole call cannot exceed timeoutMs plus one
+    // bounded attempt.
+    await sleepImpl(Math.min(intervalMs, timeoutMs - elapsedMs));
   }
+}
+
+function buildFailureResult({
+  attempts,
+  elapsedMs,
+  consecutiveMatches,
+  lastFingerprint,
+  lastError,
+  expectedFingerprint,
+  requiredConsecutive,
+  url,
+}) {
+  const reason =
+    lastFingerprint === undefined
+      ? `no valid fingerprint observed from ${url}${lastError ? ` (${lastError})` : ""}`
+      : lastFingerprint === expectedFingerprint
+        ? `fingerprint matched but never reached ${requiredConsecutive} consecutive successes before timeout`
+        : `fingerprint is still ${lastFingerprint}; expected ${expectedFingerprint}`;
+  return {
+    ok: false,
+    attempts,
+    elapsedMs,
+    consecutiveMatches,
+    lastFingerprint,
+    lastError,
+    reason,
+  };
 }
 
 function printUsage() {

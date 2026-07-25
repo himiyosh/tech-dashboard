@@ -156,6 +156,21 @@ async function mockReactionIdentity(
   });
 }
 
+async function routeReactionConfig(page: Page, body: unknown, status = 200): Promise<void> {
+  await page.route("**/api/reactions/config", async (route) => {
+    expect(route.request().method(), "reaction config health check uses GET").toBe("GET");
+    await route.fulfill({
+      status,
+      contentType: "application/json",
+      body: JSON.stringify(body),
+    });
+  });
+}
+
+function reactionConfigCard(page: Page) {
+  return page.locator('[data-health-scope="reaction-config"]');
+}
+
 test.describe("TECH Dashboard smoke", () => {
   test("unknown routes return a branded 404 with recovery paths", async ({ page }) => {
     const unknownRoutes = [
@@ -3586,6 +3601,227 @@ test.describe("TECH Dashboard smoke", () => {
     );
   });
 
+  test("status reaction config health shows configured (ok) when every dependency resolves true", async ({
+    page,
+  }) => {
+    await page.route("**/api/reactions/config", async (route) => {
+      expect(route.request().method(), "reaction config health check uses GET").toBe("GET");
+      // Small artificial delay so the SSR-neutral "checking" state is observable
+      // before the progressive-enhancement fetch resolves, without racing it.
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          config: {
+            databaseBinding: true,
+            hmacSecret: true,
+            turnstileSecret: true,
+            publicSiteKey: true,
+            configured: true,
+          },
+        }),
+      });
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/status/");
+
+    const card = reactionConfigCard(page);
+    await expect(card).toHaveAttribute("data-reaction-config-state", "checking");
+    await expect(card.locator("[data-reaction-config-label] > .i18n-ja")).toHaveText("確認中");
+    await expect(card.locator("[data-reaction-config-flags]")).toBeHidden();
+
+    await expect(card).toHaveAttribute("data-reaction-config-state", "configured", { timeout: 5_000 });
+    await expect(card.locator("[data-reaction-config-label] > .i18n-ja")).toHaveText("設定済み");
+    await expect(card.locator("[data-reaction-config-label] > .i18n-en")).toHaveText("Configured");
+    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
+      "すべて揃っています",
+    );
+    const flagRows = card.locator("[data-reaction-config-flag]");
+    await expect(flagRows).toHaveCount(4);
+    await expect(card.locator("[data-reaction-config-flags]")).toBeVisible();
+    for (const key of ["databaseBinding", "hmacSecret", "turnstileSecret", "publicSiteKey"]) {
+      const row = card.locator(`[data-reaction-config-flag="${key}"]`);
+      await expect(row).toHaveAttribute("data-reaction-config-flag-ok", "true");
+      await expect(row.locator("[data-reaction-config-flag-state] > .i18n-ja")).toHaveText("設定済み");
+      await expect(row.locator("[data-reaction-config-flag-state] > .i18n-en")).toHaveText("Configured");
+    }
+    await expect(card).toHaveClass(/reaction-config-card/);
+    const beforeColor = await card.evaluate(
+      (element) => getComputedStyle(element, "::before").backgroundColor,
+    );
+    expect(beforeColor).not.toBe("");
+  });
+
+  test("status reaction config health shows a neutral not-configured breakdown, never ERR, when partial", async ({
+    page,
+  }) => {
+    await routeReactionConfig(page, {
+      config: {
+        databaseBinding: true,
+        hmacSecret: false,
+        turnstileSecret: false,
+        publicSiteKey: false,
+        configured: false,
+      },
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/status/");
+
+    const card = reactionConfigCard(page);
+    await expect(card).toHaveAttribute("data-reaction-config-state", "not-configured");
+    await expect(card.locator("[data-reaction-config-label] > .i18n-ja")).toHaveText("未設定");
+    await expect(card.locator("[data-reaction-config-label] > .i18n-en")).toHaveText("Not configured");
+    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
+      "識別子署名用シークレット",
+    );
+    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
+      "Turnstile 検証シークレット",
+    );
+    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
+      "Turnstile 公開サイトキー",
+    );
+    await expect(card.locator("[data-reaction-config-detail] > .i18n-en")).toContainText(
+      "Identity signing secret",
+    );
+
+    await expect(
+      card.locator('[data-reaction-config-flag="databaseBinding"]'),
+    ).toHaveAttribute("data-reaction-config-flag-ok", "true");
+    for (const key of ["hmacSecret", "turnstileSecret", "publicSiteKey"]) {
+      const row = card.locator(`[data-reaction-config-flag="${key}"]`);
+      await expect(row).toHaveAttribute("data-reaction-config-flag-ok", "false");
+      await expect(row.locator("[data-reaction-config-flag-state] > .i18n-en")).toHaveText(
+        "Not configured",
+      );
+    }
+
+    // "neutral, not ERR": the not-configured state must never carry a warn/err tone class
+    // or color — this is an optional feature that degrades safely, not an incident.
+    await expect(card).not.toHaveClass(/\berr\b/);
+    await expect(card).not.toHaveClass(/\bwarn\b/);
+    await expect(card).not.toHaveClass(/tone-error/);
+    await expect(card).not.toHaveClass(/tone-warn/);
+  });
+
+  test("status reaction config health distinguishes endpoint unavailable from not-configured", async ({
+    page,
+  }) => {
+    await page.route("**/api/reactions/config", async (route) => {
+      await route.abort("failed");
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/status/");
+
+    const card = reactionConfigCard(page);
+    await expect(card).toHaveAttribute("data-reaction-config-state", "unavailable");
+    await expect(card.locator("[data-reaction-config-label] > .i18n-ja")).toHaveText("確認できません");
+    await expect(card.locator("[data-reaction-config-label] > .i18n-en")).toHaveText(
+      "Check unavailable",
+    );
+    // Distinct wording from the resolved not-configured state (asserted above) so an
+    // operator can tell "we don't know" apart from "we checked and it's missing".
+    await expect(card.locator("[data-reaction-config-label] > .i18n-en")).not.toHaveText(
+      "Not configured",
+    );
+    await expect(card.locator("[data-reaction-config-detail] > .i18n-en")).toContainText(
+      "may be a network or temporary issue",
+    );
+    // Unresolved: the itemized flag breakdown never appears when we couldn't check at all.
+    await expect(card.locator("[data-reaction-config-flags]")).toBeHidden();
+    await expect(card).not.toHaveClass(/\berr\b/);
+    await expect(card).not.toHaveClass(/\bwarn\b/);
+  });
+
+  test("status reaction config health never exposes secret or key values in the page", async ({
+    page,
+  }) => {
+    const marker = "MARKER-SECRET-VALUE-DO-NOT-RENDER-1234567890";
+    await routeReactionConfig(page, {
+      config: {
+        databaseBinding: true,
+        hmacSecret: true,
+        turnstileSecret: true,
+        publicSiteKey: true,
+        configured: true,
+        // A malicious/misbehaving endpoint might try to smuggle a value through an
+        // unexpected field; the client only ever reads the four known booleans.
+        leakedHmacSecret: marker,
+        leakedTurnstileSecret: marker,
+      },
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/status/");
+
+    const card = reactionConfigCard(page);
+    await expect(card).toHaveAttribute("data-reaction-config-state", "configured");
+    const pageContent = await page.content();
+    expect(pageContent).not.toContain(marker);
+  });
+
+  test("status reaction config health has accessible descriptions without live-region misuse", async ({
+    page,
+  }) => {
+    await routeReactionConfig(page, {
+      config: {
+        databaseBinding: false,
+        hmacSecret: false,
+        turnstileSecret: false,
+        publicSiteKey: false,
+        configured: false,
+      },
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/status/");
+
+    const card = reactionConfigCard(page);
+    await expect(card).toHaveAttribute("data-reaction-config-state", "not-configured");
+    const heading = card.locator("h3.rail-title");
+    await expect(heading).toHaveAttribute("id", "reaction-config-heading");
+    await expect(card).toHaveAttribute("aria-labelledby", "reaction-config-heading");
+    await expect(card).toHaveAttribute("aria-describedby", "reaction-config-detail");
+    await expect(card.locator("#reaction-config-detail")).toHaveCount(1);
+    // This card resolves once on load; it must not misuse aria-live as if it were a
+    // continuously-updating live region.
+    await expect(card).not.toHaveAttribute("aria-live");
+    await expect(card.locator("[data-reaction-config-label]")).not.toHaveAttribute("aria-live");
+    await expect(card.locator("[data-reaction-config-detail]")).not.toHaveAttribute("aria-live");
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(card.locator("[data-reaction-config-label] > .i18n-en")).toBeVisible();
+    await expect(card.locator("[data-reaction-config-label] > .i18n-ja")).toBeHidden();
+  });
+
+  test("status reaction config health resolves without page overflow on mobile (390px)", async ({
+    page,
+  }) => {
+    await routeReactionConfig(page, {
+      config: {
+        databaseBinding: true,
+        hmacSecret: false,
+        turnstileSecret: true,
+        publicSiteKey: false,
+        configured: false,
+      },
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/status/");
+
+    // The whole `.status-insights` rail (every card in it, not just this one) is
+    // intentionally hidden below 1181px in this app's responsive layout, so the
+    // reaction-config card is expected to be non-visible here too — this asserts
+    // that it still resolves cleanly off-screen (correct state, no overflow) rather
+    // than asserting a visibility contract this rail has never had on mobile.
+    const card = reactionConfigCard(page);
+    await expect(card).toHaveAttribute("data-reaction-config-state", "not-configured");
+    await expect(page.locator("aside.status-insights")).toBeHidden();
+    await expect(page.locator("#worker-health-heading")).toBeVisible();
+    await expect(page.locator("#source-health-heading")).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+  });
+
   test("status publication activity action targets visible main content on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/status/");
@@ -3629,7 +3865,7 @@ test.describe("TECH Dashboard smoke", () => {
     }
 
     await expect(page.locator(".category-health-list li").first()).toBeVisible();
-    await expect(page.locator("aside.status-insights h3.rail-title")).toHaveCount(5);
+    await expect(page.locator("aside.status-insights h3.rail-title")).toHaveCount(6);
     await expect(page.locator("aside.status-insights div.rail-title")).toHaveCount(0);
     await expect
       .poll(() =>

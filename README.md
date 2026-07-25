@@ -231,7 +231,7 @@ custom domain `techdb.studio344.net` は新プロジェクトに移行済みで�
 
 Knowledge カードと記事詳細のいいねは、同一 origin の Pages Functions と専用 D1 を使います。お気に入り、アカウント、マイページ、記事保存は含みません。いいねは記事 route の保持期間を延長せず、live index から外れた記事を再公開しません。
 
-本番で有効にする前に、Cloudflare Pages project へ次を設定します。コードを merge しただけでは、binding と key が無いためコントロールは利用不可のままです。
+本番で有効にする前に、Cloudflare Pages project へ次を設定します。コードを merge しただけでは、binding と key が無いためコントロールは利用不可のままです。設定状態は `/status` の「匿名いいねの設定状態」カードで確認できます (詳細は本セクション末尾)。
 
 | 種別 | 名前 | 用途 |
 |---|---|---|
@@ -280,6 +280,7 @@ API contract:
 - `GET /api/reactions?ids=<comma-separated ids>` は最大 50 記事の count と current browser の状態を返す。
 - `POST /api/reactions/identity` は匿名 cookie だけを確立する。票、count、rate-limit state は変更しない。
 - `PUT /api/reactions/:id` は確立済み cookie と `{ liked, turnstileToken }` の desired state を受け取る。cookie が無い場合は `409 identity_required` を返し、toggle command ではないため再送しても冪等。
+- `GET /api/reactions/config` は D1 binding・HMAC secret・Turnstile secret・public site key が「設定済みかどうか」を boolean だけで返す (`{ config: { databaseBinding, hmacSecret, turnstileSecret, publicSiteKey, configured } }`)。値そのものは一切返さない。Astro の静的 build は Pages Function の runtime binding を知り得ないため、この読み取り専用 same-origin endpoint が唯一の truthful な設定確認手段であり、`/metrics.json` のような build-time artifact へ推測値を書かない。
 - browser UUID は `__Host-techdb_reaction_voter` HttpOnly cookie に保持し、生値と IP address は D1 に保存しない。
 - cookie 削除や別 browser は別票として扱う best-effort contract。公開 count を identity や人気ランキングへ流用しない。
 
@@ -289,6 +290,7 @@ UI contract:
 - Knowledge では常時表示の説明、記事詳細では source/share utility と分離した専用 reaction panel を使い、匿名・非保存・非ランキングを操作地点で明示する。
 - 大きな visible count は `1.2K` / `1M` のように短縮するが、accessible name と tooltip には locale に沿った正確な件数を保持する。
 - mutation 失敗時は optimistic state を戻して server truth を再取得し、rate limit、Turnstile、service、network の原因に応じた JA/EN toast を表示する。keyboard focus は操作した button に維持する。
+- `/status` は `GET /api/reactions/config` を progressive enhancement で読み、SSR 直後は neutral な「確認中 / Checking」を表示する。応答が揃うと「設定済み / Configured」(ok tone) か「未設定 / Not configured」(neutral tone、未設定の項目を JA/EN で列挙) のどちらかを表示し、endpoint に到達できない場合だけ別の neutral な「確認できません / Check unavailable」を表示して「未設定」と区別する。欠落・未到達のどちらも ERR/WARN 相当の色にはしない (この機能は安全に degrade する任意機能であり、障害ではないため)。テキスト更新は 1 回だけ解決する読み取りなので `aria-live` は使わず、既存の `aria-labelledby`/`aria-describedby` パターンで見出しと詳細文を関連付ける。
 
 ```bash
 export CLOUDFLARE_ACCOUNT_ID=0438e47e5e23f7acd006da2e594f3559
@@ -480,6 +482,8 @@ tech-dashboard/
 │  │  ├─ components/{Sidebar,EntryCard,ArticleLike,DailySummary,DayDigest,TickerBar,TrendChart,Pager,CompactRow,CategoryHero,LiveMetrics}.astro
 │  │  ├─ lib/data.ts         # data/index.json を型付きで読み込む
 │  │  ├─ lib/reactions-client.ts # いいね count hydration / optimistic update / rollback
+│  │  ├─ lib/reaction-config-health.ts # 匿名いいねconfig健全性のpure display derivation
+│  │  ├─ lib/reaction-config-client.ts # /api/reactions/config への bounded runtime fetch
 │  │  ├─ lib/stats.ts        # data/stats.json を型付きで読み込む
 │  │  ├─ lib/metrics.ts      # Timeline / About 用の自動更新 metrics SoT
 │  │  ├─ lib/freshness.ts    # source type 別 freshness 判定 (UI / quality-audit 共有)

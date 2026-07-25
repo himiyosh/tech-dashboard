@@ -16,6 +16,10 @@ import { SOURCE_META, sourceAnchorId, sourceLabel } from "../lib/source-meta.ts"
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { deriveQueueDisplay } from "../lib/queue-health.ts";
 import { deriveWorkerRunStatus, WORKER_RUN_STATE_COPY } from "../lib/run-health.ts";
+import {
+  REACTION_CONFIG_FLAG_LABELS,
+  REACTION_CONFIG_FLAG_ORDER,
+} from "../lib/reaction-config-health.ts";
 import { NEW_ISSUE_URL } from "../lib/site.ts";
 
 const now = new Date();
@@ -884,6 +888,41 @@ const workerSummary = wh
         )}
       </div>
 
+      <div
+        class="side-card status-insight-card reaction-config-card"
+        data-health-scope="reaction-config"
+        data-reaction-config-state="checking"
+        aria-labelledby="reaction-config-heading"
+        aria-describedby="reaction-config-detail"
+      >
+        <h3 class="rail-title" id="reaction-config-heading">
+          <span class="i18n-ja">匿名いいねの設定状態</span>
+          <span class="i18n-en" lang="en">Anonymous reaction configuration</span>
+        </h3>
+        <strong data-reaction-config-label>
+          <span class="i18n-ja">確認中</span>
+          <span class="i18n-en" lang="en">Checking</span>
+        </strong>
+        <p id="reaction-config-detail" data-reaction-config-detail>
+          <span class="i18n-ja">匿名いいねの設定状態を確認しています。</span>
+          <span class="i18n-en" lang="en">Checking the anonymous reaction configuration.</span>
+        </p>
+        <ul class="reaction-config-flag-list" data-reaction-config-flags hidden>
+          {REACTION_CONFIG_FLAG_ORDER.map((key) => (
+            <li data-reaction-config-flag={key}>
+              <span>
+                <span class="i18n-ja">{REACTION_CONFIG_FLAG_LABELS[key].ja}</span>
+                <span class="i18n-en" lang="en">{REACTION_CONFIG_FLAG_LABELS[key].en}</span>
+              </span>
+              <strong data-reaction-config-flag-state>
+                <span class="i18n-ja"></span>
+                <span class="i18n-en" lang="en"></span>
+              </strong>
+            </li>
+          ))}
+        </ul>
+      </div>
+
       <div class="side-card status-insight-card">
         <h3 class="rail-title">
           <span class="i18n-ja">主なカテゴリ別状況（最大8件）</span>
@@ -1394,6 +1433,79 @@ const workerSummary = wh
     line-height: 1.5;
   }
 
+  .reaction-config-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .reaction-config-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--muted-2);
+  }
+
+  .reaction-config-card[data-reaction-config-state="configured"]::before {
+    background: var(--success);
+  }
+
+  .reaction-config-card > strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 15px;
+  }
+
+  .reaction-config-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 11.5px;
+    line-height: 1.55;
+  }
+
+  .reaction-config-flag-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 8px 0 0;
+    padding: 8px 0 0;
+    border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+    list-style: none;
+  }
+
+  /* The `hidden` boolean attribute must win over `display: flex` above, or the
+     browser's UA `[hidden] { display: none }` rule gets silently defeated by this
+     author class (same detailed-density trap documented for other toggled panels). */
+  .reaction-config-flag-list[hidden] {
+    display: none;
+  }
+
+  .reaction-config-flag-list li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .reaction-config-flag-list li > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .reaction-config-flag-list strong {
+    flex: 0 0 auto;
+    color: var(--muted-2);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .reaction-config-flag-list li[data-reaction-config-flag-ok="true"] strong {
+    color: var(--success);
+  }
+
   .category-health-list {
     display: flex;
     flex-direction: column;
@@ -1503,6 +1615,11 @@ const workerSummary = wh
 <script>
   import { deriveQueueDisplay } from "../lib/queue-health.ts";
   import { deriveWorkerRunStatus, WORKER_RUN_STATE_COPY } from "../lib/run-health.ts";
+  import { fetchReactionConfigStatus } from "../lib/reaction-config-client.ts";
+  import {
+    deriveReactionConfigDisplay,
+    type ReactionConfigFlagKey,
+  } from "../lib/reaction-config-health.ts";
 
   (() => {
     const hero = document.querySelector<HTMLElement>("section.status-hero[data-live-run-health]");
@@ -1664,5 +1781,49 @@ const workerSummary = wh
       });
     }
     apply();
+  })();
+
+  (() => {
+    const card = document.querySelector<HTMLElement>("[data-health-scope='reaction-config']");
+    if (!card) return;
+    const labelNode = card.querySelector<HTMLElement>("[data-reaction-config-label]");
+    const detailNode = card.querySelector<HTMLElement>("[data-reaction-config-detail]");
+    const flagList = card.querySelector<HTMLElement>("[data-reaction-config-flags]");
+    const flagRows = new Map<string, HTMLElement>(
+      Array.from(
+        card.querySelectorAll<HTMLElement>("[data-reaction-config-flag]"),
+      ).map((row) => [row.dataset.reactionConfigFlag ?? "", row]),
+    );
+    const setLangText = (node: HTMLElement | null, ja: string, en: string) => {
+      if (!node) return;
+      const jaNode = node.querySelector<HTMLElement>(".i18n-ja");
+      const enNode = node.querySelector<HTMLElement>(".i18n-en");
+      if (jaNode) jaNode.textContent = ja;
+      if (enNode) enNode.textContent = en;
+    };
+    const FLAG_TEXT = {
+      ok: { ja: "設定済み", en: "Configured" },
+      missing: { ja: "未設定", en: "Not configured" },
+    };
+
+    void fetchReactionConfigStatus().then((result) => {
+      const display = deriveReactionConfigDisplay(result);
+      card.dataset.reactionConfigState = display.state;
+      setLangText(labelNode, display.labelJa, display.labelEn);
+      setLangText(detailNode, display.detailJa, display.detailEn);
+
+      if (result.state !== "resolved" || !flagList) return;
+      const missing = new Set<ReactionConfigFlagKey>(display.missingKeys);
+      for (const [key, row] of flagRows) {
+        const ok = !missing.has(key as ReactionConfigFlagKey);
+        row.dataset.reactionConfigFlagOk = ok ? "true" : "false";
+        const stateNode = row.querySelector<HTMLElement>("[data-reaction-config-flag-state]");
+        if (stateNode) {
+          const copy = ok ? FLAG_TEXT.ok : FLAG_TEXT.missing;
+          setLangText(stateNode, copy.ja, copy.en);
+        }
+      }
+      flagList.hidden = false;
+    });
   })();
 </script>

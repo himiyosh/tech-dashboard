@@ -5,6 +5,7 @@ const MAX_BATCH_IDS = 50;
 const MAX_BODY_BYTES = 4_096;
 const DEFAULT_RATE_LIMIT = 12;
 const DEFAULT_RATE_WINDOW_SECONDS = 60;
+const HMAC_SECRET_MIN_LENGTH = 32;
 
 export interface D1ResultLike<T = Record<string, unknown>> {
   success: boolean;
@@ -29,8 +30,22 @@ export interface ReactionEnv {
   REACTIONS_DB?: D1DatabaseLike;
   REACTION_HMAC_SECRET?: string;
   TURNSTILE_SECRET_KEY?: string;
+  PUBLIC_TURNSTILE_SITE_KEY?: string;
   REACTION_RATE_LIMIT_MAX?: string;
   REACTION_RATE_LIMIT_WINDOW_SECONDS?: string;
+}
+
+/**
+ * Boolean-only runtime configuration snapshot for the anonymous reaction feature.
+ * This never carries secret or key values, only whether each dependency is present
+ * and usable. `configured` is true only when every flag is true.
+ */
+export interface ReactionConfigStatus {
+  databaseBinding: boolean;
+  hmacSecret: boolean;
+  turnstileSecret: boolean;
+  publicSiteKey: boolean;
+  configured: boolean;
 }
 
 export interface ReactionSnapshot {
@@ -135,16 +150,47 @@ function errorResponse(error: unknown): Response {
   );
 }
 
+/**
+ * Whether `value` is present and at least `minLength` characters after trimming.
+ * Shared by the fail-closed secret gate and the boolean-only config health check so
+ * both paths agree on what counts as "configured" (a single source of truth for the
+ * HMAC secret's 32-character floor).
+ */
+function hasMinLength(value: string | undefined, minLength: number): boolean {
+  return (value?.trim().length ?? 0) >= minLength;
+}
+
 function requireSecret(value: string | undefined, name: string, minLength = 1): string {
-  const configuredValue = value?.trim() ?? "";
-  if (configuredValue.length < minLength) {
+  if (!hasMinLength(value, minLength)) {
     throw new ReactionApiError(
       503,
       "service_not_configured",
       `${name} is not configured.`,
     );
   }
-  return configuredValue;
+  return (value ?? "").trim();
+}
+
+/**
+ * Boolean-only readiness snapshot for the anonymous reaction feature. Never returns
+ * secret or key values, only presence/usability flags plus an aggregate `configured`.
+ * `databaseBinding` / `hmacSecret` / `turnstileSecret` are runtime-only truths that a
+ * static Astro build can never know; `publicSiteKey` reads the same Pages environment
+ * variable name Astro bakes into the client bundle at build time, so it reflects the
+ * current deployment's configuration rather than a build-time guess.
+ */
+export function evaluateReactionConfig(env: ReactionEnv): ReactionConfigStatus {
+  const databaseBinding = Boolean(env.REACTIONS_DB);
+  const hmacSecret = hasMinLength(env.REACTION_HMAC_SECRET, HMAC_SECRET_MIN_LENGTH);
+  const turnstileSecret = hasMinLength(env.TURNSTILE_SECRET_KEY, 1);
+  const publicSiteKey = hasMinLength(env.PUBLIC_TURNSTILE_SITE_KEY, 1);
+  return {
+    databaseBinding,
+    hmacSecret,
+    turnstileSecret,
+    publicSiteKey,
+    configured: databaseBinding && hmacSecret && turnstileSecret && publicSiteKey,
+  };
 }
 
 function requireStore(env: ReactionEnv, dependencies: ReactionDependencies): ReactionStore {
@@ -168,7 +214,11 @@ function requireReactionService(
   store: ReactionStore;
 } {
   return {
-    hmacCredential: requireSecret(env.REACTION_HMAC_SECRET, "REACTION_HMAC_SECRET", 32),
+    hmacCredential: requireSecret(
+      env.REACTION_HMAC_SECRET,
+      "REACTION_HMAC_SECRET",
+      HMAC_SECRET_MIN_LENGTH,
+    ),
     siteverifyCredential: requireSecret(
       env.TURNSTILE_SECRET_KEY,
       "TURNSTILE_SECRET_KEY",
@@ -459,6 +509,28 @@ export class D1ReactionStore implements ReactionStore {
       throw new Error(results.find((result) => result.error)?.error || "D1 reaction mutation failed");
     }
     return normalizeCount(results[1]?.results?.[0]?.reaction_count);
+  }
+}
+
+/**
+ * Read-only, same-origin config health check for the anonymous reaction feature.
+ * Reports only booleans (never secret/key values) so Status can show a truthful
+ * "configured" / "not configured" / breakdown state without exposing anything an
+ * attacker could use. Deliberately does not touch D1 or call Turnstile Siteverify —
+ * it only inspects binding/secret presence, so it stays lightweight and side-effect
+ * free enough to poll from the client on every Status page view.
+ */
+export async function handleGetReactionConfig(
+  request: Request,
+  env: ReactionEnv,
+): Promise<Response> {
+  try {
+    if (request.method !== "GET") {
+      throw new ReactionApiError(405, "method_not_allowed", "Only GET is allowed.");
+    }
+    return jsonResponse({ config: evaluateReactionConfig(env) });
+  } catch (error) {
+    return errorResponse(error);
   }
 }
 

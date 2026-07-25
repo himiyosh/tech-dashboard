@@ -32,11 +32,26 @@ function extractWorkerDiffCheckSnippet(): string {
 
 const scratchRoots: string[] = [];
 
+// Strip git-repository-pinning env vars (GIT_DIR, GIT_WORK_TREE,
+// GIT_INDEX_FILE, GIT_OBJECT_DIRECTORY, ...) before spawning `git`/`bash`
+// against a temp repo. Without this, running these tests from inside a git
+// hook invocation (which sets these for its own subprocesses, e.g. during
+// `git push` -> pre-push -> `npm test`) leaks them into the child process
+// and silently redirects `git init`/`git diff` etc. to the *real* repo
+// instead of the intended scratch directory, producing a false result.
+function cleanGitEnv(overrides: Record<string, string> = {}) {
+  const env = { ...process.env, ...overrides };
+  for (const key of Object.keys(env)) {
+    if (key.startsWith("GIT_")) delete env[key];
+  }
+  return env;
+}
+
 function createTempRepo() {
   const root = mkdtempSync(join(tmpdir(), "tech-dashboard-worker-diff-"));
   scratchRoots.push(root);
   const run = (args: string[]) =>
-    spawnSync("git", args, { cwd: root, encoding: "utf8" });
+    spawnSync("git", args, { cwd: root, encoding: "utf8", env: cleanGitEnv() });
   run(["init", "-q", "-b", "main"]);
   run(["config", "user.email", "test@example.com"]);
   run(["config", "user.name", "test"]);
@@ -52,7 +67,7 @@ function runWorkerDiffCheck(cwd: string, range: string) {
   return spawnSync("bash", ["-c", script], {
     cwd,
     encoding: "utf8",
-    env: { ...process.env, range },
+    env: cleanGitEnv({ range }),
   });
 }
 
@@ -374,18 +389,12 @@ describe("Cloudflare Worker deploy config", () => {
   it("fails closed (not open) on a worker/ diff-detection error, and only skips deploy on a genuine no-diff", () => {
     const { root, run } = createTempRepo();
     run(["commit", "--allow-empty", "-q", "-m", "initial commit"]);
-    const baseSha = spawnSync("git", ["rev-parse", "HEAD"], {
-      cwd: root,
-      encoding: "utf8",
-    }).stdout.trim();
+    const baseSha = run(["rev-parse", "HEAD"]).stdout.trim();
     mkdirSync(join(root, "worker/src"), { recursive: true });
     writeFileSync(join(root, "worker/src/index.ts"), "x\n");
     run(["add", "-A"]);
     run(["commit", "-q", "-m", "add worker file"]);
-    const headSha = spawnSync("git", ["rev-parse", "HEAD"], {
-      cwd: root,
-      encoding: "utf8",
-    }).stdout.trim();
+    const headSha = run(["rev-parse", "HEAD"]).stdout.trim();
 
     // exit 0: no diff in worker/ for an empty range -> skip deploy cleanly.
     const noDiff = runWorkerDiffCheck(root, `${headSha}..${headSha}`);

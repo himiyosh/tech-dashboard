@@ -392,7 +392,7 @@ fingerprint を変える通常 release は次の順序を固定します。
 1. CI 合格済み PR head の `tech-dashboard-summarizer` と `tech-dashboard-body` を明示承認のうえ先に deployする。
 2. 旧 consumer の in-flight 処理が残っていないことを確認して PR を mergeする。
 3. 旧 harness が新 markerとの mismatchで data publishを停止したことを確認する。
-4. 明示承認のうえ `tech-dashboard-harness` を Free bridgeへdeployする。`wrangler deployments list` が 100% と報告した直後でも、全 edge PoP へ fingerprint が伝播するまで最大 60 秒ほどかかることがある。immediate な `/health` 確認だけで判断せず、`node scripts/verify-worker-deploy.mjs` (bounded polling、既定 120s timeout / 5s interval / 3 回連続一致) で伝播を確認してから次へ進む。
+4. 明示承認のうえ `tech-dashboard-harness` を Free bridgeへdeployする。`wrangler deployments list` が 100% と報告した直後でも、release verifierからの `/health` が最大 60 秒ほど旧fingerprintを返すことがある。immediateな1回の応答だけで判断せず、`node scripts/verify-worker-deploy.mjs` (bounded polling、既定120s timeout / 5s interval / 3回連続一致) で観測経路の安定収束を確認してから次へ進む。これは全edge PoPの収束証明ではない。
 5. bridge `/health`、Publisher workflow、data commit、Queue drain、Pages productionを順に確認する。
 
 #### 監視 / ヘルスチェック

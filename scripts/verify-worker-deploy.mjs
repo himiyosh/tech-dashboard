@@ -2,19 +2,19 @@
 
 // Bounded post-deploy verification for `tech-dashboard-harness` (the Free-plan
 // bridge Worker). `wrangler deploy` returning success, or `wrangler deployments
-// list` showing a new version at 100%, only means Cloudflare's control plane
-// has *accepted* the deployment (it does not mean every edge PoP is already
-// serving it). A single immediate `/health` check (even with a cache-busting
-// query and `cache-control: no-cache`) can therefore still observe the
-// *previous* bundle's `publisherContractFingerprint` for up to roughly a
-// minute while the new script propagates globally (LL-407).
+// list` showing a new version at 100%, does not guarantee that the very next
+// request from the release verifier will observe the new isolate. A single
+// immediate `/health` check (even with a cache-busting query and
+// `cache-control: no-cache`) can still observe the *previous* bundle's
+// `publisherContractFingerprint` for up to roughly a minute (LL-407).
 //
 // This script polls `/health` on a bounded interval/timeout and requires
 // several *consecutive* matches before declaring the rollout verified, so a
-// single lucky hit against an already-updated PoP cannot be mistaken for a
-// completed rollout, and a genuinely bad bundle (or a harness that is stuck
-// on the old fingerprint for reasons other than propagation) still fails
-// closed once the bounded window elapses. It intentionally does not retry
+// single lucky response cannot be mistaken for stable convergence along the
+// verifier's request path. This does not prove that every edge PoP has
+// converged. A genuinely bad bundle (or a harness that is stuck on the old
+// fingerprint for reasons other than propagation) still fails closed once
+// the bounded window elapses. It intentionally does not retry
 // forever: `npm run health:prod` / `worker-health.yml` remain the immediate,
 // fail-closed, *recurring* checks (R-027); this tool exists only for the
 // short window right after an explicit, human-approved deploy.

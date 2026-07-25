@@ -206,7 +206,7 @@ const HUGGINGFACE_PLATFORM_RE =
 // news and belongs in "tech-news" (docs/04-site-spec.md §1.1: copilot covers
 // "GitHub Copilot / Workspace / Copilot CLI / Copilot Enterprise" only).
 // Verified against the full live+archive corpus (192 unique entries, 2026-07):
-// 107 stay "copilot", 85 move to "tech-news". See tests/harness-normalize.test.ts
+// 107 stay "copilot", 85 move to "tech-news". See tests/normalize.test.ts
 // for actual-title keep/drop fixtures.
 const GITHUB_CHANGELOG_RELEVANT_RE =
   /\b(?:copilot|gpt(?:-[\d.]+)?|gemini|gemma|claude|kimi|grok|openai|anthropic|mai-code|chatgpt|mcp|model context protocol|agents?|agentic|llm|large language model|opus|sonnet|haiku|ai credit|ai usage|ai adoption|model selection|models? in auto)\b/;
@@ -219,7 +219,7 @@ const GITHUB_CHANGELOG_RELEVANT_RE =
 // Deliberately narrow/anchored phrases so an MCP-integration story that
 // happens to mention "Google Pay" (an AI/agent topic) is not excluded.
 // Verified against the full live+archive corpus (58 unique entries, 2026-07):
-// 6 move to "tech-news", 52 stay "gemini". See tests/harness-normalize.test.ts.
+// 6 move to "tech-news", 52 stay "gemini". See tests/normalize.test.ts.
 const GOOGLE_DEVELOPERS_GENERIC_RE =
   /sign in with google|the latest updates to google pay|enhancing android checkout|merchant initiated transactions|supporting google account username change|get ready for google i\/o/;
 

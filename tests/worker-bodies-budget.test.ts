@@ -69,12 +69,23 @@ describe("bodyBudgetPruneOrder (LL-411): 優先順位", () => {
     expect(bodyBudgetPruneOrder(candidates)).toEqual(["imp1", "imp2", "imp3"]);
   });
 
-  it("evergreen は prune order から完全に除外される", () => {
+  it("evergreen は prune order の最後 (last-resort) に位置し、除外はされない", () => {
     const candidates = [
       priorityEntry({ id: "ever", evergreen: true, importance: 1 }),
       priorityEntry({ id: "imp1", importance: 1 }),
     ];
-    expect(bodyBudgetPruneOrder(candidates)).toEqual(["imp1"]);
+    // Evergreen is still in the returned order (it CAN be pruned as a last
+    // resort) -- it just sorts to the very end, after every other tier.
+    expect(bodyBudgetPruneOrder(candidates)).toEqual(["imp1", "ever"]);
+  });
+
+  it("evergreen 同士でも古い順に prune 対象になる (last-resort 内のタイブレーク)", () => {
+    const candidates = [
+      priorityEntry({ id: "ever-new", evergreen: true, publishedAt: "2026-06-01T00:00:00.000Z" }),
+      priorityEntry({ id: "ever-old", evergreen: true, publishedAt: "2020-01-01T00:00:00.000Z" }),
+      priorityEntry({ id: "imp1", importance: 1 }),
+    ];
+    expect(bodyBudgetPruneOrder(candidates)).toEqual(["imp1", "ever-old", "ever-new"]);
   });
 
   it("同じ tier では古い publishedAt が先に prune される", () => {
@@ -201,36 +212,81 @@ describe("enforceBodiesBudget (LL-411)", () => {
     expect(result.bytes).toBeLessThanOrEqual(target);
   });
 
-  it("evergreen は budget 超過時も一切 prune されない", () => {
-    const ids = ["ever-a", "ever-b", "imp1"];
-    const payload = payloadFrom(ids, 300);
+  it("evergreen も non-evergreen を全て prune した後は last-resort として prune される", () => {
+    const ids = ["ever-old", "ever-new", "imp1"];
     const entries = [
-      priorityEntry({ id: "ever-a", evergreen: true }),
-      priorityEntry({ id: "ever-b", evergreen: true }),
-      priorityEntry({ id: "imp1", importance: 1 }),
+      priorityEntry({ id: "ever-old", evergreen: true, publishedAt: "2020-01-01T00:00:00.000Z" }),
+      priorityEntry({ id: "ever-new", evergreen: true, publishedAt: "2024-01-01T00:00:00.000Z" }),
+      priorityEntry({ id: "imp1", importance: 1, publishedAt: "2026-01-01T00:00:00.000Z" }),
     ];
-    // Target far below even the two evergreen records alone.
-    const result = enforceBodiesBudget(payload, entries, 10);
-    expect(result.payload.bodies["ever-a"]).toBeDefined();
-    expect(result.payload.bodies["ever-b"]).toBeDefined();
-    expect(result.prunedIds).not.toContain("ever-a");
-    expect(result.prunedIds).not.toContain("ever-b");
-    // imp1 (the only non-evergreen candidate) is prunable and gets removed.
-    expect(result.prunedIds).toContain("imp1");
+    const payload = payloadFrom(ids, 300);
+    // Prune order is imp1 (rank 3) first, then the OLDER evergreen record,
+    // then the newer one. A target that fits only one record forces removing
+    // BOTH imp1 and ever-old, leaving only ever-new -- proving evergreen is
+    // not exempt once every other tier is already gone.
+    const oneRecordOnly = payloadFrom(["ever-new"], 300);
+    const twoRecords = payloadFrom(["ever-old", "ever-new"], 300);
+    const target = Math.round(
+      (serializedByteLength(oneRecordOnly) + serializedByteLength(twoRecords)) / 2,
+    );
+    const result = enforceBodiesBudget(payload, entries, target);
+    expect(result.changed).toBe(true);
+    expect(result.prunedIds).toEqual(["imp1", "ever-old"]);
+    expect(result.payload.bodies["ever-new"]).toBeDefined();
+    expect(result.payload.bodies["ever-old"]).toBeUndefined();
+    expect(result.payload.bodies["imp1"]).toBeUndefined();
+    expect(result.bytes).toBeLessThanOrEqual(target);
   });
 
-  it("evergreen だけで target を超える場合は変更せず (best effort) 実バイト数を報告する", () => {
-    const payload = payloadFrom(["ever-a", "ever-b"], 5000);
+  it("evergreen だけが残っても target 超過なら古い evergreen からさらに prune し、必ず target 以下にする", () => {
+    const ids = ["ever-a", "ever-b", "ever-c"];
+    const entries = [
+      priorityEntry({ id: "ever-a", evergreen: true, publishedAt: "2018-01-01T00:00:00.000Z" }),
+      priorityEntry({ id: "ever-b", evergreen: true, publishedAt: "2020-01-01T00:00:00.000Z" }),
+      priorityEntry({ id: "ever-c", evergreen: true, publishedAt: "2022-01-01T00:00:00.000Z" }),
+    ];
+    // Large records so even a single one exceeds the tiny target below.
+    const payload = payloadFrom(ids, 5000);
+    const emptyBytes = serializedByteLength({ generatedAt: payload.generatedAt, count: 0, bodies: {} });
+    const target = emptyBytes + 50; // just above the minimal possible envelope
+    const result = enforceBodiesBudget(payload, entries, target);
+    // "Protected" means pruned LAST, not exempt: in this extreme scenario
+    // (no lower tier exists to absorb the cut), evergreen is pruned down to
+    // whatever is strictly necessary to guarantee the target -- here, all of
+    // it, since even one 5000-char record does not fit.
+    expect(result.bytes).toBeLessThanOrEqual(target);
+    expect(Object.keys(result.payload.bodies)).toEqual([]);
+    expect([...result.prunedIds].sort()).toEqual(["ever-a", "ever-b", "ever-c"]);
+  });
+
+  it("target が最小envelopeサイズより小さい病的な誤設定でも、クラッシュ・無限ループせず全件 prune した実バイト数を返す", () => {
+    // Documents the one theoretical exception to the "always fits under
+    // target" guarantee: a targetBytes smaller than the minimal possible
+    // JSON envelope itself ({"generatedAt":...,"count":0,"bodies":{}})
+    // cannot be satisfied by any amount of pruning -- there is nothing left
+    // to remove below the envelope. This never happens with the production
+    // DEFAULT_BODY_BUDGET_TARGET_BYTES (9,000,000), which is many orders of
+    // magnitude larger than the envelope, but a misconfigured
+    // BODY_BUDGET_TARGET_BYTES override should still behave safely (prune
+    // everything, report the real byte count, no crash/hang) rather than
+    // silently claiming an unmet guarantee.
+    const ids = ["ever-a", "imp1"];
     const entries = [
       priorityEntry({ id: "ever-a", evergreen: true }),
-      priorityEntry({ id: "ever-b", evergreen: true }),
+      priorityEntry({ id: "imp1", importance: 1 }),
     ];
-    const before = serializedByteLength(payload);
-    const result = enforceBodiesBudget(payload, entries, 10);
-    expect(result.changed).toBe(false);
-    expect(result.prunedIds).toEqual([]);
-    expect(result.bytes).toBe(before);
-    expect(result.bytes).toBeGreaterThan(10);
+    const payload = payloadFrom(ids, 300);
+    const emptyBytes = serializedByteLength({ generatedAt: payload.generatedAt, count: 0, bodies: {} });
+    const target = Math.max(1, emptyBytes - 10); // strictly below the minimal envelope
+    const result = enforceBodiesBudget(payload, entries, target);
+    expect(result.changed).toBe(true);
+    expect(Object.keys(result.payload.bodies)).toEqual([]);
+    expect([...result.prunedIds].sort()).toEqual(["ever-a", "imp1"]);
+    // The best-effort result is the (tiny) empty-envelope size, which is the
+    // true minimum achievable -- it may still exceed this unrealistic target,
+    // but only by the envelope's own fixed overhead, never by a full record.
+    expect(result.bytes).toBe(emptyBytes);
+    expect(result.bytes).toBeLessThan(target + 20);
   });
 
   it("既に present だが entries に見つからない孤立 record は最優先で prune される", () => {
@@ -386,8 +442,20 @@ describe("carryForwardBudgetEvictedIds (LL-411 follow-up: cross-run state loss)"
   });
 
   it("evergreen へ昇格した id は除外する (promotion recovery)", () => {
-    const entries = [priorityEntry({ id: "promoted", evergreen: true })];
-    const result = carryForwardBudgetEvictedIds(["promoted"], entries, new Set(), []);
+    const entries = [
+      priorityEntry({ id: "promoted", evergreen: true }),
+      // "survivor" still sits at the worst tier (importance 1, rank 3) but
+      // currently HAS a real body -- i.e. the budget has room even for the
+      // worst tier right now, so an id that improved to a much better tier
+      // (evergreen, rank 0) no longer belongs among excluded candidates.
+      priorityEntry({ id: "survivor", importance: 1 }),
+    ];
+    const result = carryForwardBudgetEvictedIds(
+      ["promoted"],
+      entries,
+      new Set(["survivor"]),
+      [],
+    );
     expect(result).toEqual([]);
   });
 
@@ -395,14 +463,52 @@ describe("carryForwardBudgetEvictedIds (LL-411 follow-up: cross-run state loss)"
     const entries = [
       priorityEntry({ id: "promoted-2", importance: 2 }),
       priorityEntry({ id: "promoted-3", importance: 3 }),
+      priorityEntry({ id: "survivor", importance: 1 }),
     ];
     const result = carryForwardBudgetEvictedIds(
       ["promoted-2", "promoted-3"],
       entries,
-      new Set(),
+      new Set(["survivor"]),
       [],
     );
     expect(result).toEqual([]);
+  });
+
+  it("worst surviving tier と同じ rank (tie) では release されない (保守的に除外継続)", () => {
+    // "still-worst" is at the exact same rank (importance 1, rank 3) as the
+    // worst tier that currently survives -- nothing about its situation has
+    // actually improved, so it must stay excluded; otherwise it would be
+    // re-admitted, regenerated, and re-evicted every other run.
+    const entries = [
+      priorityEntry({ id: "still-worst", importance: 1 }),
+      priorityEntry({ id: "survivor", importance: 1 }),
+    ];
+    const result = carryForwardBudgetEvictedIds(
+      ["still-worst"],
+      entries,
+      new Set(["survivor"]),
+      [],
+    );
+    expect(result).toEqual(["still-worst"]);
+  });
+
+  it("evergreen が last-resort として prune された場合、evergreen のみが生き残っていても再導入されない", () => {
+    // Only evergreen entries currently have a real body (worstSurvivingRank
+    // is therefore 0, evergreen's own rank). An evergreen id that got evicted
+    // must stay excluded -- rank 0 is NOT strictly less than worstSurvivingRank
+    // (also 0) -- otherwise this would recreate the exact waste loop this
+    // function exists to prevent, just for the evergreen tier.
+    const entries = [
+      priorityEntry({ id: "evicted-evergreen", evergreen: true }),
+      priorityEntry({ id: "surviving-evergreen", evergreen: true }),
+    ];
+    const result = carryForwardBudgetEvictedIds(
+      ["evicted-evergreen"],
+      entries,
+      new Set(["surviving-evergreen"]),
+      [],
+    );
+    expect(result).toEqual(["evicted-evergreen"]);
   });
 
   it("previousIds が空でも新規 prune だけは反映する", () => {

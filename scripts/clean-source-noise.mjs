@@ -1163,8 +1163,11 @@ export async function main(argv = process.argv.slice(2)) {
   // Apply the SAME byte-budget enforcement as the Publisher runtime
   // (worker/src/index.ts's runBodyPipeline) so migration never leaves
   // data/bodies.json above the operational target even if prior runs (or a
-  // stale collector) let it drift. Evergreen is protected absolutely; lowest
-  // priority (importance 1, oldest first) is pruned first.
+  // stale collector) let it drift. Lowest priority (importance 1, oldest
+  // first) is pruned first; evergreen is pruned LAST (highest priority) but
+  // is NOT exempt -- if every lower tier is already gone and the payload is
+  // still over target, evergreen is pruned too, as a last resort (LL-411
+  // follow-up 2).
   const bodyBudget = enforceBodiesBudget(
     bodyMerge.payload,
     bodyRetentionEntries,

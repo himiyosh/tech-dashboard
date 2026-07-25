@@ -563,29 +563,44 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     }
   });
 
-  it("body budget evicted ids は persistence contract どおり live・retention-eligible・最低優先度に限る (LL-411 follow-up)", () => {
+  it("body budget evicted ids は persistence contract どおり live・retention-eligible・worst-surviving-rank 以上に限る (LL-411 follow-up)", () => {
     // Guards the cross-run persistence semantics carryForwardBudgetEvictedIds
     // enforces: any id recorded in health.bodyBudgetEvictedIds must still be
-    // (a) a live, retention-eligible entry, and (b) at the lowest priority
-    // rank (importance==1, non-evergreen). A stale reference (aged out /
-    // no longer live) or a promoted entry (evergreen or importance bumped)
-    // leaking into this list would mean the carry-forward filter regressed.
+    // (a) a live, retention-eligible entry, (b) still bodyless, and (c) at a
+    // priority rank at or worse than worstSurvivingRank (the worst rank among
+    // entries that currently have a real body) -- recomputed here exactly the
+    // same way carryForwardBudgetEvictedIds does, since evergreen is now a
+    // last-resort PRUNABLE tier rather than an exempt one, so a fixed
+    // "must be rank 3" check would be wrong (an id evicted from a tighter
+    // budget can legitimately sit at any rank). A stale reference, an entry
+    // that already regained a real body, or one that improved to a strictly
+    // better rank than the current worst survivor leaking into this list
+    // would mean the carry-forward filter regressed.
     const evictedIds = data.health?.bodyBudgetEvictedIds;
     if (!Array.isArray(evictedIds) || evictedIds.length === 0) return;
     const referenceMs = Date.parse(data.generatedAt);
     const entriesById = new Map(data.entries.map((entry) => [String(entry.id), entry]));
+    const bodyPresentIdsForPersistence = new Set(Object.keys(bodies?.bodies ?? {}));
+
+    let worstSurvivingRank = -1;
+    for (const entry of data.entries) {
+      if (!bodyPresentIdsForPersistence.has(String(entry.id))) continue;
+      const rank = bodyBudgetPriorityRank(entry as Pick<NormalizedEntry, "evergreen" | "importance">);
+      if (rank > worstSurvivingRank) worstSurvivingRank = rank;
+    }
+
     const invalid = evictedIds.filter((id) => {
       const entry = entriesById.get(String(id));
       if (!entry) return true; // stale reference to a no-longer-live entry
+      if (bodyPresentIdsForPersistence.has(String(id))) return true; // already regained a real body
       const eligible = isBodyRetentionEligible(
         entry as Pick<NormalizedEntry, "evergreen" | "importance" | "publishedAt" | "collectedAt">,
         referenceMs,
         DEFAULT_BODY_RETENTION_DAYS,
       );
       if (!eligible) return true;
-      return bodyBudgetPriorityRank(
-        entry as Pick<NormalizedEntry, "evergreen" | "importance">,
-      ) !== 3;
+      const rank = bodyBudgetPriorityRank(entry as Pick<NormalizedEntry, "evergreen" | "importance">);
+      return rank < worstSurvivingRank; // strictly better than the worst survivor -> should have been released
     });
     expect(invalid).toEqual([]);
   });

@@ -13,9 +13,16 @@
  * payload, prune the deterministic lowest-priority records (oldest within the
  * lowest eligible tier first) until the EXACT serialized byte length is at or
  * under a target budget -- independent of, and always at least as strict as,
- * the boolean retention gate. Evergreen entries are protected absolutely and
- * are never budget-pruned, matching R-012's "evergreen accumulates, does not
- * archive" product intent.
+ * the boolean retention gate. Evergreen entries are the HIGHEST-priority tier
+ * (pruned only as an absolute last resort, after every other tier has already
+ * been fully removed and the payload is STILL over budget) but they are NOT
+ * exempt: enforceBodiesBudget() guarantees the result fits at or under
+ * targetBytes for any realistic positive target (in particular, always for
+ * the production DEFAULT_BODY_BUDGET_TARGET_BYTES), matching R-012's
+ * "evergreen is prioritized, not unconditionally unbounded" intent.
+ * "Protected" here means "pruned last", not "never pruned" (LL-411
+ * follow-up). The only theoretical exception is a target smaller than the
+ * minimal possible JSON envelope itself, which never occurs in production.
  *
  * Cloudflare-type-free (no @cloudflare/workers-types import) so it can be
  * unit-tested directly, same as body-queue.ts / bodies-file.ts.
@@ -46,11 +53,15 @@ export interface BodyBudgetPriorityInput {
 
 /**
  * Priority tier for body-budget pruning. Lower rank means the body is
- * protected longer (pruned later). Rank 0 (evergreen) is never actually
- * budget-pruned -- bodyBudgetPruneOrder() and enforceBodiesBudget() both
- * filter evergreen entries out of the prunable pool entirely, so this
- * function mainly documents/tests the tier boundary rather than gating
- * removal directly.
+ * protected LONGER (pruned LATER), not that it is exempt from pruning.
+ * Rank 0 (evergreen) is the highest-priority tier -- bodyBudgetPruneOrder()
+ * always sorts it to the very end of the removal order -- but
+ * enforceBodiesBudget() will still prune it as a last resort if every lower
+ * (higher-numbered) tier has already been fully removed and the payload is
+ * still over target. "Protected" therefore means "pruned last", not "never
+ * pruned" (LL-411 follow-up: an earlier version treated evergreen as
+ * unconditionally exempt, which left the operational size guarantee
+ * unbounded whenever the evergreen corpus alone grew past target).
  */
 export function bodyBudgetPriorityRank(
   entry: Pick<BodyBudgetPriorityInput, "evergreen" | "importance">,
@@ -71,13 +82,16 @@ function priorityEntryMs(
 /**
  * Deterministic prune order for a set of candidate entries: ids earlier in
  * the returned array are pruned FIRST when the payload exceeds the target
- * byte budget. Evergreen entries are excluded from the result entirely (never
- * a budget-prune candidate).
+ * byte budget. ALL entries are included, evergreen ones too -- evergreen just
+ * sorts to the very end (last-resort tier) rather than being excluded from
+ * the pool entirely, so enforceBodiesBudget() can still guarantee the target
+ * is met when nothing else is left to remove (LL-411 follow-up).
  *
  * Order (ascending removal priority, i.e. first-to-prune first):
  *   1. importance 1 (recent-only retention) -- oldest first
  *   2. importance 2 -- oldest first
  *   3. importance >= 3 -- oldest first
+ *   4. evergreen -- oldest first (last resort only)
  * Ties within the same tier and the same effective date (publishedAt falling
  * back to collectedAt, matching isBodyRetentionEligible) are broken by
  * ascending entry id, so the order is fully deterministic and stable across
@@ -86,8 +100,7 @@ function priorityEntryMs(
 export function bodyBudgetPruneOrder(
   candidates: readonly BodyBudgetPriorityInput[],
 ): string[] {
-  const prunable = candidates.filter((entry) => entry.evergreen !== true);
-  const ranked = prunable.map((entry) => ({
+  const ranked = candidates.map((entry) => ({
     id: entry.id,
     rank: bodyBudgetPriorityRank(entry),
     ms: priorityEntryMs(entry),
@@ -131,10 +144,24 @@ export interface EnforceBodiesBudgetResult {
  * overall payload is over budget and it is among the lowest-priority records
  * present.
  *
- * Evergreen entries are NEVER pruned by this function (protected absolutely).
- * If evergreen bodies alone exceed targetBytes, the result may still exceed
- * target -- an accepted edge case; the much larger hard-ceiling schema test
- * still guards against catastrophic growth in that scenario.
+ * Evergreen entries are the highest-priority (pruned-last) tier, but they are
+ * NOT exempt: if every other tier has already been removed and the payload is
+ * STILL over target, evergreen records are pruned too, oldest first, only as
+ * many as strictly necessary. This guarantees the returned payload's bytes
+ * are always at or under targetBytes for any REALISTIC target -- in
+ * particular, always for the production `DEFAULT_BODY_BUDGET_TARGET_BYTES`
+ * (9,000,000 bytes) -- there is no "accepted over-target" outcome once every
+ * tier including evergreen is on the table (LL-411 follow-up: an earlier
+ * version left evergreen unconditionally exempt, which meant the operational
+ * size guarantee could be violated forever once the evergreen corpus alone
+ * exceeded target, eventually recreating the exact Publisher hard-ceiling
+ * failure this module exists to prevent). The one theoretical exception is a
+ * pathologically misconfigured `targetBytes` smaller than the minimal
+ * possible JSON envelope (`{"generatedAt":...,"count":0,"bodies":{}}`, well
+ * under 100 bytes): in that degenerate case, pruning every record still
+ * cannot go below the envelope's own byte length, so the result may remain
+ * marginally over such an unrealistic target. This never occurs with the
+ * production constant, which is many orders of magnitude larger.
  *
  * Uses an exact minimal-removal binary search over the deterministic prune
  * order rather than approximating per-record byte contributions, so the
@@ -164,14 +191,13 @@ export function enforceBodiesBudget(
   // no priority information and are treated as the very lowest priority --
   // pruned before anything ranked. In normal operation this should not occur
   // (mergeBodies already prunes anything not in liveIds before this runs),
-  // but keeps this function correct and defensive standing alone.
+  // but keeps this function correct and defensive standing alone. Every
+  // present id ends up in either `orphanIds` or `known`, and
+  // bodyBudgetPruneOrder() now returns ALL of `known` (evergreen included,
+  // sorted last) rather than filtering any of it out, so `pruneOrder` always
+  // has the same length as `presentIds` here -- there is no "nothing left to
+  // prune" case to special-case.
   const pruneOrder = [...orphanIds.sort(), ...bodyBudgetPruneOrder(known)];
-
-  if (pruneOrder.length === 0) {
-    // Only evergreen records present and still over target: nothing left
-    // that is safe to prune (evergreen is protected absolutely).
-    return { payload, prunedIds: [], bytes: currentBytes, changed: false };
-  }
 
   const buildWithoutFirst = (k: number): BodiesPayload => {
     const drop = new Set(pruneOrder.slice(0, k));
@@ -187,7 +213,11 @@ export function enforceBodiesBudget(
   // target. Removing strictly more records can only shrink (never grow) the
   // serialized size, so the "fits under target" predicate is monotonic in k
   // and a binary search converges to the exact minimal removal count in
-  // O(log n) full, exact serializations rather than O(n).
+  // O(log n) full, exact serializations rather than O(n). Dropping ALL
+  // present ids (k = pruneOrder.length) leaves only the tiny generatedAt/
+  // count/bodies:{} envelope, which fits under any realistic positive
+  // target, so hi is always a valid upper bound and the loop always
+  // terminates with bytes <= targetBytes.
   let lo = 0;
   let hi = pruneOrder.length;
   while (lo < hi) {
@@ -205,16 +235,6 @@ export function enforceBodiesBudget(
     changed: lo > 0,
   };
 }
-
-/**
- * The lowest possible priority rank (importance==1, non-evergreen). Only ids
- * still at this rank are safe to keep permanently excluded from new-candidate
- * selection across runs (see carryForwardBudgetEvictedIds below): any
- * improvement in rank (promoted to importance>=2 or evergreen) means the
- * entry's position in the prune order has fundamentally changed and it
- * deserves reconsideration rather than staying excluded forever.
- */
-const LOWEST_BUDGET_RANK = 3;
 
 /**
  * Computes the persistent, cross-run set of entry ids that should remain
@@ -241,11 +261,29 @@ const LOWEST_BUDGET_RANK = 3;
  *     process -- e.g. a manual backfill or a later re-merge -- gave it one;
  *     excluding it from future generation candidates would be meaningless
  *     since needsBody() already treats it as satisfied).
- *   - Dropped if the entry's CURRENT priority rank has improved past the
- *     lowest tier (LOWEST_BUDGET_RANK): a registry/config change (importance
- *     bumped, or the source/entry became evergreen) means this id may no
- *     longer be the kind of record budget enforcement keeps evicting, so it
- *     is released back to normal candidate selection to recover.
+ *   - Dropped ("released") if the entry's CURRENT priority rank is STRICTLY
+ *     BETTER (numerically lower) than `worstSurvivingRank`: the worst
+ *     (highest-numbered) rank among entries that CURRENTLY have a real body
+ *     in the final payload, i.e. the tier boundary that "made the cut" this
+ *     run. A registry/config change (importance bumped, or the entry became
+ *     evergreen) that pushes an id past that boundary means it is no longer
+ *     the kind of record budget enforcement keeps evicting, so it is
+ *     released back to normal candidate selection to recover.
+ *
+ * Since evergreen is now a last-resort PRUNABLE tier rather than an exempt
+ * one (see enforceBodiesBudget), a fixed "only rank 3 is ever excluded"
+ * check would be wrong: it would incorrectly release an evergreen (or
+ * importance>=2) id that got pruned in a tight-budget scenario purely
+ * because its rank differs from 3, even though nothing about its situation
+ * actually improved -- reintroducing the exact waste loop this function
+ * exists to prevent, just for a higher tier. Comparing against the DYNAMIC
+ * `worstSurvivingRank` (rather than a fixed threshold) stays correct
+ * regardless of which tier enforcement is currently having to prune from: a
+ * tie (same rank as the worst survivor) is kept excluded conservatively,
+ * since the excluded id may simply be older within that same tier.
+ * `worstSurvivingRank` defaults to -1 (lower than any real rank) when
+ * nothing currently has a body, so nothing is ever speculatively released in
+ * that degenerate scenario.
  *
  * The result is deterministically sorted (ascending id) rather than kept in
  * insertion order, and NOT arbitrarily truncated to a fixed count: the true
@@ -262,11 +300,18 @@ export function carryForwardBudgetEvictedIds(
   newlyPrunedIds: readonly string[] = [],
 ): string[] {
   const entryById = new Map(entries.map((entry) => [entry.id, entry]));
+  let worstSurvivingRank = -1;
+  for (const entry of entries) {
+    if (!bodiesPresent.has(entry.id)) continue;
+    const rank = bodyBudgetPriorityRank(entry);
+    if (rank > worstSurvivingRank) worstSurvivingRank = rank;
+  }
+
   const carried = previousIds.filter((id) => {
     if (bodiesPresent.has(id)) return false;
     const entry = entryById.get(id);
     if (!entry) return false;
-    return bodyBudgetPriorityRank(entry) === LOWEST_BUDGET_RANK;
+    return bodyBudgetPriorityRank(entry) >= worstSurvivingRank;
   });
   return [...new Set([...carried, ...newlyPrunedIds])].sort();
 }

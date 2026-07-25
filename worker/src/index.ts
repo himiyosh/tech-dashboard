@@ -2339,7 +2339,10 @@ export async function runBodyPipeline(
     //     top of isBodyRetentionEligible. An entry can be boolean-eligible
     //     (evergreen/importance>=2/recent) yet still get pruned here if the
     //     merged payload is over budget and it is the deterministic
-    //     lowest-priority record present. Evergreen entries are never pruned.
+    //     lowest-priority record present. Evergreen is pruned LAST (highest
+    //     priority) but is NOT exempt: if every lower tier has already been
+    //     removed and the payload is still over budget, evergreen is pruned
+    //     too, as a last resort (LL-411 follow-up 2).
     const budget = enforceBodiesBudget(merge.payload, retainedEntries, budgetTargetBytes);
 
     // 2) Enqueue the selected entries that do NOT yet have a generated body (KV

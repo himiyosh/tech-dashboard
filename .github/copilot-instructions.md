@@ -2661,6 +2661,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: 許可済みauthority kindを固定JA/EN labelへ解決し、記事resultのtoplineへ既存badge tokenで表示する。未知値は描画せず、language toggle、machine-readable authority、mobile幅をE2Eで検証する。
 - **教訓**: 検索やTop listで順位を説明する場合、比較に使うtrust signalを説明文だけへ置かず各候補で確認できるようにする。内部filter値を直接表示せず、通常cardと同じreader-facing vocabularyへ変換する。
 
+### LL-403: `pipefail`下で大きなfile listを`grep -q`へpipeしない
+- **事象**: 62 filesを含むmerge commitのpushで、pre-push hookは`git diff --name-only`から17件のWeb影響fileを得られる状態なのに`web/への影響なし`としてPublisher E2Eをskipした。同じSHA rangeをpush後に直接検査すると17件が一致した。
+- **根本原因**: `set -o pipefail`下で`echo "$CHANGED" | grep -qE ...`を使っていた。`grep -q`が先頭matchで終了した後、大きな`echo`がSIGPIPEになるとpipeline全体がnonzeroになり、先頭の`!`が「matchなし」へ反転した。短いfile listではproducerが先に完了して再現しない。
+- **対策**: producer pipeを廃止し、`grep -qE ... <<<"$CHANGED"`で同一process inputを渡す。source contract testでhere-string使用と旧`echo | grep -q`不在を固定し、次のWeb影響pushでPublisher E2Eが実行されることをhook出力で確認する。
+- **教訓**: `pipefail`と早期終了するconsumerを組み合わせると、match成功でもproducerのSIGPIPEがpipeline失敗へ見える。判定用の小さな文字列はpipeせずhere-stringまたはfile inputを使い、短いfixtureだけでなく多数fileのmerge rangeでも実行経路を検証する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

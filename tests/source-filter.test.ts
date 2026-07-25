@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   evaluateKeywordFilter,
   isMutableReleaseAliasUrl,
+  keywordFilterEntryFromNormalized,
   keywordMatchesHaystack,
   matchesKeywordFilter,
 } from "../harness/pipeline/source-filter.ts";
@@ -169,6 +170,35 @@ describe("matchesKeywordFilter", () => {
     });
   });
 
+  it("never reuses generated summaries as prior source-filter input", () => {
+    const nonTitleSource: SourceDefinition = {
+      ...source,
+      keywordFilterScope: undefined,
+      includeKeywords: ["llm"],
+      excludeKeywords: ["clinical code prediction"],
+    };
+    const prior = keywordFilterEntryFromNormalized({
+      title: "LLM evaluation for structured outputs",
+      url: "https://example.com/llm-evaluation",
+      summaryJa: "臨床 code prediction の研究を説明します。",
+      summaryEn: "This generated summary mentions clinical code prediction.",
+      titleJa: "",
+      titleEn: "",
+    });
+
+    expect(prior.contentSnippet).toBeUndefined();
+    expect(
+      evaluateKeywordFilter(prior, nonTitleSource, {
+        allowLossyMissingInclude: true,
+      }),
+    ).toEqual({
+      keep: true,
+      reason: "include",
+      keyword: "llm",
+      trusted: true,
+    });
+  });
+
   it("matches standalone ASCII keywords but not substrings inside alnum words", () => {
     expect(keywordMatchesHaystack("AI coding tools", "ai")).toBe(true);
     expect(keywordMatchesHaystack("AIs for developer tooling", "ai")).toBe(true);
@@ -231,6 +261,30 @@ describe("arXiv Research filter (R-017, LL-260)", () => {
       ),
     ).toBe(false);
   });
+
+  it("drops clinical prediction work while preserving LLM summary evaluation", () => {
+    expect(
+      matchesKeywordFilter(
+        {
+          title: "Graph-Constrained Policy Learning for Extreme Clinical Code Prediction",
+          url: "https://arxiv.org/abs/2607.00003",
+          contentSnippet: "",
+        },
+        REGISTRY["arxiv-cs-lg"],
+      ),
+    ).toBe(false);
+    expect(
+      matchesKeywordFilter(
+        {
+          title:
+            "Faithful by Design: Evaluating and Improving LLM-Generated Clinical Trial Summaries for Multi-Stakeholder Audiences",
+          url: "https://arxiv.org/abs/2607.00001",
+          contentSnippet: "",
+        },
+        arxivCl,
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("Google Cloud Blog knowledge filter (R-017)", () => {
@@ -244,6 +298,11 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
     expect(check("Architecting a trusted agentic platform with graph technologies")).toBe(true);
     expect(check("How I learned Go in a Day with Antigravity 2.0")).toBe(true);
     expect(check("BigQuery ML: training models at scale")).toBe(true);
+  });
+
+  it("drops startup cohort marketing from the evergreen knowledge lane", () => {
+    expect(check("Meet the 33 cybersecurity startups joining the Gemini Startup Forum")).toBe(false);
+    expect(check("Meet the startups building secure AI agents with Gemini")).toBe(true);
   });
 
   describe("AWS Machine Learning Blog relevance filter", () => {
@@ -326,6 +385,11 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
     ] as const;
     const techNewsGenericDropCases = [
       [
+        "techcrunch",
+        "ServiceNow bets $40 million on Indian banking software specialist to expand its financial services push",
+        "The investment targets a financial services software company.",
+      ],
+      [
         "ars-technica",
         "Quantum error correction can constantly recalibrate a processor",
         "This AI platform ships new developer tools for enterprise agents.",
@@ -345,6 +409,20 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
         "Airbnb-backed WeRoad raises $58M to take its group travel platform to the US",
         "The startup says AI developer agents and model tooling power the platform.",
       ],
+    ] as const;
+    const actualLowSignalTitleCases = [
+      ["google-keyword", "Apply now for the Google for Startups Gemini Startup Forum."],
+      [
+        "nvidia-blog",
+        "GeForce NOW Sets Sail With ‘Path of Exile: Curse of the Allflame’ Joining the Cloud",
+      ],
+      [
+        "aws-news",
+        "AWS Weekly Roundup: One-click Lambda setup prompt, OpenAI GPT-5.6 models on Bedrock, and more (July 20, 2026)",
+      ],
+      ["techcrunch", "Should AI help you get away with killing your spouse?"],
+      ["nvidia-blog", "It’s Gonna Be May: 16 Games Hit the Cloud, Including ‘Palworld’"],
+      ["ars-technica", "When your vehicle outlives its cloud: What happens next?"],
     ] as const;
     const evidenceBackedLowSignalCases = [
       ["google-keyword", "Here’s how to make study notebooks in the Gemini app."],
@@ -441,6 +519,20 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
       expect(check(
         REGISTRY["meta-newsroom"],
         "Meta releases an open model toolkit for AI developers",
+      )).toBe(true);
+    });
+
+    it("drops low-signal titles observed in the live broad-feed corpus", () => {
+      for (const [sourceId, title] of actualLowSignalTitleCases) {
+        expect(check(REGISTRY[sourceId], title), `${sourceId}: ${title}`).toBe(false);
+      }
+      expect(check(
+        REGISTRY["aws-news"],
+        "Amazon Bedrock introduces new advanced prompt optimization and migration tool",
+      )).toBe(true);
+      expect(check(
+        REGISTRY["nvidia-blog"],
+        "NVIDIA Open Sources First GPU-Accelerated Medical Physics Simulation Framework",
       )).toBe(true);
     });
 

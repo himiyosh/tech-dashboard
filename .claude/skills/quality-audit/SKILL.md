@@ -6,7 +6,7 @@ description: tech-dashboard の index.json を監査し、品質・鮮度・カ�
 
 ## 目的
 
-`data/index.json` を読み取り、以下 7 観点で品質スコアを算出・問題リストを返す。
+`data/index.json` を読み取り、以下 9 観点で品質スコアを算出・問題リストを返す。
 
 > 重要: `data/index.json` の `collectedAt` は **その source の last checked telemetry ではない**。broad / filtered feed は recent item が include/exclude で全落ちすると、live index に残る最新 qualifying entry が古く見える。これだけで collector failure と断定しない。pipeline 健全性は `index.health` の aggregate telemetry (`lastRunAt` / `copilotOk` / `sourcesAttempted` / `sourcesOk` / `sourcesFailed`) で判断する。
 
@@ -17,6 +17,8 @@ description: tech-dashboard の index.json を監査し、品質・鮮度・カ�
 5. **fallback debt**: deterministic fallback (`このエントリは ... AI 要約未生成` / `AI summary not yet available`) が残っている件数と比率。10% 以上または 50 件以上で warning、70% 以上で critical。
 6. **タグ品質 (tags)**: 同一タグのバリエーション (例: "llm" vs "LLM" vs "大規模言語モデル")。
 7. **重複 (dup)**: tracking query を除去した URL 正規化漏れ。同一 YouTube watch URL は `v` を動画 ID として保持。
+8. **Queue telemetry**: summary/body/shared budget の backlog、candidate、実 enqueue、lookup、merge、ETA を分離し、未観測を 0 件として扱わない。
+9. **Knowledge coverage**: registry の全 evergreen source を母集団にし、source ごとの収集件数、evergreen stamp 件数、shared summary quality contract を通る bilingual-ready 件数を比較する。0 entry や stamp 欠落 source も省略せず、本文 coverage とは別指標にする。
 
 ## 実行手順
 
@@ -77,6 +79,15 @@ description: tech-dashboard の index.json を監査し、品質・鮮度・カ�
 - 空要約: M 件
 - 短すぎ (<20 chars): K 件
 - deterministic fallback: F 件 (Y%)
+
+## ⚙️ Enrichment Queue snapshot
+
+- `未観測` は 0 件ではない
+- backlog / candidates / enqueued / lookup / merged / ETA を別々に表示する
+
+## 🌲 Knowledge evergreen coverage
+
+- registry evergreen source ごとの collected / evergreen flagged / bilingual ready / pending を表示する
 
 ## 🏷️ タグ揺れ候補
 

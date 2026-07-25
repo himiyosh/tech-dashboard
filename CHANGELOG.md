@@ -48,6 +48,8 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - `collectedAt` 基準の `NEW` を `新規収集 / INDEXED` へ変更し、記事の公開日時ではなくDashboardへの収録時刻を示す状態だと明確化しました。
 - Research を含む taxonomy、source filter、live/archive の tag・stats 同期を更新しました。
 - AWS ML Blogの一般QuickSight機能・BI運用記事・DeepRacer端末告知と、一般宇宙・防衛・副業案内・AI写真講評・indie game投資記事をAgent Frameworks / Tech Newsから除外し、正当なAI/ML・agentic engineering記事は維持するtitle-scope filterへ更新しました。
+- actual title corpus に基づき、AWS Weekly Roundup、GeForce NOWとcloud gaming、Gemini Startup Forumの募集・cohort記事、一般software投資、connected-car cloud、臨床code predictionをTech News / Knowledge / Researchから除外し、source filterのkeep/drop契約を強化しました。
+- 品質監査にregistryの全evergreen sourceを母集団とする収集・stamp・両言語要約件数と、summary/body Queueのbacklog・candidate・実enqueue・lookup・merge・ETAを追加し、0 entry、stamp欠落、未観測値を省略または0件へnormalizationしないようにしました。既存artifactで同一runの共有enqueue合計から実body enqueueを安全に導出できる場合は、その値もmigrationで補完します。
 - 10 件以上の記事で使われるタグだけをfull静的ページ化し、従来公開済みの2-9件tag URLは小さなnoindex recovery pageから完全一致検索へ戻れるようにしました。
 - 共通 canvas と左 Sidebar の有効幅を広げ、Home と Status の右 rail を中間幅まで段階的に維持する responsive layout へ変更しました。
 - Trending Topics と Most Active Sources に順位、件数、カテゴリ、相対量を加え、狭い rail でも比較しやすい視覚階層へ変更しました。

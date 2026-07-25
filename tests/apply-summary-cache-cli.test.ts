@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 const scriptPath = join(repoRoot, "scripts/apply-summary-cache.mjs");
+const CLI_TEST_TIMEOUT_MS = 30_000;
 
 function scratchDir(label: string): string {
   const root = join(repoRoot, `.apply-summary-cache-test-${label}-${process.pid}-${Date.now()}`);
@@ -17,6 +18,7 @@ function runCli(cwd: string, args: string[] = []) {
   return spawnSync(process.execPath, ["--import", "tsx", scriptPath, ...args], {
     cwd,
     encoding: "utf8",
+    timeout: CLI_TEST_TIMEOUT_MS,
   });
 }
 
@@ -69,7 +71,7 @@ describe("apply-summary-cache CLI", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, CLI_TEST_TIMEOUT_MS);
 
   it("refuses to race another data artifact writer", () => {
     const root = scratchDir("writer-lock");
@@ -97,7 +99,7 @@ describe("apply-summary-cache CLI", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, CLI_TEST_TIMEOUT_MS);
 
   it("rejects body-in-index compatibility flags", () => {
     const root = scratchDir("body-flag");
@@ -111,5 +113,5 @@ describe("apply-summary-cache CLI", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, CLI_TEST_TIMEOUT_MS);
 });

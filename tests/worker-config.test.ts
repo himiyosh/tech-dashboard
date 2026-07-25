@@ -241,6 +241,9 @@ describe("Cloudflare Worker deploy config", () => {
     expect(() => playwrightPreviewPort("/tmp/worktree", "80")).toThrow(
       "Invalid PLAYWRIGHT_PORT",
     );
+    expect(() => playwrightPreviewPort("/tmp/worktree", "invalid")).toThrow(
+      "Invalid PLAYWRIGHT_PORT",
+    );
     expect(playwrightConfig).toContain("workers: 1");
     expect(publisherWorkflow).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
     expect(publisherWorkflow).toMatch(

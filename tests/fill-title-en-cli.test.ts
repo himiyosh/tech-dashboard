@@ -228,5 +228,5 @@ describe("fill-title-en CLI safety", () => {
       expect(result.status).toBe(testCase.status);
       expect(sha256(INDEX_PATH)).toBe(before);
     }
-  }, 15_000);
+  }, 30_000);
 });

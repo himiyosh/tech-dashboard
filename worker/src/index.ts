@@ -2087,6 +2087,7 @@ interface BodyPipelineResult {
     bodyQueueMode: string;
     bodyEnqueueCap: number;
     bodyEnqueueCandidates: number;
+    bodyEnqueued: number;
     bodyBacklog: number;
     bodyQueueDrainEstimateHours: number;
     bodyLookupCount: number;
@@ -2191,6 +2192,7 @@ async function runBodyPipeline(
       bodyQueueMode: mode,
       bodyEnqueueCap: 0,
       bodyEnqueueCandidates: 0,
+      bodyEnqueued: 0,
       bodyBacklog: 0,
       bodyQueueDrainEstimateHours: 0,
       bodyLookupCount: 0,
@@ -2308,6 +2310,7 @@ async function runBodyPipeline(
         bodyQueueMode: "enabled",
         bodyEnqueueCap: enqueueCap,
         bodyEnqueueCandidates: toEnqueue.length,
+        bodyEnqueued: enqueued,
         bodyBacklog: remainingBacklog,
         bodyQueueDrainEstimateHours: enqueueCap > 0
           ? Math.ceil(remainingBacklog / enqueueCap)

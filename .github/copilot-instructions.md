@@ -1109,10 +1109,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: **宣言されているツールだけを使う**。`apply_patch`、GNU `grep -P`、PCRE look-around を既定能力だと思わない。portable validation は Node など repo 依存で確実に使える runtime で書き、section 読み取りは単純検索と range read に分け、OS/tool 差分のある one-liner に依存しない。
 
 ### LL-144: lossy normalized prior では missing include だけで destructive drop しない
-- **事象**: current-rule cleanup が normalized/compact prior entry に shared include filter を再適用すると、raw snippet にあった include hit が normalize 後の欠損/短縮 `contentSnippet` で消え、valid prior article が migration/Worker merge で drop され得た。
-- **根本原因**: non-title scope source の include 判定は本来 `title + raw snippet + url` 契約だが、prior artifact は raw snippet を保持していない。lossy normalized context で include miss を「不適格」と断定していたのが過剰だった。
-- **対策**: shared source-filter に decision helper を追加し、**exclude hit は常に drop、title-scope の missing include は drop、non-title scope prior normalized の missing include は `missing-include-unverified` として preserve/restamp** する。fresh collector は raw/full context の strict contract を維持し、`hn-ai` は title-only scope に固定する。`tests/data-schema.test.ts` の artifact gate も同じ evaluator (`allowLossyMissingInclude:true`) に同期し、keep=false と category drift だけを violation にする。
-- **教訓**: **lossy normalized context は destructive cleanup の根拠に使わない**。raw input が失われた後は missing include を「確認不能」と扱い、drop するのは exclude hit か title-only のように証拠が十分な場合だけにする。fresh raw path、prior normalized path、artifact test gate の 3 者で同じ evaluator 契約を共有しないと、migration/Worker は通るのに test gate だけが過剰検出する drift が起こる。
+- **事象**: current-rule cleanup が normalized/compact prior entry に shared include filter を再適用すると、raw snippet にあった include hit が normalize 後の欠損/短縮 `contentSnippet` で消れ、valid prior article が migration/Worker merge で drop され得た。後に、`contentSnippet`欠落時へ生成済み`summaryJa` / `summaryEn`をfilter入力として補う実装があり、collectorが受理した記事をLLMの言い換えだけで後段migrationが削除できる経路も見つかった。
+- **根本原因**: non-title scope source の include 判定は本来 `title + raw snippet + url` 契約だが、prior artifact は raw snippet を保持していない。lossy normalized context で include miss を「不適格」と断定し、さらに生成要約をraw snippetの代用にしていたのが過剰だった。
+- **対策**: shared source-filter に decision helper を追加し、**raw title/urlと保存済みraw `contentSnippet`だけをfilter入力にする。生成title/summaryは採否へ使わない**。exclude hit は drop、title-scope の missing include は drop、non-title scope prior normalized の missing include は `missing-include-unverified` として preserve/restampする。fresh collector は raw/full context の strict contract を維持し、`hn-ai` は title-only scope に固定する。`tests/data-schema.test.ts` の artifact gate も同じ evaluator (`allowLossyMissingInclude:true`) に同期し、keep=false と category drift だけを violation にする。
+- **教訓**: **lossy normalized context と生成enrichmentを destructive cleanup の根拠に使わない**。raw input が失われた後は missing include を「確認不能」と扱い、drop するのはraw title/snippet/urlのexclude hitかtitle-onlyのように証拠が十分な場合だけにする。fresh raw path、prior normalized path、artifact test gate の 3 者で同じ evaluator 契約を共有しないと、migration/Worker は通るのに test gate だけが過剰検出する drift が起こる。
 
 ### LL-145: i18n toggle は heading だけでなく本文コンテナ自体を切り替える
 - **事象**: article detail の TL;DR は言語 toggle で heading だけ EN に変わる一方、本文は常に JA block が見え、EN bullets は `<details>` を開かないと読めなかった。EN user には「見出しだけ英語で本文は日本語」という半端な状態だった。
@@ -1505,10 +1505,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: static page と検索 index が data 件数に比例して増えるサイトでは、E2E webServer と CI job 全体の timeout を固定の小さい値にしない。通常 build と前処理の実測値に十分な余裕を持たせ、timeout 延長で assertion failure を隠さない。
 
 ### LL-210: data migration 後も全 artifact の U+FFFD を schema gate で検出する
-- **事象**: self-critique の全量 Unicode scan で、`data/archive/2026-06.json` の Qiita title / titleJa に U+FFFD が 1 文字ずつ残っていた。`origin/main` にも同じ 2 field が存在し、taxonomy migration は文字化けを新規生成していないが、そのまま保持していた。
-- **根本原因**: data schema は field 型、要約、URL、tag parity を検証していたが、live/archive の文字列に Unicode replacement character が含まれないことを gate にしていなかった。migration の idempotence と schema PASS だけでは既存の文字破損を検出できなかった。
-- **対策**: canonical Qiita page の HTML title と照合して `で[U+FFFD]AI` を `で AI` へ修復し、live/archive 全 entry の serialized value に U+FFFD が無いことを `tests/data-schema.test.ts` で検証する。
-- **教訓**: migration は既存 artifact の構造を安全に保っても、既存文字破損まで自動的には直さない。data artifact を変更した完了ゲートでは Markdown だけでなく live/archive の U+FFFD を全量検査し、修復は一次情報で正しい文字列を確認してから行う。
+- **事象**: self-critique の全量 Unicode scan で、`data/archive/2026-06.json` の Qiita title / titleJa に U+FFFD が 1 文字ずつ残っていた。後のfinal migrationでは`data/bodies.json`の日本語本文にもU+FFFDが2文字残り、いずれも`origin/main` baselineから継承されていた。taxonomy migration は文字化けを新規生成していないが、そのまま保持していた。
+- **根本原因**: data schema は field 型、要約、URL、tag parity を検証していたが、当初はlive/archive、その後もbody sidecarの文字列にUnicode replacement characterが含まれないことをgateにしていなかった。migration の idempotence と schema PASS だけでは既存の文字破損を検出できなかった。
+- **対策**: canonical Qiita page の HTML title と照合して `で[U+FFFD]AI` を `で AI` へ修復した。bodyの壊れた例示文字列は正しい元bytesを推測せず`文字化けした記号列`という意味保持表現へ置換し、live/archive全entryとbodies全recordのU+FFFD不在を`tests/data-schema.test.ts`で検証する。
+- **教訓**: migration は既存 artifact の構造を安全に保っても、既存文字破損まで自動的には直さない。data artifact を変更した完了ゲートでは Markdown、live/archive、body sidecarのU+FFFDを全量検査し、修復は一次情報で正しい文字列を確認する。元文字を確定できない本文例示は破損文字を再現せず、意味を捏造しない説明表現へ置き換える。
 
 ### LL-211: contract 一致だけでは publisher の data snapshot race を閉じない
 - **事象**: 独立 code review で、`runHarness()` が branch 名の raw URL から古い index / bodies / archive / stats を読んだ後、`ghCommitFiles()` が同じ contract を持つ新しい main HEAD を親に採用し、古い data snapshot を巻き戻せる race が見つかった。
@@ -2379,11 +2379,11 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: `selectTickerItems()`へ要約済み、重要度、source authority、配信形式、公開時刻のrankと、source・hostnameごとの最大2件を集約した。完全一覧はTimelineに維持し、Tickerだけを比較用highlightに限定する。実dataで旧20件から7件へ整理し、各platform最大2件であることをunit testとE2EのDOM属性で固定した。
 - **教訓**: Featured、Ticker、Top listのようなdecision surfaceは、個別itemのscoreが正しくても高頻度streamに独占される。rankとdiversity quotaを別の契約として持ち、source IDだけでなく配信platformも実分布で測る。全件一覧とhighlight枠の責務を分け、枠を埋めるために低品質な重複候補を戻さない。
 
-### LL-356: 複数processを起動するCLI安全testはfull suite基準の個別timeoutを持つ
-- **事象**: `fill-title-en`のCLI安全testは単独実行では2.85秒で成功したが、全622件のVitest suiteでは5.39秒と6.14秒になり、既定5秒timeoutで2回連続失敗した。製品処理やassertionの失敗はなく、同testが5種類のCLI modeを別processで順次起動していた。
-- **根本原因**: child processを複数起動するtestへ通常のpure unit testと同じ5秒予算を適用し、full suiteの並列transform/import負荷を考慮していなかった。単独実行の成功だけでは全suite時のprocess起動遅延を再現できなかった。
-- **対策**: global test timeoutは変更せず、5 processの終了とdata hash不変を検証する当該testだけ15秒へ広げた。fail-closedのexit codeとmutation不在のassertionは維持する。
-- **教訓**: subprocessを起動するintegration寄りtestは、単独時間でなくfull suite中の実測時間に余裕を持つ個別budgetを設定する。global timeoutを緩めてpure unitのhang検知を弱めず、Two-strikeで再現したtestだけを明示的に調整する。
+### LL-356: 複数processや全artifact走査を行うtestはfull suite基準の個別timeoutを持つ
+- **事象**: `fill-title-en`のCLI安全testは単独実行では2.85秒で成功したが、全622件のVitest suiteでは5.39秒と6.14秒になり、既定5秒timeoutで2回連続失敗した。後の668件suiteでは15.67秒まで伸び、registry filterをlive/archive全件へ再適用するdata schema testも5.27秒で既定5秒を僅かに超えた。製品処理やassertionの失敗はなかった。最初のtimeout修正ではcontextの弱いpatchにより、定数が`spawnSync`の無効な第4引数、`Array.map`の`thisArg`、fixture helperの余分な引数へ入り、test自体はextra argumentを無視して成功した。
+- **根本原因**: child processを複数起動するtestや全artifactを走査するintegration寄りtestへ通常のpure unit testと同じ予算を適用し、full suiteの並列transform/import負荷を考慮していなかった。単独実行の成功だけでは全suite時のprocess起動・全量走査の遅延を再現できなかった。
+- **対策**: global test timeoutは変更せず、5 processの終了とdata hash不変を検証するCLI安全testだけ30秒、live/archive全件のfilter/category parity testだけ15秒へ広げた。CLI testはVitestの`it(..., timeout)`と`spawnSync` options内の`timeout`を両方設定し、fail-closedのexit code、mutation不在、全entry検査のassertionを維持する。timeout定数の全参照を検索し、test callbackとspawn options以外へ渡っていないことを確認する。
+- **教訓**: subprocessや全artifact走査を行うintegration寄りtestは、単独時間でなくfull suite中の実測時間に余裕を持つ個別budgetを設定する。global timeoutを緩めてpure unitのhang検知を弱めず、再現したtestだけを明示的に調整する。JavaScriptが余分な引数を黙って無視するAPIではtest PASSだけで配線を証明できないため、定数のcallsiteを全量検索して実APIのparameter位置を確認する。
 
 ### LL-357: 静的pageのviewport行列は幅ごとに再navigationしない
 - **事象**: 全100件E2EでTop 3の29幅行列とlane pageの2 route×9幅行列が、assertionへ到達する前に30秒timeoutした。どちらも幅ごとに同じ静的URLへ`page.goto()`し直し、retryでも同じ箇所で停止した。後の110件E2Eでは、8 routeのPageHeroをdesktop/mobileごとに再navigationする1 testも30秒へ達した。
@@ -2591,9 +2591,33 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 
 ### LL-391: 複数worktreeのPlaywright previewは固定portを共有しない
 - **事象**: Publisher E2Eとcommit後のpre-push E2Eが300秒のwebServer timeoutで停止した。`4322`は別worktreeのAstro previewが約3時間保持し、HTTP 404を返していた。今回のPlaywrightが起動したpreviewは空いている`4323`へ自動退避したため、Playwrightは設定済み`4322`のready stateを待ち続けた。
-- **根本原因**: `reuseExistingServer: true`と固定portを複数worktreeで共有し、portを保持するprocessのrepository identityを確認せず別artifactを信頼していた。明示port overrideは手動実行には使えても、portを指定しないpre-pushでは固定`4322`へ戻るため恒久対策にならなかった。
-- **対策**: absolute worktree pathのSHA-256から12000-31999のpreview portを決定し、`PLAYWRIGHT_PORT`の明示overrideもfail-closedで検証する。Playwrightは`reuseExistingServer: false`として自分が起動したserverだけを使い、server command、baseURL、readiness URLを同じportへ接続する。別worktreeのprocessは停止しない。
-- **教訓**: 複数worktreeでbrowser testを並行するrepositoryでは、固定portとexisting-server再利用をartifact ownershipの証拠にしない。手動overrideだけでなく通常E2Eとpre-pushの既定経路もworktree固有にし、port、server process、workspace、dist snapshotを同じtest contractへ接続する。
+- **根本原因**: `reuseExistingServer: true`と固定portを複数worktreeで共有し、portを保持するprocessのrepository identityを確認せず別artifactを信頼していた。明示port overrideは手動実行には使えても、portを指定しないpre-pushでは固定`4322`へ戻るため恒久対策にならなかった。さらにstatic Homeのviewport行列が幅ごとに`page.goto()`を繰り返し、server負荷時にtest budgetを消費していた。
+- **対策**: absolute worktree pathのSHA-256から12000-31999のpreview portを決定し、`PLAYWRIGHT_PORT`の明示overrideもfail-closedで検証する。Playwrightは`reuseExistingServer: false`として自分が起動したserverだけを使い、server command、baseURL、readiness URLを同じportへ接続する。別worktreeのprocessは停止しない。同一static routeのresponsive matrixは1回のnavigation後にviewport変更と2 frameのreflow待機で測る。
+- **教訓**: 複数worktreeでbrowser testを並行するrepositoryでは、固定portとexisting-server再利用をartifact ownershipの証拠にしない。手動overrideだけでなく通常E2Eとpre-pushの既定経路もworktree固有にし、port、server process、workspace、dist snapshotを同じtest contractへ接続する。static responsive testはroute変更がない限り再navigationせず、focused retryなし実行でserver層とassertion層を分離する。
+
+### LL-392: Queueのcandidate、実enqueue、merge、未観測を同じ数値へ潰さない
+- **事象**: body Queueは`bodyEnqueueCandidates`とshared enqueue合計を記録していたが、artifact healthに個別の`bodyEnqueued`が無く、Web metricsでは実enqueueが`null`になった。quality-auditも旧deterministic fallback markerだけを独自判定し、Queue fieldとKnowledgeの収集・要約非対称を表示していなかった。
+- **根本原因**: producer内部ではcandidate、実送信、lookup、mergeを別々に計測していたが、永続telemetryと監査consumerへ同じfieldをend-to-endで配線していなかった。field欠落を0件として補うと、未観測と観測済み0件も区別できない。
+- **対策**: body pipeline healthへ実送信件数`bodyEnqueued`を追加し、candidate、cap、lookup、pending lookup、merge、backlog、ETAと分離した。既存artifactは同一runの`enrichmentEnqueued - summaryQueueEnqueued`が非負で両fieldとも観測済みの場合だけ`bodyEnqueued`をmigrationで補完する。quality-auditはshared summary quality contractを再利用し、summary/body/shared Queue snapshotとKnowledge source別coverageを表示する。data schemaは候補、実送信、反映、共有budgetの不変条件を検証する。
+- **教訓**: 非同期enrichmentのtelemetryはeligible、backlog、candidate、cap、実enqueue、lookup、merge、ETAを別の意味単位として永続化する。consumerはfield欠落を0へnormalizationせず未観測として扱い、生成器、artifact、監査、Web metricsを同じfield名と不変条件へ揃える。
+
+### LL-393: 同じnoise語でもregistry familyが別なら全filter集合へ適用されない
+- **事象**: Tech News共通excludeへ`startup forum`を追加してGoogle Keyword Blogの記事を除外しても、別の`GCLOUD_EXCLUDE_KEYWORDS`を使うGoogle Cloud Blogの同種startup cohort記事はKnowledgeへ残った。`geforce now`を除外しても、titleに製品名がない`16 Games Hit the Cloud`はarchiveへ残った。
+- **根本原因**: 1つの実例を1つのkeyword arrayへ追加すれば同じ概念の全sourceへ効くとみなし、sourceごとに異なるregistry filter familyとtitle表現をactual corpus全体で再検査していなかった。
+- **対策**: Google Cloud evergreen filterにも`startup forum`を明示し、Tech Newsには製品名を省いたcloud-gaming titleとconnected-car cloudの実title phraseを追加した。drop fixtureと隣接する正当なagent/AI engineeringのkeep fixtureをactual registry定義で固定し、transaction migrationを再適用した。
+- **教訓**: source採否の単一情報源はregistryだが、registry内に複数のfilter familyがある場合、同じ概念が自動共有されるとは限らない。新しいnoise patternは対象sourceが参照する実配列を確認し、全live/archive corpusで同概念の表記変種を再検索する。製品名だけに依存せず、title-scopeで高信頼な主題phraseをkeep/drop両fixtureへ固定する。
+
+### LL-394: coverage auditはartifact側のflagged entryだけを母集団にしない
+- **事象**: quality-auditのKnowledge coverageが`entry.evergreen === true`の行だけからsource表を作っていたため、registryではevergreenなのにentry stampが欠けたsourceや0 entryのsourceが表から完全に消えた。
+- **根本原因**: 監査対象の異常を検出するためのflagを、監査母集団の選択条件にも使っていた。flag欠落が起きると検査対象自体が消え、正常に見える自己参照になった。
+- **対策**: registryの全`evergreen: true` sourceを先に0件で初期化し、収集済みentry、evergreen flagged、bilingual readyを別々に加算する。0 entryとstamp欠落sourceも常に表へ残すfixtureを追加した。
+- **教訓**: coverage auditの母集団は期待契約を定義するregistry/schemaから作り、artifact側の検査対象fieldで絞り込まない。存在、stamp、enrichment readyは別のcountとして表示し、異常時ほどrowが消えない設計にする。
+
+### LL-395: Pagefindのfacet件数はlive indexだけでなくindexed detail corpus全体で数える
+- **事象**: singleton tag recovery E2Eがlive indexでは1件の`acquisition`を選んだが、Pagefindはwarm archive detailもindexするため、case variantのexact tag検索では複数の過去記事が返り別記事が先頭になった。
+- **根本原因**: testのsingleton母集団を`data/index.json`だけから作り、実検索indexの母集団であるlistable live entryとwarm archive detail routeを一致させていなかった。検索filter自体は正しくcase-normalizeされていた。
+- **対策**: E2Eのtag countをlive indexと全月warm archiveのID dedupe集合から算出し、実際にPagefind上でsingletonなtagだけをcase-variant回帰へ使う。
+- **教訓**: 検索やfacetのE2E fixtureは表示中のlive集合ではなく、検索engineが実際にindexするroute corpusから選ぶ。static route、archive retention、検索metadataの母集団が異なる場合は同じ正規化とdedupeをtest側にも共有する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

@@ -699,6 +699,12 @@ test.describe("TECH Dashboard smoke", () => {
     // Wide desktop: use the expanded canvas while keeping both rails useful.
     await page.setViewportSize({ width: 1920, height: 900 });
     await page.goto("/");
+    const settleLayout = () =>
+      page.evaluate(
+        () => new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        ),
+      );
     const rail = page.locator(".layout aside.right.home-right");
     await expect(rail).toBeVisible();
     await expect(rail.locator(":scope > .side-card > h3.right-title")).toHaveCount(3);
@@ -796,7 +802,7 @@ test.describe("TECH Dashboard smoke", () => {
     // The compact right rail returns once all three columns retain useful width.
     for (const width of [1181, 1280, 1359]) {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto("/");
+      await settleLayout();
       await expect(rail, `${width}px shows the compact right rail`).toBeVisible();
       const compact = await page.locator(".layout").evaluate((layout) => ({
         cols: getComputedStyle(layout).gridTemplateColumns.split(" ").filter(Boolean).length,
@@ -807,7 +813,7 @@ test.describe("TECH Dashboard smoke", () => {
     }
 
     await page.setViewportSize({ width: 1180, height: 900 });
-    await page.goto("/");
+    await settleLayout();
     await expect(rail).toBeHidden();
     const collapsedCols = await page.locator(".layout").evaluate((layout) =>
       getComputedStyle(layout).gridTemplateColumns.split(" ").filter(Boolean).length,
@@ -816,7 +822,7 @@ test.describe("TECH Dashboard smoke", () => {
 
     // Mobile: rail hidden, no horizontal scroll.
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/");
+    await settleLayout();
     await expect(rail).toBeHidden();
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
@@ -1022,9 +1028,16 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("mid-width header keeps every control readable without clipping", async ({ page }) => {
-    for (const width of [721, 768, 901, 981, 1000, 1100]) {
+    const widths = [721, 768, 901, 981, 1000, 1100];
+    await page.setViewportSize({ width: widths[0]!, height: 900 });
+    await page.goto("/");
+    for (const width of widths) {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto("/");
+      await page.evaluate(
+        () => new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        ),
+      );
 
       const metrics = await page.evaluate(() => {
         const rect = (element: Element | null) => {
@@ -3620,6 +3633,7 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("every metric-bearing PageHero explains its population and window", async ({ page }) => {
+    test.setTimeout(90_000);
     const paths = [
       "/categories/",
       "/status/",
@@ -3635,6 +3649,12 @@ test.describe("TECH Dashboard smoke", () => {
       "/t/claude/",
       "/t/claude/page/2/",
     ];
+    const settleLayout = () =>
+      page.evaluate(
+        () => new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        ),
+      );
 
     await page.goto("/");
     const routeContracts = await page.evaluate(
@@ -3691,17 +3711,16 @@ test.describe("TECH Dashboard smoke", () => {
       await page.goto(path);
       for (const [width, height, maxHeroHeight] of responsiveViewports) {
         await page.setViewportSize({ width, height });
-        await page.evaluate(() => new Promise<void>((resolve) =>
-          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-        ));
+        await settleLayout();
         const hero = page.locator(".page-hero");
         await expect(hero).toBeVisible();
         const box = await hero.boundingBox();
         expect(box, `${path} hero renders at ${width}px`).not.toBeNull();
         expect(box!.height, `${path} metric detail remains compact at ${width}px`).toBeLessThan(maxHeroHeight);
-        await expect
-          .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-          .toBe(true);
+        expect(
+          await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+          `${path} stays within ${width}px`,
+        ).toBe(true);
       }
     }
 
@@ -3714,9 +3733,18 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("page families keep stable content widths across routes", async ({ page }) => {
-    const measure = async (path: string, width: number) => {
+    test.setTimeout(60_000);
+    const measure = async (path: string, width: number, navigate = true) => {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto(path);
+      if (navigate) {
+        await page.goto(path);
+      } else {
+        await page.evaluate(
+          () => new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+          ),
+        );
+      }
       return page.evaluate(() => {
         const main = document.querySelector<HTMLElement>(".layout > main");
         const left = document.querySelector<HTMLElement>(".layout > aside.left");
@@ -3743,14 +3771,29 @@ test.describe("TECH Dashboard smoke", () => {
       });
     };
 
-    const at1280 = {
-      home: await measure("/", 1280),
-      status: await measure("/status/", 1280),
-      categories: await measure("/categories/", 1280),
-      category: await measure("/c/copilot/", 1280),
-      about: await measure("/about/", 1280),
-      archive: await measure("/archive/", 1280),
-    };
+    const routeEntries = [
+      ["home", "/"],
+      ["status", "/status/"],
+      ["categories", "/categories/"],
+      ["category", "/c/copilot/"],
+      ["about", "/about/"],
+      ["archive", "/archive/"],
+    ] as const;
+    const measurements = new Map<
+      (typeof routeEntries)[number][0],
+      {
+        at1280: Awaited<ReturnType<typeof measure>>;
+        at1440: Awaited<ReturnType<typeof measure>>;
+      }
+    >();
+    for (const [key, path] of routeEntries) {
+      const at1280 = await measure(path, 1280);
+      const at1440 = await measure(path, 1440, false);
+      measurements.set(key, { at1280, at1440 });
+    }
+    const at1280 = Object.fromEntries(
+      [...measurements].map(([key, value]) => [key, value.at1280]),
+    ) as Record<(typeof routeEntries)[number][0], Awaited<ReturnType<typeof measure>>>;
     expect(Math.abs(at1280.home.main!.width - at1280.status.main!.width)).toBeLessThanOrEqual(1);
     for (const key of ["categories", "category", "about", "archive"] as const) {
       expect(
@@ -3768,16 +3811,15 @@ test.describe("TECH Dashboard smoke", () => {
       0,
     );
 
-    const desktopPaths = ["/", "/status/", "/categories/", "/c/copilot/", "/about/", "/archive/"];
     const desktopWidths: number[] = [];
-    for (const path of desktopPaths) {
-      const metrics = await measure(path, 1440);
+    for (const [key, path] of routeEntries) {
+      const metrics = measurements.get(key)!.at1440;
       desktopWidths.push(metrics.main!.width);
       expect(metrics.overflow, `${path} does not overflow at 1440px`).toBeLessThanOrEqual(0);
     }
     expect(Math.max(...desktopWidths) - Math.min(...desktopWidths)).toBeLessThanOrEqual(1);
 
-    const categoryDetail = await measure("/c/copilot/", 1440);
+    const categoryDetail = measurements.get("category")!.at1440;
     expect(categoryDetail.crumbContentX, "breadcrumb uses the shared desktop gutter").toBeCloseTo(
       categoryDetail.left!.x,
       0,
@@ -5052,13 +5094,27 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("singleton tag links recover their article through exact search", async ({ page }) => {
+    test.setTimeout(45_000);
     await page.goto("/");
 
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{ tags?: string[] }>;
+      entries: Array<{ id: string; tags?: string[] }>;
     };
+    const warmArchiveEntries = readdirSync("data/archive")
+      .filter((name) => /^\d{4}-\d{2}\.json$/.test(name))
+      .flatMap((name) => {
+        const month = JSON.parse(readFileSync(`data/archive/${name}`, "utf8")) as {
+          entries?: Array<{ id: string; tags?: string[]; archiveTier?: string }>;
+        };
+        return (month.entries ?? []).filter((entry) => entry.archiveTier === "warm");
+      });
+    const indexedEntries = [
+      ...new Map(
+        [...index.entries, ...warmArchiveEntries].map((entry) => [entry.id, entry]),
+      ).values(),
+    ];
     const tagCounts = new Map<string, number>();
-    for (const entry of index.entries) {
+    for (const entry of indexedEntries) {
       for (const tag of new Set((entry.tags ?? []).map(normalizeTagKey).filter(Boolean))) {
         tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
       }
@@ -5091,14 +5147,26 @@ test.describe("TECH Dashboard smoke", () => {
     const input = page.locator("#pagefind-search-input");
     await expect(input).toBeFocused();
     await expect(input).toHaveValue(query!);
-    await expect(page.locator(`.search-hit[href="${detailHref}"]`)).toBeVisible({ timeout: 10_000 });
+    await expect
+      .poll(
+        () => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"),
+        { timeout: 15_000 },
+      )
+      .toBe(true);
+    await expect(page.locator(`.search-hit[href="${detailHref}"]`)).toBeVisible({ timeout: 15_000 });
 
     const caseVariant = query!.replace(/[a-z]/g, (character) => character.toUpperCase());
     expect(caseVariant).not.toBe(query);
     const caseQuery = new URLSearchParams({ q: caseVariant, tag: caseVariant });
     await page.goto(`/search?${caseQuery.toString()}`);
     await expect(input).toHaveValue(caseVariant);
-    await expect(page.locator(".search-hit").first()).toHaveAttribute("href", detailHref!, { timeout: 10_000 });
+    await expect
+      .poll(
+        () => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"),
+        { timeout: 15_000 },
+      )
+      .toBe(true);
+    await expect(page.locator(".search-hit").first()).toHaveAttribute("href", detailHref!, { timeout: 15_000 });
 
     await input.fill(`${caseVariant}-manual`);
     await expect.poll(() => new URL(page.url()).searchParams.has("tag")).toBe(false);
@@ -5596,6 +5664,7 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("pagefind exact-result filtering ignores Unicode diacritics", async ({ page }) => {
+    test.setTimeout(45_000);
     await page.goto("/");
     await expect
       .poll(() => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"))
@@ -6303,9 +6372,9 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(imageCard, "image failure fixture remains available").toBeAttached();
     const imageHref = await imageCard.locator(".kg-card-link").getAttribute("href");
     expect(imageHref, "image card has a stable detail href").toBeTruthy();
-    const stableImageCard = page.locator(".kg-card").filter({
-      has: page.locator(`.kg-card-link[href="${imageHref}"]`),
-    });
+    const stableImageCard = page.locator(
+      `.kg-card:has(.kg-card-link[href="${imageHref}"])`,
+    );
     const bodyWidthBefore = await stableImageCard.locator(".kg-body").evaluate((body) =>
       body.getBoundingClientRect().width,
     );

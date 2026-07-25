@@ -109,15 +109,32 @@ interface WorkerHealth {
   queueMode?: "enabled" | "disabled" | "missing-binding";
   queueCap?: number;
   enqueueCandidates?: number;
+  summaryQueueEnqueued?: number;
   summaryQueueBacklog?: number;
   summaryQueueDrainEstimateHours?: number;
   summaryQueueStartIndex?: number;
+  bodyQueueMode?: "enabled" | "disabled" | "missing-binding" | "error";
+  bodyRetentionEligible?: number;
+  bodyBacklog?: number;
+  bodyEnqueueCandidates?: number;
+  bodyEnqueueCap?: number;
+  bodyEnqueued?: number;
+  bodyLookupCount?: number;
+  bodyPendingLookupCount?: number;
+  bodyMerged?: number;
+  bodyQueueDrainEstimateHours?: number;
+  bodyMergePendingIds?: string[];
+  enrichmentEnqueueCap?: number;
+  enrichmentEnqueued?: number;
+  enrichmentRemaining?: number;
   copilotOk: boolean;
   copilotError: string | null;
   ogCached: number;
   ogNewHits: number;
 }
 ```
+
+Queue telemetry の `backlog`、`candidate`、実 `enqueued`、`lookup`、`merged` は別の母集団である。optional field の欠落は 0 件ではなく未観測として扱う。
 
 ステータスラベル (表示ロジックは `web/src/pages/status.astro`):
 - `healthy` — 直近 6h 以内に成功 / Copilot OK / 失敗 source なし

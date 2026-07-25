@@ -170,10 +170,18 @@ fi
 # worker/ 配下の差分を確認 (pipefail 下で `| grep -q` を使うと、grep が早期
 # 終了した後の git diff の SIGPIPE がパイプライン全体を非 0 にし、差分あり
 # でも「差分なし」に誤判定し得る。LL-403 と同じ SIGPIPE 誤判定を避けるため
-# pipe を使わない `git diff --quiet` で判定する)
-if git diff --quiet "$range" -- worker/ 2>/dev/null; then
+# pipe を使わない `git diff --quiet` で判定する。exit code は 0=差分無し、
+# 1=差分有り、それ以外 (range 不正等の error) は fail-closed で push/deploy
+# を中断する。stderr は診断のため抑制しない)
+worker_diff_status=0
+git diff --quiet "$range" -- worker/ || worker_diff_status=$?
+if [ "$worker_diff_status" -eq 0 ]; then
   echo "[pre-push] worker/ に差分なし → wrangler deploy はスキップ"
   exit 0
+elif [ "$worker_diff_status" -ne 1 ]; then
+  echo "[pre-push] ERR: worker/ 差分確認に失敗しました (git diff --quiet の exit code=$worker_diff_status, range=$range)"
+  echo "[pre-push] ERR: range や repository の状態を確認して再実行してください。push を中断します"
+  exit 1
 fi
 
 if [ "${RUN_WORKER_DEPLOY:-}" != "1" ]; then

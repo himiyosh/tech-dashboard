@@ -1,6 +1,8 @@
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   playwrightPreviewPort,
   playwrightWebServerCommand,
@@ -10,6 +12,55 @@ import { SOURCE_BATCHES, sourceBatchIndexAt } from "../worker/src/index.ts";
 function readConfig(path: string): string {
   return readFileSync(join(process.cwd(), path), "utf8");
 }
+
+// Extracts the exact worker/ diff-check block from the real pre-push hook
+// (rather than hand-duplicating it in a test string) so this test cannot
+// silently drift from the file it verifies.
+function extractWorkerDiffCheckSnippet(): string {
+  const content = readConfig("scripts/git-hooks/pre-push");
+  const startMarker = "# worker/ 配下の差分を確認";
+  const endMarker = 'if [ "${RUN_WORKER_DEPLOY:-}" != "1" ]';
+  const startIdx = content.indexOf(startMarker);
+  const endIdx = content.indexOf(endMarker);
+  if (startIdx === -1 || endIdx === -1) {
+    throw new Error(
+      "could not locate the worker/ diff-check snippet in scripts/git-hooks/pre-push",
+    );
+  }
+  return content.slice(startIdx, endIdx);
+}
+
+const scratchRoots: string[] = [];
+
+function createTempRepo() {
+  const root = mkdtempSync(join(tmpdir(), "tech-dashboard-worker-diff-"));
+  scratchRoots.push(root);
+  const run = (args: string[]) =>
+    spawnSync("git", args, { cwd: root, encoding: "utf8" });
+  run(["init", "-q", "-b", "main"]);
+  run(["config", "user.email", "test@example.com"]);
+  run(["config", "user.name", "test"]);
+  return { root, run };
+}
+
+// Executes the extracted worker/ diff-check snippet in a real temp git
+// repo, appending a marker so the test can tell whether execution fell
+// through to the deploy path (no exit called) vs. exited early.
+function runWorkerDiffCheck(cwd: string, range: string) {
+  const snippet = extractWorkerDiffCheckSnippet();
+  const script = `set -euo pipefail\n${snippet}\necho "REACHED_DEPLOY_PATH"\n`;
+  return spawnSync("bash", ["-c", script], {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, range },
+  });
+}
+
+afterEach(() => {
+  for (const root of scratchRoots.splice(0)) {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 describe("Cloudflare Worker deploy config", () => {
   it("deploys only the OIDC bridge on Workers Free without a cron or paid CPU limit", () => {
@@ -294,6 +345,20 @@ describe("Cloudflare Worker deploy config", () => {
     );
     expect(prePush).not.toMatch(/git diff[^\n]*worker\/[^\n]*\|\s*grep/);
 
+    // `git diff --quiet` returns 0 (no diff), 1 (diff exists), or a higher
+    // code (e.g. 128 for an invalid range/object). Treating "not 0" as "diff
+    // exists" would silently proceed to `wrangler deploy` on a detection
+    // error too. The exit code must be captured and the non-0/non-1 case
+    // must fail closed instead of falling through to the deploy path.
+    expect(prePush).toContain(
+      "git diff --quiet \"$range\" -- worker/ || worker_diff_status=$?",
+    );
+    expect(prePush).toMatch(
+      /"\$worker_diff_status" -eq 0[\s\S]{0,200}exit 0[\s\S]{0,400}"\$worker_diff_status" -ne 1[\s\S]{0,400}exit 1/,
+    );
+    // The error branch's diagnostic must not be silently discarded.
+    expect(prePush).not.toContain('git diff --quiet "$range" -- worker/ 2>/dev/null');
+
     // pre-commit: staged-TypeScript-file detection has the exact same
     // pipe shape and must use the same capture-then-here-string fix.
     expect(preCommit).toContain("staged_files=$(git diff --cached --name-only)");
@@ -304,6 +369,47 @@ describe("Cloudflare Worker deploy config", () => {
       'git diff --cached --name-only | grep -qE',
     );
     expect(preCommit).not.toMatch(/git diff[^\n]*\|\s*grep/);
+  });
+
+  it("fails closed (not open) on a worker/ diff-detection error, and only skips deploy on a genuine no-diff", () => {
+    const { root, run } = createTempRepo();
+    run(["commit", "--allow-empty", "-q", "-m", "initial commit"]);
+    const baseSha = spawnSync("git", ["rev-parse", "HEAD"], {
+      cwd: root,
+      encoding: "utf8",
+    }).stdout.trim();
+    mkdirSync(join(root, "worker/src"), { recursive: true });
+    writeFileSync(join(root, "worker/src/index.ts"), "x\n");
+    run(["add", "-A"]);
+    run(["commit", "-q", "-m", "add worker file"]);
+    const headSha = spawnSync("git", ["rev-parse", "HEAD"], {
+      cwd: root,
+      encoding: "utf8",
+    }).stdout.trim();
+
+    // exit 0: no diff in worker/ for an empty range -> skip deploy cleanly.
+    const noDiff = runWorkerDiffCheck(root, `${headSha}..${headSha}`);
+    expect(noDiff.status).toBe(0);
+    expect(noDiff.stdout).toContain("差分なし");
+    expect(noDiff.stdout).not.toContain("REACHED_DEPLOY_PATH");
+
+    // exit 1: a genuine worker/ diff exists -> fall through to the deploy path.
+    const hasDiff = runWorkerDiffCheck(root, `${baseSha}..${headSha}`);
+    expect(hasDiff.status).toBe(0);
+    expect(hasDiff.stdout).toContain("REACHED_DEPLOY_PATH");
+    expect(hasDiff.stdout).not.toContain("差分なし");
+    expect(hasDiff.stdout).not.toContain("ERR");
+
+    // exit >1 (128, invalid range): a detection error must fail closed --
+    // abort with a visible diagnostic, never silently fall through to the
+    // deploy path as if a diff were found.
+    const badRange = runWorkerDiffCheck(root, `nonexistent-ref-xyz..${headSha}`);
+    expect(badRange.status).toBe(1);
+    expect(badRange.stdout).not.toContain("REACHED_DEPLOY_PATH");
+    expect(badRange.stdout).not.toContain("差分なし");
+    expect(badRange.stdout).toContain("worker/ 差分確認に失敗しました");
+    // The underlying git diagnostic must still be visible, not swallowed.
+    expect(badRange.stderr).toContain("bad revision");
   });
 
   it("loads search metadata from the shared client bundle instead of repeating JSON in every page", () => {

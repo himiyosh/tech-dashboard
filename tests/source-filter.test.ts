@@ -231,6 +231,30 @@ describe("matchesKeywordFilter", () => {
   });
 });
 
+describe("Zenn AI Local LLM relevance (LL-412)", () => {
+  const zennAi = REGISTRY["zenn-ai"];
+  const check = (title: string, contentSnippet = "") =>
+    matchesKeywordFilter(
+      {
+        title,
+        url: "https://zenn.dev/example/articles/local-llm",
+        contentSnippet,
+      },
+      zennAi,
+    );
+
+  it("requires a Local LLM signal in the title instead of an incidental source snippet", () => {
+    expect(zennAi.keywordFilterScope).toBe("title");
+    expect(
+      check(
+        "4つのファイルから、AIでグラフ付きWordレポートを生成してみた",
+        "ローカルのプロジェクトフォルダを選ぶと、編集可能なレポートを保存できます。",
+      ),
+    ).toBe(false);
+    expect(check("OllamaでローカルLLMを量子化して実行する")).toBe(true);
+  });
+});
+
 describe("arXiv Research filter (R-017, LL-260)", () => {
   const arxivCl = REGISTRY["arxiv-cs-cl"];
 

@@ -71,6 +71,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 修正
 
+- 広い Zenn AI feed の Local LLM 判定をタイトル根拠へ限定し、本文中の「ローカルのプロジェクトフォルダ」のような偶発語だけを理由に、業務向け AI デモが `local-llm` として掲載されないようにしました。既存の live/archive data にも同じ source filter を再適用しています。
 - 静的build時に固定されていた「N分前・N時間前」を閲覧時と1分周期で再計算し、Status、Home、記事一覧・詳細、PageHero、footerが古い経過時間を表示し続ける問題を修正しました。6時間の遅延境界を越えた場合は、run、Queue、Home、About、要約待ちcardも同じ状態へ切り替わります。
 - AboutのPurpose、Freshness、History、Pipeline説明をJA/EN切替へ接続し、EN表示で収集方針だけが日本語のまま残る問題を修正しました。
 - Statusのsource掲載状態は公開スナップショット時点の絶対日時として表示し、相対時刻だけが古くなる状態を廃止しました。Aboutのrun指標も同じsnapshotから一体で更新し、欠落telemetryはJA/ENそれぞれで記録なしと表示します。

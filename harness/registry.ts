@@ -652,6 +652,7 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     perSourceCap: 30,
     includeKeywords: LOCAL_LLM_RELEVANCE_KEYWORDS,
     excludeKeywords: LOCAL_LLM_EXCLUDE_KEYWORDS,
+    keywordFilterScope: "title",
     maxEntriesPerRun: 10,
     collect: collectRss,
   },

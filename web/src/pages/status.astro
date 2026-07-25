@@ -16,6 +16,7 @@ import { SOURCE_META, sourceAnchorId, sourceLabel } from "../lib/source-meta.ts"
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { deriveQueueDisplay } from "../lib/queue-health.ts";
 import { deriveWorkerRunStatus, WORKER_RUN_STATE_COPY } from "../lib/run-health.ts";
+import { NEW_ISSUE_URL } from "../lib/site.ts";
 
 const now = new Date();
 type SourceActivityStatus = "recent" | "low-activity" | "long-inactive" | "not-listed";
@@ -911,6 +912,42 @@ const workerSummary = wh
           <span class="i18n-en" lang="en">The top reports runs and queues; the directory reports listing activity. “Low activity” and “Long inactive” are not collection errors.</span>
         </p>
       </div>
+
+      <div class="side-card status-insight-card feedback-card" data-health-scope="feedback" data-run-tone={workerRun.tone}>
+        <h3 class="rail-title">
+          <span class="i18n-ja">問題を報告</span>
+          <span class="i18n-en" lang="en">Report a problem</span>
+        </h3>
+        {workerRun.tone === "err" ? (
+          <p>
+            <span class="i18n-ja">
+              稼働状態が ERR です。数時間で回復する一時的な収集遅延は既知の運用状態で、不具合ではありません。ERR が長時間続く場合や、
+              特定 source の分類・翻訳・表示が誤っている場合に報告してください。
+            </span>
+            <span class="i18n-en" lang="en">
+              Run status is ERR right now. A brief collection delay that recovers within a few hours is an expected operational state, not a bug.
+              Report it if ERR persists for a long time, or if a specific source is miscategorized, mistranslated, or displayed incorrectly.
+            </span>
+          </p>
+        ) : (
+          <p>
+            <span class="i18n-ja">
+              誤ったカテゴリ・タグ、翻訳の欠落、壊れたリンクなどに気づいたら報告してください。稼働状態が長時間 ERR のまま回復しない場合も対象です。
+            </span>
+            <span class="i18n-en" lang="en">
+              Report a miscategorized entry, a missing translation, or a broken link. This also covers a run status that stays ERR without recovering.
+            </span>
+          </p>
+        )}
+        <p class="feedback-cta">
+          <a class="feedback-issue-link" href={NEW_ISSUE_URL} target="_blank" rel="noopener noreferrer">
+            <span aria-hidden="true">⚠</span>
+            <span class="i18n-ja">GitHub で問題を報告</span>
+            <span class="i18n-en" lang="en">Report an issue on GitHub</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+        </p>
+      </div>
     </aside>
   </div>
 </Portal>
@@ -1368,6 +1405,14 @@ const workerSummary = wh
 
   .status-insight-card {
     container-type: inline-size;
+  }
+
+  .feedback-card p + p {
+    margin-top: 8px;
+  }
+
+  .feedback-card .feedback-cta {
+    margin-top: 10px;
   }
 
   .category-health-list li {

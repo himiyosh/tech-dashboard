@@ -2667,7 +2667,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: producer pipeを廃止し、`grep -qE ... <<<"$CHANGED"`で同一process inputを渡す。source contract testでhere-string使用と旧`echo | grep -q`不在を固定し、次のWeb影響pushでPublisher E2Eが実行されることをhook出力で確認する。
 - **教訓**: `pipefail`と早期終了するconsumerを組み合わせると、match成功でもproducerのSIGPIPEがpipeline失敗へ見える。判定用の小さな文字列はpipeせずhere-stringまたはfile inputを使い、短いfixtureだけでなく多数fileのmerge rangeでも実行経路を検証する。
 
-### LL-404: 全feed一括分類のsourceはtitle+contentSnippetのINCLUDE/EXCLUDEルールで分割し、live+archive全corpusで検証する
+### LL-404: 表示言語のURL共有はlocalStorage優先度・truthfulな同期・既存query保持を1つのcontractにする
+- **事象**: 言語切替 (`.lang-btn`) は`html[data-lang]`とlocalStorage (`td:lang`) だけを更新し、URLに一切反映していなかった。EN表示で記事詳細の「タイトルと URL をコピー」を押しても、共有されたURLには言語情報が無く、localStorageが空の別ブラウザ・別読者が開くと常にJAへ戻った。
+- **対策**: `web/src/lib/lang-url.ts`にpure helper (`resolveLangFromUrl`, `hrefWithLang`, `shareUrlWithLang`) を追加し、優先順位を「明示的な`?lang=`query > 保存済みlocalStorage > JA既定」に統一した。Portal.astroのpre-paint inline scriptは`?lang=`を最優先で読み、既定のJAはURLにparamを付けない (truthfulだが既存URLを汚さない)。言語toggleのapply()は`history.replaceState`でaddress barを毎回同期し (pushStateではないためback/forwardの履歴を消費しない)、他の既存query (`q`, `tag`など) は`URLSearchParams.set/delete`で個別operationのみ行い保持する。記事詳細の共有button (is:inline script、importできない) は同じ`shareUrlWithLang`相当のロジックを手動で複製した。
+- **検証**: 新しいbrowser contextで`?lang=en`直接アクセス→即EN表示、`localStorage`未設定でのJA既定、`?q=`保持、`replaceState`によるback-navigation非消費、focus維持をE2Eで固定。既存の`about#reactions-privacy`や`detail copy action`のような、EN状態で別ページへ遷移するテストは、遷移後のURLに`?lang=en`が自動付与される前提へ更新した。
+- **教訓**: 表示言語のような「共有可能であるべきUI状態」は、truthfulなURL contractを持たせる際、(1)優先順位 (URL > storage > default)、(2)同期方向 (URLを読むだけでなく書く)、(3)既存query保持、(4)履歴を汚さない同期方法 (replaceState)、を1つのcontractとして設計する。EN/JAの既定言語はURLをクリーンに保ち (paramを省略)、非既定言語だけを明示する設計にすると、既存のcanonical/SEO契約 (query無しのcanonical URL) を壊さない。
+
+### LL-405: 過去に2回rejectされたUI要素の再導入は、視認性だけでなく可視breakpointの一致で判定する
+- **事象**: Home Top-3の`.top-rank-sub`へ比較順rationale (「重要度→出典→経過時間の順で比較」) を追加する候補を検証した。1440px・1024px・901pxでは1行に収まり視覚的な破綻は無かったが、既存CSSに`@media (max-width:900px) { .top-rank-sub { display:none; } }`があり、900px以下 (ほぼ全モバイル・小型tablet) では既存の適格性説明文ごと非表示になることが判明した。
+- **判断**: 同じ箇所へのrationale追加はLL-289 (Spotlight role copyの重複signal) とLL-319 (Top-3 reason rowのクラッター) で過去2回rejectされている。今回追加しても価値を得られるのはdesktopユーザーのみで、mobile-first persona (最重要ターゲットの1つ) には一切届かない非対称なtrust signalになる。追加による副作用 (誤ったdevice間の情報格差) がメリット (desktopでの理解向上) を上回ると判断し、実装をrevertして「document and reject」した。
+- **教訓**: 過去に2回rejectされたUI要素 (2-strike) を再検討する際は、単に現在のviewportで見た目が壊れないかだけでなく、その要素が実際にどのbreakpointで表示されるか (`display:none`の既存rule) を必ず確認する。追加した情報がdesktop限定で表示され、それがtrust/理解に関わる内容である場合、mobile-first persona向けの等価な代替が無い限り、非対称な情報格差を生むため追加を見送る根拠になる。
+
+### LL-406: 全feed一括分類のsourceはtitle+contentSnippetのINCLUDE/EXCLUDEルールで分割し、live+archive全corpusで検証する
 - **事象**: `github-changelog` (category固定 `copilot`) と `google-developers` (category固定 `gemini`) がfeed全体を単一categoryへ一括分類していたため、Xcode runner、SSO/Settings、secret scanning、Dependabot、Visual Studio Subscription、GitHub Code Quality、GHES、npmのような無関係なGitHubプラットフォーム記事や、Google Pay決済・Sign in with GoogleセッションのようなGoogleの非AI記事が、それぞれCopilot/Geminiとして表示されていた。
 - **根本原因**: `SourceDefinition.category`はsource単位の固定値で、`resolveCategory()`は`huggingface-blog`/`qiita-vscode`にだけper-entry override分岐を持っていたが、`github-changelog`/`google-developers`には無かった。両sourceとも実体は「複数トピックを扱うfeed」で、feed自体に`<category>`タグも無いため、title+contentSnippetのkeyword判定で分割する以外に手段が無かった。
 - **対策**: `resolveCategory()`へ2branchを追加。`github-changelog`はcopilot/AI関連keyword (`copilot|gpt|gemini|gemma|claude|kimi|grok|openai|anthropic|mai-code|mcp|agents?|agentic|llm|opus|sonnet|haiku|ai credit|ai usage|ai adoption|model selection|models? in auto`) を要求するINCLUDE方式 (未match時はtech-news)、`google-developers`はGoogle Pay/Sign in with Google等の少数EXCLUDE方式 (未matchはgemini維持) にした。両方式ともlive+archive全192/58件のdeduped corpusで実titleを分類し、境界事例 (Claude Opus codename、AI credit、MCP entry内のGoogle Pay言及等) を手動検証してから確定した。既存artifactは`scripts/clean-source-noise.mjs --apply`で再分類し、canonical URL損失0・body損失0を確認した。`llm/llms`等7組のtag単数複数ゆれも`TAG_ALIASES`へ追加し、既存precedent (`agents->agent`, `benchmarks->benchmark`) と同様に多数派表記を正準形にした。
@@ -2677,4 +2688,3 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。
 4. 追記・更新は **コード修正と同一 commit** に含める（persona §8.1 の 3 点セットと同じ）。
-

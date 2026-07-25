@@ -18,9 +18,12 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - 日次サマリーと要約表示の品質契約を固定する unit test、responsive geometry を固定する E2E を追加しました。
 - AI 要約待ちの記事へ、収集元の抜粋を「AI 要約ではない」と明示して表示し、元記事を開く前にも内容を判断できるようにしました。
 - 検索結果へカテゴリ・タグ・タイトル・source・要約の一致理由、source authority、検索順位の比較基準を追加しました。
+- 表示言語 (JA/EN) を `?lang=` の URL query として保持し、EN に切り替えて共有した記事・検索・カテゴリ URL がローカルストレージのない新しいブラウザでも EN を再現できるようにしました。日本語は既定のまま URL に param を付けません。
+- About と Status に GitHub Issues への「問題を報告」導線と、稼働状態が ERR の場合の切り分けガイダンス (収集遅延は不具合ではなく、長時間の ERR や誤分類・翻訳欠落・壊れたリンクを報告対象とする案内) を追加しました。
 
 ### 変更
 
+- 記事詳細の「タイトルと URL をコピー」は EN 表示時に `?lang=en` を含む URL を共有できるようにし、共有相手が別ブラウザで開いても表示言語が一致するようにしました。
 - Publisher が実英語要約から安全に導出できる `titleEn` を publish 前に自動補完し、日本語コミュニティ記事の英語表示で原題 fallback が連続する状態を減らすようにしました。
 - 毎時 Publisher は生成データに関係する Home・記事詳細・metrics・Archive・404 の専用 E2E を実行し、全 UI 回帰は PR CI で維持するようにしました。成功した Publisher の完了後は Worker Health を自動確認します。
 - Publisher は収集開始前、data commit直前、Queue/KV effects送信直前にFree bridgeのpublisher fingerprintを確認し、rollout不一致時にdataだけを先行公開しないようにしました。

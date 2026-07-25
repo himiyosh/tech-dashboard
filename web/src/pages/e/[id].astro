@@ -1091,6 +1091,18 @@ const jsonLd = {
         var localizedTitle = isEnglish ? button.dataset.titleEn : button.dataset.titleJa;
         var t = localizedTitle || button.dataset.title || document.title;
         var u = button.dataset.url || location.href;
+        // Truthful shareable URL: append lang=en when the reader is viewing
+        // English, so a fresh browser reproduces English for whoever
+        // receives the copied link (mirrors web/src/lib/lang-url.ts
+        // shareUrlWithLang; duplicated here since this script is is:inline
+        // and cannot import a module).
+        if (isEnglish) {
+          try {
+            var withLang = new URL(u);
+            withLang.searchParams.set("lang", "en");
+            u = withLang.toString();
+          } catch (_) {}
+        }
         var text = t + "\n" + u;
         try {
           await navigator.clipboard.writeText(text);

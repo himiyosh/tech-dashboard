@@ -2193,7 +2193,7 @@ test.describe("TECH Dashboard smoke", () => {
     await copyAction.click();
     await expect
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
-      .toBe(`${titleEn}\n${url}`);
+      .toBe(`${titleEn}\n${url}?lang=en`);
   });
 
   test("mobile detail gives the original article a clear full-width action", async ({ page }) => {
@@ -2565,6 +2565,91 @@ test.describe("TECH Dashboard smoke", () => {
       expect(box!.width, "language toggle meets the mobile target width").toBeGreaterThanOrEqual(44);
       expect(box!.height, "language toggle meets the mobile target height").toBeGreaterThanOrEqual(44);
     }
+  });
+
+  test("a fresh browser with no local storage renders JA by default with no lang param", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("data-lang", "ja");
+    await expect(page.locator("html")).toHaveAttribute("lang", "ja");
+    await expect(page.locator('.lang-btn[data-lang="ja"]')).toHaveAttribute("aria-pressed", "true");
+    await expect(page).not.toHaveURL(/[?&]lang=/);
+  });
+
+  test("a shared ?lang=en URL reproduces English in a fresh browser with no local storage", async ({ page }) => {
+    // Simulates a reader opening a link someone shared after switching to
+    // EN: no localStorage exists yet, so the URL alone must be truthful.
+    await page.goto("/?lang=en");
+    await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect(page.locator('.lang-btn[data-lang="en"]')).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("article.featured .featured-label .i18n-en")).toBeVisible();
+  });
+
+  test("?lang=en on an article/search/category URL is truthful and preserves other query params", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const detailPath = await page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first().getAttribute("href");
+    expect(detailPath, "at least one article detail href is available").toBeTruthy();
+
+    // Article detail: a fresh visit with ?lang=en renders English immediately.
+    await page.goto(`${detailPath}?lang=en`);
+    await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
+
+    // Search: ?lang=en does not clobber the existing ?q= search intent, and
+    // the query param order/content is preserved verbatim.
+    await page.goto("/search/?q=Copilot&lang=en");
+    await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
+    await expect(page.locator("#pagefind-search-input")).toHaveValue("Copilot");
+    await expect(page).toHaveURL(/\/search\/\?q=Copilot&lang=en$/);
+
+    // Category: ?lang=en renders English on a taxonomy destination too.
+    await page.goto("/c/copilot/?lang=en");
+    await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
+  });
+
+  test("?lang=en persists via local storage across navigation to a page without the param", async ({
+    page,
+  }) => {
+    await page.goto("/?lang=en");
+    await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
+
+    // A plain internal link (no ?lang=) still carries EN forward via
+    // localStorage, and the new page's address bar becomes truthful too.
+    await page.locator("a.footer-run-link").click();
+    await expect(page).toHaveURL(/\/status\/?\?lang=en$/);
+    await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
+  });
+
+  test("language toggle syncs the URL via replaceState and does not consume back navigation", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.goto("/status/");
+    await expect(page.locator("html")).toHaveAttribute("data-lang", "ja");
+    await expect(page).not.toHaveURL(/[?&]lang=/);
+
+    const enBtn = page.locator('.lang-btn[data-lang="en"]');
+    await enBtn.click();
+    await expect(page).toHaveURL(/\/status\/?\?lang=en$/);
+
+    // Back must return to the actual previous *page* ("/"), not just undo
+    // the toggle: replaceState never pushed a history entry for it.
+    await page.goBack();
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+
+    await page.goForward();
+    await expect(page).toHaveURL(/\/status\/?\?lang=en$/);
+  });
+
+  test("language toggle keeps focus on the clicked button", async ({ page }) => {
+    await page.goto("/");
+    const enBtn = page.locator('.lang-btn[data-lang="en"]');
+    await enBtn.click();
+    await expect(enBtn).toBeFocused();
+    const jaBtn = page.locator('.lang-btn[data-lang="ja"]');
+    await jaBtn.click();
+    await expect(jaBtn).toBeFocused();
   });
 
   test("detail TLDR body follows the active language, not just the heading", async ({ page }) => {
@@ -3544,7 +3629,7 @@ test.describe("TECH Dashboard smoke", () => {
     }
 
     await expect(page.locator(".category-health-list li").first()).toBeVisible();
-    await expect(page.locator("aside.status-insights h3.rail-title")).toHaveCount(4);
+    await expect(page.locator("aside.status-insights h3.rail-title")).toHaveCount(5);
     await expect(page.locator("aside.status-insights div.rail-title")).toHaveCount(0);
     await expect
       .poll(() =>
@@ -6931,7 +7016,7 @@ test.describe("TECH Dashboard smoke", () => {
     ).toBe(true);
 
     await privacyLink.click();
-    await expect(page).toHaveURL(/\/about\/?#reactions-privacy$/);
+    await expect(page).toHaveURL(/\/about\/?\?lang=en#reactions-privacy$/);
     const privacyTarget = page.locator("#reactions-privacy");
     await expect(privacyTarget).toBeVisible();
     await expect

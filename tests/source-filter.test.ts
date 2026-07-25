@@ -243,15 +243,25 @@ describe("Zenn AI Local LLM relevance (LL-412)", () => {
       zennAi,
     );
 
-  it("requires a Local LLM signal in the title instead of an incidental source snippet", () => {
+  it("requires subject-specific Local LLM evidence in the title", () => {
     expect(zennAi.keywordFilterScope).toBe("title");
+    expect(zennAi.includeKeywords).not.toContain("ローカル");
     expect(
       check(
         "4つのファイルから、AIでグラフ付きWordレポートを生成してみた",
         "ローカルのプロジェクトフォルダを選ぶと、編集可能なレポートを保存できます。",
       ),
     ).toBe(false);
-    expect(check("OllamaでローカルLLMを量子化して実行する")).toBe(true);
+    expect(
+      check(
+        "検証環境のDBデータをエクスポートしてローカルに持ってくる作業をAIにやらせてみた",
+        "VPC内のAWS RDS（PostgreSQL）からローカルPCへデータを取り込む作業を自動化します。",
+      ),
+    ).toBe(false);
+    expect(check("ローカルLLMを量子化して実行する")).toBe(true);
+    expect(check("ローカルAI GatewayにPolicy Engineを実装しました")).toBe(true);
+    expect(check("Ollamaでモデルを実行する")).toBe(true);
+    expect(check("GemmaをMLXで量子化する")).toBe(true);
   });
 });
 

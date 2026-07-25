@@ -25,6 +25,17 @@ const TAG_ALIASES = {
   "vs-code": "vscode",
   "open-models": "open-model",
   agents: "agent",
+  // Singular/plural fragmentation observed in live data (2026-07 taxonomy
+  // audit). Canonical form picked by majority usage in the corpus at the
+  // time of the fix, matching the existing agents->agent / benchmarks->
+  // benchmark precedent above.
+  llms: "llm",
+  "coding-agents": "coding-agent",
+  "llm-agent": "llm-agents",
+  "ai-model": "ai-models",
+  "foundation-model": "foundation-models",
+  "autonomous-agent": "autonomous-agents",
+  guardrail: "guardrails",
 } as const;
 
 export function normalizeTag(tag: string): string {

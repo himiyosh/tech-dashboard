@@ -98,6 +98,33 @@ describe("tag normalization", () => {
     expect(normalizeTag("open-source")).toBe("open-source");
   });
 
+  it("collapses the 2026-07 taxonomy audit singular/plural fragmentation", () => {
+    expect(normalizeTags([
+      "llm",
+      "llms",
+      "coding-agent",
+      "coding-agents",
+      "llm-agent",
+      "llm-agents",
+      "ai-model",
+      "ai-models",
+      "foundation-model",
+      "foundation-models",
+      "autonomous-agent",
+      "autonomous-agents",
+      "guardrail",
+      "guardrails",
+    ])).toEqual([
+      "ai-models",
+      "autonomous-agents",
+      "coding-agent",
+      "foundation-models",
+      "guardrails",
+      "llm",
+      "llm-agents",
+    ]);
+  });
+
   it("normalizes source auto tags before publishing a fresh entry", () => {
     const aliasedSource: SourceDefinition = {
       ...releaseSource,
@@ -268,6 +295,130 @@ describe("normalize category override", () => {
       "2026-05-10T01:00:00.000Z",
     );
     expect(entry.category).toBe("copilot");
+  });
+
+  // github.blog/changelog covers the entire GitHub platform (Projects, Actions,
+  // Dependabot, secret scanning, Code Quality, GHES, npm, Enterprise admin
+  // settings), not just GitHub Copilot. These are actual titles collected from
+  // the live feed (2026-07), verified against the full live+archive corpus
+  // (192 unique entries: 107 stay "copilot", 85 move to "tech-news").
+  const githubChangelogSource: SourceDefinition = {
+    id: "github-changelog",
+    displayName: "GitHub Changelog",
+    category: "copilot",
+    sourceType: "changelog",
+    defaultLang: "en",
+    autoTags: ["github", "changelog"],
+    feedUrl: "https://github.blog/changelog/feed/",
+    collect: async () => [],
+    tier: 1,
+  };
+
+  it.each([
+    // keep: GitHub Copilot / model-vendor / agent content
+    ["Copilot cloud agent for Linear is now generally available", "copilot"],
+    ["GitHub MCP Server supports the next MCP specification", "copilot"],
+    ["Gemini 3.6 Flash is now available in GitHub Copilot", "copilot"],
+    ["AI credit pools for cost centers in the billing UI", "copilot"],
+    ["Cost centers now support AI credit pools", "copilot"],
+    ["OpenAI’s GPT-5.6 Sol, Terra, and Luna are now available in GitHub Copilot", "copilot"],
+    ["Kimi K2.7 now available for Copilot Business and Enterprise", "copilot"],
+    ["GPT-4.1 deprecated", "copilot"],
+    ["Grok Code Fast 1 deprecated", "copilot"],
+    ["Upcoming deprecation of Opus 4.6 (fast)", "copilot"],
+    ["Agentic autofix for code scanning alerts in public preview", "copilot"],
+    ["Agent automation controls in GitHub Issues in public preview", "copilot"],
+    ["Auto model selection now routes based on your task in VS Code", "copilot"],
+    ["Changes to model selection for Free and Student plans", "copilot"],
+    ["Evaluation models in auto for individual plans", "copilot"],
+    ["AI usage report updates", "copilot"],
+    [
+      "Enterprise-managed OpenTelemetry export for VS Code and CLI",
+      "copilot",
+      "Organizations can now mandate where GitHub Copilot sends OpenTelemetry (OTel) data, so telemetry flows to an approved collector without each developer setting OTEL_* environment variables.",
+    ],
+    // move: generic GitHub platform news, no Copilot/AI signal
+    ["Multi-select fields for Projects and Issues in public preview", "tech-news"],
+    ["Upcoming GHES change impacting uploading support bundles", "tech-news"],
+    ["GitHub Code Quality is now generally available", "tech-news"],
+    ["Advanced search for Projects is generally available", "tech-news"],
+    ["Repository admins can archive pull requests", "tech-news"],
+    ["REST API endpoints for Visual Studio Subscription management", "tech-news"],
+    ["Xcode 27 runner image now in public preview", "tech-news"],
+    ["Red Hat Enterprise Linux runner images are now in public preview", "tech-news"],
+    ["Improvements to secret scanning and public monitoring", "tech-news"],
+    ["Dependabot version updates introduce default package cooldown", "tech-news"],
+    ["Manage secret scanning custom patterns via REST API", "tech-news"],
+    ["Separate SSO and Organizations pages in Settings", "tech-news"],
+    ["New pull requests dashboard is now generally available", "tech-news"],
+    ["Innersource security advisories are generally available", "tech-news"],
+    ["Restrict who can dismiss reviews in rulesets", "tech-news"],
+    ["Code scanning shows AI security detections on pull requests", "tech-news"],
+    ["CodeQL 2.26.0 adds Kotlin 2.4.0 support and AI prompt injection detection", "tech-news"],
+    ["GitHub Models is being fully retired on July 30, 2026", "tech-news"],
+    ["Per-user budgets for cost centers in the billing UI", "tech-news"],
+    ["Enterprises can now create up to 500 cost centers", "tech-news"],
+    ["Staged publishing and new install-time controls for npm", "tech-news"],
+    ["Timestamp fields in GitHub Projects", "tech-news"],
+  ] as const)("GitHub Changelog の %s を %s に分類する", (title, category, contentSnippet = "") => {
+    const entry = normalize(
+      {
+        externalId: title,
+        url: `https://github.blog/changelog/${encodeURIComponent(title)}`,
+        title,
+        contentSnippet,
+        publishedAt: "2026-07-10T00:00:00.000Z",
+      },
+      githubChangelogSource,
+      "2026-07-10T01:00:00.000Z",
+    );
+    expect(entry.category).toBe(category);
+  });
+
+  // developers.googleblog.com is overwhelmingly Gemini/GenAI content, but a
+  // handful of posts cover unrelated Google platform features (Google Pay,
+  // Sign in with Google, Google Account). Actual titles collected from the
+  // live feed (2026-07), verified against the full live+archive corpus
+  // (58 unique entries: 6 move to "tech-news", 52 stay "gemini").
+  const googleDevelopersSource: SourceDefinition = {
+    id: "google-developers",
+    displayName: "Google Developers Blog",
+    category: "gemini",
+    sourceType: "blog",
+    defaultLang: "en",
+    autoTags: ["google"],
+    feedUrl: "https://developers.googleblog.com/feeds/posts/default",
+    collect: async () => [],
+    tier: 1,
+  };
+
+  it.each([
+    // keep: Gemini/GenAI content, including an MCP story that happens to
+    // mention "Google Pay" (must not be excluded by the payment-topic filter)
+    ["Bringing Gemma 4 12B to your Laptop: Unlocking Local, Agentic Workflows with Google AI Edge", "gemini"],
+    ["Supercharge your integration workflow with the Google Pay & Wallet Developer MCP server", "gemini"],
+    ["Subagents have arrived in Gemini CLI", "gemini"],
+    ["Why we built ADK 2.0", "gemini"],
+    // move: unrelated Google platform features, no AI/Gemini signal
+    ["Enhance Security and Trust: New Session Metadata in Sign in with Google", "tech-news"],
+    ["The latest updates to Google Pay", "tech-news"],
+    ["Enhancing Android Checkout with Dynamic Callbacks in Google Pay", "tech-news"],
+    ["New enhancements for merchant initiated transactions with the Google Pay API", "tech-news"],
+    ["Supporting Google Account username change in your app", "tech-news"],
+    ["Get ready for Google I/O: Livestream schedule revealed", "tech-news"],
+  ] as const)("Google Developers Blog の %s を %s に分類する", (title, category) => {
+    const entry = normalize(
+      {
+        externalId: title,
+        url: `https://developers.googleblog.com/${encodeURIComponent(title)}`,
+        title,
+        contentSnippet: "",
+        publishedAt: "2026-07-10T00:00:00.000Z",
+      },
+      googleDevelopersSource,
+      "2026-07-10T01:00:00.000Z",
+    );
+    expect(entry.category).toBe(category);
   });
 });
 

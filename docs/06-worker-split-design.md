@@ -129,7 +129,7 @@ fingerprintを変えるreleaseは次の順序を固定する。
 2. 旧consumerのin-flight処理が残っていないことを確認する。
 3. PRをmergeする。
 4. 旧harnessが新markerとのmismatchでdata publishを停止したことを確認する。
-5. 明示承認のうえ`tech-dashboard-harness`をFree bridgeへdeployする。
+5. 明示承認のうえ`tech-dashboard-harness`をFree bridgeへdeployする。`wrangler deployments list`が100%を示した直後でも、release verifierからの`/health`が最大60秒ほど旧fingerprintを返すことがある。immediateな1回の応答だけで「bundleが壊れている」と判断せず、`node scripts/verify-worker-deploy.mjs` (bounded polling、既定120s timeout / 5s interval / 3回連続一致) で観測経路の安定収束を確認する。これは全edge PoPの収束証明ではない。
 6. bridge `/health`、Publisher workflow、data commit、Queue drain、Pages production、公開URLを順に確認する。
 
 ## Observability

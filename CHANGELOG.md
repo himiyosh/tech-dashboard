@@ -66,6 +66,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - Status の共有生成枠を合計値と内訳へ分け、Footer のQueue表示をサイト全体の状態として明示し、個別記事の準備状態と区別しました。
 - Publisher の統計を差分更新から、immutable baseline の live index と全 archive を使う完全再構築へ変更しました。
 - 緊急Direct Uploadはcleanなmainと`origin/main`の一致をbuild前後・upload後に検証し、検証済みcommit SHAをdeploymentへ明示するようにしました。
+- `tech-dashboard-harness`のWorker deploy直後にrelease verifierからの`/health`が旧fingerprintを返す場合に備え、`node scripts/verify-worker-deploy.mjs`によるbounded pollingで観測経路の安定収束を確認するようにしました。全edge PoPの収束証明ではなく、毎時の運用監視 (`npm run health:prod`) とPublisherの自動precondition確認は従来どおりimmediateかつfail-closedのままです。
 
 ### 修正
 

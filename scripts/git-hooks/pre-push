@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # pre-push: protected branch guard と secret scan、unit/web build/e2e テストを実行する。
 # worker/ の deploy は RUN_WORKER_DEPLOY=1 が明示された main push のみ実行する。
+# deploy 成功後は fingerprint 伝播を bounded polling で確認する (非 blocking)。
 # 失敗時は push を中断する (exit 1)。
 #
 # インストール: bash scripts/install-hooks.sh (リポジトリ root で 1 回だけ)
 # スキップ: SKIP_TESTS=1 git push / SKIP_WEB_BUILD=1 git push / SKIP_E2E=1 git push
 # Worker deploy: RUN_WORKER_DEPLOY=1 git push
+# Worker deploy 後の伝播確認だけスキップ: SKIP_WORKER_DEPLOY_VERIFY=1 git push
 
 set -euo pipefail
 
@@ -165,10 +167,21 @@ if [ "$push_to_main" = "0" ]; then
   exit 0
 fi
 
-# worker/ 配下の差分を確認
-if ! git diff --name-only "$range" -- worker/ 2>/dev/null | grep -q .; then
+# worker/ 配下の差分を確認 (pipefail 下で `| grep -q` を使うと、grep が早期
+# 終了した後の git diff の SIGPIPE がパイプライン全体を非 0 にし、差分あり
+# でも「差分なし」に誤判定し得る。LL-403 と同じ SIGPIPE 誤判定を避けるため
+# pipe を使わない `git diff --quiet` で判定する。exit code は 0=差分無し、
+# 1=差分有り、それ以外 (range 不正等の error) は fail-closed で push/deploy
+# を中断する。stderr は診断のため抑制しない)
+worker_diff_status=0
+git diff --quiet "$range" -- worker/ || worker_diff_status=$?
+if [ "$worker_diff_status" -eq 0 ]; then
   echo "[pre-push] worker/ に差分なし → wrangler deploy はスキップ"
   exit 0
+elif [ "$worker_diff_status" -ne 1 ]; then
+  echo "[pre-push] ERR: worker/ 差分確認に失敗しました (git diff --quiet の exit code=$worker_diff_status, range=$range)"
+  echo "[pre-push] ERR: range や repository の状態を確認して再実行してください。push を中断します"
+  exit 1
 fi
 
 if [ "${RUN_WORKER_DEPLOY:-}" != "1" ]; then
@@ -196,4 +209,23 @@ if ! npx --yes wrangler@4.85.0 deploy; then
 fi
 
 echo "[pre-push] OK: worker deploy 完了"
+
+# Cloudflare の deploy は control plane が 100% と報告した後も、全 edge PoP へ
+# 伝播するまで最大 60 秒ほどかかることがある (LL-407)。immediate な /health
+# 確認だけで「bundle が壊れている」と誤判定しないよう、bounded polling で
+# fingerprint 伝播を確認する。deploy 自体は既に成功しているため、この確認は
+# push 自体をブロックしない (伝播待ちで無関係な commit を止めないため)。
+if [ "${SKIP_WORKER_DEPLOY_VERIFY:-}" = "1" ]; then
+  echo "[pre-push] SKIP_WORKER_DEPLOY_VERIFY=1 → fingerprint 伝播確認をスキップします"
+  exit 0
+fi
+
+cd "$ROOT"
+if node scripts/verify-worker-deploy.mjs; then
+  echo "[pre-push] OK: fingerprint 伝播を確認しました"
+else
+  echo "[pre-push] WARN: fingerprint 伝播をまだ確認できません (push はブロックしません)"
+  echo "[pre-push] 対処案: 数分待ってから 'node scripts/verify-worker-deploy.mjs' を再実行してください"
+  echo "[pre-push] 対処案: これは通常 Cloudflare edge への伝播待ちで、bundle 自体が壊れているとは限りません"
+fi
 exit 0

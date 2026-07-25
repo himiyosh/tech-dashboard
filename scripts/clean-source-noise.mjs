@@ -53,6 +53,7 @@ import {
 import {
   DEFAULT_BODY_BUDGET_TARGET_BYTES,
   bodyBudgetPriorityRank,
+  carryForwardBudgetEvictedIds,
   enforceBodiesBudget,
   serializedByteLength,
 } from "../worker/src/bodies-budget.ts";
@@ -1192,6 +1193,23 @@ export async function main(argv = process.argv.slice(2)) {
   if (!dryRun && (!bodiesExisted || bodyMerge.changed || bodyBudget.changed || bodyCountDrift)) {
     bodiesWrite = { path: bodiesPath, payload: bodyBudget.payload };
   }
+  // Carry forward the previously recorded budget-evicted ids (from the
+  // existing index.health, before this migration overwrites it) using the
+  // SAME persistence contract as the Publisher runtime (LL-411 follow-up):
+  // only remembering what THIS run pruned would drop ids that are still
+  // missing a body and still budget-doomed, letting them be regenerated and
+  // evicted again in an every-other-run waste loop.
+  const previousBodyBudgetEvictedIds = Array.isArray(index.health?.bodyBudgetEvictedIds)
+    ? index.health.bodyBudgetEvictedIds.filter(
+        (id) => typeof id === "string" && id.trim().length > 0,
+      )
+    : [];
+  const persistedBodyBudgetEvictedIds = carryForwardBudgetEvictedIds(
+    previousBodyBudgetEvictedIds,
+    bodyRetentionEntries,
+    bodyPresentIds,
+    bodyBudget.prunedIds,
+  );
 
   printSection("Removed by source", sortedCounts(report.removedBySource));
   printSection("Removed by category", sortedCounts(report.removedByCategory));
@@ -1205,7 +1223,8 @@ export async function main(argv = process.argv.slice(2)) {
     `\nBody budget: bytes=${bodyBudget.bytes}/${bodyBudgetTargetBytes}, pruned=${bodyBudget.prunedIds.length}`
     + ` (importance3=${bodyBudgetPrunedByTier.importance3}, importance2=${bodyBudgetPrunedByTier.importance2},`
     + ` importance1=${bodyBudgetPrunedByTier.importance1}, evergreen=${bodyBudgetPrunedByTier.evergreen},`
-    + ` orphan=${bodyBudgetPrunedByTier.orphan})`,
+    + ` orphan=${bodyBudgetPrunedByTier.orphan}), persisted excluded ids=${persistedBodyBudgetEvictedIds.length}`
+    + ` (carried forward=${previousBodyBudgetEvictedIds.length})`,
   );
   printSamples("Representative keep samples", report.keepSamples);
   printSamples("Representative drop samples", report.dropSamples);
@@ -1231,7 +1250,7 @@ export async function main(argv = process.argv.slice(2)) {
         targetBytes: bodyBudgetTargetBytes,
         bytes: bodyBudget.bytes,
         pruned: bodyBudget.prunedIds.length,
-        evictedIds: bodyBudget.prunedIds.slice(0, 500),
+        evictedIds: persistedBodyBudgetEvictedIds,
       },
     );
   }

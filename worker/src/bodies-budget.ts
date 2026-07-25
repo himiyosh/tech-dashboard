@@ -205,3 +205,68 @@ export function enforceBodiesBudget(
     changed: lo > 0,
   };
 }
+
+/**
+ * The lowest possible priority rank (importance==1, non-evergreen). Only ids
+ * still at this rank are safe to keep permanently excluded from new-candidate
+ * selection across runs (see carryForwardBudgetEvictedIds below): any
+ * improvement in rank (promoted to importance>=2 or evergreen) means the
+ * entry's position in the prune order has fundamentally changed and it
+ * deserves reconsideration rather than staying excluded forever.
+ */
+const LOWEST_BUDGET_RANK = 3;
+
+/**
+ * Computes the persistent, cross-run set of entry ids that should remain
+ * excluded from new body-generation candidates because budget enforcement
+ * has been evicting them (LL-411 follow-up).
+ *
+ * A naive "only remember what THIS run pruned" design has a state-loss bug:
+ * if a run excludes an id (so nothing new is merged/pruned for it) and then
+ * writes back only its OWN prunedIds, the persisted list goes empty even
+ * though the id is still missing a body and still budget-doomed. The NEXT
+ * run then reads an empty list, re-admits the id as a fresh candidate,
+ * regenerates it, and gets it evicted again -- an every-other-run waste loop
+ * that (at Web level) also makes a "queued, coming soon" state repeat
+ * forever without ever resolving.
+ *
+ * This function fixes that by carrying forward the previous run's evicted
+ * ids, filtered to only those that are still relevant, and unions them with
+ * this run's freshly pruned ids:
+ *
+ *   - Dropped if the id is no longer live/retention-eligible (it naturally
+ *     falls out of scope; keeping it around would leak stale references and
+ *     let the set grow without bound as old ids age out of the live index).
+ *   - Dropped if the id NOW has a real body in the final payload (some other
+ *     process -- e.g. a manual backfill or a later re-merge -- gave it one;
+ *     excluding it from future generation candidates would be meaningless
+ *     since needsBody() already treats it as satisfied).
+ *   - Dropped if the entry's CURRENT priority rank has improved past the
+ *     lowest tier (LOWEST_BUDGET_RANK): a registry/config change (importance
+ *     bumped, or the source/entry became evergreen) means this id may no
+ *     longer be the kind of record budget enforcement keeps evicting, so it
+ *     is released back to normal candidate selection to recover.
+ *
+ * The result is deterministically sorted (ascending id) rather than kept in
+ * insertion order, and NOT arbitrarily truncated to a fixed count: the true
+ * size of this set is already bounded by the retention-eligible population
+ * lacking a body (at most a few thousand entries in realistic data), so an
+ * arbitrary cap would either be a no-op or -- worse -- silently reintroduce
+ * the exact waste loop this function exists to prevent by dropping ids that
+ * are still legitimately excluded.
+ */
+export function carryForwardBudgetEvictedIds(
+  previousIds: readonly string[],
+  entries: readonly BodyBudgetPriorityInput[],
+  bodiesPresent: ReadonlySet<string>,
+  newlyPrunedIds: readonly string[] = [],
+): string[] {
+  const entryById = new Map(entries.map((entry) => [entry.id, entry]));
+  const carried = previousIds.filter((id) => {
+    if (bodiesPresent.has(id)) return false;
+    const entry = entryById.get(id);
+    if (!entry) return false;
+    return bodyBudgetPriorityRank(entry) === LOWEST_BUDGET_RANK;
+  });
+  return [...new Set([...carried, ...newlyPrunedIds])].sort();
+}

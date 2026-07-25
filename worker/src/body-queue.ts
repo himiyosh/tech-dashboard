@@ -180,8 +180,15 @@ export function bodyBacklogAfterMerge(eligibleCount: number, mergedCount: number
 export interface BodyPipelineSelectionOpts
   extends Omit<BodyJobSelectionOpts, "excludeEntryIds"> {
   /**
-   * Entry ids the body-budget enforcer pruned in the PREVIOUS run
-   * (health.bodyBudgetEvictedIds, one-hop lookback like previousPendingIds).
+   * Entry ids the body-budget enforcer has been evicting
+   * (health.bodyBudgetEvictedIds). Unlike previousPendingIds (a genuine
+   * one-hop lookback), this is a PERSISTENT, carried-forward set: see
+   * carryForwardBudgetEvictedIds() in bodies-budget.ts, which keeps an id
+   * excluded across runs until it is no longer live/retention-eligible, has
+   * a real body, or is promoted out of the lowest priority tier -- writing
+   * back only "this run's fresh prunes" here would silently forget ids that
+   * are still excluded and reintroduce the exact waste loop this option
+   * exists to prevent (LL-411 follow-up).
    * Excluded from new-candidate selection so an entry that is deterministically
    * the lowest-priority record present does not get regenerated only to be
    * evicted again next run -- which would both waste Queue/LLM work and make

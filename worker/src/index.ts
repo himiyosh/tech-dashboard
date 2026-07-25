@@ -38,6 +38,7 @@ import {
 } from "./body-queue.ts";
 import {
   DEFAULT_BODY_BUDGET_TARGET_BYTES,
+  carryForwardBudgetEvictedIds,
   enforceBodiesBudget,
   serializedByteLength,
 } from "./bodies-budget.ts";
@@ -1129,17 +1130,22 @@ export async function runHarness(
           pendingIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0),
         )].slice(0, 100);
       }
-      // Body-budget enforcement (LL-411): entries the PREVIOUS run pruned for
-      // being over the operational byte target are excluded from new
-      // generation candidates this run. Without this, a deterministically
-      // lowest-priority entry would be regenerated and evicted again every
-      // run -- wasted Queue/LLM work, and a Web "queued" state that never
-      // resolves to either "ready" or an honest "summary-only" state.
+      // Body-budget enforcement (LL-411): entries budget enforcement has been
+      // evicting are excluded from new generation candidates until they are
+      // no longer live/retention-eligible, already have a body, or have been
+      // promoted to a higher priority tier (see carryForwardBudgetEvictedIds
+      // in bodies-budget.ts for the full persistence/promotion contract).
+      // Without this, a deterministically lowest-priority entry would be
+      // regenerated and evicted again -- wasted Queue/LLM work, and a Web
+      // "queued" state that never resolves to either "ready" or an honest
+      // "summary-only" state. This set is naturally bounded by the
+      // retention-eligible-but-bodyless population, so it is not truncated
+      // to an arbitrary count here (see carryForwardBudgetEvictedIds).
       const evictedIds = parsed.health?.bodyBudgetEvictedIds;
       if (Array.isArray(evictedIds)) {
         previousBodyBudgetEvictedIds = [...new Set(
           evictedIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0),
-        )].slice(0, 500);
+        )];
       }
     } catch (err) {
       console.warn(`[worker] failed to parse existing index: ${err}`);
@@ -2223,7 +2229,15 @@ export async function runBodyPipeline(
     1,
     Number(env.BODY_BUDGET_TARGET_BYTES ?? DEFAULT_BODY_BUDGET_TARGET_BYTES),
   );
-  const existingBytes = serializedByteLength(parseBodies(existingBodiesContent));
+  const parsedExistingForFallback = parseBodies(existingBodiesContent);
+  const existingBytes = serializedByteLength(parsedExistingForFallback);
+  // Present set used to carry forward budget-evicted ids even in the
+  // disabled/missing-binding/error paths below, where no merge/enforcement
+  // runs this invocation -- otherwise a transient mode change (e.g. the
+  // Queue binding is briefly missing) would silently forget which ids are
+  // budget-excluded and let them be regenerated wastefully once the pipeline
+  // resumes (LL-411 follow-up).
+  const existingBodiesPresentForFallback = bodiesPresentSet(parsedExistingForFallback);
   const disabled = (mode: string): BodyPipelineResult => ({
     bodiesFileContent: null,
     enqueued: 0,
@@ -2239,13 +2253,17 @@ export async function runBodyPipeline(
       bodyMergePendingIds: [],
       bodyMerged: 0,
       bodyPruned: 0,
-      bodiesTotal: parseBodies(existingBodiesContent).count,
+      bodiesTotal: parsedExistingForFallback.count,
       bodyRetentionDays: retentionDays,
       bodyRetentionEligible: retainedEntries.length,
       bodyBudgetTargetBytes: budgetTargetBytes,
       bodyBudgetBytes: existingBytes,
       bodyBudgetPruned: 0,
-      bodyBudgetEvictedIds: [],
+      bodyBudgetEvictedIds: carryForwardBudgetEvictedIds(
+        options.previousBudgetEvictedIds ?? [],
+        retainedEntries,
+        existingBodiesPresentForFallback,
+      ),
     },
   });
 
@@ -2357,6 +2375,12 @@ export async function runBodyPipeline(
     const remainingBacklog = retainedEntries.filter((entry) =>
       needsBody(entry, finalBodiesPresent)
     ).length;
+    const persistedBudgetEvictedIds = carryForwardBudgetEvictedIds(
+      options.previousBudgetEvictedIds ?? [],
+      retainedEntries,
+      finalBodiesPresent,
+      budget.prunedIds,
+    );
     return {
       bodiesFileContent: sanitizedBodies.changed || merge.changed || budget.changed
         ? serializeBodies(budget.payload)
@@ -2382,7 +2406,7 @@ export async function runBodyPipeline(
         bodyBudgetTargetBytes: budgetTargetBytes,
         bodyBudgetBytes: budget.bytes,
         bodyBudgetPruned: budget.prunedIds.length,
-        bodyBudgetEvictedIds: budget.prunedIds.slice(0, 500),
+        bodyBudgetEvictedIds: persistedBudgetEvictedIds,
       },
     };
   } catch (err) {

@@ -762,5 +762,139 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
     // legitimate candidate and gets enqueued.
     expect(run.health.bodyEnqueueCandidates).toBeGreaterThan(0);
   });
+
+  it("run1 で prune された id は run2 で新規 prune が 0 件でも telemetry へ持ち越され、run3 でも再候補化されない (LL-411 follow-up: cross-run state loss)", async () => {
+    const existingContent = fullExistingBodies();
+    const full = parseBodies(existingContent);
+    const fourOnly: BodiesPayload = {
+      generatedAt: full.generatedAt,
+      count: 4,
+      bodies: Object.fromEntries(
+        Object.entries(full.bodies).filter(([id]) => id !== "imp1-old"),
+      ),
+    };
+    const target = Math.round(
+      (new TextEncoder().encode(serializeBodies(fourOnly)).byteLength
+        + new TextEncoder().encode(existingContent).byteLength) / 2,
+    );
+    const env = baseEnv({ BODY_BUDGET_TARGET_BYTES: String(target) });
+
+    // Run 1: imp1-old gets pruned by budget for the first time.
+    const run1 = await runBodyPipeline(
+      env,
+      pipelineEntries,
+      existingContent,
+      GENERATED_AT,
+      `sha256:${"a".repeat(64)}`,
+    );
+    expect(run1.health.bodyBudgetPruned).toBe(1);
+    expect(run1.health.bodyBudgetEvictedIds).toEqual(["imp1-old"]);
+
+    // Run 2: reads run1's persisted evicted ids and excludes imp1-old from
+    // candidates, so nothing new is generated/merged/pruned THIS run (the
+    // 4-record payload is already at/under target). A naive implementation
+    // that only reports THIS run's fresh prunedIds would write back an EMPTY
+    // evicted-ids list here, silently forgetting imp1-old. The fix must
+    // still report it (carried forward), because it is still live,
+    // retention-eligible, missing a body, and still the lowest-priority tier.
+    // `run1.bodiesFileContent` (not run2's, which is expected to be null
+    // since nothing changed) is what a real commit-on-change publisher would
+    // have persisted and what the next run would read back.
+    const run2 = await runBodyPipeline(
+      env,
+      pipelineEntries,
+      run1.bodiesFileContent,
+      "2026-07-25T01:00:00.000Z",
+      `sha256:${"a".repeat(64)}`,
+      { previousBudgetEvictedIds: run1.health.bodyBudgetEvictedIds },
+    );
+    expect(run2.enqueued).toBe(0);
+    expect(run2.health.bodyMergePendingIds).toEqual([]);
+    expect(run2.health.bodyBudgetPruned).toBe(0); // nothing NEW pruned this run
+    expect(run2.bodiesFileContent).toBeNull(); // nothing changed, no new commit
+    expect(run2.health.bodyBudgetEvictedIds).toEqual(["imp1-old"]); // still persisted, not emptied
+
+    // Run 3: reads run2's (correctly non-empty) evicted ids and still
+    // excludes imp1-old. Without the fix, run2 would have hand run3 an empty
+    // list, imp1-old would become a fresh candidate again, get enqueued,
+    // regenerated, merged, and evicted again -- the every-other-run waste
+    // loop the parent review flagged.
+    const run3 = await runBodyPipeline(
+      env,
+      pipelineEntries,
+      run1.bodiesFileContent, // still the last actually-committed content
+      "2026-07-25T02:00:00.000Z",
+      `sha256:${"a".repeat(64)}`,
+      { previousBudgetEvictedIds: run2.health.bodyBudgetEvictedIds },
+    );
+    expect(run3.enqueued).toBe(0);
+    expect(run3.health.bodyMergePendingIds).toEqual([]);
+    expect(run3.health.bodyBudgetEvictedIds).toEqual(["imp1-old"]);
+  });
+
+  it("disabled/missing-binding/error mode でも previousBudgetEvictedIds を持ち越す", async () => {
+    const existingContent = fullExistingBodies();
+    const full = parseBodies(existingContent);
+    const fourOnly: BodiesPayload = {
+      generatedAt: full.generatedAt,
+      count: 4,
+      bodies: Object.fromEntries(
+        Object.entries(full.bodies).filter(([id]) => id !== "imp1-old"),
+      ),
+    };
+    const withoutOld = serializeBodies(fourOnly);
+
+    const disabledRun = await runBodyPipeline(
+      baseEnv({ ENABLE_BODY_QUEUE: "0" }),
+      pipelineEntries,
+      withoutOld,
+      "2026-07-25T03:00:00.000Z",
+      `sha256:${"a".repeat(64)}`,
+      { previousBudgetEvictedIds: ["imp1-old"] },
+    );
+    expect(disabledRun.health.bodyQueueMode).toBe("disabled");
+    // A transient mode flip (e.g. ENABLE_BODY_QUEUE briefly "0") must not
+    // silently forget imp1-old: it is still live, retention-eligible,
+    // missing a body, and still lowest-priority.
+    expect(disabledRun.health.bodyBudgetEvictedIds).toEqual(["imp1-old"]);
+
+    const missingBindingRun = await runBodyPipeline(
+      { ...baseEnv({}), BODY_QUEUE: undefined },
+      pipelineEntries,
+      withoutOld,
+      "2026-07-25T04:00:00.000Z",
+      `sha256:${"a".repeat(64)}`,
+      { previousBudgetEvictedIds: ["imp1-old"] },
+    );
+    expect(missingBindingRun.health.bodyQueueMode).toBe("missing-binding");
+    expect(missingBindingRun.health.bodyBudgetEvictedIds).toEqual(["imp1-old"]);
+  });
+
+  it("stale/promoted な previousBudgetEvictedIds は disabled/error mode でも掃除される", async () => {
+    const existingContent = fullExistingBodies();
+    const full = parseBodies(existingContent);
+    const withoutOld: BodiesPayload = {
+      generatedAt: full.generatedAt,
+      count: 4,
+      bodies: Object.fromEntries(
+        Object.entries(full.bodies).filter(([id]) => id !== "imp1-old"),
+      ),
+    };
+    const disabledRun = await runBodyPipeline(
+      baseEnv({ ENABLE_BODY_QUEUE: "0" }),
+      pipelineEntries,
+      serializeBodies(withoutOld),
+      "2026-07-25T05:00:00.000Z",
+      `sha256:${"a".repeat(64)}`,
+      {
+        previousBudgetEvictedIds: [
+          "imp1-old", // still valid: keep
+          "no-such-entry", // no longer live/eligible: drop
+          "ever", // present, still evergreen: not lowest-rank, drop (promotion)
+        ],
+      },
+    );
+    expect(disabledRun.health.bodyBudgetEvictedIds).toEqual(["imp1-old"]);
+  });
 });
 

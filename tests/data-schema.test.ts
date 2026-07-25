@@ -29,7 +29,7 @@ import {
   isBodyRetentionEligible,
   needsBody,
 } from "../worker/src/body-queue.ts";
-import { DEFAULT_BODY_BUDGET_TARGET_BYTES } from "../worker/src/bodies-budget.ts";
+import { bodyBudgetPriorityRank, DEFAULT_BODY_BUDGET_TARGET_BYTES } from "../worker/src/bodies-budget.ts";
 
 interface RawEntry {
   id?: unknown;
@@ -561,6 +561,33 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     for (const id of evictedIds ?? []) {
       expect(bodyPresentIdsForBudget.has(String(id))).toBe(false);
     }
+  });
+
+  it("body budget evicted ids は persistence contract どおり live・retention-eligible・最低優先度に限る (LL-411 follow-up)", () => {
+    // Guards the cross-run persistence semantics carryForwardBudgetEvictedIds
+    // enforces: any id recorded in health.bodyBudgetEvictedIds must still be
+    // (a) a live, retention-eligible entry, and (b) at the lowest priority
+    // rank (importance==1, non-evergreen). A stale reference (aged out /
+    // no longer live) or a promoted entry (evergreen or importance bumped)
+    // leaking into this list would mean the carry-forward filter regressed.
+    const evictedIds = data.health?.bodyBudgetEvictedIds;
+    if (!Array.isArray(evictedIds) || evictedIds.length === 0) return;
+    const referenceMs = Date.parse(data.generatedAt);
+    const entriesById = new Map(data.entries.map((entry) => [String(entry.id), entry]));
+    const invalid = evictedIds.filter((id) => {
+      const entry = entriesById.get(String(id));
+      if (!entry) return true; // stale reference to a no-longer-live entry
+      const eligible = isBodyRetentionEligible(
+        entry as Pick<NormalizedEntry, "evergreen" | "importance" | "publishedAt" | "collectedAt">,
+        referenceMs,
+        DEFAULT_BODY_RETENTION_DAYS,
+      );
+      if (!eligible) return true;
+      return bodyBudgetPriorityRank(
+        entry as Pick<NormalizedEntry, "evergreen" | "importance">,
+      ) !== 3;
+    });
+    expect(invalid).toEqual([]);
   });
 
   it("summary/body/shared Queue telemetry は候補・実送信・反映を混同しない", () => {

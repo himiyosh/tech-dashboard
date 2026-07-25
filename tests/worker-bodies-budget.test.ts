@@ -9,6 +9,7 @@ import { describe, it, expect } from "vitest";
 import {
   bodyBudgetPriorityRank,
   bodyBudgetPruneOrder,
+  carryForwardBudgetEvictedIds,
   DEFAULT_BODY_BUDGET_TARGET_BYTES,
   enforceBodiesBudget,
   serializedByteLength,
@@ -344,3 +345,81 @@ describe("enforceBodiesBudget (LL-411)", () => {
     }
   });
 });
+
+describe("carryForwardBudgetEvictedIds (LL-411 follow-up: cross-run state loss)", () => {
+  it("依然として live・retention-eligible・body 無し・最低優先度のままの id を carry forward する", () => {
+    const entries = [priorityEntry({ id: "stuck", importance: 1 })];
+    const result = carryForwardBudgetEvictedIds(["stuck"], entries, new Set(), []);
+    expect(result).toEqual(["stuck"]);
+  });
+
+  it("新規 prune と過去の carry-forward を union し、重複なく決定論的にソートする", () => {
+    const entries = [
+      priorityEntry({ id: "old-evicted", importance: 1 }),
+      priorityEntry({ id: "new-evicted", importance: 1 }),
+    ];
+    const result = carryForwardBudgetEvictedIds(
+      ["old-evicted"],
+      entries,
+      new Set(),
+      ["new-evicted", "old-evicted"], // duplicate on purpose
+    );
+    expect(result).toEqual(["new-evicted", "old-evicted"]);
+  });
+
+  it("live/retention-eligible でなくなった id は除外する (stale cleanup)", () => {
+    // "gone" is no longer present in `entries` at all (aged out / no longer live).
+    const entries: BodyBudgetPriorityInput[] = [];
+    const result = carryForwardBudgetEvictedIds(["gone"], entries, new Set(), []);
+    expect(result).toEqual([]);
+  });
+
+  it("既に real body を持つ id は除外する", () => {
+    const entries = [priorityEntry({ id: "has-body-now", importance: 1 })];
+    const result = carryForwardBudgetEvictedIds(
+      ["has-body-now"],
+      entries,
+      new Set(["has-body-now"]),
+      [],
+    );
+    expect(result).toEqual([]);
+  });
+
+  it("evergreen へ昇格した id は除外する (promotion recovery)", () => {
+    const entries = [priorityEntry({ id: "promoted", evergreen: true })];
+    const result = carryForwardBudgetEvictedIds(["promoted"], entries, new Set(), []);
+    expect(result).toEqual([]);
+  });
+
+  it("importance が 2/3 へ昇格した id も除外する (promotion recovery)", () => {
+    const entries = [
+      priorityEntry({ id: "promoted-2", importance: 2 }),
+      priorityEntry({ id: "promoted-3", importance: 3 }),
+    ];
+    const result = carryForwardBudgetEvictedIds(
+      ["promoted-2", "promoted-3"],
+      entries,
+      new Set(),
+      [],
+    );
+    expect(result).toEqual([]);
+  });
+
+  it("previousIds が空でも新規 prune だけは反映する", () => {
+    const entries = [priorityEntry({ id: "fresh", importance: 1 })];
+    const result = carryForwardBudgetEvictedIds([], entries, new Set(), ["fresh"]);
+    expect(result).toEqual(["fresh"]);
+  });
+
+  it("同じ入力に対して常に同じ出力を返す (決定論的)", () => {
+    const entries = [
+      priorityEntry({ id: "zzz", importance: 1 }),
+      priorityEntry({ id: "aaa", importance: 1 }),
+    ];
+    const a = carryForwardBudgetEvictedIds(["zzz"], entries, new Set(), ["aaa"]);
+    const b = carryForwardBudgetEvictedIds(["zzz"], entries, new Set(), ["aaa"]);
+    expect(a).toEqual(b);
+    expect(a).toEqual(["aaa", "zzz"]);
+  });
+});
+

@@ -29,6 +29,7 @@ import {
   isBodyRetentionEligible,
   needsBody,
 } from "../worker/src/body-queue.ts";
+import { bodyBudgetPriorityRank, DEFAULT_BODY_BUDGET_TARGET_BYTES } from "../worker/src/bodies-budget.ts";
 
 interface RawEntry {
   id?: unknown;
@@ -73,6 +74,10 @@ interface IndexShape {
     enrichmentEnqueueCap?: number;
     enrichmentEnqueued?: number;
     enrichmentRemaining?: number;
+    bodyBudgetTargetBytes?: number;
+    bodyBudgetBytes?: number;
+    bodyBudgetPruned?: number;
+    bodyBudgetEvictedIds?: string[];
   };
 }
 
@@ -455,9 +460,21 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     expect(bad).toEqual([]);
   });
 
-  it("bodies.json は運用上限を超えない (10MB)", () => {
+  it("bodies.json は運用上限 (hard ceiling, safety net) を超えない (10MB)", () => {
+    // Hard ceiling: unchanged and intentionally much larger than the active
+    // producer target below. This is a safety net that would still catch
+    // catastrophic growth even if the budget enforcement below were ever
+    // skipped or buggy -- it should not itself need raising (LL-411).
     if (!existsSync(bodiesPath)) return;
     expect(statSync(bodiesPath).size).toBeLessThanOrEqual(10_000_000);
+  });
+
+  it("bodies.json は運用 target を超えない (deterministic budget policy, LL-411)", () => {
+    // Active target: the Publisher (worker/src/index.ts's runBodyPipeline)
+    // and the clean-source-noise.mjs migration both enforce this via
+    // enforceBodiesBudget() before ever committing data/bodies.json.
+    if (!existsSync(bodiesPath)) return;
+    expect(statSync(bodiesPath).size).toBeLessThanOrEqual(DEFAULT_BODY_BUDGET_TARGET_BYTES);
   });
 
   it("bodies.json は evergreen・重要記事・直近30日の本文だけを保持する", () => {
@@ -517,6 +534,75 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     expect(data.health?.bodyQueueDrainEstimateHours).toBe(
       enqueueCap > 0 ? Math.ceil(backlog / enqueueCap) : 0,
     );
+  });
+
+  it("body budget telemetry は実バイト数・target と一致する (LL-411)", () => {
+    const targetBytes = data.health?.bodyBudgetTargetBytes;
+    const measuredBytes = data.health?.bodyBudgetBytes;
+    const pruned = data.health?.bodyBudgetPruned;
+    const evictedIds = data.health?.bodyBudgetEvictedIds;
+
+    if (targetBytes === undefined) return; // pre-rollout artifact, field not present yet
+
+    expect(typeof targetBytes).toBe("number");
+    expect(targetBytes).toBe(DEFAULT_BODY_BUDGET_TARGET_BYTES);
+    expect(typeof measuredBytes).toBe("number");
+    // The recorded byte measurement must match the actual committed file, and
+    // must be at or under the target (the enforcement's own contract).
+    if (existsSync(bodiesPath)) {
+      expect(measuredBytes).toBe(statSync(bodiesPath).size);
+    }
+    expect(measuredBytes as number).toBeLessThanOrEqual(targetBytes as number);
+    expect(typeof pruned).toBe("number");
+    expect(pruned as number).toBeGreaterThanOrEqual(0);
+    expect(Array.isArray(evictedIds)).toBe(true);
+    // Evicted ids recorded this run must no longer have a real body present.
+    const bodyPresentIdsForBudget = new Set(Object.keys(bodies?.bodies ?? {}));
+    for (const id of evictedIds ?? []) {
+      expect(bodyPresentIdsForBudget.has(String(id))).toBe(false);
+    }
+  });
+
+  it("body budget evicted ids は persistence contract どおり live・retention-eligible・worst-surviving-rank 以上に限る (LL-411 follow-up)", () => {
+    // Guards the cross-run persistence semantics carryForwardBudgetEvictedIds
+    // enforces: any id recorded in health.bodyBudgetEvictedIds must still be
+    // (a) a live, retention-eligible entry, (b) still bodyless, and (c) at a
+    // priority rank at or worse than worstSurvivingRank (the worst rank among
+    // entries that currently have a real body) -- recomputed here exactly the
+    // same way carryForwardBudgetEvictedIds does, since evergreen is now a
+    // last-resort PRUNABLE tier rather than an exempt one, so a fixed
+    // "must be rank 3" check would be wrong (an id evicted from a tighter
+    // budget can legitimately sit at any rank). A stale reference, an entry
+    // that already regained a real body, or one that improved to a strictly
+    // better rank than the current worst survivor leaking into this list
+    // would mean the carry-forward filter regressed.
+    const evictedIds = data.health?.bodyBudgetEvictedIds;
+    if (!Array.isArray(evictedIds) || evictedIds.length === 0) return;
+    const referenceMs = Date.parse(data.generatedAt);
+    const entriesById = new Map(data.entries.map((entry) => [String(entry.id), entry]));
+    const bodyPresentIdsForPersistence = new Set(Object.keys(bodies?.bodies ?? {}));
+
+    let worstSurvivingRank = -1;
+    for (const entry of data.entries) {
+      if (!bodyPresentIdsForPersistence.has(String(entry.id))) continue;
+      const rank = bodyBudgetPriorityRank(entry as Pick<NormalizedEntry, "evergreen" | "importance">);
+      if (rank > worstSurvivingRank) worstSurvivingRank = rank;
+    }
+
+    const invalid = evictedIds.filter((id) => {
+      const entry = entriesById.get(String(id));
+      if (!entry) return true; // stale reference to a no-longer-live entry
+      if (bodyPresentIdsForPersistence.has(String(id))) return true; // already regained a real body
+      const eligible = isBodyRetentionEligible(
+        entry as Pick<NormalizedEntry, "evergreen" | "importance" | "publishedAt" | "collectedAt">,
+        referenceMs,
+        DEFAULT_BODY_RETENTION_DAYS,
+      );
+      if (!eligible) return true;
+      const rank = bodyBudgetPriorityRank(entry as Pick<NormalizedEntry, "evergreen" | "importance">);
+      return rank < worstSurvivingRank; // strictly better than the worst survivor -> should have been released
+    });
+    expect(invalid).toEqual([]);
   });
 
   it("summary/body/shared Queue telemetry は候補・実送信・反映を混同しない", () => {

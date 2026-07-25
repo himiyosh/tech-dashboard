@@ -21,6 +21,7 @@ import {
   validateIndexPayload,
   writeJsonTransaction,
 } from "../scripts/clean-source-noise.mjs";
+import { carryForwardBudgetEvictedIds } from "../worker/src/bodies-budget.ts";
 
 function entry(overrides: Partial<NormalizedEntry> = {}): NormalizedEntry {
   return {
@@ -729,6 +730,98 @@ describe("clean-source-noise bodies reconciliation", () => {
       model: "legacy-index-migration",
       generatedAt: "2026-07-02T00:00:00.000Z",
     });
+  });
+});
+
+describe("clean-source-noise body budget telemetry persistence (LL-411 follow-up)", () => {
+  it("synchronizeBodyHealth の budget param は既存の bodyBudget* フィールドを更新する", () => {
+    expect(synchronizeBodyHealth(
+      {
+        bodyRetentionEligible: 1509,
+        bodiesTotal: 1305,
+        bodyBacklog: 200,
+        bodyBudgetTargetBytes: 9_000_000,
+        bodyBudgetBytes: 8_500_000,
+        bodyBudgetPruned: 50,
+        bodyBudgetEvictedIds: ["stale"],
+      },
+      1509,
+      1305,
+      200,
+      {
+        targetBytes: 9_000_000,
+        bytes: 8_996_058,
+        pruned: 0,
+        evictedIds: ["imp1-old"],
+      },
+    )).toMatchObject({
+      bodyBudgetTargetBytes: 9_000_000,
+      bodyBudgetBytes: 8_996_058,
+      bodyBudgetPruned: 0,
+      bodyBudgetEvictedIds: ["imp1-old"],
+    });
+  });
+
+  it("budget param が無い既存 4 引数呼び出しは budget フィールドを変更しない (後方互換)", () => {
+    const result = synchronizeBodyHealth(
+      { bodyBudgetEvictedIds: ["untouched"] },
+      10,
+      5,
+      2,
+    );
+    expect(result.bodyBudgetEvictedIds).toEqual(["untouched"]);
+  });
+
+  it("migration が読み取る previous evicted ids を carryForwardBudgetEvictedIds へそのまま連鎖できる (2 回分の migration run を模擬)", () => {
+    // Simulates the exact sequence scripts/clean-source-noise.mjs's main()
+    // performs across two runs: read index.health.bodyBudgetEvictedIds from
+    // the PREVIOUS run, carry it forward through the same pure helper the
+    // Publisher runtime uses, and write the result back to health -- without
+    // ever losing an id that is still live, retention-eligible, bodyless,
+    // and lowest-priority.
+    const retainedEntries = [
+      entry({ id: "imp1-old", importance: 1 }),
+      entry({ id: "imp2", importance: 2 }),
+    ];
+
+    // Migration run 1: nothing carried forward yet, imp1-old gets pruned.
+    const run1PrunedIds = ["imp1-old"];
+    const run1BodyPresentIds = new Set(["imp2"]); // imp1-old just got pruned
+    const run1Evicted = carryForwardBudgetEvictedIds(
+      [], // no prior index.health.bodyBudgetEvictedIds yet
+      retainedEntries,
+      run1BodyPresentIds,
+      run1PrunedIds,
+    );
+    expect(run1Evicted).toEqual(["imp1-old"]);
+    const health1 = synchronizeBodyHealth(
+      { bodyBudgetEvictedIds: [] },
+      2,
+      1,
+      1,
+      { targetBytes: 9_000_000, bytes: 8_000_000, pruned: 1, evictedIds: run1Evicted },
+    );
+    expect(health1.bodyBudgetEvictedIds).toEqual(["imp1-old"]);
+
+    // Migration run 2: reads health1.bodyBudgetEvictedIds as the previous
+    // ids. Nothing new is pruned this run (imp1-old already absent from the
+    // payload), so a naive "only report this run's fresh prunes" write would
+    // lose imp1-old here. The fix must still report it.
+    const run2Evicted = carryForwardBudgetEvictedIds(
+      health1.bodyBudgetEvictedIds,
+      retainedEntries,
+      run1BodyPresentIds, // still just imp2 -- imp1-old still bodyless
+      [], // no NEW prune this run
+    );
+    expect(run2Evicted).toEqual(["imp1-old"]);
+    const health2 = synchronizeBodyHealth(
+      health1,
+      2,
+      1,
+      1,
+      { targetBytes: 9_000_000, bytes: 8_000_000, pruned: 0, evictedIds: run2Evicted },
+    );
+    expect(health2.bodyBudgetEvictedIds).toEqual(["imp1-old"]);
   });
 });
 

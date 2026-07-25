@@ -50,6 +50,13 @@ import {
   isBodyRetentionEligible,
   needsBody,
 } from "../worker/src/body-queue.ts";
+import {
+  DEFAULT_BODY_BUDGET_TARGET_BYTES,
+  bodyBudgetPriorityRank,
+  carryForwardBudgetEvictedIds,
+  enforceBodiesBudget,
+  serializedByteLength,
+} from "../worker/src/bodies-budget.ts";
 
 export { synchronizeArchiveTagsFromLive };
 
@@ -922,6 +929,7 @@ export function synchronizeBodyHealth(
   bodyRetentionEligible,
   bodiesTotal,
   bodyBacklog,
+  budget = null,
 ) {
   if (!isPlainObject(health)) return health;
   const next = { ...health };
@@ -956,6 +964,16 @@ export function synchronizeBodyHealth(
     && enrichmentEnqueued >= summaryEnqueued
   ) {
     next.bodyEnqueued = enrichmentEnqueued - summaryEnqueued;
+  }
+  if (budget) {
+    // These are brand-new fields being introduced by this rollout (LL-411),
+    // unlike the fields above which only refresh EXISTING keys defensively.
+    // Always set them so the migration establishes the new health contract
+    // rather than silently skipping it because the field wasn't present yet.
+    next.bodyBudgetTargetBytes = budget.targetBytes;
+    next.bodyBudgetBytes = budget.bytes;
+    next.bodyBudgetPruned = budget.pruned;
+    next.bodyBudgetEvictedIds = budget.evictedIds;
   }
   return next;
 }
@@ -1138,15 +1156,63 @@ export async function main(argv = process.argv.slice(2)) {
     bodyAliases,
     index.entries,
   );
-  const reconciledBodyCount = bodyMerge.payload.count;
-  const bodyPresentIds = new Set(Object.keys(bodyMerge.payload.bodies));
+  const bodyBudgetTargetBytes = Math.max(
+    1,
+    Number(process.env.BODY_BUDGET_TARGET_BYTES ?? DEFAULT_BODY_BUDGET_TARGET_BYTES),
+  );
+  // Apply the SAME byte-budget enforcement as the Publisher runtime
+  // (worker/src/index.ts's runBodyPipeline) so migration never leaves
+  // data/bodies.json above the operational target even if prior runs (or a
+  // stale collector) let it drift. Lowest priority (importance 1, oldest
+  // first) is pruned first; evergreen is pruned LAST (highest priority) but
+  // is NOT exempt -- if every lower tier is already gone and the payload is
+  // still over target, evergreen is pruned too, as a last resort (LL-411
+  // follow-up 2).
+  const bodyBudget = enforceBodiesBudget(
+    bodyMerge.payload,
+    bodyRetentionEntries,
+    bodyBudgetTargetBytes,
+  );
+  const bodyEntryById = new Map(bodyRetentionEntries.map((entry) => [entry.id, entry]));
+  const bodyBudgetPrunedByTier = { evergreen: 0, importance3: 0, importance2: 0, importance1: 0, orphan: 0 };
+  for (const id of bodyBudget.prunedIds) {
+    const entry = bodyEntryById.get(id);
+    if (!entry) {
+      bodyBudgetPrunedByTier.orphan += 1;
+      continue;
+    }
+    const rank = bodyBudgetPriorityRank(entry);
+    if (rank === 0) bodyBudgetPrunedByTier.evergreen += 1;
+    else if (rank === 1) bodyBudgetPrunedByTier.importance3 += 1;
+    else if (rank === 2) bodyBudgetPrunedByTier.importance2 += 1;
+    else bodyBudgetPrunedByTier.importance1 += 1;
+  }
+  const reconciledBodyCount = bodyBudget.payload.count;
+  const bodyPresentIds = new Set(Object.keys(bodyBudget.payload.bodies));
   const bodyBacklog = bodyRetentionEntries.filter((entry) =>
     needsBody(entry, bodyPresentIds)
   ).length;
-  const bodyCountDrift = rawBodies.count !== bodyMerge.payload.count;
-  if (!dryRun && (!bodiesExisted || bodyMerge.changed || bodyCountDrift)) {
-    bodiesWrite = { path: bodiesPath, payload: bodyMerge.payload };
+  const bodyCountDrift = rawBodies.count !== bodyBudget.payload.count;
+  if (!dryRun && (!bodiesExisted || bodyMerge.changed || bodyBudget.changed || bodyCountDrift)) {
+    bodiesWrite = { path: bodiesPath, payload: bodyBudget.payload };
   }
+  // Carry forward the previously recorded budget-evicted ids (from the
+  // existing index.health, before this migration overwrites it) using the
+  // SAME persistence contract as the Publisher runtime (LL-411 follow-up):
+  // only remembering what THIS run pruned would drop ids that are still
+  // missing a body and still budget-doomed, letting them be regenerated and
+  // evicted again in an every-other-run waste loop.
+  const previousBodyBudgetEvictedIds = Array.isArray(index.health?.bodyBudgetEvictedIds)
+    ? index.health.bodyBudgetEvictedIds.filter(
+        (id) => typeof id === "string" && id.trim().length > 0,
+      )
+    : [];
+  const persistedBodyBudgetEvictedIds = carryForwardBudgetEvictedIds(
+    previousBodyBudgetEvictedIds,
+    bodyRetentionEntries,
+    bodyPresentIds,
+    bodyBudget.prunedIds,
+  );
 
   printSection("Removed by source", sortedCounts(report.removedBySource));
   printSection("Removed by category", sortedCounts(report.removedByCategory));
@@ -1156,6 +1222,13 @@ export async function main(argv = process.argv.slice(2)) {
   console.log(`\nMedia URLs normalized: ${report.mediaUrlsNormalized}`);
   console.log(`\nArchive tags synchronized: ${report.archiveTagsSynchronized}`);
   if (reconciledBodyCount !== null) console.log(`\nBodies retained: ${reconciledBodyCount}`);
+  console.log(
+    `\nBody budget: bytes=${bodyBudget.bytes}/${bodyBudgetTargetBytes}, pruned=${bodyBudget.prunedIds.length}`
+    + ` (importance3=${bodyBudgetPrunedByTier.importance3}, importance2=${bodyBudgetPrunedByTier.importance2},`
+    + ` importance1=${bodyBudgetPrunedByTier.importance1}, evergreen=${bodyBudgetPrunedByTier.evergreen},`
+    + ` orphan=${bodyBudgetPrunedByTier.orphan}), persisted excluded ids=${persistedBodyBudgetEvictedIds.length}`
+    + ` (carried forward=${previousBodyBudgetEvictedIds.length})`,
+  );
   printSamples("Representative keep samples", report.keepSamples);
   printSamples("Representative drop samples", report.dropSamples);
   printSamples("Representative reclass samples", report.reclassSamples);
@@ -1176,6 +1249,12 @@ export async function main(argv = process.argv.slice(2)) {
       bodyRetentionEntries.length,
       reconciledBodyCount,
       bodyBacklog,
+      {
+        targetBytes: bodyBudgetTargetBytes,
+        bytes: bodyBudget.bytes,
+        pruned: bodyBudget.prunedIds.length,
+        evictedIds: persistedBodyBudgetEvictedIds,
+      },
     );
   }
 

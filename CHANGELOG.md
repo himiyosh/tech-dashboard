@@ -20,6 +20,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - 検索結果へカテゴリ・タグ・タイトル・source・要約の一致理由、source authority、検索順位の比較基準を追加しました。
 - 表示言語 (JA/EN) を `?lang=` の URL query として保持し、EN に切り替えて共有した記事・検索・カテゴリ URL がローカルストレージのない新しいブラウザでも EN を再現できるようにしました。日本語は既定のまま URL に param を付けません。
 - About と Status に GitHub Issues への「問題を報告」導線と、稼働状態が ERR の場合の切り分けガイダンス (収集遅延は不具合ではなく、長時間の ERR や誤分類・翻訳欠落・壊れたリンクを報告対象とする案内) を追加しました。
+- Status に、匿名いいね機能 (D1 binding・識別子署名用シークレット・Turnstile 検証シークレット・Turnstile 公開サイトキー) の設定状態を確認できる「匿名いいねの設定状態」カードを追加しました。値そのものは一切表示せず、boolean のみを返す読み取り専用 `GET /api/reactions/config` を progressive enhancement で読み、「設定済み / Configured」「未設定 / Not configured (未設定の項目を列挙)」「確認できません / Check unavailable (endpoint 未到達)」の 3 状態を区別して表示します。いずれも安全に degrade する任意機能として neutral tone で表示し、ERR/WARN 相当の色は使いません。
 
 ### 変更
 

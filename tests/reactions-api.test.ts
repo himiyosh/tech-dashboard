@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import {
+  evaluateReactionConfig,
   handleEnsureReactionIdentity,
+  handleGetReactionConfig,
   handleGetReactions,
   handlePutReaction,
   verifyTurnstileChallenge,
@@ -510,5 +512,136 @@ describe("anonymous public reactions API", () => {
     expect(sql).toMatch(/CREATE TABLE IF NOT EXISTS reaction_rate_limits/i);
     expect(sql).toMatch(/voter_hash TEXT PRIMARY KEY/i);
     expect(sql).toMatch(/WITHOUT ROWID/);
+  });
+});
+
+describe("boolean-only reaction config health", () => {
+  const fullyConfiguredEnv: ReactionEnv = {
+    REACTIONS_DB: {
+      prepare: () => {
+        throw new Error("not used by the config health check");
+      },
+      batch: () => {
+        throw new Error("not used by the config health check");
+      },
+    },
+    REACTION_HMAC_SECRET: "a".repeat(32),
+    TURNSTILE_SECRET_KEY: "turnstile-secret",
+    PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+  };
+
+  it("reports configured:true only when every dependency is present and usable", () => {
+    expect(evaluateReactionConfig(fullyConfiguredEnv)).toEqual({
+      databaseBinding: true,
+      hmacSecret: true,
+      turnstileSecret: true,
+      publicSiteKey: true,
+      configured: true,
+    });
+  });
+
+  it("flags a too-short HMAC secret as not usable, matching the fail-closed gate", () => {
+    const status = evaluateReactionConfig({
+      ...fullyConfiguredEnv,
+      REACTION_HMAC_SECRET: "too-short",
+    });
+    expect(status.hmacSecret).toBe(false);
+    expect(status.configured).toBe(false);
+  });
+
+  it("reports each missing dependency independently (partial configuration)", () => {
+    expect(evaluateReactionConfig({})).toEqual({
+      databaseBinding: false,
+      hmacSecret: false,
+      turnstileSecret: false,
+      publicSiteKey: false,
+      configured: false,
+    });
+    expect(
+      evaluateReactionConfig({
+        REACTIONS_DB: fullyConfiguredEnv.REACTIONS_DB,
+      }),
+    ).toEqual({
+      databaseBinding: true,
+      hmacSecret: false,
+      turnstileSecret: false,
+      publicSiteKey: false,
+      configured: false,
+    });
+    expect(
+      evaluateReactionConfig({
+        REACTIONS_DB: fullyConfiguredEnv.REACTIONS_DB,
+        REACTION_HMAC_SECRET: fullyConfiguredEnv.REACTION_HMAC_SECRET,
+        TURNSTILE_SECRET_KEY: fullyConfiguredEnv.TURNSTILE_SECRET_KEY,
+      }),
+    ).toEqual({
+      databaseBinding: true,
+      hmacSecret: true,
+      turnstileSecret: true,
+      publicSiteKey: false,
+      configured: false,
+    });
+  });
+
+  it("GET /api/reactions/config responds with the same boolean snapshot", async () => {
+    const response = await handleGetReactionConfig(
+      new Request("https://techdb.example/api/reactions/config"),
+      fullyConfiguredEnv,
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    await expect(response.json()).resolves.toEqual({
+      config: {
+        databaseBinding: true,
+        hmacSecret: true,
+        turnstileSecret: true,
+        publicSiteKey: true,
+        configured: true,
+      },
+    });
+  });
+
+  it("rejects non-GET methods on the config health endpoint", async () => {
+    for (const method of ["POST", "PUT", "DELETE", "PATCH"]) {
+      const response = await handleGetReactionConfig(
+        new Request("https://techdb.example/api/reactions/config", { method }),
+        fullyConfiguredEnv,
+      );
+      expect(response.status).toBe(405);
+      await expect(response.json()).resolves.toMatchObject({
+        error: { code: "method_not_allowed" },
+      });
+    }
+  });
+
+  it("never echoes secret or key values, even when they contain markers or are absent", async () => {
+    const markerEnv: ReactionEnv = {
+      REACTIONS_DB: fullyConfiguredEnv.REACTIONS_DB,
+      REACTION_HMAC_SECRET: `MARKER-HMAC-${"x".repeat(40)}`,
+      TURNSTILE_SECRET_KEY: "MARKER-TURNSTILE-SECRET-VALUE",
+      PUBLIC_TURNSTILE_SITE_KEY: "MARKER-PUBLIC-SITE-KEY",
+    };
+    const response = await handleGetReactionConfig(
+      new Request("https://techdb.example/api/reactions/config"),
+      markerEnv,
+    );
+    const rawText = await response.text();
+    expect(rawText).not.toContain("MARKER-HMAC");
+    expect(rawText).not.toContain("MARKER-TURNSTILE-SECRET-VALUE");
+    expect(rawText).not.toContain("MARKER-PUBLIC-SITE-KEY");
+    const payload = JSON.parse(rawText) as { config: Record<string, unknown> };
+    for (const value of Object.values(payload.config)) {
+      expect(typeof value).toBe("boolean");
+    }
+
+    const missingEnv: ReactionEnv = {};
+    const missingResponse = await handleGetReactionConfig(
+      new Request("https://techdb.example/api/reactions/config"),
+      missingEnv,
+    );
+    const missingPayload = (await missingResponse.json()) as { config: Record<string, unknown> };
+    for (const value of Object.values(missingPayload.config)) {
+      expect(typeof value).toBe("boolean");
+    }
   });
 });

@@ -29,6 +29,7 @@ import {
   isBodyRetentionEligible,
   needsBody,
 } from "../worker/src/body-queue.ts";
+import { DEFAULT_BODY_BUDGET_TARGET_BYTES } from "../worker/src/bodies-budget.ts";
 
 interface RawEntry {
   id?: unknown;
@@ -73,6 +74,10 @@ interface IndexShape {
     enrichmentEnqueueCap?: number;
     enrichmentEnqueued?: number;
     enrichmentRemaining?: number;
+    bodyBudgetTargetBytes?: number;
+    bodyBudgetBytes?: number;
+    bodyBudgetPruned?: number;
+    bodyBudgetEvictedIds?: string[];
   };
 }
 
@@ -455,9 +460,21 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     expect(bad).toEqual([]);
   });
 
-  it("bodies.json は運用上限を超えない (10MB)", () => {
+  it("bodies.json は運用上限 (hard ceiling, safety net) を超えない (10MB)", () => {
+    // Hard ceiling: unchanged and intentionally much larger than the active
+    // producer target below. This is a safety net that would still catch
+    // catastrophic growth even if the budget enforcement below were ever
+    // skipped or buggy -- it should not itself need raising (LL-411).
     if (!existsSync(bodiesPath)) return;
     expect(statSync(bodiesPath).size).toBeLessThanOrEqual(10_000_000);
+  });
+
+  it("bodies.json は運用 target を超えない (deterministic budget policy, LL-411)", () => {
+    // Active target: the Publisher (worker/src/index.ts's runBodyPipeline)
+    // and the clean-source-noise.mjs migration both enforce this via
+    // enforceBodiesBudget() before ever committing data/bodies.json.
+    if (!existsSync(bodiesPath)) return;
+    expect(statSync(bodiesPath).size).toBeLessThanOrEqual(DEFAULT_BODY_BUDGET_TARGET_BYTES);
   });
 
   it("bodies.json は evergreen・重要記事・直近30日の本文だけを保持する", () => {
@@ -517,6 +534,33 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     expect(data.health?.bodyQueueDrainEstimateHours).toBe(
       enqueueCap > 0 ? Math.ceil(backlog / enqueueCap) : 0,
     );
+  });
+
+  it("body budget telemetry は実バイト数・target と一致する (LL-411)", () => {
+    const targetBytes = data.health?.bodyBudgetTargetBytes;
+    const measuredBytes = data.health?.bodyBudgetBytes;
+    const pruned = data.health?.bodyBudgetPruned;
+    const evictedIds = data.health?.bodyBudgetEvictedIds;
+
+    if (targetBytes === undefined) return; // pre-rollout artifact, field not present yet
+
+    expect(typeof targetBytes).toBe("number");
+    expect(targetBytes).toBe(DEFAULT_BODY_BUDGET_TARGET_BYTES);
+    expect(typeof measuredBytes).toBe("number");
+    // The recorded byte measurement must match the actual committed file, and
+    // must be at or under the target (the enforcement's own contract).
+    if (existsSync(bodiesPath)) {
+      expect(measuredBytes).toBe(statSync(bodiesPath).size);
+    }
+    expect(measuredBytes as number).toBeLessThanOrEqual(targetBytes as number);
+    expect(typeof pruned).toBe("number");
+    expect(pruned as number).toBeGreaterThanOrEqual(0);
+    expect(Array.isArray(evictedIds)).toBe(true);
+    // Evicted ids recorded this run must no longer have a real body present.
+    const bodyPresentIdsForBudget = new Set(Object.keys(bodies?.bodies ?? {}));
+    for (const id of evictedIds ?? []) {
+      expect(bodyPresentIdsForBudget.has(String(id))).toBe(false);
+    }
   });
 
   it("summary/body/shared Queue telemetry は候補・実送信・反映を混同しない", () => {

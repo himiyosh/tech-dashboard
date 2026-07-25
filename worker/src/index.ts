@@ -37,6 +37,11 @@ import {
   type BodyPipelineSelection,
 } from "./body-queue.ts";
 import {
+  DEFAULT_BODY_BUDGET_TARGET_BYTES,
+  enforceBodiesBudget,
+  serializedByteLength,
+} from "./bodies-budget.ts";
+import {
   bodyCacheEntryMatchesPublisherContract,
   getBodyCacheEntries,
   type BodyCacheEntry,
@@ -124,6 +129,10 @@ export interface PublisherEnv extends GithubRepositoryEnv {
   // Max current body candidates to inspect per run. Previous-run jobs receive
   // a separate bounded lookup so generated bodies are merged promptly.
   BODY_LOOKUP_CAP?: string;
+  // Operational size budget for data/bodies.json (LL-411). Defaults to
+  // DEFAULT_BODY_BUDGET_TARGET_BYTES, well below the much larger
+  // tests/data-schema.test.ts hard ceiling (10MB, unchanged safety net).
+  BODY_BUDGET_TARGET_BYTES?: string;
 }
 
 export interface PublisherCommitFile {
@@ -1106,11 +1115,12 @@ export async function runHarness(
       : null;
   let priorEntries: NormalizedEntry[] = [];
   let previousBodyPendingIds: string[] = [];
+  let previousBodyBudgetEvictedIds: string[] = [];
   if (existing?.content) {
     try {
       const parsed = JSON.parse(existing.content) as {
         entries?: NormalizedEntry[];
-        health?: { bodyMergePendingIds?: unknown };
+        health?: { bodyMergePendingIds?: unknown; bodyBudgetEvictedIds?: unknown };
       };
       priorEntries = parsed.entries ?? [];
       const pendingIds = parsed.health?.bodyMergePendingIds;
@@ -1118,6 +1128,18 @@ export async function runHarness(
         previousBodyPendingIds = [...new Set(
           pendingIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0),
         )].slice(0, 100);
+      }
+      // Body-budget enforcement (LL-411): entries the PREVIOUS run pruned for
+      // being over the operational byte target are excluded from new
+      // generation candidates this run. Without this, a deterministically
+      // lowest-priority entry would be regenerated and evicted again every
+      // run -- wasted Queue/LLM work, and a Web "queued" state that never
+      // resolves to either "ready" or an honest "summary-only" state.
+      const evictedIds = parsed.health?.bodyBudgetEvictedIds;
+      if (Array.isArray(evictedIds)) {
+        previousBodyBudgetEvictedIds = [...new Set(
+          evictedIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0),
+        )].slice(0, 500);
       }
     } catch (err) {
       console.warn(`[worker] failed to parse existing index: ${err}`);
@@ -1580,6 +1602,7 @@ export async function runHarness(
     publisherContractFingerprint,
     {
       previousPendingIds: previousBodyPendingIds,
+      previousBudgetEvictedIds: previousBodyBudgetEvictedIds,
       enqueueCap: effectiveBodyEnqueueCap,
     },
   );
@@ -2079,7 +2102,7 @@ async function maybeEnqueueSummaryJobs(
 
 // ---------- Body pipeline (body-file Phase B, LL-115) -----------------------
 
-interface BodyPipelineResult {
+export interface BodyPipelineResult {
   /** Serialized data/bodies.json to commit, or null when unchanged. */
   bodiesFileContent: string | null;
   enqueued: number;
@@ -2098,6 +2121,16 @@ interface BodyPipelineResult {
     bodiesTotal: number;
     bodyRetentionDays: number;
     bodyRetentionEligible: number;
+    /** Operational size target for data/bodies.json (LL-411). */
+    bodyBudgetTargetBytes: number;
+    /** Exact serialized byte length of the committed bodies.json this run. */
+    bodyBudgetBytes: number;
+    /** Records pruned this run for being over the byte budget (separate from
+     * bodyPruned, which counts not-live / product-conflict pruning). */
+    bodyBudgetPruned: number;
+    /** Ids pruned by budget this run; read back next run to avoid
+     * regenerating a body that would just be evicted again. */
+    bodyBudgetEvictedIds: string[];
   };
 }
 
@@ -2162,7 +2195,7 @@ export function selectBodyJobsToEnqueue(
  * before the body queue + worker exist (no-op until activated). Best-effort:
  * never throws into the publish path.
  */
-async function runBodyPipeline(
+export async function runBodyPipeline(
   env: PublisherEnv,
   liveEntries: readonly NormalizedEntry[],
   existingBodiesContent: string | null,
@@ -2170,6 +2203,7 @@ async function runBodyPipeline(
   publisherContractFingerprint: string,
   options: {
     previousPendingIds?: readonly string[];
+    previousBudgetEvictedIds?: readonly string[];
     enqueueCap?: number;
   } = {},
 ): Promise<BodyPipelineResult> {
@@ -2185,6 +2219,11 @@ async function runBodyPipeline(
       retentionDays,
     ),
   );
+  const budgetTargetBytes = Math.max(
+    1,
+    Number(env.BODY_BUDGET_TARGET_BYTES ?? DEFAULT_BODY_BUDGET_TARGET_BYTES),
+  );
+  const existingBytes = serializedByteLength(parseBodies(existingBodiesContent));
   const disabled = (mode: string): BodyPipelineResult => ({
     bodiesFileContent: null,
     enqueued: 0,
@@ -2203,6 +2242,10 @@ async function runBodyPipeline(
       bodiesTotal: parseBodies(existingBodiesContent).count,
       bodyRetentionDays: retentionDays,
       bodyRetentionEligible: retainedEntries.length,
+      bodyBudgetTargetBytes: budgetTargetBytes,
+      bodyBudgetBytes: existingBytes,
+      bodyBudgetPruned: 0,
+      bodyBudgetEvictedIds: [],
     },
   });
 
@@ -2227,6 +2270,9 @@ async function runBodyPipeline(
     // (LL-116). Jobs emitted by the previous Publisher run get one priority
     // lookup first, so completed Queue work is folded into bodies.json before
     // the round-robin window advances. A pending miss is not carried again.
+    // Entries the previous run's budget enforcement evicted are excluded from
+    // new candidates (LL-411) so a deterministically lowest-priority record
+    // does not get regenerated only to be evicted again this run.
     const lookupCap = Math.max(0, Number(env.BODY_LOOKUP_CAP ?? 10));
     const configuredEnqueueCap = Math.max(0, Number(env.BODY_ENQUEUE_MAX_NEW ?? 10));
     const enqueueCap = Math.min(
@@ -2238,7 +2284,10 @@ async function runBodyPipeline(
       present,
       options.previousPendingIds ?? [],
       lookupCap,
-      { publisherContractFingerprint },
+      {
+        publisherContractFingerprint,
+        excludeBudgetEvictedIds: options.previousBudgetEvictedIds ?? [],
+      },
     );
 
     // 1) Merge: read `b:` KV for the selected entries and fold any freshly
@@ -2268,6 +2317,13 @@ async function runBodyPipeline(
       retainedEntries,
     );
 
+    // 1b) Enforce the operational byte budget (LL-411): a separate layer on
+    //     top of isBodyRetentionEligible. An entry can be boolean-eligible
+    //     (evergreen/importance>=2/recent) yet still get pruned here if the
+    //     merged payload is over budget and it is the deterministic
+    //     lowest-priority record present. Evergreen entries are never pruned.
+    const budget = enforceBodiesBudget(merge.payload, retainedEntries, budgetTargetBytes);
+
     // 2) Enqueue the selected entries that do NOT yet have a generated body (KV
     //    miss), so worker-body generates them for a future run's merge.
     const toEnqueue = selectBodyJobsToEnqueue(
@@ -2291,19 +2347,19 @@ async function runBodyPipeline(
       }
     }
     const totalPruned = sanitizedBodies.pruned + merge.pruned;
-    if (selection.eligibleCount > 0 || sanitizedBodies.changed || merge.changed) {
+    if (selection.eligibleCount > 0 || sanitizedBodies.changed || merge.changed || budget.changed) {
       console.log(
-        `[worker] body pipeline: backlog=${selection.eligibleCount}, pendingLookup=${selection.pendingJobs.length}, candidateLookup=${selection.candidateJobs.length}, merged=${merge.added}, pruned=${totalPruned}, enqueue=${enqueued}, enqueueCap=${enqueueCap}`,
+        `[worker] body pipeline: backlog=${selection.eligibleCount}, pendingLookup=${selection.pendingJobs.length}, candidateLookup=${selection.candidateJobs.length}, merged=${merge.added}, pruned=${totalPruned}, budgetPruned=${budget.prunedIds.length}, budgetBytes=${budget.bytes}/${budgetTargetBytes}, enqueue=${enqueued}, enqueueCap=${enqueueCap}`,
       );
     }
 
-    const finalBodiesPresent = bodiesPresentSet(merge.payload);
+    const finalBodiesPresent = bodiesPresentSet(budget.payload);
     const remainingBacklog = retainedEntries.filter((entry) =>
       needsBody(entry, finalBodiesPresent)
     ).length;
     return {
-      bodiesFileContent: sanitizedBodies.changed || merge.changed
-        ? serializeBodies(merge.payload)
+      bodiesFileContent: sanitizedBodies.changed || merge.changed || budget.changed
+        ? serializeBodies(budget.payload)
         : null,
       enqueued,
       health: {
@@ -2320,9 +2376,13 @@ async function runBodyPipeline(
         bodyMergePendingIds: toEnqueue.slice(0, enqueued).map((job) => job.entry.id),
         bodyMerged: merge.added,
         bodyPruned: totalPruned,
-        bodiesTotal: merge.payload.count,
+        bodiesTotal: budget.payload.count,
         bodyRetentionDays: retentionDays,
         bodyRetentionEligible: retainedEntries.length,
+        bodyBudgetTargetBytes: budgetTargetBytes,
+        bodyBudgetBytes: budget.bytes,
+        bodyBudgetPruned: budget.prunedIds.length,
+        bodyBudgetEvictedIds: budget.prunedIds.slice(0, 500),
       },
     };
   } catch (err) {

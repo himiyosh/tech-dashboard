@@ -98,3 +98,4 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - 完全一致タグ検索と一般検索を独立した期限で実行し、一般検索が遅い場合もタグから対象記事へ戻れるようにしました。
 - Linux のフォントメトリクスでも中間幅の Hero と固定 Footer が過度に伸びず、優先記事と重ならないようにしました。
 - archive index baseline が `null`、`false`、`0` などの非 object JSON でも欠落扱いされる経路を廃止し、存在する baseline を必ず fail-closed で検証するようにしました。
+- `data/bodies.json` が evergreen・importance 2/3 の蓄積で運用上限へ近づき、scheduled Publisher run が失敗する問題を修正しました。retention の boolean gate (evergreen・importance 2/3・直近日数) とは別に、実バイト量が 9,000,000 bytes の target を超えた場合に evergreen を絶対保護しつつ importance の低い記事の最古から決定論的に prune する budget enforcement を追加し、既存データへも同じ policy を一度だけ適用しました。10MB の hard ceiling test は安全網として維持し、上限自体は変更していません。prune された記事は要約と原文リンクを引き続き表示します。

@@ -15,7 +15,9 @@ import {
 } from "../worker/src/body-queue.ts";
 import {
   buildHeartbeatPayload,
+  runBodyPipeline,
   selectBodyJobsToEnqueue,
+  type PublisherEnv,
 } from "../worker/src/index.ts";
 import {
   bodiesPresentSet,
@@ -24,8 +26,11 @@ import {
   mergeBodiesWithProductGuard,
   parseBodies,
   pruneKnownProductBodyConflicts,
+  serializeBodies,
   type BodiesPayload,
 } from "../worker/src/bodies-file.ts";
+import type { KeyValueBinding, QueueBatchBinding } from "../worker/src/runtime-bindings.ts";
+import type { BodyJob } from "../worker/src/body-generate.ts";
 
 function entry(over: Partial<NormalizedEntry> & { id: string }): NormalizedEntry {
   return {
@@ -503,3 +508,259 @@ describe("mergeBodies (LL-115)", () => {
     expect(r.pruned).toBe(0);
   });
 });
+
+describe("selectBodyPipelineJobs: excludeBudgetEvictedIds (LL-411)", () => {
+  const entries = [
+    entry({ id: "pending", publishedAt: "2026-06-30T00:00:00.000Z" }),
+    entry({ id: "new", publishedAt: "2026-06-29T00:00:00.000Z" }),
+    entry({ id: "old", publishedAt: "2026-06-01T00:00:00.000Z" }),
+  ];
+
+  it("budget-evicted な id は候補選定から除外される", () => {
+    const withoutExclusion = selectBodyPipelineJobs(
+      entries,
+      new Set(),
+      [],
+      3,
+      { nowMs: 0 },
+    );
+    expect(withoutExclusion.candidateJobs.map((job) => job.entry.id)).toContain("old");
+
+    const withExclusion = selectBodyPipelineJobs(
+      entries,
+      new Set(),
+      [],
+      3,
+      { nowMs: 0, excludeBudgetEvictedIds: ["old"] },
+    );
+    expect(withExclusion.candidateJobs.map((job) => job.entry.id)).not.toContain("old");
+  });
+
+  it("pending lookup 対象は budget exclusion の影響を受けない (別枠)", () => {
+    const selection = selectBodyPipelineJobs(
+      entries,
+      new Set(),
+      ["pending"],
+      3,
+      { nowMs: 0, excludeBudgetEvictedIds: ["pending"] },
+    );
+    // "pending" is explicitly a previous-run enqueue target; budget exclusion
+    // only prevents it from being picked again as a fresh CANDIDATE, but since
+    // it's already in previousPendingIds it is looked up via the pending path
+    // (the exclusion only applies to `selectBodyJobBatch`'s candidate window).
+    expect(selection.pendingJobs.map((job) => job.entry.id)).toEqual(["pending"]);
+  });
+
+  it("既存 opts (excludeBudgetEvictedIds なし) は従来どおり動作する (後方互換)", () => {
+    const selection = selectBodyPipelineJobs(
+      entries,
+      new Set(),
+      ["pending"],
+      2,
+      { nowMs: 0 },
+    );
+    expect(selection.pendingJobs.map((job) => job.entry.id)).toEqual(["pending"]);
+    expect(selection.lookupJobs).toHaveLength(2);
+  });
+});
+
+function bodyGeneratedRecordText(seed: string): { bodyJa: string; bodyEn: string } {
+  return {
+    bodyJa: `本文${seed}`.repeat(150),
+    bodyEn: `body ${seed} `.repeat(150),
+  };
+}
+
+function stubKv(): KeyValueBinding {
+  return {
+    async get() {
+      return null;
+    },
+    async put() {
+      /* no-op */
+    },
+  };
+}
+
+function stubQueue(): QueueBatchBinding<BodyJob> {
+  return {
+    async sendBatch() {
+      /* no-op */
+    },
+  };
+}
+
+function baseEnv(overrides: Partial<PublisherEnv> = {}): PublisherEnv {
+  return {
+    GH_TOKEN: "x",
+    GITHUB_OWNER: "himiyosh",
+    GITHUB_REPO: "tech-dashboard",
+    GITHUB_BRANCH: "main",
+    SUMMARY_CACHE: stubKv(),
+    COPILOT_PAT: "",
+    SUMMARIZE_MODEL: "claude-sonnet-4.6",
+    SUMMARIZE_MAX_NEW: "0",
+    ENABLE_BODY_QUEUE: "1",
+    BODY_QUEUE: stubQueue(),
+    BODY_ENQUEUE_MAX_NEW: "35",
+    BODY_LOOKUP_CAP: "35",
+    BODY_RETENTION_DAYS: "30",
+    ...overrides,
+  };
+}
+
+describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
+  const GENERATED_AT = "2026-07-25T00:00:00.000Z";
+  const pipelineEntries: NormalizedEntry[] = [
+    entry({
+      id: "ever",
+      evergreen: true,
+      importance: 1,
+      publishedAt: "2020-01-01T00:00:00.000Z",
+      collectedAt: "2020-01-01T00:00:00.000Z",
+    }),
+    entry({
+      id: "imp3",
+      importance: 3,
+      publishedAt: "2026-07-01T00:00:00.000Z",
+      collectedAt: "2026-07-01T00:00:00.000Z",
+    }),
+    entry({
+      id: "imp2",
+      importance: 2,
+      publishedAt: "2026-06-01T00:00:00.000Z",
+      collectedAt: "2026-06-01T00:00:00.000Z",
+    }),
+    entry({
+      id: "imp1-new",
+      importance: 1,
+      publishedAt: "2026-07-20T00:00:00.000Z",
+      collectedAt: "2026-07-20T00:00:00.000Z",
+    }),
+    entry({
+      id: "imp1-old",
+      importance: 1,
+      publishedAt: "2026-07-02T00:00:00.000Z",
+      collectedAt: "2026-07-02T00:00:00.000Z",
+    }),
+  ];
+
+  function fullExistingBodies(): string {
+    const bodies: BodiesPayload["bodies"] = {};
+    for (const e of pipelineEntries) {
+      bodies[e.id] = {
+        ...bodyGeneratedRecordText(e.id),
+        model: "claude-opus-4.8",
+        generatedAt: "2026-07-24T00:00:00.000Z",
+      };
+    }
+    return serializeBodies({ generatedAt: "2026-07-24T00:00:00.000Z", count: pipelineEntries.length, bodies });
+  }
+
+  it("target を超えた分だけ最古の importance-1 を budget prune し、telemetry に反映する", async () => {
+    const existingContent = fullExistingBodies();
+    const full = parseBodies(existingContent);
+    // Target between "4 records" and "5 records" worth of bytes, forcing
+    // exactly one (the oldest importance-1) removal.
+    const fourOnly: BodiesPayload = {
+      generatedAt: full.generatedAt,
+      count: 4,
+      bodies: Object.fromEntries(
+        Object.entries(full.bodies).filter(([id]) => id !== "imp1-old"),
+      ),
+    };
+    const target = Math.round(
+      (new TextEncoder().encode(serializeBodies(fourOnly)).byteLength
+        + new TextEncoder().encode(existingContent).byteLength) / 2,
+    );
+
+    const env = baseEnv({ BODY_BUDGET_TARGET_BYTES: String(target) });
+    const result = await runBodyPipeline(
+      env,
+      pipelineEntries,
+      existingContent,
+      GENERATED_AT,
+      `sha256:${"a".repeat(64)}`,
+    );
+
+    expect(result.health.bodyBudgetTargetBytes).toBe(target);
+    expect(result.health.bodyBudgetPruned).toBe(1);
+    expect(result.health.bodyBudgetEvictedIds).toEqual(["imp1-old"]);
+    expect(result.health.bodyBudgetBytes).toBeLessThanOrEqual(target);
+    expect(result.health.bodiesTotal).toBe(4);
+    expect(result.bodiesFileContent).not.toBeNull();
+
+    const finalPayload = parseBodies(result.bodiesFileContent);
+    expect(finalPayload.bodies.ever).toBeDefined();
+    expect(finalPayload.bodies.imp3).toBeDefined();
+    expect(finalPayload.bodies.imp2).toBeDefined();
+    expect(finalPayload.bodies["imp1-new"]).toBeDefined();
+    expect(finalPayload.bodies["imp1-old"]).toBeUndefined();
+  });
+
+  it("前回 budget-evicted な id は次回 run で再 enqueue されない", async () => {
+    const existingContent = fullExistingBodies();
+    const full = parseBodies(existingContent);
+    const fourOnly: BodiesPayload = {
+      generatedAt: full.generatedAt,
+      count: 4,
+      bodies: Object.fromEntries(
+        Object.entries(full.bodies).filter(([id]) => id !== "imp1-old"),
+      ),
+    };
+    const target = Math.round(
+      (new TextEncoder().encode(serializeBodies(fourOnly)).byteLength
+        + new TextEncoder().encode(existingContent).byteLength) / 2,
+    );
+
+    const run1 = await runBodyPipeline(
+      baseEnv({ BODY_BUDGET_TARGET_BYTES: String(target) }),
+      pipelineEntries,
+      existingContent,
+      GENERATED_AT,
+      `sha256:${"a".repeat(64)}`,
+    );
+    expect(run1.health.bodyBudgetEvictedIds).toEqual(["imp1-old"]);
+
+    // Run 2: imp1-old is still retention-eligible (importance 1, within 30
+    // days) and now lacks a body -- it WOULD be the only enqueue candidate.
+    // With the previous run's eviction fed back in, it must be excluded.
+    const run2 = await runBodyPipeline(
+      baseEnv({ BODY_BUDGET_TARGET_BYTES: String(target) }),
+      pipelineEntries,
+      run1.bodiesFileContent,
+      "2026-07-25T01:00:00.000Z",
+      `sha256:${"a".repeat(64)}`,
+      { previousBudgetEvictedIds: run1.health.bodyBudgetEvictedIds },
+    );
+
+    expect(run2.enqueued).toBe(0);
+    expect(run2.health.bodyMergePendingIds).toEqual([]);
+    expect(run2.health.bodyBudgetPruned).toBe(0); // already at/under target, nothing new to prune
+  });
+
+  it("previousBudgetEvictedIds を渡さない場合は従来どおり再候補化される (後方互換)", async () => {
+    const existingContent = fullExistingBodies();
+    const full = parseBodies(existingContent);
+    const fourOnly: BodiesPayload = {
+      generatedAt: full.generatedAt,
+      count: 4,
+      bodies: Object.fromEntries(
+        Object.entries(full.bodies).filter(([id]) => id !== "imp1-old"),
+      ),
+    };
+    const bodiesWithoutOld = serializeBodies(fourOnly);
+
+    const run = await runBodyPipeline(
+      baseEnv({ BODY_ENQUEUE_MAX_NEW: "5", BODY_LOOKUP_CAP: "5" }),
+      pipelineEntries,
+      bodiesWithoutOld,
+      "2026-07-25T02:00:00.000Z",
+      `sha256:${"a".repeat(64)}`,
+    );
+    // No exclusion supplied: imp1-old (missing body, retention-eligible) is a
+    // legitimate candidate and gets enqueued.
+    expect(run.health.bodyEnqueueCandidates).toBeGreaterThan(0);
+  });
+});
+

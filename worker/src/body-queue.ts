@@ -42,7 +42,10 @@ export interface BodyPipelineSelection {
 
 export const DEFAULT_BODY_RETENTION_DAYS = 30;
 
-function dateMs(value: string | null | undefined): number {
+/** Parse an ISO timestamp to epoch ms, or 0 when missing/invalid. Exported so
+ * bodies-budget.ts can rank entries by the same recency semantics used here
+ * (publishedAt falling back to collectedAt). */
+export function dateMs(value: string | null | undefined): number {
   if (!value) return 0;
   const ms = Date.parse(value);
   return Number.isFinite(ms) ? ms : 0;
@@ -174,6 +177,19 @@ export function bodyBacklogAfterMerge(eligibleCount: number, mergedCount: number
   return Math.max(0, Math.floor(eligibleCount) - Math.max(0, Math.floor(mergedCount)));
 }
 
+export interface BodyPipelineSelectionOpts
+  extends Omit<BodyJobSelectionOpts, "excludeEntryIds"> {
+  /**
+   * Entry ids the body-budget enforcer pruned in the PREVIOUS run
+   * (health.bodyBudgetEvictedIds, one-hop lookback like previousPendingIds).
+   * Excluded from new-candidate selection so an entry that is deterministically
+   * the lowest-priority record present does not get regenerated only to be
+   * evicted again next run -- which would both waste Queue/LLM work and make
+   * the Web "queued" state a repeating, never-resolving false promise.
+   */
+  excludeBudgetEvictedIds?: readonly string[];
+}
+
 /**
  * Look up the jobs enqueued by the previous publisher run before selecting new
  * candidates. A previous miss receives one priority lookup only; it is excluded
@@ -184,8 +200,9 @@ export function selectBodyPipelineJobs(
   bodiesPresent: ReadonlySet<string>,
   previousPendingIds: readonly string[],
   lookupCap: number,
-  opts: Omit<BodyJobSelectionOpts, "excludeEntryIds"> = {},
+  opts: BodyPipelineSelectionOpts = {},
 ): BodyPipelineSelection {
+  const { excludeBudgetEvictedIds, ...jobOpts } = opts;
   const byId = new Map(entries.map((entry) => [entry.id, entry]));
   const pendingJobs: BodyJob[] = [];
   const pendingIds = new Set<string>();
@@ -195,17 +212,19 @@ export function selectBodyPipelineJobs(
     const entry = byId.get(id);
     if (!entry || !needsBody(entry, bodiesPresent)) continue;
     pendingIds.add(id);
-    pendingJobs.push(bodyJobForEntry(entry, opts.publisherContractFingerprint));
+    pendingJobs.push(bodyJobForEntry(entry, jobOpts.publisherContractFingerprint));
   }
 
   const remainingCandidateCap = Math.max(0, safeLookupCap - pendingJobs.length);
+  const excludeIds = new Set(pendingIds);
+  for (const id of excludeBudgetEvictedIds ?? []) excludeIds.add(id);
   const candidates = selectBodyJobBatch(
     entries,
     bodiesPresent,
     remainingCandidateCap,
     {
-      ...opts,
-      excludeEntryIds: pendingIds,
+      ...jobOpts,
+      excludeEntryIds: excludeIds,
     },
   );
 

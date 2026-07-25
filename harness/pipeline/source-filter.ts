@@ -106,12 +106,10 @@ export function matchingKeyword(
 }
 
 export function keywordFilterEntryFromNormalized(entry: KeywordFilterNormalizedEntry): KeywordFilterEntry {
-  const contentSnippet = entry.contentSnippet
-    ?? [entry.titleJa, entry.titleEn, entry.summaryJa, entry.summaryEn].filter(Boolean).join(" ");
   return {
     title: entry.title,
     url: entry.url,
-    ...(contentSnippet ? { contentSnippet } : {}),
+    ...(entry.contentSnippet ? { contentSnippet: entry.contentSnippet } : {}),
   };
 }
 

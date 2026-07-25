@@ -189,7 +189,7 @@ function escapeHtml(s: string): string {
 function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-function highlightTags(html: string, tagList: string[]): string {
+function highlightTags(html: string, tagList: string[], entryId: string): string {
   if (tagList.length === 0) return html;
   // Sort by length desc to avoid prefix collisions.
   const sorted = [...new Set(tagList.map((t) => t.trim()).filter(Boolean))]
@@ -198,7 +198,7 @@ function highlightTags(html: string, tagList: string[]): string {
   for (const tag of sorted) {
     if (tag.length < 2) continue;
     const re = new RegExp(`\\b${escapeRegex(tag)}\\b`, "gi");
-    const href = tagHref(tag);
+    const href = tagHref(tag, entryId);
     out = out.replace(re, (match) => `<a class="kw" href="${escapeHtml(href)}">${escapeHtml(match)}</a>`);
   }
   return out;
@@ -207,12 +207,12 @@ function highlightTags(html: string, tagList: string[]): string {
 const renderedJa = paragraphsJa.map((p, i) => ({
   id: `p-ja-${i + 1}`,
   label: tocLabelJa(p),
-  html: highlightTags(escapeHtml(p), entry.tags),
+  html: highlightTags(escapeHtml(p), entry.tags, entry.id),
 }));
 const renderedEn = paragraphsEn.map((p, i) => ({
   id: `p-en-${i + 1}`,
   label: tocLabelEn(p),
-  html: highlightTags(escapeHtml(p), entry.tags),
+  html: highlightTags(escapeHtml(p), entry.tags, entry.id),
 }));
 const breadcrumb = [
   { label: "Home", href: "/" },
@@ -661,7 +661,7 @@ const jsonLd = {
             </span>
             <span class="ed-topic-links">
               {entry.tags.map((t) => (
-                <a href={tagHref(t)}>{t}</a>
+                <a href={tagHref(t, entry.id)}>{t}</a>
               ))}
             </span>
           </nav>

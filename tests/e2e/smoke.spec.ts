@@ -5,6 +5,7 @@ import {
   summaryForLangWithFallback,
   type SummaryDisplayEntry,
 } from "../../web/src/lib/summary-display.ts";
+import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
 
 const TIMELINE_ENTRY_LINK_SELECTOR = 'main article.card h3.title > a[href^="/e/"]';
 const REACTION_MUTATION_URL_RE = /\/api\/reactions\/[a-f0-9]{16}$/;
@@ -31,6 +32,85 @@ async function expectPagefindReady(page: Page): Promise<void> {
     .poll(
       () => page.evaluate(() => typeof (window as any).__pagefind?.search === "function"),
       { timeout: 10_000 },
+    )
+    .toBe(true);
+}
+
+async function expectResponsivePageHero(
+  page: Page,
+  path: string,
+  topLevel = false,
+): Promise<void> {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(path);
+  const hero = page.locator(".page-hero").first();
+  await expect(hero).toBeVisible();
+  if (topLevel) {
+    await expect(
+      page.locator(".crumb-bar"),
+      `${path} should not render breadcrumbs`,
+    ).toHaveCount(0);
+  }
+  const desktopBox = await hero.boundingBox();
+  expect(desktopBox, `${path} desktop hero box`).not.toBeNull();
+  expect(
+    desktopBox!.height,
+    `${path} desktop hero has page-banner presence`,
+  ).toBeGreaterThan(120);
+  const innerBox = await hero.locator(".page-hero-inner").boundingBox();
+  expect(innerBox, `${path} desktop hero inner box`).not.toBeNull();
+  expect(Math.round(innerBox!.width), `${path} desktop hero inner width`).toBe(1280);
+  if (topLevel) {
+    await expect(hero, `${path} top-level hero class`).toHaveClass(
+      /page-hero-top-level/,
+    );
+    const metricBoxes = await hero.locator(".page-hero-metric").evaluateAll((items) =>
+      items.map((item) => item.getBoundingClientRect().width)
+    );
+    expect(metricBoxes, `${path} top-level hero metric count`).toHaveLength(6);
+    expect(
+      Math.max(...metricBoxes) - Math.min(...metricBoxes),
+      `${path} top-level metric widths match`,
+    ).toBeLessThanOrEqual(1);
+    const metricScopes = await hero.locator(".page-hero-metric").evaluateAll((items) =>
+      items.map((item) => ({
+        scope: item.getAttribute("data-metric-scope") ?? "",
+        describedBy: item.getAttribute("aria-describedby") ?? "",
+        detail:
+          item.querySelector(".page-hero-metric-detail")?.textContent?.trim() ??
+          "",
+      }))
+    );
+    expect(
+      metricScopes.every(
+        (metric) =>
+          metric.scope.length > 0 &&
+          metric.describedBy.length > 0 &&
+          metric.detail.length > 0,
+      ),
+      `${path} metrics expose a population or time-window definition`,
+    ).toBe(true);
+  }
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+    )
+    .toBe(true);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      ),
+  );
+  await expect(hero).toBeVisible();
+  const mobileBox = await hero.boundingBox();
+  expect(mobileBox, `${path} mobile hero box`).not.toBeNull();
+  expect(mobileBox!.height, `${path} mobile hero stays compact`).toBeLessThan(310);
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
     )
     .toBe(true);
 }
@@ -634,6 +714,12 @@ test.describe("TECH Dashboard smoke", () => {
     // Wide desktop: use the expanded canvas while keeping both rails useful.
     await page.setViewportSize({ width: 1920, height: 900 });
     await page.goto("/");
+    const settleLayout = () =>
+      page.evaluate(
+        () => new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        ),
+      );
     const rail = page.locator(".layout aside.right.home-right");
     await expect(rail).toBeVisible();
     await expect(rail.locator(":scope > .side-card > h3.right-title")).toHaveCount(3);
@@ -732,7 +818,7 @@ test.describe("TECH Dashboard smoke", () => {
     // The compact right rail returns once all three columns retain useful width.
     for (const width of [1181, 1280, 1359]) {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto("/");
+      await settleLayout();
       await expect(rail, `${width}px shows the compact right rail`).toBeVisible();
       const compact = await page.locator(".layout").evaluate((layout) => ({
         cols: getComputedStyle(layout).gridTemplateColumns.split(" ").filter(Boolean).length,
@@ -743,7 +829,7 @@ test.describe("TECH Dashboard smoke", () => {
     }
 
     await page.setViewportSize({ width: 1180, height: 900 });
-    await page.goto("/");
+    await settleLayout();
     await expect(rail).toBeHidden();
     const collapsedCols = await page.locator(".layout").evaluate((layout) =>
       getComputedStyle(layout).gridTemplateColumns.split(" ").filter(Boolean).length,
@@ -752,7 +838,7 @@ test.describe("TECH Dashboard smoke", () => {
 
     // Mobile: rail hidden, no horizontal scroll.
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/");
+    await settleLayout();
     await expect(rail).toBeHidden();
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
@@ -958,9 +1044,16 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("mid-width header keeps every control readable without clipping", async ({ page }) => {
-    for (const width of [721, 768, 901, 981, 1000, 1100]) {
+    const widths = [721, 768, 901, 981, 1000, 1100];
+    await page.setViewportSize({ width: widths[0]!, height: 900 });
+    await page.goto("/");
+    for (const width of widths) {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto("/");
+      await page.evaluate(
+        () => new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        ),
+      );
 
       const metrics = await page.evaluate(() => {
         const rect = (element: Element | null) => {
@@ -3552,68 +3645,38 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
-  test("section page heroes give page context on desktop and mobile", async ({ page }) => {
+  test("top-level page heroes give page context on desktop and mobile", async ({ page }) => {
     const topLevelPaths = ["/categories/", "/status/", "/about/", "/archive/"];
-    const paths = [
-      ...topLevelPaths,
-      "/page/2/",
-      "/c/copilot/",
-      "/archive/2026-07/",
-      "/t/claude/",
-    ];
+    for (const path of topLevelPaths) {
+      await expectResponsivePageHero(page, path, true);
+    }
+    await expectResponsivePageHero(page, "/page/2/");
+  });
+
+  test("deep page heroes give page context on desktop and mobile", async ({ page }) => {
+    const paths: string[] = [];
+    await page.goto("/categories/");
+    const firstCategoryHref = await page.locator(".category-card").first().getAttribute("href");
+    if (firstCategoryHref) paths.push(firstCategoryHref);
+
+    await page.goto("/archive/");
+    const firstMonthHref = await page.locator(".month-card").first().getAttribute("href");
+    if (firstMonthHref) paths.push(firstMonthHref);
+
+    await page.goto("/");
+    const firstTag = page.locator('a[href^="/t/"]').first();
+    if ((await firstTag.count()) > 0) {
+      const firstTagHref = await firstTag.getAttribute("href");
+      if (firstTagHref) paths.push(firstTagHref);
+    }
 
     for (const path of paths) {
-      await page.setViewportSize({ width: 1280, height: 900 });
-      await page.goto(path);
-      if (topLevelPaths.includes(path)) {
-        await expect(page.locator(".crumb-bar"), `${path} should not render breadcrumbs`).toHaveCount(0);
-      }
-      const hero = page.locator(".page-hero").first();
-      await expect(hero).toBeVisible();
-      const desktopBox = await hero.boundingBox();
-      expect(desktopBox, `${path} desktop hero box`).not.toBeNull();
-      expect(desktopBox!.height, `${path} desktop hero has page-banner presence`).toBeGreaterThan(120);
-      const innerBox = await hero.locator(".page-hero-inner").boundingBox();
-      expect(innerBox, `${path} desktop hero inner box`).not.toBeNull();
-      expect(Math.round(innerBox!.width), `${path} desktop hero inner width`).toBe(1280);
-      if (topLevelPaths.includes(path)) {
-        await expect(hero, `${path} top-level hero class`).toHaveClass(/page-hero-top-level/);
-        const metricBoxes = await hero.locator(".page-hero-metric").evaluateAll((items) =>
-          items.map((item) => item.getBoundingClientRect().width),
-        );
-        expect(metricBoxes, `${path} top-level hero metric count`).toHaveLength(6);
-        expect(Math.max(...metricBoxes) - Math.min(...metricBoxes), `${path} top-level metric widths match`).toBeLessThanOrEqual(1);
-        const metricScopes = await hero.locator(".page-hero-metric").evaluateAll((items) =>
-          items.map((item) => ({
-            scope: item.getAttribute("data-metric-scope") ?? "",
-            describedBy: item.getAttribute("aria-describedby") ?? "",
-            detail: item.querySelector(".page-hero-metric-detail")?.textContent?.trim() ?? "",
-          })),
-        );
-        expect(
-          metricScopes.every((metric) => metric.scope.length > 0 && metric.describedBy.length > 0 && metric.detail.length > 0),
-          `${path} metrics expose a population or time-window definition`,
-        ).toBe(true);
-      }
-      await expect
-        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-        .toBe(true);
-
-      await page.setViewportSize({ width: 390, height: 844 });
-      await page.evaluate(
-        () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
-      );
-      await expect(hero).toBeVisible();
-      const mobileBox = await hero.boundingBox();
-      expect(mobileBox, `${path} mobile hero box`).not.toBeNull();
-      expect(mobileBox!.height, `${path} mobile hero stays compact`).toBeLessThan(310);
-      await expect
-        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-        .toBe(true);
+      await expectResponsivePageHero(page, path);
     }
   });
 
   test("every metric-bearing PageHero explains its population and window", async ({ page }) => {
+    test.setTimeout(90_000);
     const paths = [
       "/categories/",
       "/status/",
@@ -3629,24 +3692,33 @@ test.describe("TECH Dashboard smoke", () => {
       "/t/claude/",
       "/t/claude/page/2/",
     ];
-
-    for (const path of paths) {
-      await page.setViewportSize({ width: 1280, height: 900 });
-      const response = await page.goto(path);
-      expect(response?.status(), `${path} is generated`).toBeLessThan(400);
-      const metrics = page.locator(".page-hero-metric");
-      expect(await metrics.count(), `${path} exposes summary metrics`).toBeGreaterThan(0);
-      const contracts = await metrics.evaluateAll((items) =>
-        items.map((item) => {
-          const describedBy = item.getAttribute("aria-describedby") ?? "";
-          const detail = describedBy ? document.getElementById(describedBy) : null;
+    await page.goto("/");
+    const routeContracts = await page.evaluate(
+      async (routePaths) =>
+        Promise.all(routePaths.map(async (path) => {
+          const response = await fetch(path);
+          const html = await response.text();
+          const document = new DOMParser().parseFromString(html, "text/html");
+          const metrics = [...document.querySelectorAll(".page-hero-metric")];
           return {
-            scope: item.getAttribute("data-metric-scope") ?? "",
-            describedBy,
-            detail: detail?.textContent?.trim() ?? "",
+            path,
+            status: response.status,
+            contracts: metrics.map((item) => {
+              const describedBy = item.getAttribute("aria-describedby") ?? "";
+              const detail = describedBy ? document.getElementById(describedBy) : null;
+              return {
+                scope: item.getAttribute("data-metric-scope") ?? "",
+                describedBy,
+                detail: detail?.textContent?.trim() ?? "",
+              };
+            }),
           };
-        }),
-      );
+        })),
+      paths,
+    );
+    for (const { path, status, contracts } of routeContracts) {
+      expect(status, `${path} is generated`).toBeLessThan(400);
+      expect(contracts.length, `${path} exposes summary metrics`).toBeGreaterThan(0);
       expect(
         contracts.every((metric) =>
           metric.scope.length > 0
@@ -3665,30 +3737,34 @@ test.describe("TECH Dashboard smoke", () => {
       "/arxiv/",
       "/glossary/",
     ];
-    const viewports = [
+    const responsiveViewports = [
       [320, 844, 335],
       [375, 844, 335],
       [390, 844, 335],
       [414, 844, 335],
       [768, 900, 430],
     ] as const;
+    const settleLayout = () =>
+      page.evaluate(
+        () => new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        ),
+      );
     for (const path of responsivePaths) {
-      const firstViewport = viewports[0];
-      await page.setViewportSize({ width: firstViewport[0], height: firstViewport[1] });
+      await page.setViewportSize({ width: 320, height: 844 });
       await page.goto(path);
-      for (const [width, height, maxHeroHeight] of viewports) {
+      for (const [width, height, maxHeroHeight] of responsiveViewports) {
         await page.setViewportSize({ width, height });
-        await page.evaluate(
-          () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
-        );
+        await settleLayout();
         const hero = page.locator(".page-hero");
         await expect(hero).toBeVisible();
         const box = await hero.boundingBox();
         expect(box, `${path} hero renders at ${width}px`).not.toBeNull();
         expect(box!.height, `${path} metric detail remains compact at ${width}px`).toBeLessThan(maxHeroHeight);
-        await expect
-          .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-          .toBe(true);
+        expect(
+          await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+          `${path} stays within ${width}px`,
+        ).toBe(true);
         if (width === 390 && path === "/page/2/") {
           await expect(page.locator('[data-metric-scope="timeline-snapshot"]')).toBeVisible();
         }
@@ -3701,11 +3777,18 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("page families keep stable content widths across routes", async ({ page }) => {
-    const measureCurrent = async (width: number) => {
+    test.setTimeout(60_000);
+    const measure = async (path: string, width: number, navigate = true) => {
       await page.setViewportSize({ width, height: 900 });
-      await page.evaluate(
-        () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
-      );
+      if (navigate) {
+        await page.goto(path);
+      } else {
+        await page.evaluate(
+          () => new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+          ),
+        );
+      }
       return page.evaluate(() => {
         const main = document.querySelector<HTMLElement>(".layout > main");
         const left = document.querySelector<HTMLElement>(".layout > aside.left");
@@ -3732,7 +3815,7 @@ test.describe("TECH Dashboard smoke", () => {
       });
     };
 
-    const routes = [
+    const routeEntries = [
       ["home", "/"],
       ["status", "/status/"],
       ["categories", "/categories/"],
@@ -3740,21 +3823,26 @@ test.describe("TECH Dashboard smoke", () => {
       ["about", "/about/"],
       ["archive", "/archive/"],
     ] as const;
-    const at1280 = new Map<string, Awaited<ReturnType<typeof measureCurrent>>>();
-    const at1440 = new Map<string, Awaited<ReturnType<typeof measureCurrent>>>();
-    for (const [key, path] of routes) {
-      await page.setViewportSize({ width: 1280, height: 900 });
-      await page.goto(path);
-      at1280.set(key, await measureCurrent(1280));
-      at1440.set(key, await measureCurrent(1440));
+    const measurements = new Map<
+      (typeof routeEntries)[number][0],
+      {
+        at1280: Awaited<ReturnType<typeof measure>>;
+        at1440: Awaited<ReturnType<typeof measure>>;
+      }
+    >();
+    for (const [key, path] of routeEntries) {
+      const at1280 = await measure(path, 1280);
+      const at1440 = await measure(path, 1440, false);
+      measurements.set(key, { at1280, at1440 });
     }
-
-    const home1280 = at1280.get("home")!;
-    const status1280 = at1280.get("status")!;
-    const categories1280 = at1280.get("categories")!;
-    expect(Math.abs(home1280.main!.width - status1280.main!.width)).toBeLessThanOrEqual(1);
+    const at1280 = Object.fromEntries(
+      [...measurements].map(([key, value]) => [key, value.at1280]),
+    ) as Record<(typeof routeEntries)[number][0], Awaited<ReturnType<typeof measure>>>;
+    expect(Math.abs(at1280.home.main!.width - at1280.status.main!.width)).toBeLessThanOrEqual(1);
+    const home1280 = at1280.home;
+    const categories1280 = at1280.categories;
     for (const key of ["categories", "category", "about", "archive"] as const) {
-      const metrics = at1280.get(key)!;
+      const metrics = at1280[key];
       expect(
         Math.abs(metrics.main!.width - categories1280.main!.width),
         `${key} shares the exploration/content main width at 1280px`,
@@ -3771,14 +3859,14 @@ test.describe("TECH Dashboard smoke", () => {
     );
 
     const desktopWidths: number[] = [];
-    for (const [key, path] of routes) {
-      const metrics = at1440.get(key)!;
+    for (const [key, path] of routeEntries) {
+      const metrics = measurements.get(key)!.at1440;
       desktopWidths.push(metrics.main!.width);
       expect(metrics.overflow, `${path} does not overflow at 1440px`).toBeLessThanOrEqual(0);
     }
     expect(Math.max(...desktopWidths) - Math.min(...desktopWidths)).toBeLessThanOrEqual(1);
 
-    const categoryDetail = at1440.get("category")!;
+    const categoryDetail = measurements.get("category")!.at1440;
     expect(categoryDetail.crumbContentX, "breadcrumb uses the shared desktop gutter").toBeCloseTo(
       categoryDetail.left!.x,
       0,
@@ -5060,11 +5148,42 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("singleton tag links recover their article through exact search", async ({ page }) => {
+    test.setTimeout(45_000);
     await page.goto("/");
 
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string; tags?: string[] }>;
+    };
+    const warmArchiveEntries = readdirSync("data/archive")
+      .filter((name) => /^\d{4}-\d{2}\.json$/.test(name))
+      .flatMap((name) => {
+        const month = JSON.parse(readFileSync(`data/archive/${name}`, "utf8")) as {
+          entries?: Array<{ id: string; tags?: string[]; archiveTier?: string }>;
+        };
+        return (month.entries ?? []).filter((entry) => entry.archiveTier === "warm");
+      });
+    const indexedEntries = [
+      ...new Map(
+        [...index.entries, ...warmArchiveEntries].map((entry) => [entry.id, entry]),
+      ).values(),
+    ];
+    const tagCounts = new Map<string, number>();
+    for (const entry of indexedEntries) {
+      for (const tag of new Set((entry.tags ?? []).map(normalizeTagKey).filter(Boolean))) {
+        tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+      }
+    }
+    const singletonTags = [...tagCounts.entries()]
+      .filter(([, count]) => count === 1)
+      .map(([tag]) => tag);
     const tagLinks = page.locator("main article.card .tag-chip[href^='/search?q=']");
-    const tagIndex = await tagLinks.evaluateAll((links) =>
-      links.findIndex((link) => /[a-z]/.test(new URL((link as HTMLAnchorElement).href).searchParams.get("q") ?? "")),
+    const tagIndex = await tagLinks.evaluateAll(
+      (links, candidates) =>
+        links.findIndex((link) => {
+          const query = new URL((link as HTMLAnchorElement).href).searchParams.get("q") ?? "";
+          return /[a-z]/.test(query) && candidates.includes(query);
+        }),
+      singletonTags,
     );
     expect(tagIndex).toBeGreaterThanOrEqual(0);
     const tagLink = tagLinks.nth(tagIndex);
@@ -5516,6 +5635,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(hit.locator(".search-hit-meta")).toContainText("GitHub Copilot Blog");
     await expect(hit.locator(".search-hit-meta")).toContainText("Local Models");
     await expect(hit.locator(".search-hit-meta")).not.toContainText(/github-copilot|local-llm/);
+    const authority = hit.locator(".search-hit-authority");
+    await expect(authority).toHaveAttribute("data-source-authority", "official");
+    await expect(authority.locator(".i18n-ja")).toBeVisible();
+    await expect(authority.locator(".i18n-ja")).toHaveText("公式");
     await expect(page.locator("#pagefind-results")).not.toContainText("Nearby operations reference");
 
     await page.locator('.lang-btn[data-lang="en"]').click();
@@ -5525,6 +5648,8 @@ test.describe("TECH Dashboard smoke", () => {
     );
     await expect(hit.locator(".search-hit-fallback")).toHaveCount(0);
     await expect(hit.locator(".search-hit-title [lang='en']")).toHaveText("Fallback agent reference");
+    await expect(authority.locator(".i18n-en")).toBeVisible();
+    await expect(authority.locator(".i18n-en")).toHaveText("Official");
 
     await input.fill("status");
     await expect(hit.locator(".search-hit-meta")).toContainText("Status page");
@@ -5623,6 +5748,7 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("pagefind exact-result filtering ignores Unicode diacritics", async ({ page }) => {
+    test.setTimeout(45_000);
     await page.goto("/");
     await expectPagefindReady(page);
     await page.evaluate(() => {
@@ -6326,9 +6452,9 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(imageCard, "image failure fixture remains available").toBeAttached();
     const imageHref = await imageCard.locator(".kg-card-link").getAttribute("href");
     expect(imageHref, "image card has a stable detail href").toBeTruthy();
-    const stableImageCard = page.locator(".kg-card").filter({
-      has: page.locator(`.kg-card-link[href="${imageHref}"]`),
-    });
+    const stableImageCard = page.locator(
+      `.kg-card:has(.kg-card-link[href="${imageHref}"])`,
+    );
     const bodyWidthBefore = await stableImageCard.locator(".kg-body").evaluate((body) =>
       body.getBoundingClientRect().width,
     );

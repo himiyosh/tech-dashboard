@@ -69,7 +69,7 @@ describe("web clarity contracts", () => {
     const endpoint = read("web/src/pages/tag-recovery.json.ts");
     const headers = read("web/public/_headers");
 
-    expect(endpoint).toContain("SINGLETON_TAG_ENTRY_IDS");
+    expect(endpoint).toContain("SINGLETON_INDEXED_TAG_ENTRY_IDS");
     expect(portal).toContain("data-tag-recovery-version");
     expect(portal).toContain("tag-recovery.json?v=");
     expect(portal).toContain('cache: "no-store"');

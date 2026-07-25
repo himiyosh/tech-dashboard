@@ -54,6 +54,7 @@ const RESEARCH_EXCLUDE_KEYWORDS = [
   "segmentation",
   "robot",
   "robotics",
+  "clinical code prediction",
 ] as const;
 
 const DORA_EXCLUDE_KEYWORDS = [
@@ -106,7 +107,7 @@ const TECH_NEWS_RELEVANCE_KEYWORDS = [
   "text-to-image",
   "developer",
   "developers",
-  "software",
+  "software engineering",
   "coding",
   "development",
   "developer tool",
@@ -227,6 +228,12 @@ const TECH_NEWS_EXCLUDE_KEYWORDS = [
   "digital literacy",
   "ai literacy",
   "imagine cup",
+  "weekly roundup",
+  "startup forum",
+  "geforce now",
+  "games hit the cloud",
+  "vehicle outlives its cloud",
+  "killing your spouse",
 ] as const;
 
 const HN_AI_RELEVANCE_KEYWORDS = [
@@ -358,6 +365,7 @@ const GCLOUD_EXCLUDE_KEYWORDS = [
   "financial services",
   "what's new with google cloud",
   "weekly roundup",
+  "startup forum",
   "partner",
   "sponsor",
 ] as const;

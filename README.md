@@ -140,7 +140,7 @@ npx -y modern-web-guidance@latest retrieve "accessibility,css,performance,securi
 | Typecheck | `npm run typecheck` | TypeScript 型チェック | 速い |
 | Worker Typecheck | `npm --prefix worker run typecheck && npm --prefix worker-summarizer run typecheck && npm --prefix worker-body run typecheck` | Cloudflare Worker / Queue consumer の型チェック | 速い |
 | Unit | `npm test` | Vitest による関数単位の検証 (要約 JSON パース、Web ロジック、`data/index.json` スキーマ) | 速い (~1s) |
-| Web build | `npm run build:web` | Cloudflare Pages と同じ `web` build (`astro build && pagefind --site dist`) を検証 | 中程度 |
+| Web build | `npm run build:web` | Cloudflare Pages と同じ Astro + Pagefind build を実行し、30秒 heartbeat、phase別 CPU/RSS、route/file数、3,200 HTML route上限を検証 | 中程度 |
 | E2E | `npm run test:e2e` | Playwright (Chromium) でトップ表示・記事詳細・言語切替を検証 | 中程度 (~30s + build) |
 | Secret scan | `npm run secrets:scan` | tracked file の secret / private key / 高リスクファイル名を検証 | 速い |
 | Worktree secret scan | `npm run secrets:scan:worktree` | tracked + untracked non-ignored file を検証し、ignored local secret store は値を読まず path だけ警告 | 速い |
@@ -154,7 +154,7 @@ Git hook は `bash scripts/install-hooks.sh` で 1 回有効化します。
 | Hook | 実行内容 | スキップ |
 |---|---|---|
 | `pre-commit` | `main` / `master` / `develop` への直接 commit 拒否 → staged file の secret scan → `.ts/.tsx` がステージされていれば `npm run typecheck` | Typecheck のみ `SKIP_TYPECHECK=1 git commit` |
-| `pre-push` | protected branch への直接 push 拒否 → push 対象 commit range の secret scan → `npm test` (unit) → `npm run build:web` → `npm run test:e2e` → `RUN_WORKER_DEPLOY=1` の場合のみ `wrangler deploy` | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1`。Worker deploy は `RUN_WORKER_DEPLOY=1 git push` |
+| `pre-push` | protected branch への直接 push 拒否 → push 対象 commit range の secret scan → `npm test` (unit) → `npm run build:web` → Publisher Playwright E2E (生成Home・記事詳細・metrics・Archive・404) → `RUN_WORKER_DEPLOY=1` の場合のみ `wrangler deploy`。warm/cold・exact tag・navを含む全PlaywrightはPR CIで必須 | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1`。Worker deploy は `RUN_WORKER_DEPLOY=1 git push` |
 
 Secret scan は値を表示せず、検出種別・ファイル位置・ハッシュだけを出します。ローカル作業ツリー全体を確認する場合は `npm run secrets:scan:worktree`、全履歴を手動確認する場合は `npm run secrets:scan:history` を使います。
 
@@ -397,7 +397,7 @@ fingerprint を変える通常 release は次の順序を固定します。
 
 #### 監視 / ヘルスチェック
 
-Publisher は実行ごとに `data/index.json` の `health` フィールドにメタデータ (`lastRunAt` / `batchIndex` / `sourcesOk` / `sourcesFailed[]` / `copilotOk` / `fallbackTotal` / `queueMode` / `enqueueCandidates` / `summaryQueueBacklog` / `summaryQueueDrainEstimateHours` / `bodyQueueMode` / `bodyBacklog` / `bodyQueueDrainEstimateHours` / `bodyMergePendingIds` / `enrichmentEnqueueCap` / `summaryFallbacks` / `bodyFallbacks` / `ogCached` 等) を埋め込みます。Web の Queue 表示はこの artifact health を正本とし、`enabled` かつ backlog 0 の場合だけ処理待ちなしと表示します。run 停止中は保存済み ETA を確定値として表示しません。Node Publisher は `heartbeat.v1` を bridge の KV write へ送らず、Free bridge の write allowlist は `og.v1` のみに保ちます。サイトの [https://techdb.studio344.net/status/](https://techdb.studio344.net/status/) 上部の **Worker Health** セクションで一目で確認できます。
+Publisher は実行ごとに `data/index.json` の `health` フィールドにメタデータ (`lastRunAt` / `batchIndex` / `sourcesOk` / `sourcesFailed[]` / `copilotOk` / `fallbackTotal` / `queueMode` / `enqueueCandidates` / `summaryQueueBacklog` / `summaryQueueEnqueued` / `summaryQueueDrainEstimateHours` / `bodyQueueMode` / `bodyRetentionEligible` / `bodyBacklog` / `bodyEnqueueCandidates` / `bodyEnqueueCap` / `bodyEnqueued` / `bodyLookupCount` / `bodyMerged` / `bodyQueueDrainEstimateHours` / `bodyMergePendingIds` / `enrichmentEnqueueCap` / `enrichmentEnqueued` / `enrichmentRemaining` / `summaryFallbacks` / `bodyFallbacks` / `ogCached` 等) を埋め込みます。candidate、実 enqueue、lookup、merge は別指標で、field が無い場合は 0 件ではなく未観測です。Web の Queue 表示はこの artifact health を正本とし、`enabled` かつ backlog 0 の場合だけ処理待ちなしと表示します。run 停止中は保存済み ETA を確定値として表示しません。Node Publisher は `heartbeat.v1` を bridge の KV write へ送らず、Free bridge の write allowlist は `og.v1` のみに保ちます。サイトの [https://techdb.studio344.net/status/](https://techdb.studio344.net/status/) 上部の **Worker Health** セクションで一目で確認できます。
 
 - `run ok` — 直近 run が正常（source freshness は別指標）
 - `run warn` — summarize disabled / source error / backlog 増加など要確認

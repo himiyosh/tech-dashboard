@@ -15,6 +15,15 @@ import {
   summaryForLang,
   summaryForLangWithFallback,
 } from "./summary-display.ts";
+import {
+  CATEGORIES_BY_NAME,
+  CATEGORIES_BY_SHORT_LABEL,
+  CATEGORY_META,
+  categoryLabel,
+  type Category,
+  type CategoryGroup,
+  type CategoryMeta,
+} from "./category-meta.ts";
 import { sourceAuthority } from "./source-meta.ts";
 import { normalizeTagKey } from "./tag-normalize.ts";
 
@@ -30,22 +39,13 @@ export {
   summaryForLangWithFallback,
 };
 export { relativeTime } from "./relative-time.ts";
-
-export type Category =
-  | "copilot"
-  | "claude"
-  | "codex"
-  | "gemini"
-  | "vscode"
-  | "cursor"
-  | "cline"
-  | "aider"
-  | "opencode"
-  | "local-llm"
-  | "agent-fw"
-  | "mcp"
-  | "research"
-  | "tech-news";
+export {
+  CATEGORIES_BY_NAME,
+  CATEGORIES_BY_SHORT_LABEL,
+  CATEGORY_META,
+  categoryLabel,
+};
+export type { Category, CategoryGroup, CategoryMeta };
 
 export interface NormalizedEntry {
   id: string;
@@ -243,10 +243,18 @@ export const ALL_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.filter(isList
 export const GENERATED_AT = data.generatedAt;
 export const WORKER_HEALTH: WorkerHealth | null = data.health ?? null;
 
-export const TAG_PAGE_MIN_ENTRIES = 2;
+export const TAG_PAGE_MIN_ENTRIES = 10;
 
 const TAG_ENTRIES_BY_NAME = new Map<string, NormalizedEntry[]>();
+const ENTRY_BY_ID = new Map<string, NormalizedEntry>();
+const ENTRY_ORDER_BY_ID = new Map<string, number>();
+const SOURCE_ENTRIES_BY_ID = new Map<string, NormalizedEntry[]>();
 for (const entry of ALL_ENTRIES) {
+  ENTRY_BY_ID.set(entry.id, entry);
+  ENTRY_ORDER_BY_ID.set(entry.id, ENTRY_ORDER_BY_ID.size);
+  const sourceEntries = SOURCE_ENTRIES_BY_ID.get(entry.source);
+  if (sourceEntries) sourceEntries.push(entry);
+  else SOURCE_ENTRIES_BY_ID.set(entry.source, [entry]);
   for (const tag of new Set(entry.tags.map(normalizeTagKey).filter(Boolean))) {
     const matches = TAG_ENTRIES_BY_NAME.get(tag);
     if (matches) matches.push(entry);
@@ -362,6 +370,21 @@ export function isResearchListingEntry(entry: NormalizedEntry): boolean {
 export const RESEARCH_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter(isResearchListingEntry);
 export const MAIN_TIMELINE_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter((entry) => !isArxivEntry(entry));
 
+const CATEGORY_ENTRIES_BY_SLUG = new Map<Category, NormalizedEntry[]>();
+for (const entry of ALL_ENTRIES) {
+  if (entry.category === "research" && isArxivEntry(entry)) continue;
+  const entries = CATEGORY_ENTRIES_BY_SLUG.get(entry.category);
+  if (entries) entries.push(entry);
+  else CATEGORY_ENTRIES_BY_SLUG.set(entry.category, [entry]);
+}
+const CATEGORY_POSITION_BY_ID = new Map<string, number>();
+for (const entries of CATEGORY_ENTRIES_BY_SLUG.values()) {
+  entries.forEach((entry, index) => CATEGORY_POSITION_BY_ID.set(entry.id, index));
+}
+const ARXIV_POSITION_BY_ID = new Map(
+  ARXIV_ENTRIES.map((entry, index) => [entry.id, index] as const),
+);
+
 /**
  * Evergreen knowledge / best-practice entries (R-022). These come from sources
  * marked `evergreen: true` in the registry (vendor engineering blogs, how-to,
@@ -400,76 +423,6 @@ export function knowledgeBySource(): Array<{ source: string; items: NormalizedEn
 
 /** Items per page on timeline / category / tag pages. */
 export const PAGE_SIZE = 30;
-
-export type CategoryGroup =
-  | "microsoft"
-  | "anthropic"
-  | "openai"
-  | "google"
-  | "coding-tools"
-  | "open-models"
-  | "agent-tools"
-  | "research"
-  | "industry";
-
-/** Category slugs are stable URLs; group/name provide the visible taxonomy. */
-export interface CategoryMeta {
-  slug: Category;
-  name: string;
-  /** Compact label for narrow surfaces (sidebar). */
-  shortLabel: string;
-  /** Natural-language queries that should prioritize the category landing page. */
-  searchAliases?: readonly string[];
-  color: string;
-  initial: string;
-  emoji: string;
-  group: CategoryGroup;
-}
-
-export const CATEGORY_META: ReadonlyArray<CategoryMeta> = [
-    { slug: "copilot", name: "GitHub Copilot", shortLabel: "Copilot", color: "#5eead4", initial: "Co", emoji: "\u{1F9E0}", group: "microsoft" },
-    { slug: "vscode", name: "VS Code / Dev Env", shortLabel: "VS Code", color: "#63a2ff", initial: "Vs", emoji: "\u{1F537}", group: "microsoft" },
-    { slug: "claude", name: "Claude / Claude Code", shortLabel: "Claude Code", color: "#fbbf24", initial: "Cl", emoji: "\u{1F9E1}", group: "anthropic" },
-    { slug: "codex", name: "OpenAI / Codex", shortLabel: "Codex", color: "#93c5fd", initial: "Cx", emoji: "\u{1F4D8}", group: "openai" },
-    { slug: "gemini", name: "Gemini / Gemma", shortLabel: "Gemini/Gemma", color: "#60a5fa", initial: "Gm", emoji: "\u{2728}", group: "google" },
-    { slug: "cursor", name: "AI Editors", shortLabel: "AI Editors", color: "#cbd5e1", initial: "Ed", emoji: "\u{1F5B1}\u{FE0F}", group: "coding-tools" },
-    { slug: "cline", name: "Cline / Roo", shortLabel: "Cline/Roo", color: "#c4b5fd", initial: "Cn", emoji: "\u{1F9F5}", group: "coding-tools" },
-    { slug: "aider", name: "Aider", shortLabel: "Aider", color: "#d6d3a1", initial: "Ai", emoji: "\u{1F91D}", group: "coding-tools" },
-    { slug: "opencode", name: "OpenHands / OpenCode", shortLabel: "OpenHands/OpenCode", color: "#a5b4fc", initial: "Oh", emoji: "\u{1F310}", group: "coding-tools" },
-    { slug: "local-llm", name: "Local LLM / Open Models", shortLabel: "Local Models", searchAliases: ["local model", "local models", "local ai", "on-device ai", "open source model", "open source models"], color: "#f87171", initial: "Lm", emoji: "\u{1F3E0}", group: "open-models" },
-    { slug: "agent-fw", name: "Agent Frameworks", shortLabel: "Agent Frameworks", color: "#34d399", initial: "Af", emoji: "\u{1F916}", group: "agent-tools" },
-    { slug: "mcp", name: "MCP / Tooling", shortLabel: "MCP", color: "#f472b6", initial: "Mc", emoji: "\u{1F517}", group: "agent-tools" },
-    { slug: "research", name: "Papers / Benchmarks", shortLabel: "Papers/Benchmarks", searchAliases: ["benchmark", "benchmarks", "paper", "papers", "research"], color: "#fda4af", initial: "Pb", emoji: "\u{1F52C}", group: "research" },
-    { slug: "tech-news", name: "Industry & Policy", shortLabel: "News/Policy", color: "#fb923c", initial: "Ip", emoji: "\u{1F4F0}", group: "industry" },
-  ];
-
-export function categoryLabel(
-  category: Category,
-  variant: "short" | "full" = "short",
-): string {
-  const meta = CATEGORY_META.find((item) => item.slug === category);
-  if (meta) return variant === "full" ? meta.name : meta.shortLabel;
-  return category
-    .split("-")
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-/**
- * Categories sorted alphabetically for navigation/directory lists (sidebar,
- * categories directory, about coverage). Predictable A→Z order instead of the
- * vendor-group definition order, which read as "scattered" to users.
- * CATEGORY_META keeps its original order for anything that still needs the
- * authored sequence.
- */
-export const CATEGORIES_BY_NAME: readonly CategoryMeta[] = [...CATEGORY_META].sort((a, b) =>
-  a.name.localeCompare(b.name),
-);
-/** Like CATEGORIES_BY_NAME but ordered by the compact sidebar label. */
-export const CATEGORIES_BY_SHORT_LABEL: readonly CategoryMeta[] = [...CATEGORY_META].sort((a, b) =>
-  a.shortLabel.localeCompare(b.shortLabel),
-);
 
 export function countByCategory(): Record<Category, number> {
   const counts = Object.fromEntries(
@@ -511,8 +464,7 @@ export function sparklineHeights(category: Category): number[] {
 
 /** Entries filtered by category, newest first. */
 export function entriesFor(category: Category): NormalizedEntry[] {
-  if (category === "research") return [...RESEARCH_ENTRIES];
-  return ALL_ENTRIES.filter((e) => e.category === category);
+  return [...(CATEGORY_ENTRIES_BY_SLUG.get(category) ?? [])];
 }
 
 /** Newest N entries across all categories. */
@@ -902,7 +854,7 @@ export function entryHref(e: Pick<NormalizedEntry, "id">): string {
 
 /** Look up an entry by id (used by the detail page). */
 export function getEntryById(id: string): NormalizedEntry | undefined {
-  return ALL_ENTRIES.find((e) => e.id === id);
+  return ENTRY_BY_ID.get(id);
 }
 
 export interface SourceListedActivity {
@@ -956,7 +908,9 @@ export function relatedEntries(
   e: NormalizedEntry,
   n = 6,
 ): NormalizedEntry[] {
-  const lane = isArxivEntry(e) ? ARXIV_ENTRIES : entriesFor(e.category);
+  const lane = isArxivEntry(e)
+    ? ARXIV_ENTRIES
+    : CATEGORY_ENTRIES_BY_SLUG.get(e.category) ?? [];
   return lane.filter((x) => x.id !== e.id).slice(0, n);
 }
 
@@ -965,7 +919,9 @@ export function entriesBySource(
   e: NormalizedEntry,
   n = 5,
 ): NormalizedEntry[] {
-  return ALL_ENTRIES.filter((x) => x.id !== e.id && x.source === e.source).slice(0, n);
+  return (SOURCE_ENTRIES_BY_ID.get(e.source) ?? [])
+    .filter((x) => x.id !== e.id)
+    .slice(0, n);
 }
 
 /** Newest entries sharing any tag with `e`, excluding self and same-category dupes. */
@@ -974,19 +930,32 @@ export function entriesByTag(
   n = 5,
 ): NormalizedEntry[] {
   if (e.tags.length === 0) return [];
-  const tagset = new Set(e.tags.map((t) => t.toLowerCase()));
-  return ALL_ENTRIES.filter((x) => {
-    if (x.id === e.id) return false;
-    return x.tags.some((t) => tagset.has(t.toLowerCase()));
-  }).slice(0, n);
+  const candidates = new Map<string, NormalizedEntry>();
+  for (const tag of new Set(e.tags.map(normalizeTagKey).filter(Boolean))) {
+    for (const candidate of TAG_ENTRIES_BY_NAME.get(tag) ?? []) {
+      if (candidate.id !== e.id) candidates.set(candidate.id, candidate);
+    }
+  }
+  return [...candidates.values()]
+    .sort(
+      (a, b) =>
+        (ENTRY_ORDER_BY_ID.get(a.id) ?? Number.MAX_SAFE_INTEGER)
+        - (ENTRY_ORDER_BY_ID.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+    )
+    .slice(0, n);
 }
 
 /** Previous and next entries within the same category (newest = index 0). */
 export function adjacentInCategory(
   e: NormalizedEntry,
 ): { prev?: NormalizedEntry; next?: NormalizedEntry } {
-  const cat = isArxivEntry(e) ? ARXIV_ENTRIES : entriesFor(e.category);
-  const i = cat.findIndex((x) => x.id === e.id);
+  const arxiv = isArxivEntry(e);
+  const cat = arxiv
+    ? ARXIV_ENTRIES
+    : CATEGORY_ENTRIES_BY_SLUG.get(e.category) ?? [];
+  const i = arxiv
+    ? ARXIV_POSITION_BY_ID.get(e.id) ?? -1
+    : CATEGORY_POSITION_BY_ID.get(e.id) ?? -1;
   if (i < 0) return {};
   return { prev: cat[i - 1], next: cat[i + 1] };
 }
@@ -994,7 +963,9 @@ export function adjacentInCategory(
 export function categoryImportanceStanding(
   e: NormalizedEntry,
 ): { total: number; sameOrHigher: number } {
-  const categoryEntries = isArxivEntry(e) ? ARXIV_ENTRIES : entriesFor(e.category);
+  const categoryEntries = isArxivEntry(e)
+    ? ARXIV_ENTRIES
+    : CATEGORY_ENTRIES_BY_SLUG.get(e.category) ?? [];
   return {
     total: categoryEntries.length,
     sameOrHigher: categoryEntries.filter((entry) => entry.importance >= e.importance).length,
@@ -1006,7 +977,7 @@ export function sourceAvgImportance(
   e: NormalizedEntry,
   n = 30,
 ): number {
-  const recent = ALL_ENTRIES.filter((x) => x.source === e.source).slice(0, n);
+  const recent = (SOURCE_ENTRIES_BY_ID.get(e.source) ?? []).slice(0, n);
   if (recent.length === 0) return e.importance;
   return Math.round(
     (recent.reduce((s, x) => s + x.importance, 0) / recent.length) * 10,

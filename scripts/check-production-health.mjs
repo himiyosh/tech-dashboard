@@ -1,5 +1,14 @@
 #!/usr/bin/env node
 
+// Recurring, immediate, fail-closed production health check (R-027). This
+// script intentionally does NOT retry or wait out Cloudflare's edge
+// propagation delay: `validateBridge()` below must report a mismatch as soon
+// as it sees one, because it runs on a schedule long after any deploy has
+// had time to settle (worker-health.yml). For the short window right after
+// an explicit `wrangler deploy`, where the propagation delay is expected and
+// should not be mistaken for a bad bundle, use the separate bounded-polling
+// tool instead: `scripts/verify-worker-deploy.mjs` (LL-407).
+
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 

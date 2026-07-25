@@ -19,7 +19,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | og:image 取得 | Publisher → OIDC bridge → KV | 毎時最大 1 件。data 検証と push 成功後だけ `og.v1` を更新 | サムネが no-image fallback になる | `health.ogCached` |
 | `data/index.json` / `data/archive/*` / `data/stats.json` 更新 commit | Publisher workflow → built-in `GITHUB_TOKEN` | 全品質ゲート後、差分があるときのみ data allowlist を 1 commit にまとめる | サイトに反映されない、記事数推移が古いまま | GitHub Actions `Publisher` |
 | サイト build / deploy | Cloudflare Pages (Git Integration) | `main` の push 検知 | サイトが古いまま | Cloudflare Pages dashboard |
-| Worker コード deploy 補助 | `scripts/git-hooks/pre-push` | `RUN_WORKER_DEPLOY=1 git push` かつ `main` push に `worker/` 差分あり | Worker 側のロジック修正が反映されない | push 時の出力 / `wrangler deployments list` |
+| Worker コード deploy 補助 | `scripts/git-hooks/pre-push` | `RUN_WORKER_DEPLOY=1 git push` かつ `main` push に `worker/` 差分あり | Worker 側のロジック修正が反映されない | push 時の出力 (deploy 成功後 `node scripts/verify-worker-deploy.mjs` で fingerprint 伝播を bounded polling 確認、非 blocking) |
 
 ### 手動運用 (年 1 回程度)
 
@@ -392,7 +392,7 @@ fingerprint を変える通常 release は次の順序を固定します。
 1. CI 合格済み PR head の `tech-dashboard-summarizer` と `tech-dashboard-body` を明示承認のうえ先に deployする。
 2. 旧 consumer の in-flight 処理が残っていないことを確認して PR を mergeする。
 3. 旧 harness が新 markerとの mismatchで data publishを停止したことを確認する。
-4. 明示承認のうえ `tech-dashboard-harness` を Free bridgeへdeployする。
+4. 明示承認のうえ `tech-dashboard-harness` を Free bridgeへdeployする。`wrangler deployments list` が 100% と報告した直後でも、全 edge PoP へ fingerprint が伝播するまで最大 60 秒ほどかかることがある。immediate な `/health` 確認だけで判断せず、`node scripts/verify-worker-deploy.mjs` (bounded polling、既定 120s timeout / 5s interval / 3 回連続一致) で伝播を確認してから次へ進む。
 5. bridge `/health`、Publisher workflow、data commit、Queue drain、Pages productionを順に確認する。
 
 #### 監視 / ヘルスチェック

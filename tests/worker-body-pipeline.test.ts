@@ -896,5 +896,109 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
     );
     expect(disabledRun.health.bodyBudgetEvictedIds).toEqual(["imp1-old"]);
   });
+
+  it("importance 1 の prune だけでは足りず importance 2 まで prune しても importance 3 / evergreen は保持される (tier fallback, LL-411 follow-up 2)", async () => {
+    const existingContent = fullExistingBodies();
+    const full = parseBodies(existingContent);
+    // Removing only imp1-old + imp1-new (leaving imp2+imp3+ever) is NOT
+    // enough; the target sits strictly between "3 records left" and
+    // "2 records left" bytes, forcing imp2 to be pruned too -- but imp3 and
+    // evergreen (both higher priority than imp2) must survive untouched.
+    const threeRemain: BodiesPayload = {
+      generatedAt: full.generatedAt,
+      count: 3,
+      bodies: Object.fromEntries(
+        Object.entries(full.bodies).filter(([id]) => id === "imp2" || id === "imp3" || id === "ever"),
+      ),
+    };
+    const twoRemain: BodiesPayload = {
+      generatedAt: full.generatedAt,
+      count: 2,
+      bodies: Object.fromEntries(
+        Object.entries(full.bodies).filter(([id]) => id === "imp3" || id === "ever"),
+      ),
+    };
+    const target = Math.round(
+      (new TextEncoder().encode(serializeBodies(threeRemain)).byteLength
+        + new TextEncoder().encode(serializeBodies(twoRemain)).byteLength) / 2,
+    );
+
+    const run = await runBodyPipeline(
+      baseEnv({ BODY_BUDGET_TARGET_BYTES: String(target) }),
+      pipelineEntries,
+      existingContent,
+      GENERATED_AT,
+      `sha256:${"a".repeat(64)}`,
+    );
+
+    expect(run.health.bodyBudgetPruned).toBe(3);
+    expect([...run.health.bodyBudgetEvictedIds].sort()).toEqual(["imp1-new", "imp1-old", "imp2"]);
+    expect(run.health.bodyBudgetBytes).toBeLessThanOrEqual(target);
+    const finalPayload = parseBodies(run.bodiesFileContent);
+    expect(finalPayload.bodies.imp3).toBeDefined();
+    expect(finalPayload.bodies.ever).toBeDefined();
+    expect(finalPayload.bodies.imp2).toBeUndefined();
+    expect(finalPayload.bodies["imp1-new"]).toBeUndefined();
+    expect(finalPayload.bodies["imp1-old"]).toBeUndefined();
+  });
+
+  it("evergreen が last-resort として prune された場合も 3-run 分 telemetry へ persist され、再候補化されない (evergreen eviction, LL-411 follow-up 2)", async () => {
+    const existingContent = fullExistingBodies();
+    const full = parseBodies(existingContent);
+    const emptyPayload: BodiesPayload = { generatedAt: full.generatedAt, count: 0, bodies: {} };
+    const emptyBytes = new TextEncoder().encode(serializeBodies(emptyPayload)).byteLength;
+    // Far below even a single record's byte size -- forces ALL 5 entries
+    // (including "ever", the evergreen record) to be pruned as a last resort.
+    const target = emptyBytes + 10;
+
+    // Run 1: everything, including evergreen, is pruned for the first time.
+    const run1 = await runBodyPipeline(
+      baseEnv({ BODY_BUDGET_TARGET_BYTES: String(target) }),
+      pipelineEntries,
+      existingContent,
+      GENERATED_AT,
+      `sha256:${"a".repeat(64)}`,
+    );
+    expect(run1.health.bodyBudgetPruned).toBe(5);
+    expect([...run1.health.bodyBudgetEvictedIds].sort()).toEqual(
+      ["ever", "imp1-new", "imp1-old", "imp2", "imp3"],
+    );
+    expect(run1.health.bodiesTotal).toBe(0);
+
+    // Run 2: with run1's eviction fed back in, every entry (including "ever")
+    // is already excluded, so nothing new is generated/merged/pruned.
+    const run2 = await runBodyPipeline(
+      baseEnv({ BODY_BUDGET_TARGET_BYTES: String(target) }),
+      pipelineEntries,
+      run1.bodiesFileContent,
+      "2026-07-25T06:00:00.000Z",
+      `sha256:${"a".repeat(64)}`,
+      { previousBudgetEvictedIds: run1.health.bodyBudgetEvictedIds },
+    );
+    expect(run2.enqueued).toBe(0);
+    expect(run2.health.bodyBudgetPruned).toBe(0);
+    expect([...run2.health.bodyBudgetEvictedIds].sort()).toEqual(
+      ["ever", "imp1-new", "imp1-old", "imp2", "imp3"],
+    );
+
+    // Run 3: "ever" is STILL excluded. A fixed "rank !== 3 releases" carry
+    // forward check (round 2's original design) would have released "ever"
+    // (rank 0, always !== 3) unconditionally every run, re-admitting it as a
+    // fresh candidate and recreating the every-other-run waste loop this
+    // fix exists to prevent -- just for the evergreen tier instead of
+    // importance==1.
+    const run3 = await runBodyPipeline(
+      baseEnv({ BODY_BUDGET_TARGET_BYTES: String(target) }),
+      pipelineEntries,
+      run1.bodiesFileContent,
+      "2026-07-25T07:00:00.000Z",
+      `sha256:${"a".repeat(64)}`,
+      { previousBudgetEvictedIds: run2.health.bodyBudgetEvictedIds },
+    );
+    expect(run3.enqueued).toBe(0);
+    expect([...run3.health.bodyBudgetEvictedIds].sort()).toEqual(
+      ["ever", "imp1-new", "imp1-old", "imp2", "imp3"],
+    );
+  });
 });
 

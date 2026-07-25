@@ -98,10 +98,21 @@ const footerLastRunRelative = footerLastRunAt
     <slot name="head" />
     <script is:inline>
       // Pre-paint: apply saved language to avoid flash.
+      // A shareable URL (?lang=en) is truthful and wins over any stored
+      // preference, so a fresh browser with no localStorage reproduces the
+      // language the link's author was viewing (see web/src/lib/lang-url.ts
+      // for the deferred, unit-tested version of this same resolution).
       (function () {
         try {
-          var l = localStorage.getItem("td:lang");
-          if (l !== "ja" && l !== "en") l = "ja";
+          var urlLang = new URLSearchParams(window.location.search).get("lang");
+          var l;
+          if (urlLang === "ja" || urlLang === "en") {
+            l = urlLang;
+            try { localStorage.setItem("td:lang", l); } catch (_) {}
+          } else {
+            l = localStorage.getItem("td:lang");
+            if (l !== "ja" && l !== "en") l = "ja";
+          }
           document.documentElement.setAttribute("data-lang", l);
           document.documentElement.setAttribute("lang", l);
         } catch (_) {
@@ -335,6 +346,7 @@ const footerLastRunRelative = footerLastRunAt
         runCadenceLead,
         WORKER_RUN_STATE_COPY,
       } from "../lib/run-health.ts";
+      import { hrefWithLang } from "../lib/lang-url.ts";
 
       initializeRelativeTimes();
 
@@ -470,10 +482,25 @@ const footerLastRunRelative = footerLastRunAt
 
       // Language toggle (Ja / En) — sync with <html data-lang="...">.
       (() => {
+        // Keep the address bar truthful: whatever the reader is looking at
+        // right now is what a copied/shared link reproduces in a fresh
+        // browser. replaceState (not pushState) so this never adds a
+        // back/forward history entry or touches focus (LL: shareable URL
+        // language contract).
+        const syncAddressBar = (l: "ja" | "en") => {
+          try {
+            const next = hrefWithLang(window.location.href, l);
+            const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+            if (next !== current) {
+              window.history.replaceState(window.history.state, "", next);
+            }
+          } catch {}
+        };
         const apply = (l: "ja" | "en") => {
           document.documentElement.setAttribute("data-lang", l);
           document.documentElement.setAttribute("lang", l);
           try { localStorage.setItem("td:lang", l); } catch {}
+          syncAddressBar(l);
           document.querySelectorAll<HTMLButtonElement>(".lang-btn").forEach((b) => {
             const on = b.dataset.lang === l;
             b.setAttribute("aria-pressed", on ? "true" : "false");

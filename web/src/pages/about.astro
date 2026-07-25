@@ -14,6 +14,7 @@ import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../lib/reaction-copy.ts";
 import { WORKER_HEALTH } from "../lib/data.ts";
 import { deriveWorkerRunStatus, WORKER_RUN_STATE_COPY } from "../lib/run-health.ts";
+import { NEW_ISSUE_URL } from "../lib/site.ts";
 
 const now = new Date();
 const lastUpdated = relativeTime(DASHBOARD_METRICS.generatedAt, now);
@@ -99,6 +100,7 @@ const pipelineSteps = [
       { href: "/feed.json", label: "JSON Feed" },
       { href: "/status", label: "Status" },
       { href: "#reactions-privacy", label: "Likes & privacy" },
+      { href: "#feedback", label: "問題を報告", labelEn: "Report an issue" },
     ]}
     metrics={[
       {
@@ -309,6 +311,43 @@ const pipelineSteps = [
           </span>
         </p>
       </section>
+
+      <section id="feedback" class="about-note-panel feedback-panel">
+        <h3>
+          <span class="i18n-ja">問題の報告</span>
+          <span class="i18n-en" lang="en">Report a problem</span>
+        </h3>
+        <p>
+          <span class="i18n-ja">
+            誤ったカテゴリ・タグ、翻訳の欠落、壊れたリンク、表示崩れなど、サイトの問題を見つけた場合は GitHub Issues で報告できます。
+            記事 URL や再現手順を含めていただくと調査しやすくなります。
+          </span>
+          <span class="i18n-en" lang="en">
+            If you notice a miscategorized entry, a missing translation, a broken link, or a display bug, you can report it
+            on GitHub Issues. Including the article URL and steps to reproduce helps investigation.
+          </span>
+        </p>
+        <p>
+          <span class="i18n-ja">
+            収集や AI 要約の遅れ自体は、通常の運用状態であり不具合ではありません。まず
+            <a href="/status">Status</a> で稼働状況・Queue backlog・収集エラーを確認し、それでも数時間以上 ERR が続く場合や、
+            意図的な障害と思われる場合に報告してください。
+          </span>
+          <span class="i18n-en" lang="en">
+            Collection or AI summary delays are expected operational states, not bugs by themselves. Check
+            <a href="/status">Status</a> first for run health, queue backlog, and collection errors, and report only when
+            an ERR state persists for several hours or looks like an unintended failure.
+          </span>
+        </p>
+        <p class="feedback-cta">
+          <a class="feedback-issue-link" href={NEW_ISSUE_URL} target="_blank" rel="noopener noreferrer">
+            <span aria-hidden="true">⚠</span>
+            <span class="i18n-ja">GitHub で問題を報告</span>
+            <span class="i18n-en" lang="en">Report an issue on GitHub</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+        </p>
+      </section>
     </main>
 
     <aside class="right about-insights">
@@ -454,6 +493,17 @@ const pipelineSteps = [
       0 14px 36px rgba(0, 0, 0, 0.16);
   }
 
+  #feedback {
+    scroll-margin-top: 120px;
+  }
+
+  #feedback:target {
+    border-color: color-mix(in srgb, var(--important) 72%, var(--border));
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--important) 16%, transparent),
+      0 14px 36px rgba(0, 0, 0, 0.16);
+  }
+
   .about-panel.large {
     grid-row: span 2;
   }
@@ -549,6 +599,14 @@ const pipelineSteps = [
     font-size: 12.5px;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .feedback-panel p + p {
+    margin-top: 10px;
+  }
+
+  .feedback-panel .feedback-cta {
+    margin-top: 12px;
   }
 
   .about-note-panel {

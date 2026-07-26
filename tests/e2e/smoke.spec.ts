@@ -5673,12 +5673,13 @@ test.describe("TECH Dashboard smoke", () => {
     await expectPagefindReady(page);
     await page.evaluate(() => {
       const pagefind = (window as any).__pagefind;
+      const now = Date.now();
       const result = (
         url: string,
         title: string,
         authority: string,
         importance: string,
-        publishedDay: string,
+        ageDays: number,
       ) => ({
         data: async () => ({
           url,
@@ -5686,16 +5687,20 @@ test.describe("TECH Dashboard smoke", () => {
             ? { title, titleEn: title, summaryEn: `${title} explains agent operations.` }
             : { title },
           excerpt: `${title} explains agent operations.`,
-          filters: { authority: [authority], importance: [importance], publishedDay: [publishedDay] },
+          filters: {
+            authority: [authority],
+            importance: [importance],
+            publishedDay: [new Date(now - ageDays * 86400000).toISOString().slice(0, 10)],
+          },
         }),
       });
 
       pagefind.search = async () => ({
         results: [
-          result("/categories/", "Agent categories", "source", "3", "2026-07-20"),
-          result("/e/community-agent/", "Community agent guide", "community", "3", "2026-07-20"),
-          result("/e/official-agent-old/", "Official high-importance reference", "official", "3", "2026-07-18"),
-          result("/e/official-agent-new/", "Official low-importance update", "official", "1", "2026-07-20"),
+          result("/categories/", "Agent categories", "source", "3", 2),
+          result("/e/community-agent/", "Community agent guide", "community", "3", 2),
+          result("/e/official-agent-old/", "Official high-importance reference", "official", "3", 4),
+          result("/e/official-agent-new/", "Official low-importance update", "official", "1", 2),
         ],
       });
     });

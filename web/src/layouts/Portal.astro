@@ -537,6 +537,7 @@ const footerLastRunRelative = footerLastRunAt
         let mobileTriggerPlaceholder: HTMLSpanElement | null = null;
         const isVisible = (el: HTMLElement | null): el is HTMLElement =>
           !!el && el.isConnected && el.getClientRects().length > 0 && !(el as HTMLButtonElement).disabled;
+        const visibleMenuTrigger = () => triggers.find(isVisible) ?? null;
         const syncPortalledMobileTrigger = () => {
           if (!portalledMobileTrigger || !mobileTriggerPlaceholder?.isConnected) return;
           const rect = mobileTriggerPlaceholder.getBoundingClientRect();
@@ -585,7 +586,8 @@ const footerLastRunRelative = footerLastRunAt
           restorePortalledMobileTrigger();
           menu.hidden = true;
           syncMenuTriggers(false);
-          if (restoreFocusOnClose && isVisible(lastTrigger)) lastTrigger.focus();
+          const focusTarget = isVisible(lastTrigger) ? lastTrigger : visibleMenuTrigger();
+          if (restoreFocusOnClose && focusTarget) focusTarget.focus();
           restoreFocusOnClose = false;
         };
         const openMenu = (trigger: HTMLButtonElement) => {
@@ -605,6 +607,15 @@ const footerLastRunRelative = footerLastRunAt
           else finalizeMenuClose();
         };
         (window as any).__tdCloseMenu = closeMenu;
+        const mobileNavigationBreakpoint = window.matchMedia("(max-width: 720px)");
+        mobileNavigationBreakpoint.addEventListener("change", () => {
+          if (!menu.open) return;
+          window.requestAnimationFrame(() => {
+            if (!menu.open) return;
+            lastTrigger = visibleMenuTrigger() ?? lastTrigger;
+            closeMenu(true);
+          });
+        });
 
         triggers.forEach((trigger) => {
           trigger.addEventListener("click", () => {

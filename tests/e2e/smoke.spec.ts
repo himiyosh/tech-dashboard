@@ -5089,6 +5089,68 @@ test.describe("TECH Dashboard smoke", () => {
     expect(mobileLayering.searchZ, "mobile search stays above the header layer").toBeGreaterThan(mobileLayering.headerZ);
   });
 
+  test("menu breakpoint changes close the dialog and focus the visible trigger", async ({ page }) => {
+    const menu = page.locator("#site-menu");
+    const desktopMenuTrigger = page.locator("header .menu-trigger");
+    const tabbar = page.getByRole("navigation", { name: "Primary" });
+    const mobileMenuTrigger = tabbar.getByRole("button", { name: /Menu/ });
+    const assertFocusedHitTestableTrigger = async (selector: string) => {
+      const evidence = await page.evaluate((selector) => {
+        const dialog = document.querySelector<HTMLDialogElement>("#site-menu");
+        const trigger = document.querySelector<HTMLButtonElement>(selector);
+        if (!dialog || !trigger) return null;
+        const rect = trigger.getBoundingClientRect();
+        const hit = document.elementFromPoint(
+          rect.left + rect.width / 2,
+          rect.top + rect.height / 2,
+        );
+        return {
+          dialogOpen: dialog.open,
+          focused: document.activeElement === trigger,
+          visible: trigger.getClientRects().length > 0,
+          hitTestable: hit === trigger || hit?.closest("[data-menu-trigger]") === trigger,
+        };
+      }, selector);
+      expect(evidence).toEqual({
+        dialogOpen: false,
+        focused: true,
+        visible: true,
+        hitTestable: true,
+      });
+    };
+    const expectNoHorizontalOverflow = async () => {
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+        .toBe(true);
+    };
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    await expect(desktopMenuTrigger).toBeVisible();
+    await desktopMenuTrigger.click();
+    await expect(menu).toBeVisible();
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(menu).toBeHidden();
+    await expect(tabbar).toBeVisible();
+    await expect(tabbar.locator("a, button")).toHaveCount(5);
+    await assertFocusedHitTestableTrigger(".mobile-tabbar button.mobile-menu-trigger");
+    await expectNoHorizontalOverflow();
+
+    await mobileMenuTrigger.click();
+    await expect(menu).toBeVisible();
+    await page.setViewportSize({ width: 844, height: 390 });
+    await expect(menu).toBeHidden();
+    await expect(tabbar).toBeHidden();
+    await expect(desktopMenuTrigger).toBeVisible();
+    await expect(page.locator("header .nav-shortcut")).toHaveCount(3);
+    await expect(page.locator("header .nav-shortcut", { hasText: "Categories" })).toBeVisible();
+    await expect(page.locator("header .nav-shortcut", { hasText: "arXiv" })).toBeVisible();
+    await expect(page.locator("header .nav-shortcut", { hasText: "Knowledge" })).toBeVisible();
+    await assertFocusedHitTestableTrigger("header .menu-trigger");
+    await expectNoHorizontalOverflow();
+  });
+
   test("mobile featured panel and thumbnails keep fallback layout", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");

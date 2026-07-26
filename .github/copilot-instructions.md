@@ -119,6 +119,7 @@
 - mobile bottom tabbar は `Home / Categories / arXiv / Knowledge / Menu` の 5 action とする。explore shortcut (Categories / arXiv / Knowledge) は desktop header と mobile tabbar の両方に出し、どちらの viewport でも到達できるようにする。Search / Archive / Status / About は `#site-menu` に集約する。
 - explore shortcut のページ (`/categories/`, `/arxiv/`, `/knowledge/`) では、その shortcut だけを active にし、`Menu` trigger を active にしない (`menuOwnsCurrentPage` は `navItems` 由来なので explore shortcut を含めない)。
 - mobile (`max-width: 720px`) では header の `.header-switcher` を `display:none` にし、explore は bottom tabbar に集約する。header nav link row を page top に露出させない。
+- `#site-menu` が開いている間に `matchMedia("(max-width: 720px)")` が変化したら、responsive layout が反映された次 frame で dialog を閉じ、変更後の viewport で visible な Menu trigger へ focus を戻す。mobile の portalled trigger を dialog 外へ残したままにせず、desktop→mobile と mobile→landscape の両方向を E2E で検証する。
 - homepage banner の `.banner-quick-links` も Categories / arXiv / Knowledge の 3 link を同じアクセント色で並べる。
 - nav 変更時は E2E で desktop 3 explore shortcut 表示、desktop hamburger 表示、menu 内 secondary links (Archive / Status / About / Search)、menu 内 Categories / arXiv / Knowledge 非表示 (重複なし)、mobile tabbar 5 item と各 item 幅・横スクロールなし、Categories / Knowledge ページで該当 shortcut が active かつ Menu 非 active、menu open/close、Archive / About / Status / Search の menu 動線を必ず検証する。
 
@@ -170,7 +171,7 @@
 - **省略条件**: 1-2 文で済む短い回答 (単純な Yes/No 確認など) ではサマリ不要。
 
 ### R-021: Visual review は DOM 寸法と画像 fallback まで見る
-- mobile navigation を変更したら、`390x844` で `header .menu-trigger` が非表示、bottom tabbar が `Home / Categories / Menu` の 3 action、`#site-menu` が tabbar 由来の bottom-sheet として viewport 内に収まることを Playwright で検証する。
+- mobile navigation を変更したら、`390x844` で `header .menu-trigger` が非表示、bottom tabbar が `Home / Categories / arXiv / Knowledge / Menu` の 5 action、`#site-menu` が tabbar 由来の bottom-sheet として viewport 内に収まることを Playwright で検証する。
 - Featured / article card の layout を変更したら、空リンクや fallback 要素が grid/flex の通常 flow に参加していないこと、thumb/body の bounding box が期待位置にあること、panel height が異常に伸びないこと、mobile 通常カードの thumbnail が本文幅を削らず article panel の境界 gap が見えることを検証する。通常カードの OGP thumbnail は mobile では非表示にしてよい。
 - Knowledge card の mobile layout を変更したら、`390x844` で実画像がある entry だけ compact な正方形 thumb を出し、画像なし・画像失敗 entry は slot 自体を持たず本文が card 幅へ広がることを確認する。thumb の中央配置・本文非重複・全 card の高さ・横 overflow も DOM 寸法で検証する。
 - category directory / category detail の補助 panel は本文と一緒にスクロールさせる。primary navigation の左 Sidebar だけ sticky を維持し、scroll 前後の bounding box で両者の挙動を分けて検証する。
@@ -537,8 +538,8 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-050: mobile で header nav の一部を page top に残さない
 - **事象**: Archive / About が mobile bottom navigation に含まれず、代わりに header 内 `.nav` の残りリンクとしてページ上部に表示され続けた。ユーザーから「ナビゲーションバーになく、ページ上部に表示される」と再指摘された。
 - **根本原因**: mobile CSS が `.nav [data-mobile-primary] { display: none; }` で Timeline / Categories / Status だけを隠し、Archive / About を header nav の折り返し行として残していた。さらに primary navigation の所有者が header と tabbar に分裂していた。
-- **対策**: header の inline nav を廃止し、desktop / mobile とも hamburger `Menu` + `#site-menu` に primary links を集約する。mobile bottom tabbar は `Home / Search / Menu` の 3 action に限定し、Archive / About などは `#site-menu` から遷移する。
-- **教訓**: viewport ごとに primary navigation の source of truth を分裂させない。表示リンクが増えたら tabbar や header row を増やすのではなく、hamburger menu に集約する。
+- **対策**: header の inline nav を廃止し、desktop header は `Categories` / `arXiv` / `Knowledge` の direct shortcut と `Menu` に、mobile bottom tabbar は `Home / Categories / arXiv / Knowledge / Menu` の 5 action に整理する。Archive / About などの secondary destination は `#site-menu` から遷移する。
+- **教訓**: viewport ごとに primary navigation の source of truth を分裂させない。direct shortcut は desktop header と mobile tabbar の両方で同じ destination を指し、それ以外の secondary link は hamburger menu に集約する。
 
 ### LL-051: top-level Archive にだけ breadcrumb が出る不一致を防ぐ
 - **事象**: Categories / Status / About には breadcrumb が無い一方で、top-level の `/archive/` にだけ `Home › Archive` の breadcrumb が表示され、ページ構造が不揃いに見えた。
@@ -552,12 +553,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: top-level page (`/categories/`, `/archive/`, `/status/`, `/about/`) の PageHero に `page-hero-top-level` を付け、6 KPI / 3列 / 同一 inner width / 同一 metric width を標準にする。Archive / Status は KPI を 6 件に補い、E2E で top-level hero class、inner width、metric count、metric width 差を検証する。
 - **教訓**: 共通コンポーネントでもデータ件数・列数がページごとに違うと見た目の幅感は揺れる。top-level の visual system は class と寸法テストで固定し、ページ個別の KPI 数に任せない。
 
-### LL-053: ナビ項目が増えたら hamburger に集約し、tabbar は 3 action に保つ
+### LL-053: ナビ項目が増えても direct shortcut と secondary destination を分ける
 - **事象**: mobile tabbar が `Home / Categories / Archive / Status / About / Search` の 6 項目になり、ユーザーから「ナビゲーションメニューが多すぎる」と指摘された。
 - **根本原因**: 以前の再発防止で「全リンクを mobile tabbar に載せる」方向に寄せたため、項目数が増えるほど固定 UI が圧縮され、primary action の優先順位も分かりにくくなった。
-- **対策**: `Portal.astro` に shared hamburger menu (`#site-menu`) を置き、desktop header も mobile bottom tabbar も同じ menu を開く。Categories は Search より優先度が高い探索導線として header / mobile tabbar に直接表示し、Search は desktop input と menu 内補助 action に移す。mobile tabbar は `Home / Categories / Menu` の 3 action に戻し、E2E で item count、menu open/close、menu link 遷移、Search 補助 action、横スクロールなしを検証する。
+- **対策**: `Portal.astro` に shared hamburger menu (`#site-menu`) を置き、desktop header は `Categories` / `arXiv` / `Knowledge` の direct shortcut と Menu、mobile bottom tabbar は `Home / Categories / arXiv / Knowledge / Menu` の 5 action にする。Search は desktop input と menu 内補助 action に移し、Archive / Status / About は menu-owned secondary destination にする。E2E で item count、menu open/close、menu link 遷移、Search 補助 action、横スクロールなしを検証する。
 - **追加対策**: `#site-menu` は banner / search / tabbar より上の layer に置き、mobile header には `z-index` を付与する。E2E では menu link の実クリックを通し、背面 CTA が pointer event を奪わないことを確認する。
-- **教訓**: fixed bottom navigation は 3〜4 action 程度に抑える。5 個以上の destination link を直接並べるより、重要 action と menu trigger に分ける。検索より重要な探索入口 (Categories など) は hamburger に隠しすぎない。
+- **教訓**: fixed bottom navigation は Home、3 つの direct explore shortcut、Menu の 5 action に固定する。secondary destination を直接追加せず、重要な探索入口 (Categories / arXiv / Knowledge) は hamburger に隠しすぎない。
 
 ### LL-054: direct shortcut は hamburger の active state / menu item から除外する
 - **事象**: Categories を直接導線として header / mobile tabbar に出した後も、Categories 選択時に Menu button まで active 表示になり、PC の hamburger 内にも Categories が残っているように見えた。
@@ -2721,11 +2722,11 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓 (follow-up 2)**: 「優先度が最も高い tier は絶対に prune しない」という設計は、その tier 自体が無制限に成長し得る場合、budget enforcement 全体を無意味にする。優先度の高低は「どの順で prune するか」を決めるだけであり、「prune され得るか」を決めるものではない — 最上位 tier も含めた**全 tier が候補プールに入り、単に prune 順序の末尾に位置する**ように設計すれば、"prune 不可能な例外" を一切作らずに budget 保証を無条件にできる。降順ソートで最上位 tier を自然に末尾へ送るような比較関数の設計は、特別扱いの除外ロジックより単純かつ正しい。cross-run な「除外済み id を解放してよいか」の判定を、**固定の閾値 rank** で行うと、prunable な tier が増えるたびに (今回は evergreen) 同じ waste loop バグを別の tier で再導入する。正しい一般化は、判定基準そのものを「今 observe できる事実」(=現在生き残っている中の最悪 rank) に置き換えることであり、これは新しい tier が prunable になっても自動的に正しく振る舞う。「protected」「保護」という言葉を使う設計は、それが「絶対的」なのか「相対的な優先順位」なのかを必ず明記する — 曖昧なままだと、後から別の tier を prunable にした際に同種のバグを繰り返しやすい。
 - **follow-up 2 の独立レビュー指摘 (non-blocking、修正済み)**: 上記 fix のロジック自体に blocking issue は無かったが、独立レビューで 2 点の残存 stale comment を発見した — `worker/src/index.ts` の `enforceBodiesBudget()` 呼び出し直前のコメントと `scripts/clean-source-noise.mjs` の同等コメントが、`.github/copilot-instructions.md`/README/CHANGELOG の更新から漏れて "Evergreen entries are never pruned" / "Evergreen is protected absolutely" という古い文言のまま残っていた (コード本体のロジックは既に正しく修正済みだったが、コメントだけが古い設計を主張していた)。両方を「pruned last、絶対的免除ではない」へ修正した。加えて `enforceBodiesBudget()` の docstring が「record が 1 件でも存在すれば必ず target 以下を保証する」と無条件に書いていたが、target が理論上の最小 JSON envelope サイズ (`{"generatedAt":...,"count":0,"bodies":{}}`、100 byte 未満) より小さい病的な誤設定の場合はこの限りではない (envelope 自体より小さくすることは不可能なため) ことが判明した。本番の `DEFAULT_BODY_BUDGET_TARGET_BYTES` (9,000,000) はこの envelope よりも桁違いに大きいため実運用では発生しないが、docstring にこの理論上の例外を明記し、クラッシュ・無限ループせず全件 prune した実バイト数を返す (best effort) ことを固定するテストを追加した。**追加テスト (統合レベル)**: `tests/worker-body-pipeline.test.ts` (実 `runBodyPipeline()` を通す統合テスト) へ、importance 1 の prune だけでは足りず importance 2 まで prune しても importance 3 / evergreen は手つかずで生き残る tier fallback テストと、evergreen 自体が last-resort として prune される 3-run 分の persistence テスト (round 2 の importance==1 版と対になる、evergreen 版の cross-run waste-loop 回帰テスト) を追加し、純粋関数単体テストだけでなく実 pipeline 経由でも同じ不変条件を固定した。**教訓**: ドキュメント更新は「関連ファイルを更新した」で終わらず、呼び出しサイトのインラインコメントも含めてリポジトリ全体を grep する。「常に保証する」という強い docstring の主張は、理論上の反例 (病的な入力値) が無いかを実際に手計算・実行して確認してから書く。純粋関数の単体テストで不変条件を検証しても、実際の呼び出し経路 (統合テスト) でも同じシナリオ (特に cross-run persistence のような複数呼び出しにまたがる契約) を固定しないと、呼び出し側の配線ミスや副作用の見落としを見逃し得る。
 
-### LL-412: modal dialog の外に見せた操作面は backdrop 越しに再操作できない
+### LL-413: modal dialog の外に見せた操作面は backdrop 越しに再操作できない
 - **事象**: 390x844 の mobile viewport で `#site-menu` を `showModal()` すると、下部 tabbar に見えている唯一の Menu button を再度押して閉じられなかった。dialog sheet 自体は tabbar の上で止まっていたが、button の中心を `document.elementFromPoint()` で調べると dialog/backdrop が返った。
 - **根本原因**: modal `dialog` は top layer と viewport 全体の backdrop を生成し、dialog 外の tabbar を inert にする。通常の document stacking context にある button を z-index だけで上げても top layer/backdrop より前面には出せないため、見た目だけでは操作契約を回復できない。
-- **対策**: mobile Menu の実 button を開いている dialog の child へ一時的に移し、元の grid cell は placeholder で保持する。placeholder の実測 rect を dialog 内の button に適用するため、元の 5 action tabbar geometry を保ったまま、top layer 内で同じ button を pointer/touch toggle として使える。close 時は DOM を復元し、Escape/backdrop の native close では opener へ focus を戻す。E2E は center hit test、同一 button の toggle close、sheet/tabbar の境界、focus containment、Escape/backdrop focus restoration、横 overflow を同時に確認する。
-- **教訓**: native modal overlay と固定 navigation を共存させるとき、modal 外の visible control を「重なって見えるから操作できる」と見なさない。interactive control を top layer の owned subtree へ移すか、非 modal primitive の keyboard/inert contract を明示的に実装する。どちらでも `elementFromPoint()` と実際の pointer click を regression test に入れ、z-index の見た目だけで合格にしない。
+- **対策**: mobile Menu の実 button を開いている dialog の child へ一時的に移し、元の grid cell は placeholder で保持する。placeholder の実測 rect を dialog 内の button に適用するため、元の 5 action tabbar geometry を保ったまま、top layer 内で同じ button を pointer/touch toggle として使える。close 時は DOM を復元し、Escape/backdrop の native close では opener へ focus を戻す。`matchMedia("(max-width: 720px)")` の change では responsive layout を待って dialog を閉じ、変更後に visible な trigger を選んで focus を戻す。E2E は center hit test、同一 button の toggle close、sheet/tabbar の境界、focus containment、Escape/backdrop と breakpoint transition の focus restoration、横 overflow を同時に確認する。
+- **教訓**: native modal overlay と固定 navigation を共存させるとき、modal 外の visible control を「重なって見えるから操作できる」と見なさない。interactive control を top layer の owned subtree へ移すか、非 modal primitive の keyboard/inert contract を明示的に実装する。portal した control は responsive breakpoint をまたいで残さず、`elementFromPoint()` と実際の pointer click、viewport 変更後の focus を regression test に入れ、z-index の見た目だけで合格にしない。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

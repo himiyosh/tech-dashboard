@@ -1,8 +1,59 @@
 {
-  "generatedAt": "2026-07-26T12:52:43.523Z",
+  "generatedAt": "2026-07-26T14:22:01.563Z",
   "month": "2026-07",
-  "count": 1105,
+  "count": 1110,
   "entries": [
+    {
+      "id": "aac02d0dc3848629",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/sakamoro/articles/f966c34eaee6ee",
+      "title": "GGUF互換なのに llama.cpp と PPL が一致しなかった──Layer 0まで追って見えた「演算経路」の違い",
+      "titleJa": "GGUF互換なのに llama.cpp と PPL が一致しなかった──Layer 0まで追って見えた「演算経路」の違い",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-26T11:00:05.000Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
+      "tags": [
+        "llm",
+        "open-model",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "自作の Rust 製 LLM 推論エンジン (ALICE-LLM) で Qwen 3.5-4B の Perplexity を実測したら、同じ GGUF 重みを読ませたはずの llama.cpp と PPL が 2.68 倍 乖離していました GGUF 互換 = llama.cpp 互換ではなかった 8 個の仮説を順に潰し、Layer 0 の op-by-op ダンプまで潜って辿り着いた「現時点で最も説明力の高い仮説」は、単一のバグではなく 実装上の計算経路全体の違い でした 本記事では、evaluation order・reduction order・a",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--d2Pv5Uuw--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:GGUF%25E4%25BA%2592%25E6%258F%259B%25E3%2581%25AA%25E3%2581%25AE%25E3%2581%25AB%2520llama.cpp%2520%25E3%2581%25A8%2520PPL%2520%25E3%2581%258C%25E4%25B8%2580%25E8%2587%25B4%25E3%2581%2597%25E3%2581%25AA%25E3%2581%258B%25E3%2581%25A3%25E3%2581%259F%25E2%2594%2580%25E2%2594%2580Layer%25200%25E3%2581%25BE%25E3%2581%25A7%25E8%25BF%25BD%25E3%2581%25A3%25E3%2581%25A6%25E8%25A6%258B%25E3%2581%2588%25E3%2581%259F%25E3%2580%258C%25E6%25BC%2594%25E7%25AE%2597%25E7%25B5%258C%25E8%25B7%25AF%25E3%2580%258D%25E3%2581%25AE%25E9%2581%2595%25E3%2581%2584%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E5%259D%2582%25E6%259C%25AC%25E5%25B8%25AB%25E5%2593%2589%2520Moroya%2520Sakamoto%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSTFzSXQ1X0JZanhSN2t1aHRNaVNwVzBVY3NWM0NwS2pKTTRUdWNFMG5fblJDQnQtYmN4QT1zOTYtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--d2Pv5Uuw--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:GGUF%25E4%25BA%2592%25E6%258F%259B%25E3%2581%25AA%25E3%2581%25AE%25E3%2581%25AB%2520llama.cpp%2520%25E3%2581%25A8%2520PPL%2520%25E3%2581%258C%25E4%25B8%2580%25E8%2587%25B4%25E3%2581%2597%25E3%2581%25AA%25E3%2581%258B%25E3%2581%25A3%25E3%2581%259F%25E2%2594%2580%25E2%2594%2580Layer%25200%25E3%2581%25BE%25E3%2581%25A7%25E8%25BF%25BD%25E3%2581%25A3%25E3%2581%25A6%25E8%25A6%258B%25E3%2581%2588%25E3%2581%259F%25E3%2580%258C%25E6%25BC%2594%25E7%25AE%2597%25E7%25B5%258C%25E8%25B7%25AF%25E3%2580%258D%25E3%2581%25AE%25E9%2581%2595%25E3%2581%2584%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E5%259D%2582%25E6%259C%25AC%25E5%25B8%25AB%25E5%2593%2589%2520Moroya%2520Sakamoto%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSTFzSXQ1X0JZanhSN2t1aHRNaVNwVzBVY3NWM0NwS2pKTTRUdWNFMG5fblJDQnQtYmN4QT1zOTYtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "GGUF互換なのに llama.cpp と PPL が一致しなかった──Layer 0まで追って見えた「演算経路」の違い",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "6147027214229859",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/sdkfz181tiger/articles/bb22e00f405626",
+      "title": "OllamaではじめるローカルLLM入門(Python対応)",
+      "titleJa": "OllamaではじめるローカルLLM入門(Python対応)",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-26T10:32:20.000Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "01: Ollamaとは!? Ollamaは、ローカル環境で気軽にLLM(Large Language Model)を実行・管理するツールです。 お手持ちのコンピューター内だけで完結するので、トークン消費を気にせずLLMを使う事ができます。 更に、クラウドAPIへデータを送信せず、ローカル環境だけでLLMを実行できます。 他にも様々なモデルを自由に選択することも可能です。 (一度モデルをダウンロードした後は、インターネット接続なしで利用できます) Ollamaちゃん 02: インストール インストールはとても簡単です。 下記のコマンドをターミナルで実行し"
+    },
     {
       "id": "171a79dde56dea19",
       "source": "qiita-vscode",
@@ -38,6 +89,70 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "be6b1540136e5fe6",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/shibacorgi/items/e9d2dfe399d0475f7aaf",
+      "title": "Kimi-K2.6、Qwen3.6、gemma-4、勝つのはどれだ！無料オープンLLM対決！",
+      "titleJa": "Kimi-K2.6、Qwen3.6、gemma-4、勝つのはどれだ！無料オープンLLM対決！",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-26T10:06:58.000Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
+      "tags": [
+        "llm",
+        "open-model",
+        "qiita"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに さくらのAI Engineには、月3,000回まで無料で使える「基盤モデル無償プラン」があり、gpt-oss-120bやKimi-K2.6、Qwen3系、Phi-4系など、チャット生成モデルだけで9種類が並んでいます。 せっかく無料で使えるので、これらのモデルを..."
+    },
+    {
+      "id": "43497269dabefd62",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/tokimoa/articles/7493750c801369",
+      "title": "日本語OCRモデルSarashina2.2-OCRをMLXへ移植する。モデルカードだけでは分からない実装を追った記録",
+      "titleJa": "日本語OCRモデルSarashina2.2-OCRをMLXへ移植する。モデルカードだけでは分からない実装を追った記録",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-26T08:43:42.000Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "移植で分かったこと SB Intuitionsの日本語OCRモデル sbintuitions/sarashina2.2-ocr（3B・MIT）を、mlx-vlmに未収録のアーキテクチャだったため自前でモデルクラスを実装してMLX（Apple Silicon）へ移植しました。要点は3つです。 モデルカードは学習元を説明していますが、移植に必要な実行時構造までは分かりません。実装は Qwen2-VL系ViT + Qwen3-VL系のdeepstack merger + Llama-3B + interleaved M-RoPE の「spatial_reset"
+    },
+    {
+      "id": "867ffb2c55449bfb",
+      "source": "zenn-llm",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/tokimoa/articles/2f8a22ff2ee051",
+      "title": "LLMの監督モデルはどこまで小さくできるか。9B・35B・自己検査で実測したら三様の結果になった",
+      "titleJa": "LLMの監督モデルはどこまで小さくできるか。9B・35B・自己検査で実測したら三様の結果になった",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-26T08:41:53.000Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
+      "tags": [
+        "llm",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "実測結果 主モデルの出力を監督モデルが検査し、指摘があれば主モデルが再生成する二段構成を、日本語の議事録要約40問×監督3種で実測しました。効果は監督の選び方で正反対になります。 主モデル 監督 事実忠実度（0〜2） 期日誤り率 形式適合 検査速度 gemma-4-26b-a4b（強・基準1.83） Qwen3.5-9B 1.73（−0.10） 0.05 0.88 22秒/問 Qwen3.6-35B-A3B 1.85（+0.03） 0.11 0.98 4.1秒/問 自己検査（gemma自身） 1.90（+0.08） 0.08 1.00 3.3秒/問 ll"
     },
     {
       "id": "aec15d5dc81cddbd",
@@ -150,7 +265,7 @@
       "titleEn": "One fallen power line exposed a growing AI data center problem. Here’s how to fix it.",
       "lang": "en",
       "publishedAt": "2026-07-25T13:05:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "ai-infrastructure",
         "data-center",
@@ -792,7 +907,7 @@
       "titleEn": "langchain-anthropic==1.5.2",
       "lang": "en",
       "publishedAt": "2026-07-24T19:08:23.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "agent",
         "anthropic",
@@ -1883,7 +1998,7 @@
       "titleEn": "langchain-openai==1.4.1",
       "lang": "en",
       "publishedAt": "2026-07-23T20:31:30.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "agent",
         "langchain",
@@ -1916,7 +2031,7 @@
       "titleEn": "langchain-fireworks==1.5.1",
       "lang": "en",
       "publishedAt": "2026-07-23T20:28:43.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "agent",
         "fireworks",
@@ -1948,7 +2063,7 @@
       "titleEn": "langchain-anthropic==1.5.1",
       "lang": "en",
       "publishedAt": "2026-07-23T20:23:18.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "agent",
         "anthropic",
@@ -1981,7 +2096,7 @@
       "titleEn": "langchain-core==1.5.1",
       "lang": "en",
       "publishedAt": "2026-07-23T20:13:37.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "agent",
         "langchain",
@@ -3143,7 +3258,7 @@
       "titleEn": "langchain-openrouter==0.2.7",
       "lang": "en",
       "publishedAt": "2026-07-22T20:16:36.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "agent",
         "langchain",
@@ -3280,8 +3395,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "Copilot now bills usage at listed API rates. Compare direct model access with the coding workflow, policy, and harness work around it. The post Copilot vs. raw API access: What are you actually paying for? appeared first on The GitHub Blog ."
+      "contentSnippet": "Copilot now bills usage at listed API rates. Compare direct model access with the coding workflow, policy, and harness work around it. The post Copilot vs. raw API access: What are you actually paying for? appeared first on The GitHub Blog .",
+      "evergreen": true
     },
     {
       "id": "5c7a0e9ed0d3e365",
@@ -3499,7 +3614,7 @@
       "titleEn": "Building Agents that Act on Your Behalf with Toolboxes in Foundry",
       "lang": "en",
       "publishedAt": "2026-07-22T15:00:29.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "agent",
         "ai",
@@ -3512,8 +3627,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "How Toolboxes in Foundry simplify user delegation At some point, many agents move from answering questions to taking action. And when it does, the question becomes: whose identity is it acting with? Imagine you are building an internal employee agent. It needs to call a private, ",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "How Toolboxes in Foundry simplify user delegation At some point, many agents move from answering questions to taking action. And when it does, the question becomes: whose identity is it acting with? Imagine you are building an internal employee agent. It needs to call a private, "
     },
     {
       "id": "cfd84ce2f8c6ea93",
@@ -4278,7 +4393,7 @@
       "titleEn": "langchain-anthropic==1.5.0",
       "lang": "en",
       "publishedAt": "2026-07-21T18:17:28.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "agent",
         "anthropic",
@@ -4387,7 +4502,7 @@
       "titleEn": "Introducing the ChatGPT for small business program",
       "lang": "en",
       "publishedAt": "2026-07-21T17:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "chatgpt",
         "openai",
@@ -4493,7 +4608,7 @@
       "titleEn": "langchain-fireworks==1.5.0",
       "lang": "en",
       "publishedAt": "2026-07-21T16:16:19.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "agent",
         "fireworks-ai",
@@ -4526,7 +4641,7 @@
       "titleEn": "langchain-xai==1.3.0",
       "lang": "en",
       "publishedAt": "2026-07-21T16:15:45.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "agent",
         "grok",
@@ -4559,7 +4674,7 @@
       "titleEn": "langchain-openai==1.4.0",
       "lang": "en",
       "publishedAt": "2026-07-21T16:09:41.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "agent",
         "langchain",
@@ -4605,7 +4720,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Canvases turn AI into interactive workspaces where you can visualize information, explore workflows, and take action across complex tasks. The post How to build interactive experiences with canvases appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/06/MSFTBuild_Blog_Header_01.jpg?fit=2400%2C1260",
@@ -4614,7 +4728,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "527c90fe001be1f4",
@@ -9579,7 +9694,7 @@
       "titleEn": "A scorecard for the AI age",
       "lang": "en",
       "publishedAt": "2026-07-17T10:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "accountability",
         "ai-policy",
@@ -11440,7 +11555,7 @@
       "titleEn": "What building Shippy taught us about building agents",
       "lang": "en",
       "publishedAt": "2026-07-15T17:29:41.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "agent",
         "agent-design",
@@ -11465,7 +11580,7 @@
       "titleEn": "Model Routing Is Simple. Until It Isn’t.",
       "lang": "en",
       "publishedAt": "2026-07-15T17:27:01.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "huggingface",
         "ibm-research",
@@ -12047,7 +12162,7 @@
       "titleEn": "The US is advancing AI safety through state and federal action",
       "lang": "en",
       "publishedAt": "2026-07-15T12:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "ai-safety",
         "openai",
@@ -12174,7 +12289,7 @@
       "titleEn": "GPT-Red: Unlocking Self-Improvement for Robustness",
       "lang": "en",
       "publishedAt": "2026-07-15T10:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "ai-safety",
         "gpt-red",
@@ -12701,7 +12816,7 @@
       "titleEn": "Welcome Inkling by Thinking Machines",
       "lang": "en",
       "publishedAt": "2026-07-15T00:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "huggingface",
         "inkling",
@@ -13836,7 +13951,7 @@
       "titleEn": "How to manage AI investments in the agentic era",
       "lang": "en",
       "publishedAt": "2026-07-14T10:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -15074,7 +15189,7 @@
       "titleEn": "How data science teams use ChatGPT Work",
       "lang": "en",
       "publishedAt": "2026-07-14T00:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "chatgpt",
         "codex",
@@ -19841,8 +19956,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "How migrating Copilot code review to shared Unix-style code exploration tools reduced review cost by reshaping agent workflows around pull request evidence. The post Better tools made Copilot code review worse. Here’s how we actually improved it. appeared first on The GitHub Blog"
+      "contentSnippet": "How migrating Copilot code review to shared Unix-style code exploration tools reduced review cost by reshaping agent workflows around pull request evidence. The post Better tools made Copilot code review worse. Here’s how we actually improved it. appeared first on The GitHub Blog",
+      "evergreen": true
     },
     {
       "id": "60fd74dad92cbcc4",
@@ -20641,7 +20756,7 @@
       "summaryEn": "Deutsche Telekom is partnering with OpenAI to transform customer service and network operations with AI, marking a significant enterprise deployment of AI in the telecom sector.",
       "lang": "en",
       "publishedAt": "2026-07-10T07:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "deutsche-telekom",
         "enterprise",
@@ -21674,7 +21789,7 @@
       "summaryEn": "The third installment of a PyTorch profiling series focuses on diagnosing and optimizing attention mechanism bottlenecks in large language models, offering practical techniques for real-world performance gains.",
       "lang": "en",
       "publishedAt": "2026-07-10T00:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "attention",
         "huggingface",
@@ -22493,7 +22608,7 @@
       "summaryEn": "OpenAI's GPT-5.6 has been designated the default model powering Microsoft 365 Copilot, bringing the latest capabilities to enterprise productivity tools used by millions.",
       "lang": "en",
       "publishedAt": "2026-07-09T13:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "copilot",
         "enterprise",
@@ -22570,7 +22685,7 @@
       "summaryEn": "OpenAI launched GPT-5.6, a new frontier model designed to scale intelligence across diverse use cases, offering developers and enterprises enhanced reasoning and task-handling capabilities.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "gpt-5",
         "llm",
@@ -22596,7 +22711,7 @@
       "summaryEn": "OpenAI has repositioned ChatGPT as a capable collaborator for complex, high-stakes work, expanding its role beyond simple Q&A into a true professional partner for ambitious projects.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "ai-assistant",
         "chatgpt",
@@ -22621,7 +22736,7 @@
       "summaryEn": "OpenAI launched a bio-focused bug bounty program for GPT-5.5, inviting external researchers to probe the model for biosafety vulnerabilities and help strengthen its defenses against biological misuse.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "biosafety",
         "bug-bounty",
@@ -23391,7 +23506,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Explore how the Aspire team turns merged product changes into SME-reviewed docs pull requests, closing the gap between release and documentation. The post Automating cross-repo documentation with GitHub Agentic Workflows appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/01/generic-mona-copilot-logo.png",
@@ -23400,7 +23514,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "e498a5108f393999",
@@ -23749,8 +23864,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "Go from an empty repository to a live custom domain with HTTPS in about 14 minutes, without manually editing a single DNS record. The post How GitHub Copilot enables zero DNS configuration for GitHub Pages appeared first on The GitHub Blog ."
+      "contentSnippet": "Go from an empty repository to a live custom domain with HTTPS in about 14 minutes, without manually editing a single DNS record. The post How GitHub Copilot enables zero DNS configuration for GitHub Pages appeared first on The GitHub Blog .",
+      "evergreen": true
     },
     {
       "id": "29e7163d7a001a6e",
@@ -24072,7 +24187,7 @@
       "summaryEn": "Apple has announced increased spending with Broadcom to manufacture billions of additional chips in the United States, signaling a major push toward domestic semiconductor production.",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:13.748Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "apple",
         "broadcom",
@@ -24100,7 +24215,7 @@
       "summaryEn": "OpenAI launched an initiative to help K–12 educators develop hands-on AI skills, equipping teachers with practical tools and knowledge to integrate AI effectively into their classrooms.",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "ai-literacy",
         "education",
@@ -24513,7 +24628,7 @@
       "summaryEn": "Transformers is now a native modeling backend for vLLM, enabling full-speed inference without duplicating model implementations across the two libraries.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "huggingface",
         "inference",
@@ -24538,7 +24653,7 @@
       "summaryEn": "OpenAI announced GPT-Live, a new real-time interactive AI experience that enables more natural, live interactions with GPT models, marking a significant step in conversational AI accessibility.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "conversational-ai",
         "gpt-live",
@@ -24875,7 +24990,7 @@
       "summaryEn": "A new one-click integration lets users deploy Hugging Face models directly into Amazon SageMaker Studio, significantly reducing friction for ML practitioners moving from model discovery to production.",
       "lang": "en",
       "publishedAt": "2026-07-07T21:15:33.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "aws",
         "deployment",
@@ -25254,7 +25369,7 @@
       "summaryEn": "Hugging Face open models can now be deployed on Microsoft Foundry Managed Compute, making it easier for enterprises to run open-source LLMs in a managed cloud environment.",
       "lang": "en",
       "publishedAt": "2026-07-07T15:20:06.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "azure",
         "deployment",
@@ -25611,7 +25726,7 @@
       "titleEn": "What’s New in Microsoft Foundry | June 2026",
       "lang": "en",
       "publishedAt": "2026-07-07T07:10:25.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "ai",
         "ai-platform",
@@ -25625,6 +25740,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Claude is now generally available in Microsoft Foundry. Here's everything else that shipped between Build 2026 and the end of June — autopilot agents, expanded Toolboxes and Routines, Agent Optimizer's private preview, and more. The post What’s New in Microsoft Foundry | June 202",
       "image": {
         "src": "https://devblogs.microsoft.com/foundry/wp-content/uploads/sites/89/2026/07/Whats-New-June-2026.webp",
@@ -25633,8 +25749,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "bee242a6477cb421",
@@ -26178,7 +26293,7 @@
       "summaryEn": "SkyPilot now integrates with Hugging Face as a zero-egress storage backend, letting teams run AI workloads on any cloud while keeping datasets and model artifacts on Hugging Face without incurring data transfer fees.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "cloud-storage",
         "huggingface",
@@ -26203,7 +26318,7 @@
       "summaryEn": "LeRobot v0.6.0 introduces capabilities for imagination-based planning, improved evaluation pipelines, and iterative policy improvement, making robot learning more accessible without physical hardware.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "benchmark",
         "huggingface",
@@ -26230,7 +26345,7 @@
       "summaryEn": "MUFG has partnered with OpenAI to embed AI across its entire organization, pursuing a transformation into a fully AI-native bank. The move signals a major commitment by a global financial institution to AI-driven operations.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "enterprise-ai",
         "finance",
@@ -26256,7 +26371,7 @@
       "summaryEn": "Australian Payments Plus adopted ChatGPT and Codex to accelerate software development and streamline operations, demonstrating practical AI gains in critical financial infrastructure.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "case-study",
         "codex",
@@ -26614,7 +26729,7 @@
       "summaryEn": "Photoroom details the data strategy behind their PRX model series, covering how they curated and managed training data for local LLMs. This matters because robust data pipelines are central to achieving strong model performance.",
       "lang": "en",
       "publishedAt": "2026-07-06T15:30:55.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "data-strategy",
         "huggingface",
@@ -27204,7 +27319,7 @@
       "summaryEn": "Hugging Face has revamped its Kernels platform, making it significantly easier to integrate and share optimized GPU kernels within inference pipelines, delivering better performance for local LLM deployments.",
       "lang": "en",
       "publishedAt": "2026-07-06T00:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "cuda",
         "gpu",
@@ -31499,7 +31614,7 @@
       "summaryEn": "Hugging Face and Cerebras have partnered to integrate Google's Gemma 4 model into a real-time voice AI pipeline, enabling low-latency conversational experiences by combining fast inference hardware with state-of-the-art open models.",
       "lang": "en",
       "publishedAt": "2026-07-01T00:00:00.000Z",
-      "collectedAt": "2026-07-26T08:03:28.607Z",
+      "collectedAt": "2026-07-26T14:21:55.898Z",
       "tags": [
         "cerebras",
         "gemma",

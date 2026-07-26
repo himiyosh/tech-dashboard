@@ -9,6 +9,7 @@ import TimelineRightRail from "../components/TimelineRightRail.astro";
 import Pager from "../components/Pager.astro";
 import SourceDisclosure from "../components/SourceDisclosure.astro";
 import LanguageFallbackBadge from "../components/LanguageFallbackBadge.astro";
+import ExternalLinkHint from "../components/ExternalLinkHint.astro";
 import ArxivIcon from "../components/icons/ArxivIcon.astro";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { sourceFaviconUrl } from "../lib/favicon.ts";
@@ -313,12 +314,14 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
                           <LanguageFallbackBadge fallbackLang={ja.fallbackLang} variant="title" />
                         )}
                         {ja.text}
+                        {featuredDestination?.external && <ExternalLinkHint lang="ja" />}
                       </span>
                       <span class="i18n-en" lang={en.fallbackLang === "ja" ? "ja" : "en"}>
                         {en.isFallback && en.fallbackLang && (
                           <LanguageFallbackBadge fallbackLang={en.fallbackLang} variant="title" />
                         )}
                         {en.text}
+                        {featuredDestination?.external && <ExternalLinkHint lang="en" />}
                       </span>
                     </>
                   );
@@ -437,12 +440,14 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
                                 <LanguageFallbackBadge fallbackLang={ja.fallbackLang} variant="title" />
                               )}
                               {ja.text}
+                              {destination.external && <ExternalLinkHint lang="ja" />}
                             </span>
                             <span class="i18n-en" lang={en.fallbackLang === "ja" ? "ja" : "en"}>
                               {en.isFallback && en.fallbackLang && (
                                 <LanguageFallbackBadge fallbackLang={en.fallbackLang} variant="title" />
                               )}
                               {en.text}
+                              {destination.external && <ExternalLinkHint lang="en" />}
                             </span>
                           </>
                         );

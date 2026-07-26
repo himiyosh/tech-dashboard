@@ -79,7 +79,7 @@ describe("sitemap", () => {
       href: "https://example.com/cold",
       external: true,
       target: "_blank",
-      rel: "noopener nofollow",
+      rel: "noopener noreferrer nofollow",
     });
     expect(totalPageCount(0, 20)).toBe(1);
     expect(paginationPageNumbers(20, 20)).toEqual([]);

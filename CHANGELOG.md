@@ -25,7 +25,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 変更
 
-- cold / dropped の記事カードは存在しない内部 detail route ではなく canonical source URL を開くようにし、hot / warm は従来どおり内部 detail を使います。production build は sitemap URL と生成済み canonical HTML の双方向 parity、redirect-only 除外、全 HTML の cold / dropped 内部 link 0 件を fail-closed で検証します。
+- cold / dropped の記事カードは存在しない内部 detail route ではなく canonical source URL を開くようにし、hot / warm は従来どおり内部 detail を使います。新しいタブで開く source link は共有 `noopener noreferrer nofollow`、共通の `↗`、表示言語別の読み上げ補足を持ちます。production build は sitemap URL と生成済み canonical HTML の双方向 parity、redirect-only 除外、標準 HTML parser が抽出した実要素の href を各 HTML の canonical route 基準で解決し、全内部 detail link が実在することを fail-closed で検証します。
 - 記事詳細の「タイトルと URL をコピー」は EN 表示時に `?lang=en` を含む URL を共有できるようにし、共有相手が別ブラウザで開いても表示言語が一致するようにしました。
 - Publisher が実英語要約から安全に導出できる `titleEn` を publish 前に自動補完し、日本語コミュニティ記事の英語表示で原題 fallback が連続する状態を減らすようにしました。
 - 毎時 Publisher は生成データに関係する Home・記事詳細・metrics・Archive・404 の専用 E2E を実行し、全 UI 回帰は PR CI で維持するようにしました。成功した Publisher の完了後は Worker Health を自動確認します。

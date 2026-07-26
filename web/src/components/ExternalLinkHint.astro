@@ -1,0 +1,36 @@
+---
+export interface Props {
+  lang: "ja" | "en";
+}
+
+const { lang } = Astro.props;
+const text = lang === "ja" ? "新しいタブで開きます" : "opens in a new tab";
+---
+
+<span
+  class:list={["external-link-hint", lang === "ja" ? "i18n-ja" : "i18n-en"]}
+  data-external-link-hint
+  data-hint-lang={lang}
+  lang={lang}
+>
+  <span class="external-link-hint-icon" aria-hidden="true">↗</span>
+  <span class="visually-hidden">（{text}）</span>
+</span>
+
+<style>
+  .external-link-hint {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    margin-inline-start: 0.28em;
+    line-height: 1;
+    vertical-align: 0.08em;
+    white-space: nowrap;
+  }
+
+  .external-link-hint-icon {
+    font-size: 0.82em;
+    font-weight: 750;
+    opacity: 0.86;
+  }
+</style>

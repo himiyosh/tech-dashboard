@@ -391,7 +391,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 - `web/src/lib/site.ts` の `SITE_URL` を canonical origin の唯一の正本とする。
 - `/sitemap.xml` は Home、top-level destination、カテゴリ、生成済みページネーション、arXiv / Knowledge / Glossary、Archive 月、10件以上の生成対象タグ、live と warm の記事詳細だけを重複なしで列挙する。
 - redirect-only `/sources`、query URL、生成されない低頻度タグ、外部 URL、cold / dropped の記事詳細は含めない。
-- 一覧上の cold / dropped は canonical source URL、untiered / hot / warm は内部 detail URL を共通 destination helper で選ぶ。production build は sitemap と実際の canonical HTML inventory の双方向 parity、redirect-only 非包含、全 HTML の cold / dropped 内部 detail link 0 件を検証する。
+- 一覧上の cold / dropped は canonical source URL、untiered / hot / warm は内部 detail URL を共通 destination helper で選ぶ。新しいタブで開く source link は共有 `rel="noopener noreferrer nofollow"`、`↗`、表示言語別の visually-hidden 補足を持つ。production build は sitemap と実際の canonical HTML inventory の双方向 parity、redirect-only 非包含、標準 HTML parser が抽出・復号した実要素の `href` を各 HTML の canonical route 基準で解決し、内部 `/e/{id}/` link が実在する detail route を指すことを検証する。
 - `lastmod` は route の実更新時刻を保証できないため付与しない。50,000 URL または uncompressed 50 MB を超える場合は build を fail-closed にする。
 - `/robots.txt` は crawl を許可し、`Sitemap: {SITE_URL}/sitemap.xml` を広告 publisher ID と無関係に公開する。実 publisher ID が無い `ads.txt` は生成しない。
 

@@ -4,6 +4,7 @@ import Sidebar from "../../components/Sidebar.astro";
 import CategoryThumb from "../../components/CategoryThumb.astro";
 import ArticleLike from "../../components/ArticleLike.astro";
 import LanguageFallbackBadge from "../../components/LanguageFallbackBadge.astro";
+import ExternalLinkHint from "../../components/ExternalLinkHint.astro";
 import { SITE_URL } from "../../lib/site.ts";
 import {
   ALL_ENTRIES,
@@ -30,7 +31,10 @@ import {
 import { articleBodyState, bodyForEntry } from "../../lib/bodies.ts";
 import { ARCHIVE_WARM_ENTRIES } from "../../lib/archive.ts";
 import { collectAddressableDetailEntries } from "../../lib/detail-addressability.ts";
-import { entryDestination } from "../../lib/entry-destination.ts";
+import {
+  entryDestination,
+  EXTERNAL_ENTRY_REL,
+} from "../../lib/entry-destination.ts";
 import { sourceFaviconUrl, sourceHost } from "../../lib/favicon.ts";
 import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../../lib/reaction-copy.ts";
 import {
@@ -439,13 +443,14 @@ const jsonLd = {
             </>)}
           </div>
           <div class="ed-action-strip">
-            <a class="ed-header-cta" href={sourceUrl} target="_blank" rel="noopener nofollow">
+            <a class="ed-header-cta" href={sourceUrl} target="_blank" rel={EXTERNAL_ENTRY_REL}>
               <span class="ed-header-cta-copy">
                 <span class="i18n-ja">元記事を読む</span>
                 <span class="i18n-en" lang="en">Read original article</span>
                 <small>{sourceHost(sourceUrl)}</small>
               </span>
-              <span aria-hidden="true">↗</span>
+              <ExternalLinkHint lang="ja" />
+              <ExternalLinkHint lang="en" />
             </a>
             <button
               class="ed-share-btn"
@@ -780,12 +785,14 @@ const jsonLd = {
                     <LanguageFallbackBadge fallbackLang={prevTitles.ja.fallbackLang} variant="title" />
                   )}
                   {prevTitles?.ja.text}
+                  {prevDestination?.external && <ExternalLinkHint lang="ja" />}
                 </span>
                 <span class="ed-pn-title i18n-en" lang={prevTitles?.en.fallbackLang ?? "en"}>
                   {prevTitles?.en.isFallback && prevTitles.en.fallbackLang && (
                     <LanguageFallbackBadge fallbackLang={prevTitles.en.fallbackLang} variant="title" />
                   )}
                   {prevTitles?.en.text}
+                  {prevDestination?.external && <ExternalLinkHint lang="en" />}
                 </span>
                 <span class="ed-pn-time" data-relative-time data-datetime={prev.publishedAt}>
                   {relativeTime(prev.publishedAt, now)}
@@ -811,12 +818,14 @@ const jsonLd = {
                     <LanguageFallbackBadge fallbackLang={nextTitles.ja.fallbackLang} variant="title" />
                   )}
                   {nextTitles?.ja.text}
+                  {nextDestination?.external && <ExternalLinkHint lang="ja" />}
                 </span>
                 <span class="ed-pn-title i18n-en" lang={nextTitles?.en.fallbackLang ?? "en"}>
                   {nextTitles?.en.isFallback && nextTitles.en.fallbackLang && (
                     <LanguageFallbackBadge fallbackLang={nextTitles.en.fallbackLang} variant="title" />
                   )}
                   {nextTitles?.en.text}
+                  {nextDestination?.external && <ExternalLinkHint lang="en" />}
                 </span>
                 <span class="ed-pn-time" data-relative-time data-datetime={next.publishedAt}>
                   {relativeTime(next.publishedAt, now)}
@@ -874,12 +883,14 @@ const jsonLd = {
                           <LanguageFallbackBadge fallbackLang={rTitleJa.fallbackLang} variant="title" />
                         )}
                         {rTitleJa.text}
+                        {destination.external && <ExternalLinkHint lang="ja" />}
                       </span>
                       <span class="i18n-en" lang={rTitleEn.fallbackLang ?? "en"}>
                         {rTitleEn.isFallback && rTitleEn.fallbackLang && (
                           <LanguageFallbackBadge fallbackLang={rTitleEn.fallbackLang} variant="title" />
                         )}
                         {rTitleEn.text}
+                        {destination.external && <ExternalLinkHint lang="en" />}
                       </span>
                     </div>
                     <div class="ed-rel-meta">
@@ -979,12 +990,14 @@ const jsonLd = {
                         <LanguageFallbackBadge fallbackLang={rTitleJa.fallbackLang} variant="title" />
                       )}
                       {rTitleJa.text}
+                      {destination.external && <ExternalLinkHint lang="ja" />}
                     </span>
                     <span class="rail-item-title i18n-en" lang={rTitleEn.fallbackLang ?? "en"}>
                       {rTitleEn.isFallback && rTitleEn.fallbackLang && (
                         <LanguageFallbackBadge fallbackLang={rTitleEn.fallbackLang} variant="title" />
                       )}
                       {rTitleEn.text}
+                      {destination.external && <ExternalLinkHint lang="en" />}
                     </span>
                     <span class="rail-item-time" data-relative-time data-datetime={r.publishedAt}>
                       {relativeTime(r.publishedAt, now)}
@@ -1017,12 +1030,14 @@ const jsonLd = {
                         <LanguageFallbackBadge fallbackLang={rTitleJa.fallbackLang} variant="title" />
                       )}
                       {rTitleJa.text}
+                      {destination.external && <ExternalLinkHint lang="ja" />}
                     </span>
                     <span class="rail-item-title i18n-en" lang={rTitleEn.fallbackLang ?? "en"}>
                       {rTitleEn.isFallback && rTitleEn.fallbackLang && (
                         <LanguageFallbackBadge fallbackLang={rTitleEn.fallbackLang} variant="title" />
                       )}
                       {rTitleEn.text}
+                      {destination.external && <ExternalLinkHint lang="en" />}
                     </span>
                     <span class="rail-item-time" data-relative-time data-datetime={r.publishedAt}>
                       {relativeTime(r.publishedAt, now)}

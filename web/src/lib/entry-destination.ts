@@ -5,6 +5,8 @@ import {
 import { detailPath } from "./route-inventory.ts";
 import { canonicalSourceUrl } from "./source-meta.ts";
 
+export const EXTERNAL_ENTRY_REL = "noopener noreferrer nofollow" as const;
+
 export interface EntryDestinationInput {
   id: string;
   url: string;
@@ -15,7 +17,7 @@ export interface EntryDestination {
   href: string;
   external: boolean;
   target?: "_blank";
-  rel?: "noopener nofollow";
+  rel?: typeof EXTERNAL_ENTRY_REL;
 }
 
 export function entryDestination(
@@ -31,6 +33,6 @@ export function entryDestination(
     href: canonicalSourceUrl(entry.url),
     external: true,
     target: "_blank",
-    rel: "noopener nofollow",
+    rel: EXTERNAL_ENTRY_REL,
   };
 }

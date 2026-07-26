@@ -11,6 +11,7 @@ import {
 } from "../lib/data.ts";
 import { canonicalSourceUrl, sourceLabel } from "../lib/source-meta.ts";
 import { entryDestination } from "../lib/entry-destination.ts";
+import ExternalLinkHint from "./ExternalLinkHint.astro";
 
 export interface Props {
   entry: NormalizedEntry;
@@ -52,7 +53,6 @@ function typeLabel(t: NormalizedEntry["sourceType"]): string {
   target={destination.target}
   rel={destination.rel}
   data-detail-destination={destination.external ? "source" : "internal"}
-  aria-label={`${title} from ${sourceLabel(entry.source, entry.url)}, ${categoryName}`}
   style={`--cat-color:${catColor}`}
 >
   <span class="cat-dot" title={categoryName}></span>
@@ -67,7 +67,15 @@ function typeLabel(t: NormalizedEntry["sourceType"]): string {
       <span class="i18n-en" lang="en">{RECENT_COLLECTION_BADGE.en}</span>
     </span>
   )}
-  <span class="title">{title}</span>
+  <span class="title">
+    {title}
+    {destination.external && (
+      <>
+        <ExternalLinkHint lang="ja" />
+        <ExternalLinkHint lang="en" />
+      </>
+    )}
+  </span>
   <span class="spacer"></span>
   <span class="src">{sourceLabel(entry.source, entry.url)}</span>
   <span class="host">{host(sourceUrl)}</span>

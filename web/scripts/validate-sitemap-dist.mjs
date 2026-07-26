@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
+import { parse } from "parse5";
 
 const REDIRECT_MARKERS = [
   /<meta[^>]+http-equiv=["']refresh["']/i,
@@ -38,9 +39,46 @@ function htmlFiles(root) {
   return files;
 }
 
+function hrefAttributes(html) {
+  const hrefs = [];
+  const stack = [parse(html)];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (Array.isArray(node.attrs)) {
+      for (const attribute of node.attrs) {
+        // parse5 normalizes HTML names and also exposes foreign/namespaced attrs
+        // through this shape. Both HTML/SVG href attributes carry name="href".
+        if (attribute.name === "href") hrefs.push(attribute.value);
+      }
+    }
+    if (Array.isArray(node.childNodes)) {
+      for (let index = node.childNodes.length - 1; index >= 0; index -= 1) {
+        stack.push(node.childNodes[index]);
+      }
+    }
+  }
+  return hrefs;
+}
+
+function normalizedInternalDetailPath(href, documentUrl) {
+  let url;
+  try {
+    url = new URL(href, documentUrl);
+  } catch {
+    return null;
+  }
+  if (url.origin !== documentUrl.origin) return null;
+  const match = /^\/e\/([^/]+)\/?$/.exec(url.pathname);
+  if (!match) return null;
+  try {
+    return `/e/${encodeURIComponent(decodeURIComponent(match[1]))}/`;
+  } catch {
+    return `${url.pathname.replace(/\/?$/, "/")}`;
+  }
+}
+
 export function validateSitemapDist({
   distDirectory,
-  indexPath,
 }) {
   const sitemapPath = path.join(distDirectory, "sitemap.xml");
   const sitemapXml = readFileSync(sitemapPath, "utf8");
@@ -63,15 +101,9 @@ export function validateSitemapDist({
     sitemapPaths.add(url.pathname);
   }
 
-  const index = JSON.parse(readFileSync(indexPath, "utf8"));
-  const nonAddressableIds = new Set(
-    index.entries
-      .filter((entry) => entry.archiveTier === "cold" || entry.archiveTier === "dropped")
-      .map((entry) => entry.id),
-  );
   const canonicalHtmlPaths = new Set();
   const redirectPaths = new Set();
-  const coldInboundLinks = [];
+  const internalDetailLinks = [];
 
   for (const filePath of htmlFiles(distDirectory)) {
     const route = routeForHtml(distDirectory, filePath);
@@ -79,18 +111,20 @@ export function validateSitemapDist({
     const html = readFileSync(filePath, "utf8");
     const isRedirect = REDIRECT_MARKERS.some((marker) => marker.test(html));
     (isRedirect ? redirectPaths : canonicalHtmlPaths).add(route);
-
-    for (const match of html.matchAll(/href=["'](?:https?:\/\/[^/"']+)?\/e\/([^/"'#?]+)\/["']/g)) {
-      const id = decodeURIComponent(match[1]);
-      if (nonAddressableIds.has(id)) {
-        coldInboundLinks.push(`${route} -> /e/${id}/`);
-      }
+    if (isRedirect) continue;
+    const documentUrl = new URL(route, `${canonicalOrigin}/`);
+    for (const href of hrefAttributes(html)) {
+      const detailPath = normalizedInternalDetailPath(href, documentUrl);
+      if (detailPath) internalDetailLinks.push({ route, detailPath });
     }
   }
 
   const missingHtml = [...sitemapPaths].filter((route) => !canonicalHtmlPaths.has(route));
   const missingSitemap = [...canonicalHtmlPaths].filter((route) => !sitemapPaths.has(route));
   const redirectInSitemap = [...redirectPaths].filter((route) => sitemapPaths.has(route));
+  const invalidInternalDetailLinks = internalDetailLinks
+    .filter(({ detailPath }) => !canonicalHtmlPaths.has(detailPath))
+    .map(({ route, detailPath }) => `${route} -> ${detailPath}`);
   const failures = [];
   if (missingHtml.length > 0) {
     failures.push(`sitemap URLs without canonical HTML: ${missingHtml.slice(0, 10).join(", ")}`);
@@ -101,8 +135,10 @@ export function validateSitemapDist({
   if (redirectInSitemap.length > 0) {
     failures.push(`redirect-only URLs in sitemap: ${redirectInSitemap.slice(0, 10).join(", ")}`);
   }
-  if (coldInboundLinks.length > 0) {
-    failures.push(`cold/dropped internal detail links: ${coldInboundLinks.slice(0, 10).join(", ")}`);
+  if (invalidInternalDetailLinks.length > 0) {
+    failures.push(
+      `internal detail links without generated canonical routes: ${invalidInternalDetailLinks.slice(0, 10).join(", ")}`,
+    );
   }
   if (failures.length > 0) {
     throw new Error(`Built crawl parity validation failed:\n- ${failures.join("\n- ")}`);
@@ -113,6 +149,7 @@ export function validateSitemapDist({
     sitemapByteLength,
     canonicalHtmlCount: canonicalHtmlPaths.size,
     redirectCount: redirectPaths.size,
-    coldInboundLinkCount: coldInboundLinks.length,
+    internalDetailLinkCount: internalDetailLinks.length,
+    invalidInternalDetailLinkCount: invalidInternalDetailLinks.length,
   };
 }

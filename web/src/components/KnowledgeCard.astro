@@ -15,6 +15,7 @@ import { entryDestination } from "../lib/entry-destination.ts";
 import { sourceFaviconUrl, sourceHost } from "../lib/favicon.ts";
 import ArticleLike from "./ArticleLike.astro";
 import LanguageFallbackBadge from "./LanguageFallbackBadge.astro";
+import ExternalLinkHint from "./ExternalLinkHint.astro";
 
 export interface Props {
   entry: NormalizedEntry;
@@ -72,11 +73,13 @@ const hasImage = imgSrc.length > 0;
           {titleJa.isFallback && titleJa.fallbackLang && (
             <LanguageFallbackBadge fallbackLang={titleJa.fallbackLang} variant="title" />
           )}{titleJa.text}
+          {destination.external && <ExternalLinkHint lang="ja" />}
         </span>
         <span class="i18n-en" lang={titleEn.fallbackLang === "ja" ? "ja" : "en"}>
           {titleEn.isFallback && titleEn.fallbackLang && (
             <LanguageFallbackBadge fallbackLang={titleEn.fallbackLang} variant="title" />
           )}{titleEn.text}
+          {destination.external && <ExternalLinkHint lang="en" />}
         </span>
       </h3>
 

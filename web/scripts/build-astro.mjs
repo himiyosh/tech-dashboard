@@ -270,10 +270,9 @@ console.log(`BUILD: phase=legacy-tag-redirects state=completed files=${legacyTag
 
 const crawlParity = validateSitemapDist({
   distDirectory: dist,
-  indexPath: path.resolve("../data/index.json"),
 });
 console.log(
-  `BUILD: phase=crawl-parity state=completed sitemapUrls=${crawlParity.sitemapUrlCount} sitemapBytes=${crawlParity.sitemapByteLength} canonicalHtml=${crawlParity.canonicalHtmlCount} redirects=${crawlParity.redirectCount} coldInboundLinks=${crawlParity.coldInboundLinkCount}`,
+  `BUILD: phase=crawl-parity state=completed sitemapUrls=${crawlParity.sitemapUrlCount} sitemapBytes=${crawlParity.sitemapByteLength} canonicalHtml=${crawlParity.canonicalHtmlCount} redirects=${crawlParity.redirectCount} internalDetailLinks=${crawlParity.internalDetailLinkCount} invalidInternalDetailLinks=${crawlParity.invalidInternalDetailLinkCount}`,
 );
 
 await runPhase("pagefind", pagefindCommand, ["--site", "dist"]);

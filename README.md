@@ -141,7 +141,7 @@ npx -y modern-web-guidance@latest retrieve "accessibility,css,performance,securi
 | Typecheck | `npm run typecheck` | TypeScript 型チェック | 速い |
 | Worker Typecheck | `npm --prefix worker run typecheck && npm --prefix worker-summarizer run typecheck && npm --prefix worker-body run typecheck` | Cloudflare Worker / Queue consumer の型チェック | 速い |
 | Unit | `npm test` | Vitest による関数単位の検証 (要約 JSON パース、Web ロジック、`data/index.json` スキーマ) | 速い (~1s) |
-| Web build | `npm run build:web` | Cloudflare Pages と同じ Astro + Pagefind build を実行し、30秒 heartbeat、phase別 CPU/RSS、route/file数、3,200 HTML route上限に加えて sitemap と canonical HTML の双方向 parity、redirect 除外、cold / dropped 内部 detail link 0 件を検証 | 中程度 |
+| Web build | `npm run build:web` | Cloudflare Pages と同じ Astro + Pagefind build を実行し、30秒 heartbeat、phase別 CPU/RSS、route/file数、3,200 HTML route上限に加えて sitemap と canonical HTML の双方向 parity、redirect 除外、標準 HTML parser で各 HTML route を基準に解決した存在しない内部 detail link 0 件を検証 | 中程度 |
 | E2E | `npm run test:e2e` | Playwright (Chromium) でトップ表示・記事詳細・言語切替を検証 | 中程度 (~30s + build) |
 | Secret scan | `npm run secrets:scan` | tracked file の secret / private key / 高リスクファイル名を検証 | 速い |
 | Worktree secret scan | `npm run secrets:scan:worktree` | tracked + untracked non-ignored file を検証し、ignored local secret store は値を読まず path だけ警告 | 速い |

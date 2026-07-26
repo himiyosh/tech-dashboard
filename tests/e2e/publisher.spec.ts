@@ -88,6 +88,77 @@ test.describe("Publisher generated artifact", () => {
     expect(runtimeErrors).toEqual([]);
   });
 
+  test("announces detail and disclosure source links in both languages", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    const internalEntry = page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first();
+    await expect(internalEntry).toBeVisible();
+    await expect(internalEntry).not.toHaveAttribute("target");
+    await expect(internalEntry).not.toHaveAttribute("rel");
+    await expect(internalEntry).not.toHaveAccessibleName(
+      /新しいタブで開きます|opens in a new tab/,
+    );
+    const detailHref = await internalEntry.getAttribute("href");
+    if (!detailHref) throw new Error("generated Timeline entry is missing href");
+
+    const disclosure = page.locator(".featured-src.source-disclosure");
+    const disclosureTrigger = disclosure.locator("[data-source-disclosure-trigger]");
+    await expect(disclosureTrigger).not.toHaveAccessibleName(
+      /新しいタブで開きます|opens in a new tab/,
+    );
+    await disclosureTrigger.click();
+    const disclosureLink = disclosure.locator(".source-disclosure-link");
+    await expect(disclosureLink).toHaveAttribute("target", "_blank");
+    await expect(disclosureLink).toHaveAttribute("rel", "noopener noreferrer nofollow");
+    await expect(disclosureLink).toHaveAccessibleName(
+      /元記事で掲載元を確認.*新しいタブで開きます/,
+    );
+    await expect(disclosureLink.locator('[data-hint-lang="ja"]')).toBeVisible();
+    await expect(disclosureLink.locator('[data-hint-lang="en"]')).toBeHidden();
+    await expect(disclosureLink.locator('[data-external-link-hint]:visible')).toHaveCount(1);
+    await expect(disclosureLink.locator(':scope > [aria-hidden="true"]')).toHaveCount(0);
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(disclosureLink).toHaveAccessibleName(
+      /Verify at the original article.*opens in a new tab/,
+    );
+    await expect(disclosureLink.locator('[data-hint-lang="en"]')).toBeVisible();
+    await expect(disclosureLink.locator('[data-hint-lang="ja"]')).toBeHidden();
+    await expect(disclosureTrigger).not.toHaveAccessibleName(
+      /新しいタブで開きます|opens in a new tab/,
+    );
+
+    await page.goto(detailHref, { waitUntil: "domcontentloaded" });
+    await page.locator('.lang-btn[data-lang="ja"]').click();
+    const sourceCta = page.locator(".ed-header-cta");
+    await expect(sourceCta).toHaveAttribute("target", "_blank");
+    await expect(sourceCta).toHaveAttribute("rel", "noopener noreferrer nofollow");
+    await expect(sourceCta).toHaveAccessibleName(
+      /元記事を読む.*新しいタブで開きます/,
+    );
+    await expect(sourceCta.locator('[data-hint-lang="ja"]')).toBeVisible();
+    await expect(sourceCta.locator('[data-hint-lang="en"]')).toBeHidden();
+    await expect(sourceCta.locator('[data-external-link-hint]:visible')).toHaveCount(1);
+    await expect(sourceCta.locator(':scope > [aria-hidden="true"]')).toHaveCount(0);
+
+    const copyAction = page.locator(".ed-share-btn[data-share-copy]");
+    await expect(copyAction).not.toHaveAttribute("target");
+    await expect(copyAction).not.toHaveAttribute("rel");
+    await expect(copyAction).not.toHaveAccessibleName(
+      /新しいタブで開きます|opens in a new tab/,
+    );
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(sourceCta).toHaveAccessibleName(
+      /Read original article.*opens in a new tab/,
+    );
+    await expect(sourceCta.locator('[data-hint-lang="en"]')).toBeVisible();
+    await expect(sourceCta.locator('[data-hint-lang="ja"]')).toBeHidden();
+    await expect(copyAction).not.toHaveAccessibleName(
+      /新しいタブで開きます|opens in a new tab/,
+    );
+  });
+
   test("publishes coherent generated metrics", async ({ request }) => {
     const response = await request.get("/metrics.json");
     expect(response.ok()).toBe(true);
@@ -167,7 +238,7 @@ test.describe("Publisher generated artifact", () => {
     expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${cold!.id}/</loc>`);
   });
 
-  test("routes cold listing cards to source while hot and warm cards stay internal", async ({
+  test("routes and announces cold source links while hot and warm cards stay internal", async ({
     page,
   }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
@@ -212,22 +283,68 @@ test.describe("Publisher generated artifact", () => {
     const coldLink = coldCard.locator("h3.title > a");
     await expect(coldLink).toHaveAttribute("href", canonicalSourceUrl(cold!.entry.url));
     await expect(coldLink).toHaveAttribute("target", "_blank");
+    await expect(coldLink).toHaveAttribute("rel", "noopener noreferrer nofollow");
+    const coldAction = coldCard.locator("a.url");
+    await expect(coldAction).toHaveAttribute("target", "_blank");
+    await expect(coldAction).toHaveAttribute("rel", "noopener noreferrer nofollow");
+    await expect(coldLink).toHaveAccessibleName(/新しいタブで開きます/);
+    const jaHint = coldLink.locator(
+      '[data-external-link-hint][data-hint-lang="ja"]',
+    );
+    const enHint = coldLink.locator(
+      '[data-external-link-hint][data-hint-lang="en"]',
+    );
+    await expect(jaHint).toBeVisible();
+    await expect(jaHint.locator('[aria-hidden="true"]')).toHaveText("↗");
+    await expect(enHint).toBeHidden();
     await expect(page.locator(`a[href="/e/${cold!.entry.id}/"]`)).toHaveCount(0);
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(coldLink).toHaveAccessibleName(/opens in a new tab/);
+    await expect(enHint).toBeVisible();
+    await expect(jaHint).toBeHidden();
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(enHint).toBeVisible();
+    await page.locator('.lang-btn[data-lang="ja"]').click();
+    await expect(coldLink).toHaveAccessibleName(/新しいタブで開きます/);
+    await expect(jaHint).toBeVisible();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
 
     await page.goto(hot!.route!, { waitUntil: "domcontentloaded" });
     const hotCard = page.locator(`[data-entry-id="${hot!.entry.id}"]`);
     await expect(hotCard).toHaveAttribute("data-detail-destination", "internal");
-    await expect(hotCard.locator("h3.title > a")).toHaveAttribute(
+    const hotLink = hotCard.locator("h3.title > a");
+    await expect(hotLink).toHaveAttribute(
       "href",
       `/e/${hot!.entry.id}/`,
+    );
+    await expect(hotLink).not.toHaveAttribute("target");
+    await expect(hotLink).not.toHaveAttribute("rel");
+    await expect(hotCard.locator("a.url")).not.toHaveAttribute("target");
+    await expect(hotCard.locator("a.url")).not.toHaveAttribute("rel");
+    await expect(hotLink.locator("[data-external-link-hint]")).toHaveCount(0);
+    await expect(hotLink).not.toHaveAccessibleName(
+      /新しいタブで開きます|opens in a new tab/,
     );
 
     await page.goto(warm!.route, { waitUntil: "domcontentloaded" });
     const warmCard = page.locator(`[data-entry-id="${warm!.entry.id}"]`);
     await expect(warmCard).toHaveAttribute("data-detail-destination", "internal");
-    await expect(warmCard.locator("h3.title > a")).toHaveAttribute(
+    const warmLink = warmCard.locator("h3.title > a");
+    await expect(warmLink).toHaveAttribute(
       "href",
       `/e/${warm!.entry.id}/`,
+    );
+    await expect(warmLink).not.toHaveAttribute("target");
+    await expect(warmLink).not.toHaveAttribute("rel");
+    await expect(warmCard.locator("a.url")).not.toHaveAttribute("target");
+    await expect(warmCard.locator("a.url")).not.toHaveAttribute("rel");
+    await expect(warmLink.locator("[data-external-link-hint]")).toHaveCount(0);
+    await expect(warmLink).not.toHaveAccessibleName(
+      /新しいタブで開きます|opens in a new tab/,
     );
   });
 

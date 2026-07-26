@@ -14,14 +14,17 @@ import {
   jstDayLabel,
   relativeTime,
 } from "../../lib/data.ts";
+import {
+  paginationPageNumbers,
+  totalPageCount,
+} from "../../lib/route-inventory.ts";
 
 export function getStaticPaths() {
-  const total = Math.max(1, Math.ceil(MAIN_TIMELINE_ENTRIES.length / PAGE_SIZE));
-  const paths: Array<{ params: { page: string }; props: { page: number; total: number } }> = [];
-  for (let p = 2; p <= total; p++) {
-    paths.push({ params: { page: String(p) }, props: { page: p, total } });
-  }
-  return paths;
+  const total = totalPageCount(MAIN_TIMELINE_ENTRIES.length, PAGE_SIZE);
+  return paginationPageNumbers(MAIN_TIMELINE_ENTRIES.length, PAGE_SIZE).map((page) => ({
+    params: { page: String(page) },
+    props: { page, total },
+  }));
 }
 
 interface Props {

@@ -1,4 +1,7 @@
 ---
+import { EXTERNAL_ENTRY_REL } from "../lib/entry-destination.ts";
+import ExternalLinkHint from "./ExternalLinkHint.astro";
+
 interface Props {
   label: string;
   class?: string;
@@ -49,10 +52,11 @@ const {
       </span>
     )}
     {href && (
-      <a class="source-disclosure-link" href={href} target="_blank" rel="noopener nofollow">
+      <a class="source-disclosure-link" href={href} target="_blank" rel={EXTERNAL_ENTRY_REL}>
         <span class="i18n-ja">元記事で掲載元を確認</span>
         <span class="i18n-en" lang="en">Verify at the original article</span>
-        <span aria-hidden="true">↗</span>
+        <ExternalLinkHint lang="ja" />
+        <ExternalLinkHint lang="en" />
       </a>
     )}
     <span class="source-disclosure-hint">

@@ -1969,7 +1969,7 @@ test.describe("TECH Dashboard smoke", () => {
     expect([hasProse, hasDigest, hasPending].filter(Boolean)).toHaveLength(1);
     await expect(sourceCta).toHaveCount(1);
     await expect(sourceCta).toBeVisible();
-    await expect(sourceCta.locator(".i18n-ja")).toHaveText("元記事を読む");
+    await expect(sourceCta.locator(".ed-header-cta-copy > .i18n-ja")).toHaveText("元記事を読む");
     await expect(sourceCta.locator("small")).not.toHaveText("");
     await expect(copyAction).toHaveCount(1);
     await expect(copyAction).toBeVisible();
@@ -4799,7 +4799,7 @@ test.describe("TECH Dashboard smoke", () => {
       "target",
       "_blank",
     );
-    await expect(coldCard.locator("a.url .i18n-ja")).toHaveText("元記事");
+    await expect(coldCard.locator("a.url > .i18n-ja")).toContainText("元記事");
   });
 
   test("navigation highlights sections without marking ancestor links as the current page", async ({ page }) => {
@@ -6550,7 +6550,7 @@ test.describe("TECH Dashboard smoke", () => {
     const sourceCta = page.locator(".ed-header-cta");
     await expect(sourceCta).toHaveCount(1);
     await expect(sourceCta).toHaveAttribute("href", /^https?:\/\//);
-    await expect(sourceCta.locator(".i18n-ja")).toHaveText("元記事を読む");
+    await expect(sourceCta.locator(".ed-header-cta-copy > .i18n-ja")).toHaveText("元記事を読む");
     await expect(sourceCta.locator("small")).not.toHaveText("");
     await expect(page.locator(".ed-hot-pill")).toHaveCount(0);
   });

@@ -6,15 +6,16 @@
  */
 import {
   CATEGORY_META,
-  entryHref,
   relativeTime,
   titleForLangWithFallback,
   summaryForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
+import { entryDestination } from "../lib/entry-destination.ts";
 import { sourceFaviconUrl, sourceHost } from "../lib/favicon.ts";
 import ArticleLike from "./ArticleLike.astro";
 import LanguageFallbackBadge from "./LanguageFallbackBadge.astro";
+import ExternalLinkHint from "./ExternalLinkHint.astro";
 
 export interface Props {
   entry: NormalizedEntry;
@@ -33,13 +34,20 @@ const rel = relativeTime(entry.publishedAt ?? entry.collectedAt);
 const siteHost = sourceHost(entry.url);
 const favicon = sourceFaviconUrl(entry.url);
 const tags = (entry.tags ?? []).slice(0, 2);
+const destination = entryDestination(entry);
 
 const imgSrc = typeof entry.image?.src === "string" && entry.image.src.length > 0 ? entry.image.src : "";
 const hasImage = imgSrc.length > 0;
 ---
 
 <article class={`kg-card ${hasImage ? "has-image" : "no-image"}`} style={`--cat-color:${catColor}`}>
-  <a class="kg-card-link" href={entryHref(entry)}>
+  <a
+    class="kg-card-link"
+    href={destination.href}
+    target={destination.target}
+    rel={destination.rel}
+    data-detail-destination={destination.external ? "source" : "internal"}
+  >
     {hasImage && (
       <div class="kg-thumb" aria-hidden="true">
         <img
@@ -65,11 +73,13 @@ const hasImage = imgSrc.length > 0;
           {titleJa.isFallback && titleJa.fallbackLang && (
             <LanguageFallbackBadge fallbackLang={titleJa.fallbackLang} variant="title" />
           )}{titleJa.text}
+          {destination.external && <ExternalLinkHint lang="ja" />}
         </span>
         <span class="i18n-en" lang={titleEn.fallbackLang === "ja" ? "ja" : "en"}>
           {titleEn.isFallback && titleEn.fallbackLang && (
             <LanguageFallbackBadge fallbackLang={titleEn.fallbackLang} variant="title" />
           )}{titleEn.text}
+          {destination.external && <ExternalLinkHint lang="en" />}
         </span>
       </h3>
 

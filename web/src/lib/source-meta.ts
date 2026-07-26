@@ -58,7 +58,9 @@ export const SOURCE_META = [
   { id: "youtube-anthropic", displayName: "YouTube - Anthropic", category: "claude", tier: 3 },
 ] as const;
 
-const SOURCE_META_BY_ID = new Map(SOURCE_META.map((s) => [s.id, s] as const));
+const SOURCE_META_BY_ID = new Map<string, (typeof SOURCE_META)[number]>(
+  SOURCE_META.map((source) => [source.id, source]),
+);
 
 interface SourcePresentationOverride {
   label: string;

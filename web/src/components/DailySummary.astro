@@ -2,13 +2,13 @@
 import {
   CATEGORY_META,
   categoryLabel,
-  entryHref,
   isPublishableEntry,
   jstDateKey,
   summaryForLangWithFallback,
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
+import { entryDestination } from "../lib/entry-destination.ts";
 import {
   dailyBoardBaseDayKey,
   dailyBoardEmptyReason,
@@ -18,6 +18,7 @@ import {
 import { sourceLabel } from "../lib/source-meta.ts";
 import type { DayBucket, StatsPayload } from "../lib/stats.ts";
 import LanguageFallbackBadge from "./LanguageFallbackBadge.astro";
+import ExternalLinkHint from "./ExternalLinkHint.astro";
 
 export interface Props {
   /** All listable lanes used for activity totals and category statistics. */
@@ -357,12 +358,19 @@ const catColorOf = (slug: string): string =>
             const summaryJa = summaryForLangWithFallback(e, "ja");
             const summaryEn = summaryForLangWithFallback(e, "en");
             const num = String(i + 1).padStart(2, "0");
+            const destination = entryDestination(e);
             return (
               <li
                 style={`--cat-color:${catColorOf(e.category)}`}
                 data-summary-state="ready"
               >
-                <a href={entryHref(e)} class="b-row">
+                <a
+                  href={destination.href}
+                  target={destination.target}
+                  rel={destination.rel}
+                  data-detail-destination={destination.external ? "source" : "internal"}
+                  class="b-row"
+                >
                   <span class="b-num">{num}</span>
                   <span class="b-cat" title={categoryLabel(e.category)}>{categoryLabel(e.category)}</span>
                   <span class="b-tags">
@@ -380,6 +388,7 @@ const catColorOf = (slug: string): string =>
                       <LanguageFallbackBadge fallbackLang={jaResult.fallbackLang} variant="title" />
                     )}
                     {jaResult.text}
+                    {destination.external && <ExternalLinkHint lang="ja" />}
                   </span>
                   <span
                     class="b-title i18n-en"
@@ -389,6 +398,7 @@ const catColorOf = (slug: string): string =>
                       <LanguageFallbackBadge fallbackLang={enResult.fallbackLang} variant="title" />
                     )}
                     {enResult.text}
+                    {destination.external && <ExternalLinkHint lang="en" />}
                   </span>
                   {summaryJa.text && (
                     <span

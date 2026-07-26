@@ -842,16 +842,6 @@ export function selectTickerDayEntries(
   };
 }
 
-/**
- * Internal href to the in-site article summary page for an entry.
- * All article links across the site should route through this helper
- * so that users land on the in-site summary rather than the original
- * source URL. The original URL is still surfaced on the detail page.
- */
-export function entryHref(e: Pick<NormalizedEntry, "id">): string {
-  return `/e/${e.id}/`;
-}
-
 /** Look up an entry by id (used by the detail page). */
 export function getEntryById(id: string): NormalizedEntry | undefined {
   return ENTRY_BY_ID.get(id);

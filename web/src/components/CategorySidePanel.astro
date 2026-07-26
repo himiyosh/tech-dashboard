@@ -2,15 +2,16 @@
 import {
   ARXIV_ENTRIES,
   CATEGORY_META,
-  entryHref,
   relativeTime,
   tagHref,
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
+import { entryDestination } from "../lib/entry-destination.ts";
 import { sourceLabel } from "../lib/source-meta.ts";
 import { ARXIV_SOURCE_INFO } from "../lib/arxiv-meta.ts";
 import LanguageFallbackBadge from "./LanguageFallbackBadge.astro";
+import ExternalLinkHint from "./ExternalLinkHint.astro";
 
 interface Props {
   category: (typeof CATEGORY_META)[number];
@@ -37,6 +38,7 @@ const relatedCategories = CATEGORY_META.filter(
 const latest = entries[0] ?? null;
 const latestTitleJa = latest ? titleForLangWithFallback(latest, "ja") : null;
 const latestTitleEn = latest ? titleForLangWithFallback(latest, "en") : null;
+const latestDestination = latest ? entryDestination(latest) : null;
 const categoryInitial = category.initial;
 ---
 
@@ -67,19 +69,27 @@ const categoryInitial = category.initial;
       </div>
     </div>
     {latest ? (
-      <a class="category-latest-link" href={entryHref(latest)}>
+      <a
+        class="category-latest-link"
+        href={latestDestination?.href}
+        target={latestDestination?.target}
+        rel={latestDestination?.rel}
+        data-detail-destination={latestDestination?.external ? "source" : "internal"}
+      >
         <span>Latest</span>
         <strong class="i18n-ja" lang={latestTitleJa?.fallbackLang === "en" ? "en" : "ja"}>
           {latestTitleJa?.isFallback && latestTitleJa.fallbackLang && (
             <LanguageFallbackBadge fallbackLang={latestTitleJa.fallbackLang} variant="title" />
           )}
           {latestTitleJa?.text}
+          {latestDestination?.external && <ExternalLinkHint lang="ja" />}
         </strong>
         <strong class="i18n-en" lang={latestTitleEn?.fallbackLang === "ja" ? "ja" : "en"}>
           {latestTitleEn?.isFallback && latestTitleEn.fallbackLang && (
             <LanguageFallbackBadge fallbackLang={latestTitleEn.fallbackLang} variant="title" />
           )}
           {latestTitleEn?.text}
+          {latestDestination?.external && <ExternalLinkHint lang="en" />}
         </strong>
         <em data-relative-time data-datetime={latest.publishedAt}>{relativeTime(latest.publishedAt, now)}</em>
       </a>

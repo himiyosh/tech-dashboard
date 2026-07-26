@@ -15,6 +15,10 @@ import {
   relativeTime,
   tagHref,
 } from "../../../../lib/data.ts";
+import {
+  paginationPageNumbers,
+  totalPageCount,
+} from "../../../../lib/route-inventory.ts";
 
 export function getStaticPaths() {
   const out: Array<{
@@ -22,11 +26,12 @@ export function getStaticPaths() {
     props: { tag: string; page: number; total: number };
   }> = [];
   for (const tag of STATIC_TAG_PAGE_TAGS) {
-    const total = Math.max(1, Math.ceil(entriesForTagPage(tag).length / PAGE_SIZE));
-    for (let p = 2; p <= total; p++) {
+    const entryCount = entriesForTagPage(tag).length;
+    const total = totalPageCount(entryCount, PAGE_SIZE);
+    for (const page of paginationPageNumbers(entryCount, PAGE_SIZE)) {
       out.push({
-        params: { tag, page: String(p) },
-        props: { tag, page: p, total },
+        params: { tag, page: String(page) },
+        props: { tag, page, total },
       });
     }
   }

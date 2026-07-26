@@ -1,4 +1,5 @@
 import { defineConfig } from "astro/config";
+import { SITE_URL } from "./src/lib/site.ts";
 
 const BUILD_CONCURRENCY = process.env.GITHUB_ACTIONS === "true" ? 1 : 2;
 
@@ -39,7 +40,7 @@ function buildPhaseTelemetry() {
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://techdb.studio344.net",
+  site: SITE_URL,
   output: "static",
   // "ignore" accepts both /foo and /foo/ — safer for preview + Cloudflare Pages.
   trailingSlash: "ignore",

@@ -4,6 +4,7 @@ import Sidebar from "../../components/Sidebar.astro";
 import CategoryThumb from "../../components/CategoryThumb.astro";
 import ArticleLike from "../../components/ArticleLike.astro";
 import LanguageFallbackBadge from "../../components/LanguageFallbackBadge.astro";
+import ExternalLinkHint from "../../components/ExternalLinkHint.astro";
 import { SITE_URL } from "../../lib/site.ts";
 import {
   ALL_ENTRIES,
@@ -29,6 +30,11 @@ import {
 } from "../../lib/data.ts";
 import { articleBodyState, bodyForEntry } from "../../lib/bodies.ts";
 import { ARCHIVE_WARM_ENTRIES } from "../../lib/archive.ts";
+import { collectAddressableDetailEntries } from "../../lib/detail-addressability.ts";
+import {
+  entryDestination,
+  EXTERNAL_ENTRY_REL,
+} from "../../lib/entry-destination.ts";
 import { sourceFaviconUrl, sourceHost } from "../../lib/favicon.ts";
 import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../../lib/reaction-copy.ts";
 import {
@@ -42,11 +48,7 @@ import { sourceExcerptForEntry } from "../../lib/source-excerpt.ts";
 import SourceExcerpt from "../../components/SourceExcerpt.astro";
 
 export function getStaticPaths() {
-  const entriesById = new Map(ALL_ENTRIES.map((entry) => [entry.id, entry]));
-  for (const entry of ARCHIVE_WARM_ENTRIES) {
-    if (!entriesById.has(entry.id)) entriesById.set(entry.id, entry);
-  }
-  return [...entriesById.values()].map((e) => ({
+  return collectAddressableDetailEntries(ALL_ENTRIES, ARCHIVE_WARM_ENTRIES).map((e) => ({
     params: { id: e.id },
     props: { entry: e },
   }));
@@ -155,6 +157,8 @@ const localizedTitles = (item: NormalizedEntry) => ({
 });
 const prevTitles = prev ? localizedTitles(prev) : null;
 const nextTitles = next ? localizedTitles(next) : null;
+const prevDestination = prev ? entryDestination(prev) : null;
+const nextDestination = next ? entryDestination(next) : null;
 
 const bodyChars = (body?.bodyJa ?? "").length;
 const readMinutes = bodyChars > 0 ? Math.max(1, Math.round(bodyChars / 500)) : 0;
@@ -439,13 +443,14 @@ const jsonLd = {
             </>)}
           </div>
           <div class="ed-action-strip">
-            <a class="ed-header-cta" href={sourceUrl} target="_blank" rel="noopener nofollow">
+            <a class="ed-header-cta" href={sourceUrl} target="_blank" rel={EXTERNAL_ENTRY_REL}>
               <span class="ed-header-cta-copy">
                 <span class="i18n-ja">元記事を読む</span>
                 <span class="i18n-en" lang="en">Read original article</span>
                 <small>{sourceHost(sourceUrl)}</small>
               </span>
-              <span aria-hidden="true">↗</span>
+              <ExternalLinkHint lang="ja" />
+              <ExternalLinkHint lang="en" />
             </a>
             <button
               class="ed-share-btn"
@@ -762,7 +767,13 @@ const jsonLd = {
             <span class="i18n-en" lang="en">Adjacent articles in this category</span>
           </span>
           {prev ? (
-            <a class="ed-pn-card prev" href={`/e/${prev.id}/`} accesskey="ArrowLeft">
+            <a
+              class="ed-pn-card prev"
+              href={prevDestination?.href}
+              target={prevDestination?.target}
+              rel={prevDestination?.rel}
+              accesskey="ArrowLeft"
+            >
               <span class="ed-pn-arrow" aria-hidden="true">←</span>
               <span class="ed-pn-body">
                 <span class="ed-pn-dir">
@@ -774,12 +785,14 @@ const jsonLd = {
                     <LanguageFallbackBadge fallbackLang={prevTitles.ja.fallbackLang} variant="title" />
                   )}
                   {prevTitles?.ja.text}
+                  {prevDestination?.external && <ExternalLinkHint lang="ja" />}
                 </span>
                 <span class="ed-pn-title i18n-en" lang={prevTitles?.en.fallbackLang ?? "en"}>
                   {prevTitles?.en.isFallback && prevTitles.en.fallbackLang && (
                     <LanguageFallbackBadge fallbackLang={prevTitles.en.fallbackLang} variant="title" />
                   )}
                   {prevTitles?.en.text}
+                  {prevDestination?.external && <ExternalLinkHint lang="en" />}
                 </span>
                 <span class="ed-pn-time" data-relative-time data-datetime={prev.publishedAt}>
                   {relativeTime(prev.publishedAt, now)}
@@ -788,7 +801,13 @@ const jsonLd = {
             </a>
           ) : <span class="ed-pn-empty" aria-hidden="true"></span>}
           {next ? (
-            <a class="ed-pn-card next" href={`/e/${next.id}/`} accesskey="ArrowRight">
+            <a
+              class="ed-pn-card next"
+              href={nextDestination?.href}
+              target={nextDestination?.target}
+              rel={nextDestination?.rel}
+              accesskey="ArrowRight"
+            >
               <span class="ed-pn-body">
                 <span class="ed-pn-dir">
                   <span class="i18n-ja">古い記事</span>
@@ -799,12 +818,14 @@ const jsonLd = {
                     <LanguageFallbackBadge fallbackLang={nextTitles.ja.fallbackLang} variant="title" />
                   )}
                   {nextTitles?.ja.text}
+                  {nextDestination?.external && <ExternalLinkHint lang="ja" />}
                 </span>
                 <span class="ed-pn-title i18n-en" lang={nextTitles?.en.fallbackLang ?? "en"}>
                   {nextTitles?.en.isFallback && nextTitles.en.fallbackLang && (
                     <LanguageFallbackBadge fallbackLang={nextTitles.en.fallbackLang} variant="title" />
                   )}
                   {nextTitles?.en.text}
+                  {nextDestination?.external && <ExternalLinkHint lang="en" />}
                 </span>
                 <span class="ed-pn-time" data-relative-time data-datetime={next.publishedAt}>
                   {relativeTime(next.publishedAt, now)}
@@ -837,8 +858,15 @@ const jsonLd = {
               const rTitle = rTitleJa.text || rTitleEn.text || r.title;
               const rMeta = CATEGORY_META.find((c) => c.slug === r.category);
               const rColor = rMeta?.color ?? catColor;
+              const destination = entryDestination(r);
               return (
-                <a class="ed-rel-card" href={`/e/${r.id}/`} style={`--cat-color:${rColor}`}>
+                <a
+                  class="ed-rel-card"
+                  href={destination.href}
+                  target={destination.target}
+                  rel={destination.rel}
+                  style={`--cat-color:${rColor}`}
+                >
                   <div class="ed-rel-thumb">
                     {r.image?.src ? (
                       <img src={r.image.src} alt={r.image.alt || rTitle} loading="lazy" decoding="async" onerror="this.parentElement.classList.add('failed')" />
@@ -855,12 +883,14 @@ const jsonLd = {
                           <LanguageFallbackBadge fallbackLang={rTitleJa.fallbackLang} variant="title" />
                         )}
                         {rTitleJa.text}
+                        {destination.external && <ExternalLinkHint lang="ja" />}
                       </span>
                       <span class="i18n-en" lang={rTitleEn.fallbackLang ?? "en"}>
                         {rTitleEn.isFallback && rTitleEn.fallbackLang && (
                           <LanguageFallbackBadge fallbackLang={rTitleEn.fallbackLang} variant="title" />
                         )}
                         {rTitleEn.text}
+                        {destination.external && <ExternalLinkHint lang="en" />}
                       </span>
                     </div>
                     <div class="ed-rel-meta">
@@ -951,20 +981,23 @@ const jsonLd = {
             {sameSource.map((r) => {
               const rTitleJa = titleForLangWithFallback(r, "ja");
               const rTitleEn = titleForLangWithFallback(r, "en");
+              const destination = entryDestination(r);
               return (
                 <li>
-                  <a href={`/e/${r.id}/`}>
+                  <a href={destination.href} target={destination.target} rel={destination.rel}>
                     <span class="rail-item-title i18n-ja" lang={rTitleJa.fallbackLang ?? "ja"}>
                       {rTitleJa.isFallback && rTitleJa.fallbackLang && (
                         <LanguageFallbackBadge fallbackLang={rTitleJa.fallbackLang} variant="title" />
                       )}
                       {rTitleJa.text}
+                      {destination.external && <ExternalLinkHint lang="ja" />}
                     </span>
                     <span class="rail-item-title i18n-en" lang={rTitleEn.fallbackLang ?? "en"}>
                       {rTitleEn.isFallback && rTitleEn.fallbackLang && (
                         <LanguageFallbackBadge fallbackLang={rTitleEn.fallbackLang} variant="title" />
                       )}
                       {rTitleEn.text}
+                      {destination.external && <ExternalLinkHint lang="en" />}
                     </span>
                     <span class="rail-item-time" data-relative-time data-datetime={r.publishedAt}>
                       {relativeTime(r.publishedAt, now)}
@@ -988,20 +1021,23 @@ const jsonLd = {
             {sameTag.map((r) => {
               const rTitleJa = titleForLangWithFallback(r, "ja");
               const rTitleEn = titleForLangWithFallback(r, "en");
+              const destination = entryDestination(r);
               return (
                 <li>
-                  <a href={`/e/${r.id}/`}>
+                  <a href={destination.href} target={destination.target} rel={destination.rel}>
                     <span class="rail-item-title i18n-ja" lang={rTitleJa.fallbackLang ?? "ja"}>
                       {rTitleJa.isFallback && rTitleJa.fallbackLang && (
                         <LanguageFallbackBadge fallbackLang={rTitleJa.fallbackLang} variant="title" />
                       )}
                       {rTitleJa.text}
+                      {destination.external && <ExternalLinkHint lang="ja" />}
                     </span>
                     <span class="rail-item-title i18n-en" lang={rTitleEn.fallbackLang ?? "en"}>
                       {rTitleEn.isFallback && rTitleEn.fallbackLang && (
                         <LanguageFallbackBadge fallbackLang={rTitleEn.fallbackLang} variant="title" />
                       )}
                       {rTitleEn.text}
+                      {destination.external && <ExternalLinkHint lang="en" />}
                     </span>
                     <span class="rail-item-time" data-relative-time data-datetime={r.publishedAt}>
                       {relativeTime(r.publishedAt, now)}

@@ -305,6 +305,10 @@ const ZENN_AI_LOCAL_LLM_RELEVANCE_KEYWORDS = [
   "\u30ed\u30fc\u30ab\u30eb\u30e2\u30c7\u30eb",
   "\u30ed\u30fc\u30ab\u30eb \u30e2\u30c7\u30eb",
   "\u30aa\u30f3\u30c7\u30d0\u30a4\u30b9",
+  "diffusiongemma",
+  "llm",
+  "slm",
+  "vram",
 ] as const;
 
 const LOCAL_LLM_EXCLUDE_KEYWORDS = [

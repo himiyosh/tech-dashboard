@@ -294,6 +294,23 @@ const LOCAL_LLM_RELEVANCE_KEYWORDS = [
   "\u91cf\u5b50\u5316",
 ] as const;
 
+// The broad Zenn AI tag needs a topic signal, not a generic local-PC/filesystem mention.
+const ZENN_AI_LOCAL_LLM_RELEVANCE_KEYWORDS = [
+  ...LOCAL_LLM_RELEVANCE_KEYWORDS.filter((keyword) => keyword !== "\u30ed\u30fc\u30ab\u30eb"),
+  "\u30ed\u30fc\u30ab\u30ebllm",
+  "\u30ed\u30fc\u30ab\u30eb llm",
+  "\u30ed\u30fc\u30ab\u30ebai",
+  "\u30ed\u30fc\u30ab\u30eb ai",
+  "\u30ed\u30fc\u30ab\u30eb\u8a00\u8a9e\u30e2\u30c7\u30eb",
+  "\u30ed\u30fc\u30ab\u30eb\u30e2\u30c7\u30eb",
+  "\u30ed\u30fc\u30ab\u30eb \u30e2\u30c7\u30eb",
+  "\u30aa\u30f3\u30c7\u30d0\u30a4\u30b9",
+  "diffusiongemma",
+  "llm",
+  "slm",
+  "vram",
+] as const;
+
 const LOCAL_LLM_EXCLUDE_KEYWORDS = [
   "saas is dead",
   "profit",
@@ -650,8 +667,9 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     feedUrl: "https://zenn.dev/topics/ai/feed",
     tier: 1,
     perSourceCap: 30,
-    includeKeywords: LOCAL_LLM_RELEVANCE_KEYWORDS,
+    includeKeywords: ZENN_AI_LOCAL_LLM_RELEVANCE_KEYWORDS,
     excludeKeywords: LOCAL_LLM_EXCLUDE_KEYWORDS,
+    keywordFilterScope: "title",
     maxEntriesPerRun: 10,
     collect: collectRss,
   },

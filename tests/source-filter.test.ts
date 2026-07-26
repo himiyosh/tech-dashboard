@@ -231,6 +231,52 @@ describe("matchesKeywordFilter", () => {
   });
 });
 
+describe("Zenn AI Local LLM relevance (LL-412)", () => {
+  const zennAi = REGISTRY["zenn-ai"];
+  const check = (title: string, contentSnippet = "") =>
+    matchesKeywordFilter(
+      {
+        title,
+        url: "https://zenn.dev/example/articles/local-llm",
+        contentSnippet,
+      },
+      zennAi,
+    );
+
+  it("requires subject-specific Local LLM evidence in the title", () => {
+    expect(zennAi.keywordFilterScope).toBe("title");
+    expect(zennAi.includeKeywords).not.toContain("ローカル");
+    expect(zennAi.includeKeywords).not.toContain("model");
+    expect(
+      check(
+        "4つのファイルから、AIでグラフ付きWordレポートを生成してみた",
+        "ローカルのプロジェクトフォルダを選ぶと、編集可能なレポートを保存できます。",
+      ),
+    ).toBe(false);
+    expect(
+      check(
+        "検証環境のDBデータをエクスポートしてローカルに持ってくる作業をAIにやらせてみた",
+        "VPC内のAWS RDS（PostgreSQL）からローカルPCへデータを取り込む作業を自動化します。",
+      ),
+    ).toBe(false);
+    expect(check("Kaggle Titanicの実行環境をローカルでつくる")).toBe(false);
+    expect(check("X ブックマークをAIで整理するローカルOSSを公開しました")).toBe(false);
+    expect(check("業務モデルの導入記録")).toBe(false);
+    expect(keywordMatchesHaystack("DiffusionGemma", "gemma")).toBe(false);
+    expect(check("DiffusionGemmaで拡散推論を実行する")).toBe(true);
+    expect(
+      check("拡散LLM DiffusionGemmaをModalで動かし、ノイズ除去の途中経過をブラウザで可視化してみた"),
+    ).toBe(true);
+    expect(check("ローカル 8GB VRAM で動画モデル 3 本走らせて分かった、現実的な棲み分け")).toBe(true);
+    expect(check("ローカルLLMを量子化して実行する")).toBe(true);
+    expect(check("ローカルAI GatewayにPolicy Engineを実装しました")).toBe(true);
+    expect(check("Ollamaでモデルを実行する")).toBe(true);
+    expect(check("SLMを端末上で実行する")).toBe(true);
+    expect(check("vLLMでローカル推論を実行する")).toBe(true);
+    expect(check("GemmaをMLXで量子化する")).toBe(true);
+  });
+});
+
 describe("arXiv Research filter (R-017, LL-260)", () => {
   const arxivCl = REGISTRY["arxiv-cs-cl"];
 

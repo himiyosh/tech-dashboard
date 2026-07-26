@@ -5674,6 +5674,9 @@ test.describe("TECH Dashboard smoke", () => {
     await page.evaluate(() => {
       const pagefind = (window as any).__pagefind;
       const now = Date.now();
+      // Keep both dates in one recency tier while proving date does not outrank trust signals.
+      const recentDay = (ageDays: number) =>
+        new Date(now - ageDays * 86400000).toISOString().slice(0, 10);
       const result = (
         url: string,
         title: string,
@@ -5690,7 +5693,7 @@ test.describe("TECH Dashboard smoke", () => {
           filters: {
             authority: [authority],
             importance: [importance],
-            publishedDay: [new Date(now - ageDays * 86400000).toISOString().slice(0, 10)],
+            publishedDay: [recentDay(ageDays)],
           },
         }),
       });

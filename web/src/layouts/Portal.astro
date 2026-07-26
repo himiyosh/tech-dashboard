@@ -274,7 +274,7 @@ const footerLastRunRelative = footerLastRunAt
         aria-label="Open Menu"
         aria-controls="site-menu"
         aria-expanded="false"
-        class={menuOwnsCurrentPage ? "active" : ""}
+        class={`mobile-menu-trigger${menuOwnsCurrentPage ? " active" : ""}`}
       ><span aria-hidden="true">☰</span><span>Menu</span></button>
     </nav>
 
@@ -533,8 +533,47 @@ const footerLastRunRelative = footerLastRunAt
 
         let lastTrigger: HTMLButtonElement | null = null;
         let restoreFocusOnClose = false;
+        let portalledMobileTrigger: HTMLButtonElement | null = null;
+        let mobileTriggerPlaceholder: HTMLSpanElement | null = null;
         const isVisible = (el: HTMLElement | null): el is HTMLElement =>
           !!el && el.isConnected && el.getClientRects().length > 0 && !(el as HTMLButtonElement).disabled;
+        const syncPortalledMobileTrigger = () => {
+          if (!portalledMobileTrigger || !mobileTriggerPlaceholder?.isConnected) return;
+          const rect = mobileTriggerPlaceholder.getBoundingClientRect();
+          portalledMobileTrigger.style.setProperty("--mobile-menu-trigger-left", `${rect.left}px`);
+          portalledMobileTrigger.style.setProperty("--mobile-menu-trigger-top", `${rect.top}px`);
+          portalledMobileTrigger.style.setProperty("--mobile-menu-trigger-width", `${rect.width}px`);
+          portalledMobileTrigger.style.setProperty("--mobile-menu-trigger-height", `${rect.height}px`);
+        };
+        const portalMobileTrigger = (trigger: HTMLButtonElement) => {
+          if (!trigger.matches(".mobile-menu-trigger") || portalledMobileTrigger === trigger) return;
+          const placeholder = document.createElement("span");
+          placeholder.className = "mobile-menu-trigger-placeholder";
+          placeholder.setAttribute("aria-hidden", "true");
+          trigger.insertAdjacentElement("afterend", placeholder);
+          mobileTriggerPlaceholder = placeholder;
+          portalledMobileTrigger = trigger;
+          trigger.classList.add("is-dialog-toggle");
+          menu.append(trigger);
+          syncPortalledMobileTrigger();
+          window.addEventListener("resize", syncPortalledMobileTrigger);
+          window.visualViewport?.addEventListener("resize", syncPortalledMobileTrigger);
+        };
+        const restorePortalledMobileTrigger = () => {
+          const trigger = portalledMobileTrigger;
+          const placeholder = mobileTriggerPlaceholder;
+          if (!trigger) return;
+          window.removeEventListener("resize", syncPortalledMobileTrigger);
+          window.visualViewport?.removeEventListener("resize", syncPortalledMobileTrigger);
+          if (placeholder?.isConnected) placeholder.replaceWith(trigger);
+          trigger.classList.remove("is-dialog-toggle");
+          trigger.style.removeProperty("--mobile-menu-trigger-left");
+          trigger.style.removeProperty("--mobile-menu-trigger-top");
+          trigger.style.removeProperty("--mobile-menu-trigger-width");
+          trigger.style.removeProperty("--mobile-menu-trigger-height");
+          portalledMobileTrigger = null;
+          mobileTriggerPlaceholder = null;
+        };
         const syncMenuTriggers = (open: boolean) => {
           triggers.forEach((trigger) => {
             trigger.setAttribute("aria-expanded", open ? "true" : "false");
@@ -543,6 +582,7 @@ const footerLastRunRelative = footerLastRunAt
           });
         };
         const finalizeMenuClose = () => {
+          restorePortalledMobileTrigger();
           menu.hidden = true;
           syncMenuTriggers(false);
           if (restoreFocusOnClose && isVisible(lastTrigger)) lastTrigger.focus();
@@ -550,10 +590,12 @@ const footerLastRunRelative = footerLastRunAt
         };
         const openMenu = (trigger: HTMLButtonElement) => {
           lastTrigger = trigger;
+          restoreFocusOnClose = true;
           (window as any).__tdCloseSearch?.();
           menu.hidden = false;
           syncMenuTriggers(true);
           if (!menu.open) menu.showModal();
+          portalMobileTrigger(trigger);
           const active = menu.querySelector<HTMLElement>("a.active");
           window.requestAnimationFrame(() => (active ?? menu.querySelector<HTMLElement>("a, button"))?.focus());
         };

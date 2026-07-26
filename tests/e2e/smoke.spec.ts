@@ -1628,6 +1628,49 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
+  test("home uses system fonts without render-blocking external font requests", async ({ page }) => {
+    const viewports = [
+      { width: 390, height: 844 },
+      { width: 768, height: 900 },
+      { width: 1280, height: 900 },
+    ];
+
+    await page.setViewportSize(viewports[0]);
+    await page.goto("/");
+    await expect(page.locator('link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"]')).toHaveCount(0);
+
+    for (const viewport of viewports) {
+      await page.setViewportSize(viewport);
+      await page.evaluate(() => {
+        window.scrollTo(0, 0);
+        return new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        });
+      });
+
+      const metrics = await page.evaluate(() => {
+        return {
+          bodyFontFamily: getComputedStyle(document.body).fontFamily,
+          horizontalOverflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      });
+
+      expect(metrics.bodyFontFamily, `${viewport.width}px uses the local system stack`).not.toMatch(/Inter|Noto Sans JP/);
+      expect(metrics.bodyFontFamily, `${viewport.width}px keeps a cross-platform sans-serif fallback`).toMatch(
+        /Arial|system-ui|Hiragino Sans|Yu Gothic UI|Meiryo|sans-serif/,
+      );
+      expect(metrics.horizontalOverflow, `${viewport.width}px keeps the page inside the viewport`).toBeLessThanOrEqual(0);
+    }
+
+    const fontResources = await page.evaluate(() =>
+      performance
+        .getEntriesByType("resource")
+        .map((entry) => entry.name)
+        .filter((url) => /fonts\.googleapis\.com|fonts\.gstatic\.com/.test(url)),
+    );
+    expect(fontResources, "Home does not fetch Google Fonts at runtime").toEqual([]);
+  });
+
   // (archive-backed daily activity), not the publishable-live fallback. When
   // index.astro forgot to pass the `stats` prop the chart silently collapsed to
   // single-digit bars and looked like collection had stopped (see LL).

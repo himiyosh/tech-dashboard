@@ -4971,12 +4971,75 @@ test.describe("TECH Dashboard smoke", () => {
       await tabbar.getByRole("button", { name: /Menu/ }).click();
       await expect(menu).toBeVisible();
     };
+    const mobileMenuToggle = page.locator("button.mobile-menu-trigger[data-menu-trigger]");
 
     await tabbar.getByRole("link", { name: "Categories" }).click();
     await expect(page).toHaveURL(/\/categories\/?$/);
     await expect(page.locator("#categories-heading")).toBeVisible();
     await expect(tabbar.getByRole("link", { name: "Categories" })).toHaveClass(/active/);
     await expect(tabbar.getByRole("button", { name: /Menu/ })).not.toHaveClass(/active/);
+    await openMobileMenu();
+    const openMobileMenuMetrics = await page.evaluate(() => {
+      const dialog = document.querySelector<HTMLDialogElement>("#site-menu");
+      const trigger = document.querySelector<HTMLButtonElement>(
+        "button.mobile-menu-trigger[data-menu-trigger]",
+      );
+      const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
+      const placeholder = document.querySelector<HTMLElement>(".mobile-menu-trigger-placeholder");
+      if (!dialog || !trigger || !tabbar || !placeholder) return null;
+      const triggerRect = trigger.getBoundingClientRect();
+      const placeholderRect = placeholder.getBoundingClientRect();
+      const hit = document.elementFromPoint(
+        triggerRect.left + triggerRect.width / 2,
+        triggerRect.top + triggerRect.height / 2,
+      );
+      return {
+        dialogOwnsToggle: dialog.contains(trigger),
+        tabbarActionSlots: tabbar.querySelectorAll("a, .mobile-menu-trigger-placeholder").length,
+        toggleOccupiesTabbarSlot:
+          Math.abs(triggerRect.left - placeholderRect.left) <= 1 &&
+          Math.abs(triggerRect.top - placeholderRect.top) <= 1 &&
+          Math.abs(triggerRect.width - placeholderRect.width) <= 1 &&
+          Math.abs(triggerRect.height - placeholderRect.height) <= 1,
+        toggleIsHitTestable:
+          hit === trigger || hit?.closest("button.mobile-menu-trigger") === trigger,
+        toggleWidth: triggerRect.width,
+        toggleHeight: triggerRect.height,
+        sheetBottom: dialog.getBoundingClientRect().bottom,
+        tabbarTop: tabbar.getBoundingClientRect().top,
+        noHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth,
+      };
+    });
+    expect(openMobileMenuMetrics).not.toBeNull();
+    expect(openMobileMenuMetrics!.dialogOwnsToggle).toBe(true);
+    expect(openMobileMenuMetrics!.tabbarActionSlots).toBe(5);
+    expect(openMobileMenuMetrics!.toggleOccupiesTabbarSlot).toBe(true);
+    expect(openMobileMenuMetrics!.toggleIsHitTestable).toBe(true);
+    expect(openMobileMenuMetrics!.toggleWidth).toBeGreaterThanOrEqual(44);
+    expect(openMobileMenuMetrics!.toggleHeight).toBeGreaterThanOrEqual(44);
+    expect(openMobileMenuMetrics!.sheetBottom).toBeLessThan(openMobileMenuMetrics!.tabbarTop);
+    expect(openMobileMenuMetrics!.noHorizontalOverflow).toBe(true);
+    for (let index = 0; index < 8; index += 1) {
+      await page.keyboard.press("Tab");
+      expect(
+        await page.evaluate(() => {
+          const dialog = document.querySelector("#site-menu");
+          return Boolean(dialog?.contains(document.activeElement));
+        }),
+        `mobile modal menu keeps focus on Tab step ${index + 1}`,
+      ).toBe(true);
+    }
+    await mobileMenuToggle.click();
+    await expect(menu).toBeHidden();
+    await expect(mobileMenuToggle).toBeFocused();
+    await mobileMenuToggle.click();
+    await page.keyboard.press("Escape");
+    await expect(menu).toBeHidden();
+    await expect(mobileMenuToggle).toBeFocused();
+    await mobileMenuToggle.click();
+    await page.mouse.click(4, 4);
+    await expect(menu).toBeHidden();
+    await expect(mobileMenuToggle).toBeFocused();
     await openMobileMenu();
     await expect(menu.getByRole("link", { name: /Categories/ })).toHaveCount(0);
     await expect(menu.getByRole("link", { name: /arXiv/ })).toHaveCount(0);
@@ -5024,6 +5087,68 @@ test.describe("TECH Dashboard smoke", () => {
       };
     });
     expect(mobileLayering.searchZ, "mobile search stays above the header layer").toBeGreaterThan(mobileLayering.headerZ);
+  });
+
+  test("menu breakpoint changes close the dialog and focus the visible trigger", async ({ page }) => {
+    const menu = page.locator("#site-menu");
+    const desktopMenuTrigger = page.locator("header .menu-trigger");
+    const tabbar = page.getByRole("navigation", { name: "Primary" });
+    const mobileMenuTrigger = tabbar.getByRole("button", { name: /Menu/ });
+    const assertFocusedHitTestableTrigger = async (selector: string) => {
+      const evidence = await page.evaluate((selector) => {
+        const dialog = document.querySelector<HTMLDialogElement>("#site-menu");
+        const trigger = document.querySelector<HTMLButtonElement>(selector);
+        if (!dialog || !trigger) return null;
+        const rect = trigger.getBoundingClientRect();
+        const hit = document.elementFromPoint(
+          rect.left + rect.width / 2,
+          rect.top + rect.height / 2,
+        );
+        return {
+          dialogOpen: dialog.open,
+          focused: document.activeElement === trigger,
+          visible: trigger.getClientRects().length > 0,
+          hitTestable: hit === trigger || hit?.closest("[data-menu-trigger]") === trigger,
+        };
+      }, selector);
+      expect(evidence).toEqual({
+        dialogOpen: false,
+        focused: true,
+        visible: true,
+        hitTestable: true,
+      });
+    };
+    const expectNoHorizontalOverflow = async () => {
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+        .toBe(true);
+    };
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    await expect(desktopMenuTrigger).toBeVisible();
+    await desktopMenuTrigger.click();
+    await expect(menu).toBeVisible();
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(menu).toBeHidden();
+    await expect(tabbar).toBeVisible();
+    await expect(tabbar.locator("a, button")).toHaveCount(5);
+    await assertFocusedHitTestableTrigger(".mobile-tabbar button.mobile-menu-trigger");
+    await expectNoHorizontalOverflow();
+
+    await mobileMenuTrigger.click();
+    await expect(menu).toBeVisible();
+    await page.setViewportSize({ width: 844, height: 390 });
+    await expect(menu).toBeHidden();
+    await expect(tabbar).toBeHidden();
+    await expect(desktopMenuTrigger).toBeVisible();
+    await expect(page.locator("header .nav-shortcut")).toHaveCount(3);
+    await expect(page.locator("header .nav-shortcut", { hasText: "Categories" })).toBeVisible();
+    await expect(page.locator("header .nav-shortcut", { hasText: "arXiv" })).toBeVisible();
+    await expect(page.locator("header .nav-shortcut", { hasText: "Knowledge" })).toBeVisible();
+    await assertFocusedHitTestableTrigger("header .menu-trigger");
+    await expectNoHorizontalOverflow();
   });
 
   test("mobile featured panel and thumbnails keep fallback layout", async ({ page }) => {
@@ -5548,9 +5673,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expectPagefindReady(page);
     await page.evaluate(() => {
       const pagefind = (window as any).__pagefind;
+      const now = Date.now();
       // Keep both dates in one recency tier while proving date does not outrank trust signals.
       const recentDay = (ageDays: number) =>
-        new Date(Date.now() - ageDays * 86400000).toISOString().slice(0, 10);
+        new Date(now - ageDays * 86400000).toISOString().slice(0, 10);
       const result = (
         url: string,
         title: string,
@@ -5564,7 +5690,11 @@ test.describe("TECH Dashboard smoke", () => {
             ? { title, titleEn: title, summaryEn: `${title} explains agent operations.` }
             : { title },
           excerpt: `${title} explains agent operations.`,
-          filters: { authority: [authority], importance: [importance], publishedDay: [recentDay(ageDays)] },
+          filters: {
+            authority: [authority],
+            importance: [importance],
+            publishedDay: [recentDay(ageDays)],
+          },
         }),
       });
 

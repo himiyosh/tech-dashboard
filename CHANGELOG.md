@@ -71,6 +71,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 修正
 
+- モバイルで開いた navigation sheet の top-layer backdrop が下部 tabbar の Menu 操作を遮る問題を修正しました。実際の Menu button を sheet の top layer へ一時的に移し、同じ位置・同じ操作面で閉じられるようにして、Escape・backdrop・Search 遷移時の focus restoration を維持しました。
 - 広い Zenn AI feed の Local LLM 判定を、`DiffusionGemma`、`LLM` / `SLM`、`Ollama`、明示model/runtime、`VRAM`、`ローカルLLM` / `ローカルAI` などタイトル上の主題根拠へ限定し、本文中または題名中のbare「ローカル」だけを理由に、業務・DB・一般AIデモが `local-llm` として掲載されないようにしました。正当なDiffusionGemma推論とVRAM動画モデルの記事を保持し、既存の live/archive data にも同じ source filter を再適用しています。変更したPublisher fingerprintのrolloutはR-027に従い、PR-headのQueue consumer deployとdrain、merge後の旧harness mismatch観測、明示承認後のbridge/harness deployの順で行います。
 - 静的build時に固定されていた「N分前・N時間前」を閲覧時と1分周期で再計算し、Status、Home、記事一覧・詳細、PageHero、footerが古い経過時間を表示し続ける問題を修正しました。6時間の遅延境界を越えた場合は、run、Queue、Home、About、要約待ちcardも同じ状態へ切り替わります。
 - AboutのPurpose、Freshness、History、Pipeline説明をJA/EN切替へ接続し、EN表示で収集方針だけが日本語のまま残る問題を修正しました。

@@ -1369,10 +1369,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: taxonomy の slug は URL / filter key、label は読者向け表示、alias は検索 intent である。3 者を metadata に集約し、UI が raw slug を直接表示したり個別 synonym table を持ったりしない。
 
 ### LL-187: static preview の E2E は変更後の build artifact を先に更新する
-- **事象**: CSS / client script を変更しても、既存 preview server が古い `web/dist` を配信し、ブラウザ計測が修正前の挙動を示し得た。
-- **根本原因**: Playwright の preview は source を直接変換せず static build artifact を読む。さらに `reuseExistingServer: true` は同じ port の既存 preview を再利用するため、source 更新と dist 更新を同一視すると古い server / artifact を検証し得る。
-- **対策**: UI 変更後は `playwright.config.ts` の `webServer.url` から実際の対象 port を確認して既存 preview を停止し、`npm run build:web` を単独で完了させ、その後に Playwright / browser 寸法検証を行う。build と Playwright は `web/dist` 競合を避けて逐次実行する。
-- **教訓**: static preview の証拠は source ではなく現在の dist と server process に対する証拠である。慣例的な preview port を確認しただけで既存 server 不在と判断せず、Playwright が実際に使う port、artifact の更新時刻、build 成功を確定する。
+- **事象**: CSS / client script を変更しても、既存 preview server が古い `web/dist` を配信し、ブラウザ計測が修正前の挙動を示し得た。別 worktree を検証するつもりで親 checkout の cwd から build / Playwright を実行し、別 artifact の結果を対象 branch の証拠として扱いかけた事例もある。
+- **根本原因**: Playwright の preview は source を直接変換せず static build artifact を読む。さらに `reuseExistingServer: true` は同じ port の既存 preview を再利用し、Bash tool は明示しなければ親 session の cwd で起動するため、source、worktree、dist、server の所有者を一致させないと別 revision を正常に検証できる。
+- **対策**: UI 変更後は検証対象 worktree の絶対 path へ明示的に `cd` し、`git rev-parse HEAD` と cwd を確定する。`playwright.config.ts` の `webServer.url` から実際の対象 port を確認して既存 preview を停止し、その worktree で `npm run build:web` を単独完了させた後に Playwright / browser 寸法検証を行う。build と Playwright は `web/dist` 競合を避けて逐次実行する。
+- **教訓**: static preview の証拠は対象 worktree の source、現在の dist、server process の組み合わせに対する証拠である。慣例的な port や親 checkout の成功結果を使い回さず、cwd、HEAD、artifact 更新時刻、server 所有者、build 成功を同じ検証単位で確定する。
 
 ### LL-188: Chrome DevTools MCP の profile lock は既存 browser process を特定して解消する
 - **事象**: `list_pages` が「browser is already running for chrome-profile」で起動失敗した。profile path を使う Chrome root process が残り、新しい MCP server が同じ user-data-dir を取得できなかった。別の事例では browser root だけを停止すると親 MCP process が再生成し、親を停止すると現在の transport 自体が閉じた。

@@ -6,12 +6,12 @@
  */
 import {
   CATEGORY_META,
-  entryHref,
   relativeTime,
   titleForLangWithFallback,
   summaryForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
+import { entryDestination } from "../lib/entry-destination.ts";
 import { sourceFaviconUrl, sourceHost } from "../lib/favicon.ts";
 import ArticleLike from "./ArticleLike.astro";
 import LanguageFallbackBadge from "./LanguageFallbackBadge.astro";
@@ -33,13 +33,20 @@ const rel = relativeTime(entry.publishedAt ?? entry.collectedAt);
 const siteHost = sourceHost(entry.url);
 const favicon = sourceFaviconUrl(entry.url);
 const tags = (entry.tags ?? []).slice(0, 2);
+const destination = entryDestination(entry);
 
 const imgSrc = typeof entry.image?.src === "string" && entry.image.src.length > 0 ? entry.image.src : "";
 const hasImage = imgSrc.length > 0;
 ---
 
 <article class={`kg-card ${hasImage ? "has-image" : "no-image"}`} style={`--cat-color:${catColor}`}>
-  <a class="kg-card-link" href={entryHref(entry)}>
+  <a
+    class="kg-card-link"
+    href={destination.href}
+    target={destination.target}
+    rel={destination.rel}
+    data-detail-destination={destination.external ? "source" : "internal"}
+  >
     {hasImage && (
       <div class="kg-thumb" aria-hidden="true">
         <img

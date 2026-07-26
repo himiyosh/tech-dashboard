@@ -7,10 +7,10 @@ import {
   isPublishableEntry,
   CATEGORY_META,
   categoryLabel,
-  entryHref,
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { canonicalSourceUrl, sourceLabel } from "../lib/source-meta.ts";
+import { entryDestination } from "../lib/entry-destination.ts";
 
 export interface Props {
   entry: NormalizedEntry;
@@ -26,6 +26,7 @@ const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
 const categoryName = categoryLabel(entry.category);
 const catColor = catMeta?.color ?? "#8a847e";
 const sourceUrl = canonicalSourceUrl(entry.url);
+const destination = entryDestination(entry);
 
 function host(url: string): string {
   try {
@@ -47,7 +48,10 @@ function typeLabel(t: NormalizedEntry["sourceType"]): string {
 <a
   class:list={["row", { important: summaryReady && entry.importance === 3 }]}
   data-summary-state={summaryReady ? "ready" : "pending"}
-  href={entryHref(entry)}
+  href={destination.href}
+  target={destination.target}
+  rel={destination.rel}
+  data-detail-destination={destination.external ? "source" : "internal"}
   aria-label={`${title} from ${sourceLabel(entry.source, entry.url)}, ${categoryName}`}
   style={`--cat-color:${catColor}`}
 >

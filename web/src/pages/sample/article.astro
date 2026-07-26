@@ -5,10 +5,11 @@
  * with the real article page.
  */
 import { ALL_ENTRIES } from "../../lib/data.ts";
+import { entryDestination } from "../../lib/entry-destination.ts";
 import Portal from "../../layouts/Portal.astro";
 
 const target = ALL_ENTRIES.find((e) => (e.bodyJa ?? "").length > 200) ?? ALL_ENTRIES[0];
-const targetHref = target ? `/e/${target.id}/` : "/";
+const targetHref = target ? entryDestination(target).href : "/";
 ---
 
 <Portal title="Sample Article — TECH Dashboard">

@@ -1,6 +1,9 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
+import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { SITE_URL } from "../../web/src/lib/site.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
+import { canonicalSourceUrl } from "../../web/src/lib/source-meta.ts";
 
 const TIMELINE_ENTRY_LINK_SELECTOR =
   'main article.card h3.title > a[href^="/e/"]';
@@ -20,6 +23,40 @@ function collectPageErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   return errors;
+}
+
+const generatedEntryRouteCache = new Map<"page" | "archive", Map<string, string>>();
+
+function generatedEntryRoutes(
+  routeFamily: "page" | "archive",
+): Map<string, string> {
+  const cached = generatedEntryRouteCache.get(routeFamily);
+  if (cached) return cached;
+  const dist = path.resolve("web/dist");
+  const routes = new Map<string, string>();
+  const walk = (directory: string): void => {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        walk(absolute);
+      } else if (
+        entry.isFile()
+        && entry.name === "index.html"
+      ) {
+        const relative = path.relative(dist, absolute).split(path.sep).join("/");
+        const route = relative === "index.html"
+          ? "/"
+          : `/${relative.slice(0, -"index.html".length)}`;
+        const html = readFileSync(absolute, "utf8");
+        for (const match of html.matchAll(/data-entry-id="([^"]+)"/g)) {
+          if (!routes.has(match[1])) routes.set(match[1], route);
+        }
+      }
+    }
+  };
+  walk(path.join(dist, routeFamily));
+  generatedEntryRouteCache.set(routeFamily, routes);
+  return routes;
 }
 
 test.describe("Publisher generated artifact", () => {
@@ -70,6 +107,128 @@ test.describe("Publisher generated artifact", () => {
       Number(metrics.archiveBrowsableEntries),
     );
     expect(Number.isFinite(Date.parse(String(metrics.generatedAt)))).toBe(true);
+  });
+
+  test("publishes crawler discovery endpoints", async ({ request }) => {
+    const sitemapResponse = await request.get("/sitemap.xml");
+    const sitemap = await sitemapResponse.text();
+    expect(sitemapResponse.status()).toBe(200);
+    expect(sitemapResponse.headers()["content-type"]).toMatch(/^(?:application|text)\/xml\b/);
+    expect(sitemap).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
+    expect(sitemap).toContain(`<loc>${SITE_URL}/</loc>`);
+
+    const robotsResponse = await request.get("/robots.txt");
+    const robots = await robotsResponse.text();
+    expect(robotsResponse.status()).toBe(200);
+    expect(robotsResponse.headers()["content-type"]).toContain("text/plain");
+    expect(robots).toContain(`Sitemap: ${SITE_URL}/sitemap.xml`);
+  });
+
+  test("keeps hot and warm details addressable while cold details stay month-only", async ({
+    request,
+  }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string; archiveTier?: string }>;
+    };
+    const hot = index.entries.find((entry) => entry.archiveTier === "hot");
+    const cold = index.entries.find((entry) => entry.archiveTier === "cold");
+    const liveIds = new Set(index.entries.map((entry) => entry.id));
+    const archiveIndex = JSON.parse(
+      readFileSync("data/archive/_index.json", "utf8"),
+    ) as { months: string[] };
+    let warmOnly: { id: string } | undefined;
+    for (const month of archiveIndex.months) {
+      const archive = JSON.parse(
+        readFileSync(`data/archive/${month}.json`, "utf8"),
+      ) as { entries: Array<{ id: string; archiveTier?: string }> };
+      warmOnly = archive.entries.find(
+        (entry) => entry.archiveTier === "warm" && !liveIds.has(entry.id),
+      );
+      if (warmOnly) break;
+    }
+
+    expect(hot, "fixture includes a hot detail").toBeTruthy();
+    expect(warmOnly, "fixture includes a warm archive-only detail").toBeTruthy();
+    expect(cold, "fixture includes a cold live-index row").toBeTruthy();
+
+    const [hotResponse, warmResponse, coldResponse, sitemapResponse] = await Promise.all([
+      request.get(`/e/${hot!.id}/`),
+      request.get(`/e/${warmOnly!.id}/`),
+      request.get(`/e/${cold!.id}/`),
+      request.get("/sitemap.xml"),
+    ]);
+    const sitemap = await sitemapResponse.text();
+
+    expect(hotResponse.status()).toBe(200);
+    expect(warmResponse.status()).toBe(200);
+    expect(coldResponse.status()).toBe(404);
+    expect(sitemap).toContain(`<loc>${SITE_URL}/e/${hot!.id}/</loc>`);
+    expect(sitemap).toContain(`<loc>${SITE_URL}/e/${warmOnly!.id}/</loc>`);
+    expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${cold!.id}/</loc>`);
+  });
+
+  test("routes cold listing cards to source while hot and warm cards stay internal", async ({
+    page,
+  }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string; url: string; archiveTier?: string }>;
+    };
+    const timelineRoutes = generatedEntryRoutes("page");
+    const archiveRoutes = generatedEntryRoutes("archive");
+    const cold = index.entries
+      .filter((entry) => entry.archiveTier === "cold")
+      .map((entry) => ({ entry, route: timelineRoutes.get(entry.id) }))
+      .find(({ route }) => route);
+    const hot = index.entries
+      .filter((entry) => entry.archiveTier === "hot")
+      .map((entry) => ({ entry, route: timelineRoutes.get(entry.id) }))
+      .find(({ route }) => route);
+    const archiveIndex = JSON.parse(
+      readFileSync("data/archive/_index.json", "utf8"),
+    ) as { months: string[] };
+    let warm: {
+      entry: { id: string; url: string; archiveTier?: string };
+      route: string;
+    } | undefined;
+    for (const month of archiveIndex.months) {
+      const archive = JSON.parse(
+        readFileSync(`data/archive/${month}.json`, "utf8"),
+      ) as { entries: Array<{ id: string; url: string; archiveTier?: string }> };
+      const entry = archive.entries.find((candidate) => candidate.archiveTier === "warm");
+      const route = entry ? archiveRoutes.get(entry.id) : undefined;
+      if (entry && route) {
+        warm = { entry, route };
+        break;
+      }
+    }
+
+    expect(cold, "fixture includes a cold card on a generated timeline page").toBeTruthy();
+    expect(hot, "fixture includes a hot card on a generated timeline page").toBeTruthy();
+    expect(warm, "fixture includes a warm card on a generated archive page").toBeTruthy();
+
+    await page.goto(cold!.route!, { waitUntil: "domcontentloaded" });
+    const coldCard = page.locator(`[data-entry-id="${cold!.entry.id}"]`);
+    await expect(coldCard).toHaveAttribute("data-detail-destination", "source");
+    const coldLink = coldCard.locator("h3.title > a");
+    await expect(coldLink).toHaveAttribute("href", canonicalSourceUrl(cold!.entry.url));
+    await expect(coldLink).toHaveAttribute("target", "_blank");
+    await expect(page.locator(`a[href="/e/${cold!.entry.id}/"]`)).toHaveCount(0);
+
+    await page.goto(hot!.route!, { waitUntil: "domcontentloaded" });
+    const hotCard = page.locator(`[data-entry-id="${hot!.entry.id}"]`);
+    await expect(hotCard).toHaveAttribute("data-detail-destination", "internal");
+    await expect(hotCard.locator("h3.title > a")).toHaveAttribute(
+      "href",
+      `/e/${hot!.entry.id}/`,
+    );
+
+    await page.goto(warm!.route, { waitUntil: "domcontentloaded" });
+    const warmCard = page.locator(`[data-entry-id="${warm!.entry.id}"]`);
+    await expect(warmCard).toHaveAttribute("data-detail-destination", "internal");
+    await expect(warmCard.locator("h3.title > a")).toHaveAttribute(
+      "href",
+      `/e/${warm!.entry.id}/`,
+    );
   });
 
   test("links the archive index to a generated month", async ({ page }) => {

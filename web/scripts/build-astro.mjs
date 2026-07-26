@@ -7,6 +7,7 @@ import {
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { writeLegacyTagRedirects } from "./legacy-tag-redirects.mjs";
+import { validateSitemapDist } from "./validate-sitemap-dist.mjs";
 import {
   resolveBuildMemoryConfig,
   rssBudgetFailure,
@@ -266,6 +267,14 @@ const legacyTagRedirectCount = writeLegacyTagRedirects({
   indexPath: path.resolve("../data/index.json"),
 });
 console.log(`BUILD: phase=legacy-tag-redirects state=completed files=${legacyTagRedirectCount}`);
+
+const crawlParity = validateSitemapDist({
+  distDirectory: dist,
+  indexPath: path.resolve("../data/index.json"),
+});
+console.log(
+  `BUILD: phase=crawl-parity state=completed sitemapUrls=${crawlParity.sitemapUrlCount} sitemapBytes=${crawlParity.sitemapByteLength} canonicalHtml=${crawlParity.canonicalHtmlCount} redirects=${crawlParity.redirectCount} coldInboundLinks=${crawlParity.coldInboundLinkCount}`,
+);
 
 await runPhase("pagefind", pagefindCommand, ["--site", "dist"]);
 const finalOutput = collectOutputStats(dist);

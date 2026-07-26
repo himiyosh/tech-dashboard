@@ -367,9 +367,16 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | `/about` | About | サイト説明 / ライセンス |
 | `/page/[n]` | ページネーション | Timeline 2 ページ目以降 |
 | `/t/[tag]` | タグ別 | 横断タグによる絞り込み |
+| `/c/[slug]/page/[n]` | カテゴリページネーション | カテゴリ 2 ページ目以降 |
+| `/t/[tag]/page/[n]` | タグページネーション | 10 件以上の生成対象タグ 2 ページ目以降 |
+| `/arxiv` | arXiv | live 論文一覧 |
+| `/glossary` | Glossary | AI / LLM 用語集 |
+| `/archive`, `/archive/[month]` | Archive | 月一覧 / 要約付き warm・cold 記事一覧 |
 | `/rss.xml` | RSS 2.0 | 最新 50 件 |
 | `/feed.json` | JSON Feed 1.1 | 最新 50 件 |
 | `/metrics.json` | Dashboard metrics | Timeline / About の自動更新用 counts |
+| `/sitemap.xml` | Sitemap XML | canonical な addressable HTML route |
+| `/robots.txt` | Robots directives | crawl 許可 + canonical Sitemap directive |
 
 ### 6.2 共通レイアウト (`Portal.astro`)
 
@@ -379,7 +386,16 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 - **言語切替**: `localStorage["td:lang"]` に保存、プリペイントで FOUC 回避
 - **ファビコン**: `/favicon.svg` (レーダー + パルスドット)
 
-### 6.3 トップ画面 (`/`)
+### 6.3 Crawl discovery
+
+- `web/src/lib/site.ts` の `SITE_URL` を canonical origin の唯一の正本とする。
+- `/sitemap.xml` は Home、top-level destination、カテゴリ、生成済みページネーション、arXiv / Knowledge / Glossary、Archive 月、10件以上の生成対象タグ、live と warm の記事詳細だけを重複なしで列挙する。
+- redirect-only `/sources`、query URL、生成されない低頻度タグ、外部 URL、cold / dropped の記事詳細は含めない。
+- 一覧上の cold / dropped は canonical source URL、untiered / hot / warm は内部 detail URL を共通 destination helper で選ぶ。production build は sitemap と実際の canonical HTML inventory の双方向 parity、redirect-only 非包含、全 HTML の cold / dropped 内部 detail link 0 件を検証する。
+- `lastmod` は route の実更新時刻を保証できないため付与しない。50,000 URL または uncompressed 50 MB を超える場合は build を fail-closed にする。
+- `/robots.txt` は crawl を許可し、`Sitemap: {SITE_URL}/sitemap.xml` を広告 publisher ID と無関係に公開する。実 publisher ID が無い `ads.txt` は生成しない。
+
+### 6.4 トップ画面 (`/`)
 
 | セクション | 内容 |
 |---|---|
@@ -388,7 +404,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | **TimelineList** | 最新エントリ (カード UI、重要度バッジ、カテゴリ色、JA/EN 要約トグル) |
 | **Sidebar** | カテゴリ別件数 + 各 7 日スパーク |
 
-### 6.4 検索
+### 6.5 検索
 
 - **エンジン**: [Pagefind](https://pagefind.app/) (ビルド時に `web/dist` を走査して静的インデックス生成)
 - **UI**: ヘッダの検索バーにインラインポップオーバー。タイプ中 120ms デバウンスで最大 10 件表示
@@ -398,7 +414,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
   - 外側クリック / フォーカス外: 閉じる
 - **Dev 制約**: `npm run dev` ではインデックスが生成されないため、検証は `npm run preview` または本番環境を使用
 
-### 6.5 匿名公開いいね
+### 6.6 匿名公開いいね
 
 - **表示面**: Knowledge カードと記事詳細。
 - **永続化**: Cloudflare Pages Functions から専用 D1 binding `REACTIONS_DB` を使用する。publisher data、Featured、Top 3、importance、taxonomy には影響しない。
@@ -410,7 +426,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 - **Count**: visible count は compact notation で card geometry を守り、accessible name と tooltip には locale に沿った exact count を保持する。
 - **Failure recovery**: busy 中も focus を維持する。失敗時は optimistic state を rollback し、server truth を再取得後、rate limit、Turnstile、service、network の原因別 JA/EN toast を表示する。toast は fixed mobile tabbar と Turnstile challenge より上の semantic layer に置く。
 
-### 6.6 多言語表示
+### 6.7 多言語表示
 
 - JA/EN 要約はビルド時に両方埋め込み、DOM の `.i18n-ja` / `.i18n-en` を CSS `display` で切替
 - `<html data-lang="ja">` / `<html data-lang="en">` に連動

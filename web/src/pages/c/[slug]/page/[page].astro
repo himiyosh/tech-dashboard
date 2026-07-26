@@ -13,6 +13,10 @@ import {
   jstDayLabel,
   type Category,
 } from "../../../../lib/data.ts";
+import {
+  paginationPageNumbers,
+  totalPageCount,
+} from "../../../../lib/route-inventory.ts";
 import { categoryWeekOverWeek } from "../../../../lib/stats.ts";
 
 export function getStaticPaths() {
@@ -26,11 +30,11 @@ export function getStaticPaths() {
   }> = [];
   for (const c of CATEGORY_META) {
     const all = entriesFor(c.slug);
-    const total = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
-    for (let p = 2; p <= total; p++) {
+    const total = totalPageCount(all.length, PAGE_SIZE);
+    for (const page of paginationPageNumbers(all.length, PAGE_SIZE)) {
       out.push({
-        params: { slug: c.slug, page: String(p) },
-        props: { category: c, page: p, total },
+        params: { slug: c.slug, page: String(page) },
+        props: { category: c, page, total },
       });
     }
   }

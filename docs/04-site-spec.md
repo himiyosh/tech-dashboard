@@ -396,8 +396,9 @@ SVG インライン (外部アイコンフォント不使用)。カテゴリア�
 - `<title>` / `<meta description>`: 各ページに固有値
 - OGP: og:title / og:description / og:image (Featured のみ動的画像)
 - JSON-LD: Article schema (エントリカードには不使用、トップは WebSite schema)
-- sitemap.xml: Astro の `@astrojs/sitemap` で自動生成
-- robots.txt: 検索エンジン許可 (bot-traps 排除)
+- sitemap.xml: web 内の共有 route/data helper から静的生成。重複・外部・query URL を除外し、50,000 URL / uncompressed 50 MB と生成済み canonical HTML の双方向 parity を fail-closed で検証
+- 記事 destination: untiered / hot / warm は内部 detail、cold / dropped は canonical source URL。build は生成済み HTML 全体に cold / dropped の内部 detail link がないことを検証
+- robots.txt: 検索エンジン許可 + canonical Sitemap directive (Cloudflare managed content signal は配信側で付加)
 
 ### 7.4 ブラウザサポート 🟡
 

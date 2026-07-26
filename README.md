@@ -42,6 +42,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | Publisher cron / quality gate | [.github/workflows/publisher.yml](.github/workflows/publisher.yml) |
 | Free bridge / Queue / KV binding | [worker/wrangler.toml](worker/wrangler.toml) |
 | サイト URL (canonical) | [web/src/lib/site.ts](web/src/lib/site.ts) |
+| Sitemap の route 列挙 / protocol 上限 | [web/src/lib/sitemap.ts](web/src/lib/sitemap.ts) |
 | ソース定義 (registry) | [harness/registry.ts](harness/registry.ts) |
 | カテゴリ / 型定義 | [harness/types.ts](harness/types.ts) |
 
@@ -140,7 +141,7 @@ npx -y modern-web-guidance@latest retrieve "accessibility,css,performance,securi
 | Typecheck | `npm run typecheck` | TypeScript 型チェック | 速い |
 | Worker Typecheck | `npm --prefix worker run typecheck && npm --prefix worker-summarizer run typecheck && npm --prefix worker-body run typecheck` | Cloudflare Worker / Queue consumer の型チェック | 速い |
 | Unit | `npm test` | Vitest による関数単位の検証 (要約 JSON パース、Web ロジック、`data/index.json` スキーマ) | 速い (~1s) |
-| Web build | `npm run build:web` | Cloudflare Pages と同じ Astro + Pagefind build を実行し、30秒 heartbeat、phase別 CPU/RSS、route/file数、3,200 HTML route上限を検証 | 中程度 |
+| Web build | `npm run build:web` | Cloudflare Pages と同じ Astro + Pagefind build を実行し、30秒 heartbeat、phase別 CPU/RSS、route/file数、3,200 HTML route上限に加えて sitemap と canonical HTML の双方向 parity、redirect 除外、cold / dropped 内部 detail link 0 件を検証 | 中程度 |
 | E2E | `npm run test:e2e` | Playwright (Chromium) でトップ表示・記事詳細・言語切替を検証 | 中程度 (~30s + build) |
 | Secret scan | `npm run secrets:scan` | tracked file の secret / private key / 高リスクファイル名を検証 | 速い |
 | Worktree secret scan | `npm run secrets:scan:worktree` | tracked + untracked non-ignored file を検証し、ignored local secret store は値を読まず path だけ警告 | 速い |
@@ -489,13 +490,15 @@ tech-dashboard/
 │  │  ├─ lib/freshness.ts    # source type 別 freshness 判定 (UI / quality-audit 共有)
 │  │  ├─ lib/source-meta.ts  # web 自己完結用の sources メタ複製 (R-005)
 │  │  ├─ lib/site.ts         # canonical URL 単一情報源 (R-004)
+│  │  ├─ lib/detail-addressability.ts # JSON-free な live/hot/warm detail route policy
+│  │  ├─ lib/sitemap.ts      # addressable route 列挙 + 50,000 URL / 50 MB fail-closed serializer
 │  │  ├─ styles/portal.css   # 全 CSS (モバイル最適化済み)
 │  │  └─ pages/
 │  │     ├─ index.astro      # ポータルトップ (Top-3 メダル / DailySummary 等)
 │  │     ├─ c/[slug].astro   # カテゴリ別 (14 ページ)
 │  │     ├─ t/[tag].astro    # タグ別
 │  │     ├─ status.astro, categories.astro, about.astro, sources.astro (redirect)
-│  │     └─ {rss.xml,feed.json,metrics.json}.ts  # RSS / JSON Feed / 表示 metrics
+│  │     └─ {rss.xml,feed.json,metrics.json,sitemap.xml,robots.txt}.ts  # Feed / metrics / crawl discovery
 │  ├─ .node-version          # Cloudflare Pages build 用 Node 22 ピン
 │  └─ astro.config.mjs
 ├─ .claude/skills/

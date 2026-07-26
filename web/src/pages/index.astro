@@ -25,7 +25,6 @@ import {
   MAIN_TIMELINE_ENTRIES,
   PAGE_SIZE,
   CATEGORY_META,
-  entryHref,
   featured,
   importanceLabel,
   latestListedCollectedAtForEntry,
@@ -39,6 +38,7 @@ import {
   isOffTopicForHero,
   WORKER_HEALTH,
 } from "../lib/data.ts";
+import { entryDestination } from "../lib/entry-destination.ts";
 import { sourceFreshnessStatus } from "../lib/freshness.ts";
 import { deriveWorkerRunStatus, runCadenceLead } from "../lib/run-health.ts";
 
@@ -67,6 +67,7 @@ const dailySummaryAfterEntryIndex = Math.min(2, pageEntries.length - 1);
 const feat = featured();
 const featuredId = feat?.id ?? null;
 const featuredSource = feat?.source ?? null;
+const featuredDestination = feat ? entryDestination(feat) : null;
 
 const now = new Date();
 const ago = relativeTime(DASHBOARD_METRICS.generatedAt, now);
@@ -296,7 +297,12 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
               <span class="i18n-en" lang="en">Spotlight · summary-ready priority pick</span>
             </div>
             <h2 class="featured-title">
-              <a href={entryHref(feat)}>
+              <a
+                href={featuredDestination?.href}
+                target={featuredDestination?.target}
+                rel={featuredDestination?.rel}
+                data-detail-destination={featuredDestination?.external ? "source" : "internal"}
+              >
                 {(() => {
                   const ja = titleForLangWithFallback(feat, "ja");
                   const en = titleForLangWithFallback(feat, "en");
@@ -404,6 +410,7 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
               const summaryJa = summaryForLangWithFallback(e, "ja");
               const summaryEn = summaryForLangWithFallback(e, "en");
               const rankAuthority = sourceAuthority(e.source, e.sourceType);
+              const destination = entryDestination(e);
               return (
                 <li
                   class={`top-rank-item rank-${i + 1}`}
@@ -411,7 +418,13 @@ const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
                   style={`--cat-color:${meta?.color ?? "#8a847e"}`}
                 >
                   <span class="medal" aria-hidden="true">{medals[i]}</span>
-                  <a class="rank-content-link" href={entryHref(e)}>
+                  <a
+                    class="rank-content-link"
+                    href={destination.href}
+                    target={destination.target}
+                    rel={destination.rel}
+                    data-detail-destination={destination.external ? "source" : "internal"}
+                  >
                     <span class="rank-cat" aria-hidden="true">{meta?.emoji ?? "\u{1F4C4}"}</span>
                     <span class="rank-title">
                       {(() => {

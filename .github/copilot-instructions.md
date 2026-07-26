@@ -2747,6 +2747,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **follow-up (共通 affordance の適用漏れ)**: cold/dropped card の source destination には `ExternalLinkHint` を適用したが、既存の detail source CTA と `SourceDisclosure` は hand-written `aria-hidden` arrow のまま残り、visible icon はあるのに accessible name へ新規tab intentが入らなかった。docs の「source link」contractを新規変更callsiteだけの検査で保証したため、同じ target/rel policy を持つ既存callsiteを見落とした。
 - **対策 / 教訓 (follow-up 6)**: `target="_blank"` と `EXTERNAL_ENTRY_REL` を持つ全 source CTA は visible/SR affordance も同じ `ExternalLinkHint` に統一し、callsite固有の arrow は削除する。E2E は detail CTA と disclosure link の JA/EN accessible name、active hintが1個だけvisible、rel、さらに disclosure trigger・copy action・internal entry linkがnew-tab警告を持たないことを個別に確認する。共通policyを導入するときは新規callsiteだけでなく属性検索で既存consumerを全件棚卸しする。
 
+### LL-415: text LCP最適化はspeedだけでなくAX treeを比較し、安全なresource削減を選ぶ
+- **事象**: 390x844、Fast 3G、4x CPUのproduction traceでHomeのLCPはTickerのtext `span.tb-title.i18n-ja`となり、1,532-2,395msのうち96.5%以上がelement render delayだった。AdSense遮断では改善せず、fold外cardへ`content-visibility:auto`を適用した比較は一部runでLCPを短縮したが、Chromium accessibility treeのheadingが35件から8件へ減り、後続記事のtitleとtrust情報がscroll前に見えなくなった。
+- **根本原因**: performance比較をDOM、keyboard、find-in-page、CLSだけで評価し、assistive technologyが参照する初期AX treeを同じacceptance criteriaへ含めていなかった。一方、Google Fontsのrender-blocking stylesheetはInter 5 weightとNoto Sans JP 4 weightを要求し、network dependency treeで多数の日本語subset requestを作っていた。
+- **対策**: semantic articleへの`content-visibility:auto`案を撤回した。AdSenseを同条件で遮断した上でGoogle Fontsだけを遮断する3run比較では、LCP中央値が1,584msから880msへ44%短縮し、AX heading数は35件のまま維持された。PortalからGoogle Fonts stylesheet/preconnectを除去し、bodyとSVG thumbnailをsystem font stackへ統一する。E2Eは外部font link/request不在、system fallback、390/768/1280pxのoverflowを固定する。
+- **教訓**: text LCPでTTFBが低い場合、画像preloadやDOM非表示を推測で追加せず、同条件のA/BとAX treeを同時に測る。`content-visibility:auto`はDOM textやTab移動を保っても初期AX treeからsemantic contentを外す場合があるため、reader-facing feedへ適用しない。外部fontのようにaccessibility semanticsを変えずcritical requestを削減できる案を優先し、LCP中央値、network、AX件数を同じrelease gateにする。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

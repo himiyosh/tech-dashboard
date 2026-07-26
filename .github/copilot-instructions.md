@@ -2752,6 +2752,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: performance比較をDOM、keyboard、find-in-page、CLSだけで評価し、assistive technologyが参照する初期AX treeを同じacceptance criteriaへ含めていなかった。一方、Google Fontsのrender-blocking stylesheetはInter 5 weightとNoto Sans JP 4 weightを要求し、network dependency treeで多数の日本語subset requestを作っていた。
 - **対策**: semantic articleへの`content-visibility:auto`案を撤回した。AdSenseを同条件で遮断した上でGoogle Fontsだけを遮断する3run比較では、LCP中央値が1,584msから880msへ44%短縮し、AX heading数は35件のまま維持された。PortalからGoogle Fonts stylesheet/preconnectを除去し、bodyとSVG thumbnailをsystem font stackへ統一する。E2Eは外部font link/request不在、system fallback、390/768/1280pxのoverflowを固定する。
 - **教訓**: text LCPでTTFBが低い場合、画像preloadやDOM非表示を推測で追加せず、同条件のA/BとAX treeを同時に測る。`content-visibility:auto`はDOM textやTab移動を保っても初期AX treeからsemantic contentを外す場合があるため、reader-facing feedへ適用しない。外部fontのようにaccessibility semanticsを変えずcritical requestを削減できる案を優先し、LCP中央値、network、AX件数を同じrelease gateにする。
+- **follow-up**: macOSで`system-ui`を先頭にしたstackは全122件E2Eを通ったが、Linux CIでは721pxのHeader/Top-3 overflow、390pxの`Agent Frameworks` clip、Featuredのfirst-view 8px超過が再現した。OS既定fontのmetricsを同一と仮定したことが原因だった。LatinはArial/Liberation互換を先頭に固定し、日本語はHiragino/Yu Gothic/Meiryo/system fallbackへ流すstackへ変更した。外部font削減はnetwork gateだけで完了にせず、Linux CIの境界幅・first-view・label clipを必須とする。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

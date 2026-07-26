@@ -1657,7 +1657,7 @@ test.describe("TECH Dashboard smoke", () => {
 
       expect(metrics.bodyFontFamily, `${viewport.width}px uses the local system stack`).not.toMatch(/Inter|Noto Sans JP/);
       expect(metrics.bodyFontFamily, `${viewport.width}px keeps a cross-platform sans-serif fallback`).toMatch(
-        /system-ui|BlinkMacSystemFont|Segoe UI|Hiragino Sans|Yu Gothic UI|Meiryo|sans-serif/,
+        /Arial|system-ui|Hiragino Sans|Yu Gothic UI|Meiryo|sans-serif/,
       );
       expect(metrics.horizontalOverflow, `${viewport.width}px keeps the page inside the viewport`).toBeLessThanOrEqual(0);
     }

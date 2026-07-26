@@ -373,8 +373,8 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 
 ### 6.2 共通レイアウト (`Portal.astro`)
 
-- **ヘッダ**: ロゴ / Nav (Timeline / Knowledge / Archive / Status / About) / **検索ボックス (Pagefind インライン)** / 言語トグル (JA/EN)
-- **Knowledge レーン (`/knowledge`)**: evergreen ソース (R-022) のベストプラクティス / 知見をニュース Timeline から分離し、ソース別に蓄積表示する。`#site-menu` から遷移する secondary destination で、mobile tabbar には出さない (R-015)。
+- **ヘッダ**: ロゴ / direct explore shortcut (`Categories` / `arXiv` / `Knowledge`) / `Menu` / **検索ボックス (Pagefind インライン)** / 言語トグル (JA/EN)
+- **Knowledge レーン (`/knowledge`)**: evergreen ソース (R-022) のベストプラクティス / 知見をニュース Timeline から分離し、ソース別に蓄積表示する。desktop header と mobile tabbar の direct `Knowledge` shortcut から遷移し、`#site-menu` には重複表示しない (R-015)。
 - **フッタ**: Generated at / リポジトリリンク / ライセンス
 - **言語切替**: `localStorage["td:lang"]` に保存、プリペイントで FOUC 回避
 - **ファビコン**: `/favicon.svg` (レーダー + パルスドット)

@@ -7,6 +7,7 @@ export const SITEMAP_STATIC_PATHS = [
   "/archive/",
   "/status/",
   "/about/",
+  "/privacy/",
   "/search/",
 ] as const;
 

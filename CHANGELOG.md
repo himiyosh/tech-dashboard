@@ -22,10 +22,13 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - 表示言語 (JA/EN) を `?lang=` の URL query として保持し、EN に切り替えて共有した記事・検索・カテゴリ URL がローカルストレージのない新しいブラウザでも EN を再現できるようにしました。日本語は既定のまま URL に param を付けません。
 - About と Status に GitHub Issues への「問題を報告」導線と、稼働状態が ERR の場合の切り分けガイダンス (収集遅延は不具合ではなく、長時間の ERR や誤分類・翻訳欠落・壊れたリンクを報告対象とする案内) を追加しました。
 - Status に、匿名いいね機能 (D1 binding・識別子署名用シークレット・Turnstile 検証シークレット・Turnstile 公開サイトキー) の設定状態を確認できる「匿名いいねの設定状態」カードを追加しました。値そのものは一切表示せず、boolean のみを返す読み取り専用 `GET /api/reactions/config` を progressive enhancement で読み、「設定済み / Configured」「未設定 / Not configured (未設定の項目を列挙)」「確認できません / Check unavailable (endpoint 未到達)」の 3 状態を区別して表示します。いずれも安全に degrade する任意機能として neutral tone で表示し、ERR/WARN 相当の色は使いません。
+- bilingual `/privacy/`、version付きの明示的な広告opt-in、production custom-domain限定のAdSense gate、local設定消去、current-browser匿名いいね削除を追加しました。未選択・未知・壊れた・旧version・preview/pages.devはfail-closedで広告OFFとなり、閲覧・検索・Archive・RSS・JSON Feedは同意なしで利用できます。
 
 ### 変更
 
 - 外部 Google Fonts の render-blocking stylesheet と多数の日本語font requestを廃止し、OS標準のsans-serif stackへ切り替えました。文字情報とアクセシビリティtreeを維持しながら、mobile LCPと初期network負荷を削減します。
+- 匿名いいねのcurrent-browser削除をTurnstile設定から分離し、same-origin DELETEがD1の票・rate-limit行とHttpOnly cookieを冪等に削除できるようにしました。privacy disclosureにはURL-visibleな言語・検索query、外部media、保持期間、第三者serviceを実装どおり明記します。
+- 匿名いいねにactive identity rowと`article_likes(voter_hash)` indexを追加し、identity確認、rate-limit、票変更を同一D1 transactionへまとめました。current-browser DELETEと並行するPUTは削除済みidentityの票・rate-limit行を再生成できません。
 - cold / dropped の記事カードは存在しない内部 detail route ではなく canonical source URL を開くようにし、hot / warm は従来どおり内部 detail を使います。新しいタブで開く source link は共有 `noopener noreferrer nofollow`、共通の `↗`、表示言語別の読み上げ補足を持ちます。production build は sitemap URL と生成済み canonical HTML の双方向 parity、redirect-only 除外、標準 HTML parser が抽出した実要素の href を各 HTML の canonical route 基準で解決し、全内部 detail link が実在することを fail-closed で検証します。
 - 記事詳細の「タイトルと URL をコピー」は EN 表示時に `?lang=en` を含む URL を共有できるようにし、共有相手が別ブラウザで開いても表示言語が一致するようにしました。
 - Publisher が実英語要約から安全に導出できる `titleEn` を publish 前に自動補完し、日本語コミュニティ記事の英語表示で原題 fallback が連続する状態を減らすようにしました。

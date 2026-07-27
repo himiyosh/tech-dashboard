@@ -1,0 +1,970 @@
+---
+import PageHero from "../components/PageHero.astro";
+import ExternalLinkHint from "../components/ExternalLinkHint.astro";
+import PrivacyConsentSettings from "../components/PrivacyConsentSettings.astro";
+import Portal from "../layouts/Portal.astro";
+import {
+  PRIVACY_JURISDICTION,
+  PRIVACY_LAST_UPDATED,
+  PUBLIC_CONTACT_EMAIL,
+  PUBLIC_OPERATOR_NAME,
+} from "../lib/site.ts";
+---
+
+<Portal
+  pageKey="privacy"
+  title="Privacy & Consent - TECH Dashboard"
+  description="TECH Dashboardのデータ取扱い、広告同意、匿名いいね、第三者サービス、利用者の選択を説明します。"
+  descriptionEn="TECH Dashboard privacy, advertising consent, anonymous likes, third-party services, retention, deletion, and user controls."
+>
+  <PageHero
+    className="page-hero-privacy"
+    kicker="Privacy & consent"
+    title="プライバシー"
+    titleEn="Privacy & consent"
+    headingId="privacy-heading"
+    description="収集する情報を最小限にし、任意の広告は明示的な選択があるまで読み込みません。現在の技術的な取扱いと変更方法を公開します。"
+    descriptionEn="We minimize data collection and do not load optional advertising until you explicitly allow it. This page documents the current technical behavior and your controls."
+    actions={[
+      { href: "#choices", label: "選択を変更", labelEn: "Change choices" },
+      { href: "#data-we-use", label: "取扱うデータ", labelEn: "Data we use" },
+      { href: "#third-parties", label: "第三者サービス", labelEn: "Third parties" },
+      { href: "#contact", label: "連絡先", labelEn: "Contact" },
+    ]}
+  />
+
+  <div class="privacy-layout">
+    <aside class="privacy-rail" aria-labelledby="privacy-rail-label">
+      <span id="privacy-rail-label" class="visually-hidden">
+        <span class="i18n-ja">プライバシーページの案内</span>
+        <span class="i18n-en" lang="en">Privacy page navigation</span>
+      </span>
+      <div class="privacy-identity">
+        <span class="privacy-mark" aria-hidden="true">◎</span>
+        <div>
+          <strong>{PUBLIC_OPERATOR_NAME}</strong>
+          <small>
+            <span class="i18n-ja">日本で運営</span>
+            <span class="i18n-en" lang="en">Operated in Japan</span>
+          </small>
+        </div>
+      </div>
+      <dl>
+        <div>
+          <dt>
+            <span class="i18n-ja">更新日</span>
+            <span class="i18n-en" lang="en">Updated</span>
+          </dt>
+          <dd><time datetime={PRIVACY_LAST_UPDATED}>{PRIVACY_LAST_UPDATED}</time></dd>
+        </div>
+        <div>
+          <dt>
+            <span class="i18n-ja">解析サービス</span>
+            <span class="i18n-en" lang="en">Analytics</span>
+          </dt>
+          <dd>
+            <span class="i18n-ja">未使用</span>
+            <span class="i18n-en" lang="en">Not used</span>
+          </dd>
+        </div>
+        <div>
+          <dt>
+            <span class="i18n-ja">任意広告</span>
+            <span class="i18n-en" lang="en">Optional ads</span>
+          </dt>
+          <dd>
+            <span class="i18n-ja">初期OFF</span>
+            <span class="i18n-en" lang="en">Off by default</span>
+          </dd>
+        </div>
+      </dl>
+      <nav aria-labelledby="privacy-sections-label">
+        <span id="privacy-sections-label" class="visually-hidden">
+          <span class="i18n-ja">プライバシーの各項目</span>
+          <span class="i18n-en" lang="en">Privacy sections</span>
+        </span>
+        <a href="#choices">
+          <span class="i18n-ja">選択と初期設定</span>
+          <span class="i18n-en" lang="en">Choices and defaults</span>
+        </a>
+        <a href="#data-we-use">
+          <span class="i18n-ja">取扱うデータ</span>
+          <span class="i18n-en" lang="en">Data we use</span>
+        </a>
+        <a href="#anonymous-reactions">
+          <span class="i18n-ja">匿名いいね</span>
+          <span class="i18n-en" lang="en">Anonymous likes</span>
+        </a>
+        <a href="#third-parties">
+          <span class="i18n-ja">第三者サービス</span>
+          <span class="i18n-en" lang="en">Third parties</span>
+        </a>
+        <a href="#your-controls">
+          <span class="i18n-ja">削除と変更</span>
+          <span class="i18n-en" lang="en">Deletion and changes</span>
+        </a>
+        <a href="#contact">
+          <span class="i18n-ja">運営者と連絡先</span>
+          <span class="i18n-en" lang="en">Operator and contact</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="privacy-main">
+      <section class="privacy-intro" aria-labelledby="privacy-intro-heading">
+        <p class="privacy-label">Privacy by default</p>
+        <h2 id="privacy-intro-heading">
+          <span class="i18n-ja">読むために広告へ同意する必要はありません</span>
+          <span class="i18n-en" lang="en">Reading does not require advertising consent</span>
+        </h2>
+        <p>
+          <span class="i18n-ja">記事一覧、検索、Archive、RSS、JSON Feed は広告を許可しなくても利用できます。TECH Dashboard は独立したアクセス解析サービスを使用していません。任意の広告スクリプトは、利用者が「広告を許可」を選んだ場合だけ本番カスタムドメインで読み込みます。</span>
+          <span class="i18n-en" lang="en">Article lists, search, Archive, RSS, and JSON Feed work without advertising consent. TECH Dashboard does not use a separate analytics service. Optional advertising loads on the production custom domain only after you choose “Allow advertising.”</span>
+        </p>
+      </section>
+
+      <section id="choices" class="privacy-section" aria-labelledby="choices-heading">
+        <div class="privacy-section-heading">
+          <div>
+            <h2 id="choices-heading">
+              <span class="i18n-ja">選択と初期設定</span>
+              <span class="i18n-en" lang="en">Choices and defaults</span>
+            </h2>
+            <p>
+              <span class="i18n-ja">未選択、壊れた記録、古いversionはいずれも広告OFFとして扱います。</span>
+              <span class="i18n-en" lang="en">No choice, malformed records, and old versions all fail closed with advertising off.</span>
+            </p>
+          </div>
+        </div>
+        <PrivacyConsentSettings />
+      </section>
+
+      <section id="data-we-use" class="privacy-section" aria-labelledby="data-heading">
+        <div class="privacy-section-heading">
+          <div>
+            <h2 id="data-heading">
+              <span class="i18n-ja">取扱うデータ</span>
+              <span class="i18n-en" lang="en">Data we use</span>
+            </h2>
+            <p>
+              <span class="i18n-ja">機能ごとに目的を限定し、別用途へ自動転用しません。</span>
+              <span class="i18n-en" lang="en">Each data category has a limited purpose and is not automatically repurposed.</span>
+            </p>
+          </div>
+        </div>
+        <dl class="privacy-practices">
+          <div>
+            <dt>
+              <span class="i18n-ja">表示設定</span>
+              <span class="i18n-en" lang="en">Display preferences</span>
+            </dt>
+            <dd>
+              <span class="i18n-ja">表示言語、arXiv表示形式、広告選択をlocalStorageへ保存します。英語表示は共有可能なURLの<code>?lang=en</code>にも反映され、そのURLは通常の配信requestとしてCloudflareへ届きます。広告選択は運営者のserverへ送信しません。</span>
+              <span class="i18n-en" lang="en">Interface language, arXiv view mode, and advertising choice are stored in localStorage. English mode is also reflected as <code>?lang=en</code> in shareable URLs, so Cloudflare receives it as ordinary delivery request data. The advertising choice is not sent to the operator's server.</span>
+            </dd>
+          </div>
+          <div>
+            <dt>
+              <span class="i18n-ja">検索</span>
+              <span class="i18n-en" lang="en">Search</span>
+            </dt>
+            <dd>
+              <span class="i18n-ja">Pagefindの静的indexをbrowser内で検索します。共有可能な検索URLには<code>?q=</code>、<code>?tag=</code>、exact recovery用の<code>?entry=</code>が含まれる場合があります。RSSのカテゴリ絞り込みは<code>?category=</code>を使います。これらはCloudflareが通常の配信requestとして処理しますが、独立したアクセス解析serviceへ送りません。</span>
+              <span class="i18n-en" lang="en">Pagefind searches a static index in the browser. Shareable search URLs can contain <code>?q=</code>, <code>?tag=</code>, and an exact-recovery <code>?entry=</code>. RSS category filters use <code>?category=</code>. Cloudflare processes these as ordinary delivery requests, but they are not sent to a separate analytics service.</span>
+            </dd>
+          </div>
+          <div>
+            <dt>
+              <span class="i18n-ja">配信request</span>
+              <span class="i18n-en" lang="en">Delivery requests</span>
+            </dt>
+            <dd>
+              <span class="i18n-ja">Cloudflare PagesとFunctionsがsiteとAPIを配信します。URL path・query、IP address、user agent、referrerなどのHTTP request metadataを配信・security・abuse対策のためCloudflareが処理する場合があります。保持期間とcontrolはCloudflareのpolicyに従います。</span>
+              <span class="i18n-en" lang="en">Cloudflare Pages and Functions deliver the site and APIs. Cloudflare may process HTTP request metadata such as URL path and query, IP address, user agent, and referrer for delivery, security, and abuse prevention. Retention and controls follow Cloudflare's policy.</span>
+            </dd>
+          </div>
+          <div>
+            <dt>
+              <span class="i18n-ja">外部media</span>
+              <span class="i18n-en" lang="en">External media</span>
+            </dt>
+            <dd>
+              <span class="i18n-ja">記事画像やfaviconは広告選択と独立して、元siteまたは画像providerから直接取得する場合があります。そのrequestではURL、IP address、browser情報、referrerが送信先へ届く場合があります。保持期間と削除controlは各送信先が管理し、このpageの削除controlでは消去できません。</span>
+              <span class="i18n-en" lang="en">Independently of the advertising choice, article images and favicons may load directly from source sites or image providers. Those requests may expose URL, IP address, browser information, and referrer to the destination. Each destination controls retention and deletion; this page's deletion control cannot remove that data.</span>
+            </dd>
+          </div>
+          <div>
+            <dt>
+              <span class="i18n-ja">保持期間</span>
+              <span class="i18n-en" lang="en">Retention</span>
+            </dt>
+            <dd>
+              <span class="i18n-ja">localStorageの設定は変更・消去またはbrowser storageの削除まで保持されます。匿名いいねCookieは最長1年間です。D1のactive identity、票、rate-limit行には現在、自動削除期限を設定していません。このpageの削除controlまたは運用上の削除で消去します。第三者が保持する情報は各serviceのpolicyに従います。</span>
+              <span class="i18n-en" lang="en">Local preferences remain until changed, cleared, or removed with browser storage. The anonymous-like cookie lasts up to one year. D1 active-identity, vote, and rate-limit rows currently have no automatic expiry; they are removed by this page's deletion control or operational deletion. Third-party retention follows each provider's policy.</span>
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section id="anonymous-reactions" class="privacy-section" aria-labelledby="reactions-heading">
+        <div class="privacy-section-heading">
+          <div>
+            <h2 id="reactions-heading">
+              <span class="i18n-ja">匿名いいね</span>
+              <span class="i18n-en" lang="en">Anonymous likes</span>
+            </h2>
+            <p>
+              <span class="i18n-ja">いいねを操作したbrowserだけに、機能用の識別子を作成します。</span>
+              <span class="i18n-en" lang="en">A functional identifier is created only for a browser that uses the like control.</span>
+            </p>
+          </div>
+        </div>
+        <div class="privacy-prose">
+          <p>
+            <span class="i18n-ja">不透明なUUIDを<code>__Host-techdb_reaction_voter</code>というHttpOnly、Secure、SameSite=Lax Cookieに最長1年間保存します。serverはUUIDそのものではなく、active identityのHMAC-SHA256 digestと作成時刻、記事ID、いいね状態、rate-limit状態だけをD1へ保存します。count読込時は記事IDを<code>?ids=</code>でsame-origin Functionへ送り、設定済みCookieはbrowserが同じrequestへ付与します。</span>
+            <span class="i18n-en" lang="en">An opaque UUID is stored for up to one year in the <code>__Host-techdb_reaction_voter</code> HttpOnly, Secure, SameSite=Lax cookie. The server stores only the active identity's HMAC-SHA256 digest and creation time, article ID, like state, and rate-limit state in D1, not the UUID itself. Count reads send article IDs to the same-origin Function in <code>?ids=</code>, and the browser includes the configured cookie with that request.</span>
+          </p>
+          <p>
+            <span class="i18n-ja">いいね変更時だけCloudflare Turnstileを読み込み、one-time tokenとIP addressを検証へ送信します。IP addressはTECH DashboardのD1へ保存しません。いいねはお気に入り、記事保存、ranking signalではありません。</span>
+            <span class="i18n-en" lang="en">Cloudflare Turnstile loads only when a like changes, sending a one-time token and IP address for verification. TECH Dashboard does not store the IP address in D1. Likes are not bookmarks, saved articles, or ranking signals.</span>
+          </p>
+        </div>
+      </section>
+
+      <section id="third-parties" class="privacy-section" aria-labelledby="third-parties-heading">
+        <div class="privacy-section-heading">
+          <div>
+            <h2 id="third-parties-heading">
+              <span class="i18n-ja">第三者サービス</span>
+              <span class="i18n-en" lang="en">Third-party services</span>
+            </h2>
+            <p>
+              <span class="i18n-ja">利用する目的と起動条件を分けて公開します。</span>
+              <span class="i18n-en" lang="en">Purpose and activation conditions are disclosed separately.</span>
+            </p>
+          </div>
+        </div>
+        <ul class="third-party-list">
+          <li>
+            <strong>Cloudflare</strong>
+            <span>
+              <span class="i18n-ja">site配信、Functions、D1、任意のいいね検証。request metadataとTurnstile verification dataの保持・controlはCloudflareのpolicyに従い、このpageのlocal/D1削除ではCloudflare側の記録を消去できません。</span>
+              <span class="i18n-en" lang="en">Site delivery, Functions, D1, and optional like verification. Cloudflare controls retention and deletion of request metadata and Turnstile verification data; this page's local/D1 deletion cannot remove provider-side records.</span>
+            </span>
+            <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">
+              Privacy policy
+              <ExternalLinkHint lang="ja" />
+              <ExternalLinkHint lang="en" />
+            </a>
+          </li>
+          <li>
+            <strong>Google AdSense</strong>
+            <span>
+              <span class="i18n-ja">「広告を許可」を選んだ本番custom domainでのみ読み込みます。Googleはcookie、IP address、browser情報などを広告配信と不正対策へ使用する場合があります。選択変更は将来の読込を止めますが、既にGoogleが受け取ったdataの保持・削除はGoogleのpolicyとcontrolに従います。</span>
+              <span class="i18n-en" lang="en">Loads only on the production custom domain after “Allow advertising.” Google may use cookies, IP address, and browser information for ad delivery and fraud prevention. Changing the choice stops future loading; retention and deletion of data already received by Google follow Google's policies and controls.</span>
+            </span>
+            <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">
+              Advertising policy
+              <ExternalLinkHint lang="ja" />
+              <ExternalLinkHint lang="en" />
+            </a>
+          </li>
+          <li>
+            <strong>DuckDuckGo icons</strong>
+            <span>
+              <span class="i18n-ja">一部sourceのfaviconを広告選択と独立して表示するために使用します。送信先のrequest記録はDuckDuckGoが管理し、このpageの削除controlでは消去できません。</span>
+              <span class="i18n-en" lang="en">Used independently of the advertising choice to display favicons for some sources. DuckDuckGo controls destination-side request records; this page's deletion control cannot remove them.</span>
+            </span>
+            <a href="https://duckduckgo.com/privacy" target="_blank" rel="noopener noreferrer">
+              Privacy policy
+              <ExternalLinkHint lang="ja" />
+              <ExternalLinkHint lang="en" />
+            </a>
+          </li>
+        </ul>
+      </section>
+
+      <section id="your-controls" class="privacy-section" aria-labelledby="controls-heading" data-privacy-controls>
+        <div class="privacy-section-heading">
+          <div>
+            <h2 id="controls-heading">
+              <span class="i18n-ja">削除と変更</span>
+              <span class="i18n-en" lang="en">Deletion and changes</span>
+            </h2>
+            <p>
+              <span class="i18n-ja">選択の変更と匿名いいねデータの削除を、このpageから実行できます。</span>
+              <span class="i18n-en" lang="en">You can change choices and delete anonymous like data from this page.</span>
+            </p>
+          </div>
+        </div>
+        <div class="privacy-controls">
+          <article aria-labelledby="local-preferences-heading">
+            <h3 id="local-preferences-heading">
+              <span class="i18n-ja">ローカル設定を消去</span>
+              <span class="i18n-en" lang="en">Clear local preferences</span>
+            </h3>
+            <p id="local-preferences-description">
+              <span class="i18n-ja">このbrowserの保存済み表示言語、arXiv表示形式、広告選択をlocalStorageから削除します。現在のURLにある<code>?lang=</code>、<code>?q=</code>、<code>?tag=</code>は変更しません。</span>
+              <span class="i18n-en" lang="en">Removes saved interface language, arXiv view mode, and advertising choice from this browser's localStorage. It does not rewrite <code>?lang=</code>, <code>?q=</code>, or <code>?tag=</code> in the current URL.</span>
+            </p>
+            <button type="button" data-clear-local-preferences aria-describedby="local-preferences-description">
+              <span class="i18n-ja">ローカル設定を消去</span>
+              <span class="i18n-en" lang="en">Clear local preferences</span>
+            </button>
+          </article>
+          <article
+            aria-labelledby="reaction-deletion-heading"
+            data-reaction-delete-card
+            data-reaction-delete-state="checking"
+          >
+            <h3 id="reaction-deletion-heading">
+              <span class="i18n-ja">匿名いいねデータを削除</span>
+              <span class="i18n-en" lang="en">Delete anonymous like data</span>
+            </h3>
+            <p id="reaction-deletion-description">
+              <span class="i18n-ja">現在のbrowser識別子に紐づくactive identity、全ての票、rate-limit記録をD1から削除し、Cookieを失効させます。第三者service側のrequest記録は削除対象に含みません。</span>
+              <span class="i18n-en" lang="en">Deletes the active identity, all votes, and rate-limit records linked to the current browser from D1 and expires its cookie. Provider-side request records are not included.</span>
+            </p>
+            <p
+              class="reaction-delete-availability"
+              data-reaction-delete-availability="checking"
+              role="status"
+            >
+              <span class="i18n-ja">削除機能の設定を確認しています。</span>
+              <span class="i18n-en" lang="en">Checking deletion availability.</span>
+            </p>
+            <p
+              class="reaction-delete-availability"
+              data-reaction-delete-availability="ready"
+              role="status"
+              hidden
+              inert
+            >
+              <span class="i18n-ja">この環境では削除機能を利用できます。</span>
+              <span class="i18n-en" lang="en">Deletion is available in this environment.</span>
+            </p>
+            <p
+              class="reaction-delete-availability"
+              data-reaction-delete-availability="not-configured"
+              role="status"
+              hidden
+              inert
+            >
+              <span class="i18n-ja">D1または識別子署名が未設定のため、この環境では削除できません。</span>
+              <span class="i18n-en" lang="en">Deletion is unavailable because D1 or identity signing is not configured in this environment.</span>
+            </p>
+            <p
+              class="reaction-delete-availability"
+              data-reaction-delete-availability="unavailable"
+              role="status"
+              hidden
+              inert
+            >
+              <span class="i18n-ja">静的previewでは削除APIを確認できません。本番Pages Functionsで設定済みの場合に利用できます。</span>
+              <span class="i18n-en" lang="en">The deletion API cannot be verified in a static preview. It is available when configured in production Pages Functions.</span>
+            </p>
+            <button
+              type="button"
+              data-reaction-delete-open
+              aria-controls="reaction-delete-confirmation"
+              aria-expanded="false"
+              aria-describedby="reaction-deletion-description"
+              hidden
+              inert
+            >
+              <span class="i18n-ja">削除を確認</span>
+              <span class="i18n-en" lang="en">Review deletion</span>
+            </button>
+            <div
+              id="reaction-delete-confirmation"
+              class="delete-confirmation"
+              data-reaction-delete-confirmation
+              hidden
+              inert
+            >
+              <p id="reaction-delete-confirmation-label">
+                <span class="i18n-ja">この操作は取り消せません。続行しますか？</span>
+                <span class="i18n-en" lang="en">This action cannot be undone. Continue?</span>
+              </p>
+              <div role="group" aria-labelledby="reaction-delete-confirmation-label">
+                <button type="button" data-reaction-delete-cancel>
+                  <span class="i18n-ja">キャンセル</span>
+                  <span class="i18n-en" lang="en">Cancel</span>
+                </button>
+                <button type="button" class="danger" data-reaction-delete-confirm aria-disabled="false" aria-busy="false">
+                  <span class="i18n-ja">削除する</span>
+                  <span class="i18n-en" lang="en">Delete data</span>
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+        <div class="privacy-control-status" role="status" aria-live="polite" aria-atomic="true">
+          <p data-privacy-control-status="success" hidden>
+            <span class="i18n-ja">処理が完了しました。</span>
+            <span class="i18n-en" lang="en">The request completed.</span>
+          </p>
+          <p data-privacy-control-status="error" hidden>
+            <span class="i18n-ja">処理を完了できませんでした。再試行するか、下記の連絡先へお問い合わせください。</span>
+            <span class="i18n-en" lang="en">The request could not be completed. Try again or contact the address below.</span>
+          </p>
+        </div>
+      </section>
+
+      <section id="contact" class="privacy-section privacy-contact" aria-labelledby="contact-heading">
+        <div class="privacy-section-heading">
+          <div>
+            <h2 id="contact-heading">
+              <span class="i18n-ja">運営者と連絡先</span>
+              <span class="i18n-en" lang="en">Operator and contact</span>
+            </h2>
+          </div>
+        </div>
+        <dl>
+          <div>
+            <dt>
+              <span class="i18n-ja">運営主体</span>
+              <span class="i18n-en" lang="en">Operator</span>
+            </dt>
+            <dd>{PUBLIC_OPERATOR_NAME}</dd>
+          </div>
+          <div>
+            <dt>
+              <span class="i18n-ja">連絡先</span>
+              <span class="i18n-en" lang="en">Contact</span>
+            </dt>
+            <dd><a href={`mailto:${PUBLIC_CONTACT_EMAIL}`}>{PUBLIC_CONTACT_EMAIL}</a></dd>
+          </div>
+          <div>
+            <dt>
+              <span class="i18n-ja">適用法域</span>
+              <span class="i18n-en" lang="en">Jurisdiction</span>
+            </dt>
+            <dd>
+              <span class="i18n-ja">日本</span>
+              <span class="i18n-en" lang="en">{PRIVACY_JURISDICTION}</span>
+            </dd>
+          </div>
+        </dl>
+        <p>
+          <span class="i18n-ja">アクセス、訂正、削除、その他のプライバシーに関する質問は上記連絡先へお送りください。第三者サービスが保有する情報は、各serviceのprivacy policyとcontrolに従います。</span>
+          <span class="i18n-en" lang="en">Send access, correction, deletion, or other privacy questions to the contact above. Data held by third-party services is governed by their privacy policies and controls.</span>
+        </p>
+      </section>
+    </main>
+  </div>
+</Portal>
+
+<script>
+  import { initializePrivacyControls } from "../lib/privacy-controls.ts";
+
+  initializePrivacyControls();
+</script>
+
+<style>
+  .privacy-layout {
+    display: grid;
+    grid-template-columns: 236px minmax(0, 1fr);
+    gap: 28px;
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: 22px var(--page-gutter) 104px;
+  }
+
+  .privacy-rail {
+    position: sticky;
+    top: 126px;
+    align-self: start;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+  }
+
+  .privacy-identity {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .privacy-mark {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, var(--border));
+    border-radius: 50%;
+    color: var(--accent);
+    background: var(--accent-bg);
+    font-size: 19px;
+  }
+
+  .privacy-identity strong,
+  .privacy-identity small {
+    display: block;
+  }
+
+  .privacy-identity strong {
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  .privacy-identity small {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .privacy-rail dl {
+    display: grid;
+    gap: 8px;
+    margin: 14px 0;
+  }
+
+  .privacy-rail dl > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .privacy-rail dt,
+  .privacy-rail dd {
+    margin: 0;
+    font-size: 11px;
+  }
+
+  .privacy-rail dt {
+    color: var(--muted);
+  }
+
+  .privacy-rail dd {
+    color: var(--text-2);
+    font-weight: 700;
+    text-align: right;
+  }
+
+  .privacy-rail nav {
+    display: grid;
+    gap: 3px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .privacy-rail nav a {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 7px 9px;
+    border-radius: 7px;
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 650;
+  }
+
+  .privacy-rail nav a:focus-visible {
+    color: var(--accent);
+    background: var(--accent-bg);
+    outline: 2px solid color-mix(in srgb, var(--accent) 60%, white);
+    outline-offset: 2px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .privacy-rail nav a:hover {
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+  }
+
+  .privacy-main {
+    min-width: 0;
+    max-width: 920px;
+  }
+
+  .privacy-intro {
+    padding: 24px 26px;
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+    border-radius: 14px;
+    background:
+      radial-gradient(circle at 96% 12%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 34%),
+      var(--surface);
+  }
+
+  .privacy-label {
+    margin: 0 0 8px;
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .privacy-intro h2 {
+    max-width: 720px;
+    margin: 0;
+    color: var(--text);
+    font-size: 24px;
+    line-height: 1.3;
+    text-wrap: balance;
+  }
+
+  .privacy-intro > p:last-child {
+    max-width: 74ch;
+    margin: 12px 0 0;
+    color: var(--text-2);
+    font-size: 13.5px;
+    line-height: 1.75;
+    text-wrap: pretty;
+  }
+
+  .privacy-section {
+    scroll-margin-top: 120px;
+    padding: 30px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .privacy-section:target {
+    outline: 3px solid color-mix(in srgb, var(--accent) 20%, transparent);
+    outline-offset: 8px;
+  }
+
+  .privacy-section-heading {
+    margin-bottom: 16px;
+  }
+
+  .privacy-section-heading h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 19px;
+    line-height: 1.35;
+  }
+
+  .privacy-section-heading p {
+    max-width: 72ch;
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+
+  .privacy-practices {
+    display: grid;
+    margin: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .privacy-practices > div {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 18px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .privacy-practices dt,
+  .privacy-practices dd {
+    margin: 0;
+  }
+
+  .privacy-practices dt {
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .privacy-practices dd,
+  .privacy-prose p,
+  .privacy-contact > p {
+    color: var(--text-2);
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .privacy-main code {
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    overflow-wrap: anywhere;
+  }
+
+  .privacy-prose {
+    max-width: 76ch;
+  }
+
+  .privacy-prose p {
+    margin: 0 0 12px;
+  }
+
+  .third-party-list {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+    list-style: none;
+  }
+
+  .third-party-list li {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: start;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .third-party-list strong {
+    color: var(--text);
+    font-size: 12px;
+  }
+
+  .third-party-list span,
+  .third-party-list a {
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+
+  .third-party-list > li > span {
+    color: var(--text-2);
+  }
+
+  .third-party-list a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .privacy-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .privacy-controls article {
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: var(--surface);
+  }
+
+  .privacy-controls h3,
+  .privacy-controls p {
+    margin: 0;
+  }
+
+  .privacy-controls .reaction-delete-availability {
+    min-height: 0;
+    color: var(--text-2);
+  }
+
+  .reaction-delete-availability[hidden] {
+    display: none;
+  }
+
+  .privacy-controls h3 {
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .privacy-controls p {
+    min-height: 64px;
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.65;
+  }
+
+  .privacy-controls button {
+    min-height: 45px;
+    margin-top: 12px;
+    padding: 9px 13px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--text-2);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .privacy-controls button:focus-visible {
+    border-color: var(--accent);
+    color: var(--accent);
+    outline: 2px solid color-mix(in srgb, var(--accent) 65%, white);
+    outline-offset: 2px;
+  }
+
+  .privacy-controls button:active {
+    transform: translateY(1px);
+  }
+
+  .privacy-controls button[aria-disabled="true"] {
+    opacity: 0.62;
+    cursor: progress;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .privacy-controls button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+  }
+
+  .delete-confirmation[hidden],
+  .privacy-control-status [hidden] {
+    display: none;
+  }
+
+  .delete-confirmation {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .delete-confirmation p {
+    min-height: 0;
+    margin: 0;
+    color: var(--text-2);
+  }
+
+  .delete-confirmation > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .delete-confirmation button.danger {
+    border-color: color-mix(in srgb, var(--danger) 60%, var(--border));
+    color: var(--danger);
+  }
+
+  .privacy-control-status p {
+    margin: 14px 0 0;
+    color: var(--text-2);
+    font-size: 12.5px;
+  }
+
+  .privacy-contact dl {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--border);
+  }
+
+  .privacy-contact dl > div {
+    padding: 15px;
+    background: var(--surface);
+  }
+
+  .privacy-contact dt,
+  .privacy-contact dd {
+    margin: 0;
+  }
+
+  .privacy-contact dt {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .privacy-contact dd {
+    margin-top: 5px;
+    color: var(--text);
+    font-size: 12.5px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+
+  .privacy-contact dd a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .privacy-contact > p {
+    max-width: 76ch;
+    margin: 16px 0 0;
+  }
+
+  @media (max-width: 980px) {
+    .privacy-layout {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    .privacy-rail {
+      position: static;
+    }
+
+    .privacy-rail nav {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 720px) {
+    .privacy-layout {
+      padding: 16px 16px calc(104px + env(safe-area-inset-bottom));
+    }
+
+    .privacy-rail {
+      padding: 15px;
+    }
+
+    .privacy-rail nav {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .privacy-rail nav a {
+      min-height: 44px;
+    }
+
+    .privacy-intro {
+      padding: 20px 18px;
+    }
+
+    .privacy-intro h2 {
+      font-size: 20px;
+    }
+
+    .privacy-section {
+      padding: 24px 0;
+    }
+
+    .privacy-practices > div,
+    .third-party-list li {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .third-party-list a {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-self: start;
+    }
+
+    .privacy-controls,
+    .privacy-contact dl {
+      grid-template-columns: 1fr;
+    }
+
+    .privacy-controls p {
+      min-height: 0;
+    }
+
+    .privacy-controls button {
+      width: 100%;
+    }
+  }
+</style>

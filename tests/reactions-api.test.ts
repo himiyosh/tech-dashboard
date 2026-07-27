@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import {
   evaluateReactionConfig,
+  handleDeleteReactionIdentity,
   handleEnsureReactionIdentity,
   handleGetReactionConfig,
   handleGetReactions,
@@ -23,6 +24,7 @@ const env: ReactionEnv = {
 class MemoryReactionStore implements ReactionStore {
   readonly votes = new Map<string, Set<string>>();
   readonly seenVoterHashes = new Set<string>();
+  readonly identities = new Set<string>();
   readonly rateLimits = new Map<string, { startedAt: number; count: number }>();
 
   async list(ids: string[], voterHash: string): Promise<ReactionSnapshot[]> {
@@ -33,36 +35,62 @@ class MemoryReactionStore implements ReactionStore {
     }));
   }
 
-  async consumeRateLimit(
+  async hasIdentity(voterHash: string): Promise<boolean> {
+    return this.identities.has(voterHash);
+  }
+
+  async createIdentity(voterHash: string, _nowMs: number): Promise<void> {
+    this.identities.add(voterHash);
+  }
+
+  async mutateReaction(
+    id: string,
     voterHash: string,
+    liked: boolean,
     nowMs: number,
     windowMs: number,
     maxRequests: number,
-  ): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
+  ): Promise<{
+    identityActive: boolean;
+    allowed: boolean;
+    retryAfterSeconds: number;
+    count: number;
+  }> {
+    if (!this.identities.has(voterHash)) {
+      return {
+        identityActive: false,
+        allowed: false,
+        retryAfterSeconds: 1,
+        count: this.votes.get(id)?.size ?? 0,
+      };
+    }
     const current = this.rateLimits.get(voterHash);
     const record =
       !current || current.startedAt <= nowMs - windowMs
         ? { startedAt: nowMs, count: 1 }
         : { startedAt: current.startedAt, count: current.count + 1 };
     this.rateLimits.set(voterHash, record);
+    const allowed = record.count <= maxRequests;
+    if (allowed) {
+      this.seenVoterHashes.add(voterHash);
+      const voters = this.votes.get(id) ?? new Set<string>();
+      if (liked) voters.add(voterHash);
+      else voters.delete(voterHash);
+      this.votes.set(id, voters);
+    }
     return {
-      allowed: record.count <= maxRequests,
+      identityActive: true,
+      allowed,
       retryAfterSeconds: Math.max(1, Math.ceil((record.startedAt + windowMs - nowMs) / 1_000)),
+      count: this.votes.get(id)?.size ?? 0,
     };
   }
 
-  async setLiked(
-    id: string,
-    voterHash: string,
-    liked: boolean,
-    _nowMs: number,
-  ): Promise<number> {
-    this.seenVoterHashes.add(voterHash);
-    const voters = this.votes.get(id) ?? new Set<string>();
-    if (liked) voters.add(voterHash);
-    else voters.delete(voterHash);
-    this.votes.set(id, voters);
-    return voters.size;
+  async deleteVoterData(voterHash: string): Promise<void> {
+    this.identities.delete(voterHash);
+    for (const voters of this.votes.values()) voters.delete(voterHash);
+    this.rateLimits.delete(voterHash);
+    this.seenVoterHashes.delete(voterHash);
   }
 }
 
@@ -93,9 +121,9 @@ function cookieFrom(response: Response): string {
   return setCookie.split(";", 1)[0] ?? "";
 }
 
-function identityRequest(cookie?: string): Request {
+function identityRequest(cookie?: string, method = "POST"): Request {
   return new Request(`${origin}/api/reactions/identity`, {
-    method: "POST",
+    method,
     headers: {
       Origin: origin,
       ...(cookie ? { Cookie: cookie } : {}),
@@ -310,6 +338,178 @@ describe("anonymous public reactions API", () => {
     expect(store.rateLimits.size).toBe(0);
   });
 
+  it("deletes the current browser reaction identity, votes, and rate-limit state", async () => {
+    const store = new MemoryReactionStore();
+    const deps = dependencies(store);
+    const cookie = await establishIdentity(store, deps);
+    const liked = await handlePutReaction(
+      mutationRequest(articleId, true, cookie),
+      env,
+      articleId,
+      deps,
+    );
+    expect(liked.status).toBe(200);
+    expect(store.votes.get(articleId)?.size).toBe(1);
+    expect(store.rateLimits.size).toBe(1);
+
+    const response = await handleDeleteReactionIdentity(
+      identityRequest(cookie, "DELETE"),
+      { REACTION_HMAC_SECRET: hmacSecret },
+      deps,
+    );
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      identity: { ready: false, deleted: true },
+    });
+    expect(response.headers.get("Set-Cookie")).toContain("Max-Age=0");
+    expect(response.headers.get("Set-Cookie")).toContain("HttpOnly");
+    expect(store.votes.get(articleId)?.size).toBe(0);
+    expect(store.rateLimits.size).toBe(0);
+    expect(store.identities.size).toBe(0);
+  });
+
+  it("keeps reaction identity deletion idempotent when no cookie exists", async () => {
+    const response = await handleDeleteReactionIdentity(
+      identityRequest(undefined, "DELETE"),
+      {},
+    );
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      identity: { ready: false, deleted: false },
+    });
+    expect(response.headers.get("Set-Cookie")).toContain("Max-Age=0");
+  });
+
+  it("issues a fresh identity when a deleted cookie is presented again", async () => {
+    const store = new MemoryReactionStore();
+    const firstId = "22222222-2222-4222-8222-222222222222";
+    const secondId = "33333333-3333-4333-8333-333333333333";
+    const first = await handleEnsureReactionIdentity(
+      identityRequest(),
+      { REACTION_HMAC_SECRET: hmacSecret },
+      {
+        store,
+        now: () => Date.parse("2026-07-13T12:00:00.000Z"),
+        randomUUID: () => firstId,
+      },
+    );
+    const staleCookie = cookieFrom(first);
+    expect(staleCookie).toContain(firstId);
+
+    const deletion = await handleDeleteReactionIdentity(
+      identityRequest(staleCookie, "DELETE"),
+      { REACTION_HMAC_SECRET: hmacSecret },
+      { store },
+    );
+    expect(deletion.status).toBe(200);
+    expect(store.identities.size).toBe(0);
+
+    const replacement = await handleEnsureReactionIdentity(
+      identityRequest(staleCookie),
+      { REACTION_HMAC_SECRET: hmacSecret },
+      {
+        store,
+        now: () => Date.parse("2026-07-13T12:01:00.000Z"),
+        randomUUID: () => secondId,
+      },
+    );
+    expect(replacement.status).toBe(200);
+    expect(cookieFrom(replacement)).toContain(secondId);
+    expect(cookieFrom(replacement)).not.toContain(firstId);
+    expect(store.identities.size).toBe(1);
+  });
+
+  it("expires an invalid voter cookie without requiring reaction service bindings", async () => {
+    const response = await handleDeleteReactionIdentity(
+      identityRequest("__Host-techdb_reaction_voter=invalid", "DELETE"),
+      {},
+    );
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      identity: { ready: false, deleted: false },
+    });
+    expect(response.headers.get("Set-Cookie")).toContain("Max-Age=0");
+  });
+
+  it("rejects cross-origin reaction identity deletion before touching storage", async () => {
+    const store = new MemoryReactionStore();
+    const response = await handleDeleteReactionIdentity(
+      new Request(`${origin}/api/reactions/identity`, {
+        method: "DELETE",
+        headers: { Origin: "https://attacker.example" },
+      }),
+      { REACTION_HMAC_SECRET: hmacSecret },
+      dependencies(store),
+    );
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: "origin_rejected" },
+    });
+    expect(store.votes.size).toBe(0);
+    expect(store.rateLimits.size).toBe(0);
+  });
+
+  it("does not recreate votes when deletion wins a concurrent mutation race", async () => {
+    class PausedMutationStore extends MemoryReactionStore {
+      mutationStartedResolve!: () => void;
+      continueMutationResolve!: () => void;
+      readonly mutationStarted = new Promise<void>((resolve) => {
+        this.mutationStartedResolve = resolve;
+      });
+      readonly continueMutation = new Promise<void>((resolve) => {
+        this.continueMutationResolve = resolve;
+      });
+
+      override async mutateReaction(
+        id: string,
+        voterHash: string,
+        liked: boolean,
+        nowMs: number,
+        windowMs: number,
+        maxRequests: number,
+      ) {
+        this.mutationStartedResolve();
+        await this.continueMutation;
+        return super.mutateReaction(
+          id,
+          voterHash,
+          liked,
+          nowMs,
+          windowMs,
+          maxRequests,
+        );
+      }
+    }
+
+    const store = new PausedMutationStore();
+    const deps = dependencies(store);
+    const cookie = await establishIdentity(store, deps);
+    const pendingMutation = handlePutReaction(
+      mutationRequest(articleId, true, cookie),
+      env,
+      articleId,
+      deps,
+    );
+    await store.mutationStarted;
+
+    const deletion = await handleDeleteReactionIdentity(
+      identityRequest(cookie, "DELETE"),
+      { REACTION_HMAC_SECRET: hmacSecret },
+      deps,
+    );
+    expect(deletion.status).toBe(200);
+    store.continueMutationResolve();
+
+    const mutation = await pendingMutation;
+    expect(mutation.status).toBe(409);
+    await expect(mutation.json()).resolves.toMatchObject({
+      error: { code: "identity_required" },
+    });
+    expect(store.identities.size).toBe(0);
+    expect(store.votes.get(articleId)?.size ?? 0).toBe(0);
+    expect(store.rateLimits.size).toBe(0);
+  });
+
   it("rejects mutations before identity establishment without changing state", async () => {
     const store = new MemoryReactionStore();
     const deps = dependencies(store);
@@ -466,12 +666,15 @@ describe("anonymous public reactions API", () => {
       },
     });
 
-    const missingTurnstileHydration = await handleGetReactions(
+    const hydrationWithoutTurnstile = await handleGetReactions(
       new Request(`${origin}/api/reactions?ids=${articleId}`),
       { REACTION_HMAC_SECRET: hmacSecret },
       dependencies(new MemoryReactionStore()),
     );
-    expect(missingTurnstileHydration.status).toBe(503);
+    expect(hydrationWithoutTurnstile.status).toBe(200);
+    await expect(hydrationWithoutTurnstile.json()).resolves.toEqual({
+      reactions: [{ id: articleId, count: 0, liked: false }],
+    });
 
     const missingTurnstile = await handlePutReaction(
       mutationRequest(articleId, true),
@@ -504,14 +707,21 @@ describe("anonymous public reactions API", () => {
   });
 
   it("uses a composite vote key and bounded per-browser rate-limit state", () => {
-    const sql = readFileSync(
+    const baseSql = readFileSync(
       new URL("../web/migrations/0001_reactions.sql", import.meta.url),
       "utf8",
     );
-    expect(sql).toMatch(/PRIMARY KEY\s*\(article_id,\s*voter_hash\)/i);
-    expect(sql).toMatch(/CREATE TABLE IF NOT EXISTS reaction_rate_limits/i);
-    expect(sql).toMatch(/voter_hash TEXT PRIMARY KEY/i);
-    expect(sql).toMatch(/WITHOUT ROWID/);
+    const identitySql = readFileSync(
+      new URL("../web/migrations/0002_reaction_identities.sql", import.meta.url),
+      "utf8",
+    );
+    expect(baseSql).toMatch(/PRIMARY KEY\s*\(article_id,\s*voter_hash\)/i);
+    expect(baseSql).toMatch(/CREATE TABLE IF NOT EXISTS reaction_rate_limits/i);
+    expect(baseSql).toMatch(/voter_hash TEXT PRIMARY KEY/i);
+    expect(baseSql).toMatch(/WITHOUT ROWID/);
+    expect(identitySql).toMatch(/CREATE TABLE IF NOT EXISTS reaction_voters/i);
+    expect(identitySql).toMatch(/CREATE INDEX IF NOT EXISTS article_likes_by_voter/i);
+    expect(identitySql).toMatch(/ON article_likes\s*\(voter_hash\)/i);
   });
 });
 

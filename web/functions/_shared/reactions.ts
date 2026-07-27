@@ -56,13 +56,22 @@ export interface ReactionSnapshot {
 
 export interface ReactionStore {
   list(ids: string[], voterHash: string): Promise<ReactionSnapshot[]>;
-  consumeRateLimit(
+  hasIdentity(voterHash: string): Promise<boolean>;
+  createIdentity(voterHash: string, nowMs: number): Promise<void>;
+  mutateReaction(
+    id: string,
     voterHash: string,
+    liked: boolean,
     nowMs: number,
     windowMs: number,
     maxRequests: number,
-  ): Promise<{ allowed: boolean; retryAfterSeconds: number }>;
-  setLiked(id: string, voterHash: string, liked: boolean, nowMs: number): Promise<number>;
+  ): Promise<{
+    identityActive: boolean;
+    allowed: boolean;
+    retryAfterSeconds: number;
+    count: number;
+  }>;
+  deleteVoterData(voterHash: string): Promise<void>;
 }
 
 export interface VerifyChallengeInput {
@@ -205,6 +214,23 @@ function requireStore(env: ReactionEnv, dependencies: ReactionDependencies): Rea
   return new D1ReactionStore(env.REACTIONS_DB);
 }
 
+function requireReactionIdentityStore(
+  env: ReactionEnv,
+  dependencies: ReactionDependencies,
+): {
+  hmacCredential: string;
+  store: ReactionStore;
+} {
+  return {
+    hmacCredential: requireSecret(
+      env.REACTION_HMAC_SECRET,
+      "REACTION_HMAC_SECRET",
+      HMAC_SECRET_MIN_LENGTH,
+    ),
+    store: requireStore(env, dependencies),
+  };
+}
+
 function requireReactionService(
   env: ReactionEnv,
   dependencies: ReactionDependencies,
@@ -214,16 +240,11 @@ function requireReactionService(
   store: ReactionStore;
 } {
   return {
-    hmacCredential: requireSecret(
-      env.REACTION_HMAC_SECRET,
-      "REACTION_HMAC_SECRET",
-      HMAC_SECRET_MIN_LENGTH,
-    ),
+    ...requireReactionIdentityStore(env, dependencies),
     siteverifyCredential: requireSecret(
       env.TURNSTILE_SECRET_KEY,
       "TURNSTILE_SECRET_KEY",
     ),
-    store: requireStore(env, dependencies),
   };
 }
 
@@ -242,6 +263,10 @@ function parseCookie(request: Request, name: string): string | null {
 
 function serializeVoterCookie(voterId: string): string {
   return `${VOTER_COOKIE}=${voterId}; Path=/; Max-Age=31536000; HttpOnly; Secure; SameSite=Lax`;
+}
+
+function serializeExpiredVoterCookie(): string {
+  return `${VOTER_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
 }
 
 async function hmacHex(signingMaterial: string, value: string): Promise<string> {
@@ -280,6 +305,24 @@ async function resolveVoter(
     newCookie = serializeVoterCookie(voterId);
   }
   return { hash: await hmacHex(signingMaterial, voterId), newCookie };
+}
+
+async function createVoter(
+  signingMaterial: string,
+  randomUUID: () => string,
+): Promise<{ hash: string; newCookie: string }> {
+  const voterId = randomUUID();
+  if (!VOTER_ID_RE.test(voterId)) {
+    throw new ReactionApiError(
+      503,
+      "identity_unavailable",
+      "An anonymous voter identity could not be created.",
+    );
+  }
+  return {
+    hash: await hmacHex(signingMaterial, voterId),
+    newCookie: serializeVoterCookie(voterId),
+  };
 }
 
 function parseBatchIds(request: Request): string[] {
@@ -459,17 +502,49 @@ export class D1ReactionStore implements ReactionStore {
     return ids.map((id) => ({ id, count: rows.get(id)?.count ?? 0, liked: rows.get(id)?.liked ?? false }));
   }
 
-  async consumeRateLimit(
+  async hasIdentity(voterHash: string): Promise<boolean> {
+    const row = await this.db
+      .prepare("SELECT 1 AS identity_active FROM reaction_voters WHERE voter_hash = ?")
+      .bind(voterHash)
+      .first<{ identity_active?: number | string }>();
+    return Number(row?.identity_active) === 1;
+  }
+
+  async createIdentity(voterHash: string, nowMs: number): Promise<void> {
+    const [result] = await this.db.batch([
+      this.db
+        .prepare(
+          `INSERT OR IGNORE INTO reaction_voters (voter_hash, created_at)
+           VALUES (?, ?)`,
+        )
+        .bind(voterHash, nowMs),
+    ]);
+    if (!result?.success) {
+      throw new Error(result?.error || "D1 reaction identity creation failed");
+    }
+  }
+
+  async mutateReaction(
+    id: string,
     voterHash: string,
+    liked: boolean,
     nowMs: number,
     windowMs: number,
     maxRequests: number,
-  ): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
+  ): Promise<{
+    identityActive: boolean;
+    allowed: boolean;
+    retryAfterSeconds: number;
+    count: number;
+  }> {
     const cutoff = nowMs - windowMs;
-    const row = await this.db
+    const rateLimit = this.db
       .prepare(
         `INSERT INTO reaction_rate_limits (voter_hash, window_started_at, request_count)
-         VALUES (?, ?, 1)
+         SELECT ?, ?, 1
+         WHERE EXISTS (
+           SELECT 1 FROM reaction_voters
+           WHERE voter_hash = ?)
          ON CONFLICT(voter_hash) DO UPDATE SET
            window_started_at = CASE
              WHEN reaction_rate_limits.window_started_at <= ? THEN excluded.window_started_at
@@ -481,34 +556,88 @@ export class D1ReactionStore implements ReactionStore {
            END
          RETURNING window_started_at, request_count`,
       )
-      .bind(voterHash, nowMs, cutoff, cutoff)
-      .first<{ window_started_at: number | string; request_count: number | string }>();
-    if (!row) throw new Error("D1 rate-limit update returned no row");
-    const startedAt = Number(row.window_started_at);
-    const requestCount = normalizeCount(row.request_count);
-    const retryAfterSeconds = Math.max(1, Math.ceil((startedAt + windowMs - nowMs) / 1_000));
-    return { allowed: requestCount <= maxRequests, retryAfterSeconds };
-  }
-
-  async setLiked(id: string, voterHash: string, liked: boolean, nowMs: number): Promise<number> {
+      .bind(voterHash, nowMs, voterHash, cutoff, cutoff);
     const mutation = liked
       ? this.db
           .prepare(
             `INSERT OR IGNORE INTO article_likes (article_id, voter_hash, created_at)
-             VALUES (?, ?, ?)`,
+             SELECT ?, ?, ?
+             WHERE EXISTS (
+               SELECT 1 FROM reaction_voters
+               WHERE voter_hash = ?)
+             AND (
+               SELECT request_count FROM reaction_rate_limits
+               WHERE voter_hash = ?) <= ?`,
           )
-          .bind(id, voterHash, nowMs)
+          .bind(id, voterHash, nowMs, voterHash, voterHash, maxRequests)
       : this.db
-          .prepare("DELETE FROM article_likes WHERE article_id = ? AND voter_hash = ?")
-          .bind(id, voterHash);
+          .prepare(
+            `DELETE FROM article_likes
+             WHERE article_id = ? AND voter_hash = ?
+             AND EXISTS (
+               SELECT 1 FROM reaction_voters
+               WHERE voter_hash = ?)
+             AND (
+               SELECT request_count FROM reaction_rate_limits
+               WHERE voter_hash = ?) <= ?`,
+          )
+          .bind(id, voterHash, voterHash, voterHash, maxRequests);
     const count = this.db
       .prepare("SELECT COUNT(*) AS reaction_count FROM article_likes WHERE article_id = ?")
       .bind(id);
-    const results = await this.db.batch<{ reaction_count?: number | string }>([mutation, count]);
-    if (results.length !== 2 || results.some((result) => !result.success)) {
-      throw new Error(results.find((result) => result.error)?.error || "D1 reaction mutation failed");
+    const identity = this.db
+      .prepare(
+        `SELECT CASE WHEN EXISTS (
+           SELECT 1 FROM reaction_voters
+           WHERE voter_hash = ?) THEN 1 ELSE 0 END AS identity_active`,
+      )
+      .bind(voterHash);
+    const results = await this.db.batch<{
+      window_started_at?: number | string;
+      request_count?: number | string;
+      reaction_count?: number | string;
+      identity_active?: number | string;
+    }>([rateLimit, mutation, count, identity]);
+    if (results.length !== 4 || results.some((result) => !result.success)) {
+      throw new Error(
+        results.find((result) => result.error)?.error ||
+          "D1 reaction mutation transaction failed",
+      );
     }
-    return normalizeCount(results[1]?.results?.[0]?.reaction_count);
+    const identityActive =
+      Number(results[3]?.results?.[0]?.identity_active) === 1;
+    const rateRow = results[0]?.results?.[0];
+    const startedAt = Number(rateRow?.window_started_at);
+    const requestCount = normalizeCount(rateRow?.request_count);
+    const retryAfterSeconds = Number.isFinite(startedAt)
+      ? Math.max(1, Math.ceil((startedAt + windowMs - nowMs) / 1_000))
+      : 1;
+    return {
+      identityActive,
+      allowed: identityActive && requestCount <= maxRequests,
+      retryAfterSeconds,
+      count: normalizeCount(results[2]?.results?.[0]?.reaction_count),
+    };
+  }
+
+  async deleteVoterData(voterHash: string): Promise<void> {
+    const results = await this.db.batch([
+      this.db
+        .prepare("DELETE FROM reaction_voters WHERE voter_hash = ?")
+        .bind(voterHash),
+      this.db
+        .prepare("DELETE FROM article_likes WHERE voter_hash = ?")
+        .bind(voterHash),
+      this.db
+        .prepare("DELETE FROM reaction_rate_limits WHERE voter_hash = ?")
+        .bind(voterHash),
+    ]);
+    if (results.length !== 3 || results.some((result) => !result.success)) {
+      throw new Error(
+        results.find((result) => result.error)?.error ||
+          "D1 reaction identity deletion failed",
+      );
+    }
   }
 }
 
@@ -544,7 +673,7 @@ export async function handleGetReactions(
       throw new ReactionApiError(405, "method_not_allowed", "Only GET is allowed.");
     }
     const ids = parseBatchIds(request);
-    const { hmacCredential, store } = requireReactionService(env, dependencies);
+    const { hmacCredential, store } = requireReactionIdentityStore(env, dependencies);
     const voter = await resolveVoter(
       request,
       hmacCredential,
@@ -568,16 +697,54 @@ export async function handleEnsureReactionIdentity(
       throw new ReactionApiError(405, "method_not_allowed", "Only POST is allowed.");
     }
     assertSameOrigin(request);
-    const { hmacCredential } = requireReactionService(env, dependencies);
-    const voter = await resolveVoter(
+    const { hmacCredential, store } = requireReactionIdentityStore(env, dependencies);
+    const randomUUID = dependencies.randomUUID ?? crypto.randomUUID.bind(crypto);
+    const nowMs = (dependencies.now ?? Date.now)();
+    let voter = await resolveVoter(
       request,
       hmacCredential,
       true,
-      dependencies.randomUUID ?? crypto.randomUUID.bind(crypto),
+      randomUUID,
     );
+    if (voter.newCookie) {
+      await store.createIdentity(voter.hash, nowMs);
+    } else if (!(await store.hasIdentity(voter.hash))) {
+      voter = await createVoter(hmacCredential, randomUUID);
+      await store.createIdentity(voter.hash, nowMs);
+    }
     const headers = new Headers();
     if (voter.newCookie) headers.set("Set-Cookie", voter.newCookie);
     return jsonResponse({ identity: { ready: true } }, 200, headers);
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+export async function handleDeleteReactionIdentity(
+  request: Request,
+  env: ReactionEnv,
+  dependencies: ReactionDependencies = {},
+): Promise<Response> {
+  try {
+    if (request.method !== "DELETE") {
+      throw new ReactionApiError(405, "method_not_allowed", "Only DELETE is allowed.");
+    }
+    assertSameOrigin(request);
+    const voterId = parseCookie(request, VOTER_COOKIE);
+    if (!voterId || !VOTER_ID_RE.test(voterId)) {
+      return jsonResponse(
+        { identity: { ready: false, deleted: false } },
+        200,
+        { "Set-Cookie": serializeExpiredVoterCookie() },
+      );
+    }
+    const { hmacCredential, store } = requireReactionIdentityStore(env, dependencies);
+    await store.deleteVoterData(await hmacHex(hmacCredential, voterId));
+    return jsonResponse(
+      { identity: { ready: false, deleted: true } },
+      200,
+      { "Set-Cookie": serializeExpiredVoterCookie() },
+    );
   } catch (error) {
     return errorResponse(error);
   }
@@ -633,18 +800,36 @@ export async function handlePutReaction(
         env.REACTION_RATE_LIMIT_WINDOW_SECONDS,
         DEFAULT_RATE_WINDOW_SECONDS,
       ) * 1_000;
-    const rateLimit = await store.consumeRateLimit(voter.hash, nowMs, windowMs, maxRequests);
-    if (!rateLimit.allowed) {
+    const mutation = await store.mutateReaction(
+      articleId,
+      voter.hash,
+      body.liked,
+      nowMs,
+      windowMs,
+      maxRequests,
+    );
+    if (!mutation.identityActive) {
+      throw new ReactionApiError(
+        409,
+        "identity_required",
+        "Establish an anonymous reaction identity before changing a reaction.",
+      );
+    }
+    if (!mutation.allowed) {
       throw new ReactionApiError(
         429,
         "rate_limited",
         "Too many reaction changes. Please try again shortly.",
-        rateLimit.retryAfterSeconds,
+        mutation.retryAfterSeconds,
       );
     }
-
-    const count = await store.setLiked(articleId, voter.hash, body.liked, nowMs);
-    return jsonResponse({ reaction: { id: articleId, liked: body.liked, count } });
+    return jsonResponse({
+      reaction: {
+        id: articleId,
+        liked: body.liked,
+        count: mutation.count,
+      },
+    });
   } catch (error) {
     return errorResponse(error);
   }

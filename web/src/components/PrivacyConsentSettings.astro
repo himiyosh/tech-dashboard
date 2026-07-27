@@ -1,0 +1,167 @@
+<section
+  class="consent-settings"
+  data-privacy-consent
+  data-consent-surface="settings"
+  aria-labelledby="consent-settings-heading"
+>
+  <div class="consent-settings-copy">
+    <h3 id="consent-settings-heading">
+      <span class="i18n-ja">広告の選択</span>
+      <span class="i18n-en" lang="en">Advertising choice</span>
+    </h3>
+    <div class="consent-current" role="status" aria-live="polite" aria-atomic="true">
+      <p data-consent-status="undecided">
+        <span class="i18n-ja"><strong>未選択。</strong> 広告は読み込まれていません。</span>
+        <span class="i18n-en" lang="en"><strong>Not chosen.</strong> Advertising is not loaded.</span>
+      </p>
+      <p data-consent-status="denied" hidden inert>
+        <span class="i18n-ja"><strong>広告OFF。</strong> Google AdSenseは読み込まれません。</span>
+        <span class="i18n-en" lang="en"><strong>Advertising off.</strong> Google AdSense is not loaded.</span>
+      </p>
+      <p data-consent-status="allowed" hidden inert>
+        <span class="i18n-ja"><strong>広告を許可。</strong> 本番カスタムドメインで Google AdSense を読み込みます。</span>
+        <span class="i18n-en" lang="en"><strong>Advertising allowed.</strong> Google AdSense loads on the production custom domain.</span>
+      </p>
+    </div>
+    <p class="consent-note">
+      <span class="i18n-ja">この選択が制御するのはGoogle AdSenseだけです。元siteの画像やfaviconは広告選択と別に読み込む場合があります。pages.devとローカルpreviewでは、許可しても広告を読み込みません。</span>
+      <span class="i18n-en" lang="en">This choice controls Google AdSense only. Source images and favicons may load independently of the advertising choice. Ads remain disabled on pages.dev and local previews even when allowed.</span>
+    </p>
+  </div>
+  <div class="consent-actions" role="group" aria-labelledby="consent-actions-label">
+    <span id="consent-actions-label" class="visually-hidden">
+      <span class="i18n-ja">広告の同意設定</span>
+      <span class="i18n-en" lang="en">Advertising consent setting</span>
+    </span>
+    <button type="button" data-consent-choice="denied" aria-pressed="false">
+      <span class="i18n-ja">広告なしで続行</span>
+      <span class="i18n-en" lang="en">Continue without ads</span>
+    </button>
+    <button type="button" data-consent-choice="allowed" aria-pressed="false">
+      <span class="i18n-ja">広告を許可</span>
+      <span class="i18n-en" lang="en">Allow advertising</span>
+    </button>
+  </div>
+  <p class="consent-error" data-consent-error role="status" aria-live="polite" hidden inert>
+    <span class="i18n-ja">このブラウザへ選択を保存できませんでした。ブラウザの保存設定を確認して、もう一度お試しください。</span>
+    <span class="i18n-en" lang="en">The choice could not be saved in this browser. Check browser storage settings and try again.</span>
+  </p>
+</section>
+
+<style>
+  .consent-settings {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 20px;
+    align-items: center;
+    padding: 20px;
+    border: 1px solid color-mix(in srgb, var(--accent) 36%, var(--border));
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--accent-bg) 40%, var(--surface));
+  }
+
+  .consent-error {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--danger);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .consent-error[hidden] {
+    display: none;
+  }
+
+  .consent-settings h3,
+  .consent-current p,
+  .consent-note {
+    margin: 0;
+  }
+
+  .consent-settings h3 {
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.35;
+  }
+
+  .consent-current {
+    margin-top: 8px;
+    color: var(--text-2);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .consent-current [hidden] {
+    display: none;
+  }
+
+  .consent-note {
+    max-width: 72ch;
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.65;
+  }
+
+  .consent-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .consent-actions button {
+    min-height: 45px;
+    padding: 9px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 9px;
+    background: var(--surface-2);
+    color: var(--text-2);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .consent-actions button[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+    color: var(--accent);
+  }
+
+  .consent-actions button:focus-visible {
+    border-color: var(--accent);
+    color: var(--accent);
+    outline: 2px solid color-mix(in srgb, var(--accent) 65%, white);
+    outline-offset: 2px;
+  }
+
+  .consent-actions button:active {
+    transform: translateY(1px);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .consent-actions button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+  }
+
+  @media (max-width: 760px) {
+    .consent-settings {
+      grid-template-columns: 1fr;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .consent-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .consent-actions button {
+      width: 100%;
+    }
+  }
+</style>

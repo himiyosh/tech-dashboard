@@ -4626,6 +4626,389 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
+  test("Privacy keeps optional ads off by default and exposes bilingual controls", async ({
+    page,
+  }) => {
+    let deleteStatus = 200;
+    await page.addInitScript(() => window.localStorage.clear());
+    await page.route("**/api/reactions/config", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          config: {
+            databaseBinding: true,
+            hmacSecret: true,
+            turnstileSecret: false,
+            publicSiteKey: false,
+            configured: false,
+          },
+        }),
+      });
+    });
+    await page.route("**/api/reactions/identity", async (route) => {
+      expect(route.request().method()).toBe("DELETE");
+      await route.fulfill({
+        status: deleteStatus,
+        contentType: "application/json",
+        body: deleteStatus === 200
+          ? JSON.stringify({ identity: { ready: false, deleted: true } })
+          : JSON.stringify({ error: { code: "service_unavailable" } }),
+      });
+    });
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/privacy/");
+    await expect(page.locator("body")).toHaveClass(/privacy-page/);
+    await expect(page.locator(".footer-bar")).toHaveCSS("position", "static");
+    await expect(page.locator("#privacy-heading")).toBeVisible();
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      "content",
+      /TECH Dashboardのデータ取扱い/,
+    );
+    await expect(page.locator(".privacy-consent-prompt")).toBeHidden();
+    await expect(page.locator("#consent-settings-heading")).toBeVisible();
+    await expect(page.getByRole("group", { name: "広告の同意設定" })).toBeVisible();
+    await expect(page.getByRole("complementary", { name: "プライバシーページの案内" })).toBeVisible();
+    await expect(page.locator('[data-consent-status="undecided"]')).toBeVisible();
+    await expect(page.locator('script[src*="googlesyndication"]')).toHaveCount(0);
+    await expect(page.locator("#contact")).toContainText("Studio344");
+    await expect(page.locator("#contact")).toContainText("himiyosh@gmail.com");
+    await expect(page.locator("#contact")).toContainText("日本");
+    await expect(page.locator('a[href="mailto:himiyosh@gmail.com"]')).toBeVisible();
+
+    const denied = page.getByRole("button", { name: "広告なしで続行" });
+    await denied.click();
+    await expect(denied).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator('[data-consent-status="denied"]')).toBeVisible();
+    expect(
+      await page.evaluate(() => {
+        const value = window.localStorage.getItem("td:privacy-consent:v1");
+        return value ? JSON.parse(value) : null;
+      }),
+    ).toMatchObject({ version: 1, advertising: "denied" });
+
+    const allowed = page.getByRole("button", { name: "広告を許可" });
+    await allowed.click();
+    await expect(allowed).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator('[data-consent-status="allowed"]')).toBeVisible();
+    await expect(page.locator('script[src*="googlesyndication"]')).toHaveCount(0);
+
+    await page.evaluate(() => {
+      window.localStorage.setItem("tech-dashboard-arxiv-view", "compact");
+    });
+    const clearPreferences = page.getByRole("button", { name: "ローカル設定を消去" });
+    await clearPreferences.click();
+    await expect(clearPreferences).toBeFocused();
+    expect(
+      await page.evaluate(() => ({
+        consent: window.localStorage.getItem("td:privacy-consent:v1"),
+        language: window.localStorage.getItem("td:lang"),
+        arxiv: window.localStorage.getItem("tech-dashboard-arxiv-view"),
+      })),
+    ).toEqual({ consent: null, language: null, arxiv: null });
+
+    const deleteOpen = page.locator("[data-reaction-delete-open]");
+    await expect(deleteOpen).toHaveAccessibleName("削除を確認");
+    await expect(
+      page.locator('[data-reaction-delete-availability="ready"]'),
+    ).toBeVisible();
+    await deleteOpen.click();
+    const confirmation = page.locator("[data-reaction-delete-confirmation]");
+    await expect(confirmation).toBeVisible();
+    await expect(deleteOpen).toHaveAttribute("aria-expanded", "true");
+    await expect(page.getByRole("button", { name: "キャンセル" })).toBeFocused();
+    await page.getByRole("button", { name: "削除する" }).click();
+    await expect(page.locator('[data-privacy-control-status="success"]')).toBeVisible();
+    await expect(deleteOpen).toBeFocused();
+    await expect(deleteOpen).toHaveAttribute("aria-expanded", "false");
+
+    deleteStatus = 503;
+    await deleteOpen.click();
+    const deleteConfirm = page.getByRole("button", { name: "削除する" });
+    await deleteConfirm.click();
+    await expect(page.locator('[data-privacy-control-status="error"]')).toBeVisible();
+    await expect(deleteConfirm).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(confirmation).toBeHidden();
+    await expect(deleteOpen).toBeFocused();
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(page.locator("#privacy-heading .i18n-en")).toBeVisible();
+    await expect(page.locator("#privacy-heading .i18n-ja")).toBeHidden();
+    await expect(page.locator("#choices .i18n-en").first()).toBeVisible();
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      "content",
+      /TECH Dashboard privacy, advertising consent/,
+    );
+    await expect(page.getByRole("group", { name: "Advertising consent setting" })).toBeVisible();
+    await expect(page.getByRole("complementary", { name: "Privacy page navigation" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Continue without ads" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Allow advertising" })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /Privacy policy .*opens in a new tab/ }).first(),
+    ).toBeVisible();
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    const tabbar = page.getByRole("navigation", { name: "Primary" });
+    await tabbar.getByRole("button", { name: /Menu/ }).click();
+    const privacyMenuLink = page.locator("#site-menu").getByRole("link", {
+      name: /Privacy/,
+    });
+    await expect(privacyMenuLink).toBeVisible();
+    await expect(privacyMenuLink).toHaveAttribute("aria-current", "page");
+    await page.keyboard.press("Escape");
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+    const targetHeights = await page
+      .locator(
+        ".consent-actions button, .privacy-controls button, .privacy-rail nav a, .third-party-list a, .privacy-contact a",
+      )
+      .evaluateAll((nodes) =>
+        nodes
+          .filter((node) => node instanceof HTMLElement && node.getClientRects().length > 0)
+          .map((node) => node.getBoundingClientRect().height),
+      );
+    expect(targetHeights.length).toBeGreaterThan(0);
+    expect(targetHeights.every((height) => height >= 44)).toBe(true);
+
+    await page.setViewportSize({ width: 375, height: 667 });
+    await deleteOpen.scrollIntoViewIfNeeded();
+    await deleteOpen.click();
+    await expect(confirmation).toBeVisible();
+    await expect
+      .poll(async () => {
+        const [confirmationBox, tabbarBox] = await Promise.all([
+          confirmation.boundingBox(),
+          tabbar.boundingBox(),
+        ]);
+        return confirmationBox && tabbarBox
+          ? tabbarBox.y - (confirmationBox.y + confirmationBox.height)
+          : -1;
+      })
+      .toBeGreaterThanOrEqual(8);
+    await page.getByRole("button", { name: "Delete data" }).click();
+    const errorStatus = page.locator('[data-privacy-control-status="error"]');
+    await expect(errorStatus).toBeVisible();
+    await expect
+      .poll(async () => {
+        const [statusBox, tabbarBox] = await Promise.all([
+          errorStatus.boundingBox(),
+          tabbar.boundingBox(),
+        ]);
+        return statusBox && tabbarBox
+          ? tabbarBox.y - (statusBox.y + statusBox.height)
+          : -1;
+      })
+      .toBeGreaterThanOrEqual(8);
+  });
+
+  test("Privacy prompt stays operable above the mobile tabbar", async ({ page }) => {
+    await page.addInitScript(() => window.localStorage.clear());
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/");
+    const prompt = page.locator(".privacy-consent-prompt");
+    await prompt.evaluate((element) => {
+      element.hidden = false;
+      element.removeAttribute("inert");
+    });
+    await expect(prompt).toBeVisible();
+    await expect(prompt).toHaveCSS("position", "relative");
+    const tabbar = page.getByRole("navigation", { name: "Primary" });
+    const featured = page.locator("article.featured");
+    const [promptBox, tabbarBox, featuredBox] = await Promise.all([
+      prompt.boundingBox(),
+      tabbar.boundingBox(),
+      featured.boundingBox(),
+    ]);
+    expect(promptBox).not.toBeNull();
+    expect(tabbarBox).not.toBeNull();
+    expect(featuredBox).not.toBeNull();
+    expect(promptBox!.y + promptBox!.height).toBeLessThanOrEqual(featuredBox!.y - 8);
+    expect(
+      await prompt.locator("a, button").evaluateAll((nodes) =>
+        nodes.every((node) => {
+          const rect = node.getBoundingClientRect();
+          return rect.height >= 44 && rect.left >= 0 && rect.right <= window.innerWidth;
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      await page.evaluate(({ x, y }) => {
+        const target = document.elementFromPoint(x, y);
+        return Boolean(target?.closest(".privacy-consent-prompt"));
+      }, {
+        x: promptBox!.x + promptBox!.width / 2,
+        y: promptBox!.y + promptBox!.height / 2,
+      }),
+    ).toBe(true);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+  });
+
+  test("Privacy deletion fails closed when the runtime endpoint is unavailable", async ({
+    page,
+  }) => {
+    await page.route("**/api/reactions/config", (route) =>
+      route.fulfill({
+        status: 404,
+        contentType: "application/json",
+        body: JSON.stringify({ error: { code: "not_found" } }),
+      }));
+    await page.goto("/privacy/");
+    const card = page.locator("[data-reaction-delete-card]");
+    await expect(card).toHaveAttribute(
+      "data-reaction-delete-state",
+      "unavailable",
+    );
+    await expect(
+      card.locator('[data-reaction-delete-availability="unavailable"]'),
+    ).toBeVisible();
+    await expect(card.locator("[data-reaction-delete-open]")).toBeHidden();
+    await expect(card).toContainText("静的previewでは削除APIを確認できません");
+  });
+
+  test("Advertising loads only for current explicit consent on the production host", async ({
+    page,
+    baseURL,
+  }) => {
+    expect(baseURL).toBeTruthy();
+    let advertisingRequests = 0;
+    await page.route("https://techdb.studio344.net/**", async (route) => {
+      const source = new URL(route.request().url());
+      const target = new URL(`${source.pathname}${source.search}`, baseURL!);
+      const response = await route.fetch({ url: target.href });
+      await route.fulfill({ response });
+    });
+    await page.route("https://pagead2.googlesyndication.com/**", async (route) => {
+      advertisingRequests += 1;
+      await route.abort("blockedbyclient");
+    });
+    await page.goto("https://techdb.studio344.net/");
+    await page.evaluate(() => window.localStorage.clear());
+    await page.reload();
+    const prompt = page.locator(".privacy-consent-prompt");
+    await expect(prompt).toBeVisible();
+    await expect(page.locator('script[src*="googlesyndication"]')).toHaveCount(0);
+    expect(advertisingRequests).toBe(0);
+
+    await page.evaluate(() => {
+      window.localStorage.setItem(
+        "td:privacy-consent:v1",
+        JSON.stringify({
+          version: 0,
+          advertising: "allowed",
+          decidedAt: "2026-07-27T00:00:00.000Z",
+        }),
+      );
+    });
+    await page.reload();
+    await expect(prompt).toBeVisible();
+    await expect(page.locator('script[src*="googlesyndication"]')).toHaveCount(0);
+    expect(advertisingRequests).toBe(0);
+
+    await page.evaluate(() => {
+      window.localStorage.setItem(
+        "td:privacy-consent:v1",
+        JSON.stringify({
+          version: 1,
+          advertising: "allowed",
+          decidedAt: "2026-07-27T00:00:00.000Z",
+        }),
+      );
+    });
+    await page.reload();
+    await expect(prompt).toBeHidden();
+    await expect(page.locator('script[src*="googlesyndication"]')).toHaveCount(1);
+    await expect.poll(() => advertisingRequests).toBe(1);
+
+    await page.evaluate(() => {
+      window.localStorage.setItem(
+        "td:privacy-consent:v1",
+        JSON.stringify({
+          version: 1,
+          advertising: "denied",
+          decidedAt: "2026-07-27T00:00:00.000Z",
+        }),
+      );
+    });
+    await page.reload();
+    await expect(prompt).toBeHidden();
+    await expect(page.locator('script[src*="googlesyndication"]')).toHaveCount(0);
+    expect(advertisingRequests).toBe(1);
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+  });
+
+  test("Advertising withdrawal unloads active scripts across tabs and restores focus", async ({
+    context,
+    baseURL,
+  }) => {
+    expect(baseURL).toBeTruthy();
+    await context.route("https://techdb.studio344.net/**", async (route) => {
+      const source = new URL(route.request().url());
+      const target = new URL(`${source.pathname}${source.search}`, baseURL!);
+      const response = await route.fetch({ url: target.href });
+      await route.fulfill({ response });
+    });
+    await context.route("https://pagead2.googlesyndication.com/**", (route) =>
+      route.abort("blockedbyclient"));
+
+    const settingsPage = await context.newPage();
+    await settingsPage.goto("https://techdb.studio344.net/privacy/");
+    await settingsPage.evaluate(() => {
+      window.localStorage.setItem(
+        "td:privacy-consent:v1",
+        JSON.stringify({
+          version: 1,
+          advertising: "allowed",
+          decidedAt: "2026-07-27T00:00:00.000Z",
+        }),
+      );
+    });
+    await settingsPage.reload();
+    await expect(
+      settingsPage.locator('script[src*="googlesyndication"]'),
+    ).toHaveCount(1);
+
+    const secondPage = await context.newPage();
+    await secondPage.goto("https://techdb.studio344.net/");
+    await expect(
+      secondPage.locator('script[src*="googlesyndication"]'),
+    ).toHaveCount(1);
+
+    const denialButton = settingsPage.locator(
+      '[data-consent-surface="settings"] [data-consent-choice="denied"]',
+    );
+    const settingsReload = settingsPage.waitForNavigation({ waitUntil: "domcontentloaded" });
+    const secondReload = secondPage.waitForNavigation({ waitUntil: "domcontentloaded" });
+    await denialButton.click();
+    await Promise.all([settingsReload, secondReload]);
+
+    await expect(
+      settingsPage.locator('script[src*="googlesyndication"]'),
+    ).toHaveCount(0);
+    await expect(
+      secondPage.locator('script[src*="googlesyndication"]'),
+    ).toHaveCount(0);
+    await expect(
+      settingsPage.locator(
+        '[data-consent-surface="settings"] [data-consent-choice="denied"]',
+      ),
+    ).toBeFocused();
+    expect(
+      await secondPage.evaluate(() => {
+        const value = window.localStorage.getItem("td:privacy-consent:v1");
+        return value ? JSON.parse(value).advertising : null;
+      }),
+    ).toBe("denied");
+
+    await context.unrouteAll({ behavior: "ignoreErrors" });
+    await settingsPage.close();
+    await secondPage.close();
+  });
+
   test("Research copy distinguishes selected research from paper-only arXiv browsing", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/c/research/");
@@ -4940,6 +5323,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(menu.getByRole("link", { name: /Knowledge/ })).toHaveCount(0);
     await expect(menu.getByRole("link", { name: /Archive/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /About/ })).toBeVisible();
+    await expect(menu.getByRole("link", { name: /Privacy/ })).toBeVisible();
     await expect(menu.getByRole("button", { name: /Search/ })).toBeVisible();
     for (let index = 0; index < 12; index += 1) {
       await page.keyboard.press("Tab");
@@ -7235,7 +7619,7 @@ test.describe("TECH Dashboard smoke", () => {
           ).__TECHDB_REACTION_TURNSTILE_LABEL__,
       ),
       "Turnstile uses the active Japanese label",
-    ).toBe("本人確認");
+    ).toBe("人間による操作の確認（ボット対策）");
 
     await button.focus();
     await page.keyboard.press("Space");
@@ -7288,7 +7672,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(button).toHaveAttribute("aria-busy", "false");
     await expect(button).toHaveAttribute("aria-pressed", "false");
     await expect(reactionToast.locator("[data-reaction-toast-copy]")).toContainText(
-      "本人確認サービスを一時利用できません。",
+      "ボット対策の確認サービスを一時利用できません。",
     );
 
     expect(mutations.map((payload) => payload.liked)).toEqual([true, false, true, true, true]);
@@ -7414,7 +7798,7 @@ test.describe("TECH Dashboard smoke", () => {
     const privacyLink = reactionExplainer.getByRole("link", {
       name: "How it works and privacy",
     });
-    await expect(privacyLink).toHaveAttribute("href", "/about#reactions-privacy");
+    await expect(privacyLink).toHaveAttribute("href", "/privacy#anonymous-reactions");
     const actionTargetHeights = await page.locator(".ed-action-strip a, .ed-action-strip button").evaluateAll(
       (nodes) =>
         nodes
@@ -7428,8 +7812,8 @@ test.describe("TECH Dashboard smoke", () => {
     ).toBe(true);
 
     await privacyLink.click();
-    await expect(page).toHaveURL(/\/about\/?\?lang=en#reactions-privacy$/);
-    const privacyTarget = page.locator("#reactions-privacy");
+    await expect(page).toHaveURL(/\/privacy\/?\?lang=en#anonymous-reactions$/);
+    const privacyTarget = page.locator("#anonymous-reactions");
     await expect(privacyTarget).toBeVisible();
     await expect
       .poll(async () => {
@@ -7439,8 +7823,8 @@ test.describe("TECH Dashboard smoke", () => {
       })
       .toBeGreaterThanOrEqual(8);
     await expect(privacyTarget).toHaveCSS("border-color", /rgb/);
-    await expect(page.locator('.page-hero-actions a[href="#reactions-privacy"]')).toHaveText(
-      "Likes & privacy",
+    await expect(page.locator('.privacy-rail a[href="#anonymous-reactions"] .i18n-en')).toHaveText(
+      "Anonymous likes",
     );
   });
 
@@ -8453,12 +8837,12 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(button).toHaveAttribute("aria-busy", "false");
     await expect(button).toHaveAttribute("aria-pressed", "false");
     await expect(control.locator("[data-reaction-status]")).toContainText(
-      "本人確認を完了できませんでした。",
+      "ボット対策の確認を完了できませんでした。",
     );
     await expect(page.locator("#reaction-error-toast")).toBeVisible();
     await expect(
       page.locator("#reaction-error-toast [data-reaction-toast-copy]"),
-    ).toContainText("本人確認を完了できませんでした。");
+    ).toContainText("ボット対策の確認を完了できませんでした。");
     expect(scriptRequests).toBe(1);
     expect(mutationRequests).toBe(0);
     await expect(page.locator('script[data-techdb-turnstile-loader="true"]')).toHaveCount(0);

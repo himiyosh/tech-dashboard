@@ -228,6 +228,15 @@ Pages プロジェクトは Cloudflare dashboard で **Create application** → 
 
 custom domain `techdb.studio344.net` は新プロジェクトに移行済みです。再構築が必要な場合のみ、API token (`Pages Write`) で同じ設定を再現できます。
 
+#### Privacy と任意広告
+
+`/privacy/` は、運営主体、連絡先、日本での運営、localStorage、検索URL、外部media、Cloudflare、匿名いいね、Google AdSense、保持期間、利用者controlを日本語・英語で公開する正本です。記事閲覧、検索、Archive、RSS、JSON Feed は広告同意なしで利用できます。
+
+- 広告選択はversion付きの`td:privacy-consent:v1` recordとしてbrowserのlocalStorageだけへ保存する。未選択、壊れたrecord、未知field/state、旧versionは全て広告OFFとして扱う。
+- Google AdSenseは`techdb.studio344.net`で利用者が明示的に許可した場合だけclient scriptを追加する。local previewと`tech-dashboard-6a7.pages.dev`では、localStorageに許可recordがあっても読み込まない。
+- 表示言語はlocalStorageに加えて共有可能な`?lang=en`へ反映され、検索URLは`?q=`/`?tag=`を含む場合がある。これらのURLは通常の配信requestとしてCloudflareへ届くため、browser内だけに留まる広告選択とは区別して説明する。
+- local設定の消去と、現在のbrowser識別子に紐づくactive identity・匿名いいね・rate-limit行の削除は`/privacy/`から実行できる。これらのD1行には自動削除期限を設定していないため、このcontrolまたは運用上の削除まで保持される。
+
 #### 匿名公開いいね (Pages Functions + D1)
 
 Knowledge カードと記事詳細のいいねは、同一 origin の Pages Functions と専用 D1 を使います。お気に入り、アカウント、マイページ、記事保存は含みません。いいねは記事 route の保持期間を延長せず、live index から外れた記事を再公開しません。
@@ -236,7 +245,7 @@ Knowledge カードと記事詳細のいいねは、同一 origin の Pages Func
 
 | 種別 | 名前 | 用途 |
 |---|---|---|
-| D1 binding | `REACTIONS_DB` | 記事ごとの匿名票と rate-limit state |
+| D1 binding | `REACTIONS_DB` | active匿名identity、記事ごとの匿名票、rate-limit state |
 | Encrypted secret | `REACTION_HMAC_SECRET` | browser cookie の UUID を保存前に HMAC-SHA256 化 |
 | Encrypted secret | `TURNSTILE_SECRET_KEY` | mutation ごとの Turnstile Siteverify |
 | Build variable | `PUBLIC_TURNSTILE_SITE_KEY` | Astro がいいねコントロールへ埋め込む公開 site key |
@@ -251,6 +260,11 @@ npx wrangler d1 execute REACTIONS_DB \
   --config web/.wrangler/reactions-production.jsonc \
   --remote \
   --file=web/migrations/0001_reactions.sql
+
+npx wrangler d1 execute REACTIONS_DB \
+  --config web/.wrangler/reactions-production.jsonc \
+  --remote \
+  --file=web/migrations/0002_reaction_identities.sql
 ```
 
 `web/wrangler.reactions.local.jsonc` を `web/.wrangler/reactions-production.jsonc` へコピーし、all-zero の `database_id` を `d1 create` が表示した ID へ、`database_name` を作成時の名前へ置き換えます。binding は `REACTIONS_DB` のまま使います。このファイルは `.wrangler/` 配下のため Git には追加しません。Cloudflare dashboard の Pages project settings で `REACTIONS_DB` を作成済み D1 へ bind し、production の secret と build variable を登録します。Turnstile widget の許可 hostname には、実際に機能を有効にする custom domain と pages.dev domain だけを登録します。設定後は新しい Pages deployment が必要です。
@@ -267,6 +281,12 @@ npx --yes wrangler@4.85.0 d1 execute REACTIONS_DB \
   --persist-to .wrangler/state/reactions \
   --file=migrations/0001_reactions.sql
 
+npx --yes wrangler@4.85.0 d1 execute REACTIONS_DB \
+  --config wrangler.reactions.local.jsonc \
+  --local \
+  --persist-to .wrangler/state/reactions \
+  --file=migrations/0002_reaction_identities.sql
+
 # 2. 同じ永続化 directory と D1 を Pages Functions へ bind する
 npx --yes wrangler@4.85.0 pages dev dist \
   --compatibility-date 2026-05-01 \
@@ -274,16 +294,19 @@ npx --yes wrangler@4.85.0 pages dev dist \
   --persist-to .wrangler/state/reactions
 ```
 
-`wrangler.reactions.local.jsonc` の all-zero ID はローカル専用です。`--remote` では使いません。上記手順は schema 適用後の `GET /api/reactions`、identity bootstrap、D1 の vote/rate-limit 行が 0 件の状態までローカルで確認済みです。
+`wrangler.reactions.local.jsonc` の all-zero ID はローカル専用です。`--remote` では使いません。上記手順は schema 適用後の `GET /api/reactions`、identity bootstrap、D1 の identity/vote/rate-limit 行が意図した状態になることをローカルで確認します。
 
 API contract:
 
 - `GET /api/reactions?ids=<comma-separated ids>` は最大 50 記事の count と current browser の状態を返す。
-- `POST /api/reactions/identity` は匿名 cookie だけを確立する。票、count、rate-limit state は変更しない。
+- `POST /api/reactions/identity` は匿名 cookie とactive identity rowだけを確立する。票、count、rate-limit state は変更しない。既存cookieのhashにactive rowがなければ`409 identity_required`とcookie失効を返し、同じrequestではidentityを再生成しない。cookie失効後の別requestだけが新しいUUIDを発行できる。
+- `DELETE /api/reactions/identity` はsame-origin requestだけを受け付け、現在のbrowser識別子に紐づくactive identity、全票、rate-limit行を1つのD1 transactionで削除してHttpOnly cookieを失効させる。削除にはD1とHMAC secretだけを使い、Turnstile設定には依存しない。cookieが無い場合も冪等に成功する。
 - `PUT /api/reactions/:id` は確立済み cookie と `{ liked, turnstileToken }` の desired state を受け取る。cookie が無い場合は `409 identity_required` を返し、toggle command ではないため再送しても冪等。
+- reaction mutationはactive identity確認、rate-limit更新、票変更、count読込を同一D1 transactionへまとめる。DELETEが先に完了したidentityは票やrate-limit行を再生成できない。
 - `GET /api/reactions/config` は D1 binding・HMAC secret・Turnstile secret・public site key が「設定済みかどうか」を boolean だけで返す (`{ config: { databaseBinding, hmacSecret, turnstileSecret, publicSiteKey, configured } }`)。値そのものは一切返さない。Astro の静的 build は Pages Function の runtime binding を知り得ないため、この読み取り専用 same-origin endpoint が唯一の truthful な設定確認手段であり、`/metrics.json` のような build-time artifact へ推測値を書かない。
 - browser UUID は `__Host-techdb_reaction_voter` HttpOnly cookie に保持し、生値と IP address は D1 に保存しない。
 - cookie 削除や別 browser は別票として扱う best-effort contract。公開 count を identity や人気ランキングへ流用しない。
+- `article_likes(voter_hash)` indexはcurrent-browser削除をfull-table scanにせず、existing D1へ`0002_reaction_identities.sql`を適用してから対応codeを本番反映する。
 
 UI contract:
 
@@ -477,7 +500,7 @@ tech-dashboard/
 │     └─ stats-core.ts       # Worker / Node 共有の stats 純粋ロジック
 ├─ web/                      # Astro 静的サイト
 │  ├─ functions/             # Pages Functions (匿名公開いいね API)
-│  ├─ migrations/            # Pages D1 schema
+│  ├─ migrations/            # Pages D1 schema + active identity / voter index migration
 │  ├─ src/
 │  │  ├─ layouts/Portal.astro
 │  │  ├─ components/{Sidebar,EntryCard,ArticleLike,DailySummary,DayDigest,TickerBar,TrendChart,Pager,CompactRow,CategoryHero,LiveMetrics}.astro
@@ -485,6 +508,9 @@ tech-dashboard/
 │  │  ├─ lib/reactions-client.ts # いいね count hydration / optimistic update / rollback
 │  │  ├─ lib/reaction-config-health.ts # 匿名いいねconfig健全性のpure display derivation
 │  │  ├─ lib/reaction-config-client.ts # /api/reactions/config への bounded runtime fetch
+│  │  ├─ lib/privacy-consent.ts # versioned広告同意 + production host gate
+│  │  ├─ lib/privacy-consent-client.ts # consent同期 + AdSense遅延load
+│  │  ├─ lib/privacy-controls.ts # local設定 / current-browser reaction削除
 │  │  ├─ lib/stats.ts        # data/stats.json を型付きで読み込む
 │  │  ├─ lib/metrics.ts      # Timeline / About 用の自動更新 metrics SoT
 │  │  ├─ lib/freshness.ts    # source type 別 freshness 判定 (UI / quality-audit 共有)
@@ -497,7 +523,7 @@ tech-dashboard/
 │  │     ├─ index.astro      # ポータルトップ (Top-3 メダル / DailySummary 等)
 │  │     ├─ c/[slug].astro   # カテゴリ別 (14 ページ)
 │  │     ├─ t/[tag].astro    # タグ別
-│  │     ├─ status.astro, categories.astro, about.astro, sources.astro (redirect)
+│  │     ├─ status.astro, categories.astro, about.astro, privacy.astro, sources.astro (redirect)
 │  │     └─ {rss.xml,feed.json,metrics.json,sitemap.xml,robots.txt}.ts  # Feed / metrics / crawl discovery
 │  ├─ .node-version          # Cloudflare Pages build 用 Node 22 ピン
 │  └─ astro.config.mjs

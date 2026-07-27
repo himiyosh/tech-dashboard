@@ -1,6 +1,5 @@
 ---
 import "../styles/portal.css";
-import { SITE_URL } from "../lib/site.ts";
 import { WORKER_HEALTH, relativeTime } from "../lib/data.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { deriveQueueDisplay } from "../lib/queue-health.ts";
@@ -10,13 +9,15 @@ import ArxivIcon from "../components/icons/ArxivIcon.astro";
 export interface Props {
   title?: string;
   description?: string;
-  pageKey?: "timeline" | "categories" | "arxiv" | "knowledge" | "glossary" | "sources" | "archive" | "status" | "about" | "search" | "not-found";
+  descriptionEn?: string;
+  pageKey?: "timeline" | "categories" | "arxiv" | "knowledge" | "glossary" | "sources" | "archive" | "status" | "about" | "privacy" | "search" | "not-found";
   breadcrumb?: Array<{ label: string; href?: string }>;
 }
 
 const {
   title = "TECH Dashboard — Pulse of the AI Ecosystem",
   description = "公式発表、変更履歴、arXiv 論文、コミュニティ記事を毎時 1 バッチ収集。各ソースは約 6 時間周期で巡回し、AI 要約。",
+  descriptionEn = description,
   pageKey = "timeline",
   breadcrumb,
 } = Astro.props;
@@ -30,13 +31,13 @@ const navItems = [
   { href: "/archive", key: "archive", label: "Archive", detail: "月別に過去記事を確認", detailEn: "Browse articles by month" },
   { href: "/status", key: "status", label: "Status", detail: "収集 source と Worker 状態", detailEn: "Collection sources and Worker health" },
   { href: "/about", key: "about", label: "About", detail: "サイトの目的と収集方針", detailEn: "Purpose and collection policy" },
+  { href: "/privacy", key: "privacy", label: "Privacy", detail: "データ取扱い・広告選択・削除", detailEn: "Data use, advertising choice, and deletion" },
 ] as const;
 // Primary explore shortcuts live in the header switcher / mobile tabbar
 // (Categories, arXiv, Knowledge), so they are intentionally excluded from
 // navItems (the hamburger menu) to avoid duplicate controls (LL-054).
 const menuOwnsCurrentPage = pageKey === "search"
   || navItems.some((item) => item.key === pageKey && item.key !== "timeline");
-const productionHost = new URL(SITE_URL).hostname;
 const footerRun = deriveWorkerRunStatus({
   workerHealth: WORKER_HEALTH,
   fallbackPercent: DASHBOARD_METRICS.fallbackPercent,
@@ -85,7 +86,12 @@ const footerLastRunRelative = footerLastRunAt
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
-    <meta name="description" content={description} />
+    <meta
+      name="description"
+      content={description}
+      data-description-ja={description}
+      data-description-en={descriptionEn}
+    />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate" type="application/rss+xml" title="TECH Dashboard RSS" href="/rss.xml" />
     <link rel="alternate" type="application/json" title="TECH Dashboard JSON Feed" href="/feed.json" />
@@ -109,24 +115,25 @@ const footerLastRunRelative = footerLastRunAt
           }
           document.documentElement.setAttribute("data-lang", l);
           document.documentElement.setAttribute("lang", l);
+          var description = document.querySelector('meta[name="description"]');
+          if (description) {
+            var localizedDescription = l === "en"
+              ? description.getAttribute("data-description-en")
+              : description.getAttribute("data-description-ja");
+            if (localizedDescription) description.setAttribute("content", localizedDescription);
+          }
         } catch (_) {
           document.documentElement.setAttribute("data-lang", "ja");
         }
       })();
     </script>
-    <script is:inline define:vars={{ productionHost }}>
-      // Load ads only on the production custom domain; local preview and pages.dev stay quiet for QA/trust review.
-      (function () {
-        if (location.hostname !== productionHost) return;
-        var script = document.createElement("script");
-        script.async = true;
-        script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3044810068333301";
-        script.crossOrigin = "anonymous";
-        document.head.appendChild(script);
-      })();
-    </script>
   </head>
-  <body class:list={{ "entry-detail-page": currentPath.startsWith("/e/") }}>
+  <body
+    class:list={{
+      "entry-detail-page": currentPath.startsWith("/e/"),
+      "privacy-page": currentPath === "/privacy",
+    }}
+  >
     <a class="skip-link" href="#content-start">
       <span class="i18n-ja">本文へスキップ</span>
       <span class="i18n-en" lang="en">Skip to content</span>
@@ -272,6 +279,48 @@ const footerLastRunRelative = footerLastRunAt
       ><span aria-hidden="true">☰</span><span>Menu</span></button>
     </nav>
 
+    <aside
+      class="privacy-consent-prompt"
+      data-privacy-consent
+      data-consent-surface="prompt"
+      aria-labelledby="privacy-consent-prompt-title"
+      hidden
+      inert
+    >
+      <div>
+        <strong id="privacy-consent-prompt-title">
+          <span class="i18n-ja">任意の広告について</span>
+          <span class="i18n-en" lang="en">Optional advertising</span>
+        </strong>
+        <p>
+          <span class="i18n-ja">Google AdSenseだけの選択です。元siteの画像やfaviconは別に読み込む場合があります。</span>
+          <span class="i18n-en" lang="en">This choice controls Google AdSense only. Source images and favicons may load separately.</span>
+        </p>
+        <p class="privacy-consent-prompt-error" data-consent-error role="status" aria-live="polite" hidden inert>
+          <span class="i18n-ja">このブラウザへ選択を保存できませんでした。保存設定を確認して、もう一度お試しください。</span>
+          <span class="i18n-en" lang="en">The choice could not be saved in this browser. Check storage settings and try again.</span>
+        </p>
+        <a href="/privacy">
+          <span class="i18n-ja">詳しい取扱い</span>
+          <span class="i18n-en" lang="en">Privacy details</span>
+        </a>
+      </div>
+      <div class="privacy-consent-prompt-actions" role="group" aria-labelledby="privacy-consent-actions-label">
+        <span id="privacy-consent-actions-label" class="visually-hidden">
+          <span class="i18n-ja">広告の同意</span>
+          <span class="i18n-en" lang="en">Advertising consent</span>
+        </span>
+        <button type="button" data-consent-choice="denied" aria-pressed="false">
+          <span class="i18n-ja">広告なしで続行</span>
+          <span class="i18n-en" lang="en">Continue without ads</span>
+        </button>
+        <button type="button" data-consent-choice="allowed" aria-pressed="false">
+          <span class="i18n-ja">広告を許可</span>
+          <span class="i18n-en" lang="en">Allow advertising</span>
+        </button>
+      </div>
+    </aside>
+
     <div id="content-start" class="content-start-anchor" tabindex="-1"></div>
     <slot />
 
@@ -324,6 +373,10 @@ const footerLastRunRelative = footerLastRunAt
         <span class="item">harness <strong>v0.1</strong></span>
         <span class="item footer-stack">powered by <strong>Astro</strong> + <strong>Claude Opus</strong></span>
         <span class="spacer"></span>
+        <a class="item footer-privacy-link" href="/privacy">
+          <span class="i18n-ja">Privacy</span>
+          <span class="i18n-en" lang="en">Privacy</span>
+        </a>
         <span class="item">Cloudflare Pages</span>
       </div>
     </footer>
@@ -341,8 +394,10 @@ const footerLastRunRelative = footerLastRunAt
         WORKER_RUN_STATE_COPY,
       } from "../lib/run-health.ts";
       import { hrefWithLang } from "../lib/lang-url.ts";
+      import { initializePrivacyConsent } from "../lib/privacy-consent-client.ts";
 
       initializeRelativeTimes();
+      initializePrivacyConsent();
 
       (() => {
         const link = document.querySelector<HTMLElement>("a.footer-run-link[data-live-run-health]");
@@ -493,6 +548,15 @@ const footerLastRunRelative = footerLastRunAt
         const apply = (l: "ja" | "en") => {
           document.documentElement.setAttribute("data-lang", l);
           document.documentElement.setAttribute("lang", l);
+          const description = document.querySelector<HTMLMetaElement>(
+            'meta[name="description"]',
+          );
+          const localizedDescription = l === "en"
+            ? description?.dataset.descriptionEn
+            : description?.dataset.descriptionJa;
+          if (description && localizedDescription) {
+            description.content = localizedDescription;
+          }
           try { localStorage.setItem("td:lang", l); } catch {}
           syncAddressBar(l);
           document.querySelectorAll<HTMLButtonElement>(".lang-btn").forEach((b) => {

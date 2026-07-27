@@ -653,7 +653,9 @@ async function requestTurnstileToken(siteKey: string): Promise<string> {
     container.className = "reaction-turnstile-widget";
     container.setAttribute(
       "aria-label",
-      currentLanguage() === "en" ? "Human verification" : "本人確認",
+      currentLanguage() === "en"
+        ? "Human verification"
+        : "人間による操作の確認（ボット対策）",
     );
     document.body.append(container);
 
@@ -811,13 +813,13 @@ function mutationFailureMessage(error: unknown): LocalizedReactionMessage {
   }
   if (code === "challenge_failed" || code.startsWith("turnstile_")) {
     return {
-      ja: "本人確認を完了できませんでした。もう一度お試しください。",
+      ja: "ボット対策の確認を完了できませんでした。もう一度お試しください。",
       en: "Verification could not be completed. Please try again.",
     };
   }
   if (code === "challenge_unavailable") {
     return {
-      ja: "本人確認サービスを一時利用できません。しばらくしてから再度お試しください。",
+      ja: "ボット対策の確認サービスを一時利用できません。しばらくしてから再度お試しください。",
       en: "The verification service is temporarily unavailable. Please try again later.",
     };
   }

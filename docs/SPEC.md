@@ -365,6 +365,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | `/status` | ステータス + ソース一覧 | `generatedAt` / 件数 / Worker health / source registry / ソース健全性 |
 | `/sources` | 互換リダイレクト | `/status` へ誘導 |
 | `/about` | About | サイト説明 / ライセンス |
+| `/privacy` | Privacy & consent | bilingual disclosure / 広告選択 / local設定・匿名いいね削除 |
 | `/page/[n]` | ページネーション | Timeline 2 ページ目以降 |
 | `/t/[tag]` | タグ別 | 横断タグによる絞り込み |
 | `/c/[slug]/page/[n]` | カテゴリページネーション | カテゴリ 2 ページ目以降 |
@@ -382,8 +383,8 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 
 - **ヘッダ**: ロゴ / direct explore shortcut (`Categories` / `arXiv` / `Knowledge`) / `Menu` / **検索ボックス (Pagefind インライン)** / 言語トグル (JA/EN)
 - **Knowledge レーン (`/knowledge`)**: evergreen ソース (R-022) のベストプラクティス / 知見をニュース Timeline から分離し、ソース別に蓄積表示する。desktop header と mobile tabbar の direct `Knowledge` shortcut から遷移し、`#site-menu` には重複表示しない (R-015)。
-- **フッタ**: Generated at / リポジトリリンク / ライセンス
-- **言語切替**: `localStorage["td:lang"]` に保存、プリペイントで FOUC 回避
+- **フッタ**: site-wide health / Privacy / build stack
+- **言語切替**: `localStorage["td:lang"]` に保存し、ENは共有可能な`?lang=en`へ同期。プリペイントで FOUC 回避
 - **ファビコン**: `/favicon.svg` (レーダー + パルスドット)
 
 ### 6.3 Crawl discovery
@@ -418,15 +419,27 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 
 - **表示面**: Knowledge カードと記事詳細。
 - **永続化**: Cloudflare Pages Functions から専用 D1 binding `REACTIONS_DB` を使用する。publisher data、Featured、Top 3、importance、taxonomy には影響しない。
-- **匿名 voter**: `__Host-techdb_reaction_voter` HttpOnly cookie の UUID を server-side HMAC-SHA256 化し、生 UUID と IP address は D1 に保存しない。
-- **mutation**: Turnstile 検証済みの desired-state `PUT` を使う。D1 の `(article_id, voter_hash)` primary key により再送を冪等にする。
+- **匿名 voter**: `__Host-techdb_reaction_voter` HttpOnly cookie の UUID を server-side HMAC-SHA256 化し、生 UUID と IP address は D1 に保存しない。D1のactive identity rowが存在するhashだけをmutation可能にする。
+- **identity bootstrap**: cookieなしのPOSTだけが新しいactive identityを作成する。既存cookieのactive rowが削除済みなら、同じPOSTは`409 identity_required`でcookieを失効させ、別requestより前にidentityを再生成しない。
+- **mutation**: Turnstile 検証済みの desired-state `PUT` を使う。active identity確認、rate-limit更新、票変更、count読込を同一D1 transactionへまとめ、D1 の `(article_id, voter_hash)` primary key により再送を冪等にする。
+- **deletion**: same-origin DELETEはactive identity、全票、rate-limit行を同一transactionで削除し、cookieを失効させる。DELETEが先に完了した場合、並行PUTは`409 identity_required`となりdataを再生成しない。`article_likes(voter_hash)` indexでcurrent-browser削除をboundedにする。
 - **制限**: いいねは記事を保存せず、archive 後の route 維持、account、my page、cross-device sync を提供しない。cookie 削除や別 browser は別票になる。
 - **Progressive enhancement**: batch count の取得に成功した control だけを表示する。site key 未設定、API 障害、invalid entry では control、Knowledge の説明、記事詳細の reaction panel を非表示かつ inert にし、主記事 link を遮らない。
 - **UI**: heart ではなく thumbs-up icon と `aria-pressed` を持つ 44px 以上の button を使う。利用可能時の Knowledge 説明は mobile でも表示し、記事詳細では source/share utility と分離した専用 reaction panel を使う。
 - **Count**: visible count は compact notation で card geometry を守り、accessible name と tooltip には locale に沿った exact count を保持する。
 - **Failure recovery**: busy 中も focus を維持する。失敗時は optimistic state を rollback し、server truth を再取得後、rate limit、Turnstile、service、network の原因別 JA/EN toast を表示する。toast は fixed mobile tabbar と Turnstile challenge より上の semantic layer に置く。
 
-### 6.7 多言語表示
+### 6.7 Privacy と consent
+
+- **正本**: `/privacy/`がStudio344、公開連絡先、日本での運営、data category、目的、第三者service、保持、利用者controlをJA/ENで公開する。
+- **広告初期値**: 広告は明示opt-inまでOFF。version付きlocalStorage recordが未選択、壊れている、未知field/stateを含む、旧versionの場合はfail-closedでOFFにする。
+- **host gate**: Google AdSense client scriptは`techdb.studio344.net`で明示opt-inがある場合だけ追加する。local previewとpages.devでは許可recordがあっても追加しない。
+- **機能分離**: 読む、検索、Archive、RSS、JSON Feed、匿名いいねの既存functional dataは広告同意へ依存させない。外部media request、Cloudflare配信、Turnstile、任意広告を同一の同意として扱わない。
+- **URL-visible state**: EN表示は`?lang=en`、検索は`?q=`/`?tag=`を含み得るため、Cloudflareが通常の配信requestとして処理する。広告選択はlocalStorageだけに保持し、operator APIへ送らない。
+- **保持と削除**: local設定はbrowser側で消去できる。anonymous-like cookieは最長1年。D1のactive identity、票、rate-limit行には自動削除期限を設定せず、same-origin `DELETE /api/reactions/identity`または運用上の削除で消去する。DELETEはD1とHMACに依存し、Turnstile設定には依存しない。
+- **UI**: promptはnon-modalで両選択を同じ強度で表示する。controlはactive languageのaccessible name、44px以上の操作面、focus維持、mobile tabbarとの安全距離、保存/通信失敗の明示状態を持つ。
+
+### 6.8 多言語表示
 
 - JA/EN 要約はビルド時に両方埋め込み、DOM の `.i18n-ja` / `.i18n-en` を CSS `display` で切替
 - `<html data-lang="ja">` / `<html data-lang="en">` に連動

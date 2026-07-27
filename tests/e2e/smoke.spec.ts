@@ -7557,6 +7557,280 @@ test.describe("TECH Dashboard smoke", () => {
     expect(desktopBox!.height, "desktop search outer control should be at least 44px tall").toBeGreaterThanOrEqual(44);
   });
 
+  test("narrow Search keeps header controls distinct, operable, and accessible", async ({ page }) => {
+    const viewports = [
+      { width: 375, height: 667 },
+      { width: 390, height: 844 },
+      { width: 720, height: 844 },
+      { width: 721, height: 844 },
+    ];
+
+    for (const viewport of viewports) {
+      await page.setViewportSize(viewport);
+      await page.goto("/");
+      await page.locator("header .lang-btn[data-lang='ja']").click();
+      const menuTrigger = viewport.width <= 720
+        ? page.locator(".mobile-tabbar button[data-menu-trigger]")
+        : page.locator("header .menu-trigger");
+      await menuTrigger.click();
+      await page.locator("#site-menu [data-search-trigger]").click();
+
+      const search = page.locator("body > header .search.is-open");
+      const input = page.locator("#pagefind-search-input");
+      const close = page.getByRole("button", { name: "Close search" });
+      const jaButton = page.locator("body > header .lang-btn[data-lang='ja']");
+      const enButton = page.locator("body > header .lang-btn[data-lang='en']");
+      await expect(search).toBeVisible();
+      await expect(input).toBeFocused();
+      await expect(close).toBeVisible();
+
+      const geometry = await page.evaluate(() => {
+        const header = document.querySelector<HTMLElement>("body > header");
+        const searchRoot = document.querySelector<HTMLElement>("body > header .search.is-open");
+        const input = document.querySelector<HTMLElement>("#pagefind-search-input");
+        const closeButton = document.querySelector<HTMLElement>("body > header [data-search-close]");
+        const langToggle = document.querySelector<HTMLElement>("body > header .lang-toggle");
+        const languageButtons = Array.from(
+          document.querySelectorAll<HTMLElement>("body > header .lang-btn"),
+        );
+        if (!header || !searchRoot || !input || !closeButton || !langToggle) return null;
+        const rect = (element: Element) => {
+          const box = element.getBoundingClientRect();
+          return {
+            left: box.left,
+            top: box.top,
+            right: box.right,
+            bottom: box.bottom,
+            width: box.width,
+            height: box.height,
+          };
+        };
+        const overlapArea = (
+          first: ReturnType<typeof rect>,
+          second: ReturnType<typeof rect>,
+        ) =>
+          Math.max(0, Math.min(first.right, second.right) - Math.max(first.left, second.left))
+          * Math.max(0, Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top));
+        const searchBox = rect(searchRoot);
+        const closeBox = rect(closeButton);
+        const langBox = rect(langToggle);
+        const headerButtons = Array.from(
+          header.querySelectorAll<HTMLElement>("a, button"),
+        ).filter((element) =>
+          !searchRoot.contains(element)
+          && element.getClientRects().length > 0
+        );
+        const hitOwnsCenter = (element: HTMLElement) => {
+          const box = element.getBoundingClientRect();
+          return element.contains(document.elementFromPoint(
+            box.left + box.width / 2,
+            box.top + box.height / 2,
+          ));
+        };
+        return {
+          headerBottom: header.getBoundingClientRect().bottom,
+          searchBox,
+          closeBox,
+          langBox,
+          inputBox: rect(input),
+          closeLanguageOverlap: overlapArea(closeBox, langBox),
+          searchLanguageOverlap: overlapArea(searchBox, langBox),
+          coveredHeaderControls: headerButtons.filter((element) =>
+            overlapArea(searchBox, rect(element)) > 0
+          ).map((element) => element.getAttribute("aria-label") ?? element.textContent?.trim()),
+          hitClose: hitOwnsCenter(closeButton),
+          hitLanguages: languageButtons.map(hitOwnsCenter),
+          languageButtons: languageButtons.map((button) => ({
+            box: rect(button),
+            ariaHidden: button.getAttribute("aria-hidden"),
+            inert: button.hasAttribute("inert"),
+            tabIndex: button.tabIndex,
+          })),
+          horizontalOverflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      });
+      expect(geometry, `${viewport.width}px Search geometry`).not.toBeNull();
+      expect(
+        geometry!.searchBox.top,
+        `${viewport.width}px Search begins below the visible header`,
+      ).toBeGreaterThanOrEqual(geometry!.headerBottom + 7);
+      expect(geometry!.closeLanguageOverlap, `${viewport.width}px close/language overlap`).toBe(0);
+      expect(geometry!.searchLanguageOverlap, `${viewport.width}px Search/language overlap`).toBe(0);
+      expect(geometry!.coveredHeaderControls, `${viewport.width}px covered header controls`).toEqual([]);
+      expect(geometry!.hitClose, `${viewport.width}px close owns its center hit target`).toBe(true);
+      expect(geometry!.hitLanguages, `${viewport.width}px language buttons own their hit targets`).toEqual([
+        true,
+        true,
+      ]);
+      expect(geometry!.horizontalOverflow, `${viewport.width}px horizontal overflow`).toBe(0);
+
+      for (const [name, box] of [
+        ["Search input", geometry!.inputBox],
+        ["Search close", geometry!.closeBox],
+        ["language toggle", geometry!.langBox],
+        ...geometry!.languageButtons.map((button, index) => [
+          index === 0 ? "JA" : "EN",
+          button.box,
+        ] as const),
+      ] as const) {
+        expect(box.left, `${viewport.width}px ${name} stays inside the left edge`).toBeGreaterThanOrEqual(0);
+        expect(box.right, `${viewport.width}px ${name} stays inside the right edge`).toBeLessThanOrEqual(
+          viewport.width,
+        );
+        expect(box.top, `${viewport.width}px ${name} stays inside the top edge`).toBeGreaterThanOrEqual(0);
+        expect(box.bottom, `${viewport.width}px ${name} stays inside the bottom edge`).toBeLessThanOrEqual(
+          viewport.height,
+        );
+        expect(box.width, `${viewport.width}px ${name} keeps a 44px width`).toBeGreaterThanOrEqual(44);
+        expect(box.height, `${viewport.width}px ${name} keeps a 44px height`).toBeGreaterThanOrEqual(44);
+      }
+      expect(
+        geometry!.languageButtons.map(({ ariaHidden, inert, tabIndex }) => ({
+          ariaHidden,
+          inert,
+          tabIndex,
+        })),
+        `${viewport.width}px visible language controls remain semantic and keyboard reachable`,
+      ).toEqual([
+        { ariaHidden: null, inert: false, tabIndex: 0 },
+        { ariaHidden: null, inert: false, tabIndex: 0 },
+      ]);
+
+      const headerAccessibility = await page.getByRole("banner").ariaSnapshot();
+      expect(headerAccessibility).toContain('button "Close search"');
+      expect(headerAccessibility).toContain('button "JA 日本語表示中"');
+      expect(headerAccessibility).toContain('button "EN 英語表示に切り替え"');
+
+      await page.keyboard.press("Tab");
+      await expect(close).toBeFocused();
+      await page.keyboard.press("Shift+Tab");
+      await expect(input).toBeFocused();
+
+      if (viewport.width === 390) {
+        for (let index = 0; index < 5; index += 1) await page.keyboard.press("Tab");
+        await expect(jaButton).toBeFocused();
+        await page.keyboard.press("Tab");
+        await expect(enButton).toBeFocused();
+        await page.keyboard.press("Enter");
+        await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
+        await expect(page).toHaveURL(/[?&]lang=en(?:&|$)/);
+        await expect(search).toBeVisible();
+        await expect(enButton).toBeFocused();
+        await jaButton.click();
+        await expect(page.locator("html")).toHaveAttribute("data-lang", "ja");
+      }
+
+      if (viewport.width === 375) await input.press("Escape");
+      else await close.click();
+      await expect(search).toBeHidden();
+      await expect(page.locator("[data-menu-trigger]:visible").first()).toBeFocused();
+    }
+  });
+
+  test("short tablet Search keeps its final result inside the viewport", async ({ page }) => {
+    const scenarios = [
+      { path: "/", width: 721, height: 600, breadcrumb: false },
+      { path: "/c/copilot/", width: 721, height: 667, breadcrumb: true },
+    ];
+
+    for (const scenario of scenarios) {
+      await page.setViewportSize({ width: scenario.width, height: scenario.height });
+      await page.goto(scenario.path);
+      await expect(page.locator(".crumb-bar")).toHaveCount(scenario.breadcrumb ? 1 : 0);
+      await expectPagefindReady(page);
+      await page.evaluate(() => {
+        const pagefind = (window as any).__pagefind;
+        pagefind.search = async () => ({
+          results: Array.from({ length: 10 }, (_, index) => {
+            const title = `Release result ${index + 1} with enough detail for a stable row height`;
+            return {
+              data: async () => ({
+                url: `/e/short-tablet-result-${index + 1}/`,
+                meta: {
+                  title,
+                  titleEn: title,
+                  summaryEn: `${title}. This deterministic summary keeps the result row measurable.`,
+                },
+                excerpt: `${title}. This deterministic excerpt keeps the result row measurable.`,
+                filters: {
+                  authority: ["official"],
+                  category: ["copilot"],
+                  importance: ["2"],
+                  source: ["github-copilot"],
+                },
+              }),
+            };
+          }),
+        });
+      });
+
+      await page.locator("header .menu-trigger").click();
+      await page.locator("#site-menu [data-search-trigger]").click();
+      const input = page.locator("#pagefind-search-input");
+      const close = page.getByRole("button", { name: "Close search" });
+      const panel = page.locator("#pagefind-results");
+      const hits = panel.locator(".search-hit");
+      await input.fill("release");
+      await expect(hits).toHaveCount(10);
+      await panel.evaluate((element) => {
+        element.scrollTop = element.scrollHeight;
+      });
+
+      const geometry = await page.evaluate(() => {
+        const panel = document.querySelector<HTMLElement>("#pagefind-results");
+        const hits = Array.from(document.querySelectorAll<HTMLElement>("#pagefind-results .search-hit"));
+        const input = document.querySelector<HTMLElement>("#pagefind-search-input");
+        const close = document.querySelector<HTMLElement>("[data-search-close]");
+        if (!panel || !input || !close || hits.length === 0) return null;
+        const rect = (element: Element) => {
+          const box = element.getBoundingClientRect();
+          return {
+            left: box.left,
+            top: box.top,
+            right: box.right,
+            bottom: box.bottom,
+            width: box.width,
+            height: box.height,
+          };
+        };
+        return {
+          panel: rect(panel),
+          last: rect(hits.at(-1)!),
+          input: rect(input),
+          close: rect(close),
+          scrollTop: panel.scrollTop,
+          maxScrollTop: panel.scrollHeight - panel.clientHeight,
+          horizontalOverflow: document.documentElement.scrollWidth - window.innerWidth,
+          focused: document.activeElement === input,
+        };
+      });
+      expect(geometry, `${scenario.path} short-tablet geometry`).not.toBeNull();
+      expect(geometry!.panel.bottom, `${scenario.path} panel keeps 12px viewport clearance`).toBeLessThanOrEqual(
+        scenario.height - 11,
+      );
+      expect(geometry!.last.bottom, `${scenario.path} final result is reachable after internal scroll`).toBeLessThanOrEqual(
+        geometry!.panel.bottom,
+      );
+      expect(geometry!.scrollTop, `${scenario.path} results use internal scrolling`).toBeGreaterThan(0);
+      expect(geometry!.scrollTop, `${scenario.path} results reach the internal scroll end`).toBeCloseTo(
+        geometry!.maxScrollTop,
+        0,
+      );
+      expect(geometry!.horizontalOverflow, `${scenario.path} does not create horizontal overflow`).toBe(0);
+      expect(geometry!.focused, `${scenario.path} keeps Search focus while results scroll`).toBe(true);
+      for (const [name, box] of [
+        ["Search input", geometry!.input],
+        ["Search close", geometry!.close],
+      ] as const) {
+        expect(box.width, `${scenario.path} ${name} keeps a 44px width`).toBeGreaterThanOrEqual(44);
+        expect(box.height, `${scenario.path} ${name} keeps a 44px height`).toBeGreaterThanOrEqual(44);
+      }
+      await close.click();
+      await expect(panel).toBeHidden();
+      await expect(page.locator("header .menu-trigger")).toBeFocused();
+    }
+  });
+
   test("closing search restores focus to the trigger that opened it", async ({ page }) => {
     await page.goto("/");
     const search = page.locator("header .search");

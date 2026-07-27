@@ -4318,7 +4318,7 @@ body {
   .header-inner > .search.is-open {
     position: fixed;
     z-index: 115;
-    top: 12px;
+    top: var(--search-overlay-top, 89px);
     right: 12px;
     left: 12px;
     display: flex;
@@ -4350,6 +4350,8 @@ body {
     right: 0;
     left: 0;
     width: auto;
+    /* 50px Search control + 6px panel gap + 12px viewport clearance. */
+    max-height: min(520px, calc(100dvh - var(--search-overlay-top, 89px) - 68px));
   }
 
   .nav-shortcut span:not(.nav-icon) {
@@ -5053,7 +5055,7 @@ html, body {
     display: none;
     position: fixed;
     z-index: 115;
-    top: 12px;
+    top: var(--search-overlay-top, 77px);
     left: 14px;
     right: 14px;
     width: auto;

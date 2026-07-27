@@ -2816,6 +2816,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **follow-up**: `Intl.Segmenter`も`.NET`の先頭period、`U.S.`のdotted initialism、`Dr.`の略語後を文境界として返すため、segment候補をそのまま完全文とみなさず前後tokenで再検証する。decimalと通常の文末を同時にfixture化し、false boundaryの拒否が正しい文境界を消さないことも固定する。
 - **follow-up 2**: `U.S.`直前の`the/a/an`や直後のall-capsを一般化した継続判定は、`The company operates in the U.S. Microsoft announced ...`のような正しい文末まで消す。曖昧な固有名詞を構文推測で結合せず、実corpusで確認した`SEC`と`Department`などの高信頼継続語だけを明示し、任意のproper nounが始まる次文をnegative fixtureで保持する。
 
+### LL-426: 見た目で覆われたcontrolはTab・pointer・AXから自動的には消えない
+- **事象**: 390x844と375x667で固定Searchの閉じるボタンがJA/EN言語切替と1,848平方CSS px重なり、言語ボタンの中心hit targetは閉じるボタンになった。一方、背面のJA/ENはvisible判定、Tab順、accessibility treeに残っていた。
+- **根本原因**: 固定overlayをviewport端へ配置しながら、同じHeader内の既存controlとの矩形交差とhit-testingを検証していなかった。z-indexで見えなくなっても、背面controlのfocusabilityとaccessibility semanticsは変わらない。
+- **対策**: 980px以下のSearchは実測したvisible Header下端から8px下へ配置し、375/390/720/721pxでSearch、閉じる、言語切替、全Header controlのDOMRect非交差、中心hit target、44px操作面、Tab/Shift+Tab、AX snapshot、言語切替、focus復帰、overflowをE2Eへ固定した。
+- **教訓**: overlayの回帰検証はz-indexとスクリーンショットだけで終えない。covered controlが無いことをDOMRectと`elementFromPoint()`で確認し、覆う設計を採る場合はfocusable要素へ`aria-hidden`だけを付けず、`hidden`または`inert`を実際の操作状態と同期する。両controlを残す場合は双方が可視・操作可能であることをTab順とAX treeまで実測する。
+
+### LL-427: fixed overlayを移動したら子panelのviewport予算も再計算する
+- **事象**: SearchをHeader下へ移動してcontrol重なりを解消した後も、tabletの検索結果panelは旧`max-height:520px`を維持した。721x600 Homeではpanelがy=144..664、721x667 breadcrumb pageではy=180..700となり、内部scrollを末尾まで進めても最後のresultがviewport外へ残った。
+- **根本原因**: fixed overlay本体のtopだけを変更し、absolute child panelの最大高を新しいtopとviewport残余高へ接続していなかった。既存E2Eも721x844だけで、短いtablet heightを検証していなかった。
+- **対策**: tablet result panelを`100dvh - --search-overlay-top - Search control高 - panel gap - viewport clearance`へclampし、721x600 Homeと721x667 breadcrumb routeで末尾まで内部scrollした後のpanel/last result座標、focus、44px操作面、overflowを固定した。
+- **教訓**: fixed/sticky overlayの位置を変えた場合、親の非交差だけで完了にしない。子のdropdown/listbox/dialog本文が使える残りviewport高も同じ位置変数から導出し、幅breakpointに加えて実際に短いheight、深いrouteの追加Header行、内部scroll末尾をDOMRectで検証する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -1,8 +1,58 @@
 {
-  "generatedAt": "2026-07-27T09:22:44.798Z",
+  "generatedAt": "2026-07-27T12:48:08.173Z",
   "month": "2026-07",
-  "count": 1136,
+  "count": 1141,
   "entries": [
+    {
+      "id": "0092925c3dc3408e",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/interpark/articles/cc1a0861d9a521",
+      "title": "LLMアプリは「ハーネス」が9割 ── Perl/CGIの現役SaaSにAIエージェントを組み込んで学んだこと",
+      "titleJa": "LLMアプリは「ハーネス」が9割 ── Perl/CGIの現役SaaSにAIエージェントを組み込んで学んだこと",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-27T08:59:59.000Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
+      "tags": [
+        "ai",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 長年運用しているPerl/CGI製SaaS（自社のノーコード業務アプリ基盤）に、LLMエージェントを組み込みました。作ったのは次の3機能です。 対話型アプリビルダー ── チャットでヒアリングしながら業務アプリを丸ごと生成（サンプルデータ・ダッシュボード・メール雛形つき） アプリ内エージェント ── どの画面からでも呼べるアシスタント。自然言語でレコードの検索・集計・統計分析・登録・更新 アプリ改善アドバイザー ── アプリの作りと使われ方を診断して改善提案 先に断っておくと、これらは社内勉強会のお題として作った試作機能で、本番リリースされたも",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--4j92LoZU--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:LLM%25E3%2582%25A2%25E3%2583%2597%25E3%2583%25AA%25E3%2581%25AF%25E3%2580%258C%25E3%2583%258F%25E3%2583%25BC%25E3%2583%258D%25E3%2582%25B9%25E3%2580%258D%25E3%2581%258C9%25E5%2589%25B2%2520%25E2%2594%2580%25E2%2594%2580%2520Perl%252FCGI%25E3%2581%25AE%25E7%258F%25BE%25E5%25BD%25B9SaaS%25E3%2581%25ABAI%25E3%2582%25A8%25E3%2583%25BC%25E3%2582%25B8%25E3%2582%25A7%25E3%2583%25B3%25E3%2583%2588%25E3%2582%2592%25E7%25B5%2584%25E3%2581%25BF%25E8%25BE%25BC%25E3%2582%2593%25E3%2581%25A7%25E5%25AD%25A6%25E3%2582%2593%25E3%2581%25A0%25E3%2581%2593%25E3%2581%25A8%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E6%25A0%25AA%25E5%25BC%258F%25E4%25BC%259A%25E7%25A4%25BE%25E3%2582%25A4%25E3%2583%25B3%25E3%2582%25BF%25E3%2583%25BC%25E3%2583%2591%25E3%2583%25BC%25E3%2582%25AF%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2I0MjAyNzZmZjQuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--4j92LoZU--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:LLM%25E3%2582%25A2%25E3%2583%2597%25E3%2583%25AA%25E3%2581%25AF%25E3%2580%258C%25E3%2583%258F%25E3%2583%25BC%25E3%2583%258D%25E3%2582%25B9%25E3%2580%258D%25E3%2581%258C9%25E5%2589%25B2%2520%25E2%2594%2580%25E2%2594%2580%2520Perl%252FCGI%25E3%2581%25AE%25E7%258F%25BE%25E5%25BD%25B9SaaS%25E3%2581%25ABAI%25E3%2582%25A8%25E3%2583%25BC%25E3%2582%25B8%25E3%2582%25A7%25E3%2583%25B3%25E3%2583%2588%25E3%2582%2592%25E7%25B5%2584%25E3%2581%25BF%25E8%25BE%25BC%25E3%2582%2593%25E3%2581%25A7%25E5%25AD%25A6%25E3%2582%2593%25E3%2581%25A0%25E3%2581%2593%25E3%2581%25A8%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E6%25A0%25AA%25E5%25BC%258F%25E4%25BC%259A%25E7%25A4%25BE%25E3%2582%25A4%25E3%2583%25B3%25E3%2582%25BF%25E3%2583%25BC%25E3%2583%2591%25E3%2583%25BC%25E3%2582%25AF%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2I0MjAyNzZmZjQuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "LLMアプリは「ハーネス」が9割 ── Perl/CGIの現役SaaSにAIエージェントを組み込んで学んだこと",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "fd4b757f1c6e8e59",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/appare/articles/jp-digest-20260725-diffusion-llm",
+      "title": "拡散言語モデルとは？LLMが2.42倍速くなる新しい生成の仕組み",
+      "titleJa": "拡散言語モデルとは？LLMが2.42倍速くなる新しい生成の仕組み",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-27T08:56:29.000Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
+      "tags": [
+        "ai",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "いま「拡散言語モデル」がざわついている理由 LLM（大規模言語モデル）の生成って、そろそろ「速さ」がかなり大事になってきましたよね。今回は海外の論文と複数の技術メディア、公式発表を突き合わせて、日本の読者向けに再構成しました。 2026年7月1日、NVIDIAが「Nemotron-Labs-TwoTower」というモデルをオープンウェイト（重みが公開されていて自分で動かせる）で公開しました。ライセンスは NVIDIA Nemotron Open Model License です。 このモデルは拡散言語モデル（diffusion language mode"
+    },
     {
       "id": "d3734fce4ac64961",
       "source": "qiita-mcp",
@@ -10,12 +60,16 @@
       "url": "https://qiita.com/koukyo/items/f2c1dde32706670e7939",
       "title": "AIエージェント開発を体系的に学ぶための厳選4冊――設計・実装・基盤理解まで",
       "titleJa": "AIエージェント開発を体系的に学ぶための厳選4冊――設計・実装・基盤理解まで",
-      "titleEn": "",
+      "titleEn": "A curated list of four books for systematically learning AI agent development,…",
       "lang": "ja",
       "publishedAt": "2026-07-27T08:00:37.000Z",
       "collectedAt": "2026-07-27T09:22:39.424Z",
       "tags": [
+        "ai-agents",
+        "book-recommendation",
+        "learning-resources",
         "mcp",
+        "mcp-server",
         "qiita"
       ],
       "category": "mcp",
@@ -38,17 +92,22 @@
       "sourceType": "blog",
       "url": "https://qiita.com/ryu-ki/items/3e963798505ec997837d",
       "title": "【Stack Overflow】Stack Overflow for Agentsとは？〜AIエージェント同士でナレッジを共有する仕組みを整理する〜",
-      "titleJa": "【Stack Overflow】Stack Overflow for Agentsとは？〜AIエージェント同士でナレッジを共有する仕組みを整理する〜",
-      "titleEn": "",
+      "titleJa": "Stack Overflow for Agentsとは？〜AIエージェント同士でナレッジを共有する仕組みを整理する〜",
+      "titleEn": "Stack Overflow for Agents is a knowledge-sharing framework that lets AI agents…",
       "lang": "ja",
       "publishedAt": "2026-07-27T03:25:47.000Z",
       "collectedAt": "2026-07-27T09:22:39.424Z",
       "tags": [
+        "ai-agents",
+        "knowledge-sharing",
         "mcp",
-        "qiita"
+        "mcp-server",
+        "multi-agent",
+        "qiita",
+        "stack-overflow"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに 2026年6月10日、Stack Overflow から「Stack Overflow for Agents」というサービスのベータ版が公開されました。 AI コーディングエージェントが急速に普及する中で、エージェント同士がナレッジを共有できるプラットフォ..."
@@ -59,17 +118,23 @@
       "sourceType": "blog",
       "url": "https://qiita.com/kai_kou/items/437335f2f74d1ec3b18b",
       "title": "Grok Build CLI、CLAUDE.mdは読んでもhooksは検出しなかった",
-      "titleJa": "Grok Build CLI、CLAUDE.mdは読んでもhooksは検出しなかった",
-      "titleEn": "",
+      "titleJa": "Grok Build CLIは「CLAUDE.md」を読み込むがhooksは検出しない",
+      "titleEn": "Testing revealed that Grok Build CLI reads CLAUDE.md configuration files but…",
       "lang": "ja",
       "publishedAt": "2026-07-27T03:07:48.000Z",
       "collectedAt": "2026-07-27T09:22:39.424Z",
       "tags": [
+        "claude",
+        "cli",
+        "compatibility",
+        "grok",
+        "hooks",
         "mcp",
+        "mcp-server",
         "qiita"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに 対象読者は、Claude Code を日常的に使っていて、他社のエージェント型 CLI がどこまで CLAUDE.md や .claude/ 配下の設定と互換性を持つか気になる開発者です。SpaceXAI（旧 xAI。2026年2月の SpaceX 統合を経て、..."
@@ -113,18 +178,21 @@
       "sourceType": "blog",
       "url": "https://qiita.com/hironakamura_ai/items/e2345e6f5d32b7fe11d4",
       "title": "MCP移行前にSession依存を検出するPython",
-      "titleJa": "MCP移行前にSession依存を検出するPython",
-      "titleEn": "",
+      "titleJa": "MCP移行前にSession依存を検出するPythonツール",
+      "titleEn": "Introduces a Python-based static analysis approach to detect Session-dependent…",
       "lang": "ja",
       "publishedAt": "2026-07-27T02:27:17.000Z",
       "collectedAt": "2026-07-27T09:22:39.424Z",
       "tags": [
         "mcp",
         "mcp-server",
-        "qiita"
+        "migration",
+        "python",
+        "qiita",
+        "static-analysis"
       ],
       "category": "mcp",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "MCP移行前にSession依存を検出するPython ステートレス化したMCPサーバーで、どこに残っていた状態が消えるのか。ロードバランサーの設定だけを直して終えると、ここで事故る。 7月28日に正式化予定のMCP 2026-07-28 は、プロトコル層の initia..."
@@ -135,14 +203,17 @@
       "sourceType": "release",
       "url": "https://github.com/ollama/ollama/releases/tag/v0.32.5-rc0",
       "title": "Ollama Releases v0.32.5",
-      "titleJa": "",
+      "titleJa": "Ollama v0.32.5 リリース",
       "titleEn": "Ollama Releases v0.32.5",
       "lang": "en",
       "publishedAt": "2026-07-27T01:25:40.000Z",
       "collectedAt": "2026-07-27T09:22:39.424Z",
       "tags": [
+        "local-llm",
         "ollama",
-        "release"
+        "release",
+        "update",
+        "v0.32.5"
       ],
       "category": "local-llm",
       "importance": 2,
@@ -157,6 +228,27 @@
         "height": 0,
         "source": "media"
       }
+    },
+    {
+      "id": "217cdf373f6959e8",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/shohei_ai_lab/articles/89e2ac809c1135",
+      "title": "【実証済み】AIエージェントへの指示設計5原則 — 「良い指示」と「悪い指示」で生まれるコードの差を数値で示す",
+      "titleJa": "【実証済み】AIエージェントへの指示設計5原則 — 「良い指示」と「悪い指示」で生まれるコードの差を数値で示す",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-27T01:23:43.000Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
+      "tags": [
+        "cursor",
+        "zenn"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "この記事で得られるもの AIエージェントから良いコードを引き出す「指示設計の5原則」の概要 実際にDocker環境で検証した「良い指示 vs 悪い指示」の定量データ 3大ツール（Claude Code / Cursor / GitHub Copilot）の設定ファイル活用法 すぐ使えるプロジェクト設定ファイルのサンプル 対象読者 AIコーディングツールを使い始めたが、思ったような結果が出ない方 「何を指示すればいいかわからない」と感じている方 指示の質を定量的に評価したい方 「指示の質」で本当にコードが変わるのか？ — 検証してみた 「AIへの指示が大事"
     },
     {
       "id": "8452fa5b99310fef",
@@ -175,7 +267,8 @@
         "cursor",
         "developer-workflow",
         "productivity",
-        "qiita"
+        "qiita",
+        "tutorial"
       ],
       "category": "cursor",
       "importance": 2,
@@ -216,6 +309,27 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "bf53392db77f4fd1",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/aiforall/articles/a7657601499a34",
+      "title": "誰でも「Cursor」で安全なWeb運用を。レガシーな現場でAI駆動開発の民主化を目指したPoCの記録（第3回／全3回）",
+      "titleJa": "誰でも「Cursor」で安全なWeb運用を。レガシーな現場でAI駆動開発の民主化を目指したPoCの記録（第3回／全3回）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-27T00:21:42.000Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
+      "tags": [
+        "cursor",
+        "zenn"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "こんにちは。株式会社メンバーズ AIフォーオールカンパニーで生成AI活用PMOをしている、ラウタクです。 前回に続き、「Cursor」を活用したPoCの記録の第3回（最終回）をお届けします。 ! 第1回：AI駆動開発の民主化メリットと課題 第2回：民主化に向けた課題を解決するためのPoC設計とは 第3回：PoCの具体的な実装について ← 本記事 ! 本記事で記載しているファイル構成や各種設定、Project Rules（ガードレール）は、仮想的なプロジェクトを想定した設定となっており、あくまで参考事例としての紹介です。 実際に使う際は、現行のプロジェクト"
     },
     {
       "id": "777abd8f43a57ca0",
@@ -376,6 +490,27 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "こんにちは、ダックスフントです。 2026年6月からGitHub Copilotの課金方式がAI Creditによる従量課金制に移行しました。以前と同じ使い方を続けていても料金がだいぶ上がった実感があり、X（旧Twitter）でも「実質値上げでは？」という声をよく目にします..."
+    },
+    {
+      "id": "5c3200f04a9d82fd",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/usudonsdev/articles/article-zenn-microgit-overlaygit",
+      "title": "OverlayGit の論文を読んで、保存ごとのマイクロ履歴ツールを作ってみた",
+      "titleJa": "OverlayGit の論文を読んで、保存ごとのマイクロ履歴ツールを作ってみた",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-26T14:30:55.000Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
+      "tags": [
+        "cursor",
+        "zenn"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに Git のチェックアウトを OverlayFS で速くする、という話を論文で知りました。大阪大学の OverlayGit（情報処理学会論文誌, 2025）です。 読んでいて刺さったのは実装の細部より、「blob 展開が高いなら、空間を使って先に展開しておけば切替を軽くできる」 という整理でした。MSR（リポジトリマイニング）向けの話ですが、個人開発の「保存のたびに履歴を残したい」にも使えそうだと思い、VS Code / Cursor 拡張の MicroGit（本稿時点 v4.0.0）を作りました。 本ツール・本記事は、論文の著者や所属機関とは無"
     },
     {
       "id": "04bde16699b5b9a5",
@@ -851,11 +986,11 @@
       "sourceType": "blog",
       "url": "https://zenn.dev/amayann/articles/markdownbook-creation-process",
       "title": "約2万行のアプリを7巻58章のZenn本にした話 — 執筆の目的・品質管理・AI活用の実録",
-      "titleJa": "約2万行のアプリを7巻58章のZenn本にした話 — 執筆目的・品質管理・AI活用の実録",
+      "titleJa": "約2万行のアプリを7巻58章のZenn本にした話 — 執筆の目的・品質管理・AI活用の実録",
       "titleEn": "The author details how a ~20,000-line application was systematically documented…",
       "lang": "ja",
       "publishedAt": "2026-07-26T08:15:18.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "ai-assisted",
         "cursor",
@@ -1062,8 +1197,8 @@
       }
     },
     {
-      "id": "653ec7d947991404",
-      "source": "zenn-copilot",
+      "id": "8334db90315c9c52",
+      "source": "zenn-cursor",
       "sourceType": "blog",
       "url": "https://zenn.dev/shohei_ai_lab/books/7ba75032da798d",
       "title": "AIエージェントへの指示設計 完全ガイド — Claude Code / Cursor / Copilot 実践テンプレート付き",
@@ -1071,7 +1206,7 @@
       "titleEn": "A comprehensive guide to designing effective instructions for AI coding agents…",
       "lang": "ja",
       "publishedAt": "2026-07-25T12:21:03.000Z",
-      "collectedAt": "2026-07-26T22:46:08.870Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "ai-agents",
         "claude-code",
@@ -1082,7 +1217,7 @@
         "tutorial",
         "zenn"
       ],
-      "category": "copilot",
+      "category": "cursor",
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -1165,8 +1300,8 @@
       }
     },
     {
-      "id": "fd8d8b11f3dc12f1",
-      "source": "zenn-copilot",
+      "id": "14dfa2240c9159ad",
+      "source": "zenn-cursor",
       "sourceType": "blog",
       "url": "https://zenn.dev/shohei_ai_lab/articles/c7552bb8d04f3d",
       "title": "AIエージェントへの指示設計 完全ガイド — Claude Code / Cursor / GitHub Copilot で成果を出すプロン",
@@ -1174,7 +1309,7 @@
       "titleEn": "A comprehensive practical guide covering prompt and instruction design for…",
       "lang": "ja",
       "publishedAt": "2026-07-25T10:30:14.000Z",
-      "collectedAt": "2026-07-26T22:46:08.870Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "ai-agents",
         "claude-code",
@@ -1185,7 +1320,7 @@
         "tutorial",
         "zenn"
       ],
-      "category": "copilot",
+      "category": "cursor",
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -1365,7 +1500,7 @@
       "titleEn": "The author realized that declining output quality from Cursor was caused by…",
       "lang": "ja",
       "publishedAt": "2026-07-25T01:28:49.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "ai-coding",
         "best-practices",
@@ -1515,7 +1650,7 @@
       "titleEn": "This article explains how to manage Go and gopls via mise.toml and configure…",
       "lang": "ja",
       "publishedAt": "2026-07-24T22:13:36.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "cursor",
         "go",
@@ -1973,8 +2108,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "When we introduced the Open Knowledge Format (OKF) in June 2026, we asserted that the context that agents need (table schemas, metric definitions, runbooks) should live in a format, not in a proprietary service, and not scattered across unstructured text blobs. Accordingly, OKF v"
+      "contentSnippet": "When we introduced the Open Knowledge Format (OKF) in June 2026, we asserted that the context that agents need (table schemas, metric definitions, runbooks) should live in a format, not in a proprietary service, and not scattered across unstructured text blobs. Accordingly, OKF v",
+      "evergreen": true
     },
     {
       "id": "627841b4f5c80956",
@@ -2226,7 +2361,7 @@
       "titleEn": "This article explains how assigning explicit roles or subagents in Cursor…",
       "lang": "ja",
       "publishedAt": "2026-07-24T10:45:05.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -2304,7 +2439,7 @@
       "titleEn": "The author experimented with running three AI agent tools simultaneously and…",
       "lang": "ja",
       "publishedAt": "2026-07-24T05:41:38.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "agent",
         "ai-tools",
@@ -2639,7 +2774,7 @@
       "titleEn": "Introducing Claude Opus 5",
       "lang": "en",
       "publishedAt": "2026-07-24T00:00:00.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "anthropic",
         "benchmark",
@@ -2981,7 +3116,7 @@
       "titleEn": "Zed Editor Releases v1.12.0-pre",
       "lang": "en",
       "publishedAt": "2026-07-23T19:00:12.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "editor",
         "open-source",
@@ -3013,7 +3148,7 @@
       "titleEn": "Zed Editor Releases v1.12.0",
       "lang": "en",
       "publishedAt": "2026-07-23T18:58:20.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "editor",
         "open-source",
@@ -3164,7 +3299,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "The math behind reinforcement learning (RL) post-training for large language models (LLMs) is notoriously unforgiving. As frontier AI labs push the boundaries of reasoning and coding models using RL post-training algorithms like Group Relative Policy Optimization (GRPO), they rou",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/image4_zZBzQx7.max-1000x1000.png",
@@ -3173,7 +3307,8 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "f9fca82092edfd73",
@@ -3396,7 +3531,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Welcome to The Blueprint, a new feature where we highlight how Google Cloud customers are tackling unique and common challenges across industries using the latest AI and cloud technologies. We hope to inspire others looking to innovate in their work . Founded in 2018, Voicify rei",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/image1_DsM3Zpr.max-1000x1000.png",
@@ -3405,7 +3539,8 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "f16ddb90ebfe07b5",
@@ -3432,7 +3567,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "What’s one of the biggest bottlenecks stopping organizations from scaling their AI initiatives? It isn’t the capabilities of today’s models — it’s their access to business context and semantic meaning. In the agentic era, enterprises need to go beyond simply storing data to activ",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/2_bR2eV1x.max-1000x1000.png",
@@ -3441,7 +3575,8 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "c3af2a595f5ea377",
@@ -3563,7 +3698,7 @@
       "titleEn": "The author hit Cursor's free-tier limit while developing a Roblox project and…",
       "lang": "ja",
       "publishedAt": "2026-07-23T12:24:13.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "api-key",
         "cursor",
@@ -3616,7 +3751,7 @@
       "titleEn": "The article examines how Cursor took seven months to disclose a critical issue…",
       "lang": "ja",
       "publishedAt": "2026-07-23T10:19:27.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -3806,7 +3941,7 @@
       "titleEn": "Zed Editor Releases v1.13.0-pre",
       "lang": "en",
       "publishedAt": "2026-07-23T01:00:37.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "editor",
         "open-source",
@@ -4145,8 +4280,8 @@
       }
     },
     {
-      "id": "0e422dfe1852aca1",
-      "source": "github-copilot",
+      "id": "eff57dde7bf6dc49",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/copilot-vs-raw-api-access-what-are-you-actually-paying-for/",
       "title": "Copilot vs. raw API access: What are you actually paying for?",
@@ -4154,7 +4289,7 @@
       "titleEn": "Copilot vs. raw API access: What are you actually paying for?",
       "lang": "en",
       "publishedAt": "2026-07-22T19:00:00.000Z",
-      "collectedAt": "2026-07-27T01:30:53.139Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "api",
         "copilot",
@@ -4167,8 +4302,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "Copilot now bills usage at listed API rates. Compare direct model access with the coding workflow, policy, and harness work around it. The post Copilot vs. raw API access: What are you actually paying for? appeared first on The GitHub Blog .",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "Copilot now bills usage at listed API rates. Compare direct model access with the coding workflow, policy, and harness work around it. The post Copilot vs. raw API access: What are you actually paying for? appeared first on The GitHub Blog ."
     },
     {
       "id": "5c7a0e9ed0d3e365",
@@ -4180,7 +4315,7 @@
       "titleEn": "Visual Studio Code 1.130 Release Notes",
       "lang": "en",
       "publishedAt": "2026-07-22T17:00:00.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "developer-tools",
         "editor",
@@ -4578,7 +4713,7 @@
       "titleEn": "A developer with no prior coding background shares hard-won lessons from 8,700…",
       "lang": "ja",
       "publishedAt": "2026-07-22T08:31:46.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "ai-coding",
         "cursor",
@@ -4819,7 +4954,7 @@
       "titleEn": "A research agenda for the Economic Futures Research Fund",
       "lang": "en",
       "publishedAt": "2026-07-22T00:00:00.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "anthropic",
         "claude",
@@ -4844,7 +4979,7 @@
       "titleEn": "Ask Claude about the Anthropic Economic Index",
       "lang": "en",
       "publishedAt": "2026-07-22T00:00:00.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "anthropic",
         "claude",
@@ -4940,7 +5075,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "We are living in the golden age of the weekend AI side project. Thanks to agentic engineering and LLMs, the time to go from a blank IDE to a functional local application has dropped from quarters to hours. You can build your wildest ideas over a cup of coffee. But inside an enter",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/1_Gemini_Generated_Image.max-1000x1000.jpg",
@@ -4949,7 +5083,8 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "3731ff20c85f6986",
@@ -5470,8 +5605,8 @@
       }
     },
     {
-      "id": "15824f57a24427a6",
-      "source": "github-copilot",
+      "id": "12b30620a61a6003",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/how-to-build-interactive-experiences-with-canvases/",
       "title": "How to build interactive experiences with canvases",
@@ -5479,7 +5614,7 @@
       "titleEn": "How to build interactive experiences with canvases",
       "lang": "en",
       "publishedAt": "2026-07-21T16:00:00.000Z",
-      "collectedAt": "2026-07-27T01:30:53.139Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "canvas",
         "copilot",
@@ -5492,6 +5627,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Canvases turn AI into interactive workspaces where you can visualize information, explore workflows, and take action across complex tasks. The post How to build interactive experiences with canvases appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/06/MSFTBuild_Blog_Header_01.jpg?fit=2400%2C1260",
@@ -5500,8 +5636,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "527c90fe001be1f4",
@@ -5729,7 +5864,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "As adversarial AI threats accelerate attacks on code, security teams must counter them with machine-speed defenses that can automate code remediation and fight AI with AI. CodeMender is our managed code security agent, and starting today, we're bringing its code scanning and reme",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/2_LNSezkk.max-1000x1000.png",
@@ -5738,7 +5872,8 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "32d11cdb5e5f6c1b",
@@ -6281,7 +6416,7 @@
       "titleEn": "This article outlines practical habits developers should adopt when using…",
       "lang": "ja",
       "publishedAt": "2026-07-21T10:34:17.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "ai-coding",
         "best-practices",
@@ -6364,7 +6499,7 @@
       "titleEn": "The second installment of a three-part PoC series explores democratizing…",
       "lang": "ja",
       "publishedAt": "2026-07-21T04:34:17.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "ai-driven-development",
         "cursor",
@@ -6907,7 +7042,7 @@
       "titleEn": "This article explains how to feed GitHub Issues and Pull Requests to Cursor…",
       "lang": "ja",
       "publishedAt": "2026-07-20T17:14:15.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -8077,7 +8212,7 @@
       "titleEn": "This article explains how to configure Cursor Project Rules to streamline…",
       "lang": "ja",
       "publishedAt": "2026-07-19T06:47:31.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "cursor",
         "project-rules",
@@ -8524,7 +8659,7 @@
       "titleEn": "A practical examination of the trade-offs between full codebase indexing and…",
       "lang": "ja",
       "publishedAt": "2026-07-19T02:16:38.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "ai-workflow",
         "context-management",
@@ -9956,7 +10091,7 @@
       "titleEn": "In-House LLM Serving at Netflix",
       "lang": "en",
       "publishedAt": "2026-07-17T21:32:39.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "ai",
         "engineering",
@@ -10164,7 +10299,7 @@
       "titleEn": "A developer lost 170 GB of data due to a Cursor AI operation gone wrong, and…",
       "lang": "ja",
       "publishedAt": "2026-07-17T17:25:00.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "ai-coding",
         "cursor",
@@ -10259,8 +10394,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "Many BigQuery customers rely on policy tags for protecting their sensitive information in BigQuery. Policy tags were the go-to solution for applying column-level access controls, allowing only users with the right permission to view sensitive columns like personally identifiable "
+      "contentSnippet": "Many BigQuery customers rely on policy tags for protecting their sensitive information in BigQuery. Policy tags were the go-to solution for applying column-level access controls, allowing only users with the right permission to view sensitive columns like personally identifiable ",
+      "evergreen": true
     },
     {
       "id": "c2b4bdd3ea39d385",
@@ -10289,8 +10424,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "Earlier this year, we introduced Gemini Enterprise Agent Platform , where you can build, scale, govern, and optimize agents. Today, we’re sharing 13 demos that walk you through what Agent Platform can do. Each one teaches a concept, a pattern, or an architecture you can put to wo"
+      "contentSnippet": "Earlier this year, we introduced Gemini Enterprise Agent Platform , where you can build, scale, govern, and optimize agents. Today, we’re sharing 13 demos that walk you through what Agent Platform can do. Each one teaches a concept, a pattern, or an architecture you can put to wo",
+      "evergreen": true
     },
     {
       "id": "0ec0533d27bed34a",
@@ -10518,7 +10653,7 @@
       "titleEn": "A practical guide to setting up a technical blog workflow using Cursor, GitHub,…",
       "lang": "ja",
       "publishedAt": "2026-07-17T07:11:41.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "cursor",
         "github",
@@ -12117,7 +12252,7 @@
       "titleEn": "Zed Editor Releases v1.11.3",
       "lang": "en",
       "publishedAt": "2026-07-15T19:10:38.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "editor",
         "open-source",
@@ -12439,7 +12574,7 @@
       "titleEn": "Visual Studio Code 1.129 Release Notes",
       "lang": "en",
       "publishedAt": "2026-07-15T17:00:00.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "editor",
         "monthly-release",
@@ -16189,7 +16324,7 @@
       "titleEn": "Building Service Topology at Scale: Architecture, Challenges, and Lessons Learned",
       "lang": "en",
       "publishedAt": "2026-07-13T22:44:11.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "architecture",
         "engineering",
@@ -16716,6 +16851,8 @@
       "title": "Empowering India’s next generation of innovators with ATL Saathi",
       "titleJa": "ATL Saathiでインドの次世代イノベーターを支援",
       "titleEn": "Empowering India’s next generation of innovators with ATL Saathi",
+      "summaryJa": "GoogleとDeepMindはインドの学生向けAI学習プログラム「ATL Saathi」を通じ、Atal Tinkering Labsと連携して若い世代の技術革新力を育成する取り組みを発表した。",
+      "summaryEn": "Google and DeepMind announced ATL Saathi, a program partnering with India's Atal Tinkering Labs to bring AI-powered mentorship and resources to young student innovators across the country.",
       "lang": "en",
       "publishedAt": "2026-07-13T12:37:28.000Z",
       "collectedAt": "2026-07-26T22:46:08.870Z",
@@ -16730,7 +16867,7 @@
       "category": "gemini",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Google and AIM launched ATL Saathi, a Gemini-powered AI tool empowering Indian educators in robotics labs.",
       "image": {
         "src": "https://lh3.googleusercontent.com/0BYvIo8ObViyRtRGOYajXHdEGUFX6cKMTQ6lxys98kN0sB6H7rrTo1pdW8M4kCUGnBnidJWbIr6VvcxGKDEDD4YxOVqYRlyxj_a48uqNw_AytF7c-A=w528-h297-n-nu-rw-lo",
@@ -16802,6 +16939,8 @@
       "title": "Simulating everything, sort of: The promise and limits of world models",
       "titleJa": "「ワールドモデル」の可能性と限界：あらゆるものをシミュレートするAI",
       "titleEn": "Simulating everything, sort of: The promise and limits of world models",
+      "summaryJa": "AIのワールドモデルは現実世界を内部でシミュレートし、ロボットや自動運転に活用が期待されるが、精度や汎化性能にはまだ大きな限界がある。",
+      "summaryEn": "World models promise to simulate physical reality for AI agents, but current limitations in accuracy and generalization mean they remain far from a universal solution.",
       "lang": "en",
       "publishedAt": "2026-07-13T11:00:51.000Z",
       "collectedAt": "2026-07-14T04:39:34.428Z",
@@ -16816,7 +16955,7 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Experts explain how they work, what they can do, and what's still unsettled."
     },
     {
@@ -17478,7 +17617,7 @@
       "summaryEn": "Zed Editor published v1.11.3-pre, a pre-release build containing incremental fixes and improvements ahead of a stable release. It represents the project's ongoing cadence of iterative quality updates.",
       "lang": "en",
       "publishedAt": "2026-07-13T00:43:20.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "editor",
         "open-source",
@@ -17512,7 +17651,7 @@
       "summaryEn": "Zed Editor v1.10.3 has been released with bug fixes and stability improvements, representing a routine patch update for developers using the editor.",
       "lang": "en",
       "publishedAt": "2026-07-13T00:42:21.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "editor",
         "open-source",
@@ -20714,8 +20853,8 @@
       "contentSnippet": "3行まとめ Grok 4.5 は Grok 4 の改良版ではなく、SpaceX の計算資源と Cursor の訓練基盤・データ資産が合流した初のモデル CursorBench は、Cursor コードベースの過去スナップショットが訓練データに混入して有利になっていたこ..."
     },
     {
-      "id": "7bed20f42f96d7b0",
-      "source": "github-copilot",
+      "id": "569fc3e078bdf317",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/better-tools-made-copilot-code-review-worse-heres-how-we-actually-improved-it/",
       "title": "Better tools made Copilot code review worse. Here’s how we actually improved it.",
@@ -20723,7 +20862,7 @@
       "titleEn": "Better tools made Copilot code review worse. Here’s how we actually improved it.",
       "lang": "en",
       "publishedAt": "2026-07-10T15:57:47.000Z",
-      "collectedAt": "2026-07-27T01:30:53.139Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "ai-quality",
         "benchmark",
@@ -20736,8 +20875,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "How migrating Copilot code review to shared Unix-style code exploration tools reduced review cost by reshaping agent workflows around pull request evidence. The post Better tools made Copilot code review worse. Here’s how we actually improved it. appeared first on The GitHub Blog",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "How migrating Copilot code review to shared Unix-style code exploration tools reduced review cost by reshaping agent workflows around pull request evidence. The post Better tools made Copilot code review worse. Here’s how we actually improved it. appeared first on The GitHub Blog"
     },
     {
       "id": "60fd74dad92cbcc4",
@@ -21410,7 +21549,7 @@
       "summaryEn": "Zed Editor has published the v1.11.2-pre prerelease, delivering the latest bug fixes and incremental improvements for users tracking the bleeding-edge development channel.",
       "lang": "en",
       "publishedAt": "2026-07-10T09:36:08.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "editor",
         "pre-release",
@@ -24007,7 +24146,7 @@
       "summaryEn": "Anthropic announced an initiative to openly engage with difficult questions about AI safety and its own practices, aiming to foster transparency and build public trust through honest dialogue.",
       "lang": "en",
       "publishedAt": "2026-07-09T00:00:00.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "ai-safety",
         "anthropic",
@@ -24263,8 +24402,8 @@
       "contentSnippet": "GitHub Advanced Security enterprise customers can now publish internal security advisories. Innersource advisories work similarly to GitHub’s open source advisories, but their visibility is restricted to repositories owned by the… The post Innersource security advisories are gene"
     },
     {
-      "id": "d015d2e8e0f35f72",
-      "source": "github-copilot",
+      "id": "413130c4bc9704a2",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/automating-cross-repo-documentation-with-github-agentic-workflows/",
       "title": "Automating cross-repo documentation with GitHub Agentic Workflows",
@@ -24272,7 +24411,7 @@
       "titleEn": "Automating cross-repo documentation with GitHub Agentic Workflows",
       "lang": "en",
       "publishedAt": "2026-07-08T21:11:56.000Z",
-      "collectedAt": "2026-07-27T01:30:53.139Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "agent",
         "agentic-workflows",
@@ -24286,6 +24425,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Explore how the Aspire team turns merged product changes into SME-reviewed docs pull requests, closing the gap between release and documentation. The post Automating cross-repo documentation with GitHub Agentic Workflows appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/01/generic-mona-copilot-logo.png",
@@ -24294,8 +24434,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "e498a5108f393999",
@@ -24530,7 +24669,7 @@
       "summaryEn": "The July 2026 VS Code 1.128 monthly release brings editor usability improvements, enhanced GitHub Copilot integration, and new extension APIs, collectively refining the development experience for all users.",
       "lang": "en",
       "publishedAt": "2026-07-08T17:00:00.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "developer-tools",
         "editor",
@@ -24622,8 +24761,8 @@
       }
     },
     {
-      "id": "9abd388c3dbd0d69",
-      "source": "github-copilot",
+      "id": "76241322f07c86bf",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/how-github-copilot-enables-zero-dns-configuration-for-github-pages/",
       "title": "How GitHub Copilot enables zero DNS configuration for GitHub Pages",
@@ -24631,7 +24770,7 @@
       "titleEn": "How GitHub Copilot enables zero DNS configuration for GitHub Pages",
       "lang": "en",
       "publishedAt": "2026-07-08T16:00:00.000Z",
-      "collectedAt": "2026-07-27T01:30:53.139Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "automation",
         "copilot",
@@ -24644,8 +24783,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "Go from an empty repository to a live custom domain with HTTPS in about 14 minutes, without manually editing a single DNS record. The post How GitHub Copilot enables zero DNS configuration for GitHub Pages appeared first on The GitHub Blog .",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "Go from an empty repository to a live custom domain with HTTPS in about 14 minutes, without manually editing a single DNS record. The post How GitHub Copilot enables zero DNS configuration for GitHub Pages appeared first on The GitHub Blog ."
     },
     {
       "id": "29e7163d7a001a6e",
@@ -31522,7 +31661,7 @@
       "summaryEn": "Visual Studio Code 1.127 is the July 2026 monthly release, delivering editor enhancements, GitHub Copilot improvements, and updated extension APIs to boost developer productivity.",
       "lang": "en",
       "publishedAt": "2026-07-01T17:00:00.000Z",
-      "collectedAt": "2026-07-26T18:52:11.513Z",
+      "collectedAt": "2026-07-27T12:48:01.223Z",
       "tags": [
         "developer-tools",
         "editor",

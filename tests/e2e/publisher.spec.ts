@@ -3,6 +3,14 @@ import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { onRequestGet as localizeArticleMetadata } from "../../web/functions/e/[id].ts";
 import { onRequestGet as localizeHomeMetadata } from "../../web/functions/index.ts";
+import {
+  summaryForLang,
+  type SummaryDisplayEntry,
+} from "../../web/src/lib/summary-display.ts";
+import {
+  SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
+  boundedSocialDescription,
+} from "../../web/src/lib/bounded-description.ts";
 import { SITE_URL } from "../../web/src/lib/site.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
 import { canonicalSourceUrl } from "../../web/src/lib/source-meta.ts";
@@ -439,6 +447,69 @@ test.describe("Publisher generated artifact", () => {
     await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute(
       "content",
       /without a source image/,
+    );
+  });
+
+  test("renders bounded JA and EN article descriptions from the shared helper", async ({
+    page,
+  }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<
+        SummaryDisplayEntry & {
+          id: string;
+          archiveTier?: string;
+        }
+      >;
+    };
+    const fixture = index.entries.find((entry) => {
+      if (entry.archiveTier === "cold" || entry.archiveTier === "dropped") return false;
+      const summaryJa = summaryForLang(entry, "ja");
+      const summaryEn = summaryForLang(entry, "en");
+      return Boolean(
+        summaryJa
+        && summaryEn
+        && (
+          Array.from(summaryJa).length > SOCIAL_DESCRIPTION_CHARACTER_LIMIT
+          || Array.from(summaryEn).length > SOCIAL_DESCRIPTION_CHARACTER_LIMIT
+        ),
+      );
+    });
+    expect(fixture, "fixture includes a long addressable bilingual summary").toBeTruthy();
+
+    const expectedJa = boundedSocialDescription(summaryForLang(fixture!, "ja"), "ja");
+    const expectedEn = boundedSocialDescription(summaryForLang(fixture!, "en"), "en");
+    for (const expected of [expectedJa, expectedEn]) {
+      expect(Array.from(expected).length).toBeLessThanOrEqual(
+        SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
+      );
+    }
+
+    await page.goto(`/e/${fixture!.id}/`, { waitUntil: "domcontentloaded" });
+    const description = page.locator('meta[name="description"]');
+    await expect(description).toHaveAttribute("content", expectedJa);
+    await expect(description).toHaveAttribute("data-meta-content-ja", expectedJa);
+    await expect(description).toHaveAttribute("data-meta-content-en", expectedEn);
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
+      "content",
+      expectedJa,
+    );
+    await expect(page.locator('meta[name="twitter:description"]')).toHaveAttribute(
+      "content",
+      expectedJa,
+    );
+
+    await page.goto(`/e/${fixture!.id}/?lang=en`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      "content",
+      expectedEn,
+    );
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
+      "content",
+      expectedEn,
+    );
+    await expect(page.locator('meta[name="twitter:description"]')).toHaveAttribute(
+      "content",
+      expectedEn,
     );
   });
 

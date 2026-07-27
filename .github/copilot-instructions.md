@@ -2808,6 +2808,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: quote stateを追ってopening tag終端を探すbounded scannerへ置き換え、`>`を含むfixtureと生成済み全記事HTMLをactual route handlerへ通す回帰testを追加した。
 - **教訓**: HTML属性を含むtag全体を`[^>]*`の正規表現でparseしない。生成HTMLの限定変換でもquote-aware parser/scannerを使い、代表例だけでなく全生成corpusを通してfail-closed変換の到達性を確認する。
 
+### LL-425: bounded social descriptionは文字数sliceより完全文を優先する
+- **事象**: productionの英語social descriptionが160文字目で`This `まで露出し、直前に収まっていた完全文より読みにくい共有previewになった。
+- **根本原因**: metadata helperがUTF-16の`slice(0, 160)`を使い、文・単語・grapheme・HTML entityの境界を検証していなかった。
+- **対策**: Unicode code pointで160文字を測り、収まる最長の完全文を優先し、完全文が無い場合だけword/grapheme境界で省略記号を付ける共通helperと実production fixtureの回帰testを追加した。
+- **教訓**: bounded reader-facing copyは非空・最大長だけで合格にせず、sentence completenessとUnicode/serialization境界を実corpusで検証する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

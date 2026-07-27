@@ -1,4 +1,5 @@
 import { SITE_URL } from "./site.ts";
+import { boundedSocialDescription } from "./bounded-description.ts";
 
 export type MetadataLanguage = "ja" | "en";
 
@@ -177,7 +178,7 @@ export function localizedArticleMetadataDescription(input: {
   categoryLabel: string;
 }): string {
   const summary = input.summary.trim();
-  if (summary) return summary.slice(0, 160);
+  if (summary) return boundedSocialDescription(summary, input.lang);
   return input.lang === "ja"
     ? `${input.sourceLabel}が公開した${input.categoryLabel}の記事です。タイトル、公開日、カテゴリ、元記事へのリンクを確認できます。`
     : `An article from ${input.sourceLabel} in ${input.categoryLabel}. Review its title, publication date, category, and original-source link.`;

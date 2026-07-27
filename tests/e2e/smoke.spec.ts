@@ -7727,6 +7727,110 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
+  test("short tablet Search keeps its final result inside the viewport", async ({ page }) => {
+    const scenarios = [
+      { path: "/", width: 721, height: 600, breadcrumb: false },
+      { path: "/c/copilot/", width: 721, height: 667, breadcrumb: true },
+    ];
+
+    for (const scenario of scenarios) {
+      await page.setViewportSize({ width: scenario.width, height: scenario.height });
+      await page.goto(scenario.path);
+      await expect(page.locator(".crumb-bar")).toHaveCount(scenario.breadcrumb ? 1 : 0);
+      await expectPagefindReady(page);
+      await page.evaluate(() => {
+        const pagefind = (window as any).__pagefind;
+        pagefind.search = async () => ({
+          results: Array.from({ length: 10 }, (_, index) => {
+            const title = `Release result ${index + 1} with enough detail for a stable row height`;
+            return {
+              data: async () => ({
+                url: `/e/short-tablet-result-${index + 1}/`,
+                meta: {
+                  title,
+                  titleEn: title,
+                  summaryEn: `${title}. This deterministic summary keeps the result row measurable.`,
+                },
+                excerpt: `${title}. This deterministic excerpt keeps the result row measurable.`,
+                filters: {
+                  authority: ["official"],
+                  category: ["copilot"],
+                  importance: ["2"],
+                  source: ["github-copilot"],
+                },
+              }),
+            };
+          }),
+        });
+      });
+
+      await page.locator("header .menu-trigger").click();
+      await page.locator("#site-menu [data-search-trigger]").click();
+      const input = page.locator("#pagefind-search-input");
+      const close = page.getByRole("button", { name: "Close search" });
+      const panel = page.locator("#pagefind-results");
+      const hits = panel.locator(".search-hit");
+      await input.fill("release");
+      await expect(hits).toHaveCount(10);
+      await panel.evaluate((element) => {
+        element.scrollTop = element.scrollHeight;
+      });
+
+      const geometry = await page.evaluate(() => {
+        const panel = document.querySelector<HTMLElement>("#pagefind-results");
+        const hits = Array.from(document.querySelectorAll<HTMLElement>("#pagefind-results .search-hit"));
+        const input = document.querySelector<HTMLElement>("#pagefind-search-input");
+        const close = document.querySelector<HTMLElement>("[data-search-close]");
+        if (!panel || !input || !close || hits.length === 0) return null;
+        const rect = (element: Element) => {
+          const box = element.getBoundingClientRect();
+          return {
+            left: box.left,
+            top: box.top,
+            right: box.right,
+            bottom: box.bottom,
+            width: box.width,
+            height: box.height,
+          };
+        };
+        return {
+          panel: rect(panel),
+          last: rect(hits.at(-1)!),
+          input: rect(input),
+          close: rect(close),
+          scrollTop: panel.scrollTop,
+          maxScrollTop: panel.scrollHeight - panel.clientHeight,
+          horizontalOverflow: document.documentElement.scrollWidth - window.innerWidth,
+          focused: document.activeElement === input,
+        };
+      });
+      expect(geometry, `${scenario.path} short-tablet geometry`).not.toBeNull();
+      expect(geometry!.panel.bottom, `${scenario.path} panel keeps 12px viewport clearance`).toBeLessThanOrEqual(
+        scenario.height - 11,
+      );
+      expect(geometry!.last.bottom, `${scenario.path} final result is reachable after internal scroll`).toBeLessThanOrEqual(
+        geometry!.panel.bottom,
+      );
+      expect(geometry!.scrollTop, `${scenario.path} results use internal scrolling`).toBeGreaterThan(0);
+      expect(geometry!.scrollTop, `${scenario.path} results reach the internal scroll end`).toBeCloseTo(
+        geometry!.maxScrollTop,
+        0,
+      );
+      expect(geometry!.horizontalOverflow, `${scenario.path} does not create horizontal overflow`).toBe(0);
+      expect(geometry!.focused, `${scenario.path} keeps Search focus while results scroll`).toBe(true);
+      for (const [name, box] of [
+        ["Search input", geometry!.input],
+        ["Search close", geometry!.close],
+      ] as const) {
+        expect(box.width, `${scenario.path} ${name} keeps a 44px width`).toBeGreaterThanOrEqual(44);
+        expect(box.height, `${scenario.path} ${name} keeps a 44px height`).toBeGreaterThanOrEqual(44);
+      }
+      await close.click();
+      await expect(panel).toBeHidden();
+      await expect(page.locator("header .menu-trigger")).toBeFocused();
+    }
+  });
+
   test("closing search restores focus to the trigger that opened it", async ({ page }) => {
     await page.goto("/");
     const search = page.locator("header .search");

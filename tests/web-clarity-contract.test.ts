@@ -90,5 +90,8 @@ describe("web clarity contracts", () => {
     expect(portal).toContain('window.addEventListener("scroll", syncSearchOverlayPosition');
     expect(styles).toContain("top: var(--search-overlay-top, 89px);");
     expect(styles).toContain("top: var(--search-overlay-top, 77px);");
+    expect(styles).toContain(
+      "max-height: min(520px, calc(100dvh - var(--search-overlay-top, 89px) - 68px));",
+    );
   });
 });

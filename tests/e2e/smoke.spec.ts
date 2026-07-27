@@ -5949,6 +5949,7 @@ test.describe("TECH Dashboard smoke", () => {
       if (!dialog || !trigger || !tabbar || !placeholder) return null;
       const triggerRect = trigger.getBoundingClientRect();
       const placeholderRect = placeholder.getBoundingClientRect();
+      const dialogRect = dialog.getBoundingClientRect();
       const hit = document.elementFromPoint(
         triggerRect.left + triggerRect.width / 2,
         triggerRect.top + triggerRect.height / 2,
@@ -5965,7 +5966,7 @@ test.describe("TECH Dashboard smoke", () => {
           hit === trigger || hit?.closest("button.mobile-menu-trigger") === trigger,
         toggleWidth: triggerRect.width,
         toggleHeight: triggerRect.height,
-        sheetBottom: dialog.getBoundingClientRect().bottom,
+        sheetBottom: dialogRect.bottom,
         tabbarTop: tabbar.getBoundingClientRect().top,
         noHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth,
       };
@@ -5981,13 +5982,30 @@ test.describe("TECH Dashboard smoke", () => {
     expect(openMobileMenuMetrics!.noHorizontalOverflow).toBe(true);
     for (let index = 0; index < 8; index += 1) {
       await page.keyboard.press("Tab");
+      const focusEvidence = await page.evaluate(() => {
+        const dialog = document.querySelector<HTMLDialogElement>("#site-menu");
+        const active = document.activeElement as HTMLElement | null;
+        if (!dialog || !active) return null;
+        const dialogRect = dialog.getBoundingClientRect();
+        const activeRect = active.getBoundingClientRect();
+        return {
+          insideDialog: dialog.contains(active),
+          portalledToggle: active.matches(".mobile-menu-trigger.is-dialog-toggle"),
+          activeTop: activeRect.top,
+          activeBottom: activeRect.bottom,
+          dialogTop: dialogRect.top,
+          dialogBottom: dialogRect.bottom,
+        };
+      });
+      expect(focusEvidence, `mobile Tab step ${index + 1} has a focused control`).not.toBeNull();
       expect(
-        await page.evaluate(() => {
-          const dialog = document.querySelector("#site-menu");
-          return Boolean(dialog?.contains(document.activeElement));
-        }),
+        focusEvidence!.insideDialog,
         `mobile modal menu keeps focus on Tab step ${index + 1}`,
       ).toBe(true);
+      if (!focusEvidence!.portalledToggle) {
+        expect(focusEvidence!.activeTop).toBeGreaterThanOrEqual(focusEvidence!.dialogTop - 0.5);
+        expect(focusEvidence!.activeBottom).toBeLessThanOrEqual(focusEvidence!.dialogBottom + 0.5);
+      }
     }
     await mobileMenuToggle.click();
     await expect(menu).toBeHidden();
@@ -6049,6 +6067,221 @@ test.describe("TECH Dashboard smoke", () => {
     expect(mobileLayering.searchZ, "mobile search stays above the header layer").toBeGreaterThan(mobileLayering.headerZ);
   });
 
+  test("modal menu locks background scrolling and restores every dismiss path", async ({ page }) => {
+    const menu = page.locator("#site-menu");
+    const captureDocumentState = () =>
+      page.evaluate(() => {
+        const content = document.querySelector<HTMLElement>("#content-start");
+        const header = document.querySelector<HTMLElement>("header .header-inner");
+        const contentRect = content?.getBoundingClientRect();
+        const headerRect = header?.getBoundingClientRect();
+        return {
+          scrollX: window.scrollX,
+          scrollY: window.scrollY,
+          bodyTop: document.body.getBoundingClientRect().top,
+          contentTop: contentRect?.top ?? null,
+          headerLeft: headerRect?.left ?? null,
+          headerWidth: headerRect?.width ?? null,
+          htmlStyle: document.documentElement.getAttribute("style") ?? "",
+          bodyStyle: document.body.getAttribute("style") ?? "",
+          htmlClass: document.documentElement.className,
+          bodyClass: document.body.className,
+          htmlInert: document.documentElement.hasAttribute("inert"),
+          bodyInert: document.body.hasAttribute("inert"),
+          htmlOverflow: getComputedStyle(document.documentElement).overflow,
+          bodyOverflow: getComputedStyle(document.body).overflow,
+          bodyPosition: getComputedStyle(document.body).position,
+          horizontalOverflow: document.documentElement.scrollWidth > window.innerWidth,
+        };
+      });
+    const settleLayout = () =>
+      page.evaluate(() =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        )
+      );
+    const setScrollPosition = async () => {
+      await page.evaluate(() => window.scrollTo(0, 1200));
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(900);
+    };
+    const expectBackgroundLocked = async (
+      before: Awaited<ReturnType<typeof captureDocumentState>>,
+    ) => {
+      const locked = await captureDocumentState();
+      expect(locked.scrollY, "fixed-body lock keeps the root scroll offset at zero").toBe(0);
+      expect(locked.bodyPosition).toBe("fixed");
+      expect(locked.htmlOverflow).toBe("hidden");
+      expect(locked.bodyOverflow).toBe("hidden");
+      expect(Math.abs(locked.bodyTop - before.bodyTop), "body visual position remains stable").toBeLessThanOrEqual(0.5);
+      expect(Math.abs((locked.contentTop ?? 0) - (before.contentTop ?? 0)), "content does not move behind the dialog").toBeLessThanOrEqual(0.5);
+      expect(Math.abs((locked.headerLeft ?? 0) - (before.headerLeft ?? 0)), "scrollbar compensation does not shift the header").toBeLessThanOrEqual(0.5);
+      expect(Math.abs((locked.headerWidth ?? 0) - (before.headerWidth ?? 0)), "scrollbar compensation keeps the header width stable").toBeLessThanOrEqual(0.5);
+      expect(locked.horizontalOverflow).toBe(false);
+    };
+    const expectDocumentRestored = async (
+      before: Awaited<ReturnType<typeof captureDocumentState>>,
+    ) => {
+      await expect(menu).toBeHidden();
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(before.scrollY);
+      const restored = await captureDocumentState();
+      expect(restored.scrollX).toBe(before.scrollX);
+      expect(restored.scrollY).toBe(before.scrollY);
+      expect(restored.htmlStyle).toBe(before.htmlStyle);
+      expect(restored.bodyStyle).toBe(before.bodyStyle);
+      expect(restored.htmlClass).toBe(before.htmlClass);
+      expect(restored.bodyClass).toBe(before.bodyClass);
+      expect(restored.htmlInert).toBe(before.htmlInert);
+      expect(restored.bodyInert).toBe(before.bodyInert);
+      expect(restored.horizontalOverflow).toBe(false);
+    };
+
+    for (const viewport of [
+      {
+        name: "mobile",
+        width: 390,
+        height: 844,
+        trigger: ".mobile-tabbar button[data-menu-trigger]",
+        close: "button.mobile-menu-trigger[data-menu-trigger]",
+      },
+      {
+        name: "desktop",
+        width: 1440,
+        height: 900,
+        trigger: "header .menu-trigger",
+        close: "#site-menu [data-menu-close]",
+      },
+    ] as const) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto("/");
+      await setScrollPosition();
+      const before = await captureDocumentState();
+      await page.locator(viewport.trigger).click();
+      await expect(menu).toBeVisible();
+      await settleLayout();
+      await expectBackgroundLocked(before);
+
+      await page.mouse.move(4, Math.round(viewport.height / 2));
+      await page.mouse.wheel(0, 500);
+      await expectBackgroundLocked(before);
+
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send("Emulation.setTouchEmulationEnabled", {
+        enabled: true,
+        maxTouchPoints: 1,
+      });
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchStart",
+        touchPoints: [{ x: 4, y: Math.round(viewport.height * 0.75) }],
+      });
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x: 4, y: Math.round(viewport.height * 0.35) }],
+      });
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchEnd",
+        touchPoints: [],
+      });
+      await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: false });
+      await expectBackgroundLocked(before);
+
+      await menu.locator("a").first().focus();
+      await page.keyboard.press("PageDown");
+      await expectBackgroundLocked(before);
+      await page.keyboard.press("Space");
+      await expectBackgroundLocked(before);
+
+      await page.evaluate(() => window.scrollBy(0, 500));
+      await expectBackgroundLocked(before);
+
+      await page.locator(viewport.close).click();
+      await expectDocumentRestored(before);
+      await expect(page.locator(viewport.trigger)).toBeFocused();
+
+      await setScrollPosition();
+      const beforeEscape = await captureDocumentState();
+      await page.locator(viewport.trigger).click();
+      await page.keyboard.press("Escape");
+      await expectDocumentRestored(beforeEscape);
+      await expect(page.locator(viewport.trigger)).toBeFocused();
+
+      await setScrollPosition();
+      const beforeBackdrop = await captureDocumentState();
+      await page.locator(viewport.trigger).click();
+      await page.mouse.click(4, 4);
+      await expectDocumentRestored(beforeBackdrop);
+      await expect(page.locator(viewport.trigger)).toBeFocused();
+
+      await setScrollPosition();
+      const beforeSearch = await captureDocumentState();
+      await page.locator(viewport.trigger).click();
+      await menu.getByRole("button", { name: /Search/ }).click();
+      await expectDocumentRestored(beforeSearch);
+      await expect(page.locator("#pagefind-search-input")).toBeFocused();
+      await page.locator("#pagefind-search-input").press("Escape");
+
+      await setScrollPosition();
+      const beforeNavigation = await captureDocumentState();
+      await page.locator(viewport.trigger).click();
+      await page.evaluate(() => {
+        document.querySelector<HTMLAnchorElement>('#site-menu a[href="/archive"]')
+          ?.addEventListener("click", (event) => event.preventDefault(), { once: true });
+      });
+      await menu.getByRole("link", { name: /Archive/ }).click();
+      await expectDocumentRestored(beforeNavigation);
+    }
+  });
+
+  test("mobile modal menu scrolls internally without moving the document", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 480 });
+    await page.goto("/");
+    await page.evaluate(() => window.scrollTo(0, 900));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(600);
+    const before = await page.evaluate(() => ({
+      scrollY: window.scrollY,
+      contentTop: document.querySelector("#content-start")?.getBoundingClientRect().top ?? null,
+    }));
+
+    const trigger = page.locator(".mobile-tabbar button[data-menu-trigger]");
+    await trigger.click();
+    const menu = page.locator("#site-menu");
+    const list = menu.locator(".site-menu-list");
+    await expect(menu).toBeVisible();
+    const initialList = await list.evaluate((element) => ({
+      scrollTop: element.scrollTop,
+      clientHeight: element.clientHeight,
+      scrollHeight: element.scrollHeight,
+      overflowY: getComputedStyle(element).overflowY,
+      overscrollBehavior: getComputedStyle(element).overscrollBehavior,
+    }));
+    expect(initialList.scrollHeight).toBeGreaterThan(initialList.clientHeight);
+    expect(initialList.overflowY).toBe("auto");
+    expect(initialList.overscrollBehavior).toBe("contain");
+
+    const listBox = await list.boundingBox();
+    expect(listBox).not.toBeNull();
+    await page.mouse.move(
+      listBox!.x + listBox!.width / 2,
+      listBox!.y + listBox!.height / 2,
+    );
+    await page.mouse.wheel(0, 300);
+    await expect.poll(() => list.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+
+    const whileOpen = await page.evaluate(() => ({
+      scrollY: window.scrollY,
+      contentTop: document.querySelector("#content-start")?.getBoundingClientRect().top ?? null,
+    }));
+    expect(whileOpen.scrollY).toBe(0);
+    expect(Math.abs((whileOpen.contentTop ?? 0) - (before.contentTop ?? 0))).toBeLessThanOrEqual(0.5);
+
+    await page.locator("button.mobile-menu-trigger[data-menu-trigger]").click();
+    await expect(menu).toBeHidden();
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(before.scrollY);
+    await expect(trigger).toBeFocused();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+  });
+
   test("menu breakpoint changes close the dialog and focus the visible trigger", async ({ page }) => {
     const menu = page.locator("#site-menu");
     const desktopMenuTrigger = page.locator("header .menu-trigger");
@@ -6086,6 +6319,9 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/");
+    await page.evaluate(() => window.scrollTo(0, 900));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(500);
+    const desktopScrollY = await page.evaluate(() => window.scrollY);
     await expect(desktopMenuTrigger).toBeVisible();
     await desktopMenuTrigger.click();
     await expect(menu).toBeVisible();
@@ -6095,8 +6331,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(tabbar).toBeVisible();
     await expect(tabbar.locator("a, button")).toHaveCount(5);
     await assertFocusedHitTestableTrigger(".mobile-tabbar button.mobile-menu-trigger");
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(desktopScrollY);
     await expectNoHorizontalOverflow();
 
+    const mobileScrollY = await page.evaluate(() => window.scrollY);
     await mobileMenuTrigger.click();
     await expect(menu).toBeVisible();
     await page.setViewportSize({ width: 844, height: 390 });
@@ -6108,6 +6346,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("header .nav-shortcut", { hasText: "arXiv" })).toBeVisible();
     await expect(page.locator("header .nav-shortcut", { hasText: "Knowledge" })).toBeVisible();
     await assertFocusedHitTestableTrigger("header .menu-trigger");
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(mobileScrollY);
     await expectNoHorizontalOverflow();
   });
 

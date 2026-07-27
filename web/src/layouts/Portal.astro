@@ -497,6 +497,7 @@ const footerLastRunRelative = footerLastRunAt
       import { SOURCE_META, sourceLabel } from "../lib/source-meta.ts";
       import { deriveQueueDisplay, summaryQueueCardCopy } from "../lib/queue-health.ts";
       import { initializeRelativeTimes } from "../lib/relative-time.ts";
+      import { createDocumentScrollLock } from "../lib/document-scroll-lock.ts";
       import {
         deriveWorkerRunStatus,
         runCadenceLead,
@@ -698,6 +699,7 @@ const footerLastRunRelative = footerLastRunAt
         const closeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-menu-close]"));
         if (!menu || triggers.length === 0) return;
 
+        const menuScrollLock = createDocumentScrollLock();
         let lastTrigger: HTMLButtonElement | null = null;
         let restoreFocusOnClose = false;
         let portalledMobileTrigger: HTMLButtonElement | null = null;
@@ -755,6 +757,7 @@ const footerLastRunRelative = footerLastRunAt
           syncMenuTriggers(false);
           const focusTarget = isVisible(lastTrigger) ? lastTrigger : visibleMenuTrigger();
           if (restoreFocusOnClose && focusTarget) focusTarget.focus();
+          menuScrollLock.unlock();
           restoreFocusOnClose = false;
         };
         const openMenu = (trigger: HTMLButtonElement) => {
@@ -763,7 +766,15 @@ const footerLastRunRelative = footerLastRunAt
           (window as any).__tdCloseSearch?.();
           menu.hidden = false;
           syncMenuTriggers(true);
-          if (!menu.open) menu.showModal();
+          if (!menu.open) {
+            menuScrollLock.lock();
+            try {
+              menu.showModal();
+            } catch (error) {
+              menuScrollLock.unlock();
+              throw error;
+            }
+          }
           portalMobileTrigger(trigger);
           const active = menu.querySelector<HTMLElement>("a.active");
           window.requestAnimationFrame(() => (active ?? menu.querySelector<HTMLElement>("a, button"))?.focus());

@@ -228,6 +228,12 @@ Pages プロジェクトは Cloudflare dashboard で **Create application** → 
 
 custom domain `techdb.studio344.net` は新プロジェクトに移行済みです。再構築が必要な場合のみ、API token (`Pages Write`) で同じ設定を再現できます。
 
+#### 共有・discovery metadata
+
+Home と記事詳細は、queryを含まないcanonical URLを維持しながら、日本語・英語それぞれのtitle、description、Open Graph、Twitter Card metadataを1組だけ出力します。`?lang=en`のHome・記事詳細requestは、Pages Functionが静的HTML本文を変更せずheadのlocalization markerだけを英語値へ置換するため、JavaScriptを実行しないsocial crawlerにも英語metadataが届きます。既定の日本語requestは生成済みstatic responseをそのまま返します。
+
+元記事画像が無い記事とHomeは、repository内で決定論的に生成する`/social/tech-dashboard-v1.png`を使用します。画像は1200x630のPNGで、absolute custom-domain URL、content type、寸法、JA/EN alt metadataをOpen GraphとTwitter Cardへ出力します。元記事画像がある場合はそのabsolute URLを維持し、未確認のtypeや寸法を推測しません。SVG/AVIFなどsocial cardで扱えないことが分かっている形式は同じbrand PNGへfallbackします。
+
 #### Privacy と任意広告
 
 `/privacy/` は、運営主体、連絡先、日本での運営、localStorage、検索URL、外部media、Cloudflare、匿名いいね、Google AdSense、保持期間、利用者controlを日本語・英語で公開する正本です。記事閲覧、検索、Archive、RSS、JSON Feed は広告同意なしで利用できます。
@@ -499,7 +505,7 @@ tech-dashboard/
 │     ├─ stats-builder.ts    # data/stats.json
 │     └─ stats-core.ts       # Worker / Node 共有の stats 純粋ロジック
 ├─ web/                      # Astro 静的サイト
-│  ├─ functions/             # Pages Functions (匿名公開いいね API)
+│  ├─ functions/             # Pages Functions (localized metadata / 匿名公開いいね API)
 │  ├─ migrations/            # Pages D1 schema + active identity / voter index migration
 │  ├─ src/
 │  │  ├─ layouts/Portal.astro

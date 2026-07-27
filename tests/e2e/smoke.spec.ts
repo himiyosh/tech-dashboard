@@ -4438,7 +4438,13 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".category-card")).toHaveCount(14);
     await expect(page.locator(".category-card").first()).toContainText("live");
     await expect(page.locator(".category-card").first()).not.toContainText("all time");
-    await expect(page.locator('.cat-types[data-type-scope="category-live-entries"]')).toHaveCount(14);
+    const standardCategoryCards = page.locator(".category-card:not([data-research-overview])");
+    await expect(page.locator('.cat-types[data-type-scope="category-live-entries"]')).toHaveCount(
+      await standardCategoryCards.count(),
+    );
+    await expect(
+      page.locator('[data-research-overview] [data-lane-scope="curated-research"]'),
+    ).toHaveCount(1);
     await expect(page.locator(".cat-types-scope .i18n-ja").first()).toHaveText("Live内訳");
 
     const desktopBox = await directory.boundingBox();
@@ -4488,6 +4494,122 @@ test.describe("TECH Dashboard smoke", () => {
 
     await directory.getByRole("link", { name: /Copilot/ }).click();
     await expect(page).toHaveURL(/\/c\/copilot\/?$/);
+  });
+
+  test("Research overview exposes distinct curated and arXiv destinations", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/categories/");
+
+    const overview = page.locator('[data-research-overview][data-category="research"]');
+    const curated = overview.locator('[data-research-lane="curated"]');
+    const arxiv = overview.locator('[data-research-lane="arxiv"]');
+
+    await expect(overview).toHaveCount(1);
+    await expect(overview).toHaveJSProperty("tagName", "ARTICLE");
+    await expect(overview.locator("a")).toHaveCount(2);
+    await expect(overview.locator("a a")).toHaveCount(0);
+    await expect(page.locator('a[href="/arxiv/"]')).toHaveCount(1);
+    await expect(page.locator('#category-directory a[href="/arxiv/"]')).toHaveCount(0);
+    await expect(curated).toHaveAttribute("href", "/c/research/");
+    await expect(arxiv).toHaveAttribute("href", "/arxiv/");
+    const curatedCount = await curated.getAttribute("data-entry-count");
+    const arxivCount = await arxiv.getAttribute("data-entry-count");
+    expect(curatedCount).toMatch(/^\d+$/);
+    expect(arxivCount).toMatch(/^\d+$/);
+    await expect(curated).toHaveAccessibleName(
+      `Research arXivを除く選定記事 ${curatedCount} 記事`,
+    );
+    await expect(arxiv).toHaveAccessibleName(
+      `arXiv 論文 専用レーン ${arxivCount} 件`,
+    );
+
+    await curated.focus();
+    await expect(curated).toBeFocused();
+    const curatedFocus = await curated.evaluate((node) => {
+      const style = getComputedStyle(node);
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineWidth: Number.parseFloat(style.outlineWidth),
+      };
+    });
+    expect(curatedFocus.outlineStyle).not.toBe("none");
+    expect(curatedFocus.outlineWidth).toBeGreaterThanOrEqual(2);
+    await page.keyboard.press("Tab");
+    await expect(arxiv).toBeFocused();
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(curated).toHaveAccessibleName(
+      `Curated Research Selected entries, excluding arXiv ${curatedCount} entries`,
+    );
+    await expect(arxiv).toHaveAccessibleName(
+      `arXiv papers Dedicated paper lane ${arxivCount} papers`,
+    );
+
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 768, height: 900 },
+      { width: 1000, height: 900 },
+      { width: 1280, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        );
+      });
+
+      const geometry = await overview.evaluate((card) => {
+        const cardRect = card.getBoundingClientRect();
+        const actions = [...card.querySelectorAll<HTMLElement>(".research-lane-link")];
+        const rects = actions.map((action) => {
+          const rect = action.getBoundingClientRect();
+          return {
+            left: rect.left,
+            right: rect.right,
+            top: rect.top,
+            bottom: rect.bottom,
+            width: rect.width,
+            height: rect.height,
+            clipped:
+              action.scrollWidth > action.clientWidth + 1 ||
+              action.scrollHeight > action.clientHeight + 1,
+          };
+        });
+        return {
+          card: {
+            left: cardRect.left,
+            right: cardRect.right,
+            top: cardRect.top,
+            bottom: cardRect.bottom,
+            height: cardRect.height,
+          },
+          actions: rects,
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      });
+
+      expect(geometry.overflow, `${viewport.width}px page overflow`).toBeLessThanOrEqual(0);
+      expect(geometry.actions).toHaveLength(2);
+      for (const action of geometry.actions) {
+        expect(action.width, `${viewport.width}px link width`).toBeGreaterThanOrEqual(44);
+        expect(action.height, `${viewport.width}px link height`).toBeGreaterThanOrEqual(44);
+        expect(action.left).toBeGreaterThanOrEqual(geometry.card.left - 1);
+        expect(action.right).toBeLessThanOrEqual(geometry.card.right + 1);
+        expect(action.top).toBeGreaterThanOrEqual(geometry.card.top - 1);
+        expect(action.bottom).toBeLessThanOrEqual(geometry.card.bottom + 1);
+        expect(action.clipped, `${viewport.width}px link content should fit`).toBe(false);
+      }
+      expect(geometry.actions[0]!.right).toBeLessThanOrEqual(geometry.actions[1]!.left);
+      expect(
+        geometry.card.height,
+        `${viewport.width}px Research card stays compact`,
+      ).toBeLessThan(viewport.width <= 640 ? 230 : 220);
+    }
+
+    const copilotCard = page.locator('.category-card[data-category="copilot"]');
+    await expect(copilotCard).toHaveJSProperty("tagName", "A");
+    await expect(copilotCard).toHaveAttribute("href", "/c/copilot");
   });
 
   test("category-owned panels scroll normally while primary sidebar stays sticky", async ({ page }) => {

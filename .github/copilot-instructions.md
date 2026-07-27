@@ -2814,6 +2814,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: Unicode code pointで160文字を測り、収まる最長の完全文を優先し、完全文が無い場合だけword/grapheme境界で省略記号を付ける共通helperと実production fixtureの回帰testを追加した。
 - **教訓**: bounded reader-facing copyは非空・最大長だけで合格にせず、sentence completenessとUnicode/serialization境界を実corpusで検証する。
 - **follow-up**: `Intl.Segmenter`も`.NET`の先頭period、`U.S.`のdotted initialism、`Dr.`の略語後を文境界として返すため、segment候補をそのまま完全文とみなさず前後tokenで再検証する。decimalと通常の文末を同時にfixture化し、false boundaryの拒否が正しい文境界を消さないことも固定する。
+- **follow-up 2**: `U.S.`直前の`the/a/an`や直後のall-capsを一般化した継続判定は、`The company operates in the U.S. Microsoft announced ...`のような正しい文末まで消す。曖昧な固有名詞を構文推測で結合せず、実corpusで確認した`SEC`と`Department`などの高信頼継続語だけを明示し、任意のproper nounが始まる次文をnegative fixtureで保持する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

@@ -20,6 +20,10 @@ const NON_TERMINAL_ABBREVIATIONS = new Set([
   "st",
   "vs",
 ]);
+const INITIALISM_CONTINUATION_WORDS = new Set([
+  "department",
+  "sec",
+]);
 const CLEAR_SENTENCE_STARTERS = new Set([
   "a",
   "an",
@@ -97,11 +101,7 @@ function isFalsePeriodBoundary(value: string, end: number, segmentText: string):
   const initialismMatch = terminalCore.match(/(?:\p{L}\.){2,}$/u);
   if (!initialismMatch) return false;
   if (/\p{Ll}/u.test(initialismMatch[0])) return true;
-  if (followsClearSentenceStarter) return false;
-  if (/^\p{Ll}/u.test(followingWord) || /^\p{Lu}{2,}$/u.test(followingWord)) return true;
-
-  const prefix = terminalCore.slice(0, initialismMatch.index).trim();
-  return !prefix || /(?:^|\s)(?:the|an?)$/iu.test(prefix);
+  return /^\p{Ll}/u.test(followingWord) || INITIALISM_CONTINUATION_WORDS.has(followingLower);
 }
 
 function longestCompleteSentencePrefix(

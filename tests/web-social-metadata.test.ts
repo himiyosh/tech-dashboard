@@ -76,6 +76,8 @@ describe("localized social metadata", () => {
     const decimalSentence = "Version 2.42 improves inference throughput.";
     const genuineSentence = "The API is stable.";
     const initialismEnding = "The company operates in the U.S.";
+    const properNounTail =
+      ` Microsoft announced ${"additional product context ".repeat(8)}.`;
     expect(boundedSocialDescription(`${decimalSentence}${longTail}`, "en")).toBe(
       decimalSentence,
     );
@@ -83,6 +85,9 @@ describe("localized social metadata", () => {
       genuineSentence,
     );
     expect(boundedSocialDescription(`${initialismEnding}${longTail}`, "en")).toBe(
+      initialismEnding,
+    );
+    expect(boundedSocialDescription(`${initialismEnding}${properNounTail}`, "en")).toBe(
       initialismEnding,
     );
   });

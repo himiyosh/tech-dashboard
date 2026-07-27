@@ -299,7 +299,7 @@ npx --yes wrangler@4.85.0 pages dev dist \
 API contract:
 
 - `GET /api/reactions?ids=<comma-separated ids>` は最大 50 記事の count と current browser の状態を返す。
-- `POST /api/reactions/identity` は匿名 cookie とactive identity rowだけを確立する。票、count、rate-limit state は変更しない。cookieのhashにactive rowがなければ、新しいUUIDを発行して削除済みidentityを再利用しない。
+- `POST /api/reactions/identity` は匿名 cookie とactive identity rowだけを確立する。票、count、rate-limit state は変更しない。既存cookieのhashにactive rowがなければ`409 identity_required`とcookie失効を返し、同じrequestではidentityを再生成しない。cookie失効後の別requestだけが新しいUUIDを発行できる。
 - `DELETE /api/reactions/identity` はsame-origin requestだけを受け付け、現在のbrowser識別子に紐づくactive identity、全票、rate-limit行を1つのD1 transactionで削除してHttpOnly cookieを失効させる。削除にはD1とHMAC secretだけを使い、Turnstile設定には依存しない。cookieが無い場合も冪等に成功する。
 - `PUT /api/reactions/:id` は確立済み cookie と `{ liked, turnstileToken }` の desired state を受け取る。cookie が無い場合は `409 identity_required` を返し、toggle command ではないため再送しても冪等。
 - reaction mutationはactive identity確認、rate-limit更新、票変更、count読込を同一D1 transactionへまとめる。DELETEが先に完了したidentityは票やrate-limit行を再生成できない。

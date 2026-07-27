@@ -380,7 +380,7 @@ describe("anonymous public reactions API", () => {
     expect(response.headers.get("Set-Cookie")).toContain("Max-Age=0");
   });
 
-  it("issues a fresh identity when a deleted cookie is presented again", async () => {
+  it("expires a deleted cookie and creates a fresh identity only on a later cookie-less request", async () => {
     const store = new MemoryReactionStore();
     const firstId = "22222222-2222-4222-8222-222222222222";
     const secondId = "33333333-3333-4333-8333-333333333333";
@@ -404,7 +404,7 @@ describe("anonymous public reactions API", () => {
     expect(deletion.status).toBe(200);
     expect(store.identities.size).toBe(0);
 
-    const replacement = await handleEnsureReactionIdentity(
+    const staleBootstrap = await handleEnsureReactionIdentity(
       identityRequest(staleCookie),
       { REACTION_HMAC_SECRET: hmacSecret },
       {
@@ -413,9 +413,24 @@ describe("anonymous public reactions API", () => {
         randomUUID: () => secondId,
       },
     );
+    expect(staleBootstrap.status).toBe(409);
+    await expect(staleBootstrap.json()).resolves.toMatchObject({
+      error: { code: "identity_required" },
+    });
+    expect(staleBootstrap.headers.get("Set-Cookie")).toContain("Max-Age=0");
+    expect(store.identities.size).toBe(0);
+
+    const replacement = await handleEnsureReactionIdentity(
+      identityRequest(),
+      { REACTION_HMAC_SECRET: hmacSecret },
+      {
+        store,
+        now: () => Date.parse("2026-07-13T12:02:00.000Z"),
+        randomUUID: () => secondId,
+      },
+    );
     expect(replacement.status).toBe(200);
     expect(cookieFrom(replacement)).toContain(secondId);
-    expect(cookieFrom(replacement)).not.toContain(firstId);
     expect(store.identities.size).toBe(1);
   });
 
@@ -449,16 +464,30 @@ describe("anonymous public reactions API", () => {
     expect(store.rateLimits.size).toBe(0);
   });
 
-  it("does not recreate votes when deletion wins a concurrent mutation race", async () => {
-    class PausedMutationStore extends MemoryReactionStore {
+  it("does not recreate identity or votes when deletion wins concurrent POST and PUT races", async () => {
+    class PausedIdentityAndMutationStore extends MemoryReactionStore {
+      identityLookupStartedResolve!: () => void;
+      continueIdentityLookupResolve!: () => void;
       mutationStartedResolve!: () => void;
       continueMutationResolve!: () => void;
+      readonly identityLookupStarted = new Promise<void>((resolve) => {
+        this.identityLookupStartedResolve = resolve;
+      });
+      readonly continueIdentityLookup = new Promise<void>((resolve) => {
+        this.continueIdentityLookupResolve = resolve;
+      });
       readonly mutationStarted = new Promise<void>((resolve) => {
         this.mutationStartedResolve = resolve;
       });
       readonly continueMutation = new Promise<void>((resolve) => {
         this.continueMutationResolve = resolve;
       });
+
+      override async hasIdentity(voterHash: string): Promise<boolean> {
+        this.identityLookupStartedResolve();
+        await this.continueIdentityLookup;
+        return super.hasIdentity(voterHash);
+      }
 
       override async mutateReaction(
         id: string,
@@ -481,16 +510,21 @@ describe("anonymous public reactions API", () => {
       }
     }
 
-    const store = new PausedMutationStore();
+    const store = new PausedIdentityAndMutationStore();
     const deps = dependencies(store);
     const cookie = await establishIdentity(store, deps);
+    const pendingBootstrap = handleEnsureReactionIdentity(
+      identityRequest(cookie),
+      env,
+      deps,
+    );
     const pendingMutation = handlePutReaction(
       mutationRequest(articleId, true, cookie),
       env,
       articleId,
       deps,
     );
-    await store.mutationStarted;
+    await Promise.all([store.identityLookupStarted, store.mutationStarted]);
 
     const deletion = await handleDeleteReactionIdentity(
       identityRequest(cookie, "DELETE"),
@@ -498,9 +532,16 @@ describe("anonymous public reactions API", () => {
       deps,
     );
     expect(deletion.status).toBe(200);
+    store.continueIdentityLookupResolve();
     store.continueMutationResolve();
 
+    const bootstrap = await pendingBootstrap;
     const mutation = await pendingMutation;
+    expect(bootstrap.status).toBe(409);
+    await expect(bootstrap.json()).resolves.toMatchObject({
+      error: { code: "identity_required" },
+    });
+    expect(bootstrap.headers.get("Set-Cookie")).toContain("Max-Age=0");
     expect(mutation.status).toBe(409);
     await expect(mutation.json()).resolves.toMatchObject({
       error: { code: "identity_required" },
@@ -508,6 +549,17 @@ describe("anonymous public reactions API", () => {
     expect(store.identities.size).toBe(0);
     expect(store.votes.get(articleId)?.size ?? 0).toBe(0);
     expect(store.rateLimits.size).toBe(0);
+
+    const replacement = await handleEnsureReactionIdentity(
+      identityRequest(),
+      env,
+      {
+        ...deps,
+        randomUUID: () => "44444444-4444-4444-8444-444444444444",
+      },
+    );
+    expect(replacement.status).toBe(200);
+    expect(store.identities.size).toBe(1);
   });
 
   it("rejects mutations before identity establishment without changing state", async () => {

@@ -307,24 +307,6 @@ async function resolveVoter(
   return { hash: await hmacHex(signingMaterial, voterId), newCookie };
 }
 
-async function createVoter(
-  signingMaterial: string,
-  randomUUID: () => string,
-): Promise<{ hash: string; newCookie: string }> {
-  const voterId = randomUUID();
-  if (!VOTER_ID_RE.test(voterId)) {
-    throw new ReactionApiError(
-      503,
-      "identity_unavailable",
-      "An anonymous voter identity could not be created.",
-    );
-  }
-  return {
-    hash: await hmacHex(signingMaterial, voterId),
-    newCookie: serializeVoterCookie(voterId),
-  };
-}
-
 function parseBatchIds(request: Request): string[] {
   const raw = new URL(request.url).searchParams.get("ids") ?? "";
   const ids = [...new Set(raw.split(",").map((id) => id.trim()).filter(Boolean))];
@@ -700,7 +682,20 @@ export async function handleEnsureReactionIdentity(
     const { hmacCredential, store } = requireReactionIdentityStore(env, dependencies);
     const randomUUID = dependencies.randomUUID ?? crypto.randomUUID.bind(crypto);
     const nowMs = (dependencies.now ?? Date.now)();
-    let voter = await resolveVoter(
+    const presentedVoterId = parseCookie(request, VOTER_COOKIE);
+    if (presentedVoterId !== null && !VOTER_ID_RE.test(presentedVoterId)) {
+      return jsonResponse(
+        {
+          error: {
+            code: "identity_required",
+            message: "Establish a new anonymous reaction identity before continuing.",
+          },
+        },
+        409,
+        { "Set-Cookie": serializeExpiredVoterCookie() },
+      );
+    }
+    const voter = await resolveVoter(
       request,
       hmacCredential,
       true,
@@ -709,8 +704,16 @@ export async function handleEnsureReactionIdentity(
     if (voter.newCookie) {
       await store.createIdentity(voter.hash, nowMs);
     } else if (!(await store.hasIdentity(voter.hash))) {
-      voter = await createVoter(hmacCredential, randomUUID);
-      await store.createIdentity(voter.hash, nowMs);
+      return jsonResponse(
+        {
+          error: {
+            code: "identity_required",
+            message: "Establish a new anonymous reaction identity before continuing.",
+          },
+        },
+        409,
+        { "Set-Cookie": serializeExpiredVoterCookie() },
+      );
     }
     const headers = new Headers();
     if (voter.newCookie) headers.set("Set-Cookie", voter.newCookie);

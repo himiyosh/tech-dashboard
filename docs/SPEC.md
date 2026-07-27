@@ -420,6 +420,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 - **表示面**: Knowledge カードと記事詳細。
 - **永続化**: Cloudflare Pages Functions から専用 D1 binding `REACTIONS_DB` を使用する。publisher data、Featured、Top 3、importance、taxonomy には影響しない。
 - **匿名 voter**: `__Host-techdb_reaction_voter` HttpOnly cookie の UUID を server-side HMAC-SHA256 化し、生 UUID と IP address は D1 に保存しない。D1のactive identity rowが存在するhashだけをmutation可能にする。
+- **identity bootstrap**: cookieなしのPOSTだけが新しいactive identityを作成する。既存cookieのactive rowが削除済みなら、同じPOSTは`409 identity_required`でcookieを失効させ、別requestより前にidentityを再生成しない。
 - **mutation**: Turnstile 検証済みの desired-state `PUT` を使う。active identity確認、rate-limit更新、票変更、count読込を同一D1 transactionへまとめ、D1 の `(article_id, voter_hash)` primary key により再送を冪等にする。
 - **deletion**: same-origin DELETEはactive identity、全票、rate-limit行を同一transactionで削除し、cookieを失効させる。DELETEが先に完了した場合、並行PUTは`409 identity_required`となりdataを再生成しない。`article_likes(voter_hash)` indexでcurrent-browser削除をboundedにする。
 - **制限**: いいねは記事を保存せず、archive 後の route 維持、account、my page、cross-device sync を提供しない。cookie 削除や別 browser は別票になる。

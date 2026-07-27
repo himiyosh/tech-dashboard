@@ -5,6 +5,10 @@ import {
   CATEGORY_META,
   titleForLang,
 } from "../web/src/lib/data.ts";
+import {
+  SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
+  boundedSocialDescription,
+} from "../web/src/lib/bounded-description.ts";
 import { ARCHIVE_WARM_ENTRIES } from "../web/src/lib/archive.ts";
 import { collectAddressableDetailEntries } from "../web/src/lib/detail-addressability.ts";
 import { sourceLabel } from "../web/src/lib/source-meta.ts";
@@ -28,6 +32,108 @@ import {
 } from "../web/src/pages/social/tech-dashboard-v1.png.ts";
 
 describe("localized social metadata", () => {
+  it("keeps complete sentences inside the social description budget", () => {
+    const productionSummary =
+      "Diffusion language models generate multiple tokens in parallel rather than one at a time, achieving up to 2.42× faster inference than autoregressive LLMs. This architectural shift could significantly improve the practicality of locally-run language models.";
+    const completeFirstSentence =
+      "Diffusion language models generate multiple tokens in parallel rather than one at a time, achieving up to 2.42× faster inference than autoregressive LLMs.";
+    expect(boundedSocialDescription(productionSummary, "en")).toBe(completeFirstSentence);
+    expect(boundedSocialDescription(productionSummary, "en")).not.toContain("This ");
+    expect(
+      localizedArticleMetadataDescription({
+        summary: productionSummary,
+        lang: "en",
+        sourceLabel: "Zenn AI",
+        categoryLabel: "Local Models",
+      }),
+    ).toBe(completeFirstSentence);
+
+    const japaneseFirstSentence = "日本語の最初の文は、160文字以内で完結しています。";
+    const japaneseSummary =
+      `${japaneseFirstSentence}${"次の説明は文末までが長く、境界内には収まりません".repeat(8)}。`;
+    expect(boundedSocialDescription(japaneseSummary, "ja")).toBe(japaneseFirstSentence);
+
+    const first = "The first sentence explains the change.";
+    const second = " The second sentence records the user-visible result.";
+    const third = ` ${"A final sentence contains additional context ".repeat(5)}.`;
+    expect(boundedSocialDescription(`${first}${second}${third}`, "en")).toBe(
+      `${first}${second}`,
+    );
+  });
+
+  it("coalesces identifier, initialism, and abbreviation fragments", () => {
+    const longTail = ` ${"This later sentence contains additional context ".repeat(5)}.`;
+    const fixtures = [
+      "Semantic Kernel for .NET developers improves agent orchestration.",
+      "The U.S. SEC published guidance for AI model governance.",
+      "Policies from the U.S. Department improve AI procurement.",
+      "Dr. Smith published guidance for AI model governance.",
+    ];
+    for (const expected of fixtures) {
+      expect(boundedSocialDescription(`${expected}${longTail}`, "en")).toBe(expected);
+    }
+
+    const decimalSentence = "Version 2.42 improves inference throughput.";
+    const genuineSentence = "The API is stable.";
+    const initialismEnding = "The company operates in the U.S.";
+    const properNounTail =
+      ` Microsoft announced ${"additional product context ".repeat(8)}.`;
+    expect(boundedSocialDescription(`${decimalSentence}${longTail}`, "en")).toBe(
+      decimalSentence,
+    );
+    expect(boundedSocialDescription(`${genuineSentence}${longTail}`, "en")).toBe(
+      genuineSentence,
+    );
+    expect(boundedSocialDescription(`${initialismEnding}${longTail}`, "en")).toBe(
+      initialismEnding,
+    );
+    expect(boundedSocialDescription(`${initialismEnding}${properNounTail}`, "en")).toBe(
+      initialismEnding,
+    );
+  });
+
+  it("falls back to safe word, grapheme, and entity boundaries", () => {
+    const noSentenceBoundary = Array.from(
+      { length: 40 },
+      (_, index) => `metadata${index}`,
+    ).join(" ");
+    const wordBounded = boundedSocialDescription(noSentenceBoundary, "en");
+    const wordPrefix = wordBounded.slice(0, -1);
+    expect(wordBounded.endsWith("…")).toBe(true);
+    expect(Array.from(wordBounded).length).toBeLessThanOrEqual(
+      SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
+    );
+    expect(noSentenceBoundary.startsWith(wordPrefix)).toBe(true);
+    expect(noSentenceBoundary[wordPrefix.length]).toBe(" ");
+
+    const combiningWord = "Cafe\u0301";
+    const emoji = "👩🏽‍💻";
+    const unicodeInput = `${`${combiningWord} ${emoji} `.repeat(24)}without punctuation`;
+    const unicodeBounded = boundedSocialDescription(unicodeInput, "en");
+    expect(unicodeBounded.endsWith("…")).toBe(true);
+    expect(Array.from(unicodeBounded).length).toBeLessThanOrEqual(
+      SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
+    );
+    const unicodePrefix = unicodeBounded.slice(0, -1);
+    expect(
+      unicodePrefix.endsWith(combiningWord) || unicodePrefix.endsWith(emoji),
+    ).toBe(true);
+
+    const entityInput = `${"safe ".repeat(31)}&amp; continuation without punctuation`;
+    const entityBounded = boundedSocialDescription(entityInput, "en");
+    expect(entityBounded).toBe(`${"safe ".repeat(30)}safe…`);
+    expect(entityBounded).not.toMatch(/&(?:#x?[\da-f]*|[a-z]*)…$/iu);
+
+    expect(boundedSocialDescription("x".repeat(200), "en")).toBe("…");
+  });
+
+  it("preserves exact-boundary and already-short descriptions", () => {
+    const exactBoundary = "界".repeat(SOCIAL_DESCRIPTION_CHARACTER_LIMIT);
+    const shortDescription = "Short metadata without terminal punctuation";
+    expect(boundedSocialDescription(exactBoundary, "ja")).toBe(exactBoundary);
+    expect(boundedSocialDescription(shortDescription, "en")).toBe(shortDescription);
+  });
+
   it("defines complete localized Home metadata with one absolute brand image", () => {
     expect(HOME_PAGE_METADATA).toMatchObject({
       canonicalUrl: "https://techdb.studio344.net/",

@@ -78,6 +78,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 修正
 
+- 記事のJA/EN別social descriptionを160文字で機械的に切らず、収まる最長の完全文を優先し、`.NET`、`U.S.`、`Dr.`を誤った文末にせず、文境界が無い場合も単語・grapheme・HTML entityを壊さず省略記号を付けるようにしました。
 - modal Menuを開いている間は背景documentのscroll位置を固定し、wheel・keyboard・touch操作で本文が動かないようにしました。Menu内の長いnavigationは引き続きscrollでき、閉じた後は元の位置とfocusを復元します。
 - 初回訪問のモバイル表示で、広告同意promptを保存済み状態から初回paint前に配置し、本文全体が後から約205px移動するlayout shiftを防ぐようにしました。許可・拒否済み、Privacy画面、preview hostでは従来どおりpromptを表示しません。
 - 本番の `/sitemap.xml` と `/sitemap-index.xml` が 404 で、robots.txt に Sitemap directive が無かったため、単一の standards-compliant sitemap を静的配信するよう修正しました。記事詳細と sitemap は同じ addressability policy を共有し、cold / dropped 記事は月別 Archive のみに残します。

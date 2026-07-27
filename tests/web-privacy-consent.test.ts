@@ -7,6 +7,7 @@ import {
   privacyConsentState,
   serializePrivacyConsent,
   shouldLoadAdvertising,
+  shouldShowPrivacyConsentPrompt,
 } from "../web/src/lib/privacy-consent.ts";
 import { SITEMAP_STATIC_PATHS } from "../web/src/lib/route-inventory.ts";
 import {
@@ -67,6 +68,30 @@ describe("privacy consent contract", () => {
     expect(shouldLoadAdvertising("localhost", "allowed")).toBe(false);
   });
 
+  it("shows the prompt only for undecided production pages outside Privacy", () => {
+    expect(
+      shouldShowPrivacyConsentPrompt("techdb.studio344.net", "/", "undecided"),
+    ).toBe(true);
+    expect(
+      shouldShowPrivacyConsentPrompt("techdb.studio344.net", "/", "allowed"),
+    ).toBe(false);
+    expect(
+      shouldShowPrivacyConsentPrompt("techdb.studio344.net", "/", "denied"),
+    ).toBe(false);
+    expect(
+      shouldShowPrivacyConsentPrompt("techdb.studio344.net", "/privacy", "undecided"),
+    ).toBe(false);
+    expect(
+      shouldShowPrivacyConsentPrompt("techdb.studio344.net", "/privacy/", "undecided"),
+    ).toBe(false);
+    expect(
+      shouldShowPrivacyConsentPrompt("tech-dashboard-6a7.pages.dev", "/", "undecided"),
+    ).toBe(false);
+    expect(
+      shouldShowPrivacyConsentPrompt("localhost", "/", "undecided"),
+    ).toBe(false);
+  });
+
   it("publishes the confirmed operator, contact, jurisdiction, and privacy route", () => {
     expect(PUBLIC_OPERATOR_NAME).toBe("Studio344");
     expect(PUBLIC_CONTACT_EMAIL).toBe("himiyosh@gmail.com");
@@ -75,7 +100,7 @@ describe("privacy consent contract", () => {
     expect(SITEMAP_STATIC_PATHS).toContain("/privacy/");
   });
 
-  it("keeps consent progressive, non-modal, and hidden before client initialization", () => {
+  it("keeps consent progressive, non-modal, and stable before client initialization", () => {
     const portal = readFileSync(
       new URL("../web/src/layouts/Portal.astro", import.meta.url),
       "utf8",
@@ -84,10 +109,31 @@ describe("privacy consent contract", () => {
       new URL("../web/src/lib/privacy-consent-client.ts", import.meta.url),
       "utf8",
     );
+    const styles = readFileSync(
+      new URL("../web/src/styles/portal.css", import.meta.url),
+      "utf8",
+    );
     expect(portal).toMatch(/data-consent-surface="prompt"[\s\S]*?hidden[\s\S]*?inert/);
+    expect(portal).toContain("data-privacy-consent-prompt");
+    expect(portal).toContain("privacyConsentStorageKey");
+    expect(portal).toContain("privacyConsentVersion");
+    expect(portal).toContain("productionAdvertisingHostname");
+    expect(portal.indexOf('data-consent-surface="prompt"')).toBeLessThan(
+      portal.indexOf("Parser-blocking bootstrap"),
+    );
+    expect(portal).toContain("root.hidden = !showPrompt");
+    expect(portal).toContain('root.removeAttribute("inert")');
+    expect(portal).toContain("working fail-safe");
+    expect(styles).not.toContain(
+      'html[data-privacy-consent-prompt="visible"] .privacy-consent-prompt[hidden]',
+    );
     expect(portal).not.toMatch(/pagead2\.googlesyndication\.com/);
+    expect(portal).not.toMatch(/opacity:\s*0|visibility:\s*hidden/);
     expect(portal).not.toMatch(/<dialog[^>]+privacy/i);
     expect(client).toContain("shouldLoadAdvertising");
+    expect(client).toContain("shouldShowPrivacyConsentPrompt");
+    expect(client).toContain("dataset.privacyConsentPrompt");
+    expect(client).toContain('dataset.privacyConsentClient = "ready"');
     expect(client).toContain("dataset.consent = \"advertising\"");
     expect(client).toContain("event.key === null");
     expect(client).toContain("[data-consent-error]");

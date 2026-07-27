@@ -77,6 +77,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 修正
 
+- 初回訪問のモバイル表示で、広告同意promptを保存済み状態から初回paint前に配置し、本文全体が後から約205px移動するlayout shiftを防ぐようにしました。許可・拒否済み、Privacy画面、preview hostでは従来どおりpromptを表示しません。
 - 本番の `/sitemap.xml` と `/sitemap-index.xml` が 404 で、robots.txt に Sitemap directive が無かったため、単一の standards-compliant sitemap を静的配信するよう修正しました。記事詳細と sitemap は同じ addressability policy を共有し、cold / dropped 記事は月別 Archive のみに残します。
 - モバイルで開いた navigation sheet の top-layer backdrop が下部 tabbar の Menu 操作を遮る問題を修正しました。実際の Menu button を sheet の top layer へ一時的に移し、同じ位置・同じ操作面で閉じられるようにして、Escape・backdrop・Search 遷移時の focus restoration を維持しました。
 - 広い Zenn AI feed の Local LLM 判定を、`DiffusionGemma`、`LLM` / `SLM`、`Ollama`、明示model/runtime、`VRAM`、`ローカルLLM` / `ローカルAI` などタイトル上の主題根拠へ限定し、本文中または題名中のbare「ローカル」だけを理由に、業務・DB・一般AIデモが `local-llm` として掲載されないようにしました。正当なDiffusionGemma推論とVRAM動画モデルの記事を保持し、既存の live/archive data にも同じ source filter を再適用しています。変更したPublisher fingerprintのrolloutはR-027に従い、PR-headのQueue consumer deployとdrain、merge後の旧harness mismatch観測、明示承認後のbridge/harness deployの順で行います。

@@ -77,6 +77,18 @@ export function shouldLoadAdvertising(
   return isProductionAdvertisingHost(hostname) && state === "allowed";
 }
 
+export function shouldShowPrivacyConsentPrompt(
+  hostname: string,
+  pathname: string,
+  state: PrivacyConsentState,
+): boolean {
+  return (
+    isProductionAdvertisingHost(hostname)
+    && state === "undecided"
+    && !/^\/privacy\/?$/.test(pathname)
+  );
+}
+
 export function adsenseScriptUrl(): string {
   return `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(ADSENSE_CLIENT_ID)}`;
 }

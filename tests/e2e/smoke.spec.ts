@@ -5,6 +5,11 @@ import {
   summaryForLangWithFallback,
   type SummaryDisplayEntry,
 } from "../../web/src/lib/summary-display.ts";
+import {
+  PRIVACY_CONSENT_STORAGE_KEY,
+  parsePrivacyConsent,
+  privacyConsentState,
+} from "../../web/src/lib/privacy-consent.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
 
 const TIMELINE_ENTRY_LINK_SELECTOR = 'main article.card h3.title > a[href^="/e/"]';
@@ -16,6 +21,188 @@ type SummaryFixtureEntry = SummaryDisplayEntry & {
 const REACTION_VOTER_COOKIE_NAME = "__Host-techdb_reaction_voter";
 const MOBILE_FIRST_DECISION_MAX_Y = 340;
 const LAYOUT_SUBPIXEL_EPSILON_PX = 0.01;
+const PRODUCTION_ORIGIN = "https://techdb.studio344.net";
+
+interface PrivacyPromptProbeOptions {
+  storedValue: string | null;
+  failStorageRead?: boolean;
+  measureLayoutShift?: boolean;
+}
+
+async function routeProductionHostToPreview(
+  page: Page,
+  baseURL: string,
+): Promise<void> {
+  await page.route(`${PRODUCTION_ORIGIN}/**`, async (route) => {
+    const source = new URL(route.request().url());
+    const target = new URL(`${source.pathname}${source.search}`, baseURL);
+    const response = await route.fetch({ url: target.href });
+    await route.fulfill({ response });
+  });
+}
+
+async function installPrivacyPromptProbe(
+  page: Page,
+  options: PrivacyPromptProbeOptions,
+): Promise<void> {
+  await page.addInitScript(
+    ({ storedValue, failStorageRead, measureLayoutShift, storageKey }) => {
+      window.localStorage.clear();
+      if (storedValue !== null) {
+        window.localStorage.setItem(storageKey, storedValue);
+      }
+      if (failStorageRead) {
+        const getItem = Storage.prototype.getItem;
+        Object.defineProperty(Storage.prototype, "getItem", {
+          configurable: true,
+          value(this: Storage, key: string) {
+            if (key === storageKey) throw new Error("storage unavailable");
+            return getItem.call(this, key);
+          },
+        });
+      }
+
+      const state = window as typeof window & {
+        __privacyPromptFirstLayout?: {
+          display: string;
+          height: number;
+          hidden: boolean;
+          inert: boolean;
+          rootState: string;
+        };
+        __privacyConsentCls?: number;
+        __privacyConsentClsObserver?: PerformanceObserver;
+      };
+      let promptCaptureScheduled = false;
+      const capturePrompt = () => {
+        if (state.__privacyPromptFirstLayout || promptCaptureScheduled) return;
+        const prompt = document.querySelector<HTMLElement>(".privacy-consent-prompt");
+        if (!prompt?.querySelector("[data-consent-choice]")) return;
+        promptCaptureScheduled = true;
+        requestAnimationFrame(() => {
+          const currentPrompt =
+            document.querySelector<HTMLElement>(".privacy-consent-prompt");
+          if (!currentPrompt) return;
+          const rect = currentPrompt.getBoundingClientRect();
+          state.__privacyPromptFirstLayout = {
+            display: getComputedStyle(currentPrompt).display,
+            height: rect.height,
+            hidden: currentPrompt.hidden,
+            inert: currentPrompt.hasAttribute("inert"),
+            rootState:
+              document.documentElement.dataset.privacyConsentPrompt ?? "",
+          };
+          promptObserver.disconnect();
+        });
+      };
+      const promptObserver = new MutationObserver(capturePrompt);
+      promptObserver.observe(document, {
+        childList: true,
+        subtree: true,
+      });
+      capturePrompt();
+
+      if (measureLayoutShift && "PerformanceObserver" in window) {
+        state.__privacyConsentCls = 0;
+        const layoutShiftObserver = new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) {
+            const shift = entry as PerformanceEntry & {
+              hadRecentInput?: boolean;
+              value?: number;
+            };
+            if (!shift.hadRecentInput && typeof shift.value === "number") {
+              state.__privacyConsentCls =
+                (state.__privacyConsentCls ?? 0) + shift.value;
+            }
+          }
+        });
+        layoutShiftObserver.observe({
+          type: "layout-shift",
+          buffered: true,
+        } as PerformanceObserverInit);
+        state.__privacyConsentClsObserver = layoutShiftObserver;
+      }
+    },
+    {
+      ...options,
+      storageKey: PRIVACY_CONSENT_STORAGE_KEY,
+    },
+  );
+}
+
+async function collectStablePrivacyLayout(page: Page) {
+  return page.evaluate(async () => {
+    await document.fonts.ready;
+    let previous = "";
+    let stableFrames = 0;
+    for (let frame = 0; frame < 20 && stableFrames < 3; frame += 1) {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const rect = (selector: string) => {
+        const box = document.querySelector<HTMLElement>(selector)?.getBoundingClientRect();
+        return box
+          ? [box.x, box.y, box.width, box.height].map((value) => value.toFixed(2))
+          : [];
+      };
+      const current = JSON.stringify({
+        prompt: rect(".privacy-consent-prompt"),
+        banner: rect(".banner"),
+        ticker: rect(".ticker-bar"),
+        layout: rect(".layout"),
+      });
+      stableFrames = current === previous ? stableFrames + 1 : 0;
+      previous = current;
+    }
+
+    const state = window as typeof window & {
+      __privacyPromptFirstLayout?: {
+        display: string;
+        height: number;
+        hidden: boolean;
+        inert: boolean;
+        rootState: string;
+      };
+      __privacyConsentCls?: number;
+      __privacyConsentClsObserver?: PerformanceObserver;
+    };
+    const observer = state.__privacyConsentClsObserver;
+    if (observer) {
+      for (const entry of observer.takeRecords()) {
+        const shift = entry as PerformanceEntry & {
+          hadRecentInput?: boolean;
+          value?: number;
+        };
+        if (!shift.hadRecentInput && typeof shift.value === "number") {
+          state.__privacyConsentCls = (state.__privacyConsentCls ?? 0) + shift.value;
+        }
+      }
+      observer.disconnect();
+    }
+    const prompt = document.querySelector<HTMLElement>(".privacy-consent-prompt");
+    const promptBox = prompt?.getBoundingClientRect();
+    return {
+      stable: stableFrames >= 3,
+      cls:
+        typeof state.__privacyConsentCls === "number"
+          ? Number(state.__privacyConsentCls.toFixed(6))
+          : null,
+      firstLayout: state.__privacyPromptFirstLayout ?? null,
+      promptVisible: Boolean(
+        promptBox &&
+          promptBox.width > 0 &&
+          promptBox.height > 0 &&
+          getComputedStyle(prompt).visibility !== "hidden",
+      ),
+      promptHidden: prompt?.hidden ?? true,
+      promptInert: prompt?.hasAttribute("inert") ?? true,
+      rootState:
+        document.documentElement.dataset.privacyConsentPrompt ?? "",
+      advertisingState:
+        document.documentElement.dataset.advertisingConsent ?? "",
+      overflow:
+        document.documentElement.scrollWidth - window.innerWidth,
+    };
+  });
+}
 
 async function expectMobileFirstDecisionNearViewport(page: Page): Promise<void> {
   const featured = page.locator("article.featured").first();
@@ -4626,6 +4813,301 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
+  test("Privacy prompt pre-paint state matches storage, host, and route policy", async ({
+    context,
+    baseURL,
+  }) => {
+    expect(baseURL).toBeTruthy();
+    await context.route(`${PRODUCTION_ORIGIN}/**`, async (route) => {
+      const source = new URL(route.request().url());
+      const target = new URL(`${source.pathname}${source.search}`, baseURL!);
+      const response = await route.fetch({ url: target.href });
+      await route.fulfill({ response });
+    });
+    await context.route("https://pagead2.googlesyndication.com/**", (route) =>
+      route.abort("blockedbyclient"));
+    await context.route("**/_astro/*.js", (route) =>
+      route.abort("blockedbyclient"));
+
+    const validDate = "2026-07-27T00:00:00.000Z";
+    const recordCases: Array<{ name: string; storedValue: string | null }> = [
+      { name: "absent record", storedValue: null },
+      { name: "malformed JSON", storedValue: "not-json" },
+      {
+        name: "extra record key",
+        storedValue: JSON.stringify({
+          version: 1,
+          advertising: "allowed",
+          decidedAt: validDate,
+          analytics: "allowed",
+        }),
+      },
+      {
+        name: "old record version",
+        storedValue: JSON.stringify({
+          version: 0,
+          advertising: "allowed",
+          decidedAt: validDate,
+        }),
+      },
+      {
+        name: "invalid advertising choice",
+        storedValue: JSON.stringify({
+          version: 1,
+          advertising: "unknown",
+          decidedAt: validDate,
+        }),
+      },
+      {
+        name: "invalid decision date",
+        storedValue: JSON.stringify({
+          version: 1,
+          advertising: "allowed",
+          decidedAt: "not-a-date",
+        }),
+      },
+      {
+        name: "non-canonical decision date",
+        storedValue: JSON.stringify({
+          version: 1,
+          advertising: "allowed",
+          decidedAt: "2026-07-27T09:00:00+09:00",
+        }),
+      },
+      {
+        name: "allowed record",
+        storedValue: JSON.stringify({
+          version: 1,
+          advertising: "allowed",
+          decidedAt: validDate,
+        }),
+      },
+      {
+        name: "denied record",
+        storedValue: JSON.stringify({
+          version: 1,
+          advertising: "denied",
+          decidedAt: validDate,
+        }),
+      },
+    ];
+    const productionScenarios = recordCases.map(({ name, storedValue }) => {
+      const expectedConsent = privacyConsentState(parsePrivacyConsent(storedValue));
+      const visible = expectedConsent === "undecided";
+      return {
+        name: `production ${name}`,
+        target: `${PRODUCTION_ORIGIN}/`,
+        storedValue,
+        expectedConsent,
+        expectedState: visible ? "visible" : "hidden",
+        visible,
+      };
+    });
+    const scenarios: Array<{
+      name: string;
+      target: string;
+      storedValue: string | null;
+      expectedConsent: "allowed" | "denied" | "undecided";
+      expectedState: "visible" | "hidden";
+      visible: boolean;
+      failStorageRead?: boolean;
+    }> = [
+      ...productionScenarios,
+      {
+        name: "unavailable production storage",
+        target: `${PRODUCTION_ORIGIN}/`,
+        storedValue: null,
+        failStorageRead: true,
+        expectedConsent: "undecided",
+        expectedState: "visible",
+        visible: true,
+      },
+      {
+        name: "production Privacy route",
+        target: `${PRODUCTION_ORIGIN}/privacy/`,
+        storedValue: null,
+        expectedConsent: "undecided",
+        expectedState: "hidden",
+        visible: false,
+      },
+      {
+        name: "preview host",
+        target: new URL("/", baseURL!).href,
+        storedValue: null,
+        expectedConsent: "undecided",
+        expectedState: "hidden",
+        visible: false,
+      },
+    ];
+
+    for (const scenario of scenarios) {
+      const scenarioPage = await context.newPage();
+      await scenarioPage.setViewportSize({ width: 390, height: 844 });
+      await installPrivacyPromptProbe(scenarioPage, {
+        storedValue: scenario.storedValue,
+        failStorageRead: scenario.failStorageRead,
+      });
+      const response = await scenarioPage.goto(scenario.target, {
+        waitUntil: "domcontentloaded",
+      });
+      expect(response?.status(), `${scenario.name} response`).toBeLessThan(400);
+      const evidence = await collectStablePrivacyLayout(scenarioPage);
+      expect(evidence.stable, `${scenario.name} reaches a stable layout`).toBe(true);
+      expect(evidence.firstLayout, `${scenario.name} captures initial prompt layout`).not.toBeNull();
+      expect(
+        evidence.firstLayout?.rootState,
+        `${scenario.name} sets root state before prompt parsing`,
+      ).toBe(scenario.expectedState);
+      expect(evidence.rootState, `${scenario.name} keeps root state synchronized`).toBe(
+        scenario.expectedState,
+      );
+      expect(
+        evidence.advertisingState,
+        `${scenario.name} inline parser matches the shared record parser`,
+      ).toBe(scenario.expectedConsent);
+      await expect(scenarioPage.locator("html")).not.toHaveAttribute(
+        "data-privacy-consent-client",
+        "ready",
+      );
+      expect(evidence.overflow, `${scenario.name} has no horizontal overflow`).toBeLessThanOrEqual(
+        0,
+      );
+
+      if (scenario.visible) {
+        expect(
+          evidence.firstLayout?.display,
+          `${scenario.name} is visible in its first layout`,
+        ).not.toBe("none");
+        expect(
+          evidence.firstLayout?.height ?? 0,
+          `${scenario.name} reserves prompt height before client initialization`,
+        ).toBeGreaterThan(0);
+        expect(evidence.promptVisible, `${scenario.name} stays visible after initialization`).toBe(
+          true,
+        );
+        expect(evidence.promptHidden, `${scenario.name} removes hidden after initialization`).toBe(
+          false,
+        );
+        expect(evidence.promptInert, `${scenario.name} removes inert after initialization`).toBe(
+          false,
+        );
+      } else {
+        expect(
+          evidence.firstLayout?.display,
+          `${scenario.name} never paints the prompt`,
+        ).toBe("none");
+        expect(evidence.firstLayout?.height, `${scenario.name} reserves no prompt height`).toBe(0);
+        expect(evidence.promptVisible, `${scenario.name} remains prompt-free`).toBe(false);
+        expect(evidence.promptHidden, `${scenario.name} keeps hidden semantics`).toBe(true);
+        expect(evidence.promptInert, `${scenario.name} keeps inert semantics`).toBe(true);
+      }
+      await scenarioPage.close();
+    }
+
+    await context.unrouteAll({ behavior: "ignoreErrors" });
+  });
+
+  test("Privacy prompt stays operable when the deferred client bundle is blocked", async ({
+    page,
+    baseURL,
+  }) => {
+    expect(baseURL).toBeTruthy();
+    let advertisingRequests = 0;
+    await routeProductionHostToPreview(page, baseURL!);
+    await page.route("https://pagead2.googlesyndication.com/**", async (route) => {
+      advertisingRequests += 1;
+      await route.abort("blockedbyclient");
+    });
+    await page.route(`${PRODUCTION_ORIGIN}/_astro/*.js`, (route) =>
+      route.abort("blockedbyclient"));
+    await installPrivacyPromptProbe(page, { storedValue: null });
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    const response = await page.goto(`${PRODUCTION_ORIGIN}/`, {
+      waitUntil: "domcontentloaded",
+    });
+    expect(response?.status()).toBeLessThan(400);
+    const initial = await collectStablePrivacyLayout(page);
+    expect(initial.firstLayout?.display).not.toBe("none");
+    expect(initial.firstLayout?.height ?? 0).toBeGreaterThan(0);
+    expect(initial.promptVisible).toBe(true);
+    expect(initial.promptHidden).toBe(false);
+    expect(initial.promptInert).toBe(false);
+    expect(initial.rootState).toBe("visible");
+    await expect(page.locator("html")).not.toHaveAttribute(
+      "data-privacy-consent-client",
+      "ready",
+    );
+    await expect(page.locator('script[src*="googlesyndication"]')).toHaveCount(0);
+    expect(advertisingRequests).toBe(0);
+
+    await page.getByRole("button", { name: "広告を許可" }).click();
+    const storedValue = await page.evaluate((storageKey) =>
+      window.localStorage.getItem(storageKey), PRIVACY_CONSENT_STORAGE_KEY);
+    const record = parsePrivacyConsent(storedValue);
+    expect(record?.advertising).toBe("allowed");
+    const prompt = page.locator(".privacy-consent-prompt");
+    await expect(prompt).toBeHidden();
+    await expect(prompt).toHaveAttribute("inert", "");
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-advertising-consent",
+      "allowed",
+    );
+    await expect(page.locator('script[src*="googlesyndication"]')).toHaveCount(0);
+    expect(advertisingRequests).toBe(0);
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+  });
+
+  test("Privacy consent prompt keeps first-load CLS within the good threshold", async ({
+    browser,
+    baseURL,
+  }) => {
+    expect(baseURL).toBeTruthy();
+    const results: Array<{ name: string; cls: number }> = [];
+
+    for (const viewport of [
+      { name: "mobile", width: 390, height: 844 },
+      { name: "desktop", width: 1280, height: 900 },
+    ] as const) {
+      const context = await browser.newContext({
+        viewport: { width: viewport.width, height: viewport.height },
+      });
+      const scenarioPage = await context.newPage();
+      await routeProductionHostToPreview(scenarioPage, baseURL!);
+      await scenarioPage.route(
+        "https://pagead2.googlesyndication.com/**",
+        (route) => route.abort("blockedbyclient"),
+      );
+      await installPrivacyPromptProbe(scenarioPage, {
+        storedValue: null,
+        measureLayoutShift: true,
+      });
+      const response = await scenarioPage.goto(`${PRODUCTION_ORIGIN}/`, {
+        waitUntil: "domcontentloaded",
+      });
+      expect(response?.status(), `${viewport.name} response`).toBeLessThan(400);
+      const evidence = await collectStablePrivacyLayout(scenarioPage);
+      expect(evidence.stable, `${viewport.name} reaches a stable layout`).toBe(true);
+      expect(
+        evidence.firstLayout?.display,
+        `${viewport.name} prompt participates in the first layout`,
+      ).not.toBe("none");
+      expect(evidence.firstLayout?.height ?? 0).toBeGreaterThan(0);
+      expect(evidence.promptVisible).toBe(true);
+      expect(evidence.rootState).toBe("visible");
+      expect(evidence.overflow).toBeLessThanOrEqual(0);
+      expect(evidence.cls, `${viewport.name} exposes LayoutShift metrics`).not.toBeNull();
+      expect(evidence.cls!, `${viewport.name} CLS remains good`).toBeLessThanOrEqual(0.1);
+      results.push({ name: viewport.name, cls: evidence.cls! });
+      await scenarioPage.unrouteAll({ behavior: "ignoreErrors" });
+      await context.close();
+    }
+
+    console.log(
+      `CONSENT_CLS: ${results.map((result) => `${result.name}=${result.cls.toFixed(4)}`).join(" ")}`,
+    );
+  });
+
   test("Privacy keeps optional ads off by default and exposes bilingual controls", async ({
     page,
   }) => {
@@ -4804,48 +5286,99 @@ test.describe("TECH Dashboard smoke", () => {
       .toBeGreaterThanOrEqual(8);
   });
 
-  test("Privacy prompt stays operable above the mobile tabbar", async ({ page }) => {
-    await page.addInitScript(() => window.localStorage.clear());
-    await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto("/");
+  test("Privacy prompt stays operable above the mobile tabbar", async ({
+    page,
+    baseURL,
+  }) => {
+    expect(baseURL).toBeTruthy();
+    await routeProductionHostToPreview(page, baseURL!);
+    await page.route("https://pagead2.googlesyndication.com/**", (route) =>
+      route.abort("blockedbyclient"));
+    await installPrivacyPromptProbe(page, { storedValue: null });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${PRODUCTION_ORIGIN}/`);
     const prompt = page.locator(".privacy-consent-prompt");
-    await prompt.evaluate((element) => {
-      element.hidden = false;
-      element.removeAttribute("inert");
-    });
     await expect(prompt).toBeVisible();
-    await expect(prompt).toHaveCSS("position", "relative");
-    const tabbar = page.getByRole("navigation", { name: "Primary" });
-    const featured = page.locator("article.featured");
-    const [promptBox, tabbarBox, featuredBox] = await Promise.all([
-      prompt.boundingBox(),
-      tabbar.boundingBox(),
-      featured.boundingBox(),
-    ]);
-    expect(promptBox).not.toBeNull();
-    expect(tabbarBox).not.toBeNull();
-    expect(featuredBox).not.toBeNull();
-    expect(promptBox!.y + promptBox!.height).toBeLessThanOrEqual(featuredBox!.y - 8);
-    expect(
-      await prompt.locator("a, button").evaluateAll((nodes) =>
-        nodes.every((node) => {
-          const rect = node.getBoundingClientRect();
-          return rect.height >= 44 && rect.left >= 0 && rect.right <= window.innerWidth;
-        }),
-      ),
-    ).toBe(true);
-    expect(
-      await page.evaluate(({ x, y }) => {
-        const target = document.elementFromPoint(x, y);
-        return Boolean(target?.closest(".privacy-consent-prompt"));
-      }, {
-        x: promptBox!.x + promptBox!.width / 2,
-        y: promptBox!.y + promptBox!.height / 2,
-      }),
-    ).toBe(true);
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-      .toBe(true);
+
+    for (const width of [320, 360, 361, 390, 720, 721, 768, 1280]) {
+      const height = width <= 720 ? 844 : 900;
+      await page.setViewportSize({ width, height });
+      await page.evaluate(
+        () => new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ),
+      );
+      const metrics = await page.evaluate(() => {
+        const prompt = document.querySelector<HTMLElement>(".privacy-consent-prompt");
+        const featured = document.querySelector<HTMLElement>("article.featured");
+        const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
+        if (!prompt || !featured || !tabbar) return null;
+        const promptBox = prompt.getBoundingClientRect();
+        const featuredBox = featured.getBoundingClientRect();
+        const tabbarBox = tabbar.getBoundingClientRect();
+        const hit = document.elementFromPoint(
+          promptBox.x + promptBox.width / 2,
+          promptBox.y + promptBox.height / 2,
+        );
+        return {
+          position: getComputedStyle(prompt).position,
+          promptHidden: prompt.hidden,
+          promptInert: prompt.hasAttribute("inert"),
+          promptLeft: promptBox.left,
+          promptRight: promptBox.right,
+          promptBottom: promptBox.bottom,
+          featuredTop: featuredBox.top,
+          tabbarVisible: tabbarBox.width > 0 && tabbarBox.height > 0,
+          targets: [...prompt.querySelectorAll<HTMLElement>("a, button")].map((target) => {
+            const box = target.getBoundingClientRect();
+            return {
+              height: box.height,
+              left: box.left,
+              right: box.right,
+            };
+          }),
+          promptHit: Boolean(hit?.closest(".privacy-consent-prompt")),
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+          viewportWidth: window.innerWidth,
+          viewportHeight: window.innerHeight,
+        };
+      });
+      expect(metrics, `${width}px prompt metrics`).not.toBeNull();
+      expect(metrics!.promptHidden, `${width}px prompt is not hidden`).toBe(false);
+      expect(metrics!.promptInert, `${width}px prompt is operable`).toBe(false);
+      expect(metrics!.promptLeft, `${width}px prompt stays inside the left edge`).toBeGreaterThanOrEqual(
+        0,
+      );
+      expect(metrics!.promptRight, `${width}px prompt stays inside the right edge`).toBeLessThanOrEqual(
+        metrics!.viewportWidth,
+      );
+      expect(metrics!.targets.length, `${width}px exposes consent controls`).toBeGreaterThan(0);
+      expect(
+        metrics!.targets.every((target) =>
+          target.height >= 44
+          && target.left >= 0
+          && target.right <= metrics!.viewportWidth
+        ),
+        `${width}px consent targets remain at least 44px and inside the viewport`,
+      ).toBe(true);
+      expect(metrics!.promptHit, `${width}px prompt remains hit-testable`).toBe(true);
+      expect(metrics!.overflow, `${width}px has no horizontal overflow`).toBeLessThanOrEqual(0);
+
+      if (width <= 720) {
+        expect(metrics!.position, `${width}px uses the mobile flow layout`).toBe("relative");
+        expect(metrics!.tabbarVisible, `${width}px keeps the mobile tabbar`).toBe(true);
+        expect(
+          metrics!.promptBottom,
+          `${width}px prompt remains before the first decision card`,
+        ).toBeLessThanOrEqual(metrics!.featuredTop - 8);
+      } else {
+        expect(metrics!.position, `${width}px uses the desktop overlay layout`).toBe("fixed");
+        expect(metrics!.tabbarVisible, `${width}px hides the mobile tabbar`).toBe(false);
+        expect(metrics!.promptBottom, `${width}px prompt stays inside the viewport`).toBeLessThanOrEqual(
+          metrics!.viewportHeight,
+        );
+      }
+    }
   });
 
   test("Privacy deletion fails closed when the runtime endpoint is unavailable", async ({

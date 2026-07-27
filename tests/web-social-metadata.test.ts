@@ -61,6 +61,32 @@ describe("localized social metadata", () => {
     );
   });
 
+  it("coalesces identifier, initialism, and abbreviation fragments", () => {
+    const longTail = ` ${"This later sentence contains additional context ".repeat(5)}.`;
+    const fixtures = [
+      "Semantic Kernel for .NET developers improves agent orchestration.",
+      "The U.S. SEC published guidance for AI model governance.",
+      "Policies from the U.S. Department improve AI procurement.",
+      "Dr. Smith published guidance for AI model governance.",
+    ];
+    for (const expected of fixtures) {
+      expect(boundedSocialDescription(`${expected}${longTail}`, "en")).toBe(expected);
+    }
+
+    const decimalSentence = "Version 2.42 improves inference throughput.";
+    const genuineSentence = "The API is stable.";
+    const initialismEnding = "The company operates in the U.S.";
+    expect(boundedSocialDescription(`${decimalSentence}${longTail}`, "en")).toBe(
+      decimalSentence,
+    );
+    expect(boundedSocialDescription(`${genuineSentence}${longTail}`, "en")).toBe(
+      genuineSentence,
+    );
+    expect(boundedSocialDescription(`${initialismEnding}${longTail}`, "en")).toBe(
+      initialismEnding,
+    );
+  });
+
   it("falls back to safe word, grapheme, and entity boundaries", () => {
     const noSentenceBoundary = Array.from(
       { length: 40 },

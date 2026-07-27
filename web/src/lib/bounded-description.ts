@@ -7,8 +7,36 @@ interface EntityRange {
   end: number;
 }
 
-const SENTENCE_END_PATTERN = /[.!?。！？]+["'”’」』）)\]】》〉}]*$/u;
+const SENTENCE_END_PATTERN = /([.!?。！？]+)["'”’」』）)\]】》〉}]*$/u;
 const HTML_ENTITY_PATTERN = /&(?:#\d{1,7}|#x[0-9a-f]{1,6}|[a-z][a-z0-9]{1,31});/giu;
+const NON_TERMINAL_ABBREVIATIONS = new Set([
+  "dr",
+  "mr",
+  "mrs",
+  "ms",
+  "prof",
+  "sr",
+  "jr",
+  "st",
+  "vs",
+]);
+const CLEAR_SENTENCE_STARTERS = new Set([
+  "a",
+  "an",
+  "he",
+  "however",
+  "it",
+  "meanwhile",
+  "next",
+  "she",
+  "that",
+  "the",
+  "these",
+  "they",
+  "this",
+  "those",
+  "we",
+]);
 
 const segmenters = {
   ja: {
@@ -38,6 +66,44 @@ function splitsEntity(index: number, ranges: readonly EntityRange[]): boolean {
   return ranges.some((range) => range.start < index && index < range.end);
 }
 
+function nextWord(value: string, start: number): string {
+  return value.slice(start).trimStart().match(/^[\p{L}\p{N}]+/u)?.[0] ?? "";
+}
+
+// Intl can expose fragments such as ".NET", "U.S.", and "Dr." as sentences.
+// Reject only high-confidence continuation shapes, then let a later real
+// terminal include the coalesced prefix.
+function isFalsePeriodBoundary(value: string, end: number, segmentText: string): boolean {
+  if (end >= value.length) return false;
+  const immediateNext = value[end] ?? "";
+  if (immediateNext && !/\s/u.test(immediateNext) && /[\p{L}\p{N}]/u.test(immediateNext)) {
+    return true;
+  }
+
+  const followingWord = nextWord(value, end);
+  if (!followingWord) return false;
+  const followingLower = followingWord.toLowerCase();
+  const followsClearSentenceStarter = CLEAR_SENTENCE_STARTERS.has(followingLower);
+  const terminalCore = segmentText.replace(/["'”’」』）)\]】》〉}]+$/u, "");
+  const abbreviation = terminalCore.match(/([\p{L}]+)\.$/u)?.[1]?.toLowerCase();
+  if (
+    abbreviation
+    && NON_TERMINAL_ABBREVIATIONS.has(abbreviation)
+    && !followsClearSentenceStarter
+  ) {
+    return true;
+  }
+
+  const initialismMatch = terminalCore.match(/(?:\p{L}\.){2,}$/u);
+  if (!initialismMatch) return false;
+  if (/\p{Ll}/u.test(initialismMatch[0])) return true;
+  if (followsClearSentenceStarter) return false;
+  if (/^\p{Ll}/u.test(followingWord) || /^\p{Lu}{2,}$/u.test(followingWord)) return true;
+
+  const prefix = terminalCore.slice(0, initialismMatch.index).trim();
+  return !prefix || /(?:^|\s)(?:the|an?)$/iu.test(prefix);
+}
+
 function longestCompleteSentencePrefix(
   value: string,
   language: BoundedDescriptionLanguage,
@@ -46,8 +112,12 @@ function longestCompleteSentencePrefix(
   let longest = "";
   for (const segment of segmenters[language].sentence.segment(value)) {
     const segmentText = segment.segment.trimEnd();
-    if (!SENTENCE_END_PATTERN.test(segmentText)) continue;
+    const terminalMatch = segmentText.match(SENTENCE_END_PATTERN);
+    if (!terminalMatch) continue;
     const end = segment.index + segmentText.length;
+    if (terminalMatch[1] === "." && isFalsePeriodBoundary(value, end, segmentText)) {
+      continue;
+    }
     const candidate = value.slice(0, end);
     if (unicodeCharacterLength(candidate) > limit) break;
     longest = candidate;

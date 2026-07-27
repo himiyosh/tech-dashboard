@@ -2784,6 +2784,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: TSXのdisambiguation syntaxである`<T,>`へ変更し、Web treeの`.astro`にあるgeneric arrowを全量検索した。production Astro buildとfull Playwrightを実行してruntime互換性まで確認した。
 - **教訓**: Astro major upgradeではtypecheckだけで互換性を判断せずproduction buildを必須にする。`.astro`内のgeneric arrowは`<T,>`またはfunction declarationを使い、`<T>(...) =>`の曖昧構文を残さない。
 
+### LL-421: document-startのCLS probeはDocumentを監視し、geometryを最初のanimation frameで採取する
+- **事象**: 広告同意promptのpre-paint回帰testで、`addInitScript()`直後に`document.documentElement`へMutationObserverを付けるとobserverが動かず、DOM挿入直後の`getBoundingClientRect()`はpromptが初回layoutへ参加していても高さ0を返した。
+- **根本原因**: document-startでは`documentElement`が未確立の場合があり、DOM nodeの挿入通知時点はstyle/layoutが確定した最初のpaint機会より早い。DOMへ存在することと初回layout geometryが確定したことを同じ時点として扱っていた。
+- **対策**: observerは常に存在する`Document`を監視し、対象nodeと操作要素が揃った後の最初の`requestAnimationFrame()`でcomputed displayとgeometryを採取する。CLSはdocument-startでPerformanceObserverを開始し、layoutが複数frame安定した後に`takeRecords()`を含めて評価する。
+- **教訓**: first-paint UIの回帰testはDOM挿入、style/layout確定、paint後のshiftを別の観測点として扱う。document-startで未確立nodeへobserverを付けず、初回geometryはanimation frame、CLSはbuffered PerformanceObserverと安定frameで検証する。
+
+### LL-422: `hidden`をCSSだけで上書きするとclient failure時にvisible+inertのdead UIを作る
+- **事象**: 同意promptの初回layoutを予約するため、root data属性がvisibleなら`[hidden]`要素へ`display:grid`を適用した。deferred client bundleが失敗するとpromptは画面に見える一方、DOM上は`hidden inert`のままでbuttonを操作できない状態になった。
+- **根本原因**: 見た目のdisplayとHTMLのhidden/inert semanticsを別々の実行経路へ分け、CSS stateだけを初回paintへ先行させた。client JavaScriptが必ず実行されることを操作可能性の前提にしていた。
+- **対策**: prompt markup直後のparser-blocking inline scriptが実際のhidden/inertを初回paint前に設定し、deferred client未実行時にも選択を保存できる最小fallbackを所有する。fallbackは広告scriptを読み込まず、clientがreadyなら既存delegated handlerへ処理を譲る。inline parserはshared `parsePrivacyConsent()`と全record境界を実browserで照合する。
+- **教訓**: 初回paintの状態をCSSで先行させる場合でも、visible、focusable、operableの3契約を同時に満たす必要がある。`hidden`/`inert`をauthor displayで打ち消して見た目だけを変えず、client bundle failureを実際に遮断してdead controlとpremature trackingが無いことを検証する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

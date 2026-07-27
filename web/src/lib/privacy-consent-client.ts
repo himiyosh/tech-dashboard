@@ -3,11 +3,11 @@ import {
   PRIVACY_CONSENT_STORAGE_KEY,
   adsenseScriptUrl,
   createPrivacyConsent,
-  isProductionAdvertisingHost,
   parsePrivacyConsent,
   privacyConsentState,
   serializePrivacyConsent,
   shouldLoadAdvertising,
+  shouldShowPrivacyConsentPrompt,
   type AdvertisingConsent,
   type PrivacyConsentState,
 } from "./privacy-consent.ts";
@@ -92,16 +92,24 @@ function syncRoot(root: HTMLElement, state: PrivacyConsentState): void {
   });
 
   if (root.dataset.consentSurface === "prompt") {
-    const shouldShow =
-      isProductionAdvertisingHost(window.location.hostname) &&
-      state === "undecided" &&
-      !/^\/privacy\/?$/.test(window.location.pathname);
+    const shouldShow = shouldShowPrivacyConsentPrompt(
+      window.location.hostname,
+      window.location.pathname,
+      state,
+    );
     setHidden(root, !shouldShow);
   }
 }
 
 export function syncPrivacyConsent(state = readState()): void {
   document.documentElement.dataset.advertisingConsent = state;
+  document.documentElement.dataset.privacyConsentPrompt = shouldShowPrivacyConsentPrompt(
+    window.location.hostname,
+    window.location.pathname,
+    state,
+  )
+    ? "visible"
+    : "hidden";
   document.querySelectorAll<HTMLElement>(CONSENT_ROOT_SELECTOR).forEach((root) => {
     syncRoot(root, state);
   });
@@ -162,6 +170,7 @@ export function initializePrivacyConsent(): void {
       }
     }
   });
+  document.documentElement.dataset.privacyConsentClient = "ready";
   syncPrivacyConsent();
   restoreConsentFocus();
 }

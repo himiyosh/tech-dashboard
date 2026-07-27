@@ -2772,6 +2772,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: storage eventでstateがallowed以外へ変わりAdSense loaderが存在するtabはreloadし、操作tabはone-use session markerでsettings buttonへfocusを戻す。Privacyをmenu-owned secondary destinationへ追加し、mobile promptはfixed overlayではなくcontent前のinline surfaceにする。削除confirmationとerror statusはreduced-motion対応のsafe scrollでtabbar上へ収める。production-hostの2tab撤回、focus、375px geometry、Menu再到達をE2Eで固定する。
 - **教訓**: optional third-party consentの撤回は将来のloadを止めるだけでなく、現在のdocumentで既に起動したscriptをどう停止するかを定義する。choice surfaceを閉じた後も同じcontrolへ戻れる永続navigationを残し、reload、cross-tab、focus、mobile safe areaを1つのconsent lifecycleとして検証する。
 
+### LL-419: package feed proxy 由来のlockfileはresolved hostとintegrity algorithmをpublish前に正規化する
+- **事象**: Astroのsecurity upgradeを通常の`npm install`で適用したところ、環境のnpm registryが`packagefeedproxy.microsoft.io`を指していたため、新規lock entryの`resolved`が`ms-feed-*.pkgs.visualstudio.com`、`integrity`がSHA-1になった。直接`registry.npmjs.org`を指定した再生成はnetworkで`ENOTCONN`となり、repositoryのHTTPS npmjs + SHA-512 provenance contractをそのまま満たせなかった。
+- **根本原因**: npm proxyはupstream packageを取得できる一方、lockfileへproxy固有URLとSHA-1 metadataを書き込む。`--registry`を指定しても、直接registryへのnetwork pathが利用できない環境ではlockfile生成自体が停止する。
+- **対策**: manifest resolutionとtarball取得は設定済みproxyを利用し、各tarballの実bytesからSHA-512を再計算して、同じpackage pathのcanonical `https://registry.npmjs.org/...` URLへlockfileを正規化した。全lock entryについてHTTPS、host、SHA-512を検証し、`npm ci`でbytesとintegrityが一致することを確認する。
+- **教訓**: dependency updateではaudit 0件だけでなくlockfile provenanceを別gateとして扱う。企業proxyを無理に迂回せず、upstreamと同一のtarball bytesを取得できる場合はcontent hashを自ら検証してcanonical metadataへ正規化し、最終的に`npm ci`で再現性を証明する。proxy URLやSHA-1をそのままcommitせず、直接registryへ到達できないnetwork failureをsecurity contractの緩和理由にしない。
+
+### LL-420: Astro client scriptのgeneric arrowはstrict compilerでTSX tagと解釈され得る
+- **事象**: Astro 6から7へのsecurity upgrade後、`Portal.astro`のclient scriptにあった`const withDeadline = <T>(...) =>`がRust compilerでHTML tag開始として解釈され、`Unexpected token`でproduction buildが停止した。root typecheckとunit testはこのtemplate compile errorを検出しなかった。
+- **根本原因**: `.astro`内のclient scriptはTypeScriptを含められるが、単一generic parameterのarrow syntaxはJSX/HTMLと曖昧である。旧compilerが受理していた曖昧構文をAstro 7のstrict parserが拒否した。
+- **対策**: TSXのdisambiguation syntaxである`<T,>`へ変更し、Web treeの`.astro`にあるgeneric arrowを全量検索した。production Astro buildとfull Playwrightを実行してruntime互換性まで確認した。
+- **教訓**: Astro major upgradeではtypecheckだけで互換性を判断せずproduction buildを必須にする。`.astro`内のgeneric arrowは`<T,>`またはfunction declarationを使い、`<T>(...) =>`の曖昧構文を残さない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -970,6 +970,19 @@ const footerLastRunRelative = footerLastRunAt
         const sourceLabels = new Map(
           sourceMeta.flatMap((entry) => [[entry.id, entry.label], [entry.label, entry.label]] as const),
         );
+        const narrowSearchLayout = window.matchMedia("(max-width: 980px)");
+        const searchHeader = searchRoot.closest("header");
+        const syncSearchOverlayPosition = () => {
+          if (!searchRoot.classList.contains("is-open") || !narrowSearchLayout.matches || !searchHeader) {
+            searchRoot.style.removeProperty("--search-overlay-top");
+            return;
+          }
+          const headerBottom = searchHeader.getBoundingClientRect().bottom;
+          searchRoot.style.setProperty(
+            "--search-overlay-top",
+            `${Math.max(12, Math.ceil(headerBottom) + 8)}px`,
+          );
+        };
         const tagRecoveryVersion = panel.dataset.tagRecoveryVersion ?? "";
         let pf: any = null;
         let tagRecoveryMapPromise: Promise<Record<string, string>> | null = null;
@@ -1095,6 +1108,7 @@ const footerLastRunRelative = footerLastRunAt
         const establishSearchState = () => {
           (window as any).__tdCloseMenu?.();
           searchRoot.classList.add("is-open");
+          syncSearchOverlayPosition();
           if (closeButton) closeButton.hidden = false;
           setTriggerActive(true);
         };
@@ -1123,6 +1137,7 @@ const footerLastRunRelative = footerLastRunAt
           panel.removeAttribute("aria-busy");
           panel.replaceChildren();
           searchRoot.classList.remove("is-open");
+          searchRoot.style.removeProperty("--search-overlay-top");
           if (closeButton) closeButton.hidden = true;
           setTriggerActive(false);
           setExpanded(false);
@@ -1131,6 +1146,8 @@ const footerLastRunRelative = footerLastRunAt
         };
         (window as any).__tdCloseSearch = closeSearch;
         closeButton?.addEventListener("click", () => closeSearch(true));
+        window.addEventListener("resize", syncSearchOverlayPosition);
+        window.addEventListener("scroll", syncSearchOverlayPosition, { passive: true });
         const hitItems = () => Array.from(panel.querySelectorAll<HTMLAnchorElement>(".search-hit"));
         const clearActive = () => {
           activeIndex = -1;

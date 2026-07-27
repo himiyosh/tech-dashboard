@@ -78,4 +78,17 @@ describe("web clarity contracts", () => {
     expect(headers).toContain("/tag-recovery.json");
     expect(headers).toContain("Cache-Control: no-store");
   });
+
+  it("positions narrow Search from the visible header edge", () => {
+    const portal = read("web/src/layouts/Portal.astro");
+    const styles = read("web/src/styles/portal.css");
+
+    expect(portal).toContain('window.matchMedia("(max-width: 980px)")');
+    expect(portal).toContain('const headerBottom = searchHeader.getBoundingClientRect().bottom;');
+    expect(portal).toContain('"--search-overlay-top"');
+    expect(portal).toContain('window.addEventListener("resize", syncSearchOverlayPosition)');
+    expect(portal).toContain('window.addEventListener("scroll", syncSearchOverlayPosition');
+    expect(styles).toContain("top: var(--search-overlay-top, 89px);");
+    expect(styles).toContain("top: var(--search-overlay-top, 77px);");
+  });
 });

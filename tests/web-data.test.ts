@@ -795,6 +795,18 @@ describe("Research と arXiv の表示レーン", () => {
     expect(isArxivEntry(reportEntry)).toBe(false);
     expect(isResearchListingEntry(reportEntry)).toBe(true);
   });
+
+  it("overview count の curated Research と arXiv paper を重複させない", () => {
+    const fixtures = [arxivEntry, reportEntry];
+    const curatedIds = fixtures.filter(isResearchListingEntry).map((entry) => entry.id);
+    const arxivIds = fixtures.filter(isArxivEntry).map((entry) => entry.id);
+
+    expect(curatedIds).toEqual(["research-report"]);
+    expect(arxivIds).toEqual(["arxiv-entry"]);
+    expect(new Set([...curatedIds, ...arxivIds]).size).toBe(
+      curatedIds.length + arxivIds.length,
+    );
+  });
 });
 
 // ============================================================

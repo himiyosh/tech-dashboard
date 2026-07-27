@@ -94,4 +94,19 @@ describe("web clarity contracts", () => {
       "max-height: min(520px, calc(100dvh - var(--search-overlay-top, 89px) - 68px));",
     );
   });
+
+  it("keeps curated Research and arXiv as distinct canonical destinations", () => {
+    const categories = read("web/src/pages/categories.astro");
+
+    expect(categories).toContain("ARXIV_ENTRIES");
+    expect(categories).toContain("RESEARCH_ENTRIES");
+    expect(categories).toContain('const CardElement = isResearch ? "article" : "a";');
+    expect(categories).toContain('href="/c/research/"');
+    expect(categories).toContain('href="/arxiv/"');
+    expect(categories).toContain("data-entry-count={researchLaneCounts.curated}");
+    expect(categories).toContain("data-entry-count={researchLaneCounts.arxiv}");
+    expect(categories).toContain("curated: RESEARCH_ENTRIES.length");
+    expect(categories).toContain("arxiv: ARXIV_ENTRIES.length");
+    expect(categories).not.toMatch(/curated:\s*15\b|arxiv:\s*80\b/);
+  });
 });

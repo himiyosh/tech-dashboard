@@ -2828,6 +2828,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: tablet result panelを`100dvh - --search-overlay-top - Search control高 - panel gap - viewport clearance`へclampし、721x600 Homeと721x667 breadcrumb routeで末尾まで内部scrollした後のpanel/last result座標、focus、44px操作面、overflowを固定した。
 - **教訓**: fixed/sticky overlayの位置を変えた場合、親の非交差だけで完了にしない。子のdropdown/listbox/dialog本文が使える残りviewport高も同じ位置変数から導出し、幅breakpointに加えて実際に短いheight、深いrouteの追加Header行、内部scroll末尾をDOMRectで検証する。
 
+### LL-428: Playwright testからJSON-backedなWeb data moduleを直接importしない
+- **事象**: CategoriesのE2Eでcanonical `ARXIV_ENTRIES` / `RESEARCH_ENTRIES`を直接参照するため`web/src/lib/data.ts`をimportしたところ、Playwright runnerのNode ESM評価が`data/index.json needs an import attribute of type: json`でtest収集前に停止した。
+- **根本原因**: VitestとAstro buildはJSON importを処理できる一方、Playwright設定下のNode ESM loaderはJSON-backed moduleを同じ変換経路で評価しない。production collectionの再利用をtest runnerのmodule互換性と同一視していた。
+- **対策**: canonical collection利用はsource contractで固定し、browser E2EはSSRが出力した動的`data-entry-count`とreader-facing text、href、geometryを検証する。lane分離の集合契約はJSON非依存fixtureでproduction helperをunit testする。
+- **教訓**: browser E2Eからbuild-time JSONをimportするmoduleを直接読み込まず、純粋なJSON非依存helper、source contract、生成DOMのmachine-readable属性へ責務を分ける。test収集時のloader failureと製品runtime failureを混同しない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

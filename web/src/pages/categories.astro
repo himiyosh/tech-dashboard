@@ -4,7 +4,9 @@ import PageHero from "../components/PageHero.astro";
 import Sidebar from "../components/Sidebar.astro";
 import LanguageFallbackBadge from "../components/LanguageFallbackBadge.astro";
 import {
+  ARXIV_ENTRIES,
   MAIN_TIMELINE_ENTRIES,
+  RESEARCH_ENTRIES,
   CATEGORY_META,
   countByCategory,
   entriesFor,
@@ -124,6 +126,10 @@ const topCategory = [...categoryPanels].sort((a, b) => b.liveCount - a.liveCount
 const activeCategories = categoryPanels.filter((panel) => panel.last30 > 0).length;
 const researchPanel = categoryPanels.find((panel) => panel.slug === "research");
 const techNewsPanel = categoryPanels.find((panel) => panel.slug === "tech-news");
+const researchLaneCounts = {
+  curated: RESEARCH_ENTRIES.length,
+  arxiv: ARXIV_ENTRIES.length,
+} as const;
 
 // Compact directory: a flat A→Z list so the order is predictable (not the
 // vendor-group authoring order, which read as "scattered").
@@ -252,27 +258,59 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
           </div>
           <div class="category-grid">
             {cats.map((cat) => {
+              const isResearch = cat.slug === "research";
+              const CardElement = isResearch ? "article" : "a";
               return (
-                <a href={`/c/${cat.slug}`} class="category-card" style={`--cat-color:${cat.color}`}>
+                <CardElement
+                  href={isResearch ? undefined : `/c/${cat.slug}`}
+                  class:list={["category-card", isResearch && "category-card-research"]}
+                  style={`--cat-color:${cat.color}`}
+                  data-category={cat.slug}
+                  data-research-overview={isResearch ? "" : undefined}
+                >
                   <div class="cat-head">
                     <span class="cat-icon" aria-hidden="true">{cat.emoji}</span>
                     <div class="cat-title-block">
                       <span class="cat-name">{cat.name}</span>
                       <span class="cat-group-label">{GROUP_LABEL[cat.group]}</span>
                     </div>
-                    <span class="cat-count">{cat.liveCount}</span>
+                    {!isResearch && <span class="cat-count">{cat.liveCount}</span>}
                   </div>
 
-                  <div class="cat-metrics">
-                    <span><strong>{cat.liveCount}</strong> live</span>
-                    <span><strong>{cat.last30}</strong> live 30d</span>
-                    <span><strong>{cat.sourceCount}</strong> sources</span>
-                    <span class:list={["cat-delta", cat.delta > 0 ? "up" : cat.delta < 0 ? "down" : "flat"]}>
-                      {cat.delta > 0 ? "+" : ""}{cat.delta}% 7d
-                    </span>
-                  </div>
+                  {isResearch ? (
+                    <div
+                      class="cat-metrics cat-metrics-research"
+                      data-lane-scope="curated-research"
+                      aria-label="Curated Research activity, excluding arXiv papers"
+                    >
+                      <small class="research-curated-scope">
+                        <span class="i18n-ja">キュレーション Research の動向</span>
+                        <span class="i18n-en" lang="en">Curated Research activity</span>
+                      </small>
+                      <span><strong>{cat.last30}</strong> live 30d</span>
+                      <span><strong>{cat.sourceCount}</strong> sources</span>
+                      <span class:list={["cat-delta", cat.delta > 0 ? "up" : cat.delta < 0 ? "down" : "flat"]}>
+                        {cat.delta > 0 ? "+" : ""}{cat.delta}% 7d
+                      </span>
+                    </div>
+                  ) : (
+                    <div class="cat-metrics">
+                      <span><strong>{cat.liveCount}</strong> live</span>
+                      <span><strong>{cat.last30}</strong> live 30d</span>
+                      <span><strong>{cat.sourceCount}</strong> sources</span>
+                      <span class:list={["cat-delta", cat.delta > 0 ? "up" : cat.delta < 0 ? "down" : "flat"]}>
+                        {cat.delta > 0 ? "+" : ""}{cat.delta}% 7d
+                      </span>
+                    </div>
+                  )}
 
-                  <div class="cat-trend" role="img" aria-label={`${cat.name} article trend for the last 30 days`}>
+                  <div
+                    class="cat-trend"
+                    role="img"
+                    aria-label={isResearch
+                      ? "Curated Research article trend for the last 30 days, excluding arXiv papers"
+                      : `${cat.name} article trend for the last 30 days`}
+                  >
                     {cat.daily.map((bucket) => (
                       <span class="cat-bar" title={`${bucket.key}: ${bucket.count}`}>
                         <i style={`height:${bucket.height}%`}></i>
@@ -285,7 +323,7 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
                     <span>{cat.daily.at(-1)?.label}</span>
                   </div>
 
-                  {cat.latest && cat.latestTitleJa && cat.latestTitleEn && (
+                  {!isResearch && cat.latest && cat.latestTitleJa && cat.latestTitleEn && (
                     <div class="cat-latest">
                       <span>Latest</span>
                       <strong class="i18n-ja" lang={cat.latestTitleJa.fallbackLang ?? "ja"}>
@@ -315,32 +353,89 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
                     </tbody>
                   </table>
 
-                  <div class="cat-footer">
-                    <div class="cat-meta">
-                      {cat.latest ? (
-                        <>
-                          最終更新{" "}
-                          <time datetime={cat.latest.publishedAt} data-relative-time>
-                            {relativeTime(cat.latest.publishedAt, now)}
-                          </time>
-                        </>
-                      ) : "エントリなし"}
+                  {isResearch ? (
+                    <ul class="research-lane-actions" role="list">
+                      <li>
+                        <a
+                          href="/c/research/"
+                          class="research-lane-link"
+                          data-research-lane="curated"
+                          data-entry-count={researchLaneCounts.curated}
+                        >
+                          <span class="research-lane-copy">
+                            <strong>
+                              <span class="i18n-ja">Research</span>
+                              <span class="i18n-en" lang="en">Curated Research</span>
+                            </strong>
+                            <small>
+                              <span class="i18n-ja">arXivを除く選定記事</span>
+                              <span class="i18n-en" lang="en">Selected entries, excluding arXiv</span>
+                            </small>
+                          </span>
+                          <span class="research-lane-count">
+                            <strong>{researchLaneCounts.curated}</strong>
+                            <small>
+                              <span class="i18n-ja">記事</span>
+                              <span class="i18n-en" lang="en">entries</span>
+                            </small>
+                          </span>
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          href="/arxiv/"
+                          class="research-lane-link"
+                          data-research-lane="arxiv"
+                          data-entry-count={researchLaneCounts.arxiv}
+                        >
+                          <span class="research-lane-copy">
+                            <strong>
+                              <span class="i18n-ja">arXiv 論文</span>
+                              <span class="i18n-en" lang="en">arXiv papers</span>
+                            </strong>
+                            <small>
+                              <span class="i18n-ja">専用レーン</span>
+                              <span class="i18n-en" lang="en">Dedicated paper lane</span>
+                            </small>
+                          </span>
+                          <span class="research-lane-count">
+                            <strong>{researchLaneCounts.arxiv}</strong>
+                            <small>
+                              <span class="i18n-ja">件</span>
+                              <span class="i18n-en" lang="en">papers</span>
+                            </small>
+                          </span>
+                        </a>
+                      </li>
+                    </ul>
+                  ) : (
+                    <div class="cat-footer">
+                      <div class="cat-meta">
+                        {cat.latest ? (
+                          <>
+                            最終更新{" "}
+                            <time datetime={cat.latest.publishedAt} data-relative-time>
+                              {relativeTime(cat.latest.publishedAt, now)}
+                            </time>
+                          </>
+                        ) : "エントリなし"}
+                      </div>
+                      <div
+                        class="cat-types"
+                        data-type-scope="category-live-entries"
+                        aria-label={`${cat.name} current live entries by source type`}
+                      >
+                        <small class="cat-types-scope">
+                          <span class="i18n-ja">Live内訳</span>
+                          <span class="i18n-en" lang="en">Live mix</span>
+                        </small>
+                        {cat.topTypes.map((type) => (
+                          <span class="cat-type">{type.label} {type.count}</span>
+                        ))}
+                      </div>
                     </div>
-                    <div
-                      class="cat-types"
-                      data-type-scope="category-live-entries"
-                      aria-label={`${cat.name} current live entries by source type`}
-                    >
-                      <small class="cat-types-scope">
-                        <span class="i18n-ja">Live内訳</span>
-                        <span class="i18n-en" lang="en">Live mix</span>
-                      </small>
-                      {cat.topTypes.map((type) => (
-                        <span class="cat-type">{type.label} {type.count}</span>
-                      ))}
-                    </div>
-                  </div>
-                </a>
+                  )}
+                </CardElement>
               );
             })}
           </div>
@@ -554,9 +649,13 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
     transition: border-color 0.15s ease, transform 0.15s ease;
   }
 
-  .category-card:hover {
+  a.category-card:hover {
     border-color: color-mix(in srgb, var(--cat-color) 62%, var(--border));
     transform: translateY(-1px);
+  }
+
+  .category-card-research:focus-within {
+    border-color: color-mix(in srgb, var(--cat-color) 62%, var(--border));
   }
 
   .cat-head {
@@ -622,6 +721,18 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
     color: var(--text);
     font-size: 11px;
     font-variant-numeric: tabular-nums;
+  }
+
+  .cat-metrics-research {
+    align-items: center;
+  }
+
+  .research-curated-scope {
+    flex: 1 0 100%;
+    color: var(--text-subtle);
+    font-size: 9.5px;
+    font-weight: 700;
+    line-height: 1.25;
   }
 
   .cat-delta.up {
@@ -752,6 +863,86 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
 
   .cat-types .cat-type:nth-of-type(n+3) {
     display: none;
+  }
+
+  .research-lane-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .research-lane-actions > li {
+    min-width: 0;
+  }
+
+  .research-lane-link {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    min-height: 48px;
+    padding: 6px 8px;
+    border: 1px solid color-mix(in srgb, var(--cat-color) 32%, var(--border));
+    border-radius: 7px;
+    color: var(--text-2);
+    background: color-mix(in srgb, var(--cat-color) 8%, var(--bg-2));
+    text-decoration: none;
+  }
+
+  .research-lane-link:hover {
+    border-color: color-mix(in srgb, var(--cat-color) 62%, var(--border));
+    color: var(--text);
+  }
+
+  .research-lane-link:focus-visible {
+    border-color: var(--cat-color);
+    outline: 2px solid var(--cat-color);
+    outline-offset: 2px;
+  }
+
+  .research-lane-copy,
+  .research-lane-copy strong,
+  .research-lane-copy small {
+    display: block;
+    min-width: 0;
+  }
+
+  .research-lane-copy strong {
+    color: var(--text);
+    font-size: 10.5px;
+    line-height: 1.2;
+  }
+
+  .research-lane-copy small {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 8.5px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .research-lane-count {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: baseline;
+    gap: 2px;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .research-lane-count > strong {
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .research-lane-count > small {
+    color: var(--muted);
+    font-size: 8px;
+    line-height: 1;
   }
 
   .sr-only {

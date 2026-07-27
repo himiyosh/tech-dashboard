@@ -438,6 +438,9 @@ header {
 .site-menu-list {
   display: grid;
   gap: 6px;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .site-menu-list a,
@@ -5091,10 +5094,14 @@ html, body {
     left: 10px;
     width: auto;
     max-height: min(70vh, 520px);
+    display: flex;
+    flex-direction: column;
     overflow: visible;
   }
   .site-menu-list {
-    max-height: min(calc(70vh - 64px), 456px);
+    min-height: 0;
+    max-height: none;
+    flex: 1 1 auto;
     overflow-y: auto;
   }
   .lang-btn {

@@ -45,6 +45,12 @@ import {
 } from "../../lib/source-meta.ts";
 import { normalizeTagKey } from "../../lib/tag-normalize.ts";
 import { sourceExcerptForEntry } from "../../lib/source-excerpt.ts";
+import {
+  articleSocialImage,
+  createLocalizedPageMetadata,
+  localizedArticleMetadataDescription,
+  localizedArticleMetadataTitle,
+} from "../../lib/social-metadata.ts";
 import SourceExcerpt from "../../components/SourceExcerpt.astro";
 
 export function getStaticPaths() {
@@ -223,18 +229,50 @@ const breadcrumb = [
   { label: laneName, href: laneHref },
   { label: titleDisplay },
 ];
-const pageTitle = `${titleDisplay} — TECH Dashboard`;
 const pendingDescription = {
   ja: "AI 要約は準備中です。共有前にタイトル、カテゴリ、元記事を確認してください。",
   en: "AI summary pending. Check the title, category, and original article before sharing.",
 } as const;
-const pageDesc = (
-  summaryAbsent
-    ? pendingDescription.ja
-    : summaryJa || summaryEn.text || entry.title
-).slice(0, 160);
-const ogImage = entry.image?.src ?? "";
 const canonicalUrl = `${SITE_URL}/e/${entry.id}/`;
+const metadataTitleJa = localizedArticleMetadataTitle({
+  title: titleJa,
+  lang: "ja",
+  sourceLabel: srcDisplay,
+  categoryLabel: catName,
+  publishedAt: entry.publishedAt,
+  sourceUrl,
+});
+const metadataTitleEn = localizedArticleMetadataTitle({
+  title: titleEn,
+  lang: "en",
+  sourceLabel: srcDisplay,
+  categoryLabel: catName,
+  publishedAt: entry.publishedAt,
+  sourceUrl,
+});
+const pageDescriptionJa = localizedArticleMetadataDescription({
+  summary: indexedSummaryJa,
+  lang: "ja",
+  sourceLabel: srcDisplay,
+  categoryLabel: catName,
+});
+const pageDescriptionEn = localizedArticleMetadataDescription({
+  summary: indexedSummaryEn,
+  lang: "en",
+  sourceLabel: srcDisplay,
+  categoryLabel: catName,
+});
+const articleMetadata = createLocalizedPageMetadata({
+  canonicalUrl,
+  type: "article",
+  titleJa: `${metadataTitleJa} | TECH Dashboard`,
+  titleEn: `${metadataTitleEn} | TECH Dashboard`,
+  socialTitleJa: metadataTitleJa,
+  socialTitleEn: metadataTitleEn,
+  descriptionJa: pageDescriptionJa,
+  descriptionEn: pageDescriptionEn,
+  image: articleSocialImage(entry.image, metadataTitleJa, metadataTitleEn),
+});
 const importanceStandingJa =
   `${laneName} ${categoryStanding.total}件中、同等以上 ${categoryStanding.sameOrHigher}件`;
 const importanceStandingEn =
@@ -276,11 +314,12 @@ const halfLifeMeta = entry.halfLife ? halfLifeLabel[entry.halfLife] : null;
 const structuredHeadline = effectiveTitleLang === "ja"
   ? titleJaResult.text
   : titleEnResult.text;
-const structuredDescription = summaryAbsent
-  ? pendingDescription[effectiveTitleLang]
-  : effectiveTitleLang === "ja"
-    ? indexedSummaryJa || structuredHeadline
-    : indexedSummaryEn || structuredHeadline;
+const structuredDescription = effectiveTitleLang === "ja"
+  ? pageDescriptionJa
+  : pageDescriptionEn;
+const structuredImageAlt = effectiveTitleLang === "ja"
+  ? articleMetadata.image.altJa
+  : articleMetadata.image.altEn;
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -290,7 +329,14 @@ const jsonLd = {
   url: canonicalUrl,
   datePublished: entry.publishedAt,
   inLanguage: effectiveTitleLang === "ja" ? "ja-JP" : "en",
-  image: ogImage || undefined,
+  image: {
+    "@type": "ImageObject",
+    url: articleMetadata.image.url,
+    contentUrl: articleMetadata.image.url,
+    caption: structuredImageAlt,
+    width: articleMetadata.image.width,
+    height: articleMetadata.image.height,
+  },
   author: { "@type": "Organization", name: srcDisplay, url: sourceUrl },
   publisher: { "@type": "Organization", name: "TECH Dashboard", url: SITE_URL },
   mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
@@ -300,22 +346,11 @@ const jsonLd = {
 ---
 
 <Portal
-  title={pageTitle}
-  description={pageDesc}
+  metadata={articleMetadata}
   pageKey={entryIsArxiv ? "arxiv" : "timeline"}
   breadcrumb={breadcrumb}
 >
   <Fragment slot="head">
-    <link rel="canonical" href={canonicalUrl} />
-    <meta property="og:type" content="article" />
-    <meta property="og:title" content={titleDisplay} />
-    <meta property="og:description" content={pageDesc} />
-    <meta property="og:url" content={canonicalUrl} />
-    {ogImage && <meta property="og:image" content={ogImage} />}
-    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
-    <meta name="twitter:title" content={titleDisplay} />
-    <meta name="twitter:description" content={pageDesc} />
-    {ogImage && <meta name="twitter:image" content={ogImage} />}
     <meta property="article:section" content={catName} />
     <meta property="article:published_time" content={entry.publishedAt} />
     {entry.tags.map((t) => <meta property="article:tag" content={t} />)}

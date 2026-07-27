@@ -2796,6 +2796,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: prompt markup直後のparser-blocking inline scriptが実際のhidden/inertを初回paint前に設定し、deferred client未実行時にも選択を保存できる最小fallbackを所有する。fallbackは広告scriptを読み込まず、clientがreadyなら既存delegated handlerへ処理を譲る。inline parserはshared `parsePrivacyConsent()`と全record境界を実browserで照合する。
 - **教訓**: 初回paintの状態をCSSで先行させる場合でも、visible、focusable、operableの3契約を同時に満たす必要がある。`hidden`/`inert`をauthor displayで打ち消して見た目だけを変えず、client bundle failureを実際に遮断してdead controlとpremature trackingが無いことを検証する。
 
+### LL-423: static HTMLのquery状態はclient更新だけではsocial crawlerへ届かない
+- **事象**: `?lang=en`でUIと`meta[name=description]`はclient-sideに英語へ切り替わったが、Homeと記事のOpen Graph・Twitter metadataは生成HTMLに無いか日本語固定で、JavaScriptを実行しないsocial crawlerは英語previewを取得できなかった。
+- **根本原因**: static hostingではquery違いが同じHTML fileへ解決され、`history.replaceState`やclient DOM mutationはcrawlerが最初に受け取るresponse bodyを変更しない。既存の共有URL言語contractをcrawler-visible metadata contractと同一視していた。
+- **対策**: canonical static pageへJA/EN値を持つlocalization markerを1組だけ生成し、Home・記事詳細の`?lang=en` requestだけをPages Functionでhead限定変換する。canonical linkと本文は変更せず、default requestはstatic responseをそのまま返し、required metadata欠落時はfail-closedにする。
+- **教訓**: queryで表すshareable UI stateをsocial previewへ反映する場合、client scriptの表示結果をcrawler responseの証拠にしない。別static routeまたはboundedなserver-side response変換が必要であり、generated HTML、edge transform、canonical、重複tag、non-JavaScript responseを別々に検証する。
+
+### LL-424: HTML opening tagを`[^>]*`で抽出するとquoted属性内の`>`で壊れる
+- **事象**: 英語descriptionに`langgraph>=1.2.2`を含む実記事で、Pages Functionのhead局所化がmeta tagを途中までしか抽出できずHTTP 500になった。
+- **根本原因**: opening tagを`<meta\b[^>]*>`で抽出し、quoted属性値に含まれる`>`をtag終端として扱っていた。synthetic fixtureと代表記事だけではこの実corpus境界を検出できなかった。
+- **対策**: quote stateを追ってopening tag終端を探すbounded scannerへ置き換え、`>`を含むfixtureと生成済み全記事HTMLをactual route handlerへ通す回帰testを追加した。
+- **教訓**: HTML属性を含むtag全体を`[^>]*`の正規表現でparseしない。生成HTMLの限定変換でもquote-aware parser/scannerを使い、代表例だけでなく全生成corpusを通してfail-closed変換の到達性を確認する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

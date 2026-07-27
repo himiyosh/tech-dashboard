@@ -1,9 +1,19 @@
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { onRequestGet as localizeArticleMetadata } from "../../web/functions/e/[id].ts";
+import { onRequestGet as localizeHomeMetadata } from "../../web/functions/index.ts";
 import { SITE_URL } from "../../web/src/lib/site.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
 import { canonicalSourceUrl } from "../../web/src/lib/source-meta.ts";
+import {
+  HOME_PAGE_METADATA,
+  SOCIAL_IMAGE_HEIGHT,
+  SOCIAL_IMAGE_PATH,
+  SOCIAL_IMAGE_URL,
+  SOCIAL_IMAGE_WIDTH,
+  articleSocialImage,
+} from "../../web/src/lib/social-metadata.ts";
 
 const TIMELINE_ENTRY_LINK_SELECTOR =
   'main article.card h3.title > a[href^="/e/"]';
@@ -23,6 +33,19 @@ function collectPageErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   return errors;
+}
+
+function localizedHeadValue(html: string, key: string): string {
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (key === "title") {
+    return html.match(
+      new RegExp(`<title\\b(?=[^>]*data-meta-key="${escapedKey}")[^>]*>([\\s\\S]*?)<\\/title>`, "i"),
+    )?.[1] ?? "";
+  }
+  const tag = html.match(
+    new RegExp(`<meta\\b(?=[^>]*data-meta-key="${escapedKey}")[^>]*>`, "i"),
+  )?.[0];
+  return tag?.match(/\scontent="([^"]*)"/i)?.[1] ?? "";
 }
 
 const generatedEntryRouteCache = new Map<"page" | "archive", Map<string, string>>();
@@ -86,6 +109,337 @@ test.describe("Publisher generated artifact", () => {
     );
     await expect(page.locator("body")).not.toContainText("近日中に AI が生成");
     expect(runtimeErrors).toEqual([]);
+  });
+
+  test("publishes complete localized Home discovery metadata and brand image", async ({
+    page,
+    request,
+  }) => {
+    const response = await page.goto("/", { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+
+    const uniqueSelectors = [
+      'link[rel="canonical"]',
+      'meta[name="description"]',
+      'meta[property="og:type"]',
+      'meta[property="og:title"]',
+      'meta[property="og:description"]',
+      'meta[property="og:url"]',
+      'meta[property="og:image"]',
+      'meta[property="og:image:alt"]',
+      'meta[name="twitter:card"]',
+      'meta[name="twitter:title"]',
+      'meta[name="twitter:description"]',
+      'meta[name="twitter:image"]',
+      'meta[name="twitter:image:alt"]',
+    ];
+    for (const selector of uniqueSelectors) {
+      await expect(page.locator(selector), `${selector} is emitted exactly once`).toHaveCount(1);
+    }
+
+    await expect.poll(() => page.title()).toBe(HOME_PAGE_METADATA.titleJa);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      "href",
+      HOME_PAGE_METADATA.canonicalUrl,
+    );
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      "content",
+      HOME_PAGE_METADATA.descriptionJa,
+    );
+    await expect(page.locator('meta[property="og:type"]')).toHaveAttribute(
+      "content",
+      "website",
+    );
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+      "content",
+      HOME_PAGE_METADATA.socialUrlJa,
+    );
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+      "content",
+      SOCIAL_IMAGE_URL,
+    );
+    await expect(page.locator('meta[property="og:image:type"]')).toHaveAttribute(
+      "content",
+      "image/png",
+    );
+    await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute(
+      "content",
+      String(SOCIAL_IMAGE_WIDTH),
+    );
+    await expect(page.locator('meta[property="og:image:height"]')).toHaveAttribute(
+      "content",
+      String(SOCIAL_IMAGE_HEIGHT),
+    );
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      "content",
+      "summary_large_image",
+    );
+
+    const jsonLd = JSON.parse(
+      (await page.locator('script[type="application/ld+json"]').textContent()) ?? "{}",
+    ) as {
+      name?: string;
+      inLanguage?: string[];
+      description?: Array<{ "@value"?: string; "@language"?: string }>;
+    };
+    expect(jsonLd.name).toBe("TECH Dashboard");
+    expect(jsonLd.inLanguage).toEqual(["ja-JP", "en"]);
+    expect(jsonLd.description).toEqual([
+      { "@value": HOME_PAGE_METADATA.descriptionJa, "@language": "ja" },
+      { "@value": HOME_PAGE_METADATA.descriptionEn, "@language": "en" },
+    ]);
+
+    const imageResponse = await request.get(SOCIAL_IMAGE_PATH);
+    expect(imageResponse.status()).toBe(200);
+    expect(imageResponse.headers()["content-type"]).toContain("image/png");
+    const image = await imageResponse.body();
+    expect([...image.subarray(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+    expect(image.readUInt32BE(16)).toBe(SOCIAL_IMAGE_WIDTH);
+    expect(image.readUInt32BE(20)).toBe(SOCIAL_IMAGE_HEIGHT);
+
+    await page.goto("/?lang=en", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect.poll(() => page.title()).toBe(HOME_PAGE_METADATA.titleEn);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      "content",
+      HOME_PAGE_METADATA.descriptionEn,
+    );
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+      "content",
+      HOME_PAGE_METADATA.socialTitleEn,
+    );
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
+      "content",
+      HOME_PAGE_METADATA.descriptionEn,
+    );
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+      "content",
+      HOME_PAGE_METADATA.socialUrlEn,
+    );
+    await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute(
+      "content",
+      "en_US",
+    );
+    await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute(
+      "content",
+      HOME_PAGE_METADATA.socialTitleEn,
+    );
+    await expect(page.locator('meta[name="twitter:description"]')).toHaveAttribute(
+      "content",
+      HOME_PAGE_METADATA.descriptionEn,
+    );
+    await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute(
+      "content",
+      HOME_PAGE_METADATA.image.altEn,
+    );
+    await expect(page.locator('meta[name="twitter:image:alt"]')).toHaveAttribute(
+      "content",
+      HOME_PAGE_METADATA.image.altEn,
+    );
+  });
+
+  test("localizes actual built Home and article responses before client JavaScript", async () => {
+    const homeStaticHtml = readFileSync("web/dist/index.html", "utf8");
+    const homeResponse = await localizeHomeMetadata({
+      request: new Request(`${SITE_URL}/?lang=en`),
+      next: async () => new Response(homeStaticHtml, {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      }),
+    });
+    const homeHtml = await homeResponse.text();
+    expect(homeResponse.status).toBe(200);
+    expect(homeResponse.headers.get("content-language")).toBe("en");
+    expect(homeHtml).toMatch(/<html\b[^>]*lang="en"[^>]*data-lang="en"/);
+    expect(localizedHeadValue(homeHtml, "title")).toBe(HOME_PAGE_METADATA.titleEn);
+    expect(localizedHeadValue(homeHtml, "description")).toBe(
+      HOME_PAGE_METADATA.descriptionEn,
+    );
+    expect(localizedHeadValue(homeHtml, "og:url")).toBe(
+      HOME_PAGE_METADATA.socialUrlEn.replaceAll("&", "&amp;"),
+    );
+
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{
+        id: string;
+        archiveTier?: string;
+        image?: { src?: string };
+      }>;
+    };
+    const imageLess = index.entries.find(
+      (entry) =>
+        entry.archiveTier !== "cold"
+        && entry.archiveTier !== "dropped"
+        && articleSocialImage(entry.image, "JA", "EN").url === SOCIAL_IMAGE_URL,
+    );
+    expect(imageLess, "fixture includes a built image-less article").toBeTruthy();
+    const articleStaticHtml = readFileSync(
+      path.join("web/dist/e", imageLess!.id, "index.html"),
+      "utf8",
+    );
+    const articleResponse = await localizeArticleMetadata({
+      request: new Request(`${SITE_URL}/e/${imageLess!.id}/?lang=en`),
+      next: async () => new Response(articleStaticHtml, {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      }),
+    });
+    const articleHtml = await articleResponse.text();
+    expect(articleResponse.status).toBe(200);
+    expect(articleResponse.headers.get("content-language")).toBe("en");
+    expect(articleHtml).toMatch(/<html\b[^>]*lang="en"[^>]*data-lang="en"/);
+    expect(localizedHeadValue(articleHtml, "title")).toBeTruthy();
+    expect(localizedHeadValue(articleHtml, "title")).not.toMatch(
+      /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u,
+    );
+    expect(localizedHeadValue(articleHtml, "description")).not.toMatch(
+      /AI 要約は準備中|AI summary pending|近日中/,
+    );
+    expect(localizedHeadValue(articleHtml, "og:url")).toBe(
+      `${SITE_URL}/e/${imageLess!.id}/?lang=en`,
+    );
+    expect(articleHtml).toContain(`content="${SOCIAL_IMAGE_URL}"`);
+  });
+
+  test("localizes every generated article response without HTML parser failures", async () => {
+    const articleDirectories = readdirSync("web/dist/e", { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+    expect(articleDirectories.length).toBeGreaterThan(0);
+
+    const failures: Array<{ id: string; status: number }> = [];
+    for (const id of articleDirectories) {
+      const html = readFileSync(path.join("web/dist/e", id, "index.html"), "utf8");
+      const response = await localizeArticleMetadata({
+        request: new Request(`${SITE_URL}/e/${id}/?lang=en`),
+        next: async () => new Response(html, {
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        }),
+      });
+      if (response.status !== 200) failures.push({ id, status: response.status });
+    }
+
+    expect(failures).toEqual([]);
+  });
+
+  test("keeps source images and gives image-less articles complete localized metadata", async ({
+    page,
+  }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{
+        id: string;
+        archiveTier?: string;
+        image?: { src?: string; width?: number; height?: number };
+      }>;
+    };
+    const addressable = index.entries.filter(
+      (entry) => entry.archiveTier !== "cold" && entry.archiveTier !== "dropped",
+    );
+    const imageBacked = addressable.find(
+      (entry) => articleSocialImage(entry.image, "JA", "EN").url !== SOCIAL_IMAGE_URL,
+    );
+    const imageLess = addressable.find(
+      (entry) => articleSocialImage(entry.image, "JA", "EN").url === SOCIAL_IMAGE_URL,
+    );
+    expect(imageBacked, "fixture includes an addressable image-backed article").toBeTruthy();
+    expect(imageLess, "fixture includes an addressable image-less article").toBeTruthy();
+
+    await page.goto(`/e/${imageBacked!.id}/`, { waitUntil: "domcontentloaded" });
+    const backedExpected = articleSocialImage(imageBacked!.image, "JA", "EN");
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+      "content",
+      backedExpected.url,
+    );
+    await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute(
+      "content",
+      backedExpected.url,
+    );
+    expect(
+      JSON.parse(
+        (await page.locator('script[type="application/ld+json"]').textContent()) ?? "{}",
+      ).image.url,
+    ).toBe(backedExpected.url);
+
+    await page.goto(`/e/${imageLess!.id}/`, { waitUntil: "domcontentloaded" });
+    for (const selector of [
+      'link[rel="canonical"]',
+      'meta[property="og:title"]',
+      'meta[property="og:description"]',
+      'meta[property="og:image"]',
+      'meta[property="og:image:alt"]',
+      'meta[name="twitter:title"]',
+      'meta[name="twitter:description"]',
+      'meta[name="twitter:image"]',
+      'meta[name="twitter:image:alt"]',
+    ]) {
+      await expect(page.locator(selector), `${selector} is emitted exactly once`).toHaveCount(1);
+    }
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+      "content",
+      SOCIAL_IMAGE_URL,
+    );
+    await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute(
+      "content",
+      SOCIAL_IMAGE_URL,
+    );
+    await expect(page.locator('meta[property="og:image:type"]')).toHaveAttribute(
+      "content",
+      "image/png",
+    );
+    await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute(
+      "content",
+      String(SOCIAL_IMAGE_WIDTH),
+    );
+    await expect(page.locator('meta[property="og:image:height"]')).toHaveAttribute(
+      "content",
+      String(SOCIAL_IMAGE_HEIGHT),
+    );
+
+    const description = page.locator('meta[name="description"]');
+    const jaDescription = await description.getAttribute("data-meta-content-ja");
+    const enDescription = await description.getAttribute("data-meta-content-en");
+    expect(jaDescription).toBeTruthy();
+    expect(enDescription).toBeTruthy();
+    expect(jaDescription).not.toBe(enDescription);
+    expect(`${jaDescription} ${enDescription}`).not.toMatch(
+      /AI 要約は準備中|AI summary pending|近日中/,
+    );
+    expect(
+      JSON.parse(
+        (await page.locator('script[type="application/ld+json"]').textContent()) ?? "{}",
+      ).image,
+    ).toMatchObject({
+      url: SOCIAL_IMAGE_URL,
+      contentUrl: SOCIAL_IMAGE_URL,
+      width: SOCIAL_IMAGE_WIDTH,
+      height: SOCIAL_IMAGE_HEIGHT,
+    });
+
+    await page.goto(`/e/${imageLess!.id}/?lang=en`, {
+      waitUntil: "domcontentloaded",
+    });
+    const title = page.locator("title");
+    const enTitle = await title.getAttribute("data-meta-content-en");
+    expect(enTitle).toBeTruthy();
+    await expect.poll(() => page.title()).toBe(enTitle!);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      "content",
+      enDescription!,
+    );
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
+      "content",
+      enDescription!,
+    );
+    await expect(page.locator('meta[name="twitter:description"]')).toHaveAttribute(
+      "content",
+      enDescription!,
+    );
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+      "content",
+      `${SITE_URL}/e/${imageLess!.id}/?lang=en`,
+    );
+    await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute(
+      "content",
+      /without a source image/,
+    );
   });
 
   test("announces detail and disclosure source links in both languages", async ({ page }) => {

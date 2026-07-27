@@ -9,23 +9,32 @@ import {
 import { deriveQueueDisplay } from "../lib/queue-health.ts";
 import { deriveWorkerRunStatus } from "../lib/run-health.ts";
 import { SITE_URL } from "../lib/site.ts";
+import type { LocalizedPageMetadata } from "../lib/social-metadata.ts";
 import ArxivIcon from "../components/icons/ArxivIcon.astro";
 
 export interface Props {
   title?: string;
+  titleEn?: string;
   description?: string;
   descriptionEn?: string;
+  metadata?: LocalizedPageMetadata;
   pageKey?: "timeline" | "categories" | "arxiv" | "knowledge" | "glossary" | "sources" | "archive" | "status" | "about" | "privacy" | "search" | "not-found";
   breadcrumb?: Array<{ label: string; href?: string }>;
 }
 
 const {
-  title = "TECH Dashboard — Pulse of the AI Ecosystem",
+  title: titleProp = "TECH Dashboard — Pulse of the AI Ecosystem",
+  titleEn: titleEnProp = titleProp,
   description = "公式発表、変更履歴、arXiv 論文、コミュニティ記事を毎時 1 バッチ収集。各ソースは約 6 時間周期で巡回し、AI 要約。",
   descriptionEn = description,
+  metadata,
   pageKey = "timeline",
   breadcrumb,
 } = Astro.props;
+const pageTitleJa = metadata?.titleJa ?? titleProp;
+const pageTitleEn = metadata?.titleEn ?? titleEnProp;
+const pageDescriptionJa = metadata?.descriptionJa ?? description;
+const pageDescriptionEn = metadata?.descriptionEn ?? descriptionEn;
 const currentPath = Astro.url.pathname.replace(/\/+$/, "") || "/";
 const productionAdvertisingHostname = new URL(SITE_URL).hostname;
 const isCurrentHref = (href: string) =>
@@ -91,16 +100,100 @@ const footerLastRunRelative = footerLastRunAt
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title}</title>
+    <title
+      data-meta-key="title"
+      data-meta-content-ja={pageTitleJa}
+      data-meta-content-en={pageTitleEn}
+    >{pageTitleJa}</title>
     <meta
       name="description"
-      content={description}
-      data-description-ja={description}
-      data-description-en={descriptionEn}
+      content={pageDescriptionJa}
+      data-meta-key="description"
+      data-meta-content-ja={pageDescriptionJa}
+      data-meta-content-en={pageDescriptionEn}
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate" type="application/rss+xml" title="TECH Dashboard RSS" href="/rss.xml" />
     <link rel="alternate" type="application/json" title="TECH Dashboard JSON Feed" href="/feed.json" />
+    {metadata && (
+      <>
+        <link rel="canonical" href={metadata.canonicalUrl} />
+        <meta property="og:type" content={metadata.type} />
+        <meta property="og:site_name" content="TECH Dashboard" />
+        <meta
+          property="og:title"
+          content={metadata.socialTitleJa}
+          data-meta-key="og:title"
+          data-meta-content-ja={metadata.socialTitleJa}
+          data-meta-content-en={metadata.socialTitleEn}
+        />
+        <meta
+          property="og:description"
+          content={metadata.descriptionJa}
+          data-meta-key="og:description"
+          data-meta-content-ja={metadata.descriptionJa}
+          data-meta-content-en={metadata.descriptionEn}
+        />
+        <meta
+          property="og:url"
+          content={metadata.socialUrlJa}
+          data-meta-key="og:url"
+          data-meta-content-ja={metadata.socialUrlJa}
+          data-meta-content-en={metadata.socialUrlEn}
+        />
+        <meta property="og:image" content={metadata.image.url} />
+        {metadata.image.url.startsWith("https://") && (
+          <meta property="og:image:secure_url" content={metadata.image.url} />
+        )}
+        {metadata.image.type && <meta property="og:image:type" content={metadata.image.type} />}
+        {metadata.image.width && <meta property="og:image:width" content={String(metadata.image.width)} />}
+        {metadata.image.height && <meta property="og:image:height" content={String(metadata.image.height)} />}
+        <meta
+          property="og:image:alt"
+          content={metadata.image.altJa}
+          data-meta-key="og:image:alt"
+          data-meta-content-ja={metadata.image.altJa}
+          data-meta-content-en={metadata.image.altEn}
+        />
+        <meta
+          property="og:locale"
+          content="ja_JP"
+          data-meta-key="og:locale"
+          data-meta-content-ja="ja_JP"
+          data-meta-content-en="en_US"
+        />
+        <meta
+          property="og:locale:alternate"
+          content="en_US"
+          data-meta-key="og:locale:alternate"
+          data-meta-content-ja="en_US"
+          data-meta-content-en="ja_JP"
+        />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content={metadata.socialTitleJa}
+          data-meta-key="twitter:title"
+          data-meta-content-ja={metadata.socialTitleJa}
+          data-meta-content-en={metadata.socialTitleEn}
+        />
+        <meta
+          name="twitter:description"
+          content={metadata.descriptionJa}
+          data-meta-key="twitter:description"
+          data-meta-content-ja={metadata.descriptionJa}
+          data-meta-content-en={metadata.descriptionEn}
+        />
+        <meta name="twitter:image" content={metadata.image.url} />
+        <meta
+          name="twitter:image:alt"
+          content={metadata.image.altJa}
+          data-meta-key="twitter:image:alt"
+          data-meta-content-ja={metadata.image.altJa}
+          data-meta-content-en={metadata.image.altEn}
+        />
+      </>
+    )}
     <slot name="head" />
     <script is:inline>
       // Pre-paint: apply saved language to avoid flash.
@@ -121,13 +214,12 @@ const footerLastRunRelative = footerLastRunAt
           }
           document.documentElement.setAttribute("data-lang", l);
           document.documentElement.setAttribute("lang", l);
-          var description = document.querySelector('meta[name="description"]');
-          if (description) {
-            var localizedDescription = l === "en"
-              ? description.getAttribute("data-description-en")
-              : description.getAttribute("data-description-ja");
-            if (localizedDescription) description.setAttribute("content", localizedDescription);
-          }
+          document.querySelectorAll("[data-meta-content-ja][data-meta-content-en]").forEach(function (element) {
+            var localizedContent = element.getAttribute("data-meta-content-" + l);
+            if (!localizedContent) return;
+            if (element.tagName === "TITLE") element.textContent = localizedContent;
+            else element.setAttribute("content", localizedContent);
+          });
         } catch (_) {
           document.documentElement.setAttribute("data-lang", "ja");
         }
@@ -658,15 +750,16 @@ const footerLastRunRelative = footerLastRunAt
         const apply = (l: "ja" | "en") => {
           document.documentElement.setAttribute("data-lang", l);
           document.documentElement.setAttribute("lang", l);
-          const description = document.querySelector<HTMLMetaElement>(
-            'meta[name="description"]',
-          );
-          const localizedDescription = l === "en"
-            ? description?.dataset.descriptionEn
-            : description?.dataset.descriptionJa;
-          if (description && localizedDescription) {
-            description.content = localizedDescription;
-          }
+          document.querySelectorAll<HTMLElement>(
+            "[data-meta-content-ja][data-meta-content-en]",
+          ).forEach((element) => {
+            const localizedContent = l === "en"
+              ? element.dataset.metaContentEn
+              : element.dataset.metaContentJa;
+            if (!localizedContent) return;
+            if (element instanceof HTMLTitleElement) element.textContent = localizedContent;
+            else if (element instanceof HTMLMetaElement) element.content = localizedContent;
+          });
           try { localStorage.setItem("td:lang", l); } catch {}
           syncAddressBar(l);
           document.querySelectorAll<HTMLButtonElement>(".lang-btn").forEach((b) => {

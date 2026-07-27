@@ -2583,7 +2583,8 @@ test.describe("TECH Dashboard smoke", () => {
     const ogTitle = await page.locator('meta[property="og:title"]').getAttribute("content");
     const ogDescription = await page.locator('meta[property="og:description"]').getAttribute("content");
     const twitterDescription = await page.locator('meta[name="twitter:description"]').getAttribute("content");
-    expect(description).toMatch(/AI 要約は準備中/);
+    expect(description).toMatch(/が公開した.+の記事です/);
+    expect(description).not.toMatch(/AI 要約は準備中|近日中/);
     expect(description).not.toBe(ogTitle);
     expect(ogDescription).toBe(description);
     expect(twitterDescription).toBe(description);
@@ -2591,7 +2592,7 @@ test.describe("TECH Dashboard smoke", () => {
     const structuredData = JSON.parse(
       await page.locator('script[type="application/ld+json"]').textContent() ?? "{}",
     ) as { headline?: string; description?: string; inLanguage?: string };
-    expect(structuredData.description).toMatch(/AI 要約は準備中|AI summary pending/);
+    expect(structuredData.description).not.toMatch(/AI 要約は準備中|AI summary pending|近日中/);
     expect(structuredData.description).not.toBe(structuredData.headline);
     expect(structuredData.inLanguage).toMatch(/^(ja-JP|en)$/);
   });

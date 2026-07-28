@@ -590,8 +590,12 @@ test.describe("TECH Dashboard smoke", () => {
         .map((a) => a.getAttribute("href"))
         .filter((href): href is string => !!href);
       const featuredSource = (document.querySelector<HTMLElement>("article.featured")?.dataset.source ?? "").trim();
+      const featuredTopic = (document.querySelector<HTMLElement>("article.featured")?.dataset.decisionTopic ?? "").trim();
       const topSources = Array.from(document.querySelectorAll<HTMLElement>(".top-rank-list .top-rank-item"))
         .map((item) => (item.dataset.source ?? "").trim())
+        .filter(Boolean);
+      const topTopics = Array.from(document.querySelectorAll<HTMLElement>(".top-rank-list .top-rank-item"))
+        .map((item) => (item.dataset.decisionTopic ?? "").trim())
         .filter(Boolean);
       const authorityBadge = document.querySelector("article.featured .featured-meta .badge[data-source-authority]") as HTMLElement | null;
       const importanceBadge = document.querySelector("article.featured .featured-meta [data-featured-importance]") as HTMLElement | null;
@@ -599,7 +603,9 @@ test.describe("TECH Dashboard smoke", () => {
         featuredHref,
         topHrefs,
         featuredSource,
+        featuredTopic,
         topSources,
+        topTopics,
         sourceType: authorityBadge?.dataset.sourceType ?? "",
         sourceAuthority: authorityBadge?.dataset.sourceAuthority ?? "",
         authorityClass: authorityBadge?.className ?? "",
@@ -613,7 +619,9 @@ test.describe("TECH Dashboard smoke", () => {
     expect(decisionLinks.topHrefs.length, "top-3 keeps three entries with current data").toBe(3);
     expect(new Set(decisionLinks.topHrefs).size, "top-3 entries are distinct").toBe(3);
     expect(decisionLinks.featuredSource, "featured item exposes its raw source id").toBeTruthy();
+    expect(decisionLinks.featuredTopic, "featured item exposes its decision topic").toBeTruthy();
     expect(decisionLinks.topSources.length, "top-3 items expose raw source ids").toBe(3);
+    expect(decisionLinks.topTopics.length, "top-3 items expose decision topics").toBe(3);
     expect(
       decisionLinks.topHrefs.every((href) => href !== decisionLinks.featuredHref),
       "featured and top-3 should not overlap",
@@ -622,6 +630,10 @@ test.describe("TECH Dashboard smoke", () => {
       decisionLinks.topSources.every((source) => source !== decisionLinks.featuredSource),
       "top-3 should exclude the featured source stream, not only the featured entry id",
     ).toBe(true);
+    expect(
+      new Set([decisionLinks.featuredTopic, ...decisionLinks.topTopics]).size,
+      "Spotlight and Top-3 should represent four distinct decision topics",
+    ).toBe(4);
     expect(["official", "paper", "community", "news", "aggregator", "source"]).toContain(
       decisionLinks.sourceAuthority,
     );
@@ -653,14 +665,18 @@ test.describe("TECH Dashboard smoke", () => {
       /優先度トップ|top priority update|選定根拠|Selection basis|公式|Official|重要度|importance/i,
     );
     await expect(page.locator(".top-rank-sub .i18n-ja")).toContainText(
-      "同じ source の重複を抑制",
+      "話題と source の重複を抑制",
     );
     await expect(page.locator(".top-rank-sub .i18n-en")).toContainText(
-      "repeated sources limited",
+      "repeated topics and sources limited",
     );
     await expect(page.locator("#today-priority")).toHaveAttribute(
       "data-decision-eligibility",
       "summary-ready",
+    );
+    await expect(page.locator("#today-priority")).toHaveAttribute(
+      "data-ranking-diversity",
+      "topic-source-limited",
     );
     await expect(page.locator(".top-rank-item .rank-reason")).toHaveCount(0);
     const rankedSummaries = await page.locator(".top-rank-item .rank-summary").evaluateAll((nodes) =>

@@ -115,7 +115,11 @@ const {
   tagHref,
   tagHrefForCount,
 } = await import("../web/src/lib/data.ts");
-const { decisionRankScore } = await import("../web/src/lib/ranking.ts");
+const {
+  decisionRankScore,
+  decisionTopicKey,
+  selectDiverseDecisionEntries,
+} = await import("../web/src/lib/ranking.ts");
 
 // ---- フィクスチャ参照ヘルパー ----
 const e1 = ALL_ENTRIES[0]!; // entry-001 (claude)
@@ -1013,6 +1017,189 @@ describe("decisionRankScore", () => {
     const aggregator = { ...e1, source: "hn-ai" };
     expect(decisionRankScore(official, nowMs)).toBeGreaterThan(
       decisionRankScore(aggregator, nowMs),
+    );
+  });
+});
+
+describe("decision priority topic diversity", () => {
+  const makeEntry = (overrides: Partial<typeof e1>): typeof e1 => ({
+    ...e1,
+    ...overrides,
+  });
+
+  const awsLaunch = makeEntry({
+    id: "aws-opus-5",
+    source: "aws-ml-blog",
+    title: "Introducing Claude Opus 5 on AWS: Anthropic's most capable Opus model",
+    titleJa: "AWSでClaude Opus 5が登場",
+    titleEn: "Introducing Claude Opus 5 on AWS",
+    publishedAt: "2026-07-24T17:59:03.000Z",
+  });
+  const officialLaunch = makeEntry({
+    id: "anthropic-opus-5",
+    source: "anthropic-news",
+    title: "Introducing Claude Opus 5",
+    titleJa: "Claude Opus 5 発表",
+    titleEn: "Introducing Claude Opus 5",
+    publishedAt: "2026-07-24T00:00:00.000Z",
+  });
+  const newsLaunch = makeEntry({
+    id: "news-opus-5",
+    source: "the-verge",
+    title: "Anthropic releases Opus 5 with improved capabilities",
+    titleJa: "AnthropicがOpus 5をリリース",
+    titleEn: "Anthropic releases Opus 5",
+    publishedAt: "2026-07-24T17:00:00.000Z",
+  });
+
+  it("groups cross-source headlines about the same versioned model launch", () => {
+    const keys = [awsLaunch, officialLaunch, newsLaunch].map(decisionTopicKey);
+    expect(new Set(keys)).toEqual(new Set(["model-launch:claude-opus:5"]));
+  });
+
+  it.each([
+    "Introducing a Claude Opus 5 pricing and migration guide",
+    "Claude Opus 5 released: deployment tutorial",
+    "Claude Opus 5 launch analysis",
+    "Claude Opus 5 発表後の料金と移行ガイド",
+  ])("keeps non-launch decision content independently eligible: %s", (title) => {
+    expect(decisionTopicKey(makeEntry({ title }))).toBeNull();
+  });
+
+  it("uses an explicit publisher cluster independently of title wording", () => {
+    expect(decisionTopicKey(makeEntry({
+      clusterId: " Frontier-Model-Rollout ",
+      title: "A practical deployment note",
+    }))).toBe("cluster:frontier-model-rollout");
+  });
+
+  it.each([
+    ["Introducing Gemini 2.5 Pro", "Introducing Gemini 2.5 Flash"],
+    ["GPT-5.4 mini is now available", "GPT-5.4 is now available"],
+    ["Qwen 3 Coder released", "Qwen 3 VL released"],
+    ["Introducing Gemma 4 12B", "Introducing Gemma 4 27B"],
+    ["Introducing Gemini 3.5 Flash Cyber", "Introducing Gemini 3.5 Flash"],
+    ["Introducing GPT-5 Turbo", "Introducing GPT-5"],
+    ["Introducing Qwen 3 Omni", "Introducing Qwen 3"],
+    ["Introducing Gemini 3 Pro Deep Think", "Introducing Gemini 3 Pro"],
+  ])("keeps distinct model variants in separate topics: %s / %s", (left, right) => {
+    expect(decisionTopicKey(makeEntry({ title: left }))).not.toBe(
+      decisionTopicKey(makeEntry({ title: right })),
+    );
+  });
+
+  it("does not treat a model feature announcement as a model launch", () => {
+    for (const title of [
+      "Introducing computer use in Gemini 3.5 Flash",
+      "Gemini 3.5 Flash launches computer use",
+      "Gemini 3.5 Flash releases a new coding agent",
+      "Gemini 3.5 Flash announces native audio support",
+      "Gemini 3.5 Flash is now available in Google AI Studio",
+      "Google announces Gemini 3.5 Flash native audio support",
+      "AWS announces Claude Opus 5 availability in Amazon Bedrock",
+    ]) {
+      expect(decisionTopicKey(makeEntry({ title }))).toBeNull();
+    }
+    expect(decisionTopicKey(makeEntry({
+      title: "Introducing Gemini 3.5 Flash Cyber",
+    }))).toBe("model-launch:gemini:3.5:flash-cyber");
+    expect(decisionTopicKey(makeEntry({
+      title: "Gemini 3.5 Flash is now available",
+    }))).toBe("model-launch:gemini:3.5:flash");
+    expect(decisionTopicKey(makeEntry({
+      title: "Introducing Claude Opus 5 on AWS: Anthropic's most capable Opus model",
+    }))).toBe("model-launch:claude-opus:5");
+    expect(decisionTopicKey(makeEntry({
+      title: "Anthropic releases Opus 5 with improved capabilities",
+    }))).toBe("model-launch:claude-opus:5");
+    expect(decisionTopicKey(makeEntry({
+      title: "Introducing Gemini 3 Pro Deep Think",
+    }))).toBe("model-launch:gemini:3:pro-deep-think");
+  });
+
+  it("does not reintroduce the featured event when filling the decision list", () => {
+    const meta = makeEntry({
+      id: "meta-agents",
+      source: "meta-newsroom",
+      title: "Meta AI can take action",
+      titleJa: "Meta AIは行動する",
+      titleEn: "Meta AI can take action",
+      publishedAt: "2026-07-27T17:00:00.000Z",
+    });
+    const zed = makeEntry({
+      id: "zed-release",
+      source: "zed-releases",
+      sourceType: "release",
+      title: "Zed Editor v1.12.0",
+      titleJa: "Zed Editor v1.12.0",
+      titleEn: "Zed Editor v1.12.0",
+      publishedAt: "2026-07-27T16:00:00.000Z",
+    });
+    const security = makeEntry({
+      id: "security-alliance",
+      source: "nvidia-blog",
+      title: "Open Secure AI Alliance",
+      titleJa: "Open Secure AI Alliance",
+      titleEn: "Open Secure AI Alliance",
+      publishedAt: "2026-07-27T15:00:00.000Z",
+    });
+
+    const selected = selectDiverseDecisionEntries(
+      [officialLaunch, newsLaunch, meta, zed, security],
+      {
+        featured: awsLaunch,
+        limit: 3,
+        nowMs: Date.parse("2026-07-28T00:00:00.000Z"),
+      },
+    );
+
+    expect(selected.map((entry) => entry.id)).toEqual([
+      "meta-agents",
+      "security-alliance",
+      "zed-release",
+    ]);
+    expect(selected.map(decisionTopicKey)).not.toContain(
+      decisionTopicKey(awsLaunch),
+    );
+  });
+
+  it("returns fewer items rather than repeating one event in fallback", () => {
+    expect(selectDiverseDecisionEntries(
+      [officialLaunch, newsLaunch],
+      {
+        featured: awsLaunch,
+        limit: 3,
+        nowMs: Date.parse("2026-07-28T00:00:00.000Z"),
+      },
+    )).toEqual([]);
+  });
+
+  it("applies the candidate cap after featured source and topic exclusions", () => {
+    const blockedPrefix = Array.from({ length: 120 }, (_, index) =>
+      makeEntry({
+        id: `featured-source-${index}`,
+        source: awsLaunch.source,
+        title: `AWS deployment note ${index}`,
+      })
+    );
+    const distinct = [
+      makeEntry({ id: "distinct-a", source: "meta-newsroom", title: "Meta AI acts" }),
+      makeEntry({ id: "distinct-b", source: "zed-releases", title: "Zed stable update" }),
+      makeEntry({ id: "distinct-c", source: "nvidia-blog", title: "Open Secure AI Alliance" }),
+    ];
+
+    const selectedIds = selectDiverseDecisionEntries(
+      [...blockedPrefix, ...distinct],
+      {
+        candidateLimit: 120,
+        featured: awsLaunch,
+        limit: 3,
+        nowMs: Date.parse("2026-07-28T00:00:00.000Z"),
+      },
+    ).map((entry) => entry.id);
+    expect(selectedIds).toHaveLength(3);
+    expect(new Set(selectedIds)).toEqual(
+      new Set(["distinct-a", "distinct-b", "distinct-c"]),
     );
   });
 });

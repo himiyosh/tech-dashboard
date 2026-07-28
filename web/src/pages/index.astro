@@ -13,7 +13,10 @@ import ExternalLinkHint from "../components/ExternalLinkHint.astro";
 import ArxivIcon from "../components/icons/ArxivIcon.astro";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { sourceFaviconUrl } from "../lib/favicon.ts";
-import { decisionRankScore } from "../lib/ranking.ts";
+import {
+  decisionTopicKey,
+  selectDiverseDecisionEntries,
+} from "../lib/ranking.ts";
 import {
   canonicalSourceUrl,
   sourceAuthority,
@@ -75,8 +78,8 @@ const dailySummaryAfterEntryIndex = Math.min(2, pageEntries.length - 1);
 
 const feat = featured();
 const featuredId = feat?.id ?? null;
-const featuredSource = feat?.source ?? null;
 const featuredDestination = feat ? entryDestination(feat) : null;
+const featuredTopic = feat ? decisionTopicKey(feat) : null;
 
 const now = new Date();
 const ago = relativeTime(DASHBOARD_METRICS.generatedAt, now);
@@ -91,37 +94,15 @@ const rankedPool = primaryEntries
   .filter(
     (e) =>
       e.importance >= 2 &&
-      e.id !== featuredId &&
-      e.source !== featuredSource &&
       isPublishableEntry(e) &&
       !isLowSignalRelease(e) &&
       !isOffTopicForHero(e),
-  )
-  .slice(0, 120);
-const scoredTopCandidates = rankedPool
-  .map((e) => ({ entry: e, score: decisionRankScore(e, now.getTime()) }))
-  .sort((a, b) => b.score - a.score);
-const topThree = (() => {
-  const picked: typeof ALL_ENTRIES[number][] = [];
-  const sourceCount = new Map<string, number>();
-  const categoryCount = new Map<string, number>();
-  for (const { entry } of scoredTopCandidates) {
-    if ((sourceCount.get(entry.source) ?? 0) >= 1) continue;
-    if ((categoryCount.get(entry.category) ?? 0) >= 2) continue;
-    picked.push(entry);
-    sourceCount.set(entry.source, (sourceCount.get(entry.source) ?? 0) + 1);
-    categoryCount.set(entry.category, (categoryCount.get(entry.category) ?? 0) + 1);
-    if (picked.length === 3) break;
-  }
-  if (picked.length < 3) {
-    for (const { entry } of scoredTopCandidates) {
-      if (picked.some((item) => item.id === entry.id)) continue;
-      picked.push(entry);
-      if (picked.length === 3) break;
-    }
-  }
-  return picked;
-})();
+  );
+const topThree = selectDiverseDecisionEntries(rankedPool, {
+  featured: feat,
+  limit: 3,
+  nowMs: now.getTime(),
+});
 const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
 const homeJsonLd = {
   "@context": "https://schema.org",
@@ -274,6 +255,7 @@ const homeJsonLd = {
           aria-describedby="priority-note-ja priority-note-en"
           data-decision-eligibility="summary-ready"
           data-ranking-scope="importance-authority-recency"
+          data-ranking-diversity="topic-source-limited"
         >
         <div class="section-header primary section-header-stacked">
           <h2 id="priority-heading">
@@ -281,10 +263,10 @@ const homeJsonLd = {
             <span class="i18n-en" lang="en">Today's decision list</span>
           </h2>
           <p class="section-note i18n-ja" id="priority-note-ja">
-            AI 要約が利用できる記事だけを選び、同じ source の重複を抑えて比較します。
+            AI 要約が利用できる記事だけを選び、同じ話題と source の重複を抑えて比較します。
           </p>
           <p class="section-note i18n-en" id="priority-note-en" lang="en">
-            Only summary-ready articles appear here, with repeated sources limited for comparison.
+            Only summary-ready articles appear here, with repeated topics and sources limited for comparison.
           </p>
         </div>
 
@@ -310,6 +292,7 @@ const homeJsonLd = {
           data-pagefind-body
           data-reveal="featured"
           data-source={feat.source}
+          data-decision-topic={featuredTopic ?? `entry:${feat.id}`}
           style={`--cat-color:${featCatColor}`}
         >
           <div class:list={["featured-thumb", { "has-image": !!featImg }]}>
@@ -424,15 +407,15 @@ const homeJsonLd = {
       })()}
 
       {topThree.length > 0 && (
-        <section class="top-rank" data-reveal="top-rank" data-ranking-diversity="source-limited">
+        <section class="top-rank" data-reveal="top-rank" data-ranking-diversity="topic-source-limited">
           <div class="top-rank-head">
             <span class="top-rank-title">
               <span class="i18n-ja">次に見る Top {topThree.length}</span>
               <span class="i18n-en" lang="en">Next {topThree.length} to review</span>
             </span>
             <span class="top-rank-sub">
-              <span class="i18n-ja">要約済み · 同じ source の重複を抑制</span>
-              <span class="i18n-en" lang="en">Summary-ready · repeated sources limited</span>
+              <span class="i18n-ja">要約済み · 話題と source の重複を抑制</span>
+              <span class="i18n-en" lang="en">Summary-ready · repeated topics and sources limited</span>
             </span>
           </div>
           <ol class="top-rank-list">
@@ -448,10 +431,12 @@ const homeJsonLd = {
               const summaryEn = summaryForLangWithFallback(e, "en");
               const rankAuthority = sourceAuthority(e.source, e.sourceType);
               const destination = entryDestination(e);
+              const decisionTopic = decisionTopicKey(e);
               return (
                 <li
                   class={`top-rank-item rank-${i + 1}`}
                   data-source={e.source}
+                  data-decision-topic={decisionTopic ?? `entry:${e.id}`}
                   style={`--cat-color:${meta?.color ?? "#8a847e"}`}
                 >
                   <span class="medal" aria-hidden="true">{medals[i]}</span>

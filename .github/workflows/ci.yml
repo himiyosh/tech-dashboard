@@ -25,6 +25,37 @@ jobs:
           node-version: "22"
           cache: "npm"
 
+      - name: Enforce exact-head independent review
+        if: github.event_name == 'pull_request' && github.event.pull_request.state == 'open'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          MERGER_SESSION_ID: ${{ vars.INDEPENDENT_REVIEW_MERGER_SESSION_ID }}
+          REVIEWER_SESSION_ID: ${{ vars.INDEPENDENT_REVIEW_REVIEWER_SESSION_ID }}
+        run: |
+          CURRENT_PR_STATE="$(
+            gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq '.state'
+          )"
+          case "$CURRENT_PR_STATE" in
+            closed)
+              echo "SKIP: pull request $PR_NUMBER is already closed"
+              exit 0
+              ;;
+            open)
+              ;;
+            *)
+              echo "ERR: unexpected current pull request state: $CURRENT_PR_STATE"
+              exit 1
+              ;;
+          esac
+          npm run check:independent-review -- \
+            --repo "$GITHUB_REPOSITORY" \
+            --pr "$PR_NUMBER" \
+            --head "$PR_HEAD_SHA" \
+            --merger-session "$MERGER_SESSION_ID" \
+            --reviewer-session "$REVIEWER_SESSION_ID"
+
       - name: Install root deps
         run: npm ci
 

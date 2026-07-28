@@ -26,6 +26,14 @@ This repository requires an external exact-head review clearance before a pull r
 6. Interpret the result only after checking the single review ticket/session state and the PR state. `UNKNOWN` means no authoritative exact-head pass was found after those checks. It is not permission to merge and is not a reason to create a duplicate ticket automatically.
 7. If the PR head changes, the prior marker is stale. Send a new push request for the new exact head and rerun the gate. The command must exit 0 on that exact head immediately before merge.
 
+## Pull request CI enforcement
+
+- `.github/workflows/ci.yml` executes `npm run check:independent-review` only for a `pull_request` event whose event snapshot is open. It resolves the PR number and expected head from `github.event.pull_request`, never from branch names or free-form PR text.
+- Configure `INDEPENDENT_REVIEW_MERGER_SESSION_ID` and `INDEPENDENT_REVIEW_REVIEWER_SESSION_ID` as GitHub Actions repository variables. Both values must be full lowercase UUIDs and must identify different sessions. Missing, malformed, or identical values fail closed.
+- Before executing the strict gate, the workflow reads the current PR state from GitHub REST. A current `closed` state skips only that historical rerun. A current `open` state proceeds to the existing REST evidence loader, which revalidates lowercase `state=open`, the exact event head, reviews, comments, and both session IDs. Any other state or API failure stops the workflow.
+- Posting a marker does not create a new `pull_request` event. Rerun the failed job for the same head after the external reviewer posts the marker. If the head changed, use the new workflow run and request a new exact-head review.
+- CI enforcement does not replace the immediate pre-merge command in step 5. The merger must still refetch the exact head and run the local gate immediately before merge.
+
 ## Deterministic marker policy
 
 - Only markers from the expected reviewer session and for the expected head are authoritative.

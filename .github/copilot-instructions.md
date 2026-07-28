@@ -2845,6 +2845,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: static outputではroute handlerのResponse header自体はartifactへ保存されず、配信時のMIMEは生成fileの拡張子とserver設定から決まる。handler直接testとbuilt previewを同じheader文字列で検証していた。
 - **対策**: unit testはhandlerのcharset指定を固定し、built previewはmedia typeを`text/plain`として検証する。本文、終端改行、HTTP 200は両層で厳密に確認する。
 - **教訓**: SSG endpointの公開contractはhandler直接実行だけで完了にせず、生成fileとproduction相当previewのstatus、media type、本文を別々に検証する。charset parameterの有無を配信server間で同一と仮定しない。
+- **追補**: JSON Feed routeはsource上で`application/feed+json`を返していても、生成済み`feed.json`を配信するCloudflare Pagesは`web/public/_headers`に個別ruleが無ければ`application/json`を返した。`/feed.json`のexact header rule、build artifact内のrule、production health checkの実response headerを別々に検証する。Astro previewはPagesの`_headers`を適用しないため、previewの拡張子由来MIMEをproduction期待値へ弱める根拠にしない。
 
 ### LL-431: prerender済みendpointのqueryは別contentを生成しない
 - **事象**: カテゴリ画面が`/rss.xml?category=<slug>`へlinkしていたが、静的`rss.xml.ts`はbuild時に一度だけ全体feedを生成し、request queryを読まないため、全カテゴリで同じRSSを返していた。

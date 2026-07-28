@@ -17,6 +17,9 @@ const DEFAULT_PUBLISHER_MAX_AGE_MINUTES = 180;
 const DEFAULT_DATA_WARN_AGE_MINUTES = 360;
 const DEFAULT_DATA_MAX_AGE_MINUTES = 24 * 60;
 const PUBLISHER_APPLY_RUN_TITLE = "Publisher / publish";
+const JSON_FEED_MEDIA_TYPE = "application/feed+json";
+const JSON_FEED_VERSION = "https://jsonfeed.org/version/1.1";
+const JSON_FEED_URL = "https://techdb.studio344.net/feed.json";
 const EXPECTED_PUBLISHER_FINGERPRINT = JSON.parse(
   readFileSync(
     new URL("../worker/publisher-contract.json", import.meta.url),
@@ -37,6 +40,7 @@ const endpoints = {
   index:
     process.env.PUBLISHER_INDEX_URL ??
     "https://raw.githubusercontent.com/himiyosh/tech-dashboard/main/data/index.json",
+  jsonFeed: process.env.PUBLIC_JSON_FEED_URL ?? JSON_FEED_URL,
 };
 
 const timeoutMs = Number(process.env.HEALTHCHECK_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
@@ -57,7 +61,9 @@ async function fetchJson(name, url, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const headers = new Headers({ accept: "application/json" });
+    const headers = new Headers({
+      accept: options.accept ?? "application/json",
+    });
     if (options.githubToken) {
       headers.set("authorization", `Bearer ${options.githubToken}`);
       headers.set("x-github-api-version", "2022-11-28");
@@ -239,26 +245,78 @@ export function validateSummarizer(body) {
   return { errors, warnings };
 }
 
+export function validateJsonFeed(body, response) {
+  const errors = [];
+  const contentType = response?.headers?.get?.("content-type") ?? "";
+  const mediaType = contentType.split(";", 1)[0].trim().toLowerCase();
+  const items = Array.isArray(body?.items) ? body.items : [];
+
+  requireCondition(
+    errors,
+    mediaType === JSON_FEED_MEDIA_TYPE,
+    `content type is ${contentType || "missing"}; expected ${JSON_FEED_MEDIA_TYPE}`,
+  );
+  requireCondition(
+    errors,
+    body?.version === JSON_FEED_VERSION,
+    `version is ${body?.version ?? "missing"}; expected ${JSON_FEED_VERSION}`,
+  );
+  requireCondition(
+    errors,
+    body?.feed_url === JSON_FEED_URL,
+    `feed_url is ${body?.feed_url ?? "missing"}; expected ${JSON_FEED_URL}`,
+  );
+  requireCondition(
+    errors,
+    items.length > 0 && items.length <= 100,
+    `item count is ${items.length}; expected 1-100`,
+  );
+  requireCondition(
+    errors,
+    items.every(
+      (item) =>
+        item &&
+        typeof item === "object" &&
+        typeof item.id === "string" &&
+        item.id.length > 0 &&
+        typeof item.url === "string" &&
+        item.url.length > 0 &&
+        typeof item.title === "string" &&
+        item.title.trim().length > 0 &&
+        typeof item.content_text === "string" &&
+        item.content_text.trim().length > 0,
+    ),
+    "items contain missing id, URL, title, or summary",
+  );
+  return { errors, warnings: [] };
+}
+
 export async function runProductionHealthCheck() {
   const failures = [];
   const warnings = [];
   const checks = [
-    ["bridge", endpoints.bridge, validateBridge, {}],
+    ["bridge", endpoints.bridge, (body) => validateBridge(body), {}],
     [
       "publisher",
       endpoints.publisherRuns,
-      validatePublisherRuns,
+      (body) => validatePublisherRuns(body),
       { githubToken: process.env.GITHUB_TOKEN },
     ],
-    ["index", endpoints.index, validateIndexFreshness, {}],
-    ["summarizer", endpoints.summarizer, validateSummarizer, {}],
+    ["index", endpoints.index, (body) => validateIndexFreshness(body), {}],
+    ["summarizer", endpoints.summarizer, (body) => validateSummarizer(body), {}],
+    [
+      "json-feed",
+      endpoints.jsonFeed,
+      validateJsonFeed,
+      { accept: JSON_FEED_MEDIA_TYPE },
+    ],
   ];
 
   for (const [name, url, validate, options] of checks) {
     try {
       const { response, body } = await fetchJson(name, url, options);
       if (!response.ok) failures.push(`${name} endpoint returned HTTP ${response.status}`);
-      const result = validate(body);
+      const result = validate(body, response);
       failures.push(...result.errors.map((error) => `${name}: ${error}`));
       warnings.push(...result.warnings.map((warning) => `${name}: ${warning}`));
       console.log(`[${name}] http=${response.status} url=${url}`);

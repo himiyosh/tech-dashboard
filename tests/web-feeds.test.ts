@@ -234,6 +234,17 @@ describe("public feeds", () => {
     );
   });
 
+  it("declares the JSON Feed media type at the route and Pages delivery boundaries", async () => {
+    const response = (await getJsonFeed({} as never)) as Response;
+
+    expect(response.headers.get("content-type")).toBe(
+      "application/feed+json; charset=utf-8",
+    );
+    expect(publicHeaders).toContain(
+      "/feed.json\n  Content-Type: application/feed+json; charset=utf-8",
+    );
+  });
+
   it("RSS publishes validated display title and summary", async () => {
     const response = (await getRss({} as never)) as Response;
     const xml = await response.text();

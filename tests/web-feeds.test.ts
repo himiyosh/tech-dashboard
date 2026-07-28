@@ -109,6 +109,14 @@ const portalSource = readFileSync(
   new URL("../web/src/layouts/Portal.astro", import.meta.url),
   "utf8",
 );
+const pageHeroSource = readFileSync(
+  new URL("../web/src/components/PageHero.astro", import.meta.url),
+  "utf8",
+);
+const aboutSource = readFileSync(
+  new URL("../web/src/pages/about.astro", import.meta.url),
+  "utf8",
+);
 const publicHeaders = readFileSync(
   new URL("../web/public/_headers", import.meta.url),
   "utf8",
@@ -146,6 +154,23 @@ describe("public feeds", () => {
     ]);
     expect(portalSource).toContain('rssHref = "/rss.xml"');
     expect(portalSource).toContain('href={rssHref}');
+  });
+
+  it("keeps descriptive subscription actions discoverable on mobile", () => {
+    expect(pageHeroSource).toContain("mobilePriority?: boolean");
+    expect(pageHeroSource).toContain('"page-hero-mobile-priority"');
+    expect(pageHeroSource).toContain('"has-mobile-priority-actions"');
+    expect(pageHeroSource).toContain('"page-hero-action-mobile"');
+    expect(aboutSource).toContain('label: "全体RSS"');
+    expect(aboutSource).toContain('labelEn: "Site-wide RSS"');
+    expect(aboutSource.match(/mobilePriority:\s*true/g)).toHaveLength(2);
+    expect(portalSource).toContain("サイトの目的・収集方針・RSS購読");
+    expect(portalSource).toContain("Purpose, collection policy, and feeds");
+    for (const source of categorySources.slice(1)) {
+      expect(source).toContain('label: "カテゴリRSS"');
+      expect(source).toContain('labelEn: "Category RSS"');
+      expect(source).toContain("mobilePriority: true");
+    }
   });
 
   it("builds deterministic category feed URLs without query filtering", () => {

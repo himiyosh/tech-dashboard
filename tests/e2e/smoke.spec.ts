@@ -4221,6 +4221,77 @@ test.describe("TECH Dashboard smoke", () => {
     await expectResponsivePageHero(page, "/page/2/");
   });
 
+  test("mobile readers can discover site-wide and category feeds", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+
+    await page.locator(".mobile-menu-trigger").click();
+    const aboutMenuItem = page.locator('#site-menu a[href="/about"]');
+    await expect(aboutMenuItem).toBeVisible();
+    await expect(aboutMenuItem.locator(".i18n-ja")).toContainText("RSS購読");
+    await aboutMenuItem.click();
+    await expect(page).toHaveURL(/\/about\/?$/);
+
+    const siteWideRss = page.locator('.page-hero-actions a[href="/rss.xml"]');
+    const jsonFeed = page.locator('.page-hero-actions a[href="/feed.json"]');
+    await expect(siteWideRss).toBeVisible();
+    await expect(jsonFeed).toBeVisible();
+    await expect(siteWideRss.locator(".i18n-ja")).toHaveText("全体RSS");
+    await expect(siteWideRss).toHaveAccessibleName("全体RSS");
+    await expect(jsonFeed).toHaveAccessibleName("JSON Feed");
+    for (const link of [siteWideRss, jsonFeed]) {
+      const box = await link.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.height).toBeGreaterThanOrEqual(44);
+    }
+    await expect(page.locator('.page-hero-actions a[href="/status"]')).toBeHidden();
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(siteWideRss.locator(".i18n-en")).toBeVisible();
+    await expect(siteWideRss.locator(".i18n-en")).toHaveText("Site-wide RSS");
+    await expect(siteWideRss).toHaveAccessibleName("Site-wide RSS");
+
+    await page.goto("/c/copilot/");
+    const categoryRss = page.locator('.page-hero-actions a[href="/rss/copilot.xml"]');
+    await expect(categoryRss).toBeVisible();
+    await expect(categoryRss.locator(".i18n-en")).toHaveText("Category RSS");
+    await expect(categoryRss).toHaveAccessibleName("Category RSS");
+    const categoryBox = await categoryRss.boundingBox();
+    expect(categoryBox).not.toBeNull();
+    expect(categoryBox!.height).toBeGreaterThanOrEqual(44);
+    await expect(page.locator('.page-hero-actions a[href="/categories"]')).toBeHidden();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
+    for (const width of [320, 375, 414]) {
+      await page.setViewportSize({ width, height: width === 375 ? 667 : 844 });
+      for (const path of ["/about/", "/c/copilot/"]) {
+        await page.goto(path);
+        const priorityActions = page.locator(".page-hero-actions .page-hero-action-mobile");
+        await expect(priorityActions.first(), `${path} keeps a mobile feed action at ${width}px`).toBeVisible();
+        const geometry = await page.locator(".page-hero").evaluate((hero) => {
+          const box = hero.getBoundingClientRect();
+          const actions = [...hero.querySelectorAll<HTMLElement>(".page-hero-action-mobile")]
+            .filter((action) => action.getClientRects().length > 0)
+            .map((action) => {
+              const rect = action.getBoundingClientRect();
+              return { left: rect.left, right: rect.right, height: rect.height };
+            });
+          return { heroHeight: box.height, actions, overflow: document.documentElement.scrollWidth - innerWidth };
+        });
+        expect(geometry.heroHeight, `${path} stays within the compact hero budget at ${width}px`).toBeLessThan(310);
+        expect(geometry.actions.length, `${path} exposes at least one feed action at ${width}px`).toBeGreaterThan(0);
+        for (const action of geometry.actions) {
+          expect(action.left).toBeGreaterThanOrEqual(0);
+          expect(action.right).toBeLessThanOrEqual(width);
+          expect(action.height).toBeGreaterThanOrEqual(44);
+        }
+        expect(geometry.overflow, `${path} has no horizontal overflow at ${width}px`).toBeLessThanOrEqual(0);
+      }
+    }
+  });
+
   test("deep page heroes give page context on desktop and mobile", async ({ page }) => {
     const paths: string[] = [];
     await page.goto("/categories/");

@@ -60,31 +60,76 @@ const NON_LAUNCH_INTENT_RE =
 const FEATURE_OR_PLATFORM_SUFFIX_RE =
   /\b(?:api|audio|coding agent|computer use|feature|function calling|github copilot|integration|native audio|plugin|support|tool use|availability in|available in|comes to|now in)\b|機能|統合|対応|提供先|で利用可能|に対応|で提供開始/iu;
 
-const MODEL_VARIANT =
-  String.raw`(?:pro|flash|ultra|nano|mini|lite|max|coder|coding|vl|vision|instruct|chat|reasoning|thinking|embedding|audio|image|fast|preview|cyber|\d+(?:\.\d+)?b|\d+x\d+b)`;
-
 const MODEL_VERSION_PATTERNS: ReadonlyArray<{
   pattern: RegExp;
   family: (match: RegExpMatchArray) => string;
   versionIndex: number;
 }> = [
   {
-    pattern: new RegExp(
-      String.raw`\b(?:claude[\s-]+)?(opus|sonnet|haiku)[\s-]+v?(\d+(?:[._-]\d+){0,2}[a-z]?)(?:[\s-]+(?<variant>${MODEL_VARIANT}(?:[\s-]+${MODEL_VARIANT}){0,2}))?\b`,
-      "iu",
-    ),
+    pattern: /\b(?:claude[\s-]+)?(opus|sonnet|haiku)[\s-]+v?(\d+(?:[._-]\d+){0,2}[a-z]?)\b/iu,
     family: (match) => `claude-${match[1]!.toLocaleLowerCase()}`,
     versionIndex: 2,
   },
   {
-    pattern: new RegExp(
-      String.raw`\b(chatgpt|gpt|gemini|gemma|llama|qwen|deepseek|grok|kimi|mistral|codex|fable)[\s-]*v?(\d+(?:[._-]\d+){0,2}[a-z]?)(?:[\s-]+(?<variant>${MODEL_VARIANT}(?:[\s-]+${MODEL_VARIANT}){0,2}))?\b`,
-      "iu",
-    ),
+    pattern: /\b(chatgpt|gpt|gemini|gemma|llama|qwen|deepseek|grok|kimi|mistral|codex|fable)[\s-]*v?(\d+(?:[._-]\d+){0,2}[a-z]?)\b/iu,
     family: (match) => match[1]!.toLocaleLowerCase(),
     versionIndex: 2,
   },
 ];
+
+const MODEL_VARIANT_STOP_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "are",
+  "at",
+  "available",
+  "availability",
+  "announced",
+  "announces",
+  "announcing",
+  "by",
+  "capabilities",
+  "capability",
+  "comes",
+  "for",
+  "from",
+  "in",
+  "introduced",
+  "introduces",
+  "introducing",
+  "is",
+  "launched",
+  "launches",
+  "model",
+  "models",
+  "now",
+  "of",
+  "on",
+  "released",
+  "releasing",
+  "releases",
+  "rolled",
+  "rollout",
+  "shipped",
+  "ships",
+  "the",
+  "to",
+  "with",
+  "発表",
+  "登場",
+  "公開",
+  "提供開始",
+  "が",
+  "で",
+  "と",
+  "に",
+  "の",
+  "は",
+  "へ",
+  "を",
+  "モデル",
+]);
 
 function normalizeVersion(value: string): string {
   return value.toLocaleLowerCase().replace(/[._-]+/g, ".");
@@ -92,6 +137,37 @@ function normalizeVersion(value: string): string {
 
 function normalizeVariant(value: string): string {
   return value.toLocaleLowerCase().replace(/[\s_]+/g, "-").replace(/-+/g, "-");
+}
+
+function parseModelVariantSuffix(
+  text: string,
+  modelEnd: number,
+): { end: number; variant: string | null } {
+  let cursor = modelEnd;
+  const separator = text.slice(cursor).match(/^[\s_-]+/u)?.[0] ?? "";
+  if (!separator) return { end: modelEnd, variant: null };
+  cursor += separator.length;
+
+  const tokens: string[] = [];
+  let variantEnd = modelEnd;
+  for (let index = 0; index < 3; index += 1) {
+    const tokenMatch = text.slice(cursor).match(
+      /^([\p{Letter}\p{Number}]+)(?=$|[\s_:;,()[\]/{}/-])/u,
+    );
+    const token = tokenMatch?.[1];
+    if (!token || MODEL_VARIANT_STOP_WORDS.has(token.toLocaleLowerCase())) break;
+    tokens.push(token);
+    cursor += token.length;
+    variantEnd = cursor;
+    const nextSeparator = text.slice(cursor).match(/^[\s_-]+/u)?.[0] ?? "";
+    if (!nextSeparator) break;
+    cursor += nextSeparator.length;
+  }
+
+  return {
+    end: tokens.length > 0 ? variantEnd : modelEnd,
+    variant: tokens.length > 0 ? normalizeVariant(tokens.join("-")) : null,
+  };
 }
 
 function normalizedWords(value: string): string[] {
@@ -120,13 +196,14 @@ function hasLaunchIntentNearModel(
   text: string,
   modelStart: number,
   modelEnd: number,
+  modelCoreEnd: number,
 ): boolean {
   const launchIntent = new RegExp(LAUNCH_INTENT_SOURCE, "giu");
   for (const match of text.matchAll(launchIntent)) {
     const intentStart = match.index;
     const intentEnd = intentStart + match[0].length;
     if (intentEnd <= modelStart && isLaunchFiller(text.slice(intentEnd, modelStart))) {
-      return !FEATURE_OR_PLATFORM_SUFFIX_RE.test(text.slice(modelEnd));
+      return !FEATURE_OR_PLATFORM_SUFFIX_RE.test(text.slice(modelCoreEnd));
     }
     if (
       intentStart >= modelEnd
@@ -162,13 +239,10 @@ export function decisionTopicKey(entry: DecisionTopicEntry): string | null {
     const match = text.match(pattern);
     const version = match?.[versionIndex];
     const matchStart = match?.index;
-    if (
-      match
-      && version
-      && matchStart !== undefined
-      && hasLaunchIntentNearModel(text, matchStart, matchStart + match[0].length)
-    ) {
-      const variant = match.groups?.variant;
+    if (match && version && matchStart !== undefined) {
+      const modelCoreEnd = matchStart + match[0].length;
+      const { end: modelEnd, variant } = parseModelVariantSuffix(text, modelCoreEnd);
+      if (!hasLaunchIntentNearModel(text, matchStart, modelEnd, modelCoreEnd)) continue;
       return [
         "model-launch",
         family(match),

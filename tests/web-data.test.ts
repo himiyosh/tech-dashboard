@@ -1079,6 +1079,9 @@ describe("decision priority topic diversity", () => {
     ["Qwen 3 Coder released", "Qwen 3 VL released"],
     ["Introducing Gemma 4 12B", "Introducing Gemma 4 27B"],
     ["Introducing Gemini 3.5 Flash Cyber", "Introducing Gemini 3.5 Flash"],
+    ["Introducing GPT-5 Turbo", "Introducing GPT-5"],
+    ["Introducing Qwen 3 Omni", "Introducing Qwen 3"],
+    ["Introducing Gemini 3 Pro Deep Think", "Introducing Gemini 3 Pro"],
   ])("keeps distinct model variants in separate topics: %s / %s", (left, right) => {
     expect(decisionTopicKey(makeEntry({ title: left }))).not.toBe(
       decisionTopicKey(makeEntry({ title: right })),
@@ -1109,6 +1112,9 @@ describe("decision priority topic diversity", () => {
     expect(decisionTopicKey(makeEntry({
       title: "Anthropic releases Opus 5 with improved capabilities",
     }))).toBe("model-launch:claude-opus:5");
+    expect(decisionTopicKey(makeEntry({
+      title: "Introducing Gemini 3 Pro Deep Think",
+    }))).toBe("model-launch:gemini:3:pro-deep-think");
   });
 
   it("does not reintroduce the featured event when filling the decision list", () => {

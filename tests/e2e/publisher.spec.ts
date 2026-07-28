@@ -13,7 +13,11 @@ import {
   boundedSocialDescription,
 } from "../../web/src/lib/bounded-description.ts";
 import { buildAdsTxt } from "../../web/src/lib/ads-txt.ts";
-import { CATEGORY_META } from "../../web/src/lib/category-meta.ts";
+import {
+  CATEGORY_META,
+  type Category,
+} from "../../web/src/lib/category-meta.ts";
+import { isArxivEntry } from "../../web/src/lib/research-lane.ts";
 import { ADSENSE_CLIENT_ID, SITE_URL } from "../../web/src/lib/site.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
 import { canonicalSourceUrl } from "../../web/src/lib/source-meta.ts";
@@ -61,6 +65,7 @@ function localizedHeadValue(html: string, key: string): string {
 
 interface ParsedRssItem {
   category?: string | string[];
+  link?: string;
 }
 
 function rssItemDocuments(xml: string): ParsedRssItem[] {
@@ -886,6 +891,80 @@ test.describe("Publisher generated artifact", () => {
 
     const unknownResponse = await request.get("/rss/not-a-category.xml");
     expect(unknownResponse.status()).toBe(404);
+  });
+
+  test("Research RSS matches the publishable HTML lane and excludes arXiv", async ({
+    page,
+    request,
+  }) => {
+    const raw = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{
+        id: string;
+        url: string;
+        category: Category;
+        source: string;
+        sourceType: string;
+      }>;
+    };
+    type RawEntry = (typeof raw.entries)[number];
+    const byId = new Map(raw.entries.map((entry) => [entry.id, entry]));
+    const readyIds: string[] = [];
+    const visitedCategoryPages = new Set<string>();
+    let categoryHref = "/c/research/";
+
+    while (true) {
+      if (visitedCategoryPages.has(categoryHref)) {
+        throw new Error(`Research pagination cycle detected at ${categoryHref}`);
+      }
+      visitedCategoryPages.add(categoryHref);
+      const categoryResponse = await page.goto(categoryHref, {
+        waitUntil: "domcontentloaded",
+      });
+      expect(categoryResponse?.status()).toBe(200);
+      readyIds.push(
+        ...await page
+          .locator('article.card[data-summary-state="ready"][data-entry-id]')
+          .evaluateAll((cards) =>
+            cards
+              .map((card) => card.getAttribute("data-entry-id") ?? "")
+              .filter(Boolean),
+          ),
+      );
+      const nextLink = page.locator("nav.pager a[rel=next]");
+      const nextHref = await nextLink.count() > 0
+        ? await nextLink.getAttribute("href")
+        : null;
+      if (!nextHref) break;
+      categoryHref = nextHref;
+    }
+
+    const expectedUrls = readyIds.slice(0, 100).map((id) => {
+      const entry = byId.get(id);
+      if (!entry) throw new Error(`Research listing entry ${id} is absent from data/index.json`);
+      return entry.url;
+    });
+    expect(expectedUrls.length).toBeGreaterThan(0);
+    expect(
+      readyIds
+        .map((id) => byId.get(id))
+        .filter((entry): entry is RawEntry => entry !== undefined)
+        .filter(isArxivEntry),
+    ).toEqual([]);
+
+    const feedResponse = await request.get("/rss/research.xml");
+    const feedXml = await feedResponse.text();
+    const feedUrls = rssItemDocuments(feedXml).map((item) => item.link ?? "");
+    expect(feedResponse.status()).toBe(200);
+    expect(feedUrls).toEqual(expectedUrls);
+    expect(
+      feedUrls
+        .map((url) => raw.entries.find((entry) => entry.url === url))
+        .filter((entry): entry is RawEntry => entry !== undefined)
+        .filter(isArxivEntry),
+    ).toEqual([]);
+
+    const arxivFeedResponse = await request.get("/rss/arxiv.xml");
+    expect(arxivFeedResponse.status()).toBe(404);
   });
 
   test("keeps legacy low-frequency tag URLs recoverable", async ({ request }) => {

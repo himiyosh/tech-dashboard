@@ -24,6 +24,12 @@ import {
   type CategoryGroup,
   type CategoryMeta,
 } from "./category-meta.ts";
+import {
+  filterCategoryListingEntries,
+  isArxivEntry,
+  isCategoryListingEntry,
+  isResearchListingEntry,
+} from "./research-lane.ts";
 import { sourceAuthority } from "./source-meta.ts";
 import { normalizeTagKey } from "./tag-normalize.ts";
 
@@ -45,6 +51,7 @@ export {
   CATEGORY_META,
   categoryLabel,
 };
+export { isArxivEntry, isResearchListingEntry };
 export type { Category, CategoryGroup, CategoryMeta };
 
 export interface NormalizedEntry {
@@ -301,10 +308,6 @@ export function tagHref(tag: string, entryId?: string): string {
   return tagHrefForCount(tag, tagEntryCount(tag), entryId);
 }
 
-export function isArxivEntry(entry: Pick<NormalizedEntry, "source" | "sourceType" | "url">): boolean {
-  return entry.source.startsWith("arxiv-") || (entry.sourceType === "paper" && entry.url.includes("arxiv.org"));
-}
-
 /**
  * Low-signal release builds: nightly snapshots, pre-releases, release
  * candidates, betas/alphas, and internal staging builds. These are dev
@@ -364,15 +367,15 @@ export function isOffTopicForHero(
 }
 
 export const ARXIV_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter(isArxivEntry);
-export function isResearchListingEntry(entry: NormalizedEntry): boolean {
-  return entry.category === "research" && !isArxivEntry(entry);
-}
-export const RESEARCH_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter(isResearchListingEntry);
+export const RESEARCH_ENTRIES: readonly NormalizedEntry[] = filterCategoryListingEntries(
+  ALL_ENTRIES,
+  "research",
+);
 export const MAIN_TIMELINE_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter((entry) => !isArxivEntry(entry));
 
 const CATEGORY_ENTRIES_BY_SLUG = new Map<Category, NormalizedEntry[]>();
 for (const entry of ALL_ENTRIES) {
-  if (entry.category === "research" && isArxivEntry(entry)) continue;
+  if (!isCategoryListingEntry(entry, entry.category)) continue;
   const entries = CATEGORY_ENTRIES_BY_SLUG.get(entry.category);
   if (entries) entries.push(entry);
   else CATEGORY_ENTRIES_BY_SLUG.set(entry.category, [entry]);
@@ -429,7 +432,7 @@ export function countByCategory(): Record<Category, number> {
     CATEGORY_META.map((c) => [c.slug, 0] as const),
   ) as Record<Category, number>;
   for (const e of ALL_ENTRIES) {
-    if (e.category === "research" && isArxivEntry(e)) continue;
+    if (!isCategoryListingEntry(e, e.category)) continue;
     if (e.category in counts) counts[e.category]++;
   }
   return counts;

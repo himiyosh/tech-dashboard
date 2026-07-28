@@ -7,6 +7,7 @@ import {
 import {
   createRssResponse,
 } from "../../lib/rss.ts";
+import { filterCategoryListingEntries } from "../../lib/research-lane.ts";
 import { SITE_URL } from "../../lib/site.ts";
 
 export function getStaticPaths() {
@@ -21,8 +22,9 @@ export const GET: APIRoute = ({ params }) => {
     return new Response("Not found", { status: 404 });
   }
 
-  const entries = PUBLISHABLE_ENTRIES.filter(
-    (entry) => entry.category === category.slug,
+  const entries = filterCategoryListingEntries(
+    PUBLISHABLE_ENTRIES,
+    category.slug,
   );
   return createRssResponse(entries, {
     title: `TECH Dashboard | ${category.name}`,

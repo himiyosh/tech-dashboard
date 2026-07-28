@@ -2876,6 +2876,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: 重複する生成要約ベースのgateを削除し、artifact全体は既存のshared registry evaluatorで検査する。実Kimi K3のraw itemをkeepし、raw title/snippetにbusiness、workflow、agent noiseがある場合はdropするactual registry fixtureを追加した。
 - **教訓**: source品質gateはregistryとraw source fieldsの単一契約へ揃える。AI生成title/summaryを採否へ使わず、正当記事のkeepと真正noiseのdropを同じactual source定義で固定し、別の正規表現をdata schemaへ重ねない。
 
+### LL-436: category RSSはHTML laneと同じmembership predicateを共有する
+- **事象**: HTMLのResearch一覧は専用arXivレーンを除外して15件を表示していた一方、`/rss/research.xml`はcategoryだけで選択し、同じ`research` categoryを持つarXiv 80件を含む95件を配信していた。
+- **根本原因**: HTML collectionは`isResearchListingEntry()`を使っていたが、category RSS routeは`entry.category === category.slug`を独自実装し、reader-facing lane membershipを共有していなかった。
+- **対策**: arXiv判定、Research membership、一般category selectionをJSON非依存の共通helperへ集約し、HTML collectionとcategory RSSの両方から利用する。ResearchとarXivが同じcategoryを持つfixture、全体feed維持、未知arXiv feed 404、built HTMLとのURL parityを回帰testへ追加した。
+- **教訓**: category、lane、feedが同じslugを共有しても表示母集団が同一とは限らない。購読feedはcategory文字列を再判定せず、HTML listingのmembership predicateを共有し、専用laneとの境界をdeterministic fixtureとbuilt artifactで検証する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

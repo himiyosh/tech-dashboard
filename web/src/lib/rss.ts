@@ -19,12 +19,44 @@ export function categoryRssHref(category: Category): `/rss/${Category}.xml` {
   return `/rss/${category}.xml`;
 }
 
-function escapeXml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+function isXml10CodePoint(codePoint: number): boolean {
+  return (
+    codePoint === 0x09 ||
+    codePoint === 0x0a ||
+    codePoint === 0x0d ||
+    (codePoint >= 0x20 && codePoint <= 0xd7ff) ||
+    (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
+    (codePoint >= 0x10000 && codePoint <= 0x10ffff)
+  );
+}
+
+export function escapeXml(value: string): string {
+  let escaped = "";
+  for (const character of value) {
+    const codePoint = character.codePointAt(0);
+    if (codePoint === undefined || !isXml10CodePoint(codePoint)) continue;
+
+    switch (character) {
+      case "&":
+        escaped += "&amp;";
+        break;
+      case "<":
+        escaped += "&lt;";
+        break;
+      case ">":
+        escaped += "&gt;";
+        break;
+      case '"':
+        escaped += "&quot;";
+        break;
+      case "'":
+        escaped += "&apos;";
+        break;
+      default:
+        escaped += character;
+    }
+  }
+  return escaped;
 }
 
 export function serializeRssFeed(

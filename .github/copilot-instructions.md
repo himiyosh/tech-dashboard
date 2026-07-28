@@ -2864,6 +2864,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: PageHero descriptionを1要素のままHeroの`aria-describedby`へ関連付け、mobile優先Heroではvisually-hidden patternでlayoutから外しつつaccessibility treeへ残した。JA/ENのactive description、320/375/390/414pxとdesktopのHero高、44px action、横overflowをbrowser testで固定し、dead data属性を削除した。
 - **教訓**: responsive密度のために意味のある本文を隠す場合、`display:none`を使う前に視覚だけを隠すべき情報かを判定する。landmarkの目的説明はDOMを複製せず単一要素をprogrammatic descriptionへ接続し、active language、visual geometry、accessibility treeを同じviewport contractで検証する。状態classが契約の単一情報源ならconsumerのないdata属性を残さない。
 
+### LL-434: XML entity escapeの前にXML 1.0の文字集合をcode point単位で検証する
+- **事象**: 全体RSSとカテゴリRSSを共有serializerへ集約しても、文字列の`& < > " '`だけをescapeしていたため、feed dataにNUL、禁止C0制御文字、孤立surrogate、U+FFFE/U+FFFFが混ざるとXML consumerがfeed全体を拒否できる状態だった。
+- **根本原因**: markup delimiterのescapeとXML documentへ出力可能な文字集合のvalidationを同じ完成条件として扱い、UTF-16 code unitでなくUnicode code pointを確認する前処理が無かった。
+- **対策**: shared RSS helperは`for...of`でcode pointを走査し、XML 1.0の`#x9/#xA/#xD/#x20-#xD7FF/#xE000-#xFFFD/#x10000-#x10FFFF`だけを保持してからentity escapeする。pure helperと全体・カテゴリroute fixtureで禁止文字除去、TAB/LF/CR、日本語、astral Unicode、well-formed XMLを固定する。
+- **教訓**: XML serializerはentity escapeだけで安全化を完了しない。文字集合validationを先に行い、isolated surrogateを除去しつつvalid surrogate pairをastral code pointとして保持する。共有serializerを使う全routeとactual data fixtureの両方でdocument全体のwell-formednessを検証する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

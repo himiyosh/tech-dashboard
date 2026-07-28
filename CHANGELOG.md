@@ -84,6 +84,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 修正
 
+- RSSの共有serializerはXML 1.0で許可される文字だけをcode point単位で保持し、NUL、禁止制御文字、孤立surrogate、U+FFFE/U+FFFFを除去してからentity escapeするようにしました。全体RSSとカテゴリRSSは同じfail-safe契約を使い、日本語とastral Unicode、TAB/LF/CRを維持します。
 - mobileの購読action付きPageHeroは説明文を視覚的にだけ畳み、JA/ENのページ目的をHeroのaccessible descriptionとして支援技術へ残すようにしました。購読actionの44px操作面とcompactなHero高は維持します。
 - モバイル・タブレットで Search を開いた際、固定された閉じるボタンが JA/EN 言語切替を覆いながら背面の言語ボタンが Tab・支援技術から到達できていた問題を修正しました。Search は実測した Header 下端の下へ配置し、短いタブレット画面では残りの viewport 高へ検索結果を収めて内部スクロールできるようにしました。閉じる・言語切替の44px操作面、focus復帰、言語切替、検索状態を維持します。
 - 記事のJA/EN別social descriptionを160文字で機械的に切らず、収まる最長の完全文を優先し、`.NET`、`U.S.`、`Dr.`を誤った文末にせず、文境界が無い場合も単語・grapheme・HTML entityを壊さず省略記号を付けるようにしました。

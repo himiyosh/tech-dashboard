@@ -113,6 +113,10 @@ const pageHeroSource = readFileSync(
   new URL("../web/src/components/PageHero.astro", import.meta.url),
   "utf8",
 );
+const portalStyles = readFileSync(
+  new URL("../web/src/styles/portal.css", import.meta.url),
+  "utf8",
+);
 const aboutSource = readFileSync(
   new URL("../web/src/pages/about.astro", import.meta.url),
   "utf8",
@@ -161,6 +165,17 @@ describe("public feeds", () => {
     expect(pageHeroSource).toContain('"page-hero-mobile-priority"');
     expect(pageHeroSource).toContain('"has-mobile-priority-actions"');
     expect(pageHeroSource).toContain('"page-hero-action-mobile"');
+    expect(pageHeroSource).toContain('const descriptionId = `${headingId}-description`;');
+    expect(pageHeroSource).toContain("aria-describedby={descriptionId}");
+    expect(pageHeroSource).toContain('id={descriptionId} class="page-hero-description"');
+    expect(pageHeroSource).toContain('<span class="i18n-en" lang="en">{descriptionEn}</span>');
+    expect(pageHeroSource).not.toContain("data-mobile-priority");
+    expect(portalStyles).toMatch(
+      /\.page-hero-mobile-priority \.page-hero-description\s*\{[^}]*position:\s*absolute;[^}]*clip-path:\s*inset\(50%\);/s,
+    );
+    expect(portalStyles).not.toMatch(
+      /\.page-hero-mobile-priority \.page-hero-description\s*\{[^}]*display:\s*none;/s,
+    );
     expect(aboutSource).toContain('label: "全体RSS"');
     expect(aboutSource).toContain('labelEn: "Site-wide RSS"');
     expect(aboutSource.match(/mobilePriority:\s*true/g)).toHaveLength(2);

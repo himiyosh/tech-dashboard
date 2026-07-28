@@ -46,6 +46,7 @@ const {
   actions = [],
 } = Astro.props;
 const hasMobilePriorityActions = actions.some((action) => action.mobilePriority);
+const descriptionId = `${headingId}-description`;
 ---
 
 <section
@@ -56,6 +57,7 @@ const hasMobilePriorityActions = actions.some((action) => action.mobilePriority)
   ]}
   style={accent ? `--page-hero-accent:${accent}` : undefined}
   aria-labelledby={headingId}
+  aria-describedby={descriptionId}
 >
   <div class="page-hero-inner">
     <div class="page-hero-copy">
@@ -78,11 +80,11 @@ const hasMobilePriorityActions = actions.some((action) => action.mobilePriority)
           </span>
         )}
       </h1>
-      <p>
+      <p id={descriptionId} class="page-hero-description">
         {descriptionEn ? (
           <>
             <span class="i18n-ja">{description}</span>
-            <span class="i18n-en">{descriptionEn}</span>
+            <span class="i18n-en" lang="en">{descriptionEn}</span>
           </>
         ) : description}
       </p>
@@ -98,7 +100,6 @@ const hasMobilePriorityActions = actions.some((action) => action.mobilePriority)
             <a
               href={action.href}
               class:list={{ "page-hero-action-mobile": action.mobilePriority }}
-              data-mobile-priority={action.mobilePriority ? "true" : undefined}
             >
               {action.labelEn ? (
                 <>

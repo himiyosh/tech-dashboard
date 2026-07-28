@@ -30,9 +30,10 @@ This repository requires an external exact-head review clearance before a pull r
 - Duplicate authoritative `pass` markers are accepted.
 - Any authoritative exact-head `fail` dominates all `pass` markers until that fail comment or review body is edited or deleted.
 - Stale-head, malformed, boundary-spoofed, mixed-case, wrong-reviewer, and self-issued markers never satisfy the gate.
+- A malformed count requires a marker-like HTML comment sentinel (`<!-- independent-review`). Ordinary discussion of the gate or `check-independent-review.mjs` is not a marker attempt. A marker-like comment embedded in prose is malformed because a valid marker must remain the complete standalone body.
 - Both `reviews[].body` and `comments[].body` are scanned. An empty review list does not invalidate a valid owner comment.
 - Missing evidence arrays, a non-open PR, an exact-head mismatch, or a GitHub CLI/API failure fails closed.
-- A rejection reached after evidence normalization emits exactly one count summary in the form `ERR: markers valid=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n>`. JSON, GitHub API, and evidence-normalization failures occur before a result exists and do not synthesize counts.
+- A rejection reached after evidence normalization emits exactly one count summary in the form `ERR: markers valid=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>`. JSON, GitHub API, and evidence-normalization failures occur before a result exists and do not synthesize counts.
 
 ## Lessons Learned
 
@@ -42,3 +43,10 @@ This repository requires an external exact-head review clearance before a pull r
 - **Root cause**: Marker grammar and reviewer independence were informal rather than executable.
 - **Mitigation**: Keep the lowercase whole-body marker grammar, expected external reviewer UUID, exact PR head, and fail-dominates policy in `scripts/check-independent-review.mjs` and its regression tests.
 - **Lesson**: A review comment is not merge clearance unless one fail-closed command verifies its exact syntax, exact head, external issuer, authoritative reviewer, and current PR state.
+
+### LL-IR-002: Diagnostics classify syntax attempts, not topic mentions
+
+- **Incident**: Ordinary review discussion and the script filename increased the malformed marker count because both contained the substring `independent-review`.
+- **Root cause**: Diagnostic classification used a topic substring instead of a marker syntax sentinel.
+- **Mitigation**: Count malformed bodies only when a marker-like HTML comment starts with the protocol prefix, while preserving the standalone whole-body parser for clearance.
+- **Lesson**: Diagnostic counters should identify high-confidence syntax attempts. Discussion about a protocol is evidence population, not malformed protocol data.

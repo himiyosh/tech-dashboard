@@ -13,6 +13,7 @@ const RFC3339_RE =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(Z|[+-](\d{2}):(\d{2}))$/;
 const MARKER_RE =
   /^<!-- independent-review head=([0-9a-f]{40}) verdict=(pass|fail) by=([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) at=([^ ]+) -->$/;
+const MARKER_ATTEMPT_RE = /<!--\s*independent-review/;
 const GH_TIMEOUT_MS = 20_000;
 const GH_MAX_BUFFER_BYTES = 4 * 1024 * 1024;
 
@@ -89,6 +90,10 @@ export function parseIndependentReviewMarker(body) {
     by: match[3],
     at: match[4],
   };
+}
+
+export function isIndependentReviewMarkerAttempt(body) {
+  return typeof body === "string" && MARKER_ATTEMPT_RE.test(body);
 }
 
 function normalizeMessages(value, label) {
@@ -191,7 +196,7 @@ export function evaluateIndependentReviewGate({
   for (const message of messages) {
     const marker = parseIndependentReviewMarker(message.body);
     if (!marker) {
-      if (message.body.includes("independent-review")) {
+      if (isIndependentReviewMarkerAttempt(message.body)) {
         counts.malformedMarkerBodies += 1;
       }
       continue;
@@ -463,7 +468,7 @@ export async function runIndependentReviewCli(argv, deps = {}) {
     if (!result.ok) {
       for (const reason of result.reasons) console.error(`ERR: ${reason}`);
       console.error(
-        `ERR: markers valid=${result.counts.validMarkers} stale=${result.counts.staleMarkers} wrongReviewer=${result.counts.wrongReviewerMarkers} selfIssued=${result.counts.selfIssuedMarkers} malformed=${result.counts.malformedMarkerBodies}`,
+        `ERR: markers valid=${result.counts.validMarkers} stale=${result.counts.staleMarkers} wrongReviewer=${result.counts.wrongReviewerMarkers} selfIssued=${result.counts.selfIssuedMarkers} malformed=${result.counts.malformedMarkerBodies} reviewsScanned=${result.counts.reviewsScanned} commentsScanned=${result.counts.commentsScanned}`,
       );
       console.error(
         `ERR: independent review gate rejected ${repository}#${pullRequestNumber} at ${expectedHead}`,

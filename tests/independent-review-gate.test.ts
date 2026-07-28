@@ -14,6 +14,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   evaluateIndependentReviewGate,
   fetchGitHubIndependentReviewEvidence,
+  isIndependentReviewMarkerAttempt,
   isStrictRfc3339,
   parseIndependentReviewCliArgs,
   parseIndependentReviewMarker,
@@ -180,6 +181,46 @@ describe("independent review marker parser", () => {
     expect(isStrictRfc3339("2024-02-29T00:00:00Z")).toBe(true);
     expect(isStrictRfc3339("2026-07-28 07:30:15Z")).toBe(false);
   });
+
+  it.each([
+    { label: "valid marker", body: marker() },
+    { label: "prose-embedded marker", body: `prose ${marker()}` },
+    {
+      label: "malformed standalone marker",
+      body: marker({ verdict: "PASS" }),
+    },
+    {
+      label: "truncated marker comment",
+      body: `<!-- independent-review head=${HEAD}`,
+    },
+    {
+      label: "marker comment without canonical spacing",
+      body: "<!--independent-review verdict=pass -->",
+    },
+    {
+      label: "boundary-spoofed marker comment",
+      body: `<!-- independent-reviewer head=${HEAD} verdict=pass -->`,
+    },
+  ])("recognizes $label as a high-confidence marker attempt", ({ body }) => {
+    expect(isIndependentReviewMarkerAttempt(body)).toBe(true);
+  });
+
+  it.each([
+    {
+      label: "ordinary gate discussion",
+      body: "The independent-review gate scans reviews and comments.",
+    },
+    {
+      label: "script filename mention",
+      body: "Please inspect scripts/check-independent-review.mjs before merging.",
+    },
+    {
+      label: "plain verdict discussion",
+      body: `The expected verdict=pass belongs to reviewer ${REVIEWER}.`,
+    },
+  ])("does not treat $label as a marker attempt", ({ body }) => {
+    expect(isIndependentReviewMarkerAttempt(body)).toBe(false);
+  });
 });
 
 describe("independent review gate policy", () => {
@@ -209,6 +250,29 @@ describe("independent review gate policy", () => {
 
     expect(result.ok).toBe(true);
     expect(result.counts.authoritativePasses).toBe(2);
+  });
+
+  it("does not count ordinary discussion as malformed evidence", () => {
+    const result = evaluate(
+      evidence({
+        reviews: [
+          { body: "Discussion of the independent-review gate only." },
+          { body: "No clearance marker was posted in this review." },
+        ],
+        comments: [
+          { body: "See scripts/check-independent-review.mjs for the implementation." },
+          { body: "This is unrelated PR discussion." },
+        ],
+      }),
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.counts).toMatchObject({
+      reviewsScanned: 2,
+      commentsScanned: 2,
+      validMarkers: 0,
+      malformedMarkerBodies: 0,
+    });
   });
 
   it.each([
@@ -242,6 +306,11 @@ describe("independent review gate policy", () => {
       count: "malformedMarkerBodies",
     },
     {
+      label: "malformed standalone marker",
+      body: marker().replace(` by=${REVIEWER}`, ""),
+      count: "malformedMarkerBodies",
+    },
+    {
       label: "stale head",
       body: marker({ head: OTHER_HEAD }),
       count: "staleMarkers",
@@ -259,6 +328,11 @@ describe("independent review gate policy", () => {
     {
       label: "boundary-spoofed marker",
       body: `text ${marker()}`,
+      count: "malformedMarkerBodies",
+    },
+    {
+      label: "boundary-spoofed marker name",
+      body: `<!-- independent-reviewer head=${HEAD} verdict=pass by=${REVIEWER} at=${AT} -->`,
       count: "malformedMarkerBodies",
     },
   ])("rejects $label as clearance", ({ body, count }) => {
@@ -409,31 +483,31 @@ describe("independent review CLI", () => {
       label: "no marker",
       body: undefined,
       expected:
-        "ERR: markers valid=0 stale=0 wrongReviewer=0 selfIssued=0 malformed=0",
+        "ERR: markers valid=0 stale=0 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=0",
     },
     {
       label: "self-issued marker",
       body: marker({ by: MERGER }),
       expected:
-        "ERR: markers valid=1 stale=0 wrongReviewer=1 selfIssued=1 malformed=0",
+        "ERR: markers valid=1 stale=0 wrongReviewer=1 selfIssued=1 malformed=0 reviewsScanned=0 commentsScanned=1",
     },
     {
       label: "prose-embedded malformed marker",
       body: `prose ${marker()}`,
       expected:
-        "ERR: markers valid=0 stale=0 wrongReviewer=0 selfIssued=0 malformed=1",
+        "ERR: markers valid=0 stale=0 wrongReviewer=0 selfIssued=0 malformed=1 reviewsScanned=0 commentsScanned=1",
     },
     {
       label: "stale marker",
       body: marker({ head: OTHER_HEAD }),
       expected:
-        "ERR: markers valid=1 stale=1 wrongReviewer=0 selfIssued=0 malformed=0",
+        "ERR: markers valid=1 stale=1 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=1",
     },
     {
       label: "wrong-reviewer marker",
       body: marker({ by: OTHER_REVIEWER }),
       expected:
-        "ERR: markers valid=1 stale=0 wrongReviewer=1 selfIssued=0 malformed=0",
+        "ERR: markers valid=1 stale=0 wrongReviewer=1 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=1",
     },
   ])(
     "prints stable marker counts and exits 1 for $label",
@@ -455,6 +529,30 @@ describe("independent review CLI", () => {
       expect(diagnosticLines).toEqual([expected]);
     },
   );
+
+  it("distinguishes empty evidence from fetched non-marker discussion", () => {
+    const root = createScratchRoot("discussion-population");
+    const inputPath = writeEvidenceFixture(
+      root,
+      evidence({
+        reviews: [{ body: "Discussing the independent-review policy." }],
+        comments: [
+          { body: "See scripts/check-independent-review.mjs." },
+          { body: "No marker was posted." },
+        ],
+      }),
+    );
+
+    const result = runCli(requiredCliArgs(inputPath));
+    const diagnosticLines = result.stderr
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith("ERR: markers "));
+
+    expect(result.status).toBe(1);
+    expect(diagnosticLines).toEqual([
+      "ERR: markers valid=0 stale=0 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=1 commentsScanned=2",
+    ]);
+  });
 
   it("does not synthesize marker counts when JSON parsing fails", () => {
     const root = createScratchRoot("invalid-json");
@@ -500,7 +598,7 @@ describe("independent review CLI", () => {
     expect(instruction).toContain("Only lowercase `pass` and `fail` are valid");
     expect(instruction).toContain("expected reviewer must be external");
     expect(instruction).toContain(
-      "ERR: markers valid=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n>",
+      "ERR: markers valid=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>",
     );
     expect(script).toContain("evidence.reviews.map");
     expect(script).toContain("evidence.comments.map");

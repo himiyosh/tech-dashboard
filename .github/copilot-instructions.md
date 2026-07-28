@@ -2870,6 +2870,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: shared RSS helperは`for...of`でcode pointを走査し、XML 1.0の`#x9/#xA/#xD/#x20-#xD7FF/#xE000-#xFFFD/#x10000-#x10FFFF`だけを保持してからentity escapeする。pure helperと全体・カテゴリroute fixtureで禁止文字除去、TAB/LF/CR、日本語、astral Unicode、well-formed XMLを固定する。
 - **教訓**: XML serializerはentity escapeだけで安全化を完了しない。文字集合validationを先に行い、isolated surrogateを除去しつつvalid surrogate pairをastral code pointとして保持する。共有serializerを使う全routeとactual data fixtureの両方でdocument全体のwell-formednessを検証する。
 
+### LL-435: 生成要約の一般語をsource filterの採否根拠にしない
+- **事象**: scheduled PublisherがSimon Willisonの正当なKimi K3 model/repository記事へAI要約を付けた後、data schemaのLocal LLM専用正規表現が要約内の`workflow`や`startup`等の一般語を検出し、shared registry filterを通過した記事を拒否した。
+- **根本原因**: collector、Worker merge、migrationはraw title、raw contentSnippet、URLだけをshared registry filterへ渡していたが、追加のschema gateだけが生成後の`summaryJa`/`summaryEn`を独自語彙で再分類していた。生成要約はモデルの言い換えで語彙が変わるためsource採否の安定した証拠ではない。
+- **対策**: 重複する生成要約ベースのgateを削除し、artifact全体は既存のshared registry evaluatorで検査する。実Kimi K3のraw itemをkeepし、raw title/snippetにbusiness、workflow、agent noiseがある場合はdropするactual registry fixtureを追加した。
+- **教訓**: source品質gateはregistryとraw source fieldsの単一契約へ揃える。AI生成title/summaryを採否へ使わず、正当記事のkeepと真正noiseのdropを同じactual source定義で固定し、別の正規表現をdata schemaへ重ねない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

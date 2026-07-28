@@ -14,7 +14,9 @@ const RFC3339_RE =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(Z|[+-](\d{2}):(\d{2}))$/;
 const MARKER_RE =
   /^<!-- independent-review head=([0-9a-f]{40}) verdict=(pass|fail) by=([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) at=([^ ]+) -->$/;
-const MARKER_ATTEMPT_RE = /<!--\s*independent-review/;
+// Fold only the protocol sentinel for diagnostics; clearance remains fully strict.
+const MARKER_ATTEMPT_RE =
+  /<!--\s*[iI][nN][dD][eE][pP][eE][nN][dD][eE][nN][tT]-[rR][eE][vV][iI][eE][wW]/;
 const DIAGNOSTIC_CONTROL_RE = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g;
 const GH_TIMEOUT_MS = 20_000;
 const GH_MAX_BUFFER_BYTES = 4 * 1024 * 1024;

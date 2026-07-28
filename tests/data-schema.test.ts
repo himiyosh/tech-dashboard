@@ -706,7 +706,7 @@ describe("カテゴリ品質ガード", () => {
     expect(researchLive.length, `research live count: ${researchLive.length}`).toBeLessThanOrEqual(140);
   });
 
-  // LL-081 / LL-129 / LL-144 / LL-260: source filter と category restamp の単一ソースは
+  // LL-081 / LL-129 / LL-144 / LL-260 / LL-435: source filter と category restamp の単一ソースは
   // registry。既存 live/archive も shared helper で current rule に再適用した結果と
   // 一致していなければならない。ただし normalized live/archive artifact は raw
   // snippet を失っていることがあるため、non-title scope source では missing include
@@ -740,17 +740,6 @@ describe("カテゴリ品質ガード", () => {
     ).toEqual([]);
   }, 15_000);
 
-  it("Local LLM category excludes workflow and business noise", () => {
-    const noisy = allDataEntries
-      .filter((entry) => String(entry.category) === "local-llm")
-      .filter((entry) => ["zenn-ai", "zenn-llm", "qiita-llm", "simonw-blog"].includes(String(entry.source)))
-      .filter((entry) =>
-        /(saas is dead|claude code|workflow|billing|invoice|startup|profit|profitable|\u55b6\u696d|\u9ed2\u5b57|\u53ce\u76ca|\u8acb\u6c42)/i
-          .test(String(entry.title) + " " + String(entry.summaryJa) + " " + String(entry.summaryEn) + " " + String(entry.url)),
-      )
-      .map((entry) => String(entry.source) + ":" + String(entry.title));
-    expect(noisy).toEqual([]);
-  });
 });
 
 describe("evergreen 蓄積ポリシー (R-022)", () => {

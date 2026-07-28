@@ -8397,6 +8397,77 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator('.paper-filter-tabs [data-paper-filter="all"]')).toHaveAttribute("aria-pressed", "true");
   });
 
+  test("arXiv exposes a localized RSS subscription action and autodiscovery", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/arxiv/");
+
+    const feedAction = page.locator(
+      '.page-hero-actions a[href="/rss/arxiv.xml"]',
+    );
+    await expect(feedAction).toBeVisible();
+    await expect(feedAction.locator(".i18n-ja")).toHaveText("arXiv RSSを購読");
+    await expect(feedAction.locator(".i18n-en")).toBeHidden();
+    await expect(
+      page.locator(
+        'head link[rel="alternate"][type="application/rss+xml"][href="/rss/arxiv.xml"]',
+      ),
+    ).toHaveCount(1);
+    await expect(
+      page.locator(
+        'head link[rel="alternate"][type="application/rss+xml"][href="/rss/arxiv.xml"]',
+      ),
+    ).toHaveAttribute("title", "TECH Dashboard | arXiv Papers");
+    await expect(
+      page.locator(
+        'head link[rel="alternate"][type="application/feed+json"][href="/feed.json"]',
+      ),
+    ).toHaveAttribute("title", "TECH Dashboard site-wide JSON Feed");
+    await expect(feedAction).toHaveAttribute("type", "application/rss+xml");
+    await feedAction.focus();
+    await expect(feedAction).toBeFocused();
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(feedAction.locator(".i18n-ja")).toBeHidden();
+    await expect(feedAction.locator(".i18n-en")).toHaveText(
+      "Subscribe to arXiv RSS",
+    );
+    await expect(feedAction.locator(".i18n-en")).toBeVisible();
+
+    for (const width of [721, 720, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.evaluate(
+        () => new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        ),
+      );
+      await expect(feedAction).toBeVisible();
+      const geometry = await page.evaluate(() => {
+        const action = document.querySelector(
+          '.page-hero-actions a[href="/rss/arxiv.xml"]',
+        ) as HTMLElement | null;
+        if (!action) throw new Error("arXiv RSS action is missing");
+        const rect = action.getBoundingClientRect();
+        return {
+          width: rect.width,
+          height: rect.height,
+          left: rect.left,
+          right: rect.right,
+          viewportWidth: window.innerWidth,
+          overflow: document.documentElement.scrollWidth > window.innerWidth,
+        };
+      });
+      expect(geometry.left).toBeGreaterThanOrEqual(0);
+      expect(geometry.right).toBeLessThanOrEqual(geometry.viewportWidth);
+      expect(geometry.overflow).toBe(false);
+      if (width <= 720) {
+        expect(geometry.width).toBeGreaterThanOrEqual(44);
+        expect(geometry.height).toBeGreaterThanOrEqual(44);
+      }
+    }
+  });
+
   test("lane pages never collapse into a 3-column timeline grid (LL-091)", async ({ page }) => {
     // The timeline .layout has responsive media queries (a 200px sidebar and a
     // 3-col :has(aside.right) rule for 901-1180px) that previously bled into

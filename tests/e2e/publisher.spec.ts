@@ -17,6 +17,10 @@ import {
   CATEGORY_META,
   type Category,
 } from "../../web/src/lib/category-meta.ts";
+import {
+  isPublishableEntry,
+  type PublicationEntry,
+} from "../../web/src/lib/entry-publication.ts";
 import { isArxivEntry } from "../../web/src/lib/research-lane.ts";
 import { ADSENSE_CLIENT_ID, SITE_URL } from "../../web/src/lib/site.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
@@ -66,6 +70,11 @@ function localizedHeadValue(html: string, key: string): string {
 interface ParsedRssItem {
   category?: string | string[];
   link?: string;
+}
+
+interface FeedArtifactEntry extends PublicationEntry {
+  id: string;
+  category: Category;
 }
 
 function rssItemDocuments(xml: string): ParsedRssItem[] {
@@ -934,17 +943,10 @@ test.describe("Publisher generated artifact", () => {
     request,
   }) => {
     const raw = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{
-        id: string;
-        url: string;
-        category: Category;
-        source: string;
-        sourceType: string;
-      }>;
+      entries: FeedArtifactEntry[];
     };
-    type RawEntry = (typeof raw.entries)[number];
     const byId = new Map(raw.entries.map((entry) => [entry.id, entry]));
-    const readyIds: string[] = [];
+    const listingIds: string[] = [];
     const visitedCategoryPages = new Set<string>();
     let categoryHref = "/c/research/";
 
@@ -957,9 +959,9 @@ test.describe("Publisher generated artifact", () => {
         waitUntil: "domcontentloaded",
       });
       expect(categoryResponse?.status()).toBe(200);
-      readyIds.push(
+      listingIds.push(
         ...await page
-          .locator('article.card[data-summary-state="ready"][data-entry-id]')
+          .locator("article.card[data-entry-id]")
           .evaluateAll((cards) =>
             cards
               .map((card) => card.getAttribute("data-entry-id") ?? "")
@@ -974,18 +976,16 @@ test.describe("Publisher generated artifact", () => {
       categoryHref = nextHref;
     }
 
-    const expectedUrls = readyIds.slice(0, 100).map((id) => {
-      const entry = byId.get(id);
-      if (!entry) throw new Error(`Research listing entry ${id} is absent from data/index.json`);
-      return entry.url;
-    });
+    const expectedEntries = listingIds
+      .map((id) => {
+        const entry = byId.get(id);
+        if (!entry) throw new Error(`Research listing entry ${id} is absent from data/index.json`);
+        return entry;
+      })
+      .filter(isPublishableEntry);
+    const expectedUrls = expectedEntries.slice(0, 100).map((entry) => entry.url);
     expect(expectedUrls.length).toBeGreaterThan(0);
-    expect(
-      readyIds
-        .map((id) => byId.get(id))
-        .filter((entry): entry is RawEntry => entry !== undefined)
-        .filter(isArxivEntry),
-    ).toEqual([]);
+    expect(expectedEntries.filter(isArxivEntry)).toEqual([]);
 
     const feedResponse = await request.get("/rss/research.xml");
     const feedXml = await feedResponse.text();
@@ -995,12 +995,72 @@ test.describe("Publisher generated artifact", () => {
     expect(
       feedUrls
         .map((url) => raw.entries.find((entry) => entry.url === url))
-        .filter((entry): entry is RawEntry => entry !== undefined)
+        .filter((entry): entry is FeedArtifactEntry => entry !== undefined)
         .filter(isArxivEntry),
     ).toEqual([]);
 
-    const arxivFeedResponse = await request.get("/rss/arxiv.xml");
-    expect(arxivFeedResponse.status()).toBe(404);
+  });
+
+  test("arXiv RSS matches the publishable HTML lane and keeps Research separate", async ({
+    page,
+    request,
+  }) => {
+    const raw = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: FeedArtifactEntry[];
+    };
+    const byId = new Map(raw.entries.map((entry) => [entry.id, entry]));
+
+    const pageResponse = await page.goto("/arxiv/", {
+      waitUntil: "domcontentloaded",
+    });
+    expect(pageResponse?.status()).toBe(200);
+    const laneIds = await page
+      .locator('[data-paper-view-panel="cards"] article.card[data-entry-id]')
+      .evaluateAll((cards) =>
+        cards
+          .map((card) => card.getAttribute("data-entry-id") ?? "")
+          .filter(Boolean),
+      );
+    const expectedEntries = laneIds
+      .map((id) => {
+        const entry = byId.get(id);
+        if (!entry) throw new Error(`arXiv listing entry ${id} is absent from data/index.json`);
+        return entry;
+      })
+      .filter(isPublishableEntry);
+    expect(expectedEntries.every(isArxivEntry)).toBe(true);
+    const expectedUrls = expectedEntries.slice(0, 100).map((entry) => entry.url);
+
+    const [arxivResponse, researchResponse] = await Promise.all([
+      request.get("/rss/arxiv.xml"),
+      request.get("/rss/research.xml"),
+    ]);
+    const arxivXml = await arxivResponse.text();
+    const researchXml = await researchResponse.text();
+    const arxivItems = rssItemDocuments(arxivXml);
+    const arxivUrls = arxivItems.map((item) => item.link ?? "");
+    const researchUrls = rssItemDocuments(researchXml).map((item) => item.link ?? "");
+
+    expect(arxivResponse.status()).toBe(200);
+    expect(arxivResponse.headers()["content-type"]).toMatch(
+      /^(?:application|text)\/xml(?:;|$)/,
+    );
+    expect(arxivUrls).toEqual(expectedUrls);
+    expect(arxivItems.length).toBeLessThanOrEqual(100);
+    expect(
+      arxivItems.every((item) => rssItemCategory(item) === "research"),
+    ).toBe(true);
+    expect(
+      researchUrls
+        .map((url) => raw.entries.find((entry) => entry.url === url))
+        .filter((entry): entry is FeedArtifactEntry => entry !== undefined)
+        .filter(isArxivEntry),
+    ).toEqual([]);
+    await expect(
+      page.locator(
+        'head link[rel="alternate"][type="application/rss+xml"][href="/rss/arxiv.xml"]',
+      ),
+    ).toHaveCount(1);
   });
 
   test("keeps legacy low-frequency tag URLs recoverable", async ({ request }) => {

@@ -26,10 +26,17 @@ import {
 } from "./category-meta.ts";
 import {
   filterCategoryListingEntries,
+  filterArxivEntries,
   isArxivEntry,
   isCategoryListingEntry,
   isResearchListingEntry,
 } from "./research-lane.ts";
+import {
+  isDeterministicFallbackEntry,
+  isListableEntry,
+  isMutableReleaseAliasEntry,
+  isPublishableEntry,
+} from "./entry-publication.ts";
 import { sourceAuthority } from "./source-meta.ts";
 import { normalizeTagKey } from "./tag-normalize.ts";
 
@@ -52,6 +59,12 @@ export {
   categoryLabel,
 };
 export { isArxivEntry, isResearchListingEntry };
+export {
+  isDeterministicFallbackEntry,
+  isListableEntry,
+  isMutableReleaseAliasEntry,
+  isPublishableEntry,
+};
 export type { Category, CategoryGroup, CategoryMeta };
 
 export interface NormalizedEntry {
@@ -161,73 +174,6 @@ interface IndexPayload {
 }
 
 const data = indexJson as IndexPayload;
-
-/**
- * Returns true only when this entry lacks a usable AI summary in both
- * languages. A valid JA or EN summary is enough because the UI truthfully
- * cross-falls back to the available language. Summary-first design (LL-112):
- * long-form body presence must NOT affect fallback classification.
- */
-export function isDeterministicFallbackEntry(e: NormalizedEntry): boolean {
-  return !hasGeneratedSummary(e);
-}
-
-function hasGeneratedSummary(e: NormalizedEntry): boolean {
-  return (
-    hasUsableSummaryForLanguage(e, e.summaryJa, "ja")
-    || hasUsableSummaryForLanguage(e, e.summaryEn, "en")
-    || hasUsableSummaryForLanguage(e, e.summaryJa, "en")
-    || hasUsableSummaryForLanguage(e, e.summaryEn, "ja")
-  );
-}
-
-const MUTABLE_GITHUB_RELEASE_ALIAS_RE =
-  /\/releases\/tag\/(?:nightly|canary|snapshot|rolling|extension-(?:workflows|cli)|collab-(?:staging|production|prod))\/?$/i;
-
-export function isMutableReleaseAliasEntry(
-  entry: Pick<NormalizedEntry, "sourceType" | "url">,
-): boolean {
-  if (entry.sourceType !== "release" && entry.sourceType !== "changelog") return false;
-  try {
-    const parsed = new URL(entry.url);
-    return parsed.hostname.toLowerCase() === "github.com"
-      && MUTABLE_GITHUB_RELEASE_ALIAS_RE.test(parsed.pathname);
-  } catch {
-    return false;
-  }
-}
-
-/** Decision-critical slots (Featured / Top-3) and feeds require a real summary. */
-export function isPublishableEntry(e: NormalizedEntry): boolean {
-  return !isMutableReleaseAliasEntry(e)
-    && !isDeterministicFallbackEntry(e);
-}
-
-/**
- * An entry is "listable" when it should appear in the Timeline / category / tag
- * listings. It is listable if it is publishable (real AI summary) OR it is still
- * waiting for its summary but has a real, human-readable title to show.
- *
- * This is the LL-074 / LL-083 / LL-087 family fix: do NOT hide a freshly
- * collected article just because its async AI summary has not been generated
- * yet. The summary queue drains at a capped rate, so the newest entries are
- * disproportionately still in the fallback state — hiding them makes recent days
- * look empty even though collection is healthy. Listing them (with a "summary
- * generating" state in the card) keeps the site reflecting reality, while the
- * real summary upgrades in place once the queue catches up.
- *
- * Synthetic-title-only entries (no real title, just "X (source) related
- * update") are still excluded — there is nothing meaningful to list.
- */
-export function isListableEntry(e: NormalizedEntry): boolean {
-  if (isMutableReleaseAliasEntry(e)) return false;
-  if (isPublishableEntry(e)) return true;
-  return (
-    (!!(e.titleEn ?? "").trim() && !isSyntheticFallbackTitle(e, e.titleEn)) ||
-    (!!(e.titleJa ?? "").trim() && !isSyntheticFallbackTitle(e, e.titleJa)) ||
-    (!!(e.title ?? "").trim() && !isSyntheticFallbackTitle(e, e.title))
-  );
-}
 
 function sameTitleValue(left: string, right: string): boolean {
   return left.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase() ===
@@ -366,7 +312,10 @@ export function isOffTopicForHero(
   );
 }
 
-export const ARXIV_ENTRIES: readonly NormalizedEntry[] = ALL_ENTRIES.filter(isArxivEntry);
+export const ARXIV_ENTRIES: readonly NormalizedEntry[] = filterArxivEntries(ALL_ENTRIES);
+export const ARXIV_FEED_ENTRIES: readonly NormalizedEntry[] = filterArxivEntries(
+  PUBLISHABLE_ENTRIES,
+);
 export const RESEARCH_ENTRIES: readonly NormalizedEntry[] = filterCategoryListingEntries(
   ALL_ENTRIES,
   "research",

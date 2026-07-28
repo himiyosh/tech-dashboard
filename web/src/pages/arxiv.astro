@@ -14,6 +14,7 @@ import {
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { ARXIV_SOURCE_INFO, arxivSourceInfo } from "../lib/arxiv-meta.ts";
+import { ARXIV_RSS_HREF } from "../lib/rss.ts";
 import { SOURCE_META } from "../lib/source-meta.ts";
 import { sourceLast30dTotal } from "../lib/stats.ts";
 
@@ -68,7 +69,10 @@ const breadcrumb = [
   pageKey="arxiv"
   title="arXiv Papers — TECH Dashboard"
   description="arXiv 論文ソースを通常タイムラインから分離し、研究更新だけをまとめて確認できるページです。"
+  descriptionEn="Browse AI-summarized arXiv papers in a dedicated research lane separate from the main Timeline."
   breadcrumb={breadcrumb}
+  rssHref={ARXIV_RSS_HREF}
+  rssTitle="TECH Dashboard | arXiv Papers"
 >
   <PageHero
     className="page-hero-arxiv"
@@ -78,7 +82,15 @@ const breadcrumb = [
     count={`${ARXIV_ENTRIES.length} papers`}
     headingId="arxiv-heading"
     description="arXiv 系ソースは通常タイムラインから分離しました。論文だけをまとめて追いたい時は、このページで cs.AI / cs.CL / cs.SE / cs.LG を確認できます。"
+    descriptionEn="Follow cs.AI, cs.CL, cs.SE, and cs.LG papers in this dedicated lane, separate from the main Timeline."
     actions={[
+      {
+        href: ARXIV_RSS_HREF,
+        label: "arXiv RSSを購読",
+        labelEn: "Subscribe to arXiv RSS",
+        mediaType: "application/rss+xml",
+        mobilePriority: true,
+      },
       { href: "/", label: "Main timeline" },
       { href: "#arxiv-timeline", label: "Latest papers" },
       { href: "/c/research", label: "Research category" },

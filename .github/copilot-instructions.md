@@ -2883,6 +2883,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: arXiv判定、Research membership、一般category selectionをJSON非依存の共通helperへ集約し、HTML collectionとcategory RSSの両方から利用する。ResearchとarXivが同じcategoryを持つfixture、全体feed維持、未知arXiv feed 404、built HTMLとのURL parityを回帰testへ追加した。
 - **教訓**: category、lane、feedが同じslugを共有しても表示母集団が同一とは限らない。購読feedはcategory文字列を再判定せず、HTML listingのmembership predicateを共有し、専用laneとの境界をdeterministic fixtureとbuilt artifactで検証する。
 
+### LL-437: primary laneの購読feedはcategory列挙へ暗黙依存させない
+- **事象**: arXivはdesktop/mobileのprimary laneとして`/arxiv/`を持つ一方、category RSSの静的pathは`CATEGORY_META`だけを列挙するため`/rss/arxiv.xml`が404となり、Research RSSからarXivを正しく除外した後に専用の継続購読先が無かった。
+- **根本原因**: reader-facing laneとtaxonomy categoryのroute identityが異なるのに、購読endpointの生成をcategory slugへ暗黙依存させていた。HTMLはlistable entryを含み、RSSは少なくとも片言語に利用可能な要約を持つpublishable entryだけを配信する別の品質境界もあった。
+- **対策**: JSON非依存のpublishability helperとarXiv membership helperを共有し、publishable arXiv collectionから有限の静的`/rss/arxiv.xml`を生成する。`/arxiv/`のautodiscoveryとJA/ENのmobile-priority購読actionを同じURLへ接続し、Research RSSのarXiv除外、片言語要約、pending要約、feed cap/order、未知routeの404をunitとbuilt-preview E2Eで固定する。複数personaがfeed reader上の識別不能を報告したため、RSS autodiscoveryの`title`も各feed固有にし、同じheadに残すglobal JSON Feedは`site-wide`と明記する。
+- **教訓**: primary laneがcategoryではない場合、購読feedをcategory routeへ押し込まずlane固有のstatic endpointを明示する。HTMLのmembershipとRSSのpublishabilityを別々に再実装せず、同じpure helperを使ってlistable集合からfeed対象を導出し、ページ固有autodiscovery、人間向けaction、built artifactのHTTP contractを同じ変更で揃える。autodiscoveryは`href`だけでなくreaderが表示する`title`もdestination固有にし、同時にadvertiseするsite-wide feedをlane feedのように見せない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

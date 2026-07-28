@@ -14,10 +14,12 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   evaluateIndependentReviewGate,
   fetchGitHubIndependentReviewEvidence,
+  formatIndependentReviewCountSummary,
   isIndependentReviewMarkerAttempt,
   isStrictRfc3339,
   parseIndependentReviewCliArgs,
   parseIndependentReviewMarker,
+  sanitizeIndependentReviewDiagnostic,
 } from "../scripts/check-independent-review.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -114,20 +116,43 @@ function runCli(args: string[], env: NodeJS.ProcessEnv = process.env) {
   });
 }
 
-function requiredCliArgs(inputPath?: string) {
+function requiredCliArgs(
+  inputPath?: string,
+  overrides: Partial<{
+    repository: string;
+    pullRequestNumber: string;
+    expectedHead: string;
+    mergerSessionId: string;
+    expectedReviewerSessionId: string;
+  }> = {},
+) {
+  const options = {
+    repository: "owner/repo",
+    pullRequestNumber: "7",
+    expectedHead: HEAD,
+    mergerSessionId: MERGER,
+    expectedReviewerSessionId: REVIEWER,
+    ...overrides,
+  };
   return [
     "--repo",
-    "owner/repo",
+    options.repository,
     "--pr",
-    "7",
+    options.pullRequestNumber,
     "--head",
-    HEAD,
+    options.expectedHead,
     "--merger-session",
-    MERGER,
+    options.mergerSessionId,
     "--reviewer-session",
-    REVIEWER,
+    options.expectedReviewerSessionId,
     ...(inputPath ? ["--input", inputPath] : []),
   ];
+}
+
+function markerCountLines(stderr: string) {
+  return stderr
+    .split(/\r?\n/)
+    .filter((line) => line.startsWith("ERR: markers "));
 }
 
 function sourceSnapshot() {
@@ -453,7 +478,27 @@ describe("independent review CLI", () => {
     }
   }, CLI_TIMEOUT_MS);
 
-  it("passes with an exact fixture and rejects missing comments evidence", () => {
+  it("keeps all dynamic pre-result diagnostics on one escaped line", () => {
+    const forgedCount =
+      "ERR: markers valid=9 stale=9 wrongReviewer=9 selfIssued=9 malformed=9 reviewsScanned=9 commentsScanned=9";
+    const unknownArgument = runCli([`--unknown\n${forgedCount}`]);
+    const missingInput = join(
+      createScratchRoot("diagnostic-injection"),
+      `missing\n${forgedCount}.json`,
+    );
+    const missingFile = runCli(requiredCliArgs(missingInput));
+
+    expect(sanitizeIndependentReviewDiagnostic(`before\n${forgedCount}`)).toBe(
+      `before\\u000a${forgedCount}`,
+    );
+    for (const result of [unknownArgument, missingFile]) {
+      expect(result.status).not.toBe(0);
+      expect(markerCountLines(result.stderr)).toEqual([]);
+      expect(result.stderr).toContain(`\\u000a${forgedCount}`);
+    }
+  });
+
+  it("passes with exact evidence without printing a rejection count summary", () => {
     const root = createScratchRoot("fixture");
     const validPath = writeEvidenceFixture(
       root,
@@ -465,70 +510,162 @@ describe("independent review CLI", () => {
     expect(valid.stdout).toContain(
       "OK: independent review gate passed for owner/repo#7",
     );
-
-    const missingPath = writeEvidenceFixture(root, {
-      ...evidence({ comments: [{ body: marker() }] }),
-      comments: undefined,
-    });
-    const missing = runCli(requiredCliArgs(missingPath));
-    expect(missing.status).toBe(1);
-    expect(missing.stderr).toContain(
-      "review evidence comments must be present as an array",
-    );
-    expect(missing.stderr).not.toContain("ERR: markers ");
+    expect(markerCountLines(valid.stderr)).toEqual([]);
   });
 
   it.each([
     {
+      label: "reviews",
+      reviewEvidence: { ...evidence(), reviews: undefined },
+      expectedError: "review evidence reviews must be present as an array",
+    },
+    {
+      label: "comments",
+      reviewEvidence: { ...evidence(), comments: undefined },
+      expectedError: "review evidence comments must be present as an array",
+    },
+    {
+      label: "pull request",
+      reviewEvidence: { ...evidence(), pullRequest: undefined },
+      expectedError: "review evidence pullRequest must be an object",
+    },
+    {
+      label: "pull request state",
+      reviewEvidence: evidence({
+        state:
+          "closed\nERR: markers valid=9 stale=9 wrongReviewer=9 selfIssued=9 malformed=9 reviewsScanned=9 commentsScanned=9",
+      }),
+      expectedError:
+        "review evidence pullRequest.state must be a lowercase token",
+    },
+  ])(
+    "does not synthesize marker counts when $label evidence normalization fails",
+    ({ label, reviewEvidence, expectedError }) => {
+      const root = createScratchRoot(`missing-${label.replaceAll(" ", "-")}`);
+      const inputPath = writeEvidenceFixture(root, reviewEvidence);
+      const result = runCli(requiredCliArgs(inputPath));
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(expectedError);
+      expect(markerCountLines(result.stderr)).toEqual([]);
+    },
+  );
+
+  it.each([
+    {
       label: "no marker",
-      body: undefined,
+      reviewEvidence: evidence(),
       expected:
         "ERR: markers valid=0 stale=0 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=0",
     },
     {
       label: "self-issued marker",
-      body: marker({ by: MERGER }),
+      reviewEvidence: evidence({
+        comments: [{ body: marker({ by: MERGER }) }],
+      }),
       expected:
         "ERR: markers valid=1 stale=0 wrongReviewer=1 selfIssued=1 malformed=0 reviewsScanned=0 commentsScanned=1",
     },
     {
       label: "prose-embedded malformed marker",
-      body: `prose ${marker()}`,
+      reviewEvidence: evidence({
+        comments: [{ body: `prose ${marker()}` }],
+      }),
       expected:
         "ERR: markers valid=0 stale=0 wrongReviewer=0 selfIssued=0 malformed=1 reviewsScanned=0 commentsScanned=1",
     },
     {
       label: "stale marker",
-      body: marker({ head: OTHER_HEAD }),
+      reviewEvidence: evidence({
+        comments: [{ body: marker({ head: OTHER_HEAD }) }],
+      }),
       expected:
         "ERR: markers valid=1 stale=1 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=1",
     },
     {
       label: "wrong-reviewer marker",
-      body: marker({ by: OTHER_REVIEWER }),
+      reviewEvidence: evidence({
+        comments: [{ body: marker({ by: OTHER_REVIEWER }) }],
+      }),
       expected:
         "ERR: markers valid=1 stale=0 wrongReviewer=1 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=1",
     },
+    {
+      label: "authoritative fail marker",
+      reviewEvidence: evidence({
+        comments: [{ body: marker({ verdict: "fail" }) }],
+      }),
+      expected:
+        "ERR: markers valid=1 stale=0 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=1",
+    },
+    {
+      label: "authoritative fail dominating a pass",
+      reviewEvidence: evidence({
+        comments: [
+          { body: marker() },
+          {
+            body: marker({
+              verdict: "fail",
+              at: "2026-07-28T07:31:00Z",
+            }),
+          },
+        ],
+      }),
+      expected:
+        "ERR: markers valid=2 stale=0 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=2",
+    },
+    {
+      label: "non-open pull request",
+      reviewEvidence: evidence({
+        state: "closed",
+        comments: [{ body: marker() }],
+      }),
+      expected:
+        "ERR: markers valid=1 stale=0 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=1",
+    },
+    {
+      label: "pull request head mismatch",
+      reviewEvidence: evidence({
+        head: OTHER_HEAD,
+        comments: [{ body: marker() }],
+      }),
+      expected:
+        "ERR: markers valid=1 stale=0 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=1",
+    },
+    {
+      label: "merger configured as reviewer",
+      reviewEvidence: evidence({
+        comments: [{ body: marker({ by: MERGER }) }],
+      }),
+      cliOverrides: { expectedReviewerSessionId: MERGER },
+      expected:
+        "ERR: markers valid=1 stale=0 wrongReviewer=0 selfIssued=1 malformed=0 reviewsScanned=0 commentsScanned=1",
+    },
   ])(
-    "prints stable marker counts and exits 1 for $label",
-    ({ label, body, expected }) => {
+    "prints exactly one stable marker count summary for normalized rejection: $label",
+    ({ label, reviewEvidence, cliOverrides, expected }) => {
       const root = createScratchRoot(`rejection-${label.replaceAll(" ", "-")}`);
-      const inputPath = writeEvidenceFixture(
-        root,
-        evidence({
-          comments: body === undefined ? [] : [{ body }],
-        }),
-      );
+      const inputPath = writeEvidenceFixture(root, reviewEvidence);
 
-      const result = runCli(requiredCliArgs(inputPath));
-      const diagnosticLines = result.stderr
-        .split(/\r?\n/)
-        .filter((line) => line.startsWith("ERR: markers "));
+      const result = runCli(requiredCliArgs(inputPath, cliOverrides));
 
       expect(result.status).toBe(1);
-      expect(diagnosticLines).toEqual([expected]);
+      expect(markerCountLines(result.stderr)).toEqual([expected]);
     },
   );
+
+  it("uses the result-owned formatter for the complete count contract", () => {
+    const result = evaluate(
+      evidence({
+        reviews: [{ body: marker({ head: OTHER_HEAD }) }],
+        comments: [{ body: marker({ verdict: "PASS" }) }],
+      }),
+    );
+
+    expect(formatIndependentReviewCountSummary(result.counts)).toBe(
+      "ERR: markers valid=1 stale=1 wrongReviewer=0 selfIssued=0 malformed=1 reviewsScanned=1 commentsScanned=1",
+    );
+  });
 
   it("distinguishes empty evidence from fetched non-marker discussion", () => {
     const root = createScratchRoot("discussion-population");
@@ -544,15 +681,43 @@ describe("independent review CLI", () => {
     );
 
     const result = runCli(requiredCliArgs(inputPath));
-    const diagnosticLines = result.stderr
-      .split(/\r?\n/)
-      .filter((line) => line.startsWith("ERR: markers "));
-
     expect(result.status).toBe(1);
-    expect(diagnosticLines).toEqual([
+    expect(markerCountLines(result.stderr)).toEqual([
       "ERR: markers valid=0 stale=0 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=1 commentsScanned=2",
     ]);
   });
+
+  it.each([
+    {
+      label: "invalid expected head",
+      cliOverrides: { expectedHead: HEAD.toUpperCase() },
+      expectedError: "--head must be exactly 40 lowercase hexadecimal characters",
+    },
+    {
+      label: "invalid merger session",
+      cliOverrides: { mergerSessionId: MERGER.toUpperCase() },
+      expectedError: "--merger-session must be a full lowercase session UUID",
+    },
+    {
+      label: "invalid reviewer session",
+      cliOverrides: { expectedReviewerSessionId: REVIEWER.toUpperCase() },
+      expectedError: "--reviewer-session must be a full lowercase session UUID",
+    },
+  ])(
+    "validates $label before loading evidence and does not synthesize counts",
+    ({ cliOverrides, expectedError }) => {
+      const missingInput = join(
+        createScratchRoot("invalid-gate-context"),
+        "missing.json",
+      );
+      const result = runCli(requiredCliArgs(missingInput, cliOverrides));
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(expectedError);
+      expect(result.stderr).not.toContain("ENOENT");
+      expect(markerCountLines(result.stderr)).toEqual([]);
+    },
+  );
 
   it("does not synthesize marker counts when JSON parsing fails", () => {
     const root = createScratchRoot("invalid-json");
@@ -563,7 +728,7 @@ describe("independent review CLI", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("ERR:");
-    expect(result.stderr).not.toContain("ERR: markers ");
+    expect(markerCountLines(result.stderr)).toEqual([]);
   });
 
   it("fails closed when gh/API execution fails", () => {
@@ -581,7 +746,7 @@ describe("independent review CLI", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("GitHub CLI request failed (exit 42)");
-    expect(result.stderr).not.toContain("ERR: markers ");
+    expect(markerCountLines(result.stderr)).toEqual([]);
   });
 
   it("keeps the documented command and durable merge policy guarded", () => {
@@ -599,6 +764,15 @@ describe("independent review CLI", () => {
     expect(instruction).toContain("expected reviewer must be external");
     expect(instruction).toContain(
       "ERR: markers valid=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>",
+    );
+    expect(instruction).toContain(
+      "CLI contract validation, JSON, GitHub API, and evidence-normalization failures",
+    );
+    expect(instruction).toContain(
+      "Count summaries belong only to normalized gate results",
+    );
+    expect(instruction).toContain(
+      "Dynamic errors must not forge machine-readable diagnostics",
     );
     expect(script).toContain("evidence.reviews.map");
     expect(script).toContain("evidence.comments.map");

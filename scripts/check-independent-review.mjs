@@ -9,11 +9,13 @@ const HEAD_RE = /^[0-9a-f]{40}$/;
 const SESSION_ID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const REPOSITORY_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const PULL_REQUEST_STATE_RE = /^[a-z]+$/;
 const RFC3339_RE =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(Z|[+-](\d{2}):(\d{2}))$/;
 const MARKER_RE =
   /^<!-- independent-review head=([0-9a-f]{40}) verdict=(pass|fail) by=([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) at=([^ ]+) -->$/;
 const MARKER_ATTEMPT_RE = /<!--\s*independent-review/;
+const DIAGNOSTIC_CONTROL_RE = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g;
 const GH_TIMEOUT_MS = 20_000;
 const GH_MAX_BUFFER_BYTES = 4 * 1024 * 1024;
 
@@ -48,6 +50,32 @@ function requirePullRequestNumber(value) {
     throw new Error("--pr must be a positive integer");
   }
   return number;
+}
+
+function normalizeIndependentReviewGateContext({
+  repository,
+  pullRequestNumber,
+  expectedHead,
+  mergerSessionId,
+  expectedReviewerSessionId,
+}) {
+  return {
+    repository: requireRepository(repository),
+    pullRequestNumber: requirePullRequestNumber(pullRequestNumber),
+    expectedHead: requireCanonicalHead(expectedHead, "--head"),
+    mergerSessionId: requireSessionId(mergerSessionId, "--merger-session"),
+    expectedReviewerSessionId: requireSessionId(
+      expectedReviewerSessionId,
+      "--reviewer-session",
+    ),
+  };
+}
+
+export function sanitizeIndependentReviewDiagnostic(value) {
+  return String(value).replace(DIAGNOSTIC_CONTROL_RE, (character) => {
+    const codePoint = character.codePointAt(0);
+    return `\\u${codePoint.toString(16).padStart(4, "0")}`;
+  });
 }
 
 export function isStrictRfc3339(value) {
@@ -138,8 +166,11 @@ export function normalizeIndependentReviewEvidence(
     raw.pullRequest.headSha,
     "review evidence pullRequest.headSha",
   );
-  if (typeof raw.pullRequest.state !== "string" || raw.pullRequest.state.length === 0) {
-    throw new Error("review evidence pullRequest.state must be a non-empty string");
+  if (
+    typeof raw.pullRequest.state !== "string" ||
+    !PULL_REQUEST_STATE_RE.test(raw.pullRequest.state)
+  ) {
+    throw new Error("review evidence pullRequest.state must be a lowercase token");
   }
   return {
     repository: normalizedRepository,
@@ -161,17 +192,19 @@ export function evaluateIndependentReviewGate({
   mergerSessionId,
   expectedReviewerSessionId,
 }) {
-  const normalizedRepository = requireRepository(repository);
-  const normalizedPullRequestNumber = requirePullRequestNumber(pullRequestNumber);
-  const normalizedExpectedHead = requireCanonicalHead(expectedHead, "--head");
-  const normalizedMergerSessionId = requireSessionId(
+  const {
+    repository: normalizedRepository,
+    pullRequestNumber: normalizedPullRequestNumber,
+    expectedHead: normalizedExpectedHead,
+    mergerSessionId: normalizedMergerSessionId,
+    expectedReviewerSessionId: normalizedReviewerSessionId,
+  } = normalizeIndependentReviewGateContext({
+    repository,
+    pullRequestNumber,
+    expectedHead,
     mergerSessionId,
-    "--merger-session",
-  );
-  const normalizedReviewerSessionId = requireSessionId(
     expectedReviewerSessionId,
-    "--reviewer-session",
-  );
+  });
   const evidence = normalizeIndependentReviewEvidence(rawEvidence, {
     repository: normalizedRepository,
     pullRequestNumber: normalizedPullRequestNumber,
@@ -250,6 +283,10 @@ export function evaluateIndependentReviewGate({
     expectedHead: normalizedExpectedHead,
     reviewerSessionId: normalizedReviewerSessionId,
   };
+}
+
+export function formatIndependentReviewCountSummary(counts) {
+  return `ERR: markers valid=${counts.validMarkers} stale=${counts.staleMarkers} wrongReviewer=${counts.wrongReviewerMarkers} selfIssued=${counts.selfIssuedMarkers} malformed=${counts.malformedMarkerBodies} reviewsScanned=${counts.reviewsScanned} commentsScanned=${counts.commentsScanned}`;
 }
 
 function flattenPaginatedPayload(value, label) {
@@ -429,7 +466,7 @@ export function parseIndependentReviewCliArgs(argv) {
 export async function runIndependentReviewCli(argv, deps = {}) {
   const parsed = parseIndependentReviewCliArgs(argv);
   if (!parsed.ok) {
-    console.error(`ERR: ${parsed.message}`);
+    console.error(`ERR: ${sanitizeIndependentReviewDiagnostic(parsed.message)}`);
     printUsage();
     return parsed.exitCode;
   }
@@ -447,44 +484,45 @@ export async function runIndependentReviewCli(argv, deps = {}) {
     inputPath,
   } = parsed.options;
   try {
-    const pullRequestNumber = requirePullRequestNumber(rawPullRequestNumber);
-    const evidence = inputPath
-      ? normalizeIndependentReviewEvidence(
-          JSON.parse(readFileSync(resolve(inputPath), "utf8")),
-          { repository, pullRequestNumber },
-        )
-      : (deps.fetchEvidence ?? fetchGitHubIndependentReviewEvidence)({
-          repository,
-          pullRequestNumber,
-        });
-    const result = evaluateIndependentReviewGate({
-      evidence,
+    const gateContext = normalizeIndependentReviewGateContext({
       repository,
-      pullRequestNumber,
+      pullRequestNumber: rawPullRequestNumber,
       expectedHead,
       mergerSessionId,
       expectedReviewerSessionId,
     });
+    const evidence = inputPath
+      ? JSON.parse(readFileSync(resolve(inputPath), "utf8"))
+      : (deps.fetchEvidence ?? fetchGitHubIndependentReviewEvidence)({
+          repository: gateContext.repository,
+          pullRequestNumber: gateContext.pullRequestNumber,
+        });
+    const result = evaluateIndependentReviewGate({
+      evidence,
+      ...gateContext,
+    });
     if (!result.ok) {
-      for (const reason of result.reasons) console.error(`ERR: ${reason}`);
+      for (const reason of result.reasons) {
+        console.error(`ERR: ${sanitizeIndependentReviewDiagnostic(reason)}`);
+      }
+      console.error(formatIndependentReviewCountSummary(result.counts));
       console.error(
-        `ERR: markers valid=${result.counts.validMarkers} stale=${result.counts.staleMarkers} wrongReviewer=${result.counts.wrongReviewerMarkers} selfIssued=${result.counts.selfIssuedMarkers} malformed=${result.counts.malformedMarkerBodies} reviewsScanned=${result.counts.reviewsScanned} commentsScanned=${result.counts.commentsScanned}`,
-      );
-      console.error(
-        `ERR: independent review gate rejected ${repository}#${pullRequestNumber} at ${expectedHead}`,
+        `ERR: independent review gate rejected ${gateContext.repository}#${gateContext.pullRequestNumber} at ${gateContext.expectedHead}`,
       );
       return 1;
     }
     console.log(
-      `OK: independent review gate passed for ${repository}#${pullRequestNumber} at ${expectedHead}`,
+      `OK: independent review gate passed for ${gateContext.repository}#${gateContext.pullRequestNumber} at ${gateContext.expectedHead}`,
     );
     console.log(
-      `OK: reviewer=${expectedReviewerSessionId} passes=${result.counts.authoritativePasses} reviews=${result.counts.reviewsScanned} comments=${result.counts.commentsScanned}`,
+      `OK: reviewer=${gateContext.expectedReviewerSessionId} passes=${result.counts.authoritativePasses} reviews=${result.counts.reviewsScanned} comments=${result.counts.commentsScanned}`,
     );
     return 0;
   } catch (error) {
     console.error(
-      `ERR: ${error instanceof Error ? error.message : String(error)}`,
+      `ERR: ${sanitizeIndependentReviewDiagnostic(
+        error instanceof Error ? error.message : error,
+      )}`,
     );
     return 1;
   }

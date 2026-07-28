@@ -159,9 +159,12 @@ describe("independent review marker parser", () => {
   });
 
   it.each([
+    marker().replace("independent-review", "Independent-Review"),
+    marker().replace("independent-review", "INDEPENDENT-REVIEW"),
     marker({ verdict: "PASS" }),
     marker({ verdict: "Pass" }),
     marker({ head: HEAD.toUpperCase() }),
+    marker({ head: `A${HEAD.slice(1)}` }),
     marker({ by: REVIEWER.toUpperCase() }),
     `prefix ${marker()}`,
     `${marker()} suffix`,
@@ -184,6 +187,21 @@ describe("independent review marker parser", () => {
 
   it.each([
     { label: "valid marker", body: marker() },
+    {
+      label: "mixed-case protocol marker",
+      body: marker().replace("independent-review", "Independent-Review"),
+    },
+    {
+      label: "uppercase protocol marker",
+      body: marker().replace("independent-review", "INDEPENDENT-REVIEW"),
+    },
+    {
+      label: "case-variant marker after an unrelated comment",
+      body: `<!-- ordinary comment -->\n${marker().replace(
+        "independent-review",
+        "INDEPENDENT-REVIEW",
+      )}`,
+    },
     { label: "prose-embedded marker", body: `prose ${marker()}` },
     {
       label: "malformed standalone marker",
@@ -213,6 +231,10 @@ describe("independent review marker parser", () => {
     {
       label: "script filename mention",
       body: "Please inspect scripts/check-independent-review.mjs before merging.",
+    },
+    {
+      label: "uppercase protocol discussion",
+      body: "The INDEPENDENT-REVIEW protocol remains strict.",
     },
     {
       label: "plain verdict discussion",
@@ -303,6 +325,31 @@ describe("independent review gate policy", () => {
     {
       label: "uppercase verdict",
       body: marker({ verdict: "PASS" }),
+      count: "malformedMarkerBodies",
+    },
+    {
+      label: "mixed-case verdict",
+      body: marker({ verdict: "Pass" }),
+      count: "malformedMarkerBodies",
+    },
+    {
+      label: "uppercase head",
+      body: marker({ head: HEAD.toUpperCase() }),
+      count: "malformedMarkerBodies",
+    },
+    {
+      label: "mixed-case head",
+      body: marker({ head: `A${HEAD.slice(1)}` }),
+      count: "malformedMarkerBodies",
+    },
+    {
+      label: "mixed-case protocol",
+      body: marker().replace("independent-review", "Independent-Review"),
+      count: "malformedMarkerBodies",
+    },
+    {
+      label: "uppercase protocol",
+      body: marker().replace("independent-review", "INDEPENDENT-REVIEW"),
       count: "malformedMarkerBodies",
     },
     {
@@ -554,6 +601,41 @@ describe("independent review CLI", () => {
     ]);
   });
 
+  it("counts case-variant protocol attempts without changing evidence populations", () => {
+    const root = createScratchRoot("case-variant-population");
+    const inputPath = writeEvidenceFixture(
+      root,
+      evidence({
+        reviews: [
+          { body: marker({ head: OTHER_HEAD }) },
+          { body: "Discussion of the INDEPENDENT-REVIEW protocol only." },
+        ],
+        comments: [
+          {
+            body: marker().replace("independent-review", "Independent-Review"),
+          },
+          {
+            body: marker().replace("independent-review", "INDEPENDENT-REVIEW"),
+          },
+          { body: marker({ verdict: "Pass" }) },
+          { body: marker({ head: `A${HEAD.slice(1)}` }) },
+          { body: `prose ${marker()}` },
+          { body: "See scripts/check-independent-review.mjs." },
+        ],
+      }),
+    );
+
+    const result = runCli(requiredCliArgs(inputPath));
+    const diagnosticLines = result.stderr
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith("ERR: markers "));
+
+    expect(result.status).toBe(1);
+    expect(diagnosticLines).toEqual([
+      "ERR: markers valid=1 stale=1 wrongReviewer=0 selfIssued=0 malformed=5 reviewsScanned=2 commentsScanned=6",
+    ]);
+  });
+
   it("does not synthesize marker counts when JSON parsing fails", () => {
     const root = createScratchRoot("invalid-json");
     const inputPath = join(root, "invalid.json");
@@ -595,7 +677,9 @@ describe("independent review CLI", () => {
     expect(instruction).toContain("one outstanding review ticket");
     expect(instruction).toContain("Immediately before `gh pr merge`");
     expect(instruction).toContain("`UNKNOWN` means no authoritative exact-head pass");
-    expect(instruction).toContain("Only lowercase `pass` and `fail` are valid");
+    expect(instruction).toContain(
+      "Only lowercase `independent-review`, `pass`, and `fail` are valid",
+    );
     expect(instruction).toContain("expected reviewer must be external");
     expect(instruction).toContain(
       "ERR: markers valid=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>",

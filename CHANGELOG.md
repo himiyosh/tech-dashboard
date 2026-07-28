@@ -84,7 +84,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 修正
 
-- PR merge の exact-head 独立レビュー gate が拒否した場合、valid・stale・wrong reviewer・self-issued・malformed marker と走査済み review/comment の件数を 1 行で診断できるようにしました。malformed は marker 形式の HTML comment を試みた本文だけを数え、通常の議論や script 名への言及は除外します。JSON・GitHub API・evidence normalization が結果生成前に失敗した場合は件数を生成しません。
+- PR merge の exact-head 独立レビュー gate が拒否した場合、valid・stale・wrong reviewer・self-issued・malformed marker と走査済み review/comment の件数を 1 行で診断できるようにしました。malformed は marker 形式の HTML comment を試みた本文だけを数え、`Independent-Review` / `INDEPENDENT-REVIEW` のような protocol 名の case variant も invalid clearance のまま malformed attempt として可視化し、通常の議論や script 名への言及は除外します。JSON・GitHub API・evidence normalization が結果生成前に失敗した場合は件数を生成しません。
 - RSSの共有serializerはXML 1.0で許可される文字だけをcode point単位で保持し、NUL、禁止制御文字、孤立surrogate、U+FFFE/U+FFFFを除去してからentity escapeするようにしました。全体RSSとカテゴリRSSは同じfail-safe契約を使い、日本語とastral Unicode、TAB/LF/CRを維持します。
 - mobileの購読action付きPageHeroは説明文を視覚的にだけ畳み、JA/ENのページ目的をHeroのaccessible descriptionとして支援技術へ残すようにしました。購読actionの44px操作面とcompactなHero高は維持します。
 - モバイル・タブレットで Search を開いた際、固定された閉じるボタンが JA/EN 言語切替を覆いながら背面の言語ボタンが Tab・支援技術から到達できていた問題を修正しました。Search は実測した Header 下端の下へ配置し、短いタブレット画面では残りの viewport 高へ検索結果を収めて内部スクロールできるようにしました。閉じる・言語切替の44px操作面、focus復帰、言語切替、検索状態を維持します。

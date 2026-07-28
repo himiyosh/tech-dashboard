@@ -22,6 +22,21 @@ function extractNamedStep(workflow: string, name: string) {
   );
 }
 
+function extractJob(workflow: string, name: string) {
+  const marker = `\n  ${name}:\n`;
+  const start = workflow.indexOf(marker);
+  if (start === -1) {
+    throw new Error(`missing workflow job: ${name}`);
+  }
+  const bodyStart = start + marker.length;
+  const remainder = workflow.slice(bodyStart);
+  const nextJob = remainder.search(/\n {2}[A-Za-z0-9_-]+:\n/);
+  return workflow.slice(
+    start,
+    nextJob === -1 ? workflow.length : bodyStart + nextJob,
+  );
+}
+
 describe("independent review CI wiring", () => {
   it("executes the strict gate for the current open pull request", () => {
     const packageJson = JSON.parse(readRepoFile("package.json")) as {
@@ -69,5 +84,22 @@ describe("independent review CI wiring", () => {
     expect(step).toContain('--merger-session "$MERGER_SESSION_ID"');
     expect(step).toContain('--reviewer-session "$REVIEWER_SESSION_ID"');
     expect(step).not.toMatch(/\bnode\s+--check\b/);
+  });
+
+  it("runs review clearance independently from unit, build, and E2E quality jobs", () => {
+    const workflow = readRepoFile(".github/workflows/ci.yml");
+    const reviewJob = extractJob(workflow, "independent-review");
+    const unitJob = extractJob(workflow, "unit");
+    const webBuildJob = extractJob(workflow, "web-build");
+    const e2eJob = extractJob(workflow, "e2e");
+
+    expect(reviewJob).toContain("name: exact-head independent review");
+    expect(reviewJob).toContain("name: Enforce exact-head independent review");
+    expect(reviewJob).not.toMatch(/^ {4}needs:/m);
+    expect(unitJob).not.toContain("Enforce exact-head independent review");
+    expect(unitJob).not.toMatch(/^ {4}needs:/m);
+    expect(webBuildJob).not.toMatch(/^ {4}needs:/m);
+    expect(e2eJob).toContain("needs: [unit, web-build]");
+    expect(e2eJob).not.toMatch(/needs:\s*\[[^\]]*independent-review/);
   });
 });

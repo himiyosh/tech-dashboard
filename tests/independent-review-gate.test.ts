@@ -35,9 +35,17 @@ const OTHER_HEAD = "b".repeat(40);
 const MERGER = "11111111-aaaa-4aaa-8aaa-111111111111";
 const REVIEWER = "22222222-bbbb-4bbb-8bbb-222222222222";
 const OTHER_REVIEWER = "33333333-cccc-4ccc-8ccc-333333333333";
+const TRUSTED_AUTHOR = "owner";
+const UNTRUSTED_AUTHOR = "outside-contributor";
 const AT = "2026-07-28T07:30:15.123Z";
 const CLI_TIMEOUT_MS = 20_000;
 const scratchRoots: string[] = [];
+
+type ReviewMessage = {
+  body: string | null;
+  user?: { login: string } | null;
+  author_association?: string | null;
+};
 
 function marker({
   head = HEAD,
@@ -61,15 +69,20 @@ function evidence({
 }: {
   head?: string;
   state?: string;
-  reviews?: Array<{ body: string | null }>;
-  comments?: Array<{ body: string | null }>;
+  reviews?: ReviewMessage[];
+  comments?: ReviewMessage[];
 } = {}) {
+  const withTrustedAuthor = (message: ReviewMessage) => ({
+    user: { login: TRUSTED_AUTHOR },
+    author_association: "OWNER",
+    ...message,
+  });
   return {
     repository: "owner/repo",
     pullRequestNumber: 7,
     pullRequest: { headSha: head, state },
-    reviews,
-    comments,
+    reviews: reviews.map(withTrustedAuthor),
+    comments: comments.map(withTrustedAuthor),
   };
 }
 
@@ -287,6 +300,77 @@ describe("independent review gate policy", () => {
     expect(evaluate(evidence({ reviews: [{ body: marker() }] })).ok).toBe(true);
   });
 
+  it.each([
+    {
+      label: "outside contributor",
+      message: {
+        body: marker(),
+        user: { login: UNTRUSTED_AUTHOR },
+        author_association: "NONE",
+      },
+    },
+    {
+      label: "spoofed owner association",
+      message: {
+        body: marker(),
+        user: { login: UNTRUSTED_AUTHOR },
+        author_association: "OWNER",
+      },
+    },
+    {
+      label: "owner login without owner association",
+      message: {
+        body: marker(),
+        user: { login: TRUSTED_AUTHOR },
+        author_association: "NONE",
+      },
+    },
+    {
+      label: "missing author evidence",
+      message: {
+        body: marker(),
+        user: null,
+        author_association: null,
+      },
+    },
+  ])("rejects an exact-head reviewer marker from $label", ({ message }) => {
+    const result = evaluate(evidence({ comments: [message] }));
+
+    expect(result.ok).toBe(false);
+    expect(result.counts).toMatchObject({
+      parsedMarkers: 1,
+      untrustedAuthorMarkers: 1,
+      authoritativePasses: 0,
+      authoritativeFails: 0,
+    });
+  });
+
+  it("ignores an untrusted fail marker without weakening trusted fail-dominates", () => {
+    const result = evaluate(
+      evidence({
+        comments: [
+          { body: marker() },
+          {
+            body: marker({
+              verdict: "fail",
+              at: "2026-07-28T07:31:00Z",
+            }),
+            user: { login: UNTRUSTED_AUTHOR },
+            author_association: "NONE",
+          },
+        ],
+      }),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.counts).toMatchObject({
+      parsedMarkers: 2,
+      untrustedAuthorMarkers: 1,
+      authoritativePasses: 1,
+      authoritativeFails: 0,
+    });
+  });
+
   it("accepts deterministic duplicate passes", () => {
     const result = evaluate(
       evidence({
@@ -352,7 +436,7 @@ describe("independent review gate policy", () => {
       authoritativeFails: 0,
     });
     expect(formatIndependentReviewCountSummary(result.counts)).toBe(
-      "ERR: markers parsed=3 stale=3 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=1 commentsScanned=2",
+      "ERR: markers parsed=3 stale=3 wrongReviewer=0 selfIssued=0 untrustedAuthor=0 malformed=0 reviewsScanned=1 commentsScanned=2",
     );
   });
 
@@ -372,7 +456,7 @@ describe("independent review gate policy", () => {
       authoritativeFails: 0,
     });
     expect(formatIndependentReviewCountSummary(result.counts)).toBe(
-      "ERR: markers parsed=1 stale=0 wrongReviewer=1 selfIssued=1 malformed=0 reviewsScanned=0 commentsScanned=1",
+      "ERR: markers parsed=1 stale=0 wrongReviewer=1 selfIssued=1 untrustedAuthor=0 malformed=0 reviewsScanned=0 commentsScanned=1",
     );
   });
 
@@ -517,8 +601,20 @@ describe("GitHub evidence loader", () => {
       if (endpoint.endsWith("/pulls/7")) {
         return { head: { sha: HEAD }, state: "open" };
       }
-      if (endpoint.includes("/pulls/7/reviews")) return [[{ body: reviewBody }]];
-      if (endpoint.includes("/issues/7/comments")) return [[{ body: commentBody }]];
+      if (endpoint.includes("/pulls/7/reviews")) {
+        return [[{
+          body: reviewBody,
+          user: { login: TRUSTED_AUTHOR },
+          author_association: "OWNER",
+        }]];
+      }
+      if (endpoint.includes("/issues/7/comments")) {
+        return [[{
+          body: commentBody,
+          user: { login: TRUSTED_AUTHOR },
+          author_association: "OWNER",
+        }]];
+      }
       throw new Error(`unexpected endpoint: ${endpoint}`);
     };
 
@@ -528,8 +624,16 @@ describe("GitHub evidence loader", () => {
       runGhApi,
     });
 
-    expect(loaded.reviews).toEqual([{ body: reviewBody }]);
-    expect(loaded.comments).toEqual([{ body: commentBody }]);
+    expect(loaded.reviews).toEqual([{
+      body: reviewBody,
+      user: { login: TRUSTED_AUTHOR },
+      author_association: "OWNER",
+    }]);
+    expect(loaded.comments).toEqual([{
+      body: commentBody,
+      user: { login: TRUSTED_AUTHOR },
+      author_association: "OWNER",
+    }]);
     expect(calls).toHaveLength(3);
     expect(calls[1]).toContain("--paginate");
     expect(calls[2]).toContain("--paginate");
@@ -593,7 +697,7 @@ describe("independent review CLI", () => {
 
   it("keeps all dynamic pre-result diagnostics on one escaped line", () => {
     const forgedCount =
-      "ERR: markers parsed=9 stale=9 wrongReviewer=9 selfIssued=9 malformed=9 reviewsScanned=9 commentsScanned=9";
+      "ERR: markers parsed=9 stale=9 wrongReviewer=9 selfIssued=9 untrustedAuthor=9 malformed=9 reviewsScanned=9 commentsScanned=9";
     const unknownArgument = runCli([`--unknown\n${forgedCount}`]);
     const missingInput = join(
       createScratchRoot("diagnostic-injection"),
@@ -667,7 +771,7 @@ describe("independent review CLI", () => {
       label: "pull request state",
       reviewEvidence: evidence({
         state:
-          "closed\nERR: markers parsed=9 stale=9 wrongReviewer=9 selfIssued=9 malformed=9 reviewsScanned=9 commentsScanned=9",
+          "closed\nERR: markers parsed=9 stale=9 wrongReviewer=9 selfIssued=9 untrustedAuthor=9 malformed=9 reviewsScanned=9 commentsScanned=9",
       }),
       expectedError:
         "review evidence pullRequest.state must be a lowercase token from GitHub REST repos/<owner>/<repo>/pulls/<n>",
@@ -690,7 +794,7 @@ describe("independent review CLI", () => {
       label: "no marker",
       reviewEvidence: evidence(),
       expected:
-        "ERR: markers parsed=0 stale=0 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=0",
+        "ERR: markers parsed=0 stale=0 wrongReviewer=0 selfIssued=0 untrustedAuthor=0 malformed=0 reviewsScanned=0 commentsScanned=0",
     },
     {
       label: "self-issued marker",
@@ -698,7 +802,7 @@ describe("independent review CLI", () => {
         comments: [{ body: marker({ by: MERGER }) }],
       }),
       expected:
-        "ERR: markers parsed=1 stale=0 wrongReviewer=1 selfIssued=1 malformed=0 reviewsScanned=0 commentsScanned=1",
+        "ERR: markers parsed=1 stale=0 wrongReviewer=1 selfIssued=1 untrustedAuthor=0 malformed=0 reviewsScanned=0 commentsScanned=1",
     },
     {
       label: "prose-embedded malformed marker",
@@ -706,7 +810,7 @@ describe("independent review CLI", () => {
         comments: [{ body: `prose ${marker()}` }],
       }),
       expected:
-        "ERR: markers parsed=0 stale=0 wrongReviewer=0 selfIssued=0 malformed=1 reviewsScanned=0 commentsScanned=1",
+        "ERR: markers parsed=0 stale=0 wrongReviewer=0 selfIssued=0 untrustedAuthor=0 malformed=1 reviewsScanned=0 commentsScanned=1",
     },
     {
       label: "stale marker",
@@ -714,7 +818,7 @@ describe("independent review CLI", () => {
         comments: [{ body: marker({ head: OTHER_HEAD }) }],
       }),
       expected:
-        "ERR: markers parsed=1 stale=1 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=1",
+        "ERR: markers parsed=1 stale=1 wrongReviewer=0 selfIssued=0 untrustedAuthor=0 malformed=0 reviewsScanned=0 commentsScanned=1",
     },
     {
       label: "wrong-reviewer marker",
@@ -722,7 +826,19 @@ describe("independent review CLI", () => {
         comments: [{ body: marker({ by: OTHER_REVIEWER }) }],
       }),
       expected:
-        "ERR: markers parsed=1 stale=0 wrongReviewer=1 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=1",
+        "ERR: markers parsed=1 stale=0 wrongReviewer=1 selfIssued=0 untrustedAuthor=0 malformed=0 reviewsScanned=0 commentsScanned=1",
+    },
+    {
+      label: "untrusted-author marker",
+      reviewEvidence: evidence({
+        comments: [{
+          body: marker(),
+          user: { login: UNTRUSTED_AUTHOR },
+          author_association: "NONE",
+        }],
+      }),
+      expected:
+        "ERR: markers parsed=1 stale=0 wrongReviewer=0 selfIssued=0 untrustedAuthor=1 malformed=0 reviewsScanned=0 commentsScanned=1",
     },
     {
       label: "authoritative fail marker",
@@ -730,7 +846,7 @@ describe("independent review CLI", () => {
         comments: [{ body: marker({ verdict: "fail" }) }],
       }),
       expected:
-        "ERR: markers parsed=1 stale=0 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=1",
+        "ERR: markers parsed=1 stale=0 wrongReviewer=0 selfIssued=0 untrustedAuthor=0 malformed=0 reviewsScanned=0 commentsScanned=1",
     },
     {
       label: "authoritative fail dominating a pass",
@@ -746,7 +862,7 @@ describe("independent review CLI", () => {
         ],
       }),
       expected:
-        "ERR: markers parsed=2 stale=0 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=2",
+        "ERR: markers parsed=2 stale=0 wrongReviewer=0 selfIssued=0 untrustedAuthor=0 malformed=0 reviewsScanned=0 commentsScanned=2",
     },
     {
       label: "non-open pull request",
@@ -755,7 +871,7 @@ describe("independent review CLI", () => {
         comments: [{ body: marker() }],
       }),
       expected:
-        "ERR: markers parsed=1 stale=0 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=1",
+        "ERR: markers parsed=1 stale=0 wrongReviewer=0 selfIssued=0 untrustedAuthor=0 malformed=0 reviewsScanned=0 commentsScanned=1",
     },
     {
       label: "pull request head mismatch",
@@ -764,7 +880,7 @@ describe("independent review CLI", () => {
         comments: [{ body: marker() }],
       }),
       expected:
-        "ERR: markers parsed=1 stale=0 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=0 commentsScanned=1",
+        "ERR: markers parsed=1 stale=0 wrongReviewer=0 selfIssued=0 untrustedAuthor=0 malformed=0 reviewsScanned=0 commentsScanned=1",
     },
     {
       label: "merger configured as reviewer",
@@ -773,7 +889,7 @@ describe("independent review CLI", () => {
       }),
       cliOverrides: { expectedReviewerSessionId: MERGER },
       expected:
-        "ERR: markers parsed=1 stale=0 wrongReviewer=0 selfIssued=1 malformed=0 reviewsScanned=0 commentsScanned=1",
+        "ERR: markers parsed=1 stale=0 wrongReviewer=0 selfIssued=1 untrustedAuthor=0 malformed=0 reviewsScanned=0 commentsScanned=1",
     },
   ])(
     "prints exactly one stable marker count summary for normalized rejection: $label",
@@ -797,7 +913,7 @@ describe("independent review CLI", () => {
     );
 
     expect(formatIndependentReviewCountSummary(result.counts)).toBe(
-      "ERR: markers parsed=1 stale=1 wrongReviewer=0 selfIssued=0 malformed=1 reviewsScanned=1 commentsScanned=1",
+      "ERR: markers parsed=1 stale=1 wrongReviewer=0 selfIssued=0 untrustedAuthor=0 malformed=1 reviewsScanned=1 commentsScanned=1",
     );
   });
 
@@ -817,7 +933,7 @@ describe("independent review CLI", () => {
     const result = runCli(requiredCliArgs(inputPath));
     expect(result.status).toBe(1);
     expect(markerCountLines(result.stderr)).toEqual([
-      "ERR: markers parsed=0 stale=0 wrongReviewer=0 selfIssued=0 malformed=0 reviewsScanned=1 commentsScanned=2",
+      "ERR: markers parsed=0 stale=0 wrongReviewer=0 selfIssued=0 untrustedAuthor=0 malformed=0 reviewsScanned=1 commentsScanned=2",
     ]);
   });
 
@@ -884,7 +1000,7 @@ describe("independent review CLI", () => {
 
     expect(result.status).toBe(1);
     expect(diagnosticLines).toEqual([
-      "ERR: markers parsed=1 stale=1 wrongReviewer=0 selfIssued=0 malformed=5 reviewsScanned=2 commentsScanned=6",
+      "ERR: markers parsed=1 stale=1 wrongReviewer=0 selfIssued=0 untrustedAuthor=0 malformed=5 reviewsScanned=2 commentsScanned=6",
     ]);
   });
 
@@ -934,7 +1050,10 @@ describe("independent review CLI", () => {
     );
     expect(instruction).toContain("expected reviewer must be external");
     expect(instruction).toContain(
-      "ERR: markers parsed=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>",
+      "ERR: markers parsed=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> untrustedAuthor=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>",
+    );
+    expect(instruction).toContain(
+      "repository owner and report `author_association=OWNER`",
     );
     expect(instruction).toContain(
       "CLI contract validation, JSON, GitHub API, and evidence-normalization failures",

@@ -2,7 +2,7 @@
 
 AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline / Aider / VSCode / OpenCode / Local LLM / Agent FW / MCP / Tech News / Research の **14 カテゴリ**) を **一括で追跡** できるポータルサイト。Harness Engineering のプラクティスに沿って、AI エージェントが自律的に情報収集・正規化・公開を行う。
 
-**現状**: GitHub Actions の Node publisher が registry の有効 source を **毎時自動収集** (6 バッチローテーション) し、Cloudflare の OIDC bridge 経由で Queue / KV を利用します。Astro 静的サイト生成、RSS/JSON Feed 配信、Cloudflare Queue 分離の GitHub Copilot Enterprise (Claude Sonnet 4.6) 要約パイプライン、Pagefind 全文検索、品質監査 Skill、AI Scrum 開発運用 Skill、UI 表示ガード Skill、Modern Web Guidance Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。現在の source 件数・coverage は `/status` を単一情報源として確認してください。
+**現状**: GitHub Actions の Node publisher が registry の有効 source を **毎時自動収集** (6 バッチローテーション) し、Cloudflare の OIDC bridge 経由で Queue / KV を利用します。Astro 静的サイト生成、全体 RSS (`/rss.xml`)・カテゴリ別 RSS (`/rss/<category>.xml`)・JSON Feed 配信、Cloudflare Queue 分離の GitHub Copilot Enterprise (Claude Sonnet 4.6) 要約パイプライン、Pagefind 全文検索、品質監査 Skill、AI Scrum 開発運用 Skill、UI 表示ガード Skill、Modern Web Guidance Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。現在の source 件数・coverage は `/status` を単一情報源として確認してください。
 
 ## 🔭 運用ステータス早見表 (Single Source of Truth)
 
@@ -529,6 +529,7 @@ tech-dashboard/
 │  │  └─ pages/
 │  │     ├─ index.astro      # ポータルトップ (Top-3 メダル / DailySummary 等)
 │  │     ├─ c/[slug].astro   # カテゴリ別 (14 ページ)
+│  │     ├─ rss/[category].xml.ts # カテゴリ別 RSS (valid category のみ)
 │  │     ├─ t/[tag].astro    # タグ別
 │  │     ├─ status.astro, categories.astro, about.astro, privacy.astro, sources.astro (redirect)
 │  │     └─ {rss.xml,feed.json,metrics.json,sitemap.xml,robots.txt,ads.txt}.ts  # Feed / metrics / discovery / authorized sellers

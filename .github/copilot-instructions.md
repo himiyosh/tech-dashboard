@@ -2846,6 +2846,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: unit testはhandlerのcharset指定を固定し、built previewはmedia typeを`text/plain`として検証する。本文、終端改行、HTTP 200は両層で厳密に確認する。
 - **教訓**: SSG endpointの公開contractはhandler直接実行だけで完了にせず、生成fileとproduction相当previewのstatus、media type、本文を別々に検証する。charset parameterの有無を配信server間で同一と仮定しない。
 
+### LL-431: prerender済みendpointのqueryは別contentを生成しない
+- **事象**: カテゴリ画面が`/rss.xml?category=<slug>`へlinkしていたが、静的`rss.xml.ts`はbuild時に一度だけ全体feedを生成し、request queryを読まないため、全カテゴリで同じRSSを返していた。
+- **根本原因**: runtimeのquery filterをprerender済みstatic endpointでも利用できるとみなし、link先のURLと生成artifactの対応をbuilt previewで検証していなかった。
+- **対策**: valid categoryを`getStaticPaths()`で列挙する`/rss/[category].xml.ts`を追加し、全体feedとカテゴリfeedを同じtyped serializerへ接続した。カテゴリactionとhead autodiscoveryは共通URL helperを使い、built previewでcategory限定content、全体feed継続、未知routeの404を固定する。
+- **教訓**: static endpointでrequestごとに異なるcontentが必要な場合、query parameterへ依存せず、build時に列挙できる有限集合はdynamic static pathとして生成する。URLだけでfilterを表現したつもりにせず、生成file、Content-Type、内容、invalid routeのstatusをproduction相当previewで検証する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

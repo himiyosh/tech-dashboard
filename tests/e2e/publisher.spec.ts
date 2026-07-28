@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { onRequestGet as localizeArticleMetadata } from "../../web/functions/e/[id].ts";
 import { onRequestGet as localizeHomeMetadata } from "../../web/functions/index.ts";
 import {
@@ -12,6 +13,7 @@ import {
   boundedSocialDescription,
 } from "../../web/src/lib/bounded-description.ts";
 import { buildAdsTxt } from "../../web/src/lib/ads-txt.ts";
+import { CATEGORY_META } from "../../web/src/lib/category-meta.ts";
 import { ADSENSE_CLIENT_ID, SITE_URL } from "../../web/src/lib/site.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
 import { canonicalSourceUrl } from "../../web/src/lib/source-meta.ts";
@@ -55,6 +57,27 @@ function localizedHeadValue(html: string, key: string): string {
     new RegExp(`<meta\\b(?=[^>]*data-meta-key="${escapedKey}")[^>]*>`, "i"),
   )?.[0];
   return tag?.match(/\scontent="([^"]*)"/i)?.[1] ?? "";
+}
+
+interface ParsedRssItem {
+  category?: string | string[];
+}
+
+function rssItemDocuments(xml: string): ParsedRssItem[] {
+  expect(XMLValidator.validate(xml)).toBe(true);
+  const document = new XMLParser({
+    parseTagValue: false,
+  }).parse(xml) as {
+    rss?: { channel?: { item?: ParsedRssItem | ParsedRssItem[] } };
+  };
+  const items = document.rss?.channel?.item;
+  if (!items) return [];
+  return Array.isArray(items) ? items : [items];
+}
+
+function rssItemCategory(item: ParsedRssItem): string | null {
+  if (Array.isArray(item.category)) return item.category[0] ?? null;
+  return item.category ?? null;
 }
 
 const generatedEntryRouteCache = new Map<"page" | "archive", Map<string, string>>();
@@ -825,6 +848,44 @@ test.describe("Publisher generated artifact", () => {
     await expect(page.locator("#not-found-heading")).toBeVisible();
     await expect(page.locator("[data-recovery-action]")).toHaveCount(3);
     expect(pageErrors).toEqual([]);
+  });
+
+  test("publishes global and category-specific RSS routes", async ({ request }) => {
+    const globalResponse = await request.get("/rss.xml");
+    const globalXml = await globalResponse.text();
+    expect(globalResponse.status()).toBe(200);
+    expect(globalResponse.headers()["content-type"]).toMatch(/^text\/xml(?:;|$)/);
+    expect(rssItemDocuments(globalXml).length).toBeGreaterThan(0);
+    expect(rssItemDocuments(globalXml).length).toBeLessThanOrEqual(100);
+
+    let categoryItemCount = 0;
+    for (const category of CATEGORY_META) {
+      const feedHref = `/rss/${category.slug}.xml`;
+      const response = await request.get(feedHref);
+      const xml = await response.text();
+      const items = rssItemDocuments(xml);
+      expect(response.status(), feedHref).toBe(200);
+      expect(response.headers()["content-type"], feedHref).toMatch(
+        /^text\/xml(?:;|$)/,
+      );
+      expect(items.length, feedHref).toBeLessThanOrEqual(100);
+      for (const item of items) {
+        expect(rssItemCategory(item), feedHref).toBe(category.slug);
+      }
+      categoryItemCount += items.length;
+    }
+    expect(categoryItemCount).toBeGreaterThan(0);
+
+    const category = CATEGORY_META[0];
+    if (!category) throw new Error("category metadata is empty");
+    const categoryPageResponse = await request.get(`/c/${category.slug}/`);
+    const categoryHtml = await categoryPageResponse.text();
+    expect(categoryPageResponse.status()).toBe(200);
+    expect(categoryHtml).toContain(`href="/rss/${category.slug}.xml"`);
+    expect(categoryHtml).not.toContain("/rss.xml?category=");
+
+    const unknownResponse = await request.get("/rss/not-a-category.xml");
+    expect(unknownResponse.status()).toBe(404);
   });
 
   test("keeps legacy low-frequency tag URLs recoverable", async ({ request }) => {

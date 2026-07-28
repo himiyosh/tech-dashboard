@@ -14,6 +14,7 @@ import {
   jstDayLabel,
   type Category,
 } from "../../lib/data.ts";
+import { categoryRssHref } from "../../lib/rss.ts";
 import { categoryWeekOverWeek } from "../../lib/stats.ts";
 
 export function getStaticPaths() {
@@ -38,6 +39,7 @@ const dayGroups = groupByDay(entries);
 const now = new Date();
 const wow = categoryWeekOverWeek(slug);
 const deltaSign = wow.deltaPct > 0 ? "+" : wow.deltaPct < 0 ? "-" : "";
+const rssHref = categoryRssHref(slug);
 
 const breadcrumb = [
   { label: "Home", href: "/" },
@@ -50,6 +52,7 @@ const breadcrumb = [
   pageKey="categories"
   title={`${category.name} — TECH Dashboard`}
   breadcrumb={breadcrumb}
+  rssHref={rssHref}
 >
   <PageHero
     className="page-hero-category-detail"
@@ -62,7 +65,7 @@ const breadcrumb = [
     descriptionEn={`Browse ${categoryContextLabel} updates by recency, 30-day trend, and related topics.`}
     actions={[
       { href: "/categories", label: "All categories" },
-      { href: `/rss.xml?category=${slug}`, label: "RSS" },
+      { href: rssHref, label: "RSS" },
       { href: "/status", label: "Source health" },
     ]}
     metrics={[

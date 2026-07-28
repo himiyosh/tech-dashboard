@@ -21,6 +21,8 @@ This repository requires an external exact-head review clearance before a pull r
 
    `node scripts/check-independent-review.mjs --repo <owner/name> --pr <number> --head <exact-head> --merger-session <uuid> --reviewer-session <uuid>`
 
+   When using `--input`, source `pullRequest.state` from GitHub REST `repos/<owner>/<repo>/pulls/<n>`, which returns lowercase values such as `open`. Do not use `gh pr view --json state`, which emits uppercase enum values such as `OPEN`; uppercase evidence remains invalid and fails closed.
+
 6. Interpret the result only after checking the single review ticket/session state and the PR state. `UNKNOWN` means no authoritative exact-head pass was found after those checks. It is not permission to merge and is not a reason to create a duplicate ticket automatically.
 7. If the PR head changes, the prior marker is stale. Send a new push request for the new exact head and rerun the gate. The command must exit 0 on that exact head immediately before merge.
 
@@ -33,7 +35,7 @@ This repository requires an external exact-head review clearance before a pull r
 - A malformed count requires a marker-like HTML comment sentinel whose protocol-name prefix is a case variant of `independent-review`. The diagnostic classifier normalizes only that protocol-name prefix, so case variants are visible as malformed attempts without loosening head, verdict, session, timestamp, or whole-body validation. Ordinary discussion of the gate or `check-independent-review.mjs` is not a marker attempt. A marker-like comment embedded in prose is malformed because a valid marker must remain the complete standalone body.
 - Both `reviews[].body` and `comments[].body` are scanned. An empty review list does not invalidate a valid owner comment.
 - Missing evidence arrays, a non-open PR, an exact-head mismatch, or a GitHub CLI/API failure fails closed.
-- A rejection reached after evidence normalization emits exactly one count summary in the form `ERR: markers parsed=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>`. `parsed` counts bodies that satisfy the strict marker grammar before head and reviewer authority checks, so it can overlap with `stale`, `wrongReviewer`, and `selfIssued`. CLI contract validation, JSON, GitHub API, and evidence-normalization failures occur before a result exists and do not synthesize counts.
+- A rejection reached after evidence normalization emits exactly one count summary in the form `ERR: markers parsed=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>`. Diagnostic categories are intentionally non-exclusive: `parsed` counts bodies that satisfy the strict marker grammar before head and reviewer authority checks, so it can overlap with `stale`, `wrongReviewer`, and `selfIssued`; for an exact-head marker issued by the merger while the expected reviewer is a different session, `wrongReviewer` and `selfIssued` both increment. Overlap never grants clearance, and the counters are not intended to sum to the number of scanned messages. CLI contract validation, JSON, GitHub API, and evidence-normalization failures occur before a result exists and do not synthesize counts.
 
 ## Lessons Learned
 
@@ -68,6 +70,13 @@ This repository requires an external exact-head review clearance before a pull r
 ### LL-IR-005: Parsed markers are not authoritative clearances
 
 - **Incident**: The former diagnostic counter name described every body accepted by the strict marker parser as valid even when all of those markers were stale or came from a non-authoritative session.
-- **Root cause**: The counter increments immediately after syntax parsing, before the exact-head, expected-reviewer, self-issued, and verdict checks that determine clearance.
-- **Mitigation**: Name the internal field `parsedMarkers` and the diagnostic label `parsed`, document its overlap with rejection classifications, and keep authoritative pass and fail counts separate.
-- **Lesson**: Diagnostic terminology must describe the stage that produced the count. Syntax acceptance is not exact-head review clearance.
+- **Root cause**: The counter increments immediately after syntax parsing, before the exact-head, expected-reviewer, self-issued, and verdict checks that determine clearance. A merger-issued exact-head marker also independently satisfies both the self-issued and wrong-reviewer diagnostics when the configured external reviewer is another session.
+- **Mitigation**: Name the internal field `parsedMarkers` and the diagnostic label `parsed`, document all intentional overlaps, keep authoritative pass and fail counts separate, and fixture one marker that increments `parsedMarkers`, `wrongReviewerMarkers`, and `selfIssuedMarkers` without granting clearance.
+- **Lesson**: Diagnostic terminology must describe the stage that produced the count, and diagnostic categories need not form a partition. Syntax acceptance and overlapping rejection reasons are not exact-head review clearance.
+
+### LL-IR-006: Fixture PR state must preserve REST evidence semantics
+
+- **Incident**: `gh pr view --json state` emits uppercase enum values such as `OPEN`, while the REST pull request response used by the gate provides lowercase `state` values such as `open`; copying the former into `--input` produced a fail-closed error without identifying the correct evidence source.
+- **Root cause**: The fixture validation error stated the lowercase shape but omitted the GitHub REST endpoint that defines the normalized evidence contract.
+- **Mitigation**: Keep uppercase values invalid, direct operators to REST `repos/<owner>/<repo>/pulls/<n>` in both CLI usage and validation errors, and fixture lowercase success plus uppercase pre-result failure with no count summary.
+- **Lesson**: Fail-closed validation should preserve the authoritative evidence source and tell operators how to produce conforming evidence without silently normalizing a different API's enum format.

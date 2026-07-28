@@ -10,6 +10,8 @@ const SESSION_ID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const REPOSITORY_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const PULL_REQUEST_STATE_RE = /^[a-z]+$/;
+const PULL_REQUEST_STATE_EVIDENCE_SOURCE =
+  "GitHub REST repos/<owner>/<repo>/pulls/<n>";
 const RFC3339_RE =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(Z|[+-](\d{2}):(\d{2}))$/;
 const MARKER_RE =
@@ -172,7 +174,9 @@ export function normalizeIndependentReviewEvidence(
     typeof raw.pullRequest.state !== "string" ||
     !PULL_REQUEST_STATE_RE.test(raw.pullRequest.state)
   ) {
-    throw new Error("review evidence pullRequest.state must be a lowercase token");
+    throw new Error(
+      `review evidence pullRequest.state must be a lowercase token from ${PULL_REQUEST_STATE_EVIDENCE_SOURCE} (for example, open); do not use gh pr view --json state values such as OPEN`,
+    );
   }
   return {
     repository: normalizedRepository,
@@ -212,6 +216,7 @@ export function evaluateIndependentReviewGate({
     pullRequestNumber: normalizedPullRequestNumber,
   });
 
+  // Diagnostic categories describe independent checks rather than a partition.
   const counts = {
     reviewsScanned: evidence.reviews.length,
     commentsScanned: evidence.comments.length,
@@ -236,11 +241,14 @@ export function evaluateIndependentReviewGate({
       }
       continue;
     }
+    // Every strict marker is parsed, even when a later authority check rejects it.
     counts.parsedMarkers += 1;
     if (marker.head !== normalizedExpectedHead) {
       counts.staleMarkers += 1;
       continue;
     }
+    // A merger-issued marker is also a wrong-reviewer marker when the expected
+    // external reviewer is a different session. Both diagnostics are intentional.
     if (marker.by === normalizedMergerSessionId) {
       counts.selfIssuedMarkers += 1;
     }
@@ -377,6 +385,9 @@ function printUsage() {
       "Checks the current open PR head, review bodies, and issue comment bodies.",
       "Without --input, evidence is fetched with `gh api`. The optional fixture",
       "must contain repository, pullRequestNumber, pullRequest, reviews, and comments.",
+      `For --input, set pullRequest.state from ${PULL_REQUEST_STATE_EVIDENCE_SOURCE}`,
+      "(REST returns lowercase values such as open). Do not copy gh pr view --json state",
+      "values such as OPEN; uppercase state remains invalid and fails closed.",
       "",
       "Marker (the complete body, apart from surrounding whitespace):",
       "  <!-- independent-review head=<40 lowercase hex> verdict=pass|fail by=<full lowercase session UUID> at=<RFC3339> -->",

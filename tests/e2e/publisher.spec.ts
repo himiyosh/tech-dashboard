@@ -649,6 +649,42 @@ test.describe("Publisher generated artifact", () => {
     expect(robots).toContain(`Sitemap: ${SITE_URL}/sitemap.xml`);
   });
 
+  test("publishes the JSON Feed body and Pages delivery contract", async ({
+    request,
+  }) => {
+    const [homeResponse, feedResponse, metricsResponse] = await Promise.all([
+      request.get("/"),
+      request.get("/feed.json"),
+      request.get("/metrics.json"),
+    ]);
+    const home = await homeResponse.text();
+    const feed = (await feedResponse.json()) as {
+      version?: string;
+      feed_url?: string;
+      items?: Array<{ content_text?: string }>;
+    };
+    const builtHeaders = readFileSync("web/dist/_headers", "utf8");
+
+    expect(homeResponse.status()).toBe(200);
+    expect(home).toMatch(
+      /<link\b(?=[^>]*\brel="alternate")(?=[^>]*\btype="application\/feed\+json")(?=[^>]*\bhref="\/feed\.json")[^>]*>/,
+    );
+    expect(feedResponse.status()).toBe(200);
+    expect(feed.version).toBe("https://jsonfeed.org/version/1.1");
+    expect(feed.feed_url).toBe(`${SITE_URL}/feed.json`);
+    expect(feed.items?.length).toBeGreaterThan(0);
+    expect(feed.items?.length).toBeLessThanOrEqual(100);
+    expect(feed.items?.every((item) => Boolean(item.content_text?.trim()))).toBe(
+      true,
+    );
+    expect(builtHeaders).toContain(
+      "/feed.json\n  Content-Type: application/feed+json; charset=utf-8",
+    );
+    expect(metricsResponse.headers()["content-type"].split(";", 1)[0]).toBe(
+      "application/json",
+    );
+  });
+
   test("publishes the canonical AdSense authorized seller record", async ({ request }) => {
     const response = await request.get("/ads.txt");
     const body = await response.text();

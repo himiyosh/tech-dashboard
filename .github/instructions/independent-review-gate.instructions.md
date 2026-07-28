@@ -15,7 +15,7 @@ This repository requires an external exact-head review clearance before a pull r
 
    `<!-- independent-review head=<40 lowercase hex> verdict=pass|fail by=<full lowercase session UUID> at=<RFC3339> -->`
 
-   `verdict` is case-sensitive. Only lowercase `pass` and `fail` are valid. `PASS`, `Pass`, and other variants are invalid.
+   The protocol name and `verdict` are case-sensitive. Only lowercase `independent-review`, `pass`, and `fail` are valid. `Independent-Review`, `INDEPENDENT-REVIEW`, `PASS`, `Pass`, and other variants are invalid.
 4. The expected reviewer must be external to the merger/coordinator session. A marker whose `by` session equals the merger/coordinator session never grants clearance.
 5. Immediately before `gh pr merge`, obtain the PR state and exact current head again, then run:
 
@@ -30,7 +30,7 @@ This repository requires an external exact-head review clearance before a pull r
 - Duplicate authoritative `pass` markers are accepted.
 - Any authoritative exact-head `fail` dominates all `pass` markers until that fail comment or review body is edited or deleted.
 - Stale-head, malformed, boundary-spoofed, mixed-case, wrong-reviewer, and self-issued markers never satisfy the gate.
-- A malformed count requires a marker-like HTML comment sentinel (`<!-- independent-review`). Ordinary discussion of the gate or `check-independent-review.mjs` is not a marker attempt. A marker-like comment embedded in prose is malformed because a valid marker must remain the complete standalone body.
+- A malformed count requires a marker-like HTML comment sentinel whose protocol-name prefix is a case variant of `independent-review`. The diagnostic classifier normalizes only that protocol-name prefix, so case variants are visible as malformed attempts without loosening head, verdict, session, timestamp, or whole-body validation. Ordinary discussion of the gate or `check-independent-review.mjs` is not a marker attempt. A marker-like comment embedded in prose is malformed because a valid marker must remain the complete standalone body.
 - Both `reviews[].body` and `comments[].body` are scanned. An empty review list does not invalidate a valid owner comment.
 - Missing evidence arrays, a non-open PR, an exact-head mismatch, or a GitHub CLI/API failure fails closed.
 - A rejection reached after evidence normalization emits exactly one count summary in the form `ERR: markers valid=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>`. JSON, GitHub API, and evidence-normalization failures occur before a result exists and do not synthesize counts.
@@ -48,5 +48,5 @@ This repository requires an external exact-head review clearance before a pull r
 
 - **Incident**: Ordinary review discussion and the script filename increased the malformed marker count because both contained the substring `independent-review`.
 - **Root cause**: Diagnostic classification used a topic substring instead of a marker syntax sentinel.
-- **Mitigation**: Count malformed bodies only when a marker-like HTML comment starts with the protocol prefix, while preserving the standalone whole-body parser for clearance.
+- **Mitigation**: Count malformed bodies only when a marker-like HTML comment starts with the protocol prefix, including case variants of that prefix, while preserving the lowercase standalone whole-body parser for clearance.
 - **Lesson**: Diagnostic counters should identify high-confidence syntax attempts. Discussion about a protocol is evidence population, not malformed protocol data.

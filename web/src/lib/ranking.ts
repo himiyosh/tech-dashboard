@@ -57,6 +57,9 @@ const LAUNCH_TRAILING_TOKENS = new Set([
 const NON_LAUNCH_INTENT_RE =
   /\b(?:analysis|comparison|cost|explainer|guide|how-to|migration|overview|price|pricing|review|tutorial)\b|分析|価格|ガイド|コスト|使い方|手順|単価|解説|検証|比較|移行|料金|チュートリアル|レビュー/iu;
 
+const FEATURE_OR_PLATFORM_SUFFIX_RE =
+  /\b(?:api|audio|coding agent|computer use|feature|function calling|github copilot|integration|native audio|plugin|support|tool use|availability in|available in|comes to|now in)\b|機能|統合|対応|提供先|で利用可能|に対応|で提供開始/iu;
+
 const MODEL_VARIANT =
   String.raw`(?:pro|flash|ultra|nano|mini|lite|max|coder|coding|vl|vision|instruct|chat|reasoning|thinking|embedding|audio|image|fast|preview|cyber|\d+(?:\.\d+)?b|\d+x\d+b)`;
 
@@ -123,7 +126,7 @@ function hasLaunchIntentNearModel(
     const intentStart = match.index;
     const intentEnd = intentStart + match[0].length;
     if (intentEnd <= modelStart && isLaunchFiller(text.slice(intentEnd, modelStart))) {
-      return true;
+      return !FEATURE_OR_PLATFORM_SUFFIX_RE.test(text.slice(modelEnd));
     }
     if (
       intentStart >= modelEnd

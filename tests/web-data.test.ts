@@ -1092,6 +1092,8 @@ describe("decision priority topic diversity", () => {
       "Gemini 3.5 Flash releases a new coding agent",
       "Gemini 3.5 Flash announces native audio support",
       "Gemini 3.5 Flash is now available in Google AI Studio",
+      "Google announces Gemini 3.5 Flash native audio support",
+      "AWS announces Claude Opus 5 availability in Amazon Bedrock",
     ]) {
       expect(decisionTopicKey(makeEntry({ title }))).toBeNull();
     }
@@ -1101,6 +1103,12 @@ describe("decision priority topic diversity", () => {
     expect(decisionTopicKey(makeEntry({
       title: "Gemini 3.5 Flash is now available",
     }))).toBe("model-launch:gemini:3.5:flash");
+    expect(decisionTopicKey(makeEntry({
+      title: "Introducing Claude Opus 5 on AWS: Anthropic's most capable Opus model",
+    }))).toBe("model-launch:claude-opus:5");
+    expect(decisionTopicKey(makeEntry({
+      title: "Anthropic releases Opus 5 with improved capabilities",
+    }))).toBe("model-launch:claude-opus:5");
   });
 
   it("does not reintroduce the featured event when filling the decision list", () => {

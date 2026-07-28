@@ -1086,12 +1086,21 @@ describe("decision priority topic diversity", () => {
   });
 
   it("does not treat a model feature announcement as a model launch", () => {
-    expect(decisionTopicKey(makeEntry({
-      title: "Introducing computer use in Gemini 3.5 Flash",
-    }))).toBeNull();
+    for (const title of [
+      "Introducing computer use in Gemini 3.5 Flash",
+      "Gemini 3.5 Flash launches computer use",
+      "Gemini 3.5 Flash releases a new coding agent",
+      "Gemini 3.5 Flash announces native audio support",
+      "Gemini 3.5 Flash is now available in Google AI Studio",
+    ]) {
+      expect(decisionTopicKey(makeEntry({ title }))).toBeNull();
+    }
     expect(decisionTopicKey(makeEntry({
       title: "Introducing Gemini 3.5 Flash Cyber",
     }))).toBe("model-launch:gemini:3.5:flash-cyber");
+    expect(decisionTopicKey(makeEntry({
+      title: "Gemini 3.5 Flash is now available",
+    }))).toBe("model-launch:gemini:3.5:flash");
   });
 
   it("does not reintroduce the featured event when filling the decision list", () => {

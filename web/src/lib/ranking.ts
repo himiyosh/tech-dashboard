@@ -22,6 +22,7 @@ const LAUNCH_FILLER_TOKENS = new Set([
   "a",
   "an",
   "are",
+  "general",
   "is",
   "its",
   "latest",
@@ -40,6 +41,17 @@ const LAUNCH_FILLER_TOKENS = new Set([
   "モデル",
   "新型",
   "最新",
+]);
+
+const LAUNCH_TRAILING_TOKENS = new Set([
+  "globally",
+  "now",
+  "officially",
+  "today",
+  "worldwide",
+  "一般提供",
+  "正式提供",
+  "本日",
 ]);
 
 const NON_LAUNCH_INTENT_RE =
@@ -79,16 +91,26 @@ function normalizeVariant(value: string): string {
   return value.toLocaleLowerCase().replace(/[\s_]+/g, "-").replace(/-+/g, "-");
 }
 
-function isLaunchFiller(value: string): boolean {
-  const tokens = value
+function normalizedWords(value: string): string[] {
+  return value
     .normalize("NFKC")
     .toLocaleLowerCase()
     .replace(/[^\p{Letter}\p{Number}]+/gu, " ")
     .trim()
     .split(/\s+/u)
     .filter(Boolean);
+}
+
+function isLaunchFiller(value: string): boolean {
+  const tokens = normalizedWords(value);
   return tokens.length <= 4
     && tokens.every((token) => LAUNCH_FILLER_TOKENS.has(token));
+}
+
+function isLaunchTrailingFiller(value: string): boolean {
+  const tokens = normalizedWords(value);
+  return tokens.length <= 2
+    && tokens.every((token) => LAUNCH_TRAILING_TOKENS.has(token));
 }
 
 function hasLaunchIntentNearModel(
@@ -103,7 +125,11 @@ function hasLaunchIntentNearModel(
     if (intentEnd <= modelStart && isLaunchFiller(text.slice(intentEnd, modelStart))) {
       return true;
     }
-    if (intentStart >= modelEnd && isLaunchFiller(text.slice(modelEnd, intentStart))) {
+    if (
+      intentStart >= modelEnd
+      && isLaunchFiller(text.slice(modelEnd, intentStart))
+      && isLaunchTrailingFiller(text.slice(intentEnd))
+    ) {
       return true;
     }
   }

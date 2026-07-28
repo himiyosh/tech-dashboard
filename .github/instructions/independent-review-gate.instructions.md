@@ -33,7 +33,7 @@ This repository requires an external exact-head review clearance before a pull r
 - A malformed count requires a marker-like HTML comment sentinel whose protocol-name prefix is a case variant of `independent-review`. The diagnostic classifier normalizes only that protocol-name prefix, so case variants are visible as malformed attempts without loosening head, verdict, session, timestamp, or whole-body validation. Ordinary discussion of the gate or `check-independent-review.mjs` is not a marker attempt. A marker-like comment embedded in prose is malformed because a valid marker must remain the complete standalone body.
 - Both `reviews[].body` and `comments[].body` are scanned. An empty review list does not invalidate a valid owner comment.
 - Missing evidence arrays, a non-open PR, an exact-head mismatch, or a GitHub CLI/API failure fails closed.
-- A rejection reached after evidence normalization emits exactly one count summary in the form `ERR: markers valid=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>`. JSON, GitHub API, and evidence-normalization failures occur before a result exists and do not synthesize counts.
+- A rejection reached after evidence normalization emits exactly one count summary in the form `ERR: markers valid=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>`. CLI contract validation, JSON, GitHub API, and evidence-normalization failures occur before a result exists and do not synthesize counts.
 
 ## Lessons Learned
 
@@ -50,3 +50,17 @@ This repository requires an external exact-head review clearance before a pull r
 - **Root cause**: Diagnostic classification used a topic substring instead of a marker syntax sentinel.
 - **Mitigation**: Count malformed bodies only when a marker-like HTML comment starts with the protocol prefix, including case variants of that prefix, while preserving the lowercase standalone whole-body parser for clearance.
 - **Lesson**: Diagnostic counters should identify high-confidence syntax attempts. Discussion about a protocol is evidence population, not malformed protocol data.
+
+### LL-IR-003: Count summaries belong only to normalized gate results
+
+- **Incident**: The CLI normalized fixture evidence before validating the expected head and session IDs, so invalid gate inputs could fail after evidence normalization without producing either a gate result or the required count summary.
+- **Root cause**: Input validation, evidence normalization, and gate rejection were ordered independently, while regression tests covered marker classifications but not every PR-state and fail-dominates rejection.
+- **Mitigation**: Validate the complete CLI gate context before loading evidence, reject multiline PR state values during evidence normalization, format counts from the normalized result object in one place, and exercise every normalized rejection through the CLI.
+- **Lesson**: Emit diagnostics from a completed normalized result exactly once. Failures before a result exists must remain distinguishable and must not invent marker counts.
+
+### LL-IR-004: Dynamic errors must not forge machine-readable diagnostics
+
+- **Incident**: A newline in an unknown CLI argument or missing input path could place a forged `ERR: markers ...` line inside a pre-result error.
+- **Root cause**: Dynamic error text was printed without escaping control characters, while operators and tests identify count summaries by their line prefix.
+- **Mitigation**: Escape control characters in every dynamic diagnostic and reserve the count prefix for the result-owned formatter.
+- **Lesson**: Machine-readable diagnostic lines require an exclusive emitter. Untrusted error text must remain on one escaped line before it reaches logs or parsers.

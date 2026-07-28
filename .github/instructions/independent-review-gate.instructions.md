@@ -33,7 +33,7 @@ This repository requires an external exact-head review clearance before a pull r
 - A malformed count requires a marker-like HTML comment sentinel whose protocol-name prefix is a case variant of `independent-review`. The diagnostic classifier normalizes only that protocol-name prefix, so case variants are visible as malformed attempts without loosening head, verdict, session, timestamp, or whole-body validation. Ordinary discussion of the gate or `check-independent-review.mjs` is not a marker attempt. A marker-like comment embedded in prose is malformed because a valid marker must remain the complete standalone body.
 - Both `reviews[].body` and `comments[].body` are scanned. An empty review list does not invalidate a valid owner comment.
 - Missing evidence arrays, a non-open PR, an exact-head mismatch, or a GitHub CLI/API failure fails closed.
-- A rejection reached after evidence normalization emits exactly one count summary in the form `ERR: markers valid=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>`. CLI contract validation, JSON, GitHub API, and evidence-normalization failures occur before a result exists and do not synthesize counts.
+- A rejection reached after evidence normalization emits exactly one count summary in the form `ERR: markers parsed=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>`. `parsed` counts bodies that satisfy the strict marker grammar before head and reviewer authority checks, so it can overlap with `stale`, `wrongReviewer`, and `selfIssued`. CLI contract validation, JSON, GitHub API, and evidence-normalization failures occur before a result exists and do not synthesize counts.
 
 ## Lessons Learned
 
@@ -64,3 +64,10 @@ This repository requires an external exact-head review clearance before a pull r
 - **Root cause**: Dynamic error text was printed without escaping control characters, while operators and tests identify count summaries by their line prefix.
 - **Mitigation**: Escape control characters in every dynamic diagnostic and reserve the count prefix for the result-owned formatter.
 - **Lesson**: Machine-readable diagnostic lines require an exclusive emitter. Untrusted error text must remain on one escaped line before it reaches logs or parsers.
+
+### LL-IR-005: Parsed markers are not authoritative clearances
+
+- **Incident**: The former diagnostic counter name described every body accepted by the strict marker parser as valid even when all of those markers were stale or came from a non-authoritative session.
+- **Root cause**: The counter increments immediately after syntax parsing, before the exact-head, expected-reviewer, self-issued, and verdict checks that determine clearance.
+- **Mitigation**: Name the internal field `parsedMarkers` and the diagnostic label `parsed`, document its overlap with rejection classifications, and keep authoritative pass and fail counts separate.
+- **Lesson**: Diagnostic terminology must describe the stage that produced the count. Syntax acceptance is not exact-head review clearance.

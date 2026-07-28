@@ -401,6 +401,71 @@ describe("independent review CLI", () => {
     expect(missing.stderr).toContain(
       "review evidence comments must be present as an array",
     );
+    expect(missing.stderr).not.toContain("ERR: markers ");
+  });
+
+  it.each([
+    {
+      label: "no marker",
+      body: undefined,
+      expected:
+        "ERR: markers valid=0 stale=0 wrongReviewer=0 selfIssued=0 malformed=0",
+    },
+    {
+      label: "self-issued marker",
+      body: marker({ by: MERGER }),
+      expected:
+        "ERR: markers valid=1 stale=0 wrongReviewer=1 selfIssued=1 malformed=0",
+    },
+    {
+      label: "prose-embedded malformed marker",
+      body: `prose ${marker()}`,
+      expected:
+        "ERR: markers valid=0 stale=0 wrongReviewer=0 selfIssued=0 malformed=1",
+    },
+    {
+      label: "stale marker",
+      body: marker({ head: OTHER_HEAD }),
+      expected:
+        "ERR: markers valid=1 stale=1 wrongReviewer=0 selfIssued=0 malformed=0",
+    },
+    {
+      label: "wrong-reviewer marker",
+      body: marker({ by: OTHER_REVIEWER }),
+      expected:
+        "ERR: markers valid=1 stale=0 wrongReviewer=1 selfIssued=0 malformed=0",
+    },
+  ])(
+    "prints stable marker counts and exits 1 for $label",
+    ({ label, body, expected }) => {
+      const root = createScratchRoot(`rejection-${label.replaceAll(" ", "-")}`);
+      const inputPath = writeEvidenceFixture(
+        root,
+        evidence({
+          comments: body === undefined ? [] : [{ body }],
+        }),
+      );
+
+      const result = runCli(requiredCliArgs(inputPath));
+      const diagnosticLines = result.stderr
+        .split(/\r?\n/)
+        .filter((line) => line.startsWith("ERR: markers "));
+
+      expect(result.status).toBe(1);
+      expect(diagnosticLines).toEqual([expected]);
+    },
+  );
+
+  it("does not synthesize marker counts when JSON parsing fails", () => {
+    const root = createScratchRoot("invalid-json");
+    const inputPath = join(root, "invalid.json");
+    writeFileSync(inputPath, "{", "utf8");
+
+    const result = runCli(requiredCliArgs(inputPath));
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("ERR:");
+    expect(result.stderr).not.toContain("ERR: markers ");
   });
 
   it("fails closed when gh/API execution fails", () => {
@@ -418,6 +483,7 @@ describe("independent review CLI", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("GitHub CLI request failed (exit 42)");
+    expect(result.stderr).not.toContain("ERR: markers ");
   });
 
   it("keeps the documented command and durable merge policy guarded", () => {
@@ -433,6 +499,9 @@ describe("independent review CLI", () => {
     expect(instruction).toContain("`UNKNOWN` means no authoritative exact-head pass");
     expect(instruction).toContain("Only lowercase `pass` and `fail` are valid");
     expect(instruction).toContain("expected reviewer must be external");
+    expect(instruction).toContain(
+      "ERR: markers valid=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n>",
+    );
     expect(script).toContain("evidence.reviews.map");
     expect(script).toContain("evidence.comments.map");
     expect(script).toContain("fail dominates pass until edited or deleted");

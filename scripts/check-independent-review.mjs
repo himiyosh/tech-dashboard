@@ -463,6 +463,9 @@ export async function runIndependentReviewCli(argv, deps = {}) {
     if (!result.ok) {
       for (const reason of result.reasons) console.error(`ERR: ${reason}`);
       console.error(
+        `ERR: markers valid=${result.counts.validMarkers} stale=${result.counts.staleMarkers} wrongReviewer=${result.counts.wrongReviewerMarkers} selfIssued=${result.counts.selfIssuedMarkers} malformed=${result.counts.malformedMarkerBodies}`,
+      );
+      console.error(
         `ERR: independent review gate rejected ${repository}#${pullRequestNumber} at ${expectedHead}`,
       );
       return 1;

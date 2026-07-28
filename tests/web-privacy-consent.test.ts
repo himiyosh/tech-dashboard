@@ -113,8 +113,11 @@ describe("privacy consent contract", () => {
       new URL("../web/src/styles/portal.css", import.meta.url),
       "utf8",
     );
+    const promptRule = styles.match(/\.privacy-consent-prompt\s*\{([^}]*)\}/)?.[1] ?? "";
     expect(portal).toMatch(/data-consent-surface="prompt"[\s\S]*?hidden[\s\S]*?inert/);
     expect(portal).toContain("data-privacy-consent-prompt");
+    expect(portal).toContain('aria-describedby="privacy-consent-prompt-description"');
+    expect(portal).toContain("privacy-consent-choice-actions");
     expect(portal).toContain("privacyConsentStorageKey");
     expect(portal).toContain("privacyConsentVersion");
     expect(portal).toContain("productionAdvertisingHostname");
@@ -126,6 +129,13 @@ describe("privacy consent contract", () => {
     expect(portal).toContain("working fail-safe");
     expect(styles).not.toContain(
       'html[data-privacy-consent-prompt="visible"] .privacy-consent-prompt[hidden]',
+    );
+    expect(promptRule).toContain("position: relative");
+    expect(promptRule).not.toContain("position: fixed");
+    expect(promptRule).not.toContain("box-shadow");
+    expect(styles).toContain(".privacy-consent-choice-actions");
+    expect(styles).toContain(
+      'html[data-privacy-consent-prompt="visible"] .footer-bar',
     );
     expect(portal).not.toMatch(/pagead2\.googlesyndication\.com/);
     expect(portal).not.toMatch(/opacity:\s*0|visibility:\s*hidden/);
@@ -139,6 +149,12 @@ describe("privacy consent contract", () => {
     expect(client).toContain("[data-consent-error]");
     expect(client).toContain("CONSENT_FOCUS_STORAGE_KEY");
     expect(client).toContain("state !== \"allowed\" && hadAdvertisingScript");
+    expect(portal).toContain(
+      'document.addEventListener("techdb:privacyconsentchange", syncSearchOverlayPosition)',
+    );
+    expect(portal).toMatch(
+      /document\.addEventListener\("techdb:languagechange", \(\) => \{\s*syncSearchOverlayPosition\(\)/,
+    );
     expect(portal).toMatch(/\{ href: "\/privacy", key: "privacy"/);
   });
 

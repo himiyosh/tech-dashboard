@@ -2889,6 +2889,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: JSON非依存のpublishability helperとarXiv membership helperを共有し、publishable arXiv collectionから有限の静的`/rss/arxiv.xml`を生成する。`/arxiv/`のautodiscoveryとJA/ENのmobile-priority購読actionを同じURLへ接続し、Research RSSのarXiv除外、片言語要約、pending要約、feed cap/order、未知routeの404をunitとbuilt-preview E2Eで固定する。複数personaがfeed reader上の識別不能を報告したため、RSS autodiscoveryの`title`も各feed固有にし、同じheadに残すglobal JSON Feedは`site-wide`と明記する。
 - **教訓**: primary laneがcategoryではない場合、購読feedをcategory routeへ押し込まずlane固有のstatic endpointを明示する。HTMLのmembershipとRSSのpublishabilityを別々に再実装せず、同じpure helperを使ってlistable集合からfeed対象を導出し、ページ固有autodiscovery、人間向けaction、built artifactのHTTP contractを同じ変更で揃える。autodiscoveryは`href`だけでなくreaderが表示する`title`もdestination固有にし、同時にadvertiseするsite-wide feedをlane feedのように見せない。
 
+### LL-438: first-use同意面は全viewportで通常flowに置き、判断面との非交差を直接測る
+- **事象**: productionの広告同意promptはdesktopで`540x143px`の`position:fixed`、`z-index:65`となり、1440x900では3件目のTop 3 linkと右railのfocus可能なlinkを覆った。mobileは通常flowへ戻していたが`358x195px`となり、390x844のFeaturedを`y=529`まで押し下げた。複数personaが同じfirst-use obstructionを報告した。
+- **根本原因**: LL-418でmobileだけをinline化し、desktopのfixed overlayを残した。promptも説明、44pxのPrivacy link、縦積みの許可・拒否buttonをcard化しており、非遮蔽と初回判断密度を同じresponsive contractで検証していなかった。
+- **対策**: consent state、localStorage schema、cross-tab撤回、初回paint bootstrap、client failure fallbackを変更せず、全viewportでcontent canvas内のcompact stripへ統一した。Google AdSenseが任意であること、拒否しても全機能を使えること、source mediaは別読込の場合があることを短く可視化し、Privacy、拒否、許可を45px以上の操作面へ並べた。SearchはHeaderだけでなく現在表示中の同意strip下端もposition基準にし、cross-tabでstripがhiddenからvisibleへ変わるconsent eventと言語切替で高さが変わるeventの両方で再配置する。同意未決定のdesktopではFooterを通常flowへ戻し、決定後だけ既存fixed Footerへ復帰させる。320/360/375/390/414/720/721/768/1280/1440pxと決定論的なpending/ready記事詳細、Search open中のcross-tab state変更と言語切替で、全priority surface・focusable・FooterとのDOMRect非交差、center hit target、tabbar geometry、JA/EN accessible name、keyboard focus、390/375pxのFeatured `y<=420`を固定した。
+- **教訓**: privacy選択を明示する必要があっても、first-use consentをdecision surfaceへ重ねてよい理由にはならない。modalでない同意面はviewportごとの例外を作らず通常flowに置き、同意control自身の寸法だけでなく、主要判断card、記事本文、focusable、fixed navigationとの非交差とhit-testingを実ブラウザで検証する。truthful copy、同等の許可・拒否、Privacyへのreturn path、fail-closedな第三者script gateはcompact化と同時に維持する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -387,40 +387,49 @@ const footerLastRunRelative = footerLastRunAt
       data-privacy-consent
       data-consent-surface="prompt"
       aria-labelledby="privacy-consent-prompt-title"
+      aria-describedby="privacy-consent-prompt-description"
       hidden
       inert
     >
-      <div>
+      <div class="privacy-consent-prompt-copy">
         <strong id="privacy-consent-prompt-title">
-          <span class="i18n-ja">任意の広告について</span>
-          <span class="i18n-en" lang="en">Optional advertising</span>
+          <span class="i18n-ja">Google AdSense は任意です</span>
+          <span class="i18n-en" lang="en">Google AdSense is optional</span>
         </strong>
-        <p>
-          <span class="i18n-ja">Google AdSenseだけの選択です。元siteの画像やfaviconは別に読み込む場合があります。</span>
-          <span class="i18n-en" lang="en">This choice controls Google AdSense only. Source images and favicons may load separately.</span>
+        <p id="privacy-consent-prompt-description">
+          <span class="i18n-ja">広告なしでも全機能を使えます。外部画像等は別読込の場合あり。</span>
+          <span class="i18n-en" lang="en">All features work without ads. External media may still load.</span>
         </p>
         <p class="privacy-consent-prompt-error" data-consent-error role="status" aria-live="polite" hidden inert>
           <span class="i18n-ja">このブラウザへ選択を保存できませんでした。保存設定を確認して、もう一度お試しください。</span>
           <span class="i18n-en" lang="en">The choice could not be saved in this browser. Check storage settings and try again.</span>
         </p>
-        <a href="/privacy">
-          <span class="i18n-ja">詳しい取扱い</span>
-          <span class="i18n-en" lang="en">Privacy details</span>
-        </a>
       </div>
-      <div class="privacy-consent-prompt-actions" role="group" aria-labelledby="privacy-consent-actions-label">
-        <span id="privacy-consent-actions-label" class="visually-hidden">
-          <span class="i18n-ja">広告の同意</span>
-          <span class="i18n-en" lang="en">Advertising consent</span>
-        </span>
-        <button type="button" data-consent-choice="denied" aria-pressed="false">
-          <span class="i18n-ja">広告なしで続行</span>
-          <span class="i18n-en" lang="en">Continue without ads</span>
-        </button>
-        <button type="button" data-consent-choice="allowed" aria-pressed="false">
-          <span class="i18n-ja">広告を許可</span>
-          <span class="i18n-en" lang="en">Allow advertising</span>
-        </button>
+      <div class="privacy-consent-prompt-actions">
+        <a href="/privacy">
+          <span class="i18n-ja" aria-hidden="true">詳細</span>
+          <span class="i18n-en" lang="en" aria-hidden="true">Details</span>
+          <span class="visually-hidden i18n-ja">プライバシーの詳細</span>
+          <span class="visually-hidden i18n-en" lang="en">Privacy details</span>
+        </a>
+        <div class="privacy-consent-choice-actions" role="group" aria-labelledby="privacy-consent-actions-label">
+          <span id="privacy-consent-actions-label" class="visually-hidden">
+            <span class="i18n-ja">広告の同意</span>
+            <span class="i18n-en" lang="en">Advertising consent</span>
+          </span>
+          <button type="button" data-consent-choice="denied" aria-pressed="false">
+            <span class="i18n-ja" aria-hidden="true">拒否</span>
+            <span class="i18n-en" lang="en" aria-hidden="true">Decline</span>
+            <span class="visually-hidden i18n-ja">広告を拒否</span>
+            <span class="visually-hidden i18n-en" lang="en">Decline advertising</span>
+          </button>
+          <button type="button" data-consent-choice="allowed" aria-pressed="false">
+            <span class="i18n-ja" aria-hidden="true">許可</span>
+            <span class="i18n-en" lang="en" aria-hidden="true">Allow</span>
+            <span class="visually-hidden i18n-ja">広告を許可</span>
+            <span class="visually-hidden i18n-en" lang="en">Allow advertising</span>
+          </button>
+        </div>
       </div>
     </aside>
     <script
@@ -976,15 +985,19 @@ const footerLastRunRelative = footerLastRunAt
         );
         const narrowSearchLayout = window.matchMedia("(max-width: 980px)");
         const searchHeader = searchRoot.closest("header");
+        const privacyPrompt = document.querySelector<HTMLElement>(".privacy-consent-prompt");
         const syncSearchOverlayPosition = () => {
           if (!searchRoot.classList.contains("is-open") || !narrowSearchLayout.matches || !searchHeader) {
             searchRoot.style.removeProperty("--search-overlay-top");
             return;
           }
           const headerBottom = searchHeader.getBoundingClientRect().bottom;
+          const promptBottom = privacyPrompt?.getClientRects().length
+            ? privacyPrompt.getBoundingClientRect().bottom
+            : 0;
           searchRoot.style.setProperty(
             "--search-overlay-top",
-            `${Math.max(12, Math.ceil(headerBottom) + 8)}px`,
+            `${Math.max(12, Math.ceil(headerBottom), Math.ceil(promptBottom)) + 8}px`,
           );
         };
         const tagRecoveryVersion = panel.dataset.tagRecoveryVersion ?? "";
@@ -1150,6 +1163,7 @@ const footerLastRunRelative = footerLastRunAt
         };
         (window as any).__tdCloseSearch = closeSearch;
         closeButton?.addEventListener("click", () => closeSearch(true));
+        document.addEventListener("techdb:privacyconsentchange", syncSearchOverlayPosition);
         window.addEventListener("resize", syncSearchOverlayPosition);
         window.addEventListener("scroll", syncSearchOverlayPosition, { passive: true });
         const hitItems = () => Array.from(panel.querySelectorAll<HTMLAnchorElement>(".search-hit"));
@@ -1652,6 +1666,7 @@ const footerLastRunRelative = footerLastRunAt
         };
 
         document.addEventListener("techdb:languagechange", () => {
+          syncSearchOverlayPosition();
           const query = input.value.trim();
           if (!searchRoot.classList.contains("is-open") || !query) return;
           void renderResults(query, nextRequestGeneration());

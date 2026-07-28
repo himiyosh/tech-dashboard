@@ -14,6 +14,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 追加
 
+- arXiv専用レーンへ静的な`/rss/arxiv.xml`、ページ固有のRSS autodiscovery、JA/ENの購読actionを追加しました。feedはHTMLレーンと同じarXiv membershipと公開可能要約の判定を使い、Research RSSにはarXivを戻しません。autodiscoveryのRSS名は各feed固有、JSON Feed名はsite-wideと明示します。
 - live/warm の記事詳細、カテゴリ・タグ・月別 Archive と各ページネーションを実際の静的 route 生成条件から列挙する `/sitemap.xml` と、canonical Sitemap directive を持つ `/robots.txt` を追加しました。sitemap は重複・外部・query URL を拒否し、50,000 URL / 50 MB の上限を build 時に fail-closed で検証します。
 - Homeと記事詳細へJA/EN別のOpen Graph・Twitter Card metadataとHomeのWebSite構造化データを追加しました。元記事画像が無い記事はrepository-ownedの1200x630 PNGを使用し、`?lang=en`ではPages Functionが静的本文を維持したままcrawler向けheadを英語へ局所化します。
 - 日本語・英語の要約やタイトルが片言語だけ利用できる場合に、表示言語の出典を明示する共通 fallback 表示を追加しました。

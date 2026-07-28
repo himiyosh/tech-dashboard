@@ -14,6 +14,12 @@ export function isArxivEntry(
     || (entry.sourceType === "paper" && entry.url.includes("arxiv.org"));
 }
 
+export function filterArxivEntries<
+  T extends Pick<CategoryLaneEntry, "source" | "sourceType" | "url">,
+>(entries: readonly T[]): T[] {
+  return entries.filter(isArxivEntry);
+}
+
 export function isResearchListingEntry(entry: CategoryLaneEntry): boolean {
   return entry.category === "research" && !isArxivEntry(entry);
 }

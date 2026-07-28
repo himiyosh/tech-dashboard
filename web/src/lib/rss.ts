@@ -7,6 +7,7 @@ import type { Category } from "./category-meta.ts";
 
 export const RSS_CONTENT_TYPE = "application/rss+xml; charset=utf-8";
 export const RSS_ITEM_LIMIT = 100;
+export const ARXIV_RSS_HREF = "/rss/arxiv.xml" as const;
 
 export interface RssChannel {
   title: string;

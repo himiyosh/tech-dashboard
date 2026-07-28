@@ -2852,6 +2852,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: valid categoryを`getStaticPaths()`で列挙する`/rss/[category].xml.ts`を追加し、全体feedとカテゴリfeedを同じtyped serializerへ接続した。カテゴリactionとhead autodiscoveryは共通URL helperを使い、built previewでcategory限定content、全体feed継続、未知routeの404を固定する。
 - **教訓**: static endpointでrequestごとに異なるcontentが必要な場合、query parameterへ依存せず、build時に列挙できる有限集合はdynamic static pathとして生成する。URLだけでfilterを表現したつもりにせず、生成file、Content-Type、内容、invalid routeのstatusをproduction相当previewで検証する。
 
+### LL-432: mobile密度調整は継続利用の主要actionを一律に隠さない
+- **事象**: desktopのAboutとカテゴリ画面ではRSS/JSON Feed actionが見えていたが、`max-width:720px`の共通CSSが全PageHero actionを非表示にし、mobileではhead autodiscovery以外に購読先を見つけられなかった。
+- **根本原因**: first-viewをcompactにするための表示規則が、補助shortcutと継続購読に必要な主要actionを区別していなかった。
+- **対策**: PageHero actionへ明示的な`mobilePriority`契約を追加し、購読actionだけを44px以上でmobileに残した。購読actionを持つheroはmobileで説明文を畳み、既存metricを削らずcompactな高さを維持した。AboutのMenu説明とlink textも購読先が分かるJA/EN表記へ揃えた。
+- **教訓**: responsive密度を下げる際はaction群を一括で隠さず、主要task、回復、継続利用に必要なactionだけを明示的にopt-inして残す。head metadataの存在を人間向けの発見可能性の代用にせず、desktop/mobile両方でlink目的と操作寸法を検証する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

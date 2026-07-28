@@ -13,6 +13,7 @@ export interface PageHeroAction {
   href: string;
   label: string;
   labelEn?: string;
+  mobilePriority?: boolean;
 }
 
 export interface Props {
@@ -44,10 +45,15 @@ const {
   metrics = [],
   actions = [],
 } = Astro.props;
+const hasMobilePriorityActions = actions.some((action) => action.mobilePriority);
 ---
 
 <section
-  class:list={["page-hero", className]}
+  class:list={[
+    "page-hero",
+    className,
+    { "page-hero-mobile-priority": hasMobilePriorityActions },
+  ]}
   style={accent ? `--page-hero-accent:${accent}` : undefined}
   aria-labelledby={headingId}
 >
@@ -81,9 +87,19 @@ const {
         ) : description}
       </p>
       {actions.length > 0 && (
-        <div class="page-hero-actions" aria-label={`${title} shortcuts`}>
+        <div
+          class:list={[
+            "page-hero-actions",
+            { "has-mobile-priority-actions": hasMobilePriorityActions },
+          ]}
+          aria-label={`${title} shortcuts`}
+        >
           {actions.map((action) => (
-            <a href={action.href}>
+            <a
+              href={action.href}
+              class:list={{ "page-hero-action-mobile": action.mobilePriority }}
+              data-mobile-priority={action.mobilePriority ? "true" : undefined}
+            >
               {action.labelEn ? (
                 <>
                   <span class="i18n-ja">{action.label}</span>

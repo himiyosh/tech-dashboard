@@ -32,6 +32,7 @@ This repository requires an external exact-head review clearance before a pull r
 - Stale-head, malformed, boundary-spoofed, mixed-case, wrong-reviewer, and self-issued markers never satisfy the gate.
 - Both `reviews[].body` and `comments[].body` are scanned. An empty review list does not invalidate a valid owner comment.
 - Missing evidence arrays, a non-open PR, an exact-head mismatch, or a GitHub CLI/API failure fails closed.
+- A rejection reached after evidence normalization emits exactly one count summary in the form `ERR: markers valid=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n>`. JSON, GitHub API, and evidence-normalization failures occur before a result exists and do not synthesize counts.
 
 ## Lessons Learned
 

@@ -277,6 +277,80 @@ describe("Zenn AI Local LLM relevance (LL-412)", () => {
   });
 });
 
+describe("Simon Willison Local LLM raw-field filtering (LL-435)", () => {
+  const simonw = REGISTRY["simonw-blog"];
+  const kimiUrl = "https://simonwillison.net/2026/Jul/27/kimi-k3/#atom-everything";
+  const kimiSnippet =
+    "moonshotai/Kimi-K3 As promised earlier this month, Moonshot have released the weights for their excellent 2.8 trillion parameter Kimi K3. They're a hefty 1.56TB on Hugging Face.";
+
+  it("keeps the real Kimi K3 source item when generated summaries use generic business wording", () => {
+    const raw = keywordFilterEntryFromNormalized({
+      title: "moonshotai/Kimi-K3",
+      url: kimiUrl,
+      contentSnippet: kimiSnippet,
+      titleJa: "",
+      titleEn: "moonshotai/Kimi-K3",
+      summaryJa: "Kimi K3 は startup 向け workflow を含む大規模モデルです。",
+      summaryEn: "Kimi K3 supports startup workflows and model serving.",
+    });
+
+    expect(raw).toEqual({
+      title: "moonshotai/Kimi-K3",
+      url: kimiUrl,
+      contentSnippet: kimiSnippet,
+    });
+    expect(
+      evaluateKeywordFilter(raw, simonw, {
+        allowLossyMissingInclude: true,
+      }),
+    ).toEqual({
+      keep: true,
+      reason: "include",
+      keyword: "hugging face",
+      trusted: true,
+    });
+  });
+
+  it.each([
+    [
+      "SaaS is Dead: using a local LLM to build a profitable startup",
+      "",
+      "saas is dead",
+    ],
+    [
+      "Operating an open model service",
+      "A startup billing workflow for hosted model customers.",
+      "startup",
+    ],
+    [
+      "Claude Code workflow for a local model",
+      "",
+      "claude code",
+    ],
+    [
+      "An opinionated guide to which AI to use to do stuff",
+      "ChatGPT's two agent modes are Work and Codex.",
+      "agent",
+    ],
+  ])("still drops genuine raw source noise: %s", (title, contentSnippet, keyword) => {
+    expect(
+      evaluateKeywordFilter(
+        {
+          title,
+          url: "https://simonwillison.net/example/",
+          contentSnippet,
+        },
+        simonw,
+      ),
+    ).toEqual({
+      keep: false,
+      reason: "exclude",
+      keyword,
+      trusted: true,
+    });
+  });
+});
+
 describe("arXiv Research filter (R-017, LL-260)", () => {
   const arxivCl = REGISTRY["arxiv-cs-cl"];
 

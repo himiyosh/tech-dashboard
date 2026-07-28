@@ -21,6 +21,7 @@ export interface Props {
   pageKey?: "timeline" | "categories" | "arxiv" | "knowledge" | "glossary" | "sources" | "archive" | "status" | "about" | "privacy" | "search" | "not-found";
   breadcrumb?: Array<{ label: string; href?: string }>;
   rssHref?: string;
+  rssTitle?: string;
 }
 
 const {
@@ -32,6 +33,7 @@ const {
   pageKey = "timeline",
   breadcrumb,
   rssHref = "/rss.xml",
+  rssTitle = "TECH Dashboard site-wide RSS",
 } = Astro.props;
 const pageTitleJa = metadata?.titleJa ?? titleProp;
 const pageTitleEn = metadata?.titleEn ?? titleEnProp;
@@ -115,8 +117,8 @@ const footerLastRunRelative = footerLastRunAt
       data-meta-content-en={pageDescriptionEn}
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="alternate" type="application/rss+xml" title="TECH Dashboard RSS" href={rssHref} />
-    <link rel="alternate" type="application/feed+json" title="TECH Dashboard JSON Feed" href="/feed.json" />
+    <link rel="alternate" type="application/rss+xml" title={rssTitle} href={rssHref} />
+    <link rel="alternate" type="application/feed+json" title="TECH Dashboard site-wide JSON Feed" href="/feed.json" />
     {metadata && (
       <>
         <link rel="canonical" href={metadata.canonicalUrl} />

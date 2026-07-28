@@ -2845,6 +2845,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: static outputではroute handlerのResponse header自体はartifactへ保存されず、配信時のMIMEは生成fileの拡張子とserver設定から決まる。handler直接testとbuilt previewを同じheader文字列で検証していた。
 - **対策**: unit testはhandlerのcharset指定を固定し、built previewはmedia typeを`text/plain`として検証する。本文、終端改行、HTTP 200は両層で厳密に確認する。
 - **教訓**: SSG endpointの公開contractはhandler直接実行だけで完了にせず、生成fileとproduction相当previewのstatus、media type、本文を別々に検証する。charset parameterの有無を配信server間で同一と仮定しない。
+- **追補**: JSON Feed routeはsource上で`application/feed+json`を返していても、生成済み`feed.json`を配信するCloudflare Pagesは`web/public/_headers`に個別ruleが無ければ`application/json`を返した。`/feed.json`のexact header rule、build artifact内のrule、production health checkの実response headerを別々に検証する。Astro previewはPagesの`_headers`を適用しないため、previewの拡張子由来MIMEをproduction期待値へ弱める根拠にしない。
 
 ### LL-431: prerender済みendpointのqueryは別contentを生成しない
 - **事象**: カテゴリ画面が`/rss.xml?category=<slug>`へlinkしていたが、静的`rss.xml.ts`はbuild時に一度だけ全体feedを生成し、request queryを読まないため、全カテゴリで同じRSSを返していた。
@@ -2876,7 +2877,19 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: 重複する生成要約ベースのgateを削除し、artifact全体は既存のshared registry evaluatorで検査する。実Kimi K3のraw itemをkeepし、raw title/snippetにbusiness、workflow、agent noiseがある場合はdropするactual registry fixtureを追加した。
 - **教訓**: source品質gateはregistryとraw source fieldsの単一契約へ揃える。AI生成title/summaryを採否へ使わず、正当記事のkeepと真正noiseのdropを同じactual source定義で固定し、別の正規表現をdata schemaへ重ねない。
 
-### LL-436: first-use同意面は全viewportで通常flowに置き、判断面との非交差を直接測る
+### LL-436: category RSSはHTML laneと同じmembership predicateを共有する
+- **事象**: HTMLのResearch一覧は専用arXivレーンを除外して15件を表示していた一方、`/rss/research.xml`はcategoryだけで選択し、同じ`research` categoryを持つarXiv 80件を含む95件を配信していた。
+- **根本原因**: HTML collectionは`isResearchListingEntry()`を使っていたが、category RSS routeは`entry.category === category.slug`を独自実装し、reader-facing lane membershipを共有していなかった。
+- **対策**: arXiv判定、Research membership、一般category selectionをJSON非依存の共通helperへ集約し、HTML collectionとcategory RSSの両方から利用する。ResearchとarXivが同じcategoryを持つfixture、全体feed維持、未知arXiv feed 404、built HTMLとのURL parityを回帰testへ追加した。
+- **教訓**: category、lane、feedが同じslugを共有しても表示母集団が同一とは限らない。購読feedはcategory文字列を再判定せず、HTML listingのmembership predicateを共有し、専用laneとの境界をdeterministic fixtureとbuilt artifactで検証する。
+
+### LL-437: primary laneの購読feedはcategory列挙へ暗黙依存させない
+- **事象**: arXivはdesktop/mobileのprimary laneとして`/arxiv/`を持つ一方、category RSSの静的pathは`CATEGORY_META`だけを列挙するため`/rss/arxiv.xml`が404となり、Research RSSからarXivを正しく除外した後に専用の継続購読先が無かった。
+- **根本原因**: reader-facing laneとtaxonomy categoryのroute identityが異なるのに、購読endpointの生成をcategory slugへ暗黙依存させていた。HTMLはlistable entryを含み、RSSは少なくとも片言語に利用可能な要約を持つpublishable entryだけを配信する別の品質境界もあった。
+- **対策**: JSON非依存のpublishability helperとarXiv membership helperを共有し、publishable arXiv collectionから有限の静的`/rss/arxiv.xml`を生成する。`/arxiv/`のautodiscoveryとJA/ENのmobile-priority購読actionを同じURLへ接続し、Research RSSのarXiv除外、片言語要約、pending要約、feed cap/order、未知routeの404をunitとbuilt-preview E2Eで固定する。複数personaがfeed reader上の識別不能を報告したため、RSS autodiscoveryの`title`も各feed固有にし、同じheadに残すglobal JSON Feedは`site-wide`と明記する。
+- **教訓**: primary laneがcategoryではない場合、購読feedをcategory routeへ押し込まずlane固有のstatic endpointを明示する。HTMLのmembershipとRSSのpublishabilityを別々に再実装せず、同じpure helperを使ってlistable集合からfeed対象を導出し、ページ固有autodiscovery、人間向けaction、built artifactのHTTP contractを同じ変更で揃える。autodiscoveryは`href`だけでなくreaderが表示する`title`もdestination固有にし、同時にadvertiseするsite-wide feedをlane feedのように見せない。
+
+### LL-438: first-use同意面は全viewportで通常flowに置き、判断面との非交差を直接測る
 - **事象**: productionの広告同意promptはdesktopで`540x143px`の`position:fixed`、`z-index:65`となり、1440x900では3件目のTop 3 linkと右railのfocus可能なlinkを覆った。mobileは通常flowへ戻していたが`358x195px`となり、390x844のFeaturedを`y=529`まで押し下げた。複数personaが同じfirst-use obstructionを報告した。
 - **根本原因**: LL-418でmobileだけをinline化し、desktopのfixed overlayを残した。promptも説明、44pxのPrivacy link、縦積みの許可・拒否buttonをcard化しており、非遮蔽と初回判断密度を同じresponsive contractで検証していなかった。
 - **対策**: consent state、localStorage schema、cross-tab撤回、初回paint bootstrap、client failure fallbackを変更せず、全viewportでcontent canvas内のcompact stripへ統一した。Google AdSenseが任意であること、拒否しても全機能を使えること、source mediaは別読込の場合があることを短く可視化し、Privacy、拒否、許可を45px以上の操作面へ並べた。SearchはHeaderだけでなく現在表示中の同意strip下端もposition基準にし、cross-tabでstripがhiddenからvisibleへ変わるconsent eventと言語切替で高さが変わるeventの両方で再配置する。同意未決定のdesktopではFooterを通常flowへ戻し、決定後だけ既存fixed Footerへ復帰させる。320/360/375/390/414/720/721/768/1280/1440pxと決定論的なpending/ready記事詳細、Search open中のcross-tab state変更と言語切替で、全priority surface・focusable・FooterとのDOMRect非交差、center hit target、tabbar geometry、JA/EN accessible name、keyboard focus、390/375pxのFeatured `y<=420`を固定した。

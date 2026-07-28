@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { NormalizedEntry } from "../web/src/lib/data.ts";
 
 const {
+  arxivFeedEntries,
   categoryMeta,
   feedEntries,
   summaryForLangWithFallback,
@@ -28,6 +29,15 @@ const {
       initial: "Cl",
       emoji: "orange",
       group: "anthropic",
+    },
+    {
+      slug: "research",
+      name: "Papers / Benchmarks",
+      shortLabel: "Papers/Benchmarks",
+      color: "#fda4af",
+      initial: "Pb",
+      emoji: "microscope",
+      group: "research",
     },
   ];
   const baseEntry = {
@@ -61,6 +71,25 @@ const {
     },
     {
       ...baseEntry,
+      id: "research-report",
+      source: "dora-insights",
+      url: "https://example.com/research-report",
+      titleJa: "Research レポート",
+      summaryJa: "選定した Research レポートの要約。",
+      category: "research",
+    },
+    {
+      ...baseEntry,
+      id: "arxiv-paper",
+      source: "arxiv-cs-ai",
+      sourceType: "paper",
+      url: "https://arxiv.org/abs/2607.01234",
+      titleJa: "arXiv 論文",
+      summaryJa: "専用 arXiv レーンの論文要約。",
+      category: "research",
+    },
+    {
+      ...baseEntry,
       id: "agent-entry-2",
       url: "https://example.com/agent-2",
       titleJa: "2件目の検証済みタイトル\u0000\u0001\u000b\ud800\ufffe\uffff",
@@ -69,6 +98,7 @@ const {
     },
   ];
   return {
+    arxivFeedEntries: feedEntries.filter((entry) => entry.id === "arxiv-paper"),
     categoryMeta,
     feedEntries,
     titleForLangWithFallback: vi.fn(
@@ -87,6 +117,7 @@ const {
 });
 
 vi.mock("../web/src/lib/data.ts", () => ({
+  ARXIV_FEED_ENTRIES: arxivFeedEntries,
   CATEGORY_META: categoryMeta,
   GENERATED_AT: "2026-01-01T00:00:00.000Z",
   PUBLISHABLE_ENTRIES: feedEntries,
@@ -95,12 +126,14 @@ vi.mock("../web/src/lib/data.ts", () => ({
 }));
 
 const { GET: getRss } = await import("../web/src/pages/rss.xml.ts");
+const { GET: getArxivRss } = await import("../web/src/pages/rss/arxiv.xml.ts");
 const {
   GET: getCategoryRss,
   getStaticPaths: getCategoryRssPaths,
 } = await import("../web/src/pages/rss/[category].xml.ts");
 const { GET: getJsonFeed } = await import("../web/src/pages/feed.json.ts");
 const {
+  ARXIV_RSS_HREF,
   RSS_ITEM_LIMIT,
   categoryRssHref,
   escapeXml,
@@ -120,6 +153,10 @@ const portalStyles = readFileSync(
 );
 const aboutSource = readFileSync(
   new URL("../web/src/pages/about.astro", import.meta.url),
+  "utf8",
+);
+const arxivSource = readFileSync(
+  new URL("../web/src/pages/arxiv.astro", import.meta.url),
   "utf8",
 );
 const publicHeaders = readFileSync(
@@ -158,11 +195,16 @@ describe("public feeds", () => {
       }),
     ]);
     expect(portalSource).toContain('rssHref = "/rss.xml"');
+    expect(portalSource).toContain('rssTitle = "TECH Dashboard site-wide RSS"');
+    expect(portalSource).toContain('title="TECH Dashboard site-wide JSON Feed"');
     expect(portalSource).toContain('href={rssHref}');
+    expect(portalSource).toContain('title={rssTitle}');
   });
 
   it("keeps descriptive subscription actions discoverable on mobile", () => {
     expect(pageHeroSource).toContain("mobilePriority?: boolean");
+    expect(pageHeroSource).toContain("mediaType?: string");
+    expect(pageHeroSource).toContain("type={action.mediaType}");
     expect(pageHeroSource).toContain('"page-hero-mobile-priority"');
     expect(pageHeroSource).toContain('"has-mobile-priority-actions"');
     expect(pageHeroSource).toContain('"page-hero-action-mobile"');
@@ -180,6 +222,10 @@ describe("public feeds", () => {
     expect(aboutSource).toContain('label: "全体RSS"');
     expect(aboutSource).toContain('labelEn: "Site-wide RSS"');
     expect(aboutSource.match(/mobilePriority:\s*true/g)).toHaveLength(2);
+    expect(arxivSource).toContain('label: "arXiv RSSを購読"');
+    expect(arxivSource).toContain('labelEn: "Subscribe to arXiv RSS"');
+    expect(arxivSource).toContain('mediaType: "application/rss+xml"');
+    expect(arxivSource).toContain("mobilePriority: true");
     expect(portalSource).toContain("サイトの目的・収集方針・RSS購読");
     expect(portalSource).toContain("Purpose, collection policy, and feeds");
     for (const source of categorySources.slice(1)) {
@@ -190,6 +236,7 @@ describe("public feeds", () => {
   });
 
   it("builds deterministic category feed URLs without query filtering", () => {
+    expect(ARXIV_RSS_HREF).toBe("/rss/arxiv.xml");
     expect(categoryRssHref("agent-fw")).toBe("/rss/agent-fw.xml");
     expect(categoryRssHref("local-llm")).toBe("/rss/local-llm.xml");
     for (const source of categorySources) {
@@ -198,11 +245,26 @@ describe("public feeds", () => {
     }
     expect(categorySources[1]).toContain("rssHref={rssHref}");
     expect(categorySources[2]).toContain("rssHref={rssHref}");
+    expect(categorySources[1]).toContain('rssTitle={`TECH Dashboard | ${category.name}`}');
+    expect(categorySources[2]).toContain('rssTitle={`TECH Dashboard | ${category.name}`}');
+    expect(arxivSource).toContain("rssHref={ARXIV_RSS_HREF}");
+    expect(arxivSource).toContain('rssTitle="TECH Dashboard | arXiv Papers"');
     expect(publicHeaders).toContain(
       "/rss.xml\n  Content-Type: application/rss+xml; charset=utf-8",
     );
     expect(publicHeaders).toContain(
       "/rss/*\n  Content-Type: application/rss+xml; charset=utf-8",
+    );
+  });
+
+  it("declares the JSON Feed media type at the route and Pages delivery boundaries", async () => {
+    const response = (await getJsonFeed({} as never)) as Response;
+
+    expect(response.headers.get("content-type")).toBe(
+      "application/feed+json; charset=utf-8",
+    );
+    expect(publicHeaders).toContain(
+      "/feed.json\n  Content-Type: application/feed+json; charset=utf-8",
     );
   });
 
@@ -253,11 +315,50 @@ describe("public feeds", () => {
     }
   });
 
+  it("Research RSS follows the curated listing predicate while global feeds keep arXiv", async () => {
+    const response = (await getCategoryRss({
+      params: { category: "research" },
+    } as never)) as Response;
+    const xml = await response.text();
+
+    expect(XMLValidator.validate(xml)).toBe(true);
+    expect(xml.match(/<item>/g)).toHaveLength(1);
+    expect(xml).toContain("https://example.com/research-report");
+    expect(xml).not.toContain("https://arxiv.org/abs/2607.01234");
+
+    const globalRss = (await getRss({} as never)) as Response;
+    expect(await globalRss.text()).toContain("https://arxiv.org/abs/2607.01234");
+
+    const jsonFeed = (await getJsonFeed({} as never)) as Response;
+    expect(JSON.stringify(await jsonFeed.json())).toContain(
+      "https://arxiv.org/abs/2607.01234",
+    );
+  });
+
+  it("publishes the dedicated arXiv lane feed from its canonical collection", async () => {
+    const response = (await getArxivRss({} as never)) as Response;
+    const xml = await response.text();
+    const items = xml.match(/<item>[\s\S]*?<\/item>/g) ?? [];
+
+    expect(XMLValidator.validate(xml)).toBe(true);
+    expect(response.headers.get("content-type")).toBe(
+      "application/rss+xml; charset=utf-8",
+    );
+    expect(items).toHaveLength(arxivFeedEntries.length);
+    expect(xml).toContain("<title>TECH Dashboard | arXiv Papers</title>");
+    expect(xml).toContain("https://arxiv.org/abs/2607.01234");
+    expect(xml).not.toContain("https://example.com/research-report");
+  });
+
   it("category RSS rejects an unknown category and caps output at 100 items", async () => {
     const invalidResponse = (await getCategoryRss({
       params: { category: "not-a-category" },
     } as never)) as Response;
     expect(invalidResponse.status).toBe(404);
+    const arxivResponse = (await getCategoryRss({
+      params: { category: "arxiv" },
+    } as never)) as Response;
+    expect(arxivResponse.status).toBe(404);
 
     const entries: NormalizedEntry[] = Array.from(
       { length: RSS_ITEM_LIMIT + 5 },

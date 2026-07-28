@@ -13,6 +13,7 @@ export interface PageHeroAction {
   href: string;
   label: string;
   labelEn?: string;
+  mediaType?: string;
   mobilePriority?: boolean;
 }
 
@@ -99,6 +100,7 @@ const descriptionId = `${headingId}-description`;
           {actions.map((action) => (
             <a
               href={action.href}
+              type={action.mediaType}
               class:list={{ "page-hero-action-mobile": action.mobilePriority }}
             >
               {action.labelEn ? (

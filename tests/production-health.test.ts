@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   validateBridge,
   validateIndexFreshness,
+  validateJsonFeed,
   validatePublisherRuns,
 } from "../scripts/check-production-health.mjs";
 import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../worker/src/publisher-contract.ts";
@@ -172,5 +173,37 @@ describe("production health topology", () => {
         now,
       ).errors,
     ).toContain("data/index.json health reports all 9 sources failed");
+  });
+
+  it("requires the public JSON Feed media type and reader contract", () => {
+    const body = {
+      version: "https://jsonfeed.org/version/1.1",
+      feed_url: "https://techdb.studio344.net/feed.json",
+      items: [
+        {
+          id: "entry-1",
+          url: "https://example.com/entry-1",
+          title: "Entry title",
+          content_text: "Entry summary",
+        },
+      ],
+    };
+    const validResponse = new Response(null, {
+      headers: { "content-type": "application/feed+json; charset=utf-8" },
+    });
+    expect(validateJsonFeed(body, validResponse).errors).toEqual([]);
+
+    const genericJsonResponse = new Response(null, {
+      headers: { "content-type": "application/json" },
+    });
+    expect(validateJsonFeed(body, genericJsonResponse).errors).toContain(
+      "content type is application/json; expected application/feed+json",
+    );
+    expect(
+      validateJsonFeed(
+        { ...body, items: [{ ...body.items[0], content_text: "" }] },
+        validResponse,
+      ).errors,
+    ).toContain("items contain missing id, URL, title, or summary");
   });
 });

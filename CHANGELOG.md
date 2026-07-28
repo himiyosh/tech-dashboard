@@ -14,6 +14,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 追加
 
+- arXiv専用レーンへ静的な`/rss/arxiv.xml`、ページ固有のRSS autodiscovery、JA/ENの購読actionを追加しました。feedはHTMLレーンと同じarXiv membershipと公開可能要約の判定を使い、Research RSSにはarXivを戻しません。autodiscoveryのRSS名は各feed固有、JSON Feed名はsite-wideと明示します。
 - live/warm の記事詳細、カテゴリ・タグ・月別 Archive と各ページネーションを実際の静的 route 生成条件から列挙する `/sitemap.xml` と、canonical Sitemap directive を持つ `/robots.txt` を追加しました。sitemap は重複・外部・query URL を拒否し、50,000 URL / 50 MB の上限を build 時に fail-closed で検証します。
 - Homeと記事詳細へJA/EN別のOpen Graph・Twitter Card metadataとHomeのWebSite構造化データを追加しました。元記事画像が無い記事はrepository-ownedの1200x630 PNGを使用し、`?lang=en`ではPages Functionが静的本文を維持したままcrawler向けheadを英語へ局所化します。
 - 日本語・英語の要約やタイトルが片言語だけ利用できる場合に、表示言語の出典を明示する共通 fallback 表示を追加しました。
@@ -32,6 +33,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - AboutのMenu説明とPageHeroでRSS/JSON Feed購読を明示し、カテゴリRSSを含む購読actionだけをmobileでも44px以上の操作面で表示するようにしました。mobileではHero説明文より購読actionを優先し、既存metricと他のPageHero action契約は維持します。
 - カテゴリ画面の RSS link と autodiscovery を、query を無視する全体 feed から静的な `/rss/<category>.xml` へ変更しました。各 feed は該当カテゴリのAI要約済み記事だけを最大100件配信し、全体 `/rss.xml` は従来どおり維持します。
 - RSS autodiscoveryを維持したまま、JSON Feedのalternate linkをendpointと同じ標準MIME type `application/feed+json`へ揃えました。
+- JSON Feedの本文とautodiscoveryを維持したまま、Cloudflare Pagesの`/feed.json`配信を標準MIME type `application/feed+json`へ揃え、production health checkでMIME driftを検出するようにしました。
 - Home の Spotlight と Top 3 は、異なる source が同じモデル発表を扱う場合も1つの話題として重複を抑え、別の重要更新を判断枠へ補充するようにしました。
 - Categories の Research overview で、arXiv を除くキュレーション Research と専用 arXiv 論文レーンの件数・移動先を分けて表示し、両方へ直接移動できるようにしました。
 - 外部 Google Fonts の render-blocking stylesheet と多数の日本語font requestを廃止し、OS標準のsans-serif stackへ切り替えました。文字情報とアクセシビリティtreeを維持しながら、mobile LCPと初期network負荷を削減します。
@@ -85,6 +87,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 修正
 
+- ResearchカテゴリRSSを、HTMLのResearch一覧と同じarXiv除外predicateへ接続しました。`/rss/research.xml`はキュレーションResearchだけを配信し、全体RSS・JSON Feed・他カテゴリRSS・専用arXivレーンは従来の母集団を維持します。
 - PR merge の exact-head 独立レビュー gate が拒否した場合、valid・stale・wrong reviewer・self-issued・malformed marker と走査済み review/comment の件数を 1 行で診断できるようにしました。malformed は marker 形式の HTML comment を試みた本文だけを数え、`Independent-Review` / `INDEPENDENT-REVIEW` のような protocol 名の case variant も invalid clearance のまま malformed attempt として可視化し、通常の議論や script 名への言及は除外します。JSON・GitHub API・evidence normalization が結果生成前に失敗した場合は件数を生成しません。
 - RSSの共有serializerはXML 1.0で許可される文字だけをcode point単位で保持し、NUL、禁止制御文字、孤立surrogate、U+FFFE/U+FFFFを除去してからentity escapeするようにしました。全体RSSとカテゴリRSSは同じfail-safe契約を使い、日本語とastral Unicode、TAB/LF/CRを維持します。
 - mobileの購読action付きPageHeroは説明文を視覚的にだけ畳み、JA/ENのページ目的をHeroのaccessible descriptionとして支援技術へ残すようにしました。購読actionの44px操作面とcompactなHero高は維持します。

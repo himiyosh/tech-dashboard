@@ -63,8 +63,8 @@ const {
       ...baseEntry,
       id: "agent-entry-2",
       url: "https://example.com/agent-2",
-      titleJa: "2件目の検証済みタイトル",
-      summaryJa: "2件目の検証済み要約。",
+      titleJa: "2件目の検証済みタイトル\u0000\u0001\u000b\ud800\ufffe\uffff",
+      summaryJa: "2件目の検証済み要約。\u0008\u000c\u001f\udc00",
       category: "agent-fw",
     },
   ];
@@ -103,6 +103,7 @@ const { GET: getJsonFeed } = await import("../web/src/pages/feed.json.ts");
 const {
   RSS_ITEM_LIMIT,
   categoryRssHref,
+  escapeXml,
   serializeRssFeed,
 } = await import("../web/src/lib/rss.ts");
 const portalSource = readFileSync(
@@ -209,6 +210,7 @@ describe("public feeds", () => {
     const response = (await getRss({} as never)) as Response;
     const xml = await response.text();
 
+    expect(XMLValidator.validate(xml)).toBe(true);
     expect(response.headers.get("content-type")).toBe(
       "application/rss+xml; charset=utf-8",
     );
@@ -236,6 +238,7 @@ describe("public feeds", () => {
     const xml = await response.text();
     const items = xml.match(/<item>[\s\S]*?<\/item>/g) ?? [];
 
+    expect(XMLValidator.validate(xml)).toBe(true);
     expect(response.headers.get("content-type")).toBe(
       "application/rss+xml; charset=utf-8",
     );
@@ -280,6 +283,30 @@ describe("public feeds", () => {
     expect(xml).not.toContain("https://example.com/capped-100");
   });
 
+  it("keeps only XML 1.0 characters before escaping entities", () => {
+    const input = [
+      "\t\n\r",
+      "\u0000\u0001\u0008\u000b\u000c\u001f",
+      "\ud800A\udc00",
+      "\ufffe\uffff",
+      " \ud7ff\ue000\ufffd",
+      "\u{10000}\u{1f680}\u{10ffff}",
+      "日本語",
+      "&<>\"'",
+    ].join("");
+
+    expect(escapeXml(input)).toBe(
+      [
+        "\t\n\r",
+        "A",
+        " \ud7ff\ue000\ufffd",
+        "\u{10000}\u{1f680}\u{10ffff}",
+        "日本語",
+        "&amp;&lt;&gt;&quot;&apos;",
+      ].join(""),
+    );
+  });
+
   it("escapes channel and item values into well-formed XML", () => {
     const entry: NormalizedEntry = {
       ...feedEntries[0],
@@ -295,10 +322,11 @@ describe("public feeds", () => {
     const xml = serializeRssFeed([entry], {
       title: "TECH & AI <Agent feed>",
       link: "https://example.com/category?a=1&b=2",
-      description: 'Agent "updates" & releases',
+      description: 'Agent "updates" & \'trusted\' releases',
       lastBuildDate: "2026-01-01T00:00:00.000Z",
     });
     expect(XMLValidator.validate(xml)).toBe(true);
+    expect(xml).toContain("&apos;");
 
     const document = new XMLParser({
       ignoreAttributes: false,
@@ -321,7 +349,7 @@ describe("public feeds", () => {
     const channel = document.rss.channel;
     expect(channel.title).toBe("TECH & AI <Agent feed>");
     expect(channel.link).toBe("https://example.com/category?a=1&b=2");
-    expect(channel.description).toBe('Agent "updates" & releases');
+    expect(channel.description).toBe('Agent "updates" & \'trusted\' releases');
     expect(channel.item).toMatchObject({
       title: 'Agents & tools <release> "verified"',
       link: "https://example.com/article?a=1&b=2",

@@ -2858,6 +2858,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: PageHero actionへ明示的な`mobilePriority`契約を追加し、購読actionだけを44px以上でmobileに残した。購読actionを持つheroはmobileで説明文を畳み、既存metricを削らずcompactな高さを維持した。AboutのMenu説明とlink textも購読先が分かるJA/EN表記へ揃えた。
 - **教訓**: responsive密度を下げる際はaction群を一括で隠さず、主要task、回復、継続利用に必要なactionだけを明示的にopt-inして残す。head metadataの存在を人間向けの発見可能性の代用にせず、desktop/mobile両方でlink目的と操作寸法を検証する。
 
+### LL-433: mobile密度のための`display:none`はページ目的をaccessibility treeからも消す
+- **事象**: 購読actionをmobileへ残すPageHeroで説明文を`display:none`にしたため、視覚Heroはcompactになった一方、screen reader利用者は同じページ目的を取得できなかった。actionへ付けた`data-mobile-priority`もCSS、script、testのconsumerがなくdead attributeだった。
+- **根本原因**: 視覚密度の調整と支援技術向けの情報可用性を同じdisplay propertyへ委ね、Hero regionのaccessible descriptionを明示していなかった。実装用classで既にmobile優先actionを識別できるのに、同じ状態を未使用のdata属性へ重複していた。
+- **対策**: PageHero descriptionを1要素のままHeroの`aria-describedby`へ関連付け、mobile優先Heroではvisually-hidden patternでlayoutから外しつつaccessibility treeへ残した。JA/ENのactive description、320/375/390/414pxとdesktopのHero高、44px action、横overflowをbrowser testで固定し、dead data属性を削除した。
+- **教訓**: responsive密度のために意味のある本文を隠す場合、`display:none`を使う前に視覚だけを隠すべき情報かを判定する。landmarkの目的説明はDOMを複製せず単一要素をprogrammatic descriptionへ接続し、active language、visual geometry、accessibility treeを同じviewport contractで検証する。状態classが契約の単一情報源ならconsumerのないdata属性を残さない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

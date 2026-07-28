@@ -4222,6 +4222,17 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("mobile readers can discover site-wide and category feeds", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/about/");
+    const desktopHero = page.locator(".page-hero").first();
+    const desktopDescription = desktopHero.locator(".page-hero-description");
+    await expect(desktopDescription).toHaveCount(1);
+    await expect(desktopDescription).toBeVisible();
+    await expect(desktopHero).toHaveAttribute("aria-describedby", "about-heading-description");
+    await expect(desktopHero).toHaveAccessibleDescription(
+      /TECH Dashboard は、AI coding と agent ecosystem の変化を毎日追う/,
+    );
+
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
 
@@ -4239,6 +4250,13 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(siteWideRss.locator(".i18n-ja")).toHaveText("全体RSS");
     await expect(siteWideRss).toHaveAccessibleName("全体RSS");
     await expect(jsonFeed).toHaveAccessibleName("JSON Feed");
+    const aboutHero = page.locator(".page-hero").first();
+    const aboutDescription = aboutHero.locator(".page-hero-description");
+    await expect(aboutDescription).toHaveCount(1);
+    await expect(aboutHero).toHaveAttribute("aria-describedby", "about-heading-description");
+    await expect(aboutHero).toHaveAccessibleDescription(
+      /TECH Dashboard は、AI coding と agent ecosystem の変化を毎日追う/,
+    );
     for (const link of [siteWideRss, jsonFeed]) {
       const box = await link.boundingBox();
       expect(box).not.toBeNull();
@@ -4250,6 +4268,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(siteWideRss.locator(".i18n-en")).toBeVisible();
     await expect(siteWideRss.locator(".i18n-en")).toHaveText("Site-wide RSS");
     await expect(siteWideRss).toHaveAccessibleName("Site-wide RSS");
+    await expect(aboutDescription.locator(".i18n-en")).toHaveAttribute("lang", "en");
+    await expect(aboutHero).toHaveAccessibleDescription(
+      /TECH Dashboard tracks daily changes across AI coding and the agent ecosystem/,
+    );
 
     await page.goto("/c/copilot/");
     const categoryRss = page.locator('.page-hero-actions a[href="/rss/copilot.xml"]');
@@ -4264,24 +4286,57 @@ test.describe("TECH Dashboard smoke", () => {
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
 
-    for (const width of [320, 375, 414]) {
+    for (const width of [320, 375, 390, 414]) {
       await page.setViewportSize({ width, height: width === 375 ? 667 : 844 });
       for (const path of ["/about/", "/c/copilot/"]) {
         await page.goto(path);
+        const hero = page.locator(".page-hero").first();
         const priorityActions = page.locator(".page-hero-actions .page-hero-action-mobile");
         await expect(priorityActions.first(), `${path} keeps a mobile feed action at ${width}px`).toBeVisible();
-        const geometry = await page.locator(".page-hero").evaluate((hero) => {
+        const geometry = await hero.evaluate((hero) => {
           const box = hero.getBoundingClientRect();
+          const description = hero.querySelector<HTMLElement>(".page-hero-description");
+          const descriptionRect = description?.getBoundingClientRect();
+          const descriptionStyle = description ? getComputedStyle(description) : null;
           const actions = [...hero.querySelectorAll<HTMLElement>(".page-hero-action-mobile")]
             .filter((action) => action.getClientRects().length > 0)
             .map((action) => {
               const rect = action.getBoundingClientRect();
               return { left: rect.left, right: rect.right, height: rect.height };
             });
-          return { heroHeight: box.height, actions, overflow: document.documentElement.scrollWidth - innerWidth };
+          return {
+            heroHeight: box.height,
+            actions,
+            descriptionCount: hero.querySelectorAll(".page-hero-description").length,
+            descriptionId: description?.id ?? "",
+            describedBy: hero.getAttribute("aria-describedby") ?? "",
+            descriptionGeometry: descriptionRect
+              ? {
+                  width: descriptionRect.width,
+                  height: descriptionRect.height,
+                  position: descriptionStyle?.position ?? "",
+                  clipPath: descriptionStyle?.clipPath ?? "",
+                }
+              : null,
+            overflow: document.documentElement.scrollWidth - innerWidth,
+          };
         });
         expect(geometry.heroHeight, `${path} stays within the compact hero budget at ${width}px`).toBeLessThan(310);
         expect(geometry.actions.length, `${path} exposes at least one feed action at ${width}px`).toBeGreaterThan(0);
+        expect(geometry.descriptionCount, `${path} renders one purpose description at ${width}px`).toBe(1);
+        expect(geometry.descriptionId, `${path} exposes the described element at ${width}px`).toBe(
+          geometry.describedBy,
+        );
+        expect(geometry.descriptionGeometry, `${path} description geometry at ${width}px`).not.toBeNull();
+        expect(geometry.descriptionGeometry!.position).toBe("absolute");
+        expect(geometry.descriptionGeometry!.clipPath).toBe("inset(50%)");
+        expect(geometry.descriptionGeometry!.width).toBeLessThanOrEqual(1);
+        expect(geometry.descriptionGeometry!.height).toBeLessThanOrEqual(1);
+        const englishDescription = (
+          await hero.locator(".page-hero-description .i18n-en").textContent()
+        )?.trim();
+        expect(englishDescription, `${path} English description text at ${width}px`).toBeTruthy();
+        await expect(hero).toHaveAccessibleDescription(englishDescription!);
         for (const action of geometry.actions) {
           expect(action.left).toBeGreaterThanOrEqual(0);
           expect(action.right).toBeLessThanOrEqual(width);

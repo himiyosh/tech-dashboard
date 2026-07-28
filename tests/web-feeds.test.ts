@@ -29,6 +29,15 @@ const {
       emoji: "orange",
       group: "anthropic",
     },
+    {
+      slug: "research",
+      name: "Papers / Benchmarks",
+      shortLabel: "Papers/Benchmarks",
+      color: "#fda4af",
+      initial: "Pb",
+      emoji: "microscope",
+      group: "research",
+    },
   ];
   const baseEntry = {
     source: "official-source",
@@ -58,6 +67,25 @@ const {
       titleJa: "Claude の検証済みタイトル",
       summaryJa: "Claude の検証済み要約。",
       category: "claude",
+    },
+    {
+      ...baseEntry,
+      id: "research-report",
+      source: "dora-insights",
+      url: "https://example.com/research-report",
+      titleJa: "Research レポート",
+      summaryJa: "選定した Research レポートの要約。",
+      category: "research",
+    },
+    {
+      ...baseEntry,
+      id: "arxiv-paper",
+      source: "arxiv-cs-ai",
+      sourceType: "paper",
+      url: "https://arxiv.org/abs/2607.01234",
+      titleJa: "arXiv 論文",
+      summaryJa: "専用 arXiv レーンの論文要約。",
+      category: "research",
     },
     {
       ...baseEntry,
@@ -253,11 +281,35 @@ describe("public feeds", () => {
     }
   });
 
+  it("Research RSS follows the curated listing predicate while global feeds keep arXiv", async () => {
+    const response = (await getCategoryRss({
+      params: { category: "research" },
+    } as never)) as Response;
+    const xml = await response.text();
+
+    expect(XMLValidator.validate(xml)).toBe(true);
+    expect(xml.match(/<item>/g)).toHaveLength(1);
+    expect(xml).toContain("https://example.com/research-report");
+    expect(xml).not.toContain("https://arxiv.org/abs/2607.01234");
+
+    const globalRss = (await getRss({} as never)) as Response;
+    expect(await globalRss.text()).toContain("https://arxiv.org/abs/2607.01234");
+
+    const jsonFeed = (await getJsonFeed({} as never)) as Response;
+    expect(JSON.stringify(await jsonFeed.json())).toContain(
+      "https://arxiv.org/abs/2607.01234",
+    );
+  });
+
   it("category RSS rejects an unknown category and caps output at 100 items", async () => {
     const invalidResponse = (await getCategoryRss({
       params: { category: "not-a-category" },
     } as never)) as Response;
     expect(invalidResponse.status).toBe(404);
+    const arxivResponse = (await getCategoryRss({
+      params: { category: "arxiv" },
+    } as never)) as Response;
+    expect(arxivResponse.status).toBe(404);
 
     const entries: NormalizedEntry[] = Array.from(
       { length: RSS_ITEM_LIMIT + 5 },

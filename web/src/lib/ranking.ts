@@ -15,43 +15,99 @@ type DecisionTopicEntry = Pick<
   "clusterId" | "title"
 >;
 
-const LAUNCH_INTENT_RE =
-  /\b(?:announc(?:e|ed|es|ing|ement)|introduc(?:e|ed|es|ing)|launch(?:ed|es|ing)?|releas(?:e|ed|es|ing)|unveil(?:ed|s|ing)?|debut(?:ed|s|ing)?|available|availability|rollout|ships?)\b|発表|登場|リリース|公開|提供開始|利用可能/iu;
+const LAUNCH_INTENT_SOURCE =
+  String.raw`\b(?:announc(?:e|ed|es|ing|ement)|introduc(?:e|ed|es|ing)|launch(?:ed|es|ing)?|releas(?:e|ed|es|ing)|unveil(?:ed|s|ing)?|debut(?:ed|s|ing)?|available|availability|rollout|ships?)\b|発表|登場|リリース|公開|提供開始|利用可能`;
+
+const LAUNCH_FILLER_TOKENS = new Set([
+  "a",
+  "an",
+  "are",
+  "is",
+  "its",
+  "latest",
+  "model",
+  "models",
+  "new",
+  "now",
+  "our",
+  "the",
+  "updated",
+  "was",
+  "が",
+  "の",
+  "は",
+  "を",
+  "モデル",
+  "新型",
+  "最新",
+]);
 
 const NON_LAUNCH_INTENT_RE =
-  /\b(?:analysis|cost|guide|migration|price|pricing|review|tutorial)\b|分析|価格|ガイド|コスト|使い方|手順|単価|検証|移行|料金|チュートリアル|レビュー/iu;
+  /\b(?:analysis|comparison|cost|explainer|guide|how-to|migration|overview|price|pricing|review|tutorial)\b|分析|価格|ガイド|コスト|使い方|手順|単価|解説|検証|比較|移行|料金|チュートリアル|レビュー/iu;
 
 const MODEL_VARIANT =
-  String.raw`(?:pro|flash|ultra|nano|mini|lite|coder|coding|vl|vision|instruct|chat|reasoning|embedding|audio|image|fast|preview|\d+(?:\.\d+)?b|\d+x\d+b)`;
+  String.raw`(?:pro|flash|ultra|nano|mini|lite|max|coder|coding|vl|vision|instruct|chat|reasoning|thinking|embedding|audio|image|fast|preview|cyber|\d+(?:\.\d+)?b|\d+x\d+b)`;
 
 const MODEL_VERSION_PATTERNS: ReadonlyArray<{
   pattern: RegExp;
   family: (match: RegExpMatchArray) => string;
-  variantIndex: number;
   versionIndex: number;
 }> = [
   {
     pattern: new RegExp(
-      String.raw`\b(?:claude[\s-]+)?(opus|sonnet|haiku)[\s-]+v?(\d+(?:[._-]\d+){0,2}[a-z]?)(?:[\s-]+(${MODEL_VARIANT}))?\b`,
+      String.raw`\b(?:claude[\s-]+)?(opus|sonnet|haiku)[\s-]+v?(\d+(?:[._-]\d+){0,2}[a-z]?)(?:[\s-]+(?<variant>${MODEL_VARIANT}(?:[\s-]+${MODEL_VARIANT}){0,2}))?\b`,
       "iu",
     ),
     family: (match) => `claude-${match[1]!.toLocaleLowerCase()}`,
-    variantIndex: 3,
     versionIndex: 2,
   },
   {
     pattern: new RegExp(
-      String.raw`\b(chatgpt|gpt|gemini|gemma|llama|qwen|deepseek|grok|kimi|mistral|codex|fable)[\s-]*v?(\d+(?:[._-]\d+){0,2}[a-z]?)(?:[\s-]+(${MODEL_VARIANT}))?\b`,
+      String.raw`\b(chatgpt|gpt|gemini|gemma|llama|qwen|deepseek|grok|kimi|mistral|codex|fable)[\s-]*v?(\d+(?:[._-]\d+){0,2}[a-z]?)(?:[\s-]+(?<variant>${MODEL_VARIANT}(?:[\s-]+${MODEL_VARIANT}){0,2}))?\b`,
       "iu",
     ),
     family: (match) => match[1]!.toLocaleLowerCase(),
-    variantIndex: 3,
     versionIndex: 2,
   },
 ];
 
 function normalizeVersion(value: string): string {
   return value.toLocaleLowerCase().replace(/[._-]+/g, ".");
+}
+
+function normalizeVariant(value: string): string {
+  return value.toLocaleLowerCase().replace(/[\s_]+/g, "-").replace(/-+/g, "-");
+}
+
+function isLaunchFiller(value: string): boolean {
+  const tokens = value
+    .normalize("NFKC")
+    .toLocaleLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, " ")
+    .trim()
+    .split(/\s+/u)
+    .filter(Boolean);
+  return tokens.length <= 4
+    && tokens.every((token) => LAUNCH_FILLER_TOKENS.has(token));
+}
+
+function hasLaunchIntentNearModel(
+  text: string,
+  modelStart: number,
+  modelEnd: number,
+): boolean {
+  const launchIntent = new RegExp(LAUNCH_INTENT_SOURCE, "giu");
+  for (const match of text.matchAll(launchIntent)) {
+    const intentStart = match.index;
+    const intentEnd = intentStart + match[0].length;
+    if (intentEnd <= modelStart && isLaunchFiller(text.slice(intentEnd, modelStart))) {
+      return true;
+    }
+    if (intentStart >= modelEnd && isLaunchFiller(text.slice(modelEnd, intentStart))) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -68,23 +124,27 @@ export function decisionTopicKey(entry: DecisionTopicEntry): string | null {
   // analysis as an announcement and would make the fallback over-cluster.
   const text = entry.title.normalize("NFKC").toLocaleLowerCase();
   if (NON_LAUNCH_INTENT_RE.test(text)) return null;
-  if (!LAUNCH_INTENT_RE.test(text)) return null;
 
   for (const {
     pattern,
     family,
-    variantIndex,
     versionIndex,
   } of MODEL_VERSION_PATTERNS) {
     const match = text.match(pattern);
     const version = match?.[versionIndex];
-    if (match && version) {
-      const variant = match[variantIndex]?.toLocaleLowerCase();
+    const matchStart = match?.index;
+    if (
+      match
+      && version
+      && matchStart !== undefined
+      && hasLaunchIntentNearModel(text, matchStart, matchStart + match[0].length)
+    ) {
+      const variant = match.groups?.variant;
       return [
         "model-launch",
         family(match),
         normalizeVersion(version),
-        variant,
+        variant ? normalizeVariant(variant) : null,
       ].filter(Boolean).join(":");
     }
   }
@@ -106,6 +166,7 @@ export function decisionRankScore(
 }
 
 export interface DecisionSelectionOptions {
+  candidateLimit?: number;
   featured?: NormalizedEntry;
   limit?: number;
   maxPerCategory?: number;
@@ -120,6 +181,7 @@ export interface DecisionSelectionOptions {
 export function selectDiverseDecisionEntries(
   candidates: readonly NormalizedEntry[],
   {
+    candidateLimit = 120,
     featured,
     limit = 3,
     maxPerCategory = 2,
@@ -133,6 +195,7 @@ export function selectDiverseDecisionEntries(
       const topic = decisionTopicKey(entry);
       return !topic || topic !== featuredTopic;
     })
+    .slice(0, candidateLimit)
     .map((entry) => ({ entry, score: decisionRankScore(entry, nowMs) }))
     .sort((left, right) =>
       right.score - left.score

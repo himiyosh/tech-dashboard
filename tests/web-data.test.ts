@@ -1078,10 +1078,20 @@ describe("decision priority topic diversity", () => {
     ["GPT-5.4 mini is now available", "GPT-5.4 is now available"],
     ["Qwen 3 Coder released", "Qwen 3 VL released"],
     ["Introducing Gemma 4 12B", "Introducing Gemma 4 27B"],
+    ["Introducing Gemini 3.5 Flash Cyber", "Introducing Gemini 3.5 Flash"],
   ])("keeps distinct model variants in separate topics: %s / %s", (left, right) => {
     expect(decisionTopicKey(makeEntry({ title: left }))).not.toBe(
       decisionTopicKey(makeEntry({ title: right })),
     );
+  });
+
+  it("does not treat a model feature announcement as a model launch", () => {
+    expect(decisionTopicKey(makeEntry({
+      title: "Introducing computer use in Gemini 3.5 Flash",
+    }))).toBeNull();
+    expect(decisionTopicKey(makeEntry({
+      title: "Introducing Gemini 3.5 Flash Cyber",
+    }))).toBe("model-launch:gemini:3.5:flash-cyber");
   });
 
   it("does not reintroduce the featured event when filling the decision list", () => {
@@ -1139,6 +1149,35 @@ describe("decision priority topic diversity", () => {
         nowMs: Date.parse("2026-07-28T00:00:00.000Z"),
       },
     )).toEqual([]);
+  });
+
+  it("applies the candidate cap after featured source and topic exclusions", () => {
+    const blockedPrefix = Array.from({ length: 120 }, (_, index) =>
+      makeEntry({
+        id: `featured-source-${index}`,
+        source: awsLaunch.source,
+        title: `AWS deployment note ${index}`,
+      })
+    );
+    const distinct = [
+      makeEntry({ id: "distinct-a", source: "meta-newsroom", title: "Meta AI acts" }),
+      makeEntry({ id: "distinct-b", source: "zed-releases", title: "Zed stable update" }),
+      makeEntry({ id: "distinct-c", source: "nvidia-blog", title: "Open Secure AI Alliance" }),
+    ];
+
+    const selectedIds = selectDiverseDecisionEntries(
+      [...blockedPrefix, ...distinct],
+      {
+        candidateLimit: 120,
+        featured: awsLaunch,
+        limit: 3,
+        nowMs: Date.parse("2026-07-28T00:00:00.000Z"),
+      },
+    ).map((entry) => entry.id);
+    expect(selectedIds).toHaveLength(3);
+    expect(new Set(selectedIds)).toEqual(
+      new Set(["distinct-a", "distinct-b", "distinct-c"]),
+    );
   });
 });
 

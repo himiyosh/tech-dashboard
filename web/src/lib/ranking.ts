@@ -21,19 +21,31 @@ const LAUNCH_INTENT_RE =
 const NON_LAUNCH_INTENT_RE =
   /\b(?:analysis|cost|guide|migration|price|pricing|review|tutorial)\b|分析|価格|ガイド|コスト|使い方|手順|単価|検証|移行|料金|チュートリアル|レビュー/iu;
 
+const MODEL_VARIANT =
+  String.raw`(?:pro|flash|ultra|nano|mini|lite|coder|coding|vl|vision|instruct|chat|reasoning|embedding|audio|image|fast|preview|\d+(?:\.\d+)?b|\d+x\d+b)`;
+
 const MODEL_VERSION_PATTERNS: ReadonlyArray<{
   pattern: RegExp;
   family: (match: RegExpMatchArray) => string;
+  variantIndex: number;
   versionIndex: number;
 }> = [
   {
-    pattern: /\b(?:claude[\s-]+)?(opus|sonnet|haiku)[\s-]+v?(\d+(?:[._-]\d+){0,2}[a-z]?)\b/iu,
+    pattern: new RegExp(
+      String.raw`\b(?:claude[\s-]+)?(opus|sonnet|haiku)[\s-]+v?(\d+(?:[._-]\d+){0,2}[a-z]?)(?:[\s-]+(${MODEL_VARIANT}))?\b`,
+      "iu",
+    ),
     family: (match) => `claude-${match[1]!.toLocaleLowerCase()}`,
+    variantIndex: 3,
     versionIndex: 2,
   },
   {
-    pattern: /\b(chatgpt|gpt|gemini|gemma|llama|qwen|deepseek|grok|kimi|mistral|codex|fable)[\s-]+v?(\d+(?:[._-]\d+){0,2}[a-z]?)\b/iu,
+    pattern: new RegExp(
+      String.raw`\b(chatgpt|gpt|gemini|gemma|llama|qwen|deepseek|grok|kimi|mistral|codex|fable)[\s-]*v?(\d+(?:[._-]\d+){0,2}[a-z]?)(?:[\s-]+(${MODEL_VARIANT}))?\b`,
+      "iu",
+    ),
     family: (match) => match[1]!.toLocaleLowerCase(),
+    variantIndex: 3,
     versionIndex: 2,
   },
 ];
@@ -58,11 +70,22 @@ export function decisionTopicKey(entry: DecisionTopicEntry): string | null {
   if (NON_LAUNCH_INTENT_RE.test(text)) return null;
   if (!LAUNCH_INTENT_RE.test(text)) return null;
 
-  for (const { pattern, family, versionIndex } of MODEL_VERSION_PATTERNS) {
+  for (const {
+    pattern,
+    family,
+    variantIndex,
+    versionIndex,
+  } of MODEL_VERSION_PATTERNS) {
     const match = text.match(pattern);
     const version = match?.[versionIndex];
     if (match && version) {
-      return `model-launch:${family(match)}:${normalizeVersion(version)}`;
+      const variant = match[variantIndex]?.toLocaleLowerCase();
+      return [
+        "model-launch",
+        family(match),
+        normalizeVersion(version),
+        variant,
+      ].filter(Boolean).join(":");
     }
   }
   return null;

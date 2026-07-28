@@ -1073,6 +1073,17 @@ describe("decision priority topic diversity", () => {
     }))).toBe("cluster:frontier-model-rollout");
   });
 
+  it.each([
+    ["Introducing Gemini 2.5 Pro", "Introducing Gemini 2.5 Flash"],
+    ["GPT-5.4 mini is now available", "GPT-5.4 is now available"],
+    ["Qwen 3 Coder released", "Qwen 3 VL released"],
+    ["Introducing Gemma 4 12B", "Introducing Gemma 4 27B"],
+  ])("keeps distinct model variants in separate topics: %s / %s", (left, right) => {
+    expect(decisionTopicKey(makeEntry({ title: left }))).not.toBe(
+      decisionTopicKey(makeEntry({ title: right })),
+    );
+  });
+
   it("does not reintroduce the featured event when filling the decision list", () => {
     const meta = makeEntry({
       id: "meta-agents",

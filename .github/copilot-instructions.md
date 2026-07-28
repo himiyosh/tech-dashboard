@@ -2837,7 +2837,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-429: decision slot は source だけでなく同一発表の話題重複を除外する
 - **事象**: production相当dataのHomeで、SpotlightとTop 3の4枠中3枠が、AWS、Anthropic、The Vergeという異なるsourceからのClaude Opus 5発表記事だった。Dev LeadとAI Researcherの独立persona監査が同じ根本原因をHighとして報告した。
 - **根本原因**: priority選定はentry ID、source、categoryの占有上限だけを持ち、異なるsourceが同じモデル発表を扱う場合のevent identityを比較していなかった。source diversityは満たしても、読者が比較できる話題の幅は増えていなかった。
-- **対策**: explicit `clusterId`を優先し、fallbackでは収集元の原題が発表・公開・利用開始を示すversion付きmodel headlineだけを保守的に同一topicへ正規化する。生成titleの言い換えは採否へ使わず、原題に料金、移行、チュートリアル、分析などの実用・評価intentがある場合もclusterしない。SpotlightのtopicをTop 3から除外し、Top 3内もtopicを重複させず、source/category制約を緩和するfallbackでもtopic制約だけは維持する。実Opus 5の3表現、料金・分析記事の非cluster、現行dataの4枠topic uniquenessをunit/E2Eへ固定する。
+- **対策**: explicit `clusterId`を優先し、fallbackでは収集元の原題が発表・公開・利用開始を示すversion付きmodel headlineだけを保守的に同一topicへ正規化する。生成titleの言い換えは採否へ使わず、原題に料金、移行、チュートリアル、分析などの実用・評価intentがある場合もclusterしない。Pro/Flash、mini、Coder/VL、model sizeなどversion後のvariantもtopic identityへ含める。SpotlightのtopicをTop 3から除外し、Top 3内もtopicを重複させず、source/category制約を緩和するfallbackでもtopic制約だけは維持する。実Opus 5の3表現、料金・分析記事と別variantの非cluster、現行dataの4枠topic uniquenessをunit/E2Eへ固定する。
 - **教訓**: decision-criticalな複数枠の多様性は、entry、source、categoryだけでは保証できない。同じeventを複数mediaが報じるdashboardでは、high-confidenceなevent identityを独立したselection contractにし、fallbackで再導入しない。汎用token類似だけで過剰clusterせず、明示clusterまたはversion付き発表のように根拠が十分な場合だけ適用する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。

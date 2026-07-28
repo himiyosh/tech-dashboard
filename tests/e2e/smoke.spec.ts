@@ -78,6 +78,8 @@ async function installPrivacyPromptProbe(
         if (state.__privacyPromptFirstLayout || promptCaptureScheduled) return;
         const prompt = document.querySelector<HTMLElement>(".privacy-consent-prompt");
         if (!prompt?.querySelector("[data-consent-choice]")) return;
+        const rootState = document.documentElement.dataset.privacyConsentPrompt;
+        if (rootState !== "visible" && rootState !== "hidden") return;
         promptCaptureScheduled = true;
         requestAnimationFrame(() => {
           const currentPrompt =
@@ -97,6 +99,8 @@ async function installPrivacyPromptProbe(
       };
       const promptObserver = new MutationObserver(capturePrompt);
       promptObserver.observe(document, {
+        attributes: true,
+        attributeFilter: ["data-privacy-consent-prompt"],
         childList: true,
         subtree: true,
       });
@@ -5551,7 +5555,7 @@ test.describe("TECH Dashboard smoke", () => {
       .toBeGreaterThanOrEqual(8);
   });
 
-  test("Privacy prompt stays operable above the mobile tabbar", async ({
+  test("Privacy prompt stays compact, in flow, and clear of priority content", async ({
     page,
     baseURL,
   }) => {
@@ -5565,9 +5569,18 @@ test.describe("TECH Dashboard smoke", () => {
     const prompt = page.locator(".privacy-consent-prompt");
     await expect(prompt).toBeVisible();
 
-    for (const width of [320, 360, 361, 390, 720, 721, 768, 1280]) {
-      const height = width <= 720 ? 844 : 900;
-      await page.setViewportSize({ width, height });
+    for (const viewport of [
+      { width: 320, height: 667 },
+      { width: 375, height: 667 },
+      { width: 390, height: 844 },
+      { width: 414, height: 844 },
+      { width: 720, height: 844 },
+      { width: 721, height: 900 },
+      { width: 768, height: 900 },
+      { width: 1280, height: 900 },
+      { width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport);
       await page.evaluate(
         () => new Promise<void>((resolve) =>
           requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
@@ -5581,69 +5594,441 @@ test.describe("TECH Dashboard smoke", () => {
         const promptBox = prompt.getBoundingClientRect();
         const featuredBox = featured.getBoundingClientRect();
         const tabbarBox = tabbar.getBoundingClientRect();
-        const hit = document.elementFromPoint(
-          promptBox.x + promptBox.width / 2,
-          promptBox.y + promptBox.height / 2,
-        );
+        const footer = document.querySelector<HTMLElement>(".footer-bar");
+        const footerBox = footer?.getBoundingClientRect();
+        const featuredSummaryBox = document
+          .querySelector<HTMLElement>(".featured-sum.i18n-ja")
+          ?.getBoundingClientRect();
+        const intersects = (left: DOMRect, right: DOMRect) =>
+          left.left < right.right
+          && left.right > right.left
+          && left.top < right.bottom
+          && left.bottom > right.top;
+        const priorityOverlaps = [
+          ...document.querySelectorAll<HTMLElement>(
+            ".banner, .ticker-bar, article.featured, .top-rank, article.card",
+          ),
+        ]
+          .filter((element) => element.getClientRects().length > 0)
+          .filter((element) => intersects(promptBox, element.getBoundingClientRect()))
+          .map((element) => element.className);
+        const focusableOverlaps = [
+          ...document.querySelectorAll<HTMLElement>("a, button, input, summary, [tabindex]"),
+        ]
+          .filter((element) => !prompt.contains(element) && element.getClientRects().length > 0)
+          .filter((element) => intersects(promptBox, element.getBoundingClientRect()))
+          .map((element) => element.outerHTML.slice(0, 120));
+        const footerFocusableOverlaps = footerBox
+          ? [
+              ...document.querySelectorAll<HTMLElement>(
+                "a, button, input, summary, [tabindex]",
+              ),
+            ]
+              .filter((element) => !footer?.contains(element) && element.getClientRects().length > 0)
+              .filter((element) => intersects(footerBox, element.getBoundingClientRect()))
+              .map((element) => element.outerHTML.slice(0, 120))
+          : [];
         return {
           position: getComputedStyle(prompt).position,
           promptHidden: prompt.hidden,
           promptInert: prompt.hasAttribute("inert"),
+          promptTop: promptBox.top,
           promptLeft: promptBox.left,
           promptRight: promptBox.right,
           promptBottom: promptBox.bottom,
           featuredTop: featuredBox.top,
+          featuredSummaryBottom: featuredSummaryBox?.bottom ?? 0,
           tabbarVisible: tabbarBox.width > 0 && tabbarBox.height > 0,
+          tabbarTop: tabbarBox.top,
+          tabbarLeft: tabbarBox.left,
+          tabbarRight: tabbarBox.right,
+          tabbarBottom: tabbarBox.bottom,
+          priorityOverlaps,
+          focusableOverlaps,
+          footerPosition: footer ? getComputedStyle(footer).position : "",
+          footerFocusableOverlaps,
           targets: [...prompt.querySelectorAll<HTMLElement>("a, button")].map((target) => {
             const box = target.getBoundingClientRect();
+            const hit = document.elementFromPoint(
+              box.x + box.width / 2,
+              box.y + box.height / 2,
+            );
             return {
+              width: box.width,
               height: box.height,
               left: box.left,
               right: box.right,
+              centerHit: hit === target || target.contains(hit),
             };
           }),
-          promptHit: Boolean(hit?.closest(".privacy-consent-prompt")),
           overflow: document.documentElement.scrollWidth - window.innerWidth,
           viewportWidth: window.innerWidth,
           viewportHeight: window.innerHeight,
         };
       });
-      expect(metrics, `${width}px prompt metrics`).not.toBeNull();
-      expect(metrics!.promptHidden, `${width}px prompt is not hidden`).toBe(false);
-      expect(metrics!.promptInert, `${width}px prompt is operable`).toBe(false);
-      expect(metrics!.promptLeft, `${width}px prompt stays inside the left edge`).toBeGreaterThanOrEqual(
+      expect(metrics, `${viewport.width}px prompt metrics`).not.toBeNull();
+      expect(metrics!.position, `${viewport.width}px prompt stays in document flow`).toBe("relative");
+      expect(metrics!.promptHidden, `${viewport.width}px prompt is not hidden`).toBe(false);
+      expect(metrics!.promptInert, `${viewport.width}px prompt is operable`).toBe(false);
+      expect(metrics!.promptTop, `${viewport.width}px prompt stays inside the top edge`).toBeGreaterThanOrEqual(
         0,
       );
-      expect(metrics!.promptRight, `${width}px prompt stays inside the right edge`).toBeLessThanOrEqual(
+      expect(metrics!.promptLeft, `${viewport.width}px prompt stays inside the left edge`).toBeGreaterThanOrEqual(
+        0,
+      );
+      expect(metrics!.promptRight, `${viewport.width}px prompt stays inside the right edge`).toBeLessThanOrEqual(
         metrics!.viewportWidth,
       );
-      expect(metrics!.targets.length, `${width}px exposes consent controls`).toBeGreaterThan(0);
+      expect(metrics!.targets.length, `${viewport.width}px exposes consent controls`).toBe(3);
       expect(
         metrics!.targets.every((target) =>
-          target.height >= 44
+          target.width >= 44
+          && target.height >= 44
           && target.left >= 0
           && target.right <= metrics!.viewportWidth
+          && target.centerHit
         ),
-        `${width}px consent targets remain at least 44px and inside the viewport`,
+        `${viewport.width}px consent targets remain at least 44px, visible, and hit-testable`,
       ).toBe(true);
-      expect(metrics!.promptHit, `${width}px prompt remains hit-testable`).toBe(true);
-      expect(metrics!.overflow, `${width}px has no horizontal overflow`).toBeLessThanOrEqual(0);
+      expect(
+        metrics!.priorityOverlaps,
+        `${viewport.width}px prompt does not cover priority surfaces`,
+      ).toEqual([]);
+      expect(
+        metrics!.focusableOverlaps,
+        `${viewport.width}px prompt does not cover focusable controls`,
+      ).toEqual([]);
+      expect(
+        metrics!.footerFocusableOverlaps,
+        `${viewport.width}px footer does not cover focusable controls`,
+      ).toEqual([]);
+      expect(metrics!.overflow, `${viewport.width}px has no horizontal overflow`).toBeLessThanOrEqual(0);
+      expect(
+        metrics!.featuredTop - metrics!.promptBottom,
+        `${viewport.width}px prompt ends before the first decision card`,
+      ).toBeGreaterThanOrEqual(8);
 
-      if (width <= 720) {
-        expect(metrics!.position, `${width}px uses the mobile flow layout`).toBe("relative");
-        expect(metrics!.tabbarVisible, `${width}px keeps the mobile tabbar`).toBe(true);
-        expect(
-          metrics!.promptBottom,
-          `${width}px prompt remains before the first decision card`,
-        ).toBeLessThanOrEqual(metrics!.featuredTop - 8);
-      } else {
-        expect(metrics!.position, `${width}px uses the desktop overlay layout`).toBe("fixed");
-        expect(metrics!.tabbarVisible, `${width}px hides the mobile tabbar`).toBe(false);
-        expect(metrics!.promptBottom, `${width}px prompt stays inside the viewport`).toBeLessThanOrEqual(
-          metrics!.viewportHeight,
+      if (viewport.width <= 720) {
+        expect(metrics!.tabbarVisible, `${viewport.width}px keeps the mobile tabbar`).toBe(true);
+        expect(metrics!.tabbarLeft, `${viewport.width}px tabbar starts at the viewport edge`).toBe(0);
+        expect(metrics!.tabbarRight, `${viewport.width}px tabbar ends at the viewport edge`).toBe(
+          metrics!.viewportWidth,
         );
+        expect(
+          Math.abs(metrics!.tabbarBottom - metrics!.viewportHeight),
+          `${viewport.width}px tabbar keeps its bottom-edge contract`,
+        ).toBeLessThanOrEqual(LAYOUT_SUBPIXEL_EPSILON_PX);
+      } else {
+        expect(metrics!.tabbarVisible, `${viewport.width}px hides the mobile tabbar`).toBe(false);
+        expect(
+          metrics!.footerPosition,
+          `${viewport.width}px consent state keeps the footer in normal flow`,
+        ).toBe("static");
+      }
+
+      if (viewport.width === 375 || viewport.width === 390) {
+        expect(
+          metrics!.featuredTop,
+          `${viewport.width}px keeps the first priority item in the initial decision area`,
+        ).toBeLessThanOrEqual(420);
+        expect(
+          metrics!.tabbarVisible
+            ? metrics!.tabbarTop - metrics!.featuredSummaryBottom
+            : -1,
+          `${viewport.width}px keeps the complete Featured summary above the tabbar`,
+        ).toBeGreaterThanOrEqual(8);
       }
     }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.reload({ waitUntil: "domcontentloaded" });
+    const promptDetails = page.locator(".privacy-consent-prompt").getByRole("link", {
+      name: "プライバシーの詳細",
+    });
+    const promptDecline = page.locator(".privacy-consent-prompt").getByRole("button", {
+      name: "広告を拒否",
+    });
+    const promptAllow = page.locator(".privacy-consent-prompt").getByRole("button", {
+      name: "広告を許可",
+    });
+    const tabbarMenu = page.getByRole("navigation", { name: "Primary" }).getByRole("button", {
+      name: /Menu/,
+    });
+    await tabbarMenu.focus();
+    await page.keyboard.press("Tab");
+    await expect(promptDetails).toBeFocused();
+    expect(await promptDetails.evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe(
+      "none",
+    );
+    await page.keyboard.press("Tab");
+    await expect(promptDecline).toBeFocused();
+    expect(await promptDecline.evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe(
+      "none",
+    );
+    await page.keyboard.press("Tab");
+    await expect(promptAllow).toBeFocused();
+    expect(await promptAllow.evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe(
+      "none",
+    );
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(page.getByRole("group", { name: "Advertising consent" })).toBeVisible();
+    await expect(
+      page.locator(".privacy-consent-prompt").getByRole("link", {
+        name: "Privacy details",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.locator(".privacy-consent-prompt").getByRole("button", {
+        name: "Decline advertising",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.locator(".privacy-consent-prompt").getByRole("button", {
+        name: "Allow advertising",
+      }),
+    ).toBeVisible();
+  });
+
+  test("Privacy prompt and narrow Search keep separate hit targets", async ({
+    page,
+    baseURL,
+  }) => {
+    expect(baseURL).toBeTruthy();
+    await routeProductionHostToPreview(page, baseURL!);
+    await page.route("https://pagead2.googlesyndication.com/**", (route) =>
+      route.abort("blockedbyclient"));
+    await installPrivacyPromptProbe(page, { storedValue: null });
+
+    for (const viewport of [
+      { width: 360, height: 800 },
+      { width: 390, height: 844 },
+      { width: 768, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto(`${PRODUCTION_ORIGIN}/search/?q=Copilot`, {
+        waitUntil: "domcontentloaded",
+      });
+      const metrics = await page.evaluate(() => {
+        const prompt = document.querySelector<HTMLElement>(".privacy-consent-prompt");
+        const search = document.querySelector<HTMLElement>(".search.is-open");
+        if (!prompt || !search) return null;
+        const promptBox = prompt.getBoundingClientRect();
+        const searchBox = search.getBoundingClientRect();
+        const overlap = Math.max(
+          0,
+          Math.min(promptBox.bottom, searchBox.bottom)
+            - Math.max(promptBox.top, searchBox.top),
+        );
+        return {
+          overlap,
+          gap: searchBox.top - promptBox.bottom,
+          targetHits: [...prompt.querySelectorAll<HTMLElement>("a, button")].map((target) => {
+            const box = target.getBoundingClientRect();
+            const hit = document.elementFromPoint(
+              box.x + box.width / 2,
+              box.y + box.height / 2,
+            );
+            return hit === target || target.contains(hit);
+          }),
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      });
+      expect(metrics, `${viewport.width}px Search/consent metrics`).not.toBeNull();
+      expect(metrics!.overlap, `${viewport.width}px Search does not cover consent`).toBe(0);
+      expect(metrics!.gap, `${viewport.width}px Search clears consent by 8px`).toBeGreaterThanOrEqual(
+        8,
+      );
+      expect(
+        metrics!.targetHits,
+        `${viewport.width}px each consent target owns its center hit point`,
+      ).toEqual([true, true, true]);
+      expect(metrics!.overflow, `${viewport.width}px Search has no horizontal overflow`).toBeLessThanOrEqual(
+        0,
+      );
+      for (const language of ["en", "ja"]) {
+        await page.locator(`.lang-btn[data-lang="${language}"]`).click();
+        await expect
+          .poll(async () => {
+            const [promptBox, searchBox] = await Promise.all([
+              page.locator(".privacy-consent-prompt").boundingBox(),
+              page.locator(".search.is-open").boundingBox(),
+            ]);
+            return promptBox && searchBox
+              ? searchBox.y - (promptBox.y + promptBox.height)
+              : -1;
+          })
+          .toBeGreaterThanOrEqual(8);
+      }
+    }
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+  });
+
+  test("Narrow Search follows a consent prompt revealed by cross-tab state", async ({
+    page,
+    baseURL,
+  }) => {
+    expect(baseURL).toBeTruthy();
+    await routeProductionHostToPreview(page, baseURL!);
+    await page.route("https://pagead2.googlesyndication.com/**", (route) =>
+      route.abort("blockedbyclient"));
+    await page.addInitScript((storageKey) => {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          version: 1,
+          advertising: "denied",
+          decidedAt: "2026-07-27T00:00:00.000Z",
+        }),
+      );
+    }, PRIVACY_CONSENT_STORAGE_KEY);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${PRODUCTION_ORIGIN}/search/?q=Copilot`, {
+      waitUntil: "domcontentloaded",
+    });
+
+    const prompt = page.locator(".privacy-consent-prompt");
+    const search = page.locator(".search.is-open");
+    const input = search.getByRole("combobox", { name: "Search updates" });
+    await expect(prompt).toBeHidden();
+    await expect(search).toBeVisible();
+    await expect(input).toBeFocused();
+
+    await page.evaluate((storageKey) => {
+      const oldValue = window.localStorage.getItem(storageKey);
+      window.localStorage.removeItem(storageKey);
+      window.dispatchEvent(new StorageEvent("storage", {
+        key: storageKey,
+        oldValue,
+        newValue: null,
+        storageArea: window.localStorage,
+      }));
+    }, PRIVACY_CONSENT_STORAGE_KEY);
+
+    await expect(prompt).toBeVisible();
+    await expect(input).toBeFocused();
+    await expect
+      .poll(async () => {
+        const [promptBox, searchBox] = await Promise.all([
+          prompt.boundingBox(),
+          search.boundingBox(),
+        ]);
+        return promptBox && searchBox
+          ? searchBox.y - (promptBox.y + promptBox.height)
+          : -1;
+      })
+      .toBeGreaterThanOrEqual(8);
+    const targetHits = await prompt.locator("a, button").evaluateAll((targets) =>
+      targets.map((target) => {
+        const box = target.getBoundingClientRect();
+        const hit = document.elementFromPoint(
+          box.x + box.width / 2,
+          box.y + box.height / 2,
+        );
+        return hit === target || target.contains(hit);
+      }),
+    );
+    expect(targetHits).toEqual([true, true, true]);
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+  });
+
+  test("Privacy prompt remains clear of pending and ready article details", async ({
+    page,
+    baseURL,
+  }) => {
+    expect(baseURL).toBeTruthy();
+    await routeProductionHostToPreview(page, baseURL!);
+    await page.route("https://pagead2.googlesyndication.com/**", (route) =>
+      route.abort("blockedbyclient"));
+    await installPrivacyPromptProbe(page, { storedValue: null });
+
+    const entries = (JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<SummaryFixtureEntry & { archiveTier?: string }>;
+    }).entries.filter((entry) => entry.archiveTier !== "cold" && entry.archiveTier !== "dropped");
+    const hasSummary = (entry: SummaryFixtureEntry) =>
+      Boolean(
+        summaryForLangWithFallback(entry, "ja").text
+        || summaryForLangWithFallback(entry, "en").text
+      );
+    const readyEntry = entries.find(hasSummary);
+    expect(readyEntry, "the generated corpus exposes a ready detail fixture").toBeTruthy();
+    const fixtures = [
+      { state: "ready", entry: readyEntry!, syntheticPending: false },
+      { state: "pending", entry: readyEntry!, syntheticPending: true },
+    ] as const;
+
+    for (const fixture of fixtures) {
+      for (const viewport of [
+        { width: 390, height: 844 },
+        { width: 1440, height: 900 },
+      ]) {
+        await page.setViewportSize(viewport);
+        await page.goto(`${PRODUCTION_ORIGIN}/e/${fixture.entry.id}/`, {
+          waitUntil: "domcontentloaded",
+        });
+        if (fixture.syntheticPending) {
+          await page.evaluate(() => {
+            const article = document.querySelector<HTMLElement>("article.entry-detail");
+            const head = article?.querySelector<HTMLElement>(".ed-head");
+            if (!article || !head) throw new Error("article detail fixture is unavailable");
+            article.dataset.summaryState = "pending";
+            const pending = document.createElement("section");
+            pending.className = "ed-pending-summary";
+            pending.setAttribute("aria-labelledby", "synthetic-pending-summary-heading");
+            pending.innerHTML = [
+              '<strong id="synthetic-pending-summary-heading">AI 要約 準備待ち</strong>',
+              "<p>AI 要約は準備中です。共有前に元記事を確認してください。</p>",
+            ].join("");
+            head.after(pending);
+          });
+        }
+        const prompt = page.locator(".privacy-consent-prompt");
+        const article = page.locator("article.entry-detail");
+        await expect(prompt).toBeVisible();
+        await expect(article).toHaveAttribute("data-summary-state", fixture.state);
+        const metrics = await page.evaluate(() => {
+          const prompt = document.querySelector<HTMLElement>(".privacy-consent-prompt");
+          const article = document.querySelector<HTMLElement>("article.entry-detail");
+          if (!prompt || !article) return null;
+          const promptBox = prompt.getBoundingClientRect();
+          const articleBox = article.getBoundingClientRect();
+          const intersects = (left: DOMRect, right: DOMRect) =>
+            left.left < right.right
+            && left.right > right.left
+            && left.top < right.bottom
+            && left.bottom > right.top;
+          const contentOverlaps = [
+            ...document.querySelectorAll<HTMLElement>(
+              ".ed-hero, .ed-head, .ed-pending-summary, .ed-tldr, .ed-summary-only",
+            ),
+          ]
+            .filter((element) => element.getClientRects().length > 0)
+            .filter((element) => intersects(promptBox, element.getBoundingClientRect()))
+            .map((element) => element.className);
+          const focusableOverlaps = [
+            ...document.querySelectorAll<HTMLElement>("a, button, input, [tabindex]"),
+          ]
+            .filter((element) => !prompt.contains(element) && element.getClientRects().length > 0)
+            .filter((element) => intersects(promptBox, element.getBoundingClientRect()))
+            .map((element) => element.outerHTML.slice(0, 120));
+          return {
+            position: getComputedStyle(prompt).position,
+            promptBottom: promptBox.bottom,
+            articleTop: articleBox.top,
+            contentOverlaps,
+            focusableOverlaps,
+            overflow: document.documentElement.scrollWidth - window.innerWidth,
+          };
+        });
+        expect(metrics, `${fixture.state} ${viewport.width}px detail metrics`).not.toBeNull();
+        expect(metrics!.position).toBe("relative");
+        expect(metrics!.articleTop - metrics!.promptBottom).toBeGreaterThanOrEqual(0);
+        expect(metrics!.contentOverlaps).toEqual([]);
+        expect(metrics!.focusableOverlaps).toEqual([]);
+        expect(metrics!.overflow).toBeLessThanOrEqual(0);
+      }
+    }
+    await page.unrouteAll({ behavior: "ignoreErrors" });
   });
 
   test("Privacy deletion fails closed when the runtime endpoint is unavailable", async ({

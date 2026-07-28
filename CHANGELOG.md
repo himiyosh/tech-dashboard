@@ -28,6 +28,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 変更
 
+- 初回の広告同意promptを全viewportで通常flow内のcompact stripへ変更し、Spotlight・Top 3・記事詳細・Search・focus可能なcontrolを覆わないようにしました。Google AdSenseが任意であること、拒否しても全機能を利用できること、外部mediaは別に読み込む場合があることを維持し、JA/ENの許可・拒否・プライバシー詳細controlは45px以上の操作面と具体的なaccessible nameを持ちます。別tabで広告選択が未決定へ戻った場合や言語切替でstrip高が変わった場合も、開いているSearchをstripの下へ再配置します。同意未決定のdesktopではFooterを通常flowへ戻し、Top 3のsource controlを覆わないようにします。決定後は既存の固定Footerへ復帰します。
 - AboutのMenu説明とPageHeroでRSS/JSON Feed購読を明示し、カテゴリRSSを含む購読actionだけをmobileでも44px以上の操作面で表示するようにしました。mobileではHero説明文より購読actionを優先し、既存metricと他のPageHero action契約は維持します。
 - カテゴリ画面の RSS link と autodiscovery を、query を無視する全体 feed から静的な `/rss/<category>.xml` へ変更しました。各 feed は該当カテゴリのAI要約済み記事だけを最大100件配信し、全体 `/rss.xml` は従来どおり維持します。
 - RSS autodiscoveryを維持したまま、JSON Feedのalternate linkをendpointと同じ標準MIME type `application/feed+json`へ揃えました。

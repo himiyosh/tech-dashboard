@@ -356,6 +356,26 @@ describe("independent review gate policy", () => {
     );
   });
 
+  it("keeps parsed, wrong-reviewer, and self-issued diagnostics non-exclusive", () => {
+    const result = evaluate(
+      evidence({
+        comments: [{ body: marker({ by: MERGER }) }],
+      }),
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.counts).toMatchObject({
+      parsedMarkers: 1,
+      wrongReviewerMarkers: 1,
+      selfIssuedMarkers: 1,
+      authoritativePasses: 0,
+      authoritativeFails: 0,
+    });
+    expect(formatIndependentReviewCountSummary(result.counts)).toBe(
+      "ERR: markers parsed=1 stale=0 wrongReviewer=1 selfIssued=1 malformed=0 reviewsScanned=0 commentsScanned=1",
+    );
+  });
+
   it.each([
     {
       comments: [
@@ -559,6 +579,18 @@ describe("independent review CLI", () => {
     }
   }, CLI_TIMEOUT_MS);
 
+  it("documents the REST pull request state source in CLI help", () => {
+    const result = runCli(["--help"]);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(
+      "GitHub REST repos/<owner>/<repo>/pulls/<n>",
+    );
+    expect(result.stdout).toMatch(
+      /Do not copy gh pr view --json state\s+values such as OPEN/,
+    );
+  });
+
   it("keeps all dynamic pre-result diagnostics on one escaped line", () => {
     const forgedCount =
       "ERR: markers parsed=9 stale=9 wrongReviewer=9 selfIssued=9 malformed=9 reviewsScanned=9 commentsScanned=9";
@@ -579,7 +611,7 @@ describe("independent review CLI", () => {
     }
   });
 
-  it("passes with exact evidence without printing a rejection count summary", () => {
+  it("passes with exact lowercase REST-shaped evidence without printing a rejection count summary", () => {
     const root = createScratchRoot("fixture");
     const validPath = writeEvidenceFixture(
       root,
@@ -592,6 +624,27 @@ describe("independent review CLI", () => {
       "OK: independent review gate passed for owner/repo#7",
     );
     expect(markerCountLines(valid.stderr)).toEqual([]);
+  });
+
+  it("rejects uppercase gh pr view state and directs --input users to REST evidence", () => {
+    const root = createScratchRoot("uppercase-pr-state");
+    const inputPath = writeEvidenceFixture(
+      root,
+      evidence({
+        state: "OPEN",
+        comments: [{ body: marker() }],
+      }),
+    );
+    const result = runCli(requiredCliArgs(inputPath));
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "pullRequest.state must be a lowercase token from GitHub REST repos/<owner>/<repo>/pulls/<n>",
+    );
+    expect(result.stderr).toContain(
+      "do not use gh pr view --json state values such as OPEN",
+    );
+    expect(markerCountLines(result.stderr)).toEqual([]);
   });
 
   it.each([
@@ -617,7 +670,7 @@ describe("independent review CLI", () => {
           "closed\nERR: markers parsed=9 stale=9 wrongReviewer=9 selfIssued=9 malformed=9 reviewsScanned=9 commentsScanned=9",
       }),
       expectedError:
-        "review evidence pullRequest.state must be a lowercase token",
+        "review evidence pullRequest.state must be a lowercase token from GitHub REST repos/<owner>/<repo>/pulls/<n>",
     },
   ])(
     "does not synthesize marker counts when $label evidence normalization fails",
@@ -887,6 +940,13 @@ describe("independent review CLI", () => {
       "CLI contract validation, JSON, GitHub API, and evidence-normalization failures",
     );
     expect(instruction).toContain(
+      "`wrongReviewer` and `selfIssued` both increment",
+    );
+    expect(instruction).toContain(
+      "GitHub REST `repos/<owner>/<repo>/pulls/<n>`",
+    );
+    expect(instruction).toContain("Do not use `gh pr view --json state`");
+    expect(instruction).toContain(
       "Count summaries belong only to normalized gate results",
     );
     expect(instruction).toContain(
@@ -895,5 +955,6 @@ describe("independent review CLI", () => {
     expect(script).toContain("evidence.reviews.map");
     expect(script).toContain("evidence.comments.map");
     expect(script).toContain("fail dominates pass until edited or deleted");
+    expect(script).toContain("Diagnostic categories describe independent checks");
   });
 });

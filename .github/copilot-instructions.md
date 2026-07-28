@@ -2895,6 +2895,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: consent state、localStorage schema、cross-tab撤回、初回paint bootstrap、client failure fallbackを変更せず、全viewportでcontent canvas内のcompact stripへ統一した。Google AdSenseが任意であること、拒否しても全機能を使えること、source mediaは別読込の場合があることを短く可視化し、Privacy、拒否、許可を45px以上の操作面へ並べた。SearchはHeaderだけでなく現在表示中の同意strip下端もposition基準にし、cross-tabでstripがhiddenからvisibleへ変わるconsent eventと言語切替で高さが変わるeventの両方で再配置する。同意未決定のdesktopではFooterを通常flowへ戻し、決定後だけ既存fixed Footerへ復帰させる。320/360/375/390/414/720/721/768/1280/1440pxと決定論的なpending/ready記事詳細、Search open中のcross-tab state変更と言語切替で、全priority surface・focusable・FooterとのDOMRect非交差、center hit target、tabbar geometry、JA/EN accessible name、keyboard focus、390/375pxのFeatured `y<=420`を固定した。
 - **教訓**: privacy選択を明示する必要があっても、first-use consentをdecision surfaceへ重ねてよい理由にはならない。modalでない同意面はviewportごとの例外を作らず通常flowに置き、同意control自身の寸法だけでなく、主要判断card、記事本文、focusable、fixed navigationとの非交差とhit-testingを実ブラウザで検証する。truthful copy、同等の許可・拒否、Privacyへのreturn path、fail-closedな第三者script gateはcompact化と同時に維持する。
 
+### LL-439: 公開markerのsession UUIDだけをauthorityにすると第三者がclearanceを偽造できる
+- **事象**: exact-head独立レビューmarkerは外部reviewerのfull session UUIDを要求していたが、GitHub review/commentの`user.login`と`author_association`を正規化時に破棄していた。repositoryはpublicで、過去の正当なmarker本文からreviewer UUIDを読めるため、第三者commenterが同じ`by=`をコピーしてgateを通せる状態だった。
+- **根本原因**: session UUIDをreviewer identityとみなし、markerを投稿したGitHub authorのtrust境界を別のevidenceとして検証していなかった。`by=`は公開文字列であり、GitHub accountとの暗号的な結び付きではない。
+- **対策**: review/comment evidenceの`user.login`と`author_association`をbodyと一緒に正規化し、repository ownerのloginかつ`author_association=OWNER`の場合だけstrict head・reviewer UUID・fail-dominates判定へ進める。untrusted authorはpassにもfailにも数えず、専用diagnosticで可視化する。正当markerを持つ既存PR #200/#203/#205がすべて`himiyosh`/`OWNER`であることをRESTで確認し、NONE、login不一致、association不一致、author欠落を回帰testに固定した。
+- **教訓**: 公開repositoryのreview gateはmarker本文だけをauthorityにしない。公開・再利用可能なsession ID、token-like label、署名のないmetadataはidentity proofではないため、providerが返すauthor evidenceとexpected sessionの両方をfail-closedで検証する。untrustedなfail markerもdenial-of-serviceへ使わせず、authoritative evidenceだけがpass/failへ影響するようにする。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

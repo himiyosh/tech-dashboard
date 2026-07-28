@@ -23,6 +23,16 @@ const MOBILE_FIRST_DECISION_MAX_Y = 340;
 const LAYOUT_SUBPIXEL_EPSILON_PX = 0.01;
 const PRODUCTION_ORIGIN = "https://techdb.studio344.net";
 
+function requirePresent<T>(
+  value: T | null | undefined,
+  message: string,
+): T {
+  if (value === null || value === undefined) {
+    throw new Error(message);
+  }
+  return value;
+}
+
 interface PrivacyPromptProbeOptions {
   storedValue: string | null;
   failStorageRead?: boolean;
@@ -402,17 +412,24 @@ test.describe("TECH Dashboard smoke", () => {
     const mobileMetrics = await page.evaluate(() => {
       const actions = [...document.querySelectorAll<HTMLElement>("[data-recovery-action]")];
       const panel = document.querySelector<HTMLElement>(".not-found-panel");
+      if (!panel) return null;
       return {
         actionHeights: actions.map((action) => action.getBoundingClientRect().height),
-        panelWidth: panel?.getBoundingClientRect().width ?? 0,
+        panelWidth: panel.getBoundingClientRect().width,
         viewportWidth: window.innerWidth,
         overflow: document.documentElement.scrollWidth - window.innerWidth,
       };
     });
-    expect(mobileMetrics.actionHeights).toHaveLength(3);
-    expect(mobileMetrics.actionHeights.every((height) => height >= 44)).toBe(true);
-    expect(mobileMetrics.panelWidth).toBeLessThanOrEqual(mobileMetrics.viewportWidth - 32);
-    expect(mobileMetrics.overflow).toBeLessThanOrEqual(0);
+    const requiredMobileMetrics = requirePresent(
+      mobileMetrics,
+      "mobile 404 panel geometry is unavailable",
+    );
+    expect(requiredMobileMetrics.actionHeights).toHaveLength(3);
+    expect(requiredMobileMetrics.actionHeights.every((height) => height >= 44)).toBe(true);
+    expect(requiredMobileMetrics.panelWidth).toBeLessThanOrEqual(
+      requiredMobileMetrics.viewportWidth - 32,
+    );
+    expect(requiredMobileMetrics.overflow).toBeLessThanOrEqual(0);
   });
 
   test("home renders primary sections", async ({ page }) => {
@@ -516,8 +533,12 @@ test.describe("TECH Dashboard smoke", () => {
     expect(desktopDensity.topRank?.y, "desktop ranked Top-3 begins within the first viewport").toBeLessThanOrEqual(900);
     expect(desktopDensity.rankMeta?.height, "desktop Top-3 metadata stays on one line").toBeLessThanOrEqual(28);
     expect(desktopDensity.rankSourceClipped, "long Top-3 source uses ellipsis").toBe(true);
+    const desktopTopRank = requirePresent(
+      desktopDensity.topRank,
+      "desktop Top-3 geometry is unavailable",
+    );
     expect(
-      (desktopDensity.topRank?.y ?? Number.POSITIVE_INFINITY) + (desktopDensity.topRank?.height ?? 0),
+      desktopTopRank.y + desktopTopRank.height,
       "desktop ranked Top-3 stays above the fixed footer in the first viewport",
     ).toBeLessThanOrEqual(desktopDensity.visibleBottom - 8);
     await expect(page.getByRole("link", { name: /今日の重要記事/ })).toBeVisible();
@@ -818,18 +839,20 @@ test.describe("TECH Dashboard smoke", () => {
         elements.map((element) => {
           const category = element.querySelector<HTMLElement>(".b-cat");
           const tags = element.querySelector<HTMLElement>(".b-tags");
-          const categoryRect = category?.getBoundingClientRect();
-          const tagsRect = tags?.getBoundingClientRect();
+          if (!category || !tags) return null;
+          const categoryRect = category.getBoundingClientRect();
+          const tagsRect = tags.getBoundingClientRect();
           return {
-            categoryRight: categoryRect?.right ?? 0,
-            tagsLeft: tagsRect?.left ?? Number.POSITIVE_INFINITY,
-            categoryTitle: category?.getAttribute("title") ?? "",
+            categoryRight: categoryRect.right,
+            tagsLeft: tagsRect.left,
+            categoryTitle: category.getAttribute("title") ?? "",
           };
         }),
       );
       for (const row of rows) {
-        expect(row.categoryTitle).not.toBe("");
-        expect(row.categoryRight).toBeLessThanOrEqual(row.tagsLeft + 0.5);
+        const requiredRow = requirePresent(row, "Ticker row category or tag geometry is unavailable");
+        expect(requiredRow.categoryTitle).not.toBe("");
+        expect(requiredRow.categoryRight).toBeLessThanOrEqual(requiredRow.tagsLeft + 0.5);
       }
     }
   });
@@ -984,15 +1007,20 @@ test.describe("TECH Dashboard smoke", () => {
     expect(desktop.noScroll).toBe(true);
     expect(desktop.alignedSurfaces.every(Boolean), "all wide-canvas surfaces should exist").toBe(true);
     const [headerSurface, ...alignedSurfaces] = desktop.alignedSurfaces;
-    expect(headerSurface?.width, "wide header should use the shared content width").toBeGreaterThanOrEqual(1670);
+    const requiredHeaderSurface = requirePresent(
+      headerSurface,
+      "wide header geometry is unavailable",
+    );
+    expect(requiredHeaderSurface.width, "wide header should use the shared content width").toBeGreaterThanOrEqual(1670);
     for (const surface of alignedSurfaces) {
+      const requiredSurface = requirePresent(surface, "wide canvas surface geometry is unavailable");
       expect(
-        Math.abs((surface?.left ?? 0) - (headerSurface?.left ?? 0)),
-        `${surface?.selector} aligns with the header`,
+        Math.abs(requiredSurface.left - requiredHeaderSurface.left),
+        `${requiredSurface.selector} aligns with the header`,
       ).toBeLessThanOrEqual(1);
       expect(
-        Math.abs((surface?.right ?? 0) - (headerSurface?.right ?? 0)),
-        `${surface?.selector} aligns with the header`,
+        Math.abs(requiredSurface.right - requiredHeaderSurface.right),
+        `${requiredSurface.selector} aligns with the header`,
       ).toBeLessThanOrEqual(1);
     }
     const sourceLabelMetrics = await rail.locator(".home-source-row .home-ranked-label").evaluateAll(
@@ -1029,12 +1057,16 @@ test.describe("TECH Dashboard smoke", () => {
     );
     expect(rankedGeometry.length).toBeGreaterThan(0);
     for (const row of rankedGeometry) {
-      expect(row.rank?.left).toBeGreaterThanOrEqual(row.rowLeft - 1);
-      expect(row.copy?.left).toBeGreaterThanOrEqual((row.rank?.right ?? 0) - 1);
-      expect(row.count?.left).toBeGreaterThanOrEqual((row.copy?.right ?? 0) - 1);
-      expect(row.count?.right).toBeLessThanOrEqual(row.rowRight + 1);
-      expect(row.meter?.left).toBeGreaterThanOrEqual((row.copy?.left ?? 0) - 1);
-      expect(row.meter?.right).toBeLessThanOrEqual((row.count?.right ?? 0) + 1);
+      const rank = requirePresent(row.rank, "rank number geometry is unavailable");
+      const copy = requirePresent(row.copy, "rank label geometry is unavailable");
+      const count = requirePresent(row.count, "rank count geometry is unavailable");
+      const meter = requirePresent(row.meter, "rank meter geometry is unavailable");
+      expect(rank.left).toBeGreaterThanOrEqual(row.rowLeft - 1);
+      expect(copy.left).toBeGreaterThanOrEqual(rank.right - 1);
+      expect(count.left).toBeGreaterThanOrEqual(copy.right - 1);
+      expect(count.right).toBeLessThanOrEqual(row.rowRight + 1);
+      expect(meter.left).toBeGreaterThanOrEqual(copy.left - 1);
+      expect(meter.right).toBeLessThanOrEqual(count.right + 1);
     }
 
     // The compact right rail returns once all three columns retain useful width.
@@ -1091,20 +1123,36 @@ test.describe("TECH Dashboard smoke", () => {
         .poll(() => right.evaluate((element) => getComputedStyle(element).position))
         .toBe("static");
 
-      const before = await page.evaluate(() => ({
-        leftTop: document.querySelector(".layout > aside.left")?.getBoundingClientRect().top ?? 0,
-        rightTop: document.querySelector(".layout > aside.right")?.getBoundingClientRect().top ?? 0,
-      }));
+      const before = await page.evaluate(() => {
+        const left = document.querySelector(".layout > aside.left");
+        const right = document.querySelector(".layout > aside.right");
+        if (!left || !right) return null;
+        return {
+          leftTop: left.getBoundingClientRect().top,
+          rightTop: right.getBoundingClientRect().top,
+        };
+      });
       await page.evaluate(() => window.scrollTo(0, 320));
       await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(200);
-      const after = await page.evaluate(() => ({
-        leftTop: document.querySelector(".layout > aside.left")?.getBoundingClientRect().top ?? 0,
-        rightTop: document.querySelector(".layout > aside.right")?.getBoundingClientRect().top ?? 0,
-        noOverflow: document.documentElement.scrollWidth <= window.innerWidth,
-      }));
-      expect(after.leftTop, `${path} left rail scrolls with content`).toBeLessThan(before.leftTop - 150);
-      expect(after.rightTop, `${path} right rail scrolls with content`).toBeLessThan(before.rightTop - 150);
-      expect(after.noOverflow, `${path} has no horizontal overflow`).toBe(true);
+      const after = await page.evaluate(() => {
+        const left = document.querySelector(".layout > aside.left");
+        const right = document.querySelector(".layout > aside.right");
+        if (!left || !right) return null;
+        return {
+          leftTop: left.getBoundingClientRect().top,
+          rightTop: right.getBoundingClientRect().top,
+          noOverflow: document.documentElement.scrollWidth <= window.innerWidth,
+        };
+      });
+      const requiredBefore = requirePresent(before, `${path} initial rail geometry is unavailable`);
+      const requiredAfter = requirePresent(after, `${path} scrolled rail geometry is unavailable`);
+      expect(requiredAfter.leftTop, `${path} left rail scrolls with content`).toBeLessThan(
+        requiredBefore.leftTop - 150,
+      );
+      expect(requiredAfter.rightTop, `${path} right rail scrolls with content`).toBeLessThan(
+        requiredBefore.rightTop - 150,
+      );
+      expect(requiredAfter.noOverflow, `${path} has no horizontal overflow`).toBe(true);
     }
   });
 
@@ -1144,16 +1192,17 @@ test.describe("TECH Dashboard smoke", () => {
       expect(metrics?.rightVisible, `width ${width}: decorative banner rail should stay hidden`).toBe(false);
       expect(metrics?.copyMaxWidth, `width ${width}: banner copy should release the desktop width cap`).toBe("none");
       expect(metrics?.copyGridColumns, `width ${width}: banner copy should use its compact two-column layout`).toBe(2);
-      expect(metrics?.copyWidth, `width ${width}: banner copy should fill its content track`).toBeGreaterThanOrEqual(
-        (metrics?.innerContentWidth ?? 0) - 1,
+      const requiredMetrics = requirePresent(metrics, `width ${width}: banner metrics are unavailable`);
+      expect(requiredMetrics.copyWidth, `width ${width}: banner copy should fill its content track`).toBeGreaterThanOrEqual(
+        requiredMetrics.innerContentWidth - 1,
       );
-      expect(metrics?.actionsRight, `width ${width}: banner actions should remain inside the copy area`).toBeLessThanOrEqual(
-        (metrics?.copyRight ?? 0) + 1,
+      expect(requiredMetrics.actionsRight, `width ${width}: banner actions should remain inside the copy area`).toBeLessThanOrEqual(
+        requiredMetrics.copyRight + 1,
       );
       expect(
-        metrics?.quickLinksRight,
+        requiredMetrics.quickLinksRight,
         `width ${width}: banner quick links should remain inside the copy area`,
-      ).toBeLessThanOrEqual((metrics?.copyRight ?? 0) + 1);
+      ).toBeLessThanOrEqual(requiredMetrics.copyRight + 1);
     }
   });
 
@@ -1228,37 +1277,49 @@ test.describe("TECH Dashboard smoke", () => {
         };
       });
 
-      expect(desktop.banner?.height, `width ${width}: desktop hero avoids excessive vertical whitespace`).toBeLessThanOrEqual(
+      const banner = requirePresent(desktop.banner, `width ${width}: banner geometry is unavailable`);
+      const copy = requirePresent(desktop.copy, `width ${width}: banner copy geometry is unavailable`);
+      const right = requirePresent(desktop.right, `width ${width}: banner rail geometry is unavailable`);
+      const facts = requirePresent(desktop.facts, `width ${width}: banner facts geometry is unavailable`);
+      expect(banner.height, `width ${width}: desktop hero avoids excessive vertical whitespace`).toBeLessThanOrEqual(
         260,
       );
-      expect(desktop.right?.width, `width ${width}: desktop information rail stays bounded`).toBeLessThanOrEqual(621);
-      expect(desktop.right?.width, `width ${width}: desktop information rail does not dominate the hero copy`).toBeLessThanOrEqual(
-        (desktop.copy?.width ?? 0) + 1,
+      expect(right.width, `width ${width}: desktop information rail stays bounded`).toBeLessThanOrEqual(621);
+      expect(right.width, `width ${width}: desktop information rail does not dominate the hero copy`).toBeLessThanOrEqual(
+        copy.width + 1,
       );
-      expect(desktop.copy?.right, `width ${width}: hero copy does not overlap the information rail`).toBeLessThanOrEqual(
-        (desktop.right?.x ?? 0) - 8,
+      expect(copy.right, `width ${width}: hero copy does not overlap the information rail`).toBeLessThanOrEqual(
+        right.x - 8,
       );
       if (width < 1240) {
         expect(desktop.orbitVisible, `width ${width}: narrow desktop prioritizes facts over decoration`).toBe(false);
-        expect(desktop.facts?.width, `width ${width}: facts use the full information rail`).toBeGreaterThanOrEqual(
-          (desktop.right?.width ?? 0) - 1,
+        expect(facts.width, `width ${width}: facts use the full information rail`).toBeGreaterThanOrEqual(
+          right.width - 1,
         );
       } else {
+        const orbit = requirePresent(
+          desktop.orbit,
+          `width ${width}: banner orbit geometry is unavailable`,
+        );
         expect(desktop.orbitVisible, `width ${width}: wide desktop keeps the orbit`).toBe(true);
-        expect(desktop.orbit?.height, `width ${width}: desktop orbit remains visually substantial`).toBeGreaterThanOrEqual(
+        expect(orbit.height, `width ${width}: desktop orbit remains visually substantial`).toBeGreaterThanOrEqual(
           200,
         );
-        expect(desktop.orbit?.width, `width ${width}: orbit labels retain usable space`).toBeGreaterThanOrEqual(231);
-        expect(desktop.orbit?.right, `width ${width}: orbit and facts remain distinct columns`).toBeLessThanOrEqual(
-          (desktop.facts?.x ?? 0) - 6,
+        expect(orbit.width, `width ${width}: orbit labels retain usable space`).toBeGreaterThanOrEqual(231);
+        expect(orbit.right, `width ${width}: orbit and facts remain distinct columns`).toBeLessThanOrEqual(
+          facts.x - 6,
         );
       }
       for (const card of desktop.factCards) {
-        expect(card?.x, `width ${width}: fact card stays inside the information rail`).toBeGreaterThanOrEqual(
-          desktop.facts?.x ?? Number.POSITIVE_INFINITY,
+        const requiredCard = requirePresent(
+          card,
+          `width ${width}: fact card geometry is unavailable`,
         );
-        expect(card?.right, `width ${width}: fact card stays inside the information rail`).toBeLessThanOrEqual(
-          desktop.facts?.right ?? 0,
+        expect(requiredCard.x, `width ${width}: fact card stays inside the information rail`).toBeGreaterThanOrEqual(
+          facts.x,
+        );
+        expect(requiredCard.right, `width ${width}: fact card stays inside the information rail`).toBeLessThanOrEqual(
+          facts.right,
         );
       }
       expect(desktop.noOverflow, `width ${width}: desktop hero does not create horizontal overflow`).toBe(true);
@@ -1422,13 +1483,14 @@ test.describe("TECH Dashboard smoke", () => {
       });
 
       expect(metrics, `${width}px ticker geometry should be available`).not.toBeNull();
-      expect(metrics?.noOverflow, `${width}px ticker should not cause horizontal overflow`).toBe(true);
-      expect(metrics?.slideHeight, `${width}px ticker keeps a compact two-row stage`).toBeLessThanOrEqual(44);
-      expect(metrics?.metaBottom, `${width}px ticker metadata stays above the headline`).toBeLessThanOrEqual(
-        metrics?.titleTop ?? 0,
+      const requiredMetrics = requirePresent(metrics, `${width}px ticker geometry is unavailable`);
+      expect(requiredMetrics.noOverflow, `${width}px ticker should not cause horizontal overflow`).toBe(true);
+      expect(requiredMetrics.slideHeight, `${width}px ticker keeps a compact two-row stage`).toBeLessThanOrEqual(44);
+      expect(requiredMetrics.metaBottom, `${width}px ticker metadata stays above the headline`).toBeLessThanOrEqual(
+        requiredMetrics.titleTop,
       );
-      expect(metrics?.titleWidth, `${width}px headline uses the full ticker stage width`).toBeGreaterThanOrEqual(
-        (metrics?.stageWidth ?? 0) - 1,
+      expect(requiredMetrics.titleWidth, `${width}px headline uses the full ticker stage width`).toBeGreaterThanOrEqual(
+        requiredMetrics.stageWidth - 1,
       );
     }
   });
@@ -1498,7 +1560,7 @@ test.describe("TECH Dashboard smoke", () => {
         () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
       );
 
-      const metrics = await page.evaluate(() => {
+      const measuredMetrics = await page.evaluate(() => {
         const layout = document.querySelector(".layout");
         const rightRail = document.querySelector<HTMLElement>(".layout aside.right.home-right");
         const railRect = rightRail?.getBoundingClientRect();
@@ -1514,6 +1576,28 @@ test.describe("TECH Dashboard smoke", () => {
         const topRank = document.querySelector<HTMLElement>(".top-rank");
         const bannerInner = document.querySelector<HTMLElement>(".banner-inner");
         const footer = document.querySelector<HTMLElement>(".footer-bar");
+        const featuredThumb = document.querySelector<HTMLElement>("article.featured .featured-thumb");
+        const featuredBody = document.querySelector<HTMLElement>("article.featured .featured-body");
+        const main = document.querySelector<HTMLElement>(".layout main");
+        const featuredFreshness = document.querySelector<HTMLElement>("article.featured .featured-freshness");
+        const featuredMeta = document.querySelector<HTMLElement>("article.featured .featured-meta");
+        const featuredSource = document.querySelector<HTMLElement>(
+          "article.featured .featured-src .source-disclosure-label",
+        );
+        if (
+          !layout
+          || !rankList
+          || !topRank
+          || !bannerInner
+          || !footer
+          || !featuredThumb
+          || !featuredBody
+          || !main
+          || !featuredMeta
+          || !featuredSource
+        ) {
+          return null;
+        }
         const itemHeights = items.map((item) => item.getBoundingClientRect().height);
         const maxRankHeight = itemHeights.length > 0 ? Math.max(...itemHeights) : 0;
         const metaInMedalTrack = items.some((item) => {
@@ -1542,33 +1626,32 @@ test.describe("TECH Dashboard smoke", () => {
           })
           .filter((entry) => entry.visible);
 
-        const featuredThumb = document.querySelector<HTMLElement>("article.featured .featured-thumb");
-        const featuredBody = document.querySelector<HTMLElement>("article.featured .featured-body");
-        const main = document.querySelector<HTMLElement>(".layout main");
-        const featuredFreshness = document.querySelector<HTMLElement>("article.featured .featured-freshness");
-        const featuredMeta = document.querySelector<HTMLElement>("article.featured .featured-meta");
-        const featuredSource = document.querySelector<HTMLElement>(
-          "article.featured .featured-src .source-disclosure-label",
-        );
-        const featuredThumbRect = featuredThumb?.getBoundingClientRect();
-        const featuredBodyRect = featuredBody?.getBoundingClientRect();
+        const featuredThumbRect = featuredThumb.getBoundingClientRect();
+        const featuredBodyRect = featuredBody.getBoundingClientRect();
         const featuredFreshnessRect = featuredFreshness?.getBoundingClientRect();
-        const featuredMetaRect = featuredMeta?.getBoundingClientRect();
-        const topRankRect = topRank?.getBoundingClientRect();
-        const topRankStyle = topRank ? getComputedStyle(topRank) : null;
-        const bannerInnerRect = bannerInner?.getBoundingClientRect();
-        const footerRect = footer?.getBoundingClientRect();
-        const footerRunDetail = footer?.querySelector<HTMLElement>(".footer-run-link .mono");
-        const footerStack = footer?.querySelector<HTMLElement>(".footer-stack");
-        const footerBodyQueue = footer?.querySelector<HTMLElement>(".footer-body-queue");
+        const featuredMetaRect = featuredMeta.getBoundingClientRect();
+        const topRankRect = topRank.getBoundingClientRect();
+        const topRankStyle = getComputedStyle(topRank);
+        const bannerInnerRect = bannerInner.getBoundingClientRect();
+        const footerRect = footer.getBoundingClientRect();
+        const footerRunDetail = footer.querySelector<HTMLElement>(".footer-run-link .mono");
+        const footerStack = footer.querySelector<HTMLElement>(".footer-stack");
+        const footerBodyQueue = footer.querySelector<HTMLElement>(".footer-body-queue");
+        const requiredChildRect = (item: HTMLElement, selector: string) => {
+          const element = item.querySelector<HTMLElement>(selector);
+          if (!element) {
+            throw new Error(`Top-3 item is missing ${selector}`);
+          }
+          return element.getBoundingClientRect();
+        };
         const rankMetaHeights = items
-          .map((item) => item.querySelector<HTMLElement>(".rank-meta")?.getBoundingClientRect().height ?? 0);
+          .map((item) => requiredChildRect(item, ".rank-meta").height);
         const rankSummaryWidths = items
-          .map((item) => item.querySelector<HTMLElement>(".rank-summary")?.getBoundingClientRect().width ?? 0);
+          .map((item) => requiredChildRect(item, ".rank-summary").width);
         const rankSummaryHeights = items
-          .map((item) => item.querySelector<HTMLElement>(".rank-summary")?.getBoundingClientRect().height ?? 0);
+          .map((item) => requiredChildRect(item, ".rank-summary").height);
         const rankContentHeights = items
-          .map((item) => item.querySelector<HTMLElement>(".rank-content-link")?.getBoundingClientRect().height ?? 0);
+          .map((item) => requiredChildRect(item, ".rank-content-link").height);
         const firstRankSource = items[0]?.querySelector<HTMLElement>(
           ".rank-source [data-source-disclosure-label]",
         );
@@ -1597,6 +1680,9 @@ test.describe("TECH Dashboard smoke", () => {
           const source = visibleRect(item.querySelector<HTMLElement>("[data-source-disclosure-trigger]"));
           const time = visibleRect(item.querySelector<HTMLElement>(".rank-time"));
           const freshness = visibleRect(item.querySelector<HTMLElement>(".rank-freshness"));
+          if (!source) {
+            throw new Error("Top-3 source disclosure geometry is unavailable");
+          }
           const visible = [source, time, freshness].filter((rect) => rect !== null);
           const overlaps = visible.some((rect, index) =>
             visible.slice(index + 1).some((other) =>
@@ -1608,39 +1694,36 @@ test.describe("TECH Dashboard smoke", () => {
           );
           return {
             overlaps,
-            sourceWidth: source?.width ?? 0,
-            sourceHeight: source?.height ?? 0,
+            sourceWidth: source.width,
+            sourceHeight: source.height,
             timeVisible: time !== null,
           };
         });
 
         return {
           noOverflow: document.documentElement.scrollWidth <= window.innerWidth,
-          gridCols: layout ? getComputedStyle(layout).gridTemplateColumns.split(" ").filter(Boolean).length : 0,
-          rankGridCols: rankList ? getComputedStyle(rankList).gridTemplateColumns.split(" ").filter(Boolean).length : 0,
+          gridCols: getComputedStyle(layout).gridTemplateColumns.split(" ").filter(Boolean).length,
+          rankGridCols: getComputedStyle(rankList).gridTemplateColumns.split(" ").filter(Boolean).length,
           rightRailVisible,
           rightRailCards,
           rankCount: items.length,
           maxRankHeight,
           metaInMedalTrack,
           freshness,
-          featuredThumbWidth: featuredThumbRect?.width ?? 0,
-          featuredThumbHeight: featuredThumbRect?.height ?? 0,
-          featuredBodyWidth: featuredBodyRect?.width ?? 0,
-          mainWidth: main?.getBoundingClientRect().width ?? 0,
-          featuredFreshnessWidth: featuredFreshnessRect?.width ?? 0,
-          featuredFreshnessHeight: featuredFreshnessRect?.height ?? 0,
-          featuredMetaHeight: featuredMetaRect?.height ?? 0,
+          featuredThumbWidth: featuredThumbRect.width,
+          featuredThumbHeight: featuredThumbRect.height,
+          featuredBodyWidth: featuredBodyRect.width,
+          mainWidth: main.getBoundingClientRect().width,
+          featuredFreshnessWidth: featuredFreshnessRect?.width ?? null,
+          featuredFreshnessHeight: featuredFreshnessRect?.height ?? null,
+          featuredMetaHeight: featuredMetaRect.height,
           maxRankMetaHeight: rankMetaHeights.length > 0 ? Math.max(...rankMetaHeights) : 0,
           minRankSummaryWidth: rankSummaryWidths.length > 0 ? Math.min(...rankSummaryWidths) : 0,
           maxRankSummaryHeight: rankSummaryHeights.length > 0 ? Math.max(...rankSummaryHeights) : 0,
           minRankContentHeight: rankContentHeights.length > 0 ? Math.min(...rankContentHeights) : 0,
-          topRankWidth: topRankRect?.width ?? 0,
-          bannerHeight: bannerInnerRect?.height ?? Number.POSITIVE_INFINITY,
+          bannerHeight: bannerInnerRect.height,
           topRankContentWidth:
-            topRank && topRankStyle
-              ? topRank.clientWidth - parseFloat(topRankStyle.paddingLeft) - parseFloat(topRankStyle.paddingRight)
-              : 0,
+            topRank.clientWidth - parseFloat(topRankStyle.paddingLeft) - parseFloat(topRankStyle.paddingRight),
           rankMetaOverlaps: rankMetaGeometry.some((entry) => entry.overlaps),
           minRankSourceTriggerWidth: rankMetaGeometry.length > 0
             ? Math.min(...rankMetaGeometry.map((entry) => entry.sourceWidth))
@@ -1650,25 +1733,27 @@ test.describe("TECH Dashboard smoke", () => {
             : 0,
           rankTimeVisibleCount: rankMetaGeometry.filter((entry) => entry.timeVisible).length,
           rankReasonCount: document.querySelectorAll(".top-rank-item .rank-reason").length,
-          topRankBottom: topRankRect?.bottom ?? Number.POSITIVE_INFINITY,
-          visibleBottom: Math.min(window.innerHeight, footerRect?.top ?? window.innerHeight),
-          footerHeight: footerRect?.height ?? Number.POSITIVE_INFINITY,
+          topRankBottom: topRankRect.bottom,
+          visibleBottom: Math.min(window.innerHeight, footerRect.top),
+          footerHeight: footerRect.height,
           footerRunTextOverflow: footerRunDetail
             ? getComputedStyle(footerRunDetail).textOverflow
             : "",
           footerStackVisible: !!footerStack && getComputedStyle(footerStack).display !== "none",
           footerBodyQueueVisible:
             !!footerBodyQueue && getComputedStyle(footerBodyQueue).display !== "none",
-          featuredSourceSafe: !!featuredSource
-            && (
-              featuredSource.scrollWidth <= featuredSource.clientWidth + 1
-              || getComputedStyle(featuredSource).textOverflow === "ellipsis"
-            ),
+          featuredSourceSafe:
+            featuredSource.scrollWidth <= featuredSource.clientWidth + 1
+            || getComputedStyle(featuredSource).textOverflow === "ellipsis",
           rankSourceClipped: !!firstRankSource
             && firstRankSource.scrollWidth > firstRankSource.clientWidth
             && getComputedStyle(firstRankSource).textOverflow === "ellipsis",
         };
       });
+      const metrics = requirePresent(
+        measuredMetrics,
+        `width ${width}: required Top-3 geometry is unavailable`,
+      );
 
       expect(metrics.noOverflow, `width ${width}: page should not overflow horizontally`).toBe(true);
       expect(metrics.rankCount, `width ${width}: top-3 should keep three cards`).toBe(3);
@@ -1714,9 +1799,15 @@ test.describe("TECH Dashboard smoke", () => {
           metrics.minRankSummaryWidth,
           `width ${width}: Top-3 summaries should remain useful before the right rail returns`,
         ).toBeGreaterThanOrEqual(180);
-        if (metrics.featuredFreshnessWidth > 0) {
+        if (metrics.featuredFreshnessWidth !== null) {
           expect(metrics.featuredFreshnessWidth, `width ${width}: featured freshness should keep readable width`).toBeGreaterThanOrEqual(70);
-          expect(metrics.featuredFreshnessHeight, `width ${width}: featured freshness should stay one-line height`).toBeLessThanOrEqual(48);
+          expect(
+            requirePresent(
+              metrics.featuredFreshnessHeight,
+              `width ${width}: featured freshness height is unavailable`,
+            ),
+            `width ${width}: featured freshness should stay one-line height`,
+          ).toBeLessThanOrEqual(48);
         }
       }
 
@@ -2474,6 +2565,7 @@ test.describe("TECH Dashboard smoke", () => {
       const actionStrip = page.locator(".ed-action-strip");
       const sourceCta = actionStrip.locator(".ed-header-cta");
       const copyAction = actionStrip.locator(".ed-share-btn[data-share-copy]");
+      await expect(actionStrip).toBeVisible();
       await expect(sourceCta).toHaveCount(1);
       await expect(copyAction).toHaveCount(1);
       await expect(sourceCta.locator("small")).toHaveText(/^[a-z0-9.-]+(?::\d+)?$/i);
@@ -2482,27 +2574,32 @@ test.describe("TECH Dashboard smoke", () => {
         const strip = document.querySelector(".ed-action-strip")?.getBoundingClientRect();
         const source = document.querySelector(".ed-header-cta")?.getBoundingClientRect();
         const copy = document.querySelector(".ed-share-btn[data-share-copy]")?.getBoundingClientRect();
+        if (!strip || !source || !copy) return null;
         return {
-          stripWidth: strip?.width ?? 0,
-          sourceWidth: source?.width ?? 0,
-          sourceHeight: source?.height ?? 0,
-          stripLeft: strip?.left ?? 0,
-          stripRight: strip?.right ?? 0,
-          copyWidth: copy?.width ?? 0,
-          copyHeight: copy?.height ?? 0,
-          copyLeft: copy?.left ?? 0,
-          copyRight: copy?.right ?? 0,
+          stripWidth: strip.width,
+          sourceWidth: source.width,
+          sourceHeight: source.height,
+          stripLeft: strip.left,
+          stripRight: strip.right,
+          copyWidth: copy.width,
+          copyHeight: copy.height,
+          copyLeft: copy.left,
+          copyRight: copy.right,
           overflow: document.documentElement.scrollWidth - window.innerWidth,
         };
       });
-      expect(geometry.sourceWidth).toBeGreaterThanOrEqual(geometry.stripWidth - 1);
-      expect(geometry.copyWidth).toBeGreaterThanOrEqual(geometry.stripWidth - 40);
-      expect(geometry.copyWidth).toBeLessThan(geometry.stripWidth - 20);
-      expect(geometry.copyLeft).toBeGreaterThan(geometry.stripLeft + 14);
-      expect(geometry.copyRight).toBeLessThan(geometry.stripRight - 14);
-      expect(geometry.sourceHeight).toBeGreaterThanOrEqual(52);
-      expect(geometry.copyHeight).toBeGreaterThanOrEqual(44);
-      expect(geometry.overflow).toBeLessThanOrEqual(0);
+      const requiredGeometry = requirePresent(
+        geometry,
+        `width ${width}: detail action geometry is unavailable`,
+      );
+      expect(requiredGeometry.sourceWidth).toBeGreaterThanOrEqual(requiredGeometry.stripWidth - 1);
+      expect(requiredGeometry.copyWidth).toBeGreaterThanOrEqual(requiredGeometry.stripWidth - 40);
+      expect(requiredGeometry.copyWidth).toBeLessThan(requiredGeometry.stripWidth - 20);
+      expect(requiredGeometry.copyLeft).toBeGreaterThan(requiredGeometry.stripLeft + 14);
+      expect(requiredGeometry.copyRight).toBeLessThan(requiredGeometry.stripRight - 14);
+      expect(requiredGeometry.sourceHeight).toBeGreaterThanOrEqual(52);
+      expect(requiredGeometry.copyHeight).toBeGreaterThanOrEqual(44);
+      expect(requiredGeometry.overflow).toBeLessThanOrEqual(0);
       await expect(page.locator(".ed-freshness, .rail-freshness")).toHaveCount(0);
 
       if (width === 390) {
@@ -2668,11 +2765,15 @@ test.describe("TECH Dashboard smoke", () => {
         count: box(".count"),
       };
     });
-    expect(sidebarGeometry.name?.width, "category label keeps a useful reading width").toBeGreaterThan(80);
-    expect(sidebarGeometry.brand?.right).toBeLessThanOrEqual((sidebarGeometry.name?.left ?? 0) + 1);
-    expect(sidebarGeometry.name?.right).toBeLessThanOrEqual((sidebarGeometry.count?.left ?? 0) + 1);
-    expect(sidebarGeometry.spark?.right).toBeLessThanOrEqual((sidebarGeometry.count?.left ?? 0) + 1);
-    expect(sidebarGeometry.count?.right).toBeLessThanOrEqual(sidebarGeometry.item.right + 1);
+    const sidebarBrand = requirePresent(sidebarGeometry.brand, "sidebar brand geometry is unavailable");
+    const sidebarName = requirePresent(sidebarGeometry.name, "sidebar label geometry is unavailable");
+    const sidebarSpark = requirePresent(sidebarGeometry.spark, "sidebar spark geometry is unavailable");
+    const sidebarCount = requirePresent(sidebarGeometry.count, "sidebar count geometry is unavailable");
+    expect(sidebarName.width, "category label keeps a useful reading width").toBeGreaterThan(80);
+    expect(sidebarBrand.right).toBeLessThanOrEqual(sidebarName.left + 1);
+    expect(sidebarName.right).toBeLessThanOrEqual(sidebarCount.left + 1);
+    expect(sidebarSpark.right).toBeLessThanOrEqual(sidebarCount.left + 1);
+    expect(sidebarCount.right).toBeLessThanOrEqual(sidebarGeometry.item.right + 1);
 
     expect(
       marqueeScrollWidth,
@@ -2695,9 +2796,10 @@ test.describe("TECH Dashboard smoke", () => {
           const sidebar = layout?.querySelector<HTMLElement>("aside.left");
           const main = layout?.querySelector<HTMLElement>("main");
           const items = Array.from(document.querySelectorAll<HTMLElement>("aside.left .side-item"));
+          if (!sidebar || !main) return null;
           return {
-            sidebarWidth: sidebar?.getBoundingClientRect().width ?? 0,
-            mainWidth: main?.getBoundingClientRect().width ?? 0,
+            sidebarWidth: sidebar.getBoundingClientRect().width,
+            mainWidth: main.getBoundingClientRect().width,
             labelsFit: items.length > 0 && items.every((item) => {
               const label = item.querySelector<HTMLElement>(".name");
               return !!label && label.scrollWidth <= label.clientWidth + 1 && !item.hasAttribute("data-marquee");
@@ -2705,10 +2807,14 @@ test.describe("TECH Dashboard smoke", () => {
             overflow: document.documentElement.scrollWidth - window.innerWidth,
           };
         });
-        expect(layoutMetrics.sidebarWidth, `${route} at ${width}px keeps a readable sidebar`).toBeGreaterThanOrEqual(228);
-        expect(layoutMetrics.mainWidth, `${route} at ${width}px preserves the main content width`).toBeGreaterThanOrEqual(600);
-        expect(layoutMetrics.labelsFit, `${route} at ${width}px keeps every category label visible`).toBe(true);
-        expect(layoutMetrics.overflow, `${route} at ${width}px should not overflow horizontally`).toBeLessThanOrEqual(0);
+        const requiredLayoutMetrics = requirePresent(
+          layoutMetrics,
+          `${route} at ${width}px layout geometry is unavailable`,
+        );
+        expect(requiredLayoutMetrics.sidebarWidth, `${route} at ${width}px keeps a readable sidebar`).toBeGreaterThanOrEqual(228);
+        expect(requiredLayoutMetrics.mainWidth, `${route} at ${width}px preserves the main content width`).toBeGreaterThanOrEqual(600);
+        expect(requiredLayoutMetrics.labelsFit, `${route} at ${width}px keeps every category label visible`).toBe(true);
+        expect(requiredLayoutMetrics.overflow, `${route} at ${width}px should not overflow horizontally`).toBeLessThanOrEqual(0);
       }
     }
   });
@@ -3063,7 +3169,12 @@ test.describe("TECH Dashboard smoke", () => {
           : null,
       };
     });
-    expect(failedGeometry.image?.width ?? 0, "failed hero image leaves layout flow").toBe(0);
+    const failedImage = requirePresent(
+      failedGeometry.image,
+      "failed hero image geometry is unavailable",
+    );
+    expect(failedImage.width, "failed hero image leaves layout flow").toBe(0);
+    expect(failedImage.height, "failed hero image leaves layout flow").toBe(0);
     expect(failedGeometry.fallback?.height).toBeGreaterThanOrEqual(188);
     expect(failedGeometry.fallback?.width).toBeGreaterThan(300);
     expect(
@@ -4131,11 +4242,14 @@ test.describe("TECH Dashboard smoke", () => {
         items: items.map((item) => {
           const itemRect = item.getBoundingClientRect();
           const detailRect = item.querySelector("small")?.getBoundingClientRect();
+          if (!detailRect) {
+            throw new Error("status category row is missing its detail geometry");
+          }
           return {
             itemLeft: itemRect.left,
             itemRight: itemRect.right,
-            detailLeft: detailRect?.left ?? 0,
-            detailRight: detailRect?.right ?? 0,
+            detailLeft: detailRect.left,
+            detailRight: detailRect.right,
           };
         }),
       };
@@ -5223,8 +5337,12 @@ test.describe("TECH Dashboard smoke", () => {
       const evidence = await collectStablePrivacyLayout(scenarioPage);
       expect(evidence.stable, `${scenario.name} reaches a stable layout`).toBe(true);
       expect(evidence.firstLayout, `${scenario.name} captures initial prompt layout`).not.toBeNull();
+      const firstLayout = requirePresent(
+        evidence.firstLayout,
+        `${scenario.name} initial prompt layout is unavailable`,
+      );
       expect(
-        evidence.firstLayout?.rootState,
+        firstLayout.rootState,
         `${scenario.name} sets root state before prompt parsing`,
       ).toBe(scenario.expectedState);
       expect(evidence.rootState, `${scenario.name} keeps root state synchronized`).toBe(
@@ -5244,11 +5362,11 @@ test.describe("TECH Dashboard smoke", () => {
 
       if (scenario.visible) {
         expect(
-          evidence.firstLayout?.display,
+          firstLayout.display,
           `${scenario.name} is visible in its first layout`,
         ).not.toBe("none");
         expect(
-          evidence.firstLayout?.height ?? 0,
+          firstLayout.height,
           `${scenario.name} reserves prompt height before client initialization`,
         ).toBeGreaterThan(0);
         expect(evidence.promptVisible, `${scenario.name} stays visible after initialization`).toBe(
@@ -5262,10 +5380,10 @@ test.describe("TECH Dashboard smoke", () => {
         );
       } else {
         expect(
-          evidence.firstLayout?.display,
+          firstLayout.display,
           `${scenario.name} never paints the prompt`,
         ).toBe("none");
-        expect(evidence.firstLayout?.height, `${scenario.name} reserves no prompt height`).toBe(0);
+        expect(firstLayout.height, `${scenario.name} reserves no prompt height`).toBe(0);
         expect(evidence.promptVisible, `${scenario.name} remains prompt-free`).toBe(false);
         expect(evidence.promptHidden, `${scenario.name} keeps hidden semantics`).toBe(true);
         expect(evidence.promptInert, `${scenario.name} keeps inert semantics`).toBe(true);
@@ -5297,8 +5415,12 @@ test.describe("TECH Dashboard smoke", () => {
     });
     expect(response?.status()).toBeLessThan(400);
     const initial = await collectStablePrivacyLayout(page);
-    expect(initial.firstLayout?.display).not.toBe("none");
-    expect(initial.firstLayout?.height ?? 0).toBeGreaterThan(0);
+    const initialLayout = requirePresent(
+      initial.firstLayout,
+      "deferred-client prompt layout is unavailable",
+    );
+    expect(initialLayout.display).not.toBe("none");
+    expect(initialLayout.height).toBeGreaterThan(0);
     expect(initial.promptVisible).toBe(true);
     expect(initial.promptHidden).toBe(false);
     expect(initial.promptInert).toBe(false);
@@ -5357,11 +5479,15 @@ test.describe("TECH Dashboard smoke", () => {
       expect(response?.status(), `${viewport.name} response`).toBeLessThan(400);
       const evidence = await collectStablePrivacyLayout(scenarioPage);
       expect(evidence.stable, `${viewport.name} reaches a stable layout`).toBe(true);
+      const firstLayout = requirePresent(
+        evidence.firstLayout,
+        `${viewport.name} initial prompt layout is unavailable`,
+      );
       expect(
-        evidence.firstLayout?.display,
+        firstLayout.display,
         `${viewport.name} prompt participates in the first layout`,
       ).not.toBe("none");
-      expect(evidence.firstLayout?.height ?? 0).toBeGreaterThan(0);
+      expect(firstLayout.height).toBeGreaterThan(0);
       expect(evidence.promptVisible).toBe(true);
       expect(evidence.rootState).toBe("visible");
       expect(evidence.overflow).toBeLessThanOrEqual(0);
@@ -5590,15 +5716,14 @@ test.describe("TECH Dashboard smoke", () => {
         const prompt = document.querySelector<HTMLElement>(".privacy-consent-prompt");
         const featured = document.querySelector<HTMLElement>("article.featured");
         const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
-        if (!prompt || !featured || !tabbar) return null;
+        const footer = document.querySelector<HTMLElement>(".footer-bar");
+        const featuredSummary = document.querySelector<HTMLElement>(".featured-sum.i18n-ja");
+        if (!prompt || !featured || !tabbar || !footer || !featuredSummary) return null;
         const promptBox = prompt.getBoundingClientRect();
         const featuredBox = featured.getBoundingClientRect();
         const tabbarBox = tabbar.getBoundingClientRect();
-        const footer = document.querySelector<HTMLElement>(".footer-bar");
-        const footerBox = footer?.getBoundingClientRect();
-        const featuredSummaryBox = document
-          .querySelector<HTMLElement>(".featured-sum.i18n-ja")
-          ?.getBoundingClientRect();
+        const footerBox = footer.getBoundingClientRect();
+        const featuredSummaryBox = featuredSummary.getBoundingClientRect();
         const intersects = (left: DOMRect, right: DOMRect) =>
           left.left < right.right
           && left.right > right.left
@@ -5618,16 +5743,14 @@ test.describe("TECH Dashboard smoke", () => {
           .filter((element) => !prompt.contains(element) && element.getClientRects().length > 0)
           .filter((element) => intersects(promptBox, element.getBoundingClientRect()))
           .map((element) => element.outerHTML.slice(0, 120));
-        const footerFocusableOverlaps = footerBox
-          ? [
-              ...document.querySelectorAll<HTMLElement>(
-                "a, button, input, summary, [tabindex]",
-              ),
-            ]
-              .filter((element) => !footer?.contains(element) && element.getClientRects().length > 0)
-              .filter((element) => intersects(footerBox, element.getBoundingClientRect()))
-              .map((element) => element.outerHTML.slice(0, 120))
-          : [];
+        const footerFocusableOverlaps = [
+          ...document.querySelectorAll<HTMLElement>(
+            "a, button, input, summary, [tabindex]",
+          ),
+        ]
+          .filter((element) => !footer.contains(element) && element.getClientRects().length > 0)
+          .filter((element) => intersects(footerBox, element.getBoundingClientRect()))
+          .map((element) => element.outerHTML.slice(0, 120));
         return {
           position: getComputedStyle(prompt).position,
           promptHidden: prompt.hidden,
@@ -5637,7 +5760,7 @@ test.describe("TECH Dashboard smoke", () => {
           promptRight: promptBox.right,
           promptBottom: promptBox.bottom,
           featuredTop: featuredBox.top,
-          featuredSummaryBottom: featuredSummaryBox?.bottom ?? 0,
+          featuredSummaryBottom: featuredSummaryBox.bottom,
           tabbarVisible: tabbarBox.width > 0 && tabbarBox.height > 0,
           tabbarTop: tabbarBox.top,
           tabbarLeft: tabbarBox.left,
@@ -5645,7 +5768,7 @@ test.describe("TECH Dashboard smoke", () => {
           tabbarBottom: tabbarBox.bottom,
           priorityOverlaps,
           focusableOverlaps,
-          footerPosition: footer ? getComputedStyle(footer).position : "",
+          footerPosition: getComputedStyle(footer).position,
           footerFocusableOverlaps,
           targets: [...prompt.querySelectorAll<HTMLElement>("a, button")].map((target) => {
             const box = target.getBoundingClientRect();
@@ -6758,14 +6881,38 @@ test.describe("TECH Dashboard smoke", () => {
       before: Awaited<ReturnType<typeof captureDocumentState>>,
     ) => {
       const locked = await captureDocumentState();
+      const beforeContentTop = requirePresent(
+        before.contentTop,
+        "content geometry is unavailable before the dialog opens",
+      );
+      const beforeHeaderLeft = requirePresent(
+        before.headerLeft,
+        "header position is unavailable before the dialog opens",
+      );
+      const beforeHeaderWidth = requirePresent(
+        before.headerWidth,
+        "header width is unavailable before the dialog opens",
+      );
+      const lockedContentTop = requirePresent(
+        locked.contentTop,
+        "content geometry is unavailable while the dialog is open",
+      );
+      const lockedHeaderLeft = requirePresent(
+        locked.headerLeft,
+        "header position is unavailable while the dialog is open",
+      );
+      const lockedHeaderWidth = requirePresent(
+        locked.headerWidth,
+        "header width is unavailable while the dialog is open",
+      );
       expect(locked.scrollY, "fixed-body lock keeps the root scroll offset at zero").toBe(0);
       expect(locked.bodyPosition).toBe("fixed");
       expect(locked.htmlOverflow).toBe("hidden");
       expect(locked.bodyOverflow).toBe("hidden");
       expect(Math.abs(locked.bodyTop - before.bodyTop), "body visual position remains stable").toBeLessThanOrEqual(0.5);
-      expect(Math.abs((locked.contentTop ?? 0) - (before.contentTop ?? 0)), "content does not move behind the dialog").toBeLessThanOrEqual(0.5);
-      expect(Math.abs((locked.headerLeft ?? 0) - (before.headerLeft ?? 0)), "scrollbar compensation does not shift the header").toBeLessThanOrEqual(0.5);
-      expect(Math.abs((locked.headerWidth ?? 0) - (before.headerWidth ?? 0)), "scrollbar compensation keeps the header width stable").toBeLessThanOrEqual(0.5);
+      expect(Math.abs(lockedContentTop - beforeContentTop), "content does not move behind the dialog").toBeLessThanOrEqual(0.5);
+      expect(Math.abs(lockedHeaderLeft - beforeHeaderLeft), "scrollbar compensation does not shift the header").toBeLessThanOrEqual(0.5);
+      expect(Math.abs(lockedHeaderWidth - beforeHeaderWidth), "scrollbar compensation keeps the header width stable").toBeLessThanOrEqual(0.5);
       expect(locked.horizontalOverflow).toBe(false);
     };
     const expectDocumentRestored = async (
@@ -6921,7 +7068,12 @@ test.describe("TECH Dashboard smoke", () => {
       contentTop: document.querySelector("#content-start")?.getBoundingClientRect().top ?? null,
     }));
     expect(whileOpen.scrollY).toBe(0);
-    expect(Math.abs((whileOpen.contentTop ?? 0) - (before.contentTop ?? 0))).toBeLessThanOrEqual(0.5);
+    expect(
+      Math.abs(
+        requirePresent(whileOpen.contentTop, "content geometry is unavailable while menu is open")
+        - requirePresent(before.contentTop, "content geometry is unavailable before menu opens"),
+      ),
+    ).toBeLessThanOrEqual(0.5);
 
     await page.locator("button.mobile-menu-trigger[data-menu-trigger]").click();
     await expect(menu).toBeHidden();
@@ -9046,12 +9198,12 @@ test.describe("TECH Dashboard smoke", () => {
           hasThumb: thumbRect !== undefined,
           hasImageClass: card.classList.contains("has-image"),
           noImageClass: card.classList.contains("no-image"),
-          thumbWidth: thumbRect?.width ?? 0,
-          thumbHeight: thumbRect?.height ?? 0,
+          thumbWidth: thumbRect?.width ?? null,
+          thumbHeight: thumbRect?.height ?? null,
           centerDelta: thumbRect
             ? (thumbRect.top + thumbRect.bottom) / 2 - (cardRect.top + cardRect.bottom) / 2
-            : 0,
-          bodyOverlap: thumbRect ? thumbRect.right - bodyRect.left : 0,
+            : null,
+          bodyOverlap: thumbRect ? thumbRect.right - bodyRect.left : null,
           textWidthDelta: linkRect.width - bodyRect.width,
           textStartDelta: bodyRect.left - linkRect.left,
         };
@@ -9067,24 +9219,30 @@ test.describe("TECH Dashboard smoke", () => {
         geometry.hasImageClass,
       );
       if (geometry.hasThumb) {
+        const thumbWidth = requirePresent(geometry.thumbWidth, "mobile thumbnail width is unavailable");
+        const thumbHeight = requirePresent(geometry.thumbHeight, "mobile thumbnail height is unavailable");
         expect(
-          Math.abs(geometry.thumbWidth - geometry.thumbHeight),
+          Math.abs(thumbWidth - thumbHeight),
           "mobile thumbnail stays square",
         ).toBeLessThanOrEqual(1);
-        expect(geometry.thumbWidth, "mobile thumbnail remains compact").toBeGreaterThanOrEqual(80);
+        expect(thumbWidth, "mobile thumbnail remains compact").toBeGreaterThanOrEqual(80);
         expect(
-          geometry.thumbWidth,
+          thumbWidth,
           "mobile thumbnail does not become a full-height strip",
         ).toBeLessThanOrEqual(88);
         expect(
-          Math.abs(geometry.centerDelta),
+          Math.abs(requirePresent(geometry.centerDelta, "mobile thumbnail center is unavailable")),
           "mobile thumbnail is vertically centered",
         ).toBeLessThanOrEqual(1);
         expect(
-          geometry.bodyOverlap,
+          requirePresent(geometry.bodyOverlap, "mobile thumbnail overlap is unavailable"),
           "mobile thumbnail does not overlap card content",
         ).toBeLessThanOrEqual(0);
       } else {
+        expect(geometry.thumbWidth).toBeNull();
+        expect(geometry.thumbHeight).toBeNull();
+        expect(geometry.centerDelta).toBeNull();
+        expect(geometry.bodyOverlap).toBeNull();
         expect(geometry.noImageClass, "text-only card declares no-image state").toBe(true);
         expect(
           geometry.textWidthDelta,
@@ -9170,7 +9328,6 @@ test.describe("TECH Dashboard smoke", () => {
         },
       };
     });
-
     await page.route("**/api/reactions?*", async (route) => {
       const ids = new URL(route.request().url()).searchParams
         .get("ids")

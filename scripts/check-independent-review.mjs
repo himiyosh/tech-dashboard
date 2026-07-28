@@ -139,8 +139,41 @@ function normalizeMessages(value, label) {
     if (item.body !== undefined && item.body !== null && typeof item.body !== "string") {
       throw new Error(`${label}[${index}].body must be a string or null`);
     }
-    return { body: typeof item.body === "string" ? item.body : "" };
+    if (item.user !== undefined && item.user !== null && !isRecord(item.user)) {
+      throw new Error(`${label}[${index}].user must be an object or null`);
+    }
+    if (
+      isRecord(item.user) &&
+      (typeof item.user.login !== "string" || item.user.login.length === 0)
+    ) {
+      throw new Error(`${label}[${index}].user.login must be a non-empty string`);
+    }
+    if (
+      item.author_association !== undefined &&
+      item.author_association !== null &&
+      typeof item.author_association !== "string"
+    ) {
+      throw new Error(
+        `${label}[${index}].author_association must be a string or null`,
+      );
+    }
+    return {
+      body: typeof item.body === "string" ? item.body : "",
+      user: isRecord(item.user) ? { login: item.user.login } : null,
+      author_association:
+        typeof item.author_association === "string"
+          ? item.author_association
+          : null,
+    };
   });
+}
+
+function isTrustedRepositoryOwner(message, repository) {
+  const owner = repository.slice(0, repository.indexOf("/"));
+  return (
+    message.user?.login.toLowerCase() === owner.toLowerCase() &&
+    message.author_association === "OWNER"
+  );
 }
 
 export function normalizeIndependentReviewEvidence(
@@ -225,6 +258,7 @@ export function evaluateIndependentReviewGate({
     staleMarkers: 0,
     wrongReviewerMarkers: 0,
     selfIssuedMarkers: 0,
+    untrustedAuthorMarkers: 0,
     authoritativePasses: 0,
     authoritativeFails: 0,
   };
@@ -243,6 +277,13 @@ export function evaluateIndependentReviewGate({
     }
     // Every strict marker is parsed, even when a later authority check rejects it.
     counts.parsedMarkers += 1;
+    const trustedAuthor = isTrustedRepositoryOwner(
+      message,
+      normalizedRepository,
+    );
+    if (!trustedAuthor) {
+      counts.untrustedAuthorMarkers += 1;
+    }
     if (marker.head !== normalizedExpectedHead) {
       counts.staleMarkers += 1;
       continue;
@@ -254,6 +295,9 @@ export function evaluateIndependentReviewGate({
     }
     if (marker.by !== normalizedReviewerSessionId) {
       counts.wrongReviewerMarkers += 1;
+      continue;
+    }
+    if (!trustedAuthor) {
       continue;
     }
     if (marker.verdict === "fail") {
@@ -296,7 +340,7 @@ export function evaluateIndependentReviewGate({
 }
 
 export function formatIndependentReviewCountSummary(counts) {
-  return `ERR: markers parsed=${counts.parsedMarkers} stale=${counts.staleMarkers} wrongReviewer=${counts.wrongReviewerMarkers} selfIssued=${counts.selfIssuedMarkers} malformed=${counts.malformedMarkerBodies} reviewsScanned=${counts.reviewsScanned} commentsScanned=${counts.commentsScanned}`;
+  return `ERR: markers parsed=${counts.parsedMarkers} stale=${counts.staleMarkers} wrongReviewer=${counts.wrongReviewerMarkers} selfIssued=${counts.selfIssuedMarkers} untrustedAuthor=${counts.untrustedAuthorMarkers} malformed=${counts.malformedMarkerBodies} reviewsScanned=${counts.reviewsScanned} commentsScanned=${counts.commentsScanned}`;
 }
 
 function flattenPaginatedPayload(value, label) {
@@ -393,6 +437,8 @@ function printUsage() {
       "  <!-- independent-review head=<40 lowercase hex> verdict=pass|fail by=<full lowercase session UUID> at=<RFC3339> -->",
       "",
       "Policy:",
+      "  - The review/comment must be authored by the repository owner with",
+      "    author_association=OWNER.",
       "  - Only exact-head markers from --reviewer-session are authoritative.",
       "  - Any authoritative exact-head fail blocks, even when pass markers exist.",
       "  - Duplicate passes are accepted; stale, malformed, wrong-reviewer, and",

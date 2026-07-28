@@ -141,6 +141,7 @@ npx -y modern-web-guidance@latest retrieve "accessibility,css,performance,securi
 | Typecheck | `npm run typecheck` | TypeScript 型チェック | 速い |
 | Worker Typecheck | `npm --prefix worker run typecheck && npm --prefix worker-summarizer run typecheck && npm --prefix worker-body run typecheck` | Cloudflare Worker / Queue consumer の型チェック | 速い |
 | Unit | `npm test` | Vitest による関数単位の検証 (要約 JSON パース、Web ロジック、`data/index.json` スキーマ) | 速い (~1s) |
+| Independent review | `npm run check:independent-review -- --repo <owner/name> --pr <number> --head <sha> --merger-session <uuid> --reviewer-session <uuid>` | 現在openのPR、exact head、外部reviewer、統括session、厳格なmarkerをREST evidenceで検証 | 速い |
 | Web build | `npm run build:web` | Cloudflare Pages と同じ Astro + Pagefind build を実行し、30秒 heartbeat、phase別 CPU/RSS、route/file数、3,200 HTML route上限に加えて sitemap と canonical HTML の双方向 parity、redirect 除外、標準 HTML parser で各 HTML route を基準に解決した存在しない内部 detail link 0 件を検証 | 中程度 |
 | E2E | `npm run test:e2e` | Playwright (Chromium) でトップ表示・記事詳細・言語切替を検証 | 中程度 (~30s + build) |
 | Secret scan | `npm run secrets:scan` | tracked file の secret / private key / 高リスクファイル名を検証 | 速い |
@@ -163,7 +164,11 @@ protected branch への直接 commit / push は通常禁止です。当該セッ
 
 in-place session では branch と index が全 turn で共有されます。Git mutation を行う前に session automation と先行 turn を停止し、current branch、status、push 先 ref を直前に再確認してください。
 
-CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的のみ**で、デプロイは行いません。push / PR ごとに dependency audit (soft gate) + `typecheck + npm test + npm run build:web + npm run test:e2e` を実行し、Cloudflare Pages の build 失敗を事前に検知します。
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的のみ**で、デプロイは行いません。push / PR ごとに dependency audit (soft gate) + `typecheck + npm test + npm run build:web + npm run test:e2e` を実行し、Cloudflare Pages の build 失敗を事前に検知します。PR eventではexact-head独立レビューgateを独立jobで並列実行するため、marker待ちでgateが赤でもunit・typecheck・Web build・E2Eの品質結果を取得できます。
+
+独立レビューCIはPR番号とhead SHAを`github.event.pull_request`から取得し、現在のPR state、head、review、issue commentをGitHub RESTから再取得します。`INDEPENDENT_REVIEW_MERGER_SESSION_ID`と`INDEPENDENT_REVIEW_REVIEWER_SESSION_ID`はGitHub Actions repository variablesへfull lowercase UUIDで設定し、両者を別sessionにしてください。markerはrepository ownerのGitHub accountから投稿され、REST evidenceが`author_association=OWNER`を返す場合だけsession UUIDの検査へ進みます。変数欠落、不正UUID、untrusted author、open PRのhead drift、marker欠落、stale marker、wrong reviewer、self-issued marker、exact-head fail marker、API失敗はすべてfail-closedです。
+
+marker投稿では新しいworkflowを自動起動しません。exact-head markerの投稿後は、同じheadの失敗runを再実行してください。古いrunの再実行時にPRが既にclosedなら、RESTのcurrent stateを確認したうえでgate stepだけをskipします。PRがopenのままheadだけ変わった場合はstale runを通さず、新しいheadへのreview requestとmarkerが必要です。CIの成功はmerge直前のlocal exact-head gateを置き換えません。
 
 現時点の dependency audit 既知事項:
 

@@ -26,16 +26,26 @@ This repository requires an external exact-head review clearance before a pull r
 6. Interpret the result only after checking the single review ticket/session state and the PR state. `UNKNOWN` means no authoritative exact-head pass was found after those checks. It is not permission to merge and is not a reason to create a duplicate ticket automatically.
 7. If the PR head changes, the prior marker is stale. Send a new push request for the new exact head and rerun the gate. The command must exit 0 on that exact head immediately before merge.
 
+## Pull request CI enforcement
+
+- `.github/workflows/ci.yml` executes `npm run check:independent-review` only for a `pull_request` event whose event snapshot is open. It resolves the PR number and expected head from `github.event.pull_request`, never from branch names or free-form PR text.
+- The review gate is an independent parallel job. Its expected marker-missing failure must not skip unit, typecheck, Web build, or E2E quality jobs.
+- Configure `INDEPENDENT_REVIEW_MERGER_SESSION_ID` and `INDEPENDENT_REVIEW_REVIEWER_SESSION_ID` as GitHub Actions repository variables. Both values must be full lowercase UUIDs and must identify different sessions. Missing, malformed, or identical values fail closed.
+- Before executing the strict gate, the workflow reads the current PR state from GitHub REST. A current `closed` state skips only that historical rerun. A current `open` state proceeds to the existing REST evidence loader, which revalidates lowercase `state=open`, the exact event head, reviews, comments, and both session IDs. Any other state or API failure stops the workflow.
+- Posting a marker does not create a new `pull_request` event. Rerun the failed job for the same head after the external reviewer posts the marker. If the head changed, use the new workflow run and request a new exact-head review.
+- CI enforcement does not replace the immediate pre-merge command in step 5. The merger must still refetch the exact head and run the local gate immediately before merge.
+
 ## Deterministic marker policy
 
 - Only markers from the expected reviewer session and for the expected head are authoritative.
+- The REST review/comment evidence must be authored by the repository owner and report `author_association=OWNER`. A public commenter cannot grant or deny clearance by copying a known session UUID.
 - Duplicate authoritative `pass` markers are accepted.
 - Any authoritative exact-head `fail` dominates all `pass` markers until that fail comment or review body is edited or deleted.
 - Stale-head, malformed, boundary-spoofed, mixed-case, wrong-reviewer, and self-issued markers never satisfy the gate.
 - A malformed count requires a marker-like HTML comment sentinel whose protocol-name prefix is a case variant of `independent-review`. The diagnostic classifier normalizes only that protocol-name prefix, so case variants are visible as malformed attempts without loosening head, verdict, session, timestamp, or whole-body validation. Ordinary discussion of the gate or `check-independent-review.mjs` is not a marker attempt. A marker-like comment embedded in prose is malformed because a valid marker must remain the complete standalone body.
 - Both `reviews[].body` and `comments[].body` are scanned. An empty review list does not invalidate a valid owner comment.
 - Missing evidence arrays, a non-open PR, an exact-head mismatch, or a GitHub CLI/API failure fails closed.
-- A rejection reached after evidence normalization emits exactly one count summary in the form `ERR: markers parsed=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>`. Diagnostic categories are intentionally non-exclusive: `parsed` counts bodies that satisfy the strict marker grammar before head and reviewer authority checks, so it can overlap with `stale`, `wrongReviewer`, and `selfIssued`; for an exact-head marker issued by the merger while the expected reviewer is a different session, `wrongReviewer` and `selfIssued` both increment. Overlap never grants clearance, and the counters are not intended to sum to the number of scanned messages. CLI contract validation, JSON, GitHub API, and evidence-normalization failures occur before a result exists and do not synthesize counts.
+- A rejection reached after evidence normalization emits exactly one count summary in the form `ERR: markers parsed=<n> stale=<n> wrongReviewer=<n> selfIssued=<n> untrustedAuthor=<n> malformed=<n> reviewsScanned=<n> commentsScanned=<n>`. Diagnostic categories are intentionally non-exclusive: `parsed` counts bodies that satisfy the strict marker grammar before head, reviewer, and GitHub author authority checks, so it can overlap with `stale`, `wrongReviewer`, `selfIssued`, and `untrustedAuthor`; for an exact-head marker issued by the merger while the expected reviewer is a different session, `wrongReviewer` and `selfIssued` both increment. Overlap never grants clearance, and the counters are not intended to sum to the number of scanned messages. CLI contract validation, JSON, GitHub API, and evidence-normalization failures occur before a result exists and do not synthesize counts.
 
 ## Lessons Learned
 

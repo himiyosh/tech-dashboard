@@ -215,7 +215,7 @@ export function evaluateIndependentReviewGate({
   const counts = {
     reviewsScanned: evidence.reviews.length,
     commentsScanned: evidence.comments.length,
-    validMarkers: 0,
+    parsedMarkers: 0,
     malformedMarkerBodies: 0,
     staleMarkers: 0,
     wrongReviewerMarkers: 0,
@@ -236,7 +236,7 @@ export function evaluateIndependentReviewGate({
       }
       continue;
     }
-    counts.validMarkers += 1;
+    counts.parsedMarkers += 1;
     if (marker.head !== normalizedExpectedHead) {
       counts.staleMarkers += 1;
       continue;
@@ -288,7 +288,7 @@ export function evaluateIndependentReviewGate({
 }
 
 export function formatIndependentReviewCountSummary(counts) {
-  return `ERR: markers valid=${counts.validMarkers} stale=${counts.staleMarkers} wrongReviewer=${counts.wrongReviewerMarkers} selfIssued=${counts.selfIssuedMarkers} malformed=${counts.malformedMarkerBodies} reviewsScanned=${counts.reviewsScanned} commentsScanned=${counts.commentsScanned}`;
+  return `ERR: markers parsed=${counts.parsedMarkers} stale=${counts.staleMarkers} wrongReviewer=${counts.wrongReviewerMarkers} selfIssued=${counts.selfIssuedMarkers} malformed=${counts.malformedMarkerBodies} reviewsScanned=${counts.reviewsScanned} commentsScanned=${counts.commentsScanned}`;
 }
 
 function flattenPaginatedPayload(value, label) {

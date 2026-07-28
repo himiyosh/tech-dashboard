@@ -24,6 +24,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - About と Status に GitHub Issues への「問題を報告」導線と、稼働状態が ERR の場合の切り分けガイダンス (収集遅延は不具合ではなく、長時間の ERR や誤分類・翻訳欠落・壊れたリンクを報告対象とする案内) を追加しました。
 - Status に、匿名いいね機能 (D1 binding・識別子署名用シークレット・Turnstile 検証シークレット・Turnstile 公開サイトキー) の設定状態を確認できる「匿名いいねの設定状態」カードを追加しました。値そのものは一切表示せず、boolean のみを返す読み取り専用 `GET /api/reactions/config` を progressive enhancement で読み、「設定済み / Configured」「未設定 / Not configured (未設定の項目を列挙)」「確認できません / Check unavailable (endpoint 未到達)」の 3 状態を区別して表示します。いずれも安全に degrade する任意機能として neutral tone で表示し、ERR/WARN 相当の色は使いません。
 - bilingual `/privacy/`、version付きの明示的な広告opt-in、production custom-domain限定のAdSense gate、local設定消去、current-browser匿名いいね削除を追加しました。未選択・未知・壊れた・旧version・preview/pages.devはfail-closedで広告OFFとなり、閲覧・検索・Archive・RSS・JSON Feedは同意なしで利用できます。
+- Google AdSenseのpublisher identityからauthorized seller recordを生成するroot `/ads.txt`を追加し、ID形式をbuild時にfail-closedで検証するようにしました。
 
 ### 変更
 

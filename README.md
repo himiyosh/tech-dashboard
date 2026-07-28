@@ -240,6 +240,7 @@ Home と記事詳細は、queryを含まないcanonical URLを維持しながら
 
 - 広告選択はversion付きの`td:privacy-consent:v1` recordとしてbrowserのlocalStorageだけへ保存する。未選択、壊れたrecord、未知field/state、旧versionは全て広告OFFとして扱う。
 - Google AdSenseは`techdb.studio344.net`で利用者が明示的に許可した場合だけclient scriptを追加する。local previewと`tech-dashboard-6a7.pages.dev`では、localStorageに許可recordがあっても読み込まない。
+- rootの`/ads.txt`は`web/src/lib/site.ts`の`ADSENSE_CLIENT_ID`からauthorized seller lineを生成し、publisher IDの重複設定を持たない。
 - 表示言語はlocalStorageに加えて共有可能な`?lang=en`へ反映され、検索URLは`?q=`/`?tag=`を含む場合がある。これらのURLは通常の配信requestとしてCloudflareへ届くため、browser内だけに留まる広告選択とは区別して説明する。
 - local設定の消去と、現在のbrowser識別子に紐づくactive identity・匿名いいね・rate-limit行の削除は`/privacy/`から実行できる。これらのD1行には自動削除期限を設定していないため、このcontrolまたは運用上の削除まで保持される。
 
@@ -530,7 +531,7 @@ tech-dashboard/
 │  │     ├─ c/[slug].astro   # カテゴリ別 (14 ページ)
 │  │     ├─ t/[tag].astro    # タグ別
 │  │     ├─ status.astro, categories.astro, about.astro, privacy.astro, sources.astro (redirect)
-│  │     └─ {rss.xml,feed.json,metrics.json,sitemap.xml,robots.txt}.ts  # Feed / metrics / crawl discovery
+│  │     └─ {rss.xml,feed.json,metrics.json,sitemap.xml,robots.txt,ads.txt}.ts  # Feed / metrics / discovery / authorized sellers
 │  ├─ .node-version          # Cloudflare Pages build 用 Node 22 ピン
 │  └─ astro.config.mjs
 ├─ .claude/skills/

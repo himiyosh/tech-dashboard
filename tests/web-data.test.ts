@@ -115,7 +115,11 @@ const {
   tagHref,
   tagHrefForCount,
 } = await import("../web/src/lib/data.ts");
-const { decisionRankScore } = await import("../web/src/lib/ranking.ts");
+const {
+  decisionRankScore,
+  decisionTopicKey,
+  selectDiverseDecisionEntries,
+} = await import("../web/src/lib/ranking.ts");
 
 // ---- フィクスチャ参照ヘルパー ----
 const e1 = ALL_ENTRIES[0]!; // entry-001 (claude)
@@ -1014,6 +1018,115 @@ describe("decisionRankScore", () => {
     expect(decisionRankScore(official, nowMs)).toBeGreaterThan(
       decisionRankScore(aggregator, nowMs),
     );
+  });
+});
+
+describe("decision priority topic diversity", () => {
+  const makeEntry = (overrides: Partial<typeof e1>): typeof e1 => ({
+    ...e1,
+    ...overrides,
+  });
+
+  const awsLaunch = makeEntry({
+    id: "aws-opus-5",
+    source: "aws-ml-blog",
+    title: "Introducing Claude Opus 5 on AWS: Anthropic's most capable Opus model",
+    titleJa: "AWSでClaude Opus 5が登場",
+    titleEn: "Introducing Claude Opus 5 on AWS",
+    publishedAt: "2026-07-24T17:59:03.000Z",
+  });
+  const officialLaunch = makeEntry({
+    id: "anthropic-opus-5",
+    source: "anthropic-news",
+    title: "Introducing Claude Opus 5",
+    titleJa: "Claude Opus 5 発表",
+    titleEn: "Introducing Claude Opus 5",
+    publishedAt: "2026-07-24T00:00:00.000Z",
+  });
+  const newsLaunch = makeEntry({
+    id: "news-opus-5",
+    source: "the-verge",
+    title: "Anthropic releases Opus 5 with improved capabilities",
+    titleJa: "AnthropicがOpus 5をリリース",
+    titleEn: "Anthropic releases Opus 5",
+    publishedAt: "2026-07-24T17:00:00.000Z",
+  });
+
+  it("groups cross-source headlines about the same versioned model launch", () => {
+    const keys = [awsLaunch, officialLaunch, newsLaunch].map(decisionTopicKey);
+    expect(new Set(keys)).toEqual(new Set(["model-launch:claude-opus:5"]));
+  });
+
+  it("keeps pricing and analysis about the same model independently eligible", () => {
+    expect(decisionTopicKey(makeEntry({
+      title: "Claude Opus 5 pricing and migration guide",
+      titleJa: "Claude Opus 5 発表後の料金と移行ガイド",
+      titleEn: "Introducing a Claude Opus 5 pricing and migration guide",
+    }))).toBeNull();
+  });
+
+  it("uses an explicit publisher cluster independently of title wording", () => {
+    expect(decisionTopicKey(makeEntry({
+      clusterId: " Frontier-Model-Rollout ",
+      title: "A practical deployment note",
+    }))).toBe("cluster:frontier-model-rollout");
+  });
+
+  it("does not reintroduce the featured event when filling the decision list", () => {
+    const meta = makeEntry({
+      id: "meta-agents",
+      source: "meta-newsroom",
+      title: "Meta AI can take action",
+      titleJa: "Meta AIは行動する",
+      titleEn: "Meta AI can take action",
+      publishedAt: "2026-07-27T17:00:00.000Z",
+    });
+    const zed = makeEntry({
+      id: "zed-release",
+      source: "zed-releases",
+      sourceType: "release",
+      title: "Zed Editor v1.12.0",
+      titleJa: "Zed Editor v1.12.0",
+      titleEn: "Zed Editor v1.12.0",
+      publishedAt: "2026-07-27T16:00:00.000Z",
+    });
+    const security = makeEntry({
+      id: "security-alliance",
+      source: "nvidia-blog",
+      title: "Open Secure AI Alliance",
+      titleJa: "Open Secure AI Alliance",
+      titleEn: "Open Secure AI Alliance",
+      publishedAt: "2026-07-27T15:00:00.000Z",
+    });
+
+    const selected = selectDiverseDecisionEntries(
+      [officialLaunch, newsLaunch, meta, zed, security],
+      {
+        featured: awsLaunch,
+        limit: 3,
+        nowMs: Date.parse("2026-07-28T00:00:00.000Z"),
+      },
+    );
+
+    expect(selected.map((entry) => entry.id)).toEqual([
+      "meta-agents",
+      "security-alliance",
+      "zed-release",
+    ]);
+    expect(selected.map(decisionTopicKey)).not.toContain(
+      decisionTopicKey(awsLaunch),
+    );
+  });
+
+  it("returns fewer items rather than repeating one event in fallback", () => {
+    expect(selectDiverseDecisionEntries(
+      [officialLaunch, newsLaunch],
+      {
+        featured: awsLaunch,
+        limit: 3,
+        nowMs: Date.parse("2026-07-28T00:00:00.000Z"),
+      },
+    )).toEqual([]);
   });
 });
 

@@ -27,6 +27,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 変更
 
+- Home の Spotlight と Top 3 は、異なる source が同じモデル発表を扱う場合も1つの話題として重複を抑え、別の重要更新を判断枠へ補充するようにしました。
 - Categories の Research overview で、arXiv を除くキュレーション Research と専用 arXiv 論文レーンの件数・移動先を分けて表示し、両方へ直接移動できるようにしました。
 - 外部 Google Fonts の render-blocking stylesheet と多数の日本語font requestを廃止し、OS標準のsans-serif stackへ切り替えました。文字情報とアクセシビリティtreeを維持しながら、mobile LCPと初期network負荷を削減します。
 - 匿名いいねのcurrent-browser削除をTurnstile設定から分離し、same-origin DELETEがD1の票・rate-limit行とHttpOnly cookieを冪等に削除できるようにしました。privacy disclosureにはURL-visibleな言語・検索query、外部media、保持期間、第三者serviceを実装どおり明記します。

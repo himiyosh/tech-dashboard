@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it, vi } from "vitest";
 
 const titleForLangWithFallback = vi.fn(() => ({
@@ -35,13 +37,46 @@ vi.mock("../web/src/lib/data.ts", () => ({
 
 const { GET: getRss } = await import("../web/src/pages/rss.xml.ts");
 const { GET: getJsonFeed } = await import("../web/src/pages/feed.json.ts");
+const portalSource = readFileSync(
+  new URL("../web/src/layouts/Portal.astro", import.meta.url),
+  "utf8",
+);
+
+function alternateLinks(source: string) {
+  return [...source.matchAll(/<link\b(?=[^>]*\brel="alternate")[^>]*>/g)].map(
+    ([tag]) =>
+      Object.fromEntries(
+        [...tag.matchAll(/([\w-]+)="([^"]*)"/g)].map(([, name, value]) => [
+          name,
+          value,
+        ]),
+      ),
+  );
+}
 
 describe("public feeds", () => {
+  it("shared Portal head advertises each public feed exactly once", () => {
+    expect(alternateLinks(portalSource)).toEqual([
+      expect.objectContaining({
+        rel: "alternate",
+        type: "application/rss+xml",
+        href: "/rss.xml",
+      }),
+      expect.objectContaining({
+        rel: "alternate",
+        type: "application/feed+json",
+        href: "/feed.json",
+      }),
+    ]);
+  });
+
   it("RSS publishes validated display title and summary", async () => {
     const response = (await getRss({} as never)) as Response;
     const xml = await response.text();
 
-    expect(response.headers.get("content-type")).toContain("application/rss+xml");
+    expect(response.headers.get("content-type")).toBe(
+      "application/rss+xml; charset=utf-8",
+    );
     expect(xml).toContain("<title>検証済みタイトル</title>");
     expect(xml).toContain("<description>検証済み要約。</description>");
     expect(xml).not.toContain("RAW_TITLE");
@@ -52,7 +87,9 @@ describe("public feeds", () => {
     const response = (await getJsonFeed({} as never)) as Response;
     const feed = await response.json();
 
-    expect(response.headers.get("content-type")).toContain("application/feed+json");
+    expect(response.headers.get("content-type")).toBe(
+      "application/feed+json; charset=utf-8",
+    );
     expect(feed.items[0]).toMatchObject({
       title: "検証済みタイトル",
       content_text: "検証済み要約。",

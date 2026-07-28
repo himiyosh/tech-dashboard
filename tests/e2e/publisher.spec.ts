@@ -11,7 +11,8 @@ import {
   SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
   boundedSocialDescription,
 } from "../../web/src/lib/bounded-description.ts";
-import { SITE_URL } from "../../web/src/lib/site.ts";
+import { buildAdsTxt } from "../../web/src/lib/ads-txt.ts";
+import { ADSENSE_CLIENT_ID, SITE_URL } from "../../web/src/lib/site.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
 import { canonicalSourceUrl } from "../../web/src/lib/source-meta.ts";
 import {
@@ -618,6 +619,16 @@ test.describe("Publisher generated artifact", () => {
     expect(robotsResponse.status()).toBe(200);
     expect(robotsResponse.headers()["content-type"]).toContain("text/plain");
     expect(robots).toContain(`Sitemap: ${SITE_URL}/sitemap.xml`);
+  });
+
+  test("publishes the canonical AdSense authorized seller record", async ({ request }) => {
+    const response = await request.get("/ads.txt");
+    const body = await response.text();
+
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"].split(";", 1)[0]).toBe("text/plain");
+    expect(body).toBe(buildAdsTxt(ADSENSE_CLIENT_ID));
+    expect(body.match(/\n/g)).toHaveLength(1);
   });
 
   test("keeps hot and warm details addressable while cold details stay month-only", async ({

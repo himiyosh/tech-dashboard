@@ -2840,6 +2840,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: explicit `clusterId`を優先し、fallbackでは収集元の原題で発表語とversion付きmodel identityが近接するheadlineだけを保守的に同一topicへ正規化する。生成titleの言い換えは採否へ使わず、原題に料金、移行、チュートリアル、分析などの実用・評価intentがある場合もclusterしない。version後のvariantはclosed allowlistへ限定せず、前置詞や発表語までの最大3 tokenをtopic identityへ含め、Pro/Flash Cyber、mini、Coder/VL、Deep Think、model sizeを別話題として保持する。model名が先に来る場合は発表語より後ろが空または一般提供を示す短い語だけの文末型に限定する。発表語が先でもmodel後にnative audio、computer use、coding agent、個別platformでのavailabilityなどが続く場合は機能・提供先の別話題として保持する。SpotlightのID/source/topicを除外してから候補上限を適用し、Top 3内もtopicを重複させず、source/category制約を緩和するfallbackでもtopic制約だけは維持する。実Opus 5の3表現、料金・分析記事、別variant、model機能発表の非cluster、現行dataの4枠topic uniquenessをunit/E2Eへ固定する。
 - **教訓**: decision-criticalな複数枠の多様性は、entry、source、categoryだけでは保証できない。同じeventを複数mediaが報じるdashboardでは、high-confidenceなevent identityを独立したselection contractにし、fallbackで再導入しない。汎用token類似だけで過剰clusterせず、明示clusterまたはversion付き発表のように根拠が十分な場合だけ適用する。
 
+### LL-430: SSG endpointのresponse headerは静的artifactへ保持されない
+- **事象**: Astroの`ads.txt.ts` routeはunit実行時に`text/plain; charset=utf-8`を返したが、production build後のpreviewは生成済み`ads.txt`を配信serverが判定し、`Content-Type: text/plain`を返した。
+- **根本原因**: static outputではroute handlerのResponse header自体はartifactへ保存されず、配信時のMIMEは生成fileの拡張子とserver設定から決まる。handler直接testとbuilt previewを同じheader文字列で検証していた。
+- **対策**: unit testはhandlerのcharset指定を固定し、built previewはmedia typeを`text/plain`として検証する。本文、終端改行、HTTP 200は両層で厳密に確認する。
+- **教訓**: SSG endpointの公開contractはhandler直接実行だけで完了にせず、生成fileとproduction相当previewのstatus、media type、本文を別々に検証する。charset parameterの有無を配信server間で同一と仮定しない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

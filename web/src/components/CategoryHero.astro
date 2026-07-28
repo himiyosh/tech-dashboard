@@ -4,6 +4,7 @@
  * Mirrors mockup-F §Category Hero.
  */
 import type { Category } from "../lib/data.ts";
+import { categoryRssHref } from "../lib/rss.ts";
 import { categoryWeekOverWeek } from "../lib/stats.ts";
 
 export interface Props {
@@ -34,7 +35,7 @@ const deltaSign = wow.deltaPct > 0 ? "▲" : wow.deltaPct < 0 ? "▼" : "—";
       </span>
     </div>
   </div>
-  <a class="rss" href={`/rss.xml?category=${slug}`}>
+  <a class="rss" href={categoryRssHref(slug)}>
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M4 11a9 9 0 0 1 9 9"/>
       <path d="M4 4a16 16 0 0 1 16 16"/>

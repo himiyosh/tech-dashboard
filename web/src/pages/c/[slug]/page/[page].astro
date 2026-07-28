@@ -17,6 +17,7 @@ import {
   paginationPageNumbers,
   totalPageCount,
 } from "../../../../lib/route-inventory.ts";
+import { categoryRssHref } from "../../../../lib/rss.ts";
 import { categoryWeekOverWeek } from "../../../../lib/stats.ts";
 
 export function getStaticPaths() {
@@ -57,6 +58,7 @@ const dayGroups = groupByDay(entries);
 const now = new Date();
 const wow = categoryWeekOverWeek(slug);
 const deltaSign = wow.deltaPct > 0 ? "+" : wow.deltaPct < 0 ? "-" : "";
+const rssHref = categoryRssHref(slug);
 
 const breadcrumb = [
   { label: "Home", href: "/" },
@@ -70,6 +72,7 @@ const breadcrumb = [
   pageKey="categories"
   title={`${category.name} · p.${page} — TECH Dashboard`}
   breadcrumb={breadcrumb}
+  rssHref={rssHref}
 >
   <PageHero
     className="page-hero-category-detail"
@@ -83,7 +86,7 @@ const breadcrumb = [
     actions={[
       { href: `/c/${slug}`, label: "First page" },
       { href: "/categories", label: "All categories" },
-      { href: `/rss.xml?category=${slug}`, label: "RSS" },
+      { href: rssHref, label: "RSS" },
     ]}
     metrics={[
       {

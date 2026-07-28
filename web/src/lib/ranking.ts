@@ -18,6 +18,9 @@ type DecisionTopicEntry = Pick<
 const LAUNCH_INTENT_RE =
   /\b(?:announc(?:e|ed|es|ing|ement)|introduc(?:e|ed|es|ing)|launch(?:ed|es|ing)?|releas(?:e|ed|es|ing)|unveil(?:ed|s|ing)?|debut(?:ed|s|ing)?|available|availability|rollout|ships?)\b|発表|登場|リリース|公開|提供開始|利用可能/iu;
 
+const NON_LAUNCH_INTENT_RE =
+  /\b(?:analysis|cost|guide|migration|price|pricing|review|tutorial)\b|分析|価格|ガイド|コスト|使い方|手順|単価|検証|移行|料金|チュートリアル|レビュー/iu;
+
 const MODEL_VERSION_PATTERNS: ReadonlyArray<{
   pattern: RegExp;
   family: (match: RegExpMatchArray) => string;
@@ -52,6 +55,7 @@ export function decisionTopicKey(entry: DecisionTopicEntry): string | null {
   // Use the source title only. Generated title translations can paraphrase
   // analysis as an announcement and would make the fallback over-cluster.
   const text = entry.title.normalize("NFKC").toLocaleLowerCase();
+  if (NON_LAUNCH_INTENT_RE.test(text)) return null;
   if (!LAUNCH_INTENT_RE.test(text)) return null;
 
   for (const { pattern, family, versionIndex } of MODEL_VERSION_PATTERNS) {

@@ -1057,12 +1057,13 @@ describe("decision priority topic diversity", () => {
     expect(new Set(keys)).toEqual(new Set(["model-launch:claude-opus:5"]));
   });
 
-  it("keeps pricing and analysis about the same model independently eligible", () => {
-    expect(decisionTopicKey(makeEntry({
-      title: "Claude Opus 5 pricing and migration guide",
-      titleJa: "Claude Opus 5 発表後の料金と移行ガイド",
-      titleEn: "Introducing a Claude Opus 5 pricing and migration guide",
-    }))).toBeNull();
+  it.each([
+    "Introducing a Claude Opus 5 pricing and migration guide",
+    "Claude Opus 5 released: deployment tutorial",
+    "Claude Opus 5 launch analysis",
+    "Claude Opus 5 発表後の料金と移行ガイド",
+  ])("keeps non-launch decision content independently eligible: %s", (title) => {
+    expect(decisionTopicKey(makeEntry({ title }))).toBeNull();
   });
 
   it("uses an explicit publisher cluster independently of title wording", () => {

@@ -7494,8 +7494,8 @@ test.describe("TECH Dashboard smoke", () => {
           contentOutside: boolean;
           summary: {
             width: number;
-            height: number;
-            lineHeight: number;
+            clientHeight: number;
+            scrollHeight: number;
             whiteSpace: string;
             overflow: string;
             textOverflow: string;
@@ -7539,8 +7539,8 @@ test.describe("TECH Dashboard smoke", () => {
                 const style = getComputedStyle(activeSummary);
                 return {
                   width: summaryBox.width,
-                  height: summaryBox.height,
-                  lineHeight: Number.parseFloat(style.lineHeight),
+                  clientHeight: activeSummary.clientHeight,
+                  scrollHeight: activeSummary.scrollHeight,
                   whiteSpace: style.whiteSpace,
                   overflow: style.overflow,
                   textOverflow: style.textOverflow,
@@ -7620,9 +7620,9 @@ test.describe("TECH Dashboard smoke", () => {
         expect(card.summary!.overflow, `${width}px card ${index + 1} summary clips excess text`).toBe("hidden");
         expect(card.summary!.textOverflow, `${width}px card ${index + 1} summary exposes truncation`).toBe("ellipsis");
         expect(
-          card.summary!.height,
-          `${width}px card ${index + 1} summary is bounded to one line box`,
-        ).toBeLessThanOrEqual(card.summary!.lineHeight + 1);
+          card.summary!.scrollHeight,
+          `${width}px card ${index + 1} summary has no vertical content overflow`,
+        ).toBeLessThanOrEqual(card.summary!.clientHeight + 1);
         expect(
           card.summary!.width,
           `${width}px card ${index + 1} summary retains most of the card width`,

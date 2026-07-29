@@ -2932,6 +2932,36 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: 全addressable detailのJA/EN title pairを先に生成し、実際に衝突するentryだけへcanonical source URLの最終path segmentを事実ベースのdiscriminatorとして付与する。pathでも衝突する場合だけ既存entry IDを最終fallbackにし、canonical URLとsource provenanceは変更しない。Queueは`finalEntries`からbatchを1回だけ選び、そのbatchを送信して`summaryQueueSnapshotStage=final-entries`、candidate、backlog、実送信、ETAへ共有する。実送信が同じbatchのcandidate/backlogを超える場合はclampせずfail-closedにする。
 - **教訓**: remote cache mergeのようにentryの公開可否や表示branchを変える処理がある場合、reader-facing identityと運用telemetryをmerge前後で別々に導出しない。不可逆な送信とpersisted healthは同じfinal snapshotを共有し、別stageを残す必要がある場合はfield名とsnapshot stageを明示する。実送信数を後段candidateへ丸めて整合したように見せず、母集団の不一致をtestで失敗させる。
 
+### LL-445: 検索結果の種類をdestination URLだけから推定しない
+- **事象**: cold Archive記事を`/archive/{month}/#...`へ接続すると、既存検索はURL prefixだけで通常のArchive pageと分類し、記事用のsource authority、重要度、公開時期rankingを適用できなかった。さらにactual cold結果を既存Pagefind結果と同列にsortすると、common queryで古いcold記事が上位10件を占め、現行記事やnavigation resultを押し出した。
+- **根本原因**: content identityとnavigation destinationを同一視し、result kindをURL構造から逆算していた。補助indexを追加的な回収経路として扱わず、既存検索と同じ候補母集団へ無条件に混ぜていた。
+- **対策**: cold recordへ明示的な`resultKind`を持たせ、destinationはArchive anchorのまま記事用metadataとranking contractを適用する。明示category/tag intentとPagefind exact結果を先に保ち、cold候補は残り枠を補完する。singleton tag fast-pathはcold indexを確認でき、同tagのcold候補が0件の場合だけ「唯一」と表示する。
+- **教訓**: 検索resultの意味は遷移先URLと別の契約である。Archive anchor、外部source、canonical landing pageへ遷移する記事でも、authorityや一致理由を失わない明示kindを持たせる。補助indexは既存結果を置換・抑制せずfail-openで合成し、common queryとexact recoveryの両方を実corpusで検証する。
+
+### LL-446: flex pill内の固定iconは外枠とtextの両方に縮小境界を持たせる
+- **事象**: 390x844のEN Archive cardで、外部link hintの`↗`がcard footer pillの右端から3pxはみ出し、page全体の`scrollWidth`が393pxになった。pill外枠へ`max-width:100%`と`overflow:hidden`を付けても、anonymous textと固定iconを含む言語spanの内部overflowは残った。
+- **根本原因**: `a.url`はflex itemとして縮められても、子の言語spanはanonymous text、`white-space:nowrap`のlabel、`flex:none`のiconを持ち、自身に`min-width:0`とoverflow境界がなかった。page-level overflowだけでは、どの入れ子が境界を越えたか分からなかった。
+- **対策**: visible labelを`.url-label`へ分離し、外枠pillとJA/EN言語spanの両方を`min-width:0`、`max-width:100%`、overflow制約へ接続する。labelだけをellipsis対象にし、iconは固定のまま保持する。EN Archive到達後に全DOMRectのoffenderを列挙し、page overflow 0をE2Eへ固定した。
+- **教訓**: flex controlの横overflowは外枠だけをclipして完了にしない。固定iconと可変labelを持つ入れ子ごとに縮む所有者を明示し、表示言語が長い状態で親子の実寸を測る。anonymous textは縮小契約を付けにくいためsemantic spanへ分離する。
+
+### LL-447: 補助検索indexはprimary検索と並行取得するだけでなく先行結果を即描画する
+- **事象**: cold Archive indexとPagefindを同時にfetchしても、両方をawaitしてから最終結果を描画していたため、primary Pagefindが即時完了しても補助indexの2.5秒timeoutまで利用者へ結果を出せなかった。cold exact件数をPagefind候補走査の早期終了へ含めると、primary exact記事のhydrateも途中で止められた。
+- **根本原因**: I/Oの並行開始をUIの非blocking contractと同一視し、結果描画と候補countのownershipを分離していなかった。
+- **対策**: Pagefindの検索・hydrateをeager promiseへ集約し、結果が得られた時点でgeneration guard付きの共通rendererへ先行描画する。cold index到着後は同じrendererで追加更新し、早期終了countはPagefind由来候補だけを数える。singleton tagの安全確認中もPagefind結果を先に表示し、fast-path確定後だけ置換する。
+- **教訓**: 補助indexのfail-openは「失敗してもprimaryを残す」だけでなく「遅くてもprimaryを待たせない」ことを含む。fetch開始、hydrate、描画、最終mergeを別の状態として扱い、先行結果の表示時刻を遅延fixtureで直接検証する。
+
+### LL-448: actual corpus parityは未出現のcanonical branchを保護しない
+- **事象**: cold Archive全entryについてWeb helperとPublisher helperのcanonical key一致を検証していたが、現行cold corpusには`m.youtube.com`と`medium.com/netflix-techblog`が無く、両alias branchを削除してもtestが通る状態だった。
+- **根本原因**: 実artifact全量検査を分岐coverageの証拠とみなし、canonicalizerが持つprovider alias、tracking除去、custom domainの固定境界fixtureを別に置いていなかった。
+- **対策**: mobile YouTube、Medium Netflix publication、Netflix custom domain、tracking queryのliteral期待値とalias間anchor同一性を固定fixtureにした。`m.youtube.com`正規化とMedium aliasを1つずつ一時除去し、それぞれfixtureとanchor assertionがREDになるmutation確認後にproduction codeを復元した。
+- **教訓**: actual corpus testは現在存在するdataのdriftを検出するが、未出現の条件分岐を守らない。canonical URL、taxonomy alias、provider mappingのような有限policyは、actual corpus全量検査に加えて代表branchのliteral fixtureとmutation REDを持たせる。
+
+### LL-449: compactnessを絶対panel高だけで検証しない
+- **事象**: mobile Top 3のcompactnessをpanel `<=380px`、card `<=118px`で固定したtestが、同一Web実装でもLinux runnerで`381.421875px`となりretryを含めて失敗した。panel gapを2px縮めて閾値へ合わせる変更は、表示意図ではなくtest値を満たすだけだった。
+- **根本原因**: compactnessの利用者向け意図をfont metricsとsubpixel roundingへ依存する絶対高さへ潰し、表示件数、summary clamp、content overflow、card間非交差、tabbar安全距離を直接検証していなかった。
+- **対策**: gap workaroundを撤回し、390x844と375x667でexact 3 cards、重複reason 0、summaryのnowrap/hidden/ellipsisと縦overflow不在、card contentの境界内収容、card同士の非交差、44px article target、tabbarとの8px安全距離、footer非表示、page overflow 0を測るtestへ置き換えた。first-viewとFeatured/ticker境界の既存assertionは維持した。
+- **教訓**: visual compactnessは単一の絶対高さではなく、情報量、行数、overflow、隣接surface、操作寸法の組み合わせで検証する。OS差で閾値を僅かに超えた場合、製品CSSを縮めたり上限を緩めたりせず、利用者が困る状態を直接表す相対geometryへ分解する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

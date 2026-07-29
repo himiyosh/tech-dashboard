@@ -34,9 +34,15 @@ export interface Props {
   entry: NormalizedEntry;
   href?: string;
   external?: boolean;
+  anchorId?: string;
 }
 
-const { entry, href: hrefOverride, external: externalOverride } = Astro.props;
+const {
+  entry,
+  href: hrefOverride,
+  external: externalOverride,
+  anchorId,
+} = Astro.props;
 const defaultDestination = entryDestination(entry);
 const href = hrefOverride ?? defaultDestination.href;
 const external = externalOverride ?? defaultDestination.external;
@@ -140,13 +146,16 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
 ---
 
 <article
+  id={anchorId}
   class:list={["card", "has-thumb", { important: isImportant }]}
   data-summary-state={hasSummary ? "ready" : "pending"}
   data-entry-id={entry.id}
   data-archive-tier={entry.archiveTier}
+  data-archive-search-anchor={anchorId || undefined}
   data-detail-destination={external ? "source" : "internal"}
   data-pagefind-body
   data-reveal="card"
+  tabindex={anchorId ? "-1" : undefined}
   style={`--cat-color:${catColor}`}
 >
   <div class="card-body">
@@ -325,11 +334,11 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
           onerror="this.style.display='none'"
         />
         <span class="i18n-ja">
-          {external ? "元記事" : "記事詳細"}
+          <span class="url-label">{external ? "元記事" : "記事詳細"}</span>
           {external && <ExternalLinkHint lang="ja" />}
         </span>
         <span class="i18n-en" lang="en">
-          {external ? "Original article" : "Article details"}
+          <span class="url-label">{external ? "Original article" : "Article details"}</span>
           {external && <ExternalLinkHint lang="en" />}
         </span>
         {!external && <span class="arrow">→</span>}

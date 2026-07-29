@@ -2901,6 +2901,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: review/comment evidenceの`user.login`と`author_association`をbodyと一緒に正規化し、repository ownerのloginかつ`author_association=OWNER`の場合だけstrict head・reviewer UUID・fail-dominates判定へ進める。untrusted authorはpassにもfailにも数えず、専用diagnosticで可視化する。正当markerを持つ既存PR #200/#203/#205がすべて`himiyosh`/`OWNER`であることをRESTで確認し、NONE、login不一致、association不一致、author欠落を回帰testに固定した。
 - **教訓**: 公開repositoryのreview gateはmarker本文だけをauthorityにしない。公開・再利用可能なsession ID、token-like label、署名のないmetadataはidentity proofではないため、providerが返すauthor evidenceとexpected sessionの両方をfail-closedで検証する。untrustedなfail markerもdenial-of-serviceへ使わせず、authoritative evidenceだけがpass/failへ影響するようにする。
 
+### LL-440: 表示modeの操作面は切替buttonだけでなく各panel内の導線まで検証する
+- **事象**: arXivのCards/Compact切替buttonをmobileで45pxへ広げ、Cards panelの記事title linkも45pxへ揃えたが、Compact panelの`CompactRow` anchorは34pxのまま残った。E2EはCompactへ切り替えてpanel表示だけを確認したため、全Compact記事linkが44px未満でも通過した。
+- **根本原因**: view switch controlとactive panel内のreader-facing navigationを別々の操作契約として棚卸しせず、既定Cards modeのtarget寸法をalternate Compact modeへ横展開していなかった。
+- **対策**: `CompactRow`はmobile breakpointで45px以上のblock sizeを持たせる。E2Eは375px/390pxでCompactへ切り替え、filter後の全visible anchorについてDOMRect、非交差、横overflow、center hit ownershipを測り、実際に記事detailへ遷移して戻った後もCompact stateを保持し、Cardsへ再切替できることを固定する。
+- **教訓**: tabs、segmented controls、Cards/List切替のtouch-target監査は切替buttonやdefault panelだけで完了にしない。全modeを実際にactivateし、各panel内の主要link/buttonの寸法、hit-testing、navigation、state復帰を同じviewportで検証する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

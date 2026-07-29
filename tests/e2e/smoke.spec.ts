@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { expect, test, type Page, type Route } from "@playwright/test";
+import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 import {
   effectiveTitleLanguage,
   summaryForLangWithFallback,
@@ -235,6 +235,86 @@ async function expectPagefindReady(page: Page): Promise<void> {
       { timeout: 10_000 },
     )
     .toBe(true);
+}
+
+async function settleResponsiveLayout(page: Page): Promise<void> {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      ),
+  );
+}
+
+async function expectTouchTargets(
+  page: Page,
+  selector: string,
+  label: string,
+): Promise<void> {
+  const targets = page.locator(selector);
+  const count = await targets.count();
+  expect(count, `${label} exposes touch targets`).toBeGreaterThan(0);
+
+  const geometry = await targets.evaluateAll((nodes) => {
+    const boxes = nodes.map((node, index) => {
+      const rect = node.getBoundingClientRect();
+      return {
+        index,
+        width: rect.width,
+        height: rect.height,
+        left: rect.left,
+        right: rect.right,
+        top: rect.top,
+        bottom: rect.bottom,
+      };
+    });
+    const overlaps: Array<[number, number]> = [];
+    boxes.forEach((box, index) => {
+      boxes.slice(index + 1).forEach((other) => {
+        if (
+          box.left < other.right &&
+          box.right > other.left &&
+          box.top < other.bottom &&
+          box.bottom > other.top
+        ) {
+          overlaps.push([box.index, other.index]);
+        }
+      });
+    });
+    return {
+      boxes,
+      overlaps,
+      overflow: document.documentElement.scrollWidth - window.innerWidth,
+      viewportWidth: window.innerWidth,
+    };
+  });
+
+  expect(geometry.overlaps, `${label} targets do not overlap`).toEqual([]);
+  expect(geometry.overflow, `${label} page has no horizontal overflow`).toBeLessThanOrEqual(0);
+  for (const box of geometry.boxes) {
+    expect(box.width, `${label} target ${box.index} keeps a 44px width`).toBeGreaterThanOrEqual(44);
+    expect(box.height, `${label} target ${box.index} keeps a 44px height`).toBeGreaterThanOrEqual(44);
+    expect(box.left, `${label} target ${box.index} stays inside the left edge`).toBeGreaterThanOrEqual(0);
+    expect(box.right, `${label} target ${box.index} stays inside the right edge`).toBeLessThanOrEqual(
+      geometry.viewportWidth,
+    );
+  }
+}
+
+async function expectTargetOwnsCenter(target: Locator, label: string): Promise<void> {
+  await target.scrollIntoViewIfNeeded();
+  await expect(target).toBeVisible();
+  expect(
+    await target.evaluate((node) => {
+      const rect = node.getBoundingClientRect();
+      const hit = document.elementFromPoint(
+        rect.left + rect.width / 2,
+        rect.top + rect.height / 2,
+      );
+      return hit === node || (hit instanceof Node && node.contains(hit));
+    }),
+    `${label} owns its center hit target`,
+  ).toBe(true);
 }
 
 async function expectResponsivePageHero(
@@ -4756,6 +4836,53 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page).toHaveURL(/\/c\/copilot\/?$/);
   });
 
+  test("mobile category directory and article titles keep 44px touch targets", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/categories/");
+
+    const directorySelector = "#category-directory a.category-directory-item";
+    await expect(page.locator(directorySelector)).toHaveCount(14);
+    for (const viewport of [
+      { width: 375, height: 667 },
+      { width: 390, height: 844 },
+      { width: 640, height: 844 },
+      { width: 641, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await settleResponsiveLayout(page);
+      await expectTouchTargets(page, directorySelector, `${viewport.width}px category directory`);
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await settleResponsiveLayout(page);
+    const agentFrameworks = page.locator(
+      '#category-directory a.category-directory-item[href="/c/agent-fw"]',
+    );
+    await expectTargetOwnsCenter(agentFrameworks, "Agent Frameworks directory link");
+    await agentFrameworks.click();
+    await expect(page).toHaveURL(/\/c\/agent-fw\/?$/);
+
+    const categoryTitleSelector = "main article.card h3.title > a";
+    for (const viewport of [
+      { width: 375, height: 667 },
+      { width: 390, height: 844 },
+      { width: 720, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await settleResponsiveLayout(page);
+      await expectTouchTargets(page, categoryTitleSelector, `${viewport.width}px category article title`);
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await settleResponsiveLayout(page);
+    const firstArticle = page.locator(categoryTitleSelector).first();
+    await expectTargetOwnsCenter(firstArticle, "category article title");
+    const detailHref = await firstArticle.getAttribute("href");
+    expect(detailHref).toMatch(/^\/e\/[a-f0-9]{16}\/$/);
+    await firstArticle.click();
+    await expect.poll(() => new URL(page.url()).pathname).toBe(detailHref);
+  });
+
   test("Research overview exposes distinct curated and arXiv destinations", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/categories/");
@@ -8970,6 +9097,106 @@ test.describe("TECH Dashboard smoke", () => {
     await page.locator('.paper-filter-tabs [data-paper-filter="all"]').click();
     await expect(page).toHaveURL(/\/arxiv\/$/);
     await expect(page.locator('.paper-filter-tabs [data-paper-filter="all"]')).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("mobile Spotlight, arXiv titles, filters, and view controls keep 44px targets", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/");
+    for (const viewport of [
+      { width: 375, height: 667 },
+      { width: 390, height: 844 },
+      { width: 720, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await settleResponsiveLayout(page);
+      await expectTouchTargets(
+        page,
+        "article.featured .featured-title > a",
+        `${viewport.width}px Spotlight title`,
+      );
+    }
+
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/arxiv/");
+    const arxivControls = ".paper-controls .paper-filter-btn, .paper-controls .paper-view-btn";
+    const arxivTitles = '[data-paper-view-panel="cards"] article.card h3.title > a';
+    await expect(page.locator(arxivControls)).toHaveCount(7);
+    for (const viewport of [
+      { width: 375, height: 667 },
+      { width: 390, height: 844 },
+      { width: 720, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await settleResponsiveLayout(page);
+      await expectTouchTargets(page, arxivControls, `${viewport.width}px arXiv controls`);
+      await expectTouchTargets(page, arxivTitles, `${viewport.width}px arXiv article titles`);
+    }
+
+    await page.setViewportSize({ width: 721, height: 844 });
+    await settleResponsiveLayout(page);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await settleResponsiveLayout(page);
+    const sourceFilter = page.locator(
+      '.paper-filter-tabs [data-paper-filter="arxiv-cs-cl"]',
+    );
+    await expectTargetOwnsCenter(sourceFilter, "arXiv source filter");
+    await sourceFilter.click();
+    await expect(sourceFilter).toHaveAttribute("aria-pressed", "true");
+    const filteredCards = page.locator(
+      '[data-paper-view-panel="cards"] [data-paper-entry]:visible',
+    );
+    expect(await filteredCards.count()).toBeGreaterThan(0);
+    expect(
+      await filteredCards.evaluateAll((entries) =>
+        entries.every((entry) => (entry as HTMLElement).dataset.source === "arxiv-cs-cl")
+      ),
+    ).toBe(true);
+
+    const compactView = page.locator('[data-paper-view="compact"]');
+    await expectTargetOwnsCenter(compactView, "arXiv Compact view control");
+    await compactView.click();
+    await expect(compactView).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator('[data-paper-view-panel="compact"]')).toBeVisible();
+    await expect(page.locator('[data-paper-view-panel="cards"]')).toBeHidden();
+
+    const compactArticleLinks =
+      '[data-paper-view-panel="compact"] [data-paper-entry]:not([hidden]) > a.row';
+    for (const viewport of [
+      { width: 375, height: 667 },
+      { width: 390, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await settleResponsiveLayout(page);
+      await expectTouchTargets(
+        page,
+        compactArticleLinks,
+        `${viewport.width}px arXiv Compact article links`,
+      );
+    }
+
+    const firstCompactArticle = page.locator(`${compactArticleLinks}[href^="/e/"]`).first();
+    await expectTargetOwnsCenter(firstCompactArticle, "arXiv Compact article link");
+    const compactDetailHref = await firstCompactArticle.getAttribute("href");
+    expect(compactDetailHref).toMatch(/^\/e\/[a-f0-9]{16}\/$/);
+    await firstCompactArticle.click();
+    await expect.poll(() => new URL(page.url()).pathname).toBe(compactDetailHref);
+    await page.goBack();
+    await expect(page.locator('[data-paper-view-panel="compact"]')).toBeVisible();
+    await expect(page.locator('[data-paper-view="compact"]')).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    const cardsView = page.locator('[data-paper-view="cards"]');
+    await cardsView.click();
+    await expect(cardsView).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator('[data-paper-view-panel="cards"]')).toBeVisible();
   });
 
   test("arXiv exposes a localized RSS subscription action and autodiscovery", async ({

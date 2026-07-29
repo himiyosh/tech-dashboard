@@ -29,6 +29,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 変更
 
+- Categoriesのcompact directory、arXivのsource filter・Cards/Compact切替、Home・カテゴリ・arXivのCards/Compact両表示の記事linkをmobileで45px以上の操作面に揃え、375px/390pxでも横overflowや操作密度を崩さないようにしました。
 - PrivacyのJA/EN説明へCloudflare Web Analytics (RUM)を明記し、任意のAdSense同意とは独立して通常閲覧時に性能・request情報がCloudflareへ送信される場合があること、保持とcontrolはCloudflareのpolicyに従うことを公開しました。カテゴリRSSの案内も実装済みの`/rss/<category>.xml`へ訂正しました。
 - PR CIでexact-head独立レビューgateを独立jobとして実行し、marker待ちでもunit・typecheck・Web build・E2Eを継続できるようにしました。event由来のPR番号・head、REST由来のcurrent open state、repository ownerかつ`author_association=OWNER`の投稿者境界、外部reviewer session、統括session、厳格なmarkerをfail-closedで検証します。closed済みPRのhistorical rerunだけはREST state確認後にskipし、open PRのmarker投稿後は同一headのfailed runを再実行します。CI成功後もmerge直前のlocal gateは必須です。
 - 初回の広告同意promptを全viewportで通常flow内のcompact stripへ変更し、Spotlight・Top 3・記事詳細・Search・focus可能なcontrolを覆わないようにしました。Google AdSenseが任意であること、拒否しても全機能を利用できること、外部mediaは別に読み込む場合があることを維持し、JA/ENの許可・拒否・プライバシー詳細controlは45px以上の操作面と具体的なaccessible nameを持ちます。別tabで広告選択が未決定へ戻った場合や言語切替でstrip高が変わった場合も、開いているSearchをstripの下へ再配置します。同意未決定のdesktopではFooterを通常flowへ戻し、Top 3のsource controlを覆わないようにします。決定後は既存の固定Footerへ復帰します。

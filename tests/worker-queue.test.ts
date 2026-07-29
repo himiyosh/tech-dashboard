@@ -209,7 +209,7 @@ describe("worker summary queue selection", () => {
       30,
     );
     expect(jobs.map((job) => job.url)).toEqual([contaminatedEntry.url]);
-    expect(isSummaryComplete(contaminatedCache)).toBe(false);
+    expect(isSummaryComplete(contaminatedCache, baseEntry)).toBe(false);
   });
 
   it("does not accept a materially contradictory summary cache hit", () => {

@@ -544,6 +544,17 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
       ["nvidia-blog", "It’s Gonna Be May: 16 Games Hit the Cloud, Including ‘Palworld’"],
       ["ars-technica", "When your vehicle outlives its cloud: What happens next?"],
     ] as const;
+    const consumerCloudGamingCase = [
+      "the-verge",
+      "Logitech’s handheld plans are on ice — don’t expect a G Cloud 2 soon",
+    ] as const;
+    const cloudGamingBoundaryKeepCases = [
+      ["aws-news", "Amazon Bedrock introduces new advanced prompt optimization and migration tool"],
+      ["ars-technica", "Zero-day exploit completely defeats default Windows 11 BitLocker protections"],
+      ["aws-news", "AWS Interconnect is now generally available, with a new option to simplify last-mile connectivity"],
+      ["microsoft-source", "Rethinking cloud operations with agentic observability"],
+      ["aws-news", "Scaling cloud infrastructure for AI workloads"],
+    ] as const;
     const evidenceBackedLowSignalCases = [
       ["google-keyword", "Here’s how to make study notebooks in the Gemini app."],
       ["google-keyword", "3 ways this coffee shop is growing with Gemini"],
@@ -654,6 +665,14 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
         REGISTRY["nvidia-blog"],
         "NVIDIA Open Sources First GPU-Accelerated Medical Physics Simulation Framework",
       )).toBe(true);
+    });
+
+    it("drops the actual Logitech G Cloud handheld story without hiding AI cloud, security, or developer infrastructure", () => {
+      const [sourceId, title] = consumerCloudGamingCase;
+      expect(check(REGISTRY[sourceId], title), `${sourceId}: ${title}`).toBe(false);
+      for (const [keepSourceId, keepTitle] of cloudGamingBoundaryKeepCases) {
+        expect(check(REGISTRY[keepSourceId], keepTitle), `${keepSourceId}: ${keepTitle}`).toBe(true);
+      }
     });
 
     it("drops DORA awards and site-update posts while keeping research reports", () => {

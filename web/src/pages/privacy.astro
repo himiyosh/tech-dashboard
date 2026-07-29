@@ -63,8 +63,8 @@ import {
             <span class="i18n-en" lang="en">Analytics</span>
           </dt>
           <dd>
-            <span class="i18n-ja">未使用</span>
-            <span class="i18n-en" lang="en">Not used</span>
+            <span class="i18n-ja">Cloudflare RUM</span>
+            <span class="i18n-en" lang="en">Cloudflare RUM</span>
           </dd>
         </div>
         <div>
@@ -118,8 +118,8 @@ import {
           <span class="i18n-en" lang="en">Reading does not require advertising consent</span>
         </h2>
         <p>
-          <span class="i18n-ja">記事一覧、検索、Archive、RSS、JSON Feed は広告を許可しなくても利用できます。TECH Dashboard は独立したアクセス解析サービスを使用していません。任意の広告スクリプトは、利用者が「広告を許可」を選んだ場合だけ本番カスタムドメインで読み込みます。</span>
-          <span class="i18n-en" lang="en">Article lists, search, Archive, RSS, and JSON Feed work without advertising consent. TECH Dashboard does not use a separate analytics service. Optional advertising loads on the production custom domain only after you choose “Allow advertising.”</span>
+          <span class="i18n-ja">記事一覧、検索、Archive、RSS、JSON Feed は広告を許可しなくても利用できます。本番サイトでは、配信基盤のCloudflare Web Analytics (RUM) がパフォーマンス計測のため通常の閲覧時に動作します。これは任意の広告同意とは別であり、TECH Dashboardはほかのアクセス解析providerを追加していません。任意の広告scriptは、利用者が「広告を許可」を選んだ場合だけ本番custom domainで読み込みます。</span>
+          <span class="i18n-en" lang="en">Article lists, search, Archive, RSS, and JSON Feed work without advertising consent. On the production site, Cloudflare Web Analytics (RUM) operates during normal browsing to measure performance. It operates independently of optional advertising consent, and TECH Dashboard does not add another analytics provider. Optional advertising loads on the production custom domain only after you choose “Allow advertising.”</span>
         </p>
       </section>
 
@@ -153,7 +153,7 @@ import {
           </div>
         </div>
         <dl class="privacy-practices">
-          <div>
+          <div data-privacy-practice="display">
             <dt>
               <span class="i18n-ja">表示設定</span>
               <span class="i18n-en" lang="en">Display preferences</span>
@@ -163,17 +163,27 @@ import {
               <span class="i18n-en" lang="en">Interface language, arXiv view mode, and advertising choice are stored in localStorage. English mode is also reflected as <code>?lang=en</code> in shareable URLs, so Cloudflare receives it as ordinary delivery request data. The advertising choice is not sent to the operator's server.</span>
             </dd>
           </div>
-          <div>
+          <div data-privacy-practice="search">
             <dt>
               <span class="i18n-ja">検索</span>
               <span class="i18n-en" lang="en">Search</span>
             </dt>
             <dd>
-              <span class="i18n-ja">Pagefindの静的indexをbrowser内で検索します。共有可能な検索URLには<code>?q=</code>、<code>?tag=</code>、exact recovery用の<code>?entry=</code>が含まれる場合があります。RSSのカテゴリ絞り込みは<code>?category=</code>を使います。これらはCloudflareが通常の配信requestとして処理しますが、独立したアクセス解析serviceへ送りません。</span>
-              <span class="i18n-en" lang="en">Pagefind searches a static index in the browser. Shareable search URLs can contain <code>?q=</code>, <code>?tag=</code>, and an exact-recovery <code>?entry=</code>. RSS category filters use <code>?category=</code>. Cloudflare processes these as ordinary delivery requests, but they are not sent to a separate analytics service.</span>
+              <span class="i18n-ja">Pagefindの静的indexをbrowser内で検索します。共有可能な検索URLには<code>?q=</code>、<code>?tag=</code>、exact recovery用の<code>?entry=</code>が含まれる場合があります。カテゴリRSSは<code>/rss/&lt;category&gt;.xml</code>で配信します。これらのpathとqueryはCloudflareが通常の配信requestとして処理します。</span>
+              <span class="i18n-en" lang="en">Pagefind searches a static index in the browser. Shareable search URLs can contain <code>?q=</code>, <code>?tag=</code>, and an exact-recovery <code>?entry=</code>. Category RSS is served at <code>/rss/&lt;category&gt;.xml</code>. Cloudflare processes these paths and queries as ordinary delivery requests.</span>
             </dd>
           </div>
-          <div>
+          <div data-privacy-practice="rum">
+            <dt>
+              <span class="i18n-ja">パフォーマンス計測 (RUM)</span>
+              <span class="i18n-en" lang="en">Performance measurement (RUM)</span>
+            </dt>
+            <dd>
+              <span class="i18n-ja">本番サイトではCloudflare Web Analytics (RUM)を使用します。任意の広告への同意とは独立して、通常の閲覧時に<code>static.cloudflareinsights.com</code>のbeaconが読み込まれ、browserのPerformance APIから得るpage読込・応答性などの性能測定値、閲覧pageのURL、送信元IPなど通常のrequest contextを<code>/cdn-cgi/rum</code>へ送信する場合があります。目的はsiteの性能と利用状況の把握です。保持とcontrolはCloudflareのpolicyに従います。</span>
+              <span class="i18n-en" lang="en">The production site uses Cloudflare Web Analytics (RUM). Independently of optional advertising consent, normal site use can load a beacon from <code>static.cloudflareinsights.com</code> and send performance measurements from browser Performance APIs, such as page-load and responsiveness data, together with the viewed page URL and ordinary request context such as source IP, to <code>/cdn-cgi/rum</code>. Its purpose is to understand site performance and usage. Retention and controls follow Cloudflare's policy.</span>
+            </dd>
+          </div>
+          <div data-privacy-practice="delivery">
             <dt>
               <span class="i18n-ja">配信request</span>
               <span class="i18n-en" lang="en">Delivery requests</span>
@@ -183,7 +193,7 @@ import {
               <span class="i18n-en" lang="en">Cloudflare Pages and Functions deliver the site and APIs. Cloudflare may process HTTP request metadata such as URL path and query, IP address, user agent, and referrer for delivery, security, and abuse prevention. Retention and controls follow Cloudflare's policy.</span>
             </dd>
           </div>
-          <div>
+          <div data-privacy-practice="media">
             <dt>
               <span class="i18n-ja">外部media</span>
               <span class="i18n-en" lang="en">External media</span>
@@ -193,7 +203,7 @@ import {
               <span class="i18n-en" lang="en">Independently of the advertising choice, article images and favicons may load directly from source sites or image providers. Those requests may expose URL, IP address, browser information, and referrer to the destination. Each destination controls retention and deletion; this page's deletion control cannot remove that data.</span>
             </dd>
           </div>
-          <div>
+          <div data-privacy-practice="retention">
             <dt>
               <span class="i18n-ja">保持期間</span>
               <span class="i18n-en" lang="en">Retention</span>
@@ -248,8 +258,8 @@ import {
           <li>
             <strong>Cloudflare</strong>
             <span>
-              <span class="i18n-ja">site配信、Functions、D1、任意のいいね検証。request metadataとTurnstile verification dataの保持・controlはCloudflareのpolicyに従い、このpageのlocal/D1削除ではCloudflare側の記録を消去できません。</span>
-              <span class="i18n-en" lang="en">Site delivery, Functions, D1, and optional like verification. Cloudflare controls retention and deletion of request metadata and Turnstile verification data; this page's local/D1 deletion cannot remove provider-side records.</span>
+              <span class="i18n-ja">site配信、Functions、D1、任意広告への同意と独立して動作するWeb Analytics (RUM)、任意のいいね検証に使用します。request metadata、RUM performance data、Turnstile verification dataの保持・controlはCloudflareのpolicyに従い、このpageのlocal/D1削除ではCloudflare側の記録を消去できません。</span>
+              <span class="i18n-en" lang="en">Used for site delivery, Functions, D1, Web Analytics (RUM) that operates independently of optional advertising consent, and optional like verification. Retention and controls for request metadata, RUM performance data, and Turnstile verification data follow Cloudflare's policy; this page's local/D1 deletion cannot remove provider-side records.</span>
             </span>
             <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">
               Privacy policy

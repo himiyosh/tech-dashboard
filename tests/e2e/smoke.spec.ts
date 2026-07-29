@@ -5680,6 +5680,19 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("#contact")).toContainText("himiyosh@gmail.com");
     await expect(page.locator("#contact")).toContainText("日本");
     await expect(page.locator('a[href="mailto:himiyosh@gmail.com"]')).toBeVisible();
+    const rumPractice = page.locator('[data-privacy-practice="rum"]');
+    await expect(rumPractice).toBeVisible();
+    await expect(rumPractice.locator("dt .i18n-ja")).toHaveText("パフォーマンス計測 (RUM)");
+    await expect(rumPractice.locator("dd > .i18n-ja")).toBeVisible();
+    await expect(rumPractice.locator("dd > .i18n-ja")).toContainText(
+      "Cloudflare Web Analytics",
+    );
+    await expect(rumPractice.locator("dd > .i18n-en")).toBeHidden();
+    expect(
+      await page
+        .locator(".privacy-practices > [data-privacy-practice]")
+        .evaluateAll((items) => items.map((item) => item.getAttribute("data-privacy-practice"))),
+    ).toEqual(["display", "search", "rum", "delivery", "media", "retention"]);
 
     const denied = page.getByRole("button", { name: "広告なしで続行" });
     await denied.click();
@@ -5749,6 +5762,14 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.getByRole("complementary", { name: "Privacy page navigation" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Continue without ads" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Allow advertising" })).toBeVisible();
+    await expect(rumPractice.locator("dt .i18n-en")).toHaveText(
+      "Performance measurement (RUM)",
+    );
+    await expect(rumPractice.locator("dd > .i18n-en")).toBeVisible();
+    await expect(rumPractice.locator("dd > .i18n-en")).toContainText(
+      /independently of optional advertising consent/i,
+    );
+    await expect(rumPractice.locator("dd > .i18n-ja")).toBeHidden();
     await expect(
       page.getByRole("link", { name: /Privacy policy .*opens in a new tab/ }).first(),
     ).toBeVisible();
@@ -5765,6 +5786,23 @@ test.describe("TECH Dashboard smoke", () => {
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
+    const rumGeometry = await rumPractice.evaluate((item) => {
+      const itemRect = item.getBoundingClientRect();
+      const termRect = item.querySelector("dt")?.getBoundingClientRect();
+      const descriptionRect = item.querySelector("dd")?.getBoundingClientRect();
+      return {
+        viewportWidth: window.innerWidth,
+        item: {
+          left: itemRect.left,
+          right: itemRect.right,
+        },
+        termBottom: termRect?.bottom ?? 0,
+        descriptionTop: descriptionRect?.top ?? 0,
+      };
+    });
+    expect(rumGeometry.item.left).toBeGreaterThanOrEqual(0);
+    expect(rumGeometry.item.right).toBeLessThanOrEqual(rumGeometry.viewportWidth);
+    expect(rumGeometry.descriptionTop).toBeGreaterThanOrEqual(rumGeometry.termBottom);
     const targetHeights = await page
       .locator(
         ".consent-actions button, .privacy-controls button, .privacy-rail nav a, .third-party-list a, .privacy-contact a",

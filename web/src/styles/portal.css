@@ -716,6 +716,20 @@ header {
   border-radius: 2px;
 }
 
+.card[data-archive-search-anchor] {
+  scroll-margin-top: 120px;
+}
+
+.card[data-archive-search-anchor]:target {
+  border-color: color-mix(in srgb, var(--important) 70%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--important) 18%, transparent);
+}
+
+.card[data-archive-search-anchor]:focus {
+  outline: 2px solid var(--important);
+  outline-offset: 3px;
+}
+
 .search-empty {
   padding: 14px 12px;
   font-size: 12px;
@@ -3030,7 +3044,10 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  flex: 0 1 auto;
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   margin-left: auto;
   padding: 3px 6px;
   border: 1px solid color-mix(in srgb, var(--border) 68%, transparent);
@@ -3039,7 +3056,17 @@ main {
   text-decoration: none;
 }
 
-.card .url span:not(.arrow) {
+.card .url > .i18n-ja,
+.card .url > .i18n-en {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.card .url-label {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

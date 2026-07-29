@@ -7909,7 +7909,9 @@ test.describe("TECH Dashboard smoke", () => {
     await opener.click();
     const input = page.locator("#pagefind-search-input");
     await input.fill("agent");
-    const hits = page.locator(".search-hit");
+    const hits = page.locator(
+      '.search-hit:not([data-result-kind="cold-archive"])',
+    );
     await expect(hits).toHaveCount(4);
     expect(await hits.evaluateAll((items) => items.map((item) => item.getAttribute("aria-selected")))).toEqual([
       "false",
@@ -7966,10 +7968,16 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.locator("button[data-search-trigger]:visible").first().click();
     await page.locator("#pagefind-search-input").fill("Copilot");
-    const hits = page.locator(".search-hit");
-    await expect(hits).toHaveCount(3);
-    await expect(hits.nth(1)).toHaveAttribute("href", "/e/community-current/");
-    await expect(hits.nth(2)).toHaveAttribute("href", "/e/official-archive/");
+    const hits = page.locator(
+      '.search-hit:not([data-result-kind="cold-archive"])',
+    );
+    await expect(hits.first()).toHaveAttribute("href", "/c/copilot/");
+    const pagefindArticles = page.locator(
+      '.search-hit[data-result-kind="article"]',
+    );
+    await expect(pagefindArticles).toHaveCount(2);
+    await expect(pagefindArticles.nth(0)).toHaveAttribute("href", "/e/community-current/");
+    await expect(pagefindArticles.nth(1)).toHaveAttribute("href", "/e/official-archive/");
   });
 
   test("pagefind scans a bounded candidate window before applying recency ranking", async ({ page }) => {
@@ -8138,6 +8146,377 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(form).toHaveClass(/is-open/);
   });
 
+  test("search recovers an actual cold article through its archive month anchor", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    const payload = JSON.parse(
+      readFileSync("web/dist/cold-archive-search.json", "utf8"),
+    ) as {
+      entries: Array<{
+        entryId: string;
+        anchorId: string;
+        archiveMonth: string;
+        href: string;
+        titleJa: string;
+        titleEn: string;
+        tags: string[];
+      }>;
+    };
+    const coldTagCounts = new Map<string, number>();
+    for (const entry of payload.entries) {
+      for (const tag of new Set(entry.tags.map(normalizeTagKey))) {
+        coldTagCounts.set(tag, (coldTagCounts.get(tag) ?? 0) + 1);
+      }
+    }
+    const record = requirePresent(
+      payload.entries.find(
+        (entry) =>
+          !entry.titleJa
+          && entry.titleEn.length >= 12
+          && entry.tags.length > 0,
+      ),
+      "built cold archive search index has an English-only title fixture",
+    );
+    const tagFixture = requirePresent(
+      payload.entries
+        .flatMap((entry) =>
+          entry.tags.map((tag) => ({ entry, tag })),
+        )
+        .find(
+          ({ entry, tag }) =>
+            coldTagCounts.get(normalizeTagKey(tag)) === 1
+            && !normalizeTagKey(`${entry.titleJa} ${entry.titleEn}`)
+              .includes(normalizeTagKey(tag)),
+        ),
+      "built cold archive search index has a unique tag fixture",
+    );
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await expectPagefindReady(page);
+    await page.evaluate(() => {
+      const pagefind = (window as any).__pagefind;
+      pagefind.search = async () => {
+        throw new Error("synthetic Pagefind outage");
+      };
+    });
+    await page.locator("button[data-search-trigger]:visible").first().click();
+    const input = page.locator("#pagefind-search-input");
+    await input.fill(record.titleEn);
+    await expect(input).toBeFocused();
+
+    const coldHit = page.locator(
+      `.search-hit[data-result-kind="cold-archive"][href="${record.href}"]`,
+    );
+    await expect(coldHit).toBeVisible({ timeout: 10_000 });
+    await expect(coldHit).toHaveAttribute("data-match-scope", "title");
+    await expect(coldHit.locator(".search-hit-type")).toHaveText("ARCHIVE");
+    await expect(coldHit.locator(".search-hit-authority")).toHaveCount(1);
+    await expect(coldHit.locator(".search-hit-meta")).toContainText("Archive");
+    await expect(
+      coldHit.locator(".search-hit-title .search-hit-fallback .i18n-ja"),
+    ).toHaveText("原文 EN");
+    await expect(
+      coldHit.locator(".search-hit-title > span[lang='en']"),
+    ).toContainText(record.titleEn);
+    const geometry = await coldHit.evaluate((hit) => {
+      const rect = hit.getBoundingClientRect();
+      const center = document.elementFromPoint(
+        rect.left + rect.width / 2,
+        rect.top + Math.min(rect.height / 2, 22),
+      );
+      return {
+        width: rect.width,
+        height: rect.height,
+        left: rect.left,
+        right: rect.right,
+        ownsCenter: center instanceof Node && hit.contains(center),
+        noPageOverflow:
+          document.documentElement.scrollWidth <= window.innerWidth,
+      };
+    });
+    expect(geometry.height).toBeGreaterThanOrEqual(44);
+    expect(geometry.left).toBeGreaterThanOrEqual(0);
+    expect(geometry.right).toBeLessThanOrEqual(390);
+    expect(geometry.ownsCenter).toBe(true);
+    expect(geometry.noPageOverflow).toBe(true);
+
+    await input.fill(tagFixture.tag);
+    const tagHit = page.locator(
+      `.search-hit[data-result-kind="cold-archive"][href="${tagFixture.entry.href}"]`,
+    );
+    await expect(tagHit).toBeVisible({ timeout: 10_000 });
+    await expect(tagHit).toHaveAttribute("data-match-scope", "tag");
+
+    await input.fill(record.titleEn);
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(coldHit.locator(".search-hit-title")).toContainText(
+      record.titleEn,
+    );
+    await expect(
+      coldHit.locator(".search-hit-title .search-hit-fallback"),
+    ).toHaveCount(0);
+    await coldHit.click();
+
+    await expect.poll(() => {
+      const url = new URL(page.url());
+      return {
+        pathname: url.pathname,
+        hash: url.hash,
+        lang: url.searchParams.get("lang"),
+      };
+    }).toEqual({
+      pathname: `/archive/${record.archiveMonth}/`,
+      hash: `#${record.anchorId}`,
+      lang: "en",
+    });
+    const target = page.locator(`#${record.anchorId}`);
+    await expect(target).toBeVisible();
+    await expect(target).toBeFocused();
+    await expect(target).toHaveAttribute("data-archive-tier", "cold");
+    await expect(target).toHaveAttribute(
+      "data-archive-search-anchor",
+      record.anchorId,
+    );
+    const sourceDestination = requirePresent(
+      await target.locator("h3.title a").getAttribute("href"),
+      "cold archive target retains its source destination",
+    );
+    expect(sourceDestination).not.toMatch(/^\/e\//);
+    const targetStyle = await target.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      const header = document.querySelector("header")?.getBoundingClientRect();
+      return {
+        outlineStyle: style.outlineStyle,
+        boxShadow: style.boxShadow,
+        top: rect.top,
+        headerBottom: header?.bottom ?? 0,
+      };
+    });
+    expect(targetStyle.outlineStyle).not.toBe("none");
+    expect(targetStyle.boxShadow).not.toBe("none");
+    expect(targetStyle.top).toBeGreaterThanOrEqual(
+      targetStyle.headerBottom + 8,
+    );
+    const archiveOverflow = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth,
+      offenders: Array.from(document.querySelectorAll<HTMLElement>("body *"))
+        .map((element) => {
+          const rect = element.getBoundingClientRect();
+          return {
+            selector: `${element.tagName.toLowerCase()}.${element.className}`,
+            parent: `${element.parentElement?.tagName.toLowerCase() ?? ""}.${element.parentElement?.className ?? ""}`,
+            grandparent: `${element.parentElement?.parentElement?.tagName.toLowerCase() ?? ""}.${element.parentElement?.parentElement?.className ?? ""}`,
+            left: rect.left,
+            right: rect.right,
+          };
+        })
+        .filter(({ left, right }) => left < -0.5 || right > window.innerWidth + 0.5)
+        .slice(0, 10),
+    }));
+    expect(
+      archiveOverflow,
+      "the focused cold archive target must not create horizontal overflow",
+    ).toEqual({
+      scrollWidth: archiveOverflow.viewportWidth,
+      viewportWidth: archiveOverflow.viewportWidth,
+      offenders: [],
+    });
+
+    const coldDetail = await page.goto(`/e/${record.entryId}/`);
+    expect(coldDetail?.status()).toBe(404);
+  });
+
+  test("cold tag matches disable the addressable singleton fast path", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await page.goto("/");
+    const coldPayload = JSON.parse(
+      readFileSync("web/dist/cold-archive-search.json", "utf8"),
+    ) as {
+      entries: Array<{
+        entryId: string;
+        href: string;
+        tags: string[];
+      }>;
+    };
+    const tagRecovery = JSON.parse(
+      readFileSync("web/dist/tag-recovery.json", "utf8"),
+    ) as Record<string, string>;
+    const fixture = requirePresent(
+      coldPayload.entries
+        .flatMap((entry) =>
+          entry.tags.map((tag) => ({
+            entry,
+            tag: normalizeTagKey(tag),
+          })),
+        )
+        .find(({ tag }) => Boolean(tagRecovery[tag])),
+      "actual cold corpus overlaps an addressable singleton tag",
+    );
+
+    await page.goto(
+      `/search/?q=${encodeURIComponent(fixture.tag)}`
+      + `&tag=${encodeURIComponent(fixture.tag)}`
+      + `&entry=${tagRecovery[fixture.tag]}`,
+    );
+    const coldHit = page.locator(
+      `.search-hit[data-result-kind="cold-archive"][href="${fixture.entry.href}"]`,
+    );
+    await expect(coldHit).toBeVisible({ timeout: 15_000 });
+    await expect(coldHit).toHaveAttribute("data-match-scope", "tag");
+    await expect(page.locator(".search-results-heading")).not.toContainText(
+      /唯一の記事|only article/i,
+    );
+  });
+
+  test("cold index failure leaves Pagefind results usable", async ({ page }) => {
+    await page.route("**/cold-archive-search.json*", (route) => route.abort());
+    await page.goto("/");
+    await expectPagefindReady(page);
+    await page.evaluate(() => {
+      const pagefind = (window as any).__pagefind;
+      pagefind.search = async () => ({
+        results: [{
+          data: async () => ({
+            url: "/e/pagefind-survives/",
+            meta: {
+              titleEn: "Pagefind survives archive index failure",
+              summaryEn: "The primary search index remains available.",
+            },
+            filters: {
+              authority: ["official"],
+              importance: ["2"],
+              publishedDay: ["2026-07-20"],
+            },
+          }),
+        }],
+      });
+    });
+
+    await page.locator("button[data-search-trigger]:visible").first().click();
+    await page.locator("#pagefind-search-input").fill("Pagefind survives");
+    const hit = page.locator(
+      '.search-hit[data-result-kind="article"][href="/e/pagefind-survives/"]',
+    );
+    await expect(hit).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator(".search-empty")).toHaveCount(0);
+  });
+
+  test("slow cold lookup starts tag Pagefind without waiting for the auxiliary index", async ({
+    page,
+  }) => {
+    const coldPayload = JSON.parse(
+      readFileSync("web/dist/cold-archive-search.json", "utf8"),
+    ) as {
+      entries: Array<{ tags: string[] }>;
+    };
+    const tagRecovery = JSON.parse(
+      readFileSync("web/dist/tag-recovery.json", "utf8"),
+    ) as Record<string, string>;
+    const overlappingTag = requirePresent(
+      coldPayload.entries
+        .flatMap((entry) => entry.tags.map(normalizeTagKey))
+        .find((tag) => Boolean(tagRecovery[tag])),
+      "actual cold corpus overlaps an addressable singleton tag",
+    );
+    await page.route("**/cold-archive-search.json*", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await route.continue();
+    });
+    await page.goto("/");
+    await expectPagefindReady(page);
+    await page.evaluate(() => {
+      const pagefind = (window as any).__pagefind;
+      (window as any).__pagefindStartedAt = 0;
+      pagefind.search = async () => {
+        (window as any).__pagefindStartedAt = performance.now();
+        return {
+          results: [{
+            data: async () => ({
+              url: "/e/concurrent-pagefind/",
+              meta: {
+                titleEn: "Concurrent Pagefind result",
+                summaryEn: "Primary search starts while archive recovery loads.",
+              },
+              filters: {
+                authority: ["official"],
+                importance: ["2"],
+                publishedDay: ["2026-07-20"],
+              },
+            }),
+          }],
+        };
+      };
+    });
+
+    await page.evaluate(({ tag, entry }) => {
+      const next = new URL(window.location.href);
+      next.pathname = "/search/";
+      next.searchParams.set("q", tag);
+      next.searchParams.set("tag", tag);
+      next.searchParams.set("entry", entry);
+      window.history.replaceState(window.history.state, "", next);
+    }, { tag: overlappingTag, entry: tagRecovery[overlappingTag] });
+    await page.locator("button[data-search-trigger]:visible").first().click();
+    const startedBeforeInput = await page.evaluate(() => performance.now());
+    await page.locator("#pagefind-search-input").fill(overlappingTag);
+    await expect.poll(
+      () => page.evaluate(() => (window as any).__pagefindStartedAt),
+      { timeout: 750 },
+    ).toBeGreaterThan(startedBeforeInput);
+    await expect(
+      page.locator('.search-hit[href="/e/concurrent-pagefind/"]'),
+    ).toBeVisible({ timeout: 750 });
+  });
+
+  test("cold matches do not satisfy the Pagefind candidate scan threshold", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expectPagefindReady(page);
+    await page.evaluate(() => {
+      const pagefind = (window as any).__pagefind;
+      const approximate = Array.from({ length: 119 }, (_, index) => ({
+        data: async () => ({
+          url: `/t/cold-threshold-nearby-${index}/`,
+          meta: { title: `Nearby developer reference ${index}` },
+          excerpt: "A nearby Pagefind candidate without the requested term.",
+          filters: {},
+        }),
+      }));
+      pagefind.search = async () => ({
+        results: [
+          ...approximate,
+          {
+            data: async () => ({
+              url: "/e/agent-after-cold-threshold/",
+              meta: {
+                titleEn: "Agent result after the cold threshold",
+                summaryEn: "The primary index continues beyond cold matches.",
+              },
+              filters: {
+                authority: ["official"],
+                importance: ["3"],
+                publishedDay: ["2026-07-20"],
+              },
+            }),
+          },
+        ],
+      });
+    });
+
+    await page.locator("button[data-search-trigger]:visible").first().click();
+    await page.locator("#pagefind-search-input").fill("agent");
+    await expect(
+      page.locator('.search-hit[href="/e/agent-after-cold-threshold/"]'),
+    ).toBeVisible({ timeout: 10_000 });
+  });
+
   test("search preserves typing that happens while Pagefind is loading", async ({ page }) => {
     await page.route("**/pagefind/pagefind.js", async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -8193,7 +8572,9 @@ test.describe("TECH Dashboard smoke", () => {
     await page.locator("button[data-search-trigger]:visible").first().click();
     const input = page.locator("#pagefind-search-input");
     await input.fill("local model");
-    const hits = page.locator(".search-hit");
+    const hits = page.locator(
+      '.search-hit:not([data-result-kind="cold-archive"])',
+    );
     await expect(hits).toHaveCount(2);
     await expect(hits.first()).toHaveAttribute("href", "/c/local-llm/");
     await expect(hits.nth(1).locator(".search-hit-meta")).toContainText("Local Models");

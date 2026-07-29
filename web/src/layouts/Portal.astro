@@ -305,6 +305,7 @@ const footerLastRunRelative = footerLastRunAt
             role="listbox"
             aria-live="polite"
             data-tag-recovery-version={DASHBOARD_METRICS.generatedAt}
+            data-cold-archive-search-version={DASHBOARD_METRICS.generatedAt}
             hidden
           ></div>
         </form>
@@ -598,6 +599,12 @@ const footerLastRunRelative = footerLastRunAt
     <script>
       import { normalizeSearchText } from "../lib/search-normalize.ts";
       import { normalizeTagKey } from "../lib/tag-normalize.ts";
+      import {
+        coldArchiveRecordMatchesQuery,
+        coldArchiveRecordToSearchItem,
+        parseColdArchiveSearchPayload,
+        type ColdArchiveSearchRecord,
+      } from "../lib/cold-archive-search-core.ts";
       import { CATEGORY_META } from "../lib/category-meta.ts";
       import { SOURCE_META, sourceLabel } from "../lib/source-meta.ts";
       import { deriveQueueDisplay, summaryQueueCardCopy } from "../lib/queue-health.ts";
@@ -1001,8 +1008,12 @@ const footerLastRunRelative = footerLastRunAt
           );
         };
         const tagRecoveryVersion = panel.dataset.tagRecoveryVersion ?? "";
+        const coldArchiveSearchVersion =
+          panel.dataset.coldArchiveSearchVersion ?? "";
         let pf: any = null;
         let tagRecoveryMapPromise: Promise<Record<string, string>> | null = null;
+        let coldArchiveSearchPromise:
+          Promise<readonly ColdArchiveSearchRecord[]> | null = null;
         let activeIndex = -1;
         let requestGeneration = 0;
         const isSearchRoute = /^\/search\/?$/.test(window.location.pathname);
@@ -1081,6 +1092,25 @@ const footerLastRunRelative = footerLastRunAt
             });
           }
           return tagRecoveryMapPromise;
+        };
+        const coldArchiveSearchRecords = () => {
+          if (!coldArchiveSearchPromise) {
+            const indexUrl =
+              `/cold-archive-search.json?v=${encodeURIComponent(coldArchiveSearchVersion)}`;
+            coldArchiveSearchPromise = fetch(indexUrl, {
+              cache: "no-store",
+              headers: { accept: "application/json" },
+            }).then(async (response) => {
+              if (!response.ok) {
+                throw new Error("Cold archive search index is unavailable.");
+              }
+              return parseColdArchiveSearchPayload(await response.json()).entries;
+            }).catch((error) => {
+              coldArchiveSearchPromise = null;
+              throw error;
+            });
+          }
+          return coldArchiveSearchPromise;
         };
         const setTriggerActive = (active: boolean) => {
           searchTriggers.forEach((trigger) => {
@@ -1201,19 +1231,39 @@ const footerLastRunRelative = footerLastRunAt
           setActive(activeIndex < 0 ? (direction > 0 ? 0 : hits.length - 1) : activeIndex + direction);
         };
 
-        const classifyResult = (url: string): { label: string; className: string } => {
+        type SearchResultType = {
+          label: string;
+          className: string;
+          badgeClass: string;
+        };
+        const classifyResult = (
+          value: string | { url?: unknown; resultKind?: unknown },
+        ): SearchResultType => {
+          if (
+            typeof value !== "string"
+            && value.resultKind === "cold-archive"
+          ) {
+            return {
+              label: "ARCHIVE",
+              className: "article",
+              badgeClass: "archive",
+            };
+          }
+          const url = typeof value === "string"
+            ? value
+            : String(value.url ?? "");
           const path = url.replace(/^https?:\/\/[^/]+/, "");
-          if (/^\/e\//.test(path)) return { label: "ARTICLE", className: "article" };
-          if (/^\/c\//.test(path) || path === "/categories/" || path === "/categories") return { label: "CATEGORY", className: "category" };
-          if (/^\/arxiv/.test(path)) return { label: "ARXIV", className: "paper" };
-          if (/^\/t\//.test(path)) return { label: "TAG", className: "tag" };
-          if (/^\/archive/.test(path)) return { label: "ARCHIVE", className: "archive" };
-          if (/^\/status/.test(path)) return { label: "STATUS", className: "status" };
-          return { label: "PAGE", className: "page" };
+          if (/^\/e\//.test(path)) return { label: "ARTICLE", className: "article", badgeClass: "article" };
+          if (/^\/c\//.test(path) || path === "/categories/" || path === "/categories") return { label: "CATEGORY", className: "category", badgeClass: "category" };
+          if (/^\/arxiv/.test(path)) return { label: "ARXIV", className: "paper", badgeClass: "paper" };
+          if (/^\/t\//.test(path)) return { label: "TAG", className: "tag", badgeClass: "tag" };
+          if (/^\/archive/.test(path)) return { label: "ARCHIVE", className: "archive", badgeClass: "archive" };
+          if (/^\/status/.test(path)) return { label: "STATUS", className: "status", badgeClass: "status" };
+          return { label: "PAGE", className: "page", badgeClass: "page" };
         };
         const stripTags = (value: string) => value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
         const resultText = (d: any) => {
-          const type = classifyResult(d.url || "");
+          const type = classifyResult(d);
           if (type.className === "article") {
             const source = displaySource(filterValue(d, "source"));
             const category = displayCategory(filterValue(d, "category"));
@@ -1239,6 +1289,13 @@ const footerLastRunRelative = footerLastRunAt
         const filterValue = (item: any, name: string): string => {
           const value = item.filters?.[name];
           return String(Array.isArray(value) ? value[0] ?? "" : value ?? "");
+        };
+        const filterValues = (item: any, name: string): string[] => {
+          const value = item.filters?.[name];
+          if (Array.isArray(value)) return value.map(String);
+          return value === null || value === undefined || value === ""
+            ? []
+            : [String(value)];
         };
         const authorityOrder: Record<string, number> = {
           official: 0,
@@ -1295,7 +1352,7 @@ const footerLastRunRelative = footerLastRunAt
             ? `<span class="search-hit-fallback"><span class="i18n-ja">原文 ${fallbackLang}</span><span class="i18n-en" lang="en">Original ${fallbackLang}</span></span>`
             : "";
         const resultTitle = (d: any) => {
-          const type = classifyResult(d.url || "");
+          const type = classifyResult(d);
           return type.className === "article"
             ? localizedResult(d.meta?.titleJa, d.meta?.titleEn)
             : localizedResult(d.meta?.titleJa, d.meta?.titleEn, d.meta?.title || type.label);
@@ -1309,7 +1366,7 @@ const footerLastRunRelative = footerLastRunAt
           return localizedResult(d.meta?.summaryJa, d.meta?.summaryEn);
         };
         const resultExcerpt = (d: any) => {
-          if (classifyResult(d.url || "").className !== "article") return "";
+          if (classifyResult(d).className !== "article") return "";
           const summary = resultSummary(d);
           if (!summary.text) return "";
           const langAttribute = summary.lang ? ` lang="${summary.lang}"` : "";
@@ -1325,7 +1382,7 @@ const footerLastRunRelative = footerLastRunAt
         const matchScope = (
           d: any,
           q: string,
-          type: { className: string },
+          type: SearchResultType,
         ): MatchScope => {
           if (d.intentKind === "tag" || type.className === "tag") return "tag";
           if (d.intentKind === "category" || type.className === "category") return "category";
@@ -1347,14 +1404,14 @@ const footerLastRunRelative = footerLastRunAt
           };
           return `<span class="search-hit-match" data-match-scope="${scope}"><span class="i18n-ja">${labels[scope].ja}</span><span class="i18n-en" lang="en">${labels[scope].en}</span></span>`;
         };
-        const authorityMarkup = (d: any, type: { className: string }): string => {
+        const authorityMarkup = (d: any, type: SearchResultType): string => {
           if (type.className !== "article") return "";
           const kind = filterValue(d, "authority");
           const labels = authorityLabels[kind];
           if (!labels) return "";
           return `<span class="search-hit-authority badge authority ${kind}" data-source-authority="${kind}"><span class="i18n-ja">${labels.ja}</span><span class="i18n-en" lang="en">${labels.en}</span></span>`;
         };
-        const hitMeta = (d: any, type: { className: string }): string => {
+        const hitMeta = (d: any, type: SearchResultType): string => {
           const lang = activeSearchLang();
           if (type.className === "article" && d.filters) {
             const parts: string[] = [];
@@ -1373,6 +1430,21 @@ const footerLastRunRelative = footerLastRunAt
             }
             const age = day ? relativeAge(day) : "";
             if (age) parts.push(age);
+            const archiveMonth = d.resultKind === "cold-archive"
+              ? String(d.meta?.archiveMonth ?? "")
+              : "";
+            if (/^\d{4}-\d{2}$/.test(archiveMonth)) {
+              const [year, month] = archiveMonth.split("-");
+              parts.push(
+                lang === "ja"
+                  ? `${year}年${Number(month)}月 Archive`
+                  : `${new Intl.DateTimeFormat("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      timeZone: "UTC",
+                    }).format(new Date(`${archiveMonth}-01T00:00:00Z`))} Archive`,
+              );
+            }
             if (parts.length) return parts.join(" · ");
           }
           if (type.className === "article") return lang === "ja" ? "記事" : "Article";
@@ -1399,11 +1471,159 @@ const footerLastRunRelative = footerLastRunAt
             renderSearchHelp();
             return;
           }
+          setExpanded(true);
+          panel.setAttribute("aria-busy", "true");
+          panel.innerHTML = `<div class="search-empty"><span class="i18n-ja"><strong>${escapeHtml(q)}</strong> を検索中...</span><span class="i18n-en" lang="en">Searching for <strong>${escapeHtml(q)}</strong>...</span></div>`;
           const searchParams = new URLSearchParams(window.location.search);
           const requestedTag = normalizeTagKey(searchParams.get("tag") ?? "");
           const tagIntent = requestedTag && requestedTag === normalizeTagKey(q)
             ? requestedTag
             : "";
+          type ColdArchiveLookup = {
+            available: boolean;
+            matches: readonly ColdArchiveSearchRecord[];
+          };
+          const coldArchiveLookupPromise: Promise<ColdArchiveLookup> =
+            withDeadline(
+              coldArchiveSearchRecords(),
+              2500,
+              "Cold archive search index took too long to load.",
+            ).then(
+              (records) => ({
+                available: true,
+                matches: records.filter((record) =>
+                  tagIntent
+                    ? record.tags.some((tag) => normalizeTagKey(tag) === tagIntent)
+                    : coldArchiveRecordMatchesQuery(record, q),
+                ),
+              }),
+              () => ({ available: false, matches: [] }),
+            );
+          const searchDeadline = performance.now() + (tagIntent ? 12_000 : 9000);
+          const pagefindLookupPromise = pf
+            ? Promise.allSettled([
+                tagIntent
+                  ? Promise.resolve({ results: [] })
+                  : withDeadline(
+                      Promise.resolve(pf.search(q)),
+                      3500,
+                      "The search index took too long to respond.",
+                    ),
+                tagIntent
+                  ? withDeadline(
+                      Promise.resolve(pf.search(null, { filters: { tag: [tagIntent] } })),
+                      8000,
+                      "The tag index took too long to respond.",
+                    )
+                  : Promise.resolve({ results: [] }),
+              ])
+            : null;
+          const pagefindItemsPromise = (async (): Promise<{
+            items: any[];
+            error: unknown;
+          }> => {
+            const items: any[] = [];
+            if (!pagefindLookupPromise) return { items, error: null };
+            try {
+              const [searchResult, tagSearchResult] =
+                await pagefindLookupPromise;
+              if (tagIntent && tagSearchResult.status === "rejected") {
+                throw tagSearchResult.reason;
+              }
+              if (!tagIntent && searchResult.status === "rejected") {
+                throw searchResult.reason;
+              }
+              const search = searchResult.status === "fulfilled"
+                ? searchResult.value
+                : { results: [] };
+              const tagSearch = tagSearchResult.status === "fulfilled"
+                ? tagSearchResult.value
+                : { results: [] };
+              const batchSize = 30;
+              const minimumCandidateScan = 90;
+              const candidates: Array<{
+                result: any;
+                intentMatch: boolean;
+                intentKind?: "tag";
+              }> = [
+                ...tagSearch.results.slice(0, 12).map((result: any) => ({
+                  result,
+                  intentMatch: true,
+                  intentKind: "tag" as const,
+                })),
+                ...search.results.slice(0, 300).map((result: any) => ({
+                  result,
+                  intentMatch: false,
+                })),
+              ];
+              for (
+                let offset = 0;
+                offset < candidates.length;
+                offset += batchSize
+              ) {
+                const remainingMs = searchDeadline - performance.now();
+                if (remainingMs <= 0) break;
+                const batch = await Promise.allSettled(
+                  candidates
+                    .slice(offset, offset + batchSize)
+                    .map(async ({ result, intentMatch, intentKind }) => {
+                      const item = await withDeadline(
+                        Promise.resolve(result.data()),
+                        Math.max(
+                          1,
+                          Math.min(tagIntent ? 3500 : 2500, remainingMs),
+                        ),
+                        "A search result took too long to load.",
+                      );
+                      return intentMatch
+                        ? { ...item, intentMatch: true, intentKind }
+                        : item;
+                    }),
+                );
+                if (!isCurrentRequest(generation)) {
+                  return { items: [], error: null };
+                }
+                items.push(
+                  ...batch.flatMap((result) =>
+                    result.status === "fulfilled" ? [result.value] : []
+                  ),
+                );
+                const exactPagefindArticleCount = items.filter(
+                  (item) =>
+                    classifyResult(item).className === "article"
+                    && isExactResult(item, q),
+                ).length;
+                const scannedCandidateCount = Math.min(
+                  offset + batchSize,
+                  candidates.length,
+                );
+                if (
+                  scannedCandidateCount >= minimumCandidateScan
+                  && exactPagefindArticleCount >= 12
+                ) {
+                  break;
+                }
+              }
+              if (items.length === 0 && candidates.length > 0) {
+                throw new Error("Search results could not be loaded in time.");
+              }
+              return { items, error: null };
+            } catch (error) {
+              return { items, error };
+            }
+          })();
+          let directTagRendered = false;
+          void pagefindItemsPromise.then(({ items }) => {
+            if (
+              directTagRendered
+              || items.length === 0
+              || !isCurrentRequest(generation)
+            ) {
+              return;
+            }
+            renderResolvedItems(items, false);
+          });
+          let coldArchiveLookup: ColdArchiveLookup | null = null;
           const requestedEntryId = searchParams.get("entry")?.toLowerCase() ?? "";
           let directTagEntryId = tagIntent && /^[a-f0-9]{16}$/.test(requestedEntryId)
             ? requestedEntryId
@@ -1422,6 +1642,20 @@ const footerLastRunRelative = footerLastRunAt
             }
           }
           if (directTagEntryId) {
+            coldArchiveLookup = await coldArchiveLookupPromise;
+            if (!isCurrentRequest(generation)) return;
+          }
+          if (
+            directTagEntryId
+            && (
+              !coldArchiveLookup?.available
+              || coldArchiveLookup.matches.length > 0
+            )
+          ) {
+            directTagEntryId = "";
+          }
+          if (directTagEntryId) {
+            directTagRendered = true;
             panel.removeAttribute("aria-busy");
             setExpanded(true);
             const direct = {
@@ -1434,14 +1668,14 @@ const footerLastRunRelative = footerLastRunAt
               intentMatch: true,
               intentKind: "tag",
             };
-            const type = classifyResult(direct.url);
+            const type = classifyResult(direct);
             const heading = `<span class="i18n-ja"><strong>${escapeHtml(q)}</strong> の検索結果</span><span class="i18n-en" lang="en">Results for <strong>${escapeHtml(q)}</strong></span>`;
             const rankingNote = `<small class="search-ranking-note"><span class="i18n-ja">このタグに一致する唯一の記事です。</span><span class="i18n-en" lang="en">This is the only article matching this tag.</span></small>`;
             panel.innerHTML = `
               <div class="search-results-heading">${heading}${rankingNote}</div>
               <a class="search-hit search-hit-article" data-match-scope="tag" id="search-hit-${directTagEntryId}" role="option" aria-selected="false" href="${direct.url}">
                 <div class="search-hit-topline">
-                  <span class="search-hit-type article">${type.label}</span>
+                  <span class="search-hit-type ${type.badgeClass}">${type.label}</span>
                   ${matchMarkup("tag")}
                   <span class="search-hit-meta">${escapeHtml(hitMeta(direct, type))}</span>
                 </div>
@@ -1451,7 +1685,11 @@ const footerLastRunRelative = footerLastRunAt
             return;
           }
           if (!pf) {
-            setExpanded(true);
+            coldArchiveLookup ??= await coldArchiveLookupPromise;
+            if (!isCurrentRequest(generation)) return;
+          }
+          if (!pf && coldArchiveLookup.matches.length === 0) {
+            panel.removeAttribute("aria-busy");
             panel.innerHTML = `
               <div class="search-empty">
                 <strong><span class="i18n-ja">${pagefindLoadSettled ? "検索indexを利用できません。" : "検索indexを読み込み中..."}</span><span class="i18n-en" lang="en">${pagefindLoadSettled ? "Search index is not ready." : "Loading search index..."}</span></strong>
@@ -1467,83 +1705,21 @@ const footerLastRunRelative = footerLastRunAt
               </div>`;
             return;
           }
-          setExpanded(true);
-          panel.setAttribute("aria-busy", "true");
-          panel.innerHTML = `<div class="search-empty"><span class="i18n-ja"><strong>${escapeHtml(q)}</strong> を検索中...</span><span class="i18n-en" lang="en">Searching for <strong>${escapeHtml(q)}</strong>...</span></div>`;
-          let items: any[] = [];
-          try {
-            const searchDeadline = performance.now() + (tagIntent ? 12_000 : 9000);
-            const [searchResult, tagSearchResult] = await Promise.allSettled([
-              tagIntent
-                ? Promise.resolve({ results: [] })
-                : withDeadline(
-                    Promise.resolve(pf.search(q)),
-                    3500,
-                    "The search index took too long to respond.",
-                  ),
-              tagIntent && !directTagEntryId
-                ? withDeadline(
-                    Promise.resolve(pf.search(null, { filters: { tag: [tagIntent] } })),
-                    8000,
-                    "The tag index took too long to respond.",
-                  )
-                : Promise.resolve({ results: [] }),
-            ]);
-            if (tagIntent && !directTagEntryId && tagSearchResult.status === "rejected") {
-              throw tagSearchResult.reason;
-            }
-            if (!tagIntent && searchResult.status === "rejected") {
-              throw searchResult.reason;
-            }
-            const search = searchResult.status === "fulfilled"
-              ? searchResult.value
-              : { results: [] };
-            const tagSearch = tagSearchResult.status === "fulfilled"
-              ? tagSearchResult.value
-              : { results: [] };
-            const batchSize = 30;
-            const minimumCandidateScan = 90;
-            const candidates: Array<{
-              result: any;
-              intentMatch: boolean;
-              intentKind?: "tag";
-            }> = [
-              ...tagSearch.results.slice(0, 12).map((result: any) => ({ result, intentMatch: true, intentKind: "tag" })),
-              ...search.results.slice(0, 300).map((result: any) => ({ result, intentMatch: false })),
-            ];
-            for (let offset = 0; offset < candidates.length; offset += batchSize) {
-              const remainingMs = searchDeadline - performance.now();
-              if (remainingMs <= 0) break;
-              const batch = await Promise.allSettled(
-                candidates.slice(offset, offset + batchSize).map(async ({ result, intentMatch, intentKind }) => {
-                  const item = await withDeadline(
-                    Promise.resolve(result.data()),
-                    Math.max(1, Math.min(tagIntent ? 3500 : 2500, remainingMs)),
-                    "A search result took too long to load.",
-                  );
-                  return intentMatch ? { ...item, intentMatch: true, intentKind } : item;
-                }),
-              );
-              if (!isCurrentRequest(generation)) return;
-              items.push(...batch.flatMap((result) => result.status === "fulfilled" ? [result.value] : []));
-              const exactArticleCount = items.filter(
-                (item) =>
-                  classifyResult(item.url || "").className === "article"
-                  && isExactResult(item, q),
-              ).length;
-              const scannedCandidateCount = Math.min(offset + batchSize, candidates.length);
-              if (scannedCandidateCount >= minimumCandidateScan && exactArticleCount >= 12) break;
-            }
-            if (items.length === 0 && candidates.length > 0) {
-              throw new Error("Search results could not be loaded in time.");
-            }
-          } catch (error) {
-            if (!isCurrentRequest(generation)) return;
+          const pagefindOutcome = await pagefindItemsPromise;
+          if (!isCurrentRequest(generation)) return;
+          const items = [...pagefindOutcome.items];
+          const pagefindError = pagefindOutcome.error;
+          coldArchiveLookup ??= await coldArchiveLookupPromise;
+          if (!isCurrentRequest(generation)) return;
+          items.push(
+            ...coldArchiveLookup.matches.map(coldArchiveRecordToSearchItem),
+          );
+          if (pagefindError && items.length === 0) {
             panel.removeAttribute("aria-busy");
             panel.innerHTML = `
               <div class="search-empty">
                 <strong><span class="i18n-ja">検索を一時的に利用できません。</span><span class="i18n-en" lang="en">Search temporarily failed.</span></strong>
-                <p><span class="i18n-ja">通信状態を確認して、もう一度お試しください。</span><span class="i18n-en" lang="en">${escapeHtml(error instanceof Error ? error.message : "Pagefind could not return results.")}</span></p>
+                <p><span class="i18n-ja">通信状態を確認して、もう一度お試しください。</span><span class="i18n-en" lang="en">${escapeHtml(pagefindError instanceof Error ? pagefindError.message : "Pagefind could not return results.")}</span></p>
                 <div class="search-empty-actions">
                   <a href="/categories"><span class="i18n-ja">カテゴリを見る</span><span class="i18n-en" lang="en">Browse categories instead</span></a>
                   <a href="/status"><span class="i18n-ja">sourceを確認</span><span class="i18n-en" lang="en">Check sources</span></a>
@@ -1551,9 +1727,14 @@ const footerLastRunRelative = footerLastRunAt
               </div>`;
             return;
           }
-          if (!isCurrentRequest(generation)) return;
-          panel.removeAttribute("aria-busy");
-          setExpanded(true);
+          function renderResolvedItems(
+            resolvedItems: any[],
+            settled: boolean,
+          ): void {
+            if (!isCurrentRequest(generation)) return;
+            if (settled) panel.removeAttribute("aria-busy");
+            setExpanded(true);
+            let items = [...resolvedItems];
           const normalizedQuery = normalizeSearchText(q);
           const categoryIntent = categoryMeta.find((entry) =>
             entry.aliases.some((alias) => normalizeSearchText(alias) === normalizedQuery),
@@ -1593,8 +1774,8 @@ const footerLastRunRelative = footerLastRunAt
             seenUrls.add(url);
             return true;
           });
-          const exactItems = items
-            .map((item, index) => ({ item, index, type: classifyResult(item.url || "") }))
+          const rankedExactItems = items
+            .map((item, index) => ({ item, index, type: classifyResult(item) }))
             .filter(({ item }) => Boolean(item.url) && isExactResult(item, q))
             .sort((a, b) => {
               const explicitIntentOrder =
@@ -1605,6 +1786,10 @@ const footerLastRunRelative = footerLastRunAt
                 Number(categorySlugForItem(b.item) === intentSlug)
                 - Number(categorySlugForItem(a.item) === intentSlug);
               if (intentOrder) return intentOrder;
+              const coldArchiveOrder =
+                Number(a.item.resultKind === "cold-archive")
+                - Number(b.item.resultKind === "cold-archive");
+              if (coldArchiveOrder) return coldArchiveOrder;
               const typeOrder = Number(b.type.className === "article") - Number(a.type.className === "article");
               if (typeOrder) return typeOrder;
               if (a.type.className === "article" && b.type.className === "article") {
@@ -1629,8 +1814,21 @@ const footerLastRunRelative = footerLastRunAt
                 if (published) return published;
               }
               return a.index - b.index;
-            })
-            .slice(0, 10);
+            });
+          const exactItems = rankedExactItems.slice(0, 10);
+          const normalizedTagQuery = normalizeTagKey(q);
+          const coldTagMatch = rankedExactItems.find(({ item }) =>
+            item.resultKind === "cold-archive"
+            && filterValues(item, "tag")
+              .some((tag) => normalizeTagKey(tag) === normalizedTagQuery),
+          );
+          if (
+            coldTagMatch
+            && !exactItems.some(({ item }) => item === coldTagMatch.item)
+          ) {
+            if (exactItems.length >= 10) exactItems.pop();
+            exactItems.push(coldTagMatch);
+          }
           if (exactItems.length === 0) {
             panel.innerHTML = `
               <div class="search-empty">
@@ -1650,9 +1848,9 @@ const footerLastRunRelative = footerLastRunAt
             .map(({ item: d, type }) => {
               const scope = matchScope(d, q, type);
               return `
-              <a class="search-hit search-hit-${type.className}" data-match-scope="${scope}" id="search-hit-${Math.random().toString(36).slice(2)}" role="option" aria-selected="false" href="${escapeHtml(d.url)}">
+              <a class="search-hit search-hit-${type.className}" data-result-kind="${escapeHtml(d.resultKind ?? type.className)}" data-match-scope="${scope}" id="search-hit-${Math.random().toString(36).slice(2)}" role="option" aria-selected="false" href="${escapeHtml(d.url)}">
                 <div class="search-hit-topline">
-                  <span class="search-hit-type ${type.className}">${type.label}</span>
+                  <span class="search-hit-type ${type.badgeClass}">${type.label}</span>
                   ${matchMarkup(scope)}
                   ${authorityMarkup(d, type)}
                   <span class="search-hit-meta">${escapeHtml(hitMeta(d, type))}</span>
@@ -1663,6 +1861,8 @@ const footerLastRunRelative = footerLastRunAt
             })
             .join("");
           clearActive();
+          }
+          renderResolvedItems(items, true);
         };
 
         document.addEventListener("techdb:languagechange", () => {

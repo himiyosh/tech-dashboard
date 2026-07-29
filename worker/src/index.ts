@@ -19,10 +19,13 @@ import {
   hasKnownProductBodyRecordConflict,
   normalizeKnownProductNames,
 } from "../../harness/pipeline/product-name.ts";
+import { hasUsableGroundedBilingualSummary } from "../../harness/pipeline/summary-quality.ts";
+import { hasSufficientSourceGrounding } from "../../harness/pipeline/source-grounding.ts";
 import { canonicalUrlKey, normalizeMediaUrl } from "../../harness/pipeline/url.ts";
 import { applyDeterministicContentFallback } from "./content-fallback.ts";
 import {
   needsGeneratedContent,
+  isUsableSummaryCacheEntry,
   selectSummaryJobBatch,
   selectSummaryLookupEntries,
   type SummaryJob,
@@ -45,18 +48,18 @@ import {
 import {
   bodyCacheEntryMatchesPublisherContract,
   getBodyCacheEntries,
+  isGroundedBodyCacheEntry,
   type BodyCacheEntry,
 } from "./body-cache.ts";
 import {
   bodiesPresentSet,
-  mergeBodiesWithProductGuard,
+  mergeBodiesWithGuards,
   parseBodies,
-  pruneKnownProductBodyConflicts,
+  pruneInvalidBodyRecords,
   serializeBodies,
   type NewBody,
 } from "./bodies-file.ts";
 import {
-  cacheEntryMatchesPublisherContract,
   cacheMetadataMatchesPublisherContract,
   getCacheEntriesWithLegacyFallback,
   putCacheEntry,
@@ -934,6 +937,17 @@ async function callCopilot(
     if (!res.ok) throw new Error(`copilot ${res.status}: ${(await res.text()).slice(0, 200)}`);
     const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
     const parsed = parseResponse(data.choices?.[0]?.message?.content ?? "");
+    if (
+      !parsed.titleJa ||
+      !hasUsableGroundedBilingualSummary(e, {
+        ...parsed,
+        title: e.title,
+        titleJa: parsed.titleJa || e.titleJa,
+        titleEn: e.titleEn,
+      })
+    ) {
+      throw new Error(`model response failed source grounding for ${e.url}`);
+    }
     return {
       ...parsed,
       model,
@@ -1315,12 +1329,15 @@ export async function runHarness(
   const afterCache: NormalizedEntry[] = [];
   for (const e of sorted) {
     const rawHit = hitsByUrl.get(e.url);
-    const hit = cacheEntryMatchesPublisherContract(
-      rawHit,
-      publisherContractFingerprint,
-    )
-      ? rawHit
-      : undefined;
+    const hit =
+      rawHit &&
+      isUsableSummaryCacheEntry(
+        rawHit,
+        e,
+        publisherContractFingerprint,
+      )
+        ? rawHit
+        : undefined;
     const cachedTitleJa = hit?.titleJa || e.titleJa;
     if (hit && cachedTitleJa && hit.summaryJa && hit.summaryEn) {
       afterCache.push({
@@ -1343,15 +1360,11 @@ export async function runHarness(
           ? dedupeTags([...e.tags, ...hit.extraTags])
           : e.tags,
       });
-      // Re-summarize entries cached before bodyJa/bodyEn was introduced.
-      if (!hit.bodyJa || !hit.bodyEn) {
-        needsSummary.push(e);
-      }
     } else if (!hit && !needsGeneratedContent(e)) {
       // Skipped KV lookup; entry already has a real summary from a prior run.
       afterCache.push(e);
     } else {
-      needsSummary.push(e);
+      if (hasSufficientSourceGrounding(e)) needsSummary.push(e);
       afterCache.push(e);
     }
   }
@@ -1550,12 +1563,19 @@ export async function runHarness(
   // 5) Build payload (cap newest entries; dropped tier is retained only in reports)
   let summaryFallbacks = 0;
   let bodyFallbacks = 0;
+  let summaryGroundingRejected = 0;
   const contentReady = afterCache.map((entry) => {
     const result = applyDeterministicContentFallback(entry);
+    summaryGroundingRejected += result.summaryGroundingRejected;
     summaryFallbacks += result.summaryFallbacks;
     bodyFallbacks += result.bodyFallbacks;
     return result.entry;
   });
+  if (summaryGroundingRejected > 0) {
+    console.warn(
+      `[worker] rejected ${summaryGroundingRejected} materially ungrounded summaries before publish`,
+    );
+  }
   const retainedEntries = contentReady.filter((entry) => entry.archiveTier !== "dropped");
   const cappedEntries = retainedEntries.slice(0, INDEX_LIMIT);
   const titleEnCompletion = fillMissingTitleEnEntries(cappedEntries);
@@ -2150,6 +2170,7 @@ function isUsableBodyCacheEntry(
       candidate,
       publisherContractFingerprint,
     ) &&
+    isGroundedBodyCacheEntry(job.entry, candidate) &&
     !hasKnownProductBodyRecordConflict(job.entry, candidate)
   );
 }
@@ -2275,7 +2296,7 @@ export async function runBodyPipeline(
 
   try {
     const parsedBodies = parseBodies(existingBodiesContent);
-    const sanitizedBodies = pruneKnownProductBodyConflicts(
+    const sanitizedBodies = pruneInvalidBodyRecords(
       parsedBodies,
       retainedEntries,
       generatedAt,
@@ -2327,7 +2348,7 @@ export async function runBodyPipeline(
         newBodies.push({ id: job.entry.id, bodyJa: hit.bodyJa, bodyEn: hit.bodyEn, model: hit.model, cachedAt: hit.cachedAt });
       }
     }
-    const merge = mergeBodiesWithProductGuard(
+    const merge = mergeBodiesWithGuards(
       existingBodies,
       newBodies,
       retainedIds,

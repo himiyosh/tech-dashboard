@@ -164,6 +164,8 @@ describe("summarize cache application", () => {
       titleEn: "A clean release",
       summaryJa: "既存の有効な日本語要約。",
       summaryEn: "The existing English summary is valid.",
+      contentSnippet:
+        "The source documents a concrete release, its supported behavior, and why the change matters to users.",
       lang: "en",
       publishedAt: "2026-07-01T00:00:00.000Z",
       collectedAt: "2026-07-01T01:00:00.000Z",
@@ -220,7 +222,11 @@ describe("isCompleteSummaryResponse", () => {
       }),
     );
 
-    expect(isCompleteSummaryResponse(parsed)).toBe(true);
+    expect(isCompleteSummaryResponse(parsed, {
+      title: "Great update",
+      contentSnippet:
+        "The source describes a concrete product update, its supported workflow, and the resulting developer impact in detail.",
+    })).toBe(true);
     expect(isCompleteSummaryResponse(parseModelResponse("not json"))).toBe(
       false,
     );
@@ -247,7 +253,11 @@ describe("isCompleteSummaryResponse", () => {
     }));
 
     expect(
-      isCompleteSummaryResponse(parsed, ["Original release title"]),
+      isCompleteSummaryResponse(parsed, {
+        title: "Original release title",
+        contentSnippet:
+          "The original release explains the feature behavior, supported environment, and why the change matters to users.",
+      }),
     ).toBe(false);
   });
 });

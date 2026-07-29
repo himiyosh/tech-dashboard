@@ -1,4 +1,9 @@
 import type { KeyValueBinding } from "./runtime-bindings.ts";
+import {
+  hasMaterialBodyGroundingConflict,
+  hasSufficientSourceGrounding,
+  type SourceGroundingInput,
+} from "../../harness/pipeline/source-grounding.ts";
 
 /**
  * Per-URL body cache (KV) helpers — body-file architecture, Phase B (LL-115).
@@ -83,6 +88,17 @@ export async function putBodyCacheEntry(
 /** True when a body cache entry has real, renderable bilingual prose. */
 export function isBodyComplete(entry: BodyCacheEntry | null | undefined): boolean {
   return Boolean(entry && entry.bodyJa.trim() && entry.bodyEn.trim());
+}
+
+export function isGroundedBodyCacheEntry(
+  source: SourceGroundingInput,
+  entry: BodyCacheEntry | null | undefined,
+): boolean {
+  if (!entry || !isBodyComplete(entry)) return false;
+  return (
+    hasSufficientSourceGrounding(source) &&
+    !hasMaterialBodyGroundingConflict(source, entry)
+  );
 }
 
 export function bodyCacheEntryMatchesPublisherContract(

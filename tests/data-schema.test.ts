@@ -14,7 +14,14 @@ import {
   evaluateKeywordFilter,
   keywordFilterEntryFromNormalized,
 } from "../harness/pipeline/source-filter.ts";
-import { isContaminatedSummaryText } from "../harness/pipeline/summary-quality.ts";
+import {
+  hasUsableBilingualSummary,
+  isContaminatedSummaryText,
+} from "../harness/pipeline/summary-quality.ts";
+import {
+  findBodyGroundingIssues,
+  findSummaryGroundingIssues,
+} from "../harness/pipeline/source-grounding.ts";
 import { normalizeTag } from "../harness/pipeline/tag.ts";
 import { hasKnownProductBodyConflict } from "../harness/pipeline/product-name.ts";
 import { canonicalUrlKey } from "../harness/pipeline/url.ts";
@@ -399,6 +406,21 @@ describe("data/index.json 各エントリ", () => {
     expect(bad).toEqual([]);
   });
 
+  it("live summary は収集元のmaterial factと矛盾しない", () => {
+    const bad = data.entries
+      .filter((entry) =>
+        hasUsableBilingualSummary(entry as NormalizedEntry) &&
+        findSummaryGroundingIssues(
+          entry as NormalizedEntry,
+          entry as NormalizedEntry,
+        ).length > 0
+      )
+      .map((entry) =>
+        `${String(entry.id)}:${String(entry.source)}:${String(entry.title)}`
+      );
+    expect(bad).toEqual([]);
+  });
+
   it("live index は本文を持たない (body-file architecture / LL-113)", () => {
     // Body-file architecture: the long-form body lives in data/bodies.json, NOT
     // in index.json. The index must stay body-free so it remains well under the
@@ -477,6 +499,22 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     expect(statSync(bodiesPath).size).toBeLessThanOrEqual(DEFAULT_BODY_BUDGET_TARGET_BYTES);
   });
 
+  it("bodies.json の本文は収集元のmaterial factと矛盾しない", () => {
+    const entriesById = new Map(
+      data.entries.map((entry) => [String(entry.id), entry as NormalizedEntry]),
+    );
+    const bad = Object.entries(bodies?.bodies ?? {})
+      .filter(([id, body]) => {
+        const entry = entriesById.get(id);
+        return Boolean(
+          entry &&
+          findBodyGroundingIssues(entry, body).length > 0,
+        );
+      })
+      .map(([id]) => id);
+    expect(bad).toEqual([]);
+  });
+
   it("bodies.json は evergreen・重要記事・直近30日の本文だけを保持する", () => {
     const entriesById = new Map(data.entries.map((entry) => [String(entry.id), entry]));
     const referenceMs = Date.parse(data.generatedAt);
@@ -522,7 +560,7 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
       )
       .filter((entry) =>
         needsBody(
-          entry as Pick<NormalizedEntry, "id" | "summaryJa" | "summaryEn">,
+          entry as NormalizedEntry,
           bodyPresentIds,
         )
       ).length;

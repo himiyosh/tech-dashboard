@@ -9,6 +9,7 @@ import {
 import { evaluateHarnessHealth } from "../worker/src/index.ts";
 import {
   needsGeneratedContent,
+  isUsableSummaryCacheEntry,
   orderSummaryCandidates,
   roundRobinStart,
   selectSummaryJobBatch,
@@ -27,6 +28,8 @@ const baseEntry: NormalizedEntry = {
   titleEn: "Example Paper",
   summaryJa: "このエントリは arxiv-cs-ai から収集した research 領域の最新アップデートです。",
   summaryEn: "AI summary not yet available.",
+  contentSnippet:
+    "The paper evaluates a new agent planning method across several benchmark environments and reports reliability improvements.",
   bodyJa: "このエントリは arxiv-cs-ai から収集した research 領域の最新アップデートです。",
   bodyEn: "This long-form note is completed from the existing summary and collection metadata.",
   lang: "en",
@@ -121,6 +124,7 @@ describe("worker summary queue selection", () => {
     expect(jobs).toHaveLength(1);
     expect(jobs[0]!.url).toBe(baseEntry.url);
     expect(jobs[0]!.entry.summaryEn).toBe(baseEntry.summaryEn);
+    expect(jobs[0]!.entry.contentSnippet).toBe(baseEntry.contentSnippet);
     expect(jobs[0]!.entry.tags).toEqual(baseEntry.tags);
   });
 
@@ -134,6 +138,22 @@ describe("worker summary queue selection", () => {
     );
     expect(jobs).toHaveLength(1);
     expect(jobs[0]!.url).toBe(baseEntry.url);
+  });
+
+  it("does not enqueue sparse title-only input without sufficient source grounding", () => {
+    const sparse = {
+      ...baseEntry,
+      title: "Cursor Start",
+      titleEn: "Cursor Start",
+      contentSnippet: "",
+    };
+    const jobs = selectSummaryJobs(
+      [sparse],
+      new Map(),
+      new Set([sparse.url]),
+      30,
+    );
+    expect(jobs).toEqual([]);
   });
 
   it("skips entries with a complete non-fallback cache hit", () => {
@@ -190,6 +210,37 @@ describe("worker summary queue selection", () => {
     );
     expect(jobs.map((job) => job.url)).toEqual([contaminatedEntry.url]);
     expect(isSummaryComplete(contaminatedCache)).toBe(false);
+  });
+
+  it("does not accept a materially contradictory summary cache hit", () => {
+    const cursor = {
+      ...baseEntry,
+      source: "cursor-changelog",
+      sourceType: "changelog" as const,
+      url: "https://cursor.com/changelog/cursor-start",
+      title: "Cursor Start",
+      titleJa: "Cursor Start",
+      titleEn: "Cursor Start",
+      contentSnippet:
+        "Cursor Start is a new ₹649 monthly plan for developers in India with local pricing and UPI.",
+    };
+    const badCache = {
+      ...summaryOnlyCache,
+      titleJa: "Cursor Start",
+      summaryJa: "Cursor Startはプロジェクト初期化を支援する新機能だ。",
+      summaryEn:
+        "Cursor Start is a project initialization and onboarding feature.",
+    };
+
+    expect(isUsableSummaryCacheEntry(badCache, cursor)).toBe(false);
+    expect(
+      selectSummaryJobs(
+        [cursor],
+        new Map([[cursor.url, badCache]]),
+        new Set([cursor.url]),
+        30,
+      ),
+    ).toHaveLength(1);
   });
 
   it("needsGeneratedContent is summary-only: real summary + deterministic body is complete (LL-107)", () => {
@@ -704,6 +755,7 @@ describe("worker summarizer queue consumer", () => {
                 category: baseEntry.category,
                 source: baseEntry.source,
                 sourceType: baseEntry.sourceType,
+                contentSnippet: baseEntry.contentSnippet,
               },
             },
             ack,
@@ -795,6 +847,7 @@ describe("worker summarizer queue consumer", () => {
                 category: baseEntry.category,
                 source: baseEntry.source,
                 sourceType: baseEntry.sourceType,
+                contentSnippet: baseEntry.contentSnippet,
                 summaryEn: baseEntry.summaryEn,
               },
             },
@@ -878,6 +931,7 @@ describe("worker summarizer queue consumer", () => {
                 category: baseEntry.category,
                 source: baseEntry.source,
                 sourceType: baseEntry.sourceType,
+                contentSnippet: baseEntry.contentSnippet,
               },
             },
             ack,
@@ -962,6 +1016,7 @@ describe("worker summarizer queue consumer", () => {
                 category: baseEntry.category,
                 source: baseEntry.source,
                 sourceType: baseEntry.sourceType,
+                contentSnippet: baseEntry.contentSnippet,
                 summaryEn: baseEntry.summaryEn,
               },
             },
@@ -1047,6 +1102,7 @@ describe("worker summarizer queue consumer", () => {
                 category: baseEntry.category,
                 source: baseEntry.source,
                 sourceType: baseEntry.sourceType,
+                contentSnippet: baseEntry.contentSnippet,
                 summaryEn: baseEntry.summaryEn,
               },
             },
@@ -1082,9 +1138,9 @@ describe("worker summarizer queue consumer", () => {
   });
 
   it("treats title+JA/EN summary as a complete summary even without a body (LL-104)", () => {
-    expect(isSummaryComplete({ ...realCache, bodyJa: "", bodyEn: "" })).toBe(true);
-    expect(isSummaryComplete({ ...realCache, summaryEn: "" })).toBe(false);
-    expect(isSummaryComplete({ ...realCache, titleJa: "" })).toBe(false);
+    expect(isSummaryComplete({ ...realCache, bodyJa: "", bodyEn: "" }, baseEntry)).toBe(true);
+    expect(isSummaryComplete({ ...realCache, summaryEn: "" }, baseEntry)).toBe(false);
+    expect(isSummaryComplete({ ...realCache, titleJa: "" }, baseEntry)).toBe(false);
   });
 
   it("persists a complete summary even if the body stays empty after all attempts (LL-104)", async () => {
@@ -1136,6 +1192,7 @@ describe("worker summarizer queue consumer", () => {
                 category: baseEntry.category,
                 source: baseEntry.source,
                 sourceType: baseEntry.sourceType,
+                contentSnippet: baseEntry.contentSnippet,
                 summaryEn: baseEntry.summaryEn,
               },
             },

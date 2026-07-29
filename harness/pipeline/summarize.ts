@@ -30,10 +30,12 @@ import { dirname, join } from "node:path";
 import type { NormalizedEntry } from "../types.ts";
 import { buildSummaryPrompt, parseResponse } from "../../worker/src/prompt.ts";
 import {
+  hasUsableGroundedBilingualSummary,
   hasUsableBilingualSummary,
   needsSummaryGeneration,
   type SummaryQualityInput,
 } from "./summary-quality.ts";
+import { hasSufficientSourceGrounding } from "./source-grounding.ts";
 import { normalizeTags } from "./tag.ts";
 
 interface CacheEntry {
@@ -187,7 +189,7 @@ async function callCopilot(
   }
   const text = data.choices?.[0]?.message?.content ?? "";
   const parsed = parseModelResponse(text);
-  if (!isCompleteSummaryResponse(parsed, [entry.title, entry.titleJa, entry.titleEn])) {
+  if (!isCompleteSummaryResponse(parsed, entry)) {
     throw new Error("model response missing required clean summary fields");
   }
   return {
@@ -217,11 +219,15 @@ export function parseModelResponse(text: string): {
 
 export function isCompleteSummaryResponse(
   parsed: ReturnType<typeof parseModelResponse>,
-  originalTitleCandidates: ReadonlyArray<string | null | undefined> = [],
+  source: SummaryQualityInput = {},
 ): boolean {
   return Boolean(
     parsed.titleJa
-      && hasUsableBilingualSummary(parsed, originalTitleCandidates),
+      && hasUsableBilingualSummary(
+        parsed,
+        [source.title, source.titleJa, source.titleEn],
+      )
+      && hasUsableGroundedBilingualSummary(source, parsed),
   );
 }
 
@@ -287,7 +293,21 @@ export async function summarize(
   const out = entries.map((e) => {
     const hit = cache[e.url];
     const cachedTitleJa = hit?.titleJa || e.titleJa;
-    if (hit && cachedTitleJa && hit.summaryJa && hit.summaryEn) {
+    const groundedCacheHit = Boolean(
+      hit &&
+      cachedTitleJa &&
+      hit.model !== "deterministic-fallback" &&
+      hasUsableGroundedBilingualSummary(
+        e,
+        {
+          ...hit,
+          title: e.title,
+          titleJa: cachedTitleJa,
+          titleEn: e.titleEn,
+        },
+      ),
+    );
+    if (hit && groundedCacheHit) {
       const cachedEntry = stripIndexBodies({
         ...e,
         titleJa: cachedTitleJa,
@@ -305,7 +325,12 @@ export async function summarize(
       stats.cached++;
       return cachedEntry;
     }
-    if (needsGeneratedContent(e)) needsSummary.push(e);
+    if (
+      (needsGeneratedContent(e) || Boolean(hit && !groundedCacheHit)) &&
+      hasSufficientSourceGrounding(e)
+    ) {
+      needsSummary.push(e);
+    }
     return stripIndexBodies(e);
   });
 

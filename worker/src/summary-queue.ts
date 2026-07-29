@@ -1,9 +1,10 @@
 import type { NormalizedEntry } from "../../harness/types.ts";
 import {
-  hasUsableBilingualSummary,
+  hasUsableGroundedBilingualSummary,
   needsSummaryGeneration,
   type SummaryQualityInput,
 } from "../../harness/pipeline/summary-quality.ts";
+import { hasSufficientSourceGrounding } from "../../harness/pipeline/source-grounding.ts";
 import {
   cacheEntryMatchesPublisherContract,
   type CacheEntry,
@@ -23,6 +24,7 @@ export interface SummaryJob {
         | "titleEn"
         | "summaryJa"
         | "summaryEn"
+        | "contentSnippet"
         | "lang"
         | "publishedAt"
         | "tags"
@@ -177,7 +179,7 @@ export function needsGeneratedContent(
  * purpose, and requiring a body here re-enqueued every already-summarized
  * entry forever (LL-107).
  */
-function hasRealCacheEntry(
+export function isUsableSummaryCacheEntry(
   hit: CacheEntry | undefined,
   entry: NormalizedEntry,
   publisherContractFingerprint?: string,
@@ -186,12 +188,15 @@ function hasRealCacheEntry(
     hit &&
       cacheEntryMatchesPublisherContract(hit, publisherContractFingerprint) &&
       hit.titleJa &&
-      hasUsableBilingualSummary({
-        ...hit,
-        title: entry.title,
-        titleJa: hit.titleJa || entry.titleJa,
-        titleEn: entry.titleEn,
-      }) &&
+      hasUsableGroundedBilingualSummary(
+        entry,
+        {
+          ...hit,
+          title: entry.title,
+          titleJa: hit.titleJa || entry.titleJa,
+          titleEn: entry.titleEn,
+        },
+      ) &&
       hit.model !== "deterministic-fallback",
   );
 }
@@ -211,6 +216,7 @@ function toSummaryJob(
       titleEn: entry.titleEn,
       summaryJa: entry.summaryJa,
       summaryEn: entry.summaryEn,
+      contentSnippet: entry.contentSnippet,
       lang: entry.lang,
       publishedAt: entry.publishedAt ?? undefined,
       tags: entry.tags,
@@ -229,6 +235,7 @@ function isEligibleSummaryJob(
   uncheckedFallbackUrls: ReadonlySet<string>,
   publisherContractFingerprint?: string,
 ): boolean {
+  if (!hasSufficientSourceGrounding(entry)) return false;
   const isLookedUp = lookedUpUrls.has(entry.url);
   const isUncheckedFallback = uncheckedFallbackUrls.has(entry.url);
   if (!isLookedUp && !isUncheckedFallback) {
@@ -236,7 +243,7 @@ function isEligibleSummaryJob(
   }
   if (
     isLookedUp &&
-    hasRealCacheEntry(
+    isUsableSummaryCacheEntry(
       hitsByUrl.get(entry.url),
       entry,
       publisherContractFingerprint,
@@ -282,7 +289,13 @@ export function selectSummaryLookupEntries(
   cap: number,
   opts: SummaryJobSelectionOpts = {},
 ): SummaryEntrySelection {
-  return orderSummaryCandidates(entries.filter(needsGeneratedContent), cap, opts);
+  return orderSummaryCandidates(
+    entries.filter((entry) =>
+      needsGeneratedContent(entry) && hasSufficientSourceGrounding(entry)
+    ),
+    cap,
+    opts,
+  );
 }
 
 export function selectSummaryJobs(

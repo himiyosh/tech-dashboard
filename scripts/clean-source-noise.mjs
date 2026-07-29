@@ -30,6 +30,7 @@ import {
   keywordFilterEntryFromNormalized,
 } from "../harness/pipeline/source-filter.ts";
 import { normalizeKnownProductNames } from "../harness/pipeline/product-name.ts";
+import { sanitizeStoredSummaryGrounding } from "../harness/pipeline/summary-quality.ts";
 import { applyTags } from "../harness/pipeline/tag.ts";
 import { canonicalUrlKey, normalizeMediaUrl } from "../harness/pipeline/url.ts";
 import {
@@ -42,8 +43,8 @@ import {
 import { buildStatsPayload } from "../harness/publishers/stats-core.ts";
 import {
   isRealBody,
-  mergeBodiesWithProductGuard,
-  pruneKnownProductBodyConflicts,
+  mergeBodiesWithGuards,
+  pruneInvalidBodyRecords,
 } from "../worker/src/bodies-file.ts";
 import {
   DEFAULT_BODY_RETENTION_DAYS,
@@ -57,6 +58,7 @@ import {
   enforceBodiesBudget,
   serializedByteLength,
 } from "../worker/src/bodies-budget.ts";
+import { applyDeterministicContentFallback } from "../worker/src/content-fallback.ts";
 
 export { synchronizeArchiveTagsFromLive };
 
@@ -843,7 +845,16 @@ export function summarizeChanges(label, entries, referenceAt, report, options = 
       );
     }
 
-    kept.push(normalizeKnownProductNames(decision.entry));
+    const normalizedProduct = normalizeKnownProductNames(decision.entry);
+    const grounding = sanitizeStoredSummaryGrounding(normalizedProduct);
+    if (grounding.rejected) {
+      report.summaryGroundingRejected =
+        (report.summaryGroundingRejected ?? 0) + 1;
+    }
+    const groundedEntry = options.preserveArchiveTier
+      ? grounding.entry
+      : applyDeterministicContentFallback(grounding.entry).entry;
+    kept.push(groundedEntry);
   }
   return kept;
 }
@@ -882,7 +893,7 @@ export function reconcileBodiesPayload(
   aliases = new Map(),
   sourceEntries = [],
 ) {
-  const sanitizedBodies = pruneKnownProductBodyConflicts(
+  const sanitizedBodies = pruneInvalidBodyRecords(
     existingBodies,
     sourceEntries,
     referenceAt,
@@ -910,7 +921,7 @@ export function reconcileBodiesPayload(
       cachedAt: referenceAt,
     });
   }
-  const merged = mergeBodiesWithProductGuard(
+  const merged = mergeBodiesWithGuards(
     sanitizedBodies.payload,
     transferredBodies,
     liveIds,
@@ -1053,6 +1064,7 @@ export async function main(argv = process.argv.slice(2)) {
     reclassSamples: new Map(),
     mediaUrlsNormalized: 0,
     archiveTagsSynchronized: 0,
+    summaryGroundingRejected: 0,
   };
 
   const liveEntries = summarizeChanges("live", index.entries, referenceAt, report);
@@ -1221,6 +1233,7 @@ export async function main(argv = process.argv.slice(2)) {
   console.log(`\nCanonical dedupe:\n  live: ${liveDeduped}\n  archive: ${archiveDeduped}`);
   console.log(`\nMedia URLs normalized: ${report.mediaUrlsNormalized}`);
   console.log(`\nArchive tags synchronized: ${report.archiveTagsSynchronized}`);
+  console.log(`\nSummaries rejected by source grounding: ${report.summaryGroundingRejected}`);
   if (reconciledBodyCount !== null) console.log(`\nBodies retained: ${reconciledBodyCount}`);
   console.log(
     `\nBody budget: bytes=${bodyBudget.bytes}/${bodyBudgetTargetBytes}, pruned=${bodyBudget.prunedIds.length}`

@@ -1,7 +1,13 @@
-export interface SummaryQualityInput {
+import {
+  findSummaryGroundingIssues,
+  hasSufficientSourceGrounding,
+  type GroundingIssue,
+  type SourceGroundingInput,
+} from "./source-grounding.ts";
+
+export interface SummaryQualityInput extends SourceGroundingInput {
   summaryJa?: string | null;
   summaryEn?: string | null;
-  title?: string | null;
   titleJa?: string | null;
   titleEn?: string | null;
 }
@@ -84,6 +90,61 @@ export function hasUsableBilingualSummary(
   );
 }
 
+export function hasUsableGroundedBilingualSummary(
+  source: SourceGroundingInput,
+  generated: SummaryQualityInput,
+  additionalTitleCandidates: ReadonlyArray<string | null | undefined> = [],
+): boolean {
+  return (
+    hasSufficientSourceGrounding(source) &&
+    hasUsableBilingualSummary(generated, additionalTitleCandidates) &&
+    findSummaryGroundingIssues(source, generated).length === 0
+  );
+}
+
 export function needsSummaryGeneration(input: SummaryQualityInput): boolean {
-  return !hasUsableBilingualSummary(input);
+  return (
+    !hasUsableBilingualSummary(input) ||
+    findSummaryGroundingIssues(input, input).length > 0
+  );
+}
+
+export interface SummaryGroundingSanitization<T extends SummaryQualityInput> {
+  entry: T;
+  rejected: boolean;
+  issues: GroundingIssue[];
+}
+
+export function sanitizeStoredSummaryGrounding<T extends SummaryQualityInput>(
+  entry: T,
+): SummaryGroundingSanitization<T> {
+  if (!hasUsableBilingualSummary(entry)) {
+    return { entry, rejected: false, issues: [] };
+  }
+  const issues = findSummaryGroundingIssues(entry, entry);
+  if (issues.length === 0) {
+    return { entry, rejected: false, issues };
+  }
+
+  const titleJaRejected = issues.some((issue) => issue.field === "titleJa");
+  const titleEnRejected = issues.some((issue) => issue.field === "titleEn");
+  return {
+    entry: {
+      ...entry,
+      titleJa: titleJaRejected
+        ? entry.lang === "ja"
+          ? entry.title ?? ""
+          : ""
+        : entry.titleJa,
+      titleEn: titleEnRejected
+        ? entry.lang === "en"
+          ? entry.title ?? ""
+          : ""
+        : entry.titleEn,
+      summaryJa: "",
+      summaryEn: "",
+    },
+    rejected: true,
+    issues,
+  };
 }

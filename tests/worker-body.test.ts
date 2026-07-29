@@ -9,6 +9,7 @@ import {
   bodyCacheEntryMatchesPublisherContract,
   bodyCacheKeyForUrl,
   isBodyComplete,
+  isGroundedBodyCacheEntry,
   type BodyCacheEntry,
 } from "../worker/src/body-cache.ts";
 import { UNVERSIONED_JOB_FINGERPRINT } from "../worker/src/kv-cache.ts";
@@ -18,7 +19,10 @@ import {
   cleanBodyText,
   type BodyPromptEntry,
 } from "../worker/src/body-generate.ts";
-import { buildBodyCacheEntry } from "../worker-body/src/index.ts";
+import {
+  buildBodyCacheEntry,
+  isBodyEntryComplete,
+} from "../worker-body/src/index.ts";
 
 const entry: BodyPromptEntry = {
   title: "GLM-5.2 on Cloudflare Workers AI",
@@ -30,6 +34,8 @@ const entry: BodyPromptEntry = {
   url: "https://example.com/glm-5-2",
   summaryJa: "Cloudflare Workers AI で GLM-5.2 を無料で試す手順を解説する。",
   summaryEn: "A walkthrough of running GLM-5.2 for free on Cloudflare Workers AI.",
+  contentSnippet:
+    "The source gives a step-by-step walkthrough for running GLM-5.2 on Cloudflare Workers AI, including setup and cost constraints.",
   tags: ["llm", "cloudflare", "glm"],
   publishedAt: "2026-06-27T10:00:00.000Z",
 };
@@ -131,6 +137,27 @@ describe("isBodyComplete (LL-115)", () => {
     expect(isBodyComplete(null)).toBe(false);
     expect(isBodyComplete(undefined)).toBe(false);
   });
+
+  it("rejects a structurally complete body that contradicts material source facts", () => {
+    const source = {
+      title: "Cursor Start",
+      contentSnippet:
+        "Cursor Start is a new ₹649 monthly plan for developers in India with local pricing and UPI.",
+    };
+    expect(isGroundedBodyCacheEntry(source, {
+      bodyJa: "Cursor Startはプロジェクト初期化を支援する新機能である。",
+      bodyEn: "Cursor Start is a project initialization and onboarding feature.",
+      model: "claude-opus-4.8",
+      cachedAt: "2026-07-29T00:00:00.000Z",
+    })).toBe(false);
+    expect(isBodyEntryComplete(
+      {
+        bodyJa: "Cursor Startはプロジェクト初期化を支援する新機能である。".repeat(5),
+        bodyEn: "Cursor Start is a project initialization and onboarding feature. ".repeat(4),
+      },
+      source,
+    )).toBe(false);
+  });
 });
 
 describe("buildBodyPromptJa / buildBodyPromptEn (LL-115)", () => {
@@ -142,6 +169,7 @@ describe("buildBodyPromptJa / buildBodyPromptEn (LL-115)", () => {
     // context が入っている
     expect(p).toContain("local-llm");
     expect(p).toContain("GLM-5.2");
+    expect(p).toContain("Source excerpt");
   });
 
   it("EN プロンプトは英語本文・語数・plain text 要件を含む", () => {
@@ -150,6 +178,7 @@ describe("buildBodyPromptJa / buildBodyPromptEn (LL-115)", () => {
     expect(p).toContain("500-800 words");
     expect(p).toContain("Plain text only");
     expect(p).toContain("local-llm");
+    expect(p).toContain("Source excerpt");
   });
 
   it("fallback boilerplate の summary は context に含めない", () => {

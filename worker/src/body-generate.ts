@@ -23,7 +23,14 @@ export type BodyPromptEntry = Pick<
   Partial<
     Pick<
       NormalizedEntry,
-      "titleJa" | "titleEn" | "summaryJa" | "summaryEn" | "publishedAt" | "tags"
+      | "titleJa"
+      | "titleEn"
+      | "summaryJa"
+      | "summaryEn"
+      | "contentSnippet"
+      | "lang"
+      | "publishedAt"
+      | "tags"
     >
   >;
 
@@ -63,6 +70,9 @@ function contextLines(e: BodyPromptEntry): string[] {
   lines.push(`カテゴリ / Category: ${e.category} · ソース / Source: ${e.source} (${e.sourceType})`);
   if (e.publishedAt) lines.push(`公開日時 / Published: ${e.publishedAt}`);
   if (e.tags?.length) lines.push(`タグ / Tags: ${e.tags.slice(0, 8).join(", ")}`);
+  if (e.contentSnippet && !isFallbackText(e.contentSnippet)) {
+    lines.push(`収集元の抜粋 / Source excerpt: ${compact(e.contentSnippet, 900)}`);
+  }
   if (e.summaryJa && !isFallbackText(e.summaryJa)) {
     lines.push(`既存の日本語要約: ${compact(e.summaryJa, 600)}`);
   }
@@ -85,6 +95,7 @@ export function buildBodyPromptJa(e: BodyPromptEntry): string {
     "・リード文で主題と重要性を 1〜2 文で提示し、本文で技術的内容・背景・影響を噛み砕いて説明する。",
     "・関連する周辺ツール・他社動向・前提知識など、読み応えを高める文脈を適度に含める。",
     "・中立かつ事実ベース。誤った断定や推測の断言は避け、推測は「と見られる」「可能性がある」等のヘッジ表現を使う。",
+    "・収集元のタイトルと抜粋を事実の上限とし、料金・対象地域・対応OS・既存版からの展開を別の機能や新製品へ置き換えない。",
     "・プレーンテキストのみ。Markdown 見出し (#) やリスト記号 (- , *) は使わない。コードフェンスや前置きも書かない。",
     "・本文のみを返す。タイトルや「以下が本文です」等のメタ説明は書かない。",
     "",
@@ -106,6 +117,7 @@ export function buildBodyPromptEn(e: BodyPromptEntry): string {
     "- Open with one or two sentences stating the topic and why it matters, then explain the key points, technical detail, and context.",
     "- Add useful background: adjacent tools, related industry moves, or prerequisite concepts, to make it worth reading.",
     "- Neutral and fact-based. Avoid overclaiming; hedge speculation with phrases like \"appears to\" or \"is likely\".",
+    "- Treat the collected title and source excerpt as the factual boundary. Preserve pricing, region, platform, and expansion facts instead of replacing them with a different feature or a new-product claim.",
     "- Plain text only. No Markdown headings (#) or list markers (-, *). No code fences and no preamble.",
     "- Return ONLY the body text. Do not write a title or any meta commentary such as \"Here is the body\".",
     "",

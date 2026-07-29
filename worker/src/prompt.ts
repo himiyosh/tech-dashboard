@@ -170,6 +170,8 @@ export function buildSummaryPrompt(e: PromptEntry): string {
     `Do NOT write a body or any long-form text. Keep the whole response short.`,
     `Write a genuine summary of what the article is about and why it matters -- do NOT copy or truncate the opening sentence of the excerpt.`,
     `Every summary must be grammatically complete: never cut off mid-sentence or mid-word, and always end with proper punctuation.`,
+    `Treat the collected title and source excerpt as the factual boundary. Do not invent a feature when the source describes a pricing plan, and do not describe an expansion to a new platform as the first launch of an existing product.`,
+    `Preserve material facts such as plan type, price, target region, payment method, target platform, and prior-platform expansion in BOTH summaries when they appear in the source context.`,
     `{`,
     `  "titleJa": "Natural Japanese title. Keep product/company names and version numbers unchanged.",`,
     `  "summaryJa": "Complete Japanese summary in 1-2 full sentences (90-150 chars). State what changed and why it matters.",`,

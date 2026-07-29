@@ -9127,6 +9127,34 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator('[data-paper-view-panel="compact"]')).toBeVisible();
     await expect(page.locator('[data-paper-view-panel="cards"]')).toBeHidden();
 
+    const compactArticleLinks =
+      '[data-paper-view-panel="compact"] [data-paper-entry]:not([hidden]) > a.row';
+    for (const viewport of [
+      { width: 375, height: 667 },
+      { width: 390, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await settleResponsiveLayout(page);
+      await expectTouchTargets(
+        page,
+        compactArticleLinks,
+        `${viewport.width}px arXiv Compact article links`,
+      );
+    }
+
+    const firstCompactArticle = page.locator(`${compactArticleLinks}[href^="/e/"]`).first();
+    await expectTargetOwnsCenter(firstCompactArticle, "arXiv Compact article link");
+    const compactDetailHref = await firstCompactArticle.getAttribute("href");
+    expect(compactDetailHref).toMatch(/^\/e\/[a-f0-9]{16}\/$/);
+    await firstCompactArticle.click();
+    await expect.poll(() => new URL(page.url()).pathname).toBe(compactDetailHref);
+    await page.goBack();
+    await expect(page.locator('[data-paper-view-panel="compact"]')).toBeVisible();
+    await expect(page.locator('[data-paper-view="compact"]')).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
     const cardsView = page.locator('[data-paper-view="cards"]');
     await cardsView.click();
     await expect(cardsView).toHaveAttribute("aria-pressed", "true");

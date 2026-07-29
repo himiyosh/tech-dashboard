@@ -68,6 +68,7 @@ interface IndexShape {
   health?: {
     bodiesTotal?: number;
     enqueueCandidates?: number;
+    summaryQueueSnapshotStage?: string;
     summaryQueueBacklog?: number;
     summaryQueueEnqueued?: number;
     bodyEnqueueCap?: number;
@@ -656,6 +657,9 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     const sharedRemaining = health?.enrichmentRemaining;
 
     if (summaryEnqueued !== undefined) {
+      if (health?.summaryQueueSnapshotStage !== undefined) {
+        expect(health.summaryQueueSnapshotStage).toBe("final-entries");
+      }
       expect(summaryEnqueued).toBeLessThanOrEqual(health?.enqueueCandidates ?? 0);
       expect(summaryEnqueued).toBeLessThanOrEqual(health?.summaryQueueBacklog ?? 0);
     }

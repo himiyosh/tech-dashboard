@@ -425,6 +425,7 @@ describe("quality-audit queue telemetry", () => {
     expect(queueTelemetryForAudit()).toEqual({
       summary: {
         mode: null,
+        snapshotStage: null,
         backlog: null,
         candidates: null,
         enqueueCap: null,
@@ -454,6 +455,7 @@ describe("quality-audit queue telemetry", () => {
       queueMode: "enabled",
       queueCap: 12,
       enqueueCandidates: 0,
+      summaryQueueSnapshotStage: "final-entries",
       summaryQueueBacklog: 0,
       summaryQueueEnqueued: 0,
       summaryQueueDrainEstimateHours: 0,
@@ -471,7 +473,13 @@ describe("quality-audit queue telemetry", () => {
       enrichmentEnqueued: 0,
       enrichmentRemaining: 35,
     })).toMatchObject({
-      summary: { backlog: 0, candidates: 0, enqueueCap: 12, enqueued: 0 },
+      summary: {
+        snapshotStage: "final-entries",
+        backlog: 0,
+        candidates: 0,
+        enqueueCap: 12,
+        enqueued: 0,
+      },
       body: {
         retentionEligible: 10,
         backlog: 0,

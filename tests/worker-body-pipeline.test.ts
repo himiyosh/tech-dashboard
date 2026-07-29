@@ -349,6 +349,7 @@ describe("shared enrichment budget and pending body merge", () => {
         sourcesAttempted: 14,
         sourcesFailed: [],
         copilotOk: true,
+        summaryQueueSnapshotStage: "final-entries",
         summaryQueueBacklog: 1,
         summaryQueueEnqueued: 1,
         bodyQueueMode: "enabled",
@@ -372,6 +373,7 @@ describe("shared enrichment budget and pending body merge", () => {
     );
 
     expect(payload).toMatchObject({
+      summaryQueueSnapshotStage: "final-entries",
       summaryQueueEnqueued: 1,
       bodyQueueMode: "enabled",
       bodyBacklog: 433,

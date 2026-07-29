@@ -44,6 +44,7 @@ export interface DashboardMetrics {
   realSummaryEntries: number;
   fallbackPercent: number;
   summaryQueueMode: string;
+  summaryQueueSnapshotStage: string | null;
   summaryQueueCandidates: number;
   summaryQueueBacklog: number;
   summaryQueueEnqueued: number | null;
@@ -132,6 +133,10 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
     realSummaryEntries: fallback.realSummaryEntries,
     fallbackPercent: WORKER_HEALTH?.fallbackPercent ?? fallback.fallbackPercent,
     summaryQueueMode: WORKER_HEALTH?.queueMode ?? "unknown",
+    summaryQueueSnapshotStage:
+      typeof WORKER_HEALTH?.summaryQueueSnapshotStage === "string"
+        ? WORKER_HEALTH.summaryQueueSnapshotStage
+        : null,
     summaryQueueCandidates: WORKER_HEALTH?.enqueueCandidates ?? 0,
     summaryQueueBacklog: WORKER_HEALTH?.summaryQueueBacklog ?? WORKER_HEALTH?.fallbackTotal ?? fallback.fallbackEntries,
     summaryQueueEnqueued: optionalMetric(WORKER_HEALTH?.summaryQueueEnqueued),

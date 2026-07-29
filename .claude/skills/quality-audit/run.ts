@@ -53,6 +53,7 @@ interface Index {
     queueMode?: string;
     queueCap?: number;
     enqueueCandidates?: number;
+    summaryQueueSnapshotStage?: string;
     summaryQueueBacklog?: number;
     summaryQueueEnqueued?: number;
     summaryQueueDrainEstimateHours?: number;
@@ -84,6 +85,7 @@ type AuditMetric = number | null;
 export interface AuditQueueTelemetry {
   summary: {
     mode: string | null;
+    snapshotStage: string | null;
     backlog: AuditMetric;
     candidates: AuditMetric;
     enqueueCap: AuditMetric;
@@ -189,6 +191,10 @@ export function queueTelemetryForAudit(health?: Index["health"]): AuditQueueTele
   return {
     summary: {
       mode: typeof health?.queueMode === "string" ? health.queueMode : null,
+      snapshotStage:
+        typeof health?.summaryQueueSnapshotStage === "string"
+          ? health.summaryQueueSnapshotStage
+          : null,
       backlog: optionalMetric(health?.summaryQueueBacklog),
       candidates: optionalMetric(health?.enqueueCandidates),
       enqueueCap: optionalMetric(health?.queueCap),
@@ -458,6 +464,7 @@ async function main() {
   lines.push(
     `| Shared enqueue budget | - | - | - | - | ${metricLabel(queueTelemetry.shared.enqueueCap)} | ${metricLabel(queueTelemetry.shared.enqueued)} | - | - | - | - |`,
   );
+  lines.push(`- summary snapshot stage: ${queueTelemetry.summary.snapshotStage ?? "未観測"}`);
   lines.push(`- shared remaining: ${metricLabel(queueTelemetry.shared.remaining)}`);
   lines.push("");
 

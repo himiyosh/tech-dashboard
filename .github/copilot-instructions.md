@@ -2926,6 +2926,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: Queue jobへ`contentSnippet`をend-to-endで伝播し、source context不足時は新規生成を行わない。料金plan・対象地域・価格/決済と、既存platformから別platformへの展開という高信頼factだけを対象に、LLM非依存のbounded grounding contractを追加した。consumer書込み、local/remote cache採用、Publisher fallback、body job選定、body cache、sidecar merge、transaction migrationを同じcontractへ接続し、Cursor StartとWindows展開fixtureをpending/source excerptへ戻した。変更前live 1,825件の全量測定ではmaterial conflictはissueの2件だけで、8件のbounded official-source keep sampleはfalse positive 0件だった。
 - **教訓**: 「promptへsource欄がある」ことはgroundingの証拠ではない。source evidenceがjob schema、consumer validation、cache provenance、最終artifactまで実際に到達し、生成前と採用時の両方で同じcontractを通る必要がある。一般的な意味矛盾を正規表現で推測せず、公式evidenceから決定論的に取り出せるmaterial factへ範囲を限定し、既存有効summaryを広くpendingへ戻さないfalse-positive corpusを同時に固定する。
 
+### LL-444: remote enrichment後のidentityとtelemetryは同じfinal snapshotから導出する
+- **事象**: Publisher run `30459203097`ではremote summary cache反映後に、異なるsource URLを持つ2記事が同じ英語metadata titleへ収束した。同じrunで要約Queueはpre-publish集合から7件送信した一方、persisted healthはfinal集合の候補6件を保存し、`summaryQueueEnqueued=7`が`enqueueCandidates=6`を超えた。scheduled run `30473429412`でも同じmetadata重複が再現した。失敗runはdata commitとeffects flushを行わなかった。
+- **根本原因**: metadata identityが生成title、reader-facing source表示名、公開時刻だけで構成され、cache反映でpending title branchからready title branchへ変わると、異なるURL pathのidentity差が失われた。Queue側は送信前の`afterCache`からjobを選び、fallback適用、retention、index cap、title補完後の`finalEntries`からcandidate/backlogを再計算していたため、実送信とhealthが別の母集団を表していた。
+- **対策**: 全addressable detailのJA/EN title pairを先に生成し、実際に衝突するentryだけへcanonical source URLの最終path segmentを事実ベースのdiscriminatorとして付与する。pathでも衝突する場合だけ既存entry IDを最終fallbackにし、canonical URLとsource provenanceは変更しない。Queueは`finalEntries`からbatchを1回だけ選び、そのbatchを送信して`summaryQueueSnapshotStage=final-entries`、candidate、backlog、実送信、ETAへ共有する。実送信が同じbatchのcandidate/backlogを超える場合はclampせずfail-closedにする。
+- **教訓**: remote cache mergeのようにentryの公開可否や表示branchを変える処理がある場合、reader-facing identityと運用telemetryをmerge前後で別々に導出しない。不可逆な送信とpersisted healthは同じfinal snapshotを共有し、別stageを残す必要がある場合はfield名とsnapshot stageを明示する。実送信数を後段candidateへ丸めて整合したように見せず、母集団の不一致をtestで失敗させる。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

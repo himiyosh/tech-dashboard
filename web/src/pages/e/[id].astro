@@ -50,21 +50,37 @@ import {
   articleSocialImage,
   createLocalizedPageMetadata,
   localizedArticleMetadataDescription,
-  localizedArticleMetadataTitle,
   localizedPendingArticleMetadataDescription,
-  localizedPendingArticleMetadataTitle,
 } from "../../lib/social-metadata.ts";
+import {
+  buildUniqueArticleMetadataTitleMap,
+  type ArticleMetadataTitles,
+} from "../../lib/article-metadata.ts";
 import SourceExcerpt from "../../components/SourceExcerpt.astro";
 
 export function getStaticPaths() {
-  return collectAddressableDetailEntries(ALL_ENTRIES, ARCHIVE_WARM_ENTRIES).map((e) => ({
-    params: { id: e.id },
-    props: { entry: e },
-  }));
+  const addressableEntries = collectAddressableDetailEntries(
+    ALL_ENTRIES,
+    ARCHIVE_WARM_ENTRIES,
+  );
+  const metadataTitlesById = buildUniqueArticleMetadataTitleMap(addressableEntries);
+  return addressableEntries.map((e) => {
+    const metadataTitles = metadataTitlesById.get(e.id);
+    if (!metadataTitles) {
+      throw new Error(`missing article metadata title pair for ${e.id}`);
+    }
+    return {
+      params: { id: e.id },
+      props: { entry: e, metadataTitles },
+    };
+  });
 }
 
-interface Props { entry: NormalizedEntry; }
-const { entry } = Astro.props as Props;
+interface Props {
+  entry: NormalizedEntry;
+  metadataTitles: ArticleMetadataTitles;
+}
+const { entry, metadataTitles } = Astro.props as Props;
 
 const titleJa = titleForLang(entry, "ja");
 const titleEn = titleForLang(entry, "en");
@@ -237,26 +253,8 @@ const pendingDescription = {
   en: "AI summary pending. Check the title, category, and original article before sharing.",
 } as const;
 const canonicalUrl = `${SITE_URL}/e/${entry.id}/`;
-const metadataTitleJa = (summaryAbsent
-  ? localizedPendingArticleMetadataTitle
-  : localizedArticleMetadataTitle)({
-  title: summaryAbsent ? titleJaResult.text : titleJa,
-  lang: "ja",
-  sourceLabel: srcDisplay,
-  categoryLabel: catName,
-  publishedAt: entry.publishedAt,
-  sourceUrl,
-});
-const metadataTitleEn = (summaryAbsent
-  ? localizedPendingArticleMetadataTitle
-  : localizedArticleMetadataTitle)({
-  title: summaryAbsent ? titleEnResult.text : titleEn,
-  lang: "en",
-  sourceLabel: srcDisplay,
-  categoryLabel: catName,
-  publishedAt: entry.publishedAt,
-  sourceUrl,
-});
+const metadataTitleJa = metadataTitles.ja;
+const metadataTitleEn = metadataTitles.en;
 const pageDescriptionJa = summaryAbsent
   ? localizedPendingArticleMetadataDescription({
       title: titleJaResult.text,

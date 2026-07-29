@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -6,6 +7,7 @@ import {
   summaryForLangWithFallback,
   titleForLang,
   titleForLangWithFallback,
+  type NormalizedEntry,
 } from "../web/src/lib/data.ts";
 import {
   SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
@@ -13,6 +15,7 @@ import {
 } from "../web/src/lib/bounded-description.ts";
 import { ARCHIVE_WARM_ENTRIES } from "../web/src/lib/archive.ts";
 import { collectAddressableDetailEntries } from "../web/src/lib/detail-addressability.ts";
+import { buildUniqueArticleMetadataTitleMap } from "../web/src/lib/article-metadata.ts";
 import { sourceLabel } from "../web/src/lib/source-meta.ts";
 import {
   HOME_DESCRIPTION_EN,
@@ -384,11 +387,97 @@ describe("localized social metadata", () => {
     expect(consonantCategoryDescription).not.toContain("an GitHub Copilot article");
   });
 
+  it("distinguishes same-title same-source metadata by factual source URL identity", () => {
+    const common = {
+      title: "Introducing Gemini 3.6 Flash, 3.5 Flash-Lite, and 3.5 Flash Cyber",
+      lang: "en" as const,
+      sourceLabel: "Google DeepMind Blog",
+      categoryLabel: "Gemini",
+      publishedAt: "2026-07-21T15:16:30.000Z",
+      sourceUrl: "https://deepmind.google/blog/introducing-gemini-36-flash-35-flash-lite-and-35-flash-cyber/",
+    };
+    const first = localizedArticleMetadataTitle({
+      ...common,
+      identityDiscriminator:
+        "introducing-gemini-36-flash-35-flash-lite-and-35-flash-cyber",
+    });
+    const second = localizedArticleMetadataTitle({
+      ...common,
+      sourceUrl:
+        "https://deepmind.google/blog/introducing-gemini-3-6-flash-3-5-flash-lite-and-3-5-flash-cyber/",
+      identityDiscriminator:
+        "introducing-gemini-3-6-flash-3-5-flash-lite-and-3-5-flash-cyber",
+    });
+
+    expect(first).not.toBe(second);
+    expect(first).toContain("introducing-gemini-36");
+    expect(second).toContain("introducing-gemini-3-6");
+    expect(Array.from(first).length).toBeLessThanOrEqual(120);
+    expect(Array.from(second).length).toBeLessThanOrEqual(120);
+
+    const entryBase: NormalizedEntry = {
+      id: "42230b0b340ad2a5",
+      source: "google-deepmind",
+      sourceType: "blog",
+      url: common.sourceUrl,
+      title: common.title,
+      titleJa: "Gemini 3.6 Flash、3.5 Flash-Lite、3.5 Flash Cyberを発表",
+      titleEn: common.title,
+      summaryJa: "Googleが3つのGeminiモデルを発表した。",
+      summaryEn: "Google introduced three Gemini models.",
+      lang: "en",
+      publishedAt: common.publishedAt,
+      collectedAt: "2026-07-26T22:46:08.870Z",
+      tags: ["gemini"],
+      category: "gemini",
+      importance: 3,
+      archiveTier: "hot",
+    };
+    const duplicateEntries = [
+      entryBase,
+      {
+        ...entryBase,
+        id: "85722a1fd47d7dd5",
+        url:
+          "https://deepmind.google/blog/introducing-gemini-3-6-flash-3-5-flash-lite-and-3-5-flash-cyber/",
+      },
+    ];
+    const uniqueTitles = buildUniqueArticleMetadataTitleMap(duplicateEntries);
+    const firstPair = uniqueTitles.get(duplicateEntries[0]!.id);
+    const secondPair = uniqueTitles.get(duplicateEntries[1]!.id);
+
+    expect(firstPair?.ja).not.toBe(secondPair?.ja);
+    expect(firstPair?.en).not.toBe(secondPair?.en);
+    expect(firstPair?.en).toContain("Google DeepMind Blog");
+    expect(secondPair?.en).toContain("Google DeepMind Blog");
+    expect(firstPair?.en).toContain("introducing-gemini-36");
+    expect(secondPair?.en).toContain("introducing-gemini-3-6");
+    expect(duplicateEntries.map((entry) => entry.url)).toEqual([
+      common.sourceUrl,
+      "https://deepmind.google/blog/introducing-gemini-3-6-flash-3-5-flash-lite-and-3-5-flash-cyber/",
+    ]);
+  });
+
+  it("wires collision-safe title pairs into every generated detail route", () => {
+    const detailSource = readFileSync(
+      new URL("../web/src/pages/e/[id].astro", import.meta.url),
+      "utf8",
+    );
+
+    expect(detailSource).toContain(
+      "buildUniqueArticleMetadataTitleMap(addressableEntries)",
+    );
+    expect(detailSource).toContain("props: { entry: e, metadataTitles }");
+    expect(detailSource).toContain("const metadataTitleJa = metadataTitles.ja");
+    expect(detailSource).toContain("const metadataTitleEn = metadataTitles.en");
+  });
+
   it("matches ready and pending title metadata branches across the current corpus", () => {
     const addressable = collectAddressableDetailEntries(
       ALL_ENTRIES,
       ARCHIVE_WARM_ENTRIES,
     );
+    const metadataTitlesById = buildUniqueArticleMetadataTitleMap(addressable);
     const jaTitles = new Set<string>();
     const enTitles = new Set<string>();
     for (const entry of addressable) {
@@ -405,19 +494,12 @@ describe("localized social metadata", () => {
         && !summaryForLangWithFallback(entry, "en").text;
       const jaDisplayTitle = titleForLangWithFallback(entry, "ja").text;
       const enDisplayTitle = titleForLangWithFallback(entry, "en").text;
-      const titleBuilder = summaryAbsent
-        ? localizedPendingArticleMetadataTitle
-        : localizedArticleMetadataTitle;
-      const jaTitle = titleBuilder({
-        ...common,
-        title: summaryAbsent ? jaDisplayTitle : titleForLang(entry, "ja"),
-        lang: "ja",
-      });
-      const enTitle = titleBuilder({
-        ...common,
-        title: summaryAbsent ? enDisplayTitle : titleForLang(entry, "en"),
-        lang: "en",
-      });
+      const metadataTitles = metadataTitlesById.get(entry.id);
+      if (!metadataTitles) {
+        throw new Error(`missing metadata titles for ${entry.id}`);
+      }
+      const jaTitle = metadataTitles.ja;
+      const enTitle = metadataTitles.en;
 
       if (summaryAbsent) {
         const sourcePrefix = Array.from(common.sourceLabel).slice(0, 19).join("");

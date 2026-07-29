@@ -142,6 +142,7 @@ export interface WorkerHealth {
   queueMode?: string;
   queueCap?: number;
   enqueueCandidates?: number;
+  summaryQueueSnapshotStage?: string;
   summaryQueueBacklog?: number;
   summaryQueueEnqueued?: number;
   summaryQueueDrainEstimateHours?: number;

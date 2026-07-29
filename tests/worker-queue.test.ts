@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import type { NormalizedEntry } from "../harness/types.ts";
 import {
@@ -8,6 +9,7 @@ import {
 } from "../worker/src/kv-cache.ts";
 import { evaluateHarnessHealth } from "../worker/src/index.ts";
 import {
+  buildSummaryQueueTelemetry,
   needsGeneratedContent,
   isUsableSummaryCacheEntry,
   orderSummaryCandidates,
@@ -302,6 +304,52 @@ describe("worker summary queue selection", () => {
     for (const batch of [first, second, fourth]) {
       expect(new Set(batch.jobs.map((j) => j.url)).size).toBe(batch.jobs.length);
     }
+  });
+
+  it("does not persist 7 actual sends against a later 6-candidate snapshot", () => {
+    const entries = Array.from({ length: 7 }, (_, index) => ({
+      ...baseEntry,
+      id: `snapshot-${index}`,
+      url: `https://example.com/snapshot-${index}`,
+    }));
+    const lookedUp = new Set(entries.map((entry) => entry.url));
+    const sentBatch = selectSummaryJobBatch(entries, new Map(), lookedUp, 7, new Set(), {
+      nowMs: 0,
+    });
+    const finalBatch = selectSummaryJobBatch(
+      entries.slice(0, 6),
+      new Map(),
+      new Set(entries.slice(0, 6).map((entry) => entry.url)),
+      7,
+      new Set(),
+      { nowMs: 0 },
+    );
+    expect(buildSummaryQueueTelemetry(sentBatch, 7, true)).toMatchObject({
+      summaryQueueSnapshotStage: "final-entries",
+      enqueueCandidates: 7,
+      summaryQueueBacklog: 7,
+      summaryQueueEnqueued: 7,
+    });
+    expect(() => buildSummaryQueueTelemetry(finalBatch, 7, true)).toThrow(
+      /enqueued=7 candidates=6 backlog=6 stage=final-entries/,
+    );
+  });
+
+  it("selects, sends, and persists one final-entry summary Queue batch", () => {
+    const source = readFileSync(
+      new URL("../worker/src/index.ts", import.meta.url),
+      "utf8",
+    );
+
+    expect(source).not.toContain("prePublishQueueBatch");
+    expect(source).not.toContain("maybeEnqueueSummaryJobs");
+    expect(source).toContain(
+      "const summaryEnqueued = await enqueueSummaryJobBatch(env, summaryQueueBatch)",
+    );
+    expect(source).toContain(
+      "const summaryQueueTelemetry = buildSummaryQueueTelemetry(",
+    );
+    expect(source).toContain("...summaryQueueTelemetry");
   });
 
   it("prioritizes evergreen (Knowledge) entries ahead of the news backlog (LL-098)", () => {

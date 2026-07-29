@@ -24,11 +24,13 @@ import { hasSufficientSourceGrounding } from "../../harness/pipeline/source-grou
 import { canonicalUrlKey, normalizeMediaUrl } from "../../harness/pipeline/url.ts";
 import { applyDeterministicContentFallback } from "./content-fallback.ts";
 import {
+  buildSummaryQueueTelemetry,
   needsGeneratedContent,
   isUsableSummaryCacheEntry,
   selectSummaryJobBatch,
   selectSummaryLookupEntries,
   type SummaryJob,
+  type SummaryJobBatch,
 } from "./summary-queue.ts";
 import { type BodyJob } from "./body-generate.ts";
 import {
@@ -1281,7 +1283,7 @@ export async function runHarness(
   //
   // Root-cause fix (2026-05-24): the earlier cap of 60 (LL-042 follow-up)
   // caused a permanent blind-spot. Entries at positions 60+ were never
-  // KV-checked, never entered `lookedUpUrls`, and maybeEnqueueSummaryJobs
+  // KV-checked, never entered `lookedUpUrls`, and summary job selection
   // incorrectly treated them as "has real summary — skip". Result: a growing
   // tail (484 entries, 400+ permanently stuck) that never got enqueued.
   //
@@ -1306,7 +1308,7 @@ export async function runHarness(
   const lookedUpUrls = new Set(needsKvLookup.map((e) => e.url));
   // uncheckedFallbackUrls: fallback entries skipped this cron because
   // allFallback.length > KV_LOOKUP_CAP. We know they're fallbacks (no real
-  // summary) even without a KV read, so maybeEnqueueSummaryJobs treats them
+  // summary) even without a KV read, so summary job selection treats them
   // the same as KV-miss entries.
   const uncheckedFallbackUrls = new Set(
     allFallback.filter((e) => !lookedUpUrls.has(e.url)).map((e) => e.url),
@@ -1501,64 +1503,6 @@ export async function runHarness(
   const queueCap = Math.max(1, Number(env.ENQUEUE_MAX_NEW ?? 30));
   const queueEnabled = env.ENABLE_SUMMARY_QUEUE === "1";
   const queueMode = queueEnabled ? (env.SUMMARY_QUEUE ? "enabled" : "missing-binding") : "disabled";
-  const prePublishFallbackTotal = afterCache.filter(needsGeneratedContent).length;
-  const prePublishFallbackPercent =
-    afterCache.length === 0 ? 0 : Math.round((prePublishFallbackTotal / afterCache.length) * 100);
-  const prePublishQueueBatch = selectSummaryJobBatch(
-    afterCache,
-    hitsByUrl,
-    lookedUpUrls,
-    queueCap,
-    uncheckedFallbackUrls,
-    {
-      nowMs: summarySelectionNowMs,
-      skipUrls: summaryRetryCooldownUrls,
-      publisherContractFingerprint,
-    },
-  );
-
-  // Enqueue before the CPU-heavy publish phase. Jobs carry the publisher
-  // fingerprint, so a later parent-SHA rejection cannot make a newer publisher
-  // consume stale enrichment output.
-  const earlyEnqueued = await maybeEnqueueSummaryJobs(
-    env,
-    afterCache,
-    hitsByUrl,
-    lookedUpUrls,
-    uncheckedFallbackUrls,
-    summaryRetryCooldownUrls,
-    summarySelectionNowMs,
-    publisherContractFingerprint,
-  );
-  if (earlyEnqueued > 0) {
-    console.log(`[worker] enqueued ${earlyEnqueued} summary jobs (pre-publish path)`);
-  }
-  await writeHeartbeat(
-    env,
-    {
-      batchIndex: batchIndex + 1,
-      batchTotal: SOURCE_BATCHES,
-      sourcesAttempted: sources.length,
-      sourcesOk: settled.filter((s) => s.result.ok).length,
-      sourcesFailed: failedSources,
-      copilotOk: inlineCopilotOk,
-      fallbackPercent: prePublishFallbackPercent,
-      queueMode,
-      queueCap,
-      enqueueCandidates: queueEnabled && env.SUMMARY_QUEUE ? prePublishQueueBatch.jobs.length : 0,
-      summaryQueueBacklog: prePublishQueueBatch.eligibleCount,
-      summaryQueueDrainEstimateHours: prePublishQueueBatch.drainEstimateHours,
-      summaryQueueStartIndex: prePublishQueueBatch.startIndex,
-      summaryQueueCooldownCount: prePublishQueueBatch.cooldownCount,
-      kvLookupCount: needsKvLookup.length,
-      kvLookupCap: KV_LOOKUP_CAP,
-      publisherContractFingerprint,
-    },
-    false,
-    earlyEnqueued,
-    prePublishFallbackTotal,
-    "pre-publish",
-  );
 
   // 5) Build payload (cap newest entries; dropped tier is retained only in reports)
   let summaryFallbacks = 0;
@@ -1601,7 +1545,40 @@ export async function runHarness(
       publisherContractFingerprint,
     },
   );
-  const enqueueCandidates = queueEnabled && env.SUMMARY_QUEUE ? summaryQueueBatch.jobs.length : 0;
+  // Select, send, and persist summary Queue telemetry from the same finalized
+  // entry population. Recomputing candidates after an earlier send mixed two
+  // stages and produced impossible snapshots such as 7 sends / 6 candidates.
+  const summaryEnqueued = await enqueueSummaryJobBatch(env, summaryQueueBatch);
+  const summaryQueueTelemetry = buildSummaryQueueTelemetry(
+    summaryQueueBatch,
+    summaryEnqueued,
+    queueEnabled && Boolean(env.SUMMARY_QUEUE),
+  );
+  if (summaryEnqueued > 0) {
+    console.log(`[worker] enqueued ${summaryEnqueued} summary jobs (final-entry snapshot)`);
+  }
+  await writeHeartbeat(
+    env,
+    {
+      batchIndex: batchIndex + 1,
+      batchTotal: SOURCE_BATCHES,
+      sourcesAttempted: sources.length,
+      sourcesOk: settled.filter((s) => s.result.ok).length,
+      sourcesFailed: failedSources,
+      copilotOk: inlineCopilotOk,
+      fallbackPercent,
+      queueMode,
+      queueCap,
+      ...summaryQueueTelemetry,
+      kvLookupCount: needsKvLookup.length,
+      kvLookupCap: KV_LOOKUP_CAP,
+      publisherContractFingerprint,
+    },
+    false,
+    summaryEnqueued,
+    fallbackTotal,
+    "pre-publish",
+  );
   // Body-file pipeline (LL-115): merge generated bodies into data/bodies.json
   // and enqueue body-less entries. Summary jobs keep priority within the
   // shared Queue write allowance; body jobs consume only the unused capacity.
@@ -1617,7 +1594,7 @@ export async function runHarness(
   );
   const effectiveBodyEnqueueCap = bodyEnqueueAllowance(
     totalEnrichmentEnqueueCap,
-    earlyEnqueued,
+    summaryEnqueued,
     configuredBodyEnqueueCap,
   );
   const bodyPipeline = await runBodyPipeline(
@@ -1649,12 +1626,7 @@ export async function runHarness(
     kvLookupCount: needsKvLookup.length,
     queueMode,
     queueCap,
-    enqueueCandidates,
-    summaryQueueEnqueued: earlyEnqueued,
-    summaryQueueBacklog: summaryQueueBatch.eligibleCount,
-    summaryQueueDrainEstimateHours: summaryQueueBatch.drainEstimateHours,
-    summaryQueueStartIndex: summaryQueueBatch.startIndex,
-    summaryQueueCooldownCount: summaryQueueBatch.cooldownCount,
+    ...summaryQueueTelemetry,
     copilotOk: inlineCopilotOk,
     copilotError,
     ogCached: Object.keys(ogBlob).length,
@@ -1662,10 +1634,10 @@ export async function runHarness(
     publisherContractFingerprint,
     ...bodyPipeline.health,
     enrichmentEnqueueCap: totalEnrichmentEnqueueCap,
-    enrichmentEnqueued: earlyEnqueued + bodyPipeline.enqueued,
+    enrichmentEnqueued: summaryEnqueued + bodyPipeline.enqueued,
     enrichmentRemaining: Math.max(
       0,
-      totalEnrichmentEnqueueCap - earlyEnqueued - bodyPipeline.enqueued,
+      totalEnrichmentEnqueueCap - summaryEnqueued - bodyPipeline.enqueued,
     ),
   };
   // Body-file architecture (LL-115): the long-form body is NOT stored in
@@ -1712,7 +1684,7 @@ export async function runHarness(
   const noDataChanges = indexUnchanged && !bodiesChanged;
   const message = `chore(data): update tech dashboard ${payload.generatedAt}`;
   // Compare ignoring `generatedAt` timestamp so unchanged runs don't churn commits.
-  // Queue enqueue already happened in the pre-publish path above because
+  // Queue enqueue already happened from the finalized entry snapshot above because
   // cache state (some entries are still fallbacks) is independent of whether
   // the index payload changed. The commit sink still runs with zero files so
   // effect-only runs must pass the same final snapshot CAS before effects can
@@ -1758,14 +1730,14 @@ export async function runHarness(
   );
   if (noDataChanges) {
     console.log("[worker] no data changes; snapshot verified");
-    await writeHeartbeat(env, health, false, earlyEnqueued, allFallback.length);
+    await writeHeartbeat(env, health, false, summaryEnqueued, fallbackTotal);
     return {
       changed: false,
       stats: {
         finalEntries: finalEntries.length,
         summarized,
         errors,
-        enqueued: earlyEnqueued,
+        enqueued: summaryEnqueued,
       },
     };
   }
@@ -1774,11 +1746,9 @@ export async function runHarness(
     `[worker] history archiveChanged=${historyStats.archiveFilesChanged}, statsChanged=${historyStats.statsChanged}, bodiesMerged=${bodyPipeline.health.bodyMerged}, bodyEnqueued=${bodyPipeline.enqueued}, commit=${commitSha}`,
   );
 
-  // 8) Record the pre-publish enqueue result in the final heartbeat. Queue
-  // dispatch happens before GitHub publish so AI backfill is not blocked by
-  // large JSON serialization or transient GitHub failures.
-  const enqueued = earlyEnqueued;
-  await writeHeartbeat(env, health, true, enqueued, allFallback.length);
+  // 8) Record the final-entry enqueue result in the published heartbeat.
+  const enqueued = summaryEnqueued;
+  await writeHeartbeat(env, health, true, enqueued, fallbackTotal);
 
   return {
     changed: true,
@@ -1816,6 +1786,7 @@ export interface HeartbeatHealthSnapshot {
   queueMode?: string;
   queueCap?: number;
   enqueueCandidates?: number;
+  summaryQueueSnapshotStage?: string;
   summaryQueueBacklog?: number;
   summaryQueueEnqueued?: number;
   summaryQueueDrainEstimateHours?: number;
@@ -1864,6 +1835,7 @@ export function buildHeartbeatPayload(
     queueMode: health.queueMode,
     queueCap: health.queueCap,
     enqueueCandidates: health.enqueueCandidates,
+    summaryQueueSnapshotStage: health.summaryQueueSnapshotStage,
     summaryQueueBacklog: health.summaryQueueBacklog,
     summaryQueueEnqueued: health.summaryQueueEnqueued,
     summaryQueueDrainEstimateHours: health.summaryQueueDrainEstimateHours,
@@ -2071,41 +2043,23 @@ export function evaluateHarnessHealth(
 }
 
 /**
- * Send up to ENQUEUE_MAX_NEW entries lacking a real cached summary to the
- * SUMMARY_QUEUE. Returns the number actually enqueued. No-op when disabled
- * or when the queue binding is missing.
+ * Send one preselected final-entry batch to SUMMARY_QUEUE. Returns the number
+ * actually enqueued without recomputing or clamping the candidate population.
+ * No-op when disabled or when the queue binding is missing.
  */
-async function maybeEnqueueSummaryJobs(
+async function enqueueSummaryJobBatch(
   env: PublisherEnv,
-  entries: readonly NormalizedEntry[],
-  hitsByUrl: Map<string, CacheEntry>,
-  lookedUpUrls: Set<string>,
-  uncheckedFallbackUrls: Set<string>,
-  summaryRetryCooldownUrls: ReadonlySet<string>,
-  nowMs: number,
-  publisherContractFingerprint: string,
+  batch: SummaryJobBatch,
 ): Promise<number> {
   if (env.ENABLE_SUMMARY_QUEUE !== "1") return 0;
   if (!env.SUMMARY_QUEUE) {
     console.warn("[worker] ENABLE_SUMMARY_QUEUE=1 but SUMMARY_QUEUE binding missing");
     return 0;
   }
-  const cap = Math.max(1, Number(env.ENQUEUE_MAX_NEW ?? 30));
-  const { jobs: candidates, eligibleCount, startIndex, drainEstimateHours } = selectSummaryJobBatch(
-    entries,
-    hitsByUrl,
-    lookedUpUrls,
-    cap,
-    uncheckedFallbackUrls,
-    {
-      nowMs,
-      skipUrls: summaryRetryCooldownUrls,
-      publisherContractFingerprint,
-    },
-  );
-  if (eligibleCount > 0) {
+  const candidates = batch.jobs;
+  if (batch.eligibleCount > 0) {
     console.log(
-      `[worker] summary queue candidates=${eligibleCount}, enqueue=${candidates.length}, start=${startIndex}, estimatedDrainHours=${drainEstimateHours}`,
+      `[worker] summary queue candidates=${batch.eligibleCount}, enqueue=${candidates.length}, start=${batch.startIndex}, estimatedDrainHours=${batch.drainEstimateHours}`,
     );
   }
 

@@ -118,13 +118,14 @@ export function articleSocialImage(
   };
 }
 
-interface ArticleMetadataTitleInput {
+export interface ArticleMetadataTitleInput {
   title: string;
   lang: MetadataLanguage;
   sourceLabel: string;
   categoryLabel: string;
   publishedAt: string;
   sourceUrl: string;
+  identityDiscriminator?: string;
 }
 
 function buildLocalizedArticleMetadataTitle(
@@ -142,10 +143,6 @@ function buildLocalizedArticleMetadataTitle(
     ? `${input.sourceLabel}の${input.categoryLabel}更新`
     : `${input.categoryLabel} update from ${input.sourceLabel}`;
   const title = languageSafeTitle || fallbackTitle;
-  const titleCharacters = Array.from(title);
-  const boundedTitle = !preserveSourceTitle && titleCharacters.length > 64
-    ? `${titleCharacters.slice(0, 63).join("")}…`
-    : title;
   const parsedPublishedAt = new Date(input.publishedAt);
   const publishedLabel = Number.isFinite(parsedPublishedAt.getTime())
     ? parsedPublishedAt.toISOString().replace("T", " ").slice(0, 16) + " UTC"
@@ -175,9 +172,26 @@ function buildLocalizedArticleMetadataTitle(
   const boundedSourceLabel = sourceCharacters.length > 20
     ? `${sourceCharacters.slice(0, 19).join("")}…`
     : input.sourceLabel;
-  const identity = languageSafeTitle
+  const baseIdentity = languageSafeTitle
     ? `${boundedSourceLabel} | ${publishedLabel}`
     : sourceDiscriminator || publishedLabel;
+  const identityDiscriminator = truncateMetadataPart(
+    input.identityDiscriminator ?? "",
+    48,
+  );
+  const identity = identityDiscriminator
+    ? `${baseIdentity} | ${identityDiscriminator}`
+    : baseIdentity;
+  const separator = " | ";
+  const titleCharacters = Array.from(title);
+  const boundedTitle = identityDiscriminator
+    ? truncateMetadataPart(
+        title,
+        Math.max(1, 120 - Array.from(`${separator}${identity}`).length),
+      )
+    : !preserveSourceTitle && titleCharacters.length > 64
+      ? `${titleCharacters.slice(0, 63).join("")}…`
+      : title;
   return `${boundedTitle} | ${identity}`;
 }
 

@@ -41,6 +41,47 @@ export interface SummaryJobBatch {
   cooldownCount: number;
 }
 
+export const SUMMARY_QUEUE_SNAPSHOT_STAGE = "final-entries" as const;
+
+export interface SummaryQueueTelemetry {
+  summaryQueueSnapshotStage: typeof SUMMARY_QUEUE_SNAPSHOT_STAGE;
+  enqueueCandidates: number;
+  summaryQueueBacklog: number;
+  summaryQueueEnqueued: number;
+  summaryQueueDrainEstimateHours: number;
+  summaryQueueStartIndex: number;
+  summaryQueueCooldownCount: number;
+}
+
+export function buildSummaryQueueTelemetry(
+  batch: SummaryJobBatch,
+  enqueued: number,
+  queueAvailable: boolean,
+): SummaryQueueTelemetry {
+  if (!Number.isInteger(enqueued) || enqueued < 0) {
+    throw new Error(`summary Queue enqueued count must be a non-negative integer: ${enqueued}`);
+  }
+  const enqueueCandidates = queueAvailable ? batch.jobs.length : 0;
+  if (
+    batch.jobs.length > batch.eligibleCount
+    || enqueued > enqueueCandidates
+    || enqueued > batch.eligibleCount
+  ) {
+    throw new Error(
+      `summary Queue snapshot mismatch: enqueued=${enqueued} candidates=${enqueueCandidates} backlog=${batch.eligibleCount} stage=${SUMMARY_QUEUE_SNAPSHOT_STAGE}`,
+    );
+  }
+  return {
+    summaryQueueSnapshotStage: SUMMARY_QUEUE_SNAPSHOT_STAGE,
+    enqueueCandidates,
+    summaryQueueBacklog: batch.eligibleCount,
+    summaryQueueEnqueued: enqueued,
+    summaryQueueDrainEstimateHours: batch.drainEstimateHours,
+    summaryQueueStartIndex: batch.startIndex,
+    summaryQueueCooldownCount: batch.cooldownCount,
+  };
+}
+
 export interface SummaryJobSelectionOpts {
   nowMs?: number;
   skipUrls?: ReadonlySet<string>;

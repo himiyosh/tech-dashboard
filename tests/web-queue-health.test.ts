@@ -120,4 +120,19 @@ describe("deriveQueueDisplay", () => {
     expect(source).not.toContain("summaryQueue.showEstimate");
     expect(source).not.toContain("summaryQueue.estimateHours");
   });
+
+  it("Status exposes the persisted summary Queue snapshot stage", () => {
+    const metrics = readFileSync(
+      join(process.cwd(), "web/src/lib/metrics.ts"),
+      "utf8",
+    );
+    const status = readFileSync(
+      join(process.cwd(), "web/src/pages/status.astro"),
+      "utf8",
+    );
+
+    expect(metrics).toContain("summaryQueueSnapshotStage");
+    expect(status).toContain("data-summary-queue-snapshot-stage");
+    expect(status).toContain("DASHBOARD_METRICS.summaryQueueSnapshotStage");
+  });
 });

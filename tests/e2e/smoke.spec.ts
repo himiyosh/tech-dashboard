@@ -3549,15 +3549,24 @@ test.describe("TECH Dashboard smoke", () => {
       expectedLanguage,
     );
 
-    const jsonLd = JSON.parse(
-      (await page.locator('script[type="application/ld+json"]').textContent()) ?? "{}",
-    ) as { headline?: string; description?: string; inLanguage?: string };
+    const jsonLdText =
+      (await page.locator('script[type="application/ld+json"]').textContent()) ?? "{}";
+    expect(jsonLdText).not.toMatch(/[<>&\u2028\u2029]/u);
+    const jsonLd = JSON.parse(jsonLdText) as {
+      headline?: string;
+      description?: string;
+      inLanguage?: string;
+      url?: string;
+    };
     const structuredHeadline = page.locator(
       `.ed-title .i18n-${expectedLanguage} .ed-title-text`,
     );
     expect(jsonLd.headline).toBe((await structuredHeadline.textContent())?.trim());
     expect(jsonLd.description).toBeTruthy();
     expect(jsonLd.inLanguage).toBe(expectedLanguage === "ja" ? "ja-JP" : "en");
+    expect(jsonLd.url).toBe(
+      await page.locator('link[rel="canonical"]').getAttribute("href"),
+    );
   });
 
   test("home keeps the decision path compact at tablet width", async ({ page }) => {

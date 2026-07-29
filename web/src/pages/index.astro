@@ -44,6 +44,7 @@ import {
 } from "../lib/data.ts";
 import { entryDestination } from "../lib/entry-destination.ts";
 import { sourceFreshnessStatus } from "../lib/freshness.ts";
+import { serializeJsonLd } from "../lib/json-ld.ts";
 import { deriveWorkerRunStatus, runCadenceLead } from "../lib/run-health.ts";
 import { SITE_URL } from "../lib/site.ts";
 import {
@@ -131,7 +132,7 @@ const homeJsonLd = {
 
 <Portal pageKey="timeline" metadata={HOME_PAGE_METADATA}>
   <Fragment slot="head">
-    <script type="application/ld+json" set:html={JSON.stringify(homeJsonLd)} />
+    <script type="application/ld+json" set:html={serializeJsonLd(homeJsonLd)} />
   </Fragment>
   <section class="banner">
     <div class="banner-bg-grid"></div>

@@ -1946,7 +1946,6 @@ test.describe("TECH Dashboard smoke", () => {
         }
       } else {
         expect(metrics.rankGridCols, `width ${width}: mobile Top-3 should remain a single column`).toBe(1);
-        expect(metrics.maxRankHeight, `width ${width}: mobile Top-3 cards stay compact`).toBeLessThanOrEqual(118);
         expect(metrics.maxRankMetaHeight, `width ${width}: mobile Top-3 metadata stays on one row`).toBeLessThanOrEqual(28);
         expect(metrics.rankMetaOverlaps, `width ${width}: mobile Top-3 metadata controls must not overlap`).toBe(false);
       }

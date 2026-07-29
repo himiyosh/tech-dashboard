@@ -420,7 +420,7 @@ test.describe("Publisher generated artifact", () => {
     }
     const descriptionJa = await page.locator('meta[name="description"]').getAttribute("content");
     expect(descriptionJa).toContain("AI 要約は準備中です");
-    expect(descriptionJa).toContain(visibleTitleJa);
+    expect(descriptionJa).toContain(Array.from(visibleTitleJa).slice(0, 32).join(""));
     await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
       "content",
       descriptionJa!,
@@ -437,18 +437,27 @@ test.describe("Publisher generated artifact", () => {
       description?: string;
       inLanguage?: string;
       author?: { name?: string; url?: string };
+      articleSection?: string;
       mainEntityOfPage?: { "@id"?: string };
     };
     const structuredTitle = structuredData.inLanguage === "ja-JP"
       ? visibleTitleJa
       : visibleTitleEn;
+    const structuredSource = structuredData.author?.name ?? "";
+    const structuredCategory = structuredData.articleSection ?? "";
+    expect(structuredSource).toBeTruthy();
+    expect(structuredCategory).toBeTruthy();
     expect(structuredData.headline).toBe(structuredTitle);
     expect(structuredData.description).toMatch(
       structuredData.inLanguage === "ja-JP"
         ? /AI 要約は準備中です/
         : /AI summary pending/,
     );
-    expect(structuredData.description).toContain(structuredTitle);
+    expect(structuredData.description).toContain(
+      Array.from(structuredTitle).slice(0, 32).join(""),
+    );
+    expect(structuredData.description).toContain(structuredSource);
+    expect(structuredData.description).toContain(structuredCategory);
     expect(structuredData.author?.name).toBeTruthy();
     expect(structuredData.author?.url).toMatch(/^https?:\/\//);
     expect(structuredData.mainEntityOfPage?.["@id"]).toBe(canonicalUrl);
@@ -469,7 +478,9 @@ test.describe("Publisher generated artifact", () => {
       localizedHeadValue(edgeHtml, "description"),
     );
     expect(edgeDescription).toContain("AI summary pending.");
-    expect(edgeDescription).toContain(visibleTitleEn);
+    expect(edgeDescription).toContain(Array.from(visibleTitleEn).slice(0, 32).join(""));
+    expect(edgeDescription).toContain(structuredSource);
+    expect(edgeDescription).toContain(structuredCategory);
     expect(
       decodeHeadValue(localizedHeadValue(edgeHtml, "og:title")),
     ).toContain(visibleTitleEn);

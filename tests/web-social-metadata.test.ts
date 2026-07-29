@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   ALL_ENTRIES,
   CATEGORY_META,
+  summaryForLangWithFallback,
   titleForLang,
+  titleForLangWithFallback,
 } from "../web/src/lib/data.ts";
 import {
   SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
@@ -327,7 +329,7 @@ describe("localized social metadata", () => {
       "AI 要約は準備中です。「npm publish-time malware scanning and dual-use metadata」はGitHub Changelogが公開したIndustry & Policyの記事です。",
     );
     expect(descriptionEn).toBe(
-      'AI summary pending. "npm publish-time malware scanning and dual-use metadata" is an Industry & Policy article from GitHub Changelog.',
+      'AI summary pending. "npm publish-time malware scanning and dual-use metadata" comes from GitHub Changelog in Industry & Policy.',
     );
     expect(`${descriptionJa} ${descriptionEn}`).not.toMatch(
       /generated summary|生成済み|近日中/,
@@ -338,9 +340,51 @@ describe("localized social metadata", () => {
     expect(Array.from(descriptionEn).length).toBeLessThanOrEqual(
       SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
     );
+
+    const longTitle =
+      "A very long source-grounded article title about secure AI agent evaluation, deployment, governance, and observability";
+    const longDescriptionEn = localizedPendingArticleMetadataDescription({
+      title: longTitle,
+      lang: "en",
+      sourceLabel: common.sourceLabel,
+      categoryLabel: common.categoryLabel,
+    });
+    expect(longDescriptionEn).toContain("AI summary pending.");
+    expect(longDescriptionEn).toContain(Array.from(longTitle).slice(0, 32).join(""));
+    expect(longDescriptionEn).toContain(common.sourceLabel);
+    expect(longDescriptionEn).toContain(common.categoryLabel);
+    expect(Array.from(longDescriptionEn).length).toBeLessThanOrEqual(
+      SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
+    );
+
+    const longJapaneseTitle =
+      "大規模なAIエージェント運用における安全な評価と監視とガバナンスの実践的な設計指針".repeat(3);
+    const longDescriptionJa = localizedPendingArticleMetadataDescription({
+      title: longJapaneseTitle,
+      lang: "ja",
+      sourceLabel: common.sourceLabel,
+      categoryLabel: common.categoryLabel,
+    });
+    expect(longDescriptionJa).toContain("AI 要約は準備中です");
+    expect(longDescriptionJa).toContain(
+      Array.from(longJapaneseTitle).slice(0, 32).join(""),
+    );
+    expect(longDescriptionJa).toContain(common.sourceLabel);
+    expect(longDescriptionJa).toContain(common.categoryLabel);
+    expect(Array.from(longDescriptionJa).length).toBeLessThanOrEqual(
+      SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
+    );
+
+    const consonantCategoryDescription = localizedPendingArticleMetadataDescription({
+      title: sourceTitle,
+      lang: "en",
+      sourceLabel: "GitHub Blog",
+      categoryLabel: "GitHub Copilot",
+    });
+    expect(consonantCategoryDescription).not.toContain("an GitHub Copilot article");
   });
 
-  it("keeps every addressable article title language-safe and unique in the current corpus", () => {
+  it("matches ready and pending title metadata branches across the current corpus", () => {
     const addressable = collectAddressableDetailEntries(
       ALL_ENTRIES,
       ARCHIVE_WARM_ENTRIES,
@@ -357,25 +401,40 @@ describe("localized social metadata", () => {
         publishedAt: entry.publishedAt,
         sourceUrl: entry.url,
       };
-      const jaTitle = localizedArticleMetadataTitle({
+      const summaryAbsent = !summaryForLangWithFallback(entry, "ja").text
+        && !summaryForLangWithFallback(entry, "en").text;
+      const jaDisplayTitle = titleForLangWithFallback(entry, "ja").text;
+      const enDisplayTitle = titleForLangWithFallback(entry, "en").text;
+      const titleBuilder = summaryAbsent
+        ? localizedPendingArticleMetadataTitle
+        : localizedArticleMetadataTitle;
+      const jaTitle = titleBuilder({
         ...common,
-        title: titleForLang(entry, "ja"),
+        title: summaryAbsent ? jaDisplayTitle : titleForLang(entry, "ja"),
         lang: "ja",
       });
-      const enTitle = localizedArticleMetadataTitle({
+      const enTitle = titleBuilder({
         ...common,
-        title: titleForLang(entry, "en"),
+        title: summaryAbsent ? enDisplayTitle : titleForLang(entry, "en"),
         lang: "en",
       });
 
-      expect(enTitle).not.toMatch(
-        /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u,
-      );
+      if (summaryAbsent) {
+        const sourcePrefix = Array.from(common.sourceLabel).slice(0, 19).join("");
+        expect(jaTitle).toContain(jaDisplayTitle);
+        expect(enTitle).toContain(enDisplayTitle);
+        expect(jaTitle).toContain(sourcePrefix);
+        expect(enTitle).toContain(sourcePrefix);
+      } else {
+        expect(enTitle).not.toMatch(
+          /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u,
+        );
+        expect(Array.from(jaTitle).length).toBeLessThanOrEqual(120);
+        expect(Array.from(enTitle).length).toBeLessThanOrEqual(120);
+      }
       expect(`${jaTitle} ${enTitle}`).not.toMatch(
         /AI 要約は準備中|AI summary pending|近日中/,
       );
-      expect(Array.from(jaTitle).length).toBeLessThanOrEqual(120);
-      expect(Array.from(enTitle).length).toBeLessThanOrEqual(120);
       expect(
         articleSocialImage(entry.image, jaTitle, enTitle).url,
       ).not.toMatch(/\.(?:avif|svg)(?:$|[?#])/i);

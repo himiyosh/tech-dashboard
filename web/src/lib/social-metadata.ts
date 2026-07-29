@@ -1,5 +1,8 @@
 import { SITE_URL } from "./site.ts";
-import { boundedSocialDescription } from "./bounded-description.ts";
+import {
+  SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
+  boundedSocialDescription,
+} from "./bounded-description.ts";
 
 export type MetadataLanguage = "ja" | "en";
 
@@ -203,21 +206,38 @@ export function localizedArticleMetadataDescription(input: {
     : `An article from ${input.sourceLabel} in ${input.categoryLabel}. Review its title, publication date, category, and original-source link.`;
 }
 
+function truncateMetadataPart(value: string, limit: number): string {
+  const characters = Array.from(value.trim());
+  if (characters.length <= limit) return characters.join("");
+  if (limit <= 1) return "…";
+  return `${characters.slice(0, limit - 1).join("")}…`;
+}
+
 export function localizedPendingArticleMetadataDescription(input: {
   title: string;
   lang: MetadataLanguage;
   sourceLabel: string;
   categoryLabel: string;
 }): string {
-  const title = input.title.trim();
-  const description = input.lang === "ja"
-    ? title
-      ? `AI 要約は準備中です。「${title}」は${input.sourceLabel}が公開した${input.categoryLabel}の記事です。`
-      : `AI 要約は準備中です。${input.sourceLabel}が公開した${input.categoryLabel}の記事です。`
-    : title
-      ? `AI summary pending. "${title}" is an ${input.categoryLabel} article from ${input.sourceLabel}.`
-      : `AI summary pending for an ${input.categoryLabel} article from ${input.sourceLabel}.`;
-  return boundedSocialDescription(description, input.lang);
+  const sourceLabel = truncateMetadataPart(input.sourceLabel, 36)
+    || (input.lang === "ja" ? "収集元" : "source");
+  const categoryLabel = truncateMetadataPart(input.categoryLabel, 36)
+    || (input.lang === "ja" ? "技術" : "technology");
+  const rawTitle = input.title.trim();
+  if (!rawTitle) {
+    return input.lang === "ja"
+      ? `AI 要約は準備中です。${sourceLabel}が公開した${categoryLabel}の記事です。`
+      : `AI summary pending for an article from ${sourceLabel} in ${categoryLabel}.`;
+  }
+
+  const buildDescription = input.lang === "ja"
+    ? (title: string) =>
+        `AI 要約は準備中です。「${title}」は${sourceLabel}が公開した${categoryLabel}の記事です。`
+    : (title: string) =>
+        `AI summary pending. "${title}" comes from ${sourceLabel} in ${categoryLabel}.`;
+  const titleBudget = SOCIAL_DESCRIPTION_CHARACTER_LIMIT
+    - Array.from(buildDescription("")).length;
+  return buildDescription(truncateMetadataPart(rawTitle, Math.max(1, titleBudget)));
 }
 
 export function createLocalizedPageMetadata(input: {

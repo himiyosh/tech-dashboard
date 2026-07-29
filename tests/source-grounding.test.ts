@@ -76,6 +76,110 @@ describe("source grounding contract", () => {
     expect(needsSummaryGeneration({ ...cursorStartSource, ...contradicted })).toBe(true);
   });
 
+  it("does not treat lowercase us as United States and preserves explicit US anchors", () => {
+    const contactUsSource = {
+      title: "Team subscription pricing starts at $20 per month",
+      contentSnippet:
+        "The Team plan costs $20 per month per seat. Contact us for enterprise pricing and deployment support.",
+    };
+    const faithful = {
+      titleJa: "Teamプランは月額20ドル",
+      titleEn: "Team plan pricing",
+      summaryJa: "Teamプランは1席あたり月額$20で、企業向けの詳細は問い合わせできる。",
+      summaryEn: "The Team plan costs $20 per seat each month, with enterprise pricing available on request.",
+    };
+    expect(findSummaryGroundingIssues(contactUsSource, faithful)).toEqual([]);
+
+    for (
+      const region of [
+        "United States",
+        "U.S.",
+        "U.S.A",
+        "U.S.A.",
+        "USA",
+        "米国",
+        "アメリカ",
+      ]
+    ) {
+      const source = {
+        title: `Team subscription plan pricing for ${region}`,
+        contentSnippet: `The Team plan costs $20 per month for developers in ${region}.`,
+      };
+      expect(
+        findSummaryGroundingIssues(source, {
+          titleJa: "Teamプランの料金",
+          titleEn: "Team plan pricing",
+          summaryJa: "Teamプランは米国で1席あたり月額$20で提供される。",
+          summaryEn:
+            `The Team plan costs $20 per seat each month in ${region} for eligible developers.`,
+        }),
+        region,
+      ).toEqual([]);
+
+      const issues = findSummaryGroundingIssues(source, {
+        titleJa: "Teamプランの料金",
+        titleEn: "Team plan pricing",
+        summaryJa: "Teamプランは1席あたり月額$20で提供される。",
+        summaryEn:
+          "The Team plan costs $20 per seat each month. Contact us for details.",
+      });
+      expect(
+        issues.some((issue) =>
+          issue.code === "commercial-plan-conflict" && issue.field === "summaryEn"
+        ),
+        region,
+      ).toBe(true);
+    }
+  });
+
+  it("rejects commercial summaries that omit the source region or all pricing details", () => {
+    const missingRegion = {
+      titleJa: "Cursor Start料金プラン",
+      titleEn: "Cursor Start pricing plan",
+      summaryJa: "Cursorは月額₹649のCursor Startプランを開始し、UPI決済に対応した。",
+      summaryEn: "Cursor launched the ₹649 monthly Cursor Start plan with UPI payments.",
+    };
+    const missingCommercialDetail = {
+      titleJa: "インド向けCursor Startプラン",
+      titleEn: "Cursor Start plan for India",
+      summaryJa: "Cursorはインドの開発者向けにCursor Startプランを開始した。",
+      summaryEn: "Cursor launched the Cursor Start plan for developers in India.",
+    };
+
+    expect(findSummaryGroundingIssues(cursorStartSource, missingRegion)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "commercial-plan-conflict", field: "summaryJa" }),
+        expect.objectContaining({ code: "commercial-plan-conflict", field: "summaryEn" }),
+      ]),
+    );
+    expect(
+      findSummaryGroundingIssues(cursorStartSource, missingCommercialDetail),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "commercial-plan-conflict", field: "summaryJa" }),
+        expect.objectContaining({ code: "commercial-plan-conflict", field: "summaryEn" }),
+      ]),
+    );
+  });
+
+  it("rejects setup-topic generated titles for a commercial plan", () => {
+    const issues = findSummaryGroundingIssues(cursorStartSource, {
+      titleJa: "Cursor Startのプロジェクト初期セットアップ",
+      titleEn: "Cursor Start project initialization",
+      summaryJa:
+        "Cursorはインドの開発者向けに月額₹649のCursor Startプランを開始し、UPI決済に対応した。",
+      summaryEn:
+        "Cursor launched the ₹649 monthly Cursor Start plan for developers in India with UPI payments.",
+    });
+
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "commercial-plan-conflict", field: "titleJa" }),
+        expect.objectContaining({ code: "commercial-plan-conflict", field: "titleEn" }),
+      ]),
+    );
+  });
+
   it("rejects treating an existing Mac product's Windows expansion as a new product launch", () => {
     const contradicted = {
       titleJa: windowsExpansionSource.titleJa,
@@ -102,6 +206,55 @@ describe("source grounding contract", () => {
     );
     expect(hasUsableGroundedBilingualSummary(windowsExpansionSource, contradicted)).toBe(false);
     expect(hasUsableGroundedBilingualSummary(windowsExpansionSource, grounded)).toBe(true);
+  });
+
+  it("classifies prior-platform phrases locally and keeps truncated expansion evidence active", () => {
+    const contradicted = {
+      titleJa: windowsExpansionSource.titleJa,
+      titleEn: windowsExpansionSource.titleEn,
+      summaryJa:
+        "PerplexityはWindows PC向けの新機能Personal Computerを発表した。",
+      summaryEn:
+        "Perplexity launched Personal Computer as a new feature for Windows PCs.",
+    };
+    const snippets = [
+      "Personal Computer is now available on Windows, after launching on Mac earlier this year.",
+      "Personal Computer is now available on Windows, like the Mac version launched in April.",
+      "Personal ComputerはMac版に続いてWindowsで提供開始され、ローカルAIエージェントとして動作する。",
+      "Perplexity has expanded its Personal Computer tool to Windows, allowing Windows PCs to run a local AI agent.",
+    ];
+
+    for (const contentSnippet of snippets) {
+      const issues = findSummaryGroundingIssues(
+        { ...windowsExpansionSource, contentSnippet },
+        contradicted,
+      );
+      expect(
+        issues.some((issue) =>
+          issue.code === "platform-expansion-conflict" &&
+          issue.field === "summaryEn"
+        ),
+        contentSnippet,
+      ).toBe(true);
+    }
+  });
+
+  it("does not treat a first availability announcement as an existing-product expansion", () => {
+    const iosLaunchSource = {
+      title: "Cursor Mobile App for iOS",
+      contentSnippet:
+        "Cursor for iOS is now available in public beta on all paid plans. Launch and manage always-on agents from anywhere.",
+    };
+    const iosLaunchSummary = {
+      titleJa: "Cursor Mobile App for iOS",
+      titleEn: "Cursor Mobile App for iOS",
+      summaryJa:
+        "CursorはiOS向けモバイルアプリの公開ベータを開始し、外出先からエージェントを操作できるようにした。",
+      summaryEn:
+        "Cursor launched the public beta of its iOS mobile app, letting developers manage agents from anywhere.",
+    };
+
+    expect(findSummaryGroundingIssues(iosLaunchSource, iosLaunchSummary)).toEqual([]);
   });
 
   it("applies the same material-fact contract to generated bodies", () => {

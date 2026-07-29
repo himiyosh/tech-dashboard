@@ -8,7 +8,8 @@ import type { Lang, SourceType } from "../types.ts";
  * validates only two high-confidence fact profiles that can be extracted
  * deterministically from official source text:
  * - commercial plans with a region plus pricing/payment evidence
- * - an existing product expanding from one named platform to another
+ * - an existing product explicitly expanding to a named platform, preserving
+ *   a prior named platform when the source text provides one
  *
  * Legacy summaries are not rejected merely because an old artifact no longer
  * retains its original snippet. Stored content is invalidated only when one of
@@ -86,8 +87,14 @@ const SETUP_TOPIC_RE =
 
 const EXPANSION_RE =
   /\b(?:expand(?:ed|s|ing)?|now available|comes? to|arrives? on|roll(?:ed|s|ing)? out to)\b|展開|対応開始|提供開始|利用可能/iu;
+const EXPLICIT_PRODUCT_EXPANSION_BEFORE_RE =
+  /\bexpand(?:ed|s|ing)?\s+(?:its|the)\b[^.!?]{0,96}\bto\s*$|\b(?:comes?|arrives?)\s+(?:to|on)\s*$|\broll(?:ed|s|ing)?\s+out\s+to\s*$/iu;
 const GENERATED_EXPANSION_RE =
   /\b(?:expand(?:ed|s|ing)?|expansion|now available|comes? to|arrives? on|rollout|rolled out|support(?:ed)? on|windows version|mac(?:os)? version|linux version|android version|ios version)\b|展開|拡大|対応開始|提供開始|利用可能|(?:Windows|macOS|Mac|Linux|Android|iOS)版/iu;
+const PRIOR_PLATFORM_BEFORE_RE =
+  /\b(?:like the|after(?: launching)?(?: on)?|previously(?: available)?(?: on)?|earlier(?: available)?(?: on)?|from)\s+(?:the\s+)?$/iu;
+const PRIOR_PLATFORM_AFTER_RE =
+  /^(?:版)?(?:に続いて|から|では先行|で先行)/u;
 
 interface NamedAnchor {
   key: string;
@@ -100,8 +107,10 @@ const REGIONS: readonly NamedAnchor[] = [
   { key: "japan", source: /\bjapan\b|日本/iu, generated: /\bjapan\b|日本/iu },
   {
     key: "united-states",
-    source: /\b(?:united states|u\.?s\.?a?)\b|米国|アメリカ/iu,
-    generated: /\b(?:united states|u\.?s\.?a?)\b|米国|アメリカ/iu,
+    source:
+      /\b[Uu][Nn][Ii][Tt][Ee][Dd]\s+[Ss][Tt][Aa][Tt][Ee][Ss]\b|\b(?:US|USA)\b|\bU\.S\.A?\.?(?=\s|$|[^\p{L}\p{N}_])|米国|アメリカ/u,
+    generated:
+      /\b[Uu][Nn][Ii][Tt][Ee][Dd]\s+[Ss][Tt][Aa][Tt][Ee][Ss]\b|\b(?:US|USA)\b|\bU\.S\.A?\.?(?=\s|$|[^\p{L}\p{N}_])|米国|アメリカ/u,
   },
   {
     key: "united-kingdom",
@@ -275,32 +284,76 @@ function explicitCommercialTitleConflict(
   return SETUP_TOPIC_RE.test(title) && commercialPlanConflict(profile, title);
 }
 
-function expansionPhraseTargets(evidence: string): NamedAnchor[] {
+function platformMatches(
+  evidence: string,
+  platform: NamedAnchor,
+): IterableIterator<RegExpMatchArray> {
+  const flags = platform.source.flags.includes("g")
+    ? platform.source.flags
+    : `${platform.source.flags}g`;
+  return evidence.matchAll(new RegExp(platform.source.source, flags));
+}
+
+function isPriorPlatformOccurrence(
+  evidence: string,
+  index: number,
+  matchLength: number,
+): boolean {
+  const before = evidence.slice(Math.max(0, index - 56), index);
+  const after = evidence.slice(index + matchLength, index + matchLength + 24);
+  return PRIOR_PLATFORM_BEFORE_RE.test(before) || PRIOR_PLATFORM_AFTER_RE.test(after);
+}
+
+function expansionPhraseTargets(
+  evidence: string,
+  expansionPattern: RegExp = EXPANSION_RE,
+): NamedAnchor[] {
   return PLATFORMS.filter((platform) => {
-    const flags = platform.source.flags.includes("g")
-      ? platform.source.flags
-      : `${platform.source.flags}g`;
-    const matcher = new RegExp(platform.source.source, flags);
-    for (const match of evidence.matchAll(matcher)) {
+    for (const match of platformMatches(evidence, platform)) {
       if (match.index === undefined) continue;
+      if (isPriorPlatformOccurrence(evidence, match.index, match[0].length)) {
+        continue;
+      }
       const before = evidence.slice(Math.max(0, match.index - 100), match.index);
-      if (EXPANSION_RE.test(before)) return true;
+      const after = evidence.slice(
+        match.index + match[0].length,
+        match.index + match[0].length + 48,
+      );
+      if (expansionPattern.test(before) || expansionPattern.test(after)) return true;
     }
     return false;
   });
 }
 
-function priorPlatforms(
+function priorPlatforms(evidence: string): NamedAnchor[] {
+  return PLATFORMS.filter((platform) => {
+    for (const match of platformMatches(evidence, platform)) {
+      if (
+        match.index !== undefined &&
+        isPriorPlatformOccurrence(evidence, match.index, match[0].length)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  });
+}
+
+function hasExplicitProductExpansionTarget(
   evidence: string,
   targets: readonly NamedAnchor[],
-): NamedAnchor[] {
-  const targetKeys = new Set(targets.map((target) => target.key));
-  const priorSignal =
-    /\b(?:like the|previously|earlier|after|from)\b|先行|既存|従来|に続いて/iu;
-  if (!priorSignal.test(evidence)) return [];
-  return PLATFORMS.filter((platform) =>
-    !targetKeys.has(platform.key) && platform.source.test(evidence)
-  );
+): boolean {
+  return targets.some((target) => {
+    for (const match of platformMatches(evidence, target)) {
+      if (match.index === undefined) continue;
+      if (isPriorPlatformOccurrence(evidence, match.index, match[0].length)) {
+        continue;
+      }
+      const before = evidence.slice(Math.max(0, match.index - 120), match.index);
+      if (EXPLICIT_PRODUCT_EXPANSION_BEFORE_RE.test(before)) return true;
+    }
+    return false;
+  });
 }
 
 function platformExpansionProfile(
@@ -309,8 +362,16 @@ function platformExpansionProfile(
   const evidence = sourceEvidence(source);
   const targets = expansionPhraseTargets(evidence);
   if (targets.length === 0) return null;
-  const previous = priorPlatforms(evidence, targets);
-  if (previous.length === 0) return null;
+  const targetKeys = new Set(targets.map((target) => target.key));
+  const previous = priorPlatforms(evidence).filter(
+    (platform) => !targetKeys.has(platform.key),
+  );
+  if (
+    previous.length === 0 &&
+    !hasExplicitProductExpansionTarget(evidence, targets)
+  ) {
+    return null;
+  }
   return {
     targets,
     priorPlatforms: previous,

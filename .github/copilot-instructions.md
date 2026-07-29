@@ -99,7 +99,7 @@
 
 ### R-013: publisher は publish 前に summary fallback を適用し、index を本文フリーに保つ
 - production Node publisher は `data/index.json` を commit する前に deterministic **summary** fallback を全 live entry に適用し、`summaryJa` / `summaryEn` のいずれかが空の payload を publish しない (両言語必須)。本文は fallback 対象にしない。
-- summary/body Queue job は収集元の `contentSnippet` を保持し、sparse/title-only inputで十分なsource groundingがないentryを生成対象にしない。公式title/snippetが示す料金plan・対象地域・platform展開とmaterially矛盾する生成title/summary/bodyは、consumer書込み、cache read、Publisher最終化、bodies sidecar mergeの全境界で共通のdeterministic contractにより拒否し、summaryはsource excerptを伴うpendingへ戻す。不合格cacheは採用せず、十分なgroundingがある場合だけ再生成対象へ戻す。
+- summary/body Queue job は収集元の `contentSnippet` を保持し、sparse/title-only inputで十分なsource groundingがないentryを生成対象にしない。公式title/snippetから決定論的に抽出できるbounded profile（料金plan・対象地域・価格/決済、または既存productのnamed platform展開）の範囲でmaterially矛盾する生成title/summary/bodyは、consumer書込み、cache read、Publisher最終化、bodies sidecar mergeの全境界で共通のdeterministic contractにより拒否し、summaryはsource excerptを伴うpendingへ戻す。不合格cacheは採用せず、十分なgroundingがある場合だけ再生成対象へ戻す。
 - `titleEn` が空で、実 `summaryEn` の先頭文から安全に導出できる場合は publish 前に自動補完する。pending / contaminated / bare title echo の要約や source-language title のコピーを `titleEn` へ書かず、手動 `titleen:fill` と Publisher は `harness/pipeline/title-en.ts` の同じ品質契約を使う。
 - publisher は publish 時に index entry の `bodyJa` / `bodyEn` を**必ず空にする** (LL-115)。`s:` cache hit が旧 body を持っていても index には載せない (LL-073 family: stale cache 由来の本文混入で index を再肥大化させない)。本文は `data/bodies.json` 経路でのみ更新する。
 - 英語タイトルのみの entry でも `summaryJa` は決定的な日本語テンプレートで埋める。逆も同様。JA / EN UI で cross-language fallback バッジを出さないこと (LL-028)。

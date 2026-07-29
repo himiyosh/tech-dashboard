@@ -48,6 +48,46 @@ describe("cold archive search core", () => {
     expect(coldArchiveAnchorId(base.url)).toMatch(/^archive-entry-[a-f0-9]{16}$/);
   });
 
+  it.each([
+    [
+      "mobile YouTube alias",
+      "https://m.youtube.com/watch?v=x",
+      "youtube.com/watch?v=x",
+    ],
+    [
+      "Medium Netflix publication alias",
+      "https://medium.com/netflix-techblog/foo?source=rss----2615bd06b42e---4",
+      "netflixtechblog.com/foo",
+    ],
+    [
+      "Netflix custom domain",
+      "https://netflixtechblog.com/foo/",
+      "netflixtechblog.com/foo",
+    ],
+    [
+      "tracking parameters",
+      "https://www.example.com/a/?utm_source=x&ref=feed&b=2&a=1",
+      "example.com/a?a=1&b=2",
+    ],
+  ])(
+    "keeps fixed canonical parity for %s",
+    (_label, input, expected) => {
+      expect(canonicalArchiveSearchKey(input)).toBe(expected);
+      expect(canonicalUrlKey(input)).toBe(expected);
+    },
+  );
+
+  it("keeps alias-equivalent URLs on the same stable anchor", () => {
+    expect(coldArchiveAnchorId("https://m.youtube.com/watch?v=x")).toBe(
+      coldArchiveAnchorId("https://youtube.com/watch?v=x"),
+    );
+    expect(
+      coldArchiveAnchorId(
+        "https://medium.com/netflix-techblog/foo?source=rss----2615bd06b42e---4",
+      ),
+    ).toBe(coldArchiveAnchorId("https://netflixtechblog.com/foo/"));
+  });
+
   it("projects cold entries to their final month anchor and matches title or exact tag", () => {
     const record = createColdArchiveSearchRecord(base);
 

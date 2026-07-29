@@ -2950,6 +2950,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: Pagefindの検索・hydrateをeager promiseへ集約し、結果が得られた時点でgeneration guard付きの共通rendererへ先行描画する。cold index到着後は同じrendererで追加更新し、早期終了countはPagefind由来候補だけを数える。singleton tagの安全確認中もPagefind結果を先に表示し、fast-path確定後だけ置換する。
 - **教訓**: 補助indexのfail-openは「失敗してもprimaryを残す」だけでなく「遅くてもprimaryを待たせない」ことを含む。fetch開始、hydrate、描画、最終mergeを別の状態として扱い、先行結果の表示時刻を遅延fixtureで直接検証する。
 
+### LL-448: actual corpus parityは未出現のcanonical branchを保護しない
+- **事象**: cold Archive全entryについてWeb helperとPublisher helperのcanonical key一致を検証していたが、現行cold corpusには`m.youtube.com`と`medium.com/netflix-techblog`が無く、両alias branchを削除してもtestが通る状態だった。
+- **根本原因**: 実artifact全量検査を分岐coverageの証拠とみなし、canonicalizerが持つprovider alias、tracking除去、custom domainの固定境界fixtureを別に置いていなかった。
+- **対策**: mobile YouTube、Medium Netflix publication、Netflix custom domain、tracking queryのliteral期待値とalias間anchor同一性を固定fixtureにした。`m.youtube.com`正規化とMedium aliasを1つずつ一時除去し、それぞれfixtureとanchor assertionがREDになるmutation確認後にproduction codeを復元した。
+- **教訓**: actual corpus testは現在存在するdataのdriftを検出するが、未出現の条件分岐を守らない。canonical URL、taxonomy alias、provider mappingのような有限policyは、actual corpus全量検査に加えて代表branchのliteral fixtureとmutation REDを持たせる。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

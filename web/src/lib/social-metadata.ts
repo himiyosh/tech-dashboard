@@ -1,5 +1,8 @@
 import { SITE_URL } from "./site.ts";
-import { boundedSocialDescription } from "./bounded-description.ts";
+import {
+  SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
+  boundedSocialDescription,
+} from "./bounded-description.ts";
 
 export type MetadataLanguage = "ja" | "en";
 
@@ -115,17 +118,24 @@ export function articleSocialImage(
   };
 }
 
-export function localizedArticleMetadataTitle(input: {
+interface ArticleMetadataTitleInput {
   title: string;
   lang: MetadataLanguage;
   sourceLabel: string;
   categoryLabel: string;
   publishedAt: string;
   sourceUrl: string;
-}): string {
+}
+
+function buildLocalizedArticleMetadataTitle(
+  input: ArticleMetadataTitleInput,
+  preserveSourceTitle: boolean,
+): string {
   const hasJapaneseScript = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
   const rawTitle = input.title.trim();
-  const languageSafeTitle = input.lang === "en" && hasJapaneseScript.test(rawTitle)
+  const languageSafeTitle = !preserveSourceTitle
+    && input.lang === "en"
+    && hasJapaneseScript.test(rawTitle)
     ? ""
     : rawTitle;
   const fallbackTitle = input.lang === "ja"
@@ -133,7 +143,7 @@ export function localizedArticleMetadataTitle(input: {
     : `${input.categoryLabel} update from ${input.sourceLabel}`;
   const title = languageSafeTitle || fallbackTitle;
   const titleCharacters = Array.from(title);
-  const boundedTitle = titleCharacters.length > 64
+  const boundedTitle = !preserveSourceTitle && titleCharacters.length > 64
     ? `${titleCharacters.slice(0, 63).join("")}…`
     : title;
   const parsedPublishedAt = new Date(input.publishedAt);
@@ -171,6 +181,18 @@ export function localizedArticleMetadataTitle(input: {
   return `${boundedTitle} | ${identity}`;
 }
 
+export function localizedArticleMetadataTitle(
+  input: ArticleMetadataTitleInput,
+): string {
+  return buildLocalizedArticleMetadataTitle(input, false);
+}
+
+export function localizedPendingArticleMetadataTitle(
+  input: ArticleMetadataTitleInput,
+): string {
+  return buildLocalizedArticleMetadataTitle(input, true);
+}
+
 export function localizedArticleMetadataDescription(input: {
   summary: string;
   lang: MetadataLanguage;
@@ -182,6 +204,40 @@ export function localizedArticleMetadataDescription(input: {
   return input.lang === "ja"
     ? `${input.sourceLabel}が公開した${input.categoryLabel}の記事です。タイトル、公開日、カテゴリ、元記事へのリンクを確認できます。`
     : `An article from ${input.sourceLabel} in ${input.categoryLabel}. Review its title, publication date, category, and original-source link.`;
+}
+
+function truncateMetadataPart(value: string, limit: number): string {
+  const characters = Array.from(value.trim());
+  if (characters.length <= limit) return characters.join("");
+  if (limit <= 1) return "…";
+  return `${characters.slice(0, limit - 1).join("")}…`;
+}
+
+export function localizedPendingArticleMetadataDescription(input: {
+  title: string;
+  lang: MetadataLanguage;
+  sourceLabel: string;
+  categoryLabel: string;
+}): string {
+  const sourceLabel = truncateMetadataPart(input.sourceLabel, 36)
+    || (input.lang === "ja" ? "収集元" : "source");
+  const categoryLabel = truncateMetadataPart(input.categoryLabel, 36)
+    || (input.lang === "ja" ? "技術" : "technology");
+  const rawTitle = input.title.trim();
+  if (!rawTitle) {
+    return input.lang === "ja"
+      ? `AI 要約は準備中です。${sourceLabel}が公開した${categoryLabel}の記事です。`
+      : `AI summary pending for an article from ${sourceLabel} in ${categoryLabel}.`;
+  }
+
+  const buildDescription = input.lang === "ja"
+    ? (title: string) =>
+        `AI 要約は準備中です。「${title}」は${sourceLabel}が公開した${categoryLabel}の記事です。`
+    : (title: string) =>
+        `AI summary pending. "${title}" comes from ${sourceLabel} in ${categoryLabel}.`;
+  const titleBudget = SOCIAL_DESCRIPTION_CHARACTER_LIMIT
+    - Array.from(buildDescription("")).length;
+  return buildDescription(truncateMetadataPart(rawTitle, Math.max(1, titleBudget)));
 }
 
 export function createLocalizedPageMetadata(input: {

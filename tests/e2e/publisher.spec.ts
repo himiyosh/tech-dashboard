@@ -67,6 +67,20 @@ function localizedHeadValue(html: string, key: string): string {
   return tag?.match(/\scontent="([^"]*)"/i)?.[1] ?? "";
 }
 
+function decodeHeadValue(value: string): string {
+  return value.replace(
+    /&(?:amp|quot|apos|lt|gt|#39);/gi,
+    (entity) => ({
+      "&amp;": "&",
+      "&quot;": '"',
+      "&apos;": "'",
+      "&lt;": "<",
+      "&gt;": ">",
+      "&#39;": "'",
+    })[entity.toLowerCase()] ?? entity,
+  );
+}
+
 interface ParsedRssItem {
   category?: string | string[];
   link?: string;
@@ -305,16 +319,21 @@ test.describe("Publisher generated artifact", () => {
     );
 
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{
-        id: string;
-        archiveTier?: string;
-        image?: { src?: string };
-      }>;
+      entries: Array<
+        SummaryDisplayEntry
+        & PublicationEntry
+        & {
+          id: string;
+          archiveTier?: string;
+          image?: { src?: string };
+        }
+      >;
     };
     const imageLess = index.entries.find(
       (entry) =>
         entry.archiveTier !== "cold"
         && entry.archiveTier !== "dropped"
+        && isPublishableEntry(entry)
         && articleSocialImage(entry.image, "JA", "EN").url === SOCIAL_IMAGE_URL,
     );
     expect(imageLess, "fixture includes a built image-less article").toBeTruthy();
@@ -345,6 +364,163 @@ test.describe("Publisher generated artifact", () => {
     expect(articleHtml).toContain(`content="${SOCIAL_IMAGE_URL}"`);
   });
 
+  test("keeps actual pending metadata source-grounded and ready metadata summary-backed", async ({
+    page,
+  }) => {
+    const articleFixtures = readdirSync("web/dist/e", { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => {
+        const html = readFileSync(
+          path.join("web/dist/e", entry.name, "index.html"),
+          "utf8",
+        );
+        return { id: entry.name, html };
+      });
+    const pendingFixture = articleFixtures.find(({ html }) =>
+      html.includes('data-summary-state="pending"')
+    );
+    const readyFixture = articleFixtures.find(({ html }) =>
+      html.includes('data-summary-state="ready"')
+    );
+
+    expect(readyFixture, "fixture includes an actual ready article").toBeTruthy();
+    if (!pendingFixture) {
+      expect(
+        pendingFixture,
+        "a fully summarized corpus is valid; helper tests retain pending coverage",
+      ).toBeUndefined();
+      return;
+    }
+
+    const pendingPath = `/e/${pendingFixture.id}/`;
+    await page.goto(pendingPath, { waitUntil: "domcontentloaded" });
+    const visibleTitleJa = (
+      await page.locator(".ed-title .i18n-ja .ed-title-text").textContent()
+    )?.trim() ?? "";
+    const visibleTitleEn = (
+      await page.locator(".ed-title .i18n-en .ed-title-text").textContent()
+    )?.trim() ?? "";
+    expect(visibleTitleJa).toBeTruthy();
+    expect(visibleTitleEn).toBeTruthy();
+
+    const canonicalUrl = `${SITE_URL}${pendingPath}`;
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      "href",
+      canonicalUrl,
+    );
+    await expect.poll(() => page.title()).toContain(visibleTitleJa);
+    for (const selector of [
+      'meta[property="og:title"]',
+      'meta[name="twitter:title"]',
+    ]) {
+      await expect(page.locator(selector)).toHaveAttribute(
+        "content",
+        new RegExp(visibleTitleJa.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+      );
+    }
+    const descriptionJa = await page.locator('meta[name="description"]').getAttribute("content");
+    expect(descriptionJa).toContain("AI 要約は準備中です");
+    expect(descriptionJa).toContain(Array.from(visibleTitleJa).slice(0, 32).join(""));
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
+      "content",
+      descriptionJa!,
+    );
+    await expect(page.locator('meta[name="twitter:description"]')).toHaveAttribute(
+      "content",
+      descriptionJa!,
+    );
+
+    const structuredData = JSON.parse(
+      await page.locator('script[type="application/ld+json"]').textContent() ?? "{}",
+    ) as {
+      headline?: string;
+      description?: string;
+      inLanguage?: string;
+      author?: { name?: string; url?: string };
+      articleSection?: string;
+      mainEntityOfPage?: { "@id"?: string };
+    };
+    const structuredTitle = structuredData.inLanguage === "ja-JP"
+      ? visibleTitleJa
+      : visibleTitleEn;
+    const structuredSource = structuredData.author?.name ?? "";
+    const structuredCategory = structuredData.articleSection ?? "";
+    expect(structuredSource).toBeTruthy();
+    expect(structuredCategory).toBeTruthy();
+    expect(structuredData.headline).toBe(structuredTitle);
+    expect(structuredData.description).toMatch(
+      structuredData.inLanguage === "ja-JP"
+        ? /AI 要約は準備中です/
+        : /AI summary pending/,
+    );
+    expect(structuredData.description).toContain(
+      Array.from(structuredTitle).slice(0, 32).join(""),
+    );
+    expect(structuredData.description).toContain(structuredSource);
+    expect(structuredData.description).toContain(structuredCategory);
+    expect(structuredData.author?.name).toBeTruthy();
+    expect(structuredData.author?.url).toMatch(/^https?:\/\//);
+    expect(structuredData.mainEntityOfPage?.["@id"]).toBe(canonicalUrl);
+
+    const edgeResponse = await localizeArticleMetadata({
+      request: new Request(`${canonicalUrl}?lang=en`),
+      next: async () => new Response(pendingFixture.html, {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      }),
+    });
+    const edgeHtml = await edgeResponse.text();
+    expect(edgeResponse.status).toBe(200);
+    expect(edgeResponse.headers.get("content-language")).toBe("en");
+    expect(decodeHeadValue(localizedHeadValue(edgeHtml, "title"))).toContain(
+      visibleTitleEn,
+    );
+    const edgeDescription = decodeHeadValue(
+      localizedHeadValue(edgeHtml, "description"),
+    );
+    expect(edgeDescription).toContain("AI summary pending.");
+    expect(edgeDescription).toContain(Array.from(visibleTitleEn).slice(0, 32).join(""));
+    expect(edgeDescription).toContain(structuredSource);
+    expect(edgeDescription).toContain(structuredCategory);
+    expect(
+      decodeHeadValue(localizedHeadValue(edgeHtml, "og:title")),
+    ).toContain(visibleTitleEn);
+    expect(
+      decodeHeadValue(localizedHeadValue(edgeHtml, "twitter:title")),
+    ).toContain(visibleTitleEn);
+    expect(decodeHeadValue(localizedHeadValue(edgeHtml, "og:description"))).toBe(
+      edgeDescription,
+    );
+    expect(
+      decodeHeadValue(localizedHeadValue(edgeHtml, "twitter:description")),
+    ).toBe(edgeDescription);
+
+    await page.goto(`${pendingPath}?lang=en`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect.poll(() => page.title()).toContain(visibleTitleEn);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      "content",
+      edgeDescription,
+    );
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      "href",
+      canonicalUrl,
+    );
+    const englishStructuredData = JSON.parse(
+      await page.locator('script[type="application/ld+json"]').textContent() ?? "{}",
+    );
+    expect(englishStructuredData).toEqual(structuredData);
+
+    const readyPath = `/e/${readyFixture!.id}/`;
+    await page.goto(readyPath, { waitUntil: "domcontentloaded" });
+    const readyDescriptionJa = await page.locator('meta[name="description"]').getAttribute("content");
+    expect(readyDescriptionJa).toBeTruthy();
+    expect(readyDescriptionJa).not.toMatch(/AI 要約は準備中|AI summary pending/);
+    await page.goto(`${readyPath}?lang=en`, { waitUntil: "domcontentloaded" });
+    const readyDescriptionEn = await page.locator('meta[name="description"]').getAttribute("content");
+    expect(readyDescriptionEn).toBeTruthy();
+    expect(readyDescriptionEn).not.toMatch(/AI 要約は準備中|AI summary pending/);
+  });
+
   test("localizes every generated article response without HTML parser failures", async () => {
     const articleDirectories = readdirSync("web/dist/e", { withFileTypes: true })
       .filter((entry) => entry.isDirectory())
@@ -370,11 +546,15 @@ test.describe("Publisher generated artifact", () => {
     page,
   }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{
-        id: string;
-        archiveTier?: string;
-        image?: { src?: string; width?: number; height?: number };
-      }>;
+      entries: Array<
+        SummaryDisplayEntry
+        & PublicationEntry
+        & {
+          id: string;
+          archiveTier?: string;
+          image?: { src?: string; width?: number; height?: number };
+        }
+      >;
     };
     const addressable = index.entries.filter(
       (entry) => entry.archiveTier !== "cold" && entry.archiveTier !== "dropped",
@@ -383,7 +563,9 @@ test.describe("Publisher generated artifact", () => {
       (entry) => articleSocialImage(entry.image, "JA", "EN").url !== SOCIAL_IMAGE_URL,
     );
     const imageLess = addressable.find(
-      (entry) => articleSocialImage(entry.image, "JA", "EN").url === SOCIAL_IMAGE_URL,
+      (entry) =>
+        isPublishableEntry(entry)
+        && articleSocialImage(entry.image, "JA", "EN").url === SOCIAL_IMAGE_URL,
     );
     expect(imageBacked, "fixture includes an addressable image-backed article").toBeTruthy();
     expect(imageLess, "fixture includes an addressable image-less article").toBeTruthy();

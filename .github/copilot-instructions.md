@@ -1676,10 +1676,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **教訓**: 機能の正体を誤認すると判断が変わる説明は hidden text や別ページだけに置かず、各 direct-entry surface で可視化する。optional feature の unavailable state は、説明付き disabled overlay よりも progressive enhancement として面ごと隠す方が主タスクを妨げない場合がある。visual、accessibility、pointer の3経路を一体で検証する。
 
 ### LL-238: 検証コマンドは repository の runner と専用検索 tool を使う
-- **事象**: `tests/data-schema.test.ts` を `node --test` で起動して Vitest runner の初期化エラーを起こし、複数の正規表現を埋め込んだ shell command も quote mismatch で構文エラーになった。どちらも製品コードの失敗ではなかった。
-- **根本原因**: test file が使う runner と repository の既存実行経路を確認せず、専用の code search tool で分けて実行できる検索まで quote の多い shell command にまとめた。
-- **対策**: data schema は `npx vitest run tests/data-schema.test.ts` で再実行し、code search は `rg` tool、publisher fingerprint は CLI が実装している `npm run publisher:contract -- --dry-run` で検証する。未実装の `--check` を推測で使わない。
-- **教訓**: 検証失敗は最初に実装失敗と launcher/shell 失敗を分ける。test framework は repository の script または対応 runnerを使い、検索は専用 tool へ分離して shell quoting を検証リスクにしない。
+- **事象**: `tests/data-schema.test.ts` を `node --test` で起動して Vitest runner の初期化エラーを起こし、複数の正規表現を埋め込んだ shell command も quote mismatch で構文エラーになった。別のfresh worktreeでは`npm exec vitest`がrepositoryの`pretest`を迂回し、`web/node_modules`未復元のままWeb tsconfigを解決できず停止した。いずれも製品コードの失敗ではなかった。
+- **根本原因**: test file が使う runner と repository の既存実行経路を確認せず、専用の code search tool で分けて実行できる検索まで quote の多い shell command にまとめた。さらにpackage scriptへ組み込まれた依存復元などの前処理を、binary直接起動でも実行されると仮定した。
+- **対策**: data schema は `npm test -- tests/data-schema.test.ts`などrepository script経由で再実行し、code search は `rg` tool、publisher fingerprint は CLI が実装している `npm run publisher:contract -- --dry-run` で検証する。未実装の `--check` を推測で使わず、fresh worktreeでdirect runnerが必要な場合は先に対応するpre-scriptを明示実行する。
+- **教訓**: 検証失敗は最初に実装失敗と launcher/shell 失敗を分ける。test framework は repository の script または対応 runnerを使い、検索は専用 tool へ分離して shell quoting を検証リスクにしない。`pretest`やbuild wrapperのようなrepository固有の前処理がある場合、binary直接起動を同等経路として扱わない。
 
 ### LL-239: optional reaction は状態、意味、回復、件数境界を1つの製品契約として磨く
 - **事象**: 匿名公開いいねの基本動作は完成していたが、heart icon が保存に見え、loading/unavailable control が壊れた affordance として残り、Knowledge の説明は mobile で消え、記事詳細の reaction は source/share utility と混在していた。mutation failure は視覚通知が弱く、大きな count は card title と競合し得た。
@@ -2906,6 +2906,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: view switch controlとactive panel内のreader-facing navigationを別々の操作契約として棚卸しせず、既定Cards modeのtarget寸法をalternate Compact modeへ横展開していなかった。
 - **対策**: `CompactRow`はmobile breakpointで45px以上のblock sizeを持たせる。E2Eは375px/390pxでCompactへ切り替え、filter後の全visible anchorについてDOMRect、非交差、横overflow、center hit ownershipを測り、実際に記事detailへ遷移して戻った後もCompact stateを保持し、Cardsへ再切替できることを固定する。
 - **教訓**: tabs、segmented controls、Cards/List切替のtouch-target監査は切替buttonやdefault panelだけで完了にしない。全modeを実際にactivateし、各panel内の主要link/buttonの寸法、hit-testing、navigation、state復帰を同じviewportで検証する。
+
+### LL-441: 完全文優先のdescription短縮では先頭の状態文だけを独立させない
+- **事象**: 要約待ち記事のsocial descriptionを`AI summary pending.`から始まる複数文として組み立ててから160文字へ短縮した結果、英語titleが84文字以上になると完全文優先helperが先頭の状態文だけを返し、title、source、categoryをすべて落とした。現行corpusは要約待ち0件だったためbrowser testがearly returnし、corpus invariant testもready用title helperだけを呼んでproductionのpending分岐を検証していなかった。
+- **根本原因**: 可変長fieldを含む完成文全体へsentence-aware truncationを適用し、短縮後も残すべき情報の優先順位を定義していなかった。生成dataで現在存在しないstateをbrowser corpusだけへ依存し、production branchとtest branchも非対称だった。
+- **対策**: sourceとcategoryを先に安全な上限へ収め、固定部分から残り文字予算を計算してtitleだけをellipsis付きで短縮してから、必ず160文字以内になるdescriptionを構築する。英語は不定冠詞に依存しない語順へ変更する。unit testは長いtitleでもpending、title prefix、source、categoryが全て残ることを固定し、corpus testはproductionと同じsummary有無判定でready/pending title helperを切り替える。E2Eは文字数上限のためfull title一致を要求せず、安定したtitle prefixとsource/category provenanceを検証する。
+- **教訓**: 完全文を優先する短縮helperへ先頭だけで完結する状態文を渡すと、後続の判断情報がまとめて消える。variable fieldを組み立て前にboundし、最終文の必須fieldが残ることをdeterministicな長文fixtureで検証する。generated corpusにoptional stateが無い場合はearly returnだけでcoverageを主張せず、pure fixtureとproduction分岐を共有したinvariant testで補う。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

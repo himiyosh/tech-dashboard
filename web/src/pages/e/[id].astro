@@ -50,6 +50,8 @@ import {
   createLocalizedPageMetadata,
   localizedArticleMetadataDescription,
   localizedArticleMetadataTitle,
+  localizedPendingArticleMetadataDescription,
+  localizedPendingArticleMetadataTitle,
 } from "../../lib/social-metadata.ts";
 import SourceExcerpt from "../../components/SourceExcerpt.astro";
 
@@ -234,34 +236,52 @@ const pendingDescription = {
   en: "AI summary pending. Check the title, category, and original article before sharing.",
 } as const;
 const canonicalUrl = `${SITE_URL}/e/${entry.id}/`;
-const metadataTitleJa = localizedArticleMetadataTitle({
-  title: titleJa,
+const metadataTitleJa = (summaryAbsent
+  ? localizedPendingArticleMetadataTitle
+  : localizedArticleMetadataTitle)({
+  title: summaryAbsent ? titleJaResult.text : titleJa,
   lang: "ja",
   sourceLabel: srcDisplay,
   categoryLabel: catName,
   publishedAt: entry.publishedAt,
   sourceUrl,
 });
-const metadataTitleEn = localizedArticleMetadataTitle({
-  title: titleEn,
+const metadataTitleEn = (summaryAbsent
+  ? localizedPendingArticleMetadataTitle
+  : localizedArticleMetadataTitle)({
+  title: summaryAbsent ? titleEnResult.text : titleEn,
   lang: "en",
   sourceLabel: srcDisplay,
   categoryLabel: catName,
   publishedAt: entry.publishedAt,
   sourceUrl,
 });
-const pageDescriptionJa = localizedArticleMetadataDescription({
-  summary: indexedSummaryJa,
-  lang: "ja",
-  sourceLabel: srcDisplay,
-  categoryLabel: catName,
-});
-const pageDescriptionEn = localizedArticleMetadataDescription({
-  summary: indexedSummaryEn,
-  lang: "en",
-  sourceLabel: srcDisplay,
-  categoryLabel: catName,
-});
+const pageDescriptionJa = summaryAbsent
+  ? localizedPendingArticleMetadataDescription({
+      title: titleJaResult.text,
+      lang: "ja",
+      sourceLabel: srcDisplay,
+      categoryLabel: catName,
+    })
+  : localizedArticleMetadataDescription({
+      summary: indexedSummaryJa,
+      lang: "ja",
+      sourceLabel: srcDisplay,
+      categoryLabel: catName,
+    });
+const pageDescriptionEn = summaryAbsent
+  ? localizedPendingArticleMetadataDescription({
+      title: titleEnResult.text,
+      lang: "en",
+      sourceLabel: srcDisplay,
+      categoryLabel: catName,
+    })
+  : localizedArticleMetadataDescription({
+      summary: indexedSummaryEn,
+      lang: "en",
+      sourceLabel: srcDisplay,
+      categoryLabel: catName,
+    });
 const articleMetadata = createLocalizedPageMetadata({
   canonicalUrl,
   type: "article",

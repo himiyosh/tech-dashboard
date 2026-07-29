@@ -25,6 +25,8 @@ import {
   articleSocialImage,
   localizedArticleMetadataDescription,
   localizedArticleMetadataTitle,
+  localizedPendingArticleMetadataDescription,
+  localizedPendingArticleMetadataTitle,
 } from "../web/src/lib/social-metadata.ts";
 import {
   GET as getSocialImage,
@@ -266,6 +268,75 @@ describe("localized social metadata", () => {
     expect(enDescription).toContain("An article from GitHub Blog in Copilot");
     expect(`${jaDescription} ${enDescription}`).not.toMatch(
       /AI 要約は準備中|AI summary pending|近日中/,
+    );
+  });
+
+  it("keeps pending metadata source-grounded and explicit about the missing summary", () => {
+    const common = {
+      sourceLabel: "GitHub Changelog",
+      categoryLabel: "Industry & Policy",
+      publishedAt: "2026-07-28T22:50:05.000Z",
+      sourceUrl:
+        "https://github.blog/changelog/2026-07-28-npm-publish-time-malware-scanning-and-dual-use-metadata",
+    };
+    const sourceTitle = "npm publish-time malware scanning and dual-use metadata";
+    const japaneseSourceTitle = "AI エージェント開発の実践ガイド";
+    const longSourceTitle =
+      "GitHub Copilot app usage metrics now expand across report rollups";
+
+    expect(
+      localizedPendingArticleMetadataTitle({
+        ...common,
+        title: sourceTitle,
+        lang: "ja",
+      }),
+    ).toBe(
+      "npm publish-time malware scanning and dual-use metadata | GitHub Changelog | 2026-07-28 22:50 UTC",
+    );
+    expect(
+      localizedPendingArticleMetadataTitle({
+        ...common,
+        title: japaneseSourceTitle,
+        lang: "en",
+      }),
+    ).toBe(
+      "AI エージェント開発の実践ガイド | GitHub Changelog | 2026-07-28 22:50 UTC",
+    );
+    expect(
+      localizedPendingArticleMetadataTitle({
+        ...common,
+        title: longSourceTitle,
+        lang: "en",
+      }),
+    ).toContain(longSourceTitle);
+
+    const descriptionJa = localizedPendingArticleMetadataDescription({
+      title: sourceTitle,
+      lang: "ja",
+      sourceLabel: common.sourceLabel,
+      categoryLabel: common.categoryLabel,
+    });
+    const descriptionEn = localizedPendingArticleMetadataDescription({
+      title: sourceTitle,
+      lang: "en",
+      sourceLabel: common.sourceLabel,
+      categoryLabel: common.categoryLabel,
+    });
+
+    expect(descriptionJa).toBe(
+      "AI 要約は準備中です。「npm publish-time malware scanning and dual-use metadata」はGitHub Changelogが公開したIndustry & Policyの記事です。",
+    );
+    expect(descriptionEn).toBe(
+      'AI summary pending. "npm publish-time malware scanning and dual-use metadata" is an Industry & Policy article from GitHub Changelog.',
+    );
+    expect(`${descriptionJa} ${descriptionEn}`).not.toMatch(
+      /generated summary|生成済み|近日中/,
+    );
+    expect(Array.from(descriptionJa).length).toBeLessThanOrEqual(
+      SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
+    );
+    expect(Array.from(descriptionEn).length).toBeLessThanOrEqual(
+      SOCIAL_DESCRIPTION_CHARACTER_LIMIT,
     );
   });
 

@@ -36,6 +36,7 @@ import {
   EXTERNAL_ENTRY_REL,
 } from "../../lib/entry-destination.ts";
 import { sourceFaviconUrl, sourceHost } from "../../lib/favicon.ts";
+import { serializeJsonLd } from "../../lib/json-ld.ts";
 import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../../lib/reaction-copy.ts";
 import {
   SOURCE_META,
@@ -388,7 +389,7 @@ const jsonLd = {
     <meta data-pagefind-filter="importance[content]" content={String(entry.importance)} />
     <meta data-pagefind-filter="publishedDay[content]" content={entry.publishedAt.slice(0, 10)} />
     <meta data-pagefind-sort="published[content]" content={String(Date.parse(entry.publishedAt) || 0)} />
-    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <script type="application/ld+json" set:html={serializeJsonLd(jsonLd)} />
   </Fragment>
 
   {/* Reading progress bar */}

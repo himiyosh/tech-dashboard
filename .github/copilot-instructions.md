@@ -2913,6 +2913,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: sourceとcategoryを先に安全な上限へ収め、固定部分から残り文字予算を計算してtitleだけをellipsis付きで短縮してから、必ず160文字以内になるdescriptionを構築する。英語は不定冠詞に依存しない語順へ変更する。unit testは長いtitleでもpending、title prefix、source、categoryが全て残ることを固定し、corpus testはproductionと同じsummary有無判定でready/pending title helperを切り替える。E2Eは文字数上限のためfull title一致を要求せず、安定したtitle prefixとsource/category provenanceを検証する。
 - **教訓**: 完全文を優先する短縮helperへ先頭だけで完結する状態文を渡すと、後続の判断情報がまとめて消える。variable fieldを組み立て前にboundし、最終文の必須fieldが残ることをdeterministicな長文fixtureで検証する。generated corpusにoptional stateが無い場合はearly returnだけでcoverageを主張せず、pure fixtureとproduction分岐を共有したinvariant testで補う。
 
+### LL-442: keyword filterのレビューはfallback行でなく実際のcompile経路を実行する
+- **事象**: `g cloud` exclusionが`Scaling cloud`や`Rethinking cloud`へ部分一致するという独立レビュー指摘を受けたが、shared helperをexact headで実行すると両者は非一致で、`G Cloud 2`だけが一致した。
+- **根本原因**: `keywordMatchesHaystack()`の最後にあるplain `includes()` fallbackだけを根拠にし、その前段でASCII keywordが英数字境界付きの正規表現へcompileされる実行経路を確認していなかった。既存keep fixtureもこの誤読を直接反証する`-ing cloud` titleを含んでいなかった。
+- **対策**: exclusion自体を製品版名`g cloud 2`へさらに狭め、実corpusの`Rethinking cloud operations with agentic observability`と`Scaling cloud infrastructure for AI workloads`をkeep fixtureへ追加した。review時は`keywordMatchesHaystack()`をactual titleで直接実行し、どのbranchが使われたかを確認する。
+- **教訓**: shared matcherの1行だけを読んで採否を断定しない。compile、boundary、fallbackを含む実行経路をactual corpusで再現し、drop fixtureと誤爆し得る境界keep fixtureを同時に固定する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

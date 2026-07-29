@@ -231,7 +231,7 @@ const TECH_NEWS_EXCLUDE_KEYWORDS = [
   "weekly roundup",
   "startup forum",
   "geforce now",
-  "g cloud",
+  "g cloud 2",
   "games hit the cloud",
   "vehicle outlives its cloud",
   "killing your spouse",

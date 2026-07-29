@@ -552,6 +552,8 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
       ["aws-news", "Amazon Bedrock introduces new advanced prompt optimization and migration tool"],
       ["ars-technica", "Zero-day exploit completely defeats default Windows 11 BitLocker protections"],
       ["aws-news", "AWS Interconnect is now generally available, with a new option to simplify last-mile connectivity"],
+      ["microsoft-source", "Rethinking cloud operations with agentic observability"],
+      ["aws-news", "Scaling cloud infrastructure for AI workloads"],
     ] as const;
     const evidenceBackedLowSignalCases = [
       ["google-keyword", "Here’s how to make study notebooks in the Gemini app."],

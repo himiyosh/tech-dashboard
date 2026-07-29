@@ -2956,6 +2956,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: mobile YouTube、Medium Netflix publication、Netflix custom domain、tracking queryのliteral期待値とalias間anchor同一性を固定fixtureにした。`m.youtube.com`正規化とMedium aliasを1つずつ一時除去し、それぞれfixtureとanchor assertionがREDになるmutation確認後にproduction codeを復元した。
 - **教訓**: actual corpus testは現在存在するdataのdriftを検出するが、未出現の条件分岐を守らない。canonical URL、taxonomy alias、provider mappingのような有限policyは、actual corpus全量検査に加えて代表branchのliteral fixtureとmutation REDを持たせる。
 
+### LL-449: compactnessを絶対panel高だけで検証しない
+- **事象**: mobile Top 3のcompactnessをpanel `<=380px`、card `<=118px`で固定したtestが、同一Web実装でもLinux runnerで`381.421875px`となりretryを含めて失敗した。panel gapを2px縮めて閾値へ合わせる変更は、表示意図ではなくtest値を満たすだけだった。
+- **根本原因**: compactnessの利用者向け意図をfont metricsとsubpixel roundingへ依存する絶対高さへ潰し、表示件数、summary clamp、content overflow、card間非交差、tabbar安全距離を直接検証していなかった。
+- **対策**: gap workaroundを撤回し、390x844と375x667でexact 3 cards、重複reason 0、summaryのnowrap/hidden/ellipsisと1 line box、card contentの境界内収容、card同士の非交差、44px article target、tabbarとの8px安全距離、footer非表示、page overflow 0を測るtestへ置き換えた。first-viewとFeatured/ticker境界の既存assertionは維持した。
+- **教訓**: visual compactnessは単一の絶対高さではなく、情報量、行数、overflow、隣接surface、操作寸法の組み合わせで検証する。OS差で閾値を僅かに超えた場合、製品CSSを縮めたり上限を緩めたりせず、利用者が困る状態を直接表す相対geometryへ分解する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -7376,11 +7376,6 @@ test.describe("TECH Dashboard smoke", () => {
       tickerMetaBox,
       tickerTitleBox,
       taglineClipped,
-      topRankBox,
-      rankCardBoxes,
-      rankSummaryBoxes,
-      rankMetaBoxes,
-      rankReasonCount,
     } = await page.evaluate(() => {
       const rect = (element: Element | null) => {
         if (!element || element.getClientRects().length === 0) return null;
@@ -7422,11 +7417,6 @@ test.describe("TECH Dashboard smoke", () => {
         tickerMetaBox: rect(document.querySelector(".ticker-bar .tb-slide.is-active .tb-meta")),
         tickerTitleBox: rect(tickerTitle ?? null),
         taglineClipped: Boolean(tagline && tagline.scrollHeight > tagline.clientHeight + 1),
-        topRankBox: rect(document.querySelector(".top-rank")),
-        rankCardBoxes: Array.from(document.querySelectorAll(".top-rank-item")).map((item) => rect(item)),
-        rankSummaryBoxes: Array.from(document.querySelectorAll(".top-rank-item .rank-summary")).map((item) => rect(item)),
-        rankMetaBoxes: Array.from(document.querySelectorAll(".top-rank-item .rank-meta")).map((item) => rect(item)),
-        rankReasonCount: document.querySelectorAll(".top-rank-item .rank-reason").length,
       };
     });
     expect(featuredBox, "featured panel has a box").not.toBeNull();
@@ -7483,19 +7473,176 @@ test.describe("TECH Dashboard smoke", () => {
     expect(tickerTitleBox!.width, "ticker title receives the full mobile headline width").toBeGreaterThanOrEqual(
       tickerSlideBox!.width - 1,
     );
-    expect(rankReasonCount, "Top 3 removes the duplicated authority, format, and category row").toBe(0);
-    expect(rankSummaryBoxes, "Top 3 keeps one summary line per article").toHaveLength(3);
-    expect(topRankBox!.height, "Top 3 panel stays compact with article-specific summaries").toBeLessThanOrEqual(380);
-    for (const cardBox of rankCardBoxes) {
-      expect(cardBox!.height, "Top 3 card stays compact while retaining decision context").toBeLessThanOrEqual(118);
-    }
-    for (const summaryBox of rankSummaryBoxes) {
-      expect(summaryBox!.height, "Top 3 summary stays on one clamped line").toBeLessThanOrEqual(20);
-      expect(summaryBox!.width, "Top 3 summary has usable mobile width").toBeGreaterThanOrEqual(260);
-    }
-    for (const metaBox of rankMetaBoxes) {
-      expect(metaBox!.height, "Top 3 source and time stay on one metadata row").toBeLessThanOrEqual(28);
-    }
+    const assertTopRankIntent = async (width: number, height: number) => {
+      await page.setViewportSize({ width, height });
+      await page.locator(".top-rank").evaluate((panel) => {
+        panel.scrollIntoView({ block: "center" });
+      });
+      const metrics = await page.evaluate(() => new Promise<{
+        cardCount: number;
+        reasonCount: number;
+        noPageOverflow: boolean;
+        panel: { top: number; bottom: number; left: number; right: number };
+        tabbar: { top: number; bottom: number } | null;
+        footerVisible: boolean;
+        cards: Array<{
+          top: number;
+          bottom: number;
+          width: number;
+          linkHeight: number;
+          horizontalOverflow: boolean;
+          contentOutside: boolean;
+          summary: {
+            width: number;
+            height: number;
+            lineHeight: number;
+            whiteSpace: string;
+            overflow: string;
+            textOverflow: string;
+          } | null;
+          metaCenterSpread: number;
+        }>;
+      }>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => {
+        const box = (element: Element) => {
+          const rect = element.getBoundingClientRect();
+          return {
+            top: rect.top,
+            bottom: rect.bottom,
+            left: rect.left,
+            right: rect.right,
+            width: rect.width,
+            height: rect.height,
+          };
+        };
+        const panel = document.querySelector<HTMLElement>(".top-rank")!;
+        const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
+        const footer = document.querySelector<HTMLElement>(".footer-bar");
+        const cards = Array.from(
+          document.querySelectorAll<HTMLElement>(".top-rank-item"),
+        ).map((card) => {
+          const cardBox = box(card);
+          const contentBoxes = Array.from(card.children)
+            .filter((child) => {
+              const rect = child.getBoundingClientRect();
+              return getComputedStyle(child).display !== "none"
+                && rect.width > 0
+                && rect.height > 0;
+            })
+            .map(box);
+          const link = card.querySelector<HTMLElement>(".rank-content-link");
+          const activeSummary = Array.from(
+            card.querySelectorAll<HTMLElement>(".rank-summary > span"),
+          ).find((summary) => getComputedStyle(summary).display !== "none");
+          const summary = activeSummary
+            ? (() => {
+                const summaryBox = box(activeSummary);
+                const style = getComputedStyle(activeSummary);
+                return {
+                  width: summaryBox.width,
+                  height: summaryBox.height,
+                  lineHeight: Number.parseFloat(style.lineHeight),
+                  whiteSpace: style.whiteSpace,
+                  overflow: style.overflow,
+                  textOverflow: style.textOverflow,
+                };
+              })()
+            : null;
+          const metaChildren = Array.from(
+            card.querySelectorAll<HTMLElement>(".rank-meta > *"),
+          ).filter((child) => {
+            const rect = child.getBoundingClientRect();
+            return getComputedStyle(child).display !== "none"
+              && rect.width > 0
+              && rect.height > 0;
+          }).map(box);
+          const metaCenters = metaChildren.map(
+            (child) => (child.top + child.bottom) / 2,
+          );
+          return {
+            top: cardBox.top,
+            bottom: cardBox.bottom,
+            width: cardBox.width,
+            linkHeight: link?.getBoundingClientRect().height ?? 0,
+            horizontalOverflow: card.scrollWidth > card.clientWidth + 1,
+            contentOutside: contentBoxes.some((child) =>
+              child.left < cardBox.left - 1
+              || child.right > cardBox.right + 1
+              || child.top < cardBox.top - 1
+              || child.bottom > cardBox.bottom + 1
+            ),
+            summary,
+            metaCenterSpread: metaCenters.length > 1
+              ? Math.max(...metaCenters) - Math.min(...metaCenters)
+              : 0,
+          };
+        });
+        const panelBox = box(panel);
+        const tabbarBox = tabbar && getComputedStyle(tabbar).display !== "none"
+          ? box(tabbar)
+          : null;
+        resolve({
+          cardCount: cards.length,
+          reasonCount: panel.querySelectorAll(".rank-reason").length,
+          noPageOverflow:
+            document.documentElement.scrollWidth <= window.innerWidth
+            && document.body.scrollWidth <= window.innerWidth,
+          panel: panelBox,
+          tabbar: tabbarBox
+            ? { top: tabbarBox.top, bottom: tabbarBox.bottom }
+            : null,
+          footerVisible: Boolean(
+            footer
+            && getComputedStyle(footer).display !== "none"
+            && footer.getClientRects().length > 0
+          ),
+          cards,
+        });
+      }))));
+
+      expect(metrics.cardCount, `${width}px Top 3 keeps exactly three cards`).toBe(3);
+      expect(metrics.reasonCount, `${width}px Top 3 has no duplicated reason rows`).toBe(0);
+      expect(metrics.noPageOverflow, `${width}px Top 3 creates no page overflow`).toBe(true);
+      expect(metrics.footerVisible, `${width}px desktop footer stays out of the mobile viewport`).toBe(false);
+      expect(metrics.tabbar, `${width}px mobile tabbar remains available`).not.toBeNull();
+      expect(
+        metrics.panel.bottom,
+        `${width}px centered Top 3 stays above the mobile tabbar`,
+      ).toBeLessThanOrEqual(metrics.tabbar!.top - 8);
+      expect(metrics.panel.left, `${width}px Top 3 stays inside the left edge`).toBeGreaterThanOrEqual(0);
+      expect(metrics.panel.right, `${width}px Top 3 stays inside the right edge`).toBeLessThanOrEqual(width);
+
+      for (const [index, card] of metrics.cards.entries()) {
+        expect(card.horizontalOverflow, `${width}px card ${index + 1} has no horizontal content overflow`).toBe(false);
+        expect(card.contentOutside, `${width}px card ${index + 1} keeps content inside its panel`).toBe(false);
+        expect(card.linkHeight, `${width}px card ${index + 1} keeps a 44px article target`).toBeGreaterThanOrEqual(44);
+        expect(card.summary, `${width}px card ${index + 1} has a visible summary`).not.toBeNull();
+        expect(card.summary!.whiteSpace, `${width}px card ${index + 1} summary stays on one line`).toBe("nowrap");
+        expect(card.summary!.overflow, `${width}px card ${index + 1} summary clips excess text`).toBe("hidden");
+        expect(card.summary!.textOverflow, `${width}px card ${index + 1} summary exposes truncation`).toBe("ellipsis");
+        expect(
+          card.summary!.height,
+          `${width}px card ${index + 1} summary is bounded to one line box`,
+        ).toBeLessThanOrEqual(card.summary!.lineHeight + 1);
+        expect(
+          card.summary!.width,
+          `${width}px card ${index + 1} summary retains most of the card width`,
+        ).toBeGreaterThanOrEqual(card.width - 80);
+        expect(
+          card.metaCenterSpread,
+          `${width}px card ${index + 1} metadata remains one row`,
+        ).toBeLessThanOrEqual(1);
+        if (index > 0) {
+          expect(
+            metrics.cards[index - 1]!.bottom,
+            `${width}px cards ${index} and ${index + 1} do not overlap`,
+          ).toBeLessThanOrEqual(card.top);
+        }
+      }
+    };
+    await assertTopRankIntent(390, 844);
+    await assertTopRankIntent(375, 667);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page.locator(".top-rank-title .i18n-ja")).toHaveText(/次に見る Top 3/);
 
     const featuredImage = featured.locator(".featured-thumb.has-image img").first();

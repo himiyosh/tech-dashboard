@@ -113,7 +113,9 @@ describe("privacy consent contract", () => {
       new URL("../web/src/styles/portal.css", import.meta.url),
       "utf8",
     );
-    const promptRule = styles.match(/\.privacy-consent-prompt\s*\{([^}]*)\}/)?.[1] ?? "";
+    const promptRules = [
+      ...styles.matchAll(/^\s*\.privacy-consent-prompt\s*\{([^}]*)\}/gm),
+    ].map((match) => match[1] ?? "");
     expect(portal).toMatch(/data-consent-surface="prompt"[\s\S]*?hidden[\s\S]*?inert/);
     expect(portal).toContain("data-privacy-consent-prompt");
     expect(portal).toContain('aria-describedby="privacy-consent-prompt-description"');
@@ -130,9 +132,12 @@ describe("privacy consent contract", () => {
     expect(styles).not.toContain(
       'html[data-privacy-consent-prompt="visible"] .privacy-consent-prompt[hidden]',
     );
-    expect(promptRule).toContain("position: relative");
-    expect(promptRule).not.toContain("position: fixed");
-    expect(promptRule).not.toContain("box-shadow");
+    expect(promptRules.length).toBeGreaterThan(0);
+    expect(promptRules[0]).toContain("position: relative");
+    for (const promptRule of promptRules) {
+      expect(promptRule).not.toContain("position: fixed");
+      expect(promptRule).not.toContain("box-shadow");
+    }
     expect(styles).toContain(".privacy-consent-choice-actions");
     expect(styles).toContain(
       'html[data-privacy-consent-prompt="visible"] .footer-bar',

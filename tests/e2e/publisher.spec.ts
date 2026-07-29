@@ -1030,6 +1030,7 @@ test.describe("Publisher generated artifact", () => {
       .filter(isPublishableEntry);
     expect(expectedEntries.every(isArxivEntry)).toBe(true);
     const expectedUrls = expectedEntries.slice(0, 100).map((entry) => entry.url);
+    expect(expectedUrls.length).toBeGreaterThan(0);
 
     const [arxivResponse, researchResponse] = await Promise.all([
       request.get("/rss/arxiv.xml"),

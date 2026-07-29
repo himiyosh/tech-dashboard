@@ -96,7 +96,7 @@ describe("privacy consent contract", () => {
     expect(PUBLIC_OPERATOR_NAME).toBe("Studio344");
     expect(PUBLIC_CONTACT_EMAIL).toBe("himiyosh@gmail.com");
     expect(PRIVACY_JURISDICTION).toBe("Japan");
-    expect(PRIVACY_LAST_UPDATED).toBe("2026-07-27");
+    expect(PRIVACY_LAST_UPDATED).toBe("2026-07-29");
     expect(SITEMAP_STATIC_PATHS).toContain("/privacy/");
   });
 
@@ -174,7 +174,7 @@ describe("privacy consent contract", () => {
     expect(headers).toContain("X-Frame-Options: SAMEORIGIN");
   });
 
-  it("documents URL-visible preferences, retention, and bounded deletion controls", () => {
+  it("documents URL-visible preferences, Cloudflare RUM, retention, and bounded deletion controls", () => {
     const page = readFileSync(
       new URL("../web/src/pages/privacy.astro", import.meta.url),
       "utf8",
@@ -186,8 +186,16 @@ describe("privacy consent contract", () => {
     expect(page).toContain("<code>?lang=en</code>");
     expect(page).toContain("<code>?q=</code>");
     expect(page).toContain("<code>?entry=</code>");
-    expect(page).toContain("<code>?category=</code>");
+    expect(page).toContain("<code>/rss/&lt;category&gt;.xml</code>");
+    expect(page).not.toContain("?category=");
     expect(page).toContain("<code>?ids=</code>");
+    expect(page).toContain("Cloudflare Web Analytics (RUM)");
+    expect(page).toContain("任意の広告への同意とは独立して");
+    expect(page).toContain("independently of optional advertising consent");
+    expect(page).toContain("<code>static.cloudflareinsights.com</code>");
+    expect(page).toContain("<code>/cdn-cgi/rum</code>");
+    expect(page).not.toContain("独立したアクセス解析サービスを使用していません");
+    expect(page).not.toContain("does not use a separate analytics service");
     expect(page).toContain("D1のactive identity、票、rate-limit行には現在、自動削除期限を設定していません");
     expect(page).toContain("ExternalLinkHint");
     expect(page).toContain('aria-controls="reaction-delete-confirmation"');

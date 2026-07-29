@@ -23,8 +23,10 @@ import {
   bodiesPresentSet,
   isRealBody,
   mergeBodies,
+  mergeBodiesWithGuards,
   mergeBodiesWithProductGuard,
   parseBodies,
+  pruneInvalidBodyRecords,
   pruneKnownProductBodyConflicts,
   serializeBodies,
   type BodiesPayload,
@@ -43,6 +45,9 @@ function entry(over: Partial<NormalizedEntry> & { id: string }): NormalizedEntry
     titleEn: over.titleEn ?? `Title ${over.id}`,
     summaryJa: over.summaryJa ?? "本物の日本語要約です。",
     summaryEn: over.summaryEn ?? "A real English summary.",
+    contentSnippet:
+      over.contentSnippet ??
+      `The source explains the ${over.id} update, its supported behavior, and its impact on developers in concrete detail.`,
     bodyJa: over.bodyJa ?? "",
     bodyEn: over.bodyEn ?? "",
     lang: over.lang ?? "ja",
@@ -66,6 +71,20 @@ describe("needsBody (LL-115)", () => {
   });
   it("要約が pending fallback → false (先に要約が要る)", () => {
     expect(needsBody(entry({ id: "a", summaryJa: PENDING_JA, summaryEn: "" }), new Set())).toBe(false);
+  });
+  it("source contextが不足するtitle-only entryは本文生成へ進めない", () => {
+    expect(
+      needsBody(
+        entry({
+          id: "sparse",
+          title: "Cursor Start",
+          titleJa: "Cursor Start",
+          titleEn: "Cursor Start",
+          contentSnippet: "",
+        }),
+        new Set(),
+      ),
+    ).toBe(false);
   });
 });
 
@@ -112,6 +131,60 @@ describe("body retention policy", () => {
 
       expect(result.pruned).toBe(1);
       expect(result.payload.bodies).toEqual({});
+    });
+
+    describe("source grounding body invalidation", () => {
+      const cursorEntry = entry({
+        id: "cursor-start",
+        source: "cursor-changelog",
+        sourceType: "changelog",
+        title: "Cursor Start",
+        titleJa: "Cursor Start",
+        titleEn: "Cursor Start",
+        contentSnippet:
+          "We're introducing Cursor Start, a new ₹649 monthly plan for developers in India with local pricing and UPI.",
+      });
+
+      it("prunes an existing body that contradicts material source facts", () => {
+        const result = pruneInvalidBodyRecords(
+          {
+            generatedAt: "2026-07-28T00:00:00.000Z",
+            count: 1,
+            bodies: {
+              "cursor-start": {
+                bodyJa: "Cursor Startはプロジェクト初期化とオンボーディングを支援する。",
+                bodyEn: "Cursor Start streamlines project initialization and onboarding.",
+              },
+            },
+          },
+          [cursorEntry],
+          "2026-07-29T00:00:00.000Z",
+        );
+
+        expect(result.pruned).toBe(1);
+        expect(result.payload.bodies).toEqual({});
+      });
+
+      it("rejects the same contradiction from an incoming body cache", () => {
+        const result = mergeBodiesWithGuards(
+          {
+            generatedAt: "2026-07-28T00:00:00.000Z",
+            count: 0,
+            bodies: {},
+          },
+          [{
+            id: "cursor-start",
+            bodyJa: "Cursor Startはプロジェクト初期化とオンボーディングを支援する。",
+            bodyEn: "Cursor Start streamlines project initialization and onboarding.",
+          }],
+          new Set(["cursor-start"]),
+          "2026-07-29T00:00:00.000Z",
+          [cursorEntry],
+        );
+
+        expect(result.added).toBe(0);
+        expect(result.payload.bodies).toEqual({});
+      });
     });
 
     it("keeps a body that distinguishes Amazon Quick from Quick Sight", () => {
@@ -1001,4 +1074,3 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
     );
   });
 });
-

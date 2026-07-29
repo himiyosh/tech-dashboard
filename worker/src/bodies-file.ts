@@ -12,6 +12,7 @@ import {
   hasKnownProductBodyRecordConflict,
   type ProductNameEntry,
 } from "../../harness/pipeline/product-name.ts";
+import { hasMaterialBodyGroundingConflict } from "../../harness/pipeline/source-grounding.ts";
 import type { NormalizedEntry } from "../../harness/types.ts";
 
 export interface BodyRecord {
@@ -26,6 +27,15 @@ export interface BodiesPayload {
   count: number;
   bodies: Record<string, BodyRecord>;
 }
+
+type BodyGuardEntry = Pick<NormalizedEntry, "id"> &
+  ProductNameEntry &
+  Partial<
+    Pick<
+      NormalizedEntry,
+      "contentSnippet" | "sourceType" | "url" | "lang"
+    >
+  >;
 
 const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collection metadata";
 const FALLBACK_BODY_JA_NEEDLE = "元記事の要約と収集時のメタデータから";
@@ -77,9 +87,7 @@ export interface PruneBodiesResult {
 
 export function pruneKnownProductBodyConflicts(
   payload: BodiesPayload,
-  entries: readonly (
-    Pick<NormalizedEntry, "id"> & ProductNameEntry
-  )[],
+  entries: readonly BodyGuardEntry[],
   generatedAt: string,
 ): PruneBodiesResult {
   const entriesById = new Map(entries.map((entry) => [entry.id, entry]));
@@ -107,24 +115,77 @@ export function pruneKnownProductBodyConflicts(
   };
 }
 
+export function pruneInvalidBodyRecords(
+  payload: BodiesPayload,
+  entries: readonly BodyGuardEntry[],
+  generatedAt: string,
+): PruneBodiesResult {
+  const entriesById = new Map(entries.map((entry) => [entry.id, entry]));
+  const bodies = { ...payload.bodies };
+  let pruned = 0;
+
+  for (const [id, record] of Object.entries(bodies)) {
+    const entry = entriesById.get(id);
+    if (
+      entry &&
+      (
+        hasKnownProductBodyRecordConflict(entry, record) ||
+        hasMaterialBodyGroundingConflict(entry, record)
+      )
+    ) {
+      delete bodies[id];
+      pruned += 1;
+    }
+  }
+
+  return {
+    payload: pruned > 0
+      ? {
+          generatedAt,
+          count: Object.keys(bodies).length,
+          bodies,
+        }
+      : payload,
+    pruned,
+    changed: pruned > 0,
+  };
+}
+
 export function mergeBodiesWithProductGuard(
   existing: BodiesPayload,
   newBodies: readonly NewBody[],
   liveIds: ReadonlySet<string>,
   generatedAt: string,
-  entries: readonly (
-    Pick<NormalizedEntry, "id"> & ProductNameEntry
-  )[],
+  entries: readonly BodyGuardEntry[],
+): MergeBodiesResult {
+  return mergeBodiesWithGuards(
+    existing,
+    newBodies,
+    liveIds,
+    generatedAt,
+    entries,
+  );
+}
+
+export function mergeBodiesWithGuards(
+  existing: BodiesPayload,
+  newBodies: readonly NewBody[],
+  liveIds: ReadonlySet<string>,
+  generatedAt: string,
+  entries: readonly BodyGuardEntry[],
 ): MergeBodiesResult {
   const entriesById = new Map(entries.map((entry) => [entry.id, entry]));
-  const sanitizedExisting = pruneKnownProductBodyConflicts(
+  const sanitizedExisting = pruneInvalidBodyRecords(
     existing,
     entries,
     generatedAt,
   );
   const compatibleBodies = newBodies.filter((body) => {
     const entry = entriesById.get(body.id);
-    return !entry || !hasKnownProductBodyRecordConflict(entry, body);
+    return !entry || (
+      !hasKnownProductBodyRecordConflict(entry, body) &&
+      !hasMaterialBodyGroundingConflict(entry, body)
+    );
   });
   const merged = mergeBodies(
     sanitizedExisting.payload,
@@ -132,7 +193,7 @@ export function mergeBodiesWithProductGuard(
     liveIds,
     generatedAt,
   );
-  const sanitizedMerged = pruneKnownProductBodyConflicts(
+  const sanitizedMerged = pruneInvalidBodyRecords(
     merged.payload,
     entries,
     generatedAt,

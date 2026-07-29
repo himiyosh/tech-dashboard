@@ -22,8 +22,10 @@
  *   - After max_retries, message goes to the DLQ for manual triage.
  */
 import type { NormalizedEntry } from "../../harness/types.ts";
-import { hasUsableBilingualSummary } from "../../harness/pipeline/summary-quality.ts";
+import { hasUsableGroundedBilingualSummary } from "../../harness/pipeline/summary-quality.ts";
+import { hasSufficientSourceGrounding } from "../../harness/pipeline/source-grounding.ts";
 import { buildSummaryPrompt, parseResponse } from "../../worker/src/prompt.ts";
+import type { SummaryJob } from "../../worker/src/summary-queue.ts";
 import {
   type CacheEntry,
   putCacheEntry,
@@ -38,35 +40,7 @@ interface Env {
   SUMMARIZE_MAX_TOKENS?: string;
 }
 
-/**
- * Shape of a queue message produced by the harness Worker. Keep small:
- * queues cap message size, and the prompt derives context from collected
- * metadata plus RSS/Atom snippets carried in summaryEn/summaryJa.
- */
-export interface SummaryJob {
-  url: string;
-  publisherContractFingerprint?: string;
-  // The full NormalizedEntry would be more than we need. Avoids bloating the
-  // queue payload while still carrying the RSS/Atom snippet that normalization
-  // placed in summaryEn/summaryJa.
-  entry: Pick<
-    NormalizedEntry,
-    "id" | "url" | "title" | "category" | "source" | "sourceType"
-  > &
-    Partial<
-      Pick<
-        NormalizedEntry,
-        | "titleJa"
-        | "titleEn"
-        | "summaryJa"
-        | "summaryEn"
-        | "lang"
-        | "publishedAt"
-        | "tags"
-        | "importance"
-      >
-    >;
-}
+export type { SummaryJob } from "../../worker/src/summary-queue.ts";
 
 // LL-038 fix: per-URL KV keys instead of a single multi-MB blob. The blob
 // is still read by the harness Worker as a fallback during migration, but
@@ -218,16 +192,19 @@ export function isCompleteCacheEntry(entry: CacheEntry): boolean {
  */
 export function isSummaryComplete(
   entry: CacheEntry,
-  titles: Partial<Pick<NormalizedEntry, "title" | "titleJa" | "titleEn">> = {},
+  source: Partial<NormalizedEntry> = {},
 ): boolean {
   return Boolean(
     entry.titleJa.trim() &&
-      hasUsableBilingualSummary({
-        ...entry,
-        title: titles.title,
-        titleJa: entry.titleJa || titles.titleJa,
-        titleEn: titles.titleEn,
-      }),
+      hasUsableGroundedBilingualSummary(
+        source,
+        {
+          ...entry,
+          title: source.title,
+          titleJa: entry.titleJa || source.titleJa,
+          titleEn: source.titleEn,
+        },
+      ),
   );
 }
 
@@ -241,6 +218,9 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
   const model = env.SUMMARIZE_MODEL || "claude-sonnet-4.6";
   const timeoutMs = Number(env.SUMMARIZE_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
   const maxTokens = Number(env.SUMMARIZE_MAX_TOKENS ?? DEFAULT_MAX_TOKENS);
+  if (!hasSufficientSourceGrounding(job.entry)) {
+    throw new Error(`insufficient source grounding for ${job.url}`);
+  }
 
   // Summary-only prompt (LL-106). claude-sonnet-4.6 emits opaque reasoning
   // tokens that count against max_tokens; asking for a long bilingual body in

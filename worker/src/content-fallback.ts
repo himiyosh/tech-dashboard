@@ -1,10 +1,14 @@
 import type { NormalizedEntry } from "../../harness/types.ts";
-import { isContaminatedSummaryText } from "../../harness/pipeline/summary-quality.ts";
+import {
+  isContaminatedSummaryText,
+  sanitizeStoredSummaryGrounding,
+} from "../../harness/pipeline/summary-quality.ts";
 
 export interface ContentFallbackResult {
   entry: NormalizedEntry;
   summaryFallbacks: number;
   bodyFallbacks: number;
+  summaryGroundingRejected: number;
 }
 
 function text(value: string | undefined | null): string {
@@ -56,7 +60,8 @@ export function buildFallbackSummary(entry: NormalizedEntry): Pick<NormalizedEnt
 }
 
 export function applyDeterministicContentFallback(entry: NormalizedEntry): ContentFallbackResult {
-  const next: NormalizedEntry = { ...entry };
+  const grounding = sanitizeStoredSummaryGrounding(entry);
+  const next: NormalizedEntry = { ...grounding.entry };
   if (isContaminatedSummaryText(next.summaryJa)) next.summaryJa = "";
   if (isContaminatedSummaryText(next.summaryEn)) next.summaryEn = "";
   const summary = buildFallbackSummary(next);
@@ -81,5 +86,10 @@ export function applyDeterministicContentFallback(entry: NormalizedEntry): Conte
   // body empty; the real AI summary is the primary content and the detail page
   // links to the original article. Pre-existing real AI bodies (from the old
   // generation path) are preserved upstream in the cache merge and still render.
-  return { entry: next, summaryFallbacks, bodyFallbacks: 0 };
+  return {
+    entry: next,
+    summaryFallbacks,
+    bodyFallbacks: 0,
+    summaryGroundingRejected: grounding.rejected ? 1 : 0,
+  };
 }

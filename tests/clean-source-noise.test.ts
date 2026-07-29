@@ -56,6 +56,7 @@ function emptyReport() {
     keepSamples: new Map(),
     dropSamples: new Map(),
     reclassSamples: new Map(),
+    summaryGroundingRejected: 0,
   };
 }
 
@@ -308,6 +309,37 @@ describe("clean-source-noise validation", () => {
 });
 
 describe("clean-source-noise archive migration", () => {
+  it("replaces materially contradictory live summaries with pending fallback", () => {
+    const report = emptyReport();
+    const kept = summarizeChanges(
+      "live",
+      [
+        entry({
+          id: "cursor-start",
+          source: "cursor-changelog",
+          sourceType: "changelog",
+          url: "https://cursor.com/changelog/cursor-start",
+          title: "Cursor Start",
+          titleJa: "Cursor Start",
+          titleEn: "Cursor Start",
+          summaryJa: "Cursor Startはプロジェクト初期化を支援する新機能だ。",
+          summaryEn:
+            "Cursor Start is a project initialization and onboarding feature.",
+          contentSnippet:
+            "Cursor Start is a new ₹649 monthly plan for developers in India with local pricing and UPI.",
+          category: "cursor",
+        }),
+      ],
+      "2026-07-29T00:00:00.000Z",
+      report,
+    );
+
+    expect(kept).toHaveLength(1);
+    expect(kept[0].summaryJa).toContain("AI による日本語要約");
+    expect(kept[0].summaryEn).toBe("Cursor Start");
+    expect(report.summaryGroundingRejected).toBe(1);
+  });
+
   it("preserves the archive clock when migration content is unchanged", () => {
     const archivedEntry = entry({
       archiveTier: "warm",
@@ -591,6 +623,40 @@ describe("clean-source-noise archive migration", () => {
 });
 
 describe("clean-source-noise bodies reconciliation", () => {
+  it("prunes a materially contradictory body before sidecar reconciliation", () => {
+    const cursorEntry = entry({
+      id: "cursor-start",
+      source: "cursor-changelog",
+      sourceType: "changelog",
+      url: "https://cursor.com/changelog/cursor-start",
+      title: "Cursor Start",
+      titleJa: "Cursor Start",
+      titleEn: "Cursor Start",
+      contentSnippet:
+        "Cursor Start is a new ₹649 monthly plan for developers in India with local pricing and UPI.",
+      category: "cursor",
+    });
+    const merge = reconcileBodiesPayload(
+      {
+        generatedAt: "2026-07-28T00:00:00.000Z",
+        count: 1,
+        bodies: {
+          "cursor-start": {
+            bodyJa: "Cursor Startはプロジェクト初期化を支援する新機能だ。",
+            bodyEn: "Cursor Start is a project initialization feature.",
+          },
+        },
+      },
+      new Set(["cursor-start"]),
+      "2026-07-29T00:00:00.000Z",
+      new Map(),
+      [cursorEntry],
+    );
+
+    expect(merge.pruned).toBe(1);
+    expect(merge.payload.bodies).toEqual({});
+  });
+
   it("prunes orphan body ids while preserving retained bodies", () => {
     const merge = reconcileBodiesPayload(
       {

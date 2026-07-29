@@ -16,8 +16,9 @@
  * Cloudflare-type-free so it can be unit-tested directly.
  */
 import type { NormalizedEntry } from "../../harness/types.ts";
+import { hasUsableGroundedBilingualSummary } from "../../harness/pipeline/summary-quality.ts";
 import { type BodyJob } from "./body-generate.ts";
-import { needsGeneratedContent, roundRobinStart } from "./summary-queue.ts";
+import { roundRobinStart } from "./summary-queue.ts";
 
 export interface BodyJobBatch {
   jobs: BodyJob[];
@@ -66,6 +67,8 @@ export function bodyJobForEntry(
       titleEn: entry.titleEn,
       summaryJa: entry.summaryJa,
       summaryEn: entry.summaryEn,
+      contentSnippet: entry.contentSnippet,
+      lang: entry.lang,
       category: entry.category,
       source: entry.source,
       sourceType: entry.sourceType,
@@ -98,13 +101,24 @@ export function isBodyRetentionEligible(
  * ids that already have a real body in data/bodies.json.
  */
 export function needsBody(
-  entry: Pick<NormalizedEntry, "id" | "summaryJa" | "summaryEn">,
+  entry: Pick<
+    NormalizedEntry,
+    | "id"
+    | "title"
+    | "titleJa"
+    | "titleEn"
+    | "summaryJa"
+    | "summaryEn"
+    | "contentSnippet"
+    | "source"
+    | "sourceType"
+    | "url"
+    | "lang"
+  >,
   bodiesPresent: ReadonlySet<string>,
 ): boolean {
   if (bodiesPresent.has(entry.id)) return false;
-  // Reuse the summary contract: only entries with a real bilingual summary are
-  // eligible (an entry still in summary-fallback should get its summary first).
-  return !needsGeneratedContent(entry);
+  return hasUsableGroundedBilingualSummary(entry, entry);
 }
 
 export function selectBodyJobBatch(

@@ -99,6 +99,7 @@
 
 ### R-013: publisher は publish 前に summary fallback を適用し、index を本文フリーに保つ
 - production Node publisher は `data/index.json` を commit する前に deterministic **summary** fallback を全 live entry に適用し、`summaryJa` / `summaryEn` のいずれかが空の payload を publish しない (両言語必須)。本文は fallback 対象にしない。
+- summary/body Queue job は収集元の `contentSnippet` を保持し、sparse/title-only inputで十分なsource groundingがないentryを生成対象にしない。公式title/snippetが示す料金plan・対象地域・platform展開とmaterially矛盾する生成title/summary/bodyは、consumer書込み、cache read、Publisher最終化、bodies sidecar mergeの全境界で共通のdeterministic contractにより拒否し、summaryはsource excerptを伴うpendingへ戻す。不合格cacheは採用せず、十分なgroundingがある場合だけ再生成対象へ戻す。
 - `titleEn` が空で、実 `summaryEn` の先頭文から安全に導出できる場合は publish 前に自動補完する。pending / contaminated / bare title echo の要約や source-language title のコピーを `titleEn` へ書かず、手動 `titleen:fill` と Publisher は `harness/pipeline/title-en.ts` の同じ品質契約を使う。
 - publisher は publish 時に index entry の `bodyJa` / `bodyEn` を**必ず空にする** (LL-115)。`s:` cache hit が旧 body を持っていても index には載せない (LL-073 family: stale cache 由来の本文混入で index を再肥大化させない)。本文は `data/bodies.json` 経路でのみ更新する。
 - 英語タイトルのみの entry でも `summaryJa` は決定的な日本語テンプレートで埋める。逆も同様。JA / EN UI で cross-language fallback バッジを出さないこと (LL-028)。
@@ -2918,6 +2919,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: `keywordMatchesHaystack()`の最後にあるplain `includes()` fallbackだけを根拠にし、その前段でASCII keywordが英数字境界付きの正規表現へcompileされる実行経路を確認していなかった。既存keep fixtureもこの誤読を直接反証する`-ing cloud` titleを含んでいなかった。
 - **対策**: exclusion自体を製品版名`g cloud 2`へさらに狭め、実corpusの`Rethinking cloud operations with agentic observability`と`Scaling cloud infrastructure for AI workloads`をkeep fixtureへ追加した。review時は`keywordMatchesHaystack()`をactual titleで直接実行し、どのbranchが使われたかを確認する。
 - **教訓**: shared matcherの1行だけを読んで採否を断定しない。compile、boundary、fallbackを含む実行経路をactual corpusで再現し、drop fixtureと誤爆し得る境界keep fixtureを同時に固定する。
+
+### LL-443: promptにsource contextの受け口があってもQueue schemaとcache gateが運ばなければgroundingは成立しない
+- **事象**: 公式Cursor changelogのtitle/snippetはインド向け月額₹649のCursor Start planを示していたが、公開summary/bodyはproject initialization機能として生成された。Perplexity Personal ComputerもMac版からWindowsへの展開であるsource contextに対し、新規製品発表としてsummary/bodyが公開された。
+- **根本原因**: prompt builderは`contentSnippet`を受け取れる実装だったが、summary/body Queue job schemaがsnippetをpayloadへ含めずconsumerは実質title-onlyで生成していた。completion gateも非空、pending marker、title echo、既知contaminationだけを検査し、公式title/snippetとのmaterial contradictionをcache read/write、Publisher最終化、bodies sidecar mergeで検査していなかった。誤ったsummaryを本文promptのcontextに使ったため、同じ矛盾が長文へ増幅された。
+- **対策**: Queue jobへ`contentSnippet`をend-to-endで伝播し、source context不足時は新規生成を行わない。料金plan・対象地域・価格/決済と、既存platformから別platformへの展開という高信頼factだけを対象に、LLM非依存のbounded grounding contractを追加した。consumer書込み、local/remote cache採用、Publisher fallback、body job選定、body cache、sidecar merge、transaction migrationを同じcontractへ接続し、Cursor StartとWindows展開fixtureをpending/source excerptへ戻した。変更前live 1,825件の全量測定ではmaterial conflictはissueの2件だけで、8件のbounded official-source keep sampleはfalse positive 0件だった。
+- **教訓**: 「promptへsource欄がある」ことはgroundingの証拠ではない。source evidenceがjob schema、consumer validation、cache provenance、最終artifactまで実際に到達し、生成前と採用時の両方で同じcontractを通る必要がある。一般的な意味矛盾を正規表現で推測せず、公式evidenceから決定論的に取り出せるmaterial factへ範囲を限定し、既存有効summaryを広くpendingへ戻さないfalse-positive corpusを同時に固定する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

@@ -1,6 +1,6 @@
 #!/usr/bin/env -S npx tsx
 import { existsSync, readFileSync } from "node:fs";
-import { hasUsableBilingualSummary } from "../harness/pipeline/summary-quality.ts";
+import { hasUsableGroundedBilingualSummary } from "../harness/pipeline/summary-quality.ts";
 import { normalizeTags } from "../harness/pipeline/tag.ts";
 import {
   acquireWriteTransactionLock,
@@ -81,10 +81,18 @@ for (const entry of entries) {
   if (!hit) continue;
   stats.cacheHits++;
 
-  const titleCandidates = [entry.title, entry.titleJa, entry.titleEn];
   const usableSummary =
     hit.model !== "deterministic-fallback"
-    && hasUsableBilingualSummary(hit, titleCandidates);
+    && hasUsableGroundedBilingualSummary(
+      entry,
+      {
+        ...hit,
+        title: entry.title,
+        titleJa: hit.titleJa || entry.titleJa,
+        titleEn: entry.titleEn,
+      },
+      [entry.title, entry.titleJa, entry.titleEn],
+    );
   if (!usableSummary) {
     stats.cacheRejected++;
     continue;

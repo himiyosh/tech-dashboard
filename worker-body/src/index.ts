@@ -30,6 +30,11 @@ import {
   buildBodyPromptJa,
   cleanBodyText,
 } from "../../worker/src/body-generate.ts";
+import {
+  hasMaterialBodyGroundingConflict,
+  hasSufficientSourceGrounding,
+  type SourceGroundingInput,
+} from "../../harness/pipeline/source-grounding.ts";
 import { type BodyCacheEntry, putBodyCacheEntry } from "../../worker/src/body-cache.ts";
 import { UNVERSIONED_JOB_FINGERPRINT } from "../../worker/src/kv-cache.ts";
 
@@ -164,8 +169,20 @@ async function callCopilotText(
   }
 }
 
-export function isBodyEntryComplete(entry: { bodyJa: string; bodyEn: string }): boolean {
-  return Boolean(entry.bodyJa.trim().length >= MIN_BODY_CHARS && entry.bodyEn.trim().length >= MIN_BODY_CHARS);
+export function isBodyEntryComplete(
+  entry: { bodyJa: string; bodyEn: string },
+  source?: SourceGroundingInput,
+): boolean {
+  const structurallyComplete = Boolean(
+    entry.bodyJa.trim().length >= MIN_BODY_CHARS &&
+    entry.bodyEn.trim().length >= MIN_BODY_CHARS,
+  );
+  if (!structurallyComplete) return false;
+  if (!source) return true;
+  return (
+    hasSufficientSourceGrounding(source) &&
+    !hasMaterialBodyGroundingConflict(source, entry)
+  );
 }
 
 export function buildBodyCacheEntry(
@@ -191,6 +208,9 @@ async function processJob(env: Env, job: BodyJob): Promise<void> {
   const reasoning = env.BODY_REASONING_EFFORT || DEFAULT_REASONING;
   const timeoutMs = Number(env.BODY_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
   const maxTokens = Number(env.BODY_MAX_TOKENS ?? DEFAULT_MAX_TOKENS);
+  if (!hasSufficientSourceGrounding(job.entry)) {
+    throw new Error(`insufficient source grounding for ${job.url}`);
+  }
 
   // Two separate single-language calls (LL-115). Sequential so one shared token
   // covers both and Copilot pressure stays moderate (max_concurrency also caps
@@ -199,8 +219,8 @@ async function processJob(env: Env, job: BodyJob): Promise<void> {
   const bodyEn = await callCopilotText(pat, model, reasoning, buildBodyPromptEn(job.entry), timeoutMs, maxTokens);
 
   const entry = buildBodyCacheEntry(job, bodyJa, bodyEn, model);
-  if (!isBodyEntryComplete(entry)) {
-    throw new Error(`incomplete body for ${job.url}`);
+  if (!isBodyEntryComplete(entry, job.entry)) {
+    throw new Error(`incomplete or ungrounded body for ${job.url}`);
   }
   await putBodyCacheEntry(env.SUMMARY_CACHE, job.url, entry);
   await clearIssue(env, job.url);

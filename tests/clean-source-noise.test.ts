@@ -483,6 +483,35 @@ describe("clean-source-noise archive migration", () => {
     expect(report.removed).toBe(1);
   });
 
+  it("drops the actual Logitech G Cloud story through the transaction migration filter", () => {
+    const report = emptyReport();
+    const kept = summarizeChanges(
+      "2026-07.json",
+      [
+        entry({
+          id: "4c103fe22f21c8e9",
+          source: "the-verge",
+          sourceType: "blog",
+          url: "https://www.theverge.com/games/971651/logitech-handheld-business-g-cloud-robin-piispanen-interview",
+          title: "Logitech’s handheld plans are on ice — don’t expect a G Cloud 2 soon",
+          titleEn: "Logitech’s handheld plans are on ice — don’t expect a G Cloud 2 soon",
+          summaryJa: "AIクラウドと開発者インフラに関する生成要約。",
+          summaryEn: "A generated summary mentioning AI cloud and developer infrastructure.",
+          tags: ["ai", "cloud", "developer", "gaming"],
+          category: "tech-news",
+          archiveTier: "hot",
+        }),
+      ],
+      "2026-07-29T00:00:00.000Z",
+      report,
+      { preserveArchiveTier: true },
+    );
+
+    expect(kept).toEqual([]);
+    expect(report.removed).toBe(1);
+    expect(report.removedBySource.get("the-verge")).toBe(1);
+  });
+
   it("filters dropped aliases before canonical merging", () => {
     const retained = entry({
       id: "retained",

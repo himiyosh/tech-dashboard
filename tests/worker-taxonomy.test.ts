@@ -54,6 +54,23 @@ describe("applyCurrentSourceRules", () => {
     expect(next).toBeNull();
   });
 
+  it("drops the actual Logitech G Cloud story from prior entries without trusting generated summaries or tags", () => {
+    const stale = baseEntry({
+      id: "4c103fe22f21c8e9",
+      source: "the-verge",
+      sourceType: "blog",
+      title: "Logitech’s handheld plans are on ice — don’t expect a G Cloud 2 soon",
+      titleEn: "Logitech’s handheld plans are on ice — don’t expect a G Cloud 2 soon",
+      url: "https://www.theverge.com/games/971651/logitech-handheld-business-g-cloud-robin-piispanen-interview",
+      category: "tech-news",
+      summaryJa: "AIクラウドと開発者インフラに関する生成要約。",
+      summaryEn: "A generated summary mentioning AI cloud and developer infrastructure.",
+      tags: ["ai", "cloud", "developer", "gaming"],
+    });
+
+    expect(applyCurrentSourceRules(stale, REGISTRY["the-verge"], "2026-07-29T00:00:00.000Z")).toBeNull();
+  });
+
   it("preserves non-title prior entries on unverified missing-include but still drops title-scope misses and excludes", () => {
     const nonTitleSource: SourceDefinition = {
       ...REGISTRY["google-cloud-blog"],

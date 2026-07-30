@@ -1,9 +1,9 @@
 import {
-  summaryForLangWithFallback,
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "./data.ts";
 import type { Category } from "./category-meta.ts";
+import { buildFeedDecisionDigest } from "./feed-decision-digest.ts";
 
 export const RSS_CONTENT_TYPE = "application/rss+xml; charset=utf-8";
 export const RSS_ITEM_LIMIT = 100;
@@ -68,7 +68,7 @@ export function serializeRssFeed(
   const items = entries.slice(0, RSS_ITEM_LIMIT)
     .map((entry) => {
       const title = escapeXml(titleForLangWithFallback(entry, "ja").text);
-      const description = escapeXml(summaryForLangWithFallback(entry, "ja").text);
+      const description = escapeXml(buildFeedDecisionDigest(entry).text);
       const tags = entry.tags
         .map((tag) => `<category>${escapeXml(tag)}</category>`)
         .join("");

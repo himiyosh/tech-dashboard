@@ -31,6 +31,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 変更
 
+- RSSとJSON Feedの各記事へ、reader-facingな出典名、出典区分、重要度、検証済み要約をまとめた短いdecision digestを追加しました。JSON Feedは標準の`summary`と`content_text`へ同じ内容を出し、既存のprivate extension、記事集合、順序、上限、canonical URLは維持します。
 - remote summary cacheの反映で記事が要約待ちから公開可能へ変わっても、全addressable detailのJA/EN metadata titleが重複しないようにしました。同じ原題・source表示名・公開時刻が衝突する場合だけ、既存のsource URL pathを事実ベースの識別子として付与し、canonical URLとsource provenanceは維持します。要約Queueもfinal entry集合から1回だけ候補を選び、その同じsnapshotを送信・healthへ保存するため、実送信7件とfinal候補6件のようなstage混在を防ぎます。
 - sparseまたはtitle-onlyのsource inputでは十分な収集元contextがない限りAI要約・解説本文を生成せず、公式title/snippetから決定論的に抽出できる料金plan・対象地域・価格/決済、または既存productのnamed platform展開と矛盾する生成結果をsummary/body cache、Publisher、sidecarの全経路で拒否するようにしました。United Statesの略記と英語の代名詞`us`を区別し、先行platformの言い回しやsnippet切り詰めでも既知のplatform展開hallucinationを準備待ちへ戻します。不合格cacheは再生成対象へ戻し、記事は収集元の抜粋を伴う準備待ち状態に留まります。
 - AI要約待ちの記事は、画面上の原題をHTML title・Open Graph・Twitter Card・構造化データへ揃え、要約未生成をdescriptionへ明示するようにしました。長い原題でも160文字以内に原題の先頭、出典、カテゴリ、準備中状態を残し、要約済み記事のmetadata、canonical URL、出典情報は従来どおり維持します。

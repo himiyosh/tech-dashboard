@@ -21,6 +21,7 @@ import {
   isPublishableEntry,
   type PublicationEntry,
 } from "../../web/src/lib/entry-publication.ts";
+import { buildFeedDecisionDigest } from "../../web/src/lib/feed-decision-digest.ts";
 import { isArxivEntry } from "../../web/src/lib/research-lane.ts";
 import { ADSENSE_CLIENT_ID, SITE_URL } from "../../web/src/lib/site.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
@@ -83,6 +84,7 @@ function decodeHeadValue(value: string): string {
 
 interface ParsedRssItem {
   category?: string | string[];
+  description?: string;
   link?: string;
 }
 
@@ -90,6 +92,7 @@ interface FeedArtifactEntry extends PublicationEntry {
   id: string;
   category: Category;
   evergreen?: boolean;
+  importance: 1 | 2 | 3;
 }
 
 function rssItemDocuments(xml: string): ParsedRssItem[] {
@@ -853,8 +856,20 @@ test.describe("Publisher generated artifact", () => {
     const feed = (await feedResponse.json()) as {
       version?: string;
       feed_url?: string;
-      items?: Array<{ content_text?: string }>;
+      items?: Array<{
+        id?: string;
+        url?: string;
+        summary?: string;
+        content_text?: string;
+        _source?: string;
+        _importance?: number;
+      }>;
     };
+    const raw = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: FeedArtifactEntry[];
+    };
+    const expectedEntries = raw.entries.filter(isPublishableEntry).slice(0, 100);
+    const feedItems = feed.items ?? [];
     const builtHeaders = readFileSync("web/dist/_headers", "utf8");
 
     expect(homeResponse.status()).toBe(200);
@@ -864,11 +879,27 @@ test.describe("Publisher generated artifact", () => {
     expect(feedResponse.status()).toBe(200);
     expect(feed.version).toBe("https://jsonfeed.org/version/1.1");
     expect(feed.feed_url).toBe(`${SITE_URL}/feed.json`);
-    expect(feed.items?.length).toBeGreaterThan(0);
-    expect(feed.items?.length).toBeLessThanOrEqual(100);
-    expect(feed.items?.every((item) => Boolean(item.content_text?.trim()))).toBe(
+    expect(feedItems.length).toBeGreaterThan(0);
+    expect(feedItems.length).toBeLessThanOrEqual(100);
+    expect(feedItems.map((item) => item.url)).toEqual(
+      expectedEntries.map((entry) => entry.url),
+    );
+    expect(feedItems.every((item) => Boolean(item.content_text?.trim()))).toBe(
       true,
     );
+    for (const [index, item] of feedItems.entries()) {
+      const entry = expectedEntries[index];
+      if (!entry) throw new Error(`JSON Feed item ${index} has no source entry`);
+      const digest = buildFeedDecisionDigest(entry);
+      expect(item).toMatchObject({
+        id: entry.id,
+        url: entry.url,
+        summary: digest.text,
+        content_text: digest.text,
+        _source: entry.source,
+        _importance: entry.importance,
+      });
+    }
     expect(builtHeaders).toContain(
       "/feed.json\n  Content-Type: application/feed+json; charset=utf-8",
     );
@@ -1084,12 +1115,23 @@ test.describe("Publisher generated artifact", () => {
   });
 
   test("publishes global and category-specific RSS routes", async ({ request }) => {
+    const raw = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: FeedArtifactEntry[];
+    };
+    const expectedGlobalEntries = raw.entries.filter(isPublishableEntry).slice(0, 100);
     const globalResponse = await request.get("/rss.xml");
     const globalXml = await globalResponse.text();
+    const globalItems = rssItemDocuments(globalXml);
     expect(globalResponse.status()).toBe(200);
     expect(globalResponse.headers()["content-type"]).toMatch(/^text\/xml(?:;|$)/);
-    expect(rssItemDocuments(globalXml).length).toBeGreaterThan(0);
-    expect(rssItemDocuments(globalXml).length).toBeLessThanOrEqual(100);
+    expect(globalItems.length).toBeGreaterThan(0);
+    expect(globalItems.length).toBeLessThanOrEqual(100);
+    expect(globalItems.map((item) => item.link)).toEqual(
+      expectedGlobalEntries.map((entry) => entry.url),
+    );
+    expect(globalItems.map((item) => item.description)).toEqual(
+      expectedGlobalEntries.map((entry) => buildFeedDecisionDigest(entry).text),
+    );
 
     let categoryItemCount = 0;
     for (const category of CATEGORY_META) {
@@ -1104,6 +1146,9 @@ test.describe("Publisher generated artifact", () => {
       expect(items.length, feedHref).toBeLessThanOrEqual(100);
       for (const item of items) {
         expect(rssItemCategory(item), feedHref).toBe(category.slug);
+        const entry = raw.entries.find((candidate) => candidate.url === item.link);
+        if (!entry) throw new Error(`${feedHref} contains unknown item ${item.link}`);
+        expect(item.description, feedHref).toBe(buildFeedDecisionDigest(entry).text);
       }
       categoryItemCount += items.length;
     }
@@ -1230,6 +1275,11 @@ test.describe("Publisher generated artifact", () => {
       /^(?:application|text)\/xml(?:;|$)/,
     );
     expect(arxivUrls).toEqual(expectedUrls);
+    expect(arxivItems.map((item) => item.description)).toEqual(
+      expectedEntries
+        .slice(0, 100)
+        .map((entry) => buildFeedDecisionDigest(entry).text),
+    );
     expect(arxivItems.length).toBeLessThanOrEqual(100);
     expect(
       arxivItems.every((item) => rssItemCategory(item) === "research"),
@@ -1269,6 +1319,11 @@ test.describe("Publisher generated artifact", () => {
       /^(?:application|text)\/xml(?:;|$)/,
     );
     expect(feedUrls).toEqual(expectedUrls);
+    expect(items.map((item) => item.description)).toEqual(
+      expectedEntries
+        .slice(0, 100)
+        .map((entry) => buildFeedDecisionDigest(entry).text),
+    );
     expect(items.length).toBeLessThanOrEqual(100);
     expect(
       feedUrls

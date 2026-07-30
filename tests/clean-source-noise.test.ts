@@ -333,15 +333,37 @@ describe("clean-source-noise archive migration", () => {
       evergreen: true,
       category: "agent-fw",
     });
+    const announcementBoilerplate = entry({
+      id: "1fe4d821705368ab",
+      source: "aws-ml-blog",
+      sourceType: "blog",
+      title: "Introducing Claude apps gateway for AWS",
+      contentSnippet: "Today, we're announcing the Claude apps gateway for AWS. In this post, we show how to set up and run it.",
+      summaryJa: "日本語要約",
+      summaryEn: "English summary",
+      evergreen: true,
+      category: "agent-fw",
+    });
+    const durableAnnouncement = entry({
+      id: "da8334e0b7763710",
+      source: "microsoft-foundry",
+      sourceType: "blog",
+      title: "Introducing Agent Optimizer in Foundry Agent Service",
+      contentSnippet: "You write your logic, run azd deploy, and your agent is live. But live and production-ready are not the same thing.",
+      summaryJa: "日本語要約",
+      summaryEn: "English summary",
+      evergreen: true,
+      category: "copilot",
+    });
 
     const kept = summarizeChanges(
       "live",
-      [announcement, tutorial],
+      [announcement, tutorial, announcementBoilerplate, durableAnnouncement],
       "2026-07-30T01:00:00.000Z",
       report,
     );
 
-    expect(kept).toHaveLength(2);
+    expect(kept).toHaveLength(4);
     expect(kept[0]).toMatchObject({
       id: announcement.id,
       url: announcement.url,
@@ -352,6 +374,8 @@ describe("clean-source-noise archive migration", () => {
     expect(kept[0]?.knowledgeEligible).toBe(false);
     expect(kept[1]?.evergreen).toBe(true);
     expect(kept[1]?.knowledgeEligible).toBeUndefined();
+    expect(kept[2]?.knowledgeEligible).toBe(false);
+    expect(kept[3]?.knowledgeEligible).toBeUndefined();
     expect(report.removed).toBe(0);
   });
 

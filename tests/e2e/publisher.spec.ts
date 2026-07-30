@@ -1415,6 +1415,12 @@ test.describe("Publisher generated artifact", () => {
       "bed450615ddfd03d",
       "7ce8f0655e5249f3",
       "7b3cb462c9d102ab",
+      "52a59dad31dc17b8",
+      "5abc0b85ffaee46f",
+      "07df858350edbc9d",
+      "37803898e498b24d",
+      "1fe4d821705368ab",
+      "4804d6346be88fc2",
     ]) {
       const entry = raw.entries.find((candidate) => candidate.id === id);
       expect(entry).toBeDefined();

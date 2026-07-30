@@ -43,13 +43,21 @@ const DURABLE_SNIPPET_PATTERNS = [
 
 const ANNOUNCEMENT_TITLE_PATTERNS = [
   /^announc(?:e|es|ed|ing|ement)\b/i,
-  /^introduc(?:e|es|ed|ing)\b/i,
+  /(?:^|[:;|/\u2013\u2014-]\s*)introduc(?:e|es|ed|ing)\b/i,
   /^launch(?:es|ed|ing)\b/i,
   /^now in (?:public |private )?preview\b/i,
   /^register now\b/i,
-  /^what(?:['’]s| is) new\b/i,
+  /(?:^|[:;|/\u2013\u2014-]\s*)what(?:['’]s| is) new\b/i,
   /^what .+ announced\b/i,
-  /\b(?:named|recognized as) (?:a )?(?:commander|leader)\b/i,
+  /\bnew (?:capabilit(?:y|ies)|features?) announced\b/i,
+  /\b(?:named|recognized as) (?:(?:a|the) )?(?:commander|leader|challenger|visionary)\b/i,
+  /\b(?:is|remains) (?:a|the) (?:leader|challenger|visionary)\b/i,
+  /\b(?:Gartner(?:®)? )?Magic Quadrant\b/i,
+];
+
+const ANNOUNCEMENT_SNIPPET_COUNTER_PATTERNS = [
+  /^(?:today,?\s+)?we(?:['’]re| are)?\s+announc(?:e|es|ed|ing)\b/i,
+  /^this post covers\b.{0,240}\bhow you access(?:\s+(?:it|them))?\b/i,
 ];
 
 const AVAILABILITY_PHRASES = [
@@ -89,6 +97,12 @@ function hasDurableSnippetSignal(contentSnippet: string): boolean {
   return DURABLE_SNIPPET_PATTERNS.some((pattern) => pattern.test(contentSnippet));
 }
 
+function hasAnnouncementSnippetCounterSignal(contentSnippet: string): boolean {
+  return ANNOUNCEMENT_SNIPPET_COUNTER_PATTERNS.some((pattern) =>
+    pattern.test(contentSnippet)
+  );
+}
+
 function hasAvailabilitySignal(value: string): boolean {
   return (
     AVAILABILITY_PHRASES.some((phrase) => matchesAsciiPhrase(value, phrase)) ||
@@ -110,7 +124,10 @@ export function knowledgeEligibility(
   if (hasDurableTitleSignal(title)) {
     return { eligible: true, reason: "durable-title" };
   }
-  if (hasDurableSnippetSignal(contentSnippet)) {
+  if (
+    hasDurableSnippetSignal(contentSnippet) &&
+    !hasAnnouncementSnippetCounterSignal(contentSnippet)
+  ) {
     return { eligible: true, reason: "durable-snippet" };
   }
   if (entry.knowledgeEligible === false) {

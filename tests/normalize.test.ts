@@ -462,9 +462,18 @@ describe("restampEntryFromSource", () => {
       evergreenSource,
       "2026-07-30T00:00:00.000Z",
     );
+    const announcementBoilerplate = normalize(
+      {
+        ...rawEntry("Introducing Claude apps gateway for AWS"),
+        contentSnippet: "Today, we're announcing the Claude apps gateway for AWS. In this post, we show how to set up and run it.",
+      },
+      evergreenSource,
+      "2026-07-30T00:00:00.000Z",
+    );
 
     expect(announcement.evergreen).toBe(true);
     expect(announcement.knowledgeEligible).toBe(false);
+    expect(announcementBoilerplate.knowledgeEligible).toBe(false);
     expect(tutorial.evergreen).toBe(true);
     expect(restampEntryFromSource(
       { ...announcement, knowledgeEligible: true },

@@ -2975,6 +2975,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: raw title/snippet/source contextだけを使う共有helperで`knowledgeEligible:false`をstampし、Publisher、transaction migration、Web、RSS、quality-auditへ接続した。evergreen retentionと既存URL・要約・本文は維持し、`GA`はASCII token境界で`gap`へ一致させないactual-corpus keep/drop fixtureを追加した。Dev LeadとAI Researcherが同じ4件の過剰除外を報告したため、setup手順、API parameter、`azd deploy`とproduction-readinessのような狭いraw procedural evidenceだけを告知titleより優先する回帰guardも追加した。
 - **教訓**: source-level retentionとreader-facing lane membershipは別の契約である。生成要約を採否へ使わず、実コーパスの告知dropとhow-to keepを同時に固定し、保存済みenrichmentを掲載判定変更の副作用で削除しない。titleが`Introducing`や`Launching`でも本文抜粋が具体的なsetup/implementationを示す場合はannouncement-onlyと断定せず、複数personaの実利用判断でfalse exclusionを検査する。`GA`のような短い頭字語はtoken境界だけでなくcaseも意味の一部なので、一般phraseと同じcase-insensitive matcherへ混ぜない。
 
+### LL-452: 告知判定はtitle位置とsnippet先頭のcounter-signalを分ける
+- **事象**: Knowledgeの告知判定がtitle先頭だけを見ていたため、`From query to action: Introducing ...`、`...: What's new ...`、`... New Capabilities Announced ...`とGartner Magic Quadrantの評価記事が残った。さらに`Today, we're announcing ... In this post, we show how to ...`や一般的な`This post covers ... how you access it`がdurable snippetとして保存済み除外を上書きした。
+- **根本原因**: announcement patternが先頭anchorへ偏り、durable overrideはsnippet内の`how`だけを見て、その文脈が告知定型文から始まるかを確認していなかった。
+- **対策**: punctuation境界を持つmid-title pattern、analyst positioning pattern、snippet先頭のannouncement boilerplate counter-signalを共有helperへ追加した。具体的なsetup、API parameter、CLI、実装手順は従来どおりdurable overrideとして維持し、actual corpusのdrop/keep両側を回帰testへ固定した。
+- **教訓**: 告知除外を先頭語だけへ限定せず、title途中の高信頼なframingもboundedに検出する。一方、`how`の存在だけでdurableと断定せず、snippetが告知定型文から始まる場合はoverrideを無効化し、具体的なprocedural evidenceだけを救済根拠にする。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

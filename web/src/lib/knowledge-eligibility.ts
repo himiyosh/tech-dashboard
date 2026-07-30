@@ -56,8 +56,8 @@ const AVAILABILITY_PHRASES = [
   "general availability",
   "generally available",
   "now available",
-  "GA",
 ] as const;
+const AVAILABILITY_ACRONYMS = ["GA"] as const;
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -67,13 +67,17 @@ function normalized(value: string | undefined): string {
   return String(value ?? "").normalize("NFKC").replace(/\s+/g, " ").trim();
 }
 
-function matchesAsciiPhrase(value: string, phrase: string): boolean {
+function matchesAsciiPhrase(
+  value: string,
+  phrase: string,
+  caseSensitive = false,
+): boolean {
   const parts = phrase.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return false;
   const body = parts.map(escapeRegExp).join(ASCII_SEPARATOR_RE);
   return new RegExp(
     `(^|[^${ASCII_ALNUM_CLASS}])${body}(?=$|[^${ASCII_ALNUM_CLASS}])`,
-    "i",
+    caseSensitive ? "" : "i",
   ).test(value);
 }
 
@@ -86,7 +90,12 @@ function hasDurableSnippetSignal(contentSnippet: string): boolean {
 }
 
 function hasAvailabilitySignal(value: string): boolean {
-  return AVAILABILITY_PHRASES.some((phrase) => matchesAsciiPhrase(value, phrase));
+  return (
+    AVAILABILITY_PHRASES.some((phrase) => matchesAsciiPhrase(value, phrase)) ||
+    AVAILABILITY_ACRONYMS.some((phrase) =>
+      matchesAsciiPhrase(value, phrase, true)
+    )
+  );
 }
 
 export function knowledgeEligibility(

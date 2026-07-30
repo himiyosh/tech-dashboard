@@ -167,6 +167,20 @@ describe("Knowledge eligibility", () => {
     })).toBe(true);
   });
 
+  it("treats only uppercase GA as the availability acronym", () => {
+    for (const title of [
+      "Understanding the ga particle in Japanese",
+      "Ga doping in semiconductors",
+      "What ga.js does in analytics",
+    ]) {
+      expect(isKnowledgeEligibleEntry({
+        source: "google-cloud-blog",
+        title,
+        evergreen: true,
+      })).toBe(true);
+    }
+  });
+
   it("ignores generated summaries when deciding source acceptance", () => {
     const entry = {
       ...ACTUAL_KEEP_FIXTURES[1]!.entry,

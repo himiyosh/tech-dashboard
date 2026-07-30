@@ -3,13 +3,16 @@ import {
   GENERATED_AT,
   KNOWLEDGE_ENTRIES,
 } from "../../lib/data.ts";
+import {
+  KNOWLEDGE_RSS_FEED,
+  publicFeedHtmlUrl,
+} from "../../lib/feed-catalog.ts";
 import { createRssResponse } from "../../lib/rss.ts";
-import { SITE_URL } from "../../lib/site.ts";
 
 export const GET: APIRoute = () =>
   createRssResponse(KNOWLEDGE_ENTRIES, {
-    title: "TECH Dashboard | Knowledge & Best Practices",
-    link: `${SITE_URL}/knowledge/`,
-    description: "AI要約済みのevergreenな技術知見を新着順で配信するKnowledge専用feed",
+    title: KNOWLEDGE_RSS_FEED.title,
+    link: publicFeedHtmlUrl(KNOWLEDGE_RSS_FEED),
+    description: KNOWLEDGE_RSS_FEED.description,
     lastBuildDate: GENERATED_AT,
   });

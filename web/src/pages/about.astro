@@ -15,6 +15,7 @@ import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../lib/reaction-copy
 import { WORKER_HEALTH } from "../lib/data.ts";
 import { deriveWorkerRunStatus, WORKER_RUN_STATE_COPY } from "../lib/run-health.ts";
 import { NEW_ISSUE_URL } from "../lib/site.ts";
+import { OPML_HREF, OPML_MEDIA_TYPE } from "../lib/feed-catalog.ts";
 
 const now = new Date();
 const lastUpdated = relativeTime(DASHBOARD_METRICS.generatedAt, now);
@@ -98,6 +99,7 @@ const pipelineSteps = [
     actions={[
       { href: "/rss.xml", label: "全体RSS", labelEn: "Site-wide RSS", mobilePriority: true },
       { href: "/feed.json", label: "JSON Feed", labelEn: "JSON Feed", mobilePriority: true },
+      { href: OPML_HREF, label: "OPMLで一括購読", labelEn: "Subscribe via OPML", mediaType: OPML_MEDIA_TYPE, mobilePriority: true },
       { href: "/status", label: "Status" },
       { href: "/privacy", label: "Privacy" },
       { href: "#feedback", label: "問題を報告", labelEn: "Report an issue" },

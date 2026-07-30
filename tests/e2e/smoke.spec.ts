@@ -4449,7 +4449,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expectResponsivePageHero(page, "/page/2/");
   });
 
-  test("mobile readers can discover site-wide and category feeds", async ({ page }) => {
+  test("mobile readers can discover site-wide, OPML, and category feeds", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/about/");
     const desktopHero = page.locator(".page-hero").first();
@@ -4473,11 +4473,24 @@ test.describe("TECH Dashboard smoke", () => {
 
     const siteWideRss = page.locator('.page-hero-actions a[href="/rss.xml"]');
     const jsonFeed = page.locator('.page-hero-actions a[href="/feed.json"]');
+    const opmlBundle = page.locator('.page-hero-actions a[href="/feeds.opml"]');
     await expect(siteWideRss).toBeVisible();
     await expect(jsonFeed).toBeVisible();
+    await expect(opmlBundle).toBeVisible();
     await expect(siteWideRss.locator(".i18n-ja")).toHaveText("全体RSS");
     await expect(siteWideRss).toHaveAccessibleName("全体RSS");
     await expect(jsonFeed).toHaveAccessibleName("JSON Feed");
+    await expect(opmlBundle.locator(".i18n-ja")).toHaveText("OPMLで一括購読");
+    await expect(opmlBundle).toHaveAccessibleName("OPMLで一括購読");
+    await expect(opmlBundle).toHaveAttribute("type", "text/x-opml");
+    const outline = page.locator(
+      'head link[rel="outline"][type="text/x-opml"][href="/feeds.opml"]',
+    );
+    await expect(outline).toHaveCount(1);
+    await expect(outline).toHaveAttribute(
+      "title",
+      "TECH Dashboard public RSS subscriptions",
+    );
     const aboutHero = page.locator(".page-hero").first();
     const aboutDescription = aboutHero.locator(".page-hero-description");
     await expect(aboutDescription).toHaveCount(1);
@@ -4485,21 +4498,40 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(aboutHero).toHaveAccessibleDescription(
       /TECH Dashboard は、AI coding と agent ecosystem の変化を毎日追う/,
     );
-    for (const link of [siteWideRss, jsonFeed]) {
-      const box = await link.boundingBox();
-      expect(box).not.toBeNull();
-      expect(box!.height).toBeGreaterThanOrEqual(44);
-    }
     await expect(page.locator('.page-hero-actions a[href="/status"]')).toBeHidden();
 
     await page.locator('.lang-btn[data-lang="en"]').click();
     await expect(siteWideRss.locator(".i18n-en")).toBeVisible();
     await expect(siteWideRss.locator(".i18n-en")).toHaveText("Site-wide RSS");
     await expect(siteWideRss).toHaveAccessibleName("Site-wide RSS");
+    await expect(opmlBundle.locator(".i18n-en")).toBeVisible();
+    await expect(opmlBundle.locator(".i18n-en")).toHaveText("Subscribe via OPML");
+    await expect(opmlBundle).toHaveAccessibleName("Subscribe via OPML");
     await expect(aboutDescription.locator(".i18n-en")).toHaveAttribute("lang", "en");
     await expect(aboutHero).toHaveAccessibleDescription(
       /TECH Dashboard tracks daily changes across AI coding and the agent ecosystem/,
     );
+
+    for (const viewport of [
+      { width: 375, height: 667 },
+      { width: 390, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await settleResponsiveLayout(page);
+      for (const link of [siteWideRss, jsonFeed, opmlBundle]) {
+        const box = await link.boundingBox();
+        expect(box).not.toBeNull();
+        expect(box!.width).toBeGreaterThanOrEqual(44);
+        expect(box!.height).toBeGreaterThanOrEqual(44);
+        expect(box!.x).toBeGreaterThanOrEqual(0);
+        expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width);
+      }
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > window.innerWidth,
+        ),
+      ).toBe(false);
+    }
 
     await page.goto("/c/copilot/");
     const categoryRss = page.locator('.page-hero-actions a[href="/rss/copilot.xml"]');

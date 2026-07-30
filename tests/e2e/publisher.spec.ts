@@ -22,6 +22,14 @@ import {
   type PublicationEntry,
 } from "../../web/src/lib/entry-publication.ts";
 import { buildFeedDecisionDigest } from "../../web/src/lib/feed-decision-digest.ts";
+import {
+  OPML_HREF,
+  OPML_MEDIA_TYPE,
+  OPML_TITLE,
+  publicFeedHtmlUrl,
+  publicFeedXmlUrl,
+  publicRssFeeds,
+} from "../../web/src/lib/feed-catalog.ts";
 import { isArxivEntry } from "../../web/src/lib/research-lane.ts";
 import { ADSENSE_CLIENT_ID, SITE_URL } from "../../web/src/lib/site.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
@@ -842,6 +850,76 @@ test.describe("Publisher generated artifact", () => {
     expect(robotsResponse.status()).toBe(200);
     expect(robotsResponse.headers()["content-type"]).toContain("text/plain");
     expect(robots).toContain(`Sitemap: ${SITE_URL}/sitemap.xml`);
+  });
+
+  test("publishes the exact public RSS bundle as OPML 2.0", async ({ request }) => {
+    const [opmlResponse, homeResponse, aboutResponse, unknownResponse] =
+      await Promise.all([
+        request.get(OPML_HREF),
+        request.get("/"),
+        request.get("/about/"),
+        request.get("/feeds-not-found.opml"),
+      ]);
+    const xml = await opmlResponse.text();
+    const home = await homeResponse.text();
+    const about = await aboutResponse.text();
+    const builtHeaders = readFileSync("web/dist/_headers", "utf8");
+    const expectedFeeds = publicRssFeeds();
+
+    expect(opmlResponse.status()).toBe(200);
+    expect(XMLValidator.validate(xml)).toBe(true);
+    const document = new XMLParser({
+      ignoreAttributes: false,
+      parseAttributeValue: false,
+      parseTagValue: false,
+    }).parse(xml) as {
+      opml?: {
+        "@_version"?: string;
+        head?: { title?: string };
+        body?: {
+          outline?:
+            | Record<string, string>
+            | Array<Record<string, string>>;
+        };
+      };
+    };
+    const parsedOutlines = document.opml?.body?.outline;
+    const outlines = Array.isArray(parsedOutlines)
+      ? parsedOutlines
+      : parsedOutlines
+        ? [parsedOutlines]
+        : [];
+
+    expect(document.opml?.["@_version"]).toBe("2.0");
+    expect(document.opml?.head?.title).toBe(OPML_TITLE);
+    expect(outlines).toEqual(
+      expectedFeeds.map((feed) => ({
+        "@_type": "rss",
+        "@_text": feed.title,
+        "@_title": feed.title,
+        "@_xmlUrl": publicFeedXmlUrl(feed),
+        "@_htmlUrl": publicFeedHtmlUrl(feed),
+        "@_description": feed.description,
+        "@_language": "ja",
+        "@_version": "RSS",
+      })),
+    );
+    expect(new Set(outlines.map((outline) => outline["@_xmlUrl"])).size).toBe(
+      outlines.length,
+    );
+    expect(xml).not.toContain("/feed.json");
+    expect(home).toMatch(
+      new RegExp(
+        `<link\\b(?=[^>]*\\brel="outline")(?=[^>]*\\btype="${OPML_MEDIA_TYPE}")(?=[^>]*\\bhref="${OPML_HREF.replace(".", "\\.")}")[^>]*>`,
+      ),
+    );
+    expect(about).toContain(`href="${OPML_HREF}"`);
+    expect(about).toContain("OPMLで一括購読");
+    expect(about).toContain("Subscribe via OPML");
+    expect(builtHeaders).toContain(
+      "/feeds.opml\n  Content-Type: text/x-opml; charset=utf-8",
+    );
+    expect(unknownResponse.status()).toBe(404);
   });
 
   test("publishes the JSON Feed body and Pages delivery contract", async ({

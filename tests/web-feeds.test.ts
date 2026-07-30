@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { describe, expect, it, vi } from "vitest";
+import { CATEGORY_META as CANONICAL_CATEGORY_META } from "../web/src/lib/category-meta.ts";
 import type { NormalizedEntry } from "../web/src/lib/data.ts";
 import type { FeedDecisionDigestEntry } from "../web/src/lib/feed-decision-digest.ts";
 
@@ -134,11 +135,24 @@ vi.mock("../web/src/lib/data.ts", () => ({
 const { GET: getRss } = await import("../web/src/pages/rss.xml.ts");
 const { GET: getArxivRss } = await import("../web/src/pages/rss/arxiv.xml.ts");
 const { GET: getKnowledgeRss } = await import("../web/src/pages/rss/knowledge.xml.ts");
+const { GET: getOpml } = await import("../web/src/pages/feeds.opml.ts");
 const {
   GET: getCategoryRss,
   getStaticPaths: getCategoryRssPaths,
 } = await import("../web/src/pages/rss/[category].xml.ts");
 const { GET: getJsonFeed } = await import("../web/src/pages/feed.json.ts");
+const {
+  publicFeedHtmlUrl,
+  publicFeedXmlUrl,
+  publicRssFeeds,
+} = await import("../web/src/lib/feed-catalog.ts");
+const {
+  OPML_CONTENT_TYPE,
+  OPML_HREF,
+  OPML_MEDIA_TYPE,
+  OPML_TITLE,
+  serializeOpml,
+} = await import("../web/src/lib/opml.ts");
 const {
   ARXIV_RSS_HREF,
   KNOWLEDGE_RSS_HREF,
@@ -186,6 +200,18 @@ const categorySources = [
 
 function alternateLinks(source: string) {
   return [...source.matchAll(/<link\b(?=[^>]*\brel="alternate")[^>]*>/g)].map(
+    ([tag]) =>
+      Object.fromEntries(
+        [...tag.matchAll(/([\w-]+)="([^"]*)"/g)].map(([, name, value]) => [
+          name,
+          value,
+        ]),
+      ),
+  );
+}
+
+function outlineLinks(source: string) {
+  return [...source.matchAll(/<link\b(?=[^>]*\brel="outline")[^>]*>/g)].map(
     ([tag]) =>
       Object.fromEntries(
         [...tag.matchAll(/([\w-]+)="([^"]*)"/g)].map(([, name, value]) => [
@@ -304,6 +330,10 @@ describe("public feeds", () => {
     expect(portalSource).toContain('title="TECH Dashboard site-wide JSON Feed"');
     expect(portalSource).toContain('href={rssHref}');
     expect(portalSource).toContain('title={rssTitle}');
+    expect(outlineLinks(portalSource)).toEqual([{ rel: "outline" }]);
+    expect(portalSource).toContain("type={OPML_MEDIA_TYPE}");
+    expect(portalSource).toContain("href={OPML_HREF}");
+    expect(portalSource).toContain("title={OPML_TITLE}");
   });
 
   it("keeps descriptive subscription actions discoverable on mobile", () => {
@@ -326,7 +356,10 @@ describe("public feeds", () => {
     );
     expect(aboutSource).toContain('label: "全体RSS"');
     expect(aboutSource).toContain('labelEn: "Site-wide RSS"');
-    expect(aboutSource.match(/mobilePriority:\s*true/g)).toHaveLength(2);
+    expect(aboutSource).toContain('label: "OPMLで一括購読"');
+    expect(aboutSource).toContain('labelEn: "Subscribe via OPML"');
+    expect(aboutSource).toContain("mediaType: OPML_MEDIA_TYPE");
+    expect(aboutSource.match(/mobilePriority:\s*true/g)).toHaveLength(3);
     expect(arxivSource).toContain('label: "arXiv RSSを購読"');
     expect(arxivSource).toContain('labelEn: "Subscribe to arXiv RSS"');
     expect(arxivSource).toContain('mediaType: "application/rss+xml"');
@@ -368,6 +401,67 @@ describe("public feeds", () => {
     );
     expect(publicHeaders).toContain(
       "/rss/*\n  Content-Type: application/rss+xml; charset=utf-8",
+    );
+    expect(publicHeaders).toContain(
+      "/feeds.opml\n  Content-Type: text/x-opml; charset=utf-8",
+    );
+  });
+
+  it("publishes the exact public RSS catalog as flat OPML 2.0", async () => {
+    const response = (await getOpml({} as never)) as Response;
+    const xml = await response.text();
+    const expectedFeeds = publicRssFeeds(CANONICAL_CATEGORY_META);
+
+    expect(response.headers.get("content-type")).toBe(OPML_CONTENT_TYPE);
+    expect(XMLValidator.validate(xml)).toBe(true);
+    const document = new XMLParser({
+      ignoreAttributes: false,
+      parseAttributeValue: false,
+      parseTagValue: false,
+    }).parse(xml) as {
+      opml: {
+        "@_version": string;
+        head: { title: string };
+        body: {
+          outline: Array<{
+            "@_type": string;
+            "@_text": string;
+            "@_title": string;
+            "@_xmlUrl": string;
+            "@_htmlUrl": string;
+            "@_description": string;
+            "@_language": string;
+            "@_version": string;
+            outline?: unknown;
+          }>;
+        };
+      };
+    };
+    const outlines = document.opml.body.outline;
+
+    expect(document.opml["@_version"]).toBe("2.0");
+    expect(document.opml.head.title).toBe(OPML_TITLE);
+    expect(outlines).toHaveLength(CANONICAL_CATEGORY_META.length + 3);
+    expect(outlines).toEqual(
+      expectedFeeds.map((feed) => ({
+        "@_type": "rss",
+        "@_text": feed.title,
+        "@_title": feed.title,
+        "@_xmlUrl": publicFeedXmlUrl(feed),
+        "@_htmlUrl": publicFeedHtmlUrl(feed),
+        "@_description": feed.description,
+        "@_language": "ja",
+        "@_version": "RSS",
+      })),
+    );
+    expect(outlines.every((outline) => outline.outline === undefined)).toBe(true);
+    expect(new Set(outlines.map((outline) => outline["@_xmlUrl"])).size).toBe(
+      outlines.length,
+    );
+    expect(xml).not.toContain("/feed.json");
+    expect(OPML_HREF).toBe("/feeds.opml");
+    expect(() => serializeOpml([expectedFeeds[0]!, expectedFeeds[0]!])).toThrow(
+      "duplicate RSS URLs",
     );
   });
 

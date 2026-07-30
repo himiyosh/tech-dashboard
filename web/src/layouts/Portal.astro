@@ -8,6 +8,7 @@ import {
 } from "../lib/privacy-consent.ts";
 import { deriveQueueDisplay } from "../lib/queue-health.ts";
 import { deriveWorkerRunStatus } from "../lib/run-health.ts";
+import { OPML_HREF, OPML_MEDIA_TYPE, OPML_TITLE } from "../lib/feed-catalog.ts";
 import { SITE_URL } from "../lib/site.ts";
 import type { LocalizedPageMetadata } from "../lib/social-metadata.ts";
 import ArxivIcon from "../components/icons/ArxivIcon.astro";
@@ -119,6 +120,7 @@ const footerLastRunRelative = footerLastRunAt
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate" type="application/rss+xml" title={rssTitle} href={rssHref} />
     <link rel="alternate" type="application/feed+json" title="TECH Dashboard site-wide JSON Feed" href="/feed.json" />
+    <link rel="outline" type={OPML_MEDIA_TYPE} title={OPML_TITLE} href={OPML_HREF} />
     {metadata && (
       <>
         <link rel="canonical" href={metadata.canonicalUrl} />

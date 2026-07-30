@@ -5,6 +5,7 @@ import {
   DECISION_JOURNEY_VIEWPORTS,
   DecisionJourneyTimeoutError,
   createDecisionJourneyReport,
+  deterministicStepContractFailure,
   pendingSummaryOutcome,
   serializeDecisionJourneyReport,
   validateDecisionJourneyReport,
@@ -17,24 +18,40 @@ import {
 function completedSteps(
   viewport: "desktop" | "mobile",
 ): DecisionJourneyStepResult[] {
-  return DECISION_JOURNEY_STEPS.map((step, index) => ({
-    ...step,
-    status:
-      step.name === "pending_summary_or_fully_summarized"
-        ? "not_applicable"
-        : "completed",
-    elapsedMs: 100 + index,
-    viewport,
-    route: step.name === "not_found_recovery"
+  return DECISION_JOURNEY_STEPS.map((step, index) => {
+    const route = step.name === "not_found_recovery"
       ? "/e/0000000000000000/"
-      : "/",
-    evidence: step.name === "pending_summary_or_fully_summarized"
-      ? {
-          corpusState: "fully-summarized-corpus",
-          pendingCardCount: 0,
-        }
-      : { state: "ready" },
-  }));
+      : "/";
+    return {
+      ...step,
+      status:
+        step.name === "pending_summary_or_fully_summarized"
+          ? "not_applicable" as const
+          : "completed" as const,
+      elapsedMs: 100 + index,
+      viewport,
+      route,
+      actionCount: 0,
+      actionLimit: 3,
+      actions: [],
+      documentNavigationCount: 1,
+      expectedDocumentRoutes: [route],
+      documentRoutes: [route],
+      navigationStable: true,
+      completionViewport: {
+        width: viewport === "desktop" ? 1440 : 390,
+        height: viewport === "desktop" ? 900 : 844,
+        scrollX: 0,
+        scrollY: 0,
+      },
+      evidence: step.name === "pending_summary_or_fully_summarized"
+        ? {
+            corpusState: "fully-summarized-corpus",
+            pendingCardCount: 0,
+          }
+        : { state: "ready" },
+    };
+  });
 }
 
 function completedRuns(): DecisionJourneyViewportResult[] {
@@ -69,9 +86,10 @@ describe("decision journey report contract", () => {
       DECISION_JOURNEY_OUTPUT_LIMIT_BYTES,
     );
     expect(JSON.parse(serialized)).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       measurementKind: "local-synthetic-decision-journey",
       fieldData: false,
+      timingAssessment: "informational-only",
       status: "completed",
     });
     expect(report.runs.map((run) => run.viewport.name)).toEqual([
@@ -102,6 +120,41 @@ describe("decision journey report contract", () => {
         runs: report.runs.filter((run) => run.viewport.name === "desktop"),
       }),
     ).toThrow("completed report requires completed desktop and mobile runs");
+  });
+
+  it("keeps elapsed milliseconds informational even beyond the five-minute reference window", () => {
+    const report = createDecisionJourneyReport(
+      "0123456789abcdef0123456789abcdef01234567",
+      "2026-07-30T12:00:00.000Z",
+      900_000,
+      completedRuns(),
+    );
+
+    expect(report.status).toBe("completed");
+    expect(report.elapsedMs).toBe(900_000);
+    expect(report.timingAssessment).toBe("informational-only");
+    expect(() => validateDecisionJourneyReport(report)).not.toThrow();
+  });
+
+  it("fails deterministic complexity and navigation contracts", () => {
+    expect(
+      deterministicStepContractFailure({
+        actionCount: 4,
+        actionLimit: 3,
+        documentRoutes: ["/"],
+        expectedDocumentRoutes: ["/"],
+        runtimeErrors: [],
+      }),
+    ).toBe("action count 4 exceeds limit 3");
+    expect(
+      deterministicStepContractFailure({
+        actionCount: 1,
+        actionLimit: 3,
+        documentRoutes: ["/", "/unexpected"],
+        expectedDocumentRoutes: ["/"],
+        runtimeErrors: [],
+      }),
+    ).toContain("document routes");
   });
 });
 

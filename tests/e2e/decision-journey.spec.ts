@@ -1,7 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import {
-  DECISION_JOURNEY_BUDGET_MS,
   DECISION_JOURNEY_STEPS,
   DECISION_JOURNEY_VIEWPORTS,
   createDecisionJourneyReport,
@@ -13,7 +12,6 @@ test("local synthetic decision journey completes on desktop and mobile", async (
   browser,
   baseURL,
 }) => {
-  test.setTimeout(DECISION_JOURNEY_BUDGET_MS + 30_000);
   expect(baseURL, "Playwright baseURL is required").toBeTruthy();
   const startedAt = performance.now();
   const generatedAt = new Date().toISOString();
@@ -44,6 +42,21 @@ test("local synthetic decision journey completes on desktop and mobile", async (
       run.steps.map((step) => step.name),
       `${run.viewport.name} records every machine-readable step`,
     ).toEqual(DECISION_JOURNEY_STEPS.map((step) => step.name));
+    for (const step of run.steps) {
+      expect(
+        step.actionCount,
+        `${run.viewport.name}/${step.name} stays within its interaction limit`,
+      ).toBeLessThanOrEqual(step.actionLimit);
+      expect(
+        step.navigationStable,
+        `${run.viewport.name}/${step.name} has no unexpected reload or route race`,
+      ).toBe(true);
+      expect(step.documentRoutes).toEqual(step.expectedDocumentRoutes);
+      expect(step.completionViewport).toMatchObject({
+        width: run.viewport.width,
+        height: run.viewport.height,
+      });
+    }
   }
   expect(
     report.status,

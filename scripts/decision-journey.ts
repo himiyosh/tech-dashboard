@@ -1,11 +1,13 @@
 import type {
   Browser,
   BrowserContext,
+  Locator,
   Page,
+  Request,
 } from "@playwright/test";
 
-export const DECISION_JOURNEY_SCHEMA_VERSION = 1 as const;
-export const DECISION_JOURNEY_BUDGET_MS = 5 * 60_000;
+export const DECISION_JOURNEY_SCHEMA_VERSION = 2 as const;
+export const DECISION_JOURNEY_REFERENCE_WINDOW_MS = 5 * 60_000;
 export const DECISION_JOURNEY_OUTPUT_LIMIT_BYTES = 64 * 1024;
 export const DECISION_JOURNEY_STEP_TIMEOUT_MS = 20_000;
 
@@ -68,8 +70,7 @@ export type DecisionJourneyFailureStep =
   | DecisionJourneyStepName
   | "harness_build"
   | "harness_browser_context"
-  | "harness_playwright_execution"
-  | "journey_budget";
+  | "harness_playwright_execution";
 export type DecisionJourneyStepStatus =
   | "completed"
   | "not_applicable"
@@ -89,8 +90,28 @@ export interface DecisionJourneyStepResult {
   elapsedMs: number;
   viewport: DecisionJourneyViewportName;
   route: string;
+  actionCount: number;
+  actionLimit: number;
+  actions: DecisionJourneyAction[];
+  documentNavigationCount: number;
+  expectedDocumentRoutes: string[];
+  documentRoutes: string[];
+  navigationStable: boolean;
+  completionViewport: DecisionJourneyCompletionViewport;
   evidence: Record<string, unknown>;
   failure?: DecisionJourneyFailure;
+}
+
+export interface DecisionJourneyAction {
+  type: "click" | "fill";
+  target: string;
+}
+
+export interface DecisionJourneyCompletionViewport {
+  width: number;
+  height: number;
+  scrollX: number;
+  scrollY: number;
 }
 
 export interface DecisionJourneyViewportResult {
@@ -109,11 +130,12 @@ export interface DecisionJourneyReport {
   schemaVersion: typeof DECISION_JOURNEY_SCHEMA_VERSION;
   measurementKind: "local-synthetic-decision-journey";
   fieldData: false;
+  timingAssessment: "informational-only";
   disclaimer:
-    "Local synthetic Playwright timings from a production Web build. Not field data or Core Web Vitals.";
+    "Elapsed milliseconds are informational local synthetic timings from a production Web build. They do not determine pass/fail and are not field data or Core Web Vitals.";
   commit: string;
   generatedAt: string;
-  budgetMs: typeof DECISION_JOURNEY_BUDGET_MS;
+  referenceWindowMs: typeof DECISION_JOURNEY_REFERENCE_WINDOW_MS;
   outputLimitBytes: typeof DECISION_JOURNEY_OUTPUT_LIMIT_BYTES;
   status: "completed" | "failed";
   elapsedMs: number;
@@ -130,11 +152,21 @@ interface MeasuredStepDefinition {
   name: DecisionJourneyStepName;
   startCondition: string;
   completionCondition: string;
-  execute: () => Promise<{
+  actionLimit: number;
+  execute: (activity: DecisionJourneyActivity) => Promise<{
     status?: Exclude<DecisionJourneyStepStatus, "failed">;
+    expectedDocumentRoutes: string[];
     evidence: Record<string, unknown>;
   }>;
   observe: () => Promise<Record<string, unknown>>;
+}
+
+interface DecisionJourneyActivity {
+  readonly actions: DecisionJourneyAction[];
+  readonly documentRoutes: string[];
+  click: (locator: Locator, target: string) => Promise<void>;
+  fill: (locator: Locator, target: string, value: string) => Promise<void>;
+  stop: () => void;
 }
 
 interface JourneyRuntime {
@@ -166,6 +198,114 @@ function routeFor(page: Page): string {
   } catch {
     return "/";
   }
+}
+
+function documentRoute(url: string): string {
+  const pathname = new URL(url).pathname.replace(/\/+$/u, "");
+  return pathname || "/";
+}
+
+function createDecisionJourneyActivity(page: Page): DecisionJourneyActivity {
+  const actions: DecisionJourneyAction[] = [];
+  const documentRoutes: string[] = [];
+  const recordNavigation = (request: Request) => {
+    if (
+      request.isNavigationRequest()
+      && request.frame() === page.mainFrame()
+      && request.resourceType() === "document"
+    ) {
+      documentRoutes.push(documentRoute(request.url()));
+    }
+  };
+  page.on("request", recordNavigation);
+
+  return {
+    actions,
+    documentRoutes,
+    async click(locator, target) {
+      actions.push({ type: "click", target });
+      await locator.click({ timeout: 10_000 });
+    },
+    async fill(locator, target, value) {
+      actions.push({ type: "fill", target });
+      await locator.fill(value);
+    },
+    stop() {
+      page.off("request", recordNavigation);
+    },
+  };
+}
+
+function sameStringArray(left: string[], right: string[]): boolean {
+  return left.length === right.length
+    && left.every((value, index) => value === right[index]);
+}
+
+export function deterministicStepContractFailure(input: {
+  actionCount: number;
+  actionLimit: number;
+  documentRoutes: string[];
+  expectedDocumentRoutes: string[];
+  runtimeErrors: string[];
+  allowExpected404Console?: boolean;
+}): string | null {
+  if (input.actionCount > input.actionLimit) {
+    return `action count ${input.actionCount} exceeds limit ${input.actionLimit}`;
+  }
+  if (!sameStringArray(input.documentRoutes, input.expectedDocumentRoutes)) {
+    return `document routes ${JSON.stringify(input.documentRoutes)} do not match ${JSON.stringify(
+      input.expectedDocumentRoutes,
+    )}`;
+  }
+  const unexpectedRuntimeErrors = input.runtimeErrors.filter(
+    (message) =>
+      !(
+        input.allowExpected404Console
+        && message.includes("status of 404")
+      ),
+  );
+  if (unexpectedRuntimeErrors.length > 0) {
+    return `unexpected runtime errors: ${unexpectedRuntimeErrors.join(" | ")}`;
+  }
+  return null;
+}
+
+async function completionViewport(
+  page: Page,
+): Promise<DecisionJourneyCompletionViewport> {
+  return page.evaluate(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+    scrollX: window.scrollX,
+    scrollY: window.scrollY,
+  }));
+}
+
+async function visibleGeometry(locator: Locator): Promise<{
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+  width: number;
+  height: number;
+  intersectsViewport: boolean;
+}> {
+  return locator.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      top: rect.top,
+      right: rect.right,
+      bottom: rect.bottom,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+      intersectsViewport:
+        rect.bottom > 0
+        && rect.right > 0
+        && rect.top < window.innerHeight
+        && rect.left < window.innerWidth,
+    };
+  });
 }
 
 function errorMessage(error: unknown): string {
@@ -284,11 +424,28 @@ async function measureStep(
   page: Page,
 ): Promise<DecisionJourneyStepResult> {
   const startedAt = performance.now();
+  const activity = createDecisionJourneyActivity(page);
+  let expectedDocumentRoutes: string[] = [];
   try {
     const result = await withBoundedTimeout(
-      definition.execute(),
+      definition.execute(activity),
       DECISION_JOURNEY_STEP_TIMEOUT_MS,
     );
+    expectedDocumentRoutes = result.expectedDocumentRoutes;
+    const runtimeErrors = Array.isArray(result.evidence.runtimeErrors)
+      ? result.evidence.runtimeErrors.filter(
+          (value): value is string => typeof value === "string",
+        )
+      : [];
+    const contractFailure = deterministicStepContractFailure({
+      actionCount: activity.actions.length,
+      actionLimit: definition.actionLimit,
+      documentRoutes: activity.documentRoutes,
+      expectedDocumentRoutes,
+      runtimeErrors,
+      allowExpected404Console: definition.name === "not_found_recovery",
+    });
+    if (contractFailure) throw new Error(contractFailure);
     return {
       name: definition.name,
       startCondition: definition.startCondition,
@@ -297,10 +454,25 @@ async function measureStep(
       elapsedMs: elapsedSince(startedAt),
       viewport,
       route: routeFor(page),
+      actionCount: activity.actions.length,
+      actionLimit: definition.actionLimit,
+      actions: [...activity.actions],
+      documentNavigationCount: activity.documentRoutes.length,
+      expectedDocumentRoutes,
+      documentRoutes: [...activity.documentRoutes],
+      navigationStable: true,
+      completionViewport: await completionViewport(page),
       evidence: normalizedEvidence(result.evidence),
     };
   } catch (error) {
-    const observedState = await observeBounded(definition.observe);
+    const observedState = normalizedEvidence({
+      ...(await observeBounded(definition.observe)),
+      actionCount: activity.actions.length,
+      actionLimit: definition.actionLimit,
+      actions: activity.actions,
+      documentRoutes: activity.documentRoutes,
+      expectedDocumentRoutes,
+    });
     const failure: DecisionJourneyFailure = {
       stepName: definition.name,
       reason: errorMessage(error),
@@ -314,15 +486,29 @@ async function measureStep(
       elapsedMs: elapsedSince(startedAt),
       viewport,
       route: routeFor(page),
+      actionCount: activity.actions.length,
+      actionLimit: definition.actionLimit,
+      actions: [...activity.actions],
+      documentNavigationCount: activity.documentRoutes.length,
+      expectedDocumentRoutes,
+      documentRoutes: [...activity.documentRoutes],
+      navigationStable: sameStringArray(
+        activity.documentRoutes,
+        expectedDocumentRoutes,
+      ),
+      completionViewport: await completionViewport(page),
       evidence: observedState,
       failure,
     };
+  } finally {
+    activity.stop();
   }
 }
 
 function journeyStepDefinitions(
   runtime: JourneyRuntime,
   baseURL: string,
+  viewport: (typeof DECISION_JOURNEY_VIEWPORTS)[number],
 ): MeasuredStepDefinition[] {
   const { page, runtimeErrors } = runtime;
   let notFoundStatus: number | null = null;
@@ -331,6 +517,7 @@ function journeyStepDefinitions(
   return [
     {
       ...DECISION_JOURNEY_STEPS[0],
+      actionLimit: 0,
       execute: async () => {
         const response = await page.goto(`${baseURL}/`, {
           waitUntil: "domcontentloaded",
@@ -353,7 +540,12 @@ function journeyStepDefinitions(
         await summary.waitFor({ state: "visible", timeout: 15_000 });
         const href = await link.getAttribute("href");
         if (!href) throw new Error("Spotlight article link has no href");
+        const geometry = await visibleGeometry(spotlight);
+        if (!geometry.intersectsViewport) {
+          throw new Error("Spotlight does not intersect the initial viewport");
+        }
         return {
+          expectedDocumentRoutes: ["/"],
           evidence: {
             surface: "spotlight",
             href,
@@ -363,6 +555,7 @@ function journeyStepDefinitions(
                 .locator(".featured-meta [data-source-authority]")
                 .getAttribute("data-source-authority"),
             summaryCharacters: (await summary.innerText()).trim().length,
+            geometry,
             runtimeErrors,
           },
         };
@@ -377,7 +570,8 @@ function journeyStepDefinitions(
     },
     {
       ...DECISION_JOURNEY_STEPS[1],
-      execute: async () => {
+      actionLimit: viewport.name === "mobile" ? 3 : 2,
+      execute: async (activity) => {
         await page.goto(`${baseURL}/`, {
           waitUntil: "domcontentloaded",
           timeout: 15_000,
@@ -394,18 +588,19 @@ function journeyStepDefinitions(
           .first();
         if ((await visibleSearchTrigger.count()) === 0) {
           const menuTrigger = page.locator("button[data-menu-trigger]:visible").first();
-          await menuTrigger.click({ timeout: 10_000 });
-          await page
-            .locator("#site-menu [data-search-trigger]")
-            .click({ timeout: 10_000 });
+          await activity.click(menuTrigger, "open-menu");
+          await activity.click(
+            page.locator("#site-menu [data-search-trigger]"),
+            "open-search-from-menu",
+          );
         } else {
-          await visibleSearchTrigger.click({ timeout: 10_000 });
+          await activity.click(visibleSearchTrigger, "open-search");
         }
 
         const input = page.locator("#pagefind-search-input");
         await input.waitFor({ state: "visible", timeout: 10_000 });
         const query = runtime.exactSearchCandidate?.title ?? ZERO_RESULT_QUERY;
-        await input.fill(query);
+        await activity.fill(input, "search-query", query);
         const settledPanel = page.locator("#pagefind-results:not([aria-busy])");
         await settledPanel.waitFor({ state: "visible", timeout: 18_000 });
 
@@ -414,13 +609,19 @@ function journeyStepDefinitions(
             `.search-hit[href="${runtime.exactSearchCandidate.href}"]`,
           );
           await exactHit.waitFor({ state: "visible", timeout: 2_000 });
+          const geometry = await visibleGeometry(exactHit);
+          if (!geometry.intersectsViewport) {
+            throw new Error("Exact search result does not intersect the viewport");
+          }
           return {
+            expectedDocumentRoutes: ["/"],
             evidence: {
               outcome: "exact-result",
               query,
               href: runtime.exactSearchCandidate.href,
               matchScope: await exactHit.getAttribute("data-match-scope"),
               hitCount: await settledPanel.locator(".search-hit").count(),
+              geometry,
               runtimeErrors,
             },
           };
@@ -432,13 +633,19 @@ function journeyStepDefinitions(
         if ((await recoveryActions.count()) !== 3) {
           throw new Error("Zero-result state does not expose all three recovery actions");
         }
+        const geometry = await visibleGeometry(zeroState);
+        if (!geometry.intersectsViewport) {
+          throw new Error("Zero-result recovery does not intersect the viewport");
+        }
         return {
+          expectedDocumentRoutes: ["/"],
           evidence: {
             outcome: "truthful-zero-result-recovery",
             query,
             recoveryHrefs: await recoveryActions.evaluateAll((links) =>
               links.map((link) => link.getAttribute("href")),
             ),
+            geometry,
             runtimeErrors,
           },
         };
@@ -458,19 +665,22 @@ function journeyStepDefinitions(
     },
     {
       ...DECISION_JOURNEY_STEPS[2],
-      execute: async () => {
+      actionLimit: 2,
+      execute: async (activity) => {
         await page.goto(`${baseURL}/`, {
           waitUntil: "domcontentloaded",
           timeout: 15_000,
         });
-        await page
-          .locator("button[data-menu-trigger]:visible")
-          .first()
-          .click({ timeout: 10_000 });
+        await activity.click(
+          page.locator("button[data-menu-trigger]:visible").first(),
+          "open-menu",
+        );
         const menu = page.locator("#site-menu");
         await menu.waitFor({ state: "visible", timeout: 10_000 });
-        await menu.locator('a[href="/about"]').click({ timeout: 10_000 });
-        await page.waitForURL(/\/about\/?$/, { timeout: 10_000 });
+        await Promise.all([
+          page.waitForURL(/\/about\/?$/, { timeout: 10_000 }),
+          activity.click(menu.locator('a[href="/about"]'), "open-about"),
+        ]);
 
         const rss = page.locator('.page-hero-actions a[href="/rss.xml"]');
         const jsonFeed = page.locator('.page-hero-actions a[href="/feed.json"]');
@@ -480,7 +690,14 @@ function journeyStepDefinitions(
           jsonFeed.waitFor({ state: "visible", timeout: 10_000 }),
           opml.waitFor({ state: "visible", timeout: 10_000 }),
         ]);
+        const actionGeometry = await Promise.all(
+          [rss, jsonFeed, opml].map((action) => visibleGeometry(action)),
+        );
+        if (actionGeometry.some((geometry) => !geometry.intersectsViewport)) {
+          throw new Error("A subscription action does not intersect the viewport");
+        }
         return {
+          expectedDocumentRoutes: ["/", "/about"],
           evidence: {
             menuDestination: "/about",
             subscriptionHrefs: [
@@ -489,6 +706,7 @@ function journeyStepDefinitions(
               await opml.getAttribute("href"),
             ],
             opmlMediaType: await opml.getAttribute("type"),
+            actionGeometry,
             runtimeErrors,
           },
         };
@@ -507,6 +725,7 @@ function journeyStepDefinitions(
     },
     {
       ...DECISION_JOURNEY_STEPS[3],
+      actionLimit: 0,
       execute: async () => {
         const response = await page.goto(`${baseURL}${UNKNOWN_ARTICLE_ROUTE}`, {
           waitUntil: "domcontentloaded",
@@ -523,15 +742,27 @@ function journeyStepDefinitions(
         if ((await actions.count()) !== 3) {
           throw new Error("404 page does not expose all three recovery actions");
         }
+        const exactRecoveryPath = await actions.evaluateAll((links) =>
+          links.map((link) => ({
+            action: link.getAttribute("data-recovery-action"),
+            href: link.getAttribute("href"),
+          })),
+        );
+        const expectedRecoveryPath = [
+          { action: "search", href: "/search" },
+          { action: "archive", href: "/archive" },
+          { action: "home", href: "/" },
+        ];
+        if (JSON.stringify(exactRecoveryPath) !== JSON.stringify(expectedRecoveryPath)) {
+          throw new Error("404 recovery path does not match the product contract");
+        }
         return {
+          expectedDocumentRoutes: [
+            documentRoute(`${baseURL}${UNKNOWN_ARTICLE_ROUTE}`),
+          ],
           evidence: {
             httpStatus: notFoundStatus,
-            recoveryActions: await actions.evaluateAll((links) =>
-              links.map((link) => ({
-                action: link.getAttribute("data-recovery-action"),
-                href: link.getAttribute("href"),
-              })),
-            ),
+            recoveryActions: exactRecoveryPath,
             runtimeErrors,
           },
         };
@@ -549,7 +780,8 @@ function journeyStepDefinitions(
     },
     {
       ...DECISION_JOURNEY_STEPS[4],
-      execute: async () => {
+      actionLimit: 1,
+      execute: async (activity) => {
         await page.goto(`${baseURL}/`, {
           waitUntil: "domcontentloaded",
           timeout: 15_000,
@@ -562,6 +794,7 @@ function journeyStepDefinitions(
         if (pendingCount === 0) {
           return {
             status: outcome.status,
+            expectedDocumentRoutes: ["/"],
             evidence: {
               corpusState: outcome.corpusState,
               pendingCardCount: 0,
@@ -576,10 +809,15 @@ function journeyStepDefinitions(
           .first()
           .getAttribute("href");
         if (!detailHref) throw new Error("Pending card has no internal detail link");
-        await page.goto(`${baseURL}${detailHref}`, {
-          waitUntil: "domcontentloaded",
-          timeout: 15_000,
-        });
+        await Promise.all([
+          page.waitForURL(new RegExp(`${detailHref.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")}$`), {
+            timeout: 15_000,
+          }),
+          activity.click(
+            pendingCard.locator('a[href^="/e/"]').first(),
+            "open-pending-detail",
+          ),
+        ]);
         const article = page.locator(
           'article.entry-detail[data-summary-state="pending"]',
         );
@@ -588,6 +826,7 @@ function journeyStepDefinitions(
           .locator(".ed-pending-summary")
           .waitFor({ state: "visible", timeout: 10_000 });
         return {
+          expectedDocumentRoutes: ["/", documentRoute(`${baseURL}${detailHref}`)],
           evidence: {
             corpusState: outcome.corpusState,
             pendingCardCount: pendingCount,
@@ -643,7 +882,7 @@ async function runJourneyInContext(
   };
   const steps: DecisionJourneyStepResult[] = [];
 
-  for (const definition of journeyStepDefinitions(runtime, baseURL)) {
+  for (const definition of journeyStepDefinitions(runtime, baseURL, viewport)) {
     runtimeErrors.length = 0;
     const result = await measureStep(definition, viewport.name, page);
     steps.push(result);
@@ -731,13 +970,6 @@ export function createDecisionJourneyReport(
   runs: DecisionJourneyViewportResult[],
 ): DecisionJourneyReport {
   const runFailure = firstRunFailure(runs);
-  const budgetFailure = elapsedMs > DECISION_JOURNEY_BUDGET_MS
-    ? {
-        stepName: "journey_budget" as const,
-        reason: `journey elapsed ${elapsedMs}ms exceeds ${DECISION_JOURNEY_BUDGET_MS}ms`,
-        observedState: { elapsedMs, budgetMs: DECISION_JOURNEY_BUDGET_MS },
-      }
-    : undefined;
   const completedViewports = new Set(
     runs
       .filter((run) => run.status === "completed")
@@ -745,7 +977,6 @@ export function createDecisionJourneyReport(
   );
   const status =
     !runFailure
-    && !budgetFailure
     && completedViewports.has("desktop")
     && completedViewports.has("mobile")
       ? "completed"
@@ -755,16 +986,17 @@ export function createDecisionJourneyReport(
     schemaVersion: DECISION_JOURNEY_SCHEMA_VERSION,
     measurementKind: "local-synthetic-decision-journey",
     fieldData: false,
+    timingAssessment: "informational-only",
     disclaimer:
-      "Local synthetic Playwright timings from a production Web build. Not field data or Core Web Vitals.",
+      "Elapsed milliseconds are informational local synthetic timings from a production Web build. They do not determine pass/fail and are not field data or Core Web Vitals.",
     commit,
     generatedAt,
-    budgetMs: DECISION_JOURNEY_BUDGET_MS,
+    referenceWindowMs: DECISION_JOURNEY_REFERENCE_WINDOW_MS,
     outputLimitBytes: DECISION_JOURNEY_OUTPUT_LIMIT_BYTES,
     status,
     elapsedMs,
     runs,
-    failure: runFailure ?? budgetFailure,
+    failure: runFailure,
   };
 }
 
@@ -781,11 +1013,12 @@ export function createInfrastructureFailureReport(
     schemaVersion: DECISION_JOURNEY_SCHEMA_VERSION,
     measurementKind: "local-synthetic-decision-journey",
     fieldData: false,
+    timingAssessment: "informational-only",
     disclaimer:
-      "Local synthetic Playwright timings from a production Web build. Not field data or Core Web Vitals.",
+      "Elapsed milliseconds are informational local synthetic timings from a production Web build. They do not determine pass/fail and are not field data or Core Web Vitals.",
     commit,
     generatedAt: new Date().toISOString(),
-    budgetMs: DECISION_JOURNEY_BUDGET_MS,
+    referenceWindowMs: DECISION_JOURNEY_REFERENCE_WINDOW_MS,
     outputLimitBytes: DECISION_JOURNEY_OUTPUT_LIMIT_BYTES,
     status: "failed",
     elapsedMs: 0,
@@ -824,8 +1057,11 @@ export function validateDecisionJourneyReport(
     throw new Error("measurementKind is invalid");
   }
   if (report.fieldData !== false) throw new Error("fieldData must be false");
+  if (report.timingAssessment !== "informational-only") {
+    throw new Error("timingAssessment must be informational-only");
+  }
   if (report.disclaimer !==
-    "Local synthetic Playwright timings from a production Web build. Not field data or Core Web Vitals.") {
+    "Elapsed milliseconds are informational local synthetic timings from a production Web build. They do not determine pass/fail and are not field data or Core Web Vitals.") {
     throw new Error("disclaimer is invalid");
   }
   assertString(report.commit, "commit");
@@ -833,8 +1069,10 @@ export function validateDecisionJourneyReport(
   if (!Number.isFinite(Date.parse(report.generatedAt))) {
     throw new Error("generatedAt must be RFC3339-compatible");
   }
-  if (report.budgetMs !== DECISION_JOURNEY_BUDGET_MS) {
-    throw new Error(`budgetMs must be ${DECISION_JOURNEY_BUDGET_MS}`);
+  if (report.referenceWindowMs !== DECISION_JOURNEY_REFERENCE_WINDOW_MS) {
+    throw new Error(
+      `referenceWindowMs must be ${DECISION_JOURNEY_REFERENCE_WINDOW_MS}`,
+    );
   }
   if (report.outputLimitBytes !== DECISION_JOURNEY_OUTPUT_LIMIT_BYTES) {
     throw new Error(
@@ -895,8 +1133,118 @@ export function validateDecisionJourneyReport(
       if (typeof step.route !== "string" || !step.route.startsWith("/")) {
         throw new Error(`runs[${runIndex}].steps[${stepIndex}].route is invalid`);
       }
+      assertFiniteNonNegative(
+        step.actionCount,
+        `runs[${runIndex}].steps[${stepIndex}].actionCount`,
+      );
+      assertFiniteNonNegative(
+        step.actionLimit,
+        `runs[${runIndex}].steps[${stepIndex}].actionLimit`,
+      );
+      if (
+        !Number.isInteger(step.actionCount)
+        || !Number.isInteger(step.actionLimit)
+      ) {
+        throw new Error(
+          `runs[${runIndex}].steps[${stepIndex}] action counts must be integers`,
+        );
+      }
+      if (!Array.isArray(step.actions) || step.actions.length !== step.actionCount) {
+        throw new Error(
+          `runs[${runIndex}].steps[${stepIndex}].actions must match actionCount`,
+        );
+      }
+      for (const action of step.actions) {
+        if (
+          !action
+          || (action.type !== "click" && action.type !== "fill")
+          || typeof action.target !== "string"
+          || !action.target
+        ) {
+          throw new Error(
+            `runs[${runIndex}].steps[${stepIndex}].actions contains an invalid action`,
+          );
+        }
+      }
+      assertFiniteNonNegative(
+        step.documentNavigationCount,
+        `runs[${runIndex}].steps[${stepIndex}].documentNavigationCount`,
+      );
+      if (!Number.isInteger(step.documentNavigationCount)) {
+        throw new Error(
+          `runs[${runIndex}].steps[${stepIndex}].documentNavigationCount must be an integer`,
+        );
+      }
+      if (
+        !Array.isArray(step.documentRoutes)
+        || step.documentRoutes.length !== step.documentNavigationCount
+        || step.documentRoutes.some(
+          (documentRouteValue) =>
+            typeof documentRouteValue !== "string"
+            || !documentRouteValue.startsWith("/"),
+        )
+      ) {
+        throw new Error(
+          `runs[${runIndex}].steps[${stepIndex}].documentRoutes is invalid`,
+        );
+      }
+      if (
+        !Array.isArray(step.expectedDocumentRoutes)
+        || step.expectedDocumentRoutes.some(
+          (expectedRoute) =>
+            typeof expectedRoute !== "string" || !expectedRoute.startsWith("/"),
+        )
+      ) {
+        throw new Error(
+          `runs[${runIndex}].steps[${stepIndex}].expectedDocumentRoutes is invalid`,
+        );
+      }
+      if (typeof step.navigationStable !== "boolean") {
+        throw new Error(
+          `runs[${runIndex}].steps[${stepIndex}].navigationStable must be boolean`,
+        );
+      }
+      if (!step.completionViewport || typeof step.completionViewport !== "object") {
+        throw new Error(
+          `runs[${runIndex}].steps[${stepIndex}].completionViewport is invalid`,
+        );
+      }
+      assertFiniteNonNegative(
+        step.completionViewport.width,
+        `runs[${runIndex}].steps[${stepIndex}].completionViewport.width`,
+      );
+      assertFiniteNonNegative(
+        step.completionViewport.height,
+        `runs[${runIndex}].steps[${stepIndex}].completionViewport.height`,
+      );
+      assertFiniteNonNegative(
+        step.completionViewport.scrollX,
+        `runs[${runIndex}].steps[${stepIndex}].completionViewport.scrollX`,
+      );
+      assertFiniteNonNegative(
+        step.completionViewport.scrollY,
+        `runs[${runIndex}].steps[${stepIndex}].completionViewport.scrollY`,
+      );
       if (!step.evidence || typeof step.evidence !== "object") {
         throw new Error(`runs[${runIndex}].steps[${stepIndex}].evidence is invalid`);
+      }
+      if (step.status !== "failed") {
+        if (step.actionCount > step.actionLimit) {
+          throw new Error(
+            `runs[${runIndex}].steps[${stepIndex}] exceeds its action limit`,
+          );
+        }
+        if (
+          !step.navigationStable
+          || !sameStringArray(
+            step.documentRoutes,
+            step.expectedDocumentRoutes,
+          )
+        ) {
+          throw new Error(
+            `runs[${runIndex}].steps[${stepIndex}] has unexpected document navigation`,
+          );
+        }
       }
       if (step.status === "failed" && step.failure?.stepName !== step.name) {
         throw new Error(
@@ -928,9 +1276,6 @@ export function validateDecisionJourneyReport(
   }
 
   if (report.status === "completed") {
-    if (report.elapsedMs > DECISION_JOURNEY_BUDGET_MS) {
-      throw new Error("completed report exceeds the five-minute budget");
-    }
     const names = new Set(report.runs.map((run) => run.viewport.name));
     if (
       report.runs.length !== DECISION_JOURNEY_VIEWPORTS.length

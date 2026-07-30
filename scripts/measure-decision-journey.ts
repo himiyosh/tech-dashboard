@@ -125,7 +125,8 @@ function usage(): string {
     "",
     "The default command creates one production Web build, reuses it for",
     "Playwright, and writes one bounded JSON report to stdout. Child build and",
-    "test logs go to stderr. Timings are local synthetic data, not field data.",
+    "test logs go to stderr. Timings are informational local synthetic data,",
+    "not pass/fail criteria, field data, or Core Web Vitals.",
   ].join("\n");
 }
 

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { REGISTRY } from "../harness/registry.ts";
+import { normalize } from "../harness/pipeline/normalize.ts";
 import type { NormalizedEntry, SourceDefinition } from "../harness/types.ts";
+import { knowledgeEligibility } from "../web/src/lib/knowledge-eligibility.ts";
 import { applyCurrentSourceRules, mergeFreshAndPriorEntries } from "../worker/src/index.ts";
 
 function baseEntry(overrides: Partial<NormalizedEntry>): NormalizedEntry {
@@ -156,6 +158,49 @@ describe("applyCurrentSourceRules", () => {
     expect(applyCurrentSourceRules(unverified, source, "2026-06-30T00:00:00.000Z")).not.toBeNull();
   });
 
+  it("preserves lossy Knowledge exclusions while allowing durable raw evidence to recover", () => {
+    const source = REGISTRY["google-cloud-blog"];
+    const excluded = baseEntry({
+      id: "prior-knowledge-excluded",
+      source: "google-cloud-blog",
+      sourceType: "blog",
+      title: "Future-proofing data integrity: Quantum-safe digital signatures in Cloud KMS",
+      titleEn: "Future-proofing data integrity: Quantum-safe digital signatures in Cloud KMS",
+      category: "gemini",
+      evergreen: true,
+      knowledgeEligible: false,
+      contentSnippet:
+        "The persisted context was compacted before the availability evidence.",
+    });
+    const durable = baseEntry({
+      id: "prior-knowledge-durable",
+      source: "google-cloud-blog",
+      sourceType: "blog",
+      title: "Automate your agent development lifecycle using any coding agent",
+      titleEn: "Automate your agent development lifecycle using any coding agent",
+      category: "gemini",
+      evergreen: true,
+      knowledgeEligible: false,
+      contentSnippet:
+        "A practical walkthrough for building production-ready agents.",
+    });
+
+    expect(
+      applyCurrentSourceRules(
+        excluded,
+        source,
+        "2026-07-30T00:00:00.000Z",
+      )?.knowledgeEligible,
+    ).toBe(false);
+    expect(
+      applyCurrentSourceRules(
+        durable,
+        source,
+        "2026-07-30T00:00:00.000Z",
+      )?.knowledgeEligible,
+    ).toBeUndefined();
+  });
+
   it("reapplies current filters only to prior merged entries, not already-filtered fresh ones", () => {
     const sourceDefs = new Map(Object.values(REGISTRY).map((source) => [source.id, source]));
     const fresh = baseEntry({
@@ -200,5 +245,50 @@ describe("applyCurrentSourceRules", () => {
     expect(merged.entries.map((entry) => entry.id).sort()).toEqual(["fresh-1", "prior-stale"]);
     expect(merged.entries.find((entry) => entry.id === "fresh-1")?.url).toBe(fresh.url);
     expect(merged.entries.find((entry) => entry.id === "prior-stale")?.category).toBe("tech-news");
+  });
+
+  it("keeps a fresh broad-evergreen stamp reproducible after canonical merge", () => {
+    const source = REGISTRY["google-cloud-blog"];
+    const url =
+      "https://cloud.google.com/blog/products/data-analytics/conversational-analytics-in-google-data-cloud-in-q326/";
+    const fresh = normalize(
+      {
+        externalId: url,
+        url,
+        title: "Bringing Conversational Analytics to your entire data ecosystem",
+        contentSnippet:
+          `${"Enterprise architecture and governance context. ".repeat(8)}The API is now generally available.`,
+        publishedAt: "2026-07-28T17:30:00.000Z",
+      },
+      source,
+      "2026-07-30T10:00:00.000Z",
+    );
+    const prior = baseEntry({
+      id: fresh.id,
+      source: "google-cloud-blog",
+      sourceType: "blog",
+      url,
+      title: fresh.title,
+      titleEn: fresh.title,
+      category: "gemini",
+      evergreen: true,
+      contentSnippet: "Older compact context without the availability phrase.",
+      collectedAt: "2026-07-29T10:00:00.000Z",
+    });
+
+    const merged = mergeFreshAndPriorEntries(
+      [fresh],
+      [prior],
+      new Map([[source.id, source]]),
+      "2026-07-30T10:00:00.000Z",
+    ).entries[0]!;
+
+    expect(merged.knowledgeEligible).toBe(false);
+    expect(knowledgeEligibility({
+      source: merged.source,
+      title: merged.title,
+      contentSnippet: merged.contentSnippet,
+      evergreen: merged.evergreen,
+    })).toEqual({ eligible: false, reason: "availability-context" });
   });
 });

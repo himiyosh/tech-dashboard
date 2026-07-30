@@ -110,6 +110,26 @@ const ACTUAL_DROP_FIXTURES: ReadonlyArray<{
     },
     reason: "announcement-title",
   },
+  {
+    id: "b774ed271b22e41b",
+    entry: {
+      source: "google-cloud-blog",
+      title: "Bringing Conversational Analytics to your entire data ecosystem",
+      contentSnippet: "Increasing the adoption of generative AI across the enterprise requires you to do more than deploy a generic chatbot with a custom wrapper. Interacting with business-critical databases demands absolute trust, strict governance, and deep grounding in enterprise semantics. Over the last year, Conversational Analytics (CA) in Google Cloud has moved from isolated experiments to scaled, enterprise-wide deployments. BigQuery Conversational Analytics and the Conversational Analytics API are now generally available, adding to the general availability of Conversational Analytics in Looker last year.",
+      evergreen: true,
+    },
+    reason: "availability-context",
+  },
+  {
+    id: "592d34bdee2e8b6a",
+    entry: {
+      source: "google-cloud-blog",
+      title: "Future-proofing data integrity: Quantum-safe digital signatures in Cloud KMS",
+      contentSnippet: "With cryptographically relevant quantum computers (CRQC) on the horizon, transitioning to quantum-safe digital signatures is critical to safeguarding long-term data integrity and authenticity. Organizations are steadily recognizing this urgency. For example, the U.S. government announced an update to the timelines by which departments and agencies must transition to quantum safe digital signatures. To help with the transition, we are announcing the general availability of our quantum-safe digital signatures (ML-DSA, SLH-DSA) and post-quantum key encapsulation (ML-KEM) in Google Cloud Key Management Service (Cloud KMS).",
+      evergreen: true,
+    },
+    reason: "availability-context",
+  },
 ];
 
 const ACTUAL_KEEP_FIXTURES: ReadonlyArray<{
@@ -196,6 +216,26 @@ const ACTUAL_KEEP_FIXTURES: ReadonlyArray<{
       evergreen: true,
     },
     reason: "durable-snippet",
+  },
+  {
+    id: "75ae9ec89cc4eb11",
+    entry: {
+      source: "google-cloud-blog",
+      title: "Automate your agent development lifecycle using any coding agent",
+      contentSnippet: "Welcome to our latest Gemini Enterprise Agent Platform deep dive, a practical walkthrough where we’ll teach you how to build real-world, production-ready agents starting from step 1.",
+      evergreen: true,
+    },
+    reason: "durable-title",
+  },
+  {
+    id: "12add31c8d3b5946",
+    entry: {
+      source: "google-cloud-blog",
+      title: "Detect early and enforce firmly with Google Cloud's enhanced cost controls for AI spend",
+      contentSnippet: "Generative AI can make cloud costs difficult to predict. A single five-word prompt can run complex operations and generate significant costs. Traditional metrics like requests per second no longer help you estimate your bill, increasing the risk of unexpected cost spikes. While Google Cloud offers budget alerts, you need proactive guardrails that work out of the box.",
+      evergreen: true,
+    },
+    reason: "durable-title",
   },
 ];
 

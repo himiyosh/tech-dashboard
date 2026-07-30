@@ -49,6 +49,14 @@ const ISSUE_237_ENTRIES = [
     id: "4804d6346be88fc2",
     url: "https://aws.amazon.com/blogs/machine-learning/introducing-grok-on-amazon-bedrock/",
   },
+  {
+    id: "b774ed271b22e41b",
+    url: "https://cloud.google.com/blog/products/data-analytics/conversational-analytics-in-google-data-cloud-in-q326/",
+  },
+  {
+    id: "592d34bdee2e8b6a",
+    url: "https://cloud.google.com/blog/products/identity-security/future-proofing-data-integrity-quantum-safe-digital-signatures-in-cloud-kms/",
+  },
 ] as const;
 
 const archiveEntries = readdirSync("data/archive")

@@ -379,6 +379,46 @@ describe("clean-source-noise archive migration", () => {
     expect(report.removed).toBe(0);
   });
 
+  it("keeps prior Knowledge exclusions through lossy migration context without blocking durable guides", () => {
+    const report = emptyReport();
+    const excluded = entry({
+      id: "prior-knowledge-excluded",
+      source: "google-cloud-blog",
+      sourceType: "blog",
+      title: "Future-proofing data integrity: Quantum-safe digital signatures in Cloud KMS",
+      titleEn: "Future-proofing data integrity: Quantum-safe digital signatures in Cloud KMS",
+      category: "gemini",
+      evergreen: true,
+      knowledgeEligible: false,
+      contentSnippet:
+        "The compacted artifact no longer contains the original availability phrase.",
+    });
+    const durable = entry({
+      id: "prior-knowledge-durable",
+      source: "google-cloud-blog",
+      sourceType: "blog",
+      title: "Automate your agent development lifecycle using any coding agent",
+      titleEn: "Automate your agent development lifecycle using any coding agent",
+      category: "gemini",
+      evergreen: true,
+      knowledgeEligible: false,
+      contentSnippet:
+        "A practical walkthrough for building production-ready agents.",
+    });
+
+    const kept = summarizeChanges(
+      "live",
+      [excluded, durable],
+      "2026-07-30T01:00:00.000Z",
+      report,
+    );
+
+    expect(kept).toHaveLength(2);
+    expect(kept[0]?.knowledgeEligible).toBe(false);
+    expect(kept[1]?.knowledgeEligible).toBeUndefined();
+    expect(report.removed).toBe(0);
+  });
+
   it("replaces materially contradictory live summaries with pending fallback", () => {
     const report = emptyReport();
     const kept = summarizeChanges(

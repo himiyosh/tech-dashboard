@@ -2981,6 +2981,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: punctuation境界を持つmid-title pattern、analyst positioning pattern、snippet先頭のannouncement boilerplate counter-signalを共有helperへ追加した。具体的なsetup、API parameter、CLI、実装手順は従来どおりdurable overrideとして維持し、actual corpusのdrop/keep両側を回帰testへ固定した。
 - **教訓**: 告知除外を先頭語だけへ限定せず、title途中の高信頼なframingもboundedに検出する。一方、`how`の存在だけでdurableと断定せず、snippetが告知定型文から始まる場合はoverrideを無効化し、具体的なprocedural evidenceだけを救済根拠にする。
 
+### LL-453: fresh判定とpersisted raw contextの境界を分けない
+- **事象**: Google Cloud Blogの2記事は、raw RSS snippetの280文字より後ろに`generally available`があり、fresh normalizeでは`knowledgeEligible:false`になった一方、artifactへ保存した280文字snippetから同じ判定を再現できず、PublisherのKnowledge stamp gateが失敗した。次runのprior restampは短縮済みsnippetだけで再判定し、正しい除外markerを消せる状態だった。
+- **根本原因**: source-owned metadataをpre-truncation inputから計算し、監査・migration・prior mergeが読むpersisted inputは別の短い境界にしていた。restampも既存の明示的な除外をhelperへ渡す前に取り除いていた。
+- **対策**: raw source contextを800文字の単一境界で一度だけ正規化し、fresh stampとartifact persistenceの両方へ使う。prior/migrationは既存`knowledgeEligible:false`を同じhelperへ渡し、具体的なdurable title/snippet evidenceがある場合だけ解除する。実Google Cloudの告知2件と隣接するdurable guide、fresh canonical merge、lossy prior migrationを回帰testへ固定した。
+- **教訓**: raw inputから決定する保存済みpolicy fieldは、判定入力と再検証可能なpersisted evidenceを同一のbounded valueから導出する。lossy compaction後のmissing evidenceを反証として扱わず、明示的な除外を消す場合は保存済みinput内の肯定的なcounter-evidenceを要求する。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

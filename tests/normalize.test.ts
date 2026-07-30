@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { decorateReleaseTitle, detectLang, normalize, restampEntryFromSource } from "../harness/pipeline/normalize.ts";
 import { normalizeTag, normalizeTags } from "../harness/pipeline/tag.ts";
 import type { RawEntry, SourceDefinition } from "../harness/types.ts";
+import { knowledgeEligibility } from "../web/src/lib/knowledge-eligibility.ts";
 
 const releaseSource: SourceDefinition = {
   id: "cline-releases",
@@ -63,7 +64,7 @@ describe("normalize summary fields", () => {
   });
 
   it("長い snippet は context 用に上限まで切り詰める", () => {
-    const long = "x".repeat(400);
+    const long = "x".repeat(1_000);
     const entry = normalize({ ...rawEntry("Long"), contentSnippet: long }, releaseSource, "2026-05-10T01:00:00.000Z");
     expect(entry.contentSnippet?.length).toBe(280);
   });
@@ -480,5 +481,70 @@ describe("restampEntryFromSource", () => {
       evergreenSource,
       "2026-07-30T01:00:00.000Z",
     ).knowledgeEligible).toBe(false);
+  });
+
+  it("uses the same persisted raw context for fresh Knowledge eligibility stamps", () => {
+    const evergreenSource: SourceDefinition = {
+      ...releaseSource,
+      id: "google-cloud-blog",
+      sourceType: "blog",
+      category: "gemini",
+      evergreen: true,
+    };
+    const raw = {
+      ...rawEntry("Bringing Conversational Analytics to your entire data ecosystem"),
+      contentSnippet:
+        `${"Durable-looking architecture context. ".repeat(9)}The API is now generally available for enterprise teams.`,
+    };
+
+    const normalized = normalize(
+      raw,
+      evergreenSource,
+      "2026-07-30T00:00:00.000Z",
+    );
+    const reproducibleDecision = knowledgeEligibility({
+      source: normalized.source,
+      title: normalized.title,
+      contentSnippet: normalized.contentSnippet,
+      evergreen: normalized.evergreen,
+    });
+
+    expect(normalized.contentSnippet).toContain("now generally available");
+    expect(normalized.knowledgeEligible).toBe(false);
+    expect(reproducibleDecision).toEqual({
+      eligible: false,
+      reason: "availability-context",
+    });
+  });
+
+  it("preserves a stored exclusion when prior raw context is lossy", () => {
+    const evergreenSource: SourceDefinition = {
+      ...releaseSource,
+      id: "google-cloud-blog",
+      sourceType: "blog",
+      category: "gemini",
+      evergreen: true,
+    };
+    const prior = normalize(
+      {
+        ...rawEntry("Future-proofing data integrity"),
+        contentSnippet: "The service is now generally available.",
+      },
+      evergreenSource,
+      "2026-07-30T00:00:00.000Z",
+    );
+    const lossyPrior = {
+      ...prior,
+      contentSnippet: "A durable-looking explanation without the original availability evidence.",
+    };
+
+    expect(lossyPrior.knowledgeEligible).toBe(false);
+    expect(
+      restampEntryFromSource(
+        lossyPrior,
+        evergreenSource,
+        "2026-07-30T01:00:00.000Z",
+      ).knowledgeEligible,
+    ).toBe(false);
   });
 });

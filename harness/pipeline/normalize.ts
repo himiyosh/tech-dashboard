@@ -76,7 +76,8 @@ export function scoreImportance(raw: RawEntry, source: SourceDefinition): Import
   return 1;
 }
 
-const SNIPPET_CONTEXT_MAX = 280;
+const DEFAULT_SNIPPET_CONTEXT_MAX = 280;
+const EVERGREEN_SNIPPET_CONTEXT_MAX = 800;
 
 /**
  * Extract the raw RSS/Atom snippet to keep as AI input context for the
@@ -99,8 +100,8 @@ const SNIPPET_CONTEXT_MAX = 280;
  * builders as collected context to improve summary quality (especially for the
  * terse Japanese release/Q&A titles this most affects).
  */
-function snippetContext(raw: RawEntry): string {
-  return (raw.contentSnippet ?? "").replace(/\s+/g, " ").trim().slice(0, SNIPPET_CONTEXT_MAX);
+function snippetContext(raw: RawEntry, maxLength: number): string {
+  return (raw.contentSnippet ?? "").replace(/\s+/g, " ").trim().slice(0, maxLength);
 }
 
 /**
@@ -185,7 +186,9 @@ export function decorateReleaseTitle(rawTitle: string, source: SourceDefinition)
   return rawTitle;
 }
 
-type CategorySignal = Pick<RawEntry, "title" | "contentSnippet" | "publishedAt">;
+type CategorySignal =
+  & Pick<RawEntry, "title" | "contentSnippet" | "publishedAt">
+  & Pick<NormalizedEntry, "knowledgeEligible">;
 
 const HUGGINGFACE_MCP_RE = /\bmcp\b|model context protocol/i;
 const HUGGINGFACE_LIBRARY_RELEASE_RE = /\b(?:lerobot|trl)\s+v\d+(?:\.\d+){1,3}\b/i;
@@ -291,6 +294,7 @@ function sourceOwnedFields(
     title: signal.title,
     contentSnippet: signal.contentSnippet,
     evergreen,
+    knowledgeEligible: signal.knowledgeEligible,
   });
   const archiveTier = decideTier(
     { publishedAt: signal.publishedAt, halfLife, evergreen },
@@ -318,6 +322,7 @@ export function restampEntryFromSource(
       title: entry.title,
       contentSnippet: entry.contentSnippet,
       publishedAt: entry.publishedAt,
+      knowledgeEligible: entry.knowledgeEligible,
     },
     source,
     referenceAt,
@@ -349,7 +354,12 @@ export function normalize(
   const decoratedRaw: RawEntry = decoratedTitle === raw.title ? raw : { ...raw, title: decoratedTitle };
   raw = decoratedRaw;
   const lang = detectLang(`${raw.title} ${raw.contentSnippet ?? ""}`, source.defaultLang);
-  const contentSnippet = snippetContext(raw);
+  const contentSnippet = snippetContext(
+    raw,
+    source.evergreen
+      ? EVERGREEN_SNIPPET_CONTEXT_MAX
+      : DEFAULT_SNIPPET_CONTEXT_MAX,
+  );
   const image = raw.mediaThumbnail
     ? {
       src: raw.mediaThumbnail,
@@ -363,7 +373,18 @@ export function normalize(
 
   // Archive classification (Phase A/B). Computed deterministically on every
   // run so a registry override flip-flop is reflected next collect.
-  const metadata = sourceOwnedFields(raw, source, collectedAt);
+  // Source-owned metadata must be derived from the same bounded raw context
+  // that is persisted. Otherwise a phrase beyond the storage boundary can
+  // stamp an exclusion that the artifact gate cannot reproduce.
+  const metadata = sourceOwnedFields(
+    {
+      title: raw.title,
+      contentSnippet: contentSnippet || undefined,
+      publishedAt: raw.publishedAt,
+    },
+    source,
+    collectedAt,
+  );
 
   return {
     id,

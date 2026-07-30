@@ -2990,8 +2990,8 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-454: ローカル合成ジャーニーの経過時間をCI合否へ使わない
 - **事象**: 5分判断ジャーニーの初版はdesktop/mobileの到達結果に加え、合計`elapsedMs <= 300000`を完了条件にしていた。独立運用レビューで、同じ製品状態でもCI runnerやhost負荷により壁時計時間が変わるため、回帰ではない速度差でgateが失敗すると指摘された。
 - **根本原因**: 利用者の「5分以内に判断できる」という製品目標と、ローカルPlaywright runのwall-clockを同一の測定値として扱った。合成browserの経過時間は比較用の参考値にはなるが、実利用者のfield dataでも決定論的な複雑度でもない。
-- **対策**: 経過msと5分のreference windowは`timingAssessment:"informational-only"`としてmachine-readable outputへ残し、合否判定から完全に除外した。各stepは必要状態への到達、viewport別のclick/fill上限、期待document navigation列との完全一致、unexpected runtime error不在、completion時のviewport/scroll、正確な404・検索回復経路だけでfail-closedに判定する。operation timeoutは性能基準ではなく、hangをboundedに停止してbrowser contextをcleanupする安全機構として別testで固定する。
-- **教訓**: synthetic journeyの速度値をfield performanceやUX成功率として扱わない。CIの合否はrunner速度に左右されない到達性、操作数、navigation identity、状態遷移、回復経路へ分解し、wall-clockは将来runとの情報比較だけに使う。hang防止deadlineとperformance thresholdも同じ数値契約へ混ぜない。
+- **対策**: 経過msは`timingAssessment:"informational-only"`として現行runのmachine-readable outputへ残し、合否判定から完全に除外した。履歴baseline、過去run比較、delta警告・失敗は実装しない。各stepは必要状態への到達、viewport別のclick/fill上限、期待document navigation列との完全一致、unexpected runtime error不在、completion時のviewport/scroll、正確な404・検索回復経路だけでfail-closedに判定する。operation timeoutは性能基準ではなく、hangをboundedに停止してbrowser contextをcleanupする安全機構として別testで固定する。
+- **教訓**: synthetic journeyの速度値をfield performanceやUX成功率として扱わない。CIの合否はrunner速度に左右されない到達性、操作数、navigation identity、状態遷移、回復経路へ分解し、wall-clockは現行runの一時的な診断情報に限定する。履歴へ保存してbaseline化、過去値と比較、deltaを警告・失敗へ変換しない。hang防止deadlineとperformance thresholdも同じ数値契約へ混ぜない。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

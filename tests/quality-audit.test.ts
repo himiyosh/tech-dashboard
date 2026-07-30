@@ -522,6 +522,14 @@ describe("quality-audit queue telemetry", () => {
         },
         {
           source: "evergreen-a",
+          evergreen: true,
+          knowledgeEligible: false,
+          title: "Introducing a time-sensitive release",
+          summaryJa: "告知要約です。",
+          summaryEn: "This is an announcement summary.",
+        },
+        {
+          source: "evergreen-a",
           title: "Missing stamp",
           summaryJa: "要約はありますがevergreen stampがありません。",
           summaryEn: "The summary exists but the evergreen stamp is missing.",
@@ -535,14 +543,16 @@ describe("quality-audit queue telemetry", () => {
       ], registry)).toEqual([
         {
           source: "evergreen-a",
-          collected: 2,
-          evergreenFlagged: 1,
+          collected: 3,
+          evergreenFlagged: 2,
+          knowledgeEligible: 1,
           bilingualReady: 1,
         },
         {
           source: "evergreen-b",
           collected: 0,
           evergreenFlagged: 0,
+          knowledgeEligible: 0,
           bilingualReady: 0,
         },
       ]);

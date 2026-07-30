@@ -31,6 +31,7 @@ import {
   publicRssFeeds,
 } from "../../web/src/lib/feed-catalog.ts";
 import { isArxivEntry } from "../../web/src/lib/research-lane.ts";
+import { isKnowledgeEligibleEntry } from "../../web/src/lib/knowledge-eligibility.ts";
 import { ADSENSE_CLIENT_ID, SITE_URL } from "../../web/src/lib/site.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
 import { canonicalSourceUrl } from "../../web/src/lib/source-meta.ts";
@@ -1382,7 +1383,7 @@ test.describe("Publisher generated artifact", () => {
       entries: FeedArtifactEntry[];
     };
     const expectedEntries = raw.entries
-      .filter((entry) => entry.evergreen === true)
+      .filter(isKnowledgeEligibleEntry)
       .filter(isPublishableEntry);
     const expectedUrls = expectedEntries.slice(0, 100).map((entry) => entry.url);
 
@@ -1407,8 +1408,20 @@ test.describe("Publisher generated artifact", () => {
       feedUrls
         .map((url) => raw.entries.find((entry) => entry.url === url))
         .filter((entry): entry is FeedArtifactEntry => entry !== undefined)
-        .every((entry) => entry.evergreen === true && isPublishableEntry(entry)),
+        .every((entry) => isKnowledgeEligibleEntry(entry) && isPublishableEntry(entry)),
     ).toBe(true);
+
+    for (const id of [
+      "bed450615ddfd03d",
+      "7ce8f0655e5249f3",
+      "7b3cb462c9d102ab",
+    ]) {
+      const entry = raw.entries.find((candidate) => candidate.id === id);
+      expect(entry).toBeDefined();
+      expect(feedUrls).not.toContain(entry?.url);
+      const detailResponse = await request.get(`/e/${id}/`);
+      expect(detailResponse.status()).toBe(200);
+    }
 
     const pageResponse = await request.get("/knowledge/");
     const pageHtml = await pageResponse.text();

@@ -437,4 +437,39 @@ describe("restampEntryFromSource", () => {
     );
     expect(restamped.importance).toBe(3);
   });
+
+  it("stamps evergreen per entry and demotes announcement-only source items", () => {
+    const evergreenSource: SourceDefinition = {
+      ...releaseSource,
+      id: "aws-ml-blog",
+      sourceType: "blog",
+      category: "agent-fw",
+      evergreen: true,
+    };
+    const announcement = normalize(
+      {
+        ...rawEntry("Introducing Claude Opus 5 on AWS: Anthropic’s most capable Opus model"),
+        contentSnippet: "This post covers the newly available model on Amazon Bedrock.",
+      },
+      evergreenSource,
+      "2026-07-30T00:00:00.000Z",
+    );
+    const tutorial = normalize(
+      {
+        ...rawEntry("Get started with OpenAI GPT-5.6 Sol, Terra, and Luna on Amazon Bedrock"),
+        contentSnippet: "The models are now generally available. Learn how to run inference and reduce cost.",
+      },
+      evergreenSource,
+      "2026-07-30T00:00:00.000Z",
+    );
+
+    expect(announcement.evergreen).toBe(true);
+    expect(announcement.knowledgeEligible).toBe(false);
+    expect(tutorial.evergreen).toBe(true);
+    expect(restampEntryFromSource(
+      { ...announcement, knowledgeEligible: true },
+      evergreenSource,
+      "2026-07-30T01:00:00.000Z",
+    ).knowledgeEligible).toBe(false);
+  });
 });

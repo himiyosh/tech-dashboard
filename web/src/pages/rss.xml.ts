@@ -3,13 +3,16 @@ import {
   PUBLISHABLE_ENTRIES,
   GENERATED_AT,
 } from "../lib/data.ts";
+import {
+  publicFeedHtmlUrl,
+  SITE_WIDE_RSS_FEED,
+} from "../lib/feed-catalog.ts";
 import { createRssResponse } from "../lib/rss.ts";
-import { SITE_URL } from "../lib/site.ts";
 
 export const GET: APIRoute = () =>
   createRssResponse(PUBLISHABLE_ENTRIES, {
-    title: "TECH Dashboard — AI Daily",
-    link: SITE_URL,
-    description: "AI コーディング/エコシステムの公式情報を毎日自動収集・要約",
+    title: SITE_WIDE_RSS_FEED.title,
+    link: publicFeedHtmlUrl(SITE_WIDE_RSS_FEED),
+    description: SITE_WIDE_RSS_FEED.description,
     lastBuildDate: GENERATED_AT,
   });

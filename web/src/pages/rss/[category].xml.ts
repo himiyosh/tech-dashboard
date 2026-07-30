@@ -5,10 +5,13 @@ import {
   PUBLISHABLE_ENTRIES,
 } from "../../lib/data.ts";
 import {
+  categoryRssFeed,
+  publicFeedHtmlUrl,
+} from "../../lib/feed-catalog.ts";
+import {
   createRssResponse,
 } from "../../lib/rss.ts";
 import { filterCategoryListingEntries } from "../../lib/research-lane.ts";
-import { SITE_URL } from "../../lib/site.ts";
 
 export function getStaticPaths() {
   return CATEGORY_META.map((category) => ({
@@ -26,10 +29,11 @@ export const GET: APIRoute = ({ params }) => {
     PUBLISHABLE_ENTRIES,
     category.slug,
   );
+  const feed = categoryRssFeed(category);
   return createRssResponse(entries, {
-    title: `TECH Dashboard | ${category.name}`,
-    link: `${SITE_URL}/c/${category.slug}/`,
-    description: `${category.name} カテゴリの AI 要約済み最新記事`,
+    title: feed.title,
+    link: publicFeedHtmlUrl(feed),
+    description: feed.description,
     lastBuildDate: GENERATED_AT,
   });
 };

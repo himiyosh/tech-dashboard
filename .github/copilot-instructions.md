@@ -2962,6 +2962,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: gap workaroundを撤回し、390x844と375x667でexact 3 cards、重複reason 0、summaryのnowrap/hidden/ellipsisと縦overflow不在、card contentの境界内収容、card同士の非交差、44px article target、tabbarとの8px安全距離、footer非表示、page overflow 0を測るtestへ置き換えた。first-viewとFeatured/ticker境界の既存assertionは維持した。
 - **教訓**: visual compactnessは単一の絶対高さではなく、情報量、行数、overflow、隣接surface、操作寸法の組み合わせで検証する。OS差で閾値を僅かに超えた場合、製品CSSを縮めたり上限を緩めたりせず、利用者が困る状態を直接表す相対geometryへ分解する。
 
+### LL-450: mobileの可変個数actionはintrinsic幅のflex wrapへ任せない
+- **事象**: Aboutのmobile PageHeroへ3件目の購読actionを追加すると、320pxの英語表示でactionが3段へ折り返し、Hero高が354pxとなって既存のcompact budget 310pxを超えた。各actionは44px以上で横overflowも無かったが、first-viewの縦密度だけが悪化した。
+- **根本原因**: `display:flex; flex-wrap:wrap`が各labelのintrinsic幅で改行位置を決めていたため、action数と利用可能幅から均等列を作らず、長い英語labelが別行を占有した。
+- **対策**: mobile-priority action群を`grid-auto-flow:column`と`grid-auto-columns:minmax(0,1fr)`へ変更し、DOM上の可視action数へ自動追従させた。各linkは中央揃え、`min-width:0`、label内だけ折り返し可能とし、320/375/390/414pxでHero高、44px操作面、viewport内配置、横overflowを実ブラウザ検証した。
+- **教訓**: mobileの主要actionを増減できるcomponentは、各labelのintrinsic幅へ列数を委ねない。DOM item数へ追従する均等gridと、各item内部の折り返しを分離し、横overflowだけでなくHero全体の縦密度も境界幅で測る。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

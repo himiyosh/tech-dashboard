@@ -2,23 +2,22 @@ import {
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "./data.ts";
-import type { Category } from "./category-meta.ts";
 import { buildFeedDecisionDigest } from "./feed-decision-digest.ts";
+export {
+  ARXIV_RSS_HREF,
+  KNOWLEDGE_RSS_HREF,
+  SITE_WIDE_RSS_HREF,
+  categoryRssHref,
+} from "./feed-catalog.ts";
 
 export const RSS_CONTENT_TYPE = "application/rss+xml; charset=utf-8";
 export const RSS_ITEM_LIMIT = 100;
-export const ARXIV_RSS_HREF = "/rss/arxiv.xml" as const;
-export const KNOWLEDGE_RSS_HREF = "/rss/knowledge.xml" as const;
 
 export interface RssChannel {
   title: string;
   link: string;
   description: string;
   lastBuildDate: string;
-}
-
-export function categoryRssHref(category: Category): `/rss/${Category}.xml` {
-  return `/rss/${category}.xml`;
 }
 
 function isXml10CodePoint(codePoint: number): boolean {

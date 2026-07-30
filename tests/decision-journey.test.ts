@@ -86,7 +86,7 @@ describe("decision journey report contract", () => {
       DECISION_JOURNEY_OUTPUT_LIMIT_BYTES,
     );
     expect(JSON.parse(serialized)).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: 3,
       measurementKind: "local-synthetic-decision-journey",
       fieldData: false,
       timingAssessment: "informational-only",
@@ -133,6 +133,7 @@ describe("decision journey report contract", () => {
     expect(report.status).toBe("completed");
     expect(report.elapsedMs).toBe(900_000);
     expect(report.timingAssessment).toBe("informational-only");
+    expect(report).not.toHaveProperty("referenceWindowMs");
     expect(() => validateDecisionJourneyReport(report)).not.toThrow();
   });
 

@@ -6,8 +6,7 @@ import type {
   Request,
 } from "@playwright/test";
 
-export const DECISION_JOURNEY_SCHEMA_VERSION = 2 as const;
-export const DECISION_JOURNEY_REFERENCE_WINDOW_MS = 5 * 60_000;
+export const DECISION_JOURNEY_SCHEMA_VERSION = 3 as const;
 export const DECISION_JOURNEY_OUTPUT_LIMIT_BYTES = 64 * 1024;
 export const DECISION_JOURNEY_STEP_TIMEOUT_MS = 20_000;
 
@@ -135,7 +134,6 @@ export interface DecisionJourneyReport {
     "Elapsed milliseconds are informational local synthetic timings from a production Web build. They do not determine pass/fail and are not field data or Core Web Vitals.";
   commit: string;
   generatedAt: string;
-  referenceWindowMs: typeof DECISION_JOURNEY_REFERENCE_WINDOW_MS;
   outputLimitBytes: typeof DECISION_JOURNEY_OUTPUT_LIMIT_BYTES;
   status: "completed" | "failed";
   elapsedMs: number;
@@ -991,7 +989,6 @@ export function createDecisionJourneyReport(
       "Elapsed milliseconds are informational local synthetic timings from a production Web build. They do not determine pass/fail and are not field data or Core Web Vitals.",
     commit,
     generatedAt,
-    referenceWindowMs: DECISION_JOURNEY_REFERENCE_WINDOW_MS,
     outputLimitBytes: DECISION_JOURNEY_OUTPUT_LIMIT_BYTES,
     status,
     elapsedMs,
@@ -1018,7 +1015,6 @@ export function createInfrastructureFailureReport(
       "Elapsed milliseconds are informational local synthetic timings from a production Web build. They do not determine pass/fail and are not field data or Core Web Vitals.",
     commit,
     generatedAt: new Date().toISOString(),
-    referenceWindowMs: DECISION_JOURNEY_REFERENCE_WINDOW_MS,
     outputLimitBytes: DECISION_JOURNEY_OUTPUT_LIMIT_BYTES,
     status: "failed",
     elapsedMs: 0,
@@ -1068,11 +1064,6 @@ export function validateDecisionJourneyReport(
   assertString(report.generatedAt, "generatedAt");
   if (!Number.isFinite(Date.parse(report.generatedAt))) {
     throw new Error("generatedAt must be RFC3339-compatible");
-  }
-  if (report.referenceWindowMs !== DECISION_JOURNEY_REFERENCE_WINDOW_MS) {
-    throw new Error(
-      `referenceWindowMs must be ${DECISION_JOURNEY_REFERENCE_WINDOW_MS}`,
-    );
   }
   if (report.outputLimitBytes !== DECISION_JOURNEY_OUTPUT_LIMIT_BYTES) {
     throw new Error(

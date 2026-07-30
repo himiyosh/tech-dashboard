@@ -9828,6 +9828,72 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
+  test("Knowledge exposes a localized RSS subscription action and autodiscovery", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/knowledge/");
+
+    const feedAction = page.locator(
+      '.page-hero-actions a[href="/rss/knowledge.xml"]',
+    );
+    await expect(feedAction).toBeVisible();
+    await expect(feedAction.locator(".i18n-ja")).toHaveText("Knowledge RSSを購読");
+    await expect(feedAction.locator(".i18n-en")).toBeHidden();
+    const alternate = page.locator(
+      'head link[rel="alternate"][type="application/rss+xml"][href="/rss/knowledge.xml"]',
+    );
+    await expect(alternate).toHaveCount(1);
+    await expect(alternate).toHaveAttribute(
+      "title",
+      "TECH Dashboard | Knowledge & Best Practices",
+    );
+    await expect(
+      page.locator(
+        'head link[rel="alternate"][type="application/feed+json"][href="/feed.json"]',
+      ),
+    ).toHaveAttribute("title", "TECH Dashboard site-wide JSON Feed");
+    await expect(feedAction).toHaveAttribute("type", "application/rss+xml");
+    await feedAction.focus();
+    await expect(feedAction).toBeFocused();
+
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(feedAction.locator(".i18n-ja")).toBeHidden();
+    await expect(feedAction.locator(".i18n-en")).toHaveText(
+      "Subscribe to Knowledge RSS",
+    );
+    await expect(feedAction.locator(".i18n-en")).toBeVisible();
+
+    for (const viewport of [
+      { width: 375, height: 667 },
+      { width: 390, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await settleResponsiveLayout(page);
+      await expect(feedAction).toBeVisible();
+      const geometry = await page.evaluate(() => {
+        const action = document.querySelector(
+          '.page-hero-actions a[href="/rss/knowledge.xml"]',
+        ) as HTMLElement | null;
+        if (!action) throw new Error("Knowledge RSS action is missing");
+        const rect = action.getBoundingClientRect();
+        return {
+          width: rect.width,
+          height: rect.height,
+          left: rect.left,
+          right: rect.right,
+          viewportWidth: window.innerWidth,
+          overflow: document.documentElement.scrollWidth > window.innerWidth,
+        };
+      });
+      expect(geometry.width).toBeGreaterThanOrEqual(44);
+      expect(geometry.height).toBeGreaterThanOrEqual(44);
+      expect(geometry.left).toBeGreaterThanOrEqual(0);
+      expect(geometry.right).toBeLessThanOrEqual(geometry.viewportWidth);
+      expect(geometry.overflow).toBe(false);
+    }
+  });
+
   test("lane pages never collapse into a 3-column timeline grid (LL-091)", async ({ page }) => {
     // The timeline .layout has responsive media queries (a 200px sidebar and a
     // 3-col :has(aside.right) rule for 901-1180px) that previously bled into

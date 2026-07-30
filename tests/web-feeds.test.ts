@@ -8,6 +8,7 @@ const {
   arxivFeedEntries,
   categoryMeta,
   feedEntries,
+  knowledgeFeedEntries,
   summaryForLangWithFallback,
   titleForLangWithFallback,
 } = vi.hoisted(() => {
@@ -68,6 +69,7 @@ const {
       titleJa: "Claude の検証済みタイトル",
       summaryJa: "Claude の検証済み要約。",
       category: "claude",
+      evergreen: true,
     },
     {
       ...baseEntry,
@@ -77,6 +79,7 @@ const {
       titleJa: "Research レポート",
       summaryJa: "選定した Research レポートの要約。",
       category: "research",
+      evergreen: true,
     },
     {
       ...baseEntry,
@@ -101,6 +104,7 @@ const {
     arxivFeedEntries: feedEntries.filter((entry) => entry.id === "arxiv-paper"),
     categoryMeta,
     feedEntries,
+    knowledgeFeedEntries: [feedEntries[1]!, feedEntries[2]!],
     titleForLangWithFallback: vi.fn(
       (entry: { titleJa: string }) => ({
         text: entry.titleJa,
@@ -120,6 +124,7 @@ vi.mock("../web/src/lib/data.ts", () => ({
   ARXIV_FEED_ENTRIES: arxivFeedEntries,
   CATEGORY_META: categoryMeta,
   GENERATED_AT: "2026-01-01T00:00:00.000Z",
+  KNOWLEDGE_ENTRIES: knowledgeFeedEntries,
   PUBLISHABLE_ENTRIES: feedEntries,
   summaryForLangWithFallback,
   titleForLangWithFallback,
@@ -127,6 +132,7 @@ vi.mock("../web/src/lib/data.ts", () => ({
 
 const { GET: getRss } = await import("../web/src/pages/rss.xml.ts");
 const { GET: getArxivRss } = await import("../web/src/pages/rss/arxiv.xml.ts");
+const { GET: getKnowledgeRss } = await import("../web/src/pages/rss/knowledge.xml.ts");
 const {
   GET: getCategoryRss,
   getStaticPaths: getCategoryRssPaths,
@@ -134,6 +140,7 @@ const {
 const { GET: getJsonFeed } = await import("../web/src/pages/feed.json.ts");
 const {
   ARXIV_RSS_HREF,
+  KNOWLEDGE_RSS_HREF,
   RSS_ITEM_LIMIT,
   categoryRssHref,
   escapeXml,
@@ -157,6 +164,10 @@ const aboutSource = readFileSync(
 );
 const arxivSource = readFileSync(
   new URL("../web/src/pages/arxiv.astro", import.meta.url),
+  "utf8",
+);
+const knowledgeSource = readFileSync(
+  new URL("../web/src/pages/knowledge.astro", import.meta.url),
   "utf8",
 );
 const publicHeaders = readFileSync(
@@ -226,6 +237,10 @@ describe("public feeds", () => {
     expect(arxivSource).toContain('labelEn: "Subscribe to arXiv RSS"');
     expect(arxivSource).toContain('mediaType: "application/rss+xml"');
     expect(arxivSource).toContain("mobilePriority: true");
+    expect(knowledgeSource).toContain('label: "Knowledge RSSを購読"');
+    expect(knowledgeSource).toContain('labelEn: "Subscribe to Knowledge RSS"');
+    expect(knowledgeSource).toContain('mediaType: "application/rss+xml"');
+    expect(knowledgeSource).toContain("mobilePriority: true");
     expect(portalSource).toContain("サイトの目的・収集方針・RSS購読");
     expect(portalSource).toContain("Purpose, collection policy, and feeds");
     for (const source of categorySources.slice(1)) {
@@ -237,6 +252,7 @@ describe("public feeds", () => {
 
   it("builds deterministic category feed URLs without query filtering", () => {
     expect(ARXIV_RSS_HREF).toBe("/rss/arxiv.xml");
+    expect(KNOWLEDGE_RSS_HREF).toBe("/rss/knowledge.xml");
     expect(categoryRssHref("agent-fw")).toBe("/rss/agent-fw.xml");
     expect(categoryRssHref("local-llm")).toBe("/rss/local-llm.xml");
     for (const source of categorySources) {
@@ -249,6 +265,10 @@ describe("public feeds", () => {
     expect(categorySources[2]).toContain('rssTitle={`TECH Dashboard | ${category.name}`}');
     expect(arxivSource).toContain("rssHref={ARXIV_RSS_HREF}");
     expect(arxivSource).toContain('rssTitle="TECH Dashboard | arXiv Papers"');
+    expect(knowledgeSource).toContain("rssHref={KNOWLEDGE_RSS_HREF}");
+    expect(knowledgeSource).toContain(
+      'rssTitle="TECH Dashboard | Knowledge & Best Practices"',
+    );
     expect(publicHeaders).toContain(
       "/rss.xml\n  Content-Type: application/rss+xml; charset=utf-8",
     );
@@ -348,6 +368,25 @@ describe("public feeds", () => {
     expect(xml).toContain("<title>TECH Dashboard | arXiv Papers</title>");
     expect(xml).toContain("https://arxiv.org/abs/2607.01234");
     expect(xml).not.toContain("https://example.com/research-report");
+  });
+
+  it("publishes the dedicated Knowledge lane feed from its canonical collection", async () => {
+    const response = (await getKnowledgeRss({} as never)) as Response;
+    const xml = await response.text();
+    const items = xml.match(/<item>[\s\S]*?<\/item>/g) ?? [];
+    const links = items.map(
+      (item) => item.match(/<link>([^<]+)<\/link>/)?.[1] ?? "",
+    );
+
+    expect(XMLValidator.validate(xml)).toBe(true);
+    expect(response.headers.get("content-type")).toBe(
+      "application/rss+xml; charset=utf-8",
+    );
+    expect(items).toHaveLength(knowledgeFeedEntries.length);
+    expect(links).toEqual(knowledgeFeedEntries.map((entry) => entry.url));
+    expect(xml).toContain("<title>TECH Dashboard | Knowledge &amp; Best Practices</title>");
+    expect(xml).not.toContain("https://example.com/agent-1");
+    expect(xml).not.toContain("https://arxiv.org/abs/2607.01234");
   });
 
   it("category RSS rejects an unknown category and caps output at 100 items", async () => {

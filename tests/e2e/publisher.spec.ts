@@ -89,6 +89,7 @@ interface ParsedRssItem {
 interface FeedArtifactEntry extends PublicationEntry {
   id: string;
   category: Category;
+  evergreen?: boolean;
 }
 
 function rssItemDocuments(xml: string): ParsedRssItem[] {
@@ -1244,6 +1245,43 @@ test.describe("Publisher generated artifact", () => {
         'head link[rel="alternate"][type="application/rss+xml"][href="/rss/arxiv.xml"]',
       ),
     ).toHaveCount(1);
+  });
+
+  test("Knowledge RSS matches the publishable evergreen lane", async ({
+    request,
+  }) => {
+    const raw = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: FeedArtifactEntry[];
+    };
+    const expectedEntries = raw.entries
+      .filter((entry) => entry.evergreen === true)
+      .filter(isPublishableEntry);
+    const expectedUrls = expectedEntries.slice(0, 100).map((entry) => entry.url);
+
+    expect(expectedUrls.length).toBeGreaterThan(0);
+    const response = await request.get("/rss/knowledge.xml");
+    const xml = await response.text();
+    const items = rssItemDocuments(xml);
+    const feedUrls = items.map((item) => item.link ?? "");
+
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toMatch(
+      /^(?:application|text)\/xml(?:;|$)/,
+    );
+    expect(feedUrls).toEqual(expectedUrls);
+    expect(items.length).toBeLessThanOrEqual(100);
+    expect(
+      feedUrls
+        .map((url) => raw.entries.find((entry) => entry.url === url))
+        .filter((entry): entry is FeedArtifactEntry => entry !== undefined)
+        .every((entry) => entry.evergreen === true && isPublishableEntry(entry)),
+    ).toBe(true);
+
+    const pageResponse = await request.get("/knowledge/");
+    const pageHtml = await pageResponse.text();
+    expect(pageResponse.status()).toBe(200);
+    expect(pageHtml).toContain('href="/rss/knowledge.xml"');
+    expect(pageHtml).toContain('title="TECH Dashboard | Knowledge &amp; Best Practices"');
   });
 
   test("keeps legacy low-frequency tag URLs recoverable", async ({ request }) => {

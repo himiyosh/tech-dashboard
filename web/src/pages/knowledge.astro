@@ -12,6 +12,7 @@ import {
 } from "../lib/data.ts";
 import { sourceFaviconUrl } from "../lib/favicon.ts";
 import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../lib/reaction-copy.ts";
+import { KNOWLEDGE_RSS_HREF } from "../lib/rss.ts";
 import { SOURCE_META } from "../lib/source-meta.ts";
 
 const now = new Date();
@@ -88,6 +89,8 @@ const breadcrumb = [
   title="Knowledge — ベストプラクティス & 知見 | TECH Dashboard"
   description="各社のエンジニアリングブログやベストプラクティスを、流れていくニュースとは別に蓄積するページです。時間が経っても価値が減らない知見をソース別にまとめています。"
   breadcrumb={breadcrumb}
+  rssHref={KNOWLEDGE_RSS_HREF}
+  rssTitle="TECH Dashboard | Knowledge & Best Practices"
 >
   <PageHero
     className="page-hero-top-level page-hero-knowledge"
@@ -98,6 +101,13 @@ const breadcrumb = [
     headingId="knowledge-heading"
     description="各社のエンジニアリングブログやベストプラクティスは、流れていくニュースとは別にここで蓄積します。アーカイブで消えず、いつでも参照できる「知見の置き場」です。"
     actions={[
+      {
+        href: KNOWLEDGE_RSS_HREF,
+        label: "Knowledge RSSを購読",
+        labelEn: "Subscribe to Knowledge RSS",
+        mediaType: "application/rss+xml",
+        mobilePriority: true,
+      },
       { href: "/", label: "Main timeline" },
       { href: "#knowledge-sources", label: "Browse sources" },
       { href: "/about", label: "収集方針" },

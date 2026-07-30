@@ -14,6 +14,10 @@ AI 研究者やプラットフォーム設計者も利用しますが、深掘�
 
 公式ブログ、リリース、研究、業界ニュースを収集・要約・分類し、重要度、出典、鮮度とともに提示します。成功状態は、利用者が更新の信頼性と重要性を迷わず理解し、5 分以内に読む記事と共有する記事を選べることです。
 
+## Local Synthetic Measurement
+
+5分判断契約は、production Web buildを使うローカルPlaywrightジャーニーでdesktop/mobileを反復計測します。Homeの最初の判断面、検索結果または正直な0件回復、RSS/OPML購読経路、実404回復、存在する場合の要約待ち詳細を対象とし、各stepの開始条件、完了条件、操作上限、document navigation列、viewport/scroll、route、失敗時の観測状態をJSONへ記録します。合否は決定論的な到達性と複雑度で判定し、経過msは情報値として比較できますが合否条件にはしません。この値は実利用者のfield dataやCore Web Vitalsではなく、将来runとの回帰比較に使う合成計測です。
+
 ## Brand Personality
 
 信頼できる、専門的、効率的。

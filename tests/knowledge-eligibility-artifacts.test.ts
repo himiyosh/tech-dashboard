@@ -25,6 +25,30 @@ const ISSUE_237_ENTRIES = [
     id: "7b3cb462c9d102ab",
     url: "https://cloud.google.com/blog/products/sap-google-cloud/sap-and-google-cloud-launch-bdc-connect-for-bigquery/",
   },
+  {
+    id: "52a59dad31dc17b8",
+    url: "https://cloud.google.com/blog/products/ai-machine-learning/google-is-a-leader-in-the-gartner-magic-quadrant-for-conversational-ai/",
+  },
+  {
+    id: "5abc0b85ffaee46f",
+    url: "https://cloud.google.com/blog/products/management-tools/alert-with-sql-in-cloud-monitoring-observability-analytics/",
+  },
+  {
+    id: "07df858350edbc9d",
+    url: "https://cloud.google.com/blog/products/identity-security/securing-agentic-ai-whats-new-in-vpc-service-controls/",
+  },
+  {
+    id: "37803898e498b24d",
+    url: "https://devblogs.microsoft.com/foundry/document-translation-build-2026/",
+  },
+  {
+    id: "1fe4d821705368ab",
+    url: "https://aws.amazon.com/blogs/machine-learning/introducing-claude-apps-gateway-for-aws/",
+  },
+  {
+    id: "4804d6346be88fc2",
+    url: "https://aws.amazon.com/blogs/machine-learning/introducing-grok-on-amazon-bedrock/",
+  },
 ] as const;
 
 const archiveEntries = readdirSync("data/archive")

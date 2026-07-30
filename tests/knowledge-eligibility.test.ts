@@ -50,6 +50,66 @@ const ACTUAL_DROP_FIXTURES: ReadonlyArray<{
     },
     reason: "announcement-title",
   },
+  {
+    id: "52a59dad31dc17b8",
+    entry: {
+      source: "google-cloud-blog",
+      title: "Google is a Leader and positioned furthest in Vision and highest in Execution in the 2026 Gartner® Magic Quadrant™ for Conversational AI Platforms",
+      contentSnippet: "For the second consecutive year, Google has been named a Leader in the Gartner® Magic Quadrant™ for Conversational AI Platforms.",
+      evergreen: true,
+    },
+    reason: "announcement-title",
+  },
+  {
+    id: "5abc0b85ffaee46f",
+    entry: {
+      source: "google-cloud-blog",
+      title: "From query to action: Introducing SQL alerting in Cloud Monitoring Observability Analytics",
+      contentSnippet: "Traditional alerting systems often force a compromise between simple log events and rigid metrics.",
+      evergreen: true,
+    },
+    reason: "announcement-title",
+  },
+  {
+    id: "07df858350edbc9d",
+    entry: {
+      source: "google-cloud-blog",
+      title: "Securing agentic AI with perimeter guardrails: What's new in VPC Service Controls",
+      contentSnippet: "As enterprises scale autonomous AI agents into production, enabling safe innovation requires robust architectural guardrails.",
+      evergreen: true,
+    },
+    reason: "announcement-title",
+  },
+  {
+    id: "37803898e498b24d",
+    entry: {
+      source: "microsoft-foundry",
+      title: "Expanding the Reach of Document Translation – New Capabilities Announced at Microsoft Build",
+      contentSnippet: "Learn how new Document Translation capabilities in Azure Translator help developers translate images, PDFs, and Office files.",
+      evergreen: true,
+    },
+    reason: "announcement-title",
+  },
+  {
+    id: "1fe4d821705368ab",
+    entry: {
+      source: "aws-ml-blog",
+      title: "Introducing Claude apps gateway for AWS",
+      contentSnippet: "Today, we're announcing the Claude apps gateway for AWS, a self-hosted control plane. In this post, we show how to set up and run Claude apps gateway for AWS.",
+      evergreen: true,
+    },
+    reason: "announcement-title",
+  },
+  {
+    id: "4804d6346be88fc2",
+    entry: {
+      source: "aws-ml-blog",
+      title: "Introducing Grok on Amazon Bedrock",
+      contentSnippet: "This post covers what makes Grok 4.3 a fit for agentic workloads, how you access it through Amazon Bedrock, and how to use chat requests.",
+      evergreen: true,
+    },
+    reason: "announcement-title",
+  },
 ];
 
 const ACTUAL_KEEP_FIXTURES: ReadonlyArray<{
@@ -98,14 +158,14 @@ const ACTUAL_KEEP_FIXTURES: ReadonlyArray<{
     reason: "durable-title",
   },
   {
-    id: "4804d6346be88fc2",
+    id: "4c02d3e289738117",
     entry: {
-      source: "aws-ml-blog",
-      title: "Introducing Grok on Amazon Bedrock",
-      contentSnippet: "This post covers what makes Grok 4.3 a great fit for agentic workloads, how you access it through Amazon Bedrock, and how to use chat requests, tool calling, and structured output.",
+      source: "microsoft-foundry",
+      title: "Build smarter document workflows: What’s new in Azure Content Understanding at Build 2026",
+      contentSnippet: "Azure Content Understanding ingests documents, audio, images, and video to power grounded AI solutions.",
       evergreen: true,
     },
-    reason: "durable-snippet",
+    reason: "durable-title",
   },
   {
     id: "2abb1db68940e816",
@@ -118,11 +178,11 @@ const ACTUAL_KEEP_FIXTURES: ReadonlyArray<{
     reason: "durable-snippet",
   },
   {
-    id: "1fe4d821705368ab",
+    id: "05443c49aa5fc77c",
     entry: {
       source: "aws-ml-blog",
-      title: "Introducing Claude apps gateway for AWS",
-      contentSnippet: "In this post, we show how to set up and run Claude apps gateway for AWS.",
+      title: "Beyond RAG: Task-aware knowledge compression for enterprise AI on AWS",
+      contentSnippet: "This post shows how to use task-aware knowledge compression on AWS to pre-compress knowledge bases and route queries.",
       evergreen: true,
     },
     reason: "durable-snippet",
@@ -214,5 +274,27 @@ describe("Knowledge eligibility", () => {
       evergreen: true,
       knowledgeEligible: false,
     })).toEqual({ eligible: true, reason: "durable-snippet" });
+  });
+
+  it("does not let announcement boilerplate override a stored exclusion", () => {
+    expect(knowledgeEligibility({
+      source: "aws-ml-blog",
+      title: "Introducing Claude apps gateway for AWS",
+      contentSnippet: "Today, we're announcing the Claude apps gateway for AWS. In this post, we show how to set up and run it.",
+      evergreen: true,
+      knowledgeEligible: false,
+    })).toEqual({ eligible: false, reason: "stored-exclusion" });
+  });
+
+  it.each([
+    "Example is a Leader in the enterprise agent market",
+    "Example remains the Challenger for conversational AI",
+    "Example remains a Visionary for cloud orchestration",
+  ])("treats analyst-positioning title as announcement-only: %s", (title) => {
+    expect(knowledgeEligibility({
+      source: "google-cloud-blog",
+      title,
+      evergreen: true,
+    })).toEqual({ eligible: false, reason: "announcement-title" });
   });
 });

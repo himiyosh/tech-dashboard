@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { describe, expect, it, vi } from "vitest";
 import type { NormalizedEntry } from "../web/src/lib/data.ts";
+import type { FeedDecisionDigestEntry } from "../web/src/lib/feed-decision-digest.ts";
 
 const {
   arxivFeedEntries,
@@ -42,7 +43,7 @@ const {
     },
   ];
   const baseEntry = {
-    source: "official-source",
+    source: "openai-blog",
     sourceType: "blog",
     title: "RAW_TITLE",
     titleEn: "Raw title",
@@ -146,6 +147,9 @@ const {
   escapeXml,
   serializeRssFeed,
 } = await import("../web/src/lib/rss.ts");
+const { buildFeedDecisionDigest } = await import(
+  "../web/src/lib/feed-decision-digest.ts"
+);
 const portalSource = readFileSync(
   new URL("../web/src/layouts/Portal.astro", import.meta.url),
   "utf8",
@@ -193,6 +197,96 @@ function alternateLinks(source: string) {
 }
 
 describe("public feeds", () => {
+  it("builds one reader-facing digest for every source authority kind", () => {
+    const summary = '要約 & <確認> "引用" 🚀';
+    const base: FeedDecisionDigestEntry = {
+      source: "openai-blog",
+      sourceType: "blog",
+      url: "https://example.com/article",
+      title: "Source title",
+      titleJa: "出典タイトル",
+      titleEn: "Source title",
+      summaryJa: summary,
+      summaryEn: "Validated English summary.",
+      importance: 3,
+    };
+    const cases = [
+      {
+        entry: { ...base, source: "openai-blog", sourceType: "blog" },
+        source: "OpenAI Blog",
+        authority: "公式",
+        kind: "official",
+      },
+      {
+        entry: { ...base, source: "arxiv-cs-ai", sourceType: "paper" },
+        source: "arXiv cs.AI",
+        authority: "論文",
+        kind: "paper",
+      },
+      {
+        entry: { ...base, source: "zenn-ai", sourceType: "community" },
+        source: "Zenn AI",
+        authority: "コミュニティ",
+        kind: "community",
+      },
+      {
+        entry: { ...base, source: "techcrunch", sourceType: "blog" },
+        source: "TechCrunch",
+        authority: "報道",
+        kind: "news",
+      },
+      {
+        entry: { ...base, source: "hn-ai", sourceType: "blog" },
+        source: "Hacker News - AI coding",
+        authority: "集約",
+        kind: "aggregator",
+      },
+      {
+        entry: { ...base, source: "custom-unknown", sourceType: "blog" },
+        source: "Custom Unknown",
+        authority: "出典",
+        kind: "source",
+      },
+    ] as const;
+
+    for (const fixture of cases) {
+      const digest = buildFeedDecisionDigest(fixture.entry);
+      expect(digest).toMatchObject({
+        source: fixture.source,
+        authority: {
+          kind: fixture.kind,
+          ja: fixture.authority,
+        },
+        importance: 3,
+        summary,
+        metadata: `出典: ${fixture.source} | 種別: ${fixture.authority} | 重要度: 3/3`,
+      });
+      expect(digest.text).toBe(
+        `出典: ${fixture.source} | 種別: ${fixture.authority} | 重要度: 3/3\n\n${summary}`,
+      );
+    }
+
+    expect(buildFeedDecisionDigest(cases.at(-1)!.entry).text).not.toContain(
+      "custom-unknown",
+    );
+  });
+
+  it("rejects pending or noisy summaries at the shared feed boundary", () => {
+    expect(() =>
+      buildFeedDecisionDigest({
+        source: "openai-blog",
+        sourceType: "blog",
+        url: "https://example.com/pending",
+        title: "Pending article",
+        titleJa: "準備待ちの記事",
+        titleEn: "Pending article",
+        summaryJa: "AI 要約未生成",
+        summaryEn: "AI summary pending",
+        importance: 2,
+      })
+    ).toThrow("requires a validated summary");
+  });
+
   it("shared Portal head advertises each public feed exactly once", () => {
     expect(alternateLinks(portalSource)).toEqual([
       expect.objectContaining({
@@ -297,12 +391,19 @@ describe("public feeds", () => {
       "application/rss+xml; charset=utf-8",
     );
     expect(xml).toContain("<title>検証済みタイトル</title>");
-    expect(xml).toContain("<description>検証済み要約。</description>");
+    expect(xml).toContain(
+      "<description>出典: OpenAI Blog | 種別: 公式 | 重要度: 2/3\n\n検証済み要約。</description>",
+    );
     expect(xml).toContain("<title>TECH Dashboard — AI Daily</title>");
     expect(xml).not.toContain("RAW_TITLE");
     expect(xml).toContain("<category>agent-fw</category>");
     expect(xml).toContain("<category>claude</category>");
     expect(xml.match(/<item>/g)).toHaveLength(feedEntries.length);
+    for (const entry of feedEntries) {
+      expect(xml).toContain(
+        `<description>${escapeXml(buildFeedDecisionDigest(entry).text)}</description>`,
+      );
+    }
   });
 
   it("generates one static RSS endpoint for every valid category", () => {
@@ -328,6 +429,11 @@ describe("public feeds", () => {
     expect(xml).toContain("<title>検証済みタイトル</title>");
     expect(xml).toContain("<title>2件目の検証済みタイトル</title>");
     expect(xml).not.toContain("Claude の検証済みタイトル");
+    for (const entry of feedEntries.filter((item) => item.category === "agent-fw")) {
+      expect(xml).toContain(
+        `<description>${escapeXml(buildFeedDecisionDigest(entry).text)}</description>`,
+      );
+    }
     for (const item of items) {
       expect(item.match(/<category>([^<]+)<\/category>/)?.[1]).toBe(
         "agent-fw",
@@ -368,6 +474,9 @@ describe("public feeds", () => {
     expect(xml).toContain("<title>TECH Dashboard | arXiv Papers</title>");
     expect(xml).toContain("https://arxiv.org/abs/2607.01234");
     expect(xml).not.toContain("https://example.com/research-report");
+    expect(xml).toContain(
+      `<description>${escapeXml(buildFeedDecisionDigest(arxivFeedEntries[0]!).text)}</description>`,
+    );
   });
 
   it("publishes the dedicated Knowledge lane feed from its canonical collection", async () => {
@@ -387,6 +496,11 @@ describe("public feeds", () => {
     expect(xml).toContain("<title>TECH Dashboard | Knowledge &amp; Best Practices</title>");
     expect(xml).not.toContain("https://example.com/agent-1");
     expect(xml).not.toContain("https://arxiv.org/abs/2607.01234");
+    for (const entry of knowledgeFeedEntries) {
+      expect(xml).toContain(
+        `<description>${escapeXml(buildFeedDecisionDigest(entry).text)}</description>`,
+      );
+    }
   });
 
   it("category RSS rejects an unknown category and caps output at 100 items", async () => {
@@ -455,7 +569,7 @@ describe("public feeds", () => {
       importance: 2,
       lang: "en",
       titleJa: 'Agents & tools <release> "verified"',
-      summaryJa: "Use A > B & B < C.",
+      summaryJa: "日本語で A > B & B < C を確認。",
       url: "https://example.com/article?a=1&b=2",
       tags: ["tools & agents", "model <release>"],
     };
@@ -493,7 +607,8 @@ describe("public feeds", () => {
     expect(channel.item).toMatchObject({
       title: 'Agents & tools <release> "verified"',
       link: "https://example.com/article?a=1&b=2",
-      description: "Use A > B & B < C.",
+      description:
+        "出典: OpenAI Blog | 種別: 公式 | 重要度: 2/3\n\n日本語で A > B & B < C を確認。",
       category: ["agent-fw", "tools & agents", "model <release>"],
     });
   });
@@ -507,8 +622,16 @@ describe("public feeds", () => {
     );
     expect(feed.items[0]).toMatchObject({
       title: "検証済みタイトル",
-      content_text: "検証済み要約。",
+      summary:
+        "出典: OpenAI Blog | 種別: 公式 | 重要度: 2/3\n\n検証済み要約。",
+      content_text:
+        "出典: OpenAI Blog | 種別: 公式 | 重要度: 2/3\n\n検証済み要約。",
+      _source: "openai-blog",
+      _importance: 2,
     });
+    expect(feed.items.map((item: { id: string }) => item.id)).toEqual(
+      feedEntries.map((entry) => entry.id),
+    );
     expect(JSON.stringify(feed)).not.toContain("RAW_TITLE");
     expect(JSON.stringify(feed)).not.toContain("RAW_SUMMARY");
   });

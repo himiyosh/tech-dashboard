@@ -2,9 +2,9 @@ import type { APIRoute } from "astro";
 import {
   PUBLISHABLE_ENTRIES,
   GENERATED_AT,
-  summaryForLangWithFallback,
   titleForLangWithFallback,
 } from "../lib/data.ts";
+import { buildFeedDecisionDigest } from "../lib/feed-decision-digest.ts";
 import { SITE_URL } from "../lib/site.ts";
 
 export const GET: APIRoute = () => {
@@ -18,12 +18,13 @@ export const GET: APIRoute = () => {
     _generated_at: GENERATED_AT,
     items: PUBLISHABLE_ENTRIES.slice(0, 100).map((e) => {
       const title = titleForLangWithFallback(e, "ja");
-      const summary = summaryForLangWithFallback(e, "ja");
+      const digest = buildFeedDecisionDigest(e);
       return {
         id: e.id,
         url: e.url,
         title: title.text,
-        content_text: summary.text,
+        summary: digest.text,
+        content_text: digest.text,
         ...(e.publishedAt ? { date_published: e.publishedAt } : {}),
         tags: [e.category, ...e.tags],
         _source: e.source,

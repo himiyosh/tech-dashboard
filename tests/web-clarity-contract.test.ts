@@ -109,4 +109,26 @@ describe("web clarity contracts", () => {
     expect(categories).toContain("arxiv: ARXIV_ENTRIES.length");
     expect(categories).not.toMatch(/curated:\s*15\b|arxiv:\s*80\b/);
   });
+
+  it("keeps mobile Top 3 compactness tied to intent-level geometry", () => {
+    const smoke = read("tests/e2e/smoke.spec.ts");
+
+    expect(smoke).not.toMatch(
+      /maxRankHeight[\s\S]{0,160}mobile Top-3[\s\S]{0,160}toBeLessThanOrEqual\(\s*118\s*\)/,
+    );
+    for (const contract of [
+      "Top 3 keeps exactly three cards",
+      "Top 3 has no duplicated reason rows",
+      "summary stays on one line",
+      "summary has no vertical content overflow",
+      "keeps content inside its panel",
+      "cards ${index} and ${index + 1} do not overlap",
+      "keeps a 44px article target",
+      "centered Top 3 stays above the mobile tabbar",
+      "desktop footer stays out of the mobile viewport",
+      "Top 3 creates no page overflow",
+    ]) {
+      expect(smoke).toContain(contract);
+    }
+  });
 });

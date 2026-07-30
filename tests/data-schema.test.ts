@@ -25,6 +25,7 @@ import {
 import { normalizeTag } from "../harness/pipeline/tag.ts";
 import { hasKnownProductBodyConflict } from "../harness/pipeline/product-name.ts";
 import { canonicalUrlKey } from "../harness/pipeline/url.ts";
+import { isKnowledgeEligibleEntry } from "../web/src/lib/knowledge-eligibility.ts";
 import {
   buildStatsPayloadFromArtifacts,
   STATS_BUCKET_TIME_ZONE,
@@ -59,6 +60,7 @@ interface RawEntry {
   archiveTier?: unknown;
   halfLife?: unknown;
   evergreen?: unknown;
+  knowledgeEligible?: unknown;
 }
 
 interface IndexShape {
@@ -809,6 +811,26 @@ describe("evergreen 蓄積ポリシー (R-022)", () => {
       (entry) => (entry as { evergreen?: unknown }).evergreen === true,
     );
     expect(accumulated.length).toBeGreaterThan(0);
+  });
+
+  it("Knowledge evergreen stamp は raw source context の eligibility contract と一致する", () => {
+    const violations = data.entries.flatMap((entry) => {
+      const source = REGISTRY[String(entry.source)];
+      if (source?.evergreen !== true) return [];
+      const expected = isKnowledgeEligibleEntry({
+        source: String(entry.source),
+        title: String(entry.title),
+        contentSnippet: typeof entry.contentSnippet === "string"
+          ? entry.contentSnippet
+          : undefined,
+        evergreen: true,
+      });
+      const excluded = (entry as { knowledgeEligible?: unknown }).knowledgeEligible === false;
+      return excluded === !expected
+        ? []
+        : [`${String(entry.source)}: ${String(entry.title)}`];
+    });
+    expect(violations).toEqual([]);
   });
 });
 

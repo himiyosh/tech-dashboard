@@ -13,6 +13,7 @@ import type {
   SourceDefinition,
 } from "../types.ts";
 import { decideTier, resolveHalfLife } from "../half-life.ts";
+import { isKnowledgeEligibleEntry } from "../../web/src/lib/knowledge-eligibility.ts";
 import { normalizeTags } from "./tag.ts";
 
 function sha256Short(input: string): string {
@@ -259,6 +260,7 @@ interface SourceOwnedFields {
   halfLife: HalfLife;
   archiveTier: NormalizedEntry["archiveTier"];
   evergreen?: true;
+  knowledgeEligible?: false;
 }
 
 function sourceOwnedFields(
@@ -284,6 +286,12 @@ function sourceOwnedFields(
     sourceOverride: source.halfLifeOverride,
   });
   const evergreen = source.evergreen ?? false;
+  const knowledgeEligible = isKnowledgeEligibleEntry({
+    source: source.id,
+    title: signal.title,
+    contentSnippet: signal.contentSnippet,
+    evergreen,
+  });
   const archiveTier = decideTier(
     { publishedAt: signal.publishedAt, halfLife, evergreen },
     new Date(referenceAt),
@@ -295,6 +303,7 @@ function sourceOwnedFields(
     halfLife,
     archiveTier,
     ...(evergreen ? { evergreen: true as const } : {}),
+    ...(evergreen && !knowledgeEligible ? { knowledgeEligible: false as const } : {}),
   };
 }
 
@@ -313,7 +322,11 @@ export function restampEntryFromSource(
     source,
     referenceAt,
   );
-  const { evergreen: _priorEvergreen, ...base } = entry;
+  const {
+    evergreen: _priorEvergreen,
+    knowledgeEligible: _priorKnowledgeEligible,
+    ...base
+  } = entry;
   const tags = normalizeTags([...source.autoTags, ...entry.tags]);
   const preserveImportance = options.preserveImportance ?? true;
   const preserveArchiveTier = options.preserveArchiveTier ?? false;
@@ -371,6 +384,7 @@ export function normalize(
     halfLife: metadata.halfLife,
     archiveTier: metadata.archiveTier,
     ...(metadata.evergreen ? { evergreen: true } : {}),
+    ...(metadata.knowledgeEligible === false ? { knowledgeEligible: false } : {}),
     ...(contentSnippet ? { contentSnippet } : {}),
     ...(image ? { image } : {}),
   };

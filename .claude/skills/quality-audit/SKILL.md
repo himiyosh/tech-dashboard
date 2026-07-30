@@ -18,7 +18,7 @@ description: tech-dashboard の index.json を監査し、品質・鮮度・カ�
 6. **タグ品質 (tags)**: 同一タグのバリエーション (例: "llm" vs "LLM" vs "大規模言語モデル")。
 7. **重複 (dup)**: tracking query を除去した URL 正規化漏れ。同一 YouTube watch URL は `v` を動画 ID として保持。
 8. **Queue telemetry**: summary/body/shared budget の backlog、candidate、実 enqueue、lookup、merge、ETA を分離し、未観測を 0 件として扱わない。
-9. **Knowledge coverage**: registry の全 evergreen source を母集団にし、source ごとの収集件数、evergreen stamp 件数、shared summary quality contract を通る bilingual-ready 件数を比較する。0 entry や stamp 欠落 source も省略せず、本文 coverage とは別指標にする。
+9. **Knowledge coverage**: registry の全 evergreen source を母集団にし、source ごとの収集件数、evergreen stamp 件数、raw title/snippet/source context の共有契約を通る Knowledge eligible 件数、shared summary quality contract を通る bilingual-ready 件数を比較する。0 entry や stamp 欠落 source も省略せず、本文 coverage とは別指標にする。
 
 ## 実行手順
 
@@ -87,7 +87,7 @@ description: tech-dashboard の index.json を監査し、品質・鮮度・カ�
 
 ## 🌲 Knowledge evergreen coverage
 
-- registry evergreen source ごとの collected / evergreen flagged / bilingual ready / pending を表示する
+- registry evergreen source ごとの collected / evergreen flagged / Knowledge eligible / bilingual ready / pending を表示する
 
 ## 🏷️ タグ揺れ候補
 

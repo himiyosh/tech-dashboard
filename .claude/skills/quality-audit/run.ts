@@ -18,6 +18,7 @@ import {
 import { canonicalUrlKey } from "../../../harness/pipeline/url.ts";
 import { ALL_CATEGORIES, type SourceDefinition } from "../../../harness/types.ts";
 import { sourceFreshnessStatus } from "../../../web/src/lib/freshness.ts";
+import { isKnowledgeEligibleEntry } from "../../../web/src/lib/knowledge-eligibility.ts";
 import { deriveWorkerRunStatus, type WorkerHealthSnapshot } from "../../../web/src/lib/run-health.ts";
 
 export { canonicalUrlKey } from "../../../harness/pipeline/url.ts";
@@ -39,6 +40,8 @@ interface Entry {
   category: string;
   importance: number;
   evergreen?: boolean;
+  knowledgeEligible?: boolean;
+  contentSnippet?: string;
 }
 
 interface Index {
@@ -114,12 +117,15 @@ export interface AuditQueueTelemetry {
 export interface KnowledgeAuditEntry extends SummaryQualityInput {
   source: string;
   evergreen?: boolean;
+  knowledgeEligible?: boolean;
+  contentSnippet?: string;
 }
 
 export interface KnowledgeAuditCoverage {
   source: string;
   collected: number;
   evergreenFlagged: number;
+  knowledgeEligible: number;
   bilingualReady: number;
 }
 
@@ -232,6 +238,7 @@ export function knowledgeCoverageForAudit(
       source: source.id,
       collected: 0,
       evergreenFlagged: 0,
+      knowledgeEligible: 0,
       bilingualReady: 0,
     });
   }
@@ -241,6 +248,8 @@ export function knowledgeCoverageForAudit(
     coverage.collected++;
     if (entry.evergreen !== true) continue;
     coverage.evergreenFlagged++;
+    if (!isKnowledgeEligibleEntry(entry)) continue;
+    coverage.knowledgeEligible++;
     if (hasUsableBilingualSummary(entry)) coverage.bilingualReady++;
   }
   return [...bySource.values()].sort((a, b) => a.source.localeCompare(b.source));
@@ -473,14 +482,15 @@ async function main() {
   lines.push(
     `- registry evergreen source の収集済み entry: ${evergreenCoverage.reduce((sum, row) => sum + row.collected, 0)} 件`,
   );
-  lines.push("- `bilingual ready` は shared summary quality contract を通る両言語要約です。本文の有無とは別指標です。");
+  lines.push("- `Knowledge eligible` は raw title/snippet/source context の共有契約を通り、告知専用ではないentryです。生成要約は採否へ使いません。");
+  lines.push("- `bilingual ready` は Knowledge eligible のうちshared summary quality contractを通る両言語要約です。本文の有無とは別指標です。");
   lines.push("- `evergreen flagged` が collected より少ない場合、source metadata の stamp 漏れです。0 entry のsourceも表から省略しません。");
   lines.push("");
-  lines.push("| Source | Collected | Evergreen flagged | Bilingual ready | Pending |");
-  lines.push("|---|---:|---:|---:|---:|");
+  lines.push("| Source | Collected | Evergreen flagged | Knowledge eligible | Bilingual ready | Pending |");
+  lines.push("|---|---:|---:|---:|---:|---:|");
   for (const coverage of evergreenCoverage) {
     lines.push(
-      `| ${coverage.source} | ${coverage.collected} | ${coverage.evergreenFlagged} | ${coverage.bilingualReady} | ${coverage.evergreenFlagged - coverage.bilingualReady} |`,
+      `| ${coverage.source} | ${coverage.collected} | ${coverage.evergreenFlagged} | ${coverage.knowledgeEligible} | ${coverage.bilingualReady} | ${coverage.knowledgeEligible - coverage.bilingualReady} |`,
     );
   }
   lines.push("");

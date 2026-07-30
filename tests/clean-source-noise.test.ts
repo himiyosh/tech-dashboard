@@ -309,6 +309,52 @@ describe("clean-source-noise validation", () => {
 });
 
 describe("clean-source-noise archive migration", () => {
+  it("demotes Knowledge announcements without deleting entries or summaries", () => {
+    const report = emptyReport();
+    const announcement = entry({
+      id: "bed450615ddfd03d",
+      source: "aws-ml-blog",
+      sourceType: "blog",
+      title: "Introducing Claude Opus 5 on AWS: Anthropic’s most capable Opus model",
+      contentSnippet: "This post covers the newly available model on Amazon Bedrock.",
+      summaryJa: "日本語要約",
+      summaryEn: "English summary",
+      evergreen: true,
+      category: "agent-fw",
+    });
+    const tutorial = entry({
+      id: "627841b4f5c80956",
+      source: "aws-ml-blog",
+      sourceType: "blog",
+      title: "Get started with OpenAI GPT-5.6 Sol, Terra, and Luna on Amazon Bedrock",
+      contentSnippet: "The models are generally available. Learn how to run inference and reduce cost.",
+      summaryJa: "日本語チュートリアル要約",
+      summaryEn: "English tutorial summary",
+      evergreen: true,
+      category: "agent-fw",
+    });
+
+    const kept = summarizeChanges(
+      "live",
+      [announcement, tutorial],
+      "2026-07-30T01:00:00.000Z",
+      report,
+    );
+
+    expect(kept).toHaveLength(2);
+    expect(kept[0]).toMatchObject({
+      id: announcement.id,
+      url: announcement.url,
+      summaryJa: announcement.summaryJa,
+      summaryEn: announcement.summaryEn,
+    });
+    expect(kept[0]?.evergreen).toBe(true);
+    expect(kept[0]?.knowledgeEligible).toBe(false);
+    expect(kept[1]?.evergreen).toBe(true);
+    expect(kept[1]?.knowledgeEligible).toBeUndefined();
+    expect(report.removed).toBe(0);
+  });
+
   it("replaces materially contradictory live summaries with pending fallback", () => {
     const report = emptyReport();
     const kept = summarizeChanges(

@@ -37,6 +37,7 @@ import {
   isMutableReleaseAliasEntry,
   isPublishableEntry,
 } from "./entry-publication.ts";
+import { isKnowledgeEligibleEntry } from "./knowledge-eligibility.ts";
 import { sourceAuthority } from "./source-meta.ts";
 import { normalizeTagKey } from "./tag-normalize.ts";
 
@@ -94,6 +95,7 @@ export interface NormalizedEntry {
   archiveTier?: "hot" | "warm" | "cold" | "dropped";
   halfLife?: "news" | "tutorial" | "architecture" | "fundamental";
   evergreen?: boolean;
+  knowledgeEligible?: boolean;
   image?: {
     src: string;
     origSrc: string;
@@ -339,10 +341,9 @@ const ARXIV_POSITION_BY_ID = new Map(
 );
 
 /**
- * Evergreen knowledge / best-practice entries (R-022). These come from sources
- * marked `evergreen: true` in the registry (vendor engineering blogs, how-to,
- * best-practice guides). They accumulate instead of decaying, so they get a
- * dedicated page separate from the time-sensitive news Timeline. Newest first.
+ * Evergreen knowledge / best-practice entries (R-022). Source-level evergreen
+ * marks the candidate pool; the shared raw title/snippet contract removes
+ * announcement-only items before they reach this durable lane. Newest first.
  *
  * Unlike the news Timeline, the Knowledge lane stays publishable-only: it is a
  * curated lane whose cards rely on a real bilingual summary (uniform card
@@ -352,7 +353,7 @@ const ARXIV_POSITION_BY_ID = new Map(
  * Timeline is where freshly collected, not-yet-summarized items show up).
  */
 export const KNOWLEDGE_ENTRIES: readonly NormalizedEntry[] = PUBLISHABLE_ENTRIES.filter(
-  (entry) => entry.evergreen === true,
+  isKnowledgeEligibleEntry,
 );
 
 /** Knowledge entries grouped by source, each group newest-first, groups by size desc. */

@@ -142,6 +142,11 @@ export interface NormalizedEntry {
    * Set manually for editorial picks or automatically when viewsLast30d is high.
    */
   evergreen?: boolean;
+  /**
+   * Explicit exclusion from the durable Knowledge lane while preserving the
+   * source's evergreen retention contract and existing enrichment artifacts.
+   */
+  knowledgeEligible?: boolean;
   /** Minimal raw copy for auditing. */
   raw?: unknown;
 }

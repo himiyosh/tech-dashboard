@@ -14,6 +14,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 追加
 
+- production Web buildを1回だけ再利用し、desktop/mobileのHome判断面、検索、RSS/OPML購読発見、実404回復、optionalな要約待ち状態を5分予算内でローカル計測するPlaywrightジャーニーを追加しました。出力はstep条件・経過ms・viewport・route・失敗観測を含む64KiB以下のJSONで、field dataやCore Web Vitalsではありません。
 - site-wide RSS、全カテゴリRSS、arXiv RSS、Knowledge RSSを重複なく一括購読できる静的`/feeds.opml`を追加しました。AboutのJA/EN購読actionと全ページのOPML autodiscoveryから利用でき、JSON FeedはRSSとしてbundleへ含めません。
 - Knowledge専用レーンへ静的な`/rss/knowledge.xml`、ページ固有のRSS autodiscovery、JA/ENの購読actionを追加しました。feedはKnowledge画面と同じ公開可能なevergreen記事だけを、既存RSSの順序・上限・XML安全契約で配信します。
 - Searchでcold tierの記事をtitleまたはtagから回収し、個別detail routeを復活させず、canonical URL由来のstable anchorを持つ月別Archiveへ遷移できるようにしました。結果は既存Pagefindのexact/category/tag/rankingへ追加的に合成し、JA/EN、source authority、一致理由を維持します。

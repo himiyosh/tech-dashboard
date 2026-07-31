@@ -1,8 +1,78 @@
 {
-  "generatedAt": "2026-07-31T11:15:59.418Z",
+  "generatedAt": "2026-07-31T13:25:46.988Z",
   "month": "2026-07",
-  "count": 1335,
+  "count": 1338,
   "entries": [
+    {
+      "id": "4dbaeeb6990bc5ce",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/ManabuYamamoto/items/02e8abbf94c5e36cb107",
+      "title": "Azure SRE Agent の実力とコストを確かめてみた ― App Service / VM / ネットワークの障害を復旧させて実測",
+      "titleJa": "Azure SRE Agent の実力とコストを確かめてみた ― App Service / VM / ネットワークの障害を復旧させて実測",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-31T12:26:36.000Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
+      "tags": [
+        "agent",
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "「復旧してください」と日本語で頼んだら、承認ゲートを挟んで設定を直し、HTTP 200 に戻ったことまで自分で確認して報告してきました。 はじめに 2026年3月に Azure SRE Agent が GA しました。名前は聞いていたものの「結局どこまで自律的に動くの？...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzMTI0NDk4JTJGNTMxNTRmY2U3YmRmZTA3MzY1ZjcxZGFjNTZjZGJhMTFkMDA1ZmY2YyUyRnhfbGFyZ2UucG5nJTNGMTY3NTQwNTEyMD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9ZGY4ODk0MWQ4NTgyYTJiNzFhMmJiYzM1N2U5OTdmZDA%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZiYWU2ZDNhMDgyOGMwMTlmZjI1OWNkYjQ3YTg5ODhjOTg2MzYzODlmJTJGb3JpZ2luYWwuanBnJTNGMTU4MzcyMTg2NT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0yZTZmZDNmZTU4ZjI4NDMwMWExYjZlMGM4OWJhOWMxZg%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3Dc3303e15c56cc6abf406b29b533bf60f?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QXp1cmUlMjBTUkUlMjBBZ2VudCUyMCVFMyU4MSVBRSVFNSVBRSU5RiVFNSU4QSU5QiVFMyU4MSVBOCVFMyU4MiVCMyVFMyU4MiVCOSVFMyU4MyU4OCVFMyU4MiU5MiVFNyVBMiVCQSVFMyU4MSU4QiVFMyU4MiU4MSVFMyU4MSVBNiVFMyU4MSVCRiVFMyU4MSU5RiUyMCVFMiU4MCU5NSUyMEFwcCUyMFNlcnZpY2UlMjAlMkYlMjBWTSUyMCUyRiUyMCVFMyU4MyU4RCVFMyU4MyU4MyVFMyU4MyU4OCVFMyU4MyVBRiVFMyU4MyVCQyVFMyU4MiVBRiVFMyU4MSVBRSVFOSU5QSU5QyVFNSVBRSVCMyVFMyU4MiU5MiVFNSVCRSVBOSVFNiU5NyVBNyVFMyU4MSU5NSVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTAzNTU2ODkxNmI0NDYzMGY0OWE0Y2RhNjhmOWQxMGNi&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBNYW5hYnVZYW1hbW90byZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWExZGRmM2E3NzgzY2M2OWM2MWM1YWY5MjZhNmY5YTFl&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=TWljcm9zb2Z0&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=b89ac33875193b89f1e1f26f58447322",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzMTI0NDk4JTJGNTMxNTRmY2U3YmRmZTA3MzY1ZjcxZGFjNTZjZGJhMTFkMDA1ZmY2YyUyRnhfbGFyZ2UucG5nJTNGMTY3NTQwNTEyMD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9ZGY4ODk0MWQ4NTgyYTJiNzFhMmJiYzM1N2U5OTdmZDA%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZiYWU2ZDNhMDgyOGMwMTlmZjI1OWNkYjQ3YTg5ODhjOTg2MzYzODlmJTJGb3JpZ2luYWwuanBnJTNGMTU4MzcyMTg2NT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0yZTZmZDNmZTU4ZjI4NDMwMWExYjZlMGM4OWJhOWMxZg%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3Dc3303e15c56cc6abf406b29b533bf60f?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QXp1cmUlMjBTUkUlMjBBZ2VudCUyMCVFMyU4MSVBRSVFNSVBRSU5RiVFNSU4QSU5QiVFMyU4MSVBOCVFMyU4MiVCMyVFMyU4MiVCOSVFMyU4MyU4OCVFMyU4MiU5MiVFNyVBMiVCQSVFMyU4MSU4QiVFMyU4MiU4MSVFMyU4MSVBNiVFMyU4MSVCRiVFMyU4MSU5RiUyMCVFMiU4MCU5NSUyMEFwcCUyMFNlcnZpY2UlMjAlMkYlMjBWTSUyMCUyRiUyMCVFMyU4MyU4RCVFMyU4MyU4MyVFMyU4MyU4OCVFMyU4MyVBRiVFMyU4MyVCQyVFMyU4MiVBRiVFMyU4MSVBRSVFOSU5QSU5QyVFNSVBRSVCMyVFMyU4MiU5MiVFNSVCRSVBOSVFNiU5NyVBNyVFMyU4MSU5NSVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTAzNTU2ODkxNmI0NDYzMGY0OWE0Y2RhNjhmOWQxMGNi&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBNYW5hYnVZYW1hbW90byZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWExZGRmM2E3NzgzY2M2OWM2MWM1YWY5MjZhNmY5YTFl&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=TWljcm9zb2Z0&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=b89ac33875193b89f1e1f26f58447322",
+        "alt": "Azure SRE Agent の実力とコストを確かめてみた ― App Service / VM / ネットワークの障害を復旧させて実測",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "e97b50a19e8a4106",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/Erga-mion/items/1b33f05342eac2746bc2",
+      "title": "「さくらのAI Engine」で GitHub Copilot の知恵の延伸",
+      "titleJa": "「さくらのAI Engine」で GitHub Copilot の知恵の延伸",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-31T04:34:29.000Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
+      "tags": [
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに VS CodeのGitHub Copilot Chatでは、GitHub Copilotから用意されているモデルだけでなく、外部のAIモデルを登録できます。 今回は、VS Codeの「Custom Endpoint」機能を利用し、GitHub Copilot C..."
+    },
+    {
+      "id": "ae4c1a4d9442b1e7",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/kinamocchi_tech/items/4e8409c1d86a1e49a7c7",
+      "title": "Mistral Vibe比較 — Claude Code・Codexより安いのに強い理由と落とし穴",
+      "titleJa": "Mistral Vibe比較 — Claude Code・Codexより安いのに強い理由と落とし穴",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-07-31T04:12:58.000Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
+      "tags": [
+        "open-model",
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "📺 この記事は YouTube チャンネル きなこもっちーのテック深掘り の動画解説記事です。 ▶️ 動画はこちら → Mistral Vibe比較 — Claude Code・Codexより安いのに強い理由と落とし穴 🐹🦜 この記事に登場する2匹 🐹 もっちー..."
+    },
     {
       "id": "068f7efab7d1e039",
       "source": "zenn-llm",
@@ -15,6 +85,7 @@
       "publishedAt": "2026-07-31T03:58:06.000Z",
       "collectedAt": "2026-07-31T08:28:52.831Z",
       "tags": [
+        "agent",
         "ai-safety",
         "llm",
         "local-llm",
@@ -37,8 +108,8 @@
       }
     },
     {
-      "id": "2153aacf510eba4a",
-      "source": "qiita-cursor",
+      "id": "aad9544ae5be4caa",
+      "source": "qiita-copilot",
       "sourceType": "blog",
       "url": "https://qiita.com/kinamocchi_tech/items/a05fc8a783b969c45315",
       "title": "GitHub Copilot「月200ドル」は誤解！クレジット制で実費$100のカラクリ",
@@ -46,7 +117,7 @@
       "titleEn": "GitHub Copilot's higher-tier plan appears to cost $200/month, but a…",
       "lang": "ja",
       "publishedAt": "2026-07-31T00:14:58.000Z",
-      "collectedAt": "2026-07-31T11:15:47.187Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "billing",
         "credits",
@@ -55,7 +126,7 @@
         "pricing",
         "qiita"
       ],
-      "category": "cursor",
+      "category": "copilot",
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
@@ -87,6 +158,7 @@
         "llm",
         "multimodal",
         "on-device",
+        "open-model",
         "zenn"
       ],
       "category": "local-llm",
@@ -113,7 +185,7 @@
       "titleEn": "Investigating three real-world incidents in our cybersecurity evaluations",
       "lang": "en",
       "publishedAt": "2026-07-30T23:41:29.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "ai-safety",
         "cybersecurity",
@@ -306,7 +378,7 @@
       "titleEn": "GitHub Models is now retired",
       "lang": "en",
       "publishedAt": "2026-07-30T19:14:22.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "ai",
         "api",
@@ -405,7 +477,7 @@
       "titleEn": "Reference same-repository actions with self-repository syntax",
       "lang": "en",
       "publishedAt": "2026-07-30T17:39:46.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "changelog",
         "dx",
@@ -429,7 +501,7 @@
       "titleEn": "Stacked sessions and pull requests in the GitHub Copilot app",
       "lang": "en",
       "publishedAt": "2026-07-30T17:30:24.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "copilot",
         "github",
@@ -443,6 +515,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Learn how I modernized an old codebase of mine using stacked sessions and pull requests in the GitHub Copilot app. The post Stacked sessions and pull requests in the GitHub Copilot app appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/01/generic-github-copilot-logo-stripe.png",
@@ -451,8 +524,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "ae2168ae48e89388",
@@ -613,7 +685,7 @@
       "titleEn": "Stacked pull requests are now in public preview",
       "lang": "en",
       "publishedAt": "2026-07-30T16:14:29.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "changelog",
         "code-review",
@@ -809,7 +881,7 @@
       "titleEn": "llm-chat-completions-server 0.1a0",
       "lang": "en",
       "publishedAt": "2026-07-30T15:43:16.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "api-server",
         "llm",
@@ -884,7 +956,7 @@
       "titleEn": "GitHub Copilot in Visual Studio — July update",
       "lang": "en",
       "publishedAt": "2026-07-30T15:01:48.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "agent",
         "azure",
@@ -1001,7 +1073,7 @@
       "titleEn": "Limit remote control to managed devices",
       "lang": "en",
       "publishedAt": "2026-07-30T14:54:47.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "changelog",
         "enterprise",
@@ -1302,7 +1374,7 @@
       "titleEn": "GitHub Copilot in Visual Studio Code, July 2026 releases",
       "lang": "en",
       "publishedAt": "2026-07-30T08:00:00.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "agent",
         "ai-assistant",
@@ -1685,7 +1757,7 @@
       "titleEn": "Copilot code review: Agent skills and MCP now generally available",
       "lang": "en",
       "publishedAt": "2026-07-29T21:26:19.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "agent",
         "changelog",
@@ -2387,7 +2459,7 @@
       "titleEn": "Default model enablement for Copilot Business and Enterprise",
       "lang": "en",
       "publishedAt": "2026-07-29T14:01:07.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "admin-policy",
         "changelog",
@@ -2597,7 +2669,7 @@
       "titleEn": "CodeQL 2.26.1 improves analysis accuracy and framework coverage",
       "lang": "en",
       "publishedAt": "2026-07-29T09:45:11.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "changelog",
         "code-scanning",
@@ -2954,7 +3026,7 @@
       "titleEn": "GitHub Copilot app usage metrics now expand across report rollups",
       "lang": "en",
       "publishedAt": "2026-07-28T23:35:01.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "admin",
         "changelog",
@@ -3761,7 +3833,7 @@
       "titleEn": "Powerful Compute So Compact, It’s Clutch — Build AI Anywhere With NVIDIA Jetson",
       "lang": "en",
       "publishedAt": "2026-07-28T15:00:19.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "edge-ai",
         "embedded",
@@ -4505,7 +4577,7 @@
       "titleEn": "moonshotai/Kimi-K3",
       "lang": "en",
       "publishedAt": "2026-07-27T23:39:04.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "kimi-k3",
         "llm",
@@ -4710,7 +4782,7 @@
       "titleEn": "The harness is all you need (mostly)",
       "lang": "en",
       "publishedAt": "2026-07-27T18:00:00.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "ai-coding",
         "best-practices",
@@ -4723,8 +4795,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "A practical GitHub Copilot workflow for prototyping, planning, implementing, and reviewing software without chasing every new AI tool. The post The harness is all you need (mostly) appeared first on The GitHub Blog .",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "A practical GitHub Copilot workflow for prototyping, planning, implementing, and reviewing software without chasing every new AI tool. The post The harness is all you need (mostly) appeared first on The GitHub Blog ."
     },
     {
       "id": "811e399dd03b6bbb",
@@ -5025,7 +5097,7 @@
       "titleEn": "GitHub Copilot app for Beginners: Getting started",
       "lang": "en",
       "publishedAt": "2026-07-27T16:00:00.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "ai-coding",
         "beginners",
@@ -5038,6 +5110,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "New to the GitHub Copilot app? Learn how to start projects, work with AI agents, explore canvases, and streamline your development workflow. The post GitHub Copilot app for Beginners: Getting started appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/07/GIT1050_THUMB_CFB_C.png?fit=1280%2C720",
@@ -5046,8 +5119,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "0ece365f91f83d20",
@@ -5369,7 +5441,7 @@
       "titleEn": "Industry Leaders Unite in Open Secure AI Alliance for AI Safety and Security",
       "lang": "en",
       "publishedAt": "2026-07-27T09:00:07.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "ai-safety",
         "enterprise",
@@ -5816,7 +5888,7 @@
       "titleEn": "NVIDIA Harnesses Vera CPU to Speed Up Design of Next-Generation CPUs and GPUs",
       "lang": "en",
       "publishedAt": "2026-07-27T00:45:42.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "chip-design",
         "cpu",
@@ -8144,7 +8216,7 @@
       "titleEn": "At AI Summit, South Korea Outlines Its AI Future With NVIDIA and Partners",
       "lang": "en",
       "publishedAt": "2026-07-24T04:34:27.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "ai-policy",
         "infrastructure",
@@ -9620,7 +9692,7 @@
       "titleEn": "NVIDIA AI Supercomputer Comes Online at Naval Postgraduate School",
       "lang": "en",
       "publishedAt": "2026-07-23T02:00:46.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "defense",
         "dgx",
@@ -9763,7 +9835,7 @@
       "titleEn": "Quoting Thomas Ptacek",
       "lang": "en",
       "publishedAt": "2026-07-22T23:59:01.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "llm",
         "local-llm",
@@ -9812,7 +9884,7 @@
       "titleEn": "Are AI labs pelicanmaxxing?",
       "lang": "en",
       "publishedAt": "2026-07-22T23:01:00.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "ai-labs",
         "benchmark",
@@ -9993,7 +10065,7 @@
       "titleEn": "Copilot vs. raw API access: What are you actually paying for?",
       "lang": "en",
       "publishedAt": "2026-07-22T19:00:00.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "api",
         "copilot",
@@ -10006,8 +10078,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "Copilot now bills usage at listed API rates. Compare direct model access with the coding workflow, policy, and harness work around it. The post Copilot vs. raw API access: What are you actually paying for? appeared first on The GitHub Blog .",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "Copilot now bills usage at listed API rates. Compare direct model access with the coding workflow, policy, and harness work around it. The post Copilot vs. raw API access: What are you actually paying for? appeared first on The GitHub Blog ."
     },
     {
       "id": "5c7a0e9ed0d3e365",
@@ -10301,7 +10373,7 @@
       "titleEn": "NVIDIA Open Sources First GPU-Accelerated Medical Physics Simulation Framework",
       "lang": "en",
       "publishedAt": "2026-07-22T13:00:11.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "gpu",
         "healthcare",
@@ -10800,7 +10872,7 @@
       "titleEn": "Built in Fort Worth: Wistron Opens Advanced Manufacturing Plant to Produce NVIDIA AI Systems",
       "lang": "en",
       "publishedAt": "2026-07-21T22:35:45.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "ai-hardware",
         "manufacturing",
@@ -11318,7 +11390,7 @@
       "titleEn": "How to build interactive experiences with canvases",
       "lang": "en",
       "publishedAt": "2026-07-21T16:00:00.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "canvas",
         "copilot",
@@ -11331,6 +11403,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Canvases turn AI into interactive workspaces where you can visualize information, explore workflows, and take action across complex tasks. The post How to build interactive experiences with canvases appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/06/MSFTBuild_Blog_Header_01.jpg?fit=2400%2C1260",
@@ -11339,8 +11412,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "527c90fe001be1f4",
@@ -11352,7 +11424,7 @@
       "titleEn": "NVIDIA Vera Rubin Driving Performance Per Watt, Lowest Token Cost for Partners Worldwide",
       "lang": "en",
       "publishedAt": "2026-07-21T15:36:43.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "ai-infrastructure",
         "data-center",
@@ -11728,7 +11800,7 @@
       "titleEn": "Nativ: Run AI models locally on your Mac",
       "lang": "en",
       "publishedAt": "2026-07-21T14:22:27.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "llm",
         "local-ai",
@@ -18317,7 +18389,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Hierarchical Interest Representation is a research area for Meta Ads. We’re exploring an upstream representation layer over the universe of Ads entities – users, advertisers, products, services – learning unified embeddings that connect users’ inferred interests with the breadth of what advertisers offer in their deep funnel ads. The innovations in Hierarchical Interest Representation are [...] Read More... The post Exploring Hierarchical Interest Representation For Meta Ads Deep Funnel Optimization appeared first on Engineering at Meta .",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/07/image2_6a0f44.jpg",
@@ -18326,7 +18397,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "cad49597519e5a0e",
@@ -22550,8 +22622,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "TL; DR At Meta’s scale, a few milliseconds of latency degradation can have a significant negative impact on ads performance. When a Linux kernel upgrade risked regressing latency across Meta’s ad serving fleet, we turned to sched_ext — the upstream, BPF-based extensible scheduling framework — to build a scheduling policy customized to the Ads delivery [...] Read More... The post Modernizing the Meta Ads Service With an Open-Source Kernel Scheduler appeared first on Engineering at Meta ."
+      "contentSnippet": "TL; DR At Meta’s scale, a few milliseconds of latency degradation can have a significant negative impact on ads performance. When a Linux kernel upgrade risked regressing latency across Meta’s ad serving fleet, we turned to sched_ext — the upstream, BPF-based extensible scheduling framework — to build a scheduling policy customized to the Ads delivery [...] Read More... The post Modernizing the Meta Ads Service With an Open-Source Kernel Scheduler appeared first on Engineering at Meta .",
+      "evergreen": true
     },
     {
       "id": "eec53a552c746d07",
@@ -26761,7 +26833,7 @@
       "titleEn": "Better tools made Copilot code review worse. Here’s how we actually improved it.",
       "lang": "en",
       "publishedAt": "2026-07-10T15:57:47.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "ai-quality",
         "benchmark",
@@ -26774,8 +26846,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "How migrating Copilot code review to shared Unix-style code exploration tools reduced review cost by reshaping agent workflows around pull request evidence. The post Better tools made Copilot code review worse. Here’s how we actually improved it. appeared first on The GitHub Blog .",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "How migrating Copilot code review to shared Unix-style code exploration tools reduced review cost by reshaping agent workflows around pull request evidence. The post Better tools made Copilot code review worse. Here’s how we actually improved it. appeared first on The GitHub Blog ."
     },
     {
       "id": "60fd74dad92cbcc4",
@@ -30310,7 +30382,7 @@
       "titleEn": "Automating cross-repo documentation with GitHub Agentic Workflows",
       "lang": "en",
       "publishedAt": "2026-07-08T21:11:56.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "agent",
         "agentic-workflows",
@@ -30324,6 +30396,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Explore how the Aspire team turns merged product changes into SME-reviewed docs pull requests, closing the gap between release and documentation. The post Automating cross-repo documentation with GitHub Agentic Workflows appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/01/generic-mona-copilot-logo.png",
@@ -30332,8 +30405,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "e498a5108f393999",
@@ -30670,7 +30742,7 @@
       "titleEn": "How GitHub Copilot enables zero DNS configuration for GitHub Pages",
       "lang": "en",
       "publishedAt": "2026-07-08T16:00:00.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "automation",
         "copilot",
@@ -30683,8 +30755,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "Go from an empty repository to a live custom domain with HTTPS in about 14 minutes, without manually editing a single DNS record. The post How GitHub Copilot enables zero DNS configuration for GitHub Pages appeared first on The GitHub Blog .",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "Go from an empty repository to a live custom domain with HTTPS in about 14 minutes, without manually editing a single DNS record. The post How GitHub Copilot enables zero DNS configuration for GitHub Pages appeared first on The GitHub Blog ."
     },
     {
       "id": "29e7163d7a001a6e",
@@ -33429,7 +33501,7 @@
       "summaryEn": "Anthropic examines the core values and character at the heart of Claude, revealing the fundamental principles and motivations that shape how the AI thinks and behaves. Understanding Claude's inner life matters for transparency in AI development.",
       "lang": "en",
       "publishedAt": "2026-07-06T16:59:51.000Z",
-      "collectedAt": "2026-07-31T01:26:59.066Z",
+      "collectedAt": "2026-07-31T13:25:38.334Z",
       "tags": [
         "ai-identity",
         "ai-philosophy",
@@ -37645,7 +37717,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Over the past several years, model capabilities and training dataset sizes have experienced exponential growth. During the past year or so, the time between new-frontier-model releases has gone down from months to weeks. Reliable and fast access to storage is important to both the speed and computational cost of this AI innovation. If AI is [...] Read More... The post Meta’s AI Storage Blueprint at Scale appeared first on Engineering at Meta .",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/06/Metas-AI-Storage-Blueprint-at-Scale-Hero-1.png",
@@ -37654,7 +37725,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "a6d7a65d12189805",
@@ -37819,7 +37891,9 @@
       "url": "https://qiita.com/wa-chan222/items/5fb4d524710881808eef",
       "title": "【初心者向け】Excel to Markdownの使い方｜VSCodeで表をMarkdown化する方法",
       "titleJa": "【初心者向け】Excel to Markdownの使い方｜VSCodeで表をMarkdown化する方法",
-      "titleEn": "",
+      "titleEn": "This beginner's guide explains how to use the Excel to Markdown VSCode…",
+      "summaryJa": "VSCode拡張機能「Excel to Markdown」を使い、Excelの表をMarkdown形式に変換する手順を初心者向けに解説した記事。ドキュメント作成の効率化に役立つ実践的なガイドです。",
+      "summaryEn": "This beginner's guide explains how to use the Excel to Markdown VSCode extension to convert spreadsheet tables into Markdown format, streamlining the process of writing technical documentation.",
       "lang": "ja",
       "publishedAt": "2026-07-01T13:12:37.000Z",
       "collectedAt": "2026-07-02T00:00:08.933Z",
@@ -37836,7 +37910,7 @@
       "category": "vscode",
       "importance": 1,
       "halfLife": "tutorial",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "はじめに Aという処理を古い言語から新しい言語へ移行するプロジェクトで、テスト実施前の準備として必要な値を調査するタスクを担当することになりました。 これまでは調査結果をExcelへ手入力していましたが、ふとAIもうまく活用して早くできないか…そんなことを考えました。 ...",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Ftech-festa-ogp-background-4b5015b2c518c7e6b9062a7c9f5f5e90.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMzc3NzkzNiUyRnByb2ZpbGUtaW1hZ2VzJTJGMTczODMxNzU0Nj9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YTBjOGRhYzMxNWQ3YjdlYjZmNDc4YTBjN2JhNzcyMjM%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D3d215b63d1788c99843785ae386b8002?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwJUU1JTg4JTlEJUU1JUJGJTgzJUU4JTgwJTg1JUU1JTkwJTkxJUUzJTgxJTkxJUUzJTgwJTkxRXhjZWwlMjB0byUyME1hcmtkb3duJUUzJTgxJUFFJUU0JUJEJUJGJUUzJTgxJTg0JUU2JTk2JUI5JUVGJUJEJTlDVlNDb2RlJUUzJTgxJUE3JUU4JUExJUE4JUUzJTgyJTkyTWFya2Rvd24lRTUlOEMlOTYlRTMlODElOTklRTMlODIlOEIlRTYlOTYlQjklRTYlQjMlOTUmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyM0ZGRkZGRiZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1iZmY2ZThhNmZlNTExNDQ5M2IzOTA3ZGI1OTFkMzAzMg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB3YS1jaGFuMjIyJnR4dC1jb2xvcj0lMjNGRkZGRkYmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NjNkMTY3NmIwNWM2ZDIwMGY3YTJiODIwM2Q1NTdkMjE&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=9f51094a90320af4def3e20be8643227",

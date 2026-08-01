@@ -1,8 +1,226 @@
 {
-  "generatedAt": "2026-08-01T07:58:27.888Z",
+  "generatedAt": "2026-08-01T09:55:07.099Z",
   "month": "2026-08",
-  "count": 3,
+  "count": 13,
   "entries": [
+    {
+      "id": "8fb00bb49dc8dd80",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/tedorigawa001/items/8914ab554c70d1af15c1",
+      "title": "ServiceNowのアクセス制御：ブラウザUIセッション(同時ログイン制限)とREST API(レート制限)の違いをPDI実機で検証してみた",
+      "titleJa": "ServiceNowのアクセス制御：ブラウザUIセッション(同時ログイン制限)とREST API(レート制限)の違いをPDI実機で検証してみた",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-08-01T07:01:49.000Z",
+      "collectedAt": "2026-08-01T09:54:59.050Z",
+      "tags": [
+        "mcp",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに ServiceNow のセキュリティや運用設計を行っていると、必ずぶつかるのが 「アクセス制限・セッション管理」 の仕様です。 特に「同一ユーザーの同時ログインを制限したい」「REST API の連打や乱用を防ぎたい」といった要件が出てきた際、ブラウザ UI か...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjI4NzM3NDc2NSUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0zZGEzYjgyOTE3MmRkNTZiZjc5NTdjMjk1MzNiOTZiNw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D127bfaa373c166199c5bdf3de814e974?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9U2VydmljZU5vdyVFMyU4MSVBRSVFMyU4MiVBMiVFMyU4MiVBRiVFMyU4MiVCQiVFMyU4MiVCOSVFNSU4OCVCNiVFNSVCRSVBMSVFRiVCQyU5QSVFMyU4MyU5NiVFMyU4MyVBOSVFMyU4MiVBNiVFMyU4MiVCNlVJJUUzJTgyJUJCJUUzJTgzJTgzJUUzJTgyJUI3JUUzJTgzJUE3JUUzJTgzJUIzJTI4JUU1JTkwJThDJUU2JTk5JTgyJUUzJTgzJUFEJUUzJTgyJUIwJUUzJTgyJUE0JUUzJTgzJUIzJUU1JTg4JUI2JUU5JTk5JTkwJTI5JUUzJTgxJUE4UkVTVCUyMEFQSSUyOCVFMyU4MyVBQyVFMyU4MyVCQyVFMyU4MyU4OCVFNSU4OCVCNiVFOSU5OSU5MCUyOSVFMyU4MSVBRSVFOSU4MSU5NSVFMyU4MSU4NCVFMyU4MiU5MiVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTZiMzA0M2MzOTAwN2JjNDU2NWMxYTlmYWIzNGJlNjZk&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB0ZWRvcmlnYXdhMDAxJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9OWQ0OGI4NTg3OGI3ZGEyY2I3M2NjNmEyZTgyNjI3MjQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=c179ded90ce5de3841eb63e55d4deff6",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjI4NzM3NDc2NSUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0zZGEzYjgyOTE3MmRkNTZiZjc5NTdjMjk1MzNiOTZiNw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D127bfaa373c166199c5bdf3de814e974?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9U2VydmljZU5vdyVFMyU4MSVBRSVFMyU4MiVBMiVFMyU4MiVBRiVFMyU4MiVCQiVFMyU4MiVCOSVFNSU4OCVCNiVFNSVCRSVBMSVFRiVCQyU5QSVFMyU4MyU5NiVFMyU4MyVBOSVFMyU4MiVBNiVFMyU4MiVCNlVJJUUzJTgyJUJCJUUzJTgzJTgzJUUzJTgyJUI3JUUzJTgzJUE3JUUzJTgzJUIzJTI4JUU1JTkwJThDJUU2JTk5JTgyJUUzJTgzJUFEJUUzJTgyJUIwJUUzJTgyJUE0JUUzJTgzJUIzJUU1JTg4JUI2JUU5JTk5JTkwJTI5JUUzJTgxJUE4UkVTVCUyMEFQSSUyOCVFMyU4MyVBQyVFMyU4MyVCQyVFMyU4MyU4OCVFNSU4OCVCNiVFOSU5OSU5MCUyOSVFMyU4MSVBRSVFOSU4MSU5NSVFMyU4MSU4NCVFMyU4MiU5MiVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTZiMzA0M2MzOTAwN2JjNDU2NWMxYTlmYWIzNGJlNjZk&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB0ZWRvcmlnYXdhMDAxJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9OWQ0OGI4NTg3OGI3ZGEyY2I3M2NjNmEyZTgyNjI3MjQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=c179ded90ce5de3841eb63e55d4deff6",
+        "alt": "ServiceNowのアクセス制御：ブラウザUIセッション(同時ログイン制限)とREST API(レート制限)の違いをPDI実機で検証してみた",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "ba2e7dcdb6fdd160",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fsdk%2Fv0.0.68",
+      "title": "Cline SDK v0.0.68",
+      "titleJa": "",
+      "titleEn": "Cline SDK v0.0.68",
+      "lang": "en",
+      "publishedAt": "2026-08-01T05:29:37.000Z",
+      "collectedAt": "2026-08-01T09:54:59.050Z",
+      "tags": [
+        "cline",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Provider errors forwarded through the Vercel AI Gateway now surface the real upstream message (e.g. \"This model's maximum context length is 40960 tokens...\") instead of a raw Zod issue dump, and opaque object errors no longer render as [object Object] fetchClineRecommendedModels ",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline SDK v0.0.68",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "9bbfb9d9837c0ce5",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fcore%2Fv0.0.68",
+      "title": "Cline sdk/core v0.0.68",
+      "titleJa": "",
+      "titleEn": "Cline sdk/core v0.0.68",
+      "lang": "en",
+      "publishedAt": "2026-08-01T05:29:26.000Z",
+      "collectedAt": "2026-08-01T09:54:59.050Z",
+      "tags": [
+        "cline",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "@cline/core@0.0.68",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline sdk/core v0.0.68",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "33878ff1b3b7b120",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fagents%2Fv0.0.68",
+      "title": "Cline sdk/agents v0.0.68",
+      "titleJa": "",
+      "titleEn": "Cline sdk/agents v0.0.68",
+      "lang": "en",
+      "publishedAt": "2026-08-01T05:29:25.000Z",
+      "collectedAt": "2026-08-01T09:54:59.050Z",
+      "tags": [
+        "cline",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "@cline/agents@0.0.68",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline sdk/agents v0.0.68",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "5b9fda53605d5e99",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fllms%2Fv0.0.68",
+      "title": "Cline sdk/llms v0.0.68",
+      "titleJa": "",
+      "titleEn": "Cline sdk/llms v0.0.68",
+      "lang": "en",
+      "publishedAt": "2026-08-01T05:29:24.000Z",
+      "collectedAt": "2026-08-01T09:54:59.050Z",
+      "tags": [
+        "cline",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "@cline/llms@0.0.68",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline sdk/llms v0.0.68",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "2e0f7ac78a14f8fd",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fshared%2Fv0.0.68",
+      "title": "Cline sdk/shared v0.0.68",
+      "titleJa": "",
+      "titleEn": "Cline sdk/shared v0.0.68",
+      "lang": "en",
+      "publishedAt": "2026-08-01T05:29:22.000Z",
+      "collectedAt": "2026-08-01T09:54:59.050Z",
+      "tags": [
+        "cline",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "@cline/shared@0.0.68",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline sdk/shared v0.0.68",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "3560a3794b9cc0c6",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/Xim2jp/items/545056ce2ed716df1d54",
+      "title": "MCP 2026-07-28対応のMCPサーバーをTypeScript SDK v2で作ってみた（実装編）",
+      "titleJa": "MCP 2026-07-28対応のMCPサーバーをTypeScript SDK v2で作ってみた（実装編）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-08-01T04:56:50.000Z",
+      "collectedAt": "2026-08-01T09:54:59.050Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "MCP 2026-07-28対応のMCPサーバーをTypeScript SDK v2で作ってみた（実装編） 前回の記事でMCP 2026-07-28の仕様変更を整理しました。今回はその後編で、TypeScript SDK v2を使って実際に動くMCPサーバーを1本作ります..."
+    },
+    {
+      "id": "69ff06364c14439e",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/mamagotolab/items/a482fb1c5e2ddfaa58e3",
+      "title": "【実測】freee公式MCPは `FREEE_SCOPE=read` では読み取り専用にならない──AIに会計の「書き込み」を許す前の線引き",
+      "titleJa": "【実測】freee公式MCPは `FREEE_SCOPE=read` では読み取り専用にならない──AIに会計の「書き込み」を許す前の線引き",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-08-01T04:21:02.000Z",
+      "collectedAt": "2026-08-01T09:54:59.050Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "「先月の売上を教えて」とAIに聞ける。ここまでは、たぶん誰も反対しません。 では、「その請求書、作っといて」まで任せますか。 2026年、会計データにAIを直結する仕組みが一気に実用段階に入りました。日本ではfreeeが公式MCPサーバーを出し、海外では会計プラットフォーム..."
+    },
     {
       "id": "e21e51aadbbfbfe7",
       "source": "qiita-copilot",
@@ -10,12 +228,17 @@
       "url": "https://qiita.com/tonbi_attack/items/30b0903fe6101c2400ea",
       "title": "VS Code の Copilot コミット自動生成が効かないときの実践切り分け",
       "titleJa": "VS Code の Copilot コミット自動生成が効かないときの実践切り分け",
-      "titleEn": "",
+      "titleEn": "When VS Code Copilot fails to auto-generate commit messages, the issue often…",
       "lang": "ja",
       "publishedAt": "2026-08-01T03:10:02.000Z",
       "collectedAt": "2026-08-01T07:58:21.358Z",
       "tags": [
-        "qiita"
+        "commit-message",
+        "debugging",
+        "git",
+        "github-copilot",
+        "qiita",
+        "vscode"
       ],
       "category": "copilot",
       "importance": 1,
@@ -66,6 +289,27 @@
       }
     },
     {
+      "id": "6495a49899d71c52",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/doushimasho/articles/8e0ecd0bc7199d",
+      "title": "コードの書けない私が、一人で「趣味分析＆趣味図鑑」を作った時に意識したこと",
+      "titleJa": "コードの書けない私が、一人で「趣味分析＆趣味図鑑」を作った時に意識したこと",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-08-01T01:36:13.000Z",
+      "collectedAt": "2026-08-01T09:54:59.050Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "①状況を説明せず「あなた自身で確認して」と言う ②直すだけでなく、再発防止の仕組みまで作らせる ③スケールさせる前に、検証の自動化を作らせる ④軸を増やす前に、統計（相関・頻度・分散）を出させる ⑤抽象的な分析より、失敗している具体例を列挙させる ⑥追加する軸は「対象を知らない人でも即答できるか」で選ぶ ⑦既存データへの後付けは「規則推定→分布確認→ルール調整」 ⑧正解データがないなら、ペルソナを作って検証する ⑨大量生成はCIに任せ、自分が維持できる範囲に収める ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝ AIと一緒"
+    },
+    {
       "id": "2e6ec36ee27081de",
       "source": "zenn-mcp",
       "sourceType": "blog",
@@ -89,6 +333,28 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに 自組織ではClaude TeamプランでClaude Codeを導入しており、管理設定(Managed Settings)を使った統制を進めています。同じ管理設定まわりの検証としては、以前に管理設定の配布経路の優先順位を検証した記事も書きました。今回はその続きとして、MCPサーバー(外部ツール連携)の統制まわりを検証した際に踏んだ落とし穴について書きます。 ! 本記事の検証環境は以下のとおりです。 項目 内容 Claudeプラン Team OS / 管理 macOS(Jamf Pro管理下) Claude Code v2.1.220 検証時期 "
+    },
+    {
+      "id": "728fda2aa99f5ace",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/tt_and_tk/items/f7545c4c18f571eba72b",
+      "title": "COROSのMCPサーバを使って，こちらの事情を把握してもらったうえでAIにトレーニングプランを作ってもらう",
+      "titleJa": "COROSのMCPサーバを使って，こちらの事情を把握してもらったうえでAIにトレーニングプランを作ってもらう",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-08-01T00:09:41.000Z",
+      "collectedAt": "2026-08-01T09:54:59.050Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "COROSとは 電子系のスポーツ用品を販売しているアメリカのブランドです． 有名なのはランニングウォッチですが，サイコン(サイクルコンピュータ．ロードバイクに乗る人が自転車に取り付けているアホみたいに高い電子機器)も作っています． これらを使用することで，ランニングやサイ..."
     }
   ]
 }

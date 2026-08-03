@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-03T08:56:34.664Z",
+  "generatedAt": "2026-08-03T12:13:30.060Z",
   "month": "2026-08",
-  "count": 61,
+  "count": 63,
   "entries": [
     {
       "id": "ea46cc4659f7b785",
@@ -9,18 +9,23 @@
       "sourceType": "blog",
       "url": "https://qiita.com/okssusucha/items/6bf2de765c16771b8f47",
       "title": "DeepSeek-V4がKVキャッシュを10分の1に減らせたCSAとHCAの設計",
-      "titleJa": "DeepSeek-V4がKVキャッシュを10分の1に減らせたCSAとHCAの設計",
-      "titleEn": "",
+      "titleJa": "DeepSeek-V4がKVキャッシュを10分の1に削減できたCSAとHCAの設計",
+      "titleEn": "DeepSeek-V4 addresses the memory bottleneck of KV caches in long-context LLMs…",
       "lang": "ja",
       "publishedAt": "2026-08-03T04:35:53.000Z",
       "collectedAt": "2026-08-03T08:56:28.080Z",
       "tags": [
+        "architecture",
+        "attention",
+        "deepseek",
+        "kv-cache",
         "llm",
+        "memory-efficiency",
         "open-model",
         "qiita"
       ],
       "category": "local-llm",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "長い文脈を扱うLLMで、実際に効いてくるコストはFLOPs(計算量)よりむしろKVキャッシュのメモリだ。入力が100万トークンにもなると、各トークン分のKey/Valueを保持し続けるだけでGPUのメモリが埋まり、バッチサイズが絞られ、結局スループットが落ちる。DeepSe...",
@@ -32,6 +37,56 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "ba5fec9d72ba8e86",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/exapolicy/articles/0a8f74542f6beb",
+      "title": "LLM ルーティングはどう動くのか — 入力が評価され、判定され、送信先が決まるまで",
+      "titleJa": "LLM ルーティングはどう動くのか — 入力が評価され、判定され、送信先が決まるまで",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-08-02T23:46:29.000Z",
+      "collectedAt": "2026-08-03T12:13:22.884Z",
+      "tags": [
+        "ai",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 生成 AI を業務で使っていると、送信ボタンを押す直前に手が止まる瞬間があります — 「この内容、クラウドに送ってよいのだったか」。顧客名が入っている。まだ公開していない情報が混じっている。でも急いでいる。 この「毎回、人間が頭の中で仕分ける」やり方は、真面目な人ほど疲弊しますし、急いでいる日ほど破れます。そこで出てくるのが LLM ルーティング — 入力の内容に応じて、処理の行き先 (手元のローカル LLM か、クラウド AI か) を自動で仕分ける仕組みです。 この記事では、LLM ルーティングが内部で何をしているのかを、「評価 → 判定 ",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--q6ZAFBL---/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2580%2580LLM%2520%25E3%2583%25AB%25E3%2583%25BC%25E3%2583%2586%25E3%2582%25A3%25E3%2583%25B3%25E3%2582%25B0%25E3%2581%25AF%25E3%2581%25A9%25E3%2581%2586%25E5%258B%2595%25E3%2581%258F%25E3%2581%25AE%25E3%2581%258B%2520%25E2%2580%2594%2520%25E5%2585%25A5%25E5%258A%259B%25E3%2581%258C%25E8%25A9%2595%25E4%25BE%25A1%25E3%2581%2595%25E3%2582%258C%25E3%2580%2581%25E5%2588%25A4%25E5%25AE%259A%25E3%2581%2595%25E3%2582%258C%25E3%2580%2581%25E9%2580%2581%25E4%25BF%25A1%25E5%2585%2588%25E3%2581%258C%25E6%25B1%25BA%25E3%2581%25BE%25E3%2582%258B%25E3%2581%25BE%25E3%2581%25A7%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_34:%25E3%2583%2597%25E3%2583%25AD%25E3%2583%259E%25E3%2583%258D%25E6%25AD%25A6%25E8%2594%25B5%2Cx_220%2Cy_108/bo_3px_solid_rgb:d6e3ed%2Cg_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2U1ZWFkYzhmNGEuanBlZw==%2Cr_20%2Cw_90%2Cx_92%2Cy_102/co_rgb:6e7b85%2Cg_south_west%2Cl_text:notosansjp-medium.otf_30:Exapolicy%2520%252F%2520%25E3%2582%25A8%25E3%2582%25AF%25E3%2582%25B5%25E3%2583%259D%25E3%2583%25AA%25E3%2582%25B7%25E3%2583%25BC%2Cx_220%2Cy_160/bo_4px_solid_white%2Cg_south_west%2Ch_50%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2MxODc0NzZlNzYuanBlZw==%2Cr_max%2Cw_50%2Cx_139%2Cy_84/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--q6ZAFBL---/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2580%2580LLM%2520%25E3%2583%25AB%25E3%2583%25BC%25E3%2583%2586%25E3%2582%25A3%25E3%2583%25B3%25E3%2582%25B0%25E3%2581%25AF%25E3%2581%25A9%25E3%2581%2586%25E5%258B%2595%25E3%2581%258F%25E3%2581%25AE%25E3%2581%258B%2520%25E2%2580%2594%2520%25E5%2585%25A5%25E5%258A%259B%25E3%2581%258C%25E8%25A9%2595%25E4%25BE%25A1%25E3%2581%2595%25E3%2582%258C%25E3%2580%2581%25E5%2588%25A4%25E5%25AE%259A%25E3%2581%2595%25E3%2582%258C%25E3%2580%2581%25E9%2580%2581%25E4%25BF%25A1%25E5%2585%2588%25E3%2581%258C%25E6%25B1%25BA%25E3%2581%25BE%25E3%2582%258B%25E3%2581%25BE%25E3%2581%25A7%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_34:%25E3%2583%2597%25E3%2583%25AD%25E3%2583%259E%25E3%2583%258D%25E6%25AD%25A6%25E8%2594%25B5%2Cx_220%2Cy_108/bo_3px_solid_rgb:d6e3ed%2Cg_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2U1ZWFkYzhmNGEuanBlZw==%2Cr_20%2Cw_90%2Cx_92%2Cy_102/co_rgb:6e7b85%2Cg_south_west%2Cl_text:notosansjp-medium.otf_30:Exapolicy%2520%252F%2520%25E3%2582%25A8%25E3%2582%25AF%25E3%2582%25B5%25E3%2583%259D%25E3%2583%25AA%25E3%2582%25B7%25E3%2583%25BC%2Cx_220%2Cy_160/bo_4px_solid_white%2Cg_south_west%2Ch_50%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2MxODc0NzZlNzYuanBlZw==%2Cr_max%2Cw_50%2Cx_139%2Cy_84/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "LLM ルーティングはどう動くのか — 入力が評価され、判定され、送信先が決まるまで",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "c6ab4d65b75d434f",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/monocola/articles/f069eec4c5dd5b",
+      "title": "LLMエージェント32体に「不満」だけを与えて6時間放置した — 全ログ公開と、多エージェント設計への3つの教訓",
+      "titleJa": "LLMエージェント32体に「不満」だけを与えて6時間放置した — 全ログ公開と、多エージェント設計への3つの教訓",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-08-02T23:18:53.000Z",
+      "collectedAt": "2026-08-03T12:13:22.884Z",
+      "tags": [
+        "ai",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Minecraft 上に自作の自律エージェント 32 体を作り、制度（役割の割当て・共有規則・権限・契約の履行機構）を一切与えずに約 6 時間放置しました。与えたのは身体と、9 軸の「不満」と、性格だけです。 結果として村人同士の殺害が 24 件発生し、生存 18 体で終わりました。ただしこの記事で書きたいのはその顛末ではなく、LLM エージェントを複数動かすときに再現しそうな 3 つの失敗パターンです。全ログ（発言 9,874 件・構造化イベント 14,969 件）を DOI 付きで公開しているので、主張はすべて検証できます。 データ・技術報告書: h"
     },
     {
       "id": "fefe5cbd28fd306b",
@@ -145,7 +200,7 @@
       "titleEn": "Zed Editor Releases v1.13.2",
       "lang": "en",
       "publishedAt": "2026-08-02T17:33:45.000Z",
-      "collectedAt": "2026-08-02T18:50:18.431Z",
+      "collectedAt": "2026-08-03T12:13:22.884Z",
       "tags": [
         "bug-fix",
         "cursor-movement",
@@ -178,7 +233,7 @@
       "titleEn": "Zed Editor Releases v1.14.2-pre",
       "lang": "en",
       "publishedAt": "2026-08-02T16:52:59.000Z",
-      "collectedAt": "2026-08-02T18:50:18.431Z",
+      "collectedAt": "2026-08-03T12:13:22.884Z",
       "tags": [
         "agent",
         "bug-fix",
@@ -846,7 +901,7 @@
       "titleEn": "Since Cursor lacks a built-in account switcher, this guide shows how to run…",
       "lang": "ja",
       "publishedAt": "2026-08-02T01:12:51.000Z",
-      "collectedAt": "2026-08-02T18:50:18.431Z",
+      "collectedAt": "2026-08-03T12:13:22.884Z",
       "tags": [
         "cursor",
         "macos",
@@ -1670,7 +1725,7 @@
       "titleEn": "A solo developer used Cursor Pro+ intensively alongside a full-time job to…",
       "lang": "ja",
       "publishedAt": "2026-08-01T04:41:09.000Z",
-      "collectedAt": "2026-08-02T18:50:18.431Z",
+      "collectedAt": "2026-08-03T12:13:22.884Z",
       "tags": [
         "cursor",
         "cursor-pro",

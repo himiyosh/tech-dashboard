@@ -1,8 +1,59 @@
 {
-  "generatedAt": "2026-08-03T12:13:30.060Z",
+  "generatedAt": "2026-08-03T17:44:05.550Z",
   "month": "2026-08",
-  "count": 63,
+  "count": 66,
   "entries": [
+    {
+      "id": "f34248d15cd6ac0a",
+      "source": "zenn-mcp",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/shohei_ai_lab/articles/4df38a6e593d70",
+      "title": "【Playwright MCP】複数AIエージェントでブラウザが衝突する問題を完全解決する構成",
+      "titleJa": "【Playwright MCP】複数AIエージェントでブラウザが衝突する問題を完全解決する構成",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-08-03T06:29:35.000Z",
+      "collectedAt": "2026-08-03T17:43:50.355Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "zenn"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "この記事で得られるもの 複数AIエージェントが同時にブラウザを操作するとなぜ衝突するのかの理解 Playwright MCPの「HTTPサーバーモード + mcp-remote」による衝突ゼロの構成 コピペで動く設定ファイル・起動スクリプト一式 対象読者 Claude Code / Kiro / Cursor 等のAIコーディングエージェントを複数同時に動かしている方 Playwright MCPでブラウザ操作をAIに任せているが、並行実行で困っている方 herdr / tmux 等でマルチペイン環境を構築している方 はじめに — AIエージェント時代の",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--V4_It6cY--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2580%2590Playwright%2520MCP%25E3%2580%2591%25E8%25A4%2587%25E6%2595%25B0AI%25E3%2582%25A8%25E3%2583%25BC%25E3%2582%25B8%25E3%2582%25A7%25E3%2583%25B3%25E3%2583%2588%25E3%2581%25A7%25E3%2583%2596%25E3%2583%25A9%25E3%2582%25A6%25E3%2582%25B6%25E3%2581%258C%25E8%25A1%259D%25E7%25AA%2581%25E3%2581%2599%25E3%2582%258B%25E5%2595%258F%25E9%25A1%258C%25E3%2582%2592%25E5%25AE%258C%25E5%2585%25A8%25E8%25A7%25A3%25E6%25B1%25BA%25E3%2581%2599%25E3%2582%258B%25E6%25A7%258B%25E6%2588%2590%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:shohei-ai-lab%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSnlvQVdTWTNTcll0NlhKckVfUjVkUHVzTFMwcVROcFNvVzZqQUV0anltNkVvSnpRPXMyNTAtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--V4_It6cY--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2580%2590Playwright%2520MCP%25E3%2580%2591%25E8%25A4%2587%25E6%2595%25B0AI%25E3%2582%25A8%25E3%2583%25BC%25E3%2582%25B8%25E3%2582%25A7%25E3%2583%25B3%25E3%2583%2588%25E3%2581%25A7%25E3%2583%2596%25E3%2583%25A9%25E3%2582%25A6%25E3%2582%25B6%25E3%2581%258C%25E8%25A1%259D%25E7%25AA%2581%25E3%2581%2599%25E3%2582%258B%25E5%2595%258F%25E9%25A1%258C%25E3%2582%2592%25E5%25AE%258C%25E5%2585%25A8%25E8%25A7%25A3%25E6%25B1%25BA%25E3%2581%2599%25E3%2582%258B%25E6%25A7%258B%25E6%2588%2590%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:shohei-ai-lab%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSnlvQVdTWTNTcll0NlhKckVfUjVkUHVzTFMwcVROcFNvVzZqQUV0anltNkVvSnpRPXMyNTAtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "【Playwright MCP】複数AIエージェントでブラウザが衝突する問題を完全解決する構成",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "1608a3ecc18d3f33",
+      "source": "qiita-cursor",
+      "sourceType": "blog",
+      "url": "https://qiita.com/kooohei/items/b373253c3387c9a73585",
+      "title": "【第２回】Cursor × SpecKitではじめる仕様駆動開発（Specification編）～Terraformを書く前に仕様を書く～",
+      "titleJa": "【第２回】Cursor × SpecKitではじめる仕様駆動開発（Specification編）～Terraformを書く前に仕様を書く～",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-08-03T06:11:50.000Z",
+      "collectedAt": "2026-08-03T17:43:50.355Z",
+      "tags": [
+        "cursor",
+        "qiita"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 前回は、Cursor に SpecKit を導入し、Constitution（開発方針） を作成しました。 Constitution では、 Terraform を優先する モジュール化を意識する State 管理を明確にする 日本語で仕様・設計・タスクを作成..."
+    },
     {
       "id": "ea46cc4659f7b785",
       "source": "qiita-llm",
@@ -39,22 +90,46 @@
       }
     },
     {
+      "id": "e9405ec0c0aab0dc",
+      "source": "google-developers",
+      "sourceType": "blog",
+      "url": "https://developers.googleblog.com/scaling-real-time-ai-agents-with-session-aware-load-balancing/",
+      "title": "Scaling real-time AI agents with session-aware load balancing",
+      "titleJa": "",
+      "titleEn": "Scaling real-time AI agents with session-aware load balancing",
+      "lang": "en",
+      "publishedAt": "2026-08-03T00:00:00.000Z",
+      "collectedAt": "2026-08-03T17:43:50.355Z",
+      "tags": [
+        "google"
+      ],
+      "category": "gemini",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Real-time AI agents break traditional request-response load balancing paradigms because they rely on long-lived, stateful bidirectional streams that obscure true server capacity. To solve this, developers must implement application-level session tracking directly within the runti"
+    },
+    {
       "id": "ba5fec9d72ba8e86",
       "source": "zenn-ai",
       "sourceType": "blog",
       "url": "https://zenn.dev/exapolicy/articles/0a8f74542f6beb",
       "title": "LLM ルーティングはどう動くのか — 入力が評価され、判定され、送信先が決まるまで",
       "titleJa": "LLM ルーティングはどう動くのか — 入力が評価され、判定され、送信先が決まるまで",
-      "titleEn": "",
+      "titleEn": "This article explains how LLM routing works internally—automatically…",
       "lang": "ja",
       "publishedAt": "2026-08-02T23:46:29.000Z",
       "collectedAt": "2026-08-03T12:13:22.884Z",
       "tags": [
         "ai",
+        "ai-architecture",
+        "llm-routing",
+        "local-llm",
+        "privacy",
         "zenn"
       ],
       "category": "local-llm",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "はじめに 生成 AI を業務で使っていると、送信ボタンを押す直前に手が止まる瞬間があります — 「この内容、クラウドに送ってよいのだったか」。顧客名が入っている。まだ公開していない情報が混じっている。でも急いでいる。 この「毎回、人間が頭の中で仕分ける」やり方は、真面目な人ほど疲弊しますし、急いでいる日ほど破れます。そこで出てくるのが LLM ルーティング — 入力の内容に応じて、処理の行き先 (手元のローカル LLM か、クラウド AI か) を自動で仕分ける仕組みです。 この記事では、LLM ルーティングが内部で何をしているのかを、「評価 → 判定 ",
@@ -74,16 +149,21 @@
       "url": "https://zenn.dev/monocola/articles/f069eec4c5dd5b",
       "title": "LLMエージェント32体に「不満」だけを与えて6時間放置した — 全ログ公開と、多エージェント設計への3つの教訓",
       "titleJa": "LLMエージェント32体に「不満」だけを与えて6時間放置した — 全ログ公開と、多エージェント設計への3つの教訓",
-      "titleEn": "",
+      "titleEn": "A 6-hour Minecraft experiment running 32 institution-free LLM agents resulted…",
       "lang": "ja",
       "publishedAt": "2026-08-02T23:18:53.000Z",
       "collectedAt": "2026-08-03T12:13:22.884Z",
       "tags": [
+        "agent-design",
         "ai",
+        "llm",
+        "minecraft",
+        "multi-agent",
+        "simulation",
         "zenn"
       ],
       "category": "local-llm",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "Minecraft 上に自作の自律エージェント 32 体を作り、制度（役割の割当て・共有規則・権限・契約の履行機構）を一切与えずに約 6 時間放置しました。与えたのは身体と、9 軸の「不満」と、性格だけです。 結果として村人同士の殺害が 24 件発生し、生存 18 体で終わりました。ただしこの記事で書きたいのはその顛末ではなく、LLM エージェントを複数動かすときに再現しそうな 3 つの失敗パターンです。全ログ（発言 9,874 件・構造化イベント 14,969 件）を DOI 付きで公開しているので、主張はすべて検証できます。 データ・技術報告書: h"
@@ -1456,7 +1536,7 @@
       "titleEn": "GitHub opened its standalone Copilot app to all plans—including Copilot Free…",
       "lang": "ja",
       "publishedAt": "2026-08-01T07:54:52.000Z",
-      "collectedAt": "2026-08-03T05:26:51.440Z",
+      "collectedAt": "2026-08-03T17:43:50.355Z",
       "tags": [
         "agent",
         "byok",
@@ -1850,7 +1930,7 @@
       "titleEn": "This article introduces cursor-agent, an npm package that lets you remotely…",
       "lang": "ja",
       "publishedAt": "2026-08-01T02:44:53.000Z",
-      "collectedAt": "2026-08-03T05:26:51.440Z",
+      "collectedAt": "2026-08-03T17:43:50.355Z",
       "tags": [
         "agent",
         "browser-automation",

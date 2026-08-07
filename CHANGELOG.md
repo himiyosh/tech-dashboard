@@ -100,6 +100,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 修正
 
+- evergreen記事がlive indexのcap (`PER_SOURCE_CAP` / `CATEGORY_CAPS` / `INDEX_LIMIT`) でevictされた際に、全ての閲覧面から消える問題を修正しました。capはevergreenを考慮せず永久にevictするため、archive行はtier `hot`のまま凍結し、LL-044でsummaryを剥がされた状態で固定されていました。結果として月別Archive (summary必須) にも個別記事ページ (warm由来) にも現れず、`data/archive/{YYYY-MM}.json`にだけ存在する記事になっていました。archive書き出し時にevergreenのsummaryを保持し、liveから外れたevergreen行をwarmへ昇格するようにし、既に凍結していた78件はgit履歴のsummaryを復元してwarmへ戻しました (R-022)。
 - Knowledgeの告知専用判定を、Gartner Magic Quadrantの評価記事、title途中の`Introducing`・`What's new`・`New Capabilities Announced`まで拡張しました。`Today, we're announcing`や一般的な`This post covers ... how you access it`という告知定型文は、保存済み除外をhow-toとして再採用する根拠にせず、具体的なsetup・API parameter・CLI手順は引き続き維持します。
 - ResearchカテゴリRSSを、HTMLのResearch一覧と同じarXiv除外predicateへ接続しました。`/rss/research.xml`はキュレーションResearchだけを配信し、全体RSS・JSON Feed・他カテゴリRSS・専用arXivレーンは従来の母集団を維持します。
 - PR merge の exact-head 独立レビュー gate が拒否した場合、valid・stale・wrong reviewer・self-issued・malformed marker と走査済み review/comment の件数を 1 行で診断できるようにしました。malformed は marker 形式の HTML comment を試みた本文だけを数え、`Independent-Review` / `INDEPENDENT-REVIEW` のような protocol 名の case variant も invalid clearance のまま malformed attempt として可視化し、通常の議論や script 名への言及は除外します。JSON・GitHub API・evidence normalization が結果生成前に失敗した場合は件数を生成しません。

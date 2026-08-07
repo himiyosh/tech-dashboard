@@ -80,6 +80,7 @@ import {
   buildArchiveIndexFile,
   buildArchiveMonthFile,
   groupArchiveEntries,
+  promoteEvictedEvergreenEntries,
   reconcileArchiveMonths,
   synchronizeArchiveTagsFromLive,
   type ArchiveIndexFile,
@@ -836,8 +837,16 @@ async function publishHistoryFiles(
       reconciledByMonth.get(month) ?? [],
       liveEntries,
     );
-    archiveEntriesForStats.push(...tagSync.entries);
-    const mergedEntries = tagSync.entries;
+    // Evergreen rows the live-index caps just evicted would otherwise freeze at
+    // tier "hot" and drop off every browsable surface (R-022).
+    const tierPromotion = promoteEvictedEvergreenEntries(tagSync.entries, liveEntries);
+    if (tierPromotion.changed > 0) {
+      console.log(
+        `[publisher] archive ${month}: promoted ${tierPromotion.changed} evicted evergreen entries to warm`,
+      );
+    }
+    archiveEntriesForStats.push(...tierPromotion.entries);
+    const mergedEntries = tierPromotion.entries;
     const monthPayload = buildArchiveMonthFile(month, mergedEntries, generatedAt);
     finalMonthFiles.set(month, monthPayload);
 

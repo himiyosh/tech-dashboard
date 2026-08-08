@@ -121,6 +121,30 @@ describe("cold archive search core", () => {
     expect(record?.titleJa).toBe("");
     expect(record?.titleEn).toBe("English-only archive title");
   });
+
+  // issue #253: 元記事や RSS から貼り付けたタイトルで検索できること。live 側は
+  // Pagefind の titleRaw meta で対応済みで、cold-archive も同じ条件に揃える。
+  it("訳と食い違う生タイトルを載せ、貼り付け検索で一致する", () => {
+    const rawTitle = "Agent evaluation update, rewritten upstream";
+    const record = createColdArchiveSearchRecord({ ...base, title: rawTitle });
+
+    expect(record?.titleRaw).toBe(rawTitle);
+    expect(coldArchiveRecordMatchesQuery(record!, rawTitle)).toBe(true);
+    // 既存の訳ベースの一致は維持する
+    expect(coldArchiveRecordMatchesQuery(record!, "エージェント評価の更新")).toBe(true);
+  });
+
+  it("生タイトルが訳と一致する場合は payload を膨らませない", () => {
+    // cold-archive payload は COLD_ARCHIVE_SEARCH_MAX_BYTES の予算があるため、
+    // 冗長な重複は載せない (実測: 1064 record 中 titleRaw を持つのは 1 件)。
+    expect(createColdArchiveSearchRecord({ ...base, title: base.titleJa })?.titleRaw)
+      .toBeUndefined();
+    expect(createColdArchiveSearchRecord({ ...base, title: base.titleEn })?.titleRaw)
+      .toBeUndefined();
+    expect(createColdArchiveSearchRecord({ ...base, title: "  " })?.titleRaw)
+      .toBeUndefined();
+    expect(createColdArchiveSearchRecord(base)?.titleRaw).toBeUndefined();
+  });
 });
 
 describe("actual cold archive search artifact", () => {

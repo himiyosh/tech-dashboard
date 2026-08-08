@@ -741,6 +741,14 @@ export function selectArchiveUpdateEntries(
     existingPayload.entries.map((entry) => [canonicalUrlKey(entry.url) ?? entry.url ?? entry.id, entry]),
   );
   return nextEntries.filter((entry) => {
+    // Evergreen rows are always carried into the archive, even when the live
+    // entry is byte-identical to last run. The change filter is an efficiency
+    // optimisation built on "an unchanged entry's archive row is already
+    // correct", which does not hold for evergreen: the row must own current
+    // summaries before the caps evict the entry (promoteEvictedEvergreenEntries
+    // can only flip the tier, it cannot invent a summary), and a stable entry
+    // never changes, so it would never get another chance to supply them.
+    if (entry.evergreen) return true;
     const key = canonicalUrlKey(entry.url) ?? entry.url ?? entry.id;
     return JSON.stringify(existingByUrl.get(key)) !== JSON.stringify(entry);
   });

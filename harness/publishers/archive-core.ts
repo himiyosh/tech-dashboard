@@ -64,6 +64,11 @@ function hasAuthoritativePublishedAt(entry: NormalizedEntry): boolean {
   return Math.abs(published - collected) >= 100;
 }
 
+function hasBilingualSummaries(entry: NormalizedEntry): boolean {
+  return (entry.summaryJa ?? "").trim().length > 0
+    && (entry.summaryEn ?? "").trim().length > 0;
+}
+
 function archiveMergeKey(entry: NormalizedEntry): string {
   return canonicalUrlKey(entry.url) ?? entry.url ?? entry.id;
 }
@@ -278,6 +283,14 @@ export function promoteEvictedEvergreenEntries(
     if (!entry.evergreen || entry.archiveTier === "warm") return entry;
     const key = canonicalUrlKey(entry.url);
     if (liveIds.has(entry.id) || (key && liveCanonical.has(key))) return entry;
+    // A warm row must own bilingual summaries (validateArchiveMonthPayload, and
+    // the monthly page filters through isPublishableEntry). Promoting a row that
+    // has none would only trade an invisible article for an invalid record --
+    // and because the publisher verifies its own artifacts fail-closed, that
+    // invalid record would halt every later publish. Leave it hot instead; the
+    // live entry is expected to supply summaries before eviction (evergreen is
+    // always carried into the archive by selectArchiveUpdateEntries).
+    if (!hasBilingualSummaries(entry)) return entry;
 
     changed += 1;
     return { ...entry, archiveTier: "warm" as const };

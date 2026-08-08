@@ -13,6 +13,7 @@ import {
   boundedSocialDescription,
 } from "../../web/src/lib/bounded-description.ts";
 import { buildAdsTxt } from "../../web/src/lib/ads-txt.ts";
+import { KNOWLEDGE_RSS_FEED } from "../../web/src/lib/feed-catalog.ts";
 import {
   CATEGORY_META,
   type Category,
@@ -96,15 +97,24 @@ function localizedHeadValue(html: string, key: string): string {
 
 function decodeHeadValue(value: string): string {
   return value.replace(
-    /&(?:amp|quot|apos|lt|gt|#39);/gi,
-    (entity) => ({
-      "&amp;": "&",
-      "&quot;": '"',
-      "&apos;": "'",
-      "&lt;": "<",
-      "&gt;": ">",
-      "&#39;": "'",
-    })[entity.toLowerCase()] ?? entity,
+    /&(?:amp|quot|apos|lt|gt|#\d+|#x[0-9a-f]+);/gi,
+    (entity) => {
+      const numeric = entity.match(/^&#(x)?([0-9a-f]+);$/i);
+      if (numeric) {
+        return String.fromCodePoint(
+          Number.parseInt(numeric[2], numeric[1] ? 16 : 10),
+        );
+      }
+      return (
+        {
+          "&amp;": "&",
+          "&quot;": '"',
+          "&apos;": "'",
+          "&lt;": "<",
+          "&gt;": ">",
+        }[entity.toLowerCase()] ?? entity
+      );
+    },
   );
 }
 
@@ -1460,8 +1470,19 @@ test.describe("Publisher generated artifact", () => {
     const pageResponse = await request.get("/knowledge/");
     const pageHtml = await pageResponse.text();
     expect(pageResponse.status()).toBe(200);
-    expect(pageHtml).toContain('href="/rss/knowledge.xml"');
-    expect(pageHtml).toContain('title="TECH Dashboard | Knowledge &amp; Best Practices"');
+    expect(pageHtml).toContain(`href="${KNOWLEDGE_RSS_FEED.href}"`);
+    // title は feed-catalog を単一の真実の源とし、実体参照の表記揺れ
+    // (&amp; と &#38; はどちらも &) に依存しない形で比較する。
+    const knowledgeAlternate = pageHtml.match(
+      new RegExp(
+        `<link\\b(?=[^>]*rel="alternate")(?=[^>]*href="${KNOWLEDGE_RSS_FEED.href}")[^>]*>`,
+        "i",
+      ),
+    )?.[0];
+    expect(knowledgeAlternate).toBeDefined();
+    expect(
+      decodeHeadValue(knowledgeAlternate?.match(/\stitle="([^"]*)"/i)?.[1] ?? ""),
+    ).toBe(KNOWLEDGE_RSS_FEED.title);
   });
 
   test("keeps legacy low-frequency tag URLs recoverable", async ({ request }) => {

@@ -47,6 +47,23 @@ import {
 const TIMELINE_ENTRY_LINK_SELECTOR =
   'main article.card h3.title > a[href^="/e/"]';
 
+/**
+ * issue #237 で Knowledge レーンから除外した記事の anchor。
+ * live 在籍は保証されない (live index の cap が evergreen も evict する) ため、
+ * live 枠を持っている間だけ live 面を検証する名前付きケースとして使う。
+ */
+const ISSUE_237_KNOWLEDGE_EXCLUSION_ANCHORS = [
+  "bed450615ddfd03d",
+  "7ce8f0655e5249f3",
+  "7b3cb462c9d102ab",
+  "52a59dad31dc17b8",
+  "5abc0b85ffaee46f",
+  "07df858350edbc9d",
+  "37803898e498b24d",
+  "1fe4d821705368ab",
+  "4804d6346be88fc2",
+] as const;
+
 function collectRuntimeErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
@@ -1411,20 +1428,31 @@ test.describe("Publisher generated artifact", () => {
         .every((entry) => isKnowledgeEligibleEntry(entry) && isPublishableEntry(entry)),
     ).toBe(true);
 
-    for (const id of [
-      "bed450615ddfd03d",
-      "7ce8f0655e5249f3",
-      "7b3cb462c9d102ab",
-      "52a59dad31dc17b8",
-      "5abc0b85ffaee46f",
-      "07df858350edbc9d",
-      "37803898e498b24d",
-      "1fe4d821705368ab",
-      "4804d6346be88fc2",
-    ]) {
+    // stored exclusion (evergreen かつ Knowledge 不適格) は Knowledge feed に
+    // 出さない。母集団は毎回のデータから導出するので、どの記事が live 枠を
+    // 持っていても常に検証される。
+    const storedExclusions = raw.entries.filter(
+      (entry) =>
+        (entry as { evergreen?: unknown }).evergreen === true
+        && !isKnowledgeEligibleEntry(entry),
+    );
+    expect(storedExclusions.length).toBeGreaterThan(0);
+    for (const entry of storedExclusions) {
+      expect(feedUrls).not.toContain(entry.url);
+    }
+
+    // issue #237 の anchor は名前付きケースとして維持する。ただし live 在籍は
+    // 前提にしない: live index の cap (PER_SOURCE_CAP / CATEGORY_CAPS /
+    // INDEX_LIMIT) は evergreen も pickScore だけで永久 eviction するため、
+    // 固定 ID が live に居ることを要求すると、Publisher の fail-closed 検証が
+    // 「publish 停止 → commit 済みデータは古いまま → 新規生成では必ず落ちる」
+    // という恒久デッドロックになる (PR #247 が unit test 側で修正した同じ罠)。
+    // evict された記事は archive 側の保証 (tests/data-schema.test.ts の
+    // evergreen ゲート) が引き続き担保する。
+    for (const id of ISSUE_237_KNOWLEDGE_EXCLUSION_ANCHORS) {
       const entry = raw.entries.find((candidate) => candidate.id === id);
-      expect(entry).toBeDefined();
-      expect(feedUrls).not.toContain(entry?.url);
+      if (!entry) continue;
+      expect(feedUrls).not.toContain(entry.url);
       const detailResponse = await request.get(`/e/${id}/`);
       expect(detailResponse.status()).toBe(200);
     }

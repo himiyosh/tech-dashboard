@@ -15,7 +15,9 @@ const TRACKING_PARAM_NAMES = new Set([
 const FNV_OFFSET_BASIS_64 = 0xcbf29ce484222325n;
 const FNV_PRIME_64 = 0x100000001b3n;
 
-export const COLD_ARCHIVE_SEARCH_SCHEMA_VERSION = 1 as const;
+// v2: titleRaw (LLM 訳と食い違う生 feed タイトル) を追加。旧 payload は
+// titleRaw を持たないため、schema version を上げて読み捨てる (issue #253)。
+export const COLD_ARCHIVE_SEARCH_SCHEMA_VERSION = 2 as const;
 export const COLD_ARCHIVE_SEARCH_MAX_BYTES = 1_000_000;
 
 export type ColdArchiveAuthority =
@@ -33,6 +35,8 @@ export interface ColdArchiveSearchInput {
   archiveTier?: "hot" | "warm" | "cold" | "dropped";
   titleJa: string;
   titleEn: string;
+  /** 生 feed タイトル。LLM 訳と食い違う場合だけ record へ載せる。 */
+  title?: string;
   tags: readonly string[];
   source: string;
   category: string;
@@ -49,6 +53,12 @@ export interface ColdArchiveSearchRecord {
   resultKind: "cold-archive";
   titleJa: string;
   titleEn: string;
+  /**
+   * 生 feed タイトル。titleJa/titleEn のどちらとも異なるときだけ入る
+   * (issue #253: 元記事や RSS から貼り付けた検索を live 側と同じ条件で拾う)。
+   * 一致する場合は payload を膨らませないため省略する。
+   */
+  titleRaw?: string;
   tags: string[];
   source: string;
   category: string;
@@ -70,6 +80,8 @@ export interface ColdArchiveSearchItem {
   meta: {
     titleJa: string;
     titleEn: string;
+    /** 生 feed タイトル (訳と食い違う場合のみ)。Portal の exact 判定が読む。 */
+    titleRaw?: string;
     tags: string;
     archiveMonth: string;
   };
@@ -177,6 +189,10 @@ export function createColdArchiveSearchRecord(
   const titleJa = input.titleJa.trim();
   const titleEn = input.titleEn.trim();
   if (!titleJa && !titleEn) return null;
+  const rawTitle = (input.title ?? "").trim();
+  const titleRaw = rawTitle && rawTitle !== titleJa && rawTitle !== titleEn
+    ? rawTitle
+    : undefined;
 
   const anchorId = coldArchiveAnchorId(input.url);
   return {
@@ -187,6 +203,7 @@ export function createColdArchiveSearchRecord(
     resultKind: "cold-archive",
     titleJa,
     titleEn,
+    ...(titleRaw ? { titleRaw } : {}),
     tags: [...new Set(input.tags.map((tag) => tag.trim()).filter(Boolean))],
     source: input.source,
     category: input.category,
@@ -206,7 +223,9 @@ export function coldArchiveRecordMatchesQuery(
     return true;
   }
 
-  const title = normalizeSearchText(`${record.titleJa} ${record.titleEn}`);
+  const title = normalizeSearchText(
+    `${record.titleJa} ${record.titleEn} ${record.titleRaw ?? ""}`,
+  );
   const terms = normalizedQuery.split(/\s+/).filter(Boolean);
   return title.includes(normalizedQuery)
     || (terms.length > 1 && terms.every((term) => title.includes(term)));
@@ -221,6 +240,7 @@ export function coldArchiveRecordToSearchItem(
     meta: {
       titleJa: record.titleJa,
       titleEn: record.titleEn,
+      ...(record.titleRaw ? { titleRaw: record.titleRaw } : {}),
       tags: record.tags.join(" "),
       archiveMonth: record.archiveMonth,
     },

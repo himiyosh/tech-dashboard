@@ -25,6 +25,7 @@ for (const [month, file] of Object.entries(ARCHIVE_BY_MONTH)) {
       archiveTier: entry.archiveTier,
       titleJa: titleForLang(entry, "ja"),
       titleEn: titleForLang(entry, "en"),
+      title: entry.title,
       tags: entry.tags,
       source: entry.source,
       category: entry.category,

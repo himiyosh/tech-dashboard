@@ -1,8 +1,523 @@
 {
-  "generatedAt": "2026-08-07T20:26:43.445Z",
+  "generatedAt": "2026-08-08T12:21:13.873Z",
   "month": "2026-08",
-  "count": 170,
+  "count": 220,
   "entries": [
+    {
+      "id": "dc9e473bc3bef0a6",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/jvince/items/eeb67d2d0bc5e1ffabb4",
+      "title": "AIにUnityプロジェクトを毎回探索させたくないので、アセット参照MCPを作った【UAsset Reference MCP #1】",
+      "titleJa": "AIにUnityプロジェクトを毎回探索させたくないので、アセット参照MCPを作った【UAsset Reference MCP #1】",
+      "titleEn": "The author built and open-sourced UAsset Reference MCP, a Model Context…",
+      "lang": "ja",
+      "publishedAt": "2026-08-08T08:32:44.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai-tooling",
+        "asset-management",
+        "game-development",
+        "mcp",
+        "mcp-server",
+        "qiita",
+        "unity"
+      ],
+      "category": "mcp",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "GitHub: https://github.com/JVinceW/uasset-reference-memory-mcp はじめに 最近、AIがどんどん強くなってきました。 ゲーム開発でもAIを取り入れる人が増えていて、自分の開発ワークフローの中でも、AIを使う場面が...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMjE1NjAxNSUyRnByb2ZpbGUtaW1hZ2VzJTJGMTYzMzkzMzg3Nz9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OTEwNzkyNjhiNzg3NGQyM2Q3NTgwYTBiODM1YmU1ODI%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D6a8ed5e6d9e7b584049dc5fd13e98844?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QUklRTMlODElQUJVbml0eSVFMyU4MyU5NyVFMyU4MyVBRCVFMyU4MiVCOCVFMyU4MiVBNyVFMyU4MiVBRiVFMyU4MyU4OCVFMyU4MiU5MiVFNiVBRiU4RSVFNSU5QiU5RSVFNiU4RSVBMiVFNyVCNCVBMiVFMyU4MSU5NSVFMyU4MSU5QiVFMyU4MSU5RiVFMyU4MSU4RiVFMyU4MSVBQSVFMyU4MSU4NCVFMyU4MSVBRSVFMyU4MSVBNyVFMyU4MCU4MSVFMyU4MiVBMiVFMyU4MiVCQiVFMyU4MyU4MyVFMyU4MyU4OCVFNSU4RiU4MiVFNyU4NSVBN01DUCVFMyU4MiU5MiVFNCVCRCU5QyVFMyU4MSVBMyVFMyU4MSU5RiVFMyU4MCU5MFVBc3NldCUyMFJlZmVyZW5jZSUyMCVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWU2NjIwMzlhMGM0ODlkMWUxOTM2MTUxMmYwYzhkZWQ3&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBqdmluY2UmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz03Nzc2YTgyNWZjOWU4OWQyZTc2OTc4ZmE3NTdmMjJkOA&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=ac40d94314e2f4ff60b9a04c49e3befc",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMjE1NjAxNSUyRnByb2ZpbGUtaW1hZ2VzJTJGMTYzMzkzMzg3Nz9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OTEwNzkyNjhiNzg3NGQyM2Q3NTgwYTBiODM1YmU1ODI%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D6a8ed5e6d9e7b584049dc5fd13e98844?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QUklRTMlODElQUJVbml0eSVFMyU4MyU5NyVFMyU4MyVBRCVFMyU4MiVCOCVFMyU4MiVBNyVFMyU4MiVBRiVFMyU4MyU4OCVFMyU4MiU5MiVFNiVBRiU4RSVFNSU5QiU5RSVFNiU4RSVBMiVFNyVCNCVBMiVFMyU4MSU5NSVFMyU4MSU5QiVFMyU4MSU5RiVFMyU4MSU4RiVFMyU4MSVBQSVFMyU4MSU4NCVFMyU4MSVBRSVFMyU4MSVBNyVFMyU4MCU4MSVFMyU4MiVBMiVFMyU4MiVCQiVFMyU4MyU4MyVFMyU4MyU4OCVFNSU4RiU4MiVFNyU4NSVBN01DUCVFMyU4MiU5MiVFNCVCRCU5QyVFMyU4MSVBMyVFMyU4MSU5RiVFMyU4MCU5MFVBc3NldCUyMFJlZmVyZW5jZSUyMCVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWU2NjIwMzlhMGM0ODlkMWUxOTM2MTUxMmYwYzhkZWQ3&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBqdmluY2UmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz03Nzc2YTgyNWZjOWU4OWQyZTc2OTc4ZmE3NTdmMjJkOA&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=ac40d94314e2f4ff60b9a04c49e3befc",
+        "alt": "AIにUnityプロジェクトを毎回探索させたくないので、アセット参照MCPを作った【UAsset Reference MCP #1】",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "93539c67eb582c10",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/takayuki_miyazaki/items/a8afeb47cf7977b0e68d",
+      "title": "【止まっちゃう事件の記録 #2】GPUメモリ衝突を潰したのに、まだホストが「無痕跡」で凍りつく話 〜熱暴走という仮説にたどり着くまで〜",
+      "titleJa": "【止まっちゃう事件の記録 #2】GPUメモリ衝突を解消したのに、ホストが「無痕跡」で凍りつく問題 〜熱暴走という仮説にたどり着くまで〜",
+      "titleEn": "After fixing GPU memory profiling conflicts between co-resident vLLM instances,…",
+      "lang": "ja",
+      "publishedAt": "2026-08-08T07:14:46.000Z",
+      "collectedAt": "2026-08-08T08:25:05.107Z",
+      "tags": [
+        "debugging",
+        "docker",
+        "gpu",
+        "llm",
+        "local-llm",
+        "qiita",
+        "thermal",
+        "vllm"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "この記事について 前回の記事で、複数の vLLM を同一GPUに常駐させた際に発生していたホストハングの原因（dockerd の一斉自動復旧時に起きるGPUメモリプロファイリングの衝突）を特定し、対策を打ちました。 対策後、明らかに衝突由来のハングは激減しました。ところが...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYxOTA1ODIyJTJGM2JiM2JiNDg3N2MwYTE4N2E4ODI2MTVkNjI1ZjZhZTAzMWEwMTQyMSUyRnhfbGFyZ2UucG5nJTNGMTYyOTI1NjEzNT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OGFjNzQ5OGUxMjQ3OWE1YzUwNGJmMzUyN2YwN2M4YjU%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZhN2EyMDNhZjhlZmEyZjAxODVjZTJkZjk4ODU1YWQ5YzcwZDc3YzNiJTJGb3JpZ2luYWwuanBnJTNGMTYyOTAxOTk1MT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1kMzQyZTRiODRkMjc1MzY5YjQ4M2EzZjlhZTQ2ZjE2MQ%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D18bb632382b93efc30051495d5aefeb8?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwJUU2JUFEJUEyJUUzJTgxJUJFJUUzJTgxJUEzJUUzJTgxJUExJUUzJTgyJTgzJUUzJTgxJTg2JUU0JUJBJThCJUU0JUJCJUI2JUUzJTgxJUFFJUU4JUE4JTk4JUU5JThDJUIyJTIwJTIzMiVFMyU4MCU5MUdQVSVFMyU4MyVBMSVFMyU4MyVBMiVFMyU4MyVBQSVFOCVBMSU5RCVFNyVBQSU4MSVFMyU4MiU5MiVFNiVCRCVCMCVFMyU4MSU5NyVFMyU4MSU5RiVFMyU4MSVBRSVFMyU4MSVBQiVFMyU4MCU4MSVFMyU4MSVCRSVFMyU4MSVBMCVFMyU4MyU5QiVFMyU4MiVCOSVFMyU4MyU4OCVFMyU4MSU4QyVFMyU4MCU4QyVFNyU4NCVBMSVFNyU5NyU5NSVFOCVCNyVBMSVFMyU4MCU4RCVFMyU4MSVBNyVFNSU4NyU4RCVFMyU4MiU4QSVFMyU4MSVBNCVFMyU4MSU4RiVFOCVBOSVCMSUyMCVFMyU4MCU5QyVFNyU4NiVCMSVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTE3MWM3OWM5NjUwMjg4NmY1YmJkZDFiNmQ3M2I2ZmY1&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB0YWtheXVraV9taXlhemFraSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTFlZTE2ZDIyNjBhOWFiYjZkNmFlMmU5YzY4OGUxYzU4&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=R0lGVElWRSBSRVNFQVJDSCwgTExDLg&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=337361a00e7aad365592aec32382b519",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYxOTA1ODIyJTJGM2JiM2JiNDg3N2MwYTE4N2E4ODI2MTVkNjI1ZjZhZTAzMWEwMTQyMSUyRnhfbGFyZ2UucG5nJTNGMTYyOTI1NjEzNT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OGFjNzQ5OGUxMjQ3OWE1YzUwNGJmMzUyN2YwN2M4YjU%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZhN2EyMDNhZjhlZmEyZjAxODVjZTJkZjk4ODU1YWQ5YzcwZDc3YzNiJTJGb3JpZ2luYWwuanBnJTNGMTYyOTAxOTk1MT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1kMzQyZTRiODRkMjc1MzY5YjQ4M2EzZjlhZTQ2ZjE2MQ%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D18bb632382b93efc30051495d5aefeb8?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwJUU2JUFEJUEyJUUzJTgxJUJFJUUzJTgxJUEzJUUzJTgxJUExJUUzJTgyJTgzJUUzJTgxJTg2JUU0JUJBJThCJUU0JUJCJUI2JUUzJTgxJUFFJUU4JUE4JTk4JUU5JThDJUIyJTIwJTIzMiVFMyU4MCU5MUdQVSVFMyU4MyVBMSVFMyU4MyVBMiVFMyU4MyVBQSVFOCVBMSU5RCVFNyVBQSU4MSVFMyU4MiU5MiVFNiVCRCVCMCVFMyU4MSU5NyVFMyU4MSU5RiVFMyU4MSVBRSVFMyU4MSVBQiVFMyU4MCU4MSVFMyU4MSVCRSVFMyU4MSVBMCVFMyU4MyU5QiVFMyU4MiVCOSVFMyU4MyU4OCVFMyU4MSU4QyVFMyU4MCU4QyVFNyU4NCVBMSVFNyU5NyU5NSVFOCVCNyVBMSVFMyU4MCU4RCVFMyU4MSVBNyVFNSU4NyU4RCVFMyU4MiU4QSVFMyU4MSVBNCVFMyU4MSU4RiVFOCVBOSVCMSUyMCVFMyU4MCU5QyVFNyU4NiVCMSVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTE3MWM3OWM5NjUwMjg4NmY1YmJkZDFiNmQ3M2I2ZmY1&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB0YWtheXVraV9taXlhemFraSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTFlZTE2ZDIyNjBhOWFiYjZkNmFlMmU5YzY4OGUxYzU4&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=R0lGVElWRSBSRVNFQVJDSCwgTExDLg&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=337361a00e7aad365592aec32382b519",
+        "alt": "【止まっちゃう事件の記録 #2】GPUメモリ衝突を潰したのに、まだホストが「無痕跡」で凍りつく話 〜熱暴走という仮説にたどり着くまで〜",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "aa11f6e9eaccd82f",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/RK127/items/28ffc078ac9c76c001c8",
+      "title": "npxで.vscode/settings.jsonとかを自動生成するツールを作ってみた",
+      "titleJa": "npxで「.vscode/settings.json」などを自動生成するツールを作ってみた",
+      "titleEn": "A developer created vscode-autoconfig, an npx-based tool that automatically…",
+      "lang": "ja",
+      "publishedAt": "2026-08-08T05:48:41.000Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
+      "tags": [
+        "developer-tools",
+        "extensions-json",
+        "npx",
+        "qiita",
+        "settings-json",
+        "vscode",
+        "vscode-autoconfig"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに .vscodeのsettings.jsonとextensions.jsonを自動生成するツール(vscode-autoconfig)を作ってみました。 作った経緯 きっかけは自分が関わっていたプロジェクトの開発環境が全然整備されていなかったことでした。 .vs...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzMTE4Mjg2JTJGYjg4MDkwMDcxOGQxODgzYmYyM2NkYWVlZWIzYjAxNzkwYzIzOWNjZCUyRnhfbGFyZ2UucG5nJTNGMTc0NjcwODExMD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9ZmM2MWFhNzQyNmQ3NDE1ZTEyZjNkMzgyNTE2ZDQ1ZWI%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dc56f4e0cbaf9cbce54344b093b04cc3f?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9bnB4JUUzJTgxJUE3LnZzY29kZSUyRnNldHRpbmdzLmpzb24lRTMlODElQTglRTMlODElOEIlRTMlODIlOTIlRTglODclQUElRTUlOEIlOTUlRTclOTQlOUYlRTYlODglOTAlRTMlODElOTklRTMlODIlOEIlRTMlODMlODQlRTMlODMlQkMlRTMlODMlQUIlRTMlODIlOTIlRTQlQkQlOUMlRTMlODElQTMlRTMlODElQTYlRTMlODElQkYlRTMlODElOUYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0zMDEzY2E3YzQyZmMwOWNmNTc1ZjRlNzBmOWFmNzdjNQ&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBSSzEyNyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTZlZGI0ZmI3NzhlNzlmOWQwNWJiNDkwYmQ4NTc3NDVh&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=8ac375d5e01e48abb5cb50303237f98c",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzMTE4Mjg2JTJGYjg4MDkwMDcxOGQxODgzYmYyM2NkYWVlZWIzYjAxNzkwYzIzOWNjZCUyRnhfbGFyZ2UucG5nJTNGMTc0NjcwODExMD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9ZmM2MWFhNzQyNmQ3NDE1ZTEyZjNkMzgyNTE2ZDQ1ZWI%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dc56f4e0cbaf9cbce54344b093b04cc3f?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9bnB4JUUzJTgxJUE3LnZzY29kZSUyRnNldHRpbmdzLmpzb24lRTMlODElQTglRTMlODElOEIlRTMlODIlOTIlRTglODclQUElRTUlOEIlOTUlRTclOTQlOUYlRTYlODglOTAlRTMlODElOTklRTMlODIlOEIlRTMlODMlODQlRTMlODMlQkMlRTMlODMlQUIlRTMlODIlOTIlRTQlQkQlOUMlRTMlODElQTMlRTMlODElQTYlRTMlODElQkYlRTMlODElOUYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0zMDEzY2E3YzQyZmMwOWNmNTc1ZjRlNzBmOWFmNzdjNQ&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBSSzEyNyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTZlZGI0ZmI3NzhlNzlmOWQwNWJiNDkwYmQ4NTc3NDVh&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=8ac375d5e01e48abb5cb50303237f98c",
+        "alt": "npxで.vscode/settings.jsonとかを自動生成するツールを作ってみた",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "884cc6b8f1f10b99",
+      "source": "qiita-copilot",
+      "sourceType": "blog",
+      "url": "https://qiita.com/heftykoo/items/5c6e64759dd4e079ef86",
+      "title": "AI coding agentのAuto modeは、モデル選びを消す代わりに評価設計を要求する",
+      "titleJa": "AI coding agentの「Auto mode」はモデル選択を省く代わりに評価設計を求める",
+      "titleEn": "GitHub Copilot's Auto mode removes the need to manually select a model, but it…",
+      "lang": "ja",
+      "publishedAt": "2026-08-08T02:46:11.000Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
+      "tags": [
+        "agent",
+        "auto-mode",
+        "benchmark",
+        "copilot-cli",
+        "evaluation",
+        "model-selection",
+        "qiita"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Copilot CLIで/modelを開き、Autoを選ぶ。毎回モデルを選ぶ手間がなくなるので、これはかなり楽です。 ただ、同じfrontendの修正を頼んだときに、前回と今回を何で比べればいいのかは急に分かりにくくなります。diffが変わったのはpromptのせいか、re...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jSUpwQTE5QWJOcDFrT0tBcE1ISmo1aHh4R2loQnpyUEltYUdLMzdRNGRnaUtWalJnJTNEczk2LWM_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWFkYTAzNzBmNzJkNTNiZWEwZjIyOWMzMzFiYWYwNmRk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Db599133b325fa1b83ac5108210eb35e5?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QUklMjBjb2RpbmclMjBhZ2VudCVFMyU4MSVBRUF1dG8lMjBtb2RlJUUzJTgxJUFGJUUzJTgwJTgxJUUzJTgzJUEyJUUzJTgzJTg3JUUzJTgzJUFCJUU5JTgxJUI4JUUzJTgxJUIzJUUzJTgyJTkyJUU2JUI2JTg4JUUzJTgxJTk5JUU0JUJCJUEzJUUzJTgyJThGJUUzJTgyJThBJUUzJTgxJUFCJUU4JUE5JTk1JUU0JUJFJUExJUU4JUE4JUFEJUU4JUE4JTg4JUUzJTgyJTkyJUU4JUE2JTgxJUU2JUIxJTgyJUUzJTgxJTk5JUUzJTgyJThCJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9OGQyMDgwODZhYmI1MzExYzI1NzdmZmY4MzdlZDA3MzU&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBoZWZ0eWtvbyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWNjZjhkMzEzODdiNDViYTNiOTI5M2QyOTAwNTZjZGI4&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=a40e10f138b10b275231d1a659ce0aac",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jSUpwQTE5QWJOcDFrT0tBcE1ISmo1aHh4R2loQnpyUEltYUdLMzdRNGRnaUtWalJnJTNEczk2LWM_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWFkYTAzNzBmNzJkNTNiZWEwZjIyOWMzMzFiYWYwNmRk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Db599133b325fa1b83ac5108210eb35e5?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QUklMjBjb2RpbmclMjBhZ2VudCVFMyU4MSVBRUF1dG8lMjBtb2RlJUUzJTgxJUFGJUUzJTgwJTgxJUUzJTgzJUEyJUUzJTgzJTg3JUUzJTgzJUFCJUU5JTgxJUI4JUUzJTgxJUIzJUUzJTgyJTkyJUU2JUI2JTg4JUUzJTgxJTk5JUU0JUJCJUEzJUUzJTgyJThGJUUzJTgyJThBJUUzJTgxJUFCJUU4JUE5JTk1JUU0JUJFJUExJUU4JUE4JUFEJUU4JUE4JTg4JUUzJTgyJTkyJUU4JUE2JTgxJUU2JUIxJTgyJUUzJTgxJTk5JUUzJTgyJThCJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9OGQyMDgwODZhYmI1MzExYzI1NzdmZmY4MzdlZDA3MzU&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBoZWZ0eWtvbyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWNjZjhkMzEzODdiNDViYTNiOTI5M2QyOTAwNTZjZGI4&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=a40e10f138b10b275231d1a659ce0aac",
+        "alt": "AI coding agentのAuto modeは、モデル選びを消す代わりに評価設計を要求する",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "93cf84397f2894aa",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/hisuzuya/items/4390b34f284e29080090",
+      "title": "AIエージェントの社内導入で始まる「OAuth地獄」 — ID-JAGとEMAでMCP認可を一元管理する",
+      "titleJa": "AIエージェントの社内導入で始まる「OAuth地獄」 — ID-JAGとEMAでMCP認可を一元管理する",
+      "titleEn": "Enterprises deploying multiple MCP servers face repeated per-service OAuth…",
+      "lang": "ja",
+      "publishedAt": "2026-08-08T02:18:47.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai-agents",
+        "authorization",
+        "identity",
+        "mcp",
+        "mcp-server",
+        "oauth",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "当社でも、SSOに対応したMCP、OAuth認証が必要なMCP、APIキーで接続するMCPを用途に応じて使い分けています。 特に負担になったのがOAuth認証です。新しいMCPを追加するたびに、利用者が接続先ごとに認証しなければなりませんでした。 少人数で試している間は、そ...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMzIzMTI0NiUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc2NTk0NjU3NT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MjQzNmIxNjlhOWEwNzQ5MzE2MjgxYjE1NzM0ZjRlODg%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY2MjYzNzMzMmM2OThlZTVmYWJmMzEyODU1NWUwNjNlMjE0NzdjZGJiJTJGb3JpZ2luYWwuanBnJTNGMTc2OTQ5MzczOT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1iMzY3OTFlNzNlZTlhZjE4MWMzYTE4MzQzY2ZmNzQxZA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D340818ecdd0b3dfcb31388da4436f8e7?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QUklRTMlODIlQTglRTMlODMlQkMlRTMlODIlQjglRTMlODIlQTclRTMlODMlQjMlRTMlODMlODglRTMlODElQUUlRTclQTQlQkUlRTUlODYlODUlRTUlQjAlOEUlRTUlODUlQTUlRTMlODElQTclRTUlQTclOEIlRTMlODElQkUlRTMlODIlOEIlRTMlODAlOENPQXV0aCVFNSU5QyVCMCVFNyU4RCU4NCVFMyU4MCU4RCUyMCVFMiU4MCU5NCUyMElELUpBRyVFMyU4MSVBOEVNQSVFMyU4MSVBN01DUCVFOCVBQSU4RCVFNSU4RiVBRiVFMyU4MiU5MiVFNCVCOCU4MCVFNSU4NSU4MyVFNyVBRSVBMSVFNyU5MCU4NiVFMyU4MSU5OSVFMyU4MiU4QiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWFkNWQ0YTQ2NjI5YTg1MzlkNTk2NWYzOTg2NDg2YTZh&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBoaXN1enV5YSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTZlZDg2NWZkNzZjNDU3MzAyYmU5Mjc5YWY4ZjllOWM2&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=5qCq5byP5Lya56S-UkFZVkVO&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=fb50166bf3129e303d3467490ec9e6b4",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMzIzMTI0NiUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc2NTk0NjU3NT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MjQzNmIxNjlhOWEwNzQ5MzE2MjgxYjE1NzM0ZjRlODg%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY2MjYzNzMzMmM2OThlZTVmYWJmMzEyODU1NWUwNjNlMjE0NzdjZGJiJTJGb3JpZ2luYWwuanBnJTNGMTc2OTQ5MzczOT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1iMzY3OTFlNzNlZTlhZjE4MWMzYTE4MzQzY2ZmNzQxZA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D340818ecdd0b3dfcb31388da4436f8e7?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QUklRTMlODIlQTglRTMlODMlQkMlRTMlODIlQjglRTMlODIlQTclRTMlODMlQjMlRTMlODMlODglRTMlODElQUUlRTclQTQlQkUlRTUlODYlODUlRTUlQjAlOEUlRTUlODUlQTUlRTMlODElQTclRTUlQTclOEIlRTMlODElQkUlRTMlODIlOEIlRTMlODAlOENPQXV0aCVFNSU5QyVCMCVFNyU4RCU4NCVFMyU4MCU4RCUyMCVFMiU4MCU5NCUyMElELUpBRyVFMyU4MSVBOEVNQSVFMyU4MSVBN01DUCVFOCVBQSU4RCVFNSU4RiVBRiVFMyU4MiU5MiVFNCVCOCU4MCVFNSU4NSU4MyVFNyVBRSVBMSVFNyU5MCU4NiVFMyU4MSU5OSVFMyU4MiU4QiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWFkNWQ0YTQ2NjI5YTg1MzlkNTk2NWYzOTg2NDg2YTZh&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBoaXN1enV5YSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTZlZDg2NWZkNzZjNDU3MzAyYmU5Mjc5YWY4ZjllOWM2&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=5qCq5byP5Lya56S-UkFZVkVO&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=fb50166bf3129e303d3467490ec9e6b4",
+        "alt": "AIエージェントの社内導入で始まる「OAuth地獄」 — ID-JAGとEMAでMCP認可を一元管理する",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "514e5a9f66c1cc9c",
+      "source": "zenn-ai",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/kenjiigarashi/articles/c7e6e98176ce08",
+      "title": "数式拒絶！多次元ベクトルに騙されるな。「階層引き出し」で脳内にマップを作るLLM超入門 〜専門書で挫折した人へ〜",
+      "titleJa": "数式拒絶！「階層引き出し」で脳内にマップを作るLLM超入門 〜専門書で挫折した人へ〜",
+      "titleEn": "This beginner's guide explains how large language models work using intuitive…",
+      "lang": "ja",
+      "publishedAt": "2026-08-08T00:47:24.000Z",
+      "collectedAt": "2026-08-08T06:29:57.218Z",
+      "tags": [
+        "ai",
+        "beginner",
+        "explainer",
+        "llm",
+        "local-llm",
+        "tutorial",
+        "zenn"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "🧭 はじめに この記事は「LLM（大規模言語モデル）」の概念を直感的に伝えるための読み物です。そのため、難解な数学的数式や、専門的なグラフは一切登場しません。 巷のAI解説書や技術記事を開くと、すぐに「多次元ベクトルの分布図」が出てきて、「X軸が〜, Y軸が〜, 相対座標が〜」という説明が始まります。しかし、そんなデータを見せられても、一般の人には具体的なイメージが全く湧きません。 最初にお伝えしておきます。実は、この記事を書いている私自身、数式をきちんと理解しているわけではありません（笑）。 だからこそ、専門書を開いては数式やグラフで挫折する人の気持",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--WaMJj0Yu--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E6%2595%25B0%25E5%25BC%258F%25E6%258B%2592%25E7%25B5%25B6%25EF%25BC%2581%25E5%25A4%259A%25E6%25AC%25A1%25E5%2585%2583%25E3%2583%2599%25E3%2582%25AF%25E3%2583%2588%25E3%2583%25AB%25E3%2581%25AB%25E9%25A8%2599%25E3%2581%2595%25E3%2582%258C%25E3%2582%258B%25E3%2581%25AA%25E3%2580%2582%25E3%2580%258C%25E9%259A%258E%25E5%25B1%25A4%25E5%25BC%2595%25E3%2581%258D%25E5%2587%25BA%25E3%2581%2597%25E3%2580%258D%25E3%2581%25A7%25E8%2584%25B3%25E5%2586%2585%25E3%2581%25AB%25E3%2583%259E%25E3%2583%2583%25E3%2583%2597%25E3%2582%2592%25E4%25BD%259C%25E3%2582%258BLLM%25E8%25B6%2585%25E5%2585%25A5%25E9%2596%2580%2520%25E3%2580%259C%25E5%25B0%2582%25E9%2596%2580%25E6%259B%25B8%25E3%2581%25A7%25E6%258C%25AB%25E6%258A%2598%25E3%2581%2597%25E3%2581%259F%25E4%25BA%25BA%25E3%2581%25B8%25E3%2580%259C%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Kenji%2520Igarashi%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSVBMQmJVbk02SEF1TzhlLUxpUV93VW1sX0IxWXVvQkdQTm9LeUtFTXBRYTdMVjBnPXMyNTAtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--WaMJj0Yu--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E6%2595%25B0%25E5%25BC%258F%25E6%258B%2592%25E7%25B5%25B6%25EF%25BC%2581%25E5%25A4%259A%25E6%25AC%25A1%25E5%2585%2583%25E3%2583%2599%25E3%2582%25AF%25E3%2583%2588%25E3%2583%25AB%25E3%2581%25AB%25E9%25A8%2599%25E3%2581%2595%25E3%2582%258C%25E3%2582%258B%25E3%2581%25AA%25E3%2580%2582%25E3%2580%258C%25E9%259A%258E%25E5%25B1%25A4%25E5%25BC%2595%25E3%2581%258D%25E5%2587%25BA%25E3%2581%2597%25E3%2580%258D%25E3%2581%25A7%25E8%2584%25B3%25E5%2586%2585%25E3%2581%25AB%25E3%2583%259E%25E3%2583%2583%25E3%2583%2597%25E3%2582%2592%25E4%25BD%259C%25E3%2582%258BLLM%25E8%25B6%2585%25E5%2585%25A5%25E9%2596%2580%2520%25E3%2580%259C%25E5%25B0%2582%25E9%2596%2580%25E6%259B%25B8%25E3%2581%25A7%25E6%258C%25AB%25E6%258A%2598%25E3%2581%2597%25E3%2581%259F%25E4%25BA%25BA%25E3%2581%25B8%25E3%2580%259C%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Kenji%2520Igarashi%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSVBMQmJVbk02SEF1TzhlLUxpUV93VW1sX0IxWXVvQkdQTm9LeUtFTXBRYTdMVjBnPXMyNTAtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "数式拒絶！多次元ベクトルに騙されるな。「階層引き出し」で脳内にマップを作るLLM超入門 〜専門書で挫折した人へ〜",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "0a47857f30be52dd",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/okssusucha/items/47a30368a08ca808d29f",
+      "title": "ローカル8Bを84%に引き上げるForge、ツール呼び出しの信頼性は配信層で決まる",
+      "titleJa": "ローカル8Bモデルのツール呼び出し成功率を84%に引き上げる「Forge」、信頼性は配信層の設計で決まる",
+      "titleEn": "A comparison of local 8B model deployments shows tool-call success rates…",
+      "lang": "ja",
+      "publishedAt": "2026-08-08T00:04:57.000Z",
+      "collectedAt": "2026-08-08T02:47:27.048Z",
+      "tags": [
+        "agent",
+        "forge",
+        "inference-server",
+        "llm",
+        "local-llm",
+        "qiita",
+        "tool-calling"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "同じ8Bの重みを、同じマシンで動かす。なのにエージェントのツール呼び出し成功率が、一方では7%、もう一方では83%になる。この差はモデルの賢さではなく、モデルを「配信する側」の作りで生まれている。ローカルLLMでエージェントを組んだことがある人なら、途中でツール呼び出しのJ...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDQ0NTkxOCUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc4MTY3MDc5Nz9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MDNlMjVkZWRkNmU3MWFiNWViODkyMWY3ZmU0MDkxMTk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Da31592270e517f215bc50ec14b67500e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgzJUFEJUUzJTgzJUJDJUUzJTgyJUFCJUUzJTgzJUFCOEIlRTMlODIlOTI4NCUyNSVFMyU4MSVBQiVFNSVCQyU5NSVFMyU4MSU4RCVFNCVCOCU4QSVFMyU4MSU5MiVFMyU4MiU4QkZvcmdlJUUzJTgwJTgxJUUzJTgzJTg0JUUzJTgzJUJDJUUzJTgzJUFCJUU1JTkxJUJDJUUzJTgxJUIzJUU1JTg3JUJBJUUzJTgxJTk3JUUzJTgxJUFFJUU0JUJGJUExJUU5JUEwJUJDJUU2JTgwJUE3JUUzJTgxJUFGJUU5JTg1JThEJUU0JUJGJUExJUU1JUIxJUE0JUUzJTgxJUE3JUU2JUIxJUJBJUUzJTgxJUJFJUUzJTgyJThCJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MmJlMzI2ODZkYjRjZDYxMjY3ZDFjMmNiODNlOGU5ODE&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBva3NzdXN1Y2hhJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NDUyMjg3YzA3OWQzZTBhYmJkYzZkZjg1MjVmMzNlNTc&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=4f96a32c09963db7a27ed48a358882e2",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDQ0NTkxOCUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc4MTY3MDc5Nz9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MDNlMjVkZWRkNmU3MWFiNWViODkyMWY3ZmU0MDkxMTk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Da31592270e517f215bc50ec14b67500e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgzJUFEJUUzJTgzJUJDJUUzJTgyJUFCJUUzJTgzJUFCOEIlRTMlODIlOTI4NCUyNSVFMyU4MSVBQiVFNSVCQyU5NSVFMyU4MSU4RCVFNCVCOCU4QSVFMyU4MSU5MiVFMyU4MiU4QkZvcmdlJUUzJTgwJTgxJUUzJTgzJTg0JUUzJTgzJUJDJUUzJTgzJUFCJUU1JTkxJUJDJUUzJTgxJUIzJUU1JTg3JUJBJUUzJTgxJTk3JUUzJTgxJUFFJUU0JUJGJUExJUU5JUEwJUJDJUU2JTgwJUE3JUUzJTgxJUFGJUU5JTg1JThEJUU0JUJGJUExJUU1JUIxJUE0JUUzJTgxJUE3JUU2JUIxJUJBJUUzJTgxJUJFJUUzJTgyJThCJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MmJlMzI2ODZkYjRjZDYxMjY3ZDFjMmNiODNlOGU5ODE&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBva3NzdXN1Y2hhJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NDUyMjg3YzA3OWQzZTBhYmJkYzZkZjg1MjVmMzNlNTc&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=4f96a32c09963db7a27ed48a358882e2",
+        "alt": "ローカル8Bを84%に引き上げるForge、ツール呼び出しの信頼性は配信層で決まる",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "55100e4bb4bbb1ff",
+      "source": "simonw-blog",
+      "sourceType": "blog",
+      "url": "https://simonwillison.net/2026/Aug/7/openai-timeline/#atom-everything",
+      "title": "Now we have a timeline of the OpenAI accidental attack against Hugging Face",
+      "titleJa": "OpenAIによるHugging Faceへの誤攻撃、タイムラインが明らかに",
+      "titleEn": "Now we have a timeline of the OpenAI accidental attack against Hugging Face",
+      "lang": "en",
+      "publishedAt": "2026-08-07T23:55:58.000Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
+      "tags": [
+        "black-hat",
+        "hugging-face",
+        "llm",
+        "newsletter",
+        "openai",
+        "security"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "OpenAI gave a last-minute presentation at the Black Hat security on Wednesday about \"the Hugging Face Incident\" ( previously on this blog). The video was published yesterday. It's short and information dense and well worth watching, in particular because it provides full details ",
+      "image": {
+        "src": "https://img.youtube.com/vi/87DyyMV0kCY/maxresdefault.jpg",
+        "origSrc": "https://img.youtube.com/vi/87DyyMV0kCY/maxresdefault.jpg",
+        "alt": "Now we have a timeline of the OpenAI accidental attack against Hugging Face",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "74b6e02835f52091",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-08-07-github-copilot-weekly-releases-august-3",
+      "title": "GitHub Copilot weekly releases — August 3",
+      "titleJa": "GitHub Copilot 週次リリース — 8月3日",
+      "titleEn": "GitHub Copilot weekly releases — August 3",
+      "lang": "en",
+      "publishedAt": "2026-08-07T23:16:02.000Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
+      "tags": [
+        "changelog",
+        "cli",
+        "github",
+        "vscode",
+        "weekly-release"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "This week’s updates across GitHub Copilot in the desktop app, CLI, and VS Code help you resume and organize work, review changes, and ask questions without losing context. GitHub Copilot… The post GitHub Copilot weekly releases — August 3 appeared first on The GitHub Blog ."
+    },
+    {
+      "id": "2a2600ed49a92481",
+      "source": "qiita-claude",
+      "sourceType": "blog",
+      "url": "https://qiita.com/moha0918_/items/8d9bb54bff914f7017cd",
+      "title": "Claude Code v2.1.224｜セッション間 SendMessage が解禁｜毎日Changelog解説",
+      "titleJa": "Claude Code v2.1.224｜セッション間 SendMessage が解禁｜毎日Changelog解説",
+      "titleEn": "Claude Code v2.1.224 enables cross-session communication via SendMessage,…",
+      "lang": "ja",
+      "publishedAt": "2026-08-07T22:10:09.000Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
+      "tags": [
+        "agent",
+        "changelog",
+        "claude",
+        "claude-code",
+        "multi-agent",
+        "qiita",
+        "release"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Claude Codeの公式Changelogをリリースから最速で翻訳・解説しています。 別々に起動した Claude Code のセッション同士が、SendMessage で直接やり取りできるようになりました。相手を探すのは ListAgents。同じマシンに居な..."
+    },
+    {
+      "id": "0b30b85871b80092",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-08-07-enterprises-can-now-install-third-party-github-apps",
+      "title": "Enterprises can now install third-party GitHub Apps",
+      "titleJa": "エンタープライズアカウントにサードパーティ製 GitHub Apps をインストール可能に",
+      "titleEn": "Enterprises can now install third-party GitHub Apps",
+      "lang": "en",
+      "publishedAt": "2026-08-07T21:40:03.000Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
+      "tags": [
+        "changelog",
+        "enterprise",
+        "github",
+        "github-apps"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Enterprise owners can now install public GitHub Apps created outside their enterprise on their enterprise account. This allows third-party integrators to build apps for enterprise management scenarios. Enterprise installations grant… The post Enterprises can now install third-par"
+    },
+    {
+      "id": "8baa107d86d0c992",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-08-07-copilot-impact-dashboard-adds-a-return-on-investment-section",
+      "title": "Copilot impact dashboard adds a return on investment section",
+      "titleJa": "Copilot インパクトダッシュボードに「投資対効果」セクションが追加",
+      "titleEn": "Copilot impact dashboard adds a return on investment section",
+      "lang": "en",
+      "publishedAt": "2026-08-07T21:05:37.000Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
+      "tags": [
+        "changelog",
+        "copilot",
+        "dashboard",
+        "github",
+        "roi"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The Copilot impact dashboard now includes a “Potential return on investment” section that connects what you spend on Copilot to the pull request output you get back. What’s new Two… The post Copilot impact dashboard adds a return on investment section appeared first on The GitHub"
+    },
+    {
+      "id": "8054fbb8979e411b",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-08-07-copilot-code-review-effort-levels-are-generally-available",
+      "title": "Copilot code review effort levels are generally available",
+      "titleJa": "Copilot コードレビューの「努力レベル」機能が一般提供開始",
+      "titleEn": "Copilot code review effort levels are generally available",
+      "lang": "en",
+      "publishedAt": "2026-08-07T20:49:26.000Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
+      "tags": [
+        "changelog",
+        "code-review",
+        "copilot",
+        "github",
+        "release"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Lite and Balanced effort levels for GitHub Copilot code review are now generally available. They let you match the depth of a review to the complexity and risk of a… The post Copilot code review effort levels are generally available appeared first on The GitHub Blog ."
+    },
+    {
+      "id": "288b0bf07995c59e",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/ai-artificial-intelligence/976801/fenix-flexin-rubberz-ai-song-treblo",
+      "title": "Fenix Flexin isn’t even denying using AI to make ‘Rubberz’ anymore",
+      "titleJa": "LAラッパーのFenix Flexin、楽曲「Rubberz」へのAI使用をほぼ認める",
+      "titleEn": "Fenix Flexin isn’t even denying using AI to make ‘Rubberz’ anymore",
+      "lang": "en",
+      "publishedAt": "2026-08-07T20:01:51.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai-generated",
+        "hip-hop",
+        "music",
+        "news",
+        "treblo",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "It took long enough, but now LA rapper Fenix Flexin appears to have admitted using AI for the 80s synth pop-themed song \"Rubberz.\" His comments follow the producer Medasin's videos claiming that an AI tool called Treblo (formerly Sonauto) was used to make the song, and the compan",
+      "image": {
+        "src": "https://platform.theverge.com/wp-content/uploads/sites/2/2026/08/artworks-WsdIgVXV8NOV-0-t1080x1080.jpg?quality=90&strip=all&crop=0,23.821989528796,100,52.356020942408",
+        "origSrc": "https://platform.theverge.com/wp-content/uploads/sites/2/2026/08/artworks-WsdIgVXV8NOV-0-t1080x1080.jpg?quality=90&strip=all&crop=0,23.821989528796,100,52.356020942408",
+        "alt": "Fenix Flexin isn’t even denying using AI to make ‘Rubberz’ anymore",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "d28c6f7f2e5b1e98",
+      "source": "openhands-releases",
+      "sourceType": "release",
+      "url": "https://github.com/OpenHands/OpenHands/releases/tag/v1.12.0",
+      "title": "OpenHands Releases v1.12.0",
+      "titleJa": "OpenHands v1.12.0 リリース",
+      "titleEn": "OpenHands Releases v1.12.0",
+      "lang": "en",
+      "publishedAt": "2026-08-07T19:38:32.000Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
+      "tags": [
+        "model-endpoints",
+        "openhands",
+        "release",
+        "v1.12.0"
+      ],
+      "category": "opencode",
+      "importance": 3,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "1.12.0 (2026-08-07) What's Changed Features feat: clarify free OpenHands model endpoints by @juanmichelini in #16281 Full Changelog : v1.11.0...v1.12.0 This PR was generated with Release Please . See documentation .",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/225919603?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/225919603?s=60&v=4",
+        "alt": "OpenHands Releases v1.12.0",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "c94c230138f24aeb",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/entertainment/976939/roku-fairground-ai-fast-channel",
+      "title": "Watching Roku’s AI channel is like eating from a trough",
+      "titleJa": "RokuのAIチャンネルは「飼い葉桶から食べる」ような体験",
+      "titleEn": "Watching Roku’s AI channel is like eating from a trough",
+      "lang": "en",
+      "publishedAt": "2026-08-07T18:59:46.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai-generated-content",
+        "fast",
+        "news",
+        "release",
+        "roku",
+        "streaming",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The appeal of free ad-supported streaming television (FAST) channels has always been the way they make it easier to (re)discover classic films and series. But Roku's latest experiment in the FAST space has less to do with traditionally produced entertainment and is entirely focus",
+      "image": {
+        "src": "https://platform.theverge.com/wp-content/uploads/sites/2/2026/08/Screenshot-2026-08-07-at-2.40.34-PM.png?quality=90&strip=all&crop=0%2C2.3735501218774%2C100%2C95.252899756245&w=1200",
+        "origSrc": "https://platform.theverge.com/wp-content/uploads/sites/2/2026/08/Screenshot-2026-08-07-at-2.40.34-PM.png?quality=90&strip=all&crop=0%2C2.3735501218774%2C100%2C95.252899756245&w=1200",
+        "alt": "Watching Roku’s AI channel is like eating from a trough",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "359ba2e35e53a598",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/ai-artificial-intelligence/976948/openai-astra-model-pause-critical-cyber-capabilities",
+      "title": "OpenAI puts the brakes on a new model because it’s supposedly too powerful",
+      "titleJa": "OpenAI、強力すぎるとして新モデル「Astra」の開発活動を一時停止",
+      "titleEn": "OpenAI puts the brakes on a new model because it’s supposedly too powerful",
+      "lang": "en",
+      "publishedAt": "2026-08-07T18:40:34.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai-safety",
+        "cybersecurity",
+        "news",
+        "openai",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "OpenAI says it is pausing \"internal activities\" around an in-development AI model, Astra, because it doesn't yet meet new security standards the company is putting in place. The announcement follows its recent disclosure that OpenAI models accidentally hacked Hugging Face. Anthro"
+    },
     {
       "id": "ce3fbfd3e94ed8ff",
       "source": "github-changelog",
@@ -13,7 +528,7 @@
       "titleEn": "Copilot usage metrics API adds agent app activity",
       "lang": "en",
       "publishedAt": "2026-08-07T18:20:47.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "agent",
         "api",
@@ -37,6 +552,116 @@
       }
     },
     {
+      "id": "dfb18900947ff84c",
+      "source": "openhands-releases",
+      "sourceType": "release",
+      "url": "https://github.com/OpenHands/OpenHands/releases/tag/v1.11.0",
+      "title": "OpenHands Releases v1.11.0",
+      "titleJa": "OpenHands v1.11.0 リリース",
+      "titleEn": "OpenHands Releases v1.11.0",
+      "lang": "en",
+      "publishedAt": "2026-08-07T18:06:12.000Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
+      "tags": [
+        "agent",
+        "agent-canvas",
+        "llm-cost",
+        "openhands",
+        "release",
+        "ui-improvement"
+      ],
+      "category": "opencode",
+      "importance": 3,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "1.11.0 (2026-08-07) What's Changed Features feat: show per-run LLM cost in the Activity Log and exports by @hieptl in #16351 feat: reorder Customize navigation by @DevinVinson in #16358 feat(settings): polish Agent Canvas version update UI by @FraterCCCLXIII in #16343 feat(home):",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/225919603?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/225919603?s=60&v=4",
+        "alt": "OpenHands Releases v1.11.0",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "a7ae7216fe753c70",
+      "source": "microsoft-source",
+      "sourceType": "blog",
+      "url": "https://news.microsoft.com/source/asia/features/microsofts-newest-india-datacenter-region-goes-live-to-power-the-countrys-ai-economy-and-enable-frontier-firms/",
+      "title": "Microsoft’s newest India datacenter region goes live to power the country’s AI economy and enable Frontier Firms",
+      "titleJa": "Microsoftのインド新データセンターリージョンが稼働開始、AI経済を支援",
+      "titleEn": "Microsoft’s newest India datacenter region goes live to power the country’s AI economy and enable Frontier Firms",
+      "lang": "en",
+      "publishedAt": "2026-08-07T18:00:40.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai-infrastructure",
+        "cloud",
+        "datacenter",
+        "india",
+        "microsoft",
+        "news",
+        "release"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The post Microsoft’s newest India datacenter region goes live to power the country’s AI economy and enable Frontier Firms appeared first on Source ."
+    },
+    {
+      "id": "0d097005bb5c7ce9",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/streaming/976881/disney-plus-ai-recommendation-espn-search",
+      "title": "Disney Plus tries a new AI-powered search",
+      "titleJa": "Disney Plusが自然言語対応のAI検索機能をテスト中",
+      "titleEn": "Disney Plus tries a new AI-powered search",
+      "lang": "en",
+      "publishedAt": "2026-08-07T17:53:44.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai",
+        "disney-plus",
+        "news",
+        "recommendation",
+        "streaming",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Disney is testing a new AI-powered tool for Disney Plus that uses a natural language search, a voice query, or a suggested prompt to create a customized row of show and movie recommendations. Disney Plus, like other streaming services, can recommend shows to watch based on your v"
+    },
+    {
+      "id": "cf40115ceb3bf6f7",
+      "source": "microsoft-source",
+      "sourceType": "blog",
+      "url": "https://news.microsoft.com/source/asia/2026/08/04/when-access-opens-doors-how-two-young-indonesians-are-building-digital-careers-through-ai-and-cloud/",
+      "title": "How two young Indonesians are building digital careers through AI and cloud",
+      "titleJa": "AIとクラウドでデジタルキャリアを築くインドネシアの若者2人の挑戦",
+      "titleEn": "How two young Indonesians are building digital careers through AI and cloud",
+      "lang": "en",
+      "publishedAt": "2026-08-07T17:51:33.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai",
+        "career",
+        "cloud",
+        "digital-skills",
+        "indonesia",
+        "microsoft",
+        "news"
+      ],
+      "category": "tech-news",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The post How two young Indonesians are building digital careers through AI and cloud appeared first on Source ."
+    },
+    {
       "id": "354009beaf7009f2",
       "source": "github-changelog",
       "sourceType": "changelog",
@@ -46,13 +671,14 @@
       "titleEn": "“Relates to” issue relationship in public preview and multi-select fields is generally available",
       "lang": "en",
       "publishedAt": "2026-08-07T17:33:14.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "changelog",
         "github",
         "github-projects",
         "issues",
-        "project-management"
+        "project-management",
+        "release"
       ],
       "category": "tech-news",
       "importance": 2,
@@ -69,6 +695,34 @@
       }
     },
     {
+      "id": "a4d4ce02cf99f13d",
+      "source": "google-cloud-blog",
+      "sourceType": "blog",
+      "url": "https://cloud.google.com/blog/products/data-analytics/new-bigquery-data-transfer-service-capabilities/",
+      "title": "Zero-code, low-cost data ingestion: New BigQuery DTS capabilities",
+      "titleJa": "コードなし・低コストのデータ取り込み：BigQuery DTSの新機能",
+      "titleEn": "Zero-code, low-cost data ingestion: New BigQuery DTS capabilities",
+      "summaryJa": "BigQuery Data Transfer Serviceが新コネクタと機能を追加し、社内ETLパイプラインの構築・維持コストを削減しながら、ゼロコードでBigQueryへのデータ取り込みを自動化できるようになった。",
+      "summaryEn": "BigQuery Data Transfer Service expands its connector ecosystem with new integrations, enabling fully managed, zero-code data ingestion into BigQuery and reducing reliance on costly in-house ETL pipelines.",
+      "lang": "en",
+      "publishedAt": "2026-08-07T17:00:00.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "bigquery",
+        "cloud",
+        "data-analytics",
+        "data-transfer",
+        "etl",
+        "google"
+      ],
+      "category": "gemini",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "In a fast-paced digital economy, data is your most critical engine. Yet, many enterprises find themselves trapped in a costly paradox, spending over 100 hours a week building and fixing fragile, in-house ETL pipelines or wrestling with unpredictable third-party tools. Trusted by thousands of customers every single day , BigQuery Data Transfer Service (DTS) eliminates this engineering burden. As a fully managed, zero-code data movement solution, BigQuery DTS automates data ingestion into BigQuery allowing your teams to transition from pipeline maintenance to strategic data science in minutes. Expanding the ecosystem: New connectors and capabilities We are rapidly expanding our integration landscape to eliminate data silos across databases, ads and marketing platforms. Here are the latest ad",
+      "evergreen": true
+    },
+    {
       "id": "eacbeb377907f747",
       "source": "github-changelog",
       "sourceType": "changelog",
@@ -78,7 +732,7 @@
       "titleEn": "Secret scanning coverage updates",
       "lang": "en",
       "publishedAt": "2026-08-07T16:54:47.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "changelog",
         "github",
@@ -90,7 +744,40 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
-      "contentSnippet": "This release expands secret scanning’s coverage with more secrets blocked by push protection, one new secret scanning partner, and richer metadata on alerts. Secret scanning partnership program Lovable Labs is… The post Secret scanning coverage updates appeared first on The GitHu"
+      "contentSnippet": "This release expands secret scanning’s coverage with more secrets blocked by push protection, one new secret scanning partner, and richer metadata on alerts. Secret scanning partnership program Lovable Labs is… The post Secret scanning coverage updates appeared first on The GitHu",
+      "image": {
+        "src": "https://github.blog/wp-content/uploads/2026/08/571554102-6349f5b6-b0b7-4130-9300-6d5d87e0b6e9.jpg",
+        "origSrc": "https://github.blog/wp-content/uploads/2026/08/571554102-6349f5b6-b0b7-4130-9300-6d5d87e0b6e9.jpg",
+        "alt": "Secret scanning coverage updates",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "24dd21408c39cc0b",
+      "source": "the-verge",
+      "sourceType": "blog",
+      "url": "https://www.theverge.com/podcast/976784/google-deepmind-ai-race-vergecast",
+      "title": "What’s behind the Google AI shake-up",
+      "titleJa": "GoogleのAIチーム大規模再編の背景とは",
+      "titleEn": "What’s behind the Google AI shake-up",
+      "lang": "en",
+      "publishedAt": "2026-08-07T16:45:14.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai",
+        "deepmind",
+        "google",
+        "news",
+        "personnel",
+        "verge"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Some of the biggest names on Google's AI team got new jobs this week. In some cases, including for legendary Googler Jeff Dean, those jobs are no longer at Google. Given that Google's models seem to be behind the best of what's coming out of anthropic and OpenAI, is this a sign o"
     },
     {
       "id": "7e512337c97c6bc3",
@@ -100,9 +787,11 @@
       "title": "How and Why Netflix Built a Real-Time Distributed Graph: Part 3 — Querying the graph with gRPC…",
       "titleJa": "NetflixがリアルタイムグラフをgRPCでクエリする方法（パート3）",
       "titleEn": "How and Why Netflix Built a Real-Time Distributed Graph: Part 3 — Querying the graph with gRPC…",
+      "summaryJa": "Netflixのエンジニアリングブログが、分散リアルタイムグラフシステムへのクエリをgRPCで実現する設計と実装を解説。大規模データを低レイテンシで取得するアーキテクチャの詳細が明らかにされた。",
+      "summaryEn": "Netflix's engineering blog details how gRPC is used to query their real-time distributed graph system, explaining the architecture decisions that enable low-latency access to large-scale graph data.",
       "lang": "en",
       "publishedAt": "2026-08-07T16:01:02.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "distributed-systems",
         "engineering",
@@ -118,6 +807,43 @@
       "evergreen": true
     },
     {
+      "id": "1b43ba985e422911",
+      "source": "google-cloud-blog",
+      "sourceType": "blog",
+      "url": "https://cloud.google.com/blog/products/data-analytics/bigquery-search-innovations-unify-structured-unstructured-data/",
+      "title": "Unifying Structured and Unstructured Data Insights with BQ Search Innovations",
+      "titleJa": "BQ Search の革新で構造化・非構造化データのインサイトを統合",
+      "titleEn": "Unifying Structured and Unstructured Data Insights with BQ Search Innovations",
+      "summaryJa": "BigQueryが新たな検索機能により、PDF・音声・画像などの非構造化データをウェアハウス内で直接分析できるようになり、複雑なLLMパイプラインや外部インデックスが不要になった。",
+      "summaryEn": "BigQuery's new search innovations allow enterprises to analyze unstructured data such as PDFs, audio, and images directly within the warehouse, eliminating the need for fragmented LLM pipelines and separate search indexes.",
+      "lang": "en",
+      "publishedAt": "2026-08-07T16:00:00.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "bigquery",
+        "cloud",
+        "data-analytics",
+        "google",
+        "llm",
+        "search",
+        "unstructured-data"
+      ],
+      "category": "gemini",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "Modern enterprises possess a vast amount of unstructured data, yet they frequently encounter significant challenges in managing and extracting value from it. Historically, unlocking the insights hidden within PDFs, audio files, images, and unstructured text required a fragmented architecture: moving data out of your warehouse, stitching together complex LLM pipelines, and managing disparate search indexes. BigQuery has worked with many enterprises to make sense of their unstructured data sources. For example, consider an advanced healthcare company managing thousands of clinical trial documents in PDF form. BigQuery helps unlock insights from these documents through a simple, five-step lifecycle: Access, Process, Ground, Relate, and Activate . In this post, we are highlighting three major",
+      "image": {
+        "src": "https://storage.googleapis.com/gweb-cloudblog-publish/original_images/image1_bQnyG2Q.gif",
+        "origSrc": "https://storage.googleapis.com/gweb-cloudblog-publish/original_images/image1_bQnyG2Q.gif",
+        "alt": "Unifying Structured and Unstructured Data Insights with BQ Search Innovations",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "evergreen": true
+    },
+    {
       "id": "2f6f1dc6e1feac85",
       "source": "github-changelog",
       "sourceType": "changelog",
@@ -127,7 +853,7 @@
       "titleEn": "GitHub Code Quality no longer adds Copilot as a reviewer",
       "lang": "en",
       "publishedAt": "2026-08-07T15:07:25.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "changelog",
         "code-quality",
@@ -139,7 +865,44 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
-      "contentSnippet": "Enabling GitHub Code Quality on a repository no longer creates a ruleset that automatically requests a code review from GitHub Copilot on your pull requests. In repositories that already have… The post GitHub Code Quality no longer adds Copilot as a reviewer appeared first on The"
+      "contentSnippet": "Enabling GitHub Code Quality on a repository no longer creates a ruleset that automatically requests a code review from GitHub Copilot on your pull requests. In repositories that already have… The post GitHub Code Quality no longer adds Copilot as a reviewer appeared first on The",
+      "image": {
+        "src": "https://github.blog/wp-content/uploads/2026/08/631315426-674b7c06-7791-4d33-a0ca-ca4cb87f7696.jpeg",
+        "origSrc": "https://github.blog/wp-content/uploads/2026/08/631315426-674b7c06-7791-4d33-a0ca-ca4cb87f7696.jpeg",
+        "alt": "GitHub Code Quality no longer adds Copilot as a reviewer",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "ac1599048339d6dc",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/suwash/articles/agentic-coding-clis_20260807",
+      "title": "コーディングエージェントをまたいで近い振る舞いを保つ拡張設計 - 6製品比較",
+      "titleJa": "コーディングエージェントをまたいで近い振る舞いを保つ拡張設計 - 6製品比較",
+      "titleEn": "A practical comparison of six AI coding CLIs—including Claude Code and OpenAI…",
+      "lang": "ja",
+      "publishedAt": "2026-08-07T15:00:00.000Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
+      "tags": [
+        "agent",
+        "ai-coding-agent",
+        "claude-code",
+        "cli-comparison",
+        "codex-cli",
+        "configuration",
+        "copilot",
+        "cursor",
+        "github-copilot",
+        "zenn"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "AIコーディングCLIを乗り換えるとき、モデル性能より先に困るのが設定資産の移植です。Claude Codeで育てたCLAUDE.md、.claude/skills/、hooks、subagentsは、別のCLIではどこに置き、何に読み替えればよいのでしょうか。 この調査の目的は「最強のCLI」を決めることではありません。コーディングエージェントを切り替えても、リポジトリに対して近い振る舞いをさせることです。そのため、Claude Code、OpenAI Codex CLI、GitHub Copilot CLI、Google Antigravity CL"
     },
     {
       "id": "026f2d8e2c3b3889",
@@ -151,7 +914,7 @@
       "titleEn": "See what 5 builders are making with Gemini Omni",
       "lang": "en",
       "publishedAt": "2026-08-07T14:00:00.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "builders",
         "gemini",
@@ -184,7 +947,7 @@
       "titleEn": "langchain-openai==1.4.2",
       "lang": "en",
       "publishedAt": "2026-08-07T13:58:16.000Z",
-      "collectedAt": "2026-08-07T20:26:26.221Z",
+      "collectedAt": "2026-08-08T08:25:05.107Z",
       "tags": [
         "agent",
         "bug-fix",
@@ -230,7 +993,15 @@
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
-      "contentSnippet": "X で見かけたバイラル投稿がきっかけだった。「MiniMax H3、Colab の L4 で15秒あたり €0.23」。じゃあ試すか、と軽い気持ちで手を出したら、実際にぶつかった壁は VRAM ではなくディスクと RAM だった、という記録です。 普段は IVYXON というサイトで、SEC の開示データなどの一次情報を使った米国株の実測記事や自作ツールを公開しています。今回は毛色を変えて、実機で潰した罠だけを記録した技術メモです。 MiniMax H3 (Hailuo 3.0) とは 正体は Hailuo 3.0。テキスト・画像・動画・音声を同一文脈で"
+      "contentSnippet": "X で見かけたバイラル投稿がきっかけだった。「MiniMax H3、Colab の L4 で15秒あたり €0.23」。じゃあ試すか、と軽い気持ちで手を出したら、実際にぶつかった壁は VRAM ではなくディスクと RAM だった、という記録です。 普段は IVYXON というサイトで、SEC の開示データなどの一次情報を使った米国株の実測記事や自作ツールを公開しています。今回は毛色を変えて、実機で潰した罠だけを記録した技術メモです。 MiniMax H3 (Hailuo 3.0) とは 正体は Hailuo 3.0。テキスト・画像・動画・音声を同一文脈で",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--QxkDK_H1--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:MiniMax%2520H3%2520%2528Hailuo%25203.0%2529%2520%25E3%2582%2592Colab%2520A100%25E3%2581%25A7%25E5%258B%2595%25E3%2581%258B%25E3%2581%2597%25E3%2581%259F%25E3%2582%2589%25E3%2580%2581%25E8%25A9%25B0%25E3%2581%25BE%25E3%2581%25A3%25E3%2581%259F%25E3%2581%25AE%25E3%2581%25AFVRAM%25E3%2581%2598%25E3%2582%2583%25E3%2581%25AA%25E3%2581%258F%25E3%2583%2587...%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:IVYXON%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2VlMWI0YjQ2MDUuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--QxkDK_H1--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:MiniMax%2520H3%2520%2528Hailuo%25203.0%2529%2520%25E3%2582%2592Colab%2520A100%25E3%2581%25A7%25E5%258B%2595%25E3%2581%258B%25E3%2581%2597%25E3%2581%259F%25E3%2582%2589%25E3%2580%2581%25E8%25A9%25B0%25E3%2581%25BE%25E3%2581%25A3%25E3%2581%259F%25E3%2581%25AE%25E3%2581%25AFVRAM%25E3%2581%2598%25E3%2582%2583%25E3%2581%25AA%25E3%2581%258F%25E3%2583%2587...%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:IVYXON%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2VlMWI0YjQ2MDUuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "MiniMax H3 (Hailuo 3.0) をColab A100で動かしたら、詰まったのはVRAMじゃなくディスクとRAMだった",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "ced334a97a1cc925",
@@ -242,12 +1013,13 @@
       "titleEn": "This article explains how to use Automation Skill Builder (ASB) to capture AI…",
       "lang": "ja",
       "publishedAt": "2026-08-07T09:47:38.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
       "tags": [
         "asb",
         "automation",
         "cursor",
         "local-automation",
+        "mcp",
         "qiita",
         "tutorial",
         "workflow-capture"
@@ -267,6 +1039,39 @@
       }
     },
     {
+      "id": "b9942415a59b2149",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/desktop-v0.0.10",
+      "title": "Cline Desktop v0.0.10",
+      "titleJa": "Cline Desktop v0.0.10",
+      "titleEn": "Cline Desktop v0.0.10",
+      "lang": "en",
+      "publishedAt": "2026-08-07T07:04:12.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "cline",
+        "desktop",
+        "mcp",
+        "mcp-server",
+        "oauth",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Remote MCP servers can now authenticate with OAuth from Settings → MCP — authorize a server, see its auth status, and cancel or retry a pending authorization. Servers that require a pre-registered OAuth client (client ID/secret) instead of dynamic registration are now supported, ",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline Desktop v0.0.10",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
       "id": "8e19c39ffb1827bf",
       "source": "qiita-vscode",
       "sourceType": "blog",
@@ -276,7 +1081,7 @@
       "titleEn": "A practical guide explaining how to set up Claude Code in VS Code and how it…",
       "lang": "ja",
       "publishedAt": "2026-08-07T01:40:54.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T04:01:34.289Z",
       "tags": [
         "ai-coding",
         "claude-code",
@@ -309,7 +1114,7 @@
       "titleEn": "The author describes a workflow where humans focus on intent and diagrams while…",
       "lang": "ja",
       "publishedAt": "2026-08-07T01:08:19.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "ai-workflow",
         "claude-code",
@@ -368,6 +1173,33 @@
       }
     },
     {
+      "id": "e1fb36b6d72037b0",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-08-06-mcp-allowlists-in-enterprise-managed-settings",
+      "title": "MCP allowlists in enterprise managed settings",
+      "titleJa": "エンタープライズ管理設定における MCP サーバーの許可リスト機能",
+      "titleEn": "MCP allowlists in enterprise managed settings",
+      "lang": "en",
+      "publishedAt": "2026-08-07T00:11:19.000Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
+      "tags": [
+        "allowlist",
+        "changelog",
+        "copilot",
+        "enterprise",
+        "github",
+        "mcp-server",
+        "policy",
+        "security"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Enterprise owners can now centrally control which Model Context Protocol (MCP) servers GitHub Copilot clients are allowed to run by using the new allowedMcpServers and deniedMcpServers keys in enterprise managed… The post MCP allowlists in enterprise managed settings appeared fir"
+    },
+    {
       "id": "5cf484945dcca9e2",
       "source": "anthropic-news",
       "sourceType": "blog",
@@ -377,7 +1209,7 @@
       "titleEn": "Improving Fable 5's biology safeguards",
       "lang": "en",
       "publishedAt": "2026-08-07T00:00:00.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "anthropic",
         "biology",
@@ -410,7 +1242,7 @@
       "titleEn": "Set pull request limits at the organization level",
       "lang": "en",
       "publishedAt": "2026-08-06T23:46:17.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "access-control",
         "changelog",
@@ -422,7 +1254,15 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
-      "contentSnippet": "You can now set pull request limits at the organization level. Pull request limits let you define how many open pull requests a user without write access can have at… The post Set pull request limits at the organization level appeared first on The GitHub Blog ."
+      "contentSnippet": "You can now set pull request limits at the organization level. Pull request limits let you define how many open pull requests a user without write access can have at… The post Set pull request limits at the organization level appeared first on The GitHub Blog .",
+      "image": {
+        "src": "https://github.blog/wp-content/uploads/2026/08/changelog-improvements-unfurl-centered-organizationpullrequestlimit_720.jpg",
+        "origSrc": "https://github.blog/wp-content/uploads/2026/08/changelog-improvements-unfurl-centered-organizationpullrequestlimit_720.jpg",
+        "alt": "Set pull request limits at the organization level",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "8f44dd6ebfb8f5c4",
@@ -434,7 +1274,7 @@
       "titleEn": "Runtime instances: persistent compute for production AI agents on Amazon Bedrock AgentCore",
       "lang": "en",
       "publishedAt": "2026-08-06T22:58:00.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -470,7 +1310,7 @@
       "titleEn": "An August 2026 update to a monthly AI model comparison series for Cursor,…",
       "lang": "ja",
       "publishedAt": "2026-08-06T22:15:19.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
       "tags": [
         "ai-models",
         "cursor",
@@ -503,7 +1343,7 @@
       "titleEn": "Suno hopes to go legit with watermarks for AI-generated music",
       "lang": "en",
       "publishedAt": "2026-08-06T20:17:36.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "ai-music",
         "ars-technica",
@@ -527,6 +1367,32 @@
       }
     },
     {
+      "id": "cb1330a46978958b",
+      "source": "microsoft-source",
+      "sourceType": "blog",
+      "url": "https://www.microsoft.com/en-us/startups/blog/how-to-deploy-fireworks-ai-on-microsoft-foundry-a-startup-architecture-blueprint/",
+      "title": "Microsoft expands AI model choice for startups",
+      "titleJa": "Microsoftがスタートアップ向けにAIモデルの選択肢を拡大",
+      "titleEn": "Microsoft expands AI model choice for startups",
+      "lang": "en",
+      "publishedAt": "2026-08-06T20:11:40.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai-models",
+        "azure",
+        "fireworks-ai",
+        "foundry",
+        "microsoft",
+        "news",
+        "startups"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The post Microsoft expands AI model choice for startups appeared first on Source ."
+    },
+    {
       "id": "acfb8d87a31386ca",
       "source": "ars-technica",
       "sourceType": "blog",
@@ -536,7 +1402,7 @@
       "titleEn": "Anthropic will design its own hardware to power Claude",
       "lang": "en",
       "publishedAt": "2026-08-06T20:03:44.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "ai-hardware",
         "anthropic",
@@ -560,16 +1426,18 @@
       }
     },
     {
-      "id": "f51884b3b28d7cd8",
-      "source": "github-copilot",
+      "id": "98b6d8ed63a96316",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/a-guide-to-slash-commands-in-the-github-copilot-app/",
       "title": "A guide to slash commands in the GitHub Copilot app",
       "titleJa": "GitHub Copilot アプリのスラッシュコマンド完全ガイド",
       "titleEn": "A guide to slash commands in the GitHub Copilot app",
+      "summaryJa": "GitHub Copilot アプリで利用できるスラッシュコマンドを活用することで、計画・共同作業・自動化・ワークフローのカスタマイズが効率化できる。チャット以上の操作を可能にする各コマンドの使い方を解説している。",
+      "summaryEn": "GitHub's tutorial covers the slash commands available in the Copilot app, showing how they extend beyond basic chat to streamline planning, collaboration, automation, and workflow customization for developers.",
       "lang": "en",
       "publishedAt": "2026-08-06T19:49:34.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "copilot",
         "developer-tools",
@@ -582,6 +1450,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Go beyond chat in the GitHub Copilot app with these slash commands. They'll help you plan, collaborate, automate, and customize your dev workflow. The post A guide to slash commands in the GitHub Copilot app appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/06/MSFTBuild_Blog_Header_01.jpg",
@@ -590,8 +1459,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "93120742e5d55aa3",
@@ -637,7 +1505,7 @@
       "titleEn": "How Gemini plans such detailed vacation itineraries for you",
       "lang": "en",
       "publishedAt": "2026-08-06T18:00:00.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "ai-assistant",
         "gemini",
@@ -694,7 +1562,7 @@
       "titleEn": "Cursor's free Hobby plan caps Tab completions at 2,000/month and premium model…",
       "lang": "ja",
       "publishedAt": "2026-08-06T17:16:57.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "cursor",
         "cursor-hobby",
@@ -737,6 +1605,140 @@
       "contentSnippet": "Cloudflare built an AI agent workspace for its employees. Now it’s open source."
     },
     {
+      "id": "937de23b0fd2237b",
+      "source": "google-cloud-blog",
+      "sourceType": "blog",
+      "url": "https://cloud.google.com/blog/products/data-analytics/bigquery-performance-optimizations/",
+      "title": "Agentic Future Ready With BigQuery: Continually Improving Price-Performance, Zero Effort",
+      "titleJa": "BigQueryでエージェント時代に備える：継続的なコストパフォーマンス向上をゼロ手間で",
+      "titleEn": "Agentic Future Ready With BigQuery: Continually Improving Price-Performance, Zero Effort",
+      "summaryJa": "BigQueryはクエリチューニングやスキーマ調整を自動化し、エージェントが大量クエリを実行する時代においてもコストパフォーマンスを継続的に改善する仕組みを提供する。",
+      "summaryEn": "BigQuery automates query tuning and price-performance optimization so teams can handle the massive query volumes driven by agentic workloads without manual intervention.",
+      "lang": "en",
+      "publishedAt": "2026-08-06T16:00:00.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "agent",
+        "agentic-ai",
+        "automation",
+        "bigquery",
+        "cloud",
+        "data-analytics",
+        "google",
+        "performance"
+      ],
+      "category": "gemini",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "In the modern data landscape, query performance tuning and managing system price-performance is challenging, especially as the number of agentic workloads increase. Even for experienced developers and DBAs, constantly analyzing query execution plans, tweaking schemas, and adding query hints with ever exploding volume, variety, and velocity of data is a never-ending cycle that drains business velocity. While performance tuning is a common practice, a modern data platform should do more. As data platforms evolve from systems of intelligence to systems of action, and analytics workloads shift from humans running a few queries per day to countless agents running many thousands of queries per minute, the old way of manual query tuning doesn’t work. When queries are generated by agents and appli",
+      "image": {
+        "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/Figure_1_-_Last12MonthsOfPerfImprovements.max-1000x1000.png",
+        "origSrc": "https://storage.googleapis.com/gweb-cloudblog-publish/images/Figure_1_-_Last12MonthsOfPerfImprovements.max-1000x1000.png",
+        "alt": "Agentic Future Ready With BigQuery: Continually Improving Price-Performance, Zero Effort",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "evergreen": true
+    },
+    {
+      "id": "1faebfd62d78d118",
+      "source": "google-cloud-blog",
+      "sourceType": "blog",
+      "url": "https://cloud.google.com/blog/products/identity-security/privacy-first-medical-ai-with-medperf-and-google-cloud/",
+      "title": "Advancing brain tumor research with privacy-first AI",
+      "titleJa": "プライバシー優先AIで脳腫瘍研究を前進させる",
+      "titleEn": "Advancing brain tumor research with privacy-first AI",
+      "summaryJa": "Google CloudはMLCommonsのMedPerfと連携し、Confidential Computingを活用して患者データのプライバシーを守りながら医療AIモデルを実環境でベンチマークできる安全なクリーンルームを構築している。",
+      "summaryEn": "Google Cloud is partnering with MLCommons' MedPerf initiative to use Confidential Computing as a secure clean room, enabling medical AI models to be benchmarked on real-world patient data without compromising privacy.",
+      "lang": "en",
+      "publishedAt": "2026-08-06T16:00:00.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "cloud",
+        "confidential-computing",
+        "google",
+        "healthcare-ai",
+        "medperf",
+        "mlcommons",
+        "privacy"
+      ],
+      "category": "gemini",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "The intersection of medicine and AI has led to remarkable innovations. However, developers now face the thorny challenge of building robust medical AI tools that have been tested and evaluated on diverse, real-world patient data while also protecting patient privacy. At Google Cloud, our approach combines strategic collaboration with Confidential Computing. To help protect both patient privacy and AI models during validation, we’re collaborating with MLCommons t hrough the MedPerf initiative . First announced at Google Cloud Next earlier this year, this partnership uses Confidential Computing to establish a secure clean room for benchmarking AI models in real-world settings. The challenge: Evaluating AI without seeing the data MLCommons, a global community with over 125 members across tech",
+      "evergreen": true
+    },
+    {
+      "id": "40dae3bce89cf16b",
+      "source": "google-cloud-blog",
+      "sourceType": "blog",
+      "url": "https://cloud.google.com/blog/topics/training-certifications/free-gemini-enterrprise-training/",
+      "title": "Your agentic summer: No-cost lessons from Google experts to build and scale agents",
+      "titleJa": "エージェントの夏：Googleの専門家による無料レッスンでエージェントを構築・スケール",
+      "titleEn": "Your agentic summer: No-cost lessons from Google experts to build and scale agents",
+      "summaryJa": "Googleは、AIエージェントを本番環境で構築・スケールするための無料トレーニングパスを今夏提供。セキュリティやサプライチェーン最適化など実践的なフレームワークを学べる。",
+      "summaryEn": "Google is offering no-cost, expert-led training this summer to help developers and IT leaders build and scale AI agents in production using real-world frameworks and approaches.",
+      "lang": "en",
+      "publishedAt": "2026-08-06T16:00:00.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "agent",
+        "agentic-ai",
+        "cloud",
+        "free",
+        "gemini",
+        "google",
+        "training"
+      ],
+      "category": "gemini",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "I’ve talked to developers, IT leaders, and builders who all ask the same question: How do we actually get agents into production? The answer isn't theoretical — it's hands-on. Whether it’s designing a system that allows your agents to interact with external data sources while maintaining strict security guardrails or creating self-optimizing supply chain workflows or whatever you can think up, we’ve got you covered. That’s why we’ve designed a path to help you take your AI ideas from a rough sketch to fully autonomous agents running in production. This summer, you can harness the same frameworks and approaches used by Google experts to build and scale agents — entirely at no cost. Powered by Gemini Enterprise Agent Ready (GEAR) , these hands-on labs and courses give you the blueprints and",
+      "evergreen": true
+    },
+    {
+      "id": "c2a4646e14a1bed3",
+      "source": "google-cloud-blog",
+      "sourceType": "blog",
+      "url": "https://cloud.google.com/blog/topics/hybrid-cloud/state-of-ai-infrastructure-report-on-hybrid-cloud-and-gdc/",
+      "title": "Digital sovereignty in the age of AI: You don’t have to choose between control and innovation",
+      "titleJa": "AIの時代におけるデジタル主権：管理とイノベーションはどちらかを選ぶ必要はない",
+      "titleEn": "Digital sovereignty in the age of AI: You don’t have to choose between control and innovation",
+      "summaryJa": "厳格なコンプライアンスや主権要件を持つ企業・政府が、管轄リスク・経済的独立・地政学的リスクという3つの課題に直面する中、GoogleはオンプレミスでもAIを活用できるハイブリッドクラウド基盤の重要性を訴えている。",
+      "summaryEn": "Google Cloud argues that organizations facing jurisdictional, economic, and geopolitical risks no longer need to sacrifice AI innovation for data sovereignty, highlighting hybrid and distributed cloud infrastructure as the bridge between compliance and cutting-edge AI capabilities.",
+      "lang": "en",
+      "publishedAt": "2026-08-06T16:00:00.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai-infrastructure",
+        "cloud",
+        "compliance",
+        "digital-sovereignty",
+        "enterprise",
+        "google",
+        "hybrid-cloud",
+        "on-premises"
+      ],
+      "category": "gemini",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "For enterprises and governments with strict compliance and sovereignty requirements, keeping sensitive data on-premises often means missing out on the latest AI. These organizations are managing three major risks: Jurisdictional risk: Shifting local regulations, the need to protect intellectual property and the potential of foreign data access requests make local data handling essential. Economic independence: Reliance on foreign infrastructure providers could leave critical services vulnerable. Geopolitical risk: A need to safeguard critical local services against unpredictable global disruptions. In a recent survey of over 1,400 senior IT leaders for our State of AI Infrastructure report , 48% of leaders stated they are prioritizing infrastructure with data residency, controls, supportin",
+      "image": {
+        "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/image1_0SuEihC.max-1000x1000.png",
+        "origSrc": "https://storage.googleapis.com/gweb-cloudblog-publish/images/image1_0SuEihC.max-1000x1000.png",
+        "alt": "Digital sovereignty in the age of AI: You don’t have to choose between control and innovation",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "evergreen": true
+    },
+    {
       "id": "dc13d7a88945fb95",
       "source": "qiita-vscode",
       "sourceType": "blog",
@@ -746,7 +1748,7 @@
       "titleEn": "A Claude Code VS Code extension silently stopped responding due to stale hook…",
       "lang": "ja",
       "publishedAt": "2026-08-06T15:32:20.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T04:01:34.289Z",
       "tags": [
         "claude-code",
         "debugging",
@@ -771,7 +1773,7 @@
       "titleEn": "WeatherNext: AI model achieves breakthrough in forecasting cyclones",
       "lang": "en",
       "publishedAt": "2026-08-06T15:06:15.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "climate-ai",
         "cyclone",
@@ -803,7 +1805,7 @@
       "titleEn": "Why Meta Builds Its Own AI Data Centers",
       "lang": "en",
       "publishedAt": "2026-08-06T15:00:23.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
       "tags": [
         "ai-infrastructure",
         "data-center",
@@ -835,7 +1837,7 @@
       "titleEn": "Our WeatherNext 2 AI model demonstrated a massive leap forward in predicting cyclones.",
       "lang": "en",
       "publishedAt": "2026-08-06T14:00:00.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "cyclone-prediction",
         "forecasting",
@@ -869,7 +1871,7 @@
       "titleEn": "Into the Omniverse: How Open World Models Push the Frontier of Physical AI",
       "lang": "en",
       "publishedAt": "2026-08-06T13:00:00.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "news",
         "nvidia",
@@ -885,8 +1887,37 @@
       "contentSnippet": "In July, NVIDIA joined more than 200 companies and organizations in signing “Open Weights and American AI Leadership,” an open letter arguing that AI leadership will be measured not by any single frontier model but by whether an open ecosystem reaches every sector."
     },
     {
-      "id": "d30cf47724cd9579",
-      "source": "zenn-mcp",
+      "id": "efa5efcfa7d632a7",
+      "source": "google-cloud-blog",
+      "sourceType": "blog",
+      "url": "https://cloud.google.com/blog/topics/startups/mirendil-selects-ai-hypercomputer/",
+      "title": "Mirendil taps AI Hypercomputer TPUs and GPUs for pre- and post-training applications",
+      "titleJa": "MirendilがAI HypercomputerのTPUとGPUを採用、モデルの事前・事後学習に活用",
+      "titleEn": "Mirendil taps AI Hypercomputer TPUs and GPUs for pre- and post-training applications",
+      "summaryJa": "フロンティアAIラボのMirendilがGoogle CloudのAI Hypercomputerを採用し、TPUとNVIDIA GPUを組み合わせてモデルの事前学習・事後学習に活用することが発表された。主要AIラボのGoogle Cloud採用が相次ぐ中、新興スタートアップへの広がりを示す動きとして注目される。",
+      "summaryEn": "Frontier AI startup Mirendil has selected Google Cloud's AI Hypercomputer—combining Google TPUs and NVIDIA GPU infrastructure—to power its model pre-training and post-training workloads, underscoring Google Cloud's growing dominance as the platform of choice for cutting-edge AI labs.",
+      "lang": "en",
+      "publishedAt": "2026-08-06T13:00:00.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai-hypercomputer",
+        "cloud",
+        "google",
+        "gpu",
+        "startup",
+        "tpu",
+        "training"
+      ],
+      "category": "gemini",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "Nearly every major AI lab uses Google Cloud infrastructure, including for training of models, inference for agents, and new frontier research. Google Cloud also continues to be the platform of choice for new, high-growth AI startups who are driving much of the industry’s research and innovation. Today, we’re announcing that Mirendil , an exciting frontier AI lab focused on accelerating AI development, will also utilize Google Cloud’s AI Hypercomputer . This includes using a mix of Google’s TPU AI accelerators and full-stack NVIDIA AI infrastructure running on Google Cloud; this purpose-built AI infrastructure will support model pre-training and post-training applications for Mirendil. The Mirendil team is building new AI systems that can help accelerate and democratize AI research and deve",
+      "evergreen": true
+    },
+    {
+      "id": "85191299590e46c3",
+      "source": "zenn-copilot",
       "sourceType": "blog",
       "url": "https://zenn.dev/kurimochi29/articles/github-copilot-agent-division-design",
       "title": "万能エージェント1体をやめる — GitHub Copilot のカスタムエージェントと自作 MCP サーバーで「分業」を設計する",
@@ -894,7 +1925,7 @@
       "titleEn": "This article details a multi-agent architecture for GitHub Copilot where one…",
       "lang": "ja",
       "publishedAt": "2026-08-06T12:28:22.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "agent",
         "copilot",
@@ -905,11 +1936,43 @@
         "workflow-automation",
         "zenn"
       ],
-      "category": "mcp",
+      "category": "copilot",
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "この記事でやること ナレッジベース（ヘルプセンター）の記事更新を、GitHub Copilot のカスタムエージェントに分業させた構成の設計と実装をまとめます。 統括役1体＋専門エージェント3体という構成 外部の SaaS は、自作した MCP サーバー経由で操作する 動かしてわかったことと、未解決のまま残っている課題 想定読者は、カスタムエージェントを「便利なペルソナ1体」以上に使いたい人、MCP サーバーを自作して手元の業務システムに繋ぎたい人です。 前提と、この記事のコードについて VS Code の GitHub Copilot Chat（カスタ"
+    },
+    {
+      "id": "3a6565cb1c7c353d",
+      "source": "semantic-kernel-releases",
+      "sourceType": "release",
+      "url": "https://github.com/microsoft/semantic-kernel/releases/tag/dotnet-1.79.0",
+      "title": "Semantic Kernel dotnet-1.79.0",
+      "titleJa": "Semantic Kernel dotnet-1.79.0 リリース",
+      "titleEn": "Semantic Kernel dotnet-1.79.0",
+      "lang": "en",
+      "publishedAt": "2026-08-06T11:33:35.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "agent",
+        "dotnet",
+        "maintenance",
+        "release",
+        "semantic-kernel"
+      ],
+      "category": "agent-fw",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Changes: fb13781 .NET: Bump package version to 1.79.0 ( #14275 ) 383d102 Bump .NET SDK from 10.0.301 to 10.0.302 ( #14235 ) 362cc2b Bump form-data from 4.0.5 to 4.0.6 in ProcessFrameworkWithSignalR React frontend ( #14234 ) e78a8f5 Suppress CodeQL false positive in internal HTTP ",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/13853051?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/13853051?s=60&v=4",
+        "alt": "Semantic Kernel dotnet-1.79.0",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
     },
     {
       "id": "74a62df0fc1d00bc",
@@ -934,6 +1997,40 @@
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "Why humans need to moderate humans."
+    },
+    {
+      "id": "db29c05e82ec3f99",
+      "source": "semantic-kernel-releases",
+      "sourceType": "release",
+      "url": "https://github.com/microsoft/semantic-kernel/releases/tag/python-1.44.1",
+      "title": "Semantic Kernel python-1.44.1",
+      "titleJa": "Semantic Kernel python-1.44.1 リリース",
+      "titleEn": "Semantic Kernel python-1.44.1",
+      "lang": "en",
+      "publishedAt": "2026-08-06T09:55:22.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "agent",
+        "bugfix",
+        "openapi",
+        "patch-release",
+        "python",
+        "release",
+        "semantic-kernel"
+      ],
+      "category": "agent-fw",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "What's Changed Encode OpenAPI server variable values by Eduard van Valkenburg (@eavanvalkenburg) in #14146 Consolidate Dependabot dependency updates by Evan Mattson (@moonbox3) in #14176 Suppress CodeQL false positive in internal HTTP utility by SergeyMenshykh in #14223 Python: [",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/35585003?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/35585003?s=60&v=4",
+        "alt": "Semantic Kernel python-1.44.1",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
     },
     {
       "id": "b1cc2f45977de6d3",
@@ -988,6 +2085,219 @@
       "contentSnippet": "はじめに プログラミング学習で使うエディタ「Visual Studio Code（以下 VSCode）」を、コマンドで一気にセットアップする手順をまとめました。 対象：これからプログラミングを始める方 / Mac をお使いの方 ゴール：VSCode をインストールして、日..."
     },
     {
+      "id": "fe1eaeb8afa914c1",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/v4.1.6",
+      "title": "Cline Releases v4.1.6",
+      "titleJa": "Cline v4.1.6 リリース",
+      "titleEn": "Cline Releases v4.1.6",
+      "lang": "en",
+      "publishedAt": "2026-08-06T08:09:42.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "bug-fix",
+        "cline",
+        "model-update",
+        "release",
+        "telemetry"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Added Offer meta/muse-spark-1.2-contributor on the Cline provider, alongside a refreshed model catalog. Fixed Attribute error telemetry to the model actually in use for a run, so failures are no longer reported against the wrong model. Full Changelog : v4.1.5...v4.1.6",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline Releases v4.1.6",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "c569108b8e62464f",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/cli-v3.0.51",
+      "title": "Cline CLI v3.0.51",
+      "titleJa": "Cline CLI v3.0.51",
+      "titleEn": "Cline CLI v3.0.51",
+      "lang": "en",
+      "publishedAt": "2026-08-06T07:46:56.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "cli",
+        "cline",
+        "ollama",
+        "reasoning",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 3,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Reasoning effort now applies consistently across providers instead of going through per-provider thinking overrides, including Ollama, and asking for reasoning to be off is respected everywhere (from SDK v0.0.71) meta/muse-spark-1.2-contributor is now selectable on the Cline prov",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline CLI v3.0.51",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "cea421b0481fc44d",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fsdk%2Fv0.0.71",
+      "title": "Cline SDK v0.0.71",
+      "titleJa": "Cline SDK v0.0.71",
+      "titleEn": "Cline SDK v0.0.71",
+      "lang": "en",
+      "publishedAt": "2026-08-06T07:29:51.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai-sdk",
+        "cline",
+        "ollama",
+        "reasoning",
+        "release",
+        "sdk"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Reasoning settings now resolve portably across AI SDK providers — effort levels and enable/disable flags map to the AI SDK's native reasoning setting (including Ollama), replacing the per-provider thinking overrides, and an explicit request to disable reasoning now takes priority",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline SDK v0.0.71",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "b40b92ff3f17f4ac",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fcore%2Fv0.0.71",
+      "title": "Cline sdk/core v0.0.71",
+      "titleJa": "",
+      "titleEn": "Cline sdk/core v0.0.71",
+      "lang": "en",
+      "publishedAt": "2026-08-06T07:29:38.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "cline",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "@cline/core@0.0.71",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline sdk/core v0.0.71",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "b8e781c93a09018c",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fagents%2Fv0.0.71",
+      "title": "Cline sdk/agents v0.0.71",
+      "titleJa": "",
+      "titleEn": "Cline sdk/agents v0.0.71",
+      "lang": "en",
+      "publishedAt": "2026-08-06T07:29:36.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "cline",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "@cline/agents@0.0.71",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline sdk/agents v0.0.71",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "6822a67c7bfa6dfe",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fllms%2Fv0.0.71",
+      "title": "Cline sdk/llms v0.0.71",
+      "titleJa": "",
+      "titleEn": "Cline sdk/llms v0.0.71",
+      "lang": "en",
+      "publishedAt": "2026-08-06T07:29:34.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "cline",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "@cline/llms@0.0.71",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline sdk/llms v0.0.71",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "c189c9feaedc6663",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/sdk%2Fshared%2Fv0.0.71",
+      "title": "Cline sdk/shared v0.0.71",
+      "titleJa": "",
+      "titleEn": "Cline sdk/shared v0.0.71",
+      "lang": "en",
+      "publishedAt": "2026-08-06T07:29:32.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "cline",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "@cline/shared@0.0.71",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline sdk/shared v0.0.71",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
       "id": "b5b691c97c8e9756",
       "source": "qiita-copilot",
       "sourceType": "blog",
@@ -997,7 +2307,7 @@
       "titleEn": "The whimsical 'bribing the hamsters' loading message in GitHub Copilot for…",
       "lang": "ja",
       "publishedAt": "2026-08-06T07:02:33.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "easter-egg",
         "fun",
@@ -1029,7 +2339,7 @@
       "titleEn": "Most AI agents resend their full transcript each loop iteration, causing O(N²)…",
       "lang": "ja",
       "publishedAt": "2026-08-06T05:10:35.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
       "tags": [
         "ai-agents",
         "benchmarking",
@@ -1089,7 +2399,7 @@
       "titleEn": "A head-to-head benchmark running refactoring, test generation, and code review…",
       "lang": "ja",
       "publishedAt": "2026-08-06T01:01:19.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
       "tags": [
         "ai-coding",
         "benchmark",
@@ -1115,7 +2425,7 @@
       "titleEn": "Randomized controlled trials show that passively delegating to AI reduces…",
       "lang": "ja",
       "publishedAt": "2026-08-06T00:51:58.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T00:41:26.229Z",
       "tags": [
         "ai-learning",
         "best-practices",
@@ -1139,7 +2449,7 @@
       "titleEn": "This article explains how to manage GitHub Copilot costs under the AI credits…",
       "lang": "ja",
       "publishedAt": "2026-08-06T00:29:41.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "ai-credits",
         "billing",
@@ -1172,7 +2482,7 @@
       "titleEn": "Agent Plugins package your skills, tools, and more",
       "lang": "en",
       "publishedAt": "2026-08-06T00:00:00.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
       "tags": [
         "agent",
         "agent-plugins",
@@ -1215,6 +2525,70 @@
       "contentSnippet": "Baseboard management controllers from the world's biggest manufacturers are a security mess."
     },
     {
+      "id": "30fd9aa869fd6b9c",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/v4.1.5",
+      "title": "Cline Releases v4.1.5",
+      "titleJa": "Cline v4.1.5 リリース",
+      "titleEn": "Cline Releases v4.1.5",
+      "lang": "en",
+      "publishedAt": "2026-08-05T21:54:08.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "cline",
+        "free-model",
+        "release",
+        "ux"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Added Explain when a free model promotion ends. Requests to a retired free model now show a dedicated notice with a button to pick another model, instead of a generic error with nothing but a Retry prompt. Changed Map reasoning settings onto a shared path across AI SDK providers,",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline Releases v4.1.5",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "5eb83b6063878efe",
+      "source": "ollama-releases",
+      "sourceType": "release",
+      "url": "https://github.com/ollama/ollama/releases/tag/v0.32.6",
+      "title": "Ollama Releases v0.32.6",
+      "titleJa": "Ollama v0.32.6 リリース",
+      "titleEn": "Ollama Releases v0.32.6",
+      "lang": "en",
+      "publishedAt": "2026-08-05T19:46:52.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "mlx",
+        "ollama",
+        "openai-compatible",
+        "qwen3",
+        "release",
+        "speculative-decoding"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "What's Changed Qwen3.5 is faster on Apple GPUs: the MLX engine now uses the model's MTP head for speculative decoding automatically /v1/chat/completions streaming now matches OpenAI's wire format: role only on the first chunk, finish_reason on its own chunk, and usage in a separa",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Ollama Releases v0.32.6",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
       "id": "4f4aaee39da4b7ef",
       "source": "qiita-copilot",
       "sourceType": "blog",
@@ -1224,7 +2598,7 @@
       "titleEn": "The article proposes a development workflow that uses generative AI and prompts…",
       "lang": "ja",
       "publishedAt": "2026-08-05T19:45:30.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "generative-ai",
         "llm",
@@ -1247,9 +2621,11 @@
       "title": "From User Sequences to Scaling Laws: A Multi-Stage Architecture for Meta’s Ads Ranking",
       "titleJa": "ユーザーシーケンスからスケーリング則まで：Metaの広告ランキングを支える多段階アーキテクチャ",
       "titleEn": "From User Sequences to Scaling Laws: A Multi-Stage Architecture for Meta’s Ads Ranking",
+      "summaryJa": "Metaは広告推薦システムにおいて、ユーザー行動の時系列モデリングを発展させ、スケーリング則を活用した多段階アーキテクチャを構築。精度と効率を両立する広告ランキング手法の進化を解説している。",
+      "summaryEn": "Meta details how it evolved its ads ranking system from sequence-based user modeling into a multi-stage architecture governed by scaling laws, improving recommendation accuracy across billions of daily interactions.",
       "lang": "en",
       "publishedAt": "2026-08-05T19:20:20.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
       "tags": [
         "ads",
         "engineering",
@@ -1284,7 +2660,7 @@
       "titleEn": "langchain-anthropic==1.5.4",
       "lang": "en",
       "publishedAt": "2026-08-05T19:03:35.000Z",
-      "collectedAt": "2026-08-07T20:26:26.221Z",
+      "collectedAt": "2026-08-08T08:25:05.107Z",
       "tags": [
         "agent",
         "anthropic",
@@ -1317,7 +2693,7 @@
       "titleEn": "Zed Editor Releases v1.15.0-pre",
       "lang": "en",
       "publishedAt": "2026-08-05T17:59:43.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "diff",
         "editor",
@@ -1341,6 +2717,32 @@
       }
     },
     {
+      "id": "6d23d7854fbea151",
+      "source": "microsoft-source",
+      "sourceType": "blog",
+      "url": "https://www.microsoft.com/en-us/security/blog/2026/08/04/advance-zero-trust-for-ai-new-tools-and-guidance-to-secure-ai-agents-and-devsecops/",
+      "title": "Advance Zero Trust for AI: New tools and guidance to secure AI agents and DevSecOps",
+      "titleJa": "AIのゼロトラストを推進：AIエージェントとDevSecOpsを保護する新ツールとガイダンス",
+      "titleEn": "Advance Zero Trust for AI: New tools and guidance to secure AI agents and DevSecOps",
+      "lang": "en",
+      "publishedAt": "2026-08-05T17:46:31.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai-agents",
+        "ai-security",
+        "devsecops",
+        "microsoft",
+        "news",
+        "release",
+        "zero-trust"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The post Advance Zero Trust for AI: New tools and guidance to secure AI agents and DevSecOps appeared first on Source ."
+    },
+    {
       "id": "bfff0a2d27de58b8",
       "source": "vscode-updates",
       "sourceType": "release",
@@ -1350,7 +2752,7 @@
       "titleEn": "Visual Studio Code 1.132 Release Notes",
       "lang": "en",
       "publishedAt": "2026-08-05T17:00:00.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "editor",
         "release",
@@ -1381,7 +2783,7 @@
       "titleEn": "Zed Editor Releases v1.14.2",
       "lang": "en",
       "publishedAt": "2026-08-05T16:57:09.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "agent",
         "editor",
@@ -1414,7 +2816,7 @@
       "titleEn": "OpenHands Releases v1.10.0",
       "lang": "en",
       "publishedAt": "2026-08-05T16:00:58.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
       "tags": [
         "canvas",
         "glm",
@@ -1446,7 +2848,7 @@
       "titleEn": "The next chapter of our AI momentum",
       "lang": "en",
       "publishedAt": "2026-08-05T16:00:00.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "ai-strategy",
         "google",
@@ -1460,6 +2862,44 @@
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "Today, Google and Alphabet CEO Sundar Pichai shared some changes with Google DeepMind teams."
+    },
+    {
+      "id": "7c3447fd9d7ebc1b",
+      "source": "google-cloud-blog",
+      "sourceType": "blog",
+      "url": "https://cloud.google.com/blog/topics/customers/how-uipath-built-its-high-performance-gpu-platform/",
+      "title": "Scaling agentic AI: How UiPath built its high-performance GPU platform on AI Hypercomputer",
+      "titleJa": "エージェントAIのスケーリング：UiPathがAI HypercomputerでGPUプラットフォームを構築した方法",
+      "titleEn": "Scaling agentic AI: How UiPath built its high-performance GPU platform on AI Hypercomputer",
+      "summaryJa": "UiPathはGoogle CloudのAI Hypercomputer上に高性能GPUプラットフォームを構築し、数百のGPUを連携させることでエンタープライズ向けエージェントAIの大規模展開を実現した。",
+      "summaryEn": "UiPath leveraged Google Cloud's AI Hypercomputer to build a high-performance GPU platform capable of orchestrating hundreds of GPUs, enabling reliable large-scale agentic AI for enterprise automation workloads.",
+      "lang": "en",
+      "publishedAt": "2026-08-05T16:00:00.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "agent",
+        "agentic-ai",
+        "ai-hypercomputer",
+        "cloud",
+        "enterprise",
+        "google",
+        "gpu",
+        "uipath"
+      ],
+      "category": "gemini",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "As a market leader in enterprise agentic automation and business orchestration, UiPath is helping to pioneer an industry shift toward agentic AI. With it, the company is deploying autonomous agents to actively reason, make decisions, and execute complex business processes across its disparate systems. This transition from simple task automation to cognitive decision-making agents requires a massive surge in computational power and powerful infrastructure that’s reliable enough for the needs of the world's largest enterprises. Being able to orchestrate hundreds of GPUs in perfect harmony can be what makes the difference between just running a research experiment and building a global AI platform. Such orchestration requires balancing massive training jobs with real-time inference, all witho",
+      "image": {
+        "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/1_G8V5B63.max-1000x1000.jpg",
+        "origSrc": "https://storage.googleapis.com/gweb-cloudblog-publish/images/1_G8V5B63.max-1000x1000.jpg",
+        "alt": "Scaling agentic AI: How UiPath built its high-performance GPU platform on AI Hypercomputer",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "evergreen": true
     },
     {
       "id": "3e73e04b8795247a",
@@ -1532,7 +2972,7 @@
       "titleEn": "This article proposes three design principles for AI-era repositories: a single…",
       "lang": "ja",
       "publishedAt": "2026-08-05T13:21:34.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "agents-md",
         "ai-agents",
@@ -1557,7 +2997,7 @@
       "titleEn": "NVIDIA and Partners Build in America, for America",
       "lang": "en",
       "publishedAt": "2026-08-05T13:00:47.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "ai-infrastructure",
         "made-in-usa",
@@ -1581,6 +3021,38 @@
       }
     },
     {
+      "id": "d91c61393c4f7376",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/v4.1.4",
+      "title": "Cline Releases v4.1.4",
+      "titleJa": "Cline v4.1.4 リリース",
+      "titleEn": "Cline Releases v4.1.4",
+      "lang": "en",
+      "publishedAt": "2026-08-05T10:29:34.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "chutes",
+        "cline",
+        "plan-mode",
+        "release",
+        "slash-commands"
+      ],
+      "category": "cline",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Added Recognize Chutes as a provider. Show skills alongside workflows in the slash command menu, and disambiguate commands that share a name instead of letting one shadow the other. Changed Remove model-initiated plan-to-act switching. Switching out of plan mode is now driven by ",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline Releases v4.1.4",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
       "id": "a1a5135b887eeda8",
       "source": "zenn-copilot",
       "sourceType": "blog",
@@ -1590,7 +3062,7 @@
       "titleEn": "This article documents applying mizchi's empirical-prompt-tuning methodology in…",
       "lang": "ja",
       "publishedAt": "2026-08-05T08:23:13.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "copilot",
         "llm",
@@ -1649,7 +3121,7 @@
       "titleEn": "Scaling AI Agent Infrastructure with the MCP Stateless updates",
       "lang": "en",
       "publishedAt": "2026-08-05T00:00:00.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
       "tags": [
         "agent",
         "google",
@@ -1708,7 +3180,7 @@
       "titleEn": "PipeNetwork/minimax-h3-mlx",
       "lang": "en",
       "publishedAt": "2026-08-04T19:10:09.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "apple-silicon",
         "llm",
@@ -1766,16 +3238,18 @@
       }
     },
     {
-      "id": "efb398861203332b",
-      "source": "github-copilot",
+      "id": "718721d9cadc6019",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/how-the-github-legal-team-used-copilot-cli-to-streamline-their-workflows/",
       "title": "How the GitHub legal team used Copilot CLI to streamline their workflows",
       "titleJa": "GitHubの法務チームがCopilot CLIを活用してワークフローを効率化した方法",
       "titleEn": "How the GitHub legal team used Copilot CLI to streamline their workflows",
+      "summaryJa": "GitHubの法務チームがコードを一切書かずにCopilot CLIを使い、日常業務のワークフローを簡略化した実践例を紹介。非エンジニアでもAIツールで業務効率化できることを示している。",
+      "summaryEn": "GitHub's legal team shares how they used Copilot CLI to streamline their workflows without writing any code, demonstrating that non-engineers can build practical productivity tools with AI assistance.",
       "lang": "en",
       "publishedAt": "2026-08-04T19:02:34.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "copilot",
         "copilot-cli",
@@ -1788,6 +3262,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Learn how to build tools to simplify how you work—without writing a single line of code. The post How the GitHub legal team used Copilot CLI to streamline their workflows appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/01/generic-github-copilot-smiling-flying-logo.png",
@@ -1796,8 +3271,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "02b83330160b2494",
@@ -1809,7 +3283,7 @@
       "titleEn": "This article explains how to back up Slack conversations locally using the…",
       "lang": "ja",
       "publishedAt": "2026-08-04T18:53:23.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "claude-desktop",
         "cursor",
@@ -1861,6 +3335,35 @@
       }
     },
     {
+      "id": "54d235ee36e64a47",
+      "source": "ollama-releases",
+      "sourceType": "release",
+      "url": "https://github.com/ollama/ollama/releases/tag/v0.32.6-rc0",
+      "title": "Ollama Releases v0.32.6-rc0",
+      "titleJa": "",
+      "titleEn": "Ollama Releases v0.32.6-rc0",
+      "lang": "en",
+      "publishedAt": "2026-08-04T16:51:52.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ollama",
+        "release"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "llama.cpp update ( #17545 )",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/4033016?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/4033016?s=60&v=4",
+        "alt": "Ollama Releases v0.32.6-rc0",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
       "id": "c5af0f0c41c3e632",
       "source": "nvidia-blog",
       "sourceType": "blog",
@@ -1870,7 +3373,7 @@
       "titleEn": "NVIDIA Joins NSF State and Regional AI Hubs Program to Expand AI Research and Education Across the US",
       "lang": "en",
       "publishedAt": "2026-08-04T16:00:56.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "ai-research",
         "education",
@@ -1919,7 +3422,7 @@
       "titleEn": "NVIDIA Alpamayo 2 Super, the Frontier Open Model for Robotaxis and Autonomous Vehicles, Now Available for Commercial Use",
       "lang": "en",
       "publishedAt": "2026-08-04T15:00:49.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "agent",
         "autonomous-driving",
@@ -1946,7 +3449,7 @@
       "titleEn": "As AI Increases Demands on Memory, Storage Steps Up",
       "lang": "en",
       "publishedAt": "2026-08-04T15:00:47.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "ai-infrastructure",
         "memory",
@@ -1970,7 +3473,7 @@
       "titleEn": "A hands-on trial of GitHub's stacked PR feature (public preview July 2026) with…",
       "lang": "ja",
       "publishedAt": "2026-08-04T14:37:24.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "copilot",
         "gh-cli",
@@ -2020,6 +3523,31 @@
       }
     },
     {
+      "id": "ea3481648e67123d",
+      "source": "microsoft-source",
+      "sourceType": "blog",
+      "url": "https://news.microsoft.com/signal/articles/teaching-ai-to-speak-the-language-of-pathology/",
+      "title": "Teaching AI to speak the language of pathology",
+      "titleJa": "AIに病理学の言語を教える",
+      "titleEn": "Teaching AI to speak the language of pathology",
+      "lang": "en",
+      "publishedAt": "2026-08-04T13:38:55.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "ai",
+        "healthcare",
+        "medical-ai",
+        "microsoft",
+        "news",
+        "pathology"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The post Teaching AI to speak the language of pathology appeared first on Source ."
+    },
+    {
       "id": "0ba765edf66a75a0",
       "source": "nvidia-blog",
       "sourceType": "blog",
@@ -2029,7 +3557,7 @@
       "titleEn": "AI Leaders Propose SAFE Guidelines for Cybersecurity Transparency",
       "lang": "en",
       "publishedAt": "2026-08-04T13:00:47.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -2056,7 +3584,7 @@
       "titleEn": "The latest AI news we announced in July 2026",
       "lang": "en",
       "publishedAt": "2026-08-04T13:00:00.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "2026",
         "ai",
@@ -2253,7 +3781,7 @@
       "titleEn": "A hands-on 7-day build log showing how to ship a SaaS MVP by combining v0,…",
       "lang": "ja",
       "publishedAt": "2026-08-04T01:12:13.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "claude-code",
         "cursor",
@@ -2289,7 +3817,7 @@
       "titleEn": "A Claude Code power user tried Cursor for the first time and built a…",
       "lang": "ja",
       "publishedAt": "2026-08-04T00:59:45.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "ai-coding",
         "claude-code",
@@ -2346,7 +3874,7 @@
       "titleEn": "A unified API for AI model routing",
       "lang": "en",
       "publishedAt": "2026-08-04T00:00:00.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
       "tags": [
         "api-gateway",
         "google",
@@ -2370,7 +3898,7 @@
       "titleEn": "Mariano-Florentino (Tino) Cuéllar to join Anthropic as Chief Global Affairs Officer",
       "lang": "en",
       "publishedAt": "2026-08-04T00:00:00.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "anthropic",
         "claude",
@@ -2666,7 +4194,7 @@
       "titleEn": "OpenHands Releases v1.9.0",
       "lang": "en",
       "publishedAt": "2026-08-03T18:54:13.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
       "tags": [
         "agent",
         "openhands",
@@ -2689,6 +4217,33 @@
       }
     },
     {
+      "id": "08ef90b63c5a2960",
+      "source": "microsoft-source",
+      "sourceType": "blog",
+      "url": "https://www.microsoft.com/en-us/security/blog/2026/07/31/captivecrunch-midnight-blizzard-targets-travelers-worldwide-for-malware-delivery-and-credential-theft/",
+      "title": "Hackers target travelers through hotel and public Wi‑Fi networks",
+      "titleJa": "ハッカーがホテルや公共Wi-Fiを悪用して旅行者を標的に",
+      "titleEn": "Hackers target travelers through hotel and public Wi‑Fi networks",
+      "lang": "en",
+      "publishedAt": "2026-08-03T18:49:37.000Z",
+      "collectedAt": "2026-08-08T09:25:18.437Z",
+      "tags": [
+        "apt",
+        "credential-theft",
+        "malware",
+        "microsoft",
+        "midnight-blizzard",
+        "news",
+        "travel-security",
+        "wi-fi"
+      ],
+      "category": "tech-news",
+      "importance": 3,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The post Hackers target travelers through hotel and public Wi‑Fi networks appeared first on Source ."
+    },
+    {
       "id": "2a23b37ba98e3435",
       "source": "meta-engineering",
       "sourceType": "blog",
@@ -2696,9 +4251,11 @@
       "title": "GEM Training: How Meta Doubled the Efficiency of Its LLM-Scale Ads Foundation Model",
       "titleJa": "GEMトレーニング：MetaがLLMスケールの広告基盤モデルの効率を2倍にした方法",
       "titleEn": "GEM Training: How Meta Doubled the Efficiency of Its LLM-Scale Ads Foundation Model",
+      "summaryJa": "MetaはInstagram・Facebook向け広告推薦基盤モデルGEMのトレーニング効率を2倍（MFU 20〜25%）に引き上げつつ、計算量を4倍にスケールさせることに成功した。",
+      "summaryEn": "Meta achieved a 2x improvement in end-to-end training efficiency for GEM, its ads recommendation foundation model, reaching 20–25% MFU while scaling training FLOPs 4x on thousands of latest-generation GPUs.",
       "lang": "en",
       "publishedAt": "2026-08-03T18:00:17.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
       "tags": [
         "ads",
         "engineering",
@@ -2784,7 +4341,7 @@
       "titleEn": "Inside our 353,000-person vibe coding course",
       "lang": "en",
       "publishedAt": "2026-08-03T15:00:00.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "ai-agents",
         "developer-education",
@@ -2893,7 +4450,7 @@
       "titleEn": "A firsthand account of passing the GH-600: GitHub Agentic AI Developer exam,…",
       "lang": "ja",
       "publishedAt": "2026-08-03T10:32:42.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -3008,7 +4565,7 @@
       "titleEn": "High-autonomy models like Claude Opus 5 and GPT-5.6 in GitHub Copilot can…",
       "lang": "ja",
       "publishedAt": "2026-08-03T06:05:38.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "claude",
         "copilot",
@@ -3068,7 +4625,7 @@
       "titleEn": "Yayoi shared one year of org-wide Cursor adoption at Cursor Meetup Sapporo,…",
       "lang": "ja",
       "publishedAt": "2026-08-03T02:46:44.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "ai-coding",
         "cursor",
@@ -3094,7 +4651,7 @@
       "titleEn": "Scaling real-time AI agents with session-aware load balancing",
       "lang": "en",
       "publishedAt": "2026-08-03T00:00:00.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
       "tags": [
         "ai-agents",
         "gemini",
@@ -3119,7 +4676,7 @@
       "titleEn": "Google Workspace Plugins",
       "lang": "en",
       "publishedAt": "2026-08-03T00:00:00.000Z",
-      "collectedAt": "2026-08-07T17:38:16.835Z",
+      "collectedAt": "2026-08-08T05:33:25.755Z",
       "tags": [
         "changelog",
         "cursor",
@@ -3305,7 +4862,7 @@
       "titleEn": "Zed Editor Releases v1.13.2",
       "lang": "en",
       "publishedAt": "2026-08-02T17:33:45.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "bug-fix",
         "cursor-movement",
@@ -3338,7 +4895,7 @@
       "titleEn": "Zed Editor Releases v1.14.2-pre",
       "lang": "en",
       "publishedAt": "2026-08-02T16:52:59.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "agent",
         "bug-fix",
@@ -3406,7 +4963,7 @@
       "titleEn": "This article maps the various AI-driven development patterns seen in practice…",
       "lang": "ja",
       "publishedAt": "2026-08-02T15:00:00.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "ai-driven-development",
         "cursor",
@@ -3914,7 +5471,7 @@
       "titleEn": "Open letters about AI development",
       "lang": "en",
       "publishedAt": "2026-08-02T04:16:52.000Z",
-      "collectedAt": "2026-08-07T19:42:02.762Z",
+      "collectedAt": "2026-08-08T07:38:42.755Z",
       "tags": [
         "ai-policy",
         "industry",
@@ -4030,7 +5587,7 @@
       "titleEn": "Since Cursor lacks a built-in account switcher, this guide shows how to run…",
       "lang": "ja",
       "publishedAt": "2026-08-02T01:12:51.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "cursor",
         "macos",
@@ -4585,7 +6142,7 @@
       "titleEn": "GitHub opened its standalone Copilot app to all plans—including Copilot Free…",
       "lang": "ja",
       "publishedAt": "2026-08-01T07:54:52.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "agent",
         "byok",
@@ -4613,7 +6170,7 @@
       "titleEn": "This article argues that the core UI for AI agents should shift from chat…",
       "lang": "ja",
       "publishedAt": "2026-08-01T07:29:42.000Z",
-      "collectedAt": "2026-08-07T16:38:49.338Z",
+      "collectedAt": "2026-08-08T10:18:51.216Z",
       "tags": [
         "agent",
         "agent-ux",
@@ -4854,7 +6411,7 @@
       "titleEn": "A solo developer used Cursor Pro+ intensively alongside a full-time job to…",
       "lang": "ja",
       "publishedAt": "2026-08-01T04:41:09.000Z",
-      "collectedAt": "2026-08-07T18:36:19.574Z",
+      "collectedAt": "2026-08-08T12:21:06.929Z",
       "tags": [
         "cursor",
         "cursor-pro",

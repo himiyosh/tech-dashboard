@@ -8112,6 +8112,185 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page).toHaveURL(/\/search\/\?q=agent$/);
   });
 
+  test("pagefind exact-match accepts a pasted raw feed title that diverged from the localized titles", async ({ page }) => {
+    // issue #253: card や元記事・RSS に出る生 feed タイトルは、LLM 訳
+    // (titleJa/titleEn) と語句が食い違うことがある。exact 判定は retrieval 後の
+    // フィルタなので、titleRaw を比較テキストへ含めないと貼り付け検索が
+    // 「一致する結果はありません」に落ちる。live ID は cap eviction で消えるため
+    // pin せず、pagefind.search を mock して判定層だけを固定する。
+    const RAW_TITLE = "AIエージェントの社内導入で始まる「OAuth地獄」 — 認可を一元管理する";
+    const LOCALIZED_TITLE = "AIエージェント社内導入で起きる「OAuth地獄」— 認可を一元管理する";
+    await page.goto("/");
+    await expectPagefindReady(page);
+    await page.evaluate(
+      ([raw, localized]) => {
+        const pagefind = (window as any).__pagefind;
+        const today = new Date().toISOString().slice(0, 10);
+        pagefind.search = async () => ({
+          results: [
+            {
+              data: async () => ({
+                url: "/e/raw-title-divergence/",
+                meta: {
+                  title: localized,
+                  titleJa: localized,
+                  titleEn: "OAuth sprawl in enterprise agent rollouts",
+                  titleRaw: raw,
+                  summaryJa: "エージェント導入時の認可管理を解説します。",
+                  summaryEn: "Explains authorization management for agent rollouts.",
+                },
+                excerpt: "Explains authorization management.",
+                filters: {
+                  authority: ["community"],
+                  importance: ["2"],
+                  publishedDay: [today],
+                },
+              }),
+            },
+          ],
+        });
+      },
+      [RAW_TITLE, LOCALIZED_TITLE] as const,
+    );
+
+    const opener = page.locator("button[data-search-trigger]:visible").first();
+    await opener.click();
+    const input = page.locator("#pagefind-search-input");
+    await input.fill(RAW_TITLE);
+
+    const hits = page.locator('.search-hit:not([data-result-kind="cold-archive"])');
+    await expect(hits).toHaveCount(1);
+    // exact 扱い (zero-state ではなく結果リストに載る) かつ match scope は title。
+    // resultText から titleRaw を外すと zero-state に落ち toHaveCount(1) が失敗、
+    // matchScope から外すと scope が summary に落ちる (両方向で fail することを
+    // revert して確認済み)。
+    await expect(hits.first().locator(".search-hit-match")).toHaveAttribute(
+      "data-match-scope",
+      "title",
+    );
+    await expect(hits.first().locator(".search-hit-title")).toContainText(LOCALIZED_TITLE);
+  });
+
+  test("detail body prose keeps a readable line measure on wide screens", async ({ page }) => {
+    // 実測 2026-08-08: measure 制限なしでは本文の行長が 1440px で約 52 全角字、
+    // 1920px で約 66 字に達していた (日本語の快適域は 35〜45 字)。流し込み
+    // テキストは 706px (≈45.5 字 @15.5px) を上限に固定する。
+    // 最新 entry は本文が queue 未生成のことが多く、Timeline 先頭へ飛ぶと
+    // .ed-body-prose が存在せず検証が空振りする。live index と bodies.json の
+    // 積集合から本文持ち entry をデータ導出する (live ID は pin しない)。
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string; archiveTier?: string }>;
+    };
+    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, unknown>;
+    };
+    const withBody = index.entries.find(
+      (entry) =>
+        entry.archiveTier !== "cold"
+        && entry.archiveTier !== "dropped"
+        && entry.id in bodies.bodies,
+    );
+    // 本文持ちが 1 件も無い corpus は有効な状態 (全記事が要約のみ)。
+    if (!withBody) return;
+
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto(`/e/${withBody.id}/`);
+
+    // 既定は JA 表示。EN-only 本文の display:none ブロックを測らないよう
+    // 可視の JA prose に限定する。
+    const prose = page.locator(".ed-body-prose.i18n-ja p").first();
+    await expect(prose, "body-bearing entry renders prose").toBeVisible();
+    const width = await prose.evaluate((el) => el.getBoundingClientRect().width);
+    expect(width, "prose line measure stays readable").toBeLessThanOrEqual(710);
+    expect(width, "prose does not collapse").toBeGreaterThan(400);
+  });
+
+  test("pagefind retrieval falls back to a query prefix when a long pasted title returns nothing", async ({ page }) => {
+    // issue #253 第2形態: title === titleJa の記事でも、タイトル全文クエリは
+    // Pagefind の CJK トークナイズ都合で retrieval 自体が 0 件になり得る
+    // (実測: 全文 0 件 / 先頭 12 字では同記事が候補入り)。0 件時のみ接頭辞で
+    // 再取得し、exact 判定は従来どおり全文 query で行うことを固定する。
+    const PASTED_TITLE = "AIにUnityプロジェクトを毎回探索させたくないので、アセット参照MCPを作った検証記事";
+    await page.goto("/");
+    await expectPagefindReady(page);
+    await page.evaluate((pasted) => {
+      const pagefind = (window as any).__pagefind;
+      const today = new Date().toISOString().slice(0, 10);
+      (window as any).__searchCalls = [];
+      pagefind.search = async (q: string | null) => {
+        (window as any).__searchCalls.push(q);
+        // 全文はトークナイズ都合で 0 件、接頭辞 (12 字) なら候補が返る想定を模す。
+        if (q !== pasted.slice(0, 12)) return { results: [] };
+        return {
+          results: [
+            {
+              data: async () => ({
+                url: "/e/prefix-fallback/",
+                meta: {
+                  title: pasted,
+                  titleJa: pasted,
+                  titleEn: "Built an asset-reference MCP verification article",
+                  summaryJa: "アセット参照の検証記事です。",
+                  summaryEn: "A verification article for asset references.",
+                },
+                excerpt: "A verification article.",
+                filters: {
+                  authority: ["community"],
+                  importance: ["2"],
+                  publishedDay: [today],
+                },
+              }),
+            },
+          ],
+        };
+      };
+    }, PASTED_TITLE);
+
+    const opener = page.locator("button[data-search-trigger]:visible").first();
+    await opener.click();
+    await page.locator("#pagefind-search-input").fill(PASTED_TITLE);
+
+    const hits = page.locator('.search-hit:not([data-result-kind="cold-archive"])');
+    await expect(hits).toHaveCount(1);
+    await expect(hits.first().locator(".search-hit-match")).toHaveAttribute(
+      "data-match-scope",
+      "title",
+    );
+    // 全文 → 0 件 → 接頭辞 fallback の 2 回だけ呼ばれる (短い query では発火しない)。
+    const calls = await page.evaluate(() => (window as any).__searchCalls);
+    expect(calls).toEqual([PASTED_TITLE, PASTED_TITLE.slice(0, 12)]);
+  });
+
+  test("built detail pages expose titleRaw for entries whose raw title diverged", async ({ page, request }) => {
+    // mocked テストは Portal 側の比較層しか守れない。ここでは実ビルドの HTML が
+    // data-pagefind-meta="titleRaw" を実際に出力していることを、live ID を pin
+    // せずデータから導出した対象で検証する (live-index-cap-eviction の教訓)。
+    const raw = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{
+        id: string;
+        title?: string;
+        titleJa?: string;
+        titleEn?: string;
+        archiveTier?: string;
+      }>;
+    };
+    const divergent = raw.entries.find(
+      (entry) =>
+        entry.archiveTier !== "cold"
+        && entry.archiveTier !== "dropped"
+        && !!entry.title
+        && entry.title !== entry.titleJa
+        && entry.title !== entry.titleEn,
+    );
+    // 全 entry の訳が原題一致になる corpus では検証対象が存在しない (有効な状態)。
+    if (!divergent) return;
+
+    const response = await request.get(`/e/${divergent.id}/`);
+    expect(response.status()).toBe(200);
+    const html = await response.text();
+    expect(html).toContain('data-pagefind-meta="titleRaw"');
+  });
+
   test("pagefind groups recent exact articles ahead of older authority matches", async ({ page }) => {
     await page.goto("/");
     await expectPagefindReady(page);
@@ -9787,6 +9966,49 @@ test.describe("TECH Dashboard smoke", () => {
     await cardsView.click();
     await expect(cardsView).toHaveAttribute("aria-pressed", "true");
     await expect(page.locator('[data-paper-view-panel="cards"]')).toBeVisible();
+  });
+
+  test("mobile secondary links keep the WCAG 24px minimum tap size", async ({ page }) => {
+    // 44px は主要導線の基準 (上のテスト)。ここは高頻度の副次リンク —
+    // card のタグ chip、記事詳細のパンくず・関連トピック、月別 Archive の
+    // all-link — が WCAG 2.5.8 の最小 24px を下回らないことを固定する。
+    // 実測 2026-08-08: chip 22px / crumb 17px / topic 18px / all-link 20px が
+    // すべて 24px 未満だった (probe による回帰基準)。
+    const expectMinTapHeight = async (selector: string, label: string) => {
+      const targets = page.locator(selector);
+      const count = await targets.count();
+      expect(count, `${label} exposes targets`).toBeGreaterThan(0);
+      const heights = await targets.evaluateAll((nodes) =>
+        nodes
+          .filter((node) => {
+            const rect = node.getBoundingClientRect();
+            const style = window.getComputedStyle(node);
+            return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden";
+          })
+          .map((node) => node.getBoundingClientRect().height),
+      );
+      expect(heights.length, `${label} has visible targets`).toBeGreaterThan(0);
+      for (const height of heights) {
+        expect(height, `${label} keeps a 24px tap height`).toBeGreaterThanOrEqual(24);
+      }
+    };
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await expectMinTapHeight(".card .tag-chip", "390px card tag chips");
+
+    const firstDetail = page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first();
+    const detailHref = await firstDetail.getAttribute("href");
+    expect(detailHref).toBeTruthy();
+    await page.goto(detailHref!);
+    await expectMinTapHeight(".crumb-inner a", "390px detail breadcrumb links");
+    await expectMinTapHeight(".ed-topic-links a", "390px detail topic links");
+
+    await page.goto("/archive/");
+    const monthHref = await page.locator('a[href^="/archive/2"]').first().getAttribute("href");
+    expect(monthHref).toBeTruthy();
+    await page.goto(monthHref!);
+    await expectMinTapHeight(".month-nav .all-link", "390px archive all-months link");
   });
 
   test("arXiv exposes a localized RSS subscription action and autodiscovery", async ({

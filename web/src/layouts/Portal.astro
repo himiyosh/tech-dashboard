@@ -1269,8 +1269,10 @@ const footerLastRunRelative = footerLastRunAt
           if (type.className === "article") {
             const source = displaySource(filterValue(d, "source"));
             const category = displayCategory(filterValue(d, "category"));
+            // titleRaw: LLM 訳と食い違う生 feed タイトル (issue #253)。元記事や
+            // RSS からの貼り付け検索を exact 判定に到達させる。
             return normalizeSearchText(stripTags(
-              `${d.meta?.titleJa || ""} ${d.meta?.titleEn || ""} ${d.meta?.summaryJa || ""} ${d.meta?.summaryEn || ""} ${d.meta?.tags || ""} ${source} ${category}`,
+              `${d.meta?.titleJa || ""} ${d.meta?.titleEn || ""} ${d.meta?.titleRaw || ""} ${d.meta?.summaryJa || ""} ${d.meta?.summaryEn || ""} ${d.meta?.tags || ""} ${source} ${category}`,
             ));
           }
           const source = filterValue(d, "source");
@@ -1388,7 +1390,7 @@ const footerLastRunRelative = footerLastRunAt
         ): MatchScope => {
           if (d.intentKind === "tag" || type.className === "tag") return "tag";
           if (d.intentKind === "category" || type.className === "category") return "category";
-          if (matchesQuery(`${d.meta?.title ?? ""} ${d.meta?.titleJa ?? ""} ${d.meta?.titleEn ?? ""}`, q)) {
+          if (matchesQuery(`${d.meta?.title ?? ""} ${d.meta?.titleJa ?? ""} ${d.meta?.titleEn ?? ""} ${d.meta?.titleRaw ?? ""}`, q)) {
             return "title";
           }
           if (matchesQuery(d.meta?.tags, q)) return "tag";
@@ -1506,11 +1508,42 @@ const footerLastRunRelative = footerLastRunAt
             ? Promise.allSettled([
                 tagIntent
                   ? Promise.resolve({ results: [] })
-                  : withDeadline(
-                      Promise.resolve(pf.search(q)),
-                      3500,
-                      "The search index took too long to respond.",
-                    ),
+                  : (async () => {
+                      // 長い CJK 貼り付けクエリ (タイトル全文など) は Pagefind の
+                      // トークナイズ都合で retrieval 自体が 0 件になることがある
+                      // (issue #253 の第2形態; 実測: 全文 0 件 / 先頭 12 字 30 件)。
+                      // 0 件のときだけ接頭辞で再取得して recall を回復する。
+                      // 精度は従来どおり後段の isExactResult (whole-query includes)
+                      // が担保するため、タイトル貼り付け以外の長文が誤って exact に
+                      // 昇格することはない。
+                      // - 1 回目の search は従来と同じ 3500ms 契約 (timeout は throw)
+                      // - fallback は best-effort: 独自の 1500ms 予算で、失敗時は
+                      //   従来の 0 件挙動へ黙って戻る (error UI へ昇格させない)
+                      // - CJK を含むクエリに限定する。空白区切りの英文は Pagefind の
+                      //   term AND で 0 件 = 真の不一致であり、接頭辞再取得は junk
+                      //   候補の data() fetch を増やすだけになる
+                      // - code point 単位で数え、絵文字 (surrogate pair) を割らない
+                      const first = await withDeadline(
+                        Promise.resolve(pf.search(q)),
+                        3500,
+                        "The search index took too long to respond.",
+                      );
+                      if ((first?.results?.length ?? 0) > 0) return first;
+                      const trimmed = q.trim();
+                      const points = [...trimmed];
+                      const hasCjk = /[぀-ヿ㐀-鿿豈-﫿]/.test(trimmed);
+                      if (!hasCjk || points.length < 16) return first;
+                      try {
+                        const fallback = await withDeadline(
+                          Promise.resolve(pf.search(points.slice(0, 12).join(""))),
+                          1500,
+                          "The prefix fallback took too long to respond.",
+                        );
+                        return (fallback?.results?.length ?? 0) > 0 ? fallback : first;
+                      } catch {
+                        return first;
+                      }
+                    })(),
                 tagIntent
                   ? withDeadline(
                       Promise.resolve(pf.search(null, { filters: { tag: [tagIntent] } })),

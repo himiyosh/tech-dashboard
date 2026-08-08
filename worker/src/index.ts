@@ -80,6 +80,7 @@ import {
   buildArchiveIndexFile,
   buildArchiveMonthFile,
   groupArchiveEntries,
+  promoteEvictedEvergreenEntries,
   reconcileArchiveMonths,
   synchronizeArchiveTagsFromLive,
   type ArchiveIndexFile,
@@ -740,6 +741,14 @@ export function selectArchiveUpdateEntries(
     existingPayload.entries.map((entry) => [canonicalUrlKey(entry.url) ?? entry.url ?? entry.id, entry]),
   );
   return nextEntries.filter((entry) => {
+    // Evergreen rows are always carried into the archive, even when the live
+    // entry is byte-identical to last run. The change filter is an efficiency
+    // optimisation built on "an unchanged entry's archive row is already
+    // correct", which does not hold for evergreen: the row must own current
+    // summaries before the caps evict the entry (promoteEvictedEvergreenEntries
+    // can only flip the tier, it cannot invent a summary), and a stable entry
+    // never changes, so it would never get another chance to supply them.
+    if (entry.evergreen) return true;
     const key = canonicalUrlKey(entry.url) ?? entry.url ?? entry.id;
     return JSON.stringify(existingByUrl.get(key)) !== JSON.stringify(entry);
   });
@@ -836,8 +845,16 @@ async function publishHistoryFiles(
       reconciledByMonth.get(month) ?? [],
       liveEntries,
     );
-    archiveEntriesForStats.push(...tagSync.entries);
-    const mergedEntries = tagSync.entries;
+    // Evergreen rows the live-index caps just evicted would otherwise freeze at
+    // tier "hot" and drop off every browsable surface (R-022).
+    const tierPromotion = promoteEvictedEvergreenEntries(tagSync.entries, liveEntries);
+    if (tierPromotion.changed > 0) {
+      console.log(
+        `[publisher] archive ${month}: promoted ${tierPromotion.changed} evicted evergreen entries to warm`,
+      );
+    }
+    archiveEntriesForStats.push(...tierPromotion.entries);
+    const mergedEntries = tierPromotion.entries;
     const monthPayload = buildArchiveMonthFile(month, mergedEntries, generatedAt);
     finalMonthFiles.set(month, monthPayload);
 

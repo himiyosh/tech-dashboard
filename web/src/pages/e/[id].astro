@@ -406,6 +406,21 @@ const jsonLd = {
         data-summary-state={summaryAbsent ? "pending" : "ready"}
         style={`--cat-color:${catColor}`}
       >
+        {/*
+          生 feed タイトルが LLM 訳 (titleJa/titleEn) と食い違う記事は、元記事や
+          RSS から貼り付けた検索が titleJa/titleEn ベースの比較で 0 hit になる
+          (issue #253)。data-pagefind-body 内の hidden テキストとして埋めることで
+          Pagefind の検索対象になり (head の meta[content] は retrievable だが
+          searchable ではない)、同じ属性で meta.titleRaw としても取り出せる。
+          hidden にするのは支援技術へタイトルを二重に読ませないため。
+          注意: この hidden テキストは Pagefind の excerpt 生成対象にもなる。
+          検索 UI は excerpt を meta.summaryJa/En から描画しており (Portal.astro
+          resultExcerpt)、result.data().excerpt を直接描画する consumer を将来
+          追加すると非表示テキストが露出する。
+        */}
+        {entry.title && entry.title !== titleJa && entry.title !== titleEn && (
+          <span hidden data-pagefind-meta="titleRaw">{entry.title}</span>
+        )}
         {/* HERO */}
         <div class="ed-hero" id="ed-hero">
           {entry.image?.src ? (
@@ -1329,6 +1344,8 @@ const jsonLd = {
     color: var(--text); font-weight: 800;
     letter-spacing: -0.005em; margin: 0 0 12px;
     font-feature-settings: "palt" 1;
+    /* 複数行タイトルの行長を均し、最終行だけ極端に短い折返しを避ける */
+    text-wrap: balance;
   }
   .ed-byline {
     display: flex; flex-wrap: wrap; align-items: center;
@@ -1488,6 +1505,17 @@ const jsonLd = {
 
   /* BODY */
   .ed-body { padding: 28px 32px 8px; }
+  /* 読みやすさ: 長文テキストの行長を約 45 全角字 (706px ≈ 15.5px × 45.5) に
+     制限する。実測では制限なしだと 1440px で約 52 字、1920px で約 66 字に
+     達し、日本語の快適域 (35〜45 字) を大きく超えていた。行間 2.05 は維持。
+     箱物 (TLDR・要約カード) は据え置き、流し込みテキストだけを揃える。 */
+  .ed-body-prose p,
+  .ed-body-note,
+  .ed-body-origin,
+  .ed-pullquote,
+  .ed-divider {
+    max-width: 706px;
+  }
   .ed-body-origin {
     display: flex;
     align-items: flex-start;
@@ -1505,6 +1533,9 @@ const jsonLd = {
     margin: 0 0 22px;
     text-align: justify; text-justify: inter-character;
     scroll-margin-top: 84px;
+    /* 段落末尾の孤立語 (orphan) を避ける。JA は justify で影響が薄く、
+       主に英語 prose の折返し品質に効く */
+    text-wrap: pretty;
   }
   .ed-body-prose .kw {
     color: var(--cat-color);
@@ -1603,7 +1634,7 @@ const jsonLd = {
   .ed-topic-links {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px 0;
+    gap: 8px 0;
     min-width: 0;
   }
   .ed-topic-links a {
@@ -1611,6 +1642,11 @@ const jsonLd = {
     text-decoration: underline;
     text-decoration-color: color-mix(in srgb, var(--muted) 45%, transparent);
     text-underline-offset: 3px;
+    /* WCAG 2.5.8: 行送りを変えずにヒット領域を ≥24px へ (17.8px + 4px×2)。
+       flex item のため負 margin で box 拡張を相殺する。折返し行間の
+       gap 8px は拡張後の rect が隣行と重ならないための下限。 */
+    padding-block: 4px;
+    margin-block: -4px;
   }
   .ed-topic-links a:hover { color: var(--cat-color); }
   .ed-topic-links a:not(:last-child)::after {

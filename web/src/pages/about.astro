@@ -14,7 +14,11 @@ import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../lib/reaction-copy.ts";
 import { WORKER_HEALTH } from "../lib/data.ts";
 import { deriveWorkerRunStatus, WORKER_RUN_STATE_COPY } from "../lib/run-health.ts";
-import { NEW_ISSUE_URL } from "../lib/site.ts";
+import {
+  NEW_ISSUE_URL,
+  PUBLIC_CONTACT_EMAIL,
+  PUBLIC_OPERATOR_NAME,
+} from "../lib/site.ts";
 import { OPML_HREF, OPML_MEDIA_TYPE } from "../lib/feed-catalog.ts";
 
 const now = new Date();
@@ -356,6 +360,37 @@ const pipelineSteps = [
           </a>
         </p>
       </section>
+
+      <section id="operator" class="about-note-panel operator-panel" aria-labelledby="operator-heading">
+        <h3 id="operator-heading">
+          <span class="i18n-ja">運営者情報</span>
+          <span class="i18n-en" lang="en">Operator</span>
+        </h3>
+        <dl class="operator-dl">
+          <div>
+            <dt>
+              <span class="i18n-ja">運営主体</span>
+              <span class="i18n-en" lang="en">Operated by</span>
+            </dt>
+            <dd>{PUBLIC_OPERATOR_NAME}</dd>
+          </div>
+          <div>
+            <dt>
+              <span class="i18n-ja">連絡先</span>
+              <span class="i18n-en" lang="en">Contact</span>
+            </dt>
+            <dd><a href={`mailto:${PUBLIC_CONTACT_EMAIL}`}>{PUBLIC_CONTACT_EMAIL}</a></dd>
+          </div>
+        </dl>
+        <p>
+          <span class="i18n-ja">
+            データの扱い・第三者サービス・適用法域の詳細は <a href="/privacy">Privacy</a> を参照してください。
+          </span>
+          <span class="i18n-en" lang="en">
+            See <a href="/privacy">Privacy</a> for data handling, third-party services, and jurisdiction details.
+          </span>
+        </p>
+      </section>
     </main>
 
     <aside class="right about-insights">
@@ -503,6 +538,39 @@ const pipelineSteps = [
 
   #feedback {
     scroll-margin-top: 120px;
+  }
+
+  #operator {
+    scroll-margin-top: 120px;
+  }
+
+  .operator-dl {
+    display: grid;
+    gap: 6px;
+    margin: 0 0 10px;
+  }
+
+  .operator-dl > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    align-items: baseline;
+  }
+
+  .operator-dl dt {
+    min-width: 88px;
+    color: var(--muted-2);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .operator-dl dd {
+    margin: 0;
+    color: var(--text-2);
+    font-size: 13px;
+    overflow-wrap: anywhere;
   }
 
   #feedback:target {

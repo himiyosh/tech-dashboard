@@ -8261,6 +8261,56 @@ test.describe("TECH Dashboard smoke", () => {
     expect(calls).toEqual([PASTED_TITLE, PASTED_TITLE.slice(0, 12)]);
   });
 
+  test("mobile article titles are not clipped mid-title", async ({ page }) => {
+    // 利用者報告 (2026-08-09): モバイルで記事タイトルが見切れる。
+    // 原因は -webkit-line-clamp: 2 で、390px 実測では card title の 23% が
+    // 収まらなかった (3 行で 97%、4 行で 100%)。日本語は 1 行の情報量が
+    // 少ないため、狭幅では 2 行 clamp が実質的な切り捨てになる。
+    // 判定は「clamp 値」ではなく実際の見切れ (scrollHeight > clientHeight) で
+    // 行い、フォントや文字数が変わっても意味が保たれるようにする。
+    // Spotlight (article.featured) はここに含めない。375px では「タイトル全文」と
+    // 「Spotlight 要約を tabbar の上に収める」(下の Privacy prompt テストが固定する
+    // ファーストビュー契約) が両立しないため、hero は 3 行 clamp を上限として
+    // ファーストビュー契約を優先する。Timeline カードは単一列で下方向へ伸ばせるので
+    // 全文表示にできる。
+    const titleSelectors = [
+      ".card h3.title > a",
+      ".top-rank-item .rank-title",
+    ];
+
+    for (const width of [390, 375, 360]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto("/");
+      const clipped = await page.evaluate((selectors) => {
+        const offenders: string[] = [];
+        for (const selector of selectors) {
+          for (const el of document.querySelectorAll<HTMLElement>(selector)) {
+            const rect = el.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) continue;
+            if (el.scrollHeight - el.clientHeight > 1) {
+              offenders.push(
+                `${selector}: "${(el.textContent ?? "").trim().slice(0, 24)}" `
+                + `${el.scrollHeight}px in ${el.clientHeight}px`,
+              );
+            }
+          }
+        }
+        return offenders;
+      }, titleSelectors);
+      expect(clipped, `${width}px titles are fully visible`).toEqual([]);
+    }
+
+    // hero は全文表示できないが、従来の 2 行から 3 行へは広げてある。
+    // ここが 2 に戻ると見切れが目に見えて悪化するため下限を固定する。
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    const heroClamp = await page.evaluate(() => {
+      const el = document.querySelector<HTMLElement>("article.featured .featured-title > a");
+      return el ? getComputedStyle(el).webkitLineClamp : null;
+    });
+    expect(Number(heroClamp), "Spotlight title keeps at least 3 lines").toBeGreaterThanOrEqual(3);
+  });
+
   test("ad slots stay hidden without consent and reveal with exactly one push", async ({
     page,
     baseURL,

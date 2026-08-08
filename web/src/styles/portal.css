@@ -5399,6 +5399,17 @@ html, body {
   .card .summary .en-mark {
     display: none;
   }
+  /* モバイルはカードが単一列なので行数の揃えより可読性を優先する。
+     card / Top3 のタイトルは 4 行まで許容し、見切れを解消する
+     (390px 実測: 2 行 clamp で card title の 23% が途中で切れていた)。 */
+  .card .title a {
+    -webkit-line-clamp: 4;
+  }
+
+  .top-rank-item .rank-title {
+    -webkit-line-clamp: 4;
+  }
+
   .card .summary .s-text {
     white-space: normal;          /* allow wrap on mobile */
     line-break: strict;
@@ -5438,7 +5449,10 @@ html, body {
     overflow: hidden;
     min-block-size: 45px;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    /* hero は 3 行が上限。4 行にすると 375px で Spotlight 要約が tabbar の
+       下へ押し出され、ファーストビュー契約 (smoke の Privacy prompt テスト)
+       を破る。全文表示できるのは下方向へ伸ばせる Timeline カード側だけ。 */
+    -webkit-line-clamp: 3;
   }
   .featured-sum {
     font-size: 12.5px;

@@ -321,6 +321,8 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 > **Tier の意味**: 1 = 一次情報源 (ベンダー公式) / 2 = 次次情報源 (サードパーティ) / 3 = コミュニティ・ユーザカスタム
 >
 > **evergreen ソース (R-022)**: `anthropic-engineering` / `github-blog-ai` / `github-copilot` はベストプラクティス/知見系のため `evergreen: true`。hot window 経過後も warm (個別URL) に留まり、cold (/archive 月次集約) / dropped にせず蓄積する。判定は `harness/half-life.ts` の `decideTier`、検証は `tests/half-life.test.ts` と `tests/data-schema.test.ts` の evergreen ゲート。
+>
+> **evergreen の live index eviction (R-022)**: live index の cap (`PER_SOURCE_CAP` / `CATEGORY_CAPS` / `INDEX_LIMIT`) は `pickScore` だけで永久に evict し、evergreen を考慮しない。evict された行は再入力されないため `archiveTier` がその時点で凍結する。そのため archive 書き出し側が `harness/publishers/archive-core.ts` で 2 点を保証する: (1) `compactArchiveEntry` は evergreen の hot 行から summary を剥がさない (LL-044 の「live index が保持している」前提が cap 相手には成り立たないため)、(2) `promoteEvictedEvergreenEntries` が live から外れた evergreen 行を即座に warm へ昇格し、hot window の残りを待たずに個別 URL を維持する。evergreen を cap から除外する方向は採らない — evergreen は無限に蓄積するため live index が膨張し、`INDEX_LIMIT` の publishedAt 降順 slice が新しいニュースを押し出す。
 
 ---
 

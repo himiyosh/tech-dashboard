@@ -804,6 +804,41 @@ describe("evergreen 蓄積ポリシー (R-022)", () => {
     expect(violations, "evergreen エントリが cold/dropped。decideTier / migrate-evergreen を確認すること").toEqual([]);
   });
 
+  // live index の cap (PER_SOURCE_CAP / CATEGORY_CAPS / INDEX_LIMIT) は evergreen を
+  // 考慮せず永久 eviction する。evict された行が tier "hot" のまま凍結すると、
+  // /archive/{month} (isPublishableEntry で summary 必須) にも /e/{id}
+  // (ARCHIVE_WARM_ENTRIES 由来) にも出ず、記事が全 surface から消える。
+  // 予防は archive-core.ts の compactArchiveEntry + promoteEvictedEvergreenEntries。
+  it("live index から落ちた evergreen は warm + summary 付きで archive に残る", () => {
+    const liveIds = new Set(data.entries.map((entry) => String(entry.id)));
+    const liveUrls = new Set(
+      data.entries.flatMap((entry) => {
+        const key = canonicalUrlKey(String(entry.url));
+        return key ? [key] : [];
+      }),
+    );
+
+    const violations = archiveEntries.flatMap((entry) => {
+      if ((entry as { evergreen?: unknown }).evergreen !== true) return [];
+      const key = canonicalUrlKey(String(entry.url ?? ""));
+      if (liveIds.has(String(entry.id)) || (key && liveUrls.has(key))) return [];
+
+      const tier = (entry as { archiveTier?: unknown }).archiveTier;
+      const reasons: string[] = [];
+      if (tier !== "warm") reasons.push(`tier=${String(tier ?? "(none)")}`);
+      if (!String(entry.summaryJa ?? "").trim()) reasons.push("summaryJa 欠落");
+      if (!String(entry.summaryEn ?? "").trim()) reasons.push("summaryEn 欠落");
+      return reasons.length > 0
+        ? [`${entry.archiveFile} ${String(entry.id)}: ${reasons.join(", ")}`]
+        : [];
+    });
+
+    expect(
+      violations,
+      "evict された evergreen が browsable surface から消えている。archive-core.ts の promoteEvictedEvergreenEntries / compactArchiveEntry と scripts/restore-evicted-evergreen.mjs を確認すること",
+    ).toEqual([]);
+  });
+
   it("registry の evergreen ソースが少なくとも 1 件 live で蓄積されている", () => {
     const evergreenSources = Object.keys(REGISTRY).filter((id) => REGISTRY[id]?.evergreen);
     expect(evergreenSources.length).toBeGreaterThan(0);

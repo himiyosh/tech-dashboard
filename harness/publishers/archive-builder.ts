@@ -29,6 +29,7 @@ import {
   buildArchiveIndexFile,
   buildArchiveMonthFile,
   groupArchiveEntries,
+  promoteEvictedEvergreenEntries,
   reconcileArchiveMonths,
   synchronizeArchiveTagsFromLive,
   type ArchiveBuildStats,
@@ -87,9 +88,12 @@ export async function writeArchive(
       reconciledByMonth.get(month) ?? [],
       entries,
     );
+    // Evergreen rows the live-index caps just evicted would otherwise freeze at
+    // tier "hot" and drop off every browsable surface (R-022).
+    const promoted = promoteEvictedEvergreenEntries(synchronized.entries, entries);
     const payload = buildArchiveMonthFile(
       month,
-      synchronized.entries,
+      promoted.entries,
       generatedAt,
     );
     await writeFile(path, JSON.stringify(payload, null, 2) + "\n", "utf8");

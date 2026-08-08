@@ -37,6 +37,11 @@ export interface ArchiveTagSyncResult {
   changed: number;
 }
 
+export interface ArchiveTierPromotionResult {
+  entries: NormalizedEntry[];
+  changed: number;
+}
+
 export interface ArchiveMonthEntries {
   month: string;
   entries: readonly NormalizedEntry[];
@@ -98,7 +103,15 @@ function compactArchiveEntry(entry: NormalizedEntry): NormalizedEntry {
   // Hot-tier entries are still present in the live index, so strip summaries
   // to keep the current-month archive file small (LL-044).
   // Warm/cold tiers retain summaries for archive detail page display.
-  if (entry.archiveTier === "hot") {
+  //
+  // Evergreen is the exception. LL-044 assumes a hot row can always recover its
+  // summaries from the live index, but the live index caps (PER_SOURCE_CAP /
+  // CATEGORY_CAPS / INDEX_LIMIT in worker/src/index.ts) evict permanently — an
+  // evicted entry never returns in `entries` here, so a stripped summary is
+  // gone for good. Evergreen rows are guaranteed to end up warm and
+  // individually addressable (R-022), so they must carry their own summaries
+  // rather than borrow them from a live slot they can lose at any run.
+  if (entry.archiveTier === "hot" && !entry.evergreen) {
     // summaryJa/summaryEn are required on NormalizedEntry but optional on the
     // serialised archive payload — cast to Partial to satisfy tsc.
     delete (compact as Partial<typeof compact>).summaryJa;
@@ -223,6 +236,51 @@ export function synchronizeArchiveTagsFromLive(
 
     changed += 1;
     return { ...entry, tags: [...live.tags] };
+  });
+
+  return { entries, changed };
+}
+
+/**
+ * Promote evergreen archive rows that have left the live index to "warm".
+ *
+ * `archiveTier` is stamped by normalize() while an entry is being ingested, so
+ * it stops advancing the moment the entry leaves the live index. For ordinary
+ * entries that freeze is intentional: a cap-evicted hot row stays a statistical
+ * snapshot (RETAINED_TIERS) and is deliberately not listed on the monthly page.
+ *
+ * Evergreen content cannot take that deal. R-022 says it accumulates instead of
+ * being archived — it must stay individually addressable — but the live index
+ * caps evict on pickScore alone and ignore the flag entirely. A row frozen at
+ * "hot" is in neither the live index nor any browsable surface: the monthly page
+ * lists only publishable rows and the detail route is generated from warm rows.
+ *
+ * Tier is therefore re-derived from liveness rather than from age: an evergreen
+ * row that is no longer live is warm, which is exactly where decideTier() puts
+ * evergreen content past its hot window. Restoring it at eviction time (instead
+ * of waiting out the hot threshold) keeps the article continuously reachable —
+ * the live detail route hands off directly to the archive one.
+ */
+export function promoteEvictedEvergreenEntries(
+  archiveEntries: readonly NormalizedEntry[],
+  liveEntries: readonly NormalizedEntry[],
+): ArchiveTierPromotionResult {
+  const liveIds = new Set<string>();
+  const liveCanonical = new Set<string>();
+  for (const entry of liveEntries) {
+    liveIds.add(entry.id);
+    const key = canonicalUrlKey(entry.url);
+    if (key) liveCanonical.add(key);
+  }
+
+  let changed = 0;
+  const entries = archiveEntries.map((entry) => {
+    if (!entry.evergreen || entry.archiveTier === "warm") return entry;
+    const key = canonicalUrlKey(entry.url);
+    if (liveIds.has(entry.id) || (key && liveCanonical.has(key))) return entry;
+
+    changed += 1;
+    return { ...entry, archiveTier: "warm" as const };
   });
 
   return { entries, changed };

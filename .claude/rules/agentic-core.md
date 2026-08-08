@@ -67,6 +67,6 @@ Do not open a work view by writing a file alone, and do not end a turn silently 
 
 ## Detailed references
 
-Detailed engineering, persona, and knowledge-system guidance is distributed under `.github/knowledge/agentic-rules/` and loaded only when the task requires it.
+Detailed engineering, persona, and knowledge-system guidance is distributed under this project's `knowledge/agentic-rules/` directory and loaded only when the task requires it. The exact root depends on the platform the bundle was installed for, so resolve the path from this project's agent entry point rather than assuming one. Do not report the guidance as missing without checking the entry point first.
 Long-running multi-session orchestration, liveness, stale-report handling, blank-session lifecycle, manifest coverage, retirement, and categorized dashboard guidance is in `agentic-engineering-rules.md` §6.
 The start-of-work view and end-of-work summary contracts are in `agentic-engineering-rules.md` §6.16.1 and §6.16.2.

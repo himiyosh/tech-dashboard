@@ -66,6 +66,7 @@ Anthropic / OpenAI / Microsoft / Google の公開ベストプラクティスと�
 
 - `.github/copilot-instructions.md` / `AGENTS.md`（必要に応じて `CLAUDE.md` / `GEMINI.md`）
 - `.github/instructions/*.instructions.md`（ファイルパターン別ルール）
+- Claude Code を使うプロジェクトでは、常時適用は `CLAUDE.md` または `.claude/rules/*.md`（`paths:` frontmatter なし）、ファイルパターン別は `.claude/rules/*.md`（`paths:` frontmatter あり）を使う。`.github/instructions/` の `applyTo` は Claude Code では解釈されない。
 
 **書くべき内容**: プロジェクト概要 / 技術スタック / 実行環境 / 禁止事項 / コーディング規約 / テスト・ビルド・リント手順 / デプロイ制約 / セキュリティ制約 / UI・a11y・i18n・パフォーマンス方針。
 

@@ -6,9 +6,10 @@
 
 ## 常時適用ルール
 
-次の 1 ファイルだけを常時ロードする。組織非依存の安全契約、work cycle、validation、evidence を含む。
-
-@.claude/agentic-core.instructions.md
+組織非依存の安全契約、work cycle、validation、evidence は `.claude/rules/agentic-core.md` にあり、
+Claude Code が launch 時に自動ロードする。**このファイルから import しない。**
+`@` import は working directory の外を指すと承認ダイアログの対象になり、一度拒否すると恒久的に無効化されるため、
+安全契約をそこへ依存させない。
 
 ## 詳細ルール（Progressive Disclosure。常時ロードしない）
 
@@ -30,5 +31,5 @@ profile によっては配布されないファイルがある。存在しない
 
 このプロジェクトだけに効く絶対制約をここに書く。上の共通ルールと重複する一般論は書かない。
 
-- 導入元 ref: `v0.6.0` (`d2c01144f0e469baa53ba6eab23bc4bbacaf38a7`)
+- 導入元 ref: `v0.6.1` (`5792d8bb3ea23d3812e10c5b7f4ced214ac73753`)
 - 導入 profile: `core`（platform: `claude-code`）

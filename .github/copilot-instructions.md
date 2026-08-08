@@ -3,7 +3,7 @@
 このリポジトリで Copilot / agent が作業する際の絶対ルールと、過去事象から得た Lessons Learned を集約する。
 新しい知見を得たら **同一セッション内で本ファイルに追記** すること（ユーザーから指摘される前に行う）。
 
-> **共通ルールの参照**: 探索・計画・検証・ブランチ運用・UI 品質・セキュリティ・依存管理など**プロジェクト横断の作業ルール**は `.github/instructions/agentic-engineering-rules.instructions.md`、応答スタイル・言語・自己改善・エンコーディングなど**振る舞いルール**は `.github/instructions/agent-persona-rules.instructions.md` に集約している。本ファイルは、それらと重複しない **本プロジェクト固有の絶対制約 (R-xxx)** と **障害履歴 (LL-xxx)** だけを保持する。共通ルールと矛盾する場合は、より安全な側（確認必須・破壊回避）を採用し、判断が割れる箇所はユーザーに確認する。
+> **共通ルールの参照**: 探索・計画・検証・ブランチ運用・UI 品質・セキュリティ・依存管理など**プロジェクト横断の作業ルール**は `.github/knowledge/agentic-rules/agentic-engineering-rules.md`、応答スタイル・言語・自己改善・エンコーディングなど**振る舞いルール**は `.github/knowledge/agentic-rules/agent-persona-rules.md` に集約している。常時適用の短い安全契約は `.github/instructions/agentic-core.instructions.md` にあり、詳細 2 文書は必要な作業に入る時だけ読む（Progressive Disclosure）。共通ルールの導入元は himiyosh/agentic-rules の `v0.6.1` (`5792d8bb3ea23d3812e10c5b7f4ced214ac73753`)、platform `copilot` / profile `core`。本ファイルは、それらと重複しない **本プロジェクト固有の絶対制約 (R-xxx)** と **障害履歴 (LL-xxx)** だけを保持する。共通ルールと矛盾する場合は、より安全な側（確認必須・破壊回避）を採用し、判断が割れる箇所はユーザーに確認する。
 
 ---
 

@@ -1965,6 +1965,14 @@ const jsonLd = {
     .ed-fab { right: 14px; bottom: 14px; }
   }
   @media (max-width: 720px) {
+    /* 狭幅では日本語タイトルが 3 行以上必要になり、2 行 clamp では
+       関連記事・前後記事のタイトルが途中で切れる (375px 実測)。
+       clamp は上限なので短いタイトルの高さは変わらない。 */
+    .ed-rel-title,
+    .ed-pn-title {
+      -webkit-line-clamp: 4;
+    }
+
     .ed-fab {
       bottom: calc(68px + env(safe-area-inset-bottom));
     }

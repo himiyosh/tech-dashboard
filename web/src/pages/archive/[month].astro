@@ -378,7 +378,13 @@ const monthHeroActions = [
     text-decoration: none;
   }
   .month-nav a:hover { text-decoration: underline; }
-  .month-nav .all-link { color: var(--muted); }
+  .month-nav .all-link {
+    color: var(--muted);
+    /* WCAG 2.5.8: 20px テキストリンクのヒット領域を ≥24px へ。
+       負 margin 相殺で month-nav の行高は変えない。 */
+    padding-block: 3px;
+    margin-block: -3px;
+  }
   .month-nav span span,
   .month-nav a span {
     color: var(--muted-2);

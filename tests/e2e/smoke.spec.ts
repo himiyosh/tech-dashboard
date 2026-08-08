@@ -8171,6 +8171,96 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(hits.first().locator(".search-hit-title")).toContainText(LOCALIZED_TITLE);
   });
 
+  test("detail body prose keeps a readable line measure on wide screens", async ({ page }) => {
+    // 実測 2026-08-08: measure 制限なしでは本文の行長が 1440px で約 52 全角字、
+    // 1920px で約 66 字に達していた (日本語の快適域は 35〜45 字)。流し込み
+    // テキストは 706px (≈45.5 字 @15.5px) を上限に固定する。
+    // 最新 entry は本文が queue 未生成のことが多く、Timeline 先頭へ飛ぶと
+    // .ed-body-prose が存在せず検証が空振りする。live index と bodies.json の
+    // 積集合から本文持ち entry をデータ導出する (live ID は pin しない)。
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string; archiveTier?: string }>;
+    };
+    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, unknown>;
+    };
+    const withBody = index.entries.find(
+      (entry) =>
+        entry.archiveTier !== "cold"
+        && entry.archiveTier !== "dropped"
+        && entry.id in bodies.bodies,
+    );
+    // 本文持ちが 1 件も無い corpus は有効な状態 (全記事が要約のみ)。
+    if (!withBody) return;
+
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto(`/e/${withBody.id}/`);
+
+    // 既定は JA 表示。EN-only 本文の display:none ブロックを測らないよう
+    // 可視の JA prose に限定する。
+    const prose = page.locator(".ed-body-prose.i18n-ja p").first();
+    await expect(prose, "body-bearing entry renders prose").toBeVisible();
+    const width = await prose.evaluate((el) => el.getBoundingClientRect().width);
+    expect(width, "prose line measure stays readable").toBeLessThanOrEqual(710);
+    expect(width, "prose does not collapse").toBeGreaterThan(400);
+  });
+
+  test("pagefind retrieval falls back to a query prefix when a long pasted title returns nothing", async ({ page }) => {
+    // issue #253 第2形態: title === titleJa の記事でも、タイトル全文クエリは
+    // Pagefind の CJK トークナイズ都合で retrieval 自体が 0 件になり得る
+    // (実測: 全文 0 件 / 先頭 12 字では同記事が候補入り)。0 件時のみ接頭辞で
+    // 再取得し、exact 判定は従来どおり全文 query で行うことを固定する。
+    const PASTED_TITLE = "AIにUnityプロジェクトを毎回探索させたくないので、アセット参照MCPを作った検証記事";
+    await page.goto("/");
+    await expectPagefindReady(page);
+    await page.evaluate((pasted) => {
+      const pagefind = (window as any).__pagefind;
+      const today = new Date().toISOString().slice(0, 10);
+      (window as any).__searchCalls = [];
+      pagefind.search = async (q: string | null) => {
+        (window as any).__searchCalls.push(q);
+        // 全文はトークナイズ都合で 0 件、接頭辞 (12 字) なら候補が返る想定を模す。
+        if (q !== pasted.slice(0, 12)) return { results: [] };
+        return {
+          results: [
+            {
+              data: async () => ({
+                url: "/e/prefix-fallback/",
+                meta: {
+                  title: pasted,
+                  titleJa: pasted,
+                  titleEn: "Built an asset-reference MCP verification article",
+                  summaryJa: "アセット参照の検証記事です。",
+                  summaryEn: "A verification article for asset references.",
+                },
+                excerpt: "A verification article.",
+                filters: {
+                  authority: ["community"],
+                  importance: ["2"],
+                  publishedDay: [today],
+                },
+              }),
+            },
+          ],
+        };
+      };
+    }, PASTED_TITLE);
+
+    const opener = page.locator("button[data-search-trigger]:visible").first();
+    await opener.click();
+    await page.locator("#pagefind-search-input").fill(PASTED_TITLE);
+
+    const hits = page.locator('.search-hit:not([data-result-kind="cold-archive"])');
+    await expect(hits).toHaveCount(1);
+    await expect(hits.first().locator(".search-hit-match")).toHaveAttribute(
+      "data-match-scope",
+      "title",
+    );
+    // 全文 → 0 件 → 接頭辞 fallback の 2 回だけ呼ばれる (短い query では発火しない)。
+    const calls = await page.evaluate(() => (window as any).__searchCalls);
+    expect(calls).toEqual([PASTED_TITLE, PASTED_TITLE.slice(0, 12)]);
+  });
+
   test("built detail pages expose titleRaw for entries whose raw title diverged", async ({ page, request }) => {
     // mocked テストは Portal 側の比較層しか守れない。ここでは実ビルドの HTML が
     // data-pagefind-meta="titleRaw" を実際に出力していることを、live ID を pin

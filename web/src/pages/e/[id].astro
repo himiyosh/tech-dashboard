@@ -1603,7 +1603,7 @@ const jsonLd = {
   .ed-topic-links {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px 0;
+    gap: 8px 0;
     min-width: 0;
   }
   .ed-topic-links a {
@@ -1611,6 +1611,11 @@ const jsonLd = {
     text-decoration: underline;
     text-decoration-color: color-mix(in srgb, var(--muted) 45%, transparent);
     text-underline-offset: 3px;
+    /* WCAG 2.5.8: 行送りを変えずにヒット領域を ≥24px へ (17.8px + 4px×2)。
+       flex item のため負 margin で box 拡張を相殺する。折返し行間の
+       gap 8px は拡張後の rect が隣行と重ならないための下限。 */
+    padding-block: 4px;
+    margin-block: -4px;
   }
   .ed-topic-links a:hover { color: var(--cat-color); }
   .ed-topic-links a:not(:last-child)::after {

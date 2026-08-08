@@ -9789,6 +9789,49 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator('[data-paper-view-panel="cards"]')).toBeVisible();
   });
 
+  test("mobile secondary links keep the WCAG 24px minimum tap size", async ({ page }) => {
+    // 44px は主要導線の基準 (上のテスト)。ここは高頻度の副次リンク —
+    // card のタグ chip、記事詳細のパンくず・関連トピック、月別 Archive の
+    // all-link — が WCAG 2.5.8 の最小 24px を下回らないことを固定する。
+    // 実測 2026-08-08: chip 22px / crumb 17px / topic 18px / all-link 20px が
+    // すべて 24px 未満だった (probe による回帰基準)。
+    const expectMinTapHeight = async (selector: string, label: string) => {
+      const targets = page.locator(selector);
+      const count = await targets.count();
+      expect(count, `${label} exposes targets`).toBeGreaterThan(0);
+      const heights = await targets.evaluateAll((nodes) =>
+        nodes
+          .filter((node) => {
+            const rect = node.getBoundingClientRect();
+            const style = window.getComputedStyle(node);
+            return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden";
+          })
+          .map((node) => node.getBoundingClientRect().height),
+      );
+      expect(heights.length, `${label} has visible targets`).toBeGreaterThan(0);
+      for (const height of heights) {
+        expect(height, `${label} keeps a 24px tap height`).toBeGreaterThanOrEqual(24);
+      }
+    };
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await expectMinTapHeight(".card .tag-chip", "390px card tag chips");
+
+    const firstDetail = page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first();
+    const detailHref = await firstDetail.getAttribute("href");
+    expect(detailHref).toBeTruthy();
+    await page.goto(detailHref!);
+    await expectMinTapHeight(".crumb-inner a", "390px detail breadcrumb links");
+    await expectMinTapHeight(".ed-topic-links a", "390px detail topic links");
+
+    await page.goto("/archive/");
+    const monthHref = await page.locator('a[href^="/archive/2"]').first().getAttribute("href");
+    expect(monthHref).toBeTruthy();
+    await page.goto(monthHref!);
+    await expectMinTapHeight(".month-nav .all-link", "390px archive all-months link");
+  });
+
   test("arXiv exposes a localized RSS subscription action and autodiscovery", async ({
     page,
   }) => {

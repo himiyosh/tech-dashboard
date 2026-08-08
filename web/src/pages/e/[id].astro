@@ -1344,6 +1344,8 @@ const jsonLd = {
     color: var(--text); font-weight: 800;
     letter-spacing: -0.005em; margin: 0 0 12px;
     font-feature-settings: "palt" 1;
+    /* 複数行タイトルの行長を均し、最終行だけ極端に短い折返しを避ける */
+    text-wrap: balance;
   }
   .ed-byline {
     display: flex; flex-wrap: wrap; align-items: center;
@@ -1503,6 +1505,17 @@ const jsonLd = {
 
   /* BODY */
   .ed-body { padding: 28px 32px 8px; }
+  /* 読みやすさ: 長文テキストの行長を約 45 全角字 (706px ≈ 15.5px × 45.5) に
+     制限する。実測では制限なしだと 1440px で約 52 字、1920px で約 66 字に
+     達し、日本語の快適域 (35〜45 字) を大きく超えていた。行間 2.05 は維持。
+     箱物 (TLDR・要約カード) は据え置き、流し込みテキストだけを揃える。 */
+  .ed-body-prose p,
+  .ed-body-note,
+  .ed-body-origin,
+  .ed-pullquote,
+  .ed-divider {
+    max-width: 706px;
+  }
   .ed-body-origin {
     display: flex;
     align-items: flex-start;
@@ -1520,6 +1533,9 @@ const jsonLd = {
     margin: 0 0 22px;
     text-align: justify; text-justify: inter-character;
     scroll-margin-top: 84px;
+    /* 段落末尾の孤立語 (orphan) を避ける。JA は justify で影響が薄く、
+       主に英語 prose の折返し品質に効く */
+    text-wrap: pretty;
   }
   .ed-body-prose .kw {
     color: var(--cat-color);

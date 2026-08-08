@@ -583,3 +583,20 @@ tech-dashboard/
 | P2 Tier 2 + LLM          | Tier 2 残り + Claude Sonnet Queue 要約 + Pagefind 検索 | ✅ 完了 |
 | P3 Feed + 監査           | RSS/JSON Feed + /status + quality-audit skill     | ✅ 完了 |
 | P4 Tier 3 + カスタマイズ | HN / YouTube / OPML + ユーザカスタマイズ基盤      | ✅ 完了 |
+
+### 広告ユニットの有効化 (AdSense 承認後)
+
+審査承認後、AdSense 管理画面「広告 > 広告ユニットごと」でディスプレイ広告ユニットを作成し、発行された数値 slot ID を `web/src/lib/ad-slots.ts` の定数へ設定するだけで有効化されます。
+
+| 定数 | 掲載位置 |
+| --- | --- |
+| `ADSENSE_SLOT_ARTICLE_BOTTOM` | 記事詳細: AI 解説本文の下、関連記事の上 |
+| `ADSENSE_SLOT_ARCHIVE_MONTH` | 月別 Archive: 記事一覧の下 |
+
+- 空文字列の間は `AdSlot.astro` がマークアップを一切描画しません (審査中は空白領域も出ません)。
+- 設定後も表示は既存の opt-in 同意ゲートの内側です。**本番ドメインかつ同意「許可」のときだけ** 表示し `adsbygoogle.push` します (`shouldLoadAdvertising`)。preview / pages.dev / localhost では同意があっても読み込みません。
+- 表示は fail-closed です: `html:not([data-advertising-consent="allowed"]) .ad-slot` を CSS で強制非表示にしているため、JS 経路が変わっても同意なしで漏れません。ラベルは実際に広告が入ったとき (`data-ad-status="filled"`) だけ表示します。
+- CLS 対策として枠の高さを予約し (desktop 100px / mobile 280px)、在庫なし・未承認・script ブロックで一定時間 fill しなかった unit は `data-ad-collapsed` により畳みます。
+- 不正な値 (プレースホルダ、`ca-pub-` の貼り間違い、桁数違い) は `isRenderableAdSlotId` が fail-closed で弾き、`tests/ad-slots.test.ts` が検出します。
+- 同意ゲートの実挙動 (未決定/拒否は hidden かつ push 0、許可で表示かつ push 1 回) は `tests/e2e/smoke.spec.ts` の "ad slots stay hidden without consent" が固定します。
+- 承認後の確認は、同意「許可」を与えた実ブラウザで本番ドメインを開いて行ってください (crawler や通常の fetch では広告は読み込まれません)。

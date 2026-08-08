@@ -56,6 +56,45 @@ function loadAdvertising(state: PrivacyConsentState): void {
   document.head.append(script);
 }
 
+/**
+ * 手動広告ユニット (components/AdSlot.astro) の表示と初期化。
+ *
+ * AdSlot は slot ID 設定時のみ hidden + data-ad-pending で描画される。
+ * 同意が「許可」かつ本番ドメインのときだけ表示し、unit ごとに 1 回
+ * adsbygoogle.push する (push の queue は script 読込前でも配列として
+ * 積めるため、loadAdvertising との順序に依存しない)。同意なし・非本番では
+ * hidden のまま触らないので、審査中や preview で空白領域は生じない。
+ */
+const AD_FILL_TIMEOUT_MS = 4000;
+
+function revealAdSlots(state: PrivacyConsentState): void {
+  if (!shouldLoadAdvertising(window.location.hostname, state)) return;
+  document
+    .querySelectorAll<HTMLElement>(".ad-slot[data-ad-pending]")
+    .forEach((slot) => {
+      // push を先に試し、成功した slot だけを可視化する。push が throw した
+      // 場合 (adsbygoogle が frozen / Proxy 化されている拡張環境など) は
+      // pending のまま残し、空のラベル枠を出さない。
+      try {
+        const queue = ((window as unknown as { adsbygoogle?: { push(value: unknown): unknown } })
+          .adsbygoogle ??= [] as unknown as { push(value: unknown): unknown });
+        queue.push({});
+      } catch {
+        return;
+      }
+      slot.removeAttribute("data-ad-pending");
+      setHidden(slot, false);
+      // AdSense が fill しなかった場合 (在庫なし・未承認・script ブロック) は
+      // 予約した高さごと畳む。data-ad-status は script が応答したときにしか
+      // 付かないため、時間で打ち切らないと空白が残り続ける。
+      window.setTimeout(() => {
+        const ins = slot.querySelector("ins.adsbygoogle");
+        if (ins?.getAttribute("data-ad-status") === "filled") return;
+        slot.dataset.adCollapsed = "true";
+      }, AD_FILL_TIMEOUT_MS);
+    });
+}
+
 function rememberConsentFocus(choice: AdvertisingConsent): void {
   try {
     window.sessionStorage.setItem(CONSENT_FOCUS_STORAGE_KEY, choice);
@@ -114,6 +153,7 @@ export function syncPrivacyConsent(state = readState()): void {
     syncRoot(root, state);
   });
   loadAdvertising(state);
+  revealAdSlots(state);
   document.dispatchEvent(
     new CustomEvent("techdb:privacyconsentchange", { detail: { state } }),
   );

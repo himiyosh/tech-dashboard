@@ -7,6 +7,7 @@ import {
   promoteEvictedEvergreenEntries,
 } from "../harness/publishers/archive-core.ts";
 import { writeArchive } from "../harness/publishers/archive-builder.ts";
+import { selectArchiveUpdateEntries } from "../worker/src/index.ts";
 import type { NormalizedEntry } from "../harness/types.ts";
 import { isPublishableEntry } from "../web/src/lib/entry-publication.ts";
 import { isAddressableDetailEntry } from "../web/src/lib/detail-addressability.ts";
@@ -117,6 +118,51 @@ describe("evergreen archive retention (R-022)", () => {
     expect(first.changed).toBe(0);
     expect(second.changed).toBe(0);
     expect(second.entries[0]?.archiveTier).toBe("warm");
+  });
+
+  it("summary を持たない evergreen は昇格させず hot のまま残す", () => {
+    // 昇格させると「warm なのに summary 無し」という不正 record になり、
+    // publisher の fail-closed 検証を恒久的に落とす (promotion は summary を
+    // 生成できないので、tier だけ動かしても記事は閲覧可能にならない)。
+    const evicted = fixtureEntry({
+      id: "no-summary",
+      archiveTier: "hot",
+      evergreen: true,
+      summaryJa: "",
+      summaryEn: "",
+    });
+
+    const { entries, changed } = promoteEvictedEvergreenEntries([evicted], []);
+
+    expect(changed).toBe(0);
+    expect(entries[0]?.archiveTier).toBe("hot");
+  });
+
+  it("片方の言語しか summary が無い evergreen も昇格させない", () => {
+    const evicted = fixtureEntry({
+      id: "half-summary",
+      archiveTier: "hot",
+      evergreen: true,
+      summaryEn: "",
+    });
+
+    const { changed } = promoteEvictedEvergreenEntries([evicted], []);
+
+    expect(changed).toBe(0);
+  });
+
+  it("変化していない evergreen も archive 更新対象に含める", () => {
+    // selectArchiveUpdateEntries の変更 filter は「変化していない entry の archive
+    // 行は既に正しい」という前提だが、evergreen では成り立たない。安定した entry が
+    // 除外され続けると、cap に evict されるまで summary を archive へ渡す機会が
+    // 一度も来ない。
+    const evergreen = fixtureEntry({ id: "stable-evergreen", evergreen: true });
+    const plain = fixtureEntry({ id: "stable-plain", url: "https://example.com/plain" });
+    const existingPayload = { entries: [evergreen, plain] };
+
+    const selected = selectArchiveUpdateEntries(existingPayload, [evergreen, plain]);
+
+    expect(selected.map((entry) => entry.id)).toEqual(["stable-evergreen"]);
   });
 
   it("eviction 後も月次 archive と個別ページの両方に残る", async () => {

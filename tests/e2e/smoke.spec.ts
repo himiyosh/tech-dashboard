@@ -8112,6 +8112,95 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page).toHaveURL(/\/search\/\?q=agent$/);
   });
 
+  test("pagefind exact-match accepts a pasted raw feed title that diverged from the localized titles", async ({ page }) => {
+    // issue #253: card や元記事・RSS に出る生 feed タイトルは、LLM 訳
+    // (titleJa/titleEn) と語句が食い違うことがある。exact 判定は retrieval 後の
+    // フィルタなので、titleRaw を比較テキストへ含めないと貼り付け検索が
+    // 「一致する結果はありません」に落ちる。live ID は cap eviction で消えるため
+    // pin せず、pagefind.search を mock して判定層だけを固定する。
+    const RAW_TITLE = "AIエージェントの社内導入で始まる「OAuth地獄」 — 認可を一元管理する";
+    const LOCALIZED_TITLE = "AIエージェント社内導入で起きる「OAuth地獄」— 認可を一元管理する";
+    await page.goto("/");
+    await expectPagefindReady(page);
+    await page.evaluate(
+      ([raw, localized]) => {
+        const pagefind = (window as any).__pagefind;
+        const today = new Date().toISOString().slice(0, 10);
+        pagefind.search = async () => ({
+          results: [
+            {
+              data: async () => ({
+                url: "/e/raw-title-divergence/",
+                meta: {
+                  title: localized,
+                  titleJa: localized,
+                  titleEn: "OAuth sprawl in enterprise agent rollouts",
+                  titleRaw: raw,
+                  summaryJa: "エージェント導入時の認可管理を解説します。",
+                  summaryEn: "Explains authorization management for agent rollouts.",
+                },
+                excerpt: "Explains authorization management.",
+                filters: {
+                  authority: ["community"],
+                  importance: ["2"],
+                  publishedDay: [today],
+                },
+              }),
+            },
+          ],
+        });
+      },
+      [RAW_TITLE, LOCALIZED_TITLE] as const,
+    );
+
+    const opener = page.locator("button[data-search-trigger]:visible").first();
+    await opener.click();
+    const input = page.locator("#pagefind-search-input");
+    await input.fill(RAW_TITLE);
+
+    const hits = page.locator('.search-hit:not([data-result-kind="cold-archive"])');
+    await expect(hits).toHaveCount(1);
+    // exact 扱い (zero-state ではなく結果リストに載る) かつ match scope は title。
+    // resultText から titleRaw を外すと zero-state に落ち toHaveCount(1) が失敗、
+    // matchScope から外すと scope が summary に落ちる (両方向で fail することを
+    // revert して確認済み)。
+    await expect(hits.first().locator(".search-hit-match")).toHaveAttribute(
+      "data-match-scope",
+      "title",
+    );
+    await expect(hits.first().locator(".search-hit-title")).toContainText(LOCALIZED_TITLE);
+  });
+
+  test("built detail pages expose titleRaw for entries whose raw title diverged", async ({ page, request }) => {
+    // mocked テストは Portal 側の比較層しか守れない。ここでは実ビルドの HTML が
+    // data-pagefind-meta="titleRaw" を実際に出力していることを、live ID を pin
+    // せずデータから導出した対象で検証する (live-index-cap-eviction の教訓)。
+    const raw = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{
+        id: string;
+        title?: string;
+        titleJa?: string;
+        titleEn?: string;
+        archiveTier?: string;
+      }>;
+    };
+    const divergent = raw.entries.find(
+      (entry) =>
+        entry.archiveTier !== "cold"
+        && entry.archiveTier !== "dropped"
+        && !!entry.title
+        && entry.title !== entry.titleJa
+        && entry.title !== entry.titleEn,
+    );
+    // 全 entry の訳が原題一致になる corpus では検証対象が存在しない (有効な状態)。
+    if (!divergent) return;
+
+    const response = await request.get(`/e/${divergent.id}/`);
+    expect(response.status()).toBe(200);
+    const html = await response.text();
+    expect(html).toContain('data-pagefind-meta="titleRaw"');
+  });
+
   test("pagefind groups recent exact articles ahead of older authority matches", async ({ page }) => {
     await page.goto("/");
     await expectPagefindReady(page);

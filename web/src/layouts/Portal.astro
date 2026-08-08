@@ -1269,8 +1269,10 @@ const footerLastRunRelative = footerLastRunAt
           if (type.className === "article") {
             const source = displaySource(filterValue(d, "source"));
             const category = displayCategory(filterValue(d, "category"));
+            // titleRaw: LLM 訳と食い違う生 feed タイトル (issue #253)。元記事や
+            // RSS からの貼り付け検索を exact 判定に到達させる。
             return normalizeSearchText(stripTags(
-              `${d.meta?.titleJa || ""} ${d.meta?.titleEn || ""} ${d.meta?.summaryJa || ""} ${d.meta?.summaryEn || ""} ${d.meta?.tags || ""} ${source} ${category}`,
+              `${d.meta?.titleJa || ""} ${d.meta?.titleEn || ""} ${d.meta?.titleRaw || ""} ${d.meta?.summaryJa || ""} ${d.meta?.summaryEn || ""} ${d.meta?.tags || ""} ${source} ${category}`,
             ));
           }
           const source = filterValue(d, "source");
@@ -1388,7 +1390,7 @@ const footerLastRunRelative = footerLastRunAt
         ): MatchScope => {
           if (d.intentKind === "tag" || type.className === "tag") return "tag";
           if (d.intentKind === "category" || type.className === "category") return "category";
-          if (matchesQuery(`${d.meta?.title ?? ""} ${d.meta?.titleJa ?? ""} ${d.meta?.titleEn ?? ""}`, q)) {
+          if (matchesQuery(`${d.meta?.title ?? ""} ${d.meta?.titleJa ?? ""} ${d.meta?.titleEn ?? ""} ${d.meta?.titleRaw ?? ""}`, q)) {
             return "title";
           }
           if (matchesQuery(d.meta?.tags, q)) return "tag";

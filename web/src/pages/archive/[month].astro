@@ -3,6 +3,8 @@ import Portal from "../../layouts/Portal.astro";
 import PageHero from "../../components/PageHero.astro";
 import Sidebar from "../../components/Sidebar.astro";
 import EntryCard from "../../components/EntryCard.astro";
+import AdSlot from "../../components/AdSlot.astro";
+import { ADSENSE_SLOT_ARCHIVE_MONTH } from "../../lib/ad-slots.ts";
 import {
   ARCHIVE_MONTHS,
   getMonth,
@@ -190,6 +192,9 @@ const monthHeroActions = [
           ))}
         </section>
       ))}
+
+      {/* 広告 (一覧下)。slot ID 未設定の間は何も描画されない */}
+      <AdSlot slot={ADSENSE_SLOT_ARCHIVE_MONTH} placement="archive-month" />
     </main>
 
     <aside class="right archive-month-insights">

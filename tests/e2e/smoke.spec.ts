@@ -8261,6 +8261,89 @@ test.describe("TECH Dashboard smoke", () => {
     expect(calls).toEqual([PASTED_TITLE, PASTED_TITLE.slice(0, 12)]);
   });
 
+  test("ad slots stay hidden without consent and reveal with exactly one push", async ({
+    page,
+    baseURL,
+  }) => {
+    // slot ID 未設定の間は AdSlot が何も描画しないため、実マークアップと同形の
+    // slot を注入して revealAdSlots のゲートそのものを検証する。ID を設定した
+    // 瞬間に本番で効く唯一の分岐なので、pure predicate ではなくここを固定する。
+    await routeProductionHostToPreview(page, baseURL!);
+    await page.route("**/pagead2.googlesyndication.com/**", (route) => route.abort());
+    await page.addInitScript(() => {
+      window.localStorage.clear();
+      const install = () => {
+        if (document.querySelector(".ad-slot")) return;
+        const main = document.querySelector("main");
+        if (!main) return;
+        const slot = document.createElement("div");
+        slot.className = "ad-slot";
+        slot.dataset.adPlacement = "test-probe";
+        slot.hidden = true;
+        slot.setAttribute("inert", "");
+        slot.dataset.adPending = "true";
+        const ins = document.createElement("ins");
+        ins.className = "adsbygoogle";
+        slot.append(ins);
+        main.append(slot);
+      };
+      document.addEventListener("DOMContentLoaded", install);
+      // adsbygoogle への push を記録する (script 自体は abort 済み)
+      (window as unknown as { __adPushes?: unknown[] }).__adPushes = [];
+      const queue: unknown[] = [];
+      Object.defineProperty(window, "adsbygoogle", {
+        configurable: true,
+        get: () => queue,
+        set: () => {},
+      });
+      const origPush = queue.push.bind(queue);
+      queue.push = (...args: unknown[]) => {
+        (window as unknown as { __adPushes: unknown[] }).__adPushes.push(args);
+        return origPush(...args);
+      };
+    });
+
+    await page.goto(`${PRODUCTION_ORIGIN}/`);
+    const slot = page.locator(".ad-slot");
+    await expect(slot).toHaveCount(1);
+
+    // 未決定: hidden かつ push なし
+    const undecided = await page.evaluate(() => ({
+      hidden: (document.querySelector(".ad-slot") as HTMLElement).hidden,
+      pushes: (window as unknown as { __adPushes: unknown[] }).__adPushes.length,
+    }));
+    expect(undecided.hidden, "undecided keeps the slot hidden").toBe(true);
+    expect(undecided.pushes, "undecided pushes nothing").toBe(0);
+
+    // 拒否: hidden のまま push なし
+    await page.locator('[data-consent-choice="denied"]:visible').first().click();
+    const denied = await page.evaluate(() => ({
+      hidden: (document.querySelector(".ad-slot") as HTMLElement).hidden,
+      pushes: (window as unknown as { __adPushes: unknown[] }).__adPushes.length,
+    }));
+    expect(denied.hidden, "denied keeps the slot hidden").toBe(true);
+    expect(denied.pushes, "denied pushes nothing").toBe(0);
+
+    // 許可: 表示され push はちょうど 1 回
+    await page.evaluate(() => {
+      const root = document.querySelector<HTMLElement>("[data-privacy-consent]");
+      root?.querySelector<HTMLButtonElement>('[data-consent-choice="allowed"]')?.click();
+    });
+    await expect
+      .poll(async () =>
+        page.evaluate(() => document.documentElement.dataset.advertisingConsent),
+      )
+      .toBe("allowed");
+    const allowed = await page.evaluate(() => ({
+      hidden: (document.querySelector(".ad-slot") as HTMLElement).hidden,
+      pending: document.querySelector(".ad-slot[data-ad-pending]") !== null,
+      pushes: (window as unknown as { __adPushes: unknown[] }).__adPushes.length,
+    }));
+    expect(allowed.hidden, "allowed reveals the slot").toBe(false);
+    expect(allowed.pending, "allowed clears the pending marker").toBe(false);
+    expect(allowed.pushes, "allowed pushes exactly once").toBe(1);
+  });
+
   test("built detail pages expose titleRaw for entries whose raw title diverged", async ({ page, request }) => {
     // mocked テストは Portal 側の比較層しか守れない。ここでは実ビルドの HTML が
     // data-pagefind-meta="titleRaw" を実際に出力していることを、live ID を pin

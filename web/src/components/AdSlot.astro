@@ -1,0 +1,47 @@
+---
+/**
+ * 同意ゲート付きの手動 AdSense ユニット。
+ *
+ * 状態遷移 (fail-closed):
+ * 1. slot ID 未設定/不正 → 何も描画しない (審査中は完全に無)
+ * 2. 描画時の初期状態 → hidden + inert (支援技術からも外す)
+ * 3. 本番ドメイン かつ 同意「許可」 → privacy-consent-client の revealAdSlots が
+ *    push 成功時にだけ hidden を外す
+ * 4. 一定時間内に AdSense が fill しなかった (在庫なし・script ブロック・未承認)
+ *    → data-ad-collapsed が付き CSS で畳まれる
+ *
+ * ラベルは fill 確認後にだけ表示する。script がブロックされた場合に
+ * 「スポンサーリンク」だけが残るのを避けるため (CSS 側の :has で制御)。
+ *
+ * script / style をこのコンポーネントに置かず consent client + portal.css へ
+ * 寄せているのは、同意ゲートの所有者を 1 箇所に保つため (bundle サイズ目的
+ * ではない。Astro は component の script/style を利用ページのみへ出す)。
+ */
+import { isRenderableAdSlotId } from "../lib/ad-slots.ts";
+import { ADSENSE_CLIENT_ID } from "../lib/site.ts";
+
+interface Props {
+  slot: string;
+  placement: string;
+}
+
+const { slot, placement } = Astro.props;
+const renderable = isRenderableAdSlotId(slot);
+---
+
+{renderable && (
+  <div class="ad-slot" data-ad-placement={placement} hidden inert data-ad-pending>
+    <span class="ad-slot-label" aria-hidden="true">
+      <span class="i18n-ja">スポンサーリンク</span>
+      <span class="i18n-en" lang="en">Sponsored Links</span>
+    </span>
+    <ins
+      class="adsbygoogle"
+      style="display:block"
+      data-ad-client={ADSENSE_CLIENT_ID}
+      data-ad-slot={slot}
+      data-ad-format="auto"
+      data-full-width-responsive="false"
+    ></ins>
+  </div>
+)}

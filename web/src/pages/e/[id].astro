@@ -1,7 +1,9 @@
 ---
 import Portal from "../../layouts/Portal.astro";
 import Sidebar from "../../components/Sidebar.astro";
+import AdSlot from "../../components/AdSlot.astro";
 import CategoryThumb from "../../components/CategoryThumb.astro";
+import { ADSENSE_SLOT_ARTICLE_BOTTOM } from "../../lib/ad-slots.ts";
 import ArticleLike from "../../components/ArticleLike.astro";
 import LanguageFallbackBadge from "../../components/LanguageFallbackBadge.astro";
 import ExternalLinkHint from "../../components/ExternalLinkHint.astro";
@@ -827,6 +829,14 @@ const jsonLd = {
           </p>
         )}
       </article>
+
+      {/*
+        広告は記事本文の直後・ナビゲーション導線の手前に置く。prev/next カードと
+        関連記事グリッドの間へ挟むと、モバイルで全幅タップ領域に前後を挟まれ
+        誤クリックを誘発する配置になるため (AdSense の配置ポリシー)。
+        slot ID 未設定の間は何も描画されない。
+      */}
+      <AdSlot slot={ADSENSE_SLOT_ARTICLE_BOTTOM} placement="article-bottom" />
 
       {/* PREV / NEXT */}
       {(prev || next) && (

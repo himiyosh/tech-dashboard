@@ -406,6 +406,21 @@ const jsonLd = {
         data-summary-state={summaryAbsent ? "pending" : "ready"}
         style={`--cat-color:${catColor}`}
       >
+        {/*
+          生 feed タイトルが LLM 訳 (titleJa/titleEn) と食い違う記事は、元記事や
+          RSS から貼り付けた検索が titleJa/titleEn ベースの比較で 0 hit になる
+          (issue #253)。data-pagefind-body 内の hidden テキストとして埋めることで
+          Pagefind の検索対象になり (head の meta[content] は retrievable だが
+          searchable ではない)、同じ属性で meta.titleRaw としても取り出せる。
+          hidden にするのは支援技術へタイトルを二重に読ませないため。
+          注意: この hidden テキストは Pagefind の excerpt 生成対象にもなる。
+          検索 UI は excerpt を meta.summaryJa/En から描画しており (Portal.astro
+          resultExcerpt)、result.data().excerpt を直接描画する consumer を将来
+          追加すると非表示テキストが露出する。
+        */}
+        {entry.title && entry.title !== titleJa && entry.title !== titleEn && (
+          <span hidden data-pagefind-meta="titleRaw">{entry.title}</span>
+        )}
         {/* HERO */}
         <div class="ed-hero" id="ed-hero">
           {entry.image?.src ? (

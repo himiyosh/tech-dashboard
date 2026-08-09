@@ -9,6 +9,7 @@ import {
   PRIVACY_CONSENT_STORAGE_KEY,
   parsePrivacyConsent,
   privacyConsentState,
+  ADVERTISING_REQUIRES_CONSENT,
 } from "../../web/src/lib/privacy-consent.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
 
@@ -5389,6 +5390,10 @@ test.describe("TECH Dashboard smoke", () => {
     context,
     baseURL,
   }) => {
+    // 2026-08-09: 広告は本番の標準機能となり同意 UI を描画しない。
+    // 状態モデルと本テスト群は、広告オフを有料機能として提供する際に
+    // ADVERTISING_REQUIRES_CONSENT を true へ戻せばそのまま復活する。
+    test.skip(!ADVERTISING_REQUIRES_CONSENT, "consent UI is not rendered while ads are mandatory");
     expect(baseURL).toBeTruthy();
     await context.route(`${PRODUCTION_ORIGIN}/**`, async (route) => {
       const source = new URL(route.request().url());
@@ -5587,6 +5592,10 @@ test.describe("TECH Dashboard smoke", () => {
     page,
     baseURL,
   }) => {
+    // 2026-08-09: 広告は本番の標準機能となり同意 UI を描画しない。
+    // 状態モデルと本テスト群は、広告オフを有料機能として提供する際に
+    // ADVERTISING_REQUIRES_CONSENT を true へ戻せばそのまま復活する。
+    test.skip(!ADVERTISING_REQUIRES_CONSENT, "consent UI is not rendered while ads are mandatory");
     expect(baseURL).toBeTruthy();
     let advertisingRequests = 0;
     await routeProductionHostToPreview(page, baseURL!);
@@ -5642,6 +5651,10 @@ test.describe("TECH Dashboard smoke", () => {
     browser,
     baseURL,
   }) => {
+    // 2026-08-09: 広告は本番の標準機能となり同意 UI を描画しない。
+    // 状態モデルと本テスト群は、広告オフを有料機能として提供する際に
+    // ADVERTISING_REQUIRES_CONSENT を true へ戻せばそのまま復活する。
+    test.skip(!ADVERTISING_REQUIRES_CONSENT, "consent UI is not rendered while ads are mandatory");
     expect(baseURL).toBeTruthy();
     const results: Array<{ name: string; cls: number }> = [];
 
@@ -5695,6 +5708,10 @@ test.describe("TECH Dashboard smoke", () => {
   test("Privacy keeps optional ads off by default and exposes bilingual controls", async ({
     page,
   }) => {
+    // 2026-08-09: 広告は本番の標準機能となり同意 UI を描画しない。
+    // 状態モデルと本テスト群は、広告オフを有料機能として提供する際に
+    // ADVERTISING_REQUIRES_CONSENT を true へ戻せばそのまま復活する。
+    test.skip(!ADVERTISING_REQUIRES_CONSENT, "consent UI is not rendered while ads are mandatory");
     let deleteStatus = 200;
     await page.addInitScript(() => window.localStorage.clear());
     await page.route("**/api/reactions/config", async (route) => {
@@ -5732,16 +5749,18 @@ test.describe("TECH Dashboard smoke", () => {
       "content",
       /TECH Dashboardのデータ取扱い/,
     );
-    await expect(page.locator(".privacy-consent-prompt")).toBeHidden();
-    await expect(page.locator("#consent-settings-heading")).toBeVisible();
-    await expect(page.getByRole("group", { name: "広告の同意設定" })).toBeVisible();
+    // 2026-08-09: 広告は本番の標準機能となり、同意 UI (バナー / 選択ボタン) は
+    // 描画しない。preview host なので広告 script も読み込まれない。
+    await expect(page.locator(".privacy-consent-prompt")).toHaveCount(0);
+    await expect(page.locator("[data-consent-choice]")).toHaveCount(0);
     await expect(page.getByRole("complementary", { name: "プライバシーページの案内" })).toBeVisible();
-    await expect(page.locator('[data-consent-status="undecided"]')).toBeVisible();
     await expect(page.locator('script[src*="googlesyndication"]')).toHaveCount(0);
+    // クレジットは運営者名のみ。メールアドレスは掲載せず GitHub Issues へ寄せる。
     await expect(page.locator("#contact")).toContainText("Studio344");
-    await expect(page.locator("#contact")).toContainText("himiyosh@gmail.com");
     await expect(page.locator("#contact")).toContainText("日本");
-    await expect(page.locator('a[href="mailto:himiyosh@gmail.com"]')).toBeVisible();
+    await expect(page.locator("#contact")).not.toContainText("@");
+    await expect(page.locator('a[href^="mailto:"]')).toHaveCount(0);
+    await expect(page.locator("#contact").locator('a[href*="github.com"]')).toBeVisible();
     const rumPractice = page.locator('[data-privacy-practice="rum"]');
     await expect(rumPractice).toBeVisible();
     await expect(rumPractice.locator("dt .i18n-ja")).toHaveText("パフォーマンス計測 (RUM)");
@@ -5912,6 +5931,10 @@ test.describe("TECH Dashboard smoke", () => {
     page,
     baseURL,
   }) => {
+    // 2026-08-09: 広告は本番の標準機能となり同意 UI を描画しない。
+    // 状態モデルと本テスト群は、広告オフを有料機能として提供する際に
+    // ADVERTISING_REQUIRES_CONSENT を true へ戻せばそのまま復活する。
+    test.skip(!ADVERTISING_REQUIRES_CONSENT, "consent UI is not rendered while ads are mandatory");
     expect(baseURL).toBeTruthy();
     await routeProductionHostToPreview(page, baseURL!);
     await page.route("https://pagead2.googlesyndication.com/**", (route) =>
@@ -6144,6 +6167,10 @@ test.describe("TECH Dashboard smoke", () => {
     page,
     baseURL,
   }) => {
+    // 2026-08-09: 広告は本番の標準機能となり同意 UI を描画しない。
+    // 状態モデルと本テスト群は、広告オフを有料機能として提供する際に
+    // ADVERTISING_REQUIRES_CONSENT を true へ戻せばそのまま復活する。
+    test.skip(!ADVERTISING_REQUIRES_CONSENT, "consent UI is not rendered while ads are mandatory");
     expect(baseURL).toBeTruthy();
     await routeProductionHostToPreview(page, baseURL!);
     await page.route("https://pagead2.googlesyndication.com/**", (route) =>
@@ -6218,6 +6245,9 @@ test.describe("TECH Dashboard smoke", () => {
     page,
     baseURL,
   }) => {
+    // 2026-08-09: 広告は本番の標準機能となり同意 UI / 撤回経路を出さない。
+    // ADVERTISING_REQUIRES_CONSENT を true へ戻せば本テストも復活する。
+    test.skip(!ADVERTISING_REQUIRES_CONSENT, "consent UI is not rendered while ads are mandatory");
     expect(baseURL).toBeTruthy();
     await routeProductionHostToPreview(page, baseURL!);
     await page.route("https://pagead2.googlesyndication.com/**", (route) =>
@@ -6286,6 +6316,9 @@ test.describe("TECH Dashboard smoke", () => {
     page,
     baseURL,
   }) => {
+    // 2026-08-09: 広告は本番の標準機能となり同意 UI / 撤回経路を出さない。
+    // ADVERTISING_REQUIRES_CONSENT を true へ戻せば本テストも復活する。
+    test.skip(!ADVERTISING_REQUIRES_CONSENT, "consent UI is not rendered while ads are mandatory");
     expect(baseURL).toBeTruthy();
     await routeProductionHostToPreview(page, baseURL!);
     await page.route("https://pagead2.googlesyndication.com/**", (route) =>
@@ -6407,6 +6440,9 @@ test.describe("TECH Dashboard smoke", () => {
     page,
     baseURL,
   }) => {
+    // 2026-08-09: 広告は本番の標準機能となり同意 UI / 撤回経路を出さない。
+    // ADVERTISING_REQUIRES_CONSENT を true へ戻せば本テストも復活する。
+    test.skip(!ADVERTISING_REQUIRES_CONSENT, "consent UI is not rendered while ads are mandatory");
     expect(baseURL).toBeTruthy();
     let advertisingRequests = 0;
     await page.route("https://techdb.studio344.net/**", async (route) => {
@@ -6478,6 +6514,9 @@ test.describe("TECH Dashboard smoke", () => {
     context,
     baseURL,
   }) => {
+    // 2026-08-09: 広告は本番の標準機能となり同意 UI / 撤回経路を出さない。
+    // ADVERTISING_REQUIRES_CONSENT を true へ戻せば本テストも復活する。
+    test.skip(!ADVERTISING_REQUIRES_CONSENT, "consent UI is not rendered while ads are mandatory");
     expect(baseURL).toBeTruthy();
     await context.route("https://techdb.studio344.net/**", async (route) => {
       const source = new URL(route.request().url());
@@ -8261,6 +8300,106 @@ test.describe("TECH Dashboard smoke", () => {
     expect(calls).toEqual([PASTED_TITLE, PASTED_TITLE.slice(0, 12)]);
   });
 
+  test("ad slots reveal only on the production host, with exactly one push", async ({
+    page,
+    baseURL,
+  }) => {
+    // slot ID 未設定の間は AdSlot が何も描画しないため、実マークアップと同形の
+    // slot を注入して revealAdSlots のゲートを検証する。ID を設定した瞬間に
+    // 本番で効く唯一の分岐なので、pure predicate ではなくここを固定する。
+    // 2026-08-09 以降、同意は表示条件ではない (ADVERTISING_REQUIRES_CONSENT=false)。
+    // 残る唯一のゲートは本番ドメイン判定で、preview では絶対に出さない。
+    await page.route("**/pagead2.googlesyndication.com/**", (route) => route.abort());
+    await routeProductionHostToPreview(page, baseURL!);
+    await page.addInitScript(() => {
+      window.localStorage.clear();
+      (window as unknown as { __adPushes?: unknown[] }).__adPushes = [];
+      const queue: unknown[] = [];
+      Object.defineProperty(window, "adsbygoogle", {
+        configurable: true,
+        get: () => queue,
+        set: () => {},
+      });
+      const origPush = queue.push.bind(queue);
+      queue.push = (...args: unknown[]) => {
+        (window as unknown as { __adPushes: unknown[] }).__adPushes.push(args);
+        return origPush(...args);
+      };
+    });
+
+    // slot を注入してから storage イベントで再同期させる。パース順に依存せず
+    // revealAdSlots を確実に 1 度だけ通せる (本番では slot はサーバ描画済み)。
+    const injectAndSync = async () => {
+      await page.evaluate(() => {
+        const main = document.querySelector("main");
+        if (!main) throw new Error("main element is required for the probe");
+        const slot = document.createElement("div");
+        slot.className = "ad-slot";
+        slot.dataset.adPlacement = "test-probe";
+        slot.hidden = true;
+        slot.setAttribute("inert", "");
+        slot.dataset.adPending = "true";
+        const ins = document.createElement("ins");
+        ins.className = "adsbygoogle";
+        slot.append(ins);
+        main.append(slot);
+        window.dispatchEvent(new StorageEvent("storage", { key: null }));
+      });
+    };
+
+    const probe = async () =>
+      page.evaluate(() => ({
+        count: document.querySelectorAll(".ad-slot").length,
+        hidden: (document.querySelector(".ad-slot") as HTMLElement).hidden,
+        pending: document.querySelector(".ad-slot[data-ad-pending]") !== null,
+        pushes: (window as unknown as { __adPushes: unknown[] }).__adPushes.length,
+        scriptLoaded: document.querySelector('script[data-consent="advertising"]') !== null,
+      }));
+
+    // preview host: 本番ではないので出さない。
+    await page.goto("/");
+    await injectAndSync();
+    const preview = await probe();
+    expect(preview.count, "probe slot is present on preview").toBe(1);
+    expect(preview.hidden, "preview host keeps the slot hidden").toBe(true);
+    expect(preview.pushes, "preview host pushes nothing").toBe(0);
+    expect(preview.scriptLoaded, "preview host loads no AdSense script").toBe(false);
+
+    // 本番 host: 同意を求めず表示し、push はちょうど 1 回。
+    await page.goto(`${PRODUCTION_ORIGIN}/`);
+    await injectAndSync();
+    const production = await probe();
+    expect(production.count, "probe slot is present on production").toBe(1);
+    expect(production.hidden, "production reveals the slot").toBe(false);
+    expect(production.pending, "production clears the pending marker").toBe(false);
+    expect(production.pushes, "production pushes exactly once").toBe(1);
+  });
+
+  test("Spotlight summary stays above the mobile tabbar", async ({ page }) => {
+    // 同意 prompt 前提の geometry テストを skip したため、まだ有効な
+    // ファーストビュー契約だけを独立して固定する。Spotlight のタイトル clamp を
+    // 3 行に留めている根拠がこの契約で、4 行にすると要約が tabbar の下へ落ちる。
+    for (const width of [375, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto("/");
+      const geometry = await page.evaluate(() => {
+        const summary = document.querySelector<HTMLElement>(".featured-sum.i18n-ja");
+        const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
+        if (!summary || !tabbar) return null;
+        return {
+          summaryBottom: summary.getBoundingClientRect().bottom,
+          tabbarTop: tabbar.getBoundingClientRect().top,
+        };
+      });
+      // 要素が無い場合は null を返して落とす (空振り防止)。
+      expect(geometry, `${width}px exposes the Spotlight summary and tabbar`).not.toBeNull();
+      expect(
+        geometry!.summaryBottom,
+        `${width}px keeps the complete Spotlight summary above the tabbar`,
+      ).toBeLessThanOrEqual(geometry!.tabbarTop);
+    }
+  });
+
   test("mobile article titles are not clipped mid-title", async ({ page }) => {
     // 利用者報告 (2026-08-09): モバイルで記事タイトルが見切れる。
     // 原因は -webkit-line-clamp: 2 で、390px 実測では card title の 23% が
@@ -8311,88 +8450,6 @@ test.describe("TECH Dashboard smoke", () => {
     expect(Number(heroClamp), "Spotlight title keeps at least 3 lines").toBeGreaterThanOrEqual(3);
   });
 
-  test("ad slots stay hidden without consent and reveal with exactly one push", async ({
-    page,
-    baseURL,
-  }) => {
-    // slot ID 未設定の間は AdSlot が何も描画しないため、実マークアップと同形の
-    // slot を注入して revealAdSlots のゲートそのものを検証する。ID を設定した
-    // 瞬間に本番で効く唯一の分岐なので、pure predicate ではなくここを固定する。
-    await routeProductionHostToPreview(page, baseURL!);
-    await page.route("**/pagead2.googlesyndication.com/**", (route) => route.abort());
-    await page.addInitScript(() => {
-      window.localStorage.clear();
-      const install = () => {
-        if (document.querySelector(".ad-slot")) return;
-        const main = document.querySelector("main");
-        if (!main) return;
-        const slot = document.createElement("div");
-        slot.className = "ad-slot";
-        slot.dataset.adPlacement = "test-probe";
-        slot.hidden = true;
-        slot.setAttribute("inert", "");
-        slot.dataset.adPending = "true";
-        const ins = document.createElement("ins");
-        ins.className = "adsbygoogle";
-        slot.append(ins);
-        main.append(slot);
-      };
-      document.addEventListener("DOMContentLoaded", install);
-      // adsbygoogle への push を記録する (script 自体は abort 済み)
-      (window as unknown as { __adPushes?: unknown[] }).__adPushes = [];
-      const queue: unknown[] = [];
-      Object.defineProperty(window, "adsbygoogle", {
-        configurable: true,
-        get: () => queue,
-        set: () => {},
-      });
-      const origPush = queue.push.bind(queue);
-      queue.push = (...args: unknown[]) => {
-        (window as unknown as { __adPushes: unknown[] }).__adPushes.push(args);
-        return origPush(...args);
-      };
-    });
-
-    await page.goto(`${PRODUCTION_ORIGIN}/`);
-    const slot = page.locator(".ad-slot");
-    await expect(slot).toHaveCount(1);
-
-    // 未決定: hidden かつ push なし
-    const undecided = await page.evaluate(() => ({
-      hidden: (document.querySelector(".ad-slot") as HTMLElement).hidden,
-      pushes: (window as unknown as { __adPushes: unknown[] }).__adPushes.length,
-    }));
-    expect(undecided.hidden, "undecided keeps the slot hidden").toBe(true);
-    expect(undecided.pushes, "undecided pushes nothing").toBe(0);
-
-    // 拒否: hidden のまま push なし
-    await page.locator('[data-consent-choice="denied"]:visible').first().click();
-    const denied = await page.evaluate(() => ({
-      hidden: (document.querySelector(".ad-slot") as HTMLElement).hidden,
-      pushes: (window as unknown as { __adPushes: unknown[] }).__adPushes.length,
-    }));
-    expect(denied.hidden, "denied keeps the slot hidden").toBe(true);
-    expect(denied.pushes, "denied pushes nothing").toBe(0);
-
-    // 許可: 表示され push はちょうど 1 回
-    await page.evaluate(() => {
-      const root = document.querySelector<HTMLElement>("[data-privacy-consent]");
-      root?.querySelector<HTMLButtonElement>('[data-consent-choice="allowed"]')?.click();
-    });
-    await expect
-      .poll(async () =>
-        page.evaluate(() => document.documentElement.dataset.advertisingConsent),
-      )
-      .toBe("allowed");
-    const allowed = await page.evaluate(() => ({
-      hidden: (document.querySelector(".ad-slot") as HTMLElement).hidden,
-      pending: document.querySelector(".ad-slot[data-ad-pending]") !== null,
-      pushes: (window as unknown as { __adPushes: unknown[] }).__adPushes.length,
-    }));
-    expect(allowed.hidden, "allowed reveals the slot").toBe(false);
-    expect(allowed.pending, "allowed clears the pending marker").toBe(false);
-    expect(allowed.pushes, "allowed pushes exactly once").toBe(1);
-  });
 
   test("built detail pages expose titleRaw for entries whose raw title diverged", async ({ page, request }) => {
     // mocked テストは Portal 側の比較層しか守れない。ここでは実ビルドの HTML が

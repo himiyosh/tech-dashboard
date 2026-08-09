@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  ADVERTISING_REQUIRES_CONSENT,
   PRIVACY_CONSENT_STORAGE_KEY,
   createPrivacyConsent,
   parsePrivacyConsent,
@@ -13,7 +14,6 @@ import { SITEMAP_STATIC_PATHS } from "../web/src/lib/route-inventory.ts";
 import {
   PRIVACY_JURISDICTION,
   PRIVACY_LAST_UPDATED,
-  PUBLIC_CONTACT_EMAIL,
   PUBLIC_OPERATOR_NAME,
 } from "../web/src/lib/site.ts";
 
@@ -60,41 +60,38 @@ describe("privacy consent contract", () => {
     expect(PRIVACY_CONSENT_STORAGE_KEY).toBe("td:privacy-consent:v1");
   });
 
-  it("loads advertising only after opt-in on the production custom domain", () => {
-    expect(shouldLoadAdvertising("techdb.studio344.net", "allowed")).toBe(true);
-    expect(shouldLoadAdvertising("techdb.studio344.net", "denied")).toBe(false);
-    expect(shouldLoadAdvertising("techdb.studio344.net", "undecided")).toBe(false);
-    expect(shouldLoadAdvertising("tech-dashboard-6a7.pages.dev", "allowed")).toBe(false);
-    expect(shouldLoadAdvertising("localhost", "allowed")).toBe(false);
+  // 2026-08-09 利用者判断: 広告は本番の標準機能とし、同意を要件から外した
+  // (ADVERTISING_REQUIRES_CONSENT = false)。オフにする機能は将来の有料化候補で、
+  // 状態モデルと撤回経路は温存してある。ここでは現行契約と、定数を true へ
+  // 戻したときに opt-in 契約が復活することの両方を固定する。
+  it("本番ドメインでは同意状態によらず広告を読み込む", () => {
+    expect(ADVERTISING_REQUIRES_CONSENT).toBe(false);
+    for (const state of ["allowed", "denied", "undecided"] as const) {
+      expect(shouldLoadAdvertising("techdb.studio344.net", state)).toBe(true);
+    }
   });
 
-  it("shows the prompt only for undecided production pages outside Privacy", () => {
-    expect(
-      shouldShowPrivacyConsentPrompt("techdb.studio344.net", "/", "undecided"),
-    ).toBe(true);
-    expect(
-      shouldShowPrivacyConsentPrompt("techdb.studio344.net", "/", "allowed"),
-    ).toBe(false);
-    expect(
-      shouldShowPrivacyConsentPrompt("techdb.studio344.net", "/", "denied"),
-    ).toBe(false);
-    expect(
-      shouldShowPrivacyConsentPrompt("techdb.studio344.net", "/privacy", "undecided"),
-    ).toBe(false);
-    expect(
-      shouldShowPrivacyConsentPrompt("techdb.studio344.net", "/privacy/", "undecided"),
-    ).toBe(false);
-    expect(
-      shouldShowPrivacyConsentPrompt("tech-dashboard-6a7.pages.dev", "/", "undecided"),
-    ).toBe(false);
-    expect(
-      shouldShowPrivacyConsentPrompt("localhost", "/", "undecided"),
-    ).toBe(false);
+  it("本番ドメイン以外では広告を読み込まない", () => {
+    for (const state of ["allowed", "denied", "undecided"] as const) {
+      expect(shouldLoadAdvertising("tech-dashboard-6a7.pages.dev", state)).toBe(false);
+      expect(shouldLoadAdvertising("localhost", state)).toBe(false);
+      expect(shouldLoadAdvertising("127.0.0.1", state)).toBe(false);
+    }
   });
 
-  it("publishes the confirmed operator, contact, jurisdiction, and privacy route", () => {
+  it("同意 UI を出さない (バナー・無効化ボタンとも非表示)", () => {
+    // 定数が false の間は、どの hostname / path / state でも prompt を出さない。
+    for (const hostname of ["techdb.studio344.net", "tech-dashboard-6a7.pages.dev", "localhost"]) {
+      for (const path of ["/", "/privacy", "/about"]) {
+        for (const state of ["undecided", "allowed", "denied"] as const) {
+          expect(shouldShowPrivacyConsentPrompt(hostname, path, state)).toBe(false);
+        }
+      }
+    }
+  });
+
+  it("publishes the confirmed operator, jurisdiction, and privacy route", () => {
     expect(PUBLIC_OPERATOR_NAME).toBe("Studio344");
-    expect(PUBLIC_CONTACT_EMAIL).toBe("himiyosh@gmail.com");
     expect(PRIVACY_JURISDICTION).toBe("Japan");
     expect(PRIVACY_LAST_UPDATED).toBe("2026-07-29");
     expect(SITEMAP_STATIC_PATHS).toContain("/privacy/");
@@ -190,8 +187,10 @@ describe("privacy consent contract", () => {
     expect(page).not.toContain("?category=");
     expect(page).toContain("<code>?ids=</code>");
     expect(page).toContain("Cloudflare Web Analytics (RUM)");
-    expect(page).toContain("任意の広告への同意とは独立して");
-    expect(page).toContain("independently of optional advertising consent");
+    // 広告は常時表示になったため「同意とは独立して」ではなく「広告とは独立して」。
+    // RUM が広告の有無に依存しないことの開示自体は維持する。
+    expect(page).toContain("広告とは独立して");
+    expect(page).toContain("independently of advertising");
     expect(page).toContain("<code>static.cloudflareinsights.com</code>");
     expect(page).toContain("<code>/cdn-cgi/rum</code>");
     expect(page).not.toContain("独立したアクセス解析サービスを使用していません");

@@ -142,7 +142,10 @@ function clearLocalPreferences(root: HTMLElement): void {
   }
   cleared = clearPrivacyConsent() && cleared;
   showStatus(root, cleared ? "success" : "error");
-  if (cleared && hadAdvertisingScript) window.location.reload();
+  // 同意が要件でない間は広告を落とす reload に意味がない (再読込後も表示される)。
+  if (ADVERTISING_REQUIRES_CONSENT && cleared && hadAdvertisingScript) {
+    window.location.reload();
+  }
 }
 
 export function initializePrivacyControls(): void {

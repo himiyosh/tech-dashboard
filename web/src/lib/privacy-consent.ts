@@ -4,6 +4,22 @@ export const PRIVACY_CONSENT_STORAGE_KEY = "td:privacy-consent:v1";
 export const PRIVACY_CONSENT_VERSION = 1;
 export const ADSENSE_SCRIPT_ID = "techdb-adsense-loader";
 
+/**
+ * 広告表示に読者の同意を必要とするか (利用者判断 2026-08-09)。
+ *
+ * false = 広告は本番ドメインで常時表示し、同意バナーと無効化ボタンを出さない。
+ *
+ * 同意の状態モデル・保存形式・撤回経路は**意図的に残してある**。広告オフを
+ * 将来的に有料機能として提供する計画があるため、その時点でこの定数を true に
+ * 戻せば UI と gate がそのまま復活する (作り直し不要)。
+ *
+ * 注意: Google の EU ユーザー同意ポリシーは EEA / 英国からの閲覧者に対する
+ * 同意取得を publisher に求める。自前バナーを出さない運用では、AdSense 管理
+ * 画面の「プライバシーとメッセージ」(Google CMP) を有効にして対象地域にだけ
+ * メッセージを出す構成が前提となる。
+ */
+export const ADVERTISING_REQUIRES_CONSENT = false;
+
 export type AdvertisingConsent = "allowed" | "denied";
 export type PrivacyConsentState = AdvertisingConsent | "undecided";
 
@@ -74,7 +90,8 @@ export function shouldLoadAdvertising(
   hostname: string,
   state: PrivacyConsentState,
 ): boolean {
-  return isProductionAdvertisingHost(hostname) && state === "allowed";
+  if (!isProductionAdvertisingHost(hostname)) return false;
+  return ADVERTISING_REQUIRES_CONSENT ? state === "allowed" : true;
 }
 
 export function shouldShowPrivacyConsentPrompt(
@@ -82,6 +99,7 @@ export function shouldShowPrivacyConsentPrompt(
   pathname: string,
   state: PrivacyConsentState,
 ): boolean {
+  if (!ADVERTISING_REQUIRES_CONSENT) return false;
   return (
     isProductionAdvertisingHost(hostname)
     && state === "undecided"

@@ -3,6 +3,7 @@ import "../styles/portal.css";
 import { WORKER_HEALTH, relativeTime } from "../lib/data.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import {
+  ADVERTISING_REQUIRES_CONSENT,
   PRIVACY_CONSENT_STORAGE_KEY,
   PRIVACY_CONSENT_VERSION,
 } from "../lib/privacy-consent.ts";
@@ -385,6 +386,7 @@ const footerLastRunRelative = footerLastRunAt
       ><span aria-hidden="true">☰</span><span>Menu</span></button>
     </nav>
 
+    {ADVERTISING_REQUIRES_CONSENT && (
     <aside
       class="privacy-consent-prompt"
       data-privacy-consent
@@ -435,6 +437,7 @@ const footerLastRunRelative = footerLastRunAt
         </div>
       </div>
     </aside>
+    )}
     <script
       is:inline
       define:vars={{

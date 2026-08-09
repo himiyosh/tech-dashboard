@@ -1,7 +1,6 @@
 export const SITE_URL = "https://techdb.studio344.net";
 export const ADSENSE_CLIENT_ID = "ca-pub-3044810068333301";
 export const PUBLIC_OPERATOR_NAME = "Studio344";
-export const PUBLIC_CONTACT_EMAIL = "himiyosh@gmail.com";
 export const PRIVACY_JURISDICTION = "Japan";
 export const PRIVACY_LAST_UPDATED = "2026-07-29";
 /** Public health endpoint of the harness worker — no secrets, safe for browser fetch. */

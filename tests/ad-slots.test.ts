@@ -34,14 +34,14 @@ describe("ad slot configuration", () => {
   // 述語をそのまま表示条件に使う。真理値表自体は web-privacy-consent.test.ts
   // にもあるが、広告ユニット側から見た契約として重複を承知で固定する
   // (実挙動は tests/e2e/smoke.spec.ts の ad slot ゲートテストが担保)。
-  it("広告は本番ドメインかつ同意「許可」のときだけ有効になる", () => {
+  it("広告は本番ドメインでのみ有効になる (同意は現在要件ではない)", () => {
     const production = new URL(SITE_URL).hostname;
-    expect(shouldLoadAdvertising(production, "allowed")).toBe(true);
-    expect(shouldLoadAdvertising(production, "denied")).toBe(false);
-    expect(shouldLoadAdvertising(production, "undecided")).toBe(false);
-    // preview / pages.dev / localhost は同意があっても読み込まない
-    expect(shouldLoadAdvertising("tech-dashboard.pages.dev", "allowed")).toBe(false);
-    expect(shouldLoadAdvertising("127.0.0.1", "allowed")).toBe(false);
-    expect(shouldLoadAdvertising("localhost", "allowed")).toBe(false);
+    for (const state of ["allowed", "denied", "undecided"] as const) {
+      expect(shouldLoadAdvertising(production, state)).toBe(true);
+      // preview / pages.dev / localhost は本番ではないため常に読み込まない
+      expect(shouldLoadAdvertising("tech-dashboard.pages.dev", state)).toBe(false);
+      expect(shouldLoadAdvertising("127.0.0.1", state)).toBe(false);
+      expect(shouldLoadAdvertising("localhost", state)).toBe(false);
+    }
   });
 });

@@ -1,12 +1,11 @@
 ---
 import PageHero from "../components/PageHero.astro";
 import ExternalLinkHint from "../components/ExternalLinkHint.astro";
-import PrivacyConsentSettings from "../components/PrivacyConsentSettings.astro";
 import Portal from "../layouts/Portal.astro";
 import {
+  NEW_ISSUE_URL,
   PRIVACY_JURISDICTION,
   PRIVACY_LAST_UPDATED,
-  PUBLIC_CONTACT_EMAIL,
   PUBLIC_OPERATOR_NAME,
 } from "../lib/site.ts";
 ---
@@ -23,7 +22,7 @@ import {
     title="プライバシー"
     titleEn="Privacy & consent"
     headingId="privacy-heading"
-    description="収集する情報を最小限にし、任意の広告は明示的な選択があるまで読み込みません。現在の技術的な取扱いと変更方法を公開します。"
+    description="収集する情報を最小限にし、広告・解析・第三者サービスの取扱いを公開します。"
     descriptionEn="We minimize data collection and do not load optional advertising until you explicitly allow it. This page documents the current technical behavior and your controls."
     actions={[
       { href: "#choices", label: "選択を変更", labelEn: "Change choices" },
@@ -69,7 +68,7 @@ import {
         </div>
         <div>
           <dt>
-            <span class="i18n-ja">任意広告</span>
+            <span class="i18n-ja">広告</span>
             <span class="i18n-en" lang="en">Optional ads</span>
           </dt>
           <dd>
@@ -112,14 +111,14 @@ import {
 
     <main class="privacy-main">
       <section class="privacy-intro" aria-labelledby="privacy-intro-heading">
-        <p class="privacy-label">Privacy by default</p>
+        <p class="privacy-label">What we collect</p>
         <h2 id="privacy-intro-heading">
-          <span class="i18n-ja">読むために広告へ同意する必要はありません</span>
-          <span class="i18n-en" lang="en">Reading does not require advertising consent</span>
+          <span class="i18n-ja">収集する情報は最小限です</span>
+          <span class="i18n-en" lang="en">We keep collected information to a minimum</span>
         </h2>
         <p>
-          <span class="i18n-ja">記事一覧、検索、Archive、RSS、JSON Feed は広告を許可しなくても利用できます。本番サイトでは、配信基盤のCloudflare Web Analytics (RUM) がパフォーマンス計測のため通常の閲覧時に動作します。これは任意の広告同意とは別であり、TECH Dashboardはほかのアクセス解析providerを追加していません。任意の広告scriptは、利用者が「広告を許可」を選んだ場合だけ本番custom domainで読み込みます。</span>
-          <span class="i18n-en" lang="en">Article lists, search, Archive, RSS, and JSON Feed work without advertising consent. On the production site, Cloudflare Web Analytics (RUM) operates during normal browsing to measure performance. It operates independently of optional advertising consent, and TECH Dashboard does not add another analytics provider. Optional advertising loads on the production custom domain only after you choose “Allow advertising.”</span>
+          <span class="i18n-ja">記事一覧、検索、Archive、RSS、JSON Feed は登録もアカウントも不要で利用できます。本番サイトでは運営費をまかなうため Google AdSense の広告を表示し、あわせて配信基盤の Cloudflare Web Analytics (RUM) がパフォーマンス計測のため動作します。TECH Dashboard はこれ以外のアクセス解析providerを追加していません。広告scriptは本番custom domainでのみ読み込み、pages.devとローカルpreviewでは読み込みません。</span>
+          <span class="i18n-en" lang="en">Article lists, search, Archive, RSS, and JSON Feed need no account or sign-up. The production site shows Google AdSense advertising to cover running costs, and Cloudflare Web Analytics (RUM) operates alongside it to measure performance. TECH Dashboard adds no other analytics provider. Advertising scripts load only on the production custom domain, never on pages.dev or local previews.</span>
         </p>
       </section>
 
@@ -127,16 +126,19 @@ import {
         <div class="privacy-section-heading">
           <div>
             <h2 id="choices-heading">
-              <span class="i18n-ja">選択と初期設定</span>
-              <span class="i18n-en" lang="en">Choices and defaults</span>
+              <span class="i18n-ja">広告について</span>
+              <span class="i18n-en" lang="en">About advertising</span>
             </h2>
             <p>
-              <span class="i18n-ja">未選択、壊れた記録、古いversionはいずれも広告OFFとして扱います。</span>
-              <span class="i18n-en" lang="en">No choice, malformed records, and old versions all fail closed with advertising off.</span>
+              <span class="i18n-ja">広告は本番サイトの標準機能として表示され、現在オフにする設定は提供していません。</span>
+              <span class="i18n-en" lang="en">Advertising is a standard part of the production site; there is currently no setting to turn it off.</span>
             </p>
           </div>
         </div>
-        <PrivacyConsentSettings />
+        <p>
+          <span class="i18n-ja">広告の配信には Google AdSense を使用します。Googleはcookie、IP address、browser情報などを広告配信と不正対策へ使用する場合があり、保持と削除はGoogleのpolicyとcontrolに従います。ブラウザ側の広告設定は <a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer">Google 広告センター</a> から変更できます。</span>
+          <span class="i18n-en" lang="en">Advertising is served by Google AdSense. Google may use cookies, IP address, and browser information for ad delivery and fraud prevention; retention and deletion follow Google policies and controls. You can adjust your own ad settings at <a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer">Google Ad Center</a>.</span>
+        </p>
       </section>
 
       <section id="data-we-use" class="privacy-section" aria-labelledby="data-heading">
@@ -159,8 +161,8 @@ import {
               <span class="i18n-en" lang="en">Display preferences</span>
             </dt>
             <dd>
-              <span class="i18n-ja">表示言語、arXiv表示形式、広告選択をlocalStorageへ保存します。英語表示は共有可能なURLの<code>?lang=en</code>にも反映され、そのURLは通常の配信requestとしてCloudflareへ届きます。広告選択は運営者のserverへ送信しません。</span>
-              <span class="i18n-en" lang="en">Interface language, arXiv view mode, and advertising choice are stored in localStorage. English mode is also reflected as <code>?lang=en</code> in shareable URLs, so Cloudflare receives it as ordinary delivery request data. The advertising choice is not sent to the operator's server.</span>
+              <span class="i18n-ja">表示言語とarXiv表示形式をlocalStorageへ保存します。英語表示は共有可能なURLの<code>?lang=en</code>にも反映され、そのURLは通常の配信requestとしてCloudflareへ届きます。これらの設定は運営者のserverへ送信しません。</span>
+              <span class="i18n-en" lang="en">Interface language and arXiv view mode are stored in localStorage. English mode is also reflected as <code>?lang=en</code> in shareable URLs, so Cloudflare receives it as ordinary delivery request data. These preferences are not sent to the operator's server.</span>
             </dd>
           </div>
           <div data-privacy-practice="search">
@@ -179,7 +181,7 @@ import {
               <span class="i18n-en" lang="en">Performance measurement (RUM)</span>
             </dt>
             <dd>
-              <span class="i18n-ja">本番サイトではCloudflare Web Analytics (RUM)を使用します。任意の広告への同意とは独立して、通常の閲覧時に<code>static.cloudflareinsights.com</code>のbeaconが読み込まれ、browserのPerformance APIから得るpage読込・応答性などの性能測定値、閲覧pageのURL、送信元IPなど通常のrequest contextを<code>/cdn-cgi/rum</code>へ送信する場合があります。目的はsiteの性能と利用状況の把握です。保持とcontrolはCloudflareのpolicyに従います。</span>
+              <span class="i18n-ja">本番サイトではCloudflare Web Analytics (RUM)を使用します。広告とは独立して、通常の閲覧時に<code>static.cloudflareinsights.com</code>のbeaconが読み込まれ、browserのPerformance APIから得るpage読込・応答性などの性能測定値、閲覧pageのURL、送信元IPなど通常のrequest contextを<code>/cdn-cgi/rum</code>へ送信する場合があります。目的はsiteの性能と利用状況の把握です。保持とcontrolはCloudflareのpolicyに従います。</span>
               <span class="i18n-en" lang="en">The production site uses Cloudflare Web Analytics (RUM). Independently of optional advertising consent, normal site use can load a beacon from <code>static.cloudflareinsights.com</code> and send performance measurements from browser Performance APIs, such as page-load and responsiveness data, together with the viewed page URL and ordinary request context such as source IP, to <code>/cdn-cgi/rum</code>. Its purpose is to understand site performance and usage. Retention and controls follow Cloudflare's policy.</span>
             </dd>
           </div>
@@ -199,8 +201,8 @@ import {
               <span class="i18n-en" lang="en">External media</span>
             </dt>
             <dd>
-              <span class="i18n-ja">記事画像やfaviconは広告選択と独立して、元siteまたは画像providerから直接取得する場合があります。そのrequestではURL、IP address、browser情報、referrerが送信先へ届く場合があります。保持期間と削除controlは各送信先が管理し、このpageの削除controlでは消去できません。</span>
-              <span class="i18n-en" lang="en">Independently of the advertising choice, article images and favicons may load directly from source sites or image providers. Those requests may expose URL, IP address, browser information, and referrer to the destination. Each destination controls retention and deletion; this page's deletion control cannot remove that data.</span>
+              <span class="i18n-ja">記事画像やfaviconは広告と独立して、元siteまたは画像providerから直接取得する場合があります。そのrequestではURL、IP address、browser情報、referrerが送信先へ届く場合があります。保持期間と削除controlは各送信先が管理し、このpageの削除controlでは消去できません。</span>
+              <span class="i18n-en" lang="en">Independently of advertising, article images and favicons may load directly from source sites or image providers. Those requests may expose URL, IP address, browser information, and referrer to the destination. Each destination controls retention and deletion; this page's deletion control cannot remove that data.</span>
             </dd>
           </div>
           <div data-privacy-practice="retention">
@@ -258,8 +260,8 @@ import {
           <li>
             <strong>Cloudflare</strong>
             <span>
-              <span class="i18n-ja">site配信、Functions、D1、任意広告への同意と独立して動作するWeb Analytics (RUM)、任意のいいね検証に使用します。request metadata、RUM performance data、Turnstile verification dataの保持・controlはCloudflareのpolicyに従い、このpageのlocal/D1削除ではCloudflare側の記録を消去できません。</span>
-              <span class="i18n-en" lang="en">Used for site delivery, Functions, D1, Web Analytics (RUM) that operates independently of optional advertising consent, and optional like verification. Retention and controls for request metadata, RUM performance data, and Turnstile verification data follow Cloudflare's policy; this page's local/D1 deletion cannot remove provider-side records.</span>
+              <span class="i18n-ja">site配信、Functions、D1、広告と独立して動作するWeb Analytics (RUM)、任意のいいね検証に使用します。request metadata、RUM performance data、Turnstile verification dataの保持・controlはCloudflareのpolicyに従い、このpageのlocal/D1削除ではCloudflare側の記録を消去できません。</span>
+              <span class="i18n-en" lang="en">Used for site delivery, Functions, D1, Web Analytics (RUM) that operates independently of advertising, and optional like verification. Retention and controls for request metadata, RUM performance data, and Turnstile verification data follow Cloudflare's policy; this page's local/D1 deletion cannot remove provider-side records.</span>
             </span>
             <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">
               Privacy policy
@@ -270,8 +272,8 @@ import {
           <li>
             <strong>Google AdSense</strong>
             <span>
-              <span class="i18n-ja">「広告を許可」を選んだ本番custom domainでのみ読み込みます。Googleはcookie、IP address、browser情報などを広告配信と不正対策へ使用する場合があります。選択変更は将来の読込を止めますが、既にGoogleが受け取ったdataの保持・削除はGoogleのpolicyとcontrolに従います。</span>
-              <span class="i18n-en" lang="en">Loads only on the production custom domain after “Allow advertising.” Google may use cookies, IP address, and browser information for ad delivery and fraud prevention. Changing the choice stops future loading; retention and deletion of data already received by Google follow Google's policies and controls.</span>
+              <span class="i18n-ja">本番custom domainで読み込みます (pages.devとローカルpreviewでは読み込みません)。Googleはcookie、IP address、browser情報などを広告配信と不正対策へ使用する場合があります。既にGoogleが受け取ったdataの保持・削除はGoogleのpolicyとcontrolに従い、表示される広告の設定は Google 広告センターから変更できます。</span>
+              <span class="i18n-en" lang="en">Loads on the production custom domain (never on pages.dev or local previews). Google may use cookies, IP address, and browser information for ad delivery and fraud prevention. Retention and deletion of data already received by Google follow Google's policies and controls, and you can adjust the ads you see in Google Ad Center.</span>
             </span>
             <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">
               Advertising policy
@@ -282,8 +284,8 @@ import {
           <li>
             <strong>DuckDuckGo icons</strong>
             <span>
-              <span class="i18n-ja">一部sourceのfaviconを広告選択と独立して表示するために使用します。送信先のrequest記録はDuckDuckGoが管理し、このpageの削除controlでは消去できません。</span>
-              <span class="i18n-en" lang="en">Used independently of the advertising choice to display favicons for some sources. DuckDuckGo controls destination-side request records; this page's deletion control cannot remove them.</span>
+              <span class="i18n-ja">一部sourceのfaviconを広告と独立して表示するために使用します。送信先のrequest記録はDuckDuckGoが管理し、このpageの削除controlでは消去できません。</span>
+              <span class="i18n-en" lang="en">Used independently of advertising to display favicons for some sources. DuckDuckGo controls destination-side request records; this page's deletion control cannot remove them.</span>
             </span>
             <a href="https://duckduckgo.com/privacy" target="_blank" rel="noopener noreferrer">
               Privacy policy
@@ -314,8 +316,8 @@ import {
               <span class="i18n-en" lang="en">Clear local preferences</span>
             </h3>
             <p id="local-preferences-description">
-              <span class="i18n-ja">このbrowserの保存済み表示言語、arXiv表示形式、広告選択をlocalStorageから削除します。現在のURLにある<code>?lang=</code>、<code>?q=</code>、<code>?tag=</code>は変更しません。</span>
-              <span class="i18n-en" lang="en">Removes saved interface language, arXiv view mode, and advertising choice from this browser's localStorage. It does not rewrite <code>?lang=</code>, <code>?q=</code>, or <code>?tag=</code> in the current URL.</span>
+              <span class="i18n-ja">このbrowserの保存済み表示言語とarXiv表示形式をlocalStorageから削除します。現在のURLにある<code>?lang=</code>、<code>?q=</code>、<code>?tag=</code>は変更しません。</span>
+              <span class="i18n-en" lang="en">Removes saved interface language and arXiv view mode from this browser's localStorage. It does not rewrite <code>?lang=</code>, <code>?q=</code>, or <code>?tag=</code> in the current URL.</span>
             </p>
             <button type="button" data-clear-local-preferences aria-describedby="local-preferences-description">
               <span class="i18n-ja">ローカル設定を消去</span>
@@ -443,7 +445,14 @@ import {
               <span class="i18n-ja">連絡先</span>
               <span class="i18n-en" lang="en">Contact</span>
             </dt>
-            <dd><a href={`mailto:${PUBLIC_CONTACT_EMAIL}`}>{PUBLIC_CONTACT_EMAIL}</a></dd>
+            <dd>
+              <a href={NEW_ISSUE_URL} target="_blank" rel="noopener noreferrer">
+                <span class="i18n-ja">GitHub Issues</span>
+                <span class="i18n-en" lang="en">GitHub Issues</span>
+                <ExternalLinkHint lang="ja" />
+                <ExternalLinkHint lang="en" />
+              </a>
+            </dd>
           </div>
           <div>
             <dt>

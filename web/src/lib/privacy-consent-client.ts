@@ -1,5 +1,6 @@
 import {
   ADSENSE_SCRIPT_ID,
+  ADVERTISING_REQUIRES_CONSENT,
   PRIVACY_CONSENT_STORAGE_KEY,
   adsenseScriptUrl,
   createPrivacyConsent,
@@ -205,7 +206,10 @@ export function initializePrivacyConsent(): void {
       const state = readState();
       const hadAdvertisingScript = Boolean(document.getElementById(ADSENSE_SCRIPT_ID));
       syncPrivacyConsent(state);
-      if (state !== "allowed" && hadAdvertisingScript) {
+      // 撤回 (allowed → それ以外) を他 tab から受けたときだけ reload して
+      // 読み込み済み script を落とす。同意が要件でない間は「allowed 以外」が
+      // 常態なので、この条件のままだと storage event のたびに reload が走る。
+      if (ADVERTISING_REQUIRES_CONSENT && state !== "allowed" && hadAdvertisingScript) {
         window.location.reload();
       }
     }

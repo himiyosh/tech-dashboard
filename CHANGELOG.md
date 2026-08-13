@@ -35,6 +35,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 - Publisher jobのGitHub Actions wall-time timeoutを60分へ拡張しました。明示的なfull incremental-shadow bootstrap用の余裕だけを増やし、Astroの18分build・static file数・RSS resource guardは引き続き内部契約でfail-closedに維持します。
 - Incremental shadow publishのR2 uploadに、開始件数と1件目・100件ごと・完了時だけを出すbounded progress diagnosticsを追加しました。各checkpointはread-back検証済みbyte数を表示し、uploadログ量がroute数に比例して無制限に増えないようにしました。
+- Incremental shadowのcontent-addressed uploadは、HTTP 408/429/5xxや一時的なnetwork/read-back失敗だけを最大3回・1秒/2秒のbounded backoffで再試行するようにしました。metadata/digest不一致などのcontract failureは従来どおり即時fail-closedにし、数千object中1件の一過性R2 502でactivation全体が失敗する再発を防ぎます。
 - Incremental shadowのR2 upload検証を、edgeで変化し得るHEADの`etag`/`content-length`比較から、認証済みGETで実bytesを読み戻してbyte数とSHA-256を再計算する方式へ変更しました。PUT時のFixedLengthStream、R2 checksum、content-addressed key、activation前のfail-closed検証は維持します。
 - Incremental shadowのR2 uploadを、bounded validation streamからCloudflare `FixedLengthStream`へ接続する既知長streamへ変更しました。最大5MiBのroute objectをWorker内でbufferせず、R2 SHA-256検証とread-backを維持したまま、production R2がgeneric変換streamをHTTP 502で拒否するbootstrap障害を解消します。
 - body Queueの単一記事で本文生成が繰り返し失敗してもservice全体を503にせず、entry warningとruntime failureを分離するようにしました。missing KV bindingは例外ではなく構造化JSON 503を返します。

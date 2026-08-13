@@ -91,7 +91,8 @@ Cloudflare [`FixedLengthStream`](https://developers.cloudflare.com/workers/runti
 This preserves the bounded streaming design while giving `R2Bucket.put()` the
 known-length stream required by the production runtime. R2 still verifies the
 SHA-256 supplied from the content-addressed key, and the Publisher performs a
-metadata read-back before activation.
+bounded authenticated byte read-back and recomputes the exact SHA-256 before
+activation.
 
 ## Free-tier budget
 
@@ -112,7 +113,7 @@ The repository uses these conservative fail-closed budgets:
 | D1 rows written | 100,000/day | generation metadata and pointer only |
 | R2 reads per served route | n/a | 2 |
 
-At the 80,000 request/day cutover ceiling, two R2 reads/request over a conservative 31-day month project to 4.96 million public Class B operations/month. The client adds Publisher R2 HEAD/read-back operations to the same Class B total and separately projects R2 Class A and authenticated Publisher API requests from the object/shard count. Public and Publisher Worker requests must remain at or below 90,000/day together, leaving 10,000/day below the provider ceiling. The one-time detail bootstrap runs while public serving is off; future hourly serving requires packed/batched artifacts or another design that keeps upload requests inside the same combined budget.
+At the 80,000 request/day cutover ceiling, two R2 reads/request over a conservative 31-day month project to 4.96 million public Class B operations/month. The client adds Publisher R2 GET/read-back operations to the same Class B total and separately projects R2 Class A and authenticated Publisher API requests from the object/shard count. Public and Publisher Worker requests must remain at or below 90,000/day together, leaving 10,000/day below the provider ceiling. The one-time detail bootstrap runs while public serving is off; future hourly serving requires packed/batched artifacts or another design that keeps upload requests inside the same combined budget.
 
 Before any cutover, record the peak daily HTML-route requests and account-wide Worker/D1/R2 usage from Cloudflare for at least seven days. Verify public requests are at or below 80,000/day and public plus Publisher requests are at or below 90,000/day. Also measure the shadow Worker's CPU distribution and actual bucket inventory, then add active/previous mark-and-sweep retention. The repository does not infer these values.
 

@@ -6,6 +6,7 @@ import {
   DecisionJourneyTimeoutError,
   createDecisionJourneyReport,
   deterministicStepContractFailure,
+  isExactSearchTitleCandidate,
   pendingSummaryOutcome,
   serializeDecisionJourneyReport,
   validateDecisionJourneyReport,
@@ -72,6 +73,17 @@ afterEach(() => {
 });
 
 describe("decision journey report contract", () => {
+  it("chooses prose titles instead of package-version identifiers for exact search", () => {
+    expect(isExactSearchTitleCandidate("langchain-openai==1.5.0")).toBe(false);
+    expect(isExactSearchTitleCandidate("v1.2.3")).toBe(false);
+    expect(
+      isExactSearchTitleCandidate(
+        "AIエージェントの指示ファイルは、なぜ端末ごとにズレていくのか",
+      ),
+    ).toBe(true);
+    expect(isExactSearchTitleCandidate("Copilot reliability update")).toBe(true);
+  });
+
   it("serializes a bounded, non-field report with every named step and viewport", () => {
     const report = createDecisionJourneyReport(
       "0123456789abcdef0123456789abcdef01234567",

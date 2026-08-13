@@ -149,8 +149,10 @@ describe("Cloudflare Worker deploy config", () => {
     expect(summarizerConfig).toContain("[observability]");
     expect(summarizerConfig).toContain("enabled = true");
     expect(publisherWorkflow).toContain('cron: "0 * * * *"');
+    expect(publisherWorkflow).toContain('cron: "17 2 * * *"');
     expect(publisherWorkflow).toContain("run-name: Publisher /");
-    expect(publisherWorkflow).toContain("'dry-run' || 'publish'");
+    expect(publisherWorkflow).toContain("inputs.full_reconcile");
+    expect(publisherWorkflow).toContain("PUBLISHER_FULL_RECONCILE");
     expect(publisherWorkflow).toContain("group: tech-dashboard-publisher");
     expect(publisherWorkflow).toContain("cancel-in-progress: false");
     expect(publisherWorkflow).toContain("contents: write");
@@ -160,7 +162,7 @@ describe("Cloudflare Worker deploy config", () => {
       /test -n "\$\(git diff --cached --name-only\)"[\s\S]*npm run publisher:run -- --preflight[\s\S]*git commit -m/,
     );
     expect(publisherWorkflow).not.toMatch(/wrangler\s+(?:pages\s+)?deploy/);
-    expect(healthWorkflow).toContain('cron: "40 * * * *"');
+    expect(healthWorkflow).toContain('cron: "23 */6 * * *"');
     expect(healthWorkflow).toContain("workflow_run:");
     expect(healthWorkflow).toContain('workflows: ["Publisher"]');
     expect(healthWorkflow).toContain("types: [completed]");
@@ -168,7 +170,30 @@ describe("Cloudflare Worker deploy config", () => {
       "github.event.workflow_run.conclusion == 'success'",
     );
     expect(healthWorkflow).toContain("npm run health:prod");
+    expect(healthWorkflow).toContain("PUBLIC_DEPLOY_WAIT_MS");
+    expect(healthWorkflow).toContain("900000");
     expect(packageJson).toContain('"health:prod": "node scripts/check-production-health.mjs"');
+  });
+
+  it("runs focused hourly verification and a daily full reconciliation without deploying from Actions", () => {
+    const publisherWorkflow = readConfig(".github/workflows/publisher.yml");
+
+    expect(publisherWorkflow).toContain("Summarize incremental route impact");
+    expect(publisherWorkflow).toContain("scripts/publisher-impact.ts --report");
+    expect(publisherWorkflow).toContain("Verify incremental data and invalidation plan");
+    expect(publisherWorkflow).toContain(
+      "npm test -- tests/data-schema.test.ts tests/publisher-impact.test.ts tests/publisher-runner.test.ts",
+    );
+    expect(publisherWorkflow).toContain("Run full static reconciliation");
+    const fullReconcileStart = publisherWorkflow.indexOf("      - name: Run full static reconciliation");
+    const commitStart = publisherWorkflow.indexOf("      - name: Commit and push verified data");
+    const fullReconcileStep = publisherWorkflow.slice(fullReconcileStart, commitStart);
+    expect(fullReconcileStep).toContain("if: env.PUBLISHER_FULL_RECONCILE == 'true'");
+    expect(fullReconcileStep).not.toContain("steps.publisher.outputs.changed");
+    expect(publisherWorkflow).toMatch(
+      /PUBLISHER_FULL_RECONCILE[\s\S]*npm run typecheck[\s\S]*npm run build:web[\s\S]*npm run test:e2e:publisher/,
+    );
+    expect(publisherWorkflow).not.toMatch(/wrangler\s+(?:pages\s+)?deploy/);
   });
 
   it("gives CI jobs enough time for Pagefind builds and the full Playwright suite", () => {
@@ -178,6 +203,7 @@ describe("Cloudflare Worker deploy config", () => {
     };
     const astroBuildRunner = readConfig("web/scripts/build-astro.mjs");
     const astroResourcePolicy = readConfig("web/scripts/build-resource-policy.mjs");
+    const astroOutputPolicy = readConfig("web/scripts/build-output-policy.mjs");
     const astroMemoryProbe = readConfig("web/scripts/build-memory-probe.mjs");
     const astroConfig = readConfig("web/astro.config.mjs");
     const unitStart = ciWorkflow.indexOf("\n  unit:\n");
@@ -216,7 +242,7 @@ describe("Cloudflare Worker deploy config", () => {
     expect(astroBuildRunner).toContain('await runPhase("astro"');
     expect(astroBuildRunner).toContain('await runPhase("pagefind"');
     expect(astroBuildRunner).toContain("const HEARTBEAT_MS = 30_000");
-    expect(astroBuildRunner).toContain("const MAX_ASTRO_RENDERED_HTML_FILES = 3_200");
+    expect(astroBuildRunner).not.toContain("MAX_ASTRO_RENDERED_HTML_FILES");
     expect(astroResourcePolicy).toContain(
       'const heapLimitMiB = Number(env.ASTRO_HEAP_LIMIT_MIB ?? "512")',
     );
@@ -227,7 +253,12 @@ describe("Cloudflare Worker deploy config", () => {
     expect(astroBuildRunner).toContain("`--max-old-space-size=${ASTRO_HEAP_LIMIT_MIB}`");
     expect(astroBuildRunner).toContain("build-memory-probe.mjs");
     expect(astroResourcePolicy).toContain("exceeded RSS budget");
-    expect(astroBuildRunner).toContain("Astro-rendered HTML route budget exceeded");
+    expect(astroOutputPolicy).toContain("CLOUDFLARE_FREE_STATIC_FILE_LIMIT = 20_000");
+    expect(astroOutputPolicy).toContain("STATIC_FILE_SAFETY_MARGIN = 2_000");
+    expect(astroOutputPolicy).toContain("CLOUDFLARE_BUILD_LIMIT_SECONDS = 20 * 60");
+    expect(astroBuildRunner).toContain("buildOutputBudgetFailures");
+    expect(astroBuildRunner).toContain("policy=cloudflare-free");
+    expect(astroBuildRunner).not.toContain("Astro-rendered HTML route budget exceeded");
     expect(astroBuildRunner).toContain("writeLegacyTagRedirects");
     expect(astroBuildRunner).toContain("peakRss=");
     expect(astroBuildRunner).toContain("processes=");

@@ -142,7 +142,7 @@ npx -y modern-web-guidance@latest retrieve "accessibility,css,performance,securi
 | Worker Typecheck | `npm --prefix worker run typecheck && npm --prefix worker-summarizer run typecheck && npm --prefix worker-body run typecheck` | Cloudflare Worker / Queue consumer の型チェック | 速い |
 | Unit | `npm test` | Vitest による関数単位の検証 (要約 JSON パース、Web ロジック、`data/index.json` スキーマ) | 速い (~1s) |
 | Independent review | `npm run check:independent-review -- --repo <owner/name> --pr <number> --head <sha> --merger-session <uuid> --reviewer-session <uuid>` | 現在openのPR、exact head、外部reviewer、統括session、厳格なmarkerをREST evidenceで検証 | 速い |
-| Web build | `npm run build:web` | Cloudflare Pages と同じ Astro + Pagefind build を実行し、30秒 heartbeat、phase別 CPU/RSS、route/file数、3,200 HTML route上限に加えて sitemap と canonical HTML の双方向 parity、redirect 除外、標準 HTML parser で各 HTML route を基準に解決した存在しない内部 detail link 0 件を検証 | 中程度 |
+| Web build | `npm run build:web` | Cloudflare Pages と同じ Astro + Pagefind build を実行し、30秒 heartbeat、phase別 CPU/RSS・route familyを記録。Cloudflare Freeの20,000 filesから2,000 filesの安全余裕を引いた18,000 files、20分build ceilingから2分の余裕を引いた18分、sitemap/canonical HTML parity、redirect除外、内部detail link実在をfail-closedで検証 | 中程度 |
 | E2E | `npm run test:e2e` | Playwright (Chromium) でトップ表示・記事詳細・言語切替を検証 | 中程度 (~30s + build) |
 | 5分判断ジャーニー | `node --import tsx scripts/measure-decision-journey.ts` | production Web buildを1回だけ生成してPlaywright previewへ再利用し、desktop/mobileのHome判断面、exact検索または正直な0件回復、RSS/OPML発見、実404回復、optionalな要約待ち状態を計測。step到達、操作上限、document navigation列、viewport/scroll、正確な回復経路を合否判定に使います。経過msは現行runのstdout JSONにだけ情報値として出し、履歴baselineへ保存、過去runと比較、delta警告・失敗には使いません。JSONは64KiB以下、`fieldData:false`でありfield dataやCore Web Vitalsではありません。検証済みの`web/dist`を再利用する場合だけ`--reuse-build`を指定 | 中程度 |
 | Secret scan | `npm run secrets:scan` | tracked file の secret / private key / 高リスクファイル名を検証 | 速い |
@@ -163,9 +163,11 @@ Secret scan は値を表示せず、検出種別・ファイル位置・ハッ�
 
 protected branch への直接 commit / push は通常禁止です。当該セッションでユーザーが直接書き込みを明示承認した場合だけ、`ALLOW_PROTECTED_BRANCH_WRITE=1` を指定できます。作業ブランチと PR を使う通常作業では指定しません。
 
+通常のPRは `working branch -> develop`、production releaseは `develop -> main` の2段階です。GitHub default branchはscheduled Publisherのため`main`に維持するので、PR作成時は `gh pr create --base develop --head <branch>` を明示します。main向けrelease PRはancestryを保つmerge commit (`gh pr merge --merge`) を使い、squash/rebaseしません。`main -> develop`はhotfix/release後のbacksync PRだけに使います。Publisherのdata-only main commitはdevelopへ複製しません。
+
 in-place session では branch と index が全 turn で共有されます。Git mutation を行う前に session automation と先行 turn を停止し、current branch、status、push 先 ref を直前に再確認してください。
 
-CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的のみ**で、デプロイは行いません。push / PR ごとに dependency audit (soft gate) + `typecheck + npm test + npm run build:web + npm run test:e2e` を実行し、Cloudflare Pages の build 失敗を事前に検知します。PR eventではexact-head独立レビューgateを独立jobで並列実行するため、marker待ちでgateが赤でもunit・typecheck・Web build・E2Eの品質結果を取得できます。
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的のみ**で、デプロイは行いません。main/develop pushと両branch向けPRでbranch-flow gateを実行し、feature→mainを拒否します。push / PR ごとに dependency audit (soft gate) + `typecheck + npm test + npm run build:web + npm run test:e2e` を実行し、Cloudflare Pages の build 失敗を事前に検知します。PR eventではexact-head独立レビューgateを独立jobで並列実行するため、marker待ちでgateが赤でもunit・typecheck・Web build・E2Eの品質結果を取得できます。
 
 独立レビューCIはPR番号とhead SHAを`github.event.pull_request`から取得し、現在のPR state、head、review、issue commentをGitHub RESTから再取得します。`INDEPENDENT_REVIEW_MERGER_SESSION_ID`と`INDEPENDENT_REVIEW_REVIEWER_SESSION_ID`はGitHub Actions repository variablesへfull lowercase UUIDで設定し、両者を別sessionにしてください。markerはrepository ownerのGitHub accountから投稿され、REST evidenceが`author_association=OWNER`を返す場合だけsession UUIDの検査へ進みます。変数欠落、不正UUID、untrusted author、open PRのhead drift、marker欠落、stale marker、wrong reviewer、self-issued marker、exact-head fail marker、API失敗はすべてfail-closedです。
 
@@ -203,14 +205,19 @@ SUMMARIZE_MAX_TOKENS=1600           # titleJa + summaryJa + summaryEn の出力�
 通常運用では GitHub Actions Publisher が `data/index.json`、`data/bodies.json`、`data/archive/*`、`data/stats.json` を検証して main に commit し、Cloudflare Pages の Git Integration が更新を検知してサイトを build / deploy します。Queue / KV effects は data 検証と push の成功後だけ、GitHub Actions OIDC で認証した Free bridge へ送信します。
 
 ```
-[GitHub Actions Publisher] ──毎時 (6 batch ローテーション)──→ [data-only commit]
-  │ (RSS 収集 + full quality gates)                         │ push to main
+[GitHub Actions Publisher] ──毎時 (6 batchローテーション)──→ [data-only commit]
+  │ (収集 + schema/impact/CAS gate)                        │ push to main
   │                                                        ↓
   ├── GitHub OIDC → [Cloudflare Free bridge]     [Cloudflare Pages Git Integration]
-  │                    ├ Queue                              ↓ npm run build
+  │                    ├ Queue                              ↓ 単一production build
   │                    └ OG Cache (KV)            [Cloudflare Pages 本番サイト]
+  ├── 毎日 02:17 UTC: full Astro/Pagefind/E2E reconciliation
   └── main drift / test failure / push failure 時は effects を送らない
 ```
+
+毎時runは変更dataからroute impact manifestを作り、変更detail IDと、再計算が必要なpagination/category/tag/feed/sitemap/search/global shellを明示します。GitHub Actionsでは毎時の全static renderを行わず、全体driftは毎日のfull reconciliationとPR CIで検出します。productionはこのmigration sliceでもPages Git Integrationを維持するため、Pages build失敗時は直前の成功deploymentが残ります。
+
+> **Workers Static Assetsへの次段階**: 同じ検証済みartifactを1回だけdeployする構成は、repository側のdual-publish/preview/rollback契約と、least-privilege Cloudflare API token・custom-domain parityの外部設定を別PRで検証してから切り替えます。このsliceは新しいCloudflare resource/secretを要求せず、現行productionを上書きしません。
 
 > **構成決定の経緯**: 旧 `tech-dashboard` プロジェクトは Direct Upload 型で Git Integration へ切替不可だったため、いったん削除して同名で Git Integration 付きの新プロジェクトを再作成済みです (詳細は [.github/copilot-instructions.md](.github/copilot-instructions.md) の R-001 / LL-001)。
 
@@ -391,9 +398,9 @@ npm run deploy -- --dry-run
 npx wrangler deploy
 ```
 
-Publisher workflow は `0 * * * *` (毎時) で起動します。registry の有効 source を 6 バッチでローテーション収集するため、**個別 source の再収集はおおむね 6 時間周期**です。runner は開始時に checkout と remote main の HEAD SHA を一致確認し、その immutable SHA から publisher contract、index、bodies、archive、stats を読みます。生成後に main が進んでいれば stale snapshot の commit と effects flushを中止し、次 run へ持ち越します。
+Publisher workflow は `0 * * * *` (毎時) で起動し、`17 2 * * *` (毎日 02:17 UTC / 11:17 JST) にfull reconciliationを追加実行します。registry の有効 source を 6 バッチでローテーション収集するため、**個別 source の再収集はおおむね 6 時間周期**です。runner は開始時に checkout と remote main の HEAD SHA を一致確認し、その immutable SHA から publisher contract、index、bodies、archive、stats を読みます。生成後に main が進んでいれば stale snapshot の commit と effects flushを中止し、次 run へ持ち越します。
 
-data に差分がある run は typecheck、unit、data schema、web build、E2E、secret scanを通し、生成対象の data file だけを stageして non-force pushします。Queue と `og.v1` KV write は `$RUNNER_TEMP` の bundleへ遅延し、data push成功後だけ bridgeへ flushします。data差分がない runも final snapshot CASとcontract確認後に Queue / KV effectsだけをflushできます。collapse guardやCAS失敗時は effects bundleを保存しません。新しい repository secretは不要です。GitHub commitは built-in `GITHUB_TOKEN`、bridgeは専用 audienceのGitHub Actions OIDCを使います。
+毎時のdata差分runはsecret scan、data schema、Publisher/impact regression、route-family growth、snapshot CASを通し、生成対象のdata fileだけをstageしてnon-force pushします。impact manifestは変更detail/body ID、archive月、category/tag、全件再計算が必要なaggregate familyを`$RUNNER_TEMP`へ記録します。毎日・manual full reconciliationは追加でroot/Worker typecheck、全unit、Astro + Pagefind build、Publisher E2Eを実行します。Queue と `og.v1` KV write は `$RUNNER_TEMP` の bundleへ遅延し、data push成功後だけ bridgeへ flushします。data差分がない runも final snapshot CASとcontract確認後に Queue / KV effectsだけをflushできます。collapse guardやCAS失敗時は effects bundleを保存しません。新しい repository secretは不要です。GitHub commitは built-in `GITHUB_TOKEN`、bridgeは専用 audienceのGitHub Actions OIDCを使います。
 
 Copilot要約は `worker-summarizer/` が 1 message / invocation で生成し、per-URL KV cacheに保存します。Queue consumerは summary-only contract (`titleJa + summaryJa + summaryEn`) に合わせて `SUMMARIZE_TIMEOUT_MS=60000`、`SUMMARIZE_MAX_TOKENS=1600` とします。本文は `data/bodies.json` に分離し、evergreen、importance 2/3、直近30日だけを retention 対象にします。さらにその中でも実バイト予算 (`worker/src/bodies-budget.ts` の `DEFAULT_BODY_BUDGET_TARGET_BYTES`、既定 9,000,000 bytes) を必ず超えないよう、importance 1 (直近のみ) → importance 2 → importance 3 → evergreen の順に最古から決定論的に prune します。evergreen は最優先 (最後に prune される) ですが、他の全 tier を prune してもなお target を超える場合は evergreen も last-resort として prune され、「保護」は「絶対に prune しない」ではなく「最後に prune される」を意味します (LL-411)。`tests/data-schema.test.ts` の hard ceiling (10,000,000 bytes) はこの target より大きい安全網として維持され、target 自体は上げません。同じ policy を Publisher runtime と `npm run noise:clean -- --apply` の両方が共有します。
 
@@ -402,9 +409,9 @@ Copilot 要約は summarizer Worker 側の `SUMMARIZE_TIMEOUT_MS` (既定 60000 
 **手動トリガ** (緊急で回したい時):
 
 ```bash
-gh workflow run publisher.yml -f dry_run=false
-# 書き込みを行わない確認
-gh workflow run publisher.yml -f dry_run=true
+gh workflow run publisher.yml -f dry_run=false -f full_reconcile=true
+# 全buildを省略して書き込みを行わないimpact/data確認
+gh workflow run publisher.yml -f dry_run=true -f full_reconcile=false
 ```
 
 進行状況は GitHub Actions の `Publisher` workflow で確認します。`dry_run=true` は data、Queue、KV、GitHub refを変更しません。
@@ -419,14 +426,14 @@ bash scripts/install-hooks.sh
 
 Worker を反映する push では、ユーザーが main への直接 push と Worker deploy の両方を明示承認した場合に限り、`ALLOW_PROTECTED_BRANCH_WRITE=1 RUN_WORKER_DEPLOY=1 git push` を使います。`main` への push に `worker/` 差分がある場合だけ `npx wrangler@4.85.0 deploy` が走ります。通常は作業ブランチを PR で mergeし、Workerを別途承認済みdeploy commandで反映します。
 
-`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更した PR では、commit 前に fingerprint を更新します。
+`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`scripts/publisher-impact.ts`、その `web/src/lib/**` critical dependencies、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更した PR では、commit 前に fingerprint を更新します。
 
 ```bash
 npm run publisher:contract -- --apply
 npm run publisher:contract -- --dry-run  # CURRENT を確認
 ```
 
-fingerprint を変える通常 release は次の順序を固定します。
+fingerprint を変える変更はまずdevelopへ統合し、production Workerはまだ変更しません。develop→mainのrelease PR exact headが確定した後、次の順序を固定します。
 
 1. CI 合格済み PR head の `tech-dashboard-summarizer` と `tech-dashboard-body` を明示承認のうえ先に deployする。
 2. 旧 consumer の in-flight 処理が残っていないことを確認して PR を mergeする。
@@ -447,7 +454,7 @@ Publisher は実行ごとに `data/index.json` の `health` フィールドに�
 
 Queue consumer 単体の疎通は `https://tech-dashboard-summarizer.himiyosh.workers.dev/health` で確認できます。ここでは秘密値は返さず、binding / model / timeout 設定が有効かだけを公開します。Queue consumer の直近 retry / KV write cap defer は短期 TTL 付きで KV に記録され、recent retry は `HTTP 503` になります。
 
-本番監視は `.github/workflows/worker-health.yml` が毎時 `:40` に `npm run health:prod` を実行します。Publisherは毎時`:00`に起動するため、workflowの完了、bridge、data freshness、summarizerを同じcheckで検証できます。手元からも同じチェックを実行できます。
+本番監視は `.github/workflows/worker-health.yml` が成功したPublisher完了後と6時間ごとの`:23`に `npm run health:prod` を実行します。workflowの完了、bridge、data freshness、summarizerに加え、public `/metrics.json.indexGeneratedAt`がcommitted `data/index.json.generatedAt`へ追いついたことを確認します。Publisher直後だけ最大15分bounded waitし、定期checkは即時fail-closedです。Publisher失敗時の同内容のHealth failureを毎時重ねません。手元からも同じチェックを実行できます。
 
 ```bash
 npm run health:prod
@@ -457,11 +464,12 @@ npm run health:prod
 
 | 領域 | 仕組み | 頻度 / トリガ |
 |---|---|---|
-| データ収集 + Queue 要約 + og:image | GitHub Actions Publisher + OIDC Free bridge + Queue consumer | 毎時 (registry source を 6 batch ローテーション、検証済みrunだけeffectsをflush) |
+| データ収集 + Queue 要約 + og:image | GitHub Actions Publisher + OIDC Free bridge + Queue consumer | 毎時 (impact/data gate、registry sourceを6 batchローテーション、検証済みrunだけeffectsをflush) |
 | GitHub commit | Publisher workflow → built-in `GITHUB_TOKEN` | allowlist済みdata fileを全品質ゲート後に1 commitへまとめる |
-| サイト build / deploy | Cloudflare Pages Git Integration | `main` push を検知 |
+| Full reconciliation | GitHub Actions Publisher / PR CI | 毎日02:17 UTC、manual、code change PRでAstro + Pagefind + E2E |
+| サイト build / deploy | Cloudflare Pages Git Integration | `main` pushを検知し単一production build。Static Assets cutoverまでは現行経路を維持 |
 | Worker コード deploy | `scripts/git-hooks/pre-push` | `RUN_WORKER_DEPLOY=1 git push` かつ `main` push に worker/ 差分あり |
-| ヘルス監視 | bridge `/health` + Publisher run + data freshness + summarizer + `/status` | 毎時 `:40` に外形監視、サイト訪問時にも確認 |
+| ヘルス監視 | bridge `/health` + Publisher run + committed/public snapshot parity + summarizer + `/status` | 成功Publisher完了後 + 6時間ごと`:23`、サイト訪問時にも確認 |
 
 **残る手動運用**: Queue consumer の `COPILOT_PAT` 更新と、コード変更時の明示承認付き Worker deploy。Publisher commit と bridge 認証には長命な repository secret を追加しません。
 

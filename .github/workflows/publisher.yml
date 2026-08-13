@@ -1,15 +1,20 @@
 name: Publisher
-run-name: Publisher / ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'dry-run' || 'publish' }}
+run-name: Publisher / ${{ github.event_name == 'schedule' && github.event.schedule == '17 2 * * *' && 'reconcile' || github.event_name == 'workflow_dispatch' && inputs.dry_run && 'dry-run' || github.event_name == 'workflow_dispatch' && inputs.full_reconcile && 'reconcile' || 'publish' }}
 
 on:
   schedule:
     - cron: "0 * * * *"
+    - cron: "17 2 * * *"
   workflow_dispatch:
     inputs:
       dry_run:
         description: Prepare and compare data without writes, queue sends, or push
         type: boolean
         default: false
+      full_reconcile:
+        description: Run the full Astro, Pagefind, and Publisher E2E reconciliation
+        type: boolean
+        default: true
 
 concurrency:
   group: tech-dashboard-publisher
@@ -28,6 +33,7 @@ jobs:
       PUBLISHER_BRIDGE_URL: https://tech-dashboard-harness.himiyosh.workers.dev
       PUBLISHER_OIDC_AUDIENCE: tech-dashboard-publisher
       PUBLISHER_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+      PUBLISHER_FULL_RECONCILE: ${{ (github.event_name == 'schedule' && github.event.schedule == '17 2 * * *') || (github.event_name == 'workflow_dispatch' && inputs.full_reconcile && !inputs.dry_run) }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -61,15 +67,32 @@ jobs:
           fi
           npm run publisher:run -- "${mode}"
 
-      - name: Install verification dependencies
-        if: steps.publisher.outputs.changed == 'true' && env.PUBLISHER_DRY_RUN != 'true'
+      - name: Summarize incremental route impact
+        if: steps.publisher.outputs.changed == 'true'
+        env:
+          IMPACT_PATH: ${{ steps.publisher.outputs.impact_path }}
+        run: node --import tsx scripts/publisher-impact.ts --report "${IMPACT_PATH}" | tee -a "${GITHUB_STEP_SUMMARY}"
+
+      - name: Install incremental verification dependencies
+        if: steps.publisher.outputs.changed == 'true' && env.PUBLISHER_DRY_RUN != 'true' && env.PUBLISHER_FULL_RECONCILE != 'true'
+        run: npm --prefix web ci
+
+      - name: Verify incremental data and invalidation plan
+        if: steps.publisher.outputs.changed == 'true' && env.PUBLISHER_DRY_RUN != 'true' && env.PUBLISHER_FULL_RECONCILE != 'true'
+        run: |
+          npm run secrets:scan
+          npm test -- tests/data-schema.test.ts tests/publisher-impact.test.ts tests/publisher-runner.test.ts
+          git diff --check -- data
+
+      - name: Install full reconciliation dependencies
+        if: env.PUBLISHER_FULL_RECONCILE == 'true' && env.PUBLISHER_DRY_RUN != 'true'
         run: |
           npm --prefix worker ci
           npm --prefix web ci
           npx playwright install --with-deps chromium
 
-      - name: Verify generated data
-        if: steps.publisher.outputs.changed == 'true' && env.PUBLISHER_DRY_RUN != 'true'
+      - name: Run full static reconciliation
+        if: env.PUBLISHER_FULL_RECONCILE == 'true' && env.PUBLISHER_DRY_RUN != 'true'
         env:
           # The preceding build is the exact artifact under verification.
           # Rebuilding in Playwright doubles the static-generation cost and can

@@ -26,14 +26,16 @@ import type {
   QueueBatchBinding,
 } from "../worker/src/runtime-bindings.ts";
 import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../worker/src/publisher-contract.ts";
+import {
+  PUBLISHER_DATA_PATH_RE,
+  planPublisherImpactFromRepository,
+  type PublisherImpactPlan,
+} from "./publisher-impact.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_BRIDGE_URL =
   "https://tech-dashboard-harness.himiyosh.workers.dev";
 const DEFAULT_OIDC_AUDIENCE = "tech-dashboard-publisher";
-const ALLOWED_DATA_PATH =
-  /^data\/(?:index\.json|bodies\.json|stats\.json|archive\/(?:_index|\d{4}-\d{2})\.json)$/;
-
 type PublisherMode = "apply" | "dry-run" | "check" | "preflight" | "flush";
 
 interface PreparedPublisherOutput {
@@ -41,11 +43,13 @@ interface PreparedPublisherOutput {
   files: string[];
   message: string;
   expectedParentSha: string;
+  impact: PublisherImpactPlan | null;
 }
 
 interface PublisherActionOutput extends PreparedPublisherOutput {
   effectsCount: number;
   effectsPath: string;
+  impactPath: string;
 }
 
 interface OidcTokenState {
@@ -367,7 +371,7 @@ function gitHead(root: string): string {
 }
 
 function writeAtomic(root: string, file: PublisherCommitFile): void {
-  if (!ALLOWED_DATA_PATH.test(file.path)) {
+  if (!PUBLISHER_DATA_PATH_RE.test(file.path)) {
     throw new Error(`publisher refused unexpected output path: ${file.path}`);
   }
   const target = resolve(root, file.path);
@@ -417,6 +421,11 @@ function effectCount(bundle: DeferredEffectsBundle): number {
 function effectsFilePath(env: NodeJS.ProcessEnv): string {
   const runnerTemp = requiredEnv(env, "RUNNER_TEMP");
   return resolve(runnerTemp, "tech-dashboard-publisher-effects.json");
+}
+
+function impactFilePath(env: NodeJS.ProcessEnv): string {
+  const runnerTemp = requiredEnv(env, "RUNNER_TEMP");
+  return resolve(runnerTemp, "tech-dashboard-publisher-impact.json");
 }
 
 function readEffectsBundle(
@@ -476,6 +485,7 @@ export function createLocalCommitSink(options: {
   dryRun: boolean;
   getLocalHead?: () => string;
   getRemoteHead?: (env: GithubRepositoryEnv) => Promise<string>;
+  planImpact?: typeof planPublisherImpactFromRepository;
   onPrepared: (output: PreparedPublisherOutput) => void;
 }): PublisherCommitSink {
   return async (env, message, files, expectedParentSha) => {
@@ -495,6 +505,7 @@ export function createLocalCommitSink(options: {
         files: [],
         message,
         expectedParentSha,
+        impact: null,
       });
       return null;
     }
@@ -502,11 +513,16 @@ export function createLocalCommitSink(options: {
     if (uniquePaths.size !== files.length) {
       throw new Error("publisher commit sink requires unique output files");
     }
+    const impact = (options.planImpact ?? planPublisherImpactFromRepository)({
+      root: options.root,
+      baseRef: expectedParentSha,
+      changedFiles: files,
+    });
     if (!options.dryRun) {
       for (const file of files) writeAtomic(options.root, file);
     } else {
       for (const file of files) {
-        if (!ALLOWED_DATA_PATH.test(file.path)) {
+        if (!PUBLISHER_DATA_PATH_RE.test(file.path)) {
           throw new Error(`publisher refused unexpected output path: ${file.path}`);
         }
       }
@@ -516,6 +532,7 @@ export function createLocalCommitSink(options: {
       files: files.map(({ path }) => path),
       message,
       expectedParentSha,
+      impact,
     });
     return `prepared:${expectedParentSha}`;
   };
@@ -542,6 +559,7 @@ function writeActionOutputs(output: PublisherActionOutput): void {
   );
   appendFileSync(outputPath, `effects_count=${output.effectsCount}\n`, "utf8");
   appendFileSync(outputPath, `effects_path=${output.effectsPath}\n`, "utf8");
+  appendFileSync(outputPath, `impact_path=${output.impactPath}\n`, "utf8");
 }
 
 function assertActionsContext(env: NodeJS.ProcessEnv): void {
@@ -636,8 +654,10 @@ export async function runPublisherCli(
     files: [],
     message: "",
     expectedParentSha: gitHead(ROOT),
+    impact: null,
     effectsCount: 0,
     effectsPath: "",
+    impactPath: "",
   };
   const commitFiles = createLocalCommitSink({
     root: ROOT,
@@ -675,6 +695,13 @@ export async function runPublisherCli(
     prepared.files = [];
   }
   prepared.effectsCount = effectCount(effects);
+  if (prepared.changed && prepared.impact) {
+    prepared.impactPath = impactFilePath(env);
+    writeAtomicFile(
+      prepared.impactPath,
+      `${JSON.stringify(prepared.impact, null, 2)}\n`,
+    );
+  }
   if (!dryRun && prepared.effectsCount > 0) {
     prepared.effectsPath = effectsFilePath(env);
     writeAtomicFile(

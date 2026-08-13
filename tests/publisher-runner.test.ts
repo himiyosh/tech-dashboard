@@ -18,6 +18,27 @@ import {
 import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../worker/src/publisher-contract.ts";
 import type { PublisherEnv } from "../worker/src/index.ts";
 
+function impactPlan() {
+  return {
+    version: 1 as const,
+    baseRef: "captured-sha",
+    changedDataPaths: ["data/index.json"],
+    changedEntryIds: ["entry-1"],
+    changedBodyIds: [],
+    changedArchiveMonths: [],
+    affectedCategories: ["copilot"],
+    affectedTags: ["agent"],
+    routeFamilies: ["detail-pages", "home"],
+    requiresFullStaticReconciliation: true,
+    fullReconciliationReasons: [
+      "index-health-and-snapshot-are-imported-by-the-static-shell",
+    ],
+    before: { detailRoutes: 10, tagBaseRoutes: 2, archiveMonths: 1 },
+    after: { detailRoutes: 11, tagBaseRoutes: 2, archiveMonths: 1 },
+    growth: { detailRoutes: 1, tagBaseRoutes: 0, archiveMonths: 0 },
+  };
+}
+
 describe("GitHub Actions publisher runner", () => {
   it("requires one explicit fail-closed mode", () => {
     expect(parsePublisherArgs([])).toEqual({
@@ -325,6 +346,7 @@ describe("GitHub Actions publisher runner", () => {
       dryRun: false,
       getLocalHead: () => "captured-sha",
       getRemoteHead: async () => "captured-sha",
+      planImpact: () => impactPlan(),
       onPrepared: prepared,
     });
     await sink(
@@ -348,6 +370,7 @@ describe("GitHub Actions publisher runner", () => {
       files: ["data/index.json", "data/archive/2026-07.json"],
       message: "data update",
       expectedParentSha: "captured-sha",
+      impact: impactPlan(),
     });
   });
 
@@ -378,6 +401,7 @@ describe("GitHub Actions publisher runner", () => {
       files: [],
       message: "no data changes",
       expectedParentSha: "captured-sha",
+      impact: null,
     });
   });
 
@@ -388,6 +412,7 @@ describe("GitHub Actions publisher runner", () => {
       dryRun: true,
       getLocalHead: () => "captured-sha",
       getRemoteHead: async () => "captured-sha",
+      planImpact: () => impactPlan(),
       onPrepared: () => undefined,
     });
     await dryRunSink(

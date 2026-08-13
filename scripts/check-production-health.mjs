@@ -16,7 +16,12 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_PUBLISHER_MAX_AGE_MINUTES = 180;
 const DEFAULT_DATA_WARN_AGE_MINUTES = 360;
 const DEFAULT_DATA_MAX_AGE_MINUTES = 24 * 60;
-const PUBLISHER_APPLY_RUN_TITLE = "Publisher / publish";
+const DEFAULT_PUBLIC_DEPLOY_WAIT_MS = 0;
+const DEFAULT_PUBLIC_DEPLOY_POLL_MS = 15_000;
+const PUBLISHER_APPLY_RUN_TITLES = new Set([
+  "Publisher / publish",
+  "Publisher / reconcile",
+]);
 const JSON_FEED_MEDIA_TYPE = "application/feed+json";
 const JSON_FEED_VERSION = "https://jsonfeed.org/version/1.1";
 const JSON_FEED_URL = "https://techdb.studio344.net/feed.json";
@@ -26,6 +31,9 @@ const EXPECTED_PUBLISHER_FINGERPRINT = JSON.parse(
     "utf8",
   ),
 ).fingerprint;
+const EXPECTED_INDEX_SNAPSHOT = JSON.parse(
+  readFileSync(new URL("../data/index.json", import.meta.url), "utf8"),
+);
 
 const endpoints = {
   bridge:
@@ -41,6 +49,9 @@ const endpoints = {
     process.env.PUBLISHER_INDEX_URL ??
     "https://raw.githubusercontent.com/himiyosh/tech-dashboard/main/data/index.json",
   jsonFeed: process.env.PUBLIC_JSON_FEED_URL ?? JSON_FEED_URL,
+  metrics:
+    process.env.PUBLIC_METRICS_URL ??
+    "https://techdb.studio344.net/metrics.json",
 };
 
 const timeoutMs = Number(process.env.HEALTHCHECK_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
@@ -55,6 +66,14 @@ const dataWarnAgeMinutes = Number(
 const dataMaxAgeMinutes = Number(
   process.env.PUBLISHER_DATA_MAX_AGE_MINUTES ??
     DEFAULT_DATA_MAX_AGE_MINUTES,
+);
+const publicDeployWaitMs = Math.max(
+  0,
+  Number(process.env.PUBLIC_DEPLOY_WAIT_MS ?? DEFAULT_PUBLIC_DEPLOY_WAIT_MS),
+);
+const publicDeployPollMs = Math.max(
+  1_000,
+  Number(process.env.PUBLIC_DEPLOY_POLL_MS ?? DEFAULT_PUBLIC_DEPLOY_POLL_MS),
 );
 
 async function fetchJson(name, url, options = {}) {
@@ -94,7 +113,7 @@ function isPublishingRun(run) {
   if (run.event === "schedule") return true;
   return (
     run.event === "workflow_dispatch" &&
-    run.display_title === PUBLISHER_APPLY_RUN_TITLE
+    PUBLISHER_APPLY_RUN_TITLES.has(run.display_title)
   );
 }
 
@@ -222,6 +241,77 @@ export function validateIndexFreshness(body, nowMs = Date.now()) {
   return { errors, warnings, ageMinutes };
 }
 
+export function validatePublicDeployment(indexBody, metricsBody) {
+  const errors = [];
+  const indexGeneratedAt = typeof indexBody?.generatedAt === "string"
+    ? indexBody.generatedAt
+    : null;
+  const deployedIndexGeneratedAt =
+    typeof metricsBody?.indexGeneratedAt === "string"
+      ? metricsBody.indexGeneratedAt
+      : null;
+  const deployedGeneratedAt = typeof metricsBody?.generatedAt === "string"
+    ? Date.parse(metricsBody.generatedAt)
+    : Number.NaN;
+  const expectedIndexMs = indexGeneratedAt ? Date.parse(indexGeneratedAt) : Number.NaN;
+  const deployedIndexMs = deployedIndexGeneratedAt
+    ? Date.parse(deployedIndexGeneratedAt)
+    : Number.NaN;
+
+  requireCondition(
+    errors,
+    indexGeneratedAt !== null,
+    "repository index generatedAt is missing",
+  );
+  requireCondition(
+    errors,
+    deployedIndexGeneratedAt !== null,
+    "public metrics indexGeneratedAt is missing",
+  );
+  requireCondition(
+    errors,
+    Number.isFinite(deployedGeneratedAt),
+    "public metrics generatedAt is invalid",
+  );
+  requireCondition(
+    errors,
+    Number.isFinite(expectedIndexMs)
+      && Number.isFinite(deployedIndexMs)
+      && deployedIndexMs >= expectedIndexMs,
+    `public deployment is behind the checked-out index snapshot: deployed ${deployedIndexGeneratedAt ?? "missing"}, expected at least ${indexGeneratedAt ?? "missing"}`,
+  );
+  return { errors, warnings: [] };
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForPublicDeployment(indexBody) {
+  const deadline = Date.now() + publicDeployWaitMs;
+  let lastErrors = ["public deployment was not checked"];
+  let lastStatus = null;
+  do {
+    try {
+      const { response, body } = await fetchJson("public-deploy", endpoints.metrics);
+      lastStatus = response.status;
+      const result = validatePublicDeployment(indexBody, body);
+      lastErrors = [
+        ...(response.ok ? [] : [`public metrics endpoint returned HTTP ${response.status}`]),
+        ...result.errors,
+      ];
+      if (lastErrors.length === 0) {
+        return { errors: [], warnings: [], status: response.status };
+      }
+    } catch (error) {
+      lastErrors = [error instanceof Error ? error.message : String(error)];
+    }
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    await delay(Math.min(publicDeployPollMs, remaining));
+  } while (Date.now() <= deadline);
+  return { errors: lastErrors, warnings: [], status: lastStatus };
+}
 export function validateSummarizer(body) {
   const errors = [];
   const warnings = [];
@@ -324,6 +414,11 @@ export async function runProductionHealthCheck() {
       failures.push(`${name}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
+
+  const deployment = await waitForPublicDeployment(EXPECTED_INDEX_SNAPSHOT);
+  failures.push(...deployment.errors.map((error) => `public-deploy: ${error}`));
+  warnings.push(...deployment.warnings.map((warning) => `public-deploy: ${warning}`));
+  console.log(`[public-deploy] http=${deployment.status ?? "unknown"} url=${endpoints.metrics}`);
 
   for (const warning of warnings) console.warn(`warning: ${warning}`);
   if (failures.length > 0) {

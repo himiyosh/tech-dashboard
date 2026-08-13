@@ -1,3 +1,5 @@
+export const TAG_PAGE_MIN_ENTRIES = 10;
+
 export const SITEMAP_STATIC_PATHS = [
   "/",
   "/categories/",

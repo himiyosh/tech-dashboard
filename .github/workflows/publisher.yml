@@ -32,7 +32,9 @@ jobs:
   publish:
     name: collect, verify, and publish data
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 30
+    # Extra wall time is only for explicit full incremental-shadow bootstrap;
+    # internal 18-minute/file/RSS resource guards still fail closed.
+    timeout-minutes: 60
     env:
       PUBLISHER_BRIDGE_URL: https://tech-dashboard-harness.himiyosh.workers.dev
       PUBLISHER_OIDC_AUDIENCE: tech-dashboard-publisher

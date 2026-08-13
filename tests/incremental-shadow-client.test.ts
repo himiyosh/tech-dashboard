@@ -10,6 +10,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   parseIncrementalShadowArgs,
   prepareIncrementalGeneration,
+  shouldReportUploadProgress,
   uploadAndVerify,
   verifyIncrementalShellAssets,
 } from "../scripts/incremental-shadow-client.ts";
@@ -183,6 +184,20 @@ describe("incremental shadow publisher client", () => {
         "text/html; charset=utf-8",
       ),
     ).rejects.toThrow(`got digest=sha256:${rawDigest(truncated)} bytes=${truncated.byteLength}`);
+  });
+
+  it("bounds incremental upload progress diagnostics", () => {
+    const reported: number[] = [];
+    for (let completed = 1; completed <= 250; completed += 1) {
+      if (shouldReportUploadProgress(completed, 250)) {
+        reported.push(completed);
+      }
+    }
+
+    expect(reported).toEqual([1, 100, 200, 250]);
+    expect(shouldReportUploadProgress(0, 250)).toBe(false);
+    expect(shouldReportUploadProgress(251, 250)).toBe(false);
+    expect(shouldReportUploadProgress(1.5, 250)).toBe(false);
   });
 
   it("builds a distinct generation revision with bounded shards and tombstones", async () => {

@@ -8401,10 +8401,9 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("mobile article titles are not clipped mid-title", async ({ page }) => {
-    // 利用者報告 (2026-08-09): モバイルで記事タイトルが見切れる。
-    // 原因は -webkit-line-clamp: 2 で、390px 実測では card title の 23% が
-    // 収まらなかった (3 行で 97%、4 行で 100%)。日本語は 1 行の情報量が
-    // 少ないため、狭幅では 2 行 clamp が実質的な切り捨てになる。
+    // Fixed line counts only fit the titles that exist when the test is written.
+    // Inject a stable long Japanese title so future feed growth cannot silently
+    // reintroduce clipping behind a larger clamp.
     // 判定は「clamp 値」ではなく実際の見切れ (scrollHeight > clientHeight) で
     // 行い、フォントや文字数が変わっても意味が保たれるようにする。
     // Spotlight (article.featured) はここに含めない。375px では「タイトル全文」と
@@ -8412,42 +8411,75 @@ test.describe("TECH Dashboard smoke", () => {
     // ファーストビュー契約) が両立しないため、hero は 3 行 clamp を上限として
     // ファーストビュー契約を優先する。Timeline カードは単一列で下方向へ伸ばせるので
     // 全文表示にできる。
-    const titleSelectors = [
-      ".card h3.title > a",
-      ".top-rank-item .rank-title",
-    ];
+    const stressTitle = "Claude Codeのステータスラインを設定し、複数プロジェクトの実行状態、利用中モデル、作業ディレクトリ、コンテキスト残量、エラー通知、次に取るべき操作までをモバイルでも省略せず確認できるようにする実践ガイド";
 
     for (const width of [390, 375, 360]) {
       await page.setViewportSize({ width, height: 844 });
       await page.goto("/");
-      const clipped = await page.evaluate((selectors) => {
-        const offenders: string[] = [];
-        for (const selector of selectors) {
-          for (const el of document.querySelectorAll<HTMLElement>(selector)) {
-            const rect = el.getBoundingClientRect();
-            if (rect.width === 0 || rect.height === 0) continue;
-            if (el.scrollHeight - el.clientHeight > 1) {
-              offenders.push(
-                `${selector}: "${(el.textContent ?? "").trim().slice(0, 24)}" `
-                + `${el.scrollHeight}px in ${el.clientHeight}px`,
-              );
-            }
-          }
-        }
-        return offenders;
-      }, titleSelectors);
-      expect(clipped, `${width}px titles are fully visible`).toEqual([]);
+      const stressTarget = page.locator(".card h3.title > a:visible").first();
+      await expect(stressTarget).toBeVisible();
+      await stressTarget.evaluate((element, title) => {
+        element.textContent = title;
+      }, stressTitle);
+      await page.evaluate(() =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        )
+      );
+
+      const titleMetrics = await page.locator(".card h3.title > a:visible").evaluateAll((elements) =>
+        elements.map((element) => {
+          const el = element as HTMLElement;
+          const rect = el.getBoundingClientRect();
+          const style = getComputedStyle(el);
+          return {
+            text: (el.textContent ?? "").trim(),
+            clientHeight: el.clientHeight,
+            scrollHeight: el.scrollHeight,
+            clientWidth: el.clientWidth,
+            scrollWidth: el.scrollWidth,
+            targetHeight: rect.height,
+            overflow: style.overflow,
+            lineClamp: style.webkitLineClamp,
+          };
+        })
+      );
+      const clipped = titleMetrics
+        .filter((metric) => metric.scrollHeight - metric.clientHeight > 1)
+        .map((metric) =>
+          `"${metric.text.slice(0, 24)}" ${metric.scrollHeight}px in ${metric.clientHeight}px`
+        );
+      expect(clipped, `${width}px Timeline titles are fully visible`).toEqual([]);
+
+      const stressed = titleMetrics.find((metric) => metric.text === stressTitle);
+      expect(stressed, `${width}px renders the deterministic stress title`).toBeDefined();
+      expect(stressed!.scrollWidth, `${width}px stress title does not overflow horizontally`)
+        .toBeLessThanOrEqual(stressed!.clientWidth + 1);
+      expect(stressed!.targetHeight, `${width}px title link preserves its touch target`)
+        .toBeGreaterThanOrEqual(44);
+      expect(stressed!.overflow, `${width}px Timeline title overflow stays visible`).toBe("visible");
+      expect(stressed!.lineClamp, `${width}px Timeline title has no fixed line clamp`).toBe("none");
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+        `${width}px page has no horizontal overflow`,
+      ).toBe(true);
     }
 
-    // hero は全文表示できないが、従来の 2 行から 3 行へは広げてある。
-    // ここが 2 に戻ると見切れが目に見えて悪化するため下限を固定する。
+    // Spotlight と Top 3 は first-view density を守る既存 clamp を維持する。
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
-    const heroClamp = await page.evaluate(() => {
-      const el = document.querySelector<HTMLElement>("article.featured .featured-title > a");
-      return el ? getComputedStyle(el).webkitLineClamp : null;
+    const fixedClampContracts = await page.evaluate(() => {
+      const hero = document.querySelector<HTMLElement>("article.featured .featured-title > a");
+      const topRank = document.querySelector<HTMLElement>(".top-rank-item .rank-title");
+      return {
+        hero: hero ? getComputedStyle(hero).webkitLineClamp : null,
+        topRank: topRank ? getComputedStyle(topRank).webkitLineClamp : null,
+      };
     });
-    expect(Number(heroClamp), "Spotlight title keeps at least 3 lines").toBeGreaterThanOrEqual(3);
+    expect(Number(fixedClampContracts.hero), "Spotlight title keeps at least 3 lines")
+      .toBeGreaterThanOrEqual(3);
+    expect(Number(fixedClampContracts.topRank), "Top 3 title keeps its compact two-line contract")
+      .toBe(2);
   });
 
 

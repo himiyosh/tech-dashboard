@@ -3075,6 +3075,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: GitHub Actionsのjob timeoutはinput expressionを使えないためliteral 60分へ拡張し、18分build・18,000 files・12GiB RSS・network timeout・CAS・deferred effectsの各内部guardは変更しない。uploadは開始、1件目、100件ごと、完了だけをread-back検証済みbyte数とともに記録する。
 - **教訓**: 明示的なfull bootstrapの外側wall-clockを広げるとき、内部のCPU/RSS/file/network budgetまで緩めない。job timeoutは全工程のorchestration上限、各resource guardは個別の安全上限として別々に固定し、長時間I/Oはbounded progressで「進行中」と「停止」を区別できるようにする。
 
+### LL-466: 数千objectのcontent-addressed uploadは一過性1件をbounded retryで吸収する
+- **事象**: 60分wall-clockへ拡張したfull bootstrapは5,495件を検証し、5,400件のbounded progressまで到達したが、途中1件のR2 PUTだけがHTTP 502 `content_write_failed`を返し、45分後にactivationを行わずrun全体がfailureになった。D1 pointerは未変更で、成功済みobjectはimmutable R2へ残った。
+- **根本原因**: content-addressed PUT/GETは冪等なのにclientは一過性の408/429/5xx、network error、read-back body errorを1回で永久失敗としていた。数千回の外部requestでは単発transientの累積確率を無視できず、1件のfailureが全objectの検証完了までrunを消費した後でactivationを止めた。
+- **対策**: 各objectは60秒request timeoutを維持したまま、transient errorだけを最大3回、1秒/2秒backoffで再試行する。retry回数と対象keyをbounded logへ出し、4xx contract rejection、metadata不一致、digest/byte mismatchは再試行せずfail-closedにする。
+- **教訓**: immutable/content-addressed writeの大規模fan-outでは、永続的なcontract failureと一過性transport/storage failureを分離する。冪等性が証明できる単位だけを小さい固定回数で再試行し、全job retryや無制限backoffへ広げない。成功済みobjectとactivation pointerを分離しておけば、失敗時もpartial cutoverせず安全に再実行できる。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

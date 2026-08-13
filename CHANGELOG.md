@@ -36,6 +36,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - body Queueの単一記事で本文生成が繰り返し失敗してもservice全体を503にせず、entry warningとruntime failureを分離するようにしました。missing KV bindingは例外ではなく構造化JSON 503を返します。
 - 通常PRを`working branch -> develop`、production releaseを`develop -> main`へ分離し、CIが誤ったbase/headをfail-closedに拒否するbranch-flow gateを追加しました。default branchとPublisher/Pages production branchはmainのまま維持し、releaseはmerge commitでancestryを保ちます。
 - 毎時Publisherを変更data・route impact・schema・CASの増分gateへ分離し、全Astro/Pagefind/E2E reconciliationを毎日02:17 UTC・manual・PR CIへ移しました。impact manifestは変更detail/body IDと、pagination/category/tag/feed/sitemap/search/global shellの波及を記録し、unrelated historical detailをGitHub Actionsで毎時再renderしません。
+- Fully-free incremental servingの第2段階として、既存Astro detail pageをroute単位でJA/ENのcontent-addressed HTMLへpre-renderし、専用R2/D1 shadow generationへ手動dual-publishできる無効既定の経路を追加しました。production Pages、custom domain、scheduled Publisherは変更せず、detail-only coverage、traffic未観測、budget超過ではcutoverをfail-closedに拒否します。
 - staleな3,200 HTML route上限を撤去し、Cloudflare Freeの20,000 static filesから余裕を引いた18,000 files、18分build、RSS、route-family growth、crawl/detail parityのprovider-aligned gateへ置き換えました。productionはPages Git Integrationを維持し、Healthはcommitted indexとpublic metrics snapshotの一致を検証します。
 - Knowledgeはsource-levelのevergreen retentionを候補母集団として維持しつつ、raw title/snippet/source contextの共有契約で提供開始・一般提供・preview・月次告知・award・event登録などの告知専用記事を除外するようにしました。告知形式のtitleでもsetup、API parameter、CLI運用などの具体的なprocedural evidenceを持つ記事は維持します。Timeline、カテゴリ、検索、Archive、canonical URL、要約、AI解説本文は維持し、Knowledge HTMLとKnowledge RSSだけを同じ適格性契約へ揃えます。
 - Knowledgeのfresh entryは、掲載可否の判定とartifactへ保存するraw source contextを同じ800文字上限から導出するようにしました。判定根拠が旧280文字境界より後ろにあるGoogle Cloud告知でもPublisher gateが再現でき、lossyなprior/archive restampは保存済みの除外を具体的なprocedural evidenceなしに解除しません。
@@ -104,6 +105,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 修正
 
+- モバイルのTimeline記事タイトルから固定4行clampとhidden overflowを外し、feedタイトルが長くなっても全文を自然に折り返して表示するようにしました。SpotlightとTop 3のfirst-view向けclamp、44px以上の操作面、横overflow契約は維持します。
 - evergreen記事のarchive行へsummaryが供給されない経路を塞ぎました。`selectArchiveUpdateEntries`は「今回変化したentryだけ」をarchiveへ流すため、変化のない安定したevergreen entryはarchive行が二度と更新されず、旧`compactArchiveEntry`に剥がされたsummaryが入らないまま残っていました (実測128件)。この状態でcapにevictされると、tierだけwarmへ昇格して「warmなのにsummary無し」という不正recordが生まれ、publisherのfail-closed検証を恒久停止させ得ました。evergreenは変化の有無に関わらず常にarchive更新対象へ含め、昇格側もbilingual summaryが揃っている行だけに限定します。data gateも、archive層が修復できない状態 (summary未供給のままevictされたhot行) では落ちないよう対象を限定しました。
 - evergreen記事がlive indexのcap (`PER_SOURCE_CAP` / `CATEGORY_CAPS` / `INDEX_LIMIT`) でevictされた際に、全ての閲覧面から消える問題を修正しました。capはevergreenを考慮せず永久にevictするため、archive行はtier `hot`のまま凍結し、LL-044でsummaryを剥がされた状態で固定されていました。結果として月別Archive (summary必須) にも個別記事ページ (warm由来) にも現れず、`data/archive/{YYYY-MM}.json`にだけ存在する記事になっていました。archive書き出し時にevergreenのsummaryを保持し、liveから外れたevergreen行をwarmへ昇格するようにし、既に凍結していた78件はgit履歴のsummaryを復元してwarmへ戻しました (R-022)。
 - Knowledgeの告知専用判定を、Gartner Magic Quadrantの評価記事、title途中の`Introducing`・`What's new`・`New Capabilities Announced`まで拡張しました。`Today, we're announcing`や一般的な`This post covers ... how you access it`という告知定型文は、保存済み除外をhow-toとして再採用する根拠にせず、具体的なsetup・API parameter・CLI手順は引き続き維持します。

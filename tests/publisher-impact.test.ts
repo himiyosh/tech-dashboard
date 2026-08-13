@@ -75,6 +75,15 @@ describe("Publisher incremental impact plan", () => {
       "search-index",
     ]));
     expect(plan.requiresFullStaticReconciliation).toBe(true);
+    expect(plan.incremental).toMatchObject({
+      detailMode: "global",
+      searchMode: "global",
+      shadowSafe: false,
+    });
+    expect(plan.incremental.blockers).toEqual(expect.arrayContaining([
+      "detail-pages-embed-global-entry-and-health-state",
+      "pagefind-requires-global-reconciliation",
+    ]));
   });
 
   it("does not mark unrelated aggregate pages for a body-only change", () => {
@@ -105,6 +114,44 @@ describe("Publisher incremental impact plan", () => {
     expect(plan.routeFamilies).not.toContain("category-pages");
     expect(plan.routeFamilies).not.toContain("archive");
     expect(plan.routeFamilies).not.toContain("home");
+    expect(plan.incremental).toEqual({
+      detailMode: "exact",
+      detailUpsertIds: ["body-entry"],
+      detailTombstoneIds: [],
+      detailPaths: ["/e/body-entry/"],
+      searchMode: "delta",
+      searchDeltaIds: ["body-entry"],
+      shadowSafe: true,
+      blockers: [],
+    });
+  });
+
+  it("emits a tombstone when an addressable detail leaves the final snapshot", () => {
+    const removed = entry("removed", { archiveTier: "warm" });
+    const before = files({
+      "data/index.json": { entries: [removed] },
+      "data/bodies.json": { bodies: {} },
+      "data/stats.json": {},
+      "data/archive/_index.json": {},
+    });
+    const after = files({
+      "data/index.json": { entries: [] },
+      "data/bodies.json": { bodies: {} },
+      "data/stats.json": {},
+      "data/archive/_index.json": {},
+    });
+
+    const plan = buildPublisherImpactPlan({
+      baseRef: "f".repeat(40),
+      beforeFiles: before,
+      afterFiles: after,
+      changedPaths: ["data/index.json"],
+    });
+
+    expect(plan.incremental.detailTombstoneIds).toEqual(["removed"]);
+    expect(plan.incremental.detailUpsertIds).toEqual([]);
+    expect(plan.incremental.detailPaths).toEqual(["/e/removed/"]);
+    expect(plan.incremental.shadowSafe).toBe(false);
   });
 
   it("tracks archive month invalidation without unrelated IDs", () => {
@@ -145,7 +192,7 @@ describe("Publisher incremental impact plan", () => {
 
   it("fails closed on a per-run detail route growth anomaly", () => {
     const plan = {
-      version: 1 as const,
+      version: 2 as const,
       baseRef: "d".repeat(40),
       changedDataPaths: ["data/index.json"],
       changedEntryIds: [],
@@ -167,6 +214,16 @@ describe("Publisher incremental impact plan", () => {
         tagBaseRoutes: 0,
         archiveMonths: 0,
       },
+      incremental: {
+        detailMode: "none" as const,
+        detailUpsertIds: [],
+        detailTombstoneIds: [],
+        detailPaths: [],
+        searchMode: "none" as const,
+        searchDeltaIds: [],
+        shadowSafe: false,
+        blockers: [],
+      },
     };
     expect(() => assertPublisherImpactGrowth(plan)).toThrow(
       /route-family growth anomaly: detailRoutes/,
@@ -175,7 +232,7 @@ describe("Publisher incremental impact plan", () => {
 
   it("formats a bounded workflow summary", () => {
     const text = formatPublisherImpactMarkdown({
-      version: 1,
+      version: 2,
       baseRef: "e".repeat(40),
       changedDataPaths: ["data/index.json"],
       changedEntryIds: ["entry-1"],
@@ -189,9 +246,21 @@ describe("Publisher incremental impact plan", () => {
       before: { detailRoutes: 10, tagBaseRoutes: 2, archiveMonths: 1 },
       after: { detailRoutes: 11, tagBaseRoutes: 2, archiveMonths: 1 },
       growth: { detailRoutes: 1, tagBaseRoutes: 0, archiveMonths: 0 },
+      incremental: {
+        detailMode: "global",
+        detailUpsertIds: ["entry-1"],
+        detailTombstoneIds: [],
+        detailPaths: ["/e/entry-1/"],
+        searchMode: "global",
+        searchDeltaIds: [],
+        shadowSafe: false,
+        blockers: ["pagefind-requires-global-reconciliation"],
+      },
     });
     expect(text).toContain("Changed detail entries: 1");
     expect(text).toContain("Full static reconciliation required: yes");
     expect(text).toContain("Route growth: detail +1");
+    expect(text).toContain("Incremental detail mode: global (1 paths)");
+    expect(text).toContain("Shadow-safe slice: no");
   });
 });

@@ -1,0 +1,32 @@
+#:schema https://cloudflare.com/workers/wrangler-schema.json
+# Dedicated incremental-serving Worker. It has no custom-domain route and is
+# fail-safe by default: public traffic proxies the existing Pages deployment
+# until an explicit, independently verified cutover.
+
+name = "tech-dashboard-incremental-serving"
+main = "src/incremental-serving.ts"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[[r2_buckets]]
+binding = "INCREMENTAL_OBJECTS"
+bucket_name = "tech-dashboard-incremental-serving"
+
+[[d1_databases]]
+binding = "INCREMENTAL_STATE"
+database_name = "tech-dashboard-incremental-serving"
+# Provision a dedicated database and replace this local-only sentinel before
+# any preview or production deployment. The Worker remains off without setup.
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations/incremental-serving"
+
+[vars]
+INCREMENTAL_SERVING_MODE = "off"
+CUTOVER_APPROVED = "0"
+PAGES_FALLBACK_ORIGIN = "https://tech-dashboard-6a7.pages.dev"
+PUBLISHER_OIDC_AUDIENCE = "tech-dashboard-publisher"
+PUBLISHER_REPOSITORY = "himiyosh/tech-dashboard"
+PUBLISHER_WORKFLOW_REF = "himiyosh/tech-dashboard/.github/workflows/publisher.yml@refs/heads/main"
+
+[observability]
+enabled = true

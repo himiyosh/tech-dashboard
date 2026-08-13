@@ -223,6 +223,10 @@
 - 毎時runは変更dataのschema、secret、snapshot、route impact manifestを検証し、変更されたdetail IDと、全件再計算が必要なpagination/category/tag/feed/sitemap/search/global shellを明示する。unrelated historical detailをGitHub Actionsで再renderしない。
 - 毎日 `02:17 UTC` と明示manual reconciliationは root / Worker typecheck、全 unit、Astro + Pagefind build、生成 Home / detail / metrics / archive / 404 の専用E2Eを実行する。PR CIは全UI・interaction E2Eを維持する。
 - production build / deployは移行slice中もCloudflare Pages Git Integrationを単一経路とし、GitHub Actionsからdeployしない。Workers Static Assetsへの切替は、同一artifactのpreview、custom domain、rollback、least-privilege tokenを別PRで検証できるまでfeature-gatedにする。
+- 第2段階のincremental servingは、Node Publisherがroute objectをpre-renderし、専用R2へcontent-addressed data artifactとして送信し、専用D1 pointerでshadow generationをatomicに切り替える。専用Workerは`off`既定・custom-domain routeなしとし、request時にAstro/HTML renderを行わない。R2/D1作成、Worker deploy、shadow化、custom-domain cutover、Pages build-watch変更はそれぞれ新しい明示承認を必要とする。
+- detail-only sliceでは`serve` modeをコード上でもhard-disableし、設定値だけでproduction servingへ昇格できないようにする。現在の実行可能modeはPagesへ無条件fallbackする`off`と、`/__incremental-shadow/*`だけを読む`shadow`に限定する。
+- detail-only shadow coverageはproduction cutoverを許可しない。Home、pagination、category/tag、arXiv、Knowledge、Archive、feeds、sitemap、search、Status、metrics、global shellを同じgenerationでatomicに更新し、実trafficとWorker CPU、rollback、Pages fallback ageを検証するまでPages Git Integrationとdata commit buildを維持する。Static Assetsのhash差分uploadをsource-level incremental generationと呼ばない。
+- Workers Freeの100,000 request/dayはreader requestだけでなくPublisherからshadow Workerへのupload/read-back/state/activate requestも合算する。public trafficは80,000/day、public+Publisher合算は90,000/dayを安全上限とし、将来のhourly full-route更新はper-route API requestを増やさないpack/batch contractが完成するまでcutoverしない。
 - Web buildはHTML総数proxyでなく、Cloudflare Freeの20,000 static file ceilingから2,000 fileの余裕を引いた18,000 file target、20分build ceilingから2分の余裕を引いた18分target、RSS、route-family telemetry、sitemap/detail parityでfail-closedにする。
 - Queue consumerのpublic healthはservice全体の処理可能性を示す。同一entryのcontent生成失敗はrepeatしてもwarning/HTTP 200に留め、認証・binding・timeout等のruntime failureだけをrepeat時にHTTP 503とする。summary/body consumerは同じissue scope contractを使う。
 - bridge の KV write は publisher が必要とする `og.v1` だけを許可する。summary/body cache と heartbeat は Node publisher から書き込まない。新しい repository secret は追加せず、GitHub 操作は built-in `GITHUB_TOKEN`、bridge 認証は Actions OIDC を使う。
@@ -230,6 +234,7 @@
 
 ### R-027: publisher contract mismatch 時は data publish を fail-closed にする
 - `worker/publisher-contract.json` は data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`scripts/publisher-impact.ts`、その `web/src/lib/**` critical dependencies、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
+- incremental shadowのrenderer、publisher client、専用Worker、D1 migration、Wrangler configもpublisher fingerprintのcritical pathへ含める。generationはrenderer shell digestと分離した固有revision、exact source commit、coverage route family、object byte、quota projectionを保持し、D1 active pointerはexpected revisionとのcompare-and-swapでだけ更新する。coverage incomplete、traffic未観測、budget超過、fingerprint不一致では`serve`へ進まずPagesへ戻す。
 - Node publisher は収集開始時に checkout と remote main が同じ HEAD SHA であることを確認し、その SHA の contract marker と runner fingerprint を照合する。`data/index.json`、`data/bodies.json`、archive index / month、stats の baseline はすべて同じ immutable SHA から読む。data commit または effect-only flush 前にも main ref が開始時 SHA と完全一致することを再確認し、進んでいれば commit と遅延 effects を中止する。commit parent も同じ SHA に固定し、push は non-force とする。
 - Node publisher は収集開始前、data commit 直前、遅延 effects flush 直前に Free bridge の public health が同じ publisher fingerprint を公開していることを確認する。bridge の fingerprint が未公開・不一致・unhealthy の場合は harness、data commit、effects flush を fail-closed で中止する。
 - summary/body Queue job と生成 cache には publisher fingerprint を伝播する。現在の fingerprint と明示的に異なる cache は採用せず再生成対象にする。fingerprint 導入前の既存 cache は本文・要約テキストだけ互換読み込みし、summary の importance / extraTags は exact fingerprint 一致時だけ採用する。fingerprint 無し job を受けた更新済み consumer は `legacy-unversioned-job` を保存し、既存 legacy cache と区別する。
@@ -3022,6 +3027,24 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: summarizerではLL-181によりentry-specific failureとruntime failureを分離済みだったが、body consumerは`repeatCount >= 3`だけでglobal errorにしていた。同じ非同期consumer familyへの横展開が漏れていた。cache binding欠落時もhealth判定前に`.get()`して構造化503へ到達できなかった。
 - **対策**: body issue recordへ`entry|runtime` scopeを保存し、旧recordもerror textから復元する。empty/short body、incomplete/ungrounded body、insufficient source groundingはentry warning/HTTP 200、認証・timeout等のruntime repeatだけHTTP 503とする。binding存在確認後だけissueを読み、missing bindingはJSON 503を返す。legacy marker、runtime repeat、missing bindingをunit testへ固定する。
 - **教訓**: 同型consumerを分離してもhealth semanticsは自動共有されない。あるconsumerでservice availabilityとpathological itemを分けたら、兄弟consumerのissue write/read、legacy marker、binding failureを全て横断監査し、単一itemでglobal healthを落とさない。
+
+### LL-458: upload差分とsource-level増分生成を同一視しない
+- **事象**: 第1段階で毎時GitHub Actions側のfull Astro/Pagefindを除去しても、Pages Git Integrationはdata commitごとに全siteをbuildし続けた。Workers Static Assetsは未変更fileのuploadを省略できるが、localの全出力tree生成とmanifest scanは残る。
+- **根本原因**: transfer量の削減と、変更routeだけを生成するincremental renderingを同じ「増分配信」として扱いかけた。またdetailはbodyだけでなくglobal health、関連entry、metadata title衝突、trending tagを埋め込むため、index変更時のchanged IDだけでは完全なinvalidationにならない。
+- **対策**: feature-gatedな第2段階は既存Astro detail pageをNode側でroute objectへpre-renderし、full snapshot 2,694件のJA/EN semantic parityを検証した。現sliceはbody-only changeだけをexact detail + search deltaとしてshadow-safeにし、index/archive/stats changeはglobal blockerとしてcutoverを拒否する。production Pages buildは維持する。
+- **教訓**: true incremental generationは、変更inputから再生成route集合を決定し、その集合外をrenderしないことで証明する。upload hashの再利用だけを根拠にせず、route dependency、tombstone、aggregate、feed、sitemap、searchを同じgenerationへ含めるまで全体cutoverしない。
+
+### LL-459: generation identity、renderer shell、route objectを別のcontent identityにする
+- **事象**: 初期shadow contractはgeneration revisionをrenderer shell digestと同一にした。shellはcode release間で不変なため、複数data commitが同じrevisionになりactivationできなかった。uploadも5MiB route objectをWorker内でbuffer/hashする実装になり、Freeの10ms CPU制約と矛盾した。
+- **根本原因**: code asset identity、data generation identity、route content identityを1つのhashへ潰し、R2がstream upload時にSHA-256 checksumを検証できる契約を利用していなかった。
+- **対策**: generationはexact source commitから独立に導出し、shellと各JA/EN routeは別content-addressed keyにした。route shardはvariant byte数を保持し、serve時のR2 object sizeを照合する。authenticated uploadは`Content-Length`を先にboundし、request streamをR2へ渡してR2 SHA-256 checksumとread-back metadataで検証する。専用D1はexact source commit、coverage route family、budget、active/previous revisionを保存する。
+- **教訓**: immutable deliveryではcode shell、data snapshot、object bytesのidentityを分離し、pointerだけをatomicに切り替える。Free Workerをbridgeに使う場合、大きなpayloadをJS memoryでhashせずstorage側のchecksum検証とstreamingを使い、quota計算に必要なbyte数はmanifestへ明示する。
+
+### LL-460: 固定行数clampは将来のfeedタイトル全文表示を保証しない
+- **事象**: mobile Timeline cardを4行まで許容する修正後、`Claude Codeのステータスラインを設定し...`で始まる新しい日本語titleが5行相当となり、390pxで`scrollHeight=101px`、`clientHeight=81px`の途中切れが再発した。
+- **根本原因**: 4行なら当時のcorpus全件が収まるという観測値を、今後もtitle全文を表示できる不変条件として扱った。feed titleの長さは変化するため、固定最大行数を増やしても別の長いtitleで再びclippingする。
+- **対策**: 下方向へ伸びられるmobile Timeline cardだけはfixed clampとhidden overflowを解除し、標準の自然な折り返しへ戻す。SpotlightとTop 3のfirst-view向けclampは維持する。E2Eは現在dataに依存せず、長い日本語stress titleをvisible Timeline cardへ注入して390/375/360pxの`scrollHeight <= clientHeight`、44px操作面、横overflow不在を検証する。
+- **教訓**: 可変な外部contentの全文表示contractを「現在の最大行数」で表現しない。縦に成長できるcomponentは自然なwrapとcontent-driven sizingを使い、行数clampはfirst-view密度など明示的に省略を許すsurfaceへ限定する。回帰testは現行corpusだけでなく、契約境界を超えるdeterministic stress inputを含める。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

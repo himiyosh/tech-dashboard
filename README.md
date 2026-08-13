@@ -26,6 +26,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | 作業 | コマンド | 期日の気付き方 |
 |---|---|---|
 | `COPILOT_PAT` 更新 | `cd worker && npx wrangler secret put COPILOT_PAT` | `/status` Worker Health が `summarize disabled` |
+| (shadow) detail-only増分配信の検証 | `docs/07-incremental-serving-shadow.md` の手順 | 専用R2/D1とshadow Workerを明示承認後に準備した場合だけ。既定はoff |
 | (緊急) 手動収集 | `npm run collect` | バックログ滞留時 (例: 1h に 5 件以上の新着) |
 | (緊急) cache 済み要約の再反映 | `npm run summaries:apply-cache` | `data/_summary-cache.json` に有効な bilingual summary があるのに `data/index.json` 側が未反映の時 |
 | (緊急) 不足要約のバルク補充 | `SUMMARIZE_MAX_NEW=400 npx tsx --env-file-if-exists=.env.local scripts/resummarize.mjs` | 過去エントリの `summaryJa` / `summaryEn` がまとめて欠けている時 |
@@ -41,8 +42,10 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | 自動化アーキテクチャ決定の経緯 | `/memories/repo/automation-decision.md` |
 | Publisher cron / quality gate | [.github/workflows/publisher.yml](.github/workflows/publisher.yml) |
 | Free bridge / Queue / KV binding | [worker/wrangler.toml](worker/wrangler.toml) |
+| Incremental serving shadow / R2 / D1 binding | [worker/wrangler.incremental.toml](worker/wrangler.incremental.toml) |
 | サイト URL (canonical) | [web/src/lib/site.ts](web/src/lib/site.ts) |
 | Sitemap の route 列挙 / protocol 上限 | [web/src/lib/sitemap.ts](web/src/lib/sitemap.ts) |
+| Fully-free incremental serving shadow | [docs/07-incremental-serving-shadow.md](docs/07-incremental-serving-shadow.md) |
 | ソース定義 (registry) | [harness/registry.ts](harness/registry.ts) |
 | カテゴリ / 型定義 | [harness/types.ts](harness/types.ts) |
 
@@ -53,7 +56,8 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
                │ GitHub Actions Publisher (hourly, 6 batch)   │
                │  ├ immutable main SHA から baseline read     │
                │  ├ collect + normalize + dedupe + tag        │
-               │  ├ build + unit + schema + E2E               │
+               │  ├ hourly impact/schema/CAS                  │
+               │  ├ daily/manual full Astro/Pagefind/E2E      │
                │  └ data-only non-force push                  │
                 └───────────────┬───────────────────────────────┘
                                │ push 成功後だけ GitHub OIDC
@@ -73,6 +77,8 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 
 > **デプロイは GitHub Actions から行いません。** Publisher workflow は data の収集、検証、commit と OIDC bridge 経由の Queue / KV effects だけを担当し、Pages deploy は Cloudflare Pages Git Integration が行います ([.github/copilot-instructions.md](.github/copilot-instructions.md) R-001 参照)。
 > `.github/workflows/ci.yml` は **テスト目的のみ** で、Publisher workflow も Pages / Worker の deploy は行いません。
+>
+> 第2段階の増分配信は、専用R2へcontent-addressedなdetail HTMLを生成し、専用D1 pointerでshadow generationを切り替える**無効既定の検証経路**だけを追加しています。productionは引き続きPagesです。Workers Static Assetsの差分uploadをsource-level増分生成とは扱わず、全route family、search、traffic、CPU、rollbackのcutover gateが揃うまでPages buildを止めません。
 
 ## ドキュメント構成
 
@@ -88,6 +94,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | 04  | [サイト仕様書 v1.0 (草案)](docs/04-site-spec.md)                        | 計画段階の草案 (現状は SPEC.md が正)         |
 | 05  | [AI Scrum Harness 適用設計](docs/05-ai-scrum-harness.md)                | Orchestrator / サブエージェント運用方針      |
 | 06  | [Worker 分割設計](docs/06-worker-split-design.md)                       | Free publisher、OIDC bridge、Queue 分離、publisher contract |
+| 07  | [Fully-free incremental serving shadow](docs/07-incremental-serving-shadow.md) | detail-only増分生成、R2/D1 shadow、無料枠、cutover/rollback gate |
 | 02c | [ユーザカスタマイズ](docs/02-customization.md)                          | OPML / YouTube / HN クエリの追加方法         |
 
 モック: [`docs/mockups/`](docs/mockups/) (mockup-D が確定デザイン)

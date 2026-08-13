@@ -619,7 +619,10 @@ async function uploadAndVerify(
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   if (!response.ok) {
-    throw new Error(`incremental upload ${key} failed with HTTP ${response.status}`);
+    const detail = (await response.text()).slice(0, 500);
+    throw new Error(
+      `incremental upload ${key} failed with HTTP ${response.status}: ${detail}`,
+    );
   }
   const result = await response.json() as {
     key?: unknown;

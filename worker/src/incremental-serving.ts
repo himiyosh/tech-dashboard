@@ -179,6 +179,10 @@ interface IncrementalServingHandlerOptions {
     token: string,
     policy: PublisherOidcPolicy,
   ) => Promise<void>;
+  createFixedLengthStream?: (length: number) => {
+    readable: ReadableStream<Uint8Array>;
+    writable: WritableStream<Uint8Array>;
+  };
 }
 
 interface GenerationRecord {
@@ -714,6 +718,9 @@ async function uploadContent(
   kind: ContentObjectKind,
   key: string,
   expectedDigest: string,
+  createFixedLengthStream: NonNullable<
+    IncrementalServingHandlerOptions["createFixedLengthStream"]
+  >,
 ): Promise<Response> {
   const claimedDigest = request.headers.get("x-content-sha256");
   if (claimedDigest !== expectedDigest) {
@@ -755,20 +762,25 @@ async function uploadContent(
   }
   let stored: IncrementalR2Head | null;
   try {
-    stored = await bucket.put(
-      key,
+    const fixedLength = createFixedLengthStream(byteLength);
+    const [result] = await Promise.all([
+      bucket.put(key, fixedLength.readable, {
+        httpMetadata: { contentType },
+        customMetadata: { sha256: expectedDigest },
+        sha256: expectedDigest.slice("sha256:".length),
+      }),
       boundedPassthroughStream(
         request.body,
         maxBytesForContentKind(kind),
         byteLength,
-      ),
-      {
-      httpMetadata: { contentType },
-      customMetadata: { sha256: expectedDigest },
-      sha256: expectedDigest.slice("sha256:".length),
-      },
+      ).pipeTo(fixedLength.writable),
+    ]);
+    stored = result;
+  } catch (error) {
+    console.error(
+      "[incremental-serving] R2 content write failed",
+      error instanceof Error ? error.message : "unknown error",
     );
-  } catch {
     throw new IncrementalServingContractError(
       "content_write_failed",
       "R2 rejected or failed the content-addressed write",
@@ -864,6 +876,8 @@ async function handleApiRequest(
           kind,
           key,
           digest,
+          options.createFixedLengthStream
+            ?? ((length) => new FixedLengthStream(length)),
         );
       }
       if (request.method === "GET" || request.method === "HEAD") {

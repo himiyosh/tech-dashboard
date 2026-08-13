@@ -210,6 +210,31 @@ describe("Cloudflare Worker deploy config", () => {
     );
   });
 
+  it("keeps Publisher wall-clock slack separate from internal build resource guards", () => {
+    const publisherWorkflow = readConfig(".github/workflows/publisher.yml");
+    const astroResourcePolicy = readConfig("web/scripts/build-resource-policy.mjs");
+    const astroOutputPolicy = readConfig("web/scripts/build-output-policy.mjs");
+
+    expect(publisherWorkflow).toContain(
+      "Extra wall time is only for explicit full incremental-shadow bootstrap",
+    );
+    expect(publisherWorkflow).toMatch(/timeout-minutes:\s*60/);
+    expect(astroOutputPolicy).toContain(
+      "CLOUDFLARE_FREE_STATIC_FILE_LIMIT = 20_000",
+    );
+    expect(astroOutputPolicy).toContain("STATIC_FILE_SAFETY_MARGIN = 2_000");
+    expect(astroOutputPolicy).toContain("MAX_STATIC_FILES =");
+    expect(astroOutputPolicy).toContain("CLOUDFLARE_BUILD_LIMIT_SECONDS = 20 * 60");
+    expect(astroOutputPolicy).toContain("BUILD_TIME_SAFETY_MARGIN_SECONDS = 2 * 60");
+    expect(astroOutputPolicy).toContain("MAX_BUILD_SECONDS");
+    expect(astroOutputPolicy).toContain("static file budget exceeded");
+    expect(astroOutputPolicy).toContain("build time budget exceeded");
+    expect(astroResourcePolicy).toContain(
+      'env.GITHUB_ACTIONS === "true" && platform !== "win32" ? 12_000 : 0',
+    );
+    expect(astroResourcePolicy).toContain("astro exceeded RSS budget");
+  });
+
   it("keeps incremental serving on a separate off-by-default Worker without a route", () => {
     const config = readConfig("worker/wrangler.incremental.toml");
     const worker = readConfig("worker/src/incremental-serving.ts");

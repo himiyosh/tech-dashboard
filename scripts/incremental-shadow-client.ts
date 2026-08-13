@@ -38,6 +38,9 @@ const REQUEST_TIMEOUT_MS = 60_000;
 const DEFAULT_PAGES_FALLBACK_ORIGIN =
   "https://tech-dashboard-6a7.pages.dev";
 const MAX_SHELL_ASSET_BYTES = 5 * 1024 * 1024;
+const UPLOAD_PROGRESS_INTERVAL = 100;
+
+type ProgressLogger = (message: string) => void;
 
 interface BundleObject {
   digest: string;
@@ -675,11 +678,20 @@ async function mapConcurrent<T>(
   );
 }
 
+export function shouldReportUploadProgress(completed: number, total: number): boolean {
+  if (!Number.isInteger(completed) || !Number.isInteger(total)) return false;
+  if (completed <= 0 || total <= 0 || completed > total) return false;
+  return completed === 1
+    || completed === total
+    || completed % UPLOAD_PROGRESS_INTERVAL === 0;
+}
+
 export async function publishIncrementalBundle(
   requester: IncrementalShadowRequester,
   bundlePath: string,
   env: NodeJS.ProcessEnv,
   fetchImpl: typeof fetch = fetch,
+  progressLog: ProgressLogger = (message) => console.error(message),
 ): Promise<PreparedGeneration> {
   const { bundle, directory } = readBundle(bundlePath, env);
   const state = await fetchState(requester);
@@ -729,6 +741,11 @@ export async function publishIncrementalBundle(
       contentType: "application/json; charset=utf-8",
     })),
   ];
+  let completedUploads = 0;
+  let verifiedUploadBytes = 0;
+  progressLog(
+    `[incremental-shadow] upload start: ${uploads.length} objects to verify`,
+  );
   await mapConcurrent(uploads, 4, async (upload) => {
     const bytes = upload.load();
     await uploadAndVerify(
@@ -737,6 +754,15 @@ export async function publishIncrementalBundle(
       bytes,
       upload.contentType,
     );
+    completedUploads += 1;
+    verifiedUploadBytes += bytes.byteLength;
+    if (shouldReportUploadProgress(completedUploads, uploads.length)) {
+      progressLog(
+        `[incremental-shadow] upload progress: `
+          + `${completedUploads}/${uploads.length} objects verified `
+          + `(${verifiedUploadBytes} bytes)`,
+      );
+    }
   });
   if (!prepared.alreadyActive) {
     await requestJson(

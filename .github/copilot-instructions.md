@@ -3069,6 +3069,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: journeyはactive languageのtitle spanをcloneし、既知のprovenance badgeとexternal-link hintだけを除去する。そのうえで先頭12件をboundedに走査し、十分な日本語本文または複数wordを持ち、`=`等のidentifier構文を含まないreader-facing titleだけをexact queryへ使う。候補が無いcorpusは既存のtruthful zero-result回復を検証する。coldなPagefind hydrateもstep全体の20秒deadline内で完了できるよう、exact result待機を8秒にboundした。実current dataでdesktop/mobile全5stepをretryなしで完了させる。
 - **教訓**: 複合linkの`innerText()`やDOM先頭をそのままsearch query/identityへ使わない。badge、状態、new-tab hintを含むvisible labelと検索対象titleを分け、候補集合から検索fixtureとして安定したresourceを明示的に選ぶ。条件付きcorpusではbounded scanとzero-result fallbackの両方をcontractにする。
 
+### LL-465: full bootstrapのjob wall-clockと内部resource guardを同一のtimeoutにしない
+- **事象**: incremental-shadowの初回full bootstrapは、full reconcile、snapshot生成、data push、deferred effects flushまで成功し、約606MB・5,405 filesのverified publish中にもR2/upload errorを出さなかったが、Publisher job全体の固定30分timeoutだけでcancelされた。
+- **根本原因**: Astro buildには18分、static file数、RSSのfail-closed guardがある一方、GitHub Actionsのjob timeoutは収集・検証・commit・effects・初回全object uploadを含む外側のwall-clockだった。内部resource guardとorchestration全体の時間余裕を同じ30分へ潰していた。
+- **対策**: GitHub Actionsのjob timeoutはinput expressionを使えないためliteral 60分へ拡張し、18分build・18,000 files・12GiB RSS・network timeout・CAS・deferred effectsの各内部guardは変更しない。uploadは開始、1件目、100件ごと、完了だけをread-back検証済みbyte数とともに記録する。
+- **教訓**: 明示的なfull bootstrapの外側wall-clockを広げるとき、内部のCPU/RSS/file/network budgetまで緩めない。job timeoutは全工程のorchestration上限、各resource guardは個別の安全上限として別々に固定し、長時間I/Oはbounded progressで「進行中」と「停止」を区別できるようにする。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

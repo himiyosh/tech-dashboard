@@ -1,8 +1,110 @@
 {
-  "generatedAt": "2026-08-12T00:53:26.033Z",
+  "generatedAt": "2026-08-13T02:09:32.541Z",
   "month": "2026-08",
-  "count": 293,
+  "count": 300,
   "entries": [
+    {
+      "id": "539d3c4cfad7a0d5",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/engchina/items/fa84ceb77fccbc4429e5",
+      "title": "RTX 4090 × 4枚で Qwen3.6-27B ファインチューン「Fable-Fusion-711」を vLLM (Docker) で動かす — ハイブリッド構成の KV 設計まで",
+      "titleJa": "RTX 4090 × 4枚で Qwen3.6-27B ファインチューン「Fable-Fusion-711」を vLLM (Docker) で動かす — ハイブリッド構成の KV 設計まで",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-08-13T00:34:39.000Z",
+      "collectedAt": "2026-08-13T02:09:25.618Z",
+      "tags": [
+        "llm",
+        "qiita"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに Qwen3.6-27B のコミュニティファインチューンとして、DavidAU 氏の Qwen3.6-27B-Fable-Fusion-711 が公開されています。ARC-C で 0.711 を出し、ベースの Qwen3.6-27B を 7 指標中 6 つで上回...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzOTMyNzgxJTJGOTA5ODgyYWQ5YTcwNWVmZjI2ZmM5NDBmMzg0MzQwMWU3OWQyNjY4YyUyRnhfbGFyZ2UucG5nJTNGMTc2OTAzODc0OD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9NjlhZjBhYTliMGQ4ZGI2ODU0N2Q1MmJiNzIxZjNhOWQ%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dcd90e93143b337f0499d992a3f230c37?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9UlRYJTIwNDA5MCUyMCVDMyU5NyUyMDQlRTYlOUUlOUElRTMlODElQTclMjBRd2VuMy42LTI3QiUyMCVFMyU4MyU5NSVFMyU4MiVBMSVFMyU4MiVBNCVFMyU4MyVCMyVFMyU4MyU4MSVFMyU4MyVBNSVFMyU4MyVCQyVFMyU4MyVCMyVFMyU4MCU4Q0ZhYmxlLUZ1c2lvbi03MTElRTMlODAlOEQlRTMlODIlOTIlMjB2TExNJTIwJTI4RG9ja2VyJTI5JTIwJUUzJTgxJUE3JUU1JThCJTk1JUUyJTgwJUE2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9OWU3NDAzMGQ1Mjc0YjNlMDQ2MzYyYmIzZmJmMGU0ODI&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBlbmdjaGluYSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWJjNzFmYTUzNmUwM2I1OWMzMmYzZjlmMDM3ZTI5MTcz&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=d593e8991fb7b62ba7e5e4ff207de03f",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzOTMyNzgxJTJGOTA5ODgyYWQ5YTcwNWVmZjI2ZmM5NDBmMzg0MzQwMWU3OWQyNjY4YyUyRnhfbGFyZ2UucG5nJTNGMTc2OTAzODc0OD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9NjlhZjBhYTliMGQ4ZGI2ODU0N2Q1MmJiNzIxZjNhOWQ%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dcd90e93143b337f0499d992a3f230c37?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9UlRYJTIwNDA5MCUyMCVDMyU5NyUyMDQlRTYlOUUlOUElRTMlODElQTclMjBRd2VuMy42LTI3QiUyMCVFMyU4MyU5NSVFMyU4MiVBMSVFMyU4MiVBNCVFMyU4MyVCMyVFMyU4MyU4MSVFMyU4MyVBNSVFMyU4MyVCQyVFMyU4MyVCMyVFMyU4MCU4Q0ZhYmxlLUZ1c2lvbi03MTElRTMlODAlOEQlRTMlODIlOTIlMjB2TExNJTIwJTI4RG9ja2VyJTI5JTIwJUUzJTgxJUE3JUU1JThCJTk1JUUyJTgwJUE2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9OWU3NDAzMGQ1Mjc0YjNlMDQ2MzYyYmIzZmJmMGU0ODI&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBlbmdjaGluYSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWJjNzFmYTUzNmUwM2I1OWMzMmYzZjlmMDM3ZTI5MTcz&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=d593e8991fb7b62ba7e5e4ff207de03f",
+        "alt": "RTX 4090 × 4枚で Qwen3.6-27B ファインチューン「Fable-Fusion-711」を vLLM (Docker) で動かす — ハイブリッド構成の KV 設計まで",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "4d90c2275a7b5d33",
+      "source": "microsoft-foundry",
+      "sourceType": "blog",
+      "url": "https://devblogs.microsoft.com/foundry/azure-content-understanding-updates-august-2026/",
+      "title": "From Sync APIs to support for the GPT-5 model series and agentic workflows: What’s new in Azure Content Understanding – August 2026",
+      "titleJa": "",
+      "titleEn": "From Sync APIs to support for the GPT-5 model series and agentic workflows: What’s new in Azure Content Understanding – August 2026",
+      "summaryJa": "このエントリは microsoft-foundry から収集した copilot 領域の最新アップデートです。原題:「From Sync APIs to support for the GPT-5 model series and agentic workflows: What’s new in Azure Content Understanding – August 2026」。AI による日本語要約は次回以降の Worker ru…",
+      "summaryEn": "From Sync APIs to support for the GPT-5 model series and agentic workflows: What’s new in Azure Content Understanding – August 2026",
+      "lang": "en",
+      "publishedAt": "2026-08-12T18:43:01.000Z",
+      "collectedAt": "2026-08-13T02:09:25.618Z",
+      "tags": [
+        "agent",
+        "ai",
+        "foundry",
+        "microsoft"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "evergreen": true,
+      "knowledgeEligible": false,
+      "contentSnippet": "Enterprise content is no longer just something people read. AI apps and agents are only as useful as the information they can understand, yet much of the world’s enterprise knowledge is locked in documents, forms, tables, images, audio, and video. The latest Azure Content Understanding updates help developers turn that content into structured, grounded data […] The post From Sync APIs to support for the GPT-5 model series and agentic workflows: What’s new in Azure Content Understanding – August 2026 appeared first on Microsoft Foundry Blog ."
+    },
+    {
+      "id": "ceafbe71b934c2df",
+      "source": "microsoft-foundry",
+      "sourceType": "blog",
+      "url": "https://devblogs.microsoft.com/foundry/azure-content-understanding-gpt-5-series-guide-model-selection-grounding-improvements-and-confidence-enhancements/",
+      "title": "Azure Content Understanding GPT-5 Series Guide: Model Selection, Grounding Improvements, and Confidence Enhancements",
+      "titleJa": "",
+      "titleEn": "Azure Content Understanding GPT-5 Series Guide: Model Selection, Grounding Improvements, and Confidence Enhancements",
+      "summaryJa": "このエントリは microsoft-foundry から収集した copilot 領域の最新アップデートです。原題:「Azure Content Understanding GPT-5 Series Guide: Model Selection, Grounding Improvements, and Confidence Enhancements」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Azure Content Understanding GPT-5 Series Guide: Model Selection, Grounding Improvements, and Confidence Enhancements",
+      "lang": "en",
+      "publishedAt": "2026-08-12T18:42:25.000Z",
+      "collectedAt": "2026-08-13T02:09:25.618Z",
+      "tags": [
+        "ai",
+        "foundry",
+        "microsoft",
+        "tutorial"
+      ],
+      "category": "copilot",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "evergreen": true,
+      "contentSnippet": "Enterprise content is no longer just something people consume. As organizations increasingly rely on AI to extract and act on information from documents, images, audio, and video, Azure Content Understanding is expanding support for the GPT-5 series and improving grounding and confidence to deliver greater flexibility, efficiency, and quality. This expanded model catalog enables organizations […] The post Azure Content Understanding GPT-5 Series Guide: Model Selection, Grounding Improvements, and Confidence Enhancements appeared first on Microsoft Foundry Blog ."
+    },
+    {
+      "id": "e33edd69f7816887",
+      "source": "openai-news",
+      "sourceType": "blog",
+      "url": "https://openai.com/index/how-enterprises-put-ai-to-work",
+      "title": "From assistance to execution: How enterprises put AI to work",
+      "titleJa": "",
+      "titleEn": "From assistance to execution: How enterprises put AI to work",
+      "lang": "en",
+      "publishedAt": "2026-08-12T06:00:00.000Z",
+      "collectedAt": "2026-08-13T02:09:25.618Z",
+      "tags": [
+        "openai"
+      ],
+      "category": "codex",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "OpenAI research reveals how enterprises are adopting agentic AI, using ChatGPT and Codex, and how frontier firms are pulling ahead in AI adoption."
+    },
     {
       "id": "3aac80acda9e86f7",
       "source": "zenn-ai",
@@ -52,6 +154,96 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "前回、AIエージェントの指示ファイルが端末ごとにズレていく話を書きました。構造の話で終わっていたので、今回は実際に計測できるものを作りました。 https://github.com/untactit/agent-drift 単一ファイル・依存ゼロ・Python 3.8+。読み取り専用で、スキャンしたファイルには一切書き込みません。 curl -O https://raw.githubusercontent.com/untactit/agent-drift/main/agent_drift.py python3 agent_drift.py ~/work "
+    },
+    {
+      "id": "acc735a078e19815",
+      "source": "langchain-releases",
+      "sourceType": "release",
+      "url": "https://github.com/langchain-ai/langchain/releases/tag/langchain-anthropic%3D%3D1.5.5",
+      "title": "langchain-anthropic==1.5.5",
+      "titleJa": "",
+      "titleEn": "langchain-anthropic==1.5.5",
+      "lang": "en",
+      "publishedAt": "2026-08-11T19:16:57.000Z",
+      "collectedAt": "2026-08-13T02:09:25.618Z",
+      "tags": [
+        "agent",
+        "langchain",
+        "release"
+      ],
+      "category": "agent-fw",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Changes since langchain-anthropic==1.5.4 release(anthropic): 1.5.5 ( #39597 ) fix(anthropic): report reasoning tokens in usage metadata ( #39590 ) fix(anthropic): fix KeyError on rename in Claude file-tool middleware ( #39293 ) chore(model-profiles): refresh model profile data ( ",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "langchain-anthropic==1.5.5",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "06ecbf0adbdd46cb",
+      "source": "langchain-releases",
+      "sourceType": "release",
+      "url": "https://github.com/langchain-ai/langchain/releases/tag/langchain%3D%3D1.3.15",
+      "title": "langchain==1.3.15",
+      "titleJa": "",
+      "titleEn": "langchain==1.3.15",
+      "lang": "en",
+      "publishedAt": "2026-08-11T19:11:11.000Z",
+      "collectedAt": "2026-08-13T02:09:25.618Z",
+      "tags": [
+        "agent",
+        "langchain",
+        "release"
+      ],
+      "category": "agent-fw",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Changes since langchain==1.3.14 release(langchain): 1.3.15 ( #39595 ) feat(langchain): expose trace_policy on AgentMiddleware ( #38910 ) chore(langchain): fix type errors in tests ( #39589 ) chore: bump h2 from 4.3.0 to 4.4.1 in /libs/langchain_v1 ( #39324 ) fix(langchain): prese",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "langchain==1.3.15",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
+    },
+    {
+      "id": "152874e59b1278f2",
+      "source": "langchain-releases",
+      "sourceType": "release",
+      "url": "https://github.com/langchain-ai/langchain/releases/tag/langchain-core%3D%3D1.5.4",
+      "title": "langchain-core==1.5.4",
+      "titleJa": "",
+      "titleEn": "langchain-core==1.5.4",
+      "lang": "en",
+      "publishedAt": "2026-08-11T18:03:12.000Z",
+      "collectedAt": "2026-08-13T02:09:25.618Z",
+      "tags": [
+        "agent",
+        "langchain",
+        "release"
+      ],
+      "category": "agent-fw",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Changes since langchain-core==1.5.3 release(core): 1.5.4 ( #39592 ) fix(core): compat with pydantic 2.14 ( #39328 ) fix(core): stop StructuredPrompt from mutating caller kwargs ( #39174 ) fix(core): preserve flat tool args schema for RootModel runnables ( #39307 ) fix(core): clos",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "langchain-core==1.5.4",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      }
     },
     {
       "id": "beab76d6cd5e0a02",
@@ -572,7 +764,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Enterprise Java developers have a new superpower—drive GitHub Copilot from idiomatic Java code with annotations, virtual threads, and more. The post Using the GitHub Copilot SDK for Java appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/01/generic-copilot-flying-invertocat-logo-github.png?fit=1920%2C1080",
@@ -581,7 +772,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "97b8edb934084a2f",
@@ -950,7 +1142,7 @@
       "titleEn": "langchain-openai==1.4.3",
       "lang": "en",
       "publishedAt": "2026-08-10T13:23:36.000Z",
-      "collectedAt": "2026-08-11T08:00:57.967Z",
+      "collectedAt": "2026-08-13T02:09:25.618Z",
       "tags": [
         "agent",
         "langchain",
@@ -3309,6 +3501,7 @@
         "copilot",
         "cursor",
         "github-copilot",
+        "tutorial",
         "zenn"
       ],
       "category": "cursor",
@@ -3360,7 +3553,7 @@
       "titleEn": "langchain-openai==1.4.2",
       "lang": "en",
       "publishedAt": "2026-08-07T13:58:16.000Z",
-      "collectedAt": "2026-08-11T08:00:57.967Z",
+      "collectedAt": "2026-08-13T02:09:25.618Z",
       "tags": [
         "agent",
         "bug-fix",
@@ -3863,7 +4056,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Go beyond chat in the GitHub Copilot app with these slash commands. They'll help you plan, collaborate, automate, and customize your dev workflow. The post A guide to slash commands in the GitHub Copilot app appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/06/MSFTBuild_Blog_Header_01.jpg",
@@ -3872,7 +4064,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "93120742e5d55aa3",
@@ -5073,7 +5266,7 @@
       "titleEn": "langchain-anthropic==1.5.4",
       "lang": "en",
       "publishedAt": "2026-08-05T19:03:35.000Z",
-      "collectedAt": "2026-08-11T08:00:57.967Z",
+      "collectedAt": "2026-08-13T02:09:25.618Z",
       "tags": [
         "agent",
         "anthropic",
@@ -5675,7 +5868,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Learn how to build tools to simplify how you work—without writing a single line of code. The post How the GitHub legal team used Copilot CLI to streamline their workflows appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/01/generic-github-copilot-smiling-flying-logo.png",
@@ -5684,7 +5876,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "02b83330160b2494",

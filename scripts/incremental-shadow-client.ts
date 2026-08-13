@@ -601,7 +601,7 @@ export async function prepareIncrementalGeneration(
   };
 }
 
-async function uploadAndVerify(
+export async function uploadAndVerify(
   requester: IncrementalShadowRequester,
   key: string,
   bytes: Uint8Array,
@@ -637,15 +637,25 @@ async function uploadAndVerify(
     throw new Error(`incremental upload ${key} returned inconsistent metadata`);
   }
   const readBack = await requester.request(`${API_PREFIX}/content/${key}`, {
-    method: "HEAD",
+    method: "GET",
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
+  if (!readBack.ok) {
+    throw new Error(
+      `incremental upload ${key} failed read-back verification with HTTP ${readBack.status}`,
+    );
+  }
+  const returned = new Uint8Array(await readBack.arrayBuffer());
+  const returnedDigest = `sha256:${rawSha256(returned)}`;
   if (
-    !readBack.ok
-    || readBack.headers.get("etag") !== `"${digest}"`
-    || readBack.headers.get("content-length") !== String(bytes.byteLength)
+    returned.byteLength !== bytes.byteLength
+    || returnedDigest !== digest
   ) {
-    throw new Error(`incremental upload ${key} failed read-back verification`);
+    throw new Error(
+      `incremental upload ${key} failed read-back verification: `
+        + `expected digest=${digest} bytes=${bytes.byteLength}; `
+        + `got digest=${returnedDigest} bytes=${returned.byteLength}`,
+    );
   }
 }
 

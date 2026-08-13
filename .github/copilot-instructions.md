@@ -3057,6 +3057,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: CI job、CLI、dedicated tests、instructions、README、agentic rules、Actions variablesを同じreleaseで除去し、通常の品質jobとbranch-flowが残ること、削除済みtoken・pathが運用面へ戻らないことを回帰testで固定する。通常のGitHub reviewと任意のcode/security reviewは利用可能なまま維持する。
 - **教訓**: merge policyはrepository内で観測できる客観的品質・安全gateと明示承認境界を中心にし、session固有identityやコメント形式を必須clearanceへ使わない。廃止時はcode、docs、tests、settingsをatomicに棚卸しし、手続きだけが残って再起動しないようにする。
 
+### LL-463: R2 uploadのread-backはedge response headerではなく実bytesで検証する
+- **事象**: FixedLengthStream修正後のincremental shadow bootstrapはshell objectのPUTとmetadata応答まで成功したが、直後のHEAD検証で`failed read-back verification`となった。remote R2から同objectを取得すると4,283 bytes、SHA-256はcontent-addressed keyと完全一致し、D1のactive/previous pointerはnullのまま保たれていた。
+- **根本原因**: Publisher clientがread-back成功条件をHEAD responseの`etag`と`content-length`の完全一致へ固定していた。失敗logは各header値を記録していないためremoteでどちらが変化したかは断定できないが、実bytesが正しいにもかかわらずheader比較だけで拒否したfailure pathは特定できた。R2のdurable integrity proofとedge HTTP response headerを同一視していた。
+- **対策**: PUT時のFixedLengthStream、R2 SHA-256 checksum、custom metadata、bounded size検証を維持し、read-backは同じ認証endpointからGETした実bytesの長さとSHA-256をclient側で再計算する。成功応答に`etag`/`content-length`が無くても通り、同長digest mismatchとlength mismatchはfail-closedになるdeterministic testを追加する。
+- **教訓**: content-addressed storageのread-back検証をedgeが合成・正規化し得るHTTP headerだけへ依存させない。保存済みobjectの実bytesをboundedに読み戻してcontent identityを再計算し、headerは補助telemetryとして扱う。generic errorを追加する場合もstatus、期待/実byte数、期待/実digestを秘密値なしで出し、次のremote failureを同じ一文へ潰さない。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

@@ -33,6 +33,8 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 変更
 
+- 毎時Publisherを変更data・route impact・schema・CASの増分gateへ分離し、全Astro/Pagefind/E2E reconciliationを毎日02:17 UTC・manual・PR CIへ移しました。impact manifestは変更detail/body IDと、pagination/category/tag/feed/sitemap/search/global shellの波及を記録し、unrelated historical detailをGitHub Actionsで毎時再renderしません。
+- staleな3,200 HTML route上限を撤去し、Cloudflare Freeの20,000 static filesから余裕を引いた18,000 files、18分build、RSS、route-family growth、crawl/detail parityのprovider-aligned gateへ置き換えました。productionはPages Git Integrationを維持し、Healthはcommitted indexとpublic metrics snapshotの一致を検証します。
 - Knowledgeはsource-levelのevergreen retentionを候補母集団として維持しつつ、raw title/snippet/source contextの共有契約で提供開始・一般提供・preview・月次告知・award・event登録などの告知専用記事を除外するようにしました。告知形式のtitleでもsetup、API parameter、CLI運用などの具体的なprocedural evidenceを持つ記事は維持します。Timeline、カテゴリ、検索、Archive、canonical URL、要約、AI解説本文は維持し、Knowledge HTMLとKnowledge RSSだけを同じ適格性契約へ揃えます。
 - Knowledgeのfresh entryは、掲載可否の判定とartifactへ保存するraw source contextを同じ800文字上限から導出するようにしました。判定根拠が旧280文字境界より後ろにあるGoogle Cloud告知でもPublisher gateが再現でき、lossyなprior/archive restampは保存済みの除外を具体的なprocedural evidenceなしに解除しません。
 - RSSとJSON Feedの各記事へ、reader-facingな出典名、出典区分、重要度、検証済み要約をまとめた短いdecision digestを追加しました。JSON Feedは標準の`summary`と`content_text`へ同じ内容を出し、既存のprivate extension、記事集合、順序、上限、canonical URLは維持します。
@@ -59,7 +61,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - Publisher は収集開始前、data commit直前、Queue/KV effects送信直前にFree bridgeのpublisher fingerprintを確認し、rollout不一致時にdataだけを先行公開しないようにしました。
 - PR CI は unit・typecheck と Web build を独立jobに分け、runner中断後に失敗したbuildだけを再実行できるようにしました。
 - 大規模な静的Web buildとPlaywright、毎時Publisherは、公開repository向けのUbuntu 24.04 ARM runnerで実行するようにしました。
-- Astro の静的ページ生成をlocal/Cloudflareでは2並列、16GB GitHub runnerでは1並列へ変更し、phase別 CPU/RSS・route/file数をbounded telemetryとして記録するようにしました。HTML routeは3,200件を上限とし、低頻度tagはexact searchへ送って静的生成量を抑えます。
+- Astro の静的ページ生成をlocal/Cloudflareでは2並列、16GB GitHub runnerでは1並列へ変更し、phase別 CPU/RSS・route/file数をbounded telemetryとして記録するようにしました。低頻度tagはexact searchへ送って静的生成量を抑え、route/file数はprovider-aligned budgetとfamily telemetryで監視します。
 - Astro childのV8 old-spaceを512MiBへ制限し、detail route生成中の一時objectを小さい世代で回収するようにしました。V8 heap・external・arrayBuffers・route進捗とprocess tree RSSを継続計測し、GitHub Actionsでは12,000MiBのRSS上限を超えるbuildをfail-closedにします。
 - Archive は閲覧可能な要約付き履歴と、live収録時点のhot統計snapshotを含む保存行を分けて表示し、All-time・月別・metrics APIの母集団を明示するようにしました。
 - モバイル記事詳細の「トップに戻る」ボタンを下部tabbarの上へ配置し、スクロール後も操作できるようにしました。

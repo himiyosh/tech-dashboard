@@ -3,6 +3,12 @@ import {
   resolveBuildMemoryConfig,
   rssBudgetFailure,
 } from "../web/scripts/build-resource-policy.mjs";
+import {
+  CLOUDFLARE_FREE_STATIC_FILE_LIMIT,
+  MAX_BUILD_SECONDS,
+  MAX_STATIC_FILES,
+  buildOutputBudgetFailures,
+} from "../web/scripts/build-output-policy.mjs";
 
 describe("Web build resource policy", () => {
   it("uses a small heap and a bounded RSS budget on GitHub Linux runners", () => {
@@ -62,6 +68,33 @@ describe("Web build resource policy", () => {
         now: 31_000,
       }),
     ).toBe("astro RSS telemetry unavailable for 30s");
+  });
+
+  it("uses provider-aligned file and build-time budgets with safety margins", () => {
+    expect(CLOUDFLARE_FREE_STATIC_FILE_LIMIT).toBe(20_000);
+    expect(MAX_STATIC_FILES).toBe(18_000);
+    expect(MAX_BUILD_SECONDS).toBe(18 * 60);
+    expect(buildOutputBudgetFailures({
+      files: MAX_STATIC_FILES,
+      elapsedSeconds: MAX_BUILD_SECONDS,
+    })).toEqual([]);
+    expect(buildOutputBudgetFailures({
+      files: MAX_STATIC_FILES + 1,
+      elapsedSeconds: MAX_BUILD_SECONDS,
+    })[0]).toContain("static file budget exceeded");
+    expect(buildOutputBudgetFailures({
+      files: MAX_STATIC_FILES,
+      elapsedSeconds: MAX_BUILD_SECONDS + 1,
+    })[0]).toContain("build time budget exceeded");
+  });
+
+  it("rejects malformed provider budget measurements", () => {
+    expect(buildOutputBudgetFailures({ files: -1, elapsedSeconds: 1 })).toContain(
+      "static file count is invalid: -1",
+    );
+    expect(buildOutputBudgetFailures({ files: 1, elapsedSeconds: Number.NaN })).toContain(
+      "build elapsed time is invalid: NaN",
+    );
   });
 
   it("does not apply the Astro RSS policy to other phases or disabled budgets", () => {

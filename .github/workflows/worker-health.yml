@@ -2,7 +2,7 @@ name: Worker Health
 
 on:
   schedule:
-    - cron: "40 * * * *"
+    - cron: "23 */6 * * *"
   workflow_run:
     workflows: ["Publisher"]
     types: [completed]
@@ -17,10 +17,10 @@ permissions:
 
 jobs:
   production-health:
-    name: production health check
+    name: production freshness and deploy health
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
 
@@ -32,4 +32,5 @@ jobs:
       - name: Check publisher and Cloudflare enrichment health
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          PUBLIC_DEPLOY_WAIT_MS: ${{ github.event_name == 'workflow_run' && '900000' || '0' }}
         run: npm run health:prod

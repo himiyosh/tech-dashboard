@@ -3,6 +3,7 @@ import {
   validateBridge,
   validateIndexFreshness,
   validateJsonFeed,
+  validatePublicDeployment,
   validatePublisherRuns,
 } from "../scripts/check-production-health.mjs";
 import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../worker/src/publisher-contract.ts";
@@ -73,6 +74,26 @@ describe("production health topology", () => {
     );
     expect(result.errors).toEqual([]);
     expect(result.warnings).toContain("publisher run 2 is in_progress");
+  });
+
+  it("recognizes an explicit full reconciliation as a publishing run", () => {
+    const now = Date.parse("2026-07-12T12:00:00.000Z");
+    const result = validatePublisherRuns(
+      {
+        workflow_runs: [
+          {
+            head_branch: "main",
+            event: "workflow_dispatch",
+            display_title: "Publisher / reconcile",
+            status: "completed",
+            conclusion: "success",
+            updated_at: "2026-07-12T11:55:00.000Z",
+          },
+        ],
+      },
+      now,
+    );
+    expect(result.errors).toEqual([]);
   });
 
   it("does not let a successful diagnostic dry run hide a failed publisher run", () => {
@@ -173,6 +194,34 @@ describe("production health topology", () => {
         now,
       ).errors,
     ).toContain("data/index.json health reports all 9 sources failed");
+  });
+
+  it("requires the public deployment to expose the committed index snapshot", () => {
+    const index = { generatedAt: "2026-07-12T11:30:00.000Z" };
+    expect(
+      validatePublicDeployment(index, {
+        generatedAt: "2026-07-12T11:31:00.000Z",
+        indexGeneratedAt: "2026-07-12T11:30:00.000Z",
+      }).errors,
+    ).toEqual([]);
+    expect(
+      validatePublicDeployment(index, {
+        generatedAt: "2026-07-12T12:01:00.000Z",
+        indexGeneratedAt: "2026-07-12T12:00:00.000Z",
+      }).errors,
+    ).toEqual([]);
+    expect(
+      validatePublicDeployment(index, {
+        generatedAt: "2026-07-12T11:00:00.000Z",
+        indexGeneratedAt: "2026-07-12T10:00:00.000Z",
+      }).errors,
+    ).toContain(
+      "public deployment is behind the checked-out index snapshot: deployed 2026-07-12T10:00:00.000Z, expected at least 2026-07-12T11:30:00.000Z",
+    );
+    expect(validatePublicDeployment(index, {}).errors).toEqual(expect.arrayContaining([
+      "public metrics indexGeneratedAt is missing",
+      "public metrics generatedAt is invalid",
+    ]));
   });
 
   it("requires the public JSON Feed media type and reader contract", () => {

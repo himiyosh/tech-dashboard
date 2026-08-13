@@ -5399,11 +5399,12 @@ html, body {
   .card .summary .en-mark {
     display: none;
   }
-  /* モバイルはカードが単一列なので行数の揃えより可読性を優先する。
-     card / Top3 のタイトルは 4 行まで許容し、見切れを解消する
-     (390px 実測: 2 行 clamp で card title の 23% が途中で切れていた)。 */
+  /* Timeline cards can grow vertically on mobile, so evolving feed titles
+     must wrap naturally instead of being clipped at a fixed line count. */
   .card .title a {
-    -webkit-line-clamp: 4;
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: unset;
   }
 
   .top-rank-item .rank-title {

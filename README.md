@@ -163,9 +163,11 @@ Secret scan は値を表示せず、検出種別・ファイル位置・ハッ�
 
 protected branch への直接 commit / push は通常禁止です。当該セッションでユーザーが直接書き込みを明示承認した場合だけ、`ALLOW_PROTECTED_BRANCH_WRITE=1` を指定できます。作業ブランチと PR を使う通常作業では指定しません。
 
+通常のPRは `working branch -> develop`、production releaseは `develop -> main` の2段階です。GitHub default branchはscheduled Publisherのため`main`に維持するので、PR作成時は `gh pr create --base develop --head <branch>` を明示します。main向けrelease PRはancestryを保つmerge commit (`gh pr merge --merge`) を使い、squash/rebaseしません。`main -> develop`はhotfix/release後のbacksync PRだけに使います。Publisherのdata-only main commitはdevelopへ複製しません。
+
 in-place session では branch と index が全 turn で共有されます。Git mutation を行う前に session automation と先行 turn を停止し、current branch、status、push 先 ref を直前に再確認してください。
 
-CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的のみ**で、デプロイは行いません。push / PR ごとに dependency audit (soft gate) + `typecheck + npm test + npm run build:web + npm run test:e2e` を実行し、Cloudflare Pages の build 失敗を事前に検知します。PR eventではexact-head独立レビューgateを独立jobで並列実行するため、marker待ちでgateが赤でもunit・typecheck・Web build・E2Eの品質結果を取得できます。
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的のみ**で、デプロイは行いません。main/develop pushと両branch向けPRでbranch-flow gateを実行し、feature→mainを拒否します。push / PR ごとに dependency audit (soft gate) + `typecheck + npm test + npm run build:web + npm run test:e2e` を実行し、Cloudflare Pages の build 失敗を事前に検知します。PR eventではexact-head独立レビューgateを独立jobで並列実行するため、marker待ちでgateが赤でもunit・typecheck・Web build・E2Eの品質結果を取得できます。
 
 独立レビューCIはPR番号とhead SHAを`github.event.pull_request`から取得し、現在のPR state、head、review、issue commentをGitHub RESTから再取得します。`INDEPENDENT_REVIEW_MERGER_SESSION_ID`と`INDEPENDENT_REVIEW_REVIEWER_SESSION_ID`はGitHub Actions repository variablesへfull lowercase UUIDで設定し、両者を別sessionにしてください。markerはrepository ownerのGitHub accountから投稿され、REST evidenceが`author_association=OWNER`を返す場合だけsession UUIDの検査へ進みます。変数欠落、不正UUID、untrusted author、open PRのhead drift、marker欠落、stale marker、wrong reviewer、self-issued marker、exact-head fail marker、API失敗はすべてfail-closedです。
 
@@ -431,7 +433,7 @@ npm run publisher:contract -- --apply
 npm run publisher:contract -- --dry-run  # CURRENT を確認
 ```
 
-fingerprint を変える通常 release は次の順序を固定します。
+fingerprint を変える変更はまずdevelopへ統合し、production Workerはまだ変更しません。develop→mainのrelease PR exact headが確定した後、次の順序を固定します。
 
 1. CI 合格済み PR head の `tech-dashboard-summarizer` と `tech-dashboard-body` を明示承認のうえ先に deployする。
 2. 旧 consumer の in-flight 処理が残っていないことを確認して PR を mergeする。

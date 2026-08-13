@@ -33,7 +33,7 @@ Choose the mode from the user's request. If no mode is stated, use `audit` for r
 
 - Perform release preparation, CI diagnosis, pull request creation and follow-through, deployment verification, and safe branch/worktree cleanup.
 - Require explicit approval in the current request before merge, deploy, production-data mutation, or branch/worktree deletion, unless repository instructions already record approval for that exact operation.
-- Cloudflare Pages deploys through the `main` branch Git integration. Do not add a GitHub Actions deployment path.
+- Feature/fix/docs PRs target `develop`. Release PRs use `develop -> main` with a merge commit; only the resulting `main` update triggers Cloudflare Pages production. Do not add a GitHub Actions deployment path.
 - Cloudflare Worker deployment remains a separate explicitly approved operation.
 
 ## Hallmark UI Design Guidance
@@ -60,7 +60,7 @@ Find issues that normal build/test checks miss:
 ## Shared Safety Boundaries
 
 - Do not print secrets or read ignored credential files.
-- Never push directly to `main`, force push, reset, rebase, amend, bypass hooks, or delete dirty or uniquely valuable work.
+- Never push directly to `main` or `develop`, force push, reset, rebase, amend, bypass hooks, or delete dirty or uniquely valuable work.
 - Do not run Cloudflare/Wrangler deploy or secret-mutation commands in any mode without explicit approval for that exact operation.
 - Do not create GitHub Issues unless the user explicitly asks.
 - Do not claim a problem exists without evidence from a persona journey, DOM observation, screenshot, console/network observation, or source/data inspection.

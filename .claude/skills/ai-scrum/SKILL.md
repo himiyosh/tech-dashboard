@@ -61,7 +61,7 @@ description: tech-dashboard の開発タスクを AI Scrum 形式で整理し、
 - Sprint Goal を 1 文で書く
 - 対象ファイル、影響範囲、検証コマンドを決める
 - どのロールをサブエージェントへ isolate するか決める
-- `main` / `master` / `develop` では作業しない。必要なら作業ブランチを作る
+- `main` / `master` / `develop` では作業しない。必要なら作業ブランチを作り、通常PRは `develop` をbaseにする。`main`向けは `develop -> main` release PRだけにする
 
 ### 4. Sprint Execution
 

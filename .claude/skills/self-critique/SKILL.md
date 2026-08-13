@@ -40,6 +40,7 @@ argument-hint: "scope or suspected regression"
 |---|---|
 | R-001: GitHub Actions に deploy job を追加していないか | `.github/workflows/*.yml` に `wrangler pages deploy` が含まれていないことを確認 |
 | R-001b: protected branch へ直接 commit / push していないか | commit / push 直前に `git branch --show-current` と対象 ref を確認し、`main` / `master` / `develop` なら中断する。`tests/protected-branch-guard.test.ts` で pre-commit / pre-push の fail-closed contract を確認する |
+| R-001c: feature→develop→main release flowを守っているか | 通常PRのbaseが`develop`、main向けPRのheadが`develop`で、`.github/workflows/ci.yml`がmain/develop両方を対象に`check-pr-branch-flow.mjs`を実行することを確認 |
 | R-003: web build が web で自己完結しているか | `web/src/**` から `../../../harness/` への runtime import がないことを grep で確認 |
 | R-009: secret が staged / tracked に混入していないか | `npm run secrets:scan` と `npm run secrets:scan:worktree` を実行 |
 | R-012: live index が body-free architecture と retention を守っているか | `data/index.json` で非空 `bodyJa` / `bodyEn` 件数が 0、本文は `data/bodies.json` にあり、retention 対象外 record が 0 であることを `tests/data-schema.test.ts` で確認 |

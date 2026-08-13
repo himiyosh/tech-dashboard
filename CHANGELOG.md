@@ -33,6 +33,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 変更
 
+- 通常PRを`working branch -> develop`、production releaseを`develop -> main`へ分離し、CIが誤ったbase/headをfail-closedに拒否するbranch-flow gateを追加しました。default branchとPublisher/Pages production branchはmainのまま維持し、releaseはmerge commitでancestryを保ちます。
 - 毎時Publisherを変更data・route impact・schema・CASの増分gateへ分離し、全Astro/Pagefind/E2E reconciliationを毎日02:17 UTC・manual・PR CIへ移しました。impact manifestは変更detail/body IDと、pagination/category/tag/feed/sitemap/search/global shellの波及を記録し、unrelated historical detailをGitHub Actionsで毎時再renderしません。
 - staleな3,200 HTML route上限を撤去し、Cloudflare Freeの20,000 static filesから余裕を引いた18,000 files、18分build、RSS、route-family growth、crawl/detail parityのprovider-aligned gateへ置き換えました。productionはPages Git Integrationを維持し、Healthはcommitted indexとpublic metrics snapshotの一致を検証します。
 - Knowledgeはsource-levelのevergreen retentionを候補母集団として維持しつつ、raw title/snippet/source contextの共有契約で提供開始・一般提供・preview・月次告知・award・event登録などの告知専用記事を除外するようにしました。告知形式のtitleでもsetup、API parameter、CLI運用などの具体的なprocedural evidenceを持つ記事は維持します。Timeline、カテゴリ、検索、Archive、canonical URL、要約、AI解説本文は維持し、Knowledge HTMLとKnowledge RSSだけを同じ適格性契約へ揃えます。

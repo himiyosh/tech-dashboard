@@ -24,6 +24,14 @@
 - 自動化の限定例外: `publisher.yml` は main SHA を固定し、data-only allowlist、全品質ゲート、non-force push を通した生成 commit だけを built-in `GITHUB_TOKEN` で main へ push してよい。人間または agent の通常変更にはこの例外を適用しない。
 - `scripts/git-hooks/pre-commit` / `pre-push` は `main` / `master` / `develop` への直接書き込みを fail-closed で拒否する。`ALLOW_PROTECTED_BRANCH_WRITE=1` は、当該セッションでユーザーが直接書き込みを明示承認した場合だけ使用でき、通常の PR 作業や PR merge 後の継続作業では指定しない。
 
+### R-001c: 通常変更は develop へ統合し、develop から main へ release する (ABSOLUTE)
+- 通常の作業branch PRは必ず `develop` をbaseにする。feature/fix/docs等のbranchから `main` へ直接PRを出さない。
+- `main` をbaseにできる通常release PRのheadは `develop` だけとする。`main -> develop` はproduction hotfixやrelease後のbacksync用PRとして許可する。
+- `develop -> main` releaseは履歴のancestryを保つためmerge commitを使い、squash/rebase mergeを使わない。main merge前のユーザー承認、exact-head review、CI、R-027 rollout gateは従来どおり必須。
+- GitHubのdefault branchはscheduled Publisherをmainから実行するため `main` のまま維持する。PR作成時は `--base develop` を明示し、CIのbranch-flow jobで誤ったbase/headをfail-closedに拒否する。
+- Publisherのdata-only commitはR-001b/R-026の限定例外としてmainへ直接入る。developへ毎時data commitを複製せず、release mergeはmain側の最新dataを保持する。data conflictがある場合はreleaseを止め、別のworking branchで解消してdevelopへ戻す。
+- fingerprintを変える変更はdevelopへのintegration merge時にはproduction Workerをdeployしない。consumer-first / bridge-lastのR-027 rolloutは `develop -> main` releaseのexact headに対して実施する。
+
 ### R-002: Cloudflare Pages project 設定の固定値
 | 項目 | 値 |
 |---|---|
@@ -224,7 +232,7 @@
 - Node publisher は収集開始時に checkout と remote main が同じ HEAD SHA であることを確認し、その SHA の contract marker と runner fingerprint を照合する。`data/index.json`、`data/bodies.json`、archive index / month、stats の baseline はすべて同じ immutable SHA から読む。data commit または effect-only flush 前にも main ref が開始時 SHA と完全一致することを再確認し、進んでいれば commit と遅延 effects を中止する。commit parent も同じ SHA に固定し、push は non-force とする。
 - Node publisher は収集開始前、data commit 直前、遅延 effects flush 直前に Free bridge の public health が同じ publisher fingerprint を公開していることを確認する。bridge の fingerprint が未公開・不一致・unhealthy の場合は harness、data commit、effects flush を fail-closed で中止する。
 - summary/body Queue job と生成 cache には publisher fingerprint を伝播する。現在の fingerprint と明示的に異なる cache は採用せず再生成対象にする。fingerprint 導入前の既存 cache は本文・要約テキストだけ互換読み込みし、summary の importance / extraTags は exact fingerprint 一致時だけ採用する。fingerprint 無し job を受けた更新済み consumer は `legacy-unversioned-job` を保存し、既存 legacy cache と区別する。
-- fingerprint を変える release は Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を PR head から先に deployし、旧 consumer の in-flight 処理が残らないことを確認してから PR を mergeする。merge 後は原則として旧 harness が marker mismatch で停止したことを確認し、明示承認のうえ Free bridge を deployする。deployment provenanceやguard到達性を確認できずmismatchを観測できない場合は、その事実を明記し、旧runのterminal failure、merge後のdata commit不在、旧heartbeat非更新をすべて実測できた場合に限り「旧writerがpublish不能」という安全条件でbridge置換へ進む。いずれかを確認できなければ停止してユーザー判断を求める。bridge health、Publisher workflow、data commit、Queue drain、Pages productionを順に確認する。
+- fingerprint を変える変更はCIとexact-head review後にdevelopへ統合してよいが、その時点ではproduction Workerをdeployしない。develop→main release PRのexact headから Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を先にdeployし、旧consumerのin-flight処理が残らないことを確認してからrelease PRをmerge commitでmainへmergeする。merge後は原則として旧 harness が marker mismatch で停止したことを確認し、明示承認のうえ Free bridge を deployする。deployment provenanceやguard到達性を確認できずmismatchを観測できない場合は、その事実を明記し、旧runのterminal failure、merge後のdata commit不在、旧heartbeat非更新をすべて実測できた場合に限り「旧writerがpublish不能」という安全条件でbridge置換へ進む。いずれかを確認できなければ停止してユーザー判断を求める。bridge health、Publisher workflow、data commit、Queue drain、Pages productionを順に確認する。
 - `data/index.json` の entry が変わる publish では、`data/archive/_index.json` と `data/stats.json` の `generatedAt` も同一 commit の reference clock へ揃える。月次 archive は timestamp-only churn を避ける。
 
 ### R-028: in-place checkout の Git mutation と session automation を直列化する
@@ -3001,6 +3009,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 過去のroute削減時に置いた3,200件proxyをprovider resource limitのように維持し、evergreenのaddressabilityと経時成長を反映していなかった。hourly data processing、全static reconciliation、production deployの責務も同じrunへ重ねていた。
 - **対策**: 毎時runはimmutable data snapshotと変更entry/body/archiveを比較するimpact manifest、data schema、secret、CASだけを検証する。manifestは変更detail IDだけを列挙しつつ、index変更がpagination/category/tag/feed/sitemap/search/global shellへ波及することを明示する。全Astro/Pagefind/E2E reconciliationは毎日02:17 UTC・manual・code-change PRへ分離した。3,200 HTML上限を撤去し、18,000 static files、18分build、12GiB GitHub RSS、route-family growth、crawl/detail parityを独立gateにした。productionはこのsliceではPages Git Integrationを維持し、成功Publisher後のhealthはpublic `metrics.json.indexGeneratedAt`がcommitted indexへ追いつくまでbounded waitする。scheduled healthは6時間周期へ下げ、Publisher失敗の二重failureを毎時作らない。
 - **教訓**: regression proxyはprovider quotaや利用者向け不変条件の代わりにならない。incremental publishを設計するときはnew detailだけでなくaggregate、feed、sitemap、search、global shellのinvalidationをmachine-readableに宣言し、全reconciliationを低頻度に分離する。external deploy切替はcurrent productionを残したままpreview/rollbackを証明できる別sliceにし、未検証のcredentialやdeploy pathを復旧作業へ混ぜない。
+
+### LL-456: protected developという一般規則だけではfeature→develop→mainを実装できない
+- **事象**: PR #265を通常どおりmain向けに作成した後、ユーザーからdevelopを介するrelease flowが期待されていると指摘された。実測するとremote develop branch、develop向けPR履歴、CI branch filterはいずれも存在せず、import済みagentic-rulesと上流v0.6.1はmain/master/develop上で直接作業しないことだけを定め、PRのbase順序は定めていなかった。
+- **根本原因**: protected branchの集合とintegration/releaseの方向を同一視し、project固有のbranch topologyをactive rule、remote ref、CI gateへ配線していなかった。scheduled Publisherがdefault branchでのみ動くため、default branchをdevelopへ変える単純対応もmain publisherを停止させる。
+- **対策**: tech-dashboard固有のR-001cを追加し、feature→develop、develop→main release、main→develop backsyncをfail-closedなscriptとCIで検証する。default branchとPublisher/Pages production branchはmainのまま維持し、PR作成時だけbase developを明示する。release mergeはmerge commitでancestryを保ち、fingerprint rolloutはdevelop integration時でなくdevelop→mainのexact release headに対して行う。
+- **教訓**: 「developも保護する」は「developをintegration branchとして使う」と同義ではない。branch flowはremote branchの存在、PR base/head matrix、CI trigger、merge strategy、scheduled workflowのdefault-branch制約、production rollout時点をproject-localな実行contractとして揃える。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

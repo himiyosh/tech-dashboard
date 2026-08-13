@@ -10,6 +10,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   parseIncrementalShadowArgs,
   prepareIncrementalGeneration,
+  uploadAndVerify,
   verifyIncrementalShellAssets,
 } from "../scripts/incremental-shadow-client.ts";
 import {
@@ -88,6 +89,37 @@ function fullBundle(root: string) {
   };
 }
 
+function readBackRequester(
+  key: string,
+  digest: string,
+  uploadedBytes: number,
+  readBackBytes: Uint8Array,
+) {
+  return {
+    request: vi.fn(async (_path: string, init?: RequestInit) => {
+      if (init?.method === "PUT") {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            key,
+            digest,
+            bytes: uploadedBytes,
+            reused: false,
+          }),
+          {
+            status: 201,
+            headers: { "content-type": "application/json" },
+          },
+        );
+      }
+      if (init?.method === "GET") {
+        return new Response(readBackBytes, { status: 200 });
+      }
+      throw new Error(`unexpected read-back method: ${init?.method}`);
+    }),
+  };
+}
+
 describe("incremental shadow publisher client", () => {
   it("parses only explicit fail-closed CLI modes", () => {
     expect(parseIncrementalShadowArgs([]).ok).toBe(false);
@@ -96,6 +128,61 @@ describe("incremental shadow publisher client", () => {
       ok: true,
       mode: "state",
     });
+  });
+
+  it("verifies uploaded bytes without depending on HEAD response headers", async () => {
+    const bytes = new TextEncoder().encode("verified shadow object");
+    const raw = rawDigest(bytes);
+    const digest = `sha256:${raw}`;
+    const key = `objects/sha256/${raw}`;
+    const requester = readBackRequester(
+      key,
+      digest,
+      bytes.byteLength,
+      bytes,
+    );
+
+    await expect(
+      uploadAndVerify(requester, key, bytes, "text/html; charset=utf-8"),
+    ).resolves.toBeUndefined();
+    expect(
+      requester.request.mock.calls.map(([, init]) => init?.method),
+    ).toEqual(["PUT", "GET"]);
+  });
+
+  it("rejects a same-length R2 read-back with a different digest", async () => {
+    const bytes = new TextEncoder().encode("verified shadow object");
+    const altered = new Uint8Array(bytes);
+    altered[0] = altered[0]! ^ 1;
+    const raw = rawDigest(bytes);
+    const digest = `sha256:${raw}`;
+    const key = `objects/sha256/${raw}`;
+
+    await expect(
+      uploadAndVerify(
+        readBackRequester(key, digest, bytes.byteLength, altered),
+        key,
+        bytes,
+        "text/html; charset=utf-8",
+      ),
+    ).rejects.toThrow(/got digest=sha256:/);
+  });
+
+  it("rejects an R2 read-back with a different byte length", async () => {
+    const bytes = new TextEncoder().encode("verified shadow object");
+    const truncated = bytes.slice(0, -1);
+    const raw = rawDigest(bytes);
+    const digest = `sha256:${raw}`;
+    const key = `objects/sha256/${raw}`;
+
+    await expect(
+      uploadAndVerify(
+        readBackRequester(key, digest, bytes.byteLength, truncated),
+        key,
+        bytes,
+        "text/html; charset=utf-8",
+      ),
+    ).rejects.toThrow(`got digest=sha256:${rawDigest(truncated)} bytes=${truncated.byteLength}`);
   });
 
   it("builds a distinct generation revision with bounded shards and tombstones", async () => {

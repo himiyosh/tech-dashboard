@@ -33,6 +33,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 変更
 
+- Incremental shadowのR2 upload検証を、edgeで変化し得るHEADの`etag`/`content-length`比較から、認証済みGETで実bytesを読み戻してbyte数とSHA-256を再計算する方式へ変更しました。PUT時のFixedLengthStream、R2 checksum、content-addressed key、activation前のfail-closed検証は維持します。
 - Incremental shadowのR2 uploadを、bounded validation streamからCloudflare `FixedLengthStream`へ接続する既知長streamへ変更しました。最大5MiBのroute objectをWorker内でbufferせず、R2 SHA-256検証とread-backを維持したまま、production R2がgeneric変換streamをHTTP 502で拒否するbootstrap障害を解消します。
 - body Queueの単一記事で本文生成が繰り返し失敗してもservice全体を503にせず、entry warningとruntime failureを分離するようにしました。missing KV bindingは例外ではなく構造化JSON 503を返します。
 - 通常PRを`working branch -> develop`、production releaseを`develop -> main`へ分離し、CIが誤ったbase/headをfail-closedに拒否するbranch-flow gateを追加しました。default branchとPublisher/Pages production branchはmainのまま維持し、releaseはmerge commitでancestryを保ちます。

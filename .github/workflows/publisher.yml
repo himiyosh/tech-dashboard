@@ -15,6 +15,10 @@ on:
         description: Run the full Astro, Pagefind, and Publisher E2E reconciliation
         type: boolean
         default: true
+      incremental_shadow:
+        description: Publish a detail-only R2/D1 shadow snapshot after full reconciliation
+        type: boolean
+        default: false
 
 concurrency:
   group: tech-dashboard-publisher
@@ -34,6 +38,10 @@ jobs:
       PUBLISHER_OIDC_AUDIENCE: tech-dashboard-publisher
       PUBLISHER_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
       PUBLISHER_FULL_RECONCILE: ${{ (github.event_name == 'schedule' && github.event.schedule == '17 2 * * *') || (github.event_name == 'workflow_dispatch' && inputs.full_reconcile && !inputs.dry_run) }}
+      PUBLISHER_INCREMENTAL_SHADOW: ${{ github.event_name == 'workflow_dispatch' && inputs.incremental_shadow && inputs.full_reconcile && !inputs.dry_run }}
+      INCREMENTAL_SHADOW_URL: ${{ vars.INCREMENTAL_SHADOW_URL }}
+      INCREMENTAL_MEASURED_DAILY_REQUESTS: ${{ vars.INCREMENTAL_MEASURED_DAILY_REQUESTS }}
+      INCREMENTAL_TRAFFIC_VERIFIED_AT: ${{ vars.INCREMENTAL_TRAFFIC_VERIFIED_AT }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -107,6 +115,32 @@ jobs:
           npm run test:e2e:publisher
           git diff --check -- data
 
+      - name: Prepare detail-only incremental shadow snapshot
+        id: incremental-shadow
+        if: env.PUBLISHER_INCREMENTAL_SHADOW == 'true'
+        env:
+          EXPECTED_PARENT: ${{ steps.publisher.outputs.expected_parent }}
+        run: |
+          test "${PUBLISHER_FULL_RECONCILE}" = "true"
+          test -n "${INCREMENTAL_SHADOW_URL}"
+          shell_path="${RUNNER_TEMP}/incremental-detail-shell.json"
+          bundle_dir="${RUNNER_TEMP}/incremental-shadow-bundle"
+          npm run incremental:shadow -- \
+            --capture-shell \
+            --dist web/dist \
+            --output "${shell_path}"
+          npm run incremental:shadow -- \
+            --render \
+            --base-ref "${EXPECTED_PARENT}" \
+            --shell "${shell_path}" \
+            --output "${bundle_dir}" \
+            --full-detail-snapshot
+          npm run incremental:shadow -- \
+            --verify-parity \
+            --bundle "${bundle_dir}/bundle.json" \
+            --dist web/dist
+          echo "bundle_path=${bundle_dir}/bundle.json" >> "${GITHUB_OUTPUT}"
+
       - name: Commit and push verified data
         id: publish
         if: steps.publisher.outputs.changed == 'true' && env.PUBLISHER_DRY_RUN != 'true'
@@ -153,3 +187,16 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           EFFECTS_PATH: ${{ steps.publisher.outputs.effects_path }}
         run: npm run publisher:run -- --flush "${EFFECTS_PATH}"
+
+      - name: Publish verified incremental shadow snapshot
+        if: >-
+          env.PUBLISHER_INCREMENTAL_SHADOW == 'true' &&
+          (steps.publisher.outputs.changed != 'true' || steps.publish.outputs.published == 'true')
+        env:
+          BUNDLE_PATH: ${{ steps.incremental-shadow.outputs.bundle_path }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          git fetch --quiet origin main
+          test "$(git rev-parse origin/main)" = "$(git rev-parse HEAD)"
+          INCREMENTAL_SOURCE_COMMIT="$(git rev-parse HEAD)" \
+            npm run incremental:shadow:publish -- --publish "${BUNDLE_PATH}"

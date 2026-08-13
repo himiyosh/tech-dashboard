@@ -60,6 +60,7 @@
 | **KV `SUMMARY_CACHE`** | Cloudflare KV | `s:{sha256(url)}` の per-URL summary cache と `og.v1` 画像キャッシュを管理 |
 | **harness (ローカル実行版)** | Node.js 22 / TSX | `npm run collect` で同ロジックをローカル実行 (デバッグ用) |
 | **web (Astro)** | Astro 5 + Pagefind | SSG 静的サイト。`data/index.json` をビルド時に読んで全画面生成 |
+| **Worker `tech-dashboard-incremental-serving` (repository shadow only)** | Cloudflare Workers Free | 専用R2/D1のcontent-addressed detail HTMLをshadow配信する無効既定の別Worker。resource未作成、custom-domain routeなし、production未使用 |
 | **pre-push hook** | `scripts/git-hooks/pre-push` | ローカル品質ゲートを実行し、`RUN_WORKER_DEPLOY=1` の `main` push に worker/ 差分がある場合だけ `wrangler deploy` を実行 |
 | **MCP config** | VS Code Copilot Chat | `.vscode/mcp.json` で CF 公式 MCP 5 種を接続 |
 
@@ -154,6 +155,12 @@ Queue telemetry の `backlog`、`candidate`、実 `enqueued`、`lookup`、`merge
 | ヘルス監視 | bridge `/health` + publish run + data freshness / aggregate source outcome + summarizer + `/status` | 毎時外形監視。diagnostic dry-runは成功runから除外 |
 
 **残る手動運用**: Queue consumerの`COPILOT_PAT`更新と、コード変更時の明示承認付きWorker deploy。Publisher commitはbuilt-in `GITHUB_TOKEN`、bridge認証はGitHub Actions OIDCを使うため、新しい長命repository secretは追加しない。Publisherはcommit前にbilingual summary fallbackを適用し、`data/index.json`の本文を必ず空にする。cache済みの有効な要約がindexに未反映の場合だけ`npm run summaries:apply-cache`で再反映する。本文は`data/bodies.json`の専用経路で管理し、evergreen、importance 2/3、直近30日を保持する。
+
+### 2.6 Fully-free incremental serving shadow
+
+第2段階のrepository実装は、full reconciliationで検証済みのproduction CSS/client asset shellを取得し、既存Astro detail pageからroute objectだけをpre-renderする。route objectはJA/ENを別々に生成し、専用R2のimmutable keyへ保存する。専用D1はgeneration metadataとactive/previous pointerを管理する。詳細は[07-incremental-serving-shadow.md](07-incremental-serving-shadow.md)を正とする。
+
+この経路はmanual `workflow_dispatch`の`incremental_shadow=true`かつ`full_reconcile=true`でだけ実行できる。tracked Worker configは`off`、coverageは`detail-pages`だけ、cutoverは不許可である。productionはPages Git Integrationのまま維持し、R2/D1作成、Worker deploy、custom-domain route、Pages build-watch変更はいずれも別の明示承認を必要とする。
 
 ---
 

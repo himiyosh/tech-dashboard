@@ -118,6 +118,12 @@ Runtime は **Workflow**、Dev-time は **Agent** (原則 3)。
 
 **意図的に避けたもの**: Next.js (SSR 不要), Postgres / Supabase (規模過剰), Redis (不要), Docker (overkill)。
 
+### 2.4 増分配信 shadow (無効既定)
+
+毎時Publisherのdata-only commitがPages全体buildを起動する残課題に対し、[07-incremental-serving-shadow.md](07-incremental-serving-shadow.md)のdetail-only shadowを実装する。Node側が既存Astro detail pageをroute単位でpre-renderし、JAと`?lang=en`のHTMLをcontent-addressed objectとして専用R2へ保存する。専用D1はactive/previous generation pointerだけをatomicに管理し、separate Workerはrequest時にHTMLをrenderせずstreamする。
+
+このsliceは`INCREMENTAL_SERVING_MODE=off`、custom-domain routeなし、coverage incompleteである。productionとPages Git Integrationは変更しない。Workers Static Assetsのhash差分uploadは全Astro/Pagefind生成を省かないため、true incremental generationの代替にはしない。Home、pagination、category/tag、feeds、sitemap、search、Status、metrics、global shellのincremental artifactとtraffic/CPU/parity gateが揃うまでdata commitのPages buildを停止しない。
+
 ---
 
 ## 3. データモデル

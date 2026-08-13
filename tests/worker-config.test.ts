@@ -194,6 +194,59 @@ describe("Cloudflare Worker deploy config", () => {
       /PUBLISHER_FULL_RECONCILE[\s\S]*npm run typecheck[\s\S]*npm run build:web[\s\S]*npm run test:e2e:publisher/,
     );
     expect(publisherWorkflow).not.toMatch(/wrangler\s+(?:pages\s+)?deploy/);
+    expect(publisherWorkflow).toContain("inputs.incremental_shadow");
+    expect(publisherWorkflow).toContain(
+      "PUBLISHER_INCREMENTAL_SHADOW",
+    );
+    expect(publisherWorkflow).toContain(
+      "Prepare detail-only incremental shadow snapshot",
+    );
+    expect(publisherWorkflow).toContain(
+      "Publish verified incremental shadow snapshot",
+    );
+    expect(publisherWorkflow).toContain("--full-detail-snapshot");
+    expect(publisherWorkflow.indexOf("Flush verified Queue and KV effects")).toBeLessThan(
+      publisherWorkflow.indexOf("Publish verified incremental shadow snapshot"),
+    );
+  });
+
+  it("keeps incremental serving on a separate off-by-default Worker without a route", () => {
+    const config = readConfig("worker/wrangler.incremental.toml");
+    const worker = readConfig("worker/src/incremental-serving.ts");
+    const migration = readConfig(
+      "worker/migrations/incremental-serving/0001.sql",
+    );
+    const packageJson = JSON.parse(readConfig("package.json")) as {
+      scripts?: Record<string, string>;
+    };
+
+    expect(config).toContain('name = "tech-dashboard-incremental-serving"');
+    expect(config).toContain('main = "src/incremental-serving.ts"');
+    expect(config).toContain('INCREMENTAL_SERVING_MODE = "off"');
+    expect(config).toContain('CUTOVER_APPROVED = "0"');
+    expect(config).toContain('binding = "INCREMENTAL_OBJECTS"');
+    expect(config).toContain('binding = "INCREMENTAL_STATE"');
+    expect(config).toContain(
+      'database_id = "00000000-0000-0000-0000-000000000000"',
+    );
+    expect(config).toContain(
+      'migrations_dir = "migrations/incremental-serving"',
+    );
+    expect(config).not.toMatch(/^\s*routes?\s*=/m);
+    expect(config).not.toContain("[limits]");
+    expect(config).not.toContain("[triggers]");
+    expect(worker).not.toContain("AstroContainer");
+    expect(worker).not.toContain("parse5");
+    expect(worker).not.toContain("data/index.json");
+    expect(worker).toContain("if (!INCREMENTAL_SERVE_IMPLEMENTED)");
+    expect(migration).toContain("source_commit TEXT NOT NULL");
+    expect(migration).toContain("coverage_json TEXT NOT NULL");
+    expect(packageJson.scripts?.["incremental:shadow"]).toBe(
+      "node --import tsx web/scripts/render-incremental-shadow.mjs",
+    );
+    expect(packageJson.scripts?.["incremental:shadow:publish"]).toBe(
+      "tsx scripts/incremental-shadow-client.ts",
+    );
   });
 
   it("gives CI jobs enough time for Pagefind builds and the full Playwright suite", () => {

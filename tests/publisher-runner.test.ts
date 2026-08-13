@@ -20,7 +20,7 @@ import type { PublisherEnv } from "../worker/src/index.ts";
 
 function impactPlan() {
   return {
-    version: 1 as const,
+    version: 2 as const,
     baseRef: "captured-sha",
     changedDataPaths: ["data/index.json"],
     changedEntryIds: ["entry-1"],
@@ -36,6 +36,16 @@ function impactPlan() {
     before: { detailRoutes: 10, tagBaseRoutes: 2, archiveMonths: 1 },
     after: { detailRoutes: 11, tagBaseRoutes: 2, archiveMonths: 1 },
     growth: { detailRoutes: 1, tagBaseRoutes: 0, archiveMonths: 0 },
+    incremental: {
+      detailMode: "global" as const,
+      detailUpsertIds: ["entry-1"],
+      detailTombstoneIds: [],
+      detailPaths: ["/e/entry-1/"],
+      searchMode: "global" as const,
+      searchDeltaIds: [],
+      shadowSafe: false,
+      blockers: ["pagefind-requires-global-reconciliation"],
+    },
   };
 }
 

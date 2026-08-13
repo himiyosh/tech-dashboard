@@ -54,15 +54,7 @@ describe("publisher contract runtime guard", () => {
     const contract = parsePublisherContractContent(readFileSync(CONTRACT_PATH, "utf8"));
     expect(contract.criticalPaths).toContain("scripts/run-publisher.ts");
     expect(contract.criticalPaths).toContain("scripts/publisher-impact.ts");
-    for (const dependency of [
-      "web/src/lib/entry-publication.ts",
-      "web/src/lib/route-inventory.ts",
-      "web/src/lib/search-normalize.ts",
-      "web/src/lib/summary-display.ts",
-      "web/src/lib/tag-normalize.ts",
-    ]) {
-      expect(contract.criticalPaths).toContain(dependency);
-    }
+    expect(contract.criticalPaths).toContain("web/src");
   });
 
   it("rejects a repository fingerprint that differs from the deployed bundle", () => {
@@ -283,6 +275,26 @@ describe("publisher contract runtime guard", () => {
 });
 
 describe("publisher contract updater", () => {
+  it("covers the complete incremental renderer and serving dependency roots", () => {
+    const contract = JSON.parse(readFileSync(CONTRACT_PATH, "utf8")) as {
+      criticalPaths: string[];
+    };
+    expect(contract.criticalPaths).toEqual(expect.arrayContaining([
+      ".github/workflows/publisher.yml",
+      "scripts/incremental-shadow-client.ts",
+      "web/astro.config.mjs",
+      "web/functions",
+      "web/package-lock.json",
+      "web/package.json",
+      "web/scripts/incremental-render-core.mjs",
+      "web/scripts/render-incremental-shadow.mjs",
+      "web/src",
+      "worker/migrations/incremental-serving",
+      "worker/src",
+      "worker/wrangler.incremental.toml",
+    ]));
+  });
+
   it("reports the checked-in fingerprint as current", () => {
     const result = runCliProcess(["--dry-run"]);
     expect(result.status).toBe(0);

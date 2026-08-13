@@ -33,7 +33,7 @@ export interface PublisherRouteSignals {
 }
 
 export interface PublisherImpactPlan {
-  version: 1;
+  version: 2;
   baseRef: string;
   changedDataPaths: string[];
   changedEntryIds: string[];
@@ -47,6 +47,18 @@ export interface PublisherImpactPlan {
   before: PublisherRouteSignals;
   after: PublisherRouteSignals;
   growth: PublisherRouteSignals;
+  incremental: PublisherIncrementalPlan;
+}
+
+export interface PublisherIncrementalPlan {
+  detailMode: "none" | "exact" | "global";
+  detailUpsertIds: string[];
+  detailTombstoneIds: string[];
+  detailPaths: string[];
+  searchMode: "none" | "delta" | "global";
+  searchDeltaIds: string[];
+  shadowSafe: boolean;
+  blockers: string[];
 }
 
 interface ImpactFile {
@@ -163,23 +175,39 @@ function monthDataPaths(files: ReadonlyMap<string, string | null>): string[] {
     .sort();
 }
 
+function addressableEntries(
+  files: ReadonlyMap<string, string | null>,
+): Map<string, PublisherImpactEntry> {
+  const entries = new Map<string, PublisherImpactEntry>();
+  for (const entry of entryRecords(
+    "data/index.json",
+    files.get("data/index.json") ?? null,
+  )) {
+    if (
+      isListableEntry(entry)
+      && entry.archiveTier !== "cold"
+      && entry.archiveTier !== "dropped"
+    ) {
+      entries.set(entry.id, entry);
+    }
+  }
+  for (const path of monthDataPaths(files)) {
+    for (const entry of entryRecords(path, files.get(path) ?? null)) {
+      if (entry.archiveTier === "warm" && isPublishableEntry(entry)) {
+        entries.set(entry.id, entry);
+      }
+    }
+  }
+  return entries;
+}
+
 function routeSignals(files: ReadonlyMap<string, string | null>): PublisherRouteSignals {
   const live = entryRecords("data/index.json", files.get("data/index.json") ?? null)
     .filter((entry) => isListableEntry(entry));
-  const addressableIds = new Set(
-    live
-      .filter((entry) => entry.archiveTier !== "cold" && entry.archiveTier !== "dropped")
-      .map((entry) => entry.id),
-  );
   let archiveMonths = 0;
   for (const path of monthDataPaths(files)) {
     const entries = entryRecords(path, files.get(path) ?? null);
     if (entries.some((entry) => isPublishableEntry(entry))) archiveMonths++;
-    for (const entry of entries) {
-      if (entry.archiveTier === "warm" && isPublishableEntry(entry)) {
-        addressableIds.add(entry.id);
-      }
-    }
   }
 
   const tagCounts = new Map<string, number>();
@@ -189,9 +217,79 @@ function routeSignals(files: ReadonlyMap<string, string | null>): PublisherRoute
     }
   }
   return {
-    detailRoutes: addressableIds.size,
+    detailRoutes: addressableEntries(files).size,
     tagBaseRoutes: [...tagCounts.values()].filter((count) => count >= TAG_PAGE_MIN_ENTRIES).length,
     archiveMonths,
+  };
+}
+
+function incrementalPlan(
+  changedPaths: readonly string[],
+  changedEntryIds: ReadonlySet<string>,
+  changedBodyIds: ReadonlySet<string>,
+  beforeFiles: ReadonlyMap<string, string | null>,
+  afterFiles: ReadonlyMap<string, string | null>,
+): PublisherIncrementalPlan {
+  const bodyOnly =
+    changedPaths.length === 1
+    && changedPaths[0] === "data/bodies.json";
+  const changesEntryCollections = changedPaths.some(
+    (path) =>
+      path === "data/index.json"
+      || path === "data/archive/_index.json"
+      || /^data\/archive\/\d{4}-\d{2}\.json$/.test(path),
+  );
+  const beforeAddressable = addressableEntries(beforeFiles);
+  const afterAddressable = addressableEntries(afterFiles);
+  const candidateIds = new Set([...changedEntryIds, ...changedBodyIds]);
+  const detailUpsertIds = [...candidateIds]
+    .filter((id) => afterAddressable.has(id))
+    .sort();
+  const detailTombstoneIds = [...candidateIds]
+    .filter((id) => beforeAddressable.has(id) && !afterAddressable.has(id))
+    .sort();
+  const detailMode = bodyOnly
+    ? "exact"
+    : changesEntryCollections
+      ? "global"
+      : "none";
+  const searchMode = bodyOnly
+    ? "delta"
+    : changesEntryCollections
+      ? "global"
+      : "none";
+  const blockers = new Set<string>();
+  if (detailMode === "global") {
+    blockers.add("detail-pages-embed-global-entry-and-health-state");
+  }
+  if (searchMode === "global") {
+    blockers.add("pagefind-requires-global-reconciliation");
+  }
+  for (const path of changedPaths) {
+    if (path === "data/stats.json") blockers.add("aggregate-pages-depend-on-stats");
+    if (path === "data/archive/_index.json") {
+      blockers.add("archive-index-affects-archive-sitemap-and-search");
+    }
+    if (/^data\/archive\/\d{4}-\d{2}\.json$/.test(path)) {
+      blockers.add("archive-month-affects-listing-and-addressability");
+    }
+  }
+  const shadowSafe =
+    bodyOnly
+    && detailMode === "exact"
+    && searchMode === "delta";
+  return {
+    detailMode,
+    detailUpsertIds,
+    detailTombstoneIds,
+    detailPaths: [
+      ...detailUpsertIds,
+      ...detailTombstoneIds,
+    ].sort().map((id) => `/e/${encodeURIComponent(id)}/`),
+    searchMode,
+    searchDeltaIds: bodyOnly ? [...changedBodyIds].sort() : [],
+    shadowSafe,
+    blockers: [...blockers].sort(),
   };
 }
 
@@ -304,7 +402,7 @@ export function buildPublisherImpactPlan(options: BuildImpactOptions): Publisher
   const before = routeSignals(options.beforeFiles);
   const after = routeSignals(options.afterFiles);
   const plan: PublisherImpactPlan = {
-    version: 1,
+    version: 2,
     baseRef: options.baseRef,
     changedDataPaths: changedPaths,
     changedEntryIds: [...changedEntryIds].sort(),
@@ -322,6 +420,13 @@ export function buildPublisherImpactPlan(options: BuildImpactOptions): Publisher
       tagBaseRoutes: after.tagBaseRoutes - before.tagBaseRoutes,
       archiveMonths: after.archiveMonths - before.archiveMonths,
     },
+    incremental: incrementalPlan(
+      changedPaths,
+      changedEntryIds,
+      changedBodyIds,
+      options.beforeFiles,
+      options.afterFiles,
+    ),
   };
   assertPublisherImpactGrowth(plan);
   return plan;
@@ -417,6 +522,10 @@ export function formatPublisherImpactMarkdown(plan: PublisherImpactPlan): string
     `- Route families: ${list(plan.routeFamilies)}`,
     `- Full static reconciliation required: ${plan.requiresFullStaticReconciliation ? "yes" : "no"}`,
     `- Route growth: detail ${plan.growth.detailRoutes >= 0 ? "+" : ""}${plan.growth.detailRoutes}, tag ${plan.growth.tagBaseRoutes >= 0 ? "+" : ""}${plan.growth.tagBaseRoutes}, archive months ${plan.growth.archiveMonths >= 0 ? "+" : ""}${plan.growth.archiveMonths}`,
+    `- Incremental detail mode: ${plan.incremental.detailMode} (${plan.incremental.detailPaths.length} paths)`,
+    `- Incremental search mode: ${plan.incremental.searchMode} (${plan.incremental.searchDeltaIds.length} records)`,
+    `- Shadow-safe slice: ${plan.incremental.shadowSafe ? "yes" : "no"}`,
+    `- Incremental blockers: ${list(plan.incremental.blockers)}`,
     "",
   ].join("\n");
 }

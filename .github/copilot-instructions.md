@@ -27,7 +27,7 @@
 ### R-001c: 通常変更は develop へ統合し、develop から main へ release する (ABSOLUTE)
 - 通常の作業branch PRは必ず `develop` をbaseにする。feature/fix/docs等のbranchから `main` へ直接PRを出さない。
 - `main` をbaseにできる通常release PRのheadは `develop` だけとする。`main -> develop` はproduction hotfixやrelease後のbacksync用PRとして許可する。
-- `develop -> main` releaseは履歴のancestryを保つためmerge commitを使い、squash/rebase mergeを使わない。main merge前のユーザー承認、exact-head review、CI、R-027 rollout gateは従来どおり必須。
+- `develop -> main` releaseは履歴のancestryを保つためmerge commitを使い、squash/rebase mergeを使わない。main merge前のユーザー承認、CI、R-027 rollout gateは従来どおり必須。
 - GitHubのdefault branchはscheduled Publisherをmainから実行するため `main` のまま維持する。PR作成時は `--base develop` を明示し、CIのbranch-flow jobで誤ったbase/headをfail-closedに拒否する。
 - Publisherのdata-only commitはR-001b/R-026の限定例外としてmainへ直接入る。developへ毎時data commitを複製せず、release mergeはmain側の最新dataを保持する。data conflictがある場合はreleaseを止め、別のworking branchで解消してdevelopへ戻す。
 - fingerprintを変える変更はdevelopへのintegration merge時にはproduction Workerをdeployしない。consumer-first / bridge-lastのR-027 rolloutは `develop -> main` releaseのexact headに対して実施する。
@@ -238,7 +238,7 @@
 - Node publisher は収集開始時に checkout と remote main が同じ HEAD SHA であることを確認し、その SHA の contract marker と runner fingerprint を照合する。`data/index.json`、`data/bodies.json`、archive index / month、stats の baseline はすべて同じ immutable SHA から読む。data commit または effect-only flush 前にも main ref が開始時 SHA と完全一致することを再確認し、進んでいれば commit と遅延 effects を中止する。commit parent も同じ SHA に固定し、push は non-force とする。
 - Node publisher は収集開始前、data commit 直前、遅延 effects flush 直前に Free bridge の public health が同じ publisher fingerprint を公開していることを確認する。bridge の fingerprint が未公開・不一致・unhealthy の場合は harness、data commit、effects flush を fail-closed で中止する。
 - summary/body Queue job と生成 cache には publisher fingerprint を伝播する。現在の fingerprint と明示的に異なる cache は採用せず再生成対象にする。fingerprint 導入前の既存 cache は本文・要約テキストだけ互換読み込みし、summary の importance / extraTags は exact fingerprint 一致時だけ採用する。fingerprint 無し job を受けた更新済み consumer は `legacy-unversioned-job` を保存し、既存 legacy cache と区別する。
-- fingerprint を変える変更はCIとexact-head review後にdevelopへ統合してよいが、その時点ではproduction Workerをdeployしない。develop→main release PRのexact headから Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を先にdeployし、旧consumerのin-flight処理が残らないことを確認してからrelease PRをmerge commitでmainへmergeする。merge後は原則として旧 harness が marker mismatch で停止したことを確認し、明示承認のうえ Free bridge を deployする。deployment provenanceやguard到達性を確認できずmismatchを観測できない場合は、その事実を明記し、旧runのterminal failure、merge後のdata commit不在、旧heartbeat非更新をすべて実測できた場合に限り「旧writerがpublish不能」という安全条件でbridge置換へ進む。いずれかを確認できなければ停止してユーザー判断を求める。bridge health、Publisher workflow、data commit、Queue drain、Pages productionを順に確認する。
+- fingerprint を変える変更はCI後にdevelopへ統合してよいが、その時点ではproduction Workerをdeployしない。develop→main release PRのexact headから Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を先にdeployし、旧consumerのin-flight処理が残らないことを確認してからrelease PRをmerge commitでmainへmergeする。merge後は原則として旧 harness が marker mismatch で停止したことを確認し、明示承認のうえ Free bridge を deployする。deployment provenanceやguard到達性を確認できずmismatchを観測できない場合は、その事実を明記し、旧runのterminal failure、merge後のdata commit不在、旧heartbeat非更新をすべて実測できた場合に限り「旧writerがpublish不能」という安全条件でbridge置換へ進む。いずれかを確認できなければ停止してユーザー判断を求める。bridge health、Publisher workflow、data commit、Queue drain、Pages productionを順に確認する。
 - `data/index.json` の entry が変わる publish では、`data/archive/_index.json` と `data/stats.json` の `generatedAt` も同一 commit の reference clock へ揃える。月次 archive は timestamp-only churn を避ける。
 
 ### R-028: in-place checkout の Git mutation と session automation を直列化する
@@ -255,6 +255,11 @@
 - `Portal`のJA/EN切替対象は主要見出しだけではない。hero description、navigation detail、card本文、empty/error state、side rail、Aboutの方針説明・Pipeline、tooltip、buttonのaccessible nameを含むvisible copy全体を対象にする。
 - 日本語だけの固有名詞・原題を別言語へfallbackする場合は既存の言語provenance badgeを使う。UI説明文を無印の日本語でEN modeへ残さない。
 - visible copyを追加・変更したら、同じ変更でEN modeの表示、JA variantの非表示、accessible nameをE2Eへ追加または既存testで固定する。
+
+### R-031: PR mergeの必須条件をsession固有のclearanceへ依存させない
+- PRの必須条件はbranch-flow、unit/typecheck、Web build、E2E、secret/security checks、Publisher CAS、明示承認が必要なdeploy・production変更境界で構成する。
+- 通常のGitHub reviewと任意のcode review / security reviewはリスクに応じて利用できるが、session固有の承認コメント、identity用repository variable、専用CI job、再実行手順をmerge条件へ追加しない。
+- 必須clearanceを廃止する変更では、CI、CLI、tests、instructions、docs、GitHub settingsを同じ変更単位で除去し、通常の品質jobが残る回帰testを追加する。
 
 ---
 
@@ -2914,12 +2919,6 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: consent state、localStorage schema、cross-tab撤回、初回paint bootstrap、client failure fallbackを変更せず、全viewportでcontent canvas内のcompact stripへ統一した。Google AdSenseが任意であること、拒否しても全機能を使えること、source mediaは別読込の場合があることを短く可視化し、Privacy、拒否、許可を45px以上の操作面へ並べた。SearchはHeaderだけでなく現在表示中の同意strip下端もposition基準にし、cross-tabでstripがhiddenからvisibleへ変わるconsent eventと言語切替で高さが変わるeventの両方で再配置する。同意未決定のdesktopではFooterを通常flowへ戻し、決定後だけ既存fixed Footerへ復帰させる。320/360/375/390/414/720/721/768/1280/1440pxと決定論的なpending/ready記事詳細、Search open中のcross-tab state変更と言語切替で、全priority surface・focusable・FooterとのDOMRect非交差、center hit target、tabbar geometry、JA/EN accessible name、keyboard focus、390/375pxのFeatured `y<=420`を固定した。
 - **教訓**: privacy選択を明示する必要があっても、first-use consentをdecision surfaceへ重ねてよい理由にはならない。modalでない同意面はviewportごとの例外を作らず通常flowに置き、同意control自身の寸法だけでなく、主要判断card、記事本文、focusable、fixed navigationとの非交差とhit-testingを実ブラウザで検証する。truthful copy、同等の許可・拒否、Privacyへのreturn path、fail-closedな第三者script gateはcompact化と同時に維持する。
 
-### LL-439: 公開markerのsession UUIDだけをauthorityにすると第三者がclearanceを偽造できる
-- **事象**: exact-head独立レビューmarkerは外部reviewerのfull session UUIDを要求していたが、GitHub review/commentの`user.login`と`author_association`を正規化時に破棄していた。repositoryはpublicで、過去の正当なmarker本文からreviewer UUIDを読めるため、第三者commenterが同じ`by=`をコピーしてgateを通せる状態だった。
-- **根本原因**: session UUIDをreviewer identityとみなし、markerを投稿したGitHub authorのtrust境界を別のevidenceとして検証していなかった。`by=`は公開文字列であり、GitHub accountとの暗号的な結び付きではない。
-- **対策**: review/comment evidenceの`user.login`と`author_association`をbodyと一緒に正規化し、repository ownerのloginかつ`author_association=OWNER`の場合だけstrict head・reviewer UUID・fail-dominates判定へ進める。untrusted authorはpassにもfailにも数えず、専用diagnosticで可視化する。正当markerを持つ既存PR #200/#203/#205がすべて`himiyosh`/`OWNER`であることをRESTで確認し、NONE、login不一致、association不一致、author欠落を回帰testに固定した。
-- **教訓**: 公開repositoryのreview gateはmarker本文だけをauthorityにしない。公開・再利用可能なsession ID、token-like label、署名のないmetadataはidentity proofではないため、providerが返すauthor evidenceとexpected sessionの両方をfail-closedで検証する。untrustedなfail markerもdenial-of-serviceへ使わせず、authoritative evidenceだけがpass/failへ影響するようにする。
-
 ### LL-440: 表示modeの操作面は切替buttonだけでなく各panel内の導線まで検証する
 - **事象**: arXivのCards/Compact切替buttonをmobileで45pxへ広げ、Cards panelの記事title linkも45pxへ揃えたが、Compact panelの`CompactRow` anchorは34pxのまま残った。E2EはCompactへ切り替えてpanel表示だけを確認したため、全Compact記事linkが44px未満でも通過した。
 - **根本原因**: view switch controlとactive panel内のreader-facing navigationを別々の操作契約として棚卸しせず、既定Cards modeのtarget寸法をalternate Compact modeへ横展開していなかった。
@@ -3037,7 +3036,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-459: generation identity、renderer shell、route objectを別のcontent identityにする
 - **事象**: 初期shadow contractはgeneration revisionをrenderer shell digestと同一にした。shellはcode release間で不変なため、複数data commitが同じrevisionになりactivationできなかった。uploadも5MiB route objectをWorker内でbuffer/hashする実装になり、Freeの10ms CPU制約と矛盾した。
 - **根本原因**: code asset identity、data generation identity、route content identityを1つのhashへ潰し、R2がstream upload時にSHA-256 checksumを検証できる契約を利用していなかった。
-- **対策**: generationはexact source commitから独立に導出し、shellと各JA/EN routeは別content-addressed keyにした。route shardはvariant byte数を保持し、serve時のR2 object sizeを照合する。authenticated uploadは`Content-Length`を先にboundし、request streamをR2へ渡してR2 SHA-256 checksumとread-back metadataで検証する。専用D1はexact source commit、coverage route family、budget、active/previous revisionを保存する。
+- **対策**: generationはexact source commitから独立に導出し、shellと各JA/EN routeは別content-addressed keyにした。route shardはvariant byte数を保持し、serve時のR2 object sizeを照合する。authenticated uploadは`Content-Length`を先にboundし、検証streamを同じbyte数のCloudflare `FixedLengthStream`へpipeしてからR2へ渡し、R2 SHA-256 checksumとread-back metadataで検証する。専用D1はexact source commit、coverage route family、budget、active/previous revisionを保存する。
 - **教訓**: immutable deliveryではcode shell、data snapshot、object bytesのidentityを分離し、pointerだけをatomicに切り替える。Free Workerをbridgeに使う場合、大きなpayloadをJS memoryでhashせずstorage側のchecksum検証とstreamingを使い、quota計算に必要なbyte数はmanifestへ明示する。
 
 ### LL-460: 固定行数clampは将来のfeedタイトル全文表示を保証しない
@@ -3045,6 +3044,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 4行なら当時のcorpus全件が収まるという観測値を、今後もtitle全文を表示できる不変条件として扱った。feed titleの長さは変化するため、固定最大行数を増やしても別の長いtitleで再びclippingする。
 - **対策**: 下方向へ伸びられるmobile Timeline cardだけはfixed clampとhidden overflowを解除し、標準の自然な折り返しへ戻す。SpotlightとTop 3のfirst-view向けclampは維持する。E2Eは現在dataに依存せず、長い日本語stress titleをvisible Timeline cardへ注入して390/375/360pxの`scrollHeight <= clientHeight`、44px操作面、横overflow不在を検証する。
 - **教訓**: 可変な外部contentの全文表示contractを「現在の最大行数」で表現しない。縦に成長できるcomponentは自然なwrapとcontent-driven sizingを使い、行数clampはfirst-view密度など明示的に省略を許すsurfaceへ限定する。回帰testは現行corpusだけでなく、契約境界を超えるdeterministic stress inputを含める。
+
+### LL-461: R2へ渡す変換streamはContent-Length headerだけでは既知長にならない
+- **事象**: 初回incremental shadow bootstrapは2,731 detail routeのJA/EN parity、data commit、36件のdeferred effects flushまで成功したが、最初のR2 shell uploadがHTTP 502となった。remote R2は0 object、D1 generationは0件・active/previousはnullのまま保たれた。
+- **根本原因**: upload request自体は正しい`Content-Length`を持っていたが、`boundedPassthroughStream()`が返すgeneric `ReadableStream`を`R2Bucket.put()`へ渡した時点で既知長のruntime metadataが失われた。unit testのMemoryR2は任意streamをbufferして受理したため、Cloudflare production runtimeのknown-length制約を再現していなかった。
+- **対策**: declared lengthとmax sizeを検証する既存streamを、同じ長さで構築したCloudflare `FixedLengthStream`へpipeし、R2にはそのreadable側を渡す。R2 checksum、content-addressed key、metadata read-back、5MiB上限は維持する。testは注入したfixed-length factoryのreadableがR2 fakeへ渡り、declared byte数と一致することを検証する。client errorもboundedなstructured response detailを保持する。
+- **教訓**: HTTP requestに`Content-Length`があっても、そのbodyをgeneric transformへ通した後のstreamがstorage APIにとって既知長とは限らない。streaming uploadのproduction parityは「ReadableStreamを渡した」だけで証明せず、platform固有のlength metadataと実remote object creationを確認する。bootstrap失敗時はR2/D1の不変状態をread-backし、partial activationがないことを先に証明してから修正する。
+
+### LL-462: session固有の必須PR clearanceは品質gateを補強せず運用停止を増やす
+- **事象**: repository ownerが、外部sessionの承認コメント、identity variable、専用CI job、merge直前CLIから成る必須clearanceを、時間・token消費が過大なblocking dependencyとして全面廃止するよう指示した。
+- **根本原因**: branch-flow、unit/typecheck、Web build、E2E、secret/security checks、Publisher CAS、明示承認境界という客観的gateとは別に、sessionの生存・コメント投稿・CI再実行へ依存する合成手続きをmerge条件へ追加していた。
+- **対策**: CI job、CLI、dedicated tests、instructions、README、agentic rules、Actions variablesを同じreleaseで除去し、通常の品質jobとbranch-flowが残ること、削除済みtoken・pathが運用面へ戻らないことを回帰testで固定する。通常のGitHub reviewと任意のcode/security reviewは利用可能なまま維持する。
+- **教訓**: merge policyはrepository内で観測できる客観的品質・安全gateと明示承認境界を中心にし、session固有identityやコメント形式を必須clearanceへ使わない。廃止時はcode、docs、tests、settingsをatomicに棚卸しし、手続きだけが残って再起動しないようにする。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

@@ -34,6 +34,7 @@ Choose the mode from the user's request. If no mode is stated, use `audit` for r
 - Perform release preparation, CI diagnosis, pull request creation and follow-through, deployment verification, and safe branch/worktree cleanup.
 - Require explicit approval in the current request before merge, deploy, production-data mutation, or branch/worktree deletion, unless repository instructions already record approval for that exact operation.
 - Feature/fix/docs PRs target `develop`. Release PRs use `develop -> main` with a merge commit; only the resulting `main` update triggers Cloudflare Pages production. Do not add a GitHub Actions deployment path.
+- Use ordinary GitHub review and optional code or security review when risk warrants it. They remain advisory inputs and do not replace objective CI gates or require session-bound clearance comments.
 - Cloudflare Worker deployment remains a separate explicitly approved operation.
 
 ## Hallmark UI Design Guidance

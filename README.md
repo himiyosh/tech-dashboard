@@ -26,7 +26,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | 作業 | コマンド | 期日の気付き方 |
 |---|---|---|
 | `COPILOT_PAT` 更新 | `cd worker && npx wrangler secret put COPILOT_PAT` | `/status` Worker Health が `summarize disabled` |
-| (shadow) detail-only増分配信の検証 | `docs/07-incremental-serving-shadow.md` の手順 | 専用R2/D1とshadow Workerを明示承認後に準備した場合だけ。既定はoff |
+| (shadow) detail-only増分配信の検証 | `docs/07-incremental-serving-shadow.md` の手順 | 専用private R2/D1とshadow Workerは準備済み。既定はoffで、deploy/bootstrapは明示承認時だけ |
 | (緊急) 手動収集 | `npm run collect` | バックログ滞留時 (例: 1h に 5 件以上の新着) |
 | (緊急) cache 済み要約の再反映 | `npm run summaries:apply-cache` | `data/_summary-cache.json` に有効な bilingual summary があるのに `data/index.json` 側が未反映の時 |
 | (緊急) 不足要約のバルク補充 | `SUMMARIZE_MAX_NEW=400 npx tsx --env-file-if-exists=.env.local scripts/resummarize.mjs` | 過去エントリの `summaryJa` / `summaryEn` がまとめて欠けている時 |
@@ -148,7 +148,6 @@ npx -y modern-web-guidance@latest retrieve "accessibility,css,performance,securi
 | Typecheck | `npm run typecheck` | TypeScript 型チェック | 速い |
 | Worker Typecheck | `npm --prefix worker run typecheck && npm --prefix worker-summarizer run typecheck && npm --prefix worker-body run typecheck` | Cloudflare Worker / Queue consumer の型チェック | 速い |
 | Unit | `npm test` | Vitest による関数単位の検証 (要約 JSON パース、Web ロジック、`data/index.json` スキーマ) | 速い (~1s) |
-| Independent review | `npm run check:independent-review -- --repo <owner/name> --pr <number> --head <sha> --merger-session <uuid> --reviewer-session <uuid>` | 現在openのPR、exact head、外部reviewer、統括session、厳格なmarkerをREST evidenceで検証 | 速い |
 | Web build | `npm run build:web` | Cloudflare Pages と同じ Astro + Pagefind build を実行し、30秒 heartbeat、phase別 CPU/RSS・route familyを記録。Cloudflare Freeの20,000 filesから2,000 filesの安全余裕を引いた18,000 files、20分build ceilingから2分の余裕を引いた18分、sitemap/canonical HTML parity、redirect除外、内部detail link実在をfail-closedで検証 | 中程度 |
 | E2E | `npm run test:e2e` | Playwright (Chromium) でトップ表示・記事詳細・言語切替を検証 | 中程度 (~30s + build) |
 | 5分判断ジャーニー | `node --import tsx scripts/measure-decision-journey.ts` | production Web buildを1回だけ生成してPlaywright previewへ再利用し、desktop/mobileのHome判断面、exact検索または正直な0件回復、RSS/OPML発見、実404回復、optionalな要約待ち状態を計測。step到達、操作上限、document navigation列、viewport/scroll、正確な回復経路を合否判定に使います。経過msは現行runのstdout JSONにだけ情報値として出し、履歴baselineへ保存、過去runと比較、delta警告・失敗には使いません。JSONは64KiB以下、`fieldData:false`でありfield dataやCore Web Vitalsではありません。検証済みの`web/dist`を再利用する場合だけ`--reuse-build`を指定 | 中程度 |
@@ -174,11 +173,9 @@ protected branch への直接 commit / push は通常禁止です。当該セッ
 
 in-place session では branch と index が全 turn で共有されます。Git mutation を行う前に session automation と先行 turn を停止し、current branch、status、push 先 ref を直前に再確認してください。
 
-CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的のみ**で、デプロイは行いません。main/develop pushと両branch向けPRでbranch-flow gateを実行し、feature→mainを拒否します。push / PR ごとに dependency audit (soft gate) + `typecheck + npm test + npm run build:web + npm run test:e2e` を実行し、Cloudflare Pages の build 失敗を事前に検知します。PR eventではexact-head独立レビューgateを独立jobで並列実行するため、marker待ちでgateが赤でもunit・typecheck・Web build・E2Eの品質結果を取得できます。
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的のみ**で、デプロイは行いません。main/develop pushと両branch向けPRでbranch-flow gateを実行し、feature→mainを拒否します。push / PR ごとに dependency audit (soft gate) + `typecheck + npm test + npm run build:web + npm run test:e2e` を実行し、Cloudflare Pages の build 失敗を事前に検知します。
 
-独立レビューCIはPR番号とhead SHAを`github.event.pull_request`から取得し、現在のPR state、head、review、issue commentをGitHub RESTから再取得します。`INDEPENDENT_REVIEW_MERGER_SESSION_ID`と`INDEPENDENT_REVIEW_REVIEWER_SESSION_ID`はGitHub Actions repository variablesへfull lowercase UUIDで設定し、両者を別sessionにしてください。markerはrepository ownerのGitHub accountから投稿され、REST evidenceが`author_association=OWNER`を返す場合だけsession UUIDの検査へ進みます。変数欠落、不正UUID、untrusted author、open PRのhead drift、marker欠落、stale marker、wrong reviewer、self-issued marker、exact-head fail marker、API失敗はすべてfail-closedです。
-
-marker投稿では新しいworkflowを自動起動しません。exact-head markerの投稿後は、同じheadの失敗runを再実行してください。古いrunの再実行時にPRが既にclosedなら、RESTのcurrent stateを確認したうえでgate stepだけをskipします。PRがopenのままheadだけ変わった場合はstale runを通さず、新しいheadへのreview requestとmarkerが必要です。CIの成功はmerge直前のlocal exact-head gateを置き換えません。
+通常の GitHub review と任意の code review / security review は、変更リスクに応じて引き続き利用できます。ただし session 固有の承認コメントや repository variable を使う専用 clearance は CI / merge の必須条件にしません。
 
 現時点の dependency audit 既知事項:
 

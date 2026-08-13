@@ -33,8 +33,10 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 変更
 
+- Incremental shadowのR2 uploadを、bounded validation streamからCloudflare `FixedLengthStream`へ接続する既知長streamへ変更しました。最大5MiBのroute objectをWorker内でbufferせず、R2 SHA-256検証とread-backを維持したまま、production R2がgeneric変換streamをHTTP 502で拒否するbootstrap障害を解消します。
 - body Queueの単一記事で本文生成が繰り返し失敗してもservice全体を503にせず、entry warningとruntime failureを分離するようにしました。missing KV bindingは例外ではなく構造化JSON 503を返します。
 - 通常PRを`working branch -> develop`、production releaseを`develop -> main`へ分離し、CIが誤ったbase/headをfail-closedに拒否するbranch-flow gateを追加しました。default branchとPublisher/Pages production branchはmainのまま維持し、releaseはmerge commitでancestryを保ちます。
+- session 固有の承認コメントと repository variable に依存する必須 PR clearance を廃止しました。branch-flow、unit/typecheck、Web build、E2E、secret/security checks、Publisher CAS、deploy承認境界は維持し、通常の GitHub review と任意の code/security review は引き続き利用できます。
 - 毎時Publisherを変更data・route impact・schema・CASの増分gateへ分離し、全Astro/Pagefind/E2E reconciliationを毎日02:17 UTC・manual・PR CIへ移しました。impact manifestは変更detail/body IDと、pagination/category/tag/feed/sitemap/search/global shellの波及を記録し、unrelated historical detailをGitHub Actionsで毎時再renderしません。
 - Fully-free incremental servingの第2段階として、既存Astro detail pageをroute単位でJA/ENのcontent-addressed HTMLへpre-renderし、専用R2/D1 shadow generationへ手動dual-publishできる無効既定の経路を追加しました。production Pages、custom domain、scheduled Publisherは変更せず、detail-only coverage、traffic未観測、budget超過ではcutoverをfail-closedに拒否します。
 - staleな3,200 HTML route上限を撤去し、Cloudflare Freeの20,000 static filesから余裕を引いた18,000 files、18分build、RSS、route-family growth、crawl/detail parityのprovider-aligned gateへ置き換えました。productionはPages Git Integrationを維持し、Healthはcommitted indexとpublic metrics snapshotの一致を検証します。
@@ -46,7 +48,6 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - AI要約待ちの記事は、画面上の原題をHTML title・Open Graph・Twitter Card・構造化データへ揃え、要約未生成をdescriptionへ明示するようにしました。長い原題でも160文字以内に原題の先頭、出典、カテゴリ、準備中状態を残し、要約済み記事のmetadata、canonical URL、出典情報は従来どおり維持します。
 - Categoriesのcompact directory、arXivのsource filter・Cards/Compact切替、Home・カテゴリ・arXivのCards/Compact両表示の記事linkをmobileで45px以上の操作面に揃え、375px/390pxでも横overflowや操作密度を崩さないようにしました。
 - PrivacyのJA/EN説明へCloudflare Web Analytics (RUM)を明記し、任意のAdSense同意とは独立して通常閲覧時に性能・request情報がCloudflareへ送信される場合があること、保持とcontrolはCloudflareのpolicyに従うことを公開しました。カテゴリRSSの案内も実装済みの`/rss/<category>.xml`へ訂正しました。
-- PR CIでexact-head独立レビューgateを独立jobとして実行し、marker待ちでもunit・typecheck・Web build・E2Eを継続できるようにしました。event由来のPR番号・head、REST由来のcurrent open state、repository ownerかつ`author_association=OWNER`の投稿者境界、外部reviewer session、統括session、厳格なmarkerをfail-closedで検証します。closed済みPRのhistorical rerunだけはREST state確認後にskipし、open PRのmarker投稿後は同一headのfailed runを再実行します。CI成功後もmerge直前のlocal gateは必須です。
 - 初回の広告同意promptを全viewportで通常flow内のcompact stripへ変更し、Spotlight・Top 3・記事詳細・Search・focus可能なcontrolを覆わないようにしました。Google AdSenseが任意であること、拒否しても全機能を利用できること、外部mediaは別に読み込む場合があることを維持し、JA/ENの許可・拒否・プライバシー詳細controlは45px以上の操作面と具体的なaccessible nameを持ちます。別tabで広告選択が未決定へ戻った場合や言語切替でstrip高が変わった場合も、開いているSearchをstripの下へ再配置します。同意未決定のdesktopではFooterを通常flowへ戻し、Top 3のsource controlを覆わないようにします。決定後は既存の固定Footerへ復帰します。
 - AboutのMenu説明とPageHeroでRSS/JSON Feed購読を明示し、カテゴリRSSを含む購読actionだけをmobileでも44px以上の操作面で表示するようにしました。mobileではHero説明文より購読actionを優先し、既存metricと他のPageHero action契約は維持します。
 - カテゴリ画面の RSS link と autodiscovery を、query を無視する全体 feed から静的な `/rss/<category>.xml` へ変更しました。各 feed は該当カテゴリのAI要約済み記事だけを最大100件配信し、全体 `/rss.xml` は従来どおり維持します。
@@ -110,7 +111,6 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - evergreen記事がlive indexのcap (`PER_SOURCE_CAP` / `CATEGORY_CAPS` / `INDEX_LIMIT`) でevictされた際に、全ての閲覧面から消える問題を修正しました。capはevergreenを考慮せず永久にevictするため、archive行はtier `hot`のまま凍結し、LL-044でsummaryを剥がされた状態で固定されていました。結果として月別Archive (summary必須) にも個別記事ページ (warm由来) にも現れず、`data/archive/{YYYY-MM}.json`にだけ存在する記事になっていました。archive書き出し時にevergreenのsummaryを保持し、liveから外れたevergreen行をwarmへ昇格するようにし、既に凍結していた78件はgit履歴のsummaryを復元してwarmへ戻しました (R-022)。
 - Knowledgeの告知専用判定を、Gartner Magic Quadrantの評価記事、title途中の`Introducing`・`What's new`・`New Capabilities Announced`まで拡張しました。`Today, we're announcing`や一般的な`This post covers ... how you access it`という告知定型文は、保存済み除外をhow-toとして再採用する根拠にせず、具体的なsetup・API parameter・CLI手順は引き続き維持します。
 - ResearchカテゴリRSSを、HTMLのResearch一覧と同じarXiv除外predicateへ接続しました。`/rss/research.xml`はキュレーションResearchだけを配信し、全体RSS・JSON Feed・他カテゴリRSS・専用arXivレーンは従来の母集団を維持します。
-- PR merge の exact-head 独立レビュー gate が拒否した場合、valid・stale・wrong reviewer・self-issued・malformed marker と走査済み review/comment の件数を 1 行で診断できるようにしました。malformed は marker 形式の HTML comment を試みた本文だけを数え、`Independent-Review` / `INDEPENDENT-REVIEW` のような protocol 名の case variant も invalid clearance のまま malformed attempt として可視化し、通常の議論や script 名への言及は除外します。JSON・GitHub API・evidence normalization が結果生成前に失敗した場合は件数を生成しません。
 - RSSの共有serializerはXML 1.0で許可される文字だけをcode point単位で保持し、NUL、禁止制御文字、孤立surrogate、U+FFFE/U+FFFFを除去してからentity escapeするようにしました。全体RSSとカテゴリRSSは同じfail-safe契約を使い、日本語とastral Unicode、TAB/LF/CRを維持します。
 - mobileの購読action付きPageHeroは説明文を視覚的にだけ畳み、JA/ENのページ目的をHeroのaccessible descriptionとして支援技術へ残すようにしました。購読actionの44px操作面とcompactなHero高は維持します。
 - モバイル・タブレットで Search を開いた際、固定された閉じるボタンが JA/EN 言語切替を覆いながら背面の言語ボタンが Tab・支援技術から到達できていた問題を修正しました。Search は実測した Header 下端の下へ配置し、短いタブレット画面では残りの viewport 高へ検索結果を収めて内部スクロールできるようにしました。閉じる・言語切替の44px操作面、focus復帰、言語切替、検索状態を維持します。

@@ -22,6 +22,16 @@ import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../worker/src/publisher-contract
 
 const NOW_MS = Date.parse("2026-08-13T12:00:00.000Z");
 const encoder = new TextEncoder();
+const fixedLengthStreams = new WeakMap<ReadableStream<Uint8Array>, number>();
+
+function createTestFixedLengthStream(length: number): {
+  readable: ReadableStream<Uint8Array>;
+  writable: WritableStream<Uint8Array>;
+} {
+  const stream = new TransformStream<Uint8Array, Uint8Array>();
+  fixedLengthStreams.set(stream.readable, length);
+  return stream;
+}
 
 interface StoredObject {
   bytes: Uint8Array;
@@ -36,6 +46,7 @@ class MemoryR2 implements IncrementalR2Bucket {
   headCount = 0;
   putCount = 0;
   putReceivedStream = false;
+  putFixedLength: number | null = null;
 
   seed(
     key: string,
@@ -94,6 +105,9 @@ class MemoryR2 implements IncrementalR2Bucket {
   ): Promise<IncrementalR2Head> {
     this.putCount++;
     this.putReceivedStream = value instanceof ReadableStream;
+    this.putFixedLength = value instanceof ReadableStream
+      ? fixedLengthStreams.get(value) ?? null
+      : null;
     const bytes = value instanceof Uint8Array
       ? value
       : new Uint8Array(await new Response(value).arrayBuffer());
@@ -781,10 +795,15 @@ describe("incremental serving authenticated API", () => {
         },
       ),
       baseEnv(bucket, database),
-      { verifyToken: allowOidc, nowMs: NOW_MS },
+      {
+        verifyToken: allowOidc,
+        nowMs: NOW_MS,
+        createFixedLengthStream: createTestFixedLengthStream,
+      },
     );
     expect(put.status).toBe(201);
     expect(bucket.putReceivedStream).toBe(true);
+    expect(bucket.putFixedLength).toBe(bytes.byteLength);
     await expect(put.json()).resolves.toMatchObject({
       ok: true,
       key,
@@ -822,9 +841,15 @@ describe("incremental serving authenticated API", () => {
         },
       ),
       baseEnv(bucket, database),
-      { verifyToken: allowOidc, nowMs: NOW_MS },
+      {
+        verifyToken: allowOidc,
+        nowMs: NOW_MS,
+        createFixedLengthStream: createTestFixedLengthStream,
+      },
     );
     expect(mismatch.status).toBe(502);
+    expect(bucket.putCount).toBe(1);
+    expect(bucket.objects.size).toBe(0);
     await expect(mismatch.json()).resolves.toMatchObject({
       error: { code: "content_write_failed" },
     });

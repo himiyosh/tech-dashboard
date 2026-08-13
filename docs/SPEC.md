@@ -60,7 +60,7 @@
 | **KV `SUMMARY_CACHE`** | Cloudflare KV | `s:{sha256(url)}` の per-URL summary cache と `og.v1` 画像キャッシュを管理 |
 | **harness (ローカル実行版)** | Node.js 22 / TSX | `npm run collect` で同ロジックをローカル実行 (デバッグ用) |
 | **web (Astro)** | Astro 5 + Pagefind | SSG 静的サイト。`data/index.json` をビルド時に読んで全画面生成 |
-| **Worker `tech-dashboard-incremental-serving` (repository shadow only)** | Cloudflare Workers Free | 専用R2/D1のcontent-addressed detail HTMLをshadow配信する無効既定の別Worker。resource未作成、custom-domain routeなし、production未使用 |
+| **Worker `tech-dashboard-incremental-serving` (repository shadow only)** | Cloudflare Workers Free | 準備済みの専用private R2/D1へcontent-addressed detail HTMLをshadow保存する無効既定の別Worker。`mode=off`、`CUTOVER_APPROVED=0`、custom-domain routeなし、production未使用 |
 | **pre-push hook** | `scripts/git-hooks/pre-push` | ローカル品質ゲートを実行し、`RUN_WORKER_DEPLOY=1` の `main` push に worker/ 差分がある場合だけ `wrangler deploy` を実行 |
 | **MCP config** | VS Code Copilot Chat | `.vscode/mcp.json` で CF 公式 MCP 5 種を接続 |
 

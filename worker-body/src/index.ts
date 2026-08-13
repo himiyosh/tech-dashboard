@@ -67,6 +67,7 @@ const ISSUE_KEY = "body.issue.v1";
 const ISSUE_TTL_SECONDS = 6 * 60 * 60;
 const RECENT_ISSUE_MS = 60 * 60_000;
 const ERROR_REPEAT_THRESHOLD = 3;
+type IssueScope = "entry" | "runtime";
 // A body must be at least this many characters to count as real (guards against
 // a near-empty response slipping through as "complete").
 const MIN_BODY_CHARS = 120;
@@ -231,6 +232,20 @@ function issueSummary(err: unknown): string {
   return text.slice(0, 500);
 }
 
+export function classifyBodyIssueScope(err: unknown): IssueScope {
+  const summary = issueSummary(err).toLowerCase();
+  return summary.includes("incomplete or ungrounded body for ")
+    || summary.includes("insufficient source grounding for ")
+    || /empty\/short body \(\d+ chars\)/.test(summary)
+    ? "entry"
+    : "runtime";
+}
+
+function issueScopeFromRecord(issue: Record<string, unknown> | null): IssueScope {
+  if (issue?.scope === "entry" || issue?.scope === "runtime") return issue.scope;
+  return classifyBodyIssueScope(issue?.error ?? "");
+}
+
 async function writeIssue(
   env: Env,
   status: "retry" | "deferred",
@@ -239,7 +254,11 @@ async function writeIssue(
 ): Promise<void> {
   try {
     const existing = await env.SUMMARY_CACHE.get<Record<string, unknown>>(ISSUE_KEY, "json");
-    const sameIssue = existing?.status === status && existing?.url === job.url;
+    const scope = classifyBodyIssueScope(err);
+    const sameIssue =
+      existing?.status === status
+      && existing?.url === job.url
+      && issueScopeFromRecord(existing) === scope;
     const repeatCount =
       sameIssue && typeof existing?.repeatCount === "number" && Number.isFinite(existing.repeatCount)
         ? existing.repeatCount + 1
@@ -247,8 +266,9 @@ async function writeIssue(
     await env.SUMMARY_CACHE.put(
       ISSUE_KEY,
       JSON.stringify({
-        ok: status === "deferred" || repeatCount < ERROR_REPEAT_THRESHOLD,
+        ok: status === "deferred" || scope === "entry" || repeatCount < ERROR_REPEAT_THRESHOLD,
         status,
+        scope,
         at: new Date().toISOString(),
         url: job.url,
         source: job.entry.source,
@@ -278,10 +298,15 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
     if (url.pathname === "/health" && req.method === "GET") {
-      const issue = await env.SUMMARY_CACHE.get<Record<string, unknown>>(ISSUE_KEY, "json");
+      const cache = env.SUMMARY_CACHE;
+      const cacheBinding = Boolean(cache);
+      const issue = cache
+        ? await cache.get<Record<string, unknown>>(ISSUE_KEY, "json")
+        : null;
       const issueAt = typeof issue?.at === "string" ? Date.parse(issue.at) : Number.NaN;
       const recentIssue = Number.isFinite(issueAt) && Date.now() - issueAt <= RECENT_ISSUE_MS;
       const issueStatus = typeof issue?.status === "string" ? issue.status : null;
+      const issueScope = issueScopeFromRecord(issue);
       const repeatCount =
         typeof issue?.repeatCount === "number" && Number.isFinite(issue.repeatCount)
           ? issue.repeatCount
@@ -289,12 +314,15 @@ export default {
           ? 1
           : 0;
       const issueSeverity =
-        recentIssue && issueStatus === "retry" && repeatCount >= ERROR_REPEAT_THRESHOLD
+        recentIssue
+        && issueStatus === "retry"
+        && issueScope === "runtime"
+        && repeatCount >= ERROR_REPEAT_THRESHOLD
           ? "error"
           : recentIssue
           ? "warn"
           : "ok";
-      const ok = Boolean(env.SUMMARY_CACHE) && Boolean(env.COPILOT_PAT) && issueSeverity !== "error";
+      const ok = cacheBinding && Boolean(env.COPILOT_PAT) && issueSeverity !== "error";
       return Response.json(
         {
           ok,
@@ -303,10 +331,11 @@ export default {
           reasoningEffort: env.BODY_REASONING_EFFORT || DEFAULT_REASONING,
           timeoutMs: Number(env.BODY_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS),
           maxTokens: Number(env.BODY_MAX_TOKENS ?? DEFAULT_MAX_TOKENS),
-          cacheBinding: Boolean(env.SUMMARY_CACHE),
+          cacheBinding,
           copilotSecretConfigured: Boolean(env.COPILOT_PAT),
           recentIssue,
           issueSeverity,
+          issueScope,
           issue,
         },
         {

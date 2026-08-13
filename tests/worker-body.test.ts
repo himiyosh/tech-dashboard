@@ -19,8 +19,9 @@ import {
   cleanBodyText,
   type BodyPromptEntry,
 } from "../worker/src/body-generate.ts";
-import {
+import bodyWorker, {
   buildBodyCacheEntry,
+  classifyBodyIssueScope,
   isBodyEntryComplete,
 } from "../worker-body/src/index.ts";
 
@@ -39,6 +40,13 @@ const entry: BodyPromptEntry = {
   tags: ["llm", "cloudflare", "glm"],
   publishedAt: "2026-06-27T10:00:00.000Z",
 };
+
+function mockIssueKv(issue: Record<string, unknown> | null): KVNamespace {
+  return {
+    get: async (_key: string, type?: string) =>
+      type === "json" ? issue : issue === null ? null : JSON.stringify(issue),
+  } as unknown as KVNamespace;
+}
 
 describe("bodyCacheKeyForUrl (LL-115)", () => {
   it("b: プレフィックスの sha256 キーを返す", async () => {
@@ -157,6 +165,82 @@ describe("isBodyComplete (LL-115)", () => {
       },
       source,
     )).toBe(false);
+  });
+});
+
+describe("body consumer health issue scope", () => {
+  it("classifies content failures separately from runtime failures", () => {
+    expect(classifyBodyIssueScope(new Error("empty/short body (0 chars)"))).toBe("entry");
+    expect(classifyBodyIssueScope(new Error("incomplete or ungrounded body for https://example.com/x"))).toBe("entry");
+    expect(classifyBodyIssueScope(new Error("insufficient source grounding for https://example.com/x"))).toBe("entry");
+    expect(classifyBodyIssueScope(new Error("Copilot timeout"))).toBe("runtime");
+  });
+
+  it("keeps a repeated entry-specific failure visible without failing global health", async () => {
+    const response = await bodyWorker.fetch!(
+      new Request("https://tech-dashboard-body.example/health"),
+      {
+        SUMMARY_CACHE: mockIssueKv({
+          status: "retry",
+          at: new Date().toISOString(),
+          url: "https://example.com/pathological-entry",
+          repeatCount: 3,
+          error: "Error: empty/short body (0 chars)",
+        }),
+        COPILOT_PAT: "configured",
+      },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      recentIssue: true,
+      issueSeverity: "warn",
+      issueScope: "entry",
+    });
+  });
+
+  it("returns 503 for a repeated runtime failure", async () => {
+    const response = await bodyWorker.fetch!(
+      new Request("https://tech-dashboard-body.example/health"),
+      {
+        SUMMARY_CACHE: mockIssueKv({
+          status: "retry",
+          scope: "runtime",
+          at: new Date().toISOString(),
+          url: "https://example.com/runtime-failure",
+          repeatCount: 3,
+          error: "Error: Copilot timeout",
+        }),
+        COPILOT_PAT: "configured",
+      },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      issueSeverity: "error",
+      issueScope: "runtime",
+    });
+  });
+
+  it("fails closed with structured health when the cache binding is missing", async () => {
+    const response = await bodyWorker.fetch!(
+      new Request("https://tech-dashboard-body.example/health"),
+      {
+        SUMMARY_CACHE: undefined as unknown as KVNamespace,
+        COPILOT_PAT: "configured",
+      },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      cacheBinding: false,
+    });
   });
 });
 

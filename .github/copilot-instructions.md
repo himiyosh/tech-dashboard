@@ -224,6 +224,7 @@
 - 毎日 `02:17 UTC` と明示manual reconciliationは root / Worker typecheck、全 unit、Astro + Pagefind build、生成 Home / detail / metrics / archive / 404 の専用E2Eを実行する。PR CIは全UI・interaction E2Eを維持する。
 - production build / deployは移行slice中もCloudflare Pages Git Integrationを単一経路とし、GitHub Actionsからdeployしない。Workers Static Assetsへの切替は、同一artifactのpreview、custom domain、rollback、least-privilege tokenを別PRで検証できるまでfeature-gatedにする。
 - Web buildはHTML総数proxyでなく、Cloudflare Freeの20,000 static file ceilingから2,000 fileの余裕を引いた18,000 file target、20分build ceilingから2分の余裕を引いた18分target、RSS、route-family telemetry、sitemap/detail parityでfail-closedにする。
+- Queue consumerのpublic healthはservice全体の処理可能性を示す。同一entryのcontent生成失敗はrepeatしてもwarning/HTTP 200に留め、認証・binding・timeout等のruntime failureだけをrepeat時にHTTP 503とする。summary/body consumerは同じissue scope contractを使う。
 - bridge の KV write は publisher が必要とする `og.v1` だけを許可する。summary/body cache と heartbeat は Node publisher から書き込まない。新しい repository secret は追加せず、GitHub 操作は built-in `GITHUB_TOKEN`、bridge 認証は Actions OIDC を使う。
 - `tests/worker-config.test.ts`、`tests/free-plan-bridge.test.ts`、`tests/publisher-runner.test.ts`、`tests/publisher-impact.test.ts`、`npm --prefix worker run deploy -- --dry-run` で Free plan contract を検証する。
 
@@ -3015,6 +3016,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: protected branchの集合とintegration/releaseの方向を同一視し、project固有のbranch topologyをactive rule、remote ref、CI gateへ配線していなかった。scheduled Publisherがdefault branchでのみ動くため、default branchをdevelopへ変える単純対応もmain publisherを停止させる。
 - **対策**: tech-dashboard固有のR-001cを追加し、feature→develop、develop→main release、main→develop backsyncをfail-closedなscriptとCIで検証する。default branchとPublisher/Pages production branchはmainのまま維持し、PR作成時だけbase developを明示する。release mergeはmerge commitでancestryを保ち、fingerprint rolloutはdevelop integration時でなくdevelop→mainのexact release headに対して行う。
 - **教訓**: 「developも保護する」は「developをintegration branchとして使う」と同義ではない。branch flowはremote branchの存在、PR base/head matrix、CI trigger、merge strategy、scheduled workflowのdefault-branch制約、production rollout時点をproject-localな実行contractとして揃える。
+
+### LL-457: body consumerにもentry/runtime issue scopeを横展開する
+- **事象**: release後のbody Queueは18件から0件まで正常にdrainしたが、1件のArs Technica記事が空本文を3回返しただけでbody `/health`がHTTP 503になった。site/Publisher/bridgeは正常で、service全体の停止ではなかった。
+- **根本原因**: summarizerではLL-181によりentry-specific failureとruntime failureを分離済みだったが、body consumerは`repeatCount >= 3`だけでglobal errorにしていた。同じ非同期consumer familyへの横展開が漏れていた。cache binding欠落時もhealth判定前に`.get()`して構造化503へ到達できなかった。
+- **対策**: body issue recordへ`entry|runtime` scopeを保存し、旧recordもerror textから復元する。empty/short body、incomplete/ungrounded body、insufficient source groundingはentry warning/HTTP 200、認証・timeout等のruntime repeatだけHTTP 503とする。binding存在確認後だけissueを読み、missing bindingはJSON 503を返す。legacy marker、runtime repeat、missing bindingをunit testへ固定する。
+- **教訓**: 同型consumerを分離してもhealth semanticsは自動共有されない。あるconsumerでservice availabilityとpathological itemを分けたら、兄弟consumerのissue write/read、legacy marker、binding failureを全て横断監査し、単一itemでglobal healthを落とさない。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

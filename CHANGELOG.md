@@ -33,6 +33,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 変更
 
+- body Queueの単一記事で本文生成が繰り返し失敗してもservice全体を503にせず、entry warningとruntime failureを分離するようにしました。missing KV bindingは例外ではなく構造化JSON 503を返します。
 - 通常PRを`working branch -> develop`、production releaseを`develop -> main`へ分離し、CIが誤ったbase/headをfail-closedに拒否するbranch-flow gateを追加しました。default branchとPublisher/Pages production branchはmainのまま維持し、releaseはmerge commitでancestryを保ちます。
 - 毎時Publisherを変更data・route impact・schema・CASの増分gateへ分離し、全Astro/Pagefind/E2E reconciliationを毎日02:17 UTC・manual・PR CIへ移しました。impact manifestは変更detail/body IDと、pagination/category/tag/feed/sitemap/search/global shellの波及を記録し、unrelated historical detailをGitHub Actionsで毎時再renderしません。
 - staleな3,200 HTML route上限を撤去し、Cloudflare Freeの20,000 static filesから余裕を引いた18,000 files、18分build、RSS、route-family growth、crawl/detail parityのprovider-aligned gateへ置き換えました。productionはPages Git Integrationを維持し、Healthはcommitted indexとpublic metrics snapshotの一致を検証します。

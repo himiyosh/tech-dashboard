@@ -420,11 +420,9 @@ Planner / Builder / Reviewer / Security / QA / UX・a11y / Self-critique。
 ### 6.10 日常判断に外部承認を要求する設計は、それ自体が停止要因である（MUST）
 
 - 承認者が不在なら program は止まり続ける。実測では、検証をすべて通過した成果物が承認待ちのまま 2 日間放置された。
-- **次のすべてを満たす merge は統括の判断で実行してよいという常設承認を、世代交代のたびに後継へ明示的に引き継ぐ。** (1) 競合がなく draft でない、(2) 必須の自動検証がすべて成功、(3) レビュー対象と同一の head に対する独立レビューで blocking な指摘が残っていない、(4) 本番反映、秘密情報、権限、課金、公開範囲の変更を含まない、(5) merge 直前に取り直した head がレビューした head と一致する。
+- **次のすべてを満たす merge は統括の判断で実行してよいという常設承認を、世代交代のたびに後継へ明示的に引き継ぐ。** (1) 競合がなく draft でない、(2) 必須の自動検証がすべて成功、(3) 実施した通常reviewにblockingな指摘が残っていない、(4) 本番反映、秘密情報、権限、課金、公開範囲の変更を含まない、(5) merge直前に取り直したheadが検証済みheadと一致する。
 - 最後の head 一致条件は省略しない。承認が必要なのは 4 番目の条件に該当する変更だけとする。判断を保留したまま次へ進むことも、放置と同じ停止として扱う。
-- independent review marker の `by=` には投稿 session 自身の exact session ID だけを書く。authority transfer artifact は original reviewer に new head marker の再発行を依頼する根拠であり、original reviewer の ID を使う代理投稿の許可ではない。base だけが動いた update-branch でも original reviewer が exact new head を再確認して再発行する。delta hash 同一の確認は 1 turn で完了させる。
-- original reviewer が durable に応答不能な場合だけ、移譲を受けた replacement reviewer が自身の session ID で marker を発行し、authority transfer artifact と exact-head verification を参照する。reviewer と merger は必ず異なる session とし、自己レビュー marker を無効とする。repository variables で expected reviewer / merger identity を CI が強制し、variables 未設定の repository では marker gate を「有効」とみなさない。
-- 実測では merger が review していない別 session の ID を `by=` に書き、別の marker 2 件は merger 自身の ID で自己レビューになっていた。transfer の技術論証が妥当でも identity gate 自体を弱めた手続きは独立 review の証拠にならない。
+- 通常のGitHub review、code review、security reviewはリスクに応じて任意に利用できるが、session固有の承認コメント、identity変数、専用CI job、再実行手順をmerge条件へ追加しない。具体的なblocking指摘がある場合は解消し、reviewが実施されていないこと自体を失敗条件にしない。
 - **autopilot で動く session はユーザーへの問いかけや承認 prompt を呼ばない。** 応答が返らないまま turn が終わり、停止するためである。判断が必要なら、明文化された基準で自分で決めて実行するか、決められない理由を exact blocker として上位へ message で報告する。
 - message は相手の turn を必ず起こすが、autopilot での問いかけには応答が返らない。この禁止を child の kickoff に明記して継承させる。
 

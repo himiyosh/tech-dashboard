@@ -452,7 +452,7 @@ Publisher は実行ごとに `data/index.json` の `health` フィールドに�
 
 `https://tech-dashboard-harness.himiyosh.workers.dev/health` は bridgeのbindingとOIDC設定が揃っていれば `status=bridge` を返し、欠落時は `HTTP 503` でfail-closeします。Publisherの鮮度と成否はGitHub Actions APIの定期runと`Publisher / publish`だけを対象にし、診断用`Publisher / dry-run`は成功runとして数えません。data freshnessに加え、`data/index.json`のaggregate source telemetryも外形監視します。
 
-Queue consumer 単体の疎通は `https://tech-dashboard-summarizer.himiyosh.workers.dev/health` で確認できます。ここでは秘密値は返さず、binding / model / timeout 設定が有効かだけを公開します。Queue consumer の直近 retry / KV write cap defer は短期 TTL 付きで KV に記録され、recent retry は `HTTP 503` になります。
+Queue consumer単体の疎通はsummarizer/body各`/health`で確認できます。秘密値は返さず、binding/model/timeout設定だけを公開します。同一entryのcontent生成失敗はrepeatしてもwarning/HTTP 200、認証・binding・timeout等のruntime failureだけをrepeat時にHTTP 503とします。
 
 本番監視は `.github/workflows/worker-health.yml` が成功したPublisher完了後と6時間ごとの`:23`に `npm run health:prod` を実行します。workflowの完了、bridge、data freshness、summarizerに加え、public `/metrics.json.indexGeneratedAt`がcommitted `data/index.json.generatedAt`へ追いついたことを確認します。Publisher直後だけ最大15分bounded waitし、定期checkは即時fail-closedです。Publisher失敗時の同内容のHealth failureを毎時重ねません。手元からも同じチェックを実行できます。
 

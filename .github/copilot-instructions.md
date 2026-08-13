@@ -3063,6 +3063,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: PUT時のFixedLengthStream、R2 SHA-256 checksum、custom metadata、bounded size検証を維持し、read-backは同じ認証endpointからGETした実bytesの長さとSHA-256をclient側で再計算する。成功応答に`etag`/`content-length`が無くても通り、同長digest mismatchとlength mismatchはfail-closedになるdeterministic testを追加する。
 - **教訓**: content-addressed storageのread-back検証をedgeが合成・正規化し得るHTTP headerだけへ依存させない。保存済みobjectの実bytesをboundedに読み戻してcontent identityを再計算し、headerは補助telemetryとして扱う。generic errorを追加する場合もstatus、期待/実byte数、期待/実digestを秘密値なしで出し、次のremote failureを同じ一文へ潰さない。
 
+### LL-464: browser journeyの検索queryへ可視provenance badgeを混ぜない
+- **事象**: current dataの先頭Timeline記事が別言語title fallbackかつpackage versionだけの原題だったため、decision journeyがlink全体の`innerText()`から`原題 EN langchain-openai==1.5.0`をqueryにした。badge除去後の`langchain-openai==1.5.0`もPagefindのexact候補にならず、desktop/mobileの後続3stepを実行できなかった。通常の検索・RSS・UI E2E 167件は成功していた。
+- **根本原因**: 複合linkの可視textを記事titleそのものと同一視し、`LanguageFallbackBadge`とexternal-link hintをtest queryへ含めていた。さらに最初のcardを無条件に選び、package/version identifierのような全文検索に向かないtitleを候補から除外していなかった。accessible/readableなprovenance copyはUIとして正しいが、検索対象のresource titleとexact search fixtureは別の意味単位である。
+- **対策**: journeyはactive languageのtitle spanをcloneし、既知のprovenance badgeとexternal-link hintだけを除去する。そのうえで先頭12件をboundedに走査し、十分な日本語本文または複数wordを持ち、`=`等のidentifier構文を含まないreader-facing titleだけをexact queryへ使う。候補が無いcorpusは既存のtruthful zero-result回復を検証する。coldなPagefind hydrateもstep全体の20秒deadline内で完了できるよう、exact result待機を8秒にboundした。実current dataでdesktop/mobile全5stepをretryなしで完了させる。
+- **教訓**: 複合linkの`innerText()`やDOM先頭をそのままsearch query/identityへ使わない。badge、状態、new-tab hintを含むvisible labelと検索対象titleを分け、候補集合から検索fixtureとして安定したresourceを明示的に選ぶ。条件付きcorpusではbounded scanとzero-result fallbackの両方をcontractにする。
+
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。
 3. 古くなった LL/R は更新または削除する（誤情報を残さない）。

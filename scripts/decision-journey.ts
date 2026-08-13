@@ -185,6 +185,36 @@ const EVIDENCE_MAX_STRING_LENGTH = 320;
 const EVIDENCE_MAX_ARRAY_LENGTH = 12;
 const EVIDENCE_MAX_OBJECT_KEYS = 24;
 
+async function readerFacingTitle(link: Locator): Promise<string> {
+  return link
+    .locator(":scope > .i18n-ja:visible, :scope > .i18n-en:visible")
+    .first()
+    .evaluate((node) => {
+      const clone = node.cloneNode(true) as HTMLElement;
+      clone
+        .querySelectorAll(
+          ".language-fallback-badge, [data-external-link-hint]",
+        )
+        .forEach((element) => element.remove());
+      return clone.textContent?.replace(/\s+/gu, " ").trim() ?? "";
+    });
+}
+
+export function isExactSearchTitleCandidate(title: string): boolean {
+  const normalized = title.replace(/\s+/gu, " ").trim();
+  if (
+    normalized.length < 8
+    || normalized.length > 160
+    || /[=<>{}]/u.test(normalized)
+  ) {
+    return false;
+  }
+  const hasJapanese = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
+    .test(normalized);
+  const wordCount = normalized.match(/[\p{L}\p{N}]+/gu)?.length ?? 0;
+  return hasJapanese ? normalized.length >= 10 : wordCount >= 2;
+}
+
 function elapsedSince(startedAt: number): number {
   return Math.max(0, Math.round(performance.now() - startedAt));
 }
@@ -574,11 +604,16 @@ function journeyStepDefinitions(
           waitUntil: "domcontentloaded",
           timeout: 15_000,
         });
-        const candidate = page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first();
-        if (await candidate.count()) {
+        const candidates = page.locator(TIMELINE_ENTRY_LINK_SELECTOR);
+        const candidateCount = Math.min(await candidates.count(), 12);
+        for (let index = 0; index < candidateCount; index += 1) {
+          const candidate = candidates.nth(index);
           const href = await candidate.getAttribute("href");
-          const title = (await candidate.innerText()).trim();
-          if (href && title) runtime.exactSearchCandidate = { href, title };
+          const title = await readerFacingTitle(candidate);
+          if (href && isExactSearchTitleCandidate(title)) {
+            runtime.exactSearchCandidate = { href, title };
+            break;
+          }
         }
 
         const visibleSearchTrigger = page
@@ -606,7 +641,7 @@ function journeyStepDefinitions(
           const exactHit = settledPanel.locator(
             `.search-hit[href="${runtime.exactSearchCandidate.href}"]`,
           );
-          await exactHit.waitFor({ state: "visible", timeout: 2_000 });
+          await exactHit.waitFor({ state: "visible", timeout: 8_000 });
           const geometry = await visibleGeometry(exactHit);
           if (!geometry.intersectsViewport) {
             throw new Error("Exact search result does not intersect the viewport");

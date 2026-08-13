@@ -39,8 +39,27 @@ const DEFAULT_PAGES_FALLBACK_ORIGIN =
   "https://tech-dashboard-6a7.pages.dev";
 const MAX_SHELL_ASSET_BYTES = 5 * 1024 * 1024;
 const UPLOAD_PROGRESS_INTERVAL = 100;
+const UPLOAD_MAX_ATTEMPTS = 3;
+const UPLOAD_RETRY_BASE_DELAY_MS = 1_000;
 
 type ProgressLogger = (message: string) => void;
+type RetrySleep = (ms: number) => Promise<void>;
+
+interface UploadRetryOptions {
+  onRetry?: ProgressLogger;
+  sleepImpl?: RetrySleep;
+}
+
+class RetryableUploadError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RetryableUploadError";
+  }
+}
+
+function isTransientUploadStatus(status: number): boolean {
+  return status === 408 || status === 429 || (status >= 500 && status <= 599);
+}
 
 interface BundleObject {
   digest: string;
@@ -604,28 +623,44 @@ export async function prepareIncrementalGeneration(
   };
 }
 
-export async function uploadAndVerify(
+async function defaultRetrySleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function uploadAndVerifyOnce(
   requester: IncrementalShadowRequester,
   key: string,
   bytes: Uint8Array,
   contentType: string,
 ): Promise<void> {
   const digest = parseContentKey(key).digest;
-  const response = await requester.request(`${API_PREFIX}/content/${key}`, {
-    method: "PUT",
-    headers: {
-      "content-length": String(bytes.byteLength),
-      "content-type": contentType,
-      "x-content-sha256": digest,
-    },
-    body: bytes,
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  });
+  let response: Response;
+  try {
+    response = await requester.request(`${API_PREFIX}/content/${key}`, {
+      method: "PUT",
+      headers: {
+        "content-length": String(bytes.byteLength),
+        "content-type": contentType,
+        "x-content-sha256": digest,
+      },
+      body: bytes,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch (error) {
+    throw new RetryableUploadError(
+      `incremental upload ${key} request failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
   if (!response.ok) {
     const detail = (await response.text()).slice(0, 500);
-    throw new Error(
-      `incremental upload ${key} failed with HTTP ${response.status}: ${detail}`,
-    );
+    const message =
+      `incremental upload ${key} failed with HTTP ${response.status}: ${detail}`;
+    if (isTransientUploadStatus(response.status)) {
+      throw new RetryableUploadError(message);
+    }
+    throw new Error(message);
   }
   const result = await response.json() as {
     key?: unknown;
@@ -639,16 +674,37 @@ export async function uploadAndVerify(
   ) {
     throw new Error(`incremental upload ${key} returned inconsistent metadata`);
   }
-  const readBack = await requester.request(`${API_PREFIX}/content/${key}`, {
-    method: "GET",
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  });
-  if (!readBack.ok) {
-    throw new Error(
-      `incremental upload ${key} failed read-back verification with HTTP ${readBack.status}`,
+  let readBack: Response;
+  try {
+    readBack = await requester.request(`${API_PREFIX}/content/${key}`, {
+      method: "GET",
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch (error) {
+    throw new RetryableUploadError(
+      `incremental upload ${key} read-back request failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
     );
   }
-  const returned = new Uint8Array(await readBack.arrayBuffer());
+  if (!readBack.ok) {
+    const message =
+      `incremental upload ${key} failed read-back verification with HTTP ${readBack.status}`;
+    if (isTransientUploadStatus(readBack.status)) {
+      throw new RetryableUploadError(message);
+    }
+    throw new Error(message);
+  }
+  let returned: Uint8Array;
+  try {
+    returned = new Uint8Array(await readBack.arrayBuffer());
+  } catch (error) {
+    throw new RetryableUploadError(
+      `incremental upload ${key} read-back body failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
   const returnedDigest = `sha256:${rawSha256(returned)}`;
   if (
     returned.byteLength !== bytes.byteLength
@@ -659,6 +715,35 @@ export async function uploadAndVerify(
         + `expected digest=${digest} bytes=${bytes.byteLength}; `
         + `got digest=${returnedDigest} bytes=${returned.byteLength}`,
     );
+  }
+}
+
+export async function uploadAndVerify(
+  requester: IncrementalShadowRequester,
+  key: string,
+  bytes: Uint8Array,
+  contentType: string,
+  options: UploadRetryOptions = {},
+): Promise<void> {
+  const sleepImpl = options.sleepImpl ?? defaultRetrySleep;
+  for (let attempt = 1; attempt <= UPLOAD_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      await uploadAndVerifyOnce(requester, key, bytes, contentType);
+      return;
+    } catch (error) {
+      if (
+        !(error instanceof RetryableUploadError)
+        || attempt === UPLOAD_MAX_ATTEMPTS
+      ) {
+        throw error;
+      }
+      const delayMs = UPLOAD_RETRY_BASE_DELAY_MS * attempt;
+      options.onRetry?.(
+        `[incremental-shadow] upload retry ${attempt + 1}/${UPLOAD_MAX_ATTEMPTS} `
+          + `for ${key} after ${delayMs}ms: ${error.message}`,
+      );
+      await sleepImpl(delayMs);
+    }
   }
 }
 
@@ -753,6 +838,7 @@ export async function publishIncrementalBundle(
       upload.key,
       bytes,
       upload.contentType,
+      { onRetry: progressLog },
     );
     completedUploads += 1;
     verifiedUploadBytes += bytes.byteLength;

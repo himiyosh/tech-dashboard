@@ -186,6 +186,98 @@ describe("incremental shadow publisher client", () => {
     ).rejects.toThrow(`got digest=sha256:${rawDigest(truncated)} bytes=${truncated.byteLength}`);
   });
 
+  it("retries a transient R2 write failure and then verifies the object", async () => {
+    const bytes = new TextEncoder().encode("retryable shadow object");
+    const raw = rawDigest(bytes);
+    const digest = `sha256:${raw}`;
+    const key = `objects/sha256/${raw}`;
+    const stable = readBackRequester(key, digest, bytes.byteLength, bytes);
+    let putAttempts = 0;
+    const requester = {
+      request: vi.fn(async (path: string, init?: RequestInit) => {
+        if (init?.method === "PUT" && putAttempts++ === 0) {
+          return new Response(
+            JSON.stringify({
+              ok: false,
+              error: {
+                code: "content_write_failed",
+                message: "R2 rejected or failed the content-addressed write",
+              },
+            }),
+            {
+              status: 502,
+              headers: { "content-type": "application/json" },
+            },
+          );
+        }
+        return await stable.request(path, init);
+      }),
+    };
+    const sleepImpl = vi.fn(async () => {});
+    const onRetry = vi.fn();
+
+    await expect(
+      uploadAndVerify(
+        requester,
+        key,
+        bytes,
+        "text/html; charset=utf-8",
+        { sleepImpl, onRetry },
+      ),
+    ).resolves.toBeUndefined();
+    expect(putAttempts).toBe(2);
+    expect(sleepImpl).toHaveBeenCalledWith(1_000);
+    expect(onRetry).toHaveBeenCalledWith(
+      expect.stringContaining(`upload retry 2/3 for ${key}`),
+    );
+  });
+
+  it("bounds repeated transient R2 write failures to three attempts", async () => {
+    const bytes = new TextEncoder().encode("bounded retry shadow object");
+    const raw = rawDigest(bytes);
+    const key = `objects/sha256/${raw}`;
+    const requester = {
+      request: vi.fn(async () =>
+        new Response("temporary R2 failure", { status: 502 })),
+    };
+    const sleepImpl = vi.fn(async () => {});
+
+    await expect(
+      uploadAndVerify(
+        requester,
+        key,
+        bytes,
+        "text/html; charset=utf-8",
+        { sleepImpl },
+      ),
+    ).rejects.toThrow(`incremental upload ${key} failed with HTTP 502`);
+    expect(requester.request).toHaveBeenCalledTimes(3);
+    expect(sleepImpl.mock.calls.map(([delay]) => delay)).toEqual([1_000, 2_000]);
+  });
+
+  it("does not retry a permanent upload contract rejection", async () => {
+    const bytes = new TextEncoder().encode("rejected shadow object");
+    const raw = rawDigest(bytes);
+    const key = `objects/sha256/${raw}`;
+    const requester = {
+      request: vi.fn(async () =>
+        new Response("invalid content contract", { status: 400 })),
+    };
+    const sleepImpl = vi.fn(async () => {});
+
+    await expect(
+      uploadAndVerify(
+        requester,
+        key,
+        bytes,
+        "text/html; charset=utf-8",
+        { sleepImpl },
+      ),
+    ).rejects.toThrow(`incremental upload ${key} failed with HTTP 400`);
+    expect(requester.request).toHaveBeenCalledTimes(1);
+    expect(sleepImpl).not.toHaveBeenCalled();
+  });
+
   it("bounds incremental upload progress diagnostics", () => {
     const reported: number[] = [];
     for (let completed = 1; completed <= 250; completed += 1) {

@@ -6,7 +6,8 @@ This document defines the second migration slice after PR #265. The repository i
 
 - production remains Cloudflare Pages Git Integration;
 - no custom-domain route is declared;
-- no R2 bucket or D1 database has been created;
+- the dedicated private R2 bucket and D1 database exist only for shadow data;
+- the separate Worker remains `off` with `CUTOVER_APPROVED=0`;
 - scheduled Publisher runs do not execute the shadow flow;
 - the manual `incremental_shadow` workflow input is the only repository trigger;
 - the generated coverage is detail-only and can never satisfy the full cutover gate.
@@ -85,6 +86,13 @@ Each served shadow route performs:
 
 The route body is never buffered or parsed in the Worker. `?lang=en` selects a pre-rendered English metadata object, preserving crawler-visible bilingual/social metadata without request-time HTML rewriting.
 
+Authenticated uploads validate the declared byte count while piping through a
+Cloudflare [`FixedLengthStream`](https://developers.cloudflare.com/workers/runtime-apis/streams/transformstream/#fixedlengthstream).
+This preserves the bounded streaming design while giving `R2Bucket.put()` the
+known-length stream required by the production runtime. R2 still verifies the
+SHA-256 supplied from the content-addressed key, and the Publisher performs a
+metadata read-back before activation.
+
 ## Free-tier budget
 
 Production traffic and account-wide Cloudflare usage could not be measured from public repository or public site data. This is an external blocker, so the tracked configuration remains `off`, `CUTOVER_APPROVED=0`, has no custom-domain route, and cannot enter `serve`.
@@ -142,42 +150,44 @@ npm run incremental:shadow -- \
 
 `bundle.json` records rendered routes, tombstones, a body-search delta artifact, incomplete coverage, and blockers. The search delta is evidence for the future hourly overlay; it is not yet consumed by the production search client.
 
-## External setup (requires new explicit approval)
+## Provisioned shadow resources and approved operations
 
-Do not run these steps during ordinary repository delivery. They create resources or deploy a Worker.
+The dedicated resources already exist. Do not run create commands again or
+replace their bindings:
+
+| Resource | Provisioned identity |
+|---|---|
+| private R2 bucket | `tech-dashboard-incremental-serving` |
+| D1 database | `tech-dashboard-incremental-serving` (`8b7cc7b8-3694-4bd2-ad1d-3173e078f138`) |
+| Worker | `tech-dashboard-incremental-serving` at `https://tech-dashboard-incremental-serving.himiyosh.workers.dev` |
+
+Any deploy, migration, or bootstrap still requires the explicit release
+approval defined by the repository rules.
 
 1. Use the existing local Wrangler OAuth login. Do not add a long-lived repository secret.
-2. Create a dedicated private R2 bucket:
+2. List R2, D1, and Worker deployments first and verify the identities above. If an identity differs, stop instead of creating or rebinding a resource.
+3. Copy `worker/wrangler.incremental.toml` to the ignored `worker/wrangler.incremental.local.toml` and replace only the all-zero `database_id` with the provisioned D1 ID above.
+4. Check the dedicated migrations and apply only pending files:
 
    ```bash
    cd worker
-   npx wrangler r2 bucket create tech-dashboard-incremental-serving
-   ```
-
-3. Create a dedicated D1 database:
-
-   ```bash
-   npx wrangler d1 create tech-dashboard-incremental-serving
-   ```
-
-4. Copy `worker/wrangler.incremental.toml` to the ignored `worker/wrangler.incremental.local.toml` and replace only the all-zero `database_id` with the ID returned by Wrangler.
-5. Apply the dedicated migration:
-
-   ```bash
+   npx wrangler d1 migrations list tech-dashboard-incremental-serving \
+     --remote \
+     --config wrangler.incremental.local.toml
    npx wrangler d1 migrations apply tech-dashboard-incremental-serving \
      --remote \
      --config wrangler.incremental.local.toml
    ```
 
-6. Deploy the separate Worker with `INCREMENTAL_SERVING_MODE=off` and no route:
+5. Deploy the separate Worker with `INCREMENTAL_SERVING_MODE=off` and no route:
 
    ```bash
    npx wrangler deploy --config wrangler.incremental.local.toml
    ```
 
-7. Save the exact returned `workers.dev` URL as the repository variable `INCREMENTAL_SHADOW_URL`. Do not guess the URL.
-8. Leave `INCREMENTAL_MEASURED_DAILY_REQUESTS` unset (or `0`) and `INCREMENTAL_TRAFFIC_VERIFIED_AT` unset until real Cloudflare traffic has been measured.
-9. Manually bootstrap after a full reconciliation:
+6. Keep the exact Worker URL in the repository variable `INCREMENTAL_SHADOW_URL`. Do not guess or reconstruct the URL.
+7. Leave `INCREMENTAL_MEASURED_DAILY_REQUESTS` unset (or `0`) and `INCREMENTAL_TRAFFIC_VERIFIED_AT` unset until real Cloudflare traffic has been measured.
+8. Manually bootstrap after a full reconciliation:
 
    ```bash
    gh workflow run publisher.yml \
@@ -186,7 +196,7 @@ Do not run these steps during ordinary repository delivery. They create resource
      -f incremental_shadow=true
    ```
 
-10. Change the separate Worker's mode to `shadow` only after bootstrap and deploy it under a new explicit approval. Compare `/__incremental-shadow/e/{id}/` against Pages. Do not add a custom-domain route.
+9. Change the separate Worker's mode to `shadow` only after bootstrap and deploy it under a new explicit approval. Compare `/__incremental-shadow/e/{id}/` against Pages. Do not add a custom-domain route.
 
 No Cloudflare API token is required by the Publisher. GitHub Actions authenticates to the shadow Worker with the existing OIDC audience, repository, main ref, workflow ref, event, subject, SHA, and time checks. The Worker alone holds the dedicated R2/D1 bindings.
 

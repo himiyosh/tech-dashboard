@@ -26,7 +26,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Cursor / Cline 
 | 作業 | コマンド | 期日の気付き方 |
 |---|---|---|
 | `COPILOT_PAT` 更新 | `cd worker && npx wrangler secret put COPILOT_PAT` | `/status` Worker Health が `summarize disabled` |
-| (shadow) detail-only増分配信の検証 | `docs/07-incremental-serving-shadow.md` の手順 | 専用R2/D1とshadow Workerを明示承認後に準備した場合だけ。既定はoff |
+| (shadow) detail-only増分配信の検証 | `docs/07-incremental-serving-shadow.md` の手順 | 専用private R2/D1とshadow Workerは準備済み。既定はoffで、deploy/bootstrapは明示承認時だけ |
 | (緊急) 手動収集 | `npm run collect` | バックログ滞留時 (例: 1h に 5 件以上の新着) |
 | (緊急) cache 済み要約の再反映 | `npm run summaries:apply-cache` | `data/_summary-cache.json` に有効な bilingual summary があるのに `data/index.json` 側が未反映の時 |
 | (緊急) 不足要約のバルク補充 | `SUMMARIZE_MAX_NEW=400 npx tsx --env-file-if-exists=.env.local scripts/resummarize.mjs` | 過去エントリの `summaryJa` / `summaryEn` がまとめて欠けている時 |

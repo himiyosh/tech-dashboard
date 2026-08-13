@@ -3037,7 +3037,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-459: generation identity、renderer shell、route objectを別のcontent identityにする
 - **事象**: 初期shadow contractはgeneration revisionをrenderer shell digestと同一にした。shellはcode release間で不変なため、複数data commitが同じrevisionになりactivationできなかった。uploadも5MiB route objectをWorker内でbuffer/hashする実装になり、Freeの10ms CPU制約と矛盾した。
 - **根本原因**: code asset identity、data generation identity、route content identityを1つのhashへ潰し、R2がstream upload時にSHA-256 checksumを検証できる契約を利用していなかった。
-- **対策**: generationはexact source commitから独立に導出し、shellと各JA/EN routeは別content-addressed keyにした。route shardはvariant byte数を保持し、serve時のR2 object sizeを照合する。authenticated uploadは`Content-Length`を先にboundし、request streamをR2へ渡してR2 SHA-256 checksumとread-back metadataで検証する。専用D1はexact source commit、coverage route family、budget、active/previous revisionを保存する。
+- **対策**: generationはexact source commitから独立に導出し、shellと各JA/EN routeは別content-addressed keyにした。route shardはvariant byte数を保持し、serve時のR2 object sizeを照合する。authenticated uploadは`Content-Length`を先にboundし、検証streamを同じbyte数のCloudflare `FixedLengthStream`へpipeしてからR2へ渡し、R2 SHA-256 checksumとread-back metadataで検証する。専用D1はexact source commit、coverage route family、budget、active/previous revisionを保存する。
 - **教訓**: immutable deliveryではcode shell、data snapshot、object bytesのidentityを分離し、pointerだけをatomicに切り替える。Free Workerをbridgeに使う場合、大きなpayloadをJS memoryでhashせずstorage側のchecksum検証とstreamingを使い、quota計算に必要なbyte数はmanifestへ明示する。
 
 ### LL-460: 固定行数clampは将来のfeedタイトル全文表示を保証しない
@@ -3045,6 +3045,12 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 4行なら当時のcorpus全件が収まるという観測値を、今後もtitle全文を表示できる不変条件として扱った。feed titleの長さは変化するため、固定最大行数を増やしても別の長いtitleで再びclippingする。
 - **対策**: 下方向へ伸びられるmobile Timeline cardだけはfixed clampとhidden overflowを解除し、標準の自然な折り返しへ戻す。SpotlightとTop 3のfirst-view向けclampは維持する。E2Eは現在dataに依存せず、長い日本語stress titleをvisible Timeline cardへ注入して390/375/360pxの`scrollHeight <= clientHeight`、44px操作面、横overflow不在を検証する。
 - **教訓**: 可変な外部contentの全文表示contractを「現在の最大行数」で表現しない。縦に成長できるcomponentは自然なwrapとcontent-driven sizingを使い、行数clampはfirst-view密度など明示的に省略を許すsurfaceへ限定する。回帰testは現行corpusだけでなく、契約境界を超えるdeterministic stress inputを含める。
+
+### LL-461: R2へ渡す変換streamはContent-Length headerだけでは既知長にならない
+- **事象**: 初回incremental shadow bootstrapは2,731 detail routeのJA/EN parity、data commit、36件のdeferred effects flushまで成功したが、最初のR2 shell uploadがHTTP 502となった。remote R2は0 object、D1 generationは0件・active/previousはnullのまま保たれた。
+- **根本原因**: upload request自体は正しい`Content-Length`を持っていたが、`boundedPassthroughStream()`が返すgeneric `ReadableStream`を`R2Bucket.put()`へ渡した時点で既知長のruntime metadataが失われた。unit testのMemoryR2は任意streamをbufferして受理したため、Cloudflare production runtimeのknown-length制約を再現していなかった。
+- **対策**: declared lengthとmax sizeを検証する既存streamを、同じ長さで構築したCloudflare `FixedLengthStream`へpipeし、R2にはそのreadable側を渡す。R2 checksum、content-addressed key、metadata read-back、5MiB上限は維持する。testは注入したfixed-length factoryのreadableがR2 fakeへ渡り、declared byte数と一致することを検証する。client errorもboundedなstructured response detailを保持する。
+- **教訓**: HTTP requestに`Content-Length`があっても、そのbodyをgeneric transformへ通した後のstreamがstorage APIにとって既知長とは限らない。streaming uploadのproduction parityは「ReadableStreamを渡した」だけで証明せず、platform固有のlength metadataと実remote object creationを確認する。bootstrap失敗時はR2/D1の不変状態をread-backし、partial activationがないことを先に証明してから修正する。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

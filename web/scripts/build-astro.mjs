@@ -12,10 +12,14 @@ import {
   resolveBuildMemoryConfig,
   rssBudgetFailure,
 } from "./build-resource-policy.mjs";
+import {
+  MAX_BUILD_SECONDS,
+  MAX_STATIC_FILES,
+  buildOutputBudgetFailures,
+} from "./build-output-policy.mjs";
 
 const HEARTBEAT_MS = 30_000;
 const SAMPLE_MS = 2_000;
-const MAX_ASTRO_RENDERED_HTML_FILES = 3_200;
 // A larger old-space delays major GC while thousands of detail pages allocate
 // temporary render objects. The lower ceiling keeps process RSS bounded.
 const IS_WINDOWS = process.platform === "win32";
@@ -256,12 +260,6 @@ const astroOutput = collectOutputStats(dist);
 console.log(
   `BUILD: output=astro files=${astroOutput.files} html=${astroOutput.html} size=${formatBytes(astroOutput.bytes)} routes=${astroOutput.routeFamilies}`,
 );
-if (astroOutput.html > MAX_ASTRO_RENDERED_HTML_FILES) {
-  throw new Error(
-    `Astro-rendered HTML route budget exceeded: ${astroOutput.html} > ${MAX_ASTRO_RENDERED_HTML_FILES}`,
-  );
-}
-
 const legacyTagRedirectCount = writeLegacyTagRedirects({
   distDirectory: dist,
   indexPath: path.resolve("../data/index.json"),
@@ -282,4 +280,14 @@ console.log(
 );
 
 const elapsedSeconds = Math.round((Date.now() - buildStartedAt) / 1000);
+const budgetFailures = buildOutputBudgetFailures({
+  files: finalOutput.files,
+  elapsedSeconds,
+});
+if (budgetFailures.length > 0) {
+  throw new Error(budgetFailures.join("; "));
+}
+console.log(
+  `BUILD: policy=cloudflare-free maxFiles=${MAX_STATIC_FILES} maxSeconds=${MAX_BUILD_SECONDS} state=passed`,
+);
 console.log(`BUILD: state=completed elapsed=${elapsedSeconds}s`);

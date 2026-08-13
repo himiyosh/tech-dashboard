@@ -50,6 +50,21 @@ describe("publisher contract runtime guard", () => {
     expect(assertPublisherContractContent(content)).toBe(DEPLOYED_PUBLISHER_FINGERPRINT);
   });
 
+  it("covers the impact planner imported by the Publisher runner", () => {
+    const contract = parsePublisherContractContent(readFileSync(CONTRACT_PATH, "utf8"));
+    expect(contract.criticalPaths).toContain("scripts/run-publisher.ts");
+    expect(contract.criticalPaths).toContain("scripts/publisher-impact.ts");
+    for (const dependency of [
+      "web/src/lib/entry-publication.ts",
+      "web/src/lib/route-inventory.ts",
+      "web/src/lib/search-normalize.ts",
+      "web/src/lib/summary-display.ts",
+      "web/src/lib/tag-normalize.ts",
+    ]) {
+      expect(contract.criticalPaths).toContain(dependency);
+    }
+  });
+
   it("rejects a repository fingerprint that differs from the deployed bundle", () => {
     const contract = parsePublisherContractContent(readFileSync(CONTRACT_PATH, "utf8"));
     const mismatch = JSON.stringify({

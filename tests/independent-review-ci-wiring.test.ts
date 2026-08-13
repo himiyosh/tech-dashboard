@@ -48,7 +48,7 @@ describe("independent review CI wiring", () => {
     expect(command).toBe("node scripts/check-independent-review.mjs");
     expect(command).not.toMatch(/\bnode\s+--check\b/);
     expect(workflow).toMatch(
-      /^ {2}pull_request:\s*\n {4}branches:\s*\[main\]$/m,
+      /^ {2}pull_request:\s*\n {4}branches:\s*\[main, develop\]\n {4}types:\s*\[opened, synchronize, reopened, edited\]$/m,
     );
 
     const step = extractNamedStep(

@@ -40,6 +40,7 @@ import {
 import { isKnowledgeEligibleEntry } from "./knowledge-eligibility.ts";
 import { sourceAuthority } from "./source-meta.ts";
 import { normalizeTagKey } from "./tag-normalize.ts";
+import { TAG_PAGE_MIN_ENTRIES } from "./route-inventory.ts";
 
 export {
   effectiveTitleLanguage,
@@ -53,6 +54,7 @@ export {
   summaryForLangWithFallback,
 };
 export { relativeTime } from "./relative-time.ts";
+export { TAG_PAGE_MIN_ENTRIES } from "./route-inventory.ts";
 export {
   CATEGORIES_BY_NAME,
   CATEGORIES_BY_SHORT_LABEL,
@@ -199,7 +201,6 @@ export const ALL_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.filter(isList
 export const GENERATED_AT = data.generatedAt;
 export const WORKER_HEALTH: WorkerHealth | null = data.health ?? null;
 
-export const TAG_PAGE_MIN_ENTRIES = 10;
 
 const TAG_ENTRIES_BY_NAME = new Map<string, NormalizedEntry[]>();
 const ENTRY_BY_ID = new Map<string, NormalizedEntry>();

@@ -24,6 +24,14 @@
 - 自動化の限定例外: `publisher.yml` は main SHA を固定し、data-only allowlist、全品質ゲート、non-force push を通した生成 commit だけを built-in `GITHUB_TOKEN` で main へ push してよい。人間または agent の通常変更にはこの例外を適用しない。
 - `scripts/git-hooks/pre-commit` / `pre-push` は `main` / `master` / `develop` への直接書き込みを fail-closed で拒否する。`ALLOW_PROTECTED_BRANCH_WRITE=1` は、当該セッションでユーザーが直接書き込みを明示承認した場合だけ使用でき、通常の PR 作業や PR merge 後の継続作業では指定しない。
 
+### R-001c: 通常変更は develop へ統合し、develop から main へ release する (ABSOLUTE)
+- 通常の作業branch PRは必ず `develop` をbaseにする。feature/fix/docs等のbranchから `main` へ直接PRを出さない。
+- `main` をbaseにできる通常release PRのheadは `develop` だけとする。`main -> develop` はproduction hotfixやrelease後のbacksync用PRとして許可する。
+- `develop -> main` releaseは履歴のancestryを保つためmerge commitを使い、squash/rebase mergeを使わない。main merge前のユーザー承認、exact-head review、CI、R-027 rollout gateは従来どおり必須。
+- GitHubのdefault branchはscheduled Publisherをmainから実行するため `main` のまま維持する。PR作成時は `--base develop` を明示し、CIのbranch-flow jobで誤ったbase/headをfail-closedに拒否する。
+- Publisherのdata-only commitはR-001b/R-026の限定例外としてmainへ直接入る。developへ毎時data commitを複製せず、release mergeはmain側の最新dataを保持する。data conflictがある場合はreleaseを止め、別のworking branchで解消してdevelopへ戻す。
+- fingerprintを変える変更はdevelopへのintegration merge時にはproduction Workerをdeployしない。consumer-first / bridge-lastのR-027 rolloutは `develop -> main` releaseのexact headに対して実施する。
+
 ### R-002: Cloudflare Pages project 設定の固定値
 | 項目 | 値 |
 |---|---|
@@ -209,19 +217,22 @@
 - persona 子 agent は read-only reviewer のままにし、Git、credentials、deploy、破壊的 cleanup を委譲しない。session を作成する場合は独立した non-overlapping scope に限定し、親 orchestrator が結果を検証して統合する。
 
 ### R-026: 重い publisher は GitHub Actions Node job、harness Worker は Free bridge に限定する
-- collection、multi-megabyte JSON の parse / merge / serialize、schema / E2E 検証、Git commit は `.github/workflows/publisher.yml` の Node 22 job で行う。`tech-dashboard-harness` に scheduled handler、`[limits] cpu_ms`、GitHub publish tokenを戻してはならない。
+- collection、multi-megabyte JSON の parse / merge / serialize、schema 検証、Git commit は `.github/workflows/publisher.yml` の Node 22 job で行う。`tech-dashboard-harness` に scheduled handler、`[limits] cpu_ms`、GitHub publish tokenを戻してはならない。
 - `tech-dashboard-harness` は GitHub Actions OIDC を厳密検証する KV / Queue bridge と public `/health` だけを持つ。OIDC は専用 audience、repository、owner、main ref、workflow ref、event、subject、SHA、時刻を fail-closed で検証する。
-- Node publisher は開始時の main SHA に baseline を固定し、生成副作用を `$RUNNER_TEMP` に遅延する。data 変更時は全品質ゲートと push が成功した後だけ Queue / KV effects を flush する。data 変更がない場合も final snapshot CAS を通し、collapse guard、main drift、検証失敗、push 失敗時は effects bundle を永続化または flush しない。
-- Node publisher の data-only 品質ゲートは secret scan、root / Worker typecheck、全 unit test、Pages parity build、生成 Home / detail / metrics / archive / 404 を確認する専用 E2E とする。全 UI・interaction E2E は PR CI で維持し、毎時 Publisher へ重複実行しない。
+- Node publisher は開始時の main SHA に baseline を固定し、生成副作用を `$RUNNER_TEMP` に遅延する。data 変更時は対象gateと push が成功した後だけ Queue / KV effects を flush する。data 変更がない場合も final snapshot CAS を通し、collapse guard、main drift、検証失敗、push 失敗時は effects bundle を永続化または flush しない。
+- 毎時runは変更dataのschema、secret、snapshot、route impact manifestを検証し、変更されたdetail IDと、全件再計算が必要なpagination/category/tag/feed/sitemap/search/global shellを明示する。unrelated historical detailをGitHub Actionsで再renderしない。
+- 毎日 `02:17 UTC` と明示manual reconciliationは root / Worker typecheck、全 unit、Astro + Pagefind build、生成 Home / detail / metrics / archive / 404 の専用E2Eを実行する。PR CIは全UI・interaction E2Eを維持する。
+- production build / deployは移行slice中もCloudflare Pages Git Integrationを単一経路とし、GitHub Actionsからdeployしない。Workers Static Assetsへの切替は、同一artifactのpreview、custom domain、rollback、least-privilege tokenを別PRで検証できるまでfeature-gatedにする。
+- Web buildはHTML総数proxyでなく、Cloudflare Freeの20,000 static file ceilingから2,000 fileの余裕を引いた18,000 file target、20分build ceilingから2分の余裕を引いた18分target、RSS、route-family telemetry、sitemap/detail parityでfail-closedにする。
 - bridge の KV write は publisher が必要とする `og.v1` だけを許可する。summary/body cache と heartbeat は Node publisher から書き込まない。新しい repository secret は追加せず、GitHub 操作は built-in `GITHUB_TOKEN`、bridge 認証は Actions OIDC を使う。
-- `tests/worker-config.test.ts`、`tests/free-plan-bridge.test.ts`、`tests/publisher-runner.test.ts`、`npm --prefix worker run deploy -- --dry-run` で Free plan contract を検証する。
+- `tests/worker-config.test.ts`、`tests/free-plan-bridge.test.ts`、`tests/publisher-runner.test.ts`、`tests/publisher-impact.test.ts`、`npm --prefix worker run deploy -- --dry-run` で Free plan contract を検証する。
 
 ### R-027: publisher contract mismatch 時は data publish を fail-closed にする
-- `worker/publisher-contract.json` は data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
+- `worker/publisher-contract.json` は data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`scripts/publisher-impact.ts`、その `web/src/lib/**` critical dependencies、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
 - Node publisher は収集開始時に checkout と remote main が同じ HEAD SHA であることを確認し、その SHA の contract marker と runner fingerprint を照合する。`data/index.json`、`data/bodies.json`、archive index / month、stats の baseline はすべて同じ immutable SHA から読む。data commit または effect-only flush 前にも main ref が開始時 SHA と完全一致することを再確認し、進んでいれば commit と遅延 effects を中止する。commit parent も同じ SHA に固定し、push は non-force とする。
 - Node publisher は収集開始前、data commit 直前、遅延 effects flush 直前に Free bridge の public health が同じ publisher fingerprint を公開していることを確認する。bridge の fingerprint が未公開・不一致・unhealthy の場合は harness、data commit、effects flush を fail-closed で中止する。
 - summary/body Queue job と生成 cache には publisher fingerprint を伝播する。現在の fingerprint と明示的に異なる cache は採用せず再生成対象にする。fingerprint 導入前の既存 cache は本文・要約テキストだけ互換読み込みし、summary の importance / extraTags は exact fingerprint 一致時だけ採用する。fingerprint 無し job を受けた更新済み consumer は `legacy-unversioned-job` を保存し、既存 legacy cache と区別する。
-- fingerprint を変える release は Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を PR head から先に deployし、旧 consumer の in-flight 処理が残らないことを確認してから PR を mergeする。merge 後は原則として旧 harness が marker mismatch で停止したことを確認し、明示承認のうえ Free bridge を deployする。deployment provenanceやguard到達性を確認できずmismatchを観測できない場合は、その事実を明記し、旧runのterminal failure、merge後のdata commit不在、旧heartbeat非更新をすべて実測できた場合に限り「旧writerがpublish不能」という安全条件でbridge置換へ進む。いずれかを確認できなければ停止してユーザー判断を求める。bridge health、Publisher workflow、data commit、Queue drain、Pages productionを順に確認する。
+- fingerprint を変える変更はCIとexact-head review後にdevelopへ統合してよいが、その時点ではproduction Workerをdeployしない。develop→main release PRのexact headから Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を先にdeployし、旧consumerのin-flight処理が残らないことを確認してからrelease PRをmerge commitでmainへmergeする。merge後は原則として旧 harness が marker mismatch で停止したことを確認し、明示承認のうえ Free bridge を deployする。deployment provenanceやguard到達性を確認できずmismatchを観測できない場合は、その事実を明記し、旧runのterminal failure、merge後のdata commit不在、旧heartbeat非更新をすべて実測できた場合に限り「旧writerがpublish不能」という安全条件でbridge置換へ進む。いずれかを確認できなければ停止してユーザー判断を求める。bridge health、Publisher workflow、data commit、Queue drain、Pages productionを順に確認する。
 - `data/index.json` の entry が変わる publish では、`data/archive/_index.json` と `data/stats.json` の `generatedAt` も同一 commit の reference clock へ揃える。月次 archive は timestamp-only churn を避ける。
 
 ### R-028: in-place checkout の Git mutation と session automation を直列化する
@@ -2561,7 +2572,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-385: 数千routeのAstro buildはserial prerenderと重複HTMLを実測してから並列度を上げる
 - **事象**: 最新mainのproduction buildをAstroとPagefindへ分離して計測すると、Astroは3,734 HTML、416MBをserial生成して738.9秒、最大RSS 3.17GBを使用し、Pagefindは137.4秒、最大RSS 1.59GBだった。記事detailは2,361 route・244.2MB、tagは1,212 route・123.7MBで、両者がHTMLの大半を占めた。Cloudflare Pagesのclone後build log 0件timeoutはbuild command開始前のprovider stageであり、このlocal計測だけで同じ根本原因とは断定できない。
 - **根本原因**: Astroの`build.concurrency`既定値1で数千の独立pageを直列render/writeし、低頻度tag pageと全pageへ繰り返す検索metadataが生成量を増やしていた。記事detail helperもrouteごとにlive entriesを繰り返しscanしていた。route削減だけの比較ではAstro wall timeが横ばいだったため、I/O待ちを含むserial prerenderが主なlocal bottleneckと確認できた。
-- **対策**: tag full pageの閾値を2件から10件へ上げ、低頻度tagは既存のPagefind exact filterへ送る。従来公開済みの2-9件tag URLはAstro renderへ戻さず、build後に生成する小さなnoindex recovery HTMLで200と検索導線を維持する。検索metadataを共通client bundleへ移し、記事向けcategory/source/tag indexをmodule-level Mapへ集約した。Astroは公式の`build.concurrency: 2`でrender/writeを2並列化し、3回の比較buildでAstro生成を237秒、535秒、267秒で完了した。full HTMLは2,869件、324.6MBへ減り、Pagefindは94-150秒で完了した。build wrapperは30秒heartbeat、phase別process-tree CPU/RSS、route family、file数、出力容量と3,200 Astro-rendered HTML route上限を記録する。16GB GitHub runnerはLL-389の実測に基づきconcurrency 1へ制限する。
+- **対策**: tag full pageの閾値を2件から10件へ上げ、低頻度tagは既存のPagefind exact filterへ送る。従来公開済みの2-9件tag URLはAstro renderへ戻さず、build後に生成する小さなnoindex recovery HTMLで200と検索導線を維持する。検索metadataを共通client bundleへ移し、記事向けcategory/source/tag indexをmodule-level Mapへ集約した。Astroは公式の`build.concurrency: 2`でrender/writeを2並列化し、3回の比較buildでAstro生成を237秒、535秒、267秒で完了した。full HTMLは2,869件、324.6MBへ減り、Pagefindは94-150秒で完了した。build wrapperは30秒heartbeat、phase別process-tree CPU/RSS、route family、file数、出力容量を記録する。当時の3,200 HTML proxyは後にLL-455でprovider-aligned file/time budgetへ置換した。16GB GitHub runnerはLL-389の実測に基づきconcurrency 1へ制限する。
 - **教訓**: static buildの停止をtimeout延長やrunner retryで隠さず、Astroと検索indexを分け、route family、HTML総量、wall、CPU、RSSを測る。`build.concurrency`はroute削減、共有index、serialization削減を先に行った後、single-thread CPUではなく独立pageのI/O待ちが大きい場合に小さい値から採用する。並列度を上げるとRSSも増えるためwall timeとpeak RSSを実行基盤ごとに複数回確認し、route budgetを生成器側でfail-closedにする。build wrapperを変更したら長時間buildの前に`node --check`を実行し、構文失敗を即時に検出する。
 
 ### LL-386: 新規remote branchのsecret scanへ単一commitを渡すと全到達履歴を再走査する
@@ -2992,6 +3003,18 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 利用者の「5分以内に判断できる」という製品目標と、ローカルPlaywright runのwall-clockを同一の測定値として扱った。合成browserの経過時間は比較用の参考値にはなるが、実利用者のfield dataでも決定論的な複雑度でもない。
 - **対策**: 経過msは`timingAssessment:"informational-only"`として現行runのmachine-readable outputへ残し、合否判定から完全に除外した。履歴baseline、過去run比較、delta警告・失敗は実装しない。各stepは必要状態への到達、viewport別のclick/fill上限、期待document navigation列との完全一致、unexpected runtime error不在、completion時のviewport/scroll、正確な404・検索回復経路だけでfail-closedに判定する。operation timeoutは性能基準ではなく、hangをboundedに停止してbrowser contextをcleanupする安全機構として別testで固定する。
 - **教訓**: synthetic journeyの速度値をfield performanceやUX成功率として扱わない。CIの合否はrunner速度に左右されない到達性、操作数、navigation identity、状態遷移、回復経路へ分解し、wall-clockは現行runの一時的な診断情報に限定する。履歴へ保存してbaseline化、過去値と比較、deltaを警告・失敗へ変換しない。hang防止deadlineとperformance thresholdも同じ数値契約へ混ぜない。
+
+### LL-455: providerの実上限と無関係な総HTML proxyを毎時buildの合否にしない
+- **事象**: Publisherが17回以上連続失敗し、最新runではAstro自体は約109秒・約2.25GiB RSSで完了した後、project固有の`3207 > 3200` HTML route guardだけで停止した。直近成功artifactは約7,682 filesでCloudflare Freeの20,000 files上限には十分収まっており、6件前後のevergreen/warm detail増加がstale guardを越えただけだった。毎時PublisherとPages Git Integrationは同じstatic siteを2回buildしていた。
+- **根本原因**: 過去のroute削減時に置いた3,200件proxyをprovider resource limitのように維持し、evergreenのaddressabilityと経時成長を反映していなかった。hourly data processing、全static reconciliation、production deployの責務も同じrunへ重ねていた。
+- **対策**: 毎時runはimmutable data snapshotと変更entry/body/archiveを比較するimpact manifest、data schema、secret、CASだけを検証する。manifestは変更detail IDだけを列挙しつつ、index変更がpagination/category/tag/feed/sitemap/search/global shellへ波及することを明示する。全Astro/Pagefind/E2E reconciliationは毎日02:17 UTC・manual・code-change PRへ分離した。3,200 HTML上限を撤去し、18,000 static files、18分build、12GiB GitHub RSS、route-family growth、crawl/detail parityを独立gateにした。productionはこのsliceではPages Git Integrationを維持し、成功Publisher後のhealthはpublic `metrics.json.indexGeneratedAt`がcommitted indexへ追いつくまでbounded waitする。scheduled healthは6時間周期へ下げ、Publisher失敗の二重failureを毎時作らない。
+- **教訓**: regression proxyはprovider quotaや利用者向け不変条件の代わりにならない。incremental publishを設計するときはnew detailだけでなくaggregate、feed、sitemap、search、global shellのinvalidationをmachine-readableに宣言し、全reconciliationを低頻度に分離する。external deploy切替はcurrent productionを残したままpreview/rollbackを証明できる別sliceにし、未検証のcredentialやdeploy pathを復旧作業へ混ぜない。
+
+### LL-456: protected developという一般規則だけではfeature→develop→mainを実装できない
+- **事象**: PR #265を通常どおりmain向けに作成した後、ユーザーからdevelopを介するrelease flowが期待されていると指摘された。実測するとremote develop branch、develop向けPR履歴、CI branch filterはいずれも存在せず、import済みagentic-rulesと上流v0.6.1はmain/master/develop上で直接作業しないことだけを定め、PRのbase順序は定めていなかった。
+- **根本原因**: protected branchの集合とintegration/releaseの方向を同一視し、project固有のbranch topologyをactive rule、remote ref、CI gateへ配線していなかった。scheduled Publisherがdefault branchでのみ動くため、default branchをdevelopへ変える単純対応もmain publisherを停止させる。
+- **対策**: tech-dashboard固有のR-001cを追加し、feature→develop、develop→main release、main→develop backsyncをfail-closedなscriptとCIで検証する。default branchとPublisher/Pages production branchはmainのまま維持し、PR作成時だけbase developを明示する。release mergeはmerge commitでancestryを保ち、fingerprint rolloutはdevelop integration時でなくdevelop→mainのexact release headに対して行う。
+- **教訓**: 「developも保護する」は「developをintegration branchとして使う」と同義ではない。branch flowはremote branchの存在、PR base/head matrix、CI trigger、merge strategy、scheduled workflowのdefault-branch制約、production rollout時点をproject-localな実行contractとして揃える。
 
 1. 作業中の「想定外の挙動」「ユーザーからの行動修正フィードバック」「ツール失敗の根本原因」を都度メモする。
 2. タスク完了の **前** に、本ファイルの `📚 Lessons Learned` へ LL-XXX として追記する。恒久ルール化すべきものは `🚨 絶対ルール` に R-XXX として昇格する。

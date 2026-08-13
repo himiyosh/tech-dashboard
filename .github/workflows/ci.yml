@@ -2,9 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
+    types: [opened, synchronize, reopened, edited]
 
 # 同一ブランチで push が連発した場合は古い run をキャンセル
 concurrency:
@@ -12,6 +13,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  branch-flow:
+    name: feature → develop → main branch flow
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Enforce integration and release PR branches
+        env:
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: node scripts/check-pr-branch-flow.mjs
+
   independent-review:
     name: exact-head independent review
     runs-on: ubuntu-latest

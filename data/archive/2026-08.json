@@ -1,8 +1,37 @@
 {
-  "generatedAt": "2026-08-15T07:20:17.495Z",
+  "generatedAt": "2026-08-15T08:13:05.616Z",
   "month": "2026-08",
-  "count": 438,
+  "count": 439,
   "entries": [
+    {
+      "id": "f87d1d0aa5299b01",
+      "source": "qiita-llm",
+      "sourceType": "blog",
+      "url": "https://qiita.com/YuukiYoshida/items/68aa14df457be0eea1c6",
+      "title": "ゼロから学ぶローカルLLM #2 LLMはどうやって文章を生成しているのか？ トークンと推論の仕組みを理解する",
+      "titleJa": "ゼロから学ぶローカルLLM #2 LLMはどうやって文章を生成しているのか？ トークンと推論の仕組みを理解する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-08-15T08:07:33.000Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
+      "tags": [
+        "llm",
+        "qiita"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに 前回の記事では、ローカルLLMとは何なのか、ChatGPTとの違いを通して基本的な仕組みについて整理しました。 今回はもう少し踏み込んで、そもそもLLMはどうやって文章を生成しているのか？について理解を深めていきます。 私たちがChatGPTなどのLLMに...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGMzU0NTIyJTJGcHJvZmlsZS1pbWFnZXMlMkYxNTQ5MjQzOTYwP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0wZjFjNTQ0Yjg1NzVjOTZiMDFlNGE2OGRiMWJlY2Q0Ng%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZlNWFkOGZiMGZmNDE4YmU2NzgzYTg5ZDBkNTM1ZTZmNTY1MjhmMDE4JTJGb3JpZ2luYWwuanBnJTNGMTY0NjEyNzYxNT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz03Nzk3MDlkOGU1YTg3N2NjMjQwYTc1YTA4M2U2Yzc1NA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3Dc610d4b8854fbcad359e6b38e26b6624?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgyJUJDJUUzJTgzJUFEJUUzJTgxJThCJUUzJTgyJTg5JUU1JUFEJUE2JUUzJTgxJUI2JUUzJTgzJUFEJUUzJTgzJUJDJUUzJTgyJUFCJUUzJTgzJUFCTExNJTIwJTIzMiUyMExMTSVFMyU4MSVBRiVFMyU4MSVBOSVFMyU4MSU4NiVFMyU4MiU4NCVFMyU4MSVBMyVFMyU4MSVBNiVFNiU5NiU4NyVFNyVBQiVBMCVFMyU4MiU5MiVFNyU5NCU5RiVFNiU4OCU5MCVFMyU4MSU5NyVFMyU4MSVBNiVFMyU4MSU4NCVFMyU4MiU4QiVFMyU4MSVBRSVFMyU4MSU4QiVFRiVCQyU5RiUyMCVFMyU4MyU4OCVFMyU4MyVCQyVFMyU4MiVBRiVFMyU4MyVCMyVFMyU4MSVBOCVFNiU4RSVBOCVFOCVBQiU5NiVFMyU4MSVBRSVFNCVCQiU5NSVFNyVCNSU4NCVFMyU4MSVCRiVFMyU4MiU5MiVFNyU5MCU4NiVFOCVBNyVBMyVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTY4ODA2YTc5NTNjZjU3MzQxZTQ0ZDkzM2EwMDdhZjhi&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBZdXVraVlvc2hpZGEmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz0xNzhiNTkwZWViNzJmOTgzMjhlY2Q1NWExYjllZDY0Zg&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=5qCq5byP5Lya56S-SW5mcmVlZA&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=86a00ce1bdb795b6b0656a0a38dffa63",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGMzU0NTIyJTJGcHJvZmlsZS1pbWFnZXMlMkYxNTQ5MjQzOTYwP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0wZjFjNTQ0Yjg1NzVjOTZiMDFlNGE2OGRiMWJlY2Q0Ng%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZlNWFkOGZiMGZmNDE4YmU2NzgzYTg5ZDBkNTM1ZTZmNTY1MjhmMDE4JTJGb3JpZ2luYWwuanBnJTNGMTY0NjEyNzYxNT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz03Nzk3MDlkOGU1YTg3N2NjMjQwYTc1YTA4M2U2Yzc1NA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3Dc610d4b8854fbcad359e6b38e26b6624?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgyJUJDJUUzJTgzJUFEJUUzJTgxJThCJUUzJTgyJTg5JUU1JUFEJUE2JUUzJTgxJUI2JUUzJTgzJUFEJUUzJTgzJUJDJUUzJTgyJUFCJUUzJTgzJUFCTExNJTIwJTIzMiUyMExMTSVFMyU4MSVBRiVFMyU4MSVBOSVFMyU4MSU4NiVFMyU4MiU4NCVFMyU4MSVBMyVFMyU4MSVBNiVFNiU5NiU4NyVFNyVBQiVBMCVFMyU4MiU5MiVFNyU5NCU5RiVFNiU4OCU5MCVFMyU4MSU5NyVFMyU4MSVBNiVFMyU4MSU4NCVFMyU4MiU4QiVFMyU4MSVBRSVFMyU4MSU4QiVFRiVCQyU5RiUyMCVFMyU4MyU4OCVFMyU4MyVCQyVFMyU4MiVBRiVFMyU4MyVCMyVFMyU4MSVBOCVFNiU4RSVBOCVFOCVBQiU5NiVFMyU4MSVBRSVFNCVCQiU5NSVFNyVCNSU4NCVFMyU4MSVCRiVFMyU4MiU5MiVFNyU5MCU4NiVFOCVBNyVBMyVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTY4ODA2YTc5NTNjZjU3MzQxZTQ0ZDkzM2EwMDdhZjhi&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBZdXVraVlvc2hpZGEmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz0xNzhiNTkwZWViNzJmOTgzMjhlY2Q1NWExYjllZDY0Zg&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=5qCq5byP5Lya56S-SW5mcmVlZA&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=86a00ce1bdb795b6b0656a0a38dffa63",
+        "alt": "ゼロから学ぶローカルLLM #2 LLMはどうやって文章を生成しているのか？ トークンと推論の仕組みを理解する",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "21a63bca221118ae",
       "source": "qiita-copilot",
@@ -10,16 +39,20 @@
       "url": "https://qiita.com/heftykoo/items/29b166744dea41d6c062",
       "title": "AI coding agentを「1チャット」ではなく「1変更セッション」で運用する",
       "titleJa": "AI coding agentを「1チャット」ではなく「1変更セッション」で運用する",
-      "titleEn": "",
+      "titleEn": "This article proposes managing AI coding agent work in terms of git-scoped…",
       "lang": "ja",
       "publishedAt": "2026-08-15T06:49:26.000Z",
       "collectedAt": "2026-08-15T07:20:11.079Z",
       "tags": [
         "agent",
-        "qiita"
+        "coding-agent",
+        "git",
+        "qiita",
+        "session-management",
+        "workflow"
       ],
       "category": "copilot",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "AI coding agentを「1チャット」ではなく「1変更セッション」で運用する coding agentから「実装しました。テストも通っています」と返ってきたのに、翌朝見たら現在地が分からない。 どのcommitを起点にしたのか どこまで変更してよかったのか 途中...",
@@ -73,14 +106,18 @@
       "sourceType": "blog",
       "url": "https://qiita.com/moha0918_/items/6bc03320b1d2873318db",
       "title": "Claude Code v2.1.232｜サブエージェントの fork がデフォルトON｜毎日Changelog解説",
-      "titleJa": "Claude Code v2.1.232｜サブエージェントの fork がデフォルトON｜毎日Changelog解説",
-      "titleEn": "",
+      "titleJa": "Claude Code v2.1.232｜サブエージェントの「fork」がデフォルト有効に",
+      "titleEn": "Claude Code v2.1.232 enables fork-type subagents by default, allowing them to…",
       "lang": "ja",
       "publishedAt": "2026-08-14T23:05:23.000Z",
       "collectedAt": "2026-08-15T07:20:11.079Z",
       "tags": [
+        "changelog",
         "claude",
-        "qiita"
+        "claude-code",
+        "fork",
+        "qiita",
+        "subagent"
       ],
       "category": "claude",
       "importance": 2,
@@ -94,14 +131,18 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-08-14-multiple-redirect-uris-and-token-refresh-for-oauth-apps",
       "title": "Multiple redirect URIs and token refresh for OAuth apps",
-      "titleJa": "",
+      "titleJa": "OAuthアプリに複数リダイレクトURIとトークンリフレッシュ機能が追加",
       "titleEn": "Multiple redirect URIs and token refresh for OAuth apps",
       "lang": "en",
       "publishedAt": "2026-08-14T22:43:44.000Z",
       "collectedAt": "2026-08-15T07:20:11.079Z",
       "tags": [
+        "authentication",
         "changelog",
-        "github"
+        "github",
+        "github-apps",
+        "oauth",
+        "security"
       ],
       "category": "tech-news",
       "importance": 3,
@@ -185,7 +226,7 @@
       "titleEn": "langchain-openrouter==0.2.8",
       "lang": "en",
       "publishedAt": "2026-08-14T19:03:47.000Z",
-      "collectedAt": "2026-08-15T02:06:23.638Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
       "tags": [
         "agent",
         "bug-fix",
@@ -218,7 +259,7 @@
       "titleEn": "langchain-core==1.5.5",
       "lang": "en",
       "publishedAt": "2026-08-14T18:56:43.000Z",
-      "collectedAt": "2026-08-15T02:06:23.638Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
       "tags": [
         "agent",
         "bug-fix",
@@ -564,7 +605,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "See how four GitHub agent apps can help you scope, secure, roll out, and ship a feature across the SDLC–all without leaving GitHub. The post How to bring your software delivery workflow into GitHub with agent apps appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/01/generic-copilot-logo-github.png",
@@ -573,7 +613,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "bed40e9d96da51fa",
@@ -585,7 +626,7 @@
       "titleEn": "langchain-openai==1.5.1",
       "lang": "en",
       "publishedAt": "2026-08-14T15:47:45.000Z",
-      "collectedAt": "2026-08-15T02:06:23.638Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
       "tags": [
         "agent",
         "bugfix",
@@ -619,7 +660,7 @@
       "titleEn": "Does Mark Zuckerberg really believe AI is ‘for everyone’?",
       "lang": "en",
       "publishedAt": "2026-08-14T15:43:28.000Z",
-      "collectedAt": "2026-08-15T02:06:23.638Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
       "tags": [
         "llm",
         "mark-zuckerberg",
@@ -1951,7 +1992,7 @@
       "titleEn": "langchain-openai==1.5.0",
       "lang": "en",
       "publishedAt": "2026-08-13T13:15:02.000Z",
-      "collectedAt": "2026-08-15T02:06:23.638Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
       "tags": [
         "agent",
         "langchain",
@@ -2435,7 +2476,7 @@
       "titleEn": "langchain-anthropic==1.5.6",
       "lang": "en",
       "publishedAt": "2026-08-13T02:31:05.000Z",
-      "collectedAt": "2026-08-15T02:06:23.638Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
       "tags": [
         "agent",
         "anthropic",
@@ -2797,7 +2838,6 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Learn how to write your first prompt in the GitHub Copilot app, choose the right context and model, and start your first task with confidence. The post Write your first prompt with the GitHub Copilot app appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/08/Screenshot-2026-08-11-at-6.38.49-PM.png?fit=1095%2C626",
@@ -2806,7 +2846,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "4d90c2275a7b5d33",
@@ -2820,7 +2861,7 @@
       "summaryEn": "Azure Content Understanding gains synchronous APIs, GPT-5 model series support, and tighter agentic workflow integration, making it easier to extract structured data from documents, images, audio, and video for AI apps and agents.",
       "lang": "en",
       "publishedAt": "2026-08-12T18:43:01.000Z",
-      "collectedAt": "2026-08-15T02:06:23.638Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
       "tags": [
         "agent",
         "ai",
@@ -2835,6 +2876,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
+      "knowledgeEligible": false,
       "contentSnippet": "Enterprise content is no longer just something people read. AI apps and agents are only as useful as the information they can understand, yet much of the world’s enterprise knowledge is locked in documents, forms, tables, images, audio, and video. The latest Azure Content Understanding updates help developers turn that content into structured, grounded data […] The post From Sync APIs to support for the GPT-5 model series and agentic workflows: What’s new in Azure Content Understanding – August 2026 appeared first on Microsoft Foundry Blog .",
       "image": {
         "src": "https://devblogs.microsoft.com/foundry/wp-content/uploads/sites/89/2026/08/image-8.webp",
@@ -2843,9 +2886,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true,
-      "knowledgeEligible": false
+      }
     },
     {
       "id": "ceafbe71b934c2df",
@@ -2859,7 +2900,7 @@
       "summaryEn": "Azure Content Understanding now supports the GPT-5 model series, bringing improved grounding accuracy and confidence scoring for extracting insights from documents, images, audio, and video, giving enterprises greater flexibility and quality in AI-driven content workflows.",
       "lang": "en",
       "publishedAt": "2026-08-12T18:42:25.000Z",
-      "collectedAt": "2026-08-15T02:06:23.638Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
       "tags": [
         "ai",
         "azure",
@@ -2875,6 +2916,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Enterprise content is no longer just something people consume. As organizations increasingly rely on AI to extract and act on information from documents, images, audio, and video, Azure Content Understanding is expanding support for the GPT-5 series and improving grounding and confidence to deliver greater flexibility, efficiency, and quality. This expanded model catalog enables organizations […] The post Azure Content Understanding GPT-5 Series Guide: Model Selection, Grounding Improvements, and Confidence Enhancements appeared first on Microsoft Foundry Blog .",
       "image": {
         "src": "https://devblogs.microsoft.com/foundry/wp-content/uploads/sites/89/2026/08/token-reduction.webp",
@@ -2883,8 +2925,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "e1f39f7cfe4bfcbc",
@@ -3578,8 +3619,8 @@
       }
     },
     {
-      "id": "7873e00dd904f32f",
-      "source": "openai-blog",
+      "id": "e33edd69f7816887",
+      "source": "openai-news",
       "sourceType": "blog",
       "url": "https://openai.com/index/how-enterprises-put-ai-to-work",
       "title": "From assistance to execution: How enterprises put AI to work",
@@ -3587,7 +3628,7 @@
       "titleEn": "From assistance to execution: How enterprises put AI to work",
       "lang": "en",
       "publishedAt": "2026-08-12T06:00:00.000Z",
-      "collectedAt": "2026-08-15T03:28:06.520Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -3806,7 +3847,7 @@
       "titleEn": "langchain-anthropic==1.5.5",
       "lang": "en",
       "publishedAt": "2026-08-11T19:16:57.000Z",
-      "collectedAt": "2026-08-15T02:06:23.638Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
       "tags": [
         "agent",
         "anthropic",
@@ -3839,7 +3880,7 @@
       "titleEn": "langchain==1.3.15",
       "lang": "en",
       "publishedAt": "2026-08-11T19:11:11.000Z",
-      "collectedAt": "2026-08-15T02:06:23.638Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
       "tags": [
         "agent",
         "agent-middleware",
@@ -4127,7 +4168,7 @@
       "titleEn": "langchain-core==1.5.4",
       "lang": "en",
       "publishedAt": "2026-08-11T18:03:12.000Z",
-      "collectedAt": "2026-08-15T02:06:23.638Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
       "tags": [
         "agent",
         "bugfix",
@@ -5436,7 +5477,7 @@
       "titleEn": "langchain-openai==1.4.3",
       "lang": "en",
       "publishedAt": "2026-08-10T13:23:36.000Z",
-      "collectedAt": "2026-08-15T02:06:23.638Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
       "tags": [
         "agent",
         "langchain",
@@ -7847,7 +7888,7 @@
       "titleEn": "langchain-openai==1.4.2",
       "lang": "en",
       "publishedAt": "2026-08-07T13:58:16.000Z",
-      "collectedAt": "2026-08-15T02:06:23.638Z",
+      "collectedAt": "2026-08-15T08:12:58.667Z",
       "tags": [
         "agent",
         "bug-fix",
@@ -8350,7 +8391,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Go beyond chat in the GitHub Copilot app with these slash commands. They'll help you plan, collaborate, automate, and customize your dev workflow. The post A guide to slash commands in the GitHub Copilot app appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/06/MSFTBuild_Blog_Header_01.jpg",
@@ -8359,7 +8399,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "93120742e5d55aa3",
@@ -10162,7 +10203,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Learn how to build tools to simplify how you work—without writing a single line of code. The post How the GitHub legal team used Copilot CLI to streamline their workflows appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/01/generic-github-copilot-smiling-flying-logo.png",
@@ -10171,7 +10211,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "02b83330160b2494",

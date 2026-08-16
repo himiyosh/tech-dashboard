@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-16T12:14:30.585Z",
+  "generatedAt": "2026-08-16T13:22:50.983Z",
   "month": "2026-08",
   "count": 463,
   "entries": [
@@ -54,6 +54,7 @@
         "chatgpt",
         "cursor",
         "qiita",
+        "release",
         "vibe-coding",
         "web-development"
       ],
@@ -112,19 +113,32 @@
       "url": "https://zenn.dev/kotax/articles/local-llm-tauri-viewer",
       "title": "【最速7分】ローカルLLM×Tauriで爆速Markdownビューアを作らせた必勝パターン",
       "titleJa": "【最速7分】ローカルLLM×Tauriで爆速Markdownビューアを作らせた必勝パターン",
-      "titleEn": "",
+      "titleEn": "The author demonstrates a workflow for auto-generating a lightweight…",
       "lang": "ja",
       "publishedAt": "2026-08-16T05:37:19.000Z",
       "collectedAt": "2026-08-16T12:14:22.158Z",
       "tags": [
         "ai",
+        "desktop-app",
+        "llm",
+        "markdown",
+        "rust",
+        "tauri",
         "zenn"
       ],
       "category": "local-llm",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
-      "contentSnippet": "はじめに 普段エディタでMarkdownを書いているエンジニアの皆様、「ちょっと中身を確認したいだけなのに、エディタを立ち上げるのが重い…」と感じることはありませんか？ そこで今回は、起動が爆速で閲覧に特化した「軽量マークダウンビューアー（KotaMD Viewer）」 を、ローカルLLMとクラウドAIを使って全自動で開発させてみました。 本記事では、AIを使ったデスクトップアプリ開発の全貌と、各LLMモデルのコーディング能力の比較、そしてWindows環境でのAIエージェント開発特有の「罠」について解説します。 技術的な背景と課題（Qwenの泥沼） 今"
+      "contentSnippet": "はじめに 普段エディタでMarkdownを書いているエンジニアの皆様、「ちょっと中身を確認したいだけなのに、エディタを立ち上げるのが重い…」と感じることはありませんか？ そこで今回は、起動が爆速で閲覧に特化した「軽量マークダウンビューアー（KotaMD Viewer）」 を、ローカルLLMとクラウドAIを使って全自動で開発させてみました。 本記事では、AIを使ったデスクトップアプリ開発の全貌と、各LLMモデルのコーディング能力の比較、そしてWindows環境でのAIエージェント開発特有の「罠」について解説します。 技術的な背景と課題（Qwenの泥沼） 今",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--pCKaeTKH--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2580%2590%25E6%259C%2580%25E9%2580%259F7%25E5%2588%2586%25E3%2580%2591%25E3%2583%25AD%25E3%2583%25BC%25E3%2582%25AB%25E3%2583%25ABLLM%25C3%2597Tauri%25E3%2581%25A7%25E7%2588%2586%25E9%2580%259FMarkdown%25E3%2583%2593%25E3%2583%25A5%25E3%2583%25BC%25E3%2582%25A2%25E3%2582%2592%25E4%25BD%259C%25E3%2582%2589%25E3%2581%259B%25E3%2581%259F%25E5%25BF%2585%25E5%258B%259D%25E3%2583%2591%25E3%2582%25BF%25E3%2583%25BC%25E3%2583%25B3%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:KotaX%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS3NfUDN6Y2E3UGtwaGVQbDJfWV9ZdWxBUnlhZERwZ0lzb0F0RWFlVklvYk02TWlJcz1zMjUwLWM=%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--pCKaeTKH--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2580%2590%25E6%259C%2580%25E9%2580%259F7%25E5%2588%2586%25E3%2580%2591%25E3%2583%25AD%25E3%2583%25BC%25E3%2582%25AB%25E3%2583%25ABLLM%25C3%2597Tauri%25E3%2581%25A7%25E7%2588%2586%25E9%2580%259FMarkdown%25E3%2583%2593%25E3%2583%25A5%25E3%2583%25BC%25E3%2582%25A2%25E3%2582%2592%25E4%25BD%259C%25E3%2582%2589%25E3%2581%259B%25E3%2581%259F%25E5%25BF%2585%25E5%258B%259D%25E3%2583%2591%25E3%2582%25BF%25E3%2583%25BC%25E3%2583%25B3%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:KotaX%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS3NfUDN6Y2E3UGtwaGVQbDJfWV9ZdWxBUnlhZERwZ0lzb0F0RWFlVklvYk02TWlJcz1zMjUwLWM=%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "【最速7分】ローカルLLM×Tauriで爆速Markdownビューアを作らせた必勝パターン",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "27495f0e3519d7c7",
@@ -133,16 +147,21 @@
       "url": "https://zenn.dev/egu777/articles/cursor-cloud-agents-mifos",
       "title": "「worktreesは死んだ。クラウドエージェントこそ未来」を、47万行の遺跡で確かめる",
       "titleJa": "「worktreesは死んだ。クラウドエージェントこそ未来」を、47万行の遺跡で確かめる",
-      "titleEn": "",
+      "titleEn": "A hands-on experiment using Cursor Pro ($20/month) tested cloud agents' three…",
       "lang": "ja",
       "publishedAt": "2026-08-16T01:07:20.000Z",
       "collectedAt": "2026-08-16T12:14:22.158Z",
       "tags": [
+        "ai-coding",
+        "cloud-agents",
         "cursor",
+        "legacy-code",
+        "mifos",
+        "struts",
         "zenn"
       ],
       "category": "cursor",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "! 本記事は「レガシー考古学」シリーズ第9回です。第1回/第2回/第3回/第4回/第5回/第6回前編/後編/第7回/第8回 TL;DR 「クラウドエージェントの群れこそ未来」という投稿の3本柱(実行・並列・審判)を、月$20のCursor ProでStruts 47万行の遺跡(Mifos)に対して実測した 実行の柱は遺跡で消えた。 検証エージェントは誰もMifosを起動できず、実行による確認は0件。ただし偽装はせず、依存のない計算だけをPython/Javaに切り出して実行する「切り出し実行」で部分的に立て直した 並列の柱は半分だけ立った。 幅は圧勝で、"
@@ -153,11 +172,11 @@
       "sourceType": "blog",
       "url": "https://qiita.com/mylifewithviolin/items/34a4872e17869824a3f3",
       "title": "AIとつくる日本語プログラミング言語Aoi （あおい）（ステップ３）～ Lexer最小版の実装 CodeAgent推論量最小化～",
-      "titleJa": "AIとつくる日本語プログラミング言語「Aoi（あおい）」ステップ３ ～ Lexer最小版の実装とCodeAgent推論量最小化～",
+      "titleJa": "AIとつくる日本語プログラミング言語Aoi （あおい）（ステップ３）～ Lexer最小版の実装 CodeAgent推論量最小化～",
       "titleEn": "The third installment of a series building a Japanese programming language…",
       "lang": "ja",
       "publishedAt": "2026-08-16T00:27:07.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "code-agent",
         "github-copilot",
@@ -496,7 +515,7 @@
       "titleEn": "CORS Chat",
       "lang": "en",
       "publishedAt": "2026-08-15T14:49:54.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "llm",
         "lm-studio",
@@ -598,7 +617,7 @@
       "titleEn": "This article explains how solo developers can leverage GitHub Rulesets, CI…",
       "lang": "ja",
       "publishedAt": "2026-08-15T09:12:56.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "ci-cd",
         "github",
@@ -698,7 +717,7 @@
       "titleEn": "This article proposes managing AI coding agent work in terms of git-scoped…",
       "lang": "ja",
       "publishedAt": "2026-08-15T06:49:26.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "agent",
         "coding-agent",
@@ -970,7 +989,7 @@
       "titleEn": "Multiple redirect URIs and token refresh for OAuth apps",
       "lang": "en",
       "publishedAt": "2026-08-14T22:43:44.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "authentication",
         "changelog",
@@ -1263,7 +1282,7 @@
       "titleEn": "Universitas Gadjah Mada, Indosat and NVIDIA Open Indonesia’s First University AI Center to Develop Local AI Talent",
       "lang": "en",
       "publishedAt": "2026-08-14T17:13:05.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "ai",
         "education",
@@ -1366,7 +1385,7 @@
       "titleEn": "Grok 4.6 is now available in GitHub Copilot",
       "lang": "en",
       "publishedAt": "2026-08-14T16:17:46.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "agent",
         "agentic-coding",
@@ -1391,8 +1410,8 @@
       }
     },
     {
-      "id": "9eb4ab95dfb804c7",
-      "source": "github-blog-ai",
+      "id": "c4c1018ae834ae55",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/how-to-bring-your-software-delivery-workflow-into-github-with-agent-apps/",
       "title": "How to bring your software delivery workflow into GitHub with agent apps",
@@ -1402,7 +1421,7 @@
       "summaryEn": "This tutorial shows how four GitHub agent apps cover the full SDLC—scoping, securing, rolling out, and shipping features—without ever leaving GitHub.",
       "lang": "en",
       "publishedAt": "2026-08-14T16:00:00.000Z",
-      "collectedAt": "2026-08-16T12:14:22.158Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "agent",
         "automation",
@@ -1957,7 +1976,7 @@
       "titleEn": "GitHub Copilot weekly releases — August 10",
       "lang": "en",
       "publishedAt": "2026-08-14T03:15:56.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "agent",
         "changelog",
@@ -2256,7 +2275,7 @@
       "titleEn": "License data quality improvements",
       "lang": "en",
       "publishedAt": "2026-08-13T19:14:12.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "changelog",
         "dependency-graph",
@@ -2289,7 +2308,7 @@
       "titleEn": "Block users from comments in personal repositories",
       "lang": "en",
       "publishedAt": "2026-08-13T19:02:46.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "changelog",
         "comments",
@@ -2729,7 +2748,7 @@
       "titleEn": "Gemini 3.7 Flash is now available in GitHub Copilot",
       "lang": "en",
       "publishedAt": "2026-08-13T14:00:53.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "agent",
         "changelog",
@@ -3511,7 +3530,7 @@
       "titleEn": "DeepSeek V4 Pro 0813 (on OpenRouter)",
       "lang": "en",
       "publishedAt": "2026-08-12T23:59:23.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "api",
         "deepseek",
@@ -3666,8 +3685,8 @@
       }
     },
     {
-      "id": "0e3904a50b3ab7fd",
-      "source": "github-blog-ai",
+      "id": "1ee0c39c0381a0f6",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/write-your-first-prompt-with-the-github-copilot-app/",
       "title": "Write your first prompt with the GitHub Copilot app",
@@ -3677,7 +3696,7 @@
       "summaryEn": "A beginner's guide to writing effective prompts in the GitHub Copilot app, covering how to choose the right context and model to confidently start your first task.",
       "lang": "en",
       "publishedAt": "2026-08-12T19:00:00.000Z",
-      "collectedAt": "2026-08-16T12:14:22.158Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "copilot",
         "getting-started",
@@ -3788,7 +3807,7 @@
       "titleEn": "Agent Plugins 1.0 in VS Code, Copilot CLI, and the Copilot app",
       "lang": "en",
       "publishedAt": "2026-08-12T18:39:11.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "agent",
         "agent-plugins",
@@ -3858,7 +3877,7 @@
       "titleEn": "Rule insights for organizations in public preview",
       "lang": "en",
       "publishedAt": "2026-08-12T18:30:28.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "changelog",
         "github",
@@ -4236,7 +4255,7 @@
       "titleEn": "NVIDIA CEO Tops Glassdoor’s 2026 List of Best CEOs",
       "lang": "en",
       "publishedAt": "2026-08-12T14:00:00.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "glassdoor",
         "jensen-huang",
@@ -4565,7 +4584,7 @@
       "titleEn": "NVIDIA AI Factory Compute Is Becoming an Investable Asset Class",
       "lang": "en",
       "publishedAt": "2026-08-12T00:38:21.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "ai-infrastructure",
         "finance",
@@ -4652,7 +4671,7 @@
       "titleEn": "GitHub Enterprise Server 3.22 release candidate",
       "lang": "en",
       "publishedAt": "2026-08-11T20:26:26.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "changelog",
         "copilot-cli",
@@ -4679,7 +4698,7 @@
       "titleEn": "Copilot memory and Ollama in GitHub Copilot for JetBrains",
       "lang": "en",
       "publishedAt": "2026-08-11T20:15:55.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "changelog",
         "copilot-memory",
@@ -5224,7 +5243,7 @@
       "titleEn": "Why Scaling AI Compute Performance Requires a New Power Architecture",
       "lang": "en",
       "publishedAt": "2026-08-11T15:00:06.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "ai-infrastructure",
         "data-center",
@@ -5332,7 +5351,7 @@
       "titleEn": "NVIDIA and Local AI Community Fuel Open Source Models and Intelligent Agents",
       "lang": "en",
       "publishedAt": "2026-08-11T13:00:25.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "ai-agents",
         "local-ai",
@@ -5357,7 +5376,7 @@
       "titleEn": "NVIDIA Nemotron 3.5 Lightning and NeMo Switchyard Deliver Faster, Smarter, More Efficient Agentic AI",
       "lang": "en",
       "publishedAt": "2026-08-11T13:00:05.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "agent",
         "llm",
@@ -5954,7 +5973,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Enterprise Java developers have a new superpower—drive GitHub Copilot from idiomatic Java code with annotations, virtual threads, and more. The post Using the GitHub Copilot SDK for Java appeared first on The GitHub Blog .",
       "image": {
         "src": "https://github.blog/wp-content/uploads/2026/01/generic-copilot-flying-invertocat-logo-github.png?fit=1920%2C1080",
@@ -5963,7 +5981,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "97b8edb934084a2f",
@@ -6143,7 +6162,7 @@
       "titleEn": "How Icelanders are thinking about AI",
       "lang": "en",
       "publishedAt": "2026-08-10T14:30:52.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "anthropic",
         "iceland",
@@ -7540,7 +7559,7 @@
       "titleEn": "Now we have a timeline of the OpenAI accidental attack against Hugging Face",
       "lang": "en",
       "publishedAt": "2026-08-08T14:06:41.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "hugging-face",
         "incident",
@@ -7665,7 +7684,7 @@
       "titleEn": "Firebird Launches CIS Region’s Largest AI Factory in Armenia",
       "lang": "en",
       "publishedAt": "2026-08-08T10:24:54.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "ai-infrastructure",
         "armenia",
@@ -7971,7 +7990,7 @@
       "titleEn": "Now we have a timeline of the OpenAI accidental attack against Hugging Face",
       "lang": "en",
       "publishedAt": "2026-08-07T23:55:58.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "black-hat",
         "hugging-face",
@@ -8695,6 +8714,7 @@
         "copilot",
         "cursor",
         "github-copilot",
+        "tutorial",
         "zenn"
       ],
       "category": "cursor",
@@ -9225,8 +9245,8 @@
       }
     },
     {
-      "id": "98b6d8ed63a96316",
-      "source": "github-blog-ai",
+      "id": "f51884b3b28d7cd8",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/a-guide-to-slash-commands-in-the-github-copilot-app/",
       "title": "A guide to slash commands in the GitHub Copilot app",
@@ -9236,7 +9256,7 @@
       "summaryEn": "GitHub's tutorial covers the slash commands available in the Copilot app, showing how they extend beyond basic chat to streamline planning, collaboration, automation, and workflow customization for developers.",
       "lang": "en",
       "publishedAt": "2026-08-06T19:49:34.000Z",
-      "collectedAt": "2026-08-16T12:14:22.158Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "copilot",
         "developer-tools",
@@ -9670,7 +9690,7 @@
       "titleEn": "Into the Omniverse: How Open World Models Push the Frontier of Physical AI",
       "lang": "en",
       "publishedAt": "2026-08-06T13:00:00.000Z",
-      "collectedAt": "2026-08-16T07:20:53.975Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "news",
         "nvidia",
@@ -11037,8 +11057,8 @@
       }
     },
     {
-      "id": "718721d9cadc6019",
-      "source": "github-blog-ai",
+      "id": "efb398861203332b",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/how-the-github-legal-team-used-copilot-cli-to-streamline-their-workflows/",
       "title": "How the GitHub legal team used Copilot CLI to streamline their workflows",
@@ -11048,7 +11068,7 @@
       "summaryEn": "GitHub's legal team shares how they used Copilot CLI to streamline their workflows without writing any code, demonstrating that non-engineers can build practical productivity tools with AI assistance.",
       "lang": "en",
       "publishedAt": "2026-08-04T19:02:34.000Z",
-      "collectedAt": "2026-08-16T12:14:22.158Z",
+      "collectedAt": "2026-08-16T13:22:44.115Z",
       "tags": [
         "copilot",
         "copilot-cli",
@@ -12844,6 +12864,8 @@
       "title": "Is paying artists enough to convince them to embrace AI?",
       "titleJa": "アーティストへの報酬はAI受け入れを説得するのに十分か？",
       "titleEn": "Is paying artists enough to convince them to embrace AI?",
+      "summaryJa": "生成AIによる無断学習に反発してきたイラストレーターたちに対し、報酬を支払うことで理解を得ようとする動きが広がっているが、金銭的補償だけで同意を得られるかは依然として不透明だ。",
+      "summaryEn": "As generative AI firms face backlash over training on artists' work without consent, some are now offering royalties or compensation—but whether money alone is enough to win artists over remains an open question.",
       "lang": "en",
       "publishedAt": "2026-08-02T13:00:00.000Z",
       "collectedAt": "2026-08-02T21:42:25.530Z",
@@ -12858,7 +12880,7 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Illustrators have spent years sounding the alarm about generative artificial intelligence startups training their models on artists' work without permission. They've pointed out how the practice is tantamount to theft, and in response, many gen AI boosters have argued that it's n",
       "image": {
         "src": "https://platform.theverge.com/wp-content/uploads/sites/2/2026/07/Screenshot-2026-07-31-at-4.11.25-PM.png?quality=90&strip=all&crop=2.6881256103516%2C4.7093735253803%2C97.311874389648%2C90.581252949239&w=1200",

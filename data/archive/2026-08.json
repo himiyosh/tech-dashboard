@@ -1,8 +1,59 @@
 {
-  "generatedAt": "2026-08-20T08:22:30.154Z",
+  "generatedAt": "2026-08-20T09:21:35.167Z",
   "month": "2026-08",
-  "count": 555,
+  "count": 557,
   "entries": [
+    {
+      "id": "421ae07bad23c512",
+      "source": "qiita-mcp",
+      "sourceType": "blog",
+      "url": "https://qiita.com/pmc-ko/items/4cff5997f1e29cf1ba0f",
+      "title": "MCPの仕様とC# SDKがv2でどう変わったのか整理してみる",
+      "titleJa": "MCPの仕様とC# SDKがv2でどう変わったのか整理してみる",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-08-20T06:07:38.000Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
+      "tags": [
+        "mcp",
+        "mcp-server",
+        "qiita"
+      ],
+      "category": "mcp",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "はじめに Model Context Protocol（MCP）の仕様が2026年7月28日付でメジャーアップデートされ、C# SDKも合わせて v2.0.0 としてメジャーバージョンアップしました。ちょうど1週間ほど前には v2.2.0 もリリースされていて、v2系はす...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMzU1NTM5NSUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc3Mzg4NjM4Mz9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9NjEzNzUyOWMzODk2NTAwMjk0OTZlMzY0MzVkZjVmNDU%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY0ZDdjZWU3ZTZiZDUzMDk2NTc1NDRjNmRiZGMzMDlkNzViMWZiY2NkJTJGb3JpZ2luYWwuanBnJTNGMTczMzEyMjczMj9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz00YWU5ZjZjOTliNTAzM2Y0YzIzZTk3Y2VhMDE0MGI1ZQ%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D22540dfb4a09736abce690df6f3fe7a6?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9TUNQJUUzJTgxJUFFJUU0JUJCJTk1JUU2JUE3JTk4JUUzJTgxJUE4QyUyMyUyMFNESyVFMyU4MSU4Q3YyJUUzJTgxJUE3JUUzJTgxJUE5JUUzJTgxJTg2JUU1JUE0JTg5JUUzJTgyJThGJUUzJTgxJUEzJUUzJTgxJTlGJUUzJTgxJUFFJUUzJTgxJThCJUU2JTk1JUI0JUU3JTkwJTg2JUUzJTgxJTk3JUUzJTgxJUE2JUUzJTgxJUJGJUUzJTgyJThCJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9ZmYyYmZhNmY2ZDk0NmE1OGI4Y2M3OWY0MGVjYWEwOGU&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBwbWMta28mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1jOThjNTM5NDI4MThiZmQ0MjYxOGJjODQ5MmQ2MjhlZA&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=5qCq5byP5Lya56S-44OU44O844O744Ko44Og44O744K344O8IElU44K944Oq44Ol44O844K344On44Oz5LqL5qWt6YOo&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=d5f797ec1ba7fe399e4e854482fd4014",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMzU1NTM5NSUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc3Mzg4NjM4Mz9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9NjEzNzUyOWMzODk2NTAwMjk0OTZlMzY0MzVkZjVmNDU%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY0ZDdjZWU3ZTZiZDUzMDk2NTc1NDRjNmRiZGMzMDlkNzViMWZiY2NkJTJGb3JpZ2luYWwuanBnJTNGMTczMzEyMjczMj9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz00YWU5ZjZjOTliNTAzM2Y0YzIzZTk3Y2VhMDE0MGI1ZQ%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D22540dfb4a09736abce690df6f3fe7a6?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9TUNQJUUzJTgxJUFFJUU0JUJCJTk1JUU2JUE3JTk4JUUzJTgxJUE4QyUyMyUyMFNESyVFMyU4MSU4Q3YyJUUzJTgxJUE3JUUzJTgxJUE5JUUzJTgxJTg2JUU1JUE0JTg5JUUzJTgyJThGJUUzJTgxJUEzJUUzJTgxJTlGJUUzJTgxJUFFJUUzJTgxJThCJUU2JTk1JUI0JUU3JTkwJTg2JUUzJTgxJTk3JUUzJTgxJUE2JUUzJTgxJUJGJUUzJTgyJThCJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9ZmYyYmZhNmY2ZDk0NmE1OGI4Y2M3OWY0MGVjYWEwOGU&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBwbWMta28mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1jOThjNTM5NDI4MThiZmQ0MjYxOGJjODQ5MmQ2MjhlZA&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=5qCq5byP5Lya56S-44OU44O844O744Ko44Og44O744K344O8IElU44K944Oq44Ol44O844K344On44Oz5LqL5qWt6YOo&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=d5f797ec1ba7fe399e4e854482fd4014",
+        "alt": "MCPの仕様とC# SDKがv2でどう変わったのか整理してみる",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "277c10bbed55bdce",
+      "source": "zenn-claude",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/neotechpark/articles/7003e20300d7e5",
+      "title": "GLM-5.3: 6x Terminal-Bench Gain From Post-Training Alone",
+      "titleJa": "",
+      "titleEn": "GLM-5.3: 6x Terminal-Bench Gain From Post-Training Alone",
+      "lang": "en",
+      "publishedAt": "2026-08-20T02:49:51.000Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
+      "tags": [
+        "claude",
+        "zenn"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Z.ai shipped GLM-5.3 with zero new pretraining. Post-training alone sent Terminal-Bench 3.0 from 4.6 to 28.3, and cybersecurity gains the company calls \"unexpected.\" Here is what the numbers say. Introduction On August 14, 2026, China's Z.ai (formerly Zhipu AI) released GLM-5.3, "
+    },
     {
       "id": "8bdf87535aa7aaab",
       "source": "ollama-releases",
@@ -13,7 +64,7 @@
       "titleEn": "Ollama Releases v0.32.15",
       "lang": "en",
       "publishedAt": "2026-08-20T00:49:25.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "caching",
         "ollama",
@@ -44,7 +95,7 @@
       "titleEn": "Ollama Releases v0.32.15-rc2",
       "lang": "en",
       "publishedAt": "2026-08-19T22:40:16.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "ollama",
         "release"
@@ -207,7 +258,7 @@
       "titleEn": "Built for the complexity of education: AI that understands your institution",
       "lang": "en",
       "publishedAt": "2026-08-19T20:15:17.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "ai",
         "education",
@@ -374,7 +425,7 @@
       "titleEn": "Data tools for developers and AI agents",
       "lang": "en",
       "publishedAt": "2026-08-19T17:01:55.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -509,7 +560,7 @@
       "summaryEn": "A technical guide covering how to choose between serverless and managed cluster modes for Apache Spark on Google Cloud, with resource optimization strategies and AI-assisted troubleshooting techniques.",
       "lang": "en",
       "publishedAt": "2026-08-19T16:00:00.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "apache-spark",
         "cloud",
@@ -523,6 +574,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "In modern enterprise data engineering, Apache Spark remains a cornerstone framework for processing massive datasets at scale. However, managing infrastructure such as provisioning clusters, tuning YARN configurations, and avoiding costs for idle hardware often detracts from what matters most: building resilient data pipelines. Google Cloud addresses this operational overhead via its Managed Service for Apache Spark , offering flexible deployment modes of serverless and managed clusters tailored to specific operational needs. This technical guide walks through the architectural decision matrix for deploying Spark on Google Cloud, details resource and cost optimization techniques, and demonstrates how to apply built-in Gemini Cloud Assist to rapidly troubleshoot and resolve serverless batch",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/1_uYxUREr.max-1000x1000.png",
@@ -531,8 +583,7 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "9bb38d31001a7aa5",
@@ -611,7 +662,7 @@
       "titleEn": "v0.32.15-rc1: ci: plumb temporary MLX patch through to docker stages (#17874)",
       "lang": "en",
       "publishedAt": "2026-08-19T15:33:53.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "caching",
         "ollama",
@@ -642,7 +693,7 @@
       "titleEn": "v0.32.15-rc0: mlx update (#17850)",
       "lang": "en",
       "publishedAt": "2026-08-19T14:15:11.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "ollama",
         "release"
@@ -737,7 +788,7 @@
       "titleEn": "Cline Nightly (2026-08-19 06:32)",
       "lang": "en",
       "publishedAt": "2026-08-19T06:32:39.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "build",
         "cline",
@@ -768,7 +819,7 @@
       "titleEn": "Cline Desktop v0.0.14",
       "lang": "en",
       "publishedAt": "2026-08-19T06:18:59.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "cline",
         "desktop",
@@ -1173,7 +1224,7 @@
       "titleEn": "How EDOTCO Group uses AI to make smarter network planning decisions in minutes",
       "lang": "en",
       "publishedAt": "2026-08-18T16:36:19.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "ai",
         "azure",
@@ -1277,7 +1328,7 @@
       "summaryEn": "Google Dataflow now supports generative AI agent integration, enabling streaming pipelines to move beyond static DAGs and dynamically construct plans, query databases, and trigger remediation paths based on real-time data content.",
       "lang": "en",
       "publishedAt": "2026-08-18T16:00:00.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "agent",
         "cloud",
@@ -1292,6 +1343,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Real-time streaming pipelines are the operational backbone of modern enterprises, continuously processing everything from customer support interactions to transaction logs. Traditionally, streaming DAGs are static; once deployed, their processing logic and execution paths are fixed. However, by integrating generative AI agents, we can move beyond static logic to adaptive execution. This allows streaming workflows to dynamically construct plans, query databases, and trigger custom remediation paths at runtime depending on the content of the data. For example, when a customer sends an angry message about a damaged order, a pipeline shouldn't just log the error or flag a dashboard. It should look up the order in the database that holds customer order and inventory records, decide on a remedia",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/image1_XYX8VCT.max-1000x1000.jpg",
@@ -1300,8 +1352,7 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "f115c1591ff47c2e",
@@ -1315,7 +1366,7 @@
       "summaryEn": "Box is integrating Gemini Embeddings 2 to extend enterprise AI beyond text-only RAG, enabling multimodal agents that can reason over financial models, schematics, and other rich content stored in Box.",
       "lang": "en",
       "publishedAt": "2026-08-18T16:00:00.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "agent",
         "box",
@@ -1330,6 +1381,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Enterprise content management is experiencing its biggest architectural shift since the cloud migration era. For years, enterprises have stored trillions of gigabytes of critical data in Box: financial models, clinical trial protocols, M&amp;A due diligence rooms, engineering schematics, and legal compliance playbooks. Up to this point, text-based search and retrieval-augmented generation (RAG) have successfully unlocked the vast narrative knowledge within these repositories, establishing a powerful and highly effective baseline for enterprise AI intelligence. Traditional RAG architectures have mastered text processing, but the agentic era demands more. The next logical evolution is to extend this framework to capture the inherently multimodal, deeply spatial, and highly structured element",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/original_images/GIF_1_1AuFwiE.gif",
@@ -1338,8 +1390,7 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "4d46fe7661b4cd0e",
@@ -1486,7 +1537,7 @@
       "titleEn": "Semantic Kernel dotnet-1.80.0",
       "lang": "en",
       "publishedAt": "2026-08-18T15:12:30.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "agent",
         "dotnet",
@@ -1556,7 +1607,7 @@
       "summaryEn": "Google Mandiant details an agentic vulnerability discovery framework that pairs AI models with expert-driven orchestration to find source code vulnerabilities faster than adversaries can exploit them after a data breach.",
       "lang": "en",
       "publishedAt": "2026-08-18T14:00:00.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -1571,6 +1622,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Written by: Alex Tselevich, Michael Maturi Introduction Adversarial misuse of AI has increased the risk of data theft and extortion events, because when proprietary source code is exposed, defenders must scramble to identify and patch vulnerabilities while attackers deploy machine-speed AI tools against them. By structuring the analysis process, enforcing skeptical validation steps, and injecting domain-specific human expertise directly into the pipeline, we’ve achieved a leap in efficacy. Combining AI models with a deeply structured, human expert-driven orchestration layer to tip the scales so that defenders can beat adversaries to the punch. Today, we use the Agentic Vulnerability Discovery Harness (AVDH) to rapidly analyze code and find exploit paths during proactive reviews, penetratio",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/Figure_1_Sequential_vulnerability_discover.max-1000x1000.png",
@@ -1579,8 +1631,7 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "3c69e3d373a8efd8",
@@ -1968,7 +2019,7 @@
       "titleEn": "Cline Code desktop beta (auto-update feed)",
       "lang": "en",
       "publishedAt": "2026-08-18T01:42:26.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "auto-update",
         "beta",
@@ -2000,7 +2051,7 @@
       "titleEn": "Cline Desktop v0.0.14-beta.1",
       "lang": "en",
       "publishedAt": "2026-08-18T01:42:24.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "beta",
         "cline",
@@ -2242,8 +2293,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "knowledgeEligible": false,
       "contentSnippet": "Structured outputs, web search, web fetch, MCP connector, and tool search are now available for Claude models hosted on Azure in Microsoft Foundry, turning a model endpoint into a production agent platform. The post From single call to agents: five new Claude capabilities now available in Microsoft Foundry appeared first on Microsoft Foundry Blog .",
       "image": {
         "src": "https://devblogs.microsoft.com/foundry/wp-content/uploads/sites/89/2026/08/claude-foundry.webp",
@@ -2252,7 +2301,9 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true,
+      "knowledgeEligible": false
     },
     {
       "id": "4e4fbb9d2924f122",
@@ -2839,7 +2890,7 @@
       "titleEn": "Ollama Releases v0.32.14",
       "lang": "en",
       "publishedAt": "2026-08-16T17:41:11.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "llama-server",
         "ollama",
@@ -3417,7 +3468,7 @@
       "titleEn": "Ollama Releases v0.32.14-rc0",
       "lang": "en",
       "publishedAt": "2026-08-15T18:56:40.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "llama-server",
         "ollama",
@@ -3927,7 +3978,7 @@
       "titleEn": "Ollama Releases v0.32.12",
       "lang": "en",
       "publishedAt": "2026-08-15T04:30:53.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "mlx",
         "ollama",
@@ -4164,7 +4215,7 @@
       "titleEn": "Ollama Releases v0.32.13",
       "lang": "en",
       "publishedAt": "2026-08-14T19:18:00.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "minor-update",
         "ollama",
@@ -4358,7 +4409,7 @@
       "titleEn": "Cline Releases v4.1.10",
       "lang": "en",
       "publishedAt": "2026-08-14T17:16:38.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "cline",
         "release",
@@ -4800,7 +4851,7 @@
       "titleEn": "Cline SDK v0.0.75",
       "lang": "en",
       "publishedAt": "2026-08-14T07:32:57.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "cline",
         "release",
@@ -4832,7 +4883,7 @@
       "titleEn": "Cline sdk/core v0.0.75",
       "lang": "en",
       "publishedAt": "2026-08-14T07:32:45.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "cline",
         "release"
@@ -4861,7 +4912,7 @@
       "titleEn": "Cline sdk/agents v0.0.75",
       "lang": "en",
       "publishedAt": "2026-08-14T07:32:43.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "cline",
         "release"
@@ -4890,7 +4941,7 @@
       "titleEn": "Cline sdk/llms v0.0.75",
       "lang": "en",
       "publishedAt": "2026-08-14T07:32:41.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "cline",
         "release"
@@ -4919,7 +4970,7 @@
       "titleEn": "Cline sdk/shared v0.0.75",
       "lang": "en",
       "publishedAt": "2026-08-14T07:32:40.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "cline",
         "release"
@@ -4948,7 +4999,7 @@
       "titleEn": "Ollama Releases v0.32.11",
       "lang": "en",
       "publishedAt": "2026-08-14T06:37:49.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "deepseek",
         "integration",
@@ -5449,7 +5500,7 @@
       "titleEn": "Ollama Releases v0.32.10",
       "lang": "en",
       "publishedAt": "2026-08-13T18:32:55.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "mlx",
         "nvfp4",
@@ -5581,7 +5632,7 @@
       "summaryEn": "BigQuery Graphs now supports measures in preview, combining governed metrics with relationship mapping so AI agents can reason accurately across complex, interconnected business entities rather than relying on raw flat tables.",
       "lang": "en",
       "publishedAt": "2026-08-13T17:00:00.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -5595,6 +5646,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "When enterprises transition from using simple chat assistants to autonomous, agentic workloads, they quickly run into a hard truth: Agents are prone to inaccurate insights when working with directly raw tables. BigQuery Graph helps organizations move beyond flat, static tables to represent enterprises exactly how they exist in the physical world: as interconnected business entities with real-world dependencies. With the support of measures in BigQuery Graph (preview), we are unifying governed metrics with relationship mapping. This allows your agents to reason across complex dependencies captured in graphs with precision of measures. Why relationships matter Traditional data structures are blind to multi-hop business context, causing AI agents to make incorrect operational decisions: The c",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/original_images/1_CXQhslw.gif",
@@ -5603,8 +5655,7 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "af34e6bc1c50dd27",
@@ -5651,7 +5702,7 @@
       "titleEn": "Too many notifications? Let agents sort them out",
       "lang": "en",
       "publishedAt": "2026-08-13T16:54:38.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "agent",
         "microsoft",
@@ -6853,8 +6904,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "knowledgeEligible": false,
       "contentSnippet": "Enterprise content is no longer just something people read. AI apps and agents are only as useful as the information they can understand, yet much of the world’s enterprise knowledge is locked in documents, forms, tables, images, audio, and video. The latest Azure Content Understanding updates help developers turn that content into structured, grounded data […] The post From Sync APIs to support for the GPT-5 model series and agentic workflows: What’s new in Azure Content Understanding – August 2026 appeared first on Microsoft Foundry Blog .",
       "image": {
         "src": "https://devblogs.microsoft.com/foundry/wp-content/uploads/sites/89/2026/08/image-8.webp",
@@ -6863,7 +6912,9 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true,
+      "knowledgeEligible": false
     },
     {
       "id": "ceafbe71b934c2df",
@@ -6893,7 +6944,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Enterprise content is no longer just something people consume. As organizations increasingly rely on AI to extract and act on information from documents, images, audio, and video, Azure Content Understanding is expanding support for the GPT-5 series and improving grounding and confidence to deliver greater flexibility, efficiency, and quality. This expanded model catalog enables organizations […] The post Azure Content Understanding GPT-5 Series Guide: Model Selection, Grounding Improvements, and Confidence Enhancements appeared first on Microsoft Foundry Blog .",
       "image": {
         "src": "https://devblogs.microsoft.com/foundry/wp-content/uploads/sites/89/2026/08/token-reduction.webp",
@@ -6902,7 +6952,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "e1f39f7cfe4bfcbc",
@@ -7051,7 +7102,7 @@
       "titleEn": "Care-X makes radiology AI more helpful in the clinic",
       "lang": "en",
       "publishedAt": "2026-08-12T17:27:09.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "ai",
         "healthcare",
@@ -7716,8 +7767,8 @@
       }
     },
     {
-      "id": "e33edd69f7816887",
-      "source": "openai-news",
+      "id": "7873e00dd904f32f",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/how-enterprises-put-ai-to-work",
       "title": "From assistance to execution: How enterprises put AI to work",
@@ -7725,7 +7776,7 @@
       "titleEn": "From assistance to execution: How enterprises put AI to work",
       "lang": "en",
       "publishedAt": "2026-08-12T06:00:00.000Z",
-      "collectedAt": "2026-08-20T08:22:22.851Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -8397,7 +8448,7 @@
       "summaryEn": "Google has integrated Gemini into Database Migration Service to automatically convert proprietary stored procedures and triggers written in PL/SQL or T-SQL into PostgreSQL-compatible code, removing the biggest bottleneck in database migrations to PostgreSQL or AlloyDB.",
       "lang": "en",
       "publishedAt": "2026-08-11T16:00:00.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "alloydb",
         "cloud",
@@ -8410,6 +8461,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Imagine this scenario: Your team decides to migrate a core application from an existing commercial database like Oracle or SQL Server to open source PostgreSQL or a fully managed service such as AlloyDB for PostgreSQL . The initial phase goes smoothly. Schemas convert, tables populate, and data migration pipelines transfer terabytes of data in hours. The project looks ahead of schedule. Then your team hits the bottleneck. Buried inside the existing databases are hundreds of stored procedures, complex triggers, and custom functions written in proprietary SQL dialects like PL/SQL or T-SQL. These routines contain years of critical business logic handling transaction validation, order processing, and custom reporting. Suddenly, your modernization project halts. Translating thousands of lines o",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/1_-_DMS_Code_Conversion_Console.max-1000x1000.jpg",
@@ -8418,8 +8470,7 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "6a7f0a7876bd8bea",
@@ -8433,7 +8484,7 @@
       "summaryEn": "Looker's governed semantic layer now integrates with Gemini Enterprise, providing structured context to LLMs so employees get consistent, trustworthy answers when querying enterprise data through natural language.",
       "lang": "en",
       "publishedAt": "2026-08-11T16:00:00.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "cloud",
         "data-governance",
@@ -8448,6 +8499,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "For organizations deploying AI agents at scale, there’s often a critical divide between structured and unstructured data. While large language models (LLMs) excel at parsing text documents, emails, and PDFs, they can struggle when presented with raw enterprise databases. Meanwhile, standard natural-language-to-SQL (NL2SQL) models often guess how database schemas fit together, which can lead to unpredictable queries, inconsistent metrics, and AI hallucinations that erode user trust. Gemini Enterprise brings the best of Google AI to every employee through an intuitive chat interface that acts as a single front door for AI in the workplace. And now, Looker’s governed semantic layer serves as the trusted foundation for structured data within Gemini Enterprise, enabling trusted self-service bus",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/original_images/1_Ei9b2UE.gif",
@@ -8456,8 +8508,7 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "6ce15600a8a795ca",
@@ -8567,7 +8618,7 @@
       "titleEn": "Building the foundation for agentic AI in healthcare",
       "lang": "en",
       "publishedAt": "2026-08-11T14:59:04.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -9285,7 +9336,7 @@
       "summaryEn": "Google Cloud announced the Developer Device Platform, enabling enterprises to build and test mobile apps across a wide range of real devices at scale, reducing the cost and complexity of device procurement while improving test reliability.",
       "lang": "en",
       "publishedAt": "2026-08-10T22:00:00.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "agent",
         "cloud",
@@ -9299,9 +9350,9 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "Most enterprises connect with their customers through a device. Whether it’s using a mobile app to order a product, contact customer service, view content, or manage their account, the customer experience depends on how well an app can run locally on the customer’s device. For this reason, building and testing applications across a wide variety of devices is critical for any enterprise launch that involves locally running components. However, procuring and hosting devices at scale is expensive and complex, and tests are often flaky, inconclusive, or just difficult to debug. This leaves many developers to test launches on the physical phones in their pockets and hope the results apply to most devices. To solve this challenge, today we are excited to announce the public preview launch of Dev",
       "evergreen": true,
-      "knowledgeEligible": false
+      "knowledgeEligible": false,
+      "contentSnippet": "Most enterprises connect with their customers through a device. Whether it’s using a mobile app to order a product, contact customer service, view content, or manage their account, the customer experience depends on how well an app can run locally on the customer’s device. For this reason, building and testing applications across a wide variety of devices is critical for any enterprise launch that involves locally running components. However, procuring and hosting devices at scale is expensive and complex, and tests are often flaky, inconclusive, or just difficult to debug. This leaves many developers to test launches on the physical phones in their pockets and hope the results apply to most devices. To solve this challenge, today we are excited to announce the public preview launch of Dev"
     },
     {
       "id": "c2d001e4f6b766cc",
@@ -9457,7 +9508,7 @@
       "titleEn": "How to build an AI agent: A simple guide for anyone",
       "lang": "en",
       "publishedAt": "2026-08-10T15:07:06.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -11735,7 +11786,7 @@
       "titleEn": "Microsoft’s newest India datacenter region goes live to power the country’s AI economy and enable Frontier Firms",
       "lang": "en",
       "publishedAt": "2026-08-07T18:00:40.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "ai-infrastructure",
         "cloud",
@@ -13126,7 +13177,7 @@
       "titleEn": "Semantic Kernel dotnet-1.79.0",
       "lang": "en",
       "publishedAt": "2026-08-06T11:33:35.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "agent",
         "dotnet",
@@ -13182,7 +13233,7 @@
       "titleEn": "Semantic Kernel python-1.44.1",
       "lang": "en",
       "publishedAt": "2026-08-06T09:55:22.000Z",
-      "collectedAt": "2026-08-20T03:36:04.846Z",
+      "collectedAt": "2026-08-20T09:21:28.548Z",
       "tags": [
         "agent",
         "bugfix",

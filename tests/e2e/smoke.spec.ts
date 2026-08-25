@@ -16,6 +16,10 @@ import {
   isAddressableDetailEntry,
   type DetailAddressableEntry,
 } from "../../web/src/lib/detail-addressability.ts";
+import { CATEGORY_META } from "../../web/src/lib/category-meta.ts";
+
+/** Category count follows the taxonomy source of truth, not a hard-coded number. */
+const CATEGORY_COUNT = CATEGORY_META.length;
 
 const TIMELINE_ENTRY_LINK_SELECTOR =
   'main article.card:not([data-catvis="muted"]) h3.title > a[href^="/e/"]';
@@ -2674,20 +2678,29 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(sourceCta.locator("small")).toHaveText(/^[a-z0-9.-]+(?::\d+)?$/i);
 
       const geometry = await page.evaluate(() => {
-        const strip = document.querySelector(".ed-action-strip")?.getBoundingClientRect();
-        const source = document.querySelector(".ed-header-cta")?.getBoundingClientRect();
-        const copy = document.querySelector(".ed-share-btn[data-share-copy]")?.getBoundingClientRect();
-        if (!strip || !source || !copy) return null;
+        const stripEl = document.querySelector(".ed-action-strip");
+        const sourceEl = document.querySelector<HTMLElement>(".ed-header-cta");
+        const copyEl = document.querySelector(".ed-share-btn[data-share-copy]");
+        const strip = stripEl?.getBoundingClientRect();
+        const source = sourceEl?.getBoundingClientRect();
+        const copy = copyEl?.getBoundingClientRect();
+        if (!strip || !source || !copy || !sourceEl) return null;
         return {
           stripWidth: strip.width,
-          sourceWidth: source.width,
-          sourceHeight: source.height,
           stripLeft: strip.left,
           stripRight: strip.right,
+          sourceWidth: source.width,
+          sourceHeight: source.height,
+          sourceLeft: source.left,
+          sourceRight: source.right,
+          sourceRadius: Number.parseFloat(
+            getComputedStyle(sourceEl).borderTopLeftRadius,
+          ),
           copyWidth: copy.width,
           copyHeight: copy.height,
           copyLeft: copy.left,
           copyRight: copy.right,
+          viewportWidth: window.innerWidth,
           overflow: document.documentElement.scrollWidth - window.innerWidth,
         };
       });
@@ -2695,11 +2708,16 @@ test.describe("TECH Dashboard smoke", () => {
         geometry,
         `width ${width}: detail action geometry is unavailable`,
       );
+      // Both actions fill the content column and stay inset from the
+      // viewport edges — a full-bleed square CTA next to the inset copy
+      // button reads as a broken band (regression guard).
       expect(requiredGeometry.sourceWidth).toBeGreaterThanOrEqual(requiredGeometry.stripWidth - 1);
-      expect(requiredGeometry.copyWidth).toBeGreaterThanOrEqual(requiredGeometry.stripWidth - 40);
-      expect(requiredGeometry.copyWidth).toBeLessThan(requiredGeometry.stripWidth - 20);
-      expect(requiredGeometry.copyLeft).toBeGreaterThan(requiredGeometry.stripLeft + 14);
-      expect(requiredGeometry.copyRight).toBeLessThan(requiredGeometry.stripRight - 14);
+      expect(requiredGeometry.copyWidth).toBeGreaterThanOrEqual(requiredGeometry.stripWidth - 1);
+      expect(Math.abs(requiredGeometry.copyLeft - requiredGeometry.sourceLeft)).toBeLessThanOrEqual(1);
+      expect(Math.abs(requiredGeometry.copyRight - requiredGeometry.sourceRight)).toBeLessThanOrEqual(1);
+      expect(requiredGeometry.sourceLeft).toBeGreaterThanOrEqual(12);
+      expect(requiredGeometry.sourceRight).toBeLessThanOrEqual(requiredGeometry.viewportWidth - 12);
+      expect(requiredGeometry.sourceRadius).toBeGreaterThanOrEqual(6);
       expect(requiredGeometry.sourceHeight).toBeGreaterThanOrEqual(52);
       expect(requiredGeometry.copyHeight).toBeGreaterThanOrEqual(44);
       expect(requiredGeometry.overflow).toBeLessThanOrEqual(0);
@@ -2947,7 +2965,7 @@ test.describe("TECH Dashboard smoke", () => {
     await page.goto("/");
     const items = page.locator("aside.left a.side-item[href^='/c/']");
     const count = await items.count();
-    expect(count, "sidebar lists every category").toBe(14);
+    expect(count, "sidebar lists every category").toBe(CATEGORY_COUNT);
 
     const labels: string[] = [];
     for (let i = 0; i < count; i++) {
@@ -4861,10 +4879,10 @@ test.describe("TECH Dashboard smoke", () => {
     const directory = page.locator("#category-directory");
     await expect(directory).toBeVisible();
     await expect(page.locator("#category-directory-heading")).toBeVisible();
-    await expect(directory.locator("a.category-directory-item")).toHaveCount(14);
+    await expect(directory.locator("a.category-directory-item")).toHaveCount(CATEGORY_COUNT);
     await expect(directory.getByRole("link", { name: /Copilot/ })).toBeVisible();
     await expect(directory.getByRole("link", { name: /Papers/ })).toBeVisible();
-    await expect(page.locator(".category-card")).toHaveCount(14);
+    await expect(page.locator(".category-card")).toHaveCount(CATEGORY_COUNT);
     await expect(page.locator(".category-card").first()).toContainText("live");
     await expect(page.locator(".category-card").first()).not.toContainText("all time");
     const standardCategoryCards = page.locator(".category-card:not([data-research-overview])");
@@ -4930,7 +4948,7 @@ test.describe("TECH Dashboard smoke", () => {
     await page.goto("/categories/");
 
     const directorySelector = "#category-directory a.category-directory-item";
-    await expect(page.locator(directorySelector)).toHaveCount(14);
+    await expect(page.locator(directorySelector)).toHaveCount(CATEGORY_COUNT);
     for (const viewport of [
       { width: 375, height: 667 },
       { width: 390, height: 844 },

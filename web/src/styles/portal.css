@@ -2890,9 +2890,11 @@ main {
   border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
   border-radius: 7px;
   background: color-mix(in srgb, var(--bg-2) 52%, transparent);
-  font-size: 12.4px;
+  /* The summary is the card's decision surface (PRODUCT.md #1): keep it a
+   * touch larger and looser than the metadata rows around it. */
+  font-size: 13px;
   color: var(--text-2);
-  line-height: 1.42;
+  line-height: 1.55;
   margin-bottom: 0;
   min-width: 0;
 }
@@ -2900,6 +2902,7 @@ main {
 .card .summary-en {
   font-size: 11.5px;
   color: var(--muted);
+  line-height: 1.45;
 }
 
 .card .summary .s-text {
@@ -2908,6 +2911,12 @@ main {
   display: -webkit-box;
   min-width: 0;
   -webkit-box-orient: vertical;
+  /* 3 lines for the primary (JA) summary so 90-150 char summaries are fully
+   * readable without the hover tooltip; EN stays at 2 below. */
+  -webkit-line-clamp: 3;
+}
+
+.card .summary-en .s-text {
   -webkit-line-clamp: 2;
 }
 

@@ -20,7 +20,7 @@ export interface Props {
   description?: string;
   descriptionEn?: string;
   metadata?: LocalizedPageMetadata;
-  pageKey?: "timeline" | "categories" | "arxiv" | "knowledge" | "glossary" | "sources" | "archive" | "status" | "about" | "privacy" | "search" | "not-found";
+  pageKey?: "timeline" | "categories" | "arxiv" | "knowledge" | "glossary" | "sources" | "archive" | "status" | "about" | "editorial" | "privacy" | "search" | "not-found";
   breadcrumb?: Array<{ label: string; href?: string }>;
   rssHref?: string;
   rssTitle?: string;
@@ -52,6 +52,7 @@ const navItems = [
   { href: "/archive", key: "archive", label: "Archive", detail: "月別に過去記事を確認", detailEn: "Browse articles by month" },
   { href: "/status", key: "status", label: "Status", detail: "収集 source と Worker 状態", detailEn: "Collection sources and Worker health" },
   { href: "/about", key: "about", label: "About", detail: "サイトの目的・収集方針・RSS購読", detailEn: "Purpose, collection policy, and feeds" },
+  { href: "/editorial-policy", key: "editorial", label: "Editorial", detail: "編集方針・訂正・お問い合わせ", detailEn: "Editorial policy, corrections, and contact" },
   { href: "/privacy", key: "privacy", label: "Privacy", detail: "データ取扱い・広告選択・削除", detailEn: "Data use, advertising choice, and deletion" },
 ] as const;
 // Primary explore shortcuts live in the header switcher / mobile tabbar
@@ -593,6 +594,10 @@ const footerLastRunRelative = footerLastRunAt
         <span class="item">harness <strong>v0.1</strong></span>
         <span class="item footer-stack">powered by <strong>Astro</strong> + <strong>Claude Opus</strong></span>
         <span class="spacer"></span>
+        <a class="item footer-privacy-link" href="/editorial-policy">
+          <span class="i18n-ja">編集方針</span>
+          <span class="i18n-en" lang="en">Editorial</span>
+        </a>
         <a class="item footer-privacy-link" href="/privacy">
           <span class="i18n-ja">Privacy</span>
           <span class="i18n-en" lang="en">Privacy</span>

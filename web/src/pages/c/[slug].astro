@@ -15,6 +15,11 @@ import {
   type Category,
 } from "../../lib/data.ts";
 import { categoryRssHref } from "../../lib/rss.ts";
+import { categoryPath } from "../../lib/route-inventory.ts";
+import {
+  brandSocialImage,
+  createLocalizedPageMetadata,
+} from "../../lib/social-metadata.ts";
 import { categoryWeekOverWeek } from "../../lib/stats.ts";
 
 export function getStaticPaths() {
@@ -46,11 +51,24 @@ const breadcrumb = [
   { label: "Categories", href: "/categories" },
   { label: category.name },
 ];
+
+// Canonical + OG/Twitter metadata: category pages are the site's best landing
+// pages for topic queries and previously shipped with no canonical URL.
+const metadata = createLocalizedPageMetadata({
+  canonicalUrl: categoryPath(slug),
+  type: "website",
+  titleJa: `${category.name} — TECH Dashboard`,
+  titleEn: `${category.name} — TECH Dashboard`,
+  descriptionJa: `${categoryContextLabel} カテゴリの最新 ${all.length} 件を、新着順・30日トレンド・出典付き AI 要約で確認できます。`,
+  descriptionEn: `Browse the latest ${all.length} ${categoryContextLabel} updates with recency ordering, 30-day trends, and sourced AI summaries.`,
+  image: brandSocialImage(),
+});
 ---
 
 <Portal
   pageKey="categories"
   title={`${category.name} — TECH Dashboard`}
+  metadata={metadata}
   breadcrumb={breadcrumb}
   rssHref={rssHref}
   rssTitle={`TECH Dashboard | ${category.name}`}

@@ -8,6 +8,7 @@ import {
   isPublishableEntry,
   type PublicationEntry,
 } from "../web/src/lib/entry-publication.ts";
+import { isAddressableDetailEntry } from "../web/src/lib/detail-addressability.ts";
 import { normalizeTagKey } from "../web/src/lib/tag-normalize.ts";
 import { TAG_PAGE_MIN_ENTRIES } from "../web/src/lib/route-inventory.ts";
 
@@ -183,17 +184,20 @@ function addressableEntries(
     "data/index.json",
     files.get("data/index.json") ?? null,
   )) {
-    if (
-      isListableEntry(entry)
-      && entry.archiveTier !== "cold"
-      && entry.archiveTier !== "dropped"
-    ) {
+    // Must stay a superset-consistent mirror of the real route policy
+    // (web/src/lib/detail-addressability.ts): summary-pending entries have no
+    // /e/[id]/ route, so they must never be planned as detail upserts.
+    if (isListableEntry(entry) && isAddressableDetailEntry(entry)) {
       entries.set(entry.id, entry);
     }
   }
   for (const path of monthDataPaths(files)) {
     for (const entry of entryRecords(path, files.get(path) ?? null)) {
-      if (entry.archiveTier === "warm" && isPublishableEntry(entry)) {
+      if (
+        entry.archiveTier === "warm"
+        && isPublishableEntry(entry)
+        && isAddressableDetailEntry(entry)
+      ) {
         entries.set(entry.id, entry);
       }
     }

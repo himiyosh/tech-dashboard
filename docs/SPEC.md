@@ -288,10 +288,11 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | `zenn-llm` | Zenn LLM topic | blog | 2 | zenn.dev/topics/llm |
 | `qiita-llm` | Qiita LLM tag | blog | 2 | qiita.com/tags/llm |
 
-#### Ecosystem (4 ソース: agent-fw / mcp)
+#### Ecosystem (5 ソース: agent-fw / mcp)
 
 | ID | 表示名 | 種別 | Tier | Feed URL |
 |---|---|---|---|---|
+| `mcp-blog` | MCP Blog (標準化団体公式) | blog | 1 | blog.modelcontextprotocol.io/index.xml |
 | `semantic-kernel-releases` | Semantic Kernel Releases | release | 2 | github.com/microsoft/semantic-kernel |
 | `mcp-servers-releases` | MCP Servers Releases | release | 2 | github.com/modelcontextprotocol/servers |
 | `zenn-mcp` | Zenn MCP topic | blog | 2 | zenn.dev/topics/mcp |
@@ -311,10 +312,11 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | `the-verge` | The Verge | blog | 2 | theverge.com |
 | `ars-technica` | Ars Technica | blog | 2 | arstechnica.com |
 
-#### Research (9 ソース)
+#### Research (10 ソース)
 
 | ID | 表示名 | 種別 | Tier | Feed URL |
 |---|---|---|---|---|
+| `microsoft-research` | Microsoft Research Blog | blog | 1 | microsoft.com/en-us/research/feed/ |
 | `arxiv-cs-cl` | arXiv cs.CL | paper | 1 | rss.arxiv.org/rss/cs.CL |
 | `arxiv-cs-se` | arXiv cs.SE | paper | 1 | rss.arxiv.org/rss/cs.SE |
 | `arxiv-cs-ai` | arXiv cs.AI | paper | 2 | rss.arxiv.org/rss/cs.AI |

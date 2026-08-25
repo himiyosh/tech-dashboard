@@ -14,6 +14,10 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 追加
 
+- 情報源に標準化団体公式の MCP Blog (`blog.modelcontextprotocol.io`) と Microsoft Research Blog を tier 1 で追加しました。どちらも登録前に実フィード検証を行い、Microsoft Research は AI/ML タイトル signal を必須とする title-scope keyword filter と `maxEntriesPerRun` で firmwide feed の noise を除外します。未検証の拡充候補と検証手順は `docs/source-candidates.md` に整理しました。
+- `/editorial-policy/`(編集方針)ページを追加しました。情報源の選定基準、重要度と掲載順の基準、AI 要約の生成と品質管理、訂正・削除ポリシー、広告と編集の独立、お問い合わせ (`#contact`) を JA/EN で明文化し、ハンバーガーメニュー・フッター・About・sitemap から到達できます。
+- release/changelog タイトルを version 形状で決定論的に分類する共有 module `web/src/lib/release-signal.ts` を追加しました(patch/prerelease/nightly = routine、x.Y.0 = minor、x.0.0 = major)。既存データの過大 importance を安全に降格する migration `scripts/rescore-release-importance.ts`(dry-run 既定・`--apply` 必須)も追加しています。
+
 - production Web buildを1回だけ再利用し、desktop/mobileのHome判断面、検索、RSS/OPML購読発見、実404回復、optionalな要約待ち状態をローカル計測するPlaywrightジャーニーを追加しました。出力はstep条件・操作上限・document navigation列・viewport/scroll・route・失敗観測と、現行runだけの情報値である経過msを含む64KiB以下のJSONです。合否は到達性と複雑度だけで判定し、timingの履歴baseline保存、過去比較、delta警告・失敗は行いません。
 - site-wide RSS、全カテゴリRSS、arXiv RSS、Knowledge RSSを重複なく一括購読できる静的`/feeds.opml`を追加しました。AboutのJA/EN購読actionと全ページのOPML autodiscoveryから利用でき、JSON FeedはRSSとしてbundleへ含めません。
 - Knowledge専用レーンへ静的な`/rss/knowledge.xml`、ページ固有のRSS autodiscovery、JA/ENの購読actionを追加しました。feedはKnowledge画面と同じ公開可能なevergreen記事だけを、既存RSSの順序・上限・XML安全契約で配信します。
@@ -33,6 +37,11 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 変更
 
+- 重要度採点の欠陥を修正しました。旧実装は "v1." / "v2." / "v3." の部分一致を major keyword として扱い、`Cline CLI v3.0.58` のような patch release を importance 3 に採点していました(live index の release の 78% が該当)。新実装は version 形状で判定し、patch/prerelease は importance 1 になります。Web 層のランキング・Featured・Top 3 も保存済みの過大 importance に依存せず routine release を decision 枠から除外します。
+- AI 要約が未生成 (deterministic pending fallback のみ) の記事は、個別記事ページ `/e/[id]/` と sitemap から除外するようにしました(thin content 対策)。一覧・検索・カテゴリには引き続き表示され、リンクは元記事へ直接遷移し、要約が生成されると詳細ページが復活します。publisher-impact の detail upsert 判定も同じ addressability gate を共有します。
+- AI 要約プロンプトを更新し、最初の節で最も具体的な変更点(機能名・数値・モデル名・範囲)、最後の節で誰に効くかを必ず述べる contract にしました。「〜が発表されました」だけの要約と「この記事は」等の定型導入を禁止し、importance の基準を patch/prerelease = 1 に明確化しました。
+- 一覧カードの日本語要約を 2 行 clamp から 3 行 clamp に拡大し、文字サイズと行間をわずかに引き上げて、hover なしで要約全文を読めるようにしました(英語要約は 2 行のまま)。
+- カテゴリページ `/c/[slug]/` に canonical URL と JA/EN の Open Graph / Twitter Card metadata を追加し、`/sample/article` に `noindex` を付与しました。
 - Publisher jobのGitHub Actions wall-time timeoutを60分へ拡張しました。明示的なfull incremental-shadow bootstrap用の余裕だけを増やし、Astroの18分build・static file数・RSS resource guardは引き続き内部契約でfail-closedに維持します。
 - Incremental shadow publishのR2 uploadに、開始件数と1件目・100件ごと・完了時だけを出すbounded progress diagnosticsを追加しました。各checkpointはread-back検証済みbyte数を表示し、uploadログ量がroute数に比例して無制限に増えないようにしました。
 - Incremental shadowのcontent-addressed uploadは、HTTP 408/429/5xxや一時的なnetwork/read-back失敗だけを最大3回・1秒/2秒のbounded backoffで再試行するようにしました。metadata/digest不一致などのcontract failureは従来どおり即時fail-closedにし、数千object中1件の一過性R2 502でactivation全体が失敗する再発を防ぎます。

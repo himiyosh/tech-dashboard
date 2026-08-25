@@ -16,6 +16,10 @@ import {
   validateDetailAssetShell,
 } from "../web/scripts/incremental-render-core.mjs";
 import { runIncrementalRendererCli } from "../web/scripts/render-incremental-shadow.mjs";
+import {
+  isAddressableDetailEntry,
+  type DetailAddressableEntry,
+} from "../web/src/lib/detail-addressability.ts";
 
 const fingerprint = DEPLOYED_PUBLISHER_FINGERPRINT;
 const metadata = [
@@ -147,9 +151,11 @@ describe("incremental detail renderer", () => {
 
   it("renders exactly one detail and one search delta for a body-only impact", async () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{ id: string }>;
+      entries: DetailAddressableEntry[];
     };
-    const id = index.entries[0]?.id;
+    // Detail routes exist only for addressable (summary-ready hot/warm)
+    // entries, so a summary-pending index head must not be the fixture.
+    const id = index.entries.find((entry) => isAddressableDetailEntry(entry))?.id;
     expect(id).toMatch(/^[0-9a-f]{16}$/);
     const { shell } = shellFixture();
     const root = mkdtempSync(join(tmpdir(), "incremental-render-"));

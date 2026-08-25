@@ -11,6 +11,12 @@ export interface EntryDestinationInput {
   id: string;
   url: string;
   archiveTier?: DetailArchiveTier;
+  source?: string;
+  title?: string;
+  titleJa?: string | null;
+  titleEn?: string | null;
+  summaryJa?: string | null;
+  summaryEn?: string | null;
 }
 
 export interface EntryDestination {

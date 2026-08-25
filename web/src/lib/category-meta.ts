@@ -6,7 +6,6 @@ export type Category =
   | "vscode"
   | "cursor"
   | "cline"
-  | "aider"
   | "opencode"
   | "local-llm"
   | "agent-fw"
@@ -44,7 +43,6 @@ export const CATEGORY_META: ReadonlyArray<CategoryMeta> = [
   { slug: "gemini", name: "Gemini / Gemma", shortLabel: "Gemini/Gemma", color: "#60a5fa", initial: "Gm", emoji: "\u{2728}", group: "google" },
   { slug: "cursor", name: "Editor", shortLabel: "Editor", color: "#cbd5e1", initial: "Ed", emoji: "\u{1F5B1}\u{FE0F}", group: "coding-tools" },
   { slug: "cline", name: "Cline / Roo", shortLabel: "Cline/Roo", color: "#c4b5fd", initial: "Cn", emoji: "\u{1F9F5}", group: "coding-tools" },
-  { slug: "aider", name: "Aider", shortLabel: "Aider", color: "#d6d3a1", initial: "Ai", emoji: "\u{1F91D}", group: "coding-tools" },
   { slug: "opencode", name: "OpenHands / OpenCode", shortLabel: "OpenHands/OpenCode", color: "#a5b4fc", initial: "Oh", emoji: "\u{1F310}", group: "coding-tools" },
   { slug: "local-llm", name: "Local LLM / Open Models", shortLabel: "Local Models", searchAliases: ["local model", "local models", "local ai", "on-device ai", "open source model", "open source models"], color: "#f87171", initial: "Lm", emoji: "\u{1F3E0}", group: "open-models" },
   { slug: "agent-fw", name: "Agent Frameworks", shortLabel: "Agent Frameworks", color: "#34d399", initial: "Af", emoji: "\u{1F916}", group: "agent-tools" },

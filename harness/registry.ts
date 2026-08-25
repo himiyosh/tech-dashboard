@@ -1,7 +1,7 @@
 /**
  * Source registry - maps SourceId to SourceDefinition.
  *
- * Current production registry covers 52 sources across 14 categories.
+ * Current production registry covers 52 sources across 13 categories.
  * Keep web/src/lib/source-meta.ts in sync so the Pages build stays self-contained.
  */
 import type { SourceDefinition } from "./types.ts";
@@ -904,7 +904,9 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
   "aider-releases": {
     id: "aider-releases",
     displayName: "Aider Releases",
-    category: "aider",
+    // Aider had its own near-empty lane (10 entries, dormant since 2026-02);
+    // folded into the OSS coding-agents lane per owner decision (2026-08-25).
+    category: "opencode",
     sourceType: "release",
     defaultLang: "en",
     autoTags: ["aider", "release"],

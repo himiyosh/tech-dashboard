@@ -31,7 +31,7 @@ export const SOURCE_META = [
   { id: "qiita-cursor", displayName: "Qiita Cursor tag", category: "cursor", tier: 2 },
   { id: "vscode-updates", displayName: "VS Code Updates", category: "vscode", tier: 1 },
   { id: "simonw-blog", displayName: "Simon Willison's Weblog", category: "local-llm", tier: 2 },
-  { id: "aider-releases", displayName: "Aider Releases", category: "aider", tier: 2 },
+  { id: "aider-releases", displayName: "Aider Releases", category: "opencode", tier: 2 },
   { id: "cline-releases", displayName: "Cline Releases", category: "cline", tier: 2 },
   { id: "continue-releases", displayName: "Continue.dev Releases", category: "copilot", tier: 2 },
   { id: "openhands-releases", displayName: "OpenHands Releases", category: "opencode", tier: 2 },

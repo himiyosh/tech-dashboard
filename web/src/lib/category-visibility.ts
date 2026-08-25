@@ -22,7 +22,6 @@
 export const DEFAULT_MUTED_CATEGORIES: readonly string[] = [
   "cursor",
   "cline",
-  "aider",
   "local-llm",
   "agent-fw",
 ];

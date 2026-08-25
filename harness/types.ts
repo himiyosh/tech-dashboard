@@ -12,7 +12,6 @@ export type Category =
   | "vscode"
   | "cursor"
   | "cline"
-  | "aider"
   | "opencode"
   | "local-llm"
   | "agent-fw"
@@ -28,7 +27,6 @@ export const ALL_CATEGORIES: readonly Category[] = [
   "vscode",
   "cursor",
   "cline",
-  "aider",
   "opencode",
   "local-llm",
   "agent-fw",

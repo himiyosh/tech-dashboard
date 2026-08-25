@@ -17,6 +17,7 @@ import {
   type DetailAddressableEntry,
 } from "../../web/src/lib/detail-addressability.ts";
 import { CATEGORY_META } from "../../web/src/lib/category-meta.ts";
+import { DEFAULT_MUTED_CATEGORIES } from "../../web/src/lib/category-visibility.ts";
 
 /** Category count follows the taxonomy source of truth, not a hard-coded number. */
 const CATEGORY_COUNT = CATEGORY_META.length;
@@ -2915,6 +2916,154 @@ test.describe("TECH Dashboard smoke", () => {
       page.locator('[data-category-filter] [data-category-toggle="cline"]'),
     ).toHaveAttribute("aria-pressed", "false");
     await page.setViewportSize({ width: 390, height: 844 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+  });
+
+  test("Daily Summary top stories follow the category filter", async ({ page }) => {
+    await page.goto("/");
+    const board = page.locator(".ticker-panel .board");
+    if ((await board.count()) === 0) test.skip(true, "no board on this data snapshot");
+
+    const rows = board.locator("li[data-board-row]");
+    const mutedRows = board.locator('li[data-board-row][data-catvis="muted"]');
+    const visibleRows = board.locator('li[data-board-row][data-catvis="visible"]');
+    expect(await rows.count(), "board rows carry filter state").toBeGreaterThan(0);
+
+    // Every rendered row is stamped with its lane, and default-muted lanes are
+    // hidden without JavaScript having to run.
+    const laneStates = await rows.evaluateAll((elements) =>
+      elements.map((element) => ({
+        category: element.getAttribute("data-category") ?? "",
+        catvis: element.getAttribute("data-catvis") ?? "",
+        visible: element.getBoundingClientRect().height > 0,
+      })),
+    );
+    for (const row of laneStates) {
+      expect(row.category, "board row exposes its category").not.toBe("");
+      expect(["muted", "visible"]).toContain(row.catvis);
+      expect(row.visible, `row ${row.category} visibility matches ${row.catvis}`).toBe(
+        row.catvis === "visible",
+      );
+    }
+    for (const muted of DEFAULT_MUTED_CATEGORIES) {
+      expect(
+        laneStates.some((row) => row.category === muted && row.catvis === "visible"),
+        `default-muted lane ${muted} must not appear in the visible board`,
+      ).toBe(false);
+    }
+
+    // The "N items" label counts what is actually shown, and the visible rows
+    // renumber contiguously (01, 02, 03 ...) despite the hidden ones.
+    const visibleCount = await visibleRows.count();
+    await expect(page.locator(".ticker-panel [data-board-count]").first()).toHaveText(
+      String(visibleCount),
+    );
+    // Numbering is counter-driven and only visible rows increment it, so the
+    // shown list always reads 01, 02, 03 ... with no gaps where a muted row sat.
+    const numbering = await rows.evaluateAll((elements) =>
+      elements.map((element) => ({
+        catvis: element.getAttribute("data-catvis") ?? "",
+        increment: getComputedStyle(element).counterIncrement,
+        marker: getComputedStyle(
+          element.querySelector(".b-num") as Element,
+          "::before",
+        ).content,
+      })),
+    );
+    for (const row of numbering) {
+      if (row.catvis === "muted") {
+        expect(row.increment, "muted rows do not consume a number").toBe("none");
+      } else {
+        expect(row.increment, "visible rows advance the counter").toContain("board");
+        expect(row.marker, "row number comes from the counter").toContain("counter(board");
+      }
+    }
+
+    // Opting a muted lane back in reveals its board rows and updates the count.
+    const hiddenCount = await mutedRows.count();
+    if (hiddenCount > 0) {
+      const lane = (await mutedRows.first().getAttribute("data-category")) ?? "";
+      await page.locator(`[data-category-filter] [data-category-toggle="${lane}"]`).click();
+      await expect(board.locator(`li[data-board-row][data-category="${lane}"]`).first()).toBeVisible();
+      await expect
+        .poll(() => page.locator('.ticker-panel li[data-board-row][data-catvis="visible"]').count())
+        .toBeGreaterThan(visibleCount);
+      await expect(page.locator(".ticker-panel [data-board-count]").first()).toHaveText(
+        String(await visibleRows.count()),
+      );
+    }
+  });
+
+  test("home decision slots never surface default-muted lanes", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+
+    // Spotlight, Top 3 and the rotating ticker are curated slots: they are
+    // built from lanes the site foregrounds, so a muted lane never claims one.
+    const decisionHrefs = await page
+      .locator(
+        'article.featured a[href^="/e/"], .top-rank-item a[href^="/e/"], .ticker-bar a[href^="/e/"]',
+      )
+      .evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? ""));
+
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string; category: string }>;
+    };
+    const categoryById = new Map(index.entries.map((entry) => [entry.id, entry.category]));
+    const offenders = decisionHrefs
+      .map((href) => href.split("/").filter(Boolean).at(-1) ?? "")
+      .map((id) => ({ id, category: categoryById.get(id) ?? "" }))
+      .filter((entry) => DEFAULT_MUTED_CATEGORIES.includes(entry.category));
+
+    expect(
+      offenders,
+      `decision slots must skip muted lanes: ${offenders.map((o) => `${o.id}:${o.category}`).join(",")}`,
+    ).toEqual([]);
+  });
+
+  test("mobile category filter stays one compact scrollable row", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+
+    const filter = page.locator("[data-category-filter]");
+    await expect(filter).toBeVisible();
+    const chips = filter.locator("[data-category-toggle]");
+    await expect(chips).toHaveCount(CATEGORY_COUNT);
+
+    const geometry = await page.evaluate(() => {
+      const panel = document.querySelector<HTMLElement>("[data-category-filter]");
+      const rail = document.querySelector<HTMLElement>(".cat-filter-chips");
+      if (!panel || !rail) return null;
+      const chipEls = [...rail.querySelectorAll<HTMLElement>("[data-category-toggle]")];
+      const tops = new Set(chipEls.map((chip) => Math.round(chip.getBoundingClientRect().top)));
+      return {
+        panelHeight: panel.getBoundingClientRect().height,
+        rows: tops.size,
+        minChipHeight: Math.min(...chipEls.map((chip) => chip.getBoundingClientRect().height)),
+        railScrolls: rail.scrollWidth > rail.clientWidth,
+        panelWithinViewport:
+          panel.getBoundingClientRect().left >= 0
+          && panel.getBoundingClientRect().right <= window.innerWidth + 1,
+        documentOverflow: document.documentElement.scrollWidth - window.innerWidth,
+      };
+    });
+    const g = requirePresent(geometry, "filter geometry is unavailable");
+
+    // One row of chips, not four: the panel must not eat the first screen.
+    expect(g.rows, "chips lay out on a single row").toBe(1);
+    expect(g.panelHeight, "filter panel stays compact on mobile").toBeLessThanOrEqual(120);
+    expect(g.minChipHeight, "chips keep a 44px touch target").toBeGreaterThanOrEqual(44);
+    expect(g.railScrolls, "the chip rail is horizontally scrollable").toBe(true);
+    expect(g.panelWithinViewport).toBe(true);
+    // The rail scrolls internally; the page itself must not.
+    expect(g.documentOverflow).toBeLessThanOrEqual(0);
+
+    // Chips beyond the fold stay operable (Playwright scrolls the rail).
+    const lastChip = chips.last();
+    await lastChip.click();
+    await expect(lastChip).toHaveAttribute("aria-pressed", /true|false/);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);

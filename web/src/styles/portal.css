@@ -5628,6 +5628,13 @@ html:not([data-advertising-consent="allowed"]) .ad-slot {
   display: none;
 }
 
+/* Daily Summary "top stories" rows follow the same policy, so the board never
+ * promotes a lane the reader muted. Global (not component-scoped) because the
+ * ancestor lives on the timeline section in index.astro. */
+[data-category-filter-scope] .board > li[data-catvis="muted"] {
+  display: none;
+}
+
 .cat-filter {
   margin: 0 0 12px;
   padding: 10px 12px 12px;
@@ -5724,9 +5731,69 @@ html:not([data-advertising-consent="allowed"]) .ad-slot {
   outline-offset: 2px;
 }
 
+/* Mobile: 13 wrapped chips cost ~4 rows (~240px) before a single article is
+ * visible. Keep the panel always-visible (no accordion, per site owner) but
+ * lay the chips out as one horizontally scrollable rail, so the filter costs
+ * a single 44px row. overflow-x is contained by the rail, so the document
+ * itself never scrolls sideways. */
 @media (max-width: 768px) {
+  .cat-filter {
+    padding: 8px 10px 9px;
+  }
+
+  .cat-filter-header {
+    margin-bottom: 8px;
+  }
+
+  .cat-filter-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    /* Bleed to the panel edges so the rail reads as scrollable content and
+     * the last chip can rest against the edge instead of being clipped. */
+    margin-inline: -10px;
+    padding-inline: 10px;
+    gap: 6px;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .cat-filter-chips::-webkit-scrollbar {
+    display: none;
+  }
+
   .cat-filter-chip {
+    flex: 0 0 auto;
     min-height: 44px;
     padding: 6px 14px;
+    scroll-snap-align: start;
+  }
+
+  /* Only ~2 chips fit on screen at once, so lead the rail with the lanes that
+   * are muted out of the box: those are the ones worth acting on. Ordering
+   * keys off the shipped default (never rewritten by the client), so toggling
+   * a chip does not make the rail jump under the reader's finger. */
+  .cat-filter-chip[data-default-muted] {
+    order: -1;
+  }
+
+  /* Fade the trailing edge so the rail reads as "more to the right". */
+  .cat-filter {
+    position: relative;
+  }
+
+  .cat-filter::after {
+    content: "";
+    position: absolute;
+    right: 1px;
+    bottom: 9px;
+    width: 24px;
+    height: 44px;
+    pointer-events: none;
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in srgb, var(--bg) 88%, transparent)
+    );
   }
 }

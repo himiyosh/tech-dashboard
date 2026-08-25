@@ -46,6 +46,7 @@ import {
 import { entryDestination } from "../lib/entry-destination.ts";
 import { sourceFreshnessStatus } from "../lib/freshness.ts";
 import { effectiveImportance, isRoutineReleaseEntry } from "../lib/release-signal.ts";
+import { isDefaultMutedCategory } from "../lib/category-visibility.ts";
 import { serializeJsonLd } from "../lib/json-ld.ts";
 import { deriveWorkerRunStatus, runCadenceLead } from "../lib/run-health.ts";
 import { SITE_URL } from "../lib/site.ts";
@@ -95,6 +96,10 @@ const activeSourcesEn = `${DASHBOARD_METRICS.sourceCoverageLabel} registry sourc
 // Limit repeated source/category so the decision list is useful at a glance.
 // Routine patch/prerelease releases are excluded even when their stored
 // importance is inflated (see release-signal.ts).
+// Default-muted lanes are excluded here for the same reason as the Spotlight:
+// the decision slots surface what is worth acting on, and those lanes are
+// routine release noise by definition. Their entries stay in the article list
+// and the top-stories board, both of which follow the reader's own filter.
 const rankedPool = primaryEntries
   .filter(
     (e) =>
@@ -102,7 +107,8 @@ const rankedPool = primaryEntries
       isPublishableEntry(e) &&
       !isLowSignalRelease(e) &&
       !isOffTopicForHero(e) &&
-      !isRoutineReleaseEntry(e),
+      !isRoutineReleaseEntry(e) &&
+      !isDefaultMutedCategory(e.category),
   );
 const topThree = selectDiverseDecisionEntries(rankedPool, {
   featured: feat,

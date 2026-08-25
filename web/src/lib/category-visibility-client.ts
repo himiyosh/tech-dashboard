@@ -7,7 +7,8 @@
  * CSS hides `[data-category-filter-scope] .card[data-catvis="muted"]` so the
  * default works without JavaScript and without a flash. This module replays
  * the reader's stored overrides over that default, keeps the filter chips /
- * day headers / hidden-count note in sync, and persists toggles.
+ * day headers / hidden-count note / Daily Summary board rows in sync, and
+ * persists toggles.
  *
  * localStorage access is wrapped in try/catch: a blocked or cleared store
  * degrades to the shipped defaults (LL-083 style fail-safe).
@@ -46,6 +47,16 @@ function timelineCards(scope: Element): HTMLElement[] {
   return [...scope.querySelectorAll<HTMLElement>("article.card[data-category]")];
 }
 
+/**
+ * Daily Summary "top stories" rows live inside the same scope and follow the
+ * same policy, so the board never advertises a lane the reader muted. They are
+ * counted separately from the cards: the "N hidden" note is about the article
+ * list, and the board rows are the same articles seen a second time.
+ */
+function boardRows(scope: Element): HTMLElement[] {
+  return [...scope.querySelectorAll<HTMLElement>("[data-board-row][data-category]")];
+}
+
 /** Re-stamp card visibility, then fix day headers and the hidden count. */
 function applyOverrides(
   scope: Element,
@@ -58,8 +69,27 @@ function applyOverrides(
     card.dataset.catvis = hidden ? "muted" : "visible";
     if (hidden) hiddenCount += 1;
   }
+  syncBoardRows(scope, overrides);
   syncDayHeaders(scope);
   return hiddenCount;
+}
+
+/** Re-stamp board rows and keep the "N items" label on the visible count. */
+function syncBoardRows(
+  scope: Element,
+  overrides: CategoryVisibilityOverrides,
+): void {
+  const rows = boardRows(scope);
+  if (rows.length === 0) return;
+  let visible = 0;
+  for (const row of rows) {
+    const hidden = isCategoryHidden(row.dataset.category ?? "", overrides);
+    row.dataset.catvis = hidden ? "muted" : "visible";
+    if (!hidden) visible += 1;
+  }
+  for (const count of scope.querySelectorAll<HTMLElement>("[data-board-count]")) {
+    count.textContent = String(visible);
+  }
 }
 
 /**

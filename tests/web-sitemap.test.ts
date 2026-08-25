@@ -62,6 +62,44 @@ describe("sitemap", () => {
     expect(isAddressableDetailEntry({ id: "dropped", archiveTier: "dropped" })).toBe(false);
   });
 
+  it("summary-pending entries get no detail route (thin-page guard)", () => {
+    const pendingPlaceholder = {
+      id: "pending",
+      archiveTier: "hot" as const,
+      source: "cline-releases",
+      title: "Cline Desktop v0.0.17",
+      titleEn: "Cline Desktop v0.0.17",
+      titleJa: "",
+      summaryJa:
+        "このエントリは cline-releases から収集した cline 領域の最新アップデートです。原題:「Cline Desktop v0.0.17」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      summaryEn: "cline update from Cline Releases. AI summary not yet available; a future Worker run will refresh this entry.",
+    };
+    const summarized = {
+      ...pendingPlaceholder,
+      id: "summarized",
+      summaryJa: "Cline Desktop v0.0.17 は Customize ハブを統合し、カタログ導入直後の拡張が一覧に反映されるようになりました。",
+      summaryEn: "Cline Desktop v0.0.17 unifies the Customize hub so catalog installs appear immediately.",
+    };
+    const emptySummaries = {
+      ...pendingPlaceholder,
+      id: "empty",
+      summaryJa: "",
+      summaryEn: "",
+    };
+
+    expect(isAddressableDetailEntry(pendingPlaceholder)).toBe(false);
+    expect(isAddressableDetailEntry(emptySummaries)).toBe(false);
+    expect(isAddressableDetailEntry(summarized)).toBe(true);
+    // Cross-language fallback still counts: an EN-only real summary is substance.
+    expect(
+      isAddressableDetailEntry({
+        ...emptySummaries,
+        id: "en-only",
+        summaryEn: "Adds a new MCP tool-call inspector to the desktop client.",
+      }),
+    ).toBe(true);
+  });
+
   it("shares destination and pagination builders at their boundary conditions", () => {
     expect(entryDestination({
       id: "warm",
@@ -129,7 +167,7 @@ describe("sitemap", () => {
 
     const expectedDetailUrls = new Set<string>();
     for (const entry of [...ALL_ENTRIES, ...ARCHIVE_WARM_ENTRIES]) {
-      if (entry.archiveTier === "cold" || entry.archiveTier === "dropped") continue;
+      if (!isAddressableDetailEntry(entry)) continue;
       expectedDetailUrls.add(canonical(detailPath(entry.id)));
     }
     const actualDetailUrls = new Set(
@@ -148,10 +186,13 @@ describe("sitemap", () => {
   it("excludes current cold IDs while retaining representative hot and warm details", () => {
     const urls = new Set(SITEMAP_DOCUMENT.urls);
     const coldEntries = ALL_ENTRIES.filter((entry) => entry.archiveTier === "cold");
-    const hotEntry = ALL_ENTRIES.find((entry) => entry.archiveTier === "hot");
+    const hotEntry = ALL_ENTRIES.find(
+      (entry) => entry.archiveTier === "hot" && isAddressableDetailEntry(entry),
+    );
     const liveIds = new Set(ALL_ENTRIES.map((entry) => entry.id));
-    const warmEntry = ARCHIVE_WARM_ENTRIES.find((entry) => !liveIds.has(entry.id))
-      ?? ARCHIVE_WARM_ENTRIES[0];
+    const warmEntry = ARCHIVE_WARM_ENTRIES.find(
+      (entry) => !liveIds.has(entry.id) && isAddressableDetailEntry(entry),
+    ) ?? ARCHIVE_WARM_ENTRIES.find((entry) => isAddressableDetailEntry(entry));
 
     expect(coldEntries.length).toBeGreaterThan(0);
     expect(hotEntry, "fixture includes an addressable hot entry").toBeTruthy();

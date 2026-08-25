@@ -32,6 +32,10 @@ import {
   publicRssFeeds,
 } from "../../web/src/lib/feed-catalog.ts";
 import { isArxivEntry } from "../../web/src/lib/research-lane.ts";
+import {
+  isAddressableDetailEntry,
+  type DetailAddressableEntry,
+} from "../../web/src/lib/detail-addressability.ts";
 import { isKnowledgeEligibleEntry } from "../../web/src/lib/knowledge-eligibility.ts";
 import { ADSENSE_CLIENT_ID, SITE_URL } from "../../web/src/lib/site.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
@@ -1028,10 +1032,20 @@ test.describe("Publisher generated artifact", () => {
     request,
   }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{ id: string; archiveTier?: string }>;
+      entries: Array<DetailAddressableEntry & { archiveTier?: string }>;
     };
-    const hot = index.entries.find((entry) => entry.archiveTier === "hot");
+    // Detail routes require both a hot/warm tier and a usable summary
+    // (detail-addressability.ts): summary-pending shells are no longer built.
+    const hot = index.entries.find(
+      (entry) => entry.archiveTier === "hot" && isAddressableDetailEntry(entry),
+    );
     const cold = index.entries.find((entry) => entry.archiveTier === "cold");
+    const pendingLive = index.entries.find(
+      (entry) =>
+        entry.archiveTier !== "cold" &&
+        entry.archiveTier !== "dropped" &&
+        !isAddressableDetailEntry(entry),
+    );
     const liveIds = new Set(index.entries.map((entry) => entry.id));
     const archiveIndex = JSON.parse(
       readFileSync("data/archive/_index.json", "utf8"),
@@ -1040,9 +1054,12 @@ test.describe("Publisher generated artifact", () => {
     for (const month of archiveIndex.months) {
       const archive = JSON.parse(
         readFileSync(`data/archive/${month}.json`, "utf8"),
-      ) as { entries: Array<{ id: string; archiveTier?: string }> };
+      ) as { entries: Array<DetailAddressableEntry & { archiveTier?: string }> };
       warmOnly = archive.entries.find(
-        (entry) => entry.archiveTier === "warm" && !liveIds.has(entry.id),
+        (entry) =>
+          entry.archiveTier === "warm" &&
+          !liveIds.has(entry.id) &&
+          isAddressableDetailEntry(entry),
       );
       if (warmOnly) break;
     }
@@ -1065,6 +1082,14 @@ test.describe("Publisher generated artifact", () => {
     expect(sitemap).toContain(`<loc>${SITE_URL}/e/${hot!.id}/</loc>`);
     expect(sitemap).toContain(`<loc>${SITE_URL}/e/${warmOnly!.id}/</loc>`);
     expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${cold!.id}/</loc>`);
+
+    // Summary-pending live entries must not ship a thin detail shell either
+    // (AdSense low-value-content guard). A fully summarized corpus is valid.
+    if (pendingLive) {
+      const pendingResponse = await request.get(`/e/${pendingLive.id}/`);
+      expect(pendingResponse.status()).toBe(404);
+      expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${pendingLive.id}/</loc>`);
+    }
   });
 
   test("routes and announces cold source links while hot and warm cards stay internal", async ({
@@ -1080,7 +1105,7 @@ test.describe("Publisher generated artifact", () => {
       .map((entry) => ({ entry, route: timelineRoutes.get(entry.id) }))
       .find(({ route }) => route);
     const hot = index.entries
-      .filter((entry) => entry.archiveTier === "hot")
+      .filter((entry) => entry.archiveTier === "hot" && isAddressableDetailEntry(entry))
       .map((entry) => ({ entry, route: timelineRoutes.get(entry.id) }))
       .find(({ route }) => route);
     const archiveIndex = JSON.parse(
@@ -1094,7 +1119,10 @@ test.describe("Publisher generated artifact", () => {
       const archive = JSON.parse(
         readFileSync(`data/archive/${month}.json`, "utf8"),
       ) as { entries: Array<{ id: string; url: string; archiveTier?: string }> };
-      const entry = archive.entries.find((candidate) => candidate.archiveTier === "warm");
+      const entry = archive.entries.find(
+        (candidate) =>
+          candidate.archiveTier === "warm" && isAddressableDetailEntry(candidate),
+      );
       const route = entry ? archiveRoutes.get(entry.id) : undefined;
       if (entry && route) {
         warm = { entry, route };

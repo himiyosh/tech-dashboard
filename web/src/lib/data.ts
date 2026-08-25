@@ -38,6 +38,7 @@ import {
   isPublishableEntry,
 } from "./entry-publication.ts";
 import { isKnowledgeEligibleEntry } from "./knowledge-eligibility.ts";
+import { isRoutineReleaseEntry } from "./release-signal.ts";
 import { sourceAuthority } from "./source-meta.ts";
 import { normalizeTagKey } from "./tag-normalize.ts";
 import { TAG_PAGE_MIN_ENTRIES } from "./route-inventory.ts";
@@ -437,7 +438,8 @@ export function featured(): NormalizedEntry | undefined {
   const isRoutineRelease = (e: NormalizedEntry) =>
     e.sourceType === "release" || e.sourceType === "changelog";
   const eligible = (e: NormalizedEntry) =>
-    isPublishableEntry(e) && !isLowSignalRelease(e) && !isOffTopicForHero(e);
+    isPublishableEntry(e) && !isLowSignalRelease(e) && !isOffTopicForHero(e) &&
+    !isRoutineReleaseEntry(e);
   return (
     // 1. High-importance real announcement/blog with a real summary.
     MAIN_TIMELINE_ENTRIES.find(

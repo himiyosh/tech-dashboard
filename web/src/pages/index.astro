@@ -44,6 +44,7 @@ import {
 } from "../lib/data.ts";
 import { entryDestination } from "../lib/entry-destination.ts";
 import { sourceFreshnessStatus } from "../lib/freshness.ts";
+import { isRoutineReleaseEntry } from "../lib/release-signal.ts";
 import { serializeJsonLd } from "../lib/json-ld.ts";
 import { deriveWorkerRunStatus, runCadenceLead } from "../lib/run-health.ts";
 import { SITE_URL } from "../lib/site.ts";
@@ -91,13 +92,16 @@ const activeSourcesEn = `${DASHBOARD_METRICS.sourceCoverageLabel} registry sourc
 
 // Top 3 = importance x authority x recency, but only entries with real summaries.
 // Limit repeated source/category so the decision list is useful at a glance.
+// Routine patch/prerelease releases are excluded even when their stored
+// importance is inflated (see release-signal.ts).
 const rankedPool = primaryEntries
   .filter(
     (e) =>
       e.importance >= 2 &&
       isPublishableEntry(e) &&
       !isLowSignalRelease(e) &&
-      !isOffTopicForHero(e),
+      !isOffTopicForHero(e) &&
+      !isRoutineReleaseEntry(e),
   );
 const topThree = selectDiverseDecisionEntries(rankedPool, {
   featured: feat,

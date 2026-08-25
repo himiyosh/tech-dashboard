@@ -456,6 +456,38 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
     });
   });
 
+  describe("Microsoft Research Blog relevance filter (R-017)", () => {
+    const msr = REGISTRY["microsoft-research"];
+    const check = (title: string) =>
+      matchesKeywordFilter({ title, url: "", contentSnippet: "" }, msr);
+
+    it("keeps AI/ML research articles", () => {
+      expect(check("Phi-5: pushing the frontier of small language models")).toBe(true);
+      expect(check("Evaluating agentic reasoning with a new benchmark suite")).toBe(true);
+      expect(check("AI for science: accelerating materials discovery")).toBe(true);
+    });
+
+    it("drops non-AI MSR areas and recruiting/podcast posts", () => {
+      expect(check("Advances in topological qubit fabrication for quantum computing")).toBe(false);
+      expect(check("Microsoft Research Podcast: a conversation on systems biology")).toBe(false);
+      expect(check("Apply now: 2027 PhD fellowship program")).toBe(false);
+    });
+
+    it("uses title scope so snippets cannot rescue off-topic entries", () => {
+      expect(msr.keywordFilterScope).toBe("title");
+    });
+  });
+
+  describe("MCP Blog source registration", () => {
+    it("registers the official standardization-body blog as tier-1 mcp", () => {
+      const mcpBlog = REGISTRY["mcp-blog"];
+      expect(mcpBlog.category).toBe("mcp");
+      expect(mcpBlog.tier).toBe(1);
+      expect(mcpBlog.sourceType).toBe("blog");
+      expect(mcpBlog.feedUrl).toBe("https://blog.modelcontextprotocol.io/index.xml");
+    });
+  });
+
   describe("shared tech news relevance filters (LL-129)", () => {
     const techNews = REGISTRY["the-verge"];
     const hnAi = REGISTRY["hn-ai"];

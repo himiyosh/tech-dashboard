@@ -14,6 +14,7 @@ import type {
 } from "../types.ts";
 import { decideTier, resolveHalfLife } from "../half-life.ts";
 import { isKnowledgeEligibleEntry } from "../../web/src/lib/knowledge-eligibility.ts";
+import { classifyReleaseTitleSignal } from "../../web/src/lib/release-signal.ts";
 import { normalizeTags } from "./tag.ts";
 
 function sha256Short(input: string): string {
@@ -45,34 +46,46 @@ export function detectLang(text: string, defaultLang: Lang): Lang {
 }
 
 /**
- * Heuristic importance: 3 = major release/changelog, 2 = blog with release keywords, 1 = default.
- * Deterministic fallback scoring. The summarizer may override importance for entries it enhances.
+ * Heuristic importance: 3 = major release/critical announcement, 2 = notable
+ * update, 1 = routine. Deterministic fallback scoring. The summarizer may
+ * override importance for entries it enhances.
  *
- * Low-signal builds (nightly, pre-release, RC, beta/alpha, internal staging)
- * are capped at importance 2 so fast-releasing feeds (e.g. Zed -pre / nightly)
- * do not flood the high-importance Featured/Top slots. See isLowSignalRelease
- * in web/src/lib/data.ts for the matching display-side guard.
+ * Release/changelog entries are scored by their version shape
+ * (web/src/lib/release-signal.ts): patch builds and low-signal builds
+ * (nightly, pre-release, RC, beta/alpha, internal staging) are routine
+ * (importance 1), minor releases are 2, and x.0.0-style majors are 3.
+ * The previous keyword list contained "v1."/"v2."/"v3." substrings, which
+ * scored every patch tag like "Cline CLI v3.0.58" as importance 3 and let
+ * fast-releasing feeds flood the Featured/Top decision slots. See
+ * isLowSignalRelease in web/src/lib/data.ts and isRoutineReleaseEntry in
+ * release-signal.ts for the matching display-side guards.
  */
-const LOW_SIGNAL_RELEASE_RE =
-  /\b(?:nightly|canary|snapshot)\b|\bcollab-(?:staging|production|prod)\b|[-_.](?:pre|preview|rc|alpha|beta)\d*\b|\(#\d+\)\s*$/i;
+const MAJOR_SIGNAL_KEYWORDS = [
+  "announcing",
+  "released",
+  "general availability",
+  " ga ",
+  "major update",
+] as const;
 
 export function scoreImportance(raw: RawEntry, source: SourceDefinition): Importance {
   const hay = `${raw.title} ${raw.contentSnippet ?? ""}`.toLowerCase();
-  const majorKeywords = [
-    "announcing",
-    "released",
-    "general availability",
-    " ga ",
-    "v1.",
-    "v2.",
-    "v3.",
-    "major update",
-  ];
+  const hasMajorKeyword = MAJOR_SIGNAL_KEYWORDS.some((k) => hay.includes(k));
   if (source.sourceType === "release" || source.sourceType === "changelog") {
-    if (LOW_SIGNAL_RELEASE_RE.test(raw.title)) return 2;
-    return majorKeywords.some((k) => hay.includes(k)) ? 3 : 2;
+    switch (classifyReleaseTitleSignal(raw.title)) {
+      case "low":
+      case "patch":
+        return 1;
+      case "major":
+        return 3;
+      case "minor":
+        return 2;
+      case "none":
+        // Descriptive changelog headlines without a version token.
+        return hasMajorKeyword ? 3 : 2;
+    }
   }
-  if (majorKeywords.some((k) => hay.includes(k))) return 2;
+  if (hasMajorKeyword) return 2;
   return 1;
 }
 

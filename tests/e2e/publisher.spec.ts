@@ -36,6 +36,7 @@ import {
   isAddressableDetailEntry,
   type DetailAddressableEntry,
 } from "../../web/src/lib/detail-addressability.ts";
+import { isDefaultMutedCategory } from "../../web/src/lib/category-visibility.ts";
 import { isKnowledgeEligibleEntry } from "../../web/src/lib/knowledge-eligibility.ts";
 import { ADSENSE_CLIENT_ID, SITE_URL } from "../../web/src/lib/site.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
@@ -50,7 +51,7 @@ import {
 } from "../../web/src/lib/social-metadata.ts";
 
 const TIMELINE_ENTRY_LINK_SELECTOR =
-  'main article.card h3.title > a[href^="/e/"]';
+  'main article.card:not([data-catvis="muted"]) h3.title > a[href^="/e/"]';
 
 /**
  * issue #237 で Knowledge レーンから除外した記事の anchor。
@@ -1096,16 +1097,21 @@ test.describe("Publisher generated artifact", () => {
     page,
   }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{ id: string; url: string; archiveTier?: string }>;
+      entries: Array<{ id: string; url: string; archiveTier?: string; category: string }>;
     };
     const timelineRoutes = generatedEntryRoutes("page");
     const archiveRoutes = generatedEntryRoutes("archive");
+    // Card-visibility assertions require lanes the reader can see: the
+    // timeline hides default-muted categories (category-visibility.ts).
     const cold = index.entries
-      .filter((entry) => entry.archiveTier === "cold")
+      .filter((entry) => entry.archiveTier === "cold" && !isDefaultMutedCategory(entry.category))
       .map((entry) => ({ entry, route: timelineRoutes.get(entry.id) }))
       .find(({ route }) => route);
     const hot = index.entries
-      .filter((entry) => entry.archiveTier === "hot" && isAddressableDetailEntry(entry))
+      .filter((entry) =>
+        entry.archiveTier === "hot"
+        && isAddressableDetailEntry(entry)
+        && !isDefaultMutedCategory(entry.category))
       .map((entry) => ({ entry, route: timelineRoutes.get(entry.id) }))
       .find(({ route }) => route);
     const archiveIndex = JSON.parse(

@@ -17,7 +17,8 @@ import {
   type DetailAddressableEntry,
 } from "../../web/src/lib/detail-addressability.ts";
 
-const TIMELINE_ENTRY_LINK_SELECTOR = 'main article.card h3.title > a[href^="/e/"]';
+const TIMELINE_ENTRY_LINK_SELECTOR =
+  'main article.card:not([data-catvis="muted"]) h3.title > a[href^="/e/"]';
 const REACTION_MUTATION_URL_RE = /\/api\/reactions\/[a-f0-9]{16}$/;
 type SummaryFixtureEntry = SummaryDisplayEntry & {
   id: string;
@@ -8071,7 +8072,7 @@ test.describe("TECH Dashboard smoke", () => {
     const singletonTags = [...tagCounts.entries()]
       .filter(([, count]) => count === 1)
       .map(([tag]) => tag);
-    const tagLinks = page.locator("main article.card .tag-chip[href^='/search?q=']");
+    const tagLinks = page.locator('main article.card:not([data-catvis="muted"]) .tag-chip[href^="/search?q="]');
     const tagIndex = await tagLinks.evaluateAll(
       (links, candidates) =>
         links.findIndex((link) => {
@@ -9956,7 +9957,7 @@ test.describe("TECH Dashboard smoke", () => {
     });
     await page.goto("/");
     const summarizedCard = page
-      .locator("main article.card")
+      .locator('main article.card:not([data-catvis="muted"])')
       .filter({ has: page.locator(".summary .s-text") })
       .first();
     const summarizedEntryLink = summarizedCard.locator('h3.title > a[href^="/e/"]');

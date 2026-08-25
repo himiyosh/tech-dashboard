@@ -177,7 +177,7 @@ interface JourneyRuntime {
 }
 
 const TIMELINE_ENTRY_LINK_SELECTOR =
-  'main article.card h3.title > a[href^="/e/"]';
+  'main article.card:not([data-catvis="muted"]) h3.title > a[href^="/e/"]';
 const UNKNOWN_ARTICLE_ROUTE = "/e/0000000000000000/";
 const ZERO_RESULT_QUERY = "techdb-synthetic-no-match-9f6f2e45";
 const OBSERVATION_TIMEOUT_MS = 1_000;

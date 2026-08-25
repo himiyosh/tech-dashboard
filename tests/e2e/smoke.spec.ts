@@ -2595,15 +2595,25 @@ test.describe("TECH Dashboard smoke", () => {
     );
     await expect(page.locator("#ed-fab")).toHaveAccessibleName("Back to top");
 
-    await page.locator("#p-en-2").evaluate((element) => {
-      const rect = element.getBoundingClientRect();
-      window.scrollTo({
-        top: window.scrollY + rect.top - window.innerHeight * 0.35,
-        behavior: "auto",
+    // Scroll-spy: the TOC entry for the second section (or second paragraph
+    // in the excerpt fallback) activates when its content is in view.
+    const secondTocLink = page.locator("#toc-list-en a[data-toc-target]").nth(1);
+    const secondTocKey = await secondTocLink.getAttribute("data-toc-target");
+    expect(secondTocKey, "EN TOC exposes a second entry").toBeTruthy();
+    await page
+      .locator(`.ed-body-prose.i18n-en p[data-toc-key="${secondTocKey}"]`)
+      .first()
+      .evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        window.scrollTo({
+          top: window.scrollY + rect.top - window.innerHeight * 0.35,
+          behavior: "auto",
+        });
       });
-    });
     await expect
-      .poll(() => page.locator('#toc-list-en a[data-toc-target="p-en-2"].active').count())
+      .poll(() =>
+        page.locator(`#toc-list-en a[data-toc-target="${secondTocKey}"].active`).count(),
+      )
       .toBe(1);
 
     await page.setViewportSize({ width: 390, height: 844 });
@@ -2657,6 +2667,61 @@ test.describe("TECH Dashboard smoke", () => {
     await expect
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
       .toBe(`${titleEn}\n${url}?lang=en`);
+  });
+
+  test("wide screens keep the article reading column centered with section headings", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string }>;
+    };
+    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
+    };
+    const liveIds = new Set(index.entries.map((entry) => entry.id));
+    const bodyEntryId = Object.entries(bodyFile.bodies).find(([id, body]) => {
+      const jaParagraphs = (body.bodyJa ?? "").split(/\n{2,}/).filter(Boolean);
+      return liveIds.has(id) && jaParagraphs.length >= 4;
+    })?.[0];
+    expect(bodyEntryId, "live article with a long-form JA body fixture").toBeTruthy();
+
+    for (const width of [2000, 1680, 1440]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.goto(`/e/${bodyEntryId}/`);
+
+      // 項目: a sectioned JA body renders at least two h2 headings and the
+      // TOC lists exactly those headings (not paragraph excerpts).
+      const headings = page.locator(".ed-body-prose.i18n-ja h2.ed-sec-h");
+      expect(await headings.count(), `width ${width}: section headings`).toBeGreaterThanOrEqual(2);
+      const headingTitles = await headings.locator(".ed-sec-title").allTextContents();
+      const tocLabels = await page.locator("#toc-list-ja .toc-label").allTextContents();
+      expect(tocLabels).toEqual(headingTitles);
+
+      // Centered measure: the line-length-capped reading column sits centered
+      // inside the article body instead of hugging the left edge and leaving
+      // a dead gutter before the right rail.
+      const geometry = await page.evaluate(() => {
+        const bodyEl = document.querySelector(".ed-body");
+        const para = document.querySelector(".ed-body-prose.i18n-ja p");
+        if (!bodyEl || !para) return null;
+        const bodyRect = bodyEl.getBoundingClientRect();
+        const style = getComputedStyle(bodyEl);
+        const innerLeft = bodyRect.left + Number.parseFloat(style.paddingLeft);
+        const innerRight = bodyRect.right - Number.parseFloat(style.paddingRight);
+        const paraRect = para.getBoundingClientRect();
+        return {
+          leftGap: paraRect.left - innerLeft,
+          rightGap: innerRight - paraRect.right,
+          paraWidth: paraRect.width,
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      });
+      const g = requirePresent(geometry, `width ${width}: body geometry is unavailable`);
+      expect(
+        Math.abs(g.leftGap - g.rightGap),
+        `width ${width}: reading column is centered (leftGap ${g.leftGap} vs rightGap ${g.rightGap})`,
+      ).toBeLessThanOrEqual(2);
+      expect(g.paraWidth).toBeLessThanOrEqual(707);
+      expect(g.overflow).toBeLessThanOrEqual(0);
+    }
   });
 
   test("mobile detail gives the original article a clear full-width action", async ({ page }) => {

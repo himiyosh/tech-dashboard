@@ -921,6 +921,15 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     autoTags: ["cline", "release"],
     feedUrl: "https://github.com/cline/cline/releases.atom",
     tier: 2,
+    // Monorepo feed: per-package component tags (sdk/core, sdk/agents,
+    // sdk/llms, sdk/shared) publish one near-duplicate low-value entry per
+    // package for the same release wave, on top of the primary Desktop/CLI/SDK
+    // releases. "sdk/" only matches slash-path component tags — the raw tag
+    // ("sdk/core/v0.0.79") and the branded title ("Cline sdk/core v0.0.79")
+    // both contain it, while top-level "Cline SDK v0.0.79" has no slash and
+    // stays. Title scope per R-017/LL-081.
+    excludeKeywords: ["sdk/"],
+    keywordFilterScope: "title",
     collect: collectRss,
   },
   "continue-releases": {

@@ -5622,3 +5622,131 @@ html:not([data-advertising-consent="allowed"]) .ad-slot {
 .ad-slot:has(ins.adsbygoogle[data-ad-status="filled"]) .ad-slot-label {
   display: block;
 }
+
+/* ============ Timeline category filter (category-visibility.ts) ============ */
+/* Server-rendered default: cards in default-muted categories are hidden even
+ * without JavaScript; category-visibility-client.ts replays the reader's
+ * stored overrides by rewriting data-catvis. Scoped to timeline lists only so
+ * category pages and archives always show their own entries. */
+[data-category-filter-scope] article.card[data-catvis="muted"] {
+  display: none;
+}
+
+.cat-filter {
+  margin: 0 0 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-2) 52%, transparent);
+}
+
+.cat-filter-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  user-select: none;
+}
+
+.cat-filter-summary::-webkit-details-marker {
+  display: none;
+}
+
+.cat-filter-summary:hover,
+.cat-filter[open] .cat-filter-summary {
+  color: var(--text-2);
+}
+
+.cat-filter-icon {
+  font-size: 13px;
+}
+
+.cat-filter-note {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+  background: var(--bg-2);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.cat-filter-body {
+  padding: 4px 12px 12px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.cat-filter-help {
+  margin: 8px 0 10px;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.cat-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cat-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 4px 12px;
+  border: 1px solid color-mix(in srgb, var(--chip-color, var(--border)) 45%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--chip-color, var(--bg-2)) 12%, var(--bg-2));
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.cat-filter-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--chip-color, var(--muted));
+  flex-shrink: 0;
+}
+
+/* Greyed = hidden from the timeline until the reader enables it. */
+.cat-filter-chip[data-state="muted"] {
+  opacity: 0.5;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--border) 90%, transparent);
+  background: transparent;
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.cat-filter-chip[data-state="muted"] .cat-filter-dot {
+  background: var(--muted);
+}
+
+.cat-filter-chip:hover {
+  opacity: 1;
+}
+
+.cat-filter-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .cat-filter-chip {
+    min-height: 44px;
+    padding: 6px 14px;
+  }
+}

@@ -7,6 +7,7 @@ import {
   isPublishableEntry,
   type NormalizedEntry,
 } from "../lib/data.ts";
+import { effectiveImportance } from "../lib/release-signal.ts";
 
 export interface Props {
   dayKey: string;
@@ -30,10 +31,10 @@ const catSummary = CATEGORY_META
   .sort((a, b) => b.n - a.n);
 
 const important = highlightImportant
-  ? items.filter((e) => e.importance === 3 && isPublishableEntry(e))
+  ? items.filter((e) => effectiveImportance(e) === 3 && isPublishableEntry(e))
   : [];
 const rest = highlightImportant
-  ? items.filter((e) => e.importance !== 3 || !isPublishableEntry(e))
+  ? items.filter((e) => effectiveImportance(e) !== 3 || !isPublishableEntry(e))
   : items;
 
 const label = jstDayLabel(dayKey, now);

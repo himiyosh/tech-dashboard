@@ -478,6 +478,29 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
     });
   });
 
+  describe("Cline monorepo component-tag filter", () => {
+    const cline = REGISTRY["cline-releases"];
+    const check = (title: string) =>
+      matchesKeywordFilter({ title, url: "", contentSnippet: "" }, cline);
+
+    it("drops per-package sdk/* component tags (raw and branded titles)", () => {
+      expect(check("sdk/core/v0.0.79")).toBe(false);
+      expect(check("Cline sdk/core v0.0.79")).toBe(false);
+      expect(check("Cline sdk/agents v0.0.79")).toBe(false);
+      expect(check("sdk/llms/v0.0.53")).toBe(false);
+    });
+
+    it("keeps the primary Desktop / CLI / top-level SDK releases", () => {
+      expect(check("Cline Desktop v0.0.17")).toBe(true);
+      expect(check("Cline CLI v3.0.58")).toBe(true);
+      expect(check("Cline SDK v0.0.79")).toBe(true);
+    });
+
+    it("uses title scope so URLs cannot cause false positives", () => {
+      expect(cline.keywordFilterScope).toBe("title");
+    });
+  });
+
   describe("MCP Blog source registration", () => {
     it("registers the official standardization-body blog as tier-1 mcp", () => {
       const mcpBlog = REGISTRY["mcp-blog"];

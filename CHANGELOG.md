@@ -35,8 +35,14 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - bilingual `/privacy/`、version付きの明示的な広告opt-in、production custom-domain限定のAdSense gate、local設定消去、current-browser匿名いいね削除を追加しました。未選択・未知・壊れた・旧version・preview/pages.devはfail-closedで広告OFFとなり、閲覧・検索・Archive・RSS・JSON Feedは同意なしで利用できます。
 - Google AdSenseのpublisher identityからauthorized seller recordを生成するroot `/ads.txt`を追加し、ID形式をbuild時にfail-closedで検証するようにしました。
 
+### 追加
+
+- Timeline にカテゴリ表示フィルターを追加しました。定常リリースの多い Cline カテゴリは既定でグレーアウト(非表示)になり、フィルター設定のチップをクリックすると表示に切り替えられます(任意のカテゴリを非表示にすることも可能)。選択はこの端末の localStorage にのみ保存され、検索・カテゴリページ・RSS には影響しません。既定の非表示はサーバー描画時に適用されるため JavaScript なしでも機能し、非表示件数はフィルター横に明示されます。
+
 ### 変更
 
+- 重要度バッジ・HOT 強調・重要記事グルーピングなどの表示を、保存済み importance ではなく実効 importance(`effectiveImportance`)で判定するようにしました。旧採点バグで importance 3 のまま残っている patch release(例: `Cline CLI v3.0.58` の「重要度 High」)が、データ移行や Worker 再デプロイを待たずに「Low」表示になります。
+- cline-releases のモノレポ部品タグ(`sdk/core` / `sdk/agents` 等の slash 付きタグ)を title-scope の excludeKeywords で収集対象から除外しました。同一リリースで複数の近接重複カードが並ぶノイズを止めます(トップレベルの Desktop / CLI / SDK リリースは残ります)。既存の保存済みエントリは Worker 再デプロイ後のマージ時に同ルールで除去されます(LL-077)。
 - 重要度採点の欠陥を修正しました。旧実装は "v1." / "v2." / "v3." の部分一致を major keyword として扱い、`Cline CLI v3.0.58` のような patch release を importance 3 に採点していました(live index の release の 78% が該当)。新実装は version 形状で判定し、patch/prerelease は importance 1 になります。Web 層のランキング・Featured・Top 3 も保存済みの過大 importance に依存せず routine release を decision 枠から除外します。
 - AI 要約が未生成 (deterministic pending fallback のみ) の記事は、個別記事ページ `/e/[id]/` と sitemap から除外するようにしました(thin content 対策)。一覧・検索・カテゴリには引き続き表示され、リンクは元記事へ直接遷移し、要約が生成されると詳細ページが復活します。publisher-impact の detail upsert 判定も同じ addressability gate を共有します。
 - AI 要約プロンプトを更新し、最初の節で最も具体的な変更点(機能名・数値・モデル名・範囲)、最後の節で誰に効くかを必ず述べる contract にしました。「〜が発表されました」だけの要約と「この記事は」等の定型導入を禁止し、importance の基準を patch/prerelease = 1 に明確化しました。

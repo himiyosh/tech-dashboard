@@ -1,6 +1,7 @@
 ---
 import Portal from "../layouts/Portal.astro";
 import Sidebar from "../components/Sidebar.astro";
+import CategoryFilter from "../components/CategoryFilter.astro";
 import EntryCard from "../components/EntryCard.astro";
 import CategoryThumb from "../components/CategoryThumb.astro";
 import DailySummary from "../components/DailySummary.astro";
@@ -44,7 +45,7 @@ import {
 } from "../lib/data.ts";
 import { entryDestination } from "../lib/entry-destination.ts";
 import { sourceFreshnessStatus } from "../lib/freshness.ts";
-import { isRoutineReleaseEntry } from "../lib/release-signal.ts";
+import { effectiveImportance, isRoutineReleaseEntry } from "../lib/release-signal.ts";
 import { serializeJsonLd } from "../lib/json-ld.ts";
 import { deriveWorkerRunStatus, runCadenceLead } from "../lib/run-health.ts";
 import { SITE_URL } from "../lib/site.ts";
@@ -286,7 +287,7 @@ const homeJsonLd = {
           now.getTime(),
         );
         const featStale = featFreshness.status === "stale" || featFreshness.status === "error";
-        const featImportance = importanceLabel(feat.importance);
+        const featImportance = importanceLabel(effectiveImportance(feat));
         const featAuthority = sourceAuthority(feat.source, feat.sourceType);
         const featAuthorityBadgeClass = ["badge", "authority", featAuthority.kind].join(" ");
         const featFavicon = sourceFaviconUrl(canonicalSourceUrl(feat.url));
@@ -520,7 +521,12 @@ const homeJsonLd = {
       )}
       </section>
 
-      <section class="timeline-section" id="timeline" aria-labelledby="timeline-heading">
+      <section
+        class="timeline-section"
+        id="timeline"
+        aria-labelledby="timeline-heading"
+        data-category-filter-scope
+      >
         <div class="section-header primary section-header-stacked">
           <h2 id="timeline-heading">
             <span class="i18n-ja">深掘り一覧</span>
@@ -541,6 +547,8 @@ const homeJsonLd = {
             Browse the non-arXiv update stream by recency, then narrow with category, tags, or search.
           </p>
         </div>
+
+        <CategoryFilter />
 
         {pageEntries.length === 0 ? (
           <div class="empty-state">

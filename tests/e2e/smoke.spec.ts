@@ -2767,6 +2767,59 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(pendingCard).toHaveAttribute("data-detail-destination", "source");
   });
 
+  test("timeline category filter mutes noisy lanes by default and persists reader opt-in", async ({ page }) => {
+    await page.goto("/");
+    const scope = page.locator("[data-category-filter-scope]");
+    await expect(scope).toHaveCount(1);
+    const clineCards = scope.locator('article.card[data-category="cline"]');
+    const clineCardCount = await clineCards.count();
+
+    const filter = page.locator("[data-category-filter]");
+    await expect(filter).toBeVisible();
+    const clineChip = filter.locator('[data-category-toggle="cline"]');
+    const claudeChip = filter.locator('[data-category-toggle="claude"]');
+
+    // Default: cline is greyed out and its cards are hidden; normal lanes are on.
+    await expect(clineChip).toHaveAttribute("aria-pressed", "false");
+    await expect(clineChip).toHaveAttribute("data-state", "muted");
+    await expect(claudeChip).toHaveAttribute("aria-pressed", "true");
+    if (clineCardCount > 0) {
+      await expect(clineCards.first()).toBeHidden();
+      const note = filter.locator("[data-category-filter-note]");
+      await filter.locator("summary").click();
+      await expect(note).toBeVisible();
+    } else {
+      await filter.locator("summary").click();
+    }
+
+    // Opting in re-shows the lane and survives a reload (localStorage).
+    await clineChip.click();
+    await expect(clineChip).toHaveAttribute("aria-pressed", "true");
+    if (clineCardCount > 0) {
+      await expect(clineCards.first()).toBeVisible();
+    }
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(
+      page.locator('[data-category-filter] [data-category-toggle="cline"]'),
+    ).toHaveAttribute("aria-pressed", "true");
+    if (clineCardCount > 0) {
+      await expect(
+        page.locator('[data-category-filter-scope] article.card[data-category="cline"]').first(),
+      ).toBeVisible();
+    }
+
+    // Toggling back restores the default and the mobile layout stays intact.
+    await page.locator("[data-category-filter] summary").click();
+    await page.locator('[data-category-filter] [data-category-toggle="cline"]').click();
+    await expect(
+      page.locator('[data-category-filter] [data-category-toggle="cline"]'),
+    ).toHaveAttribute("aria-pressed", "false");
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+  });
+
   test("sidebar category labels stay readable and only marquee when needed", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/");

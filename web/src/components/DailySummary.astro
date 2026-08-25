@@ -9,6 +9,7 @@ import {
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { entryDestination } from "../lib/entry-destination.ts";
+import { effectiveImportance } from "../lib/release-signal.ts";
 import {
   dailyBoardBaseDayKey,
   dailyBoardEmptyReason,
@@ -172,7 +173,7 @@ function releaseStem(title: string): string {
 
 const publishableBaseDayEntries = baseDayBoardEntries.filter(isPublishableEntry);
 const sortedToday = [...publishableBaseDayEntries].sort((a, b) => {
-  const imp = (b.importance ?? 1) - (a.importance ?? 1);
+  const imp = effectiveImportance(b) - effectiveImportance(a);
   if (imp !== 0) return imp;
   const tw = typeWeight(b.sourceType) - typeWeight(a.sourceType);
   if (tw !== 0) return tw;
@@ -352,7 +353,7 @@ const catColorOf = (slug: string): string =>
           {boardItems.map((item, i) => {
             const e = item.entry;
             const isRel = e.sourceType === "release" || e.sourceType === "changelog";
-            const isImp = e.importance === 3;
+            const isImp = effectiveImportance(e) === 3;
             const jaResult = titleForLangWithFallback(e, "ja");
             const enResult = titleForLangWithFallback(e, "en");
             const summaryJa = summaryForLangWithFallback(e, "ja");

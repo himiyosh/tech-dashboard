@@ -13,6 +13,8 @@ import {
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
+import { isDefaultMutedCategory } from "../lib/category-visibility.ts";
+import { effectiveImportance } from "../lib/release-signal.ts";
 import { sourceFaviconUrl } from "../lib/favicon.ts";
 import { deriveQueueDisplay, summaryQueueCardCopy } from "../lib/queue-health.ts";
 import { deriveWorkerRunStatus } from "../lib/run-health.ts";
@@ -60,7 +62,10 @@ const summaryJa = summaryJaResult.text;
 const summaryEn = summaryEnResult.text;
 const hasSummary = Boolean(summaryJa || summaryEn);
 const recentlyCollected = hasSummary && isRecentlyCollected(entry);
-const isImportant = hasSummary && entry.importance === 3;
+// Routine patch/prerelease builds always read as importance 1 on cards, even
+// while stored data still carries the old over-scored value (release-signal.ts).
+const cardImportance = effectiveImportance(entry);
+const isImportant = hasSummary && cardImportance === 3;
 const titleJaResult = titleForLangWithFallback(entry, "ja");
 const titleEnResult = titleForLangWithFallback(entry, "en");
 const titleJa = titleJaResult.text;
@@ -89,13 +94,13 @@ const sourceTypeEn: Record<NormalizedEntry["sourceType"], string> = {
   paper: "paper/research",
   community: "community",
 };
-const priority = importanceLabel(entry.importance);
+const priority = importanceLabel(cardImportance);
 const rankReasonJa =
-  entry.importance >= 2 || recentlyCollected
+  cardImportance >= 2 || recentlyCollected
     ? `${sourceTypeJa[entry.sourceType]} · ${catName}`
     : `深掘り候補 · ${sourceTypeJa[entry.sourceType]} · ${catName}`;
 const rankReasonEn =
-  entry.importance >= 2 || recentlyCollected
+  cardImportance >= 2 || recentlyCollected
     ? `${sourceTypeEn[entry.sourceType]} · ${catName}`
     : `Deep-dive candidate · ${sourceTypeEn[entry.sourceType]} · ${catName}`;
 const publishedJa = new Intl.DateTimeFormat("ja-JP", {
@@ -150,6 +155,8 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
   class:list={["card", "has-thumb", { important: isImportant }]}
   data-summary-state={hasSummary ? "ready" : "pending"}
   data-entry-id={entry.id}
+  data-category={entry.category}
+  data-catvis={isDefaultMutedCategory(entry.category) ? "muted" : "visible"}
   data-archive-tier={entry.archiveTier}
   data-archive-search-anchor={anchorId || undefined}
   data-detail-destination={external ? "source" : "internal"}

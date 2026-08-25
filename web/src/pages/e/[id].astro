@@ -4,6 +4,7 @@ import Sidebar from "../../components/Sidebar.astro";
 import AdSlot from "../../components/AdSlot.astro";
 import CategoryThumb from "../../components/CategoryThumb.astro";
 import { ADSENSE_SLOT_ARTICLE_BOTTOM } from "../../lib/ad-slots.ts";
+import { effectiveImportance } from "../../lib/release-signal.ts";
 import ArticleLike from "../../components/ArticleLike.astro";
 import LanguageFallbackBadge from "../../components/LanguageFallbackBadge.astro";
 import ExternalLinkHint from "../../components/ExternalLinkHint.astro";
@@ -157,7 +158,7 @@ const sourceTypeLabel: Record<NormalizedEntry["sourceType"], { ja: string; en: s
   blog: { ja: "ブログ", en: "Blog" },
   community: { ja: "コミュニティ", en: "Community" },
 };
-const importanceMeta = importanceLabel(entry.importance);
+const importanceMeta = importanceLabel(effectiveImportance(entry));
 const halfLifeLabel: Record<string, { ja: string; en: string; emoji: string; color: string }> = {
   news: { ja: "短命 (ニュース)", en: "Short-lived (news)", emoji: "⏱️", color: "#f87171" },
   tutorial: { ja: "中期 (チュートリアル)", en: "Medium-term (tutorial)", emoji: "📘", color: "#fbbf24" },

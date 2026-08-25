@@ -601,7 +601,7 @@ test.describe("Publisher generated artifact", () => {
       >;
     };
     const addressable = index.entries.filter(
-      (entry) => entry.archiveTier !== "cold" && entry.archiveTier !== "dropped",
+      (entry) => isAddressableDetailEntry(entry),
     );
     const imageBacked = addressable.find(
       (entry) => articleSocialImage(entry.image, "JA", "EN").url !== SOCIAL_IMAGE_URL,

@@ -12,6 +12,10 @@ import {
   ADVERTISING_REQUIRES_CONSENT,
 } from "../../web/src/lib/privacy-consent.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
+import {
+  isAddressableDetailEntry,
+  type DetailAddressableEntry,
+} from "../../web/src/lib/detail-addressability.ts";
 
 const TIMELINE_ENTRY_LINK_SELECTOR = 'main article.card h3.title > a[href^="/e/"]';
 const REACTION_MUTATION_URL_RE = /\/api\/reactions\/[a-f0-9]{16}$/;
@@ -2749,71 +2753,18 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(cardExcerpt).toHaveAttribute("data-excerpt-scope", "source");
       await expect(cardExcerpt).toContainText("AI 要約ではありません");
     }
-    const detailHref = await pendingCard.locator('a[href^="/e/"]').first().getAttribute("href");
-    expect(detailHref, "pending card should expose an internal detail link").toBeTruthy();
-
-    await page.goto(detailHref!);
-    const pending = page.locator(".ed-pending-summary");
-
-    await expect(pending).toBeVisible();
-    await expect(pending.locator(".i18n-ja").first()).toHaveText("AI 要約 準備待ち");
-    await expect(pending.locator(".i18n-en").first()).toHaveText("Summary pending");
-    await expect(pending).not.toContainText("近日中に AI が生成");
-    if (cardExcerptText) {
-      const detailExcerpt = pending.locator("[data-source-excerpt]");
-      await expect(detailExcerpt).toBeVisible();
-      await expect(detailExcerpt).toHaveAttribute("data-excerpt-scope", "source");
-      await expect(detailExcerpt.locator("blockquote")).toContainText(
-        cardExcerptText.replace(/…$/u, ""),
-      );
-    }
-    await expect(page.locator(".ed-disclaim")).toHaveCount(0);
-    await expect(page.locator(".ed-header-cta")).toHaveCount(1);
-    await expect(page.locator(".ed-share-btn[data-share-copy]")).toHaveCount(1);
-    await expect(page.locator(".ed-freshness, .rail-freshness")).toHaveCount(0);
-    await expect(page.locator('article.entry-detail a[target="_blank"]')).toHaveCount(1);
-    await expect(page.locator('article.entry-detail a[target="_blank"]').first()).toHaveAttribute(
-      "href", /^(?!\/e\/).+/,
-    );
-
-    const visibleTitleJa = (
-      await page.locator(".ed-title .i18n-ja .ed-title-text").textContent()
-    )?.trim() ?? "";
-    const description = await page.locator('meta[name="description"]').getAttribute("content");
-    const ogTitle = await page.locator('meta[property="og:title"]').getAttribute("content");
-    const ogDescription = await page.locator('meta[property="og:description"]').getAttribute("content");
-    const twitterDescription = await page.locator('meta[name="twitter:description"]').getAttribute("content");
-    expect(visibleTitleJa).toBeTruthy();
-    expect(await page.title()).toContain(visibleTitleJa);
-    expect(ogTitle).toContain(visibleTitleJa);
-    expect(description).toContain("AI 要約は準備中です");
-    expect(description).toContain(Array.from(visibleTitleJa).slice(0, 32).join(""));
-    expect(description).not.toMatch(/近日中/);
-    expect(description).not.toBe(ogTitle);
-    expect(ogDescription).toBe(description);
-    expect(twitterDescription).toBe(description);
-
-    const structuredData = JSON.parse(
-      await page.locator('script[type="application/ld+json"]').textContent() ?? "{}",
-    ) as {
-      headline?: string;
-      description?: string;
-      inLanguage?: string;
-      author?: { name?: string };
-      articleSection?: string;
-    };
-    const structuredSource = structuredData.author?.name ?? "";
-    const structuredCategory = structuredData.articleSection ?? "";
-    expect(structuredSource).toBeTruthy();
-    expect(structuredCategory).toBeTruthy();
-    expect(structuredData.description).toMatch(/AI 要約は準備中です|AI summary pending/);
-    expect(structuredData.description).toContain(
-      Array.from(structuredData.headline ?? "").slice(0, 32).join(""),
-    );
-    expect(structuredData.description).toContain(structuredSource);
-    expect(structuredData.description).toContain(structuredCategory);
-    expect(structuredData.description).not.toBe(structuredData.headline);
-    expect(structuredData.inLanguage).toMatch(/^(ja-JP|en)$/);
+    // Summary-pending entries no longer receive a thin /e/[id]/ detail route
+    // (detail-addressability.ts): the honest recovery is routing the reader
+    // straight to the original source in a new tab.
+    await expect(
+      pendingCard.locator('a[href^="/e/"]'),
+      "pending cards must not expose an internal detail link",
+    ).toHaveCount(0);
+    const sourceLink = pendingCard.locator("h3.title > a").first();
+    await expect(sourceLink).toHaveAttribute("href", /^(?!\/).+/);
+    await expect(sourceLink).toHaveAttribute("target", "_blank");
+    await expect(sourceLink).toHaveAttribute("rel", "noopener noreferrer nofollow");
+    await expect(pendingCard).toHaveAttribute("data-detail-destination", "source");
   });
 
   test("sidebar category labels stay readable and only marquee when needed", async ({ page }) => {
@@ -3221,12 +3172,14 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("mobile detail hero media keeps its reserved height through image failure", async ({ page }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{
-        id: string;
+      entries: Array<DetailAddressableEntry & {
         image?: { src?: string };
       }>;
     };
-    const imageEntry = index.entries.find((entry) => entry.image?.src?.trim());
+    // Only addressable (summary-ready) entries have a /e/[id]/ detail route.
+    const imageEntry = index.entries.find(
+      (entry) => entry.image?.src?.trim() && isAddressableDetailEntry(entry),
+    );
     expect(imageEntry?.image?.src, "the generated corpus contains a detail hero image").toBeTruthy();
     await page.route(imageEntry!.image!.src!, async (route) => {
       await route.fulfill({
@@ -3491,13 +3444,16 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("detail title keeps visible provenance outside the semantic heading", async ({ page }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{ id: string; titleJa?: string; titleEn?: string }>;
+      entries: DetailAddressableEntry[];
     };
     const fallbackEntry = index.entries.find(
-      (entry) => String(entry.titleJa ?? "").trim() && !String(entry.titleEn ?? "").trim(),
+      (entry) =>
+        String(entry.titleJa ?? "").trim()
+        && !String(entry.titleEn ?? "").trim()
+        && isAddressableDetailEntry(entry),
     );
     if (!fallbackEntry) {
-      test.skip(true, "Current generated corpus has no English-title fallback entry.");
+      test.skip(true, "Current generated corpus has no addressable English-title fallback entry.");
       return;
     }
 
@@ -7960,7 +7916,9 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("article.featured .featured-meta time[datetime]").first()).toBeVisible();
     await expect(page.locator(".top-rank-item time.rank-time[datetime]").first()).toBeVisible();
 
-    const detailHref = await page.locator("article.card h3.title a").first().getAttribute("href");
+    // Cards for summary-pending entries link externally now; pick the first
+    // card that still routes to an internal detail page.
+    const detailHref = await page.locator('article.card h3.title a[href^="/e/"]').first().getAttribute("href");
     expect(detailHref).toBeTruthy();
     await page.goto(detailHref!);
     const detailTime = page.locator(".ed-byline time.ed-published[datetime]");

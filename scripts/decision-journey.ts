@@ -57,7 +57,7 @@ export const DECISION_JOURNEY_STEPS = [
     name: "pending_summary_or_fully_summarized",
     startCondition: "Inspect the generated Home corpus for a real pending-summary article.",
     completionCondition:
-      "A present pending article opens an honest pending detail state, or zero pending cards is recorded as a valid fully summarized corpus.",
+      "A present pending article routes directly to its original source (no thin pending detail route exists), or zero pending cards is recorded as a valid fully summarized corpus.",
   },
 ] as const;
 
@@ -836,36 +836,41 @@ function journeyStepDefinitions(
           };
         }
 
+        // Summary-pending entries no longer receive a thin /e/[id]/ detail
+        // route (detail-addressability.ts). The honest recovery is the card
+        // itself: it must link straight to the original source in a new tab
+        // and expose no internal detail link. Assert by attributes without
+        // navigating, so the journey never leaves the site under test.
         const pendingCard = pendingCards.first();
-        const detailHref = await pendingCard
+        const internalLinkCount = await pendingCard
           .locator('a[href^="/e/"]')
-          .first()
-          .getAttribute("href");
-        if (!detailHref) throw new Error("Pending card has no internal detail link");
-        await Promise.all([
-          page.waitForURL(new RegExp(`${detailHref.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")}$`), {
-            timeout: 15_000,
-          }),
-          activity.click(
-            pendingCard.locator('a[href^="/e/"]').first(),
-            "open-pending-detail",
-          ),
-        ]);
-        const article = page.locator(
-          'article.entry-detail[data-summary-state="pending"]',
-        );
-        await article.waitFor({ state: "visible", timeout: 10_000 });
-        await article
-          .locator(".ed-pending-summary")
-          .waitFor({ state: "visible", timeout: 10_000 });
+          .count();
+        if (internalLinkCount > 0) {
+          throw new Error(
+            "Pending card exposes an internal detail link; summary-pending entries must route to the source",
+          );
+        }
+        const sourceLink = pendingCard.locator("h3.title > a").first();
+        const sourceHref = await sourceLink.getAttribute("href");
+        if (!sourceHref || sourceHref.startsWith("/")) {
+          throw new Error(
+            `Pending card title link must be an external source URL, got: ${sourceHref}`,
+          );
+        }
+        const sourceTarget = await sourceLink.getAttribute("target");
+        const sourceRel = (await sourceLink.getAttribute("rel")) ?? "";
+        if (sourceTarget !== "_blank" || !sourceRel.includes("nofollow")) {
+          throw new Error(
+            `Pending card source link must open in a new tab with nofollow rel (target=${sourceTarget}, rel=${sourceRel})`,
+          );
+        }
         return {
-          expectedDocumentRoutes: ["/", documentRoute(`${baseURL}${detailHref}`)],
+          expectedDocumentRoutes: ["/"],
           evidence: {
             corpusState: outcome.corpusState,
             pendingCardCount: pendingCount,
-            detailHref,
-            detailSummaryState: await article.getAttribute("data-summary-state"),
-            sourceExcerptVisible: await article
+            sourceHref,
+            sourceExcerptVisible: await pendingCard
               .locator("[data-source-excerpt]")
               .isVisible()
               .catch(() => false),

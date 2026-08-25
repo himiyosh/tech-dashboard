@@ -1343,7 +1343,17 @@ const jsonLd = {
     text-decoration: none;
   }
   /* TITLE */
-  .ed-head { padding: 24px 32px 18px; border-bottom: 1px dashed var(--border); }
+  .ed-head {
+    padding: 24px 32px 18px;
+    border-bottom: 1px dashed var(--border);
+    /* This is the article title block, not page chrome: neutralize the
+     * site-wide `header` element styles (sticky translucent bar + blur)
+     * that otherwise bleed in and render a dark misaligned plate. */
+    position: static;
+    background: transparent;
+    backdrop-filter: none;
+    z-index: auto;
+  }
   .ed-title-provenance {
     display: flex;
     align-items: center;
@@ -1540,13 +1550,20 @@ const jsonLd = {
   }
   .ed-body-origin .ai-badge { flex: 0 0 auto; margin-top: 1px; }
   .ed-body-prose p {
-    font-size: 15.5px; line-height: 2.05; color: var(--text);
+    font-size: 16px; line-height: 2.05; color: var(--text);
     margin: 0 0 22px;
     text-align: justify; text-justify: inter-character;
     scroll-margin-top: 84px;
     /* 段落末尾の孤立語 (orphan) を避ける。JA は justify で影響が薄く、
        主に英語 prose の折返し品質に効く */
     text-wrap: pretty;
+  }
+  /* リード段落: 記事の導入を一段強調して読み始めの摩擦を下げる */
+  .ed-body-prose > p:first-of-type {
+    font-size: 17px;
+    line-height: 2;
+    padding-left: 14px;
+    border-left: 3px solid color-mix(in srgb, var(--cat-color) 65%, transparent);
   }
   .ed-body-prose .kw {
     color: var(--cat-color);
@@ -1958,7 +1975,8 @@ const jsonLd = {
     .ed-summary-only { margin-left: 0; margin-right: 0; }
     .ed-title { font-size: 22px; }
     .ed-tldr-list li { font-size: 14px; line-height: 1.8; }
-    .ed-body-prose p { font-size: 14.5px; line-height: 1.95; margin-bottom: 18px; }
+    .ed-body-prose p { font-size: 15.5px; line-height: 2; margin-bottom: 18px; }
+    .ed-body-prose > p:first-of-type { font-size: 16.5px; padding-left: 12px; }
     .ed-pullquote { padding: 18px 18px 14px; }
     .ed-pullquote blockquote { font-size: 16px; line-height: 1.7; }
     .ed-rel-grid { grid-template-columns: 1fr; }
@@ -1978,22 +1996,24 @@ const jsonLd = {
       bottom: calc(68px + env(safe-area-inset-bottom));
     }
 
+    /* Keep both actions inset and rounded like the rest of the mobile
+     * column — the previous full-bleed primary CTA read as a broken band
+     * against the inset copy button and card corners. */
     .ed-action-strip {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
       gap: 10px;
-      margin-inline: -18px;
     }
     .ed-header-cta {
       width: 100%;
       min-height: 52px;
-      padding-inline: 18px;
-      border-radius: 0;
+      padding-inline: 16px;
+      border-radius: 8px;
     }
     .ed-action-strip .ed-share-btn {
-      width: calc(100% - 36px);
+      width: 100%;
       min-height: 48px;
-      margin-inline: 18px;
+      margin-inline: 0;
     }
     .ed-header-cta-copy small {
       max-width: min(56ch, calc(100vw - 100px));

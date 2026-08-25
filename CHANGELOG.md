@@ -44,6 +44,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 変更
 
+- 記事詳細ページの本文タイポグラフィを読みやすさ優先へ引き上げました。本文をデスクトップ 16px・モバイル 15.5px へ拡大し、冒頭段落はカテゴリ色のアクセント border 付きリード段落(17px)として強調して、開いた直後に記事の要点へ視線が入るようにしました。
 - 重要度バッジ・HOT 強調・重要記事グルーピングなどの表示を、保存済み importance ではなく実効 importance(`effectiveImportance`)で判定するようにしました。旧採点バグで importance 3 のまま残っている patch release(例: `Cline CLI v3.0.58` の「重要度 High」)が、データ移行や Worker 再デプロイを待たずに「Low」表示になります。
 - cline-releases のモノレポ部品タグ(`sdk/core` / `sdk/agents` 等の slash 付きタグ)を title-scope の excludeKeywords で収集対象から除外しました。同一リリースで複数の近接重複カードが並ぶノイズを止めます(トップレベルの Desktop / CLI / SDK リリースは残ります)。既存の保存済みエントリは Worker 再デプロイ後のマージ時に同ルールで除去されます(LL-077)。
 - 重要度採点の欠陥を修正しました。旧実装は "v1." / "v2." / "v3." の部分一致を major keyword として扱い、`Cline CLI v3.0.58` のような patch release を importance 3 に採点していました(live index の release の 78% が該当)。新実装は version 形状で判定し、patch/prerelease は importance 1 になります。Web 層のランキング・Featured・Top 3 も保存済みの過大 importance に依存せず routine release を decision 枠から除外します。
@@ -128,6 +129,8 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 修正
 
+- 記事詳細ページ `/e/[id]/` のタイトルブロックが、要素セレクタで全ページに効くグローバルな sticky header CSS(暗色半透明背景・backdrop blur・sticky 配置)を継承し、タイトル周辺が濃いプレート状にずれて重なって見える本文レイアウト崩れを修正しました。記事詳細内の header は static 配置・透明背景へ明示的に上書きし、ページ上部のグローバル sticky header は従来どおり維持します。
+- モバイルの記事詳細で「元記事を読む」CTA だけが角丸なしの full-bleed で画面端まで到達し、直下の共有ボタンと幅・角丸が揃わない問題を修正しました。両ボタンを同じ内側余白・角丸・全幅で揃え、44px 以上の操作面を維持します。
 - モバイルのTimeline記事タイトルから固定4行clampとhidden overflowを外し、feedタイトルが長くなっても全文を自然に折り返して表示するようにしました。SpotlightとTop 3のfirst-view向けclamp、44px以上の操作面、横overflow契約は維持します。
 - evergreen記事のarchive行へsummaryが供給されない経路を塞ぎました。`selectArchiveUpdateEntries`は「今回変化したentryだけ」をarchiveへ流すため、変化のない安定したevergreen entryはarchive行が二度と更新されず、旧`compactArchiveEntry`に剥がされたsummaryが入らないまま残っていました (実測128件)。この状態でcapにevictされると、tierだけwarmへ昇格して「warmなのにsummary無し」という不正recordが生まれ、publisherのfail-closed検証を恒久停止させ得ました。evergreenは変化の有無に関わらず常にarchive更新対象へ含め、昇格側もbilingual summaryが揃っている行だけに限定します。data gateも、archive層が修復できない状態 (summary未供給のままevictされたhot行) では落ちないよう対象を限定しました。
 - evergreen記事がlive indexのcap (`PER_SOURCE_CAP` / `CATEGORY_CAPS` / `INDEX_LIMIT`) でevictされた際に、全ての閲覧面から消える問題を修正しました。capはevergreenを考慮せず永久にevictするため、archive行はtier `hot`のまま凍結し、LL-044でsummaryを剥がされた状態で固定されていました。結果として月別Archive (summary必須) にも個別記事ページ (warm由来) にも現れず、`data/archive/{YYYY-MM}.json`にだけ存在する記事になっていました。archive書き出し時にevergreenのsummaryを保持し、liveから外れたevergreen行をwarmへ昇格するようにし、既に凍結していた78件はgit履歴のsummaryを復元してwarmへ戻しました (R-022)。

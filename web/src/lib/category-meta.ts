@@ -42,7 +42,7 @@ export const CATEGORY_META: ReadonlyArray<CategoryMeta> = [
   { slug: "claude", name: "Claude / Claude Code", shortLabel: "Claude Code", color: "#fbbf24", initial: "Cl", emoji: "\u{1F9E1}", group: "anthropic" },
   { slug: "codex", name: "OpenAI / Codex", shortLabel: "Codex", color: "#93c5fd", initial: "Cx", emoji: "\u{1F4D8}", group: "openai" },
   { slug: "gemini", name: "Gemini / Gemma", shortLabel: "Gemini/Gemma", color: "#60a5fa", initial: "Gm", emoji: "\u{2728}", group: "google" },
-  { slug: "cursor", name: "AI Editors", shortLabel: "AI Editors", color: "#cbd5e1", initial: "Ed", emoji: "\u{1F5B1}\u{FE0F}", group: "coding-tools" },
+  { slug: "cursor", name: "Editor", shortLabel: "Editor", color: "#cbd5e1", initial: "Ed", emoji: "\u{1F5B1}\u{FE0F}", group: "coding-tools" },
   { slug: "cline", name: "Cline / Roo", shortLabel: "Cline/Roo", color: "#c4b5fd", initial: "Cn", emoji: "\u{1F9F5}", group: "coding-tools" },
   { slug: "aider", name: "Aider", shortLabel: "Aider", color: "#d6d3a1", initial: "Ai", emoji: "\u{1F91D}", group: "coding-tools" },
   { slug: "opencode", name: "OpenHands / OpenCode", shortLabel: "OpenHands/OpenCode", color: "#a5b4fc", initial: "Oh", emoji: "\u{1F310}", group: "coding-tools" },

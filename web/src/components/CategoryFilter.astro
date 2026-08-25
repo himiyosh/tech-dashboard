@@ -4,7 +4,8 @@
  * like cline) stay greyed out until the reader enables them; any category can
  * be muted the same way. The choice persists per browser (localStorage) and
  * applies to the Timeline list only — search, category pages, and RSS are
- * unaffected. See web/src/lib/category-visibility.ts for the policy.
+ * unaffected. Always visible (no accordion) per site-owner feedback.
+ * See web/src/lib/category-visibility.ts for the policy.
  */
 import { CATEGORY_META } from "../lib/data.ts";
 import { isDefaultMutedCategory } from "../lib/category-visibility.ts";
@@ -15,14 +16,15 @@ const categories = CATEGORY_META.map((category) => ({
   color: category.color,
   defaultMuted: isDefaultMutedCategory(category.slug),
 }));
-const mutedByDefault = categories.filter((category) => category.defaultMuted);
 ---
 
-<details class="cat-filter" data-category-filter>
-  <summary class="cat-filter-summary">
-    <span class="cat-filter-icon" aria-hidden="true">⚙</span>
-    <span class="i18n-ja">表示カテゴリのフィルター</span>
-    <span class="i18n-en" lang="en">Category filter</span>
+<section class="cat-filter" data-category-filter aria-labelledby="cat-filter-heading">
+  <div class="cat-filter-header">
+    <h3 id="cat-filter-heading" class="cat-filter-title">
+      <span class="cat-filter-icon" aria-hidden="true">⚙</span>
+      <span class="i18n-ja">表示カテゴリのフィルター</span>
+      <span class="i18n-en" lang="en">Category filter</span>
+    </h3>
     <span
       class="cat-filter-note"
       data-category-filter-note
@@ -35,39 +37,31 @@ const mutedByDefault = categories.filter((category) => category.defaultMuted);
         <span data-category-filter-hidden-count>0</span> hidden
       </span>
     </span>
-  </summary>
-  <div class="cat-filter-body">
-    <p class="cat-filter-help">
-      <span class="i18n-ja">
-        グレーのカテゴリは一覧に表示されません。クリックで表示/非表示を切り替えられます(この端末にのみ保存。検索・カテゴリページ・RSS には影響しません)。
-        {mutedByDefault.length > 0 && (
-          <>既定では定常リリースの多い {mutedByDefault.map((c) => c.name).join(" / ")} を非表示にしています。</>
-        )}
-      </span>
-      <span class="i18n-en" lang="en">
-        Greyed categories are hidden from this list. Click to toggle (stored in this browser only; search, category pages, and RSS are unaffected).
-        {mutedByDefault.length > 0 && (
-          <>By default the release-heavy {mutedByDefault.map((c) => c.name).join(" / ")} {mutedByDefault.length === 1 ? "lane is" : "lanes are"} hidden.</>
-        )}
-      </span>
-    </p>
-    <div class="cat-filter-chips" role="group" aria-label="表示するカテゴリ / Categories to show">
-      {categories.map((category) => (
-        <button
-          type="button"
-          class="cat-filter-chip"
-          data-category-toggle={category.slug}
-          data-state={category.defaultMuted ? "muted" : "on"}
-          aria-pressed={category.defaultMuted ? "false" : "true"}
-          style={`--chip-color:${category.color}`}
-        >
-          <span class="cat-filter-dot" aria-hidden="true"></span>
-          {category.name}
-        </button>
-      ))}
-    </div>
   </div>
-</details>
+  <div class="cat-filter-chips" role="group" aria-label="表示するカテゴリ / Categories to show">
+    {categories.map((category) => (
+      <button
+        type="button"
+        class="cat-filter-chip"
+        data-category-toggle={category.slug}
+        data-state={category.defaultMuted ? "muted" : "on"}
+        aria-pressed={category.defaultMuted ? "false" : "true"}
+        style={`--chip-color:${category.color}`}
+      >
+        <span class="cat-filter-dot" aria-hidden="true"></span>
+        {category.name}
+      </button>
+    ))}
+  </div>
+  <p class="cat-filter-help">
+    <span class="i18n-ja">
+      グレーのカテゴリは一覧に非表示です。クリックで切り替え(この端末にのみ保存。検索・カテゴリページ・RSS には影響しません)。
+    </span>
+    <span class="i18n-en" lang="en">
+      Greyed categories are hidden from this list. Click to toggle (stored in this browser only; search, category pages, and RSS are unaffected).
+    </span>
+  </p>
+</section>
 
 <script>
   import { initCategoryVisibility } from "../lib/category-visibility-client.ts";

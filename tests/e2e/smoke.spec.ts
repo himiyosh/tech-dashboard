@@ -233,6 +233,21 @@ async function expectMobileFirstDecisionNearViewport(page: Page): Promise<void> 
     .toBeLessThanOrEqual(MOBILE_FIRST_DECISION_MAX_Y);
 }
 
+/**
+ * Opts the reader into every default-muted timeline category via the filter
+ * UI, so tests that exercise contracts on those lanes' cards (e.g. the
+ * pending-summary copy on cline releases) see them despite the default mute
+ * (category-visibility.ts).
+ */
+async function enableMutedTimelineCategories(page: Page): Promise<void> {
+  const filter = page.locator("[data-category-filter]");
+  if ((await filter.count()) === 0) return;
+  const mutedChips = filter.locator('[data-category-toggle][data-state="muted"]');
+  while ((await mutedChips.count()) > 0) {
+    await mutedChips.first().click();
+  }
+}
+
 async function expectPagefindReady(page: Page): Promise<void> {
   await expect
     .poll(
@@ -993,6 +1008,9 @@ test.describe("TECH Dashboard smoke", () => {
   test("pending cards share the summary queue state and suppress stale ETAs", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
+    // Pending cards live mostly in default-muted lanes (cline); opt in so the
+    // pending-copy contract stays exercised under the category filter.
+    await enableMutedTimelineCategories(page);
     const footerRun = page.locator(".footer-run-link");
     const queueMode = await footerRun.getAttribute("data-summary-queue-mode");
     const queueState = await footerRun.getAttribute("data-summary-queue-state");
@@ -2736,6 +2754,9 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("pending detail keeps the source action available without collection freshness", async ({ page }) => {
     await page.goto("/");
+    // Pending cards live mostly in default-muted lanes (cline); opt in so the
+    // pending-card contract stays exercised under the category filter.
+    await enableMutedTimelineCategories(page);
     const pendingCards = page.locator("article.card").filter({ has: page.locator(".summary-state") });
     const pendingCount = await pendingCards.count();
     if (pendingCount === 0) {
@@ -2785,11 +2806,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(claudeChip).toHaveAttribute("aria-pressed", "true");
     if (clineCardCount > 0) {
       await expect(clineCards.first()).toBeHidden();
-      const note = filter.locator("[data-category-filter-note]");
-      await filter.locator("summary").click();
-      await expect(note).toBeVisible();
-    } else {
-      await filter.locator("summary").click();
+      await expect(filter.locator("[data-category-filter-note]")).toBeVisible();
     }
 
     // Opting in re-shows the lane and survives a reload (localStorage).
@@ -2809,7 +2826,6 @@ test.describe("TECH Dashboard smoke", () => {
     }
 
     // Toggling back restores the default and the mobile layout stays intact.
-    await page.locator("[data-category-filter] summary").click();
     await page.locator('[data-category-filter] [data-category-toggle="cline"]').click();
     await expect(
       page.locator('[data-category-filter] [data-category-toggle="cline"]'),
@@ -7440,6 +7456,8 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(featured).toBeVisible();
     await expectMobileFirstDecisionNearViewport(page);
     const featuredThumb = featured.locator(".featured-thumb").first();
+    // The DOM-first card can sit in a default-muted (hidden) category lane;
+    // thumbnail-layout assertions must target a card the reader can see.
     const {
       featuredBox,
       thumbBox,
@@ -7852,7 +7870,9 @@ test.describe("TECH Dashboard smoke", () => {
     }
 
     await page.setViewportSize({ width: 390, height: 844 });
-    const cards = page.locator("article.card.has-thumb");
+    // Exclude default-muted (hidden) category lanes: spacing is only
+    // measurable on cards the reader can actually see.
+    const cards = page.locator('article.card.has-thumb:not([data-catvis="muted"])');
     await expect(cards.first()).toBeVisible();
     expect(await cards.count(), "mobile timeline provides cards for spacing checks").toBeGreaterThanOrEqual(2);
     const cardMetrics = await cards.evaluateAll((nodes) => {
@@ -7915,7 +7935,7 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.reload();
-    const desktopCardThumb = page.locator("article.card .card-thumb.has-image").first();
+    const desktopCardThumb = page.locator('article.card:not([data-catvis="muted"]) .card-thumb.has-image').first();
     if ((await desktopCardThumb.count()) > 0) {
       await expect(desktopCardThumb).toBeVisible();
       const cardImage = desktopCardThumb.locator("img").first();
@@ -7930,7 +7950,7 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("EntryCard category badges use display labels and stay contained", async ({ page }) => {
     const categorySurfaces = [
-      ["cursor", "AI Editors"],
+      ["cursor", "Editor"],
       ["tech-news", "News/Policy"],
       ["agent-fw", "Agent Frameworks"],
       ["local-llm", "Local Models"],
@@ -7940,14 +7960,14 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/c/cursor/");
-    await expect(page.locator("#category-heading")).toContainText("AI Editors");
+    await expect(page.locator("#category-heading")).toContainText("Editor");
 
     const zedCard = page.locator("article.card").filter({ hasText: "Zed Editor Releases" }).first();
     await expect(zedCard).toBeVisible();
     const zedBadge = zedCard.locator(".badge.cat");
-    await expect(zedBadge).toHaveText("AI Editors");
-    await expect(zedBadge).toHaveAttribute("title", "AI Editors");
-    await expect(zedBadge).toHaveAttribute("aria-label", "Category: AI Editors");
+    await expect(zedBadge).toHaveText("Editor");
+    await expect(zedBadge).toHaveAttribute("title", "Editor");
+    await expect(zedBadge).toHaveAttribute("aria-label", "Category: Editor");
 
     await page.setViewportSize({ width: 980, height: 844 });
     for (const [slug, displayLabel] of categorySurfaces) {
@@ -7964,8 +7984,12 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("decision surfaces expose semantic publication times", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("article.card .meta time[datetime]").first()).toBeVisible();
-    await expect(page.locator("article.card .card-insight time[datetime]").first()).toBeVisible();
+    await expect(
+      page.locator('article.card:not([data-catvis="muted"]) .meta time[datetime]').first(),
+    ).toBeVisible();
+    await expect(
+      page.locator('article.card:not([data-catvis="muted"]) .card-insight time[datetime]').first(),
+    ).toBeVisible();
     await expect(page.locator("article.featured .featured-meta time[datetime]").first()).toBeVisible();
     await expect(page.locator(".top-rank-item time.rank-time[datetime]").first()).toBeVisible();
 

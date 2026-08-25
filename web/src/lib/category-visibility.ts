@@ -14,10 +14,18 @@
 
 /**
  * Categories hidden from the Timeline unless the reader opts in.
- * Keep this list small and evidence-based: a lane belongs here when most of
- * its inflow is routine per-build release noise rather than decisions.
+ * A lane belongs here when most of its inflow is routine per-build release
+ * noise or tool-specific chatter rather than decisions. Current set chosen by
+ * the site owner (2026-08-25): editor/CLI release lanes plus the highest-noise
+ * community lanes.
  */
-export const DEFAULT_MUTED_CATEGORIES: readonly string[] = ["cline"];
+export const DEFAULT_MUTED_CATEGORIES: readonly string[] = [
+  "cursor",
+  "cline",
+  "aider",
+  "local-llm",
+  "agent-fw",
+];
 
 /** Versioned storage key (bump the suffix when the schema changes). */
 export const CATEGORY_VISIBILITY_STORAGE_KEY = "techdb.category-visibility.v1";

@@ -245,22 +245,27 @@ describe("body consumer health issue scope", () => {
 });
 
 describe("buildBodyPromptJa / buildBodyPromptEn (LL-115)", () => {
-  it("JA プロンプトは日本語本文・文字数・プレーンテキスト要件を含む", () => {
+  it("JA プロンプトは日本語本文・文字数・セクション見出し契約を含む", () => {
     const p = buildBodyPromptJa(entry);
     expect(p).toContain("日本語の本文記事");
     expect(p).toContain("700〜1100 文字");
-    expect(p).toContain("Markdown 見出し");
+    // セクション見出しは「## 」行のみ許可し、他の Markdown は禁止のまま。
+    expect(p).toContain("「## 」で始まる");
+    expect(p).toContain("3〜5 個のセクション");
+    expect(p).toContain("リスト記号 (- , *) や他の Markdown 記法");
     // context が入っている
     expect(p).toContain("local-llm");
     expect(p).toContain("GLM-5.2");
     expect(p).toContain("Source excerpt");
   });
 
-  it("EN プロンプトは英語本文・語数・plain text 要件を含む", () => {
+  it("EN プロンプトは英語本文・語数・セクション見出し契約を含む", () => {
     const p = buildBodyPromptEn(entry);
     expect(p).toContain("English article body");
     expect(p).toContain("500-800 words");
-    expect(p).toContain("Plain text only");
+    expect(p).toContain('beginning with "## "');
+    expect(p).toContain("3-5 sections");
+    expect(p).toContain("plain text only");
     expect(p).toContain("local-llm");
     expect(p).toContain("Source excerpt");
   });

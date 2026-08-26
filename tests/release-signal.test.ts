@@ -3,6 +3,7 @@ import { scoreImportance } from "../harness/pipeline/normalize.ts";
 import type { RawEntry, SourceDefinition } from "../harness/types.ts";
 import {
   classifyReleaseTitleSignal,
+  effectiveImportance,
   isRoutineReleaseEntry,
 } from "../web/src/lib/release-signal.ts";
 
@@ -135,5 +136,36 @@ describe("isRoutineReleaseEntry", () => {
         title: "Fixing v3.0.58 regressions in production",
       }),
     ).toBe(false);
+  });
+});
+
+describe("effectiveImportance", () => {
+  it("routine patch release は保存値が 3 でも表示上は 1 になる (未移行データ対策)", () => {
+    expect(
+      effectiveImportance({
+        sourceType: "release",
+        title: "Cline CLI v3.0.58",
+        titleEn: "Cline CLI v3.0.58",
+        titleJa: "",
+        importance: 3,
+      }),
+    ).toBe(1);
+  });
+
+  it("routine でないエントリは保存値をそのまま返す", () => {
+    expect(
+      effectiveImportance({
+        sourceType: "release",
+        title: "LangChain v1.0.0",
+        importance: 3,
+      }),
+    ).toBe(3);
+    expect(
+      effectiveImportance({
+        sourceType: "blog",
+        title: "Fixing v3.0.58 regressions in production",
+        importance: 2,
+      }),
+    ).toBe(2);
   });
 });

@@ -84,7 +84,10 @@ function contextLines(e: BodyPromptEntry): string[] {
 
 /**
  * Japanese long-form body prompt (plain text, no JSON). ~700-1100 chars,
- * multiple paragraphs separated by blank lines, no Markdown headings/list marks.
+ * multiple paragraphs separated by blank lines. Sections carry "## " heading
+ * lines (the ONLY allowed markup) so the detail page can render 項目 + TOC;
+ * legacy bodies without headings get structural sections derived at render
+ * time (web/src/lib/body-sections.ts).
  */
 export function buildBodyPromptJa(e: BodyPromptEntry): string {
   return [
@@ -92,11 +95,12 @@ export function buildBodyPromptJa(e: BodyPromptEntry): string {
     "",
     "要件:",
     "・700〜1100 文字。複数の段落に分け、段落の区切りは空行 (改行2つ) のみ。",
+    "・本文を 3〜5 個のセクションに分け、各セクションの先頭に「## 」で始まる 12 文字以内の内容見出し行を置く (見出し行の前後は空行)。見出しは「概要」のような汎用語ではなく、その記事の内容を表す具体的な言葉にする。",
     "・リード文で主題と重要性を 1〜2 文で提示し、本文で技術的内容・背景・影響を噛み砕いて説明する。",
     "・関連する周辺ツール・他社動向・前提知識など、読み応えを高める文脈を適度に含める。",
     "・中立かつ事実ベース。誤った断定や推測の断言は避け、推測は「と見られる」「可能性がある」等のヘッジ表現を使う。",
     "・収集元のタイトルと抜粋を事実の上限とし、料金・対象地域・対応OS・既存版からの展開を別の機能や新製品へ置き換えない。",
-    "・プレーンテキストのみ。Markdown 見出し (#) やリスト記号 (- , *) は使わない。コードフェンスや前置きも書かない。",
+    "・「## 」見出し行以外はプレーンテキストのみ。リスト記号 (- , *) や他の Markdown 記法、コードフェンス、前置きは書かない。",
     "・本文のみを返す。タイトルや「以下が本文です」等のメタ説明は書かない。",
     "",
     "記事情報:",
@@ -114,11 +118,12 @@ export function buildBodyPromptEn(e: BodyPromptEntry): string {
     "",
     "Requirements:",
     "- 500-800 words, multiple paragraphs separated by a blank line (two newlines).",
+    "- Split the body into 3-5 sections. Start each section with one heading line beginning with \"## \" (max 6 words), with a blank line before and after it. Make headings specific to this article's content, not generic labels like \"Overview\".",
     "- Open with one or two sentences stating the topic and why it matters, then explain the key points, technical detail, and context.",
     "- Add useful background: adjacent tools, related industry moves, or prerequisite concepts, to make it worth reading.",
     "- Neutral and fact-based. Avoid overclaiming; hedge speculation with phrases like \"appears to\" or \"is likely\".",
     "- Treat the collected title and source excerpt as the factual boundary. Preserve pricing, region, platform, and expansion facts instead of replacing them with a different feature or a new-product claim.",
-    "- Plain text only. No Markdown headings (#) or list markers (-, *). No code fences and no preamble.",
+    "- Other than the \"## \" heading lines, plain text only: no list markers (-, *), no other Markdown, no code fences, no preamble.",
     "- Return ONLY the body text. Do not write a title or any meta commentary such as \"Here is the body\".",
     "",
     "Article info:",

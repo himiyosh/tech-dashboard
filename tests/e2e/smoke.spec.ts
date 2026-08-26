@@ -16,8 +16,14 @@ import {
   isAddressableDetailEntry,
   type DetailAddressableEntry,
 } from "../../web/src/lib/detail-addressability.ts";
+import { CATEGORY_META } from "../../web/src/lib/category-meta.ts";
+import { DEFAULT_MUTED_CATEGORIES } from "../../web/src/lib/category-visibility.ts";
 
-const TIMELINE_ENTRY_LINK_SELECTOR = 'main article.card h3.title > a[href^="/e/"]';
+/** Category count follows the taxonomy source of truth, not a hard-coded number. */
+const CATEGORY_COUNT = CATEGORY_META.length;
+
+const TIMELINE_ENTRY_LINK_SELECTOR =
+  'main article.card:not([data-catvis="muted"]) h3.title > a[href^="/e/"]';
 const REACTION_MUTATION_URL_RE = /\/api\/reactions\/[a-f0-9]{16}$/;
 type SummaryFixtureEntry = SummaryDisplayEntry & {
   id: string;
@@ -233,6 +239,21 @@ async function expectMobileFirstDecisionNearViewport(page: Page): Promise<void> 
     .toBeLessThanOrEqual(MOBILE_FIRST_DECISION_MAX_Y);
 }
 
+/**
+ * Opts the reader into every default-muted timeline category via the filter
+ * UI, so tests that exercise contracts on those lanes' cards (e.g. the
+ * pending-summary copy on cline releases) see them despite the default mute
+ * (category-visibility.ts).
+ */
+async function enableMutedTimelineCategories(page: Page): Promise<void> {
+  const filter = page.locator("[data-category-filter]");
+  if ((await filter.count()) === 0) return;
+  const mutedChips = filter.locator('[data-category-toggle][data-state="muted"]');
+  while ((await mutedChips.count()) > 0) {
+    await mutedChips.first().click();
+  }
+}
+
 async function expectPagefindReady(page: Page): Promise<void> {
   await expect
     .poll(
@@ -331,12 +352,12 @@ async function expectResponsivePageHero(
   await page.goto(path);
   const hero = page.locator(".page-hero").first();
   await expect(hero).toBeVisible();
-  if (topLevel) {
-    await expect(
-      page.locator(".crumb-bar"),
-      `${path} should not render breadcrumbs`,
-    ).toHaveCount(0);
-  }
+  // Every route except the home page carries a trail back to it, so the
+  // crumb bar is present at the same place on every page a reader can land on.
+  await expect(
+    page.locator(".crumb-bar"),
+    `${path} renders breadcrumbs`,
+  ).toHaveCount(1);
   const desktopBox = await hero.boundingBox();
   expect(desktopBox, `${path} desktop hero box`).not.toBeNull();
   expect(
@@ -571,11 +592,19 @@ test.describe("TECH Dashboard smoke", () => {
     }
     await expect(page.locator(".banner-fact")).toHaveCount(3);
     await expect(page.locator(".signal-node.node-source")).toContainText(/sources with live entries/i);
-    await expect(page.locator(".banner-fact").filter({ hasText: "収録中ソース" })).toContainText(/registry sources with live entries/i);
-    await expect(page.locator(".banner-fact").filter({ hasText: "Active registry sources" })).toContainText(/active registry sources/i);
+    // The rail is three figure tiles plus one run-health line. Each tile leads
+    // with a number and names the population it counts; cadence lives in the
+    // status line, not in a fourth card.
+    for (const scope of ["timeline-live", "daily-published", "registry-live-sources"]) {
+      const tile = page.locator(`.banner-fact[data-metric-scope="${scope}"]`);
+      await expect(tile, `${scope} tile is present`).toHaveCount(1);
+      await expect(tile.locator(".fact-cap"), `${scope} tile is captioned`).not.toBeEmpty();
+      await expect(tile.locator(".fact-scope"), `${scope} tile names its population`).not.toBeEmpty();
+    }
     await expect(
-      page.locator(".banner-fact").filter({ hasText: "更新頻度" }).locator(":scope > .i18n-ja"),
-    ).toContainText(/毎時 1 バッチ収集.*最新 index/);
+      page.locator('.banner-fact[data-metric-scope="registry-live-sources"] .fact-scope'),
+    ).toContainText(/registry sources with live entries/i);
+    await expect(page.locator(".banner-facts-status")).toContainText(/index (更新|updated)/);
     await page.locator(".top-rank-item .rank-source").first().evaluate((source) => {
       const fullLabel = "Microsoft Foundry Engineering and AI Platform Updates";
       const label = source.querySelector("[data-source-disclosure-label]");
@@ -993,6 +1022,9 @@ test.describe("TECH Dashboard smoke", () => {
   test("pending cards share the summary queue state and suppress stale ETAs", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
+    // Pending cards live mostly in default-muted lanes (cline); opt in so the
+    // pending-copy contract stays exercised under the category filter.
+    await enableMutedTimelineCategories(page);
     const footerRun = page.locator(".footer-run-link");
     const queueMode = await footerRun.getAttribute("data-summary-queue-mode");
     const queueState = await footerRun.getAttribute("data-summary-queue-state");
@@ -2572,15 +2604,25 @@ test.describe("TECH Dashboard smoke", () => {
     );
     await expect(page.locator("#ed-fab")).toHaveAccessibleName("Back to top");
 
-    await page.locator("#p-en-2").evaluate((element) => {
-      const rect = element.getBoundingClientRect();
-      window.scrollTo({
-        top: window.scrollY + rect.top - window.innerHeight * 0.35,
-        behavior: "auto",
+    // Scroll-spy: the TOC entry for the second section (or second paragraph
+    // in the excerpt fallback) activates when its content is in view.
+    const secondTocLink = page.locator("#toc-list-en a[data-toc-target]").nth(1);
+    const secondTocKey = await secondTocLink.getAttribute("data-toc-target");
+    expect(secondTocKey, "EN TOC exposes a second entry").toBeTruthy();
+    await page
+      .locator(`.ed-body-prose.i18n-en p[data-toc-key="${secondTocKey}"]`)
+      .first()
+      .evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        window.scrollTo({
+          top: window.scrollY + rect.top - window.innerHeight * 0.35,
+          behavior: "auto",
+        });
       });
-    });
     await expect
-      .poll(() => page.locator('#toc-list-en a[data-toc-target="p-en-2"].active').count())
+      .poll(() =>
+        page.locator(`#toc-list-en a[data-toc-target="${secondTocKey}"].active`).count(),
+      )
       .toBe(1);
 
     await page.setViewportSize({ width: 390, height: 844 });
@@ -2636,6 +2678,61 @@ test.describe("TECH Dashboard smoke", () => {
       .toBe(`${titleEn}\n${url}?lang=en`);
   });
 
+  test("wide screens keep the article reading column centered with section headings", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string }>;
+    };
+    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
+    };
+    const liveIds = new Set(index.entries.map((entry) => entry.id));
+    const bodyEntryId = Object.entries(bodyFile.bodies).find(([id, body]) => {
+      const jaParagraphs = (body.bodyJa ?? "").split(/\n{2,}/).filter(Boolean);
+      return liveIds.has(id) && jaParagraphs.length >= 4;
+    })?.[0];
+    expect(bodyEntryId, "live article with a long-form JA body fixture").toBeTruthy();
+
+    for (const width of [2000, 1680, 1440]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.goto(`/e/${bodyEntryId}/`);
+
+      // 項目: a sectioned JA body renders at least two h2 headings and the
+      // TOC lists exactly those headings (not paragraph excerpts).
+      const headings = page.locator(".ed-body-prose.i18n-ja h2.ed-sec-h");
+      expect(await headings.count(), `width ${width}: section headings`).toBeGreaterThanOrEqual(2);
+      const headingTitles = await headings.locator(".ed-sec-title").allTextContents();
+      const tocLabels = await page.locator("#toc-list-ja .toc-label").allTextContents();
+      expect(tocLabels).toEqual(headingTitles);
+
+      // Centered measure: the line-length-capped reading column sits centered
+      // inside the article body instead of hugging the left edge and leaving
+      // a dead gutter before the right rail.
+      const geometry = await page.evaluate(() => {
+        const bodyEl = document.querySelector(".ed-body");
+        const para = document.querySelector(".ed-body-prose.i18n-ja p");
+        if (!bodyEl || !para) return null;
+        const bodyRect = bodyEl.getBoundingClientRect();
+        const style = getComputedStyle(bodyEl);
+        const innerLeft = bodyRect.left + Number.parseFloat(style.paddingLeft);
+        const innerRight = bodyRect.right - Number.parseFloat(style.paddingRight);
+        const paraRect = para.getBoundingClientRect();
+        return {
+          leftGap: paraRect.left - innerLeft,
+          rightGap: innerRight - paraRect.right,
+          paraWidth: paraRect.width,
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      });
+      const g = requirePresent(geometry, `width ${width}: body geometry is unavailable`);
+      expect(
+        Math.abs(g.leftGap - g.rightGap),
+        `width ${width}: reading column is centered (leftGap ${g.leftGap} vs rightGap ${g.rightGap})`,
+      ).toBeLessThanOrEqual(2);
+      expect(g.paraWidth).toBeLessThanOrEqual(707);
+      expect(g.overflow).toBeLessThanOrEqual(0);
+    }
+  });
+
   test("mobile detail gives the original article a clear full-width action", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
@@ -2655,20 +2752,29 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(sourceCta.locator("small")).toHaveText(/^[a-z0-9.-]+(?::\d+)?$/i);
 
       const geometry = await page.evaluate(() => {
-        const strip = document.querySelector(".ed-action-strip")?.getBoundingClientRect();
-        const source = document.querySelector(".ed-header-cta")?.getBoundingClientRect();
-        const copy = document.querySelector(".ed-share-btn[data-share-copy]")?.getBoundingClientRect();
-        if (!strip || !source || !copy) return null;
+        const stripEl = document.querySelector(".ed-action-strip");
+        const sourceEl = document.querySelector<HTMLElement>(".ed-header-cta");
+        const copyEl = document.querySelector(".ed-share-btn[data-share-copy]");
+        const strip = stripEl?.getBoundingClientRect();
+        const source = sourceEl?.getBoundingClientRect();
+        const copy = copyEl?.getBoundingClientRect();
+        if (!strip || !source || !copy || !sourceEl) return null;
         return {
           stripWidth: strip.width,
-          sourceWidth: source.width,
-          sourceHeight: source.height,
           stripLeft: strip.left,
           stripRight: strip.right,
+          sourceWidth: source.width,
+          sourceHeight: source.height,
+          sourceLeft: source.left,
+          sourceRight: source.right,
+          sourceRadius: Number.parseFloat(
+            getComputedStyle(sourceEl).borderTopLeftRadius,
+          ),
           copyWidth: copy.width,
           copyHeight: copy.height,
           copyLeft: copy.left,
           copyRight: copy.right,
+          viewportWidth: window.innerWidth,
           overflow: document.documentElement.scrollWidth - window.innerWidth,
         };
       });
@@ -2676,11 +2782,16 @@ test.describe("TECH Dashboard smoke", () => {
         geometry,
         `width ${width}: detail action geometry is unavailable`,
       );
+      // Both actions fill the content column and stay inset from the
+      // viewport edges — a full-bleed square CTA next to the inset copy
+      // button reads as a broken band (regression guard).
       expect(requiredGeometry.sourceWidth).toBeGreaterThanOrEqual(requiredGeometry.stripWidth - 1);
-      expect(requiredGeometry.copyWidth).toBeGreaterThanOrEqual(requiredGeometry.stripWidth - 40);
-      expect(requiredGeometry.copyWidth).toBeLessThan(requiredGeometry.stripWidth - 20);
-      expect(requiredGeometry.copyLeft).toBeGreaterThan(requiredGeometry.stripLeft + 14);
-      expect(requiredGeometry.copyRight).toBeLessThan(requiredGeometry.stripRight - 14);
+      expect(requiredGeometry.copyWidth).toBeGreaterThanOrEqual(requiredGeometry.stripWidth - 1);
+      expect(Math.abs(requiredGeometry.copyLeft - requiredGeometry.sourceLeft)).toBeLessThanOrEqual(1);
+      expect(Math.abs(requiredGeometry.copyRight - requiredGeometry.sourceRight)).toBeLessThanOrEqual(1);
+      expect(requiredGeometry.sourceLeft).toBeGreaterThanOrEqual(12);
+      expect(requiredGeometry.sourceRight).toBeLessThanOrEqual(requiredGeometry.viewportWidth - 12);
+      expect(requiredGeometry.sourceRadius).toBeGreaterThanOrEqual(6);
       expect(requiredGeometry.sourceHeight).toBeGreaterThanOrEqual(52);
       expect(requiredGeometry.copyHeight).toBeGreaterThanOrEqual(44);
       expect(requiredGeometry.overflow).toBeLessThanOrEqual(0);
@@ -2736,6 +2847,9 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("pending detail keeps the source action available without collection freshness", async ({ page }) => {
     await page.goto("/");
+    // Pending cards live mostly in default-muted lanes (cline); opt in so the
+    // pending-card contract stays exercised under the category filter.
+    await enableMutedTimelineCategories(page);
     const pendingCards = page.locator("article.card").filter({ has: page.locator(".summary-state") });
     const pendingCount = await pendingCards.count();
     if (pendingCount === 0) {
@@ -2765,6 +2879,211 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(sourceLink).toHaveAttribute("target", "_blank");
     await expect(sourceLink).toHaveAttribute("rel", "noopener noreferrer nofollow");
     await expect(pendingCard).toHaveAttribute("data-detail-destination", "source");
+  });
+
+  test("timeline category filter mutes noisy lanes by default and persists reader opt-in", async ({ page }) => {
+    await page.goto("/");
+    const scope = page.locator("[data-category-filter-scope]");
+    await expect(scope).toHaveCount(1);
+    const clineCards = scope.locator('article.card[data-category="cline"]');
+    const clineCardCount = await clineCards.count();
+
+    const filter = page.locator("[data-category-filter]");
+    await expect(filter).toBeVisible();
+    const clineChip = filter.locator('[data-category-toggle="cline"]');
+    const claudeChip = filter.locator('[data-category-toggle="claude"]');
+
+    // Default: cline is greyed out and its cards are hidden; normal lanes are on.
+    await expect(clineChip).toHaveAttribute("aria-pressed", "false");
+    await expect(clineChip).toHaveAttribute("data-state", "muted");
+    await expect(claudeChip).toHaveAttribute("aria-pressed", "true");
+    if (clineCardCount > 0) {
+      await expect(clineCards.first()).toBeHidden();
+      await expect(filter.locator("[data-category-filter-note]")).toBeVisible();
+    }
+
+    // Opting in re-shows the lane and survives a reload (localStorage).
+    await clineChip.click();
+    await expect(clineChip).toHaveAttribute("aria-pressed", "true");
+    if (clineCardCount > 0) {
+      await expect(clineCards.first()).toBeVisible();
+    }
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(
+      page.locator('[data-category-filter] [data-category-toggle="cline"]'),
+    ).toHaveAttribute("aria-pressed", "true");
+    if (clineCardCount > 0) {
+      await expect(
+        page.locator('[data-category-filter-scope] article.card[data-category="cline"]').first(),
+      ).toBeVisible();
+    }
+
+    // Toggling back restores the default and the mobile layout stays intact.
+    await page.locator('[data-category-filter] [data-category-toggle="cline"]').click();
+    await expect(
+      page.locator('[data-category-filter] [data-category-toggle="cline"]'),
+    ).toHaveAttribute("aria-pressed", "false");
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+  });
+
+  test("Daily Summary top stories follow the category filter", async ({ page }) => {
+    await page.goto("/");
+    const board = page.locator(".ticker-panel .board");
+    if ((await board.count()) === 0) test.skip(true, "no board on this data snapshot");
+
+    const rows = board.locator("li[data-board-row]");
+    const mutedRows = board.locator('li[data-board-row][data-catvis="muted"]');
+    const visibleRows = board.locator('li[data-board-row][data-catvis="visible"]');
+    expect(await rows.count(), "board rows carry filter state").toBeGreaterThan(0);
+
+    // Every rendered row is stamped with its lane, and default-muted lanes are
+    // hidden without JavaScript having to run.
+    const laneStates = await rows.evaluateAll((elements) =>
+      elements.map((element) => ({
+        category: element.getAttribute("data-category") ?? "",
+        catvis: element.getAttribute("data-catvis") ?? "",
+        visible: element.getBoundingClientRect().height > 0,
+      })),
+    );
+    for (const row of laneStates) {
+      expect(row.category, "board row exposes its category").not.toBe("");
+      expect(["muted", "visible"]).toContain(row.catvis);
+      expect(row.visible, `row ${row.category} visibility matches ${row.catvis}`).toBe(
+        row.catvis === "visible",
+      );
+    }
+    for (const muted of DEFAULT_MUTED_CATEGORIES) {
+      expect(
+        laneStates.some((row) => row.category === muted && row.catvis === "visible"),
+        `default-muted lane ${muted} must not appear in the visible board`,
+      ).toBe(false);
+    }
+
+    // The "N items" label counts what is actually shown, and the visible rows
+    // renumber contiguously (01, 02, 03 ...) despite the hidden ones.
+    const visibleCount = await visibleRows.count();
+    await expect(page.locator(".ticker-panel [data-board-count]").first()).toHaveText(
+      String(visibleCount),
+    );
+    // Numbering is counter-driven and only visible rows increment it, so the
+    // shown list always reads 01, 02, 03 ... with no gaps where a muted row sat.
+    const numbering = await rows.evaluateAll((elements) =>
+      elements.map((element) => ({
+        catvis: element.getAttribute("data-catvis") ?? "",
+        increment: getComputedStyle(element).counterIncrement,
+        marker: getComputedStyle(
+          element.querySelector(".b-num") as Element,
+          "::before",
+        ).content,
+      })),
+    );
+    for (const row of numbering) {
+      if (row.catvis === "muted") {
+        expect(row.increment, "muted rows do not consume a number").toBe("none");
+      } else {
+        expect(row.increment, "visible rows advance the counter").toContain("board");
+        expect(row.marker, "row number comes from the counter").toContain("counter(board");
+      }
+    }
+
+    // Opting a muted lane back in reveals its board rows and updates the count.
+    const hiddenCount = await mutedRows.count();
+    if (hiddenCount > 0) {
+      const lane = (await mutedRows.first().getAttribute("data-category")) ?? "";
+      await page.locator(`[data-category-filter] [data-category-toggle="${lane}"]`).click();
+      await expect(board.locator(`li[data-board-row][data-category="${lane}"]`).first()).toBeVisible();
+      await expect
+        .poll(() => page.locator('.ticker-panel li[data-board-row][data-catvis="visible"]').count())
+        .toBeGreaterThan(visibleCount);
+      await expect(page.locator(".ticker-panel [data-board-count]").first()).toHaveText(
+        String(await visibleRows.count()),
+      );
+    }
+  });
+
+  test("home decision slots never surface default-muted lanes", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+
+    // Spotlight, Top 3 and the rotating ticker are curated slots: they are
+    // built from lanes the site foregrounds, so a muted lane never claims one.
+    const decisionHrefs = await page
+      .locator(
+        'article.featured a[href^="/e/"], .top-rank-item a[href^="/e/"], .ticker-bar a[href^="/e/"]',
+      )
+      .evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? ""));
+
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string; category: string }>;
+    };
+    const categoryById = new Map(index.entries.map((entry) => [entry.id, entry.category]));
+    const offenders = decisionHrefs
+      .map((href) => href.split("/").filter(Boolean).at(-1) ?? "")
+      .map((id) => ({ id, category: categoryById.get(id) ?? "" }))
+      .filter((entry) => DEFAULT_MUTED_CATEGORIES.includes(entry.category));
+
+    expect(
+      offenders,
+      `decision slots must skip muted lanes: ${offenders.map((o) => `${o.id}:${o.category}`).join(",")}`,
+    ).toEqual([]);
+  });
+
+  test("mobile category filter shows every lane in a compact two-column grid", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+
+    const filter = page.locator("[data-category-filter]");
+    await expect(filter).toBeVisible();
+    const chips = filter.locator("[data-category-toggle]");
+    await expect(chips).toHaveCount(CATEGORY_COUNT);
+
+    const geometry = await page.evaluate(() => {
+      const panel = document.querySelector<HTMLElement>("[data-category-filter]");
+      const rail = document.querySelector<HTMLElement>(".cat-filter-chips");
+      if (!panel || !rail) return null;
+      const chipEls = [...rail.querySelectorAll<HTMLElement>("[data-category-toggle]")];
+      const rects = chipEls.map((chip) => chip.getBoundingClientRect());
+      const columns = new Set(rects.map((rect) => Math.round(rect.left)));
+      const rows = new Set(rects.map((rect) => Math.round(rect.top)));
+      const panelRect = panel.getBoundingClientRect();
+      return {
+        panelHeight: panelRect.height,
+        columns: columns.size,
+        rows: rows.size,
+        minChipHeight: Math.min(...rects.map((rect) => rect.height)),
+        allChipsVisible: rects.every((rect) => rect.height > 0 && rect.width > 0),
+        railScrollsHorizontally: rail.scrollWidth > rail.clientWidth + 1,
+        withinViewport: panelRect.left >= 0 && panelRect.right <= window.innerWidth + 1,
+        documentOverflow: document.documentElement.scrollWidth - window.innerWidth,
+      };
+    });
+    const g = requirePresent(geometry, "filter geometry is unavailable");
+
+    // Two columns, every lane rendered and reachable without scrolling: the
+    // horizontal rail hid the list, and a wrapped pill layout ate ~413px.
+    expect(g.columns, "chips lay out in two columns").toBe(2);
+    expect(g.rows, "13 chips over two columns need 7 rows").toBe(
+      Math.ceil(CATEGORY_COUNT / 2),
+    );
+    expect(g.allChipsVisible, "no chip is clipped out of the panel").toBe(true);
+    expect(g.railScrollsHorizontally, "the chip grid does not scroll sideways").toBe(false);
+    expect(g.panelHeight, "filter panel stays well under half the viewport").toBeLessThanOrEqual(300);
+    // WCAG 2.2 target-size minimum, the floor this repo holds secondary
+    // controls to (see the 24px tap-size test below).
+    expect(g.minChipHeight).toBeGreaterThanOrEqual(24);
+    expect(g.withinViewport).toBe(true);
+    expect(g.documentOverflow).toBeLessThanOrEqual(0);
+
+    // Every chip stays operable where it sits, including the last row.
+    const lastChip = chips.last();
+    await lastChip.click();
+    await expect(lastChip).toHaveAttribute("aria-pressed", /true|false/);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
   });
 
   test("sidebar category labels stay readable and only marquee when needed", async ({ page }) => {
@@ -2877,7 +3196,7 @@ test.describe("TECH Dashboard smoke", () => {
     await page.goto("/");
     const items = page.locator("aside.left a.side-item[href^='/c/']");
     const count = await items.count();
-    expect(count, "sidebar lists every category").toBe(14);
+    expect(count, "sidebar lists every category").toBe(CATEGORY_COUNT);
 
     const labels: string[] = [];
     for (let i = 0; i < count; i++) {
@@ -4399,7 +4718,14 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("top-level page heroes give page context on desktop and mobile", async ({ page }) => {
-    const topLevelPaths = ["/categories/", "/status/", "/about/", "/archive/"];
+    const topLevelPaths = [
+      "/categories/",
+      "/arxiv/",
+      "/knowledge/",
+      "/status/",
+      "/about/",
+      "/archive/",
+    ];
     for (const path of topLevelPaths) {
       await expectResponsivePageHero(page, path, true);
     }
@@ -4561,6 +4887,94 @@ test.describe("TECH Dashboard smoke", () => {
         }
         expect(geometry.overflow, `${path} has no horizontal overflow at ${width}px`).toBeLessThanOrEqual(0);
       }
+    }
+  });
+
+  test("top-level heroes share one height and never outgrow the home banner", async ({ page }) => {
+    const SUB_PAGES = ["/categories/", "/arxiv/", "/knowledge/"];
+
+    for (const [width, height] of [[1440, 900], [1280, 900], [390, 844]] as const) {
+      await page.setViewportSize({ width, height });
+
+      await page.goto("/");
+      const homeHeight = await page
+        .locator(".banner")
+        .evaluate((element) => element.getBoundingClientRect().height);
+
+      const heroes: Array<{ path: string; height: number; metrics: number }> = [];
+      for (const path of SUB_PAGES) {
+        await page.goto(path);
+        heroes.push({
+          path,
+          ...(await page.locator(".page-hero").first().evaluate((element) => ({
+            height: element.getBoundingClientRect().height,
+            metrics: element.querySelectorAll(".page-hero-metric").length,
+          }))),
+        });
+      }
+
+      // The three lane heroes are one component with one payload shape, so
+      // they must render at one height — /arxiv/ used to run 91px taller than
+      // its siblings because its className omitted page-hero-top-level.
+      const tallest = Math.max(...heroes.map((hero) => hero.height));
+      const shortest = Math.min(...heroes.map((hero) => hero.height));
+      expect(
+        tallest - shortest,
+        `${width}px: lane heroes agree — ${heroes.map((h) => `${h.path} ${Math.round(h.height)}`).join(", ")}`,
+      ).toBeLessThanOrEqual(1);
+      for (const hero of heroes) {
+        expect(hero.metrics, `${hero.path} carries the shared 6-metric payload`).toBe(6);
+      }
+
+      // The home banner leads the hierarchy where both are laid out side by
+      // side. On mobile the home hero is deliberately compact so the first
+      // article stays near the top, so the ordering only holds on desktop.
+      if (width >= 1280) {
+        expect(
+          homeHeight,
+          `${width}px: home banner (${Math.round(homeHeight)}) is the tallest hero (${Math.round(tallest)})`,
+        ).toBeGreaterThan(tallest);
+      }
+    }
+  });
+
+  test("every route except the home page carries a breadcrumb back to it", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+
+    // The home page is the root of the trail, so it has nothing to point back to.
+    await page.goto("/");
+    await expect(page.locator(".crumb-bar"), "home is the root").toHaveCount(0);
+
+    // Everything else — header switcher destinations, hamburger destinations,
+    // and nested routes alike — starts with a link home so the crumb bar never
+    // appears and disappears between pages at the same depth.
+    const firstCategory = await page
+      .goto("/categories/")
+      .then(() => page.locator('a[href^="/c/"]').first().getAttribute("href"));
+    const routes = [
+      "/categories/",
+      "/arxiv/",
+      "/knowledge/",
+      "/glossary/",
+      "/archive/",
+      "/status/",
+      "/about/",
+      "/editorial-policy/",
+      "/privacy/",
+      "/search/",
+      "/page/2/",
+      firstCategory,
+    ].filter((href): href is string => Boolean(href));
+
+    for (const path of routes) {
+      await page.goto(path);
+      const crumbs = page.locator(".crumb-bar");
+      await expect(crumbs, `${path} renders one breadcrumb bar`).toHaveCount(1);
+      await expect(
+        crumbs.locator('a[href="/"]'),
+        `${path} breadcrumb links back to Home`,
+      ).toHaveCount(1);
+      await expect(crumbs, `${path} breadcrumb names the page`).not.toBeEmpty();
     }
   });
 
@@ -4791,10 +5205,10 @@ test.describe("TECH Dashboard smoke", () => {
     const directory = page.locator("#category-directory");
     await expect(directory).toBeVisible();
     await expect(page.locator("#category-directory-heading")).toBeVisible();
-    await expect(directory.locator("a.category-directory-item")).toHaveCount(14);
+    await expect(directory.locator("a.category-directory-item")).toHaveCount(CATEGORY_COUNT);
     await expect(directory.getByRole("link", { name: /Copilot/ })).toBeVisible();
     await expect(directory.getByRole("link", { name: /Papers/ })).toBeVisible();
-    await expect(page.locator(".category-card")).toHaveCount(14);
+    await expect(page.locator(".category-card")).toHaveCount(CATEGORY_COUNT);
     await expect(page.locator(".category-card").first()).toContainText("live");
     await expect(page.locator(".category-card").first()).not.toContainText("all time");
     const standardCategoryCards = page.locator(".category-card:not([data-research-overview])");
@@ -4860,7 +5274,7 @@ test.describe("TECH Dashboard smoke", () => {
     await page.goto("/categories/");
 
     const directorySelector = "#category-directory a.category-directory-item";
-    await expect(page.locator(directorySelector)).toHaveCount(14);
+    await expect(page.locator(directorySelector)).toHaveCount(CATEGORY_COUNT);
     for (const viewport of [
       { width: 375, height: 667 },
       { width: 390, height: 844 },
@@ -6622,7 +7036,9 @@ test.describe("TECH Dashboard smoke", () => {
   test("archive page links to monthly archive pages", async ({ page }) => {
     await page.goto("/archive/");
 
-    await expect(page.locator(".crumb-bar")).toHaveCount(0);
+    // Archive is a menu destination, so like every page except home it opens
+    // with a trail back to the root.
+    await expect(page.locator(".crumb-bar")).toHaveCount(1);
     await expect(page.locator("#archive-heading")).toBeVisible();
     await expect(page.locator(".page-hero-metric").filter({ hasText: "All time" })).toHaveCount(0);
     await expect(page.locator('[data-metric-scope="timeline-live"]')).toContainText("Live index");
@@ -7387,6 +7803,8 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(featured).toBeVisible();
     await expectMobileFirstDecisionNearViewport(page);
     const featuredThumb = featured.locator(".featured-thumb").first();
+    // The DOM-first card can sit in a default-muted (hidden) category lane;
+    // thumbnail-layout assertions must target a card the reader can see.
     const {
       featuredBox,
       thumbBox,
@@ -7799,7 +8217,9 @@ test.describe("TECH Dashboard smoke", () => {
     }
 
     await page.setViewportSize({ width: 390, height: 844 });
-    const cards = page.locator("article.card.has-thumb");
+    // Exclude default-muted (hidden) category lanes: spacing is only
+    // measurable on cards the reader can actually see.
+    const cards = page.locator('article.card.has-thumb:not([data-catvis="muted"])');
     await expect(cards.first()).toBeVisible();
     expect(await cards.count(), "mobile timeline provides cards for spacing checks").toBeGreaterThanOrEqual(2);
     const cardMetrics = await cards.evaluateAll((nodes) => {
@@ -7862,7 +8282,7 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.reload();
-    const desktopCardThumb = page.locator("article.card .card-thumb.has-image").first();
+    const desktopCardThumb = page.locator('article.card:not([data-catvis="muted"]) .card-thumb.has-image').first();
     if ((await desktopCardThumb.count()) > 0) {
       await expect(desktopCardThumb).toBeVisible();
       const cardImage = desktopCardThumb.locator("img").first();
@@ -7877,7 +8297,7 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("EntryCard category badges use display labels and stay contained", async ({ page }) => {
     const categorySurfaces = [
-      ["cursor", "AI Editors"],
+      ["cursor", "Editor"],
       ["tech-news", "News/Policy"],
       ["agent-fw", "Agent Frameworks"],
       ["local-llm", "Local Models"],
@@ -7887,14 +8307,14 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/c/cursor/");
-    await expect(page.locator("#category-heading")).toContainText("AI Editors");
+    await expect(page.locator("#category-heading")).toContainText("Editor");
 
     const zedCard = page.locator("article.card").filter({ hasText: "Zed Editor Releases" }).first();
     await expect(zedCard).toBeVisible();
     const zedBadge = zedCard.locator(".badge.cat");
-    await expect(zedBadge).toHaveText("AI Editors");
-    await expect(zedBadge).toHaveAttribute("title", "AI Editors");
-    await expect(zedBadge).toHaveAttribute("aria-label", "Category: AI Editors");
+    await expect(zedBadge).toHaveText("Editor");
+    await expect(zedBadge).toHaveAttribute("title", "Editor");
+    await expect(zedBadge).toHaveAttribute("aria-label", "Category: Editor");
 
     await page.setViewportSize({ width: 980, height: 844 });
     for (const [slug, displayLabel] of categorySurfaces) {
@@ -7911,8 +8331,12 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("decision surfaces expose semantic publication times", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("article.card .meta time[datetime]").first()).toBeVisible();
-    await expect(page.locator("article.card .card-insight time[datetime]").first()).toBeVisible();
+    await expect(
+      page.locator('article.card:not([data-catvis="muted"]) .meta time[datetime]').first(),
+    ).toBeVisible();
+    await expect(
+      page.locator('article.card:not([data-catvis="muted"]) .card-insight time[datetime]').first(),
+    ).toBeVisible();
     await expect(page.locator("article.featured .featured-meta time[datetime]").first()).toBeVisible();
     await expect(page.locator(".top-rank-item time.rank-time[datetime]").first()).toBeVisible();
 
@@ -7994,7 +8418,7 @@ test.describe("TECH Dashboard smoke", () => {
     const singletonTags = [...tagCounts.entries()]
       .filter(([, count]) => count === 1)
       .map(([tag]) => tag);
-    const tagLinks = page.locator("main article.card .tag-chip[href^='/search?q=']");
+    const tagLinks = page.locator('main article.card:not([data-catvis="muted"]) .tag-chip[href^="/search?q="]');
     const tagIndex = await tagLinks.evaluateAll(
       (links, candidates) =>
         links.findIndex((link) => {
@@ -9879,7 +10303,7 @@ test.describe("TECH Dashboard smoke", () => {
     });
     await page.goto("/");
     const summarizedCard = page
-      .locator("main article.card")
+      .locator('main article.card:not([data-catvis="muted"])')
       .filter({ has: page.locator(".summary .s-text") })
       .first();
     const summarizedEntryLink = summarizedCard.locator('h3.title > a[href^="/e/"]');
@@ -10384,8 +10808,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(groups.first()).toBeVisible();
     const groupCount = await groups.count();
     expect(groupCount, "knowledge page shows source groups").toBeGreaterThan(0);
-    await expect(page.locator(".page-hero-metric")).toHaveCount(5);
-    await expect(page.locator(".page-hero-metric-detail")).toHaveCount(5);
+    // Six metrics, like every other top-level hero: the three sub-page heroes
+    // carry the same payload so their rendered heights match (2 rows x 3).
+    await expect(page.locator(".page-hero-metric")).toHaveCount(6);
+    await expect(page.locator(".page-hero-metric-detail")).toHaveCount(6);
     const knowledgeMetricScopes = await page.locator(".page-hero-metric").evaluateAll((metrics) =>
       metrics.map((metric) => ({
         scope: metric.getAttribute("data-metric-scope") ?? "",

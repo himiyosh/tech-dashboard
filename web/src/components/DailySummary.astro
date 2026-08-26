@@ -9,6 +9,8 @@ import {
   type NormalizedEntry,
 } from "../lib/data.ts";
 import { entryDestination } from "../lib/entry-destination.ts";
+import { effectiveImportance } from "../lib/release-signal.ts";
+import { isDefaultMutedCategory } from "../lib/category-visibility.ts";
 import {
   dailyBoardBaseDayKey,
   dailyBoardEmptyReason,
@@ -172,7 +174,7 @@ function releaseStem(title: string): string {
 
 const publishableBaseDayEntries = baseDayBoardEntries.filter(isPublishableEntry);
 const sortedToday = [...publishableBaseDayEntries].sort((a, b) => {
-  const imp = (b.importance ?? 1) - (a.importance ?? 1);
+  const imp = effectiveImportance(b) - effectiveImportance(a);
   if (imp !== 0) return imp;
   const tw = typeWeight(b.sourceType) - typeWeight(a.sourceType);
   if (tw !== 0) return tw;
@@ -180,10 +182,18 @@ const sortedToday = [...publishableBaseDayEntries].sort((a, b) => {
 });
 
 // Group successive release/changelog rows that share (source, stem).
-type BoardItem = { entry: NormalizedEntry; siblingCount: number };
+// The board honors the Timeline category filter: rows in default-muted lanes
+// are rendered but hidden (CSS), so a reader who enables that lane sees them
+// in rank order. The visible cap therefore counts only unmuted rows, and the
+// muted ones get their own smaller cap so the markup stays bounded.
+const VISIBLE_BOARD_LIMIT = 10;
+const MUTED_BOARD_LIMIT = 8;
+type BoardItem = { entry: NormalizedEntry; siblingCount: number; muted: boolean };
 const seenStems = new Map<string, number>(); // key -> first index in topUpdates
 const sourceRows = new Map<string, number>();
 const topUpdates: BoardItem[] = [];
+let visibleRows = 0;
+let mutedRows = 0;
 for (const e of sortedToday) {
   const isRel = e.sourceType === "release" || e.sourceType === "changelog";
   let releaseKey = "";
@@ -196,13 +206,22 @@ for (const e of sortedToday) {
     }
   }
   if ((sourceRows.get(e.source) ?? 0) >= 2) continue;
+  const muted = isDefaultMutedCategory(e.category);
+  // Each lane fills its own budget; a full muted budget must not stop the scan
+  // for further visible rows (and vice versa).
+  if (muted ? mutedRows >= MUTED_BOARD_LIMIT : visibleRows >= VISIBLE_BOARD_LIMIT) {
+    continue;
+  }
   if (releaseKey) seenStems.set(releaseKey, topUpdates.length);
-  topUpdates.push({ entry: e, siblingCount: 0 });
+  topUpdates.push({ entry: e, siblingCount: 0, muted });
   sourceRows.set(e.source, (sourceRows.get(e.source) ?? 0) + 1);
-  if (topUpdates.length >= 10) break;
+  if (muted) mutedRows += 1;
+  else visibleRows += 1;
+  if (visibleRows >= VISIBLE_BOARD_LIMIT && mutedRows >= MUTED_BOARD_LIMIT) break;
 }
 
 const boardItems = topUpdates;
+const boardVisibleCount = visibleRows;
 const boardEmptyReason = dailyBoardEmptyReason(
   baseDayBoardEntries.length,
   boardItems.length,
@@ -322,8 +341,8 @@ const catColorOf = (slug: string): string =>
         <span class="i18n-ja">{baseDayIsToday ? "今日の主要な更新" : "直近の主要な更新"}</span>
         <span class="i18n-en" lang="en">{baseDayIsToday ? "Today's top stories" : "Latest top stories"}</span>
         <span class="panel-sub">
-          <span class="i18n-ja">{boardItems.length} 件</span>
-          <span class="i18n-en" lang="en">{boardItems.length} items</span>
+          <span class="i18n-ja"><span data-board-count>{boardVisibleCount}</span> 件</span>
+          <span class="i18n-en" lang="en"><span data-board-count>{boardVisibleCount}</span> items</span>
         </span>
         <span class="badge-legend">
           <span class="t-tag imp">★</span><span class="legend-label i18n-ja">重要</span><span class="legend-label i18n-en" lang="en">Important</span>
@@ -349,20 +368,22 @@ const catColorOf = (slug: string): string =>
         </p>
       ) : (
         <ol class="board">
-          {boardItems.map((item, i) => {
+          {boardItems.map((item) => {
             const e = item.entry;
             const isRel = e.sourceType === "release" || e.sourceType === "changelog";
-            const isImp = e.importance === 3;
+            const isImp = effectiveImportance(e) === 3;
             const jaResult = titleForLangWithFallback(e, "ja");
             const enResult = titleForLangWithFallback(e, "en");
             const summaryJa = summaryForLangWithFallback(e, "ja");
             const summaryEn = summaryForLangWithFallback(e, "en");
-            const num = String(i + 1).padStart(2, "0");
             const destination = entryDestination(e);
             return (
               <li
                 style={`--cat-color:${catColorOf(e.category)}`}
                 data-summary-state="ready"
+                data-board-row
+                data-category={e.category}
+                data-catvis={item.muted ? "muted" : "visible"}
               >
                 <a
                   href={destination.href}
@@ -371,7 +392,7 @@ const catColorOf = (slug: string): string =>
                   data-detail-destination={destination.external ? "source" : "internal"}
                   class="b-row"
                 >
-                  <span class="b-num">{num}</span>
+                  <span class="b-num" aria-hidden="true"></span>
                   <span class="b-cat" title={categoryLabel(e.category)}>{categoryLabel(e.category)}</span>
                   <span class="b-tags">
                     {isImp && <span class="t-tag imp">★</span>}
@@ -428,6 +449,10 @@ const catColorOf = (slug: string): string =>
             );
           })}
         </ol>
+        <p class="empty board-filtered-empty" data-board-filtered-empty>
+          <span class="i18n-ja">表示中のカテゴリに該当する主要な更新はありません。上のフィルターでカテゴリを有効にすると表示されます。</span>
+          <span class="i18n-en" lang="en">No top stories in the categories you are showing. Enable a category in the filter above to see them.</span>
+        </p>
       )}
     </div>
   </div>
@@ -681,6 +706,22 @@ const catColorOf = (slug: string): string =>
     border-bottom: 1px dashed rgba(124, 255, 154, 0.08);
   }
   .board > li:last-child { border-bottom: none; }
+  /* The board follows the Timeline category filter: rows in muted lanes are
+   * rendered (so opting a lane back in reveals them in rank order) but hidden.
+   * The hiding rule itself lives in portal.css because it needs the
+   * [data-category-filter-scope] ancestor, which Astro's scoped styles would
+   * rewrite into a never-matching selector. Visible rows renumber themselves
+   * through a CSS counter so the list never shows gaps like 01, 03, 04. */
+  .board > li:not([data-catvis="muted"]) {
+    counter-increment: board;
+  }
+  .board .b-num::before {
+    content: counter(board, decimal-leading-zero);
+  }
+  .board-filtered-empty { display: none; }
+  .board:not(:has(> li:not([data-catvis="muted"]))) + .board-filtered-empty {
+    display: block;
+  }
   .board .b-row {
     display: grid;
     grid-template-columns: 22px 118px 68px minmax(0, 1fr) auto;
@@ -783,10 +824,7 @@ const catColorOf = (slug: string): string =>
       border-radius: 6px;
     }
 
-    .board > li {
-      counter-increment: board;
-    }
-    .board { counter-reset: board; border-left: none; border-right: none; border-radius: 0; }
+    .board { border-left: none; border-right: none; border-radius: 0; }
 
     /* Two-row layout: meta (num + cat + tags) on row 1, title on row 2. */
     .board .b-row {

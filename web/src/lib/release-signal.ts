@@ -80,3 +80,18 @@ export function isRoutineReleaseEntry(entry: ReleaseSignalEntry): boolean {
     return signal === "low" || signal === "patch";
   });
 }
+
+/**
+ * Display-facing importance: a routine patch/prerelease build always reads
+ * as importance 1, regardless of the stored value. Older snapshots carry
+ * over-scored importance (the collector once matched "v3." as a major
+ * keyword) and the max-merge ratchet keeps it until the data migration
+ * (scripts/rescore-release-importance.ts) runs, so every importance badge,
+ * HOT accent, and importance-based grouping must read THIS value instead of
+ * entry.importance directly.
+ */
+export function effectiveImportance<T extends 1 | 2 | 3>(
+  entry: ReleaseSignalEntry & { importance: T },
+): 1 | 2 | 3 {
+  return isRoutineReleaseEntry(entry) ? 1 : entry.importance;
+}

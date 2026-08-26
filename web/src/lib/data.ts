@@ -39,6 +39,7 @@ import {
 } from "./entry-publication.ts";
 import { isKnowledgeEligibleEntry } from "./knowledge-eligibility.ts";
 import { isRoutineReleaseEntry } from "./release-signal.ts";
+import { isDefaultMutedCategory } from "./category-visibility.ts";
 import { sourceAuthority } from "./source-meta.ts";
 import { normalizeTagKey } from "./tag-normalize.ts";
 import { TAG_PAGE_MIN_ENTRIES } from "./route-inventory.ts";
@@ -437,9 +438,14 @@ export function latest(n: number): NormalizedEntry[] {
 export function featured(): NormalizedEntry | undefined {
   const isRoutineRelease = (e: NormalizedEntry) =>
     e.sourceType === "release" || e.sourceType === "changelog";
+  // The Spotlight is a curated "what matters" slot, so lanes muted by default
+  // (routine per-build release noise) never claim it. Unlike the timeline this
+  // is decided at build time and not re-opened by the reader's filter: opting
+  // a lane back in restores it in the article list and the top-stories board,
+  // which is where its entries belong.
   const eligible = (e: NormalizedEntry) =>
     isPublishableEntry(e) && !isLowSignalRelease(e) && !isOffTopicForHero(e) &&
-    !isRoutineReleaseEntry(e);
+    !isRoutineReleaseEntry(e) && !isDefaultMutedCategory(e.category);
   return (
     // 1. High-importance real announcement/blog with a real summary.
     MAIN_TIMELINE_ENTRIES.find(

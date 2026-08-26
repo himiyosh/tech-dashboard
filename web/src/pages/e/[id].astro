@@ -4,6 +4,7 @@ import Sidebar from "../../components/Sidebar.astro";
 import AdSlot from "../../components/AdSlot.astro";
 import CategoryThumb from "../../components/CategoryThumb.astro";
 import { ADSENSE_SLOT_ARTICLE_BOTTOM } from "../../lib/ad-slots.ts";
+import { effectiveImportance } from "../../lib/release-signal.ts";
 import ArticleLike from "../../components/ArticleLike.astro";
 import LanguageFallbackBadge from "../../components/LanguageFallbackBadge.astro";
 import ExternalLinkHint from "../../components/ExternalLinkHint.astro";
@@ -31,6 +32,7 @@ import {
   type NormalizedEntry,
 } from "../../lib/data.ts";
 import { articleBodyState, bodyForEntry } from "../../lib/bodies.ts";
+import { sectionizeBody, type BodySection } from "../../lib/body-sections.ts";
 import { ARCHIVE_WARM_ENTRIES } from "../../lib/archive.ts";
 import { collectAddressableDetailEntries } from "../../lib/detail-addressability.ts";
 import {
@@ -157,7 +159,7 @@ const sourceTypeLabel: Record<NormalizedEntry["sourceType"], { ja: string; en: s
   blog: { ja: "ブログ", en: "Blog" },
   community: { ja: "コミュニティ", en: "Community" },
 };
-const importanceMeta = importanceLabel(entry.importance);
+const importanceMeta = importanceLabel(effectiveImportance(entry));
 const halfLifeLabel: Record<string, { ja: string; en: string; emoji: string; color: string }> = {
   news: { ja: "短命 (ニュース)", en: "Short-lived (news)", emoji: "⏱️", color: "#f87171" },
   tutorial: { ja: "中期 (チュートリアル)", en: "Medium-term (tutorial)", emoji: "📘", color: "#fbbf24" },
@@ -190,13 +192,11 @@ const nextDestination = next ? entryDestination(next) : null;
 const bodyChars = (body?.bodyJa ?? "").length;
 const readMinutes = bodyChars > 0 ? Math.max(1, Math.round(bodyChars / 500)) : 0;
 
-// Split body and build TOC headings (use first ~24 chars of each paragraph as label).
-const paragraphsJa: string[] = body?.bodyJa
-  ? body.bodyJa.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
-  : [];
-const paragraphsEn: string[] = body?.bodyEn
-  ? body.bodyEn.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
-  : [];
+// Sectionize the body (authored "## " headings win; legacy plain-text bodies
+// get structural sections derived from position + lexical cues) and keep the
+// flat paragraph list for pullquote/divider placement and anchors.
+const sectionsJa: BodySection[] = body?.bodyJa ? sectionizeBody(body.bodyJa, "ja") : [];
+const sectionsEn: BodySection[] = body?.bodyEn ? sectionizeBody(body.bodyEn, "en") : [];
 
 function tocLabelJa(s: string): string {
   const trimmed = s.replace(/\s+/g, " ");
@@ -235,16 +235,70 @@ function highlightTags(html: string, tagList: string[], entryId: string): string
   return out;
 }
 
-const renderedJa = paragraphsJa.map((p, i) => ({
-  id: `p-ja-${i + 1}`,
-  label: tocLabelJa(p),
-  html: highlightTags(escapeHtml(p), entry.tags, entry.id),
-}));
-const renderedEn = paragraphsEn.map((p, i) => ({
-  id: `p-en-${i + 1}`,
-  label: tocLabelEn(p),
-  html: highlightTags(escapeHtml(p), entry.tags, entry.id),
-}));
+interface RenderedParagraph {
+  id: string;
+  label: string;
+  html: string;
+  /** Section index this paragraph belongs to. */
+  sec: number;
+  /** True for the first paragraph of its section (heading slot). */
+  secStart: boolean;
+  /** Scroll-spy key: section key when the TOC lists sections, else own id. */
+  tocKey: string;
+}
+interface RenderedSection {
+  index: number;
+  anchorId: string;
+  heading: string | null;
+  /** 1-based ordinal among headed sections (display number); null if unheaded. */
+  num: number | null;
+  tocKey: string;
+}
+function buildRendered(sections: BodySection[], lang: "ja" | "en") {
+  const secs: RenderedSection[] = [];
+  const paras: RenderedParagraph[] = [];
+  let headed = 0;
+  let paraNo = 0;
+  sections.forEach((section, si) => {
+    if (section.heading) headed += 1;
+    const sec: RenderedSection = {
+      index: si,
+      anchorId: `s-${lang}-${si + 1}`,
+      heading: section.heading,
+      num: section.heading ? headed : null,
+      tocKey: `${lang}-s${si + 1}`,
+    };
+    secs.push(sec);
+    section.paragraphs.forEach((p, pi) => {
+      paraNo += 1;
+      paras.push({
+        id: `p-${lang}-${paraNo}`,
+        label: lang === "ja" ? tocLabelJa(p) : tocLabelEn(p),
+        html: highlightTags(escapeHtml(p), entry.tags, entry.id),
+        sec: si,
+        secStart: pi === 0,
+        tocKey: sec.tocKey,
+      });
+    });
+  });
+  const useSectionToc = secs.filter((s) => s.heading).length >= 2;
+  if (!useSectionToc) {
+    for (const p of paras) p.tocKey = p.id;
+  }
+  return { paras, secs, useSectionToc };
+}
+const {
+  paras: renderedJa,
+  secs: sectionMetaJa,
+  useSectionToc: useSectionTocJa,
+} = buildRendered(sectionsJa, "ja");
+const {
+  paras: renderedEn,
+  secs: sectionMetaEn,
+  useSectionToc: useSectionTocEn,
+} = buildRendered(sectionsEn, "en");
+const tocSectionsJa = sectionMetaJa.filter((s) => s.heading !== null);
+const tocSectionsEn = sectionMetaEn.filter((s) => s.heading !== null);
 const breadcrumb = [
   { label: "Home", href: "/" },
   { label: laneName, href: laneHref },
@@ -649,9 +703,22 @@ const jsonLd = {
                   const mid = Math.floor(renderedJa.length / 2);
                   const showQuote = pointsJa.length > 1 && i === mid && renderedJa.length >= 4;
                   const quote = pointsJa.slice().sort((a, b) => b.length - a.length)[0] ?? "";
+                  const sec = sectionMetaJa[p.sec];
+                  const nextStartsHeadedSection =
+                    i < renderedJa.length - 1 &&
+                    renderedJa[i + 1].secStart &&
+                    sectionMetaJa[renderedJa[i + 1].sec]?.heading !== null;
                   return (
                     <Fragment>
-                      <p id={p.id} set:html={p.html} />
+                      {p.secStart && sec?.heading && (
+                        <h2 class="ed-sec-h" id={sec.anchorId}>
+                          <span class="ed-sec-num" aria-hidden="true">
+                            {String(sec.num ?? 0).padStart(2, "0")}
+                          </span>
+                          <span class="ed-sec-title">{sec.heading}</span>
+                        </h2>
+                      )}
+                      <p id={p.id} data-toc-key={p.tocKey} set:html={p.html} />
                       {showQuote && quote && (
                         <figure class="ed-pullquote">
                           <span class="ed-pullquote-mark" aria-hidden="true">“</span>
@@ -659,7 +726,7 @@ const jsonLd = {
                           <figcaption>{catEmoji} {catName} · 本記事のポイント</figcaption>
                         </figure>
                       )}
-                      {i < renderedJa.length - 1 && i % 3 === 2 && !showQuote && (
+                      {i < renderedJa.length - 1 && i % 3 === 2 && !showQuote && !nextStartsHeadedSection && (
                         <div class="ed-divider" aria-hidden="true">
                           <span></span><span></span><span></span>
                         </div>
@@ -675,9 +742,22 @@ const jsonLd = {
                   const mid = Math.floor(renderedEn.length / 2);
                   const showQuote = pointsEn.length > 1 && i === mid && renderedEn.length >= 4 && !summaryEn.isFallback;
                   const quote = pointsEn.slice().sort((a, b) => b.length - a.length)[0] ?? "";
+                  const sec = sectionMetaEn[p.sec];
+                  const nextStartsHeadedSection =
+                    i < renderedEn.length - 1 &&
+                    renderedEn[i + 1].secStart &&
+                    sectionMetaEn[renderedEn[i + 1].sec]?.heading !== null;
                   return (
                     <Fragment>
-                      <p id={p.id} set:html={p.html} />
+                      {p.secStart && sec?.heading && (
+                        <h2 class="ed-sec-h" id={sec.anchorId}>
+                          <span class="ed-sec-num" aria-hidden="true">
+                            {String(sec.num ?? 0).padStart(2, "0")}
+                          </span>
+                          <span class="ed-sec-title">{sec.heading}</span>
+                        </h2>
+                      )}
+                      <p id={p.id} data-toc-key={p.tocKey} set:html={p.html} />
                       {showQuote && quote && (
                         <figure class="ed-pullquote">
                           <span class="ed-pullquote-mark" aria-hidden="true">“</span>
@@ -685,7 +765,7 @@ const jsonLd = {
                           <figcaption>{catEmoji} {catName} · Key takeaway</figcaption>
                         </figure>
                       )}
-                      {i < renderedEn.length - 1 && i % 3 === 2 && !showQuote && (
+                      {i < renderedEn.length - 1 && i % 3 === 2 && !showQuote && !nextStartsHeadedSection && (
                         <div class="ed-divider" aria-hidden="true">
                           <span></span><span></span><span></span>
                         </div>
@@ -1018,15 +1098,27 @@ const jsonLd = {
         </p>
       </div>
 
-      {/* TOC */}
-      {(renderedJa.length >= 3 || renderedEn.length >= 3) && (
+      {/* TOC — section headings when the body is sectioned; paragraph
+          excerpts as the legacy fallback for short/unheaded bodies. */}
+      {(useSectionTocJa || renderedJa.length >= 3 || useSectionTocEn || renderedEn.length >= 3) && (
         <div class="side-card toc-card">
           <div class="rail-title"><span class="i18n-ja">目次</span><span class="i18n-en" lang="en">Contents</span></div>
-          {renderedJa.length >= 3 && (
+          {useSectionTocJa ? (
+            <ol class="toc-list i18n-ja" id="toc-list-ja">
+              {tocSectionsJa.map((s) => (
+                <li>
+                  <a href={`#${s.anchorId}`} data-toc-target={s.tocKey}>
+                    <span class="toc-num">{String(s.num ?? 0).padStart(2, "0")}</span>
+                    <span class="toc-label">{s.heading}</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          ) : renderedJa.length >= 3 && (
             <ol class="toc-list i18n-ja" id="toc-list-ja">
               {renderedJa.map((p, i) => (
                 <li>
-                  <a href={`#${p.id}`} data-toc-target={p.id}>
+                  <a href={`#${p.id}`} data-toc-target={p.tocKey}>
                     <span class="toc-num">{String(i + 1).padStart(2, "0")}</span>
                     <span class="toc-label">{p.label}</span>
                   </a>
@@ -1034,11 +1126,22 @@ const jsonLd = {
               ))}
             </ol>
           )}
-          {renderedEn.length >= 3 && (
+          {useSectionTocEn ? (
+            <ol class="toc-list i18n-en" id="toc-list-en" lang="en">
+              {tocSectionsEn.map((s) => (
+                <li>
+                  <a href={`#${s.anchorId}`} data-toc-target={s.tocKey}>
+                    <span class="toc-num">{String(s.num ?? 0).padStart(2, "0")}</span>
+                    <span class="toc-label">{s.heading}</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          ) : renderedEn.length >= 3 && (
             <ol class="toc-list i18n-en" id="toc-list-en" lang="en">
               {renderedEn.map((p, i) => (
                 <li>
-                  <a href={`#${p.id}`} data-toc-target={p.id}>
+                  <a href={`#${p.id}`} data-toc-target={p.tocKey}>
                     <span class="toc-num">{String(i + 1).padStart(2, "0")}</span>
                     <span class="toc-label">{p.label}</span>
                   </a>
@@ -1240,24 +1343,26 @@ const jsonLd = {
       }
     });
 
-    // TOC active section highlight
+    // TOC active section highlight. Paragraphs carry data-toc-key (their
+    // section's key in section mode, their own id in the excerpt fallback);
+    // links carry the matching data-toc-target, so one observer serves both.
     var tocLinks = document.querySelectorAll(".toc-list a[data-toc-target]");
     if (tocLinks.length) {
-      var paras = Array.from(tocLinks).map(function (a) {
-        return document.getElementById(a.getAttribute("data-toc-target"));
-      });
+      var paras = document.querySelectorAll(".ed-body-prose p[data-toc-key]");
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (en) {
           if (en.isIntersecting) {
+            var key = en.target.getAttribute("data-toc-key");
+            if (!key) return;
             tocLinks.forEach(function (a) { a.classList.remove("active"); });
             var matches = document.querySelectorAll(
-              '.toc-list a[data-toc-target="' + en.target.id + '"]',
+              '.toc-list a[data-toc-target="' + key + '"]',
             );
             matches.forEach(function (match) { match.classList.add("active"); });
           }
         });
       }, { rootMargin: "-30% 0px -55% 0px", threshold: 0 });
-      paras.forEach(function (p) { if (p) io.observe(p); });
+      paras.forEach(function (p) { io.observe(p); });
     }
   })();
 </script>
@@ -1342,7 +1447,17 @@ const jsonLd = {
     text-decoration: none;
   }
   /* TITLE */
-  .ed-head { padding: 24px 32px 18px; border-bottom: 1px dashed var(--border); }
+  .ed-head {
+    padding: 24px 32px 18px;
+    border-bottom: 1px dashed var(--border);
+    /* This is the article title block, not page chrome: neutralize the
+     * site-wide `header` element styles (sticky translucent bar + blur)
+     * that otherwise bleed in and render a dark misaligned plate. */
+    position: static;
+    background: transparent;
+    backdrop-filter: none;
+    z-index: auto;
+  }
   .ed-title-provenance {
     display: flex;
     align-items: center;
@@ -1523,9 +1638,38 @@ const jsonLd = {
   .ed-body-note,
   .ed-body-origin,
   .ed-pullquote,
-  .ed-divider {
+  .ed-divider,
+  .ed-sec-h {
     max-width: 706px;
   }
+  /* セクション見出し: カテゴリ色の番号チップ + 見出しで本文に項目構造を
+     与える。段落と同じ計測幅・中央寄せの読書カラムに乗る。 */
+  .ed-sec-h {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 36px auto 18px;
+    font-size: 19px;
+    line-height: 1.5;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.01em;
+    scroll-margin-top: 84px;
+  }
+  .ed-body-prose .ed-sec-h:first-child { margin-top: 6px; }
+  .ed-sec-num {
+    flex: 0 0 auto;
+    font-size: 11.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1em;
+    color: var(--cat-color);
+    padding: 2px 8px;
+    border: 1px solid color-mix(in srgb, var(--cat-color) 45%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--cat-color) 8%, transparent);
+  }
+  .ed-sec-title { min-width: 0; }
   .ed-body-origin {
     display: flex;
     align-items: flex-start;
@@ -1539,13 +1683,20 @@ const jsonLd = {
   }
   .ed-body-origin .ai-badge { flex: 0 0 auto; margin-top: 1px; }
   .ed-body-prose p {
-    font-size: 15.5px; line-height: 2.05; color: var(--text);
+    font-size: 16px; line-height: 2.05; color: var(--text);
     margin: 0 0 22px;
     text-align: justify; text-justify: inter-character;
     scroll-margin-top: 84px;
     /* 段落末尾の孤立語 (orphan) を避ける。JA は justify で影響が薄く、
        主に英語 prose の折返し品質に効く */
     text-wrap: pretty;
+  }
+  /* リード段落: 記事の導入を一段強調して読み始めの摩擦を下げる */
+  .ed-body-prose > p:first-of-type {
+    font-size: 17px;
+    line-height: 2;
+    padding-left: 14px;
+    border-left: 3px solid color-mix(in srgb, var(--cat-color) 65%, transparent);
   }
   .ed-body-prose .kw {
     color: var(--cat-color);
@@ -1608,6 +1759,19 @@ const jsonLd = {
     padding: 14px 16px; border: 1px dashed var(--border);
     border-radius: 10px; background: var(--bg-2);
     color: var(--muted); font-size: 13px;
+  }
+  /* 中央寄せ: 行長キャップされた読書カラムをカード内で中央に置く。
+     これが無いと広い画面 (>=1360px で余剰幅が中央カラムに集まる) で
+     本文だけがカード左端に張り付き、右レールとの間に大きな空白が
+     できて「本文が左に寄って見える」。個別ルールの margin shorthand
+     より後に置いて inline 軸だけ auto で上書きする。 */
+  .ed-body-prose p,
+  .ed-body-note,
+  .ed-body-origin,
+  .ed-pullquote,
+  .ed-divider,
+  .ed-sec-h {
+    margin-inline: auto;
   }
 
   /* Entries without a long-form body keep the summary honest and refer back to
@@ -1957,7 +2121,9 @@ const jsonLd = {
     .ed-summary-only { margin-left: 0; margin-right: 0; }
     .ed-title { font-size: 22px; }
     .ed-tldr-list li { font-size: 14px; line-height: 1.8; }
-    .ed-body-prose p { font-size: 14.5px; line-height: 1.95; margin-bottom: 18px; }
+    .ed-body-prose p { font-size: 15.5px; line-height: 2; margin-bottom: 18px; }
+    .ed-body-prose > p:first-of-type { font-size: 16.5px; padding-left: 12px; }
+    .ed-sec-h { font-size: 17.5px; margin-top: 30px; margin-bottom: 14px; }
     .ed-pullquote { padding: 18px 18px 14px; }
     .ed-pullquote blockquote { font-size: 16px; line-height: 1.7; }
     .ed-rel-grid { grid-template-columns: 1fr; }
@@ -1977,22 +2143,24 @@ const jsonLd = {
       bottom: calc(68px + env(safe-area-inset-bottom));
     }
 
+    /* Keep both actions inset and rounded like the rest of the mobile
+     * column — the previous full-bleed primary CTA read as a broken band
+     * against the inset copy button and card corners. */
     .ed-action-strip {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
       gap: 10px;
-      margin-inline: -18px;
     }
     .ed-header-cta {
       width: 100%;
       min-height: 52px;
-      padding-inline: 18px;
-      border-radius: 0;
+      padding-inline: 16px;
+      border-radius: 8px;
     }
     .ed-action-strip .ed-share-btn {
-      width: calc(100% - 36px);
+      width: 100%;
       min-height: 48px;
-      margin-inline: 18px;
+      margin-inline: 0;
     }
     .ed-header-cta-copy small {
       max-width: min(56ch, calc(100vw - 100px));

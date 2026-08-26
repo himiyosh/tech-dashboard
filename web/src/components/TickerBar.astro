@@ -9,7 +9,9 @@ import {
   titleForLangWithFallback,
   type NormalizedEntry,
 } from "../lib/data.ts";
+import { isDefaultMutedCategory } from "../lib/category-visibility.ts";
 import { entryDestination } from "../lib/entry-destination.ts";
+import { effectiveImportance } from "../lib/release-signal.ts";
 import { sourceLabel } from "../lib/source-meta.ts";
 import LanguageFallbackBadge from "./LanguageFallbackBadge.astro";
 import ExternalLinkHint from "./ExternalLinkHint.astro";
@@ -23,7 +25,15 @@ export interface Props {
 }
 
 const { entries, excludeEntryIds = [], now = new Date(), limit = 24, intervalMs = 7000 } = Astro.props;
-const tickerDay = selectTickerDayEntries(entries.filter(isPublishableEntry), now, excludeEntryIds);
+// Headlines follow the same rule as the Spotlight and Top 3: default-muted
+// lanes are routine release noise and never take a rotating headline slot.
+const tickerDay = selectTickerDayEntries(
+  entries.filter(
+    (entry) => isPublishableEntry(entry) && !isDefaultMutedCategory(entry.category),
+  ),
+  now,
+  excludeEntryIds,
+);
 const baseDayKey = tickerDay.dayKey ?? "";
 const baseDayIsToday = tickerDay.dayScope === "today";
 const items = selectTickerItems(tickerDay.entries, limit);
@@ -46,7 +56,7 @@ const catColorOf = (slug: string): string =>
       <div class="tb-stage" aria-live="off">
         {items.map((e, i) => {
           const isRel = e.sourceType === "release" || e.sourceType === "changelog";
-          const isImp = e.importance === 3;
+          const isImp = effectiveImportance(e) === 3;
           const jaResult = titleForLangWithFallback(e, "ja");
           const enResult = titleForLangWithFallback(e, "en");
           const destination = entryDestination(e);

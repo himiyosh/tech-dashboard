@@ -2,6 +2,7 @@
 import Portal from "../../layouts/Portal.astro";
 import PageHero from "../../components/PageHero.astro";
 import Sidebar from "../../components/Sidebar.astro";
+import CategoryFilter from "../../components/CategoryFilter.astro";
 import EntryCard from "../../components/EntryCard.astro";
 import Pager from "../../components/Pager.astro";
 import TimelineRightRail from "../../components/TimelineRightRail.astro";
@@ -51,7 +52,7 @@ const breadcrumb = [
     title="Timeline"
     count={`page ${page}/${total}`}
     headingId="timeline-page-heading"
-    description="arXiv 論文を分離した通常更新の深掘り一覧です。Top items から外れた更新も、日付ごとに追って後から確認できます。"
+    description="arXiv 論文を分離した通常更新の記事一覧です。Top items から外れた更新も、日付ごとに追って後から確認できます。"
     actions={[
       { href: "/", label: "Back to latest" },
       { href: "/arxiv", label: "arXiv papers" },
@@ -101,7 +102,7 @@ const breadcrumb = [
   <div class="layout">
     <Sidebar active="all" />
 
-    <main>
+    <main data-category-filter-scope>
       <div class="section-header primary">
         <h2>
           Entries
@@ -111,6 +112,8 @@ const breadcrumb = [
           </span>
         </h2>
       </div>
+
+      <CategoryFilter />
 
       {dayGroups.map(({ key, items }) => (
         <>

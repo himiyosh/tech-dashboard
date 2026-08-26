@@ -1,7 +1,7 @@
 /**
  * Source registry - maps SourceId to SourceDefinition.
  *
- * Current production registry covers 52 sources across 14 categories.
+ * Current production registry covers 52 sources across 13 categories.
  * Keep web/src/lib/source-meta.ts in sync so the Pages build stays self-contained.
  */
 import type { SourceDefinition } from "./types.ts";
@@ -904,7 +904,9 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
   "aider-releases": {
     id: "aider-releases",
     displayName: "Aider Releases",
-    category: "aider",
+    // Aider had its own near-empty lane (10 entries, dormant since 2026-02);
+    // folded into the OSS coding-agents lane per owner decision (2026-08-25).
+    category: "opencode",
     sourceType: "release",
     defaultLang: "en",
     autoTags: ["aider", "release"],
@@ -921,6 +923,15 @@ export const REGISTRY: Readonly<Record<string, SourceDefinition>> = Object.freez
     autoTags: ["cline", "release"],
     feedUrl: "https://github.com/cline/cline/releases.atom",
     tier: 2,
+    // Monorepo feed: per-package component tags (sdk/core, sdk/agents,
+    // sdk/llms, sdk/shared) publish one near-duplicate low-value entry per
+    // package for the same release wave, on top of the primary Desktop/CLI/SDK
+    // releases. "sdk/" only matches slash-path component tags — the raw tag
+    // ("sdk/core/v0.0.79") and the branded title ("Cline sdk/core v0.0.79")
+    // both contain it, while top-level "Cline SDK v0.0.79" has no slash and
+    // stays. Title scope per R-017/LL-081.
+    excludeKeywords: ["sdk/"],
+    keywordFilterScope: "title",
     collect: collectRss,
   },
   "continue-releases": {

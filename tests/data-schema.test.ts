@@ -129,7 +129,6 @@ const VALID_CATEGORIES = new Set([
   "vscode",
   "cursor",
   "cline",
-  "aider",
   "opencode",
   "local-llm",
   "agent-fw",

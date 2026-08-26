@@ -12,7 +12,7 @@
 **プロダクト名**: TECH Dashboard — Pulse of the AI Ecosystem
 **目的**: AI 開発ツール / 基盤モデル / 研究の最新動向を **毎時自動収集・要約・公開** するワンストップ ポータル。
 **想定ユーザ**: Copilot / Claude / Codex / Cursor / Local LLM などを業務で使う開発者・リサーチャ。
-**スケール**: `harness/registry.ts` の有効データソース (`user-opml` はproduction対象外) / 14カテゴリ / index最大2000件 / **毎時実行**。
+**スケール**: `harness/registry.ts` の有効データソース (`user-opml` はproduction対象外) / 13カテゴリ / index最大2000件 / **毎時実行**。
 **URL**:
 - 本番: https://techdb.studio344.net/ (Cloudflare Pages の pages.dev サブドメイン: https://tech-dashboard-6a7.pages.dev/)
 - リポジトリ: https://github.com/himiyosh/tech-dashboard
@@ -233,16 +233,15 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | 2 | `claude` | Claude | `#fbbf24` | coding |
 | 3 | `codex` | Codex | `#93c5fd` | coding |
 | 4 | `gemini` | Gemini | `#60a5fa` | coding |
-| 5 | `cursor` | Cursor | `#cbd5e1` | coding |
+| 5 | `cursor` | Editor | `#cbd5e1` | coding |
 | 6 | `cline` | Cline / Roo | `#c4b5fd` | coding |
-| 7 | `aider` | Aider | `#d6d3a1` | coding |
-| 8 | `opencode` | OpenCode | `#a5b4fc` | coding |
-| 9 | `vscode` | VSCode | `#63a2ff` | platform |
-| 10 | `local-llm` | Local LLM | `#f87171` | platform |
-| 11 | `agent-fw` | Agent FW | `#34d399` | ecosystem |
-| 12 | `mcp` | MCP | `#f472b6` | ecosystem |
-| 13 | `tech-news` | Tech News | `#fb923c` | ecosystem |
-| 14 | `research` | Research | `#fda4af` | research |
+| 7 | `opencode` | OpenCode | `#a5b4fc` | coding |
+| 8 | `vscode` | VSCode | `#63a2ff` | platform |
+| 9 | `local-llm` | Local LLM | `#f87171` | platform |
+| 10 | `agent-fw` | Agent FW | `#34d399` | ecosystem |
+| 11 | `mcp` | MCP | `#f472b6` | ecosystem |
+| 12 | `tech-news` | Tech News | `#fb923c` | ecosystem |
+| 13 | `research` | Research | `#fda4af` | research |
 
 カテゴリは `harness/registry.ts` で `SourceDefinition.category` に付与される。メタ情報 (色・表示名・ group) は `web/src/lib/data.ts` の `CATEGORY_META` に定義。
 

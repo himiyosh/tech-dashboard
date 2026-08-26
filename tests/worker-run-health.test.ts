@@ -22,9 +22,11 @@ describe("deriveWorkerRunStatus", () => {
     expect(status.stateText).toBe("DELAYED");
     expect(status.runLabel).toBe("run delayed");
     expect(status.detail).toContain("no run in 6h+");
+    // The lead names the state in the same words /status and /about use, and
+    // leaves the collection schedule to the hero tagline that already states it.
     expect(runCadenceCopy(status, "7h ago")).toEqual({
-      ja: "通常は毎時 1 バッチ収集 · 現在は収集遅延を検出 · 最新 index は 7h ago",
-      en: "Normally one batch hourly · collection is currently delayed · latest index 7h ago",
+      ja: "定期収集が遅延 · index 更新 7h ago",
+      en: "Scheduled collection delayed · index updated 7h ago",
     });
 
   });

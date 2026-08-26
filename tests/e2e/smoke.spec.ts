@@ -4875,6 +4875,54 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
+  test("top-level heroes share one height and never outgrow the home banner", async ({ page }) => {
+    const SUB_PAGES = ["/categories/", "/arxiv/", "/knowledge/"];
+
+    for (const [width, height] of [[1440, 900], [1280, 900], [390, 844]] as const) {
+      await page.setViewportSize({ width, height });
+
+      await page.goto("/");
+      const homeHeight = await page
+        .locator(".banner")
+        .evaluate((element) => element.getBoundingClientRect().height);
+
+      const heroes: Array<{ path: string; height: number; metrics: number }> = [];
+      for (const path of SUB_PAGES) {
+        await page.goto(path);
+        heroes.push({
+          path,
+          ...(await page.locator(".page-hero").first().evaluate((element) => ({
+            height: element.getBoundingClientRect().height,
+            metrics: element.querySelectorAll(".page-hero-metric").length,
+          }))),
+        });
+      }
+
+      // The three lane heroes are one component with one payload shape, so
+      // they must render at one height — /arxiv/ used to run 91px taller than
+      // its siblings because its className omitted page-hero-top-level.
+      const tallest = Math.max(...heroes.map((hero) => hero.height));
+      const shortest = Math.min(...heroes.map((hero) => hero.height));
+      expect(
+        tallest - shortest,
+        `${width}px: lane heroes agree — ${heroes.map((h) => `${h.path} ${Math.round(h.height)}`).join(", ")}`,
+      ).toBeLessThanOrEqual(1);
+      for (const hero of heroes) {
+        expect(hero.metrics, `${hero.path} carries the shared 6-metric payload`).toBe(6);
+      }
+
+      // The home banner leads the hierarchy where both are laid out side by
+      // side. On mobile the home hero is deliberately compact so the first
+      // article stays near the top, so the ordering only holds on desktop.
+      if (width >= 1280) {
+        expect(
+          homeHeight,
+          `${width}px: home banner (${Math.round(homeHeight)}) is the tallest hero (${Math.round(tallest)})`,
+        ).toBeGreaterThan(tallest);
+      }
+    }
+  });
+
   test("deep page heroes give page context on desktop and mobile", async ({ page }) => {
     const paths: string[] = [];
     await page.goto("/categories/");
@@ -10703,8 +10751,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(groups.first()).toBeVisible();
     const groupCount = await groups.count();
     expect(groupCount, "knowledge page shows source groups").toBeGreaterThan(0);
-    await expect(page.locator(".page-hero-metric")).toHaveCount(5);
-    await expect(page.locator(".page-hero-metric-detail")).toHaveCount(5);
+    // Six metrics, like every other top-level hero: the three sub-page heroes
+    // carry the same payload so their rendered heights match (2 rows x 3).
+    await expect(page.locator(".page-hero-metric")).toHaveCount(6);
+    await expect(page.locator(".page-hero-metric-detail")).toHaveCount(6);
     const knowledgeMetricScopes = await page.locator(".page-hero-metric").evaluateAll((metrics) =>
       metrics.map((metric) => ({
         scope: metric.getAttribute("data-metric-scope") ?? "",

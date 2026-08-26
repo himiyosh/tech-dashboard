@@ -158,8 +158,13 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
     headingId="categories-heading"
     description="カテゴリごとの記事量、直近の勢い、過去 30 日の推移を比較できます。伸びている領域を見つけたら、そのままカテゴリ詳細へ移動できます。"
     actions={[
+      {
+        href: "#category-directory",
+        label: "カテゴリ一覧を見る",
+        labelEn: "Browse the category list",
+        mobilePriority: true,
+      },
       { href: topCategory ? `/c/${topCategory.slug}` : "#category-groups", label: "Hot category" },
-      { href: "#category-directory", label: "Category list" },
       { href: "/status", label: "Check source health" },
     ]}
     metrics={[

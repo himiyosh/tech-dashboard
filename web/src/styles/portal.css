@@ -5237,10 +5237,13 @@ html, body {
     font-size: 21px;
     line-height: 1.22;
   }
+  /* The count chip shares the h1 line box, and at 390px it costs ~95px of a
+   * 346px line — enough to wrap a longer page title onto a second line and
+   * make otherwise identical heroes different heights. The same figure is
+   * already a metric tile below (Guides / Papers / Live entries), so drop the
+   * chip on mobile rather than let it reflow the heading. */
   .page-hero .page-count {
-    margin-left: 6px;
-    vertical-align: 3px;
-    font-size: 10px;
+    display: none;
   }
   .page-hero-description {
     display: -webkit-box;

@@ -7036,7 +7036,9 @@ test.describe("TECH Dashboard smoke", () => {
   test("archive page links to monthly archive pages", async ({ page }) => {
     await page.goto("/archive/");
 
-    await expect(page.locator(".crumb-bar")).toHaveCount(0);
+    // Archive is a menu destination, so like every page except home it opens
+    // with a trail back to the root.
+    await expect(page.locator(".crumb-bar")).toHaveCount(1);
     await expect(page.locator("#archive-heading")).toBeVisible();
     await expect(page.locator(".page-hero-metric").filter({ hasText: "All time" })).toHaveCount(0);
     await expect(page.locator('[data-metric-scope="timeline-live"]')).toContainText("Live index");

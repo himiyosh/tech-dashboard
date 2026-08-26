@@ -10,9 +10,13 @@
 import { CATEGORY_META } from "../lib/data.ts";
 import { isDefaultMutedCategory } from "../lib/category-visibility.ts";
 
+// shortLabel (not the full name) matches the sidebar and the Daily Summary
+// "Top categories + lanes" list, so the filter reads as the same category
+// index rather than a second, wordier vocabulary.
 const categories = CATEGORY_META.map((category) => ({
   slug: category.slug,
-  name: category.name,
+  name: category.shortLabel,
+  title: category.name,
   color: category.color,
   defaultMuted: isDefaultMutedCategory(category.slug),
 }));
@@ -45,12 +49,12 @@ const categories = CATEGORY_META.map((category) => ({
         class="cat-filter-chip"
         data-category-toggle={category.slug}
         data-state={category.defaultMuted ? "muted" : "on"}
-        data-default-muted={category.defaultMuted ? "true" : undefined}
         aria-pressed={category.defaultMuted ? "false" : "true"}
+        title={category.title}
         style={`--chip-color:${category.color}`}
       >
         <span class="cat-filter-dot" aria-hidden="true"></span>
-        {category.name}
+        <span class="cat-filter-name">{category.name}</span>
       </button>
     ))}
   </div>

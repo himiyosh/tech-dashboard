@@ -3023,7 +3023,7 @@ test.describe("TECH Dashboard smoke", () => {
     ).toEqual([]);
   });
 
-  test("mobile category filter stays one compact scrollable row", async ({ page }) => {
+  test("mobile category filter shows every lane in a compact two-column grid", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
 
@@ -3037,30 +3037,39 @@ test.describe("TECH Dashboard smoke", () => {
       const rail = document.querySelector<HTMLElement>(".cat-filter-chips");
       if (!panel || !rail) return null;
       const chipEls = [...rail.querySelectorAll<HTMLElement>("[data-category-toggle]")];
-      const tops = new Set(chipEls.map((chip) => Math.round(chip.getBoundingClientRect().top)));
+      const rects = chipEls.map((chip) => chip.getBoundingClientRect());
+      const columns = new Set(rects.map((rect) => Math.round(rect.left)));
+      const rows = new Set(rects.map((rect) => Math.round(rect.top)));
+      const panelRect = panel.getBoundingClientRect();
       return {
-        panelHeight: panel.getBoundingClientRect().height,
-        rows: tops.size,
-        minChipHeight: Math.min(...chipEls.map((chip) => chip.getBoundingClientRect().height)),
-        railScrolls: rail.scrollWidth > rail.clientWidth,
-        panelWithinViewport:
-          panel.getBoundingClientRect().left >= 0
-          && panel.getBoundingClientRect().right <= window.innerWidth + 1,
+        panelHeight: panelRect.height,
+        columns: columns.size,
+        rows: rows.size,
+        minChipHeight: Math.min(...rects.map((rect) => rect.height)),
+        allChipsVisible: rects.every((rect) => rect.height > 0 && rect.width > 0),
+        railScrollsHorizontally: rail.scrollWidth > rail.clientWidth + 1,
+        withinViewport: panelRect.left >= 0 && panelRect.right <= window.innerWidth + 1,
         documentOverflow: document.documentElement.scrollWidth - window.innerWidth,
       };
     });
     const g = requirePresent(geometry, "filter geometry is unavailable");
 
-    // One row of chips, not four: the panel must not eat the first screen.
-    expect(g.rows, "chips lay out on a single row").toBe(1);
-    expect(g.panelHeight, "filter panel stays compact on mobile").toBeLessThanOrEqual(120);
-    expect(g.minChipHeight, "chips keep a 44px touch target").toBeGreaterThanOrEqual(44);
-    expect(g.railScrolls, "the chip rail is horizontally scrollable").toBe(true);
-    expect(g.panelWithinViewport).toBe(true);
-    // The rail scrolls internally; the page itself must not.
+    // Two columns, every lane rendered and reachable without scrolling: the
+    // horizontal rail hid the list, and a wrapped pill layout ate ~413px.
+    expect(g.columns, "chips lay out in two columns").toBe(2);
+    expect(g.rows, "13 chips over two columns need 7 rows").toBe(
+      Math.ceil(CATEGORY_COUNT / 2),
+    );
+    expect(g.allChipsVisible, "no chip is clipped out of the panel").toBe(true);
+    expect(g.railScrollsHorizontally, "the chip grid does not scroll sideways").toBe(false);
+    expect(g.panelHeight, "filter panel stays well under half the viewport").toBeLessThanOrEqual(300);
+    // WCAG 2.2 target-size minimum, the floor this repo holds secondary
+    // controls to (see the 24px tap-size test below).
+    expect(g.minChipHeight).toBeGreaterThanOrEqual(24);
+    expect(g.withinViewport).toBe(true);
     expect(g.documentOverflow).toBeLessThanOrEqual(0);
 
-    // Chips beyond the fold stay operable (Playwright scrolls the rail).
+    // Every chip stays operable where it sits, including the last row.
     const lastChip = chips.last();
     await lastChip.click();
     await expect(lastChip).toHaveAttribute("aria-pressed", /true|false/);

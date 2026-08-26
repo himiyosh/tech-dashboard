@@ -352,12 +352,12 @@ async function expectResponsivePageHero(
   await page.goto(path);
   const hero = page.locator(".page-hero").first();
   await expect(hero).toBeVisible();
-  if (topLevel) {
-    await expect(
-      page.locator(".crumb-bar"),
-      `${path} should not render breadcrumbs`,
-    ).toHaveCount(0);
-  }
+  // Every route except the home page carries a trail back to it, so the
+  // crumb bar is present at the same place on every page a reader can land on.
+  await expect(
+    page.locator(".crumb-bar"),
+    `${path} renders breadcrumbs`,
+  ).toHaveCount(1);
   const desktopBox = await hero.boundingBox();
   expect(desktopBox, `${path} desktop hero box`).not.toBeNull();
   expect(
@@ -4718,7 +4718,14 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("top-level page heroes give page context on desktop and mobile", async ({ page }) => {
-    const topLevelPaths = ["/categories/", "/status/", "/about/", "/archive/"];
+    const topLevelPaths = [
+      "/categories/",
+      "/arxiv/",
+      "/knowledge/",
+      "/status/",
+      "/about/",
+      "/archive/",
+    ];
     for (const path of topLevelPaths) {
       await expectResponsivePageHero(page, path, true);
     }
@@ -4928,6 +4935,46 @@ test.describe("TECH Dashboard smoke", () => {
           `${width}px: home banner (${Math.round(homeHeight)}) is the tallest hero (${Math.round(tallest)})`,
         ).toBeGreaterThan(tallest);
       }
+    }
+  });
+
+  test("every route except the home page carries a breadcrumb back to it", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+
+    // The home page is the root of the trail, so it has nothing to point back to.
+    await page.goto("/");
+    await expect(page.locator(".crumb-bar"), "home is the root").toHaveCount(0);
+
+    // Everything else — header switcher destinations, hamburger destinations,
+    // and nested routes alike — starts with a link home so the crumb bar never
+    // appears and disappears between pages at the same depth.
+    const firstCategory = await page
+      .goto("/categories/")
+      .then(() => page.locator('a[href^="/c/"]').first().getAttribute("href"));
+    const routes = [
+      "/categories/",
+      "/arxiv/",
+      "/knowledge/",
+      "/glossary/",
+      "/archive/",
+      "/status/",
+      "/about/",
+      "/editorial-policy/",
+      "/privacy/",
+      "/search/",
+      "/page/2/",
+      firstCategory,
+    ].filter((href): href is string => Boolean(href));
+
+    for (const path of routes) {
+      await page.goto(path);
+      const crumbs = page.locator(".crumb-bar");
+      await expect(crumbs, `${path} renders one breadcrumb bar`).toHaveCount(1);
+      await expect(
+        crumbs.locator('a[href="/"]'),
+        `${path} breadcrumb links back to Home`,
+      ).toHaveCount(1);
+      await expect(crumbs, `${path} breadcrumb names the page`).not.toBeEmpty();
     }
   });
 

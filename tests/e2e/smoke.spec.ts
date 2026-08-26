@@ -592,11 +592,19 @@ test.describe("TECH Dashboard smoke", () => {
     }
     await expect(page.locator(".banner-fact")).toHaveCount(3);
     await expect(page.locator(".signal-node.node-source")).toContainText(/sources with live entries/i);
-    await expect(page.locator(".banner-fact").filter({ hasText: "収録中ソース" })).toContainText(/registry sources with live entries/i);
-    await expect(page.locator(".banner-fact").filter({ hasText: "Active registry sources" })).toContainText(/active registry sources/i);
+    // The rail is three figure tiles plus one run-health line. Each tile leads
+    // with a number and names the population it counts; cadence lives in the
+    // status line, not in a fourth card.
+    for (const scope of ["timeline-live", "daily-published", "registry-live-sources"]) {
+      const tile = page.locator(`.banner-fact[data-metric-scope="${scope}"]`);
+      await expect(tile, `${scope} tile is present`).toHaveCount(1);
+      await expect(tile.locator(".fact-cap"), `${scope} tile is captioned`).not.toBeEmpty();
+      await expect(tile.locator(".fact-scope"), `${scope} tile names its population`).not.toBeEmpty();
+    }
     await expect(
-      page.locator(".banner-fact").filter({ hasText: "更新頻度" }).locator(":scope > .i18n-ja"),
-    ).toContainText(/毎時 1 バッチ収集.*最新 index/);
+      page.locator('.banner-fact[data-metric-scope="registry-live-sources"] .fact-scope'),
+    ).toContainText(/registry sources with live entries/i);
+    await expect(page.locator(".banner-facts-status")).toContainText(/index (更新|updated)/);
     await page.locator(".top-rank-item .rank-source").first().evaluate((source) => {
       const fullLabel = "Microsoft Foundry Engineering and AI Platform Updates";
       const label = source.querySelector("[data-source-disclosure-label]");

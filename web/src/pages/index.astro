@@ -89,8 +89,20 @@ const now = new Date();
 const ago = relativeTime(DASHBOARD_METRICS.generatedAt, now);
 const cadenceLead = runCadenceLead(runStatus);
 const activeSourcesLabel = `${DASHBOARD_METRICS.sourceCoverageLabel} sources with live entries`;
-const activeSourcesJa = `公開中の記事がある登録ソース ${DASHBOARD_METRICS.sourceCoverageLabel}`;
-const activeSourcesEn = `${DASHBOARD_METRICS.sourceCoverageLabel} registry sources with live entries`;
+
+// Hero rail figures. The cards used to restate the h1 and taglines sitting a
+// few columns to their left in prose; they now show the three numbers those
+// sentences were talking around, in the same figure/caption/scope idiom the
+// PageHero metric tiles use on every other top-level page.
+const dailyBuckets = STATS.byDay.slice(-14);
+const latestDay = dailyBuckets.at(-1) ?? null;
+const dailyPeak = Math.max(1, ...dailyBuckets.map((bucket) => bucket.count));
+const latestDayStamp = latestDay
+  ? `${Number(latestDay.date.slice(5, 7))}/${Number(latestDay.date.slice(8, 10))} JST`
+  : null;
+// sourceCoverageLabel is "55/59" while some sources are quiet, and collapses to
+// a bare "59" once every source has a live entry (metrics.ts).
+const [coverageValue, coverageUnit] = DASHBOARD_METRICS.sourceCoverageLabel.split("/");
 
 // Top 3 = importance x authority x recency, but only entries with real summaries.
 // Limit repeated source/category so the decision list is useful at a glance.
@@ -211,44 +223,106 @@ const homeJsonLd = {
           <span class="signal-node node-summary">AI summary</span>
           <span class="signal-node node-publish">publish</span>
         </div>
-        <div class="banner-facts" aria-label="Dashboard overview">
-          <div class="banner-fact" data-cadence-state={runStatus.state}>
-            <strong class="i18n-ja">できること</strong>
-            <strong class="i18n-en" lang="en">What it does</strong>
-            <span class="i18n-ja">要約・重要度・出典から、読む/共有する判断を短時間で行えます。</span>
-            <span class="i18n-en" lang="en">Use summaries, importance, and sources to decide what to read or share.</span>
-          </div>
-          <div class="banner-fact">
-            <strong class="i18n-ja">収録中ソース</strong>
-            <strong class="i18n-en" lang="en">Active registry sources</strong>
-            <span class="i18n-ja">{activeSourcesJa}</span>
-            <span class="i18n-en" lang="en">{activeSourcesEn}</span>
-          </div>
-          <div class="banner-fact">
-            <div class="banner-fact-head">
-              <strong class="i18n-ja">更新頻度</strong>
-              <strong class="i18n-en" lang="en">Cadence</strong>
-              <a
-                class="banner-run-state"
-                href="/status"
-                data-banner-run-state
-                data-run-tone={runStatus.tone}
-                aria-label={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
-                title={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
-                hidden={!showRunWarning}
-              >
-                <span class={`dot ${runStatus.tone}`} data-run-tone={runStatus.tone} aria-hidden="true"></span>
-                <span class="i18n-ja" data-banner-run-label-ja>{runStatus.stateText}</span>
-                <span class="i18n-en" lang="en" data-banner-run-label-en>{runStatus.stateText}</span>
-              </a>
+        <div class="banner-facts" role="group" aria-label="Dashboard overview">
+          <div
+            class="banner-fact"
+            role="group"
+            data-metric-scope="timeline-live"
+            aria-labelledby="hero-fact-1-cap"
+            aria-describedby="hero-fact-1-scope"
+          >
+            <p class="fact-figure">{DASHBOARD_METRICS.timelineEntries}</p>
+            <div class="fact-text">
+              <span class="fact-cap" id="hero-fact-1-cap">
+                <span class="i18n-ja">掲載中</span>
+                <span class="i18n-en" lang="en">Live entries</span>
+              </span>
+              <span class="fact-scope" id="hero-fact-1-scope">
+                <span class="i18n-ja">現在の Timeline · arXiv レーン除く</span>
+                <span class="i18n-en" lang="en">current Timeline · excluding the arXiv lane</span>
+              </span>
             </div>
+          </div>
+          <div
+            class="banner-fact"
+            role="group"
+            data-metric-scope="daily-published"
+            aria-labelledby="hero-fact-2-cap"
+            aria-describedby="hero-fact-2-scope"
+          >
+            {latestDay && <p class="fact-figure">{latestDay.count}</p>}
+            <div class="fact-text">
+              <span class="fact-cap" id="hero-fact-2-cap">
+                <span class="i18n-ja">日次</span>
+                <span class="i18n-en" lang="en">Daily</span>
+              </span>
+              <span class="fact-scope" id="hero-fact-2-scope">
+                {latestDay ? (
+                  <Fragment>
+                    <span class="i18n-ja"><b class="fact-stamp">{latestDayStamp}</b> · 公開日基準</span>
+                    <span class="i18n-en" lang="en"><b class="fact-stamp">{latestDayStamp}</b> · by publish date</span>
+                  </Fragment>
+                ) : (
+                  <Fragment>
+                    <span class="i18n-ja">記録なし</span>
+                    <span class="i18n-en" lang="en">No data</span>
+                  </Fragment>
+                )}
+              </span>
+            </div>
+            {latestDay && (
+              <span class="fact-spark" aria-hidden="true">
+                {dailyBuckets.map((bucket) => (
+                  <i
+                    class:list={{ "is-zero": bucket.count === 0 }}
+                    style={`--spark-level:${Math.round((bucket.count / dailyPeak) * 100)}%`}
+                  ></i>
+                ))}
+              </span>
+            )}
+          </div>
+          <div
+            class="banner-fact"
+            role="group"
+            data-metric-scope="registry-live-sources"
+            aria-labelledby="hero-fact-3-cap"
+            aria-describedby="hero-fact-3-scope"
+          >
+            <p class="fact-figure">
+              {coverageValue}{coverageUnit && <span class="fact-unit">/{coverageUnit}</span>}
+            </p>
+            <div class="fact-text">
+              <span class="fact-cap" id="hero-fact-3-cap">
+                <span class="i18n-ja">収録ソース</span>
+                <span class="i18n-en" lang="en">Sources</span>
+              </span>
+              <span class="fact-scope" id="hero-fact-3-scope">
+                <span class="i18n-ja">掲載中の記事がある登録ソース</span>
+                <span class="i18n-en" lang="en">registry sources with live entries</span>
+              </span>
+            </div>
+          </div>
+          <p class="banner-facts-status" data-cadence-state={runStatus.state}>
+            <a
+              class="banner-run-state"
+              href="/status"
+              data-banner-run-state
+              data-run-tone={runStatus.tone}
+              aria-label={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
+              title={`Collection health: ${runStatus.runLabel}. ${runStatus.detail}`}
+              hidden={!showRunWarning}
+            >
+              <span class={`dot ${runStatus.tone}`} data-run-tone={runStatus.tone} aria-hidden="true"></span>
+              <span class="i18n-ja" data-banner-run-label-ja>{runStatus.stateText}</span>
+              <span class="i18n-en" lang="en" data-banner-run-label-en>{runStatus.stateText}</span>
+            </a>
             <span class="i18n-ja">
               <span data-cadence-lead-ja>{cadenceLead.ja}</span><time datetime={DASHBOARD_METRICS.generatedAt} data-relative-time>{ago}</time>
             </span>
             <span class="i18n-en" lang="en">
               <span data-cadence-lead-en>{cadenceLead.en}</span><time datetime={DASHBOARD_METRICS.generatedAt} data-relative-time>{ago}</time>
             </span>
-          </div>
+          </p>
         </div>
       </div>
     </div>

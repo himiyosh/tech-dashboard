@@ -1291,38 +1291,117 @@ html:not([data-lang="en"]) .i18n-en {
   transform: translateX(-120%);
 }
 
+/* Hero rail tiles. Figure beside caption, in the same figure / caption / scope
+ * ramp the PageHero metric tiles use, so the home hero reads as the same
+ * instrument as /about, /status, /arxiv and /categories rather than three
+ * paragraphs of prose restating the headline next to it. */
 .banner-fact {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 4px;
+  align-items: center;
   padding: 8px 10px;
   border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
   border-radius: 10px;
   background: color-mix(in srgb, var(--surface) 62%, transparent);
+  overflow: hidden;
 }
 
-.banner-fact strong {
+.banner-fact .fact-figure {
+  grid-column: 1;
+  margin: 0;
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.banner-fact .fact-unit {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* flex-column, not grid: the display:none half of each i18n pair must leave no
+ * residual gap behind. */
+.banner-fact .fact-text {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.banner-fact .fact-cap {
   display: block;
   margin-bottom: 3px;
-  color: var(--text);
-  font-size: 11px;
+  color: var(--muted-2);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+/* Uppercase + tracking is a Latin device; Japanese labels take neither. */
+.banner-fact .fact-cap .i18n-en {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.banner-fact-head {
+.banner-fact .fact-scope {
+  display: block;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 9.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.banner-fact .fact-stamp {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted-2);
+  white-space: nowrap;
+}
+
+/* 14 daily bars: the shape of the last two weeks, not a second number. */
+.banner-fact .fact-spark {
+  grid-column: 2;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+
+.banner-fact .fact-spark i {
+  flex: 1 1 0;
+  min-width: 0;
+  height: max(1px, var(--spark-level, 0%));
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.banner-fact .fact-spark i.is-zero {
+  height: 1px;
+  background: color-mix(in srgb, var(--border) 90%, transparent);
+}
+
+/* Run health reads as machinery under the tiles, not as a fourth tile. */
+.banner-facts-status {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 3px;
-}
-
-.banner-fact-head strong {
-  margin-bottom: 0;
-}
-
-.banner-fact span {
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0 2px;
   color: var(--muted);
-  font-size: 11.5px;
-  line-height: 1.35;
+  font-size: 10.5px;
+  line-height: 1.4;
 }
 
 .banner-run-state {

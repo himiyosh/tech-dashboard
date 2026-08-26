@@ -64,36 +64,24 @@ function buildStatus(
   };
 }
 
+/**
+ * Lead-in for the hero's run-health line, e.g. "定期収集が遅延 · index 更新 ".
+ *
+ * The state wording is WORKER_RUN_STATE_COPY verbatim, so the hero, /status and
+ * /about all name a given state the same way. It deliberately no longer repeats
+ * the collection schedule ("毎時 1 バッチ収集 · 各ソースは約 6 時間周期"): the hero
+ * tagline a few columns to the left already says it, and restating it in the
+ * status line was what made the panel read like a form.
+ *
+ * The trailing space is load-bearing — callers append a relative timestamp.
+ */
 export function runCadenceLead(
   status: Pick<WorkerRunStatus, "state">,
 ): { ja: string; en: string } {
-  if (status.state === "healthy") {
-    return {
-      ja: "毎時 1 バッチ収集 · 各ソースは約 6 時間周期 · 最新 index は ",
-      en: "One batch hourly · each source about every 6 hours · latest index ",
-    };
-  }
-  if (status.state === "late") {
-    return {
-      ja: "通常は毎時 1 バッチ収集 · 現在は収集遅延を検出 · 最新 index は ",
-      en: "Normally one batch hourly · collection is currently delayed · latest index ",
-    };
-  }
-  if (status.state === "failed") {
-    return {
-      ja: "通常は毎時 1 バッチ収集 · 直近バッチは全ソース失敗 · 最新 index は ",
-      en: "Normally one batch hourly · every source failed in the latest batch · latest index ",
-    };
-  }
-  if (status.state === "missing") {
-    return {
-      ja: "通常は毎時 1 バッチ収集 · 稼働記録を確認できません · 最新 index は ",
-      en: "Normally one batch hourly · run telemetry is unavailable · latest index ",
-    };
-  }
+  const copy = WORKER_RUN_STATE_COPY[status.state];
   return {
-    ja: "通常は毎時 1 バッチ収集 · 一部処理を要確認 · 最新 index は ",
-    en: "Normally one batch hourly · some processing needs review · latest index ",
+    ja: `${copy.ja} · index 更新 `,
+    en: `${copy.en} · index updated `,
   };
 }
 

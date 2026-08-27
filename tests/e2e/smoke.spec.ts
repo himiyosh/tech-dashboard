@@ -9469,6 +9469,8 @@ test.describe("TECH Dashboard smoke", () => {
         entryId: string;
         href: string;
         tags: string[];
+        titleJa?: string;
+        titleEn?: string;
       }>;
     };
     const tagRecovery = JSON.parse(
@@ -9482,8 +9484,16 @@ test.describe("TECH Dashboard smoke", () => {
             tag: normalizeTagKey(tag),
           })),
         )
-        .find(({ tag }) => Boolean(tagRecovery[tag])),
-      "actual cold corpus overlaps an addressable singleton tag",
+        .find(({ entry, tag }) => {
+          if (!tagRecovery[tag]) return false;
+          // matchScope (Portal.astro) ranks a title match ABOVE a tag match,
+          // so a tag that also appears in the entry's title renders as
+          // data-match-scope="title" and cannot exercise the tag path this
+          // test is about. Pick a tag-only match.
+          const titles = `${entry.titleJa ?? ""} ${entry.titleEn ?? ""}`.toLowerCase();
+          return !titles.includes(tag.toLowerCase());
+        }),
+      "actual cold corpus overlaps an addressable singleton tag absent from its title",
     );
 
     await page.goto(

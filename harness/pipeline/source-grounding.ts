@@ -173,6 +173,18 @@ function normalized(value: string | null | undefined): string {
   return compact(value).toLocaleLowerCase("en-US");
 }
 
+/**
+ * Source-text normalization shared with the verbatim-reuse guard in
+ * summary-quality.ts. Exported so there is exactly ONE definition of "the same
+ * text": HTML entities decoded, tags stripped, NFKC, whitespace collapsed,
+ * lowercased. A second, weaker normalizer (plain whitespace + lowercase) would
+ * silently miss every excerpt that carries `&rsquo;` or an inline tag, which is
+ * a large share of the RSS-derived snippets in data/index.json.
+ */
+export function normalizedSourceText(value: string | null | undefined): string {
+  return normalized(value);
+}
+
 function wordTokens(value: string): string[] {
   return compact(value).match(/[\p{L}\p{N}][\p{L}\p{N}+'’._/-]*/gu) ?? [];
 }

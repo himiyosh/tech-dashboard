@@ -4199,6 +4199,28 @@ body {
   }
 }
 
+/* The footer carries one more link since /contact was added, so the width at
+   which its full row (build stack + body-queue detail + four links) still fits
+   on one line moved up. Tighten the gap from 1359px down instead of hiding
+   items: tests/e2e/smoke.spec.ts requires the stack and body-queue to stay
+   VISIBLE at 1240px and above while the row stays one line (<= 36px). */
+@media (min-width: 1240px) and (max-width: 1359px) {
+  .footer-inner {
+    gap: 12px;
+    padding: 7px 16px;
+  }
+
+  .footer-inner .item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .footer-inner .footer-run-link {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+}
+
 @media (min-width: 721px) and (max-width: 1239px) {
   .footer-inner {
     gap: 12px;

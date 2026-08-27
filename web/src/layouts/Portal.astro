@@ -656,7 +656,12 @@ const footerLastRunRelative = footerLastRunAt
           <span class="i18n-en" lang="en">Privacy</span>
         </a>
         <a class="item footer-privacy-link" href="/contact">
-          <span class="i18n-ja">お問い合わせ</span>
+          {/* 連絡先, not お問い合わせ: the footer must stay one line at 1240px
+              and above, where the build stack and body-queue detail are also
+              visible (tests/e2e/smoke.spec.ts "top-rank panel remains stable
+              across rail breakpoint widths"). The page itself keeps the longer
+              title. */}
+          <span class="i18n-ja">連絡先</span>
           <span class="i18n-en" lang="en">Contact</span>
         </a>
         <span class="item">Cloudflare Pages</span>

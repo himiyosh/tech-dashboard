@@ -3926,8 +3926,6 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("home keeps the decision path compact at tablet width", async ({ page }) => {
-
-  test("home keeps the decision path compact at tablet width", async ({ page }) => {
     const fullLabel = "Microsoft Foundry Engineering, AI Platform, Agent Operations, and Cloud Infrastructure Updates";
     await page.setViewportSize({ width: 768, height: 900 });
     await page.goto("/");
@@ -6886,7 +6884,9 @@ test.describe("TECH Dashboard smoke", () => {
       card.locator('[data-reaction-delete-availability="unavailable"]'),
     ).toBeVisible();
     await expect(card.locator("[data-reaction-delete-open]")).toBeHidden();
-    await expect(card).toContainText("静的previewでは削除APIを確認できません");
+    // Proofread copy: the Japanese no longer welds "preview"/"API" onto kana
+    // (web/src/pages/privacy.astro). Match the corrected wording.
+    await expect(card).toContainText("静的プレビューでは削除 API を確認できません");
   });
 
   test("Advertising loads only for current explicit consent on the production host", async ({

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { XMLValidator } from "fast-xml-parser";
 import { describe, expect, it } from "vitest";
 import {
@@ -14,6 +15,14 @@ import {
   collectAddressableDetailEntries,
   isAddressableDetailEntry,
 } from "../web/src/lib/detail-addressability.ts";
+import {
+  DETAIL_ROBOTS_INDEX,
+  DETAIL_ROBOTS_NOINDEX,
+  collectIndexableDetailEntries,
+  detailRobotsContent,
+  isIndexableDetailEntry,
+} from "../web/src/lib/detail-indexability.ts";
+import { hasRealBody } from "../web/src/lib/bodies.ts";
 import { entryDestination } from "../web/src/lib/entry-destination.ts";
 import {
   archiveMonthPath,
@@ -44,14 +53,15 @@ describe("sitemap", () => {
   it("shares a JSON-free detail addressability policy", () => {
     const entries = collectAddressableDetailEntries(
       [
-        { id: "live-legacy" },
-        { id: "hot", archiveTier: "hot" as const },
-        { id: "cold", archiveTier: "cold" as const },
+        { id: "live-legacy", publicationHold: false },
+        { id: "hot", archiveTier: "hot" as const, publicationHold: false },
+        { id: "cold", archiveTier: "cold" as const, publicationHold: false },
       ],
       [
-        { id: "warm", archiveTier: "warm" as const },
-        { id: "dropped", archiveTier: "dropped" as const },
-        { id: "hot", archiveTier: "warm" as const },
+        { id: "warm", archiveTier: "warm" as const, publicationHold: false },
+        { id: "dropped", archiveTier: "dropped" as const, publicationHold: false },
+        { id: "hot", archiveTier: "warm" as const, publicationHold: false },
+        { id: "queued", archiveTier: "warm" as const, publicationHold: true },
       ],
     );
 
@@ -165,9 +175,12 @@ describe("sitemap", () => {
       expect(urls.has(canonical(archiveMonthPath(month)))).toBe(true);
     }
 
+    // Addressable (route generated, reachable) and indexable (sitemap +
+    // "index, follow") are separate decisions since the body-less detail
+    // pages became noindex. The sitemap lists only the indexable subset.
     const expectedDetailUrls = new Set<string>();
     for (const entry of [...ALL_ENTRIES, ...ARCHIVE_WARM_ENTRIES]) {
-      if (!isAddressableDetailEntry(entry)) continue;
+      if (!isIndexableDetailEntry(entry)) continue;
       expectedDetailUrls.add(canonical(detailPath(entry.id)));
     }
     const actualDetailUrls = new Set(
@@ -183,25 +196,90 @@ describe("sitemap", () => {
     expect(collectSitemapPaths().some((path) => path.includes("?"))).toBe(false);
   });
 
-  it("excludes current cold IDs while retaining representative hot and warm details", () => {
+  it("excludes cold IDs and body-less details while retaining bodied hot and warm details", () => {
     const urls = new Set(SITEMAP_DOCUMENT.urls);
-    const coldEntries = ALL_ENTRIES.filter((entry) => entry.archiveTier === "cold");
-    const hotEntry = ALL_ENTRIES.find(
-      (entry) => entry.archiveTier === "hot" && isAddressableDetailEntry(entry),
-    );
     const liveIds = new Set(ALL_ENTRIES.map((entry) => entry.id));
-    const warmEntry = ARCHIVE_WARM_ENTRIES.find(
-      (entry) => !liveIds.has(entry.id) && isAddressableDetailEntry(entry),
-    ) ?? ARCHIVE_WARM_ENTRIES.find((entry) => isAddressableDetailEntry(entry));
+    const coldEntries = ALL_ENTRIES.filter((entry) => entry.archiveTier === "cold");
+    const indexableHot = ALL_ENTRIES.find(
+      (entry) => entry.archiveTier === "hot" && isIndexableDetailEntry(entry),
+    );
+    const noindexHot = ALL_ENTRIES.find(
+      (entry) =>
+        entry.archiveTier === "hot"
+        && isAddressableDetailEntry(entry)
+        && !isIndexableDetailEntry(entry),
+    );
+    const indexableWarm = ARCHIVE_WARM_ENTRIES.find((entry) =>
+      isIndexableDetailEntry(entry),
+    );
+    // Archive-only warm entries carry no generated body today, so this group
+    // exists purely to prove body-less details stay out of the sitemap.
+    const noindexArchiveOnlyWarm = ARCHIVE_WARM_ENTRIES.find(
+      (entry) =>
+        !liveIds.has(entry.id)
+        && isAddressableDetailEntry(entry)
+        && !isIndexableDetailEntry(entry),
+    );
 
     expect(coldEntries.length).toBeGreaterThan(0);
-    expect(hotEntry, "fixture includes an addressable hot entry").toBeTruthy();
-    expect(warmEntry, "fixture includes an addressable warm entry").toBeTruthy();
+    expect(indexableHot, "fixture includes a bodied hot entry").toBeTruthy();
+    expect(noindexHot, "fixture includes a body-less hot entry").toBeTruthy();
+    expect(indexableWarm, "fixture includes a bodied warm entry").toBeTruthy();
+    expect(
+      noindexArchiveOnlyWarm,
+      "fixture includes a body-less archive-only warm entry",
+    ).toBeTruthy();
+
     for (const entry of coldEntries) {
       expect(urls.has(canonical(`/e/${encodeURIComponent(entry.id)}/`))).toBe(false);
     }
-    expect(urls.has(canonical(`/e/${encodeURIComponent(hotEntry!.id)}/`))).toBe(true);
-    expect(urls.has(canonical(`/e/${encodeURIComponent(warmEntry!.id)}/`))).toBe(true);
+    for (const entry of [indexableHot, indexableWarm]) {
+      expect(urls.has(canonical(`/e/${encodeURIComponent(entry?.id ?? "")}/`))).toBe(true);
+    }
+    for (const entry of [noindexHot, noindexArchiveOnlyWarm]) {
+      expect(urls.has(canonical(`/e/${encodeURIComponent(entry?.id ?? "")}/`))).toBe(false);
+    }
+  });
+
+  it("lists a detail route only when data/bodies.json holds a real body", () => {
+    const urls = new Set(SITEMAP_DOCUMENT.urls);
+    const addressable = collectAddressableDetailEntries(ALL_ENTRIES, ARCHIVE_WARM_ENTRIES);
+    const indexable = addressable.filter((entry) => isIndexableDetailEntry(entry));
+    const notIndexable = addressable.filter((entry) => !isIndexableDetailEntry(entry));
+
+    expect(indexable.length, "fixture has indexable details").toBeGreaterThan(0);
+    expect(notIndexable.length, "fixture has body-less details").toBeGreaterThan(0);
+
+    for (const entry of indexable) {
+      expect(hasRealBody(entry)).toBe(true);
+      expect(urls.has(canonical(detailPath(entry.id)))).toBe(true);
+      expect(detailRobotsContent(entry)).toBe(DETAIL_ROBOTS_INDEX);
+    }
+    for (const entry of notIndexable) {
+      expect(hasRealBody(entry)).toBe(false);
+      expect(urls.has(canonical(detailPath(entry.id)))).toBe(false);
+      expect(detailRobotsContent(entry)).toBe(DETAIL_ROBOTS_NOINDEX);
+    }
+
+    const sitemapDetailCount = SITEMAP_DOCUMENT.urls.filter((url) =>
+      new URL(url).pathname.startsWith("/e/"),
+    ).length;
+    expect(sitemapDetailCount).toBe(
+      collectIndexableDetailEntries(ALL_ENTRIES, ARCHIVE_WARM_ENTRIES).length,
+    );
+  });
+
+  it("emits the shared robots directive from the detail template", () => {
+    // The route stays generated for every addressable entry (no inbound link
+    // may 404); only the robots directive and the sitemap narrow. Pin both
+    // halves at the source level so neither can silently drift.
+    const detailSource = readFileSync(
+      new URL("../web/src/pages/e/[id].astro", import.meta.url),
+      "utf8",
+    );
+    expect(detailSource).toContain("const robotsContent = detailRobotsContent(entry);");
+    expect(detailSource).toContain('<meta name="robots" content={robotsContent} />');
+    expect(detailSource).toContain("collectAddressableDetailEntries(");
   });
 
   it("escapes XML, removes duplicates, and fails closed on invalid or oversized output", () => {

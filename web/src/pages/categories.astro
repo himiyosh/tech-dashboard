@@ -149,7 +149,14 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
 );
 ---
 
-<Portal pageKey="categories" title="Categories — TECH Dashboard" breadcrumb={[{ label: "Home", href: "/" }, { label: "Categories" }]}>
+<Portal
+  pageKey="categories"
+  title="Categories — TECH Dashboard"
+  canonicalPath="/categories/"
+  description={`AI 技術アップデートを ${categoryPanels.length} カテゴリに分類したディレクトリ。掲載中 ${totalLiveEntries} 件、直近 30 日に更新のあった ${activeCategories} カテゴリを 30 日トレンド付きで比較できます。`}
+  descriptionEn={`Directory of ${categoryPanels.length} AI technology categories covering ${totalLiveEntries} live updates, with 30-day trends and ${activeCategories} categories active in the last 30 days.`}
+  breadcrumb={[{ label: "Home", href: "/" }, { label: "Categories" }]}
+>
   <PageHero
     className="page-hero-top-level page-hero-categories"
     kicker="Explore by category"

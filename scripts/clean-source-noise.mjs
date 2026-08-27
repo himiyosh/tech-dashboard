@@ -851,6 +851,17 @@ export function summarizeChanges(label, entries, referenceAt, report, options = 
       report.summaryGroundingRejected =
         (report.summaryGroundingRejected ?? 0) + 1;
     }
+    if (grounding.verbatimRejected) {
+      report.summaryVerbatimRejected =
+        (report.summaryVerbatimRejected ?? 0) + 1;
+      pushSample(
+        report.keepSamples,
+        entry.source,
+        `${label} | verbatim-source-reuse:${grounding.verbatimIssues
+          .map((issue) => issue.field)
+          .join(",")} | ${entry.category} | ${entry.title}`,
+      );
+    }
     const groundedEntry = options.preserveArchiveTier
       ? grounding.entry
       : applyDeterministicContentFallback(grounding.entry).entry;
@@ -1065,6 +1076,7 @@ export async function main(argv = process.argv.slice(2)) {
     mediaUrlsNormalized: 0,
     archiveTagsSynchronized: 0,
     summaryGroundingRejected: 0,
+    summaryVerbatimRejected: 0,
   };
 
   const liveEntries = summarizeChanges("live", index.entries, referenceAt, report);
@@ -1234,6 +1246,9 @@ export async function main(argv = process.argv.slice(2)) {
   console.log(`\nMedia URLs normalized: ${report.mediaUrlsNormalized}`);
   console.log(`\nArchive tags synchronized: ${report.archiveTagsSynchronized}`);
   console.log(`\nSummaries rejected by source grounding: ${report.summaryGroundingRejected}`);
+  console.log(
+    `\nSummaries rejected by verbatim source reuse: ${report.summaryVerbatimRejected}`,
+  );
   if (reconciledBodyCount !== null) console.log(`\nBodies retained: ${reconciledBodyCount}`);
   console.log(
     `\nBody budget: bytes=${bodyBudget.bytes}/${bodyBudgetTargetBytes}, pruned=${bodyBudget.prunedIds.length}`

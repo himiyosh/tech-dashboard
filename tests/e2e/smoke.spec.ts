@@ -12,11 +12,14 @@ import {
   ADVERTISING_REQUIRES_CONSENT,
 } from "../../web/src/lib/privacy-consent.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
+import { sectionizeBody } from "../../web/src/lib/body-sections.ts";
 import {
   isAddressableDetailEntry,
   type DetailAddressableEntry,
 } from "../../web/src/lib/detail-addressability.ts";
+import { SITE_GATE, isBuiltDetailEntry } from "./detail-route-fixture.ts";
 import { CATEGORY_META } from "../../web/src/lib/category-meta.ts";
+import { hasMeaningfulSourceSnippet } from "../../web/src/lib/source-snippet.ts";
 import { DEFAULT_MUTED_CATEGORIES } from "../../web/src/lib/category-visibility.ts";
 
 /** Category count follows the taxonomy source of truth, not a hard-coded number. */
@@ -2555,16 +2558,23 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("article body provenance and supporting copy follow the active language", async ({ page }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{ id: string }>;
+      entries: Array<{ id: string; title?: string; contentSnippet?: string }>;
     };
     const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
       bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
     };
-    const liveIds = new Set(index.entries.map((entry) => entry.id));
+    // web/src/lib/bodies.ts suppresses a stored body whose entry carries no
+    // usable source excerpt, so "has a record in bodies.json" is no longer
+    // enough to pick a page that renders prose. On the current corpus this
+    // find() returned 2741ff56db66670d, whose contentSnippet is "". Derive the
+    // fixture through the same guard the page uses.
+    const liveById = new Map(index.entries.map((entry) => [entry.id, entry]));
     const bodyEntryId = Object.entries(bodyFile.bodies).find(([id, body]) => {
+      const entry = liveById.get(id);
+      if (!entry || !hasMeaningfulSourceSnippet(entry)) return false;
       const jaParagraphs = (body.bodyJa ?? "").split(/\n{2,}/).filter(Boolean);
       const enParagraphs = (body.bodyEn ?? "").split(/\n{2,}/).filter(Boolean);
-      return liveIds.has(id) && jaParagraphs.length >= 3 && enParagraphs.length >= 3;
+      return jaParagraphs.length >= 3 && enParagraphs.length >= 3;
     })?.[0];
     expect(bodyEntryId, "live article with bilingual long-form body fixture").toBeTruthy();
 
@@ -2680,15 +2690,19 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("wide screens keep the article reading column centered with section headings", async ({ page }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{ id: string }>;
+      entries: Array<{ id: string; title?: string; contentSnippet?: string }>;
     };
     const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
       bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
     };
-    const liveIds = new Set(index.entries.map((entry) => entry.id));
+    // Same render-guard derivation as the provenance test above: the previous
+    // pick on this corpus was d089c4387b7e1eb4, contentSnippet "".
+    const liveById = new Map(index.entries.map((entry) => [entry.id, entry]));
     const bodyEntryId = Object.entries(bodyFile.bodies).find(([id, body]) => {
+      const entry = liveById.get(id);
+      if (!entry || !hasMeaningfulSourceSnippet(entry)) return false;
       const jaParagraphs = (body.bodyJa ?? "").split(/\n{2,}/).filter(Boolean);
-      return liveIds.has(id) && jaParagraphs.length >= 4;
+      return jaParagraphs.length >= 4;
     })?.[0];
     expect(bodyEntryId, "live article with a long-form JA body fixture").toBeTruthy();
 
@@ -3842,6 +3856,73 @@ test.describe("TECH Dashboard smoke", () => {
     expect(jsonLd.url).toBe(
       await page.locator('link[rel="canonical"]').getAttribute("href"),
     );
+  });
+
+  test("detail structured data credits the site and mirrors the visible crumb bar", async ({ page }) => {
+    await page.goto("/");
+    const firstEntryLink = page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first();
+    await expect(firstEntryLink).toBeVisible();
+    await firstEntryLink.click();
+    await expect(page).toHaveURL(/\/e\/.+\/$/);
+
+    const ldScripts = page.locator('script[type="application/ld+json"]');
+    await expect(
+      ldScripts,
+      "a detail page emits exactly one JSON-LD block",
+    ).toHaveCount(1);
+
+    const visibleCrumbs = (
+      await page.locator(".crumb-bar .crumb-inner > *:not(.sep)").allTextContents()
+    ).map((label) => label.trim());
+    expect(visibleCrumbs).toHaveLength(3);
+    expect(visibleCrumbs[0]).toBe("Home");
+
+    const sourceHref = await page.locator("a.ed-header-cta").getAttribute("href");
+    expect(sourceHref).toMatch(/^https?:\/\//);
+
+    const laneHref = await page
+      .locator(".crumb-bar .crumb-inner a")
+      .nth(1)
+      .getAttribute("href");
+    expect(laneHref).toMatch(/^\/(?:c\/|arxiv)/);
+    const laneCrumbPath = laneHref ?? "";
+    const laneCrumbUrl = new URL(
+      laneCrumbPath.endsWith("/") ? laneCrumbPath : `${laneCrumbPath}/`,
+      "https://techdb.studio344.net/",
+    ).href;
+
+    const jsonLd = JSON.parse((await ldScripts.textContent()) ?? "{}") as {
+      "@type"?: string;
+      author?: { "@id"?: string; name?: string };
+      publisher?: { "@id"?: string; name?: string };
+      isBasedOn?: { url?: string; publisher?: { name?: string } };
+      mainEntityOfPage?: {
+        breadcrumb?: {
+          "@type"?: string;
+          itemListElement?: Array<{ position?: number; name?: string; item?: string }>;
+        };
+      };
+    };
+
+    expect(jsonLd["@type"]).toBe("Article");
+    expect(jsonLd.author?.name).toBe("TECH Dashboard");
+    expect(jsonLd.publisher?.name).toBe("TECH Dashboard");
+    expect(jsonLd.author?.["@id"]).toBe(
+      "https://techdb.studio344.net/#organization",
+    );
+    expect(jsonLd.publisher?.["@id"]).toBe(jsonLd.author?.["@id"]);
+    expect(jsonLd.isBasedOn?.publisher?.name).toBeTruthy();
+    expect(jsonLd.author?.name).not.toBe(jsonLd.isBasedOn?.publisher?.name);
+    expect(jsonLd.isBasedOn?.url).toBe(sourceHref);
+
+    const breadcrumb = jsonLd.mainEntityOfPage?.breadcrumb;
+    const items = breadcrumb?.itemListElement ?? [];
+    expect(breadcrumb?.["@type"]).toBe("BreadcrumbList");
+    expect(items.map((item) => item.position)).toEqual([1, 2, 3]);
+    expect(items.map((item) => item.name)).toEqual(visibleCrumbs);
+    expect(items[0]?.item).toBe("https://techdb.studio344.net/");
+    expect(items[1]?.item).toBe(laneCrumbUrl);
+    expect(items[2]?.item).toBeUndefined();
   });
 
   test("home keeps the decision path compact at tablet width", async ({ page }) => {
@@ -6803,7 +6884,9 @@ test.describe("TECH Dashboard smoke", () => {
       card.locator('[data-reaction-delete-availability="unavailable"]'),
     ).toBeVisible();
     await expect(card.locator("[data-reaction-delete-open]")).toBeHidden();
-    await expect(card).toContainText("静的previewでは削除APIを確認できません");
+    // Proofread copy: the Japanese no longer welds "preview"/"API" onto kana
+    // (web/src/pages/privacy.astro). Match the corrected wording.
+    await expect(card).toContainText("静的プレビューでは削除 API を確認できません");
   });
 
   test("Advertising loads only for current explicit consent on the production host", async ({
@@ -8600,7 +8683,12 @@ test.describe("TECH Dashboard smoke", () => {
     // .ed-body-prose が存在せず検証が空振りする。live index と bodies.json の
     // 積集合から本文持ち entry をデータ導出する (live ID は pin しない)。
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{ id: string; archiveTier?: string }>;
+      entries: Array<{
+        id: string;
+        archiveTier?: string;
+        title?: string;
+        contentSnippet?: string;
+      }>;
     };
     const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
       bodies: Record<string, unknown>;
@@ -8609,7 +8697,8 @@ test.describe("TECH Dashboard smoke", () => {
       (entry) =>
         entry.archiveTier !== "cold"
         && entry.archiveTier !== "dropped"
-        && entry.id in bodies.bodies,
+        && entry.id in bodies.bodies
+        && hasMeaningfulSourceSnippet(entry),
     );
     // 本文持ちが 1 件も無い corpus は有効な状態 (全記事が要約のみ)。
     if (!withBody) return;
@@ -8624,6 +8713,83 @@ test.describe("TECH Dashboard smoke", () => {
     const width = await prose.evaluate((el) => el.getBoundingClientRect().width);
     expect(width, "prose line measure stays readable").toBeLessThanOrEqual(710);
     expect(width, "prose does not collapse").toBeGreaterThan(400);
+  });
+
+  test("tag highlighting keeps body prose identical to the generated body", async ({ page }) => {
+    // 実測 2026-08-26: highlightTags が escape 済み markup の上に tag ごとの
+    // regex 置換を重ねていたため、短い tag が長い tag の href 内部に一致し、
+    // href が `/t/pre-<a class=` のように壊れて属性の残骸が可視本文へ漏れて
+    // いた (64 記事 / 211 段落)。fix 後の不変条件を実 DOM で固定する。
+    // 候補は「本文に語として現れる tag が、別の tag を語として内包する」
+    // entry をデータ導出する (live ID は pin しない)。実測 62 件が候補で、
+    // その 62 件全てが修正前の実装で実際に破損していた。
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<DetailAddressableEntry & { id: string; tags?: string[] }>;
+    };
+    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
+    };
+    const escapeTagRegex = (value: string): string =>
+      value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const wordRe = (value: string): RegExp =>
+      new RegExp(`\\b${escapeTagRegex(value)}\\b`, "i");
+    const candidateId = index.entries
+      .filter((entry) => isAddressableDetailEntry(entry))
+      .filter((entry) => {
+        const body = bodies.bodies[entry.id];
+        if (!body || !(body.bodyJa || body.bodyEn)) return false;
+        const tags = [
+          ...new Set(
+            (entry.tags ?? []).map((tag) => tag.trim()).filter((tag) => tag.length >= 2),
+          ),
+        ];
+        const text = `${body.bodyJa ?? ""}\n${body.bodyEn ?? ""}`;
+        return tags.some(
+          (outer) =>
+            wordRe(outer).test(text)
+            && tags.some(
+              (inner) =>
+                inner !== outer
+                && wordRe(normalizeTagKey(inner)).test(normalizeTagKey(outer)),
+            ),
+        );
+      })
+      .map((entry) => entry.id)
+      .sort()[0];
+    // 衝突 tag 対を本文中に持つ記事が 0 件の corpus は有効な状態。
+    if (!candidateId) return;
+
+    const body = bodies.bodies[candidateId];
+    expect(body, "candidate carries a generated body").toBeTruthy();
+    await page.goto(`/e/${candidateId}/`);
+
+    let comparedParagraphs = 0;
+    for (const lang of ["ja", "en"] as const) {
+      const text = lang === "ja" ? body?.bodyJa : body?.bodyEn;
+      if (!text) continue;
+      const expected = sectionizeBody(text, lang).flatMap((section) => section.paragraphs);
+      const rendered = await page
+        .locator(`.ed-body-prose.i18n-${lang} p[data-toc-key]`)
+        .evaluateAll((nodes) => nodes.map((node) => node.textContent ?? ""));
+      // 破損時は属性の残骸 (`release">pre-release`) が textContent に混ざる。
+      expect(rendered, `${lang} prose renders every generated paragraph verbatim`).toEqual(
+        expected,
+      );
+      comparedParagraphs += expected.length;
+    }
+    expect(comparedParagraphs, "prose comparison is not vacuous").toBeGreaterThan(0);
+
+    const keywords = page.locator(".ed-body-prose a.kw");
+    expect(await keywords.count(), "tag highlighting ran on this body").toBeGreaterThan(0);
+    const hrefs = await keywords.evaluateAll((links) =>
+      links.map((link) => link.getAttribute("href") ?? ""),
+    );
+    for (const href of hrefs) {
+      // 破損時の href は `/t/pre-<a class=` になり、この形状検査で落ちる。
+      expect(href, "keyword href stays a well-formed site route").toMatch(
+        /^\/(?:t\/[^"<>\s]+|search\?q=[^"<>\s]+)$/,
+      );
+    }
   });
 
   test("pagefind retrieval falls back to a query prefix when a long pasted title returns nothing", async ({ page }) => {

@@ -19,8 +19,19 @@ export interface Props {
   titleEn?: string;
   description?: string;
   descriptionEn?: string;
+  /**
+   * Root-relative path of THIS route (e.g. "/t/claude/page/2/"). It becomes the
+   * self-referential <link rel="canonical">. Required for every indexable page:
+   * the AdSense audit found 510 generated pages shipping with no canonical at
+   * all, so canonical is now a route obligation instead of a layout default.
+   * Pages that pass `metadata` carry their canonical there; pages that pass
+   * `noindex` are exempt because they must never be indexed.
+   */
+  canonicalPath?: string;
+  /** Emits <meta name="robots" content="noindex, follow"> for a shell or preview route. */
+  noindex?: boolean;
   metadata?: LocalizedPageMetadata;
-  pageKey?: "timeline" | "categories" | "arxiv" | "knowledge" | "glossary" | "sources" | "archive" | "status" | "about" | "editorial" | "privacy" | "search" | "not-found";
+  pageKey?: "timeline" | "categories" | "arxiv" | "knowledge" | "glossary" | "sources" | "archive" | "status" | "about" | "editorial" | "privacy" | "contact" | "search" | "not-found";
   breadcrumb?: Array<{ label: string; href?: string }>;
   rssHref?: string;
   rssTitle?: string;
@@ -29,19 +40,59 @@ export interface Props {
 const {
   title: titleProp = "TECH Dashboard — Pulse of the AI Ecosystem",
   titleEn: titleEnProp = titleProp,
-  description = "公式発表、変更履歴、arXiv 論文、コミュニティ記事を毎時 1 バッチ収集。各ソースは約 6 時間周期で巡回し、AI 要約。",
-  descriptionEn = description,
+  description,
+  descriptionEn,
+  canonicalPath,
+  noindex = false,
   metadata,
   pageKey = "timeline",
   breadcrumb,
   rssHref = "/rss.xml",
   rssTitle = "TECH Dashboard site-wide RSS",
 } = Astro.props;
+const currentPath = Astro.url.pathname.replace(/\/+$/, "") || "/";
+
+// Fail closed on crawl identity. There is no boilerplate fallback any more: a
+// route either states its own canonical and description, or declares itself
+// noindex. Both defects the AdSense audit found (510 pages with no canonical,
+// 505 pages repeating one description) become build errors, not silent output.
+if (!metadata && !noindex && !canonicalPath) {
+  throw new Error(
+    `PORTAL_CANONICAL_MISSING: ${currentPath} renders an indexable page without \`metadata\` or \`canonicalPath\``,
+  );
+}
+let canonicalFromPath: string | null = null;
+if (canonicalPath !== undefined) {
+  if (!canonicalPath.startsWith("/") || canonicalPath.startsWith("//")) {
+    throw new Error(
+      `PORTAL_CANONICAL_NOT_ROOT_RELATIVE: ${currentPath} passed canonicalPath=${JSON.stringify(canonicalPath)}`,
+    );
+  }
+  const siteOrigin = new URL(SITE_URL).origin;
+  const resolved = new URL(canonicalPath, `${siteOrigin}/`);
+  if (resolved.origin !== siteOrigin || resolved.search || resolved.hash) {
+    throw new Error(
+      `PORTAL_CANONICAL_NOT_INTERNAL: ${currentPath} passed canonicalPath=${JSON.stringify(canonicalPath)}`,
+    );
+  }
+  canonicalFromPath = resolved.href;
+}
+const resolvedDescriptionJa = metadata ? metadata.descriptionJa : description;
+const resolvedDescriptionEn = metadata
+  ? metadata.descriptionEn
+  : (descriptionEn ?? description);
+if (!resolvedDescriptionJa || !resolvedDescriptionEn) {
+  throw new Error(
+    `PORTAL_DESCRIPTION_MISSING: ${currentPath} renders without a route-specific meta description`,
+  );
+}
+const canonicalUrl: string | null = metadata
+  ? metadata.canonicalUrl
+  : canonicalFromPath;
 const pageTitleJa = metadata?.titleJa ?? titleProp;
 const pageTitleEn = metadata?.titleEn ?? titleEnProp;
-const pageDescriptionJa = metadata?.descriptionJa ?? description;
-const pageDescriptionEn = metadata?.descriptionEn ?? descriptionEn;
-const currentPath = Astro.url.pathname.replace(/\/+$/, "") || "/";
+const pageDescriptionJa: string = resolvedDescriptionJa;
+const pageDescriptionEn: string = resolvedDescriptionEn;
 const productionAdvertisingHostname = new URL(SITE_URL).hostname;
 const isCurrentHref = (href: string) =>
   currentPath === (href.replace(/\/+$/, "") || "/");
@@ -52,8 +103,9 @@ const navItems = [
   { href: "/archive", key: "archive", label: "Archive", detail: "月別に過去記事を確認", detailEn: "Browse articles by month" },
   { href: "/status", key: "status", label: "Status", detail: "収集 source と Worker 状態", detailEn: "Collection sources and Worker health" },
   { href: "/about", key: "about", label: "About", detail: "サイトの目的・収集方針・RSS購読", detailEn: "Purpose, collection policy, and feeds" },
-  { href: "/editorial-policy", key: "editorial", label: "Editorial", detail: "編集方針・訂正・お問い合わせ", detailEn: "Editorial policy, corrections, and contact" },
+  { href: "/editorial-policy", key: "editorial", label: "Editorial", detail: "編集方針・訂正・削除依頼の基準", detailEn: "Editorial policy, corrections, and takedowns" },
   { href: "/privacy", key: "privacy", label: "Privacy", detail: "データ取扱い・広告選択・削除", detailEn: "Data use, advertising choice, and deletion" },
+  { href: "/contact", key: "contact", label: "Contact", detail: "訂正依頼・削除依頼・お問い合わせ", detailEn: "Corrections, takedowns, and enquiries" },
 ] as const;
 // Primary explore shortcuts live in the header switcher / mobile tabbar
 // (Categories, arXiv, Knowledge), so they are intentionally excluded from
@@ -123,9 +175,10 @@ const footerLastRunRelative = footerLastRunAt
     <link rel="alternate" type="application/rss+xml" title={rssTitle} href={rssHref} />
     <link rel="alternate" type="application/feed+json" title="TECH Dashboard site-wide JSON Feed" href="/feed.json" />
     <link rel="outline" type={OPML_MEDIA_TYPE} title={OPML_TITLE} href={OPML_HREF} />
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    {noindex && <meta name="robots" content="noindex, follow" />}
     {metadata && (
       <>
-        <link rel="canonical" href={metadata.canonicalUrl} />
         <meta property="og:type" content={metadata.type} />
         <meta property="og:site_name" content="TECH Dashboard" />
         <meta
@@ -601,6 +654,15 @@ const footerLastRunRelative = footerLastRunAt
         <a class="item footer-privacy-link" href="/privacy">
           <span class="i18n-ja">Privacy</span>
           <span class="i18n-en" lang="en">Privacy</span>
+        </a>
+        <a class="item footer-privacy-link" href="/contact">
+          {/* 連絡先, not お問い合わせ: the footer must stay one line at 1240px
+              and above, where the build stack and body-queue detail are also
+              visible (tests/e2e/smoke.spec.ts "top-rank panel remains stable
+              across rail breakpoint widths"). The page itself keeps the longer
+              title. */}
+          <span class="i18n-ja">連絡先</span>
+          <span class="i18n-en" lang="en">Contact</span>
         </a>
         <span class="item">Cloudflare Pages</span>
       </div>
@@ -1469,6 +1531,7 @@ const footerLastRunRelative = footerLastRunAt
           if (url.startsWith("/archive/")) return lang === "ja" ? "Archiveページ" : "Archive page";
           if (url.startsWith("/status")) return lang === "ja" ? "Statusページ" : "Status page";
           if (url.startsWith("/about")) return lang === "ja" ? "Aboutページ" : "About page";
+          if (url.startsWith("/contact")) return lang === "ja" ? "お問い合わせ" : "Contact page";
           if (url.startsWith("/glossary")) return "Glossary";
           if (url.startsWith("/knowledge")) return lang === "ja" ? "Knowledgeレーン" : "Knowledge lane";
           if (url.startsWith("/arxiv")) return "arXiv lane";

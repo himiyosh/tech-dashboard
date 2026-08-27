@@ -148,7 +148,7 @@ npx -y modern-web-guidance@latest retrieve "accessibility,css,performance,securi
 | Typecheck | `npm run typecheck` | TypeScript 型チェック | 速い |
 | Worker Typecheck | `npm --prefix worker run typecheck && npm --prefix worker-summarizer run typecheck && npm --prefix worker-body run typecheck` | Cloudflare Worker / Queue consumer の型チェック | 速い |
 | Unit | `npm test` | Vitest による関数単位の検証 (要約 JSON パース、Web ロジック、`data/index.json` スキーマ) | 速い (~1s) |
-| Web build | `npm run build:web` | Cloudflare Pages と同じ Astro + Pagefind build を実行し、30秒 heartbeat、phase別 CPU/RSS・route familyを記録。Cloudflare Freeの20,000 filesから2,000 filesの安全余裕を引いた18,000 files、20分build ceilingから2分の余裕を引いた18分、sitemap/canonical HTML parity、redirect除外、内部detail link実在をfail-closedで検証 | 中程度 |
+| Web build | `npm run build:web` | Cloudflare Pages と同じ Astro + Pagefind build を実行し、30秒 heartbeat、phase別 CPU/RSS・route familyを記録。Cloudflare Freeの20,000 filesから2,000 filesの安全余裕を引いた18,000 files、20分build ceilingから2分の余裕を引いた18分、sitemap/canonical HTML parity (`noindex` 宣言ページのみ非収録を許容し、逆に `noindex` が sitemap にいる場合は失敗)、redirect除外、内部detail link実在をfail-closedで検証 | 中程度 |
 | E2E | `npm run test:e2e` | Playwright (Chromium) でトップ表示・記事詳細・言語切替を検証 | 中程度 (~30s + build) |
 | 5分判断ジャーニー | `node --import tsx scripts/measure-decision-journey.ts` | production Web buildを1回だけ生成してPlaywright previewへ再利用し、desktop/mobileのHome判断面、exact検索または正直な0件回復、RSS/OPML発見、実404回復、optionalな要約待ち状態を計測。step到達、操作上限、document navigation列、viewport/scroll、正確な回復経路を合否判定に使います。経過msは現行runのstdout JSONにだけ情報値として出し、履歴baselineへ保存、過去runと比較、delta警告・失敗には使いません。JSONは64KiB以下、`fieldData:false`でありfield dataやCore Web Vitalsではありません。検証済みの`web/dist`を再利用する場合だけ`--reuse-build`を指定 | 中程度 |
 | Secret scan | `npm run secrets:scan` | tracked file の secret / private key / 高リスクファイル名を検証 | 速い |
@@ -541,8 +541,10 @@ tech-dashboard/
 │  │  ├─ lib/freshness.ts    # source type 別 freshness 判定 (UI / quality-audit 共有)
 │  │  ├─ lib/source-meta.ts  # web 自己完結用の sources メタ複製 (R-005)
 │  │  ├─ lib/site.ts         # canonical URL 単一情報源 (R-004)
-│  │  ├─ lib/detail-addressability.ts # JSON-free な live/hot/warm detail route policy
-│  │  ├─ lib/sitemap.ts      # addressable route 列挙 + 50,000 URL / 50 MB fail-closed serializer
+│  │  ├─ lib/detail-addressability.ts # JSON-free な live/hot/warm detail route policy (到達可能性)
+│  │  ├─ lib/detail-indexability.ts   # sitemap 収録 + robots meta を決める索引可能性 policy (実本文が条件)
+│  │  ├─ lib/body-quality.ts          # JSON-free な「実本文か filler か」述語 (bodies.ts / e2e が共有)
+│  │  ├─ lib/sitemap.ts      # indexable route 列挙 + 50,000 URL / 50 MB fail-closed serializer
 │  │  ├─ styles/portal.css   # 全 CSS (モバイル最適化済み)
 │  │  └─ pages/
 │  │     ├─ index.astro      # ポータルトップ (Top-3 メダル / DailySummary 等)

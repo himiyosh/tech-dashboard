@@ -4,6 +4,7 @@
  * Body-file Phase B (LL-115) unit tests for the body cache helpers and the
  * two-call plain-text body prompts. Cloudflare-runtime-free modules only.
  */
+import { readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 import {
   bodyCacheEntryMatchesPublisherContract,
@@ -245,13 +246,15 @@ describe("body consumer health issue scope", () => {
 });
 
 describe("buildBodyPromptJa / buildBodyPromptEn (LL-115)", () => {
+  // The fixture excerpt is 127 chars -> the plan floors apply:
+  // JA 180-300 chars / EN 80-130 words / 2 sections.
   it("JA プロンプトは日本語本文・文字数・セクション見出し契約を含む", () => {
     const p = buildBodyPromptJa(entry);
-    expect(p).toContain("日本語の本文記事");
-    expect(p).toContain("700〜1100 文字");
+    expect(p).toContain("日本語の解説本文");
+    expect(p).toContain("180〜300 文字");
     // セクション見出しは「## 」行のみ許可し、他の Markdown は禁止のまま。
     expect(p).toContain("「## 」で始まる");
-    expect(p).toContain("3〜5 個のセクション");
+    expect(p).toContain("2 個のセクション");
     expect(p).toContain("リスト記号 (- , *) や他の Markdown 記法");
     // context が入っている
     expect(p).toContain("local-llm");
@@ -261,13 +264,35 @@ describe("buildBodyPromptJa / buildBodyPromptEn (LL-115)", () => {
 
   it("EN プロンプトは英語本文・語数・セクション見出し契約を含む", () => {
     const p = buildBodyPromptEn(entry);
-    expect(p).toContain("English article body");
-    expect(p).toContain("500-800 words");
+    expect(p).toContain("English explainer body");
+    expect(p).toContain("80-130 words");
     expect(p).toContain('beginning with "## "');
-    expect(p).toContain("3-5 sections");
+    expect(p).toContain("2 sections");
     expect(p).toContain("plain text only");
     expect(p).toContain("local-llm");
     expect(p).toContain("Source excerpt");
+  });
+
+  it("両プロンプトが提供文脈外の事実追加を禁止し、背景補完を指示しない", () => {
+    const ja = buildBodyPromptJa(entry);
+    const en = buildBodyPromptEn(entry);
+    expect(ja).toContain("記事情報に無い事実を書かない");
+    expect(ja).toContain("記事情報の外にある背景を補わない");
+    expect(ja).not.toContain("関連する周辺ツール");
+    expect(en).toContain("State no fact that is absent from the Article info block");
+    expect(en).not.toContain("Add useful background");
+    expect(en).not.toContain("adjacent tools, related industry moves");
+  });
+
+  it("要求分量は抜粋の長さに比例し、固定値ではない", () => {
+    const thickSnippet = `${"x".repeat(700)} and a closing clause.`;
+    const thin = buildBodyPromptJa({ ...entry, contentSnippet: "A short note about the release." });
+    const thick = buildBodyPromptJa({ ...entry, contentSnippet: thickSnippet });
+    expect(thin).toContain("180〜300 文字");
+    expect(thick).toContain("540〜900 文字");
+    expect(thick).toContain("3〜4 個のセクション");
+    expect(buildBodyPromptEn({ ...entry, contentSnippet: thickSnippet }))
+      .toContain("240-400 words");
   });
 
   it("fallback boilerplate の summary は context に含めない", () => {
@@ -293,5 +318,25 @@ describe("cleanBodyText (LL-115)", () => {
   });
   it("通常テキストはそのまま (trim のみ)", () => {
     expect(cleanBodyText("  普通の本文。  ")).toBe("普通の本文。");
+  });
+});
+
+describe("scripts/backfill-bodies.mjs は worker の body contract から外れない", () => {
+  const source = readFileSync("scripts/backfill-bodies.mjs", "utf8");
+
+  it("抜粋をプロンプト entry に渡す", () => {
+    // contextLines() (worker/src/body-generate.ts) が読む 10 フィールドのうち
+    // contentSnippet だけが promptEntry から抜けていたため、この script が
+    // 生成した本文はすべて "収集元の抜粋 / Source excerpt:" 行の無いプロンプト
+    // から書かれていた。LL-117 の「worker と完全に同じ contract」を実際に成立
+    // させるための決定論的ガード。
+    expect(source).toContain("contentSnippet: e.contentSnippet,");
+  });
+
+  it("抜粋の無い entry では本文を生成しない", () => {
+    expect(source).toContain(
+      'import { hasSufficientBodySourceGrounding } from "../harness/pipeline/source-grounding.ts";',
+    );
+    expect(source).toContain("if (!hasSufficientBodySourceGrounding(e)) return false;");
   });
 });

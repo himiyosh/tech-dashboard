@@ -270,7 +270,7 @@ const crawlParity = validateSitemapDist({
   distDirectory: dist,
 });
 console.log(
-  `BUILD: phase=crawl-parity state=completed sitemapUrls=${crawlParity.sitemapUrlCount} sitemapBytes=${crawlParity.sitemapByteLength} canonicalHtml=${crawlParity.canonicalHtmlCount} redirects=${crawlParity.redirectCount} internalDetailLinks=${crawlParity.internalDetailLinkCount} invalidInternalDetailLinks=${crawlParity.invalidInternalDetailLinkCount}`,
+  `BUILD: phase=crawl-parity state=completed sitemapUrls=${crawlParity.sitemapUrlCount} sitemapBytes=${crawlParity.sitemapByteLength} canonicalHtml=${crawlParity.canonicalHtmlCount} noindexHtml=${crawlParity.noindexHtmlCount} redirects=${crawlParity.redirectCount} internalDetailLinks=${crawlParity.internalDetailLinkCount} invalidInternalDetailLinks=${crawlParity.invalidInternalDetailLinkCount}`,
 );
 
 await runPhase("pagefind", pagefindCommand, ["--site", "dist"]);

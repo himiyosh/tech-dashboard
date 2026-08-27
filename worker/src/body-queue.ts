@@ -17,6 +17,7 @@
  */
 import type { NormalizedEntry } from "../../harness/types.ts";
 import { hasUsableGroundedBilingualSummary } from "../../harness/pipeline/summary-quality.ts";
+import { hasSufficientBodySourceGrounding } from "../../harness/pipeline/source-grounding.ts";
 import { type BodyJob } from "./body-generate.ts";
 import { roundRobinStart } from "./summary-queue.ts";
 
@@ -118,7 +119,15 @@ export function needsBody(
   bodiesPresent: ReadonlySet<string>,
 ): boolean {
   if (bodiesPresent.has(entry.id)) return false;
-  return hasUsableGroundedBilingualSummary(entry, entry);
+  // The body gate is stricter than the summary gate: a body needs the source
+  // EXCERPT, not just a descriptive title (see
+  // hasSufficientBodySourceGrounding). Without this the collector keeps
+  // enqueueing entries that worker-body then rejects with "insufficient source
+  // grounding", burning two retries each before the DLQ.
+  return (
+    hasSufficientBodySourceGrounding(entry) &&
+    hasUsableGroundedBilingualSummary(entry, entry)
+  );
 }
 
 export function selectBodyJobBatch(

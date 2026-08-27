@@ -611,6 +611,7 @@ describe("public feeds", () => {
       { length: RSS_ITEM_LIMIT + 5 },
       (_, index) => ({
         ...feedEntries[0],
+        publicationHold: false,
         sourceType: "blog",
         category: "agent-fw",
         importance: 2,
@@ -658,6 +659,7 @@ describe("public feeds", () => {
   it("escapes channel and item values into well-formed XML", () => {
     const entry: NormalizedEntry = {
       ...feedEntries[0],
+      publicationHold: false,
       sourceType: "blog",
       category: "agent-fw",
       importance: 2,

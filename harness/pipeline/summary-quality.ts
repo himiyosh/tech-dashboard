@@ -1,6 +1,7 @@
 import {
   findSummaryGroundingIssues,
   hasSufficientSourceGrounding,
+  normalizedSourceText,
   type GroundingIssue,
   type SourceGroundingInput,
 } from "./source-grounding.ts";
@@ -90,6 +91,111 @@ export function hasUsableBilingualSummary(
   );
 }
 
+/**
+ * Verbatim-reuse guard.
+ *
+ * A summary that reproduces the collected excerpt is not a summary: it is text
+ * the SOURCE wrote, republished under our byline. worker/src/prompt.ts asks the
+ * model not to do it, but a prompt line is not a guard, and until now nothing
+ * in this module ever read `contentSnippet` when judging a summary.
+ *
+ * Two deterministic signals, both measured on data/index.json (1,917 live
+ * entries, 2026-08-26):
+ *
+ * EXACT  - the normalized summary occurs verbatim inside the normalized
+ *          excerpt (or swallows the whole excerpt). No false positive is
+ *          possible: the entire summary is source text.
+ * COVER  - at least VERBATIM_COVERAGE_RATIO of the summary's characters sit
+ *          inside runs of >= VERBATIM_SHINGLE_CHARS characters shared with the
+ *          excerpt.
+ *
+ * Combined firings, measured: 159 live entries, all on summaryEn, zero on
+ * summaryJa.
+ *
+ * Why coverage and NOT "longest shared run >= N": one long shared run is not
+ * evidence of copying. A >= 40-char shared run flags 249 live summaryEn, and
+ * that band is dominated by genuine rewrites reusing a single source phrase
+ * ("Google's open-source TPU microbenchmark suite", "generative AI inference
+ * recommendations", "project-level language server settings being ignored").
+ *
+ * VERBATIM_SHINGLE_CHARS = 24 sits above the point where product names
+ * dominate: the longest pure product/version run in the corpus is 33 chars
+ * ("watsonx orchestrate adk extension"), which covers 0.22 of a 150-char
+ * summary and cannot reach the 0.50 ratio on its own. At a 16-char shingle the
+ * ratio fires on 2 summaryJa, both legitimate entity-name-heavy rewrites; at 24
+ * it fires on 0.
+ */
+export const VERBATIM_SHINGLE_CHARS = 24;
+export const VERBATIM_COVERAGE_RATIO = 0.5;
+
+export type VerbatimReuseField = "summaryJa" | "summaryEn";
+
+export interface VerbatimReuseIssue {
+  code: "verbatim-source-reuse";
+  field: VerbatimReuseField;
+  /** Share of the summary covered by runs shared verbatim with the excerpt. */
+  coverage: number;
+  /** True when summary and excerpt contain one another outright. */
+  exact: boolean;
+}
+
+function verbatimCoverage(summary: string, snippet: string): number {
+  const chars = [...summary];
+  const total = chars.length;
+  if (total < VERBATIM_SHINGLE_CHARS) return 0;
+  const covered = new Uint8Array(total);
+  for (let start = 0; start + VERBATIM_SHINGLE_CHARS <= total; start++) {
+    const shingle = chars.slice(start, start + VERBATIM_SHINGLE_CHARS).join("");
+    if (snippet.includes(shingle)) {
+      covered.fill(1, start, start + VERBATIM_SHINGLE_CHARS);
+    }
+  }
+  let hits = 0;
+  for (const flag of covered) hits += flag;
+  return hits / total;
+}
+
+function verbatimReuseIssue(
+  source: SourceGroundingInput,
+  value: string | null | undefined,
+  field: VerbatimReuseField,
+): VerbatimReuseIssue | null {
+  const snippet = normalizedSourceText(source.contentSnippet);
+  const summary = normalizedSourceText(value);
+  // No excerpt means no comparison is possible, so there is no evidence either
+  // way and this specific check reports nothing. It does NOT weaken any other
+  // guard: a missing snippet is already reported by hasSufficientSourceGrounding
+  // and the caller still runs hasUsableBilingualSummary and
+  // findSummaryGroundingIssues.
+  if (!snippet || !summary) return null;
+  const exact = snippet.includes(summary) || summary.includes(snippet);
+  const coverage = verbatimCoverage(summary, snippet);
+  if (!exact && coverage < VERBATIM_COVERAGE_RATIO) return null;
+  return { code: "verbatim-source-reuse", field, coverage, exact };
+}
+
+/**
+ * Per-field verbatim-reuse findings for a generated summary pair. Empty array
+ * means no reuse was detected; each issue carries the measured coverage so the
+ * caller can log evidence rather than a bare boolean.
+ */
+export function findVerbatimSourceReuse(
+  source: SourceGroundingInput,
+  generated: SummaryQualityInput,
+): VerbatimReuseIssue[] {
+  return [
+    verbatimReuseIssue(source, generated.summaryJa, "summaryJa"),
+    verbatimReuseIssue(source, generated.summaryEn, "summaryEn"),
+  ].filter((issue): issue is VerbatimReuseIssue => issue !== null);
+}
+
+export function hasVerbatimSourceReuse(
+  source: SourceGroundingInput,
+  generated: SummaryQualityInput,
+): boolean {
+  return findVerbatimSourceReuse(source, generated).length > 0;
+}
+
 export function hasUsableGroundedBilingualSummary(
   source: SourceGroundingInput,
   generated: SummaryQualityInput,
@@ -98,36 +204,64 @@ export function hasUsableGroundedBilingualSummary(
   return (
     hasSufficientSourceGrounding(source) &&
     hasUsableBilingualSummary(generated, additionalTitleCandidates) &&
-    findSummaryGroundingIssues(source, generated).length === 0
+    findSummaryGroundingIssues(source, generated).length === 0 &&
+    findVerbatimSourceReuse(source, generated).length === 0
   );
 }
 
 export function needsSummaryGeneration(input: SummaryQualityInput): boolean {
   return (
     !hasUsableBilingualSummary(input) ||
-    findSummaryGroundingIssues(input, input).length > 0
+    findSummaryGroundingIssues(input, input).length > 0 ||
+    findVerbatimSourceReuse(input, input).length > 0
   );
 }
 
 export interface SummaryGroundingSanitization<T extends SummaryQualityInput> {
   entry: T;
+  /** A MATERIAL GROUNDING conflict was found. Kept category-pure on purpose. */
   rejected: boolean;
   issues: GroundingIssue[];
+  /** Verbatim reuse of the source excerpt. Reported separately from `rejected`. */
+  verbatimRejected: boolean;
+  verbatimIssues: VerbatimReuseIssue[];
 }
 
 export function sanitizeStoredSummaryGrounding<T extends SummaryQualityInput>(
   entry: T,
 ): SummaryGroundingSanitization<T> {
   if (!hasUsableBilingualSummary(entry)) {
-    return { entry, rejected: false, issues: [] };
+    return {
+      entry,
+      rejected: false,
+      issues: [],
+      verbatimRejected: false,
+      verbatimIssues: [],
+    };
   }
   const issues = findSummaryGroundingIssues(entry, entry);
-  if (issues.length === 0) {
-    return { entry, rejected: false, issues };
+  const verbatimIssues = findVerbatimSourceReuse(entry, entry);
+  if (issues.length === 0 && verbatimIssues.length === 0) {
+    return {
+      entry,
+      rejected: false,
+      issues,
+      verbatimRejected: false,
+      verbatimIssues,
+    };
   }
 
   const titleJaRejected = issues.some((issue) => issue.field === "titleJa");
   const titleEnRejected = issues.some((issue) => issue.field === "titleEn");
+  // A material grounding conflict invalidates BOTH summaries: stored text that
+  // contradicts the source cannot be trusted in either language. Verbatim reuse
+  // is per-field, because in practice only one language is copied (measured:
+  // 159 live entries, all summaryEn, zero summaryJa), and blanking a genuine
+  // Japanese summary alongside a copied English one would throw away good
+  // content and double the regeneration backlog for no evidence.
+  const groundingRejected = issues.length > 0;
+  const verbatimJa = verbatimIssues.some((issue) => issue.field === "summaryJa");
+  const verbatimEn = verbatimIssues.some((issue) => issue.field === "summaryEn");
   return {
     entry: {
       ...entry,
@@ -141,10 +275,12 @@ export function sanitizeStoredSummaryGrounding<T extends SummaryQualityInput>(
           ? entry.title ?? ""
           : ""
         : entry.titleEn,
-      summaryJa: "",
-      summaryEn: "",
+      summaryJa: groundingRejected || verbatimJa ? "" : entry.summaryJa,
+      summaryEn: groundingRejected || verbatimEn ? "" : entry.summaryEn,
     },
-    rejected: true,
+    rejected: groundingRejected,
     issues,
+    verbatimRejected: verbatimIssues.length > 0,
+    verbatimIssues,
   };
 }

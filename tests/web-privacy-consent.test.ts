@@ -93,7 +93,7 @@ describe("privacy consent contract", () => {
   it("publishes the confirmed operator, jurisdiction, and privacy route", () => {
     expect(PUBLIC_OPERATOR_NAME).toBe("Studio344");
     expect(PRIVACY_JURISDICTION).toBe("Japan");
-    expect(PRIVACY_LAST_UPDATED).toBe("2026-07-29");
+    expect(PRIVACY_LAST_UPDATED).toBe("2026-08-27");
     expect(SITEMAP_STATIC_PATHS).toContain("/privacy/");
   });
 
@@ -195,7 +195,9 @@ describe("privacy consent contract", () => {
     expect(page).toContain("<code>/cdn-cgi/rum</code>");
     expect(page).not.toContain("独立したアクセス解析サービスを使用していません");
     expect(page).not.toContain("does not use a separate analytics service");
-    expect(page).toContain("D1のactive identity、票、rate-limit行には現在、自動削除期限を設定していません");
+    expect(page).toContain(
+      "D1 に保存する有効な識別子・投票・レート制限の各行には、現在のところ自動削除の期限を設定していません",
+    );
     expect(page).toContain("ExternalLinkHint");
     expect(page).toContain('aria-controls="reaction-delete-confirmation"');
     expect(page).toContain('descriptionEn="TECH Dashboard privacy, advertising consent');

@@ -19,7 +19,11 @@ import {
   hasKnownProductBodyRecordConflict,
   normalizeKnownProductNames,
 } from "../../harness/pipeline/product-name.ts";
-import { hasUsableGroundedBilingualSummary } from "../../harness/pipeline/summary-quality.ts";
+import {
+  VERBATIM_COVERAGE_RATIO,
+  VERBATIM_SHINGLE_CHARS,
+  hasUsableGroundedBilingualSummary,
+} from "../../harness/pipeline/summary-quality.ts";
 import { hasSufficientSourceGrounding } from "../../harness/pipeline/source-grounding.ts";
 import { canonicalUrlKey, normalizeMediaUrl } from "../../harness/pipeline/url.ts";
 import { applyDeterministicContentFallback } from "./content-fallback.ts";
@@ -1525,9 +1529,11 @@ export async function runHarness(
   let summaryFallbacks = 0;
   let bodyFallbacks = 0;
   let summaryGroundingRejected = 0;
+  let summaryVerbatimRejected = 0;
   const contentReady = afterCache.map((entry) => {
     const result = applyDeterministicContentFallback(entry);
     summaryGroundingRejected += result.summaryGroundingRejected;
+    summaryVerbatimRejected += result.summaryVerbatimRejected;
     summaryFallbacks += result.summaryFallbacks;
     bodyFallbacks += result.bodyFallbacks;
     return result.entry;
@@ -1535,6 +1541,11 @@ export async function runHarness(
   if (summaryGroundingRejected > 0) {
     console.warn(
       `[worker] rejected ${summaryGroundingRejected} materially ungrounded summaries before publish`,
+    );
+  }
+  if (summaryVerbatimRejected > 0) {
+    console.warn(
+      `[worker] rejected ${summaryVerbatimRejected} summaries that reused the source excerpt verbatim (shingle=${VERBATIM_SHINGLE_CHARS}, ratio=${VERBATIM_COVERAGE_RATIO}); they are re-queued for regeneration`,
     );
   }
   const retainedEntries = contentReady.filter((entry) => entry.archiveTier !== "dropped");

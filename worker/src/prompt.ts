@@ -138,6 +138,7 @@ export function buildQueuePrompt(e: PromptEntry): string {
     ``,
     `importance: 3=major release/critical announcement, 2=important feature/research, 1=routine update.`,
     `Never copy deterministic fallback text such as "AI summary not yet available".`,
+    `HARD CONSTRAINT: no run of 24 or more consecutive characters of summaryJa or summaryEn may appear verbatim in the collected context, except for product, company, model, or version names. Rephrase every borrowed clause.`,
   ].join("\n");
 }
 
@@ -169,6 +170,7 @@ export function buildSummaryPrompt(e: PromptEntry): string {
     `Escape ASCII double quotes inside string values as \\". In titleJa, prefer Japanese corner brackets 「」 instead of ASCII double quotes.`,
     `Do NOT write a body or any long-form text. Keep the whole response short.`,
     `Write a genuine summary of what the article is about and why it matters -- do NOT copy or truncate the opening sentence of the excerpt.`,
+    `HARD CONSTRAINT: no run of 24 or more consecutive characters of either summary may appear verbatim in the source excerpt, except for product, company, model, or version names. Rephrase every borrowed clause in your own words. A summary that reproduces the excerpt is rejected and the entry is regenerated.`,
     `Every summary must be grammatically complete: never cut off mid-sentence or mid-word, and always end with proper punctuation.`,
     `Treat the collected title and source excerpt as the factual boundary. Do not invent a feature when the source describes a pricing plan, and do not describe an expansion to a new platform as the first launch of an existing product.`,
     `Preserve material facts such as plan type, price, target region, payment method, target platform, and prior-platform expansion in BOTH summaries when they appear in the source context.`,

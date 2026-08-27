@@ -1,4 +1,5 @@
 import type { Lang, SourceType } from "../types.ts";
+import { hasMeaningfulSourceSnippet } from "../../web/src/lib/source-snippet.ts";
 
 /**
  * Bounded, LLM-independent grounding checks for generated summaries and bodies.
@@ -53,9 +54,8 @@ export interface GroundingIssue {
   field: GroundingField;
 }
 
-const SOURCE_SNIPPET_MIN_CHARS = 48;
-const SOURCE_SNIPPET_MIN_WORDS = 8;
-const SOURCE_SNIPPET_MIN_CJK = 20;
+// SOURCE_SNIPPET_MIN_* now live in web/src/lib/source-snippet.ts so the
+// pipeline gate and the build-time render guard share one definition.
 const TITLE_MIN_CHARS = 20;
 const TITLE_MIN_WORDS = 4;
 const TITLE_MIN_CJK = 12;
@@ -173,6 +173,18 @@ function normalized(value: string | null | undefined): string {
   return compact(value).toLocaleLowerCase("en-US");
 }
 
+/**
+ * Source-text normalization shared with the verbatim-reuse guard in
+ * summary-quality.ts. Exported so there is exactly ONE definition of "the same
+ * text": HTML entities decoded, tags stripped, NFKC, whitespace collapsed,
+ * lowercased. A second, weaker normalizer (plain whitespace + lowercase) would
+ * silently miss every excerpt that carries `&rsquo;` or an inline tag, which is
+ * a large share of the RSS-derived snippets in data/index.json.
+ */
+export function normalizedSourceText(value: string | null | undefined): string {
+  return normalized(value);
+}
+
 function wordTokens(value: string): string[] {
   return compact(value).match(/[\p{L}\p{N}][\p{L}\p{N}+'’._/-]*/gu) ?? [];
 }
@@ -193,16 +205,15 @@ function isLowInformationReleaseTitle(value: string): boolean {
   return semantic.length <= 2;
 }
 
+/**
+ * Delegates to the single shared implementation in
+ * web/src/lib/source-snippet.ts so this pipeline gate and the build-time render
+ * guard in web/src/lib/bodies.ts can never answer differently for the same
+ * entry. Behavior is unchanged: same thresholds, same title-echo rejection,
+ * same NFKC/entity/tag normalization.
+ */
 function hasMeaningfulSnippet(input: SourceGroundingInput): boolean {
-  const snippet = compact(input.contentSnippet);
-  if (!snippet || normalized(snippet) === normalized(input.title)) return false;
-  return (
-    snippet.length >= SOURCE_SNIPPET_MIN_CHARS &&
-    (
-      wordTokens(snippet).length >= SOURCE_SNIPPET_MIN_WORDS ||
-      cjkCount(snippet) >= SOURCE_SNIPPET_MIN_CJK
-    )
-  );
+  return hasMeaningfulSourceSnippet(input);
 }
 
 function hasDescriptiveTitle(input: SourceGroundingInput): boolean {
@@ -218,6 +229,37 @@ export function hasSufficientSourceGrounding(
   input: SourceGroundingInput,
 ): boolean {
   return hasMeaningfulSnippet(input) || hasDescriptiveTitle(input);
+}
+
+/**
+ * Body-specific grounding gate. Bodies require the source EXCERPT; the
+ * descriptive-title disjunct above is not enough for them.
+ *
+ * Why the two gates differ: a 2-3 sentence summary can be written honestly from
+ * a descriptive headline, but a 300-900 character explainer cannot. The
+ * disjunct is exactly what produced the 77 stored bodies that assert facts no
+ * source supplied - 53 of them generated from an entirely empty
+ * contentSnippet (e.g. id a1f18e3cdc190979, "Introducing Gemini 3.7 Flash",
+ * snippet "", bodyJa 861 chars).
+ *
+ * Why this is NOT an AND of the two predicates. Measured over the 1,917 live
+ * entries in data/index.json:
+ *   - 1,837 pass hasSufficientSourceGrounding (the current OR)
+ *   - 1,649 carry a meaningful excerpt
+ *   - 1,379 satisfy both
+ *   - 270 carry a meaningful excerpt but fail hasDescriptiveTitle (short or
+ *     version-shaped headline, e.g. release feeds)
+ *   - 188 pass only on the title
+ * An AND would discard those 270 entries even though their source text is
+ * real, and would also break the summary path (this predicate is shared with
+ * six summary call sites). The defect is the title disjunct, not the absence
+ * of a conjunction, so this gate drops the disjunct instead of intersecting
+ * the two.
+ */
+export function hasSufficientBodySourceGrounding(
+  input: SourceGroundingInput,
+): boolean {
+  return hasMeaningfulSnippet(input);
 }
 
 function sourceEvidence(input: SourceGroundingInput): string {

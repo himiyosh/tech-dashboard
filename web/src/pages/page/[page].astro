@@ -17,6 +17,7 @@ import {
 } from "../../lib/data.ts";
 import {
   paginationPageNumbers,
+  timelinePagePath,
   totalPageCount,
 } from "../../lib/route-inventory.ts";
 
@@ -45,7 +46,14 @@ const breadcrumb = [
 ];
 ---
 
-<Portal pageKey="timeline" title={`Timeline · p.${page} — TECH Dashboard`} breadcrumb={breadcrumb}>
+<Portal
+  pageKey="timeline"
+  title={`Timeline · p.${page} — TECH Dashboard`}
+  canonicalPath={timelinePagePath(page)}
+  description={`AI 技術アップデートのタイムライン ${page}/${total} ページ目。収録 ${MAIN_TIMELINE_ENTRIES.length} 件のうち ${pageEntries.length} 件を新着順・出典付き AI 要約で掲載します。`}
+  descriptionEn={`Page ${page} of ${total} of the TECH Dashboard timeline: ${pageEntries.length} of ${MAIN_TIMELINE_ENTRIES.length} collected updates in recency order with sourced AI summaries.`}
+  breadcrumb={breadcrumb}
+>
   <PageHero
     className="page-hero-timeline"
     kicker="Timeline archive"

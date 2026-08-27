@@ -32,7 +32,7 @@ import {
 } from "../../worker/src/body-generate.ts";
 import {
   hasMaterialBodyGroundingConflict,
-  hasSufficientSourceGrounding,
+  hasSufficientBodySourceGrounding,
   type SourceGroundingInput,
 } from "../../harness/pipeline/source-grounding.ts";
 import { type BodyCacheEntry, putBodyCacheEntry } from "../../worker/src/body-cache.ts";
@@ -181,7 +181,7 @@ export function isBodyEntryComplete(
   if (!structurallyComplete) return false;
   if (!source) return true;
   return (
-    hasSufficientSourceGrounding(source) &&
+    hasSufficientBodySourceGrounding(source) &&
     !hasMaterialBodyGroundingConflict(source, entry)
   );
 }
@@ -209,7 +209,7 @@ async function processJob(env: Env, job: BodyJob): Promise<void> {
   const reasoning = env.BODY_REASONING_EFFORT || DEFAULT_REASONING;
   const timeoutMs = Number(env.BODY_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
   const maxTokens = Number(env.BODY_MAX_TOKENS ?? DEFAULT_MAX_TOKENS);
-  if (!hasSufficientSourceGrounding(job.entry)) {
+  if (!hasSufficientBodySourceGrounding(job.entry)) {
     throw new Error(`insufficient source grounding for ${job.url}`);
   }
 

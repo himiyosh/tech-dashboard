@@ -38,9 +38,13 @@ import {
   isPublishableEntry,
 } from "./entry-publication.ts";
 import { isKnowledgeEligibleEntry } from "./knowledge-eligibility.ts";
+import { isRoutineReleaseEntry } from "./release-signal.ts";
+import { isDefaultMutedCategory } from "./category-visibility.ts";
 import { sourceAuthority } from "./source-meta.ts";
 import { normalizeTagKey } from "./tag-normalize.ts";
 import { TAG_PAGE_MIN_ENTRIES } from "./route-inventory.ts";
+import { SITE_PUBLICATION_GATE } from "./publication-gate-data.ts";
+import type { PublicationGate } from "./publication-gate.ts";
 
 export {
   effectiveTitleLanguage,
@@ -72,6 +76,13 @@ export type { Category, CategoryGroup, CategoryMeta };
 
 export interface NormalizedEntry {
   id: string;
+  /**
+   * Build-time publication-gate decision (publication-gate.ts). True while the
+   * entry is queued: it stays in every listing and links out to the source
+   * (entry-destination.ts), and receives no /e/[id]/ route. Required so a
+   * collection built straight from JSON cannot reach a route consumer.
+   */
+  publicationHold: boolean;
   source: string;
   sourceType: "blog" | "release" | "changelog" | "paper" | "community";
   url: string;
@@ -171,21 +182,44 @@ export interface WorkerHealth {
   enrichmentRemaining?: number;
 }
 
+/** The entry shape data/index.json actually stores: no build-time annotation. */
+export type RawIndexEntry = Omit<NormalizedEntry, "publicationHold">;
+
 interface IndexPayload {
   generatedAt: string;
   count: number;
   health?: WorkerHealth;
-  entries: NormalizedEntry[];
+  entries: RawIndexEntry[];
 }
 
 const data = indexJson as IndexPayload;
+
+/**
+ * Attach the publication-gate decision. This is the ONLY place a stored entry
+ * becomes a `NormalizedEntry`, so every downstream route, card, sitemap URL and
+ * feed sees an explicit decision. The gate is a required argument on purpose:
+ * a permissive default would silently republish the whole corpus if a caller
+ * forgot it.
+ */
+export function applyPublicationGate<T extends RawIndexEntry>(
+  entries: readonly T[],
+  gate: PublicationGate,
+): Array<T & { publicationHold: boolean }> {
+  return entries.map((entry) => ({
+    ...entry,
+    publicationHold: !gate.isReleased(entry.id),
+  }));
+}
 
 function sameTitleValue(left: string, right: string): boolean {
   return left.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase() ===
     right.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
 }
 
-export const RAW_ENTRIES: readonly NormalizedEntry[] = data.entries;
+export const RAW_ENTRIES: readonly NormalizedEntry[] = applyPublicationGate(
+  data.entries,
+  SITE_PUBLICATION_GATE,
+);
 /** Entries with a real, generated AI summary (decision-critical slots, feeds). */
 export const PUBLISHABLE_ENTRIES: readonly NormalizedEntry[] = RAW_ENTRIES.filter(isPublishableEntry);
 /** Entries still waiting for an AI summary (rendered with a pending state). */
@@ -436,8 +470,14 @@ export function latest(n: number): NormalizedEntry[] {
 export function featured(): NormalizedEntry | undefined {
   const isRoutineRelease = (e: NormalizedEntry) =>
     e.sourceType === "release" || e.sourceType === "changelog";
+  // The Spotlight is a curated "what matters" slot, so lanes muted by default
+  // (routine per-build release noise) never claim it. Unlike the timeline this
+  // is decided at build time and not re-opened by the reader's filter: opting
+  // a lane back in restores it in the article list and the top-stories board,
+  // which is where its entries belong.
   const eligible = (e: NormalizedEntry) =>
-    isPublishableEntry(e) && !isLowSignalRelease(e) && !isOffTopicForHero(e);
+    isPublishableEntry(e) && !isLowSignalRelease(e) && !isOffTopicForHero(e) &&
+    !isRoutineReleaseEntry(e) && !isDefaultMutedCategory(e.category);
   return (
     // 1. High-importance real announcement/blog with a real summary.
     MAIN_TIMELINE_ENTRIES.find(

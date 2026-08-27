@@ -1291,38 +1291,117 @@ html:not([data-lang="en"]) .i18n-en {
   transform: translateX(-120%);
 }
 
+/* Hero rail tiles. Figure beside caption, in the same figure / caption / scope
+ * ramp the PageHero metric tiles use, so the home hero reads as the same
+ * instrument as /about, /status, /arxiv and /categories rather than three
+ * paragraphs of prose restating the headline next to it. */
 .banner-fact {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 4px;
+  align-items: center;
   padding: 8px 10px;
   border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
   border-radius: 10px;
   background: color-mix(in srgb, var(--surface) 62%, transparent);
+  overflow: hidden;
 }
 
-.banner-fact strong {
+.banner-fact .fact-figure {
+  grid-column: 1;
+  margin: 0;
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.banner-fact .fact-unit {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* flex-column, not grid: the display:none half of each i18n pair must leave no
+ * residual gap behind. */
+.banner-fact .fact-text {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.banner-fact .fact-cap {
   display: block;
   margin-bottom: 3px;
-  color: var(--text);
-  font-size: 11px;
+  color: var(--muted-2);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+/* Uppercase + tracking is a Latin device; Japanese labels take neither. */
+.banner-fact .fact-cap .i18n-en {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.banner-fact-head {
+.banner-fact .fact-scope {
+  display: block;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 9.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.banner-fact .fact-stamp {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted-2);
+  white-space: nowrap;
+}
+
+/* 14 daily bars: the shape of the last two weeks, not a second number. */
+.banner-fact .fact-spark {
+  grid-column: 2;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+
+.banner-fact .fact-spark i {
+  flex: 1 1 0;
+  min-width: 0;
+  height: max(1px, var(--spark-level, 0%));
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.banner-fact .fact-spark i.is-zero {
+  height: 1px;
+  background: color-mix(in srgb, var(--border) 90%, transparent);
+}
+
+/* Run health reads as machinery under the tiles, not as a fourth tile. */
+.banner-facts-status {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 3px;
-}
-
-.banner-fact-head strong {
-  margin-bottom: 0;
-}
-
-.banner-fact span {
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0 2px;
   color: var(--muted);
-  font-size: 11.5px;
-  line-height: 1.35;
+  font-size: 10.5px;
+  line-height: 1.4;
 }
 
 .banner-run-state {
@@ -1955,10 +2034,6 @@ aside.right:not(.category-side-panel) {
   color: #c4b5fd;
 }
 
-.bt-aider {
-  background: rgba(163, 161, 106, 0.18);
-  color: #d6d3a1;
-}
 
 .bt-opencode {
   background: rgba(165, 180, 252, 0.16);
@@ -2890,9 +2965,11 @@ main {
   border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
   border-radius: 7px;
   background: color-mix(in srgb, var(--bg-2) 52%, transparent);
-  font-size: 12.4px;
+  /* The summary is the card's decision surface (PRODUCT.md #1): keep it a
+   * touch larger and looser than the metadata rows around it. */
+  font-size: 13px;
   color: var(--text-2);
-  line-height: 1.42;
+  line-height: 1.55;
   margin-bottom: 0;
   min-width: 0;
 }
@@ -2900,6 +2977,7 @@ main {
 .card .summary-en {
   font-size: 11.5px;
   color: var(--muted);
+  line-height: 1.45;
 }
 
 .card .summary .s-text {
@@ -2908,6 +2986,12 @@ main {
   display: -webkit-box;
   min-width: 0;
   -webkit-box-orient: vertical;
+  /* 3 lines for the primary (JA) summary so 90-150 char summaries are fully
+   * readable without the hover tooltip; EN stays at 2 below. */
+  -webkit-line-clamp: 3;
+}
+
+.card .summary-en .s-text {
   -webkit-line-clamp: 2;
 }
 
@@ -4115,6 +4199,28 @@ body {
   }
 }
 
+/* The footer carries one more link since /contact was added, so the width at
+   which its full row (build stack + body-queue detail + four links) still fits
+   on one line moved up. Tighten the gap from 1359px down instead of hiding
+   items: tests/e2e/smoke.spec.ts requires the stack and body-queue to stay
+   VISIBLE at 1240px and above while the row stays one line (<= 36px). */
+@media (min-width: 1240px) and (max-width: 1359px) {
+  .footer-inner {
+    gap: 12px;
+    padding: 7px 16px;
+  }
+
+  .footer-inner .item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .footer-inner .footer-run-link {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+}
+
 @media (min-width: 721px) and (max-width: 1239px) {
   .footer-inner {
     gap: 12px;
@@ -5232,10 +5338,13 @@ html, body {
     font-size: 21px;
     line-height: 1.22;
   }
+  /* The count chip shares the h1 line box, and at 390px it costs ~95px of a
+   * 346px line — enough to wrap a longer page title onto a second line and
+   * make otherwise identical heroes different heights. The same figure is
+   * already a metric tile below (Guides / Papers / Live entries), so drop the
+   * chip on mobile rather than let it reflow the heading. */
   .page-hero .page-count {
-    margin-left: 6px;
-    vertical-align: 3px;
-    font-size: 10px;
+    display: none;
   }
   .page-hero-description {
     display: -webkit-box;
@@ -5612,4 +5721,157 @@ html:not([data-advertising-consent="allowed"]) .ad-slot {
 
 .ad-slot:has(ins.adsbygoogle[data-ad-status="filled"]) .ad-slot-label {
   display: block;
+}
+
+/* ============ Timeline category filter (category-visibility.ts) ============ */
+/* Server-rendered default: cards in default-muted categories are hidden even
+ * without JavaScript; category-visibility-client.ts replays the reader's
+ * stored overrides by rewriting data-catvis. Scoped to timeline lists only so
+ * category pages and archives always show their own entries. */
+[data-category-filter-scope] article.card[data-catvis="muted"] {
+  display: none;
+}
+
+/* Daily Summary "top stories" rows follow the same policy, so the board never
+ * promotes a lane the reader muted. Global (not component-scoped) because the
+ * ancestor lives on the timeline section in index.astro. */
+[data-category-filter-scope] .board > li[data-catvis="muted"] {
+  display: none;
+}
+
+.cat-filter {
+  margin: 0 0 12px;
+  padding: 10px 12px 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-2) 52%, transparent);
+}
+
+.cat-filter-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cat-filter-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.cat-filter-icon {
+  font-size: 13px;
+}
+
+.cat-filter-note {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+  background: var(--bg-2);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+
+.cat-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cat-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 4px 12px;
+  border: 1px solid color-mix(in srgb, var(--chip-color, var(--border)) 45%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--chip-color, var(--bg-2)) 12%, var(--bg-2));
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.cat-filter-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--chip-color, var(--muted));
+  flex-shrink: 0;
+}
+
+/* Greyed = hidden from the timeline until the reader enables it. */
+.cat-filter-chip[data-state="muted"] {
+  opacity: 0.5;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--border) 90%, transparent);
+  background: transparent;
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.cat-filter-chip[data-state="muted"] .cat-filter-dot {
+  background: var(--muted);
+}
+
+.cat-filter-chip:hover {
+  opacity: 1;
+}
+
+.cat-filter-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Mobile: 13 wrapped pill chips cost ~7 rows (~413px, half the screen), and a
+ * horizontal rail hid most of the list behind a scroll gesture. Lay them out
+ * at the same density as the Daily Summary "Top categories + lanes" index
+ * instead: a two-column grid where every lane and its mute state is visible
+ * at a glance, with no scrolling in either axis. */
+@media (max-width: 768px) {
+  .cat-filter {
+    padding: 8px 10px 10px;
+  }
+
+  .cat-filter-header {
+    margin-bottom: 8px;
+  }
+
+  .cat-filter-chips {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 6px;
+  }
+
+  .cat-filter-chip {
+    display: grid;
+    grid-template-columns: 8px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 6px;
+    width: 100%;
+    min-height: 30px;
+    padding: 5px 7px;
+    border-radius: 5px;
+    font-size: 11.5px;
+    text-align: left;
+  }
+
+  .cat-filter-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }

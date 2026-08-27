@@ -417,6 +417,7 @@ describe("localized social metadata", () => {
 
     const entryBase: NormalizedEntry = {
       id: "42230b0b340ad2a5",
+      publicationHold: false,
       source: "google-deepmind",
       sourceType: "blog",
       url: common.sourceUrl,

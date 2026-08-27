@@ -72,6 +72,24 @@ describe("needsBody (LL-115)", () => {
   it("要約が pending fallback → false (先に要約が要る)", () => {
     expect(needsBody(entry({ id: "a", summaryJa: PENDING_JA, summaryEn: "" }), new Set())).toBe(false);
   });
+  it("実要約はあるが抜粋が空の entry は本文生成へ進めない", () => {
+    // The 53-page fabrication case: a real bilingual summary plus an empty
+    // contentSnippet used to pass needsBody through the descriptive-title
+    // disjunct in hasSufficientSourceGrounding.
+    expect(
+      needsBody(
+        entry({
+          id: "no-snippet",
+          title: "Introducing Gemini 3.7 Flash",
+          titleJa: "Gemini 3.7 Flash を発表",
+          titleEn: "Introducing Gemini 3.7 Flash",
+          contentSnippet: "",
+        }),
+        new Set(),
+      ),
+    ).toBe(false);
+  });
+
   it("source contextが不足するtitle-only entryは本文生成へ進めない", () => {
     expect(
       needsBody(
@@ -158,6 +176,30 @@ describe("body retention policy", () => {
             },
           },
           [cursorEntry],
+          "2026-07-29T00:00:00.000Z",
+        );
+
+        expect(result.pruned).toBe(1);
+        expect(result.payload.bodies).toEqual({});
+      });
+
+      it("prunes a stored body whose entry has no usable source excerpt", () => {
+        const result = pruneInvalidBodyRecords(
+          {
+            generatedAt: "2026-07-28T00:00:00.000Z",
+            count: 1,
+            bodies: {
+              "no-snippet": {
+                bodyJa: "Gemini 3.7 Flash は推論速度を大幅に改善したと説明されている。",
+                bodyEn: "Gemini 3.7 Flash is described as a latency improvement.",
+              },
+            },
+          },
+          [entry({
+            id: "no-snippet",
+            title: "Introducing Gemini 3.7 Flash",
+            contentSnippet: "",
+          })],
           "2026-07-29T00:00:00.000Z",
         );
 

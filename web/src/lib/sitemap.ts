@@ -11,7 +11,7 @@ import {
   ARCHIVE_MONTHS,
   ARCHIVE_WARM_ENTRIES,
 } from "./archive.ts";
-import { collectAddressableDetailEntries } from "./detail-addressability.ts";
+import { collectIndexableDetailEntries } from "./detail-indexability.ts";
 import {
   SITEMAP_STATIC_PATHS,
   archiveMonthPath,
@@ -62,9 +62,16 @@ function canonicalInternalUrl(path: string): string {
 }
 
 /**
- * Mirrors every addressable Astro HTML route family that search crawlers should
- * discover. Redirects, feeds, utility JSON, query URLs, and cold/dropped
- * article details are intentionally absent.
+ * Mirrors every Astro HTML route family that search crawlers should discover
+ * AND index. Redirects, feeds, utility JSON, query URLs, cold/dropped article
+ * details, and body-less summary-only details are intentionally absent.
+ *
+ * Summary-only details are still generated and reachable (getStaticPaths in
+ * web/src/pages/e/[id].astro keeps using the addressability policy) so no
+ * existing URL 404s; they ship `noindex, follow` instead of a sitemap entry.
+ * See web/src/lib/detail-indexability.ts for the split, and
+ * web/scripts/validate-sitemap-dist.mjs for the build-time guard that the two
+ * decisions never drift apart.
  */
 export function collectSitemapPaths(): string[] {
   const paths: string[] = [...SITEMAP_STATIC_PATHS];
@@ -91,7 +98,7 @@ export function collectSitemapPaths(): string[] {
     paths.push(archiveMonthPath(month));
   }
 
-  for (const entry of collectAddressableDetailEntries(ALL_ENTRIES, ARCHIVE_WARM_ENTRIES)) {
+  for (const entry of collectIndexableDetailEntries(ALL_ENTRIES, ARCHIVE_WARM_ENTRIES)) {
     paths.push(detailPath(entry.id));
   }
 

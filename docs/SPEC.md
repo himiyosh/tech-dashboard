@@ -12,7 +12,7 @@
 **プロダクト名**: TECH Dashboard — Pulse of the AI Ecosystem
 **目的**: AI 開発ツール / 基盤モデル / 研究の最新動向を **毎時自動収集・要約・公開** するワンストップ ポータル。
 **想定ユーザ**: Copilot / Claude / Codex / Cursor / Local LLM などを業務で使う開発者・リサーチャ。
-**スケール**: `harness/registry.ts` の有効データソース (`user-opml` はproduction対象外) / 14カテゴリ / index最大2000件 / **毎時実行**。
+**スケール**: `harness/registry.ts` の有効データソース (`user-opml` はproduction対象外) / 13カテゴリ / index最大2000件 / **毎時実行**。
 **URL**:
 - 本番: https://techdb.studio344.net/ (Cloudflare Pages の pages.dev サブドメイン: https://tech-dashboard-6a7.pages.dev/)
 - リポジトリ: https://github.com/himiyosh/tech-dashboard
@@ -233,16 +233,15 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | 2 | `claude` | Claude | `#fbbf24` | coding |
 | 3 | `codex` | Codex | `#93c5fd` | coding |
 | 4 | `gemini` | Gemini | `#60a5fa` | coding |
-| 5 | `cursor` | Cursor | `#cbd5e1` | coding |
+| 5 | `cursor` | Editor | `#cbd5e1` | coding |
 | 6 | `cline` | Cline / Roo | `#c4b5fd` | coding |
-| 7 | `aider` | Aider | `#d6d3a1` | coding |
-| 8 | `opencode` | OpenCode | `#a5b4fc` | coding |
-| 9 | `vscode` | VSCode | `#63a2ff` | platform |
-| 10 | `local-llm` | Local LLM | `#f87171` | platform |
-| 11 | `agent-fw` | Agent FW | `#34d399` | ecosystem |
-| 12 | `mcp` | MCP | `#f472b6` | ecosystem |
-| 13 | `tech-news` | Tech News | `#fb923c` | ecosystem |
-| 14 | `research` | Research | `#fda4af` | research |
+| 7 | `opencode` | OpenCode | `#a5b4fc` | coding |
+| 8 | `vscode` | VSCode | `#63a2ff` | platform |
+| 9 | `local-llm` | Local LLM | `#f87171` | platform |
+| 10 | `agent-fw` | Agent FW | `#34d399` | ecosystem |
+| 11 | `mcp` | MCP | `#f472b6` | ecosystem |
+| 12 | `tech-news` | Tech News | `#fb923c` | ecosystem |
+| 13 | `research` | Research | `#fda4af` | research |
 
 カテゴリは `harness/registry.ts` で `SourceDefinition.category` に付与される。メタ情報 (色・表示名・ group) は `web/src/lib/data.ts` の `CATEGORY_META` に定義。
 
@@ -288,10 +287,11 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | `zenn-llm` | Zenn LLM topic | blog | 2 | zenn.dev/topics/llm |
 | `qiita-llm` | Qiita LLM tag | blog | 2 | qiita.com/tags/llm |
 
-#### Ecosystem (4 ソース: agent-fw / mcp)
+#### Ecosystem (5 ソース: agent-fw / mcp)
 
 | ID | 表示名 | 種別 | Tier | Feed URL |
 |---|---|---|---|---|
+| `mcp-blog` | MCP Blog (標準化団体公式) | blog | 1 | blog.modelcontextprotocol.io/index.xml |
 | `semantic-kernel-releases` | Semantic Kernel Releases | release | 2 | github.com/microsoft/semantic-kernel |
 | `mcp-servers-releases` | MCP Servers Releases | release | 2 | github.com/modelcontextprotocol/servers |
 | `zenn-mcp` | Zenn MCP topic | blog | 2 | zenn.dev/topics/mcp |
@@ -311,10 +311,11 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | `the-verge` | The Verge | blog | 2 | theverge.com |
 | `ars-technica` | Ars Technica | blog | 2 | arstechnica.com |
 
-#### Research (9 ソース)
+#### Research (10 ソース)
 
 | ID | 表示名 | 種別 | Tier | Feed URL |
 |---|---|---|---|---|
+| `microsoft-research` | Microsoft Research Blog | blog | 1 | microsoft.com/en-us/research/feed/ |
 | `arxiv-cs-cl` | arXiv cs.CL | paper | 1 | rss.arxiv.org/rss/cs.CL |
 | `arxiv-cs-se` | arXiv cs.SE | paper | 1 | rss.arxiv.org/rss/cs.SE |
 | `arxiv-cs-ai` | arXiv cs.AI | paper | 2 | rss.arxiv.org/rss/cs.AI |
@@ -385,7 +386,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 | `/rss.xml` | RSS 2.0 | 最新 50 件 |
 | `/feed.json` | JSON Feed 1.1 | 最新 50 件 |
 | `/metrics.json` | Dashboard metrics | Timeline / About の自動更新用 counts |
-| `/sitemap.xml` | Sitemap XML | canonical な addressable HTML route |
+| `/sitemap.xml` | Sitemap XML | canonical かつ indexable な HTML route (実本文を持つ detail のみ。本文なし detail は到達可能だが `noindex, follow`) |
 | `/robots.txt` | Robots directives | crawl 許可 + canonical Sitemap directive |
 
 ### 6.2 共通レイアウト (`Portal.astro`)
@@ -399,9 +400,10 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 ### 6.3 Crawl discovery
 
 - `web/src/lib/site.ts` の `SITE_URL` を canonical origin の唯一の正本とする。
-- `/sitemap.xml` は Home、top-level destination、カテゴリ、生成済みページネーション、arXiv / Knowledge / Glossary、Archive 月、10件以上の生成対象タグ、live と warm の記事詳細だけを重複なしで列挙する。
+- `/sitemap.xml` は Home、top-level destination、カテゴリ、生成済みページネーション、arXiv / Knowledge / Glossary、Archive 月、10件以上の生成対象タグ、そして **`data/bodies.json` に実本文を持つ** live / warm の記事詳細だけを重複なしで列挙する。
+- 到達可能性 (route 生成) と索引可能性 (sitemap 収録 + `robots` meta) は別の決定である。`web/src/lib/detail-addressability.ts` が前者、`web/src/lib/detail-indexability.ts` が後者を持つ。実本文の無い addressable な detail は route を保ったまま `noindex, follow` を出し、本文が到着した時点で同じ URL のまま sitemap へ昇格する (redirect も URL 変更も発生しない)。
 - redirect-only `/sources`、query URL、生成されない低頻度タグ、外部 URL、cold / dropped の記事詳細は含めない。
-- 一覧上の cold / dropped は canonical source URL、untiered / hot / warm は内部 detail URL を共通 destination helper で選ぶ。新しいタブで開く source link は共有 `rel="noopener noreferrer nofollow"`、`↗`、表示言語別の visually-hidden 補足を持つ。production build は sitemap と実際の canonical HTML inventory の双方向 parity、redirect-only 非包含、標準 HTML parser が抽出・復号した実要素の `href` を各 HTML の canonical route 基準で解決し、内部 `/e/{id}/` link が実在する detail route を指すことを検証する。
+- 一覧上の cold / dropped は canonical source URL、untiered / hot / warm は内部 detail URL を共通 destination helper で選ぶ。新しいタブで開く source link は共有 `rel="noopener noreferrer nofollow"`、`↗`、表示言語別の visually-hidden 補足を持つ。production build は sitemap と実際の canonical HTML inventory の双方向 parity、redirect-only 非包含、標準 HTML parser が抽出・復号した実要素の `href` を各 HTML の canonical route 基準で解決し、内部 `/e/{id}/` link が実在する detail route を指すことを検証する。双方向 parity の唯一の免除は、標準 HTML parser で読み取った `<meta name="robots">` が `noindex` (または `none`) を宣言している canonical route であり、その場合だけ sitemap 非収録を許す。逆に `noindex` を宣言した route が sitemap にいる場合、および `content` 属性を欠く robots meta がある場合は build を fail-closed にする。
 - `lastmod` は route の実更新時刻を保証できないため付与しない。50,000 URL または uncompressed 50 MB を超える場合は build を fail-closed にする。
 - `/robots.txt` は crawl を許可し、`Sitemap: {SITE_URL}/sitemap.xml` を広告 publisher ID と無関係に公開する。実 publisher ID が無い `ads.txt` は生成しない。
 

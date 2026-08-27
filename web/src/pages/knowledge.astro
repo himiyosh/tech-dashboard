@@ -87,7 +87,9 @@ const breadcrumb = [
 <Portal
   pageKey="knowledge"
   title="Knowledge — ベストプラクティス & 知見 | TECH Dashboard"
+  canonicalPath="/knowledge/"
   description="各社のエンジニアリングブログやベストプラクティスを、流れていくニュースとは別に蓄積するページです。時間が経っても価値が減らない知見をソース別にまとめています。"
+  descriptionEn="Engineering blogs and best practices kept apart from the news timeline: durable know-how that keeps its value, grouped by source."
   breadcrumb={breadcrumb}
   rssHref={KNOWLEDGE_RSS_HREF}
   rssTitle="TECH Dashboard | Knowledge & Best Practices"
@@ -133,6 +135,13 @@ const breadcrumb = [
         detail: "直近30日のKnowledge記事",
         detailEn: "Knowledge entries in the last 30 days",
         scope: "knowledge-last-30d",
+      },
+      {
+        label: "Last 7d",
+        value: countSince(KNOWLEDGE_ENTRIES, 7),
+        detail: "直近7日のKnowledge記事",
+        detailEn: "Knowledge entries in the last 7 days",
+        scope: "knowledge-last-7d",
       },
       {
         label: "News timeline",

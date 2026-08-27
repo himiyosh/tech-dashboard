@@ -1,0 +1,91 @@
+name: Approve publication batch
+
+# The human approval gate for what becomes indexable.
+#
+# Why this is separate from publisher.yml: the publisher runs hourly, and
+# binding a protected environment to it would demand 24 approvals a day and
+# stop the site's data updates whenever nobody approved. So the hourly
+# collection keeps running untouched and newly collected entries simply stay
+# on publication hold (reachable, `noindex`, absent from sitemap.xml). This
+# workflow is the only thing that lifts that hold, and it is bound to the
+# `publication-approval` environment, so GitHub requires a named reviewer to
+# approve the run before the job executes.
+#
+# Declining to approve is safe: the site keeps updating, the backlog waits,
+# and the next approved run releases from the front of the queue.
+#
+# One-time setup (repository Settings -> Environments):
+#   1. Create an environment named `publication-approval`.
+#   2. Add "Required reviewers" and name the accounts allowed to approve.
+# Without step 2 the job runs unattended and the gate is decorative.
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Maximum entries to release (defaults to the manifest's dailyReleaseLimit)"
+        required: false
+        type: string
+      dry_run:
+        description: "List what would be approved without committing"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: approve-publication
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  approve:
+    runs-on: ubuntu-latest
+    environment: publication-approval
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          # check-approval-authorship.mjs walks history for this file.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Select and record approvals
+        id: approve
+        env:
+          REVIEWER: ${{ github.actor }}
+          LIMIT: ${{ inputs.limit }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          args=(--reviewer "$REVIEWER")
+          if [ -n "$LIMIT" ]; then args+=(--limit "$LIMIT"); fi
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          node scripts/approve-publication-batch.mjs "${args[@]}" | tee approve.log
+          if git diff --quiet -- data/approved-entries.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit as the approving human
+        if: steps.approve.outputs.changed == 'true'
+        env:
+          # The AUTHOR is the person who approved this run. That is what
+          # scripts/check-approval-authorship.mjs reads (%an/%ae), so the
+          # manifest still carries a human signature even though a runner
+          # typed the edit. A bot-authored manifest commit stays a CI failure.
+          REVIEWER: ${{ github.actor }}
+          REVIEWER_ID: ${{ github.actor_id }}
+        run: |
+          set -euo pipefail
+          git -c "user.name=$REVIEWER" \
+              -c "user.email=${REVIEWER_ID}+${REVIEWER}@users.noreply.github.com" \
+              commit -m "chore(approval): release publication batch approved by $REVIEWER" \
+              -- data/approved-entries.json
+          node scripts/check-approval-authorship.mjs "HEAD~1..HEAD"
+          git push origin HEAD:main

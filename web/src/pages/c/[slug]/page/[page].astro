@@ -14,6 +14,7 @@ import {
   type Category,
 } from "../../../../lib/data.ts";
 import {
+  categoryPath,
   paginationPageNumbers,
   totalPageCount,
 } from "../../../../lib/route-inventory.ts";
@@ -71,6 +72,9 @@ const breadcrumb = [
 <Portal
   pageKey="categories"
   title={`${category.name} · p.${page} — TECH Dashboard`}
+  canonicalPath={categoryPath(slug, page)}
+  description={`${categoryContextLabel} カテゴリの ${page}/${total} ページ目。全 ${all.length} 件のうち ${entries.length} 件を新着順・出典付き AI 要約で掲載します。`}
+  descriptionEn={`Page ${page} of ${total} in ${categoryContextLabel}: ${entries.length} of ${all.length} updates in recency order with sourced AI summaries.`}
   breadcrumb={breadcrumb}
   rssHref={rssHref}
   rssTitle={`TECH Dashboard | ${category.name}`}

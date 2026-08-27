@@ -9,6 +9,12 @@ export interface ContentFallbackResult {
   summaryFallbacks: number;
   bodyFallbacks: number;
   summaryGroundingRejected: number;
+  /**
+   * Summaries cleared because they reproduced the collected source excerpt
+   * verbatim. Counted separately from summaryGroundingRejected so the publish
+   * log names the category, not just a number.
+   */
+  summaryVerbatimRejected: number;
 }
 
 function text(value: string | undefined | null): string {
@@ -91,5 +97,6 @@ export function applyDeterministicContentFallback(entry: NormalizedEntry): Conte
     summaryFallbacks,
     bodyFallbacks: 0,
     summaryGroundingRejected: grounding.rejected ? 1 : 0,
+    summaryVerbatimRejected: grounding.verbatimRejected ? 1 : 0,
   };
 }

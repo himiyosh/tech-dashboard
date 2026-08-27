@@ -1,0 +1,277 @@
+---
+import Portal from "../layouts/Portal.astro";
+import PageHero from "../components/PageHero.astro";
+import { DASHBOARD_METRICS } from "../lib/metrics.ts";
+import { PUBLIC_OPERATOR_NAME, REPO_URL } from "../lib/site.ts";
+---
+
+<Portal
+  pageKey="editorial"
+  canonicalPath="/editorial-policy/"
+  breadcrumb={[{ label: "Home", href: "/" }, { label: "Editorial" }]}
+  title="編集方針 — TECH Dashboard"
+  titleEn="Editorial Policy — TECH Dashboard"
+  description="TECH Dashboard の情報源の選定基準、AI 要約の生成と品質管理、重要度の判定基準、訂正・削除ポリシー、広告と編集の独立、お問い合わせ方法。"
+  descriptionEn="How TECH Dashboard selects sources, generates and quality-gates AI summaries, ranks importance, handles corrections, separates ads from editorial decisions, and how to contact the operator."
+>
+  <PageHero
+    className="page-hero-top-level page-hero-about"
+    kicker="Editorial Policy"
+    title="編集方針"
+    count={`${DASHBOARD_METRICS.totalSourceCount} sources`}
+    headingId="editorial-heading"
+    description="どの情報源を、どんな基準で選び、AI 要約をどう検証し、間違いをどう直すか。TECH Dashboard の編集・運営の約束をここにまとめています。"
+    descriptionEn="Which sources we track, how we select them, how AI summaries are verified, and how mistakes get fixed — the editorial commitments behind TECH Dashboard."
+    actions={[
+      { href: "/about", label: "About" },
+      { href: "/privacy", label: "Privacy" },
+      { href: "/status", label: "Status" },
+      { href: "/contact", label: "お問い合わせ", labelEn: "Contact", mobilePriority: true },
+    ]}
+  />
+
+  <div class="layout policy-layout">
+    <main class="policy-main">
+      <section class="policy-panel" aria-labelledby="policy-sources-heading">
+        <h3 id="policy-sources-heading">
+          <span class="i18n-ja">情報源の選定基準</span>
+          <span class="i18n-en" lang="en">How sources are selected</span>
+        </h3>
+        <p>
+          <span class="i18n-ja">
+            収集対象は登録制です。Tier 1 はベンダー・標準化団体の一次情報(公式ブログ、リリースノート、仕様公開)、
+            Tier 2 は信頼できるサードパーティと技術コミュニティ、Tier 3 はコミュニティ集約とユーザー定義フィードです。
+            すべてのフィードは登録前に実際に取得して形式と更新実績を検証し、テーマの広いフィードには
+            タイトル基準のキーワードフィルタを設定して AI・開発ツール領域に関係しない記事を除外します。
+          </span>
+          <span class="i18n-en" lang="en">
+            Sources are allow-listed. Tier 1 is first-party information from vendors and standards bodies
+            (official blogs, release notes, specifications), Tier 2 is trusted third parties and technical
+            communities, Tier 3 is community aggregation and user-defined feeds. Every feed is fetched and
+            verified before registration, and broad feeds get title-scoped keyword filters so off-topic
+            articles never enter the AI/dev-tooling lanes.
+          </span>
+        </p>
+        <p>
+          <span class="i18n-ja">
+            各記事には必ず出典(ソース名と原文リンク)、収集日時、発行日時を表示します。出典を隠した転載は行いません。
+          </span>
+          <span class="i18n-en" lang="en">
+            Every entry shows its source name, a link to the original article, and both published and
+            collected timestamps. We never republish content with its source hidden.
+          </span>
+        </p>
+      </section>
+
+      <section class="policy-panel" aria-labelledby="policy-importance-heading">
+        <h3 id="policy-importance-heading">
+          <span class="i18n-ja">重要度と掲載順の基準</span>
+          <span class="i18n-en" lang="en">Importance and ranking</span>
+        </h3>
+        <p>
+          <span class="i18n-ja">
+            重要度は 3 段階です。3 はメジャーリリースや重大発表、2 は注目すべき機能・研究、1 は定常的な更新です。
+            リリース情報はバージョンの形で機械判定し、パッチ版・プレリリース版・nightly ビルドは定常更新(1)として扱い、
+            トップの意思決定枠(Featured / Top 3)には載せません。掲載順は重要度、出典の権威性、鮮度から決まり、
+            広告や金銭は順位に一切影響しません。
+          </span>
+          <span class="i18n-en" lang="en">
+            Importance has three levels: 3 for major releases and critical announcements, 2 for notable
+            features and research, 1 for routine updates. Releases are classified deterministically by
+            version shape — patch, prerelease, and nightly builds count as routine and never occupy the
+            Featured / Top-3 decision slots. Ranking combines importance, source authority, and freshness;
+            advertising and payments never influence placement.
+          </span>
+        </p>
+      </section>
+
+      <section class="policy-panel" aria-labelledby="policy-ai-heading">
+        <h3 id="policy-ai-heading">
+          <span class="i18n-ja">AI 生成テキストの作り方と限界</span>
+          <span class="i18n-en" lang="en">How the AI text is produced — and its limits</span>
+        </h3>
+        <p>
+          <span class="i18n-ja">
+            日本語・英語の要約と、記事ページの解説本文は、大規模言語モデル (LLM) が生成しています。モデルに渡す材料は、
+            収集した記事のタイトル、カテゴリ、配信元の名前、公開日時、タグ、配信元が提供していた場合の原文抜粋、および
+            先に生成した要約だけです。原文抜粋は収集時点で 280 文字 (長期保存対象の記事は 800 文字) で打ち切られます。
+            原文ページを取得して全文をモデルに読ませる処理は、パイプラインのどこにも存在しません。抜粋が空だった記事では、
+            タイトルなどの断片だけを材料に本文が生成されています。
+          </span>
+          <span class="i18n-en" lang="en">
+            The Japanese and English summaries, and the explainer bodies on article pages, are generated by a
+            large language model. The only material the model receives is the collected title, the category, the
+            source name, the publication timestamp, the tags, an excerpt of the source when the feed supplied one,
+            and the summary generated earlier. That excerpt is truncated at collection time to 280 characters
+            (800 for long-retention entries). Nothing in the pipeline fetches the original page or gives the model
+            the full article. Where the feed supplied no excerpt, the body was generated from those fragments alone.
+          </span>
+        </p>
+        <p>
+          <span class="i18n-ja">
+            解説本文は、この短い材料を出発点に、モデルが学習データとして持っている背景知識や周辺情報を補って書かれます。
+            そのため、原文には書かれていない事実・数値・時期・関連製品の説明が含まれることがあります。生成結果を原文と
+            突き合わせる事実検証は、人手でも自動でも行っていません。機械的に検出しているのは、タイトルをそのまま繰り返した
+            だけの要約、途中で切れている出力、既知の矛盾パターンといった形式面の欠陥だけで、これらは再生成の対象になります。
+            これは事実確認ではありません。
+          </span>
+          <span class="i18n-en" lang="en">
+            An explainer body starts from that short material and is filled out with background the model
+            carries from its training data. A body can therefore contain facts, figures, dates, or descriptions
+            of related products that do not appear in the source article at all. Generated text is not
+            fact-checked against the original, by a person or by a machine. The automated gates catch only
+            shape defects — a summary that merely echoes the title, output that ends mid-sentence, known
+            contradiction patterns — and re-queue those for regeneration. That is not verification.
+          </span>
+        </p>
+        <p>
+          <span class="i18n-ja">
+            したがって、要約と解説本文は「その記事を読むかどうかを判断するための下書き」として扱ってください。日付、価格、
+            対応地域、機能名、バージョン番号など、判断や引用の根拠になる情報は、必ず原文でご確認ください。原文へのリンクは、
+            すべての一覧カードと記事ページから 1 クリックで到達できます。誤りを見つけた場合は
+            <a href="/contact">お問い合わせ</a> からご連絡ください。原文と照合して訂正または取り下げを行います。
+          </span>
+          <span class="i18n-en" lang="en">
+            Treat summaries and explainer bodies as a draft that helps you decide whether to read the article —
+            not as a record of what the article says. Always confirm dates, prices, supported regions, feature
+            names, and version numbers against the original, which is one click away from every card and article
+            page. If you find an error, tell us through <a href="/contact">Contact</a>; we check it against the
+            original and correct or withdraw the entry.
+          </span>
+        </p>
+        <p>
+          <span class="i18n-ja">
+            要約が未生成の記事は「準備中」と明示し、使える要約が片方の言語にも無い記事には個別の記事ページを作りません。
+            解説本文はすべての記事にあるわけではなく、要約だけの記事ページも存在します。
+          </span>
+          <span class="i18n-en" lang="en">
+            Entries whose summary has not been generated yet are labeled as pending, and an entry with no usable
+            summary in either language gets no standalone article page. Explainer bodies do not exist for every
+            entry: some article pages carry the summary only.
+          </span>
+        </p>
+      </section>
+
+      <section class="policy-panel" aria-labelledby="policy-corrections-heading">
+        <h3 id="policy-corrections-heading">
+          <span class="i18n-ja">訂正・削除ポリシー</span>
+          <span class="i18n-en" lang="en">Corrections and removals</span>
+        </h3>
+        <p>
+          <span class="i18n-ja">
+            誤ったカテゴリ・タグ、事実と異なる要約、壊れたリンクの報告を受けた場合は、原文と照合して確認し、
+            修正またはエントリの取り下げを行います。権利者から正当な削除依頼があった記事抜粋は速やかに削除します。
+            報告は下記のお問い合わせ経由で受け付けます。
+          </span>
+          <span class="i18n-en" lang="en">
+            When a miscategorized entry, a factually wrong summary, or a broken link is reported, we verify
+            it against the original article and correct or withdraw the entry. Excerpts subject to a valid
+            takedown request from a rights holder are removed promptly. Reports go through the contact
+            channel below.
+          </span>
+        </p>
+      </section>
+
+      <section class="policy-panel" aria-labelledby="policy-ads-heading">
+        <h3 id="policy-ads-heading">
+          <span class="i18n-ja">広告と編集の独立</span>
+          <span class="i18n-en" lang="en">Advertising independence</span>
+        </h3>
+        <p>
+          <span class="i18n-ja">
+            本サイトは運営費用のために広告(Google AdSense)の掲載を予定しています。広告枠は記事本文・一覧と
+            視覚的に区別され、どの記事を収集・強調するかの編集判断に広告は一切関与しません。
+            データの扱いと広告設定の選択肢は <a href="/privacy">Privacy</a> に記載しています。
+          </span>
+          <span class="i18n-en" lang="en">
+            The site plans to carry advertising (Google AdSense) to cover operating costs. Ad slots are
+            visually separated from content, and advertising plays no role in which articles are collected
+            or highlighted. Data handling and advertising choices are documented on the
+            <a href="/privacy">Privacy</a> page.
+          </span>
+        </p>
+      </section>
+
+      <section id="contact" class="policy-panel feedback-panel" aria-labelledby="policy-contact-heading">
+        <h3 id="policy-contact-heading">
+          <span class="i18n-ja">お問い合わせ</span>
+          <span class="i18n-en" lang="en">Contact</span>
+        </h3>
+        <p>
+          <span class="i18n-ja">
+            運営者は {PUBLIC_OPERATOR_NAME} です。訂正依頼・削除依頼・その他のお問い合わせの窓口と、連絡時に記載していただきたい情報、
+            対応の目安は <a href="/contact">お問い合わせページ</a> にまとめています。記事の URL と問題の内容を添えてご連絡ください。
+          </span>
+          <span class="i18n-en" lang="en">
+            The site is operated by {PUBLIC_OPERATOR_NAME}. The <a href="/contact">Contact page</a> lists every
+            channel for correction requests, takedown requests, and general enquiries, what to include, and how
+            long a reply normally takes. Please send the article URL together with a description of the problem.
+          </span>
+        </p>
+        <p class="feedback-cta">
+          <a class="feedback-issue-link" href="/contact">
+            <span aria-hidden="true">✉</span>
+            <span class="i18n-ja">お問い合わせページを開く</span>
+            <span class="i18n-en" lang="en">Open the contact page</span>
+          </a>
+        </p>
+        <p>
+          <span class="i18n-ja">
+            サイトの実装・収集パイプラインは <a href={REPO_URL} target="_blank" rel="noopener noreferrer">公開リポジトリ</a>
+            で確認できます。
+          </span>
+          <span class="i18n-en" lang="en">
+            The site's implementation and collection pipeline are public in the
+            <a href={REPO_URL} target="_blank" rel="noopener noreferrer">source repository</a>.
+          </span>
+        </p>
+      </section>
+    </main>
+  </div>
+</Portal>
+
+<style>
+  /* Single-column reading layout: override the site-wide 3-column grid. */
+  .policy-layout {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 860px;
+  }
+
+  .policy-main {
+    min-width: 0;
+    display: grid;
+    gap: 14px;
+  }
+
+  .policy-panel {
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-2) 72%, transparent);
+  }
+
+  .policy-panel h3 {
+    margin: 0 0 10px;
+    font-size: 15px;
+  }
+
+  .policy-panel p {
+    margin: 0 0 10px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .policy-panel p:last-child {
+    margin-bottom: 0;
+  }
+
+  #contact {
+    scroll-margin-top: 120px;
+  }
+
+  .feedback-cta {
+    margin-top: 12px;
+  }
+</style>

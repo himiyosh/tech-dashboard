@@ -1,0 +1,70 @@
+---
+/**
+ * Timeline category filter: default-muted noisy lanes (release-signal noise
+ * like cline) stay greyed out until the reader enables them; any category can
+ * be muted the same way. The choice persists per browser (localStorage) and
+ * applies to the Timeline list only — search, category pages, and RSS are
+ * unaffected. Always visible (no accordion) per site-owner feedback.
+ * See web/src/lib/category-visibility.ts for the policy.
+ */
+import { CATEGORY_META } from "../lib/data.ts";
+import { isDefaultMutedCategory } from "../lib/category-visibility.ts";
+
+// shortLabel (not the full name) matches the sidebar and the Daily Summary
+// "Top categories + lanes" list, so the filter reads as the same category
+// index rather than a second, wordier vocabulary.
+const categories = CATEGORY_META.map((category) => ({
+  slug: category.slug,
+  name: category.shortLabel,
+  title: category.name,
+  color: category.color,
+  defaultMuted: isDefaultMutedCategory(category.slug),
+}));
+---
+
+<section class="cat-filter" data-category-filter aria-labelledby="cat-filter-heading">
+  <div class="cat-filter-header">
+    <h3 id="cat-filter-heading" class="cat-filter-title">
+      <span class="cat-filter-icon" aria-hidden="true">⚙</span>
+      <span class="i18n-ja">表示カテゴリのフィルター</span>
+      <span class="i18n-en" lang="en">Category filter</span>
+    </h3>
+    <span
+      class="cat-filter-note"
+      data-category-filter-note
+      hidden
+    >
+      <span class="i18n-ja">
+        <span data-category-filter-hidden-count>0</span> 件を非表示中
+      </span>
+      <span class="i18n-en" lang="en">
+        <span data-category-filter-hidden-count>0</span> hidden
+      </span>
+    </span>
+  </div>
+  <div class="cat-filter-chips" role="group" aria-label="表示するカテゴリ / Categories to show">
+    {categories.map((category) => (
+      <button
+        type="button"
+        class="cat-filter-chip"
+        data-category-toggle={category.slug}
+        data-state={category.defaultMuted ? "muted" : "on"}
+        aria-pressed={category.defaultMuted ? "false" : "true"}
+        title={category.title}
+        style={`--chip-color:${category.color}`}
+      >
+        <span class="cat-filter-dot" aria-hidden="true"></span>
+        <span class="cat-filter-name">{category.name}</span>
+      </button>
+    ))}
+  </div>
+</section>
+
+<script>
+  import { initCategoryVisibility } from "../lib/category-visibility-client.ts";
+
+  for (const filterRoot of document.querySelectorAll("[data-category-filter]")) {
+    const scope = document.querySelector("[data-category-filter-scope]");
+    if (scope) initCategoryVisibility(filterRoot, scope);
+  }
+</script>

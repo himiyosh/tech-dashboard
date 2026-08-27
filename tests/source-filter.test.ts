@@ -456,6 +456,61 @@ describe("Google Cloud Blog knowledge filter (R-017)", () => {
     });
   });
 
+  describe("Microsoft Research Blog relevance filter (R-017)", () => {
+    const msr = REGISTRY["microsoft-research"];
+    const check = (title: string) =>
+      matchesKeywordFilter({ title, url: "", contentSnippet: "" }, msr);
+
+    it("keeps AI/ML research articles", () => {
+      expect(check("Phi-5: pushing the frontier of small language models")).toBe(true);
+      expect(check("Evaluating agentic reasoning with a new benchmark suite")).toBe(true);
+      expect(check("AI for science: accelerating materials discovery")).toBe(true);
+    });
+
+    it("drops non-AI MSR areas and recruiting/podcast posts", () => {
+      expect(check("Advances in topological qubit fabrication for quantum computing")).toBe(false);
+      expect(check("Microsoft Research Podcast: a conversation on systems biology")).toBe(false);
+      expect(check("Apply now: 2027 PhD fellowship program")).toBe(false);
+    });
+
+    it("uses title scope so snippets cannot rescue off-topic entries", () => {
+      expect(msr.keywordFilterScope).toBe("title");
+    });
+  });
+
+  describe("Cline monorepo component-tag filter", () => {
+    const cline = REGISTRY["cline-releases"];
+    const check = (title: string) =>
+      matchesKeywordFilter({ title, url: "", contentSnippet: "" }, cline);
+
+    it("drops per-package sdk/* component tags (raw and branded titles)", () => {
+      expect(check("sdk/core/v0.0.79")).toBe(false);
+      expect(check("Cline sdk/core v0.0.79")).toBe(false);
+      expect(check("Cline sdk/agents v0.0.79")).toBe(false);
+      expect(check("sdk/llms/v0.0.53")).toBe(false);
+    });
+
+    it("keeps the primary Desktop / CLI / top-level SDK releases", () => {
+      expect(check("Cline Desktop v0.0.17")).toBe(true);
+      expect(check("Cline CLI v3.0.58")).toBe(true);
+      expect(check("Cline SDK v0.0.79")).toBe(true);
+    });
+
+    it("uses title scope so URLs cannot cause false positives", () => {
+      expect(cline.keywordFilterScope).toBe("title");
+    });
+  });
+
+  describe("MCP Blog source registration", () => {
+    it("registers the official standardization-body blog as tier-1 mcp", () => {
+      const mcpBlog = REGISTRY["mcp-blog"];
+      expect(mcpBlog.category).toBe("mcp");
+      expect(mcpBlog.tier).toBe(1);
+      expect(mcpBlog.sourceType).toBe("blog");
+      expect(mcpBlog.feedUrl).toBe("https://blog.modelcontextprotocol.io/index.xml");
+    });
+  });
+
   describe("shared tech news relevance filters (LL-129)", () => {
     const techNews = REGISTRY["the-verge"];
     const hnAi = REGISTRY["hn-ai"];

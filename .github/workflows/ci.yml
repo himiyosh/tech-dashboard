@@ -20,12 +20,20 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
+        with:
+          # check-approval-authorship.mjs walks history for the manifest.
+          fetch-depth: 0
 
       - name: Enforce integration and release PR branches
         env:
           PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
           PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: node scripts/check-pr-branch-flow.mjs
+
+      - name: Enforce human authorship of the publication approval manifest
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/check-approval-authorship.mjs "$PR_BASE_SHA..HEAD"
 
   unit:
     name: unit + typecheck

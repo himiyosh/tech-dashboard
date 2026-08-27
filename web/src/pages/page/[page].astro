@@ -2,6 +2,7 @@
 import Portal from "../../layouts/Portal.astro";
 import PageHero from "../../components/PageHero.astro";
 import Sidebar from "../../components/Sidebar.astro";
+import CategoryFilter from "../../components/CategoryFilter.astro";
 import EntryCard from "../../components/EntryCard.astro";
 import Pager from "../../components/Pager.astro";
 import TimelineRightRail from "../../components/TimelineRightRail.astro";
@@ -16,6 +17,7 @@ import {
 } from "../../lib/data.ts";
 import {
   paginationPageNumbers,
+  timelinePagePath,
   totalPageCount,
 } from "../../lib/route-inventory.ts";
 
@@ -44,14 +46,21 @@ const breadcrumb = [
 ];
 ---
 
-<Portal pageKey="timeline" title={`Timeline · p.${page} — TECH Dashboard`} breadcrumb={breadcrumb}>
+<Portal
+  pageKey="timeline"
+  title={`Timeline · p.${page} — TECH Dashboard`}
+  canonicalPath={timelinePagePath(page)}
+  description={`AI 技術アップデートのタイムライン ${page}/${total} ページ目。収録 ${MAIN_TIMELINE_ENTRIES.length} 件のうち ${pageEntries.length} 件を新着順・出典付き AI 要約で掲載します。`}
+  descriptionEn={`Page ${page} of ${total} of the TECH Dashboard timeline: ${pageEntries.length} of ${MAIN_TIMELINE_ENTRIES.length} collected updates in recency order with sourced AI summaries.`}
+  breadcrumb={breadcrumb}
+>
   <PageHero
     className="page-hero-timeline"
     kicker="Timeline archive"
     title="Timeline"
     count={`page ${page}/${total}`}
     headingId="timeline-page-heading"
-    description="arXiv 論文を分離した通常更新の深掘り一覧です。Top items から外れた更新も、日付ごとに追って後から確認できます。"
+    description="arXiv 論文を分離した通常更新の記事一覧です。Top items から外れた更新も、日付ごとに追って後から確認できます。"
     actions={[
       { href: "/", label: "Back to latest" },
       { href: "/arxiv", label: "arXiv papers" },
@@ -101,7 +110,7 @@ const breadcrumb = [
   <div class="layout">
     <Sidebar active="all" />
 
-    <main>
+    <main data-category-filter-scope>
       <div class="section-header primary">
         <h2>
           Entries
@@ -111,6 +120,8 @@ const breadcrumb = [
           </span>
         </h2>
       </div>
+
+      <CategoryFilter />
 
       {dayGroups.map(({ key, items }) => (
         <>

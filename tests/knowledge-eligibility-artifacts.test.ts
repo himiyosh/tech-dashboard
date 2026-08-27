@@ -174,9 +174,21 @@ function missingLiveSurfaces(entry: NormalizedEntry): string[] {
     if (!normalizeTagKey(tag)) continue;
     if (!entriesForTagPage(tag).some(holdsId)) missing.push(`tag listing ${tag}`);
   }
-  if (!ADDRESSABLE_DETAIL_IDS.has(entry.id)) missing.push("detail route");
-  if (destination.external || destination.href !== detailPath(entry.id)) {
-    missing.push(`in-site canonical URL (got ${destination.href})`);
+  if (entry.publicationHold) {
+    // A queued evergreen entry keeps every listing surface but deliberately has
+    // no /e/ route yet; its honest destination is the original source. Losing
+    // the external link would be a real regression, so it is checked here.
+    if (ADDRESSABLE_DETAIL_IDS.has(entry.id)) {
+      missing.push("queued entry still holds a detail route");
+    }
+    if (!destination.external || destination.href !== canonicalSourceUrl(entry.url)) {
+      missing.push(`external source URL while queued (got ${destination.href})`);
+    }
+  } else {
+    if (!ADDRESSABLE_DETAIL_IDS.has(entry.id)) missing.push("detail route");
+    if (destination.external || destination.href !== detailPath(entry.id)) {
+      missing.push(`in-site canonical URL (got ${destination.href})`);
+    }
   }
   // Evergreen never decays past warm (harness/half-life.ts decideTier), and
   // cold/dropped would strip the individual route.

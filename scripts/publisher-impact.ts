@@ -8,6 +8,15 @@ import {
   isPublishableEntry,
   type PublicationEntry,
 } from "../web/src/lib/entry-publication.ts";
+import { isAddressableDetailEntry } from "../web/src/lib/detail-addressability.ts";
+import {
+  PUBLICATION_MANIFEST_PATH,
+  PublicationGateError,
+  buildPublicationGate,
+  parsePublicationApprovalManifest,
+  type PublicationApprovalManifest,
+  type PublicationGate,
+} from "../web/src/lib/publication-gate.ts";
 import { normalizeTagKey } from "../web/src/lib/tag-normalize.ts";
 import { TAG_PAGE_MIN_ENTRIES } from "../web/src/lib/route-inventory.ts";
 
@@ -24,6 +33,8 @@ export interface PublisherImpactEntry extends PublicationEntry {
   category: string;
   tags: string[];
   archiveTier?: "hot" | "warm" | "cold" | "dropped";
+  /** Mirrors web/src/lib/data.ts: attached here, never read from stored JSON. */
+  publicationHold?: boolean;
 }
 
 export interface PublisherRouteSignals {
@@ -71,6 +82,12 @@ interface BuildImpactOptions {
   beforeFiles: ReadonlyMap<string, string | null>;
   afterFiles: ReadonlyMap<string, string | null>;
   changedPaths: readonly string[];
+  /**
+   * The human-committed approval manifest. Required, not defaulted: an
+   * "approve everything" fallback would make the planner disagree with the real
+   * route set and hand unrenderable ids to the incremental shadow renderer.
+   */
+  approvalManifest: PublicationApprovalManifest;
 }
 
 interface RepositoryImpactOptions {
@@ -175,33 +192,69 @@ function monthDataPaths(files: ReadonlyMap<string, string | null>): string[] {
     .sort();
 }
 
+function payloadGeneratedAt(path: string, content: string | null): string {
+  const parsed = parseJson(path, content);
+  if (!isRecord(parsed) || typeof parsed.generatedAt !== "string") {
+    throw new PublicationGateError(
+      "GATE_CLOCK",
+      `publisher impact expected a generatedAt clock in ${path}; the publication`
+        + " gate cannot pick a release day without it",
+    );
+  }
+  return parsed.generatedAt;
+}
+
+function publicationGateFor(
+  manifest: PublicationApprovalManifest,
+  files: ReadonlyMap<string, string | null>,
+): PublicationGate {
+  return buildPublicationGate({
+    manifest,
+    now: payloadGeneratedAt("data/index.json", files.get("data/index.json") ?? null),
+  });
+}
+
 function addressableEntries(
   files: ReadonlyMap<string, string | null>,
+  gate: PublicationGate,
 ): Map<string, PublisherImpactEntry> {
   const entries = new Map<string, PublisherImpactEntry>();
+  const gated = (entry: PublisherImpactEntry): PublisherImpactEntry => ({
+    ...entry,
+    publicationHold: !gate.isReleased(entry.id),
+  });
   for (const entry of entryRecords(
     "data/index.json",
     files.get("data/index.json") ?? null,
   )) {
-    if (
-      isListableEntry(entry)
-      && entry.archiveTier !== "cold"
-      && entry.archiveTier !== "dropped"
-    ) {
-      entries.set(entry.id, entry);
+    // Must stay a superset-consistent mirror of the real route policy
+    // (web/src/lib/detail-addressability.ts): summary-pending entries and
+    // publication-gate holds have no /e/[id]/ route, so they must never be
+    // planned as detail upserts.
+    const candidate = gated(entry);
+    if (isListableEntry(candidate) && isAddressableDetailEntry(candidate)) {
+      entries.set(candidate.id, candidate);
     }
   }
   for (const path of monthDataPaths(files)) {
     for (const entry of entryRecords(path, files.get(path) ?? null)) {
-      if (entry.archiveTier === "warm" && isPublishableEntry(entry)) {
-        entries.set(entry.id, entry);
+      const candidate = gated(entry);
+      if (
+        candidate.archiveTier === "warm"
+        && isPublishableEntry(candidate)
+        && isAddressableDetailEntry(candidate)
+      ) {
+        entries.set(candidate.id, candidate);
       }
     }
   }
   return entries;
 }
 
-function routeSignals(files: ReadonlyMap<string, string | null>): PublisherRouteSignals {
+function routeSignals(
+  files: ReadonlyMap<string, string | null>,
+  gate: PublicationGate,
+): PublisherRouteSignals {
   const live = entryRecords("data/index.json", files.get("data/index.json") ?? null)
     .filter((entry) => isListableEntry(entry));
   let archiveMonths = 0;
@@ -217,7 +270,7 @@ function routeSignals(files: ReadonlyMap<string, string | null>): PublisherRoute
     }
   }
   return {
-    detailRoutes: addressableEntries(files).size,
+    detailRoutes: addressableEntries(files, gate).size,
     tagBaseRoutes: [...tagCounts.values()].filter((count) => count >= TAG_PAGE_MIN_ENTRIES).length,
     archiveMonths,
   };
@@ -229,6 +282,8 @@ function incrementalPlan(
   changedBodyIds: ReadonlySet<string>,
   beforeFiles: ReadonlyMap<string, string | null>,
   afterFiles: ReadonlyMap<string, string | null>,
+  beforeGate: PublicationGate,
+  afterGate: PublicationGate,
 ): PublisherIncrementalPlan {
   const bodyOnly =
     changedPaths.length === 1
@@ -239,8 +294,8 @@ function incrementalPlan(
       || path === "data/archive/_index.json"
       || /^data\/archive\/\d{4}-\d{2}\.json$/.test(path),
   );
-  const beforeAddressable = addressableEntries(beforeFiles);
-  const afterAddressable = addressableEntries(afterFiles);
+  const beforeAddressable = addressableEntries(beforeFiles, beforeGate);
+  const afterAddressable = addressableEntries(afterFiles, afterGate);
   const candidateIds = new Set([...changedEntryIds, ...changedBodyIds]);
   const detailUpsertIds = [...candidateIds]
     .filter((id) => afterAddressable.has(id))
@@ -334,6 +389,10 @@ export function buildPublisherImpactPlan(options: BuildImpactOptions): Publisher
       }
       routeFamilies.add("detail-pages");
       routeFamilies.add("search-index");
+      // A body appearing or disappearing now moves the entry in or out of
+      // sitemap.xml (web/src/lib/detail-indexability.ts), so a body-only run is
+      // no longer sitemap-neutral.
+      routeFamilies.add("sitemap");
       fullReasons.add("search-index-requires-a-global-rebuild");
       continue;
     }
@@ -399,8 +458,10 @@ export function buildPublisherImpactPlan(options: BuildImpactOptions): Publisher
     beforeChangedEntries,
     afterChangedEntries,
   );
-  const before = routeSignals(options.beforeFiles);
-  const after = routeSignals(options.afterFiles);
+  const beforeGate = publicationGateFor(options.approvalManifest, options.beforeFiles);
+  const afterGate = publicationGateFor(options.approvalManifest, options.afterFiles);
+  const before = routeSignals(options.beforeFiles, beforeGate);
+  const after = routeSignals(options.afterFiles, afterGate);
   const plan: PublisherImpactPlan = {
     version: 2,
     baseRef: options.baseRef,
@@ -426,6 +487,8 @@ export function buildPublisherImpactPlan(options: BuildImpactOptions): Publisher
       changedBodyIds,
       options.beforeFiles,
       options.afterFiles,
+      beforeGate,
+      afterGate,
     ),
   };
   assertPublisherImpactGrowth(plan);
@@ -501,7 +564,22 @@ export function planPublisherImpactFromRepository(
       overlay ?? readFileSync(resolve(options.root, path), "utf8"),
     );
   }
+  const manifestPath = resolve(options.root, PUBLICATION_MANIFEST_PATH);
+  let manifestRaw: string;
+  try {
+    manifestRaw = readFileSync(manifestPath, "utf8");
+  } catch (cause) {
+    throw new PublicationGateError(
+      "MANIFEST_SHAPE",
+      `could not read ${PUBLICATION_MANIFEST_PATH} at ${manifestPath}: `
+        + `${cause instanceof Error ? cause.message : String(cause)}`,
+    );
+  }
+  const approvalManifest = parsePublicationApprovalManifest(
+    JSON.parse(manifestRaw) as unknown,
+  );
   return buildPublisherImpactPlan({
+    approvalManifest,
     baseRef: options.baseRef,
     beforeFiles,
     afterFiles,

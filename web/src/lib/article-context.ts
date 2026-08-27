@@ -43,15 +43,10 @@ const CATEGORY_BG: Record<Category, CategoryBackground> = {
     context:
       "Cline (旧 Claude Dev) は VS Code 拡張として動作するオープンソース AI コーディングエージェントで、ファイル編集・ターミナル実行・ブラウザ操作までを許可制で実行する。Roo Code はその fork で、より積極的な自動化と複数モデル切替を志向する。",
   },
-  aider: {
-    oneLiner: "ターミナル駆動の AI ペアプログラマー。",
-    context:
-      "Aider は CLI で動作する AI コーディングツール。git ベースの差分管理と repository map による軽量なコンテキスト供給が特徴で、サーバ上での開発や CI 連携など IDE を介さないワークフローに強い。",
-  },
   opencode: {
     oneLiner: "オープンソースのコーディングエージェント。",
     context:
-      "OpenCode / OpenHands (旧 OpenDevin) など、SWE-Bench 等のベンチマークと並走しながら進化するオープンソース系コーディングエージェント群。完全自律実行と検証可能性のトレードオフを実装で探求している。",
+      "OpenCode / OpenHands (旧 OpenDevin) や Aider など、SWE-Bench 等のベンチマークと並走しながら進化するオープンソース系コーディングエージェント群。完全自律実行と検証可能性のトレードオフを実装で探求している。",
   },
   vscode: {
     oneLiner: "Microsoft 製のオープンソースエディタ。",

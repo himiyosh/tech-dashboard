@@ -41,6 +41,7 @@ import {
   mergeBodies,
   isRealBody,
 } from "../worker/src/bodies-file.ts";
+import { hasSufficientBodySourceGrounding } from "../harness/pipeline/source-grounding.ts";
 
 const INDEX_PATH = "data/index.json";
 const BODIES_PATH = "data/bodies.json";
@@ -191,8 +192,15 @@ async function main() {
     const t = (s ?? "").trim();
     return !t || t.startsWith("このエントリは ") || t.includes("AI summary not yet available");
   };
-  // Eligible = real bilingual summary (publishable) AND no real body yet AND not already cached this run.
+  // Eligible = usable source excerpt AND real bilingual summary (publishable)
+  // AND no real body yet AND not already cached this run.
+  //
+  // The excerpt gate is the same one worker-body applies before generation
+  // (hasSufficientBodySourceGrounding). Without it this script generated a body
+  // for every publishable entry, including the 53 with an entirely empty
+  // contentSnippet, and wrote them straight into data/bodies.json.
   const eligible = idx.entries.filter((e) => {
+    if (!hasSufficientBodySourceGrounding(e)) return false;
     if (isFallbackSummary(e.summaryJa) || isFallbackSummary(e.summaryEn)) return false;
     if (isRealBody(existing.bodies[e.id])) return false;
     if (isRealBody(cache[e.id])) return false;
@@ -231,6 +239,13 @@ async function main() {
         source: e.source,
         sourceType: e.sourceType,
         url: e.url,
+        // contentSnippet is the ONLY factual source the prompt gets. Omitting it
+        // (the previous behavior) meant contextLines() in
+        // worker/src/body-generate.ts never emitted its
+        // "収集元の抜粋 / Source excerpt:" line, so every body this script
+        // produced was written from the title plus two AI summaries and nothing
+        // else - the exact ungrounded-generation defect this cluster fixes.
+        contentSnippet: e.contentSnippet,
         summaryJa: e.summaryJa,
         summaryEn: e.summaryEn,
         publishedAt: e.publishedAt,

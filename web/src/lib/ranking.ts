@@ -1,4 +1,5 @@
 import type { NormalizedEntry } from "./data.ts";
+import { isRoutineReleaseEntry } from "./release-signal.ts";
 import { sourceAuthority } from "./source-meta.ts";
 
 const AUTHORITY_BOOST = {
@@ -255,7 +256,17 @@ export function decisionTopicKey(entry: DecisionTopicEntry): string | null {
 }
 
 export function decisionRankScore(
-  entry: Pick<NormalizedEntry, "collectedAt" | "importance" | "publishedAt" | "source" | "sourceType">,
+  entry: Pick<
+    NormalizedEntry,
+    | "collectedAt"
+    | "importance"
+    | "publishedAt"
+    | "source"
+    | "sourceType"
+    | "title"
+    | "titleEn"
+    | "titleJa"
+  >,
   nowMs: number,
 ): number {
   const publishedMs = Date.parse(entry.publishedAt || entry.collectedAt);
@@ -265,7 +276,13 @@ export function decisionRankScore(
   const authority = sourceAuthority(entry.source, entry.sourceType).kind;
   const sourceTypeBoost =
     entry.sourceType === "release" || entry.sourceType === "changelog" ? -8 : 0;
-  return entry.importance * 100 + AUTHORITY_BOOST[authority] - ageHours * 0.6 + sourceTypeBoost;
+  // Routine patch/prerelease builds rank as importance 1 regardless of the
+  // stored value: older snapshots carry over-scored importance (the collector
+  // once matched "v3." as a major keyword) and the max-merge ratchet keeps it.
+  const importance = isRoutineReleaseEntry(entry)
+    ? Math.min(entry.importance, 1)
+    : entry.importance;
+  return importance * 100 + AUTHORITY_BOOST[authority] - ageHours * 0.6 + sourceTypeBoost;
 }
 
 export interface DecisionSelectionOptions {

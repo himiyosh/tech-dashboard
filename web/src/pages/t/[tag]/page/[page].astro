@@ -17,6 +17,7 @@ import {
 } from "../../../../lib/data.ts";
 import {
   paginationPageNumbers,
+  tagPath,
   totalPageCount,
 } from "../../../../lib/route-inventory.ts";
 
@@ -60,7 +61,13 @@ const breadcrumb = [
 ];
 ---
 
-<Portal title={`#${tag} · p.${page} — TECH Dashboard`} breadcrumb={breadcrumb}>
+<Portal
+  title={`#${tag} · p.${page} — TECH Dashboard`}
+  canonicalPath={tagPath(tag, page)}
+  description={`#${tag} タグの ${page}/${total} ページ目。全 ${all.length} 件のうち ${entries.length} 件を新着順・出典付き AI 要約で掲載します。`}
+  descriptionEn={`Page ${page} of ${total} for #${tag}: ${entries.length} of ${all.length} tagged updates in recency order with sourced AI summaries.`}
+  breadcrumb={breadcrumb}
+>
   <PageHero
     className="page-hero-tag"
     kicker="Tag timeline"

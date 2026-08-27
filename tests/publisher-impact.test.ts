@@ -5,6 +5,39 @@ import {
   buildPublisherImpactPlan,
   formatPublisherImpactMarkdown,
 } from "../scripts/publisher-impact.ts";
+import {
+  parsePublicationApprovalManifest,
+  type PublicationApprovalManifest,
+} from "../web/src/lib/publication-gate.ts";
+
+const HEX = {
+  changed: "00000000000000c1",
+  body: "00000000000000b1",
+  removed: "00000000000000d1",
+  unchanged: "00000000000000u1".replace("u", "a"),
+  warm: "00000000000000e1",
+  fresh: "00000000000000f1",
+} as const;
+
+/**
+ * The gate is data-driven, so the fixture manifest is too: every id the older
+ * assertions expect to stay addressable is baselined, and `fresh` is left out
+ * so a brand-new entry proves the planner withholds it.
+ */
+function manifest(
+  overrides: Partial<PublicationApprovalManifest> = {},
+): PublicationApprovalManifest {
+  return parsePublicationApprovalManifest({
+    version: 1,
+    dailyReleaseLimit: 12,
+    baseline: {
+      capturedAt: "2026-08-11T00:00:00Z",
+      ids: [HEX.changed, HEX.body, HEX.removed, HEX.unchanged, HEX.warm],
+    },
+    approvals: [],
+    ...overrides,
+  });
+}
 
 function entry(id: string, overrides: Record<string, unknown> = {}) {
   return {
@@ -38,8 +71,8 @@ function files(values: Record<string, unknown>): Map<string, string | null> {
 
 describe("Publisher incremental impact plan", () => {
   it("keeps an entry-only change scoped to that detail while declaring all affected aggregates", () => {
-    const beforeEntry = entry("changed");
-    const afterEntry = entry("changed", { summaryEn: "Updated usable summary." });
+    const beforeEntry = entry("00000000000000c1");
+    const afterEntry = entry("00000000000000c1", { summaryEn: "Updated usable summary." });
     const beforeFiles = files({
       "data/index.json": { generatedAt: "2026-08-12T00:00:00Z", entries: [beforeEntry] },
       "data/bodies.json": { bodies: {} },
@@ -54,13 +87,14 @@ describe("Publisher incremental impact plan", () => {
     });
 
     const plan = buildPublisherImpactPlan({
+      approvalManifest: manifest(),
       baseRef: "a".repeat(40),
       beforeFiles,
       afterFiles,
       changedPaths: ["data/index.json"],
     });
 
-    expect(plan.changedEntryIds).toEqual(["changed"]);
+    expect(plan.changedEntryIds).toEqual(["00000000000000c1"]);
     expect(plan.changedBodyIds).toEqual([]);
     expect(plan.affectedCategories).toEqual(["agent-fw"]);
     expect(plan.affectedTags).toEqual(["agent"]);
@@ -88,20 +122,21 @@ describe("Publisher incremental impact plan", () => {
 
   it("does not mark unrelated aggregate pages for a body-only change", () => {
     const base = files({
-      "data/index.json": { entries: [entry("body-entry")] },
+      "data/index.json": { generatedAt: "2026-08-12T00:00:00Z", entries: [entry("00000000000000b1")] },
       "data/bodies.json": { bodies: {} },
       "data/stats.json": {},
       "data/archive/_index.json": {},
     });
     const after = files({
-      "data/index.json": { entries: [entry("body-entry")] },
+      "data/index.json": { generatedAt: "2026-08-12T00:00:00Z", entries: [entry("00000000000000b1")] },
       "data/bodies.json": {
-        bodies: { "body-entry": { bodyJa: "本文", bodyEn: "Body" } },
+        bodies: { "00000000000000b1": { bodyJa: "本文", bodyEn: "Body" } },
       },
       "data/stats.json": {},
       "data/archive/_index.json": {},
     });
     const plan = buildPublisherImpactPlan({
+      approvalManifest: manifest(),
       baseRef: "b".repeat(40),
       beforeFiles: base,
       afterFiles: after,
@@ -109,77 +144,81 @@ describe("Publisher incremental impact plan", () => {
     });
 
     expect(plan.changedEntryIds).toEqual([]);
-    expect(plan.changedBodyIds).toEqual(["body-entry"]);
-    expect(plan.routeFamilies).toEqual(["detail-pages", "search-index"]);
+    expect(plan.changedBodyIds).toEqual(["00000000000000b1"]);
+    // A body change now moves the sitemap too: gaining or losing a body flips
+    // the entry between indexable and noindex, so sitemap.xml must rebuild.
+    expect(plan.routeFamilies).toEqual(["detail-pages", "search-index", "sitemap"]);
     expect(plan.routeFamilies).not.toContain("category-pages");
     expect(plan.routeFamilies).not.toContain("archive");
     expect(plan.routeFamilies).not.toContain("home");
     expect(plan.incremental).toEqual({
       detailMode: "exact",
-      detailUpsertIds: ["body-entry"],
+      detailUpsertIds: ["00000000000000b1"],
       detailTombstoneIds: [],
-      detailPaths: ["/e/body-entry/"],
+      detailPaths: ["/e/00000000000000b1/"],
       searchMode: "delta",
-      searchDeltaIds: ["body-entry"],
+      searchDeltaIds: ["00000000000000b1"],
       shadowSafe: true,
       blockers: [],
     });
   });
 
   it("emits a tombstone when an addressable detail leaves the final snapshot", () => {
-    const removed = entry("removed", { archiveTier: "warm" });
+    const removed = entry("00000000000000d1", { archiveTier: "warm" });
     const before = files({
-      "data/index.json": { entries: [removed] },
+      "data/index.json": { generatedAt: "2026-08-12T00:00:00Z", entries: [removed] },
       "data/bodies.json": { bodies: {} },
       "data/stats.json": {},
       "data/archive/_index.json": {},
     });
     const after = files({
-      "data/index.json": { entries: [] },
+      "data/index.json": { generatedAt: "2026-08-12T00:00:00Z", entries: [] },
       "data/bodies.json": { bodies: {} },
       "data/stats.json": {},
       "data/archive/_index.json": {},
     });
 
     const plan = buildPublisherImpactPlan({
+      approvalManifest: manifest(),
       baseRef: "f".repeat(40),
       beforeFiles: before,
       afterFiles: after,
       changedPaths: ["data/index.json"],
     });
 
-    expect(plan.incremental.detailTombstoneIds).toEqual(["removed"]);
+    expect(plan.incremental.detailTombstoneIds).toEqual(["00000000000000d1"]);
     expect(plan.incremental.detailUpsertIds).toEqual([]);
-    expect(plan.incremental.detailPaths).toEqual(["/e/removed/"]);
+    expect(plan.incremental.detailPaths).toEqual(["/e/00000000000000d1/"]);
     expect(plan.incremental.shadowSafe).toBe(false);
   });
 
   it("tracks archive month invalidation without unrelated IDs", () => {
-    const unchanged = entry("unchanged");
-    const oldWarm = entry("warm", { archiveTier: "warm", summaryEn: "Old summary." });
-    const newWarm = entry("warm", { archiveTier: "warm", summaryEn: "New summary." });
+    const unchanged = entry("00000000000000a1");
+    const oldWarm = entry("00000000000000e1", { archiveTier: "warm", summaryEn: "Old summary." });
+    const newWarm = entry("00000000000000e1", { archiveTier: "warm", summaryEn: "New summary." });
     const beforeFiles = files({
-      "data/index.json": { entries: [unchanged] },
+      "data/index.json": { generatedAt: "2026-08-12T00:00:00Z", entries: [unchanged] },
       "data/bodies.json": { bodies: {} },
       "data/stats.json": {},
       "data/archive/_index.json": {},
       "data/archive/2026-08.json": { entries: [oldWarm] },
     });
     const afterFiles = files({
-      "data/index.json": { entries: [unchanged] },
+      "data/index.json": { generatedAt: "2026-08-12T00:00:00Z", entries: [unchanged] },
       "data/bodies.json": { bodies: {} },
       "data/stats.json": {},
       "data/archive/_index.json": {},
       "data/archive/2026-08.json": { entries: [newWarm] },
     });
     const plan = buildPublisherImpactPlan({
+      approvalManifest: manifest(),
       baseRef: "c".repeat(40),
       beforeFiles,
       afterFiles,
       changedPaths: ["data/archive/2026-08.json"],
     });
 
-    expect(plan.changedEntryIds).toEqual(["warm"]);
+    expect(plan.changedEntryIds).toEqual(["00000000000000e1"]);
     expect(plan.changedEntryIds).not.toContain("unchanged");
     expect(plan.changedArchiveMonths).toEqual(["2026-08"]);
     expect(plan.routeFamilies).toEqual(expect.arrayContaining([

@@ -32,6 +32,13 @@ import {
   publicRssFeeds,
 } from "../../web/src/lib/feed-catalog.ts";
 import { isArxivEntry } from "../../web/src/lib/research-lane.ts";
+import { isRealBodyRecord } from "../../web/src/lib/body-quality.ts";
+import {
+  isAddressableDetailEntry,
+  type DetailAddressableEntry,
+} from "../../web/src/lib/detail-addressability.ts";
+import { SITE_GATE, isBuiltDetailEntry } from "./detail-route-fixture.ts";
+import { isDefaultMutedCategory } from "../../web/src/lib/category-visibility.ts";
 import { isKnowledgeEligibleEntry } from "../../web/src/lib/knowledge-eligibility.ts";
 import { ADSENSE_CLIENT_ID, SITE_URL } from "../../web/src/lib/site.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
@@ -46,7 +53,7 @@ import {
 } from "../../web/src/lib/social-metadata.ts";
 
 const TIMELINE_ENTRY_LINK_SELECTOR =
-  'main article.card h3.title > a[href^="/e/"]';
+  'main article.card:not([data-catvis="muted"]) h3.title > a[href^="/e/"]';
 
 /**
  * issue #237 で Knowledge レーンから除外した記事の anchor。
@@ -473,17 +480,21 @@ test.describe("Publisher generated artifact", () => {
     const structuredData = JSON.parse(
       await page.locator('script[type="application/ld+json"]').textContent() ?? "{}",
     ) as {
+      "@type"?: string;
       headline?: string;
       description?: string;
       inLanguage?: string;
       author?: { name?: string; url?: string };
+      isBasedOn?: { url?: string; publisher?: { name?: string } };
       articleSection?: string;
       mainEntityOfPage?: { "@id"?: string };
     };
     const structuredTitle = structuredData.inLanguage === "ja-JP"
       ? visibleTitleJa
       : visibleTitleEn;
-    const structuredSource = structuredData.author?.name ?? "";
+    // The page description is grounded in the SOURCE publisher, which is now
+    // carried by isBasedOn. author is this site, which generated the text.
+    const structuredSource = structuredData.isBasedOn?.publisher?.name ?? "";
     const structuredCategory = structuredData.articleSection ?? "";
     expect(structuredSource).toBeTruthy();
     expect(structuredCategory).toBeTruthy();
@@ -498,7 +509,17 @@ test.describe("Publisher generated artifact", () => {
     );
     expect(structuredData.description).toContain(structuredSource);
     expect(structuredData.description).toContain(structuredCategory);
-    expect(structuredData.author?.name).toBeTruthy();
+    // AI-generated commentary is authored by this site, never by the source
+    // organization, and the source is credited through isBasedOn.
+    const visibleSourceHref = await page
+      .locator("a.ed-header-cta")
+      .getAttribute("href");
+    expect(visibleSourceHref).toMatch(/^https?:\/\//);
+    expect(structuredData["@type"]).toBe("Article");
+    expect(structuredData.author?.name).toBe("TECH Dashboard");
+    expect(structuredSource).not.toBe("TECH Dashboard");
+    expect(structuredData.author?.name).not.toBe(structuredSource);
+    expect(structuredData.isBasedOn?.url).toBe(visibleSourceHref);
     expect(structuredData.author?.url).toMatch(/^https?:\/\//);
     expect(structuredData.mainEntityOfPage?.["@id"]).toBe(canonicalUrl);
 
@@ -597,7 +618,7 @@ test.describe("Publisher generated artifact", () => {
       >;
     };
     const addressable = index.entries.filter(
-      (entry) => entry.archiveTier !== "cold" && entry.archiveTier !== "dropped",
+      (entry) => isAddressableDetailEntry(entry),
     );
     const imageBacked = addressable.find(
       (entry) => articleSocialImage(entry.image, "JA", "EN").url !== SOCIAL_IMAGE_URL,
@@ -1024,14 +1045,78 @@ test.describe("Publisher generated artifact", () => {
     expect(body.match(/\n/g)).toHaveLength(1);
   });
 
-  test("keeps hot and warm details addressable while cold details stay month-only", async ({
+  test("serves body-less details as reachable noindex pages and lists only indexable ones", async ({
+    request,
+  }) => {
+    // The AdSense remediation narrows what we ASK Google to index without
+    // deleting URLs: a detail page with no generated body stays reachable
+    // (so inbound links and the archive keep working) but ships
+    // "noindex, follow" and is absent from the sitemap.
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: DetailAddressableEntry[];
+    };
+    const bodies = (
+      JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+        bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
+      }
+    ).bodies;
+    const addressable = index.entries.filter((entry) => isAddressableDetailEntry(entry));
+    const bodied = addressable.find((entry) => isRealBodyRecord(bodies[entry.id]));
+    const bodyless = addressable.find((entry) => !isRealBodyRecord(bodies[entry.id]));
+
+    expect(bodied, "fixture includes a bodied detail entry").toBeTruthy();
+    expect(bodyless, "fixture includes a body-less detail entry").toBeTruthy();
+
+    const [bodiedResponse, bodylessResponse, sitemapResponse] = await Promise.all([
+      request.get(`/e/${bodied!.id}/`),
+      request.get(`/e/${bodyless!.id}/`),
+      request.get("/sitemap.xml"),
+    ]);
+    const sitemap = await sitemapResponse.text();
+
+    expect(bodiedResponse.status()).toBe(200);
+    expect(await bodiedResponse.text()).toMatch(
+      /<meta\s+name="robots"\s+content="index,\s*follow"\s*\/?>/,
+    );
+    expect(sitemap).toContain(`<loc>${SITE_URL}/e/${bodied!.id}/</loc>`);
+
+    // 404 here would strand every inbound link to the page.
+    expect(bodylessResponse.status()).toBe(200);
+    const bodylessHtml = await bodylessResponse.text();
+    expect(bodylessHtml).toMatch(
+      /<meta\s+name="robots"\s+content="noindex,\s*follow"\s*\/?>/,
+    );
+    expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${bodyless!.id}/</loc>`);
+    // "follow" is only meaningful if the page still exposes internal links.
+    expect(bodylessHtml).toContain('href="/c/');
+  });
+
+  test("keeps hot and warm details reachable while only bodied details enter the sitemap", async ({
     request,
   }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{ id: string; archiveTier?: string }>;
+      entries: Array<DetailAddressableEntry & { archiveTier?: string }>;
     };
-    const hot = index.entries.find((entry) => entry.archiveTier === "hot");
+    const bodies = (
+      JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+        bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
+      }
+    ).bodies;
+    // Detail routes require both a hot/warm tier and a usable summary
+    // (detail-addressability.ts): summary-pending shells are no longer built.
+    const hot = index.entries.find(
+      (entry) =>
+        entry.archiveTier === "hot"
+        && isAddressableDetailEntry(entry)
+        && isRealBodyRecord(bodies[entry.id]),
+    );
     const cold = index.entries.find((entry) => entry.archiveTier === "cold");
+    const pendingLive = index.entries.find(
+      (entry) =>
+        entry.archiveTier !== "cold" &&
+        entry.archiveTier !== "dropped" &&
+        !isAddressableDetailEntry(entry),
+    );
     const liveIds = new Set(index.entries.map((entry) => entry.id));
     const archiveIndex = JSON.parse(
       readFileSync("data/archive/_index.json", "utf8"),
@@ -1040,9 +1125,12 @@ test.describe("Publisher generated artifact", () => {
     for (const month of archiveIndex.months) {
       const archive = JSON.parse(
         readFileSync(`data/archive/${month}.json`, "utf8"),
-      ) as { entries: Array<{ id: string; archiveTier?: string }> };
+      ) as { entries: Array<DetailAddressableEntry & { archiveTier?: string }> };
       warmOnly = archive.entries.find(
-        (entry) => entry.archiveTier === "warm" && !liveIds.has(entry.id),
+        (entry) =>
+          entry.archiveTier === "warm" &&
+          !liveIds.has(entry.id) &&
+          isAddressableDetailEntry(entry),
       );
       if (warmOnly) break;
     }
@@ -1063,24 +1151,39 @@ test.describe("Publisher generated artifact", () => {
     expect(warmResponse.status()).toBe(200);
     expect(coldResponse.status()).toBe(404);
     expect(sitemap).toContain(`<loc>${SITE_URL}/e/${hot!.id}/</loc>`);
-    expect(sitemap).toContain(`<loc>${SITE_URL}/e/${warmOnly!.id}/</loc>`);
+    // Archive-only warm entries carry no generated body, so they stay
+    // reachable (200 above) but must not be advertised for indexing.
+    expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${warmOnly!.id}/</loc>`);
     expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${cold!.id}/</loc>`);
+
+    // Summary-pending live entries must not ship a thin detail shell either
+    // (AdSense low-value-content guard). A fully summarized corpus is valid.
+    if (pendingLive) {
+      const pendingResponse = await request.get(`/e/${pendingLive.id}/`);
+      expect(pendingResponse.status()).toBe(404);
+      expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${pendingLive.id}/</loc>`);
+    }
   });
 
   test("routes and announces cold source links while hot and warm cards stay internal", async ({
     page,
   }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{ id: string; url: string; archiveTier?: string }>;
+      entries: Array<{ id: string; url: string; archiveTier?: string; category: string }>;
     };
     const timelineRoutes = generatedEntryRoutes("page");
     const archiveRoutes = generatedEntryRoutes("archive");
+    // Card-visibility assertions require lanes the reader can see: the
+    // timeline hides default-muted categories (category-visibility.ts).
     const cold = index.entries
-      .filter((entry) => entry.archiveTier === "cold")
+      .filter((entry) => entry.archiveTier === "cold" && !isDefaultMutedCategory(entry.category))
       .map((entry) => ({ entry, route: timelineRoutes.get(entry.id) }))
       .find(({ route }) => route);
     const hot = index.entries
-      .filter((entry) => entry.archiveTier === "hot")
+      .filter((entry) =>
+        entry.archiveTier === "hot"
+        && isAddressableDetailEntry(entry)
+        && !isDefaultMutedCategory(entry.category))
       .map((entry) => ({ entry, route: timelineRoutes.get(entry.id) }))
       .find(({ route }) => route);
     const archiveIndex = JSON.parse(
@@ -1094,7 +1197,10 @@ test.describe("Publisher generated artifact", () => {
       const archive = JSON.parse(
         readFileSync(`data/archive/${month}.json`, "utf8"),
       ) as { entries: Array<{ id: string; url: string; archiveTier?: string }> };
-      const entry = archive.entries.find((candidate) => candidate.archiveTier === "warm");
+      const entry = archive.entries.find(
+        (candidate) =>
+          candidate.archiveTier === "warm" && isAddressableDetailEntry(candidate),
+      );
       const route = entry ? archiveRoutes.get(entry.id) : undefined;
       if (entry && route) {
         warm = { entry, route };

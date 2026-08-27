@@ -240,7 +240,14 @@ const workerSummary = wh
     };
 ---
 
-<Portal pageKey="status" title="Status — TECH Dashboard">
+<Portal
+  pageKey="status"
+  title="Status — TECH Dashboard"
+  canonicalPath="/status/"
+  description={`収集対象 ${sources.length} ソースの稼働状況。直近で更新のあった ${recent} ソース、掲載が限定的な ${limitedListingSourceCount} ソース、Worker のバッチ実行と要約キューの状態を公開します。`}
+  descriptionEn={`Live health of all ${sources.length} collected sources: ${recent} recently active, ${limitedListingSourceCount} with limited listing, plus worker batch runs and summary queue state.`}
+  breadcrumb={[{ label: "Home", href: "/" }, { label: "Status" }]}
+>
   <PageHero
     className={`page-hero-top-level page-hero-status page-hero-status-${overallStatus}`}
     accent={overallColor}

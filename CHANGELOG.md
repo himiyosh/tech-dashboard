@@ -14,6 +14,10 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 追加
 
+- 情報源に標準化団体公式の MCP Blog (`blog.modelcontextprotocol.io`) と Microsoft Research Blog を tier 1 で追加しました。どちらも登録前に実フィード検証を行い、Microsoft Research は AI/ML タイトル signal を必須とする title-scope keyword filter と `maxEntriesPerRun` で firmwide feed の noise を除外します。未検証の拡充候補と検証手順は `docs/source-candidates.md` に整理しました。
+- `/editorial-policy/`(編集方針)ページを追加しました。情報源の選定基準、重要度と掲載順の基準、AI 要約の生成と品質管理、訂正・削除ポリシー、広告と編集の独立、お問い合わせ (`#contact`) を JA/EN で明文化し、ハンバーガーメニュー・フッター・About・sitemap から到達できます。
+- release/changelog タイトルを version 形状で決定論的に分類する共有 module `web/src/lib/release-signal.ts` を追加しました(patch/prerelease/nightly = routine、x.Y.0 = minor、x.0.0 = major)。既存データの過大 importance を安全に降格する migration `scripts/rescore-release-importance.ts`(dry-run 既定・`--apply` 必須)も追加しています。
+
 - production Web buildを1回だけ再利用し、desktop/mobileのHome判断面、検索、RSS/OPML購読発見、実404回復、optionalな要約待ち状態をローカル計測するPlaywrightジャーニーを追加しました。出力はstep条件・操作上限・document navigation列・viewport/scroll・route・失敗観測と、現行runだけの情報値である経過msを含む64KiB以下のJSONです。合否は到達性と複雑度だけで判定し、timingの履歴baseline保存、過去比較、delta警告・失敗は行いません。
 - site-wide RSS、全カテゴリRSS、arXiv RSS、Knowledge RSSを重複なく一括購読できる静的`/feeds.opml`を追加しました。AboutのJA/EN購読actionと全ページのOPML autodiscoveryから利用でき、JSON FeedはRSSとしてbundleへ含めません。
 - Knowledge専用レーンへ静的な`/rss/knowledge.xml`、ページ固有のRSS autodiscovery、JA/ENの購読actionを追加しました。feedはKnowledge画面と同じ公開可能なevergreen記事だけを、既存RSSの順序・上限・XML安全契約で配信します。
@@ -31,8 +35,29 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 - bilingual `/privacy/`、version付きの明示的な広告opt-in、production custom-domain限定のAdSense gate、local設定消去、current-browser匿名いいね削除を追加しました。未選択・未知・壊れた・旧version・preview/pages.devはfail-closedで広告OFFとなり、閲覧・検索・Archive・RSS・JSON Feedは同意なしで利用できます。
 - Google AdSenseのpublisher identityからauthorized seller recordを生成するroot `/ads.txt`を追加し、ID形式をbuild時にfail-closedで検証するようにしました。
 
+### 追加
+
+- Timeline に常時表示のカテゴリフィルターを追加しました。定常リリース・ツール固有の話題が多い Editor / Cline / Aider / Local LLM / Agent Frameworks の各カテゴリは既定でグレーアウト(非表示)になり、チップをクリックすると表示に切り替えられます(任意のカテゴリを非表示にすることも可能)。選択はこの端末の localStorage にのみ保存され、検索・カテゴリページ・RSS には影響しません。既定の非表示はサーバー描画時に適用されるため JavaScript なしでも機能し、非表示件数はフィルター横に明示されます。
+- カテゴリ表示名「AI Editors」を「Editor」に変更しました(VS Code カテゴリと並んだときの重複感を解消)。
+- Aider カテゴリを廃止し、既存記事(live 10 件 + archive 10 件)と収集ソース `aider-releases` を OpenHands / OpenCode レーンへ統合しました(オーナー決定)。唯一のソースが 2026-02 以降休眠でカテゴリ最少の 10 件だったため、独立レーンの価値がありませんでした。`/c/aider` は消滅し、タクソノミーは 13 カテゴリになります。
+- Timeline の見出し「深掘り一覧 / Deep-dive timeline」を「記事一覧 / Articles」に変更し、カテゴリフィルターの説明文とタイムラインの節注記(自明な補助文言)を削除しました。
+- 記事本文にセクション見出し(項目)と、見出しベースの目次を追加しました。既存の約 1,300 本文には位置と語彙シグナルだけから導出した構造見出し(概要/詳細に加え、キューが検出できた場合のみ 背景/今後の展望)を付与し、内容を誤ってラベル付けしないことを優先しています。右レールの目次は段落の抜粋ではなくセクション見出しを表示し、読んでいるセクションに追従します。Worker の本文生成プロンプトには「## 」で始まる記事固有の見出し行(3〜5 個)を必須とする契約を追加し、今後生成される本文は記事内容に即した見出しを持ちます(既存本文への反映は Worker 再デプロイ後の再生成時)。
+
 ### 変更
 
+- パンくずリストをトップページ以外の全ページへ揃えました。従来は `/arxiv/`・`/knowledge/`・`/glossary/` にはあり、同じ階層の `/categories/`・`/status/`・`/about/`・`/archive/`・`/editorial-policy/`・`/privacy/`・`/search/` には無いという不揃いな状態でした。トップページはトレイルの起点なのでパンくずを持たず、それ以外のページはヘッダー直下の同じ位置に必ずトップへ戻るパンくずを表示します。e2e で固定しています。
+- トップページのヒーロー右側の 3 カード(「できること」「収録中ソース」「更新頻度」)を、数値主体のタイルへ作り替えました。旧カードは h1 とタグラインが数カラム左で既に述べている内容を散文で言い直しており、事務的な印象の主因になっていました。新しいタイルは「掲載中 1837(現在の Timeline · arXiv レーン除く)」「日次 15(8/25 JST · 公開日基準、直近 14 日のスパークライン付き)」「収録ソース 55/59」と、他のページの PageHero メトリクスと同じ 数値 / ラベル / 母集団 の型で表示します。稼働状態はカードではなくタイル下の 1 行に移し、文言も /status・/about と同じ語彙(「定期収集が遅延 · index 更新 …」)に統一しました(収集頻度の説明はタグラインが担うため重複を削除)。統計が空・0 件・全ソース稼働などの状態は既存の表現へ安全に縮退します。
+- トップ / カテゴリ / arXiv / Knowledge の各ヒーローの高さを揃えました。arXiv だけ className に `page-hero-top-level` が無く、メトリクスが 3 列 2 行ではなく 2 列 3 行になって 91px 高くなっていた(トップページより高い)ため、これを修正。Knowledge にも 6 つ目のメトリクス(直近 7 日)を追加して 3 ページとも同じ 6 メトリクス構成に統一し、カテゴリにもモバイル優先アクションを持たせてモバイルの構成を揃えました。ヒーロー見出しの件数チップはモバイルで非表示にしています(同じ数値がメトリクスに出ており、長いタイトルを 2 行に折り返させて高さを崩す原因になっていたため)。実測: デスクトップ 221/312/221 → 221/221/221(トップは 258 で最も高い)、モバイル 291/302/328 → 302/302/302。トップページで記事を前面に出す面すべてに適用しました。「今日 / 直近の主要な更新」ボードはミュート中のカテゴリの行を非表示にし、件数表示と行番号も表示中の行だけで数え直します(カテゴリを有効化すると、その行がランク順で現れます)。Spotlight・Top 3・見出しティッカーは既定ミュートのカテゴリを候補から除外します — これらは「今対応すべきもの」を示す枠であり、既定ミュートのレーンは定常リリースのノイズであるためです(該当記事は記事一覧とボードに残ります)。
+- モバイルのカテゴリフィルターを、折り返した大きなピル(実測約 413px、画面のほぼ半分)から、Daily Summary の「Top categories + lanes」と同じ密度の 2 列グリッドに変更しました。13 カテゴリすべてとミュート状態がスクロールなしで一覧でき、ラベルはサイドバーと同じ短縮名に揃えています(完全名は title 属性で保持)。常時表示とページの横スクロールなしは維持しています。
+- 記事詳細の本文が広い画面 (約 1,400px 以上) で左に寄って見える問題を修正しました。行長キャップ (約 45 全角字) された本文列がカード左端に張り付き、右レールとの間に大きな空白ができていたため、段落・引用・区切り・見出しからなる読書カラムをカード内で中央配置し、Playwright に中央配置とセクション見出しの回帰検証を追加しています。
+- 記事詳細ページの本文タイポグラフィを読みやすさ優先へ引き上げました。本文をデスクトップ 16px・モバイル 15.5px へ拡大し、冒頭段落はカテゴリ色のアクセント border 付きリード段落(17px)として強調して、開いた直後に記事の要点へ視線が入るようにしました。
+- 重要度バッジ・HOT 強調・重要記事グルーピングなどの表示を、保存済み importance ではなく実効 importance(`effectiveImportance`)で判定するようにしました。旧採点バグで importance 3 のまま残っている patch release(例: `Cline CLI v3.0.58` の「重要度 High」)が、データ移行や Worker 再デプロイを待たずに「Low」表示になります。
+- cline-releases のモノレポ部品タグ(`sdk/core` / `sdk/agents` 等の slash 付きタグ)を title-scope の excludeKeywords で収集対象から除外しました。同一リリースで複数の近接重複カードが並ぶノイズを止めます(トップレベルの Desktop / CLI / SDK リリースは残ります)。既存の保存済みエントリは Worker 再デプロイ後のマージ時に同ルールで除去されます(LL-077)。
+- 重要度採点の欠陥を修正しました。旧実装は "v1." / "v2." / "v3." の部分一致を major keyword として扱い、`Cline CLI v3.0.58` のような patch release を importance 3 に採点していました(live index の release の 78% が該当)。新実装は version 形状で判定し、patch/prerelease は importance 1 になります。Web 層のランキング・Featured・Top 3 も保存済みの過大 importance に依存せず routine release を decision 枠から除外します。
+- AI 要約が未生成 (deterministic pending fallback のみ) の記事は、個別記事ページ `/e/[id]/` と sitemap から除外するようにしました(thin content 対策)。一覧・検索・カテゴリには引き続き表示され、リンクは元記事へ直接遷移し、要約が生成されると詳細ページが復活します。publisher-impact の detail upsert 判定も同じ addressability gate を共有します。
+- AI 要約プロンプトを更新し、最初の節で最も具体的な変更点(機能名・数値・モデル名・範囲)、最後の節で誰に効くかを必ず述べる contract にしました。「〜が発表されました」だけの要約と「この記事は」等の定型導入を禁止し、importance の基準を patch/prerelease = 1 に明確化しました。
+- 一覧カードの日本語要約を 2 行 clamp から 3 行 clamp に拡大し、文字サイズと行間をわずかに引き上げて、hover なしで要約全文を読めるようにしました(英語要約は 2 行のまま)。
+- カテゴリページ `/c/[slug]/` に canonical URL と JA/EN の Open Graph / Twitter Card metadata を追加し、`/sample/article` に `noindex` を付与しました。
 - Publisher jobのGitHub Actions wall-time timeoutを60分へ拡張しました。明示的なfull incremental-shadow bootstrap用の余裕だけを増やし、Astroの18分build・static file数・RSS resource guardは引き続き内部契約でfail-closedに維持します。
 - Incremental shadow publishのR2 uploadに、開始件数と1件目・100件ごと・完了時だけを出すbounded progress diagnosticsを追加しました。各checkpointはread-back検証済みbyte数を表示し、uploadログ量がroute数に比例して無制限に増えないようにしました。
 - Incremental shadowのcontent-addressed uploadは、HTTP 408/429/5xxや一時的なnetwork/read-back失敗だけを最大3回・1秒/2秒のbounded backoffで再試行するようにしました。metadata/digest不一致などのcontract failureは従来どおり即時fail-closedにし、数千object中1件の一過性R2 502でactivation全体が失敗する再発を防ぎます。
@@ -110,6 +135,8 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 修正
 
+- 記事詳細ページ `/e/[id]/` のタイトルブロックが、要素セレクタで全ページに効くグローバルな sticky header CSS(暗色半透明背景・backdrop blur・sticky 配置)を継承し、タイトル周辺が濃いプレート状にずれて重なって見える本文レイアウト崩れを修正しました。記事詳細内の header は static 配置・透明背景へ明示的に上書きし、ページ上部のグローバル sticky header は従来どおり維持します。
+- モバイルの記事詳細で「元記事を読む」CTA だけが角丸なしの full-bleed で画面端まで到達し、直下の共有ボタンと幅・角丸が揃わない問題を修正しました。両ボタンを同じ内側余白・角丸・全幅で揃え、44px 以上の操作面を維持します。
 - モバイルのTimeline記事タイトルから固定4行clampとhidden overflowを外し、feedタイトルが長くなっても全文を自然に折り返して表示するようにしました。SpotlightとTop 3のfirst-view向けclamp、44px以上の操作面、横overflow契約は維持します。
 - evergreen記事のarchive行へsummaryが供給されない経路を塞ぎました。`selectArchiveUpdateEntries`は「今回変化したentryだけ」をarchiveへ流すため、変化のない安定したevergreen entryはarchive行が二度と更新されず、旧`compactArchiveEntry`に剥がされたsummaryが入らないまま残っていました (実測128件)。この状態でcapにevictされると、tierだけwarmへ昇格して「warmなのにsummary無し」という不正recordが生まれ、publisherのfail-closed検証を恒久停止させ得ました。evergreenは変化の有無に関わらず常にarchive更新対象へ含め、昇格側もbilingual summaryが揃っている行だけに限定します。data gateも、archive層が修復できない状態 (summary未供給のままevictされたhot行) では落ちないよう対象を限定しました。
 - evergreen記事がlive indexのcap (`PER_SOURCE_CAP` / `CATEGORY_CAPS` / `INDEX_LIMIT`) でevictされた際に、全ての閲覧面から消える問題を修正しました。capはevergreenを考慮せず永久にevictするため、archive行はtier `hot`のまま凍結し、LL-044でsummaryを剥がされた状態で固定されていました。結果として月別Archive (summary必須) にも個別記事ページ (warm由来) にも現れず、`data/archive/{YYYY-MM}.json`にだけ存在する記事になっていました。archive書き出し時にevergreenのsummaryを保持し、liveから外れたevergreen行をwarmへ昇格するようにし、既に凍結していた78件はgit履歴のsummaryを復元してwarmへ戻しました (R-022)。

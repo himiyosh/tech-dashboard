@@ -138,6 +138,7 @@ export function buildQueuePrompt(e: PromptEntry): string {
     ``,
     `importance: 3=major release/critical announcement, 2=important feature/research, 1=routine update.`,
     `Never copy deterministic fallback text such as "AI summary not yet available".`,
+    `HARD CONSTRAINT: no run of 24 or more consecutive characters of summaryJa or summaryEn may appear verbatim in the collected context, except for product, company, model, or version names. Rephrase every borrowed clause.`,
   ].join("\n");
 }
 
@@ -169,18 +170,21 @@ export function buildSummaryPrompt(e: PromptEntry): string {
     `Escape ASCII double quotes inside string values as \\". In titleJa, prefer Japanese corner brackets 「」 instead of ASCII double quotes.`,
     `Do NOT write a body or any long-form text. Keep the whole response short.`,
     `Write a genuine summary of what the article is about and why it matters -- do NOT copy or truncate the opening sentence of the excerpt.`,
+    `HARD CONSTRAINT: no run of 24 or more consecutive characters of either summary may appear verbatim in the source excerpt, except for product, company, model, or version names. Rephrase every borrowed clause in your own words. A summary that reproduces the excerpt is rejected and the entry is regenerated.`,
     `Every summary must be grammatically complete: never cut off mid-sentence or mid-word, and always end with proper punctuation.`,
     `Treat the collected title and source excerpt as the factual boundary. Do not invent a feature when the source describes a pricing plan, and do not describe an expansion to a new platform as the first launch of an existing product.`,
     `Preserve material facts such as plan type, price, target region, payment method, target platform, and prior-platform expansion in BOTH summaries when they appear in the source context.`,
+    `Make each summary decision-ready at a glance: the FIRST clause names the product and the single most concrete change (feature name, capability, number, model name, or scope) taken from the source; the final clause says who benefits or what it enables. Include at least one concrete fact from the source -- a summary that only says "an update was announced" / "〜が発表されました" with no specifics is invalid.`,
+    `Do not open with filler like "この記事は", "本記事では", "このエントリは", "This article describes". Start with the subject itself.`,
     `{`,
     `  "titleJa": "Natural Japanese title. Keep product/company names and version numbers unchanged.",`,
-    `  "summaryJa": "Complete Japanese summary in 1-2 full sentences (90-150 chars). State what changed and why it matters.",`,
-    `  "summaryEn": "Complete English summary in 1-2 full sentences (100-180 chars). State what changed and why it matters.",`,
+    `  "summaryJa": "Complete Japanese summary in 1-2 full sentences (90-150 chars). Lead with the concrete change, end with why it matters or who benefits.",`,
+    `  "summaryEn": "Complete English summary in 1-2 full sentences (100-180 chars). Lead with the concrete change, end with why it matters or who benefits.",`,
     `  "importance": 1 | 2 | 3,`,
     `  "extraTags": ["lowercase-kebab", ...]`,
     `}`,
     ``,
-    `importance: 3=major release/critical announcement, 2=important feature/research, 1=routine update.`,
+    `importance: 3=major release (x.0-level) or critical announcement, 2=important feature/research, 1=routine update, patch/prerelease version bump, or maintenance note.`,
     `Never copy deterministic fallback text such as "AI summary not yet available".`,
   ].join("\n");
 }

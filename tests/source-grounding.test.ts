@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   findBodyGroundingIssues,
   findSummaryGroundingIssues,
+  hasSufficientBodySourceGrounding,
   hasSufficientSourceGrounding,
 } from "../harness/pipeline/source-grounding.ts";
 import {
@@ -407,5 +408,38 @@ describe("source grounding contract", () => {
     );
     expect(samples).toHaveLength(8);
     expect(rejected).toEqual([]);
+  });
+});
+
+describe("body grounding gate", () => {
+  const descriptiveTitleOnly = {
+    title: "GitHub Copilot app usage metrics now expand across report rollups",
+    contentSnippet: "",
+  };
+  const realExcerptWeakTitle = {
+    title: "Ollama v0.33.0",
+    contentSnippet:
+      "The release notes describe a new scheduler for concurrent model loads, plus fixes for GPU memory reporting on Windows.",
+  };
+
+  it("a descriptive title alone grounds a summary but never a body", () => {
+    expect(hasSufficientSourceGrounding(descriptiveTitleOnly)).toBe(true);
+    expect(hasSufficientBodySourceGrounding(descriptiveTitleOnly)).toBe(false);
+  });
+
+  it("a real excerpt grounds a body even when the headline is version-shaped", () => {
+    // This is why the gate drops the title disjunct instead of AND-ing the two:
+    // 270 live entries look like this and their source text is real.
+    expect(hasSufficientSourceGrounding(realExcerptWeakTitle)).toBe(true);
+    expect(hasSufficientBodySourceGrounding(realExcerptWeakTitle)).toBe(true);
+  });
+
+  it("rejects an empty, fragmentary, or title-echoing excerpt", () => {
+    expect(hasSufficientBodySourceGrounding({ title: "Introducing Gemini 3.7 Flash", contentSnippet: "" })).toBe(false);
+    expect(hasSufficientBodySourceGrounding({ title: "Some post", contentSnippet: "Read more" })).toBe(false);
+    expect(hasSufficientBodySourceGrounding({
+      title: "A Tale of Two Flink Autoscalers",
+      contentSnippet: "A Tale of Two Flink Autoscalers",
+    })).toBe(false);
   });
 });

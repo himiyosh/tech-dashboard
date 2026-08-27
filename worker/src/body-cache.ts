@@ -1,7 +1,7 @@
 import type { KeyValueBinding } from "./runtime-bindings.ts";
 import {
   hasMaterialBodyGroundingConflict,
-  hasSufficientSourceGrounding,
+  hasSufficientBodySourceGrounding,
   type SourceGroundingInput,
 } from "../../harness/pipeline/source-grounding.ts";
 
@@ -96,7 +96,7 @@ export function isGroundedBodyCacheEntry(
 ): boolean {
   if (!entry || !isBodyComplete(entry)) return false;
   return (
-    hasSufficientSourceGrounding(source) &&
+    hasSufficientBodySourceGrounding(source) &&
     !hasMaterialBodyGroundingConflict(source, entry)
   );
 }

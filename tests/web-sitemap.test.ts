@@ -250,12 +250,12 @@ describe("sitemap", () => {
     expect(notIndexable.length, "fixture has body-less details").toBeGreaterThan(0);
 
     for (const entry of indexable) {
-      expect(hasRealBody(entry.id)).toBe(true);
+      expect(hasRealBody(entry)).toBe(true);
       expect(urls.has(canonical(detailPath(entry.id)))).toBe(true);
       expect(detailRobotsContent(entry)).toBe(DETAIL_ROBOTS_INDEX);
     }
     for (const entry of notIndexable) {
-      expect(hasRealBody(entry.id)).toBe(false);
+      expect(hasRealBody(entry)).toBe(false);
       expect(urls.has(canonical(detailPath(entry.id)))).toBe(false);
       expect(detailRobotsContent(entry)).toBe(DETAIL_ROBOTS_NOINDEX);
     }

@@ -38,7 +38,10 @@ export const DETAIL_ROBOTS_INDEX = "index, follow";
 export const DETAIL_ROBOTS_NOINDEX = "noindex, follow";
 
 export function isIndexableDetailEntry(entry: DetailAddressableEntry): boolean {
-  return isAddressableDetailEntry(entry) && hasRealBody(entry.id);
+  // hasRealBody takes the ENTRY, not the id, so the source-grounding guard
+  // cannot be bypassed here: a body generated without a usable source excerpt
+  // must not make its page indexable either.
+  return isAddressableDetailEntry(entry) && hasRealBody(entry);
 }
 
 /**

@@ -18,6 +18,7 @@ import {
   type DetailAddressableEntry,
 } from "../../web/src/lib/detail-addressability.ts";
 import { CATEGORY_META } from "../../web/src/lib/category-meta.ts";
+import { hasMeaningfulSourceSnippet } from "../../web/src/lib/source-snippet.ts";
 import { DEFAULT_MUTED_CATEGORIES } from "../../web/src/lib/category-visibility.ts";
 
 /** Category count follows the taxonomy source of truth, not a hard-coded number. */
@@ -2556,16 +2557,23 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("article body provenance and supporting copy follow the active language", async ({ page }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{ id: string }>;
+      entries: Array<{ id: string; title?: string; contentSnippet?: string }>;
     };
     const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
       bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
     };
-    const liveIds = new Set(index.entries.map((entry) => entry.id));
+    // web/src/lib/bodies.ts suppresses a stored body whose entry carries no
+    // usable source excerpt, so "has a record in bodies.json" is no longer
+    // enough to pick a page that renders prose. On the current corpus this
+    // find() returned 2741ff56db66670d, whose contentSnippet is "". Derive the
+    // fixture through the same guard the page uses.
+    const liveById = new Map(index.entries.map((entry) => [entry.id, entry]));
     const bodyEntryId = Object.entries(bodyFile.bodies).find(([id, body]) => {
+      const entry = liveById.get(id);
+      if (!entry || !hasMeaningfulSourceSnippet(entry)) return false;
       const jaParagraphs = (body.bodyJa ?? "").split(/\n{2,}/).filter(Boolean);
       const enParagraphs = (body.bodyEn ?? "").split(/\n{2,}/).filter(Boolean);
-      return liveIds.has(id) && jaParagraphs.length >= 3 && enParagraphs.length >= 3;
+      return jaParagraphs.length >= 3 && enParagraphs.length >= 3;
     })?.[0];
     expect(bodyEntryId, "live article with bilingual long-form body fixture").toBeTruthy();
 
@@ -2681,15 +2689,19 @@ test.describe("TECH Dashboard smoke", () => {
 
   test("wide screens keep the article reading column centered with section headings", async ({ page }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{ id: string }>;
+      entries: Array<{ id: string; title?: string; contentSnippet?: string }>;
     };
     const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
       bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
     };
-    const liveIds = new Set(index.entries.map((entry) => entry.id));
+    // Same render-guard derivation as the provenance test above: the previous
+    // pick on this corpus was d089c4387b7e1eb4, contentSnippet "".
+    const liveById = new Map(index.entries.map((entry) => [entry.id, entry]));
     const bodyEntryId = Object.entries(bodyFile.bodies).find(([id, body]) => {
+      const entry = liveById.get(id);
+      if (!entry || !hasMeaningfulSourceSnippet(entry)) return false;
       const jaParagraphs = (body.bodyJa ?? "").split(/\n{2,}/).filter(Boolean);
-      return liveIds.has(id) && jaParagraphs.length >= 4;
+      return jaParagraphs.length >= 4;
     })?.[0];
     expect(bodyEntryId, "live article with a long-form JA body fixture").toBeTruthy();
 
@@ -8670,7 +8682,12 @@ test.describe("TECH Dashboard smoke", () => {
     // .ed-body-prose が存在せず検証が空振りする。live index と bodies.json の
     // 積集合から本文持ち entry をデータ導出する (live ID は pin しない)。
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
-      entries: Array<{ id: string; archiveTier?: string }>;
+      entries: Array<{
+        id: string;
+        archiveTier?: string;
+        title?: string;
+        contentSnippet?: string;
+      }>;
     };
     const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
       bodies: Record<string, unknown>;
@@ -8679,7 +8696,8 @@ test.describe("TECH Dashboard smoke", () => {
       (entry) =>
         entry.archiveTier !== "cold"
         && entry.archiveTier !== "dropped"
-        && entry.id in bodies.bodies,
+        && entry.id in bodies.bodies
+        && hasMeaningfulSourceSnippet(entry),
     );
     // 本文持ちが 1 件も無い corpus は有効な状態 (全記事が要約のみ)。
     if (!withBody) return;

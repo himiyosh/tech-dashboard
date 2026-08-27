@@ -12,7 +12,10 @@ import {
   hasKnownProductBodyRecordConflict,
   type ProductNameEntry,
 } from "../../harness/pipeline/product-name.ts";
-import { hasMaterialBodyGroundingConflict } from "../../harness/pipeline/source-grounding.ts";
+import {
+  hasMaterialBodyGroundingConflict,
+  hasSufficientBodySourceGrounding,
+} from "../../harness/pipeline/source-grounding.ts";
 import type { NormalizedEntry } from "../../harness/types.ts";
 
 export interface BodyRecord {
@@ -129,6 +132,7 @@ export function pruneInvalidBodyRecords(
     if (
       entry &&
       (
+        !hasSufficientBodySourceGrounding(entry) ||
         hasKnownProductBodyRecordConflict(entry, record) ||
         hasMaterialBodyGroundingConflict(entry, record)
       )

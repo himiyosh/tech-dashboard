@@ -39,16 +39,47 @@ function htmlFiles(root) {
   return files;
 }
 
-function hrefAttributes(html) {
+// Google treats `none` as `noindex, nofollow`, so both directives exempt a
+// route from the sitemap. Word-bounded on whitespace/commas so `index, follow`
+// never matches.
+const ROBOTS_NOINDEX_DIRECTIVE_RE = /(?:^|[\s,])(?:noindex|none)(?:[\s,]|$)/i;
+
+/**
+ * One parse5 pass per document. Returns every href (HTML and foreign/SVG), plus
+ * whether the document declares a robots `noindex`/`none` directive, plus
+ * whether it carries a robots meta with no `content` attribute at all.
+ *
+ * All three signals are read from the parsed tree, never from raw HTML, so
+ * commented-out or script-embedded markup cannot be mistaken for a real meta
+ * tag - the same property the href scan already relies on.
+ */
+function documentSignals(html) {
   const hrefs = [];
+  const robotsDirectives = [];
+  let robotsWithoutContent = false;
   const stack = [parse(html)];
   while (stack.length > 0) {
     const node = stack.pop();
     if (Array.isArray(node.attrs)) {
+      const isMeta = node.nodeName === "meta";
+      let isRobotsMeta = false;
+      let robotsContent = null;
       for (const attribute of node.attrs) {
         // parse5 normalizes HTML names and also exposes foreign/namespaced attrs
         // through this shape. Both HTML/SVG href attributes carry name="href".
         if (attribute.name === "href") hrefs.push(attribute.value);
+        if (!isMeta) continue;
+        if (
+          attribute.name === "name"
+          && attribute.value.trim().toLowerCase() === "robots"
+        ) {
+          isRobotsMeta = true;
+        }
+        if (attribute.name === "content") robotsContent = attribute.value;
+      }
+      if (isRobotsMeta) {
+        if (robotsContent === null) robotsWithoutContent = true;
+        else robotsDirectives.push(robotsContent);
       }
     }
     if (Array.isArray(node.childNodes)) {
@@ -57,7 +88,11 @@ function hrefAttributes(html) {
       }
     }
   }
-  return hrefs;
+  return {
+    hrefs,
+    noindex: robotsDirectives.some((value) => ROBOTS_NOINDEX_DIRECTIVE_RE.test(value)),
+    robotsWithoutContent,
+  };
 }
 
 function normalizedInternalDetailPath(href, documentUrl) {
@@ -102,6 +137,8 @@ export function validateSitemapDist({
   }
 
   const canonicalHtmlPaths = new Set();
+  const noindexPaths = new Set();
+  const malformedRobotsPaths = new Set();
   const redirectPaths = new Set();
   const internalDetailLinks = [];
 
@@ -112,25 +149,50 @@ export function validateSitemapDist({
     const isRedirect = REDIRECT_MARKERS.some((marker) => marker.test(html));
     (isRedirect ? redirectPaths : canonicalHtmlPaths).add(route);
     if (isRedirect) continue;
+    const { hrefs, noindex, robotsWithoutContent } = documentSignals(html);
+    if (noindex) noindexPaths.add(route);
+    if (robotsWithoutContent) malformedRobotsPaths.add(route);
     const documentUrl = new URL(route, `${canonicalOrigin}/`);
-    for (const href of hrefAttributes(html)) {
+    for (const href of hrefs) {
       const detailPath = normalizedInternalDetailPath(href, documentUrl);
       if (detailPath) internalDetailLinks.push({ route, detailPath });
     }
   }
 
   const missingHtml = [...sitemapPaths].filter((route) => !canonicalHtmlPaths.has(route));
-  const missingSitemap = [...canonicalHtmlPaths].filter((route) => !sitemapPaths.has(route));
+  // A canonical route may leave the sitemap only by declaring `noindex`: the
+  // page stays reachable for readers and inbound links while crawlers are told
+  // not to index it (web/src/lib/detail-indexability.ts). Dropping a route from
+  // the sitemap without that declaration is still a build failure, and so is
+  // advertising a `noindex` route in the sitemap, so the two decisions cannot
+  // drift apart silently in either direction.
+  const missingSitemap = [...canonicalHtmlPaths].filter(
+    (route) => !sitemapPaths.has(route) && !noindexPaths.has(route),
+  );
+  const noindexInSitemap = [...noindexPaths].filter((route) => sitemapPaths.has(route));
   const redirectInSitemap = [...redirectPaths].filter((route) => sitemapPaths.has(route));
   const invalidInternalDetailLinks = internalDetailLinks
     .filter(({ detailPath }) => !canonicalHtmlPaths.has(detailPath))
     .map(({ route, detailPath }) => `${route} -> ${detailPath}`);
   const failures = [];
+  if (malformedRobotsPaths.size > 0) {
+    // Reported first: an unreadable robots meta invalidates the indexability
+    // classification of that route, so the sitemap findings below cannot be
+    // trusted until it is fixed.
+    failures.push(
+      `robots meta without a content attribute: ${[...malformedRobotsPaths].slice(0, 10).join(", ")}`,
+    );
+  }
   if (missingHtml.length > 0) {
     failures.push(`sitemap URLs without canonical HTML: ${missingHtml.slice(0, 10).join(", ")}`);
   }
   if (missingSitemap.length > 0) {
-    failures.push(`canonical HTML absent from sitemap: ${missingSitemap.slice(0, 10).join(", ")}`);
+    failures.push(
+      `indexable canonical HTML absent from sitemap: ${missingSitemap.slice(0, 10).join(", ")}`,
+    );
+  }
+  if (noindexInSitemap.length > 0) {
+    failures.push(`noindex routes advertised in sitemap: ${noindexInSitemap.slice(0, 10).join(", ")}`);
   }
   if (redirectInSitemap.length > 0) {
     failures.push(`redirect-only URLs in sitemap: ${redirectInSitemap.slice(0, 10).join(", ")}`);
@@ -148,6 +210,7 @@ export function validateSitemapDist({
     sitemapUrlCount: sitemapPaths.size,
     sitemapByteLength,
     canonicalHtmlCount: canonicalHtmlPaths.size,
+    noindexHtmlCount: noindexPaths.size,
     redirectCount: redirectPaths.size,
     internalDetailLinkCount: internalDetailLinks.length,
     invalidInternalDetailLinkCount: invalidInternalDetailLinks.length,

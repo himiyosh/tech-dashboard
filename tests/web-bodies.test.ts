@@ -6,6 +6,7 @@
  * bodies.json に格納され、id でルックアップする。
  */
 import { describe, it, expect, vi } from "vitest";
+import { isFillerBodyRecord, isRealBodyRecord } from "../web/src/lib/body-quality.ts";
 
 vi.mock("../data/bodies.json", () => ({
   default: {
@@ -81,5 +82,38 @@ describe("articleBodyState", () => {
 describe("BODIES_COUNT", () => {
   it("payload の count を反映する", () => {
     expect(BODIES_COUNT).toBe(3);
+  });
+});
+
+describe("isRealBodyRecord (body-quality)", () => {
+  // body-quality.ts imports no data artifact, so route policy
+  // (detail-indexability.ts), these unit tests, and the Playwright publisher
+  // spec all apply the identical predicate without loading the 9MB
+  // data/bodies.json. That shared definition is the point of the module.
+  it("rejects missing, empty, and whitespace-only records", () => {
+    expect(isRealBodyRecord(undefined)).toBe(false);
+    expect(isRealBodyRecord(null)).toBe(false);
+    expect(isRealBodyRecord({ bodyJa: "", bodyEn: "" })).toBe(false);
+    expect(isRealBodyRecord({ bodyJa: "  ", bodyEn: "\n" })).toBe(false);
+  });
+
+  it("rejects legacy deterministic filler in either language", () => {
+    expect(
+      isRealBodyRecord({
+        bodyJa: "このエントリでは、元記事の要約と収集時のメタデータから補っています。",
+        bodyEn: "",
+      }),
+    ).toBe(false);
+    expect(
+      isRealBodyRecord({
+        bodyJa: "",
+        bodyEn: "This note is completed from the existing summary and collection metadata.",
+      }),
+    ).toBe(false);
+  });
+
+  it("accepts a record with real prose in one language", () => {
+    expect(isRealBodyRecord({ bodyJa: "実本文", bodyEn: "" })).toBe(true);
+    expect(isFillerBodyRecord({ bodyJa: "実本文", bodyEn: "real" })).toBe(false);
   });
 });

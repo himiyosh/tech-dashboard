@@ -190,3 +190,117 @@ describe("built sitemap detail-link invariant", () => {
     }
   });
 });
+
+describe("sitemap / noindex parity invariant", () => {
+  function makeDist(): string {
+    return mkdtempSync(path.join(tmpdir(), "sitemap-noindex-"));
+  }
+
+  it("accepts a noindex canonical route absent from the sitemap", () => {
+    const dist = makeDist();
+    try {
+      writeRoute(dist, "/keep/", '<html><head></head><body><a href="/e/thin/">Thin</a></body></html>');
+      writeRoute(
+        dist,
+        "/e/thin/",
+        '<html><head><meta name="robots" content="noindex, follow"></head><body></body></html>',
+      );
+      writeSitemap(dist, ["/keep/"]);
+      expect(validateSitemapDist({ distDirectory: dist })).toMatchObject({
+        sitemapUrlCount: 1,
+        canonicalHtmlCount: 2,
+        noindexHtmlCount: 1,
+        internalDetailLinkCount: 1,
+        invalidInternalDetailLinkCount: 0,
+      });
+    } finally {
+      rmSync(dist, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a noindex route advertised in the sitemap", () => {
+    const dist = makeDist();
+    try {
+      writeRoute(dist, "/keep/", '<html><head></head><body><a href="/e/thin/">Thin</a></body></html>');
+      writeRoute(
+        dist,
+        "/e/thin/",
+        '<html><head><meta name="robots" content="noindex, follow"></head><body></body></html>',
+      );
+      writeSitemap(dist, ["/keep/", "/e/thin/"]);
+      expect(() => validateSitemapDist({ distDirectory: dist })).toThrow(
+        /noindex routes advertised in sitemap: \/e\/thin\//,
+      );
+    } finally {
+      rmSync(dist, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects an indexable canonical route absent from the sitemap", () => {
+    const dist = makeDist();
+    try {
+      writeRoute(dist, "/keep/", "<html><head></head><body></body></html>");
+      writeRoute(dist, "/orphan/", "<html><head></head><body></body></html>");
+      writeSitemap(dist, ["/keep/"]);
+      expect(() => validateSitemapDist({ distDirectory: dist })).toThrow(
+        /indexable canonical HTML absent from sitemap/,
+      );
+    } finally {
+      rmSync(dist, { recursive: true, force: true });
+    }
+  });
+
+  it("does not read a noindex directive out of comments or scripts", () => {
+    const dist = makeDist();
+    try {
+      writeRoute(dist, "/keep/", "<html><head></head><body></body></html>");
+      writeRoute(
+        dist,
+        "/orphan/",
+        '<html><head><!-- <meta name="robots" content="noindex"> -->'
+        + '<script>\'<meta name="robots" content="noindex">\'</script>'
+        + "</head><body></body></html>",
+      );
+      writeSitemap(dist, ["/keep/"]);
+      // The page is NOT actually noindex, so it must still be required in the
+      // sitemap. A regex-based reader would wrongly exempt it here.
+      expect(() => validateSitemapDist({ distDirectory: dist })).toThrow(
+        /indexable canonical HTML absent from sitemap/,
+      );
+    } finally {
+      rmSync(dist, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a robots meta without a content attribute", () => {
+    const dist = makeDist();
+    try {
+      writeRoute(dist, "/keep/", '<html><head><meta name="robots"></head><body></body></html>');
+      writeSitemap(dist, ["/keep/"]);
+      // Fail closed: an unreadable directive must not silently default to
+      // "indexable".
+      expect(() => validateSitemapDist({ distDirectory: dist })).toThrow(
+        /robots meta without a content attribute/,
+      );
+    } finally {
+      rmSync(dist, { recursive: true, force: true });
+    }
+  });
+
+  it("treats an explicit index directive as indexable", () => {
+    const dist = makeDist();
+    try {
+      writeRoute(
+        dist,
+        "/keep/",
+        '<html><head><meta name="robots" content="index, follow"></head><body></body></html>',
+      );
+      writeSitemap(dist, ["/keep/"]);
+      expect(validateSitemapDist({ distDirectory: dist })).toMatchObject({
+        noindexHtmlCount: 0,
+      });
+    } finally {
+      rmSync(dist, { recursive: true, force: true });
+    }
+  });
+});

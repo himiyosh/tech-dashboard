@@ -36,6 +36,7 @@ import { sectionizeBody, type BodySection } from "../../lib/body-sections.ts";
 import { highlightTagsInText } from "../../lib/body-highlight.ts";
 import { ARCHIVE_WARM_ENTRIES } from "../../lib/archive.ts";
 import { collectAddressableDetailEntries } from "../../lib/detail-addressability.ts";
+import { detailRobotsContent } from "../../lib/detail-indexability.ts";
 import {
   entryDestination,
   EXTERNAL_ENTRY_REL,
@@ -119,6 +120,11 @@ const sourceExcerpt = summaryAbsent ? sourceExcerptForEntry(entry, 320) : "";
 const body = bodyForEntry(entry.id);
 const hasRealBody = body !== null;
 const bodyState = articleBodyState(entry.id, body, WORKER_HEALTH?.bodyMergePendingIds);
+// Reachable always, indexable only with a real body (detail-indexability.ts).
+// The route is generated for every addressable entry so inbound links never
+// 404; sitemap.xml lists exactly the routes that emit `index, follow`, and the
+// build fails closed if the two ever disagree (validate-sitemap-dist.mjs).
+const robotsContent = detailRobotsContent(entry);
 
 const catMeta = CATEGORY_META.find((c) => c.slug === entry.category);
 const catColor = catMeta?.color ?? "#8a847e";
@@ -426,6 +432,7 @@ const jsonLd = buildArticleJsonLd({
   breadcrumb={breadcrumb}
 >
   <Fragment slot="head">
+    <meta name="robots" content={robotsContent} />
     <meta property="article:section" content={catName} />
     <meta property="article:published_time" content={entry.publishedAt} />
     {entry.tags.map((t) => <meta property="article:tag" content={t} />)}

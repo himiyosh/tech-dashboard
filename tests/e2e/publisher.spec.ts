@@ -32,6 +32,7 @@ import {
   publicRssFeeds,
 } from "../../web/src/lib/feed-catalog.ts";
 import { isArxivEntry } from "../../web/src/lib/research-lane.ts";
+import { isRealBodyRecord } from "../../web/src/lib/body-quality.ts";
 import {
   isAddressableDetailEntry,
   type DetailAddressableEntry,
@@ -1043,16 +1044,70 @@ test.describe("Publisher generated artifact", () => {
     expect(body.match(/\n/g)).toHaveLength(1);
   });
 
-  test("keeps hot and warm details addressable while cold details stay month-only", async ({
+  test("serves body-less details as reachable noindex pages and lists only indexable ones", async ({
+    request,
+  }) => {
+    // The AdSense remediation narrows what we ASK Google to index without
+    // deleting URLs: a detail page with no generated body stays reachable
+    // (so inbound links and the archive keep working) but ships
+    // "noindex, follow" and is absent from the sitemap.
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: DetailAddressableEntry[];
+    };
+    const bodies = (
+      JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+        bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
+      }
+    ).bodies;
+    const addressable = index.entries.filter((entry) => isAddressableDetailEntry(entry));
+    const bodied = addressable.find((entry) => isRealBodyRecord(bodies[entry.id]));
+    const bodyless = addressable.find((entry) => !isRealBodyRecord(bodies[entry.id]));
+
+    expect(bodied, "fixture includes a bodied detail entry").toBeTruthy();
+    expect(bodyless, "fixture includes a body-less detail entry").toBeTruthy();
+
+    const [bodiedResponse, bodylessResponse, sitemapResponse] = await Promise.all([
+      request.get(`/e/${bodied!.id}/`),
+      request.get(`/e/${bodyless!.id}/`),
+      request.get("/sitemap.xml"),
+    ]);
+    const sitemap = await sitemapResponse.text();
+
+    expect(bodiedResponse.status()).toBe(200);
+    expect(await bodiedResponse.text()).toMatch(
+      /<meta\s+name="robots"\s+content="index,\s*follow"\s*\/?>/,
+    );
+    expect(sitemap).toContain(`<loc>${SITE_URL}/e/${bodied!.id}/</loc>`);
+
+    // 404 here would strand every inbound link to the page.
+    expect(bodylessResponse.status()).toBe(200);
+    const bodylessHtml = await bodylessResponse.text();
+    expect(bodylessHtml).toMatch(
+      /<meta\s+name="robots"\s+content="noindex,\s*follow"\s*\/?>/,
+    );
+    expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${bodyless!.id}/</loc>`);
+    // "follow" is only meaningful if the page still exposes internal links.
+    expect(bodylessHtml).toContain('href="/c/');
+  });
+
+  test("keeps hot and warm details reachable while only bodied details enter the sitemap", async ({
     request,
   }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<DetailAddressableEntry & { archiveTier?: string }>;
     };
+    const bodies = (
+      JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+        bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
+      }
+    ).bodies;
     // Detail routes require both a hot/warm tier and a usable summary
     // (detail-addressability.ts): summary-pending shells are no longer built.
     const hot = index.entries.find(
-      (entry) => entry.archiveTier === "hot" && isAddressableDetailEntry(entry),
+      (entry) =>
+        entry.archiveTier === "hot"
+        && isAddressableDetailEntry(entry)
+        && isRealBodyRecord(bodies[entry.id]),
     );
     const cold = index.entries.find((entry) => entry.archiveTier === "cold");
     const pendingLive = index.entries.find(
@@ -1095,7 +1150,9 @@ test.describe("Publisher generated artifact", () => {
     expect(warmResponse.status()).toBe(200);
     expect(coldResponse.status()).toBe(404);
     expect(sitemap).toContain(`<loc>${SITE_URL}/e/${hot!.id}/</loc>`);
-    expect(sitemap).toContain(`<loc>${SITE_URL}/e/${warmOnly!.id}/</loc>`);
+    // Archive-only warm entries carry no generated body, so they stay
+    // reachable (200 above) but must not be advertised for indexing.
+    expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${warmOnly!.id}/</loc>`);
     expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${cold!.id}/</loc>`);
 
     // Summary-pending live entries must not ship a thin detail shell either

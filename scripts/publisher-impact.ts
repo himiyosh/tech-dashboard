@@ -338,6 +338,10 @@ export function buildPublisherImpactPlan(options: BuildImpactOptions): Publisher
       }
       routeFamilies.add("detail-pages");
       routeFamilies.add("search-index");
+      // A body appearing or disappearing now moves the entry in or out of
+      // sitemap.xml (web/src/lib/detail-indexability.ts), so a body-only run is
+      // no longer sitemap-neutral.
+      routeFamilies.add("sitemap");
       fullReasons.add("search-index-requires-a-global-rebuild");
       continue;
     }

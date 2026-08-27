@@ -110,7 +110,9 @@ describe("Publisher incremental impact plan", () => {
 
     expect(plan.changedEntryIds).toEqual([]);
     expect(plan.changedBodyIds).toEqual(["body-entry"]);
-    expect(plan.routeFamilies).toEqual(["detail-pages", "search-index"]);
+    // A body change now moves the sitemap too: gaining or losing a body flips
+    // the entry between indexable and noindex, so sitemap.xml must rebuild.
+    expect(plan.routeFamilies).toEqual(["detail-pages", "search-index", "sitemap"]);
     expect(plan.routeFamilies).not.toContain("category-pages");
     expect(plan.routeFamilies).not.toContain("archive");
     expect(plan.routeFamilies).not.toContain("home");

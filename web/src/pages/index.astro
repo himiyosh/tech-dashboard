@@ -48,6 +48,7 @@ import { sourceFreshnessStatus } from "../lib/freshness.ts";
 import { effectiveImportance, isRoutineReleaseEntry } from "../lib/release-signal.ts";
 import { isDefaultMutedCategory } from "../lib/category-visibility.ts";
 import { serializeJsonLd } from "../lib/json-ld.ts";
+import { SITE_ORGANIZATION } from "../lib/structured-data.ts";
 import { deriveWorkerRunStatus, runCadenceLead } from "../lib/run-health.ts";
 import { SITE_URL } from "../lib/site.ts";
 import {
@@ -140,11 +141,7 @@ const homeJsonLd = {
     { "@value": HOME_DESCRIPTION_EN, "@language": "en" },
   ],
   inLanguage: ["ja-JP", "en"],
-  publisher: {
-    "@type": "Organization",
-    name: "TECH Dashboard",
-    url: SITE_URL,
-  },
+  publisher: SITE_ORGANIZATION,
   potentialAction: {
     "@type": "SearchAction",
     target: `${SITE_URL}/search/?q={search_term_string}`,

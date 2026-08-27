@@ -42,6 +42,8 @@ import {
 } from "../../lib/entry-destination.ts";
 import { sourceFaviconUrl, sourceHost } from "../../lib/favicon.ts";
 import { serializeJsonLd } from "../../lib/json-ld.ts";
+import { categoryPath } from "../../lib/route-inventory.ts";
+import { buildArticleJsonLd } from "../../lib/structured-data.ts";
 import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../../lib/reaction-copy.ts";
 import {
   SOURCE_META,
@@ -383,28 +385,39 @@ const structuredImageAlt = effectiveTitleLang === "ja"
   ? articleMetadata.image.altJa
   : articleMetadata.image.altEn;
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "NewsArticle",
+// Structured data must agree with the visible disclosure at :695-699 and
+// :905-910: this page is AI-generated commentary built from the summary and
+// collection metadata, not the source's own words. So the type is Article
+// (not NewsArticle - this is not original reporting), the author and the
+// publisher are this site, and the source is credited through isBasedOn /
+// citation instead of being named as the author of text it never wrote.
+const laneStructuredPath = entryIsArxiv ? "/arxiv/" : categoryPath(entry.category);
+const jsonLd = buildArticleJsonLd({
+  canonicalUrl,
   headline: structuredHeadline,
   description: structuredDescription,
-  url: canonicalUrl,
   datePublished: entry.publishedAt,
   inLanguage: effectiveTitleLang === "ja" ? "ja-JP" : "en",
   image: {
-    "@type": "ImageObject",
     url: articleMetadata.image.url,
-    contentUrl: articleMetadata.image.url,
     caption: structuredImageAlt,
     width: articleMetadata.image.width,
     height: articleMetadata.image.height,
   },
-  author: { "@type": "Organization", name: srcDisplay, url: sourceUrl },
-  publisher: { "@type": "Organization", name: "TECH Dashboard", url: SITE_URL },
-  mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
   articleSection: catName,
   keywords: entry.tags.join(", "),
-};
+  source: {
+    url: sourceUrl,
+    title: entry.title,
+    publisherName: srcDisplay,
+    datePublished: entry.publishedAt,
+  },
+  breadcrumb: {
+    laneName,
+    lanePath: laneStructuredPath,
+    currentLabel: titleDisplay,
+  },
+});
 ---
 
 <Portal

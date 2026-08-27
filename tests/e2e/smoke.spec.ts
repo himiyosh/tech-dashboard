@@ -3845,6 +3845,75 @@ test.describe("TECH Dashboard smoke", () => {
     );
   });
 
+  test("detail structured data credits the site and mirrors the visible crumb bar", async ({ page }) => {
+    await page.goto("/");
+    const firstEntryLink = page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first();
+    await expect(firstEntryLink).toBeVisible();
+    await firstEntryLink.click();
+    await expect(page).toHaveURL(/\/e\/.+\/$/);
+
+    const ldScripts = page.locator('script[type="application/ld+json"]');
+    await expect(
+      ldScripts,
+      "a detail page emits exactly one JSON-LD block",
+    ).toHaveCount(1);
+
+    const visibleCrumbs = (
+      await page.locator(".crumb-bar .crumb-inner > *:not(.sep)").allTextContents()
+    ).map((label) => label.trim());
+    expect(visibleCrumbs).toHaveLength(3);
+    expect(visibleCrumbs[0]).toBe("Home");
+
+    const sourceHref = await page.locator("a.ed-header-cta").getAttribute("href");
+    expect(sourceHref).toMatch(/^https?:\/\//);
+
+    const laneHref = await page
+      .locator(".crumb-bar .crumb-inner a")
+      .nth(1)
+      .getAttribute("href");
+    expect(laneHref).toMatch(/^\/(?:c\/|arxiv)/);
+    const laneCrumbPath = laneHref ?? "";
+    const laneCrumbUrl = new URL(
+      laneCrumbPath.endsWith("/") ? laneCrumbPath : `${laneCrumbPath}/`,
+      "https://techdb.studio344.net/",
+    ).href;
+
+    const jsonLd = JSON.parse((await ldScripts.textContent()) ?? "{}") as {
+      "@type"?: string;
+      author?: { "@id"?: string; name?: string };
+      publisher?: { "@id"?: string; name?: string };
+      isBasedOn?: { url?: string; publisher?: { name?: string } };
+      mainEntityOfPage?: {
+        breadcrumb?: {
+          "@type"?: string;
+          itemListElement?: Array<{ position?: number; name?: string; item?: string }>;
+        };
+      };
+    };
+
+    expect(jsonLd["@type"]).toBe("Article");
+    expect(jsonLd.author?.name).toBe("TECH Dashboard");
+    expect(jsonLd.publisher?.name).toBe("TECH Dashboard");
+    expect(jsonLd.author?.["@id"]).toBe(
+      "https://techdb.studio344.net/#organization",
+    );
+    expect(jsonLd.publisher?.["@id"]).toBe(jsonLd.author?.["@id"]);
+    expect(jsonLd.isBasedOn?.publisher?.name).toBeTruthy();
+    expect(jsonLd.author?.name).not.toBe(jsonLd.isBasedOn?.publisher?.name);
+    expect(jsonLd.isBasedOn?.url).toBe(sourceHref);
+
+    const breadcrumb = jsonLd.mainEntityOfPage?.breadcrumb;
+    const items = breadcrumb?.itemListElement ?? [];
+    expect(breadcrumb?.["@type"]).toBe("BreadcrumbList");
+    expect(items.map((item) => item.position)).toEqual([1, 2, 3]);
+    expect(items.map((item) => item.name)).toEqual(visibleCrumbs);
+    expect(items[0]?.item).toBe("https://techdb.studio344.net/");
+    expect(items[1]?.item).toBe(laneCrumbUrl);
+    expect(items[2]?.item).toBeUndefined();
+  });
+
+  test("home keeps the decision path compact at tablet width", async ({ page }) => {
+
   test("home keeps the decision path compact at tablet width", async ({ page }) => {
     const fullLabel = "Microsoft Foundry Engineering, AI Platform, Agent Operations, and Cloud Infrastructure Updates";
     await page.setViewportSize({ width: 768, height: 900 });

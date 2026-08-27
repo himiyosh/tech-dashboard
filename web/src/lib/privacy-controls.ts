@@ -1,6 +1,7 @@
 import {
   PRIVACY_CONSENT_STORAGE_KEY,
   ADSENSE_SCRIPT_ID,
+  ADVERTISING_REQUIRES_CONSENT,
 } from "./privacy-consent.ts";
 import {
   clearPrivacyConsent,

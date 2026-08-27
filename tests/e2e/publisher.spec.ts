@@ -478,17 +478,21 @@ test.describe("Publisher generated artifact", () => {
     const structuredData = JSON.parse(
       await page.locator('script[type="application/ld+json"]').textContent() ?? "{}",
     ) as {
+      "@type"?: string;
       headline?: string;
       description?: string;
       inLanguage?: string;
       author?: { name?: string; url?: string };
+      isBasedOn?: { url?: string; publisher?: { name?: string } };
       articleSection?: string;
       mainEntityOfPage?: { "@id"?: string };
     };
     const structuredTitle = structuredData.inLanguage === "ja-JP"
       ? visibleTitleJa
       : visibleTitleEn;
-    const structuredSource = structuredData.author?.name ?? "";
+    // The page description is grounded in the SOURCE publisher, which is now
+    // carried by isBasedOn. author is this site, which generated the text.
+    const structuredSource = structuredData.isBasedOn?.publisher?.name ?? "";
     const structuredCategory = structuredData.articleSection ?? "";
     expect(structuredSource).toBeTruthy();
     expect(structuredCategory).toBeTruthy();
@@ -503,7 +507,17 @@ test.describe("Publisher generated artifact", () => {
     );
     expect(structuredData.description).toContain(structuredSource);
     expect(structuredData.description).toContain(structuredCategory);
-    expect(structuredData.author?.name).toBeTruthy();
+    // AI-generated commentary is authored by this site, never by the source
+    // organization, and the source is credited through isBasedOn.
+    const visibleSourceHref = await page
+      .locator("a.ed-header-cta")
+      .getAttribute("href");
+    expect(visibleSourceHref).toMatch(/^https?:\/\//);
+    expect(structuredData["@type"]).toBe("Article");
+    expect(structuredData.author?.name).toBe("TECH Dashboard");
+    expect(structuredSource).not.toBe("TECH Dashboard");
+    expect(structuredData.author?.name).not.toBe(structuredSource);
+    expect(structuredData.isBasedOn?.url).toBe(visibleSourceHref);
     expect(structuredData.author?.url).toMatch(/^https?:\/\//);
     expect(structuredData.mainEntityOfPage?.["@id"]).toBe(canonicalUrl);
 

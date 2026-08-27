@@ -56,10 +56,17 @@ export function legacyTagRedirects(
     .sort((left, right) => left.tag.localeCompare(right.tag));
 }
 
-function redirectHtml({ tag, searchHref }) {
+function redirectHtml({ tag, encodedTag, searchHref }) {
   const safeTag = escapeHtml(tag);
   const safeHref = escapeHtml(searchHref);
-  return `<!doctype html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url=${safeHref}"><link rel="canonical" href="${safeHref}"><title>#${safeTag} - TECH Dashboard</title></head><body data-pagefind-ignore><main><h1>#${safeTag}</h1><p>このタグは検索で表示します。<a href="${safeHref}">検索結果を開く</a></p><p lang="en">This tag is available through exact search. <a href="${safeHref}">Open search results</a>.</p></main></body></html>`;
+  // Self-referential canonical. These 860 stubs previously pointed their canonical
+  // at `/search/?q=…`, consolidating every low-count tag onto one parameterised
+  // shell — and robots.txt now disallows exactly that query shape, so a canonical
+  // aimed there would name a URL crawlers are told not to fetch. The stub's own
+  // URL is the only honest canonical; `noindex, follow` still keeps it out of the
+  // index while letting the recovery link be followed.
+  const safeSelfHref = escapeHtml(`/t/${encodedTag}/`);
+  return `<!doctype html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex, follow"><meta http-equiv="refresh" content="0;url=${safeHref}"><link rel="canonical" href="${safeSelfHref}"><title>#${safeTag} - TECH Dashboard</title></head><body data-pagefind-ignore><main><h1>#${safeTag}</h1><p>このタグは検索で表示します。<a href="${safeHref}">検索結果を開く</a></p><p lang="en">This tag is available through exact search. <a href="${safeHref}">Open search results</a>.</p></main></body></html>`;
 }
 
 export function writeLegacyTagRedirects({ distDirectory, indexPath }) {

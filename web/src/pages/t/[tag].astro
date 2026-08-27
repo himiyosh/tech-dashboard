@@ -15,6 +15,7 @@ import {
   relativeTime,
   tagHref,
 } from "../../lib/data.ts";
+import { tagPath } from "../../lib/route-inventory.ts";
 
 export function getStaticPaths() {
   return STATIC_TAG_PAGE_TAGS.map((tag) => ({
@@ -43,7 +44,13 @@ const breadcrumb = [
 ];
 ---
 
-<Portal title={`#${tag} — TECH Dashboard`} breadcrumb={breadcrumb}>
+<Portal
+  title={`#${tag} — TECH Dashboard`}
+  canonicalPath={tagPath(tag)}
+  description={`#${tag} タグが付いた ${all.length} 件の AI 技術アップデートを、カテゴリ横断で新着順・出典付き AI 要約とともに一覧します。`}
+  descriptionEn={`All ${all.length} AI technology updates tagged #${tag}, across every category, in recency order with sourced AI summaries.`}
+  breadcrumb={breadcrumb}
+>
   <PageHero
     className="page-hero-tag"
     kicker="Tag timeline"

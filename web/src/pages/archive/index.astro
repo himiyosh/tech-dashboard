@@ -76,7 +76,14 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
 
 ---
 
-<Portal pageKey="archive" title="Archive — TECH Dashboard" breadcrumb={[{ label: "Home", href: "/" }, { label: "Archive" }]}>
+<Portal
+  pageKey="archive"
+  title="Archive — TECH Dashboard"
+  canonicalPath="/archive/"
+  description={`${years.length} 年 ${months.length} か月分の AI 技術アップデートを月別に保管しています。hot ${storedHot} 件 / warm ${storedWarm} 件 / cold ${storedCold} 件の階層で、過去の発表と変更履歴をさかのぼれます。`}
+  descriptionEn={`${months.length} archived months across ${years.length} years of AI technology updates, tiered as ${storedHot} hot, ${storedWarm} warm, and ${storedCold} cold entries for browsing past announcements and changelogs.`}
+  breadcrumb={[{ label: "Home", href: "/" }, { label: "Archive" }]}
+>
   <PageHero
     className="page-hero-top-level page-hero-archive"
     kicker="Browse history"

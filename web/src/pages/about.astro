@@ -87,7 +87,14 @@ const pipelineSteps = [
 ];
 ---
 
-<Portal pageKey="about" title="About — TECH Dashboard" breadcrumb={[{ label: "Home", href: "/" }, { label: "About" }]}>
+<Portal
+  pageKey="about"
+  title="About — TECH Dashboard"
+  canonicalPath="/about/"
+  description={`TECH Dashboard の目的、収集パイプライン、${sourceTypes.length} 種類のソース種別、AI 要約の作り方、RSS/JSON Feed の購読方法を説明します。運営は ${PUBLIC_OPERATOR_NAME}。`}
+  descriptionEn={`What TECH Dashboard is: its purpose, collection pipeline, ${sourceTypes.length} source types, how AI summaries are produced, and how to subscribe by RSS or JSON Feed. Operated by ${PUBLIC_OPERATOR_NAME}.`}
+  breadcrumb={[{ label: "Home", href: "/" }, { label: "About" }]}
+>
   <PageHero
     className="page-hero-top-level page-hero-about"
     kicker="About TECH Dashboard"

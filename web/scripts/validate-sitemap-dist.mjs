@@ -7,6 +7,35 @@ const REDIRECT_MARKERS = [
   /window\.location\.replace\(/,
 ];
 
+/**
+ * The only generated routes allowed to carry a `noindex` robots directive.
+ * A noindex route is exempt from the sitemap-parity requirement, so without an
+ * explicit allowlist any page that accidentally went noindex would silently
+ * disappear from the sitemap instead of failing the build. Mirrors
+ * `NOINDEX_PATHS` in web/src/lib/route-inventory.ts (a standalone .mjs cannot
+ * import that TypeScript module); tests/web-sitemap.test.ts pins them together.
+ * `/sample/article/` is listed for intent even though it is classified as a
+ * redirect before the noindex check ever runs.
+ */
+export const EXPECTED_NOINDEX_PATHS = [
+  "/sample/article/",
+  "/search/",
+];
+
+/**
+ * Detail routes are the one family whose indexability is decided by DATA, not
+ * by a fixed route list: `/e/<id>/` carries `noindex` exactly when the entry
+ * has no real, source-grounded body (web/src/lib/detail-indexability.ts), so
+ * the set changes on every publisher run and cannot be enumerated here.
+ *
+ * Exempting them from the allowlist does not weaken the guard. Their
+ * correctness is still enforced in both directions by the sitemap-parity gates
+ * above - a noindex detail route in the sitemap fails, and an indexable detail
+ * route missing from it fails - and by the unit tests that pin
+ * `sitemap membership <-> robots directive` against the same predicate.
+ */
+const DATA_DRIVEN_NOINDEX_ROUTE_RE = /^\/e\/[^/]+\/$/;
+
 function decodeXml(value) {
   return value
     .replaceAll("&amp;", "&")
@@ -44,12 +73,18 @@ function htmlFiles(root) {
 // never matches.
 const ROBOTS_NOINDEX_DIRECTIVE_RE = /(?:^|[\s,])(?:noindex|none)(?:[\s,]|$)/i;
 
+function attributeValue(node, name) {
+  if (!Array.isArray(node.attrs)) return null;
+  return node.attrs.find((attribute) => attribute.name === name)?.value ?? null;
+}
+
 /**
- * One parse5 pass per document. Returns every href (HTML and foreign/SVG), plus
- * whether the document declares a robots `noindex`/`none` directive, plus
- * whether it carries a robots meta with no `content` attribute at all.
+ * One parse5 pass per document. Returns every href (HTML and foreign/SVG), the
+ * document's canonical link, whether it declares a robots `noindex`/`none`
+ * directive, and whether it carries a robots meta with no `content` attribute
+ * at all.
  *
- * All three signals are read from the parsed tree, never from raw HTML, so
+ * Every signal is read from the parsed tree, never from raw HTML, so
  * commented-out or script-embedded markup cannot be mistaken for a real meta
  * tag - the same property the href scan already relies on.
  */
@@ -57,6 +92,7 @@ function documentSignals(html) {
   const hrefs = [];
   const robotsDirectives = [];
   let robotsWithoutContent = false;
+  let canonicalHref = null;
   const stack = [parse(html)];
   while (stack.length > 0) {
     const node = stack.pop();
@@ -81,6 +117,17 @@ function documentSignals(html) {
         if (robotsContent === null) robotsWithoutContent = true;
         else robotsDirectives.push(robotsContent);
       }
+      // First canonical wins, mirroring how crawlers resolve duplicates. An
+      // empty href is captured as "" (not null) so the caller can tell
+      // "declared but empty" from "never declared" - `new URL("", base)`
+      // equals base, which would otherwise pass a self-reference check.
+      if (
+        node.nodeName === "link"
+        && canonicalHref === null
+        && attributeValue(node, "rel")?.trim().toLowerCase() === "canonical"
+      ) {
+        canonicalHref = attributeValue(node, "href") ?? "";
+      }
     }
     if (Array.isArray(node.childNodes)) {
       for (let index = node.childNodes.length - 1; index >= 0; index -= 1) {
@@ -90,6 +137,7 @@ function documentSignals(html) {
   }
   return {
     hrefs,
+    canonicalHref,
     noindex: robotsDirectives.some((value) => ROBOTS_NOINDEX_DIRECTIVE_RE.test(value)),
     robotsWithoutContent,
   };
@@ -114,7 +162,9 @@ function normalizedInternalDetailPath(href, documentUrl) {
 
 export function validateSitemapDist({
   distDirectory,
+  expectedNoindexPaths = EXPECTED_NOINDEX_PATHS,
 }) {
+  const allowedNoindex = new Set(expectedNoindexPaths);
   const sitemapPath = path.join(distDirectory, "sitemap.xml");
   const sitemapXml = readFileSync(sitemapPath, "utf8");
   const sitemapByteLength = statSync(sitemapPath).size;
@@ -141,6 +191,8 @@ export function validateSitemapDist({
   const malformedRobotsPaths = new Set();
   const redirectPaths = new Set();
   const internalDetailLinks = [];
+  const missingCanonical = [];
+  const nonSelfCanonical = [];
 
   for (const filePath of htmlFiles(distDirectory)) {
     const route = routeForHtml(distDirectory, filePath);
@@ -149,10 +201,29 @@ export function validateSitemapDist({
     const isRedirect = REDIRECT_MARKERS.some((marker) => marker.test(html));
     (isRedirect ? redirectPaths : canonicalHtmlPaths).add(route);
     if (isRedirect) continue;
-    const { hrefs, noindex, robotsWithoutContent } = documentSignals(html);
+    const { hrefs, canonicalHref, noindex, robotsWithoutContent } = documentSignals(html);
     if (noindex) noindexPaths.add(route);
     if (robotsWithoutContent) malformedRobotsPaths.add(route);
     const documentUrl = new URL(route, `${canonicalOrigin}/`);
+    // Every route we ask crawlers to index owes a self-referential canonical.
+    // A noindex route is exempt: it is telling crawlers to ignore it anyway.
+    if (!noindex) {
+      if (canonicalHref === null || canonicalHref.trim() === "") {
+        // An empty href resolves to the document itself, so it would pass a
+        // naive self-reference comparison. Treat it as absent instead.
+        missingCanonical.push(route);
+      } else {
+        let resolvedCanonical = null;
+        try {
+          resolvedCanonical = new URL(canonicalHref, documentUrl).href;
+        } catch {
+          resolvedCanonical = null;
+        }
+        if (resolvedCanonical !== documentUrl.href) {
+          nonSelfCanonical.push(`${route} -> ${canonicalHref}`);
+        }
+      }
+    }
     for (const href of hrefs) {
       const detailPath = normalizedInternalDetailPath(href, documentUrl);
       if (detailPath) internalDetailLinks.push({ route, detailPath });
@@ -170,6 +241,9 @@ export function validateSitemapDist({
     (route) => !sitemapPaths.has(route) && !noindexPaths.has(route),
   );
   const noindexInSitemap = [...noindexPaths].filter((route) => sitemapPaths.has(route));
+  const undeclaredNoindex = [...noindexPaths].filter(
+    (route) => !allowedNoindex.has(route) && !DATA_DRIVEN_NOINDEX_ROUTE_RE.test(route),
+  );
   const redirectInSitemap = [...redirectPaths].filter((route) => sitemapPaths.has(route));
   const invalidInternalDetailLinks = internalDetailLinks
     .filter(({ detailPath }) => !canonicalHtmlPaths.has(detailPath))
@@ -196,6 +270,24 @@ export function validateSitemapDist({
   }
   if (redirectInSitemap.length > 0) {
     failures.push(`redirect-only URLs in sitemap: ${redirectInSitemap.slice(0, 10).join(", ")}`);
+  }
+  if (undeclaredNoindex.length > 0) {
+    // Without this gate a route could quietly leave the sitemap just by
+    // growing a noindex directive, and the parity check above would approve
+    // it. Every intentional noindex route is named in EXPECTED_NOINDEX_PATHS.
+    failures.push(
+      `undeclared noindex routes (add them to EXPECTED_NOINDEX_PATHS or remove the directive): ${undeclaredNoindex.slice(0, 10).join(", ")}`,
+    );
+  }
+  if (missingCanonical.length > 0) {
+    failures.push(
+      `indexable HTML without a canonical link: ${missingCanonical.slice(0, 10).join(", ")}`,
+    );
+  }
+  if (nonSelfCanonical.length > 0) {
+    failures.push(
+      `indexable HTML with a non-self-referential canonical: ${nonSelfCanonical.slice(0, 10).join(", ")}`,
+    );
   }
   if (invalidInternalDetailLinks.length > 0) {
     failures.push(

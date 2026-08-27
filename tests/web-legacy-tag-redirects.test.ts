@@ -47,7 +47,14 @@ describe("legacy tag redirects", () => {
       );
       expect(writeLegacyTagRedirects({ distDirectory, indexPath })).toBe(2);
       const html = readFileSync(path.join(distDirectory, "t", "alpha", "index.html"), "utf8");
-      expect(html).toContain('name="robots" content="noindex"');
+      // "follow" is deliberate: the stub's only content is a link to the
+      // search results, and that link should be followed.
+      expect(html).toContain('name="robots" content="noindex, follow"');
+      // Self-referential canonical. These stubs used to point their canonical
+      // at /search/?q=…, which robots.txt now disallows — a canonical must
+      // never name a URL crawlers are told not to fetch.
+      expect(html).toContain('<link rel="canonical" href="/t/alpha/"');
+      expect(html).not.toContain('rel="canonical" href="/search');
       expect(html).toContain('content="0;url=/search/?q=alpha&amp;tag=alpha"');
     } finally {
       rmSync(root, { recursive: true, force: true });

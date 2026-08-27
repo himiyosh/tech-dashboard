@@ -1,5 +1,18 @@
 export const TAG_PAGE_MIN_ENTRIES = 10;
 
+/**
+ * Generated HTML routes that must never be indexed: parameterised shells and
+ * design previews with no standalone content. They stay crawlable so the
+ * `noindex` directive is readable, but they are kept out of the sitemap.
+ * `web/scripts/validate-sitemap-dist.mjs` owns the build-time enforcement in
+ * `EXPECTED_NOINDEX_PATHS` (a standalone .mjs cannot import this TypeScript
+ * module); `tests/web-sitemap.test.ts` pins the two lists to each other.
+ */
+export const NOINDEX_PATHS = [
+  "/sample/article/",
+  "/search/",
+] as const;
+
 export const SITEMAP_STATIC_PATHS = [
   "/",
   "/categories/",
@@ -11,7 +24,6 @@ export const SITEMAP_STATIC_PATHS = [
   "/about/",
   "/editorial-policy/",
   "/privacy/",
-  "/search/",
 ] as const;
 
 export function totalPageCount(entryCount: number, pageSize: number): number {

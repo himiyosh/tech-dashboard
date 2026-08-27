@@ -8473,8 +8473,7 @@ test.describe("TECH Dashboard smoke", () => {
   });
 
   test("singleton tag links recover their article through exact search", async ({ page }) => {
-    test.setTimeout(45_000);
-    await page.goto("/");
+    test.setTimeout(60_000);
 
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string; tags?: string[] }>;
@@ -8501,16 +8500,40 @@ test.describe("TECH Dashboard smoke", () => {
     const singletonTags = [...tagCounts.entries()]
       .filter(([, count]) => count === 1)
       .map(([tag]) => tag);
-    const tagLinks = page.locator('main article.card:not([data-catvis="muted"]) .tag-chip[href^="/search?q="]');
-    const tagIndex = await tagLinks.evaluateAll(
-      (links, candidates) =>
-        links.findIndex((link) => {
-          const query = new URL((link as HTMLAnchorElement).href).searchParams.get("q") ?? "";
-          return /[a-z]/.test(query) && candidates.includes(query);
-        }),
-      singletonTags,
-    );
-    expect(tagIndex).toBeGreaterThanOrEqual(0);
+    // Which listing page happens to show a globally-unique tag is a property of
+    // the data snapshot, not of the feature under test. Measured on the
+    // 2026-08-27 corpus: 2,741 singleton tags exist and 61 of the 62 listing
+    // pages render one, yet the newest 15 unmuted cards on page 1 rendered
+    // none, so pinning this to the homepage made an hourly data commit able to
+    // fail it. Walk listing pages instead. It must stay a card listing: there
+    // tagHref() is called without an entry id, so an `entry=` parameter can
+    // only come from the singleton lookup. A detail page passes the entry id
+    // explicitly and would make the assertion vacuous.
+    const MAX_LISTING_PAGES = 8;
+    const chipSelector =
+      'main article.card:not([data-catvis="muted"]) .tag-chip[href^="/search?q="]';
+    let tagLinks = page.locator(chipSelector);
+    let tagIndex = -1;
+    let listingPath = "/";
+    for (let pageNumber = 1; pageNumber <= MAX_LISTING_PAGES; pageNumber++) {
+      listingPath = pageNumber === 1 ? "/" : `/page/${pageNumber}/`;
+      const response = await page.goto(listingPath);
+      if (response !== null && response.status() >= 400) break;
+      tagLinks = page.locator(chipSelector);
+      tagIndex = await tagLinks.evaluateAll(
+        (links, candidates) =>
+          links.findIndex((link) => {
+            const query = new URL((link as HTMLAnchorElement).href).searchParams.get("q") ?? "";
+            return /[a-z]/.test(query) && candidates.includes(query);
+          }),
+        singletonTags,
+      );
+      if (tagIndex >= 0) break;
+    }
+    expect(
+      tagIndex,
+      `no singleton tag chip on the first ${MAX_LISTING_PAGES} listing pages (last tried ${listingPath})`,
+    ).toBeGreaterThanOrEqual(0);
     const tagLink = tagLinks.nth(tagIndex);
     await expect(tagLink).toBeVisible();
     const searchHref = await tagLink.getAttribute("href");

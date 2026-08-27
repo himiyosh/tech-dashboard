@@ -12,6 +12,7 @@ import {
   ADVERTISING_REQUIRES_CONSENT,
 } from "../../web/src/lib/privacy-consent.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
+import { sectionizeBody } from "../../web/src/lib/body-sections.ts";
 import {
   isAddressableDetailEntry,
   type DetailAddressableEntry,
@@ -8624,6 +8625,83 @@ test.describe("TECH Dashboard smoke", () => {
     const width = await prose.evaluate((el) => el.getBoundingClientRect().width);
     expect(width, "prose line measure stays readable").toBeLessThanOrEqual(710);
     expect(width, "prose does not collapse").toBeGreaterThan(400);
+  });
+
+  test("tag highlighting keeps body prose identical to the generated body", async ({ page }) => {
+    // 実測 2026-08-26: highlightTags が escape 済み markup の上に tag ごとの
+    // regex 置換を重ねていたため、短い tag が長い tag の href 内部に一致し、
+    // href が `/t/pre-<a class=` のように壊れて属性の残骸が可視本文へ漏れて
+    // いた (64 記事 / 211 段落)。fix 後の不変条件を実 DOM で固定する。
+    // 候補は「本文に語として現れる tag が、別の tag を語として内包する」
+    // entry をデータ導出する (live ID は pin しない)。実測 62 件が候補で、
+    // その 62 件全てが修正前の実装で実際に破損していた。
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<DetailAddressableEntry & { id: string; tags?: string[] }>;
+    };
+    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
+    };
+    const escapeTagRegex = (value: string): string =>
+      value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const wordRe = (value: string): RegExp =>
+      new RegExp(`\\b${escapeTagRegex(value)}\\b`, "i");
+    const candidateId = index.entries
+      .filter((entry) => isAddressableDetailEntry(entry))
+      .filter((entry) => {
+        const body = bodies.bodies[entry.id];
+        if (!body || !(body.bodyJa || body.bodyEn)) return false;
+        const tags = [
+          ...new Set(
+            (entry.tags ?? []).map((tag) => tag.trim()).filter((tag) => tag.length >= 2),
+          ),
+        ];
+        const text = `${body.bodyJa ?? ""}\n${body.bodyEn ?? ""}`;
+        return tags.some(
+          (outer) =>
+            wordRe(outer).test(text)
+            && tags.some(
+              (inner) =>
+                inner !== outer
+                && wordRe(normalizeTagKey(inner)).test(normalizeTagKey(outer)),
+            ),
+        );
+      })
+      .map((entry) => entry.id)
+      .sort()[0];
+    // 衝突 tag 対を本文中に持つ記事が 0 件の corpus は有効な状態。
+    if (!candidateId) return;
+
+    const body = bodies.bodies[candidateId];
+    expect(body, "candidate carries a generated body").toBeTruthy();
+    await page.goto(`/e/${candidateId}/`);
+
+    let comparedParagraphs = 0;
+    for (const lang of ["ja", "en"] as const) {
+      const text = lang === "ja" ? body?.bodyJa : body?.bodyEn;
+      if (!text) continue;
+      const expected = sectionizeBody(text, lang).flatMap((section) => section.paragraphs);
+      const rendered = await page
+        .locator(`.ed-body-prose.i18n-${lang} p[data-toc-key]`)
+        .evaluateAll((nodes) => nodes.map((node) => node.textContent ?? ""));
+      // 破損時は属性の残骸 (`release">pre-release`) が textContent に混ざる。
+      expect(rendered, `${lang} prose renders every generated paragraph verbatim`).toEqual(
+        expected,
+      );
+      comparedParagraphs += expected.length;
+    }
+    expect(comparedParagraphs, "prose comparison is not vacuous").toBeGreaterThan(0);
+
+    const keywords = page.locator(".ed-body-prose a.kw");
+    expect(await keywords.count(), "tag highlighting ran on this body").toBeGreaterThan(0);
+    const hrefs = await keywords.evaluateAll((links) =>
+      links.map((link) => link.getAttribute("href") ?? ""),
+    );
+    for (const href of hrefs) {
+      // 破損時の href は `/t/pre-<a class=` になり、この形状検査で落ちる。
+      expect(href, "keyword href stays a well-formed site route").toMatch(
+        /^\/(?:t\/[^"<>\s]+|search\?q=[^"<>\s]+)$/,
+      );
+    }
   });
 
   test("pagefind retrieval falls back to a query prefix when a long pasted title returns nothing", async ({ page }) => {

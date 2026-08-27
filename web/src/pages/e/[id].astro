@@ -33,6 +33,7 @@ import {
 } from "../../lib/data.ts";
 import { articleBodyState, bodyForEntry } from "../../lib/bodies.ts";
 import { sectionizeBody, type BodySection } from "../../lib/body-sections.ts";
+import { highlightTagsInText } from "../../lib/body-highlight.ts";
 import { ARCHIVE_WARM_ENTRIES } from "../../lib/archive.ts";
 import { collectAddressableDetailEntries } from "../../lib/detail-addressability.ts";
 import {
@@ -211,29 +212,15 @@ function tocLabelEn(s: string): string {
   return label.length < trimmed.length ? label.replace(/[.!?]$/, "") + "…" : label;
 }
 
-// Highlight tag mentions in body — server-side regex replace.
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] || c,
-  );
-}
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-function highlightTags(html: string, tagList: string[], entryId: string): string {
-  if (tagList.length === 0) return html;
-  // Sort by length desc to avoid prefix collisions.
-  const sorted = [...new Set(tagList.map((t) => t.trim()).filter(Boolean))]
-    .sort((a, b) => b.length - a.length);
-  let out = html;
-  for (const tag of sorted) {
-    if (tag.length < 2) continue;
-    const re = new RegExp(`\\b${escapeRegex(tag)}\\b`, "gi");
-    const href = tagHref(tag, entryId);
-    out = out.replace(re, (match) => `<a class="kw" href="${escapeHtml(href)}">${escapeHtml(match)}</a>`);
-  }
-  return out;
-}
+// Tag mentions in the body are linkified by lib/body-highlight.ts. The old
+// inline implementation escaped the paragraph first and then ran one regex
+// replace per tag over the growing *markup*, so a shorter tag could match
+// inside the href of an anchor a longer tag had just inserted (tags
+// ["pre-release", "release"] → `\brelease\b` matched inside href="/t/pre-release",
+// emitting href="/t/pre-<a class=" and spilling `release">` into visible prose).
+// Measured on the committed corpus: 211 paragraphs across 64 detail pages.
+// The module never runs a regex over generated markup.
+const tagHrefForEntry = (tag: string): string => tagHref(tag, entry.id);
 
 interface RenderedParagraph {
   id: string;
@@ -274,7 +261,7 @@ function buildRendered(sections: BodySection[], lang: "ja" | "en") {
       paras.push({
         id: `p-${lang}-${paraNo}`,
         label: lang === "ja" ? tocLabelJa(p) : tocLabelEn(p),
-        html: highlightTags(escapeHtml(p), entry.tags, entry.id),
+        html: highlightTagsInText(p, entry.tags, tagHrefForEntry),
         sec: si,
         secStart: pi === 0,
         tocKey: sec.tocKey,

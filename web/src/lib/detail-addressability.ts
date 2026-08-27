@@ -5,6 +5,14 @@ export type DetailArchiveTier = "hot" | "warm" | "cold" | "dropped";
 export interface DetailAddressableEntry {
   id: string;
   archiveTier?: DetailArchiveTier;
+  /**
+   * Build-time publication-gate decision (publication-gate.ts). True when the
+   * entry is not approved yet, or approved but its scheduled release day has
+   * not arrived. Optional here so raw stored rows can still be tested against
+   * the content policy; `collectAddressableDetailEntries` requires it, because
+   * that is the function that actually produces routes.
+   */
+  publicationHold?: boolean;
   source?: string;
   title?: string;
   titleJa?: string | null;
@@ -12,6 +20,15 @@ export interface DetailAddressableEntry {
   summaryJa?: string | null;
   summaryEn?: string | null;
 }
+
+/** A detail entry that carries an explicit publication-gate decision. */
+export interface GatedDetailEntry extends DetailAddressableEntry {
+  publicationHold: boolean;
+}
+
+/** Category prefix for gate-annotation failures raised from this module. */
+export const PUBLICATION_HOLD_ANNOTATION_ERROR =
+  "PUBLICATION_HOLD_ANNOTATION_MISSING";
 
 /**
  * True when the entry carries at least one usable (non-placeholder,
@@ -57,20 +74,38 @@ export function isAddressableDetailEntry(
   entry: DetailAddressableEntry,
 ): boolean {
   return (
+    entry.publicationHold !== true &&
     entry.archiveTier !== "cold" &&
     entry.archiveTier !== "dropped" &&
     hasUsableDetailSummary(entry)
   );
 }
 
+/**
+ * Collect the entries that receive a real /e/[id]/ route.
+ *
+ * Every input must carry an explicit `publicationHold`. The annotation is NOT
+ * inferred: nothing in this repository typechecks web/src/lib/data.ts,
+ * archive.ts or tests/**, so a missing annotation would otherwise pass silently
+ * and republish the entire corpus. Missing means "this collection never went
+ * through applyPublicationGate", which is a bug, so it fails closed with the
+ * offending id as evidence instead of defaulting to released.
+ */
 export function collectAddressableDetailEntries<
-  T extends DetailAddressableEntry,
+  T extends GatedDetailEntry,
 >(
   ...entryGroups: ReadonlyArray<readonly T[]>
 ): readonly T[] {
   const entriesById = new Map<string, T>();
   for (const entries of entryGroups) {
     for (const entry of entries) {
+      if (typeof entry.publicationHold !== "boolean") {
+        throw new Error(
+          `${PUBLICATION_HOLD_ANNOTATION_ERROR}: entry ${entry.id} reached the`
+            + " detail-route collector without a publication-gate decision;"
+            + " route it through applyPublicationGate (web/src/lib/data.ts) first",
+        );
+      }
       if (!isAddressableDetailEntry(entry) || entriesById.has(entry.id)) continue;
       entriesById.set(entry.id, entry);
     }

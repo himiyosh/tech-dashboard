@@ -53,14 +53,15 @@ describe("sitemap", () => {
   it("shares a JSON-free detail addressability policy", () => {
     const entries = collectAddressableDetailEntries(
       [
-        { id: "live-legacy" },
-        { id: "hot", archiveTier: "hot" as const },
-        { id: "cold", archiveTier: "cold" as const },
+        { id: "live-legacy", publicationHold: false },
+        { id: "hot", archiveTier: "hot" as const, publicationHold: false },
+        { id: "cold", archiveTier: "cold" as const, publicationHold: false },
       ],
       [
-        { id: "warm", archiveTier: "warm" as const },
-        { id: "dropped", archiveTier: "dropped" as const },
-        { id: "hot", archiveTier: "warm" as const },
+        { id: "warm", archiveTier: "warm" as const, publicationHold: false },
+        { id: "dropped", archiveTier: "dropped" as const, publicationHold: false },
+        { id: "hot", archiveTier: "warm" as const, publicationHold: false },
+        { id: "queued", archiveTier: "warm" as const, publicationHold: true },
       ],
     );
 

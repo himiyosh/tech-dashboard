@@ -6,7 +6,13 @@
  * inline every month file at build time. This keeps the runtime free of
  * fetches (consistent with how lib/data.ts inlines index.json).
  */
-import { isPublishableEntry, type NormalizedEntry } from "./data.ts";
+import {
+  applyPublicationGate,
+  isPublishableEntry,
+  type NormalizedEntry,
+  type RawIndexEntry,
+} from "./data.ts";
+import { SITE_PUBLICATION_GATE } from "./publication-gate-data.ts";
 
 export const ARCHIVE_TIER_SUMMARY = {
   ja: "hot = live収録時点の統計用snapshot · warm = 個別記事URLを保持 · cold = 月次Archive内のみ",
@@ -18,7 +24,8 @@ export const ARCHIVE_TIER_DETAIL = {
   en: "Hot rows are statistical snapshots from their live period and are not shown in monthly article lists. They may leave the live index after retention expires. Warm entries retain an individual URL. Cold entries remain only in their monthly archive. Evergreen knowledge stays warm.",
 } as const;
 
-interface ArchiveMonthFile {
+/** A month bundle exactly as data/archive/YYYY-MM.json stores it. */
+interface ArchiveMonthPayload {
   generatedAt: string;
   month: string;
   count: number;
@@ -26,6 +33,11 @@ interface ArchiveMonthFile {
   hot: number;
   warm: number;
   cold: number;
+  entries: RawIndexEntry[];
+}
+
+/** The same bundle after the publication gate has annotated its entries. */
+interface ArchiveMonthFile extends Omit<ArchiveMonthPayload, "entries"> {
   entries: NormalizedEntry[];
 }
 
@@ -37,7 +49,7 @@ interface ArchiveIndexFile {
 }
 
 // path: web/src/lib/archive.ts → data/archive/*.json (3 levels up)
-const monthModules = import.meta.glob<ArchiveMonthFile>(
+const monthModules = import.meta.glob<ArchiveMonthPayload>(
   "../../../data/archive/[0-9]*.json",
   { eager: true, import: "default" },
 );
@@ -66,7 +78,8 @@ export const ARCHIVE_BY_MONTH: Readonly<Record<string, ArchiveMonthFile>> = (() 
       else if (entry.archiveTier === "warm") warm++;
       else if (entry.archiveTier === "cold") cold++;
     }
-    const entries = payload.entries.filter(isPublishableEntry);
+    const entries = applyPublicationGate(payload.entries, SITE_PUBLICATION_GATE)
+      .filter(isPublishableEntry);
     out[m] = {
       ...payload,
       count: entries.length,

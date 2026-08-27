@@ -17,6 +17,7 @@ import {
   isAddressableDetailEntry,
   type DetailAddressableEntry,
 } from "../../web/src/lib/detail-addressability.ts";
+import { SITE_GATE, isBuiltDetailEntry } from "./detail-route-fixture.ts";
 import { CATEGORY_META } from "../../web/src/lib/category-meta.ts";
 import { hasMeaningfulSourceSnippet } from "../../web/src/lib/source-snippet.ts";
 import { DEFAULT_MUTED_CATEGORIES } from "../../web/src/lib/category-visibility.ts";

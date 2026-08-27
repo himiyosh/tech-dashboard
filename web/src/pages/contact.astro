@@ -1,0 +1,372 @@
+---
+import Portal from "../layouts/Portal.astro";
+import PageHero from "../components/PageHero.astro";
+import ExternalLinkHint from "../components/ExternalLinkHint.astro";
+import {
+  NEW_ISSUE_URL,
+  PRIVACY_JURISDICTION,
+  PUBLIC_CONTACT_EMAIL,
+  PUBLIC_OPERATOR_NAME,
+  REPO_URL,
+} from "../lib/site.ts";
+
+// Fail-visible by design. While no role mailbox exists on the site domain this
+// page says so in plain language instead of printing a stand-in address that
+// would swallow mail silently. The operator's personal address is never
+// published here, and no sample address is rendered either — a reader must not
+// be able to mistake an illustration for a working channel.
+const contactEmail = PUBLIC_CONTACT_EMAIL.trim();
+const hasContactEmail = contactEmail.length > 0;
+const contactEmailState = hasContactEmail ? "available" : "unavailable";
+---
+
+<Portal
+  pageKey="contact"
+  canonicalPath="/contact/"
+  breadcrumb={[{ label: "Home", href: "/" }, { label: "Contact" }]}
+  title="お問い合わせ — TECH Dashboard"
+  titleEn="Contact — TECH Dashboard"
+  description="TECH Dashboard の運営者への連絡方法。記事の訂正依頼、権利者からの削除依頼、プライバシーに関する請求、サイトの不具合報告の窓口と、対応の目安。"
+  descriptionEn="How to reach the operator of TECH Dashboard: correction requests, rights-holder takedown requests, privacy requests, and bug reports — with the channels available and expected response times."
+>
+  <PageHero
+    className="page-hero-top-level page-hero-about"
+    kicker="Contact"
+    title="お問い合わせ"
+    titleEn="Contact"
+    headingId="contact-heading"
+    description="記事の訂正依頼、権利者からの削除依頼、プライバシーに関する請求、サイトの不具合報告を受け付けています。運営者は個人です。"
+    descriptionEn="Correction requests, rights-holder takedown requests, privacy requests, and bug reports all arrive here. The site is run by one person."
+    actions={[
+      { href: "/editorial-policy", label: "編集方針", labelEn: "Editorial policy", mobilePriority: true },
+      { href: "/privacy", label: "Privacy" },
+      { href: "/about", label: "About" },
+      { href: "/status", label: "Status" },
+    ]}
+  />
+
+  <div class="layout policy-layout">
+    <main class="policy-main">
+      <section class="policy-panel" aria-labelledby="contact-who-heading">
+        <h3 id="contact-who-heading">
+          <span class="i18n-ja">運営者</span>
+          <span class="i18n-en" lang="en">Who you are contacting</span>
+        </h3>
+        <dl class="contact-dl">
+          <div>
+            <dt>
+              <span class="i18n-ja">運営主体</span>
+              <span class="i18n-en" lang="en">Operated by</span>
+            </dt>
+            <dd>{PUBLIC_OPERATOR_NAME}</dd>
+          </div>
+          <div>
+            <dt>
+              <span class="i18n-ja">所在地・適用法域</span>
+              <span class="i18n-en" lang="en">Location and jurisdiction</span>
+            </dt>
+            <dd>
+              <span class="i18n-ja">日本</span>
+              <span class="i18n-en" lang="en">{PRIVACY_JURISDICTION}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>
+              <span class="i18n-ja">対応言語</span>
+              <span class="i18n-en" lang="en">Languages</span>
+            </dt>
+            <dd>
+              <span class="i18n-ja">日本語・英語</span>
+              <span class="i18n-en" lang="en">Japanese and English</span>
+            </dd>
+          </div>
+        </dl>
+        <p>
+          <span class="i18n-ja">
+            TECH Dashboard は {PUBLIC_OPERATOR_NAME} が個人プロジェクトとして運営しています。法人ではないため代表電話や受付窓口はなく、
+            連絡は下記のオンライン窓口に限られます。運営体制と資金については <a href="/about">About</a> を参照してください。
+          </span>
+          <span class="i18n-en" lang="en">
+            TECH Dashboard is a personal project run by {PUBLIC_OPERATOR_NAME}. There is no company, no phone line,
+            and no reception desk — the online channels below are the only ones. How the site is run and funded is
+            described on <a href="/about">About</a>.
+          </span>
+        </p>
+      </section>
+
+      <section class="policy-panel" aria-labelledby="contact-github-heading">
+        <h3 id="contact-github-heading">
+          <span class="i18n-ja">GitHub Issues (推奨)</span>
+          <span class="i18n-en" lang="en">GitHub Issues (preferred)</span>
+        </h3>
+        <p>
+          <span class="i18n-ja">
+            記事の訂正依頼、カテゴリやタグの誤り、リンク切れ、翻訳の欠落、表示崩れの報告は、公開リポジトリの GitHub Issues で受け付けています。
+            やり取りが公開されるため経緯を追いやすく、対応漏れが起きにくい窓口です。投稿には GitHub アカウントが必要です。
+          </span>
+          <span class="i18n-en" lang="en">
+            Correction requests, wrong categories or tags, broken links, missing translations, and display bugs are
+            handled through GitHub Issues on the public repository. The thread stays public, so the history is easy to
+            follow and nothing quietly falls through. Posting requires a GitHub account.
+          </span>
+        </p>
+        <p class="contact-cta">
+          <a class="contact-primary-link" href={NEW_ISSUE_URL} target="_blank" rel="noopener noreferrer">
+            <span aria-hidden="true">✉</span>
+            <span class="i18n-ja">GitHub Issues で連絡する</span>
+            <span class="i18n-en" lang="en">Open a GitHub issue</span>
+            <ExternalLinkHint lang="ja" />
+            <ExternalLinkHint lang="en" />
+          </a>
+        </p>
+        <p>
+          <span class="i18n-ja">
+            サイトの実装と収集パイプラインは <a href={REPO_URL} target="_blank" rel="noopener noreferrer">公開リポジトリ<ExternalLinkHint lang="ja" /></a> で確認できます。
+          </span>
+          <span class="i18n-en" lang="en">
+            The site's implementation and its collection pipeline are public in the
+            <a href={REPO_URL} target="_blank" rel="noopener noreferrer">source repository<ExternalLinkHint lang="en" /></a>.
+          </span>
+        </p>
+      </section>
+
+      <section
+        class="policy-panel"
+        aria-labelledby="contact-email-heading"
+        data-contact-email-state={contactEmailState}
+      >
+        <h3 id="contact-email-heading">
+          <span class="i18n-ja">メール</span>
+          <span class="i18n-en" lang="en">Email</span>
+        </h3>
+        {hasContactEmail ? (
+          <>
+            <p>
+              <span class="i18n-ja">
+                GitHub アカウントをお持ちでない場合、また公開の場に書けない内容 (権利者からの削除依頼、プライバシーに関する請求など) は、
+                下記の運営用アドレスへお送りください。
+              </span>
+              <span class="i18n-en" lang="en">
+                If you do not have a GitHub account, or the matter should not be public — a rights-holder takedown
+                request or a privacy request, for example — write to the role address below.
+              </span>
+            </p>
+            <p class="contact-cta">
+              <a class="contact-primary-link" href={`mailto:${contactEmail}`}>
+                <span aria-hidden="true">✉</span>
+                <span>{contactEmail}</span>
+              </a>
+            </p>
+          </>
+        ) : (
+          <>
+            <p class="contact-unavailable">
+              <strong>
+                <span class="i18n-ja">メールでの窓口は未開設です。</span>
+                <span class="i18n-en" lang="en">There is no email address yet.</span>
+              </strong>
+            </p>
+            <p>
+              <span class="i18n-ja">
+                このサイト専用の連絡用アドレスをまだ用意できていないため、現時点で掲載できるメールアドレスはありません。
+                実在しないアドレスを見本として載せると、送られたメールが誰にも届かないまま失われるため、あえて掲載していません。
+                当面のご連絡は上記の GitHub Issues をご利用ください。窓口を開設し次第、このページに掲載します。
+              </span>
+              <span class="i18n-en" lang="en">
+                A dedicated mailbox for this site does not exist yet, so there is no address to publish. We do not
+                print a sample address here: mail sent to an address nobody reads is lost silently, which is worse
+                than an honest gap. Until the mailbox exists, please use GitHub Issues above. This page will carry
+                the address as soon as there is one.
+              </span>
+            </p>
+            <p>
+              <span class="i18n-ja">
+                GitHub アカウントを作成できない事情があり、かつ権利者からの削除依頼など公開の場に書けない用件がある場合は、
+                上記リポジトリのコミット履歴に記載された運営者名を手がかりに、GitHub 上の該当プロフィールからご連絡ください。
+              </span>
+              <span class="i18n-en" lang="en">
+                If you cannot create a GitHub account and your request must not be public — a rights-holder takedown,
+                for instance — the operator can be reached through the GitHub profile named in the repository's commit
+                history.
+              </span>
+            </p>
+          </>
+        )}
+      </section>
+
+      <section class="policy-panel" aria-labelledby="contact-include-heading">
+        <h3 id="contact-include-heading">
+          <span class="i18n-ja">ご連絡時に記載していただきたいこと</span>
+          <span class="i18n-en" lang="en">What to include</span>
+        </h3>
+        <ul class="contact-list">
+          <li>
+            <span class="i18n-ja">対象となる記事ページの URL (<code>/e/…</code> のアドレス)</span>
+            <span class="i18n-en" lang="en">The URL of the article page in question (its <code>/e/…</code> address)</span>
+          </li>
+          <li>
+            <span class="i18n-ja">どの記述が問題か、および原文ではどうなっているか</span>
+            <span class="i18n-en" lang="en">Which statement is wrong, and what the original source actually says</span>
+          </li>
+          <li>
+            <span class="i18n-ja">削除依頼の場合は、権利者であることが分かる情報と対象範囲</span>
+            <span class="i18n-en" lang="en">For a takedown: how you hold the rights, and exactly what should be removed</span>
+          </li>
+          <li>
+            <span class="i18n-ja">表示の不具合の場合は、ブラウザ・端末・再現手順</span>
+            <span class="i18n-en" lang="en">For a display bug: your browser, your device, and the steps to reproduce it</span>
+          </li>
+        </ul>
+        <p>
+          <span class="i18n-ja">
+            記事ページの解説本文は大規模言語モデルが生成しており、原文に無い記述が含まれる場合があります。生成の入力範囲と検証していない点は
+            <a href="/editorial-policy">編集方針</a> に記載しています。
+          </span>
+          <span class="i18n-en" lang="en">
+            Article bodies are generated by a large language model and can contain statements the source never made.
+            The <a href="/editorial-policy">Editorial Policy</a> sets out exactly what the model is given and what is
+            not verified.
+          </span>
+        </p>
+      </section>
+
+      <section class="policy-panel" aria-labelledby="contact-response-heading">
+        <h3 id="contact-response-heading">
+          <span class="i18n-ja">対応の目安</span>
+          <span class="i18n-en" lang="en">What to expect</span>
+        </h3>
+        <p>
+          <span class="i18n-ja">
+            個人運営のため、確認まで通常数日いただきます。訂正依頼は原文と照合したうえで、記述の修正または記事の取り下げを行います。
+            権利者からの正当な削除依頼は速やかに反映します。収集や AI 要約の遅れそのものは通常の運用状態であり不具合ではないため、
+            まず <a href="/status">Status</a> で稼働状況をご確認ください。
+          </span>
+          <span class="i18n-en" lang="en">
+            One person reads these, so a reply normally takes a few days. Correction requests are checked against the
+            original article, then the text is fixed or the entry is withdrawn. A valid rights-holder takedown is
+            actioned promptly. Delays in collection or AI summarisation are an expected operational state rather than
+            a bug — check <a href="/status">Status</a> first.
+          </span>
+        </p>
+        <p>
+          <span class="i18n-ja">
+            データの取扱い、広告、第三者サービス、プライバシーに関する権利は <a href="/privacy">Privacy</a> に記載しています。
+          </span>
+          <span class="i18n-en" lang="en">
+            Data handling, advertising, third-party services, and your privacy rights are documented on
+            <a href="/privacy">Privacy</a>.
+          </span>
+        </p>
+      </section>
+    </main>
+  </div>
+</Portal>
+
+<style>
+  /* Single-column reading layout: override the site-wide 3-column grid.
+     Mirrors web/src/pages/editorial-policy.astro so the trust pages match. */
+  .policy-layout {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 860px;
+  }
+
+  .policy-main {
+    min-width: 0;
+    display: grid;
+    gap: 14px;
+  }
+
+  .policy-panel {
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg-2) 72%, transparent);
+  }
+
+  .policy-panel h3 {
+    margin: 0 0 10px;
+    font-size: 15px;
+  }
+
+  .policy-panel p {
+    margin: 0 0 10px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .policy-panel p:last-child {
+    margin-bottom: 0;
+  }
+
+  .contact-dl {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 12px;
+  }
+
+  .contact-dl > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    justify-content: space-between;
+  }
+
+  .contact-dl dt,
+  .contact-dl dd {
+    margin: 0;
+    font-size: 12px;
+  }
+
+  .contact-dl dt {
+    color: var(--muted);
+  }
+
+  .contact-list {
+    margin: 0 0 10px;
+    padding-inline-start: 1.2em;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .contact-cta {
+    margin-top: 12px;
+  }
+
+  /* Mirrors the shared .feedback-issue-link CTA (portal.css:949-968) so the
+     trust pages agree, with the accent hue instead of the warning hue. */
+  .contact-primary-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 8px 16px;
+    border: 1px solid color-mix(in srgb, var(--accent) 46%, var(--border));
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .contact-primary-link:hover,
+  .contact-primary-link:focus-visible {
+    border-color: color-mix(in srgb, var(--accent) 72%, var(--border));
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+
+  /* The missing-mailbox state is a stated fact, not a soft fallback: it gets
+     the warning treatment so a reader cannot skim past it. --important is a
+     real token (portal.css:16); --warn does not exist in this codebase. */
+  .contact-unavailable {
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--important) 55%, var(--border));
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--important) 12%, transparent);
+    color: var(--text);
+  }
+</style>

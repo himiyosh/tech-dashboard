@@ -24,6 +24,7 @@ export const SITEMAP_STATIC_PATHS = [
   "/about/",
   "/editorial-policy/",
   "/privacy/",
+  "/contact/",
 ] as const;
 
 export function totalPageCount(entryCount: number, pageSize: number): number {

@@ -205,10 +205,12 @@
 - Knowledge の知見一覧は Timeline 用の重い `EntryCard` を使わず、`KnowledgeCard.astro` の横型カードを 2 列グリッドにする。card 高は揃えつつ、実画像がある entry だけ thumbnail slot を出す。画像なし・画像失敗 entry は placeholder を出さず、本文を全幅へ広げる (LL-091/093/094/096/225/226)。
 - lane ページのレイアウトを変えたら E2E で「`.layout aside.left` が 0 件」「`.layout aside.right` が 0 件」「`aside.lane-rail` が main より左」「`.layout.lane-layout` 表示」「全幅 (1280〜390) で 3 カラムにならない・横スクロールなし」を検証する。
 
-### R-024: PR merge 後は同一セッションで branch / worktree を安全に整理する
+### R-024: 不要な branch / worktree は同一セッションで必ず整理する
 - PR を main へ merge したら、同一セッション内で head の remote branch、local branch、関連 worktree を精査して整理する。
+- **merge の有無に関わらず、役目を終えた branch / worktree はその session 内で必ず削除する。** 対象は (a) merge 済みの head、(b) 別 branch へ作り直されて superseded になったもの、(c) 調査・実験用に作り成果を取り込まないと決めたもの。「あとで消す」で session を終えない。削除しなかったものは必ず保持理由を報告し、黙って残さない。
 - 削除前に対象 worktree の `status` が clean、必要な内容が main に反映済み、open PR が無い、固有 commit・patch・file が無いことを確認する。squash merge では `git branch --merged` だけに依存せず、PR 状態、patch 差分、`git cherry`、worktree の dirty 状態を合わせて判定する。
 - dirty、open PR、固有 commit、固有 file のいずれかがある branch / worktree は削除しない。保持理由と固有差分を具体的に報告し、force delete は使わない。
+- 例外: 未 merge だが superseded と確認できた branch の削除は `git branch -D` を要する。この force delete は、当該 session でユーザーがその branch を名指しで削除承認した場合にだけ実行する。承認が無ければ削除せず理由を報告する (R-025 の破壊的操作の境界と整合させる)。
 - 整理後は `git fetch --prune`、`git branch -vv --all`、`git worktree list --porcelain`、`gh pr list --state open`、main の clean status を再確認する。
 
 ### R-025: TechDBAgent は audit / delivery / release の権限境界を明示する

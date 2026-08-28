@@ -28,11 +28,18 @@ id = "6d67debb991742efadfec473a121f5fc"
 
 [vars]
 # opus-4.8 generates full bilingual bodies without the reasoning-loop-empties
-# failure that sonnet hits on Japanese long-form (LL-106/LL-115). reasoning=max
-# is affordable: token cost is inside the Copilot subscription and the LLM wait
-# is I/O, not CPU (LL-115).
+# failure that sonnet hits on Japanese long-form (LL-106/LL-115).
+#
+# reasoning=high, NOT max: with the source-scaled JA prompt (bodyLengthPlan,
+# 33d2456a) opus at reasoning=max deterministically burns the entire 4000-token
+# output budget on reasoning and returns an EMPTY Japanese body (measured
+# 2026-08-29: 2/2 empty at max, 2/2 complete in-band at high and medium,
+# ~52s vs ~7s per call). Empty content throws, so every JA job would retry
+# twice and land in the DLQ while the body backlog grows. The shorter target
+# band leaves the model reasoning far longer than the visible answer needs;
+# high keeps the anti-hallucination benefit without the token exhaustion.
 BODY_MODEL = "claude-opus-4.8"
-BODY_REASONING_EFFORT = "max"
+BODY_REASONING_EFFORT = "high"
 # Each single-language call needs ~20-30s wall (I/O). 120s leaves margin for
 # reasoning=max without killing legitimate responses.
 BODY_TIMEOUT_MS = "120000"

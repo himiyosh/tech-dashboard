@@ -18,6 +18,7 @@ import {
 import {
   DETAIL_ROBOTS_INDEX,
   DETAIL_ROBOTS_NOINDEX,
+  NON_INDEXABLE_SOURCE_TYPES,
   collectIndexableDetailEntries,
   detailRobotsContent,
   isIndexableDetailEntry,
@@ -248,15 +249,25 @@ describe("sitemap", () => {
     const notIndexable = addressable.filter((entry) => !isIndexableDetailEntry(entry));
 
     expect(indexable.length, "fixture has indexable details").toBeGreaterThan(0);
-    expect(notIndexable.length, "fixture has body-less details").toBeGreaterThan(0);
+    expect(notIndexable.length, "fixture has non-indexable details").toBeGreaterThan(0);
 
     for (const entry of indexable) {
       expect(hasRealBody(entry)).toBe(true);
+      // A real body is necessary but not sufficient: the release/changelog
+      // lane is excluded regardless, so nothing from it may appear here.
+      expect(NON_INDEXABLE_SOURCE_TYPES.has(String(entry.sourceType))).toBe(false);
       expect(urls.has(canonical(detailPath(entry.id)))).toBe(true);
       expect(detailRobotsContent(entry)).toBe(DETAIL_ROBOTS_INDEX);
     }
     for (const entry of notIndexable) {
-      expect(hasRealBody(entry)).toBe(false);
+      // Exactly two reasons are allowed to keep a page out of the index:
+      // no real body yet, or an excluded lane. Anything else means the gate
+      // grew a rule nobody declared.
+      const excludedLane = NON_INDEXABLE_SOURCE_TYPES.has(String(entry.sourceType));
+      expect(
+        !hasRealBody(entry) || excludedLane,
+        `${entry.id} is non-indexable for an undeclared reason`,
+      ).toBe(true);
       expect(urls.has(canonical(detailPath(entry.id)))).toBe(false);
       expect(detailRobotsContent(entry)).toBe(DETAIL_ROBOTS_NOINDEX);
     }
@@ -267,6 +278,49 @@ describe("sitemap", () => {
     expect(sitemapDetailCount).toBe(
       collectIndexableDetailEntries(ALL_ENTRIES, ARCHIVE_WARM_ENTRIES).length,
     );
+  });
+
+  it("keeps release/changelog details out of the index even when they have a body", () => {
+    // The version-note lane is where every near-duplicate cluster lives (18x
+    // "Zed Editor v1.17.2", 16x "Ollama v0.33.0", ...), so it is excluded by
+    // sourceType rather than by any body-quality heuristic. Guard both halves:
+    // the lane never reaches the sitemap, and the exclusion is doing real work
+    // on the actual corpus rather than passing vacuously.
+    const urls = new Set(SITEMAP_DOCUMENT.urls);
+    const addressable = collectAddressableDetailEntries(ALL_ENTRIES, ARCHIVE_WARM_ENTRIES);
+    const releaseLane = addressable.filter((entry) =>
+      NON_INDEXABLE_SOURCE_TYPES.has(String(entry.sourceType)),
+    );
+
+    expect(releaseLane.length, "corpus still carries release/changelog details")
+      .toBeGreaterThan(0);
+    const bodiedReleaseLane = releaseLane.filter((entry) => hasRealBody(entry));
+    expect(
+      bodiedReleaseLane.length,
+      "exclusion is load-bearing: some release entries do have a real body",
+    ).toBeGreaterThan(0);
+
+    for (const entry of releaseLane) {
+      expect(isIndexableDetailEntry(entry)).toBe(false);
+      expect(detailRobotsContent(entry)).toBe(DETAIL_ROBOTS_NOINDEX);
+      expect(urls.has(canonical(detailPath(entry.id)))).toBe(false);
+    }
+
+    // The route itself must stay reachable -- de-indexing must never 404.
+    for (const entry of bodiedReleaseLane) {
+      expect(isAddressableDetailEntry(entry)).toBe(true);
+    }
+  });
+
+  it("treats a missing sourceType as indexable so the gate cannot empty the sitemap", () => {
+    // Fail-open on the descriptive field is deliberate (see the module doc):
+    // a caller forgetting to thread sourceType must not silently de-index the
+    // whole site. The corpus-level tests above are what catch a real gap.
+    const bodied = collectAddressableDetailEntries(ALL_ENTRIES, ARCHIVE_WARM_ENTRIES)
+      .find((entry) => hasRealBody(entry) && !NON_INDEXABLE_SOURCE_TYPES.has(String(entry.sourceType)));
+    expect(bodied, "fixture has a bodied non-release entry").toBeTruthy();
+    const { sourceType: _dropped, ...withoutSourceType } = bodied as Record<string, unknown>;
+    expect(isIndexableDetailEntry(withoutSourceType as never)).toBe(true);
   });
 
   it("emits the shared robots directive from the detail template", () => {

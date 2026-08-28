@@ -38,7 +38,15 @@ id = "6d67debb991742efadfec473a121f5fc"
 # twice and land in the DLQ while the body backlog grows. The shorter target
 # band leaves the model reasoning far longer than the visible answer needs;
 # high keeps the anti-hallucination benefit without the token exhaustion.
-BODY_MODEL = "claude-opus-4.8"
+# GPT-5.6 Sol Fast first, per site-owner priority (2026-08-29). Smoke-tested
+# with the production body prompts on real entries: JA and EN both in the
+# bodyLengthPlan band with "## " headings, 0 grounding issues, 5-13s per call
+# vs 31-53s for opus — and no empty-JA reasoning exhaustion, since /responses
+# reasoning stays inside the same max_output_tokens budget it reports.
+# claude-opus-4.8 stays last in the chain as the safety net; the reasoning
+# setting below applies only to that chat-endpoint fallback.
+BODY_MODEL = "gpt-5.6-sol-fast"
+BODY_MODEL_FALLBACKS = "gpt-5.6-sol,gpt-5.6-terra,gpt-5.6-luna,claude-opus-4.8"
 BODY_REASONING_EFFORT = "high"
 # Each single-language call needs ~20-30s wall (I/O). 120s leaves margin for
 # reasoning=max without killing legitimate responses.

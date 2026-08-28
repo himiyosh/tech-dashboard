@@ -25,7 +25,14 @@ binding = "SUMMARY_CACHE"
 id = "6d67debb991742efadfec473a121f5fc"
 
 [vars]
-SUMMARIZE_MODEL = "claude-sonnet-4.6"
+# GPT-5.6 Sol Fast first, per site-owner priority (2026-08-29). Smoke-tested
+# against the production prompt on all four gpt-5.6 variants and real corpus
+# entries: 16/16 parse+grounding pass, natural Japanese, 3.6-12.7s per call
+# (R-007 / LL-010 small-batch gate). These models are /responses-only and the
+# worker routes them there (worker/src/copilot-client.ts); claude-sonnet-4.6
+# stays last in the chain as the battle-tested safety net on /chat/completions.
+SUMMARIZE_MODEL = "gpt-5.6-sol-fast"
+SUMMARIZE_MODEL_FALLBACKS = "gpt-5.6-sol,gpt-5.6-terra,gpt-5.6-luna,claude-sonnet-4.6"
 # Summary-only generation normally completes well below one minute. Bound each
 # attempt so a malformed or stalled response releases the queue slot quickly.
 SUMMARIZE_TIMEOUT_MS = "60000"

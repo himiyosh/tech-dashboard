@@ -3,6 +3,12 @@ import {
   isAddressableDetailEntry,
   type DetailAddressableEntry,
 } from "./detail-addressability.ts";
+import { isNonIndexableLane } from "./detail-index-policy.ts";
+
+export {
+  NON_INDEXABLE_SOURCE_TYPES,
+  isNonIndexableLane,
+} from "./detail-index-policy.ts";
 
 /**
  * Indexability is a strictly narrower decision than addressability, and the two
@@ -21,19 +27,9 @@ import {
  * `noindex, follow` until a body lands, at which point the same URL is promoted
  * into the sitemap with no redirect and no URL churn.
  *
- * A real body is necessary but NOT sufficient: release and changelog entries
- * are excluded even when they have one. Measuring the 1,204 indexed detail
- * pages against this policy showed every near-duplicate cluster came from that
- * lane -- 18x "Zed Editor v1.17.2", 16x "Ollama v0.33.0", 15x "OpenHands
- * v1.15.0", 11x "Zed v1.18.0-pre", 9x Cline, 9x/8x langchain -- with 137 pages
- * (11.4%) sitting in a same-source/version-stripped-title cluster and 60 of
- * them in a cluster of ten or more. Version notes differ only by a version
- * number, so an AI explainer over them is the most mass-produced-looking
- * content on the site while carrying the least independent value. Excluding
- * the lane by sourceType removes all of that at once: it subsumes both the
- * >=3 clusters and the bodiless-after-rescore set, and costs 194 of 1,204
- * indexed pages (16%). They stay reachable and `follow`ed like any other
- * body-less page, so inbound links and feed items are unaffected.
+ * A real body is necessary but NOT sufficient: the release/changelog lane is
+ * excluded even when it has one. detail-index-policy.ts holds that rule, the
+ * measurement behind it, and the reason it lives in a data-free module.
  *
  * web/scripts/validate-sitemap-dist.mjs enforces the pairing at build time in
  * both directions: an indexable canonical route missing from the sitemap fails
@@ -53,31 +49,17 @@ export const DETAIL_ROBOTS_NOINDEX = "noindex, follow";
 
 /**
  * A detail entry as the indexing decision sees it. `sourceType` is optional so
- * raw stored rows and fixtures stay testable, and an absent value is treated
- * as indexable rather than excluded: this gate must never be able to empty the
- * sitemap because a caller forgot to thread one descriptive field through.
- * tests/web-sitemap.test.ts pins the real corpus against the rule, and
- * web/scripts/validate-sitemap-dist.mjs re-checks the built output, so a
- * genuinely missing sourceType is caught there instead of silently
- * de-indexing the site.
+ * raw stored rows and fixtures stay testable; detail-index-policy.ts documents
+ * why an absent value stays indexable rather than excluded.
  */
 export interface DetailIndexableEntry extends DetailAddressableEntry {
   sourceType?: string;
 }
 
-/**
- * Lanes whose entries never earn indexing, however good their body is.
- * See the module comment for the measurement behind this.
- */
-export const NON_INDEXABLE_SOURCE_TYPES: ReadonlySet<string> = new Set([
-  "release",
-  "changelog",
-]);
-
 export function isIndexableDetailEntry(entry: DetailIndexableEntry): boolean {
-  if (entry.sourceType !== undefined && NON_INDEXABLE_SOURCE_TYPES.has(entry.sourceType)) {
-    return false;
-  }
+  // A real body is necessary but not sufficient: the version-note lane is
+  // excluded outright (detail-index-policy.ts).
+  if (isNonIndexableLane(entry)) return false;
   // hasRealBody takes the ENTRY, not the id, so the source-grounding guard
   // cannot be bypassed here: a body generated without a usable source excerpt
   // must not make its page indexable either.

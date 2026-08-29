@@ -5432,7 +5432,11 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await settleResponsiveLayout(page);
-    const firstArticle = page.locator(categoryTitleSelector).first();
+    // The click-through assertion needs an INTERNAL detail link; a held
+    // (unapproved) card correctly links out to its source instead.
+    const firstArticle = page
+      .locator('main article.card[data-detail-destination="internal"] h3.title > a')
+      .first();
     await expectTargetOwnsCenter(firstArticle, "category article title");
     const detailHref = await firstArticle.getAttribute("href");
     expect(detailHref).toMatch(/^\/e\/[a-f0-9]{16}\/$/);

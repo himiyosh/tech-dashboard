@@ -50,6 +50,27 @@ function text(value: string | undefined | null): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+/**
+ * True when a body text ends like a finished sentence rather than a mid-token
+ * cut. The 2026-08-29 audit measured 172 of 1,016 indexable-lane bodies
+ * (16.9%) ending mid-word ("that the long-stand", "Treating LL") — the old
+ * opus configuration exhausting max_tokens. Rejecting them here makes the
+ * pipeline self-healing: the record stops counting as real, the page drops to
+ * noindex/summary-only, needsBody() turns true again, and the hourly queue
+ * regenerates it on the current model chain.
+ *
+ * MIRRORED in web/src/lib/body-quality.ts (which must stay free of worker
+ * imports); tests/worker-body-completeness.test.ts pins the two copies to the
+ * same verdicts.
+ */
+export function looksCompleteBodyText(value: string, lang: "ja" | "en"): boolean {
+  const trimmed = text(value);
+  if (!trimmed) return true; // absence is judged elsewhere; only presence must be complete
+  return lang === "ja"
+    ? /[。！？…」』）)】.!?"']$/.test(trimmed)
+    : /[.!?…"')\]]$/.test(trimmed);
+}
+
 /** True when a record holds real, renderable bilingual prose (not filler). */
 export function isRealBody(record: BodyRecord | undefined | null): boolean {
   if (!record) return false;
@@ -57,6 +78,7 @@ export function isRealBody(record: BodyRecord | undefined | null): boolean {
   const en = text(record.bodyEn);
   if (!ja || !en) return false;
   if (en.includes(FALLBACK_BODY_EN_NEEDLE) || ja.includes(FALLBACK_BODY_JA_NEEDLE)) return false;
+  if (!looksCompleteBodyText(ja, "ja") || !looksCompleteBodyText(en, "en")) return false;
   return true;
 }
 

@@ -30,6 +30,22 @@ export function isFillerBodyRecord(record: BodyTextRecord): boolean {
   );
 }
 
+/**
+ * True when a body text ends like a finished sentence rather than a mid-token
+ * cut (max_tokens exhaustion in the old generator config). MIRROR of
+ * looksCompleteBodyText in worker/src/bodies-file.ts — this module must stay
+ * free of worker imports; the mirror test pins both copies to the same
+ * verdicts. A truncated language makes the whole record non-real, so the page
+ * degrades to noindex/summary-only and the pipeline regenerates it.
+ */
+export function looksCompleteBodyText(value: string, lang: "ja" | "en"): boolean {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return true;
+  return lang === "ja"
+    ? /[。！？…」』）)】.!?"']$/.test(trimmed)
+    : /[.!?…"')\]]$/.test(trimmed);
+}
+
 /** True when the record carries renderable long-form prose in at least one language. */
 export function isRealBodyRecord(
   record: BodyTextRecord | null | undefined,
@@ -38,5 +54,6 @@ export function isRealBodyRecord(
   const ja = (record.bodyJa ?? "").trim();
   const en = (record.bodyEn ?? "").trim();
   if (!ja && !en) return false;
+  if (!looksCompleteBodyText(ja, "ja") || !looksCompleteBodyText(en, "en")) return false;
   return !isFillerBodyRecord(record);
 }

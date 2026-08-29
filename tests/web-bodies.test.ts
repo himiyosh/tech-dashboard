@@ -169,7 +169,14 @@ describe("isRealBodyRecord (body-quality)", () => {
   });
 
   it("accepts a record with real prose in one language", () => {
-    expect(isRealBodyRecord({ bodyJa: "実本文", bodyEn: "" })).toBe(true);
-    expect(isFillerBodyRecord({ bodyJa: "実本文", bodyEn: "real" })).toBe(false);
+    expect(isRealBodyRecord({ bodyJa: "実本文。", bodyEn: "" })).toBe(true);
+    expect(isFillerBodyRecord({ bodyJa: "実本文。", bodyEn: "real." })).toBe(false);
+  });
+
+  it("rejects a record whose present language is truncated mid-sentence", () => {
+    // 2026-08-29 audit: 16.9% of indexable-lane bodies ended mid-word from
+    // max_tokens exhaustion. A truncated language disqualifies the record.
+    expect(isRealBodyRecord({ bodyJa: "完成した本文である。", bodyEn: "cut mid-sent" })).toBe(false);
+    expect(isRealBodyRecord({ bodyJa: "途中で切れた本文", bodyEn: "A finished body." })).toBe(false);
   });
 });

@@ -545,7 +545,7 @@ describe("shared enrichment budget and pending body merge", () => {
 
 describe("isRealBody / parseBodies / bodiesPresentSet (LL-115)", () => {
   it("実 body は true、空/片方/filler は false", () => {
-    expect(isRealBody({ bodyJa: "あ".repeat(200), bodyEn: "a".repeat(200) })).toBe(true);
+    expect(isRealBody({ bodyJa: "あ".repeat(200) + "。", bodyEn: "a".repeat(200) + "." })).toBe(true);
     expect(isRealBody({ bodyJa: "", bodyEn: "a" })).toBe(false);
     expect(isRealBody({ bodyJa: "元記事の要約と収集時のメタデータから補完", bodyEn: "x" })).toBe(false);
     expect(isRealBody({ bodyJa: "ok", bodyEn: "completed from the existing summary and collection metadata" })).toBe(false);
@@ -562,7 +562,7 @@ describe("isRealBody / parseBodies / bodiesPresentSet (LL-115)", () => {
       generatedAt: "",
       count: 2,
       bodies: {
-        real: { bodyJa: "あ".repeat(200), bodyEn: "a".repeat(200) },
+        real: { bodyJa: "あ".repeat(200) + "。", bodyEn: "a".repeat(200) + "." },
         filler: { bodyJa: "元記事の要約と収集時のメタデータから", bodyEn: "x" },
       },
     };
@@ -574,13 +574,13 @@ describe("mergeBodies (LL-115)", () => {
   const existing: BodiesPayload = {
     generatedAt: "2026-06-26T00:00:00.000Z",
     count: 1,
-    bodies: { keep: { bodyJa: "あ".repeat(200), bodyEn: "a".repeat(200), model: "legacy" } },
+    bodies: { keep: { bodyJa: "あ".repeat(200) + "。", bodyEn: "a".repeat(200) + ".", model: "legacy" } },
   };
 
   it("新規 body を追加する", () => {
     const r = mergeBodies(
       existing,
-      [{ id: "fresh", bodyJa: "い".repeat(200), bodyEn: "b".repeat(200), model: "claude-opus-4.8" }],
+      [{ id: "fresh", bodyJa: "い".repeat(200) + "。", bodyEn: "b".repeat(200) + ".", model: "claude-opus-4.8" }],
       new Set(["keep", "fresh"]),
       "2026-06-27T00:00:00.000Z",
     );
@@ -592,7 +592,7 @@ describe("mergeBodies (LL-115)", () => {
   it("既存の実 body は上書きしない", () => {
     const r = mergeBodies(
       existing,
-      [{ id: "keep", bodyJa: "別".repeat(200), bodyEn: "c".repeat(200) }],
+      [{ id: "keep", bodyJa: "別".repeat(200) + "。", bodyEn: "c".repeat(200) + "." }],
       new Set(["keep"]),
       "2026-06-27T00:00:00.000Z",
     );
@@ -683,8 +683,8 @@ describe("selectBodyPipelineJobs: excludeBudgetEvictedIds (LL-411)", () => {
 
 function bodyGeneratedRecordText(seed: string): { bodyJa: string; bodyEn: string } {
   return {
-    bodyJa: `本文${seed}`.repeat(150),
-    bodyEn: `body ${seed} `.repeat(150),
+    bodyJa: `本文${seed}`.repeat(150) + "。",
+    bodyEn: (`body ${seed} `.repeat(150)).trim() + ".",
   };
 }
 

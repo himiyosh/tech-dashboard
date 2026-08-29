@@ -11,7 +11,7 @@
  */
 
 export interface ArticleChatTurn {
-  /** Speaker key: "a" = ソラ / Sora, "b" = レン / Ren. */
+  /** Speaker key: "a" = ソラ / Sora, "b" = 博士 / Doc. */
   s: "a" | "b";
   ja: string;
   en: string;
@@ -25,18 +25,38 @@ export const ARTICLE_CHAT_PERSONAS = {
   a: {
     nameJa: "ソラ",
     nameEn: "Sora",
-    roleJa: "新しい技術に飛びつく好奇心旺盛なエンジニア",
-    roleEn: "a curious engineer who is quick to try new technology",
-    emoji: "🛰️",
+    roleJa: "AI とテクノロジーに興味津々の初心者",
+    roleEn: "a curious beginner just getting into AI and tech",
+    profileJa:
+      "気になるテックニュースは読むけれど、専門用語はまだ苦手な初心者。分からないことを素直に「それって何？」と聞けるのが強みで、読者が聞きたいことを代わりに質問する。",
+    profileEn:
+      "A newcomer who follows tech news with excitement but still trips over jargon. Their strength is asking the questions readers actually have, plainly and without embarrassment.",
+    speechJa:
+      "素朴で率直な話し言葉。「それって何？」「つまりどういうこと？」「へえ、すごい！」と、驚きと疑問をそのまま口にする。",
+    speechEn:
+      "Plain and candid; voices surprise and questions exactly as they come.",
+    emoji: "🌱",
   },
   b: {
-    nameJa: "レン",
-    nameEn: "Ren",
-    roleJa: "根拠と運用コストを先に確かめる慎重なレビュアー",
-    roleEn: "a careful reviewer who checks evidence and operating cost first",
-    emoji: "🔍",
+    nameJa: "博士",
+    nameEn: "Doc",
+    roleJa: "なんでも知っているやさしいテック博士",
+    roleEn: "a kindly professor who knows tech inside out",
+    profileJa:
+      "長年テック業界を見てきた、なんでも知っているやさしい博士。難しい話を身近な言葉で短く言い換えるのが得意で、知識をひけらかさず、記事に書かれていることと一般的な補足を必ず区別して話す。",
+    profileEn:
+      "A kindly professor who has watched the tech industry for decades. Great at recasting hard ideas in everyday words, never showing off, and always separating what the article says from general background.",
+    speechJa:
+      "やわらかい博士口調。「簡単に言うとじゃな」「記事によれば〜じゃよ」のように、かみ砕きと出典の区別を自然に添える。",
+    speechEn:
+      "Warm professor tone; leads with plain-language recaps and attributes claims to the article.",
+    emoji: "🎓",
   },
 } as const;
+
+/** How the two relate — steers tone away from strawman debates. */
+export const ARTICLE_CHAT_RELATIONSHIP_JA =
+  "仲の良い聞き手と教え手。ソラが読者目線の疑問をぶつけ、博士が記事の内容をかみ砕いて答える。博士はソラを見下さず、ソラは遠慮なく聞き返す。";
 
 /**
  * Same structural contract as the worker validator: exactly six non-empty

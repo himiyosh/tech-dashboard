@@ -15,7 +15,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 ### 追加
 
 - 記事の AI 解説本文に完結性ゲートを追加しました。文の途中で切断された本文(旧生成設定の max_tokens 枯渇由来、index 対象の 16.9% で実測)は本文なし扱いとなり、ページは noindex のダイジェスト表示に退避、毎時パイプラインが現行モデルで自動再生成して復帰します。新規生成時も切断出力は保存前に拒否します。
-- 記事詳細ページに「ソラとレンの読みどころ」を追加しました。固定の編集部キャラクター 2 人(ソラ: 好奇心旺盛なエンジニア、レン: 慎重なレビュアー)が、その記事について 3 往復のチャット形式で議論します。会話は記事の要約・収集メタデータだけを材料に生成され(新規事実の持ち込みと水増しは生成時と保存時の二重ゲートで拒否)、AI 生成である旨を明示します。既存記事へは KV 経由の backfill (`scripts/backfill-article-chats.mts`) と毎時 Publisher の chat-missing lookup lane で段階的に反映されます。
+- 記事詳細ページに「ソラと博士の読みどころ」を追加しました。固定の編集部キャラクター 2 人(ソラ: AI とテクノロジーに興味津々の初心者、博士: なんでも知っているやさしいテック博士)が、その記事について 3 往復のチャット形式で議論します。会話は記事の要約・収集メタデータだけを材料に生成され(新規事実の持ち込みと水増しは生成時と保存時の二重ゲートで拒否)、AI 生成である旨を明示します。既存記事へは KV 経由の backfill (`scripts/backfill-article-chats.mts`) と毎時 Publisher の chat-missing lookup lane で段階的に反映されます。
 - 情報源に標準化団体公式の MCP Blog (`blog.modelcontextprotocol.io`) と Microsoft Research Blog を tier 1 で追加しました。どちらも登録前に実フィード検証を行い、Microsoft Research は AI/ML タイトル signal を必須とする title-scope keyword filter と `maxEntriesPerRun` で firmwide feed の noise を除外します。未検証の拡充候補と検証手順は `docs/source-candidates.md` に整理しました。
 - `/editorial-policy/`(編集方針)ページを追加しました。情報源の選定基準、重要度と掲載順の基準、AI 要約の生成と品質管理、訂正・削除ポリシー、広告と編集の独立、お問い合わせ (`#contact`) を JA/EN で明文化し、ハンバーガーメニュー・フッター・About・sitemap から到達できます。
 - release/changelog タイトルを version 形状で決定論的に分類する共有 module `web/src/lib/release-signal.ts` を追加しました(patch/prerelease/nightly = routine、x.Y.0 = minor、x.0.0 = major)。既存データの過大 importance を安全に降格する migration `scripts/rescore-release-importance.ts`(dry-run 既定・`--apply` 必須)も追加しています。

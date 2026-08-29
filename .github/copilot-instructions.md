@@ -66,7 +66,8 @@
 - `npm run test:all` は `typecheck → unit → web build → e2e` の一括ゲートとする。
 
 ### R-007: 記事要約 / 本文生成のモデルは GPT-5.6 系を優先し、Claude 系を fallback とする
-- 許可モデルは `gpt-5.6-sol-fast` / `gpt-5.6-sol` / `gpt-5.6-terra` / `gpt-5.6-luna` (この優先順) と、fallback としての `claude-sonnet-4.6` / `claude-opus-4.7` / `claude-opus-4.8`。既定 chain は **`gpt-5.6-sol-fast` → sol → terra → luna → claude 系** (要約は sonnet-4.6、本文は opus-4.8 を最後尾に置く。site-owner 指定 2026-08-29)。
+- 許可モデルは `gpt-5.6-sol` / `gpt-5.6-terra` / `gpt-5.6-luna` (この優先順) と、fallback としての `claude-sonnet-4.6` / `claude-opus-4.7` / `claude-opus-4.8`。既定 chain は **`gpt-5.6-sol` → terra → luna → claude 系** (要約は sonnet-4.6、本文は opus-4.8 を最後尾に置く。site-owner 指定 2026-08-29)。
+- `gpt-5.6-sol-fast` は**使用しない** (site-owner 判断 2026-08-29)。model picker 名が "GPT-5.6 Sol Fast (Internal only)" であり、予告なく引き上げられ得る内部限定 deployment に本番 pipeline を依存させない。
 - `gpt-4o` 等の旧モデルは記事要約 / 本文生成の代替モデルとして使用しない。
 - GPT-5.x 系は Copilot の `/responses` 専用 (LL-010、2026-08-29 に gpt-5.6 全 variant で `unsupported_api_for_model` を再実測)。Worker は model prefix で endpoint を自動選択する (`worker/src/copilot-client.ts`)。`/responses` は `temperature` を拒否し、`max_output_tokens` に推論トークンを含むため、chat 用パラメータをそのまま送らない。
 - fallback chain は `SUMMARIZE_MODEL` + `SUMMARIZE_MODEL_FALLBACKS` / `BODY_MODEL` + `BODY_MODEL_FALLBACKS` (comma 区切り) で構成する。モデル単位の API エラーは chain を進め、全滅時のみ job を失敗させて Cloudflare Queues の retry/DLQ 契約を維持する。

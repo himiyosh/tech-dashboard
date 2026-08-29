@@ -65,12 +65,15 @@
 - `scripts/git-hooks/pre-push` は `SKIP_WEB_BUILD=1` が明示された場合を除き、push 前に `npm run build:web` を実行する。
 - `npm run test:all` は `typecheck → unit → web build → e2e` の一括ゲートとする。
 
-### R-007: 記事要約 / 補完 backfill のモデルは Claude 系 (Sonnet 4.6 / Opus 4.7 / Opus 4.8) または GPT-5.5 に限定する
-- 通常要約も補完/backfill も `SUMMARIZE_MODEL` は `claude-sonnet-4.6` / `claude-opus-4.7` / `claude-opus-4.8` / `gpt-5.5` のみ使用する。既定は **`claude-sonnet-4.6`** (Cloudflare Worker の 30 秒 wall-time に opus の長文生成が収まらず常時 timeout する事象を 2026-05 に確認、LL-031)。
-- `gpt-4o` 等の旧モデルは記事要約 / 補完 backfill の代替モデルとして使用しない。
-- `gpt-5.5` は Copilot の `/responses` 専用なので、現行 Worker (`/chat/completions`) からは利用できない (LL-010)。Worker を `/responses` 仕様に拡張するまで `claude-*` 系のみ実利用可能。
-- 長文生成が詰まる場合は、max_tokens / timeout / concurrency を調整し、それでも必要なら `claude-opus-4.8` / `claude-opus-4.7` (品質優先) と `claude-sonnet-4.6` (速度優先) を切り替える。本番モデル変更は小 batch (`SUMMARIZE_MAX_NEW=1` または backfill の `--limit 1`) で smoke test してから適用する (LL-010)。
-- **ローカル backfill (要約のみ・短プロンプト) は `claude-opus-4.8` を使ってよい**。Worker の 30 秒 wall-time 制約 (LL-031) は CPU 時間ではなく長文 body 生成のトークン枯渇が主因 (LL-106/115) で、ローカルかつ要約のみ (`buildSummaryPrompt`) なら opus でも budget 内で完了する。Worker 既定を opus に変えるわけではない (本番収集は引き続き sonnet)。
+### R-007: 記事要約 / 本文生成のモデルは GPT-5.6 系を優先し、Claude 系を fallback とする
+- 許可モデルは `gpt-5.6-sol` / `gpt-5.6-terra` / `gpt-5.6-luna` (この優先順) と、fallback としての `claude-sonnet-4.6` / `claude-opus-4.7` / `claude-opus-4.8`。既定 chain は **`gpt-5.6-sol` → terra → luna → claude 系** (要約は sonnet-4.6、本文は opus-4.8 を最後尾に置く。site-owner 指定 2026-08-29)。
+- `gpt-5.6-sol-fast` は**使用しない** (site-owner 判断 2026-08-29)。model picker 名が "GPT-5.6 Sol Fast (Internal only)" であり、予告なく引き上げられ得る内部限定 deployment に本番 pipeline を依存させない。
+- `gpt-4o` 等の旧モデルは記事要約 / 本文生成の代替モデルとして使用しない。
+- GPT-5.x 系は Copilot の `/responses` 専用 (LL-010、2026-08-29 に gpt-5.6 全 variant で `unsupported_api_for_model` を再実測)。Worker は model prefix で endpoint を自動選択する (`worker/src/copilot-client.ts`)。`/responses` は `temperature` を拒否し、`max_output_tokens` に推論トークンを含むため、chat 用パラメータをそのまま送らない。
+- fallback chain は `SUMMARIZE_MODEL` + `SUMMARIZE_MODEL_FALLBACKS` / `BODY_MODEL` + `BODY_MODEL_FALLBACKS` (comma 区切り) で構成する。モデル単位の API エラーは chain を進め、全滅時のみ job を失敗させて Cloudflare Queues の retry/DLQ 契約を維持する。
+- claude 系を使う場合の注意: chat endpoint の `reasoning_effort=max` は、ソース比例の短い本文プロンプト (bodyLengthPlan) と組み合わさると出力予算を推論で使い切り**日本語本文を空にする** (2026-08-29 実測、2/2 再現)。claude での本文生成は `high` 以下にする。opus の長文が Worker の 30 秒 wall-time に収まらない事象 (LL-031) も引き続き有効。
+- 本番モデル変更は小 batch (`SUMMARIZE_MAX_NEW=1` または backfill の `--limit 1`) か、本番プロンプト + 実 corpus エントリでの direct-API smoke test を通してから適用する (LL-010)。切り替え後は Copilot premium request の消費倍率を数日観察する。
+- **ローカル backfill (要約のみ・短プロンプト) は `claude-opus-4.8` を使ってよい**。Worker の 30 秒 wall-time 制約 (LL-031) は CPU 時間ではなく長文 body 生成のトークン枯渇が主因 (LL-106/115) で、ローカルかつ要約のみ (`buildSummaryPrompt`) なら opus でも budget 内で完了する。
 
 ### R-008: Worker deploy は pre-push でも明示 opt-in にする
 - `scripts/git-hooks/pre-push` は unit / web build / e2e の品質ゲートを必ず実行する。

@@ -37,17 +37,25 @@ import {
 } from "../../harness/pipeline/source-grounding.ts";
 import { type BodyCacheEntry, putBodyCacheEntry } from "../../worker/src/body-cache.ts";
 import { UNVERSIONED_JOB_FINGERPRINT } from "../../worker/src/kv-cache.ts";
+import {
+  buildCopilotRequestBody,
+  copilotEndpointForModel,
+  copilotEndpointUrl,
+  extractCopilotText,
+  parseModelChain,
+} from "../../worker/src/copilot-client.ts";
 
 interface Env {
   SUMMARY_CACHE: KVNamespace;
   COPILOT_PAT: string;
   BODY_MODEL?: string;
+  /** Comma-separated ordered fallback models tried when a call errors. */
+  BODY_MODEL_FALLBACKS?: string;
   BODY_REASONING_EFFORT?: string;
   BODY_TIMEOUT_MS?: string;
   BODY_MAX_TOKENS?: string;
 }
 
-const COPILOT_ENDPOINT = "https://api.githubcopilot.com/chat/completions";
 const COPILOT_HEADERS: Record<string, string> = {
   "editor-version": "vscode/1.95.0",
   "editor-plugin-version": "copilot-chat/0.22.0",
@@ -123,23 +131,20 @@ async function callCopilotText(
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const requestBody: Record<string, unknown> = {
+      // GPT-5.x models are /responses-only, reject `temperature`, and take no
+      // reasoning_effort field there (the chat-endpoint claude knob); shaping
+      // is shared with the summarizer (worker/src/copilot-client.ts).
+      const endpoint = copilotEndpointForModel(model);
+      const requestBody = buildCopilotRequestBody({
         model,
+        systemPrompt:
+          "You are a professional technology editor. Return only the plain-text body the user requested — no JSON, no code fences, no preamble.",
+        userPrompt: prompt,
+        maxTokens,
         temperature: 0.3,
-        max_tokens: maxTokens,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a professional technology editor. Return only the plain-text body the user requested — no JSON, no code fences, no preamble.",
-          },
-          { role: "user", content: prompt },
-        ],
-      };
-      if (reasoningEffort && reasoningEffort !== "none") {
-        requestBody.reasoning_effort = reasoningEffort;
-      }
-      const res = await fetch(COPILOT_ENDPOINT, {
+        reasoningEffort,
+      });
+      const res = await fetch(copilotEndpointUrl(endpoint), {
         method: "POST",
         signal: controller.signal,
         headers: {
@@ -156,10 +161,7 @@ async function callCopilotText(
       if (!res.ok) {
         throw new Error(`copilot ${res.status}: ${await res.text()}`);
       }
-      const body = (await res.json()) as {
-        choices?: Array<{ message?: { content?: string } }>;
-      };
-      const content = cleanBodyText(body.choices?.[0]?.message?.content ?? "");
+      const content = cleanBodyText(extractCopilotText(endpoint, await res.json()));
       if (content.length < MIN_BODY_CHARS) {
         throw new Error(`empty/short body (${content.length} chars)`);
       }
@@ -205,7 +207,7 @@ export function buildBodyCacheEntry(
 
 async function processJob(env: Env, job: BodyJob): Promise<void> {
   const pat = env.COPILOT_PAT;
-  const model = env.BODY_MODEL || DEFAULT_MODEL;
+  const chain = parseModelChain(env.BODY_MODEL || DEFAULT_MODEL, env.BODY_MODEL_FALLBACKS);
   const reasoning = env.BODY_REASONING_EFFORT || DEFAULT_REASONING;
   const timeoutMs = Number(env.BODY_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
   const maxTokens = Number(env.BODY_MAX_TOKENS ?? DEFAULT_MAX_TOKENS);
@@ -216,10 +218,30 @@ async function processJob(env: Env, job: BodyJob): Promise<void> {
   // Two separate single-language calls (LL-115). Sequential so one shared token
   // covers both and Copilot pressure stays moderate (max_concurrency also caps
   // parallel invocations). Each call is I/O-bound (no Worker CPU cost, LL-115).
-  const bodyJa = await callCopilotText(pat, model, reasoning, buildBodyPromptJa(job.entry), timeoutMs, maxTokens);
-  const bodyEn = await callCopilotText(pat, model, reasoning, buildBodyPromptEn(job.entry), timeoutMs, maxTokens);
-
-  const entry = buildBodyCacheEntry(job, bodyJa, bodyEn, model);
+  //
+  // Both languages come from the SAME model: mixing models inside one bilingual
+  // entry would give the two halves different styles and failure modes. A
+  // model-level failure on either call advances the whole pair to the next
+  // model in the chain; if every model fails, the last error propagates so
+  // Cloudflare Queues retry/DLQ semantics stay exactly as before.
+  let entry: BodyCacheEntry | undefined;
+  let lastError: unknown;
+  for (const [attemptIndex, attemptModel] of chain.entries()) {
+    if (attemptIndex > 0) {
+      console.warn(
+        `[body] fallback ${attemptIndex + 1}/${chain.length} (${attemptModel}) for ${job.url}: previous model failed`,
+      );
+    }
+    try {
+      const bodyJa = await callCopilotText(pat, attemptModel, reasoning, buildBodyPromptJa(job.entry), timeoutMs, maxTokens);
+      const bodyEn = await callCopilotText(pat, attemptModel, reasoning, buildBodyPromptEn(job.entry), timeoutMs, maxTokens);
+      entry = buildBodyCacheEntry(job, bodyJa, bodyEn, attemptModel);
+      break;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  if (!entry) throw lastError ?? new Error(`all body models failed for ${job.url}`);
   if (!isBodyEntryComplete(entry, job.entry)) {
     throw new Error(`incomplete or ungrounded body for ${job.url}`);
   }
@@ -328,6 +350,10 @@ export default {
           ok,
           role: "body-queue-consumer",
           model: env.BODY_MODEL || DEFAULT_MODEL,
+          modelFallbacks: parseModelChain(
+            env.BODY_MODEL || DEFAULT_MODEL,
+            env.BODY_MODEL_FALLBACKS,
+          ).slice(1),
           reasoningEffort: env.BODY_REASONING_EFFORT || DEFAULT_REASONING,
           timeoutMs: Number(env.BODY_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS),
           maxTokens: Number(env.BODY_MAX_TOKENS ?? DEFAULT_MAX_TOKENS),

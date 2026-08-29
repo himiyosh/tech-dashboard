@@ -154,6 +154,18 @@ export function pruneInvalidBodyRecords(
 
   for (const [id, record] of Object.entries(bodies)) {
     const entry = entriesById.get(id);
+    // A record that no longer counts as real — filler, or truncated
+    // mid-sentence by the old generator config (looksCompleteBodyText) — is
+    // REMOVED from the file, not merely ignored: leaving it in place made
+    // key-presence and isRealBody disagree, so the runtime's backlog
+    // (bodiesPresentSet-based) diverged from every raw-key recomputation.
+    // Removal is what re-arms needsBody() and lets the hourly queue
+    // regenerate the entry on the current model chain.
+    if (!isRealBody(record)) {
+      delete bodies[id];
+      pruned += 1;
+      continue;
+    }
     if (
       entry &&
       (

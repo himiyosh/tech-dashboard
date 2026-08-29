@@ -773,8 +773,8 @@ describe("clean-source-noise bodies reconciliation", () => {
         generatedAt: "2026-07-01T00:00:00.000Z",
         count: 2,
         bodies: {
-          keep: { bodyJa: "あ".repeat(200), bodyEn: "a".repeat(200), model: "legacy" },
-          orphan: { bodyJa: "い".repeat(200), bodyEn: "b".repeat(200), model: "legacy" },
+          keep: { bodyJa: "あ".repeat(200) + "。", bodyEn: "a".repeat(200) + ".", model: "legacy" },
+          orphan: { bodyJa: "い".repeat(200) + "。", bodyEn: "b".repeat(200) + ".", model: "legacy" },
         },
       },
       new Set(["keep"]),

@@ -19,7 +19,7 @@
  */
 
 export interface ArticleChatTurn {
-  /** Speaker key: "a" = ソラ / Sora, "b" = レン / Ren. */
+  /** Speaker key: "a" = ソラ / Sora, "b" = 博士 / Doc. */
   s: "a" | "b";
   ja: string;
   en: string;
@@ -34,18 +34,38 @@ export const ARTICLE_CHAT_PERSONAS = {
   a: {
     nameJa: "ソラ",
     nameEn: "Sora",
-    roleJa: "新しい技術に飛びつく好奇心旺盛なエンジニア",
-    roleEn: "a curious engineer who is quick to try new technology",
-    emoji: "🛰️",
+    roleJa: "AI とテクノロジーに興味津々の初心者",
+    roleEn: "a curious beginner just getting into AI and tech",
+    profileJa:
+      "気になるテックニュースは読むけれど、専門用語はまだ苦手な初心者。分からないことを素直に「それって何？」と聞けるのが強みで、読者が聞きたいことを代わりに質問する。",
+    profileEn:
+      "A newcomer who follows tech news with excitement but still trips over jargon. Their strength is asking the questions readers actually have, plainly and without embarrassment.",
+    speechJa:
+      "素朴で率直な話し言葉。「それって何？」「つまりどういうこと？」「へえ、すごい！」と、驚きと疑問をそのまま口にする。",
+    speechEn:
+      "Plain and candid; voices surprise and questions exactly as they come.",
+    emoji: "🌱",
   },
   b: {
-    nameJa: "レン",
-    nameEn: "Ren",
-    roleJa: "根拠と運用コストを先に確かめる慎重なレビュアー",
-    roleEn: "a careful reviewer who checks evidence and operating cost first",
-    emoji: "🔍",
+    nameJa: "博士",
+    nameEn: "Doc",
+    roleJa: "なんでも知っているやさしいテック博士",
+    roleEn: "a kindly professor who knows tech inside out",
+    profileJa:
+      "長年テック業界を見てきた、なんでも知っているやさしい博士。難しい話を身近な言葉で短く言い換えるのが得意で、知識をひけらかさず、記事に書かれていることと一般的な補足を必ず区別して話す。",
+    profileEn:
+      "A kindly professor who has watched the tech industry for decades. Great at recasting hard ideas in everyday words, never showing off, and always separating what the article says from general background.",
+    speechJa:
+      "やわらかい博士口調。「簡単に言うとじゃな」「記事によれば〜じゃよ」のように、かみ砕きと出典の区別を自然に添える。",
+    speechEn:
+      "Warm professor tone; leads with plain-language recaps and attributes claims to the article.",
+    emoji: "🎓",
   },
 } as const;
+
+/** How the two relate — steers tone away from strawman debates. */
+export const ARTICLE_CHAT_RELATIONSHIP_JA =
+  "仲の良い聞き手と教え手。ソラが読者目線の疑問をぶつけ、博士が記事の内容をかみ砕いて答える。博士はソラを見下さず、ソラは遠慮なく聞き返す。";
 
 export interface ChatPromptEntry {
   title?: string;
@@ -90,19 +110,25 @@ export function buildArticleChatPrompt(e: ChatPromptEntry): string {
   return [
     "あなたはテックメディアの編集部コーナーの脚本家です。固定キャラクター 2 人が、下の「記事情報」に書かれている内容について短いチャットで議論します。",
     "",
-    `キャラクター:`,
-    `・a = ${a.nameJa} (${a.nameEn}): ${a.roleJa}`,
-    `・b = ${b.nameJa} (${b.nameEn}): ${b.roleJa}`,
+    "キャラクター設定 (口調と視点を必ず反映する):",
+    `・a = ${a.nameJa} (${a.nameEn}): ${a.roleJa}。${a.profileJa}`,
+    `  口調: ${a.speechJa}`,
+    `・b = ${b.nameJa} (${b.nameEn}): ${b.roleJa}。${b.profileJa}`,
+    `  口調: ${b.speechJa}`,
+    `・関係性: ${ARTICLE_CHAT_RELATIONSHIP_JA}`,
     "",
     "絶対条件 (1つでも破った出力は破棄されます):",
     "・記事情報に無い事実を持ち込まない。製品名・企業名・数値・日付・価格・ベンチマーク・対応環境は記事情報に現れるものだけを使う。",
     "・周辺知識や他社動向で水増ししない。感想・評価は「記事情報に書かれている事実への反応」として述べ、新しい事実の主張にしない。",
-    "・記事情報が断定していないことは断定しない。推測は「〜なら」「〜かもね」のような仮定・伝聞の形にとどめる。",
+    "・記事情報が断定していないことは断定しない。推測は「〜なら」「〜かもね」のような仮定・伝聞の形にとどめる。キャラの背景設定は口調と視点にだけ使い、経験談として新しい事実を語らせない。",
+    "・例外はひとつ: 記事情報に登場する専門用語を、広く知られた一般的な定義の範囲で短く平易に言い換えるのはよい (例:「オープンウェイト＝モデルの中身が公開されている、くらいの意味」)。その場合も具体的な数値・日付・製品仕様・他社動向は足さない。",
     "",
     "会話の設計:",
     `・ちょうど ${ARTICLE_CHAT_TURNS} 発言 (3 往復)。a → b → a → b → a → b の順で交互。`,
-    `・${a.nameJa} は記事のポイントに興味を示して問いを立て、${b.nameJa} は根拠・制約・実務への影響を確かめる役回り。最後の往復はどう受け止めるかの締めにする。`,
-    "・各発言は 1〜2 文の話し言葉。ja は日本語 (120 文字以内)、en は同じ趣旨を自然な英語で (40 語以内)。en は直訳でなくネイティブのチャットとして書く。",
+    `・往復1 (発言1-2): ${a.nameJa} が記事の内容で気になった点や分からない言葉を素直に質問し、${b.nameJa} が記事の記述をかみ砕いて答える。`,
+    `・往復2 (発言3-4): ${a.nameJa} が「それって何が嬉しいの？」のように一歩踏み込み、${b.nameJa} が記事に書かれた範囲でその意味や影響を説明する。`,
+    `・往復3 (発言5-6): 締め。${a.nameJa} は分かったことを自分の言葉で短くまとめ、${b.nameJa} が記事の範囲で今後の見どころや注意点をひとこと添える。`,
+    "・各発言は 1〜2 文の話し言葉。ja は日本語 (120 文字以内)、en は同じ趣旨を自然な英語で (40 語以内)。en は直訳でなくネイティブのチャットとして、各キャラの口調 (Sora: " + a.speechEn + " / Ren: " + b.speechEn + ") で書く。",
     "・記事タイトルの復唱や挨拶で発言を浪費しない。1 発言目から内容に入る。",
     "",
     "出力は次の JSON 配列だけを返す (コードフェンス・前置き・後書き禁止):",

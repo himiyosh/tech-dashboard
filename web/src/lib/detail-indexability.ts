@@ -3,6 +3,12 @@ import {
   isAddressableDetailEntry,
   type DetailAddressableEntry,
 } from "./detail-addressability.ts";
+import { isNonIndexableLane } from "./detail-index-policy.ts";
+
+export {
+  NON_INDEXABLE_SOURCE_TYPES,
+  isNonIndexableLane,
+} from "./detail-index-policy.ts";
 
 /**
  * Indexability is a strictly narrower decision than addressability, and the two
@@ -21,6 +27,10 @@ import {
  * `noindex, follow` until a body lands, at which point the same URL is promoted
  * into the sitemap with no redirect and no URL churn.
  *
+ * A real body is necessary but NOT sufficient: the release/changelog lane is
+ * excluded even when it has one. detail-index-policy.ts holds that rule, the
+ * measurement behind it, and the reason it lives in a data-free module.
+ *
  * web/scripts/validate-sitemap-dist.mjs enforces the pairing at build time in
  * both directions: an indexable canonical route missing from the sitemap fails
  * the build, and so does a `noindex` route advertised in the sitemap.
@@ -37,7 +47,19 @@ export const DETAIL_ROBOTS_INDEX = "index, follow";
 /** `<meta name="robots">` content for a reachable but body-less detail route. */
 export const DETAIL_ROBOTS_NOINDEX = "noindex, follow";
 
-export function isIndexableDetailEntry(entry: DetailAddressableEntry): boolean {
+/**
+ * A detail entry as the indexing decision sees it. `sourceType` is optional so
+ * raw stored rows and fixtures stay testable; detail-index-policy.ts documents
+ * why an absent value stays indexable rather than excluded.
+ */
+export interface DetailIndexableEntry extends DetailAddressableEntry {
+  sourceType?: string;
+}
+
+export function isIndexableDetailEntry(entry: DetailIndexableEntry): boolean {
+  // A real body is necessary but not sufficient: the version-note lane is
+  // excluded outright (detail-index-policy.ts).
+  if (isNonIndexableLane(entry)) return false;
   // hasRealBody takes the ENTRY, not the id, so the source-grounding guard
   // cannot be bypassed here: a body generated without a usable source excerpt
   // must not make its page indexable either.
@@ -49,14 +71,14 @@ export function isIndexableDetailEntry(entry: DetailAddressableEntry): boolean {
  * a summary-only page still carries honest internal links to its category, tags
  * and related entries, and to the original source.
  */
-export function detailRobotsContent(entry: DetailAddressableEntry): string {
+export function detailRobotsContent(entry: DetailIndexableEntry): string {
   return isIndexableDetailEntry(entry)
     ? DETAIL_ROBOTS_INDEX
     : DETAIL_ROBOTS_NOINDEX;
 }
 
 export function collectIndexableDetailEntries<
-  T extends DetailAddressableEntry,
+  T extends DetailIndexableEntry,
 >(
   ...entryGroups: ReadonlyArray<readonly T[]>
 ): readonly T[] {

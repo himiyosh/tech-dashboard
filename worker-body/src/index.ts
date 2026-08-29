@@ -44,6 +44,12 @@ import {
   extractCopilotText,
   parseModelChain,
 } from "../../worker/src/copilot-client.ts";
+import {
+  buildArticleChatPrompt,
+  chatGroundingText,
+  parseArticleChat,
+  type ArticleChatTurn,
+} from "../../worker/src/article-chat.ts";
 
 interface Env {
   SUMMARY_CACHE: KVNamespace;
@@ -194,15 +200,60 @@ export function buildBodyCacheEntry(
   bodyEn: string,
   model: string,
   cachedAt = new Date().toISOString(),
+  chat?: ArticleChatTurn[],
 ): BodyCacheEntry {
   return {
     bodyJa,
     bodyEn,
+    ...(chat ? { chat } : {}),
     model,
     cachedAt,
     publisherContractFingerprint:
       job.publisherContractFingerprint ?? UNVERSIONED_JOB_FINGERPRINT,
   };
+}
+
+/**
+ * Best-effort article chat (worker/src/article-chat.ts). One bilingual JSON
+ * call on the SAME model that produced the bodies. Every failure mode —
+ * API error, malformed JSON, wrong structure, grounding conflict — returns
+ * undefined instead of throwing: the chat is presentation garnish and must
+ * never fail, retry, or DLQ a job whose bodies already succeeded.
+ */
+async function generateArticleChat(
+  pat: string,
+  model: string,
+  reasoning: string,
+  job: BodyJob,
+  timeoutMs: number,
+  maxTokens: number,
+): Promise<ArticleChatTurn[] | undefined> {
+  try {
+    const raw = await callCopilotText(
+      pat,
+      model,
+      reasoning,
+      buildArticleChatPrompt(job.entry),
+      timeoutMs,
+      maxTokens,
+    );
+    const turns = parseArticleChat(raw);
+    if (!turns) {
+      console.warn(`[body] chat discarded for ${job.url}: structural contract not met`);
+      return undefined;
+    }
+    const text = chatGroundingText(turns);
+    if (hasMaterialBodyGroundingConflict(job.entry, { bodyJa: text.ja, bodyEn: text.en })) {
+      console.warn(`[body] chat discarded for ${job.url}: grounding conflict`);
+      return undefined;
+    }
+    return turns;
+  } catch (err) {
+    console.warn(
+      `[body] chat generation failed for ${job.url}: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return undefined;
+  }
 }
 
 async function processJob(env: Env, job: BodyJob): Promise<void> {
@@ -235,7 +286,8 @@ async function processJob(env: Env, job: BodyJob): Promise<void> {
     try {
       const bodyJa = await callCopilotText(pat, attemptModel, reasoning, buildBodyPromptJa(job.entry), timeoutMs, maxTokens);
       const bodyEn = await callCopilotText(pat, attemptModel, reasoning, buildBodyPromptEn(job.entry), timeoutMs, maxTokens);
-      entry = buildBodyCacheEntry(job, bodyJa, bodyEn, attemptModel);
+      const chat = await generateArticleChat(pat, attemptModel, reasoning, job, timeoutMs, maxTokens);
+      entry = buildBodyCacheEntry(job, bodyJa, bodyEn, attemptModel, new Date().toISOString(), chat);
       break;
     } catch (err) {
       lastError = err;

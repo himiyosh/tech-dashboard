@@ -4,6 +4,7 @@ import {
   hasSufficientBodySourceGrounding,
   type SourceGroundingInput,
 } from "../../harness/pipeline/source-grounding.ts";
+import type { ArticleChatTurn } from "./article-chat.ts";
 
 /**
  * Per-URL body cache (KV) helpers — body-file architecture, Phase B (LL-115).
@@ -23,6 +24,12 @@ import {
 export interface BodyCacheEntry {
   bodyJa: string;
   bodyEn: string;
+  /**
+   * Optional article chat (worker/src/article-chat.ts): six alternating
+   * bilingual bubbles. Best-effort — absent when generation failed or the
+   * entry predates the feature; the publisher grafts it onto bodies.json.
+   */
+  chat?: ArticleChatTurn[];
   model: string;
   cachedAt: string;
   publisherContractFingerprint?: string;

@@ -77,9 +77,16 @@ function collectRuntimeErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
   page.on("console", (message) => {
-    if (message.type() === "error") {
-      errors.push(`console: ${message.text()}`);
-    }
+    if (message.type() !== "error") return;
+    const text = message.text();
+    // Article thumbnails are hotlinked from their source hosts, and a host
+    // that ships Cross-Origin-Resource-Policy: same-origin blocks the load
+    // (net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin). The UI handles it — every
+    // card/hero image has an onerror fallback (R-021) — so this one expected,
+    // data-dependent class of console noise must not fail the smoke check.
+    // Everything else (script errors, real 4xx/5xx) still does.
+    if (text.includes("ERR_BLOCKED_BY_RESPONSE")) return;
+    errors.push(`console: ${text}`);
   });
   return errors;
 }

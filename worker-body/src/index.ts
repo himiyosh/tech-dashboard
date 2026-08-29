@@ -36,6 +36,7 @@ import {
   type SourceGroundingInput,
 } from "../../harness/pipeline/source-grounding.ts";
 import { type BodyCacheEntry, putBodyCacheEntry } from "../../worker/src/body-cache.ts";
+import { looksCompleteBodyText } from "../../worker/src/bodies-file.ts";
 import { UNVERSIONED_JOB_FINGERPRINT } from "../../worker/src/kv-cache.ts";
 import {
   buildCopilotRequestBody,
@@ -286,6 +287,11 @@ async function processJob(env: Env, job: BodyJob): Promise<void> {
     try {
       const bodyJa = await callCopilotText(pat, attemptModel, reasoning, buildBodyPromptJa(job.entry), timeoutMs, maxTokens);
       const bodyEn = await callCopilotText(pat, attemptModel, reasoning, buildBodyPromptEn(job.entry), timeoutMs, maxTokens);
+      // A max_tokens-truncated body must never be persisted: the 2026-08-29
+      // audit found 16.9% of the indexed corpus cut mid-word by the old opus
+      // config. Throwing advances the model chain / Queue retry instead.
+      if (!looksCompleteBodyText(bodyJa, "ja")) throw new Error("truncated bodyJa (no terminal punctuation)");
+      if (!looksCompleteBodyText(bodyEn, "en")) throw new Error("truncated bodyEn (no terminal punctuation)");
       const chat = await generateArticleChat(pat, attemptModel, reasoning, job, timeoutMs, maxTokens);
       entry = buildBodyCacheEntry(job, bodyJa, bodyEn, attemptModel, new Date().toISOString(), chat);
       break;

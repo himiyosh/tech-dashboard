@@ -946,7 +946,6 @@ const jsonLd = buildArticleJsonLd({
               href={prevDestination?.href}
               target={prevDestination?.target}
               rel={prevDestination?.rel}
-              accesskey="ArrowLeft"
             >
               <span class="ed-pn-arrow" aria-hidden="true">←</span>
               <span class="ed-pn-body">
@@ -980,7 +979,6 @@ const jsonLd = buildArticleJsonLd({
               href={nextDestination?.href}
               target={nextDestination?.target}
               rel={nextDestination?.rel}
-              accesskey="ArrowRight"
             >
               <span class="ed-pn-body">
                 <span class="ed-pn-dir">
@@ -1348,7 +1346,11 @@ const jsonLd = buildArticleJsonLd({
 
     // Keyboard nav: ArrowLeft (prev = newer), ArrowRight (next = older)
     document.addEventListener("keydown", function (e) {
-      if (e.target && /^(input|textarea|select)$/i.test(e.target.tagName)) return;
+      // Modified arrows are browser/OS shortcuts (Cmd+← = back, Shift+← =
+      // selection): hijacking them navigated readers to another article
+      // (2026-08-29 audit). Editable targets are excluded the same way.
+      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+      if (e.target && (/^(input|textarea|select)$/i.test(e.target.tagName) || e.target.isContentEditable)) return;
       if (e.key === "ArrowLeft") {
         var p = document.querySelector(".ed-pn-card.prev");
         if (p && p instanceof HTMLAnchorElement) { e.preventDefault(); location.href = p.href; }

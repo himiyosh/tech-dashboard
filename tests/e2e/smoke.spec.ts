@@ -2553,6 +2553,9 @@ test.describe("TECH Dashboard smoke", () => {
     const summaryOnlyEntry = index.entries.find(
       (entry) =>
         !bodyFile.bodies[entry.id] &&
+        // The /e/{id}/ route must actually exist: content policy AND the
+        // publication gate (a held fresh entry has no built page).
+        isBuiltDetailEntry(entry as never) &&
         Boolean(
           summaryForLangWithFallback(entry, "ja").text ||
             summaryForLangWithFallback(entry, "en").text,
@@ -3551,7 +3554,7 @@ test.describe("TECH Dashboard smoke", () => {
     };
     // Only addressable (summary-ready) entries have a /e/[id]/ detail route.
     const imageEntry = index.entries.find(
-      (entry) => entry.image?.src?.trim() && isAddressableDetailEntry(entry),
+      (entry) => entry.image?.src?.trim() && isBuiltDetailEntry(entry),
     );
     expect(imageEntry?.image?.src, "the generated corpus contains a detail hero image").toBeTruthy();
     await page.route(imageEntry!.image!.src!, async (route) => {
@@ -8528,7 +8531,12 @@ test.describe("TECH Dashboard smoke", () => {
       });
     const indexedEntries = [
       ...new Map(
-        [...index.entries, ...warmArchiveEntries].map((entry) => [entry.id, entry]),
+        [
+          // Held (unapproved) entries appear on no listing page, so their
+          // tags must not count toward the singleton set either.
+          ...index.entries.filter((entry) => SITE_GATE.isReleased(entry.id)),
+          ...warmArchiveEntries,
+        ].map((entry) => [entry.id, entry]),
       ).values(),
     ];
     const tagCounts = new Map<string, number>();
@@ -8551,7 +8559,9 @@ test.describe("TECH Dashboard smoke", () => {
     // explicitly and would make the assertion vacuous.
     const MAX_LISTING_PAGES = 8;
     const chipSelector =
-      'main article.card:not([data-catvis="muted"]) .tag-chip[href^="/search?q="]';
+      // Held entries link their title to the SOURCE; this recovery journey
+      // reads the card's internal /e/{id}/ href, so restrict to those cards.
+      'main article.card:not([data-catvis="muted"])[data-detail-destination="internal"] .tag-chip[href^="/search?q="]';
     let tagLinks = page.locator(chipSelector);
     let tagIndex = -1;
     let listingPath = "/";
@@ -9111,6 +9121,7 @@ test.describe("TECH Dashboard smoke", () => {
       (entry) =>
         entry.archiveTier !== "cold"
         && entry.archiveTier !== "dropped"
+        && isBuiltDetailEntry(entry as never)
         && !!entry.title
         && entry.title !== entry.titleJa
         && entry.title !== entry.titleEn,
@@ -10542,7 +10553,9 @@ test.describe("TECH Dashboard smoke", () => {
     });
     await page.goto("/");
     const summarizedCard = page
-      .locator('main article.card:not([data-catvis="muted"])')
+      // Held entries link out to the SOURCE; this journey needs an internal
+      // detail destination.
+      .locator('main article.card:not([data-catvis="muted"])[data-detail-destination="internal"]')
       .filter({ has: page.locator(".summary .s-text") })
       .first();
     const summarizedEntryLink = summarizedCard.locator('h3.title > a[href^="/e/"]');

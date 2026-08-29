@@ -1,0 +1,144 @@
+---
+/**
+ * 記事ディスカッション — two fixed editorial characters (ソラ / レン) discuss
+ * the article in six chat bubbles (3 exchanges). Site-owner feature request
+ * (2026-08-29).
+ *
+ * Renders ONLY a chat that passed validateArticleChat (the caller gates), so
+ * this component never has to handle a malformed shape. Both language
+ * renditions are emitted and the existing i18n-ja / i18n-en toggle picks one,
+ * matching every other bilingual block on the page.
+ *
+ * The AI disclosure mirrors the explainer's: the chat is generated commentary
+ * on the collected facts, and says so.
+ */
+import {
+  ARTICLE_CHAT_PERSONAS,
+  type ArticleChatTurn,
+} from "../lib/article-chat.ts";
+
+interface Props {
+  chat: readonly ArticleChatTurn[];
+}
+
+const { chat } = Astro.props;
+---
+
+<section class="ed-chat" aria-labelledby="ed-chat-heading" data-article-chat>
+  <h2 class="ed-chat-h" id="ed-chat-heading">
+    <span class="ed-chat-emoji" aria-hidden="true">💬</span>
+    <span class="i18n-ja">ソラとレンの読みどころ</span>
+    <span class="i18n-en" lang="en">Sora &amp; Ren talk it over</span>
+  </h2>
+  <p class="ed-chat-origin">
+    <span class="ai-badge" aria-hidden="true">AI</span>
+    <span class="i18n-ja">記事の要約と収集メタデータをもとに生成した、架空の編集部キャラクター 2 人による対話です。</span>
+    <span class="i18n-en" lang="en">A generated conversation between two fictional editorial characters, based on this article's summaries and collected metadata.</span>
+  </p>
+  <ol class="ed-chat-list">
+    {chat.map((turn) => {
+      const persona = ARTICLE_CHAT_PERSONAS[turn.s];
+      return (
+        <li class={`ed-chat-turn ed-chat-${turn.s}`}>
+          <span class="ed-chat-avatar" aria-hidden="true">{persona.emoji}</span>
+          <div class="ed-chat-bubble">
+            <span class="ed-chat-name">
+              <span class="i18n-ja">{persona.nameJa}</span>
+              <span class="i18n-en" lang="en">{persona.nameEn}</span>
+            </span>
+            <span class="ed-chat-text i18n-ja">{turn.ja}</span>
+            <span class="ed-chat-text i18n-en" lang="en">{turn.en}</span>
+          </div>
+        </li>
+      );
+    })}
+  </ol>
+</section>
+
+<style>
+  .ed-chat {
+    margin: 28px 0;
+    padding: 18px 16px 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+  }
+  .ed-chat-h {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 4px;
+    font-size: 1.02rem;
+  }
+  .ed-chat-emoji { font-size: 1.05em; }
+  .ed-chat-origin {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin: 0 0 14px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .ed-chat-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .ed-chat-turn {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    max-width: 92%;
+  }
+  /* Speaker b sits on the right, mirroring a chat client. */
+  .ed-chat-b {
+    flex-direction: row-reverse;
+    align-self: flex-end;
+  }
+  .ed-chat-avatar {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 65%, transparent);
+    font-size: 0.95rem;
+  }
+  .ed-chat-bubble {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+  }
+  .ed-chat-a .ed-chat-bubble {
+    border-bottom-left-radius: 4px;
+    border-color: color-mix(in srgb, #5eead4 34%, var(--border));
+  }
+  .ed-chat-b .ed-chat-bubble {
+    border-bottom-right-radius: 4px;
+    border-color: color-mix(in srgb, #fbbf24 30%, var(--border));
+  }
+  .ed-chat-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+  .ed-chat-text {
+    font-size: 0.92rem;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 640px) {
+    .ed-chat-turn { max-width: 100%; }
+  }
+</style>

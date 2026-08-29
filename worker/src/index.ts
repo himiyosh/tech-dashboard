@@ -51,6 +51,7 @@ import {
   enforceBodiesBudget,
   serializedByteLength,
 } from "./bodies-budget.ts";
+import { validateArticleChat } from "./article-chat.ts";
 import {
   bodyCacheEntryMatchesPublisherContract,
   getBodyCacheEntries,
@@ -63,6 +64,7 @@ import {
   parseBodies,
   pruneInvalidBodyRecords,
   serializeBodies,
+  isRealBody,
   type NewBody,
 } from "./bodies-file.ts";
 import {
@@ -140,6 +142,8 @@ export interface PublisherEnv extends GithubRepositoryEnv {
   // Max current body candidates to inspect per run. Previous-run jobs receive
   // a separate bounded lookup so generated bodies are merged promptly.
   BODY_LOOKUP_CAP?: string;
+  /** Bounded per-run KV lookups for the chat backfill lane (default 20). */
+  CHAT_LOOKUP_CAP?: string;
   // Operational size budget for data/bodies.json (LL-411). Defaults to
   // DEFAULT_BODY_BUDGET_TARGET_BYTES, well below the much larger
   // tests/data-schema.test.ts hard ceiling (10MB, unchanged safety net).
@@ -2327,9 +2331,52 @@ export async function runBodyPipeline(
         ? candidate
         : undefined;
       if (hit) {
-        newBodies.push({ id: job.entry.id, bodyJa: hit.bodyJa, bodyEn: hit.bodyEn, model: hit.model, cachedAt: hit.cachedAt });
+        newBodies.push({ id: job.entry.id, bodyJa: hit.bodyJa, bodyEn: hit.bodyEn, chat: hit.chat, model: hit.model, cachedAt: hit.cachedAt });
       }
     }
+    // 1a) Chat backfill lane (bounded): entries whose bodies.json record is a
+    //     real body but has no article chat yet. The local backfill
+    //     (scripts/backfill-article-chats.mts) writes body+chat entries into
+    //     the same `b:` KV keys for the pre-feature corpus; this lane reads
+    //     them back so mergeBodies grafts ONLY the chat onto the existing
+    //     record and the published prose never churns. Once every record has
+    //     a chat the candidate set is empty and the lane costs nothing.
+    const chatLookupCap = Math.max(0, Number(env.CHAT_LOOKUP_CAP ?? 20));
+    if (chatLookupCap > 0) {
+      const alreadyLookedUp = new Set(selection.lookupJobs.map((job) => job.entry.id));
+      const chatCandidates = retainedEntries
+        .filter((entry) => {
+          if (alreadyLookedUp.has(entry.id)) return false;
+          const record = existingBodies.bodies[entry.id];
+          return Boolean(record && isRealBody(record) && !validateArticleChat(record.chat));
+        })
+        .sort((a, b) =>
+          String(a.publishedAt ?? a.collectedAt ?? "").localeCompare(
+            String(b.publishedAt ?? b.collectedAt ?? ""),
+          ),
+        )
+        .slice(0, chatLookupCap);
+      if (chatCandidates.length > 0) {
+        const chatHits = await getBodyCacheEntries(
+          env.SUMMARY_CACHE,
+          chatCandidates.map((entry) => entry.url),
+        );
+        for (const entry of chatCandidates) {
+          const hit = chatHits.get(entry.url);
+          if (hit && validateArticleChat(hit.chat)) {
+            newBodies.push({
+              id: entry.id,
+              bodyJa: hit.bodyJa,
+              bodyEn: hit.bodyEn,
+              chat: hit.chat,
+              model: hit.model,
+              cachedAt: hit.cachedAt,
+            });
+          }
+        }
+      }
+    }
+
     const merge = mergeBodiesWithGuards(
       existingBodies,
       newBodies,

@@ -17,10 +17,13 @@ import {
   hasSufficientBodySourceGrounding,
 } from "../../harness/pipeline/source-grounding.ts";
 import type { NormalizedEntry } from "../../harness/types.ts";
+import { validateArticleChat, type ArticleChatTurn } from "./article-chat.ts";
 
 export interface BodyRecord {
   bodyJa: string;
   bodyEn: string;
+  /** Optional article chat (validated: exactly six alternating turns). */
+  chat?: ArticleChatTurn[];
   model?: string;
   generatedAt?: string;
 }
@@ -220,6 +223,7 @@ export interface NewBody {
   id: string;
   bodyJa: string;
   bodyEn: string;
+  chat?: ArticleChatTurn[];
   model?: string;
   cachedAt?: string;
 }
@@ -251,11 +255,24 @@ export function mergeBodies(
 
   for (const nb of newBodies) {
     if (!isRealBody(nb)) continue;
+    const chat = validateArticleChat(nb.chat) ?? undefined;
     const existingRecord = bodies[nb.id];
-    if (existingRecord && isRealBody(existingRecord)) continue; // don't overwrite a real body
+    if (existingRecord && isRealBody(existingRecord)) {
+      // Don't overwrite a real body — but DO graft a chat it doesn't have yet.
+      // This is how the chat backfill lands for the pre-feature corpus: the
+      // backfill writes body+chat KV entries, the chat-missing lookup lane
+      // (worker/src/index.ts) reads them back, and only the chat is adopted so
+      // the published prose never churns.
+      if (chat && !validateArticleChat(existingRecord.chat)) {
+        bodies[nb.id] = { ...existingRecord, chat };
+        added += 1;
+      }
+      continue;
+    }
     bodies[nb.id] = {
       bodyJa: nb.bodyJa,
       bodyEn: nb.bodyEn,
+      ...(chat ? { chat } : {}),
       model: nb.model ?? "claude-opus-4.8",
       generatedAt: nb.cachedAt ?? generatedAt,
     };

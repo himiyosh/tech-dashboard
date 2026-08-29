@@ -21,6 +21,8 @@ import { isRealBodyRecord } from "./body-quality.ts";
 export interface BodyRecord {
   bodyJa: string;
   bodyEn: string;
+  /** Optional article chat; validated by article-chat.ts before rendering. */
+  chat?: unknown;
   model?: string;
   generatedAt?: string;
 }

@@ -808,8 +808,8 @@ describe("clean-source-noise bodies reconciliation", () => {
         count: 1,
         bodies: {
           loser: {
-            bodyJa: "負けたIDの日本語本文",
-            bodyEn: "English body from the losing id",
+            bodyJa: "負けたIDの日本語本文。",
+            bodyEn: "English body from the losing id.",
             model: "claude-opus-4.8",
             generatedAt: "2026-06-30T00:00:00.000Z",
           },
@@ -822,8 +822,8 @@ describe("clean-source-noise bodies reconciliation", () => {
 
     expect(merge.payload.bodies.loser).toBeUndefined();
     expect(merge.payload.bodies.winner).toEqual({
-      bodyJa: "負けたIDの日本語本文",
-      bodyEn: "English body from the losing id",
+      bodyJa: "負けたIDの日本語本文。",
+      bodyEn: "English body from the losing id.",
       model: "claude-opus-4.8",
       generatedAt: "2026-06-30T00:00:00.000Z",
     });
@@ -831,8 +831,8 @@ describe("clean-source-noise bodies reconciliation", () => {
 
   it("preserves an existing real winner body during canonical alias reconciliation", () => {
     const winnerBody = {
-      bodyJa: "勝者IDの既存日本語本文",
-      bodyEn: "Existing English body on the winner",
+      bodyJa: "勝者IDの既存日本語本文。",
+      bodyEn: "Existing English body on the winner.",
       model: "winner-model",
       generatedAt: "2026-07-01T00:00:00.000Z",
     };
@@ -843,8 +843,8 @@ describe("clean-source-noise bodies reconciliation", () => {
         bodies: {
           winner: winnerBody,
           loser: {
-            bodyJa: "負けたIDの日本語本文",
-            bodyEn: "English body from the losing id",
+            bodyJa: "負けたIDの日本語本文。",
+            bodyEn: "English body from the losing id.",
             model: "loser-model",
             generatedAt: "2026-06-30T00:00:00.000Z",
           },
@@ -885,14 +885,14 @@ describe("clean-source-noise bodies reconciliation", () => {
         count: 2,
         bodies: {
           "filtered-alias": {
-            bodyJa: "フィルタされた canonical alias の日本語本文",
-            bodyEn: "English body from the filtered canonical alias",
+            bodyJa: "フィルタされた canonical alias の日本語本文。",
+            bodyEn: "English body from the filtered canonical alias.",
             model: "claude-opus-4.8",
             generatedAt: "2026-06-30T00:00:00.000Z",
           },
           "filtered-unrelated": {
-            bodyJa: "別 URL の日本語本文",
-            bodyEn: "English body from a different URL",
+            bodyJa: "別 URL の日本語本文。",
+            bodyEn: "English body from a different URL.",
             model: "claude-opus-4.8",
             generatedAt: "2026-06-30T00:00:00.000Z",
           },
@@ -904,7 +904,7 @@ describe("clean-source-noise bodies reconciliation", () => {
     );
 
     expect(merge.payload.bodies.survivor?.bodyJa).toBe(
-      "フィルタされた canonical alias の日本語本文",
+      "フィルタされた canonical alias の日本語本文。",
     );
     expect(merge.payload.bodies["filtered-alias"]).toBeUndefined();
     expect(merge.payload.bodies["filtered-unrelated"]).toBeUndefined();
@@ -923,14 +923,14 @@ describe("clean-source-noise bodies reconciliation", () => {
       [
         entry({
           id: "legacy-alias",
-          bodyJa: "index にだけ残っていた実際の日本語本文",
+          bodyJa: "index にだけ残っていた実際の日本語本文。",
           bodyEn: "A real English body that existed only in the index.",
         }),
       ],
     );
 
     expect(merge.payload.bodies.winner).toEqual({
-      bodyJa: "index にだけ残っていた実際の日本語本文",
+      bodyJa: "index にだけ残っていた実際の日本語本文。",
       bodyEn: "A real English body that existed only in the index.",
       model: "legacy-index-migration",
       generatedAt: "2026-07-02T00:00:00.000Z",

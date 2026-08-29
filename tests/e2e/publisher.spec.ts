@@ -33,6 +33,7 @@ import {
 } from "../../web/src/lib/feed-catalog.ts";
 import { isArxivEntry } from "../../web/src/lib/research-lane.ts";
 import { isRealBodyRecord } from "../../web/src/lib/body-quality.ts";
+import { isNonIndexableLane } from "../../web/src/lib/detail-index-policy.ts";
 import {
   isAddressableDetailEntry,
   type DetailAddressableEntry,
@@ -76,9 +77,16 @@ function collectRuntimeErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
   page.on("console", (message) => {
-    if (message.type() === "error") {
-      errors.push(`console: ${message.text()}`);
-    }
+    if (message.type() !== "error") return;
+    const text = message.text();
+    // Article thumbnails are hotlinked from their source hosts, and a host
+    // that ships Cross-Origin-Resource-Policy: same-origin blocks the load
+    // (net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin). The UI handles it — every
+    // card/hero image has an onerror fallback (R-021) — so this one expected,
+    // data-dependent class of console noise must not fail the smoke check.
+    // Everything else (script errors, real 4xx/5xx) still does.
+    if (text.includes("ERR_BLOCKED_BY_RESPONSE")) return;
+    errors.push(`console: ${text}`);
   });
   return errors;
 }
@@ -381,6 +389,9 @@ test.describe("Publisher generated artifact", () => {
         entry.archiveTier !== "cold"
         && entry.archiveTier !== "dropped"
         && isPublishableEntry(entry)
+        // The route must actually exist: content policy AND publication gate
+        // (a held fresh entry has no built page — detail-route-fixture.ts).
+        && isBuiltDetailEntry(entry)
         && articleSocialImage(entry.image, "JA", "EN").url === SOCIAL_IMAGE_URL,
     );
     expect(imageLess, "fixture includes a built image-less article").toBeTruthy();
@@ -618,7 +629,7 @@ test.describe("Publisher generated artifact", () => {
       >;
     };
     const addressable = index.entries.filter(
-      (entry) => isAddressableDetailEntry(entry),
+      (entry) => isBuiltDetailEntry(entry),
     );
     const imageBacked = addressable.find(
       (entry) => articleSocialImage(entry.image, "JA", "EN").url !== SOCIAL_IMAGE_URL,
@@ -744,6 +755,7 @@ test.describe("Publisher generated artifact", () => {
     };
     const fixture = index.entries.find((entry) => {
       if (entry.archiveTier === "cold" || entry.archiveTier === "dropped") return false;
+      if (!isBuiltDetailEntry(entry)) return false;
       const summaryJa = summaryForLang(entry, "ja");
       const summaryEn = summaryForLang(entry, "en");
       return Boolean(
@@ -1060,12 +1072,24 @@ test.describe("Publisher generated artifact", () => {
         bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
       }
     ).bodies;
-    const addressable = index.entries.filter((entry) => isAddressableDetailEntry(entry));
-    const bodied = addressable.find((entry) => isRealBodyRecord(bodies[entry.id]));
+    const addressable = index.entries.filter((entry) => isBuiltDetailEntry(entry));
+    // A body alone no longer earns indexing: the release/changelog lane is
+    // excluded outright (detail-index-policy.ts), so the indexed sample has to
+    // clear both gates or this test would pick a legitimately noindex page.
+    const bodied = addressable.find(
+      (entry) => isRealBodyRecord(bodies[entry.id]) && !isNonIndexableLane(entry),
+    );
     const bodyless = addressable.find((entry) => !isRealBodyRecord(bodies[entry.id]));
+    const bodiedExcludedLane = addressable.find(
+      (entry) => isRealBodyRecord(bodies[entry.id]) && isNonIndexableLane(entry),
+    );
 
-    expect(bodied, "fixture includes a bodied detail entry").toBeTruthy();
+    expect(bodied, "fixture includes a bodied indexable detail entry").toBeTruthy();
     expect(bodyless, "fixture includes a body-less detail entry").toBeTruthy();
+    expect(
+      bodiedExcludedLane,
+      "fixture includes a bodied release/changelog detail entry",
+    ).toBeTruthy();
 
     const [bodiedResponse, bodylessResponse, sitemapResponse] = await Promise.all([
       request.get(`/e/${bodied!.id}/`),
@@ -1089,6 +1113,16 @@ test.describe("Publisher generated artifact", () => {
     expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${bodyless!.id}/</loc>`);
     // "follow" is only meaningful if the page still exposes internal links.
     expect(bodylessHtml).toContain('href="/c/');
+
+    // A bodied release note is the case the lane policy exists for: reachable
+    // and followed, but never advertised for indexing.
+    const excludedResponse = await request.get(`/e/${bodiedExcludedLane!.id}/`);
+    expect(excludedResponse.status()).toBe(200);
+    const excludedHtml = await excludedResponse.text();
+    expect(excludedHtml).toMatch(
+      /<meta\s+name="robots"\s+content="noindex,\s*follow"\s*\/?>/,
+    );
+    expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${bodiedExcludedLane!.id}/</loc>`);
   });
 
   test("keeps hot and warm details reachable while only bodied details enter the sitemap", async ({
@@ -1108,7 +1142,10 @@ test.describe("Publisher generated artifact", () => {
       (entry) =>
         entry.archiveTier === "hot"
         && isAddressableDetailEntry(entry)
-        && isRealBodyRecord(bodies[entry.id]),
+        && isRealBodyRecord(bodies[entry.id])
+        // Must also clear the lane policy, or the sitemap assertion below
+        // would be checking a page that is correctly excluded.
+        && !isNonIndexableLane(entry),
     );
     const cold = index.entries.find((entry) => entry.archiveTier === "cold");
     const pendingLive = index.entries.find(
@@ -1182,7 +1219,7 @@ test.describe("Publisher generated artifact", () => {
     const hot = index.entries
       .filter((entry) =>
         entry.archiveTier === "hot"
-        && isAddressableDetailEntry(entry)
+        && isBuiltDetailEntry(entry)
         && !isDefaultMutedCategory(entry.category))
       .map((entry) => ({ entry, route: timelineRoutes.get(entry.id) }))
       .find(({ route }) => route);

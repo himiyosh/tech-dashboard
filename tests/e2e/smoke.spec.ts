@@ -2212,15 +2212,43 @@ test.describe("TECH Dashboard smoke", () => {
       await page.goto("/");
       const digest = page.locator("[data-daily-summary]");
       await expect(digest).toBeVisible();
-      const timelineCardsBeforeDigest = await digest.evaluate((element) => (
-        Array.from(document.querySelectorAll("main article.card"))
+      // The digest summarises the day, so it must not sit below a run of
+      // Timeline cards -- those are ordered newest-day-first and pushed
+      // yesterday's articles above it. It now renders once, directly after the
+      // "today's decision list" section and before the article list.
+      const placement = await digest.evaluate((element) => ({
+        timelineCardsBefore: Array.from(document.querySelectorAll("main article.card"))
           .filter((card) => Boolean(card.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING))
-          .length
-      ));
+          .length,
+        afterPriority: Boolean(
+          document.querySelector("#today-priority")!.compareDocumentPosition(element)
+            & Node.DOCUMENT_POSITION_FOLLOWING,
+        ),
+        beforeTimeline: Boolean(
+          document.querySelector("#timeline")!.compareDocumentPosition(element)
+            & Node.DOCUMENT_POSITION_PRECEDING,
+        ),
+        beforeFilter: Boolean(
+          document.querySelector("[data-category-filter]")!.compareDocumentPosition(element)
+            & Node.DOCUMENT_POSITION_PRECEDING,
+        ),
+      }));
       expect(
-        timelineCardsBeforeDigest,
-        `${viewport.width}px shows three Timeline decisions before the digest`,
-      ).toBe(3);
+        placement.timelineCardsBefore,
+        `${viewport.width}px shows no Timeline card above the digest`,
+      ).toBe(0);
+      expect(
+        placement.afterPriority,
+        `${viewport.width}px keeps the digest after today's decision list`,
+      ).toBe(true);
+      expect(
+        placement.beforeFilter,
+        `${viewport.width}px keeps the digest above the category filter`,
+      ).toBe(true);
+      expect(
+        placement.beforeTimeline,
+        `${viewport.width}px keeps the digest above the article list`,
+      ).toBe(true);
 
       const metrics = await digest.evaluate((element) => {
         const spark = element.querySelector<HTMLElement>(".spark");
@@ -2525,6 +2553,9 @@ test.describe("TECH Dashboard smoke", () => {
     const summaryOnlyEntry = index.entries.find(
       (entry) =>
         !bodyFile.bodies[entry.id] &&
+        // The /e/{id}/ route must actually exist: content policy AND the
+        // publication gate (a held fresh entry has no built page).
+        isBuiltDetailEntry(entry as never) &&
         Boolean(
           summaryForLangWithFallback(entry, "ja").text ||
             summaryForLangWithFallback(entry, "en").text,
@@ -2899,6 +2930,18 @@ test.describe("TECH Dashboard smoke", () => {
     await page.goto("/");
     const scope = page.locator("[data-category-filter-scope]");
     await expect(scope).toHaveCount(1);
+
+    // Both filtered surfaces must sit INSIDE the scope: the timeline cards and
+    // the Daily Summary board. The board's hiding rule is a descendant
+    // selector on [data-category-filter-scope] (portal.css) and its rows are
+    // collected with scope.querySelectorAll, so moving either block out of the
+    // scope would silently stop the board from following the filter. The
+    // dedicated board test below skips whenever the committed data snapshot
+    // has no entries for the board's base day, so this structural assertion is
+    // what actually holds the invariant in CI.
+    await expect(scope.locator("[data-daily-summary]")).toHaveCount(1);
+    await expect(scope.locator("#timeline")).toHaveCount(1);
+
     const clineCards = scope.locator('article.card[data-category="cline"]');
     const clineCardCount = await clineCards.count();
 
@@ -3511,7 +3554,7 @@ test.describe("TECH Dashboard smoke", () => {
     };
     // Only addressable (summary-ready) entries have a /e/[id]/ detail route.
     const imageEntry = index.entries.find(
-      (entry) => entry.image?.src?.trim() && isAddressableDetailEntry(entry),
+      (entry) => entry.image?.src?.trim() && isBuiltDetailEntry(entry),
     );
     expect(imageEntry?.image?.src, "the generated corpus contains a detail hero image").toBeTruthy();
     await page.route(imageEntry!.image!.src!, async (route) => {
@@ -5389,7 +5432,11 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await settleResponsiveLayout(page);
-    const firstArticle = page.locator(categoryTitleSelector).first();
+    // The click-through assertion needs an INTERNAL detail link; a held
+    // (unapproved) card correctly links out to its source instead.
+    const firstArticle = page
+      .locator('main article.card[data-detail-destination="internal"] h3.title > a')
+      .first();
     await expectTargetOwnsCenter(firstArticle, "category article title");
     const detailHref = await firstArticle.getAttribute("href");
     expect(detailHref).toMatch(/^\/e\/[a-f0-9]{16}\/$/);
@@ -8488,7 +8535,12 @@ test.describe("TECH Dashboard smoke", () => {
       });
     const indexedEntries = [
       ...new Map(
-        [...index.entries, ...warmArchiveEntries].map((entry) => [entry.id, entry]),
+        [
+          // Held (unapproved) entries appear on no listing page, so their
+          // tags must not count toward the singleton set either.
+          ...index.entries.filter((entry) => SITE_GATE.isReleased(entry.id)),
+          ...warmArchiveEntries,
+        ].map((entry) => [entry.id, entry]),
       ).values(),
     ];
     const tagCounts = new Map<string, number>();
@@ -8511,7 +8563,9 @@ test.describe("TECH Dashboard smoke", () => {
     // explicitly and would make the assertion vacuous.
     const MAX_LISTING_PAGES = 8;
     const chipSelector =
-      'main article.card:not([data-catvis="muted"]) .tag-chip[href^="/search?q="]';
+      // Held entries link their title to the SOURCE; this recovery journey
+      // reads the card's internal /e/{id}/ href, so restrict to those cards.
+      'main article.card:not([data-catvis="muted"])[data-detail-destination="internal"] .tag-chip[href^="/search?q="]';
     let tagLinks = page.locator(chipSelector);
     let tagIndex = -1;
     let listingPath = "/";
@@ -9071,6 +9125,7 @@ test.describe("TECH Dashboard smoke", () => {
       (entry) =>
         entry.archiveTier !== "cold"
         && entry.archiveTier !== "dropped"
+        && isBuiltDetailEntry(entry as never)
         && !!entry.title
         && entry.title !== entry.titleJa
         && entry.title !== entry.titleEn,
@@ -10502,7 +10557,9 @@ test.describe("TECH Dashboard smoke", () => {
     });
     await page.goto("/");
     const summarizedCard = page
-      .locator('main article.card:not([data-catvis="muted"])')
+      // Held entries link out to the SOURCE; this journey needs an internal
+      // detail destination.
+      .locator('main article.card:not([data-catvis="muted"])[data-detail-destination="internal"]')
       .filter({ has: page.locator(".summary .s-text") })
       .first();
     const summarizedEntryLink = summarizedCard.locator('h3.title > a[href^="/e/"]');

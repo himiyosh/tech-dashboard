@@ -17,10 +17,13 @@ import {
   hasSufficientBodySourceGrounding,
 } from "../../harness/pipeline/source-grounding.ts";
 import type { NormalizedEntry } from "../../harness/types.ts";
+import { validateArticleChat, type ArticleChatTurn } from "./article-chat.ts";
 
 export interface BodyRecord {
   bodyJa: string;
   bodyEn: string;
+  /** Optional article chat (validated: exactly six alternating turns). */
+  chat?: ArticleChatTurn[];
   model?: string;
   generatedAt?: string;
 }
@@ -47,6 +50,27 @@ function text(value: string | undefined | null): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+/**
+ * True when a body text ends like a finished sentence rather than a mid-token
+ * cut. The 2026-08-29 audit measured 172 of 1,016 indexable-lane bodies
+ * (16.9%) ending mid-word ("that the long-stand", "Treating LL") — the old
+ * opus configuration exhausting max_tokens. Rejecting them here makes the
+ * pipeline self-healing: the record stops counting as real, the page drops to
+ * noindex/summary-only, needsBody() turns true again, and the hourly queue
+ * regenerates it on the current model chain.
+ *
+ * MIRRORED in web/src/lib/body-quality.ts (which must stay free of worker
+ * imports); tests/worker-body-completeness.test.ts pins the two copies to the
+ * same verdicts.
+ */
+export function looksCompleteBodyText(value: string, lang: "ja" | "en"): boolean {
+  const trimmed = text(value);
+  if (!trimmed) return true; // absence is judged elsewhere; only presence must be complete
+  return lang === "ja"
+    ? /[。！？…」』）)】.!?"']$/.test(trimmed)
+    : /[.!?…"')\]]$/.test(trimmed);
+}
+
 /** True when a record holds real, renderable bilingual prose (not filler). */
 export function isRealBody(record: BodyRecord | undefined | null): boolean {
   if (!record) return false;
@@ -54,6 +78,7 @@ export function isRealBody(record: BodyRecord | undefined | null): boolean {
   const en = text(record.bodyEn);
   if (!ja || !en) return false;
   if (en.includes(FALLBACK_BODY_EN_NEEDLE) || ja.includes(FALLBACK_BODY_JA_NEEDLE)) return false;
+  if (!looksCompleteBodyText(ja, "ja") || !looksCompleteBodyText(en, "en")) return false;
   return true;
 }
 
@@ -220,6 +245,7 @@ export interface NewBody {
   id: string;
   bodyJa: string;
   bodyEn: string;
+  chat?: ArticleChatTurn[];
   model?: string;
   cachedAt?: string;
 }
@@ -251,11 +277,24 @@ export function mergeBodies(
 
   for (const nb of newBodies) {
     if (!isRealBody(nb)) continue;
+    const chat = validateArticleChat(nb.chat) ?? undefined;
     const existingRecord = bodies[nb.id];
-    if (existingRecord && isRealBody(existingRecord)) continue; // don't overwrite a real body
+    if (existingRecord && isRealBody(existingRecord)) {
+      // Don't overwrite a real body — but DO graft a chat it doesn't have yet.
+      // This is how the chat backfill lands for the pre-feature corpus: the
+      // backfill writes body+chat KV entries, the chat-missing lookup lane
+      // (worker/src/index.ts) reads them back, and only the chat is adopted so
+      // the published prose never churns.
+      if (chat && !validateArticleChat(existingRecord.chat)) {
+        bodies[nb.id] = { ...existingRecord, chat };
+        added += 1;
+      }
+      continue;
+    }
     bodies[nb.id] = {
       bodyJa: nb.bodyJa,
       bodyEn: nb.bodyEn,
+      ...(chat ? { chat } : {}),
       model: nb.model ?? "claude-opus-4.8",
       generatedAt: nb.cachedAt ?? generatedAt,
     };

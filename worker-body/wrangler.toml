@@ -28,11 +28,29 @@ id = "6d67debb991742efadfec473a121f5fc"
 
 [vars]
 # opus-4.8 generates full bilingual bodies without the reasoning-loop-empties
-# failure that sonnet hits on Japanese long-form (LL-106/LL-115). reasoning=max
-# is affordable: token cost is inside the Copilot subscription and the LLM wait
-# is I/O, not CPU (LL-115).
-BODY_MODEL = "claude-opus-4.8"
-BODY_REASONING_EFFORT = "max"
+# failure that sonnet hits on Japanese long-form (LL-106/LL-115).
+#
+# reasoning=high, NOT max: with the source-scaled JA prompt (bodyLengthPlan,
+# 33d2456a) opus at reasoning=max deterministically burns the entire 4000-token
+# output budget on reasoning and returns an EMPTY Japanese body (measured
+# 2026-08-29: 2/2 empty at max, 2/2 complete in-band at high and medium,
+# ~52s vs ~7s per call). Empty content throws, so every JA job would retry
+# twice and land in the DLQ while the body backlog grows. The shorter target
+# band leaves the model reasoning far longer than the visible answer needs;
+# high keeps the anti-hallucination benefit without the token exhaustion.
+# GPT-5.6 Sol first, per site-owner priority (2026-08-29). Sol Fast is
+# deliberately NOT in the chain: its model-picker name marks it
+# "(Internal only)" and the site owner opted out of depending on a model that
+# could be withdrawn without notice. Smoke-tested with the production body
+# prompts on real entries: JA and EN both in the bodyLengthPlan band with
+# "## " headings, 0 grounding issues, 5-13s per call — and no empty-JA
+# reasoning exhaustion, since /responses reasoning stays inside the same
+# max_output_tokens budget it reports. claude-opus-4.8 stays last in the
+# chain as the safety net; the reasoning setting below applies only to that
+# chat-endpoint fallback.
+BODY_MODEL = "gpt-5.6-sol"
+BODY_MODEL_FALLBACKS = "gpt-5.6-terra,gpt-5.6-luna,claude-opus-4.8"
+BODY_REASONING_EFFORT = "high"
 # Each single-language call needs ~20-30s wall (I/O). 120s leaves margin for
 # reasoning=max without killing legitimate responses.
 BODY_TIMEOUT_MS = "120000"

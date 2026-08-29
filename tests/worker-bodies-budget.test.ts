@@ -376,8 +376,8 @@ describe("enforceBodiesBudget (LL-411)", () => {
     const merge = mergeBodies(
       existing,
       [
-        { id: "new-a", bodyJa: "新規A".repeat(200), bodyEn: "new a ".repeat(200) },
-        { id: "new-b", bodyJa: "新規B".repeat(200), bodyEn: "new b ".repeat(200) },
+        { id: "new-a", bodyJa: "新規A".repeat(200) + "。", bodyEn: "new a ".repeat(200).trim() + "." },
+        { id: "new-b", bodyJa: "新規B".repeat(200) + "。", bodyEn: "new b ".repeat(200).trim() + "." },
       ],
       new Set(["keep-a", "new-a", "new-b"]),
       "2026-07-25T00:00:00.000Z",

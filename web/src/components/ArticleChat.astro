@@ -1,0 +1,286 @@
+---
+/**
+ * 記事ディスカッション — two fixed editorial characters (ソラ / 博士) discuss
+ * the article in six chat bubbles (3 exchanges). Site-owner feature request
+ * (2026-08-29); rich-UI + deeper-persona revision same day.
+ *
+ * Renders ONLY a chat that passed validateArticleChat (the caller gates), so
+ * this component never handles a malformed shape. Both language renditions
+ * are emitted and the existing i18n-ja / i18n-en toggle picks one.
+ *
+ * Motion: each bubble carries the site-wide `data-reveal` contract
+ * (IntersectionObserver in Portal.astro adds .is-visible; reduced-motion
+ * users never get the `motion-ready` root class, so bubbles simply render in
+ * place). The component only adds its own opacity/offset styling on top of
+ * that existing, already-accessible mechanism.
+ */
+import {
+  ARTICLE_CHAT_PERSONAS,
+  type ArticleChatTurn,
+} from "../lib/article-chat.ts";
+
+interface Props {
+  chat: readonly ArticleChatTurn[];
+}
+
+const { chat } = Astro.props;
+const cast = [
+  { key: "a" as const, persona: ARTICLE_CHAT_PERSONAS.a },
+  { key: "b" as const, persona: ARTICLE_CHAT_PERSONAS.b },
+];
+---
+
+<section class="ed-chat" aria-labelledby="ed-chat-heading" data-article-chat>
+  <header class="ed-chat-head">
+    <span class="ed-chat-duo" aria-hidden="true">
+      <span class="ed-chat-face a">{ARTICLE_CHAT_PERSONAS.a.emoji}</span>
+      <span class="ed-chat-face b">{ARTICLE_CHAT_PERSONAS.b.emoji}</span>
+    </span>
+    <span class="ed-chat-head-text">
+      <h2 class="ed-chat-h" id="ed-chat-heading">
+        <span class="i18n-ja">ソラと博士の読みどころ</span>
+        <span class="i18n-en" lang="en">Sora &amp; Doc talk it over</span>
+      </h2>
+      <p class="ed-chat-origin">
+        <span class="ai-badge" aria-hidden="true">AI</span>
+        <span class="i18n-ja">記事の要約と収集メタデータをもとに生成した、架空の編集部キャラクター 2 人による対話です。</span>
+        <span class="i18n-en" lang="en">A generated conversation between two fictional editorial characters, based on this article's summaries and collected metadata.</span>
+      </p>
+    </span>
+  </header>
+
+  <ul class="ed-chat-cast" role="list">
+    {cast.map(({ key, persona }) => (
+      <li class={`ed-chat-castcard ${key}`}>
+        <span class="ed-chat-face" aria-hidden="true">{persona.emoji}</span>
+        <span class="ed-chat-castmeta">
+          <span class="ed-chat-castname">
+            <span class="i18n-ja">{persona.nameJa}</span>
+            <span class="i18n-en" lang="en">{persona.nameEn}</span>
+          </span>
+          <span class="ed-chat-castrole">
+            <span class="i18n-ja">{persona.roleJa}</span>
+            <span class="i18n-en" lang="en">{persona.roleEn}</span>
+          </span>
+        </span>
+      </li>
+    ))}
+  </ul>
+
+  <ol class="ed-chat-list" role="list">
+    {chat.map((turn, index) => {
+      const persona = ARTICLE_CHAT_PERSONAS[turn.s];
+      return (
+        <li
+          class={`ed-chat-turn ed-chat-${turn.s}`}
+          data-reveal="chat-turn"
+          style={`--reveal-index:${index}`}
+        >
+          <span class={`ed-chat-face ${turn.s}`} aria-hidden="true">{persona.emoji}</span>
+          <div class="ed-chat-bubble">
+            <span class="ed-chat-name">
+              <span class="i18n-ja">{persona.nameJa}</span>
+              <span class="i18n-en" lang="en">{persona.nameEn}</span>
+            </span>
+            <span class="ed-chat-text i18n-ja">{turn.ja}</span>
+            <span class="ed-chat-text i18n-en" lang="en">{turn.en}</span>
+          </div>
+        </li>
+      );
+    })}
+  </ol>
+</section>
+
+<style>
+  .ed-chat {
+    /* Per-character accents; fall back gracefully in both themes. */
+    --chat-a: #5eead4;
+    --chat-b: #fbbf24;
+    position: relative;
+    margin: 30px 0;
+    padding: 20px 18px 16px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background:
+      linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--chat-a) 6%, transparent),
+        transparent 42%,
+        color-mix(in srgb, var(--chat-b) 6%, transparent)
+      ),
+      color-mix(in srgb, var(--surface) 86%, transparent);
+    overflow: hidden;
+  }
+
+  /* ---- header -------------------------------------------------------- */
+  .ed-chat-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .ed-chat-duo {
+    flex: none;
+    display: flex;
+    align-items: center;
+  }
+  .ed-chat-duo .ed-chat-face + .ed-chat-face {
+    margin-left: -10px;
+  }
+  .ed-chat-face {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    font-size: 1.15rem;
+    background: color-mix(in srgb, var(--surface) 70%, transparent);
+    border: 2px solid var(--border);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.18);
+  }
+  .ed-chat-face.a { border-color: color-mix(in srgb, var(--chat-a) 65%, var(--border)); }
+  .ed-chat-face.b { border-color: color-mix(in srgb, var(--chat-b) 60%, var(--border)); }
+  .ed-chat-h {
+    margin: 0 0 2px;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+  }
+  .ed-chat-origin {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin: 0;
+    font-size: 0.76rem;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  /* ---- cast cards ---------------------------------------------------- */
+  .ed-chat-cast {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 16px;
+    padding: 0;
+  }
+  .ed-chat-castcard {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+  }
+  .ed-chat-castcard.a { border-left: 3px solid var(--chat-a); }
+  .ed-chat-castcard.b { border-left: 3px solid var(--chat-b); }
+  .ed-chat-castcard .ed-chat-face { width: 32px; height: 32px; font-size: 1rem; }
+  .ed-chat-castmeta { display: flex; flex-direction: column; min-width: 0; }
+  .ed-chat-castname { font-weight: 700; font-size: 0.85rem; }
+  .ed-chat-castrole {
+    font-size: 0.72rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  /* ---- bubbles ------------------------------------------------------- */
+  .ed-chat-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .ed-chat-turn {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    max-width: min(88%, 620px);
+  }
+  .ed-chat-b {
+    flex-direction: row-reverse;
+    align-self: flex-end;
+  }
+  .ed-chat-turn .ed-chat-face { width: 34px; height: 34px; font-size: 1.02rem; flex: none; }
+  .ed-chat-bubble {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    padding: 9px 14px 10px;
+    border-radius: 16px;
+    border: 1px solid;
+  }
+  .ed-chat-a .ed-chat-bubble {
+    border-bottom-left-radius: 5px;
+    border-color: color-mix(in srgb, var(--chat-a) 34%, var(--border));
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--chat-a) 9%, transparent), transparent 70%),
+      color-mix(in srgb, var(--surface) 94%, transparent);
+  }
+  .ed-chat-b .ed-chat-bubble {
+    border-bottom-right-radius: 5px;
+    border-color: color-mix(in srgb, var(--chat-b) 30%, var(--border));
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--chat-b) 9%, transparent), transparent 70%),
+      color-mix(in srgb, var(--surface) 94%, transparent);
+  }
+  /* bubble tail */
+  .ed-chat-bubble::before {
+    content: "";
+    position: absolute;
+    bottom: 6px;
+    width: 10px;
+    height: 10px;
+    transform: rotate(45deg);
+    border: inherit;
+    border-color: inherit;
+    background: inherit;
+  }
+  .ed-chat-a .ed-chat-bubble::before {
+    left: -5px;
+    border-top: none;
+    border-right: none;
+    border-bottom-left-radius: 3px;
+  }
+  .ed-chat-b .ed-chat-bubble::before {
+    right: -5px;
+    border-bottom: none;
+    border-left: none;
+    border-top-right-radius: 3px;
+  }
+  .ed-chat-name {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .ed-chat-a .ed-chat-name { color: color-mix(in srgb, var(--chat-a) 78%, var(--text)); }
+  .ed-chat-b .ed-chat-name { color: color-mix(in srgb, var(--chat-b) 72%, var(--text)); }
+  .ed-chat-text {
+    font-size: 0.93rem;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+  }
+
+  /* ---- staggered entrance on top of the site reveal contract --------- */
+  :global(html.motion-ready) .ed-chat-turn[data-reveal] {
+    opacity: 0;
+  }
+  :global(html.motion-ready) .ed-chat-turn[data-reveal].is-visible {
+    opacity: 1;
+    transition:
+      transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 0.4s ease;
+    transition-delay: calc(var(--reveal-index, 0) * 70ms);
+  }
+
+  @media (max-width: 640px) {
+    .ed-chat { padding: 16px 12px 12px; }
+    .ed-chat-turn { max-width: 100%; }
+    .ed-chat-cast { grid-template-columns: 1fr; }
+  }
+</style>

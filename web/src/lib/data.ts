@@ -4,6 +4,7 @@
  */
 // Path: web/src/lib/data.ts → tech-dashboard/data/index.json (3 levels up)
 import indexJson from "../../../data/index.json";
+import { hasRealBody } from "./bodies.ts";
 import {
   effectiveTitleLanguage,
   hasCjk,
@@ -478,19 +479,25 @@ export function featured(): NormalizedEntry | undefined {
   const eligible = (e: NormalizedEntry) =>
     isPublishableEntry(e) && !isLowSignalRelease(e) && !isOffTopicForHero(e) &&
     !isRoutineReleaseEntry(e) && !isDefaultMutedCategory(e.category);
-  return (
-    // 1. High-importance real announcement/blog with a real summary.
-    MAIN_TIMELINE_ENTRIES.find(
-      (e) => e.importance === 3 && !isRoutineRelease(e) && eligible(e),
-    ) ??
-    // 2. High-importance stable release with a real summary.
-    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 3 && eligible(e)) ??
-    // 3. Medium-importance announcement/blog with a real summary.
-    MAIN_TIMELINE_ENTRIES.find(
-      (e) => e.importance === 2 && !isRoutineRelease(e) && eligible(e),
-    ) ??
-    MAIN_TIMELINE_ENTRIES.find((e) => e.importance === 2 && eligible(e))
-  );
+  // Reviewer-first-impression fix (2026-08-29 audit): the Spotlight linked
+  // summary-only pages while bodied articles sat lower in the same tier. Each
+  // tier now prefers an entry with a real AI explainer; the body-less
+  // fallbacks keep the slot filled when a tier has no bodied candidate at all.
+  const tiers: Array<(e: NormalizedEntry) => boolean> = [
+    (e) => e.importance === 3 && !isRoutineRelease(e) && eligible(e),
+    (e) => e.importance === 3 && eligible(e),
+    (e) => e.importance === 2 && !isRoutineRelease(e) && eligible(e),
+    (e) => e.importance === 2 && eligible(e),
+  ];
+  for (const tier of tiers) {
+    const bodied = MAIN_TIMELINE_ENTRIES.find((e) => tier(e) && hasRealBody(e));
+    if (bodied) return bodied;
+  }
+  for (const tier of tiers) {
+    const any = MAIN_TIMELINE_ENTRIES.find(tier);
+    if (any) return any;
+  }
+  return undefined;
 }
 
 /** Top tags from the most recent 200 entries. */

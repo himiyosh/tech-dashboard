@@ -382,6 +382,9 @@ test.describe("Publisher generated artifact", () => {
         entry.archiveTier !== "cold"
         && entry.archiveTier !== "dropped"
         && isPublishableEntry(entry)
+        // The route must actually exist: content policy AND publication gate
+        // (a held fresh entry has no built page — detail-route-fixture.ts).
+        && isBuiltDetailEntry(entry)
         && articleSocialImage(entry.image, "JA", "EN").url === SOCIAL_IMAGE_URL,
     );
     expect(imageLess, "fixture includes a built image-less article").toBeTruthy();
@@ -619,7 +622,7 @@ test.describe("Publisher generated artifact", () => {
       >;
     };
     const addressable = index.entries.filter(
-      (entry) => isAddressableDetailEntry(entry),
+      (entry) => isBuiltDetailEntry(entry),
     );
     const imageBacked = addressable.find(
       (entry) => articleSocialImage(entry.image, "JA", "EN").url !== SOCIAL_IMAGE_URL,
@@ -745,6 +748,7 @@ test.describe("Publisher generated artifact", () => {
     };
     const fixture = index.entries.find((entry) => {
       if (entry.archiveTier === "cold" || entry.archiveTier === "dropped") return false;
+      if (!isBuiltDetailEntry(entry)) return false;
       const summaryJa = summaryForLang(entry, "ja");
       const summaryEn = summaryForLang(entry, "en");
       return Boolean(
@@ -1061,7 +1065,7 @@ test.describe("Publisher generated artifact", () => {
         bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
       }
     ).bodies;
-    const addressable = index.entries.filter((entry) => isAddressableDetailEntry(entry));
+    const addressable = index.entries.filter((entry) => isBuiltDetailEntry(entry));
     // A body alone no longer earns indexing: the release/changelog lane is
     // excluded outright (detail-index-policy.ts), so the indexed sample has to
     // clear both gates or this test would pick a legitimately noindex page.
@@ -1208,7 +1212,7 @@ test.describe("Publisher generated artifact", () => {
     const hot = index.entries
       .filter((entry) =>
         entry.archiveTier === "hot"
-        && isAddressableDetailEntry(entry)
+        && isBuiltDetailEntry(entry)
         && !isDefaultMutedCategory(entry.category))
       .map((entry) => ({ entry, route: timelineRoutes.get(entry.id) }))
       .find(({ route }) => route);

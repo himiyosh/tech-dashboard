@@ -31,11 +31,21 @@ import {
   putCacheEntry,
   UNVERSIONED_JOB_FINGERPRINT,
 } from "../../worker/src/kv-cache.ts";
+import {
+  buildCopilotRequestBody,
+  copilotEndpointForModel,
+  copilotEndpointUrl,
+  extractCopilotText,
+  parseModelChain,
+} from "../../worker/src/copilot-client.ts";
 
 interface Env {
   SUMMARY_CACHE: KVNamespace;
   COPILOT_PAT: string;
   SUMMARIZE_MODEL: string;
+  /** Comma-separated ordered fallback models tried when a call errors or the
+   * output stays incomplete. See parseModelChain (worker/src/copilot-client.ts). */
+  SUMMARIZE_MODEL_FALLBACKS?: string;
   SUMMARIZE_TIMEOUT_MS?: string;
   SUMMARIZE_MAX_TOKENS?: string;
 }
@@ -46,7 +56,6 @@ export type { SummaryJob } from "../../worker/src/summary-queue.ts";
 // is still read by the harness Worker as a fallback during migration, but
 // the summarizer writes only per-URL keys to avoid the JSON.parse/stringify
 // CPU bomb that was busting the 30 s Worker CPU cap.
-const COPILOT_ENDPOINT = "https://api.githubcopilot.com/chat/completions";
 const COPILOT_HEADERS: Record<string, string> = {
   "editor-version": "vscode/1.95.0",
   "editor-plugin-version": "copilot-chat/0.22.0",
@@ -117,7 +126,11 @@ async function callCopilot(
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const res = await fetch(COPILOT_ENDPOINT, {
+      // GPT-5.x models are /responses-only and reject `temperature`; claude
+      // stays on /chat/completions. Shaping is shared with the body worker
+      // (worker/src/copilot-client.ts).
+      const endpoint = copilotEndpointForModel(model);
+      const res = await fetch(copilotEndpointUrl(endpoint), {
         method: "POST",
         signal: controller.signal,
         headers: {
@@ -125,25 +138,19 @@ async function callCopilot(
           "content-type": "application/json",
           ...COPILOT_HEADERS,
         },
-        body: JSON.stringify({
-          model,
-          temperature: 0.2,
-          // Quality-first queue mode: this Worker has a larger CPU/timeout budget
-          // than the harness Worker, so use the same long-form contract as local
-          // backfills.
-          max_tokens: maxTokens,
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are a bilingual technical editor. Always return only the JSON object the user requested. Do not include code fences, prose preface, or commentary. Use natural Japanese for *Ja fields and native English for *En fields.",
-            },
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
-        }),
+        body: JSON.stringify(
+          buildCopilotRequestBody({
+            model,
+            systemPrompt:
+              "You are a bilingual technical editor. Always return only the JSON object the user requested. Do not include code fences, prose preface, or commentary. Use natural Japanese for *Ja fields and native English for *En fields.",
+            userPrompt: prompt,
+            // Quality-first queue mode: this Worker has a larger CPU/timeout
+            // budget than the harness Worker, so use the same long-form
+            // contract as local backfills.
+            maxTokens,
+            temperature: 0.2,
+          }),
+        ),
       });
       if (res.status === 401 && attempt === 0) {
         // IDE token rejected as expired. Drain the body, force a fresh
@@ -154,10 +161,7 @@ async function callCopilot(
       if (!res.ok) {
         throw new Error(`copilot ${res.status}: ${await res.text()}`);
       }
-      const body = (await res.json()) as {
-        choices?: Array<{ message?: { content?: string } }>;
-      };
-      const content = body.choices?.[0]?.message?.content ?? "";
+      const content = extractCopilotText(endpoint, await res.json());
       const parsed = parseResponse(content);
       return {
         ...parsed,
@@ -215,7 +219,10 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
   // consumer invocations can never clobber each other's writes.
 
   const pat = env.COPILOT_PAT;
-  const model = env.SUMMARIZE_MODEL || "claude-sonnet-4.6";
+  const chain = parseModelChain(
+    env.SUMMARIZE_MODEL || "claude-sonnet-4.6",
+    env.SUMMARIZE_MODEL_FALLBACKS,
+  );
   const timeoutMs = Number(env.SUMMARIZE_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
   const maxTokens = Number(env.SUMMARIZE_MAX_TOKENS ?? DEFAULT_MAX_TOKENS);
   if (!hasSufficientSourceGrounding(job.entry)) {
@@ -228,18 +235,39 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
   // {"choices":[]} (empty) -> "incomplete summary" -> ZERO summaries written.
   // We request only title + JA/EN summary so reasoning + answer fit. Long-form
   // body generation is handled by the separate body-file pipeline.
-  let entry = await callCopilot(pat, model, buildSummaryPrompt(job.entry), timeoutMs, maxTokens);
-
-  if (!isSummaryComplete(entry, job.entry)) {
-    console.warn(`[summarizer] retry summary prompt ${job.url}: first output was incomplete`);
-    entry = await callCopilot(
-      pat,
-      model,
-      buildSummaryPrompt(job.entry),
-      Math.min(timeoutMs, RECOVERY_TIMEOUT_MS),
-      maxTokens,
-    );
+  //
+  // One attempt per model in the configured chain; a single-model chain keeps
+  // the historical same-model retry so behavior without fallbacks is
+  // unchanged. Later attempts use the tighter recovery timeout: they exist to
+  // rescue the entry, not to double the invocation's worst-case wall time.
+  const attempts = chain.length === 1 ? [chain[0]!, chain[0]!] : chain;
+  let entry: CacheEntry | undefined;
+  let lastError: unknown;
+  for (const [attemptIndex, attemptModel] of attempts.entries()) {
+    if (attemptIndex > 0) {
+      console.warn(
+        `[summarizer] attempt ${attemptIndex + 1}/${attempts.length} (${attemptModel}) for ${job.url}: previous output was incomplete or failed`,
+      );
+    }
+    try {
+      entry = await callCopilot(
+        pat,
+        attemptModel,
+        buildSummaryPrompt(job.entry),
+        attemptIndex === 0 ? timeoutMs : Math.min(timeoutMs, RECOVERY_TIMEOUT_MS),
+        maxTokens,
+      );
+      if (isSummaryComplete(entry, job.entry)) break;
+    } catch (err) {
+      // A per-model API failure (unsupported model, 4xx/5xx, timeout) advances
+      // the chain instead of failing the job: that is what the fallbacks are
+      // for. If every model errored, rethrow the last error below so Queue
+      // retry semantics stay exactly as before.
+      lastError = err;
+      entry = undefined;
+    }
   }
+  if (!entry) throw lastError ?? new Error(`all summary models failed for ${job.url}`);
 
   // Persist as soon as the summary is complete, even if the long-form body is
   // still missing after all recovery attempts. The collector merges entries on
@@ -356,6 +384,10 @@ export default {
           ok,
           role: "queue-consumer",
           model: env.SUMMARIZE_MODEL || "claude-sonnet-4.6",
+          modelFallbacks: parseModelChain(
+            env.SUMMARIZE_MODEL || "claude-sonnet-4.6",
+            env.SUMMARIZE_MODEL_FALLBACKS,
+          ).slice(1),
           timeoutMs: Number(env.SUMMARIZE_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS),
           maxTokens: Number(env.SUMMARIZE_MAX_TOKENS ?? DEFAULT_MAX_TOKENS),
           cacheBinding,

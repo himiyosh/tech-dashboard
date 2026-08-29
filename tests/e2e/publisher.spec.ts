@@ -33,6 +33,7 @@ import {
 } from "../../web/src/lib/feed-catalog.ts";
 import { isArxivEntry } from "../../web/src/lib/research-lane.ts";
 import { isRealBodyRecord } from "../../web/src/lib/body-quality.ts";
+import { isNonIndexableLane } from "../../web/src/lib/detail-index-policy.ts";
 import {
   isAddressableDetailEntry,
   type DetailAddressableEntry,
@@ -1061,11 +1062,23 @@ test.describe("Publisher generated artifact", () => {
       }
     ).bodies;
     const addressable = index.entries.filter((entry) => isAddressableDetailEntry(entry));
-    const bodied = addressable.find((entry) => isRealBodyRecord(bodies[entry.id]));
+    // A body alone no longer earns indexing: the release/changelog lane is
+    // excluded outright (detail-index-policy.ts), so the indexed sample has to
+    // clear both gates or this test would pick a legitimately noindex page.
+    const bodied = addressable.find(
+      (entry) => isRealBodyRecord(bodies[entry.id]) && !isNonIndexableLane(entry),
+    );
     const bodyless = addressable.find((entry) => !isRealBodyRecord(bodies[entry.id]));
+    const bodiedExcludedLane = addressable.find(
+      (entry) => isRealBodyRecord(bodies[entry.id]) && isNonIndexableLane(entry),
+    );
 
-    expect(bodied, "fixture includes a bodied detail entry").toBeTruthy();
+    expect(bodied, "fixture includes a bodied indexable detail entry").toBeTruthy();
     expect(bodyless, "fixture includes a body-less detail entry").toBeTruthy();
+    expect(
+      bodiedExcludedLane,
+      "fixture includes a bodied release/changelog detail entry",
+    ).toBeTruthy();
 
     const [bodiedResponse, bodylessResponse, sitemapResponse] = await Promise.all([
       request.get(`/e/${bodied!.id}/`),
@@ -1089,6 +1102,16 @@ test.describe("Publisher generated artifact", () => {
     expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${bodyless!.id}/</loc>`);
     // "follow" is only meaningful if the page still exposes internal links.
     expect(bodylessHtml).toContain('href="/c/');
+
+    // A bodied release note is the case the lane policy exists for: reachable
+    // and followed, but never advertised for indexing.
+    const excludedResponse = await request.get(`/e/${bodiedExcludedLane!.id}/`);
+    expect(excludedResponse.status()).toBe(200);
+    const excludedHtml = await excludedResponse.text();
+    expect(excludedHtml).toMatch(
+      /<meta\s+name="robots"\s+content="noindex,\s*follow"\s*\/?>/,
+    );
+    expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${bodiedExcludedLane!.id}/</loc>`);
   });
 
   test("keeps hot and warm details reachable while only bodied details enter the sitemap", async ({
@@ -1108,7 +1131,10 @@ test.describe("Publisher generated artifact", () => {
       (entry) =>
         entry.archiveTier === "hot"
         && isAddressableDetailEntry(entry)
-        && isRealBodyRecord(bodies[entry.id]),
+        && isRealBodyRecord(bodies[entry.id])
+        // Must also clear the lane policy, or the sitemap assertion below
+        // would be checking a page that is correctly excluded.
+        && !isNonIndexableLane(entry),
     );
     const cold = index.entries.find((entry) => entry.archiveTier === "cold");
     const pendingLive = index.entries.find(

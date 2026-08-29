@@ -2212,15 +2212,43 @@ test.describe("TECH Dashboard smoke", () => {
       await page.goto("/");
       const digest = page.locator("[data-daily-summary]");
       await expect(digest).toBeVisible();
-      const timelineCardsBeforeDigest = await digest.evaluate((element) => (
-        Array.from(document.querySelectorAll("main article.card"))
+      // The digest summarises the day, so it must not sit below a run of
+      // Timeline cards -- those are ordered newest-day-first and pushed
+      // yesterday's articles above it. It now renders once, directly after the
+      // "today's decision list" section and before the article list.
+      const placement = await digest.evaluate((element) => ({
+        timelineCardsBefore: Array.from(document.querySelectorAll("main article.card"))
           .filter((card) => Boolean(card.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING))
-          .length
-      ));
+          .length,
+        afterPriority: Boolean(
+          document.querySelector("#today-priority")!.compareDocumentPosition(element)
+            & Node.DOCUMENT_POSITION_FOLLOWING,
+        ),
+        beforeTimeline: Boolean(
+          document.querySelector("#timeline")!.compareDocumentPosition(element)
+            & Node.DOCUMENT_POSITION_PRECEDING,
+        ),
+        beforeFilter: Boolean(
+          document.querySelector("[data-category-filter]")!.compareDocumentPosition(element)
+            & Node.DOCUMENT_POSITION_PRECEDING,
+        ),
+      }));
       expect(
-        timelineCardsBeforeDigest,
-        `${viewport.width}px shows three Timeline decisions before the digest`,
-      ).toBe(3);
+        placement.timelineCardsBefore,
+        `${viewport.width}px shows no Timeline card above the digest`,
+      ).toBe(0);
+      expect(
+        placement.afterPriority,
+        `${viewport.width}px keeps the digest after today's decision list`,
+      ).toBe(true);
+      expect(
+        placement.beforeFilter,
+        `${viewport.width}px keeps the digest above the category filter`,
+      ).toBe(true);
+      expect(
+        placement.beforeTimeline,
+        `${viewport.width}px keeps the digest above the article list`,
+      ).toBe(true);
 
       const metrics = await digest.evaluate((element) => {
         const spark = element.querySelector<HTMLElement>(".spark");
@@ -2899,6 +2927,18 @@ test.describe("TECH Dashboard smoke", () => {
     await page.goto("/");
     const scope = page.locator("[data-category-filter-scope]");
     await expect(scope).toHaveCount(1);
+
+    // Both filtered surfaces must sit INSIDE the scope: the timeline cards and
+    // the Daily Summary board. The board's hiding rule is a descendant
+    // selector on [data-category-filter-scope] (portal.css) and its rows are
+    // collected with scope.querySelectorAll, so moving either block out of the
+    // scope would silently stop the board from following the filter. The
+    // dedicated board test below skips whenever the committed data snapshot
+    // has no entries for the board's base day, so this structural assertion is
+    // what actually holds the invariant in CI.
+    await expect(scope.locator("[data-daily-summary]")).toHaveCount(1);
+    await expect(scope.locator("#timeline")).toHaveCount(1);
+
     const clineCards = scope.locator('article.card[data-category="cline"]');
     const clineCardCount = await clineCards.count();
 

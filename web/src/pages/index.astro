@@ -72,14 +72,9 @@ const primaryEntries = MAIN_TIMELINE_ENTRIES;
 const arxivEntries = ARXIV_ENTRIES;
 const totalPages = Math.max(1, Math.ceil(primaryEntries.length / PAGE_SIZE));
 const pageEntries = primaryEntries.slice(0, PAGE_SIZE);
+// Flat entry offsets used to exist only to position the Daily Summary inside
+// the list; it now renders once above the list, so the groups are enough.
 const dayGroups = groupByDay(pageEntries);
-const dayGroupsWithOffsets = dayGroups.map((group, index) => ({
-  ...group,
-  startIndex: dayGroups
-    .slice(0, index)
-    .reduce((count, previousGroup) => count + previousGroup.items.length, 0),
-}));
-const dailySummaryAfterEntryIndex = Math.min(2, pageEntries.length - 1);
 
 const feat = featured();
 const featuredId = feat?.id ?? null;
@@ -330,7 +325,7 @@ const homeJsonLd = {
   <div class="layout">
     <Sidebar active="all" />
 
-    <main>
+    <main data-category-filter-scope>
         <section
           class="priority-section"
           id="today-priority"
@@ -598,11 +593,19 @@ const homeJsonLd = {
       )}
       </section>
 
+      <DailySummary
+        entries={ALL_ENTRIES}
+        boardEntries={primaryEntries}
+        stats={STATS}
+        now={now}
+      />
+
+      <CategoryFilter />
+
       <section
         class="timeline-section"
         id="timeline"
         aria-labelledby="timeline-heading"
-        data-category-filter-scope
       >
         <div class="section-header primary section-header-stacked">
           <h2 id="timeline-heading">
@@ -619,8 +622,6 @@ const homeJsonLd = {
           </h2>
         </div>
 
-        <CategoryFilter />
-
         {pageEntries.length === 0 ? (
           <div class="empty-state">
             <strong class="i18n-ja">表示できる更新がありません。</strong>
@@ -630,24 +631,14 @@ const homeJsonLd = {
             <a href="/status">Status</a>
           </div>
         ) : (
-          dayGroupsWithOffsets.map(({ key, items, startIndex }) => (
+          dayGroups.map(({ key, items }) => (
             <>
               <div class="day-header">
                 <span>{jstDayLabel(key, now)}</span>
                 <span class="day-count">{items.length} entries</span>
               </div>
-              {items.map((entry, entryIndex) => (
-                <>
-                  <EntryCard entry={entry} />
-                  {startIndex + entryIndex === dailySummaryAfterEntryIndex && (
-                    <DailySummary
-                      entries={ALL_ENTRIES}
-                      boardEntries={primaryEntries}
-                      stats={STATS}
-                      now={now}
-                    />
-                  )}
-                </>
+              {items.map((entry) => (
+                <EntryCard entry={entry} />
               ))}
             </>
           ))

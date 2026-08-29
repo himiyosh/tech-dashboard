@@ -188,19 +188,21 @@ describe("production wrangler configuration", () => {
     ] as const) {
       const config = readFileSync(path, "utf8");
       expect(config, path).toMatch(
-        new RegExp(`^${primaryKey} = "gpt-5\\.6-sol-fast"$`, "m"),
+        new RegExp(`^${primaryKey} = "gpt-5\\.6-sol"$`, "m"),
       );
       const fallbacks = config.match(
         new RegExp(`^${fallbackKey} = "([^"]+)"$`, "m"),
       )?.[1];
       expect(fallbacks, path).toBeTruthy();
-      const chain = parseModelChain("gpt-5.6-sol-fast", fallbacks);
-      expect(chain.slice(0, 4), path).toEqual([
-        "gpt-5.6-sol-fast",
+      const chain = parseModelChain("gpt-5.6-sol", fallbacks);
+      expect(chain.slice(0, 3), path).toEqual([
         "gpt-5.6-sol",
         "gpt-5.6-terra",
         "gpt-5.6-luna",
       ]);
+      // Sol Fast is excluded on purpose: its picker name marks it
+      // "(Internal only)" and the site owner opted out of depending on it.
+      expect(chain, path).not.toContain("gpt-5.6-sol-fast");
       // The final safety net stays a claude model on the proven chat path.
       expect(chain[chain.length - 1], path).toMatch(/^claude-/);
     }

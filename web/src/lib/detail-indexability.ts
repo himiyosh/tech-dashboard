@@ -57,6 +57,12 @@ export interface DetailIndexableEntry extends DetailAddressableEntry {
 }
 
 export function isIndexableDetailEntry(entry: DetailIndexableEntry): boolean {
+  // The publication gate lives HERE, not in route existence: a held entry
+  // keeps its /e/[id]/ route so card titles always land in-site, but stays
+  // `noindex` and out of the sitemap until released. This is what keeps a
+  // bulk ingest from surfacing to search engines as a single-day burst of
+  // new indexable pages (publication-gate.ts dailyReleaseLimit).
+  if (entry.publicationHold === true) return false;
   // A real body is necessary but not sufficient: the version-note lane is
   // excluded outright (detail-index-policy.ts).
   if (isNonIndexableLane(entry)) return false;

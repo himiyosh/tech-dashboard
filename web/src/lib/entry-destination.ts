@@ -12,9 +12,10 @@ export interface EntryDestinationInput {
   url: string;
   archiveTier?: DetailArchiveTier;
   /**
-   * Build-time publication-gate decision. A held entry keeps its card in every
-   * listing but links out to the original source instead of a /e/ route that
-   * was never built. Optional so raw stored rows stay assignable.
+   * Build-time publication-gate decision. Carried for shape-compatibility with
+   * gated collections; the destination no longer reads it — a held entry still
+   * has a built (noindex) /e/ route, so its card links in-site like any other.
+   * Only summary-less and cold/dropped entries link out to the source.
    */
   publicationHold?: boolean;
   source?: string;

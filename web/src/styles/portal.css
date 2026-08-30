@@ -3114,6 +3114,9 @@ main {
 
 .card-footer {
   display: flex;
+  /* A wide tag row must push the destination pill onto its own line, not
+     squeeze it: 「元記事」/「記事詳細」 ellipsized to 「元…」 on 375px viewports. */
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   min-width: 0;
@@ -3132,7 +3135,10 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  flex: 0 1 auto;
+  /* Never shrink below the label's natural width — the wrapping footer above
+     gives the pill a fresh line instead. max-width still ellipsizes the label
+     if a single line is narrower than the pill itself. */
+  flex: 0 0 auto;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;

@@ -268,12 +268,13 @@ describe("sitemap", () => {
       expect(detailRobotsContent(entry)).toBe(DETAIL_ROBOTS_INDEX);
     }
     for (const entry of notIndexable) {
-      // Exactly two reasons are allowed to keep a page out of the index:
-      // no real body yet, or an excluded lane. Anything else means the gate
-      // grew a rule nobody declared.
+      // Exactly three reasons are allowed to keep a page out of the index:
+      // no real body yet, an excluded lane, or a publication-gate hold
+      // (the route exists as noindex until the release drip frees it).
+      // Anything else means the gate grew a rule nobody declared.
       const excludedLane = NON_INDEXABLE_SOURCE_TYPES.has(String(entry.sourceType));
       expect(
-        !hasRealBody(entry) || excludedLane,
+        !hasRealBody(entry) || excludedLane || entry.publicationHold === true,
         `${entry.id} is non-indexable for an undeclared reason`,
       ).toBe(true);
       expect(urls.has(canonical(detailPath(entry.id)))).toBe(false);
@@ -325,8 +326,15 @@ describe("sitemap", () => {
     // a caller forgetting to thread sourceType must not silently de-index the
     // whole site. The corpus-level tests above are what catch a real gap.
     const bodied = collectAddressableDetailEntries(ALL_ENTRIES, ARCHIVE_WARM_ENTRIES)
-      .find((entry) => hasRealBody(entry) && !NON_INDEXABLE_SOURCE_TYPES.has(String(entry.sourceType)));
-    expect(bodied, "fixture has a bodied non-release entry").toBeTruthy();
+      .find(
+        (entry) =>
+          hasRealBody(entry)
+          && !NON_INDEXABLE_SOURCE_TYPES.has(String(entry.sourceType))
+          // A held entry is legitimately non-indexable, so it cannot probe the
+          // missing-sourceType fail-open path.
+          && entry.publicationHold !== true,
+      );
+    expect(bodied, "fixture has a bodied non-release released entry").toBeTruthy();
     const { sourceType: _dropped, ...withoutSourceType } = bodied as Record<string, unknown>;
     expect(isIndexableDetailEntry(withoutSourceType as never)).toBe(true);
   });

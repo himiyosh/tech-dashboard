@@ -10,10 +10,10 @@ import {
 } from "../../web/src/lib/detail-addressability.ts";
 
 /**
- * The exact route policy the preview server was built with: the content rules
- * in detail-addressability.ts AND the publication gate. Every e2e fixture that
- * navigates to /e/{id}/ and expects 200 must select through this, otherwise it
- * can pick a queued (approved-but-not-yet-released) entry and hit a 404.
+ * The exact publication gate the preview server was built with. Routes no
+ * longer depend on it, but INDEXABILITY does: fixtures that expect a page in
+ * the sitemap (or "index, follow") must select released entries through this,
+ * or they can pick a held entry whose page is correctly noindex.
  *
  * The clock is data/index.json generatedAt, the same value web/src/lib/
  * publication-gate-data.ts feeds the build, so the two agree by construction.
@@ -27,10 +27,14 @@ export const SITE_GATE: PublicationGate = buildPublicationGate({
   ).generatedAt,
 });
 
-/** True when the build actually produced a /e/{id}/ page for this stored row. */
+/**
+ * The exact route policy the preview server was built with. Route existence is
+ * a pure content decision (usable summary, hot/warm tier) — the publication
+ * gate only decides index/noindex and sitemap membership, so a held entry's
+ * /e/{id}/ page still exists and fixtures may navigate to it. Every e2e
+ * fixture that expects a 200 from /e/{id}/ must select through this, otherwise
+ * it can pick a summary-pending or cold entry and hit a 404.
+ */
 export function isBuiltDetailEntry(entry: DetailAddressableEntry): boolean {
-  return isAddressableDetailEntry({
-    ...entry,
-    publicationHold: !SITE_GATE.isReleased(entry.id),
-  });
+  return isAddressableDetailEntry(entry);
 }

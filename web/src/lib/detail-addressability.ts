@@ -67,6 +67,13 @@ export function hasUsableDetailSummary(entry: DetailAddressableEntry): boolean {
  * lists and link out to the original source (entry-destination.ts) until a
  * real summary lands, at which point the detail route re-appears.
  *
+ * The publication gate is NOT part of this decision. A held entry keeps its
+ * in-site route so readers who click a card title always land on the summary
+ * page; what the gate withholds is search-engine exposure — a held route is
+ * `noindex, follow` and absent from the sitemap until released
+ * (detail-indexability.ts). Route existence is a content decision; index
+ * exposure is a release decision.
+ *
  * This module intentionally imports no data artifact so route consumers and
  * tests can share the policy without loading JSON.
  */
@@ -74,7 +81,6 @@ export function isAddressableDetailEntry(
   entry: DetailAddressableEntry,
 ): boolean {
   return (
-    entry.publicationHold !== true &&
     entry.archiveTier !== "cold" &&
     entry.archiveTier !== "dropped" &&
     hasUsableDetailSummary(entry)
@@ -84,11 +90,14 @@ export function isAddressableDetailEntry(
 /**
  * Collect the entries that receive a real /e/[id]/ route.
  *
- * Every input must carry an explicit `publicationHold`. The annotation is NOT
- * inferred: nothing in this repository typechecks web/src/lib/data.ts,
- * archive.ts or tests/**, so a missing annotation would otherwise pass silently
- * and republish the entire corpus. Missing means "this collection never went
- * through applyPublicationGate", which is a bug, so it fails closed with the
+ * Every input must carry an explicit `publicationHold` even though route
+ * existence no longer reads it: the routes built from this collection feed
+ * detailRobotsContent (detail-indexability.ts), where the hold decides
+ * index/noindex. The annotation is NOT inferred: nothing in this repository
+ * typechecks web/src/lib/data.ts, archive.ts or tests/**, so a missing
+ * annotation would otherwise pass silently and mark the entire corpus
+ * indexable. Missing means "this collection never went through
+ * applyPublicationGate", which is a bug, so it fails closed with the
  * offending id as evidence instead of defaulting to released.
  */
 export function collectAddressableDetailEntries<

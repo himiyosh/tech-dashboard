@@ -1074,10 +1074,14 @@ test.describe("Publisher generated artifact", () => {
     ).bodies;
     const addressable = index.entries.filter((entry) => isBuiltDetailEntry(entry));
     // A body alone no longer earns indexing: the release/changelog lane is
-    // excluded outright (detail-index-policy.ts), so the indexed sample has to
-    // clear both gates or this test would pick a legitimately noindex page.
+    // excluded outright (detail-index-policy.ts) and a publication-gate hold
+    // keeps the page noindex, so the indexed sample has to clear all three
+    // gates or this test would pick a legitimately noindex page.
     const bodied = addressable.find(
-      (entry) => isRealBodyRecord(bodies[entry.id]) && !isNonIndexableLane(entry),
+      (entry) =>
+        isRealBodyRecord(bodies[entry.id])
+        && !isNonIndexableLane(entry)
+        && SITE_GATE.isReleased(entry.id),
     );
     const bodyless = addressable.find((entry) => !isRealBodyRecord(bodies[entry.id]));
     const bodiedExcludedLane = addressable.find(
@@ -1123,6 +1127,25 @@ test.describe("Publisher generated artifact", () => {
       /<meta\s+name="robots"\s+content="noindex,\s*follow"\s*\/?>/,
     );
     expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${bodiedExcludedLane!.id}/</loc>`);
+
+    // A held (unreleased) bodied entry is what moved the gate into
+    // indexability: its route exists so card titles land in-site, but the
+    // release drip decides when it may enter the index. A fully released
+    // corpus is valid, so this sample is optional.
+    const heldBodied = addressable.find(
+      (entry) =>
+        isRealBodyRecord(bodies[entry.id])
+        && !isNonIndexableLane(entry)
+        && !SITE_GATE.isReleased(entry.id),
+    );
+    if (heldBodied) {
+      const heldResponse = await request.get(`/e/${heldBodied.id}/`);
+      expect(heldResponse.status()).toBe(200);
+      expect(await heldResponse.text()).toMatch(
+        /<meta\s+name="robots"\s+content="noindex,\s*follow"\s*\/?>/,
+      );
+      expect(sitemap).not.toContain(`<loc>${SITE_URL}/e/${heldBodied.id}/</loc>`);
+    }
   });
 
   test("keeps hot and warm details reachable while only bodied details enter the sitemap", async ({
@@ -1143,9 +1166,11 @@ test.describe("Publisher generated artifact", () => {
         entry.archiveTier === "hot"
         && isAddressableDetailEntry(entry)
         && isRealBodyRecord(bodies[entry.id])
-        // Must also clear the lane policy, or the sitemap assertion below
-        // would be checking a page that is correctly excluded.
-        && !isNonIndexableLane(entry),
+        // Must also clear the lane policy and the publication gate, or the
+        // sitemap assertion below would be checking a page that is correctly
+        // excluded (noindex).
+        && !isNonIndexableLane(entry)
+        && SITE_GATE.isReleased(entry.id),
     );
     const cold = index.entries.find((entry) => entry.archiveTier === "cold");
     const pendingLive = index.entries.find(
@@ -1167,7 +1192,10 @@ test.describe("Publisher generated artifact", () => {
         (entry) =>
           entry.archiveTier === "warm" &&
           !liveIds.has(entry.id) &&
-          isAddressableDetailEntry(entry),
+          isAddressableDetailEntry(entry) &&
+          // The not-in-sitemap assertion below relies on the entry having no
+          // generated body; pin the selection to that instead of assuming it.
+          !isRealBodyRecord(bodies[entry.id]),
       );
       if (warmOnly) break;
     }

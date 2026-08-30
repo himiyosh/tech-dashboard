@@ -66,7 +66,15 @@ describe("sitemap", () => {
       ],
     );
 
-    expect(entries.map((entry) => entry.id)).toEqual(["live-legacy", "hot", "warm"]);
+    // "queued" (publicationHold) keeps its route: the gate now decides
+    // index/noindex (detail-indexability.ts), never route existence, so card
+    // titles always land in-site while the sitemap drip stays gated.
+    expect(entries.map((entry) => entry.id)).toEqual([
+      "live-legacy",
+      "hot",
+      "warm",
+      "queued",
+    ]);
     expect(isAddressableDetailEntry({ id: "hot", archiveTier: "hot" })).toBe(true);
     expect(isAddressableDetailEntry({ id: "warm", archiveTier: "warm" })).toBe(true);
     expect(isAddressableDetailEntry({ id: "cold", archiveTier: "cold" })).toBe(false);

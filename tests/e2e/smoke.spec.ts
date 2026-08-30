@@ -17,7 +17,7 @@ import {
   isAddressableDetailEntry,
   type DetailAddressableEntry,
 } from "../../web/src/lib/detail-addressability.ts";
-import { SITE_GATE, isBuiltDetailEntry } from "./detail-route-fixture.ts";
+import { isBuiltDetailEntry } from "./detail-route-fixture.ts";
 import { CATEGORY_META } from "../../web/src/lib/category-meta.ts";
 import { hasMeaningfulSourceSnippet } from "../../web/src/lib/source-snippet.ts";
 import { DEFAULT_MUTED_CATEGORIES } from "../../web/src/lib/category-visibility.ts";
@@ -2553,8 +2553,8 @@ test.describe("TECH Dashboard smoke", () => {
     const summaryOnlyEntry = index.entries.find(
       (entry) =>
         !bodyFile.bodies[entry.id] &&
-        // The /e/{id}/ route must actually exist: content policy AND the
-        // publication gate (a held fresh entry has no built page).
+        // The /e/{id}/ route must actually exist (content policy: usable
+        // summary + hot/warm tier; the gate no longer affects routes).
         isBuiltDetailEntry(entry as never) &&
         Boolean(
           summaryForLangWithFallback(entry, "ja").text ||
@@ -5432,8 +5432,8 @@ test.describe("TECH Dashboard smoke", () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await settleResponsiveLayout(page);
-    // The click-through assertion needs an INTERNAL detail link; a held
-    // (unapproved) card correctly links out to its source instead.
+    // The click-through assertion needs an INTERNAL detail link; a
+    // summary-pending card correctly links out to its source instead.
     const firstArticle = page
       .locator('main article.card[data-detail-destination="internal"] h3.title > a')
       .first();
@@ -8536,9 +8536,10 @@ test.describe("TECH Dashboard smoke", () => {
     const indexedEntries = [
       ...new Map(
         [
-          // Held (unapproved) entries appear on no listing page, so their
-          // tags must not count toward the singleton set either.
-          ...index.entries.filter((entry) => SITE_GATE.isReleased(entry.id)),
+          // Held (unapproved) entries keep their listing cards AND their
+          // (noindex) detail pages, so pagefind can recover them; their tags
+          // count toward the singleton set like any released entry's.
+          ...index.entries,
           ...warmArchiveEntries,
         ].map((entry) => [entry.id, entry]),
       ).values(),

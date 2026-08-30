@@ -38,7 +38,7 @@ import {
   isAddressableDetailEntry,
   type DetailAddressableEntry,
 } from "../../web/src/lib/detail-addressability.ts";
-import { SITE_GATE, isBuiltDetailEntry } from "./detail-route-fixture.ts";
+import { isBuiltDetailEntry } from "./detail-route-fixture.ts";
 import { isDefaultMutedCategory } from "../../web/src/lib/category-visibility.ts";
 import { isKnowledgeEligibleEntry } from "../../web/src/lib/knowledge-eligibility.ts";
 import { ADSENSE_CLIENT_ID, SITE_URL } from "../../web/src/lib/site.ts";

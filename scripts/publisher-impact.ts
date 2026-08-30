@@ -228,9 +228,10 @@ function addressableEntries(
     files.get("data/index.json") ?? null,
   )) {
     // Must stay a superset-consistent mirror of the real route policy
-    // (web/src/lib/detail-addressability.ts): summary-pending entries and
-    // publication-gate holds have no /e/[id]/ route, so they must never be
-    // planned as detail upserts.
+    // (web/src/lib/detail-addressability.ts): summary-pending entries have no
+    // /e/[id]/ route, so they must never be planned as detail upserts. Held
+    // entries DO get a (noindex) route — the gate annotation below feeds the
+    // shared policy shape, not route existence.
     const candidate = gated(entry);
     if (isListableEntry(candidate) && isAddressableDetailEntry(candidate)) {
       entries.set(candidate.id, candidate);

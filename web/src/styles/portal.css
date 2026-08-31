@@ -37,6 +37,17 @@
   padding: 0;
 }
 
+/* Desktop density: the stylesheet is authored in px, so a uniform 90% zoom is
+   the one-line way to tighten every component together (user feedback:
+   "ブラウザ倍率 90% がちょうどいい"). Mobile stays 100% — its layout was
+   tuned at 375px and the 44px touch-target contract must keep real pixels.
+   Browsers without CSS zoom (Firefox < 126) simply render at 100%. */
+@media (min-width: 768px) {
+  html {
+    zoom: 0.9;
+  }
+}
+
 html,
 body {
   background:

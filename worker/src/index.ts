@@ -142,7 +142,7 @@ export interface PublisherEnv extends GithubRepositoryEnv {
   // Max current body candidates to inspect per run. Previous-run jobs receive
   // a separate bounded lookup so generated bodies are merged promptly.
   BODY_LOOKUP_CAP?: string;
-  /** Bounded per-run KV lookups for the chat backfill lane (default 20). */
+  /** Bounded per-run KV lookups for the chat backfill lane (default 120). */
   CHAT_LOOKUP_CAP?: string;
   // Operational size budget for data/bodies.json (LL-411). Defaults to
   // DEFAULT_BODY_BUDGET_TARGET_BYTES, well below the much larger
@@ -2347,7 +2347,11 @@ export async function runBodyPipeline(
     //     them back so mergeBodies grafts ONLY the chat onto the existing
     //     record and the published prose never churns. Once every record has
     //     a chat the candidate set is empty and the lane costs nothing.
-    const chatLookupCap = Math.max(0, Number(env.CHAT_LOOKUP_CAP ?? 20));
+    // Default 120: the backfilled corpus is ~1,000 chats, so the catch-up
+    // completes within a working day of hourly runs; once every record has a
+    // chat the candidate set is empty and the lane costs nothing. Reads only
+    // (LL-043 budgets writes), so the higher cap is safe.
+    const chatLookupCap = Math.max(0, Number(env.CHAT_LOOKUP_CAP ?? 120));
     // Counted separately from bodyLookupCount: the telemetry invariant
     // (tests/data-schema.test.ts) is bodyMerged <= bodyLookupCount +
     // chatLookupCount, since chat grafts also increment mergeBodies' added.

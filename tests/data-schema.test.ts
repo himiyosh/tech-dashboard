@@ -669,7 +669,12 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
       expect(bodyEnqueued).toBeLessThanOrEqual(bodyCap ?? 0);
     }
     if (bodyMerged !== undefined) {
-      expect(bodyMerged).toBeLessThanOrEqual(bodyLookup ?? 0);
+      // The chat backfill lane (CHAT_LOOKUP_CAP) grafts chats through the same
+      // mergeBodies counter, so its lookups extend the merge bound. Artifacts
+      // from before the lane carry no chatLookupCount and keep the old bound.
+      expect(bodyMerged).toBeLessThanOrEqual(
+        (bodyLookup ?? 0) + (health?.chatLookupCount ?? 0),
+      );
     }
     if (
       summaryEnqueued !== undefined

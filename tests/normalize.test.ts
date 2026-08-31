@@ -66,7 +66,7 @@ describe("normalize summary fields", () => {
   it("長い snippet は context 用に上限まで切り詰める", () => {
     const long = "x".repeat(1_000);
     const entry = normalize({ ...rawEntry("Long"), contentSnippet: long }, releaseSource, "2026-05-10T01:00:00.000Z");
-    expect(entry.contentSnippet?.length).toBe(280);
+    expect(entry.contentSnippet?.length).toBe(900);
   });
 });
 

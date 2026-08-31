@@ -99,10 +99,11 @@ export interface BodyLengthPlan {
  * excerpt, so counting them would double-count the input and license the model
  * to expand on its own prior output. Measured before this change: 6,770,705
  * generated body characters came out of 289,687 characters of excerpt (23.4x
- * overall) while the collector caps the excerpt at 280 chars (800 for
- * evergreen, harness/pipeline/normalize.ts:92-93). Asking for 700-1100 JA chars
- * and 500-800 EN words from that is a standing instruction to invent, so the
- * requested band now scales with what the source supplied.
+ * overall) while the collector capped the excerpt at 280 chars. Asking for
+ * 700-1100 JA chars and 500-800 EN words from that is a standing instruction
+ * to invent, so the requested band scales with what the source supplied. The
+ * collector cap now matches this budget (900, harness/pipeline/normalize.ts),
+ * so rich feeds earn the full band honestly; thin feeds stay short.
  */
 function sourceBudgetChars(e: BodyPromptEntry): number {
   if (!e.contentSnippet || isFallbackText(e.contentSnippet)) return 0;
@@ -135,8 +136,9 @@ function roundToTen(value: number): number {
  * the job into the DLQ.
  *
  * Worked points: 48-187 source chars -> JA 180-300 / EN 80-130 words;
- * 280 (the collector cap and the corpus median) -> JA 270-450 / EN 120-200;
- * 800 (evergreen cap) -> JA 540-900 / EN 240-400.
+ * 280 (the legacy collector cap; most of the stored corpus) -> JA 270-450 /
+ * EN 120-200; 563+ (rich feeds under the 900 collector cap) -> JA 540-900 /
+ * EN 240-400 (the full band).
  */
 export function bodyLengthPlan(e: BodyPromptEntry): BodyLengthPlan {
   const sourceChars = sourceBudgetChars(e);

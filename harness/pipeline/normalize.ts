@@ -89,8 +89,14 @@ export function scoreImportance(raw: RawEntry, source: SourceDefinition): Import
   return 1;
 }
 
-const DEFAULT_SNIPPET_CONTEXT_MAX = 280;
-const EVERGREEN_SNIPPET_CONTEXT_MAX = 800;
+// 900 aligns with the body generator's own excerpt budget
+// (worker/src/body-generate.ts sourceBudgetChars compacts to 900): the
+// scaled length band (bodyLengthPlan) asks for prose proportional to the
+// REAL material collected, so a richer excerpt is the honest way to longer
+// bodies. Raised from 280/800 after gpt-5.6 followed the band literally and
+// bodies for feed-capped excerpts came out at ~330 JA chars.
+const DEFAULT_SNIPPET_CONTEXT_MAX = 900;
+const EVERGREEN_SNIPPET_CONTEXT_MAX = 900;
 
 /**
  * Extract the raw RSS/Atom snippet to keep as AI input context for the

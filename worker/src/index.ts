@@ -1832,6 +1832,8 @@ export interface HeartbeatHealthSnapshot {
   bodyEnqueueCap?: number;
   bodyEnqueued?: number;
   bodyLookupCount?: number;
+  /** KV lookups made by the chat backfill lane (CHAT_LOOKUP_CAP). */
+  chatLookupCount?: number;
   bodyMerged?: number;
   bodyPruned?: number;
   bodyQueueDrainEstimateHours?: number;
@@ -1881,6 +1883,7 @@ export function buildHeartbeatPayload(
     bodyEnqueueCap: health.bodyEnqueueCap,
     bodyEnqueued: health.bodyEnqueued,
     bodyLookupCount: health.bodyLookupCount,
+    chatLookupCount: health.chatLookupCount,
     bodyMerged: health.bodyMerged,
     bodyPruned: health.bodyPruned,
     bodyQueueDrainEstimateHours: health.bodyQueueDrainEstimateHours,
@@ -2126,6 +2129,8 @@ export interface BodyPipelineResult {
     bodyBacklog: number;
     bodyQueueDrainEstimateHours: number;
     bodyLookupCount: number;
+    /** KV lookups made by the chat backfill lane (CHAT_LOOKUP_CAP). */
+    chatLookupCount: number;
     bodyPendingLookupCount: number;
     bodyMergePendingIds: string[];
     bodyMerged: number;
@@ -2256,6 +2261,7 @@ export async function runBodyPipeline(
       bodyBacklog: 0,
       bodyQueueDrainEstimateHours: 0,
       bodyLookupCount: 0,
+      chatLookupCount: 0,
       bodyPendingLookupCount: 0,
       bodyMergePendingIds: [],
       bodyMerged: 0,
@@ -2342,6 +2348,10 @@ export async function runBodyPipeline(
     //     record and the published prose never churns. Once every record has
     //     a chat the candidate set is empty and the lane costs nothing.
     const chatLookupCap = Math.max(0, Number(env.CHAT_LOOKUP_CAP ?? 20));
+    // Counted separately from bodyLookupCount: the telemetry invariant
+    // (tests/data-schema.test.ts) is bodyMerged <= bodyLookupCount +
+    // chatLookupCount, since chat grafts also increment mergeBodies' added.
+    let chatLookupCount = 0;
     if (chatLookupCap > 0) {
       const alreadyLookedUp = new Set(selection.lookupJobs.map((job) => job.entry.id));
       const chatCandidates = retainedEntries
@@ -2356,6 +2366,7 @@ export async function runBodyPipeline(
           ),
         )
         .slice(0, chatLookupCap);
+      chatLookupCount = chatCandidates.length;
       if (chatCandidates.length > 0) {
         const chatHits = await getBodyCacheEntries(
           env.SUMMARY_CACHE,
@@ -2449,6 +2460,7 @@ export async function runBodyPipeline(
           ? Math.ceil(remainingBacklog / enqueueCap)
           : 0,
         bodyLookupCount: selection.lookupJobs.length,
+        chatLookupCount,
         bodyPendingLookupCount: selection.pendingJobs.length,
         bodyMergePendingIds: toEnqueue.slice(0, enqueued).map((job) => job.entry.id),
         bodyMerged: merge.added,

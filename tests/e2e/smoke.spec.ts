@@ -9379,14 +9379,23 @@ test.describe("TECH Dashboard smoke", () => {
         coldTagCounts.set(tag, (coldTagCounts.get(tag) ?? 0) + 1);
       }
     }
+    // A LIVE cold row now keeps an in-site (noindex) route, so its archive
+    // card links internally; the source-destination assertion below needs an
+    // archive-ONLY record, which is what this recovery lane exists for.
+    const liveIdSet = new Set(
+      (JSON.parse(readFileSync("data/index.json", "utf8")) as {
+        entries: Array<{ id: string }>;
+      }).entries.map((entry) => entry.id),
+    );
     const record = requirePresent(
       payload.entries.find(
         (entry) =>
           !entry.titleJa
           && entry.titleEn.length >= 12
-          && entry.tags.length > 0,
+          && entry.tags.length > 0
+          && !liveIdSet.has(entry.entryId),
       ),
-      "built cold archive search index has an English-only title fixture",
+      "built cold archive search index has an archive-only English-only title fixture",
     );
     const tagFixture = requirePresent(
       payload.entries

@@ -182,8 +182,8 @@ function missingLiveSurfaces(entry: NormalizedEntry): string[] {
   if (destination.external || destination.href !== detailPath(entry.id)) {
     missing.push(`in-site canonical URL (got ${destination.href})`);
   }
-  // Evergreen never decays past warm (harness/half-life.ts decideTier), and
-  // cold/dropped would strip the individual route.
+  // Evergreen never decays past warm (harness/half-life.ts decideTier); a
+  // colder tier would demote the page to noindex (detail-indexability.ts).
   if (entry.archiveTier !== "hot" && entry.archiveTier !== "warm") {
     missing.push(`evergreen archive tier (got ${String(entry.archiveTier)})`);
   }

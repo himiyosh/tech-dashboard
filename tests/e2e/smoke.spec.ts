@@ -7271,8 +7271,12 @@ test.describe("TECH Dashboard smoke", () => {
         if (entry) warmOnly = { id: entry.id, month };
       }
       if (!cold) {
+        // Archive-ONLY cold: a live cold row now keeps a (noindex) route and
+        // its card links in-site, so the source-link assertion below needs a
+        // row the route builder never sees.
         const entry = archive.entries.find(
-          (candidate) => candidate.archiveTier === "cold",
+          (candidate) =>
+            candidate.archiveTier === "cold" && !liveIds.has(candidate.id),
         );
         if (entry) cold = { id: entry.id, month, url: entry.url };
       }

@@ -63,6 +63,11 @@ export function isIndexableDetailEntry(entry: DetailIndexableEntry): boolean {
   // bulk ingest from surfacing to search engines as a single-day burst of
   // new indexable pages (publication-gate.ts dailyReleaseLimit).
   if (entry.publicationHold === true) return false;
+  // Cold-tier rows keep a reachable (noindex) route so listing cards land
+  // in-site, but decayed content must not stay in the search index.
+  if (entry.archiveTier === "cold" || entry.archiveTier === "dropped") {
+    return false;
+  }
   // A real body is necessary but not sufficient: the version-note lane is
   // excluded outright (detail-index-policy.ts).
   if (isNonIndexableLane(entry)) return false;

@@ -131,12 +131,22 @@ describe("sitemap", () => {
       href: "/e/warm/",
       external: false,
     });
+    // Cold rows keep an in-site (noindex) route; only "dropped" — removed
+    // content — still sends the card to the source.
     expect(entryDestination({
       id: "cold",
       url: "https://example.com/cold",
       archiveTier: "cold",
     })).toEqual({
-      href: "https://example.com/cold",
+      href: "/e/cold/",
+      external: false,
+    });
+    expect(entryDestination({
+      id: "gone",
+      url: "https://example.com/gone",
+      archiveTier: "dropped",
+    })).toEqual({
+      href: "https://example.com/gone",
       external: true,
       target: "_blank",
       rel: "noopener noreferrer nofollow",

@@ -55,10 +55,12 @@ export function hasUsableDetailSummary(entry: DetailAddressableEntry): boolean {
 }
 
 /**
- * Detail routes exist only for current hot/warm content that has a real
- * summary. Untiered entries are accepted for compatibility with older live
- * snapshots; cold/dropped entries are month-only or removed and must never
- * receive an individual route.
+ * Detail routes exist for every collected entry that has a real summary —
+ * including cold-tier rows still present in a listing, so a card title always
+ * lands in-site (cold pages are noindex and off the sitemap,
+ * detail-indexability.ts). Untiered entries are accepted for compatibility
+ * with older live snapshots; only "dropped" entries are removed content and
+ * must never receive an individual route.
  *
  * Summary-absent entries (deterministic pending fallback only) render nothing
  * but the title plus "Summary pending" boilerplate — thousands of such
@@ -81,7 +83,6 @@ export function isAddressableDetailEntry(
   entry: DetailAddressableEntry,
 ): boolean {
   return (
-    entry.archiveTier !== "cold" &&
     entry.archiveTier !== "dropped" &&
     hasUsableDetailSummary(entry)
   );

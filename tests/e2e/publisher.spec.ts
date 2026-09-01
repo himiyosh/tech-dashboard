@@ -1172,7 +1172,11 @@ test.describe("Publisher generated artifact", () => {
         && !isNonIndexableLane(entry)
         && SITE_GATE.isReleased(entry.id),
     );
-    const cold = index.entries.find((entry) => entry.archiveTier === "cold");
+    // A summarized cold row keeps a reachable noindex route (card titles land
+    // in-site); its decayed content still stays out of the sitemap.
+    const cold = index.entries.find(
+      (entry) => entry.archiveTier === "cold" && isBuiltDetailEntry(entry as never),
+    );
     const pendingLive = index.entries.find(
       (entry) =>
         entry.archiveTier !== "cold" &&
@@ -1214,7 +1218,10 @@ test.describe("Publisher generated artifact", () => {
 
     expect(hotResponse.status()).toBe(200);
     expect(warmResponse.status()).toBe(200);
-    expect(coldResponse.status()).toBe(404);
+    expect(coldResponse.status()).toBe(200);
+    expect(await coldResponse.text()).toMatch(
+      /<meta\s+name="robots"\s+content="noindex,\s*follow"\s*\/?>/,
+    );
     expect(sitemap).toContain(`<loc>${SITE_URL}/e/${hot!.id}/</loc>`);
     // Archive-only warm entries carry no generated body, so they stay
     // reachable (200 above) but must not be advertised for indexing.
@@ -1230,7 +1237,7 @@ test.describe("Publisher generated artifact", () => {
     }
   });
 
-  test("routes and announces cold source links while hot and warm cards stay internal", async ({
+  test("routes and announces external source links while summarized cards stay internal", async ({
     page,
   }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
@@ -1238,12 +1245,39 @@ test.describe("Publisher generated artifact", () => {
     };
     const timelineRoutes = generatedEntryRoutes("page");
     const archiveRoutes = generatedEntryRoutes("archive");
-    // Card-visibility assertions require lanes the reader can see: the
-    // timeline hides default-muted categories (category-visibility.ts).
-    const cold = index.entries
-      .filter((entry) => entry.archiveTier === "cold" && !isDefaultMutedCategory(entry.category))
-      .map((entry) => ({ entry, route: timelineRoutes.get(entry.id) }))
-      .find(({ route }) => route);
+    // Under the tier-agnostic route policy the only cards that reliably link
+    // out are archive-ONLY cold rows (the route builder never sees them), so
+    // the external-announcement coverage lives on an archive month page. The
+    // timeline can go fully internal when every visible entry is summarized.
+    const liveIdSet = new Set(index.entries.map((entry) => entry.id));
+    const monthsIndex = JSON.parse(
+      readFileSync("data/archive/_index.json", "utf8"),
+    ) as { months: string[] };
+    let cold:
+      | { entry: { id: string; url: string; category: string }; route: string }
+      | undefined;
+    for (const month of monthsIndex.months) {
+      const monthFile = JSON.parse(
+        readFileSync(`data/archive/${month}.json`, "utf8"),
+      ) as {
+        entries: Array<{
+          id: string;
+          url: string;
+          archiveTier?: string;
+          category: string;
+        }>;
+      };
+      const entry = monthFile.entries.find(
+        (candidate) =>
+          candidate.archiveTier === "cold"
+          && !liveIdSet.has(candidate.id)
+          && !isDefaultMutedCategory(candidate.category),
+      );
+      if (entry) {
+        cold = { entry, route: `/archive/${month}/` };
+        break;
+      }
+    }
     const hot = index.entries
       .filter((entry) =>
         entry.archiveTier === "hot"
@@ -1273,7 +1307,7 @@ test.describe("Publisher generated artifact", () => {
       }
     }
 
-    expect(cold, "fixture includes a cold card on a generated timeline page").toBeTruthy();
+    expect(cold, "fixture includes an archive-only cold card on an archive month page").toBeTruthy();
     expect(hot, "fixture includes a hot card on a generated timeline page").toBeTruthy();
     expect(warm, "fixture includes a warm card on a generated archive page").toBeTruthy();
 

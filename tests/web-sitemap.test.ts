@@ -66,19 +66,22 @@ describe("sitemap", () => {
       ],
     );
 
-    // "queued" (publicationHold) keeps its route: the gate now decides
-    // index/noindex (detail-indexability.ts), never route existence, so card
-    // titles always land in-site while the sitemap drip stays gated.
+    // "queued" (publicationHold) and "cold" keep their routes: the gate and
+    // the tier now decide index/noindex (detail-indexability.ts), never route
+    // existence, so a card title always lands in-site. Only "dropped"
+    // (removed content) stays routeless.
     expect(entries.map((entry) => entry.id)).toEqual([
       "live-legacy",
       "hot",
+      "cold",
       "warm",
       "queued",
     ]);
     expect(isAddressableDetailEntry({ id: "hot", archiveTier: "hot" })).toBe(true);
     expect(isAddressableDetailEntry({ id: "warm", archiveTier: "warm" })).toBe(true);
-    expect(isAddressableDetailEntry({ id: "cold", archiveTier: "cold" })).toBe(false);
+    expect(isAddressableDetailEntry({ id: "cold", archiveTier: "cold" })).toBe(true);
     expect(isAddressableDetailEntry({ id: "dropped", archiveTier: "dropped" })).toBe(false);
+    expect(isIndexableDetailEntry({ id: "cold", archiveTier: "cold" })).toBe(false);
   });
 
   it("summary-pending entries get no detail route (thin-page guard)", () => {
@@ -128,12 +131,22 @@ describe("sitemap", () => {
       href: "/e/warm/",
       external: false,
     });
+    // Cold rows keep an in-site (noindex) route; only "dropped" — removed
+    // content — still sends the card to the source.
     expect(entryDestination({
       id: "cold",
       url: "https://example.com/cold",
       archiveTier: "cold",
     })).toEqual({
-      href: "https://example.com/cold",
+      href: "/e/cold/",
+      external: false,
+    });
+    expect(entryDestination({
+      id: "gone",
+      url: "https://example.com/gone",
+      archiveTier: "dropped",
+    })).toEqual({
+      href: "https://example.com/gone",
       external: true,
       target: "_blank",
       rel: "noopener noreferrer nofollow",

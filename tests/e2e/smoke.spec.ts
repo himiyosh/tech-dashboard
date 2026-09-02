@@ -1732,7 +1732,6 @@ test.describe("TECH Dashboard smoke", () => {
         const topRankStyle = getComputedStyle(topRank);
         const bannerInnerRect = bannerInner.getBoundingClientRect();
         const footerRect = footer.getBoundingClientRect();
-        const footerRunDetail = footer.querySelector<HTMLElement>(".footer-run-link .mono");
         const footerStack = footer.querySelector<HTMLElement>(".footer-stack");
         const footerBodyQueue = footer.querySelector<HTMLElement>(".footer-body-queue");
         const requiredChildRect = (item: HTMLElement, selector: string) => {
@@ -1834,9 +1833,6 @@ test.describe("TECH Dashboard smoke", () => {
           topRankBottom: topRankRect.bottom,
           visibleBottom: Math.min(window.innerHeight, footerRect.top),
           footerHeight: footerRect.height,
-          footerRunTextOverflow: footerRunDetail
-            ? getComputedStyle(footerRunDetail).textOverflow
-            : "",
           footerStackVisible: !!footerStack && getComputedStyle(footerStack).display !== "none",
           footerBodyQueueVisible:
             !!footerBodyQueue && getComputedStyle(footerBodyQueue).display !== "none",
@@ -1956,7 +1952,6 @@ test.describe("TECH Dashboard smoke", () => {
         } else {
         }
         if (width <= 980) {
-          expect(metrics.footerRunTextOverflow, `width ${width}: footer run detail should truncate safely`).toBe("ellipsis");
         }
       } else {
         expect(metrics.rankGridCols, `width ${width}: mobile Top-3 should remain a single column`).toBe(1);

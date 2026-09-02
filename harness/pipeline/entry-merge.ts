@@ -23,8 +23,18 @@ export function mergeEntryEnrichment(
 ): NormalizedEntry {
   if (!fallback) return primary;
 
+  // A fetched article excerpt (or the record of a failed attempt) must not be
+  // overwritten by the feed description every time the item is re-collected:
+  // the article lane is bounded per run and marks each attempt exactly once.
+  const excerpt = primary.excerptOrigin
+    ? { contentSnippet: primary.contentSnippet, excerptOrigin: primary.excerptOrigin }
+    : fallback.excerptOrigin
+      ? { contentSnippet: fallback.contentSnippet, excerptOrigin: fallback.excerptOrigin }
+      : {};
+
   return {
     ...primary,
+    ...excerpt,
     titleJa: fillText(primary.titleJa, fallback.titleJa),
     titleEn: fillText(primary.titleEn, fallback.titleEn),
     summaryJa: fillText(primary.summaryJa, fallback.summaryJa),

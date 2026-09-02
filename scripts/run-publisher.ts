@@ -686,6 +686,7 @@ export async function runPublisherCli(
     BODY_ENQUEUE_MAX_NEW: "35",
     BODY_LOOKUP_CAP: "35",
     BODY_RETENTION_DAYS: "30",
+    ARTICLE_FETCH_CAP: "40",
   };
   const result = await (dependencies.runHarness ?? runHarness)(publisherEnv, {
     commitFiles,

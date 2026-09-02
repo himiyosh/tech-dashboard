@@ -116,6 +116,14 @@ export interface NormalizedEntry {
    * summary (snippet-masquerade bug). Optional / may be dropped once unneeded.
    */
   contentSnippet?: string;
+  /**
+   * Where contentSnippet came from. Absent = feed description (the default
+   * collector path). "article" = replaced with prose fetched from the article
+   * page (worker/src/article-excerpt.ts); "article-unavailable" = the fetch
+   * was attempted once and produced nothing usable, so the lane must not retry
+   * it every run. Both markers survive re-collection (entry-merge.ts).
+   */
+  excerptOrigin?: "article" | "article-unavailable";
   /** Long-form magazine-style article body in Japanese (optional). */
   bodyJa?: string;
   /** Long-form magazine-style article body in English (optional). */

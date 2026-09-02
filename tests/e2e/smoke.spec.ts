@@ -4536,19 +4536,10 @@ test.describe("TECH Dashboard smoke", () => {
     const card = reactionConfigCard(page);
     await expect(card).toHaveAttribute("data-reaction-config-state", "not-configured");
     await expect(card.locator("[data-reaction-config-label] > .i18n-ja")).toHaveText("未設定");
+    // Public copy stays generic — no secret is named (site audit).
+    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toHaveText("匿名いいねは現在利用できません。");
+    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).not.toContainText("シークレット");
     await expect(card.locator("[data-reaction-config-label] > .i18n-en")).toHaveText("Not configured");
-    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
-      "識別子署名用シークレット",
-    );
-    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
-      "Turnstile 検証シークレット",
-    );
-    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
-      "Turnstile 公開サイトキー",
-    );
-    await expect(card.locator("[data-reaction-config-detail] > .i18n-en")).toContainText(
-      "Identity signing secret",
-    );
 
     await expect(
       card.locator('[data-reaction-config-flag="databaseBinding"]'),

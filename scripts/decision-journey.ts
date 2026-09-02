@@ -909,9 +909,17 @@ async function runJourneyInContext(
     }
   });
   page.on("console", (message) => {
-    if (message.type() === "error" && runtimeErrors.length < EVIDENCE_MAX_ARRAY_LENGTH) {
-      runtimeErrors.push(`console: ${message.text()}`);
-    }
+    if (message.type() !== "error" || runtimeErrors.length >= EVIDENCE_MAX_ARRAY_LENGTH) return;
+    const text = message.text();
+    // Article thumbnails are hotlinked from their source hosts, and a host that
+    // ships Cross-Origin-Resource-Policy: same-origin blocks the load
+    // (net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin). Every card/hero image has an
+    // onerror fallback (R-021), so this data-dependent class of console noise
+    // is not a journey failure — the same exclusion the Publisher smoke uses
+    // (tests/e2e/publisher.spec.ts collectRuntimeErrors). Everything else
+    // (script errors, real 4xx/5xx) still fails the step.
+    if (text.includes("ERR_BLOCKED_BY_RESPONSE")) return;
+    runtimeErrors.push(`console: ${text}`);
   });
   const runtime: JourneyRuntime = {
     page,

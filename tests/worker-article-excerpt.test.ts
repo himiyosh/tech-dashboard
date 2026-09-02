@@ -12,6 +12,8 @@ import {
 
 const PARA = "この段落は本文抽出テスト用の十分に長い日本語の文章で、メニューやラベルではなく記事本文として扱われるべきものです。";
 
+const PROSE = `<p>${PARA}</p>`.repeat(4);
+
 function page(bodyInner: string, head = ""): string {
   return `<!doctype html><html><head><title>t</title>${head}</head><body>${bodyInner}</body></html>`;
 }
@@ -48,7 +50,7 @@ describe("extractArticleText", () => {
   it("prefers <article> prose and drops nav/footer/script boilerplate", () => {
     const html = page(
       `<nav><a href="/">ホーム</a><a href="/about">このサイトについて</a></nav>
-       <article><h1>見出し</h1><p>${PARA}</p><p>${PARA}</p><script>var x = "${PARA}";</script></article>
+       <article><h1>見出し</h1>${PROSE}<script>var x = "${PARA}";</script></article>
        <footer><p>${PARA} フッターの長い定型文です。</p></footer>`,
     );
     const text = extractArticleText(html);
@@ -59,15 +61,15 @@ describe("extractArticleText", () => {
   });
 
   it("falls back to <main> then <body> when there is no <article>", () => {
-    const html = page(`<main><div><p>${PARA}</p><p>${PARA}</p></div></main>`);
+    const html = page(`<main><div>${PROSE}</div></main>`);
     expect(extractArticleText(html)).toContain(PARA);
-    const bodyOnly = page(`<div class="post"><p>${PARA}</p><p>${PARA}</p></div>`);
+    const bodyOnly = page(`<div class="post">${PROSE}</div>`);
     expect(extractArticleText(bodyOnly)).toContain(PARA);
   });
 
   it("drops short menu-like lines and decodes entities", () => {
     const html = page(
-      `<article><ul><li>Home</li><li>Blog</li></ul><p>Tom &amp; Jerry &#x27;quote&#x27; ${PARA}</p><p>${PARA}</p></article>`,
+      `<article><ul><li>Home</li><li>Blog</li></ul><p>Tom &amp; Jerry &#x27;quote&#x27; ${PARA}</p>${PROSE}</article>`,
     );
     const text = extractArticleText(html);
     expect(text).toContain("Tom & Jerry 'quote'");
@@ -102,7 +104,7 @@ describe("capExcerpt", () => {
 
 describe("fetchArticleExcerpt", () => {
   it("returns capped prose for an HTML page and null for non-HTML, errors, or non-http", async () => {
-    const html = page(`<article><p>${PARA}</p><p>${PARA}</p><p>${PARA}</p></article>`);
+    const html = page(`<article>${PROSE}</article>`);
     const fetchImpl = (async () => htmlResponse(html)) as unknown as typeof fetch;
     const text = await fetchArticleExcerpt("https://example.com/a", { fetchImpl });
     expect(text).toContain(PARA);
@@ -131,7 +133,7 @@ describe("fetchArticleExcerpt", () => {
 });
 
 describe("enrichThinExcerpts", () => {
-  const article = page(`<article><p>${PARA}</p><p>${PARA}</p><p>${PARA}</p></article>`);
+  const article = page(`<article>${PROSE}</article>`);
 
   it("flags thin excerpts and skips entries already attempted", () => {
     expect(isThinExcerptCandidate(entry({ contentSnippet: "short" }))).toBe(true);

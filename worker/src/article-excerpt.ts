@@ -43,11 +43,26 @@ const ENTITY_MAP: Record<string, string> = {
   "&apos;": "'",
   "&#39;": "'",
   "&nbsp;": " ",
+  "&mdash;": "—",
+  "&ndash;": "–",
+  "&hellip;": "…",
+  "&lsquo;": "‘",
+  "&rsquo;": "’",
+  "&ldquo;": "“",
+  "&rdquo;": "”",
+  "&laquo;": "«",
+  "&raquo;": "»",
+  "&copy;": "©",
+  "&reg;": "®",
+  "&trade;": "™",
 };
 
 function decodeEntities(value: string): string {
   return value
-    .replace(/&(?:amp|lt|gt|quot|apos|nbsp|#39);/gi, (m) => ENTITY_MAP[m.toLowerCase()] ?? m)
+    .replace(
+      /&(?:amp|lt|gt|quot|apos|nbsp|mdash|ndash|hellip|lsquo|rsquo|ldquo|rdquo|laquo|raquo|copy|reg|trade|#39);/gi,
+      (m) => ENTITY_MAP[m.toLowerCase()] ?? m,
+    )
     .replace(/&#(?:x([0-9a-f]+)|(\d+));/gi, (match, hex, decimal) => {
       const codePoint = Number.parseInt(hex ?? decimal, hex ? 16 : 10);
       if (!Number.isInteger(codePoint) || codePoint <= 0 || codePoint > 0x10ffff) return match;
@@ -69,6 +84,23 @@ const BLOCK_RE =
 const TAG_RE = /<[^>]+>/g;
 /** A line this short is a menu item, label, or caption, not prose. */
 const MIN_LINE_CHARS = 30;
+/**
+ * A line without sentence punctuation is only prose when it is clearly a
+ * paragraph (e.g. a heading-less wall of text); shorter unpunctuated lines
+ * are topic menus, tag clouds, or breadcrumbs (Microsoft Research's research-
+ * area list is 30-60 chars per item and carries no punctuation).
+ */
+const MIN_UNPUNCTUATED_LINE_CHARS = 80;
+const SENTENCE_PUNCTUATION_RE = /[。．.!！?？]/;
+/** Sponsor, consent, and account chrome that survives the structural strip. */
+const BOILERPLATE_LINE_RE =
+  /^(?:sponsored by|advertisement|advertising|cookie|we use cookies|subscribe|sign in|sign up|log in|share this|related (?:posts|articles)|read more)\b/i;
+
+function isProseLine(line: string): boolean {
+  if (line.length < MIN_LINE_CHARS) return false;
+  if (BOILERPLATE_LINE_RE.test(line)) return false;
+  return SENTENCE_PUNCTUATION_RE.test(line) || line.length >= MIN_UNPUNCTUATED_LINE_CHARS;
+}
 
 function innerHtml(html: string, tag: string): string[] {
   const re = new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)<\\/${tag}\\s*>`, "gi");
@@ -93,7 +125,7 @@ function proseFromFragment(fragment: string): string {
     .replace(TAG_RE, " ")
     .split("\n")
     .map((line) => decodeEntities(line).replace(/\s+/g, " ").trim())
-    .filter((line) => line.length >= MIN_LINE_CHARS);
+    .filter(isProseLine);
   return lines.join(" ").replace(/\s+/g, " ").trim();
 }
 

@@ -76,6 +76,18 @@ describe("extractArticleText", () => {
     expect(text).not.toMatch(/\bHome\b/);
   });
 
+  it("drops unpunctuated topic menus and sponsor chrome, decodes typographic entities", () => {
+    const menu = "<li>Search &amp; information retrieval systems</li><li>Programming languages &amp; software engineering</li>";
+    const html = page(
+      `<main><ul>${menu}</ul><p>Sponsored by: Greptile &mdash; the AI code reviewer that runs your code today.</p>${PROSE}<p>Quotes &ldquo;work&rdquo; &hellip; and dashes &ndash; too, in this long enough sentence.</p></main>`,
+    );
+    const text = extractArticleText(html);
+    expect(text).not.toContain("information retrieval");
+    expect(text).not.toContain("Sponsored by");
+    expect(text).toContain("“work” … and dashes – too");
+    expect(text).toContain(PARA);
+  });
+
   it("returns meta description when the page carries no prose, and empty for shells", () => {
     const description = "A".repeat(60);
     const shell = page(`<div id="app"></div>`, `<meta property="og:description" content="${description}">`);

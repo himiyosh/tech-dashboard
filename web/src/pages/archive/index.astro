@@ -80,8 +80,8 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
   pageKey="archive"
   title="Archive — TECH Dashboard"
   canonicalPath="/archive/"
-  description={`${years.length} 年 ${months.length} か月分の AI 技術アップデートを月別に保管しています。hot ${storedHot} 件 / warm ${storedWarm} 件 / cold ${storedCold} 件の階層で、過去の発表と変更履歴をさかのぼれます。`}
-  descriptionEn={`${months.length} archived months across ${years.length} years of AI technology updates, tiered as ${storedHot} hot, ${storedWarm} warm, and ${storedCold} cold entries for browsing past announcements and changelogs.`}
+  description={`${years.length} 年 ${months.length} か月分の AI 技術アップデートを月別に保管しています。要約付きの過去記事 ${ARCHIVE_BROWSABLE_ENTRIES} 件を月ごとに閲覧できます。`}
+  descriptionEn={`${months.length} archived months across ${years.length} years of AI technology updates: ${ARCHIVE_BROWSABLE_ENTRIES} summary-ready past articles, browsable by month.`}
   breadcrumb={[{ label: "Home", href: "/" }, { label: "Archive" }]}
 >
   <PageHero
@@ -91,8 +91,8 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
     count={`${ARCHIVE_BROWSABLE_ENTRIES} 閲覧可能 · ${ARCHIVE_STORED_ENTRIES} 保存行`}
     countEn={`${ARCHIVE_BROWSABLE_ENTRIES} browsable · ${ARCHIVE_STORED_ENTRIES} stored`}
     headingId="archive-heading"
-    description="要約付きのwarm/cold記事を月単位で閲覧できます。保存行には、live収録時点を統計用に残すhot snapshotも含まれます。"
-    descriptionEn="Browse summary-ready warm and cold articles by month. Stored rows also include hot statistical snapshots from their live period."
+    description="要約付きの過去記事を月単位で閲覧できます。各月の件数には、掲載当時の記録として残している最近の記事も含まれます。"
+    descriptionEn="Browse summary-ready past articles by month. Monthly counts also include recent articles kept as a record of their time on the site."
     actions={[
       { href: "/", label: "Latest timeline" },
       { href: latestMonth ? `/archive/${latestMonth.month}` : "#archive-months", label: "Latest month" },
@@ -109,28 +109,28 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
       {
         label: "Stored rows",
         value: ARCHIVE_STORED_ENTRIES,
-        detail: "live収録時点のhot snapshotを含む全履歴",
-        detailEn: "Full history including hot snapshots from their live period",
+        detail: "最近の記事の記録を含む全保存件数",
+        detailEn: "Every stored row, including recent articles",
         scope: "archive-stored",
       },
       {
         label: "Months",
         value: months.length,
-        detail: "月次artifact数",
+        detail: "保存している月の数",
         detailEn: "Months with stored articles",
         scope: "archive-month-count",
       },
       {
         label: "Live index",
         value: DASHBOARD_METRICS.timelineEntries,
-        detail: "現在のTimeline",
-        detailEn: "Current Timeline",
+        detail: "現在トップページに掲載中",
+        detailEn: "Currently on the timeline",
         scope: "timeline-live",
       },
       {
         label: "Latest month",
         value: latestMonth ? latestMonth.label : "none",
-        detail: "最新archive月",
+        detail: "最新の保存月",
         detailEn: "Newest archive month",
         scope: "latest-month",
       },
@@ -138,8 +138,8 @@ const updatedLabel = relativeTime(ARCHIVE_GENERATED_AT);
         label: "Updated",
         value: updatedLabel,
         datetime: ARCHIVE_GENERATED_AT,
-        detail: "archive index snapshot",
-        detailEn: "Archive index snapshot",
+        detail: "アーカイブ一覧の更新時刻",
+        detailEn: "Archive list last updated",
         scope: "archive-snapshot",
       },
     ]}

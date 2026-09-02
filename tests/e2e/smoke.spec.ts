@@ -607,7 +607,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(
       page.locator('.banner-fact[data-metric-scope="registry-live-sources"] .fact-scope'),
     ).toContainText(/registry sources with live entries/i);
-    await expect(page.locator(".banner-facts-status")).toContainText(/index (更新|updated)/);
+    await expect(page.locator(".banner-facts-status")).toContainText(/(更新|updated)/);
     await page.locator(".top-rank-item .rank-source").first().evaluate((source) => {
       const fullLabel = "Microsoft Foundry Engineering and AI Platform Updates";
       const label = source.querySelector("[data-source-disclosure-label]");
@@ -893,8 +893,8 @@ test.describe("TECH Dashboard smoke", () => {
       "waiting-for-run",
     );
     await expect(page.locator("[data-summary-mode-label-ja]")).toHaveText("収集再開待ち");
-    await expect(await refreshNode("time.footer-run-time[data-relative-time]")).toHaveText("run 6h ago");
-    await expect(page.locator("[data-footer-run-label]")).toHaveText("run delayed");
+    await expect(await refreshNode("time.footer-run-time[data-relative-time]")).toHaveText("更新 6h ago");
+    await expect(page.locator("[data-footer-run-label]")).toContainText("更新が遅れています");
 
     await page.goto("/");
     await page.locator("a.footer-run-link[data-live-run-health]").evaluate((footer, datetime) => {
@@ -910,7 +910,7 @@ test.describe("TECH Dashboard smoke", () => {
     const pendingCards = page.locator(".summary-state[data-summary-queue-state]");
     if ((await pendingCards.count()) > 0) {
       await expect(pendingCards.first()).toHaveAttribute("data-summary-queue-state", "waiting-for-run");
-      await expect(pendingCards.first().locator("[data-summary-queue-detail-ja]")).toHaveText("収集再開待ち");
+      await expect(pendingCards.first().locator("[data-summary-queue-badge-ja]")).toHaveText("要約を準備中");
     }
 
     await page.goto("/arxiv/");
@@ -928,8 +928,8 @@ test.describe("TECH Dashboard smoke", () => {
       document.dispatchEvent(new Event("techdb:refresh-relative-time"));
     }, sixHoursAgo);
     await expect(page.locator("[data-about-run-state]")).toHaveAttribute("data-run-tone", "err");
-    await expect(page.locator("[data-about-run-label-ja]")).toHaveText("定期収集が遅延");
-    await expect(page.locator("[data-about-run-state]")).toHaveAttribute("aria-label", "収集状況: 定期収集が遅延");
+    await expect(page.locator("[data-about-run-label-ja]")).toHaveText("更新が遅れています");
+    await expect(page.locator("[data-about-run-state]")).toHaveAttribute("aria-label", "収集状況: 更新が遅れています");
   });
 
   test("home renders reader-facing category labels instead of internal slugs", async ({ page }) => {
@@ -989,37 +989,28 @@ test.describe("TECH Dashboard smoke", () => {
       /^(active|clear|waiting-for-run|paused|unavailable|error|unknown)$/,
     );
     expect(bodyBacklog).toMatch(/^(unknown|\d+)$/);
-    await expect(footerRun.locator(".mono")).not.toContainText(runDetail!);
-    await expect(footerRun.locator(".mono")).toContainText(
-      new RegExp(`batch \\d+/\\d+ · sources \\d+/\\d+ · summary ${backlog}`),
+    // The footer is reader-facing since the site audit: pipeline telemetry
+    // (batch/source counts, queue backlogs, harness version, model names)
+    // lives on /status. The footer keeps the machine-readable attributes and
+    // shows only the plain-language state copy plus the last update time.
+    const runState = await footerRun.getAttribute("data-run-state");
+    const stateCopy = {
+      healthy: "正常に更新中",
+      missing: "更新記録なし",
+      late: "更新が遅れています",
+      failed: "直近の更新が失敗",
+      degraded: "一部の更新に遅れ",
+    } as const;
+    await expect(footerRun.locator("[data-footer-run-label] .i18n-ja")).toHaveText(
+      stateCopy[runState as keyof typeof stateCopy],
     );
-    if (bodyState === "active") {
-      await expect(footerRun.locator(".footer-body-queue")).toContainText(
-        `body ${bodyBacklog} pending`,
-      );
-      await expect(footerRun).toHaveAttribute(
-        "title",
-        /AI explainer body queue (about|estimate pending)/i,
-      );
-    } else if (bodyState === "clear") {
-      await expect(footerRun.locator(".footer-body-queue")).toHaveText("body ready");
-      await expect(footerRun).toHaveAttribute("title", /AI explainer body queue clear/i);
-    } else if (bodyState === "waiting-for-run") {
-      const displayedBacklog = bodyBacklog === "unknown" ? "?" : bodyBacklog;
-      await expect(footerRun.locator(".footer-body-queue")).toHaveText(
-        `body ${displayedBacklog} waiting`,
-      );
-      await expect(footerRun).toHaveAttribute(
-        "title",
-        /AI explainer body queue waiting for a successful run/i,
-      );
-    } else if (bodyState === "paused") {
-      await expect(footerRun.locator(".footer-body-queue")).toHaveText("body paused");
-    } else {
-      await expect(footerRun.locator(".footer-body-queue")).toHaveText("body unavailable");
-    }
+    await expect(footerRun.locator(".mono")).toHaveCount(0);
+    await expect(footerRun.locator(".footer-body-queue")).toHaveCount(0);
+    await expect(footerRun).toHaveAttribute("title", /^Collection health: run (ok|no data|delayed|failed|degraded)\./);
     await expect(footerRun).not.toHaveAttribute("aria-label");
-    await expect(footerRun).toHaveAccessibleName(/run .*batch .*sources .*summary .*body/i);
+    await expect(footerRun).toHaveAccessibleName(
+      new RegExp(stateCopy[runState as keyof typeof stateCopy]),
+    );
   });
 
   test("pending cards share the summary queue state and suppress stale ETAs", async ({ page }) => {
@@ -1043,34 +1034,21 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(pendingState).toHaveAttribute("data-summary-queue-mode", queueMode!);
     await expect(pendingState).toHaveAttribute("data-summary-queue-state", queueState!);
     const expectedBadge = {
-      active: "AI要約 準備待ち",
-      clear: "AI要約 次回待ち",
-      "waiting-for-run": "AI要約 再開待ち",
-      paused: "AI要約 停止中",
-      unavailable: "AI要約 利用不可",
-      error: "AI要約 要確認",
-      unknown: "AI要約 確認中",
+      active: "要約を準備中",
+      clear: "要約を準備中",
+      "waiting-for-run": "要約を準備中",
+      paused: "要約は一時停止中",
+      unavailable: "要約は準備できません",
+      error: "要約を確認中",
+      unknown: "要約を準備中",
     } as const;
     await expect(pendingState.locator(".summary-pending-badge .i18n-ja")).toHaveText(
       expectedBadge[queueState as keyof typeof expectedBadge],
     );
-    if (queueState === "active") {
-      await expect(pendingState.locator(".summary-pending-meta.i18n-ja")).toContainText(
-        "全体の要約処理は稼働中",
-      );
-      await expect(pendingState).not.toContainText(/現在値で約|AI summary queued/i);
-    } else if (queueState === "waiting-for-run") {
-      await expect(pendingState.locator(".summary-pending-meta.i18n-ja")).toContainText(
-        "収集再開待ち",
-      );
-      await expect(pendingState).not.toContainText(/解消目安|drain estimate/i);
-    }
-
-    const statusLink = pendingState.locator(".summary-pending-meta a").first();
-    const statusLinkBox = await statusLink.boundingBox();
-    expect(statusLinkBox, "pending recovery link should be measurable").not.toBeNull();
-    expect(statusLinkBox!.height).toBeGreaterThanOrEqual(44);
-    expect(statusLinkBox!.width).toBeGreaterThanOrEqual(44);
+    // Queue detail lines and the /status link were removed from cards (site
+    // audit): a reader sees one short state badge, never pipeline wording.
+    await expect(pendingState.locator(".summary-pending-meta")).toHaveCount(0);
+    await expect(pendingState).not.toContainText(/現在値で約|AI summary queued|解消目安|drain estimate|キュー|Queue/i);
   });
 
   // Timeline rails release progressively: no rails through tablet, the category
@@ -1754,7 +1732,6 @@ test.describe("TECH Dashboard smoke", () => {
         const topRankStyle = getComputedStyle(topRank);
         const bannerInnerRect = bannerInner.getBoundingClientRect();
         const footerRect = footer.getBoundingClientRect();
-        const footerRunDetail = footer.querySelector<HTMLElement>(".footer-run-link .mono");
         const footerStack = footer.querySelector<HTMLElement>(".footer-stack");
         const footerBodyQueue = footer.querySelector<HTMLElement>(".footer-body-queue");
         const requiredChildRect = (item: HTMLElement, selector: string) => {
@@ -1856,9 +1833,6 @@ test.describe("TECH Dashboard smoke", () => {
           topRankBottom: topRankRect.bottom,
           visibleBottom: Math.min(window.innerHeight, footerRect.top),
           footerHeight: footerRect.height,
-          footerRunTextOverflow: footerRunDetail
-            ? getComputedStyle(footerRunDetail).textOverflow
-            : "",
           footerStackVisible: !!footerStack && getComputedStyle(footerStack).display !== "none",
           footerBodyQueueVisible:
             !!footerBodyQueue && getComputedStyle(footerBodyQueue).display !== "none",
@@ -1975,14 +1949,9 @@ test.describe("TECH Dashboard smoke", () => {
         );
         expect(metrics.footerHeight, `width ${width}: footer should stay on one line`).toBeLessThanOrEqual(36);
         if (width <= 1239) {
-          expect(metrics.footerStackVisible, `width ${width}: compact footer should hide the build stack`).toBe(false);
-          expect(metrics.footerBodyQueueVisible, `width ${width}: compact footer should defer body queue detail`).toBe(false);
         } else {
-          expect(metrics.footerStackVisible, `width ${width}: wide footer should restore the build stack`).toBe(true);
-          expect(metrics.footerBodyQueueVisible, `width ${width}: wide footer should restore body queue detail`).toBe(true);
         }
         if (width <= 980) {
-          expect(metrics.footerRunTextOverflow, `width ${width}: footer run detail should truncate safely`).toBe("ellipsis");
         }
       } else {
         expect(metrics.rankGridCols, `width ${width}: mobile Top-3 should remain a single column`).toBe(1);
@@ -2492,7 +2461,7 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(digest.first()).toBeVisible();
       if (bodyState === "queued") {
         await expect(digest.locator(".ed-summary-only-head .i18n-ja")).toHaveText(
-          "AI解説本文を Queue に投入済み",
+          "AI 解説本文を準備中",
         );
         await expect(digest.locator(".ed-summary-only-note .i18n-ja")).toContainText(
           "完了時刻は確約せず",
@@ -4430,24 +4399,30 @@ test.describe("TECH Dashboard smoke", () => {
     const footerRunLink = page.locator("footer .footer-run-link");
     await expect(footerRunLink).toHaveAttribute("href", "/status");
     await expect(footerRunLink).toHaveAttribute("data-run-state", runState!);
-    await expect(footerRunLink.locator("strong")).toHaveText(`run ${expectedStateLabel.toLowerCase()}`);
+    const footerStateCopy = {
+      healthy: "正常に更新中",
+      missing: "更新記録なし",
+      late: "更新が遅れています",
+      failed: "直近の更新が失敗",
+      degraded: "一部の更新に遅れ",
+    } as const;
+    await expect(footerRunLink.locator("strong .i18n-ja")).toHaveText(
+      footerStateCopy[runState as keyof typeof footerStateCopy],
+    );
     await expect(footerRunLink).not.toHaveAttribute("aria-label");
     await expect(footerRunLink).toHaveAttribute(
       "title",
-      /collection health: run (ok|no data|delayed|failed|degraded).*batch \d+\/\d+.*sources \d+\/\d+.*summary \d+.*ai explainer body/i,
+      new RegExp(`^collection health: run ${expectedStateLabel.toLowerCase()}\\.`, "i"),
     );
     await expect(footerRunLink).toHaveAccessibleName(
-      /run (ok|no data|delayed|failed|degraded).*batch \d+\/\d+.*sources \d+\/\d+.*summary \d+.*body/i,
+      new RegExp(footerStateCopy[runState as keyof typeof footerStateCopy]),
     );
     const footerRunDetail = await footerRunLink.getAttribute("data-run-detail");
     expect(footerRunDetail).toBeTruthy();
     const footerDot = footerRunLink.locator(".dot");
     await expect(footerDot).toHaveAttribute("data-run-tone", expectedTone);
     await expect(footerDot).toHaveClass(new RegExp(`\\bdot\\b.*\\b${expectedTone}\\b`));
-    await expect(footerRunLink.locator(".mono")).not.toContainText(footerRunDetail!);
-    await expect(footerRunLink.locator(".mono")).toContainText(
-      /batch \d+\/\d+ · sources \d+\/\d+ · summary \d+/,
-    );
+    await expect(footerRunLink.locator(".mono")).toHaveCount(0);
     await expect(footerRunLink).toHaveAttribute("data-body-queue-backlog", /^(unknown|\d+)$/);
     const lastRunTime = footerRunLink.locator("time.footer-run-time");
     await expect(lastRunTime).toHaveCount(1);
@@ -4501,7 +4476,6 @@ test.describe("TECH Dashboard smoke", () => {
     const card = reactionConfigCard(page);
     await expect(card).toHaveAttribute("data-reaction-config-state", "checking");
     await expect(card.locator("[data-reaction-config-label] > .i18n-ja")).toHaveText("確認中");
-    await expect(card.locator("[data-reaction-config-flags]")).toBeHidden();
 
     await expect(card).toHaveAttribute("data-reaction-config-state", "configured", { timeout: 5_000 });
     await expect(card.locator("[data-reaction-config-label] > .i18n-ja")).toHaveText("設定済み");
@@ -4509,15 +4483,9 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
       "すべて揃っています",
     );
-    const flagRows = card.locator("[data-reaction-config-flag]");
-    await expect(flagRows).toHaveCount(4);
-    await expect(card.locator("[data-reaction-config-flags]")).toBeVisible();
-    for (const key of ["databaseBinding", "hmacSecret", "turnstileSecret", "publicSiteKey"]) {
-      const row = card.locator(`[data-reaction-config-flag="${key}"]`);
-      await expect(row).toHaveAttribute("data-reaction-config-flag-ok", "true");
-      await expect(row.locator("[data-reaction-config-flag-state] > .i18n-ja")).toHaveText("設定済み");
-      await expect(row.locator("[data-reaction-config-flag-state] > .i18n-en")).toHaveText("Configured");
-    }
+    // The per-secret checklist was removed from the public page (site audit):
+    // readers see only the overall state; nothing names a secret.
+    await expect(card.locator("[data-reaction-config-flag]")).toHaveCount(0);
     await expect(card).toHaveClass(/reaction-config-card/);
     const beforeColor = await card.evaluate(
       (element) => getComputedStyle(element, "::before").backgroundColor,
@@ -4543,30 +4511,10 @@ test.describe("TECH Dashboard smoke", () => {
     const card = reactionConfigCard(page);
     await expect(card).toHaveAttribute("data-reaction-config-state", "not-configured");
     await expect(card.locator("[data-reaction-config-label] > .i18n-ja")).toHaveText("未設定");
+    // Public copy stays generic — no secret is named (site audit).
+    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toHaveText("匿名いいねは現在利用できません。");
+    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).not.toContainText("シークレット");
     await expect(card.locator("[data-reaction-config-label] > .i18n-en")).toHaveText("Not configured");
-    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
-      "識別子署名用シークレット",
-    );
-    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
-      "Turnstile 検証シークレット",
-    );
-    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
-      "Turnstile 公開サイトキー",
-    );
-    await expect(card.locator("[data-reaction-config-detail] > .i18n-en")).toContainText(
-      "Identity signing secret",
-    );
-
-    await expect(
-      card.locator('[data-reaction-config-flag="databaseBinding"]'),
-    ).toHaveAttribute("data-reaction-config-flag-ok", "true");
-    for (const key of ["hmacSecret", "turnstileSecret", "publicSiteKey"]) {
-      const row = card.locator(`[data-reaction-config-flag="${key}"]`);
-      await expect(row).toHaveAttribute("data-reaction-config-flag-ok", "false");
-      await expect(row.locator("[data-reaction-config-flag-state] > .i18n-en")).toHaveText(
-        "Not configured",
-      );
-    }
 
     // "neutral, not ERR": the not-configured state must never carry a warn/err tone class
     // or color — this is an optional feature that degrades safely, not an incident.
@@ -4600,7 +4548,6 @@ test.describe("TECH Dashboard smoke", () => {
       "may be a network or temporary issue",
     );
     // Unresolved: the itemized flag breakdown never appears when we couldn't check at all.
-    await expect(card.locator("[data-reaction-config-flags]")).toBeHidden();
     await expect(card).not.toHaveClass(/\berr\b/);
     await expect(card).not.toHaveClass(/\bwarn\b/);
   });

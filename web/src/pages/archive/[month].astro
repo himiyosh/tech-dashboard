@@ -12,7 +12,7 @@ import {
   getMonthSummaries,
   ARCHIVE_TIER_DETAIL,
 } from "../../lib/archive.ts";
-import { ALL_ENTRIES, CATEGORY_META, groupByDay, jstDayLabel, relativeTime, type Category } from "../../lib/data.ts";
+import { ALL_ENTRIES, CATEGORY_META, groupByDay, jstDayLabel, jstDayLabelI18n, relativeTime, type Category } from "../../lib/data.ts";
 import { ARCHIVE_WARM_ENTRIES } from "../../lib/archive.ts";
 import { collectAddressableDetailEntries } from "../../lib/detail-addressability.ts";
 import { canonicalSourceUrl, sourceLabel } from "../../lib/source-meta.ts";
@@ -102,8 +102,8 @@ const monthHeroActions = [
     count={`${file.count} 閲覧可能 · ${file.storedCount} 保存行`}
     countEn={`${file.count} browsable · ${file.storedCount} stored`}
     headingId="archive-month-heading"
-    description="要約付きのwarm/cold記事を日付順に表示します。hotはlive収録時点の統計用snapshotで、この月別一覧には表示しません。"
-    descriptionEn="Summary-ready warm and cold articles are listed by date. Hot rows are statistical snapshots from their live period and are not shown in this monthly list."
+    description="要約付きの過去記事を日付順に表示します。最近の記事はトップページやカテゴリで読めるため、この月別一覧には含めていません。"
+    descriptionEn="Summary-ready past articles listed by date. Recent articles are read on the home and category pages, so they are not repeated in this monthly list."
     actions={monthHeroActions}
     metrics={[
       {
@@ -116,8 +116,8 @@ const monthHeroActions = [
       {
         label: "Stored rows",
         value: file.storedCount,
-        detail: "live収録時点のhot snapshotを含む保存数",
-        detailEn: "Stored rows including hot snapshots from their live period",
+        detail: "最近の記事の記録を含む保存件数",
+        detailEn: "Stored rows, including recent articles",
         scope: "month-stored-count",
       },
       {
@@ -145,8 +145,8 @@ const monthHeroActions = [
         label: "Updated",
         value: updatedLabel,
         datetime: file.generatedAt,
-        detail: "月次artifact snapshot",
-        detailEn: "Monthly artifact snapshot",
+        detail: "この月の一覧の更新時刻",
+        detailEn: "This month's list last updated",
         scope: "month-snapshot",
       },
     ]}
@@ -198,7 +198,7 @@ const monthHeroActions = [
       {dayGroups.map(({ key, items }) => (
         <section class="archive-day" id={`day-${key}`}>
           <div class="day-header">
-            <span>{jstDayLabel(key, now)}</span>
+            <span><span class="i18n-ja">{jstDayLabelI18n(key, now).ja}</span><span class="i18n-en" lang="en">{jstDayLabelI18n(key, now).en}</span></span>
             <span class="day-count">{items.length} entries</span>
           </div>
           {items.map((entry) => (

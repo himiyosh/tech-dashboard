@@ -707,6 +707,28 @@ export function jstDayLabel(key: string, now = new Date()): string {
   }).format(new Date(`${key}T00:00:00+09:00`));
 }
 
+/**
+ * Bilingual day-header label: 今日 / 昨日 / "9月1日(月)" for JA and
+ * TODAY / YESTERDAY / "Sep 1 (Mon)" for EN. Day headers on every listing used
+ * the EN form in both languages (site audit: "英語固定").
+ */
+export function jstDayLabelI18n(key: string, now = new Date()): { ja: string; en: string } {
+  const today = jstDateKey(now.toISOString());
+  const yesterday = jstDateKey(
+    new Date(now.getTime() - 86_400_000).toISOString(),
+  );
+  const en = jstDayLabel(key, now);
+  if (key === today) return { ja: "今日", en };
+  if (key === yesterday) return { ja: "昨日", en };
+  const ja = new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    month: "numeric",
+    day: "numeric",
+    weekday: "short",
+  }).format(new Date(`${key}T00:00:00+09:00`));
+  return { ja, en };
+}
+
 /** Group entries by JST day key, newest first. */
 export function groupByDay(
   entries: readonly NormalizedEntry[],

@@ -8,7 +8,7 @@ import {
   GENERATED_AT,
   MAIN_TIMELINE_ENTRIES,
   groupByDay,
-  jstDayLabel,
+  jstDayLabel, jstDayLabelI18n,
   relativeTime,
   tagHref,
   type NormalizedEntry,
@@ -160,7 +160,7 @@ const breadcrumb = [
         <div class="right-title">Code meaning</div>
         <div class="arxiv-code-list">
           {ARXIV_SOURCE_INFO.map((info) => (
-            <button type="button" class="arxiv-code-item" data-paper-filter={info.id}>
+            <button type="button" class="arxiv-code-item" data-paper-filter={info.id} title={`${info.code}: ${info.shortJa}`}>
               <strong>{info.code}</strong>
               <span>{info.shortJa}</span>
             </button>
@@ -194,6 +194,7 @@ const breadcrumb = [
                 class="paper-filter-btn"
                 data-paper-filter={row.source}
                 data-source-label={sourceButtonLabel(row.source)}
+                title={`${row.code}: ${sourceButtonLabel(row.source)}`}
                 aria-pressed="false"
               >
                 {row.code} <span>{row.total}</span>
@@ -240,7 +241,7 @@ const breadcrumb = [
               {dayGroups.map(({ key, items }) => (
                 <section class="paper-day-group" data-paper-day-group>
                   <div class="day-header">
-                    <span>{jstDayLabel(key, now)}</span>
+                    <span><span class="i18n-ja">{jstDayLabelI18n(key, now).ja}</span><span class="i18n-en" lang="en">{jstDayLabelI18n(key, now).en}</span></span>
                     <span class="day-count" data-paper-day-count>{items.length} papers</span>
                   </div>
                   {items.map((entry) => (

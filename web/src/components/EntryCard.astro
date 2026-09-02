@@ -145,7 +145,9 @@ function sourceIcon(t: string): string {
 const img = entry.image;
 const hasUsableImage =
   !!img && typeof img.src === "string" && img.src.length > 0;
-const thumbMark = hasUsableImage ? img!.source : "";
+// The image origin ("og" / "media") is diagnostic, not reader-facing (site
+// audit): it lives on data-image-source instead of a visible corner mark.
+const thumbSource = hasUsableImage ? img!.source : "";
 const visibleTags = entry.tags.slice(0, 3);
 const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
 ---
@@ -295,14 +297,6 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
             <span class="i18n-ja" data-summary-queue-badge-ja>{queueCopy.badgeJa}</span>
             <span class="i18n-en" lang="en" data-summary-queue-badge-en>{queueCopy.badgeEn}</span>
           </span>
-          <span class="summary-pending-meta i18n-ja">
-            <span data-summary-queue-detail-ja>{queueCopy.detailJa}</span>
-            <a href="/status#worker-health-heading">全体の進行状況</a>
-          </span>
-          <span class="summary-pending-meta i18n-en" lang="en">
-            <span data-summary-queue-detail-en>{queueCopy.detailEn}</span>
-            <a href="/status#worker-health-heading">Site-wide status</a>
-          </span>
         </p>
         {sourceExcerpt && (
           <SourceExcerpt
@@ -353,7 +347,7 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
     </div>
   </div>
 
-  <div class:list={["card-thumb", { fallback: !hasUsableImage, "has-image": hasUsableImage }]} style={`--cat-color:${catColor}${hasUsableImage ? `;--thumb-src:url("${img!.src.replace(/"/g, "%22")}")` : ""}`}>
+  <div class:list={["card-thumb", { fallback: !hasUsableImage, "has-image": hasUsableImage }]} style={`--cat-color:${catColor}${hasUsableImage ? `;--thumb-src:url("${img!.src.replace(/"/g, "%22")}")` : ""}`} data-image-source={thumbSource || undefined}>
     {hasUsableImage && (
       <img
         src={img!.src}
@@ -404,6 +398,5 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
         opacity="0.85"
       >{sourceIcon(entry.sourceType)}</text>
     </svg>
-    {hasUsableImage && <span class="src-mark image-src-mark">{thumbMark}</span>}
   </div>
 </article>

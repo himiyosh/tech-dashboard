@@ -12,7 +12,7 @@ import {
   MAIN_TIMELINE_ENTRIES,
   PAGE_SIZE,
   groupByDay,
-  jstDayLabel,
+  jstDayLabel, jstDayLabelI18n,
   relativeTime,
 } from "../../lib/data.ts";
 import {
@@ -78,15 +78,15 @@ const breadcrumb = [
       {
         label: "Timeline",
         value: MAIN_TIMELINE_ENTRIES.length,
-        detail: "arXivを除く現在一覧",
+        detail: "arXiv を除く掲載中の記事",
         detailEn: "Current main Timeline, excluding arXiv",
         scope: "timeline-live",
       },
       {
         label: "Page",
         value: `${page}/${total}`,
-        detail: "静的ページ位置",
-        detailEn: "Static page position",
+        detail: "現在のページ",
+        detailEn: "Current page",
         scope: "timeline-page-position",
       },
       {
@@ -113,10 +113,17 @@ const breadcrumb = [
     <main data-category-filter-scope>
       <div class="section-header primary">
         <h2>
-          Entries
+          <span class="i18n-ja">記事一覧</span>
+          <span class="i18n-en" lang="en">Articles</span>
           <span class="count">
-            {pageEntries.length} on this page · {MAIN_TIMELINE_ENTRIES.length} timeline ·
-            <a href="/arxiv">{ARXIV_ENTRIES.length} arXiv papers on a separate page</a>
+            <span class="i18n-ja">
+              このページ {pageEntries.length} 件 · 全 {MAIN_TIMELINE_ENTRIES.length} 件 ·
+              <a href="/arxiv">arXiv 論文 {ARXIV_ENTRIES.length} 件は別ページ</a>
+            </span>
+            <span class="i18n-en" lang="en">
+              {pageEntries.length} on this page · {MAIN_TIMELINE_ENTRIES.length} in total ·
+              <a href="/arxiv">{ARXIV_ENTRIES.length} arXiv papers on a separate page</a>
+            </span>
           </span>
         </h2>
       </div>
@@ -126,7 +133,7 @@ const breadcrumb = [
       {dayGroups.map(({ key, items }) => (
         <>
           <div class="day-header">
-            <span>{jstDayLabel(key, now)}</span>
+            <span><span class="i18n-ja">{jstDayLabelI18n(key, now).ja}</span><span class="i18n-en" lang="en">{jstDayLabelI18n(key, now).en}</span></span>
             <span class="day-count">{items.length} entries</span>
           </div>
           {items.map((entry) => <EntryCard entry={entry} />)}

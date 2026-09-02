@@ -2923,6 +2923,10 @@ main {
 .badge.importance-badge {
   display: inline-flex;
   align-items: center;
+  /* The pill is a single token: never wrap "重要度 / Medium" onto two lines or
+     shrink it when the reason label competes for width (mobile audit). */
+  flex: none;
+  white-space: nowrap;
   padding: 1px 5px;
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -2961,6 +2965,17 @@ main {
   color: var(--muted);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  /* "技術記事 · In…" told the reader nothing: on narrow cards the reason
+     wraps onto its own full-width line instead of being ellipsized. */
+  .insight-reason {
+    flex: 1 1 100%;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
 }
 
 .insight-date {
@@ -5505,9 +5520,11 @@ html, body {
   }
   .card .title {
     font-size: 14px;
+    /* keep-all forced Japanese titles to break only at spaces, leaving short
+       ragged lines; strict line-break alone already avoids bad kinsoku. */
     line-break: strict;
-    word-break: keep-all;
-    overflow-wrap: break-word;
+    word-break: normal;
+    overflow-wrap: anywhere;
   }
   .card .title a {
     min-block-size: 45px;
@@ -5552,11 +5569,13 @@ html, body {
   .card .summary .s-text {
     white-space: normal;          /* allow wrap on mobile */
     line-break: strict;
-    word-break: keep-all;
-    overflow-wrap: break-word;
+    word-break: normal;
+    overflow-wrap: anywhere;
     display: -webkit-box;
     width: 100%;
-    -webkit-line-clamp: 3;
+    /* 3 lines hid most of a Japanese summary behind "…" once keep-all was
+       gone; 5 lines shows a complete thought without turning cards into walls. */
+    -webkit-line-clamp: 5;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }

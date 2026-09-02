@@ -10,7 +10,7 @@ import {
   PAGE_SIZE,
   entriesFor,
   groupByDay,
-  jstDayLabel,
+  jstDayLabel, jstDayLabelI18n,
   type Category,
 } from "../../../../lib/data.ts";
 import {
@@ -175,7 +175,7 @@ const breadcrumb = [
       {dayGroups.map(({ key, items }) => (
         <>
           <div class="day-header">
-            <span>{jstDayLabel(key, now)}</span>
+            <span><span class="i18n-ja">{jstDayLabelI18n(key, now).ja}</span><span class="i18n-en" lang="en">{jstDayLabelI18n(key, now).en}</span></span>
             <span class="day-count">{items.length} entries</span>
           </div>
           {items.map((entry) => <EntryCard entry={entry} />)}

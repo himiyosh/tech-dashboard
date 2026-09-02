@@ -8,7 +8,7 @@ import {
   PRIVACY_CONSENT_VERSION,
 } from "../lib/privacy-consent.ts";
 import { deriveQueueDisplay } from "../lib/queue-health.ts";
-import { deriveWorkerRunStatus } from "../lib/run-health.ts";
+import { deriveWorkerRunStatus, WORKER_RUN_STATE_COPY } from "../lib/run-health.ts";
 import { OPML_HREF, OPML_MEDIA_TYPE, OPML_TITLE } from "../lib/feed-catalog.ts";
 import { SITE_URL } from "../lib/site.ts";
 import type { LocalizedPageMetadata } from "../lib/social-metadata.ts";
@@ -119,10 +119,11 @@ const footerRun = deriveWorkerRunStatus({
 });
 const footerRunTone = footerRun.tone;
 const footerRunStatus = footerRun.runLabel;
-const footerBatchDetail = !WORKER_HEALTH
-  ? "open /status"
-  : `batch ${WORKER_HEALTH.batchIndex}/${WORKER_HEALTH.batchTotal} · sources ${WORKER_HEALTH.sourcesOk}/${WORKER_HEALTH.sourcesAttempted} · summary ${DASHBOARD_METRICS.summaryQueueBacklog}`;
-const footerRunDetail = footerBatchDetail;
+// Reader-facing state copy (WORKER_RUN_STATE_COPY) instead of pipeline
+// telemetry: batch/source counts, queue backlogs, harness version and model
+// names belong on /status, not in a footer every visitor sees (site audit).
+const footerRunCopy = WORKER_RUN_STATE_COPY[footerRun.state];
+const footerRunDetail = footerRun.detail;
 const footerSummaryQueue = deriveQueueDisplay({
   mode: DASHBOARD_METRICS.summaryQueueMode,
   backlog: DASHBOARD_METRICS.summaryQueueBacklog,
@@ -137,17 +138,7 @@ const footerBodyQueue = deriveQueueDisplay({
   runTone: footerRun.tone,
   runState: footerRun.state,
 });
-const footerBodyQueueText = footerBodyQueue.state === "active"
-  ? `body ${footerBodyQueue.backlog} pending`
-  : footerBodyQueue.state === "clear"
-    ? "body ready"
-    : footerBodyQueue.state === "waiting-for-run"
-      ? `body ${footerBodyQueue.backlog ?? "?"} waiting`
-      : footerBodyQueue.state === "paused"
-        ? "body paused"
-        : "body unavailable";
-const footerBodyQueueDetail = `AI explainer body queue ${footerBodyQueue.labelEn}`;
-const footerHealthDetail = [footerRunDetail, footerBodyQueueDetail].filter(Boolean).join(". ");
+const footerHealthDetail = footerRunDetail;
 const footerLastRunAt = WORKER_HEALTH?.lastRunAt ?? null;
 const footerLastRunRelative = footerLastRunAt
   ? relativeTime(footerLastRunAt, new Date())
@@ -629,23 +620,22 @@ const footerLastRunRelative = footerLastRunAt
             <span class="i18n-en" lang="en">Site-wide</span>
           </span>
           <span class={`dot ${footerRunTone}`} data-run-tone={footerRunTone} aria-hidden="true"></span>
-          <strong data-footer-run-label>{footerRunStatus}</strong>
-          <span class="mono">{footerRunDetail}</span>
-          <span class="footer-body-queue" data-footer-body-queue>{footerBodyQueueText}</span>
+          <strong data-footer-run-label data-run-label-ja={footerRunCopy.ja} data-run-label-en={footerRunCopy.en}>
+            <span class="i18n-ja">{footerRunCopy.ja}</span>
+            <span class="i18n-en" lang="en">{footerRunCopy.en}</span>
+          </strong>
           {footerLastRunAt && footerLastRunRelative && (
             <time
               class="footer-run-time"
               datetime={footerLastRunAt}
               data-relative-time
-              data-relative-prefix="run "
-              title={`Last collection run: ${footerLastRunAt}`}
+              data-relative-prefix="更新 "
+              title={`Last update: ${footerLastRunAt}`}
             >
-              run {footerLastRunRelative}
+              更新 {footerLastRunRelative}
             </time>
           )}
         </a>
-        <span class="item">harness <strong>v0.1</strong></span>
-        <span class="item footer-stack">powered by <strong>Astro</strong> + <strong>Claude Opus</strong></span>
         <span class="spacer"></span>
         <a class="item footer-privacy-link" href="/editorial-policy">
           <span class="i18n-ja">編集方針</span>
@@ -664,7 +654,6 @@ const footerLastRunRelative = footerLastRunAt
           <span class="i18n-ja">連絡先</span>
           <span class="i18n-en" lang="en">Contact</span>
         </a>
-        <span class="item">Cloudflare Pages</span>
       </div>
     </footer>
 
@@ -743,15 +732,21 @@ const footerLastRunRelative = footerLastRunAt
           link.dataset.runDetail = run.detail;
           link.dataset.summaryQueueState = summaryQueue.state;
           link.dataset.bodyQueueState = bodyQueue.state;
-          link.title = `Collection health: ${run.runLabel}. ${link.querySelector(".mono")?.textContent ?? ""}. AI explainer body queue ${bodyQueue.labelEn}`;
+          link.title = `Collection health: ${run.runLabel}. ${run.detail}`;
           const dot = link.querySelector<HTMLElement>("[data-run-tone]");
           dot?.classList.remove("ok", "warn", "err");
           dot?.classList.add(run.tone);
           if (dot) dot.dataset.runTone = run.tone;
           const label = link.querySelector<HTMLElement>("[data-footer-run-label]");
-          if (label) label.textContent = run.runLabel;
-          const body = link.querySelector<HTMLElement>("[data-footer-body-queue]");
-          if (body) body.textContent = bodyQueueText(bodyQueue.state, bodyQueue.backlog);
+          if (label) {
+            const copy = WORKER_RUN_STATE_COPY[run.state];
+            label.dataset.runLabelJa = copy.ja;
+            label.dataset.runLabelEn = copy.en;
+            const ja = label.querySelector<HTMLElement>(".i18n-ja");
+            const en = label.querySelector<HTMLElement>(".i18n-en");
+            if (ja) ja.textContent = copy.ja;
+            if (en) en.textContent = copy.en;
+          }
 
           const cadence = document.querySelector<HTMLElement>("[data-cadence-state]");
           if (cadence) cadence.dataset.cadenceState = run.state;
@@ -2041,7 +2036,9 @@ const footerLastRunRelative = footerLastRunAt
             }
           }
         });
-        if (isSearchRoute) openSearch(null);
+        // /search/ keeps its guide visible; the reader opens the panel with the
+        // page button (site audit: the auto-opened overlay hid the heading and
+        // instructions on mobile).
         void pagefindReady.then(() => {
           if (!searchRoot.classList.contains("is-open")) return;
           const query = input.value.trim();

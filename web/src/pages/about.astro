@@ -67,22 +67,22 @@ const pipelineSteps = [
     label: "Normalize",
     title: "重複除去とカテゴリ正規化",
     titleEn: "Deduplicate and normalize categories",
-    body: "source、URL、publishedAt、category、importance、archiveTier を揃え、同一記事の重複を canonical URL ベースで抑えます。",
-    bodyEn: "Source, URL, publishedAt, category, importance, and archiveTier fields are normalized. Canonical URLs suppress duplicate copies of the same article.",
+    body: "同じ記事が複数の配信元から届いても 1 件にまとめ、公開日・カテゴリ・重要度を揃えて並べ替えられるようにします。",
+    bodyEn: "The same article arriving from several feeds is kept once, and publish date, category, and importance are normalized so items can be ranked and compared.",
   },
   {
     label: "Summarize",
     title: "日本語で読み始められる形に変換",
     titleEn: "Prepare summaries for fast review",
-    body: "タイトル、要約、タグ、重要度を生成し、KV cache を使って再生成を抑えます。原文への導線は記事詳細に残します。",
-    bodyEn: "Titles, summaries, tags, and importance are generated, with KV caching to avoid unnecessary regeneration. Article details retain a direct link to the original source.",
+    body: "日本語・英語の要約、見出し、タグ、重要度を AI が生成し、一度作った要約は使い回して無駄な再生成を避けます。記事詳細には必ず元記事へのリンクを残します。",
+    bodyEn: "AI writes the Japanese and English summaries, headlines, tags, and importance; finished summaries are reused rather than regenerated. Every article page keeps a direct link to the original.",
   },
   {
     label: "Publish",
     title: "静的サイトとして高速に配信",
     titleEn: "Publish as a fast static site",
-    body: "差分がある場合だけ data artifact を commit し、Cloudflare Pages Git Integration が Astro build と Pagefind index を作成します。",
-    bodyEn: "Data artifacts are committed only when they change. Cloudflare Pages Git Integration then builds the Astro site and Pagefind index.",
+    body: "新しい記事や要約があるときだけサイトを作り直し、静的ページとして配信します。検索索引も同時に更新されます。",
+    bodyEn: "The site is rebuilt only when there are new articles or summaries and served as static pages; the search index is refreshed at the same time.",
   },
 ];
 ---

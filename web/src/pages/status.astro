@@ -915,20 +915,6 @@ const workerSummary = wh
           <span class="i18n-ja">匿名いいねの設定状態を確認しています。</span>
           <span class="i18n-en" lang="en">Checking the anonymous reaction configuration.</span>
         </p>
-        <ul class="reaction-config-flag-list" data-reaction-config-flags hidden>
-          {REACTION_CONFIG_FLAG_ORDER.map((key) => (
-            <li data-reaction-config-flag={key}>
-              <span>
-                <span class="i18n-ja">{REACTION_CONFIG_FLAG_LABELS[key].ja}</span>
-                <span class="i18n-en" lang="en">{REACTION_CONFIG_FLAG_LABELS[key].en}</span>
-              </span>
-              <strong data-reaction-config-flag-state>
-                <span class="i18n-ja"></span>
-                <span class="i18n-en" lang="en"></span>
-              </strong>
-            </li>
-          ))}
-        </ul>
       </div>
 
       <div class="side-card status-insight-card">
@@ -1252,6 +1238,13 @@ const workerSummary = wh
     gap: 6px;
     color: var(--muted-2);
     font-size: 11px;
+  }
+  /* The label must never be squeezed into one character per line by the
+     flexible link next to it (mobile audit: 最/新/記/事). */
+  .source-latest-line > .i18n-ja,
+  .source-latest-line > .i18n-en {
+    flex: none;
+    white-space: nowrap;
   }
 
   .source-latest-line a,

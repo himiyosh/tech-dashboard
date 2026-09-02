@@ -2,7 +2,7 @@
 import CompactRow from "./CompactRow.astro";
 import EntryCard from "./EntryCard.astro";
 import {
-  jstDayLabel,
+  jstDayLabelI18n,
   CATEGORY_META,
   isPublishableEntry,
   type NormalizedEntry,
@@ -37,13 +37,13 @@ const rest = highlightImportant
   ? items.filter((e) => effectiveImportance(e) !== 3 || !isPublishableEntry(e))
   : items;
 
-const label = jstDayLabel(dayKey, now);
+const label = jstDayLabelI18n(dayKey, now);
 ---
 
 <section class="day" id={`day-${dayKey}`}>
   <div class="day-hd">
     <div class="day-title">
-      <span class="day-label">{label}</span>
+      <span class="day-label"><span class="i18n-ja">{label.ja}</span><span class="i18n-en" lang="en">{label.en}</span></span>
       <span class="day-key">{dayKey}</span>
       <span class="day-count">{items.length} entries</span>
     </div>

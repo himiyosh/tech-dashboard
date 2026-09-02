@@ -713,7 +713,9 @@ const jsonLd = buildArticleJsonLd({
               <div class="ed-body-prose i18n-ja" lang="ja">
                 {renderedJa.map((p, i) => {
                   const mid = Math.floor(renderedJa.length / 2);
-                  const showQuote = pointsJa.length > 1 && i === mid && renderedJa.length >= 4;
+                  // The pull quote only re-printed one of the key points shown
+                  // directly above it (site audit); keep the machinery, show nothing.
+                  const showQuote = false;
                   const quote = pointsJa.slice().sort((a, b) => b.length - a.length)[0] ?? "";
                   const sec = sectionMetaJa[p.sec];
                   const nextStartsHeadedSection =
@@ -752,7 +754,7 @@ const jsonLd = buildArticleJsonLd({
               <div class="ed-body-prose i18n-en" lang="en">
                 {renderedEn.map((p, i) => {
                   const mid = Math.floor(renderedEn.length / 2);
-                  const showQuote = pointsEn.length > 1 && i === mid && renderedEn.length >= 4 && !summaryEn.isFallback;
+                  const showQuote = false;
                   const quote = pointsEn.slice().sort((a, b) => b.length - a.length)[0] ?? "";
                   const sec = sectionMetaEn[p.sec];
                   const nextStartsHeadedSection =
@@ -798,11 +800,11 @@ const jsonLd = buildArticleJsonLd({
           <aside class="ed-summary-only ed-body-queued">
             <div class="ed-summary-only-head">
               <span class="ai-badge">AI</span>
-              <span class="i18n-ja">AI解説本文を Queue に投入済み</span>
+              <span class="i18n-ja">AI 解説本文を準備中</span>
               <span class="i18n-en" lang="en">AI explainer queued</span>
             </div>
             <p class="ed-summary-only-note">
-              <span class="i18n-ja">本文生成 Queue への投入を確認済みです。完了時刻は確約せず、現在は上記の AI 要約と元記事を案内しています。</span>
+              <span class="i18n-ja">AI 解説本文はこれから生成されます。完了時刻は確約できないため、それまでは上記の AI 要約と元記事をご覧ください。</span>
               <span class="i18n-en" lang="en">This article is confirmed in the body-generation queue. No completion time is promised; use the AI summary above or open the original source.</span>
             </p>
           </aside>
@@ -871,7 +873,7 @@ const jsonLd = buildArticleJsonLd({
             <span class="v" title={srcAvgTitle} aria-label={srcAvgTitle}>
               <span class="mini-bar" style={`--w:${(srcAvgImp / 3) * 100}%`}></span>
               <span aria-hidden="true">{srcAvgImp.toFixed(1)} / 3</span>
-              <span class="muted-sm">1=Info · 2=Medium · 3=High</span>
+              <span class="muted-sm"><span class="i18n-ja">1=情報 · 2=中 · 3=高</span><span class="i18n-en" lang="en">1=Info · 2=Medium · 3=High</span></span>
             </span>
           </li>
           <li data-entry-format={entry.sourceType}>
@@ -888,7 +890,7 @@ const jsonLd = buildArticleJsonLd({
             <span class="k"><span class="i18n-ja">重要度</span><span class="i18n-en" lang="en">Importance</span></span>
             <span class="v">
               <span class={`pill imp-${entry.importance}`}>
-                <span class="i18n-ja">{importanceMeta.ja}</span>
+                <span class="i18n-ja">{importanceMeta.ja.replace(/^重要度\s*/, "")}</span>
                 <span class="i18n-en" lang="en">{importanceMeta.en}</span>
               </span>
               <span class="muted-sm">

@@ -33,16 +33,43 @@ const GROUP_LABEL: Record<CategoryGroup, string> = {
   industry: "Industry & Policy",
 };
 
-const GROUP_COPY: Record<CategoryGroup, string> = {
-  microsoft: "GitHub Copilot、VS Code、Microsoft 系の開発者向け更新をまとめます。",
-  anthropic: "Claude、Claude Code、Anthropic API / research の動きを追います。",
-  openai: "OpenAI、Codex、ChatGPT、API / agent 関連の更新をまとめます。",
-  google: "Gemini、Gemma、Vertex AI、DeepMind、Google Developers AI を整理します。",
-  "coding-tools": "Cursor、Zed、Cline、Aider、OpenHands など AI coding tool をまとめます。",
-  "open-models": "Ollama、Hugging Face、open models、local inference の更新です。",
-  "agent-tools": "MCP、LangChain、AutoGen、Semantic Kernel など agent tooling を扱います。",
-  research: "論文、benchmark、DORA など評価・研究・長期知見をまとめます。",
-  industry: "AI 業界、cloud / GPU、市場、政策、security incident など横断ニュースです。",
+const GROUP_COPY: Record<CategoryGroup, { ja: string; en: string }> = {
+  microsoft: {
+    ja: "GitHub Copilot、VS Code、Microsoft 系の開発者向け更新をまとめます。",
+    en: "Developer-facing updates across GitHub Copilot, VS Code, and Microsoft.",
+  },
+  anthropic: {
+    ja: "Claude、Claude Code、Anthropic API / research の動きを追います。",
+    en: "Claude, Claude Code, and Anthropic API and research news.",
+  },
+  openai: {
+    ja: "OpenAI、Codex、ChatGPT、API / agent 関連の更新をまとめます。",
+    en: "OpenAI, Codex, ChatGPT, and API and agent updates.",
+  },
+  google: {
+    ja: "Gemini、Gemma、Vertex AI、DeepMind、Google Developers AI を整理します。",
+    en: "Gemini, Gemma, Vertex AI, DeepMind, and Google Developers AI.",
+  },
+  "coding-tools": {
+    ja: "Cursor、Zed、Cline、Aider、OpenHands など AI coding tool をまとめます。",
+    en: "AI coding tools such as Cursor, Zed, Cline, Aider, and OpenHands.",
+  },
+  "open-models": {
+    ja: "Ollama、Hugging Face、open models、local inference の更新です。",
+    en: "Ollama, Hugging Face, open models, and local inference.",
+  },
+  "agent-tools": {
+    ja: "MCP、LangChain、AutoGen、Semantic Kernel など agent tooling を扱います。",
+    en: "Agent tooling such as MCP, LangChain, AutoGen, and Semantic Kernel.",
+  },
+  research: {
+    ja: "論文、benchmark、DORA など評価・研究・長期知見をまとめます。",
+    en: "Papers, benchmarks, DORA, and other research and long-lived findings.",
+  },
+  industry: {
+    ja: "AI 業界、cloud / GPU、市場、政策、security incident など横断ニュースです。",
+    en: "Cross-cutting news: the AI industry, cloud and GPUs, markets, policy, security incidents.",
+  },
 };
 
 const GROUP_ORDER: CategoryGroup[] = [
@@ -214,7 +241,7 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
         label: "Updated",
         value: relativeTime(STATS.generatedAt, now),
         datetime: STATS.generatedAt,
-        detail: "統計snapshot",
+        detail: "統計の更新時刻",
         detailEn: "Stats snapshot",
         scope: "stats-snapshot",
       },
@@ -264,7 +291,7 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
           <div class="category-group-head">
             <div>
               <h3 id={`group-${group}`}>{GROUP_LABEL[group]}</h3>
-              <p>{GROUP_COPY[group]}</p>
+              <p><span class="i18n-ja">{GROUP_COPY[group].ja}</span><span class="i18n-en" lang="en">{GROUP_COPY[group].en}</span></p>
             </div>
             <span>{cats.length} categories</span>
           </div>
@@ -425,12 +452,14 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
                       <div class="cat-meta">
                         {cat.latest ? (
                           <>
-                            最終更新{" "}
+                            <span class="i18n-ja">最終更新</span><span class="i18n-en" lang="en">Updated</span>{" "}
                             <time datetime={cat.latest.publishedAt} data-relative-time>
                               {relativeTime(cat.latest.publishedAt, now)}
                             </time>
                           </>
-                        ) : "エントリなし"}
+                        ) : (
+                          <><span class="i18n-ja">記事なし</span><span class="i18n-en" lang="en">No articles</span></>
+                        )}
                       </div>
                       <div
                         class="cat-types"

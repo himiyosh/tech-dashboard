@@ -373,7 +373,7 @@ const homeJsonLd = {
           data-decision-topic={featuredTopic ?? `entry:${feat.id}`}
           style={`--cat-color:${featCatColor}`}
         >
-          <div class:list={["featured-thumb", { "has-image": !!featImg }]}>
+          <div class:list={["featured-thumb", { "has-image": !!featImg }]} style={featImg ? `--thumb-src:url("${featImg.replace(/"/g, "%22")}")` : undefined}>
             {featImg && (
               <img
                 src={featImg}

@@ -105,17 +105,20 @@ describe("deriveQueueDisplay", () => {
     );
 
     expect(summaryQueueCardCopy("active")).toEqual({
-      badgeJa: "AI要約 準備待ち",
-      badgeEn: "AI summary pending",
-      detailJa: "全体の要約処理は稼働中",
-      detailEn: "Overall summary processing is active",
+      badgeJa: "要約を準備中",
+      badgeEn: "Summary in preparation",
+      detailJa: "AI 要約はまもなく追加されます",
+      detailEn: "The AI summary will be added shortly",
     });
     expect(summaryQueueCardCopy("waiting-for-run")).toMatchObject({
-      badgeJa: "AI要約 再開待ち",
-      detailJa: "収集再開待ち",
+      badgeJa: "要約を準備中",
+      detailJa: "更新の再開後に AI 要約が追加されます",
     });
     expect(source).toContain("summaryQueueCardCopy(summaryQueue.state)");
-    expect(source).toContain("data-summary-queue-detail-ja");
+    // The card renders only the badge; queue detail copy stays available for
+    // /status but is no longer shown per entry (site audit).
+    expect(source).toContain("data-summary-queue-badge-ja");
+    expect(source).not.toContain("data-summary-queue-detail-ja");
     expect(source).not.toContain("AI summary queued");
     expect(source).not.toContain("summaryQueue.showEstimate");
     expect(source).not.toContain("summaryQueue.estimateHours");

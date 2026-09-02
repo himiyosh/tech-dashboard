@@ -20,8 +20,8 @@ export const ARCHIVE_TIER_SUMMARY = {
 } as const;
 
 export const ARCHIVE_TIER_DETAIL = {
-  ja: "hot はlive収録時点の統計用snapshotで、月別記事一覧には表示しません。保持期間後はlive indexから外れる場合があります。warm は個別記事URLを保持し、cold は月次Archive内だけで保持します。evergreen知見はwarmを維持します。",
-  en: "Hot rows are statistical snapshots from their live period and are not shown in monthly article lists. They may leave the live index after retention expires. Warm entries retain an individual URL. Cold entries remain only in their monthly archive. Evergreen knowledge stays warm.",
+  ja: "hot は最近掲載された記事(トップページやカテゴリにも表示中)、warm は要約付きで個別ページを保持している記事、cold は古くなり月別一覧だけに残している記事です。長く読まれる解説記事は warm のまま保持します。",
+  en: "Hot rows are recent articles still shown on the home and category pages, warm rows keep their own summary page, and cold rows are older articles kept only in this monthly list. Long-lived explainers stay warm.",
 } as const;
 
 /** A month bundle exactly as data/archive/YYYY-MM.json stores it. */

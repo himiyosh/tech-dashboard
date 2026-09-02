@@ -25,8 +25,8 @@ describe("deriveWorkerRunStatus", () => {
     // The lead names the state in the same words /status and /about use, and
     // leaves the collection schedule to the hero tagline that already states it.
     expect(runCadenceCopy(status, "7h ago")).toEqual({
-      ja: "定期収集が遅延 · index 更新 7h ago",
-      en: "Scheduled collection delayed · index updated 7h ago",
+      ja: "更新が遅れています · 更新 7h ago",
+      en: "Updates are delayed · updated 7h ago",
     });
 
   });

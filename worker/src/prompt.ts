@@ -34,6 +34,8 @@ const FALLBACK_BODY_EN_NEEDLE = "completed from the existing summary and collect
 
 export interface ParsedSummaryResponse {
   titleJa: string;
+  /** Natural English headline (empty when the model did not return one). */
+  titleEn: string;
   summaryJa: string;
   summaryEn: string;
   bodyJa: string;
@@ -176,8 +178,12 @@ export function buildSummaryPrompt(e: PromptEntry): string {
     `Preserve material facts such as plan type, price, target region, payment method, target platform, and prior-platform expansion in BOTH summaries when they appear in the source context.`,
     `Make each summary decision-ready at a glance: the FIRST clause names the product and the single most concrete change (feature name, capability, number, model name, or scope) taken from the source; the final clause says who benefits or what it enables. Include at least one concrete fact from the source -- a summary that only says "an update was announced" / "〜が発表されました" with no specifics is invalid.`,
     `Do not open with filler like "この記事は", "本記事では", "このエントリは", "This article describes". Start with the subject itself.`,
+    `titleJa: if the original title is already Japanese, return it VERBATIM (only normalize whitespace) — never rewrite an author's Japanese headline. If the original is English, translate it into a natural Japanese headline. titleEn: if the original title is English, return it verbatim; otherwise write a natural English headline (not a summary fragment, no trailing ellipsis).`,
+    `Language purity: titleJa and summaryJa contain only Japanese, Latin letters, digits and punctuation; titleEn and summaryEn only English. Never emit Hangul, Cyrillic, Thai, Arabic or other scripts.`,
+    `For release notes and changelogs, name the concrete changes the source lists (features, fixes, versions, platforms). "バグ修正や安定性の改善" / "bug fixes and stability improvements" alone is invalid when the source names anything more specific.`,
     `{`,
-    `  "titleJa": "Natural Japanese title. Keep product/company names and version numbers unchanged.",`,
+    `  "titleJa": "Japanese headline per the rule above.",`,
+    `  "titleEn": "English headline per the rule above.",`,
     `  "summaryJa": "Complete Japanese summary in 1-2 full sentences (90-150 chars). Lead with the concrete change, end with why it matters or who benefits.",`,
     `  "summaryEn": "Complete English summary in 1-2 full sentences (100-180 chars). Lead with the concrete change, end with why it matters or who benefits.",`,
     `  "importance": 1 | 2 | 3,`,
@@ -190,7 +196,7 @@ export function buildSummaryPrompt(e: PromptEntry): string {
 }
 
 function emptyParsedResponse(): ParsedSummaryResponse {
-  return { titleJa: "", summaryJa: "", summaryEn: "", bodyJa: "", bodyEn: "", importance: 1, extraTags: [] };
+  return { titleJa: "", titleEn: "", summaryJa: "", summaryEn: "", bodyJa: "", bodyEn: "", importance: 1, extraTags: [] };
 }
 
 function extractJsonObjectCandidates(text: string): string[] {
@@ -422,6 +428,7 @@ function coerceParsedResponse(obj: Record<string, unknown>): ParsedSummaryRespon
   const imp = Math.max(1, Math.min(3, Number(obj.importance ?? 1))) as 1 | 2 | 3;
   return {
     titleJa: String(obj.titleJa ?? "").trim(),
+    titleEn: String(obj.titleEn ?? "").trim(),
     summaryJa: String(obj.summaryJa ?? "").trim(),
     summaryEn: String(obj.summaryEn ?? "").trim(),
     bodyJa: String(obj.bodyJa ?? "").trim(),

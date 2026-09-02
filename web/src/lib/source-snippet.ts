@@ -103,8 +103,22 @@ function cjkCount(value: string): number {
  * generated prose. An excerpt that merely echoes the title carries no
  * information the title did not already give, so it is rejected too.
  */
+/**
+ * Feed chrome that some sources ship INSTEAD of a description: "The post X
+ * appeared first on Y.", "Read the full article", GitHub release scaffolding.
+ * Measured on the live index it produced 151 explainer bodies grounded on
+ * nothing but this boilerplate (site audit), so it is removed before the
+ * excerpt is measured — a snippet that is only chrome is no material at all.
+ */
+export const SOURCE_SNIPPET_BOILERPLATE_RE =
+  /\bthe post\b.*?\bappeared first on\b.*?(?:\.|$)|\bread the full article\b.*?(?:\.|$)|\bwhat's changed\b|\bfull changelog\b.*?(?:\.|$)|\bnew contributors\b.*?(?:\.|$)/giu;
+
+export function stripSourceSnippetBoilerplate(value: string | null | undefined): string {
+  return compact((value ?? "").replace(SOURCE_SNIPPET_BOILERPLATE_RE, " "));
+}
+
 export function hasMeaningfulSourceSnippet(input: SourceSnippetInput): boolean {
-  const snippet = compact(input.contentSnippet);
+  const snippet = stripSourceSnippetBoilerplate(input.contentSnippet);
   if (!snippet || normalized(snippet) === normalized(input.title)) return false;
   return (
     snippet.length >= SOURCE_SNIPPET_MIN_CHARS &&

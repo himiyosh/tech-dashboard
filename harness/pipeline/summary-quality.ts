@@ -29,7 +29,27 @@ export const CONTAMINATED_SUMMARY_MARKERS = [
   "left some junk in the readme",
   "forgot to remove oopsies",
   "release notes: n/a or added/fixed/improved",
+  // Raw feed / git chrome that reached summaryEn on release and changelog
+  // feeds (site audit): trailers with e-mail addresses, "read more" stubs,
+  // and GitHub release-note scaffolding are never an AI summary.
+  "co-authored-by:",
+  "signed-off-by:",
+  "read the full article",
+  "what's changed",
+  "full changelog",
+  "appeared first on",
 ] as const;
+
+/**
+ * Scripts that never belong in Japanese or English editorial text. A
+ * translation that slips into Hangul, Cyrillic, Thai, Arabic or Hebrew
+ * (observed: 「AI for Science」희귀疾患研究) is a contaminated generation.
+ */
+const FOREIGN_SCRIPT_RE = /[\u1100-\u11ff\u3130-\u318f\uac00-\ud7af\u0400-\u04ff\u0e00-\u0e7f\u0600-\u06ff\u0590-\u05ff]/u;
+
+export function hasForeignScriptContamination(value: string | null | undefined): boolean {
+  return FOREIGN_SCRIPT_RE.test(value ?? "");
+}
 
 function normalized(value: string | null | undefined): string {
   return (value ?? "").replace(/\s+/g, " ").trim().toLowerCase();
@@ -54,7 +74,11 @@ export function isDeterministicPendingSummaryText(value: string | null | undefin
 
 export function isContaminatedSummaryText(value: string | null | undefined): boolean {
   const text = normalized(value);
-  return Boolean(text && CONTAMINATED_SUMMARY_MARKERS.some((marker) => text.includes(marker)));
+  return Boolean(
+    text
+      && (CONTAMINATED_SUMMARY_MARKERS.some((marker) => text.includes(marker))
+        || hasForeignScriptContamination(text)),
+  );
 }
 
 export function isBareTitleEcho(

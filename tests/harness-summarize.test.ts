@@ -310,3 +310,21 @@ describe("stripIndexBodies", () => {
     expect(stripped.bodyEn).toBe("");
   });
 });
+
+
+describe("buildSummaryPrompt — headline and release contracts (site audit)", () => {
+  it("asks for verbatim Japanese titles, a real English headline, script purity, and concrete release notes", () => {
+    const prompt = buildSummaryPrompt({
+      title: "Zed Editor v1.10.1",
+      category: "vscode",
+      source: "zed-releases",
+      sourceType: "release",
+      url: "https://example.com/zed",
+      contentSnippet: "open_ai: Added support for GPT 5.6 Sol/Terra/Luna (#60699)",
+    });
+    expect(prompt).toContain('"titleEn"');
+    expect(prompt).toContain("return it VERBATIM");
+    expect(prompt).toContain("Never emit Hangul, Cyrillic, Thai, Arabic");
+    expect(prompt).toContain("name the concrete changes the source lists");
+  });
+});

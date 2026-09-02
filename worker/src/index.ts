@@ -23,6 +23,7 @@ import {
   VERBATIM_COVERAGE_RATIO,
   VERBATIM_SHINGLE_CHARS,
   hasUsableGroundedBilingualSummary,
+  hasForeignScriptContamination,
 } from "../../harness/pipeline/summary-quality.ts";
 import { hasSufficientSourceGrounding } from "../../harness/pipeline/source-grounding.ts";
 import { canonicalUrlKey, normalizeMediaUrl } from "../../harness/pipeline/url.ts";
@@ -922,7 +923,7 @@ async function resolveCopilotToken(pat: string): Promise<string> {
 
 // ---------- Summarize -------------------------------------------------------
 
-import { buildPrompt, buildQueuePrompt, parseResponse } from "./prompt.ts";
+import { buildPrompt, buildQueuePrompt, parseResponse, type ParsedSummaryResponse } from "./prompt.ts";
 // Re-export for unit tests (tests/worker-parse.test.ts).
 // NOTE: bare `export ... from` would *only* create a module-level re-export
 // and would NOT bring the symbols into this module's local scope, leading to
@@ -963,14 +964,14 @@ async function callCopilot(
     });
     if (!res.ok) throw new Error(`copilot ${res.status}: ${(await res.text()).slice(0, 200)}`);
     const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const parsed = parseResponse(data.choices?.[0]?.message?.content ?? "");
+    const parsed = applyHeadlinePolicy(e, parseResponse(data.choices?.[0]?.message?.content ?? ""));
     if (
       !parsed.titleJa ||
       !hasUsableGroundedBilingualSummary(e, {
         ...parsed,
         title: e.title,
         titleJa: parsed.titleJa || e.titleJa,
-        titleEn: e.titleEn,
+        titleEn: parsed.titleEn || e.titleEn,
       })
     ) {
       throw new Error(`model response failed source grounding for ${e.url}`);
@@ -988,6 +989,27 @@ async function callCopilot(
   } finally {
     clearTimeout(timeout);
   }
+}
+
+/**
+ * Headline policy (site audit): a Japanese author's title is never rewritten
+ * — titleJa is the original verbatim for lang=ja entries — and the model's
+ * English headline is adopted only when it is a real headline (not a
+ * truncated summary fragment) and free of foreign-script contamination.
+ */
+export function applyHeadlinePolicy(
+  e: Pick<NormalizedEntry, "title" | "lang">,
+  parsed: ParsedSummaryResponse,
+): ParsedSummaryResponse {
+  const original = (e.title ?? "").replace(/\s+/g, " ").trim();
+  const titleJa = e.lang === "ja" && original ? original : parsed.titleJa;
+  const candidateEn = (parsed.titleEn ?? "").replace(/\s+/g, " ").trim();
+  const usableEn = candidateEn
+    && candidateEn.length <= 160
+    && !/[…]$|\.\.\.$/.test(candidateEn)
+    && !hasForeignScriptContamination(candidateEn);
+  const titleEn = e.lang === "en" && original ? original : usableEn ? candidateEn : "";
+  return { ...parsed, titleJa, titleEn };
 }
 
 async function runWithConcurrency<T, R>(
@@ -1365,11 +1387,12 @@ export async function runHarness(
       )
         ? rawHit
         : undefined;
-    const cachedTitleJa = hit?.titleJa || e.titleJa;
+    const cachedTitleJa = e.lang === "ja" && e.title ? e.title : (hit?.titleJa || e.titleJa);
     if (hit && cachedTitleJa && hit.summaryJa && hit.summaryEn) {
       afterCache.push({
         ...e,
         titleJa: cachedTitleJa,
+        titleEn: hit.titleEn || e.titleEn,
         summaryJa: hit.summaryJa,
         summaryEn: hit.summaryEn,
         bodyJa: hit.bodyJa || e.bodyJa || "",
@@ -1442,7 +1465,8 @@ export async function runHarness(
       if (r) {
         afterCache[i] = {
           ...e,
-          titleJa: r.titleJa || e.titleJa,
+          titleJa: e.lang === "ja" && e.title ? e.title : (r.titleJa || e.titleJa),
+          titleEn: r.titleEn || e.titleEn,
           summaryJa: r.summaryJa,
           summaryEn: r.summaryEn || e.summaryEn,
           bodyJa: r.bodyJa || e.bodyJa || "",

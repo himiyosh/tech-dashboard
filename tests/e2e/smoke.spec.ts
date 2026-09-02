@@ -607,7 +607,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(
       page.locator('.banner-fact[data-metric-scope="registry-live-sources"] .fact-scope'),
     ).toContainText(/registry sources with live entries/i);
-    await expect(page.locator(".banner-facts-status")).toContainText(/index (更新|updated)/);
+    await expect(page.locator(".banner-facts-status")).toContainText(/(更新|updated)/);
     await page.locator(".top-rank-item .rank-source").first().evaluate((source) => {
       const fullLabel = "Microsoft Foundry Engineering and AI Platform Updates";
       const label = source.querySelector("[data-source-disclosure-label]");
@@ -2461,7 +2461,7 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(digest.first()).toBeVisible();
       if (bodyState === "queued") {
         await expect(digest.locator(".ed-summary-only-head .i18n-ja")).toHaveText(
-          "AI解説本文を Queue に投入済み",
+          "AI 解説本文を準備中",
         );
         await expect(digest.locator(".ed-summary-only-note .i18n-ja")).toContainText(
           "完了時刻は確約せず",

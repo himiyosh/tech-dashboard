@@ -33,6 +33,18 @@ test("local synthetic decision journey completes on desktop and mobile", async (
   const outputPath = process.env.DECISION_JOURNEY_OUTPUT?.trim();
   if (outputPath) writeFileSync(outputPath, serialized, "utf8");
 
+  // Assert the journey outcome FIRST so a CI failure names the failed step and
+  // its observed state; the structural assertions below would otherwise mask
+  // the cause behind "records every machine-readable step".
+  expect(
+    report.status,
+    report.failure
+      ? `${report.failure.stepName}: ${report.failure.reason}; observed=${JSON.stringify(
+          report.failure.observedState,
+        )}`
+      : "decision journey did not complete",
+  ).toBe("completed");
+
   expect(
     report.runs.map((run) => run.viewport.name),
     "both declared viewport journeys ran",
@@ -58,12 +70,4 @@ test("local synthetic decision journey completes on desktop and mobile", async (
       });
     }
   }
-  expect(
-    report.status,
-    report.failure
-      ? `${report.failure.stepName}: ${report.failure.reason}; observed=${JSON.stringify(
-          report.failure.observedState,
-        )}`
-      : "decision journey did not complete",
-  ).toBe("completed");
 });

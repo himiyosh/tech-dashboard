@@ -2710,13 +2710,15 @@ test.describe("TECH Dashboard smoke", () => {
       await page.setViewportSize({ width, height: 1000 });
       await page.goto(`/e/${bodyEntryId}/`);
 
-      // 項目: a sectioned JA body renders at least two h2 headings and the
-      // TOC lists exactly those headings (not paragraph excerpts).
+      // 項目: derived section headings (概要 / 詳細 / 背景 / 今後の展望) were
+      // retired in the site audit because they rarely matched the paragraph
+      // they labelled, so a long JA body renders as one unheaded prose column
+      // and the TOC falls back to paragraph anchors.
       const headings = page.locator(".ed-body-prose.i18n-ja h2.ed-sec-h");
-      expect(await headings.count(), `width ${width}: section headings`).toBeGreaterThanOrEqual(2);
-      const headingTitles = await headings.locator(".ed-sec-title").allTextContents();
+      expect(await headings.count(), `width ${width}: no derived section headings`).toBe(0);
       const tocLabels = await page.locator("#toc-list-ja .toc-label").allTextContents();
-      expect(tocLabels).toEqual(headingTitles);
+      expect(tocLabels.length, `width ${width}: paragraph TOC entries`).toBeGreaterThanOrEqual(3);
+      for (const label of tocLabels) expect(label.trim().length).toBeGreaterThan(0);
 
       // Centered measure: the line-length-capped reading column sits centered
       // inside the article body instead of hugging the left edge and leaving

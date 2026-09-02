@@ -46,6 +46,28 @@ const PLATFORM_TAGS: ReadonlySet<string> = new Set([
   "blog",
 ]);
 
+// Entry-type tags (release / changelog / news / bug-fix ...) describe the KIND
+// of item, not its topic, and they crowd out real subjects when they rank
+// (site audit: "Trending topics" read as #release #changelog #news #bug-fix).
+const ENTRY_TYPE_TAGS: ReadonlySet<string> = new Set([
+  "release",
+  "releases",
+  "changelog",
+  "changelogs",
+  "news",
+  "bug-fix",
+  "bugfix",
+  "bug-fixes",
+  "update",
+  "updates",
+  "prerelease",
+  "pre-release",
+  "announcement",
+  "announcements",
+  "tutorial",
+]);
+const TRENDING_EXCLUDED_TAGS: ReadonlySet<string> = new Set([...PLATFORM_TAGS, ...ENTRY_TYPE_TAGS]);
+
 const sourceMetaById = new Map(SOURCE_META.map((s) => [s.id, s]));
 const categoryMetaBySlug = new Map(CATEGORY_META.map((c) => [c.slug, c]));
 
@@ -78,7 +100,7 @@ const topSources = [...sourceCounts.entries()]
     };
   });
 
-const tags = trendingTags(tagCount, { exclude: PLATFORM_TAGS });
+const tags = trendingTags(tagCount, { exclude: TRENDING_EXCLUDED_TAGS });
 const maxTagCount = Math.max(1, ...tags.map((tag) => tag.count));
 const maxSourceCount = Math.max(1, ...topSources.map((source) => source.count));
 

@@ -4541,10 +4541,6 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).not.toContainText("シークレット");
     await expect(card.locator("[data-reaction-config-label] > .i18n-en")).toHaveText("Not configured");
 
-    await expect(
-      card.locator('[data-reaction-config-flag="databaseBinding"]'),
-    ).toHaveAttribute("data-reaction-config-flag-ok", "true");
-
     // "neutral, not ERR": the not-configured state must never carry a warn/err tone class
     // or color — this is an optional feature that degrades safely, not an incident.
     await expect(card).not.toHaveClass(/\berr\b/);

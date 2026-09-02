@@ -144,9 +144,16 @@ function buildLocalizedArticleMetadataTitle(
     : `${input.categoryLabel} update from ${input.sourceLabel}`;
   const title = languageSafeTitle || fallbackTitle;
   const parsedPublishedAt = new Date(input.publishedAt);
-  const publishedLabel = Number.isFinite(parsedPublishedAt.getTime())
-    ? parsedPublishedAt.toISOString().replace("T", " ").slice(0, 16) + " UTC"
-    : "publication time unavailable";
+  // Feeds that only carry a date arrive as T00:00:00Z; printing "00:00 UTC"
+  // invents a time (site audit), so those entries show the date alone.
+  const publishedIso = Number.isFinite(parsedPublishedAt.getTime())
+    ? parsedPublishedAt.toISOString()
+    : "";
+  const publishedLabel = !publishedIso
+    ? "publication time unavailable"
+    : publishedIso.endsWith("T00:00:00.000Z")
+      ? publishedIso.slice(0, 10)
+      : publishedIso.replace("T", " ").slice(0, 16) + " UTC";
   let sourceDiscriminator = "";
   if (!languageSafeTitle) {
     try {
@@ -169,8 +176,10 @@ function buildLocalizedArticleMetadataTitle(
     }
   }
   const sourceCharacters = Array.from(input.sourceLabel);
-  const boundedSourceLabel = sourceCharacters.length > 20
-    ? `${sourceCharacters.slice(0, 19).join("")}…`
+  // Source labels are short names ("Anthropic Engineering"); cutting them at
+  // 19 characters produced "Anthropic Engineeri…" in every tab title.
+  const boundedSourceLabel = sourceCharacters.length > 48
+    ? `${sourceCharacters.slice(0, 47).join("")}…`
     : input.sourceLabel;
   const baseIdentity = languageSafeTitle
     ? `${boundedSourceLabel} | ${publishedLabel}`

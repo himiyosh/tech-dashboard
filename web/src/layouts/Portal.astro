@@ -2041,7 +2041,9 @@ const footerLastRunRelative = footerLastRunAt
             }
           }
         });
-        if (isSearchRoute) openSearch(null);
+        // /search/ keeps its guide visible; the reader opens the panel with the
+        // page button (site audit: the auto-opened overlay hid the heading and
+        // instructions on mobile).
         void pagefindReady.then(() => {
           if (!searchRoot.classList.contains("is-open")) return;
           const query = input.value.trim();

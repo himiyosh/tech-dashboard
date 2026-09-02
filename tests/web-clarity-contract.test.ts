@@ -52,8 +52,11 @@ describe("web clarity contracts", () => {
     const sourceExcerpt = read("web/src/components/SourceExcerpt.astro");
     const portal = read("web/src/layouts/Portal.astro");
 
-    expect(entryCard).toContain("全体の進行状況");
-    expect(entryCard).toContain("Site-wide status");
+    // Site audit: cards carry one short state badge and never route readers
+    // to pipeline telemetry; site-wide status lives on /status only.
+    expect(entryCard).not.toContain("全体の進行状況");
+    expect(entryCard).not.toContain("Site-wide status");
+    expect(entryCard).toContain("data-summary-queue-badge-ja");
     expect(sourceExcerpt).toContain('data-excerpt-scope="source"');
     expect(sourceExcerpt).toContain("AI 要約ではありません");
     expect(sourceExcerpt).toContain("Not an AI summary");

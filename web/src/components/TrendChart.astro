@@ -34,11 +34,11 @@ const deltaColor =
 const deltaSign = wow.deltaPct > 0 ? "▲" : wow.deltaPct < 0 ? "▼" : "—";
 const chartLabel = `${categoryName} trend chart for the last ${days} days. This week ${wow.thisWeek}, last week ${wow.prevWeek}, daily average ${wow.avgPerDay}.`;
 const trendSourceJa = category === "research"
-  ? "現在の Research 一覧（arXiv 専用レーンを除く）を元に、直近 7 日間は vivid、それ以前は薄色で表示"
-  : "data/stats.json（archive + live）を元に、直近 7 日間は vivid、それ以前は薄色で表示";
+  ? "現在の Research 一覧（arXiv 専用レーンを除く）の掲載数。直近 7 日間を濃く、それ以前を薄く表示"
+  : "アーカイブを含む掲載数の推移。直近 7 日間を濃く、それ以前を薄く表示";
 const trendSourceEn = category === "research"
-  ? "Based on the current Research listing (excluding the dedicated arXiv lane); the last 7 days are vivid and earlier days are muted."
-  : "Based on data/stats.json (archive + live); the last 7 days are vivid and earlier days are muted.";
+  ? "Based on the current Research listing (excluding the dedicated arXiv lane); the last 7 days are shown in full colour and earlier days are muted."
+  : "Counts including the archive; the last 7 days are shown in full colour and earlier days are muted.";
 ---
 
 <section class="trend" style={`--cat-color:${color}`}>

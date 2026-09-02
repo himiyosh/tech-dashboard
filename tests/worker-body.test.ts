@@ -259,7 +259,7 @@ describe("buildBodyPromptJa / buildBodyPromptEn (LL-115)", () => {
     // context が入っている
     expect(p).toContain("local-llm");
     expect(p).toContain("GLM-5.2");
-    expect(p).toContain("Source excerpt");
+    expect(p).toContain("Article text");
   });
 
   it("EN プロンプトは英語本文・語数・セクション見出し契約を含む", () => {
@@ -270,7 +270,7 @@ describe("buildBodyPromptJa / buildBodyPromptEn (LL-115)", () => {
     expect(p).toContain("2 sections");
     expect(p).toContain("plain text only");
     expect(p).toContain("local-llm");
-    expect(p).toContain("Source excerpt");
+    expect(p).toContain("Article text");
   });
 
   it("両プロンプトが提供文脈外の事実追加を禁止し、背景補完を指示しない", () => {
@@ -282,6 +282,16 @@ describe("buildBodyPromptJa / buildBodyPromptEn (LL-115)", () => {
     expect(en).toContain("State no fact that is absent from the Article info block");
     expect(en).not.toContain("Add useful background");
     expect(en).not.toContain("adjacent tools, related industry moves");
+    // Site audit: bodies quoted their own inputs ("抜粋では触れられていない",
+    // "not detailed in the excerpt", "記事のタグには…") — the prompt now forbids
+    // naming the material and no longer passes tags as facts.
+    expect(ja).toContain("材料名やその有無・薄さに本文の中で触れない");
+    expect(ja).toContain("タグは分類用のラベルであり事実ではない");
+    expect(ja).not.toContain("タグ / Tags:");
+    expect(ja).not.toContain("収集元の抜粋");
+    expect(ja).not.toContain("既存の日本語要約");
+    expect(en).toContain("Do not mention it, its parts, or their absence in the body");
+    expect(en).toContain("Tags are classification labels, not facts");
   });
 
   it("要求分量は抜粋の長さに比例し、固定値ではない", () => {

@@ -6,6 +6,11 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  ARTICLE_CHAT_ARC_VARIANTS,
+  ARTICLE_CHAT_STOCK_PHRASES,
+  articleChatArcFor,
+} from "../worker/src/article-chat.ts";
+import {
   ARTICLE_CHAT_PERSONAS,
   ARTICLE_CHAT_TURNS,
   CHAT_TURN_MAX_EN_CHARS,
@@ -191,5 +196,42 @@ describe("detail page wiring", () => {
     );
     expect(source).toContain("const articleChat = body ? validateArticleChat(body.chat) : null;");
     expect(source).toContain("{articleChat && <ArticleChat chat={articleChat} />}");
+  });
+});
+
+
+describe("buildArticleChatPrompt — variety and provenance", () => {
+  const base = {
+    title: "Sample article",
+    titleJa: "サンプル記事",
+    summaryJa: "サンプルの要約です。",
+    summaryEn: "A sample summary.",
+    contentSnippet: "Sample excerpt text for grounding the chat.",
+    source: "qiita-claude",
+    sourceType: "community",
+    category: "claude",
+    tags: ["bedrock", "agents"],
+  };
+
+  it("picks one of three arcs deterministically per article", () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 60; i++) {
+      const arc = articleChatArcFor({ ...base, title: `Sample article ${i}` });
+      expect(ARTICLE_CHAT_ARC_VARIANTS.map((v) => v.key)).toContain(arc.key);
+      seen.add(arc.key);
+      expect(articleChatArcFor({ ...base, title: `Sample article ${i}` }).key).toBe(arc.key);
+    }
+    expect(seen.size).toBe(3);
+  });
+
+  it("forbids the stock phrases, keeps tags out of the material, and names the arc", () => {
+    const prompt = buildArticleChatPrompt(base);
+    for (const phrase of ARTICLE_CHAT_STOCK_PHRASES) expect(prompt).toContain(`「${phrase}」`);
+    expect(prompt).toContain("次の決まり文句は使わない");
+    expect(prompt).toContain("二人は記事そのものを読んだ前提で話す");
+    expect(prompt).not.toContain("タグ:");
+    expect(prompt).not.toContain("収集元抜粋");
+    expect(prompt).toContain("本文: Sample excerpt text");
+    expect(prompt).toContain(articleChatArcFor(base).ja[0]);
   });
 });

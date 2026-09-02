@@ -69,15 +69,17 @@ function contextLines(e: BodyPromptEntry): string[] {
   if (e.titleEn && e.titleEn !== e.title) lines.push(`English title: ${compact(e.titleEn, 200)}`);
   lines.push(`カテゴリ / Category: ${e.category} · ソース / Source: ${e.source} (${e.sourceType})`);
   if (e.publishedAt) lines.push(`公開日時 / Published: ${e.publishedAt}`);
-  if (e.tags?.length) lines.push(`タグ / Tags: ${e.tags.slice(0, 8).join(", ")}`);
+  // Tags are deliberately NOT passed: bodies cited them as facts ("記事の
+  // タグには Bedrock も含まれており"). Labels below are neutral so the model
+  // does not learn a vocabulary ("抜粋", "既存の要約") it then leaks into prose.
   if (e.contentSnippet && !isFallbackText(e.contentSnippet)) {
-    lines.push(`収集元の抜粋 / Source excerpt: ${compact(e.contentSnippet, 900)}`);
+    lines.push(`本文 / Article text: ${compact(e.contentSnippet, 900)}`);
   }
   if (e.summaryJa && !isFallbackText(e.summaryJa)) {
-    lines.push(`既存の日本語要約: ${compact(e.summaryJa, 600)}`);
+    lines.push(`要点 (日本語) / Key points (ja): ${compact(e.summaryJa, 600)}`);
   }
   if (e.summaryEn && !isFallbackText(e.summaryEn)) {
-    lines.push(`Existing English summary / snippet: ${compact(e.summaryEn, 800)}`);
+    lines.push(`要点 (英語) / Key points (en): ${compact(e.summaryEn, 800)}`);
   }
   return lines;
 }
@@ -192,6 +194,8 @@ export function buildBodyPromptJa(e: BodyPromptEntry): string {
     "・記事情報から読み取れないことは書かずに省く。動機・ロードマップ・今後の影響を推し量らない。",
     "・材料が少ないときは短く書いて終える。分量を満たすために内容を作らない。",
     "・収集元のタイトルと抜粋を事実の上限とし、料金・対象地域・対応OS・既存版からの展開を別の機能や新製品へ置き換えない。",
+    "・記事情報は読者には見えない編集用の材料である。「抜粋」「収集元」「記事情報」「既存の要約」「タグ」などの材料名やその有無・薄さに本文の中で触れない。書かれていないことは黙って省き、「抜粋では触れられていない」「記事情報によれば」のような言い回しを使わない。記事そのものを解説する文体で書く。",
+    "・タグは分類用のラベルであり事実ではない。タグに含まれる語を根拠として本文に持ち込まない。",
     "",
     "書式:",
     `・${plan.jaMinChars}〜${plan.jaMaxChars} 文字。複数の段落に分け、段落の区切りは空行 (改行2つ) のみ。`,
@@ -222,6 +226,8 @@ export function buildBodyPromptEn(e: BodyPromptEntry): string {
     "- Leave out anything the block does not support. Do not speculate about motives, roadmaps, or downstream impact.",
     "- When the material is thin, write a shorter body and stop. Never invent content to reach a length.",
     "- Treat the collected title and source excerpt as the factual boundary. Preserve pricing, region, platform, and expansion facts instead of replacing them with a different feature or a new-product claim.",
+    "- The Article info block is editorial material the reader never sees. Do not mention it, its parts, or their absence in the body: no \"the excerpt\", \"the collected context\", \"the existing summary\", \"the tags\", \"not detailed in the excerpt\". Leave unsupported points out silently and write as if explaining the article itself.",
+    "- Tags are classification labels, not facts. Never cite or reason from them in the body.",
     "",
     "Format:",
     `- ${plan.enMinWords}-${plan.enMaxWords} words, multiple paragraphs separated by a blank line (two newlines).`,

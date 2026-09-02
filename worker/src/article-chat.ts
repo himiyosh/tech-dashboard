@@ -56,7 +56,7 @@ export const ARTICLE_CHAT_PERSONAS = {
     profileEn:
       "A kindly professor who has watched the tech industry for decades. Great at recasting hard ideas in everyday words, never showing off, and always separating what the article says from general background.",
     speechJa:
-      "やわらかい博士口調。「簡単に言うとじゃな」「記事によれば〜じゃよ」のように、かみ砕きと出典の区別を自然に添える。",
+      "やわらかい博士口調 (語尾に「じゃ」「じゃよ」「のう」を自然に混ぜる)。かみ砕きと出典の区別を毎回違う言い回しで添え、同じ決まり文句を繰り返さない。",
     speechEn:
       "Warm professor tone; leads with plain-language recaps and attributes claims to the article.",
     emoji: "🎓",
@@ -91,11 +91,69 @@ function contextLines(e: ChatPromptEntry): string[] {
   if (e.titleJa && e.titleJa !== e.title) lines.push(`日本語タイトル: ${compact(e.titleJa, 200)}`);
   if (e.summaryJa) lines.push(`日本語要約: ${compact(e.summaryJa, 400)}`);
   if (e.summaryEn) lines.push(`英語要約: ${compact(e.summaryEn, 500)}`);
-  if (e.contentSnippet) lines.push(`収集元抜粋: ${compact(e.contentSnippet, 900)}`);
+  if (e.contentSnippet) lines.push(`本文: ${compact(e.contentSnippet, 900)}`);
   if (e.source) lines.push(`source: ${e.source} (${e.sourceType ?? "?"})`);
   if (e.category) lines.push(`カテゴリ: ${e.category}`);
-  if (e.tags?.length) lines.push(`タグ: ${e.tags.slice(0, 8).join(", ")}`);
+  // Tags are classification labels, not facts; they were quoted as such.
   return lines;
+}
+
+/**
+ * Three conversation arcs, chosen deterministically per article so the
+ * corner does not read as one template repeated 1,000 times (site audit:
+ * every chat opened with 「簡単に言うと」 and 「それって何が嬉しいの？」).
+ */
+export const ARTICLE_CHAT_ARC_VARIANTS = [
+  {
+    key: "question-first",
+    ja: [
+      "往復1 (発言1-2): ソラが記事で一番気になった具体的な点を自分の言葉で聞き、博士が記事の記述に沿ってかみ砕いて答える。",
+      "往復2 (発言3-4): ソラが「それは誰にどう役立つのか」を自分なりの例えで確かめ、博士が記事に書かれた範囲で意味や影響を説明する。",
+      "往復3 (発言5-6): ソラが分かったことを一言でまとめ、博士が記事の範囲で注意点や見どころをひとこと添える。",
+    ],
+  },
+  {
+    key: "surprise-first",
+    ja: [
+      "往復1 (発言1-2): ソラが記事の中で驚いた数字や変化を挙げて「これって大きいこと？」と聞き、博士が記事の記述をもとに大きさや位置づけを平易に説明する。",
+      "往復2 (発言3-4): ソラが専門用語や仕組みを一つ選んで「つまりどういうこと？」と掘り、博士が身近な言葉で言い換える。",
+      "往復3 (発言5-6): ソラが「自分ならどう使うか」を想像して締め、博士が記事に書かれた条件や制約を添えて現実的に受け止める。",
+    ],
+  },
+  {
+    key: "usecase-first",
+    ja: [
+      "往復1 (発言1-2): ソラが「これは普段の何が変わるの？」と生活や仕事の場面から入り、博士が記事の記述に沿って何ができるようになるかを答える。",
+      "往復2 (発言3-4): ソラが「前はできなかったの？」と比較で聞き、博士が記事に書かれた範囲で従来との違いを説明する (書かれていなければ違いは分からないと正直に言う)。",
+      "往復3 (発言5-6): ソラが一番の収穫を自分の言葉で言い、博士が記事の範囲で次に注目すべき点をひとこと添える。",
+    ],
+  },
+] as const;
+
+/** Phrases that made every chat sound identical; the prompt forbids them. */
+export const ARTICLE_CHAT_STOCK_PHRASES = [
+  "簡単に言うと",
+  "それって何が嬉しいの",
+  "記事によれば",
+  "その理解でよいぞ",
+  "見どころ",
+  "今後の見どころ",
+  "抜粋",
+  "記事情報",
+] as const;
+
+function stableHash(value: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619) >>> 0;
+  }
+  return hash >>> 0;
+}
+
+export function articleChatArcFor(e: ChatPromptEntry): (typeof ARTICLE_CHAT_ARC_VARIANTS)[number] {
+  const seed = `${e.title ?? ""}|${e.titleJa ?? ""}|${e.source ?? ""}`;
+  return ARTICLE_CHAT_ARC_VARIANTS[stableHash(seed) % ARTICLE_CHAT_ARC_VARIANTS.length]!;
 }
 
 /**
@@ -107,6 +165,7 @@ function contextLines(e: ChatPromptEntry): string[] {
 export function buildArticleChatPrompt(e: ChatPromptEntry): string {
   const a = ARTICLE_CHAT_PERSONAS.a;
   const b = ARTICLE_CHAT_PERSONAS.b;
+  const arc = articleChatArcFor(e);
   return [
     "あなたはテックメディアの編集部コーナーの脚本家です。固定キャラクター 2 人が、下の「記事情報」に書かれている内容について短いチャットで議論します。",
     "",
@@ -122,12 +181,12 @@ export function buildArticleChatPrompt(e: ChatPromptEntry): string {
     "・周辺知識や他社動向で水増ししない。感想・評価は「記事情報に書かれている事実への反応」として述べ、新しい事実の主張にしない。",
     "・記事情報が断定していないことは断定しない。推測は「〜なら」「〜かもね」のような仮定・伝聞の形にとどめる。キャラの背景設定は口調と視点にだけ使い、経験談として新しい事実を語らせない。",
     "・例外はひとつ: 記事情報に登場する専門用語を、広く知られた一般的な定義の範囲で短く平易に言い換えるのはよい (例:「オープンウェイト＝モデルの中身が公開されている、くらいの意味」)。その場合も具体的な数値・日付・製品仕様・他社動向は足さない。",
+    "・記事情報は読者には見えない台本用の材料である。「抜粋」「記事情報」「要約」などの材料名や、材料に書かれていないこと自体には触れない。二人は記事そのものを読んだ前提で話す。",
+    `・次の決まり文句は使わない: ${ARTICLE_CHAT_STOCK_PHRASES.map((p) => `「${p}」`).join("")}。出典に触れるときは「この記事では」「記事だと」のように毎回言い方を変える。`,
     "",
     "会話の設計:",
     `・ちょうど ${ARTICLE_CHAT_TURNS} 発言 (3 往復)。a → b → a → b → a → b の順で交互。`,
-    `・往復1 (発言1-2): ${a.nameJa} が記事の内容で気になった点や分からない言葉を素直に質問し、${b.nameJa} が記事の記述をかみ砕いて答える。`,
-    `・往復2 (発言3-4): ${a.nameJa} が「それって何が嬉しいの？」のように一歩踏み込み、${b.nameJa} が記事に書かれた範囲でその意味や影響を説明する。`,
-    `・往復3 (発言5-6): 締め。${a.nameJa} は分かったことを自分の言葉で短くまとめ、${b.nameJa} が記事の範囲で今後の見どころや注意点をひとこと添える。`,
+    ...arc.ja.map((line) => `・${line}`),
     "・各発言は 1〜2 文の話し言葉。ja は日本語 (120 文字以内)、en は同じ趣旨を自然な英語で (40 語以内)。en は直訳でなくネイティブのチャットとして、各キャラの口調 (Sora: " + a.speechEn + " / Ren: " + b.speechEn + ") で書く。",
     "・記事タイトルの復唱や挨拶で発言を浪費しない。1 発言目から内容に入る。",
     "",

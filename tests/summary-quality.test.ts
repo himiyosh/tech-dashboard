@@ -3,6 +3,7 @@ import {
   hasUsableBilingualSummary,
   isContaminatedSummaryText,
   needsSummaryGeneration,
+  hasForeignScriptContamination,
 } from "../harness/pipeline/summary-quality.ts";
 
 describe("summary quality contract", () => {
@@ -57,5 +58,23 @@ describe("summary quality contract", () => {
     expect(
       hasUsableBilingualSummary(response, ["Original source title"]),
     ).toBe(false);
+  });
+});
+
+
+describe("summary contamination gates (site audit)", () => {
+  it("rejects feed and git chrome that reached summaryEn on release feeds", () => {
+    expect(isContaminatedSummaryText("fix: handle persisted agent_kind ( #14306 ) Co-authored-by: openhands <openhands@all-hands.dev>")).toBe(true);
+    expect(isContaminatedSummaryText("Learn what's new in Visual Studio Code 1.114 Read the full article")).toBe(true);
+    expect(isContaminatedSummaryText("What's Changed chore: jb-66 by @RomneyDa in #11909 Full Changelog")).toBe(true);
+    expect(isContaminatedSummaryText("The post Foo appeared first on Source.")).toBe(true);
+    expect(isContaminatedSummaryText("Copilot CLI adds a --resume flag so long sessions survive restarts.")).toBe(false);
+  });
+
+  it("rejects foreign-script contamination in Japanese or English editorial text", () => {
+    expect(hasForeignScriptContamination("Anthropicの「AI for Science」희귀疾患研究グラント募集開始")).toBe(true);
+    expect(isContaminatedSummaryText("Anthropicの「AI for Science」희귀疾患研究グラント募集開始")).toBe(true);
+    expect(hasForeignScriptContamination("Claude Code v2.1.246 で API キー漏洩を修正")).toBe(false);
+    expect(hasForeignScriptContamination("Introducing Hy4 Preview — a 770B open-weight model")).toBe(false);
   });
 });

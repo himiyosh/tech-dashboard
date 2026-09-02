@@ -14,7 +14,10 @@
  *
  * Prune criterion: record.model starts with MODEL_PREFIX (default "gpt-5.6")
  * AND bodyJa is shorter than MIN_JA_CHARS (default 450 — below the 540 floor
- * of the full band, above every legacy opus record, min 539).
+ * of the full band, above every legacy opus record, min 539) AND the entry's
+ * CURRENT contentSnippet is at least MIN_SNIPPET_CHARS (450). The last clause
+ * stops churn: an entry whose feed item aged out keeps its 280-char excerpt,
+ * so regenerating it would only produce the same honest short body again.
  *
  * data/index.json health (bodiesTotal / bodyBacklog / budget fields) is
  * derived from bodies.json, so it is resynchronized in the SAME transaction —
@@ -50,6 +53,7 @@ import {
 
 const MODEL_PREFIX = "gpt-5.6";
 const MIN_JA_CHARS = 450;
+const MIN_SNIPPET_CHARS = 450;
 
 const args = process.argv.slice(2);
 const apply = args.length === 1 && args[0] === "--apply";
@@ -95,19 +99,29 @@ const storedBodies = validateBodiesPayload(
 };
 
 // ----------------------------------------------------------------- prune ---
+const snippetLengthById = new Map<string, number>();
+for (const entry of liveEntries) {
+  const snippet = entry.contentSnippet;
+  snippetLengthById.set(entry.id, typeof snippet === "string" ? snippet.length : 0);
+}
 const prunedIds: string[] = [];
+let shortButThin = 0;
 const keptBodies: Record<string, unknown> = {};
 for (const [id, record] of Object.entries(storedBodies.bodies)) {
   const model = typeof record.model === "string" ? record.model : "";
   const bodyJa = typeof record.bodyJa === "string" ? record.bodyJa : "";
   if (model.startsWith(MODEL_PREFIX) && bodyJa.length < MIN_JA_CHARS) {
-    prunedIds.push(id);
-    continue;
+    if ((snippetLengthById.get(id) ?? 0) >= MIN_SNIPPET_CHARS) {
+      prunedIds.push(id);
+      continue;
+    }
+    shortButThin += 1;
   }
   keptBodies[id] = record;
 }
 console.log(
-  `short ${MODEL_PREFIX} bodies (< ${MIN_JA_CHARS} JA chars): ${prunedIds.length} of ${storedBodies.count}`,
+  `short ${MODEL_PREFIX} bodies (< ${MIN_JA_CHARS} JA chars): ${prunedIds.length} pruned`
+  + ` (excerpt >= ${MIN_SNIPPET_CHARS}), ${shortButThin} kept (thin excerpt) of ${storedBodies.count}`,
 );
 
 // -------------------------------------------- reconcile derived artifacts --

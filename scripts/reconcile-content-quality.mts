@@ -44,6 +44,7 @@ import {
   hasForeignScriptContamination,
   isContaminatedSummaryText,
 } from "../harness/pipeline/summary-quality.ts";
+import { buildFallbackSummary } from "../worker/src/content-fallback.ts";
 import type { NormalizedEntry } from "../harness/types.ts";
 import {
   DATA_ARTIFACT_JOURNAL_PATH,
@@ -121,10 +122,15 @@ const liveEntries = index.entries.map((entry) => {
   // -------------------------------------------- 2. contaminated summaries
   const badJa = isContaminatedSummaryText(entry.summaryJa);
   const badEn = isContaminatedSummaryText(entry.summaryEn);
-  if (badJa || badEn) {
-    next.summaryJa = "";
-    next.summaryEn = "";
-    summariesCleared += 1;
+  const emptyPair = !(entry.summaryJa ?? "").trim() || !(entry.summaryEn ?? "").trim();
+  if (badJa || badEn || emptyPair) {
+    // The deterministic pending fallback is what the publisher writes before
+    // publishing; needsSummaryGeneration treats it as "regenerate", and the
+    // data-schema contract requires both summary slots to be non-empty.
+    const fallback = buildFallbackSummary({ ...entry, ...next } as never);
+    next.summaryJa = fallback.summaryJa;
+    next.summaryEn = fallback.summaryEn;
+    if (badJa || badEn) summariesCleared += 1;
   }
   if (hasForeignScriptContamination(next.titleJa)) {
     next.titleJa = entry.lang === "ja" ? original : "";

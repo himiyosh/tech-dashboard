@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-09-03T00:55:00.435Z",
-  "count": 946,
+  "count": 941,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -32706,12 +32706,6 @@
       "model": "claude-opus-4.8",
       "generatedAt": "2026-07-11T13:03:16.980Z"
     },
-    "1fab0c9c47933223": {
-      "bodyJa": "## 一般提供開始\n\nEnterprise Live Migrations（ELM）が一般提供となった。GitHub Enterprise Server（GHES）から、データレジデンシーに対応するGitHub Enterprise Cloud（GHEC DR）へリポジトリを移行するための機能で、タイトルでは移行先がghe.comと示されている。\n\n## ほぼ停止なし\n\nELMによる移行は「near-zero-downtime」、つまり停止時間をほぼゼロに抑えるものと説明されている。完全に停止が発生しないという意味ではなく、リポジトリ移行に伴うサービス中断を最小限にする点が中心となる。移行時の業務中断を抑えたい企業に役立つとされており、今回一般提供された対象は、GHESからデータレジデンシー対応のGitHub Enterprise Cloudへのリポジトリ移行である。",
-      "bodyEn": "## Enterprise Live Migrations\n\nEnterprise Live Migrations is now generally available for moving repositories from GitHub Enterprise Server (GHES) to ghe.com. The capability matters for enterprises seeking to reduce service disruption during a repository migration.\n\nThe announcement describes migrations from GHES to GitHub Enterprise Cloud with Data Residency (GHEC DR). It specifically presents Enterprise Live Migrations as a way to move repositories between those environments with near-zero downtime.\n\n## Near-zero-downtime repository migrations\n\nThe technical detail provided is the ability to conduct repository migrations while keeping downtime close to zero. This can help companies limit interruptions to their work as repositories are moved from GHES to the data-residency-supported GitHub Enterprise Cloud environment.\n\nThe general-availability announcement applies to Enterprise Live Migrations for this GHES-to-GHEC-with-Data-Residency path. According to the source, the focus is repository migration and minimizing service disruption during that move. No additional migration capabilities, supported environments, or operational requirements are specified in the announcement excerpt.",
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-02T10:04:41.690Z"
-    },
     "bb31c3dd539dc36a": {
       "bodyJa": "## 次世代AI\n\nMetaのInfrastructure Labは、次世代AIを支えるために開発中のハードウェアと、その開発現場を公開した。将来のAIワークロードに向けたシステムを知り、AI基盤を支える技術への理解を深められる内容とされる。\n\n## 開発中の機器\n\nTom ShawがInfrastructure Labの内部を案内し、ラボで開発されている機器を取り上げる。紹介の焦点は、将来のAIワークロードを支え、高度なモデルの基盤になり得るハードウェアと、開発を担うラボの役割に置かれている。",
       "bodyEn": "## Inside Meta’s Infrastructure Lab\n\nMeta’s post takes readers inside its Infrastructure Lab, focusing on hardware under development for future AI workloads. This matters because the systems are being developed to power the next generation of AI and may underpin advanced models.\n\nThe Meta Newsroom post invites readers to join Tom Shaw for a look at the lab and the equipment being developed there. It introduces the development setting and the lab’s role in creating hardware for future AI infrastructure.\n\n## Hardware under development\n\nThe post centers on equipment that is still under development rather than providing specific technical specifications. Its scope is the hardware and systems intended to support future AI workloads, giving readers a view of the technologies being developed for the next generation of AI.",
@@ -32949,158 +32943,6 @@
       "bodyEn": "## Third alpha\n\nlangchain 1.4.0a3 is the third alpha release in the 1.4.0 line, published on September 1, 2026. It focuses on the new langchain.mcp namespace, which adapts MCP servers into LangChain tools. The release matters for developers working with MCP integrations because it supports several kinds of server targets through one adapter.\n\n## MCPAdapter adapts\n\nMCPAdapter can adapt any target accepted by fastmcp.Client. The supported targets described in the release are a URL, a local script, an in-process server, an MCPConfig that names several servers, and a pre-built client.\n\nThe namespace also supports a FastMCP ClientGroup. This represents a fleet of servers behind one client, allowing the adapter to work with a grouped multi-server target as well as individual URLs, scripts, in-process servers, or existing clients.\n\n## Client-side response caching\n\nMCPAdapter.list_tools(*, cache_mode=\"use\") discovers and adapts tools. It includes optional client-side response caching under SEP-2549, with three cache modes that control how the tool list is obtained.\n\nThe default use mode serves a cached list while it remains within the server’s TTL hint. The refresh mode repopulates the cache, while bypass skips the cache. These options let callers choose between using an available cached tool list, explicitly refreshing it, or avoiding the cache for a request.\n\n## Tool metadata\n\nFor callers that manage their own client, as_langchain_tool(tool, client, *, elicitation=None) converts a single MCP tool. This provides a separate path from discovering and adapting tools through MCPAdapter.list_tools.\n\nEach adapted tool groups its tool metadata under an mcp namespace. Together, the adapter targets, ClientGroup support, cache behavior, single-tool conversion function, and namespaced metadata define the MCP-focused changes highlighted in this third alpha release.",
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-01T22:53:46.685Z"
-    },
-    "6e1e2b1edfbef0ab": {
-      "bodyJa": "## AIインフラ\n\nGoogleは、TPU、GPU、GKE、Cluster Directorなど、AIインフラとオーケストレーションに関する今月の新機能をまとめている。AI Hypercomputerを中心としたスーパーコンピューティング基盤と、その構成要素を一体として紹介している点が主題だ。\n\n## AIの取り組み\n\n記事では、GoogleのAIへの取り組みを、モデルからソフトウェア、基盤までを含む一貫したものとして説明している。AIモデルとしてGeminiやNano Bananaを挙げるほか、Gmail、BigQuery、AlloyDB、Google Cloud Code、Google Cloud Assistといった日常的に使われるツールにもAIを組み込んでいるとしている。\n\nまた、AIを使った開発を支援するソフトウェアフレームワークとして、Gemini Enterprise Agent Platform、JAX、MaxTestが示されている。モデルの提供だけでなく、AIを利用するツールや開発用ソフトウェアも取り組みの範囲に含まれる。\n\n## オーケストレーション\n\n基盤層には、幅広い標準コンピュート、TPUやGPUなどのアクセラレータ、最適化されたネットワークとストレージが含まれる。Googleは、これらを動かす強力なインフラプラットフォームを共同設計していると説明している。\n\nさらに、GKEとCluster Directorはオーケストレーションソフトウェアとして位置付けられている。今回のまとめでは、演算資源だけでなく、それらを扱うオーケストレーションまでがAIインフラ全体の要素として取り上げられている。\n\n## AI Hypercomputer\n\nこれらのモデル、ツール、フレームワーク、コンピュート、アクセラレータ、ネットワーク、ストレージ、オーケストレーションソフトウェアは、AI Hypercomputerのようなスーパーコンピューティングプラットフォームとしてまとめて提供されるとされる。記事は、このAI Hypercomputerを中心に、関連するAIインフラ基盤とオーケストレーションツールの強化内容を整理している。",
-      "bodyEn": "## AI infrastructure and orchestration\n\nGoogle’s monthly roundup summarizes new features across its AI infrastructure and orchestration stack, including TPUs, GPUs, GKE, Cluster Director, and AI Hypercomputer. The update matters because these components provide the infrastructure platform beneath Google’s AI models, tools, and software frameworks.\n\nThe source describes Google’s AI work as a “soup-to-nuts endeavor,” spanning models, everyday tools, development frameworks, infrastructure, orchestration software, and packaged supercomputing platforms.\n\n## Compute, accelerators, and storage\n\nThe underlying infrastructure includes a broad range of standard compute alongside accelerators such as TPUs and GPUs. Google says this platform also includes optimized networks and storage.\n\nThese elements support the broader collection of AI technologies identified in the announcement. That collection includes models such as Gemini and Nano Banana, as well as AI incorporated into Gmail, BigQuery, AlloyDB, Google Cloud Code, and Google Cloud Assist.\n\n## GKE and Cluster Director\n\nOrchestration is another part of the infrastructure described in the roundup. The source specifically identifies GKE and Cluster Director as orchestration software within the platform that runs beneath Google’s AI offerings.\n\nGoogle also lists software frameworks intended to help users build with AI. Those frameworks include Gemini Enterprise Agent Platform, JAX, and MaxTest. The roundup therefore presents orchestration and infrastructure as parts of a broader set of technologies that also covers models, AI-enabled tools, and development software.\n\n## AI Hypercomputer\n\nGoogle packages these components into supercomputing platforms such as AI Hypercomputer. According to the source, AI Hypercomputer brings together standard compute, TPUs, GPUs, optimized networking and storage, and orchestration software.\n\nThe existing summary says the roundup highlights enhancements to the AI Hypercomputer supercomputing platform and related orchestration tools. It frames those updates as part of Google’s wider AI infrastructure stack and its effort to support an AI and agentic future.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "AI Hypercomputerって何？ TPUやGPUとは別のものなの？",
-          "en": "What exactly is AI Hypercomputer? Is it separate from TPUs and GPUs?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、計算資源やTPU・GPU、ネットワーク、ストレージ、運用ソフトをまとめたスーパーコンピューティング基盤じゃよ。",
-          "en": "Simply put, it’s a supercomputing platform that packages compute, TPUs and GPUs, networking, storage, and orchestration software together."
-        },
-        {
-          "s": "a",
-          "ja": "いろいろ一つにまとまると、何が嬉しいの？ GKEやCluster Directorは何をするの？",
-          "en": "What’s useful about bundling all that together? And what do GKE and Cluster Director do?"
-        },
-        {
-          "s": "b",
-          "ja": "記事では、GKEとCluster Directorは基盤を動かすオーケストレーションソフトじゃ。簡単に言えば、計算資源の運用をまとめる仕組みじゃな。",
-          "en": "The article describes GKE and Cluster Director as orchestration software. In plain terms, they help organize how the computing infrastructure is operated."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど。AIの土台は、チップだけじゃなく、通信や保存、運用の仕組みまでセットなんだね！",
-          "en": "Got it! AI infrastructure isn’t just about chips—it also includes networking, storage, and the software that keeps everything organized."
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃ。記事によればTPU、GPU、GKE、Cluster Directorなどが更新されており、それらの強化がどう連携するかが見どころじゃよ。",
-          "en": "Exactly. According to the article, TPUs, GPUs, GKE, Cluster Director, and related tools are being updated; the key point is how those enhancements work together."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T19:49:18.422Z"
-    },
-    "534cf2cebb6cd6d1": {
-      "bodyJa": "AIエージェントとの協働に特化したノート・タスク管理デスクトップアプリ「hanamask」のバージョン1.0.0が公開された。最大の特徴は、AIエージェントがMCP（Model Context Protocol）を通じてMarkdown形式のノートへ直接書き込める点にある。\n\n開発者が掲げるコンセプトは「本文はエージェントが書き、人間が読む」という一言に集約される。従来のノートアプリが人間による入力を前提としてきたのに対し、hanamaskはAIエージェントを主たる書き手として想定し、人間はその成果を確認・レビューする役割を担う設計になっているとされる。ノートやタスクの本文をエージェントが生成し、利用者が読み返すという分担を明確にした点が、既存ツールとの差別化になっていると見られる。\n\n技術的な土台となっているのがMCPだ。MCPはAIモデルと外部ツールやデータソースを標準的な手順で接続するためのプロトコルで、対応するサーバーを用意すれば、エージェントがファイル操作や外部アプリの機能を呼び出せるようになる。hanamaskはこのMCPサーバーとして振る舞うことで、エージェントがアプリ内のノートを直接編集する経路を提供していると考えられる。データ形式にMarkdownを採用している点も、テキストを扱うAIとの親和性を高める狙いがあるとみられる。\n\n背景には、生成AIを単なる質問応答の相手ではなく、作業を代行する「エージェント」として活用する流れの広がりがある。近年はコード編集やドキュメント作成をエージェントに任せる開発スタイルが注目を集めており、MCPを介して各種アプリと連携する事例も増えている。Markdownベースのノートという意味ではObsidianやNotionといった既存の人気ツールも存在するが、hanamaskは「人間が書く」という前提そのものを転換しようとする点で立ち位置が異なる。\n\n料金体系や対応環境の詳細は今回の情報からは限られるものの、AIエージェントとの協働を前提に設計されたデスクトップアプリという方向性は、開発ワークフローの一つの実験例として位置づけられる。今後、同様のエージェント連携を掲げるツールがどこまで実用に耐えるかが問われていくことになりそうだ。",
-      "bodyEn": "A developer has released hanamask v1.0.0, a desktop note and task management application built specifically for working alongside AI agents. The project, announced on the Qiita developer blog, is notable because it inverts a common assumption about note-taking software: rather than treating the human as the primary author, hanamask is designed around the idea that the AI agent writes the content and the human reads and reviews it. That design choice matters as more developers integrate AI assistants into daily workflows and look for tools that can serve as durable, shared memory between people and machines.\n\nThe concept, as the author summarizes it, is that \"the body is written by the agent, and the human reads it.\" In practice this means an AI agent can compose and update notes directly, producing Markdown-formatted content that a person can then scan, verify, and act on. The app positions itself as optimized for AI development and human-agent collaboration, which suggests the intended audience is programmers and other technical users who already spend significant time prompting and supervising AI tools while building software.\n\nThe technical mechanism that makes this possible is the Model Context Protocol, or MCP, which the tags and category identify as central to hanamask. MCP is an open standard, originally introduced by Anthropic, that defines how AI applications connect to external tools, data sources, and services. An MCP server exposes capabilities—such as reading, creating, or editing notes—that a compatible AI client can call. By implementing this interface, hanamask appears to let an agent write into the app's note store without a human manually copying and pasting text, so the notes become a live workspace that the agent can modify as a task progresses.\n\nMarkdown is the other key ingredient. Because the content is stored as Markdown, notes remain lightweight, human-readable, and portable, and they render consistently across many editors and platforms. Markdown is also well suited to output from large language models, which tend to produce clean, structured text with headings, lists, and code blocks. Combining Markdown with task management features implies that hanamask can hold not just free-form notes but also actionable items that an agent updates over time, though the exact scope of the task features is not detailed in the announcement.\n\nTo understand why an app like this is emerging now, it helps to look at the broader ecosystem. Over the past year, MCP has gained rapid adoption as a way to standardize the connections between AI models and the tools they use, and a growing catalog of MCP servers now covers everything from file systems and databases to issue trackers and design tools. Major AI clients and coding assistants have added support for the protocol, which reduces the need for each application to build bespoke integrations. hanamask fits into this trend as a purpose-built endpoint: instead of bolting AI onto an existing notes product, it treats agent access as a first-class feature from the ground up.\n\nAdjacent tools help frame where hanamask sits. Popular note applications such as Obsidian and Notion have added AI features or community plugins, and Obsidian in particular relies heavily on local Markdown files, a model that resonates with hanamask's approach. General-purpose task managers and developer-focused knowledge bases are likewise experimenting with agent integrations. What distinguishes hanamask, based on the announcement, is the explicit framing that the agent is the writer and the human the reader, rather than the AI acting only as an occasional assistant to a human author.\n\nAs with any early release, some caveats apply. This is version 1.0.0 from what appears to be an individual developer, so the feature set, stability, and platform support are likely still maturing, and the announcement does not spell out pricing, licensing, or which operating systems are supported. Users who let an agent write directly into their notes will also want to consider review and verification practices, since the value of the \"human reads\" half of the concept depends on catching errors or hallucinated content. Still, hanamask is a concrete example of software being redesigned around AI agents as active participants, and it illustrates how MCP is enabling that shift in everyday productivity tools.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "AIエージェントがノートに直接書くって、どういうこと？ MCPもよく分からない！",
-          "en": "What does it mean for an AI agent to write directly into notes? And what exactly is MCP?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、hanamaskではMCPを通じてAIがMarkdownノートを書き込むんじゃ。MCPは、AIと外部ツールをつなぐ共通の決まり、と考えるとよいぞ。",
-          "en": "According to the article, hanamask lets AI write Markdown notes through MCP. Simply put, MCP is a shared set of rules for connecting AI with external tools."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、すごい！ でも、AIが直接書けると何が嬉しいの？",
-          "en": "Wow, that’s neat! But what’s the benefit of letting AI write directly?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、本文はAIが書き、人間は結果を確認する役割分担じゃな。記事では、AIとの協働に特化したノート・タスク管理アプリとされておる。",
-          "en": "Simply put, the AI writes the content and the human reviews it. The article describes hanamask as a note and task app built specifically for collaborating with AI agents."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、AIにノートを書いてもらい、人が読む流れを中心にしたデスクトップアプリなんだね！",
-          "en": "So it’s a desktop app centered on having AI write the notes and humans review them!"
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃ。公開されたv1.0.0で、この役割分担がどう形になっているかが見どころじゃな。",
-          "en": "Exactly. The key thing to watch in the newly released v1.0.0 is how that division of work is implemented."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-29T13:22:15.558Z"
-    },
-    "ac37413694d82011": {
-      "bodyJa": "大規模言語モデルの推論エンジンとして広く使われるvLLMに、長文脈処理時のGPUメモリ効率を改善する「-dcp」オプションが加わった。テンソル並列で長い文脈を扱う構成において、KVキャッシュの重複を排除し、スループットを最大3倍に高められるとされる。\n\n複数のGPUに1つのモデルを分割して載せる「テンソル並列(tensor parallelism)」は、単体では収まらない巨大モデルを動かすための定番手法だ。しかし長文脈のワークロードでは、計算資源に余裕があるにもかかわらず、あるところから急に新しいリクエストをさばけなくなる現象が起きることがある。原因は計算量の増大ではなく、注意機構(アテンション)が参照するKVキャッシュがGPUメモリを埋め尽くしてしまう点にあるという。\n\n問題を根深くしているのは、この重複がモデルの構造上ほぼ避けようがなかったことだ。近年のモデルはGrouped Query Attention(GQA)などでKVヘッドの数を抑えているため、GPUの枚数がKVヘッド数を上回ると、同じKVキャッシュを複数のGPUに複製して保持せざるを得ない。8枚のGPUに分割しても、実際には同じデータが何重にも積み上がり、メモリを浪費していたと見られる。\n\n-dcpオプションは、この重複したキャッシュを解消することで、これまで無駄に消費されていたGPUメモリを解放する。空いたメモリは新たな会話やより長い文脈の保持に回せるため、同じハードウェアで多くの同時リクエストを処理でき、結果として最大3倍のスループット向上につながるとされる。\n\n長文脈推論の需要はエージェント用途やRAG(検索拡張生成)の普及とともに高まっており、KVキャッシュの効率化はvLLMに限らず業界全体の重要テーマになっている。PagedAttentionによるメモリ断片化の抑制など、vLLMはこれまでもメモリ管理の工夫で知られてきた。今回のオプションはその延長線上にあり、限られたGPU資源を長文脈で使い切るための現実的な選択肢となりそうだ。ただし効果はモデル構成や並列度、ワークロードに依存すると考えられるため、実際の導入時には自環境での検証が望ましい。",
-      "bodyEn": "Running large language models with very long context windows has become one of the harder problems in production inference, and a configuration flag in vLLM called -dcp is aimed squarely at it. According to a technical write-up on Qiita, the option eliminates redundant key-value (KV) cache memory that tensor parallelism introduces in long-context deployments, and it can deliver up to a threefold increase in throughput by reclaiming GPU memory that was previously wasted on duplicated cache entries.\n\nThe problem it targets is one that operators of multi-GPU servers may recognize. When a long-context model is spread across eight GPUs using tensor parallelism, the system can suddenly stop accepting new requests even though compute capacity remains available. The bottleneck is not arithmetic throughput but memory: the KV cache fills up, and once it is full there is no room to admit additional concurrent conversations. Crucially, the excerpt notes that the memory pressure comes from duplication rather than raw computation, and that the duplication was, given the model's structure, nearly impossible to avoid.\n\nTo understand why, it helps to recall how tensor parallelism and modern attention layouts interact. Tensor parallelism splits a model's weights and attention heads across GPUs so that each device handles a slice of the work. Many recent models, however, use grouped-query attention (GQA) or multi-query attention (MQA), which deliberately reduce the number of key-value heads to save memory. When the number of KV heads is smaller than the number of GPUs in the tensor-parallel group, those heads cannot be divided cleanly, so the KV cache for them is replicated on every GPU. In an eight-way split of a model with only one or two KV heads, the same cache entries end up copied many times over, consuming memory that scales poorly as context length grows.\n\nThe -dcp flag, which corresponds to decode-time context parallelism, changes the axis along which the cache is partitioned. Instead of replicating KV heads across devices, it shards the cache along the sequence (context) dimension, so each GPU stores a distinct portion of the tokens rather than a duplicate copy. The result is that the aggregate KV cache capacity grows with the number of GPUs instead of being pinned to the memory of a single device. Freeing that duplicated memory lets the server hold more concurrent sequences or longer histories, which is where the reported throughput gains of up to three times come from. The improvement appears most pronounced in long-context, memory-bound scenarios; gains for short prompts are likely to be smaller, since duplication matters less when the cache is not the limiting factor.\n\nThis work sits within a broader effort across the inference ecosystem to make the KV cache cheaper to store and move. vLLM itself is built around PagedAttention, which manages the cache in non-contiguous blocks to reduce fragmentation, and it already supports prefix caching to reuse shared prompt segments. Other systems, including SGLang, TensorRT-LLM, and various serving stacks, have pursued complementary ideas such as KV cache quantization, offloading to CPU or NVMe, and different forms of context and sequence parallelism. Context parallelism in particular has gained attention as models push toward hundred-thousand-token and longer windows, where the cache rather than the weights becomes the dominant memory cost.\n\nFor practitioners, the practical takeaway is that the choice of parallelism strategy interacts with a model's attention design in ways that can quietly cap concurrency. Operators who see GPUs sitting idle while request queues back up may be hitting KV cache exhaustion rather than a compute wall, and options like -dcp are intended to address exactly that pattern. As always with such features, the benefits depend on the specific model, GPU count, and workload, and users should validate the throughput and latency trade-offs against their own traffic before relying on the reported figures. Still, the change reflects a clear direction of travel: as context windows lengthen, efficient partitioning of the KV cache is becoming as important as partitioning the model weights themselves.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "「KVキャッシュの重複」って何？ GPUが余っているのに、どうして新しい会話を受け付けられないの？",
-          "en": "What does “duplicated KV cache” mean? If there’s still GPU capacity left, why can’t the system accept new conversations?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、8枚のGPUで同じキャッシュが重複し、メモリが埋まるのが原因じゃ。KVキャッシュは、推論中の情報を一時保存する場所と考えるとよいぞ。",
-          "en": "According to the article, the cache gets duplicated across eight GPUs and fills their memory. Think of the KV cache as temporary storage for information used during inference."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあ「-dcp」で重複を消すと、何がうれしいの？ 計算そのものが速くなるの？",
-          "en": "So what’s the benefit of removing those duplicates with “-dcp”? Does it make the computation itself faster?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、計算よりもメモリの無駄を減らし、長い文脈でより多くのリクエストをさばけるのじゃ。記事ではスループットが最大3倍としておる。",
-          "en": "Simply put, it reduces wasted memory rather than computation, letting the system handle more requests with long contexts. The article reports up to three times higher throughput."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！ GPU不足ではなく、重複したKVキャッシュが邪魔だったから、「-dcp」で空きを取り戻すんだね。",
-          "en": "Got it! The problem wasn’t a lack of GPUs—the duplicated KV cache was getting in the way, and “-dcp” frees that space again."
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃ。「最大3倍」なので常に同じ効果とは限らんが、長文脈のテンソル並列構成での改善が見どころじゃな。",
-          "en": "Exactly. The key phrase is “up to,” so three times isn’t guaranteed every time, but the improvement in long-context, tensor-parallel setups is the point to watch."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-29T13:28:08.291Z"
-    },
-    "4ee0dc12c4ec957d": {
-      "bodyJa": "自律的に動作するAIエージェントが本番環境の状態を書き換える時代を見据え、GoogleはAgent Development Kit(ADK)向けにゼロトラストアーキテクチャの実装手法を解説した。システムプロンプトに頼るだけの「ソフトな」防御から脱却し、プロンプトインジェクションや悪意ある実行からワークフローを守ることを狙うものだ。\n\nADKはGoogleが提供するAIエージェント開発用のフレームワークで、外部ツールの呼び出しやAPI操作、データベースの更新といった実際のアクションをエージェントに委ねられる点が特徴とされる。しかし、こうした自律エージェントが本番環境を直接操作するようになると、想定外の入力や外部から注入された指示によって、意図しない処理が実行されるリスクが高まる。\n\n同ガイドが問題視するのは、システムプロンプトに「これをしてはいけない」と書き込む程度の対策だ。大規模言語モデルは自然言語の指示に従う性質を持つため、巧妙に細工された入力でこうしたルールを回避されうる。この攻撃手法はプロンプトインジェクションと呼ばれ、AIエージェントのセキュリティにおける代表的な脅威として広く認識されている。\n\nそこで提唱されるのがゼロトラストの考え方である。ネットワークセキュリティで培われた「何も信頼せず、すべてを検証する」という原則をエージェント設計に持ち込み、モデルの出力やツール実行を無条件に信頼しない構造を築く。抜粋によれば、ソフトなプロンプトを超えた堅牢なアーキテクチャの実装が求められると説明されており、実行前の検証を前提とした多層的な守りが重視される方向と見られる。\n\nAIエージェントの実運用が広がるなか、安全性の確保は業界共通の課題となっている。OpenAIやAnthropicなどもエージェント向けの権限管理やガードレールの整備を進めており、各社が同様の懸念に取り組んでいる状況だ。今回のADK向けガイドは、開発者が本番投入前に検討すべき防御の枠組みを示すものと位置づけられる。とりわけ状態変更を伴う自律エージェントでは、こうした前提知識と設計指針が実装段階で重要になる可能性がある。",
-      "bodyEn": "Google's Developers blog has published guidance on securing agents built with its Agent Development Kit (ADK), arguing that autonomous systems capable of changing production state require far stronger protections than the instructions written into a system prompt. The topic matters because agents are increasingly connected to real tools — databases, APIs, internal services and transactional systems — where a single manipulated instruction can trigger irreversible actions rather than merely a poor response.\n\nThe central premise is that \"soft\" system prompts, the natural-language rules developers write to steer a model's behavior, are not a dependable security boundary. A directive such as \"never delete records\" or \"only act on authorized requests\" can be overridden by carefully crafted input, because a language model tends to treat trusted instructions and untrusted data as the same stream of tokens. Once an agent can mutate production state, that ambiguity becomes an attack surface rather than a quality-of-output concern.\n\nPrompt injection is the specific threat the guidance foregrounds. In a direct injection, a malicious user embeds instructions that hijack the agent's intended task. In an indirect injection, the hostile payload is hidden inside content the agent retrieves — a web page, an email, a document or a tool response — so that reading data effectively becomes executing commands. For an agent with permissions to write to systems or call functions, this is the difference between a chatbot saying the wrong thing and an automated process taking a harmful action.\n\nTo counter this, the guide advocates a zero-trust architecture. Zero-trust is a security model borrowed from network engineering, built on the principle of \"never trust, always verify\": no request, identity or component is trusted implicitly, and every action is authenticated and authorized on its own merits. Applied to agents, this means the model's output is not treated as an inherently trustworthy command. Instead, actions that alter production state are gated by controls that sit outside the model and cannot be talked out of enforcing their rules. The source excerpt indicates the recommendations extend to hardware-level enforcement, which appears to point toward isolating execution and grounding trust in components that a prompt cannot influence, though the full technical specifics sit within Google's own documentation.\n\nIn practice, this class of architecture typically combines several layers. Least-privilege access limits each agent and tool to the narrowest set of permissions needed. Sandboxing and isolation contain code execution so a compromised step cannot reach beyond its boundary. Deterministic guardrails and validation check proposed actions against explicit policy before anything is committed, and sensitive operations can require human approval or a separate authorization step. The recurring theme is that safety is enforced by the surrounding system, not requested politely from the model.\n\nAs background, ADK is Google's open-source framework for building, orchestrating and deploying AI agents, introduced as part of the company's broader agent tooling and designed to work with Gemini models while remaining model-agnostic. It fits alongside Google's wider agent stack, including Vertex AI and its agent runtime services, and competes with frameworks such as LangChain and LangGraph, CrewAI, Microsoft's AutoGen and OpenAI's agent tooling. The industry has also converged on shared plumbing like the Model Context Protocol for connecting agents to external tools and data, which is useful for interoperability but also widens the pathways through which untrusted content can reach a model.\n\nThe security emphasis reflects a broader shift as agentic systems move from demos into production. Prompt injection is listed among the top risks in the OWASP guidance for large language model applications, and researchers have repeatedly shown that instruction-following behavior is difficult to fully constrain through prompting alone. Framing agent security as an architectural problem rather than a prompting problem aligns with that consensus, and is likely to become a prerequisite for teams granting agents real authority over live systems. For developers evaluating ADK, the takeaway is that autonomy and the ability to mutate production state raise the stakes considerably, and that treating the model as an untrusted component — while enforcing permissions, isolation and validation externally — is presented as the more defensible foundation.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "「ソフトなシステムプロンプト」だけでは足りないって、どういうこと？ ゼロトラストって何？",
-          "en": "What does it mean that “soft system prompts” aren’t enough? And what exactly is zero trust?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、指示文だけに安全を任せず、各動作を最初から信用せず確かめる設計へ進むということじゃよ。これがゼロトラストじゃな。",
-          "en": "According to the article, safety shouldn’t rely on instructions alone. Zero trust means treating each action as untrusted and checking it."
-        },
-        {
-          "s": "a",
-          "ja": "それって何がうれしいの？ 本番環境を動かすAIでは、プロンプトインジェクションが問題になるの？",
-          "en": "What’s the benefit? Is prompt injection a concern when an AI agent operates in production?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、AIに意図しない指示を入り込ませる攻撃じゃ。記事では、Google ADKのワークフローをそれや悪意ある実行から守る狙いじゃよ。",
-          "en": "Simply put, it’s an attack that slips unintended instructions into an AI. The article aims to protect Google ADK workflows from that and malicious execution."
-        },
-        {
-          "s": "a",
-          "ja": "つまり「気をつけて」と指示するだけでなく、AIの動作を信用せず確認する仕組みをGoogle ADKで作るんだね！",
-          "en": "So instead of merely telling the AI to “be careful,” you build checks around its actions with Google ADK. Got it!"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃ。見どころは、本番環境の状態を変える自律エージェント向けに、そのゼロトラスト構成をどう実装するかじゃよ。",
-          "en": "Exactly. The key point is how to implement that zero-trust design for autonomous agents that change production state."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-29T13:28:41.340Z"
     }
   }
 }

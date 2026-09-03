@@ -1,4 +1,10 @@
+import { isSourceTextUnverifiable, sourceOwnedSnippet } from "./feed-snippet.ts";
+
 export interface KnowledgeEligibilityEntry {
+  /** "article" once contentSnippet holds fetched article prose (see feed-snippet.ts). */
+  excerptOrigin?: string;
+  /** The feed description as collected; evaluated instead of article prose. */
+  feedSnippet?: string;
   source: string;
   title: string;
   contentSnippet?: string;
@@ -10,6 +16,7 @@ export type KnowledgeEligibilityReason =
   | "eligible"
   | "not-evergreen"
   | "stored-exclusion"
+  | "unverifiable-source-text"
   | "durable-title"
   | "durable-snippet"
   | "announcement-title"
@@ -119,7 +126,15 @@ export function knowledgeEligibility(
     return { eligible: false, reason: "not-evergreen" };
   }
   const title = normalized(entry.title);
-  const contentSnippet = normalized(entry.contentSnippet);
+  // Eligibility is a collection-time contract on the feed text, never on an
+  // article excerpt swapped in later for the model. When that feed text is
+  // gone (enriched before feedSnippet existed) the stored decision stands.
+  if (isSourceTextUnverifiable(entry)) {
+    return entry.knowledgeEligible === false
+      ? { eligible: false, reason: "stored-exclusion" }
+      : { eligible: true, reason: "unverifiable-source-text" };
+  }
+  const contentSnippet = normalized(sourceOwnedSnippet(entry));
 
   if (hasDurableTitleSignal(title)) {
     return { eligible: true, reason: "durable-title" };

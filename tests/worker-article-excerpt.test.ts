@@ -195,6 +195,26 @@ describe("enrichThinExcerpts", () => {
     expect(rich.contentSnippet).toBe("y".repeat(600));
   });
 
+  it("keeps the feed text in feedSnippet when article prose replaces contentSnippet", async () => {
+    const html = `<html><body><article>${"<p>Article paragraph with enough prose to clear the minimum article text threshold for the lane.</p>".repeat(4)}</article></body></html>`;
+    const fetchImpl = (async () =>
+      new Response(html, { status: 200, headers: { "content-type": "text/html" } })) as unknown as typeof fetch;
+    const target = entry({ id: "thin", url: "https://example.com/thin", contentSnippet: "Short feed text." });
+    const stats = await enrichThinExcerpts([target], { fetchImpl, cap: 5, isPrior: () => false });
+    expect(stats.enriched).toBe(1);
+    expect(target.excerptOrigin).toBe("article");
+    expect(target.feedSnippet).toBe("Short feed text.");
+    expect(target.contentSnippet).not.toBe("Short feed text.");
+
+    // An unavailable fetch records the attempt but never touches feedSnippet.
+    const failing = (async () => new Response("", { status: 500 })) as unknown as typeof fetch;
+    const other = entry({ id: "thin-2", url: "https://example.com/thin-2", contentSnippet: "Another feed text." });
+    await enrichThinExcerpts([other], { fetchImpl: failing, cap: 5, isPrior: () => false });
+    expect(other.excerptOrigin).toBe("article-unavailable");
+    expect(other.feedSnippet).toBeUndefined();
+    expect(other.contentSnippet).toBe("Another feed text.");
+  });
+
   it("does nothing when the cap is zero", async () => {
     const target = entry({ contentSnippet: "feed" });
     const fetchImpl = (async () => htmlResponse(article)) as unknown as typeof fetch;

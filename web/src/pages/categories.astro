@@ -847,11 +847,12 @@ const grouped = new Map<CategoryGroup, typeof categoryPanels>(
 
   .cat-types {
     display: flex;
-    flex-wrap: nowrap;
+    /* nowrap + overflow:hidden clipped chips mid-glyph ("内訳", "ᶦ") once the
+       label row ran out of width; wrapping keeps every chip legible. */
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 4px;
-    max-width: 54%;
-    overflow: hidden;
+    max-width: 60%;
   }
 
   .cat-types-scope {

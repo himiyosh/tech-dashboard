@@ -1,3 +1,4 @@
+import { hasMeaningfulSourceSnippet } from "../web/src/lib/source-snippet.ts";
 import { describe, expect, it } from "vitest";
 import {
   findBodyGroundingIssues,
@@ -441,5 +442,30 @@ describe("body grounding gate", () => {
       title: "A Tale of Two Flink Autoscalers",
       contentSnippet: "A Tale of Two Flink Autoscalers",
     })).toBe(false);
+  });
+});
+
+
+describe("hasMeaningfulSourceSnippet — feed boilerplate", () => {
+  it("treats appeared-first-on / read-more chrome as no material", () => {
+    expect(
+      hasMeaningfulSourceSnippet({
+        title: "Introducing TabFM in BigQuery",
+        contentSnippet: "The post Introducing TabFM in BigQuery appeared first on Microsoft Source.",
+      }),
+    ).toBe(false);
+    expect(
+      hasMeaningfulSourceSnippet({
+        title: "Visual Studio Code 1.114",
+        contentSnippet: "Learn what's new in Visual Studio Code 1.114 Read the full article",
+      }),
+    ).toBe(false);
+    expect(
+      hasMeaningfulSourceSnippet({
+        title: "TabFM in BigQuery",
+        contentSnippet:
+          "TabFM brings a tabular foundation model to BigQuery so analysts can run predictive queries without training a model first. The post appeared first on Google Cloud Blog.",
+      }),
+    ).toBe(true);
   });
 });

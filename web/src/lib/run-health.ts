@@ -27,11 +27,11 @@ export interface WorkerRunStatus {
 }
 
 export const WORKER_RUN_STATE_COPY: Record<WorkerRunState, { ja: string; en: string }> = {
-  healthy: { ja: "正常稼働", en: "Running normally" },
-  missing: { ja: "稼働記録なし", en: "Run telemetry unavailable" },
-  late: { ja: "定期収集が遅延", en: "Scheduled collection delayed" },
-  failed: { ja: "直近バッチが失敗", en: "Latest batch failed" },
-  degraded: { ja: "一部確認が必要", en: "Review recommended" },
+  healthy: { ja: "正常に更新中", en: "Updating normally" },
+  missing: { ja: "更新記録なし", en: "Update record unavailable" },
+  late: { ja: "更新が遅れています", en: "Updates are delayed" },
+  failed: { ja: "直近の更新が失敗", en: "Latest update failed" },
+  degraded: { ja: "一部の更新に遅れ", en: "Some updates delayed" },
 };
 
 function statusTextFor(tone: WorkerRunTone): WorkerRunStatus["statusText"] {
@@ -80,8 +80,8 @@ export function runCadenceLead(
 ): { ja: string; en: string } {
   const copy = WORKER_RUN_STATE_COPY[status.state];
   return {
-    ja: `${copy.ja} · index 更新 `,
-    en: `${copy.en} · index updated `,
+    ja: `${copy.ja} · 更新 `,
+    en: `${copy.en} · updated `,
   };
 }
 

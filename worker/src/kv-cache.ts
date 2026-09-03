@@ -21,6 +21,8 @@ import type { KeyValueBinding } from "./runtime-bindings.ts";
  */
 export interface CacheEntry {
   titleJa: string;
+  /** Natural English headline from the summarizer (absent on legacy entries). */
+  titleEn?: string;
   summaryJa: string;
   summaryEn: string;
   bodyJa: string;

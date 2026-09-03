@@ -46,11 +46,14 @@ import {
   isArxivEntry,
   type NormalizedEntry,
 } from "../web/src/lib/data.ts";
-import { collectAddressableDetailEntries } from "../web/src/lib/detail-addressability.ts";
+import {
+  collectAddressableDetailEntries,
+  isAddressableDetailEntry,
+} from "../web/src/lib/detail-addressability.ts";
 import { entryDestination } from "../web/src/lib/entry-destination.ts";
 import { knowledgeEligibility } from "../web/src/lib/knowledge-eligibility.ts";
 import { detailPath } from "../web/src/lib/route-inventory.ts";
-import { SOURCE_META } from "../web/src/lib/source-meta.ts";
+import { SOURCE_META, canonicalSourceUrl } from "../web/src/lib/source-meta.ts";
 import { normalizeTagKey } from "../web/src/lib/tag-normalize.ts";
 
 const ISSUE_237_ENTRIES = [
@@ -177,10 +180,16 @@ function missingLiveSurfaces(entry: NormalizedEntry): string[] {
   // Queued (publicationHold) and released entries alike keep an in-site
   // detail route: the publication gate decides index/noindex and sitemap
   // membership (detail-indexability.ts), never route existence, so a card
-  // title always lands on the summary page.
-  if (!ADDRESSABLE_DETAIL_IDS.has(entry.id)) missing.push("detail route");
-  if (destination.external || destination.href !== detailPath(entry.id)) {
-    missing.push(`in-site canonical URL (got ${destination.href})`);
+  // title always lands on the summary page. The one honest exception is an
+  // entry whose AI summary has not been generated yet: there is nothing to
+  // put on a detail page, so it links to the source until the summary lands.
+  if (isAddressableDetailEntry(entry)) {
+    if (!ADDRESSABLE_DETAIL_IDS.has(entry.id)) missing.push("detail route");
+    if (destination.external || destination.href !== detailPath(entry.id)) {
+      missing.push(`in-site canonical URL (got ${destination.href})`);
+    }
+  } else if (!destination.external || destination.href !== canonicalSourceUrl(entry.url)) {
+    missing.push(`source URL while the summary is pending (got ${destination.href})`);
   }
   // Evergreen never decays past warm (harness/half-life.ts decideTier); a
   // colder tier would demote the page to noindex (detail-indexability.ts).

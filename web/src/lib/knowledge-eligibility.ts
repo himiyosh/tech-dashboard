@@ -1,4 +1,10 @@
+import { sourceOwnedSnippet } from "./feed-snippet.ts";
+
 export interface KnowledgeEligibilityEntry {
+  /** "article" once contentSnippet holds fetched article prose (see feed-snippet.ts). */
+  excerptOrigin?: string;
+  /** The feed description as collected; evaluated instead of article prose. */
+  feedSnippet?: string;
   source: string;
   title: string;
   contentSnippet?: string;
@@ -119,7 +125,9 @@ export function knowledgeEligibility(
     return { eligible: false, reason: "not-evergreen" };
   }
   const title = normalized(entry.title);
-  const contentSnippet = normalized(entry.contentSnippet);
+  // Eligibility is a collection-time contract on the feed text, never on an
+  // article excerpt swapped in later for the model.
+  const contentSnippet = normalized(sourceOwnedSnippet(entry));
 
   if (hasDurableTitleSignal(title)) {
     return { eligible: true, reason: "durable-title" };

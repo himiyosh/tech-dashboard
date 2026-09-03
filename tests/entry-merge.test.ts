@@ -24,6 +24,30 @@ function entry(overrides: Partial<NormalizedEntry>): NormalizedEntry {
 }
 
 describe("mergeEntryEnrichment", () => {
+  it("記事抜粋と一緒に feedSnippet(収集時のフィード文)を引き継ぐ", () => {
+    const fresh = entry({
+      id: "fresh",
+      contentSnippet: "Feed description re-collected this run.",
+    });
+    const previous = entry({
+      id: "previous",
+      contentSnippet: "Article prose fetched by the excerpt lane.",
+      excerptOrigin: "article",
+      feedSnippet: "Feed description seen at collection time.",
+    });
+    const merged = mergeEntryEnrichment(fresh, previous);
+    expect(merged.contentSnippet).toBe("Article prose fetched by the excerpt lane.");
+    expect(merged.excerptOrigin).toBe("article");
+    expect(merged.feedSnippet).toBe("Feed description seen at collection time.");
+
+    const primaryEnriched = mergeEntryEnrichment(previous, fresh);
+    expect(primaryEnriched.feedSnippet).toBe("Feed description seen at collection time.");
+
+    const untouched = mergeEntryEnrichment(fresh, entry({ id: "plain", contentSnippet: "Older feed text." }));
+    expect(untouched.contentSnippet).toBe("Feed description re-collected this run.");
+    expect(untouched.feedSnippet).toBeUndefined();
+  });
+
   it("fresh entry が選ばれても既存の本文・要約を保持する", () => {
     const fresh = entry({
       id: "fresh",

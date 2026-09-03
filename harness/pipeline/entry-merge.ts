@@ -26,10 +26,20 @@ export function mergeEntryEnrichment(
   // A fetched article excerpt (or the record of a failed attempt) must not be
   // overwritten by the feed description every time the item is re-collected:
   // the article lane is bounded per run and marks each attempt exactly once.
+  // feedSnippet travels with the marker: it is the text source-owned
+  // decisions keep being evaluated on once contentSnippet holds article prose.
   const excerpt = primary.excerptOrigin
-    ? { contentSnippet: primary.contentSnippet, excerptOrigin: primary.excerptOrigin }
+    ? {
+        contentSnippet: primary.contentSnippet,
+        excerptOrigin: primary.excerptOrigin,
+        ...(primary.feedSnippet !== undefined ? { feedSnippet: primary.feedSnippet } : {}),
+      }
     : fallback.excerptOrigin
-      ? { contentSnippet: fallback.contentSnippet, excerptOrigin: fallback.excerptOrigin }
+      ? {
+          contentSnippet: fallback.contentSnippet,
+          excerptOrigin: fallback.excerptOrigin,
+          ...(fallback.feedSnippet !== undefined ? { feedSnippet: fallback.feedSnippet } : {}),
+        }
       : {};
 
   return {

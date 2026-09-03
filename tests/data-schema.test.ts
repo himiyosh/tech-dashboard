@@ -875,6 +875,9 @@ describe("evergreen 蓄積ポリシー (R-022)", () => {
         contentSnippet: typeof entry.contentSnippet === "string"
           ? entry.contentSnippet
           : undefined,
+        // Article-excerpt provenance: eligibility stays evaluated on the feed text.
+        excerptOrigin: typeof entry.excerptOrigin === "string" ? entry.excerptOrigin : undefined,
+        feedSnippet: typeof entry.feedSnippet === "string" ? entry.feedSnippet : undefined,
         evergreen: true,
       });
       const excluded = (entry as { knowledgeEligible?: unknown }).knowledgeEligible === false;

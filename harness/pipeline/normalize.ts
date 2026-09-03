@@ -3,6 +3,7 @@
  * Pure functions. See docs/04-site-spec.md §1.1 for category rules.
  */
 import { createHash } from "node:crypto";
+import { sourceOwnedSnippet } from "./feed-snippet.ts";
 import type {
   Category,
   HalfLife,
@@ -336,10 +337,12 @@ export function restampEntryFromSource(
   referenceAt: string,
   options: { preserveImportance?: boolean; preserveArchiveTier?: boolean } = {},
 ): NormalizedEntry {
+  // Source-owned fields are derived from the feed text the collector saw,
+  // never from an article excerpt swapped in later (feed-snippet.ts).
   const metadata = sourceOwnedFields(
     {
       title: entry.title,
-      contentSnippet: entry.contentSnippet,
+      contentSnippet: sourceOwnedSnippet(entry),
       publishedAt: entry.publishedAt,
       knowledgeEligible: entry.knowledgeEligible,
     },

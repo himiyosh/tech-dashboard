@@ -231,6 +231,63 @@ describe("matchesKeywordFilter", () => {
   });
 });
 
+describe("article excerpt provenance (feedSnippet)", () => {
+  const snippetScoped: SourceDefinition = {
+    ...source,
+    id: "provenance-source",
+    keywordFilterScope: "title-and-content",
+    includeKeywords: ["vscode"],
+    excludeKeywords: ["sponsored"],
+  };
+  const base = {
+    id: "id",
+    source: "provenance-source",
+    sourceType: "blog" as const,
+    url: "https://example.com/post",
+    title: "Editor update",
+    titleJa: "",
+    titleEn: "",
+    summaryJa: "",
+    summaryEn: "",
+  };
+
+  it("evaluates filters on the feed text once contentSnippet holds article prose", () => {
+    const enriched = {
+      ...base,
+      contentSnippet: "Long article prose about a sponsored keyboard review with no editor mention.",
+      excerptOrigin: "article" as const,
+      feedSnippet: "The VSCode editor update ships new features.",
+    };
+    const decision = evaluateKeywordFilter(keywordFilterEntryFromNormalized(enriched), snippetScoped);
+    expect(decision).toEqual({ keep: true, reason: "include", keyword: "vscode", trusted: true });
+    // The same prose evaluated as feed text would be excluded: the marker is what protects it.
+    const asFeed = { ...enriched, excerptOrigin: undefined, feedSnippet: undefined };
+    expect(evaluateKeywordFilter(keywordFilterEntryFromNormalized(asFeed), snippetScoped).keep).toBe(false);
+  });
+
+  it("falls back to the title (lossy) for an article-origin entry without feedSnippet", () => {
+    const orphan = {
+      ...base,
+      contentSnippet: "Article prose mentioning vscode extensively.",
+      excerptOrigin: "article" as const,
+    };
+    const filterEntry = keywordFilterEntryFromNormalized(orphan);
+    expect(filterEntry.contentSnippet).toBeUndefined();
+    expect(evaluateKeywordFilter(filterEntry, snippetScoped).reason).toBe("missing-include");
+    expect(evaluateKeywordFilter(filterEntry, snippetScoped, { allowLossyMissingInclude: true })).toEqual({
+      keep: true,
+      reason: "missing-include-unverified",
+      keyword: null,
+      trusted: false,
+    });
+  });
+
+  it("keeps using contentSnippet for feed-origin entries", () => {
+    const feedOnly = { ...base, contentSnippet: "Sponsored: a VSCode theme roundup." };
+    expect(evaluateKeywordFilter(keywordFilterEntryFromNormalized(feedOnly), snippetScoped).reason).toBe("exclude");
+  });
+});
+
 describe("Zenn AI Local LLM relevance (LL-412)", () => {
   const zennAi = REGISTRY["zenn-ai"];
   const check = (title: string, contentSnippet = "") =>

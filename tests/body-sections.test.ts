@@ -52,7 +52,9 @@ describe("sectionizeBody — derived (legacy plain-text) mode", () => {
     expect(sections[0].paragraphs).toEqual([P(1), P(2)]);
   });
 
-  it("典型的な5段落 (背景がP4・展望あり) を 概要/詳細/背景/今後の展望 に分ける", () => {
+  it("段落数に関わらず、導出見出しは付けない (見出しは authored '## ' 行のみ)", () => {
+    // Site audit: position-derived 概要/詳細/背景/今後の展望 mislabelled most
+    // legacy bodies and gave every article the same table of contents.
     const body = [
       "新製品Xが発表された。",
       "仕組みの説明。",
@@ -61,66 +63,13 @@ describe("sectionizeBody — derived (legacy plain-text) mode", () => {
       "今後の展開が注目される。",
     ].join("\n\n");
     const sections = sectionizeBody(body, "ja");
-    expect(sections.map((s) => s.heading)).toEqual(["概要", "詳細", "背景", "今後の展望"]);
-    expect(sections.map((s) => s.paragraphs.length)).toEqual([1, 2, 1, 1]);
+    expect(sections).toHaveLength(1);
+    expect(sections[0]).toMatchObject({ heading: null, source: "derived" });
     expect(flatParagraphs(sections)).toEqual(splitBodyParagraphs(body));
-  });
 
-  it("背景がP2に来る場合は 概要/背景/詳細/今後の展望 の順になる", () => {
-    const body = [
-      "リード。",
-      "背景として従来の課題がある。",
-      "詳細な説明。",
-      "今後の普及が期待される。",
-    ].join("\n\n");
-    const sections = sectionizeBody(body, "ja");
-    expect(sections.map((s) => s.heading)).toEqual(["概要", "背景", "詳細", "今後の展望"]);
-  });
-
-  it("背景キューも展望キューも無ければ 概要/詳細 のみ", () => {
-    const body = ["リード。", "説明その1。", "説明その2。"].join("\n\n");
-    const sections = sectionizeBody(body, "ja");
-    expect(sections.map((s) => s.heading)).toEqual(["概要", "詳細"]);
-    expect(sections[1].paragraphs).toEqual(["説明その1。", "説明その2。"]);
-  });
-
-  it("最終段落が文の途中で切れている場合は展望セクションにしない", () => {
-    const body = ["リード。", "説明。", "今後の展開として様々な可能性が"].join("\n\n");
-    const sections = sectionizeBody(body, "ja");
-    expect(sections.map((s) => s.heading)).toEqual(["概要", "詳細"]);
-    expect(sections[1].paragraphs).toEqual(["説明。", "今後の展開として様々な可能性が"]);
-  });
-
-  it("英語ボディは Overview/In detail/Outlook を導出する", () => {
-    const body = [
-      "Product X launched today.",
-      "It works by doing Y.",
-      "More detail about Z.",
-      "Going forward, adoption is likely to grow.",
-    ].join("\n\n");
-    const sections = sectionizeBody(body, "en");
-    expect(sections.map((s) => s.heading)).toEqual(["Overview", "In detail", "Outlook"]);
-  });
-
-  it("段落の内容と順序をどのモードでも欠落なく保持する", () => {
-    const bodies = [
-      ["a。", "b。", "c。", "背景の説明。", "今後が注目される。"].join("\n\n"),
-      "## H1\n\nx。\n\n## H2\n\ny。",
-      "single paragraph only.",
-    ];
-    for (const body of bodies) {
-      for (const lang of ["ja", "en"] as const) {
-        expect(flatParagraphs(sectionizeBody(body, lang))).toEqual(
-          splitBodyParagraphs(body).map((block) =>
-            block.replace(/^##\s+.+\n?/, "").trim(),
-          ).filter(Boolean),
-        );
-      }
-    }
-  });
-
-  it("空ボディは空配列", () => {
-    expect(sectionizeBody("", "ja")).toEqual([]);
-    expect(sectionizeBody("\n\n", "en")).toEqual([]);
+    const en = ["Lead.", "Detail one.", "Detail two.", "Going forward, adoption is expected."].join("\n\n");
+    const enSections = sectionizeBody(en, "en");
+    expect(enSections).toHaveLength(1);
+    expect(enSections[0].heading).toBeNull();
   });
 });

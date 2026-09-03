@@ -2710,13 +2710,15 @@ test.describe("TECH Dashboard smoke", () => {
       await page.setViewportSize({ width, height: 1000 });
       await page.goto(`/e/${bodyEntryId}/`);
 
-      // 項目: a sectioned JA body renders at least two h2 headings and the
-      // TOC lists exactly those headings (not paragraph excerpts).
+      // 項目: derived section headings (概要 / 詳細 / 背景 / 今後の展望) were
+      // retired in the site audit because they rarely matched the paragraph
+      // they labelled, so a long JA body renders as one unheaded prose column
+      // and the TOC falls back to paragraph anchors.
       const headings = page.locator(".ed-body-prose.i18n-ja h2.ed-sec-h");
-      expect(await headings.count(), `width ${width}: section headings`).toBeGreaterThanOrEqual(2);
-      const headingTitles = await headings.locator(".ed-sec-title").allTextContents();
+      expect(await headings.count(), `width ${width}: no derived section headings`).toBe(0);
       const tocLabels = await page.locator("#toc-list-ja .toc-label").allTextContents();
-      expect(tocLabels).toEqual(headingTitles);
+      expect(tocLabels.length, `width ${width}: paragraph TOC entries`).toBeGreaterThanOrEqual(3);
+      for (const label of tocLabels) expect(label.trim().length).toBeGreaterThan(0);
 
       // Centered measure: the line-length-capped reading column sits centered
       // inside the article body instead of hugging the left edge and leaving
@@ -4476,7 +4478,6 @@ test.describe("TECH Dashboard smoke", () => {
     const card = reactionConfigCard(page);
     await expect(card).toHaveAttribute("data-reaction-config-state", "checking");
     await expect(card.locator("[data-reaction-config-label] > .i18n-ja")).toHaveText("確認中");
-    await expect(card.locator("[data-reaction-config-flags]")).toBeHidden();
 
     await expect(card).toHaveAttribute("data-reaction-config-state", "configured", { timeout: 5_000 });
     await expect(card.locator("[data-reaction-config-label] > .i18n-ja")).toHaveText("設定済み");
@@ -4484,15 +4485,9 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
       "すべて揃っています",
     );
-    const flagRows = card.locator("[data-reaction-config-flag]");
-    await expect(flagRows).toHaveCount(4);
-    await expect(card.locator("[data-reaction-config-flags]")).toBeVisible();
-    for (const key of ["databaseBinding", "hmacSecret", "turnstileSecret", "publicSiteKey"]) {
-      const row = card.locator(`[data-reaction-config-flag="${key}"]`);
-      await expect(row).toHaveAttribute("data-reaction-config-flag-ok", "true");
-      await expect(row.locator("[data-reaction-config-flag-state] > .i18n-ja")).toHaveText("設定済み");
-      await expect(row.locator("[data-reaction-config-flag-state] > .i18n-en")).toHaveText("Configured");
-    }
+    // The per-secret checklist was removed from the public page (site audit):
+    // readers see only the overall state; nothing names a secret.
+    await expect(card.locator("[data-reaction-config-flag]")).toHaveCount(0);
     await expect(card).toHaveClass(/reaction-config-card/);
     const beforeColor = await card.evaluate(
       (element) => getComputedStyle(element, "::before").backgroundColor,
@@ -4518,30 +4513,10 @@ test.describe("TECH Dashboard smoke", () => {
     const card = reactionConfigCard(page);
     await expect(card).toHaveAttribute("data-reaction-config-state", "not-configured");
     await expect(card.locator("[data-reaction-config-label] > .i18n-ja")).toHaveText("未設定");
+    // Public copy stays generic — no secret is named (site audit).
+    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toHaveText("匿名いいねは現在利用できません。");
+    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).not.toContainText("シークレット");
     await expect(card.locator("[data-reaction-config-label] > .i18n-en")).toHaveText("Not configured");
-    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
-      "識別子署名用シークレット",
-    );
-    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
-      "Turnstile 検証シークレット",
-    );
-    await expect(card.locator("[data-reaction-config-detail] > .i18n-ja")).toContainText(
-      "Turnstile 公開サイトキー",
-    );
-    await expect(card.locator("[data-reaction-config-detail] > .i18n-en")).toContainText(
-      "Identity signing secret",
-    );
-
-    await expect(
-      card.locator('[data-reaction-config-flag="databaseBinding"]'),
-    ).toHaveAttribute("data-reaction-config-flag-ok", "true");
-    for (const key of ["hmacSecret", "turnstileSecret", "publicSiteKey"]) {
-      const row = card.locator(`[data-reaction-config-flag="${key}"]`);
-      await expect(row).toHaveAttribute("data-reaction-config-flag-ok", "false");
-      await expect(row.locator("[data-reaction-config-flag-state] > .i18n-en")).toHaveText(
-        "Not configured",
-      );
-    }
 
     // "neutral, not ERR": the not-configured state must never carry a warn/err tone class
     // or color — this is an optional feature that degrades safely, not an incident.
@@ -4575,7 +4550,6 @@ test.describe("TECH Dashboard smoke", () => {
       "may be a network or temporary issue",
     );
     // Unresolved: the itemized flag breakdown never appears when we couldn't check at all.
-    await expect(card.locator("[data-reaction-config-flags]")).toBeHidden();
     await expect(card).not.toHaveClass(/\berr\b/);
     await expect(card).not.toHaveClass(/\bwarn\b/);
   });

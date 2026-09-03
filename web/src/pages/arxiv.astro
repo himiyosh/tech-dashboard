@@ -160,7 +160,7 @@ const breadcrumb = [
         <div class="right-title">Code meaning</div>
         <div class="arxiv-code-list">
           {ARXIV_SOURCE_INFO.map((info) => (
-            <button type="button" class="arxiv-code-item" data-paper-filter={info.id}>
+            <button type="button" class="arxiv-code-item" data-paper-filter={info.id} title={`${info.code}: ${info.shortJa}`}>
               <strong>{info.code}</strong>
               <span>{info.shortJa}</span>
             </button>
@@ -194,6 +194,7 @@ const breadcrumb = [
                 class="paper-filter-btn"
                 data-paper-filter={row.source}
                 data-source-label={sourceButtonLabel(row.source)}
+                title={`${row.code}: ${sourceButtonLabel(row.source)}`}
                 aria-pressed="false"
               >
                 {row.code} <span>{row.total}</span>

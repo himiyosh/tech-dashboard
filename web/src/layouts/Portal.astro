@@ -2036,7 +2036,16 @@ const footerLastRunRelative = footerLastRunAt
             }
           }
         });
-        if (isSearchRoute) openSearch(null);
+        // A bare /search/ keeps its guide visible and the reader opens the panel
+        // with the page button (site audit: the auto-opened overlay hid the
+        // heading and instructions on mobile). A shared query (?q=, or the
+        // ?tag= / ?entry= recovery links from singleton tag chips) still opens
+        // the panel immediately so the requested search runs.
+        const hasSharedSearchRequest =
+          initialSearchQuery.length > 0 ||
+          new URLSearchParams(window.location.search).has("tag") ||
+          new URLSearchParams(window.location.search).has("entry");
+        if (isSearchRoute && hasSharedSearchRequest) openSearch(null);
         void pagefindReady.then(() => {
           if (!searchRoot.classList.contains("is-open")) return;
           const query = input.value.trim();

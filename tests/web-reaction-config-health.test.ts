@@ -73,10 +73,11 @@ describe("reaction config health display", () => {
       },
     });
     expect(display.missingKeys).toEqual(["hmacSecret", "turnstileSecret"]);
-    expect(display.detailJa).toContain("識別子署名用シークレット");
-    expect(display.detailJa).toContain("Turnstile 検証シークレット");
-    expect(display.detailEn).toContain("Identity signing secret");
-    expect(display.detailEn).toContain("Turnstile verification secret");
+    // The public detail copy no longer names secrets (site audit): the
+    // machine-readable missingKeys keep the per-flag state for operators.
+    expect(display.detailJa).toBe("匿名いいねは現在利用できません。");
+    expect(display.detailJa).not.toContain("識別子署名用シークレット");
+    expect(display.detailEn).not.toContain("Identity signing secret");
   });
 
   it("REACTION_CONFIG_FLAG_ORDER covers every ReactionConfigFlags key exactly once", () => {

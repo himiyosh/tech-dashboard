@@ -128,8 +128,8 @@ export function deriveReactionConfigDisplay(
     tone: "neutral",
     labelJa: "未設定",
     labelEn: "Not configured",
-    detailJa: `匿名いいねは現在利用できません。未設定: ${missingJa}。`,
-    detailEn: `Anonymous reactions are not available yet. Missing: ${missingEn}.`,
+    detailJa: "匿名いいねは現在利用できません。",
+    detailEn: "Anonymous reactions are not available yet.",
     missingKeys,
   };
 }

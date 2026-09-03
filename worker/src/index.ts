@@ -145,6 +145,11 @@ export interface PublisherEnv extends GithubRepositoryEnv {
   BODY_LOOKUP_CAP?: string;
   /** Bounded per-run KV lookups for the chat backfill lane (default 120). */
   CHAT_LOOKUP_CAP?: string;
+  /**
+   * Bounded per-run article page fetches that replace thin feed excerpts with
+   * article prose (worker/src/article-excerpt.ts; default 40, 0 disables).
+   */
+  ARTICLE_FETCH_CAP?: string;
   // Operational size budget for data/bodies.json (LL-411). Defaults to
   // DEFAULT_BODY_BUDGET_TARGET_BYTES, well below the much larger
   // tests/data-schema.test.ts hard ceiling (10MB, unchanged safety net).
@@ -924,6 +929,7 @@ async function resolveCopilotToken(pat: string): Promise<string> {
 // ---------- Summarize -------------------------------------------------------
 
 import { buildPrompt, buildQueuePrompt, parseResponse, type ParsedSummaryResponse } from "./prompt.ts";
+import { DEFAULT_ARTICLE_FETCH_CAP, enrichThinExcerpts } from "./article-excerpt.ts";
 // Re-export for unit tests (tests/worker-parse.test.ts).
 // NOTE: bare `export ... from` would *only* create a module-level re-export
 // and would NOT bring the symbols into this module's local scope, leading to
@@ -1240,6 +1246,28 @@ export async function runHarness(
   if (filteredByCurrentRules > 0) {
     console.log(`[worker] source keyword filters removed ${filteredByCurrentRules} prior merged entries`);
   }
+
+  // 1.6) Article excerpt lane (bounded): feed descriptions are usually 100-300
+  //      chars, which pins the excerpt-proportional body band at ~330 JA chars.
+  //      Fetch the article page for thin excerpts — this run's new entries
+  //      first, then a newest-first backfill of prior entries — and replace
+  //      contentSnippet with real article prose (capped at the shared 900).
+  //      Every attempt is marked on the entry so failures are never retried
+  //      hourly; failures keep the feed excerpt. Runs BEFORE summarize/body so
+  //      new entries are generated from the richer material immediately.
+  const priorUrlKeys = new Set(priorEntries.map((entry) => entryUrlKey(entry)));
+  const articleFetchCap = Math.max(
+    0,
+    Number(env.ARTICLE_FETCH_CAP ?? DEFAULT_ARTICLE_FETCH_CAP),
+  );
+  const excerptStats = await enrichThinExcerpts(qualityFiltered, {
+    cap: Number.isFinite(articleFetchCap) ? articleFetchCap : DEFAULT_ARTICLE_FETCH_CAP,
+    isPrior: (entry) => priorUrlKeys.has(entryUrlKey(entry)),
+  });
+  console.log(
+    `[worker] article excerpts: candidates=${excerptStats.candidates} attempted=${excerptStats.attempted}`
+      + ` enriched=${excerptStats.enriched} unavailable=${excerptStats.unavailable} deferred=${excerptStats.deferred}`,
+  );
 
   // 2) Cap per source (importance-aware for high-volume sources) then sort newest-first then cap to INDEX_LIMIT.
   const PER_SOURCE_CAP = 50;
@@ -1687,6 +1715,11 @@ export async function runHarness(
     copilotError,
     ogCached: Object.keys(ogBlob).length,
     ogNewHits: ogFound,
+    excerptFetchCandidates: excerptStats.candidates,
+    excerptFetchAttempted: excerptStats.attempted,
+    excerptFetched: excerptStats.enriched,
+    excerptFetchUnavailable: excerptStats.unavailable,
+    excerptFetchDeferred: excerptStats.deferred,
     publisherContractFingerprint,
     ...bodyPipeline.health,
     enrichmentEnqueueCap: totalEnrichmentEnqueueCap,

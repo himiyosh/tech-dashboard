@@ -105,3 +105,39 @@ describe("mergeEntryEnrichment", () => {
     ]);
   });
 });
+
+describe("mergeEntryEnrichment — article excerpt", () => {
+  it("keeps the fetched article excerpt when the feed re-collects the item", () => {
+    const prior = entry({
+      id: "prior",
+      collectedAt: "2026-09-01T00:00:00.000Z",
+      contentSnippet: "記事本文から抽出した長い抜粋".repeat(20),
+      excerptOrigin: "article",
+    });
+    const fresh = entry({
+      id: "fresh",
+      collectedAt: "2026-09-01T01:00:00.000Z",
+      contentSnippet: "短いフィード説明",
+    });
+    const merged = mergeEntryEnrichment(fresh, prior);
+    expect(merged.id).toBe("fresh");
+    expect(merged.contentSnippet).toBe(prior.contentSnippet);
+    expect(merged.excerptOrigin).toBe("article");
+  });
+
+  it("keeps the one-shot unavailable marker so the lane does not retry hourly", () => {
+    const prior = entry({ contentSnippet: "feed", excerptOrigin: "article-unavailable" });
+    const fresh = entry({ collectedAt: "2026-09-01T01:00:00.000Z", contentSnippet: "feed again" });
+    const merged = mergeEntryEnrichment(fresh, prior);
+    expect(merged.excerptOrigin).toBe("article-unavailable");
+    expect(merged.contentSnippet).toBe("feed");
+  });
+
+  it("prefers the primary's own article excerpt over a stale fallback marker", () => {
+    const prior = entry({ contentSnippet: "feed", excerptOrigin: "article-unavailable" });
+    const fresh = entry({ contentSnippet: "本文".repeat(300), excerptOrigin: "article" });
+    const merged = mergeEntryEnrichment(fresh, prior);
+    expect(merged.excerptOrigin).toBe("article");
+    expect(merged.contentSnippet).toBe(fresh.contentSnippet);
+  });
+});

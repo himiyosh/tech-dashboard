@@ -3,7 +3,7 @@
  * Pure functions. See docs/04-site-spec.md §1.1 for category rules.
  */
 import { createHash } from "node:crypto";
-import { sourceOwnedSnippet } from "./feed-snippet.ts";
+import { isSourceTextUnverifiable, sourceOwnedSnippet } from "./feed-snippet.ts";
 import type {
   Category,
   HalfLife,
@@ -357,9 +357,19 @@ export function restampEntryFromSource(
   const tags = normalizeTags([...source.autoTags, ...entry.tags]);
   const preserveImportance = options.preserveImportance ?? true;
   const preserveArchiveTier = options.preserveArchiveTier ?? false;
+  // An article-origin entry without its feed text cannot be re-classified:
+  // the stored category and knowledge exclusion stay (feed-snippet.ts).
+  const unverifiable = isSourceTextUnverifiable(entry);
+  const { knowledgeEligible: _derivedKnowledgeEligible, ...metadataWithoutEligibility } = metadata;
   return {
     ...base,
-    ...metadata,
+    ...(unverifiable ? metadataWithoutEligibility : metadata),
+    ...(unverifiable
+      ? {
+          category: entry.category,
+          ...(_priorKnowledgeEligible === false ? { knowledgeEligible: false as const } : {}),
+        }
+      : {}),
     importance: preserveImportance ? entry.importance : metadata.importance,
     archiveTier: preserveArchiveTier ? entry.archiveTier : metadata.archiveTier,
     tags,

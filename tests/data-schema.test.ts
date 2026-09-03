@@ -10,6 +10,7 @@ import { describe, it, expect } from "vitest";
 import indexJson from "../data/index.json";
 import statsJson from "../data/stats.json";
 import { restampEntryFromSource } from "../harness/pipeline/normalize.ts";
+import { isSourceTextUnverifiable } from "../harness/pipeline/feed-snippet.ts";
 import {
   evaluateKeywordFilter,
   keywordFilterEntryFromNormalized,
@@ -168,6 +169,15 @@ function asNormalizedEntry(entry: RawEntry): NormalizedEntry {
     ...(typeof entry.contentSnippet === "string" && entry.contentSnippet
       ? { contentSnippet: entry.contentSnippet }
       : {}),
+    // Article-excerpt provenance: without these, every enriched entry would be
+    // re-evaluated on fetched prose and the source-owned gates would drift.
+    ...(entry.excerptOrigin === "article" || entry.excerptOrigin === "article-unavailable"
+      ? { excerptOrigin: entry.excerptOrigin }
+      : {}),
+    ...(typeof entry.feedSnippet === "string" && entry.feedSnippet
+      ? { feedSnippet: entry.feedSnippet }
+      : {}),
+    ...(entry.knowledgeEligible === false ? { knowledgeEligible: false as const } : {}),
     ...(typeof entry.bodyJa === "string" ? { bodyJa: entry.bodyJa } : {}),
     ...(typeof entry.bodyEn === "string" ? { bodyEn: entry.bodyEn } : {}),
     lang: "en",
@@ -875,9 +885,14 @@ describe("evergreen 蓄積ポリシー (R-022)", () => {
         contentSnippet: typeof entry.contentSnippet === "string"
           ? entry.contentSnippet
           : undefined,
-        // Article-excerpt provenance: eligibility stays evaluated on the feed text.
+        // Article-excerpt provenance: eligibility stays evaluated on the feed
+        // text. An enriched entry that predates feedSnippet has no source text
+        // left to re-evaluate, so only then does the stored exclusion count.
         excerptOrigin: typeof entry.excerptOrigin === "string" ? entry.excerptOrigin : undefined,
         feedSnippet: typeof entry.feedSnippet === "string" ? entry.feedSnippet : undefined,
+        ...(isSourceTextUnverifiable(entry) && entry.knowledgeEligible === false
+          ? { knowledgeEligible: false as const }
+          : {}),
         evergreen: true,
       });
       const excluded = (entry as { knowledgeEligible?: unknown }).knowledgeEligible === false;

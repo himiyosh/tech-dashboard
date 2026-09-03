@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { restampEntryFromSource } from "../harness/pipeline/normalize.ts";
-import { sourceOwnedSnippet } from "../harness/pipeline/feed-snippet.ts";
+import { isSourceTextUnverifiable, sourceOwnedSnippet } from "../harness/pipeline/feed-snippet.ts";
 import { REGISTRY } from "../harness/registry.ts";
 import type { NormalizedEntry } from "../harness/types.ts";
 import { isKnowledgeEligibleEntry } from "../web/src/lib/knowledge-eligibility.ts";
@@ -74,7 +74,51 @@ describe("restampEntryFromSource with an article excerpt", () => {
   });
 });
 
+describe("restampEntryFromSource for an article excerpt that predates feedSnippet", () => {
+  const source = REGISTRY["github-changelog"]!;
+
+  it("keeps the stored category and knowledge exclusion instead of re-deriving from the title", () => {
+    const legacy = changelogEntry({
+      category: "copilot",
+      knowledgeEligible: false,
+      contentSnippet: "Article prose without any product name in it.",
+      excerptOrigin: "article",
+    });
+    expect(isSourceTextUnverifiable(legacy)).toBe(true);
+    const stamped = restampEntryFromSource(legacy, source, REFERENCE_AT);
+    expect(stamped.category).toBe("copilot");
+    expect(stamped.knowledgeEligible).toBe(false);
+    // Title-only derivation would have said tech-news: that is the drift being prevented.
+    const titleOnly = restampEntryFromSource(changelogEntry({ category: "copilot" }), source, REFERENCE_AT);
+    expect(titleOnly.category).toBe("tech-news");
+
+    const notExcluded = restampEntryFromSource(
+      changelogEntry({ category: "copilot", contentSnippet: "prose", excerptOrigin: "article" }),
+      source,
+      REFERENCE_AT,
+    );
+    expect(notExcluded.knowledgeEligible).toBeUndefined();
+  });
+
+  it("re-derives normally once feedSnippet is present", () => {
+    const healed = changelogEntry({
+      category: "copilot",
+      contentSnippet: "Article prose.",
+      excerptOrigin: "article",
+      feedSnippet: "Administrators can now set an expiration date on individual user budgets.",
+    });
+    expect(isSourceTextUnverifiable(healed)).toBe(false);
+    expect(restampEntryFromSource(healed, source, REFERENCE_AT).category).toBe("tech-news");
+  });
+});
+
 describe("knowledge eligibility with an article excerpt", () => {
+  it("respects the stored decision when the feed text is gone", () => {
+    const base = { source: "google-cloud-blog", title: "Some article title", evergreen: true as const };
+    expect(isKnowledgeEligibleEntry({ ...base, contentSnippet: "prose", excerptOrigin: "article", knowledgeEligible: false })).toBe(false);
+    expect(isKnowledgeEligibleEntry({ ...base, contentSnippet: "prose", excerptOrigin: "article" })).toBe(true);
+  });
+
   it("evaluates the feed text rather than the fetched prose", () => {
     const base = {
       source: "google-cloud-blog",

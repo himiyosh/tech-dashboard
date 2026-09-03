@@ -43,6 +43,21 @@ describe("mergeEntryEnrichment", () => {
     const primaryEnriched = mergeEntryEnrichment(previous, fresh);
     expect(primaryEnriched.feedSnippet).toBe("Feed description seen at collection time.");
 
+    // Enriched before feedSnippet existed: the re-collected feed text heals it.
+    const legacy = entry({
+      id: "legacy",
+      contentSnippet: "Article prose fetched before feedSnippet existed.",
+      excerptOrigin: "article",
+    });
+    const healed = mergeEntryEnrichment(fresh, legacy);
+    expect(healed.contentSnippet).toBe("Article prose fetched before feedSnippet existed.");
+    expect(healed.feedSnippet).toBe("Feed description re-collected this run.");
+    const healedPrimary = mergeEntryEnrichment(legacy, fresh);
+    expect(healedPrimary.feedSnippet).toBe("Feed description re-collected this run.");
+    // No feed-origin side available: stays unverifiable rather than inventing text.
+    const stillLegacy = mergeEntryEnrichment(legacy, entry({ id: "also-article", contentSnippet: "prose", excerptOrigin: "article-unavailable" }));
+    expect(stillLegacy.feedSnippet).toBeUndefined();
+
     const untouched = mergeEntryEnrichment(fresh, entry({ id: "plain", contentSnippet: "Older feed text." }));
     expect(untouched.contentSnippet).toBe("Feed description re-collected this run.");
     expect(untouched.feedSnippet).toBeUndefined();

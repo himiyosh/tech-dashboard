@@ -21,6 +21,17 @@ export interface FeedSnippetEntry {
  * lane; guarded for older artifacts) evaluates on its title alone: the prose
  * is not source text, and title-only is the documented lossy fallback.
  */
+/**
+ * True when contentSnippet holds article prose but the feed text was not
+ * kept (entries enriched before feedSnippet existed). Nothing but the title
+ * is source text any more, so evaluators keep the stored source-owned values
+ * instead of re-deriving them from a text the collector never saw.
+ * entry-merge.ts heals these on the next re-collection of the feed item.
+ */
+export function isSourceTextUnverifiable(entry: FeedSnippetEntry): boolean {
+  return entry.excerptOrigin === "article" && sourceOwnedSnippet(entry) === undefined;
+}
+
 export function sourceOwnedSnippet(entry: FeedSnippetEntry): string | undefined {
   if (entry.excerptOrigin === "article") {
     const feed = typeof entry.feedSnippet === "string" ? entry.feedSnippet.trim() : "";

@@ -347,7 +347,7 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
     </div>
   </div>
 
-  <div class:list={["card-thumb", { fallback: !hasUsableImage, "has-image": hasUsableImage }]} style={`--cat-color:${catColor}`} data-image-source={thumbSource || undefined}>
+  <div class:list={["card-thumb", { fallback: !hasUsableImage, "has-image": hasUsableImage }]} style={`--cat-color:${catColor}${hasUsableImage ? `;--thumb-src:url("${img!.src.replace(/"/g, "%22")}")` : ""}`} data-image-source={thumbSource || undefined}>
     {hasUsableImage && (
       <img
         src={img!.src}

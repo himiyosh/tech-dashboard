@@ -266,7 +266,7 @@ const workerSummary = wh
         label: "稼働状態",
         labelEn: "Run status",
         value: workerStatusText,
-        detail: "公開snapshotの直近run",
+        detail: "直近の更新",
         detailEn: "Latest run in this snapshot",
         scope: "run-status",
       },
@@ -282,15 +282,15 @@ const workerSummary = wh
         label: "要約待ち",
         labelEn: "Summaries pending",
         value: pendingSummaryEntries,
-        detail: "現在のlive index",
-        detailEn: "Current live index",
+        detail: "現在掲載中の記事",
+        detailEn: "Articles currently listed",
         scope: "summary-backlog",
       },
       {
         label: "本文待ち",
         labelEn: "Bodies pending",
         value: bodyQueue.showBacklog ? bodyQueue.backlog : "n/a",
-        detail: "本文保持対象Queue",
+        detail: "AI 解説本文の生成待ち",
         detailEn: "Retention-eligible body queue",
         scope: "body-backlog",
       },
@@ -307,8 +307,8 @@ const workerSummary = wh
         labelEn: "Site updated",
         value: indexAgeLabel,
         datetime: GENERATED_AT,
-        detail: "公開index snapshot",
-        detailEn: "Published index snapshot",
+        detail: "一覧の更新時刻",
+        detailEn: "List last updated",
         scope: "published-snapshot",
       },
     ]}
@@ -915,20 +915,6 @@ const workerSummary = wh
           <span class="i18n-ja">匿名いいねの設定状態を確認しています。</span>
           <span class="i18n-en" lang="en">Checking the anonymous reaction configuration.</span>
         </p>
-        <ul class="reaction-config-flag-list" data-reaction-config-flags hidden>
-          {REACTION_CONFIG_FLAG_ORDER.map((key) => (
-            <li data-reaction-config-flag={key}>
-              <span>
-                <span class="i18n-ja">{REACTION_CONFIG_FLAG_LABELS[key].ja}</span>
-                <span class="i18n-en" lang="en">{REACTION_CONFIG_FLAG_LABELS[key].en}</span>
-              </span>
-              <strong data-reaction-config-flag-state>
-                <span class="i18n-ja"></span>
-                <span class="i18n-en" lang="en"></span>
-              </strong>
-            </li>
-          ))}
-        </ul>
       </div>
 
       <div class="side-card status-insight-card">

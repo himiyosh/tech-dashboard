@@ -291,7 +291,7 @@ const catColorOf = (slug: string): string =>
         ))}
       </div>
       <p class="retention-note">
-        <span class="i18n-ja">本日は JST ライブ、過去日は archive。Research は arXiv 込み。過去値は保持ポリシーで縮む場合があります。</span>
+        <span class="i18n-ja">今日の件数は速報値で、日中に増えます。Research には arXiv 論文を含みます。</span>
         <span class="i18n-en" lang="en">Today uses live JST; past days use archive totals. Research includes arXiv. Retention may shrink past counts.</span>
       </p>
       <table class="sr-only">
@@ -344,10 +344,12 @@ const catColorOf = (slug: string): string =>
           <span class="i18n-ja"><span data-board-count>{boardVisibleCount}</span> 件</span>
           <span class="i18n-en" lang="en"><span data-board-count>{boardVisibleCount}</span> items</span>
         </span>
-        <span class="badge-legend">
-          <span class="t-tag imp">★</span><span class="legend-label i18n-ja">重要</span><span class="legend-label i18n-en" lang="en">Important</span>
-          <span class="t-tag rel">REL</span><span class="legend-label i18n-ja">リリース</span><span class="legend-label i18n-en" lang="en">Release</span>
-        </span>
+        {boardVisibleCount > 0 && (
+          <span class="badge-legend">
+            <span class="t-tag imp">★</span><span class="legend-label i18n-ja">重要</span><span class="legend-label i18n-en" lang="en">Important</span>
+            <span class="t-tag rel">REL</span><span class="legend-label i18n-ja">リリース</span><span class="legend-label i18n-en" lang="en">Release</span>
+          </span>
+        )}
       </div>
       {boardEmptyReason ? (
         <p
